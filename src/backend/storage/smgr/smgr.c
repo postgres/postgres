@@ -11,7 +11,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/storage/smgr/smgr.c,v 1.34 2000/04/10 23:41:52 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/storage/smgr/smgr.c,v 1.35 2000/04/12 17:15:42 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -23,31 +23,31 @@ static void smgrshutdown(int dummy);
 
 typedef struct f_smgr
 {
-	int			(*smgr_init) (void); /* may be NULL */
-	int			(*smgr_shutdown) (void); /* may be NULL */
+	int			(*smgr_init) (void);	/* may be NULL */
+	int			(*smgr_shutdown) (void);		/* may be NULL */
 	int			(*smgr_create) (Relation reln);
 	int			(*smgr_unlink) (Relation reln);
 	int			(*smgr_extend) (Relation reln, char *buffer);
 	int			(*smgr_open) (Relation reln);
 	int			(*smgr_close) (Relation reln);
 	int			(*smgr_read) (Relation reln, BlockNumber blocknum,
-							  char *buffer);
+										  char *buffer);
 	int			(*smgr_write) (Relation reln, BlockNumber blocknum,
-							   char *buffer);
+										   char *buffer);
 	int			(*smgr_flush) (Relation reln, BlockNumber blocknum,
-							   char *buffer);
+										   char *buffer);
 	int			(*smgr_blindwrt) (char *dbname, char *relname,
-								  Oid dbid, Oid relid,
-								  BlockNumber blkno, char *buffer,
-								  bool dofsync);
+											  Oid dbid, Oid relid,
+										 BlockNumber blkno, char *buffer,
+											  bool dofsync);
 	int			(*smgr_markdirty) (Relation reln, BlockNumber blkno);
 	int			(*smgr_blindmarkdirty) (char *dbname, char *relname,
-										Oid dbid, Oid relid,
-										BlockNumber blkno);
+													Oid dbid, Oid relid,
+													BlockNumber blkno);
 	int			(*smgr_nblocks) (Relation reln);
 	int			(*smgr_truncate) (Relation reln, int nblocks);
-	int			(*smgr_commit) (void); /* may be NULL */
-	int			(*smgr_abort) (void); /* may be NULL */
+	int			(*smgr_commit) (void);	/* may be NULL */
+	int			(*smgr_abort) (void);	/* may be NULL */
 } f_smgr;
 
 /*
@@ -59,14 +59,14 @@ static f_smgr smgrsw[] = {
 
 	/* magnetic disk */
 	{mdinit, NULL, mdcreate, mdunlink, mdextend, mdopen, mdclose,
-	 mdread, mdwrite, mdflush, mdblindwrt, mdmarkdirty, mdblindmarkdirty,
-	 mdnblocks, mdtruncate, mdcommit, mdabort},
+		mdread, mdwrite, mdflush, mdblindwrt, mdmarkdirty, mdblindmarkdirty,
+	mdnblocks, mdtruncate, mdcommit, mdabort},
 
 #ifdef STABLE_MEMORY_STORAGE
 	/* main memory */
 	{mminit, mmshutdown, mmcreate, mmunlink, mmextend, mmopen, mmclose,
-	 mmread, mmwrite, mmflush, mmblindwrt, mmmarkdirty, mmblindmarkdirty,
-	 mmnblocks, NULL, mmcommit, mmabort},
+		mmread, mmwrite, mmflush, mmblindwrt, mmmarkdirty, mmblindmarkdirty,
+	mmnblocks, NULL, mmcommit, mmabort},
 
 #endif
 };
@@ -178,7 +178,7 @@ smgrextend(int16 which, Relation reln, char *buffer)
 
 	if (status == SM_FAIL)
 		elog(ERROR, "%s: cannot extend.  Check free disk space.",
-				RelationGetRelationName(reln));
+			 RelationGetRelationName(reln));
 
 	return status;
 }
@@ -209,7 +209,7 @@ smgropen(int16 which, Relation reln)
  *		This is currently called only from RelationFlushRelation() when
  *		the relation cache entry is about to be dropped; could be doing
  *		simple relation cache clear, or finishing up DROP TABLE.
- *		
+ *
  *		Returns SM_SUCCESS on success, aborts on failure.
  */
 int
@@ -294,7 +294,7 @@ smgrflush(int16 which, Relation reln, BlockNumber blocknum, char *buffer)
  *		this case, the buffer manager will call smgrblindwrt() with
  *		the name and OID of the database and the relation to which the
  *		buffer belongs.  Every storage manager must be able to force
- *		this page down to stable storage in this circumstance.  The
+ *		this page down to stable storage in this circumstance.	The
  *		write should be synchronous if dofsync is true.
  */
 int
@@ -403,7 +403,7 @@ smgrnblocks(int16 which, Relation reln)
 
 	if ((nblocks = (*(smgrsw[which].smgr_nblocks)) (reln)) < 0)
 		elog(ERROR, "cannot count blocks for %s",
-				RelationGetRelationName(reln));
+			 RelationGetRelationName(reln));
 
 	return nblocks;
 }

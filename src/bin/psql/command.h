@@ -3,7 +3,7 @@
  *
  * Copyright 2000 by PostgreSQL Global Development Group
  *
- * $Header: /cvsroot/pgsql/src/bin/psql/command.h,v 1.9 2000/02/20 14:28:20 petere Exp $
+ * $Header: /cvsroot/pgsql/src/bin/psql/command.h,v 1.10 2000/04/12 17:16:22 momjian Exp $
  */
 #ifndef COMMAND_H
 #define COMMAND_H
@@ -23,24 +23,22 @@ typedef enum _backslashResult
 	CMD_NEWEDIT,				/* query buffer was changed (e.g., via \e) */
 	CMD_ERROR					/* the execution of the backslash command
 								 * resulted in an error */
-}			backslashResult;
+} backslashResult;
 
 
-backslashResult
-HandleSlashCmds(const char *line,
+backslashResult HandleSlashCmds(const char *line,
 				PQExpBuffer query_buf,
 				const char **end_of_cmd);
 
 int
-process_file(char *filename);
+			process_file(char *filename);
 
 bool
-test_superuser(const char * username);
+			test_superuser(const char *username);
 
-bool
-do_pset(const char *param,
+bool do_pset(const char *param,
 		const char *value,
-		printQueryOpt * popt,
+		printQueryOpt *popt,
 		bool quiet);
 
-#endif /* COMMAND_H */
+#endif	 /* COMMAND_H */

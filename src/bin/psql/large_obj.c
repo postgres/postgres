@@ -3,7 +3,7 @@
  *
  * Copyright 2000 by PostgreSQL Global Development Group
  *
- * $Header: /cvsroot/pgsql/src/bin/psql/large_obj.c,v 1.9 2000/02/16 13:15:26 momjian Exp $
+ * $Header: /cvsroot/pgsql/src/bin/psql/large_obj.c,v 1.10 2000/04/12 17:16:22 momjian Exp $
  */
 #include "postgres.h"
 #include "large_obj.h"
@@ -92,8 +92,8 @@ do_lo_export(const char *loid_arg, const char *filename_arg)
 
 	if (!pset.db)
 	{
-        if (!pset.cur_cmd_interactive)
-            fprintf(stderr, "%s: ", pset.progname);
+		if (!pset.cur_cmd_interactive)
+			fprintf(stderr, "%s: ", pset.progname);
 		fputs("\\lo_export: not connected to a database\n", stderr);
 		return false;
 	}
@@ -161,8 +161,8 @@ do_lo_import(const char *filename_arg, const char *comment_arg)
 
 	if (!pset.db)
 	{
-        if (!pset.cur_cmd_interactive)
-            fprintf(stderr, "%s: ", pset.progname);
+		if (!pset.cur_cmd_interactive)
+			fprintf(stderr, "%s: ", pset.progname);
 		fputs("\\lo_import: not connected to a database\n", stderr);
 		return false;
 	}
@@ -226,8 +226,8 @@ do_lo_import(const char *filename_arg, const char *comment_arg)
 
 
 	fprintf(pset.queryFout, "lo_import %d\n", loid);
-    sprintf(buf, "%u", (unsigned int)loid);
-    SetVariable(pset.vars, "LASTOID", buf);
+	sprintf(buf, "%u", (unsigned int) loid);
+	SetVariable(pset.vars, "LASTOID", buf);
 
 	return true;
 }
@@ -254,8 +254,8 @@ do_lo_unlink(const char *loid_arg)
 
 	if (!pset.db)
 	{
-        if (!pset.cur_cmd_interactive)
-            fprintf(stderr, "%s: ", pset.progname);
+		if (!pset.cur_cmd_interactive)
+			fprintf(stderr, "%s: ", pset.progname);
 		fputs("\\lo_unlink: not connected to a database\n", stderr);
 		return false;
 	}
@@ -328,14 +328,14 @@ do_lo_list(void)
 	printQueryOpt myopt = pset.popt;
 
 	strcpy(buf,
-           "SELECT usename as \"Owner\", substring(relname from 5) as \"ID\",\n"
-           "  obj_description(pg_class.oid) as \"Description\"\n"
-           "FROM pg_class, pg_user\n"
+	"SELECT usename as \"Owner\", substring(relname from 5) as \"ID\",\n"
+		   "  obj_description(pg_class.oid) as \"Description\"\n"
+		   "FROM pg_class, pg_user\n"
 		   "WHERE usesysid = relowner AND relkind = 'l'\n"
-           "UNION\n"
-           "SELECT NULL as \"Owner\", substring(relname from 5) as \"ID\",\n"
-           "  obj_description(pg_class.oid) as \"Description\"\n"
-           "FROM pg_class\n"
+		   "UNION\n"
+	   "SELECT NULL as \"Owner\", substring(relname from 5) as \"ID\",\n"
+		   "  obj_description(pg_class.oid) as \"Description\"\n"
+		   "FROM pg_class\n"
 		   "WHERE not exists (select 1 from pg_user where usesysid = relowner) AND relkind = 'l'\n"
 		   "ORDER BY \"ID\"");
 

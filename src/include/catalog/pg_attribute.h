@@ -8,7 +8,7 @@
  * Portions Copyright (c) 1996-2000, PostgreSQL, Inc
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Id: pg_attribute.h,v 1.54 2000/03/09 05:00:26 inoue Exp $
+ * $Id: pg_attribute.h,v 1.55 2000/04/12 17:16:28 momjian Exp $
  *
  * NOTES
  *	  the genbki.sh script reads this file and generates .bki
@@ -41,9 +41,11 @@
  */
 CATALOG(pg_attribute) BOOTSTRAP
 {
-	Oid			attrelid;		/* OID of relation containing this attribute */
+	Oid			attrelid;		/* OID of relation containing this
+								 * attribute */
 	NameData	attname;
 	Oid			atttypid;
+
 	/*
 	 * atttypid is the OID of the instance in Catalog Class pg_type that
 	 * defines the data type of this attribute (e.g. int4).  Information
@@ -53,19 +55,21 @@ CATALOG(pg_attribute) BOOTSTRAP
 	 */
 
 	float4		attdisbursion;
+
 	/*
-	 * attdisbursion is the disbursion statistic of the column (0.0 to 1.0),
-	 * or zero if the statistic has not been calculated, or -1.0
-	 * if VACUUM found that the column contains no duplicate entries
-	 * (in which case the disbursion should be taken as 1.0/numberOfRows
-	 * for the current table size).  The -1.0 hack is useful because the
-	 * number of rows may be updated more often than attdisbursion is.
-	 * We assume that the column will retain its no-duplicate-entry
-	 * property.  (Perhaps this should be driven off the existence of a
-	 * UNIQUE index for the column, instead of being a statistical guess?)
+	 * attdisbursion is the disbursion statistic of the column (0.0 to
+	 * 1.0), or zero if the statistic has not been calculated, or -1.0 if
+	 * VACUUM found that the column contains no duplicate entries (in
+	 * which case the disbursion should be taken as 1.0/numberOfRows for
+	 * the current table size).  The -1.0 hack is useful because the
+	 * number of rows may be updated more often than attdisbursion is. We
+	 * assume that the column will retain its no-duplicate-entry property.
+	 * (Perhaps this should be driven off the existence of a UNIQUE index
+	 * for the column, instead of being a statistical guess?)
 	 */
 
 	int2		attlen;
+
 	/*
 	 * attlen is a copy of the typlen field from pg_type for this
 	 * attribute.  See atttypid above.	See struct Form_pg_type for
@@ -73,6 +77,7 @@ CATALOG(pg_attribute) BOOTSTRAP
 	 */
 
 	int2		attnum;
+
 	/*
 	 * attnum is the "attribute number" for the attribute:	A value that
 	 * uniquely identifies this attribute within its class. For user
@@ -90,6 +95,7 @@ CATALOG(pg_attribute) BOOTSTRAP
 	int4		attnelems;		/* number of dimensions, if an array type */
 
 	int4		attcacheoff;
+
 	/*
 	 * fastgetattr() uses attcacheoff to cache byte offsets of attributes
 	 * in heap tuples.	The value actually stored in pg_attribute (-1)
@@ -99,36 +105,39 @@ CATALOG(pg_attribute) BOOTSTRAP
 	 */
 
 	int4		atttypmod;
+
 	/*
-	 * atttypmod records type-specific data supplied at table creation time
-	 * (for example, the max length of a varchar field).  It is passed to
-	 * type-specific input and output functions as the third argument.
-	 * The value will generally be -1 for types that do not need typmod.
+	 * atttypmod records type-specific data supplied at table creation
+	 * time (for example, the max length of a varchar field).  It is
+	 * passed to type-specific input and output functions as the third
+	 * argument. The value will generally be -1 for types that do not need
+	 * typmod.
 	 */
 
 	bool		attbyval;
+
 	/*
 	 * attbyval is a copy of the typbyval field from pg_type for this
 	 * attribute.  See atttypid above.	See struct Form_pg_type for
 	 * definition.
 	 */
-	
+
 	char		attstorage;
+
 	/*
-	 * attstorage tells for VARLENA attributes, what the heap
-	 * access methods can do to it if a given tuple doesn't fit into
-	 * a page. Possible values are
-	 *     'p': Value must be stored plain allways
-	 *     'e': Value can be stored in "secondary" relation (if relation
-	 *          has rellongrelid attached)
-	 *     'c': Value can be stored compressed inline
-	 *     'x': Value can be stored compressed inline or in "secondary".
+	 * attstorage tells for VARLENA attributes, what the heap access
+	 * methods can do to it if a given tuple doesn't fit into a page.
+	 * Possible values are 'p': Value must be stored plain allways 'e':
+	 * Value can be stored in "secondary" relation (if relation has
+	 * rellongrelid attached) 'c': Value can be stored compressed inline
+	 * 'x': Value can be stored compressed inline or in "secondary".
 	 *
 	 * Note: compressed storage
 	 */
 
 	bool		attisset;
 	char		attalign;
+
 	/*
 	 * attalign is a copy of the typalign field from pg_type for this
 	 * attribute.  See atttypid above.	See struct Form_pg_type for
@@ -136,8 +145,10 @@ CATALOG(pg_attribute) BOOTSTRAP
 	 */
 
 	bool		attnotnull;
+
 	/* This flag represents the "NOT NULL" constraint */
 	bool		atthasdef;
+
 	/* Has DEFAULT value or not */
 } FormData_pg_attribute;
 
@@ -182,16 +193,16 @@ typedef FormData_pg_attribute *Form_pg_attribute;
 /*
  *	CONSTANT and MACROS for DROP COLUMN implementation
  */
-#define	DROP_COLUMN_OFFSET	-20
-#define	COLUMN_IS_DROPPED(attribute)	((attribute)->attnum <= DROP_COLUMN_OFFSET)
-#define	DROPPED_COLUMN_INDEX(attidx)	(DROP_COLUMN_OFFSET - attidx)
-#define	ATTRIBUTE_DROP_COLUMN(attribute) \
+#define DROP_COLUMN_OFFSET	-20
+#define COLUMN_IS_DROPPED(attribute)	((attribute)->attnum <= DROP_COLUMN_OFFSET)
+#define DROPPED_COLUMN_INDEX(attidx)	(DROP_COLUMN_OFFSET - attidx)
+#define ATTRIBUTE_DROP_COLUMN(attribute) \
 	Assert((attribute)->attnum > 0); \
 	(attribute)->attnum = DROPPED_COLUMN_INDEX((attribute)->attnum); \
 	(attribute)->atttypid = (Oid) -1; \
 	(attribute)->attnotnull = false; \
-	(attribute)->atthasdef = false; 
-#endif	/* _DROP_COLUMN_HACK__ */
+	(attribute)->atthasdef = false;
+#endif	 /* _DROP_COLUMN_HACK__ */
 /* ----------------
  *		SCHEMA_ macros for declaring hardcoded tuple descriptors.
  *		these are used in utils/cache/relcache.c
@@ -286,7 +297,7 @@ DATA(insert OID = 0 ( 1262 cmax				29 0  4  -6 0 -1 -1 t p f i f f));
 { 1255, {"pronargs"},			21, 0,	2,	7, 0, -1, -1, '\001', 'p', '\0', 's', '\0', '\0' }, \
 { 1255, {"proretset"},			16, 0,	1,	8, 0, -1, -1, '\001', 'p', '\0', 'c', '\0', '\0' }, \
 { 1255, {"prorettype"},			26, 0,	4,	9, 0, -1, -1, '\001', 'p', '\0', 'i', '\0', '\0' }, \
-{ 1255, {"proargtypes"},		30, 0, INDEX_MAX_KEYS*4, 10, 0, -1, -1,	'\0', 'p', '\0', 'i', '\0', '\0' }, \
+{ 1255, {"proargtypes"},		30, 0, INDEX_MAX_KEYS*4, 10, 0, -1, -1, '\0', 'p', '\0', 'i', '\0', '\0' }, \
 { 1255, {"probyte_pct"},		23, 0,	4, 11, 0, -1, -1, '\001', 'p', '\0', 'i', '\0', '\0' }, \
 { 1255, {"properbyte_cpu"},		23, 0,	4, 12, 0, -1, -1, '\001', 'p', '\0', 'i', '\0', '\0' }, \
 { 1255, {"propercall_cpu"},		23, 0,	4, 13, 0, -1, -1, '\001', 'p', '\0', 'i', '\0', '\0' }, \
@@ -365,7 +376,7 @@ DATA(insert OID = 0 ( 1261 cmax				29 0  4  -6 0 -1 -1 t p f i f f));
 { 1249, {"attcacheoff"},  23, 0,	4,	8, 0, -1, -1, '\001', 'p', '\0', 'i', '\0', '\0' }, \
 { 1249, {"atttypmod"},	  23, 0,	4,	9, 0, -1, -1, '\001', 'p', '\0', 'i', '\0', '\0' }, \
 { 1249, {"attbyval"},	  16, 0,	1, 10, 0, -1, -1, '\001', 'p', '\0', 'c', '\0', '\0' }, \
-{ 1249, {"attstorage"},	  18, 0,	1, 11, 0, -1, -1, '\001', 'p', '\0', 'c', '\0', '\0' }, \
+{ 1249, {"attstorage"},   18, 0,	1, 11, 0, -1, -1, '\001', 'p', '\0', 'c', '\0', '\0' }, \
 { 1249, {"attisset"},	  16, 0,	1, 12, 0, -1, -1, '\001', 'p', '\0', 'c', '\0', '\0' }, \
 { 1249, {"attalign"},	  18, 0,	1, 13, 0, -1, -1, '\001', 'p', '\0', 'c', '\0', '\0' }, \
 { 1249, {"attnotnull"},  16, 0, 1, 14, 0, -1, -1, '\001', 'p', '\0', 'c', '\0', '\0' }, \
@@ -490,7 +501,7 @@ DATA(insert OID = 0 ( 1219 tgconstrrelid	26 0  4   8 0 -1 -1 t p f i f f));
 DATA(insert OID = 0 ( 1219 tgdeferrable		16 0  1   9 0 -1 -1 t p f c f f));
 DATA(insert OID = 0 ( 1219 tginitdeferred	16 0  1   10 0 -1 -1 t p f c f f));
 DATA(insert OID = 0 ( 1219 tgnargs			21 0  2   11 0 -1 -1 t p f s f f));
-DATA(insert OID = 0 ( 1219 tgattr			22 0  INDEX_MAX_KEYS*2  12 0 -1 -1 f p f i f f));
+DATA(insert OID = 0 ( 1219 tgattr			22 0  INDEX_MAX_KEYS*2	12 0 -1 -1 f p f i f f));
 DATA(insert OID = 0 ( 1219 tgargs			17 0 -1   13 0 -1 -1 f p f i f f));
 DATA(insert OID = 0 ( 1219 ctid				27 0  6  -1 0 -1 -1 f p f i f f));
 DATA(insert OID = 0 ( 1219 oid				26 0  4  -2 0 -1 -1 t p f i f f));

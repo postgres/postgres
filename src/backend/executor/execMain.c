@@ -27,7 +27,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/executor/execMain.c,v 1.112 2000/04/07 07:24:47 vadim Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/executor/execMain.c,v 1.113 2000/04/12 17:15:08 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -48,7 +48,7 @@
 
 /* XXX no points for style */
 extern TupleTableSlot *EvalPlanQual(EState *estate, Index rti,
-									ItemPointer tid);
+			 ItemPointer tid);
 
 /* decls for local routines only used within this module */
 static TupleDesc InitPlan(CmdType operation,
@@ -75,13 +75,14 @@ static void ExecReplace(TupleTableSlot *slot, ItemPointer tupleid,
 static TupleTableSlot *EvalPlanQualNext(EState *estate);
 static void EndEvalPlanQual(EState *estate);
 static void ExecCheckQueryPerms(CmdType operation, Query *parseTree,
-								Plan *plan);
+					Plan *plan);
 static void ExecCheckPlanPerms(Plan *plan, CmdType operation,
-							   int resultRelation, bool resultIsScanned);
+				   int resultRelation, bool resultIsScanned);
 static void ExecCheckRTPerms(List *rangeTable, CmdType operation,
-							 int resultRelation, bool resultIsScanned);
+				 int resultRelation, bool resultIsScanned);
 static void ExecCheckRTEPerms(RangeTblEntry *rte, CmdType operation,
-							  bool isResultRelation, bool resultIsScanned);
+				  bool isResultRelation, bool resultIsScanned);
+
 /* end of local decls */
 
 
@@ -460,14 +461,14 @@ ExecCheckPlanPerms(Plan *plan, CmdType operation,
 
 	foreach(subp, plan->initPlan)
 	{
-		SubPlan	   *subplan = (SubPlan *) lfirst(subp);
+		SubPlan    *subplan = (SubPlan *) lfirst(subp);
 
 		ExecCheckRTPerms(subplan->rtable, CMD_SELECT, 0, false);
 		ExecCheckPlanPerms(subplan->plan, CMD_SELECT, 0, false);
 	}
 	foreach(subp, plan->subPlan)
 	{
-		SubPlan	   *subplan = (SubPlan *) lfirst(subp);
+		SubPlan    *subplan = (SubPlan *) lfirst(subp);
 
 		ExecCheckRTPerms(subplan->rtable, CMD_SELECT, 0, false);
 		ExecCheckPlanPerms(subplan->plan, CMD_SELECT, 0, false);
@@ -485,49 +486,51 @@ ExecCheckPlanPerms(Plan *plan, CmdType operation,
 	switch (nodeTag(plan))
 	{
 		case T_Append:
-		{
-			Append	   *app = (Append *) plan;
-			List	   *appendplans;
-
-			if (app->inheritrelid > 0)
 			{
-				/*
-				 * Append implements expansion of inheritance; all members
-				 * of inheritrtable list will be plugged into same RTE slot.
-				 * Therefore, they are either all result relations or none.
-				 */
-				List	   *rtable;
+				Append	   *app = (Append *) plan;
+				List	   *appendplans;
 
-				foreach(rtable, app->inheritrtable)
+				if (app->inheritrelid > 0)
 				{
-					ExecCheckRTEPerms((RangeTblEntry *) lfirst(rtable),
-									  operation,
-									  (app->inheritrelid == resultRelation),
-									  resultIsScanned);
-				}
-			}
-			else
-			{
-				/* Append implements UNION, which must be a SELECT */
-				List	   *rtables;
 
-				foreach(rtables, app->unionrtables)
+					/*
+					 * Append implements expansion of inheritance; all
+					 * members of inheritrtable list will be plugged into
+					 * same RTE slot. Therefore, they are either all
+					 * result relations or none.
+					 */
+					List	   *rtable;
+
+					foreach(rtable, app->inheritrtable)
+					{
+						ExecCheckRTEPerms((RangeTblEntry *) lfirst(rtable),
+										  operation,
+								   (app->inheritrelid == resultRelation),
+										  resultIsScanned);
+					}
+				}
+				else
 				{
-					ExecCheckRTPerms((List *) lfirst(rtables),
-									 CMD_SELECT, 0, false);
-				}
-			}
+					/* Append implements UNION, which must be a SELECT */
+					List	   *rtables;
 
-			/* Check appended plans */
-			foreach(appendplans, app->appendplans)
-			{
-				ExecCheckPlanPerms((Plan *) lfirst(appendplans),
-								   operation,
-								   resultRelation,
-								   resultIsScanned);
+					foreach(rtables, app->unionrtables)
+					{
+						ExecCheckRTPerms((List *) lfirst(rtables),
+										 CMD_SELECT, 0, false);
+					}
+				}
+
+				/* Check appended plans */
+				foreach(appendplans, app->appendplans)
+				{
+					ExecCheckPlanPerms((Plan *) lfirst(appendplans),
+									   operation,
+									   resultRelation,
+									   resultIsScanned);
+				}
+				break;
 			}
-			break;
-		}
 
 		default:
 			break;
@@ -539,7 +542,7 @@ ExecCheckPlanPerms(Plan *plan, CmdType operation,
  *		Check access permissions for all relations listed in a range table.
  *
  * If resultRelation is not 0, it is the RT index of the relation to be
- * treated as the result relation.  All other relations are assumed to be
+ * treated as the result relation.	All other relations are assumed to be
  * read-only for the query.
  */
 static void
@@ -576,10 +579,11 @@ ExecCheckRTEPerms(RangeTblEntry *rte, CmdType operation,
 
 	if (rte->skipAcl)
 	{
+
 		/*
-		 * This happens if the access to this table is due to a view
-		 * query rewriting - the rewrite handler already checked the
-		 * permissions against the view owner, so we just skip this entry.
+		 * This happens if the access to this table is due to a view query
+		 * rewriting - the rewrite handler already checked the permissions
+		 * against the view owner, so we just skip this entry.
 		 */
 		return;
 	}
@@ -620,14 +624,12 @@ ExecCheckRTEPerms(RangeTblEntry *rte, CmdType operation,
 			default:
 				elog(ERROR, "ExecCheckRTEPerms: bogus operation %d",
 					 operation);
-				aclcheck_result = ACLCHECK_OK; /* keep compiler quiet */
+				aclcheck_result = ACLCHECK_OK;	/* keep compiler quiet */
 				break;
 		}
 	}
 	else
-	{
 		aclcheck_result = CHECK(ACL_RD);
-	}
 
 	if (aclcheck_result != ACLCHECK_OK)
 		elog(ERROR, "%s: %s",
@@ -734,8 +736,9 @@ InitPlan(CmdType operation, Query *parseTree, Plan *plan, EState *estate)
 		/*
 		 * If there are indices on the result relation, open them and save
 		 * descriptors in the result relation info, so that we can add new
-		 * index entries for the tuples we add/update.  We need not do this
-		 * for a DELETE, however, since deletion doesn't affect indexes.
+		 * index entries for the tuples we add/update.	We need not do
+		 * this for a DELETE, however, since deletion doesn't affect
+		 * indexes.
 		 */
 		if (resultRelationDesc->rd_rel->relhasindex &&
 			operation != CMD_DELETE)
@@ -805,10 +808,11 @@ InitPlan(CmdType operation, Query *parseTree, Plan *plan, EState *estate)
 	targetList = plan->targetlist;
 
 	/*
-	 * Now that we have the target list, initialize the junk filter if needed.
-	 * SELECT and INSERT queries need a filter if there are any junk attrs
-	 * in the tlist.  UPDATE and DELETE always need one, since there's always
-	 * a junk 'ctid' attribute present --- no need to look first.
+	 * Now that we have the target list, initialize the junk filter if
+	 * needed. SELECT and INSERT queries need a filter if there are any
+	 * junk attrs in the tlist.  UPDATE and DELETE always need one, since
+	 * there's always a junk 'ctid' attribute present --- no need to look
+	 * first.
 	 */
 	{
 		bool		junk_filter_needed = false;
@@ -948,8 +952,8 @@ EndPlan(Plan *plan, EState *estate)
 	}
 
 	/*
-	 * close the result relations if necessary,
-	 * but hold locks on them until xact commit
+	 * close the result relations if necessary, but hold locks on them
+	 * until xact commit
 	 */
 	if (resultRelationInfo != NULL)
 	{
@@ -1708,10 +1712,10 @@ ExecRelCheck(Relation rel, HeapTuple tuple, EState *estate)
 
 		/*
 		 * NOTE: SQL92 specifies that a NULL result from a constraint
-		 * expression is not to be treated as a failure.  Therefore,
-		 * tell ExecQual to return TRUE for NULL.
+		 * expression is not to be treated as a failure.  Therefore, tell
+		 * ExecQual to return TRUE for NULL.
 		 */
-		if (! ExecQual(qual, econtext, true))
+		if (!ExecQual(qual, econtext, true))
 			return check[i].ccname;
 	}
 
@@ -1738,7 +1742,7 @@ ExecConstraints(char *caller, Relation rel, HeapTuple tuple, EState *estate)
 		{
 			if (rel->rd_att->attrs[attrChk - 1]->attnotnull && heap_attisnull(tuple, attrChk))
 				elog(ERROR, "%s: Fail to add null value in not null attribute %s",
-				  caller, NameStr(rel->rd_att->attrs[attrChk - 1]->attname));
+					 caller, NameStr(rel->rd_att->attrs[attrChk - 1]->attname));
 		}
 	}
 
@@ -1791,7 +1795,7 @@ EvalPlanQual(EState *estate, Index rti, ItemPointer tid)
 			Assert(oldepq->rti != 0);
 			/* stop execution */
 			ExecEndNode(epq->plan, epq->plan);
-		    epqstate->es_tupleTable->next = 0;
+			epqstate->es_tupleTable->next = 0;
 			heap_freetuple(epqstate->es_evTuple[epq->rti - 1]);
 			epqstate->es_evTuple[epq->rti - 1] = NULL;
 			/* push current PQ to freePQ stack */
@@ -1861,7 +1865,7 @@ EvalPlanQual(EState *estate, Index rti, ItemPointer tid)
 	if (endNode)
 	{
 		ExecEndNode(epq->plan, epq->plan);
-	    epqstate->es_tupleTable->next = 0;
+		epqstate->es_tupleTable->next = 0;
 	}
 
 	/* free old RTE' tuple */
@@ -1949,10 +1953,10 @@ EvalPlanQual(EState *estate, Index rti, ItemPointer tid)
 			estate->es_evalPlanQual = (Pointer) epq;
 		}
 		else
-		{									
-			epq->rti = 0;					/* this is the first (oldest) */
-			estate->es_useEvalPlan = false;	/* PQ - mark as free and      */
-			return (NULL);					/* continue Query execution   */
+		{
+			epq->rti = 0;		/* this is the first (oldest) */
+			estate->es_useEvalPlan = false;		/* PQ - mark as free and	  */
+			return (NULL);		/* continue Query execution   */
 		}
 	}
 
@@ -1961,7 +1965,7 @@ EvalPlanQual(EState *estate, Index rti, ItemPointer tid)
 			   estate->es_origPlan->nParamExec * sizeof(ParamExecData));
 	memset(epqstate->es_evTupleNull, false,
 		   length(estate->es_range_table) * sizeof(bool));
-    Assert(epqstate->es_tupleTable->next == 0);
+	Assert(epqstate->es_tupleTable->next == 0);
 	ExecInitNode(epq->plan, epqstate, NULL);
 
 	/*
@@ -1992,16 +1996,16 @@ lpqnext:;
 	if (TupIsNull(slot))
 	{
 		ExecEndNode(epq->plan, epq->plan);
-	    epqstate->es_tupleTable->next = 0;
+		epqstate->es_tupleTable->next = 0;
 		heap_freetuple(epqstate->es_evTuple[epq->rti - 1]);
 		epqstate->es_evTuple[epq->rti - 1] = NULL;
 		/* pop old PQ from the stack */
 		oldepq = (evalPlanQual *) epqstate->es_evalPlanQual;
 		if (oldepq == (evalPlanQual *) NULL)
 		{
-			epq->rti = 0;					/* this is the first (oldest) */
-			estate->es_useEvalPlan = false;	/* PQ - mark as free and	  */
-			return (NULL);					/* continue Query execution   */
+			epq->rti = 0;		/* this is the first (oldest) */
+			estate->es_useEvalPlan = false;		/* PQ - mark as free and	  */
+			return (NULL);		/* continue Query execution   */
 		}
 		Assert(oldepq->rti != 0);
 		/* push current PQ to freePQ stack */
@@ -2031,7 +2035,7 @@ EndEvalPlanQual(EState *estate)
 	for (;;)
 	{
 		ExecEndNode(epq->plan, epq->plan);
-	    epqstate->es_tupleTable->next = 0;
+		epqstate->es_tupleTable->next = 0;
 		if (epqstate->es_evTuple[epq->rti - 1] != NULL)
 		{
 			heap_freetuple(epqstate->es_evTuple[epq->rti - 1]);
@@ -2041,8 +2045,8 @@ EndEvalPlanQual(EState *estate)
 		oldepq = (evalPlanQual *) epqstate->es_evalPlanQual;
 		if (oldepq == (evalPlanQual *) NULL)
 		{
-			epq->rti = 0;					/* this is the first (oldest) */
-			estate->es_useEvalPlan = false;	/* PQ - mark as free */
+			epq->rti = 0;		/* this is the first (oldest) */
+			estate->es_useEvalPlan = false;		/* PQ - mark as free */
 			break;
 		}
 		Assert(oldepq->rti != 0);

@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2000, PostgreSQL, Inc
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Id: execnodes.h,v 1.40 2000/01/27 18:11:44 tgl Exp $
+ * $Id: execnodes.h,v 1.41 2000/04/12 17:16:39 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -89,7 +89,7 @@ typedef struct ExprContext
 	ParamListInfo ecxt_param_list_info;
 	ParamExecData *ecxt_param_exec_vals;		/* this is for subselects */
 	List	   *ecxt_range_table;
-	Datum	   *ecxt_aggvalues;	/* precomputed values for Aggref nodes */
+	Datum	   *ecxt_aggvalues; /* precomputed values for Aggref nodes */
 	bool	   *ecxt_aggnulls;	/* null flags for Aggref nodes */
 } ExprContext;
 
@@ -443,8 +443,8 @@ typedef struct TidScanState
 	int			tss_NumTids;
 	int			tss_TidPtr;
 	int			tss_MarkTidPtr;
-	ItemPointer		*tss_TidList;
-	HeapTupleData		tss_htup;
+	ItemPointer *tss_TidList;
+	HeapTupleData tss_htup;
 } TidScanState;
 
 /* ----------------------------------------------------------------
@@ -602,7 +602,7 @@ typedef struct MaterialState
  *	during evaluation of an Agg node's output tuple(s).
  * -------------------------
  */
-typedef struct AggStatePerAggData *AggStatePerAgg; /* private in nodeAgg.c */
+typedef struct AggStatePerAggData *AggStatePerAgg;		/* private in nodeAgg.c */
 
 typedef struct AggState
 {

@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/cache/inval.c,v 1.34 2000/01/31 04:35:52 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/cache/inval.c,v 1.35 2000/04/12 17:15:53 momjian Exp $
  *
  * Note - this code is real crufty...
  *
@@ -95,11 +95,13 @@ typedef InvalidationMessageData *InvalidationMessage;
  * eaten by AtCommit_Cache() in CommitTransaction()
  */
 static LocalInvalid InvalidForall = EmptyLocalInvalid;
+
 /*
  * head of invalidation linked list for the backend itself
  * eaten by AtCommit_LocalCache() in CommandCounterIncrement()
  */
 static LocalInvalid InvalidLocal = EmptyLocalInvalid;
+
 /*
  * head of rollback linked list for the backend itself
  * eaten by AtAbort_Cache() in AbortTransaction()
@@ -110,7 +112,7 @@ static LocalInvalid RollbackStack = EmptyLocalInvalid;
 static InvalidationEntry InvalidationEntryAllocate(uint16 size);
 static void LocalInvalidInvalidate(LocalInvalid invalid, void (*function) (), bool freemember);
 static LocalInvalid LocalInvalidRegister(LocalInvalid invalid,
-										 InvalidationEntry entry);
+					 InvalidationEntry entry);
 static void DiscardInvalidStack(LocalInvalid *invalid);
 static void InvalidationMessageRegisterSharedInvalid(InvalidationMessage message);
 
@@ -161,7 +163,7 @@ LocalInvalidRegister(LocalInvalid invalid,
  * --------------------------------
  */
 static void
-LocalInvalidInvalidate(LocalInvalid invalid, void (*function) (), bool freemember)
+			LocalInvalidInvalidate(LocalInvalid invalid, void (*function) (), bool freemember)
 {
 	InvalidationEntryData *entryDataP;
 
@@ -187,12 +189,12 @@ LocalInvalidInvalidate(LocalInvalid invalid, void (*function) (), bool freemembe
 static void
 DiscardInvalidStack(LocalInvalid *invalid)
 {
-	LocalInvalid	locinv;
+	LocalInvalid locinv;
 
 	locinv = *invalid;
 	*invalid = EmptyLocalInvalid;
 	if (locinv)
-		LocalInvalidInvalidate(locinv, (void (*)()) NULL, true);
+		LocalInvalidInvalidate(locinv, (void (*) ()) NULL, true);
 }
 
 /* ----------------------------------------------------------------
@@ -234,7 +236,7 @@ elog(DEBUG, "CacheIdImmediateRegisterSharedInvalid(%d, %d, [%d, %d])", \
  */
 static LocalInvalid
 CacheIdRegisterSpecifiedLocalInvalid(LocalInvalid invalid,
-		Index cacheId, Index hashIndex, ItemPointer pointer)
+					 Index cacheId, Index hashIndex, ItemPointer pointer)
 {
 	InvalidationMessage message;
 
@@ -286,13 +288,13 @@ CacheIdRegisterLocalInvalid(Index cacheId,
 	 * ----------------
 	 */
 	InvalidForall = CacheIdRegisterSpecifiedLocalInvalid(InvalidForall,
-				cacheId, hashIndex, pointer);
+											cacheId, hashIndex, pointer);
 	/* ----------------
 	 *	Add message to InvalidLocal linked list.
 	 * ----------------
 	 */
 	InvalidLocal = CacheIdRegisterSpecifiedLocalInvalid(InvalidLocal,
-				cacheId, hashIndex, pointer);
+											cacheId, hashIndex, pointer);
 }
 
 /* --------------------------------
@@ -301,7 +303,7 @@ CacheIdRegisterLocalInvalid(Index cacheId,
  */
 static void
 CacheIdRegisterLocalRollback(Index cacheId, Index hashIndex,
-					ItemPointer pointer)
+							 ItemPointer pointer)
 {
 
 	/* ----------------
@@ -315,7 +317,7 @@ CacheIdRegisterLocalRollback(Index cacheId, Index hashIndex,
 	 * ----------------
 	 */
 	RollbackStack = CacheIdRegisterSpecifiedLocalInvalid(
-		RollbackStack, cacheId, hashIndex, pointer);
+							 RollbackStack, cacheId, hashIndex, pointer);
 }
 
 /* --------------------------------
@@ -324,7 +326,7 @@ CacheIdRegisterLocalRollback(Index cacheId, Index hashIndex,
  */
 static void
 CacheIdImmediateRegisterSharedInvalid(Index cacheId, Index hashIndex,
-					ItemPointer pointer)
+									  ItemPointer pointer)
 {
 	InvalidationMessage message;
 
@@ -361,7 +363,7 @@ CacheIdImmediateRegisterSharedInvalid(Index cacheId, Index hashIndex,
  */
 static LocalInvalid
 RelationIdRegisterSpecifiedLocalInvalid(LocalInvalid invalid,
-			Oid relationId, Oid objectId)
+										Oid relationId, Oid objectId)
 {
 	InvalidationMessage message;
 
@@ -415,13 +417,13 @@ RelationIdRegisterLocalInvalid(Oid relationId, Oid objectId)
 	 * ----------------
 	 */
 	InvalidForall = RelationIdRegisterSpecifiedLocalInvalid(InvalidForall,
-		 		relationId, objectId);
+												   relationId, objectId);
 	/* ----------------
 	 *	Add message to InvalidLocal linked list.
 	 * ----------------
 	 */
 	InvalidLocal = RelationIdRegisterSpecifiedLocalInvalid(InvalidLocal,
-		 		relationId, objectId);
+												   relationId, objectId);
 }
 
 /* --------------------------------
@@ -446,7 +448,7 @@ RelationIdRegisterLocalRollback(Oid relationId, Oid objectId)
 	 * ----------------
 	 */
 	RollbackStack = RelationIdRegisterSpecifiedLocalInvalid(
-			RollbackStack, relationId, objectId);
+									RollbackStack, relationId, objectId);
 }
 
 /* --------------------------------
@@ -643,16 +645,16 @@ InvalidationMessageCacheInvalidate(InvalidationMessage message)
 			InvalidationMessageCacheInvalidate_DEBUG1;
 
 			CacheIdInvalidate(message->any.catalog.cacheId,
-									 message->any.catalog.hashIndex,
-									 &message->any.catalog.pointerData);
+							  message->any.catalog.hashIndex,
+							  &message->any.catalog.pointerData);
 			break;
 
 		case 'r':				/* cached relation descriptor */
 			InvalidationMessageCacheInvalidate_DEBUG2;
 
 			CacheIdInvalidate(message->any.relation.relationId,
-						message->any.relation.objectId,
-						(ItemPointer) NULL);
+							  message->any.relation.objectId,
+							  (ItemPointer) NULL);
 			break;
 
 		default:
@@ -753,14 +755,14 @@ RegisterInvalid(bool send)
 	{
 		DiscardInvalidStack(&RollbackStack);
 		invalid = InvalidForall;
-		InvalidForall = EmptyLocalInvalid; /* clear InvalidForall */
+		InvalidForall = EmptyLocalInvalid;		/* clear InvalidForall */
 		LocalInvalidInvalidate(invalid, InvalidationMessageRegisterSharedInvalid, true);
 	}
 	else
 	{
 		DiscardInvalidStack(&InvalidForall);
 		invalid = RollbackStack;
-		RollbackStack = EmptyLocalInvalid; /* clear RollbackStack */
+		RollbackStack = EmptyLocalInvalid;		/* clear RollbackStack */
 		LocalInvalidInvalidate(invalid, InvalidationMessageCacheInvalidate, true);
 	}
 
@@ -794,14 +796,15 @@ ImmediateLocalInvalidation(bool send)
 	if (send)
 	{
 		invalid = InvalidLocal;
-		InvalidLocal = EmptyLocalInvalid; /* clear InvalidLocal */
+		InvalidLocal = EmptyLocalInvalid;		/* clear InvalidLocal */
 		LocalInvalidInvalidate(invalid, InvalidationMessageCacheInvalidate, true);
 	}
 	else
 	{
+
 		/*
-		 * This may be used for rollback to a savepoint.
-		 * Don't clear InvalidForall and RollbackStack here.
+		 * This may be used for rollback to a savepoint. Don't clear
+		 * InvalidForall and RollbackStack here.
 		 */
 		DiscardInvalidStack(&InvalidLocal);
 		invalid = RollbackStack;
@@ -813,8 +816,8 @@ ImmediateLocalInvalidation(bool send)
 /*
  * InvokeHeapTupleInvalidation
  *		Invoke functions for the tuple which register invalidation
- *		of catalog/relation cache.  
- *  Note:
+ *		of catalog/relation cache.
+ *	Note:
  *		Assumes object id is valid.
  *		Assumes tuple is valid.
  */
@@ -831,9 +834,9 @@ elog(DEBUG, "%s(%s, [%d,%d])", \
 
 static void
 InvokeHeapTupleInvalidation(Relation relation, HeapTuple tuple,
-		void (*CacheIdRegisterFunc)(),
-		void (*RelationIdRegisterFunc)(),
-		const char *funcname)
+							void (*CacheIdRegisterFunc) (),
+							void (*RelationIdRegisterFunc) (),
+							const char *funcname)
 {
 	/* ----------------
 	 *	sanity checks
@@ -857,13 +860,13 @@ InvokeHeapTupleInvalidation(Relation relation, HeapTuple tuple,
 	 */
 	InvokeHeapTupleInvalidation_DEBUG1;
 
-	RelationInvalidateCatalogCacheTuple(relation, tuple, 
-		CacheIdRegisterFunc);
+	RelationInvalidateCatalogCacheTuple(relation, tuple,
+										CacheIdRegisterFunc);
 
 	RelationInvalidateRelationCache(relation, tuple,
-		RelationIdRegisterFunc);
+									RelationIdRegisterFunc);
 }
- 
+
 /*
  * RelationInvalidateHeapTuple
  *		Causes the given tuple in a relation to be invalidated.
@@ -871,10 +874,10 @@ InvokeHeapTupleInvalidation(Relation relation, HeapTuple tuple,
 void
 RelationInvalidateHeapTuple(Relation relation, HeapTuple tuple)
 {
-	InvokeHeapTupleInvalidation(relation, tuple, 
-		CacheIdRegisterLocalInvalid,
-		RelationIdRegisterLocalInvalid,
-		"RelationInvalidateHeapTuple");
+	InvokeHeapTupleInvalidation(relation, tuple,
+								CacheIdRegisterLocalInvalid,
+								RelationIdRegisterLocalInvalid,
+								"RelationInvalidateHeapTuple");
 }
 
 /*
@@ -886,9 +889,9 @@ void
 RelationMark4RollbackHeapTuple(Relation relation, HeapTuple tuple)
 {
 	InvokeHeapTupleInvalidation(relation, tuple,
-		CacheIdRegisterLocalRollback,
-		RelationIdRegisterLocalRollback,
-		"RelationMark4RollbackHeapTuple");
+								CacheIdRegisterLocalRollback,
+								RelationIdRegisterLocalRollback,
+								"RelationMark4RollbackHeapTuple");
 }
 
 /*
@@ -900,9 +903,9 @@ void
 ImmediateInvalidateSharedHeapTuple(Relation relation, HeapTuple tuple)
 {
 	InvokeHeapTupleInvalidation(relation, tuple,
-		CacheIdImmediateRegisterSharedInvalid,
-		RelationIdImmediateRegisterSharedInvalid,
-		"ImmediateInvalidateSharedHeapTuple");
+								CacheIdImmediateRegisterSharedInvalid,
+								RelationIdImmediateRegisterSharedInvalid,
+								"ImmediateInvalidateSharedHeapTuple");
 }
 
 /*
@@ -912,8 +915,8 @@ ImmediateInvalidateSharedHeapTuple(Relation relation, HeapTuple tuple)
  *	This is needed for smgrunlink()/smgrtruncate().
  *	Those functions unlink/truncate the base file immediately
  *	and couldn't be rollbacked in case of abort/crash.
- *	So relation cache invalidation must be registerd immediately. 
- *  Note:
+ *	So relation cache invalidation must be registerd immediately.
+ *	Note:
  *		Assumes Relation is valid.
  */
 void
@@ -933,10 +936,10 @@ ImmediateSharedRelationCacheInvalidate(Relation relation)
 	 * ----------------
 	 */
 #ifdef	INVALIDDEBUG
-elog(DEBUG, "ImmediateSharedRelationCacheInvalidate(%s)", \
-	 RelationGetPhysicalRelationName(relation));
+	elog(DEBUG, "ImmediateSharedRelationCacheInvalidate(%s)", \
+		 RelationGetPhysicalRelationName(relation));
 #endif	 /* defined(INVALIDDEBUG) */
 
 	RelationIdImmediateRegisterSharedInvalid(
-		RelOid_pg_class, RelationGetRelid(relation));
+							RelOid_pg_class, RelationGetRelid(relation));
 }

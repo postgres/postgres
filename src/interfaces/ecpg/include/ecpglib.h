@@ -17,27 +17,27 @@ extern		"C"
 	bool		ECPGprepare(int, char *, char *);
 	bool		ECPGdeallocate(int, char *);
 	bool		ECPGdeallocate_all(int);
-	char		*ECPGprepared_statement(char *);
-	
+	char	   *ECPGprepared_statement(char *);
+
 	void		ECPGlog(const char *format,...);
-	
+
 	/* print an error message */
 	void		sqlprint(void);
-	
+
 /* define this for simplicity as well as compatibility */
 
 #define		  SQLCODE	 sqlca.sqlcode
 
 /* dynamic SQL */
 
-	bool		ECPGdo_descriptor(int line,const char *connection,
-							const char *descriptor,const char *query);
-	bool		ECPGdeallocate_desc(int line,const char *name);
-	bool		ECPGallocate_desc(int line,const char *name);
+	bool		ECPGdo_descriptor(int line, const char *connection,
+							  const char *descriptor, const char *query);
+	bool		ECPGdeallocate_desc(int line, const char *name);
+	bool		ECPGallocate_desc(int line, const char *name);
 	void		ECPGraise(int line, int code, char *str);
 	bool		ECPGget_desc_header(int, char *, int *);
-	bool		ECPGget_desc(int, char *, int, ...);
-	
+	bool		ECPGget_desc(int, char *, int,...);
+
 
 #ifdef __cplusplus
 }

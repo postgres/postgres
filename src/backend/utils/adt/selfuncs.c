@@ -15,7 +15,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/selfuncs.c,v 1.63 2000/04/09 04:31:37 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/selfuncs.c,v 1.64 2000/04/12 17:15:51 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -45,25 +45,25 @@
 #define FunctionalSelectivity(nIndKeys,attNum) ((attNum)==InvalidAttrNumber)
 
 /* default selectivity estimate for equalities such as "A = b" */
-#define DEFAULT_EQ_SEL  0.01
+#define DEFAULT_EQ_SEL	0.01
 
 /* default selectivity estimate for inequalities such as "A < b" */
 #define DEFAULT_INEQ_SEL  (1.0 / 3.0)
 
 static bool convert_string_to_scalar(char *str, int strlength,
-									 double *scaleval);
+						 double *scaleval);
 static void getattproperties(Oid relid, AttrNumber attnum,
-							 Oid *typid,
-							 int *typlen,
-							 bool *typbyval,
-							 int32 *typmod);
+				 Oid *typid,
+				 int *typlen,
+				 bool *typbyval,
+				 int32 *typmod);
 static bool getattstatistics(Oid relid, AttrNumber attnum,
-							 Oid typid, int32 typmod,
-							 double *nullfrac,
-							 double *commonfrac,
-							 Datum *commonval,
-							 Datum *loval,
-							 Datum *hival);
+				 Oid typid, int32 typmod,
+				 double *nullfrac,
+				 double *commonfrac,
+				 Datum *commonval,
+				 Datum *loval,
+				 Datum *hival);
 
 
 /*
@@ -109,15 +109,17 @@ eqsel(Oid opid,
 		{
 			if (flag & SEL_CONSTANT)
 			{
-				/* Is the constant "=" to the column's most common value?
-				 * (Although the operator may not really be "=",
-				 * we will assume that seeing whether it returns TRUE
-				 * for the most common value is useful information.
-				 * If you don't like it, maybe you shouldn't be using
-				 * eqsel for your operator...)
+
+				/*
+				 * Is the constant "=" to the column's most common value?
+				 * (Although the operator may not really be "=", we will
+				 * assume that seeing whether it returns TRUE for the most
+				 * common value is useful information. If you don't like
+				 * it, maybe you shouldn't be using eqsel for your
+				 * operator...)
 				 */
-				RegProcedure	eqproc = get_opcode(opid);
-				bool			mostcommon;
+				RegProcedure eqproc = get_opcode(opid);
+				bool		mostcommon;
 
 				if (eqproc == (RegProcedure) NULL)
 					elog(ERROR, "eqsel: no procedure for operator %u",
@@ -133,7 +135,9 @@ eqsel(Oid opid,
 
 				if (mostcommon)
 				{
-					/* Constant is "=" to the most common value.  We know
+
+					/*
+					 * Constant is "=" to the most common value.  We know
 					 * selectivity exactly (or as exactly as VACUUM could
 					 * calculate it, anyway).
 					 */
@@ -141,17 +145,22 @@ eqsel(Oid opid,
 				}
 				else
 				{
-					/* Comparison is against a constant that is neither the
-					 * most common value nor null.  Its selectivity cannot
-					 * be more than this:
+
+					/*
+					 * Comparison is against a constant that is neither
+					 * the most common value nor null.	Its selectivity
+					 * cannot be more than this:
 					 */
 					selec = 1.0 - commonfrac - nullfrac;
 					if (selec > commonfrac)
 						selec = commonfrac;
-					/* and in fact it's probably less, so we should apply
-					 * a fudge factor.  The only case where we don't is
-					 * for a boolean column, where indeed we have estimated
-					 * the less-common value's frequency exactly!
+
+					/*
+					 * and in fact it's probably less, so we should apply
+					 * a fudge factor.	The only case where we don't is
+					 * for a boolean column, where indeed we have
+					 * estimated the less-common value's frequency
+					 * exactly!
 					 */
 					if (typid != BOOLOID)
 						selec *= 0.5;
@@ -159,14 +168,18 @@ eqsel(Oid opid,
 			}
 			else
 			{
-				/* Search is for a value that we do not know a priori,
-				 * but we will assume it is not NULL.  Selectivity
-				 * cannot be more than this:
+
+				/*
+				 * Search is for a value that we do not know a priori, but
+				 * we will assume it is not NULL.  Selectivity cannot be
+				 * more than this:
 				 */
 				selec = 1.0 - nullfrac;
 				if (selec > commonfrac)
 					selec = commonfrac;
-				/* and in fact it's probably less, so apply a fudge
+
+				/*
+				 * and in fact it's probably less, so apply a fudge
 				 * factor.
 				 */
 				selec *= 0.5;
@@ -178,15 +191,17 @@ eqsel(Oid opid,
 			else if (selec > 1.0)
 				selec = 1.0;
 
-			if (! typbyval)
+			if (!typbyval)
 				pfree(DatumGetPointer(commonval));
 		}
 		else
 		{
-			/* No VACUUM ANALYZE stats available, so make a guess using
-			 * the disbursion stat (if we have that, which is unlikely
-			 * for a normal attribute; but for a system attribute we may
-			 * be able to estimate it).
+
+			/*
+			 * No VACUUM ANALYZE stats available, so make a guess using
+			 * the disbursion stat (if we have that, which is unlikely for
+			 * a normal attribute; but for a system attribute we may be
+			 * able to estimate it).
 			 */
 			selec = get_attdisbursion(relid, attno, 0.01);
 		}
@@ -234,7 +249,7 @@ scalarltsel(Oid opid,
 	float64		result;
 
 	result = (float64) palloc(sizeof(float64data));
-	if (! (flag & SEL_CONSTANT) || NONVALUE(attno) || NONVALUE(relid))
+	if (!(flag & SEL_CONSTANT) || NONVALUE(attno) || NONVALUE(relid))
 		*result = DEFAULT_INEQ_SEL;
 	else
 	{
@@ -253,21 +268,24 @@ scalarltsel(Oid opid,
 					numerator,
 					denominator;
 
-		/* Get left and right datatypes of the operator so we know
-		 * what type the constant is.
+		/*
+		 * Get left and right datatypes of the operator so we know what
+		 * type the constant is.
 		 */
 		oprtuple = get_operator_tuple(opid);
-		if (! HeapTupleIsValid(oprtuple))
+		if (!HeapTupleIsValid(oprtuple))
 			elog(ERROR, "scalarltsel: no tuple for operator %u", opid);
 		ltype = ((Form_pg_operator) GETSTRUCT(oprtuple))->oprleft;
 		rtype = ((Form_pg_operator) GETSTRUCT(oprtuple))->oprright;
 
 		/* Convert the constant to a uniform comparison scale. */
-		if (! convert_to_scalar(value,
-								((flag & SEL_RIGHT) ? rtype : ltype),
-								&val))
+		if (!convert_to_scalar(value,
+							   ((flag & SEL_RIGHT) ? rtype : ltype),
+							   &val))
 		{
-			/* Ideally we'd produce an error here, on the grounds that the
+
+			/*
+			 * Ideally we'd produce an error here, on the grounds that the
 			 * given operator shouldn't have scalarltsel registered as its
 			 * selectivity func unless we can deal with its operand types.
 			 * But currently, all manner of stuff is invoking scalarltsel,
@@ -281,9 +299,9 @@ scalarltsel(Oid opid,
 		getattproperties(relid, attno,
 						 &typid, &typlen, &typbyval, &typmod);
 
-		if (! getattstatistics(relid, attno, typid, typmod,
-							   NULL, NULL, NULL,
-							   &loval, &hival))
+		if (!getattstatistics(relid, attno, typid, typmod,
+							  NULL, NULL, NULL,
+							  &loval, &hival))
 		{
 			/* no stats available, so default result */
 			*result = DEFAULT_INEQ_SEL;
@@ -291,11 +309,11 @@ scalarltsel(Oid opid,
 		}
 
 		/* Convert the attribute's loval/hival to common scale. */
-		if (! convert_to_scalar(loval, typid, &low) ||
-			! convert_to_scalar(hival, typid, &high))
+		if (!convert_to_scalar(loval, typid, &low) ||
+			!convert_to_scalar(hival, typid, &high))
 		{
 			/* See above comments... */
-			if (! typbyval)
+			if (!typbyval)
 			{
 				pfree(DatumGetPointer(hival));
 				pfree(DatumGetPointer(loval));
@@ -306,7 +324,7 @@ scalarltsel(Oid opid,
 		}
 
 		/* release temp storage if needed */
-		if (! typbyval)
+		if (!typbyval)
 		{
 			pfree(DatumGetPointer(hival));
 			pfree(DatumGetPointer(loval));
@@ -314,18 +332,22 @@ scalarltsel(Oid opid,
 
 		if (high <= low)
 		{
-			/* If we trusted the stats fully, we could return a small or
-			 * large selec depending on which side of the single data point
-			 * the constant is on.  But it seems better to assume that the
-			 * stats are wrong and return a default...
+
+			/*
+			 * If we trusted the stats fully, we could return a small or
+			 * large selec depending on which side of the single data
+			 * point the constant is on.  But it seems better to assume
+			 * that the stats are wrong and return a default...
 			 */
 			*result = DEFAULT_INEQ_SEL;
 		}
 		else if (val < low || val > high)
 		{
-			/* If given value is outside the statistical range, return a
-			 * small or large value; but not 0.0/1.0 since there is a chance
-			 * the stats are out of date.
+
+			/*
+			 * If given value is outside the statistical range, return a
+			 * small or large value; but not 0.0/1.0 since there is a
+			 * chance the stats are out of date.
 			 */
 			if (flag & SEL_RIGHT)
 				*result = (val < low) ? 0.001 : 0.999;
@@ -359,8 +381,9 @@ scalargtsel(Oid opid,
 {
 	float64		result;
 
-	/* Compute selectivity of "<", then invert --- but only if we
-	 * were able to produce a non-default estimate.
+	/*
+	 * Compute selectivity of "<", then invert --- but only if we were
+	 * able to produce a non-default estimate.
 	 */
 	result = scalarltsel(opid, relid, attno, value, flag);
 	if (*result != DEFAULT_INEQ_SEL)
@@ -392,23 +415,24 @@ eqjoinsel(Oid opid,
 	{
 		num1 = unknown1 ? 1.0 : get_attdisbursion(relid1, attno1, 0.01);
 		num2 = unknown2 ? 1.0 : get_attdisbursion(relid2, attno2, 0.01);
+
 		/*
-		 * The join selectivity cannot be more than num2, since each
-		 * tuple in table 1 could match no more than num2 fraction of
-		 * tuples in table 2 (and that's only if the table-1 tuple
-		 * matches the most common value in table 2, so probably it's
-		 * less).  By the same reasoning it is not more than num1.
-		 * The min is therefore an upper bound.
+		 * The join selectivity cannot be more than num2, since each tuple
+		 * in table 1 could match no more than num2 fraction of tuples in
+		 * table 2 (and that's only if the table-1 tuple matches the most
+		 * common value in table 2, so probably it's less).  By the same
+		 * reasoning it is not more than num1. The min is therefore an
+		 * upper bound.
 		 *
 		 * If we know the disbursion of only one side, use it; the reasoning
 		 * above still works.
 		 *
-		 * XXX can we make a better estimate here?  Using the nullfrac
+		 * XXX can we make a better estimate here?	Using the nullfrac
 		 * statistic might be helpful, for example.  Assuming the operator
-		 * is strict (does not succeed for null inputs) then the selectivity
-		 * couldn't be more than (1-nullfrac1)*(1-nullfrac2), which might
-		 * be usefully small if there are many nulls.  How about applying
-		 * the operator to the most common values?
+		 * is strict (does not succeed for null inputs) then the
+		 * selectivity couldn't be more than (1-nullfrac1)*(1-nullfrac2),
+		 * which might be usefully small if there are many nulls.  How
+		 * about applying the operator to the most common values?
 		 */
 		min = (num1 < num2) ? num1 : num2;
 		*result = min;
@@ -434,7 +458,7 @@ neqjoinsel(Oid opid,
 }
 
 /*
- *		scalarltjoinsel	- Join selectivity of "<" and "<=" for scalars
+ *		scalarltjoinsel - Join selectivity of "<" and "<=" for scalars
  */
 float64
 scalarltjoinsel(Oid opid,
@@ -451,7 +475,7 @@ scalarltjoinsel(Oid opid,
 }
 
 /*
- *		scalargtjoinsel	- Join selectivity of ">" and ">=" for scalars
+ *		scalargtjoinsel - Join selectivity of ">" and ">=" for scalars
  */
 float64
 scalargtjoinsel(Oid opid,
@@ -493,10 +517,11 @@ convert_to_scalar(Datum value, Oid typid,
 {
 	switch (typid)
 	{
-		/*
-		 * Built-in numeric types
-		 */
-		case BOOLOID:
+
+			/*
+			 * Built-in numeric types
+			 */
+			case BOOLOID:
 			*scaleval = (double) DatumGetUInt8(value);
 			return true;
 		case INT2OID:
@@ -506,16 +531,16 @@ convert_to_scalar(Datum value, Oid typid,
 			*scaleval = (double) DatumGetInt32(value);
 			return true;
 		case INT8OID:
-			*scaleval = (double) (* i8tod((int64 *) DatumGetPointer(value)));
+			*scaleval = (double) (*i8tod((int64 *) DatumGetPointer(value)));
 			return true;
 		case FLOAT4OID:
-			*scaleval = (double) (* DatumGetFloat32(value));
+			*scaleval = (double) (*DatumGetFloat32(value));
 			return true;
 		case FLOAT8OID:
-			*scaleval = (double) (* DatumGetFloat64(value));
+			*scaleval = (double) (*DatumGetFloat64(value));
 			return true;
 		case NUMERICOID:
-			*scaleval = (double) (* numeric_float8((Numeric) DatumGetPointer(value)));
+			*scaleval = (double) (*numeric_float8((Numeric) DatumGetPointer(value)));
 			return true;
 		case OIDOID:
 		case REGPROCOID:
@@ -523,110 +548,114 @@ convert_to_scalar(Datum value, Oid typid,
 			*scaleval = (double) DatumGetObjectId(value);
 			return true;
 
-		/*
-		 * Built-in string types
-		 */
+			/*
+			 * Built-in string types
+			 */
 		case CHAROID:
-		{
-			char	ch = DatumGetChar(value);
+			{
+				char		ch = DatumGetChar(value);
 
-			return convert_string_to_scalar(&ch, 1, scaleval);
-		}
+				return convert_string_to_scalar(&ch, 1, scaleval);
+			}
 		case BPCHAROID:
 		case VARCHAROID:
 		case TEXTOID:
-		{
-			char   *str = (char *) VARDATA(DatumGetPointer(value));
-			int		strlength = VARSIZE(DatumGetPointer(value)) - VARHDRSZ;
+			{
+				char	   *str = (char *) VARDATA(DatumGetPointer(value));
+				int			strlength = VARSIZE(DatumGetPointer(value)) - VARHDRSZ;
 
-			return convert_string_to_scalar(str, strlength, scaleval);
-		}
+				return convert_string_to_scalar(str, strlength, scaleval);
+			}
 		case NAMEOID:
-		{
-			NameData   *nm = (NameData *) DatumGetPointer(value);
+			{
+				NameData   *nm = (NameData *) DatumGetPointer(value);
 
-			return convert_string_to_scalar(NameStr(*nm), strlen(NameStr(*nm)),
-											scaleval);
-		}
-
-		/*
-		 * Built-in absolute-time types
-		 */
-		case TIMESTAMPOID:
-			*scaleval = * ((Timestamp *) DatumGetPointer(value));
-			return true;
-		case ABSTIMEOID:
-			*scaleval = * abstime_timestamp(value);
-			return true;
-		case DATEOID:
-			*scaleval = * date_timestamp(value);
-			return true;
-
-		/*
-		 * Built-in relative-time types
-		 */
-		case INTERVALOID:
-		{
-			Interval   *interval = (Interval *) DatumGetPointer(value);
+				return convert_string_to_scalar(NameStr(*nm), strlen(NameStr(*nm)),
+												scaleval);
+			}
 
 			/*
-			 * Convert the month part of Interval to days using assumed
-			 * average month length of 365.25/12.0 days.  Not too accurate,
-			 * but plenty good enough for our purposes.
+			 * Built-in absolute-time types
 			 */
-			*scaleval = interval->time +
-				interval->month * (365.25/12.0 * 24.0 * 60.0 * 60.0);
+		case TIMESTAMPOID:
+			*scaleval = *((Timestamp *) DatumGetPointer(value));
 			return true;
-		}
+		case ABSTIMEOID:
+			*scaleval = *abstime_timestamp(value);
+			return true;
+		case DATEOID:
+			*scaleval = *date_timestamp(value);
+			return true;
+
+			/*
+			 * Built-in relative-time types
+			 */
+		case INTERVALOID:
+			{
+				Interval   *interval = (Interval *) DatumGetPointer(value);
+
+				/*
+				 * Convert the month part of Interval to days using
+				 * assumed average month length of 365.25/12.0 days.  Not
+				 * too accurate, but plenty good enough for our purposes.
+				 */
+				*scaleval = interval->time +
+					interval->month * (365.25 / 12.0 * 24.0 * 60.0 * 60.0);
+				return true;
+			}
 		case RELTIMEOID:
 			*scaleval = (RelativeTime) DatumGetInt32(value);
 			return true;
 		case TINTERVALOID:
-		{
-			TimeInterval	interval = (TimeInterval) DatumGetPointer(value);
-
-			if (interval->status != 0)
 			{
-				*scaleval = interval->data[1] - interval->data[0];
-				return true;
+				TimeInterval interval = (TimeInterval) DatumGetPointer(value);
+
+				if (interval->status != 0)
+				{
+					*scaleval = interval->data[1] - interval->data[0];
+					return true;
+				}
+				break;
 			}
-			break;
-		}
 		case TIMEOID:
-			*scaleval = * ((TimeADT *) DatumGetPointer(value));
+			*scaleval = *((TimeADT *) DatumGetPointer(value));
 			return true;
 
 		default:
-		{
-			/*
-			 * See whether there is a registered type-conversion function,
-			 * namely a procedure named "float8" with the right signature.
-			 * If so, assume we can convert the value to the numeric scale.
-			 *
-			 * NOTE: there are no such procedures in the standard distribution,
-			 * except with argument types that we already dealt with above.
-			 * This code is just here as an escape for user-defined types.
-			 */
-			Oid			oid_array[FUNC_MAX_ARGS];
-			HeapTuple	ftup;
-
-			MemSet(oid_array, 0, FUNC_MAX_ARGS * sizeof(Oid));
-			oid_array[0] = typid;
-			ftup = SearchSysCacheTuple(PROCNAME,
-									   PointerGetDatum("float8"),
-									   Int32GetDatum(1),
-									   PointerGetDatum(oid_array),
-									   0);
-			if (HeapTupleIsValid(ftup) &&
-				((Form_pg_proc) GETSTRUCT(ftup))->prorettype == FLOAT8OID)
 			{
-				RegProcedure convertproc = (RegProcedure) ftup->t_data->t_oid;
-				Datum converted = (Datum) fmgr(convertproc, value);
-				*scaleval = (double) (* DatumGetFloat64(converted));
-				return true;
+
+				/*
+				 * See whether there is a registered type-conversion
+				 * function, namely a procedure named "float8" with the
+				 * right signature. If so, assume we can convert the value
+				 * to the numeric scale.
+				 *
+				 * NOTE: there are no such procedures in the standard
+				 * distribution, except with argument types that we
+				 * already dealt with above. This code is just here as an
+				 * escape for user-defined types.
+				 */
+				Oid			oid_array[FUNC_MAX_ARGS];
+				HeapTuple	ftup;
+
+				MemSet(oid_array, 0, FUNC_MAX_ARGS * sizeof(Oid));
+				oid_array[0] = typid;
+				ftup = SearchSysCacheTuple(PROCNAME,
+										   PointerGetDatum("float8"),
+										   Int32GetDatum(1),
+										   PointerGetDatum(oid_array),
+										   0);
+				if (HeapTupleIsValid(ftup) &&
+				((Form_pg_proc) GETSTRUCT(ftup))->prorettype == FLOAT8OID)
+				{
+					RegProcedure convertproc = (RegProcedure) ftup->t_data->t_oid;
+					Datum		converted = (Datum) fmgr(convertproc, value);
+
+					*scaleval = (double) (*DatumGetFloat64(converted));
+					return true;
+				}
+				break;
 			}
-			break;
-		}
 	}
 	/* Don't know how to convert */
 	return false;
@@ -649,16 +678,18 @@ static bool
 convert_string_to_scalar(char *str, int strlength,
 						 double *scaleval)
 {
-	unsigned char   *sptr;
-	int				slen;
+	unsigned char *sptr;
+	int			slen;
+
 #ifdef USE_LOCALE
-	char		   *rawstr;
-	char		   *xfrmstr;
-	size_t			xfrmsize;
-	size_t			xfrmlen;
+	char	   *rawstr;
+	char	   *xfrmstr;
+	size_t		xfrmsize;
+	size_t		xfrmlen;
+
 #endif
-	double			num,
-					denom;
+	double		num,
+				denom;
 
 	if (strlength <= 0)
 	{
@@ -680,8 +711,8 @@ convert_string_to_scalar(char *str, int strlength,
 	{
 		/* Oops, didn't make it */
 		pfree(xfrmstr);
-		xfrmstr = (char *) palloc(xfrmlen+1);
-		xfrmlen = strxfrm(xfrmstr, rawstr, xfrmlen+1);
+		xfrmstr = (char *) palloc(xfrmlen + 1);
+		xfrmlen = strxfrm(xfrmstr, rawstr, xfrmlen + 1);
 	}
 	pfree(rawstr);
 
@@ -730,7 +761,7 @@ getattproperties(Oid relid, AttrNumber attnum,
 							  ObjectIdGetDatum(relid),
 							  Int16GetDatum(attnum),
 							  0, 0);
-	if (! HeapTupleIsValid(atp))
+	if (!HeapTupleIsValid(atp))
 		elog(ERROR, "getattproperties: no attribute tuple %u %d",
 			 relid, (int) attnum);
 	att_tup = (Form_pg_attribute) GETSTRUCT(atp);
@@ -778,14 +809,14 @@ getattstatistics(Oid relid,
 	bool		isnull;
 
 	/*
-	 * We assume that there will only be one entry in pg_statistic for
-	 * the given rel/att, so we search WITHOUT considering the staop
-	 * column.  Someday, VACUUM might store more than one entry per rel/att,
+	 * We assume that there will only be one entry in pg_statistic for the
+	 * given rel/att, so we search WITHOUT considering the staop column.
+	 * Someday, VACUUM might store more than one entry per rel/att,
 	 * corresponding to more than one possible sort ordering defined for
 	 * the column type.  However, to make that work we will need to figure
 	 * out which staop to search for --- it's not necessarily the one we
-	 * have at hand!  (For example, we might have a '>' operator rather than
-	 * the '<' operator that will appear in staop.)
+	 * have at hand!  (For example, we might have a '>' operator rather
+	 * than the '<' operator that will appear in staop.)
 	 */
 	tuple = SearchSysCacheTuple(STATRELID,
 								ObjectIdGetDatum(relid),
@@ -807,20 +838,22 @@ getattstatistics(Oid relid,
 	typeTuple = SearchSysCacheTuple(TYPEOID,
 									ObjectIdGetDatum(typid),
 									0, 0, 0);
-	if (! HeapTupleIsValid(typeTuple))
+	if (!HeapTupleIsValid(typeTuple))
 		elog(ERROR, "getattstatistics: Cache lookup failed for type %u",
 			 typid);
 	fmgr_info(((Form_pg_type) GETSTRUCT(typeTuple))->typinput, &inputproc);
 	typelem = ((Form_pg_type) GETSTRUCT(typeTuple))->typelem;
 
-	/* Values are variable-length fields, so cannot access as struct fields.
-	 * Must do it the hard way with SysCacheGetAttr.
+	/*
+	 * Values are variable-length fields, so cannot access as struct
+	 * fields. Must do it the hard way with SysCacheGetAttr.
 	 */
 	if (commonval)
 	{
-		text *val = (text *) SysCacheGetAttr(STATRELID, tuple,
-											 Anum_pg_statistic_stacommonval,
-											 &isnull);
+		text	   *val = (text *) SysCacheGetAttr(STATRELID, tuple,
+										  Anum_pg_statistic_stacommonval,
+												   &isnull);
+
 		if (isnull)
 		{
 			elog(DEBUG, "getattstatistics: stacommonval is null");
@@ -828,7 +861,8 @@ getattstatistics(Oid relid,
 		}
 		else
 		{
-			char *strval = textout(val);
+			char	   *strval = textout(val);
+
 			*commonval = (Datum)
 				(*fmgr_faddr(&inputproc)) (strval, typelem, typmod);
 			pfree(strval);
@@ -837,9 +871,10 @@ getattstatistics(Oid relid,
 
 	if (loval)
 	{
-		text *val = (text *) SysCacheGetAttr(STATRELID, tuple,
-											 Anum_pg_statistic_staloval,
-											 &isnull);
+		text	   *val = (text *) SysCacheGetAttr(STATRELID, tuple,
+											  Anum_pg_statistic_staloval,
+												   &isnull);
+
 		if (isnull)
 		{
 			elog(DEBUG, "getattstatistics: staloval is null");
@@ -847,7 +882,8 @@ getattstatistics(Oid relid,
 		}
 		else
 		{
-			char *strval = textout(val);
+			char	   *strval = textout(val);
+
 			*loval = (Datum)
 				(*fmgr_faddr(&inputproc)) (strval, typelem, typmod);
 			pfree(strval);
@@ -856,9 +892,10 @@ getattstatistics(Oid relid,
 
 	if (hival)
 	{
-		text *val = (text *) SysCacheGetAttr(STATRELID, tuple,
-											 Anum_pg_statistic_stahival,
-											 &isnull);
+		text	   *val = (text *) SysCacheGetAttr(STATRELID, tuple,
+											  Anum_pg_statistic_stahival,
+												   &isnull);
+
 		if (isnull)
 		{
 			elog(DEBUG, "getattstatistics: stahival is null");
@@ -866,7 +903,8 @@ getattstatistics(Oid relid,
 		}
 		else
 		{
-			char *strval = textout(val);
+			char	   *strval = textout(val);
+
 			*hival = (Datum)
 				(*fmgr_faddr(&inputproc)) (strval, typelem, typmod);
 			pfree(strval);
@@ -894,11 +932,11 @@ genericcostestimate(Query *root, RelOptInfo *rel,
 					Cost *indexTotalCost,
 					Selectivity *indexSelectivity)
 {
-	double numIndexTuples;
-	double numIndexPages;
+	double		numIndexTuples;
+	double		numIndexPages;
 
 	/* Estimate the fraction of main-table tuples that will be visited */
-    *indexSelectivity = clauselist_selectivity(root, indexQuals,
+	*indexSelectivity = clauselist_selectivity(root, indexQuals,
 											   lfirsti(rel->relids));
 
 	/* Estimate the number of index tuples that will be visited */
@@ -908,8 +946,8 @@ genericcostestimate(Query *root, RelOptInfo *rel,
 	numIndexPages = *indexSelectivity * index->pages;
 
 	/*
-	 * Always estimate at least one tuple and page are touched,
-	 * even when indexSelectivity estimate is tiny.
+	 * Always estimate at least one tuple and page are touched, even when
+	 * indexSelectivity estimate is tiny.
 	 */
 	if (numIndexTuples < 1.0)
 		numIndexTuples = 1.0;
@@ -921,11 +959,12 @@ genericcostestimate(Query *root, RelOptInfo *rel,
 	 *
 	 * Our generic assumption is that the index pages will be read
 	 * sequentially, so they have cost 1.0 each, not random_page_cost.
-	 * Also, we charge for evaluation of the indexquals at each index tuple.
-     * All the costs are assumed to be paid incrementally during the scan.
-     */
-    *indexStartupCost = 0;
-    *indexTotalCost = numIndexPages +
+	 * Also, we charge for evaluation of the indexquals at each index
+	 * tuple. All the costs are assumed to be paid incrementally during
+	 * the scan.
+	 */
+	*indexStartupCost = 0;
+	*indexTotalCost = numIndexPages +
 		(cpu_index_tuple_cost + cost_qual_eval(indexQuals)) * numIndexTuples;
 }
 
@@ -941,7 +980,7 @@ btcostestimate(Query *root, RelOptInfo *rel,
 			   Selectivity *indexSelectivity)
 {
 	genericcostestimate(root, rel, index, indexQuals,
-						indexStartupCost, indexTotalCost, indexSelectivity);
+					 indexStartupCost, indexTotalCost, indexSelectivity);
 }
 
 void
@@ -952,7 +991,7 @@ rtcostestimate(Query *root, RelOptInfo *rel,
 			   Selectivity *indexSelectivity)
 {
 	genericcostestimate(root, rel, index, indexQuals,
-						indexStartupCost, indexTotalCost, indexSelectivity);
+					 indexStartupCost, indexTotalCost, indexSelectivity);
 }
 
 void
@@ -963,7 +1002,7 @@ hashcostestimate(Query *root, RelOptInfo *rel,
 				 Selectivity *indexSelectivity)
 {
 	genericcostestimate(root, rel, index, indexQuals,
-						indexStartupCost, indexTotalCost, indexSelectivity);
+					 indexStartupCost, indexTotalCost, indexSelectivity);
 }
 
 void
@@ -974,5 +1013,5 @@ gistcostestimate(Query *root, RelOptInfo *rel,
 				 Selectivity *indexSelectivity)
 {
 	genericcostestimate(root, rel, index, indexQuals,
-						indexStartupCost, indexTotalCost, indexSelectivity);
+					 indexStartupCost, indexTotalCost, indexSelectivity);
 }

@@ -9,7 +9,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/nodes/nodes.c,v 1.12 2000/01/26 05:56:31 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/nodes/nodes.c,v 1.13 2000/04/12 17:15:16 momjian Exp $
  *
  * HISTORY
  *	  Andrew Yu			Oct 20, 1994	file creation
@@ -33,7 +33,7 @@ newNode(Size size, NodeTag tag)
 {
 	Node	   *newNode;
 
-	Assert(size >= sizeof(Node)); /* need the tag, at least */
+	Assert(size >= sizeof(Node));		/* need the tag, at least */
 
 	newNode = (Node *) palloc(size);
 	MemSet((char *) newNode, 0, size);

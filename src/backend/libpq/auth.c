@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/libpq/auth.c,v 1.43 2000/01/26 05:56:28 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/libpq/auth.c,v 1.44 2000/04/12 17:15:13 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -48,7 +48,7 @@ static int	pg_passwordv0_recvauth(void *arg, PacketLen len, void *pkt);
 static int	checkPassword(Port *port, char *user, char *password);
 static int	old_be_recvauth(Port *port);
 static int	map_old_to_new(Port *port, UserAuth old, int status);
-static void	auth_failed(Port *port);
+static void auth_failed(Port *port);
 
 
 #ifdef KRB4
@@ -130,7 +130,7 @@ static int
 pg_krb4_recvauth(Port *port)
 {
 	snprintf(PQerrormsg, PQERRORMSG_LENGTH,
-			 "pg_krb4_recvauth: Kerberos not implemented on this server.\n");
+		 "pg_krb4_recvauth: Kerberos not implemented on this server.\n");
 	fputs(PQerrormsg, stderr);
 	pqdebug("%s", PQerrormsg);
 
@@ -455,7 +455,7 @@ be_recvauth(Port *port)
 	 * an error message into the postmaster logfile if it failed.
 	 */
 
-        if (hba_getauthmethod(port) != STATUS_OK) 
+	if (hba_getauthmethod(port) != STATUS_OK)
 		PacketSendError(&port->pktInfo,
 						"Missing or erroneous pg_hba.conf file, see postmaster log for details");
 
@@ -472,6 +472,7 @@ be_recvauth(Port *port)
 
 		AuthRequest areq = AUTH_REQ_OK;
 		PacketDoneProc auth_handler = NULL;
+
 		switch (port->auth_method)
 		{
 			case uaReject:

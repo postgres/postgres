@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/access/common/tupdesc.c,v 1.61 2000/01/31 04:35:48 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/access/common/tupdesc.c,v 1.62 2000/04/12 17:14:37 momjian Exp $
  *
  * NOTES
  *	  some of the executor utility code such as "ExecTypeFromTL" should be
@@ -229,17 +229,19 @@ FreeTupleDesc(TupleDesc tupdesc)
 bool
 equalTupleDescs(TupleDesc tupdesc1, TupleDesc tupdesc2)
 {
-	int		i;
+	int			i;
 
 	if (tupdesc1->natts != tupdesc2->natts)
 		return false;
 	for (i = 0; i < tupdesc1->natts; i++)
 	{
-		Form_pg_attribute	attr1 = tupdesc1->attrs[i];
-		Form_pg_attribute	attr2 = tupdesc2->attrs[i];
+		Form_pg_attribute attr1 = tupdesc1->attrs[i];
+		Form_pg_attribute attr2 = tupdesc2->attrs[i];
 
-		/* We do not need to check every single field here, and in fact
-		 * some fields such as attdisbursion probably shouldn't be compared.
+		/*
+		 * We do not need to check every single field here, and in fact
+		 * some fields such as attdisbursion probably shouldn't be
+		 * compared.
 		 */
 		if (strcmp(NameStr(attr1->attname), NameStr(attr2->attname)) != 0)
 			return false;
@@ -254,8 +256,8 @@ equalTupleDescs(TupleDesc tupdesc1, TupleDesc tupdesc2)
 	}
 	if (tupdesc1->constr != NULL)
 	{
-		TupleConstr	   *constr1 = tupdesc1->constr;
-		TupleConstr	   *constr2 = tupdesc2->constr;
+		TupleConstr *constr1 = tupdesc1->constr;
+		TupleConstr *constr2 = tupdesc2->constr;
 
 		if (constr2 == NULL)
 			return false;
@@ -263,8 +265,8 @@ equalTupleDescs(TupleDesc tupdesc1, TupleDesc tupdesc2)
 			return false;
 		for (i = 0; i < (int) constr1->num_defval; i++)
 		{
-			AttrDefault	   *defval1 = constr1->defval + i;
-			AttrDefault	   *defval2 = constr2->defval + i;
+			AttrDefault *defval1 = constr1->defval + i;
+			AttrDefault *defval2 = constr2->defval + i;
 
 			if (defval1->adnum != defval2->adnum)
 				return false;
@@ -275,8 +277,8 @@ equalTupleDescs(TupleDesc tupdesc1, TupleDesc tupdesc2)
 			return false;
 		for (i = 0; i < (int) constr1->num_check; i++)
 		{
-			ConstrCheck	   *check1 = constr1->check + i;
-			ConstrCheck	   *check2 = constr2->check + i;
+			ConstrCheck *check1 = constr1->check + i;
+			ConstrCheck *check2 = constr2->check + i;
 
 			if (strcmp(check1->ccname, check2->ccname) != 0)
 				return false;
@@ -585,8 +587,9 @@ BuildDescForRelation(List *schema, char *relname)
 			constr->has_not_null = true;
 		desc->attrs[attnum - 1]->attnotnull = entry->is_not_null;
 
-		/* Note we copy only pre-cooked default expressions.
-		 * Digestion of raw ones is someone else's problem.
+		/*
+		 * Note we copy only pre-cooked default expressions. Digestion of
+		 * raw ones is someone else's problem.
 		 */
 		if (entry->cooked_default != NULL)
 		{

@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/access/nbtree/Attic/nbtscan.c,v 1.30 2000/01/26 05:55:58 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/access/nbtree/Attic/nbtscan.c,v 1.31 2000/04/12 17:14:49 momjian Exp $
  *
  *
  * NOTES
@@ -52,13 +52,16 @@ static void _bt_scandel(IndexScanDesc scan, BlockNumber blkno, OffsetNumber offn
 void
 AtEOXact_nbtree(void)
 {
-	/* Note: these actions should only be necessary during xact abort;
-	 * but they can't hurt during a commit.
+
+	/*
+	 * Note: these actions should only be necessary during xact abort; but
+	 * they can't hurt during a commit.
 	 */
 
-	/* Reset the active-scans list to empty.
-	 * We do not need to free the list elements, because they're all
-	 * palloc()'d, so they'll go away at end of transaction anyway.
+	/*
+	 * Reset the active-scans list to empty. We do not need to free the
+	 * list elements, because they're all palloc()'d, so they'll go away
+	 * at end of transaction anyway.
 	 */
 	BTScans = NULL;
 
@@ -96,7 +99,7 @@ _bt_dropscan(IndexScanDesc scan)
 		last = chk;
 
 	if (chk == (BTScanList) NULL)
-		elog(ERROR, "btree scan list trashed; can't find 0x%p", (void*)scan);
+		elog(ERROR, "btree scan list trashed; can't find 0x%p", (void *) scan);
 
 	if (last == (BTScanList) NULL)
 		BTScans = chk->btsl_next;

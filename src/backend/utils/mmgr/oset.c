@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/mmgr/Attic/oset.c,v 1.16 2000/01/26 05:57:31 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/mmgr/Attic/oset.c,v 1.17 2000/04/12 17:16:10 momjian Exp $
  *
  * NOTE
  *	  XXX This is a preliminary implementation which lacks fail-fast
@@ -59,6 +59,7 @@ OrderedSetContains(OrderedSet set, OrderedElem elem)
 {
 	return (bool) (elem->set == set && (elem->next || elem->prev));
 }
+
 #endif
 
 /*

@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/storage/ipc/ipc.c,v 1.45 2000/01/26 05:56:57 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/storage/ipc/ipc.c,v 1.46 2000/04/12 17:15:36 momjian Exp $
  *
  * NOTES
  *
@@ -49,7 +49,7 @@
  * so that an elog() from an on_proc_exit routine cannot get us out
  * of the exit procedure.  We do NOT want to go back to the idle loop...
  */
-bool	proc_exit_inprogress = false;
+bool		proc_exit_inprogress = false;
 
 static int	UsePrivateMemory = 0;
 
@@ -78,7 +78,7 @@ typedef struct _PrivateMemStruct
 	char	   *memptr;
 } PrivateMem;
 
-static PrivateMem	IpcPrivateMem[16];
+static PrivateMem IpcPrivateMem[16];
 
 
 static int
@@ -117,6 +117,7 @@ PrivateMemoryAttach(IpcMemoryId memid)
 void
 proc_exit(int code)
 {
+
 	/*
 	 * Once we set this flag, we are committed to exit.  Any elog() will
 	 * NOT send control back to the main loop, but right back here.
@@ -140,7 +141,7 @@ proc_exit(int code)
 	 */
 	while (--on_proc_exit_index >= 0)
 		(*on_proc_exit_list[on_proc_exit_index].function) (code,
-														   on_proc_exit_list[on_proc_exit_index].arg);
+							  on_proc_exit_list[on_proc_exit_index].arg);
 
 	TPRINTF(TRACE_VERBOSE, "exit(%d)", code);
 	exit(code);
@@ -166,7 +167,7 @@ shmem_exit(int code)
 	 */
 	while (--on_shmem_exit_index >= 0)
 		(*on_shmem_exit_list[on_shmem_exit_index].function) (code,
-														   on_shmem_exit_list[on_shmem_exit_index].arg);
+							on_shmem_exit_list[on_shmem_exit_index].arg);
 
 	on_shmem_exit_index = 0;
 }
@@ -179,7 +180,7 @@ shmem_exit(int code)
  * ----------------------------------------------------------------
  */
 int
-on_proc_exit(void (*function) (), caddr_t arg)
+			on_proc_exit(void (*function) (), caddr_t arg)
 {
 	if (on_proc_exit_index >= MAX_ON_EXITS)
 		return -1;
@@ -200,7 +201,7 @@ on_proc_exit(void (*function) (), caddr_t arg)
  * ----------------------------------------------------------------
  */
 int
-on_shmem_exit(void (*function) (), caddr_t arg)
+			on_shmem_exit(void (*function) (), caddr_t arg)
 {
 	if (on_shmem_exit_index >= MAX_ON_EXITS)
 		return -1;
@@ -288,7 +289,7 @@ IpcSemaphoreCreate(IpcSemaphoreKey semKey,
 
 	/* check arguments	*/
 	if (semNum > IPC_NMAXSEM || semNum <= 0)
-		return(-1);
+		return (-1);
 
 	semId = semget(semKey, 0, 0);
 
@@ -308,7 +309,7 @@ IpcSemaphoreCreate(IpcSemaphoreKey semKey,
 					"key=%d, num=%d, permission=%o",
 					strerror(errno), semKey, semNum, permission);
 			IpcConfigTip();
-			return(-1);
+			return (-1);
 		}
 		for (i = 0; i < semNum; i++)
 			array[i] = semStartValue;
@@ -320,7 +321,7 @@ IpcSemaphoreCreate(IpcSemaphoreKey semKey,
 					strerror(errno), semId);
 			semctl(semId, 0, IPC_RMID, semun);
 			IpcConfigTip();
-			return(-1);
+			return (-1);
 		}
 
 		if (removeOnExit)

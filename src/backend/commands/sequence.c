@@ -410,7 +410,9 @@ init_sequence(char *caller, char *name)
 
 	if (elm != (SeqTable) NULL)
 	{
-		/* We are using a seqtable entry left over from a previous xact;
+
+		/*
+		 * We are using a seqtable entry left over from a previous xact;
 		 * must check for relid change.
 		 */
 		elm->rel = seqrel;
@@ -424,7 +426,9 @@ init_sequence(char *caller, char *name)
 	}
 	else
 	{
-		/* Time to make a new seqtable entry.  These entries live as long
+
+		/*
+		 * Time to make a new seqtable entry.  These entries live as long
 		 * as the backend does, so we use plain malloc for them.
 		 */
 		elm = (SeqTable) malloc(sizeof(SeqTableData));

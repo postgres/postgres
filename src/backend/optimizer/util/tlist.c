@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/optimizer/util/tlist.c,v 1.43 2000/01/27 18:11:34 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/optimizer/util/tlist.c,v 1.44 2000/04/12 17:15:24 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -27,7 +27,7 @@
 /*
  * tlistentry_member
  *	  Finds the (first) member of the given tlist whose expression is
- *	  equal() to the given expression.  Result is NULL if no such member.
+ *	  equal() to the given expression.	Result is NULL if no such member.
  */
 TargetEntry *
 tlistentry_member(Node *node, List *targetlist)
@@ -36,7 +36,7 @@ tlistentry_member(Node *node, List *targetlist)
 
 	foreach(temp, targetlist)
 	{
-		TargetEntry	   *tlentry = (TargetEntry *) lfirst(temp);
+		TargetEntry *tlentry = (TargetEntry *) lfirst(temp);
 
 		if (equal(node, tlentry->expr))
 			return tlentry;
@@ -87,12 +87,12 @@ tlist_member(Node *node, List *targetlist)
 void
 add_var_to_tlist(RelOptInfo *rel, Var *var)
 {
-	if (! tlistentry_member((Node *) var, rel->targetlist))
+	if (!tlistentry_member((Node *) var, rel->targetlist))
 	{
 		/* XXX is copyObject necessary here? */
 		rel->targetlist = lappend(rel->targetlist,
-							create_tl_element((Var *) copyObject(var),
-											  length(rel->targetlist) + 1));
+							   create_tl_element((Var *) copyObject(var),
+										   length(rel->targetlist) + 1));
 	}
 }
 
@@ -189,7 +189,7 @@ add_to_flat_tlist(List *tlist, List *vars)
 	{
 		Var		   *var = lfirst(v);
 
-		if (! tlistentry_member((Node *) var, tlist))
+		if (!tlistentry_member((Node *) var, tlist))
 		{
 			Resdom	   *r;
 

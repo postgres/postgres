@@ -11,7 +11,7 @@
  * Portions Copyright (c) 1996-2000, PostgreSQL, Inc
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Id: array.h,v 1.22 2000/01/26 05:58:37 momjian Exp $
+ * $Id: array.h,v 1.23 2000/04/12 17:16:54 momjian Exp $
  *
  * NOTES
  *	  XXX the data array should be LONGALIGN'd -- notice that the array
@@ -98,7 +98,7 @@ typedef struct
  *------------------------------------------------------------------------
  */
 
-#define RETURN_NULL {*isNull = true; return(0); }
+#define RETURN_NULL do {*isNull = true; return(0); } while (0)
 #define NAME_LEN	30
 #define MAX_BUFF_SIZE BLCKSZ
 

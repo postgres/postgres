@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2000, PostgreSQL, Inc
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Id: heap.h,v 1.28 2000/01/26 05:57:56 momjian Exp $
+ * $Id: heap.h,v 1.29 2000/04/12 17:16:27 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -19,24 +19,25 @@
 typedef struct RawColumnDefault
 {
 	AttrNumber	attnum;			/* attribute to attach default to */
-	Node	   *raw_default;	/* default value (untransformed parse tree) */
+	Node	   *raw_default;	/* default value (untransformed parse
+								 * tree) */
 } RawColumnDefault;
 
-extern Oid RelnameFindRelid(const char *relname);
+extern Oid	RelnameFindRelid(const char *relname);
 extern Relation heap_create(char *relname, TupleDesc att,
-			    bool isnoname, bool istemp, bool storage_create);
+			bool isnoname, bool istemp, bool storage_create);
 extern bool heap_storage_create(Relation rel);
 
-extern Oid heap_create_with_catalog(char *relname, TupleDesc tupdesc, 
-				    char relkind, bool istemp);
+extern Oid heap_create_with_catalog(char *relname, TupleDesc tupdesc,
+						 char relkind, bool istemp);
 
 extern void heap_drop_with_catalog(const char *relname);
 extern void heap_truncate(char *relname);
 extern void heap_drop(Relation rel);
 
 extern void AddRelationRawConstraints(Relation rel,
-				      List *rawColDefaults,
-				      List *rawConstraints);
+						  List *rawColDefaults,
+						  List *rawConstraints);
 
 extern void InitNoNameRelList(void);
 extern void DropNoNameRels(void);

@@ -10,7 +10,7 @@
  * exceed INITIAL_EXPBUFFER_SIZE (currently 256 bytes).
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/interfaces/libpq/fe-auth.c,v 1.38 2000/03/11 03:08:36 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/interfaces/libpq/fe-auth.c,v 1.39 2000/04/12 17:17:13 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -94,7 +94,7 @@ static const struct authsvc authsvcs[] = {
 	{"password", STARTUP_PASSWORD_MSG, 0}
 };
 
-static const int	n_authsvcs = sizeof(authsvcs) / sizeof(struct authsvc);
+static const int n_authsvcs = sizeof(authsvcs) / sizeof(struct authsvc);
 
 #ifdef KRB4
 /*----------------------------------------------------------------
@@ -475,12 +475,12 @@ fe_sendauth(AuthRequest areq, PGconn *conn, const char *hostname,
 			const char *password, char *PQerrormsg)
 {
 #if !defined(KRB4) && !defined(KRB5)
-    (void)hostname; /*not used*/
+	(void) hostname;			/* not used */
 #endif
 
 	switch (areq)
 	{
-			case AUTH_REQ_OK:
+		case AUTH_REQ_OK:
 			break;
 
 		case AUTH_REQ_KRB4:

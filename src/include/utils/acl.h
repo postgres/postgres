@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2000, PostgreSQL, Inc
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Id: acl.h,v 1.24 2000/01/26 05:58:37 momjian Exp $
+ * $Id: acl.h,v 1.25 2000/04/12 17:16:54 momjian Exp $
  *
  * NOTES
  *	  For backward-compatability purposes we have to allow there
@@ -76,11 +76,13 @@ typedef struct AclItem
 	AclId		ai_id;
 	AclIdType	ai_idtype;
 	AclMode		ai_mode;
+
 	/*
-	 *	This is actually type 'aclitem', and we want a fixed size for
-	 *	for all platforms, so we pad this with dummies.
+	 * This is actually type 'aclitem', and we want a fixed size for for
+	 * all platforms, so we pad this with dummies.
 	 */
-	char		dummy1, dummy2;
+	char		dummy1,
+				dummy2;
 } AclItem;
 
 /* Note: if the size of AclItem changes,

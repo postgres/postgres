@@ -6,7 +6,7 @@
  *
  * We use tuplesort.c to sort the given index tuples into order.
  * Then we scan the index tuples in order and build the btree pages
- * for each level.  When we have only one page on a level, it must be the
+ * for each level.	When we have only one page on a level, it must be the
  * root -- it can be attached to the btree metapage and we are done.
  *
  * this code is moderately slow (~10% slower) compared to the regular
@@ -28,7 +28,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/access/nbtree/nbtsort.c,v 1.51 2000/02/18 06:32:39 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/access/nbtree/nbtsort.c,v 1.52 2000/04/12 17:14:49 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -70,12 +70,12 @@ struct BTSpool
 
 static void _bt_load(Relation index, BTSpool *btspool);
 static BTItem _bt_buildadd(Relation index, Size keysz, ScanKey scankey,
-						   BTPageState *state, BTItem bti, int flags);
+			 BTPageState *state, BTItem bti, int flags);
 static BTItem _bt_minitem(Page opage, BlockNumber oblkno, int atend);
 static BTPageState *_bt_pagestate(Relation index, int flags,
-								  int level, bool doupper);
+			  int level, bool doupper);
 static void _bt_uppershutdown(Relation index, Size keysz, ScanKey scankey,
-							  BTPageState *state);
+				  BTPageState *state);
 
 
 /*
@@ -86,7 +86,7 @@ static void _bt_uppershutdown(Relation index, Size keysz, ScanKey scankey,
 /*
  * create and initialize a spool structure
  */
-BTSpool *
+BTSpool    *
 _bt_spoolinit(Relation index, bool isunique)
 {
 	BTSpool    *btspool = (BTSpool *) palloc(sizeof(BTSpool));
@@ -99,9 +99,9 @@ _bt_spoolinit(Relation index, bool isunique)
 	btspool->sortstate = tuplesort_begin_index(index, isunique, false);
 
 	/*
-	 * Currently, tuplesort provides sort functions on IndexTuples.
-	 * If we kept anything in a BTItem other than a regular IndexTuple,
-	 * we'd need to modify tuplesort to understand BTItems as such.
+	 * Currently, tuplesort provides sort functions on IndexTuples. If we
+	 * kept anything in a BTItem other than a regular IndexTuple, we'd
+	 * need to modify tuplesort to understand BTItems as such.
 	 */
 	Assert(sizeof(BTItemData) == sizeof(IndexTupleData));
 
@@ -306,20 +306,20 @@ _bt_buildadd(Relation index, Size keysz, ScanKey scankey,
 	btisz = MAXALIGN(btisz);
 
 	/*
-	 * Check whether the item can fit on a btree page at all.
-	 * (Eventually, we ought to try to apply TOAST methods if not.)
-	 * We actually need to be able to fit three items on every page,
-	 * so restrict any one item to 1/3 the per-page available space.
-	 * Note that at this point, btisz doesn't include the ItemId.
+	 * Check whether the item can fit on a btree page at all. (Eventually,
+	 * we ought to try to apply TOAST methods if not.) We actually need to
+	 * be able to fit three items on every page, so restrict any one item
+	 * to 1/3 the per-page available space. Note that at this point, btisz
+	 * doesn't include the ItemId.
 	 *
 	 * NOTE: similar code appears in _bt_insertonpg() to defend against
-	 * oversize items being inserted into an already-existing index.
-	 * But during creation of an index, we don't go through there.
+	 * oversize items being inserted into an already-existing index. But
+	 * during creation of an index, we don't go through there.
 	 */
-	if (btisz > (PageGetPageSize(npage)-sizeof(PageHeaderData)-MAXALIGN(sizeof(BTPageOpaqueData)))/3 - sizeof(ItemIdData))
+	if (btisz > (PageGetPageSize(npage) - sizeof(PageHeaderData) - MAXALIGN(sizeof(BTPageOpaqueData))) / 3 - sizeof(ItemIdData))
 		elog(ERROR, "btree: index item size %d exceeds maximum %ld",
 			 btisz,
-			 (PageGetPageSize(npage)-sizeof(PageHeaderData)-MAXALIGN(sizeof(BTPageOpaqueData)))/3 - sizeof(ItemIdData));
+			 (PageGetPageSize(npage) - sizeof(PageHeaderData) - MAXALIGN(sizeof(BTPageOpaqueData))) /3 - sizeof(ItemIdData));
 
 	if (pgspc < btisz)
 	{

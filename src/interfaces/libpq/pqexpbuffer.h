@@ -18,7 +18,7 @@
  * Portions Copyright (c) 1996-2000, PostgreSQL, Inc
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Id: pqexpbuffer.h,v 1.4 2000/02/07 23:10:11 petere Exp $
+ * $Id: pqexpbuffer.h,v 1.5 2000/04/12 17:17:15 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -52,7 +52,7 @@ typedef PQExpBufferData *PQExpBuffer;
  * be returned by PQrequestCancel() or any routine in fe-auth.c.
  *------------------------
  */
-#define INITIAL_EXPBUFFER_SIZE  256
+#define INITIAL_EXPBUFFER_SIZE	256
 
 /*------------------------
  * There are two ways to create a PQExpBuffer object initially:
@@ -113,12 +113,12 @@ extern void resetPQExpBuffer(PQExpBuffer str);
  *
  * Returns 1 if OK, 0 if failed to enlarge buffer.
  */
-extern int enlargePQExpBuffer(PQExpBuffer str, size_t needed);
+extern int	enlargePQExpBuffer(PQExpBuffer str, size_t needed);
 
 /*------------------------
  * printfPQExpBuffer
  * Format text data under the control of fmt (an sprintf-like format string)
- * and insert it into str.  More space is allocated to str if necessary.
+ * and insert it into str.	More space is allocated to str if necessary.
  * This is a convenience routine that does the same thing as
  * resetPQExpBuffer() followed by appendPQExpBuffer().
  */
@@ -153,6 +153,6 @@ extern void appendPQExpBufferChar(PQExpBuffer str, char ch);
  * if necessary.
  */
 extern void appendBinaryPQExpBuffer(PQExpBuffer str,
-					   const char *data, size_t datalen);
+						const char *data, size_t datalen);
 
 #endif	 /* PQEXPBUFFER_H */

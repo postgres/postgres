@@ -13,7 +13,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/interfaces/libpgtcl/Attic/pgtclId.c,v 1.22 2000/01/26 05:58:43 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/interfaces/libpgtcl/Attic/pgtclId.c,v 1.23 2000/04/12 17:17:11 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -26,7 +26,7 @@
 
 
 static int
-PgEndCopy(Pg_ConnectionId *connid, int *errorCodePtr)
+PgEndCopy(Pg_ConnectionId * connid, int *errorCodePtr)
 {
 	connid->res_copyStatus = RES_COPY_NONE;
 	if (PQendcopy(connid->conn))
@@ -197,7 +197,7 @@ PgSetConnectionId(Tcl_Interp *interp, PGconn *conn)
  * Get back the connection from the Id
  */
 PGconn *
-PgGetConnectionId(Tcl_Interp *interp, char *id, Pg_ConnectionId **connid_p)
+PgGetConnectionId(Tcl_Interp *interp, char *id, Pg_ConnectionId ** connid_p)
 {
 	Tcl_Channel conn_chan;
 	Pg_ConnectionId *connid;
@@ -333,7 +333,7 @@ PgSetResultId(Tcl_Interp *interp, char *connid_c, PGresult *res)
 }
 
 static int
-getresid(Tcl_Interp *interp, char *id, Pg_ConnectionId **connid_p)
+getresid(Tcl_Interp *interp, char *id, Pg_ConnectionId ** connid_p)
 {
 	Tcl_Channel conn_chan;
 	char	   *mark;
@@ -477,7 +477,7 @@ typedef struct
 	Tcl_Event	header;			/* Standard Tcl event info */
 	PGnotify	info;			/* Notify name from SQL server */
 	Pg_ConnectionId *connid;	/* Connection for server */
-} NotifyEvent;
+}			NotifyEvent;
 
 /* Dispatch a NotifyEvent that has reached the front of the event queue */
 
@@ -569,7 +569,7 @@ Pg_Notify_EventProc(Tcl_Event *evPtr, int flags)
  */
 
 void
-PgNotifyTransferEvents(Pg_ConnectionId *connid)
+PgNotifyTransferEvents(Pg_ConnectionId * connid)
 {
 	PGnotify   *notify;
 
@@ -678,7 +678,7 @@ Pg_Notify_FileHandler(ClientData clientData, int mask)
  */
 
 void
-PgStartNotifyEventSource(Pg_ConnectionId *connid)
+PgStartNotifyEventSource(Pg_ConnectionId * connid)
 {
 	/* Start the notify event source if it isn't already running */
 	if (!connid->notifier_running)
@@ -705,7 +705,7 @@ PgStartNotifyEventSource(Pg_ConnectionId *connid)
 }
 
 void
-PgStopNotifyEventSource(Pg_ConnectionId *connid)
+PgStopNotifyEventSource(Pg_ConnectionId * connid)
 {
 	/* Remove the event source */
 	if (connid->notifier_running)

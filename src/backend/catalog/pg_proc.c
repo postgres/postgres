@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/catalog/pg_proc.c,v 1.41 2000/04/04 21:44:37 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/catalog/pg_proc.c,v 1.42 2000/04/12 17:14:56 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -154,7 +154,7 @@ ProcedureCreate(char *procedureName,
 				return tup->t_data->t_oid;
 #else
 			elog(ERROR, "lookup for procedure by source needs fix (Jan)");
-#endif /* SETS_FIXED */
+#endif	 /* SETS_FIXED */
 		}
 	}
 
@@ -245,7 +245,7 @@ ProcedureCreate(char *procedureName,
 			prosrc = procedureName;
 		if (fmgr_lookupByName(prosrc) == (func_ptr) NULL)
 			elog(ERROR,
-				 "ProcedureCreate: there is no builtin function named \"%s\"",
+			"ProcedureCreate: there is no builtin function named \"%s\"",
 				 prosrc);
 	}
 

@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2000, PostgreSQL, Inc
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Id: parse_func.h,v 1.23 2000/03/16 06:35:06 tgl Exp $
+ * $Id: parse_func.h,v 1.24 2000/04/12 17:16:45 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -41,15 +41,15 @@ typedef struct _CandidateList
 extern Node *ParseNestedFuncOrColumn(ParseState *pstate, Attr *attr,
 						int *curr_resno, int precedence);
 extern Node *ParseFuncOrColumn(ParseState *pstate,
-							   char *funcname, List *fargs,
-							   bool agg_star, bool agg_distinct,
-							   int *curr_resno, int precedence);
+				  char *funcname, List *fargs,
+				  bool agg_star, bool agg_distinct,
+				  int *curr_resno, int precedence);
 
 extern List *setup_base_tlist(Oid typeid);
 
 extern bool typeInheritsFrom(Oid subclassTypeId, Oid superclassTypeId);
 
 extern void func_error(char *caller, char *funcname,
-					   int nargs, Oid *argtypes, char *msg);
+		   int nargs, Oid *argtypes, char *msg);
 
 #endif	 /* PARSE_FUNC_H */

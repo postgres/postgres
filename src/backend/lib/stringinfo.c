@@ -9,7 +9,7 @@
  * Portions Copyright (c) 1996-2000, PostgreSQL, Inc
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- *	  $Id: stringinfo.c,v 1.24 2000/01/26 05:56:26 momjian Exp $
+ *	  $Id: stringinfo.c,v 1.25 2000/04/12 17:15:11 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -85,7 +85,7 @@ enlargeStringInfo(StringInfo str, int needed)
 	str->data = (char *) repalloc(str->data, newlen);
 	if (str->data == NULL)
 		elog(ERROR,
-			 "enlargeStringInfo: Out of memory (%d bytes requested)", newlen);
+		"enlargeStringInfo: Out of memory (%d bytes requested)", newlen);
 
 	str->maxlen = newlen;
 }
@@ -122,12 +122,13 @@ appendStringInfo(StringInfo str, const char *fmt,...)
 			nprinted = vsnprintf(str->data + str->len, avail,
 								 fmt, args);
 			va_end(args);
+
 			/*
 			 * Note: some versions of vsnprintf return the number of chars
-			 * actually stored, but at least one returns -1 on failure.
-			 * Be conservative about believing whether the print worked.
+			 * actually stored, but at least one returns -1 on failure. Be
+			 * conservative about believing whether the print worked.
 			 */
-			if (nprinted >= 0 && nprinted < avail-1)
+			if (nprinted >= 0 && nprinted < avail - 1)
 			{
 				/* Success.  Note nprinted does not include trailing null. */
 				str->len += nprinted;

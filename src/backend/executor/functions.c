@@ -9,7 +9,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/executor/functions.c,v 1.32 2000/04/04 21:44:39 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/executor/functions.c,v 1.33 2000/04/12 17:15:09 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -150,6 +150,7 @@ init_execution_state(FunctionCachePtr fcache,
 static TupleDesc
 postquel_start(execution_state *es)
 {
+
 	/*
 	 * Do nothing for utility commands. (create, destroy...)  DZ -
 	 * 30-8-1996
@@ -166,9 +167,9 @@ postquel_getnext(execution_state *es)
 
 	if (es->qd->operation == CMD_UTILITY)
 	{
+
 		/*
-		 * Process a utility command. (create, destroy...)  DZ -
-		 * 30-8-1996
+		 * Process a utility command. (create, destroy...)	DZ - 30-8-1996
 		 */
 		ProcessUtility(es->qd->parsetree->utilityStmt, es->qd->dest);
 		if (!LAST_POSTQUEL_COMMAND(es))
@@ -184,6 +185,7 @@ postquel_getnext(execution_state *es)
 static void
 postquel_end(execution_state *es)
 {
+
 	/*
 	 * Do nothing for utility commands. (create, destroy...)  DZ -
 	 * 30-8-1996

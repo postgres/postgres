@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/int.c,v 1.35 2000/03/14 23:06:36 thomas Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/int.c,v 1.36 2000/04/12 17:15:50 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -88,7 +88,7 @@ int2vectorin(char *intString)
 
 	result = (int16 *) palloc(sizeof(int16[INDEX_MAX_KEYS]));
 
-	for (slot=0; *intString && slot < INDEX_MAX_KEYS; slot++)
+	for (slot = 0; *intString && slot < INDEX_MAX_KEYS; slot++)
 	{
 		if (sscanf(intString, "%hd", &result[slot]) != 1)
 			break;
@@ -100,7 +100,7 @@ int2vectorin(char *intString)
 	while (*intString && isspace(*intString))
 		intString++;
 	if (*intString)
-		elog(ERROR,"int2vector value has too many values");
+		elog(ERROR, "int2vector value has too many values");
 	while (slot < INDEX_MAX_KEYS)
 		result[slot++] = 0;
 
@@ -113,7 +113,8 @@ int2vectorin(char *intString)
 char *
 int2vectorout(int16 *int2Array)
 {
-	int			num, maxnum;
+	int			num,
+				maxnum;
 	char	   *rp;
 	char	   *result;
 
@@ -126,12 +127,12 @@ int2vectorout(int16 *int2Array)
 	}
 
 	/* find last non-zero value in vector */
-	for (maxnum = INDEX_MAX_KEYS-1; maxnum >= 0; maxnum--)
+	for (maxnum = INDEX_MAX_KEYS - 1; maxnum >= 0; maxnum--)
 		if (int2Array[maxnum] != 0)
 			break;
 
 	/* assumes sign, 5 digits, ' ' */
-	rp = result = (char *) palloc((maxnum+1) * 7 + 1);
+	rp = result = (char *) palloc((maxnum + 1) * 7 + 1);
 	for (num = 0; num <= maxnum; num++)
 	{
 		if (num != 0)
@@ -694,13 +695,13 @@ int2fac(int16 arg1)
 int32
 int4abs(int32 arg1)
 {
-	return ((arg1 < 0)? -arg1: arg1);
+	return ((arg1 < 0) ? -arg1 : arg1);
 }
 
 int16
 int2abs(int16 arg1)
 {
-	return ((arg1 < 0)? -arg1: arg1);
+	return ((arg1 < 0) ? -arg1 : arg1);
 }
 
 int16

@@ -11,7 +11,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/postmaster/postmaster.c,v 1.138 2000/03/19 22:10:08 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/postmaster/postmaster.c,v 1.139 2000/04/12 17:15:31 momjian Exp $
  *
  * NOTES
  *
@@ -109,9 +109,11 @@
 #ifdef HAVE_SIGPROCMASK
 sigset_t	UnBlockSig,
 			BlockSig;
+
 #else
 int			UnBlockSig,
 			BlockSig;
+
 #endif
 
 /*
@@ -176,12 +178,12 @@ static int	MaxBackends = DEF_MAXBACKENDS;
   * semaphores, even if you never actually use that many backends.
   */
 
-static int		NextBackendTag = MAXINT;	/* XXX why count down not up? */
-static char	   *progname = (char *) NULL;
-static char	  **real_argv;
-static int		real_argc;
+static int	NextBackendTag = MAXINT;	/* XXX why count down not up? */
+static char *progname = (char *) NULL;
+static char **real_argv;
+static int	real_argc;
 
-static time_t	tnow;
+static time_t tnow;
 
 /*
  * Default Values
@@ -196,7 +198,8 @@ static int	ServerSock_UNIX = INVALID_SOCK;		/* stream socket server */
 #endif
 
 #ifdef USE_SSL
-static SSL_CTX  *SSL_context = NULL;                    /* Global SSL context */
+static SSL_CTX *SSL_context = NULL;		/* Global SSL context */
+
 #endif
 
 /*
@@ -216,21 +219,24 @@ static int	SendStop = false;
 
 static bool NetServer = false;	/* if not zero, postmaster listen for
 								 * non-local connections */
+
 #ifdef USE_SSL
-static bool SecureNetServer = false; /* if not zero, postmaster listens for only SSL
-                                      * non-local connections */
+static bool SecureNetServer = false;	/* if not zero, postmaster listens
+										 * for only SSL non-local
+										 * connections */
+
 #endif
 
-static pid_t	StartupPID = 0,
-				ShutdownPID = 0;
+static pid_t StartupPID = 0,
+			ShutdownPID = 0;
 
 #define			NoShutdown		0
 #define			SmartShutdown	1
 #define			FastShutdown	2
 
-static int		Shutdown = NoShutdown;
+static int	Shutdown = NoShutdown;
 
-static bool		FatalError = false;
+static bool FatalError = false;
 
 /*
  * State for assigning random salts and cancel keys.
@@ -247,51 +253,55 @@ extern int	optind,
 /*
  * postmaster.c - function prototypes
  */
-static void		pmdaemonize(char *extraoptions);
-static Port	   *ConnCreate(int serverFd);
-static void		ConnFree(Port *port);
-static void 	reset_shared(unsigned short port);
-static void 	pmdie(SIGNAL_ARGS);
-static void 	reaper(SIGNAL_ARGS);
-static void 	dumpstatus(SIGNAL_ARGS);
-static void 	CleanupProc(int pid, int exitstatus);
-static int		DoBackend(Port *port);
-static void 	ExitPostmaster(int status);
-static void 	usage(const char *);
-static int		ServerLoop(void);
-static int		BackendStartup(Port *port);
-static int		readStartupPacket(void *arg, PacketLen len, void *pkt);
-static int		processCancelRequest(Port *port, PacketLen len, void *pkt);
-static int		initMasks(fd_set *rmask, fd_set *wmask);
-static long 	PostmasterRandom(void);
-static void 	RandomSalt(char *salt);
-static void 	SignalChildren(SIGNAL_ARGS);
-static int		CountChildren(void);
-static int SetOptsFile(char *progname, int port, char *datadir,
-		      int assert, int nbuf, char *execfile,
-		      int debuglvl, int netserver,
+static void pmdaemonize(char *extraoptions);
+static Port *ConnCreate(int serverFd);
+static void ConnFree(Port *port);
+static void reset_shared(unsigned short port);
+static void pmdie(SIGNAL_ARGS);
+static void reaper(SIGNAL_ARGS);
+static void dumpstatus(SIGNAL_ARGS);
+static void CleanupProc(int pid, int exitstatus);
+static int	DoBackend(Port *port);
+static void ExitPostmaster(int status);
+static void usage(const char *);
+static int	ServerLoop(void);
+static int	BackendStartup(Port *port);
+static int	readStartupPacket(void *arg, PacketLen len, void *pkt);
+static int	processCancelRequest(Port *port, PacketLen len, void *pkt);
+static int	initMasks(fd_set *rmask, fd_set *wmask);
+static long PostmasterRandom(void);
+static void RandomSalt(char *salt);
+static void SignalChildren(SIGNAL_ARGS);
+static int	CountChildren(void);
+static int
+SetOptsFile(char *progname, int port, char *datadir,
+			int assert, int nbuf, char *execfile,
+			int debuglvl, int netserver,
 #ifdef USE_SSL
-		      int securenetserver,
+			int securenetserver,
 #endif
-		      int maxbackends, int reinit,
-		      int silent, int sendstop, char *extraoptions);
+			int maxbackends, int reinit,
+			int silent, int sendstop, char *extraoptions);
 
-extern int		BootstrapMain(int argc, char *argv[]);
-static pid_t	SSDataBase(bool startup);
-#define	StartupDataBase()	SSDataBase(true)
-#define	ShutdownDataBase()	SSDataBase(false)
+extern int	BootstrapMain(int argc, char *argv[]);
+static pid_t SSDataBase(bool startup);
+
+#define StartupDataBase()	SSDataBase(true)
+#define ShutdownDataBase()	SSDataBase(false)
 
 #ifdef USE_SSL
 static void InitSSL(void);
+
 #endif
 
 #ifdef CYR_RECODE
 void		GetCharSetByHost(char *, int, char *);
+
 #endif
 
 #ifdef USE_ASSERT_CHECKING
 
-int	assert_enabled = 1;
+int			assert_enabled = 1;
 
 #endif
 
@@ -313,7 +323,7 @@ checkDataDir(const char *DataDir, bool *DataDirOK)
 		FILE	   *fp;
 
 		snprintf(path, sizeof(path), "%s%cbase%ctemplate1%cpg_class",
-				DataDir, SEP_CHAR, SEP_CHAR, SEP_CHAR);
+				 DataDir, SEP_CHAR, SEP_CHAR, SEP_CHAR);
 #ifndef __CYGWIN32__
 		fp = AllocateFile(path, "r");
 #else
@@ -366,7 +376,7 @@ PostmasterMain(int argc, char *argv[])
 	bool		DataDirOK;		/* We have a usable PGDATA value */
 	char		hostbuf[MAXHOSTNAMELEN];
 	int			nonblank_argc;
-	char original_extraoptions[MAXPGPATH];
+	char		original_extraoptions[MAXPGPATH];
 
 	*original_extraoptions = '\0';
 
@@ -478,6 +488,7 @@ PostmasterMain(int argc, char *argv[])
 				DataDir = optarg;
 				break;
 			case 'd':
+
 				/*
 				 * Turn on debugging for the postmaster and the backend
 				 * servers descended from it.
@@ -565,15 +576,18 @@ PostmasterMain(int argc, char *argv[])
 	 * Select default values for switches where needed
 	 */
 	if (PostPortName == 0)
-		PostPortName = (unsigned short)pq_getport();
+		PostPortName = (unsigned short) pq_getport();
 
 	/*
 	 * Check for invalid combinations of switches
 	 */
 	if (NBuffers < 2 * MaxBackends || NBuffers < 16)
 	{
-		/* Do not accept -B so small that backends are likely to starve for
-		 * lack of buffers.  The specific choices here are somewhat arbitrary.
+
+		/*
+		 * Do not accept -B so small that backends are likely to starve
+		 * for lack of buffers.  The specific choices here are somewhat
+		 * arbitrary.
 		 */
 		fprintf(stderr, "%s: -B must be at least twice -N and at least 16.\n",
 				progname);
@@ -608,11 +622,11 @@ PostmasterMain(int argc, char *argv[])
 	{
 		status = StreamServerPort(hostName, PostPortName, &ServerSock_INET);
 		if (status != STATUS_OK)
-	    {
+		{
 			fprintf(stderr, "%s: cannot create INET stream port\n",
 					progname);
 			exit(1);
-	    }
+		}
 	}
 
 #if !defined(__CYGWIN32__) && !defined(__QNX__)
@@ -635,65 +649,74 @@ PostmasterMain(int argc, char *argv[])
 	BackendList = DLNewList();
 	PortList = DLNewList();
 
-	if (silentflag) {
+	if (silentflag)
 		pmdaemonize(original_extraoptions);
-	} else {
+	else
+	{
+
 		/*
 		 * create pid file. if the file has already existed, exits.
 		 */
-	  SetPidFname(DataDir);
-	  if (SetPidFile(getpid()) == 0) {
-	    if (SetOptsFile(
-		       progname,	/* postmaster executable file */
-		       PostPortName,	/* port number */
-		       DataDir,		/* PGDATA */
-		       assert_enabled,	/* whether -A is specified or not */
-		       NBuffers,	/* -B: number of shared buffers */
-		       Execfile,	/* -b: postgres executable file */
-		       DebugLvl,	/* -d: debug level */
-		       NetServer,	/* -i: accept connection from INET */
+		SetPidFname(DataDir);
+		if (SetPidFile(getpid()) == 0)
+		{
+			if (SetOptsFile(
+							progname,	/* postmaster executable file */
+							PostPortName,		/* port number */
+							DataDir,	/* PGDATA */
+							assert_enabled,		/* whether -A is specified
+												 * or not */
+							NBuffers,	/* -B: number of shared buffers */
+							Execfile,	/* -b: postgres executable file */
+							DebugLvl,	/* -d: debug level */
+							NetServer,	/* -i: accept connection from INET */
 #ifdef USE_SSL
-		       SecureNetServer,	/* -l: use SSL */
+							SecureNetServer,	/* -l: use SSL */
 #endif
-		       MaxBackends,	/* -N: max number of backends */
-		       Reinit,		/* -n: reinit shared mem after failure */
-		       silentflag,	/* -S: detach tty */
-		       SendStop,	/* -s: send SIGSTOP */
-		       original_extraoptions	/* options for backend */
-		       ) != 0) {
-		    UnlinkPidFile();
-		    ExitPostmaster(1);
-		    return 0;	/* not reached */
-	    }
-	  }
-	  else {
-	    ExitPostmaster(1);
-	    return 0;	/* not reached */
-	  }
-	    
-	  /*
-	   * register clean up proc
-	   */
-	  on_proc_exit(UnlinkPidFile, NULL);
+							MaxBackends,		/* -N: max number of
+												 * backends */
+							Reinit,		/* -n: reinit shared mem after
+										 * failure */
+							silentflag, /* -S: detach tty */
+							SendStop,	/* -s: send SIGSTOP */
+							original_extraoptions		/* options for backend */
+							) != 0)
+			{
+				UnlinkPidFile();
+				ExitPostmaster(1);
+				return 0;		/* not reached */
+			}
+		}
+		else
+		{
+			ExitPostmaster(1);
+			return 0;			/* not reached */
+		}
+
+		/*
+		 * register clean up proc
+		 */
+		on_proc_exit(UnlinkPidFile, NULL);
 	}
+
 	/*
 	 * Set up signal handlers for the postmaster process.
 	 */
 	PG_INITMASK();
 	PG_SETMASK(&BlockSig);
 
-	pqsignal(SIGHUP, pmdie);		/* send SIGHUP, don't die */
-	pqsignal(SIGINT, pmdie);		/* send SIGTERM and ShutdownDataBase */
-	pqsignal(SIGQUIT, pmdie);		/* send SIGUSR1 and die */
-	pqsignal(SIGTERM, pmdie);		/* wait for children and ShutdownDataBase */
-	pqsignal(SIGALRM, SIG_IGN);		/* ignored */
-	pqsignal(SIGPIPE, SIG_IGN); 	/* ignored */
-	pqsignal(SIGUSR1, SIG_IGN);		/* ignored */
-	pqsignal(SIGUSR2, pmdie);		/* send SIGUSR2, don't die */
-	pqsignal(SIGCHLD, reaper);		/* handle child termination */
-	pqsignal(SIGTTIN, SIG_IGN); 	/* ignored */
-	pqsignal(SIGTTOU, SIG_IGN); 	/* ignored */
-	pqsignal(SIGWINCH, dumpstatus);	/* dump port status */
+	pqsignal(SIGHUP, pmdie);	/* send SIGHUP, don't die */
+	pqsignal(SIGINT, pmdie);	/* send SIGTERM and ShutdownDataBase */
+	pqsignal(SIGQUIT, pmdie);	/* send SIGUSR1 and die */
+	pqsignal(SIGTERM, pmdie);	/* wait for children and ShutdownDataBase */
+	pqsignal(SIGALRM, SIG_IGN); /* ignored */
+	pqsignal(SIGPIPE, SIG_IGN); /* ignored */
+	pqsignal(SIGUSR1, SIG_IGN); /* ignored */
+	pqsignal(SIGUSR2, pmdie);	/* send SIGUSR2, don't die */
+	pqsignal(SIGCHLD, reaper);	/* handle child termination */
+	pqsignal(SIGTTIN, SIG_IGN); /* ignored */
+	pqsignal(SIGTTOU, SIG_IGN); /* ignored */
+	pqsignal(SIGWINCH, dumpstatus);		/* dump port status */
 
 	StartupPID = StartupDataBase();
 
@@ -707,58 +730,69 @@ static void
 pmdaemonize(char *extraoptions)
 {
 	int			i;
-	pid_t	pid;
+	pid_t		pid;
 
 	SetPidFname(DataDir);
 
 	pid = fork();
-	if (pid == -1) {
+	if (pid == -1)
+	{
 		perror("Failed to fork postmaster");
 		ExitPostmaster(1);
-		return;	/* not reached */
-	} else if (pid) {	/* parent */
-	  /*
-	   * create pid file. if the file has already existed, exits.
-	   */
-	  if (SetPidFile(pid) == 0) {
-	    if (SetOptsFile(
-		       progname,	/* postmaster executable file */
-		       PostPortName,	/* port number */
-		       DataDir,		/* PGDATA */
-		       assert_enabled,	/* whether -A is specified or not */
-		       NBuffers,	/* -B: number of shared buffers */
-		       Execfile,	/* -b: postgres executable file */
-		       DebugLvl,	/* -d: debug level */
-		       NetServer,	/* -i: accept connection from INET */
+		return;					/* not reached */
+	}
+	else if (pid)
+	{							/* parent */
+
+		/*
+		 * create pid file. if the file has already existed, exits.
+		 */
+		if (SetPidFile(pid) == 0)
+		{
+			if (SetOptsFile(
+							progname,	/* postmaster executable file */
+							PostPortName,		/* port number */
+							DataDir,	/* PGDATA */
+							assert_enabled,		/* whether -A is specified
+												 * or not */
+							NBuffers,	/* -B: number of shared buffers */
+							Execfile,	/* -b: postgres executable file */
+							DebugLvl,	/* -d: debug level */
+							NetServer,	/* -i: accept connection from INET */
 #ifdef USE_SSL
-		       SecureNetServer,	/* -l: use SSL */
+							SecureNetServer,	/* -l: use SSL */
 #endif
-		       MaxBackends,	/* -N: max number of backends */
-		       Reinit,		/* -n: reinit shared mem after failure */
-		       1,		/* -S: detach tty */
-		       SendStop,	/* -s: send SIGSTOP */
-		       extraoptions	/* options for backend */
-		       ) != 0) {
-	      /*
-	       * Failed to create opts file. kill the child and
-	       * exit now.
-	       */
-	      UnlinkPidFile();
-	      kill(pid, SIGTERM);
-	      ExitPostmaster(1);
-	      return;	/* not reached */
-	    }
-	    _exit(0);
-	  }
-	  else {
-	      /*
-	       * Failed to create pid file. kill the child and
-	       * exit now.
-	       */
-	      kill(pid, SIGTERM);
-	      ExitPostmaster(1);
-	      return;	/* not reached */
-	  }
+							MaxBackends,		/* -N: max number of
+												 * backends */
+							Reinit,		/* -n: reinit shared mem after
+										 * failure */
+							1,	/* -S: detach tty */
+							SendStop,	/* -s: send SIGSTOP */
+							extraoptions		/* options for backend */
+							) != 0)
+			{
+
+				/*
+				 * Failed to create opts file. kill the child and exit
+				 * now.
+				 */
+				UnlinkPidFile();
+				kill(pid, SIGTERM);
+				ExitPostmaster(1);
+				return;			/* not reached */
+			}
+			_exit(0);
+		}
+		else
+		{
+
+			/*
+			 * Failed to create pid file. kill the child and exit now.
+			 */
+			kill(pid, SIGTERM);
+			ExitPostmaster(1);
+			return;				/* not reached */
+		}
 	}
 
 /* GH: If there's no setsid(), we hopefully don't need silent mode.
@@ -803,7 +837,7 @@ usage(const char *progname)
 	fprintf(stderr, "\t-d [1-5]\tset debugging level\n");
 	fprintf(stderr, "\t-i \t\tlisten on TCP/IP sockets as well as Unix domain socket\n");
 #ifdef USE_SSL
-	fprintf(stderr," \t-l \t\tfor TCP/IP sockets, listen only on SSL connections\n");
+	fprintf(stderr, " \t-l \t\tfor TCP/IP sockets, listen only on SSL connections\n");
 #endif
 	fprintf(stderr, "\t-N nprocs\tset max number of backends (1..%d, default %d)\n",
 			MAXBACKENDS, DEF_MAXBACKENDS);
@@ -834,8 +868,10 @@ ServerLoop(void)
 		Port	   *port;
 		fd_set		rmask,
 					wmask;
+
 #ifdef USE_SSL
-		int no_select = 0;
+		int			no_select = 0;
+
 #endif
 
 		memmove((char *) &rmask, (char *) &readmask, sizeof(fd_set));
@@ -844,16 +880,16 @@ ServerLoop(void)
 #ifdef USE_SSL
 		for (curr = DLGetHead(PortList); curr; curr = DLGetSucc(curr))
 		{
-			if (((Port *)DLE_VAL(curr))->ssl &&
-				SSL_pending(((Port *)DLE_VAL(curr))->ssl) > 0)
+			if (((Port *) DLE_VAL(curr))->ssl &&
+				SSL_pending(((Port *) DLE_VAL(curr))->ssl) > 0)
 			{
-			    no_select = 1;
-			    break;
+				no_select = 1;
+				break;
 			}
 		}
 		PG_SETMASK(&UnBlockSig);
-		if (no_select) 
-		  FD_ZERO(&rmask); /* So we don't accept() anything below */
+		if (no_select)
+			FD_ZERO(&rmask);	/* So we don't accept() anything below */
 		else
 #else
 		PG_SETMASK(&UnBlockSig);
@@ -895,16 +931,18 @@ ServerLoop(void)
 #if !defined(__CYGWIN32__) && !defined(__QNX__)
 		if (ServerSock_UNIX != INVALID_SOCK &&
 			FD_ISSET(ServerSock_UNIX, &rmask) &&
-   		        (port = ConnCreate(ServerSock_UNIX)) != NULL) {
-		        PacketReceiveSetup(&port->pktInfo,
+			(port = ConnCreate(ServerSock_UNIX)) != NULL)
+		{
+			PacketReceiveSetup(&port->pktInfo,
 							   readStartupPacket,
 							   (void *) port);
 		}
 #endif
 
 		if (ServerSock_INET != INVALID_SOCK &&
-		    FD_ISSET(ServerSock_INET, &rmask) &&
-		    (port = ConnCreate(ServerSock_INET)) != NULL) {
+			FD_ISSET(ServerSock_INET, &rmask) &&
+			(port = ConnCreate(ServerSock_INET)) != NULL)
+		{
 			PacketReceiveSetup(&port->pktInfo,
 							   readStartupPacket,
 							   (void *) port);
@@ -921,13 +959,14 @@ ServerLoop(void)
 			Port	   *port = (Port *) DLE_VAL(curr);
 			int			status = STATUS_OK;
 			Dlelem	   *next;
-			int        readyread = 0;
+			int			readyread = 0;
 
 #ifdef USE_SSL
-			if (port->ssl) {
-			  if (SSL_pending(port->ssl) ||
-			      FD_ISSET(port->sock, &rmask))
-			    readyread = 1;
+			if (port->ssl)
+			{
+				if (SSL_pending(port->ssl) ||
+					FD_ISSET(port->sock, &rmask))
+					readyread = 1;
 			}
 			else
 #endif
@@ -966,25 +1005,27 @@ ServerLoop(void)
 
 			if (status == STATUS_OK && port->pktInfo.state == Idle)
 			{
-				/* 
+
+				/*
 				 * Can't start backend if max backend count is exceeded.
-				 * 
+				 *
 				 * The same when shutdowning data base.
 				 */
 				if (Shutdown > NoShutdown)
 					PacketSendError(&port->pktInfo,
-									"The Data Base System is shutting down");
+								"The Data Base System is shutting down");
 				else if (StartupPID)
 					PacketSendError(&port->pktInfo,
-									"The Data Base System is starting up");
+								  "The Data Base System is starting up");
 				else if (FatalError)
 					PacketSendError(&port->pktInfo,
-									"The Data Base System is in recovery mode");
+							 "The Data Base System is in recovery mode");
 				else if (CountChildren() >= MaxBackends)
 					PacketSendError(&port->pktInfo,
 									"Sorry, too many clients already");
 				else
 				{
+
 					/*
 					 * If the backend start fails then keep the connection
 					 * open to report it.  Otherwise, pretend there is an
@@ -1074,7 +1115,7 @@ readStartupPacket(void *arg, PacketLen len, void *pkt)
 
 	port = (Port *) arg;
 	si = (StartupPacket *) pkt;
-	
+
 	/*
 	 * The first field is either a protocol version number or a special
 	 * request code.
@@ -1085,42 +1126,45 @@ readStartupPacket(void *arg, PacketLen len, void *pkt)
 	if (port->proto == CANCEL_REQUEST_CODE)
 		return processCancelRequest(port, len, pkt);
 
-	if (port->proto == NEGOTIATE_SSL_CODE) {
-	  char SSLok;
-	  
+	if (port->proto == NEGOTIATE_SSL_CODE)
+	{
+		char		SSLok;
+
 #ifdef USE_SSL
-	  SSLok = 'S'; /* Support for SSL */
+		SSLok = 'S';			/* Support for SSL */
 #else
-	  SSLok = 'N'; /* No support for SSL */
+		SSLok = 'N';			/* No support for SSL */
 #endif
-	  if (send(port->sock, &SSLok, 1, 0) != 1) {
-	    perror("Failed to send SSL negotiation response");
-	    return STATUS_ERROR; /* Close connection */
-	  }
-	  
+		if (send(port->sock, &SSLok, 1, 0) != 1)
+		{
+			perror("Failed to send SSL negotiation response");
+			return STATUS_ERROR;/* Close connection */
+		}
+
 #ifdef USE_SSL
-	  if (!(port->ssl = SSL_new(SSL_context)) ||
-	      !SSL_set_fd(port->ssl, port->sock) ||
-	      SSL_accept(port->ssl) <= 0)
-	  {
-	    fprintf(stderr,"Failed to initialize SSL connection: %s, errno: %d (%s)\n",
-		    ERR_reason_error_string(ERR_get_error()), errno, strerror(errno));
-	    return STATUS_ERROR;
-	  }
+		if (!(port->ssl = SSL_new(SSL_context)) ||
+			!SSL_set_fd(port->ssl, port->sock) ||
+			SSL_accept(port->ssl) <= 0)
+		{
+			fprintf(stderr, "Failed to initialize SSL connection: %s, errno: %d (%s)\n",
+					ERR_reason_error_string(ERR_get_error()), errno, strerror(errno));
+			return STATUS_ERROR;
+		}
 #endif
-	  /* ready for the normal startup packet */
-	  PacketReceiveSetup(&port->pktInfo,
-			     readStartupPacket,
-			     (void *)port);
-	  return STATUS_OK; /* Do not close connection */
-	} 
+		/* ready for the normal startup packet */
+		PacketReceiveSetup(&port->pktInfo,
+						   readStartupPacket,
+						   (void *) port);
+		return STATUS_OK;		/* Do not close connection */
+	}
 
 	/* Could add additional special packet types here */
 
 #ifdef USE_SSL
-	/* 
-	 * Any SSL negotiation must have taken place here, so drop the connection
-	 * ASAP if we require SSL
+
+	/*
+	 * Any SSL negotiation must have taken place here, so drop the
+	 * connection ASAP if we require SSL
 	 */
 	if (SecureNetServer && !port->ssl)
 	{
@@ -1263,12 +1307,11 @@ ConnCreate(int serverFd)
  * ConnFree -- cree a local connection data structure
  */
 static void
-ConnFree(Port *conn) 
+ConnFree(Port *conn)
 {
 #ifdef USE_SSL
-        if (conn->ssl) {
-	     SSL_free(conn->ssl);
-	}
+	if (conn->ssl)
+		SSL_free(conn->ssl);
 #endif
 	free(conn);
 }
@@ -1293,13 +1336,14 @@ static void
 pmdie(SIGNAL_ARGS)
 {
 	PG_SETMASK(&BlockSig);
-	
+
 	TPRINTF(TRACE_VERBOSE, "pmdie %d", postgres_signal_arg);
 
 	switch (postgres_signal_arg)
 	{
 		case SIGHUP:
-			/* 
+
+			/*
 			 * Send SIGHUP to all children (update options flags)
 			 */
 			if (Shutdown > SmartShutdown)
@@ -1307,8 +1351,9 @@ pmdie(SIGNAL_ARGS)
 			SignalChildren(SIGHUP);
 			return;
 		case SIGUSR2:
-			/* 
-			 * Send SIGUSR2 to all children (AsyncNotifyHandler) 
+
+			/*
+			 * Send SIGUSR2 to all children (AsyncNotifyHandler)
 			 */
 			if (Shutdown > SmartShutdown)
 				return;
@@ -1316,6 +1361,7 @@ pmdie(SIGNAL_ARGS)
 			return;
 
 		case SIGTERM:
+
 			/*
 			 * Smart Shutdown:
 			 *
@@ -1327,12 +1373,14 @@ pmdie(SIGNAL_ARGS)
 			tnow = time(NULL);
 			fprintf(stderr, "Smart Shutdown request at %s", ctime(&tnow));
 			fflush(stderr);
-			if (DLGetHead(BackendList))			/* let reaper() handle this */
+			if (DLGetHead(BackendList)) /* let reaper() handle this */
 				return;
+
 			/*
 			 * No children left. Shutdown data base system.
 			 */
-			if (StartupPID > 0 || FatalError)	/* let reaper() handle this */
+			if (StartupPID > 0 || FatalError)	/* let reaper() handle
+												 * this */
 				return;
 			if (ShutdownPID > 0)
 				abort();
@@ -1341,18 +1389,19 @@ pmdie(SIGNAL_ARGS)
 			return;
 
 		case SIGINT:
+
 			/*
 			 * Fast Shutdown:
-			 * 
-			 * abort all children with SIGTERM (rollback active
-			 * transactions and exit) and ShutdownDataBase.
+			 *
+			 * abort all children with SIGTERM (rollback active transactions
+			 * and exit) and ShutdownDataBase.
 			 */
 			if (Shutdown >= FastShutdown)
 				return;
 			tnow = time(NULL);
 			fprintf(stderr, "Fast Shutdown request at %s", ctime(&tnow));
 			fflush(stderr);
-			if (DLGetHead(BackendList))			/* let reaper() handle this */
+			if (DLGetHead(BackendList)) /* let reaper() handle this */
 			{
 				Shutdown = FastShutdown;
 				if (!FatalError)
@@ -1369,10 +1418,12 @@ pmdie(SIGNAL_ARGS)
 				return;
 			}
 			Shutdown = FastShutdown;
+
 			/*
 			 * No children left. Shutdown data base system.
 			 */
-			if (StartupPID > 0 || FatalError)	/* let reaper() handle this */
+			if (StartupPID > 0 || FatalError)	/* let reaper() handle
+												 * this */
 				return;
 			if (ShutdownPID > 0)
 				abort();
@@ -1381,11 +1432,12 @@ pmdie(SIGNAL_ARGS)
 			return;
 
 		case SIGQUIT:
-			/* 
+
+			/*
 			 * Immediate Shutdown:
-			 * 
-			 * abort all children with SIGUSR1 and exit without
-			 * attempt to properly shutdown data base system.
+			 *
+			 * abort all children with SIGUSR1 and exit without attempt to
+			 * properly shutdown data base system.
 			 */
 			tnow = time(NULL);
 			fprintf(stderr, "Immediate Shutdown request at %s", ctime(&tnow));
@@ -1412,8 +1464,10 @@ reaper(SIGNAL_ARGS)
 /* GH: replace waitpid for !HAVE_WAITPID. Does this work ? */
 #ifdef HAVE_WAITPID
 	int			status;			/* backend exit status */
+
 #else
 	union wait	status;			/* backend exit status */
+
 #endif
 	int			exitstatus;
 	int			pid;			/* process id of dead backend */
@@ -1471,6 +1525,7 @@ reaper(SIGNAL_ARGS)
 
 	if (FatalError)
 	{
+
 		/*
 		 * Wait for all children exit then StartupDataBase.
 		 */
@@ -1480,8 +1535,8 @@ reaper(SIGNAL_ARGS)
 			return;
 		tnow = time(NULL);
 		fprintf(stderr, "Server processes were terminated at %s"
-						"Reinitializing shared memory and semaphores\n",
-						ctime(&tnow));
+				"Reinitializing shared memory and semaphores\n",
+				ctime(&tnow));
 		fflush(stderr);
 		shmem_exit(0);
 		reset_shared(PostPortName);
@@ -1553,8 +1608,8 @@ CleanupProc(int pid,
 	{
 		tnow = time(NULL);
 		fprintf(stderr, "Server process (pid %d) exited with status %d at %s"
-						"Terminating any active server processes...\n",
-						pid, exitstatus, ctime(&tnow));
+				"Terminating any active server processes...\n",
+				pid, exitstatus, ctime(&tnow));
 		fflush(stderr);
 	}
 	FatalError = true;
@@ -1565,11 +1620,11 @@ CleanupProc(int pid,
 		bp = (Backend *) DLE_VAL(curr);
 
 		/*
-		 * SIGUSR1 is the special signal that says exit
-		 * without proc_exit and let the user know what's going on.
-		 * ProcSemaphoreKill() cleans up the backends semaphore.  If
-		 * SendStop is set (-s on command line), then we send a SIGSTOP so
-		 * that we can core dumps from all backends by hand.
+		 * SIGUSR1 is the special signal that says exit without proc_exit
+		 * and let the user know what's going on. ProcSemaphoreKill()
+		 * cleans up the backends semaphore.  If SendStop is set (-s on
+		 * command line), then we send a SIGSTOP so that we can core dumps
+		 * from all backends by hand.
 		 */
 		sig = (SendStop) ? SIGSTOP : SIGUSR1;
 		if (bp->pid != pid)
@@ -1584,13 +1639,14 @@ CleanupProc(int pid,
 		}
 		else
 		{
+
 			/*
-			 * I don't like that we call ProcRemove() here, assuming that 
-			 * shmem may be corrupted! But is there another way to free 
-			 * backend semaphores? Actually, I believe that we need not
-			 * in per backend semaphore at all (we use them to wait on lock
-			 * only, couldn't we just sigpause?), so probably we'll
-			 * remove this call from here someday.	-- vadim 04-10-1999
+			 * I don't like that we call ProcRemove() here, assuming that
+			 * shmem may be corrupted! But is there another way to free
+			 * backend semaphores? Actually, I believe that we need not in
+			 * per backend semaphore at all (we use them to wait on lock
+			 * only, couldn't we just sigpause?), so probably we'll remove
+			 * this call from here someday.  -- vadim 04-10-1999
 			 */
 			ProcRemove(pid);
 
@@ -1827,14 +1883,14 @@ DoBackend(Port *port)
 	 */
 
 	/* We don't want the postmaster's proc_exit() handlers */
-	on_exit_reset();	
+	on_exit_reset();
 
-	/* 
+	/*
 	 * Signal handlers setting is moved to tcop/postgres...
 	 */
 
 	/* Close the postmaster sockets */
-	if (NetServer) 
+	if (NetServer)
 		StreamClose(ServerSock_INET);
 #if !defined(__CYGWIN32__) && !defined(__QNX__)
 	StreamClose(ServerSock_UNIX);
@@ -1885,11 +1941,11 @@ DoBackend(Port *port)
 #endif
 
 	/*
-	 * Pass the requested debugging level along to the backend.
-	 * Level one debugging in the postmaster traces
-	 * postmaster connection activity, and levels two and higher are
-	 * passed along to the backend.  This allows us to watch only the
-	 * postmaster or the postmaster and the backend.
+	 * Pass the requested debugging level along to the backend. Level one
+	 * debugging in the postmaster traces postmaster connection activity,
+	 * and levels two and higher are passed along to the backend.  This
+	 * allows us to watch only the postmaster or the postmaster and the
+	 * backend.
 	 */
 	if (DebugLvl > 1)
 	{
@@ -2071,31 +2127,38 @@ CountChildren(void)
 /*
  * Initialize SSL library and structures
  */
-static void InitSSL(void) {
-  char fnbuf[2048];
-  
-  SSL_load_error_strings();
-  SSL_library_init();
-  SSL_context = SSL_CTX_new(SSLv23_method());
-  if (!SSL_context) {
-    fprintf(stderr, "Failed to create SSL context: %s\n",ERR_reason_error_string(ERR_get_error()));
-    exit(1);
-  }
-  snprintf(fnbuf,sizeof(fnbuf),"%s/server.crt", DataDir);
-  if (!SSL_CTX_use_certificate_file(SSL_context, fnbuf, SSL_FILETYPE_PEM)) {
-    fprintf(stderr, "Failed to load server certificate (%s): %s\n",fnbuf,ERR_reason_error_string(ERR_get_error()));
-    exit(1);
-  }
-  snprintf(fnbuf,sizeof(fnbuf),"%s/server.key", DataDir);
-  if (!SSL_CTX_use_PrivateKey_file(SSL_context, fnbuf, SSL_FILETYPE_PEM)) {
-    fprintf(stderr, "Failed to load private key file (%s): %s\n",fnbuf,ERR_reason_error_string(ERR_get_error()));
-    exit(1);
-  }
-  if (!SSL_CTX_check_private_key(SSL_context)) {
-    fprintf(stderr, "Check of private key failed: %s\n",ERR_reason_error_string(ERR_get_error()));
-    exit(1);
-  }
+static void
+InitSSL(void)
+{
+	char		fnbuf[2048];
+
+	SSL_load_error_strings();
+	SSL_library_init();
+	SSL_context = SSL_CTX_new(SSLv23_method());
+	if (!SSL_context)
+	{
+		fprintf(stderr, "Failed to create SSL context: %s\n", ERR_reason_error_string(ERR_get_error()));
+		exit(1);
+	}
+	snprintf(fnbuf, sizeof(fnbuf), "%s/server.crt", DataDir);
+	if (!SSL_CTX_use_certificate_file(SSL_context, fnbuf, SSL_FILETYPE_PEM))
+	{
+		fprintf(stderr, "Failed to load server certificate (%s): %s\n", fnbuf, ERR_reason_error_string(ERR_get_error()));
+		exit(1);
+	}
+	snprintf(fnbuf, sizeof(fnbuf), "%s/server.key", DataDir);
+	if (!SSL_CTX_use_PrivateKey_file(SSL_context, fnbuf, SSL_FILETYPE_PEM))
+	{
+		fprintf(stderr, "Failed to load private key file (%s): %s\n", fnbuf, ERR_reason_error_string(ERR_get_error()));
+		exit(1);
+	}
+	if (!SSL_CTX_check_private_key(SSL_context))
+	{
+		fprintf(stderr, "Check of private key failed: %s\n", ERR_reason_error_string(ERR_get_error()));
+		exit(1);
+	}
 }
+
 #endif
 
 static pid_t
@@ -2103,7 +2166,7 @@ SSDataBase(bool startup)
 {
 	pid_t		pid;
 	int			i;
-	static char	ssEntry[4][2 * ARGV_SIZE];
+	static char ssEntry[4][2 * ARGV_SIZE];
 
 	for (i = 0; i < 4; ++i)
 		MemSet(ssEntry[i], 0, 2 * ARGV_SIZE);
@@ -2131,8 +2194,8 @@ SSDataBase(bool startup)
 		char		nbbuf[ARGV_SIZE];
 		char		dbbuf[ARGV_SIZE];
 
-		on_exit_reset();	
-		if (NetServer) 
+		on_exit_reset();
+		if (NetServer)
 			StreamClose(ServerSock_INET);
 #if !defined(__CYGWIN32__) && !defined(__QNX__)
 		StreamClose(ServerSock_UNIX);
@@ -2165,7 +2228,7 @@ SSDataBase(bool startup)
 		BlockSig &= ~(sigmask(SIGQUIT));
 #endif
 		PG_SETMASK(&BlockSig);
-	
+
 		BootstrapMain(ac, av);
 		exit(0);
 	}
@@ -2174,92 +2237,93 @@ SSDataBase(bool startup)
 	if (pid < 0)
 	{
 		fprintf(stderr, "%s Data Base: fork failed: %s\n",
-			((startup) ? "Startup" : "Shutdown"), strerror(errno));
+				((startup) ? "Startup" : "Shutdown"), strerror(errno));
 		ExitPostmaster(1);
 	}
 
 	NextBackendTag -= 1;
 
-	return(pid);
+	return (pid);
 }
 
 /*
  * Create the opts file
  */
-static int SetOptsFile(char *progname, int port, char *datadir,
-		      int assert, int nbuf, char *execfile,
-		      int debuglvl, int netserver,
+static int
+SetOptsFile(char *progname, int port, char *datadir,
+			int assert, int nbuf, char *execfile,
+			int debuglvl, int netserver,
 #ifdef USE_SSL
-		      int securenetserver,
+			int securenetserver,
 #endif
-		      int maxbackends, int reinit,
-		      int silent, int sendstop, char *extraoptions)
+			int maxbackends, int reinit,
+			int silent, int sendstop, char *extraoptions)
 {
-	int fd;
-	char optsfile[MAXPGPATH];
-	char opts[1024];
-	char buf[1024];
+	int			fd;
+	char		optsfile[MAXPGPATH];
+	char		opts[1024];
+	char		buf[1024];
 
 	/*
 	 * Creating opts file
 	 */
 	snprintf(optsfile, sizeof(optsfile), "%s/%s", datadir, OPTSFNAME);
 	fd = open(optsfile, O_RDWR | O_TRUNC | O_CREAT, 0600);
-	if (fd < 0) {
+	if (fd < 0)
+	{
 		fprintf(stderr, "Can't create optsfile:%s", optsfile);
-		return(-1);
+		return (-1);
 	}
-	snprintf(opts, sizeof(opts), "%s\n-p %d\n-D %s\n",progname, port, datadir);
-	if (assert) {
+	snprintf(opts, sizeof(opts), "%s\n-p %d\n-D %s\n", progname, port, datadir);
+	if (assert)
+	{
 		sprintf(buf, "-A %d\n", assert);
 		strcat(opts, buf);
 	}
 
-        snprintf(buf, sizeof(buf), "-B %d\n-b %s\n",nbuf, execfile);
+	snprintf(buf, sizeof(buf), "-B %d\n-b %s\n", nbuf, execfile);
 	strcat(opts, buf);
 
-	if (debuglvl) {
+	if (debuglvl)
+	{
 		sprintf(buf, "-d %d\n", debuglvl);
 		strcat(opts, buf);
 	}
 
-	if (netserver) {
+	if (netserver)
 		strcat(opts, "-i\n");
-	}
 
 #ifdef USE_SSL
-	if (securenetserver) {
+	if (securenetserver)
 		strcat(opts, "-l\n");
-	}
 #endif
 
 	snprintf(buf, sizeof(buf), "-N %d\n", maxbackends);
 	strcat(opts, buf);
 
-	if (!reinit) {
+	if (!reinit)
 		strcat(opts, "-n\n");
-	}
 
-	if (silent) {
+	if (silent)
 		strcat(opts, "-S\n");
-	}
 
-	if (sendstop) {
+	if (sendstop)
 		strcat(opts, "-s\n");
-	}
 
-	if (strlen(extraoptions) > 0) {
+	if (strlen(extraoptions) > 0)
+	{
 		strcat(opts, "-o '");
 		strcat(opts, extraoptions);
 		strcat(opts, "'");
 	}
 
-	if (write(fd, opts, strlen(opts)) != strlen(opts)) {
+	if (write(fd, opts, strlen(opts)) != strlen(opts))
+	{
 		perror("Writing to opts file failed");
 		close(fd);
-		return(-1);
+		return (-1);
 	}
 	close(fd);
 
-	return(0);
+	return (0);
 }

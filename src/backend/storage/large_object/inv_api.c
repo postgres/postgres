@@ -9,7 +9,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/storage/large_object/inv_api.c,v 1.66 2000/04/08 04:37:07 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/storage/large_object/inv_api.c,v 1.67 2000/04/12 17:15:37 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -289,7 +289,8 @@ inv_drop(Oid lobjId)
 		return -1;
 	}
 
-	/* Since heap_drop_with_catalog will destroy the relcache entry,
+	/*
+	 * Since heap_drop_with_catalog will destroy the relcache entry,
 	 * there's no need to drop the refcount in this path.
 	 */
 	heap_drop_with_catalog(RelationGetRelationName(r));

@@ -1,7 +1,7 @@
 /* ----------
  * pg_lzcompress.h -
  *
- * $Header: /cvsroot/pgsql/src/include/utils/pg_lzcompress.h,v 1.4 2000/01/05 18:23:52 momjian Exp $
+ * $Header: /cvsroot/pgsql/src/include/utils/pg_lzcompress.h,v 1.5 2000/04/12 17:16:55 momjian Exp $
  *
  *	Definitions for the builtin LZ compressor
  * ----------
@@ -14,14 +14,15 @@
 /* ----------
  * PGLZ_Header -
  *
- *      The information at the top of the compressed data.
+ *		The information at the top of the compressed data.
  *		The varsize must be kept the same data type as the value
  *		in front of all variable size data types in PostgreSQL.
  * ----------
  */
-typedef struct PGLZ_Header {
-    int32                       varsize;
-    int32                       rawsize;
+typedef struct PGLZ_Header
+{
+	int32		varsize;
+	int32		rawsize;
 } PGLZ_Header;
 
 
@@ -54,9 +55,9 @@ typedef struct PGLZ_Header {
  *		uncompressed data.
  * ----------
  */
-#define PGLZ_IS_COMPRESSED(_lzdata)		(_lzdata->varsize != 				\
-										 _lzdata->rawsize + 				\
-										 				sizeof(PGLZ_Header))
+#define PGLZ_IS_COMPRESSED(_lzdata)		(_lzdata->varsize !=				\
+										 _lzdata->rawsize +					\
+														sizeof(PGLZ_Header))
 
 /* ----------
  * PGLZ_RAW_DATA -
@@ -65,7 +66,7 @@ typedef struct PGLZ_Header {
  *		data. Useful if PGLZ_IS_COMPRESSED returns false.
  * ----------
  */
-#define PGLZ_RAW_DATA(_lzdata)			(((char *)(_lzdata)) + 				\
+#define PGLZ_RAW_DATA(_lzdata)			(((char *)(_lzdata)) +				\
 														sizeof(PGLZ_Header))
 
 /* ----------
@@ -89,7 +90,7 @@ typedef struct PGLZ_Header {
  *							lookup. When looking up the history to find a
  *							match that could be expressed as a tag, the
  *							algorithm does not allways walk back entirely.
- *							A good match fast is usually better than the 
+ *							A good match fast is usually better than the
  *							best possible one very late. For each iteration
  *							in the lookup, this value is lowered so the
  *							longer the lookup takes, the smaller matches
@@ -101,7 +102,8 @@ typedef struct PGLZ_Header {
  *							latest history entry at all).
  * ----------
  */
-typedef struct PGLZ_Strategy {
+typedef struct PGLZ_Strategy
+{
 	int32		min_input_size;
 	int32		force_input_size;
 	int32		min_comp_rate;
@@ -117,16 +119,17 @@ typedef struct PGLZ_Strategy {
  *		using pglz_decomp_getchar() macro.
  * ----------
  */
-typedef struct PGLZ_DecompState {
-	unsigned char	   *temp_buf;
-	unsigned char	   *cp_in;
-	unsigned char	   *cp_end;
-	unsigned char	   *cp_out;
-	unsigned char	   *cp_copy;
-	int					(*next_char)(struct PGLZ_DecompState *dstate);
-	int					tocopy;
-	int					ctrl_count;
-	unsigned char		ctrl;
+typedef struct PGLZ_DecompState
+{
+	unsigned char *temp_buf;
+	unsigned char *cp_in;
+	unsigned char *cp_end;
+	unsigned char *cp_out;
+	unsigned char *cp_copy;
+	int			(*next_char) (struct PGLZ_DecompState *dstate);
+	int			tocopy;
+	int			ctrl_count;
+	unsigned char ctrl;
 } PGLZ_DecompState;
 
 
@@ -154,9 +157,9 @@ typedef struct PGLZ_DecompState {
  *									for generic interfacing.
  * ----------
  */
-extern PGLZ_Strategy	*PGLZ_strategy_default;
-extern PGLZ_Strategy	*PGLZ_strategy_allways;
-extern PGLZ_Strategy	*PGLZ_strategy_never;
+extern PGLZ_Strategy *PGLZ_strategy_default;
+extern PGLZ_Strategy *PGLZ_strategy_allways;
+extern PGLZ_Strategy *PGLZ_strategy_never;
 
 
 /* ----------
@@ -177,10 +180,10 @@ extern PGLZ_Strategy	*PGLZ_strategy_never;
  *		Initialize a decomp state from a compressed input.
  * ----------
  */
-#define pglz_decomp_init(_ds,_lz) {											\
-		(_ds)->cp_in		= ((unsigned char *)(_lz)) 						\
+#define pglz_decomp_init(_ds,_lz) do {											\
+		(_ds)->cp_in		= ((unsigned char *)(_lz))						\
 											+ sizeof(PGLZ_Header);			\
-		(_ds)->cp_end		= (_ds)->cp_in + (_lz)->varsize 				\
+		(_ds)->cp_end		= (_ds)->cp_in + (_lz)->varsize					\
 											- sizeof(PGLZ_Header);			\
 		if (PGLZ_IS_COMPRESSED((_lz))) {									\
 			(_ds)->temp_buf		= (unsigned char *)							\
@@ -193,7 +196,7 @@ extern PGLZ_Strategy	*PGLZ_strategy_never;
 			(_ds)->temp_buf		= NULL;										\
 			(_ds)->next_char	= pglz_get_next_decomp_char_from_plain;		\
 		}																	\
-	}
+	} while (0)
 
 
 /* ----------
@@ -202,19 +205,19 @@ extern PGLZ_Strategy	*PGLZ_strategy_never;
  *		Deallocate resources after decompression.
  * ----------
  */
-#define pglz_decomp_end(_ds) {												\
+#define pglz_decomp_end(_ds) do {											\
 		if ((_ds)->temp_buf != NULL)										\
 			pfree((void *)((_ds)->temp_buf));								\
-	}
+	} while (0)
 
 
 /* ----------
  * Global function declarations
  * ----------
  */
-int	pglz_compress (char *source, int32 slen, PGLZ_Header *dest,
-									 PGLZ_Strategy *strategy);
-int pglz_decompress (PGLZ_Header *source, char *dest);
+int pglz_compress(char *source, int32 slen, PGLZ_Header *dest,
+			  PGLZ_Strategy *strategy);
+int			pglz_decompress(PGLZ_Header *source, char *dest);
 
 
 /* ----------
@@ -222,8 +225,7 @@ int pglz_decompress (PGLZ_Header *source, char *dest);
  * Internal use only.
  * ----------
  */
-extern int pglz_get_next_decomp_char_from_lzdata(PGLZ_DecompState *dstate);
-extern int pglz_get_next_decomp_char_from_plain(PGLZ_DecompState *dstate);
+extern int	pglz_get_next_decomp_char_from_lzdata(PGLZ_DecompState *dstate);
+extern int	pglz_get_next_decomp_char_from_plain(PGLZ_DecompState *dstate);
 
-#endif /* _PG_LZCOMPRESS_H_ */
-
+#endif	 /* _PG_LZCOMPRESS_H_ */

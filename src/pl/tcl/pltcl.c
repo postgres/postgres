@@ -3,7 +3,7 @@
  *			  procedural language (PL)
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/pl/tcl/pltcl.c,v 1.19 2000/02/27 07:18:29 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/pl/tcl/pltcl.c,v 1.20 2000/04/12 17:17:20 momjian Exp $
  *
  *	  This software is copyrighted by Jan Wieck - Hamburg.
  *
@@ -112,7 +112,7 @@ static void pltcl_init_load_unknown(void);
 #endif	 /* PLTCL_UNKNOWN_SUPPORT */
 
 Datum pltcl_call_handler(FmgrInfo *proinfo,
-						 FmgrValues *proargs, bool *isNull);
+				   FmgrValues *proargs, bool *isNull);
 
 static Datum pltcl_func_handler(FmgrInfo *proinfo,
 				   FmgrValues *proargs, bool *isNull);
@@ -417,7 +417,7 @@ pltcl_func_handler(FmgrInfo *proinfo,
 	char	   *stroid;
 	Tcl_HashEntry *hashent;
 	int			hashnew;
-	pltcl_proc_desc * volatile prodesc;
+	pltcl_proc_desc *volatile prodesc;
 	Tcl_DString tcl_cmd;
 	Tcl_DString list_tmp;
 	int			tcl_rc;
@@ -739,7 +739,7 @@ pltcl_trigger_handler(FmgrInfo *proinfo)
 	int			hashnew;
 	pltcl_proc_desc *prodesc;
 	TupleDesc	tupdesc;
-	volatile HeapTuple	rettup;
+	volatile HeapTuple rettup;
 	Tcl_DString tcl_cmd;
 	Tcl_DString tcl_trigtup;
 	Tcl_DString tcl_newtup;
@@ -919,7 +919,7 @@ pltcl_trigger_handler(FmgrInfo *proinfo)
 	Tcl_DStringAppendElement(&tcl_trigtup, "");
 	for (i = 0; i < tupdesc->natts; i++)
 		Tcl_DStringAppendElement(&tcl_trigtup,
-			NameStr(tupdesc->attrs[i]->attname));
+								 NameStr(tupdesc->attrs[i]->attname));
 	Tcl_DStringAppendElement(&tcl_cmd, Tcl_DStringValue(&tcl_trigtup));
 	Tcl_DStringFree(&tcl_trigtup);
 	Tcl_DStringInit(&tcl_trigtup);
@@ -1289,13 +1289,13 @@ pltcl_SPI_exec(ClientData cdata, Tcl_Interp *interp,
 	int			spi_rc;
 	char		buf[64];
 	int			count = 0;
-	char	   * volatile arrayname = NULL;
-	volatile int		query_idx;
+	char	   *volatile arrayname = NULL;
+	volatile int query_idx;
 	int			i;
 	int			loop_rc;
 	int			ntuples;
-	HeapTuple * volatile tuples;
-	volatile TupleDesc	tupdesc = NULL;
+	HeapTuple  *volatile tuples;
+	volatile TupleDesc tupdesc = NULL;
 	sigjmp_buf	save_restart;
 
 	char	   *usage = "syntax error - 'SPI_exec "
@@ -1706,15 +1706,15 @@ pltcl_SPI_execp(ClientData cdata, Tcl_Interp *interp,
 	int			loop_body;
 	Tcl_HashEntry *hashent;
 	pltcl_query_desc *qdesc;
-	char * volatile nulls = NULL;
-	char * volatile arrayname = NULL;
+	char	   *volatile nulls = NULL;
+	char	   *volatile arrayname = NULL;
 	int			count = 0;
 	int			callnargs;
 	static char **callargs = NULL;
 	int			loop_rc;
 	int			ntuples;
-	HeapTuple * volatile tuples = NULL;
-	volatile TupleDesc	tupdesc = NULL;
+	HeapTuple  *volatile tuples = NULL;
+	volatile TupleDesc tupdesc = NULL;
 	sigjmp_buf	save_restart;
 
 	char	   *usage = "syntax error - 'SPI_execp "

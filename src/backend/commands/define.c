@@ -10,7 +10,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/commands/define.c,v 1.39 2000/04/07 13:39:24 thomas Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/commands/define.c,v 1.40 2000/04/12 17:14:58 momjian Exp $
  *
  * DESCRIPTION
  *	  The "DefineFoo" routines take the parse tree and pick out the
@@ -137,12 +137,13 @@ compute_full_attributes(List *parameters, int32 *byte_pct_p,
 
 	foreach(pl, parameters)
 	{
-		DefElem *param = (DefElem *) lfirst(pl);
+		DefElem    *param = (DefElem *) lfirst(pl);
 
 		if (strcasecmp(param->defname, "iscachable") == 0)
 			*canCache_p = true;
 		else if (strcasecmp(param->defname, "trusted") == 0)
 		{
+
 			/*
 			 * we don't have untrusted functions any more. The 4.2
 			 * implementation is lousy anyway so I took it out. -ay 10/94
@@ -233,12 +234,14 @@ CreateFunction(ProcedureStmt *stmt, CommandDest dest)
 	 */
 
 	bool		returnsSet;
+
 	/* The function returns a set of values, as opposed to a singleton. */
 
 	bool		lanisPL = false;
 
 	/*
-	 * The following are optional user-supplied attributes of the function.
+	 * The following are optional user-supplied attributes of the
+	 * function.
 	 */
 	int32		byte_pct,
 				perbyte_cpu,
@@ -256,7 +259,7 @@ CreateFunction(ProcedureStmt *stmt, CommandDest dest)
 			elog(ERROR,
 				 "Only users with Postgres superuser privilege are "
 				 "permitted to create a function "
-				 "in the '%s' language.  Others may use the 'sql' language "
+			  "in the '%s' language.  Others may use the 'sql' language "
 				 "or the created procedural languages.",
 				 languageName);
 	}
@@ -316,17 +319,17 @@ CreateFunction(ProcedureStmt *stmt, CommandDest dest)
 	interpret_AS_clause(languageName, stmt->as, &prosrc_str, &probin_str);
 
 	/*
-	 * And now that we have all the parameters, and know we're
-	 * permitted to do so, go ahead and create the function.
+	 * And now that we have all the parameters, and know we're permitted
+	 * to do so, go ahead and create the function.
 	 */
 	ProcedureCreate(stmt->funcname,
 					returnsSet,
 					prorettype,
 					languageName,
-					prosrc_str,		/* converted to text later */
-					probin_str,		/* converted to text later */
+					prosrc_str, /* converted to text later */
+					probin_str, /* converted to text later */
 					canCache,
-					true,			/* (obsolete "trusted") */
+					true,		/* (obsolete "trusted") */
 					byte_pct,
 					perbyte_cpu,
 					percall_cpu,
@@ -378,7 +381,7 @@ DefineOperator(char *oprName,
 		if (!strcasecmp(defel->defname, "leftarg"))
 		{
 			if ((nodeTag(defel->arg) == T_TypeName)
-				&& (((TypeName *)defel->arg)->setof))
+				&& (((TypeName *) defel->arg)->setof))
 				elog(ERROR, "setof type not implemented for leftarg");
 
 			typeName1 = defGetString(defel);
@@ -388,7 +391,7 @@ DefineOperator(char *oprName,
 		else if (!strcasecmp(defel->defname, "rightarg"))
 		{
 			if ((nodeTag(defel->arg) == T_TypeName)
-				&& (((TypeName *)defel->arg)->setof))
+				&& (((TypeName *) defel->arg)->setof))
 				elog(ERROR, "setof type not implemented for rightarg");
 
 			typeName2 = defGetString(defel);
@@ -698,16 +701,16 @@ DefineType(char *typeName, List *parameters)
 static char *
 defGetString(DefElem *def)
 {
-	char *string;
+	char	   *string;
 
 	if (nodeTag(def->arg) == T_String)
 		string = strVal(def->arg);
 	else if (nodeTag(def->arg) == T_TypeName)
-		string = ((TypeName *)def->arg)->name;
+		string = ((TypeName *) def->arg)->name;
 	else
 		string = NULL;
 #if 0
-		elog(ERROR, "Define: \"%s\" = what?", def->defname);
+	elog(ERROR, "Define: \"%s\" = what?", def->defname);
 #endif
 
 	return string;

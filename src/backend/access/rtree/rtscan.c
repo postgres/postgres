@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/access/rtree/Attic/rtscan.c,v 1.31 2000/01/26 05:56:00 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/access/rtree/Attic/rtscan.c,v 1.32 2000/04/12 17:14:51 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -268,7 +268,7 @@ rtdropscan(IndexScanDesc s)
 		prev = l;
 
 	if (l == (RTScanList) NULL)
-		elog(ERROR, "rtree scan list corrupted -- cannot find 0x%p", (void*)s);
+		elog(ERROR, "rtree scan list corrupted -- cannot find 0x%p", (void *) s);
 
 	if (prev == (RTScanList) NULL)
 		RTScans = l->rtsl_next;

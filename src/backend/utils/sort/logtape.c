@@ -7,14 +7,14 @@
  * tuplesort.c).  Merging is an ideal algorithm for tape devices, but if
  * we implement it on disk by creating a separate file for each "tape",
  * there is an annoying problem: the peak space usage is at least twice
- * the volume of actual data to be sorted.  (This must be so because each
+ * the volume of actual data to be sorted.	(This must be so because each
  * datum will appear in both the input and output tapes of the final
- * merge pass.  For seven-tape polyphase merge, which is otherwise a
+ * merge pass.	For seven-tape polyphase merge, which is otherwise a
  * pretty good algorithm, peak usage is more like 4x actual data volume.)
  *
  * We can work around this problem by recognizing that any one tape
  * dataset (with the possible exception of the final output) is written
- * and read exactly once in a perfectly sequential manner.  Therefore,
+ * and read exactly once in a perfectly sequential manner.	Therefore,
  * a datum once read will not be required again, and we can recycle its
  * space for use by the new tape dataset(s) being generated.  In this way,
  * the total space usage is essentially just the actual data volume, plus
@@ -59,12 +59,12 @@
  * is aborted by elog(ERROR).  To avoid confusion, the caller should take
  * care that all calls for a single LogicalTapeSet are made in the same
  * palloc context.
- * 
+ *
  * Portions Copyright (c) 1996-2000, PostgreSQL, Inc
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/sort/logtape.c,v 1.4 2000/03/17 02:36:30 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/sort/logtape.c,v 1.5 2000/04/12 17:16:11 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -78,7 +78,7 @@
  * Block indexes are "long"s, so we can fit this many per indirect block.
  * NB: we assume this is an exact fit!
  */
-#define BLOCKS_PER_INDIR_BLOCK  ((int) (BLCKSZ / sizeof(long)))
+#define BLOCKS_PER_INDIR_BLOCK	((int) (BLCKSZ / sizeof(long)))
 
 /*
  * We use a struct like this for each active indirection level of each
@@ -91,8 +91,10 @@
 typedef struct IndirectBlock
 {
 	int			nextSlot;		/* next pointer slot to write or read */
-	struct IndirectBlock *nextup; /* parent indirect level, or NULL if top */
-	long		ptrs[BLOCKS_PER_INDIR_BLOCK]; /* indexes of contained blocks */
+	struct IndirectBlock *nextup;		/* parent indirect level, or NULL
+										 * if top */
+	long		ptrs[BLOCKS_PER_INDIR_BLOCK];	/* indexes of contained
+												 * blocks */
 } IndirectBlock;
 
 /*
@@ -105,23 +107,26 @@ typedef struct LogicalTape
 {
 	IndirectBlock *indirect;	/* bottom of my indirect-block hierarchy */
 	bool		writing;		/* T while in write phase */
-	bool		frozen;			/* T if blocks should not be freed when read */
+	bool		frozen;			/* T if blocks should not be freed when
+								 * read */
 	bool		dirty;			/* does buffer need to be written? */
+
 	/*
 	 * The total data volume in the logical tape is numFullBlocks * BLCKSZ
-	 * + lastBlockBytes.  BUT: we do not update lastBlockBytes during writing,
-	 * only at completion of a write phase.
+	 * + lastBlockBytes.  BUT: we do not update lastBlockBytes during
+	 * writing, only at completion of a write phase.
 	 */
 	long		numFullBlocks;	/* number of complete blocks in log tape */
-	int			lastBlockBytes;	/* valid bytes in last (incomplete) block */
+	int			lastBlockBytes; /* valid bytes in last (incomplete) block */
+
 	/*
 	 * Buffer for current data block.  Note we don't bother to store the
 	 * actual file block number of the data block (during the write phase
-	 * it hasn't been assigned yet, and during read we don't care anymore).
-	 * But we do need the relative block number so we can detect end-of-tape
-	 * while reading.
+	 * it hasn't been assigned yet, and during read we don't care
+	 * anymore). But we do need the relative block number so we can detect
+	 * end-of-tape while reading.
 	 */
-	long		curBlockNumber;	/* this block's logical blk# within tape */
+	long		curBlockNumber; /* this block's logical blk# within tape */
 	int			pos;			/* next read/write position in buffer */
 	int			nbytes;			/* total # of valid bytes in buffer */
 	char		buffer[BLCKSZ];
@@ -135,17 +140,21 @@ typedef struct LogicalTape
  */
 struct LogicalTapeSet
 {
-	BufFile	   *pfile;			/* underlying file for whole tape set */
+	BufFile    *pfile;			/* underlying file for whole tape set */
 	long		nFileBlocks;	/* # of blocks used in underlying file */
+
 	/*
-	 * We store the numbers of recycled-and-available blocks in freeBlocks[].
-	 * When there are no such blocks, we extend the underlying file.  Note
-	 * that the block numbers in freeBlocks are always in *decreasing* order,
-	 * so that removing the last entry gives us the lowest free block.
+	 * We store the numbers of recycled-and-available blocks in
+	 * freeBlocks[]. When there are no such blocks, we extend the
+	 * underlying file.  Note that the block numbers in freeBlocks are
+	 * always in *decreasing* order, so that removing the last entry gives
+	 * us the lowest free block.
 	 */
 	long	   *freeBlocks;		/* resizable array */
 	int			nFreeBlocks;	/* # of currently free blocks */
-	int			freeBlocksLen;	/* current allocated length of freeBlocks[] */
+	int			freeBlocksLen;	/* current allocated length of
+								 * freeBlocks[] */
+
 	/*
 	 * tapes[] is declared size 1 since C wants a fixed size, but actually
 	 * it is of length nTapes.
@@ -159,17 +168,17 @@ static void ltsReadBlock(LogicalTapeSet *lts, long blocknum, void *buffer);
 static long ltsGetFreeBlock(LogicalTapeSet *lts);
 static void ltsReleaseBlock(LogicalTapeSet *lts, long blocknum);
 static void ltsRecordBlockNum(LogicalTapeSet *lts, IndirectBlock *indirect,
-							  long blocknum);
+				  long blocknum);
 static long ltsRewindIndirectBlock(LogicalTapeSet *lts,
-								   IndirectBlock *indirect,
-								   bool freezing);
+					   IndirectBlock *indirect,
+					   bool freezing);
 static long ltsRewindFrozenIndirectBlock(LogicalTapeSet *lts,
-										 IndirectBlock *indirect);
+							 IndirectBlock *indirect);
 static long ltsRecallNextBlockNum(LogicalTapeSet *lts,
-								  IndirectBlock *indirect,
-								  bool frozen);
+					  IndirectBlock *indirect,
+					  bool frozen);
 static long ltsRecallPrevBlockNum(LogicalTapeSet *lts,
-								  IndirectBlock *indirect);
+					  IndirectBlock *indirect);
 static void ltsDumpBuffer(LogicalTapeSet *lts, LogicalTape *lt);
 
 
@@ -194,7 +203,7 @@ ltsWriteBlock(LogicalTapeSet *lts, long blocknum, void *buffer)
 /*
  * Read a block-sized buffer from the specified block of the underlying file.
  *
- * No need for an error return convention; we elog() on any error.  This
+ * No need for an error return convention; we elog() on any error.	This
  * module should never attempt to read a block it doesn't know is there.
  */
 static void
@@ -215,9 +224,11 @@ ltsReadBlock(LogicalTapeSet *lts, long blocknum, void *buffer)
 static long
 ltsGetFreeBlock(LogicalTapeSet *lts)
 {
-	/* If there are multiple free blocks, we select the one appearing last
-	 * in freeBlocks[].  If there are none, assign the next block at the end
-	 * of the file.
+
+	/*
+	 * If there are multiple free blocks, we select the one appearing last
+	 * in freeBlocks[].  If there are none, assign the next block at the
+	 * end of the file.
 	 */
 	if (lts->nFreeBlocks > 0)
 		return lts->freeBlocks[--lts->nFreeBlocks];
@@ -231,8 +242,8 @@ ltsGetFreeBlock(LogicalTapeSet *lts)
 static void
 ltsReleaseBlock(LogicalTapeSet *lts, long blocknum)
 {
-	int		ndx;
-	long   *ptr;
+	int			ndx;
+	long	   *ptr;
 
 	/*
 	 * Enlarge freeBlocks array if full.
@@ -241,13 +252,14 @@ ltsReleaseBlock(LogicalTapeSet *lts, long blocknum)
 	{
 		lts->freeBlocksLen *= 2;
 		lts->freeBlocks = (long *) repalloc(lts->freeBlocks,
-											lts->freeBlocksLen * sizeof(long));
+									  lts->freeBlocksLen * sizeof(long));
 	}
+
 	/*
 	 * Insert blocknum into array, preserving decreasing order (so that
-	 * ltsGetFreeBlock returns the lowest available block number).
-	 * This could get fairly slow if there were many free blocks, but
-	 * we don't expect there to be very many at one time.
+	 * ltsGetFreeBlock returns the lowest available block number). This
+	 * could get fairly slow if there were many free blocks, but we don't
+	 * expect there to be very many at one time.
 	 */
 	ndx = lts->nFreeBlocks++;
 	ptr = lts->freeBlocks + ndx;
@@ -274,12 +286,13 @@ ltsRecordBlockNum(LogicalTapeSet *lts, IndirectBlock *indirect,
 {
 	if (indirect->nextSlot >= BLOCKS_PER_INDIR_BLOCK)
 	{
+
 		/*
 		 * This indirect block is full, so dump it out and recursively
-		 * save its address in the next indirection level.  Create a
-		 * new indirection level if there wasn't one before.
+		 * save its address in the next indirection level.	Create a new
+		 * indirection level if there wasn't one before.
 		 */
-		long	indirblock = ltsGetFreeBlock(lts);
+		long		indirblock = ltsGetFreeBlock(lts);
 
 		ltsWriteBlock(lts, indirblock, (void *) indirect->ptrs);
 		if (indirect->nextup == NULL)
@@ -289,6 +302,7 @@ ltsRecordBlockNum(LogicalTapeSet *lts, IndirectBlock *indirect,
 			indirect->nextup->nextup = NULL;
 		}
 		ltsRecordBlockNum(lts, indirect->nextup, indirblock);
+
 		/*
 		 * Reset to fill another indirect block at this level.
 		 */
@@ -299,7 +313,7 @@ ltsRecordBlockNum(LogicalTapeSet *lts, IndirectBlock *indirect,
 
 /*
  * Reset a logical tape's indirect-block hierarchy after a write pass
- * to prepare for reading.  We dump out partly-filled blocks except
+ * to prepare for reading.	We dump out partly-filled blocks except
  * at the top of the hierarchy, and we rewind each level to the start.
  * This call returns the first data block number, or -1L if the tape
  * is empty.
@@ -315,22 +329,24 @@ ltsRewindIndirectBlock(LogicalTapeSet *lts,
 	/* Insert sentinel if block is not full */
 	if (indirect->nextSlot < BLOCKS_PER_INDIR_BLOCK)
 		indirect->ptrs[indirect->nextSlot] = -1L;
+
 	/*
 	 * If block is not topmost, write it out, and recurse to obtain
-	 * address of first block in this hierarchy level.  Read that one in.
+	 * address of first block in this hierarchy level.	Read that one in.
 	 */
 	if (indirect->nextup != NULL)
 	{
-		long	indirblock = ltsGetFreeBlock(lts);
+		long		indirblock = ltsGetFreeBlock(lts);
 
 		ltsWriteBlock(lts, indirblock, (void *) indirect->ptrs);
 		ltsRecordBlockNum(lts, indirect->nextup, indirblock);
 		indirblock = ltsRewindIndirectBlock(lts, indirect->nextup, freezing);
 		Assert(indirblock != -1L);
 		ltsReadBlock(lts, indirblock, (void *) indirect->ptrs);
-		if (! freezing)
+		if (!freezing)
 			ltsReleaseBlock(lts, indirblock);
 	}
+
 	/*
 	 * Reset my next-block pointer, and then fetch a block number if any.
 	 */
@@ -349,18 +365,20 @@ static long
 ltsRewindFrozenIndirectBlock(LogicalTapeSet *lts,
 							 IndirectBlock *indirect)
 {
+
 	/*
-	 * If block is not topmost, recurse to obtain
-	 * address of first block in this hierarchy level.  Read that one in.
+	 * If block is not topmost, recurse to obtain address of first block
+	 * in this hierarchy level.  Read that one in.
 	 */
 	if (indirect->nextup != NULL)
 	{
-		long	indirblock;
+		long		indirblock;
 
 		indirblock = ltsRewindFrozenIndirectBlock(lts, indirect->nextup);
 		Assert(indirblock != -1L);
 		ltsReadBlock(lts, indirblock, (void *) indirect->ptrs);
 	}
+
 	/*
 	 * Reset my next-block pointer, and then fetch a block number if any.
 	 */
@@ -384,7 +402,7 @@ ltsRecallNextBlockNum(LogicalTapeSet *lts,
 	if (indirect->nextSlot >= BLOCKS_PER_INDIR_BLOCK ||
 		indirect->ptrs[indirect->nextSlot] == -1L)
 	{
-		long	indirblock;
+		long		indirblock;
 
 		if (indirect->nextup == NULL)
 			return -1L;			/* nothing left at this level */
@@ -392,7 +410,7 @@ ltsRecallNextBlockNum(LogicalTapeSet *lts,
 		if (indirblock == -1L)
 			return -1L;			/* nothing left at this level */
 		ltsReadBlock(lts, indirblock, (void *) indirect->ptrs);
-		if (! frozen)
+		if (!frozen)
 			ltsReleaseBlock(lts, indirblock);
 		indirect->nextSlot = 0;
 	}
@@ -416,7 +434,7 @@ ltsRecallPrevBlockNum(LogicalTapeSet *lts,
 {
 	if (indirect->nextSlot <= 1)
 	{
-		long	indirblock;
+		long		indirblock;
 
 		if (indirect->nextup == NULL)
 			return -1L;			/* nothing left at this level */
@@ -424,13 +442,15 @@ ltsRecallPrevBlockNum(LogicalTapeSet *lts,
 		if (indirblock == -1L)
 			return -1L;			/* nothing left at this level */
 		ltsReadBlock(lts, indirblock, (void *) indirect->ptrs);
-		/* The previous block would only have been written out if full,
-		 * so we need not search it for a -1 sentinel.
+
+		/*
+		 * The previous block would only have been written out if full, so
+		 * we need not search it for a -1 sentinel.
 		 */
-		indirect->nextSlot = BLOCKS_PER_INDIR_BLOCK+1;
+		indirect->nextSlot = BLOCKS_PER_INDIR_BLOCK + 1;
 	}
 	indirect->nextSlot--;
-	return indirect->ptrs[indirect->nextSlot-1];
+	return indirect->ptrs[indirect->nextSlot - 1];
 }
 
 
@@ -443,8 +463,8 @@ LogicalTapeSet *
 LogicalTapeSetCreate(int ntapes)
 {
 	LogicalTapeSet *lts;
-	LogicalTape	   *lt;
-	int				i;
+	LogicalTape *lt;
+	int			i;
 
 	/*
 	 * Create top-level struct.  First LogicalTape pointer is already
@@ -452,13 +472,14 @@ LogicalTapeSetCreate(int ntapes)
 	 */
 	Assert(ntapes > 0);
 	lts = (LogicalTapeSet *) palloc(sizeof(LogicalTapeSet) +
-									(ntapes-1) * sizeof(LogicalTape *));
+									(ntapes - 1) *sizeof(LogicalTape *));
 	lts->pfile = BufFileCreateTemp();
 	lts->nFileBlocks = 0L;
 	lts->freeBlocksLen = 32;	/* reasonable initial guess */
 	lts->freeBlocks = (long *) palloc(lts->freeBlocksLen * sizeof(long));
 	lts->nFreeBlocks = 0;
 	lts->nTapes = ntapes;
+
 	/*
 	 * Create per-tape structs, including first-level indirect blocks.
 	 */
@@ -484,12 +505,13 @@ LogicalTapeSetCreate(int ntapes)
 /*
  * Close a logical tape set and release all resources.
  */
-void LogicalTapeSetClose(LogicalTapeSet *lts)
+void
+LogicalTapeSetClose(LogicalTapeSet *lts)
 {
-	LogicalTape	   *lt;
-	IndirectBlock  *ib,
-				   *nextib;
-	int				i;
+	LogicalTape *lt;
+	IndirectBlock *ib,
+			   *nextib;
+	int			i;
 
 	BufFileClose(lts->pfile);
 	for (i = 0; i < lts->nTapes; i++)
@@ -512,7 +534,7 @@ void LogicalTapeSetClose(LogicalTapeSet *lts)
 static void
 ltsDumpBuffer(LogicalTapeSet *lts, LogicalTape *lt)
 {
-	long	datablock = ltsGetFreeBlock(lts);
+	long		datablock = ltsGetFreeBlock(lts);
 
 	Assert(lt->dirty);
 	ltsWriteBlock(lts, datablock, (void *) lt->buffer);
@@ -530,8 +552,8 @@ void
 LogicalTapeWrite(LogicalTapeSet *lts, int tapenum,
 				 void *ptr, size_t size)
 {
-	LogicalTape	   *lt;
-	size_t			nthistime;
+	LogicalTape *lt;
+	size_t		nthistime;
 
 	Assert(tapenum >= 0 && tapenum < lts->nTapes);
 	lt = lts->tapes[tapenum];
@@ -543,9 +565,7 @@ LogicalTapeWrite(LogicalTapeSet *lts, int tapenum,
 		{
 			/* Buffer full, dump it out */
 			if (lt->dirty)
-			{
 				ltsDumpBuffer(lts, lt);
-			}
 			else
 			{
 				/* Hmm, went directly from reading to writing? */
@@ -582,20 +602,21 @@ LogicalTapeWrite(LogicalTapeSet *lts, int tapenum,
 void
 LogicalTapeRewind(LogicalTapeSet *lts, int tapenum, bool forWrite)
 {
-	LogicalTape	   *lt;
-	long			datablocknum;
+	LogicalTape *lt;
+	long		datablocknum;
 
 	Assert(tapenum >= 0 && tapenum < lts->nTapes);
 	lt = lts->tapes[tapenum];
 
-	if (! forWrite)
+	if (!forWrite)
 	{
 		if (lt->writing)
 		{
+
 			/*
 			 * Completion of a write phase.  Flush last partial data
-			 * block, flush any partial indirect blocks, rewind for
-			 * normal (destructive) read.
+			 * block, flush any partial indirect blocks, rewind for normal
+			 * (destructive) read.
 			 */
 			if (lt->dirty)
 				ltsDumpBuffer(lts, lt);
@@ -605,6 +626,7 @@ LogicalTapeRewind(LogicalTapeSet *lts, int tapenum, bool forWrite)
 		}
 		else
 		{
+
 			/*
 			 * This is only OK if tape is frozen; we rewind for (another)
 			 * read pass.
@@ -619,7 +641,7 @@ LogicalTapeRewind(LogicalTapeSet *lts, int tapenum, bool forWrite)
 		if (datablocknum != -1L)
 		{
 			ltsReadBlock(lts, datablocknum, (void *) lt->buffer);
-			if (! lt->frozen)
+			if (!lt->frozen)
 				ltsReleaseBlock(lts, datablocknum);
 			lt->nbytes = (lt->curBlockNumber < lt->numFullBlocks) ?
 				BLCKSZ : lt->lastBlockBytes;
@@ -627,18 +649,19 @@ LogicalTapeRewind(LogicalTapeSet *lts, int tapenum, bool forWrite)
 	}
 	else
 	{
-		/*
-		 * Completion of a read phase.  Rewind and prepare for write.
-		 *
-		 * NOTE: we assume the caller has read the tape to the end;
-		 * otherwise untouched data and indirect blocks will not have
-		 * been freed.  We could add more code to free any unread blocks,
-		 * but in current usage of this module it'd be useless code.
-		 */
-		IndirectBlock  *ib,
-					   *nextib;
 
-		Assert(! lt->writing && ! lt->frozen);
+		/*
+		 * Completion of a read phase.	Rewind and prepare for write.
+		 *
+		 * NOTE: we assume the caller has read the tape to the end; otherwise
+		 * untouched data and indirect blocks will not have been freed. We
+		 * could add more code to free any unread blocks, but in current
+		 * usage of this module it'd be useless code.
+		 */
+		IndirectBlock *ib,
+				   *nextib;
+
+		Assert(!lt->writing && !lt->frozen);
 		/* Must truncate the indirect-block hierarchy down to one level. */
 		for (ib = lt->indirect->nextup; ib != NULL; ib = nextib)
 		{
@@ -666,28 +689,28 @@ size_t
 LogicalTapeRead(LogicalTapeSet *lts, int tapenum,
 				void *ptr, size_t size)
 {
-	LogicalTape	   *lt;
-	size_t			nread = 0;
-	size_t			nthistime;
+	LogicalTape *lt;
+	size_t		nread = 0;
+	size_t		nthistime;
 
 	Assert(tapenum >= 0 && tapenum < lts->nTapes);
 	lt = lts->tapes[tapenum];
-	Assert(! lt->writing);
+	Assert(!lt->writing);
 
 	while (size > 0)
 	{
 		if (lt->pos >= lt->nbytes)
 		{
 			/* Try to load more data into buffer. */
-			long	datablocknum = ltsRecallNextBlockNum(lts, lt->indirect,
-														 lt->frozen);
+			long		datablocknum = ltsRecallNextBlockNum(lts, lt->indirect,
+															 lt->frozen);
 
 			if (datablocknum == -1L)
 				break;			/* EOF */
 			lt->curBlockNumber++;
 			lt->pos = 0;
 			ltsReadBlock(lts, datablocknum, (void *) lt->buffer);
-			if (! lt->frozen)
+			if (!lt->frozen)
 				ltsReleaseBlock(lts, datablocknum);
 			lt->nbytes = (lt->curBlockNumber < lt->numFullBlocks) ?
 				BLCKSZ : lt->lastBlockBytes;
@@ -719,23 +742,22 @@ LogicalTapeRead(LogicalTapeSet *lts, int tapenum,
  *
  * This *must* be called just at the end of a write pass, before the
  * tape is rewound (after rewind is too late!).  It performs a rewind
- * and switch to read mode "for free".  An immediately following rewind-
+ * and switch to read mode "for free".	An immediately following rewind-
  * for-read call is OK but not necessary.
  */
 void
 LogicalTapeFreeze(LogicalTapeSet *lts, int tapenum)
 {
-	LogicalTape	   *lt;
-	long			datablocknum;
+	LogicalTape *lt;
+	long		datablocknum;
 
 	Assert(tapenum >= 0 && tapenum < lts->nTapes);
 	lt = lts->tapes[tapenum];
 	Assert(lt->writing);
 
 	/*
-	 * Completion of a write phase.  Flush last partial data
-	 * block, flush any partial indirect blocks, rewind for
-	 * nondestructive read.
+	 * Completion of a write phase.  Flush last partial data block, flush
+	 * any partial indirect blocks, rewind for nondestructive read.
 	 */
 	if (lt->dirty)
 		ltsDumpBuffer(lts, lt);
@@ -756,7 +778,7 @@ LogicalTapeFreeze(LogicalTapeSet *lts, int tapenum)
 }
 
 /*
- * Backspace the tape a given number of bytes.  (We also support a more
+ * Backspace the tape a given number of bytes.	(We also support a more
  * general seek interface, see below.)
  *
  * *Only* a frozen-for-read tape can be backed up; we don't support
@@ -769,9 +791,9 @@ LogicalTapeFreeze(LogicalTapeSet *lts, int tapenum)
 bool
 LogicalTapeBackspace(LogicalTapeSet *lts, int tapenum, size_t size)
 {
-	LogicalTape	   *lt;
-	long			nblocks;
-	int				newpos;
+	LogicalTape *lt;
+	long		nblocks;
+	int			newpos;
 
 	Assert(tapenum >= 0 && tapenum < lts->nTapes);
 	lt = lts->tapes[tapenum];
@@ -785,6 +807,7 @@ LogicalTapeBackspace(LogicalTapeSet *lts, int tapenum, size_t size)
 		lt->pos -= (int) size;
 		return true;
 	}
+
 	/*
 	 * Not-so-easy case.  Figure out whether it's possible at all.
 	 */
@@ -800,14 +823,15 @@ LogicalTapeBackspace(LogicalTapeSet *lts, int tapenum, size_t size)
 		newpos = 0;
 	if (nblocks > lt->curBlockNumber)
 		return false;			/* a seek too far... */
+
 	/*
-	 * OK, we need to back up nblocks blocks.  This implementation
-	 * would be pretty inefficient for long seeks, but we really
-	 * aren't expecting that (a seek over one tuple is typical).
+	 * OK, we need to back up nblocks blocks.  This implementation would
+	 * be pretty inefficient for long seeks, but we really aren't
+	 * expecting that (a seek over one tuple is typical).
 	 */
 	while (nblocks-- > 0)
 	{
-		long	datablocknum = ltsRecallPrevBlockNum(lts, lt->indirect);
+		long		datablocknum = ltsRecallPrevBlockNum(lts, lt->indirect);
 
 		if (datablocknum == -1L)
 			elog(ERROR, "LogicalTapeBackspace: unexpected end of tape");
@@ -834,7 +858,7 @@ bool
 LogicalTapeSeek(LogicalTapeSet *lts, int tapenum,
 				long blocknum, int offset)
 {
-	LogicalTape	   *lt;
+	LogicalTape *lt;
 
 	Assert(tapenum >= 0 && tapenum < lts->nTapes);
 	lt = lts->tapes[tapenum];
@@ -849,20 +873,22 @@ LogicalTapeSeek(LogicalTapeSet *lts, int tapenum,
 		lt->pos = offset;
 		return true;
 	}
+
 	/*
 	 * Not-so-easy case.  Figure out whether it's possible at all.
 	 */
 	if (blocknum < 0 || blocknum > lt->numFullBlocks ||
 		(blocknum == lt->numFullBlocks && offset > lt->lastBlockBytes))
 		return false;
+
 	/*
-	 * OK, advance or back up to the target block.  This implementation
-	 * would be pretty inefficient for long seeks, but we really
-	 * aren't expecting that (a seek over one tuple is typical).
+	 * OK, advance or back up to the target block.	This implementation
+	 * would be pretty inefficient for long seeks, but we really aren't
+	 * expecting that (a seek over one tuple is typical).
 	 */
 	while (lt->curBlockNumber > blocknum)
 	{
-		long	datablocknum = ltsRecallPrevBlockNum(lts, lt->indirect);
+		long		datablocknum = ltsRecallPrevBlockNum(lts, lt->indirect);
 
 		if (datablocknum == -1L)
 			elog(ERROR, "LogicalTapeSeek: unexpected end of tape");
@@ -871,8 +897,8 @@ LogicalTapeSeek(LogicalTapeSet *lts, int tapenum,
 	}
 	while (lt->curBlockNumber < blocknum)
 	{
-		long	datablocknum = ltsRecallNextBlockNum(lts, lt->indirect,
-													 lt->frozen);
+		long		datablocknum = ltsRecallNextBlockNum(lts, lt->indirect,
+														 lt->frozen);
 
 		if (datablocknum == -1L)
 			elog(ERROR, "LogicalTapeSeek: unexpected end of tape");
@@ -889,13 +915,13 @@ LogicalTapeSeek(LogicalTapeSet *lts, int tapenum,
  * Obtain current position in a form suitable for a later LogicalTapeSeek.
  *
  * NOTE: it'd be OK to do this during write phase with intention of using
- * the position for a seek after freezing.  Not clear if anyone needs that.
+ * the position for a seek after freezing.	Not clear if anyone needs that.
  */
 void
 LogicalTapeTell(LogicalTapeSet *lts, int tapenum,
 				long *blocknum, int *offset)
 {
-	LogicalTape	   *lt;
+	LogicalTape *lt;
 
 	Assert(tapenum >= 0 && tapenum < lts->nTapes);
 	lt = lts->tapes[tapenum];

@@ -2,15 +2,15 @@
 /* -----------------------------------------------------------------------
  * formatting.h
  *
- * $Id: formatting.h,v 1.3 2000/02/16 17:26:26 thomas Exp $
+ * $Id: formatting.h,v 1.4 2000/04/12 17:16:55 momjian Exp $
  *
  *
- *   Portions Copyright (c) 1999-2000, PostgreSQL, Inc
+ *	 Portions Copyright (c) 1999-2000, PostgreSQL, Inc
  *
- *   The PostgreSQL routines for a DateTime/int/float/numeric formatting, 
- *   inspire with Oracle TO_CHAR() / TO_DATE() / TO_NUMBER() routines.  
+ *	 The PostgreSQL routines for a DateTime/int/float/numeric formatting,
+ *	 inspire with Oracle TO_CHAR() / TO_DATE() / TO_NUMBER() routines.
  *
- *   Karel Zak - Zakkr
+ *	 Karel Zak - Zakkr
  *
  * -----------------------------------------------------------------------
  */

@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/nodes/equalfuncs.c,v 1.65 2000/03/22 22:08:32 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/nodes/equalfuncs.c,v 1.66 2000/04/12 17:15:16 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -81,9 +81,11 @@ _equalFjoin(Fjoin *a, Fjoin *b)
 static bool
 _equalExpr(Expr *a, Expr *b)
 {
-	/* We do not examine typeOid, since the optimizer often doesn't
-	 * bother to set it in created nodes, and it is logically a
-	 * derivative of the oper field anyway.
+
+	/*
+	 * We do not examine typeOid, since the optimizer often doesn't bother
+	 * to set it in created nodes, and it is logically a derivative of the
+	 * oper field anyway.
 	 */
 	if (a->opType != b->opType)
 		return false;
@@ -134,7 +136,9 @@ _equalOper(Oper *a, Oper *b)
 		return false;
 	if (a->opresulttype != b->opresulttype)
 		return false;
-	/* We do not examine opid, opsize, or op_fcache, since these are
+
+	/*
+	 * We do not examine opid, opsize, or op_fcache, since these are
 	 * logically derived from opno, and they may not be set yet depending
 	 * on how far along the node is in the parse/plan pipeline.
 	 *
@@ -156,10 +160,11 @@ _equalConst(Const *a, Const *b)
 	if (a->constbyval != b->constbyval)
 		return false;
 	/* XXX What about constisset and constiscast? */
+
 	/*
-	 * We treat all NULL constants of the same type as equal.
-	 * Someday this might need to change?  But datumIsEqual
-	 * doesn't work on nulls, so...
+	 * We treat all NULL constants of the same type as equal. Someday this
+	 * might need to change?  But datumIsEqual doesn't work on nulls,
+	 * so...
 	 */
 	if (a->constisnull)
 		return true;
@@ -320,7 +325,9 @@ _equalArrayRef(ArrayRef *a, ArrayRef *b)
 static bool
 _equalRelOptInfo(RelOptInfo *a, RelOptInfo *b)
 {
-	/* We treat RelOptInfos as equal if they refer to the same base rels
+
+	/*
+	 * We treat RelOptInfos as equal if they refer to the same base rels
 	 * joined in the same order.  Is this sufficient?
 	 */
 	return equali(a->relids, b->relids);
@@ -329,8 +336,10 @@ _equalRelOptInfo(RelOptInfo *a, RelOptInfo *b)
 static bool
 _equalIndexOptInfo(IndexOptInfo *a, IndexOptInfo *b)
 {
-	/* We treat IndexOptInfos as equal if they refer to the same index.
-	 * Is this sufficient?
+
+	/*
+	 * We treat IndexOptInfos as equal if they refer to the same index. Is
+	 * this sufficient?
 	 */
 	if (a->indexoid != b->indexoid)
 		return false;
@@ -354,7 +363,9 @@ _equalPath(Path *a, Path *b)
 		return false;
 	if (!equal(a->parent, b->parent))
 		return false;
-	/* do not check path costs, since they may not be set yet, and being
+
+	/*
+	 * do not check path costs, since they may not be set yet, and being
 	 * float values there are roundoff error issues anyway...
 	 */
 	if (!equal(a->pathkeys, b->pathkeys))
@@ -375,8 +386,10 @@ _equalIndexPath(IndexPath *a, IndexPath *b)
 		return false;
 	if (!equali(a->joinrelids, b->joinrelids))
 		return false;
-	/* Skip 'rows' because of possibility of floating-point roundoff error.
-	 * It should be derivable from the other fields anyway.
+
+	/*
+	 * Skip 'rows' because of possibility of floating-point roundoff
+	 * error. It should be derivable from the other fields anyway.
 	 */
 	return true;
 }
@@ -442,12 +455,13 @@ _equalHashPath(HashPath *a, HashPath *b)
 /* XXX	This equality function is a quick hack, should be
  *		fixed to compare all fields.
  *
- * XXX  Why is this even here?  We don't have equal() funcs for
- *      any other kinds of Plan nodes... likely this is dead code...
+ * XXX	Why is this even here?	We don't have equal() funcs for
+ *		any other kinds of Plan nodes... likely this is dead code...
  */
 static bool
 _equalIndexScan(IndexScan *a, IndexScan *b)
 {
+
 	/*
 	 * if(a->scan.plan.cost != b->scan.plan.cost) return(false);
 	 */
@@ -642,9 +656,9 @@ _equalQuery(Query *a, Query *b)
 
 	/*
 	 * We do not check the internal-to-the-planner fields: base_rel_list,
-	 * join_rel_list, equi_key_list, query_pathkeys.
-	 * They might not be set yet, and in any case they should be derivable
-	 * from the other fields.
+	 * join_rel_list, equi_key_list, query_pathkeys. They might not be set
+	 * yet, and in any case they should be derivable from the other
+	 * fields.
 	 */
 	return true;
 }
@@ -882,7 +896,8 @@ equal(void *a, void *b)
 				List	   *lb = (List *) b;
 				List	   *l;
 
-				/* Try to reject by length check before we grovel through
+				/*
+				 * Try to reject by length check before we grovel through
 				 * all the elements...
 				 */
 				if (length(la) != length(lb))

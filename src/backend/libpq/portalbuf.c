@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/libpq/Attic/portalbuf.c,v 1.23 2000/03/17 02:36:08 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/libpq/Attic/portalbuf.c,v 1.24 2000/04/12 17:15:14 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -88,7 +88,7 @@ portals_realloc(size_t size)
 		portals = newp;
 	else
 		libpq_raise(&PortalError,
-					vararg_format("Cannot alloc more memory in portals_realloc"));
+		   vararg_format("Cannot alloc more memory in portals_realloc"));
 
 	for (i = oldsize; i < (int) portals_array_size; i++)
 		portals[i] = (PortalEntry *) NULL;
@@ -461,7 +461,7 @@ pbuf_findGroup(PortalBuffer *portal,
 
 	if (group == NULL)
 		libpq_raise(&PortalError,
-					vararg_format("Group index %d out of bound.", group_index));
+			 vararg_format("Group index %d out of bound.", group_index));
 
 	return group;
 }
@@ -484,7 +484,7 @@ pbuf_findFnumber(GroupBuffer *group,
 			return i;
 
 	libpq_raise(&PortalError,
-				vararg_format("Field-name %s does not exist.", field_name));
+			 vararg_format("Field-name %s does not exist.", field_name));
 
 	/* not reached, here to make compiler happy */
 	return 0;
@@ -501,7 +501,7 @@ pbuf_checkFnumber(GroupBuffer *group,
 {
 	if (field_number < 0 || field_number >= group->no_fields)
 		libpq_raise(&PortalError,
-					vararg_format("Field number %d out of bound.", field_number));
+		   vararg_format("Field number %d out of bound.", field_number));
 }
 
 /* --------------------------------

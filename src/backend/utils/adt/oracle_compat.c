@@ -1,7 +1,7 @@
 /*
  *	Edmund Mergl <E.Mergl@bawue.de>
  *
- *	$Id: oracle_compat.c,v 1.23 2000/04/07 13:39:41 thomas Exp $
+ *	$Id: oracle_compat.c,v 1.24 2000/04/12 17:15:51 momjian Exp $
  *
  */
 
@@ -466,10 +466,16 @@ rtrim(text *string, text *set)
 text *
 translate(text *string, text *from, text *to)
 {
-	text   *result;
-	char   *from_ptr, *to_ptr;
-	char   *source, *target;
-	int		m, fromlen, tolen, retlen, i;
+	text	   *result;
+	char	   *from_ptr,
+			   *to_ptr;
+	char	   *source,
+			   *target;
+	int			m,
+				fromlen,
+				tolen,
+				retlen,
+				i;
 
 	if (string == (text *) NULL ||
 		from == (text *) NULL ||
@@ -492,11 +498,11 @@ translate(text *string, text *from, text *to)
 
 	while (m-- > 0)
 	{
-		char	rep = *source++;
+		char		rep = *source++;
 
 		for (i = 0; i < fromlen; i++)
 		{
-            if (from_ptr[i] == rep)
+			if (from_ptr[i] == rep)
 				break;
 		}
 		if (i < fromlen)
@@ -521,6 +527,7 @@ translate(text *string, text *from, text *to)
 	}
 
 	VARSIZE(result) = retlen + VARHDRSZ;
+
 	/*
 	 * There may be some wasted space in the result if deletions occurred,
 	 * but it's not worth reallocating it; the function result probably
@@ -541,34 +548,35 @@ ascii(text *string)
 		return 0;
 
 	return ((int) *(VARDATA(string)));
-} /* ascii() */
+}	/* ascii() */
 
 
 text *
 ichar(int4 cvalue)
 {
-	text   *result;
+	text	   *result;
 
 	result = (text *) palloc(VARHDRSZ + 1);
 	VARSIZE(result) = VARHDRSZ + 1;
 	*VARDATA(result) = (char) cvalue;
 
 	return result;
-} /* ichar() */
+}	/* ichar() */
 
 
 text *
 repeat(text *string, int4 count)
 {
-	text   *result;
-	int		slen, tlen;
-	int		i;
-	char   *cp;
+	text	   *result;
+	int			slen,
+				tlen;
+	int			i;
+	char	   *cp;
 
 	if (count < 0)
 		count = 0;
 
-	slen = (VARSIZE(string)-VARHDRSZ);
+	slen = (VARSIZE(string) - VARHDRSZ);
 	tlen = (VARHDRSZ + (count * slen));
 
 	result = (text *) palloc(tlen);
@@ -582,5 +590,4 @@ repeat(text *string, int4 count)
 	}
 
 	return result;
-} /* repeat() */
-
+}	/* repeat() */

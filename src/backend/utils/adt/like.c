@@ -11,7 +11,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	$Header: /cvsroot/pgsql/src/backend/utils/adt/like.c,v 1.33 2000/01/26 05:57:14 momjian Exp $
+ *	$Header: /cvsroot/pgsql/src/backend/utils/adt/like.c,v 1.34 2000/04/12 17:15:50 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -149,7 +149,7 @@ textnlike(struct varlena * s, struct varlena * p)
 static int
 DoMatch(pg_wchar * text, pg_wchar * p)
 {
-	for (; *p && *text; text++, p++)
+	for (; *p && *text; text ++, p++)
 	{
 		switch (*p)
 		{
@@ -158,7 +158,7 @@ DoMatch(pg_wchar * text, pg_wchar * p)
 				p++;
 				/* FALLTHROUGH */
 			default:
-				if (*text != *p)
+				if (*text !=*p)
 					return LIKE_FALSE;
 				break;
 			case '_':
@@ -172,29 +172,37 @@ DoMatch(pg_wchar * text, pg_wchar * p)
 				/* Trailing percent matches everything. */
 				if (*p == '\0')
 					return LIKE_TRUE;
-				/* Otherwise, scan for a text position at which we
-				 * can match the rest of the pattern.
+
+				/*
+				 * Otherwise, scan for a text position at which we can
+				 * match the rest of the pattern.
 				 */
-				for (; *text; text++)
+				for (; *text; text ++)
 				{
-					/* Optimization to prevent most recursion: don't recurse
-					 * unless first pattern char might match this text char.
+
+					/*
+					 * Optimization to prevent most recursion: don't
+					 * recurse unless first pattern char might match this
+					 * text char.
 					 */
 					if (*text == *p || *p == '\\' || *p == '_')
 					{
-						int	matched = DoMatch(text, p);
+						int			matched = DoMatch(text, p);
+
 						if (matched != LIKE_FALSE)
-							return matched;	/* TRUE or ABORT */
+							return matched;		/* TRUE or ABORT */
 					}
 				}
-				/* End of text with no match, so no point in trying later
+
+				/*
+				 * End of text with no match, so no point in trying later
 				 * places to start matching this pattern.
 				 */
 				return LIKE_ABORT;
 		}
 	}
 
-	if (*text != '\0')
+	if (*text !='\0')
 		return LIKE_FALSE;		/* end of pattern, but not of text */
 
 	/* End of input string.  Do we have matching pattern remaining? */
@@ -202,8 +210,10 @@ DoMatch(pg_wchar * text, pg_wchar * p)
 		p++;
 	if (*p == '\0')
 		return LIKE_TRUE;
-	/* End of text with no match, so no point in trying later
-	 * places to start matching this pattern.
+
+	/*
+	 * End of text with no match, so no point in trying later places to
+	 * start matching this pattern.
 	 */
 	return LIKE_ABORT;
 }

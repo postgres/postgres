@@ -8,18 +8,26 @@
 
 #include "eloglvl.h"
 
-int elog_DEBUG(void) {
+int
+elog_DEBUG(void)
+{
 	return DEBUG;
 }
 
-int elog_ERROR(void) {
+int
+elog_ERROR(void)
+{
 	return ERROR;
 }
 
-int elog_NOIND(void) {
+int
+elog_NOIND(void)
+{
 	return NOIND;
 }
 
-int elog_NOTICE(void) {
+int
+elog_NOTICE(void)
+{
 	return NOTICE;
 }

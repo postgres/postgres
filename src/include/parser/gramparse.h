@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2000, PostgreSQL, Inc
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Id: gramparse.h,v 1.11 2000/01/26 05:58:26 momjian Exp $
+ * $Id: gramparse.h,v 1.12 2000/04/12 17:16:44 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -18,7 +18,7 @@
 /* from scan.l */
 extern void init_io(void);
 extern int	yylex(void);
-extern void yyerror(const char * message);
+extern void yyerror(const char *message);
 
 /* from gram.y */
 extern Oid	param_type(int t);

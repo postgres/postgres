@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/access/index/genam.c,v 1.24 2000/03/14 23:52:01 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/access/index/genam.c,v 1.25 2000/04/12 17:14:47 momjian Exp $
  *
  * NOTES
  *	  many of the old access method routines have been turned into
@@ -62,7 +62,7 @@
  *
  *		At the end of a scan, the AM's endscan routine undoes the locking,
  *		but does *not* call IndexScanEnd --- the higher-level index_endscan
- *		routine does that.  (We can't do it in the AM because index_endscan
+ *		routine does that.	(We can't do it in the AM because index_endscan
  *		still needs to touch the IndexScanDesc after calling the AM.)
  *
  *		Because of this, the AM does not have a choice whether to call
@@ -114,7 +114,10 @@ RelationGetIndexScan(Relation relation,
 	ItemPointerSetInvalid(&scan->currentMarkData);
 	ItemPointerSetInvalid(&scan->nextMarkData);
 
-	/* mark cached function lookup data invalid; it will be set on first use */
+	/*
+	 * mark cached function lookup data invalid; it will be set on first
+	 * use
+	 */
 	scan->fn_getnext.fn_oid = InvalidOid;
 
 	if (numberOfKeys > 0)

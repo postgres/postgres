@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/commands/Attic/rename.c,v 1.41 2000/01/26 05:56:13 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/commands/Attic/rename.c,v 1.42 2000/04/12 17:14:59 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -76,12 +76,12 @@ renameatt(char *relname,
 #endif
 
 	/*
-	 * Grab an exclusive lock on the target table, which we will NOT release
-	 * until end of transaction.
+	 * Grab an exclusive lock on the target table, which we will NOT
+	 * release until end of transaction.
 	 */
 	targetrelation = heap_openr(relname, AccessExclusiveLock);
 	relid = RelationGetRelid(targetrelation);
-	heap_close(targetrelation, NoLock);	/* close rel but keep lock! */
+	heap_close(targetrelation, NoLock); /* close rel but keep lock! */
 
 	/*
 	 * if the 'recurse' flag is set then we are supposed to rename this
@@ -160,11 +160,12 @@ renameatt(char *relname,
 	/* keep system catalog indices current */
 	{
 		Relation	irelations[Num_pg_attr_indices];
+
 		CatalogOpenIndices(Num_pg_attr_indices, Name_pg_attr_indices, irelations);
 		CatalogIndexInsert(irelations, Num_pg_attr_indices, attrelation, oldatttup);
 		CatalogCloseIndices(Num_pg_attr_indices, irelations);
 	}
-	
+
 	heap_freetuple(oldatttup);
 	heap_close(attrelation, RowExclusiveLock);
 }
@@ -194,8 +195,8 @@ renamerel(const char *oldrelname, const char *newrelname)
 			 newrelname);
 
 	/*
-	 * Grab an exclusive lock on the target table, which we will NOT release
-	 * until end of transaction.
+	 * Grab an exclusive lock on the target table, which we will NOT
+	 * release until end of transaction.
 	 */
 	targetrelation = heap_openr(oldrelname, AccessExclusiveLock);
 
@@ -211,14 +212,15 @@ renamerel(const char *oldrelname, const char *newrelname)
 	 *	they don't exist anyway.  So, no warning in that case.
 	 * ----------------
 	 */
-	if (IsTransactionBlock() && ! targetrelation->rd_myxactonly)
+	if (IsTransactionBlock() && !targetrelation->rd_myxactonly)
 		elog(NOTICE, "Caution: RENAME TABLE cannot be rolled back, so don't abort now");
 
 	/*
-	 * Flush all blocks of the relation out of the buffer pool.  We need this
-	 * because the blocks are marked with the relation's name as well as OID.
-	 * If some backend tries to write a dirty buffer with mdblindwrt after
-	 * we've renamed the physical file, we'll be in big trouble.
+	 * Flush all blocks of the relation out of the buffer pool.  We need
+	 * this because the blocks are marked with the relation's name as well
+	 * as OID. If some backend tries to write a dirty buffer with
+	 * mdblindwrt after we've renamed the physical file, we'll be in big
+	 * trouble.
 	 *
 	 * Since we hold the exclusive lock on the relation, we don't have to
 	 * worry about more blocks being read in while we finish the rename.
@@ -227,8 +229,8 @@ renamerel(const char *oldrelname, const char *newrelname)
 		elog(ERROR, "renamerel: unable to flush relation from buffer pool");
 
 	/*
-	 * Make sure smgr and lower levels close the relation's files.
-	 * (Next access to rel will reopen them.)
+	 * Make sure smgr and lower levels close the relation's files. (Next
+	 * access to rel will reopen them.)
 	 *
 	 * Note: we rely on shared cache invalidation message to make other
 	 * backends close and re-open the files.
@@ -238,14 +240,15 @@ renamerel(const char *oldrelname, const char *newrelname)
 	/*
 	 * Close rel, but keep exclusive lock!
 	 *
-	 * Note: we don't do anything about updating the relcache entry;
-	 * we assume it will be flushed by shared cache invalidate.
-	 * XXX is this good enough?  What if relation is myxactonly?
+	 * Note: we don't do anything about updating the relcache entry; we
+	 * assume it will be flushed by shared cache invalidate. XXX is this
+	 * good enough?  What if relation is myxactonly?
 	 */
 	heap_close(targetrelation, NoLock);
 
 	/*
-	 * Find relation's pg_class tuple, and make sure newrelname isn't in use.
+	 * Find relation's pg_class tuple, and make sure newrelname isn't in
+	 * use.
 	 */
 	relrelation = heap_openr(RelationRelationName, RowExclusiveLock);
 
@@ -262,8 +265,8 @@ renamerel(const char *oldrelname, const char *newrelname)
 	 * Perform physical rename of files.  If this fails, we haven't yet
 	 * done anything irreversible.
 	 *
-	 * XXX smgr.c ought to provide an interface for this; doing it
-	 * directly is bletcherous.
+	 * XXX smgr.c ought to provide an interface for this; doing it directly
+	 * is bletcherous.
 	 */
 	strcpy(oldpath, relpath(oldrelname));
 	strcpy(newpath, relpath(newrelname));

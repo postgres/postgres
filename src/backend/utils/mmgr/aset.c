@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/mmgr/aset.c,v 1.25 2000/03/08 23:42:58 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/mmgr/aset.c,v 1.26 2000/04/12 17:16:09 momjian Exp $
  *
  * NOTE:
  *	This is a new (Feb. 05, 1999) implementation of the allocation set
@@ -43,7 +43,7 @@
 /*--------------------
  * Chunk freelist k holds chunks of size 1 << (k + ALLOC_MINBITS),
  * for k = 0 .. ALLOCSET_NUM_FREELISTS-2.
- * The last freelist holds all larger free chunks.  Those chunks come in
+ * The last freelist holds all larger free chunks.	Those chunks come in
  * varying sizes depending on the request size, whereas smaller chunks are
  * coerced to powers of 2 to improve their "recyclability".
  *
@@ -261,9 +261,9 @@ AllocSetAlloc(AllocSet set, Size size)
 	Assert(chunk_size >= size);
 
 	/*
-	 * If there is enough room in the active allocation block, *and*
-	 * the chunk is less than ALLOC_BIGCHUNK_LIMIT, put the chunk
-	 * into the active allocation block.
+	 * If there is enough room in the active allocation block, *and* the
+	 * chunk is less than ALLOC_BIGCHUNK_LIMIT, put the chunk into the
+	 * active allocation block.
 	 */
 	if ((block = set->blocks) != NULL)
 	{
@@ -400,8 +400,10 @@ AllocSetFree(AllocSet set, AllocPointer pointer)
 
 	if (chunk->size >= ALLOC_BIGCHUNK_LIMIT)
 	{
-		/* Big chunks are certain to have been allocated as single-chunk
-		 * blocks.  Find the containing block and return it to malloc().
+
+		/*
+		 * Big chunks are certain to have been allocated as single-chunk
+		 * blocks.	Find the containing block and return it to malloc().
 		 */
 		AllocBlock	block = set->blocks;
 		AllocBlock	prevblock = NULL;
@@ -471,10 +473,12 @@ AllocSetRealloc(AllocSet set, AllocPointer pointer, Size size)
 
 	if (oldsize >= ALLOC_BIGCHUNK_LIMIT)
 	{
+
 		/*
-		 * If the chunk is already >= bigchunk limit, then it must have been
-		 * allocated as a single-chunk block.  Find the containing block and
-		 * use realloc() to make it bigger with minimum space wastage.
+		 * If the chunk is already >= bigchunk limit, then it must have
+		 * been allocated as a single-chunk block.	Find the containing
+		 * block and use realloc() to make it bigger with minimum space
+		 * wastage.
 		 */
 		AllocChunk	chunk = AllocPointerGetChunk(pointer);
 		AllocBlock	block = set->blocks;

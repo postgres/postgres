@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/access/heap/heapam.c,v 1.66 2000/02/09 03:49:47 inoue Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/access/heap/heapam.c,v 1.67 2000/04/12 17:14:45 momjian Exp $
  *
  *
  * INTERFACE ROUTINES
@@ -23,7 +23,7 @@
  *		heap_fetch		- retrive tuple with tid
  *		heap_insert		- insert tuple into a relation
  *		heap_delete		- delete a tuple from a relation
- *		heap_update	- replace a tuple in a relation with another tuple
+ *		heap_update - replace a tuple in a relation with another tuple
  *		heap_markpos	- mark scan position
  *		heap_restrpos	- restore position to marked location
  *
@@ -120,9 +120,9 @@ initscan(HeapScanDesc scan,
 		 * ----------------
 		 */
 		scan->rs_ntup.t_datamcxt = scan->rs_ctup.t_datamcxt =
-		scan->rs_ptup.t_datamcxt = NULL;
+			scan->rs_ptup.t_datamcxt = NULL;
 		scan->rs_ntup.t_data = scan->rs_ctup.t_data =
-		scan->rs_ptup.t_data = NULL;
+			scan->rs_ptup.t_data = NULL;
 		scan->rs_nbuf = scan->rs_cbuf = scan->rs_pbuf = InvalidBuffer;
 	}
 	else if (atend)
@@ -188,8 +188,9 @@ unpinscan(HeapScanDesc scan)
 	if (BufferIsValid(scan->rs_nbuf))
 		ReleaseBuffer(scan->rs_nbuf);
 
-	/* we don't bother to clear rs_pbuf etc --- caller must
-	 * reinitialize them if scan descriptor is not being deleted.
+	/*
+	 * we don't bother to clear rs_pbuf etc --- caller must reinitialize
+	 * them if scan descriptor is not being deleted.
 	 */
 }
 
@@ -544,7 +545,7 @@ heap_open(Oid relationId, LOCKMODE lockmode)
 	if (lockmode == NoLock)
 		return r;				/* caller must check RelationIsValid! */
 
-	if (! RelationIsValid(r))
+	if (!RelationIsValid(r))
 		elog(ERROR, "Relation %u does not exist", relationId);
 
 	LockRelation(r, lockmode);
@@ -586,7 +587,7 @@ heap_openr(const char *relationName, LOCKMODE lockmode)
 	if (lockmode == NoLock)
 		return r;				/* caller must check RelationIsValid! */
 
-	if (! RelationIsValid(r))
+	if (!RelationIsValid(r))
 		elog(ERROR, "Relation '%s' does not exist", relationName);
 
 	LockRelation(r, lockmode);
@@ -646,7 +647,7 @@ heap_beginscan(Relation relation,
 	 *	sanity checks
 	 * ----------------
 	 */
-	if (! RelationIsValid(relation))
+	if (!RelationIsValid(relation))
 		elog(ERROR, "heap_beginscan: !RelationIsValid(relation)");
 
 	/* ----------------
@@ -659,7 +660,7 @@ heap_beginscan(Relation relation,
 	 *	Acquire AccessShareLock for the duration of the scan
 	 *
 	 *	Note: we could get an SI inval message here and consequently have
-	 *	to rebuild the relcache entry.  The refcount increment above
+	 *	to rebuild the relcache entry.	The refcount increment above
 	 *	ensures that we will rebuild it and not just flush it...
 	 * ----------------
 	 */
@@ -681,6 +682,7 @@ heap_beginscan(Relation relation,
 	scan->rs_nkeys = (short) nkeys;
 
 	if (nkeys)
+
 		/*
 		 * we do this here instead of in initscan() because heap_rescan
 		 * also calls initscan() and we don't want to allocate memory
@@ -847,9 +849,7 @@ heap_getnext(HeapScanDesc scandesc, int backw)
 
 		if (scan->rs_ptup.t_data == scan->rs_ctup.t_data &&
 			BufferIsInvalid(scan->rs_pbuf))
-		{
 			return NULL;
-		}
 
 		/*
 		 * Copy the "current" tuple/buffer to "next". Pin/unpin the
@@ -1095,8 +1095,10 @@ heap_fetch(Relation relation,
 	}
 	else
 	{
-		/* All checks passed, so return the tuple as valid.
-		 * Caller is now responsible for releasing the buffer.
+
+		/*
+		 * All checks passed, so return the tuple as valid. Caller is now
+		 * responsible for releasing the buffer.
 		 */
 		*userbuf = buffer;
 	}
@@ -1109,17 +1111,18 @@ heap_fetch(Relation relation,
  */
 ItemPointer
 heap_get_latest_tid(Relation relation,
-		   Snapshot snapshot,
-		   ItemPointer tid)
+					Snapshot snapshot,
+					ItemPointer tid)
 {
 	ItemId		lp = NULL;
 	Buffer		buffer;
 	PageHeader	dp;
-	OffsetNumber	offnum;
-	HeapTupleData	tp;
-	HeapTupleHeader	t_data;
-	ItemPointerData	ctid;
-	bool		invalidBlock,linkend;
+	OffsetNumber offnum;
+	HeapTupleData tp;
+	HeapTupleHeader t_data;
+	ItemPointerData ctid;
+	bool		invalidBlock,
+				linkend;
 
 	/* ----------------
 	 *	get the buffer from the relation descriptor
@@ -1149,11 +1152,11 @@ heap_get_latest_tid(Relation relation,
 			invalidBlock = false;
 	}
 	if (invalidBlock)
-	{	
+	{
 		LockBuffer(buffer, BUFFER_LOCK_UNLOCK);
 		ReleaseBuffer(buffer);
 		return NULL;
-	} 
+	}
 
 	/* ----------------
 	 *	more sanity checks
@@ -1175,7 +1178,7 @@ heap_get_latest_tid(Relation relation,
 					   snapshot, 0, (ScanKey) NULL);
 
 	linkend = true;
-	if ((t_data->t_infomask & HEAP_XMAX_COMMITTED) && 
+	if ((t_data->t_infomask & HEAP_XMAX_COMMITTED) &&
 		!ItemPointerEquals(tid, &ctid))
 		linkend = false;
 
@@ -1186,7 +1189,7 @@ heap_get_latest_tid(Relation relation,
 	{
 		if (linkend)
 			return NULL;
-		return heap_get_latest_tid(relation, snapshot, &ctid); 
+		return heap_get_latest_tid(relation, snapshot, &ctid);
 	}
 
 	return tid;
@@ -1300,10 +1303,11 @@ l1:
 		LockBuffer(buffer, BUFFER_LOCK_EXCLUSIVE);
 		if (TransactionIdDidAbort(xwait))
 			goto l1;
-		/* 
-		 * xwait is committed but if xwait had just marked
-		 * the tuple for update then some other xaction could 
-		 * update this tuple before we got to this point.
+
+		/*
+		 * xwait is committed but if xwait had just marked the tuple for
+		 * update then some other xaction could update this tuple before
+		 * we got to this point.
 		 */
 		if (tp.t_data->t_xmax != xwait)
 			goto l1;
@@ -1345,11 +1349,11 @@ l1:
 }
 
 /*
- *	heap_update	- replace a tuple
+ *	heap_update - replace a tuple
  */
 int
 heap_update(Relation relation, ItemPointer otid, HeapTuple newtup,
-			 ItemPointer ctid)
+			ItemPointer ctid)
 {
 	ItemId		lp;
 	HeapTupleData oldtup;
@@ -1396,10 +1400,11 @@ l2:
 		LockBuffer(buffer, BUFFER_LOCK_EXCLUSIVE);
 		if (TransactionIdDidAbort(xwait))
 			goto l2;
-		/* 
-		 * xwait is committed but if xwait had just marked
-		 * the tuple for update then some other xaction could 
-		 * update this tuple before we got to this point.
+
+		/*
+		 * xwait is committed but if xwait had just marked the tuple for
+		 * update then some other xaction could update this tuple before
+		 * we got to this point.
 		 */
 		if (oldtup.t_data->t_xmax != xwait)
 			goto l2;
@@ -1521,10 +1526,11 @@ l3:
 		LockBuffer(*buffer, BUFFER_LOCK_EXCLUSIVE);
 		if (TransactionIdDidAbort(xwait))
 			goto l3;
-		/* 
-		 * xwait is committed but if xwait had just marked
-		 * the tuple for update then some other xaction could 
-		 * update this tuple before we got to this point.
+
+		/*
+		 * xwait is committed but if xwait had just marked the tuple for
+		 * update then some other xaction could update this tuple before
+		 * we got to this point.
 		 */
 		if (tuple->t_data->t_xmax != xwait)
 			goto l3;

@@ -8,7 +8,7 @@
  * Portions Copyright (c) 1996-2000, PostgreSQL, Inc
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Id: paths.h,v 1.43 2000/02/15 20:49:26 tgl Exp $
+ * $Id: paths.h,v 1.44 2000/04/12 17:16:42 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -34,13 +34,13 @@ extern RelOptInfo *make_one_rel(Query *root);
  *	  routines to generate index paths
  */
 extern void create_index_paths(Query *root, RelOptInfo *rel, List *indices,
-							   List *restrictinfo_list,
-							   List *joininfo_list);
+				   List *restrictinfo_list,
+				   List *joininfo_list);
 extern Oid indexable_operator(Expr *clause, Oid opclass, Oid relam,
-							  bool indexkey_on_left);
+				   bool indexkey_on_left);
 extern List *extract_or_indexqual_conditions(RelOptInfo *rel,
-											 IndexOptInfo *index,
-											 Expr *orsubclause);
+								IndexOptInfo *index,
+								Expr *orsubclause);
 extern List *expand_indexqual_conditions(List *indexquals);
 
 /*
@@ -48,7 +48,7 @@ extern List *expand_indexqual_conditions(List *indexquals);
  *	  additional routines for indexable OR clauses
  */
 extern void create_or_index_paths(Query *root, RelOptInfo *rel,
-								  List *clauses);
+					  List *clauses);
 
 /*
  * tidpath.h
@@ -61,9 +61,9 @@ extern void create_tidscan_paths(Query *root, RelOptInfo *rel);
  *	   routines to create join paths
  */
 extern void add_paths_to_joinrel(Query *root, RelOptInfo *joinrel,
-								 RelOptInfo *outerrel,
-								 RelOptInfo *innerrel,
-								 List *restrictlist);
+					 RelOptInfo *outerrel,
+					 RelOptInfo *innerrel,
+					 List *restrictlist);
 
 /*
  * joinrels.c
@@ -71,11 +71,11 @@ extern void add_paths_to_joinrel(Query *root, RelOptInfo *joinrel,
  */
 extern void make_rels_by_joins(Query *root, int level);
 extern RelOptInfo *make_rels_by_clause_joins(Query *root,
-											 RelOptInfo *old_rel,
-											 List *other_rels);
+						  RelOptInfo *old_rel,
+						  List *other_rels);
 extern RelOptInfo *make_rels_by_clauseless_joins(Query *root,
-												 RelOptInfo *old_rel,
-												 List *other_rels);
+							  RelOptInfo *old_rel,
+							  List *other_rels);
 
 /*
  * pathkeys.c
@@ -94,22 +94,22 @@ extern List *canonicalize_pathkeys(Query *root, List *pathkeys);
 extern PathKeysComparison compare_pathkeys(List *keys1, List *keys2);
 extern bool pathkeys_contained_in(List *keys1, List *keys2);
 extern Path *get_cheapest_path_for_pathkeys(List *paths, List *pathkeys,
-											CostSelector cost_criterion);
+							   CostSelector cost_criterion);
 extern Path *get_cheapest_fractional_path_for_pathkeys(List *paths,
-													   List *pathkeys,
-													   double fraction);
+										  List *pathkeys,
+										  double fraction);
 extern List *build_index_pathkeys(Query *root, RelOptInfo *rel,
-								  IndexOptInfo *index,
-								  ScanDirection scandir);
+					 IndexOptInfo *index,
+					 ScanDirection scandir);
 extern List *build_join_pathkeys(List *outer_pathkeys,
-								 List *join_rel_tlist,
-								 List *equi_key_list);
+					List *join_rel_tlist,
+					List *equi_key_list);
 extern List *make_pathkeys_for_sortclauses(List *sortclauses,
-										   List *tlist);
+							  List *tlist);
 extern List *find_mergeclauses_for_pathkeys(List *pathkeys,
-											List *restrictinfos);
+							   List *restrictinfos);
 extern List *make_pathkeys_for_mergeclauses(Query *root,
-											List *mergeclauses,
-											List *tlist);
+							   List *mergeclauses,
+							   List *tlist);
 
 #endif	 /* PATHS_H */

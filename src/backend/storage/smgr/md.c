@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/storage/smgr/md.c,v 1.66 2000/04/10 23:41:51 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/storage/smgr/md.c,v 1.67 2000/04/12 17:15:41 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -21,7 +21,8 @@
 #include "catalog/catalog.h"
 #include "miscadmin.h"
 #include "storage/smgr.h"
-#include "utils/inval.h"	/* ImmediateSharedRelationCacheInvalidate() */
+#include "utils/inval.h"		/* ImmediateSharedRelationCacheInvalidate()
+								 * */
 
 #undef DIAGNOSTIC
 
@@ -62,17 +63,18 @@ typedef struct _MdfdVec
 
 static int	Nfds = 100;			/* initial/current size of Md_fdvec array */
 static MdfdVec *Md_fdvec = (MdfdVec *) NULL;
-static int	Md_Free = -1;		/* head of freelist of unused fdvec entries */
+static int	Md_Free = -1;		/* head of freelist of unused fdvec
+								 * entries */
 static int	CurFd = 0;			/* first never-used fdvec index */
 static MemoryContext MdCxt;		/* context for all my allocations */
 
 /* routines declared here */
 static void mdclose_fd(int fd);
-static int _mdfd_getrelnfd(Relation reln);
+static int	_mdfd_getrelnfd(Relation reln);
 static MdfdVec *_mdfd_openseg(Relation reln, int segno, int oflags);
 static MdfdVec *_mdfd_getseg(Relation reln, int blkno);
 static int _mdfd_blind_getseg(char *dbname, char *relname,
-							  Oid dbid, Oid relid, int blkno);
+				   Oid dbid, Oid relid, int blkno);
 static int	_fdvec_alloc(void);
 static void _fdvec_free(int);
 static BlockNumber _mdnblocks(File file, Size blcksz);
@@ -140,11 +142,10 @@ mdcreate(Relation reln)
 	 * are processed.
 	 *
 	 * For cataloged relations,pg_class is guaranteed to have an unique
-	 * record with the same relname by the unique index.
-	 * So we are able to reuse existent files for new catloged relations.
-	 * Currently we reuse them in the following cases.
-	 * 1. they are empty.
-	 * 2. they are used for Index relations and their size == BLCKSZ * 2.
+	 * record with the same relname by the unique index. So we are able to
+	 * reuse existent files for new catloged relations. Currently we reuse
+	 * them in the following cases. 1. they are empty. 2. they are used
+	 * for Index relations and their size == BLCKSZ * 2.
 	 */
 
 	if (fd < 0)
@@ -162,13 +163,13 @@ mdcreate(Relation reln)
 			return -1;
 		if (!IsBootstrapProcessingMode())
 		{
-			bool	reuse = false;	
-			int	len = FileSeek(fd, 0L, SEEK_END);
+			bool		reuse = false;
+			int			len = FileSeek(fd, 0L, SEEK_END);
 
 			if (len == 0)
 				reuse = true;
 			else if (reln->rd_rel->relkind == RELKIND_INDEX &&
-				 len == BLCKSZ * 2)
+					 len == BLCKSZ * 2)
 				reuse = true;
 			if (!reuse)
 			{
@@ -206,14 +207,15 @@ mdunlink(Relation reln)
 	MdfdVec    *v;
 	MemoryContext oldcxt;
 
-	/* If the relation is already unlinked,we have nothing to do
-	 * any more.
+	/*
+	 * If the relation is already unlinked,we have nothing to do any more.
 	 */
 	if (reln->rd_unlinked && reln->rd_fd < 0)
 		return SM_SUCCESS;
+
 	/*
-	 * Force all segments of the relation to be opened, so that we
-	 * won't miss deleting any of them.
+	 * Force all segments of the relation to be opened, so that we won't
+	 * miss deleting any of them.
 	 */
 	nblocks = mdnblocks(reln);
 
@@ -222,9 +224,10 @@ mdunlink(Relation reln)
 	 *
 	 * NOTE: We truncate the file(s) before deleting 'em, because if other
 	 * backends are holding the files open, the unlink will fail on some
-	 * platforms (think Microsoft).  Better a zero-size file gets left around
-	 * than a big file.  Those other backends will be forced to close the
-	 * relation by cache invalidation, but that probably hasn't happened yet.
+	 * platforms (think Microsoft).  Better a zero-size file gets left
+	 * around than a big file.	Those other backends will be forced to
+	 * close the relation by cache invalidation, but that probably hasn't
+	 * happened yet.
 	 */
 	fd = RelationGetFile(reln);
 	if (fd < 0)					/* should not happen */
@@ -237,6 +240,7 @@ mdunlink(Relation reln)
 	for (v = &Md_fdvec[fd]; v != (MdfdVec *) NULL;)
 	{
 		MdfdVec    *ov = v;
+
 		FileTruncate(v->mdfd_vfd, 0);
 		FileUnlink(v->mdfd_vfd);
 		v = v->mdfd_chain;
@@ -269,7 +273,8 @@ mdunlink(Relation reln)
 int
 mdextend(Relation reln, char *buffer)
 {
-	long		pos, nbytes;
+	long		pos,
+				nbytes;
 	int			nblocks;
 	MdfdVec    *v;
 
@@ -279,7 +284,7 @@ mdextend(Relation reln, char *buffer)
 	if ((pos = FileSeek(v->mdfd_vfd, 0L, SEEK_END)) < 0)
 		return SM_FAIL;
 
-	if (pos % BLCKSZ != 0) /* the last block is incomplete */
+	if (pos % BLCKSZ != 0)		/* the last block is incomplete */
 	{
 		pos -= pos % BLCKSZ;
 		if (FileSeek(v->mdfd_vfd, pos, SEEK_SET) < 0)
@@ -414,6 +419,7 @@ mdclose_fd(int fd)
 		/* if not closed already */
 		if (v->mdfd_vfd >= 0)
 		{
+
 			/*
 			 * We sync the file descriptor so that we don't need to reopen
 			 * it at transaction commit to force changes to disk.  (This
@@ -436,6 +442,7 @@ mdclose_fd(int fd)
 	{
 		if (v->mdfd_vfd >= 0)
 		{
+
 			/*
 			 * We sync the file descriptor so that we don't need to reopen
 			 * it at transaction commit to force changes to disk.  (This
@@ -689,9 +696,11 @@ mdnblocks(Relation reln)
 {
 	int			fd;
 	MdfdVec    *v;
+
 #ifndef LET_OS_MANAGE_FILESIZE
 	int			nblocks;
 	int			segno;
+
 #endif
 
 	fd = _mdfd_getrelnfd(reln);
@@ -738,13 +747,16 @@ mdtruncate(Relation reln, int nblocks)
 	int			curnblk;
 	int			fd;
 	MdfdVec    *v;
+
 #ifndef LET_OS_MANAGE_FILESIZE
 	MemoryContext oldcxt;
 	int			priorblocks;
+
 #endif
 
-	/* NOTE: mdnblocks makes sure we have opened all existing segments,
-	 * so that truncate/delete loop will get them all!
+	/*
+	 * NOTE: mdnblocks makes sure we have opened all existing segments, so
+	 * that truncate/delete loop will get them all!
 	 */
 	curnblk = mdnblocks(reln);
 	if (nblocks < 0 || nblocks > curnblk)
@@ -764,29 +776,34 @@ mdtruncate(Relation reln, int nblocks)
 
 		if (priorblocks > nblocks)
 		{
-			/* This segment is no longer wanted at all (and has already been
-			 * unlinked from the mdfd_chain).
-			 * We truncate the file before deleting it because if other
-			 * backends are holding the file open, the unlink will fail on
-			 * some platforms.  Better a zero-size file gets left around than
-			 * a big file...
+
+			/*
+			 * This segment is no longer wanted at all (and has already
+			 * been unlinked from the mdfd_chain). We truncate the file
+			 * before deleting it because if other backends are holding
+			 * the file open, the unlink will fail on some platforms.
+			 * Better a zero-size file gets left around than a big file...
 			 */
 			FileTruncate(v->mdfd_vfd, 0);
 			FileUnlink(v->mdfd_vfd);
 			v = v->mdfd_chain;
-			Assert(ov != &Md_fdvec[fd]); /* we never drop the 1st segment */
+			Assert(ov != &Md_fdvec[fd]);		/* we never drop the 1st
+												 * segment */
 			pfree(ov);
 		}
 		else if (priorblocks + RELSEG_SIZE > nblocks)
 		{
-			/* This is the last segment we want to keep.
-			 * Truncate the file to the right length, and clear chain link
-			 * that points to any remaining segments (which we shall zap).
-			 * NOTE: if nblocks is exactly a multiple K of RELSEG_SIZE,
-			 * we will truncate the K+1st segment to 0 length but keep it.
-			 * This is mainly so that the right thing happens if nblocks=0.
+
+			/*
+			 * This is the last segment we want to keep. Truncate the file
+			 * to the right length, and clear chain link that points to
+			 * any remaining segments (which we shall zap). NOTE: if
+			 * nblocks is exactly a multiple K of RELSEG_SIZE, we will
+			 * truncate the K+1st segment to 0 length but keep it. This is
+			 * mainly so that the right thing happens if nblocks=0.
 			 */
-			int lastsegblocks = nblocks - priorblocks;
+			int			lastsegblocks = nblocks - priorblocks;
+
 			if (FileTruncate(v->mdfd_vfd, lastsegblocks * BLCKSZ) < 0)
 				return -1;
 			v->mdfd_lstbcnt = lastsegblocks;
@@ -795,7 +812,9 @@ mdtruncate(Relation reln, int nblocks)
 		}
 		else
 		{
-			/* We still need this segment and 0 or more blocks beyond it,
+
+			/*
+			 * We still need this segment and 0 or more blocks beyond it,
 			 * so nothing to do here.
 			 */
 			v = v->mdfd_chain;
@@ -842,7 +861,7 @@ mdcommit()
 			continue;
 		/* Sync the file entry */
 #ifndef LET_OS_MANAGE_FILESIZE
-		for ( ; v != (MdfdVec *) NULL; v = v->mdfd_chain)
+		for (; v != (MdfdVec *) NULL; v = v->mdfd_chain)
 #else
 		if (v != (MdfdVec *) NULL)
 #endif
@@ -853,7 +872,7 @@ mdcommit()
 	}
 
 	return SM_SUCCESS;
-#endif	/* XLOG */
+#endif	 /* XLOG */
 }
 
 /*
@@ -865,7 +884,9 @@ mdcommit()
 int
 mdabort()
 {
-	/* We don't actually have to do anything here.  fd.c will discard
+
+	/*
+	 * We don't actually have to do anything here.  fd.c will discard
 	 * fsync-needed bits in its AtEOXact_Files() routine.
 	 */
 	return SM_SUCCESS;
@@ -1073,8 +1094,10 @@ _mdfd_blind_getseg(char *dbname, char *relname, Oid dbid, Oid relid,
 {
 	char	   *path;
 	int			fd;
+
 #ifndef LET_OS_MANAGE_FILESIZE
 	int			segno;
+
 #endif
 
 	/* construct the path to the relation */
@@ -1085,7 +1108,7 @@ _mdfd_blind_getseg(char *dbname, char *relname, Oid dbid, Oid relid,
 	segno = blkno / RELSEG_SIZE;
 	if (segno > 0)
 	{
-		char   *segpath = (char *) palloc(strlen(path) + 12);
+		char	   *segpath = (char *) palloc(strlen(path) + 12);
 
 		sprintf(segpath, "%s.%d", path, segno);
 		pfree(path);
@@ -1110,6 +1133,7 @@ _mdnblocks(File file, Size blcksz)
 	long		len;
 
 	len = FileSeek(file, 0L, SEEK_END);
-	if (len < 0) return 0;	/* on failure, assume file is empty */
+	if (len < 0)
+		return 0;				/* on failure, assume file is empty */
 	return (BlockNumber) (len / blcksz);
 }

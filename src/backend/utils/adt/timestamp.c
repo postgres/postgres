@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/timestamp.c,v 1.24 2000/04/07 13:39:41 thomas Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/timestamp.c,v 1.25 2000/04/12 17:15:51 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -42,10 +42,10 @@ static double time2t(const int hour, const int min, const double sec);
 /* timestamp_in()
  * Convert a string to internal form.
  */
-Timestamp   *
+Timestamp  *
 timestamp_in(char *str)
 {
-	Timestamp   *result;
+	Timestamp  *result;
 
 	double		fsec;
 	struct tm	tt,
@@ -249,10 +249,10 @@ EncodeSpecialTimestamp(Timestamp dt, char *str)
 	return FALSE;
 }	/* EncodeSpecialTimestamp() */
 
-Timestamp *
+Timestamp  *
 now(void)
 {
-	Timestamp *result;
+	Timestamp  *result;
 	AbsoluteTime sec;
 
 	result = palloc(sizeof(Timestamp));
@@ -469,9 +469,9 @@ tm2interval(struct tm * tm, double fsec, Interval *span)
 {
 	span->month = ((tm->tm_year * 12) + tm->tm_mon);
 	span->time = ((((((tm->tm_mday * 24.0)
-					 + tm->tm_hour) * 60.0)
-					 + tm->tm_min) * 60.0)
-					 + tm->tm_sec);
+					  + tm->tm_hour) * 60.0)
+					+ tm->tm_min) * 60.0)
+				  + tm->tm_sec);
 	span->time = JROUND(span->time + fsec);
 
 	return 0;
@@ -562,7 +562,7 @@ SetTimestamp(Timestamp dt)
 	return dt;
 }	/* SetTimestamp() */
 
-/*		timestamp_relop	- is timestamp1 relop timestamp2
+/*		timestamp_relop - is timestamp1 relop timestamp2
  */
 bool
 timestamp_eq(Timestamp *timestamp1, Timestamp *timestamp2)
@@ -896,13 +896,15 @@ overlaps_timestamp(Timestamp *ts1, Timestamp *te1, Timestamp *ts2, Timestamp *te
 	/* Make sure we have ordered pairs... */
 	if (timestamp_gt(ts1, te1))
 	{
-		Timestamp *tt = ts1;
+		Timestamp  *tt = ts1;
+
 		ts1 = te1;
 		te1 = tt;
 	}
 	if (timestamp_gt(ts2, te2))
 	{
-		Timestamp *tt = ts2;
+		Timestamp  *tt = ts2;
+
 		ts2 = te2;
 		te2 = tt;
 	}
@@ -910,7 +912,7 @@ overlaps_timestamp(Timestamp *ts1, Timestamp *te1, Timestamp *ts2, Timestamp *te
 	return ((timestamp_gt(ts1, ts2) && (timestamp_lt(ts1, te2) || timestamp_lt(te1, te2)))
 			|| (timestamp_gt(ts2, ts1) && (timestamp_lt(ts2, te1) || timestamp_lt(te2, te1)))
 			|| timestamp_eq(ts1, ts2));
-} /* overlaps_timestamp() */
+}	/* overlaps_timestamp() */
 
 
 /*----------------------------------------------------------
@@ -921,10 +923,10 @@ overlaps_timestamp(Timestamp *ts1, Timestamp *te1, Timestamp *ts2, Timestamp *te
  *						actual value.
  *---------------------------------------------------------*/
 
-Timestamp   *
+Timestamp  *
 timestamp_smaller(Timestamp *timestamp1, Timestamp *timestamp2)
 {
-	Timestamp   *result;
+	Timestamp  *result;
 
 	Timestamp	dt1,
 				dt2;
@@ -952,10 +954,10 @@ timestamp_smaller(Timestamp *timestamp1, Timestamp *timestamp2)
 	return result;
 }	/* timestamp_smaller() */
 
-Timestamp   *
+Timestamp  *
 timestamp_larger(Timestamp *timestamp1, Timestamp *timestamp2)
 {
-	Timestamp   *result;
+	Timestamp  *result;
 
 	Timestamp	dt1,
 				dt2;
@@ -1028,10 +1030,10 @@ timestamp_mi(Timestamp *timestamp1, Timestamp *timestamp2)
  *	to the last day of month.
  * Lastly, add in the "quantitative time".
  */
-Timestamp   *
+Timestamp  *
 timestamp_pl_span(Timestamp *timestamp, Interval *span)
 {
-	Timestamp   *result;
+	Timestamp  *result;
 	Timestamp	dt;
 	int			tz;
 	char	   *tzn;
@@ -1099,10 +1101,10 @@ timestamp_pl_span(Timestamp *timestamp, Interval *span)
 	return result;
 }	/* timestamp_pl_span() */
 
-Timestamp   *
+Timestamp  *
 timestamp_mi_span(Timestamp *timestamp, Interval *span)
 {
-	Timestamp   *result;
+	Timestamp  *result;
 	Interval	tspan;
 
 	if (!PointerIsValid(timestamp) || !PointerIsValid(span))
@@ -1485,10 +1487,10 @@ timestamp_text(Timestamp *timestamp)
  * Text type is not null terminated, so use temporary string
  *	then call the standard input routine.
  */
-Timestamp   *
+Timestamp  *
 text_timestamp(text *str)
 {
-	Timestamp   *result;
+	Timestamp  *result;
 	int			i;
 	char	   *sp,
 			   *dp,
@@ -1571,10 +1573,10 @@ text_interval(text *str)
 /* timestamp_trunc()
  * Extract specified field from timestamp.
  */
-Timestamp   *
+Timestamp  *
 timestamp_trunc(text *units, Timestamp *timestamp)
 {
-	Timestamp   *result;
+	Timestamp  *result;
 
 	Timestamp	dt;
 	int			tz;

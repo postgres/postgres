@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/tid.c,v 1.15 2000/01/26 05:57:14 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/tid.c,v 1.16 2000/04/12 17:15:51 momjian Exp $
  *
  * NOTES
  *	  input routine largely stolen from boxin().
@@ -31,7 +31,7 @@
 ItemPointer
 tidin(const char *str)
 {
-	const	char	   *p,
+	const char *p,
 			   *coord[NTIDARGS];
 	int			i;
 	ItemPointer result;
@@ -105,25 +105,21 @@ bool
 tideq(ItemPointer arg1, ItemPointer arg2)
 {
 	if ((!arg1) || (!arg2))
-	{
 		return false;
-	}
-	
-	return ( BlockIdGetBlockNumber(&(arg1->ip_blkid)) ==
-		 BlockIdGetBlockNumber(&(arg2->ip_blkid)) &&
-		 arg1->ip_posid == arg2->ip_posid );
+
+	return (BlockIdGetBlockNumber(&(arg1->ip_blkid)) ==
+			BlockIdGetBlockNumber(&(arg2->ip_blkid)) &&
+			arg1->ip_posid == arg2->ip_posid);
 }
 
 bool
 tidne(ItemPointer arg1, ItemPointer arg2)
 {
 	if ((!arg1) || (!arg2))
-	{
 		return false;
-	}
-	return ( BlockIdGetBlockNumber(&(arg1->ip_blkid)) !=
-		 BlockIdGetBlockNumber(&(arg2->ip_blkid)) ||
-		 arg1->ip_posid != arg2->ip_posid );
+	return (BlockIdGetBlockNumber(&(arg1->ip_blkid)) !=
+			BlockIdGetBlockNumber(&(arg2->ip_blkid)) ||
+			arg1->ip_posid != arg2->ip_posid);
 }
 
 text *
@@ -131,7 +127,8 @@ tid_text(ItemPointer tid)
 {
 	char	   *str;
 
-	if (!tid)	return (text *)NULL;
+	if (!tid)
+		return (text *) NULL;
 	str = tidout(tid);
 
 	return textin(str);
@@ -140,10 +137,11 @@ tid_text(ItemPointer tid)
 ItemPointer
 text_tid(const text *string)
 {
-	ItemPointer	result;
-	char		*str;
+	ItemPointer result;
+	char	   *str;
 
-	if (!string)	return (ItemPointer)0;
+	if (!string)
+		return (ItemPointer) 0;
 
 	str = textout((text *) string);
 	result = tidin(str);
@@ -162,7 +160,8 @@ text_tid(const text *string)
 ItemPointer
 currtid_byreloid(Oid reloid, ItemPointer tid)
 {
-	ItemPointer	result = NULL, ret;
+	ItemPointer result = NULL,
+				ret;
 	Relation	rel;
 
 	result = (ItemPointer) palloc(sizeof(ItemPointerData));
@@ -183,11 +182,13 @@ currtid_byreloid(Oid reloid, ItemPointer tid)
 ItemPointer
 currtid_byrelname(const text *relname, ItemPointer tid)
 {
-	ItemPointer	result = NULL, ret;
-	char		*str;
+	ItemPointer result = NULL,
+				ret;
+	char	   *str;
 	Relation	rel;
 
-	if (!relname)	return result;
+	if (!relname)
+		return result;
 
 	str = textout((text *) relname);
 
@@ -201,7 +202,7 @@ currtid_byrelname(const text *relname, ItemPointer tid)
 		heap_close(rel, AccessShareLock);
 	}
 	else
-		elog(ERROR, "Relation %s not found", textout((text *)relname));
+		elog(ERROR, "Relation %s not found", textout((text *) relname));
 	pfree(str);
 
 	return result;

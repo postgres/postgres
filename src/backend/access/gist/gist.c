@@ -6,7 +6,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/access/gist/gist.c,v 1.52 2000/03/17 02:36:00 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/access/gist/gist.c,v 1.53 2000/04/12 17:14:39 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -52,8 +52,10 @@ void		gistdelete(Relation r, ItemPointer tid);
 static IndexTuple gist_tuple_replacekey(Relation r, GISTENTRY entry, IndexTuple t);
 static void gistcentryinit(GISTSTATE *giststate, GISTENTRY *e, char *pr,
 			   Relation r, Page pg, OffsetNumber o, int b, bool l);
+
 #ifdef GISTDEBUG
 static char *int_range_out(INTRANGE *r);
+
 #endif
 
 /*
@@ -98,7 +100,7 @@ gistbuild(Relation heap,
 
 	/* no locking is needed */
 
-	CommandCounterIncrement();		/* so we can see the new pg_index tuple */
+	CommandCounterIncrement();	/* so we can see the new pg_index tuple */
 
 	initGISTstate(&giststate, index);
 
@@ -186,7 +188,7 @@ gistbuild(Relation heap,
 #ifndef OMIT_PARTIAL_INDEX
 			/* SetSlotContents(slot, htup); */
 			slot->val = htup;
-			if (! ExecQual((List *) pred, econtext, false))
+			if (!ExecQual((List *) pred, econtext, false))
 				continue;
 #endif	 /* OMIT_PARTIAL_INDEX */
 		}
@@ -272,18 +274,18 @@ gistbuild(Relation heap,
 	/*
 	 * Since we just counted the tuples in the heap, we update its stats
 	 * in pg_class to guarantee that the planner takes advantage of the
-	 * index we just created.  But, only update statistics during
-	 * normal index definitions, not for indices on system catalogs
-	 * created during bootstrap processing.  We must close the relations
-	 * before updating statistics to guarantee that the relcache entries
-	 * are flushed when we increment the command counter in UpdateStats().
-	 * But we do not release any locks on the relations; those will be
-	 * held until end of transaction.
+	 * index we just created.  But, only update statistics during normal
+	 * index definitions, not for indices on system catalogs created
+	 * during bootstrap processing.  We must close the relations before
+	 * updating statistics to guarantee that the relcache entries are
+	 * flushed when we increment the command counter in UpdateStats(). But
+	 * we do not release any locks on the relations; those will be held
+	 * until end of transaction.
 	 */
 	if (IsNormalProcessingMode())
 	{
-		Oid		hrelid = RelationGetRelid(heap);
-		Oid		irelid = RelationGetRelid(index);
+		Oid			hrelid = RelationGetRelid(heap);
+		Oid			irelid = RelationGetRelid(index);
 		bool		inplace = IsReindexProcessing();
 
 		heap_close(heap, NoLock);

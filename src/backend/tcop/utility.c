@@ -10,7 +10,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/tcop/utility.c,v 1.85 2000/04/04 21:44:40 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/tcop/utility.c,v 1.86 2000/04/12 17:15:43 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -164,7 +164,7 @@ ProcessUtility(Node *parsetree,
 
 		case T_DropStmt:
 			{
-				DropStmt *stmt = (DropStmt *) parsetree;
+				DropStmt   *stmt = (DropStmt *) parsetree;
 				List	   *args = stmt->relNames;
 				List	   *arg;
 
@@ -213,17 +213,17 @@ ProcessUtility(Node *parsetree,
 				PS_SET_STATUS(commandTag = "TRUNCATE");
 				CHECK_IF_ABORTED();
 
-				relname = ((TruncateStmt *) parsetree)->relName;			
+				relname = ((TruncateStmt *) parsetree)->relName;
 				if (!allowSystemTableMods && IsSystemRelationName(relname))
 					elog(ERROR, "TRUNCATE cannot be used on system tables. '%s' is a system table",
 						 relname);
 
 				/* Grab exclusive lock in preparation for truncate... */
 				rel = heap_openr(relname, AccessExclusiveLock);
-			    if (rel->rd_rel->relkind == RELKIND_SEQUENCE)
+				if (rel->rd_rel->relkind == RELKIND_SEQUENCE)
 					elog(ERROR, "TRUNCATE cannot be used on sequences. '%s' is a sequence",
 						 relname);
-			    heap_close(rel, NoLock);
+				heap_close(rel, NoLock);
 
 #ifndef NO_SECURITY
 				if (!pg_ownercheck(userName, relname, RELNAME))
@@ -233,21 +233,21 @@ ProcessUtility(Node *parsetree,
 			}
 			break;
 
-	case T_CommentStmt:
-	  {
-	    
-	    CommentStmt *statement;
-	    
-	    statement = ((CommentStmt *) parsetree);
-	    
-	    PS_SET_STATUS(commandTag = "COMMENT");
-	    CHECK_IF_ABORTED();
-	    CommentObject(statement->objtype, statement->objname,
-			  statement->objproperty, statement->objlist,
-			  statement->comment);
-	  }
-	  break;
-	    
+		case T_CommentStmt:
+			{
+
+				CommentStmt *statement;
+
+				statement = ((CommentStmt *) parsetree);
+
+				PS_SET_STATUS(commandTag = "COMMENT");
+				CHECK_IF_ABORTED();
+				CommentObject(statement->objtype, statement->objname,
+							  statement->objproperty, statement->objlist,
+							  statement->comment);
+			}
+			break;
+
 
 
 		case T_CopyStmt:
@@ -272,7 +272,7 @@ ProcessUtility(Node *parsetree,
 				 */
 					   stmt->filename,
 					   stmt->delimiter,
-                       stmt->null_print);
+					   stmt->null_print);
 			}
 			break;
 
@@ -333,42 +333,42 @@ ProcessUtility(Node *parsetree,
 			}
 			break;
 
-            /* various Alter Table forms */
+			/* various Alter Table forms */
 
 		case T_AlterTableStmt:
-        {
-            AlterTableStmt *stmt = (AlterTableStmt *) parsetree;
+			{
+				AlterTableStmt *stmt = (AlterTableStmt *) parsetree;
 
-            PS_SET_STATUS(commandTag = "ALTER");
-            CHECK_IF_ABORTED();
+				PS_SET_STATUS(commandTag = "ALTER");
+				CHECK_IF_ABORTED();
 
-            /*
-             * Some or all of these functions are recursive to cover inherited things,
-             * so permission checks are done there.
-             */
-            switch(stmt->subtype)
-            {
-                case 'A': /* ADD COLUMN */
-                    AlterTableAddColumn(stmt->relname, stmt->inh, (ColumnDef *) stmt->def);
-                    break;
-                case 'T': /* ALTER COLUMN */
-                    AlterTableAlterColumn(stmt->relname, stmt->inh, stmt->name, stmt->def);
-                    break;
-                case 'D': /* ALTER DROP */
-                    AlterTableDropColumn(stmt->relname, stmt->inh, stmt->name, stmt->behavior);
-                    break;
-                case 'C': /* ADD CONSTRAINT */
-                    AlterTableAddConstraint(stmt->relname, stmt->inh, stmt->def);
-                    break;
-                case 'X': /* DROP CONSTRAINT */
-                    AlterTableDropConstraint(stmt->relname, stmt->inh, stmt->name, stmt->behavior);
-                    break;
-                default: /* oops */
-                    elog(ERROR, "T_AlterTableStmt: unknown subtype");
-                    break;
-            }
-        }
-        break;
+				/*
+				 * Some or all of these functions are recursive to cover
+				 * inherited things, so permission checks are done there.
+				 */
+				switch (stmt->subtype)
+				{
+					case 'A':	/* ADD COLUMN */
+						AlterTableAddColumn(stmt->relname, stmt->inh, (ColumnDef *) stmt->def);
+						break;
+					case 'T':	/* ALTER COLUMN */
+						AlterTableAlterColumn(stmt->relname, stmt->inh, stmt->name, stmt->def);
+						break;
+					case 'D':	/* ALTER DROP */
+						AlterTableDropColumn(stmt->relname, stmt->inh, stmt->name, stmt->behavior);
+						break;
+					case 'C':	/* ADD CONSTRAINT */
+						AlterTableAddConstraint(stmt->relname, stmt->inh, stmt->def);
+						break;
+					case 'X':	/* DROP CONSTRAINT */
+						AlterTableDropConstraint(stmt->relname, stmt->inh, stmt->name, stmt->behavior);
+						break;
+					default:	/* oops */
+						elog(ERROR, "T_AlterTableStmt: unknown subtype");
+						break;
+				}
+			}
+			break;
 
 
 		case T_ChangeACLStmt:
@@ -385,7 +385,7 @@ ProcessUtility(Node *parsetree,
 
 				modechg = stmt->modechg;
 				foreach(i, stmt->relNames)
-                {
+				{
 					Relation	rel;
 
 					relname = strVal(lfirst(i));
@@ -830,26 +830,26 @@ ProcessUtility(Node *parsetree,
 			DeferredTriggerSetState((ConstraintsSetStmt *) parsetree);
 			break;
 
-        case T_CreateGroupStmt:
-            PS_SET_STATUS(commandTag = "CREATE GROUP");
+		case T_CreateGroupStmt:
+			PS_SET_STATUS(commandTag = "CREATE GROUP");
 			CHECK_IF_ABORTED();
 
-            CreateGroup((CreateGroupStmt *) parsetree);
-            break;
+			CreateGroup((CreateGroupStmt *) parsetree);
+			break;
 
-        case T_AlterGroupStmt:
-            PS_SET_STATUS(commandTag = "ALTER GROUP");
+		case T_AlterGroupStmt:
+			PS_SET_STATUS(commandTag = "ALTER GROUP");
 			CHECK_IF_ABORTED();
 
-            AlterGroup((AlterGroupStmt *) parsetree, "ALTER GROUP");
-            break;
+			AlterGroup((AlterGroupStmt *) parsetree, "ALTER GROUP");
+			break;
 
-        case T_DropGroupStmt:
-            PS_SET_STATUS(commandTag = "DROP GROUP");
+		case T_DropGroupStmt:
+			PS_SET_STATUS(commandTag = "DROP GROUP");
 			CHECK_IF_ABORTED();
 
-            DropGroup((DropGroupStmt *) parsetree);
-            break;
+			DropGroup((DropGroupStmt *) parsetree);
+			break;
 
 		case T_ReindexStmt:
 			{
@@ -861,15 +861,15 @@ ProcessUtility(Node *parsetree,
 				switch (stmt->reindexType)
 				{
 					case INDEX:
-						relname = (char*) stmt->name;
+						relname = (char *) stmt->name;
 						if (IsSystemRelationName(relname))
 						{
 							if (!allowSystemTableMods && IsSystemRelationName(relname))
-							elog(ERROR, "class \"%s\" is a system catalog index",
-								 relname);
+								elog(ERROR, "class \"%s\" is a system catalog index",
+									 relname);
 							if (!IsIgnoringSystemIndexes())
 								elog(ERROR, "class \"%s\" is a system catalog index",
-								 relname);
+									 relname);
 						}
 #ifndef NO_SECURITY
 						if (!pg_ownercheck(userName, relname, RELNAME))
@@ -878,15 +878,15 @@ ProcessUtility(Node *parsetree,
 						ReindexIndex(relname, stmt->force);
 						break;
 					case TABLE:
-						relname = (char*) stmt->name;
+						relname = (char *) stmt->name;
 						if (IsSystemRelationName(relname))
 						{
 							if (!allowSystemTableMods && IsSystemRelationName(relname))
-							elog(ERROR, "class \"%s\" is a system catalog index",
-								 relname);
+								elog(ERROR, "class \"%s\" is a system catalog index",
+									 relname);
 							if (!IsIgnoringSystemIndexes())
 								elog(ERROR, "class \"%s\" is a system catalog index",
-								 relname);
+									 relname);
 						}
 #ifndef NO_SECURITY
 						if (!pg_ownercheck(userName, relname, RELNAME))
@@ -895,7 +895,7 @@ ProcessUtility(Node *parsetree,
 						ReindexTable(relname, stmt->force);
 						break;
 					case DATABASE:
-						relname = (char*) stmt->name;
+						relname = (char *) stmt->name;
 						if (!allowSystemTableMods)
 							elog(ERROR, "-O option is needed");
 						if (!IsIgnoringSystemIndexes())
@@ -906,6 +906,7 @@ ProcessUtility(Node *parsetree,
 				break;
 			}
 			break;
+
 			/*
 			 * ******************************** default ********************************
 			 *

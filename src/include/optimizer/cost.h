@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2000, PostgreSQL, Inc
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Id: cost.h,v 1.31 2000/03/22 22:08:30 tgl Exp $
+ * $Id: cost.h,v 1.32 2000/04/12 17:16:42 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -20,7 +20,7 @@
 /* NB: cost-estimation code should use the variables, not these constants! */
 #define DEFAULT_EFFECTIVE_CACHE_SIZE  1000.0	/* measured in pages */
 #define DEFAULT_RANDOM_PAGE_COST  4.0
-#define DEFAULT_CPU_TUPLE_COST  0.01
+#define DEFAULT_CPU_TUPLE_COST	0.01
 #define DEFAULT_CPU_INDEX_TUPLE_COST 0.001
 #define DEFAULT_CPU_OPERATOR_COST  0.0025
 
@@ -53,36 +53,36 @@ extern bool enable_hashjoin;
 
 extern void cost_seqscan(Path *path, RelOptInfo *baserel);
 extern void cost_index(Path *path, Query *root,
-					   RelOptInfo *baserel, IndexOptInfo *index,
-					   List *indexQuals, bool is_injoin);
+		   RelOptInfo *baserel, IndexOptInfo *index,
+		   List *indexQuals, bool is_injoin);
 extern void cost_tidscan(Path *path, RelOptInfo *baserel, List *tideval);
 extern void cost_sort(Path *path, List *pathkeys, double tuples, int width);
 extern void cost_nestloop(Path *path, Path *outer_path, Path *inner_path,
-						  List *restrictlist);
+			  List *restrictlist);
 extern void cost_mergejoin(Path *path, Path *outer_path, Path *inner_path,
-						   List *restrictlist,
-						   List *outersortkeys, List *innersortkeys);
+			   List *restrictlist,
+			   List *outersortkeys, List *innersortkeys);
 extern void cost_hashjoin(Path *path, Path *outer_path, Path *inner_path,
-						  List *restrictlist, Selectivity innerdisbursion);
+			  List *restrictlist, Selectivity innerdisbursion);
 extern Cost cost_qual_eval(List *quals);
 extern void set_baserel_size_estimates(Query *root, RelOptInfo *rel);
 extern void set_joinrel_size_estimates(Query *root, RelOptInfo *rel,
-									   RelOptInfo *outer_rel,
-									   RelOptInfo *inner_rel,
-									   List *restrictlist);
+						   RelOptInfo *outer_rel,
+						   RelOptInfo *inner_rel,
+						   List *restrictlist);
 
 /*
  * prototypes for clausesel.c
  *	  routines to compute clause selectivities
  */
 extern Selectivity restrictlist_selectivity(Query *root,
-											List *restrictinfo_list,
-											int varRelid);
+						 List *restrictinfo_list,
+						 int varRelid);
 extern Selectivity clauselist_selectivity(Query *root,
-										  List *clauses,
-										  int varRelid);
+					   List *clauses,
+					   int varRelid);
 extern Selectivity clause_selectivity(Query *root,
-									  Node *clause,
-									  int varRelid);
+				   Node *clause,
+				   int varRelid);
 
 #endif	 /* COST_H */

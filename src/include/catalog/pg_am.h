@@ -8,7 +8,7 @@
  * Portions Copyright (c) 1996-2000, PostgreSQL, Inc
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Id: pg_am.h,v 1.14 2000/02/17 03:39:47 tgl Exp $
+ * $Id: pg_am.h,v 1.15 2000/04/12 17:16:27 momjian Exp $
  *
  * NOTES
  *		the genbki.sh script reads this file and generates .bki
@@ -38,13 +38,13 @@ CATALOG(pg_am)
 {
 	NameData	amname;			/* access method name */
 	int4		amowner;		/* usesysid of creator */
-	int2		amstrategies;	/* total NUMBER of strategies by which
-								 * we can traverse/search this AM */
-	int2		amsupport;		/* total NUMBER of support functions
-								 * that this AM uses */
-	int2		amorderstrategy; /* if this AM has a sort order, the
-								  * strategy number of the sort operator.
-								  * Zero if AM is not ordered. */
+	int2		amstrategies;	/* total NUMBER of strategies by which we
+								 * can traverse/search this AM */
+	int2		amsupport;		/* total NUMBER of support functions that
+								 * this AM uses */
+	int2		amorderstrategy;/* if this AM has a sort order, the
+								 * strategy number of the sort operator.
+								 * Zero if AM is not ordered. */
 	regproc		amgettuple;		/* "next valid tuple" function */
 	regproc		aminsert;		/* "insert this tuple" function */
 	regproc		amdelete;		/* "delete this tuple" function */
@@ -62,7 +62,7 @@ CATALOG(pg_am)
 	regproc		ambuild;		/* "build new index" function */
 	regproc		amcreate;		/* - deprecated */
 	regproc		amdestroy;		/* - deprecated */
-	regproc		amcostestimate;	/* estimate cost of an indexscan */
+	regproc		amcostestimate; /* estimate cost of an indexscan */
 } FormData_pg_am;
 
 /* ----------------

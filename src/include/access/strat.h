@@ -8,7 +8,7 @@
  * Portions Copyright (c) 1996-2000, PostgreSQL, Inc
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Id: strat.h,v 1.17 2000/01/26 05:57:51 momjian Exp $
+ * $Id: strat.h,v 1.18 2000/04/12 17:16:26 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -26,6 +26,8 @@ typedef struct StrategyTransformMapData
 	StrategyNumber strategy[1]; /* VARIABLE LENGTH ARRAY */
 } StrategyTransformMapData;		/* VARIABLE LENGTH
 
+								 *
+								 *
 								 *
 								 *
 								 *

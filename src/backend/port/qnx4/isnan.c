@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/port/qnx4/Attic/isnan.c,v 1.1 1999/12/16 16:52:52 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/port/qnx4/Attic/isnan.c,v 1.2 2000/04/12 17:15:30 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -16,7 +16,8 @@
 
 unsigned char __nan[8] = __nan_bytes;
 
-int isnan(double dsrc)
+int
+isnan(double dsrc)
 {
-  return !memcmp( &dsrc, &NAN, sizeof( double ) );
+	return !memcmp(&dsrc, &NAN, sizeof(double));
 }

@@ -67,44 +67,47 @@ static void CommentTrigger(char *trigger, char *relation, char *comments);
  *------------------------------------------------------------------
 */
 
-void CommentObject(int objtype, char *objname, char *objproperty,
-		   List *objlist, char *comment) {
+void
+CommentObject(int objtype, char *objname, char *objproperty,
+			  List *objlist, char *comment)
+{
 
-  switch (objtype) {
-  case (INDEX):
-  case (SEQUENCE):
-  case (TABLE):
-  case (VIEW):
-    CommentRelation(objtype, objname, comment);
-    break;
-  case (COLUMN):
-    CommentAttribute(objname, objproperty, comment);
-    break;
-  case (DATABASE):
-    CommentDatabase(objname, comment);
-    break;
-  case (RULE):
-    CommentRewrite(objname, comment);
-    break;
-  case (TYPE_P):
-    CommentType(objname, comment);
-    break;
-  case (AGGREGATE):
-    CommentAggregate(objname, objproperty, comment);
-    break;
-  case (FUNCTION):
-    CommentProc(objname, objlist, comment);
-    break;
-  case (OPERATOR):
-    CommentOperator(objname, objlist, comment);
-    break;
-  case (TRIGGER):
-    CommentTrigger(objname, objproperty, comment);
-    break;
-  default:
-    elog(ERROR, "An attempt was made to comment on a unknown type: %i",
-	 objtype);
-  }
+	switch (objtype)
+	{
+			case (INDEX):
+			case (SEQUENCE):
+			case (TABLE):
+			case (VIEW):
+			CommentRelation(objtype, objname, comment);
+			break;
+		case (COLUMN):
+			CommentAttribute(objname, objproperty, comment);
+			break;
+		case (DATABASE):
+			CommentDatabase(objname, comment);
+			break;
+		case (RULE):
+			CommentRewrite(objname, comment);
+			break;
+		case (TYPE_P):
+			CommentType(objname, comment);
+			break;
+		case (AGGREGATE):
+			CommentAggregate(objname, objproperty, comment);
+			break;
+		case (FUNCTION):
+			CommentProc(objname, objlist, comment);
+			break;
+		case (OPERATOR):
+			CommentOperator(objname, objlist, comment);
+			break;
+		case (TRIGGER):
+			CommentTrigger(objname, objproperty, comment);
+			break;
+		default:
+			elog(ERROR, "An attempt was made to comment on a unknown type: %i",
+				 objtype);
+	}
 
 
 }
@@ -120,87 +123,99 @@ void CommentObject(int objtype, char *objname, char *objproperty,
  *------------------------------------------------------------------
  */
 
-void CreateComments(Oid oid, char *comment) {
+void
+CreateComments(Oid oid, char *comment)
+{
 
-  Relation description;
-  TupleDesc tupDesc;
-  HeapScanDesc scan;
-  ScanKeyData entry;
-  HeapTuple desctuple = NULL, searchtuple;
-  Datum values[Natts_pg_description];
-  char nulls[Natts_pg_description];
-  char replaces[Natts_pg_description];
-  bool modified = false;
-  int i;
+	Relation	description;
+	TupleDesc	tupDesc;
+	HeapScanDesc scan;
+	ScanKeyData entry;
+	HeapTuple	desctuple = NULL,
+				searchtuple;
+	Datum		values[Natts_pg_description];
+	char		nulls[Natts_pg_description];
+	char		replaces[Natts_pg_description];
+	bool		modified = false;
+	int			i;
 
-  /*** Open pg_description, form a new tuple, if necessary ***/
+	/*** Open pg_description, form a new tuple, if necessary ***/
 
-  description = heap_openr(DescriptionRelationName, RowExclusiveLock);
-  tupDesc = description->rd_att;
-  if ((comment != NULL) && (strlen(comment) > 0)) {
-    for (i = 0; i < Natts_pg_description; i++) {
-      nulls[i] = ' ';
-      replaces[i] = 'r';
-      values[i] = (Datum) NULL;
-    }
-    i = 0;
-    values[i++] = ObjectIdGetDatum(oid);
-    values[i++] = (Datum) fmgr(F_TEXTIN, comment);
-  }
-
-  /*** Now, open pg_description and attempt to find the old tuple ***/
-
-  ScanKeyEntryInitialize(&entry, 0x0, Anum_pg_description_objoid, F_OIDEQ,
-			 ObjectIdGetDatum(oid));
-  scan = heap_beginscan(description, false, SnapshotNow, 1, &entry);
-  searchtuple = heap_getnext(scan, 0);
-
-  /*** If a previous tuple exists, either delete or prep replacement ***/
-
-  if (HeapTupleIsValid(searchtuple)) {
-
-    /*** If the comment is blank, call heap_delete, else heap_update ***/
-
-    if ((comment == NULL) || (strlen(comment) == 0)) {
-      heap_delete(description, &searchtuple->t_self, NULL);
-    } else {
-      desctuple = heap_modifytuple(searchtuple, description, values,
-				   nulls, replaces);
-      heap_update(description, &searchtuple->t_self, desctuple, NULL);
-      modified = TRUE;
-    }
-
-  } else {
-
-	/*** Only if comment is non-blank do we form a new tuple ***/
-
-	if ((comment != NULL) && (strlen(comment) > 0)) {
-		desctuple = heap_formtuple(tupDesc, values, nulls);
-		heap_insert(description, desctuple);
-		modified = TRUE;
+	description = heap_openr(DescriptionRelationName, RowExclusiveLock);
+	tupDesc = description->rd_att;
+	if ((comment != NULL) && (strlen(comment) > 0))
+	{
+		for (i = 0; i < Natts_pg_description; i++)
+		{
+			nulls[i] = ' ';
+			replaces[i] = 'r';
+			values[i] = (Datum) NULL;
+		}
+		i = 0;
+		values[i++] = ObjectIdGetDatum(oid);
+		values[i++] = (Datum) fmgr(F_TEXTIN, comment);
 	}
 
-  }
+	/*** Now, open pg_description and attempt to find the old tuple ***/
 
-  /*** Complete the scan, update indices, if necessary ***/
+	ScanKeyEntryInitialize(&entry, 0x0, Anum_pg_description_objoid, F_OIDEQ,
+						   ObjectIdGetDatum(oid));
+	scan = heap_beginscan(description, false, SnapshotNow, 1, &entry);
+	searchtuple = heap_getnext(scan, 0);
 
-  heap_endscan(scan);
+	/*** If a previous tuple exists, either delete or prep replacement ***/
 
-  if (modified) {
-    if (RelationGetForm(description)->relhasindex) {
-      Relation idescs[Num_pg_description_indices];
+	if (HeapTupleIsValid(searchtuple))
+	{
 
-      CatalogOpenIndices(Num_pg_description_indices,
-			 Name_pg_description_indices, idescs);
-      CatalogIndexInsert(idescs, Num_pg_description_indices, description,
-			 desctuple);
-      CatalogCloseIndices(Num_pg_description_indices, idescs);
-    }
-    heap_freetuple(desctuple);
+		/*** If the comment is blank, call heap_delete, else heap_update ***/
 
-  }
+		if ((comment == NULL) || (strlen(comment) == 0))
+			heap_delete(description, &searchtuple->t_self, NULL);
+		else
+		{
+			desctuple = heap_modifytuple(searchtuple, description, values,
+										 nulls, replaces);
+			heap_update(description, &searchtuple->t_self, desctuple, NULL);
+			modified = TRUE;
+		}
 
-  heap_close(description, RowExclusiveLock);
+	}
+	else
+	{
+
+		/*** Only if comment is non-blank do we form a new tuple ***/
+
+		if ((comment != NULL) && (strlen(comment) > 0))
+		{
+			desctuple = heap_formtuple(tupDesc, values, nulls);
+			heap_insert(description, desctuple);
+			modified = TRUE;
+		}
+
+	}
+
+	/*** Complete the scan, update indices, if necessary ***/
+
+	heap_endscan(scan);
+
+	if (modified)
+	{
+		if (RelationGetForm(description)->relhasindex)
+		{
+			Relation	idescs[Num_pg_description_indices];
+
+			CatalogOpenIndices(Num_pg_description_indices,
+							   Name_pg_description_indices, idescs);
+			CatalogIndexInsert(idescs, Num_pg_description_indices, description,
+							   desctuple);
+			CatalogCloseIndices(Num_pg_description_indices, idescs);
+		}
+		heap_freetuple(desctuple);
+
+	}
+
+	heap_close(description, RowExclusiveLock);
 
 }
 
@@ -214,34 +229,35 @@ void CreateComments(Oid oid, char *comment) {
  *------------------------------------------------------------------
  */
 
-void DeleteComments(Oid oid) {
+void
+DeleteComments(Oid oid)
+{
 
-  Relation description;
-  TupleDesc tupDesc;
-  ScanKeyData entry;
-  HeapScanDesc scan;
-  HeapTuple searchtuple;
+	Relation	description;
+	TupleDesc	tupDesc;
+	ScanKeyData entry;
+	HeapScanDesc scan;
+	HeapTuple	searchtuple;
 
-  description = heap_openr(DescriptionRelationName, RowExclusiveLock);
-  tupDesc = description->rd_att;
+	description = heap_openr(DescriptionRelationName, RowExclusiveLock);
+	tupDesc = description->rd_att;
 
-  /*** Now, open pg_description and attempt to find the old tuple ***/
+	/*** Now, open pg_description and attempt to find the old tuple ***/
 
-  ScanKeyEntryInitialize(&entry, 0x0, Anum_pg_description_objoid, F_OIDEQ,
-			 ObjectIdGetDatum(oid));
-  scan = heap_beginscan(description, false, SnapshotNow, 1, &entry);
-  searchtuple = heap_getnext(scan, 0);
+	ScanKeyEntryInitialize(&entry, 0x0, Anum_pg_description_objoid, F_OIDEQ,
+						   ObjectIdGetDatum(oid));
+	scan = heap_beginscan(description, false, SnapshotNow, 1, &entry);
+	searchtuple = heap_getnext(scan, 0);
 
-  /*** If a previous tuple exists, delete it ***/
+	/*** If a previous tuple exists, delete it ***/
 
-  if (HeapTupleIsValid(searchtuple)) {
-    heap_delete(description, &searchtuple->t_self, NULL);
-  }
+	if (HeapTupleIsValid(searchtuple))
+		heap_delete(description, &searchtuple->t_self, NULL);
 
-  /*** Complete the scan, update indices, if necessary ***/
+	/*** Complete the scan, update indices, if necessary ***/
 
-  heap_endscan(scan);
-  heap_close(description, RowExclusiveLock);
+	heap_endscan(scan);
+	heap_close(description, RowExclusiveLock);
 
 }
 
@@ -256,60 +272,57 @@ void DeleteComments(Oid oid) {
  *------------------------------------------------------------------
 */
 
-static void CommentRelation(int reltype, char *relname, char *comment) {
+static void
+CommentRelation(int reltype, char *relname, char *comment)
+{
 
-  HeapTuple reltuple;
-  Oid oid;
-  char relkind;
+	HeapTuple	reltuple;
+	Oid			oid;
+	char		relkind;
 
-  /*** First, check object security ***/
+	/*** First, check object security ***/
 
-  #ifndef NO_SECURITY
-  if (!pg_ownercheck(GetPgUserName(), relname, RELNAME)) {
-    elog(ERROR, "you are not permitted to comment on class '%s'", relname);
-  }
-  #endif
+#ifndef NO_SECURITY
+	if (!pg_ownercheck(GetPgUserName(), relname, RELNAME))
+		elog(ERROR, "you are not permitted to comment on class '%s'", relname);
+#endif
 
-  /*** Now, attempt to find the oid in the cached version of pg_class ***/
+	/*** Now, attempt to find the oid in the cached version of pg_class ***/
 
-  reltuple = SearchSysCacheTuple(RELNAME, PointerGetDatum(relname),
-				 0, 0, 0);
-  if (!HeapTupleIsValid(reltuple)) {
-    elog(ERROR, "relation '%s' does not exist", relname);
-  }
+	reltuple = SearchSysCacheTuple(RELNAME, PointerGetDatum(relname),
+								   0, 0, 0);
+	if (!HeapTupleIsValid(reltuple))
+		elog(ERROR, "relation '%s' does not exist", relname);
 
-  oid = reltuple->t_data->t_oid;
+	oid = reltuple->t_data->t_oid;
 
-  /*** Next, verify that the relation type matches the intent ***/
+	/*** Next, verify that the relation type matches the intent ***/
 
-  relkind = ((Form_pg_class) GETSTRUCT(reltuple))->relkind;
+	relkind = ((Form_pg_class) GETSTRUCT(reltuple))->relkind;
 
-  switch (reltype) {
-  case (INDEX):
-    if (relkind != 'i') {
-      elog(ERROR, "relation '%s' is not an index", relname);
-    }
-    break;
-  case (TABLE):
-    if (relkind != 'r') {
-      elog(ERROR, "relation '%s' is not a table", relname);
-    }
-    break;
-  case (VIEW):
-    if (relkind != 'r') {
-      elog(ERROR, "relation '%s' is not a view", relname);
-    }
-    break;
-  case (SEQUENCE):
-    if (relkind != 'S') {
-      elog(ERROR, "relation '%s' is not a sequence", relname);
-    }
-    break;
-  }
+	switch (reltype)
+	{
+		case (INDEX):
+			if (relkind != 'i')
+				elog(ERROR, "relation '%s' is not an index", relname);
+			break;
+		case (TABLE):
+			if (relkind != 'r')
+				elog(ERROR, "relation '%s' is not a table", relname);
+			break;
+		case (VIEW):
+			if (relkind != 'r')
+				elog(ERROR, "relation '%s' is not a view", relname);
+			break;
+		case (SEQUENCE):
+			if (relkind != 'S')
+				elog(ERROR, "relation '%s' is not a sequence", relname);
+			break;
+	}
 
-  /*** Create the comments using the tuple's oid ***/
+	/*** Create the comments using the tuple's oid ***/
 
-  CreateComments(oid, comment);
+	CreateComments(oid, comment);
 
 }
 
@@ -320,43 +333,45 @@ static void CommentRelation(int reltype, char *relname, char *comment) {
  * such as a table's column. The routine will check security
  * restrictions and then attempt to fetch the oid of the associated
  * attribute. If successful, a comment is added/dropped, else an
- * elog() exception is thrown.  The parameters are the relation
+ * elog() exception is thrown.	The parameters are the relation
  * and attribute names, and the comments
  *------------------------------------------------------------------
 */
 
-static void CommentAttribute(char *relname, char *attrname, char *comment) {
+static void
+CommentAttribute(char *relname, char *attrname, char *comment)
+{
 
-  Relation relation;
-  HeapTuple attrtuple;
-  Oid oid;
+	Relation	relation;
+	HeapTuple	attrtuple;
+	Oid			oid;
 
-  /*** First, check object security ***/
+	/*** First, check object security ***/
 
-  #ifndef NO_SECURITY
-  if (!pg_ownercheck(GetPgUserName(), relname, RELNAME)) {
-    elog(ERROR, "you are not permitted to comment on class '%s\'", relname);
-  }
-  #endif
+#ifndef NO_SECURITY
+	if (!pg_ownercheck(GetPgUserName(), relname, RELNAME))
+		elog(ERROR, "you are not permitted to comment on class '%s\'", relname);
+#endif
 
-  /*** Now, fetch the attribute oid from the system cache ***/
+	/*** Now, fetch the attribute oid from the system cache ***/
 
-  relation = heap_openr(relname, AccessShareLock);
-  attrtuple = SearchSysCacheTuple(ATTNAME, ObjectIdGetDatum(relation->rd_id),
-				  PointerGetDatum(attrname), 0, 0);
-  if (!HeapTupleIsValid(attrtuple)) {
-    elog(ERROR, "'%s' is not an attribute of class '%s'",
-	 attrname, relname);
-  }
-  oid = attrtuple->t_data->t_oid;
+	relation = heap_openr(relname, AccessShareLock);
+	attrtuple = SearchSysCacheTuple(ATTNAME, ObjectIdGetDatum(relation->rd_id),
+									PointerGetDatum(attrname), 0, 0);
+	if (!HeapTupleIsValid(attrtuple))
+	{
+		elog(ERROR, "'%s' is not an attribute of class '%s'",
+			 attrname, relname);
+	}
+	oid = attrtuple->t_data->t_oid;
 
-  /*** Call CreateComments() to create/drop the comments ***/
+	/*** Call CreateComments() to create/drop the comments ***/
 
-  CreateComments(oid, comment);
+	CreateComments(oid, comment);
 
-  /*** Now, close the heap relation and return ***/
+	/*** Now, close the heap relation and return ***/
 
-  heap_close(relation, AccessShareLock);
+	heap_close(relation, AccessShareLock);
 
 }
 
@@ -371,61 +386,64 @@ static void CommentAttribute(char *relname, char *attrname, char *comment) {
  *------------------------------------------------------------------
 */
 
-static void CommentDatabase(char *database, char *comment) {
+static void
+CommentDatabase(char *database, char *comment)
+{
 
-  Relation pg_database;
-  HeapTuple dbtuple, usertuple;
-  ScanKeyData entry;
-  HeapScanDesc scan;
-  Oid oid;
-  bool superuser;
-  int4 dba, userid;
-  char *username;
+	Relation	pg_database;
+	HeapTuple	dbtuple,
+				usertuple;
+	ScanKeyData entry;
+	HeapScanDesc scan;
+	Oid			oid;
+	bool		superuser;
+	int4		dba,
+				userid;
+	char	   *username;
 
-  /*** First find the tuple in pg_database for the database ***/
+	/*** First find the tuple in pg_database for the database ***/
 
-  pg_database = heap_openr(DatabaseRelationName, AccessShareLock);
-  ScanKeyEntryInitialize(&entry, 0, Anum_pg_database_datname,
-			 F_NAMEEQ, NameGetDatum(database));
-  scan = heap_beginscan(pg_database, 0, SnapshotNow, 1, &entry);
-  dbtuple = heap_getnext(scan, 0);
+	pg_database = heap_openr(DatabaseRelationName, AccessShareLock);
+	ScanKeyEntryInitialize(&entry, 0, Anum_pg_database_datname,
+						   F_NAMEEQ, NameGetDatum(database));
+	scan = heap_beginscan(pg_database, 0, SnapshotNow, 1, &entry);
+	dbtuple = heap_getnext(scan, 0);
 
-  /*** Validate database exists, and fetch the dba id and oid ***/
+	/*** Validate database exists, and fetch the dba id and oid ***/
 
-  if (!HeapTupleIsValid(dbtuple)) {
-    elog(ERROR, "database '%s' does not exist", database);
-  }
-  dba = ((Form_pg_database) GETSTRUCT(dbtuple))->datdba;
-  oid = dbtuple->t_data->t_oid;
+	if (!HeapTupleIsValid(dbtuple))
+		elog(ERROR, "database '%s' does not exist", database);
+	dba = ((Form_pg_database) GETSTRUCT(dbtuple))->datdba;
+	oid = dbtuple->t_data->t_oid;
 
-  /*** Now, fetch user information ***/
+	/*** Now, fetch user information ***/
 
-  username = GetPgUserName();
-  usertuple = SearchSysCacheTuple(SHADOWNAME, PointerGetDatum(username),
-				  0, 0, 0);
-  if (!HeapTupleIsValid(usertuple)) {
-    elog(ERROR, "current user '%s' does not exist", username);
-  }
-  userid = ((Form_pg_shadow) GETSTRUCT(usertuple))->usesysid;
-  superuser = ((Form_pg_shadow) GETSTRUCT(usertuple))->usesuper;
+	username = GetPgUserName();
+	usertuple = SearchSysCacheTuple(SHADOWNAME, PointerGetDatum(username),
+									0, 0, 0);
+	if (!HeapTupleIsValid(usertuple))
+		elog(ERROR, "current user '%s' does not exist", username);
+	userid = ((Form_pg_shadow) GETSTRUCT(usertuple))->usesysid;
+	superuser = ((Form_pg_shadow) GETSTRUCT(usertuple))->usesuper;
 
-  /*** Allow if the userid matches the database dba or is a superuser ***/
+	/*** Allow if the userid matches the database dba or is a superuser ***/
 
-  #ifndef NO_SECURITY
-  if (!(superuser || (userid == dba))) {
-    elog(ERROR, "you are not permitted to comment on database '%s'",
-	 database);
-  }
-  #endif
+#ifndef NO_SECURITY
+	if (!(superuser || (userid == dba)))
+	{
+		elog(ERROR, "you are not permitted to comment on database '%s'",
+			 database);
+	}
+#endif
 
-  /*** Create the comments with the pg_database oid ***/
+	/*** Create the comments with the pg_database oid ***/
 
-  CreateComments(oid, comment);
+	CreateComments(oid, comment);
 
-  /*** Complete the scan and close any opened relations ***/
+	/*** Complete the scan and close any opened relations ***/
 
-  heap_endscan(scan);
-  heap_close(pg_database, AccessShareLock);
+	heap_endscan(scan);
+	heap_close(pg_database, AccessShareLock);
 
 }
 
@@ -439,38 +457,41 @@ static void CommentDatabase(char *database, char *comment) {
  *------------------------------------------------------------------
 */
 
-static void CommentRewrite(char *rule, char *comment) {
+static void
+CommentRewrite(char *rule, char *comment)
+{
 
-  HeapTuple rewritetuple;
-  Oid oid;
-  char *user, *relation;
-  int aclcheck;
+	HeapTuple	rewritetuple;
+	Oid			oid;
+	char	   *user,
+			   *relation;
+	int			aclcheck;
 
-  /*** First, validate user ***/
+	/*** First, validate user ***/
 
-  #ifndef NO_SECURITY
-  user = GetPgUserName();
-  relation = RewriteGetRuleEventRel(rule);
-  aclcheck = pg_aclcheck(relation, user, ACL_RU);
-  if (aclcheck != ACLCHECK_OK) {
-    elog(ERROR, "you are not permitted to comment on rule '%s'",
-	 rule);
-  }
-  #endif
+#ifndef NO_SECURITY
+	user = GetPgUserName();
+	relation = RewriteGetRuleEventRel(rule);
+	aclcheck = pg_aclcheck(relation, user, ACL_RU);
+	if (aclcheck != ACLCHECK_OK)
+	{
+		elog(ERROR, "you are not permitted to comment on rule '%s'",
+			 rule);
+	}
+#endif
 
-  /*** Next, find the rule's oid ***/
+	/*** Next, find the rule's oid ***/
 
-  rewritetuple = SearchSysCacheTuple(RULENAME, PointerGetDatum(rule),
-				     0, 0, 0);
-  if (!HeapTupleIsValid(rewritetuple)) {
-    elog(ERROR, "rule '%s' does not exist", rule);
-  }
+	rewritetuple = SearchSysCacheTuple(RULENAME, PointerGetDatum(rule),
+									   0, 0, 0);
+	if (!HeapTupleIsValid(rewritetuple))
+		elog(ERROR, "rule '%s' does not exist", rule);
 
-  oid = rewritetuple->t_data->t_oid;
+	oid = rewritetuple->t_data->t_oid;
 
-  /*** Call CreateComments() to create/drop the comments ***/
+	/*** Call CreateComments() to create/drop the comments ***/
 
-  CreateComments(oid, comment);
+	CreateComments(oid, comment);
 
 }
 
@@ -485,35 +506,37 @@ static void CommentRewrite(char *rule, char *comment) {
  *------------------------------------------------------------------
 */
 
-static void CommentType(char *type, char *comment) {
+static void
+CommentType(char *type, char *comment)
+{
 
-  HeapTuple typetuple;
-  Oid oid;
-  char *user;
+	HeapTuple	typetuple;
+	Oid			oid;
+	char	   *user;
 
-  /*** First, validate user ***/
+	/*** First, validate user ***/
 
-  #ifndef NO_SECURITY
-  user = GetPgUserName();
-  if (!pg_ownercheck(user, type, TYPENAME)) {
-    elog(ERROR, "you are not permitted to comment on type '%s'",
-	 type);
-  }
-  #endif
+#ifndef NO_SECURITY
+	user = GetPgUserName();
+	if (!pg_ownercheck(user, type, TYPENAME))
+	{
+		elog(ERROR, "you are not permitted to comment on type '%s'",
+			 type);
+	}
+#endif
 
-  /*** Next, find the type's oid ***/
+	/*** Next, find the type's oid ***/
 
-  typetuple = SearchSysCacheTuple(TYPENAME, PointerGetDatum(type),
-				  0, 0, 0);
-  if (!HeapTupleIsValid(typetuple)) {
-    elog(ERROR, "type '%s' does not exist", type);
-  }
+	typetuple = SearchSysCacheTuple(TYPENAME, PointerGetDatum(type),
+									0, 0, 0);
+	if (!HeapTupleIsValid(typetuple))
+		elog(ERROR, "type '%s' does not exist", type);
 
-  oid = typetuple->t_data->t_oid;
+	oid = typetuple->t_data->t_oid;
 
-  /*** Call CreateComments() to create/drop the comments ***/
+	/*** Call CreateComments() to create/drop the comments ***/
 
-  CreateComments(oid, comment);
+	CreateComments(oid, comment);
 
 }
 
@@ -527,57 +550,66 @@ static void CommentType(char *type, char *comment) {
  *------------------------------------------------------------------
 */
 
-static void CommentAggregate(char *aggregate, char *argument, char *comment) {
+static void
+CommentAggregate(char *aggregate, char *argument, char *comment)
+{
 
-  HeapTuple aggtuple;
-  Oid baseoid, oid;
-  bool defined;
-  char *user;
+	HeapTuple	aggtuple;
+	Oid			baseoid,
+				oid;
+	bool		defined;
+	char	   *user;
 
-  /*** First, attempt to determine the base aggregate oid ***/
+	/*** First, attempt to determine the base aggregate oid ***/
 
-  if (argument) {
-    baseoid = TypeGet(argument, &defined);
-    if (!OidIsValid(baseoid)) {
-      elog(ERROR, "aggregate type '%s' does not exist", argument);
-    }
-  } else {
-    baseoid = 0;
-  }
+	if (argument)
+	{
+		baseoid = TypeGet(argument, &defined);
+		if (!OidIsValid(baseoid))
+			elog(ERROR, "aggregate type '%s' does not exist", argument);
+	}
+	else
+		baseoid = 0;
 
-  /*** Next, validate the user's attempt to comment ***/
+	/*** Next, validate the user's attempt to comment ***/
 
-  #ifndef NO_SECURITY
-  user = GetPgUserName();
-  if (!pg_aggr_ownercheck(user, aggregate, baseoid)) {
-    if (argument) {
-      elog(ERROR, "you are not permitted to comment on aggregate '%s' %s '%s'",
-	   aggregate, "with type", argument);
-    } else {
-      elog(ERROR, "you are not permitted to comment on aggregate '%s'",
-	   aggregate);
-    }
-  }
-  #endif
+#ifndef NO_SECURITY
+	user = GetPgUserName();
+	if (!pg_aggr_ownercheck(user, aggregate, baseoid))
+	{
+		if (argument)
+		{
+			elog(ERROR, "you are not permitted to comment on aggregate '%s' %s '%s'",
+				 aggregate, "with type", argument);
+		}
+		else
+		{
+			elog(ERROR, "you are not permitted to comment on aggregate '%s'",
+				 aggregate);
+		}
+	}
+#endif
 
-  /*** Now, attempt to find the actual tuple in pg_aggregate ***/
+	/*** Now, attempt to find the actual tuple in pg_aggregate ***/
 
-  aggtuple = SearchSysCacheTuple(AGGNAME, PointerGetDatum(aggregate),
-				 ObjectIdGetDatum(baseoid), 0, 0);
-  if (!HeapTupleIsValid(aggtuple)) {
-    if (argument) {
-      elog(ERROR, "aggregate type '%s' does not exist for aggregate '%s'",
-	   argument, aggregate);
-    } else {
-      elog(ERROR, "aggregate '%s' does not exist", aggregate);
-    }
-  }
+	aggtuple = SearchSysCacheTuple(AGGNAME, PointerGetDatum(aggregate),
+								   ObjectIdGetDatum(baseoid), 0, 0);
+	if (!HeapTupleIsValid(aggtuple))
+	{
+		if (argument)
+		{
+			elog(ERROR, "aggregate type '%s' does not exist for aggregate '%s'",
+				 argument, aggregate);
+		}
+		else
+			elog(ERROR, "aggregate '%s' does not exist", aggregate);
+	}
 
-  oid = aggtuple->t_data->t_oid;
+	oid = aggtuple->t_data->t_oid;
 
-  /*** Call CreateComments() to create/drop the comments ***/
+	/*** Call CreateComments() to create/drop the comments ***/
 
-  CreateComments(oid, comment);
+	CreateComments(oid, comment);
 
 }
 
@@ -592,12 +624,17 @@ static void CommentAggregate(char *aggregate, char *argument, char *comment) {
  *------------------------------------------------------------------
 */
 
-static void CommentProc(char *function, List *arguments, char *comment)
+static void
+CommentProc(char *function, List *arguments, char *comment)
 {
-	HeapTuple argtuple, functuple;
-	Oid oid, argoids[FUNC_MAX_ARGS];
-	char *user, *argument;
-	int i, argcount;
+	HeapTuple	argtuple,
+				functuple;
+	Oid			oid,
+				argoids[FUNC_MAX_ARGS];
+	char	   *user,
+			   *argument;
+	int			i,
+				argcount;
 
 	/*** First, initialize function's argument list with their type oids ***/
 
@@ -606,13 +643,12 @@ static void CommentProc(char *function, List *arguments, char *comment)
 	if (argcount > FUNC_MAX_ARGS)
 		elog(ERROR, "functions cannot have more than %d arguments",
 			 FUNC_MAX_ARGS);
-	for (i = 0; i < argcount; i++) {
+	for (i = 0; i < argcount; i++)
+	{
 		argument = strVal(lfirst(arguments));
 		arguments = lnext(arguments);
 		if (strcmp(argument, "opaque") == 0)
-		{
 			argoids[i] = 0;
-		}
 		else
 		{
 			argtuple = SearchSysCacheTuple(TYPENAME,
@@ -623,7 +659,7 @@ static void CommentProc(char *function, List *arguments, char *comment)
 					 argument);
 			argoids[i] = argtuple->t_data->t_oid;
 		}
-    }
+	}
 
 	/*** Now, validate the user's ability to comment on this function ***/
 
@@ -663,81 +699,89 @@ static void CommentProc(char *function, List *arguments, char *comment)
  *------------------------------------------------------------------
 */
 
-static void CommentOperator(char *opername, List *arguments, char *comment) {
+static void
+CommentOperator(char *opername, List *arguments, char *comment)
+{
 
-  Form_pg_operator data;
-  HeapTuple optuple;
-  Oid oid, leftoid = InvalidOid, rightoid = InvalidOid;
-  bool defined;
-  char oprtype = 0, *user, *lefttype = NULL, *righttype = NULL;
+	Form_pg_operator data;
+	HeapTuple	optuple;
+	Oid			oid,
+				leftoid = InvalidOid,
+				rightoid = InvalidOid;
+	bool		defined;
+	char		oprtype = 0,
+			   *user,
+			   *lefttype = NULL,
+			   *righttype = NULL;
 
-  /*** Initialize our left and right argument types ***/
+	/*** Initialize our left and right argument types ***/
 
-  if (lfirst(arguments) != NULL) {
-    lefttype = strVal(lfirst(arguments));
-  }
-  if (lsecond(arguments) != NULL) {
-    righttype = strVal(lsecond(arguments));
-  }
+	if (lfirst(arguments) != NULL)
+		lefttype = strVal(lfirst(arguments));
+	if (lsecond(arguments) != NULL)
+		righttype = strVal(lsecond(arguments));
 
-  /*** Attempt to fetch the left oid, if specified ***/
+	/*** Attempt to fetch the left oid, if specified ***/
 
-  if (lefttype != NULL) {
-    leftoid = TypeGet(lefttype, &defined);
-    if (!OidIsValid(leftoid)) {
-      elog(ERROR, "left type '%s' does not exist", lefttype);
-    }
-  }
+	if (lefttype != NULL)
+	{
+		leftoid = TypeGet(lefttype, &defined);
+		if (!OidIsValid(leftoid))
+			elog(ERROR, "left type '%s' does not exist", lefttype);
+	}
 
-  /*** Attempt to fetch the right oid, if specified ***/
+	/*** Attempt to fetch the right oid, if specified ***/
 
-  if (righttype != NULL) {
-    rightoid = TypeGet(righttype, &defined);
-    if (!OidIsValid(rightoid)) {
-      elog(ERROR, "right type '%s' does not exist", righttype);
-    }
-  }
+	if (righttype != NULL)
+	{
+		rightoid = TypeGet(righttype, &defined);
+		if (!OidIsValid(rightoid))
+			elog(ERROR, "right type '%s' does not exist", righttype);
+	}
 
-  /*** Determine operator type ***/
+	/*** Determine operator type ***/
 
-  if (OidIsValid(leftoid) && (OidIsValid(rightoid))) oprtype = 'b';
-  else if (OidIsValid(leftoid)) oprtype = 'l';
-  else if (OidIsValid(rightoid)) oprtype = 'r';
-  else elog(ERROR, "operator '%s' is of an illegal type'", opername);
+	if (OidIsValid(leftoid) && (OidIsValid(rightoid)))
+		oprtype = 'b';
+	else if (OidIsValid(leftoid))
+		oprtype = 'l';
+	else if (OidIsValid(rightoid))
+		oprtype = 'r';
+	else
+		elog(ERROR, "operator '%s' is of an illegal type'", opername);
 
-  /*** Attempt to fetch the operator oid ***/
+	/*** Attempt to fetch the operator oid ***/
 
-  optuple = SearchSysCacheTupleCopy(OPERNAME, PointerGetDatum(opername),
-				    ObjectIdGetDatum(leftoid),
-				    ObjectIdGetDatum(rightoid),
-				    CharGetDatum(oprtype));
-  if (!HeapTupleIsValid(optuple)) {
-    elog(ERROR, "operator '%s' does not exist", opername);
-  }
+	optuple = SearchSysCacheTupleCopy(OPERNAME, PointerGetDatum(opername),
+									  ObjectIdGetDatum(leftoid),
+									  ObjectIdGetDatum(rightoid),
+									  CharGetDatum(oprtype));
+	if (!HeapTupleIsValid(optuple))
+		elog(ERROR, "operator '%s' does not exist", opername);
 
-  oid = optuple->t_data->t_oid;
+	oid = optuple->t_data->t_oid;
 
-  /*** Valid user's ability to comment on this operator ***/
+	/*** Valid user's ability to comment on this operator ***/
 
-  #ifndef NO_SECURITY
-  user = GetPgUserName();
-  if (!pg_ownercheck(user, (char *) ObjectIdGetDatum(oid), OPEROID)) {
-    elog(ERROR, "you are not permitted to comment on operator '%s'",
-	 opername);
-  }
-  #endif
+#ifndef NO_SECURITY
+	user = GetPgUserName();
+	if (!pg_ownercheck(user, (char *) ObjectIdGetDatum(oid), OPEROID))
+	{
+		elog(ERROR, "you are not permitted to comment on operator '%s'",
+			 opername);
+	}
+#endif
 
-  /*** Get the procedure associated with the operator ***/
+	/*** Get the procedure associated with the operator ***/
 
-  data = (Form_pg_operator) GETSTRUCT(optuple);
-  oid = regproctooid(data->oprcode);
-  if (oid == InvalidOid) {
-	  elog(ERROR, "operator '%s' does not have an underlying function", opername);
-  }
-  
-  /*** Call CreateComments() to create/drop the comments ***/
+	data = (Form_pg_operator) GETSTRUCT(optuple);
+	oid = regproctooid(data->oprcode);
+	if (oid == InvalidOid)
+		elog(ERROR, "operator '%s' does not have an underlying function", opername);
 
-  CreateComments(oid, comment);
+	/*** Call CreateComments() to create/drop the comments ***/
+
+	CreateComments(oid, comment);
 
 }
 
@@ -752,58 +796,65 @@ static void CommentOperator(char *opername, List *arguments, char *comment) {
  *------------------------------------------------------------------
 */
 
-static void CommentTrigger(char *trigger, char *relname, char *comment) {
+static void
+CommentTrigger(char *trigger, char *relname, char *comment)
+{
 
-  Form_pg_trigger data;
-  Relation pg_trigger, relation;
-  HeapTuple triggertuple;
-  HeapScanDesc scan;
-  ScanKeyData entry;
-  Oid oid = InvalidOid;
-  char *user;
+	Form_pg_trigger data;
+	Relation	pg_trigger,
+				relation;
+	HeapTuple	triggertuple;
+	HeapScanDesc scan;
+	ScanKeyData entry;
+	Oid			oid = InvalidOid;
+	char	   *user;
 
-  /*** First, validate the user's action ***/
+	/*** First, validate the user's action ***/
 
-  #ifndef NO_SECURITY
-  user = GetPgUserName();
-  if (!pg_ownercheck(user, relname, RELNAME)) {
-    elog(ERROR, "you are not permitted to comment on trigger '%s' %s '%s'",
-	 trigger, "defined for relation", relname);
-  }
-  #endif
+#ifndef NO_SECURITY
+	user = GetPgUserName();
+	if (!pg_ownercheck(user, relname, RELNAME))
+	{
+		elog(ERROR, "you are not permitted to comment on trigger '%s' %s '%s'",
+			 trigger, "defined for relation", relname);
+	}
+#endif
 
-  /*** Now, fetch the trigger oid from pg_trigger  ***/
+	/*** Now, fetch the trigger oid from pg_trigger  ***/
 
-  relation = heap_openr(relname, AccessShareLock);
-  pg_trigger = heap_openr(TriggerRelationName, AccessShareLock);
-  ScanKeyEntryInitialize(&entry, 0, Anum_pg_trigger_tgrelid,
-			 F_OIDEQ, RelationGetRelid(relation));
-  scan = heap_beginscan(pg_trigger, 0, SnapshotNow, 1, &entry);
-  triggertuple = heap_getnext(scan, 0);
-  while (HeapTupleIsValid(triggertuple)) {
-    data = (Form_pg_trigger) GETSTRUCT(triggertuple);
-    if (namestrcmp(&(data->tgname), trigger) == 0) {
-      oid = triggertuple->t_data->t_oid;
-      break;
-    }
-    triggertuple = heap_getnext(scan, 0);
-  }
+	relation = heap_openr(relname, AccessShareLock);
+	pg_trigger = heap_openr(TriggerRelationName, AccessShareLock);
+	ScanKeyEntryInitialize(&entry, 0, Anum_pg_trigger_tgrelid,
+						   F_OIDEQ, RelationGetRelid(relation));
+	scan = heap_beginscan(pg_trigger, 0, SnapshotNow, 1, &entry);
+	triggertuple = heap_getnext(scan, 0);
+	while (HeapTupleIsValid(triggertuple))
+	{
+		data = (Form_pg_trigger) GETSTRUCT(triggertuple);
+		if (namestrcmp(&(data->tgname), trigger) == 0)
+		{
+			oid = triggertuple->t_data->t_oid;
+			break;
+		}
+		triggertuple = heap_getnext(scan, 0);
+	}
 
-  /*** If no trigger exists for the relation specified, notify user ***/
+	/*** If no trigger exists for the relation specified, notify user ***/
 
-  if (oid == InvalidOid) {
-    elog(ERROR, "trigger '%s' defined for relation '%s' does not exist",
-	 trigger, relname);
-  }
+	if (oid == InvalidOid)
+	{
+		elog(ERROR, "trigger '%s' defined for relation '%s' does not exist",
+			 trigger, relname);
+	}
 
-  /*** Create the comments with the pg_trigger oid ***/
+	/*** Create the comments with the pg_trigger oid ***/
 
-  CreateComments(oid, comment);
+	CreateComments(oid, comment);
 
-  /*** Complete the scan and close any opened relations ***/
+	/*** Complete the scan and close any opened relations ***/
 
-  heap_endscan(scan);
-  heap_close(pg_trigger, AccessShareLock);
-  heap_close(relation, AccessShareLock);
+	heap_endscan(scan);
+	heap_close(pg_trigger, AccessShareLock);
+	heap_close(relation, AccessShareLock);
 
 }

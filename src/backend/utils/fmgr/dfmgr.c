@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/fmgr/dfmgr.c,v 1.38 2000/01/26 05:57:22 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/fmgr/dfmgr.c,v 1.39 2000/04/12 17:15:57 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -61,10 +61,10 @@ fmgr_dynamic(Oid procedureId, int *pronargs)
 
 	/*
 	 * The procedure isn't a builtin, so we'll have to do a catalog lookup
-	 * to find its pg_proc entry.  Moreover, since probin is varlena, we're
-	 * going to have to use heap_getattr, which means we need the reldesc,
-	 * which means we need to open the relation.  So we might as well do that
-	 * first and get the benefit of SI inval if needed.
+	 * to find its pg_proc entry.  Moreover, since probin is varlena,
+	 * we're going to have to use heap_getattr, which means we need the
+	 * reldesc, which means we need to open the relation.  So we might as
+	 * well do that first and get the benefit of SI inval if needed.
 	 */
 	rel = heap_openr(ProcedureRelationName, AccessShareLock);
 
@@ -123,7 +123,8 @@ fmgr_dynamic(Oid procedureId, int *pronargs)
 	user_fn = handle_load(probinstring, linksymbol);
 
 	pfree(probinstring);
-	if (prosrcstring) pfree(prosrcstring);
+	if (prosrcstring)
+		pfree(prosrcstring);
 
 	procedureId_save = procedureId;
 	user_fn_save = user_fn;

@@ -9,7 +9,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/catalog/indexing.c,v 1.59 2000/02/18 09:28:41 inoue Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/catalog/indexing.c,v 1.60 2000/04/12 17:14:56 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -31,54 +31,54 @@
  */
 
 char	   *Name_pg_aggregate_indices[Num_pg_aggregate_indices] =
-			{AggregateNameTypeIndex};
+{AggregateNameTypeIndex};
 char	   *Name_pg_am_indices[Num_pg_am_indices] =
-			{AmNameIndex};
+{AmNameIndex};
 char	   *Name_pg_amop_indices[Num_pg_amop_indices] =
-		 	{AccessMethodOpidIndex, AccessMethodStrategyIndex};
+{AccessMethodOpidIndex, AccessMethodStrategyIndex};
 char	   *Name_pg_attr_indices[Num_pg_attr_indices] =
-		 	{AttributeRelidNameIndex, AttributeRelidNumIndex};
+{AttributeRelidNameIndex, AttributeRelidNumIndex};
 char	   *Name_pg_attrdef_indices[Num_pg_attrdef_indices] =
-		 	{AttrDefaultIndex};
+{AttrDefaultIndex};
 char	   *Name_pg_class_indices[Num_pg_class_indices] =
-		 	{ClassNameIndex, ClassOidIndex};
+{ClassNameIndex, ClassOidIndex};
 char	   *Name_pg_group_indices[Num_pg_group_indices] =
-		 	{GroupNameIndex, GroupSysidIndex};
+{GroupNameIndex, GroupSysidIndex};
 char	   *Name_pg_index_indices[Num_pg_index_indices] =
-		 	{IndexRelidIndex};
+{IndexRelidIndex};
 char	   *Name_pg_inherits_indices[Num_pg_inherits_indices] =
-		 	{InheritsRelidSeqnoIndex};
+{InheritsRelidSeqnoIndex};
 char	   *Name_pg_language_indices[Num_pg_language_indices] =
-		 	{LanguageOidIndex, LanguageNameIndex};
+{LanguageOidIndex, LanguageNameIndex};
 char	   *Name_pg_listener_indices[Num_pg_listener_indices] =
-		 	{ListenerRelnamePidIndex};
+{ListenerRelnamePidIndex};
 char	   *Name_pg_opclass_indices[Num_pg_opclass_indices] =
-		 	{OpclassNameIndex, OpclassDeftypeIndex};
+{OpclassNameIndex, OpclassDeftypeIndex};
 char	   *Name_pg_operator_indices[Num_pg_operator_indices] =
-		 	{OperatorOidIndex, OperatorNameIndex};
+{OperatorOidIndex, OperatorNameIndex};
 char	   *Name_pg_proc_indices[Num_pg_proc_indices] =
-		 	{ProcedureOidIndex, ProcedureNameIndex};
+{ProcedureOidIndex, ProcedureNameIndex};
 char	   *Name_pg_relcheck_indices[Num_pg_relcheck_indices] =
-		 	{RelCheckIndex};
+{RelCheckIndex};
 char	   *Name_pg_rewrite_indices[Num_pg_rewrite_indices] =
-		 	{RewriteOidIndex, RewriteRulenameIndex};
+{RewriteOidIndex, RewriteRulenameIndex};
 char	   *Name_pg_shadow_indices[Num_pg_shadow_indices] =
-		 	{ShadowNameIndex, ShadowSysidIndex};
+{ShadowNameIndex, ShadowSysidIndex};
 char	   *Name_pg_statistic_indices[Num_pg_statistic_indices] =
-		 	{StatisticRelidAttnumIndex};
+{StatisticRelidAttnumIndex};
 char	   *Name_pg_trigger_indices[Num_pg_trigger_indices] =
-		 	{TriggerRelidIndex,	TriggerConstrNameIndex, TriggerConstrRelidIndex};
+{TriggerRelidIndex, TriggerConstrNameIndex, TriggerConstrRelidIndex};
 char	   *Name_pg_type_indices[Num_pg_type_indices] =
-		 	{TypeNameIndex, TypeOidIndex};
-char       *Name_pg_description_indices[Num_pg_description_indices] =
-		 	{DescriptionObjIndex};
+{TypeNameIndex, TypeOidIndex};
+char	   *Name_pg_description_indices[Num_pg_description_indices] =
+{DescriptionObjIndex};
 
 
 
 static HeapTuple CatalogIndexFetchTuple(Relation heapRelation,
-										   Relation idesc,
-										   ScanKey skey,
-										   int16 num_keys);
+					   Relation idesc,
+					   ScanKey skey,
+					   int16 num_keys);
 
 
 /*
@@ -279,7 +279,7 @@ CatalogIndexFetchTuple(Relation heapRelation,
 
 
 /*---------------------------------------------------------------------
- *                       Class-specific index lookups
+ *						 Class-specific index lookups
  *---------------------------------------------------------------------
  */
 
@@ -297,7 +297,7 @@ AggregateNameTypeIndexScan(Relation heapRelation, char *aggName, Oid aggType)
 	Relation	idesc;
 	ScanKeyData skey[2];
 	HeapTuple	tuple;
-	
+
 	ScanKeyEntryInitialize(&skey[0],
 						   (bits16) 0x0,
 						   (AttrNumber) 1,
@@ -324,7 +324,7 @@ AmNameIndexScan(Relation heapRelation, char *amName)
 	Relation	idesc;
 	ScanKeyData skey[1];
 	HeapTuple	tuple;
-	
+
 	ScanKeyEntryInitialize(&skey[0],
 						   (bits16) 0x0,
 						   (AttrNumber) 1,
@@ -414,8 +414,8 @@ AccessMethodStrategyIndexScan(Relation heapRelation,
 
 HeapTuple
 AttributeRelidNameIndexScan(Relation heapRelation,
-					   Oid relid,
-					   char *attname)
+							Oid relid,
+							char *attname)
 {
 	Relation	idesc;
 	ScanKeyData skey[2];
@@ -444,8 +444,8 @@ AttributeRelidNameIndexScan(Relation heapRelation,
 
 HeapTuple
 AttributeRelidNumIndexScan(Relation heapRelation,
-					  Oid relid,
-					  AttrNumber attnum)
+						   Oid relid,
+						   AttrNumber attnum)
 {
 	Relation	idesc;
 	ScanKeyData skey[2];
@@ -500,7 +500,7 @@ OpclassNameIndexScan(Relation heapRelation, char *opcName)
 	Relation	idesc;
 	ScanKeyData skey[1];
 	HeapTuple	tuple;
-	
+
 	ScanKeyEntryInitialize(&skey[0],
 						   (bits16) 0x0,
 						   (AttrNumber) 1,
@@ -521,7 +521,7 @@ GroupNameIndexScan(Relation heapRelation, char *groName)
 	Relation	idesc;
 	ScanKeyData skey[1];
 	HeapTuple	tuple;
-	
+
 	ScanKeyEntryInitialize(&skey[0],
 						   (bits16) 0x0,
 						   (AttrNumber) 1,
@@ -542,7 +542,7 @@ GroupSysidIndexScan(Relation heapRelation, int4 sysId)
 	Relation	idesc;
 	ScanKeyData skey[1];
 	HeapTuple	tuple;
-	
+
 	ScanKeyEntryInitialize(&skey[0],
 						   (bits16) 0x0,
 						   (AttrNumber) 1,
@@ -581,8 +581,8 @@ IndexRelidIndexScan(Relation heapRelation, Oid relid)
 
 HeapTuple
 InheritsRelidSeqnoIndexScan(Relation heapRelation,
-						   Oid relid,
-						   int4 seqno)
+							Oid relid,
+							int4 seqno)
 {
 	Relation	idesc;
 	ScanKeyData skey[2];
@@ -615,7 +615,7 @@ LanguageNameIndexScan(Relation heapRelation, char *lanName)
 	Relation	idesc;
 	ScanKeyData skey[1];
 	HeapTuple	tuple;
-	
+
 	ScanKeyEntryInitialize(&skey[0],
 						   (bits16) 0x0,
 						   (AttrNumber) 1,
@@ -658,7 +658,7 @@ ListenerRelnamePidIndexScan(Relation heapRelation, char *relName, int4 pid)
 	Relation	idesc;
 	ScanKeyData skey[2];
 	HeapTuple	tuple;
-	
+
 	ScanKeyEntryInitialize(&skey[0],
 						   (bits16) 0x0,
 						   (AttrNumber) 1,
@@ -681,10 +681,10 @@ ListenerRelnamePidIndexScan(Relation heapRelation, char *relName, int4 pid)
 
 HeapTuple
 OperatorNameIndexScan(Relation heapRelation,
-					   char *oprName,
-					   Oid   oprLeft,
-					   Oid   oprRight,
-                       char  oprKind)
+					  char *oprName,
+					  Oid oprLeft,
+					  Oid oprRight,
+					  char oprKind)
 {
 	Relation	idesc;
 	ScanKeyData skey[4];
@@ -810,7 +810,7 @@ ClassNameIndexScan(Relation heapRelation, char *relName)
 	Relation	idesc;
 	ScanKeyData skey[1];
 	HeapTuple	tuple;
-	
+
 	ScanKeyEntryInitialize(&skey[0],
 						   (bits16) 0x0,
 						   (AttrNumber) 1,
@@ -853,7 +853,7 @@ RewriteRulenameIndexScan(Relation heapRelation, char *ruleName)
 	Relation	idesc;
 	ScanKeyData skey[1];
 	HeapTuple	tuple;
-	
+
 	ScanKeyEntryInitialize(&skey[0],
 						   (bits16) 0x0,
 						   (AttrNumber) 1,
@@ -896,7 +896,7 @@ ShadowNameIndexScan(Relation heapRelation, char *useName)
 	Relation	idesc;
 	ScanKeyData skey[1];
 	HeapTuple	tuple;
-	
+
 	ScanKeyEntryInitialize(&skey[0],
 						   (bits16) 0x0,
 						   (AttrNumber) 1,
@@ -917,7 +917,7 @@ ShadowSysidIndexScan(Relation heapRelation, int4 sysId)
 	Relation	idesc;
 	ScanKeyData skey[1];
 	HeapTuple	tuple;
-	
+
 	ScanKeyEntryInitialize(&skey[0],
 						   (bits16) 0x0,
 						   (AttrNumber) 1,
@@ -934,8 +934,8 @@ ShadowSysidIndexScan(Relation heapRelation, int4 sysId)
 
 HeapTuple
 StatisticRelidAttnumIndexScan(Relation heapRelation,
-					   Oid relId,
-					   AttrNumber attNum)
+							  Oid relId,
+							  AttrNumber attNum)
 {
 	Relation	idesc;
 	ScanKeyData skey[2];
@@ -1004,4 +1004,3 @@ TypeOidIndexScan(Relation heapRelation, Oid typeId)
 
 	return tuple;
 }
-

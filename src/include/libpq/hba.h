@@ -4,7 +4,7 @@
  *	  Interface to hba.c
  *
  *
- * $Id: hba.h,v 1.16 1999/10/23 03:13:29 tgl Exp $
+ * $Id: hba.h,v 1.17 2000/04/12 17:16:35 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -42,7 +42,7 @@ typedef enum UserAuth
 
 typedef struct Port hbaPort;
 
-int hba_getauthmethod(hbaPort *port);
+int			hba_getauthmethod(hbaPort *port);
 int authident(struct sockaddr_in * raddr, struct sockaddr_in * laddr,
 		  const char *postgres_username, const char *auth_arg);
 

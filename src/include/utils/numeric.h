@@ -5,7 +5,7 @@
  *
  *	1998 Jan Wieck
  *
- * $Header: /cvsroot/pgsql/src/include/utils/numeric.h,v 1.8 2000/01/15 23:42:48 tgl Exp $
+ * $Header: /cvsroot/pgsql/src/include/utils/numeric.h,v 1.9 2000/04/12 17:16:55 momjian Exp $
  *
  * ----------
  */
@@ -41,7 +41,7 @@
 #define NUMERIC_POS			0x0000
 #define NUMERIC_NEG			0x4000
 #define NUMERIC_NAN			0xC000
-#define NUMERIC_DSCALE_MASK	0x3FFF
+#define NUMERIC_DSCALE_MASK 0x3FFF
 #define NUMERIC_SIGN(n)		((n)->n_sign_dscale & NUMERIC_SIGN_MASK)
 #define NUMERIC_DSCALE(n)	((n)->n_sign_dscale & NUMERIC_DSCALE_MASK)
 #define NUMERIC_IS_NAN(n)	(NUMERIC_SIGN(n) != NUMERIC_POS &&			\

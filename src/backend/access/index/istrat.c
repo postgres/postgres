@@ -9,7 +9,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/access/index/Attic/istrat.c,v 1.41 2000/02/18 09:29:16 inoue Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/access/index/Attic/istrat.c,v 1.42 2000/04/12 17:14:47 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -477,7 +477,7 @@ OperatorRelationFillScanKeyEntry(Relation operatorRelation,
 {
 	HeapTuple	tuple;
 	HeapScanDesc scan = NULL;
-	bool	cachesearch = (!IsBootstrapProcessingMode()) && IsCacheInitialized();
+	bool		cachesearch = (!IsBootstrapProcessingMode()) && IsCacheInitialized();
 
 	if (cachesearch)
 	{
@@ -547,7 +547,7 @@ IndexSupportInitialize(IndexStrategy indexStrategy,
 	AttrNumber	attributeNumber;
 	int			attributeIndex;
 	Oid			operatorClassObjectId[INDEX_MAX_KEYS];
-	bool	cachesearch = (!IsBootstrapProcessingMode()) && IsCacheInitialized();
+	bool		cachesearch = (!IsBootstrapProcessingMode()) && IsCacheInitialized();
 
 	if (cachesearch)
 	{
@@ -674,7 +674,7 @@ IndexSupportInitialize(IndexStrategy indexStrategy,
 			aform = (Form_pg_amop) GETSTRUCT(tuple);
 			OperatorRelationFillScanKeyEntry(operatorRelation,
 											 aform->amopopr,
-					StrategyMapGetScanKeyEntry(map, aform->amopstrategy));
+				   StrategyMapGetScanKeyEntry(map, aform->amopstrategy));
 		}
 
 		heap_endscan(scan);

@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/optimizer/prep/prepunion.c,v 1.47 2000/03/21 05:12:06 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/optimizer/prep/prepunion.c,v 1.48 2000/04/12 17:15:23 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -26,7 +26,8 @@
 #include "parser/parsetree.h"
 #include "utils/lsyscache.h"
 
-typedef struct {
+typedef struct
+{
 	Index		rt_index;
 	int			sublevels_up;
 	Oid			old_relid;
@@ -40,11 +41,11 @@ static RangeTblEntry *new_rangetable_entry(Oid new_relid,
 					 RangeTblEntry *old_entry);
 static void fix_parsetree_attnums(Index rt_index, Oid old_relid,
 					  Oid new_relid, Query *parsetree);
-static bool fix_parsetree_attnums_walker (Node *node,
-								fix_parsetree_attnums_context *context);
+static bool fix_parsetree_attnums_walker(Node *node,
+							 fix_parsetree_attnums_context *context);
 static Append *make_append(List *appendplans, List *unionrtables,
-						   Index rt_index,
-						   List *inheritrtable, List *tlist);
+			Index rt_index,
+			List *inheritrtable, List *tlist);
 
 
 /*
@@ -122,11 +123,11 @@ plan_union_queries(Query *parse)
 	/* Is this a simple one */
 	if (!union_all_found ||
 		!union_found ||
-		/* A trailing UNION negates the effect of earlier UNION ALLs */
+	/* A trailing UNION negates the effect of earlier UNION ALLs */
 		!last_union_all_flag)
 	{
 		List	   *hold_unionClause = parse->unionClause;
-		double		tuple_fraction = -1.0; /* default processing */
+		double		tuple_fraction = -1.0;		/* default processing */
 
 		/* we will do sorting later, so don't do it now */
 		if (!union_all_found ||
@@ -134,6 +135,7 @@ plan_union_queries(Query *parse)
 		{
 			parse->sortClause = NIL;
 			parse->distinctClause = NIL;
+
 			/*
 			 * force lower-level planning to assume that all tuples will
 			 * be retrieved, even if it sees a LIMIT in the query node.
@@ -149,8 +151,9 @@ plan_union_queries(Query *parse)
 		{
 			Query	   *union_query = lfirst(ulist);
 
-			/* use subquery_planner here because the union'd queries
-			 * have not been preprocessed yet.  My goodness this is messy...
+			/*
+			 * use subquery_planner here because the union'd queries have
+			 * not been preprocessed yet.  My goodness this is messy...
 			 */
 			union_plans = lappend(union_plans,
 								  subquery_planner(union_query,
@@ -178,8 +181,8 @@ plan_union_queries(Query *parse)
 		 * Recursion, but UNION only. The last one is a UNION, so it will
 		 * not come here in recursion.
 		 *
-		 * XXX is it OK to pass default -1 to union_planner in this path,
-		 * or should we force a tuple_fraction value?
+		 * XXX is it OK to pass default -1 to union_planner in this path, or
+		 * should we force a tuple_fraction value?
 		 */
 		union_plans = lcons(union_planner(parse, -1.0), NIL);
 		union_rts = lcons(parse->rtable, NIL);
@@ -189,11 +192,12 @@ plan_union_queries(Query *parse)
 		{
 			Query	   *union_all_query = lfirst(ulist);
 
-			/* use subquery_planner here because the union'd queries
-			 * have not been preprocessed yet.  My goodness this is messy...
+			/*
+			 * use subquery_planner here because the union'd queries have
+			 * not been preprocessed yet.  My goodness this is messy...
 			 */
 			union_plans = lappend(union_plans,
-								  subquery_planner(union_all_query, -1.0));
+								subquery_planner(union_all_query, -1.0));
 			union_rts = lappend(union_rts, union_all_query->rtable);
 		}
 	}
@@ -201,9 +205,11 @@ plan_union_queries(Query *parse)
 	/* We have already split UNION and UNION ALL and we made it consistent */
 	if (!last_union_all_flag)
 	{
-		/* Need SELECT DISTINCT behavior to implement UNION.
-		 * Put back the held sortClause, add any missing columns to the
-		 * sort clause, and set distinctClause properly.
+
+		/*
+		 * Need SELECT DISTINCT behavior to implement UNION. Put back the
+		 * held sortClause, add any missing columns to the sort clause,
+		 * and set distinctClause properly.
 		 */
 		List	   *slitem;
 
@@ -215,7 +221,7 @@ plan_union_queries(Query *parse)
 			SortClause *scl = (SortClause *) lfirst(slitem);
 			TargetEntry *tle = get_sortgroupclause_tle(scl, parse->targetList);
 
-			if (! tle->resdom->resjunk)
+			if (!tle->resdom->resjunk)
 				parse->distinctClause = lappend(parse->distinctClause,
 												copyObject(scl));
 		}
@@ -226,9 +232,10 @@ plan_union_queries(Query *parse)
 		parse->distinctClause = NIL;
 	}
 
-	/* Make sure we don't try to apply the first query's grouping stuff
-	 * to the Append node, either.  Basically we don't want union_planner
-	 * to do anything when we return control, except add the top sort/unique
+	/*
+	 * Make sure we don't try to apply the first query's grouping stuff to
+	 * the Append node, either.  Basically we don't want union_planner to
+	 * do anything when we return control, except add the top sort/unique
 	 * nodes for DISTINCT processing if this wasn't UNION ALL, or the top
 	 * sort node if it was UNION ALL with a user-provided sort clause.
 	 */
@@ -259,13 +266,13 @@ plan_union_queries(Query *parse)
  *
  * If grouping, aggregation, or sorting is specified in the parent plan,
  * the subplans should not do any of those steps --- we must do those
- * operations just once above the APPEND node.  The given tlist has been
+ * operations just once above the APPEND node.	The given tlist has been
  * modified appropriately to remove group/aggregate expressions, but the
  * Query node still has the relevant fields set.  We remove them in the
  * copies used for subplans (see plan_inherit_query).
  *
  * NOTE: this can be invoked recursively if more than one inheritance wildcard
- * is present.  At each level of recursion, the first wildcard remaining in
+ * is present.	At each level of recursion, the first wildcard remaining in
  * the rangetable is expanded.
  */
 Append *
@@ -282,8 +289,8 @@ plan_inherit_queries(Query *parse, List *tlist, Index rt_index)
 
 	/*
 	 * Remove the flag for this relation, since we're about to handle it.
-	 * XXX destructive change to parent parse tree, but necessary to prevent
-	 * infinite recursion.
+	 * XXX destructive change to parent parse tree, but necessary to
+	 * prevent infinite recursion.
 	 */
 	rt_entry->inh = false;
 
@@ -313,42 +320,44 @@ plan_inherit_query(Relids relids,
 	List	   *union_plans = NIL;
 	List	   *union_rtentries = NIL;
 	List	   *save_tlist = root->targetList;
-	double tuple_fraction;
+	double		tuple_fraction;
 	List	   *i;
 
 	/*
 	 * Avoid making copies of the root's tlist, which we aren't going to
-	 * use anyway (we are going to make copies of the passed tlist, instead).
+	 * use anyway (we are going to make copies of the passed tlist,
+	 * instead).
 	 */
 	root->targetList = NIL;
 
 	/*
-	 * If we are going to need sorting or grouping at the top level,
-	 * force lower-level planners to assume that all tuples will be
-	 * retrieved.
+	 * If we are going to need sorting or grouping at the top level, force
+	 * lower-level planners to assume that all tuples will be retrieved.
 	 */
 	if (root->distinctClause || root->sortClause ||
 		root->groupClause || root->hasAggs)
-		tuple_fraction = 0.0; /* will need all tuples from each subplan */
+		tuple_fraction = 0.0;	/* will need all tuples from each subplan */
 	else
-		tuple_fraction = -1.0; /* default behavior is OK (I think) */
+		tuple_fraction = -1.0;	/* default behavior is OK (I think) */
 
 	foreach(i, relids)
 	{
 		int			relid = lfirsti(i);
+
 		/*
-		 * Make a modifiable copy of the original query,
-		 * and replace the target rangetable entry with a new one
-		 * identifying this child table.
+		 * Make a modifiable copy of the original query, and replace the
+		 * target rangetable entry with a new one identifying this child
+		 * table.
 		 */
 		Query	   *new_root = copyObject(root);
 		RangeTblEntry *new_rt_entry = new_rangetable_entry(relid,
 														   rt_entry);
 
 		rt_store(rt_index, new_root->rtable, new_rt_entry);
+
 		/*
-		 * Insert (a modifiable copy of) the desired simplified tlist
-		 * into the subquery
+		 * Insert (a modifiable copy of) the desired simplified tlist into
+		 * the subquery
 		 */
 		new_root->targetList = copyObject(tlist);
 
@@ -360,14 +369,15 @@ plan_inherit_query(Relids relids,
 		new_root->sortClause = NIL;
 		new_root->groupClause = NIL;
 		new_root->havingQual = NULL;
-		new_root->hasAggs = false; /* shouldn't be any left ... */
+		new_root->hasAggs = false;		/* shouldn't be any left ... */
 
 		/*
 		 * Update attribute numbers in case child has different ordering
 		 * of columns than parent (as can happen after ALTER TABLE).
 		 *
 		 * XXX This is a crock, and it doesn't really work.  It'd be better
-		 * to fix ALTER TABLE to preserve consistency of attribute numbering.
+		 * to fix ALTER TABLE to preserve consistency of attribute
+		 * numbering.
 		 */
 		fix_parsetree_attnums(rt_index,
 							  rt_entry->relid,
@@ -397,23 +407,24 @@ find_all_inheritors(Oid parentrel)
 	List	   *unexamined_relids = lconsi(parentrel, NIL);
 
 	/*
-	 * While the queue of unexamined relids is nonempty, remove the
-	 * first element, mark it examined, and find its direct descendants.
-	 * NB: cannot use foreach(), since we modify the queue inside loop.
+	 * While the queue of unexamined relids is nonempty, remove the first
+	 * element, mark it examined, and find its direct descendants. NB:
+	 * cannot use foreach(), since we modify the queue inside loop.
 	 */
 	while (unexamined_relids != NIL)
 	{
-		Oid		currentrel = lfirsti(unexamined_relids);
-		List   *currentchildren;
+		Oid			currentrel = lfirsti(unexamined_relids);
+		List	   *currentchildren;
 
 		unexamined_relids = lnext(unexamined_relids);
 		examined_relids = lappendi(examined_relids, currentrel);
 		currentchildren = find_inheritance_children(currentrel);
+
 		/*
-		 * Add to the queue only those children not already seen.
-		 * This could probably be simplified to a plain nconc,
-		 * because our inheritance relationships should always be a
-		 * strict tree, no?  Should never find any matches, ISTM...
+		 * Add to the queue only those children not already seen. This
+		 * could probably be simplified to a plain nconc, because our
+		 * inheritance relationships should always be a strict tree, no?
+		 * Should never find any matches, ISTM...
 		 */
 		currentchildren = set_differencei(currentchildren, examined_relids);
 		unexamined_relids = LispUnioni(unexamined_relids, currentchildren);
@@ -477,7 +488,7 @@ new_rangetable_entry(Oid new_relid, RangeTblEntry *old_entry)
  *	  'old_relid' in 'parsetree' with the attribute numbers from
  *	  'new_relid'.
  *
- * The parsetree is MODIFIED IN PLACE.  This is OK only because
+ * The parsetree is MODIFIED IN PLACE.	This is OK only because
  * plan_inherit_query made a copy of the tree for us to hack upon.
  */
 static void
@@ -495,6 +506,7 @@ fix_parsetree_attnums(Index rt_index,
 	context.old_relid = old_relid;
 	context.new_relid = new_relid;
 	context.sublevels_up = 0;
+
 	/*
 	 * We must scan both the targetlist and qual, but we know the
 	 * havingQual is empty, so we can ignore it.
@@ -504,7 +516,7 @@ fix_parsetree_attnums(Index rt_index,
 }
 
 /*
- * Adjust varnos for child tables.  This routine makes it possible for
+ * Adjust varnos for child tables.	This routine makes it possible for
  * child tables to have different column positions for the "same" attribute
  * as a parent, which helps ALTER TABLE ADD COLUMN.  Unfortunately this isn't
  * nearly enough to make it work transparently; there are other places where
@@ -513,8 +525,8 @@ fix_parsetree_attnums(Index rt_index,
  * ALTER TABLE...
  */
 static bool
-fix_parsetree_attnums_walker (Node *node,
-							  fix_parsetree_attnums_context *context)
+fix_parsetree_attnums_walker(Node *node,
+							 fix_parsetree_attnums_context *context)
 {
 	if (node == NULL)
 		return false;
@@ -534,9 +546,10 @@ fix_parsetree_attnums_walker (Node *node,
 	}
 	if (IsA(node, SubLink))
 	{
+
 		/*
-		 * Standard expression_tree_walker will not recurse into subselect,
-		 * but here we must do so.
+		 * Standard expression_tree_walker will not recurse into
+		 * subselect, but here we must do so.
 		 */
 		SubLink    *sub = (SubLink *) node;
 
@@ -588,9 +601,9 @@ make_append(List *appendplans,
 	node->plan.plan_width = 0;
 	foreach(subnode, appendplans)
 	{
-		Plan   *subplan = (Plan *) lfirst(subnode);
+		Plan	   *subplan = (Plan *) lfirst(subnode);
 
-		if (subnode == appendplans)	/* first node? */
+		if (subnode == appendplans)		/* first node? */
 			node->plan.startup_cost = subplan->startup_cost;
 		node->plan.total_cost += subplan->total_cost;
 		node->plan.plan_rows += subplan->plan_rows;

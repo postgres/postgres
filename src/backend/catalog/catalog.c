@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/catalog/catalog.c,v 1.31 2000/04/09 04:43:15 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/catalog/catalog.c,v 1.32 2000/04/12 17:14:55 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -44,6 +44,7 @@ relpath(const char *relname)
 		snprintf(path, bufsize, "%s%c%s", DataDir, SEP_CHAR, relname);
 		return path;
 	}
+
 	/*
 	 * If it is in the current database, assume it is in current working
 	 * directory.  NB: this does not work during bootstrap!
@@ -55,7 +56,7 @@ relpath(const char *relname)
  * relpath_blind			- construct path to a relation's file
  *
  * Construct the path using only the info available to smgrblindwrt,
- * namely the names and OIDs of the database and relation.  (Shared system
+ * namely the names and OIDs of the database and relation.	(Shared system
  * relations are identified with dbid = 0.)  Note that we may have to
  * access a relation belonging to a different database!
  *

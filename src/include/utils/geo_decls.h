@@ -6,7 +6,7 @@
  * Portions Copyright (c) 1996-2000, PostgreSQL, Inc
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Id: geo_decls.h,v 1.26 2000/03/14 23:06:50 thomas Exp $
+ * $Id: geo_decls.h,v 1.27 2000/04/12 17:16:55 momjian Exp $
  *
  * NOTE
  *	  These routines do *not* use the float types from adt/.
@@ -361,16 +361,16 @@ extern double circle_dt(CIRCLE *circle1, CIRCLE *circle2);
 
 /* geo_selfuncs.c */
 extern float64 areasel(Oid opid, Oid relid, AttrNumber attno,
-					   Datum value, int32 flag);
+		Datum value, int32 flag);
 extern float64 areajoinsel(Oid opid, Oid relid1, AttrNumber attno1,
-						   Oid relid2, AttrNumber attno2);
+			Oid relid2, AttrNumber attno2);
 extern float64 positionsel(Oid opid, Oid relid, AttrNumber attno,
-						   Datum value, int32 flag);
+			Datum value, int32 flag);
 extern float64 positionjoinsel(Oid opid, Oid relid1, AttrNumber attno1,
-							   Oid relid2, AttrNumber attno2);
+				Oid relid2, AttrNumber attno2);
 extern float64 contsel(Oid opid, Oid relid, AttrNumber attno,
-					   Datum value, int32 flag);
+		Datum value, int32 flag);
 extern float64 contjoinsel(Oid opid, Oid relid1, AttrNumber attno1,
-						   Oid relid2, AttrNumber attno2);
+			Oid relid2, AttrNumber attno2);
 
 #endif	 /* GEO_DECLS_H */

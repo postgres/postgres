@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/float.c,v 1.56 2000/04/07 13:39:40 thomas Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/float.c,v 1.57 2000/04/12 17:15:49 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -1159,8 +1159,9 @@ dpow(float64 arg1, float64 arg2)
 	tmp1 = *arg1;
 	tmp2 = *arg2;
 
-	/* We must check both for errno getting set and for a NaN result,
-	 * in order to deal with the vagaries of different platforms...
+	/*
+	 * We must check both for errno getting set and for a NaN result, in
+	 * order to deal with the vagaries of different platforms...
 	 */
 	errno = 0;
 	*result = (float64data) pow(tmp1, tmp2);
@@ -1192,9 +1193,10 @@ dexp(float64 arg1)
 
 	tmp = *arg1;
 
-	/* We must check both for errno getting set and for a NaN result,
-	 * in order to deal with the vagaries of different platforms.
-	 * Also, a zero result implies unreported underflow.
+	/*
+	 * We must check both for errno getting set and for a NaN result, in
+	 * order to deal with the vagaries of different platforms. Also, a
+	 * zero result implies unreported underflow.
 	 */
 	errno = 0;
 	*result = (float64data) exp(tmp);
@@ -1234,7 +1236,7 @@ dlog1(float64 arg1)
 
 	CheckFloat8Val(*result);
 	return result;
-} /* dlog1() */
+}	/* dlog1() */
 
 
 /*
@@ -1260,7 +1262,7 @@ dlog10(float64 arg1)
 
 	CheckFloat8Val(*result);
 	return result;
-} /* dlog10() */
+}	/* dlog10() */
 
 
 /*
@@ -1289,7 +1291,7 @@ dacos(float64 arg1)
 
 	CheckFloat8Val(*result);
 	return result;
-} /* dacos() */
+}	/* dacos() */
 
 
 /*
@@ -1318,7 +1320,7 @@ dasin(float64 arg1)
 
 	CheckFloat8Val(*result);
 	return result;
-} /* dasin() */
+}	/* dasin() */
 
 
 /*
@@ -1347,7 +1349,7 @@ datan(float64 arg1)
 
 	CheckFloat8Val(*result);
 	return result;
-} /* datan() */
+}	/* datan() */
 
 
 /*
@@ -1374,7 +1376,7 @@ datan2(float64 arg1, float64 arg2)
 
 	CheckFloat8Val(*result);
 	return result;
-} /* datan2() */
+}	/* datan2() */
 
 
 /*
@@ -1403,7 +1405,7 @@ dcos(float64 arg1)
 
 	CheckFloat8Val(*result);
 	return result;
-} /* dcos() */
+}	/* dcos() */
 
 
 /*
@@ -1430,10 +1432,10 @@ dcot(float64 arg1)
 		)
 		elog(ERROR, "dcot(%f) input is out of range", *arg1);
 
-	*result = 1.0/(*result);
+	*result = 1.0 / (*result);
 	CheckFloat8Val(*result);
 	return result;
-} /* dcot() */
+}	/* dcot() */
 
 
 /*
@@ -1462,7 +1464,7 @@ dsin(float64 arg1)
 
 	CheckFloat8Val(*result);
 	return result;
-} /* dsin() */
+}	/* dsin() */
 
 
 /*
@@ -1491,7 +1493,7 @@ dtan(float64 arg1)
 
 	CheckFloat8Val(*result);
 	return result;
-} /* dtan() */
+}	/* dtan() */
 
 
 #ifndef M_PI
@@ -1517,7 +1519,7 @@ degrees(float64 arg1)
 
 	CheckFloat8Val(*result);
 	return result;
-} /* degrees() */
+}	/* degrees() */
 
 
 /*
@@ -1533,7 +1535,7 @@ dpi(void)
 	*result = (M_PI);
 
 	return result;
-} /* dpi() */
+}	/* dpi() */
 
 
 /*
@@ -1553,11 +1555,11 @@ radians(float64 arg1)
 
 	CheckFloat8Val(*result);
 	return result;
-} /* radians() */
+}	/* radians() */
 
 
 /*
- *		drandom   	- returns a random number
+ *		drandom		- returns a random number
  */
 float64
 drandom(void)
@@ -1571,7 +1573,7 @@ drandom(void)
 
 	CheckFloat8Val(*result);
 	return result;
-} /* drandom() */
+}	/* drandom() */
 
 
 /*
@@ -1580,12 +1582,12 @@ drandom(void)
 int32
 setseed(float64 seed)
 {
-	int iseed = ((*seed) * RAND_MAX);
+	int			iseed = ((*seed) * RAND_MAX);
 
 	srandom((unsigned int) ((*seed) * RAND_MAX));
 
 	return iseed;
-} /* setseed() */
+}	/* setseed() */
 
 
 /*

@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/optimizer/plan/initsplan.c,v 1.45 2000/02/15 20:49:18 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/optimizer/plan/initsplan.c,v 1.46 2000/04/12 17:15:21 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -30,7 +30,7 @@
 
 static void add_restrict_and_join_to_rel(Query *root, Node *clause);
 static void add_join_info_to_rels(Query *root, RestrictInfo *restrictinfo,
-								  Relids join_relids);
+					  Relids join_relids);
 static void add_vars_to_targetlist(Query *root, List *vars);
 static void check_mergejoinable(RestrictInfo *restrictinfo);
 static void check_hashjoinable(RestrictInfo *restrictinfo);
@@ -83,7 +83,7 @@ add_vars_to_targetlist(Query *root, List *vars)
  *
  *	  If we have a range variable in the FROM clause that does not appear
  *	  in the target list nor qualifications, we must add it to the base
- *	  relation list so that it will be joined.  For instance, "select f.x
+ *	  relation list so that it will be joined.	For instance, "select f.x
  *	  from foo f, foo f2" is a join of f and f2.  Note that if we have
  *	  "select foo.x from foo f", it also gets turned into a join (between
  *	  foo as foo and foo as f).
@@ -106,13 +106,15 @@ add_missing_rels_to_query(Query *root)
 		{
 			RelOptInfo *rel = get_base_rel(root, varno);
 
-			/* If the rel isn't otherwise referenced, give it a dummy
+			/*
+			 * If the rel isn't otherwise referenced, give it a dummy
 			 * targetlist consisting of its own OID.
 			 */
 			if (rel->targetlist == NIL)
 			{
 				Var		   *var = makeVar(varno, ObjectIdAttributeNumber,
 										  OIDOID, -1, 0);
+
 				add_var_to_tlist(rel, var);
 			}
 		}
@@ -142,14 +144,14 @@ add_restrict_and_join_to_rels(Query *root, List *clauses)
 	List	   *clause;
 
 	foreach(clause, clauses)
-		add_restrict_and_join_to_rel(root, (Node*) lfirst(clause));
+		add_restrict_and_join_to_rel(root, (Node *) lfirst(clause));
 }
 
 /*
  * add_restrict_and_join_to_rel
  *	  Add clause information to either the 'RestrictInfo' or 'JoinInfo' field
  *	  (depending on whether the clause is a join) of each base relation
- *	  mentioned in the clause.  A RestrictInfo node is created and added to
+ *	  mentioned in the clause.	A RestrictInfo node is created and added to
  *	  the appropriate list for each rel.  Also, if the clause uses a
  *	  mergejoinable operator, enter the left- and right-side expressions
  *	  into the query's lists of equijoined vars.
@@ -175,6 +177,7 @@ add_restrict_and_join_to_rel(Query *root, Node *clause)
 
 	if (length(relids) == 1)
 	{
+
 		/*
 		 * There is only one relation participating in 'clause', so
 		 * 'clause' must be a restriction clause for that relation.
@@ -183,21 +186,24 @@ add_restrict_and_join_to_rel(Query *root, Node *clause)
 
 		rel->baserestrictinfo = lcons(restrictinfo,
 									  rel->baserestrictinfo);
+
 		/*
 		 * Check for a "mergejoinable" clause even though it's not a join
-		 * clause.  This is so that we can recognize that "a.x = a.y" makes
-		 * x and y eligible to be considered equal, even when they belong
-		 * to the same rel.  Without this, we would not recognize that
-		 * "a.x = a.y AND a.x = b.z AND a.y = c.q" allows us to consider
-		 * z and q equal after their rels are joined.
+		 * clause.	This is so that we can recognize that "a.x = a.y"
+		 * makes x and y eligible to be considered equal, even when they
+		 * belong to the same rel.	Without this, we would not recognize
+		 * that "a.x = a.y AND a.x = b.z AND a.y = c.q" allows us to
+		 * consider z and q equal after their rels are joined.
 		 */
 		check_mergejoinable(restrictinfo);
 	}
 	else
 	{
+
 		/*
 		 * 'clause' is a join clause, since there is more than one atom in
-		 * the relid list.  Set additional RestrictInfo fields for joining.
+		 * the relid list.	Set additional RestrictInfo fields for
+		 * joining.
 		 *
 		 * We need the merge info whether or not mergejoin is enabled (for
 		 * constructing equijoined-var lists), but we don't bother setting
@@ -206,16 +212,19 @@ add_restrict_and_join_to_rel(Query *root, Node *clause)
 		check_mergejoinable(restrictinfo);
 		if (enable_hashjoin)
 			check_hashjoinable(restrictinfo);
+
 		/*
-		 * Add clause to the join lists of all the relevant
-		 * relations.  (If, perchance, 'clause' contains NO vars, then
-		 * nothing will happen...)
+		 * Add clause to the join lists of all the relevant relations.
+		 * (If, perchance, 'clause' contains NO vars, then nothing will
+		 * happen...)
 		 */
 		add_join_info_to_rels(root, restrictinfo, relids);
+
 		/*
-		 * Add vars used in the join clause to targetlists of member relations,
-		 * so that they will be emitted by the plan nodes that scan those
-		 * relations (else they won't be available at the join node!).
+		 * Add vars used in the join clause to targetlists of member
+		 * relations, so that they will be emitted by the plan nodes that
+		 * scan those relations (else they won't be available at the join
+		 * node!).
 		 */
 		add_vars_to_targetlist(root, vars);
 	}
@@ -267,7 +276,7 @@ add_join_info_to_rels(Query *root, RestrictInfo *restrictinfo,
 		joininfo = find_joininfo_node(get_base_rel(root, cur_relid),
 									  unjoined_relids);
 		joininfo->jinfo_restrictinfo = lcons(restrictinfo,
-											 joininfo->jinfo_restrictinfo);
+										   joininfo->jinfo_restrictinfo);
 	}
 }
 
@@ -296,16 +305,16 @@ check_mergejoinable(RestrictInfo *restrictinfo)
 				leftOp,
 				rightOp;
 
-	if (! is_opclause((Node *) clause))
+	if (!is_opclause((Node *) clause))
 		return;
 
 	left = get_leftop(clause);
 	right = get_rightop(clause);
 
 	/* caution: is_opclause accepts more than I do, so check it */
-	if (! right)
+	if (!right)
 		return;					/* unary opclauses need not apply */
-	if (!IsA(left, Var) || !IsA(right, Var))
+	if (!IsA(left, Var) ||!IsA(right, Var))
 		return;
 
 	opno = ((Oper *) clause->oper)->opno;
@@ -339,16 +348,16 @@ check_hashjoinable(RestrictInfo *restrictinfo)
 			   *right;
 	Oid			opno;
 
-	if (! is_opclause((Node *) clause))
+	if (!is_opclause((Node *) clause))
 		return;
 
 	left = get_leftop(clause);
 	right = get_rightop(clause);
 
 	/* caution: is_opclause accepts more than I do, so check it */
-	if (! right)
+	if (!right)
 		return;					/* unary opclauses need not apply */
-	if (!IsA(left, Var) || !IsA(right, Var))
+	if (!IsA(left, Var) ||!IsA(right, Var))
 		return;
 
 	opno = ((Oper *) clause->oper)->opno;
@@ -356,7 +365,5 @@ check_hashjoinable(RestrictInfo *restrictinfo)
 	if (op_hashjoinable(opno,
 						left->vartype,
 						right->vartype))
-	{
 		restrictinfo->hashjoinoperator = opno;
-	}
 }

@@ -4,7 +4,7 @@
  * IDENTIFICATION
  *
  *	  This software is copyrighted by Mark Hollomon
- *   but is shameless cribbed from pltcl.c by Jan Weick.
+ *	 but is shameless cribbed from pltcl.c by Jan Weick.
  *
  *	  The author hereby grants permission  to  use,  copy,	modify,
  *	  distribute,  and	license this software and its documentation
@@ -90,7 +90,7 @@ typedef struct plperl_proc_desc
 	Oid			arg_out_elem[FUNC_MAX_ARGS];
 	int			arg_out_len[FUNC_MAX_ARGS];
 	int			arg_is_rel[FUNC_MAX_ARGS];
-	SV*			reference;
+	SV		   *reference;
 }			plperl_proc_desc;
 
 
@@ -117,9 +117,11 @@ static int	plperl_firstcall = 1;
 static int	plperl_call_level = 0;
 static int	plperl_restart_in_progress = 0;
 static PerlInterpreter *plperl_safe_interp = NULL;
-static HV *plperl_proc_hash = NULL;
+static HV  *plperl_proc_hash = NULL;
+
 #if REALLYHAVEITONTHEBALL
 static Tcl_HashTable *plperl_query_hash = NULL;
+
 #endif
 
 /**********************************************************************
@@ -129,31 +131,32 @@ static void plperl_init_all(void);
 static void plperl_init_safe_interp(void);
 
 Datum plperl_call_handler(FmgrInfo *proinfo,
-						 FmgrValues *proargs, bool *isNull);
+					FmgrValues *proargs, bool *isNull);
 
 static Datum plperl_func_handler(FmgrInfo *proinfo,
-				   FmgrValues *proargs, bool *isNull);
+					FmgrValues *proargs, bool *isNull);
 
-static SV* plperl_build_tuple_argument(HeapTuple tuple, TupleDesc tupdesc);
+static SV  *plperl_build_tuple_argument(HeapTuple tuple, TupleDesc tupdesc);
 static void plperl_init_shared_libs(void);
 
 #ifdef REALLYHAVEITONTHEBALL
 static HeapTuple plperl_trigger_handler(FmgrInfo *proinfo);
 
 static int plperl_elog(ClientData cdata, Tcl_Interp *interp,
-		   int argc, char *argv[]);
-static int plperl_quote(ClientData cdata, Tcl_Interp *interp,
 			int argc, char *argv[]);
+static int plperl_quote(ClientData cdata, Tcl_Interp *interp,
+			 int argc, char *argv[]);
 
 static int plperl_SPI_exec(ClientData cdata, Tcl_Interp *interp,
-			   int argc, char *argv[]);
-static int plperl_SPI_prepare(ClientData cdata, Tcl_Interp *interp,
-				  int argc, char *argv[]);
-static int plperl_SPI_execp(ClientData cdata, Tcl_Interp *interp,
 				int argc, char *argv[]);
+static int plperl_SPI_prepare(ClientData cdata, Tcl_Interp *interp,
+				   int argc, char *argv[]);
+static int plperl_SPI_execp(ClientData cdata, Tcl_Interp *interp,
+				 int argc, char *argv[]);
 
 static void plperl_set_tuple_values(Tcl_Interp *interp, char *arrayname,
-					   int tupno, HeapTuple tuple, TupleDesc tupdesc);
+						int tupno, HeapTuple tuple, TupleDesc tupdesc);
+
 #endif
 
 
@@ -187,18 +190,17 @@ plperl_init_all(void)
 	if (plperl_proc_hash != NULL)
 	{
 		hv_undef(plperl_proc_hash);
-		SvREFCNT_dec((SV*) plperl_proc_hash);
+		SvREFCNT_dec((SV *) plperl_proc_hash);
 		plperl_proc_hash = NULL;
 	}
 
 	/************************************************************
 	 * Free the prepared query hash table
 	 ************************************************************/
+
 	/*
-	if (plperl_query_hash != NULL)
-	{
-	}
-	*/
+	 * if (plperl_query_hash != NULL) { }
+	 */
 
 	/************************************************************
 	 * Now recreate a new safe interpreter
@@ -217,7 +219,7 @@ static void
 plperl_init_safe_interp(void)
 {
 
-	char *embedding[] = { "", "-e", "use DynaLoader; require Safe; SPI::bootstrap()", "0" };
+	char	   *embedding[] = {"", "-e", "use DynaLoader; require Safe; SPI::bootstrap()", "0"};
 
 	plperl_safe_interp = perl_alloc();
 	if (!plperl_safe_interp)
@@ -227,12 +229,12 @@ plperl_init_safe_interp(void)
 	perl_parse(plperl_safe_interp, plperl_init_shared_libs, 3, embedding, NULL);
 	perl_run(plperl_safe_interp);
 
-	
+
 
 	/************************************************************
 	 * Initialize the proc and query hash tables
 	 ************************* ***********************************/
-	 plperl_proc_hash = newHV();
+	plperl_proc_hash = newHV();
 
 }
 
@@ -249,8 +251,8 @@ plperl_init_safe_interp(void)
 /* keep non-static */
 Datum
 plperl_call_handler(FmgrInfo *proinfo,
-				   FmgrValues *proargs,
-				   bool *isNull)
+					FmgrValues *proargs,
+					bool *isNull)
 {
 	Datum		retval;
 
@@ -276,11 +278,13 @@ plperl_call_handler(FmgrInfo *proinfo,
 	 ************************************************************/
 	if (CurrentTriggerData == NULL)
 		retval = plperl_func_handler(proinfo, proargs, isNull);
-	else {
+	else
+	{
 		elog(ERROR, "plperl: can't use perl in triggers yet.");
+
 		/*
-		retval = (Datum) plperl_trigger_handler(proinfo);
-		*/
+		 * retval = (Datum) plperl_trigger_handler(proinfo);
+		 */
 		/* make the compiler happy */
 		retval = (Datum) 0;
 	}
@@ -293,15 +297,16 @@ plperl_call_handler(FmgrInfo *proinfo,
 
 /**********************************************************************
  * plperl_create_sub()		- calls the perl interpreter to
- * 		create the anonymous subroutine whose text is in the SV.
- * 		Returns the SV containing the RV to the closure.
+ *		create the anonymous subroutine whose text is in the SV.
+ *		Returns the SV containing the RV to the closure.
  **********************************************************************/
 static
 SV *
-plperl_create_sub(SV *s) {
+plperl_create_sub(SV * s)
+{
 	dSP;
 
-	SV* subref = NULL;
+	SV		   *subref = NULL;
 
 	ENTER;
 	SAVETMPS;
@@ -309,7 +314,8 @@ plperl_create_sub(SV *s) {
 	perl_eval_sv(s, G_SCALAR | G_EVAL | G_KEEPERR);
 	SPAGAIN;
 
-	if (SvTRUE(GvSV(errgv))) {
+	if (SvTRUE(GvSV(errgv)))
+	{
 		POPs;
 		PUTBACK;
 		FREETMPS;
@@ -318,15 +324,17 @@ plperl_create_sub(SV *s) {
 	}
 
 	/*
-	 * need to make a deep copy of the return.
-	 * it comes off the stack as a temporary.
+	 * need to make a deep copy of the return. it comes off the stack as a
+	 * temporary.
 	 */
 	subref = newSVsv(POPs);
 
-	if (!SvROK(subref)) {
+	if (!SvROK(subref))
+	{
 		PUTBACK;
 		FREETMPS;
 		LEAVE;
+
 		/*
 		 * subref is our responsibility because it is not mortal
 		 */
@@ -341,22 +349,23 @@ plperl_create_sub(SV *s) {
 }
 
 /**********************************************************************
- * plperl_init_shared_libs()		- 
+ * plperl_init_shared_libs()		-
  *
  * We cannot use the DynaLoader directly to get at the Opcode
  * module (used by Safe.pm). So, we link Opcode into ourselves
  * and do the initialization behind perl's back.
- *			
+ *
  **********************************************************************/
 
-extern void boot_DynaLoader _((CV* cv));
-extern void boot_Opcode _((CV* cv));
-extern void boot_SPI _((CV* cv));
+extern void boot_DynaLoader _((CV * cv));
+extern void boot_Opcode _((CV * cv));
+extern void boot_SPI _((CV * cv));
 
 static void
 plperl_init_shared_libs(void)
 {
-	char *file = __FILE__;
+	char	   *file = __FILE__;
+
 	newXS("DynaLoader::bootstrap", boot_DynaLoader, file);
 	newXS("Opcode::bootstrap", boot_Opcode, file);
 	newXS("SPI::bootstrap", boot_SPI, file);
@@ -367,35 +376,40 @@ plperl_init_shared_libs(void)
  *			stored in the prodesc structure. massages the input parms properly
  **********************************************************************/
 static
-SV*
-plperl_call_perl_func (plperl_proc_desc * desc, FmgrValues *pargs)
+SV *
+plperl_call_perl_func(plperl_proc_desc * desc, FmgrValues *pargs)
 {
 	dSP;
 
-	SV* retval;
-	int i;
-	int count;
+	SV		   *retval;
+	int			i;
+	int			count;
 
 
 	ENTER;
 	SAVETMPS;
 
 	PUSHMARK(sp);
-	for (i = 0; i < desc->nargs; i++) {
-		if (desc->arg_is_rel[i]) {
+	for (i = 0; i < desc->nargs; i++)
+	{
+		if (desc->arg_is_rel[i])
+		{
+
 			/*
-			 * plperl_build_tuple_argument better return a
-			 * mortal SV.
-			*/
-			SV* hashref =  plperl_build_tuple_argument(
-				 ((TupleTableSlot *) (pargs->data[i]))->val,
-				 ((TupleTableSlot *) (pargs->data[i]))->ttc_tupleDescriptor);
+			 * plperl_build_tuple_argument better return a mortal SV.
+			 */
+			SV		   *hashref = plperl_build_tuple_argument(
+							  ((TupleTableSlot *) (pargs->data[i]))->val,
+			 ((TupleTableSlot *) (pargs->data[i]))->ttc_tupleDescriptor);
+
 			XPUSHs(hashref);
-		} else {
-			char *tmp = (*fmgr_faddr(&(desc->arg_out_func[i])))
-							(pargs->data[i],
-							 desc->arg_out_elem[i],
-							 desc->arg_out_len[i]);
+		}
+		else
+		{
+			char	   *tmp = (*fmgr_faddr(&(desc->arg_out_func[i])))
+			(pargs->data[i],
+			 desc->arg_out_elem[i],
+			 desc->arg_out_len[i]);
 
 			XPUSHs(sv_2mortal(newSVpv(tmp, 0)));
 			pfree(tmp);
@@ -406,17 +420,19 @@ plperl_call_perl_func (plperl_proc_desc * desc, FmgrValues *pargs)
 
 	SPAGAIN;
 
-	if (count !=1) {
-		PUTBACK ;
-		FREETMPS ;
+	if (count != 1)
+	{
+		PUTBACK;
+		FREETMPS;
 		LEAVE;
 		elog(ERROR, "plperl : didn't get a return item from function");
 	}
 
-	if (SvTRUE(GvSV(errgv))) {
+	if (SvTRUE(GvSV(errgv)))
+	{
 		POPs;
-		PUTBACK ;
-		FREETMPS ;
+		PUTBACK;
+		FREETMPS;
 		LEAVE;
 		elog(ERROR, "plperl : error from function : %s", SvPV(GvSV(errgv), na));
 	}
@@ -424,9 +440,9 @@ plperl_call_perl_func (plperl_proc_desc * desc, FmgrValues *pargs)
 	retval = newSVsv(POPs);
 
 
-	PUTBACK ;
-	FREETMPS ;
-	LEAVE ;
+	PUTBACK;
+	FREETMPS;
+	LEAVE;
 
 	return retval;
 
@@ -438,16 +454,16 @@ plperl_call_perl_func (plperl_proc_desc * desc, FmgrValues *pargs)
  **********************************************************************/
 static Datum
 plperl_func_handler(FmgrInfo *proinfo,
-				   FmgrValues *proargs,
-				   bool *isNull)
+					FmgrValues *proargs,
+					bool *isNull)
 {
 	int			i;
 	char		internal_proname[512];
-	int		proname_len;
+	int			proname_len;
 	char	   *stroid;
 	plperl_proc_desc *prodesc;
-	SV*		perlret;
-	Datum    retval;
+	SV		   *perlret;
+	Datum		retval;
 	sigjmp_buf	save_restart;
 
 	/************************************************************
@@ -462,7 +478,7 @@ plperl_func_handler(FmgrInfo *proinfo,
 	/************************************************************
 	 * Lookup the internal proc name in the hashtable
 	 ************************************************************/
-	if (! hv_exists(plperl_proc_hash, internal_proname, proname_len))
+	if (!hv_exists(plperl_proc_hash, internal_proname, proname_len))
 	{
 		/************************************************************
 		 * If we haven't found it in the hashtable, we analyze
@@ -476,7 +492,7 @@ plperl_func_handler(FmgrInfo *proinfo,
 		HeapTuple	typeTup;
 		Form_pg_proc procStruct;
 		Form_pg_type typeStruct;
-		SV * proc_internal_def;
+		SV		   *proc_internal_def;
 		char		proc_internal_args[4096];
 		char	   *proc_source;
 
@@ -564,16 +580,17 @@ plperl_func_handler(FmgrInfo *proinfo,
 		 *
 		 ************************************************************/
 		proc_source = textout(&(procStruct->prosrc));
+
 		/*
-		 * the string has been split for readbility.
-		 * please don't put commas between them. Hope everyone is ANSI
+		 * the string has been split for readbility. please don't put
+		 * commas between them. Hope everyone is ANSI
 		 */
 		proc_internal_def = newSVpvf(
-			"$::x = new Safe;" 
-			"$::x->permit_only(':default');"
-			"$::x->share(qw[&elog &DEBUG &NOTICE &NOIND &ERROR]);"
-			"use strict;"
-			"return $::x->reval( q[ sub { %s } ]);", proc_source);
+									 "$::x = new Safe;"
+									 "$::x->permit_only(':default');"
+				   "$::x->share(qw[&elog &DEBUG &NOTICE &NOIND &ERROR]);"
+									 "use strict;"
+				   "return $::x->reval( q[ sub { %s } ]);", proc_source);
 
 		pfree(proc_source);
 
@@ -592,8 +609,8 @@ plperl_func_handler(FmgrInfo *proinfo,
 		/************************************************************
 		 * Add the proc description block to the hashtable
 		 ************************************************************/
-		 hv_store(plperl_proc_hash, internal_proname, proname_len, 
-			newSViv((IV)prodesc), 0);
+		hv_store(plperl_proc_hash, internal_proname, proname_len,
+				 newSViv((IV) prodesc), 0);
 	}
 	else
 	{
@@ -601,7 +618,7 @@ plperl_func_handler(FmgrInfo *proinfo,
 		 * Found the proc description block in the hashtable
 		 ************************************************************/
 		prodesc = (plperl_proc_desc *) SvIV(*hv_fetch(plperl_proc_hash,
-					internal_proname, proname_len, 0));
+									  internal_proname, proname_len, 0));
 	}
 
 
@@ -632,17 +649,18 @@ plperl_func_handler(FmgrInfo *proinfo,
 		elog(ERROR, "plperl: SPI_finish() failed");
 
 	retval = (Datum) (*fmgr_faddr(&prodesc->result_in_func))
-			(SvPV(perlret, na),
-			 prodesc->result_in_elem,
-		    prodesc->result_in_len);
+		(SvPV(perlret, na),
+		 prodesc->result_in_elem,
+		 prodesc->result_in_len);
 
 	SvREFCNT_dec(perlret);
 
 	memcpy(&Warn_restart, &save_restart, sizeof(Warn_restart));
-	if (plperl_restart_in_progress) {
-		if (--plperl_call_level == 0 )
+	if (plperl_restart_in_progress)
+	{
+		if (--plperl_call_level == 0)
 			plperl_restart_in_progress = 0;
-		siglongjmp(Warn_restart,1);
+		siglongjmp(Warn_restart, 1);
 	}
 
 	return retval;
@@ -651,7 +669,7 @@ plperl_func_handler(FmgrInfo *proinfo,
 
 #ifdef REALLYHAVEITONTHEBALL
 /**********************************************************************
- * plperl_trigger_handler()	- Handler for trigger calls
+ * plperl_trigger_handler() - Handler for trigger calls
  **********************************************************************/
 static HeapTuple
 plperl_trigger_handler(FmgrInfo *proinfo)
@@ -865,7 +883,7 @@ plperl_trigger_handler(FmgrInfo *proinfo)
 
 	/* Build the data list for the trigtuple */
 	plperl_build_tuple_argument(trigdata->tg_trigtuple,
-							   tupdesc, &tcl_trigtup);
+								tupdesc, &tcl_trigtup);
 
 	/*
 	 * Now the command part of the event for TG_op and data for NEW and
@@ -894,7 +912,7 @@ plperl_trigger_handler(FmgrInfo *proinfo)
 		Tcl_DStringAppendElement(&tcl_cmd, "UPDATE");
 
 		plperl_build_tuple_argument(trigdata->tg_newtuple,
-								   tupdesc, &tcl_newtup);
+									tupdesc, &tcl_newtup);
 
 		Tcl_DStringAppendElement(&tcl_cmd, Tcl_DStringValue(&tcl_newtup));
 		Tcl_DStringAppendElement(&tcl_cmd, Tcl_DStringValue(&tcl_trigtup));
@@ -1090,7 +1108,7 @@ plperl_trigger_handler(FmgrInfo *proinfo)
  **********************************************************************/
 static int
 plperl_elog(ClientData cdata, Tcl_Interp *interp,
-		   int argc, char *argv[])
+			int argc, char *argv[])
 {
 	int			level;
 	sigjmp_buf	save_restart;
@@ -1156,7 +1174,7 @@ plperl_elog(ClientData cdata, Tcl_Interp *interp,
  **********************************************************************/
 static int
 plperl_quote(ClientData cdata, Tcl_Interp *interp,
-			int argc, char *argv[])
+			 int argc, char *argv[])
 {
 	char	   *tmp;
 	char	   *cp1;
@@ -1210,7 +1228,7 @@ plperl_quote(ClientData cdata, Tcl_Interp *interp,
  **********************************************************************/
 static int
 plperl_SPI_exec(ClientData cdata, Tcl_Interp *interp,
-			   int argc, char *argv[])
+				int argc, char *argv[])
 {
 	int			spi_rc;
 	char		buf[64];
@@ -1317,13 +1335,13 @@ plperl_SPI_exec(ClientData cdata, Tcl_Interp *interp,
 
 		case SPI_ERROR_ARGUMENT:
 			Tcl_SetResult(interp,
-						  "plperl: SPI_exec() failed - SPI_ERROR_ARGUMENT",
+						"plperl: SPI_exec() failed - SPI_ERROR_ARGUMENT",
 						  TCL_VOLATILE);
 			return TCL_ERROR;
 
 		case SPI_ERROR_UNCONNECTED:
 			Tcl_SetResult(interp,
-					  "plperl: SPI_exec() failed - SPI_ERROR_UNCONNECTED",
+					 "plperl: SPI_exec() failed - SPI_ERROR_UNCONNECTED",
 						  TCL_VOLATILE);
 			return TCL_ERROR;
 
@@ -1341,13 +1359,13 @@ plperl_SPI_exec(ClientData cdata, Tcl_Interp *interp,
 
 		case SPI_ERROR_TRANSACTION:
 			Tcl_SetResult(interp,
-					  "plperl: SPI_exec() failed - SPI_ERROR_TRANSACTION",
+					 "plperl: SPI_exec() failed - SPI_ERROR_TRANSACTION",
 						  TCL_VOLATILE);
 			return TCL_ERROR;
 
 		case SPI_ERROR_OPUNKNOWN:
 			Tcl_SetResult(interp,
-						"plperl: SPI_exec() failed - SPI_ERROR_OPUNKNOWN",
+					   "plperl: SPI_exec() failed - SPI_ERROR_OPUNKNOWN",
 						  TCL_VOLATILE);
 			return TCL_ERROR;
 
@@ -1442,7 +1460,7 @@ plperl_SPI_exec(ClientData cdata, Tcl_Interp *interp,
  **********************************************************************/
 static int
 plperl_SPI_prepare(ClientData cdata, Tcl_Interp *interp,
-				  int argc, char *argv[])
+				   int argc, char *argv[])
 {
 	int			nargs;
 	char	  **args;
@@ -1623,7 +1641,7 @@ plperl_SPI_prepare(ClientData cdata, Tcl_Interp *interp,
  **********************************************************************/
 static int
 plperl_SPI_execp(ClientData cdata, Tcl_Interp *interp,
-				int argc, char *argv[])
+				 int argc, char *argv[])
 {
 	int			spi_rc;
 	char		buf[64];
@@ -1885,13 +1903,13 @@ plperl_SPI_execp(ClientData cdata, Tcl_Interp *interp,
 
 		case SPI_ERROR_ARGUMENT:
 			Tcl_SetResult(interp,
-						  "plperl: SPI_exec() failed - SPI_ERROR_ARGUMENT",
+						"plperl: SPI_exec() failed - SPI_ERROR_ARGUMENT",
 						  TCL_VOLATILE);
 			return TCL_ERROR;
 
 		case SPI_ERROR_UNCONNECTED:
 			Tcl_SetResult(interp,
-					  "plperl: SPI_exec() failed - SPI_ERROR_UNCONNECTED",
+					 "plperl: SPI_exec() failed - SPI_ERROR_UNCONNECTED",
 						  TCL_VOLATILE);
 			return TCL_ERROR;
 
@@ -1909,13 +1927,13 @@ plperl_SPI_execp(ClientData cdata, Tcl_Interp *interp,
 
 		case SPI_ERROR_TRANSACTION:
 			Tcl_SetResult(interp,
-					  "plperl: SPI_exec() failed - SPI_ERROR_TRANSACTION",
+					 "plperl: SPI_exec() failed - SPI_ERROR_TRANSACTION",
 						  TCL_VOLATILE);
 			return TCL_ERROR;
 
 		case SPI_ERROR_OPUNKNOWN:
 			Tcl_SetResult(interp,
-						"plperl: SPI_exec() failed - SPI_ERROR_OPUNKNOWN",
+					   "plperl: SPI_exec() failed - SPI_ERROR_OPUNKNOWN",
 						  TCL_VOLATILE);
 			return TCL_ERROR;
 
@@ -2008,7 +2026,7 @@ plperl_SPI_execp(ClientData cdata, Tcl_Interp *interp,
  **********************************************************************/
 static void
 plperl_set_tuple_values(Tcl_Interp *interp, char *arrayname,
-					   int tupno, HeapTuple tuple, TupleDesc tupdesc)
+						int tupno, HeapTuple tuple, TupleDesc tupdesc)
 {
 	int			i;
 	char	   *outputstr;
@@ -2102,16 +2120,16 @@ plperl_set_tuple_values(Tcl_Interp *interp, char *arrayname,
  * plperl_build_tuple_argument() - Build a string for a ref to a hash
  *				  from all attributes of a given tuple
  **********************************************************************/
-static SV*
+static SV  *
 plperl_build_tuple_argument(HeapTuple tuple, TupleDesc tupdesc)
 {
 	int			i;
-	SV*     output;
+	SV		   *output;
 	Datum		attr;
 	bool		isnull;
 
 	char	   *attname;
-	char*     outputstr;
+	char	   *outputstr;
 	HeapTuple	typeTup;
 	Oid			typoutput;
 	Oid			typelem;
@@ -2163,9 +2181,9 @@ plperl_build_tuple_argument(HeapTuple tuple, TupleDesc tupdesc)
 
 			sv_catpvf(output, "'%s' => '%s',", attname, outputstr);
 			pfree(outputstr);
-		} else {
-			sv_catpvf(output, "'%s' => undef,", attname);
 		}
+		else
+			sv_catpvf(output, "'%s' => undef,", attname);
 	}
 	sv_catpv(output, "}");
 	output = perl_eval_pv(SvPV(output, na), TRUE);

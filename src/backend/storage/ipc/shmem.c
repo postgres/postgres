@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/storage/ipc/shmem.c,v 1.49 2000/02/26 05:25:55 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/storage/ipc/shmem.c,v 1.50 2000/04/12 17:15:37 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -340,9 +340,9 @@ ShmemInitHash(char *name,		/* table string name for shmem index */
 	long	   *location;
 
 	/*
-	 * Hash tables allocated in shared memory have a fixed directory;
-	 * it can't grow or other backends wouldn't be able to find it.
-	 * So, make sure we make it big enough to start with.
+	 * Hash tables allocated in shared memory have a fixed directory; it
+	 * can't grow or other backends wouldn't be able to find it. So, make
+	 * sure we make it big enough to start with.
 	 *
 	 * The segbase is for calculating pointer values. The shared memory
 	 * allocator must be specified too.
@@ -354,7 +354,7 @@ ShmemInitHash(char *name,		/* table string name for shmem index */
 
 	/* look it up in the shmem index */
 	location = ShmemInitStruct(name,
-						 sizeof(HHDR) + infoP->dsize * sizeof(SEG_OFFSET),
+						sizeof(HHDR) + infoP->dsize * sizeof(SEG_OFFSET),
 							   &found);
 
 	/*

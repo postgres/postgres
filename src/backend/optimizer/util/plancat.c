@@ -9,7 +9,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/optimizer/util/plancat.c,v 1.49 2000/02/18 09:30:09 inoue Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/optimizer/util/plancat.c,v 1.50 2000/04/12 17:15:24 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -50,7 +50,7 @@ relation_info(Query *root, Index relid,
 	Form_pg_class relation;
 
 	relationTuple = SearchSysCacheTuple(RELOID,
-										ObjectIdGetDatum(relationObjectId),
+									  ObjectIdGetDatum(relationObjectId),
 										0, 0, 0);
 	if (!HeapTupleIsValid(relationTuple))
 		elog(ERROR, "relation_info: Relation %u not found",
@@ -81,7 +81,7 @@ find_secondary_indexes(Query *root, Index relid)
 	Oid			indrelid = getrelid(relid, root->rtable);
 	Relation	relation;
 	HeapScanDesc scan;
-	ScanKeyData	indexKey;
+	ScanKeyData indexKey;
 	HeapTuple	indexTuple;
 
 	/* Scan pg_index for tuples describing indexes of this rel */
@@ -97,27 +97,28 @@ find_secondary_indexes(Query *root, Index relid)
 
 	while (HeapTupleIsValid(indexTuple = heap_getnext(scan, 0)))
 	{
-		Form_pg_index	index = (Form_pg_index) GETSTRUCT(indexTuple);
-		IndexOptInfo   *info = makeNode(IndexOptInfo);
-		int				i;
-		Relation		indexRelation;
-		Oid				relam;
-		uint16			amorderstrategy;
+		Form_pg_index index = (Form_pg_index) GETSTRUCT(indexTuple);
+		IndexOptInfo *info = makeNode(IndexOptInfo);
+		int			i;
+		Relation	indexRelation;
+		Oid			relam;
+		uint16		amorderstrategy;
 
 		/*
 		 * Need to make these arrays large enough to be sure there is a
 		 * terminating 0 at the end of each one.
 		 */
-		info->classlist = (Oid *) palloc(sizeof(Oid) * (INDEX_MAX_KEYS+1));
-		info->indexkeys = (int *) palloc(sizeof(int) * (INDEX_MAX_KEYS+1));
-		info->ordering = (Oid *) palloc(sizeof(Oid) * (INDEX_MAX_KEYS+1));
+		info->classlist = (Oid *) palloc(sizeof(Oid) * (INDEX_MAX_KEYS + 1));
+		info->indexkeys = (int *) palloc(sizeof(int) * (INDEX_MAX_KEYS + 1));
+		info->ordering = (Oid *) palloc(sizeof(Oid) * (INDEX_MAX_KEYS + 1));
 
 		/* Extract info from the pg_index tuple */
 		info->indexoid = index->indexrelid;
-		info->indproc = index->indproc;		/* functional index ?? */
-		if (VARSIZE(&index->indpred) != 0)	/* partial index ?? */
+		info->indproc = index->indproc; /* functional index ?? */
+		if (VARSIZE(&index->indpred) != 0)		/* partial index ?? */
 		{
 			char	   *predString = fmgr(F_TEXTOUT, &index->indpred);
+
 			info->indpred = (List *) stringToNode(predString);
 			pfree(predString);
 		}
@@ -143,26 +144,25 @@ find_secondary_indexes(Query *root, Index relid)
 		index_close(indexRelation);
 
 		/*
-		 * Fetch the ordering operators associated with the index,
-		 * if any.
+		 * Fetch the ordering operators associated with the index, if any.
 		 */
-		MemSet(info->ordering, 0, sizeof(Oid) * (INDEX_MAX_KEYS+1));
+		MemSet(info->ordering, 0, sizeof(Oid) * (INDEX_MAX_KEYS + 1));
 		if (amorderstrategy != 0)
 		{
 			for (i = 0; i < INDEX_MAX_KEYS && index->indclass[i]; i++)
 			{
-				HeapTuple		amopTuple;
-				Form_pg_amop	amop;
+				HeapTuple	amopTuple;
+				Form_pg_amop amop;
 
 				amopTuple =
 					SearchSysCacheTuple(AMOPSTRATEGY,
 										ObjectIdGetDatum(relam),
-										ObjectIdGetDatum(index->indclass[i]),
+									ObjectIdGetDatum(index->indclass[i]),
 										UInt16GetDatum(amorderstrategy),
 										0);
 				if (!HeapTupleIsValid(amopTuple))
 					elog(ERROR, "find_secondary_indexes: no amop %u %u %d",
-						 relam, index->indclass[i], (int) amorderstrategy);
+					   relam, index->indclass[i], (int) amorderstrategy);
 				amop = (Form_pg_amop) GETSTRUCT(amopTuple);
 				info->ordering[i] = amop->amopopr;
 			}

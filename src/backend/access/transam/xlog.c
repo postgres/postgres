@@ -1,4 +1,4 @@
-/*------------------------------------------------------------------------- 
+/*-------------------------------------------------------------------------
  *
  * xlog.c
  *
@@ -6,7 +6,7 @@
  * Portions Copyright (c) 1996-2000, PostgreSQL, Inc
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Header: /cvsroot/pgsql/src/backend/access/transam/xlog.c,v 1.12 2000/03/20 07:25:39 vadim Exp $
+ * $Header: /cvsroot/pgsql/src/backend/access/transam/xlog.c,v 1.13 2000/04/12 17:14:53 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -44,64 +44,64 @@ bool		StopIfError = false;
 SPINLOCK	ControlFileLockId;
 SPINLOCK	XidGenLockId;
 
-extern bool				ReleaseDataFile(void);
+extern bool ReleaseDataFile(void);
 
-extern VariableCache	ShmemVariableCache;
+extern VariableCache ShmemVariableCache;
 
-#define	MinXLOGbuffers	4
+#define MinXLOGbuffers	4
 
 typedef struct XLgwrRqst
 {
-	XLogRecPtr		Write;		/* byte (1-based) to write out */
-	XLogRecPtr		Flush;		/* byte (1-based) to flush */
+	XLogRecPtr	Write;			/* byte (1-based) to write out */
+	XLogRecPtr	Flush;			/* byte (1-based) to flush */
 } XLgwrRqst;
 
 typedef struct XLgwrResult
 {
-	XLogRecPtr		Write;		/* bytes written out */
-	XLogRecPtr		Flush;		/* bytes flushed */
+	XLogRecPtr	Write;			/* bytes written out */
+	XLogRecPtr	Flush;			/* bytes flushed */
 } XLgwrResult;
 
 typedef struct XLogCtlInsert
 {
-	XLgwrResult		LgwrResult;
-	XLogRecPtr		PrevRecord;
-	uint16			curridx;	/* current block index in cache */
-	XLogPageHeader	currpage;
-	char		   *currpos;
+	XLgwrResult LgwrResult;
+	XLogRecPtr	PrevRecord;
+	uint16		curridx;		/* current block index in cache */
+	XLogPageHeader currpage;
+	char	   *currpos;
 } XLogCtlInsert;
 
 typedef struct XLogCtlWrite
 {
-	XLgwrResult		LgwrResult;
-	uint16			curridx;	/* index of next block to write */
+	XLgwrResult LgwrResult;
+	uint16		curridx;		/* index of next block to write */
 } XLogCtlWrite;
 
 
 #ifndef HAS_TEST_AND_SET
-#define	TAS(lck)		0
-#define	S_UNLOCK(lck)
-#define	S_INIT_LOCK(lck)
+#define TAS(lck)		0
+#define S_UNLOCK(lck)
+#define S_INIT_LOCK(lck)
 #endif
 
 typedef struct XLogCtlData
 {
-	XLogCtlInsert	Insert;
-	XLgwrRqst		LgwrRqst;
-	XLgwrResult		LgwrResult;
-	XLogCtlWrite	Write;
-	char		   *pages;
-	XLogRecPtr	   *xlblocks;	/* 1st byte ptr-s + BLCKSZ */
-	uint32			XLogCacheByte;
-	uint32			XLogCacheBlck;
+	XLogCtlInsert Insert;
+	XLgwrRqst	LgwrRqst;
+	XLgwrResult LgwrResult;
+	XLogCtlWrite Write;
+	char	   *pages;
+	XLogRecPtr *xlblocks;		/* 1st byte ptr-s + BLCKSZ */
+	uint32		XLogCacheByte;
+	uint32		XLogCacheBlck;
 #ifdef HAS_TEST_AND_SET
-	slock_t			insert_lck;
-	slock_t			info_lck;
-	slock_t			lgwr_lck;
+	slock_t		insert_lck;
+	slock_t		info_lck;
+	slock_t		lgwr_lck;
 #endif
 } XLogCtlData;
 
-static XLogCtlData		   *XLogCtl = NULL;
+static XLogCtlData *XLogCtl = NULL;
 
 typedef enum DBState
 {
@@ -114,69 +114,69 @@ typedef enum DBState
 
 typedef struct ControlFileData
 {
-	uint32			logId;			/* current log file id */
-	uint32			logSeg;			/* current log file segment (1-based) */
-	XLogRecPtr		checkPoint;		/* last check point record ptr */
-	time_t			time;			/* time stamp of last modification */
-	DBState			state;			/* */
+	uint32		logId;			/* current log file id */
+	uint32		logSeg;			/* current log file segment (1-based) */
+	XLogRecPtr	checkPoint;		/* last check point record ptr */
+	time_t		time;			/* time stamp of last modification */
+	DBState		state;			/* */
 
 	/*
-	 * this data is used to make sure that configuration of this DB
-	 * is compatible with the current backend
+	 * this data is used to make sure that configuration of this DB is
+	 * compatible with the current backend
 	 */
-	uint32			blcksz;			/* block size for this DB */
-	uint32			relseg_size;	/* blocks per segment of large relation */
-	uint32			catalog_version_no;	/* internal version number */
+	uint32		blcksz;			/* block size for this DB */
+	uint32		relseg_size;	/* blocks per segment of large relation */
+	uint32		catalog_version_no;		/* internal version number */
 
 	/*
-	 * MORE DATA FOLLOWS AT THE END OF THIS STRUCTURE
-	 * - locations of data dirs 
+	 * MORE DATA FOLLOWS AT THE END OF THIS STRUCTURE - locations of data
+	 * dirs
 	 */
 } ControlFileData;
 
-static ControlFileData	   *ControlFile = NULL;
+static ControlFileData *ControlFile = NULL;
 
 typedef struct CheckPoint
 {
-	XLogRecPtr		redo;		/* next RecPtr available when we */
-								/* began to create CheckPoint */
-								/* (i.e. REDO start point) */
-	XLogRecPtr		undo;		/* first record of oldest in-progress */
-								/* transaction when we started */
-								/* (i.e. UNDO end point) */
-	TransactionId	nextXid;
-	Oid				nextOid;
+	XLogRecPtr	redo;			/* next RecPtr available when we */
+	/* began to create CheckPoint */
+	/* (i.e. REDO start point) */
+	XLogRecPtr	undo;			/* first record of oldest in-progress */
+	/* transaction when we started */
+	/* (i.e. UNDO end point) */
+	TransactionId nextXid;
+	Oid			nextOid;
 } CheckPoint;
 
-/* 
- * We break each log file in 16Mb segments 
+/*
+ * We break each log file in 16Mb segments
  */
 #define XLogSegSize		(16*1024*1024)
-#define	XLogLastSeg		(0xffffffff / XLogSegSize)
-#define	XLogFileSize	(XLogLastSeg * XLogSegSize)
+#define XLogLastSeg		(0xffffffff / XLogSegSize)
+#define XLogFileSize	(XLogLastSeg * XLogSegSize)
 
-#define	XLogFileName(path, log, seg)	\
+#define XLogFileName(path, log, seg)	\
 			snprintf(path, MAXPGPATH, "%s%c%08X%08X",	\
 					 XLogDir, SEP_CHAR, log, seg)
 
-#define	PrevBufIdx(curridx)		\
+#define PrevBufIdx(curridx)		\
 		((curridx == 0) ? XLogCtl->XLogCacheBlck : (curridx - 1))
 
-#define	NextBufIdx(curridx)		\
+#define NextBufIdx(curridx)		\
 		((curridx == XLogCtl->XLogCacheBlck) ? 0 : (curridx + 1))
 
-#define	XLByteLT(left, right)		\
+#define XLByteLT(left, right)		\
 			(right.xlogid > left.xlogid || \
 			(right.xlogid == left.xlogid && right.xrecoff > left.xrecoff))
 
-#define	XLByteLE(left, right)		\
+#define XLByteLE(left, right)		\
 			(right.xlogid > left.xlogid || \
 			(right.xlogid == left.xlogid && right.xrecoff >=  left.xrecoff))
 
-#define	XLByteEQ(left, right)		\
+#define XLByteEQ(left, right)		\
 			(right.xlogid == left.xlogid && right.xrecoff ==  left.xrecoff)
 
-#define	InitXLBuffer(curridx)	(\
+#define InitXLBuffer(curridx)	(\
 				XLogCtl->xlblocks[curridx].xrecoff = \
 				(XLogCtl->xlblocks[Insert->curridx].xrecoff == XLogFileSize) ? \
 				BLCKSZ : (XLogCtl->xlblocks[Insert->curridx].xrecoff + BLCKSZ), \
@@ -192,46 +192,46 @@ typedef struct CheckPoint
 				Insert->currpage->xlp_info = 0 \
 				)
 
-#define	XRecOffIsValid(xrecoff)	\
+#define XRecOffIsValid(xrecoff) \
 		(xrecoff % BLCKSZ >= SizeOfXLogPHD && \
 		(BLCKSZ - xrecoff % BLCKSZ) >= SizeOfXLogRecord)
 
-static void				GetFreeXLBuffer(void);
-static void				XLogWrite(char *buffer);
-static int				XLogFileInit(uint32 log, uint32 seg);
-static int				XLogFileOpen(uint32 log, uint32 seg, bool econt);
-static XLogRecord	   *ReadRecord(XLogRecPtr *RecPtr, char *buffer);
-static char			   *str_time(time_t tnow);
+static void GetFreeXLBuffer(void);
+static void XLogWrite(char *buffer);
+static int	XLogFileInit(uint32 log, uint32 seg);
+static int	XLogFileOpen(uint32 log, uint32 seg, bool econt);
+static XLogRecord *ReadRecord(XLogRecPtr *RecPtr, char *buffer);
+static char *str_time(time_t tnow);
 
-static XLgwrResult		LgwrResult = {{0, 0}, {0, 0}};
-static XLgwrRqst		LgwrRqst = {{0, 0}, {0, 0}};
+static XLgwrResult LgwrResult = {{0, 0}, {0, 0}};
+static XLgwrRqst LgwrRqst = {{0, 0}, {0, 0}};
 
-static int				logFile = -1;
-static uint32			logId = 0;
-static uint32			logSeg = 0;
-static uint32			logOff = 0;
+static int	logFile = -1;
+static uint32 logId = 0;
+static uint32 logSeg = 0;
+static uint32 logOff = 0;
 
-static XLogRecPtr		ReadRecPtr;
-static XLogRecPtr		EndRecPtr;
-static int				readFile = -1;
-static uint32			readId = 0;
-static uint32			readSeg = 0;
-static uint32			readOff = 0;
-static char				readBuf[BLCKSZ];
-static XLogRecord	   *nextRecord = NULL;
+static XLogRecPtr ReadRecPtr;
+static XLogRecPtr EndRecPtr;
+static int	readFile = -1;
+static uint32 readId = 0;
+static uint32 readSeg = 0;
+static uint32 readOff = 0;
+static char readBuf[BLCKSZ];
+static XLogRecord *nextRecord = NULL;
 
 XLogRecPtr
 XLogInsert(RmgrId rmid, char *hdr, uint32 hdrlen, char *buf, uint32 buflen)
 {
-	XLogCtlInsert	   *Insert = &XLogCtl->Insert;
-	XLogRecord		   *record;
-	XLogSubRecord	   *subrecord;
-	XLogRecPtr			RecPtr;
-	uint32				len = hdrlen + buflen,
-						freespace,
-						wlen;
-	uint16				curridx;
-	bool				updrqst = false;
+	XLogCtlInsert *Insert = &XLogCtl->Insert;
+	XLogRecord *record;
+	XLogSubRecord *subrecord;
+	XLogRecPtr	RecPtr;
+	uint32		len = hdrlen + buflen,
+				freespace,
+				wlen;
+	uint16		curridx;
+	bool		updrqst = false;
 
 	if (len == 0 || len > MAXLOGRECSZ)
 		elog(STOP, "XLogInsert: invalid record len %u", len);
@@ -242,7 +242,7 @@ XLogInsert(RmgrId rmid, char *hdr, uint32 hdrlen, char *buf, uint32 buflen)
 		bool		do_lgwr = true;
 		unsigned	i = 0;
 
-		for ( ; ; )
+		for (;;)
 		{
 			/* try to read LgwrResult while waiting for insert lock */
 			if (!TAS(&(XLogCtl->info_lck)))
@@ -250,14 +250,15 @@ XLogInsert(RmgrId rmid, char *hdr, uint32 hdrlen, char *buf, uint32 buflen)
 				LgwrRqst = XLogCtl->LgwrRqst;
 				LgwrResult = XLogCtl->LgwrResult;
 				S_UNLOCK(&(XLogCtl->info_lck));
+
 				/*
 				 * If cache is half filled then try to acquire lgwr lock
 				 * and do LGWR work, but only once.
 				 */
-				if (do_lgwr && 
-					(LgwrRqst.Write.xlogid != LgwrResult.Write.xlogid || 
-					(LgwrRqst.Write.xrecoff - LgwrResult.Write.xrecoff >=
-					XLogCtl->XLogCacheByte / 2)))
+				if (do_lgwr &&
+					(LgwrRqst.Write.xlogid != LgwrResult.Write.xlogid ||
+					 (LgwrRqst.Write.xrecoff - LgwrResult.Write.xrecoff >=
+					  XLogCtl->XLogCacheByte / 2)))
 				{
 					if (!TAS(&(XLogCtl->lgwr_lck)))
 					{
@@ -282,13 +283,13 @@ XLogInsert(RmgrId rmid, char *hdr, uint32 hdrlen, char *buf, uint32 buflen)
 		}
 	}
 
-	freespace = ((char*) Insert->currpage) + BLCKSZ - Insert->currpos;
+	freespace = ((char *) Insert->currpage) + BLCKSZ - Insert->currpos;
 	if (freespace < SizeOfXLogRecord)
 	{
 		curridx = NextBufIdx(Insert->curridx);
 		if (XLByteLE(XLogCtl->xlblocks[curridx], LgwrResult.Write))
 			InitXLBuffer(curridx);
-		else 
+		else
 			GetFreeXLBuffer();
 		freespace = BLCKSZ - SizeOfXLogPHD;
 	}
@@ -296,7 +297,7 @@ XLogInsert(RmgrId rmid, char *hdr, uint32 hdrlen, char *buf, uint32 buflen)
 		curridx = Insert->curridx;
 
 	freespace -= SizeOfXLogRecord;
-	record = (XLogRecord*) Insert->currpos;
+	record = (XLogRecord *) Insert->currpos;
 	record->xl_prev = Insert->PrevRecord;
 	if (rmid != RM_XLOG_ID)
 		record->xl_xact_prev = MyLastRecPtr;
@@ -310,9 +311,9 @@ XLogInsert(RmgrId rmid, char *hdr, uint32 hdrlen, char *buf, uint32 buflen)
 	record->xl_info = (len > freespace) ? XLR_TO_BE_CONTINUED : 0;
 	record->xl_rmid = rmid;
 	RecPtr.xlogid = XLogCtl->xlblocks[curridx].xlogid;
-	RecPtr.xrecoff = 
-		XLogCtl->xlblocks[curridx].xrecoff - BLCKSZ + 
-		Insert->currpos - ((char*) Insert->currpage);
+	RecPtr.xrecoff =
+		XLogCtl->xlblocks[curridx].xrecoff - BLCKSZ +
+		Insert->currpos - ((char *) Insert->currpage);
 	if (MyLastRecPtr.xrecoff == 0 && rmid != RM_XLOG_ID)
 	{
 		SpinAcquire(SInvalLock);
@@ -339,8 +340,8 @@ XLogInsert(RmgrId rmid, char *hdr, uint32 hdrlen, char *buf, uint32 buflen)
 			buf += wlen;
 			Insert->currpos += wlen;
 		}
-		Insert->currpos = ((char*)Insert->currpage) + 
-					DOUBLEALIGN(Insert->currpos - ((char*)Insert->currpage));
+		Insert->currpos = ((char *) Insert->currpage) +
+			DOUBLEALIGN(Insert->currpos - ((char *) Insert->currpage));
 		len = hdrlen + buflen;
 	}
 
@@ -360,7 +361,7 @@ nbuf:
 		}
 		freespace = BLCKSZ - SizeOfXLogPHD - SizeOfXLogSubRecord;
 		Insert->currpage->xlp_info |= XLP_FIRST_IS_SUBRECORD;
-		subrecord = (XLogSubRecord*) Insert->currpos;
+		subrecord = (XLogSubRecord *) Insert->currpos;
 		Insert->currpos += SizeOfXLogSubRecord;
 		if (hdrlen > freespace)
 		{
@@ -398,17 +399,19 @@ nbuf:
 		}
 		subrecord->xl_info = 0;
 		RecPtr.xlogid = XLogCtl->xlblocks[curridx].xlogid;
-		RecPtr.xrecoff = XLogCtl->xlblocks[curridx].xrecoff - 
-				BLCKSZ + SizeOfXLogPHD + subrecord->xl_len;
-		Insert->currpos = ((char*)Insert->currpage) + 
-					DOUBLEALIGN(Insert->currpos - ((char*)Insert->currpage));
+		RecPtr.xrecoff = XLogCtl->xlblocks[curridx].xrecoff -
+			BLCKSZ + SizeOfXLogPHD + subrecord->xl_len;
+		Insert->currpos = ((char *) Insert->currpage) +
+			DOUBLEALIGN(Insert->currpos - ((char *) Insert->currpage));
 	}
-	freespace = ((char*) Insert->currpage) + BLCKSZ - Insert->currpos;
+	freespace = ((char *) Insert->currpage) + BLCKSZ - Insert->currpos;
+
 	/*
 	 * All done! Update global LgwrRqst if some block was filled up.
 	 */
 	if (freespace < SizeOfXLogRecord)
-		updrqst = true;		/* curridx is filled and available for writing out */
+		updrqst = true;			/* curridx is filled and available for
+								 * writing out */
 	else
 		curridx = PrevBufIdx(curridx);
 	LgwrRqst.Write = XLogCtl->xlblocks[curridx];
@@ -419,7 +422,7 @@ nbuf:
 	{
 		unsigned	i = 0;
 
-		for ( ; ; )
+		for (;;)
 		{
 			if (!TAS(&(XLogCtl->info_lck)))
 			{
@@ -433,21 +436,21 @@ nbuf:
 	}
 
 	return (RecPtr);
-}	
+}
 
 void
 XLogFlush(XLogRecPtr record)
 {
-	XLogRecPtr		WriteRqst;
-	char			buffer[BLCKSZ];
-	char		   *usebuf = NULL;
-	unsigned		i = 0;
-	bool			force_lgwr = false;
+	XLogRecPtr	WriteRqst;
+	char		buffer[BLCKSZ];
+	char	   *usebuf = NULL;
+	unsigned	i = 0;
+	bool		force_lgwr = false;
 
 	if (XLByteLE(record, LgwrResult.Flush))
 		return;
 	WriteRqst = LgwrRqst.Write;
-	for ( ; ; )
+	for (;;)
 	{
 		/* try to read LgwrResult */
 		if (!TAS(&(XLogCtl->info_lck)))
@@ -470,9 +473,9 @@ XLogFlush(XLogRecPtr record)
 		/* if something was added to log cache then try to flush this too */
 		if (!TAS(&(XLogCtl->insert_lck)))
 		{
-			XLogCtlInsert	   *Insert = &XLogCtl->Insert;
-			uint32				freespace = 
-					((char*) Insert->currpage) + BLCKSZ - Insert->currpos;
+			XLogCtlInsert *Insert = &XLogCtl->Insert;
+			uint32		freespace =
+			((char *) Insert->currpage) + BLCKSZ - Insert->currpos;
 
 			if (freespace < SizeOfXLogRecord)	/* buffer is full */
 			{
@@ -485,14 +488,14 @@ XLogFlush(XLogRecPtr record)
 				memcpy(usebuf, Insert->currpage, BLCKSZ - freespace);
 				memset(usebuf + BLCKSZ - freespace, 0, freespace);
 				WriteRqst = XLogCtl->xlblocks[Insert->curridx];
-				WriteRqst.xrecoff = WriteRqst.xrecoff - BLCKSZ + 
-						Insert->currpos - ((char*) Insert->currpage);
+				WriteRqst.xrecoff = WriteRqst.xrecoff - BLCKSZ +
+					Insert->currpos - ((char *) Insert->currpage);
 			}
 			S_UNLOCK(&(XLogCtl->insert_lck));
 			force_lgwr = true;
 		}
-		if (force_lgwr || WriteRqst.xlogid > record.xlogid || 
-			(WriteRqst.xlogid == record.xlogid && 
+		if (force_lgwr || WriteRqst.xlogid > record.xlogid ||
+			(WriteRqst.xlogid == record.xlogid &&
 			 WriteRqst.xrecoff >= record.xrecoff + BLCKSZ))
 		{
 			if (!TAS(&(XLogCtl->lgwr_lck)))
@@ -518,12 +521,12 @@ XLogFlush(XLogRecPtr record)
 		s_lock_sleep(i++);
 	}
 
-	if (logFile >= 0 && (LgwrResult.Write.xlogid != logId || 
-		(LgwrResult.Write.xrecoff - 1) / XLogSegSize != logSeg))
+	if (logFile >= 0 && (LgwrResult.Write.xlogid != logId ||
+				 (LgwrResult.Write.xrecoff - 1) / XLogSegSize != logSeg))
 	{
 		if (close(logFile) != 0)
-			elog(STOP, "Close(logfile %u seg %u) failed: %d", 
-						logId, logSeg, errno);
+			elog(STOP, "Close(logfile %u seg %u) failed: %d",
+				 logId, logSeg, errno);
 		logFile = -1;
 	}
 
@@ -536,11 +539,11 @@ XLogFlush(XLogRecPtr record)
 	}
 
 	if (fsync(logFile) != 0)
-		elog(STOP, "Fsync(logfile %u seg %u) failed: %d", 
-					logId, logSeg, errno);
+		elog(STOP, "Fsync(logfile %u seg %u) failed: %d",
+			 logId, logSeg, errno);
 	LgwrResult.Flush = LgwrResult.Write;
 
-	for (i = 0; ; )
+	for (i = 0;;)
 	{
 		if (!TAS(&(XLogCtl->info_lck)))
 		{
@@ -562,12 +565,12 @@ XLogFlush(XLogRecPtr record)
 static void
 GetFreeXLBuffer()
 {
-	XLogCtlInsert	   *Insert = &XLogCtl->Insert;
-	XLogCtlWrite	   *Write = &XLogCtl->Write;
-	uint16				curridx = NextBufIdx(Insert->curridx);
+	XLogCtlInsert *Insert = &XLogCtl->Insert;
+	XLogCtlWrite *Write = &XLogCtl->Write;
+	uint16		curridx = NextBufIdx(Insert->curridx);
 
 	LgwrRqst.Write = XLogCtl->xlblocks[Insert->curridx];
-	for ( ; ; )
+	for (;;)
 	{
 		if (!TAS(&(XLogCtl->info_lck)))
 		{
@@ -581,6 +584,7 @@ GetFreeXLBuffer()
 				return;
 			}
 		}
+
 		/*
 		 * LgwrResult lock is busy or un-updated. Try to acquire lgwr lock
 		 * and write full blocks.
@@ -595,9 +599,10 @@ GetFreeXLBuffer()
 				InitXLBuffer(curridx);
 				return;
 			}
-			/* 
-			 * Have to write buffers while holding insert lock -
-			 * not good...
+
+			/*
+			 * Have to write buffers while holding insert lock - not
+			 * good...
 			 */
 			XLogWrite(NULL);
 			S_UNLOCK(&(XLogCtl->lgwr_lck));
@@ -613,22 +618,22 @@ GetFreeXLBuffer()
 static void
 XLogWrite(char *buffer)
 {
-	XLogCtlWrite   *Write = &XLogCtl->Write;
-	char		   *from;
-	uint32			wcnt = 0;
-	int				i = 0;
+	XLogCtlWrite *Write = &XLogCtl->Write;
+	char	   *from;
+	uint32		wcnt = 0;
+	int			i = 0;
 
-	for ( ; XLByteLT(LgwrResult.Write,	LgwrRqst.Write); )
+	for (; XLByteLT(LgwrResult.Write, LgwrRqst.Write);)
 	{
 		LgwrResult.Write = XLogCtl->xlblocks[Write->curridx];
-		if (LgwrResult.Write.xlogid != logId || 
+		if (LgwrResult.Write.xlogid != logId ||
 			(LgwrResult.Write.xrecoff - 1) / XLogSegSize != logSeg)
 		{
 			if (wcnt > 0)
 			{
 				if (fsync(logFile) != 0)
-					elog(STOP, "Fsync(logfile %u seg %u) failed: %d", 
-								logId, logSeg, errno);
+					elog(STOP, "Fsync(logfile %u seg %u) failed: %d",
+						 logId, logSeg, errno);
 				if (LgwrResult.Write.xlogid != logId)
 					LgwrResult.Flush.xrecoff = XLogFileSize;
 				else
@@ -648,8 +653,8 @@ XLogWrite(char *buffer)
 			if (logFile >= 0)
 			{
 				if (close(logFile) != 0)
-					elog(STOP, "Close(logfile %u seg %u) failed: %d", 
-								logId, logSeg, errno);
+					elog(STOP, "Close(logfile %u seg %u) failed: %d",
+						 logId, logSeg, errno);
 				logFile = -1;
 			}
 			logId = LgwrResult.Write.xlogid;
@@ -675,9 +680,9 @@ XLogWrite(char *buffer)
 		if (logOff != (LgwrResult.Write.xrecoff - BLCKSZ) % XLogSegSize)
 		{
 			logOff = (LgwrResult.Write.xrecoff - BLCKSZ) % XLogSegSize;
-			if (lseek(logFile, (off_t)logOff, SEEK_SET) < 0)
-				elog(STOP, "Lseek(logfile %u seg %u off %u) failed: %d", 
-							logId, logSeg, logOff, errno);
+			if (lseek(logFile, (off_t) logOff, SEEK_SET) < 0)
+				elog(STOP, "Lseek(logfile %u seg %u off %u) failed: %d",
+					 logId, logSeg, logOff, errno);
 		}
 
 		if (buffer != NULL && XLByteLT(LgwrRqst.Write, LgwrResult.Write))
@@ -686,8 +691,8 @@ XLogWrite(char *buffer)
 			from = XLogCtl->pages + Write->curridx * BLCKSZ;
 
 		if (write(logFile, from, BLCKSZ) != BLCKSZ)
-			elog(STOP, "Write(logfile %u seg %u off %u) failed: %d", 
-						logId, logSeg, logOff, errno);
+			elog(STOP, "Write(logfile %u seg %u off %u) failed: %d",
+				 logId, logSeg, logOff, errno);
 
 		wcnt++;
 		logOff += BLCKSZ;
@@ -700,16 +705,16 @@ XLogWrite(char *buffer)
 	if (wcnt == 0)
 		elog(STOP, "XLogWrite: nothing written");
 
-	if (XLByteLT(LgwrResult.Flush, LgwrRqst.Flush) && 
+	if (XLByteLT(LgwrResult.Flush, LgwrRqst.Flush) &&
 		XLByteLE(LgwrRqst.Flush, LgwrResult.Write))
 	{
 		if (fsync(logFile) != 0)
-			elog(STOP, "Fsync(logfile %u seg %u) failed: %d", 
-						logId, logSeg, errno);
+			elog(STOP, "Fsync(logfile %u seg %u) failed: %d",
+				 logId, logSeg, errno);
 		LgwrResult.Flush = LgwrResult.Write;
 	}
 
-	for ( ; ; )
+	for (;;)
 	{
 		if (!TAS(&(XLogCtl->info_lck)))
 		{
@@ -727,54 +732,54 @@ XLogWrite(char *buffer)
 static int
 XLogFileInit(uint32 log, uint32 seg)
 {
-	char	path[MAXPGPATH];
-	int		fd;
+	char		path[MAXPGPATH];
+	int			fd;
 
 	XLogFileName(path, log, seg);
 	unlink(path);
 
 tryAgain:
 #ifndef __CYGWIN__
-	fd = open(path, O_RDWR|O_CREAT|O_EXCL, S_IRUSR|S_IWUSR);
+	fd = open(path, O_RDWR | O_CREAT | O_EXCL, S_IRUSR | S_IWUSR);
 #else
-	fd = open(path, O_RDWR|O_CREAT|O_EXCL|O_BINARY, S_IRUSR|S_IWUSR);
+	fd = open(path, O_RDWR | O_CREAT | O_EXCL | O_BINARY, S_IRUSR | S_IWUSR);
 #endif
 	if (fd < 0 && (errno == EMFILE || errno == ENFILE))
 	{
 		fd = errno;
 		if (!ReleaseDataFile())
-			elog(STOP, "Create(logfile %u seg %u) failed: %d (and no one data file can be closed)", 
-						logId, logSeg, fd);
+			elog(STOP, "Create(logfile %u seg %u) failed: %d (and no one data file can be closed)",
+				 logId, logSeg, fd);
 		goto tryAgain;
 	}
 	if (fd < 0)
-		elog(STOP, "Init(logfile %u seg %u) failed: %d", 
-					logId, logSeg, errno);
+		elog(STOP, "Init(logfile %u seg %u) failed: %d",
+			 logId, logSeg, errno);
 
 	if (lseek(fd, XLogSegSize - 1, SEEK_SET) != (off_t) (XLogSegSize - 1))
-		elog(STOP, "Lseek(logfile %u seg %u) failed: %d", 
-					logId, logSeg, errno);
+		elog(STOP, "Lseek(logfile %u seg %u) failed: %d",
+			 logId, logSeg, errno);
 
 	if (write(fd, "", 1) != 1)
-		elog(STOP, "Init(logfile %u seg %u) failed: %d", 
-					logId, logSeg, errno);
+		elog(STOP, "Init(logfile %u seg %u) failed: %d",
+			 logId, logSeg, errno);
 
 	if (fsync(fd) != 0)
-		elog(STOP, "Fsync(logfile %u seg %u) failed: %d", 
-					logId, logSeg, errno);
+		elog(STOP, "Fsync(logfile %u seg %u) failed: %d",
+			 logId, logSeg, errno);
 
 	if (lseek(fd, 0, SEEK_SET) < 0)
-			elog(STOP, "Lseek(logfile %u seg %u off %u) failed: %d", 
-						log, seg, 0, errno);
+		elog(STOP, "Lseek(logfile %u seg %u off %u) failed: %d",
+			 log, seg, 0, errno);
 
-	return(fd);
+	return (fd);
 }
 
 static int
 XLogFileOpen(uint32 log, uint32 seg, bool econt)
 {
-	char	path[MAXPGPATH];
-	int		fd;
+	char		path[MAXPGPATH];
+	int			fd;
 
 	XLogFileName(path, log, seg);
 
@@ -788,8 +793,8 @@ tryAgain:
 	{
 		fd = errno;
 		if (!ReleaseDataFile())
-			elog(STOP, "Open(logfile %u seg %u) failed: %d (and no one data file can be closed)", 
-						logId, logSeg, fd);
+			elog(STOP, "Open(logfile %u seg %u) failed: %d (and no one data file can be closed)",
+				 logId, logSeg, fd);
 		goto tryAgain;
 	}
 	if (fd < 0)
@@ -797,24 +802,24 @@ tryAgain:
 		if (econt && errno == ENOENT)
 		{
 			elog(LOG, "Open(logfile %u seg %u) failed: file doesn't exist",
-						logId, logSeg);
+				 logId, logSeg);
 			return (fd);
 		}
-		elog(STOP, "Open(logfile %u seg %u) failed: %d", 
-					logId, logSeg, errno);
+		elog(STOP, "Open(logfile %u seg %u) failed: %d",
+			 logId, logSeg, errno);
 	}
 
-	return(fd);
+	return (fd);
 }
 
-static XLogRecord*
+static XLogRecord *
 ReadRecord(XLogRecPtr *RecPtr, char *buffer)
 {
-	XLogRecord	   *record;
-	XLogRecPtr		tmpRecPtr = EndRecPtr;
-	bool			nextmode = (RecPtr == NULL);
-	int				emode = (nextmode) ? LOG : STOP;
-	bool			noBlck = false;
+	XLogRecord *record;
+	XLogRecPtr	tmpRecPtr = EndRecPtr;
+	bool		nextmode = (RecPtr == NULL);
+	int			emode = (nextmode) ? LOG : STOP;
+	bool		noBlck = false;
 
 	if (nextmode)
 	{
@@ -835,10 +840,10 @@ ReadRecord(XLogRecPtr *RecPtr, char *buffer)
 	}
 	else if (!XRecOffIsValid(RecPtr->xrecoff))
 		elog(STOP, "ReadRecord: invalid record offset in (%u, %u)",
-					RecPtr->xlogid, RecPtr->xrecoff);
+			 RecPtr->xlogid, RecPtr->xrecoff);
 
-	if (readFile >= 0 && (RecPtr->xlogid != readId || 
-		RecPtr->xrecoff / XLogSegSize != readSeg))
+	if (readFile >= 0 && (RecPtr->xlogid != readId ||
+						  RecPtr->xrecoff / XLogSegSize != readSeg))
 	{
 		close(readFile);
 		readFile = -1;
@@ -856,59 +861,59 @@ ReadRecord(XLogRecPtr *RecPtr, char *buffer)
 	if (noBlck || readOff != (RecPtr->xrecoff % XLogSegSize) / BLCKSZ)
 	{
 		readOff = (RecPtr->xrecoff % XLogSegSize) / BLCKSZ;
-		if (lseek(readFile, (off_t)(readOff * BLCKSZ), SEEK_SET) < 0)
-			elog(STOP, "ReadRecord: lseek(logfile %u seg %u off %u) failed: %d", 
-						readId, readSeg, readOff, errno);
+		if (lseek(readFile, (off_t) (readOff * BLCKSZ), SEEK_SET) < 0)
+			elog(STOP, "ReadRecord: lseek(logfile %u seg %u off %u) failed: %d",
+				 readId, readSeg, readOff, errno);
 		if (read(readFile, readBuf, BLCKSZ) != BLCKSZ)
-			elog(STOP, "ReadRecord: read(logfile %u seg %u off %u) failed: %d", 
-						readId, readSeg, readOff, errno);
-		if (((XLogPageHeader)readBuf)->xlp_magic != XLOG_PAGE_MAGIC)
+			elog(STOP, "ReadRecord: read(logfile %u seg %u off %u) failed: %d",
+				 readId, readSeg, readOff, errno);
+		if (((XLogPageHeader) readBuf)->xlp_magic != XLOG_PAGE_MAGIC)
 		{
 			elog(emode, "ReadRecord: invalid magic number %u in logfile %u seg %u off %u",
-				((XLogPageHeader)readBuf)->xlp_magic,
-				readId, readSeg, readOff);
+				 ((XLogPageHeader) readBuf)->xlp_magic,
+				 readId, readSeg, readOff);
 			goto next_record_is_invalid;
 		}
 	}
-	if ((((XLogPageHeader)readBuf)->xlp_info & XLP_FIRST_IS_SUBRECORD) && 
+	if ((((XLogPageHeader) readBuf)->xlp_info & XLP_FIRST_IS_SUBRECORD) &&
 		RecPtr->xrecoff % BLCKSZ == SizeOfXLogPHD)
 	{
 		elog(emode, "ReadRecord: subrecord is requested by (%u, %u)",
-					RecPtr->xlogid, RecPtr->xrecoff);
+			 RecPtr->xlogid, RecPtr->xrecoff);
 		goto next_record_is_invalid;
 	}
-	record = (XLogRecord*)((char*) readBuf + RecPtr->xrecoff % BLCKSZ);
+	record = (XLogRecord *) ((char *) readBuf + RecPtr->xrecoff % BLCKSZ);
 
 got_record:;
-	if (record->xl_len == 0 || record->xl_len > 
+	if (record->xl_len == 0 || record->xl_len >
 		(BLCKSZ - RecPtr->xrecoff % BLCKSZ - SizeOfXLogRecord))
 	{
 		elog(emode, "ReadRecord: invalid record len %u in (%u, %u)",
-					record->xl_len, RecPtr->xlogid, RecPtr->xrecoff);
+			 record->xl_len, RecPtr->xlogid, RecPtr->xrecoff);
 		goto next_record_is_invalid;
 	}
 	if (record->xl_rmid > RM_MAX_ID)
 	{
 		elog(emode, "ReadRecord: invalid resource managed id %u in (%u, %u)",
-					record->xl_rmid, RecPtr->xlogid, RecPtr->xrecoff);
+			 record->xl_rmid, RecPtr->xlogid, RecPtr->xrecoff);
 		goto next_record_is_invalid;
 	}
 	nextRecord = NULL;
 	if (record->xl_info & XLR_TO_BE_CONTINUED)
 	{
-		XLogSubRecord	   *subrecord;
-		uint32				len = record->xl_len;
+		XLogSubRecord *subrecord;
+		uint32		len = record->xl_len;
 
 		if (record->xl_len + RecPtr->xrecoff % BLCKSZ + SizeOfXLogRecord != BLCKSZ)
 		{
 			elog(emode, "ReadRecord: invalid fragmented record len %u in (%u, %u)",
-						record->xl_len, RecPtr->xlogid, RecPtr->xrecoff);
+				 record->xl_len, RecPtr->xlogid, RecPtr->xrecoff);
 			goto next_record_is_invalid;
 		}
 		memcpy(buffer, record, record->xl_len + SizeOfXLogRecord);
-		record = (XLogRecord*) buffer;
+		record = (XLogRecord *) buffer;
 		buffer += record->xl_len + SizeOfXLogRecord;
-		for ( ; ; )
+		for (;;)
 		{
 			readOff++;
 			if (readOff == XLogSegSize / BLCKSZ)
@@ -926,114 +931,113 @@ got_record:;
 					goto next_record_is_invalid;
 			}
 			if (read(readFile, readBuf, BLCKSZ) != BLCKSZ)
-				elog(STOP, "ReadRecord: read(logfile %u seg %u off %u) failed: %d", 
-							readId, readSeg, readOff, errno);
-			if (((XLogPageHeader)readBuf)->xlp_magic != XLOG_PAGE_MAGIC)
+				elog(STOP, "ReadRecord: read(logfile %u seg %u off %u) failed: %d",
+					 readId, readSeg, readOff, errno);
+			if (((XLogPageHeader) readBuf)->xlp_magic != XLOG_PAGE_MAGIC)
 			{
 				elog(emode, "ReadRecord: invalid magic number %u in logfile %u seg %u off %u",
-					((XLogPageHeader)readBuf)->xlp_magic,
-					readId, readSeg, readOff);
+					 ((XLogPageHeader) readBuf)->xlp_magic,
+					 readId, readSeg, readOff);
 				goto next_record_is_invalid;
 			}
-			if (!(((XLogPageHeader)readBuf)->xlp_info & XLP_FIRST_IS_SUBRECORD))
+			if (!(((XLogPageHeader) readBuf)->xlp_info & XLP_FIRST_IS_SUBRECORD))
 			{
 				elog(emode, "ReadRecord: there is no subrecord flag in logfile %u seg %u off %u",
-							readId, readSeg, readOff);
+					 readId, readSeg, readOff);
 				goto next_record_is_invalid;
 			}
-			subrecord = (XLogSubRecord*)((char*) readBuf + SizeOfXLogPHD);
-			if (subrecord->xl_len == 0 || subrecord->xl_len > 
+			subrecord = (XLogSubRecord *) ((char *) readBuf + SizeOfXLogPHD);
+			if (subrecord->xl_len == 0 || subrecord->xl_len >
 				(BLCKSZ - SizeOfXLogPHD - SizeOfXLogSubRecord))
 			{
 				elog(emode, "ReadRecord: invalid subrecord len %u in logfile %u seg %u off %u",
-							subrecord->xl_len, readId, readSeg, readOff);
+					 subrecord->xl_len, readId, readSeg, readOff);
 				goto next_record_is_invalid;
 			}
 			len += subrecord->xl_len;
 			if (len > MAXLOGRECSZ)
 			{
 				elog(emode, "ReadRecord: too long record len %u in (%u, %u)",
-							len, RecPtr->xlogid, RecPtr->xrecoff);
+					 len, RecPtr->xlogid, RecPtr->xrecoff);
 				goto next_record_is_invalid;
 			}
-			memcpy(buffer, (char*)subrecord + SizeOfXLogSubRecord, subrecord->xl_len);
+			memcpy(buffer, (char *) subrecord + SizeOfXLogSubRecord, subrecord->xl_len);
 			buffer += subrecord->xl_len;
 			if (subrecord->xl_info & XLR_TO_BE_CONTINUED)
 			{
-				if (subrecord->xl_len + 
+				if (subrecord->xl_len +
 					SizeOfXLogPHD + SizeOfXLogSubRecord != BLCKSZ)
 				{
 					elog(emode, "ReadRecord: invalid fragmented subrecord len %u in logfile %u seg %u off %u",
-								subrecord->xl_len, readId, readSeg, readOff);
+						 subrecord->xl_len, readId, readSeg, readOff);
 					goto next_record_is_invalid;
 				}
 				continue;
 			}
 			break;
 		}
-		if (BLCKSZ - SizeOfXLogRecord >= 
+		if (BLCKSZ - SizeOfXLogRecord >=
 			subrecord->xl_len + SizeOfXLogPHD + SizeOfXLogSubRecord)
 		{
-			nextRecord = (XLogRecord*)
-				((char*)subrecord + subrecord->xl_len + SizeOfXLogSubRecord);
+			nextRecord = (XLogRecord *)
+				((char *) subrecord + subrecord->xl_len + SizeOfXLogSubRecord);
 		}
 		EndRecPtr.xlogid = readId;
-		EndRecPtr.xrecoff = readSeg * XLogSegSize + readOff * BLCKSZ + 
+		EndRecPtr.xrecoff = readSeg * XLogSegSize + readOff * BLCKSZ +
 			SizeOfXLogPHD + SizeOfXLogSubRecord + subrecord->xl_len;
 		ReadRecPtr = *RecPtr;
-		return(record);
+		return (record);
 	}
-	if (BLCKSZ - SizeOfXLogRecord >= 
+	if (BLCKSZ - SizeOfXLogRecord >=
 		record->xl_len + RecPtr->xrecoff % BLCKSZ + SizeOfXLogRecord)
-	{
-		nextRecord = (XLogRecord*)((char*)record + record->xl_len + SizeOfXLogRecord);
-	}
+		nextRecord = (XLogRecord *) ((char *) record + record->xl_len + SizeOfXLogRecord);
 	EndRecPtr.xlogid = RecPtr->xlogid;
 	EndRecPtr.xrecoff = RecPtr->xrecoff + record->xl_len + SizeOfXLogRecord;
 	ReadRecPtr = *RecPtr;
 
-	return(record);
+	return (record);
 
 next_record_is_invalid:;
 	close(readFile);
 	readFile = -1;
 	nextRecord = NULL;
 	memset(buffer, 0, SizeOfXLogRecord);
-	record = (XLogRecord*) buffer;
+	record = (XLogRecord *) buffer;
+
 	/*
 	 * If we assumed that next record began on the same page where
 	 * previous one ended - zero end of page.
 	 */
 	if (XLByteEQ(tmpRecPtr, EndRecPtr))
 	{
-		Assert (EndRecPtr.xrecoff % BLCKSZ > (SizeOfXLogPHD + SizeOfXLogSubRecord) && 
-				BLCKSZ - EndRecPtr.xrecoff % BLCKSZ >= SizeOfXLogRecord);
+		Assert(EndRecPtr.xrecoff % BLCKSZ > (SizeOfXLogPHD + SizeOfXLogSubRecord) &&
+			   BLCKSZ - EndRecPtr.xrecoff % BLCKSZ >= SizeOfXLogRecord);
 		readId = EndRecPtr.xlogid;
 		readSeg = EndRecPtr.xrecoff / XLogSegSize;
 		readOff = (EndRecPtr.xrecoff % XLogSegSize) / BLCKSZ;
 		elog(LOG, "Formatting logfile %u seg %u block %u at offset %u",
-					readId, readSeg, readOff, EndRecPtr.xrecoff % BLCKSZ);
+			 readId, readSeg, readOff, EndRecPtr.xrecoff % BLCKSZ);
 		readFile = XLogFileOpen(readId, readSeg, false);
-		if (lseek(readFile, (off_t)(readOff * BLCKSZ), SEEK_SET) < 0)
-			elog(STOP, "ReadRecord: lseek(logfile %u seg %u off %u) failed: %d", 
-						readId, readSeg, readOff, errno);
+		if (lseek(readFile, (off_t) (readOff * BLCKSZ), SEEK_SET) < 0)
+			elog(STOP, "ReadRecord: lseek(logfile %u seg %u off %u) failed: %d",
+				 readId, readSeg, readOff, errno);
 		if (read(readFile, readBuf, BLCKSZ) != BLCKSZ)
-			elog(STOP, "ReadRecord: read(logfile %u seg %u off %u) failed: %d", 
-						readId, readSeg, readOff, errno);
-		memset(readBuf + EndRecPtr.xrecoff % BLCKSZ, 0, 
-				BLCKSZ - EndRecPtr.xrecoff % BLCKSZ);
-		if (lseek(readFile, (off_t)(readOff * BLCKSZ), SEEK_SET) < 0)
-			elog(STOP, "ReadRecord: lseek(logfile %u seg %u off %u) failed: %d", 
-						readId, readSeg, readOff, errno);
+			elog(STOP, "ReadRecord: read(logfile %u seg %u off %u) failed: %d",
+				 readId, readSeg, readOff, errno);
+		memset(readBuf + EndRecPtr.xrecoff % BLCKSZ, 0,
+			   BLCKSZ - EndRecPtr.xrecoff % BLCKSZ);
+		if (lseek(readFile, (off_t) (readOff * BLCKSZ), SEEK_SET) < 0)
+			elog(STOP, "ReadRecord: lseek(logfile %u seg %u off %u) failed: %d",
+				 readId, readSeg, readOff, errno);
 		if (write(readFile, readBuf, BLCKSZ) != BLCKSZ)
-			elog(STOP, "ReadRecord: write(logfile %u seg %u off %u) failed: %d", 
-						readId, readSeg, readOff, errno);
+			elog(STOP, "ReadRecord: write(logfile %u seg %u off %u) failed: %d",
+				 readId, readSeg, readOff, errno);
 		readOff++;
 	}
 	else
 	{
-		Assert (EndRecPtr.xrecoff % BLCKSZ == 0 || 
-				BLCKSZ - EndRecPtr.xrecoff % BLCKSZ < SizeOfXLogRecord);
+		Assert(EndRecPtr.xrecoff % BLCKSZ == 0 ||
+			   BLCKSZ - EndRecPtr.xrecoff % BLCKSZ < SizeOfXLogRecord);
 		readId = tmpRecPtr.xlogid;
 		readSeg = tmpRecPtr.xrecoff / XLogSegSize;
 		readOff = (tmpRecPtr.xrecoff % XLogSegSize) / BLCKSZ;
@@ -1043,26 +1047,26 @@ next_record_is_invalid:;
 	{
 		if (!XLByteEQ(tmpRecPtr, EndRecPtr))
 			elog(LOG, "Formatting logfile %u seg %u block %u at offset 0",
-						readId, readSeg, readOff);
+				 readId, readSeg, readOff);
 		readOff *= BLCKSZ;
 		memset(readBuf, 0, BLCKSZ);
 		readFile = XLogFileOpen(readId, readSeg, false);
-		if (lseek(readFile, (off_t)readOff, SEEK_SET) < 0)
-			elog(STOP, "ReadRecord: lseek(logfile %u seg %u off %u) failed: %d", 
-						readId, readSeg, readOff, errno);
+		if (lseek(readFile, (off_t) readOff, SEEK_SET) < 0)
+			elog(STOP, "ReadRecord: lseek(logfile %u seg %u off %u) failed: %d",
+				 readId, readSeg, readOff, errno);
 		while (readOff < XLogSegSize)
 		{
 			if (write(readFile, readBuf, BLCKSZ) != BLCKSZ)
-				elog(STOP, "ReadRecord: write(logfile %u seg %u off %u) failed: %d", 
-							readId, readSeg, readOff, errno);
+				elog(STOP, "ReadRecord: write(logfile %u seg %u off %u) failed: %d",
+					 readId, readSeg, readOff, errno);
 			readOff += BLCKSZ;
 		}
 	}
 	if (readFile >= 0)
 	{
 		if (fsync(readFile) < 0)
-			elog(STOP, "ReadRecord: fsync(logfile %u seg %u) failed: %d", 
-							readId, readSeg, errno);
+			elog(STOP, "ReadRecord: fsync(logfile %u seg %u) failed: %d",
+				 readId, readSeg, errno);
 		close(readFile);
 		readFile = -1;
 	}
@@ -1084,19 +1088,19 @@ next_record_is_invalid:;
 		readId++;
 	}
 	{
-		char	path[MAXPGPATH];
+		char		path[MAXPGPATH];
 
 		XLogFileName(path, readId, readSeg);
 		unlink(path);
 	}
 
-	return(record);
+	return (record);
 }
 
 void
 UpdateControlFile()
 {
-	int		fd;
+	int			fd;
 
 tryAgain:
 #ifndef __CYGWIN__
@@ -1108,8 +1112,8 @@ tryAgain:
 	{
 		fd = errno;
 		if (!ReleaseDataFile())
-			elog(STOP, "Open(cntlfile) failed: %d (and no one data file can be closed)", 
-						fd);
+			elog(STOP, "Open(cntlfile) failed: %d (and no one data file can be closed)",
+				 fd);
 		goto tryAgain;
 	}
 	if (fd < 0)
@@ -1132,23 +1136,23 @@ XLOGShmemSize()
 	if (XLOGbuffers < MinXLOGbuffers)
 		XLOGbuffers = MinXLOGbuffers;
 
-	return(sizeof(XLogCtlData) + BLCKSZ * XLOGbuffers + 
+	return (sizeof(XLogCtlData) + BLCKSZ * XLOGbuffers +
 			sizeof(XLogRecPtr) * XLOGbuffers + BLCKSZ);
 }
 
 void
 XLOGShmemInit(void)
 {
-	bool				found;
+	bool		found;
 
 	if (XLOGbuffers < MinXLOGbuffers)
 		XLOGbuffers = MinXLOGbuffers;
 
-	ControlFile = (ControlFileData*) 
+	ControlFile = (ControlFileData *)
 		ShmemInitStruct("Control File", BLCKSZ, &found);
 	Assert(!found);
-	XLogCtl = (XLogCtlData*)
-		ShmemInitStruct("XLOG Ctl", sizeof(XLogCtlData) + BLCKSZ * XLOGbuffers + 
+	XLogCtl = (XLogCtlData *)
+		ShmemInitStruct("XLOG Ctl", sizeof(XLogCtlData) + BLCKSZ * XLOGbuffers +
 						sizeof(XLogRecPtr) * XLOGbuffers, &found);
 	Assert(!found);
 }
@@ -1159,43 +1163,45 @@ XLOGShmemInit(void)
 void
 BootStrapXLOG()
 {
-	int				fd;
-	char			buffer[BLCKSZ];
-	CheckPoint		checkPoint;
+	int			fd;
+	char		buffer[BLCKSZ];
+	CheckPoint	checkPoint;
 
 #ifdef NOT_USED
-	XLogPageHeader	page = (XLogPageHeader)buffer;
-	XLogRecord	   *record;
+	XLogPageHeader page = (XLogPageHeader) buffer;
+	XLogRecord *record;
+
 #endif
 
 #ifndef __CYGWIN__
-	fd = open(ControlFilePath, O_RDWR|O_CREAT|O_EXCL, S_IRUSR|S_IWUSR);
+	fd = open(ControlFilePath, O_RDWR | O_CREAT | O_EXCL, S_IRUSR | S_IWUSR);
 #else
-	fd = open(ControlFilePath, O_RDWR|O_CREAT|O_EXCL|O_BINARY, S_IRUSR|S_IWUSR);
+	fd = open(ControlFilePath, O_RDWR | O_CREAT | O_EXCL | O_BINARY, S_IRUSR | S_IWUSR);
 #endif
 	if (fd < 0)
-		elog(STOP, "BootStrapXLOG failed to create control file (%s): %d", 
-					ControlFilePath, errno);
+		elog(STOP, "BootStrapXLOG failed to create control file (%s): %d",
+			 ControlFilePath, errno);
 
 	checkPoint.redo.xlogid = 0;
 	checkPoint.redo.xrecoff = SizeOfXLogPHD;
 	checkPoint.undo = checkPoint.redo;
 	checkPoint.nextXid = FirstTransactionId;
-	checkPoint.nextOid =  BootstrapObjectIdData;
+	checkPoint.nextOid = BootstrapObjectIdData;
 
 #ifdef NOT_USED
 
 	memset(buffer, 0, BLCKSZ);
 	page->xlp_magic = XLOG_PAGE_MAGIC;
 	page->xlp_info = 0;
-	record = (XLogRecord*) ((char*)page + SizeOfXLogPHD);
-	record->xl_prev.xlogid = 0; record->xl_prev.xrecoff = 0;
+	record = (XLogRecord *) ((char *) page + SizeOfXLogPHD);
+	record->xl_prev.xlogid = 0;
+	record->xl_prev.xrecoff = 0;
 	record->xl_xact_prev = record->xl_prev;
 	record->xl_xid = InvalidTransactionId;
 	record->xl_len = sizeof(checkPoint);
 	record->xl_info = 0;
 	record->xl_rmid = RM_XLOG_ID;
-	memcpy((char*)record + SizeOfXLogRecord, &checkPoint, sizeof(checkPoint));
+	memcpy((char *) record + SizeOfXLogRecord, &checkPoint, sizeof(checkPoint));
 
 	logFile = XLogFileInit(0, 0);
 
@@ -1211,7 +1217,7 @@ BootStrapXLOG()
 #endif
 
 	memset(buffer, 0, BLCKSZ);
-	ControlFile = (ControlFileData*) buffer;
+	ControlFile = (ControlFileData *) buffer;
 	ControlFile->logId = 0;
 	ControlFile->logSeg = 1;
 	ControlFile->checkPoint = checkPoint.redo;
@@ -1230,16 +1236,16 @@ BootStrapXLOG()
 	close(fd);
 }
 
-static char*
+static char *
 str_time(time_t tnow)
 {
-	char   *result = ctime(&tnow);
-	char   *p = strchr(result, '\n');
+	char	   *result = ctime(&tnow);
+	char	   *p = strchr(result, '\n');
 
 	if (p != NULL)
 		*p = 0;
 
-	return(result);
+	return (result);
 }
 
 /*
@@ -1249,21 +1255,22 @@ void
 StartupXLOG()
 {
 #ifdef NOT_USED
-	XLogCtlInsert	   *Insert;
-	CheckPoint			checkPoint;
-	XLogRecPtr			RecPtr,
-						LastRec;
-	XLogRecord		   *record;
-	char				buffer[MAXLOGRECSZ+SizeOfXLogRecord];
-	int					recovery = 0;
-	bool				sie_saved = false;
+	XLogCtlInsert *Insert;
+	CheckPoint	checkPoint;
+	XLogRecPtr	RecPtr,
+				LastRec;
+	XLogRecord *record;
+	char		buffer[MAXLOGRECSZ + SizeOfXLogRecord];
+	int			recovery = 0;
+	bool		sie_saved = false;
+
 #endif
-	int					fd;
+	int			fd;
 
 	elog(LOG, "Data Base System is starting up at %s", str_time(time(NULL)));
 
-	XLogCtl->xlblocks = (XLogRecPtr*) (((char *)XLogCtl) + sizeof(XLogCtlData));
-	XLogCtl->pages = ((char *)XLogCtl->xlblocks + sizeof(XLogRecPtr) * XLOGbuffers);
+	XLogCtl->xlblocks = (XLogRecPtr *) (((char *) XLogCtl) + sizeof(XLogCtlData));
+	XLogCtl->pages = ((char *) XLogCtl->xlblocks + sizeof(XLogRecPtr) * XLOGbuffers);
 	XLogCtl->XLogCacheByte = BLCKSZ * XLOGbuffers;
 	XLogCtl->XLogCacheBlck = XLOGbuffers - 1;
 	memset(XLogCtl->xlblocks, 0, sizeof(XLogRecPtr) * XLOGbuffers);
@@ -1291,8 +1298,8 @@ tryAgain:
 	{
 		fd = errno;
 		if (!ReleaseDataFile())
-			elog(STOP, "Open(\"%s\") failed: %d (and no one data file can be closed)", 
-						ControlFilePath, fd);
+			elog(STOP, "Open(\"%s\") failed: %d (and no one data file can be closed)",
+				 ControlFilePath, fd);
 		goto tryAgain;
 	}
 	if (fd < 0)
@@ -1303,10 +1310,10 @@ tryAgain:
 
 	close(fd);
 
-	if (ControlFile->logSeg == 0 || 
-		ControlFile->time <= 0 || 
-		ControlFile->state < DB_SHUTDOWNED || 
-		ControlFile->state > DB_IN_PRODUCTION || 
+	if (ControlFile->logSeg == 0 ||
+		ControlFile->time <= 0 ||
+		ControlFile->state < DB_SHUTDOWNED ||
+		ControlFile->state > DB_IN_PRODUCTION ||
 		!XRecOffIsValid(ControlFile->checkPoint.xrecoff))
 		elog(STOP, "Control file context is broken");
 
@@ -1323,20 +1330,20 @@ tryAgain:
 
 	if (ControlFile->state == DB_SHUTDOWNED)
 		elog(LOG, "Data Base System was shut down at %s",
-					str_time(ControlFile->time));
+			 str_time(ControlFile->time));
 	else if (ControlFile->state == DB_SHUTDOWNING)
 		elog(LOG, "Data Base System was interrupted when shutting down at %s",
-					str_time(ControlFile->time));
+			 str_time(ControlFile->time));
 	else if (ControlFile->state == DB_IN_RECOVERY)
 	{
 		elog(LOG, "Data Base System was interrupted being in recovery at %s\n"
-				  "\tThis propably means that some data blocks are corrupted\n"
-				  "\tAnd you will have to use last backup for recovery",
-					str_time(ControlFile->time));
+			 "\tThis propably means that some data blocks are corrupted\n"
+			 "\tAnd you will have to use last backup for recovery",
+			 str_time(ControlFile->time));
 	}
 	else if (ControlFile->state == DB_IN_PRODUCTION)
 		elog(LOG, "Data Base System was interrupted being in production at %s",
-					str_time(ControlFile->time));
+			 str_time(ControlFile->time));
 
 #ifdef NOT_USED
 
@@ -1350,14 +1357,14 @@ tryAgain:
 		elog(STOP, "Invalid RMID in checkPoint record");
 	if (record->xl_len != sizeof(checkPoint))
 		elog(STOP, "Invalid length of checkPoint record");
-	checkPoint = *((CheckPoint*)((char*)record + SizeOfXLogRecord));
+	checkPoint = *((CheckPoint *) ((char *) record + SizeOfXLogRecord));
 
 	elog(LOG, "Redo record at (%u, %u); Undo record at (%u, %u)",
-				checkPoint.redo.xlogid, checkPoint.redo.xrecoff,
-				checkPoint.undo.xlogid, checkPoint.undo.xrecoff);
+		 checkPoint.redo.xlogid, checkPoint.redo.xrecoff,
+		 checkPoint.undo.xlogid, checkPoint.undo.xrecoff);
 	elog(LOG, "NextTransactionId: %u; NextOid: %u",
-				checkPoint.nextXid, checkPoint.nextOid);
-	if (checkPoint.nextXid < FirstTransactionId || 
+		 checkPoint.nextXid, checkPoint.nextOid);
+	if (checkPoint.nextXid < FirstTransactionId ||
 		checkPoint.nextOid < BootstrapObjectIdData)
 #ifdef XLOG
 		elog(STOP, "Invalid NextTransactionId/NextOid");
@@ -1389,7 +1396,7 @@ tryAgain:
 	if (recovery > 0)
 	{
 		elog(LOG, "The DataBase system was not properly shut down\n"
-					"\tAutomatic recovery is in progress...");
+			 "\tAutomatic recovery is in progress...");
 		ControlFile->state = DB_IN_RECOVERY;
 		ControlFile->time = time(NULL);
 		UpdateControlFile();
@@ -1400,14 +1407,15 @@ tryAgain:
 		/* Is REDO required ? */
 		if (XLByteLT(checkPoint.redo, RecPtr))
 			record = ReadRecord(&(checkPoint.redo), buffer);
-		else	/* read past CheckPoint record */
+		else
+/* read past CheckPoint record */
 			record = ReadRecord(NULL, buffer);
 
 		/* REDO */
 		if (record->xl_len != 0)
 		{
-			elog(LOG, "Redo starts at (%u, %u)", 
-						ReadRecPtr.xlogid, ReadRecPtr.xrecoff);
+			elog(LOG, "Redo starts at (%u, %u)",
+				 ReadRecPtr.xlogid, ReadRecPtr.xrecoff);
 			do
 			{
 #ifdef XLOG
@@ -1417,8 +1425,8 @@ tryAgain:
 				RmgrTable[record->xl_rmid].rm_redo(EndRecPtr, record);
 				record = ReadRecord(NULL, buffer);
 			} while (record->xl_len != 0);
-			elog(LOG, "Redo done at (%u, %u)", 
-						ReadRecPtr.xlogid, ReadRecPtr.xrecoff);
+			elog(LOG, "Redo done at (%u, %u)",
+				 ReadRecPtr.xlogid, ReadRecPtr.xrecoff);
 			LastRec = ReadRecPtr;
 		}
 		else
@@ -1431,18 +1439,18 @@ tryAgain:
 		RecPtr = ReadRecPtr;
 		if (XLByteLT(checkPoint.undo, RecPtr))
 		{
-			elog(LOG, "Undo starts at (%u, %u)", 
-						RecPtr.xlogid, RecPtr.xrecoff);
+			elog(LOG, "Undo starts at (%u, %u)",
+				 RecPtr.xlogid, RecPtr.xrecoff);
 			do
 			{
 				record = ReadRecord(&RecPtr, buffer);
-				if (TransactionIdIsValid(record->xl_xid) && 
+				if (TransactionIdIsValid(record->xl_xid) &&
 					!TransactionIdDidCommit(record->xl_xid))
 					RmgrTable[record->xl_rmid].rm_undo(record);
 				RecPtr = record->xl_prev;
 			} while (XLByteLE(checkPoint.undo, RecPtr));
-			elog(LOG, "Undo done at (%u, %u)", 
-						ReadRecPtr.xlogid, ReadRecPtr.xrecoff);
+			elog(LOG, "Undo done at (%u, %u)",
+				 ReadRecPtr.xlogid, ReadRecPtr.xrecoff);
 		}
 		else
 		{
@@ -1458,19 +1466,19 @@ tryAgain:
 	logOff = 0;
 	logFile = XLogFileOpen(logId, logSeg, false);
 	XLogCtl->xlblocks[0].xlogid = logId;
-	XLogCtl->xlblocks[0].xrecoff = 
-			((EndRecPtr.xrecoff - 1) / BLCKSZ + 1) * BLCKSZ;
+	XLogCtl->xlblocks[0].xrecoff =
+		((EndRecPtr.xrecoff - 1) / BLCKSZ + 1) * BLCKSZ;
 	Insert = &XLogCtl->Insert;
-	memcpy((char*)(Insert->currpage), readBuf, BLCKSZ);
-	Insert->currpos = ((char*) Insert->currpage) + 
+	memcpy((char *) (Insert->currpage), readBuf, BLCKSZ);
+	Insert->currpos = ((char *) Insert->currpage) +
 		(EndRecPtr.xrecoff + BLCKSZ - XLogCtl->xlblocks[0].xrecoff);
 	Insert->PrevRecord = ControlFile->checkPoint;
 
 	if (recovery > 0)
 	{
-		int		i;
+		int			i;
 
-		/* 
+		/*
 		 * Let resource managers know that recovery is done
 		 */
 		for (i = 0; i <= RM_MAX_ID; i++)
@@ -1479,7 +1487,7 @@ tryAgain:
 		StopIfError = sie_saved;
 	}
 
-#endif	/* NOT_USED */
+#endif	 /* NOT_USED */
 
 	ControlFile->state = DB_IN_PRODUCTION;
 	ControlFile->time = time(NULL);
@@ -1508,11 +1516,11 @@ void
 CreateCheckPoint(bool shutdown)
 {
 #ifdef NOT_USED
-	CheckPoint			checkPoint;
-	XLogRecPtr			recptr;
-	XLogCtlInsert	   *Insert = &XLogCtl->Insert;
-	uint32				freespace;
-	uint16				curridx;
+	CheckPoint	checkPoint;
+	XLogRecPtr	recptr;
+	XLogCtlInsert *Insert = &XLogCtl->Insert;
+	uint32		freespace;
+	uint16		curridx;
 
 	memset(&checkPoint, 0, sizeof(checkPoint));
 	if (shutdown)
@@ -1531,21 +1539,21 @@ CreateCheckPoint(bool shutdown)
 			elog(STOP, "XLog insert lock is busy while data base is shutting down");
 		(void) select(0, NULL, NULL, NULL, &delay);
 	}
-	freespace = ((char*) Insert->currpage) + BLCKSZ - Insert->currpos;
+	freespace = ((char *) Insert->currpage) + BLCKSZ - Insert->currpos;
 	if (freespace < SizeOfXLogRecord)
 	{
 		curridx = NextBufIdx(Insert->curridx);
 		if (XLByteLE(XLogCtl->xlblocks[curridx], LgwrResult.Write))
 			InitXLBuffer(curridx);
-		else 
+		else
 			GetFreeXLBuffer();
 		freespace = BLCKSZ - SizeOfXLogPHD;
 	}
 	else
 		curridx = Insert->curridx;
 	checkPoint.redo.xlogid = XLogCtl->xlblocks[curridx].xlogid;
-	checkPoint.redo.xrecoff = XLogCtl->xlblocks[curridx].xrecoff - BLCKSZ + 
-								Insert->currpos - ((char*) Insert->currpage);
+	checkPoint.redo.xrecoff = XLogCtl->xlblocks[curridx].xrecoff - BLCKSZ +
+		Insert->currpos - ((char *) Insert->currpage);
 	S_UNLOCK(&(XLogCtl->insert_lck));
 
 	SpinAcquire(XidGenLockId);
@@ -1563,14 +1571,14 @@ CreateCheckPoint(bool shutdown)
 	if (shutdown && checkPoint.undo.xrecoff != 0)
 		elog(STOP, "Active transaction while data base is shutting down");
 
-	recptr = XLogInsert(RM_XLOG_ID, (char*)&checkPoint, sizeof(checkPoint), NULL, 0);
+	recptr = XLogInsert(RM_XLOG_ID, (char *) &checkPoint, sizeof(checkPoint), NULL, 0);
 
 	if (shutdown && !XLByteEQ(checkPoint.redo, MyLastRecPtr))
 		elog(STOP, "XLog concurrent activity while data base is shutting down");
 
 	XLogFlush(recptr);
 
-#endif	/* NOT_USED */
+#endif	 /* NOT_USED */
 
 	SpinAcquire(ControlFileLockId);
 	if (shutdown)

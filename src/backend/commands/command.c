@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/commands/Attic/command.c,v 1.70 2000/03/09 05:00:23 inoue Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/commands/Attic/command.c,v 1.71 2000/04/12 17:14:57 momjian Exp $
  *
  * NOTES
  *	  The PortalExecutorHeapMemory crap needs to be eliminated
@@ -51,7 +51,7 @@
 #include "access/genam.h"
 #include "optimizer/clauses.h"
 #include "../parser/parse.h"
-#endif	/* _DROP_COLUMN_HACK__ */
+#endif	 /* _DROP_COLUMN_HACK__ */
 
 /* ----------------
  *		PortalExecutorHeapMemory stuff
@@ -262,7 +262,7 @@ PerformPortalClose(char *name, CommandDest dest)
 }
 
 /* ----------------
- *      AlterTableAddColumn
+ *		AlterTableAddColumn
  *		(formerly known as PerformAddAttribute)
  *
  *		adds an additional attribute to a relation
@@ -327,8 +327,8 @@ AlterTableAddColumn(const char *relationName,
 #endif
 
 	/*
-	 * Grab an exclusive lock on the target table, which we will NOT release
-	 * until end of transaction.
+	 * Grab an exclusive lock on the target table, which we will NOT
+	 * release until end of transaction.
 	 */
 	rel = heap_openr(relationName, AccessExclusiveLock);
 	myrelid = RelationGetRelid(rel);
@@ -341,7 +341,7 @@ AlterTableAddColumn(const char *relationName,
 		elog(ERROR, "Can't add a NOT NULL attribute to an existing relation");
 
 	if (colDef->raw_default || colDef->cooked_default)
-        elog(ERROR, "Adding columns with defaults is not implemented.");
+		elog(ERROR, "Adding columns with defaults is not implemented.");
 
 
 	/*
@@ -370,7 +370,7 @@ AlterTableAddColumn(const char *relationName,
 			 */
 			foreach(child, children)
 			{
-				Oid		childrelid = lfirsti(child);
+				Oid			childrelid = lfirsti(child);
 
 				if (childrelid == myrelid)
 					continue;
@@ -514,13 +514,13 @@ static void drop_default(Oid relid, int16 attnum);
  */
 void
 AlterTableAlterColumn(const char *relationName,
-                      bool inh, const char *colName,
-                      Node *newDefault)
+					  bool inh, const char *colName,
+					  Node *newDefault)
 {
-    Relation rel;
-    HeapTuple tuple;
-    int16 attnum;
-    Oid myrelid;
+	Relation	rel;
+	HeapTuple	tuple;
+	int16		attnum;
+	Oid			myrelid;
 
 	if (!allowSystemTableMods && IsSystemRelationName(relationName))
 		elog(ERROR, "ALTER TABLE: relation \"%s\" is a system catalog",
@@ -530,121 +530,122 @@ AlterTableAlterColumn(const char *relationName,
 		elog(ERROR, "ALTER TABLE: permission denied");
 #endif
 
-    rel = heap_openr(relationName, AccessExclusiveLock);
-    myrelid = RelationGetRelid(rel);
-    heap_close(rel, NoLock);
+	rel = heap_openr(relationName, AccessExclusiveLock);
+	myrelid = RelationGetRelid(rel);
+	heap_close(rel, NoLock);
 
-    /*
-     * Propagate to children if desired
-     */
+	/*
+	 * Propagate to children if desired
+	 */
 	if (inh)
-    {
-        List	   *child,
-            *children;
+	{
+		List	   *child,
+				   *children;
 
-        /* this routine is actually in the planner */
-        children = find_all_inheritors(myrelid);
+		/* this routine is actually in the planner */
+		children = find_all_inheritors(myrelid);
 
-        /*
-         * find_all_inheritors does the recursive search of the
-         * inheritance hierarchy, so all we have to do is process all
-         * of the relids in the list that it returns.
-         */
-        foreach(child, children)
+		/*
+		 * find_all_inheritors does the recursive search of the
+		 * inheritance hierarchy, so all we have to do is process all of
+		 * the relids in the list that it returns.
+		 */
+		foreach(child, children)
 		{
-            Oid		childrelid = lfirsti(child);
+			Oid			childrelid = lfirsti(child);
 
-            if (childrelid == myrelid)
-                continue;
-            rel = heap_open(childrelid, AccessExclusiveLock);
-            AlterTableAlterColumn(RelationGetRelationName(rel),
-                                  false, colName, newDefault);
-            heap_close(rel, AccessExclusiveLock);
-        }
-    }
+			if (childrelid == myrelid)
+				continue;
+			rel = heap_open(childrelid, AccessExclusiveLock);
+			AlterTableAlterColumn(RelationGetRelationName(rel),
+								  false, colName, newDefault);
+			heap_close(rel, AccessExclusiveLock);
+		}
+	}
 
-    /* -= now do the thing on this relation =- */
+	/* -= now do the thing on this relation =- */
 
-    /* reopen the business */
-    rel = heap_openr((char *)relationName, AccessExclusiveLock);
+	/* reopen the business */
+	rel = heap_openr((char *) relationName, AccessExclusiveLock);
 
-    /*
-     * get the number of the attribute
-     */
-    tuple = SearchSysCacheTuple(ATTNAME,
-                                ObjectIdGetDatum(myrelid),
-                                NameGetDatum(namein((char *)colName)),
-                                0, 0);
+	/*
+	 * get the number of the attribute
+	 */
+	tuple = SearchSysCacheTuple(ATTNAME,
+								ObjectIdGetDatum(myrelid),
+								NameGetDatum(namein((char *) colName)),
+								0, 0);
 
-    if (!HeapTupleIsValid(tuple))
-    {
-        heap_close(rel, AccessExclusiveLock);
-        elog(ERROR, "ALTER TABLE: relation \"%s\" has no column \"%s\"",
-             relationName, colName);
-    }
+	if (!HeapTupleIsValid(tuple))
+	{
+		heap_close(rel, AccessExclusiveLock);
+		elog(ERROR, "ALTER TABLE: relation \"%s\" has no column \"%s\"",
+			 relationName, colName);
+	}
 
-    attnum = ((Form_pg_attribute) GETSTRUCT(tuple))->attnum;
+	attnum = ((Form_pg_attribute) GETSTRUCT(tuple))->attnum;
 
-    if (newDefault) /* SET DEFAULT */
-    {
-        List* rawDefaults = NIL;
-   		RawColumnDefault *rawEnt;
+	if (newDefault)				/* SET DEFAULT */
+	{
+		List	   *rawDefaults = NIL;
+		RawColumnDefault *rawEnt;
 
-        /* Get rid of the old one first */
-        drop_default(myrelid, attnum);
+		/* Get rid of the old one first */
+		drop_default(myrelid, attnum);
 
 		rawEnt = (RawColumnDefault *) palloc(sizeof(RawColumnDefault));
 		rawEnt->attnum = attnum;
-        rawEnt->raw_default = newDefault;
+		rawEnt->raw_default = newDefault;
 		rawDefaults = lappend(rawDefaults, rawEnt);
 
-        /*
-         * This function is intended for CREATE TABLE,
-         * so it processes a _list_ of defaults, but we just do one.
-         */
-        AddRelationRawConstraints(rel, rawDefaults, NIL);
-    }
+		/*
+		 * This function is intended for CREATE TABLE, so it processes a
+		 * _list_ of defaults, but we just do one.
+		 */
+		AddRelationRawConstraints(rel, rawDefaults, NIL);
+	}
 
-    else /* DROP DEFAULT */
-    {
-        Relation attr_rel;
-        ScanKeyData scankeys[3];
-        HeapScanDesc scan;
-        HeapTuple tuple;
+	else
+/* DROP DEFAULT */
+	{
+		Relation	attr_rel;
+		ScanKeyData scankeys[3];
+		HeapScanDesc scan;
+		HeapTuple	tuple;
 
-        attr_rel = heap_openr(AttributeRelationName, AccessExclusiveLock);
-        ScanKeyEntryInitialize(&scankeys[0], 0x0, Anum_pg_attribute_attrelid, F_OIDEQ,
-                               ObjectIdGetDatum(myrelid));
-        ScanKeyEntryInitialize(&scankeys[1], 0x0, Anum_pg_attribute_attnum, F_INT2EQ,
-                               Int16GetDatum(attnum));
-        ScanKeyEntryInitialize(&scankeys[2], 0x0, Anum_pg_attribute_atthasdef, F_BOOLEQ,
-                               TRUE);
+		attr_rel = heap_openr(AttributeRelationName, AccessExclusiveLock);
+		ScanKeyEntryInitialize(&scankeys[0], 0x0, Anum_pg_attribute_attrelid, F_OIDEQ,
+							   ObjectIdGetDatum(myrelid));
+		ScanKeyEntryInitialize(&scankeys[1], 0x0, Anum_pg_attribute_attnum, F_INT2EQ,
+							   Int16GetDatum(attnum));
+		ScanKeyEntryInitialize(&scankeys[2], 0x0, Anum_pg_attribute_atthasdef, F_BOOLEQ,
+							   TRUE);
 
-        scan = heap_beginscan(attr_rel, false, SnapshotNow, 3, scankeys);
-        AssertState(scan!=NULL);
+		scan = heap_beginscan(attr_rel, false, SnapshotNow, 3, scankeys);
+		AssertState(scan != NULL);
 
-        if (HeapTupleIsValid(tuple = heap_getnext(scan, 0)))
-        {
-            HeapTuple newtuple;
-            Relation	irelations[Num_pg_attr_indices];
+		if (HeapTupleIsValid(tuple = heap_getnext(scan, 0)))
+		{
+			HeapTuple	newtuple;
+			Relation	irelations[Num_pg_attr_indices];
 
-            /* update to false */
-            newtuple = heap_copytuple(tuple);
-            ((Form_pg_attribute) GETSTRUCT(newtuple))->atthasdef = FALSE;
-            heap_update(attr_rel, &tuple->t_self, newtuple, NULL);
+			/* update to false */
+			newtuple = heap_copytuple(tuple);
+			((Form_pg_attribute) GETSTRUCT(newtuple))->atthasdef = FALSE;
+			heap_update(attr_rel, &tuple->t_self, newtuple, NULL);
 
-            /* keep the system catalog indices current */
-            CatalogOpenIndices(Num_pg_attr_indices, Name_pg_attr_indices, irelations);
-            CatalogIndexInsert(irelations, Num_pg_attr_indices, attr_rel, newtuple);
-            CatalogCloseIndices(Num_pg_attr_indices, irelations);
+			/* keep the system catalog indices current */
+			CatalogOpenIndices(Num_pg_attr_indices, Name_pg_attr_indices, irelations);
+			CatalogIndexInsert(irelations, Num_pg_attr_indices, attr_rel, newtuple);
+			CatalogCloseIndices(Num_pg_attr_indices, irelations);
 
-            /* get rid of actual default definition */
-            drop_default(myrelid, attnum);
-        }
+			/* get rid of actual default definition */
+			drop_default(myrelid, attnum);
+		}
 
-        heap_endscan(scan);
-        heap_close(attr_rel, NoLock);
-    }
+		heap_endscan(scan);
+		heap_close(attr_rel, NoLock);
+	}
 
 	heap_close(rel, NoLock);
 }
@@ -654,33 +655,33 @@ AlterTableAlterColumn(const char *relationName,
 static void
 drop_default(Oid relid, int16 attnum)
 {
-    ScanKeyData scankeys[2];
-    HeapScanDesc scan;
-    Relation attrdef_rel;
-    HeapTuple tuple;
+	ScanKeyData scankeys[2];
+	HeapScanDesc scan;
+	Relation	attrdef_rel;
+	HeapTuple	tuple;
 
-    attrdef_rel = heap_openr(AttrDefaultRelationName, AccessExclusiveLock);
-    ScanKeyEntryInitialize(&scankeys[0], 0x0, Anum_pg_attrdef_adrelid, F_OIDEQ,
-                           ObjectIdGetDatum(relid));
-    ScanKeyEntryInitialize(&scankeys[1], 0x0, Anum_pg_attrdef_adnum, F_INT2EQ,
-                           Int16GetDatum(attnum));
+	attrdef_rel = heap_openr(AttrDefaultRelationName, AccessExclusiveLock);
+	ScanKeyEntryInitialize(&scankeys[0], 0x0, Anum_pg_attrdef_adrelid, F_OIDEQ,
+						   ObjectIdGetDatum(relid));
+	ScanKeyEntryInitialize(&scankeys[1], 0x0, Anum_pg_attrdef_adnum, F_INT2EQ,
+						   Int16GetDatum(attnum));
 
-    scan = heap_beginscan(attrdef_rel, false, SnapshotNow, 2, scankeys);
-    AssertState(scan!=NULL);
+	scan = heap_beginscan(attrdef_rel, false, SnapshotNow, 2, scankeys);
+	AssertState(scan != NULL);
 
-    if (HeapTupleIsValid(tuple = heap_getnext(scan, 0)))
-        heap_delete(attrdef_rel, &tuple->t_self, NULL);
+	if (HeapTupleIsValid(tuple = heap_getnext(scan, 0)))
+		heap_delete(attrdef_rel, &tuple->t_self, NULL);
 
-    heap_endscan(scan);
+	heap_endscan(scan);
 
-    heap_close(attrdef_rel, NoLock);
+	heap_close(attrdef_rel, NoLock);
 }
 
 
 #ifdef	_DROP_COLUMN_HACK__
 /*
  *	ALTER TABLE DROP COLUMN trial implementation
- *		
+ *
  */
 
 /*
@@ -690,17 +691,17 @@ typedef struct SysScanDescData
 {
 	Relation	heap_rel;
 	Relation	irel;
-	HeapScanDesc	scan;
-	IndexScanDesc	iscan;
-	HeapTupleData	tuple;
+	HeapScanDesc scan;
+	IndexScanDesc iscan;
+	HeapTupleData tuple;
 	Buffer		buffer;
-} SysScanDescData, *SysScanDesc;
-	
+}			SysScanDescData, *SysScanDesc;
+
 static void *
 systable_beginscan(Relation rel, const char *indexRelname, int nkeys, ScanKey entry)
 {
-	bool	hasindex = (rel->rd_rel->relhasindex && !IsIgnoringSystemIndexes());
-	SysScanDesc	sysscan;
+	bool		hasindex = (rel->rd_rel->relhasindex && !IsIgnoringSystemIndexes());
+	SysScanDesc sysscan;
 
 	sysscan = (SysScanDesc) palloc(sizeof(SysScanDescData));
 	sysscan->heap_rel = rel;
@@ -710,7 +711,7 @@ systable_beginscan(Relation rel, const char *indexRelname, int nkeys, ScanKey en
 	sysscan->buffer = InvalidBuffer;
 	if (hasindex)
 	{
-		sysscan->irel = index_openr((char *)indexRelname);
+		sysscan->irel = index_openr((char *) indexRelname);
 		sysscan->iscan = index_beginscan(sysscan->irel, false, nkeys, entry);
 	}
 	else
@@ -720,7 +721,7 @@ systable_beginscan(Relation rel, const char *indexRelname, int nkeys, ScanKey en
 static void
 systable_endscan(void *scan)
 {
-	SysScanDesc	sysscan = (SysScanDesc) scan;
+	SysScanDesc sysscan = (SysScanDesc) scan;
 
 	if (sysscan->irel)
 	{
@@ -736,9 +737,9 @@ systable_endscan(void *scan)
 static HeapTuple
 systable_getnext(void *scan)
 {
-	SysScanDesc	sysscan = (SysScanDesc) scan;
+	SysScanDesc sysscan = (SysScanDesc) scan;
 	HeapTuple	htup = (HeapTuple) NULL;
-	RetrieveIndexResult	indexRes;
+	RetrieveIndexResult indexRes;
 
 	if (sysscan->irel)
 	{
@@ -774,50 +775,55 @@ find_attribute_walker(Node *node, int attnum)
 		return false;
 	if (IsA(node, Var))
 	{
-		Var	*var = (Var *) node;
+		Var		   *var = (Var *) node;
+
 		if (var->varlevelsup == 0 && var->varno == 1 &&
 			var->varattno == attnum)
 			return true;
 	}
-	return expression_tree_walker(node, find_attribute_walker, (void *)attnum); 
+	return expression_tree_walker(node, find_attribute_walker, (void *) attnum);
 }
 static bool
 find_attribute_in_node(Node *node, int attnum)
 {
-	return	expression_tree_walker(node, find_attribute_walker, (void *)attnum);
+	return expression_tree_walker(node, find_attribute_walker, (void *) attnum);
 }
+
 /*
  *	Remove/check references for the column
  */
 static bool
 RemoveColumnReferences(Oid reloid, int attnum, bool checkonly, HeapTuple reltup)
 {
-	Relation	indexRelation, rcrel;
-	ScanKeyData	entry;
-	HeapScanDesc	scan;
-	void		*sysscan;
-	HeapTuple	htup, indexTuple;
-	Form_pg_index	index;
-	Form_pg_relcheck	relcheck;
-	Form_pg_class	pgcform = (Form_pg_class) NULL;
-	int		i;
+	Relation	indexRelation,
+				rcrel;
+	ScanKeyData entry;
+	HeapScanDesc scan;
+	void	   *sysscan;
+	HeapTuple	htup,
+				indexTuple;
+	Form_pg_index index;
+	Form_pg_relcheck relcheck;
+	Form_pg_class pgcform = (Form_pg_class) NULL;
+	int			i;
 	bool		checkok = true;
 
-	
+
 	if (!checkonly)
-		pgcform = (Form_pg_class) GETSTRUCT (reltup);
+		pgcform = (Form_pg_class) GETSTRUCT(reltup);
+
 	/*
-	 *	Remove/check constraints here
+	 * Remove/check constraints here
 	 */
 	ScanKeyEntryInitialize(&entry, (bits16) 0x0, Anum_pg_relcheck_rcrelid,
-			(RegProcedure) F_OIDEQ, ObjectIdGetDatum(reloid));
+					   (RegProcedure) F_OIDEQ, ObjectIdGetDatum(reloid));
 	rcrel = heap_openr(RelCheckRelationName, RowExclusiveLock);
-	sysscan = systable_beginscan(rcrel, RelCheckIndex,1 ,&entry);
+	sysscan = systable_beginscan(rcrel, RelCheckIndex, 1, &entry);
 
 	while (HeapTupleIsValid(htup = systable_getnext(sysscan)))
 	{
-		char	*ccbin;
-		Node	*node;
+		char	   *ccbin;
+		Node	   *node;
 
 		relcheck = (Form_pg_relcheck) GETSTRUCT(htup);
 		ccbin = textout(&relcheck->rcbin);
@@ -843,15 +849,15 @@ RemoveColumnReferences(Oid reloid, int attnum, bool checkonly, HeapTuple reltup)
 	heap_close(rcrel, NoLock);
 
 	/*
-	 *	What to do with triggers/rules/views/procedues ?
+	 * What to do with triggers/rules/views/procedues ?
 	 */
 
 	/*
-	 *	Remove/check indexes
+	 * Remove/check indexes
 	 */
 	indexRelation = heap_openr(IndexRelationName, RowExclusiveLock);
 	ScanKeyEntryInitialize(&entry, 0, Anum_pg_index_indrelid, F_OIDEQ,
-				ObjectIdGetDatum(reloid));
+						   ObjectIdGetDatum(reloid));
 	scan = heap_beginscan(indexRelation, false, SnapshotNow, 1, &entry);
 	while (HeapTupleIsValid(indexTuple = heap_getnext(scan, 0)))
 	{
@@ -870,8 +876,8 @@ RemoveColumnReferences(Oid reloid, int attnum, bool checkonly, HeapTuple reltup)
 				else
 				{
 					htup = SearchSysCacheTuple(RELOID,
-						ObjectIdGetDatum(index->indexrelid),
-						0, 0, 0); 
+									 ObjectIdGetDatum(index->indexrelid),
+											   0, 0, 0);
 					RemoveIndex(NameStr(((Form_pg_class) GETSTRUCT(htup))->relname));
 				}
 				break;
@@ -883,33 +889,38 @@ RemoveColumnReferences(Oid reloid, int attnum, bool checkonly, HeapTuple reltup)
 
 	return checkok;
 }
-#endif	/* _DROP_COLUMN_HACK__ */
+
+#endif	 /* _DROP_COLUMN_HACK__ */
 
 /*
  * ALTER TABLE DROP COLUMN
  */
 void
 AlterTableDropColumn(const char *relationName,
-                     bool inh, const char *colName,
-                     int behavior)
+					 bool inh, const char *colName,
+					 int behavior)
 {
 #ifdef	_DROP_COLUMN_HACK__
-	Relation	rel, attrdesc, adrel;
-	Oid		myrelid, attoid;
+	Relation	rel,
+				attrdesc,
+				adrel;
+	Oid			myrelid,
+				attoid;
 	HeapTuple	reltup;
-	HeapTupleData	classtuple;
+	HeapTupleData classtuple;
 	Buffer		buffer;
 	Form_pg_attribute attribute;
 	HeapTuple	tup;
 	Relation	idescs[Num_pg_attr_indices];
-	int		attnum;
+	int			attnum;
 	bool		hasindex;
 	char		dropColname[32];
-	void		*sysscan;
-    	ScanKeyData	scankeys[2];
+	void	   *sysscan;
+	ScanKeyData scankeys[2];
 
-	if (inh)	
+	if (inh)
 		elog(ERROR, "ALTER TABLE / DROP COLUMN with inherit option is not supported yet");
+
 	/*
 	 * permissions checking.  this would normally be done in utility.c,
 	 * but this particular routine is recursive.
@@ -925,25 +936,25 @@ AlterTableDropColumn(const char *relationName,
 #endif
 
 	/*
-	 * Grab an exclusive lock on the target table, which we will NOT release
-	 * until end of transaction.
+	 * Grab an exclusive lock on the target table, which we will NOT
+	 * release until end of transaction.
 	 */
 	rel = heap_openr(relationName, AccessExclusiveLock);
 	myrelid = RelationGetRelid(rel);
 	heap_close(rel, NoLock);	/* close rel but keep lock! */
 
 	/*
-	 *	What to do when rel has inheritors ?
+	 * What to do when rel has inheritors ?
 	 */
 	if (length(find_all_inheritors(myrelid)) > 1)
 		elog(ERROR, "ALTER TABLE: cannot drop a column on table that is inherited from");
 
 
 	/*
-	 *	lock the pg_class tuple for update
+	 * lock the pg_class tuple for update
 	 */
 	reltup = SearchSysCacheTuple(RELNAME, PointerGetDatum(relationName),
-							0, 0, 0);
+								 0, 0, 0);
 
 	if (!HeapTupleIsValid(reltup))
 		elog(ERROR, "ALTER TABLE: relation \"%s\" not found",
@@ -976,19 +987,20 @@ AlterTableDropColumn(const char *relationName,
 	 * Get the target pg_attribute tuple
 	 */
 	tup = SearchSysCacheTupleCopy(ATTNAME,
-				ObjectIdGetDatum(reltup->t_data->t_oid),
-				PointerGetDatum(colName), 0, 0);
+								  ObjectIdGetDatum(reltup->t_data->t_oid),
+								  PointerGetDatum(colName), 0, 0);
 	if (!HeapTupleIsValid(tup))
 		elog(ERROR, "ALTER TABLE: column name \"%s\" doesn't exist in table \"%s\"",
-				 colName, relationName);
+			 colName, relationName);
 
 	attribute = (Form_pg_attribute) GETSTRUCT(tup);
 	if (attribute->attnum <= 0)
 		elog(ERROR, "ALTER TABLE: column name \"%s\" was already dropped", colName);
 	attnum = attribute->attnum;
 	attoid = tup->t_data->t_oid;
+
 	/*
-	 *	Check constraints/indices etc here
+	 * Check constraints/indices etc here
 	 */
 	if (behavior != CASCADE)
 	{
@@ -997,7 +1009,7 @@ AlterTableDropColumn(const char *relationName,
 	}
 
 	/*
-	 *	change the target pg_attribute tuple
+	 * change the target pg_attribute tuple
 	 */
 	sprintf(dropColname, "*already Dropped*%d", attnum);
 	namestrcpy(&(attribute->attname), dropColname);
@@ -1009,7 +1021,7 @@ AlterTableDropColumn(const char *relationName,
 	{
 		CatalogOpenIndices(Num_pg_attr_indices, Name_pg_attr_indices, idescs);
 		CatalogIndexInsert(idescs, Num_pg_attr_indices,
-				attrdesc, tup);
+						   attrdesc, tup);
 		CatalogCloseIndices(Num_pg_attr_indices, idescs);
 	}
 	heap_close(attrdesc, NoLock);
@@ -1020,15 +1032,17 @@ AlterTableDropColumn(const char *relationName,
 	/* delete attrdef */
 	adrel = heap_openr(AttrDefaultRelationName, RowExclusiveLock);
 	ScanKeyEntryInitialize(&scankeys[0], 0x0, Anum_pg_attrdef_adrelid,
-			F_OIDEQ, ObjectIdGetDatum(myrelid));
-	/* Oops pg_attrdef doesn't have (adrelid,adnum) index
-	ScanKeyEntryInitialize(&scankeys[1], 0x0, Anum_pg_attrdef_adnum,
-			F_INT2EQ, Int16GetDatum(attnum));
-	sysscan = systable_beginscan(adrel, AttrDefaultIndex, 2, scankeys);
-	*/
+						   F_OIDEQ, ObjectIdGetDatum(myrelid));
+
+	/*
+	 * Oops pg_attrdef doesn't have (adrelid,adnum) index
+	 * ScanKeyEntryInitialize(&scankeys[1], 0x0, Anum_pg_attrdef_adnum,
+	 * F_INT2EQ, Int16GetDatum(attnum)); sysscan =
+	 * systable_beginscan(adrel, AttrDefaultIndex, 2, scankeys);
+	 */
 	sysscan = systable_beginscan(adrel, AttrDefaultIndex, 1, scankeys);
 	while (HeapTupleIsValid(tup = systable_getnext(sysscan)))
-	{ 
+	{
 		if (((Form_pg_attrdef) GETSTRUCT(tup))->adnum == attnum)
 		{
 			heap_delete(adrel, &tup->t_self, NULL);
@@ -1037,8 +1051,9 @@ AlterTableDropColumn(const char *relationName,
 	}
 	systable_endscan(sysscan);
 	heap_close(adrel, NoLock);
+
 	/*
-	 *	Remove objects which reference this column
+	 * Remove objects which reference this column
 	 */
 	if (behavior == CASCADE)
 	{
@@ -1055,8 +1070,8 @@ AlterTableDropColumn(const char *relationName,
 	heap_freetuple(reltup);
 	heap_close(rel, NoLock);
 #else
-    elog(ERROR, "ALTER TABLE / DROP COLUMN is not implemented");
-#endif	/* _DROP_COLUMN_HACK__ */
+				elog(ERROR, "ALTER TABLE / DROP COLUMN is not implemented");
+#endif	 /* _DROP_COLUMN_HACK__ */
 }
 
 
@@ -1066,76 +1081,80 @@ AlterTableDropColumn(const char *relationName,
  */
 void
 AlterTableAddConstraint(const char *relationName,
-                        bool inh, Node *newConstraint)
+						bool inh, Node *newConstraint)
 {
-	if (newConstraint == NULL) 
+	if (newConstraint == NULL)
 		elog(ERROR, "ALTER TABLE / ADD CONSTRAINT passed invalid constraint.");
 
-	switch (nodeTag(newConstraint)) 
+	switch (nodeTag(newConstraint))
 	{
 		case T_Constraint:
 			elog(ERROR, "ALTER TABLE / ADD CONSTRAINT is not implemented");
 		case T_FkConstraint:
 			{
-				FkConstraint *fkconstraint=(FkConstraint *)newConstraint;
-				Relation rel;
+				FkConstraint *fkconstraint = (FkConstraint *) newConstraint;
+				Relation	rel;
 				HeapScanDesc scan;
-				HeapTuple tuple;
-				Trigger trig;
-				List *list;
-				int count;
+				HeapTuple	tuple;
+				Trigger		trig;
+				List	   *list;
+				int			count;
 
-				/* 
+				/*
 				 * Grab an exclusive lock on the pk table, so that someone
-				 * doesn't delete rows out from under us.  
+				 * doesn't delete rows out from under us.
 				 */
 
 				rel = heap_openr(fkconstraint->pktable_name, AccessExclusiveLock);
 				heap_close(rel, NoLock);
 
-				/* 
-				 * Grab an exclusive lock on the fk table, and then scan through
-				 * each tuple, calling the RI_FKey_Match_Ins (insert trigger)
-				 * as if that tuple had just been inserted.  If any of those
-				 * fail, it should elog(ERROR) and that's that.
+				/*
+				 * Grab an exclusive lock on the fk table, and then scan
+				 * through each tuple, calling the RI_FKey_Match_Ins
+				 * (insert trigger) as if that tuple had just been
+				 * inserted.  If any of those fail, it should elog(ERROR)
+				 * and that's that.
 				 */
 				rel = heap_openr(relationName, AccessExclusiveLock);
 				trig.tgoid = 0;
 				trig.tgname = "<unknown>";
-				trig.tgfoid = 0; 
+				trig.tgfoid = 0;
 				trig.tgtype = 0;
 				trig.tgenabled = TRUE;
 				trig.tgisconstraint = TRUE;
 				trig.tginitdeferred = FALSE;
 				trig.tgdeferrable = FALSE;
 
-				trig.tgargs = (char **)palloc(
-						sizeof(char *) * (4 + length(fkconstraint->fk_attrs) 
-						                    + length(fkconstraint->pk_attrs)));
-				
+				trig.tgargs = (char **) palloc(
+					 sizeof(char *) * (4 + length(fkconstraint->fk_attrs)
+									   + length(fkconstraint->pk_attrs)));
+
 				trig.tgargs[0] = "<unnamed>";
-				trig.tgargs[1] = (char *)relationName;
+				trig.tgargs[1] = (char *) relationName;
 				trig.tgargs[2] = fkconstraint->pktable_name;
 				trig.tgargs[3] = fkconstraint->match_type;
 				count = 4;
-				foreach (list, fkconstraint->fk_attrs) 
+				foreach(list, fkconstraint->fk_attrs)
 				{
-					Ident *fk_at = lfirst(list);
+					Ident	   *fk_at = lfirst(list);
+
 					trig.tgargs[count++] = fk_at->name;
 				}
-				foreach (list, fkconstraint->pk_attrs) 
+				foreach(list, fkconstraint->pk_attrs)
 				{
-					Ident *pk_at = lfirst(list);
+					Ident	   *pk_at = lfirst(list);
+
 					trig.tgargs[count++] = pk_at->name;
 				}
 				trig.tgnargs = count;
 
 				scan = heap_beginscan(rel, false, SnapshotNow, 0, NULL);
-				AssertState(scan!=NULL);
+				AssertState(scan != NULL);
 
 				while (HeapTupleIsValid(tuple = heap_getnext(scan, 0)))
 				{
 					TriggerData newtrigdata;
+
 					newtrigdata.tg_event = TRIGGER_EVENT_INSERT | TRIGGER_EVENT_ROW;
 					newtrigdata.tg_relation = rel;
 					newtrigdata.tg_trigtuple = tuple;
@@ -1149,7 +1168,8 @@ AlterTableAddConstraint(const char *relationName,
 					/* Make a call to the check function */
 				}
 				heap_endscan(scan);
-				heap_close(rel, NoLock);	 /* close rel but keep lock! */
+				heap_close(rel, NoLock);		/* close rel but keep
+												 * lock! */
 
 				pfree(trig.tgargs);
 			}
@@ -1166,10 +1186,10 @@ AlterTableAddConstraint(const char *relationName,
  */
 void
 AlterTableDropConstraint(const char *relationName,
-                         bool inh, const char *constrName,
-                         int behavior)
+						 bool inh, const char *constrName,
+						 int behavior)
 {
-    elog(ERROR, "ALTER TABLE / DROP CONSTRAINT is not implemented");
+	elog(ERROR, "ALTER TABLE / DROP CONSTRAINT is not implemented");
 }
 
 
@@ -1186,7 +1206,7 @@ LockTableCommand(LockStmt *lockstmt)
 	int			aclresult;
 
 	rel = heap_openr(lockstmt->relname, NoLock);
-	if (! RelationIsValid(rel))
+	if (!RelationIsValid(rel))
 		elog(ERROR, "Relation '%s' does not exist", lockstmt->relname);
 
 	if (lockstmt->mode == AccessShareLock)

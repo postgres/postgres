@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/misc/Attic/database.c,v 1.36 2000/03/08 01:46:47 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/misc/Attic/database.c,v 1.37 2000/04/12 17:16:07 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -42,8 +42,8 @@ ExpandDatabasePath(const char *dbpath)
 	const char *cp;
 	int			len;
 
-    AssertArg(dbpath);
-    Assert(DataDir);
+	AssertArg(dbpath);
+	Assert(DataDir);
 
 	if (strlen(dbpath) >= MAXPGPATH)
 		return NULL;			/* ain't gonna fit nohow */
@@ -55,7 +55,7 @@ ExpandDatabasePath(const char *dbpath)
 		cp = strrchr(dbpath, SEP_CHAR);
 		len = cp - dbpath;
 		strncpy(buf, dbpath, len);
-		snprintf(&buf[len], MAXPGPATH-len, "%cbase%c%s",
+		snprintf(&buf[len], MAXPGPATH - len, "%cbase%c%s",
 				 SEP_CHAR, SEP_CHAR, (cp + 1));
 #else
 		return NULL;
@@ -64,7 +64,7 @@ ExpandDatabasePath(const char *dbpath)
 	/* path delimiter somewhere? then has leading environment variable */
 	else if ((cp = strchr(dbpath, SEP_CHAR)) != NULL)
 	{
-        const char	   *envvar;
+		const char *envvar;
 
 		len = cp - dbpath;
 		strncpy(buf, dbpath, len);
@@ -83,28 +83,33 @@ ExpandDatabasePath(const char *dbpath)
 				 DataDir, SEP_CHAR, SEP_CHAR, dbpath);
 	}
 
-    /* check for illegal characters in dbpath 
-     * these should really throw an error, shouldn't they? or else all callers 
-     * need to test for NULL */
-    for(cp = buf; *cp; cp++)
-    {
-        /* The following characters will not be allowed anywhere in the database
-           path. (Do not include the slash  or '.' here.) */
-        char illegal_dbpath_chars[] =
-            "\001\002\003\004\005\006\007\010"
-            "\011\012\013\014\015\016\017\020"
-            "\021\022\023\024\025\026\027\030"
-            "\031\032\033\034\035\036\037"
-            "'`";
+	/*
+	 * check for illegal characters in dbpath these should really throw an
+	 * error, shouldn't they? or else all callers need to test for NULL
+	 */
+	for (cp = buf; *cp; cp++)
+	{
 
-        const char *cx;
-        for (cx = illegal_dbpath_chars; *cx; cx++)
-            if (*cp == *cx)
-                return NULL;
-       /* don't allow access to parent dirs */
-       if (strncmp(cp, "/../", 4) == 0 )
-               return NULL ; 
-    }
+		/*
+		 * The following characters will not be allowed anywhere in the
+		 * database path. (Do not include the slash  or '.' here.)
+		 */
+		char		illegal_dbpath_chars[] =
+		"\001\002\003\004\005\006\007\010"
+		"\011\012\013\014\015\016\017\020"
+		"\021\022\023\024\025\026\027\030"
+		"\031\032\033\034\035\036\037"
+		"'`";
+
+		const char *cx;
+
+		for (cx = illegal_dbpath_chars; *cx; cx++)
+			if (*cp == *cx)
+				return NULL;
+		/* don't allow access to parent dirs */
+		if (strncmp(cp, "/../", 4) == 0)
+			return NULL;
+	}
 
 	return pstrdup(buf);
 }	/* ExpandDatabasePath() */
@@ -197,18 +202,18 @@ GetRawDatabaseInfo(const char *name, Oid *db_id, char *path)
 			 * the log relation by hand, too.  Instead we take the
 			 * conservative assumption that if someone tried to delete it,
 			 * it's gone.  The other side of the coin is that we might
-			 * accept a tuple that was stored and never committed.  All in
-			 * all, this code is pretty shaky.  We will cross-check our
+			 * accept a tuple that was stored and never committed.	All in
+			 * all, this code is pretty shaky.	We will cross-check our
 			 * result in ReverifyMyDatabase() in postinit.c.
 			 *
-			 * NOTE: if a bogus tuple in pg_database prevents connection
-			 * to a valid database, a fix is to connect to another database
-			 * and do "select * from pg_database".  That should cause
+			 * NOTE: if a bogus tuple in pg_database prevents connection to a
+			 * valid database, a fix is to connect to another database and
+			 * do "select * from pg_database".	That should cause
 			 * committed and dead tuples to be marked with correct states.
 			 *
 			 * XXX wouldn't it be better to let new backends read the
-			 * database OID from a flat file, handled the same way
-			 * we handle the password relation?
+			 * database OID from a flat file, handled the same way we
+			 * handle the password relation?
 			 */
 			if (TransactionIdIsValid((TransactionId) tup.t_data->t_xmax))
 				continue;

@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/storage/buffer/bufmgr.c,v 1.79 2000/04/10 23:41:49 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/storage/buffer/bufmgr.c,v 1.80 2000/04/12 17:15:34 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -69,7 +69,7 @@ extern long int LocalBufferFlushCount;
  * marking shared buffer as dirty. We set it to false in xact.c
  * after transaction is committed/aborted.
  */
-bool			SharedBufferChanged = false;
+bool		SharedBufferChanged = false;
 
 static void WaitIO(BufferDesc *buf, SPINLOCK spinlock);
 static void StartBufferIO(BufferDesc *buf, bool forInput);
@@ -80,7 +80,7 @@ extern void AbortBufferIO(void);
 
 /*
  * Macro : BUFFER_IS_BROKEN
- *      Note that write error doesn't mean the buffer broken
+ *		Note that write error doesn't mean the buffer broken
 */
 #define BUFFER_IS_BROKEN(buf) ((buf->flags & BM_IO_ERROR) && !(buf->flags & BM_DIRTY))
 
@@ -117,7 +117,7 @@ RelationGetBufferWithBuffer(Relation relation,
 	{
 		if (!BufferIsLocal(buffer))
 		{
-			LockRelId  *lrelId = & relation->rd_lockInfo.lockRelId;
+			LockRelId  *lrelId = &relation->rd_lockInfo.lockRelId;
 
 			bufHdr = &BufferDescriptors[buffer - 1];
 			SpinAcquire(BufMgrLock);
@@ -381,29 +381,29 @@ BufferAlloc(Relation reln,
 		inProgress = (buf->flags & BM_IO_IN_PROGRESS);
 
 		*foundPtr = TRUE;
-		if (inProgress) /* confirm end of IO */
+		if (inProgress)			/* confirm end of IO */
 		{
 			WaitIO(buf, BufMgrLock);
 			inProgress = (buf->flags & BM_IO_IN_PROGRESS);
 		}
 		if (BUFFER_IS_BROKEN(buf))
 		{
-			/* I couldn't understand the following old comment.
-			 * If there's no IO for the buffer and the buffer
-			 * is BROKEN,it should be read again. So start a
-			 * new buffer IO here. 
+
+			/*
+			 * I couldn't understand the following old comment. If there's
+			 * no IO for the buffer and the buffer is BROKEN,it should be
+			 * read again. So start a new buffer IO here.
 			 *
 			 * wierd race condition:
 			 *
-			 * We were waiting for someone else to read the buffer. While
-			 * we were waiting, the reader boof'd in some way, so the
-			 * contents of the buffer are still invalid.  By saying
-			 * that we didn't find it, we can make the caller
-			 * reinitialize the buffer.  If two processes are waiting
-			 * for this block, both will read the block.  The second
-			 * one to finish may overwrite any updates made by the
-			 * first.  (Assume higher level synchronization prevents
-			 * this from happening).
+			 * We were waiting for someone else to read the buffer. While we
+			 * were waiting, the reader boof'd in some way, so the
+			 * contents of the buffer are still invalid.  By saying that
+			 * we didn't find it, we can make the caller reinitialize the
+			 * buffer.	If two processes are waiting for this block, both
+			 * will read the block.  The second one to finish may
+			 * overwrite any updates made by the first.  (Assume higher
+			 * level synchronization prevents this from happening).
 			 *
 			 * This is never going to happen, don't worry about it.
 			 */
@@ -483,7 +483,7 @@ BufferAlloc(Relation reln,
 			if (smok == FALSE)
 			{
 				elog(NOTICE, "BufferAlloc: cannot write block %u for %s/%s",
-					 buf->tag.blockNum, buf->blind.dbname, buf->blind.relname);
+				buf->tag.blockNum, buf->blind.dbname, buf->blind.relname);
 				inProgress = FALSE;
 				buf->flags |= BM_IO_ERROR;
 				buf->flags &= ~BM_IO_IN_PROGRESS;
@@ -628,9 +628,7 @@ BufferAlloc(Relation reln,
 	 * attempted, so the flag isnt set.
 	 */
 	if (!inProgress)
-	{
 		StartBufferIO(buf, true);
-	}
 	else
 		ContinueBufferIO(buf, true);
 
@@ -777,7 +775,7 @@ FlushBuffer(Buffer buffer, bool release)
 	if (BAD_BUFFER_ID(buffer))
 		return STATUS_ERROR;
 
-	Assert(PrivateRefCount[buffer - 1] > 0); /* else caller didn't pin */
+	Assert(PrivateRefCount[buffer - 1] > 0);	/* else caller didn't pin */
 
 	bufHdr = &BufferDescriptors[buffer - 1];
 	bufdb = bufHdr->tag.relId.dbId;
@@ -790,9 +788,9 @@ FlushBuffer(Buffer buffer, bool release)
 
 	/* To check if block content changed while flushing. - vadim 01/17/97 */
 	SpinAcquire(BufMgrLock);
-	WaitIO(bufHdr, BufMgrLock);	/* confirm end of IO */
+	WaitIO(bufHdr, BufMgrLock); /* confirm end of IO */
 	bufHdr->flags &= ~BM_JUST_DIRTIED;
-	StartBufferIO(bufHdr, false);	/* output IO start */
+	StartBufferIO(bufHdr, false);		/* output IO start */
 	SpinRelease(BufMgrLock);
 
 	status = smgrflush(DEFAULT_SMGR, bufrel, bufHdr->tag.blockNum,
@@ -810,12 +808,13 @@ FlushBuffer(Buffer buffer, bool release)
 	BufferFlushCount++;
 
 	SpinAcquire(BufMgrLock);
-	bufHdr->flags &= ~BM_IO_IN_PROGRESS;	/* mark IO finished */
-	TerminateBufferIO(bufHdr);		/* output IO finished */
+	bufHdr->flags &= ~BM_IO_IN_PROGRESS;		/* mark IO finished */
+	TerminateBufferIO(bufHdr);	/* output IO finished */
 
 	/*
 	 * If this buffer was marked by someone as DIRTY while we were
-	 * flushing it out we must not clear shared DIRTY flag - vadim 01/17/97
+	 * flushing it out we must not clear shared DIRTY flag - vadim
+	 * 01/17/97
 	 *
 	 * ... but we can clear BufferDirtiedByMe anyway - tgl 3/31/00
 	 */
@@ -927,7 +926,7 @@ ReleaseAndReadBuffer(Buffer buffer,
 static void
 SetBufferDirtiedByMe(Buffer buffer, BufferDesc *bufHdr)
 {
-	BufferTag  *tagLastDirtied = & BufferTagLastDirtied[buffer - 1];
+	BufferTag  *tagLastDirtied = &BufferTagLastDirtied[buffer - 1];
 	Relation	reln;
 	int			status;
 
@@ -953,8 +952,8 @@ SetBufferDirtiedByMe(Buffer buffer, BufferDesc *bufHdr)
 		if (reln == (Relation) NULL)
 		{
 			status = smgrblindmarkdirty(DEFAULT_SMGR,
-										BufferBlindLastDirtied[buffer - 1].dbname,
-										BufferBlindLastDirtied[buffer - 1].relname,
+							   BufferBlindLastDirtied[buffer - 1].dbname,
+							  BufferBlindLastDirtied[buffer - 1].relname,
 										tagLastDirtied->relId.dbId,
 										tagLastDirtied->relId.relId,
 										tagLastDirtied->blockNum);
@@ -963,7 +962,11 @@ SetBufferDirtiedByMe(Buffer buffer, BufferDesc *bufHdr)
 		{
 			status = smgrmarkdirty(DEFAULT_SMGR, reln,
 								   tagLastDirtied->blockNum);
-			/* drop relcache refcnt incremented by RelationIdCacheGetRelation */
+
+			/*
+			 * drop relcache refcnt incremented by
+			 * RelationIdCacheGetRelation
+			 */
 			RelationDecrementReferenceCount(reln);
 		}
 		if (status == SM_FAIL)
@@ -996,25 +999,23 @@ SetBufferDirtiedByMe(Buffer buffer, BufferDesc *bufHdr)
 static void
 ClearBufferDirtiedByMe(Buffer buffer, BufferDesc *bufHdr)
 {
-	BufferTag  *tagLastDirtied = & BufferTagLastDirtied[buffer - 1];
+	BufferTag  *tagLastDirtied = &BufferTagLastDirtied[buffer - 1];
 
 	/*
 	 * Do *not* clear the flag if it refers to some other buffertag than
-	 * the data we just wrote.  This is unlikely, but possible if some
+	 * the data we just wrote.	This is unlikely, but possible if some
 	 * other backend replaced the buffer contents since we set our flag.
 	 */
 	if (bufHdr->tag.relId.dbId == tagLastDirtied->relId.dbId &&
 		bufHdr->tag.relId.relId == tagLastDirtied->relId.relId &&
 		bufHdr->tag.blockNum == tagLastDirtied->blockNum)
-	{
 		BufferDirtiedByMe[buffer - 1] = false;
-	}
 }
 
 /*
  * BufferSync -- Flush all dirty buffers in the pool.
  *
- *		This is called at transaction commit time.  We find all buffers
+ *		This is called at transaction commit time.	We find all buffers
  *		that have been dirtied by the current xact and flush them to disk.
  *		We do *not* flush dirty buffers that have been dirtied by other xacts.
  *		(This is a substantial change from pre-7.0 behavior.)
@@ -1044,16 +1045,16 @@ BufferSync()
 	for (i = 0, bufHdr = BufferDescriptors; i < NBuffers; i++, bufHdr++)
 	{
 		/* Ignore buffers that were not dirtied by me */
-		if (! BufferDirtiedByMe[i])
+		if (!BufferDirtiedByMe[i])
 			continue;
 
 		SpinAcquire(BufMgrLock);
 
 		/*
 		 * We only need to write if the buffer is still dirty and still
-		 * contains the same disk page that it contained when we dirtied it.
-		 * Otherwise, someone else has already written our changes for us,
-		 * and we need only fsync.
+		 * contains the same disk page that it contained when we dirtied
+		 * it. Otherwise, someone else has already written our changes for
+		 * us, and we need only fsync.
 		 *
 		 * (NOTE: it's still possible to do an unnecessary write, if other
 		 * xacts have written and then re-dirtied the page since our last
@@ -1073,6 +1074,7 @@ BufferSync()
 				bufrel == BufferTagLastDirtied[i].relId.relId &&
 				bufHdr->tag.blockNum == BufferTagLastDirtied[i].blockNum)
 			{
+
 				/*
 				 * Try to find relation for buf.  This could fail, if the
 				 * rel has been flushed from the relcache since we dirtied
@@ -1103,19 +1105,20 @@ BufferSync()
 				}
 				else
 				{
-					/*
-					 * To check if block content changed while flushing (see
-					 * below). - vadim 01/17/97
-					 */
-					WaitIO(bufHdr, BufMgrLock);	/* confirm end of IO */
-					bufHdr->flags &= ~BM_JUST_DIRTIED;
-					StartBufferIO(bufHdr, false); /* output IO start */
 
 					/*
-					 * If we didn't have the reldesc in our local cache, write
-					 * this page out using the 'blind write' storage manager
-					 * routine.  If we did find it, use the standard
-					 * interface.
+					 * To check if block content changed while flushing
+					 * (see below). - vadim 01/17/97
+					 */
+					WaitIO(bufHdr, BufMgrLock); /* confirm end of IO */
+					bufHdr->flags &= ~BM_JUST_DIRTIED;
+					StartBufferIO(bufHdr, false);		/* output IO start */
+
+					/*
+					 * If we didn't have the reldesc in our local cache,
+					 * write this page out using the 'blind write' storage
+					 * manager routine.  If we did find it, use the
+					 * standard interface.
 					 */
 #ifndef OPTIMIZE_SINGLE
 					SpinRelease(BufMgrLock);
@@ -1127,14 +1130,14 @@ BufferSync()
 											  bufHdr->blind.relname,
 											  bufdb, bufrel,
 											  bufHdr->tag.blockNum,
-											  (char *) MAKE_PTR(bufHdr->data),
-											  true); /* must fsync */
+										 (char *) MAKE_PTR(bufHdr->data),
+											  true);	/* must fsync */
 					}
 					else
 					{
 						status = smgrwrite(DEFAULT_SMGR, reln,
 										   bufHdr->tag.blockNum,
-										   (char *) MAKE_PTR(bufHdr->data));
+										(char *) MAKE_PTR(bufHdr->data));
 					}
 #ifndef OPTIMIZE_SINGLE
 					SpinAcquire(BufMgrLock);
@@ -1147,15 +1150,15 @@ BufferSync()
 						elog(ERROR, "BufferSync: cannot write %u for %s",
 							 bufHdr->tag.blockNum, bufHdr->blind.relname);
 					}
-					bufHdr->flags &= ~BM_IO_IN_PROGRESS; /* mark IO finished */
+					bufHdr->flags &= ~BM_IO_IN_PROGRESS;		/* mark IO finished */
 					TerminateBufferIO(bufHdr);	/* Sync IO finished */
 					BufferFlushCount++;
 					didwrite = true;
 
 					/*
-					 * If this buffer was marked by someone as DIRTY while we
-					 * were flushing it out we must not clear DIRTY flag -
-					 * vadim 01/17/97
+					 * If this buffer was marked by someone as DIRTY while
+					 * we were flushing it out we must not clear DIRTY
+					 * flag - vadim 01/17/97
 					 *
 					 * but it is OK to clear BufferDirtiedByMe - tgl 3/31/00
 					 */
@@ -1170,11 +1173,11 @@ BufferSync()
 		}
 
 		/*
-		 * If we did not write the buffer (because someone else did),
-		 * we must still fsync the file containing it, to ensure that the
+		 * If we did not write the buffer (because someone else did), we
+		 * must still fsync the file containing it, to ensure that the
 		 * write is down to disk before we commit.
 		 */
-		if (! didwrite)
+		if (!didwrite)
 		{
 #ifndef OPTIMIZE_SINGLE
 			SpinRelease(BufMgrLock);
@@ -1184,17 +1187,21 @@ BufferSync()
 			if (reln == (Relation) NULL)
 			{
 				status = smgrblindmarkdirty(DEFAULT_SMGR,
-											BufferBlindLastDirtied[i].dbname,
-											BufferBlindLastDirtied[i].relname,
-											BufferTagLastDirtied[i].relId.dbId,
-											BufferTagLastDirtied[i].relId.relId,
-											BufferTagLastDirtied[i].blockNum);
+										BufferBlindLastDirtied[i].dbname,
+									   BufferBlindLastDirtied[i].relname,
+									  BufferTagLastDirtied[i].relId.dbId,
+									 BufferTagLastDirtied[i].relId.relId,
+									   BufferTagLastDirtied[i].blockNum);
 			}
 			else
 			{
 				status = smgrmarkdirty(DEFAULT_SMGR, reln,
 									   BufferTagLastDirtied[i].blockNum);
-				/* drop relcache refcnt incremented by RelationIdCacheGetRelation */
+
+				/*
+				 * drop relcache refcnt incremented by
+				 * RelationIdCacheGetRelation
+				 */
 				RelationDecrementReferenceCount(reln);
 
 			}
@@ -1241,6 +1248,7 @@ BufferSync()
 static void
 WaitIO(BufferDesc *buf, SPINLOCK spinlock)
 {
+
 	/*
 	 * Changed to wait until there's no IO - Inoue 01/13/2000
 	 */
@@ -1369,13 +1377,13 @@ ResetBufferPool(bool isCommit)
 		}
 		PrivateRefCount[i] = 0;
 
-		if (! isCommit)
+		if (!isCommit)
 			BufferDirtiedByMe[i] = false;
 	}
 
 	ResetLocalBufferPool();
 
-	if (! isCommit)
+	if (!isCommit)
 		smgrabort();
 }
 
@@ -1531,7 +1539,7 @@ BufferReplace(BufferDesc *bufHdr)
 							  bufHdr->blind.relname, bufdb, bufrel,
 							  bufHdr->tag.blockNum,
 							  (char *) MAKE_PTR(bufHdr->data),
-							  false); /* no fsync */
+							  false);	/* no fsync */
 	}
 
 #ifndef OPTIMIZE_SINGLE
@@ -1545,9 +1553,10 @@ BufferReplace(BufferDesc *bufHdr)
 	if (status == SM_FAIL)
 		return FALSE;
 
-	/* If we had marked this buffer as needing to be fsync'd, we can forget
-	 * about that, because it's now the storage manager's responsibility
-	 * (but only if we called smgrwrite, not smgrblindwrt).
+	/*
+	 * If we had marked this buffer as needing to be fsync'd, we can
+	 * forget about that, because it's now the storage manager's
+	 * responsibility (but only if we called smgrwrite, not smgrblindwrt).
 	 */
 	if (reln != (Relation) NULL)
 		ClearBufferDirtiedByMe(BufferDescriptorGetBuffer(bufHdr), bufHdr);
@@ -1601,7 +1610,7 @@ ReleaseRelationBuffers(Relation rel)
 		{
 			buf = &LocalBufferDescriptors[i];
 			if (buf->tag.relId.relId == relid)
-				buf->flags &= ~ ( BM_DIRTY | BM_JUST_DIRTIED);
+				buf->flags &= ~(BM_DIRTY | BM_JUST_DIRTIED);
 		}
 		return;
 	}
@@ -1614,10 +1623,11 @@ ReleaseRelationBuffers(Relation rel)
 			SpinAcquire(BufMgrLock);
 			holding = true;
 		}
-	recheck:
+recheck:
 		if (buf->tag.relId.dbId == MyDatabaseId &&
 			buf->tag.relId.relId == relid)
 		{
+
 			/*
 			 * If there is I/O in progress, better wait till it's done;
 			 * don't want to delete the relation out from under someone
@@ -1626,19 +1636,23 @@ ReleaseRelationBuffers(Relation rel)
 			if (buf->flags & BM_IO_IN_PROGRESS)
 			{
 				WaitIO(buf, BufMgrLock);
-				/* By now, the buffer very possibly belongs to some other
+
+				/*
+				 * By now, the buffer very possibly belongs to some other
 				 * rel, so check again before proceeding.
 				 */
 				goto recheck;
 			}
 			/* Now we can do what we came for */
-			buf->flags &= ~ ( BM_DIRTY | BM_JUST_DIRTIED);
+			buf->flags &= ~(BM_DIRTY | BM_JUST_DIRTIED);
 			ClearBufferDirtiedByMe(i, buf);
+
 			/*
 			 * Release any refcount we may have.
 			 *
 			 * This is very probably dead code, and if it isn't then it's
-			 * probably wrong.  I added the Assert to find out --- tgl 11/99.
+			 * probably wrong.	I added the Assert to find out --- tgl
+			 * 11/99.
 			 */
 			if (!(buf->flags & BM_FREE))
 			{
@@ -1663,7 +1677,7 @@ ReleaseRelationBuffers(Relation rel)
  *		This function marks all the buffers in the buffer cache for a
  *		particular database as clean.  This is used when we destroy a
  *		database, to avoid trying to flush data to disk when the directory
- *		tree no longer exists.  Implementation is pretty similar to
+ *		tree no longer exists.	Implementation is pretty similar to
  *		ReleaseRelationBuffers() which is for destroying just one relation.
  * --------------------------------------------------------------------
  */
@@ -1677,9 +1691,10 @@ DropBuffers(Oid dbid)
 	for (i = 1; i <= NBuffers; i++)
 	{
 		buf = &BufferDescriptors[i - 1];
-	recheck:
+recheck:
 		if (buf->tag.relId.dbId == dbid)
 		{
+
 			/*
 			 * If there is I/O in progress, better wait till it's done;
 			 * don't want to delete the database out from under someone
@@ -1688,17 +1703,20 @@ DropBuffers(Oid dbid)
 			if (buf->flags & BM_IO_IN_PROGRESS)
 			{
 				WaitIO(buf, BufMgrLock);
-				/* By now, the buffer very possibly belongs to some other
+
+				/*
+				 * By now, the buffer very possibly belongs to some other
 				 * DB, so check again before proceeding.
 				 */
 				goto recheck;
 			}
 			/* Now we can do what we came for */
-			buf->flags &= ~ ( BM_DIRTY | BM_JUST_DIRTIED);
+			buf->flags &= ~(BM_DIRTY | BM_JUST_DIRTIED);
 			ClearBufferDirtiedByMe(i, buf);
+
 			/*
-			 * The thing should be free, if caller has checked that
-			 * no backends are running in that database.
+			 * The thing should be free, if caller has checked that no
+			 * backends are running in that database.
 			 */
 			Assert(buf->flags & BM_FREE);
 		}
@@ -1796,7 +1814,7 @@ BufferPoolBlowaway()
  *
  *		This function removes from the buffer pool all pages of a relation
  *		that have blocknumber >= specified block.  Pages that are dirty are
- *		written out first.  If expectDirty is false, a notice is emitted
+ *		written out first.	If expectDirty is false, a notice is emitted
  *		warning of dirty buffers, but we proceed anyway.  An error code is
  *		returned if we fail to dump a dirty buffer or if we find one of
  *		the target pages is pinned into the cache.
@@ -1804,7 +1822,7 @@ BufferPoolBlowaway()
  *		This is used by VACUUM before truncating the relation to the given
  *		number of blocks.  For VACUUM, we pass expectDirty = false since it
  *		could mean a bug in VACUUM if any of the unwanted pages were still
- *		dirty.  (TRUNCATE TABLE also uses it in the same way.)
+ *		dirty.	(TRUNCATE TABLE also uses it in the same way.)
  *
  *		This is also used by RENAME TABLE (with block=0 and expectDirty=true)
  *		to clear out the buffer cache before renaming the physical files of
@@ -1817,7 +1835,7 @@ BufferPoolBlowaway()
  *		more blocks of the relation.
  *
  *		Formerly, we considered it an error condition if we found unexpectedly
- *		dirty buffers.  However, since BufferSync no longer forces out all
+ *		dirty buffers.	However, since BufferSync no longer forces out all
  *		dirty buffers at every xact commit, it's possible for dirty buffers
  *		to still be present in the cache due to failure of an earlier
  *		transaction.  So, downgrade the error to a mere notice.  Maybe we
@@ -1845,11 +1863,11 @@ FlushRelationBuffers(Relation rel, BlockNumber block, bool expectDirty)
 			{
 				if (buf->flags & BM_DIRTY)
 				{
-					if (! expectDirty)
+					if (!expectDirty)
 						elog(NOTICE, "FlushRelationBuffers(%s (local), %u): block %u is dirty",
 							 RelationGetRelationName(rel),
 							 block, buf->tag.blockNum);
-					if (FlushBuffer(-i-1, false) != STATUS_OK)
+					if (FlushBuffer(-i - 1, false) != STATUS_OK)
 					{
 						elog(NOTICE, "FlushRelationBuffers(%s (local), %u): block %u is dirty, could not flush it",
 							 RelationGetRelationName(rel),
@@ -1873,7 +1891,7 @@ FlushRelationBuffers(Relation rel, BlockNumber block, bool expectDirty)
 	SpinAcquire(BufMgrLock);
 	for (i = 0; i < NBuffers; i++)
 	{
-	recheck:
+recheck:
 		buf = &BufferDescriptors[i];
 		if (buf->tag.relId.relId == RelationGetRelid(rel) &&
 			(buf->tag.relId.dbId == MyDatabaseId ||
@@ -1884,12 +1902,12 @@ FlushRelationBuffers(Relation rel, BlockNumber block, bool expectDirty)
 			{
 				PinBuffer(buf);
 				SpinRelease(BufMgrLock);
-				if (! expectDirty)
+				if (!expectDirty)
 					elog(NOTICE, "FlushRelationBuffers(%s, %u): block %u is dirty (private %ld, global %d)",
 						 RelationGetRelationName(rel), block,
 						 buf->tag.blockNum,
 						 PrivateRefCount[i], buf->refcount);
-				if (FlushBuffer(i+1, true) != STATUS_OK)
+				if (FlushBuffer(i + 1, true) != STATUS_OK)
 				{
 					elog(NOTICE, "FlushRelationBuffers(%s, %u): block %u is dirty (private %ld, global %d), could not flush it",
 						 RelationGetRelationName(rel), block,
@@ -1898,7 +1916,9 @@ FlushRelationBuffers(Relation rel, BlockNumber block, bool expectDirty)
 					return -1;
 				}
 				SpinAcquire(BufMgrLock);
-				/* Buffer could already be reassigned, so must recheck
+
+				/*
+				 * Buffer could already be reassigned, so must recheck
 				 * whether it still belongs to rel before freeing it!
 				 */
 				goto recheck;
@@ -2244,9 +2264,10 @@ UnlockBuffers()
 		}
 		if (BufferLocks[i] & BL_RI_LOCK)
 		{
-			/* 
-			 * Someone else could remove our RI lock when acquiring
-			 * W lock. This is possible if we came here from elog(ERROR)
+
+			/*
+			 * Someone else could remove our RI lock when acquiring W
+			 * lock. This is possible if we came here from elog(ERROR)
 			 * from IpcSemaphore{Lock|Unlock}(WaitCLSemId). And so we
 			 * don't do Assert(buf->ri_lock) here.
 			 */
@@ -2270,7 +2291,7 @@ void
 LockBuffer(Buffer buffer, int mode)
 {
 	BufferDesc *buf;
-	bits8 *buflock;
+	bits8	   *buflock;
 
 	Assert(BufferIsValid(buffer));
 	if (BufferIsLocal(buffer))
@@ -2335,11 +2356,12 @@ LockBuffer(Buffer buffer, int mode)
 		{
 			if (buf->r_locks > 3 || (*buflock & BL_RI_LOCK))
 			{
+
 				/*
 				 * Our RI lock might be removed by concurrent W lock
-				 * acquiring (see what we do with RI locks below
-				 * when our own W acquiring succeeded) and so
-				 * we set RI lock again if we already did this.
+				 * acquiring (see what we do with RI locks below when our
+				 * own W acquiring succeeded) and so we set RI lock again
+				 * if we already did this.
 				 */
 				*buflock |= BL_RI_LOCK;
 				buf->ri_lock = true;
@@ -2358,9 +2380,10 @@ LockBuffer(Buffer buffer, int mode)
 		*buflock |= BL_W_LOCK;
 		if (*buflock & BL_RI_LOCK)
 		{
+
 			/*
-			 * It's possible to remove RI locks acquired by another
-			 * W lockers here, but they'll take care about it.
+			 * It's possible to remove RI locks acquired by another W
+			 * lockers here, but they'll take care about it.
 			 */
 			buf->ri_lock = false;
 			*buflock &= ~BL_RI_LOCK;
@@ -2384,36 +2407,39 @@ LockBuffer(Buffer buffer, int mode)
  *	i.e at most one io_in_progress spinlock is held
  *	per proc.
 */
-static	BufferDesc *InProgressBuf = (BufferDesc *)NULL;
-static	bool	IsForInput;
+static BufferDesc *InProgressBuf = (BufferDesc *) NULL;
+static bool IsForInput;
 
 /*
  * Function:StartBufferIO
  *	(Assumptions)
  *	My process is executing no IO
  *	BufMgrLock is held
- *	BM_IO_IN_PROGRESS mask is not set for the buffer 
+ *	BM_IO_IN_PROGRESS mask is not set for the buffer
  *	The buffer is Pinned
  *
 */
-static void StartBufferIO(BufferDesc *buf, bool forInput)
+static void
+StartBufferIO(BufferDesc *buf, bool forInput)
 {
 	Assert(!InProgressBuf);
 	Assert(!(buf->flags & BM_IO_IN_PROGRESS));
 	buf->flags |= BM_IO_IN_PROGRESS;
 #ifdef	HAS_TEST_AND_SET
+
 	/*
 	 * There used to be
 	 *
 	 * Assert(S_LOCK_FREE(&(buf->io_in_progress_lock)));
 	 *
 	 * here, but that's wrong because of the way WaitIO works: someone else
-	 * waiting for the I/O to complete will succeed in grabbing the lock for
-	 * a few instructions, and if we context-swap back to here the Assert
-	 * could fail.  Tiny window for failure, but I've seen it happen -- tgl
+	 * waiting for the I/O to complete will succeed in grabbing the lock
+	 * for a few instructions, and if we context-swap back to here the
+	 * Assert could fail.  Tiny window for failure, but I've seen it
+	 * happen -- tgl
 	 */
 	S_LOCK(&(buf->io_in_progress_lock));
-#endif /* HAS_TEST_AND_SET */
+#endif	 /* HAS_TEST_AND_SET */
 	InProgressBuf = buf;
 	IsForInput = forInput;
 }
@@ -2426,7 +2452,8 @@ static void StartBufferIO(BufferDesc *buf, bool forInput)
  *	The buffer is Pinned
  *
 */
-static void TerminateBufferIO(BufferDesc *buf)
+static void
+TerminateBufferIO(BufferDesc *buf)
 {
 	Assert(buf == InProgressBuf);
 #ifdef	HAS_TEST_AND_SET
@@ -2434,8 +2461,8 @@ static void TerminateBufferIO(BufferDesc *buf)
 #else
 	if (buf->refcount > 1)
 		SignalIO(buf);
-#endif /* HAS_TEST_AND_SET */
-	InProgressBuf = (BufferDesc *)0;
+#endif	 /* HAS_TEST_AND_SET */
+	InProgressBuf = (BufferDesc *) 0;
 }
 
 /*
@@ -2446,36 +2473,38 @@ static void TerminateBufferIO(BufferDesc *buf)
  *	The buffer is Pinned
  *
 */
-static void ContinueBufferIO(BufferDesc *buf, bool forInput)
+static void
+ContinueBufferIO(BufferDesc *buf, bool forInput)
 {
 	Assert(buf == InProgressBuf);
 	Assert(buf->flags & BM_IO_IN_PROGRESS);
 	IsForInput = forInput;
 }
 
-void InitBufferIO(void)
+void
+InitBufferIO(void)
 {
-	InProgressBuf = (BufferDesc *)0;
+	InProgressBuf = (BufferDesc *) 0;
 }
 
 /*
  *	This function is called from ProcReleaseSpins().
- *	BufMgrLock isn't held when this function is called. 
+ *	BufMgrLock isn't held when this function is called.
  *	BM_IO_ERROR is always set. If BM_IO_ERROR was already
- *	set in case of output,this routine would kill all 
+ *	set in case of output,this routine would kill all
  *	backends and reset postmaster.
  */
-void AbortBufferIO(void)
+void
+AbortBufferIO(void)
 {
 	BufferDesc *buf = InProgressBuf;
+
 	if (buf)
 	{
 		Assert(buf->flags & BM_IO_IN_PROGRESS);
 		SpinAcquire(BufMgrLock);
 		if (IsForInput)
-		{
 			Assert(!(buf->flags & BM_DIRTY));
-		}
 		else
 		{
 			Assert((buf->flags & BM_DIRTY) != 0);

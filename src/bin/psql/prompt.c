@@ -3,8 +3,8 @@
  *
  * Copyright 2000 by PostgreSQL Global Development Group
  *
- * $Header: /cvsroot/pgsql/src/bin/psql/prompt.c,v 1.11 2000/03/11 13:56:24 petere Exp $
- */ 
+ * $Header: /cvsroot/pgsql/src/bin/psql/prompt.c,v 1.12 2000/04/12 17:16:23 momjian Exp $
+ */
 #include "postgres.h"
 #include "prompt.h"
 
@@ -32,9 +32,9 @@
  * (might not be completely multibyte safe)
  *
  * Defined interpolations are:
- * %M - database server "hostname.domainname" (or "localhost" if this 
+ * %M - database server "hostname.domainname" (or "localhost" if this
  *	information is not available)
- * %m - like %M, but hostname only (before first dot) 
+ * %m - like %M, but hostname only (before first dot)
  * %> - database server port number
  * %n - database user name
  * %/ - current database
@@ -62,47 +62,48 @@
  */
 
 /*
- * We need hostname information, only if connection is via UNIX socket 
+ * We need hostname information, only if connection is via UNIX socket
  */
 #if !defined(WIN32) && !defined(__CYGWIN32__) && !defined(__QNX__)
 
 #define DOMAINNAME	1
 #define HOSTNAME	2
 
-/* 
- * Return full hostname for localhost. 
+/*
+ * Return full hostname for localhost.
  *	- informations are init only in firts time - not queries DNS or NIS
- *	  for every localhost() call 	
+ *	  for every localhost() call
  */
 static char *
-localhost(int type, char *buf, int siz)	
-{	
-	static struct hostent	*hp = NULL;
-	static int err = 0;
-	
-	if (hp==NULL && err==0)
-	{	
-		char hname[256];		
-		
+localhost(int type, char *buf, int siz)
+{
+	static struct hostent *hp = NULL;
+	static int	err = 0;
+
+	if (hp == NULL && err == 0)
+	{
+		char		hname[256];
+
 		if (gethostname(hname, 256) == 0)
 		{
 			if (!(hp = gethostbyname(hname)))
-				err = 1; 
+				err = 1;
 		}
 		else
-			err = 1;		
+			err = 1;
 	}
-	
-	if (hp==NULL) 
+
+	if (hp == NULL)
 		return strncpy(buf, "localhost", siz);
-	
+
 	strncpy(buf, hp->h_name, siz);		/* full aaa.bbb.ccc */
-	
-	if (type==HOSTNAME)
+
+	if (type == HOSTNAME)
 		buf[strcspn(buf, ".")] = '\0';
-	
-	return buf;	
+
+	return buf;
 }
+
 #endif
 
 char *
@@ -172,20 +173,21 @@ get_prompt(promptStatus_t status)
 								buf[strcspn(buf, ".")] = '\0';
 						}
 						/* UNIX socket */
-#if !defined(WIN32) && !defined(__CYGWIN32__) && !defined(__QNX__)						
-						else {
-							if (*p == 'm')	
+#if !defined(WIN32) && !defined(__CYGWIN32__) && !defined(__QNX__)
+						else
+						{
+							if (*p == 'm')
 								localhost(HOSTNAME, buf, MAX_PROMPT_SIZE);
 							else
 								localhost(DOMAINNAME, buf, MAX_PROMPT_SIZE);
 						}
-#endif					
+#endif
 					}
 					break;
 					/* DB server port number */
 				case '>':
 					if (pset.db && PQport(pset.db))
-                        strncpy(buf, PQport(pset.db), MAX_PROMPT_SIZE);
+						strncpy(buf, PQport(pset.db), MAX_PROMPT_SIZE);
 					break;
 					/* DB server user name */
 				case 'n':
@@ -236,9 +238,9 @@ get_prompt(promptStatus_t status)
 						case PROMPT_COMMENT:
 							buf[0] = '*';
 							break;
-                        case PROMPT_PAREN:
-                            buf[0] = '(';
-                            break;
+						case PROMPT_PAREN:
+							buf[0] = '(';
+							break;
 						default:
 							buf[0] = '\0';
 							break;

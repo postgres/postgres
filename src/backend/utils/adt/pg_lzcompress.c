@@ -1,7 +1,7 @@
 /* ----------
  * pg_lzcompress.c -
  *
- * $Header: /cvsroot/pgsql/src/backend/utils/adt/pg_lzcompress.c,v 1.3 1999/11/25 01:28:04 wieck Exp $
+ * $Header: /cvsroot/pgsql/src/backend/utils/adt/pg_lzcompress.c,v 1.4 2000/04/12 17:15:51 momjian Exp $
  *
  *		This is an implementation of LZ compression for PostgreSQL.
  *		It uses a simple history table and generates 2-3 byte tags
@@ -83,7 +83,7 @@
  *
  *			So the 16 bits of a 2 byte tag are coded as
  *
- *              7---T1--0  7---T2--0
+ *				7---T1--0  7---T2--0
  *				OOOO LLLL  OOOO OOOO
  *
  *			This limits the offset to 1-4095 (12 bits) and the length
@@ -144,9 +144,10 @@
  *		Linked list for the backward history lookup
  * ----------
  */
-typedef struct PGLZ_HistEntry {
-	struct PGLZ_HistEntry	   *next;
-	char					   *pos;
+typedef struct PGLZ_HistEntry
+{
+	struct PGLZ_HistEntry *next;
+	char	   *pos;
 } PGLZ_HistEntry;
 
 
@@ -155,35 +156,43 @@ typedef struct PGLZ_HistEntry {
  * ----------
  */
 static PGLZ_Strategy strategy_default_data = {
-	256,	/* Data chunks smaller 256 bytes are nott compressed			*/
-	6144,	/* Data chunks greater equal 6K force compression				*/
-			/* except compressed result is greater uncompressed data		*/
-	20,		/* Compression rates below 20% mean fallback to uncompressed	*/
-			/* storage except compression is forced by previous parameter	*/
-	128,	/* Stop history lookup if a match of 128 bytes is found			*/
-	10		/* Lower good match size by 10% at every lookup loop iteration.	*/
+	256,						/* Data chunks smaller 256 bytes are nott
+								 * compressed			 */
+	6144,						/* Data chunks greater equal 6K force
+								 * compression				 */
+	/* except compressed result is greater uncompressed data		*/
+	20,							/* Compression rates below 20% mean
+								 * fallback to uncompressed    */
+	/* storage except compression is forced by previous parameter	*/
+	128,						/* Stop history lookup if a match of 128
+								 * bytes is found		  */
+	10							/* Lower good match size by 10% at every
+								 * lookup loop iteration. */
 };
-PGLZ_Strategy	*PGLZ_strategy_default = &strategy_default_data;
+PGLZ_Strategy *PGLZ_strategy_default = &strategy_default_data;
 
 
 static PGLZ_Strategy strategy_allways_data = {
-	0,		/* Chunks of any size are compressed							*/
-	0,		/* 																*/
-	0,		/* We want to save at least one single byte						*/
-	128,	/* Stop history lookup if a match of 128 bytes is found			*/
-	6		/* Look harder for a good match.								*/
+	0,							/* Chunks of any size are compressed							*/
+	0,							/* */
+	0,							/* We want to save at least one single
+								 * byte						*/
+	128,						/* Stop history lookup if a match of 128
+								 * bytes is found		  */
+	6							/* Look harder for a good match.								*/
 };
-PGLZ_Strategy	*PGLZ_strategy_allways = &strategy_allways_data;
+PGLZ_Strategy *PGLZ_strategy_allways = &strategy_allways_data;
 
 
 static PGLZ_Strategy strategy_never_data = {
-	0,		/* 																*/
-	0,		/* 																*/
-	0,		/* 																*/
-	0,		/* Zero indicates "store uncompressed allways"					*/
-	0		/* 																*/
+	0,							/* */
+	0,							/* */
+	0,							/* */
+	0,							/* Zero indicates "store uncompressed
+								 * allways"                  */
+	0							/* */
 };
-PGLZ_Strategy	*PGLZ_strategy_never = &strategy_never_data;
+PGLZ_Strategy *PGLZ_strategy_never = &strategy_never_data;
 
 
 
@@ -197,7 +206,7 @@ PGLZ_Strategy	*PGLZ_strategy_never = &strategy_never_data;
 #if 1
 #define pglz_hist_idx(_s,_e) (												\
 			(((_e) - (_s)) < 4) ? 0 :										\
-			((((_s)[0] << 9) ^ ((_s)[1] << 6) ^ 							\
+			((((_s)[0] << 9) ^ ((_s)[1] << 6) ^								\
 			((_s)[2] << 3) ^ (_s)[3]) & (PGLZ_HISTORY_MASK))				\
 		)
 #else
@@ -217,7 +226,7 @@ PGLZ_Strategy	*PGLZ_strategy_never = &strategy_never_data;
 #define pglz_hist_add(_hs,_hn,_s,_e) {										\
 			int __hindex = pglz_hist_idx((_s),(_e));						\
 			(_hn)->next = (_hs)[__hindex];									\
-			(_hn)->pos  = (_s);												\
+			(_hn)->pos	= (_s);												\
 			(_hs)[__hindex] = (_hn)++;										\
 		}
 
@@ -288,16 +297,16 @@ PGLZ_Strategy	*PGLZ_strategy_never = &strategy_never_data;
  * ----------
  */
 static inline int
-pglz_find_match (PGLZ_HistEntry **hstart, char *input, char *end, 
-						int *lenp, int *offp, int good_match, int good_drop)
+pglz_find_match(PGLZ_HistEntry **hstart, char *input, char *end,
+				int *lenp, int *offp, int good_match, int good_drop)
 {
-	PGLZ_HistEntry	   *hent;
-	int32				len = 0;
-	int32				off = 0;
-	int32				thislen;
-	int32				thisoff;
-	char			   *ip;
-	char			   *hp;
+	PGLZ_HistEntry *hent;
+	int32		len = 0;
+	int32		off = 0;
+	int32		thislen;
+	int32		thisoff;
+	char	   *ip;
+	char	   *hp;
 
 	/* ----------
 	 * Traverse the linked history list until a good enough
@@ -311,7 +320,7 @@ pglz_find_match (PGLZ_HistEntry **hstart, char *input, char *end,
 		 * Be happy with lesser good matches the more entries we visited.
 		 * ----------
 		 */
-		good_match -= (good_match * good_drop) /100;
+		good_match -= (good_match * good_drop) / 100;
 
 		/* ----------
 		 * Stop if the offset does not fit into our tag anymore.
@@ -340,9 +349,9 @@ pglz_find_match (PGLZ_HistEntry **hstart, char *input, char *end,
 			thislen = len;
 			ip += len;
 			hp += len;
-		} else {
-			thislen = 0;
 		}
+		else
+			thislen = 0;
 		while (ip < end && *ip == *hp && thislen < PGLZ_MAX_MATCH)
 		{
 			thislen++;
@@ -390,29 +399,29 @@ pglz_find_match (PGLZ_HistEntry **hstart, char *input, char *end,
  * ----------
  */
 int
-pglz_compress (char *source, int slen, PGLZ_Header *dest, PGLZ_Strategy *strategy)
+pglz_compress(char *source, int slen, PGLZ_Header *dest, PGLZ_Strategy *strategy)
 {
-	PGLZ_HistEntry	   *hist_start[PGLZ_HISTORY_SIZE];
-	PGLZ_HistEntry	   *hist_alloc;
-	PGLZ_HistEntry	   hist_prealloc[PGLZ_HISTORY_PREALLOC];
-	PGLZ_HistEntry	   *hist_next;
+	PGLZ_HistEntry *hist_start[PGLZ_HISTORY_SIZE];
+	PGLZ_HistEntry *hist_alloc;
+	PGLZ_HistEntry hist_prealloc[PGLZ_HISTORY_PREALLOC];
+	PGLZ_HistEntry *hist_next;
 
-	unsigned char	   *bp = ((unsigned char *)dest) + sizeof(PGLZ_Header);
-	unsigned char	   *bstart = bp;
-	char			   *dp = source;
-	char			   *dend = source + slen;
-	unsigned char		ctrl_dummy = 0;
-	unsigned char	   *ctrlp = &ctrl_dummy;
-	unsigned char		ctrlb = 0;
-	unsigned char		ctrl = 0;
-	int32				match_len;
-	int32				match_off;
-	int32				good_match;
-	int32				good_drop;
-	int32				do_compress = 1;
-	int32				result_size = -1;
-	int32				result_max;
-	int32				need_rate;
+	unsigned char *bp = ((unsigned char *) dest) + sizeof(PGLZ_Header);
+	unsigned char *bstart = bp;
+	char	   *dp = source;
+	char	   *dend = source + slen;
+	unsigned char ctrl_dummy = 0;
+	unsigned char *ctrlp = &ctrl_dummy;
+	unsigned char ctrlb = 0;
+	unsigned char ctrl = 0;
+	int32		match_len;
+	int32		match_off;
+	int32		good_match;
+	int32		good_drop;
+	int32		do_compress = 1;
+	int32		result_size = -1;
+	int32		result_max;
+	int32		need_rate;
 
 	/* ----------
 	 * Our fallback strategy is the default.
@@ -436,7 +445,9 @@ pglz_compress (char *source, int slen, PGLZ_Header *dest, PGLZ_Strategy *strateg
 	{
 		memcpy(bstart, source, slen);
 		return (dest->varsize = slen + sizeof(PGLZ_Header));
-	} else {
+	}
+	else
+	{
 		if (slen < strategy->min_input_size)
 		{
 			memcpy(bstart, source, slen);
@@ -464,12 +475,12 @@ pglz_compress (char *source, int slen, PGLZ_Header *dest, PGLZ_Strategy *strateg
 	 * table on the stack frame.
 	 * ----------
 	 */
-	memset((void *)hist_start, 0, sizeof(hist_start));
+	memset((void *) hist_start, 0, sizeof(hist_start));
 	if (slen + 1 <= PGLZ_HISTORY_PREALLOC)
 		hist_alloc = hist_prealloc;
 	else
 		hist_alloc = (PGLZ_HistEntry *)
-							palloc(sizeof(PGLZ_HistEntry) * (slen + 1));
+			palloc(sizeof(PGLZ_HistEntry) * (slen + 1));
 	hist_next = hist_alloc;
 
 	/* ----------
@@ -481,9 +492,9 @@ pglz_compress (char *source, int slen, PGLZ_Header *dest, PGLZ_Strategy *strateg
 	 * ----------
 	 */
 	if (slen >= strategy->force_input_size)
-	{
 		result_max = slen;
-	} else {
+	else
+	{
 		need_rate = strategy->min_comp_rate;
 		if (need_rate < 0)
 			need_rate = 0;
@@ -513,8 +524,8 @@ pglz_compress (char *source, int slen, PGLZ_Header *dest, PGLZ_Strategy *strateg
 		 * Try to find a match in the history
 		 * ----------
 		 */
-		if (pglz_find_match(hist_start, dp, dend, &match_len, 
-										&match_off, good_match, good_drop))
+		if (pglz_find_match(hist_start, dp, dend, &match_len,
+							&match_off, good_match, good_drop))
 		{
 			/* ----------
 			 * Create the tag and add history entries for
@@ -522,21 +533,23 @@ pglz_compress (char *source, int slen, PGLZ_Header *dest, PGLZ_Strategy *strateg
 			 * ----------
 			 */
 			pglz_out_tag(ctrlp, ctrlb, ctrl, bp, match_len, match_off);
-			while(match_len--)
+			while (match_len--)
 			{
 				pglz_hist_add(hist_start, hist_next, dp, dend);
-				dp++;	/* Do not do this ++ in the line above!		*/
-						/* The macro would do it four times - Jan.	*/
+				dp++;			/* Do not do this ++ in the line above!		*/
+				/* The macro would do it four times - Jan.	*/
 			}
-		} else {
+		}
+		else
+		{
 			/* ----------
 			 * No match found. Copy one literal byte.
 			 * ----------
 			 */
 			pglz_out_literal(ctrlp, ctrlb, ctrl, bp, *dp);
 			pglz_hist_add(hist_start, hist_next, dp, dend);
-			dp++;	/* Do not do this ++ in the line above!		*/
-					/* The macro would do it four times - Jan.	*/
+			dp++;				/* Do not do this ++ in the line above!		*/
+			/* The macro would do it four times - Jan.	*/
 		}
 	}
 
@@ -545,7 +558,7 @@ pglz_compress (char *source, int slen, PGLZ_Header *dest, PGLZ_Strategy *strateg
 	 * ----------
 	 */
 	if (hist_alloc != hist_prealloc)
-		pfree((void *)hist_alloc);
+		pfree((void *) hist_alloc);
 
 	/* ----------
 	 * If we are still in compressing mode, write out the last
@@ -558,9 +571,8 @@ pglz_compress (char *source, int slen, PGLZ_Header *dest, PGLZ_Strategy *strateg
 		*ctrlp = ctrlb;
 
 		result_size = bp - bstart;
-		if (result_size >= result_max) {
+		if (result_size >= result_max)
 			do_compress = 0;
-		}
 	}
 
 	/* ----------
@@ -571,10 +583,10 @@ pglz_compress (char *source, int slen, PGLZ_Header *dest, PGLZ_Strategy *strateg
 	 * ----------
 	 */
 	if (do_compress)
-	{
 		return (dest->varsize = result_size + sizeof(PGLZ_Header));
-	} else {
-		memcpy(((char *)dest) + sizeof(PGLZ_Header), source, slen);
+	else
+	{
+		memcpy(((char *) dest) + sizeof(PGLZ_Header), source, slen);
 		return (dest->varsize = slen + sizeof(PGLZ_Header));
 	}
 }
@@ -587,19 +599,19 @@ pglz_compress (char *source, int slen, PGLZ_Header *dest, PGLZ_Strategy *strateg
  * ----------
  */
 int
-pglz_decompress (PGLZ_Header *source, char *dest)
+pglz_decompress(PGLZ_Header *source, char *dest)
 {
-	unsigned char	   *dp;
-	unsigned char	   *dend;
-	unsigned char	   *bp;
-	unsigned char		ctrl;
-	int32				ctrlc;
-	int32				len;
-	int32				off;
+	unsigned char *dp;
+	unsigned char *dend;
+	unsigned char *bp;
+	unsigned char ctrl;
+	int32		ctrlc;
+	int32		len;
+	int32		off;
 
-	dp		= ((unsigned char *)source) + sizeof(PGLZ_Header);
-	dend	= ((unsigned char *)source) + source->varsize;
-	bp		= (unsigned char *)dest;
+	dp = ((unsigned char *) source) + sizeof(PGLZ_Header);
+	dend = ((unsigned char *) source) + source->varsize;
+	bp = (unsigned char *) dest;
 
 	if (source->varsize == source->rawsize + sizeof(PGLZ_Header))
 	{
@@ -630,9 +642,7 @@ pglz_decompress (PGLZ_Header *source, char *dest)
 				off = ((dp[0] & 0xf0) << 4) | dp[1];
 				dp += 2;
 				if (len == 18)
-				{
 					len += *dp++;
-				}
 
 				/* ----------
 				 * Now we copy the bytes specified by the tag from
@@ -646,7 +656,9 @@ pglz_decompress (PGLZ_Header *source, char *dest)
 					*bp = bp[-off];
 					bp++;
 				}
-			} else {
+			}
+			else
+			{
 				/* ----------
 				 * An unset control bit means LITERAL BYTE. So we
 				 * just copy one from INPUT to OUTPUT.
@@ -667,7 +679,7 @@ pglz_decompress (PGLZ_Header *source, char *dest)
 	 * That's it.
 	 * ----------
 	 */
-	return (char *)bp - dest;
+	return (char *) bp - dest;
 }
 
 
@@ -681,7 +693,7 @@ pglz_decompress (PGLZ_Header *source, char *dest)
 int
 pglz_get_next_decomp_char_from_lzdata(PGLZ_DecompState *dstate)
 {
-	unsigned char		retval;
+	unsigned char retval;
 
 	if (dstate->tocopy > 0)
 	{
@@ -703,9 +715,7 @@ pglz_get_next_decomp_char_from_lzdata(PGLZ_DecompState *dstate)
 		 * ----------
 		 */
 		if (dstate->cp_in == dstate->cp_end)
-		{
 			return EOF;
-		}
 
 		/* ----------
 		 * This decompression method saves time only, if we stop near
@@ -721,14 +731,14 @@ pglz_get_next_decomp_char_from_lzdata(PGLZ_DecompState *dstate)
 		 */
 		if (dstate->cp_out - dstate->temp_buf >= 256)
 		{
-			unsigned char	   *cp_in		= dstate->cp_in;
-			unsigned char	   *cp_out		= dstate->cp_out;
-			unsigned char	   *cp_end		= dstate->cp_end;
-			unsigned char	   *cp_copy;
-			unsigned char		ctrl;
-			int					off;
-			int					len;
-			int					i;
+			unsigned char *cp_in = dstate->cp_in;
+			unsigned char *cp_out = dstate->cp_out;
+			unsigned char *cp_end = dstate->cp_end;
+			unsigned char *cp_copy;
+			unsigned char ctrl;
+			int			off;
+			int			len;
+			int			i;
 
 			while (cp_in < cp_end)
 			{
@@ -748,27 +758,27 @@ pglz_get_next_decomp_char_from_lzdata(PGLZ_DecompState *dstate)
 							len += *cp_in++;
 
 						cp_copy = cp_out - off;
-						while(len--)
+						while (len--)
 							*cp_out++ = *cp_copy++;
-					} else {
-						*cp_out++ = *cp_in++;
 					}
+					else
+						*cp_out++ = *cp_in++;
 					ctrl >>= 1;
 				}
 			}
 
-			dstate->cp_in		= dstate->cp_out;
-			dstate->cp_end		= cp_out;
-			dstate->next_char	= pglz_get_next_decomp_char_from_plain;
+			dstate->cp_in = dstate->cp_out;
+			dstate->cp_end = cp_out;
+			dstate->next_char = pglz_get_next_decomp_char_from_plain;
 
-			return (int)(*(dstate->cp_in++));
+			return (int) (*(dstate->cp_in++));
 		}
 
 		/* ----------
 		 * Not yet, get next control byte into decomp state.
 		 * ----------
 		 */
-		dstate->ctrl = (unsigned char)(*(dstate->cp_in++));
+		dstate->ctrl = (unsigned char) (*(dstate->cp_in++));
 		dstate->ctrl_count = 8;
 	}
 
@@ -777,9 +787,7 @@ pglz_get_next_decomp_char_from_lzdata(PGLZ_DecompState *dstate)
 	 * ----------
 	 */
 	if (dstate->cp_in == dstate->cp_end)
-	{
 		return EOF;
-	}
 
 	/* ----------
 	 * Handle next control bit.
@@ -793,27 +801,29 @@ pglz_get_next_decomp_char_from_lzdata(PGLZ_DecompState *dstate)
 		 * and do the copy for the first byte as above.
 		 * ----------
 		 */
-		int		off;
+		int			off;
 
-		dstate->tocopy	= (dstate->cp_in[0] & 0x0f) + 3;
-		off				= ((dstate->cp_in[0] & 0xf0) << 4) | dstate->cp_in[1];
-		dstate->cp_in	+= 2;
+		dstate->tocopy = (dstate->cp_in[0] & 0x0f) + 3;
+		off = ((dstate->cp_in[0] & 0xf0) << 4) | dstate->cp_in[1];
+		dstate->cp_in += 2;
 		if (dstate->tocopy == 18)
 			dstate->tocopy += *(dstate->cp_in++);
 		dstate->cp_copy = dstate->cp_out - off;
 
 		dstate->tocopy--;
 		retval = (*(dstate->cp_out++) = *(dstate->cp_copy++));
-	} else {
+	}
+	else
+	{
 		/* ----------
 		 * Bit is unset, so literal byte follows.
 		 * ----------
 		 */
-		retval = (int)(*(dstate->cp_out++) = *(dstate->cp_in++));
+		retval = (int) (*(dstate->cp_out++) = *(dstate->cp_in++));
 	}
 	dstate->ctrl >>= 1;
 
-	return (int)retval;
+	return (int) retval;
 }
 
 
@@ -831,7 +841,5 @@ pglz_get_next_decomp_char_from_plain(PGLZ_DecompState *dstate)
 	if (dstate->cp_in >= dstate->cp_end)
 		return EOF;
 
-	return (int)(*(dstate->cp_in++));
+	return (int) (*(dstate->cp_in++));
 }
-
-

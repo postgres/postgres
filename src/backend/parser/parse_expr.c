@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/parser/parse_expr.c,v 1.75 2000/03/19 07:13:58 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/parser/parse_expr.c,v 1.76 2000/04/12 17:15:26 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -33,17 +33,17 @@
 #include "utils/syscache.h"
 
 
-int	max_expr_depth = DEFAULT_MAX_EXPR_DEPTH;
+int			max_expr_depth = DEFAULT_MAX_EXPR_DEPTH;
 
 static int	expr_depth_counter = 0;
 
 static Node *parser_typecast_constant(Value *expr, TypeName *typename);
 static Node *parser_typecast_expression(ParseState *pstate,
-										Node *expr, TypeName *typename);
+						   Node *expr, TypeName *typename);
 static Node *transformAttr(ParseState *pstate, Attr *att, int precedence);
 static Node *transformIdent(ParseState *pstate, Ident *ident, int precedence);
 static Node *transformIndirection(ParseState *pstate, Node *basenode,
-								  List *indirection);
+					 List *indirection);
 
 
 /*
@@ -92,8 +92,8 @@ transformExpr(ParseState *pstate, Node *expr, int precedence)
 		return NULL;
 
 	/*
-	 * Guard against an overly complex expression leading to coredump
-	 * due to stack overflow here, or in later recursive routines that
+	 * Guard against an overly complex expression leading to coredump due
+	 * to stack overflow here, or in later recursive routines that
 	 * traverse expression trees.  Note that this is very unlikely to
 	 * happen except with pathological queries; but we don't want someone
 	 * to be able to crash the backend quite that easily...
@@ -172,7 +172,7 @@ transformExpr(ParseState *pstate, Node *expr, int precedence)
 													   "nullvalue",
 													   lcons(lexpr, NIL),
 													   false, false,
-													   &pstate->p_last_resno,
+												   &pstate->p_last_resno,
 													   precedence);
 						}
 						break;
@@ -184,7 +184,7 @@ transformExpr(ParseState *pstate, Node *expr, int precedence)
 													   "nonnullvalue",
 													   lcons(lexpr, NIL),
 													   false, false,
-													   &pstate->p_last_resno,
+												   &pstate->p_last_resno,
 													   precedence);
 						}
 						break;
@@ -289,7 +289,9 @@ transformExpr(ParseState *pstate, Node *expr, int precedence)
 
 				if (sublink->subLinkType == EXISTS_SUBLINK)
 				{
-					/* EXISTS needs no lefthand or combining operator.
+
+					/*
+					 * EXISTS needs no lefthand or combining operator.
 					 * These fields should be NIL already, but make sure.
 					 */
 					sublink->lefthand = NIL;
@@ -299,7 +301,8 @@ transformExpr(ParseState *pstate, Node *expr, int precedence)
 				{
 					List	   *tlist = qtree->targetList;
 
-					/* Make sure the subselect delivers a single column
+					/*
+					 * Make sure the subselect delivers a single column
 					 * (ignoring resjunk targets).
 					 */
 					if (tlist == NIL ||
@@ -307,11 +310,13 @@ transformExpr(ParseState *pstate, Node *expr, int precedence)
 						elog(ERROR, "Subselect must have a field");
 					while ((tlist = lnext(tlist)) != NIL)
 					{
-						if (! ((TargetEntry *) lfirst(tlist))->resdom->resjunk)
+						if (!((TargetEntry *) lfirst(tlist))->resdom->resjunk)
 							elog(ERROR, "Subselect must have only one field");
 					}
-					/* EXPR needs no lefthand or combining operator.
-					 * These fields should be NIL already, but make sure.
+
+					/*
+					 * EXPR needs no lefthand or combining operator. These
+					 * fields should be NIL already, but make sure.
 					 */
 					sublink->lefthand = NIL;
 					sublink->oper = NIL;
@@ -336,10 +341,12 @@ transformExpr(ParseState *pstate, Node *expr, int precedence)
 
 					sublink->oper = NIL;
 
-					/* Scan subquery's targetlist to find values that will be
-					 * matched against lefthand values.  We need to ignore
-					 * resjunk targets, so doing the outer iteration over
-					 * right_list is easier than doing it over left_list.
+					/*
+					 * Scan subquery's targetlist to find values that will
+					 * be matched against lefthand values.	We need to
+					 * ignore resjunk targets, so doing the outer
+					 * iteration over right_list is easier than doing it
+					 * over left_list.
 					 */
 					while (right_list != NIL)
 					{
@@ -370,8 +377,8 @@ transformExpr(ParseState *pstate, Node *expr, int precedence)
 								 op, typeidTypeName(opform->oprresult),
 								 typeidTypeName(BOOLOID));
 
-						newop = makeOper(oprid(optup),/* opno */
-										 InvalidOid, /* opid */
+						newop = makeOper(oprid(optup),	/* opno */
+										 InvalidOid,	/* opid */
 										 opform->oprresult,
 										 0,
 										 NULL);
@@ -453,9 +460,10 @@ transformExpr(ParseState *pstate, Node *expr, int precedence)
 								 || ((TypeCategory(wtype) == USER_TYPE)
 							&& (TypeCategory(c->casetype) == USER_TYPE)))
 						{
+
 							/*
-							 * both types in different categories?
-							 * then not much hope...
+							 * both types in different categories? then
+							 * not much hope...
 							 */
 							elog(ERROR, "CASE/WHEN types '%s' and '%s' not matched",
 								 typeidTypeName(c->casetype), typeidTypeName(wtype));
@@ -463,9 +471,10 @@ transformExpr(ParseState *pstate, Node *expr, int precedence)
 						else if (IsPreferredType(pcategory, wtype)
 								 && can_coerce_type(1, &ptype, &wtype))
 						{
+
 							/*
-							 * new one is preferred and can convert?
-							 * then take it...
+							 * new one is preferred and can convert? then
+							 * take it...
 							 */
 							ptype = wtype;
 							pcategory = TypeCategory(ptype);
@@ -478,6 +487,7 @@ transformExpr(ParseState *pstate, Node *expr, int precedence)
 				{
 					if (!c->casetype || c->casetype == UNKNOWNOID)
 					{
+
 						/*
 						 * default clause is NULL, so assign preferred
 						 * type from WHEN clauses...
@@ -553,14 +563,14 @@ transformExpr(ParseState *pstate, Node *expr, int precedence)
 				break;
 			}
 
-		/*
-		 * Quietly accept node types that may be presented when we are called
-		 * on an already-transformed tree.
-		 *
-		 * Do any other node types need to be accepted?  For now we are taking
-		 * a conservative approach, and only accepting node types that are
- 		 * demonstrably necessary to accept.
-		 */
+			/*
+			 * Quietly accept node types that may be presented when we are
+			 * called on an already-transformed tree.
+			 *
+			 * Do any other node types need to be accepted?  For now we are
+			 * taking a conservative approach, and only accepting node
+			 * types that are demonstrably necessary to accept.
+			 */
 		case T_Expr:
 		case T_Var:
 		case T_Const:
@@ -610,7 +620,10 @@ transformIdent(ParseState *pstate, Ident *ident, int precedence)
 	Node	   *result = NULL;
 	RangeTblEntry *rte;
 
-	/* try to find the ident as a relation ... but not if subscripts appear */
+	/*
+	 * try to find the ident as a relation ... but not if subscripts
+	 * appear
+	 */
 	if (ident->indirection == NIL &&
 		refnameRangeTableEntry(pstate, ident->name) != NULL)
 	{
@@ -625,6 +638,7 @@ transformIdent(ParseState *pstate, Ident *ident, int precedence)
 		{
 			/* Convert it to a fully qualified Attr, and transform that */
 			Attr	   *att = makeAttr(rte->eref->relname, ident->name);
+
 			att->indirection = ident->indirection;
 			return transformAttr(pstate, att, precedence);
 		}
@@ -687,7 +701,7 @@ exprType(Node *expr)
 					Query	   *qtree = (Query *) sublink->subselect;
 					TargetEntry *tent;
 
-					if (! qtree || ! IsA(qtree, Query))
+					if (!qtree || !IsA(qtree, Query))
 						elog(ERROR, "Cannot get type for untransformed sublink");
 					tent = (TargetEntry *) lfirst(qtree->targetList);
 					type = tent->resdom->restype;
@@ -735,11 +749,12 @@ exprTypmod(Node *expr)
 		case T_Const:
 			{
 				/* Be smart about string constants... */
-				Const  *con = (Const *) expr;
+				Const	   *con = (Const *) expr;
+
 				switch (con->consttype)
 				{
 					case BPCHAROID:
-						if (! con->constisnull)
+						if (!con->constisnull)
 							return VARSIZE(DatumGetPointer(con->constvalue));
 						break;
 					default:
@@ -749,7 +764,7 @@ exprTypmod(Node *expr)
 			break;
 		case T_Expr:
 			{
-				int32	coercedTypmod;
+				int32		coercedTypmod;
 
 				/* Be smart about length-coercion functions... */
 				if (exprIsLengthCoercion(expr, &coercedTypmod))
@@ -794,7 +809,7 @@ exprIsLengthCoercion(Node *expr, int32 *coercedTypmod)
 
 	/* Is it a function-call at all? */
 	if (expr == NULL ||
-		! IsA(expr, Expr) ||
+		!IsA(expr, Expr) ||
 		((Expr *) expr)->opType != FUNC_EXPR)
 		return false;
 	func = (Func *) (((Expr *) expr)->oper);
@@ -802,12 +817,13 @@ exprIsLengthCoercion(Node *expr, int32 *coercedTypmod)
 
 	/*
 	 * If it's not a two-argument function with the second argument being
-	 * an int4 constant, it can't have been created from a length coercion.
+	 * an int4 constant, it can't have been created from a length
+	 * coercion.
 	 */
 	if (length(((Expr *) expr)->args) != 2)
 		return false;
 	second_arg = (Const *) lsecond(((Expr *) expr)->args);
-	if (! IsA(second_arg, Const) ||
+	if (!IsA(second_arg, Const) ||
 		second_arg->consttype != INT4OID ||
 		second_arg->constisnull)
 		return false;
@@ -823,9 +839,9 @@ exprIsLengthCoercion(Node *expr, int32 *coercedTypmod)
 	procStruct = (Form_pg_proc) GETSTRUCT(tup);
 
 	/*
-	 * It must be a function with two arguments where the first is of
-	 * the same type as the return value and the second is an int4.
-	 * Also, just to be sure, check return type agrees with expr node.
+	 * It must be a function with two arguments where the first is of the
+	 * same type as the return value and the second is an int4. Also, just
+	 * to be sure, check return type agrees with expr node.
 	 */
 	if (procStruct->pronargs != 2 ||
 		procStruct->prorettype != procStruct->proargtypes[0] ||
@@ -834,8 +850,8 @@ exprIsLengthCoercion(Node *expr, int32 *coercedTypmod)
 		return false;
 
 	/*
-	 * Furthermore, the name of the function must be the same
-	 * as the argument/result type's name.
+	 * Furthermore, the name of the function must be the same as the
+	 * argument/result type's name.
 	 */
 	tup = SearchSysCacheTuple(TYPEOID,
 							  ObjectIdGetDatum(procStruct->prorettype),
@@ -891,7 +907,7 @@ parser_typecast_constant(Value *expr, TypeName *typename)
 
 	if (typename->arrayBounds != NIL)
 	{
-		char		type_string[NAMEDATALEN+2];
+		char		type_string[NAMEDATALEN + 2];
 
 		sprintf(type_string, "_%s", typename->name);
 		tp = (Type) typenameType(type_string);
@@ -936,7 +952,7 @@ parser_typecast_expression(ParseState *pstate,
 
 	if (typename->arrayBounds != NIL)
 	{
-		char		type_string[NAMEDATALEN+2];
+		char		type_string[NAMEDATALEN + 2];
 
 		sprintf(type_string, "_%s", typename->name);
 		tp = (Type) typenameType(type_string);
@@ -957,9 +973,10 @@ parser_typecast_expression(ParseState *pstate,
 				 typeidTypeName(inputType),
 				 typeidTypeName(targetType));
 	}
+
 	/*
-	 * If the target is a fixed-length type, it may need a length
-	 * coercion as well as a type coercion.
+	 * If the target is a fixed-length type, it may need a length coercion
+	 * as well as a type coercion.
 	 */
 	expr = coerce_type_typmod(pstate, expr,
 							  targetType, typename->typmod);

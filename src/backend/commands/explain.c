@@ -5,7 +5,7 @@
  * Portions Copyright (c) 1996-2000, PostgreSQL, Inc
  * Portions Copyright (c) 1994-5, Regents of the University of California
  *
- * $Header: /cvsroot/pgsql/src/backend/commands/explain.c,v 1.55 2000/03/14 23:06:12 thomas Exp $
+ * $Header: /cvsroot/pgsql/src/backend/commands/explain.c,v 1.56 2000/04/12 17:14:58 momjian Exp $
  *
  */
 
@@ -209,7 +209,7 @@ explain_outNode(StringInfo str, Plan *plan, int indent, ExplainState *es)
 	switch (nodeTag(plan))
 	{
 		case T_IndexScan:
-			if (ScanDirectionIsBackward(((IndexScan *)plan)->indxorderdir))
+			if (ScanDirectionIsBackward(((IndexScan *) plan)->indxorderdir))
 				appendStringInfo(str, " Backward");
 			appendStringInfo(str, " using ");
 			i = 0;
@@ -219,7 +219,7 @@ explain_outNode(StringInfo str, Plan *plan, int indent, ExplainState *es)
 				Assert(relation);
 				appendStringInfo(str, "%s%s",
 								 (++i > 1) ? ", " : "",
-								 stringStringInfo(RelationGetRelationName(relation)));
+					stringStringInfo(RelationGetRelationName(relation)));
 				/* drop relcache refcount from RelationIdGetRelation */
 				RelationDecrementReferenceCount(relation);
 			}
@@ -238,17 +238,17 @@ explain_outNode(StringInfo str, Plan *plan, int indent, ExplainState *es)
 						|| (length(rte->ref->attrs) > 0))
 					{
 						appendStringInfo(str, " %s",
-										 stringStringInfo(rte->ref->relname));
+									stringStringInfo(rte->ref->relname));
 
 						if (length(rte->ref->attrs) > 0)
 						{
-							List *c;
-							int firstEntry = true;
+							List	   *c;
+							int			firstEntry = true;
 
 							appendStringInfo(str, " (");
-							foreach (c, rte->ref->attrs)
+							foreach(c, rte->ref->attrs)
 							{
-								if (! firstEntry)
+								if (!firstEntry)
 								{
 									appendStringInfo(str, ", ");
 									firstEntry = false;

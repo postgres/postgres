@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/rewrite/Attic/locks.c,v 1.27 2000/01/26 05:56:49 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/rewrite/Attic/locks.c,v 1.28 2000/04/12 17:15:32 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -34,15 +34,16 @@
  * XXX this should be unified with attribute_used()
  */
 
-typedef struct {
+typedef struct
+{
 	int			varno;
 	int			attnum;
 	int			sublevels_up;
 } thisLockWasTriggered_context;
 
 static bool
-thisLockWasTriggered_walker (Node *node,
-							 thisLockWasTriggered_context *context)
+thisLockWasTriggered_walker(Node *node,
+							thisLockWasTriggered_context *context)
 {
 	if (node == NULL)
 		return false;
@@ -58,9 +59,10 @@ thisLockWasTriggered_walker (Node *node,
 	}
 	if (IsA(node, SubLink))
 	{
+
 		/*
-		 * Standard expression_tree_walker will not recurse into subselect,
-		 * but here we must do so.
+		 * Standard expression_tree_walker will not recurse into
+		 * subselect, but here we must do so.
 		 */
 		SubLink    *sub = (SubLink *) node;
 
@@ -69,7 +71,7 @@ thisLockWasTriggered_walker (Node *node,
 		context->sublevels_up++;
 		if (thisLockWasTriggered_walker((Node *) (sub->subselect), context))
 		{
-			context->sublevels_up--; /* not really necessary */
+			context->sublevels_up--;	/* not really necessary */
 			return true;
 		}
 		context->sublevels_up--;

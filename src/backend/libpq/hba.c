@@ -5,7 +5,7 @@
  *	  wherein you authenticate a user by seeing what IP address the system
  *	  says he comes from and possibly using ident).
  *
- *	$Id: hba.c,v 1.50 2000/03/17 02:36:08 tgl Exp $
+ *	$Id: hba.c,v 1.51 2000/04/12 17:15:14 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -209,31 +209,32 @@ process_hba_record(FILE *file, hbaPort *port, bool *matches_p, bool *error_p)
 		 */
 
 		if ((strcmp(db, port->database) != 0 && strcmp(db, "all") != 0 &&
-		 (strcmp(db, "sameuser") != 0 || strcmp(port->database, port->user) != 0)) ||
-		        port->raddr.sa.sa_family != AF_UNIX)
+			 (strcmp(db, "sameuser") != 0 || strcmp(port->database, port->user) != 0)) ||
+			port->raddr.sa.sa_family != AF_UNIX)
 			return;
 	}
 	else if (strcmp(buf, "host") == 0 || strcmp(buf, "hostssl") == 0)
 	{
 		struct in_addr file_ip_addr,
 					mask;
-		bool discard = 0; /* Discard this entry */
+		bool		discard = 0;/* Discard this entry */
 
 #ifdef USE_SSL
 		/* If SSL, then check that we are on SSL */
-		if (strcmp(buf, "hostssl") == 0) {
-		  if (!port->ssl) 
-		    discard = 1; 
-		  
-		  /* Placeholder to require specific SSL level, perhaps? */
-		  /* Or a client certificate */
+		if (strcmp(buf, "hostssl") == 0)
+		{
+			if (!port->ssl)
+				discard = 1;
 
-		  /* Since we were on SSL, proceed as with normal 'host' mode */
+			/* Placeholder to require specific SSL level, perhaps? */
+			/* Or a client certificate */
+
+			/* Since we were on SSL, proceed as with normal 'host' mode */
 		}
 #else
 		/* If not SSL, we don't support this */
-		if (strcmp(buf,"hostssl") == 0) 
-		  goto syntax;
+		if (strcmp(buf, "hostssl") == 0)
+			goto syntax;
 #endif
 
 		/* Get the database. */
@@ -286,7 +287,7 @@ process_hba_record(FILE *file, hbaPort *port, bool *matches_p, bool *error_p)
 		 * "out of sync" with the file.
 		 */
 		if (discard)
-		  return;
+			return;
 
 		/*
 		 * If this record isn't for our database, or this is the wrong
@@ -294,8 +295,8 @@ process_hba_record(FILE *file, hbaPort *port, bool *matches_p, bool *error_p)
 		 */
 
 		if ((strcmp(db, port->database) != 0 && strcmp(db, "all") != 0 &&
-		 (strcmp(db, "sameuser") != 0 || strcmp(port->database, port->user) != 0)) ||
-		        port->raddr.sa.sa_family != AF_INET ||
+			 (strcmp(db, "sameuser") != 0 || strcmp(port->database, port->user) != 0)) ||
+			port->raddr.sa.sa_family != AF_INET ||
 			((file_ip_addr.s_addr ^ port->raddr.in.sin_addr.s_addr) & mask.s_addr) != 0x0000)
 			return;
 	}
@@ -353,7 +354,7 @@ process_open_config_file(FILE *file, hbaPort *port, bool *hba_ok_p)
 		/* If no matching entry was found, synthesize 'reject' entry. */
 
 		if (!found_entry)
-		        port->auth_method = uaReject;
+			port->auth_method = uaReject;
 
 		*hba_ok_p = true;
 	}

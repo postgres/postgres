@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/storage/file/buffile.c,v 1.4 2000/01/26 05:56:55 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/storage/file/buffile.c,v 1.5 2000/04/12 17:15:35 momjian Exp $
  *
  * NOTES:
  *
@@ -23,11 +23,11 @@
  * will go away automatically at transaction end.  If the underlying
  * virtual File is made with OpenTemporaryFile, then all resources for
  * the file are certain to be cleaned up even if processing is aborted
- * by elog(ERROR).  To avoid confusion, the caller should take care that
+ * by elog(ERROR).	To avoid confusion, the caller should take care that
  * all calls for a single BufFile are made in the same palloc context.
  *
  * BufFile also supports temporary files that exceed the OS file size limit
- * (by opening multiple fd.c temporary files).  This is an essential feature
+ * (by opening multiple fd.c temporary files).	This is an essential feature
  * for sorts and hashjoins on large amounts of data.
  *-------------------------------------------------------------------------
  */
@@ -56,15 +56,19 @@ struct BufFile
 	/* all files except the last have length exactly MAX_PHYSICAL_FILESIZE */
 	File	   *files;			/* palloc'd array with numFiles entries */
 	long	   *offsets;		/* palloc'd array with numFiles entries */
-	/* offsets[i] is the current seek position of files[i].  We use this
+
+	/*
+	 * offsets[i] is the current seek position of files[i].  We use this
 	 * to avoid making redundant FileSeek calls.
 	 */
 
 	bool		isTemp;			/* can only add files if this is TRUE */
 	bool		dirty;			/* does buffer need to be written? */
+
 	/*
-	 * "current pos" is position of start of buffer within the logical file.
-	 * Position as seen by user of BufFile is (curFile, curOffset + pos).
+	 * "current pos" is position of start of buffer within the logical
+	 * file. Position as seen by user of BufFile is (curFile, curOffset +
+	 * pos).
 	 */
 	int			curFile;		/* file index (0..n) part of current pos */
 	int			curOffset;		/* offset part of current pos */
@@ -87,7 +91,7 @@ static int	BufFileFlush(BufFile *file);
 static BufFile *
 makeBufFile(File firstfile)
 {
-	BufFile	   *file = (BufFile *) palloc(sizeof(BufFile));
+	BufFile    *file = (BufFile *) palloc(sizeof(BufFile));
 
 	file->numFiles = 1;
 	file->files = (File *) palloc(sizeof(File));
@@ -117,9 +121,9 @@ extendBufFile(BufFile *file)
 	Assert(pfile >= 0);
 
 	file->files = (File *) repalloc(file->files,
-									(file->numFiles+1) * sizeof(File));
+									(file->numFiles + 1) * sizeof(File));
 	file->offsets = (long *) repalloc(file->offsets,
-									  (file->numFiles+1) * sizeof(long));
+									(file->numFiles + 1) * sizeof(long));
 	file->files[file->numFiles] = pfile;
 	file->offsets[file->numFiles] = 0L;
 	file->numFiles++;
@@ -130,7 +134,7 @@ extendBufFile(BufFile *file)
  * multiple temporary files if more than MAX_PHYSICAL_FILESIZE bytes are
  * written to it).
  */
-BufFile *
+BufFile    *
 BufFileCreateTemp(void)
 {
 	BufFile    *file;
@@ -152,7 +156,7 @@ BufFileCreateTemp(void)
  * to attach a BufFile to a non-temporary file.  Note that BufFiles created
  * in this way CANNOT be expanded into multiple files.
  */
-BufFile *
+BufFile    *
 BufFileCreate(File file)
 {
 	return makeBufFile(file);
@@ -166,7 +170,7 @@ BufFileCreate(File file)
 void
 BufFileClose(BufFile *file)
 {
-	int		i;
+	int			i;
 
 	/* flush any unwritten data */
 	BufFileFlush(file);
@@ -189,21 +193,22 @@ BufFileClose(BufFile *file)
 static void
 BufFileLoadBuffer(BufFile *file)
 {
-	File	thisfile;
+	File		thisfile;
 
 	/*
 	 * Advance to next component file if necessary and possible.
 	 *
-	 * This path can only be taken if there is more than one component,
-	 * so it won't interfere with reading a non-temp file that is over
+	 * This path can only be taken if there is more than one component, so it
+	 * won't interfere with reading a non-temp file that is over
 	 * MAX_PHYSICAL_FILESIZE.
 	 */
 	if (file->curOffset >= MAX_PHYSICAL_FILESIZE &&
-		file->curFile+1 < file->numFiles)
+		file->curFile + 1 < file->numFiles)
 	{
 		file->curFile++;
 		file->curOffset = 0L;
 	}
+
 	/*
 	 * May need to reposition physical file.
 	 */
@@ -214,6 +219,7 @@ BufFileLoadBuffer(BufFile *file)
 			return;				/* seek failed, read nothing */
 		file->offsets[file->curFile] = file->curOffset;
 	}
+
 	/*
 	 * Read whatever we can get, up to a full bufferload.
 	 */
@@ -239,21 +245,23 @@ BufFileDumpBuffer(BufFile *file)
 	File		thisfile;
 
 	/*
-	 * Unlike BufFileLoadBuffer, we must dump the whole buffer even if
-	 * it crosses a component-file boundary; so we need a loop.
+	 * Unlike BufFileLoadBuffer, we must dump the whole buffer even if it
+	 * crosses a component-file boundary; so we need a loop.
 	 */
 	while (wpos < file->nbytes)
 	{
+
 		/*
 		 * Advance to next component file if necessary and possible.
 		 */
 		if (file->curOffset >= MAX_PHYSICAL_FILESIZE && file->isTemp)
 		{
-			while (file->curFile+1 >= file->numFiles)
+			while (file->curFile + 1 >= file->numFiles)
 				extendBufFile(file);
 			file->curFile++;
 			file->curOffset = 0L;
 		}
+
 		/*
 		 * Enforce per-file size limit only for temp files, else just try
 		 * to write as much as asked...
@@ -261,11 +269,12 @@ BufFileDumpBuffer(BufFile *file)
 		bytestowrite = file->nbytes - wpos;
 		if (file->isTemp)
 		{
-			long	availbytes = MAX_PHYSICAL_FILESIZE - file->curOffset;
+			long		availbytes = MAX_PHYSICAL_FILESIZE - file->curOffset;
 
 			if ((long) bytestowrite > availbytes)
 				bytestowrite = (int) availbytes;
 		}
+
 		/*
 		 * May need to reposition physical file.
 		 */
@@ -284,11 +293,13 @@ BufFileDumpBuffer(BufFile *file)
 		wpos += bytestowrite;
 	}
 	file->dirty = false;
+
 	/*
-	 * At this point, curOffset has been advanced to the end of the buffer,
-	 * ie, its original value + nbytes.  We need to make it point to the
-	 * logical file position, ie, original value + pos, in case that is less
-	 * (as could happen due to a small backwards seek in a dirty buffer!)
+	 * At this point, curOffset has been advanced to the end of the
+	 * buffer, ie, its original value + nbytes.  We need to make it point
+	 * to the logical file position, ie, original value + pos, in case
+	 * that is less (as could happen due to a small backwards seek in a
+	 * dirty buffer!)
 	 */
 	file->curOffset -= (file->nbytes - file->pos);
 	if (file->curOffset < 0)	/* handle possible segment crossing */
@@ -297,7 +308,11 @@ BufFileDumpBuffer(BufFile *file)
 		Assert(file->curFile >= 0);
 		file->curOffset += MAX_PHYSICAL_FILESIZE;
 	}
-	/* Now we can set the buffer empty without changing the logical position */
+
+	/*
+	 * Now we can set the buffer empty without changing the logical
+	 * position
+	 */
 	file->pos = 0;
 	file->nbytes = 0;
 }
@@ -317,7 +332,7 @@ BufFileRead(BufFile *file, void *ptr, size_t size)
 	{
 		if (BufFileFlush(file) != 0)
 			return 0;			/* could not flush... */
-		Assert(! file->dirty);
+		Assert(!file->dirty);
 	}
 
 	while (size > 0)
@@ -430,8 +445,9 @@ BufFileFlush(BufFile *file)
 int
 BufFileSeek(BufFile *file, int fileno, long offset, int whence)
 {
-	int newFile;
-	long newOffset;
+	int			newFile;
+	long		newOffset;
+
 	switch (whence)
 	{
 		case SEEK_SET:
@@ -441,9 +457,11 @@ BufFileSeek(BufFile *file, int fileno, long offset, int whence)
 			newOffset = offset;
 			break;
 		case SEEK_CUR:
+
 			/*
-			 * Relative seek considers only the signed offset, ignoring fileno.
-			 * Note that large offsets (> 1 gig) risk overflow in this add...
+			 * Relative seek considers only the signed offset, ignoring
+			 * fileno. Note that large offsets (> 1 gig) risk overflow in
+			 * this add...
 			 */
 			newFile = file->curFile;
 			newOffset = (file->curOffset + file->pos) + offset;
@@ -467,11 +485,12 @@ BufFileSeek(BufFile *file, int fileno, long offset, int whence)
 		newOffset >= file->curOffset &&
 		newOffset <= file->curOffset + file->nbytes)
 	{
+
 		/*
 		 * Seek is to a point within existing buffer; we can just adjust
-		 * pos-within-buffer, without flushing buffer.  Note this is OK
-		 * whether reading or writing, but buffer remains dirty if we
-		 * were writing.
+		 * pos-within-buffer, without flushing buffer.	Note this is OK
+		 * whether reading or writing, but buffer remains dirty if we were
+		 * writing.
 		 */
 		file->pos = (int) (newOffset - file->curOffset);
 		return 0;
@@ -479,10 +498,11 @@ BufFileSeek(BufFile *file, int fileno, long offset, int whence)
 	/* Otherwise, must reposition buffer, so flush any dirty data */
 	if (BufFileFlush(file) != 0)
 		return EOF;
+
 	/*
-	 * At this point and no sooner, check for seek past last segment.
-	 * The above flush could have created a new segment, so
-	 * checking sooner would not work (at least not with this code).
+	 * At this point and no sooner, check for seek past last segment. The
+	 * above flush could have created a new segment, so checking sooner
+	 * would not work (at least not with this code).
 	 */
 	if (file->isTemp)
 	{
@@ -544,7 +564,7 @@ BufFileSeekBlock(BufFile *file, long blknum)
 long
 BufFileTellBlock(BufFile *file)
 {
-	long	blknum;
+	long		blknum;
 
 	blknum = (file->curOffset + file->pos) / BLCKSZ;
 	blknum += file->curFile * RELSEG_SIZE;

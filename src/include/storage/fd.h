@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2000, PostgreSQL, Inc
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Id: fd.h,v 1.20 2000/04/09 04:43:18 tgl Exp $
+ * $Id: fd.h,v 1.21 2000/04/12 17:16:51 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -65,7 +65,7 @@ extern FILE *AllocateFile(char *name, char *mode);
 extern void FreeFile(FILE *);
 
 /* Miscellaneous support routines */
-extern bool	ReleaseDataFile(void);
+extern bool ReleaseDataFile(void);
 extern void closeAllVfds(void);
 extern void AtEOXact_Files(void);
 extern int	pg_fsync(int fd);

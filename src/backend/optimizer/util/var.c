@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/optimizer/util/var.c,v 1.25 2000/01/26 05:56:40 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/optimizer/util/var.c,v 1.26 2000/04/12 17:15:24 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -20,7 +20,8 @@
 #include "optimizer/var.h"
 
 
-typedef struct {
+typedef struct
+{
 	List	   *varlist;
 	bool		includeUpperVars;
 } pull_var_clause_context;
@@ -28,7 +29,7 @@ typedef struct {
 static bool pull_varnos_walker(Node *node, List **listptr);
 static bool contain_var_clause_walker(Node *node, void *context);
 static bool pull_var_clause_walker(Node *node,
-								   pull_var_clause_context *context);
+					   pull_var_clause_context *context);
 
 
 /*
@@ -54,7 +55,8 @@ pull_varnos_walker(Node *node, List **listptr)
 		return false;
 	if (IsA(node, Var))
 	{
-		Var	   *var = (Var *) node;
+		Var		   *var = (Var *) node;
+
 		if (var->varlevelsup == 0 && !intMember(var->varno, *listptr))
 			*listptr = lconsi(var->varno, *listptr);
 		return false;
@@ -83,7 +85,8 @@ contain_var_clause_walker(Node *node, void *context)
 	if (IsA(node, Var))
 	{
 		if (((Var *) node)->varlevelsup == 0)
-			return true;		/* abort the tree traversal and return true */
+			return true;		/* abort the tree traversal and return
+								 * true */
 		return false;
 	}
 	return expression_tree_walker(node, contain_var_clause_walker, context);
@@ -94,7 +97,7 @@ contain_var_clause_walker(Node *node, void *context)
  *	  Recursively pulls all var nodes from an expression clause.
  *
  *	  Upper-level vars (with varlevelsup > 0) are included only
- *	  if includeUpperVars is true.  Most callers probably want
+ *	  if includeUpperVars is true.	Most callers probably want
  *	  to ignore upper-level vars.
  *
  *	  Returns list of varnodes found.  Note the varnodes themselves are not
@@ -103,7 +106,7 @@ contain_var_clause_walker(Node *node, void *context)
 List *
 pull_var_clause(Node *clause, bool includeUpperVars)
 {
-	pull_var_clause_context		context;
+	pull_var_clause_context context;
 
 	context.varlist = NIL;
 	context.includeUpperVars = includeUpperVars;

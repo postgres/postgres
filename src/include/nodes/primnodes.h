@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2000, PostgreSQL, Inc
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Id: primnodes.h,v 1.40 2000/02/20 21:32:16 tgl Exp $
+ * $Id: primnodes.h,v 1.41 2000/04/12 17:16:40 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -29,7 +29,7 @@
  *		restype			- type of the value
  *		restypmod		- type-specific modifier of the value
  *		resname			- name of the resdom (could be NULL)
- *		ressortgroupref	- nonzero if referenced by a sort/group clause
+ *		ressortgroupref - nonzero if referenced by a sort/group clause
  *		reskey			- order of key in a sort (for those > 0)
  *		reskeyop		- sort operator's regproc Oid
  *		resjunk			- set to true to eliminate the attribute
@@ -37,12 +37,12 @@
  *
  * Notes:
  * ressortgroupref is the parse/plan-time representation of ORDER BY and
- * GROUP BY items.  Targetlist entries with ressortgroupref=0 are not
+ * GROUP BY items.	Targetlist entries with ressortgroupref=0 are not
  * sort/group items.  If ressortgroupref>0, then this item is an ORDER BY or
- * GROUP BY value.  No two entries in a targetlist may have the same nonzero
+ * GROUP BY value.	No two entries in a targetlist may have the same nonzero
  * ressortgroupref --- but there is no particular meaning to the nonzero
- * values, except as tags.  (For example, one must not assume that lower
- * ressortgroupref means a more significant sort key.)  The order of the
+ * values, except as tags.	(For example, one must not assume that lower
+ * ressortgroupref means a more significant sort key.)	The order of the
  * associated SortClause or GroupClause lists determine the semantics.
  *
  * reskey and reskeyop are the execution-time representation of sorting.
@@ -329,7 +329,7 @@ typedef struct Aggref
  *		subselect		- subselect as Query* or parsetree
  *
  * A SubLink represents a subselect appearing in an expression, and in some
- * cases also the combining operator(s) just above it.  The subLinkType
+ * cases also the combining operator(s) just above it.	The subLinkType
  * indicates the form of the expression represented:
  *	EXISTS_SUBLINK		EXISTS(SELECT ...)
  *	ALL_SUBLINK			(lefthand) op ALL (SELECT ...)
@@ -350,21 +350,21 @@ typedef struct Aggref
  * NOTE: lefthand and oper have varying meanings depending on where you look
  * in the parse/plan pipeline:
  * 1. gram.y delivers a list of the (untransformed) lefthand expressions in
- *    lefthand, and sets oper to a one-element list containing the string
- *    name of the operator.
+ *	  lefthand, and sets oper to a one-element list containing the string
+ *	  name of the operator.
  * 2. The parser's expression transformation transforms lefthand normally,
- *    and replaces oper with a list of Oper nodes, one per lefthand
- *    expression.  These nodes represent the parser's resolution of exactly
- *    which operator to apply to each pair of lefthand and targetlist
- *    expressions.  However, we have not constructed actual Expr trees for
- *    these operators yet.  This is the representation seen in saved rules
- *    and in the rewriter.
+ *	  and replaces oper with a list of Oper nodes, one per lefthand
+ *	  expression.  These nodes represent the parser's resolution of exactly
+ *	  which operator to apply to each pair of lefthand and targetlist
+ *	  expressions.	However, we have not constructed actual Expr trees for
+ *	  these operators yet.	This is the representation seen in saved rules
+ *	  and in the rewriter.
  * 3. Finally, the planner converts the oper list to a list of normal Expr
- *    nodes representing the application of the operator(s) to the lefthand
- *    expressions and values from the inner targetlist.  The inner
- *    targetlist items are represented by placeholder Param or Const nodes.
- *    The lefthand field is set to NIL, since its expressions are now in
- *    the Expr list.  This representation is passed to the executor.
+ *	  nodes representing the application of the operator(s) to the lefthand
+ *	  expressions and values from the inner targetlist.  The inner
+ *	  targetlist items are represented by placeholder Param or Const nodes.
+ *	  The lefthand field is set to NIL, since its expressions are now in
+ *	  the Expr list.  This representation is passed to the executor.
  *
  * Planner routines that might see either representation 2 or 3 can tell
  * the difference by checking whether lefthand is NIL or not.  Also,
@@ -372,7 +372,7 @@ typedef struct Aggref
  * found in SubLinks that are children of SubPlan nodes.
  *
  * In EXISTS and EXPR SubLinks, both lefthand and oper are unused and are
- * always NIL.  useor is not significant either for these sublink types.
+ * always NIL.	useor is not significant either for these sublink types.
  * ----------------
  */
 typedef enum SubLinkType
@@ -432,12 +432,12 @@ typedef struct Array
  *		refelemlength	- length of the array element type
  *		refelembyval	- is the element type pass-by-value?
  *		refupperindexpr - expressions that evaluate to upper array indexes
- *		reflowerindexpr	- expressions that evaluate to lower array indexes
+ *		reflowerindexpr - expressions that evaluate to lower array indexes
  *		refexpr			- the expression that evaluates to an array value
  *		refassgnexpr	- expression for the source value, or NULL if fetch
  *
  * If reflowerindexpr = NIL, then we are fetching or storing a single array
- * element at the subscripts given by refupperindexpr.  Otherwise we are
+ * element at the subscripts given by refupperindexpr.	Otherwise we are
  * fetching or storing an array slice, that is a rectangular subarray
  * with lower and upper bounds given by the index expressions.
  * reflowerindexpr must be the same length as refupperindexpr when it
@@ -445,7 +445,7 @@ typedef struct Array
  *
  * Note: array types can be fixed-length (refattrlength > 0), but only
  * when the element type is itself fixed-length.  Otherwise they are
- * varlena structures and have refattrlength = -1.  In any case,
+ * varlena structures and have refattrlength = -1.	In any case,
  * an array type is never pass-by-value.
  *
  * Note: currently, refelemtype is NOT the element type, but the array type,

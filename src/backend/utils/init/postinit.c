@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/init/postinit.c,v 1.56 2000/01/26 05:57:26 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/init/postinit.c,v 1.57 2000/04/12 17:16:02 momjian Exp $
  *
  *
  *-------------------------------------------------------------------------
@@ -77,12 +77,12 @@ ReverifyMyDatabase(const char *name)
 {
 	Relation	pgdbrel;
 	HeapScanDesc pgdbscan;
-	ScanKeyData	key;
+	ScanKeyData key;
 	HeapTuple	tup;
 
 	/*
-	 * Because we grab AccessShareLock here, we can be sure that
-	 * destroydb is not running in parallel with us (any more).
+	 * Because we grab AccessShareLock here, we can be sure that destroydb
+	 * is not running in parallel with us (any more).
 	 */
 	pgdbrel = heap_openr(DatabaseRelationName, AccessShareLock);
 
@@ -97,12 +97,12 @@ ReverifyMyDatabase(const char *name)
 	{
 		/* OOPS */
 		heap_close(pgdbrel, AccessShareLock);
+
 		/*
 		 * The only real problem I could have created is to load dirty
-		 * buffers for the dead database into shared buffer cache;
-		 * if I did, some other backend will eventually try to write
-		 * them and die in mdblindwrt.  Flush any such pages to forestall
-		 * trouble.
+		 * buffers for the dead database into shared buffer cache; if I
+		 * did, some other backend will eventually try to write them and
+		 * die in mdblindwrt.  Flush any such pages to forestall trouble.
 		 */
 		DropBuffers(MyDatabaseId);
 		/* Now I can commit hara-kiri with a clear conscience... */
@@ -112,15 +112,15 @@ ReverifyMyDatabase(const char *name)
 
 	/*
 	 * OK, we're golden.  Only other to-do item is to save the MULTIBYTE
-	 * encoding info out of the pg_database tuple.  Note we also set the
-	 * "template encoding", which is the default encoding for any
-	 * CREATE DATABASE commands executed in this backend; essentially,
-	 * you get the same encoding of the database you connected to as
-	 * the default.  (This replaces code that unreliably grabbed
-	 * template1's encoding out of pg_database.  We could do an extra
-	 * scan to find template1's tuple, but for 99.99% of all backend
-	 * startups it'd be wasted cycles --- and the 'createdb' script
-	 * connects to template1 anyway, so there's no difference.)
+	 * encoding info out of the pg_database tuple.	Note we also set the
+	 * "template encoding", which is the default encoding for any CREATE
+	 * DATABASE commands executed in this backend; essentially, you get
+	 * the same encoding of the database you connected to as the default.
+	 * (This replaces code that unreliably grabbed template1's encoding
+	 * out of pg_database.	We could do an extra scan to find template1's
+	 * tuple, but for 99.99% of all backend startups it'd be wasted cycles
+	 * --- and the 'createdb' script connects to template1 anyway, so
+	 * there's no difference.)
 	 */
 #ifdef MULTIBYTE
 	SetDatabaseEncoding(((Form_pg_database) GETSTRUCT(tup))->encoding);
@@ -250,7 +250,7 @@ InitPostgres(const char *dbname)
 		on_shmem_exit(FlushBufferPool, (caddr_t) NULL);
 #endif
 
-    SetDatabaseName(dbname);
+	SetDatabaseName(dbname);
 	/* ----------------
 	 *	initialize the database id used for system caches and lock tables
 	 * ----------------
@@ -262,56 +262,56 @@ InitPostgres(const char *dbname)
 	}
 	else
 	{
-        char *reason;
-        char *fullpath,
-              datpath[MAXPGPATH];
+		char	   *reason;
+		char	   *fullpath,
+					datpath[MAXPGPATH];
 
-        /* Verify if DataDir is ok */
-        if (access(DataDir, F_OK) == -1)
-            elog(FATAL, "Database system not found. Data directory '%s' does not exist.",
-                 DataDir);
+		/* Verify if DataDir is ok */
+		if (access(DataDir, F_OK) == -1)
+			elog(FATAL, "Database system not found. Data directory '%s' does not exist.",
+				 DataDir);
 
-        ValidatePgVersion(DataDir, &reason);
-        if (reason != NULL)
-            elog(FATAL, reason);
+		ValidatePgVersion(DataDir, &reason);
+		if (reason != NULL)
+			elog(FATAL, reason);
 
-        /*-----------------
-         * Find oid and path of the database we're about to open. Since we're
-         * not yet up and running we have to use the hackish GetRawDatabaseInfo.
-         *
-         * OLD COMMENTS:
-         *		The database's oid forms half of the unique key for the system
-         *		caches and lock tables.  We therefore want it initialized before
-         *		we open any relations, since opening relations puts things in the
-         *		cache.	To get around this problem, this code opens and scans the
-         *		pg_database relation by hand.
-         */
+		/*-----------------
+		 * Find oid and path of the database we're about to open. Since we're
+		 * not yet up and running we have to use the hackish GetRawDatabaseInfo.
+		 *
+		 * OLD COMMENTS:
+		 *		The database's oid forms half of the unique key for the system
+		 *		caches and lock tables.  We therefore want it initialized before
+		 *		we open any relations, since opening relations puts things in the
+		 *		cache.	To get around this problem, this code opens and scans the
+		 *		pg_database relation by hand.
+		 */
 
-        GetRawDatabaseInfo(dbname, &MyDatabaseId, datpath);
+		GetRawDatabaseInfo(dbname, &MyDatabaseId, datpath);
 
-        if (!OidIsValid(MyDatabaseId))
-            elog(FATAL,
-                 "Database \"%s\" does not exist in the system catalog.",
-                 dbname);
+		if (!OidIsValid(MyDatabaseId))
+			elog(FATAL,
+				 "Database \"%s\" does not exist in the system catalog.",
+				 dbname);
 
-        fullpath = ExpandDatabasePath(datpath);
-        if (!fullpath)
-            elog(FATAL, "Database path could not be resolved.");
+		fullpath = ExpandDatabasePath(datpath);
+		if (!fullpath)
+			elog(FATAL, "Database path could not be resolved.");
 
-        /* Verify the database path */
+		/* Verify the database path */
 
-        if (access(fullpath, F_OK) == -1)
-            elog(FATAL, "Database \"%s\" does not exist. The data directory '%s' is missing.",
-                 dbname, fullpath);
+		if (access(fullpath, F_OK) == -1)
+			elog(FATAL, "Database \"%s\" does not exist. The data directory '%s' is missing.",
+				 dbname, fullpath);
 
-        ValidatePgVersion(fullpath, &reason);
-        if (reason != NULL)
-            elog(FATAL, "%s", reason);
+		ValidatePgVersion(fullpath, &reason);
+		if (reason != NULL)
+			elog(FATAL, "%s", reason);
 
-        if(chdir(fullpath) == -1)
-            elog(FATAL, "Unable to change directory to '%s': %s", fullpath, strerror(errno));
+		if (chdir(fullpath) == -1)
+			elog(FATAL, "Unable to change directory to '%s': %s", fullpath, strerror(errno));
 
-        SetDatabasePath(fullpath);
+		SetDatabasePath(fullpath);
 	}
 
 	/*
@@ -319,8 +319,9 @@ InitPostgres(const char *dbname)
 	 */
 
 	/*
-	 * Initialize the transaction system and the relation descriptor cache.
-	 * Note we have to make certain the lock manager is off while we do this.
+	 * Initialize the transaction system and the relation descriptor
+	 * cache. Note we have to make certain the lock manager is off while
+	 * we do this.
 	 */
 	AmiTransactionOverride(IsBootstrapProcessingMode());
 	LockDisable(true);
@@ -344,10 +345,10 @@ InitPostgres(const char *dbname)
 	InitProcess(PostgresIpcKey);
 
 	/*
-	 * Initialize my entry in the shared-invalidation manager's
-	 * array of per-backend data.  (Formerly this came before
-	 * InitProcess, but now it must happen after, because it uses
-	 * MyProc.)  Once I have done this, I am visible to other backends!
+	 * Initialize my entry in the shared-invalidation manager's array of
+	 * per-backend data.  (Formerly this came before InitProcess, but now
+	 * it must happen after, because it uses MyProc.)  Once I have done
+	 * this, I am visible to other backends!
 	 *
 	 * Sets up MyBackendId, a unique backend identifier.
 	 */
@@ -361,8 +362,8 @@ InitPostgres(const char *dbname)
 	}
 
 	/*
-	 * Initialize the access methods.
-	 * Does not touch files (?) - thomas 1997-11-01
+	 * Initialize the access methods. Does not touch files (?) - thomas
+	 * 1997-11-01
 	 */
 	initam();
 
@@ -412,9 +413,9 @@ BaseInit(void)
 	EnableExceptionHandling(true);
 
 	/*
-	 * Memory system initialization - we may call palloc after 
-	 * EnableMemoryContext()).	Note that EnableMemoryContext() 
-	 * must happen before EnablePortalManager().
+	 * Memory system initialization - we may call palloc after
+	 * EnableMemoryContext()).	Note that EnableMemoryContext() must
+	 * happen before EnablePortalManager().
 	 */
 	EnableMemoryContext(true);	/* initializes the "top context" */
 	EnablePortalManager(true);	/* memory for portal/transaction stuff */

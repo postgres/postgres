@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/optimizer/plan/planner.c,v 1.78 2000/03/21 05:12:01 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/optimizer/plan/planner.c,v 1.79 2000/04/12 17:15:22 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -38,10 +38,10 @@
 
 
 static List *make_subplanTargetList(Query *parse, List *tlist,
-									AttrNumber **groupColIdx);
+					   AttrNumber **groupColIdx);
 static Plan *make_groupplan(List *group_tlist, bool tuplePerGroup,
-							List *groupClause, AttrNumber *grpColIdx,
-							bool is_presorted, Plan *subplan);
+			   List *groupClause, AttrNumber *grpColIdx,
+			   bool is_presorted, Plan *subplan);
 static Plan *make_sortplan(List *tlist, List *sortcls, Plan *plannode);
 
 /*****************************************************************************
@@ -64,7 +64,7 @@ planner(Query *parse)
 	transformKeySetQuery(parse);
 
 	/* primary planning entry point (may recurse for subplans) */
-	result_plan = subquery_planner(parse, -1.0 /* default case */);
+	result_plan = subquery_planner(parse, -1.0 /* default case */ );
 
 	Assert(PlannerQueryLevel == 1);
 
@@ -110,21 +110,22 @@ planner(Query *parse)
 Plan *
 subquery_planner(Query *parse, double tuple_fraction)
 {
+
 	/*
 	 * A HAVING clause without aggregates is equivalent to a WHERE clause
-	 * (except it can only refer to grouped fields).  If there are no
-	 * aggs anywhere in the query, then we don't want to create an Agg
-	 * plan node, so merge the HAVING condition into WHERE.  (We used to
+	 * (except it can only refer to grouped fields).  If there are no aggs
+	 * anywhere in the query, then we don't want to create an Agg plan
+	 * node, so merge the HAVING condition into WHERE.	(We used to
 	 * consider this an error condition, but it seems to be legal SQL.)
 	 */
-	if (parse->havingQual != NULL && ! parse->hasAggs)
+	if (parse->havingQual != NULL && !parse->hasAggs)
 	{
 		if (parse->qual == NULL)
 			parse->qual = parse->havingQual;
 		else
 			parse->qual = (Node *) make_andclause(lappend(lcons(parse->qual,
 																NIL),
-														  parse->havingQual));
+													 parse->havingQual));
 		parse->havingQual = NULL;
 	}
 
@@ -144,8 +145,8 @@ subquery_planner(Query *parse, double tuple_fraction)
 	/*
 	 * Canonicalize the qual, and convert it to implicit-AND format.
 	 *
-	 * XXX Is there any value in re-applying eval_const_expressions
-	 * after canonicalize_qual?
+	 * XXX Is there any value in re-applying eval_const_expressions after
+	 * canonicalize_qual?
 	 */
 	parse->qual = (Node *) canonicalize_qual((Expr *) parse->qual, true);
 #ifdef OPTIMIZER_DEBUG
@@ -169,15 +170,17 @@ subquery_planner(Query *parse, double tuple_fraction)
 
 		if (parse->groupClause != NIL)
 		{
+
 			/*
-			 * Check for ungrouped variables passed to subplans.
-			 * Note we do NOT do this for subplans in WHERE; it's legal
-			 * there because WHERE is evaluated pre-GROUP.
+			 * Check for ungrouped variables passed to subplans. Note we
+			 * do NOT do this for subplans in WHERE; it's legal there
+			 * because WHERE is evaluated pre-GROUP.
 			 *
-			 * An interesting fine point: if we reassigned a HAVING qual
-			 * into WHERE above, then we will accept references to ungrouped
-			 * vars from subplans in the HAVING qual.  This is not entirely
-			 * consistent, but it doesn't seem particularly harmful...
+			 * An interesting fine point: if we reassigned a HAVING qual into
+			 * WHERE above, then we will accept references to ungrouped
+			 * vars from subplans in the HAVING qual.  This is not
+			 * entirely consistent, but it doesn't seem particularly
+			 * harmful...
 			 */
 			check_subplans_for_ungrouped_vars((Node *) parse->targetList,
 											  parse);
@@ -218,8 +221,8 @@ subquery_planner(Query *parse, double tuple_fraction)
  * tuple_fraction is the fraction of tuples we expect will be retrieved
  *
  * tuple_fraction is interpreted as follows:
- *    < 0: determine fraction by inspection of query (normal case)
- *    0: expect all tuples to be retrieved
+ *	  < 0: determine fraction by inspection of query (normal case)
+ *	  0: expect all tuples to be retrieved
  *	  0 < tuple_fraction < 1: expect the given fraction of tuples available
  *		from the plan to be retrieved
  *	  tuple_fraction >= 1: tuple_fraction is the absolute number of tuples
@@ -251,13 +254,18 @@ union_planner(Query *parse,
 									  parse->commandType,
 									  parse->resultRelation,
 									  parse->rtable);
+
 		/*
-		 * We leave current_pathkeys NIL indicating we do not know sort order.
-		 * Actually, for a normal UNION we have done an explicit sort; ought
-		 * to change interface to plan_union_queries to pass that info back!
+		 * We leave current_pathkeys NIL indicating we do not know sort
+		 * order. Actually, for a normal UNION we have done an explicit
+		 * sort; ought to change interface to plan_union_queries to pass
+		 * that info back!
 		 */
 
-		/* Calculate pathkeys that represent grouping/ordering requirements */
+		/*
+		 * Calculate pathkeys that represent grouping/ordering
+		 * requirements
+		 */
 		group_pathkeys = make_pathkeys_for_sortclauses(parse->groupClause,
 													   tlist);
 		sort_pathkeys = make_pathkeys_for_sortclauses(parse->sortClause,
@@ -280,13 +288,13 @@ union_planner(Query *parse,
 													rt_index);
 
 		/*
-		 * Fix up outer target list.  NOTE: unlike the case for non-inherited
-		 * query, we pass the unfixed tlist to subplans, which do their own
-		 * fixing.  But we still want to fix the outer target list afterwards.
-		 * I *think* this is correct --- doing the fix before recursing is
-		 * definitely wrong, because preprocess_targetlist() will do the
-		 * wrong thing if invoked twice on the same list. Maybe that is a bug?
-		 * tgl 6/6/99
+		 * Fix up outer target list.  NOTE: unlike the case for
+		 * non-inherited query, we pass the unfixed tlist to subplans,
+		 * which do their own fixing.  But we still want to fix the outer
+		 * target list afterwards. I *think* this is correct --- doing the
+		 * fix before recursing is definitely wrong, because
+		 * preprocess_targetlist() will do the wrong thing if invoked
+		 * twice on the same list. Maybe that is a bug? tgl 6/6/99
 		 */
 		tlist = preprocess_targetlist(tlist,
 									  parse->commandType,
@@ -295,12 +303,16 @@ union_planner(Query *parse,
 
 		if (parse->rowMark != NULL)
 			elog(ERROR, "SELECT FOR UPDATE is not supported for inherit queries");
+
 		/*
-		 * We leave current_pathkeys NIL indicating we do not know sort order
-		 * of the Append-ed results.
+		 * We leave current_pathkeys NIL indicating we do not know sort
+		 * order of the Append-ed results.
 		 */
 
-		/* Calculate pathkeys that represent grouping/ordering requirements */
+		/*
+		 * Calculate pathkeys that represent grouping/ordering
+		 * requirements
+		 */
 		group_pathkeys = make_pathkeys_for_sortclauses(parse->groupClause,
 													   tlist);
 		sort_pathkeys = make_pathkeys_for_sortclauses(parse->sortClause,
@@ -358,7 +370,10 @@ union_planner(Query *parse,
 		 */
 		sub_tlist = make_subplanTargetList(parse, tlist, &groupColIdx);
 
-		/* Calculate pathkeys that represent grouping/ordering requirements */
+		/*
+		 * Calculate pathkeys that represent grouping/ordering
+		 * requirements
+		 */
 		group_pathkeys = make_pathkeys_for_sortclauses(parse->groupClause,
 													   tlist);
 		sort_pathkeys = make_pathkeys_for_sortclauses(parse->sortClause,
@@ -368,11 +383,12 @@ union_planner(Query *parse,
 		 * Figure out whether we need a sorted result from query_planner.
 		 *
 		 * If we have a GROUP BY clause, then we want a result sorted
-		 * properly for grouping.  Otherwise, if there is an ORDER BY clause,
-		 * we want to sort by the ORDER BY clause.  (Note: if we have both,
-		 * and ORDER BY is a superset of GROUP BY, it would be tempting to
-		 * request sort by ORDER BY --- but that might just leave us failing
-		 * to exploit an available sort order at all.  Needs more thought...)
+		 * properly for grouping.  Otherwise, if there is an ORDER BY
+		 * clause, we want to sort by the ORDER BY clause.	(Note: if we
+		 * have both, and ORDER BY is a superset of GROUP BY, it would be
+		 * tempting to request sort by ORDER BY --- but that might just
+		 * leave us failing to exploit an available sort order at all.
+		 * Needs more thought...)
 		 */
 		if (parse->groupClause)
 			parse->query_pathkeys = group_pathkeys;
@@ -382,15 +398,16 @@ union_planner(Query *parse,
 			parse->query_pathkeys = NIL;
 
 		/*
-		 * Figure out whether we expect to retrieve all the tuples that the
-		 * plan can generate, or to stop early due to a LIMIT or other
-		 * factors.  If the caller passed a value >= 0, believe that value,
-		 * else do our own examination of the query context.
+		 * Figure out whether we expect to retrieve all the tuples that
+		 * the plan can generate, or to stop early due to a LIMIT or other
+		 * factors.  If the caller passed a value >= 0, believe that
+		 * value, else do our own examination of the query context.
 		 */
 		if (tuple_fraction < 0.0)
 		{
 			/* Initial assumption is we need all the tuples */
 			tuple_fraction = 0.0;
+
 			/*
 			 * Check for a LIMIT clause.
 			 */
@@ -430,33 +447,37 @@ union_planner(Query *parse,
 				}
 				else
 				{
+
 					/*
-					 * COUNT is a PARAM ... don't know exactly what the limit
-					 * will be, but for lack of a better idea assume 10%
-					 * of the plan's result is wanted.
+					 * COUNT is a PARAM ... don't know exactly what the
+					 * limit will be, but for lack of a better idea assume
+					 * 10% of the plan's result is wanted.
 					 */
 					tuple_fraction = 0.10;
 				}
 			}
+
 			/*
 			 * Check for a retrieve-into-portal, ie DECLARE CURSOR.
 			 *
 			 * We have no real idea how many tuples the user will ultimately
-			 * FETCH from a cursor, but it seems a good bet that he doesn't
-			 * want 'em all.  Optimize for 10% retrieval (you gotta better
-			 * number?)
+			 * FETCH from a cursor, but it seems a good bet that he
+			 * doesn't want 'em all.  Optimize for 10% retrieval (you
+			 * gotta better number?)
 			 */
 			if (parse->isPortal)
 				tuple_fraction = 0.10;
 		}
+
 		/*
 		 * Adjust tuple_fraction if we see that we are going to apply
 		 * grouping/aggregation/etc.  This is not overridable by the
-		 * caller, since it reflects plan actions that this routine
-		 * will certainly take, not assumptions about context.
+		 * caller, since it reflects plan actions that this routine will
+		 * certainly take, not assumptions about context.
 		 */
 		if (parse->groupClause)
 		{
+
 			/*
 			 * In GROUP BY mode, we have the little problem that we don't
 			 * really know how many input tuples will be needed to make a
@@ -464,33 +485,42 @@ union_planner(Query *parse,
 			 * input count.  For lack of a better idea, assume 25% of the
 			 * input data will be processed if there is any output limit.
 			 * However, if the caller gave us a fraction rather than an
-			 * absolute count, we can keep using that fraction (which amounts
-			 * to assuming that all the groups are about the same size).
+			 * absolute count, we can keep using that fraction (which
+			 * amounts to assuming that all the groups are about the same
+			 * size).
 			 */
 			if (tuple_fraction >= 1.0)
 				tuple_fraction = 0.25;
+
 			/*
 			 * If both GROUP BY and ORDER BY are specified, we will need
 			 * two levels of sort --- and, therefore, certainly need to
 			 * read all the input tuples --- unless ORDER BY is a subset
 			 * of GROUP BY.  (Although we are comparing non-canonicalized
 			 * pathkeys here, it should be OK since they will both contain
-			 * only single-element sublists at this point.  See pathkeys.c.)
+			 * only single-element sublists at this point.	See
+			 * pathkeys.c.)
 			 */
 			if (parse->groupClause && parse->sortClause &&
-				! pathkeys_contained_in(sort_pathkeys, group_pathkeys))
+				!pathkeys_contained_in(sort_pathkeys, group_pathkeys))
 				tuple_fraction = 0.0;
 		}
 		else if (parse->hasAggs)
 		{
-			/* Ungrouped aggregate will certainly want all the input tuples. */
+
+			/*
+			 * Ungrouped aggregate will certainly want all the input
+			 * tuples.
+			 */
 			tuple_fraction = 0.0;
 		}
 		else if (parse->distinctClause)
 		{
+
 			/*
 			 * SELECT DISTINCT, like GROUP, will absorb an unpredictable
-			 * number of input tuples per output tuple.  Handle the same way.
+			 * number of input tuples per output tuple.  Handle the same
+			 * way.
 			 */
 			if (tuple_fraction >= 1.0)
 				tuple_fraction = 0.25;
@@ -502,14 +532,15 @@ union_planner(Query *parse,
 									(List *) parse->qual,
 									tuple_fraction);
 
-		/* query_planner returns actual sort order (which is not
+		/*
+		 * query_planner returns actual sort order (which is not
 		 * necessarily what we requested) in query_pathkeys.
 		 */
 		current_pathkeys = parse->query_pathkeys;
 	}
 
 	/* query_planner returns NULL if it thinks plan is bogus */
-	if (! result_plan)
+	if (!result_plan)
 		elog(ERROR, "union_planner: failed to create plan");
 
 	/*
@@ -539,9 +570,9 @@ union_planner(Query *parse,
 
 		/*
 		 * If there are aggregates then the Group node should just return
-		 * the same set of vars as the subplan did (but we can exclude
-		 * any GROUP BY expressions).  If there are no aggregates
-		 * then the Group node had better compute the final tlist.
+		 * the same set of vars as the subplan did (but we can exclude any
+		 * GROUP BY expressions).  If there are no aggregates then the
+		 * Group node had better compute the final tlist.
 		 */
 		if (parse->hasAggs)
 			group_tlist = flatten_tlist(result_plan->targetlist);
@@ -549,8 +580,8 @@ union_planner(Query *parse,
 			group_tlist = tlist;
 
 		/*
-		 * Figure out whether the path result is already ordered the way we
-		 * need it --- if so, no need for an explicit sort step.
+		 * Figure out whether the path result is already ordered the way
+		 * we need it --- if so, no need for an explicit sort step.
 		 */
 		if (pathkeys_contained_in(group_pathkeys, current_pathkeys))
 		{
@@ -559,7 +590,9 @@ union_planner(Query *parse,
 		}
 		else
 		{
-			/* We will need to do an explicit sort by the GROUP BY clause.
+
+			/*
+			 * We will need to do an explicit sort by the GROUP BY clause.
 			 * make_groupplan will do the work, but set current_pathkeys
 			 * to indicate the resulting order.
 			 */
@@ -594,10 +627,8 @@ union_planner(Query *parse,
 	 */
 	if (parse->sortClause)
 	{
-		if (! pathkeys_contained_in(sort_pathkeys, current_pathkeys))
-		{
+		if (!pathkeys_contained_in(sort_pathkeys, current_pathkeys))
 			result_plan = make_sortplan(tlist, parse->sortClause, result_plan);
-		}
 	}
 
 	/*
@@ -633,7 +664,7 @@ union_planner(Query *parse,
  * we want to pass this targetlist to the subplan:
  *		a,b,c,d,a+b
  * where the a+b target will be used by the Sort/Group steps, and the
- * other targets will be used for computing the final results.  (In the
+ * other targets will be used for computing the final results.	(In the
  * above example we could theoretically suppress the a and b targets and
  * use only a+b, but it's not really worth the trouble.)
  *
@@ -675,8 +706,9 @@ make_subplanTargetList(Query *parse,
 
 	/*
 	 * If grouping, create sub_tlist entries for all GROUP BY expressions
-	 * (GROUP BY items that are simple Vars should be in the list already),
-	 * and make an array showing where the group columns are in the sub_tlist.
+	 * (GROUP BY items that are simple Vars should be in the list
+	 * already), and make an array showing where the group columns are in
+	 * the sub_tlist.
 	 */
 	numCols = length(parse->groupClause);
 	if (numCols > 0)
@@ -690,10 +722,10 @@ make_subplanTargetList(Query *parse,
 
 		foreach(gl, parse->groupClause)
 		{
-			GroupClause	   *grpcl = (GroupClause *) lfirst(gl);
-			Node		   *groupexpr = get_sortgroupclause_expr(grpcl, tlist);
-			TargetEntry	   *te = NULL;
-			List		   *sl;
+			GroupClause *grpcl = (GroupClause *) lfirst(gl);
+			Node	   *groupexpr = get_sortgroupclause_expr(grpcl, tlist);
+			TargetEntry *te = NULL;
+			List	   *sl;
 
 			/* Find or make a matching sub_tlist entry */
 			foreach(sl, sub_tlist)
@@ -702,7 +734,7 @@ make_subplanTargetList(Query *parse,
 				if (equal(groupexpr, te->expr))
 					break;
 			}
-			if (! sl)
+			if (!sl)
 			{
 				te = makeTargetEntry(makeResdom(length(sub_tlist) + 1,
 												exprType(groupexpr),
@@ -739,8 +771,9 @@ make_groupplan(List *group_tlist,
 {
 	int			numCols = length(groupClause);
 
-	if (! is_presorted)
+	if (!is_presorted)
 	{
+
 		/*
 		 * The Sort node always just takes a copy of the subplan's tlist
 		 * plus ordering information.  (This might seem inefficient if the
@@ -755,14 +788,14 @@ make_groupplan(List *group_tlist,
 
 		foreach(gl, groupClause)
 		{
-			GroupClause	   *grpcl = (GroupClause *) lfirst(gl);
-			TargetEntry	   *te = nth(grpColIdx[keyno]-1, sort_tlist);
-			Resdom		   *resdom = te->resdom;
+			GroupClause *grpcl = (GroupClause *) lfirst(gl);
+			TargetEntry *te = nth(grpColIdx[keyno] - 1, sort_tlist);
+			Resdom	   *resdom = te->resdom;
 
 			/*
-			 * Check for the possibility of duplicate group-by clauses --- the
-			 * parser should have removed 'em, but the Sort executor will get
-			 * terribly confused if any get through!
+			 * Check for the possibility of duplicate group-by clauses ---
+			 * the parser should have removed 'em, but the Sort executor
+			 * will get terribly confused if any get through!
 			 */
 			if (resdom->reskey == 0)
 			{
@@ -808,8 +841,8 @@ make_sortplan(List *tlist, List *sortcls, Plan *plannode)
 
 		/*
 		 * Check for the possibility of duplicate order-by clauses --- the
-		 * parser should have removed 'em, but the executor will get terribly
-		 * confused if any get through!
+		 * parser should have removed 'em, but the executor will get
+		 * terribly confused if any get through!
 		 */
 		if (resdom->reskey == 0)
 		{

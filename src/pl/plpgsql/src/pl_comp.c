@@ -3,7 +3,7 @@
  *			  procedural language
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/pl/plpgsql/src/pl_comp.c,v 1.17 2000/01/20 05:44:34 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/pl/plpgsql/src/pl_comp.c,v 1.18 2000/04/12 17:17:19 momjian Exp $
  *
  *	  This software is copyrighted by Jan Wieck - Hamburg.
  *
@@ -67,8 +67,8 @@
  * ----------
  */
 extern PLPGSQL_YYSTYPE plpgsql_yylval;
-extern char 		plpgsql_yytext[];
-extern int			plpgsql_yylineno;
+extern char plpgsql_yytext[];
+extern int	plpgsql_yylineno;
 
 /* ----------
  * Our own local and global variables

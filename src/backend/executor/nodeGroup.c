@@ -15,7 +15,7 @@
  *	  locate group boundaries.
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/executor/nodeGroup.c,v 1.33 2000/01/27 18:11:27 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/executor/nodeGroup.c,v 1.34 2000/04/12 17:15:09 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -97,8 +97,9 @@ ExecGroupEveryTuple(Group *node)
 	{
 		grpstate->grp_useFirstTuple = FALSE;
 
-		/* note we rely on subplan to hold ownership of the tuple
-		 * for as long as we need it; we don't copy it.
+		/*
+		 * note we rely on subplan to hold ownership of the tuple for as
+		 * long as we need it; we don't copy it.
 		 */
 		ExecStoreTuple(grpstate->grp_firstTuple,
 					   grpstate->csstate.css_ScanTupleSlot,
@@ -122,17 +123,20 @@ ExecGroupEveryTuple(Group *node)
 		}
 		else
 		{
+
 			/*
 			 * Compare with first tuple and see if this tuple is of the
 			 * same group.
 			 */
-			if (! execTuplesMatch(firsttuple, outerTuple,
-								  tupdesc,
-								  node->numCols, node->grpColIdx,
-								  grpstate->eqfunctions))
+			if (!execTuplesMatch(firsttuple, outerTuple,
+								 tupdesc,
+								 node->numCols, node->grpColIdx,
+								 grpstate->eqfunctions))
 			{
+
 				/*
-				 * No; save the tuple to return it next time, and return NULL
+				 * No; save the tuple to return it next time, and return
+				 * NULL
 				 */
 				grpstate->grp_useFirstTuple = TRUE;
 				heap_freetuple(firsttuple);
@@ -142,8 +146,9 @@ ExecGroupEveryTuple(Group *node)
 			}
 		}
 
-		/* note we rely on subplan to hold ownership of the tuple
-		 * for as long as we need it; we don't copy it.
+		/*
+		 * note we rely on subplan to hold ownership of the tuple for as
+		 * long as we need it; we don't copy it.
 		 */
 		ExecStoreTuple(outerTuple,
 					   grpstate->csstate.css_ScanTupleSlot,
@@ -227,13 +232,13 @@ ExecGroupOneTuple(Group *node)
 		outerTuple = outerslot->val;
 
 		/*
-		 * Compare with first tuple and see if this tuple is of the
-		 * same group.
+		 * Compare with first tuple and see if this tuple is of the same
+		 * group.
 		 */
-		if (! execTuplesMatch(firsttuple, outerTuple,
-							  tupdesc,
-							  node->numCols, node->grpColIdx,
-							  grpstate->eqfunctions))
+		if (!execTuplesMatch(firsttuple, outerTuple,
+							 tupdesc,
+							 node->numCols, node->grpColIdx,
+							 grpstate->eqfunctions))
 			break;
 	}
 
@@ -244,8 +249,9 @@ ExecGroupOneTuple(Group *node)
 	 */
 	projInfo = grpstate->csstate.cstate.cs_ProjInfo;
 
-	/* note we rely on subplan to hold ownership of the tuple
-	 * for as long as we need it; we don't copy it.
+	/*
+	 * note we rely on subplan to hold ownership of the tuple for as long
+	 * as we need it; we don't copy it.
 	 */
 	ExecStoreTuple(firsttuple,
 				   grpstate->csstate.css_ScanTupleSlot,
@@ -418,7 +424,7 @@ execTuplesMatch(HeapTuple tuple1,
 	 * start comparing at the last field (least significant sort key).
 	 * That's the most likely to be different...
 	 */
-	for (i = numCols; --i >= 0; )
+	for (i = numCols; --i >= 0;)
 	{
 		AttrNumber	att = matchColIdx[i];
 		Datum		attr1,
@@ -445,7 +451,7 @@ execTuplesMatch(HeapTuple tuple1,
 
 		/* Apply the type-specific equality function */
 
-		equal = (Datum) (*fmgr_faddr(& eqfunctions[i])) (attr1, attr2);
+		equal = (Datum) (*fmgr_faddr(&eqfunctions[i])) (attr1, attr2);
 
 		if (DatumGetInt32(equal) == 0)
 			return FALSE;
@@ -459,7 +465,7 @@ execTuplesMatch(HeapTuple tuple1,
  *		Look up the equality functions needed for execTuplesMatch.
  *		The result is a palloc'd array.
  */
-FmgrInfo *
+FmgrInfo   *
 execTuplesMatchPrepare(TupleDesc tupdesc,
 					   int numCols,
 					   AttrNumber *matchColIdx)
@@ -481,7 +487,7 @@ execTuplesMatchPrepare(TupleDesc tupdesc,
 				 typeidTypeName(typid));
 		}
 		pgopform = (Form_pg_operator) GETSTRUCT(eq_operator);
-		fmgr_info(pgopform->oprcode, & eqfunctions[i]);
+		fmgr_info(pgopform->oprcode, &eqfunctions[i]);
 	}
 
 	return eqfunctions;

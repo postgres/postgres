@@ -3,7 +3,7 @@
  *
  * Copyright 2000 by PostgreSQL Global Development Group
  *
- * $Header: /cvsroot/pgsql/src/bin/psql/command.c,v 1.27 2000/04/11 17:35:50 momjian Exp $
+ * $Header: /cvsroot/pgsql/src/bin/psql/command.c,v 1.28 2000/04/12 17:16:22 momjian Exp $
  */
 #include "postgres.h"
 #include "command.h"
@@ -46,12 +46,15 @@
 
 static backslashResult exec_command(const char *cmd,
 			 const char *options_string,
-             const char ** continue_parse,
+			 const char **continue_parse,
 			 PQExpBuffer query_buf);
 
-enum option_type { OT_NORMAL, OT_SQLID };
-static char * scan_option(char ** string, enum option_type type, char * quote);
-static char * unescape(const unsigned char *source, size_t len);
+enum option_type
+{
+	OT_NORMAL, OT_SQLID
+};
+static char *scan_option(char **string, enum option_type type, char *quote);
+static char *unescape(const unsigned char *source, size_t len);
 
 static bool do_edit(const char *filename_arg, PQExpBuffer query_buf);
 static bool do_connect(const char *new_dbname, const char *new_user);
@@ -84,35 +87,35 @@ HandleSlashCmds(const char *line,
 {
 	backslashResult status = CMD_SKIP_LINE;
 	char	   *my_line;
-	char       *options_string = NULL;
+	char	   *options_string = NULL;
 	size_t		blank_loc;
 	const char *continue_parse = NULL;	/* tell the mainloop where the
 										 * backslash command ended */
 
 #ifdef USE_ASSERT_CHECKING
-    assert(line);
-    assert(end_of_cmd);
+	assert(line);
+	assert(end_of_cmd);
 #endif
 
 	my_line = xstrdup(line);
 
 	/*
-	 * Find the first whitespace. line[blank_loc] will now
-	 * be the whitespace character or the \0 at the end
-     *
-     * Also look for a backslash, so stuff like \p\g works.
+	 * Find the first whitespace. line[blank_loc] will now be the
+	 * whitespace character or the \0 at the end
+	 *
+	 * Also look for a backslash, so stuff like \p\g works.
 	 */
 	blank_loc = strcspn(my_line, " \t\\");
 
-    if (my_line[blank_loc] == '\\')
-    {
-        continue_parse = &my_line[blank_loc];
+	if (my_line[blank_loc] == '\\')
+	{
+		continue_parse = &my_line[blank_loc];
 		my_line[blank_loc] = '\0';
-    }
+	}
 	/* do we have an option string? */
 	else if (my_line[blank_loc] != '\0')
-    {
-        options_string = &my_line[blank_loc + 1];
+	{
+		options_string = &my_line[blank_loc + 1];
 		my_line[blank_loc] = '\0';
 	}
 
@@ -120,11 +123,12 @@ HandleSlashCmds(const char *line,
 
 	if (status == CMD_UNKNOWN)
 	{
+
 		/*
-		 * If the command was not recognized, try inserting a space after the
-         * first letter and call again. The one letter commands allow arguments
-         * to start immediately after the command, but that is no longer
-         * encouraged.
+		 * If the command was not recognized, try inserting a space after
+		 * the first letter and call again. The one letter commands allow
+		 * arguments to start immediately after the command, but that is
+		 * no longer encouraged.
 		 */
 		char		new_cmd[2];
 
@@ -133,29 +137,29 @@ HandleSlashCmds(const char *line,
 
 		status = exec_command(new_cmd, my_line + 1, &continue_parse, query_buf);
 
-        if (status != CMD_UNKNOWN && isalpha(new_cmd[0]))
-            psql_error("Warning: this syntax is deprecated\n");
+		if (status != CMD_UNKNOWN && isalpha(new_cmd[0]))
+			psql_error("Warning: this syntax is deprecated\n");
 	}
 
 	if (status == CMD_UNKNOWN)
 	{
-        if (pset.cur_cmd_interactive)
-            fprintf(stderr, "Invalid command \\%s. Try \\? for help.\n", my_line);
-        else
-            psql_error("invalid command \\%s\n", my_line);
+		if (pset.cur_cmd_interactive)
+			fprintf(stderr, "Invalid command \\%s. Try \\? for help.\n", my_line);
+		else
+			psql_error("invalid command \\%s\n", my_line);
 		status = CMD_ERROR;
 	}
 
 	if (continue_parse && *continue_parse && *(continue_parse + 1) == '\\')
 		continue_parse += 2;
 
-    if (end_of_cmd)
-    {
-        if (continue_parse)
-            *end_of_cmd = line + (continue_parse - my_line);
-        else
-            *end_of_cmd = line + strlen(line);
-    }
+	if (end_of_cmd)
+	{
+		if (continue_parse)
+			*end_of_cmd = line + (continue_parse - my_line);
+		else
+			*end_of_cmd = line + strlen(line);
+	}
 
 	free(my_line);
 
@@ -167,25 +171,30 @@ HandleSlashCmds(const char *line,
 static backslashResult
 exec_command(const char *cmd,
 			 const char *options_string,
-             const char ** continue_parse,
+			 const char **continue_parse,
 			 PQExpBuffer query_buf)
 {
 	bool		success = true; /* indicate here if the command ran ok or
 								 * failed */
 	bool		quiet = QUIET();
 	backslashResult status = CMD_SKIP_LINE;
-    char       *string, *string_cpy;
+	char	   *string,
+			   *string_cpy;
 
-    /*
-     * The 'string' variable will be overwritten to point to the next token,
-     * hence we need an extra pointer so we can free this at the end.
-     */
-    if (options_string)
-        string = string_cpy = xstrdup(options_string);
-    else
-        string = string_cpy = NULL;
+	/*
+	 * The 'string' variable will be overwritten to point to the next
+	 * token, hence we need an extra pointer so we can free this at the
+	 * end.
+	 */
+	if (options_string)
+		string = string_cpy = xstrdup(options_string);
+	else
+		string = string_cpy = NULL;
 
-	/* \a -- toggle field alignment This makes little sense but we keep it around. */
+	/*
+	 * \a -- toggle field alignment This makes little sense but we keep it
+	 * around.
+	 */
 	if (strcmp(cmd, "a") == 0)
 	{
 		if (pset.popt.topt.format != PRINT_ALIGNED)
@@ -196,51 +205,54 @@ exec_command(const char *cmd,
 
 	/* \C -- override table title (formerly change HTML caption) */
 	else if (strcmp(cmd, "C") == 0)
-    {
-        char * opt = scan_option(&string, OT_NORMAL, NULL);
+	{
+		char	   *opt = scan_option(&string, OT_NORMAL, NULL);
+
 		success = do_pset("title", opt, &pset.popt, quiet);
-        free(opt);
-    }
+		free(opt);
+	}
 
 	/*----------
 	 * \c or \connect -- connect to new database or as different user
 	 *
 	 * \c foo bar  connect to db "foo" as user "bar"
-     * \c foo [-]  connect to db "foo" as current user
-     * \c - bar    connect to current db as user "bar"
-     * \c          connect to default db as default user
-     *----------
+	 * \c foo [-]  connect to db "foo" as current user
+	 * \c - bar    connect to current db as user "bar"
+	 * \c		   connect to default db as default user
+	 *----------
 	 */
 	else if (strcmp(cmd, "c") == 0 || strcmp(cmd, "connect") == 0)
 	{
-        char *opt1, *opt2;
-        char opt1q, opt2q;
+		char	   *opt1,
+				   *opt2;
+		char		opt1q,
+					opt2q;
 
-        opt1 = scan_option(&string, OT_NORMAL, &opt1q);
-        opt2 = scan_option(&string, OT_NORMAL, &opt2q);
+		opt1 = scan_option(&string, OT_NORMAL, &opt1q);
+		opt2 = scan_option(&string, OT_NORMAL, &opt2q);
 
 		if (opt2)
 			/* gave username */
-			success = do_connect(!opt1q && (strcmp(opt1, "-")==0 || strcmp(opt1, "")==0) ? "" : opt1,
-                                 !opt2q && (strcmp(opt2, "-")==0 || strcmp(opt2, "")==0) ? "" : opt2);
+			success = do_connect(!opt1q && (strcmp(opt1, "-") == 0 || strcmp(opt1, "") == 0) ? "" : opt1,
+								 !opt2q && (strcmp(opt2, "-") == 0 || strcmp(opt2, "") == 0) ? "" : opt2);
 		else if (opt1)
-            /* gave database name */
-            success = do_connect(!opt1q && (strcmp(opt1, "-")==0 || strcmp(opt1, "")==0) ? "" : opt1, "");
-        else
-            /* connect to default db as default user */
-            success = do_connect(NULL, NULL);
+			/* gave database name */
+			success = do_connect(!opt1q && (strcmp(opt1, "-") == 0 || strcmp(opt1, "") == 0) ? "" : opt1, "");
+		else
+			/* connect to default db as default user */
+			success = do_connect(NULL, NULL);
 
-        free(opt1);
-        free(opt2);
+		free(opt1);
+		free(opt2);
 	}
 
 	/* \copy */
 	else if (strcasecmp(cmd, "copy") == 0)
-    {
+	{
 		success = do_copy(options_string);
-        if (options_string)
-            string += strlen(string);
-    }
+		if (options_string)
+			string += strlen(string);
+	}
 
 	/* \copyright */
 	else if (strcmp(cmd, "copyright") == 0)
@@ -249,20 +261,20 @@ exec_command(const char *cmd,
 	/* \d* commands */
 	else if (cmd[0] == 'd')
 	{
-        char * name;
-        bool show_verbose;
+		char	   *name;
+		bool		show_verbose;
 
-        name = scan_option(&string, OT_SQLID, NULL);
-        show_verbose = strchr(cmd, '+') ? true : false;
+		name = scan_option(&string, OT_SQLID, NULL);
+		show_verbose = strchr(cmd, '+') ? true : false;
 
 		switch (cmd[1])
 		{
 			case '\0':
-            case '+':
+			case '+':
 				if (name)
 					success = describeTableDetails(name, show_verbose);
 				else
-                    /* standard listing of interesting things */
+					/* standard listing of interesting things */
 					success = listTables("tvs", NULL, show_verbose);
 				break;
 			case 'a':
@@ -299,7 +311,7 @@ exec_command(const char *cmd,
 			default:
 				status = CMD_UNKNOWN;
 		}
-        free(name);
+		free(name);
 	}
 
 
@@ -308,63 +320,63 @@ exec_command(const char *cmd,
 	 * the query buffer
 	 */
 	else if (strcmp(cmd, "e") == 0 || strcmp(cmd, "edit") == 0)
-    {
-        char * fname;
+	{
+		char	   *fname;
 
-        if (!query_buf)
-        {
-            psql_error("no query buffer\n");
-            status = CMD_ERROR;
-        }
-        else
-        {
-            fname = scan_option(&string, OT_NORMAL, NULL);
-            status = do_edit(fname, query_buf) ? CMD_NEWEDIT : CMD_ERROR;
-            free(fname);
-        }
-    }
+		if (!query_buf)
+		{
+			psql_error("no query buffer\n");
+			status = CMD_ERROR;
+		}
+		else
+		{
+			fname = scan_option(&string, OT_NORMAL, NULL);
+			status = do_edit(fname, query_buf) ? CMD_NEWEDIT : CMD_ERROR;
+			free(fname);
+		}
+	}
 
 	/* \echo and \qecho */
-	else if (strcmp(cmd, "echo") == 0 || strcmp(cmd, "qecho")==0)
+	else if (strcmp(cmd, "echo") == 0 || strcmp(cmd, "qecho") == 0)
 	{
-        char * value;
-        char quoted;
-        bool no_newline = false;
-        bool first = true;
-        FILE * fout;
+		char	   *value;
+		char		quoted;
+		bool		no_newline = false;
+		bool		first = true;
+		FILE	   *fout;
 
-        if (strcmp(cmd, "qecho")==0)
-            fout = pset.queryFout;
-        else
-            fout = stdout;
+		if (strcmp(cmd, "qecho") == 0)
+			fout = pset.queryFout;
+		else
+			fout = stdout;
 
-        while((value = scan_option(&string, OT_NORMAL, &quoted)))
-        {
-            if (!quoted && strcmp(value, "-n")==0)
-                no_newline = true;
-            else
-            {
-                if (first)
-                    first = false;
-                else
-                    fputc(' ', fout);
-                fputs(value, fout);
-            }
-            free(value);
-        }
-        if (!no_newline)
-            fputs("\n", fout);
+		while ((value = scan_option(&string, OT_NORMAL, &quoted)))
+		{
+			if (!quoted && strcmp(value, "-n") == 0)
+				no_newline = true;
+			else
+			{
+				if (first)
+					first = false;
+				else
+					fputc(' ', fout);
+				fputs(value, fout);
+			}
+			free(value);
+		}
+		if (!no_newline)
+			fputs("\n", fout);
 	}
 
 	/* \encoding -- set/show client side encoding */
 	else if (strcmp(cmd, "encoding") == 0)
 	{
-		char *encoding = scan_option(&string, OT_NORMAL, NULL);
+		char	   *encoding = scan_option(&string, OT_NORMAL, NULL);
 
-	        if (!encoding)
+		if (!encoding)
 			/* show encoding */
 			puts(pg_encoding_to_char(pset.encoding));
-	        else
+		else
 		{
 #ifdef MULTIBYTE
 			/* set encoding */
@@ -380,63 +392,66 @@ exec_command(const char *cmd,
 #else
 			psql_error("\\%s: multi-byte support is not enabled\n", cmd);
 #endif
-		        free(encoding);
-	        }
+			free(encoding);
+		}
 	}
 
 	/* \f -- change field separator */
 	else if (strcmp(cmd, "f") == 0)
-    {
-        char * fname = scan_option(&string, OT_NORMAL, NULL);
+	{
+		char	   *fname = scan_option(&string, OT_NORMAL, NULL);
+
 		success = do_pset("fieldsep", fname, &pset.popt, quiet);
-        free(fname);
-    }
+		free(fname);
+	}
 
 	/* \g means send query */
 	else if (strcmp(cmd, "g") == 0)
 	{
-        char * fname = scan_option(&string, OT_NORMAL, NULL);
+		char	   *fname = scan_option(&string, OT_NORMAL, NULL);
+
 		if (!fname)
 			pset.gfname = NULL;
 		else
 			pset.gfname = xstrdup(fname);
-        free(fname);
+		free(fname);
 		status = CMD_SEND;
 	}
 
 	/* help */
 	else if (strcmp(cmd, "h") == 0 || strcmp(cmd, "help") == 0)
-    {
+	{
 		helpSQL(options_string ? &options_string[strspn(options_string, " \t")] : NULL);
-        /* set pointer to end of line */
-        if (string)
-            string += strlen(string);
-    }
+		/* set pointer to end of line */
+		if (string)
+			string += strlen(string);
+	}
 
 	/* HTML mode */
 	else if (strcmp(cmd, "H") == 0 || strcmp(cmd, "html") == 0)
-    {
+	{
 		if (pset.popt.topt.format != PRINT_HTML)
 			success = do_pset("format", "html", &pset.popt, quiet);
 		else
 			success = do_pset("format", "aligned", &pset.popt, quiet);
-    }
+	}
 
 
 	/* \i is include file */
 	else if (strcmp(cmd, "i") == 0 || strcmp(cmd, "include") == 0)
 	{
-        char * fname = scan_option(&string, OT_NORMAL, NULL);
+		char	   *fname = scan_option(&string, OT_NORMAL, NULL);
+
 		if (!fname)
-        {
-            psql_error("\\%s: missing required argument\n", cmd);
+		{
+			psql_error("\\%s: missing required argument\n", cmd);
 			success = false;
 		}
 		else
-        {
+		{
 			success = (process_file(fname) == EXIT_SUCCESS);
-            free (fname);
-        }
+			free(fname);
+		}
 	}
 
 	/* \l is list databases */
@@ -446,20 +461,21 @@ exec_command(const char *cmd,
 		success = listAllDbs(true);
 
 	/*
-     * large object things
-     */
+	 * large object things
+	 */
 	else if (strncmp(cmd, "lo_", 3) == 0)
 	{
-        char *opt1, *opt2;
+		char	   *opt1,
+				   *opt2;
 
-        opt1 = scan_option(&string, OT_NORMAL, NULL);
-        opt2 = scan_option(&string, OT_NORMAL, NULL);
+		opt1 = scan_option(&string, OT_NORMAL, NULL);
+		opt2 = scan_option(&string, OT_NORMAL, NULL);
 
 		if (strcmp(cmd + 3, "export") == 0)
 		{
 			if (!opt2)
 			{
-                psql_error("\\%s: missing required argument\n", cmd);
+				psql_error("\\%s: missing required argument\n", cmd);
 				success = false;
 			}
 			else
@@ -470,7 +486,7 @@ exec_command(const char *cmd,
 		{
 			if (!opt1)
 			{
-                psql_error("\\%s: missing required argument\n", cmd);
+				psql_error("\\%s: missing required argument\n", cmd);
 				success = false;
 			}
 			else
@@ -484,7 +500,7 @@ exec_command(const char *cmd,
 		{
 			if (!opt1)
 			{
-                psql_error("\\%s: missing required argument\n", cmd);
+				psql_error("\\%s: missing required argument\n", cmd);
 				success = false;
 			}
 			else
@@ -494,18 +510,19 @@ exec_command(const char *cmd,
 		else
 			status = CMD_UNKNOWN;
 
-        free(opt1);
-        free(opt2);
+		free(opt1);
+		free(opt2);
 	}
 
 
 	/* \o -- set query output */
 	else if (strcmp(cmd, "o") == 0 || strcmp(cmd, "out") == 0)
-    {
-        char * fname = scan_option(&string, OT_NORMAL, NULL);
+	{
+		char	   *fname = scan_option(&string, OT_NORMAL, NULL);
+
 		success = setQFout(fname);
-        free(fname);
-    }
+		free(fname);
+	}
 
 	/* \p prints the current query buffer */
 	else if (strcmp(cmd, "p") == 0 || strcmp(cmd, "print") == 0)
@@ -520,18 +537,19 @@ exec_command(const char *cmd,
 	/* \pset -- set printing parameters */
 	else if (strcmp(cmd, "pset") == 0)
 	{
-        char * opt0 = scan_option(&string, OT_NORMAL, NULL);
-        char * opt1 = scan_option(&string, OT_NORMAL, NULL);
+		char	   *opt0 = scan_option(&string, OT_NORMAL, NULL);
+		char	   *opt1 = scan_option(&string, OT_NORMAL, NULL);
+
 		if (!opt0)
 		{
-            psql_error("\\%s: missing required argument\n", cmd);
+			psql_error("\\%s: missing required argument\n", cmd);
 			success = false;
 		}
 		else
 			success = do_pset(opt0, opt1, &pset.popt, quiet);
 
-        free(opt0);
-        free(opt1);
+		free(opt0);
+		free(opt1);
 	}
 
 	/* \q or \quit */
@@ -549,28 +567,27 @@ exec_command(const char *cmd,
 	/* \s save history in a file or show it on the screen */
 	else if (strcmp(cmd, "s") == 0)
 	{
-		char *fname = scan_option(&string, OT_NORMAL, NULL);
+		char	   *fname = scan_option(&string, OT_NORMAL, NULL);
 
 		success = saveHistory(fname ? fname : "/dev/tty");
 
 		if (success && !quiet && fname)
 			printf("Wrote history to %s.\n", fname);
-        free(fname);
+		free(fname);
 	}
 
 	/* \set -- generalized set variable/option command */
 	else if (strcmp(cmd, "set") == 0)
 	{
-        char * opt0 = scan_option(&string, OT_NORMAL, NULL);
+		char	   *opt0 = scan_option(&string, OT_NORMAL, NULL);
 
 		if (!opt0)
 		{
 			/* list all variables */
 
 			/*
-			 * XXX
-             * This is in utter violation of the GetVariable abstraction, but I
-             * have not bothered to do it better.
+			 * XXX This is in utter violation of the GetVariable
+			 * abstraction, but I have not bothered to do it better.
 			 */
 			struct _variable *ptr;
 
@@ -580,36 +597,37 @@ exec_command(const char *cmd,
 		}
 		else
 		{
-            /*
-             * Set variable to the concatenation of the arguments.
-             */
-            char * newval = NULL;
-            char * opt;
 
-            opt = scan_option(&string, OT_NORMAL, NULL);
-            newval = xstrdup(opt ? opt : "");
-            free(opt);
+			/*
+			 * Set variable to the concatenation of the arguments.
+			 */
+			char	   *newval = NULL;
+			char	   *opt;
 
-            while ((opt = scan_option(&string, OT_NORMAL, NULL)))
-            {
-                newval = realloc(newval, strlen(newval) + strlen(opt) + 1);
-                if (!newval)
-                {
-                    psql_error("out of memory\n");
-                    exit(EXIT_FAILURE);
-                }
-                strcat(newval, opt);
-                free(opt);
-            }
+			opt = scan_option(&string, OT_NORMAL, NULL);
+			newval = xstrdup(opt ? opt : "");
+			free(opt);
+
+			while ((opt = scan_option(&string, OT_NORMAL, NULL)))
+			{
+				newval = realloc(newval, strlen(newval) + strlen(opt) + 1);
+				if (!newval)
+				{
+					psql_error("out of memory\n");
+					exit(EXIT_FAILURE);
+				}
+				strcat(newval, opt);
+				free(opt);
+			}
 
 			if (!SetVariable(pset.vars, opt0, newval))
 			{
-                psql_error("\\%s: error\n", cmd);
+				psql_error("\\%s: error\n", cmd);
 				success = false;
 			}
-            free(newval);
+			free(newval);
 		}
-        free(opt0);
+		free(opt0);
 	}
 
 	/* \t -- turn off headers and row count */
@@ -619,67 +637,69 @@ exec_command(const char *cmd,
 
 	/* \T -- define html <table ...> attributes */
 	else if (strcmp(cmd, "T") == 0)
-    {
-        char * value = scan_option(&string, OT_NORMAL, NULL);
-		success = do_pset("tableattr", value, &pset.popt, quiet);
-        free(value);
-    }
+	{
+		char	   *value = scan_option(&string, OT_NORMAL, NULL);
 
-    /* \unset */
-    else if (strcmp(cmd, "unset") == 0)
-    {
-        char * opt = scan_option(&string, OT_NORMAL, NULL);
-        if (!opt)
-        {
-            psql_error("\\%s: missing required argument\n", cmd);
-            success = false;
-        }
-        if (!SetVariable(pset.vars, opt, NULL))
-        {
-            psql_error("\\%s: error\n", cmd);
-            success = false;
-        }
-        free(opt);
-    }
+		success = do_pset("tableattr", value, &pset.popt, quiet);
+		free(value);
+	}
+
+	/* \unset */
+	else if (strcmp(cmd, "unset") == 0)
+	{
+		char	   *opt = scan_option(&string, OT_NORMAL, NULL);
+
+		if (!opt)
+		{
+			psql_error("\\%s: missing required argument\n", cmd);
+			success = false;
+		}
+		if (!SetVariable(pset.vars, opt, NULL))
+		{
+			psql_error("\\%s: error\n", cmd);
+			success = false;
+		}
+		free(opt);
+	}
 
 	/* \w -- write query buffer to file */
 	else if (strcmp(cmd, "w") == 0 || strcmp(cmd, "write") == 0)
 	{
 		FILE	   *fd = NULL;
 		bool		is_pipe = false;
-        char       *fname = NULL;
+		char	   *fname = NULL;
 
-        if (!query_buf)
-        {
-            psql_error("no query buffer\n");
-            status = CMD_ERROR;
-        }
-        else
-        {
-            fname = scan_option(&string, OT_NORMAL, NULL);
+		if (!query_buf)
+		{
+			psql_error("no query buffer\n");
+			status = CMD_ERROR;
+		}
+		else
+		{
+			fname = scan_option(&string, OT_NORMAL, NULL);
 
-            if (!fname)
-            {
-                psql_error("\\%s: missing required argument\n", cmd);
-                success = false;
-            }
-            else
-            {
-                if (fname[0] == '|')
-                {
-                    is_pipe = true;
-                    fd = popen(&fname[1], "w");
-                }
-                else
-                    fd = fopen(fname, "w");
+			if (!fname)
+			{
+				psql_error("\\%s: missing required argument\n", cmd);
+				success = false;
+			}
+			else
+			{
+				if (fname[0] == '|')
+				{
+					is_pipe = true;
+					fd = popen(&fname[1], "w");
+				}
+				else
+					fd = fopen(fname, "w");
 
-                if (!fd)
-                {
-                    psql_error("%s: %s\n", fname, strerror(errno));
-                    success = false;
-                }
-            }
-        }
+				if (!fd)
+				{
+					psql_error("%s: %s\n", fname, strerror(errno));
+					success = false;
+				}
+			}
+		}
 
 		if (fd)
 		{
@@ -695,12 +715,12 @@ exec_command(const char *cmd,
 
 			if (result == EOF)
 			{
-                psql_error("%s: %s\n", fname, strerror(errno));
+				psql_error("%s: %s\n", fname, strerror(errno));
 				success = false;
 			}
 		}
 
-        free(fname);
+		free(fname);
 	}
 
 	/* \x -- toggle expanded table representation */
@@ -710,41 +730,43 @@ exec_command(const char *cmd,
 
 	/* \z -- list table rights (grant/revoke) */
 	else if (strcmp(cmd, "z") == 0)
-    {
-        char * opt = scan_option(&string, OT_SQLID, NULL);
+	{
+		char	   *opt = scan_option(&string, OT_SQLID, NULL);
+
 		success = permissionsList(opt);
-        free(opt);
-    }
+		free(opt);
+	}
 
-    /* \! -- shell escape */
+	/* \! -- shell escape */
 	else if (strcmp(cmd, "!") == 0)
-    {
+	{
 		success = do_shell(options_string);
-        /* wind pointer to end of line */
-        if (string)
-            string += strlen(string);
-    }
+		/* wind pointer to end of line */
+		if (string)
+			string += strlen(string);
+	}
 
-    /* \? -- slash command help */
+	/* \? -- slash command help */
 	else if (strcmp(cmd, "?") == 0)
 		slashUsage();
 
 #if 0
-    /*
+
+	/*
 	 * These commands don't do anything. I just use them to test the
 	 * parser.
 	 */
 	else if (strcmp(cmd, "void") == 0 || strcmp(cmd, "#") == 0)
 	{
 		int			i = 0;
-        char       *value;
+		char	   *value;
 
 		fprintf(stderr, "+ optstr = |%s|\n", options_string);
-        while((value = scan_option(&string, OT_NORMAL, NULL)))
-        {
+		while ((value = scan_option(&string, OT_NORMAL, NULL)))
+		{
 			fprintf(stderr, "+ opt(%d) = |%s|\n", i++, value);
-            free(value);
-        }
+			free(value);
+		}
 	}
 #endif
 
@@ -754,12 +776,12 @@ exec_command(const char *cmd,
 	if (!success)
 		status = CMD_ERROR;
 
-    /* eat the rest of the options string */
-    while(scan_option(&string, OT_NORMAL, NULL)) ;
+	/* eat the rest of the options string */
+	while (scan_option(&string, OT_NORMAL, NULL));
 
-    if (options_string && continue_parse)
-        *continue_parse = options_string + (string - string_cpy);
-    free(string_cpy);
+	if (options_string && continue_parse)
+		*continue_parse = options_string + (string - string_cpy);
+	free(string_cpy);
 
 	return status;
 }
@@ -770,268 +792,272 @@ exec_command(const char *cmd,
  * scan_option()
  */
 static char *
-scan_option(char ** string, enum option_type type, char * quote)
+scan_option(char **string, enum option_type type, char *quote)
 {
-    unsigned int pos = 0;
-    char * options_string;
-    char * return_val;
+	unsigned int pos = 0;
+	char	   *options_string;
+	char	   *return_val;
 
-    if (quote)
-        *quote = 0;
+	if (quote)
+		*quote = 0;
 
-    if (!string || !(*string))
-        return NULL;
+	if (!string || !(*string))
+		return NULL;
 
-    options_string = *string;
-    /* skip leading whitespace */
-    pos += strspn(options_string+pos, " \t");
+	options_string = *string;
+	/* skip leading whitespace */
+	pos += strspn(options_string + pos, " \t");
 
-    switch (options_string[pos])
-    {
-        /*
-         * Double quoted string
-         */
-        case '"':
-        {
-            unsigned int jj;
-            unsigned short int bslash_count = 0;
+	switch (options_string[pos])
+	{
 
-            /* scan for end of quote */
-            for (jj = pos+1; options_string[jj]; jj += PQmblen(&options_string[jj], pset.encoding))
-            {
-                if (options_string[jj] == '"' && bslash_count % 2 == 0)
-                    break;
+			/*
+			 * Double quoted string
+			 */
+		case '"':
+			{
+				unsigned int jj;
+				unsigned short int bslash_count = 0;
 
-                if (options_string[jj] == '\\')
-                    bslash_count++;
-                else
-                    bslash_count=0;
-            }
+				/* scan for end of quote */
+				for (jj = pos + 1; options_string[jj]; jj += PQmblen(&options_string[jj], pset.encoding))
+				{
+					if (options_string[jj] == '"' && bslash_count % 2 == 0)
+						break;
 
-            if (options_string[jj] == 0)
-            {
-                psql_error("parse error at end of line\n");
-                *string = &options_string[jj];
-                return NULL;
-            }
+					if (options_string[jj] == '\\')
+						bslash_count++;
+					else
+						bslash_count = 0;
+				}
 
-            return_val = malloc(jj-pos+2);
-            if (!return_val)
-            {
-                psql_error("out of memory\n");
-                exit(EXIT_FAILURE);
-            }
+				if (options_string[jj] == 0)
+				{
+					psql_error("parse error at end of line\n");
+					*string = &options_string[jj];
+					return NULL;
+				}
 
-            if (type == OT_NORMAL)
-            {
-                strncpy(return_val, &options_string[pos], jj-pos+1);
-                return_val[jj-pos+1] = '\0';
-            }
-            /*
-             * If this is expected to be an SQL identifier like option
-             * then we strip out the double quotes
-             */
-            else if (type == OT_SQLID)
-            {
-                unsigned int k, cc;
+				return_val = malloc(jj - pos + 2);
+				if (!return_val)
+				{
+					psql_error("out of memory\n");
+					exit(EXIT_FAILURE);
+				}
 
-                bslash_count = 0;
-                cc = 0;
-                for (k = pos+1; options_string[k]; k += PQmblen(&options_string[k], pset.encoding))
-                {   
-                    if (options_string[k] == '"' && bslash_count % 2 == 0)
-                        break;
-                                        
-                    if (options_string[jj] == '\\')
-                        bslash_count++;
-                    else
-                        bslash_count=0;
-                    
-                    return_val[cc++] = options_string[k];
-                }
-                return_val[cc] = '\0';
-            }       
-                    
-            *string = options_string + jj+1;
-            if (quote)
-                *quote = '"';
-                    
-            return return_val;
-        }           
+				if (type == OT_NORMAL)
+				{
+					strncpy(return_val, &options_string[pos], jj - pos + 1);
+					return_val[jj - pos + 1] = '\0';
+				}
 
-        /*
-         * A single quote has a psql internal meaning, such as
-         * for delimiting file names, and it also allows for such
-         * escape sequences as \t.
-         */
-        case '\'':
-        {
-            unsigned int jj;
-            unsigned short int bslash_count = 0;
+				/*
+				 * If this is expected to be an SQL identifier like option
+				 * then we strip out the double quotes
+				 */
+				else if (type == OT_SQLID)
+				{
+					unsigned int k,
+								cc;
 
-            for (jj = pos+1; options_string[jj]; jj += PQmblen(&options_string[jj], pset.encoding))
-            {
-                if (options_string[jj] == '\'' && bslash_count % 2 == 0)
-                    break;
+					bslash_count = 0;
+					cc = 0;
+					for (k = pos + 1; options_string[k]; k += PQmblen(&options_string[k], pset.encoding))
+					{
+						if (options_string[k] == '"' && bslash_count % 2 == 0)
+							break;
 
-                if (options_string[jj] == '\\')
-                    bslash_count++;
-                else
-                    bslash_count=0;
-            }
+						if (options_string[jj] == '\\')
+							bslash_count++;
+						else
+							bslash_count = 0;
 
-            if (options_string[jj] == 0)
-            {
-                psql_error("parse error at end of line\n");
-                *string = &options_string[jj];
-                return NULL;
-            }
+						return_val[cc++] = options_string[k];
+					}
+					return_val[cc] = '\0';
+				}
 
-            return_val = unescape(&options_string[pos+1], jj-pos-1);
-            *string = &options_string[jj + 1];
-            if (quote)
-                *quote = '\'';
-            return return_val;
-        }
+				*string = options_string + jj + 1;
+				if (quote)
+					*quote = '"';
 
-        /*
-         * Backticks are for command substitution, like in shells
-         */
-        case '`':
-        {
-            bool		error = false;
-            FILE	   *fd = NULL;
-            char	   *file;
-            PQExpBufferData output;
-            char		buf[512];
-            size_t		result, len;
+				return return_val;
+			}
 
-            len = strcspn(options_string + pos + 1, "`");
-            if (options_string[pos + 1 + len] == 0)
-            {
-                psql_error("parse error at end of line\n");
-                *string = &options_string[pos + 1 + len];
-                return NULL;
-            }
+			/*
+			 * A single quote has a psql internal meaning, such as for
+			 * delimiting file names, and it also allows for such escape
+			 * sequences as \t.
+			 */
+		case '\'':
+			{
+				unsigned int jj;
+				unsigned short int bslash_count = 0;
 
-            options_string[pos + 1 + len] = '\0';
-            file = options_string + pos + 1;
+				for (jj = pos + 1; options_string[jj]; jj += PQmblen(&options_string[jj], pset.encoding))
+				{
+					if (options_string[jj] == '\'' && bslash_count % 2 == 0)
+						break;
 
-            fd = popen(file, "r");
-            if (!fd)
-            {
-                psql_error("%s: %s\n", file, strerror(errno));
-                error = true;
-            }
+					if (options_string[jj] == '\\')
+						bslash_count++;
+					else
+						bslash_count = 0;
+				}
 
-            if (!error)
-            {
-                initPQExpBuffer(&output);
+				if (options_string[jj] == 0)
+				{
+					psql_error("parse error at end of line\n");
+					*string = &options_string[jj];
+					return NULL;
+				}
 
-                do
-                {
-                    result = fread(buf, 1, 512, fd);
-                    if (ferror(fd))
-                    {
-                        psql_error("%s: %s\n", file, strerror(errno));
-                        error = true;
-                        break;
-                    }
-                    appendBinaryPQExpBuffer(&output, buf, result);
-                } while (!feof(fd));
-                appendPQExpBufferChar(&output, '\0');
+				return_val = unescape(&options_string[pos + 1], jj - pos - 1);
+				*string = &options_string[jj + 1];
+				if (quote)
+					*quote = '\'';
+				return return_val;
+			}
 
-                if (pclose(fd) == -1)
-                {
-                    psql_error("%s: %s\n", file, strerror(errno));
-                    error = true;
-                }
-            }
+			/*
+			 * Backticks are for command substitution, like in shells
+			 */
+		case '`':
+			{
+				bool		error = false;
+				FILE	   *fd = NULL;
+				char	   *file;
+				PQExpBufferData output;
+				char		buf[512];
+				size_t		result,
+							len;
 
-            if (!error)
-            {
-                if (output.data[strlen(output.data) - 1] == '\n')
-                    output.data[strlen(output.data) - 1] = '\0';
-            }
+				len = strcspn(options_string + pos + 1, "`");
+				if (options_string[pos + 1 + len] == 0)
+				{
+					psql_error("parse error at end of line\n");
+					*string = &options_string[pos + 1 + len];
+					return NULL;
+				}
 
-            if (!error)
-                return_val = output.data;
-            else
-            {
-                return_val = xstrdup("");
-                termPQExpBuffer(&output);
-            }
-            options_string[pos + 1 + len] = '`';
-            *string = options_string + pos + len + 2;
-            if (quote)
-                *quote = '`';
-            return return_val;
-        }
+				options_string[pos + 1 + len] = '\0';
+				file = options_string + pos + 1;
 
-        /*
-         * end of line
-         */
-        case 0:
-            *string = &options_string[pos];
-            return NULL;
+				fd = popen(file, "r");
+				if (!fd)
+				{
+					psql_error("%s: %s\n", file, strerror(errno));
+					error = true;
+				}
 
-        /*
-         * Variable substitution
-         */
-        case ':':
-        {
-            size_t token_end;
-            const char * value;
-            char save_char;
-            
-            token_end = strcspn(&options_string[pos+1], " \t");
-            save_char = options_string[pos+token_end+1];
-            options_string[pos+token_end+1] = '\0';
-            value  = GetVariable(pset.vars, options_string+pos+1);
-            if (!value)
-                value = "";
-            return_val = xstrdup(value);
-            options_string[pos+token_end+1] = save_char;
-            *string = &options_string[pos + token_end+1];
-            return return_val;
-        }
+				if (!error)
+				{
+					initPQExpBuffer(&output);
 
-        /*
-         * Next command
-         */
-        case '\\':
-            *string = options_string + pos;
-            return NULL;
-            break;
+					do
+					{
+						result = fread(buf, 1, 512, fd);
+						if (ferror(fd))
+						{
+							psql_error("%s: %s\n", file, strerror(errno));
+							error = true;
+							break;
+						}
+						appendBinaryPQExpBuffer(&output, buf, result);
+					} while (!feof(fd));
+					appendPQExpBufferChar(&output, '\0');
 
-        /*
-         * A normal word
-         */
-        default:
-        {
-            size_t token_end;
-            char * cp;
-            
-            token_end = strcspn(&options_string[pos], " \t");
-            return_val = malloc(token_end + 1);
-            if (!return_val)
-            {
-                psql_error("out of memory\n");
-                exit(EXIT_FAILURE);
-            }
-            strncpy(return_val, &options_string[pos], token_end);
-            return_val[token_end] = 0;
+					if (pclose(fd) == -1)
+					{
+						psql_error("%s: %s\n", file, strerror(errno));
+						error = true;
+					}
+				}
 
-            if (type == OT_SQLID)
-                for (cp = return_val; *cp; cp += PQmblen(cp, pset.encoding))
-                    if (isascii(*cp))
-                        *cp = tolower(*cp);
+				if (!error)
+				{
+					if (output.data[strlen(output.data) - 1] == '\n')
+						output.data[strlen(output.data) - 1] = '\0';
+				}
 
-            *string = &options_string[pos+token_end];
-            return return_val;
-        }
-            
-    }
+				if (!error)
+					return_val = output.data;
+				else
+				{
+					return_val = xstrdup("");
+					termPQExpBuffer(&output);
+				}
+				options_string[pos + 1 + len] = '`';
+				*string = options_string + pos + len + 2;
+				if (quote)
+					*quote = '`';
+				return return_val;
+			}
+
+			/*
+			 * end of line
+			 */
+		case 0:
+			*string = &options_string[pos];
+			return NULL;
+
+			/*
+			 * Variable substitution
+			 */
+		case ':':
+			{
+				size_t		token_end;
+				const char *value;
+				char		save_char;
+
+				token_end = strcspn(&options_string[pos + 1], " \t");
+				save_char = options_string[pos + token_end + 1];
+				options_string[pos + token_end + 1] = '\0';
+				value = GetVariable(pset.vars, options_string + pos + 1);
+				if (!value)
+					value = "";
+				return_val = xstrdup(value);
+				options_string[pos + token_end + 1] = save_char;
+				*string = &options_string[pos + token_end + 1];
+				return return_val;
+			}
+
+			/*
+			 * Next command
+			 */
+		case '\\':
+			*string = options_string + pos;
+			return NULL;
+			break;
+
+			/*
+			 * A normal word
+			 */
+		default:
+			{
+				size_t		token_end;
+				char	   *cp;
+
+				token_end = strcspn(&options_string[pos], " \t");
+				return_val = malloc(token_end + 1);
+				if (!return_val)
+				{
+					psql_error("out of memory\n");
+					exit(EXIT_FAILURE);
+				}
+				strncpy(return_val, &options_string[pos], token_end);
+				return_val[token_end] = 0;
+
+				if (type == OT_SQLID)
+					for (cp = return_val; *cp; cp += PQmblen(cp, pset.encoding))
+						if (isascii(*cp))
+							*cp = tolower(*cp);
+
+				*string = &options_string[pos + token_end];
+				return return_val;
+			}
+
+	}
 }
 
 
@@ -1066,7 +1092,7 @@ unescape(const unsigned char *source, size_t len)
 		exit(EXIT_FAILURE);
 	}
 
-	for (p = source; p-source < len && *p; p += PQmblen(p, pset.encoding))
+	for (p = source; p - source < len && *p; p += PQmblen(p, pset.encoding))
 	{
 		if (esc)
 		{
@@ -1152,12 +1178,12 @@ do_connect(const char *new_dbname, const char *new_user)
 	bool		need_pass;
 	bool		success = false;
 
-    /* Delete variables (in case we fail before setting them anew) */
-    SetVariable(pset.vars, "DBNAME", NULL);
-    SetVariable(pset.vars, "USER", NULL);
-    SetVariable(pset.vars, "HOST", NULL);
-    SetVariable(pset.vars, "PORT", NULL);
-    SetVariable(pset.vars, "ENCODING", NULL);
+	/* Delete variables (in case we fail before setting them anew) */
+	SetVariable(pset.vars, "DBNAME", NULL);
+	SetVariable(pset.vars, "USER", NULL);
+	SetVariable(pset.vars, "HOST", NULL);
+	SetVariable(pset.vars, "PORT", NULL);
+	SetVariable(pset.vars, "ENCODING", NULL);
 
 	/* If dbname is "" then use old name, else new one (even if NULL) */
 	if (oldconn && new_dbname && PQdb(oldconn) && strcmp(new_dbname, "") == 0)
@@ -1166,7 +1192,7 @@ do_connect(const char *new_dbname, const char *new_user)
 		dbparam = new_dbname;
 
 	/* If user is "" then use the old one */
-	if (new_user && PQuser(oldconn) && strcmp(new_user, "")==0)
+	if (new_user && PQuser(oldconn) && strcmp(new_user, "") == 0)
 		userparam = PQuser(oldconn);
 	else
 		userparam = new_user;
@@ -1187,7 +1213,7 @@ do_connect(const char *new_dbname, const char *new_user)
 	{
 		need_pass = false;
 		pset.db = PQsetdbLogin(PQhost(oldconn), PQport(oldconn),
-								NULL, NULL, dbparam, userparam, pwparam);
+							   NULL, NULL, dbparam, userparam, pwparam);
 
 		if (PQstatus(pset.db) == CONNECTION_BAD &&
 			strcmp(PQerrorMessage(pset.db), "fe_sendauth: no password supplied\n") == 0)
@@ -1207,27 +1233,30 @@ do_connect(const char *new_dbname, const char *new_user)
 	 */
 	if (!pset.db || PQstatus(pset.db) == CONNECTION_BAD)
 	{
-        if (pset.cur_cmd_interactive)
-        {
-            psql_error("%s", PQerrorMessage(pset.db));
-            PQfinish(pset.db);
-            if (oldconn)
-            {
-                fputs("Previous connection kept\n", stderr);
-                pset.db = oldconn;
-            }
-            else
-                pset.db = NULL;
-        }
-        else
-        {
-            /* we don't want unpredictable things to
-             * happen in scripting mode */
-            psql_error("\\connect: %s", PQerrorMessage(pset.db));
-            PQfinish(pset.db);
+		if (pset.cur_cmd_interactive)
+		{
+			psql_error("%s", PQerrorMessage(pset.db));
+			PQfinish(pset.db);
+			if (oldconn)
+			{
+				fputs("Previous connection kept\n", stderr);
+				pset.db = oldconn;
+			}
+			else
+				pset.db = NULL;
+		}
+		else
+		{
+
+			/*
+			 * we don't want unpredictable things to happen in scripting
+			 * mode
+			 */
+			psql_error("\\connect: %s", PQerrorMessage(pset.db));
+			PQfinish(pset.db);
 			if (oldconn)
 				PQfinish(oldconn);
-            pset.db = NULL;
+			pset.db = NULL;
 		}
 	}
 	else
@@ -1238,7 +1267,8 @@ do_connect(const char *new_dbname, const char *new_user)
 				printf("You are now connected to database %s.\n", dbparam);
 			else if (dbparam != new_dbname)		/* no new db */
 				printf("You are now connected as new user %s.\n", new_user);
-			else /* both new */
+			else
+/* both new */
 				printf("You are now connected to database %s as user %s.\n",
 					   PQdb(pset.db), PQuser(pset.db));
 		}
@@ -1249,17 +1279,17 @@ do_connect(const char *new_dbname, const char *new_user)
 		success = true;
 	}
 
-    PQsetNoticeProcessor(pset.db, NoticeProcessor, NULL);
-    pset.encoding = PQclientEncoding(pset.db);
+	PQsetNoticeProcessor(pset.db, NoticeProcessor, NULL);
+	pset.encoding = PQclientEncoding(pset.db);
 
-    /* Update variables */
-    SetVariable(pset.vars, "DBNAME", PQdb(pset.db));
-    SetVariable(pset.vars, "USER", PQuser(pset.db));
-    SetVariable(pset.vars, "HOST", PQhost(pset.db));
-    SetVariable(pset.vars, "PORT", PQport(pset.db));
-    SetVariable(pset.vars, "ENCODING", pg_encoding_to_char(pset.encoding));
+	/* Update variables */
+	SetVariable(pset.vars, "DBNAME", PQdb(pset.db));
+	SetVariable(pset.vars, "USER", PQuser(pset.db));
+	SetVariable(pset.vars, "HOST", PQhost(pset.db));
+	SetVariable(pset.vars, "PORT", PQport(pset.db));
+	SetVariable(pset.vars, "ENCODING", pg_encoding_to_char(pset.encoding));
 
-    pset.issuper = test_superuser(PQuser(pset.db));
+	pset.issuper = test_superuser(PQuser(pset.db));
 
 	return success;
 }
@@ -1271,25 +1301,25 @@ do_connect(const char *new_dbname, const char *new_user)
  * (Is used to set up the prompt right.)
  */
 bool
-test_superuser(const char * username)
+test_superuser(const char *username)
 {
-    PGresult *res;
-    char buf[64 + NAMEDATALEN];
-    bool answer;
+	PGresult   *res;
+	char		buf[64 + NAMEDATALEN];
+	bool		answer;
 
-    if (!username)
-        return false;
+	if (!username)
+		return false;
 
-    sprintf(buf, "SELECT usesuper FROM pg_user WHERE usename = '%.*s'", NAMEDATALEN, username);
-    res = PSQLexec(buf);
+	sprintf(buf, "SELECT usesuper FROM pg_user WHERE usename = '%.*s'", NAMEDATALEN, username);
+	res = PSQLexec(buf);
 
-    answer =
-        (PQntuples(res)>0 && PQnfields(res)>0
-         && !PQgetisnull(res,0,0)
-         && PQgetvalue(res,0,0)
-         && strcmp(PQgetvalue(res,0,0), "t")==0);
-    PQclear(res);
-    return answer;
+	answer =
+		(PQntuples(res) > 0 && PQnfields(res) > 0
+		 && !PQgetisnull(res, 0, 0)
+		 && PQgetvalue(res, 0, 0)
+		 && strcmp(PQgetvalue(res, 0, 0), "t") == 0);
+	PQclear(res);
+	return answer;
 }
 
 
@@ -1330,8 +1360,8 @@ editFile(const char *fname)
 	sprintf(sys, "exec %s %s", editorName, fname);
 	result = system(sys);
 	if (result == -1)
-        psql_error("could not start editor %s\n", editorName);
-    else if (result == 127)
+		psql_error("could not start editor %s\n", editorName);
+	else if (result == 127)
 		psql_error("could not start /bin/sh\n");
 	free(sys);
 
@@ -1362,11 +1392,11 @@ do_edit(const char *filename_arg, PQExpBuffer query_buf)
 		/* make a temp file to edit */
 #ifndef WIN32
 		mode_t		oldumask;
-        const char *tmpdirenv = getenv("TMPDIR");
+		const char *tmpdirenv = getenv("TMPDIR");
 
 		sprintf(fnametmp, "%s/psql.edit.%ld.%ld",
-                tmpdirenv ? tmpdirenv : "/tmp",
-                (long) geteuid(), (long) getpid());
+				tmpdirenv ? tmpdirenv : "/tmp",
+				(long) geteuid(), (long) getpid());
 #else
 		GetTempFileName(".", "psql", 0, fnametmp);
 #endif
@@ -1382,7 +1412,7 @@ do_edit(const char *filename_arg, PQExpBuffer query_buf)
 
 		if (!stream)
 		{
-            psql_error("couldn't open temp file %s: %s\n", fname, strerror(errno));
+			psql_error("couldn't open temp file %s: %s\n", fname, strerror(errno));
 			error = true;
 		}
 		else
@@ -1397,7 +1427,7 @@ do_edit(const char *filename_arg, PQExpBuffer query_buf)
 
 			if (fwrite(query_buf->data, 1, ql, stream) != ql)
 			{
-                psql_error("%s: %s\n", fname, strerror(errno));
+				psql_error("%s: %s\n", fname, strerror(errno));
 				fclose(stream);
 				remove(fname);
 				error = true;
@@ -1410,7 +1440,7 @@ do_edit(const char *filename_arg, PQExpBuffer query_buf)
 #ifndef WIN32
 	if (!error && stat(fname, &before) != 0)
 	{
-        psql_error("%s: %s\n", fname, strerror(errno));
+		psql_error("%s: %s\n", fname, strerror(errno));
 		error = true;
 	}
 #endif
@@ -1422,7 +1452,7 @@ do_edit(const char *filename_arg, PQExpBuffer query_buf)
 #ifndef WIN32
 	if (!error && stat(fname, &after) != 0)
 	{
-        psql_error("%s: %s\n", fname, strerror(errno));
+		psql_error("%s: %s\n", fname, strerror(errno));
 		error = true;
 	}
 
@@ -1435,7 +1465,7 @@ do_edit(const char *filename_arg, PQExpBuffer query_buf)
 		stream = fopen(fname, "r");
 		if (!stream)
 		{
-            psql_error("%s: %s\n", fname, strerror(errno));
+			psql_error("%s: %s\n", fname, strerror(errno));
 			error = true;
 		}
 		else
@@ -1444,29 +1474,29 @@ do_edit(const char *filename_arg, PQExpBuffer query_buf)
 			char		line[1024];
 
 			resetPQExpBuffer(query_buf);
-            while (fgets(line, 1024, stream))
+			while (fgets(line, 1024, stream))
 				appendPQExpBufferStr(query_buf, line);
 
-            if (ferror(stream))
-            {
-                psql_error("%s: %s\n", fname, strerror(errno));
-                error = true;
-            }
+			if (ferror(stream))
+			{
+				psql_error("%s: %s\n", fname, strerror(errno));
+				error = true;
+			}
 
 			fclose(stream);
 		}
 
-    }
+	}
 
-  		/* remove temp file */
+	/* remove temp file */
 	if (!filename_arg)
-    {
-		if (remove(fname)==-1)
-        {
-            psql_error("%s: %s\n", fname, strerror(errno));
-            error=true;
-        }
-    }
+	{
+		if (remove(fname) == -1)
+		{
+			psql_error("%s: %s\n", fname, strerror(errno));
+			error = true;
+		}
+	}
 
 	return !error;
 }
@@ -1484,7 +1514,7 @@ process_file(char *filename)
 {
 	FILE	   *fd;
 	int			result;
-    char       *oldfilename;
+	char	   *oldfilename;
 
 	if (!filename)
 		return false;
@@ -1493,12 +1523,12 @@ process_file(char *filename)
 
 	if (!fd)
 	{
-        psql_error("%s: %s\n", filename, strerror(errno));
+		psql_error("%s: %s\n", filename, strerror(errno));
 		return false;
 	}
 
-    oldfilename = pset.inputfile;
-    pset.inputfile = filename;
+	oldfilename = pset.inputfile;
+	pset.inputfile = filename;
 	result = MainLoop(fd);
 	fclose(fd);
 	pset.inputfile = oldfilename;
@@ -1537,7 +1567,7 @@ _align2string(enum printFormat in)
 
 
 bool
-do_pset(const char *param, const char *value, printQueryOpt * popt, bool quiet)
+do_pset(const char *param, const char *value, printQueryOpt *popt, bool quiet)
 {
 	size_t		vallen = 0;
 
@@ -1624,12 +1654,13 @@ do_pset(const char *param, const char *value, printQueryOpt * popt, bool quiet)
 			free(popt->topt.recordSep);
 			popt->topt.recordSep = xstrdup(value);
 		}
-		if (!quiet) {
-            if (strcmp(popt->topt.recordSep, "\n")==0)
-                printf("Record separator is <newline>.");
-            else
-                printf("Record separator is '%s'.\n", popt->topt.recordSep);
-        }
+		if (!quiet)
+		{
+			if (strcmp(popt->topt.recordSep, "\n") == 0)
+				printf("Record separator is <newline>.");
+			else
+				printf("Record separator is '%s'.\n", popt->topt.recordSep);
+		}
 	}
 
 	/* toggle between full and barebones format */
@@ -1723,13 +1754,14 @@ do_shell(const char *command)
 			shellName = DEFAULT_SHELL;
 
 		sys = malloc(strlen(shellName) + 16);
-		if (!sys) {
-            psql_error("out of memory\n");
-            if (pset.cur_cmd_interactive)
-                return false;
-            else
-                exit(EXIT_FAILURE);
-        }
+		if (!sys)
+		{
+			psql_error("out of memory\n");
+			if (pset.cur_cmd_interactive)
+				return false;
+			else
+				exit(EXIT_FAILURE);
+		}
 		sprintf(sys, "exec %s", shellName);
 		result = system(sys);
 		free(sys);
@@ -1739,7 +1771,7 @@ do_shell(const char *command)
 
 	if (result == 127 || result == -1)
 	{
-        psql_error("\\!: failed\n");
+		psql_error("\\!: failed\n");
 		return false;
 	}
 	return true;

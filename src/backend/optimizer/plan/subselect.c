@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/optimizer/plan/subselect.c,v 1.34 2000/04/04 01:21:47 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/optimizer/plan/subselect.c,v 1.35 2000/04/12 17:15:22 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -82,19 +82,19 @@ replace_var(Var *var)
 	varlevel = PlannerQueryLevel - var->varlevelsup;
 
 	/*
-	 * If there's already a PlannerParamVar entry for this same Var,
-	 * just use it.  NOTE: in situations involving UNION or inheritance,
-	 * it is possible for the same varno/varlevel to refer to different RTEs
-	 * in different parts of the parsetree, so that different fields might
-	 * end up sharing the same Param number.  As long as we check the vartype
-	 * as well, I believe that this sort of aliasing will cause no trouble.
-	 * The correct field should get stored into the Param slot at execution
-	 * in each part of the tree.
+	 * If there's already a PlannerParamVar entry for this same Var, just
+	 * use it.	NOTE: in situations involving UNION or inheritance, it is
+	 * possible for the same varno/varlevel to refer to different RTEs in
+	 * different parts of the parsetree, so that different fields might
+	 * end up sharing the same Param number.  As long as we check the
+	 * vartype as well, I believe that this sort of aliasing will cause no
+	 * trouble. The correct field should get stored into the Param slot at
+	 * execution in each part of the tree.
 	 */
 	i = 0;
 	foreach(ppv, PlannerParamVar)
 	{
-		Var	   *pvar = lfirst(ppv);
+		Var		   *pvar = lfirst(ppv);
 
 		if (pvar->varno == var->varno &&
 			pvar->varattno == var->varattno &&
@@ -104,7 +104,7 @@ replace_var(Var *var)
 		i++;
 	}
 
-	if (! ppv)
+	if (!ppv)
 	{
 		/* Nope, so make a new one */
 		i = new_param(var, varlevel);
@@ -137,23 +137,25 @@ make_subplan(SubLink *slink)
 	PlannerQueryLevel++;		/* we become child */
 
 	/*
-	 * For an EXISTS subplan, tell lower-level planner to expect that
-	 * only the first tuple will be retrieved.  For ALL and ANY subplans,
-	 * we will be able to stop evaluating if the test condition fails,
-	 * so very often not all the tuples will be retrieved; for lack of a
-	 * better idea, specify 50% retrieval.  For EXPR and MULTIEXPR subplans,
-	 * use default behavior (we're only expecting one row out, anyway).
+	 * For an EXISTS subplan, tell lower-level planner to expect that only
+	 * the first tuple will be retrieved.  For ALL and ANY subplans, we
+	 * will be able to stop evaluating if the test condition fails, so
+	 * very often not all the tuples will be retrieved; for lack of a
+	 * better idea, specify 50% retrieval.	For EXPR and MULTIEXPR
+	 * subplans, use default behavior (we're only expecting one row out,
+	 * anyway).
 	 *
 	 * NOTE: if you change these numbers, also change cost_qual_eval_walker()
 	 * in path/costsize.c.
 	 *
-	 * XXX If an ALL/ANY subplan is uncorrelated, we may decide to materialize
-	 * its result below.  In that case it would've been better to specify
-	 * full retrieval.  At present, however, we can only detect correlation
-	 * or lack of it after we've made the subplan :-(.  Perhaps detection
-	 * of correlation should be done as a separate step.  Meanwhile, we don't
-	 * want to be too optimistic about the percentage of tuples retrieved,
-	 * for fear of selecting a plan that's bad for the materialization case.
+	 * XXX If an ALL/ANY subplan is uncorrelated, we may decide to
+	 * materialize its result below.  In that case it would've been better
+	 * to specify full retrieval.  At present, however, we can only detect
+	 * correlation or lack of it after we've made the subplan :-(. Perhaps
+	 * detection of correlation should be done as a separate step.
+	 * Meanwhile, we don't want to be too optimistic about the percentage
+	 * of tuples retrieved, for fear of selecting a plan that's bad for
+	 * the materialization case.
 	 */
 	if (slink->subLinkType == EXISTS_SUBLINK)
 		tuple_fraction = 1.0;	/* just like a LIMIT 1 */
@@ -167,8 +169,8 @@ make_subplan(SubLink *slink)
 
 	/*
 	 * Assign subPlan, extParam and locParam to plan nodes. At the moment,
-	 * SS_finalize_plan doesn't handle initPlan-s and so we assign them
-	 * to the topmost plan node and take care about its extParam too.
+	 * SS_finalize_plan doesn't handle initPlan-s and so we assign them to
+	 * the topmost plan node and take care about its extParam too.
 	 */
 	(void) SS_finalize_plan(plan);
 	plan->initPlan = PlannerInitPlan;
@@ -206,8 +208,8 @@ make_subplan(SubLink *slink)
 
 	/*
 	 * Un-correlated or undirect correlated plans of EXISTS, EXPR, or
-	 * MULTIEXPR types can be used as initPlans.  For EXISTS or EXPR,
-	 * we just produce a Param referring to the result of evaluating the
+	 * MULTIEXPR types can be used as initPlans.  For EXISTS or EXPR, we
+	 * just produce a Param referring to the result of evaluating the
 	 * initPlan.  For MULTIEXPR, we must build an AND or OR-clause of the
 	 * individual comparison operators, using the appropriate lefthand
 	 * side expressions and Params for the initPlan's target items.
@@ -228,6 +230,7 @@ make_subplan(SubLink *slink)
 	else if (node->parParam == NIL && slink->subLinkType == EXPR_SUBLINK)
 	{
 		TargetEntry *te = lfirst(plan->targetlist);
+
 		/* need a var node just to pass to new_param()... */
 		Var		   *var = makeVar(0, 0, te->resdom->restype,
 								  te->resdom->restypmod, 0);
@@ -247,14 +250,15 @@ make_subplan(SubLink *slink)
 		int			i = 0;
 
 		/*
-		 * Convert oper list of Opers into a list of Exprs, using
-		 * lefthand arguments and Params representing inside results.
+		 * Convert oper list of Opers into a list of Exprs, using lefthand
+		 * arguments and Params representing inside results.
 		 */
 		foreach(lst, slink->oper)
 		{
 			Oper	   *oper = (Oper *) lfirst(lst);
 			Node	   *lefthand = nth(i, slink->lefthand);
 			TargetEntry *te = nth(i, plan->targetlist);
+
 			/* need a var node just to pass to new_param()... */
 			Var		   *var = makeVar(0, 0, te->resdom->restype,
 									  te->resdom->restypmod, 0);
@@ -273,7 +277,9 @@ make_subplan(SubLink *slink)
 			tup = get_operator_tuple(oper->opno);
 			Assert(HeapTupleIsValid(tup));
 			opform = (Form_pg_operator) GETSTRUCT(tup);
-			/* Note: we use make_operand in case runtime type conversion
+
+			/*
+			 * Note: we use make_operand in case runtime type conversion
 			 * function calls must be inserted for this operator!
 			 */
 			left = make_operand("", lefthand,
@@ -304,15 +310,16 @@ make_subplan(SubLink *slink)
 		int			i = 0;
 
 		/*
-		 * We can't convert subplans of ALL_SUBLINK or ANY_SUBLINK types to
-		 * initPlans, even when they are uncorrelated or undirect correlated,
-		 * because we need to scan the output of the subplan for each outer
-		 * tuple.  However, we have the option to tack a MATERIAL node onto
-		 * the top of an uncorrelated/undirect correlated subplan, which lets
-		 * us do the work of evaluating the subplan only once.  We do this
-		 * if the subplan's top plan node is anything more complicated than
-		 * a plain sequential scan, and we do it even for seqscan if the
-		 * qual appears selective enough to eliminate many tuples.
+		 * We can't convert subplans of ALL_SUBLINK or ANY_SUBLINK types
+		 * to initPlans, even when they are uncorrelated or undirect
+		 * correlated, because we need to scan the output of the subplan
+		 * for each outer tuple.  However, we have the option to tack a
+		 * MATERIAL node onto the top of an uncorrelated/undirect
+		 * correlated subplan, which lets us do the work of evaluating the
+		 * subplan only once.  We do this if the subplan's top plan node
+		 * is anything more complicated than a plain sequential scan, and
+		 * we do it even for seqscan if the qual appears selective enough
+		 * to eliminate many tuples.
 		 */
 		if (node->parParam == NIL)
 		{
@@ -336,10 +343,12 @@ make_subplan(SubLink *slink)
 					break;
 				case T_Material:
 				case T_Sort:
-					/* Don't add another Material node if there's one already,
-					 * nor if the top node is a Sort, since Sort materializes
-					 * its output anyway.  (I doubt either case can happen in
-					 * practice for a subplan, but...)
+
+					/*
+					 * Don't add another Material node if there's one
+					 * already, nor if the top node is a Sort, since Sort
+					 * materializes its output anyway.	(I doubt either
+					 * case can happen in practice for a subplan, but...)
 					 */
 					use_material = false;
 					break;
@@ -359,7 +368,7 @@ make_subplan(SubLink *slink)
 		/*
 		 * Make expression of SUBPLAN type
 		 */
-		expr->typeOid = BOOLOID; /* bogus, but we don't really care */
+		expr->typeOid = BOOLOID;/* bogus, but we don't really care */
 		expr->opType = SUBPLAN_EXPR;
 		expr->oper = (Node *) node;
 
@@ -371,17 +380,20 @@ make_subplan(SubLink *slink)
 			Var		   *var = nth(lfirsti(lst), PlannerParamVar);
 
 			var = (Var *) copyObject(var);
-			/* Must fix absolute-level varlevelsup from the
-			 * PlannerParamVar entry.  But since var is at current
-			 * subplan level, this is easy:
+
+			/*
+			 * Must fix absolute-level varlevelsup from the
+			 * PlannerParamVar entry.  But since var is at current subplan
+			 * level, this is easy:
 			 */
 			var->varlevelsup = 0;
 			args = lappend(args, var);
 		}
 		expr->args = args;
+
 		/*
-		 * Convert oper list of Opers into a list of Exprs, using
-		 * lefthand arguments and Consts representing inside results.
+		 * Convert oper list of Opers into a list of Exprs, using lefthand
+		 * arguments and Consts representing inside results.
 		 */
 		foreach(lst, slink->oper)
 		{
@@ -395,8 +407,8 @@ make_subplan(SubLink *slink)
 					   *right;
 
 			/*
-			 * XXX really ought to fill in constlen and constbyval correctly,
-			 * but right now ExecEvalExpr won't look at them...
+			 * XXX really ought to fill in constlen and constbyval
+			 * correctly, but right now ExecEvalExpr won't look at them...
 			 */
 			con = makeConst(te->resdom->restype, 0, 0, true, 0, 0, 0);
 
@@ -404,7 +416,9 @@ make_subplan(SubLink *slink)
 			tup = get_operator_tuple(oper->opno);
 			Assert(HeapTupleIsValid(tup));
 			opform = (Form_pg_operator) GETSTRUCT(tup);
-			/* Note: we use make_operand in case runtime type conversion
+
+			/*
+			 * Note: we use make_operand in case runtime type conversion
 			 * function calls must be inserted for this operator!
 			 */
 			left = make_operand("", lefthand,
@@ -450,9 +464,10 @@ set_unioni(List *l1, List *l2)
  * check in make_subplan to see whether a subselect has any subselects.
  */
 
-typedef struct finalize_primnode_results {
-	List	*subplans;			/* List of subplans found in expr */
-	List	*paramids;			/* List of PARAM_EXEC paramids found */
+typedef struct finalize_primnode_results
+{
+	List	   *subplans;		/* List of subplans found in expr */
+	List	   *paramids;		/* List of PARAM_EXEC paramids found */
 } finalize_primnode_results;
 
 static bool
@@ -464,16 +479,16 @@ finalize_primnode(Node *node, finalize_primnode_results *results)
 	{
 		if (((Param *) node)->paramkind == PARAM_EXEC)
 		{
-			int		paramid = (int) ((Param *) node)->paramid;
+			int			paramid = (int) ((Param *) node)->paramid;
 
-			if (! intMember(paramid, results->paramids))
+			if (!intMember(paramid, results->paramids))
 				results->paramids = lconsi(paramid, results->paramids);
 		}
 		return false;			/* no more to do here */
 	}
 	if (is_subplan(node))
 	{
-		SubPlan	   *subplan = (SubPlan *) ((Expr *) node)->oper;
+		SubPlan    *subplan = (SubPlan *) ((Expr *) node)->oper;
 		List	   *lst;
 
 		/* Add subplan to subplans list */
@@ -486,7 +501,7 @@ finalize_primnode(Node *node, finalize_primnode_results *results)
 
 			/* note varlevelsup is absolute level number */
 			if (var->varlevelsup < PlannerQueryLevel &&
-				! intMember(paramid, results->paramids))
+				!intMember(paramid, results->paramids))
 				results->paramids = lconsi(paramid, results->paramids);
 		}
 		/* fall through to recurse into subplan args */
@@ -533,7 +548,7 @@ Node *
 SS_process_sublinks(Node *expr)
 {
 	/* No setup needed for tree walk, so away we go */
-    return process_sublinks_mutator(expr, NULL);
+	return process_sublinks_mutator(expr, NULL);
 }
 
 static Node *
@@ -543,25 +558,26 @@ process_sublinks_mutator(Node *node, void *context)
 		return NULL;
 	if (IsA(node, SubLink))
 	{
-		SubLink	   *sublink = (SubLink *) node;
+		SubLink    *sublink = (SubLink *) node;
 
-		/* First, scan the lefthand-side expressions, if any.
-		 * This is a tad klugy since we modify the input SubLink node,
-		 * but that should be OK (make_subplan does it too!)
+		/*
+		 * First, scan the lefthand-side expressions, if any. This is a
+		 * tad klugy since we modify the input SubLink node, but that
+		 * should be OK (make_subplan does it too!)
 		 */
 		sublink->lefthand = (List *)
 			process_sublinks_mutator((Node *) sublink->lefthand, context);
 		/* Now build the SubPlan node and make the expr to return */
 		return make_subplan(sublink);
 	}
+
 	/*
 	 * Note that we will never see a SubPlan expression in the input
-	 * (since this is the very routine that creates 'em to begin with).
-	 * So the code in expression_tree_mutator() that might do
-	 * inappropriate things with SubPlans or SubLinks will not be
-	 * exercised.
+	 * (since this is the very routine that creates 'em to begin with). So
+	 * the code in expression_tree_mutator() that might do inappropriate
+	 * things with SubPlans or SubLinks will not be exercised.
 	 */
-	Assert(! is_subplan(node));
+	Assert(!is_subplan(node));
 
 	return expression_tree_mutator(node,
 								   process_sublinks_mutator,
@@ -581,12 +597,13 @@ SS_finalize_plan(Plan *plan)
 
 	results.subplans = NIL;		/* initialize lists to NIL */
 	results.paramids = NIL;
+
 	/*
 	 * When we call finalize_primnode, results.paramids lists are
-	 * automatically merged together.  But when recursing to self,
-	 * we have to do it the hard way.  We want the paramids list
-	 * to include params in subplans as well as at this level.
-	 * (We don't care about finding subplans of subplans, though.)
+	 * automatically merged together.  But when recursing to self, we have
+	 * to do it the hard way.  We want the paramids list to include params
+	 * in subplans as well as at this level. (We don't care about finding
+	 * subplans of subplans, though.)
 	 */
 
 	/* Find params and subplans in targetlist and qual */
@@ -604,13 +621,15 @@ SS_finalize_plan(Plan *plan)
 		case T_Append:
 			foreach(lst, ((Append *) plan)->appendplans)
 				results.paramids = set_unioni(results.paramids,
-								SS_finalize_plan((Plan *) lfirst(lst)));
+								 SS_finalize_plan((Plan *) lfirst(lst)));
 			break;
 
 		case T_IndexScan:
 			finalize_primnode((Node *) ((IndexScan *) plan)->indxqual,
 							  &results);
-			/* we need not look at indxqualorig, since it will have the
+
+			/*
+			 * we need not look at indxqualorig, since it will have the
 			 * same param references as indxqual, and we aren't really
 			 * concerned yet about having a complete subplan list.
 			 */
@@ -633,7 +652,7 @@ SS_finalize_plan(Plan *plan)
 
 		case T_TidScan:
 			finalize_primnode((Node *) ((TidScan *) plan)->tideval,
-							&results);
+							  &results);
 			break;
 
 		case T_Agg:

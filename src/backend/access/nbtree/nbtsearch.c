@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/access/nbtree/nbtsearch.c,v 1.58 2000/03/17 02:36:04 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/access/nbtree/nbtsearch.c,v 1.59 2000/04/12 17:14:49 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -299,9 +299,7 @@ _bt_skeycmp(Relation rel,
 			compare = -1;		/* not-NULL key "<" NULL datum */
 		}
 		else
-		{
 			compare = (int32) FMGR_PTR2(&entry->sk_func, keyDatum, attrDatum);
-		}
 
 		if (compare != 0)
 			break;				/* done when we find unequal attributes */
@@ -368,26 +366,26 @@ _bt_binsrch(Relation rel,
 
 	/*
 	 * If there are no keys on the page, return the first available slot.
-	 * Note this covers two cases: the page is really empty (no keys),
-	 * or it contains only a high key.  The latter case is possible after
+	 * Note this covers two cases: the page is really empty (no keys), or
+	 * it contains only a high key.  The latter case is possible after
 	 * vacuuming.
 	 */
 	if (high < low)
 		return low;
 
 	/*
-	 * Binary search to find the first key on the page >= scan key.
-	 * Loop invariant: all slots before 'low' are < scan key, all slots
-	 * at or after 'high' are >= scan key.  Also, haveEq is true if the
-	 * tuple at 'high' is == scan key.
-	 * We can fall out when high == low.
+	 * Binary search to find the first key on the page >= scan key. Loop
+	 * invariant: all slots before 'low' are < scan key, all slots at or
+	 * after 'high' are >= scan key.  Also, haveEq is true if the tuple at
+	 * 'high' is == scan key. We can fall out when high == low.
 	 */
 	high++;						/* establish the loop invariant for high */
 	haveEq = false;
 
 	while (high > low)
 	{
-		OffsetNumber	mid = low + ((high - low) / 2);
+		OffsetNumber mid = low + ((high - low) / 2);
+
 		/* We have low <= mid < high, so mid points at a real slot */
 
 		result = _bt_compare(rel, itupdesc, page, keysz, scankey, mid);
@@ -403,7 +401,7 @@ _bt_binsrch(Relation rel,
 
 	/*--------------------
 	 * At this point we have high == low, but be careful: they could point
-	 * past the last slot on the page.  We also know that haveEq is true
+	 * past the last slot on the page.	We also know that haveEq is true
 	 * if and only if there is an equal key (in which case high&low point
 	 * at the first equal key).
 	 *
@@ -443,18 +441,20 @@ _bt_binsrch(Relation rel,
 
 	if (haveEq)
 	{
+
 		/*
 		 * There is an equal key.  We return either the first equal key
 		 * (which we just found), or the last lesser key.
 		 *
-		 * We need not check srchtype != BT_DESCENT here, since if that
-		 * is true then natts == keysz by assumption.
+		 * We need not check srchtype != BT_DESCENT here, since if that is
+		 * true then natts == keysz by assumption.
 		 */
 		if (natts == keysz)
 			return low;			/* return first equal key */
 	}
 	else
 	{
+
 		/*
 		 * There is no equal key.  We return either the first greater key
 		 * (which we just found), or the last lesser key.
@@ -524,6 +524,7 @@ _bt_compare(Relation rel,
 		&& P_LEFTMOST(opaque)
 		&& offnum == P_HIKEY)
 	{
+
 		/*
 		 * we just have to believe that this will only be called with
 		 * offnum == P_HIKEY when P_HIKEY is the OffsetNumber of the first
@@ -702,11 +703,12 @@ _bt_first(IndexScanDesc scan, ScanDirection dir)
 
 	bool		strategyCheck;
 	ScanKey		scankeys = 0;
-	int		keysCount = 0;
-	int		*nKeyIs = 0;
-	int		i, j;
-	StrategyNumber	strat_total;
-       
+	int			keysCount = 0;
+	int		   *nKeyIs = 0;
+	int			i,
+				j;
+	StrategyNumber strat_total;
+
 	rel = scan->relation;
 	so = (BTScanOpaque) scan->opaque;
 
@@ -723,15 +725,15 @@ _bt_first(IndexScanDesc scan, ScanDirection dir)
 		_bt_orderkeys(rel, so);
 
 		if (so->qual_ok)
-		     strategyCheck = true;
- 	}
+			strategyCheck = true;
+	}
 	strat_total = BTEqualStrategyNumber;
 	if (strategyCheck)
 	{
 		AttrNumber	attno;
 
-		nKeyIs = (int *)palloc(so->numberOfKeys*sizeof(int));
-		for (i=0; i < so->numberOfKeys; i++)
+		nKeyIs = (int *) palloc(so->numberOfKeys * sizeof(int));
+		for (i = 0; i < so->numberOfKeys; i++)
 		{
 			attno = so->keyData[i].sk_attno;
 			if (attno == keysCount)
@@ -739,16 +741,16 @@ _bt_first(IndexScanDesc scan, ScanDirection dir)
 			if (attno > keysCount + 1)
 				break;
 			strat = _bt_getstrat(rel, attno,
-					so->keyData[i].sk_procedure);
+								 so->keyData[i].sk_procedure);
 			if (strat == strat_total ||
-			    strat == BTEqualStrategyNumber)
+				strat == BTEqualStrategyNumber)
 			{
 				nKeyIs[keysCount++] = i;
 				continue;
 			}
 			if (ScanDirectionIsBackward(dir) &&
-			    (strat == BTLessStrategyNumber ||
-			     strat == BTLessEqualStrategyNumber) )
+				(strat == BTLessStrategyNumber ||
+				 strat == BTLessEqualStrategyNumber))
 			{
 				nKeyIs[keysCount++] = i;
 				strat_total = strat;
@@ -757,8 +759,8 @@ _bt_first(IndexScanDesc scan, ScanDirection dir)
 				continue;
 			}
 			if (ScanDirectionIsForward(dir) &&
-			    (strat == BTGreaterStrategyNumber ||
-			     strat == BTGreaterEqualStrategyNumber) )
+				(strat == BTGreaterStrategyNumber ||
+				 strat == BTGreaterEqualStrategyNumber))
 			{
 				nKeyIs[keysCount++] = i;
 				strat_total = strat;
@@ -794,8 +796,8 @@ _bt_first(IndexScanDesc scan, ScanDirection dir)
 	 * at the right place in the scan.
 	 */
 	/* _bt_orderkeys disallows it, but it's place to add some code latter */
-	scankeys = (ScanKey)palloc(keysCount*sizeof(ScanKeyData));
-	for (i=0; i < keysCount; i++)
+	scankeys = (ScanKey) palloc(keysCount * sizeof(ScanKeyData));
+	for (i = 0; i < keysCount; i++)
 	{
 		j = nKeyIs[i];
 		if (so->keyData[j].sk_flags & SK_ISNULL)
@@ -804,12 +806,13 @@ _bt_first(IndexScanDesc scan, ScanDirection dir)
 			pfree(scankeys);
 			elog(ERROR, "_bt_first: btree doesn't support is(not)null, yet");
 			return ((RetrieveIndexResult) NULL);
-		} 
-		proc = index_getprocid(rel, i+1, BTORDER_PROC);
-		ScanKeyEntryInitialize(scankeys+i, so->keyData[j].sk_flags,
-				i+1, proc, so->keyData[j].sk_argument);
+		}
+		proc = index_getprocid(rel, i + 1, BTORDER_PROC);
+		ScanKeyEntryInitialize(scankeys + i, so->keyData[j].sk_flags,
+							   i + 1, proc, so->keyData[j].sk_argument);
 	}
-	if   (nKeyIs)	pfree(nKeyIs);
+	if (nKeyIs)
+		pfree(nKeyIs);
 
 	stack = _bt_search(rel, keysCount, scankeys, &buf);
 	_bt_freestack(stack);

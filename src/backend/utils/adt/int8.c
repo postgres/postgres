@@ -71,10 +71,10 @@ int8in(char *str)
 		elog(ERROR, "Bad int8 external representation \"%s\"", str);
 	while (*ptr && isdigit(*ptr))		/* process digits */
 	{
-		int64	newtmp = tmp * 10 + (*ptr++ - '0');
+		int64		newtmp = tmp * 10 + (*ptr++ - '0');
 
 		if ((newtmp / 10) != tmp)		/* overflow? */
-			elog(ERROR,"int8 value out of range: \"%s\"", str);
+			elog(ERROR, "int8 value out of range: \"%s\"", str);
 		tmp = newtmp;
 	}
 	if (*ptr)					/* trailing junk? */
@@ -372,7 +372,7 @@ int8abs(int64 *arg1)
 
 	result = palloc(sizeof(*result));
 
-	*result = ((*arg1 < 0)? -*arg1: *arg1);
+	*result = ((*arg1 < 0) ? -*arg1 : *arg1);
 
 	return result;
 }
@@ -400,7 +400,7 @@ int64 *
 int8fac(int64 *arg1)
 {
 	int64	   *result;
-	int64	   i;
+	int64		i;
 
 	if (!PointerIsValid(arg1))
 		return NULL;
@@ -581,7 +581,7 @@ int84(int64 *val)
 
 #if NOT_USED
 int64 *
-int2vector		(int16 val)
+int2vector	(int16 val)
 {
 	int64	   *result;
 

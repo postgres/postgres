@@ -1,10 +1,11 @@
-/* $Id: isinf.c,v 1.14 1999/12/16 01:25:02 momjian Exp $ */
+/* $Id: isinf.c,v 1.15 2000/04/12 17:15:28 momjian Exp $ */
 
 #include <math.h>
 
 #include "config.h"
 
-#if HAVE_FPCLASS /* this is _not_ HAVE_FP_CLASS, and not typo */
+#if HAVE_FPCLASS				/* this is _not_ HAVE_FP_CLASS, and not
+								 * typo */
 
 #if HAVE_IEEEFP_H
 #include <ieeefp.h>
@@ -73,11 +74,11 @@ isinf(double x)
 int
 isinf(double x)
 {
-        if (x == HUGE_VAL)
-                return 1;
-        if (x == -HUGE_VAL)
-                return -1;
-        return 0;
+	if (x == HUGE_VAL)
+		return 1;
+	if (x == -HUGE_VAL)
+		return -1;
+	return 0;
 }
 
 #endif

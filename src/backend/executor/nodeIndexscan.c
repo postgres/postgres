@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/executor/nodeIndexscan.c,v 1.48 2000/04/07 00:30:41 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/executor/nodeIndexscan.c,v 1.49 2000/04/12 17:15:09 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -106,7 +106,7 @@ IndexNext(IndexScan *node)
 			direction = BackwardScanDirection;
 		else if (ScanDirectionIsBackward(direction))
 			direction = ForwardScanDirection;
-	}  
+	}
 	snapshot = estate->es_snapshot;
 	scanstate = node->scan.scanstate;
 	indexstate = node->indxstate;
@@ -195,11 +195,11 @@ IndexNext(IndexScan *node)
 				List	   *qual;
 
 				/*
-				 *	store the scanned tuple in the scan tuple slot of
-				 *	the scan state.  Eventually we will only do this and not
-				 *	return a tuple.  Note: we pass 'false' because tuples
-				 *	returned by amgetnext are pointers onto disk pages and
-				 *	must not be pfree()'d.
+				 * store the scanned tuple in the scan tuple slot of the
+				 * scan state.	Eventually we will only do this and not
+				 * return a tuple.	Note: we pass 'false' because tuples
+				 * returned by amgetnext are pointers onto disk pages and
+				 * must not be pfree()'d.
 				 */
 				ExecStoreTuple(tuple,	/* tuple to store */
 							   slot,	/* slot to store in */
@@ -208,16 +208,17 @@ IndexNext(IndexScan *node)
 
 				/*
 				 * At this point we have an extra pin on the buffer,
-				 * because ExecStoreTuple incremented the pin count.
-				 * Drop our local pin.
+				 * because ExecStoreTuple incremented the pin count. Drop
+				 * our local pin.
 				 */
 				ReleaseBuffer(buffer);
 
 				/*
 				 * We must check to see if the current tuple was already
-				 * matched by an earlier index, so we don't double-report it.
-				 * We do this by passing the tuple through ExecQual and
-				 * checking for failure with all previous qualifications.
+				 * matched by an earlier index, so we don't double-report
+				 * it. We do this by passing the tuple through ExecQual
+				 * and checking for failure with all previous
+				 * qualifications.
 				 */
 				scanstate->cstate.cs_ExprContext->ecxt_scantuple = slot;
 				qual = node->indxqualorig;
@@ -234,7 +235,7 @@ IndexNext(IndexScan *node)
 					qual = lnext(qual);
 				}
 				if (!prev_matches)
-					return slot;		/* OK to return tuple */
+					return slot;/* OK to return tuple */
 				/* Duplicate tuple, so drop it and loop back for another */
 				ExecClearTuple(slot);
 			}
@@ -380,13 +381,14 @@ ExecIndexReScan(IndexScan *node, ExprContext *exprCtxt, Plan *parent)
 					scanexpr = (run_keys[j] == RIGHT_OP) ?
 						(Node *) get_rightop(clause) :
 						(Node *) get_leftop(clause);
+
 					/*
 					 * pass in isDone but ignore it.  We don't iterate in
 					 * quals
 					 */
 					scanvalue = (Datum)
 						ExecEvalExpr(scanexpr,
-								node->scan.scanstate->cstate.cs_ExprContext,
+							 node->scan.scanstate->cstate.cs_ExprContext,
 									 &isNull, &isDone);
 					scan_keys[j].sk_argument = scanvalue;
 					if (isNull)
@@ -750,7 +752,7 @@ ExecInitIndexScan(IndexScan *node, EState *estate, Plan *parent)
 			clause = nth(j, qual);
 
 			op = (Oper *) clause->oper;
-			if (!IsA(clause, Expr) || !IsA(op, Oper))
+			if (!IsA(clause, Expr) ||!IsA(op, Oper))
 				elog(ERROR, "ExecInitIndexScan: indxqual not an opclause!");
 
 			opid = op->opid;
@@ -801,7 +803,7 @@ ExecInitIndexScan(IndexScan *node, EState *estate, Plan *parent)
 
 			Assert(leftop != NULL);
 
-			if (IsA(leftop, Var) && var_is_rel((Var *) leftop))
+			if (IsA(leftop, Var) &&var_is_rel((Var *) leftop))
 			{
 				/* ----------------
 				 *	if the leftop is a "rel-var", then it means
@@ -884,7 +886,7 @@ ExecInitIndexScan(IndexScan *node, EState *estate, Plan *parent)
 
 			Assert(rightop != NULL);
 
-			if (IsA(rightop, Var) && var_is_rel((Var *) rightop))
+			if (IsA(rightop, Var) &&var_is_rel((Var *) rightop))
 			{
 				/* ----------------
 				 *	here we make sure only one op identifies the
@@ -1049,10 +1051,8 @@ ExecInitIndexScan(IndexScan *node, EState *estate, Plan *parent)
 				  &currentRelation,		/* return: rel desc */
 				  (Pointer *) &currentScanDesc);		/* return: scan desc */
 
-if (!RelationGetForm(currentRelation)->relhasindex)
-{
-	elog(ERROR, "indexes of the relation %u was inactivated", reloid);
-}
+	if (!RelationGetForm(currentRelation)->relhasindex)
+		elog(ERROR, "indexes of the relation %u was inactivated", reloid);
 	scanstate->css_currentRelation = currentRelation;
 	scanstate->css_currentScanDesc = currentScanDesc;
 

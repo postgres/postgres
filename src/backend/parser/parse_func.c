@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/parser/parse_func.c,v 1.77 2000/03/23 07:38:30 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/parser/parse_func.c,v 1.78 2000/04/12 17:15:26 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -45,13 +45,14 @@ static Oid **argtype_inherit(int nargs, Oid *oid_array);
 
 static int	find_inheritors(Oid relid, Oid **supervec);
 static CandidateList func_get_candidates(char *funcname, int nargs);
-static bool func_get_detail(char *funcname,
-							int nargs,
-							Oid *oid_array,
-							Oid *funcid,	/* return value */
-							Oid *rettype,	/* return value */
-							bool *retset,	/* return value */
-							Oid **true_typeids);
+static bool
+func_get_detail(char *funcname,
+				int nargs,
+				Oid *oid_array,
+				Oid *funcid,	/* return value */
+				Oid *rettype,	/* return value */
+				bool *retset,	/* return value */
+				Oid **true_typeids);
 static Oid **gen_cross_product(InhPaths *arginh, int nargs);
 static void make_arguments(ParseState *pstate,
 			   int nargs,
@@ -127,7 +128,7 @@ agg_get_candidates(char *aggname,
 	HeapTuple	tup;
 	Form_pg_aggregate agg;
 	int			ncandidates = 0;
-	ScanKeyData	aggKey[1];
+	ScanKeyData aggKey[1];
 
 	*candidates = NULL;
 
@@ -179,8 +180,8 @@ agg_select_candidate(Oid typeid, CandidateList candidates)
 				current_category;
 
 	/*
-	 * First look for exact matches or binary compatible matches.
-	 * (Of course exact matches shouldn't even get here, but anyway.)
+	 * First look for exact matches or binary compatible matches. (Of
+	 * course exact matches shouldn't even get here, but anyway.)
 	 */
 	ncandidates = 0;
 	last_candidate = NULL;
@@ -191,18 +192,18 @@ agg_select_candidate(Oid typeid, CandidateList candidates)
 		current_typeid = current_candidate->args[0];
 
 		if (current_typeid == typeid
-            || IS_BINARY_COMPATIBLE(current_typeid, typeid))
+			|| IS_BINARY_COMPATIBLE(current_typeid, typeid))
 		{
 			last_candidate = current_candidate;
 			ncandidates++;
-        }
-    }
+		}
+	}
 	if (ncandidates == 1)
 		return last_candidate->args[0];
 
 	/*
-	 * If no luck that way, look for candidates which allow coercion
-	 * and have a preferred type. Keep all candidates if none match.
+	 * If no luck that way, look for candidates which allow coercion and
+	 * have a preferred type. Keep all candidates if none match.
 	 */
 	category = TypeCategory(typeid);
 	ncandidates = 0;
@@ -290,11 +291,11 @@ ParseFuncOrColumn(ParseState *pstate, char *funcname, List *fargs,
 	if (nargs == 1 && !must_be_agg)
 	{
 		/* Is it a plain Relation name from the parser? */
-		if (IsA(first_arg, Ident) && ((Ident *) first_arg)->isRel)
+		if (IsA(first_arg, Ident) &&((Ident *) first_arg)->isRel)
 		{
 			Ident	   *ident = (Ident *) first_arg;
 			RangeTblEntry *rte;
-			AttrNumber attnum;
+			AttrNumber	attnum;
 
 			/*
 			 * first arg is a relation. This could be a projection.
@@ -308,9 +309,9 @@ ParseFuncOrColumn(ParseState *pstate, char *funcname, List *fargs,
 										 makeAttr(refname, NULL),
 										 FALSE, FALSE, TRUE);
 #ifdef WARN_FROM
-				elog(NOTICE,"Adding missing FROM-clause entry%s for table %s",
-					pstate->parentParseState != NULL ? " in subquery" : "",
-					refname);
+				elog(NOTICE, "Adding missing FROM-clause entry%s for table %s",
+				  pstate->parentParseState != NULL ? " in subquery" : "",
+					 refname);
 #endif
 			}
 
@@ -320,35 +321,39 @@ ParseFuncOrColumn(ParseState *pstate, char *funcname, List *fargs,
 
 			/*
 			 * If the attr isn't a set, just make a var for it.  If it is
-			 * a set, treat it like a function and drop through.
-			 * Look through the explicit column list first, since we
-			 * now allow column aliases.
-			 * - thomas 2000-02-07
+			 * a set, treat it like a function and drop through. Look
+			 * through the explicit column list first, since we now allow
+			 * column aliases. - thomas 2000-02-07
 			 */
 			if (rte->eref->attrs != NULL)
 			{
-				List   *c;
-				/* start counting attributes/columns from one.
-				 * zero is reserved for InvalidAttrNumber.
-				 * - thomas 2000-01-27
+				List	   *c;
+
+				/*
+				 * start counting attributes/columns from one. zero is
+				 * reserved for InvalidAttrNumber. - thomas 2000-01-27
 				 */
-				int		i = 1;
-				foreach (c, rte->eref->attrs)
+				int			i = 1;
+
+				foreach(c, rte->eref->attrs)
 				{
-					char *colname = strVal(lfirst(c));
+					char	   *colname = strVal(lfirst(c));
+
 					/* found a match? */
 					if (strcmp(colname, funcname) == 0)
 					{
-						char *basename = get_attname(relid, i);
+						char	   *basename = get_attname(relid, i);
 
 						if (basename != NULL)
 						{
 							funcname = basename;
 							attnum = i;
 						}
-						/* attnum was initialized to InvalidAttrNumber
-						 * earlier, so no need to reset it if the
-						 * above test fails. - thomas 2000-02-07
+
+						/*
+						 * attnum was initialized to InvalidAttrNumber
+						 * earlier, so no need to reset it if the above
+						 * test fails. - thomas 2000-02-07
 						 */
 						break;
 					}
@@ -358,9 +363,7 @@ ParseFuncOrColumn(ParseState *pstate, char *funcname, List *fargs,
 					attnum = specialAttNum(funcname);
 			}
 			else
-			{
 				attnum = get_attnum(relid, funcname);
-			}
 
 			if (attnum != InvalidAttrNumber)
 			{
@@ -373,6 +376,7 @@ ParseFuncOrColumn(ParseState *pstate, char *funcname, List *fargs,
 		}
 		else if (ISCOMPLEX(exprType(first_arg)))
 		{
+
 			/*
 			 * Attempt to handle projection of a complex argument. If
 			 * ParseComplexProjection can't handle the projection, we have
@@ -411,6 +415,7 @@ ParseFuncOrColumn(ParseState *pstate, char *funcname, List *fargs,
 
 	if (nargs == 1 || must_be_agg)
 	{
+
 		/*
 		 * See if it's an aggregate.
 		 */
@@ -423,8 +428,8 @@ ParseFuncOrColumn(ParseState *pstate, char *funcname, List *fargs,
 			elog(ERROR, "Aggregate functions may only have one parameter");
 
 		/*
-		 * the aggregate COUNT is a special case, ignore its base
-		 * type.  Treat it as zero.   XXX mighty ugly --- FIXME
+		 * the aggregate COUNT is a special case, ignore its base type.
+		 * Treat it as zero.   XXX mighty ugly --- FIXME
 		 */
 		if (strcmp(funcname, "count") == 0)
 			basetype = 0;
@@ -469,6 +474,7 @@ ParseFuncOrColumn(ParseState *pstate, char *funcname, List *fargs,
 
 		if (must_be_agg)
 		{
+
 			/*
 			 * No matching agg, but we had '*' or DISTINCT, so a plain
 			 * function could not have been meant.
@@ -491,7 +497,7 @@ ParseFuncOrColumn(ParseState *pstate, char *funcname, List *fargs,
 	{
 		Node	   *arg = lfirst(i);
 
-		if (IsA(arg, Ident) && ((Ident *) arg)->isRel)
+		if (IsA(arg, Ident) &&((Ident *) arg)->isRel)
 		{
 			RangeTblEntry *rte;
 			int			vnum;
@@ -509,9 +515,9 @@ ParseFuncOrColumn(ParseState *pstate, char *funcname, List *fargs,
 										 makeAttr(refname, NULL),
 										 FALSE, FALSE, TRUE);
 #ifdef WARN_FROM
-				elog(NOTICE,"Adding missing FROM-clause entry%s for table %s",
-					pstate->parentParseState != NULL ? " in subquery" : "",
-					refname);
+				elog(NOTICE, "Adding missing FROM-clause entry%s for table %s",
+				  pstate->parentParseState != NULL ? " in subquery" : "",
+					 refname);
 #endif
 			}
 
@@ -532,17 +538,16 @@ ParseFuncOrColumn(ParseState *pstate, char *funcname, List *fargs,
 			lfirst(i) = makeVar(vnum, 0, toid, -1, sublevels_up);
 		}
 		else if (!attisset)
-		{
 			toid = exprType(arg);
-		}
 		else
 		{
 			/* if attisset is true, we already set toid for the single arg */
 		}
 
-		/* Most of the rest of the parser just assumes that functions do not
-		 * have more than FUNC_MAX_ARGS parameters.  We have to test here
-		 * to protect against array overruns, etc.
+		/*
+		 * Most of the rest of the parser just assumes that functions do
+		 * not have more than FUNC_MAX_ARGS parameters.  We have to test
+		 * here to protect against array overruns, etc.
 		 */
 		if (nargs >= FUNC_MAX_ARGS)
 			elog(ERROR, "Cannot pass more than %d arguments to a function",
@@ -585,23 +590,26 @@ ParseFuncOrColumn(ParseState *pstate, char *funcname, List *fargs,
 								 &rettype, &retset, &true_oid_array);
 		if (!exists)
 		{
+
 			/*
-			 * If we can't find a function (or can't find a unique function),
-			 * see if this is really a type-coercion request: single-argument
-			 * function call where the function name is a type name.  If so,
-			 * and if we can do the coercion trivially, just go ahead and do
-			 * it without requiring there to be a real function for it.
+			 * If we can't find a function (or can't find a unique
+			 * function), see if this is really a type-coercion request:
+			 * single-argument function call where the function name is a
+			 * type name.  If so, and if we can do the coercion trivially,
+			 * just go ahead and do it without requiring there to be a
+			 * real function for it.
 			 *
 			 * "Trivial" coercions are ones that involve binary-compatible
 			 * types and ones that are coercing a previously-unknown-type
 			 * literal constant to a specific type.
 			 *
 			 * DO NOT try to generalize this code to nontrivial coercions,
-			 * because you'll just set up an infinite recursion between this
-			 * routine and coerce_type!  We have already failed to find a
-			 * suitable "real" coercion function, so we have to fail unless
-			 * this is a coercion that coerce_type can handle by itself.
-			 * Make sure this code stays in sync with what coerce_type does!
+			 * because you'll just set up an infinite recursion between
+			 * this routine and coerce_type!  We have already failed to
+			 * find a suitable "real" coercion function, so we have to
+			 * fail unless this is a coercion that coerce_type can handle
+			 * by itself. Make sure this code stays in sync with what
+			 * coerce_type does!
 			 */
 			if (nargs == 1)
 			{
@@ -612,15 +620,17 @@ ParseFuncOrColumn(ParseState *pstate, char *funcname, List *fargs,
 										 0, 0, 0);
 				if (HeapTupleIsValid(tp))
 				{
-					Oid		sourceType = oid_array[0];
-					Oid		targetType = typeTypeId(tp);
-					Node   *arg1 = lfirst(fargs);
+					Oid			sourceType = oid_array[0];
+					Oid			targetType = typeTypeId(tp);
+					Node	   *arg1 = lfirst(fargs);
 
 					if ((sourceType == UNKNOWNOID && IsA(arg1, Const)) ||
 						sourceType == targetType ||
 						IS_BINARY_COMPATIBLE(sourceType, targetType))
 					{
-						/* Ah-hah, we can do it as a trivial coercion.
+
+						/*
+						 * Ah-hah, we can do it as a trivial coercion.
 						 * coerce_type can handle these cases, so why
 						 * duplicate code...
 						 */
@@ -640,7 +650,8 @@ ParseFuncOrColumn(ParseState *pstate, char *funcname, List *fargs,
 			 */
 			if (nargs == 1)
 			{
-				Type	tp = typeidType(oid_array[0]);
+				Type		tp = typeidType(oid_array[0]);
+
 				if (typeTypeFlag(tp) == 'c')
 					elog(ERROR, "No such attribute or function '%s'",
 						 funcname);
@@ -911,8 +922,8 @@ func_select_candidate(int nargs,
 				current_type;
 
 	/*
-	 * Run through all candidates and keep those with the most matches
-	 * on exact types. Keep all candidates if none match.
+	 * Run through all candidates and keep those with the most matches on
+	 * exact types. Keep all candidates if none match.
 	 */
 	ncandidates = 0;
 	nbestMatch = 0;
@@ -955,10 +966,9 @@ func_select_candidate(int nargs,
 		return candidates->args;
 
 	/*
-	 * Still too many candidates?
-	 * Run through all candidates and keep those with the most matches
-	 * on exact types + binary-compatible types.
-	 * Keep all candidates if none match.
+	 * Still too many candidates? Run through all candidates and keep
+	 * those with the most matches on exact types + binary-compatible
+	 * types. Keep all candidates if none match.
 	 */
 	ncandidates = 0;
 	nbestMatch = 0;
@@ -1005,10 +1015,9 @@ func_select_candidate(int nargs,
 		return candidates->args;
 
 	/*
-	 * Still too many candidates?
-	 * Now look for candidates which are preferred types at the args that
-	 * will require coercion.
-	 * Keep all candidates if none match.
+	 * Still too many candidates? Now look for candidates which are
+	 * preferred types at the args that will require coercion. Keep all
+	 * candidates if none match.
 	 */
 	ncandidates = 0;
 	nbestMatch = 0;
@@ -1052,19 +1061,19 @@ func_select_candidate(int nargs,
 		return candidates->args;
 
 	/*
-	 * Still too many candidates?
-	 * Try assigning types for the unknown columns.
+	 * Still too many candidates? Try assigning types for the unknown
+	 * columns.
 	 *
-	 * We do this by examining each unknown argument position to see if all the
-	 * candidates agree on the type category of that slot.  If so, and if some
-	 * candidates accept the preferred type in that category, eliminate the
-	 * candidates with other input types.  If we are down to one candidate
-	 * at the end, we win.
+	 * We do this by examining each unknown argument position to see if all
+	 * the candidates agree on the type category of that slot.	If so, and
+	 * if some candidates accept the preferred type in that category,
+	 * eliminate the candidates with other input types.  If we are down to
+	 * one candidate at the end, we win.
 	 *
 	 * XXX It's kinda bogus to do this left-to-right, isn't it?  If we
-	 * eliminate some candidates because they are non-preferred at the first
-	 * slot, we won't notice that they didn't have the same type category for
-	 * a later slot.
+	 * eliminate some candidates because they are non-preferred at the
+	 * first slot, we won't notice that they didn't have the same type
+	 * category for a later slot.
 	 */
 	for (i = 0; i < nargs; i++)
 	{
@@ -1117,7 +1126,7 @@ func_select_candidate(int nargs,
 					last_candidate = current_candidate;
 				}
 			}
-			if (last_candidate)			/* terminate rebuilt list */
+			if (last_candidate) /* terminate rebuilt list */
 				last_candidate->next = NULL;
 		}
 	}
@@ -1174,7 +1183,11 @@ func_get_detail(char *funcname,
 	}
 	else
 	{
-		/* didn't find an exact match, so now try to match up candidates... */
+
+		/*
+		 * didn't find an exact match, so now try to match up
+		 * candidates...
+		 */
 		CandidateList function_typeids;
 
 		function_typeids = func_get_candidates(funcname, nargs);
@@ -1234,7 +1247,9 @@ func_get_detail(char *funcname,
 												   0);
 						Assert(HeapTupleIsValid(ftup));
 					}
-					/* otherwise, ambiguous function call, so fail by
+
+					/*
+					 * otherwise, ambiguous function call, so fail by
 					 * exiting loop with ftup still NULL.
 					 */
 					break;
@@ -1242,7 +1257,8 @@ func_get_detail(char *funcname,
 
 				/*
 				 * No match here, so try the next inherited type vector.
-				 * First time through, we need to compute the list of vectors.
+				 * First time through, we need to compute the list of
+				 * vectors.
 				 */
 				if (input_typeid_vector == NULL)
 					input_typeid_vector = argtype_inherit(nargs, oid_array);
@@ -1341,10 +1357,10 @@ find_inheritors(Oid relid, Oid **supervec)
 
 	/*
 	 * Use queue to do a breadth-first traversal of the inheritance graph
-	 * from the relid supplied up to the root.  At the top of the loop,
-	 * relid is the OID of the reltype to check next, queue is the list
-	 * of pending rels to check after this one, and visited is the list
-	 * of relids we need to output.
+	 * from the relid supplied up to the root.	At the top of the loop,
+	 * relid is the OID of the reltype to check next, queue is the list of
+	 * pending rels to check after this one, and visited is the list of
+	 * relids we need to output.
 	 */
 	do
 	{
@@ -1372,7 +1388,7 @@ find_inheritors(Oid relid, Oid **supervec)
 		{
 			relid = lfirsti(queue);
 			queue = lnext(queue);
-			if (! intMember(relid, visited))
+			if (!intMember(relid, visited))
 			{
 				newrelid = true;
 				break;
@@ -1401,7 +1417,7 @@ find_inheritors(Oid relid, Oid **supervec)
 
 			relid = lfirsti(elt);
 			rd = heap_open(relid, NoLock);
-			if (! RelationIsValid(rd))
+			if (!RelationIsValid(rd))
 				elog(ERROR, "Relid %u does not exist", relid);
 			trelid = typeTypeId(typenameType(RelationGetRelationName(rd)));
 			heap_close(rd, NoLock);
@@ -1412,7 +1428,9 @@ find_inheritors(Oid relid, Oid **supervec)
 		*supervec = (Oid *) NULL;
 
 	freeList(visited);
-	/* there doesn't seem to be any equally easy way to release the queue
+
+	/*
+	 * there doesn't seem to be any equally easy way to release the queue
 	 * list cells, but since they're palloc'd space it's not critical.
 	 */
 

@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/access/index/indexam.c,v 1.41 2000/03/14 23:52:01 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/access/index/indexam.c,v 1.42 2000/04/12 17:14:47 momjian Exp $
  *
  * INTERFACE ROUTINES
  *		index_open		- open an index relation by relationId
@@ -115,10 +115,10 @@
  *		index_open - open an index relation by relationId
  *
  *		presently the relcache routines do all the work we need
- *		to open/close index relations.  However, callers of index_open
+ *		to open/close index relations.	However, callers of index_open
  *		expect it to succeed, so we need to check for a failure return.
  *
- *		Note: we acquire no lock on the index.  An AccessShareLock is
+ *		Note: we acquire no lock on the index.	An AccessShareLock is
  *		acquired by index_beginscan (and released by index_endscan).
  * ----------------
  */
@@ -129,7 +129,7 @@ index_open(Oid relationId)
 
 	r = RelationIdGetRelation(relationId);
 
-	if (! RelationIsValid(r))
+	if (!RelationIsValid(r))
 		elog(ERROR, "Index %u does not exist", relationId);
 
 	if (r->rd_rel->relkind != RELKIND_INDEX)
@@ -151,7 +151,7 @@ index_openr(char *relationName)
 
 	r = RelationNameGetRelation(relationName);
 
-	if (! RelationIsValid(r))
+	if (!RelationIsValid(r))
 		elog(ERROR, "Index '%s' does not exist", relationName);
 
 	if (r->rd_rel->relkind != RELKIND_INDEX)
@@ -238,7 +238,7 @@ index_beginscan(Relation relation,
 	 *	Acquire AccessShareLock for the duration of the scan
 	 *
 	 *	Note: we could get an SI inval message here and consequently have
-	 *	to rebuild the relcache entry.  The refcount increment above
+	 *	to rebuild the relcache entry.	The refcount increment above
 	 *	ensures that we will rebuild it and not just flush it...
 	 * ----------------
 	 */

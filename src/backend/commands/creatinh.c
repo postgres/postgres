@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/commands/Attic/creatinh.c,v 1.56 2000/01/29 16:58:34 petere Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/commands/Attic/creatinh.c,v 1.57 2000/04/12 17:14:58 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -32,7 +32,7 @@
  */
 
 static bool checkAttrExists(const char *attributeName,
-                            const char *attributeType, List *schema);
+				const char *attributeType, List *schema);
 static List *MergeAttributes(List *schema, List *supers, List **supconstr);
 static void StoreCatalogInheritance(Oid relationId, List *supers);
 
@@ -145,14 +145,14 @@ DefineRelation(CreateStmt *stmt, char relkind)
 	StoreCatalogInheritance(relationId, inheritList);
 
 	/*
-	 * Now add any newly specified column default values
-	 * and CHECK constraints to the new relation.  These are passed
-	 * to us in the form of raw parsetrees; we need to transform
-	 * them to executable expression trees before they can be added.
-	 * The most convenient way to do that is to apply the parser's
-	 * transformExpr routine, but transformExpr doesn't work unless
-	 * we have a pre-existing relation.  So, the transformation has
-	 * to be postponed to this final step of CREATE TABLE.
+	 * Now add any newly specified column default values and CHECK
+	 * constraints to the new relation.  These are passed to us in the
+	 * form of raw parsetrees; we need to transform them to executable
+	 * expression trees before they can be added. The most convenient way
+	 * to do that is to apply the parser's transformExpr routine, but
+	 * transformExpr doesn't work unless we have a pre-existing relation.
+	 * So, the transformation has to be postponed to this final step of
+	 * CREATE TABLE.
 	 *
 	 * First, scan schema to find new column defaults.
 	 */
@@ -181,21 +181,24 @@ DefineRelation(CreateStmt *stmt, char relkind)
 		return;
 
 	/*
-	 * We must bump the command counter to make the newly-created
-	 * relation tuple visible for opening.
+	 * We must bump the command counter to make the newly-created relation
+	 * tuple visible for opening.
 	 */
 	CommandCounterIncrement();
+
 	/*
 	 * Open the new relation.
 	 */
 	rel = heap_openr(relname, AccessExclusiveLock);
+
 	/*
 	 * Parse and add the defaults/constraints.
 	 */
 	AddRelationRawConstraints(rel, rawDefaults, stmt->constraints);
+
 	/*
-	 * Clean up.  We keep lock on new relation (although it shouldn't
-	 * be visible to anyone else anyway, until commit).
+	 * Clean up.  We keep lock on new relation (although it shouldn't be
+	 * visible to anyone else anyway, until commit).
 	 */
 	heap_close(rel, NoLock);
 }
@@ -220,13 +223,13 @@ RemoveRelation(char *name)
 
 /*
  * TruncateRelation --
- *                Removes all the rows from a relation
+ *				  Removes all the rows from a relation
  *
  * Exceptions:
- *                BadArg if name is invalid
+ *				  BadArg if name is invalid
  *
  * Note:
- *                Rows are removed, indices are truncated and reconstructed.
+ *				  Rows are removed, indices are truncated and reconstructed.
  */
 void
 TruncateRelation(char *name)
@@ -284,6 +287,7 @@ MergeAttributes(List *schema, List *supers, List **supconstr)
 
 		foreach(rest, lnext(entry))
 		{
+
 			/*
 			 * check for duplicated names within the new relation
 			 */
@@ -352,11 +356,12 @@ MergeAttributes(List *schema, List *supers, List **supconstr)
 			 * check validity
 			 *
 			 */
-            if (checkAttrExists(attributeName, attributeType, schema))
-                elog(ERROR, "CREATE TABLE: attribute \"%s\" already exists in inherited schema",
-                     attributeName);
+			if (checkAttrExists(attributeName, attributeType, schema))
+				elog(ERROR, "CREATE TABLE: attribute \"%s\" already exists in inherited schema",
+					 attributeName);
 
 			if (checkAttrExists(attributeName, attributeType, inhSchema))
+
 				/*
 				 * this entry already exists
 				 */
@@ -499,7 +504,7 @@ StoreCatalogInheritance(Oid relationId, List *supers)
 		if (RelationGetForm(relation)->relhasindex)
 		{
 			Relation	idescs[Num_pg_inherits_indices];
-	
+
 			CatalogOpenIndices(Num_pg_inherits_indices, Name_pg_inherits_indices, idescs);
 			CatalogIndexInsert(idescs, Num_pg_inherits_indices, relation, tuple);
 			CatalogCloseIndices(Num_pg_inherits_indices, idescs);
@@ -642,8 +647,9 @@ checkAttrExists(const char *attributeName, const char *attributeType, List *sche
 	{
 		ColumnDef  *def = lfirst(s);
 
-		if (strcmp(attributeName, def->colname)==0)
+		if (strcmp(attributeName, def->colname) == 0)
 		{
+
 			/*
 			 * attribute exists. Make sure the types are the same.
 			 */

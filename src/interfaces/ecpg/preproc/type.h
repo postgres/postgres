@@ -119,7 +119,7 @@ struct _defines
 {
 	char	   *old;
 	char	   *new;
-	int	   pertinent;
+	int			pertinent;
 	struct _defines *next;
 };
 
@@ -141,22 +141,25 @@ struct arguments
 
 struct descriptor
 {
-	char	*name;
-	char	*connection;
+	char	   *name;
+	char	   *connection;
 	struct descriptor *next;
 };
 
 struct assignment
-{	
-	char 			*variable;
-	enum ECPGdtype		value;
-	struct assignment 	*next;
+{
+	char	   *variable;
+	enum ECPGdtype value;
+	struct assignment *next;
 };
 
-enum errortype {ET_WARN, ET_ERROR, ET_FATAL};
+enum errortype
+{
+	ET_WARN, ET_ERROR, ET_FATAL
+};
 
 struct fetch_desc
 {
-	char *str;
-	char *name;
+	char	   *str;
+	char	   *name;
 };

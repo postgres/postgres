@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/optimizer/path/clausesel.c,v 1.33 2000/03/23 23:35:47 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/optimizer/path/clausesel.c,v 1.34 2000/04/12 17:15:19 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -28,17 +28,18 @@
  * Data structure for accumulating info about possible range-query
  * clause pairs in clauselist_selectivity.
  */
-typedef struct RangeQueryClause {
-	struct RangeQueryClause *next; /* next in linked list */
+typedef struct RangeQueryClause
+{
+	struct RangeQueryClause *next;		/* next in linked list */
 	Node	   *var;			/* The common variable of the clauses */
 	bool		have_lobound;	/* found a low-bound clause yet? */
 	bool		have_hibound;	/* found a high-bound clause yet? */
-	Selectivity	lobound;		/* Selectivity of a var > something clause */
-	Selectivity	hibound;		/* Selectivity of a var < something clause */
+	Selectivity lobound;		/* Selectivity of a var > something clause */
+	Selectivity hibound;		/* Selectivity of a var < something clause */
 } RangeQueryClause;
 
 static void addRangeClause(RangeQueryClause **rqlist, Node *clause,
-						   int flag, bool isLTsel, Selectivity s2);
+			   int flag, bool isLTsel, Selectivity s2);
 
 
 /****************************************************************************
@@ -59,7 +60,7 @@ restrictlist_selectivity(Query *root,
 						 int varRelid)
 {
 	List	   *clauselist = get_actual_clauses(restrictinfo_list);
-	Selectivity	result;
+	Selectivity result;
 
 	result = clauselist_selectivity(root, clauselist, varRelid);
 	freeList(clauselist);
@@ -75,7 +76,7 @@ restrictlist_selectivity(Query *root,
  * See clause_selectivity() for the meaning of the varRelid parameter.
  *
  * Our basic approach is to take the product of the selectivities of the
- * subclauses.  However, that's only right if the subclauses have independent
+ * subclauses.	However, that's only right if the subclauses have independent
  * probabilities, and in reality they are often NOT independent.  So,
  * we want to be smarter where we can.
 
@@ -92,7 +93,7 @@ restrictlist_selectivity(Query *root,
  * see that hisel is the fraction of the range below the high bound, while
  * losel is the fraction above the low bound; so hisel can be interpreted
  * directly as a 0..1 value but we need to convert losel to 1-losel before
- * interpreting it as a value.  Then the available range is 1-losel to hisel.)
+ * interpreting it as a value.	Then the available range is 1-losel to hisel.)
  * If the calculation yields zero or negative, however, we chicken out and
  * use the default interpretation; that probably means that one or both
  * selectivities is a default estimate rather than an actual range value.
@@ -104,9 +105,9 @@ clauselist_selectivity(Query *root,
 					   List *clauses,
 					   int varRelid)
 {
-	Selectivity			s1 = 1.0;
-	RangeQueryClause   *rqlist = NULL;
-	List			   *clist;
+	Selectivity s1 = 1.0;
+	RangeQueryClause *rqlist = NULL;
+	List	   *clist;
 
 	/*
 	 * Initial scan over clauses.  Anything that doesn't look like a
@@ -116,13 +117,13 @@ clauselist_selectivity(Query *root,
 	foreach(clist, clauses)
 	{
 		Node	   *clause = (Node *) lfirst(clist);
-		Selectivity	s2;
+		Selectivity s2;
 
 		/*
-		 * See if it looks like a restriction clause with a constant.
-		 * (If it's not a constant we can't really trust the selectivity!)
-		 * NB: for consistency of results, this fragment of code had
-		 * better match what clause_selectivity() would do.
+		 * See if it looks like a restriction clause with a constant. (If
+		 * it's not a constant we can't really trust the selectivity!) NB:
+		 * for consistency of results, this fragment of code had better
+		 * match what clause_selectivity() would do.
 		 */
 		if (varRelid != 0 || NumRelids(clause) == 1)
 		{
@@ -147,11 +148,12 @@ clauselist_selectivity(Query *root,
 														  root->rtable),
 												 attno,
 												 constval, flag);
+
 				/*
-				 * If we reach here, we have computed the same result
-				 * that clause_selectivity would, so we can just use s2
-				 * if it's the wrong oprrest.  But if it's the right
-				 * oprrest, add the clause to rqlist for later processing.
+				 * If we reach here, we have computed the same result that
+				 * clause_selectivity would, so we can just use s2 if it's
+				 * the wrong oprrest.  But if it's the right oprrest, add
+				 * the clause to rqlist for later processing.
 				 */
 				switch (oprrest)
 				{
@@ -166,7 +168,7 @@ clauselist_selectivity(Query *root,
 						s1 = s1 * s2;
 						break;
 				}
-				continue; /* drop to loop bottom */
+				continue;		/* drop to loop bottom */
 			}
 		}
 		/* Not the right form, so treat it generically. */
@@ -179,12 +181,12 @@ clauselist_selectivity(Query *root,
 	 */
 	while (rqlist != NULL)
 	{
-		RangeQueryClause   *rqnext;
+		RangeQueryClause *rqnext;
 
 		if (rqlist->have_lobound && rqlist->have_hibound)
 		{
 			/* Successfully matched a pair of range clauses */
-			Selectivity	s2 = rqlist->hibound + rqlist->lobound - 1.0;
+			Selectivity s2 = rqlist->hibound + rqlist->lobound - 1.0;
 
 			/*
 			 * A zero or slightly negative s2 should be converted into a
@@ -199,14 +201,20 @@ clauselist_selectivity(Query *root,
 			{
 				if (s2 < -0.01)
 				{
-					/* No data available --- use a default estimate that
+
+					/*
+					 * No data available --- use a default estimate that
 					 * is small, but not real small.
 					 */
 					s2 = 0.01;
 				}
 				else
 				{
-					/* It's just roundoff error; use a small positive value */
+
+					/*
+					 * It's just roundoff error; use a small positive
+					 * value
+					 */
 					s2 = 1.0e-10;
 				}
 			}
@@ -239,15 +247,15 @@ static void
 addRangeClause(RangeQueryClause **rqlist, Node *clause,
 			   int flag, bool isLTsel, Selectivity s2)
 {
-	RangeQueryClause   *rqelem;
-	Node			   *var;
-	bool				is_lobound;
+	RangeQueryClause *rqelem;
+	Node	   *var;
+	bool		is_lobound;
 
 	/* get_relattval sets flag&SEL_RIGHT if the var is on the LEFT. */
 	if (flag & SEL_RIGHT)
 	{
 		var = (Node *) get_leftop((Expr *) clause);
-		is_lobound = ! isLTsel;	/* x < something is high bound */
+		is_lobound = !isLTsel;	/* x < something is high bound */
 	}
 	else
 	{
@@ -257,23 +265,27 @@ addRangeClause(RangeQueryClause **rqlist, Node *clause,
 
 	for (rqelem = *rqlist; rqelem; rqelem = rqelem->next)
 	{
-		/* We use full equal() here because the "var" might be a function
+
+		/*
+		 * We use full equal() here because the "var" might be a function
 		 * of one or more attributes of the same relation...
 		 */
-		if (! equal(var, rqelem->var))
+		if (!equal(var, rqelem->var))
 			continue;
 		/* Found the right group to put this clause in */
 		if (is_lobound)
 		{
-			if (! rqelem->have_lobound)
+			if (!rqelem->have_lobound)
 			{
 				rqelem->have_lobound = true;
 				rqelem->lobound = s2;
 			}
 			else
 			{
-				/* We have found two similar clauses, such as
-				 * x < y AND x < z.  Keep only the more restrictive one.
+
+				/*
+				 * We have found two similar clauses, such as x < y AND x
+				 * < z.  Keep only the more restrictive one.
 				 */
 				if (rqelem->lobound > s2)
 					rqelem->lobound = s2;
@@ -281,15 +293,17 @@ addRangeClause(RangeQueryClause **rqlist, Node *clause,
 		}
 		else
 		{
-			if (! rqelem->have_hibound)
+			if (!rqelem->have_hibound)
 			{
 				rqelem->have_hibound = true;
 				rqelem->hibound = s2;
 			}
 			else
 			{
-				/* We have found two similar clauses, such as
-				 * x > y AND x > z.  Keep only the more restrictive one.
+
+				/*
+				 * We have found two similar clauses, such as x > y AND x
+				 * > z.  Keep only the more restrictive one.
 				 */
 				if (rqelem->hibound > s2)
 					rqelem->hibound = s2;
@@ -331,7 +345,7 @@ addRangeClause(RangeQueryClause **rqlist, Node *clause,
  * nestloop join's inner relation --- varRelid should then be the ID of the
  * inner relation.
  *
- * When varRelid is 0, all variables are treated as variables.  This
+ * When varRelid is 0, all variables are treated as variables.	This
  * is appropriate for ordinary join clauses and restriction clauses.
  */
 Selectivity
@@ -339,12 +353,13 @@ clause_selectivity(Query *root,
 				   Node *clause,
 				   int varRelid)
 {
-	Selectivity		s1 = 1.0;	/* default for any unhandled clause type */
+	Selectivity s1 = 1.0;		/* default for any unhandled clause type */
 
 	if (clause == NULL)
 		return s1;
 	if (IsA(clause, Var))
 	{
+
 		/*
 		 * we have a bool Var.	This is exactly equivalent to the clause:
 		 * reln.attribute = 't' so we compute the selectivity as if that
@@ -352,7 +367,7 @@ clause_selectivity(Query *root,
 		 * didn't want to have to do system cache look ups to find out all
 		 * of that info.
 		 */
-		Index	varno = ((Var *) clause)->varno;
+		Index		varno = ((Var *) clause)->varno;
 
 		if (varRelid == 0 || varRelid == (int) varno)
 			s1 = restriction_selectivity(F_EQSEL,
@@ -377,7 +392,7 @@ clause_selectivity(Query *root,
 	{
 		/* inverse of the selectivity of the underlying clause */
 		s1 = 1.0 - clause_selectivity(root,
-									  (Node*) get_notclausearg((Expr*) clause),
+							  (Node *) get_notclausearg((Expr *) clause),
 									  varRelid);
 	}
 	else if (and_clause(clause))
@@ -389,18 +404,21 @@ clause_selectivity(Query *root,
 	}
 	else if (or_clause(clause))
 	{
+
 		/*
 		 * Selectivities for an 'or' clause are computed as s1+s2 - s1*s2
-		 * to account for the probable overlap of selected tuple sets.
-		 * XXX is this too conservative?
+		 * to account for the probable overlap of selected tuple sets. XXX
+		 * is this too conservative?
 		 */
-		List   *arg;
+		List	   *arg;
+
 		s1 = 0.0;
 		foreach(arg, ((Expr *) clause)->args)
 		{
-			Selectivity	s2 = clause_selectivity(root,
+			Selectivity s2 = clause_selectivity(root,
 												(Node *) lfirst(arg),
 												varRelid);
+
 			s1 = s1 + s2 - s1 * s2;
 		}
 	}
@@ -411,17 +429,20 @@ clause_selectivity(Query *root,
 
 		if (varRelid != 0)
 		{
+
 			/*
-			 * If we are considering a nestloop join then all clauses
-			 * are restriction clauses, since we are only interested in
-			 * the one relation.
+			 * If we are considering a nestloop join then all clauses are
+			 * restriction clauses, since we are only interested in the
+			 * one relation.
 			 */
 			is_join_clause = false;
 		}
 		else
 		{
+
 			/*
-			 * Otherwise, it's a join if there's more than one relation used.
+			 * Otherwise, it's a join if there's more than one relation
+			 * used.
 			 */
 			is_join_clause = (NumRelids(clause) > 1);
 		}
@@ -432,8 +453,8 @@ clause_selectivity(Query *root,
 			RegProcedure oprjoin = get_oprjoin(opno);
 
 			/*
-			 * if the oprjoin procedure is missing for whatever reason, use a
-			 * selectivity of 0.5
+			 * if the oprjoin procedure is missing for whatever reason,
+			 * use a selectivity of 0.5
 			 */
 			if (!oprjoin)
 				s1 = (Selectivity) 0.5;
@@ -460,8 +481,8 @@ clause_selectivity(Query *root,
 			RegProcedure oprrest = get_oprrest(opno);
 
 			/*
-			 * if the oprrest procedure is missing for whatever reason, use a
-			 * selectivity of 0.5
+			 * if the oprrest procedure is missing for whatever reason,
+			 * use a selectivity of 0.5
 			 */
 			if (!oprrest)
 				s1 = (Selectivity) 0.5;
@@ -484,6 +505,7 @@ clause_selectivity(Query *root,
 	}
 	else if (is_funcclause(clause))
 	{
+
 		/*
 		 * This is not an operator, so we guess at the selectivity. THIS
 		 * IS A HACK TO GET V4 OUT THE DOOR.  FUNCS SHOULD BE ABLE TO HAVE
@@ -493,6 +515,7 @@ clause_selectivity(Query *root,
 	}
 	else if (is_subplan(clause))
 	{
+
 		/*
 		 * Just for the moment! FIX ME! - vadim 02/04/98
 		 */

@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/tcop/fastpath.c,v 1.37 2000/01/26 05:57:07 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/tcop/fastpath.c,v 1.38 2000/04/12 17:15:43 momjian Exp $
  *
  * NOTES
  *	  This cruft is the server side of PQfn.
@@ -302,10 +302,10 @@ HandleFunctionRequest()
 		update_fp_info(fid, fip);
 
 	/*
-	 * XXX FIXME: elog() here means we lose sync with the frontend,
-	 * since we have not swallowed all of its input message.  What
-	 * should happen is we absorb all of the input message per protocol
-	 * syntax, and *then* do error checking and elog if appropriate.
+	 * XXX FIXME: elog() here means we lose sync with the frontend, since
+	 * we have not swallowed all of its input message.	What should happen
+	 * is we absorb all of the input message per protocol syntax, and
+	 * *then* do error checking and elog if appropriate.
 	 */
 
 	if (fip->nargs != nargs)

@@ -5,4 +5,4 @@
 
 #include <sys/param.h>
 
-#endif /* _ENDIAN_H_ */
+#endif	 /* _ENDIAN_H_ */

@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2000, PostgreSQL, Inc
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Id: libpq-fe.h,v 1.64 2000/03/30 02:59:14 tgl Exp $
+ * $Id: libpq-fe.h,v 1.65 2000/04/12 17:17:15 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -30,31 +30,37 @@ extern		"C"
 
 	typedef enum
 	{
-		/* Although you may decide to change this list in some way,
-		   values which become unused should never be removed, nor
-           should constants be redefined - that would break 
-           compatibility with existing code.                           */
+
+		/*
+		 * Although you may decide to change this list in some way, values
+		 * which become unused should never be removed, nor should
+		 * constants be redefined - that would break compatibility with
+		 * existing code.
+		 */
 		CONNECTION_OK,
 		CONNECTION_BAD,
 		/* Non-blocking mode only below here */
-		/* The existence of these should never be relied upon - they
-		   should only be used for user feedback or similar purposes.  */
-		CONNECTION_STARTED,     /* Waiting for connection to be made.  */
-		CONNECTION_MADE,        /* Connection OK; waiting to send.     */
-		CONNECTION_AWAITING_RESPONSE,   /* Waiting for a response
-										   from the postmaster.        */
-		CONNECTION_AUTH_OK,             /* Received authentication;
-										   waiting for backend startup. */
-		CONNECTION_SETENV               /* Negotiating environment.    */
+
+		/*
+		 * The existence of these should never be relied upon - they
+		 * should only be used for user feedback or similar purposes.
+		 */
+		CONNECTION_STARTED,		/* Waiting for connection to be made.  */
+		CONNECTION_MADE,		/* Connection OK; waiting to send.	   */
+		CONNECTION_AWAITING_RESPONSE,	/* Waiting for a response from the
+										 * postmaster.		  */
+		CONNECTION_AUTH_OK,		/* Received authentication; waiting for
+								 * backend startup. */
+		CONNECTION_SETENV		/* Negotiating environment.    */
 	} ConnStatusType;
 
 	typedef enum
 	{
 		PGRES_POLLING_FAILED = 0,
-		PGRES_POLLING_READING,     /* These two indicate that one may    */
-		PGRES_POLLING_WRITING,     /* use select before polling again.   */
+		PGRES_POLLING_READING,	/* These two indicate that one may	  */
+		PGRES_POLLING_WRITING,	/* use select before polling again.   */
 		PGRES_POLLING_OK,
-		PGRES_POLLING_ACTIVE       /* Can call poll function immediately.*/
+		PGRES_POLLING_ACTIVE	/* Can call poll function immediately. */
 	} PostgresPollingStatusType;
 
 	typedef enum
@@ -104,17 +110,17 @@ extern		"C"
 	typedef void (*PQnoticeProcessor) (void *arg, const char *message);
 
 /* Print options for PQprint() */
-    typedef char pqbool;
+	typedef char pqbool;
 
 	typedef struct _PQprintOpt
 	{
-		pqbool      header;		/* print output field headings and row
+		pqbool		header;		/* print output field headings and row
 								 * count */
-		pqbool      align;		/* fill align the fields */
-		pqbool      standard;	/* old brain dead format */
-		pqbool      html3;		/* output html tables */
-		pqbool      expanded;	/* expand tables */
-		pqbool      pager;		/* use pager for output if needed */
+		pqbool		align;		/* fill align the fields */
+		pqbool		standard;	/* old brain dead format */
+		pqbool		html3;		/* output html tables */
+		pqbool		expanded;	/* expand tables */
+		pqbool		pager;		/* use pager for output if needed */
 		char	   *fieldSep;	/* field separator */
 		char	   *tableOpt;	/* insert to HTML <table ...> */
 		char	   *caption;	/* HTML <caption> */
@@ -135,14 +141,13 @@ extern		"C"
 		char	   *keyword;	/* The keyword of the option			*/
 		char	   *envvar;		/* Fallback environment variable name	*/
 		char	   *compiled;	/* Fallback compiled in default value	*/
-		char	   *val;		/* Option's current value, or NULL		*/
+		char	   *val;		/* Option's current value, or NULL		 */
 		char	   *label;		/* Label for field in connect dialog	*/
-		char	   *dispchar;	/* Character to display for this field
-								 * in a connect dialog. Values are:
-								 * ""	Display entered value as is
-								 * "*"	Password field - hide value
-								 * "D"	Debug option - don't show by default
-								 */
+		char	   *dispchar;	/* Character to display for this field in
+								 * a connect dialog. Values are: ""
+								 * Display entered value as is "*"
+								 * Password field - hide value "D"	Debug
+								 * option - don't show by default */
 		int			dispsize;	/* Field size in characters for dialog	*/
 	} PQconninfoOption;
 
@@ -176,8 +181,8 @@ extern		"C"
 	extern PGconn *PQconnectdb(const char *conninfo);
 	extern PGconn *PQsetdbLogin(const char *pghost, const char *pgport,
 								const char *pgoptions, const char *pgtty,
-								const char *dbName,
-								const char *login, const char *pwd);
+											const char *dbName,
+									 const char *login, const char *pwd);
 #define PQsetdb(M_PGHOST,M_PGPORT,M_PGOPT,M_PGTTY,M_DBNAME)  \
 	PQsetdbLogin(M_PGHOST, M_PGPORT, M_PGOPT, M_PGTTY, M_DBNAME, NULL, NULL)
 
@@ -195,7 +200,7 @@ extern		"C"
 	 * parameters
 	 */
 	/* Asynchronous (non-blocking) */
-	extern int PQresetStart(PGconn *conn);
+	extern int	PQresetStart(PGconn *conn);
 	extern PostgresPollingStatusType PQresetPoll(PGconn *conn);
 	/* Synchronous (blocking) */
 	extern void PQreset(PGconn *conn);
@@ -258,12 +263,12 @@ extern		"C"
 	 * use
 	 */
 	extern PGresult *PQfn(PGconn *conn,
-			      int fnid,
-			      int *result_buf,
-			      int *result_len,
-			      int result_is_int,
-			      const PQArgBlock *args,
-			      int nargs);
+									  int fnid,
+									  int *result_buf,
+									  int *result_len,
+									  int result_is_int,
+									  const PQArgBlock *args,
+									  int nargs);
 
 	/* Accessor functions for PGresult objects */
 	extern ExecStatusType PQresultStatus(const PGresult *res);
@@ -278,8 +283,8 @@ extern		"C"
 	extern int	PQfsize(const PGresult *res, int field_num);
 	extern int	PQfmod(const PGresult *res, int field_num);
 	extern char *PQcmdStatus(PGresult *res);
-    extern char *PQoidStatus(const PGresult *res); /* old and ugly */
-    extern Oid PQoidValue(const PGresult *res); /* new and improved */
+	extern char *PQoidStatus(const PGresult *res);		/* old and ugly */
+	extern Oid	PQoidValue(const PGresult *res);		/* new and improved */
 	extern char *PQcmdTuples(PGresult *res);
 	extern char *PQgetvalue(const PGresult *res, int tup_num, int field_num);
 	extern int	PQgetlength(const PGresult *res, int tup_num, int field_num);
@@ -298,25 +303,27 @@ extern		"C"
 /* === in fe-print.c === */
 
 	extern void PQprint(FILE *fout,		/* output stream */
-			    const PGresult *res,
-			    const PQprintOpt *ps);	/* option structure */
+									const PGresult *res,
+									const PQprintOpt *ps);		/* option structure */
 
-    /*
-     * really old printing routines
-     */
-    extern void PQdisplayTuples(const PGresult *res,
-                                FILE *fp,   /* where to send the output */
-                                int fillAlign,      /* pad the fields with spaces */
-                                const char *fieldSep,   /* field separator */
-                                int printHeader,    /* display headers? */
-                                int quiet);
- 
-    extern void PQprintTuples(const PGresult *res,
-                              FILE *fout,   /* output stream */
-                              int printAttName,     /* print attribute names */
-                              int terseOutput,      /* delimiter bars */
-                              int width);   /* width of column, if
-                                             * 0, use variable width */
+	/*
+	 * really old printing routines
+	 */
+	extern void PQdisplayTuples(const PGresult *res,
+											FILE *fp,	/* where to send the
+														 * output */
+											int fillAlign,		/* pad the fields with
+																 * spaces */
+											const char *fieldSep,		/* field separator */
+											int printHeader,	/* display headers? */
+											int quiet);
+
+	extern void PQprintTuples(const PGresult *res,
+										  FILE *fout,	/* output stream */
+										  int printAttName,		/* print attribute names */
+										  int terseOutput,		/* delimiter bars */
+										  int width);	/* width of column, if
+														 * 0, use variable width */
 
 
 /* === in fe-lobj.c === */
@@ -339,10 +346,11 @@ extern		"C"
 	extern int	PQmblen(const unsigned char *s, int encoding);
 
 	/* Get encoding id from environment variable PGCLIENTENCODING */
-	extern int PQenv2encoding(void);
+	extern int	PQenv2encoding(void);
 
 #ifdef __cplusplus
 }
+
 #endif
 
 #endif	 /* LIBPQ_FE_H */

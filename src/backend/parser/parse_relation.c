@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/parser/parse_relation.c,v 1.39 2000/03/23 07:38:30 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/parser/parse_relation.c,v 1.40 2000/04/12 17:15:27 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -76,7 +76,7 @@ static char *attnum_type[SPECIALS] = {
  * - thomas 2000-03-04
  */
 List *
-refnameRangeTableEntries(ParseState *pstate, char *refname);
+			refnameRangeTableEntries(ParseState *pstate, char *refname);
 
 List *
 refnameRangeTableEntries(ParseState *pstate, char *refname)
@@ -119,7 +119,7 @@ refnameRangeTableEntry(ParseState *pstate, char *refname)
 }
 
 /* given refname, return RT index (starting with 1) of the relation,
- * and optionally get its nesting depth (0 = current).  If sublevels_up
+ * and optionally get its nesting depth (0 = current).	If sublevels_up
  * is NULL, only consider rels at the current nesting level.
  */
 int
@@ -179,8 +179,9 @@ colnameRangeTableEntry(ParseState *pstate, char *colname)
 
 			if (rte->eref->attrs != NULL)
 			{
-				List *c;
-				foreach (c, rte->ref->attrs)
+				List	   *c;
+
+				foreach(c, rte->ref->attrs)
 				{
 					if (strcmp(strVal(lfirst(c)), colname) == 0)
 					{
@@ -192,16 +193,14 @@ colnameRangeTableEntry(ParseState *pstate, char *colname)
 				}
 			}
 
-			/* Even if we have an attribute list in the RTE,
-			 * look for the column here anyway. This is the only
-			 * way we will find implicit columns like "oid".
-			 * - thomas 2000-02-07
+			/*
+			 * Even if we have an attribute list in the RTE, look for the
+			 * column here anyway. This is the only way we will find
+			 * implicit columns like "oid". - thomas 2000-02-07
 			 */
 			if ((rte_candidate == NULL)
 				&& (get_attnum(rte->relid, colname) != InvalidAttrNumber))
-			{
 				rte_candidate = rte;
-			}
 
 			if (rte_candidate == NULL)
 				continue;
@@ -236,18 +235,18 @@ addRangeTableEntry(ParseState *pstate,
 				   bool inFromCl,
 				   bool inJoinSet)
 {
-	Relation		rel;
-	RangeTblEntry  *rte;
-	Attr		   *eref;
-	int				maxattrs;
-	int				sublevels_up;
-	int				varattno;
+	Relation	rel;
+	RangeTblEntry *rte;
+	Attr	   *eref;
+	int			maxattrs;
+	int			sublevels_up;
+	int			varattno;
 
 	/* Look for an existing rte, if available... */
 	if (pstate != NULL)
 	{
-		int rt_index = refnameRangeTablePosn(pstate, ref->relname,
-											 &sublevels_up);
+		int			rt_index = refnameRangeTablePosn(pstate, ref->relname,
+													 &sublevels_up);
 
 		if (rt_index != 0 && (!inFromCl || sublevels_up == 0))
 		{
@@ -262,12 +261,11 @@ addRangeTableEntry(ParseState *pstate,
 	rte->relname = relname;
 	rte->ref = ref;
 
-	/* Get the rel's OID.  This access also ensures that we have an
-	 * up-to-date relcache entry for the rel.  We don't need to keep
-	 * it open, however.
-	 * Since this is open anyway, let's check that the number of column
-	 * aliases is reasonable.
-	 * - Thomas 2000-02-04
+	/*
+	 * Get the rel's OID.  This access also ensures that we have an
+	 * up-to-date relcache entry for the rel.  We don't need to keep it
+	 * open, however. Since this is open anyway, let's check that the
+	 * number of column aliases is reasonable. - Thomas 2000-02-04
 	 */
 	rel = heap_openr(relname, AccessShareLock);
 	rte->relid = RelationGetRelid(rel);
@@ -290,10 +288,9 @@ addRangeTableEntry(ParseState *pstate,
 	rte->eref = eref;
 
 	/*
-	 * Flags:
-	 * - this RTE should be expanded to include descendant tables,
-	 * - this RTE is in the FROM clause,
-	 * - this RTE should be included in the planner's final join.
+	 * Flags: - this RTE should be expanded to include descendant tables,
+	 * - this RTE is in the FROM clause, - this RTE should be included in
+	 * the planner's final join.
 	 */
 	rte->inh = inh;
 	rte->inFromCl = inFromCl;
@@ -318,18 +315,16 @@ addRangeTableEntry(ParseState *pstate,
 Attr *
 expandTable(ParseState *pstate, char *refname, bool getaliases)
 {
-	Attr			   *attr;
-	RangeTblEntry	   *rte;
-	Relation			rel;
+	Attr	   *attr;
+	RangeTblEntry *rte;
+	Relation	rel;
 	int			varattno,
 				maxattrs;
 
 	rte = refnameRangeTableEntry(pstate, refname);
 
 	if (getaliases && (rte != NULL))
-	{
 		return rte->eref;
-	}
 
 	if (rte != NULL)
 		rel = heap_open(rte->relid, AccessShareLock);
@@ -350,7 +345,7 @@ expandTable(ParseState *pstate, char *refname, bool getaliases)
 #ifdef	_DROP_COLUMN_HACK__
 		if (COLUMN_IS_DROPPED(rel->rd_att->attrs[varattno]))
 			continue;
-#endif	/* _DROP_COLUMN_HACK__ */
+#endif	 /* _DROP_COLUMN_HACK__ */
 		attrname = pstrdup(NameStr(rel->rd_att->attrs[varattno]->attname));
 		attr->attrs = lappend(attr->attrs, makeString(attrname));
 	}
@@ -367,11 +362,11 @@ expandTable(ParseState *pstate, char *refname, bool getaliases)
 List *
 expandAll(ParseState *pstate, char *relname, Attr *ref, int *this_resno)
 {
-	List		   *te_list = NIL;
-	RangeTblEntry  *rte;
-	Relation		rel;
-	int				varattno,
-					maxattrs;
+	List	   *te_list = NIL;
+	RangeTblEntry *rte;
+	Relation	rel;
+	int			varattno,
+				maxattrs;
 
 	rte = refnameRangeTableEntry(pstate, ref->relname);
 	if (rte == NULL)
@@ -379,9 +374,9 @@ expandAll(ParseState *pstate, char *relname, Attr *ref, int *this_resno)
 		rte = addRangeTableEntry(pstate, relname, ref,
 								 FALSE, FALSE, TRUE);
 #ifdef WARN_FROM
-		elog(NOTICE,"Adding missing FROM-clause entry%s for table %s",
-			pstate->parentParseState != NULL ? " in subquery" : "",
-			refname);
+		elog(NOTICE, "Adding missing FROM-clause entry%s for table %s",
+			 pstate->parentParseState != NULL ? " in subquery" : "",
+			 refname);
 #endif
 	}
 
@@ -391,18 +386,21 @@ expandAll(ParseState *pstate, char *relname, Attr *ref, int *this_resno)
 
 	for (varattno = 0; varattno < maxattrs; varattno++)
 	{
-		char		   *attrname;
-		char		   *label;
-		Var			   *varnode;
-		TargetEntry	   *te = makeNode(TargetEntry);
+		char	   *attrname;
+		char	   *label;
+		Var		   *varnode;
+		TargetEntry *te = makeNode(TargetEntry);
 
 #ifdef	_DROP_COLUMN_HACK__
 		if (COLUMN_IS_DROPPED(rel->rd_att->attrs[varattno]))
 			continue;
-#endif	/* _DROP_COLUMN_HACK__ */
+#endif	 /* _DROP_COLUMN_HACK__ */
 		attrname = pstrdup(NameStr(rel->rd_att->attrs[varattno]->attname));
 
-		/* varattno is zero-based, so check that length() is always greater */
+		/*
+		 * varattno is zero-based, so check that length() is always
+		 * greater
+		 */
 		if (length(rte->eref->attrs) > varattno)
 			label = pstrdup(strVal(nth(varattno, rte->eref->attrs)));
 		else
@@ -452,7 +450,7 @@ attnameAttNum(Relation rd, char *a)
 	/* on failure */
 	elog(ERROR, "Relation '%s' does not have attribute '%s'",
 		 RelationGetRelationName(rd), a);
-	return InvalidAttrNumber;		/* lint */
+	return InvalidAttrNumber;	/* lint */
 }
 
 /* specialAttNum()
@@ -528,8 +526,3 @@ attnumTypeId(Relation rd, int attid)
 	 */
 	return rd->rd_att->attrs[attid - 1]->atttypid;
 }
-
-
-
-
-

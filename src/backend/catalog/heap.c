@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/catalog/heap.c,v 1.124 2000/03/17 02:36:05 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/catalog/heap.c,v 1.125 2000/04/12 17:14:55 momjian Exp $
  *
  *
  * INTERFACE ROUTINES
@@ -69,9 +69,9 @@
 
 
 static void AddNewRelationTuple(Relation pg_class_desc,
-								Relation new_rel_desc, Oid new_rel_oid,
-								int natts,
-								char relkind, char *temp_relname);
+					Relation new_rel_desc, Oid new_rel_oid,
+					int natts,
+					char relkind, char *temp_relname);
 static void AddToNoNameRelList(Relation r);
 
 static void DeleteAttributeTuples(Relation rel);
@@ -82,7 +82,7 @@ static void RelationRemoveInheritance(Relation relation);
 static void RemoveFromNoNameRelList(Relation r);
 static void AddNewRelationType(char *typeName, Oid new_rel_oid);
 static void StoreAttrDefault(Relation rel, AttrNumber attnum, char *adbin,
-							 bool updatePgAttribute);
+				 bool updatePgAttribute);
 static void StoreRelCheck(Relation rel, char *ccname, char *ccbin);
 static void StoreConstraints(Relation rel);
 static void RemoveConstraints(Relation rel);
@@ -271,8 +271,9 @@ heap_create(char *relname,
 
 	rel = (Relation) palloc(len);
 	MemSet((char *) rel, 0, len);
-	rel->rd_fd = -1;		/* table is not open */
+	rel->rd_fd = -1;			/* table is not open */
 	rel->rd_unlinked = TRUE;	/* table is not created yet */
+
 	/*
 	 * create a new tuple descriptor from the one passed in
 	 */
@@ -345,7 +346,7 @@ heap_create(char *relname,
 bool
 heap_storage_create(Relation rel)
 {
-	bool smgrcall = false;
+	bool		smgrcall = false;
 
 	if (rel->rd_unlinked)
 	{
@@ -715,6 +716,7 @@ AddNewRelationTuple(Relation pg_class_desc,
 
 	if (!IsIgnoringSystemIndexes())
 	{
+
 		/*
 		 * First, open the catalog indices and insert index tuples for the
 		 * new relation.
@@ -878,7 +880,7 @@ heap_create_with_catalog(char *relname,
 	 *	SOMEDAY: fill the STATISTIC relation properly.
 	 * ----------------
 	 */
-	heap_close(new_rel_desc, NoLock); /* do not unlock till end of xact */
+	heap_close(new_rel_desc, NoLock);	/* do not unlock till end of xact */
 	heap_close(pg_class_desc, RowExclusiveLock);
 
 	return new_rel_oid;
@@ -893,7 +895,7 @@ heap_create_with_catalog(char *relname,
  *		3)	remove indexes
  *		4)	remove pg_class tuple
  *		5)	remove pg_attribute tuples and related descriptions
- *              6)      remove pg_description tuples
+ *				6)		remove pg_description tuples
  *		7)	remove pg_type tuples
  *		8)	RemoveConstraints ()
  *		9)	unlink relation
@@ -963,7 +965,7 @@ RelationRemoveInheritance(Relation relation)
 	tuple = heap_getnext(scan, 0);
 	if (HeapTupleIsValid(tuple))
 	{
-		Oid		subclass = ((Form_pg_inherits) GETSTRUCT(tuple))->inhrelid;
+		Oid			subclass = ((Form_pg_inherits) GETSTRUCT(tuple))->inhrelid;
 
 		heap_endscan(scan);
 		heap_close(catalogRelation, RowExclusiveLock);
@@ -1073,7 +1075,7 @@ DeleteRelationTuple(Relation rel)
 	{
 		heap_close(pg_class_desc, RowExclusiveLock);
 		elog(ERROR, "Relation '%s' does not exist",
-					RelationGetRelationName(rel));
+			 RelationGetRelationName(rel));
 	}
 
 	/* ----------------
@@ -1096,19 +1098,27 @@ DeleteRelationTuple(Relation rel)
 static void
 RelationTruncateIndexes(Relation heapRelation)
 {
-	Relation indexRelation, currentIndex;
+	Relation	indexRelation,
+				currentIndex;
 	ScanKeyData entry;
 	HeapScanDesc scan;
-	HeapTuple indexTuple, procTuple, classTuple;
+	HeapTuple	indexTuple,
+				procTuple,
+				classTuple;
 	Form_pg_index index;
-	Oid heapId, indexId, procId, accessMethodId;
-	Node *oldPred = NULL;
-	PredInfo *predInfo;
-	List *cnfPred = NULL;
+	Oid			heapId,
+				indexId,
+				procId,
+				accessMethodId;
+	Node	   *oldPred = NULL;
+	PredInfo   *predInfo;
+	List	   *cnfPred = NULL;
 	AttrNumber *attributeNumberA;
-	FuncIndexInfo fInfo, *funcInfo = NULL;
-	int i, numberOfAttributes;
-	char *predString;
+	FuncIndexInfo fInfo,
+			   *funcInfo = NULL;
+	int			i,
+				numberOfAttributes;
+	char	   *predString;
 
 	heapId = RelationGetRelid(heapRelation);
 
@@ -1120,8 +1130,10 @@ RelationTruncateIndexes(Relation heapRelation)
 	scan = heap_beginscan(indexRelation, false, SnapshotNow, 1, &entry);
 	while (HeapTupleIsValid(indexTuple = heap_getnext(scan, 0)))
 	{
+
 		/*
-		 * For each index, fetch index attributes so we can apply index_build
+		 * For each index, fetch index attributes so we can apply
+		 * index_build
 		 */
 		index = (Form_pg_index) GETSTRUCT(indexTuple);
 		indexId = index->indexrelid;
@@ -1181,8 +1193,8 @@ RelationTruncateIndexes(Relation heapRelation)
 		LockRelation(currentIndex, AccessExclusiveLock);
 
 		/*
-		 * Release any buffers associated with this index.  If they're dirty,
-		 * they're just dropped without bothering to flush to disk.
+		 * Release any buffers associated with this index.	If they're
+		 * dirty, they're just dropped without bothering to flush to disk.
 		 */
 		ReleaseRelationBuffers(currentIndex);
 		if (FlushRelationBuffers(currentIndex, (BlockNumber) 0, false) < 0)
@@ -1198,35 +1210,35 @@ RelationTruncateIndexes(Relation heapRelation)
 					attributeNumberA, 0, NULL, funcInfo, predInfo);
 
 		/*
-		 * index_build will close both the heap and index relations
-		 * (but not give up the locks we hold on them).  That's fine
-		 * for the index, but we need to open the heap again.  We need
-		 * no new lock, since this backend still has the exclusive lock
-		 * grabbed by heap_truncate.
+		 * index_build will close both the heap and index relations (but
+		 * not give up the locks we hold on them).	That's fine for the
+		 * index, but we need to open the heap again.  We need no new
+		 * lock, since this backend still has the exclusive lock grabbed
+		 * by heap_truncate.
 		 */
 		heapRelation = heap_open(heapId, NoLock);
 		Assert(heapRelation != NULL);
 	}
 
 	/* Complete the scan and close pg_index */
-    heap_endscan(scan);
+	heap_endscan(scan);
 	heap_close(indexRelation, AccessShareLock);
 }
 
 /* ----------------------------
- *   heap_truncate
+ *	 heap_truncate
  *
- *   This routine is used to truncate the data from the
- *   storage manager of any data within the relation handed
- *   to this routine.
+ *	 This routine is used to truncate the data from the
+ *	 storage manager of any data within the relation handed
+ *	 to this routine.
  * ----------------------------
  */
 
 void
 heap_truncate(char *relname)
 {
-	Relation rel;
-	Oid rid;
+	Relation	rel;
+	Oid			rid;
 
 	/* Open relation for processing, and grab exclusive access on it. */
 
@@ -1245,12 +1257,12 @@ heap_truncate(char *relname)
 	 *	they don't exist anyway.  So, no warning in that case.
 	 * ----------------
 	 */
-	if (IsTransactionBlock() && ! rel->rd_myxactonly)
+	if (IsTransactionBlock() && !rel->rd_myxactonly)
 		elog(NOTICE, "Caution: TRUNCATE TABLE cannot be rolled back, so don't abort now");
 
 	/*
-	 * Release any buffers associated with this relation.  If they're dirty,
-	 * they're just dropped without bothering to flush to disk.
+	 * Release any buffers associated with this relation.  If they're
+	 * dirty, they're just dropped without bothering to flush to disk.
 	 */
 
 	ReleaseRelationBuffers(rel);
@@ -1300,17 +1312,17 @@ DeleteAttributeTuples(Relation rel)
 		 attnum++)
 	{
 		if (HeapTupleIsValid(tup = SearchSysCacheTupleCopy(ATTNUM,
-								   ObjectIdGetDatum(RelationGetRelid(rel)),
-								   Int16GetDatum(attnum),
+								 ObjectIdGetDatum(RelationGetRelid(rel)),
+												   Int16GetDatum(attnum),
 														   0, 0)))
 		{
-		  
-		  /*** Delete any comments associated with this attribute ***/
 
-		  DeleteComments(tup->t_data->t_oid);
+			/*** Delete any comments associated with this attribute ***/
 
-		  heap_delete(pg_attribute_desc, &tup->t_self, NULL);
-		  heap_freetuple(tup);
+			DeleteComments(tup->t_data->t_oid);
+
+			heap_delete(pg_attribute_desc, &tup->t_self, NULL);
+			heap_freetuple(tup);
 
 		}
 	}
@@ -1429,7 +1441,7 @@ DeleteTypeTuple(Relation rel)
 	 *	we release the read lock on pg_type.  -mer 13 Aug 1991
 	 * ----------------
 	 */
-	
+
 	heap_delete(pg_type_desc, &tup->t_self, NULL);
 
 	heap_endscan(pg_type_scan);
@@ -1477,7 +1489,7 @@ heap_drop_with_catalog(const char *relname)
 	 *	they don't exist anyway.  So, no warning in that case.
 	 * ----------------
 	 */
-	if (IsTransactionBlock() && ! rel->rd_myxactonly)
+	if (IsTransactionBlock() && !rel->rd_myxactonly)
 		elog(NOTICE, "Caution: DROP TABLE cannot be rolled back, so don't abort now");
 
 	/* ----------------
@@ -1547,8 +1559,8 @@ heap_drop_with_catalog(const char *relname)
 
 	/*
 	 * Close relcache entry, but *keep* AccessExclusiveLock on the
-	 * relation until transaction commit.  This ensures no one else
-	 * will try to do something with the doomed relation.
+	 * relation until transaction commit.  This ensures no one else will
+	 * try to do something with the doomed relation.
 	 */
 	heap_close(rel, NoLock);
 
@@ -1704,7 +1716,7 @@ StoreAttrDefault(Relation rel, AttrNumber attnum, char *adbin,
 	Relation	idescs[Num_pg_attrdef_indices];
 	HeapTuple	tuple;
 	Datum		values[4];
-	static char	nulls[4] = {' ', ' ', ' ', ' '};
+	static char nulls[4] = {' ', ' ', ' ', ' '};
 	Relation	attrrel;
 	Relation	attridescs[Num_pg_attr_indices];
 	HeapTuple	atttup;
@@ -1714,6 +1726,7 @@ StoreAttrDefault(Relation rel, AttrNumber attnum, char *adbin,
 	 * Need to construct source equivalent of given node-string.
 	 */
 	expr = stringToNode(adbin);
+
 	/*
 	 * deparse_expression needs a RangeTblEntry list, so make one
 	 */
@@ -1747,18 +1760,18 @@ StoreAttrDefault(Relation rel, AttrNumber attnum, char *adbin,
 	heap_freetuple(tuple);
 	pfree(adsrc);
 
-	if (! updatePgAttribute)
+	if (!updatePgAttribute)
 		return;					/* done if pg_attribute is OK */
 
 	attrrel = heap_openr(AttributeRelationName, RowExclusiveLock);
 	atttup = SearchSysCacheTupleCopy(ATTNUM,
-									 ObjectIdGetDatum(RelationGetRelid(rel)),
+								 ObjectIdGetDatum(RelationGetRelid(rel)),
 									 (Datum) attnum, 0, 0);
 	if (!HeapTupleIsValid(atttup))
 		elog(ERROR, "cache lookup of attribute %d in relation %u failed",
 			 attnum, RelationGetRelid(rel));
 	attStruct = (Form_pg_attribute) GETSTRUCT(atttup);
-	if (! attStruct->atthasdef)
+	if (!attStruct->atthasdef)
 	{
 		attStruct->atthasdef = true;
 		heap_update(attrrel, &atttup->t_self, atttup, NULL);
@@ -1789,13 +1802,14 @@ StoreRelCheck(Relation rel, char *ccname, char *ccbin)
 	Relation	idescs[Num_pg_relcheck_indices];
 	HeapTuple	tuple;
 	Datum		values[4];
-	static char	nulls[4] = {' ', ' ', ' ', ' '};
+	static char nulls[4] = {' ', ' ', ' ', ' '};
 
 	/*
 	 * Convert condition to a normal boolean expression tree.
 	 */
 	expr = stringToNode(ccbin);
 	expr = (Node *) make_ands_explicit((List *) expr);
+
 	/*
 	 * deparse_expression needs a RangeTblEntry list, so make one
 	 */
@@ -1850,9 +1864,10 @@ StoreConstraints(Relation rel)
 	if (!constr)
 		return;
 
-	/* deparsing of constraint expressions will fail unless the just-created
-	 * pg_attribute tuples for this relation are made visible.  So, bump
-	 * the command counter.
+	/*
+	 * deparsing of constraint expressions will fail unless the
+	 * just-created pg_attribute tuples for this relation are made
+	 * visible.  So, bump the command counter.
 	 */
 	CommandCounterIncrement();
 
@@ -1882,7 +1897,7 @@ StoreConstraints(Relation rel)
  * expression.
  *
  * NB: caller should have opened rel with AccessExclusiveLock, and should
- * hold that lock till end of transaction.  Also, we assume the caller has
+ * hold that lock till end of transaction.	Also, we assume the caller has
  * done a CommandCounterIncrement if necessary to make the relation's catalog
  * tuples visible.
  */
@@ -1921,8 +1936,8 @@ AddRelationRawConstraints(Relation rel,
 	}
 
 	/*
-	 * Create a dummy ParseState and insert the target relation as
-	 * its sole rangetable entry.  We need a ParseState for transformExpr.
+	 * Create a dummy ParseState and insert the target relation as its
+	 * sole rangetable entry.  We need a ParseState for transformExpr.
 	 */
 	pstate = make_parsestate(NULL);
 	makeRangeTable(pstate, NULL);
@@ -1938,25 +1953,28 @@ AddRelationRawConstraints(Relation rel,
 		Oid			type_id;
 
 		Assert(colDef->raw_default != NULL);
+
 		/*
 		 * Transform raw parsetree to executable expression.
 		 */
 		expr = transformExpr(pstate, colDef->raw_default, EXPR_COLUMN_FIRST);
+
 		/*
 		 * Make sure default expr does not refer to any vars.
 		 */
 		if (contain_var_clause(expr))
 			elog(ERROR, "Cannot use attribute(s) in DEFAULT clause");
+
 		/*
-		 * Check that it will be possible to coerce the expression
-		 * to the column's type.  We store the expression without
-		 * coercion, however, to avoid premature coercion in cases like
+		 * Check that it will be possible to coerce the expression to the
+		 * column's type.  We store the expression without coercion,
+		 * however, to avoid premature coercion in cases like
 		 *
 		 * CREATE TABLE tbl (fld datetime DEFAULT 'now');
 		 *
-		 * NB: this should match the code in updateTargetListEntry()
-		 * that will actually do the coercion, to ensure we don't accept
-		 * an unusable default expression.
+		 * NB: this should match the code in updateTargetListEntry() that
+		 * will actually do the coercion, to ensure we don't accept an
+		 * unusable default expression.
 		 */
 		type_id = exprType(expr);
 		if (type_id != InvalidOid)
@@ -1966,23 +1984,26 @@ AddRelationRawConstraints(Relation rel,
 			if (type_id != atp->atttypid)
 			{
 				if (CoerceTargetExpr(NULL, expr, type_id,
-									 atp->atttypid, atp->atttypmod) == NULL)
+								  atp->atttypid, atp->atttypmod) == NULL)
 					elog(ERROR, "Attribute '%s' is of type '%s'"
 						 " but default expression is of type '%s'"
-						 "\n\tYou will need to rewrite or cast the expression",
+					"\n\tYou will need to rewrite or cast the expression",
 						 NameStr(atp->attname),
 						 typeidTypeName(atp->atttypid),
 						 typeidTypeName(type_id));
 			}
 		}
+
 		/*
 		 * Might as well try to reduce any constant expressions.
 		 */
 		expr = eval_const_expressions(expr);
+
 		/*
 		 * Must fix opids, in case any operators remain...
 		 */
 		fix_opids(expr);
+
 		/*
 		 * OK, store it.
 		 */
@@ -2037,26 +2058,31 @@ AddRelationRawConstraints(Relation rel,
 			ccname = (char *) palloc(NAMEDATALEN);
 			snprintf(ccname, NAMEDATALEN, "$%d", numchecks + 1);
 		}
+
 		/*
 		 * Transform raw parsetree to executable expression.
 		 */
 		expr = transformExpr(pstate, cdef->raw_expr, EXPR_COLUMN_FIRST);
+
 		/*
 		 * Make sure it yields a boolean result.
 		 */
 		if (exprType(expr) != BOOLOID)
 			elog(ERROR, "CHECK '%s' does not yield boolean result",
 				 ccname);
+
 		/*
 		 * Make sure no outside relations are referred to.
 		 */
 		if (length(pstate->p_rtable) != 1)
 			elog(ERROR, "Only relation '%s' can be referenced in CHECK",
 				 relname);
+
 		/*
 		 * Might as well try to reduce any constant expressions.
 		 */
 		expr = eval_const_expressions(expr);
+
 		/*
 		 * Constraints are evaluated with execQual, which expects an
 		 * implicit-AND list, so convert expression to implicit-AND form.
@@ -2064,10 +2090,12 @@ AddRelationRawConstraints(Relation rel,
 		 * overkill...)
 		 */
 		expr = (Node *) make_ands_implicit((Expr *) expr);
+
 		/*
 		 * Must fix opids in operator clauses.
 		 */
 		fix_opids(expr);
+
 		/*
 		 * OK, store it.
 		 */
@@ -2081,12 +2109,12 @@ AddRelationRawConstraints(Relation rel,
 	 * We do this even if there was no change, in order to ensure that an
 	 * SI update message is sent out for the pg_class tuple, which will
 	 * force other backends to rebuild their relcache entries for the rel.
-	 * (Of course, for a newly created rel there is no need for an SI message,
-	 * but for ALTER TABLE ADD ATTRIBUTE this'd be important.)
+	 * (Of course, for a newly created rel there is no need for an SI
+	 * message, but for ALTER TABLE ADD ATTRIBUTE this'd be important.)
 	 */
 	relrel = heap_openr(RelationRelationName, RowExclusiveLock);
 	reltup = SearchSysCacheTupleCopy(RELOID,
-									 ObjectIdGetDatum(RelationGetRelid(rel)),
+								 ObjectIdGetDatum(RelationGetRelid(rel)),
 									 0, 0, 0);
 	if (!HeapTupleIsValid(reltup))
 		elog(ERROR, "cache lookup of relation %u failed", RelationGetRelid(rel));

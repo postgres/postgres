@@ -23,7 +23,7 @@
 #define ISO8859
 
 #define MIN(x, y)	((x) < (y) ? (x) : (y))
-#define VALUE(char)	((char) - '0')
+#define VALUE(char) ((char) - '0')
 #define DIGIT(val)	((val) + '0')
 #define ISOCTAL(c)	(((c) >= '0') && ((c) <= '7'))
 #ifndef ISO8859
@@ -89,9 +89,8 @@ string_output(unsigned char *data, int size)
 				break;
 			case '{':
 				/* Escape beginning of string, to distinguish from arrays */
-				if (p == data) {
+				if (p == data)
 					len++;
-				}
 				break;
 			default:
 				if (NOTPRINTABLE(*p))
@@ -137,9 +136,8 @@ string_output(unsigned char *data, int size)
 				break;
 			case '{':
 				/* Escape beginning of string, to distinguish from arrays */
-				if (p == data) {
+				if (p == data)
 					*r++ = '\\';
-				}
 				*r++ = c;
 				break;
 			default:
@@ -361,14 +359,15 @@ c_charin(unsigned char *str)
 {
 	return (string_input(str, 1, 0, NULL));
 }
+
 #endif
 
 /* end of file */
 
 /*
  * Local Variables:
- *  tab-width: 4
- *  c-indent-level: 4
- *  c-basic-offset: 4
+ *	tab-width: 4
+ *	c-indent-level: 4
+ *	c-basic-offset: 4
  * End:
  */

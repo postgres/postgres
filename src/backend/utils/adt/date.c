@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/date.c,v 1.43 2000/03/14 23:06:35 thomas Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/date.c,v 1.44 2000/04/12 17:15:48 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -22,7 +22,7 @@
 #include "utils/builtins.h"
 
 static int
-date2tm(DateADT dateVal, int *tzp, struct tm * tm, double *fsec, char **tzn);
+			date2tm(DateADT dateVal, int *tzp, struct tm * tm, double *fsec, char **tzn);
 
 
 /*****************************************************************************
@@ -188,10 +188,10 @@ date_mii(DateADT dateVal, int4 days)
 /* date_timestamp()
  * Convert date to timestamp data type.
  */
-Timestamp   *
+Timestamp  *
 date_timestamp(DateADT dateVal)
 {
-	Timestamp   *result;
+	Timestamp  *result;
 	struct tm	tt,
 			   *tm = &tt;
 	int			tz;
@@ -392,7 +392,7 @@ time_in(char *str)
 		elog(ERROR, "Bad (null) time external representation");
 
 	if ((ParseDateTime(str, lowstr, field, ftype, MAXDATEFIELDS, &nf) != 0)
-		|| (DecodeTimeOnly(field, ftype, nf, &dtype, tm, &fsec, NULL) != 0))
+	 || (DecodeTimeOnly(field, ftype, nf, &dtype, tm, &fsec, NULL) != 0))
 		elog(ERROR, "Bad time external representation '%s'", str);
 
 	time = palloc(sizeof(*time));
@@ -492,16 +492,16 @@ time_cmp(TimeADT *time1, TimeADT *time2)
 	return (*time1 < *time2) ? -1 : (((*time1 > *time2) ? 1 : 0));
 }	/* time_cmp() */
 
-TimeADT *
+TimeADT    *
 time_larger(TimeADT *time1, TimeADT *time2)
 {
-	return time_gt(time1, time2)? time1: time2;
+	return time_gt(time1, time2) ? time1 : time2;
 }	/* time_larger() */
 
-TimeADT *
+TimeADT    *
 time_smaller(TimeADT *time1, TimeADT *time2)
 {
-	return time_lt(time1, time2)? time1: time2;
+	return time_lt(time1, time2) ? time1 : time2;
 }	/* time_smaller() */
 
 /* overlaps_time()
@@ -514,19 +514,21 @@ overlaps_time(TimeADT *ts1, TimeADT *te1, TimeADT *ts2, TimeADT *te2)
 	/* Make sure we have ordered pairs... */
 	if (time_gt(ts1, te1))
 	{
-		TimeADT *tt = ts1;
+		TimeADT    *tt = ts1;
+
 		ts1 = te1;
 		te1 = tt;
 	}
 	if (time_gt(ts2, te2))
 	{
-		TimeADT *tt = ts2;
+		TimeADT    *tt = ts2;
+
 		ts2 = te2;
 		te2 = tt;
 	}
 
 	return ((time_gt(ts1, ts2) && (time_lt(ts1, te2) || time_lt(te1, te2)))
-			|| (time_gt(ts2, ts1) && (time_lt(ts2, te1) || time_lt(te2, te1)))
+	   || (time_gt(ts2, ts1) && (time_lt(ts2, te1) || time_lt(te2, te1)))
 			|| time_eq(ts1, ts2));
 }
 
@@ -550,13 +552,9 @@ timestamp_time(Timestamp *timestamp)
 		elog(ERROR, "Unable to convert timestamp to date");
 
 	if (TIMESTAMP_IS_EPOCH(*timestamp))
-	{
 		timestamp2tm(SetTimestamp(*timestamp), NULL, tm, &fsec, NULL);
-	}
 	else if (TIMESTAMP_IS_CURRENT(*timestamp))
-	{
 		timestamp2tm(SetTimestamp(*timestamp), &tz, tm, &fsec, &tzn);
-	}
 	else
 	{
 		if (timestamp2tm(*timestamp, &tz, tm, &fsec, &tzn) != 0)
@@ -574,10 +572,10 @@ timestamp_time(Timestamp *timestamp)
 /* datetime_timestamp()
  * Convert date and time to timestamp data type.
  */
-Timestamp   *
+Timestamp  *
 datetime_timestamp(DateADT date, TimeADT *time)
 {
-	Timestamp   *result;
+	Timestamp  *result;
 
 	if (!PointerIsValid(time))
 	{
@@ -618,7 +616,7 @@ time_interval(TimeADT *time)
  *****************************************************************************/
 
 
-TimeTzADT    *
+TimeTzADT  *
 timetz_in(char *str)
 {
 	TimeTzADT  *time;
@@ -638,7 +636,7 @@ timetz_in(char *str)
 		elog(ERROR, "Bad (null) time external representation");
 
 	if ((ParseDateTime(str, lowstr, field, ftype, MAXDATEFIELDS, &nf) != 0)
-		|| (DecodeTimeOnly(field, ftype, nf, &dtype, tm, &fsec, &tz) != 0))
+	  || (DecodeTimeOnly(field, ftype, nf, &dtype, tm, &fsec, &tz) != 0))
 		elog(ERROR, "Bad time external representation '%s'", str);
 
 	time = palloc(sizeof(*time));
@@ -738,19 +736,19 @@ timetz_ge(TimeTzADT *time1, TimeTzADT *time2)
 int
 timetz_cmp(TimeTzADT *time1, TimeTzADT *time2)
 {
-	return (timetz_lt(time1, time2) ? -1 : (timetz_gt(time1, time2)? 1: 0));
+	return (timetz_lt(time1, time2) ? -1 : (timetz_gt(time1, time2) ? 1 : 0));
 }	/* timetz_cmp() */
 
-TimeTzADT *
+TimeTzADT  *
 timetz_larger(TimeTzADT *time1, TimeTzADT *time2)
 {
-	return timetz_gt(time1, time2)? time1: time2;
+	return timetz_gt(time1, time2) ? time1 : time2;
 }	/* timetz_larger() */
 
-TimeTzADT *
+TimeTzADT  *
 timetz_smaller(TimeTzADT *time1, TimeTzADT *time2)
 {
-	return timetz_lt(time1, time2)? time1: time2;
+	return timetz_lt(time1, time2) ? time1 : time2;
 }	/* timetz_smaller() */
 
 /* overlaps_timetz()
@@ -763,13 +761,15 @@ overlaps_timetz(TimeTzADT *ts1, TimeTzADT *te1, TimeTzADT *ts2, TimeTzADT *te2)
 	/* Make sure we have ordered pairs... */
 	if (timetz_gt(ts1, te1))
 	{
-		TimeTzADT *tt = ts1;
+		TimeTzADT  *tt = ts1;
+
 		ts1 = te1;
 		te1 = tt;
 	}
 	if (timetz_gt(ts2, te2))
 	{
-		TimeTzADT *tt = ts2;
+		TimeTzADT  *tt = ts2;
+
 		ts2 = te2;
 		te2 = tt;
 	}
@@ -782,10 +782,10 @@ overlaps_timetz(TimeTzADT *ts1, TimeTzADT *te1, TimeTzADT *ts2, TimeTzADT *te2)
 /* timestamp_timetz()
  * Convert timestamp to timetz data type.
  */
-TimeTzADT    *
+TimeTzADT  *
 timestamp_timetz(Timestamp *timestamp)
 {
-	TimeTzADT    *result;
+	TimeTzADT  *result;
 	struct tm	tt,
 			   *tm = &tt;
 	int			tz;
@@ -804,9 +804,7 @@ timestamp_timetz(Timestamp *timestamp)
 		tz = 0;
 	}
 	else if (TIMESTAMP_IS_CURRENT(*timestamp))
-	{
 		timestamp2tm(SetTimestamp(*timestamp), &tz, tm, &fsec, &tzn);
-	}
 	else
 	{
 		if (timestamp2tm(*timestamp, &tz, tm, &fsec, &tzn) != 0)
@@ -828,7 +826,7 @@ timestamp_timetz(Timestamp *timestamp)
  * stored with the timetz to the result.
  * - thomas 2000-03-10
  */
-Timestamp   *
+Timestamp  *
 datetimetz_timestamp(DateADT date, TimeTzADT *time)
 {
 	Timestamp  *result;
@@ -841,9 +839,7 @@ datetimetz_timestamp(DateADT date, TimeTzADT *time)
 	result = palloc(sizeof(*result));
 
 	if (!PointerIsValid(date) || !PointerIsValid(time))
-	{
 		TIMESTAMP_INVALID(*result);
-	}
 	else
 	{
 		if (date2tm(date, &tz, tm, &fsec, &tzn) != 0)
@@ -857,5 +853,3 @@ datetimetz_timestamp(DateADT date, TimeTzADT *time)
 
 	return result;
 }	/* datetimetz_timestamp() */
-
-

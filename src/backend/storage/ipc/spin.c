@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/storage/ipc/Attic/spin.c,v 1.23 2000/04/12 04:58:09 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/storage/ipc/Attic/spin.c,v 1.24 2000/04/12 17:15:37 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -59,7 +59,8 @@ InitSpinLocks(void)
 	extern SPINLOCK SInvalLock;
 	extern SPINLOCK OidGenLockId;
 	extern SPINLOCK XidGenLockId;
-	extern SPINLOCK	ControlFileLockId;
+	extern SPINLOCK ControlFileLockId;
+
 #ifdef STABLE_MEMORY_STORAGE
 	extern SPINLOCK MMCacheLock;
 
@@ -233,7 +234,7 @@ CreateSpinlocks(IPCKey key)
 {
 
 	SpinLockId = IpcSemaphoreCreate(key, MAX_SPINS, IPCProtection,
-							   IpcSemaphoreDefaultStartValue, 1);
+									IpcSemaphoreDefaultStartValue, 1);
 
 	if (SpinLockId <= 0)
 		elog(STOP, "CreateSpinlocks: cannot create spin locks");
@@ -264,7 +265,7 @@ InitSpinLocks(void)
 	extern SPINLOCK SInvalLock;
 	extern SPINLOCK OidGenLockId;
 	extern SPINLOCK XidGenLockId;
-	extern SPINLOCK	ControlFileLockId;
+	extern SPINLOCK ControlFileLockId;
 
 #ifdef STABLE_MEMORY_STORAGE
 	extern SPINLOCK MMCacheLock;

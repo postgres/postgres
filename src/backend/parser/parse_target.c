@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/parser/parse_target.c,v 1.57 2000/03/14 23:06:33 thomas Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/parser/parse_target.c,v 1.58 2000/04/12 17:15:27 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -61,7 +61,9 @@ transformTargetEntry(ParseState *pstate,
 
 	if (colname == NULL)
 	{
-		/* Generate a suitable column name for a column without any
+
+		/*
+		 * Generate a suitable column name for a column without any
 		 * explicit 'AS ColumnName' clause.
 		 */
 		colname = FigureColname(expr, node);
@@ -101,14 +103,16 @@ transformTargetList(ParseState *pstate, List *targetlist)
 
 			if (att->relname != NULL && strcmp(att->relname, "*") == 0)
 			{
+
 				/*
-				 * Target item is a single '*', expand all tables
-				 * (eg. SELECT * FROM emp)
+				 * Target item is a single '*', expand all tables (eg.
+				 * SELECT * FROM emp)
 				 */
 				if (pstate->p_shape != NULL)
 				{
-					List *s, *a;
-					int i;
+					List	   *s,
+							   *a;
+					int			i;
 
 					Assert(length(pstate->p_shape) == length(pstate->p_alias));
 
@@ -116,12 +120,12 @@ transformTargetList(ParseState *pstate, List *targetlist)
 					a = pstate->p_alias;
 					for (i = 0; i < length(pstate->p_shape); i++)
 					{
-						TargetEntry	   *te;
-						char		   *colname;
-						Attr *shape = lfirst(s);
-						Attr *alias = lfirst(a);
+						TargetEntry *te;
+						char	   *colname;
+						Attr	   *shape = lfirst(s);
+						Attr	   *alias = lfirst(a);
 
-						Assert(IsA(shape, Attr) && IsA(alias, Attr));
+						Assert(IsA(shape, Attr) &&IsA(alias, Attr));
 
 						colname = strVal(lfirst(alias->attrs));
 						te = transformTargetEntry(pstate, (Node *) shape,
@@ -138,9 +142,10 @@ transformTargetList(ParseState *pstate, List *targetlist)
 			else if (att->attrs != NIL &&
 					 strcmp(strVal(lfirst(att->attrs)), "*") == 0)
 			{
+
 				/*
-				 * Target item is relation.*, expand that table
-				 * (eg. SELECT emp.*, dname FROM emp, dept)
+				 * Target item is relation.*, expand that table (eg.
+				 * SELECT emp.*, dname FROM emp, dept)
 				 */
 				p_target = nconc(p_target,
 								 expandAll(pstate, att->relname,
@@ -178,7 +183,7 @@ transformTargetList(ParseState *pstate, List *targetlist)
 
 /*
  * updateTargetListEntry()
- *	This is used in INSERT and UPDATE statements only.  It prepares a
+ *	This is used in INSERT and UPDATE statements only.	It prepares a
  *	TargetEntry for assignment to a column of the target table.
  *	This includes coercing the given value to the target column's type
  *	(if necessary), and dealing with any subscripts attached to the target
@@ -197,7 +202,7 @@ updateTargetListEntry(ParseState *pstate,
 					  int attrno,
 					  List *indirection)
 {
-	Oid			type_id = exprType(tle->expr); /* type of value provided */
+	Oid			type_id = exprType(tle->expr);	/* type of value provided */
 	Oid			attrtype;		/* type of target column */
 	int32		attrtypmod;
 	Resdom	   *resnode = tle->resdom;
@@ -210,18 +215,20 @@ updateTargetListEntry(ParseState *pstate,
 	attrtypmod = rd->rd_att->attrs[attrno - 1]->atttypmod;
 
 	/*
-	 * If there are subscripts on the target column, prepare an
-	 * array assignment expression.  This will generate an array value
-	 * that the source value has been inserted into, which can then
-	 * be placed in the new tuple constructed by INSERT or UPDATE.
-	 * Note that transformArraySubscripts takes care of type coercion.
+	 * If there are subscripts on the target column, prepare an array
+	 * assignment expression.  This will generate an array value that the
+	 * source value has been inserted into, which can then be placed in
+	 * the new tuple constructed by INSERT or UPDATE. Note that
+	 * transformArraySubscripts takes care of type coercion.
 	 */
 	if (indirection)
 	{
 #ifndef DISABLE_JOIN_SYNTAX
 		Attr	   *att = makeAttr(pstrdup(RelationGetRelationName(rd)), colname);
+
 #else
 		Attr	   *att = makeNode(Attr);
+
 #endif
 		Node	   *arrayBase;
 		ArrayRef   *aref;
@@ -239,24 +246,26 @@ updateTargetListEntry(ParseState *pstate,
 										tle->expr);
 		if (pstate->p_is_insert)
 		{
+
 			/*
 			 * The command is INSERT INTO table (arraycol[subscripts]) ...
 			 * so there is not really a source array value to work with.
-			 * Let the executor do something reasonable, if it can.
-			 * Notice that we forced transformArraySubscripts to treat
-			 * the subscripting op as an array-slice op above, so the
-			 * source data will have been coerced to array type.
+			 * Let the executor do something reasonable, if it can. Notice
+			 * that we forced transformArraySubscripts to treat the
+			 * subscripting op as an array-slice op above, so the source
+			 * data will have been coerced to array type.
 			 */
-			aref->refexpr = NULL; /* signal there is no source array */
+			aref->refexpr = NULL;		/* signal there is no source array */
 		}
 		tle->expr = (Node *) aref;
 	}
 	else
 	{
+
 		/*
-		 * For normal non-subscripted target column, do type checking
-		 * and coercion.  But accept InvalidOid, which indicates the
-		 * source is a NULL constant.
+		 * For normal non-subscripted target column, do type checking and
+		 * coercion.  But accept InvalidOid, which indicates the source is
+		 * a NULL constant.
 		 */
 		if (type_id != InvalidOid)
 		{
@@ -267,11 +276,12 @@ updateTargetListEntry(ParseState *pstate,
 				if (tle->expr == NULL)
 					elog(ERROR, "Attribute '%s' is of type '%s'"
 						 " but expression is of type '%s'"
-						 "\n\tYou will need to rewrite or cast the expression",
+					"\n\tYou will need to rewrite or cast the expression",
 						 colname,
 						 typeidTypeName(attrtype),
 						 typeidTypeName(type_id));
 			}
+
 			/*
 			 * If the target is a fixed-length type, it may need a length
 			 * coercion as well as a type coercion.
@@ -282,9 +292,10 @@ updateTargetListEntry(ParseState *pstate,
 	}
 
 	/*
-	 * The result of the target expression should now match the destination
-	 * column's type.  Also, reset the resname and resno to identify
-	 * the destination column --- rewriter and planner depend on that!
+	 * The result of the target expression should now match the
+	 * destination column's type.  Also, reset the resname and resno to
+	 * identify the destination column --- rewriter and planner depend on
+	 * that!
 	 */
 	resnode->restype = attrtype;
 	resnode->restypmod = attrtypmod;
@@ -344,6 +355,7 @@ checkInsertTargets(ParseState *pstate, List *cols, List **attrnos)
 
 	if (cols == NIL)
 	{
+
 		/*
 		 * Generate default column list for INSERT.
 		 */
@@ -357,20 +369,19 @@ checkInsertTargets(ParseState *pstate, List *cols, List **attrnos)
 
 #ifdef	_DROP_COLUMN_HACK__
 			if (COLUMN_IS_DROPPED(attr[i]))
-			{
 				continue;
-			}
-#endif	/* _DROP_COLUMN_HACK__ */
+#endif	 /* _DROP_COLUMN_HACK__ */
 			id->name = palloc(NAMEDATALEN);
 			StrNCpy(id->name, NameStr(attr[i]->attname), NAMEDATALEN);
 			id->indirection = NIL;
 			id->isRel = false;
 			cols = lappend(cols, id);
-			*attrnos = lappendi(*attrnos, i+1);
+			*attrnos = lappendi(*attrnos, i + 1);
 		}
 	}
 	else
 	{
+
 		/*
 		 * Do initial validation of user-supplied INSERT column list.
 		 */
@@ -407,6 +418,7 @@ ExpandAllTables(ParseState *pstate)
 	rtable = pstate->p_rtable;
 	if (pstate->p_is_rule)
 	{
+
 		/*
 		 * skip first two entries, "*new*" and "*current*"
 		 */
@@ -422,9 +434,9 @@ ExpandAllTables(ParseState *pstate)
 		RangeTblEntry *rte = lfirst(rt);
 
 		/*
-		 * we only expand those listed in the from clause. (This will
-		 * also prevent us from using the wrong table in inserts: eg.
-		 * tenk2 in "insert into tenk2 select * from tenk1;")
+		 * we only expand those listed in the from clause. (This will also
+		 * prevent us from using the wrong table in inserts: eg. tenk2 in
+		 * "insert into tenk2 select * from tenk1;")
 		 */
 		if (!rte->inFromCl)
 			continue;
@@ -449,11 +461,12 @@ FigureColname(Node *expr, Node *resval)
 	/* Some of these are easiest to do with the untransformed node */
 	switch (nodeTag(resval))
 	{
-		case T_Ident:
+			case T_Ident:
 			return ((Ident *) resval)->name;
 		case T_Attr:
 			{
 				List	   *attrs = ((Attr *) resval)->attrs;
+
 				if (attrs)
 				{
 					while (lnext(attrs) != NIL)

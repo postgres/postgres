@@ -12,7 +12,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/access/nbtree/nbtree.c,v 1.53 2000/02/18 09:29:54 inoue Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/access/nbtree/nbtree.c,v 1.54 2000/04/12 17:14:49 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -77,7 +77,7 @@ btbuild(Relation heap,
 #endif
 	Node	   *pred,
 			   *oldPred;
-	BTSpool	   *spool = NULL;
+	BTSpool    *spool = NULL;
 	bool		isunique;
 	bool		usefast;
 
@@ -185,7 +185,7 @@ btbuild(Relation heap,
 #ifndef OMIT_PARTIAL_INDEX
 			/* SetSlotContents(slot, htup); */
 			slot->val = htup;
-			if (! ExecQual((List *) pred, econtext, false))
+			if (!ExecQual((List *) pred, econtext, false))
 				continue;
 #endif	 /* OMIT_PARTIAL_INDEX */
 		}
@@ -276,9 +276,9 @@ btbuild(Relation heap,
 	}
 
 	/*
-	 * if we are doing bottom-up btree build, finish the build by
-	 * (1) completing the sort of the spool file, (2) inserting the
-	 * sorted tuples into btree pages and (3) building the upper levels.
+	 * if we are doing bottom-up btree build, finish the build by (1)
+	 * completing the sort of the spool file, (2) inserting the sorted
+	 * tuples into btree pages and (3) building the upper levels.
 	 */
 	if (usefast)
 	{
@@ -298,26 +298,27 @@ btbuild(Relation heap,
 	/*
 	 * Since we just counted the tuples in the heap, we update its stats
 	 * in pg_class to guarantee that the planner takes advantage of the
-	 * index we just created.  But, only update statistics during
-	 * normal index definitions, not for indices on system catalogs
-	 * created during bootstrap processing.  We must close the relations
-	 * before updating statistics to guarantee that the relcache entries
-	 * are flushed when we increment the command counter in UpdateStats().
-	 * But we do not release any locks on the relations; those will be
-	 * held until end of transaction.
+	 * index we just created.  But, only update statistics during normal
+	 * index definitions, not for indices on system catalogs created
+	 * during bootstrap processing.  We must close the relations before
+	 * updating statistics to guarantee that the relcache entries are
+	 * flushed when we increment the command counter in UpdateStats(). But
+	 * we do not release any locks on the relations; those will be held
+	 * until end of transaction.
 	 */
 	if (IsNormalProcessingMode())
 	{
-		Oid		hrelid = RelationGetRelid(heap);
-		Oid		irelid = RelationGetRelid(index);
+		Oid			hrelid = RelationGetRelid(heap);
+		Oid			irelid = RelationGetRelid(index);
 		bool		inplace = IsReindexProcessing();
 
 		heap_close(heap, NoLock);
 		index_close(index);
+
 		/*
-		UpdateStats(hrelid, nhtups, true);
-		UpdateStats(irelid, nitups, false);
-		*/
+		 * UpdateStats(hrelid, nhtups, true); UpdateStats(irelid, nitups,
+		 * false);
+		 */
 		UpdateStats(hrelid, nhtups, inplace);
 		UpdateStats(irelid, nitups, inplace);
 		if (oldPred != NULL)
@@ -623,7 +624,7 @@ _bt_restscan(IndexScanDesc scan)
 	BTItem		item;
 	BlockNumber blkno;
 
-	LockBuffer(buf, BT_READ);		/* lock buffer first! */
+	LockBuffer(buf, BT_READ);	/* lock buffer first! */
 	page = BufferGetPage(buf);
 	maxoff = PageGetMaxOffsetNumber(page);
 	opaque = (BTPageOpaque) PageGetSpecialPointer(page);

@@ -21,7 +21,7 @@ extern char *ps_status_buffer;
 char *ps_status_buffer = NULL
 
 #define PS_INIT_STATUS(argc, argv, execname, username, hostname, dbname) \
-	{ \
+	do { \
 		int i; \
 		for (i = 0; i < (argc); i++) { \
 			memset((argv)[i], 0, strlen((argv)[i])); \
@@ -30,10 +30,10 @@ char *ps_status_buffer = NULL
 		sprintf(ps_status_buffer, "%s %s %s %s ", execname, username, hostname, dbname); \
 		ps_status_buffer += strlen(ps_status_buffer); \
 		ps_status_buffer[0] = '\0'; \
-	}
+	} while (0)
 
 #define PS_CLEAR_STATUS() \
-	{ if (ps_status_buffer) memset(ps_status_buffer, 0, strlen(ps_status_buffer)); }
+	do { if (ps_status_buffer) memset(ps_status_buffer, 0, strlen(ps_status_buffer)); }
 
 #define PS_SET_STATUS(status) \
 	{ \
@@ -42,7 +42,7 @@ char *ps_status_buffer = NULL
 			PS_CLEAR_STATUS(); \
 			strcpy(ps_status_buffer, status); \
 		} \
-	}
+	} while (0)
 
 #define PS_STATUS (ps_status_buffer ? ps_status_buffer : "")
 
@@ -53,7 +53,7 @@ extern char Ps_status_buffer[];
 #undef PS_DEFINE_BUFFER
 
 #define PS_INIT_STATUS(argc, argv, execname, username, hostname, dbname) \
-	{ \
+	do { \
 		int i; \
 		Assert(argc >= 5); \
 		argv[0] = execname; \
@@ -63,13 +63,13 @@ extern char Ps_status_buffer[];
 		argv[4] = Ps_status_buffer; \
 		for (i = 5; i < argc; i++) \
 			argv[i] = "";  /* blank them */ \
-	}
+	} while (0)
 
 #define PS_CLEAR_STATUS() \
-	{ Ps_status_buffer[0] = '\0'; }
+	do { Ps_status_buffer[0] = '\0'; } while (0)
 
 #define PS_SET_STATUS(status) \
-	{ strcpy(Ps_status_buffer, (status)); }
+	do { strcpy(Ps_status_buffer, (status)); } while (0)
 
 #define PS_STATUS (Ps_status_buffer)
 #endif
@@ -78,7 +78,7 @@ extern char Ps_status_buffer[];
 #undef PS_DEFINE_BUFFER
 #define PS_INIT_STATUS(argc, argv, execname, username, hostname, dbname)
 #define PS_CLEAR_STATUS()
-#define PS_SET_STATUS(status) { if ((status)); }
+#define PS_SET_STATUS(status) do { if ((status)); } while (0)
 #define PS_STATUS ""
 #endif	 /* !linux */
 

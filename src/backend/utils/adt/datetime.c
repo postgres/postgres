@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/datetime.c,v 1.45 2000/03/29 03:57:18 thomas Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/datetime.c,v 1.46 2000/04/12 17:15:49 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -35,7 +35,7 @@
 #define USE_DATE_CACHE 1
 #define ROUND_ALL 0
 
-static int DecodePosixTimezone(char *str, int *val);
+static int	DecodePosixTimezone(char *str, int *val);
 
 int			day_tab[2][13] = {
 	{31, 28, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31, 0},
@@ -457,23 +457,24 @@ ParseDateTime(char *timestr, char *lowstr,
 			while (isalpha(*cp))
 				*lp++ = tolower(*cp++);
 
-			/* Full date string with leading text month?
-			 * Could also be a POSIX time zone...
+			/*
+			 * Full date string with leading text month? Could also be a
+			 * POSIX time zone...
 			 */
 			if ((*cp == '-') || (*cp == '/') || (*cp == '.'))
 			{
 #if 0
+
 				/*
-				 * special case of Posix timezone "GMT-0800"
-				 * Note that other sign (e.g. "GMT+0800"
-				 * is recognized as two separate fields and handled later.
-				 * XXX There is no room for a delimiter between
-				 * the "GMT" and the "-0800", so we are going to just swallow the "GMT".
-				 * But this leads to other troubles with the definition of signs,
-				 * so we have to flip
-				 * - thomas 2000-02-06
+				 * special case of Posix timezone "GMT-0800" Note that
+				 * other sign (e.g. "GMT+0800" is recognized as two
+				 * separate fields and handled later. XXX There is no room
+				 * for a delimiter between the "GMT" and the "-0800", so
+				 * we are going to just swallow the "GMT". But this leads
+				 * to other troubles with the definition of signs, so we
+				 * have to flip - thomas 2000-02-06
 				 */
-				if ((*cp == '-') && isdigit(*(cp+1))
+				if ((*cp == '-') && isdigit(*(cp + 1))
 					&& (strncmp(field[nf], "gmt", 3) == 0))
 				{
 					*cp = '+';
@@ -586,7 +587,8 @@ DecodeDateTime(char **field, int *ftype, int nf,
 	tm->tm_min = 0;
 	tm->tm_sec = 0;
 	*fsec = 0;
-	tm->tm_isdst = -1;	/* don't know daylight savings time status apriori */
+	tm->tm_isdst = -1;			/* don't know daylight savings time status
+								 * apriori */
 	if (tzp != NULL)
 		*tzp = 0;
 
@@ -595,10 +597,11 @@ DecodeDateTime(char **field, int *ftype, int nf,
 		switch (ftype[i])
 		{
 			case DTK_DATE:
-				/* Already have a date?
-				 * Then this might be a POSIX time zone
-				 *  with an embedded dash (e.g. "PST-3" == "EST")
-				 * - thomas 2000-03-15
+
+				/*
+				 * Already have a date? Then this might be a POSIX time
+				 * zone with an embedded dash (e.g. "PST-3" == "EST") -
+				 * thomas 2000-03-15
 				 */
 				if ((fmask & DTK_DATE_M) == DTK_DATE_M)
 				{
@@ -630,17 +633,18 @@ DecodeDateTime(char **field, int *ftype, int nf,
 					return -1;
 
 				{
-					int tz;
+					int			tz;
 
 					if (DecodeTimezone(field[i], &tz) != 0)
 						return -1;
 
-					/* Already have a time zone?
-					 * Then maybe this is the second field of a POSIX time:
-					 *  EST+3 (equivalent to PST)
+					/*
+					 * Already have a time zone? Then maybe this is the
+					 * second field of a POSIX time: EST+3 (equivalent to
+					 * PST)
 					 */
 					if ((i > 0) && ((fmask & DTK_M(TZ)) != 0)
-						&& (ftype[i-1] == DTK_TZ) && (isalpha(*field[i-1])))
+						&& (ftype[i - 1] == DTK_TZ) && (isalpha(*field[i - 1])))
 					{
 						*tzp -= tz;
 						tmask = 0;
@@ -742,6 +746,7 @@ DecodeDateTime(char **field, int *ftype, int nf,
 						break;
 
 					case MONTH:
+
 						/*
 						 * already have a (numeric) month? then see if we
 						 * can substitute...
@@ -881,7 +886,8 @@ DecodeDateTime(char **field, int *ftype, int nf,
 				tm->tm_mon += 1;
 
 #if defined(HAVE_TM_ZONE)
-				*tzp = -(tm->tm_gmtoff);	/* tm_gmtoff is Sun/DEC-ism */
+				*tzp = -(tm->tm_gmtoff);		/* tm_gmtoff is
+												 * Sun/DEC-ism */
 #elif defined(HAVE_INT_TIMEZONE)
 #ifdef __CYGWIN__
 				*tzp = ((tm->tm_isdst > 0) ? (_timezone - 3600) : _timezone);
@@ -937,7 +943,8 @@ DecodeTimeOnly(char **field, int *ftype, int nf,
 	tm->tm_min = 0;
 	tm->tm_sec = 0;
 	*fsec = 0;
-	tm->tm_isdst = -1;	/* don't know daylight savings time status apriori */
+	tm->tm_isdst = -1;			/* don't know daylight savings time status
+								 * apriori */
 	if (tzp != NULL)
 		*tzp = 0;
 
@@ -948,9 +955,10 @@ DecodeTimeOnly(char **field, int *ftype, int nf,
 		switch (ftype[i])
 		{
 			case DTK_DATE:
-				/* This might be a POSIX time zone
-				 *  with an embedded dash (e.g. "PST-3" == "EST")
-				 * - thomas 2000-03-15
+
+				/*
+				 * This might be a POSIX time zone with an embedded dash
+				 * (e.g. "PST-3" == "EST") - thomas 2000-03-15
 				 */
 				if ((tzp == NULL)
 					|| (DecodePosixTimezone(field[i], tzp) != 0))
@@ -970,17 +978,18 @@ DecodeTimeOnly(char **field, int *ftype, int nf,
 					return -1;
 
 				{
-					int tz;
+					int			tz;
 
 					if (DecodeTimezone(field[i], &tz) != 0)
 						return -1;
 
-					/* Already have a time zone?
-					 * Then maybe this is the second field of a POSIX time:
-					 *  EST+3 (equivalent to PST)
+					/*
+					 * Already have a time zone? Then maybe this is the
+					 * second field of a POSIX time: EST+3 (equivalent to
+					 * PST)
 					 */
 					if ((i > 0) && ((fmask & DTK_M(TZ)) != 0)
-						&& (ftype[i-1] == DTK_TZ) && (isalpha(*field[i-1])))
+						&& (ftype[i - 1] == DTK_TZ) && (isalpha(*field[i - 1])))
 					{
 						*tzp -= tz;
 						tmask = 0;
@@ -1107,11 +1116,12 @@ DecodeTimeOnly(char **field, int *ftype, int nf,
 	/* timezone not specified? then find local timezone if possible */
 	if ((tzp != NULL) && (!(fmask & DTK_M(TZ))))
 	{
-		struct tm tt, *tmp = &tt;
+		struct tm	tt,
+				   *tmp = &tt;
 
 		/*
-		 * daylight savings time modifier but no standard timezone?
-		 * then error
+		 * daylight savings time modifier but no standard timezone? then
+		 * error
 		 */
 		if (fmask & DTK_M(DTZMOD))
 			return -1;
@@ -1127,7 +1137,7 @@ DecodeTimeOnly(char **field, int *ftype, int nf,
 		tm->tm_isdst = tmp->tm_isdst;
 
 #if defined(HAVE_TM_ZONE)
-		*tzp = -(tmp->tm_gmtoff);	/* tm_gmtoff is Sun/DEC-ism */
+		*tzp = -(tmp->tm_gmtoff);		/* tm_gmtoff is Sun/DEC-ism */
 #elif defined(HAVE_INT_TIMEZONE)
 #ifdef __CYGWIN__
 		*tzp = ((tmp->tm_isdst > 0) ? (_timezone - 3600) : _timezone);
@@ -1366,10 +1376,8 @@ DecodeNumber(int flen, char *str, int fmask,
 	 * Enough digits to be unequivocal year? Used to test for 4 digits or
 	 * more, but we now test first for a three-digit doy so anything
 	 * bigger than two digits had better be an explicit year. - thomas
-	 * 1999-01-09
-	 * Back to requiring a 4 digit year.
-	 * We accept a two digit year farther down.
-	 * - thomas 2000-03-28
+	 * 1999-01-09 Back to requiring a 4 digit year. We accept a two digit
+	 * year farther down. - thomas 2000-03-28
 	 */
 	else if (flen >= 4)
 	{
@@ -1414,8 +1422,10 @@ DecodeNumber(int flen, char *str, int fmask,
 		*tmask = DTK_M(DAY);
 		tm->tm_mday = val;
 	}
-	/* Check for 2 or 4 or more digits, but currently we reach here
-	 * only if two digits. - thomas 2000-03-28
+
+	/*
+	 * Check for 2 or 4 or more digits, but currently we reach here only
+	 * if two digits. - thomas 2000-03-28
 	 */
 	else if (!(fmask & DTK_M(YEAR))
 			 && ((flen >= 4) || (flen == 2)))
@@ -1550,14 +1560,15 @@ DecodeTimezone(char *str, int *tzp)
 
 /* DecodePosixTimezone()
  * Interpret string as a POSIX-compatible timezone:
- *  PST-hh:mm
- *  PST+h
+ *	PST-hh:mm
+ *	PST+h
  * - thomas 2000-03-15
  */
 static int
 DecodePosixTimezone(char *str, int *tzp)
 {
-	int			val, tz;
+	int			val,
+				tz;
 	int			type;
 	char	   *cp;
 	char		delim;
@@ -1571,10 +1582,10 @@ DecodePosixTimezone(char *str, int *tzp)
 
 	delim = *cp;
 	*cp = '\0';
-	type = DecodeSpecial(MAXDATEFIELDS-1, str, &val);
+	type = DecodeSpecial(MAXDATEFIELDS - 1, str, &val);
 	*cp = delim;
 
-	switch(type)
+	switch (type)
 	{
 		case DTZ:
 		case TZ:
@@ -1898,7 +1909,7 @@ DecodeUnits(int field, char *lowtoken, int *val)
  * Binary search -- from Knuth (6.2.1) Algorithm B.  Special case like this
  * is WAY faster than the generic bsearch().
  */
-datetkn *
+datetkn    *
 datebsearch(char *key, datetkn *base, unsigned int nel)
 {
 	datetkn    *last = base + nel - 1,
@@ -2002,7 +2013,8 @@ EncodeTimeOnly(struct tm * tm, double fsec, int *tzp, int style, char *str)
 
 	if (tzp != NULL)
 	{
-		int hour, min;
+		int			hour,
+					min;
 
 		hour = -(*tzp / 3600);
 		min = ((abs(*tzp) / 60) % 60);

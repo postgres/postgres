@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/optimizer/util/clauses.c,v 1.64 2000/04/04 01:21:46 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/optimizer/util/clauses.c,v 1.65 2000/04/12 17:15:24 momjian Exp $
  *
  * HISTORY
  *	  AUTHOR			DATE			MAJOR EVENT
@@ -46,9 +46,9 @@ static bool pull_agg_clause_walker(Node *node, List **listptr);
 static bool contain_subplans_walker(Node *node, void *context);
 static bool pull_subplans_walker(Node *node, List **listptr);
 static bool check_subplans_for_ungrouped_vars_walker(Node *node,
-													 Query *context);
-static int is_single_func(Node *node);
-static Node *eval_const_expressions_mutator (Node *node, void *context);
+										 Query *context);
+static int	is_single_func(Node *node);
+static Node *eval_const_expressions_mutator(Node *node, void *context);
 static Expr *simplify_op_or_func(Expr *expr, List *args);
 
 
@@ -340,18 +340,19 @@ make_ands_explicit(List *andclauses)
 List *
 make_ands_implicit(Expr *clause)
 {
+
 	/*
 	 * NB: because the parser sets the qual field to NULL in a query that
 	 * has no WHERE clause, we must consider a NULL input clause as TRUE,
-	 * even though one might more reasonably think it FALSE.  Grumble.
-	 * If this causes trouble, consider changing the parser's behavior.
+	 * even though one might more reasonably think it FALSE.  Grumble. If
+	 * this causes trouble, consider changing the parser's behavior.
 	 */
 	if (clause == NULL)
 		return NIL;				/* NULL -> NIL list == TRUE */
 	else if (and_clause((Node *) clause))
 		return clause->args;
 	else if (IsA(clause, Const) &&
-			 ! ((Const *) clause)->constisnull &&
+			 !((Const *) clause)->constisnull &&
 			 DatumGetInt32(((Const *) clause)->constvalue))
 		return NIL;				/* constant TRUE input -> NIL list */
 	else
@@ -381,7 +382,8 @@ contain_agg_clause_walker(Node *node, void *context)
 	if (node == NULL)
 		return false;
 	if (IsA(node, Aggref))
-		return true;			/* abort the tree traversal and return true */
+		return true;			/* abort the tree traversal and return
+								 * true */
 	return expression_tree_walker(node, contain_agg_clause_walker, context);
 }
 
@@ -411,12 +413,14 @@ pull_agg_clause_walker(Node *node, List **listptr)
 	if (IsA(node, Aggref))
 	{
 		*listptr = lappend(*listptr, node);
+
 		/*
 		 * Complain if the aggregate's argument contains any aggregates;
 		 * nested agg functions are semantically nonsensical.
 		 */
 		if (contain_agg_clause(((Aggref *) node)->target))
 			elog(ERROR, "Aggregate function calls may not be nested");
+
 		/*
 		 * Having checked that, we need not recurse into the argument.
 		 */
@@ -454,7 +458,8 @@ contain_subplans_walker(Node *node, void *context)
 	if (node == NULL)
 		return false;
 	if (is_subplan(node) || IsA(node, SubLink))
-		return true;			/* abort the tree traversal and return true */
+		return true;			/* abort the tree traversal and return
+								 * true */
 	return expression_tree_walker(node, contain_subplans_walker, context);
 }
 
@@ -462,7 +467,7 @@ contain_subplans_walker(Node *node, void *context)
  * pull_subplans
  *	  Recursively pulls all subplans from an expression tree.
  *
- *	  Returns list of subplan nodes found.  Note the nodes themselves are not
+ *	  Returns list of subplan nodes found.	Note the nodes themselves are not
  *	  copied, only referenced.
  */
 List *
@@ -507,7 +512,11 @@ void
 check_subplans_for_ungrouped_vars(Node *clause,
 								  Query *query)
 {
-	/* No special setup needed; context for walker is just the Query pointer */
+
+	/*
+	 * No special setup needed; context for walker is just the Query
+	 * pointer
+	 */
 	check_subplans_for_ungrouped_vars_walker(clause, query);
 }
 
@@ -517,17 +526,19 @@ check_subplans_for_ungrouped_vars_walker(Node *node,
 {
 	if (node == NULL)
 		return false;
+
 	/*
-	 * We can ignore Vars other than in subplan args lists,
-	 * since the parser already checked 'em.
+	 * We can ignore Vars other than in subplan args lists, since the
+	 * parser already checked 'em.
 	 */
 	if (is_subplan(node))
 	{
+
 		/*
 		 * The args list of the subplan node represents attributes from
 		 * outside passed into the sublink.
 		 */
-		List	*t;
+		List	   *t;
 
 		foreach(t, ((Expr *) node)->args)
 		{
@@ -539,10 +550,10 @@ check_subplans_for_ungrouped_vars_walker(Node *node,
 			/*
 			 * We do not care about args that are not local variables;
 			 * params or outer-level vars are not our responsibility to
-			 * check.  (The outer-level query passing them to us needs
-			 * to worry, instead.)
+			 * check.  (The outer-level query passing them to us needs to
+			 * worry, instead.)
 			 */
-			if (! IsA(thisarg, Var))
+			if (!IsA(thisarg, Var))
 				continue;
 			var = (Var *) thisarg;
 			if (var->varlevelsup > 0)
@@ -554,8 +565,8 @@ check_subplans_for_ungrouped_vars_walker(Node *node,
 			contained_in_group_clause = false;
 			foreach(gl, context->groupClause)
 			{
-				GroupClause	   *gcl = lfirst(gl);
-				Node		   *groupexpr;
+				GroupClause *gcl = lfirst(gl);
+				Node	   *groupexpr;
 
 				groupexpr = get_sortgroupclause_expr(gcl,
 													 context->targetList);
@@ -569,14 +580,14 @@ check_subplans_for_ungrouped_vars_walker(Node *node,
 			if (!contained_in_group_clause)
 			{
 				/* Found an ungrouped argument.  Complain. */
-				RangeTblEntry  *rte;
-				char		   *attname;
+				RangeTblEntry *rte;
+				char	   *attname;
 
 				Assert(var->varno > 0 &&
 					   var->varno <= length(context->rtable));
 				rte = rt_fetch(var->varno, context->rtable);
 				attname = get_attname(rte->relid, var->varattno);
-				if (! attname)
+				if (!attname)
 					elog(ERROR, "cache lookup of attribute %d in relation %u failed",
 						 var->varattno, rte->relid);
 				elog(ERROR, "Sub-SELECT uses un-GROUPed attribute %s.%s from outer query",
@@ -585,7 +596,7 @@ check_subplans_for_ungrouped_vars_walker(Node *node,
 		}
 	}
 	return expression_tree_walker(node,
-								  check_subplans_for_ungrouped_vars_walker,
+								check_subplans_for_ungrouped_vars_walker,
 								  (void *) context);
 }
 
@@ -697,7 +708,7 @@ NumRelids(Node *clause)
  *		is referenced in the clause).  The routine checks that the
  *		expression is of the form (var op something) or (something op var)
  *		where the var is an attribute of the specified relation, or
- *		a function of a var of the specified relation.  If so, it
+ *		a function of a var of the specified relation.	If so, it
  *		returns the following info:
  *			the found relation number (same as targetrelid unless that is 0)
  *			the found var number (or InvalidAttrNumber if a function)
@@ -707,7 +718,7 @@ NumRelids(Node *clause)
  *		specifically 0 for the relid and attno, 0 for the constant value.
  *
  *		Note that negative attno values are *not* invalid, but represent
- *		system attributes such as OID.  It's sufficient to check for relid=0
+ *		system attributes such as OID.	It's sufficient to check for relid=0
  *		to determine whether the routine succeeded.
  */
 void
@@ -785,15 +796,13 @@ default_results:
 		*flag |= SEL_CONSTANT;
 	}
 	else
-	{
 		*constval = 0;
-	}
 }
 
 /*
  * is_single_func
- *   If the given expression is a function of a single relation,
- *   return the relation number; else return 0
+ *	 If the given expression is a function of a single relation,
+ *	 return the relation number; else return 0
  */
 static int
 is_single_func(Node *node)
@@ -804,7 +813,7 @@ is_single_func(Node *node)
 
 		if (length(varnos) == 1)
 		{
-			int		funcvarno = lfirsti(varnos);
+			int			funcvarno = lfirsti(varnos);
 
 			freeList(varnos);
 			return funcvarno;
@@ -922,7 +931,7 @@ CommuteClause(Expr *clause)
  * expression tree, for example "2 + 2" => "4".  More interestingly,
  * we can reduce certain boolean expressions even when they contain
  * non-constant subexpressions: "x OR true" => "true" no matter what
- * the subexpression x is.  (XXX We assume that no such subexpression
+ * the subexpression x is.	(XXX We assume that no such subexpression
  * will have important side-effects, which is not necessarily a good
  * assumption in the presence of user-defined functions; do we need a
  * pg_proc flag that prevents discarding the execution of a function?)
@@ -954,7 +963,7 @@ eval_const_expressions(Node *node)
 }
 
 static Node *
-eval_const_expressions_mutator (Node *node, void *context)
+eval_const_expressions_mutator(Node *node, void *context)
 {
 	if (node == NULL)
 		return NULL;
@@ -963,21 +972,22 @@ eval_const_expressions_mutator (Node *node, void *context)
 		Expr	   *expr = (Expr *) node;
 		List	   *args;
 		Const	   *const_input;
-		Expr       *newexpr;
+		Expr	   *newexpr;
 
 		/*
 		 * Reduce constants in the Expr's arguments.  We know args is
-		 * either NIL or a List node, so we can call expression_tree_mutator
-		 * directly rather than recursing to self.
+		 * either NIL or a List node, so we can call
+		 * expression_tree_mutator directly rather than recursing to self.
 		 */
 		args = (List *) expression_tree_mutator((Node *) expr->args,
-												eval_const_expressions_mutator,
+										  eval_const_expressions_mutator,
 												(void *) context);
 
 		switch (expr->opType)
 		{
 			case OP_EXPR:
 			case FUNC_EXPR:
+
 				/*
 				 * Code for op/func case is pretty bulky, so split it out
 				 * as a separate function.
@@ -985,123 +995,131 @@ eval_const_expressions_mutator (Node *node, void *context)
 				newexpr = simplify_op_or_func(expr, args);
 				if (newexpr)	/* successfully simplified it */
 					return (Node *) newexpr;
-				/* else fall out to build new Expr node with simplified args */
+
+				/*
+				 * else fall out to build new Expr node with simplified
+				 * args
+				 */
 				break;
 			case OR_EXPR:
-			{
-				/*
-				 * OR arguments are handled as follows:
-				 *	non constant: keep
-				 *  FALSE: drop (does not affect result)
-				 *	TRUE: force result to TRUE
-				 *	NULL: keep only one
-				 * We keep one NULL input because ExecEvalOr returns
-				 * NULL when no input is TRUE and at least one is NULL.
-				 */
-				List	   *newargs = NIL;
-				List	   *arg;
-				bool		haveNull = false;
-				bool		forceTrue = false;
-
-                foreach(arg, args)
 				{
-					if (! IsA(lfirst(arg), Const))
+
+					/*
+					 * OR arguments are handled as follows: non constant:
+					 * keep FALSE: drop (does not affect result) TRUE:
+					 * force result to TRUE NULL: keep only one We keep
+					 * one NULL input because ExecEvalOr returns NULL when
+					 * no input is TRUE and at least one is NULL.
+					 */
+					List	   *newargs = NIL;
+					List	   *arg;
+					bool		haveNull = false;
+					bool		forceTrue = false;
+
+					foreach(arg, args)
 					{
-						newargs = lappend(newargs, lfirst(arg));
-						continue;
+						if (!IsA(lfirst(arg), Const))
+						{
+							newargs = lappend(newargs, lfirst(arg));
+							continue;
+						}
+						const_input = (Const *) lfirst(arg);
+						if (const_input->constisnull)
+							haveNull = true;
+						else if (DatumGetInt32(const_input->constvalue))
+							forceTrue = true;
+						/* otherwise, we can drop the constant-false input */
 					}
-					const_input = (Const *) lfirst(arg);
-					if (const_input->constisnull)
-						haveNull = true;
-					else if (DatumGetInt32(const_input->constvalue))
-						forceTrue = true;
-					/* otherwise, we can drop the constant-false input */
+
+					/*
+					 * We could return TRUE before falling out of the
+					 * loop, but this coding method will be easier to
+					 * adapt if we ever add a notion of non-removable
+					 * functions. We'd need to check all the inputs for
+					 * non-removability.
+					 */
+					if (forceTrue)
+						return MAKEBOOLCONST(true, false);
+					if (haveNull)
+						newargs = lappend(newargs, MAKEBOOLCONST(false, true));
+					/* If all the inputs are FALSE, result is FALSE */
+					if (newargs == NIL)
+						return MAKEBOOLCONST(false, false);
+					/* If only one nonconst-or-NULL input, it's the result */
+					if (lnext(newargs) == NIL)
+						return (Node *) lfirst(newargs);
+					/* Else we still need an OR node */
+					return (Node *) make_orclause(newargs);
 				}
-				/*
-				 * We could return TRUE before falling out of the loop,
-				 * but this coding method will be easier to adapt if
-				 * we ever add a notion of non-removable functions.
-				 * We'd need to check all the inputs for non-removability.
-				 */
-				if (forceTrue)
-					return MAKEBOOLCONST(true, false);
-				if (haveNull)
-					newargs = lappend(newargs, MAKEBOOLCONST(false, true));
-				/* If all the inputs are FALSE, result is FALSE */
-				if (newargs == NIL)
-					return MAKEBOOLCONST(false, false);
-				/* If only one nonconst-or-NULL input, it's the result */
-				if (lnext(newargs) == NIL)
-					return (Node *) lfirst(newargs);
-				/* Else we still need an OR node */
-				return (Node *) make_orclause(newargs);
-			}
 			case AND_EXPR:
-			{
-				/*
-				 * AND arguments are handled as follows:
-				 *	non constant: keep
-				 *  TRUE: drop (does not affect result)
-				 *	FALSE: force result to FALSE
-				 *	NULL: keep only one
-				 * We keep one NULL input because ExecEvalAnd returns
-				 * NULL when no input is FALSE and at least one is NULL.
-				 */
-				List	   *newargs = NIL;
-				List	   *arg;
-				bool		haveNull = false;
-				bool		forceFalse = false;
-
-                foreach(arg, args)
 				{
-					if (! IsA(lfirst(arg), Const))
+
+					/*
+					 * AND arguments are handled as follows: non constant:
+					 * keep TRUE: drop (does not affect result) FALSE:
+					 * force result to FALSE NULL: keep only one We keep
+					 * one NULL input because ExecEvalAnd returns NULL
+					 * when no input is FALSE and at least one is NULL.
+					 */
+					List	   *newargs = NIL;
+					List	   *arg;
+					bool		haveNull = false;
+					bool		forceFalse = false;
+
+					foreach(arg, args)
 					{
-						newargs = lappend(newargs, lfirst(arg));
-						continue;
+						if (!IsA(lfirst(arg), Const))
+						{
+							newargs = lappend(newargs, lfirst(arg));
+							continue;
+						}
+						const_input = (Const *) lfirst(arg);
+						if (const_input->constisnull)
+							haveNull = true;
+						else if (!DatumGetInt32(const_input->constvalue))
+							forceFalse = true;
+						/* otherwise, we can drop the constant-true input */
 					}
-					const_input = (Const *) lfirst(arg);
-					if (const_input->constisnull)
-						haveNull = true;
-					else if (! DatumGetInt32(const_input->constvalue))
-						forceFalse = true;
-					/* otherwise, we can drop the constant-true input */
+
+					/*
+					 * We could return FALSE before falling out of the
+					 * loop, but this coding method will be easier to
+					 * adapt if we ever add a notion of non-removable
+					 * functions. We'd need to check all the inputs for
+					 * non-removability.
+					 */
+					if (forceFalse)
+						return MAKEBOOLCONST(false, false);
+					if (haveNull)
+						newargs = lappend(newargs, MAKEBOOLCONST(false, true));
+					/* If all the inputs are TRUE, result is TRUE */
+					if (newargs == NIL)
+						return MAKEBOOLCONST(true, false);
+					/* If only one nonconst-or-NULL input, it's the result */
+					if (lnext(newargs) == NIL)
+						return (Node *) lfirst(newargs);
+					/* Else we still need an AND node */
+					return (Node *) make_andclause(newargs);
 				}
-				/*
-				 * We could return FALSE before falling out of the loop,
-				 * but this coding method will be easier to adapt if
-				 * we ever add a notion of non-removable functions.
-				 * We'd need to check all the inputs for non-removability.
-				 */
-				if (forceFalse)
-					return MAKEBOOLCONST(false, false);
-				if (haveNull)
-					newargs = lappend(newargs, MAKEBOOLCONST(false, true));
-				/* If all the inputs are TRUE, result is TRUE */
-				if (newargs == NIL)
-					return MAKEBOOLCONST(true, false);
-				/* If only one nonconst-or-NULL input, it's the result */
-				if (lnext(newargs) == NIL)
-					return (Node *) lfirst(newargs);
-				/* Else we still need an AND node */
-				return (Node *) make_andclause(newargs);
-			}
 			case NOT_EXPR:
 				Assert(length(args) == 1);
-				if (! IsA(lfirst(args), Const))
+				if (!IsA(lfirst(args), Const))
 					break;
 				const_input = (Const *) lfirst(args);
 				/* NOT NULL => NULL */
 				if (const_input->constisnull)
 					return MAKEBOOLCONST(false, true);
 				/* otherwise pretty easy */
-				return MAKEBOOLCONST(! DatumGetInt32(const_input->constvalue),
+				return MAKEBOOLCONST(!DatumGetInt32(const_input->constvalue),
 									 false);
 			case SUBPLAN_EXPR:
+
 				/*
 				 * Safety measure per notes at head of this routine:
-				 * return a SubPlan unchanged.  Too late to do anything
+				 * return a SubPlan unchanged.	Too late to do anything
 				 * with it.  The arglist simplification above was wasted
-				 * work (the list probably only contains Var nodes anyway).
+				 * work (the list probably only contains Var nodes
+				 * anyway).
 				 */
 				return (Node *) expr;
 			default:
@@ -1112,25 +1130,26 @@ eval_const_expressions_mutator (Node *node, void *context)
 
 		/*
 		 * If we break out of the above switch on opType, then the
-		 * expression cannot be simplified any further, so build
-		 * and return a replacement Expr node using the
-		 * possibly-simplified arguments and the original oper node.
-		 * Can't use make_clause() here because we want to be sure
-		 * the typeOid field is preserved...
+		 * expression cannot be simplified any further, so build and
+		 * return a replacement Expr node using the possibly-simplified
+		 * arguments and the original oper node. Can't use make_clause()
+		 * here because we want to be sure the typeOid field is
+		 * preserved...
 		 */
 		newexpr = makeNode(Expr);
-        newexpr->typeOid = expr->typeOid;
-        newexpr->opType = expr->opType;
-        newexpr->oper = expr->oper;
-        newexpr->args = args;
-        return (Node *) newexpr;
+		newexpr->typeOid = expr->typeOid;
+		newexpr->opType = expr->opType;
+		newexpr->oper = expr->oper;
+		newexpr->args = args;
+		return (Node *) newexpr;
 	}
 	if (IsA(node, RelabelType))
 	{
+
 		/*
 		 * If we can simplify the input to a constant, then we don't need
-		 * the RelabelType node anymore: just change the type field of
-		 * the Const node.  Otherwise, copy the RelabelType node.
+		 * the RelabelType node anymore: just change the type field of the
+		 * Const node.	Otherwise, copy the RelabelType node.
 		 */
 		RelabelType *relabel = (RelabelType *) node;
 		Node	   *arg;
@@ -1138,13 +1157,15 @@ eval_const_expressions_mutator (Node *node, void *context)
 		arg = eval_const_expressions_mutator(relabel->arg, context);
 		if (arg && IsA(arg, Const))
 		{
-			Const  *con = (Const *) arg;
+			Const	   *con = (Const *) arg;
 
 			con->consttype = relabel->resulttype;
+
 			/*
 			 * relabel's resulttypmod is discarded, which is OK for now;
 			 * if the type actually needs a runtime length coercion then
-			 * there should be a function call to do it just above this node.
+			 * there should be a function call to do it just above this
+			 * node.
 			 */
 			return (Node *) con;
 		}
@@ -1160,15 +1181,15 @@ eval_const_expressions_mutator (Node *node, void *context)
 	}
 	if (IsA(node, CaseExpr))
 	{
+
 		/*
-		 * CASE expressions can be simplified if there are constant condition
-		 * clauses:
-		 *	FALSE (or NULL): drop the alternative
-		 *	TRUE: drop all remaining alternatives
-		 * If the first non-FALSE alternative is a constant TRUE, we can
-		 * simplify the entire CASE to that alternative's expression.
-		 * If there are no non-FALSE alternatives, we simplify the entire
-		 * CASE to the default result (ELSE result).
+		 * CASE expressions can be simplified if there are constant
+		 * condition clauses: FALSE (or NULL): drop the alternative TRUE:
+		 * drop all remaining alternatives If the first non-FALSE
+		 * alternative is a constant TRUE, we can simplify the entire CASE
+		 * to that alternative's expression. If there are no non-FALSE
+		 * alternatives, we simplify the entire CASE to the default result
+		 * (ELSE result).
 		 */
 		CaseExpr   *caseexpr = (CaseExpr *) node;
 		CaseExpr   *newcase;
@@ -1181,26 +1202,29 @@ eval_const_expressions_mutator (Node *node, void *context)
 		{
 			/* Simplify this alternative's condition and result */
 			CaseWhen   *casewhen = (CaseWhen *)
-				expression_tree_mutator((Node *) lfirst(arg),
-										eval_const_expressions_mutator,
-										(void *) context);
+			expression_tree_mutator((Node *) lfirst(arg),
+									eval_const_expressions_mutator,
+									(void *) context);
+
 			Assert(IsA(casewhen, CaseWhen));
 			if (casewhen->expr == NULL ||
-				! IsA(casewhen->expr, Const))
+				!IsA(casewhen->expr, Const))
 			{
 				newargs = lappend(newargs, casewhen);
 				continue;
 			}
 			const_input = (Const *) casewhen->expr;
 			if (const_input->constisnull ||
-				! DatumGetInt32(const_input->constvalue))
+				!DatumGetInt32(const_input->constvalue))
 				continue;		/* drop alternative with FALSE condition */
+
 			/*
-			 * Found a TRUE condition.  If it's the first (un-dropped)
+			 * Found a TRUE condition.	If it's the first (un-dropped)
 			 * alternative, the CASE reduces to just this alternative.
 			 */
 			if (newargs == NIL)
 				return casewhen->result;
+
 			/*
 			 * Otherwise, add it to the list, and drop all the rest.
 			 */
@@ -1211,7 +1235,11 @@ eval_const_expressions_mutator (Node *node, void *context)
 		/* Simplify the default result */
 		defresult = eval_const_expressions_mutator(caseexpr->defresult,
 												   context);
-		/* If no non-FALSE alternatives, CASE reduces to the default result */
+
+		/*
+		 * If no non-FALSE alternatives, CASE reduces to the default
+		 * result
+		 */
 		if (newargs == NIL)
 			return defresult;
 		/* Otherwise we need a new CASE node */
@@ -1224,21 +1252,21 @@ eval_const_expressions_mutator (Node *node, void *context)
 	}
 	if (IsA(node, Iter))
 	{
+
 		/*
-		 * The argument of an Iter is normally a function call.
-		 * We must not try to eliminate the function, but we
-		 * can try to simplify its arguments.  If, by chance,
-		 * the arg is NOT a function then we go ahead and try to
-		 * simplify it (by falling into expression_tree_mutator).
-		 * Is that the right thing?
+		 * The argument of an Iter is normally a function call. We must
+		 * not try to eliminate the function, but we can try to simplify
+		 * its arguments.  If, by chance, the arg is NOT a function then
+		 * we go ahead and try to simplify it (by falling into
+		 * expression_tree_mutator). Is that the right thing?
 		 */
 		Iter	   *iter = (Iter *) node;
 
 		if (is_funcclause(iter->iterexpr))
 		{
-			Expr   *func = (Expr *) iter->iterexpr;
-			Expr   *newfunc;
-			Iter   *newiter;
+			Expr	   *func = (Expr *) iter->iterexpr;
+			Expr	   *newfunc;
+			Iter	   *newiter;
 
 			newfunc = makeNode(Expr);
 			newfunc->typeOid = func->typeOid;
@@ -1254,12 +1282,13 @@ eval_const_expressions_mutator (Node *node, void *context)
 			return (Node *) newiter;
 		}
 	}
+
 	/*
 	 * For any node type not handled above, we recurse using
-	 * expression_tree_mutator, which will copy the node unchanged
-	 * but try to simplify its arguments (if any) using this routine.
-	 * For example: we cannot eliminate an ArrayRef node, but we
-	 * might be able to simplify constant expressions in its subscripts.
+	 * expression_tree_mutator, which will copy the node unchanged but try
+	 * to simplify its arguments (if any) using this routine. For example:
+	 * we cannot eliminate an ArrayRef node, but we might be able to
+	 * simplify constant expressions in its subscripts.
 	 */
 	return expression_tree_mutator(node, eval_const_expressions_mutator,
 								   (void *) context);
@@ -1289,31 +1318,32 @@ simplify_op_or_func(Expr *expr, List *args)
 	HeapTuple	func_tuple;
 	Form_pg_proc funcform;
 	Type		resultType;
-	Expr       *newexpr;
+	Expr	   *newexpr;
 	Datum		const_val;
 	bool		const_is_null;
 	bool		isDone;
 
 	/*
-	 * For an operator or function, we cannot simplify unless all the inputs
-	 * are constants.  (XXX possible future improvement: if the op/func is
-	 * strict and at least one input is NULL, we could simplify to NULL.
-	 * But we do not currently have any way to know if the op/func is strict
-	 * or not.  For now, a NULL input is treated the same as any other
-	 * constant node.)
+	 * For an operator or function, we cannot simplify unless all the
+	 * inputs are constants.  (XXX possible future improvement: if the
+	 * op/func is strict and at least one input is NULL, we could simplify
+	 * to NULL. But we do not currently have any way to know if the
+	 * op/func is strict or not.  For now, a NULL input is treated the
+	 * same as any other constant node.)
 	 */
 	foreach(arg, args)
 	{
-		if (! IsA(lfirst(arg), Const))
+		if (!IsA(lfirst(arg), Const))
 			return NULL;
 	}
+
 	/*
-	 * Get the function procedure's OID and look to see
-	 * whether it is marked proiscachable.
+	 * Get the function procedure's OID and look to see whether it is
+	 * marked proiscachable.
 	 */
 	if (expr->opType == OP_EXPR)
 	{
-		Oper   *oper = (Oper *) expr->oper;
+		Oper	   *oper = (Oper *) expr->oper;
 
 		replace_opid(oper);		/* OK to scribble on input to this extent */
 		funcid = oper->opid;
@@ -1321,7 +1351,7 @@ simplify_op_or_func(Expr *expr, List *args)
 	}
 	else
 	{
-		Func   *func = (Func *) expr->oper;
+		Func	   *func = (Func *) expr->oper;
 
 		funcid = func->funcid;
 		result_typeid = func->functype;
@@ -1333,21 +1363,23 @@ simplify_op_or_func(Expr *expr, List *args)
 	if (!HeapTupleIsValid(func_tuple))
 		elog(ERROR, "Function OID %u does not exist", funcid);
 	funcform = (Form_pg_proc) GETSTRUCT(func_tuple);
-	if (! funcform->proiscachable)
+	if (!funcform->proiscachable)
 		return NULL;
+
 	/*
 	 * Also check to make sure it doesn't return a set.
 	 */
 	if (funcform->proretset)
 		return NULL;
+
 	/*
 	 * OK, looks like we can simplify this operator/function.
 	 *
 	 * We use the executor's routine ExecEvalExpr() to avoid duplication of
 	 * code and ensure we get the same result as the executor would get.
 	 *
-	 * Build a new Expr node containing the already-simplified arguments.
-	 * The only other setup needed here is the replace_opid() that we already
+	 * Build a new Expr node containing the already-simplified arguments. The
+	 * only other setup needed here is the replace_opid() that we already
 	 * did for the OP_EXPR case.
 	 */
 	newexpr = makeNode(Expr);
@@ -1355,21 +1387,23 @@ simplify_op_or_func(Expr *expr, List *args)
 	newexpr->opType = expr->opType;
 	newexpr->oper = expr->oper;
 	newexpr->args = args;
+
 	/*
 	 * It is OK to pass econtext = NULL because none of the ExecEvalExpr()
 	 * code used in this situation will use econtext.  That might seem
-	 * fortuitous, but it's not so unreasonable --- a constant expression does
-	 * not depend on context, by definition, n'est ce pas?
+	 * fortuitous, but it's not so unreasonable --- a constant expression
+	 * does not depend on context, by definition, n'est ce pas?
 	 */
 	const_val = ExecEvalExpr((Node *) newexpr, NULL,
 							 &const_is_null, &isDone);
 	Assert(isDone);				/* if this isn't set, we blew it... */
 	pfree(newexpr);
+
 	/*
 	 * Make the constant result node.
 	 *
-	 * XXX would it be better to take the result type from the
-	 * pg_proc tuple, rather than the Oper or Func node?
+	 * XXX would it be better to take the result type from the pg_proc tuple,
+	 * rather than the Oper or Func node?
 	 */
 	resultType = typeidType(result_typeid);
 	return (Expr *) makeConst(result_typeid, typeLen(resultType),
@@ -1426,8 +1460,8 @@ simplify_op_or_func(Expr *expr, List *args)
  *
  * The walker routine should return "false" to continue the tree walk, or
  * "true" to abort the walk and immediately return "true" to the top-level
- * caller.  This can be used to short-circuit the traversal if the walker
- * has found what it came for.  "false" is returned to the top-level caller
+ * caller.	This can be used to short-circuit the traversal if the walker
+ * has found what it came for.	"false" is returned to the top-level caller
  * iff no invocation of the walker returned "true".
  *
  * The node types handled by expression_tree_walker include all those
@@ -1454,16 +1488,16 @@ simplify_op_or_func(Expr *expr, List *args)
  */
 
 bool
-expression_tree_walker(Node *node, bool (*walker) (), void *context)
+			expression_tree_walker(Node *node, bool (*walker) (), void *context)
 {
 	List	   *temp;
 
 	/*
-	 * The walker has already visited the current node,
-	 * and so we need only recurse into any sub-nodes it has.
+	 * The walker has already visited the current node, and so we need
+	 * only recurse into any sub-nodes it has.
 	 *
-	 * We assume that the walker is not interested in List nodes per se,
-	 * so when we expect a List we just recurse directly to self without
+	 * We assume that the walker is not interested in List nodes per se, so
+	 * when we expect a List we just recurse directly to self without
 	 * bothering to call the walker.
 	 */
 	if (node == NULL)
@@ -1478,7 +1512,7 @@ expression_tree_walker(Node *node, bool (*walker) (), void *context)
 			break;
 		case T_Expr:
 			{
-				Expr   *expr = (Expr *) node;
+				Expr	   *expr = (Expr *) node;
 
 				if (expr->opType == SUBPLAN_EXPR)
 				{
@@ -1500,6 +1534,7 @@ expression_tree_walker(Node *node, bool (*walker) (), void *context)
 		case T_ArrayRef:
 			{
 				ArrayRef   *aref = (ArrayRef *) node;
+
 				/* recurse directly for upper/lower array index lists */
 				if (expression_tree_walker((Node *) aref->refupperindexpr,
 										   walker, context))
@@ -1519,10 +1554,12 @@ expression_tree_walker(Node *node, bool (*walker) (), void *context)
 		case T_CaseExpr:
 			{
 				CaseExpr   *caseexpr = (CaseExpr *) node;
+
 				/* we assume walker doesn't care about CaseWhens, either */
 				foreach(temp, caseexpr->args)
 				{
 					CaseWhen   *when = (CaseWhen *) lfirst(temp);
+
 					Assert(IsA(when, CaseWhen));
 					if (walker(when->expr, context))
 						return true;
@@ -1538,12 +1575,14 @@ expression_tree_walker(Node *node, bool (*walker) (), void *context)
 			break;
 		case T_SubLink:
 			{
-				SubLink   *sublink = (SubLink *) node;
+				SubLink    *sublink = (SubLink *) node;
 
-				/* If the SubLink has already been processed by subselect.c,
-				 * it will have lefthand=NIL, and we only need to look at
-				 * the oper list.  Otherwise we only need to look at lefthand
-				 * (the Oper nodes in the oper list are deemed uninteresting).
+				/*
+				 * If the SubLink has already been processed by
+				 * subselect.c, it will have lefthand=NIL, and we only
+				 * need to look at the oper list.  Otherwise we only need
+				 * to look at lefthand (the Oper nodes in the oper list
+				 * are deemed uninteresting).
 				 */
 				if (sublink->lefthand)
 					return walker((Node *) sublink->lefthand, context);
@@ -1628,18 +1667,19 @@ expression_tree_walker(Node *node, bool (*walker) (), void *context)
  */
 
 Node *
-expression_tree_mutator(Node *node, Node * (*mutator) (), void *context)
+			expression_tree_mutator(Node *node, Node *(*mutator) (), void *context)
 {
+
 	/*
-	 * The mutator has already decided not to modify the current node,
-	 * but we must call the mutator for any sub-nodes.
+	 * The mutator has already decided not to modify the current node, but
+	 * we must call the mutator for any sub-nodes.
 	 */
 
 #define FLATCOPY(newnode, node, nodetype)  \
 	( (newnode) = makeNode(nodetype), \
 	  memcpy((newnode), (node), sizeof(nodetype)) )
 
-#define CHECKFLATCOPY(newnode, node, nodetype)  \
+#define CHECKFLATCOPY(newnode, node, nodetype)	\
 	( AssertMacro(IsA((node), nodetype)), \
 	  (newnode) = makeNode(nodetype), \
 	  memcpy((newnode), (node), sizeof(nodetype)) )
@@ -1659,31 +1699,41 @@ expression_tree_mutator(Node *node, Node * (*mutator) (), void *context)
 			return (Node *) copyObject(node);
 		case T_Expr:
 			{
-				Expr   *expr = (Expr *) node;
-				Expr   *newnode;
+				Expr	   *expr = (Expr *) node;
+				Expr	   *newnode;
 
 				FLATCOPY(newnode, expr, Expr);
 
 				if (expr->opType == SUBPLAN_EXPR)
 				{
-					SubLink	   *oldsublink = ((SubPlan *) expr->oper)->sublink;
-					SubPlan	   *newsubplan;
+					SubLink    *oldsublink = ((SubPlan *) expr->oper)->sublink;
+					SubPlan    *newsubplan;
 
 					/* flat-copy the oper node, which is a SubPlan */
 					CHECKFLATCOPY(newsubplan, expr->oper, SubPlan);
 					newnode->oper = (Node *) newsubplan;
 					/* likewise its SubLink node */
 					CHECKFLATCOPY(newsubplan->sublink, oldsublink, SubLink);
-					/* transform args list (params to be passed to subplan) */
+
+					/*
+					 * transform args list (params to be passed to
+					 * subplan)
+					 */
 					MUTATE(newnode->args, expr->args, List *);
 					/* transform sublink's oper list as well */
-					MUTATE(newsubplan->sublink->oper, oldsublink->oper, List*);
-					/* but not the subplan itself, which is referenced as-is */
+					MUTATE(newsubplan->sublink->oper, oldsublink->oper, List *);
+
+					/*
+					 * but not the subplan itself, which is referenced
+					 * as-is
+					 */
 				}
 				else
 				{
-					/* for other Expr node types, just transform args list,
-					 * linking to original oper node (OK?)
+
+					/*
+					 * for other Expr node types, just transform args
+					 * list, linking to original oper node (OK?)
 					 */
 					MUTATE(newnode->args, expr->args, List *);
 				}
@@ -1692,8 +1742,8 @@ expression_tree_mutator(Node *node, Node * (*mutator) (), void *context)
 			break;
 		case T_Aggref:
 			{
-				Aggref   *aggref = (Aggref *) node;
-				Aggref   *newnode;
+				Aggref	   *aggref = (Aggref *) node;
+				Aggref	   *newnode;
 
 				FLATCOPY(newnode, aggref, Aggref);
 				MUTATE(newnode->target, aggref->target, Node *);
@@ -1702,8 +1752,8 @@ expression_tree_mutator(Node *node, Node * (*mutator) (), void *context)
 			break;
 		case T_Iter:
 			{
-				Iter   *iter = (Iter *) node;
-				Iter   *newnode;
+				Iter	   *iter = (Iter *) node;
+				Iter	   *newnode;
 
 				FLATCOPY(newnode, iter, Iter);
 				MUTATE(newnode->iterexpr, iter->iterexpr, Node *);
@@ -1763,12 +1813,14 @@ expression_tree_mutator(Node *node, Node * (*mutator) (), void *context)
 			break;
 		case T_SubLink:
 			{
-				/* A "bare" SubLink (note we will not come here if we found
-				 * a SUBPLAN_EXPR node above it).  Transform the lefthand side,
-				 * but not the oper list nor the subquery.
+
+				/*
+				 * A "bare" SubLink (note we will not come here if we
+				 * found a SUBPLAN_EXPR node above it).  Transform the
+				 * lefthand side, but not the oper list nor the subquery.
 				 */
-				SubLink   *sublink = (SubLink *) node;
-				SubLink   *newnode;
+				SubLink    *sublink = (SubLink *) node;
+				SubLink    *newnode;
 
 				FLATCOPY(newnode, sublink, SubLink);
 				MUTATE(newnode->lefthand, sublink->lefthand, List *);
@@ -1777,9 +1829,12 @@ expression_tree_mutator(Node *node, Node * (*mutator) (), void *context)
 			break;
 		case T_List:
 			{
-				/* We assume the mutator isn't interested in the list nodes
-				 * per se, so just invoke it on each list element.
-				 * NOTE: this would fail badly on a list with integer elements!
+
+				/*
+				 * We assume the mutator isn't interested in the list
+				 * nodes per se, so just invoke it on each list element.
+				 * NOTE: this would fail badly on a list with integer
+				 * elements!
 				 */
 				List	   *resultlist = NIL;
 				List	   *temp;
@@ -1795,9 +1850,13 @@ expression_tree_mutator(Node *node, Node * (*mutator) (), void *context)
 			break;
 		case T_TargetEntry:
 			{
-				/* We mutate the expression, but not the resdom, by default. */
-				TargetEntry   *targetentry = (TargetEntry *) node;
-				TargetEntry   *newnode;
+
+				/*
+				 * We mutate the expression, but not the resdom, by
+				 * default.
+				 */
+				TargetEntry *targetentry = (TargetEntry *) node;
+				TargetEntry *newnode;
 
 				FLATCOPY(newnode, targetentry, TargetEntry);
 				MUTATE(newnode->expr, targetentry->expr, Node *);

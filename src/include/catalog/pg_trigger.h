@@ -35,12 +35,13 @@ CATALOG(pg_trigger) BOOTSTRAP
 	int2		tgtype;			/* BEFORE/AFTER UPDATE/DELETE/INSERT
 								 * ROW/STATEMENT */
 	bool		tgenabled;		/* trigger is enabled/disabled */
-	bool		tgisconstraint;	/* trigger is a RI constraint */
+	bool		tgisconstraint; /* trigger is a RI constraint */
 	NameData	tgconstrname;	/* RI constraint name */
 	Oid			tgconstrrelid;	/* RI table of foreign key definition */
-								/* in the case of ON DELETE or ON UPDATE */
+
+	/* in the case of ON DELETE or ON UPDATE */
 	bool		tgdeferrable;	/* RI trigger is deferrable */
-	bool		tginitdeferred;	/* RI trigger is deferred initially */
+	bool		tginitdeferred; /* RI trigger is deferred initially */
 	int2		tgnargs;		/* # of extra arguments in tgargs */
 	int2vector	tgattr;			/* UPDATE of attr1, attr2 ... (NI) */
 	bytea		tgargs;			/* first\000second\000tgnargs\000 */

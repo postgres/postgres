@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2000, PostgreSQL, Inc
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Id: buf_internals.h,v 1.36 2000/04/09 04:43:18 tgl Exp $
+ * $Id: buf_internals.h,v 1.37 2000/04/12 17:16:51 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -67,9 +67,9 @@ typedef struct buftag
  */
 typedef struct bufblindid
 {
-	char		dbname[NAMEDATALEN]; /* name of db in which buf belongs */
-	char		relname[NAMEDATALEN]; /* name of reln */
-} BufferBlindId;
+	char		dbname[NAMEDATALEN];	/* name of db in which buf belongs */
+	char		relname[NAMEDATALEN];	/* name of reln */
+}			BufferBlindId;
 
 #define BAD_BUFFER_ID(bid) ((bid) < 1 || (bid) > NBuffers)
 #define INVALID_DESCRIPTOR (-3)
@@ -184,7 +184,7 @@ extern BufferDesc *LocalBufferDescriptors;
 extern int	NLocBuffer;
 
 extern BufferDesc *LocalBufferAlloc(Relation reln, BlockNumber blockNum,
-									bool *foundPtr);
+				 bool *foundPtr);
 extern int	WriteLocalBuffer(Buffer buffer, bool release);
 extern int	FlushLocalBuffer(Buffer buffer, bool release);
 extern void InitLocalBuffer(void);

@@ -3,7 +3,7 @@
  *
  * Copyright 2000 by PostgreSQL Global Development Group
  *
- * $Header: /cvsroot/pgsql/src/bin/psql/mainloop.c,v 1.27 2000/03/27 21:11:37 petere Exp $
+ * $Header: /cvsroot/pgsql/src/bin/psql/mainloop.c,v 1.28 2000/04/12 17:16:22 momjian Exp $
  */
 #include "postgres.h"
 #include "mainloop.h"
@@ -19,7 +19,8 @@
 #ifndef WIN32
 #include <setjmp.h>
 
-sigjmp_buf main_loop_jmp;
+sigjmp_buf	main_loop_jmp;
+
 #endif
 
 
@@ -36,8 +37,8 @@ int
 MainLoop(FILE *source)
 {
 	PQExpBuffer query_buf;		/* buffer for query being accumulated */
-    PQExpBuffer previous_buf;   /* if there isn't anything in the new buffer
-                                   yet, use this one for \e, etc. */
+	PQExpBuffer previous_buf;	/* if there isn't anything in the new
+								 * buffer yet, use this one for \e, etc. */
 	char	   *line;			/* current line of input */
 	int			len;			/* length of the line */
 	volatile int successResult = EXIT_SUCCESS;
@@ -48,9 +49,9 @@ MainLoop(FILE *source)
 	volatile bool xcomment;		/* in extended comment */
 	volatile int paren_level;
 	unsigned int query_start;
-    volatile int count_eof = 0;
-    const char *var;
-    volatile unsigned int bslash_count = 0;
+	volatile int count_eof = 0;
+	const char *var;
+	volatile unsigned int bslash_count = 0;
 
 	int			i,
 				prevlen,
@@ -60,7 +61,7 @@ MainLoop(FILE *source)
 	FILE	   *prev_cmd_source;
 	bool		prev_cmd_interactive;
 
-    unsigned int prev_lineno;
+	unsigned int prev_lineno;
 	volatile bool die_on_error = false;
 
 
@@ -74,10 +75,10 @@ MainLoop(FILE *source)
 
 
 	query_buf = createPQExpBuffer();
-    previous_buf = createPQExpBuffer();
+	previous_buf = createPQExpBuffer();
 	if (!query_buf || !previous_buf)
 	{
-        psql_error("out of memory\n");
+		psql_error("out of memory\n");
 		exit(EXIT_FAILURE);
 	}
 
@@ -85,59 +86,62 @@ MainLoop(FILE *source)
 	in_quote = 0;
 	paren_level = 0;
 	slashCmdStatus = CMD_UNKNOWN;		/* set default */
-    prev_lineno = pset.lineno;
-    pset.lineno = 0;
+	prev_lineno = pset.lineno;
+	pset.lineno = 0;
 
 
 	/* main loop to get queries and execute them */
 	while (1)
 	{
 #ifndef WIN32
-        /*
-         * Welcome code for Control-C
-         */
-        if (cancel_pressed)
-        {
-            if (!pset.cur_cmd_interactive)
-            {
-                /*
-                 * You get here if you stopped a script with Ctrl-C and a query
-                 * cancel was issued. In that case we don't do the longjmp, so
-                 * the query routine can finish nicely.
-                 */
-                successResult = EXIT_USER;
-                break;
-            }
 
-            cancel_pressed = false;
-        }
+		/*
+		 * Welcome code for Control-C
+		 */
+		if (cancel_pressed)
+		{
+			if (!pset.cur_cmd_interactive)
+			{
 
-        if (sigsetjmp(main_loop_jmp, 1) != 0)
-        {
-            /* got here with longjmp */
+				/*
+				 * You get here if you stopped a script with Ctrl-C and a
+				 * query cancel was issued. In that case we don't do the
+				 * longjmp, so the query routine can finish nicely.
+				 */
+				successResult = EXIT_USER;
+				break;
+			}
 
-            if (pset.cur_cmd_interactive)
-            {
-                fputc('\n', stdout);
-                resetPQExpBuffer(query_buf);
+			cancel_pressed = false;
+		}
 
-                /* reset parsing state */
-                xcomment = false;
-                in_quote = 0;
-                paren_level = 0;
-                count_eof = 0;
-                slashCmdStatus = CMD_UNKNOWN;
-            }
-            else
-            {
-                successResult = EXIT_USER;
-                break;
-            }
-        }
-#endif /* not WIN32 */
+		if (sigsetjmp(main_loop_jmp, 1) != 0)
+		{
+			/* got here with longjmp */
+
+			if (pset.cur_cmd_interactive)
+			{
+				fputc('\n', stdout);
+				resetPQExpBuffer(query_buf);
+
+				/* reset parsing state */
+				xcomment = false;
+				in_quote = 0;
+				paren_level = 0;
+				count_eof = 0;
+				slashCmdStatus = CMD_UNKNOWN;
+			}
+			else
+			{
+				successResult = EXIT_USER;
+				break;
+			}
+		}
+#endif	 /* not WIN32 */
 
 		if (slashCmdStatus == CMD_NEWEDIT)
 		{
+
 			/*
 			 * just returned from editing the line? then just copy to the
 			 * input buffer
@@ -148,11 +152,12 @@ MainLoop(FILE *source)
 			xcomment = false;
 			in_quote = 0;
 			paren_level = 0;
-            slashCmdStatus = CMD_UNKNOWN;
+			slashCmdStatus = CMD_UNKNOWN;
 		}
 		else
 		{
-            fflush(stdout);
+			fflush(stdout);
+
 			/*
 			 * otherwise, set interactive prompt if necessary and get
 			 * another line
@@ -167,8 +172,8 @@ MainLoop(FILE *source)
 					prompt_status = PROMPT_DOUBLEQUOTE;
 				else if (xcomment)
 					prompt_status = PROMPT_COMMENT;
-                else if (paren_level)
-                    prompt_status = PROMPT_PAREN;
+				else if (paren_level)
+					prompt_status = PROMPT_PAREN;
 				else if (query_buf->len > 0)
 					prompt_status = PROMPT_CONTINUE;
 				else
@@ -195,51 +200,54 @@ MainLoop(FILE *source)
 		if (line == NULL)
 		{
 			if (pset.cur_cmd_interactive)
-            {
-                bool getout = true;
+			{
+				bool		getout = true;
 
-                /* This tries to mimic bash's IGNOREEOF feature. */
-                const char * val = GetVariable(pset.vars, "IGNOREEOF");
-                if (val)
-                {
-                    long int maxeof;
-                    char * endptr;
+				/* This tries to mimic bash's IGNOREEOF feature. */
+				const char *val = GetVariable(pset.vars, "IGNOREEOF");
 
-                    if (*val == '\0')
-                        maxeof = 10;
-                    else
-                    {
-                        maxeof = strtol(val, &endptr, 0);
-                        if (*endptr != '\0') /* string not valid as a number */
-                            maxeof = 10;
-                    }
+				if (val)
+				{
+					long int	maxeof;
+					char	   *endptr;
 
-                    if (count_eof++ != maxeof)
-                        getout = false; /* not quite there yet */
-                }
+					if (*val == '\0')
+						maxeof = 10;
+					else
+					{
+						maxeof = strtol(val, &endptr, 0);
+						if (*endptr != '\0')	/* string not valid as a
+												 * number */
+							maxeof = 10;
+					}
 
-                if (getout)
-                {
-                    if (QUIET())
-                        putc('\n', stdout);
-                    else
-                        puts("\\q");
-                    break;
-                }
-                else
-                {
-                    if (!QUIET())
-                        printf("Use \"\\q\" to leave %s.\n", pset.progname);
-                    continue;
-                }
-            }
-            else /* not interactive */
-                break;
+					if (count_eof++ != maxeof)
+						getout = false; /* not quite there yet */
+				}
+
+				if (getout)
+				{
+					if (QUIET())
+						putc('\n', stdout);
+					else
+						puts("\\q");
+					break;
+				}
+				else
+				{
+					if (!QUIET())
+						printf("Use \"\\q\" to leave %s.\n", pset.progname);
+					continue;
+				}
+			}
+			else
+/* not interactive */
+				break;
 		}
-        else
-            count_eof = 0;
+		else
+			count_eof = 0;
 
-        pset.lineno++;
+		pset.lineno++;
 
 		/* strip trailing backslashes, they don't have a clear meaning */
 		while (1)
@@ -260,10 +268,10 @@ MainLoop(FILE *source)
 		}
 
 		/* echo back if flag is set */
-        var = GetVariable(pset.vars, "ECHO");
-        if (!pset.cur_cmd_interactive && var && strcmp(var, "all")==0)
-            puts(line);
-        fflush(stdout);
+		var = GetVariable(pset.vars, "ECHO");
+		if (!pset.cur_cmd_interactive && var && strcmp(var, "all") == 0)
+			puts(line);
+		fflush(stdout);
 
 		len = strlen(line);
 		query_start = 0;
@@ -278,15 +286,16 @@ MainLoop(FILE *source)
 
 		success = true;
 		for (i = 0, prevlen = 0, thislen = (len > 0) ? PQmblen(line, pset.encoding) : 0;
-             i < len;
-             ADVANCE_1)
+			 i < len;
+			 ADVANCE_1)
 		{
 			/* was the previous character a backslash? */
-			bool was_bslash = (i > 0 && line[i - prevlen] == '\\');
-            if (was_bslash)
-                bslash_count++;
-            else
-                bslash_count = 0;
+			bool		was_bslash = (i > 0 && line[i - prevlen] == '\\');
+
+			if (was_bslash)
+				bslash_count++;
+			else
+				bslash_count = 0;
 
 			/* in quote? */
 			if (in_quote)
@@ -331,53 +340,57 @@ MainLoop(FILE *source)
 			else if (line[i] == ')' && paren_level > 0)
 				paren_level--;
 
-            /* colon -> substitute variable */
-            /* we need to be on the watch for the '::' operator */
-            else if (line[i] == ':' && !was_bslash
-                     && strspn(line+i+thislen, VALID_VARIABLE_CHARS)>0
-                     && !(prevlen>0 && line[i-prevlen] == ':')                     
-                )
-            {
+			/* colon -> substitute variable */
+			/* we need to be on the watch for the '::' operator */
+			else if (line[i] == ':' && !was_bslash
+				  && strspn(line + i + thislen, VALID_VARIABLE_CHARS) > 0
+					 && !(prevlen > 0 && line[i - prevlen] == ':')
+				)
+			{
 				size_t		in_length,
 							out_length;
 				const char *value;
 				char	   *new;
-                char       after;		/* the character after the variable name
-                                           will be temporarily overwritten */
+				char		after;		/* the character after the
+										 * variable name will be
+										 * temporarily overwritten */
 
 				in_length = strspn(&line[i + thislen], VALID_VARIABLE_CHARS);
 				after = line[i + thislen + in_length];
 				line[i + thislen + in_length] = '\0';
 
-                /* if the variable doesn't exist we'll leave the string as is */
+				/*
+				 * if the variable doesn't exist we'll leave the string as
+				 * is
+				 */
 				value = GetVariable(pset.vars, &line[i + thislen]);
-                if (value)
-                {
-                    out_length = strlen(value);
+				if (value)
+				{
+					out_length = strlen(value);
 
-                    new = malloc(len + out_length - (1 + in_length) + 1);
-                    if (!new)
-                    {
-                        psql_error("out of memory\n");
-                        exit(EXIT_FAILURE);
-                    }
+					new = malloc(len + out_length - (1 + in_length) + 1);
+					if (!new)
+					{
+						psql_error("out of memory\n");
+						exit(EXIT_FAILURE);
+					}
 
-                    sprintf(new, "%.*s%s%c", i, line, value, after);
-                    if (after)
-                        strcat(new, line + i + 1 + in_length + 1);
+					sprintf(new, "%.*s%s%c", i, line, value, after);
+					if (after)
+						strcat(new, line + i + 1 + in_length + 1);
 
-                    free(line);
-                    line = new;
-                    len = strlen(new);
-                    continue; /* reparse the just substituted */
-                }
-                else
-                {
-                    /* restore overwritten character */
-                    line[i + thislen + in_length] = after;
-                    /* move on ... */
-                }
-            }
+					free(line);
+					line = new;
+					len = strlen(new);
+					continue;	/* reparse the just substituted */
+				}
+				else
+				{
+					/* restore overwritten character */
+					line[i + thislen + in_length] = after;
+					/* move on ... */
+				}
+			}
 
 			/* semicolon? then send query */
 			else if (line[i] == ';' && !was_bslash && !paren_level)
@@ -386,6 +399,7 @@ MainLoop(FILE *source)
 				/* is there anything else on the line? */
 				if (line[query_start + strspn(line + query_start, " \t")] != '\0')
 				{
+
 					/*
 					 * insert a cosmetic newline, if this is not the first
 					 * line in the buffer
@@ -394,27 +408,29 @@ MainLoop(FILE *source)
 						appendPQExpBufferChar(query_buf, '\n');
 					/* append the line to the query buffer */
 					appendPQExpBufferStr(query_buf, line + query_start);
-                    appendPQExpBufferChar(query_buf, ';');
+					appendPQExpBufferChar(query_buf, ';');
 				}
 
 				/* execute query */
 				success = SendQuery(query_buf->data);
-                slashCmdStatus = success ? CMD_SEND : CMD_ERROR;
+				slashCmdStatus = success ? CMD_SEND : CMD_ERROR;
 
-                resetPQExpBuffer(previous_buf);
-                appendPQExpBufferStr(previous_buf, query_buf->data);
-                resetPQExpBuffer(query_buf);
+				resetPQExpBuffer(previous_buf);
+				appendPQExpBufferStr(previous_buf, query_buf->data);
+				resetPQExpBuffer(query_buf);
 				query_start = i + thislen;
 			}
 
-            /* if you have a burning need to send a semicolon or colon to
-               the backend ... */
-            else if (was_bslash && (line[i] == ';' || line[i] == ':'))
-            {
-                /* remove the backslash */
-                memmove(line + i - prevlen, line + i, len - i + 1);
-                len--;
-            }
+			/*
+			 * if you have a burning need to send a semicolon or colon to
+			 * the backend ...
+			 */
+			else if (was_bslash && (line[i] == ';' || line[i] == ':'))
+			{
+				/* remove the backslash */
+				memmove(line + i - prevlen, line + i, len - i + 1);
+				len--;
+			}
 
 			/* backslash command */
 			else if (was_bslash)
@@ -427,6 +443,7 @@ MainLoop(FILE *source)
 				/* is there anything else on the line for the command? */
 				if (line[query_start + strspn(line + query_start, " \t")] != '\0')
 				{
+
 					/*
 					 * insert a cosmetic newline, if this is not the first
 					 * line in the buffer
@@ -437,40 +454,41 @@ MainLoop(FILE *source)
 					appendPQExpBufferStr(query_buf, line + query_start);
 				}
 
-                /* handle backslash command */
-                slashCmdStatus = HandleSlashCmds(&line[i], 
-                                                 query_buf->len>0 ? query_buf : previous_buf,
-                                                 &end_of_cmd);
+				/* handle backslash command */
+				slashCmdStatus = HandleSlashCmds(&line[i],
+						   query_buf->len > 0 ? query_buf : previous_buf,
+												 &end_of_cmd);
 
 				success = slashCmdStatus != CMD_ERROR;
 
-                if ((slashCmdStatus == CMD_SEND || slashCmdStatus == CMD_NEWEDIT) &&
-                    query_buf->len == 0) {
-                    /* copy previous buffer to current for for handling */
-                    appendPQExpBufferStr(query_buf, previous_buf->data);
-                }
+				if ((slashCmdStatus == CMD_SEND || slashCmdStatus == CMD_NEWEDIT) &&
+					query_buf->len == 0)
+				{
+					/* copy previous buffer to current for for handling */
+					appendPQExpBufferStr(query_buf, previous_buf->data);
+				}
 
 				if (slashCmdStatus == CMD_SEND)
 				{
 					success = SendQuery(query_buf->data);
 					query_start = i + thislen;
 
-                    resetPQExpBuffer(previous_buf);
-                    appendPQExpBufferStr(previous_buf, query_buf->data);
-                    resetPQExpBuffer(query_buf);
+					resetPQExpBuffer(previous_buf);
+					appendPQExpBufferStr(previous_buf, query_buf->data);
+					resetPQExpBuffer(query_buf);
 				}
 
 				/* process anything left after the backslash command */
-                i += end_of_cmd - &line[i];
-                query_start = i;
+				i += end_of_cmd - &line[i];
+				query_start = i;
 			}
 
 
-            /* stop the script after error */
+			/* stop the script after error */
 			if (!success && die_on_error)
 				break;
 
-		} /* for (line) */
+		}						/* for (line) */
 
 
 		if (slashCmdStatus == CMD_TERMINATE)
@@ -495,10 +513,10 @@ MainLoop(FILE *source)
 		if (query_buf->data[0] != '\0' && GetVariableBool(pset.vars, "SINGLELINE"))
 		{
 			success = SendQuery(query_buf->data);
-            slashCmdStatus = success ? CMD_SEND : CMD_ERROR;
-            resetPQExpBuffer(previous_buf);
-            appendPQExpBufferStr(previous_buf, query_buf->data);
-            resetPQExpBuffer(query_buf);
+			slashCmdStatus = success ? CMD_SEND : CMD_ERROR;
+			resetPQExpBuffer(previous_buf);
+			appendPQExpBufferStr(previous_buf, query_buf->data);
+			resetPQExpBuffer(query_buf);
 		}
 
 
@@ -515,27 +533,27 @@ MainLoop(FILE *source)
 			successResult = EXIT_BADCONN;
 			break;
 		}
-	} /* while !endoffile/session */
+	}							/* while !endoffile/session */
 
-    /*
-     * Process query at the end of file without a semicolon
-     */
-    if (query_buf->len > 0 && !pset.cur_cmd_interactive)
-    {
-        success = SendQuery(query_buf->data);
+	/*
+	 * Process query at the end of file without a semicolon
+	 */
+	if (query_buf->len > 0 && !pset.cur_cmd_interactive)
+	{
+		success = SendQuery(query_buf->data);
 
-        if (!success && die_on_error)
-            successResult = EXIT_USER;
-        else if (pset.db == NULL)
-            successResult = EXIT_BADCONN;
-    }
-        
+		if (!success && die_on_error)
+			successResult = EXIT_USER;
+		else if (pset.db == NULL)
+			successResult = EXIT_BADCONN;
+	}
+
 	destroyPQExpBuffer(query_buf);
 	destroyPQExpBuffer(previous_buf);
 
 	pset.cur_cmd_source = prev_cmd_source;
 	pset.cur_cmd_interactive = prev_cmd_interactive;
-    pset.lineno = prev_lineno;
+	pset.lineno = prev_lineno;
 
 	return successResult;
 }	/* MainLoop() */

@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/access/nbtree/nbtcompare.c,v 1.33 2000/02/10 19:51:38 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/access/nbtree/nbtcompare.c,v 1.34 2000/04/12 17:14:49 momjian Exp $
  *
  *	NOTES
  *		These functions are stored in pg_amproc.  For each operator class
@@ -35,12 +35,12 @@ btint2cmp(int16 a, int16 b)
 int32
 btint4cmp(int32 a, int32 b)
 {
-      if (a > b)
-              return 1;
-      else if (a == b)
-              return 0;
-      else
-              return -1;
+	if (a > b)
+		return 1;
+	else if (a == b)
+		return 0;
+	else
+		return -1;
 }
 
 int32

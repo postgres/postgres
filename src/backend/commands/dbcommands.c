@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/commands/dbcommands.c,v 1.52 2000/03/26 18:32:28 petere Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/commands/dbcommands.c,v 1.53 2000/04/12 17:14:58 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -33,9 +33,9 @@
 #include "catalog/pg_shadow.h"
 #include "commands/comment.h"
 #include "miscadmin.h"
-#include "storage/bufmgr.h"        /* for DropBuffers */
-#include "storage/fd.h"            /* for closeAllVfds */
-#include "storage/sinval.h"        /* for DatabaseHasActiveBackends */
+#include "storage/bufmgr.h"		/* for DropBuffers */
+#include "storage/fd.h"			/* for closeAllVfds */
+#include "storage/sinval.h"		/* for DatabaseHasActiveBackends */
 #include "utils/builtins.h"
 #include "utils/elog.h"
 #include "utils/palloc.h"
@@ -45,10 +45,10 @@
 
 /* non-export function prototypes */
 static bool
-get_user_info(const char *name, int4 *use_sysid, bool *use_super, bool *use_createdb);
+			get_user_info(const char *name, int4 *use_sysid, bool *use_super, bool *use_createdb);
 
 static bool
-get_db_info(const char *name, char *dbpath, Oid *dbIdP, int4 *ownerIdP);
+			get_db_info(const char *name, char *dbpath, Oid *dbIdP, int4 *ownerIdP);
 
 
 
@@ -61,99 +61,104 @@ createdb(const char *dbname, const char *dbpath, int encoding)
 {
 	char		buf[2 * MAXPGPATH + 100];
 	char	   *loc;
-    char        locbuf[512];
+	char		locbuf[512];
 	int4		user_id;
-    bool        use_super, use_createdb;
+	bool		use_super,
+				use_createdb;
 	Relation	pg_database_rel;
 	HeapTuple	tuple;
-    TupleDesc   pg_database_dsc;
-    Datum       new_record[Natts_pg_database];
-    char        new_record_nulls[Natts_pg_database] = { ' ', ' ', ' ', ' ' };
+	TupleDesc	pg_database_dsc;
+	Datum		new_record[Natts_pg_database];
+	char		new_record_nulls[Natts_pg_database] = {' ', ' ', ' ', ' '};
 
-    if (!get_user_info(GetPgUserName(), &user_id, &use_super, &use_createdb))
-        elog(ERROR, "current user name is invalid");
+	if (!get_user_info(GetPgUserName(), &user_id, &use_super, &use_createdb))
+		elog(ERROR, "current user name is invalid");
 
-    if (!use_createdb && !use_super)
-        elog(ERROR, "CREATE DATABASE: permission denied");
+	if (!use_createdb && !use_super)
+		elog(ERROR, "CREATE DATABASE: permission denied");
 
-    if (get_db_info(dbname, NULL, NULL, NULL))
-        elog(ERROR, "CREATE DATABASE: database \"%s\" already exists", dbname);
+	if (get_db_info(dbname, NULL, NULL, NULL))
+		elog(ERROR, "CREATE DATABASE: database \"%s\" already exists", dbname);
 
-    /* don't call this in a transaction block */
+	/* don't call this in a transaction block */
 	if (IsTransactionBlock())
-        elog(ERROR, "CREATE DATABASE: may not be called in a transaction block");
+		elog(ERROR, "CREATE DATABASE: may not be called in a transaction block");
 
 	/* Generate directory name for the new database */
-    if (dbpath == NULL || strcmp(dbpath, dbname)==0)
-        strcpy(locbuf, dbname);
-    else
-        snprintf(locbuf, sizeof(locbuf), "%s/%s", dbpath, dbname);
+	if (dbpath == NULL || strcmp(dbpath, dbname) == 0)
+		strcpy(locbuf, dbname);
+	else
+		snprintf(locbuf, sizeof(locbuf), "%s/%s", dbpath, dbname);
 
-    loc = ExpandDatabasePath(locbuf);
+	loc = ExpandDatabasePath(locbuf);
 
 	if (loc == NULL)
 		elog(ERROR,
-             "The database path '%s' is invalid. "
+			 "The database path '%s' is invalid. "
 			 "This may be due to a character that is not allowed or because the chosen "
-             "path isn't permitted for databases", dbpath);
+			 "path isn't permitted for databases", dbpath);
 
-	/* close virtual file descriptors so the kernel has more available for
-       the system() calls */
+	/*
+	 * close virtual file descriptors so the kernel has more available for
+	 * the system() calls
+	 */
 	closeAllVfds();
 
-    /*
-     * Insert a new tuple into pg_database
-     */
+	/*
+	 * Insert a new tuple into pg_database
+	 */
 	pg_database_rel = heap_openr(DatabaseRelationName, AccessExclusiveLock);
 	pg_database_dsc = RelationGetDescr(pg_database_rel);
 
-    /* Form tuple */
-    new_record[Anum_pg_database_datname-1] = NameGetDatum(namein(dbname));
-    new_record[Anum_pg_database_datdba-1] = Int32GetDatum(user_id);
-    new_record[Anum_pg_database_encoding-1] = Int32GetDatum(encoding);
-    new_record[Anum_pg_database_datpath-1] = PointerGetDatum(textin(locbuf));
+	/* Form tuple */
+	new_record[Anum_pg_database_datname - 1] = NameGetDatum(namein(dbname));
+	new_record[Anum_pg_database_datdba - 1] = Int32GetDatum(user_id);
+	new_record[Anum_pg_database_encoding - 1] = Int32GetDatum(encoding);
+	new_record[Anum_pg_database_datpath - 1] = PointerGetDatum(textin(locbuf));
 
-    tuple = heap_formtuple(pg_database_dsc, new_record, new_record_nulls);
+	tuple = heap_formtuple(pg_database_dsc, new_record, new_record_nulls);
 
-    /*
-     * Update table
-     */
-    heap_insert(pg_database_rel, tuple);
+	/*
+	 * Update table
+	 */
+	heap_insert(pg_database_rel, tuple);
 
-    /*
-     * Update indexes (there aren't any currently)
-     */
+	/*
+	 * Update indexes (there aren't any currently)
+	 */
 #ifdef Num_pg_database_indices
-    if (RelationGetForm(pg_database_rel)->relhasindex) {
-        Relation idescs[Num_pg_database_indices];
-      
-        CatalogOpenIndices(Num_pg_database_indices, 
-                           Name_pg_database_indices, idescs);
-        CatalogIndexInsert(idescs, Num_pg_database_indices, pg_database_rel, 
-                           tuple);
-        CatalogCloseIndices(Num_pg_database_indices, idescs);
-    }
+	if (RelationGetForm(pg_database_rel)->relhasindex)
+	{
+		Relation	idescs[Num_pg_database_indices];
+
+		CatalogOpenIndices(Num_pg_database_indices,
+						   Name_pg_database_indices, idescs);
+		CatalogIndexInsert(idescs, Num_pg_database_indices, pg_database_rel,
+						   tuple);
+		CatalogCloseIndices(Num_pg_database_indices, idescs);
+	}
 #endif
 
 	heap_close(pg_database_rel, NoLock);
 
-    /* Copy the template database to the new location */
+	/* Copy the template database to the new location */
 
-	if (mkdir(loc, S_IRWXU) != 0) {
+	if (mkdir(loc, S_IRWXU) != 0)
 		elog(ERROR, "CREATE DATABASE: unable to create database directory '%s': %s", loc, strerror(errno));
-    }
 
 	snprintf(buf, sizeof(buf), "cp %s%cbase%ctemplate1%c* '%s'",
 			 DataDir, SEP_CHAR, SEP_CHAR, SEP_CHAR, loc);
-	if (system(buf) != 0) {
-        int ret;
-        snprintf(buf, sizeof(buf), "rm -rf '%s'", loc);
-        ret = system(buf);
-        if (ret == 0)
-            elog(ERROR, "CREATE DATABASE: could not initialize database directory");
-        else
-            elog(ERROR, "CREATE DATABASE: Could not initialize database directory. Delete failed as well");
-    }
+	if (system(buf) != 0)
+	{
+		int			ret;
+
+		snprintf(buf, sizeof(buf), "rm -rf '%s'", loc);
+		ret = system(buf);
+		if (ret == 0)
+			elog(ERROR, "CREATE DATABASE: could not initialize database directory");
+		else
+			elog(ERROR, "CREATE DATABASE: Could not initialize database directory. Delete failed as well");
+	}
 }
 
 
@@ -165,18 +170,19 @@ createdb(const char *dbname, const char *dbpath, int encoding)
 void
 dropdb(const char *dbname)
 {
-	int4		user_id, db_owner;
-    bool        use_super;
+	int4		user_id,
+				db_owner;
+	bool		use_super;
 	Oid			db_id;
 	char	   *path,
 				dbpath[MAXPGPATH],
 				buf[MAXPGPATH + 100];
 	Relation	pgdbrel;
 	HeapScanDesc pgdbscan;
-	ScanKeyData	key;
+	ScanKeyData key;
 	HeapTuple	tup;
 
-    AssertArg(dbname);
+	AssertArg(dbname);
 
 	if (strcmp(dbname, "template1") == 0)
 		elog(ERROR, "DROP DATABASE: May not be executed on the template1 database");
@@ -185,46 +191,49 @@ dropdb(const char *dbname)
 		elog(ERROR, "DROP DATABASE: Cannot be executed on the currently open database");
 
 	if (IsTransactionBlock())
-        elog(ERROR, "DROP DATABASE: May not be called in a transaction block");
+		elog(ERROR, "DROP DATABASE: May not be called in a transaction block");
 
-    if (!get_user_info(GetPgUserName(), &user_id, &use_super, NULL))
-        elog(ERROR, "Current user name is invalid");
+	if (!get_user_info(GetPgUserName(), &user_id, &use_super, NULL))
+		elog(ERROR, "Current user name is invalid");
 
-    if (!get_db_info(dbname, dbpath, &db_id, &db_owner))
-        elog(ERROR, "DROP DATABASE: Database \"%s\" does not exist", dbname);
+	if (!get_db_info(dbname, dbpath, &db_id, &db_owner))
+		elog(ERROR, "DROP DATABASE: Database \"%s\" does not exist", dbname);
 
-    if (user_id != db_owner && !use_super)
-        elog(ERROR, "DROP DATABASE: Permission denied");
+	if (user_id != db_owner && !use_super)
+		elog(ERROR, "DROP DATABASE: Permission denied");
 
 	path = ExpandDatabasePath(dbpath);
 	if (path == NULL)
 		elog(ERROR,
-             "The database path '%s' is invalid. "
+			 "The database path '%s' is invalid. "
 			 "This may be due to a character that is not allowed or because the chosen "
-             "path isn't permitted for databases", path);
+			 "path isn't permitted for databases", path);
 
-	/* close virtual file descriptors so the kernel has more available for
-       the system() calls */
+	/*
+	 * close virtual file descriptors so the kernel has more available for
+	 * the system() calls
+	 */
 	closeAllVfds();
 
 	/*
-	 * Obtain exclusive lock on pg_database.  We need this to ensure
-	 * that no new backend starts up in the target database while we
-	 * are deleting it.  (Actually, a new backend might still manage to
-	 * start up, because it will read pg_database without any locking
-	 * to discover the database's OID.  But it will detect its error
-	 * in ReverifyMyDatabase and shut down before any serious damage
-	 * is done.  See postinit.c.)
+	 * Obtain exclusive lock on pg_database.  We need this to ensure that
+	 * no new backend starts up in the target database while we are
+	 * deleting it.  (Actually, a new backend might still manage to start
+	 * up, because it will read pg_database without any locking to
+	 * discover the database's OID.  But it will detect its error in
+	 * ReverifyMyDatabase and shut down before any serious damage is done.
+	 * See postinit.c.)
 	 */
 	pgdbrel = heap_openr(DatabaseRelationName, AccessExclusiveLock);
 
 	/*
 	 * Check for active backends in the target database.
 	 */
-	if (DatabaseHasActiveBackends(db_id)) {
+	if (DatabaseHasActiveBackends(db_id))
+	{
 		heap_close(pgdbrel, AccessExclusiveLock);
 		elog(ERROR, "DROP DATABASE: Database \"%s\" is being accessed by other users", dbname);
-    }
+	}
 
 	/*
 	 * Find the database's tuple by OID (should be unique, we trust).
@@ -238,8 +247,11 @@ dropdb(const char *dbname)
 	if (!HeapTupleIsValid(tup))
 	{
 		heap_close(pgdbrel, AccessExclusiveLock);
-        /* This error should never come up since the existence of the
-           database is checked earlier */
+
+		/*
+		 * This error should never come up since the existence of the
+		 * database is checked earlier
+		 */
 		elog(ERROR, "DROP DATABASE: Database \"%s\" doesn't exist despite earlier reports to the contrary",
 			 dbname);
 	}
@@ -270,7 +282,7 @@ dropdb(const char *dbname)
 	 */
 	snprintf(buf, sizeof(buf), "rm -rf '%s'", path);
 	if (system(buf) != 0)
-        elog(NOTICE, "DROP DATABASE: The database directory '%s' could not be removed", path);
+		elog(NOTICE, "DROP DATABASE: The database directory '%s' could not be removed", path);
 }
 
 
@@ -285,11 +297,11 @@ get_db_info(const char *name, char *dbpath, Oid *dbIdP, int4 *ownerIdP)
 	Relation	relation;
 	HeapTuple	tuple;
 	ScanKeyData scanKey;
-    HeapScanDesc scan;
+	HeapScanDesc scan;
 
-    AssertArg(name);
+	AssertArg(name);
 
-	relation = heap_openr(DatabaseRelationName, AccessExclusiveLock/*???*/);
+	relation = heap_openr(DatabaseRelationName, AccessExclusiveLock /* ??? */ );
 
 	ScanKeyEntryInitialize(&scanKey, 0, Anum_pg_database_datname,
 						   F_NAMEEQ, NameGetDatum(name));
@@ -302,76 +314,76 @@ get_db_info(const char *name, char *dbpath, Oid *dbIdP, int4 *ownerIdP)
 
 	if (HeapTupleIsValid(tuple))
 	{
-        text	   *tmptext;
-        bool        isnull;
-    
-        /* oid of the database */
-        if (dbIdP)
-            *dbIdP = tuple->t_data->t_oid;
-        /* uid of the owner */
-        if (ownerIdP)
-        {
-            *ownerIdP = (int4) heap_getattr(tuple,
-                                            Anum_pg_database_datdba,
-                                            RelationGetDescr(relation),
-                                            &isnull);
-            if (isnull)
-                *ownerIdP = -1; /* hopefully no one has that id already ;) */
-        }
-        /* database path (as registered in pg_database) */
-        if (dbpath)
-        {
-            tmptext = (text *) heap_getattr(tuple,
-                                            Anum_pg_database_datpath,
-                                            RelationGetDescr(relation),
-                                            &isnull);
+		text	   *tmptext;
+		bool		isnull;
 
-            if (!isnull)
-            {
-                Assert(VARSIZE(tmptext) - VARHDRSZ < MAXPGPATH);
+		/* oid of the database */
+		if (dbIdP)
+			*dbIdP = tuple->t_data->t_oid;
+		/* uid of the owner */
+		if (ownerIdP)
+		{
+			*ownerIdP = (int4) heap_getattr(tuple,
+											Anum_pg_database_datdba,
+											RelationGetDescr(relation),
+											&isnull);
+			if (isnull)
+				*ownerIdP = -1; /* hopefully no one has that id already ;) */
+		}
+		/* database path (as registered in pg_database) */
+		if (dbpath)
+		{
+			tmptext = (text *) heap_getattr(tuple,
+											Anum_pg_database_datpath,
+											RelationGetDescr(relation),
+											&isnull);
 
-                strncpy(dbpath, VARDATA(tmptext), VARSIZE(tmptext) - VARHDRSZ);
-                *(dbpath + VARSIZE(tmptext) - VARHDRSZ) = '\0';
-            }
-            else
-                strcpy(dbpath, "");
-        }
+			if (!isnull)
+			{
+				Assert(VARSIZE(tmptext) - VARHDRSZ < MAXPGPATH);
+
+				strncpy(dbpath, VARDATA(tmptext), VARSIZE(tmptext) - VARHDRSZ);
+				*(dbpath + VARSIZE(tmptext) - VARHDRSZ) = '\0';
+			}
+			else
+				strcpy(dbpath, "");
+		}
 	}
 	else
-    {
-        if (dbIdP)
-            *dbIdP = InvalidOid;
-    }
+	{
+		if (dbIdP)
+			*dbIdP = InvalidOid;
+	}
 
 	heap_endscan(scan);
 
 	/* We will keep the lock on the relation until end of transaction. */
 	heap_close(relation, NoLock);
 
-    return HeapTupleIsValid(tuple);
+	return HeapTupleIsValid(tuple);
 }
 
 
 
 static bool
-get_user_info(const char * name, int4 *use_sysid, bool *use_super, bool *use_createdb)
+get_user_info(const char *name, int4 *use_sysid, bool *use_super, bool *use_createdb)
 {
-    HeapTuple   utup;
+	HeapTuple	utup;
 
 	AssertArg(name);
 	utup = SearchSysCacheTuple(SHADOWNAME,
 							   PointerGetDatum(name),
 							   0, 0, 0);
 
-    if (!HeapTupleIsValid(utup))
-        return false;
+	if (!HeapTupleIsValid(utup))
+		return false;
 
-    if (use_sysid)
-        *use_sysid =    ((Form_pg_shadow) GETSTRUCT(utup))->usesysid;
-    if (use_super)
-        *use_super =    ((Form_pg_shadow) GETSTRUCT(utup))->usesuper;
-    if (use_createdb)
-        *use_createdb = ((Form_pg_shadow) GETSTRUCT(utup))->usecreatedb;
+	if (use_sysid)
+		*use_sysid = ((Form_pg_shadow) GETSTRUCT(utup))->usesysid;
+	if (use_super)
+		*use_super = ((Form_pg_shadow) GETSTRUCT(utup))->usesuper;
+	if (use_createdb)
+		*use_createdb = ((Form_pg_shadow) GETSTRUCT(utup))->usecreatedb;
 
-    return true;
+	return true;
 }

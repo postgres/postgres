@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/interfaces/libpq/fe-lobj.c,v 1.28 2000/02/07 23:10:11 petere Exp $
+ *	  $Header: /cvsroot/pgsql/src/interfaces/libpq/fe-lobj.c,v 1.29 2000/04/12 17:17:15 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -523,7 +523,7 @@ lo_initialize(PGconn *conn)
 	PGresult   *res;
 	PGlobjfuncs *lobjfuncs;
 	int			n;
-	const char	   *fname;
+	const char *fname;
 	Oid			foid;
 
 	/* ----------------
@@ -563,7 +563,7 @@ lo_initialize(PGconn *conn)
 		free(lobjfuncs);
 		PQclear(res);
 		printfPQExpBuffer(&conn->errorMessage,
-						  "ERROR: SELECT didn't return data in lo_initialize()\n");
+				"ERROR: SELECT didn't return data in lo_initialize()\n");
 		return -1;
 	}
 
@@ -603,56 +603,56 @@ lo_initialize(PGconn *conn)
 	if (lobjfuncs->fn_lo_open == 0)
 	{
 		printfPQExpBuffer(&conn->errorMessage,
-						  "ERROR: Cannot determine OID for function lo_open\n");
+				   "ERROR: Cannot determine OID for function lo_open\n");
 		free(lobjfuncs);
 		return -1;
 	}
 	if (lobjfuncs->fn_lo_close == 0)
 	{
 		printfPQExpBuffer(&conn->errorMessage,
-						  "ERROR: Cannot determine OID for function lo_close\n");
+				  "ERROR: Cannot determine OID for function lo_close\n");
 		free(lobjfuncs);
 		return -1;
 	}
 	if (lobjfuncs->fn_lo_creat == 0)
 	{
 		printfPQExpBuffer(&conn->errorMessage,
-						  "ERROR: Cannot determine OID for function lo_creat\n");
+				  "ERROR: Cannot determine OID for function lo_creat\n");
 		free(lobjfuncs);
 		return -1;
 	}
 	if (lobjfuncs->fn_lo_unlink == 0)
 	{
 		printfPQExpBuffer(&conn->errorMessage,
-						  "ERROR: Cannot determine OID for function lo_unlink\n");
+				 "ERROR: Cannot determine OID for function lo_unlink\n");
 		free(lobjfuncs);
 		return -1;
 	}
 	if (lobjfuncs->fn_lo_lseek == 0)
 	{
 		printfPQExpBuffer(&conn->errorMessage,
-						  "ERROR: Cannot determine OID for function lo_lseek\n");
+				  "ERROR: Cannot determine OID for function lo_lseek\n");
 		free(lobjfuncs);
 		return -1;
 	}
 	if (lobjfuncs->fn_lo_tell == 0)
 	{
 		printfPQExpBuffer(&conn->errorMessage,
-						  "ERROR: Cannot determine OID for function lo_tell\n");
+				   "ERROR: Cannot determine OID for function lo_tell\n");
 		free(lobjfuncs);
 		return -1;
 	}
 	if (lobjfuncs->fn_lo_read == 0)
 	{
 		printfPQExpBuffer(&conn->errorMessage,
-						  "ERROR: Cannot determine OID for function loread\n");
+					"ERROR: Cannot determine OID for function loread\n");
 		free(lobjfuncs);
 		return -1;
 	}
 	if (lobjfuncs->fn_lo_write == 0)
 	{
 		printfPQExpBuffer(&conn->errorMessage,
-						  "ERROR: Cannot determine OID for function lowrite\n");
+				   "ERROR: Cannot determine OID for function lowrite\n");
 		free(lobjfuncs);
 		return -1;
 	}

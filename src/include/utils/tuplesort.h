@@ -6,14 +6,14 @@
  * This module handles sorting of heap tuples, index tuples, or single
  * Datums (and could easily support other kinds of sortable objects,
  * if necessary).  It works efficiently for both small and large amounts
- * of data.  Small amounts are sorted in-memory using qsort().  Large
+ * of data.  Small amounts are sorted in-memory using qsort().	Large
  * amounts are sorted using temporary files and a standard external sort
  * algorithm.
  *
  * Portions Copyright (c) 1996-2000, PostgreSQL, Inc
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Id: tuplesort.h,v 1.3 2000/01/26 05:58:38 momjian Exp $
+ * $Id: tuplesort.h,v 1.4 2000/04/12 17:16:56 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -39,31 +39,32 @@ typedef struct Tuplesortstate Tuplesortstate;
  */
 
 extern Tuplesortstate *tuplesort_begin_heap(TupleDesc tupDesc,
-											int nkeys, ScanKey keys,
-											bool randomAccess);
+					 int nkeys, ScanKey keys,
+					 bool randomAccess);
 extern Tuplesortstate *tuplesort_begin_index(Relation indexRel,
-											 bool enforceUnique,
-											 bool randomAccess);
+					  bool enforceUnique,
+					  bool randomAccess);
 extern Tuplesortstate *tuplesort_begin_datum(Oid datumType,
-											 Oid sortOperator,
-											 bool randomAccess);
+					  Oid sortOperator,
+					  bool randomAccess);
 
 extern void tuplesort_puttuple(Tuplesortstate *state, void *tuple);
 
 extern void tuplesort_putdatum(Tuplesortstate *state, Datum val,
-							   bool isNull);
+				   bool isNull);
 
 extern void tuplesort_performsort(Tuplesortstate *state);
 
 extern void *tuplesort_gettuple(Tuplesortstate *state, bool forward,
-								bool *should_free);
+				   bool *should_free);
+
 #define tuplesort_getheaptuple(state, forward, should_free) \
 	((HeapTuple) tuplesort_gettuple(state, forward, should_free))
 #define tuplesort_getindextuple(state, forward, should_free) \
 	((IndexTuple) tuplesort_gettuple(state, forward, should_free))
 
 extern bool tuplesort_getdatum(Tuplesortstate *state, bool forward,
-							   Datum *val, bool *isNull);
+				   Datum *val, bool *isNull);
 
 extern void tuplesort_end(Tuplesortstate *state);
 

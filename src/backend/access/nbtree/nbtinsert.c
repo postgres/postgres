@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/access/nbtree/nbtinsert.c,v 1.56 2000/03/17 02:36:03 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/access/nbtree/nbtinsert.c,v 1.57 2000/04/12 17:14:49 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -21,10 +21,10 @@
 
 static InsertIndexResult _bt_insertonpg(Relation rel, Buffer buf, BTStack stack, int keysz, ScanKey scankey, BTItem btitem, BTItem afteritem);
 static Buffer _bt_split(Relation rel, Size keysz, ScanKey scankey,
-						Buffer buf, OffsetNumber firstright);
+		  Buffer buf, OffsetNumber firstright);
 static OffsetNumber _bt_findsplitloc(Relation rel, Size keysz, ScanKey scankey,
-									 Page page, OffsetNumber start,
-									 OffsetNumber maxoff, Size llimit);
+				 Page page, OffsetNumber start,
+				 OffsetNumber maxoff, Size llimit);
 static void _bt_newroot(Relation rel, Buffer lbuf, Buffer rbuf);
 static OffsetNumber _bt_pgaddtup(Relation rel, Buffer buf, int keysz, ScanKey itup_scankey, Size itemsize, BTItem btitem, BTItem afteritem);
 static bool _bt_goesonpg(Relation rel, Buffer buf, Size keysz, ScanKey scankey, BTItem afteritem);
@@ -267,21 +267,20 @@ _bt_insertonpg(Relation rel,
 	itemsz = IndexTupleDSize(btitem->bti_itup)
 		+ (sizeof(BTItemData) - sizeof(IndexTupleData));
 
-	itemsz = MAXALIGN(itemsz);		/* be safe, PageAddItem will do
-										 * this but we need to be
-										 * consistent */
+	itemsz = MAXALIGN(itemsz);	/* be safe, PageAddItem will do this but
+								 * we need to be consistent */
 
 	/*
-	 * Check whether the item can fit on a btree page at all.
-	 * (Eventually, we ought to try to apply TOAST methods if not.)
-	 * We actually need to be able to fit three items on every page,
-	 * so restrict any one item to 1/3 the per-page available space.
-	 * Note that at this point, itemsz doesn't include the ItemId.
+	 * Check whether the item can fit on a btree page at all. (Eventually,
+	 * we ought to try to apply TOAST methods if not.) We actually need to
+	 * be able to fit three items on every page, so restrict any one item
+	 * to 1/3 the per-page available space. Note that at this point,
+	 * itemsz doesn't include the ItemId.
 	 */
-	if (itemsz > (PageGetPageSize(page)-sizeof(PageHeaderData)-MAXALIGN(sizeof(BTPageOpaqueData)))/3 - sizeof(ItemIdData))
+	if (itemsz > (PageGetPageSize(page) - sizeof(PageHeaderData) - MAXALIGN(sizeof(BTPageOpaqueData))) / 3 - sizeof(ItemIdData))
 		elog(ERROR, "btree: index item size %u exceeds maximum %lu",
 			 itemsz,
-			 (PageGetPageSize(page)-sizeof(PageHeaderData)-MAXALIGN(sizeof(BTPageOpaqueData)))/3 - sizeof(ItemIdData));
+			 (PageGetPageSize(page) - sizeof(PageHeaderData) - MAXALIGN(sizeof(BTPageOpaqueData))) /3 - sizeof(ItemIdData));
 
 	/*
 	 * If we have to insert item on the leftmost page which is the first
@@ -415,8 +414,8 @@ _bt_insertonpg(Relation rel,
 		bool		is_root = lpageop->btpo_flags & BTP_ROOT;
 
 		/*
-		 * Instead of splitting leaf page in the chain of duplicates 
-		 * by new duplicate, insert it into some right page.
+		 * Instead of splitting leaf page in the chain of duplicates by
+		 * new duplicate, insert it into some right page.
 		 */
 		if ((lpageop->btpo_flags & BTP_CHAIN) &&
 			(lpageop->btpo_flags & BTP_LEAF) && keys_equal)
@@ -424,8 +423,9 @@ _bt_insertonpg(Relation rel,
 			rbuf = _bt_getbuf(rel, lpageop->btpo_next, BT_WRITE);
 			rpage = BufferGetPage(rbuf);
 			rpageop = (BTPageOpaque) PageGetSpecialPointer(rpage);
-			/* 
-			 * some checks 
+
+			/*
+			 * some checks
 			 */
 			if (!P_RIGHTMOST(rpageop))	/* non-rightmost page */
 			{					/* If we have the same hikey here then
@@ -442,6 +442,7 @@ _bt_insertonpg(Relation rel,
 									 BTGreaterStrategyNumber))
 					elog(FATAL, "btree: hikey is out of order");
 				else if (rpageop->btpo_flags & BTP_CHAIN)
+
 					/*
 					 * If hikey > scankey then it's last page in chain and
 					 * BTP_CHAIN must be OFF
@@ -450,9 +451,7 @@ _bt_insertonpg(Relation rel,
 			}
 			else
 /* rightmost page */
-			{
 				Assert(!(rpageop->btpo_flags & BTP_CHAIN));
-			}
 			_bt_relbuf(rel, buf, BT_WRITE);
 			return (_bt_insertonpg(rel, rbuf, stack, keysz,
 								   scankey, btitem, afteritem));
@@ -708,7 +707,7 @@ l_spl:	;
 				 */
 				if (!parent_chained &&
 					MAXALIGN(IndexTupleDSize(lowLeftItem->bti_itup)) ==
-					MAXALIGN(IndexTupleDSize(stack->bts_btitem->bti_itup)))
+				  MAXALIGN(IndexTupleDSize(stack->bts_btitem->bti_itup)))
 				{
 					_bt_updateitem(rel, keysz, pbuf,
 								   stack->bts_btitem, lowLeftItem);

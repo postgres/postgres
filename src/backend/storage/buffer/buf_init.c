@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/storage/buffer/buf_init.c,v 1.33 2000/04/09 04:43:18 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/storage/buffer/buf_init.c,v 1.34 2000/04/12 17:15:33 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -66,8 +66,9 @@ extern IpcSemaphoreId WaitIOSemId;
 
 long	   *PrivateRefCount;	/* also used in freelist.c */
 bits8	   *BufferLocks;		/* flag bits showing locks I have set */
-BufferTag  *BufferTagLastDirtied; /* tag buffer had when last dirtied by me */
-BufferBlindId *BufferBlindLastDirtied; /* and its BlindId too */
+BufferTag  *BufferTagLastDirtied;		/* tag buffer had when last
+										 * dirtied by me */
+BufferBlindId *BufferBlindLastDirtied;	/* and its BlindId too */
 bool	   *BufferDirtiedByMe;	/* T if buf has been dirtied in cur xact */
 
 
@@ -242,7 +243,7 @@ InitBufferPool(IPCKey key)
 			elog(FATAL, "InitBufferPool: IpcSemaphoreCreate(WaitIOSemId) failed");
 		WaitCLSemId = IpcSemaphoreCreate(IPCKeyGetWaitCLSemaphoreKey(key),
 										 1, IPCProtection,
-										 IpcSemaphoreDefaultStartValue, 1);
+									   IpcSemaphoreDefaultStartValue, 1);
 		if (WaitCLSemId < 0)
 			elog(FATAL, "InitBufferPool: IpcSemaphoreCreate(WaitCLSemId) failed");
 	}

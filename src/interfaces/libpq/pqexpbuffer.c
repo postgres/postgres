@@ -17,7 +17,7 @@
  * Portions Copyright (c) 1996-2000, PostgreSQL, Inc
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Header: /cvsroot/pgsql/src/interfaces/libpq/pqexpbuffer.c,v 1.5 2000/02/07 23:10:11 petere Exp $
+ * $Header: /cvsroot/pgsql/src/interfaces/libpq/pqexpbuffer.c,v 1.6 2000/04/12 17:17:15 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -39,7 +39,7 @@
 PQExpBuffer
 createPQExpBuffer(void)
 {
-	PQExpBuffer	res;
+	PQExpBuffer res;
 
 	res = (PQExpBuffer) malloc(sizeof(PQExpBufferData));
 	if (res != NULL)
@@ -156,7 +156,7 @@ enlargePQExpBuffer(PQExpBuffer str, size_t needed)
 /*------------------------
  * printfPQExpBuffer
  * Format text data under the control of fmt (an sprintf-like format string)
- * and insert it into str.  More space is allocated to str if necessary.
+ * and insert it into str.	More space is allocated to str if necessary.
  * This is a convenience routine that does the same thing as
  * resetPQExpBuffer() followed by appendPQExpBuffer().
  */
@@ -165,7 +165,7 @@ printfPQExpBuffer(PQExpBuffer str, const char *fmt,...)
 {
 	va_list		args;
 	size_t		avail;
-    int         nprinted;
+	int			nprinted;
 
 	resetPQExpBuffer(str);
 
@@ -184,12 +184,13 @@ printfPQExpBuffer(PQExpBuffer str, const char *fmt,...)
 			nprinted = vsnprintf(str->data + str->len, avail,
 								 fmt, args);
 			va_end(args);
+
 			/*
 			 * Note: some versions of vsnprintf return the number of chars
-			 * actually stored, but at least one returns -1 on failure.
-			 * Be conservative about believing whether the print worked.
+			 * actually stored, but at least one returns -1 on failure. Be
+			 * conservative about believing whether the print worked.
 			 */
-			if (nprinted >= 0 && nprinted < avail-1)
+			if (nprinted >= 0 && nprinted < avail - 1)
 			{
 				/* Success.  Note nprinted does not include trailing null. */
 				str->len += nprinted;
@@ -197,7 +198,7 @@ printfPQExpBuffer(PQExpBuffer str, const char *fmt,...)
 			}
 		}
 		/* Double the buffer size and try again. */
-		if (! enlargePQExpBuffer(str, str->maxlen))
+		if (!enlargePQExpBuffer(str, str->maxlen))
 			return;				/* oops, out of memory */
 	}
 }
@@ -215,7 +216,7 @@ appendPQExpBuffer(PQExpBuffer str, const char *fmt,...)
 {
 	va_list		args;
 	size_t		avail;
-    int			nprinted;
+	int			nprinted;
 
 	for (;;)
 	{
@@ -232,12 +233,13 @@ appendPQExpBuffer(PQExpBuffer str, const char *fmt,...)
 			nprinted = vsnprintf(str->data + str->len, avail,
 								 fmt, args);
 			va_end(args);
+
 			/*
 			 * Note: some versions of vsnprintf return the number of chars
-			 * actually stored, but at least one returns -1 on failure.
-			 * Be conservative about believing whether the print worked.
+			 * actually stored, but at least one returns -1 on failure. Be
+			 * conservative about believing whether the print worked.
 			 */
-			if (nprinted >= 0 && nprinted < avail-1)
+			if (nprinted >= 0 && nprinted < avail - 1)
 			{
 				/* Success.  Note nprinted does not include trailing null. */
 				str->len += nprinted;
@@ -245,7 +247,7 @@ appendPQExpBuffer(PQExpBuffer str, const char *fmt,...)
 			}
 		}
 		/* Double the buffer size and try again. */
-		if (! enlargePQExpBuffer(str, str->maxlen))
+		if (!enlargePQExpBuffer(str, str->maxlen))
 			return;				/* oops, out of memory */
 	}
 }
@@ -270,7 +272,7 @@ void
 appendPQExpBufferChar(PQExpBuffer str, char ch)
 {
 	/* Make more room if needed */
-	if (! enlargePQExpBuffer(str, 1))
+	if (!enlargePQExpBuffer(str, 1))
 		return;
 
 	/* OK, append the character */
@@ -289,7 +291,7 @@ void
 appendBinaryPQExpBuffer(PQExpBuffer str, const char *data, size_t datalen)
 {
 	/* Make more room if needed */
-	if (! enlargePQExpBuffer(str, datalen))
+	if (!enlargePQExpBuffer(str, datalen))
 		return;
 
 	/* OK, append the data */

@@ -3,7 +3,7 @@
  *
  * Copyright 2000 by PostgreSQL Global Development Group
  *
- * $Header: /cvsroot/pgsql/src/bin/psql/variables.h,v 1.7 2000/02/16 13:15:26 momjian Exp $
+ * $Header: /cvsroot/pgsql/src/bin/psql/variables.h,v 1.8 2000/04/12 17:16:23 momjian Exp $
  */
 
 /*
@@ -16,7 +16,7 @@
 #define VARIABLES_H
 
 #define VALID_VARIABLE_CHARS "abcdefghijklmnopqrstuvwxyz"\
-                             "ABCDEFGHIJKLMNOPQRSTUVWXYZ" "0123456789_"
+							 "ABCDEFGHIJKLMNOPQRSTUVWXYZ" "0123456789_"
 
 struct _variable
 {
@@ -32,7 +32,7 @@ VariableSpace CreateVariableSpace(void);
 const char *GetVariable(VariableSpace space, const char *name);
 bool		GetVariableBool(VariableSpace space, const char *name);
 bool		SetVariable(VariableSpace space, const char *name, const char *value);
-bool        SetVariableBool(VariableSpace space, const char *name);
+bool		SetVariableBool(VariableSpace space, const char *name);
 bool		DeleteVariable(VariableSpace space, const char *name);
 void		DestroyVariableSpace(VariableSpace space);
 

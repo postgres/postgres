@@ -6,7 +6,7 @@
  * Portions Copyright (c) 1996-2000, PostgreSQL, Inc
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- *	$Id: execAmi.c,v 1.45 2000/01/26 05:56:21 momjian Exp $
+ *	$Id: execAmi.c,v 1.46 2000/04/12 17:15:07 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -235,9 +235,10 @@ ExecCloseR(Plan *node)
 		heap_endscan(scanDesc);
 
 	/*
-	 * endscan released AccessShareLock acquired by beginscan.  If we are
-	 * holding any stronger locks on the rel, they should be held till end of
-	 * xact.  Therefore, we need only close the rel and not release locks.
+	 * endscan released AccessShareLock acquired by beginscan.	If we are
+	 * holding any stronger locks on the rel, they should be held till end
+	 * of xact.  Therefore, we need only close the rel and not release
+	 * locks.
 	 */
 	if (relation != NULL)
 		heap_close(relation, NoLock);
@@ -423,7 +424,7 @@ ExecMarkPos(Plan *node)
 {
 	switch (nodeTag(node))
 	{
-		case T_SeqScan:
+			case T_SeqScan:
 			ExecSeqMarkPos((SeqScan *) node);
 			break;
 

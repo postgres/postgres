@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2000, PostgreSQL, Inc
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Id: vacuum.h,v 1.26 2000/01/26 05:58:00 momjian Exp $
+ * $Id: vacuum.h,v 1.27 2000/04/12 17:16:32 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -47,7 +47,8 @@ typedef struct VPageListData
 {
 	int			vpl_empty_end_pages;	/* Number of "empty" end-pages */
 	int			vpl_num_pages;	/* Number of pages in vpl_pagedesc */
-	int			vpl_num_allocated_pages;	/* Number of allocated pages in vpl_pagedesc */
+	int			vpl_num_allocated_pages;		/* Number of allocated
+												 * pages in vpl_pagedesc */
 	VPageDescr *vpl_pagedesc;	/* Descriptions of pages */
 } VPageListData;
 

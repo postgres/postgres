@@ -5,7 +5,7 @@
  *
  *	1998 Jan Wieck
  *
- * $Header: /cvsroot/pgsql/src/backend/utils/adt/numeric.c,v 1.26 2000/03/13 02:31:13 tgl Exp $
+ * $Header: /cvsroot/pgsql/src/backend/utils/adt/numeric.c,v 1.27 2000/04/12 17:15:50 momjian Exp $
  *
  * ----------
  */
@@ -59,8 +59,8 @@
  * *after* the decimal point.  Scales are always >= 0.)
  *
  * buf points at the physical start of the palloc'd digit buffer for the
- * NumericVar.  digits points at the first digit in actual use (the one
- * with the specified weight).  We normally leave an unused byte or two
+ * NumericVar.	digits points at the first digit in actual use (the one
+ * with the specified weight).	We normally leave an unused byte or two
  * (preset to zeroes) between buf and digits, so that there is room to store
  * a carry out of the top digit without special pushups.  We just need to
  * decrement digits (and increment weight) to make room for the carry digit.
@@ -77,11 +77,13 @@ typedef unsigned char NumericDigit;
 
 typedef struct NumericVar
 {
-	int			ndigits;		/* number of digits in digits[] - can be 0! */
+	int			ndigits;		/* number of digits in digits[] - can be
+								 * 0! */
 	int			weight;			/* weight of first digit */
 	int			rscale;			/* result scale */
 	int			dscale;			/* display scale */
-	int			sign;			/* NUMERIC_POS, NUMERIC_NEG, or NUMERIC_NAN */
+	int			sign;			/* NUMERIC_POS, NUMERIC_NEG, or
+								 * NUMERIC_NAN */
 	NumericDigit *buf;			/* start of palloc'd space for digits[] */
 	NumericDigit *digits;		/* decimal digits */
 } NumericVar;
@@ -122,13 +124,14 @@ static NumericVar const_nan =
 #ifdef NUMERIC_DEBUG
 static void dump_numeric(char *str, Numeric num);
 static void dump_var(char *str, NumericVar *var);
+
 #else
 #define dump_numeric(s,n)
 #define dump_var(s,v)
 #endif
 
 #define digitbuf_alloc(size)  ((NumericDigit *) palloc(size))
-#define digitbuf_free(buf)  \
+#define digitbuf_free(buf)	\
 	do { \
 		 if ((buf) != NULL) \
 			 pfree(buf); \
@@ -535,16 +538,16 @@ numeric_round(Numeric num, int32 scale)
 
 	if (i < arg.ndigits)
 	{
-		/* If i = 0, the value loses all digits, but could round up if its
-		 * first digit is more than 4.  If i < 0 the result must be 0.
+
+		/*
+		 * If i = 0, the value loses all digits, but could round up if its
+		 * first digit is more than 4.	If i < 0 the result must be 0.
 		 */
 		if (i < 0)
-		{
 			arg.ndigits = 0;
-		}
 		else
 		{
-			int		carry = (arg.digits[i] > 4) ? 1 : 0;
+			int			carry = (arg.digits[i] > 4) ? 1 : 0;
 
 			arg.ndigits = i;
 
@@ -557,7 +560,7 @@ numeric_round(Numeric num, int32 scale)
 
 			if (i < 0)
 			{
-				Assert(i == -1); /* better not have added more than 1 digit */
+				Assert(i == -1);/* better not have added more than 1 digit */
 				Assert(arg.digits > arg.buf);
 				arg.digits--;
 				arg.ndigits++;
@@ -728,10 +731,10 @@ numeric_cmp(Numeric num1, Numeric num2)
 	NumericVar	arg2;
 
 	if (num1 == NULL || num2 == NULL)
-		return (int32)0;
+		return (int32) 0;
 
 	if (NUMERIC_IS_NAN(num1) || NUMERIC_IS_NAN(num2))
-		return (int32)0;
+		return (int32) 0;
 
 	init_var(&arg1);
 	init_var(&arg2);
@@ -744,7 +747,7 @@ numeric_cmp(Numeric num1, Numeric num2)
 	free_var(&arg1);
 	free_var(&arg2);
 
-	return (int32)((result == 0) ? 0 : ((result < 0) ? -1 : 1));
+	return (int32) ((result == 0) ? 0 : ((result < 0) ? -1 : 1));
 }
 
 
@@ -1742,7 +1745,7 @@ numeric_int4(Numeric num)
 	init_var(&x);
 	set_var_from_num(num, &x);
 
-	str = get_str_from_var(&x, 0); /* dscale = 0 produces rounding */
+	str = get_str_from_var(&x, 0);		/* dscale = 0 produces rounding */
 
 	free_var(&x);
 
@@ -1793,7 +1796,7 @@ numeric_int8(Numeric num)
 	init_var(&x);
 	set_var_from_num(num, &x);
 
-	str = get_str_from_var(&x, 0); /* dscale = 0 produces rounding */
+	str = get_str_from_var(&x, 0);		/* dscale = 0 produces rounding */
 
 	free_var(&x);
 
@@ -1844,7 +1847,7 @@ numeric_int2(Numeric num)
 	init_var(&x);
 	set_var_from_num(num, &x);
 
-	str = get_str_from_var(&x, 0); /* dscale = 0 produces rounding */
+	str = get_str_from_var(&x, 0);		/* dscale = 0 produces rounding */
 
 	free_var(&x);
 
@@ -2130,7 +2133,7 @@ set_var_from_str(char *str, NumericVar *dest)
 		cp++;
 	}
 
-	if (! isdigit(*cp))
+	if (!isdigit(*cp))
 		elog(ERROR, "Bad numeric input format '%s'", str);
 
 	while (*cp)
@@ -2158,8 +2161,8 @@ set_var_from_str(char *str, NumericVar *dest)
 	/* Handle exponent, if any */
 	if (*cp == 'e' || *cp == 'E')
 	{
-		long	exponent;
-		char   *endptr;
+		long		exponent;
+		char	   *endptr;
 
 		cp++;
 		exponent = strtol(cp, &endptr, 10);
@@ -2210,7 +2213,8 @@ set_var_from_num(Numeric num, NumericVar *dest)
 	int			i;
 	int			n;
 
-	n = num->varlen - NUMERIC_HDRSZ; /* number of digit-pairs in packed fmt */
+	n = num->varlen - NUMERIC_HDRSZ;	/* number of digit-pairs in packed
+										 * fmt */
 
 	alloc_var(dest, n * 2);
 
@@ -2224,6 +2228,7 @@ set_var_from_num(Numeric num, NumericVar *dest)
 	for (i = 0; i < n; i++)
 	{
 		unsigned char digitpair = num->n_data[i];
+
 		*digit++ = (digitpair >> 4) & 0x0f;
 		*digit++ = digitpair & 0x0f;
 	}
@@ -2278,7 +2283,7 @@ get_str_from_var(NumericVar *var, int dscale)
 	i = dscale + var->weight + 1;
 	if (i >= 0 && var->ndigits > i)
 	{
-		int		carry = (var->digits[i] > 4) ? 1 : 0;
+		int			carry = (var->digits[i] > 4) ? 1 : 0;
 
 		var->ndigits = i;
 
@@ -2421,6 +2426,7 @@ make_result(NumericVar *var)
 	while (j < n)
 	{
 		unsigned char digitpair = digit[j++] << 4;
+
 		if (j < n)
 			digitpair |= digit[j++];
 		result->n_data[i++] = digitpair;
@@ -2459,7 +2465,7 @@ apply_typmod(NumericVar *var, int32 typmod)
 	i = scale + var->weight + 1;
 	if (i >= 0 && var->ndigits > i)
 	{
-		int		carry = (var->digits[i] > 4) ? 1 : 0;
+		int			carry = (var->digits[i] > 4) ? 1 : 0;
 
 		var->ndigits = i;
 
@@ -2494,7 +2500,7 @@ apply_typmod(NumericVar *var, int32 typmod)
 	if (var->weight >= maxweight)
 	{
 		/* Determine true weight; and check for all-zero result */
-		int		tweight = var->weight;
+		int			tweight = var->weight;
 
 		for (i = 0; i < var->ndigits; i++)
 		{
@@ -2502,10 +2508,10 @@ apply_typmod(NumericVar *var, int32 typmod)
 				break;
 			tweight--;
 		}
-		
+
 		if (tweight >= maxweight && i < var->ndigits)
 			elog(ERROR, "overflow on numeric "
-				 "ABS(value) >= 10^%d for field with precision %d scale %d",
+			  "ABS(value) >= 10^%d for field with precision %d scale %d",
 				 tweight, precision, scale);
 	}
 
@@ -2588,20 +2594,20 @@ add_var(NumericVar *var1, NumericVar *var2, NumericVar *result)
 			switch (cmp_abs(var1, var2))
 			{
 				case 0: /* ----------
-												 * ABS(var1) == ABS(var2)
-												 * result = ZERO
-												 * ----------
-												 */
+																 * ABS(var1) == ABS(var2)
+																 * result = ZERO
+																 * ----------
+																 */
 					zero_var(result);
 					result->rscale = MAX(var1->rscale, var2->rscale);
 					result->dscale = MAX(var1->dscale, var2->dscale);
 					break;
 
 				case 1: /* ----------
-												 * ABS(var1) > ABS(var2)
-												 * result = +(ABS(var1) - ABS(var2))
-												 * ----------
-												 */
+																 * ABS(var1) > ABS(var2)
+																 * result = +(ABS(var1) - ABS(var2))
+																 * ----------
+																 */
 					sub_abs(var1, var2, result);
 					result->sign = NUMERIC_POS;
 					break;
@@ -2629,20 +2635,20 @@ add_var(NumericVar *var1, NumericVar *var2, NumericVar *result)
 			switch (cmp_abs(var1, var2))
 			{
 				case 0: /* ----------
-												 * ABS(var1) == ABS(var2)
-												 * result = ZERO
-												 * ----------
-												 */
+																 * ABS(var1) == ABS(var2)
+																 * result = ZERO
+																 * ----------
+																 */
 					zero_var(result);
 					result->rscale = MAX(var1->rscale, var2->rscale);
 					result->dscale = MAX(var1->dscale, var2->dscale);
 					break;
 
 				case 1: /* ----------
-												 * ABS(var1) > ABS(var2)
-												 * result = -(ABS(var1) - ABS(var2))
-												 * ----------
-												 */
+																 * ABS(var1) > ABS(var2)
+																 * result = -(ABS(var1) - ABS(var2))
+																 * ----------
+																 */
 					sub_abs(var1, var2, result);
 					result->sign = NUMERIC_NEG;
 					break;
@@ -2707,20 +2713,20 @@ sub_var(NumericVar *var1, NumericVar *var2, NumericVar *result)
 			switch (cmp_abs(var1, var2))
 			{
 				case 0: /* ----------
-												 * ABS(var1) == ABS(var2)
-												 * result = ZERO
-												 * ----------
-												 */
+																 * ABS(var1) == ABS(var2)
+																 * result = ZERO
+																 * ----------
+																 */
 					zero_var(result);
 					result->rscale = MAX(var1->rscale, var2->rscale);
 					result->dscale = MAX(var1->dscale, var2->dscale);
 					break;
 
 				case 1: /* ----------
-												 * ABS(var1) > ABS(var2)
-												 * result = +(ABS(var1) - ABS(var2))
-												 * ----------
-												 */
+																 * ABS(var1) > ABS(var2)
+																 * result = +(ABS(var1) - ABS(var2))
+																 * ----------
+																 */
 					sub_abs(var1, var2, result);
 					result->sign = NUMERIC_POS;
 					break;
@@ -2748,20 +2754,20 @@ sub_var(NumericVar *var1, NumericVar *var2, NumericVar *result)
 			switch (cmp_abs(var1, var2))
 			{
 				case 0: /* ----------
-												 * ABS(var1) == ABS(var2)
-												 * result = ZERO
-												 * ----------
-												 */
+																 * ABS(var1) == ABS(var2)
+																 * result = ZERO
+																 * ----------
+																 */
 					zero_var(result);
 					result->rscale = MAX(var1->rscale, var2->rscale);
 					result->dscale = MAX(var1->dscale, var2->dscale);
 					break;
 
 				case 1: /* ----------
-												 * ABS(var1) > ABS(var2)
-												 * result = -(ABS(var1) - ABS(var2))
-												 * ----------
-												 */
+																 * ABS(var1) > ABS(var2)
+																 * result = -(ABS(var1) - ABS(var2))
+																 * ----------
+																 */
 					sub_abs(var1, var2, result);
 					result->sign = NUMERIC_NEG;
 					break;
@@ -3054,7 +3060,7 @@ div_var(NumericVar *var1, NumericVar *var2, NumericVar *result)
 	result->ndigits = ri + 1;
 	if (ri == res_ndigits + 1)
 	{
-		int		carry = (res_digits[ri] > 4) ? 1 : 0;
+		int			carry = (res_digits[ri] > 4) ? 1 : 0;
 
 		result->ndigits = ri;
 		res_digits[ri] = 0;

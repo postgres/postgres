@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/utils/Attic/version.c,v 1.14 2000/01/26 05:58:53 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/utils/Attic/version.c,v 1.15 2000/04/12 17:17:22 momjian Exp $
  *
  *	STANDALONE CODE - do not use error routines as this code is not linked
  *	with any...
@@ -78,10 +78,10 @@ ValidatePgVersion(const char *path, char **reason_p)
 	}
 	else
 	{
-		nread = read(fd, version, sizeof(version)-1);
+		nread = read(fd, version, sizeof(version) - 1);
 		if (nread < 4 ||
 			!isdigit(version[0]) ||
-			version[nread-1] != '\n')
+			version[nread - 1] != '\n')
 		{
 			*reason_p = malloc(100 + strlen(full_path));
 			sprintf(*reason_p, "File '%s' does not have a valid format "

@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Id: hio.c,v 1.30 2000/03/17 02:36:02 tgl Exp $
+ *	  $Id: hio.c,v 1.31 2000/04/12 17:14:45 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -51,7 +51,7 @@ RelationPutHeapTuple(Relation relation,
 	IncrHeapAccessStat(global_RelationPutHeapTuple);
 
 	pageHeader = (Page) BufferGetPage(buffer);
-	len = MAXALIGN(tuple->t_len); /* be conservative */
+	len = MAXALIGN(tuple->t_len);		/* be conservative */
 	Assert(len <= PageGetFreeSpace(pageHeader));
 
 	offnum = PageAddItem((Page) pageHeader, (Item) tuple->t_data,
@@ -108,11 +108,11 @@ RelationPutHeapTupleAtEnd(Relation relation, HeapTuple tuple)
 	ItemId		itemId;
 	Item		item;
 
-	len = MAXALIGN(tuple->t_len); /* be conservative */
+	len = MAXALIGN(tuple->t_len);		/* be conservative */
 
 	/*
-	 * If we're gonna fail for oversize tuple, do it right away...
-	 * this code should go away eventually.
+	 * If we're gonna fail for oversize tuple, do it right away... this
+	 * code should go away eventually.
 	 */
 	if (len > MaxTupleSize)
 		elog(ERROR, "Tuple is too big: size %u, max size %ld",
@@ -136,8 +136,8 @@ RelationPutHeapTupleAtEnd(Relation relation, HeapTuple tuple)
 	lastblock = RelationGetNumberOfBlocks(relation);
 
 	/*
-	 * Get the last existing page --- may need to create the first one
-	 * if this is a virgin relation.
+	 * Get the last existing page --- may need to create the first one if
+	 * this is a virgin relation.
 	 */
 	if (lastblock == 0)
 	{
@@ -168,12 +168,14 @@ RelationPutHeapTupleAtEnd(Relation relation, HeapTuple tuple)
 
 		if (len > PageGetFreeSpace(pageHeader))
 		{
+
 			/*
-			 * BUG: by elog'ing here, we leave the new buffer locked and not
-			 * marked dirty, which may result in an invalid page header
-			 * being left on disk.  But we should not get here given the
-			 * test at the top of the routine, and the whole deal should
-			 * go away when we implement tuple splitting anyway...
+			 * BUG: by elog'ing here, we leave the new buffer locked and
+			 * not marked dirty, which may result in an invalid page
+			 * header being left on disk.  But we should not get here
+			 * given the test at the top of the routine, and the whole
+			 * deal should go away when we implement tuple splitting
+			 * anyway...
 			 */
 			elog(ERROR, "Tuple is too big: size %u", len);
 		}

@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/parser/parse_coerce.c,v 2.41 2000/04/08 19:29:40 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/parser/parse_coerce.c,v 2.42 2000/04/12 17:15:26 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -47,21 +47,22 @@ coerce_type(ParseState *pstate, Node *node, Oid inputTypeId,
 	}
 	else if (inputTypeId == UNKNOWNOID && IsA(node, Const))
 	{
+
 		/*
 		 * Input is a string constant with previously undetermined type.
-		 * Apply the target type's typinput function to it to produce
-		 * a constant of the target type.
+		 * Apply the target type's typinput function to it to produce a
+		 * constant of the target type.
 		 *
 		 * NOTE: this case cannot be folded together with the other
 		 * constant-input case, since the typinput function does not
-		 * necessarily behave the same as a type conversion function.
-		 * For example, int4's typinput function will reject "1.2",
-		 * whereas float-to-int type conversion will round to integer.
+		 * necessarily behave the same as a type conversion function. For
+		 * example, int4's typinput function will reject "1.2", whereas
+		 * float-to-int type conversion will round to integer.
 		 *
-		 * XXX if the typinput function is not cachable, we really ought
-		 * to postpone evaluation of the function call until runtime.
-		 * But there is no way to represent a typinput function call as
-		 * an expression tree, because C-string values are not Datums.
+		 * XXX if the typinput function is not cachable, we really ought to
+		 * postpone evaluation of the function call until runtime. But
+		 * there is no way to represent a typinput function call as an
+		 * expression tree, because C-string values are not Datums.
 		 */
 		Const	   *con = (Const *) node;
 		Const	   *newcon = makeNode(Const);
@@ -73,10 +74,11 @@ coerce_type(ParseState *pstate, Node *node, Oid inputTypeId,
 		newcon->constisnull = con->constisnull;
 		newcon->constisset = false;
 
-		if (! con->constisnull)
+		if (!con->constisnull)
 		{
 			/* We know the source constant is really of type 'text' */
 			char	   *val = textout((text *) con->constvalue);
+
 			newcon->constvalue = stringTypeDatum(targetType, val, atttypmod);
 			pfree(val);
 		}
@@ -85,15 +87,17 @@ coerce_type(ParseState *pstate, Node *node, Oid inputTypeId,
 	}
 	else if (IS_BINARY_COMPATIBLE(inputTypeId, targetTypeId))
 	{
+
 		/*
-		 * We don't really need to do a conversion, but we do need to attach
-		 * a RelabelType node so that the expression will be seen to have
-		 * the intended type when inspected by higher-level code.
+		 * We don't really need to do a conversion, but we do need to
+		 * attach a RelabelType node so that the expression will be seen
+		 * to have the intended type when inspected by higher-level code.
 		 */
 		RelabelType *relabel = makeNode(RelabelType);
 
 		relabel->arg = node;
 		relabel->resulttype = targetTypeId;
+
 		/*
 		 * XXX could we label result with exprTypmod(node) instead of
 		 * default -1 typmod, to save a possible length-coercion later?
@@ -111,11 +115,12 @@ coerce_type(ParseState *pstate, Node *node, Oid inputTypeId,
 	}
 	else
 	{
+
 		/*
 		 * Otherwise, find the appropriate type conversion function
-		 * (caller should have determined that there is one), and
-		 * generate an expression tree representing run-time
-		 * application of the conversion function.
+		 * (caller should have determined that there is one), and generate
+		 * an expression tree representing run-time application of the
+		 * conversion function.
 		 */
 		FuncCall   *n = makeNode(FuncCall);
 		Type		targetType = typeidType(targetTypeId);
@@ -135,20 +140,20 @@ coerce_type(ParseState *pstate, Node *node, Oid inputTypeId,
 
 		/*
 		 * If the input is a constant, apply the type conversion function
-		 * now instead of delaying to runtime.  (We could, of course,
-		 * just leave this to be done during planning/optimization;
-		 * but it's a very frequent special case, and we save cycles
-		 * in the rewriter if we fold the expression now.)
+		 * now instead of delaying to runtime.	(We could, of course, just
+		 * leave this to be done during planning/optimization; but it's a
+		 * very frequent special case, and we save cycles in the rewriter
+		 * if we fold the expression now.)
 		 *
-		 * Note that no folding will occur if the conversion function is
-		 * not marked 'iscachable'.
+		 * Note that no folding will occur if the conversion function is not
+		 * marked 'iscachable'.
 		 *
-		 * HACK: if constant is NULL, don't fold it here.  This is needed
-		 * by make_subplan(), which calls this routine on placeholder Const
-		 * nodes that mustn't be collapsed.  (It'd be a lot cleaner to make
-		 * a separate node type for that purpose...)
+		 * HACK: if constant is NULL, don't fold it here.  This is needed by
+		 * make_subplan(), which calls this routine on placeholder Const
+		 * nodes that mustn't be collapsed.  (It'd be a lot cleaner to
+		 * make a separate node type for that purpose...)
 		 */
-		if (IsA(node, Const) && ! ((Const *) node)->constisnull)
+		if (IsA(node, Const) &&!((Const *) node)->constisnull)
 			result = eval_const_expressions(result);
 	}
 
@@ -181,8 +186,8 @@ can_coerce_type(int nargs, Oid *input_typeids, Oid *func_typeids)
 	/* run through argument list... */
 	for (i = 0; i < nargs; i++)
 	{
-		Oid		inputTypeId = input_typeids[i];
-		Oid		targetTypeId = func_typeids[i];
+		Oid			inputTypeId = input_typeids[i];
+		Oid			targetTypeId = func_typeids[i];
 
 		/* no problem if same type */
 		if (inputTypeId == targetTypeId)
@@ -203,8 +208,8 @@ can_coerce_type(int nargs, Oid *input_typeids, Oid *func_typeids)
 			return false;
 
 		/*
-		 * If input is an untyped string constant, assume we can
-		 * convert it to anything except a class type.
+		 * If input is an untyped string constant, assume we can convert
+		 * it to anything except a class type.
 		 */
 		if (inputTypeId == UNKNOWNOID)
 		{
@@ -220,15 +225,15 @@ can_coerce_type(int nargs, Oid *input_typeids, Oid *func_typeids)
 			continue;
 
 		/*
-		 * Else, try for explicit conversion using functions:
-		 * look for a single-argument function named with the
-		 * target type name and accepting the source type.
+		 * Else, try for explicit conversion using functions: look for a
+		 * single-argument function named with the target type name and
+		 * accepting the source type.
 		 */
 		MemSet(oid_array, 0, FUNC_MAX_ARGS * sizeof(Oid));
 		oid_array[0] = inputTypeId;
 
 		ftup = SearchSysCacheTuple(PROCNAME,
-							PointerGetDatum(typeidTypeName(targetTypeId)),
+						   PointerGetDatum(typeidTypeName(targetTypeId)),
 								   Int32GetDatum(1),
 								   PointerGetDatum(oid_array),
 								   0);
@@ -331,14 +336,14 @@ TypeCategory(Oid inType)
 			result = STRING_TYPE;
 			break;
 
-		/*
-		 * Kluge added 4/8/00 by tgl: treat the new BIT types as strings,
-		 * so that 'unknown' || 'unknown' continues to resolve as textcat
-		 * rather than generating an ambiguous-operator error.  Probably
-		 * BIT types should have their own type category, or maybe they
-		 * should be numeric?  Need a better way of handling unknown types
-		 * first.
-		 */
+			/*
+			 * Kluge added 4/8/00 by tgl: treat the new BIT types as
+			 * strings, so that 'unknown' || 'unknown' continues to
+			 * resolve as textcat rather than generating an
+			 * ambiguous-operator error.  Probably BIT types should have
+			 * their own type category, or maybe they should be numeric?
+			 * Need a better way of handling unknown types first.
+			 */
 		case (ZPBITOID):
 		case (VARBITOID):
 			result = STRING_TYPE;

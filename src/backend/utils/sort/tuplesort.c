@@ -6,7 +6,7 @@
  * This module handles sorting of heap tuples, index tuples, or single
  * Datums (and could easily support other kinds of sortable objects,
  * if necessary).  It works efficiently for both small and large amounts
- * of data.  Small amounts are sorted in-memory using qsort().  Large
+ * of data.  Small amounts are sorted in-memory using qsort().	Large
  * amounts are sorted using temporary files and a standard external sort
  * algorithm.
  *
@@ -31,7 +31,7 @@
  * no more records of the prior run are left in the heap.
  *
  * The (approximate) amount of memory allowed for any one sort operation
- * is given in kilobytes by the external variable SortMem.  Initially,
+ * is given in kilobytes by the external variable SortMem.	Initially,
  * we absorb tuples and simply store them in an unsorted array as long as
  * we haven't exceeded SortMem.  If we reach the end of the input without
  * exceeding SortMem, we sort the array using qsort() and subsequently return
@@ -40,7 +40,7 @@
  * into sorted runs in temporary tapes, emitting just enough tuples at each
  * step to get back within the SortMem limit.  Whenever the run number at
  * the top of the heap changes, we begin a new run with a new output tape
- * (selected per Algorithm D).  After the end of the input is reached,
+ * (selected per Algorithm D).	After the end of the input is reached,
  * we dump out remaining tuples in memory into a final run (or two),
  * then merge the runs using Algorithm D.
  *
@@ -57,17 +57,17 @@
  * access at all, defeating the read-ahead methods used by most Unix kernels.
  * Worse, the output tape gets written into a very random sequence of blocks
  * of the temp file, ensuring that things will be even worse when it comes
- * time to read that tape.  A straightforward merge pass thus ends up doing a
+ * time to read that tape.	A straightforward merge pass thus ends up doing a
  * lot of waiting for disk seeks.  We can improve matters by prereading from
  * each source tape sequentially, loading about SortMem/M bytes from each tape
  * in turn.  Then we run the merge algorithm, writing but not reading until
- * one of the preloaded tuple series runs out.  Then we switch back to preread
+ * one of the preloaded tuple series runs out.	Then we switch back to preread
  * mode, fill memory again, and repeat.  This approach helps to localize both
  * read and write accesses.
  *
  * When the caller requests random access to the sort result, we form
  * the final sorted run on a logical tape which is then "frozen", so
- * that we can access it randomly.  When the caller does not need random
+ * that we can access it randomly.	When the caller does not need random
  * access, we return from tuplesort_performsort() as soon as we are down
  * to one run per logical tape.  The final merge is then performed
  * on-the-fly as the caller repeatedly calls tuplesort_gettuple; this
@@ -78,7 +78,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/sort/tuplesort.c,v 1.8 2000/03/17 02:36:31 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/sort/tuplesort.c,v 1.9 2000/04/12 17:16:12 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -99,18 +99,19 @@
  */
 typedef enum
 {
-	TSS_INITIAL,		/* Loading tuples; still within memory limit */
-	TSS_BUILDRUNS,		/* Loading tuples; writing to tape */
-	TSS_SORTEDINMEM,	/* Sort completed entirely in memory */
-	TSS_SORTEDONTAPE,	/* Sort completed, final run is on tape */
-	TSS_FINALMERGE		/* Performing final merge on-the-fly */
+	TSS_INITIAL,				/* Loading tuples; still within memory
+								 * limit */
+	TSS_BUILDRUNS,				/* Loading tuples; writing to tape */
+	TSS_SORTEDINMEM,			/* Sort completed entirely in memory */
+	TSS_SORTEDONTAPE,			/* Sort completed, final run is on tape */
+	TSS_FINALMERGE				/* Performing final merge on-the-fly */
 } TupSortStatus;
 
 /*
  * We use a seven-tape polyphase merge, which is the "sweet spot" on the
  * tapes-to-passes curve according to Knuth's figure 70 (section 5.4.2).
  */
-#define MAXTAPES		7				/* Knuth's T */
+#define MAXTAPES		7		/* Knuth's T */
 #define TAPERANGE		(MAXTAPES-1)	/* Knuth's P */
 
 /*
@@ -121,54 +122,59 @@ struct Tuplesortstate
 	TupSortStatus status;		/* enumerated value as shown above */
 	bool		randomAccess;	/* did caller request random access? */
 	long		availMem;		/* remaining memory available, in bytes */
-	LogicalTapeSet *tapeset;	/* logtape.c object for tapes in a temp file */
+	LogicalTapeSet *tapeset;	/* logtape.c object for tapes in a temp
+								 * file */
 
 	/*
-	 * These function pointers decouple the routines that must know what kind
-	 * of tuple we are sorting from the routines that don't need to know it.
-	 * They are set up by the tuplesort_begin_xxx routines.
+	 * These function pointers decouple the routines that must know what
+	 * kind of tuple we are sorting from the routines that don't need to
+	 * know it. They are set up by the tuplesort_begin_xxx routines.
 	 *
-	 * Function to compare two tuples; result is per qsort() convention,
-	 * ie, <0, 0, >0 according as a<b, a=b, a>b.
+	 * Function to compare two tuples; result is per qsort() convention, ie,
+	 * <0, 0, >0 according as a<b, a=b, a>b.
 	 */
-	int (*comparetup) (Tuplesortstate *state, const void *a, const void *b);
+	int			(*comparetup) (Tuplesortstate *state, const void *a, const void *b);
+
 	/*
-	 * Function to copy a supplied input tuple into palloc'd space.
-	 * (NB: we assume that a single pfree() is enough to release the tuple
+	 * Function to copy a supplied input tuple into palloc'd space. (NB:
+	 * we assume that a single pfree() is enough to release the tuple
 	 * later, so the representation must be "flat" in one palloc chunk.)
 	 * state->availMem must be decreased by the amount of space used.
 	 */
-	void * (*copytup) (Tuplesortstate *state, void *tup);
+	void	   *(*copytup) (Tuplesortstate *state, void *tup);
+
 	/*
-	 * Function to write a stored tuple onto tape.  The representation of
-	 * the tuple on tape need not be the same as it is in memory; requirements
-	 * on the tape representation are given below.  After writing the tuple,
-	 * pfree() it, and increase state->availMem by the amount of memory space
-	 * thereby released.
+	 * Function to write a stored tuple onto tape.	The representation of
+	 * the tuple on tape need not be the same as it is in memory;
+	 * requirements on the tape representation are given below.  After
+	 * writing the tuple, pfree() it, and increase state->availMem by the
+	 * amount of memory space thereby released.
 	 */
-	void (*writetup) (Tuplesortstate *state, int tapenum, void *tup);
+	void		(*writetup) (Tuplesortstate *state, int tapenum, void *tup);
+
 	/*
-	 * Function to read a stored tuple from tape back into memory.
-	 * 'len' is the already-read length of the stored tuple.  Create and
-	 * return a palloc'd copy, and decrease state->availMem by the amount
-	 * of memory space consumed.
+	 * Function to read a stored tuple from tape back into memory. 'len'
+	 * is the already-read length of the stored tuple.	Create and return
+	 * a palloc'd copy, and decrease state->availMem by the amount of
+	 * memory space consumed.
 	 */
-	void * (*readtup) (Tuplesortstate *state, int tapenum, unsigned int len);
+	void	   *(*readtup) (Tuplesortstate *state, int tapenum, unsigned int len);
+
 	/*
-	 * Obtain memory space occupied by a stored tuple.  (This routine is
+	 * Obtain memory space occupied by a stored tuple.	(This routine is
 	 * only needed in the FINALMERGE case, since copytup, writetup, and
 	 * readtup are expected to adjust availMem appropriately.)
 	 */
 	unsigned int (*tuplesize) (Tuplesortstate *state, void *tup);
 
 	/*
-	 * This array holds pointers to tuples in sort memory.  If we are in
+	 * This array holds pointers to tuples in sort memory.	If we are in
 	 * state INITIAL, the tuples are in no particular order; if we are in
 	 * state SORTEDINMEM, the tuples are in final sorted order; in states
 	 * BUILDRUNS and FINALMERGE, the tuples are organized in "heap" order
-	 * per Algorithm H.  (Note that memtupcount only counts the tuples that
-	 * are part of the heap --- during merge passes, memtuples[] entries
-	 * beyond TAPERANGE are never in the heap and are used to hold
+	 * per Algorithm H.  (Note that memtupcount only counts the tuples
+	 * that are part of the heap --- during merge passes, memtuples[]
+	 * entries beyond TAPERANGE are never in the heap and are used to hold
 	 * pre-read tuples.)  In state SORTEDONTAPE, the array is not used.
 	 */
 	void	  **memtuples;		/* array of pointers to palloc'd tuples */
@@ -176,19 +182,21 @@ struct Tuplesortstate
 	int			memtupsize;		/* allocated length of memtuples array */
 
 	/*
-	 * While building initial runs, this array holds the run number for each
-	 * tuple in memtuples[].  During merge passes, we re-use it to hold the
-	 * input tape number that each tuple in the heap was read from, or to hold
-	 * the index of the next tuple pre-read from the same tape in the case of
-	 * pre-read entries.  This array is never allocated unless we need to use
-	 * tapes.  Whenever it is allocated, it has the same length as
-	 * memtuples[].
+	 * While building initial runs, this array holds the run number for
+	 * each tuple in memtuples[].  During merge passes, we re-use it to
+	 * hold the input tape number that each tuple in the heap was read
+	 * from, or to hold the index of the next tuple pre-read from the same
+	 * tape in the case of pre-read entries.  This array is never
+	 * allocated unless we need to use tapes.  Whenever it is allocated,
+	 * it has the same length as memtuples[].
 	 */
-	int		   *memtupindex;	/* index value associated with memtuples[i] */
+	int		   *memtupindex;	/* index value associated with
+								 * memtuples[i] */
 
 	/*
 	 * While building initial runs, this is the current output run number
-	 * (starting at 0).  Afterwards, it is the number of initial runs we made.
+	 * (starting at 0).  Afterwards, it is the number of initial runs we
+	 * made.
 	 */
 	int			currentRun;
 
@@ -199,20 +207,24 @@ struct Tuplesortstate
 	 * index of the next pre-read tuple (next to be loaded into the heap)
 	 * for tape i, or 0 if we are out of pre-read tuples.  mergelast[i]
 	 * similarly points to the last pre-read tuple from each tape.
-	 * mergeavailmem[i] is the amount of unused space allocated for tape i.
-	 * mergefreelist and mergefirstfree keep track of unused locations
+	 * mergeavailmem[i] is the amount of unused space allocated for tape
+	 * i. mergefreelist and mergefirstfree keep track of unused locations
 	 * in the memtuples[] array.  memtupindex[] links together pre-read
-	 * tuples for each tape as well as recycled locations in mergefreelist.
-	 * It is OK to use 0 as a null link in these lists, because memtuples[0]
-	 * is part of the merge heap and is never a pre-read tuple.
+	 * tuples for each tape as well as recycled locations in
+	 * mergefreelist. It is OK to use 0 as a null link in these lists,
+	 * because memtuples[0] is part of the merge heap and is never a
+	 * pre-read tuple.
 	 */
-	bool		mergeactive[MAXTAPES]; /* Active input run source? */
-	int			mergenext[MAXTAPES]; /* first preread tuple for each source */
-	int			mergelast[MAXTAPES]; /* last preread tuple for each source */
-	long		mergeavailmem[MAXTAPES]; /* availMem for prereading tapes */
+	bool		mergeactive[MAXTAPES];	/* Active input run source? */
+	int			mergenext[MAXTAPES];	/* first preread tuple for each
+										 * source */
+	int			mergelast[MAXTAPES];	/* last preread tuple for each
+										 * source */
+	long		mergeavailmem[MAXTAPES];		/* availMem for prereading
+												 * tapes */
 	long		spacePerTape;	/* actual per-tape target usage */
 	int			mergefreelist;	/* head of freelist of recycled slots */
-	int			mergefirstfree;	/* first slot never used in this merge */
+	int			mergefirstfree; /* first slot never used in this merge */
 
 	/*
 	 * Variables for Algorithm D.  Note that destTape is a "logical" tape
@@ -221,10 +233,12 @@ struct Tuplesortstate
 	 */
 	int			Level;			/* Knuth's l */
 	int			destTape;		/* current output tape (Knuth's j, less 1) */
-	int			tp_fib[MAXTAPES]; /* Target Fibonacci run counts (A[]) */
-	int			tp_runs[MAXTAPES];	/* # of real runs on each tape */
-	int			tp_dummy[MAXTAPES];	/* # of dummy runs for each tape (D[]) */
-	int			tp_tapenum[MAXTAPES]; /* Actual tape numbers (TAPE[]) */
+	int			tp_fib[MAXTAPES];		/* Target Fibonacci run counts
+										 * (A[]) */
+	int			tp_runs[MAXTAPES];		/* # of real runs on each tape */
+	int			tp_dummy[MAXTAPES];		/* # of dummy runs for each tape
+										 * (D[]) */
+	int			tp_tapenum[MAXTAPES];	/* Actual tape numbers (TAPE[]) */
 
 	/*
 	 * These variables are used after completion of sorting to keep track
@@ -237,12 +251,13 @@ struct Tuplesortstate
 
 	/* markpos_xxx holds marked position for mark and restore */
 	long		markpos_block;	/* tape block# (only used if SORTEDONTAPE) */
-	int			markpos_offset;	/* saved "current", or offset in tape block */
+	int			markpos_offset; /* saved "current", or offset in tape
+								 * block */
 	bool		markpos_eof;	/* saved "eof_reached" */
 
 	/*
-	 * These variables are specific to the HeapTuple case; they are set
-	 * by tuplesort_begin_heap and used only by the HeapTuple routines.
+	 * These variables are specific to the HeapTuple case; they are set by
+	 * tuplesort_begin_heap and used only by the HeapTuple routines.
 	 */
 	TupleDesc	tupDesc;
 	int			nKeys;
@@ -257,8 +272,8 @@ struct Tuplesortstate
 	bool		enforceUnique;	/* complain if we find duplicate tuples */
 
 	/*
-	 * These variables are specific to the Datum case; they are set
-	 * by tuplesort_begin_datum and used only by the DatumTuple routines.
+	 * These variables are specific to the Datum case; they are set by
+	 * tuplesort_begin_datum and used only by the DatumTuple routines.
 	 */
 	Oid			datumType;
 	Oid			sortOperator;
@@ -271,7 +286,7 @@ struct Tuplesortstate
 #define COMPARETUP(state,a,b)	((*(state)->comparetup) (state, a, b))
 #define COPYTUP(state,tup)	((*(state)->copytup) (state, tup))
 #define WRITETUP(state,tape,tup)	((*(state)->writetup) (state, tape, tup))
-#define READTUP(state,tape,len)	((*(state)->readtup) (state, tape, len))
+#define READTUP(state,tape,len) ((*(state)->readtup) (state, tape, len))
 #define TUPLESIZE(state,tup)	((*(state)->tuplesize) (state, tup))
 #define LACKMEM(state)		((state)->availMem < 0)
 #define USEMEM(state,amt)	((state)->availMem -= (amt))
@@ -290,7 +305,7 @@ struct Tuplesortstate
  * If state->randomAccess is true, then the stored representation of the
  * tuple must be followed by another "unsigned int" that is a copy of the
  * length --- so the total tape space used is actually sizeof(unsigned int)
- * more than the stored length value.  This allows read-backwards.  When
+ * more than the stored length value.  This allows read-backwards.	When
  * randomAccess is not true, the write/read routines may omit the extra
  * length word.
  *
@@ -300,7 +315,7 @@ struct Tuplesortstate
  * the back length word (if present).
  *
  * The write/read routines can make use of the tuple description data
- * stored in the Tuplesortstate record, if needed.  They are also expected
+ * stored in the Tuplesortstate record, if needed.	They are also expected
  * to adjust state->availMem by the amount of memory space (not tape space!)
  * released or consumed.  There is no error return from either writetup
  * or readtup; they should elog() on failure.
@@ -311,7 +326,7 @@ struct Tuplesortstate
  * We count space requested for tuples against the SortMem limit.
  * Fixed-size space (primarily the LogicalTapeSet I/O buffers) is not
  * counted, nor do we count the variable-size memtuples and memtupindex
- * arrays.  (Even though those could grow pretty large, they should be
+ * arrays.	(Even though those could grow pretty large, they should be
  * small compared to the tuples proper, so this is not unreasonable.)
  *
  * The major deficiency in this approach is that it ignores palloc overhead.
@@ -360,37 +375,37 @@ static void beginmerge(Tuplesortstate *state);
 static void mergepreread(Tuplesortstate *state);
 static void dumptuples(Tuplesortstate *state, bool alltuples);
 static void tuplesort_heap_insert(Tuplesortstate *state, void *tuple,
-								  int tupleindex, bool checkIndex);
+					  int tupleindex, bool checkIndex);
 static void tuplesort_heap_siftup(Tuplesortstate *state, bool checkIndex);
 static unsigned int getlen(Tuplesortstate *state, int tapenum, bool eofOK);
 static void markrunend(Tuplesortstate *state, int tapenum);
-static int qsort_comparetup(const void *a, const void *b);
+static int	qsort_comparetup(const void *a, const void *b);
 static int comparetup_heap(Tuplesortstate *state,
-						   const void *a, const void *b);
+				const void *a, const void *b);
 static void *copytup_heap(Tuplesortstate *state, void *tup);
 static void writetup_heap(Tuplesortstate *state, int tapenum, void *tup);
 static void *readtup_heap(Tuplesortstate *state, int tapenum,
-						  unsigned int len);
+			 unsigned int len);
 static unsigned int tuplesize_heap(Tuplesortstate *state, void *tup);
 static int comparetup_index(Tuplesortstate *state,
-							const void *a, const void *b);
+				 const void *a, const void *b);
 static void *copytup_index(Tuplesortstate *state, void *tup);
 static void writetup_index(Tuplesortstate *state, int tapenum, void *tup);
 static void *readtup_index(Tuplesortstate *state, int tapenum,
-						   unsigned int len);
+			  unsigned int len);
 static unsigned int tuplesize_index(Tuplesortstate *state, void *tup);
 static int comparetup_datum(Tuplesortstate *state,
-							const void *a, const void *b);
+				 const void *a, const void *b);
 static void *copytup_datum(Tuplesortstate *state, void *tup);
 static void writetup_datum(Tuplesortstate *state, int tapenum, void *tup);
 static void *readtup_datum(Tuplesortstate *state, int tapenum,
-						   unsigned int len);
+			  unsigned int len);
 static unsigned int tuplesize_datum(Tuplesortstate *state, void *tup);
 
 /*
  * Since qsort(3) will not pass any context info to qsort_comparetup(),
  * we have to use this ugly static variable.  It is set to point to the
- * active Tuplesortstate object just before calling qsort.  It should
+ * active Tuplesortstate object just before calling qsort.	It should
  * not be used directly by anything except qsort_comparetup().
  */
 static Tuplesortstate *qsort_tuplesortstate;
@@ -403,7 +418,7 @@ static Tuplesortstate *qsort_tuplesortstate;
  *
  * After calling tuplesort_begin, the caller should call tuplesort_puttuple
  * zero or more times, then call tuplesort_performsort when all the tuples
- * have been supplied.  After performsort, retrieve the tuples in sorted
+ * have been supplied.	After performsort, retrieve the tuples in sorted
  * order by calling tuplesort_gettuple until it returns NULL.  (If random
  * access was requested, rescan, markpos, and restorepos can also be called.)
  * For Datum sorts, putdatum/getdatum are used instead of puttuple/gettuple.
@@ -434,7 +449,8 @@ tuplesort_begin_common(bool randomAccess)
 
 	/* Algorithm D variables will be initialized by inittapes, if needed */
 
-	state->result_tape = -1;	/* flag that result tape has not been formed */
+	state->result_tape = -1;	/* flag that result tape has not been
+								 * formed */
 
 	return state;
 }
@@ -490,7 +506,7 @@ tuplesort_begin_datum(Oid datumType,
 					  bool randomAccess)
 {
 	Tuplesortstate *state = tuplesort_begin_common(randomAccess);
-	Type			typeInfo;
+	Type		typeInfo;
 
 	state->comparetup = comparetup_datum;
 	state->copytup = copytup_datum;
@@ -518,7 +534,7 @@ tuplesort_begin_datum(Oid datumType,
 void
 tuplesort_end(Tuplesortstate *state)
 {
-	int		i;
+	int			i;
 
 	if (state->tapeset)
 		LogicalTapeSetClose(state->tapeset);
@@ -540,6 +556,7 @@ tuplesort_end(Tuplesortstate *state)
 void
 tuplesort_puttuple(Tuplesortstate *state, void *tuple)
 {
+
 	/*
 	 * Copy the given tuple into memory we control, and decrease availMem.
 	 * Then call the code shared with the Datum case.
@@ -557,7 +574,7 @@ tuplesort_puttuple(Tuplesortstate *state, void *tuple)
 void
 tuplesort_putdatum(Tuplesortstate *state, Datum val, bool isNull)
 {
-	DatumTuple	   *tuple;
+	DatumTuple *tuple;
 
 	/*
 	 * Build pseudo-tuple carrying the datum, and decrease availMem.
@@ -571,9 +588,9 @@ tuplesort_putdatum(Tuplesortstate *state, Datum val, bool isNull)
 	}
 	else
 	{
-		int		datalen = state->datumTypeLen;
-		int		tuplelen;
-		char   *newVal;
+		int			datalen = state->datumTypeLen;
+		int			tuplelen;
+		char	   *newVal;
 
 		if (datalen == -1)		/* variable length type? */
 			datalen = VARSIZE((struct varlena *) DatumGetPointer(val));
@@ -598,7 +615,8 @@ puttuple_common(Tuplesortstate *state, void *tuple)
 {
 	switch (state->status)
 	{
-		case TSS_INITIAL:
+			case TSS_INITIAL:
+
 			/*
 			 * Save the copied tuple into the unsorted array.
 			 */
@@ -611,41 +629,47 @@ puttuple_common(Tuplesortstate *state, void *tuple)
 							 state->memtupsize * sizeof(void *));
 			}
 			state->memtuples[state->memtupcount++] = tuple;
+
 			/*
 			 * Done if we still fit in available memory.
 			 */
-			if (! LACKMEM(state))
+			if (!LACKMEM(state))
 				return;
+
 			/*
 			 * Nope; time to switch to tape-based operation.
 			 */
 			inittapes(state);
+
 			/*
 			 * Dump tuples until we are back under the limit.
 			 */
 			dumptuples(state, false);
 			break;
 		case TSS_BUILDRUNS:
+
 			/*
 			 * Insert the copied tuple into the heap, with run number
 			 * currentRun if it can go into the current run, else run
 			 * number currentRun+1.  The tuple can go into the current run
-			 * if it is >= the first not-yet-output tuple.  (Actually,
-			 * it could go into the current run if it is >= the most recently
+			 * if it is >= the first not-yet-output tuple.	(Actually, it
+			 * could go into the current run if it is >= the most recently
 			 * output tuple ... but that would require keeping around the
-			 * tuple we last output, and it's simplest to let writetup free
-			 * each tuple as soon as it's written.)
+			 * tuple we last output, and it's simplest to let writetup
+			 * free each tuple as soon as it's written.)
 			 *
-			 * Note there will always be at least one tuple in the heap
-			 * at this point; see dumptuples.
+			 * Note there will always be at least one tuple in the heap at
+			 * this point; see dumptuples.
 			 */
 			Assert(state->memtupcount > 0);
 			if (COMPARETUP(state, tuple, state->memtuples[0]) >= 0)
 				tuplesort_heap_insert(state, tuple, state->currentRun, true);
 			else
-				tuplesort_heap_insert(state, tuple, state->currentRun+1, true);
+				tuplesort_heap_insert(state, tuple, state->currentRun + 1, true);
+
 			/*
-			 * If we are over the memory limit, dump tuples till we're under.
+			 * If we are over the memory limit, dump tuples till we're
+			 * under.
 			 */
 			dumptuples(state, false);
 			break;
@@ -663,7 +687,8 @@ tuplesort_performsort(Tuplesortstate *state)
 {
 	switch (state->status)
 	{
-		case TSS_INITIAL:
+			case TSS_INITIAL:
+
 			/*
 			 * We were able to accumulate all the tuples within the
 			 * allowed amount of memory.  Just qsort 'em and we're done.
@@ -681,8 +706,9 @@ tuplesort_performsort(Tuplesortstate *state)
 			state->status = TSS_SORTEDINMEM;
 			break;
 		case TSS_BUILDRUNS:
+
 			/*
-			 * Finish tape-based sort.  First, flush all tuples remaining
+			 * Finish tape-based sort.	First, flush all tuples remaining
 			 * in memory out to tape; then merge until we have a single
 			 * remaining run (or, if !randomAccess, one run per tape).
 			 * Note that mergeruns sets the correct state->status.
@@ -702,15 +728,15 @@ tuplesort_performsort(Tuplesortstate *state)
 
 /*
  * Fetch the next tuple in either forward or back direction.
- * Returns NULL if no more tuples.  If should_free is set, the
+ * Returns NULL if no more tuples.	If should_free is set, the
  * caller must pfree the returned tuple when done with it.
  */
 void *
 tuplesort_gettuple(Tuplesortstate *state, bool forward,
 				   bool *should_free)
 {
-	unsigned int	tuplen;
-	void		   *tup;
+	unsigned int tuplen;
+	void	   *tup;
 
 	switch (state->status)
 	{
@@ -728,15 +754,16 @@ tuplesort_gettuple(Tuplesortstate *state, bool forward,
 			{
 				if (state->current <= 0)
 					return NULL;
+
 				/*
-				 * if all tuples are fetched already then we return last tuple,
-				 * else - tuple before last returned.
+				 * if all tuples are fetched already then we return last
+				 * tuple, else - tuple before last returned.
 				 */
 				if (state->eof_reached)
 					state->eof_reached = false;
 				else
 				{
-					state->current--; /* last returned tuple */
+					state->current--;	/* last returned tuple */
 					if (state->current <= 0)
 						return NULL;
 				}
@@ -762,65 +789,74 @@ tuplesort_gettuple(Tuplesortstate *state, bool forward,
 					return NULL;
 				}
 			}
-			/* Backward.
+
+			/*
+			 * Backward.
 			 *
 			 * if all tuples are fetched already then we return last tuple,
 			 * else - tuple before last returned.
 			 */
 			if (state->eof_reached)
 			{
+
 				/*
-				 * Seek position is pointing just past the zero tuplen
-				 * at the end of file; back up to fetch last tuple's ending
-				 * length word.  If seek fails we must have a completely empty
-				 * file.
+				 * Seek position is pointing just past the zero tuplen at
+				 * the end of file; back up to fetch last tuple's ending
+				 * length word.  If seek fails we must have a completely
+				 * empty file.
 				 */
-				if (! LogicalTapeBackspace(state->tapeset,
-										   state->result_tape,
-										   2 * sizeof(unsigned int)))
+				if (!LogicalTapeBackspace(state->tapeset,
+										  state->result_tape,
+										  2 * sizeof(unsigned int)))
 					return NULL;
 				state->eof_reached = false;
 			}
 			else
 			{
+
 				/*
-				 * Back up and fetch previously-returned tuple's ending length
-				 * word.  If seek fails, assume we are at start of file.
+				 * Back up and fetch previously-returned tuple's ending
+				 * length word.  If seek fails, assume we are at start of
+				 * file.
 				 */
-				if (! LogicalTapeBackspace(state->tapeset,
-										   state->result_tape,
-										   sizeof(unsigned int)))
+				if (!LogicalTapeBackspace(state->tapeset,
+										  state->result_tape,
+										  sizeof(unsigned int)))
 					return NULL;
 				tuplen = getlen(state, state->result_tape, false);
+
 				/*
 				 * Back up to get ending length word of tuple before it.
 				 */
-				if (! LogicalTapeBackspace(state->tapeset,
-										   state->result_tape,
-										   tuplen + 2 * sizeof(unsigned int)))
+				if (!LogicalTapeBackspace(state->tapeset,
+										  state->result_tape,
+									  tuplen + 2 * sizeof(unsigned int)))
 				{
-					/* If that fails, presumably the prev tuple is the first
-					 * in the file.  Back up so that it becomes next to read
-					 * in forward direction (not obviously right, but that is
-					 * what in-memory case does).
+
+					/*
+					 * If that fails, presumably the prev tuple is the
+					 * first in the file.  Back up so that it becomes next
+					 * to read in forward direction (not obviously right,
+					 * but that is what in-memory case does).
 					 */
-					if (! LogicalTapeBackspace(state->tapeset,
-											   state->result_tape,
-											   tuplen + sizeof(unsigned int)))
+					if (!LogicalTapeBackspace(state->tapeset,
+											  state->result_tape,
+										  tuplen + sizeof(unsigned int)))
 						elog(ERROR, "tuplesort_gettuple: bogus tuple len in backward scan");
 					return NULL;
 				}
 			}
 
 			tuplen = getlen(state, state->result_tape, false);
+
 			/*
-			 * Now we have the length of the prior tuple, back up and read it.
-			 * Note: READTUP expects we are positioned after the initial
-			 * length word of the tuple, so back up to that point.
+			 * Now we have the length of the prior tuple, back up and read
+			 * it. Note: READTUP expects we are positioned after the
+			 * initial length word of the tuple, so back up to that point.
 			 */
-			if (! LogicalTapeBackspace(state->tapeset,
-									   state->result_tape,
-									   tuplen))
+			if (!LogicalTapeBackspace(state->tapeset,
+									  state->result_tape,
+									  tuplen))
 				elog(ERROR, "tuplesort_gettuple: bogus tuple len in backward scan");
 			tup = READTUP(state, state->result_tape, tuplen);
 			return tup;
@@ -828,15 +864,16 @@ tuplesort_gettuple(Tuplesortstate *state, bool forward,
 		case TSS_FINALMERGE:
 			Assert(forward);
 			*should_free = true;
+
 			/*
 			 * This code should match the inner loop of mergeonerun().
 			 */
 			if (state->memtupcount > 0)
 			{
-				int				srcTape = state->memtupindex[0];
-				unsigned int	tuplen;
-				int				tupIndex;
-				void		   *newtup;
+				int			srcTape = state->memtupindex[0];
+				unsigned int tuplen;
+				int			tupIndex;
+				void	   *newtup;
 
 				tup = state->memtuples[0];
 				/* returned tuple is no longer counted in our memory space */
@@ -846,9 +883,17 @@ tuplesort_gettuple(Tuplesortstate *state, bool forward,
 				tuplesort_heap_siftup(state, false);
 				if ((tupIndex = state->mergenext[srcTape]) == 0)
 				{
-					/* out of preloaded data on this tape, try to read more */
+
+					/*
+					 * out of preloaded data on this tape, try to read
+					 * more
+					 */
 					mergepreread(state);
-					/* if still no data, we've reached end of run on this tape */
+
+					/*
+					 * if still no data, we've reached end of run on this
+					 * tape
+					 */
 					if ((tupIndex = state->mergenext[srcTape]) == 0)
 						return tup;
 				}
@@ -881,8 +926,8 @@ bool
 tuplesort_getdatum(Tuplesortstate *state, bool forward,
 				   Datum *val, bool *isNull)
 {
-	DatumTuple	   *tuple;
-	bool			should_free;
+	DatumTuple *tuple;
+	bool		should_free;
 
 	tuple = (DatumTuple *) tuplesort_gettuple(state, forward, &should_free);
 
@@ -896,8 +941,8 @@ tuplesort_getdatum(Tuplesortstate *state, bool forward,
 	}
 	else
 	{
-		int		datalen = state->datumTypeLen;
-		char   *newVal;
+		int			datalen = state->datumTypeLen;
+		char	   *newVal;
 
 		if (datalen == -1)		/* variable length type? */
 			datalen = VARSIZE((struct varlena *) DatumGetPointer(tuple->val));
@@ -933,15 +978,15 @@ inittapes(Tuplesortstate *state)
 	state->memtupindex = (int *) palloc(state->memtupsize * sizeof(int));
 
 	/*
-	 * Convert the unsorted contents of memtuples[] into a heap.
-	 * Each tuple is marked as belonging to run number zero.
+	 * Convert the unsorted contents of memtuples[] into a heap. Each
+	 * tuple is marked as belonging to run number zero.
 	 *
-	 * NOTE: we pass false for checkIndex since there's no point in
-	 * comparing indexes in this step, even though we do intend the
-	 * indexes to be part of the sort key...
+	 * NOTE: we pass false for checkIndex since there's no point in comparing
+	 * indexes in this step, even though we do intend the indexes to be
+	 * part of the sort key...
 	 */
 	ntuples = state->memtupcount;
-	state->memtupcount = 0;			/* make the heap empty */
+	state->memtupcount = 0;		/* make the heap empty */
 	for (j = 0; j < ntuples; j++)
 		tuplesort_heap_insert(state, state->memtuples[j], 0, false);
 	Assert(state->memtupcount == ntuples);
@@ -976,11 +1021,11 @@ inittapes(Tuplesortstate *state)
 static void
 selectnewtape(Tuplesortstate *state)
 {
-	int		j;
-	int		a;
+	int			j;
+	int			a;
 
 	/* Step D3: advance j (destTape) */
-	if (state->tp_dummy[state->destTape] < state->tp_dummy[state->destTape+1])
+	if (state->tp_dummy[state->destTape] < state->tp_dummy[state->destTape + 1])
 	{
 		state->destTape++;
 		return;
@@ -996,8 +1041,8 @@ selectnewtape(Tuplesortstate *state)
 	a = state->tp_fib[0];
 	for (j = 0; j < TAPERANGE; j++)
 	{
-		state->tp_dummy[j] = a + state->tp_fib[j+1] - state->tp_fib[j];
-		state->tp_fib[j] = a + state->tp_fib[j+1];
+		state->tp_dummy[j] = a + state->tp_fib[j + 1] - state->tp_fib[j];
+		state->tp_fib[j] = a + state->tp_fib[j + 1];
 	}
 	state->destTape = 0;
 }
@@ -1011,17 +1056,18 @@ selectnewtape(Tuplesortstate *state)
 static void
 mergeruns(Tuplesortstate *state)
 {
-	int		tapenum,
-			svTape,
-			svRuns,
-			svDummy;
+	int			tapenum,
+				svTape,
+				svRuns,
+				svDummy;
 
 	Assert(state->status == TSS_BUILDRUNS);
 	Assert(state->memtupcount == 0);
+
 	/*
-	 * If we produced only one initial run (quite likely if the total
-	 * data volume is between 1X and 2X SortMem), we can just use that
-	 * tape as the finished output, rather than doing a useless merge.
+	 * If we produced only one initial run (quite likely if the total data
+	 * volume is between 1X and 2X SortMem), we can just use that tape as
+	 * the finished output, rather than doing a useless merge.
 	 */
 	if (state->currentRun == 1)
 	{
@@ -1039,10 +1085,10 @@ mergeruns(Tuplesortstate *state)
 	for (;;)
 	{
 		/* Step D5: merge runs onto tape[T] until tape[P] is empty */
-		while (state->tp_runs[TAPERANGE-1] || state->tp_dummy[TAPERANGE-1])
+		while (state->tp_runs[TAPERANGE - 1] || state->tp_dummy[TAPERANGE - 1])
 		{
-			bool	allDummy = true;
-			bool	allOneRun = true;
+			bool		allDummy = true;
+			bool		allOneRun = true;
 
 			for (tapenum = 0; tapenum < TAPERANGE; tapenum++)
 			{
@@ -1051,28 +1097,27 @@ mergeruns(Tuplesortstate *state)
 				if (state->tp_runs[tapenum] + state->tp_dummy[tapenum] != 1)
 					allOneRun = false;
 			}
+
 			/*
 			 * If we don't have to produce a materialized sorted tape,
 			 * quit as soon as we're down to one real/dummy run per tape.
 			 */
-			if (! state->randomAccess && allOneRun)
+			if (!state->randomAccess && allOneRun)
 			{
-				Assert(! allDummy);
+				Assert(!allDummy);
 				/* Initialize for the final merge pass */
 				beginmerge(state);
 				state->status = TSS_FINALMERGE;
 				return;
 			}
 			if (allDummy)
-			{	
+			{
 				state->tp_dummy[TAPERANGE]++;
 				for (tapenum = 0; tapenum < TAPERANGE; tapenum++)
 					state->tp_dummy[tapenum]--;
 			}
 			else
-			{
 				mergeonerun(state);
-			}
 		}
 		/* Step D6: decrease level */
 		if (--state->Level == 0)
@@ -1081,30 +1126,35 @@ mergeruns(Tuplesortstate *state)
 		LogicalTapeRewind(state->tapeset, state->tp_tapenum[TAPERANGE],
 						  false);
 		/* rewind used-up input tape P, and prepare it for write pass */
-		LogicalTapeRewind(state->tapeset, state->tp_tapenum[TAPERANGE-1],
+		LogicalTapeRewind(state->tapeset, state->tp_tapenum[TAPERANGE - 1],
 						  true);
-		state->tp_runs[TAPERANGE-1] = 0;
-		/* reassign tape units per step D6; note we no longer care about A[] */
+		state->tp_runs[TAPERANGE - 1] = 0;
+
+		/*
+		 * reassign tape units per step D6; note we no longer care about
+		 * A[]
+		 */
 		svTape = state->tp_tapenum[TAPERANGE];
 		svDummy = state->tp_dummy[TAPERANGE];
 		svRuns = state->tp_runs[TAPERANGE];
 		for (tapenum = TAPERANGE; tapenum > 0; tapenum--)
 		{
-			state->tp_tapenum[tapenum] = state->tp_tapenum[tapenum-1];
-			state->tp_dummy[tapenum] = state->tp_dummy[tapenum-1];
-			state->tp_runs[tapenum] = state->tp_runs[tapenum-1];
+			state->tp_tapenum[tapenum] = state->tp_tapenum[tapenum - 1];
+			state->tp_dummy[tapenum] = state->tp_dummy[tapenum - 1];
+			state->tp_runs[tapenum] = state->tp_runs[tapenum - 1];
 		}
 		state->tp_tapenum[0] = svTape;
 		state->tp_dummy[0] = svDummy;
 		state->tp_runs[0] = svRuns;
 	}
+
 	/*
-	 * Done.  Knuth says that the result is on TAPE[1], but since we exited
-	 * the loop without performing the last iteration of step D6, we have not
-	 * rearranged the tape unit assignment, and therefore the result is on
-	 * TAPE[T].  We need to do it this way so that we can freeze the final
-	 * output tape while rewinding it.  The last iteration of step D6 would
-	 * be a waste of cycles anyway...
+	 * Done.  Knuth says that the result is on TAPE[1], but since we
+	 * exited the loop without performing the last iteration of step D6,
+	 * we have not rearranged the tape unit assignment, and therefore the
+	 * result is on TAPE[T].  We need to do it this way so that we can
+	 * freeze the final output tape while rewinding it.  The last
+	 * iteration of step D6 would be a waste of cycles anyway...
 	 */
 	state->result_tape = state->tp_tapenum[TAPERANGE];
 	LogicalTapeFreeze(state->tapeset, state->result_tape);
@@ -1120,23 +1170,24 @@ mergeruns(Tuplesortstate *state)
 static void
 mergeonerun(Tuplesortstate *state)
 {
-	int				destTape = state->tp_tapenum[TAPERANGE];
-	int				srcTape;
-	int				tupIndex;
-	void		   *tup;
-	long			priorAvail,
-					spaceFreed;
+	int			destTape = state->tp_tapenum[TAPERANGE];
+	int			srcTape;
+	int			tupIndex;
+	void	   *tup;
+	long		priorAvail,
+				spaceFreed;
 
 	/*
 	 * Start the merge by loading one tuple from each active source tape
-	 * into the heap.  We can also decrease the input run/dummy run counts.
+	 * into the heap.  We can also decrease the input run/dummy run
+	 * counts.
 	 */
 	beginmerge(state);
 
 	/*
 	 * Execute merge by repeatedly extracting lowest tuple in heap,
-	 * writing it out, and replacing it with next tuple from same tape
-	 * (if there is another one).
+	 * writing it out, and replacing it with next tuple from same tape (if
+	 * there is another one).
 	 */
 	while (state->memtupcount > 0)
 	{
@@ -1166,9 +1217,10 @@ mergeonerun(Tuplesortstate *state)
 		state->mergefreelist = tupIndex;
 		tuplesort_heap_insert(state, tup, srcTape, false);
 	}
+
 	/*
-	 * When the heap empties, we're done.  Write an end-of-run marker
-	 * on the output tape, and increment its count of real runs.
+	 * When the heap empties, we're done.  Write an end-of-run marker on
+	 * the output tape, and increment its count of real runs.
 	 */
 	markrunend(state, destTape);
 	state->tp_runs[TAPERANGE]++;
@@ -1178,16 +1230,16 @@ mergeonerun(Tuplesortstate *state)
  * beginmerge - initialize for a merge pass
  *
  * We decrease the counts of real and dummy runs for each tape, and mark
- * which tapes contain active input runs in mergeactive[].  Then, load
+ * which tapes contain active input runs in mergeactive[].	Then, load
  * as many tuples as we can from each active input tape, and finally
  * fill the merge heap with the first tuple from each active tape.
  */
 static void
 beginmerge(Tuplesortstate *state)
 {
-	int				activeTapes;
-	int				tapenum;
-	int				srcTape;
+	int			activeTapes;
+	int			tapenum;
+	int			srcTape;
 
 	/* Heap should be empty here */
 	Assert(state->memtupcount == 0);
@@ -1198,16 +1250,15 @@ beginmerge(Tuplesortstate *state)
 	memset(state->mergelast, 0, sizeof(state->mergelast));
 	memset(state->mergeavailmem, 0, sizeof(state->mergeavailmem));
 	state->mergefreelist = 0;	/* nothing in the freelist */
-	state->mergefirstfree = MAXTAPES; /* first slot available for preread */
+	state->mergefirstfree = MAXTAPES;	/* first slot available for
+										 * preread */
 
 	/* Adjust run counts and mark the active tapes */
 	activeTapes = 0;
 	for (tapenum = 0; tapenum < TAPERANGE; tapenum++)
 	{
 		if (state->tp_dummy[tapenum] > 0)
-		{
 			state->tp_dummy[tapenum]--;
-		}
 		else
 		{
 			Assert(state->tp_runs[tapenum] > 0);
@@ -1219,8 +1270,8 @@ beginmerge(Tuplesortstate *state)
 	}
 
 	/*
-	 * Initialize space allocation to let each active input tape have
-	 * an equal share of preread space.
+	 * Initialize space allocation to let each active input tape have an
+	 * equal share of preread space.
 	 */
 	Assert(activeTapes > 0);
 	state->spacePerTape = state->availMem / activeTapes;
@@ -1261,39 +1312,41 @@ beginmerge(Tuplesortstate *state)
  * This routine exists to improve sequentiality of reads during a merge pass,
  * as explained in the header comments of this file.  Load tuples from each
  * active source tape until the tape's run is exhausted or it has used up
- * its fair share of available memory.  In any case, we guarantee that there
+ * its fair share of available memory.	In any case, we guarantee that there
  * is at one preread tuple available from each unexhausted input tape.
  */
 static void
 mergepreread(Tuplesortstate *state)
 {
-	int				srcTape;
-	unsigned int	tuplen;
-	void		   *tup;
-	int				tupIndex;
-	long			priorAvail,
-					spaceUsed;
+	int			srcTape;
+	unsigned int tuplen;
+	void	   *tup;
+	int			tupIndex;
+	long		priorAvail,
+				spaceUsed;
 
 	for (srcTape = 0; srcTape < MAXTAPES; srcTape++)
 	{
-		if (! state->mergeactive[srcTape])
+		if (!state->mergeactive[srcTape])
 			continue;
+
 		/*
-		 * Skip reading from any tape that still has at least half
-		 * of its target memory filled with tuples (threshold fraction
-		 * may need adjustment?).  This avoids reading just a few tuples
-		 * when the incoming runs are not being consumed evenly.
+		 * Skip reading from any tape that still has at least half of its
+		 * target memory filled with tuples (threshold fraction may need
+		 * adjustment?).  This avoids reading just a few tuples when the
+		 * incoming runs are not being consumed evenly.
 		 */
 		if (state->mergenext[srcTape] != 0 &&
 			state->mergeavailmem[srcTape] <= state->spacePerTape / 2)
 			continue;
+
 		/*
-		 * Read tuples from this tape until it has used up its free memory,
-		 * but ensure that we have at least one.
+		 * Read tuples from this tape until it has used up its free
+		 * memory, but ensure that we have at least one.
 		 */
 		priorAvail = state->availMem;
 		state->availMem = state->mergeavailmem[srcTape];
-		while (! LACKMEM(state) || state->mergenext[srcTape] == 0)
+		while (!LACKMEM(state) || state->mergenext[srcTape] == 0)
 		{
 			/* read next tuple, if any */
 			if ((tuplen = getlen(state, srcTape, true)) == 0)
@@ -1359,17 +1412,19 @@ dumptuples(Tuplesortstate *state, bool alltuples)
 	while (alltuples ||
 		   (LACKMEM(state) && state->memtupcount > 1))
 	{
+
 		/*
-		 * Dump the heap's frontmost entry, and sift up to remove it
-		 * from the heap.
+		 * Dump the heap's frontmost entry, and sift up to remove it from
+		 * the heap.
 		 */
 		Assert(state->memtupcount > 0);
 		WRITETUP(state, state->tp_tapenum[state->destTape],
 				 state->memtuples[0]);
 		tuplesort_heap_siftup(state, true);
+
 		/*
-		 * If the heap is empty *or* top run number has changed,
-		 * we've finished the current run.
+		 * If the heap is empty *or* top run number has changed, we've
+		 * finished the current run.
 		 */
 		if (state->memtupcount == 0 ||
 			state->currentRun != state->memtupindex[0])
@@ -1377,7 +1432,8 @@ dumptuples(Tuplesortstate *state, bool alltuples)
 			markrunend(state, state->tp_tapenum[state->destTape]);
 			state->currentRun++;
 			state->tp_runs[state->destTape]++;
-			state->tp_dummy[state->destTape]--;	/* per Alg D step D2 */
+			state->tp_dummy[state->destTape]--; /* per Alg D step D2 */
+
 			/*
 			 * Done if heap is empty, else prepare for new run.
 			 */
@@ -1437,8 +1493,8 @@ tuplesort_markpos(Tuplesortstate *state)
 		case TSS_SORTEDONTAPE:
 			LogicalTapeTell(state->tapeset,
 							state->result_tape,
-							& state->markpos_block,
-							& state->markpos_offset);
+							&state->markpos_block,
+							&state->markpos_offset);
 			state->markpos_eof = state->eof_reached;
 			break;
 		default:
@@ -1448,7 +1504,7 @@ tuplesort_markpos(Tuplesortstate *state)
 }
 
 /*
- * tuplesort_restorepos	- restores current position in merged sort file to
+ * tuplesort_restorepos - restores current position in merged sort file to
  *						  last saved position
  */
 void
@@ -1463,10 +1519,10 @@ tuplesort_restorepos(Tuplesortstate *state)
 			state->eof_reached = state->markpos_eof;
 			break;
 		case TSS_SORTEDONTAPE:
-			if (! LogicalTapeSeek(state->tapeset,
-								  state->result_tape,
-								  state->markpos_block,
-								  state->markpos_offset))
+			if (!LogicalTapeSeek(state->tapeset,
+								 state->result_tape,
+								 state->markpos_block,
+								 state->markpos_offset))
 				elog(ERROR, "tuplesort_restorepos failed");
 			state->eof_reached = state->markpos_eof;
 			break;
@@ -1497,9 +1553,9 @@ static void
 tuplesort_heap_insert(Tuplesortstate *state, void *tuple,
 					  int tupleindex, bool checkIndex)
 {
-	void  **memtuples;
-	int	   *memtupindex;
-	int		j;
+	void	  **memtuples;
+	int		   *memtupindex;
+	int			j;
 
 	/*
 	 * Make sure memtuples[] can handle another entry.
@@ -1516,14 +1572,15 @@ tuplesort_heap_insert(Tuplesortstate *state, void *tuple,
 	}
 	memtuples = state->memtuples;
 	memtupindex = state->memtupindex;
+
 	/*
-	 * Sift-up the new entry, per Knuth 5.2.3 exercise 16.
-	 * Note that Knuth is using 1-based array indexes, not 0-based.
+	 * Sift-up the new entry, per Knuth 5.2.3 exercise 16. Note that Knuth
+	 * is using 1-based array indexes, not 0-based.
 	 */
 	j = state->memtupcount++;
 	while (j > 0)
 	{
-		int		i = (j-1) >> 1;
+		int			i = (j - 1) >> 1;
 
 		if (HEAPCOMPARE(tuple, tupleindex,
 						memtuples[i], memtupindex[i]) >= 0)
@@ -1543,12 +1600,12 @@ tuplesort_heap_insert(Tuplesortstate *state, void *tuple,
 static void
 tuplesort_heap_siftup(Tuplesortstate *state, bool checkIndex)
 {
-	void  **memtuples = state->memtuples;
-	int	   *memtupindex = state->memtupindex;
-	void   *tuple;
-	int		tupindex,
-			i,
-			n;
+	void	  **memtuples = state->memtuples;
+	int		   *memtupindex = state->memtupindex;
+	void	   *tuple;
+	int			tupindex,
+				i,
+				n;
 
 	if (--state->memtupcount <= 0)
 		return;
@@ -1556,15 +1613,15 @@ tuplesort_heap_siftup(Tuplesortstate *state, bool checkIndex)
 	tuple = memtuples[n];		/* tuple that must be reinserted */
 	tupindex = memtupindex[n];
 	i = 0;						/* i is where the "hole" is */
-    for (;;)
+	for (;;)
 	{
-		int		j = 2*i + 1;
+		int			j = 2 * i + 1;
 
 		if (j >= n)
 			break;
-		if (j+1 < n &&
+		if (j + 1 < n &&
 			HEAPCOMPARE(memtuples[j], memtupindex[j],
-						memtuples[j+1], memtupindex[j+1]) > 0)
+						memtuples[j + 1], memtupindex[j + 1]) > 0)
 			j++;
 		if (HEAPCOMPARE(tuple, tupindex,
 						memtuples[j], memtupindex[j]) <= 0)
@@ -1572,8 +1629,8 @@ tuplesort_heap_siftup(Tuplesortstate *state, bool checkIndex)
 		memtuples[i] = memtuples[j];
 		memtupindex[i] = memtupindex[j];
 		i = j;
-    }
-    memtuples[i] = tuple;
+	}
+	memtuples[i] = tuple;
 	memtupindex[i] = tupindex;
 }
 
@@ -1585,7 +1642,7 @@ tuplesort_heap_siftup(Tuplesortstate *state, bool checkIndex)
 static unsigned int
 getlen(Tuplesortstate *state, int tapenum, bool eofOK)
 {
-	unsigned int	len;
+	unsigned int len;
 
 	if (LogicalTapeRead(state->tapeset, tapenum, (void *) &len,
 						sizeof(len)) != sizeof(len))
@@ -1598,7 +1655,7 @@ getlen(Tuplesortstate *state, int tapenum, bool eofOK)
 static void
 markrunend(Tuplesortstate *state, int tapenum)
 {
-	unsigned int	len = 0;
+	unsigned int len = 0;
 
 	LogicalTapeWrite(state->tapeset, tapenum, (void *) &len, sizeof(len));
 }
@@ -1613,7 +1670,7 @@ qsort_comparetup(const void *a, const void *b)
 {
 	/* The passed pointers are pointers to void * ... */
 
-	return COMPARETUP(qsort_tuplesortstate, * (void **) a, * (void **) b);
+	return COMPARETUP(qsort_tuplesortstate, *(void **) a, *(void **) b);
 }
 
 
@@ -1651,14 +1708,14 @@ comparetup_heap(Tuplesortstate *state, const void *a, const void *b)
 			return -1;
 		else if (scanKey->sk_flags & SK_COMMUTE)
 		{
-			if (!(result = - (int) (*fmgr_faddr(&scanKey->sk_func)) (rattr, lattr)))
+			if (!(result = -(int) (*fmgr_faddr(&scanKey->sk_func)) (rattr, lattr)))
 				result = (int) (*fmgr_faddr(&scanKey->sk_func)) (lattr, rattr);
 			if (result)
 				return result;
 		}
 		else
 		{
-			if (!(result = - (int) (*fmgr_faddr(&scanKey->sk_func)) (lattr, rattr)))
+			if (!(result = -(int) (*fmgr_faddr(&scanKey->sk_func)) (lattr, rattr)))
 				result = (int) (*fmgr_faddr(&scanKey->sk_func)) (rattr, lattr);
 			if (result)
 				return result;
@@ -1684,17 +1741,17 @@ copytup_heap(Tuplesortstate *state, void *tup)
 static void
 writetup_heap(Tuplesortstate *state, int tapenum, void *tup)
 {
-	HeapTuple		tuple = (HeapTuple) tup;
-	unsigned int	tuplen;
+	HeapTuple	tuple = (HeapTuple) tup;
+	unsigned int tuplen;
 
 	tuplen = tuple->t_len + sizeof(tuplen);
 	LogicalTapeWrite(state->tapeset, tapenum,
-					 (void*) &tuplen, sizeof(tuplen));
+					 (void *) &tuplen, sizeof(tuplen));
 	LogicalTapeWrite(state->tapeset, tapenum,
-					 (void*) tuple->t_data, tuple->t_len);
+					 (void *) tuple->t_data, tuple->t_len);
 	if (state->randomAccess)	/* need trailing length word? */
 		LogicalTapeWrite(state->tapeset, tapenum,
-						 (void*) &tuplen, sizeof(tuplen));
+						 (void *) &tuplen, sizeof(tuplen));
 
 	FREEMEM(state, HEAPTUPLESIZE + tuple->t_len);
 	heap_freetuple(tuple);
@@ -1703,8 +1760,8 @@ writetup_heap(Tuplesortstate *state, int tapenum, void *tup)
 static void *
 readtup_heap(Tuplesortstate *state, int tapenum, unsigned int len)
 {
-	unsigned int	tuplen = len - sizeof(unsigned int) + HEAPTUPLESIZE;
-	HeapTuple		tuple = (HeapTuple) palloc(tuplen);
+	unsigned int tuplen = len - sizeof(unsigned int) + HEAPTUPLESIZE;
+	HeapTuple	tuple = (HeapTuple) palloc(tuplen);
 
 	USEMEM(state, tuplen);
 	/* reconstruct the HeapTupleData portion */
@@ -1736,7 +1793,7 @@ tuplesize_heap(Tuplesortstate *state, void *tup)
  * Routines specialized for IndexTuple case
  *
  * NOTE: actually, these are specialized for the btree case; it's not
- * clear whether you could use them for a non-btree index.  Possibly
+ * clear whether you could use them for a non-btree index.	Possibly
  * you'd need to make another set of routines if you needed to sort
  * according to another kind of index.
  */
@@ -1744,9 +1801,10 @@ tuplesize_heap(Tuplesortstate *state, void *tup)
 static int
 comparetup_index(Tuplesortstate *state, const void *a, const void *b)
 {
+
 	/*
-	 * This is almost the same as _bt_tuplecompare(), but we need to
-	 * keep track of whether any null fields are present.
+	 * This is almost the same as _bt_tuplecompare(), but we need to keep
+	 * track of whether any null fields are present.
 	 */
 	IndexTuple	tuple1 = (IndexTuple) a;
 	IndexTuple	tuple2 = (IndexTuple) b;
@@ -1793,7 +1851,8 @@ comparetup_index(Tuplesortstate *state, const void *a, const void *b)
 		}
 
 		if (compare != 0)
-			return (int) compare; /* done when we find unequal attributes */
+			return (int) compare;		/* done when we find unequal
+										 * attributes */
 	}
 
 	/*
@@ -1801,9 +1860,9 @@ comparetup_index(Tuplesortstate *state, const void *a, const void *b)
 	 * tuples are detected (unless there was at least one NULL field).
 	 *
 	 * It is sufficient to make the test here, because if two tuples are
-	 * equal they *must* get compared at some stage of the sort --- otherwise
-	 * the sort algorithm wouldn't have checked whether one must appear
-	 * before the other.
+	 * equal they *must* get compared at some stage of the sort ---
+	 * otherwise the sort algorithm wouldn't have checked whether one must
+	 * appear before the other.
 	 */
 	if (state->enforceUnique && !equal_hasnull)
 		elog(ERROR, "Cannot create unique index. Table contains non-unique values");
@@ -1814,9 +1873,9 @@ comparetup_index(Tuplesortstate *state, const void *a, const void *b)
 static void *
 copytup_index(Tuplesortstate *state, void *tup)
 {
-	IndexTuple		tuple = (IndexTuple) tup;
-	unsigned int	tuplen = IndexTupleSize(tuple);
-	IndexTuple		newtuple;
+	IndexTuple	tuple = (IndexTuple) tup;
+	unsigned int tuplen = IndexTupleSize(tuple);
+	IndexTuple	newtuple;
 
 	USEMEM(state, tuplen);
 	newtuple = (IndexTuple) palloc(tuplen);
@@ -1828,17 +1887,17 @@ copytup_index(Tuplesortstate *state, void *tup)
 static void
 writetup_index(Tuplesortstate *state, int tapenum, void *tup)
 {
-	IndexTuple		tuple = (IndexTuple) tup;
-	unsigned int	tuplen;
+	IndexTuple	tuple = (IndexTuple) tup;
+	unsigned int tuplen;
 
 	tuplen = IndexTupleSize(tuple) + sizeof(tuplen);
 	LogicalTapeWrite(state->tapeset, tapenum,
-					 (void*) &tuplen, sizeof(tuplen));
+					 (void *) &tuplen, sizeof(tuplen));
 	LogicalTapeWrite(state->tapeset, tapenum,
-					 (void*) tuple, IndexTupleSize(tuple));
+					 (void *) tuple, IndexTupleSize(tuple));
 	if (state->randomAccess)	/* need trailing length word? */
 		LogicalTapeWrite(state->tapeset, tapenum,
-						 (void*) &tuplen, sizeof(tuplen));
+						 (void *) &tuplen, sizeof(tuplen));
 
 	FREEMEM(state, IndexTupleSize(tuple));
 	pfree(tuple);
@@ -1847,8 +1906,8 @@ writetup_index(Tuplesortstate *state, int tapenum, void *tup)
 static void *
 readtup_index(Tuplesortstate *state, int tapenum, unsigned int len)
 {
-	unsigned int	tuplen = len - sizeof(unsigned int);
-	IndexTuple		tuple = (IndexTuple) palloc(tuplen);
+	unsigned int tuplen = len - sizeof(unsigned int);
+	IndexTuple	tuple = (IndexTuple) palloc(tuplen);
 
 	USEMEM(state, tuplen);
 	if (LogicalTapeRead(state->tapeset, tapenum, (void *) tuple,
@@ -1864,8 +1923,8 @@ readtup_index(Tuplesortstate *state, int tapenum, unsigned int len)
 static unsigned int
 tuplesize_index(Tuplesortstate *state, void *tup)
 {
-	IndexTuple		tuple = (IndexTuple) tup;
-	unsigned int	tuplen = IndexTupleSize(tuple);
+	IndexTuple	tuple = (IndexTuple) tup;
+	unsigned int tuplen = IndexTupleSize(tuple);
 
 	return tuplen;
 }
@@ -1891,10 +1950,10 @@ comparetup_datum(Tuplesortstate *state, const void *a, const void *b)
 		return -1;
 	else
 	{
-		int		result;
+		int			result;
 
-		if (!(result = - (int) (*fmgr_faddr(&state->sortOpFn)) (ltup->val,
-																rtup->val)))
+		if (!(result = -(int) (*fmgr_faddr(&state->sortOpFn)) (ltup->val,
+															 rtup->val)))
 			result = (int) (*fmgr_faddr(&state->sortOpFn)) (rtup->val,
 															ltup->val);
 		return result;
@@ -1912,17 +1971,17 @@ copytup_datum(Tuplesortstate *state, void *tup)
 static void
 writetup_datum(Tuplesortstate *state, int tapenum, void *tup)
 {
-	DatumTuple	   *tuple = (DatumTuple *) tup;
-	unsigned int	tuplen = tuplesize_datum(state, tup);
-	unsigned int	writtenlen = tuplen + sizeof(unsigned int);
+	DatumTuple *tuple = (DatumTuple *) tup;
+	unsigned int tuplen = tuplesize_datum(state, tup);
+	unsigned int writtenlen = tuplen + sizeof(unsigned int);
 
 	LogicalTapeWrite(state->tapeset, tapenum,
-					 (void*) &writtenlen, sizeof(writtenlen));
+					 (void *) &writtenlen, sizeof(writtenlen));
 	LogicalTapeWrite(state->tapeset, tapenum,
-					 (void*) tuple, tuplen);
+					 (void *) tuple, tuplen);
 	if (state->randomAccess)	/* need trailing length word? */
 		LogicalTapeWrite(state->tapeset, tapenum,
-						 (void*) &writtenlen, sizeof(writtenlen));
+						 (void *) &writtenlen, sizeof(writtenlen));
 
 	FREEMEM(state, tuplen);
 	pfree(tuple);
@@ -1931,8 +1990,8 @@ writetup_datum(Tuplesortstate *state, int tapenum, void *tup)
 static void *
 readtup_datum(Tuplesortstate *state, int tapenum, unsigned int len)
 {
-	unsigned int	tuplen = len - sizeof(unsigned int);
-	DatumTuple	   *tuple = (DatumTuple *) palloc(tuplen);
+	unsigned int tuplen = len - sizeof(unsigned int);
+	DatumTuple *tuple = (DatumTuple *) palloc(tuplen);
 
 	USEMEM(state, tuplen);
 	if (LogicalTapeRead(state->tapeset, tapenum, (void *) tuple,
@@ -1952,16 +2011,14 @@ readtup_datum(Tuplesortstate *state, int tapenum, unsigned int len)
 static unsigned int
 tuplesize_datum(Tuplesortstate *state, void *tup)
 {
-	DatumTuple	   *tuple = (DatumTuple *) tup;
+	DatumTuple *tuple = (DatumTuple *) tup;
 
 	if (tuple->isNull || state->datumTypeByVal)
-	{
 		return (unsigned int) sizeof(DatumTuple);
-	}
 	else
 	{
-		int		datalen = state->datumTypeLen;
-		int		tuplelen;
+		int			datalen = state->datumTypeLen;
+		int			tuplelen;
 
 		if (datalen == -1)		/* variable length type? */
 			datalen = VARSIZE((struct varlena *) DatumGetPointer(tuple->val));

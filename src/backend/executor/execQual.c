@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/executor/execQual.c,v 1.68 2000/02/20 21:32:04 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/executor/execQual.c,v 1.69 2000/04/12 17:15:08 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -108,12 +108,14 @@ ExecEvalArrayRef(ArrayRef *arrayRef,
 	}
 	else
 	{
-		/* Null refexpr indicates we are doing an INSERT into an array column.
-		 * For now, we just take the refassgnexpr (which the parser will have
-		 * ensured is an array value) and return it as-is, ignoring any
-		 * subscripts that may have been supplied in the INSERT column list.
-		 * This is a kluge, but it's not real clear what the semantics ought
-		 * to be...
+
+		/*
+		 * Null refexpr indicates we are doing an INSERT into an array
+		 * column. For now, we just take the refassgnexpr (which the
+		 * parser will have ensured is an array value) and return it
+		 * as-is, ignoring any subscripts that may have been supplied in
+		 * the INSERT column list. This is a kluge, but it's not real
+		 * clear what the semantics ought to be...
 		 */
 		array_scanner = NULL;
 	}
@@ -153,16 +155,15 @@ ExecEvalArrayRef(ArrayRef *arrayRef,
 		lIndex = lower.indx;
 	}
 	else
-	{
 		lIndex = NULL;
-	}
 
 	if (arrayRef->refassgnexpr != NULL)
 	{
-		Datum sourceData = ExecEvalExpr(arrayRef->refassgnexpr,
-										econtext,
-										isNull,
-										&dummy);
+		Datum		sourceData = ExecEvalExpr(arrayRef->refassgnexpr,
+											  econtext,
+											  isNull,
+											  &dummy);
+
 		if (*isNull)
 			return (Datum) NULL;
 
@@ -209,7 +210,7 @@ ExecEvalArrayRef(ArrayRef *arrayRef,
 static Datum
 ExecEvalAggref(Aggref *aggref, ExprContext *econtext, bool *isNull)
 {
-	if (econtext->ecxt_aggvalues == NULL) /* safety check */
+	if (econtext->ecxt_aggvalues == NULL)		/* safety check */
 		elog(ERROR, "ExecEvalAggref: no aggregates in this expression context");
 
 	*isNull = econtext->ecxt_aggnulls[aggref->aggno];
@@ -281,7 +282,7 @@ ExecEvalVar(Var *variable, ExprContext *econtext, bool *isNull)
 	Assert(attnum <= 0 ||
 		   (attnum - 1 <= tuple_type->natts - 1 &&
 			tuple_type->attrs[attnum - 1] != NULL &&
-			variable->vartype == tuple_type->attrs[attnum - 1]->atttypid));
+		  variable->vartype == tuple_type->attrs[attnum - 1]->atttypid));
 
 	/*
 	 * If the attribute number is invalid, then we are supposed to return
@@ -633,7 +634,7 @@ ExecEvalFuncArgs(FunctionCachePtr fcache,
 		 */
 		argV[i] = ExecEvalExpr((Node *) lfirst(arg),
 							   econtext,
-							   & nullVect[i],
+							   &nullVect[i],
 							   argIsDone);
 
 		if (!(*argIsDone))
@@ -779,9 +780,9 @@ ExecMakeFunctionResult(Node *node,
 			result = postquel_function(funcNode, (char **) argV,
 									   isNull, isDone);
 
-			if (! *isDone)
+			if (!*isDone)
 				break;			/* got a result from current argument */
-			if (! fcache->hasSetArg)
+			if (!fcache->hasSetArg)
 				break;			/* input not a set, so done */
 
 			/* OK, get the next argument... */
@@ -789,7 +790,11 @@ ExecMakeFunctionResult(Node *node,
 
 			if (argDone)
 			{
-				/* End of arguments, so reset the setArg flag and say "Done" */
+
+				/*
+				 * End of arguments, so reset the setArg flag and say
+				 * "Done"
+				 */
 				fcache->setArg = (char *) NULL;
 				fcache->hasSetArg = false;
 				*isDone = true;
@@ -797,7 +802,8 @@ ExecMakeFunctionResult(Node *node,
 				break;
 			}
 
-			/* If we reach here, loop around to run the function on the
+			/*
+			 * If we reach here, loop around to run the function on the
 			 * new argument.
 			 */
 		}
@@ -1003,20 +1009,22 @@ ExecEvalOr(Expr *orExpr, ExprContext *econtext, bool *isNull)
 	AnyNull = false;
 
 	/*
-	 * If any of the clauses is TRUE, the OR result is TRUE regardless
-	 * of the states of the rest of the clauses, so we can stop evaluating
+	 * If any of the clauses is TRUE, the OR result is TRUE regardless of
+	 * the states of the rest of the clauses, so we can stop evaluating
 	 * and return TRUE immediately.  If none are TRUE and one or more is
 	 * NULL, we return NULL; otherwise we return FALSE.  This makes sense
 	 * when you interpret NULL as "don't know": if we have a TRUE then the
 	 * OR is TRUE even if we aren't sure about some of the other inputs.
 	 * If all the known inputs are FALSE, but we have one or more "don't
 	 * knows", then we have to report that we "don't know" what the OR's
-	 * result should be --- perhaps one of the "don't knows" would have been
-	 * TRUE if we'd known its value.  Only when all the inputs are known
-	 * to be FALSE can we state confidently that the OR's result is FALSE.
+	 * result should be --- perhaps one of the "don't knows" would have
+	 * been TRUE if we'd known its value.  Only when all the inputs are
+	 * known to be FALSE can we state confidently that the OR's result is
+	 * FALSE.
 	 */
 	foreach(clause, clauses)
 	{
+
 		/*
 		 * We don't iterate over sets in the quals, so pass in an isDone
 		 * flag, but ignore it.
@@ -1025,6 +1033,7 @@ ExecEvalOr(Expr *orExpr, ExprContext *econtext, bool *isNull)
 									econtext,
 									isNull,
 									&isDone);
+
 		/*
 		 * if we have a non-null true result, then return it.
 		 */
@@ -1059,12 +1068,13 @@ ExecEvalAnd(Expr *andExpr, ExprContext *econtext, bool *isNull)
 	 * If any of the clauses is FALSE, the AND result is FALSE regardless
 	 * of the states of the rest of the clauses, so we can stop evaluating
 	 * and return FALSE immediately.  If none are FALSE and one or more is
-	 * NULL, we return NULL; otherwise we return TRUE.  This makes sense
+	 * NULL, we return NULL; otherwise we return TRUE.	This makes sense
 	 * when you interpret NULL as "don't know", using the same sort of
 	 * reasoning as for OR, above.
 	 */
 	foreach(clause, clauses)
 	{
+
 		/*
 		 * We don't iterate over sets in the quals, so pass in an isDone
 		 * flag, but ignore it.
@@ -1073,6 +1083,7 @@ ExecEvalAnd(Expr *andExpr, ExprContext *econtext, bool *isNull)
 									econtext,
 									isNull,
 									&isDone);
+
 		/*
 		 * if we have a non-null false result, then return it.
 		 */
@@ -1084,7 +1095,7 @@ ExecEvalAnd(Expr *andExpr, ExprContext *econtext, bool *isNull)
 
 	/* AnyNull is true if at least one clause evaluated to NULL */
 	*isNull = AnyNull;
-	return (Datum) (! AnyNull);
+	return (Datum) (!AnyNull);
 }
 
 /* ----------------------------------------------------------------
@@ -1129,7 +1140,7 @@ ExecEvalCase(CaseExpr *caseExpr, ExprContext *econtext, bool *isNull)
 		 * case statement is satisfied.  A NULL result from the test is
 		 * not considered true.
 		 */
-		if (DatumGetInt32(clause_value) != 0 && ! *isNull)
+		if (DatumGetInt32(clause_value) != 0 && !*isNull)
 		{
 			return ExecEvalExpr(wclause->result,
 								econtext,
@@ -1258,7 +1269,7 @@ ExecEvalExpr(Node *expression,
 					default:
 						elog(ERROR, "ExecEvalExpr: unknown expression type %d",
 							 expr->opType);
-						retDatum = 0; /* keep compiler quiet */
+						retDatum = 0;	/* keep compiler quiet */
 						break;
 				}
 				break;
@@ -1332,7 +1343,7 @@ ExecQual(List *qual, ExprContext *econtext, bool resultForNull)
 	IncrProcessed();
 
 	/*
-	 * Evaluate the qual conditions one at a time.  If we find a FALSE
+	 * Evaluate the qual conditions one at a time.	If we find a FALSE
 	 * result, we can stop evaluating and return FALSE --- the AND result
 	 * must be FALSE.  Also, if we find a NULL result when resultForNull
 	 * is FALSE, we can stop and return FALSE --- the AND result must be
@@ -1353,14 +1364,15 @@ ExecQual(List *qual, ExprContext *econtext, bool resultForNull)
 
 		/*
 		 * If there is a null clause, consider the qualification to fail.
-		 * XXX is this still correct for constraints?  It probably shouldn't
-		 * happen at all ...
+		 * XXX is this still correct for constraints?  It probably
+		 * shouldn't happen at all ...
 		 */
 		if (clause == NULL)
 			return false;
+
 		/*
-		 * pass isDone, but ignore it.	We don't iterate over multiple returns
-		 * in the qualifications.
+		 * pass isDone, but ignore it.	We don't iterate over multiple
+		 * returns in the qualifications.
 		 */
 		expr_value = ExecEvalExpr(clause, econtext, &isNull, &isDone);
 
@@ -1429,7 +1441,8 @@ ExecTargetList(List *targetlist,
 	HeapTuple	newTuple;
 	bool		isNull;
 	bool		haveDoneIters;
-	static struct tupleDesc NullTupleDesc; /* we assume this inits to zeroes */
+	static struct tupleDesc NullTupleDesc;		/* we assume this inits to
+												 * zeroes */
 
 	/*
 	 * debugging stuff
@@ -1512,7 +1525,8 @@ ExecTargetList(List *targetlist,
 				if (itemIsDone[resind])
 					haveDoneIters = true;
 				else
-					*isDone = false; /* we have undone Iters in the list */
+					*isDone = false;	/* we have undone Iters in the
+										 * list */
 			}
 		}
 		else
@@ -1571,7 +1585,9 @@ ExecTargetList(List *targetlist,
 	{
 		if (*isDone)
 		{
-			/* all Iters are done, so return a null indicating tlist set
+
+			/*
+			 * all Iters are done, so return a null indicating tlist set
 			 * expansion is complete.
 			 */
 			newTuple = NULL;
@@ -1579,21 +1595,24 @@ ExecTargetList(List *targetlist,
 		}
 		else
 		{
-			/* We have some done and some undone Iters.  Restart the done ones
-			 * so that we can deliver a tuple (if possible).
+
+			/*
+			 * We have some done and some undone Iters.  Restart the done
+			 * ones so that we can deliver a tuple (if possible).
 			 *
 			 * XXX this code is a crock, because it only works for Iters at
-			 * the top level of tlist expressions, and doesn't even work right
-			 * for them: you should get all possible combinations of Iter
-			 * results, but you won't unless the numbers of values returned by
-			 * each are relatively prime.  Should have a mechanism more like
-			 * aggregate functions, where we make a list of all Iters
-			 * contained in the tlist and cycle through their values in a
-			 * methodical fashion.  To do someday; can't get excited about
-			 * fixing a Berkeley feature that's not in SQL92.  (The only
-			 * reason we're doing this much is that we have to be sure all
-			 * the Iters are run to completion, or their subplan executors
-			 * will have unreleased resources, e.g. pinned buffers...)
+			 * the top level of tlist expressions, and doesn't even work
+			 * right for them: you should get all possible combinations of
+			 * Iter results, but you won't unless the numbers of values
+			 * returned by each are relatively prime.  Should have a
+			 * mechanism more like aggregate functions, where we make a
+			 * list of all Iters contained in the tlist and cycle through
+			 * their values in a methodical fashion.  To do someday; can't
+			 * get excited about fixing a Berkeley feature that's not in
+			 * SQL92.  (The only reason we're doing this much is that we
+			 * have to be sure all the Iters are run to completion, or
+			 * their subplan executors will have unreleased resources,
+			 * e.g. pinned buffers...)
 			 */
 			foreach(tl, targetlist)
 			{
@@ -1605,16 +1624,18 @@ ExecTargetList(List *targetlist,
 					resdom = tle->resdom;
 					resind = resdom->resno - 1;
 
-					if (IsA(expr, Iter) && itemIsDone[resind])
+					if (IsA(expr, Iter) &&itemIsDone[resind])
 					{
 						constvalue = (Datum) ExecEvalExpr(expr,
 														  econtext,
 														  &isNull,
-														  &itemIsDone[resind]);
+													&itemIsDone[resind]);
 						if (itemIsDone[resind])
 						{
-							/* Oh dear, this Iter is returning an empty set.
-							 * Guess we can't make a tuple after all.
+
+							/*
+							 * Oh dear, this Iter is returning an empty
+							 * set. Guess we can't make a tuple after all.
 							 */
 							*isDone = true;
 							newTuple = NULL;
@@ -1639,6 +1660,7 @@ ExecTargetList(List *targetlist,
 	newTuple = (HeapTuple) heap_formtuple(targettype, values, null_head);
 
 exit:
+
 	/*
 	 * free the status arrays if we palloc'd them
 	 */

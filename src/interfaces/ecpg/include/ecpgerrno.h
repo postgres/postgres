@@ -14,7 +14,7 @@
 
 /* first we have a set of ecpg messages, they start at 200 */
 #define ECPG_UNSUPPORTED		-200
-#define ECPG_TOO_MANY_ARGUMENTS 	-201
+#define ECPG_TOO_MANY_ARGUMENTS		-201
 #define ECPG_TOO_FEW_ARGUMENTS		-202
 #define ECPG_TOO_MANY_MATCHES		-203
 #define ECPG_INT_FORMAT			-204

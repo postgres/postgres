@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/include/storage/s_lock.h,v 1.69 2000/01/26 05:58:33 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/include/storage/s_lock.h,v 1.70 2000/04/12 17:16:51 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -260,7 +260,7 @@ tas(slock_t *s_lock)
 #else /* i.e. not __osf__ */
 
 #define TAS(lock) tas(lock)
-#define S_UNLOCK(lock) { __asm__("mb"); *(lock) = 0; }
+#define S_UNLOCK(lock) do { __asm__("mb"); *(lock) = 0; } while (0)
 
 static __inline__ int
 tas(volatile slock_t *lock)
@@ -300,10 +300,10 @@ __asm__("	 ldq   $0, %0			   \n\
  */
 
 #define S_UNLOCK(lock) \
-{ \
+do { \
 	volatile slock_t *lock_ = (volatile slock_t *) (lock); \
 	lock_->sema[0] = lock_->sema[1] = lock_->sema[2] = lock_->sema[3] = -1; \
-}
+} while (0)
 
 #define S_LOCK_FREE(lock)	( *(int *) (((long) (lock) + 15) & ~15) != 0)
 

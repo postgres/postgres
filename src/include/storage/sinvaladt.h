@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2000, PostgreSQL, Inc
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Id: sinvaladt.h,v 1.20 2000/01/26 05:58:33 momjian Exp $
+ * $Id: sinvaladt.h,v 1.21 2000/04/12 17:16:52 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -20,7 +20,7 @@
 
 /*
  * The shared cache invalidation manager is responsible for transmitting
- * invalidation messages between backends.  Any message sent by any backend
+ * invalidation messages between backends.	Any message sent by any backend
  * must be delivered to all already-running backends before it can be
  * forgotten.
  *
@@ -35,7 +35,7 @@
  * In reality, the messages are stored in a circular buffer of MAXNUMMESSAGES
  * entries.  We translate MsgNum values into circular-buffer indexes by
  * computing MsgNum % MAXNUMMESSAGES (this should be fast as long as
- * MAXNUMMESSAGES is a constant and a power of 2).  As long as maxMsgNum
+ * MAXNUMMESSAGES is a constant and a power of 2).	As long as maxMsgNum
  * doesn't exceed minMsgNum by more than MAXNUMMESSAGES, we have enough space
  * in the buffer.  If the buffer does overflow, we reset it to empty and
  * force each backend to "reset", ie, discard all its invalidatable state.
@@ -85,16 +85,19 @@ typedef struct ProcState
 /* Shared cache invalidation memory segment */
 typedef struct SISeg
 {
+
 	/*
 	 * General state information
 	 */
 	int			minMsgNum;		/* oldest message still needed */
 	int			maxMsgNum;		/* next message number to be assigned */
 	int			maxBackends;	/* size of procState array */
+
 	/*
 	 * Circular buffer holding shared-inval messages
 	 */
-	SharedInvalidData	buffer[MAXNUMMESSAGES];
+	SharedInvalidData buffer[MAXNUMMESSAGES];
+
 	/*
 	 * Per-backend state info.
 	 *
@@ -106,20 +109,19 @@ typedef struct SISeg
 
 
 extern SISeg *shmInvalBuffer;	/* pointer to the shared buffer segment,
-								 * set by SISegmentAttach()
-								 */
+								 * set by SISegmentAttach() */
 
 
 /*
  * prototypes for functions in sinvaladt.c
  */
-extern int	SISegmentInit(bool createNewSegment, IPCKey key,
-						  int maxBackends);
+extern int SISegmentInit(bool createNewSegment, IPCKey key,
+			  int maxBackends);
 extern int	SIBackendInit(SISeg *segP);
 
 extern bool SIInsertDataEntry(SISeg *segP, SharedInvalidData *data);
-extern int	SIGetDataEntry(SISeg *segP, int backendId,
-						   SharedInvalidData *data);
+extern int SIGetDataEntry(SISeg *segP, int backendId,
+			   SharedInvalidData *data);
 extern void SIDelExpiredDataEntries(SISeg *segP);
 
 #endif	 /* SINVALADT_H */

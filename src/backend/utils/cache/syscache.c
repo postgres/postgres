@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/cache/syscache.c,v 1.49 2000/02/18 09:28:56 inoue Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/cache/syscache.c,v 1.50 2000/04/12 17:15:54 momjian Exp $
  *
  * NOTES
  *	  These routines allow the parser/planner/executor to perform
@@ -57,28 +57,28 @@ typedef HeapTuple (*ScanFunc) ();
 	the list sorted alphabetically and adjust the cache numbers
 	accordingly.
 
-	Add your entry to the cacheinfo[] array below.  All cache lists are
+	Add your entry to the cacheinfo[] array below.	All cache lists are
 	alphabetical, so add it in the proper place.  Specify the relation
-    name, number of arguments, argument names, size of tuple, index lookup
+	name, number of arguments, argument names, size of tuple, index lookup
 	function, and index name.
 
-    In include/catalog/indexing.h, add a define for the number of indexes
-    in the relation, add a define for the index name, add an extern
-    array to hold the index names, define the index lookup function
-    prototype, and use DECLARE_UNIQUE_INDEX to define the index.  Cache
-    lookups return only one row, so the index should be unique.
+	In include/catalog/indexing.h, add a define for the number of indexes
+	in the relation, add a define for the index name, add an extern
+	array to hold the index names, define the index lookup function
+	prototype, and use DECLARE_UNIQUE_INDEX to define the index.  Cache
+	lookups return only one row, so the index should be unique.
 
-    In backend/catalog/indexing.c, initialize the relation array with
-    the index names for the relation, fixed size of relation (or marking
-    first non-fixed length field), and create the index lookup function.
-    Pick one that takes similar arguments and use that one, but keep the
-    function names in the same order as the cache list for clarity.
+	In backend/catalog/indexing.c, initialize the relation array with
+	the index names for the relation, fixed size of relation (or marking
+	first non-fixed length field), and create the index lookup function.
+	Pick one that takes similar arguments and use that one, but keep the
+	function names in the same order as the cache list for clarity.
 
-    Finally, any place your relation gets heap_insert() or
+	Finally, any place your relation gets heap_insert() or
 	heap_update calls, include code to do a CatalogIndexInsert() to update
 	the system indexes.  The heap_* calls do not update indexes.
 
-    bjm 1999/11/22
+	bjm 1999/11/22
 
   ---------------------------------------------------------------------------
 */
@@ -394,10 +394,12 @@ static struct cachedesc cacheinfo[] = {
 	TypeOidIndexScan}
 };
 
-static struct catcache *SysCache[lengthof(cacheinfo)];
+static struct catcache *SysCache[
+								 lengthof(cacheinfo)];
 static int32 SysCacheSize = lengthof(cacheinfo);
-static bool  CacheInitialized = false;
-extern bool  IsCacheInitialized(void)
+static bool CacheInitialized = false;
+extern bool
+IsCacheInitialized(void)
 {
 	return CacheInitialized;
 }
@@ -520,7 +522,7 @@ SearchSysCacheTuple(int cacheId,/* cache selection code */
 	/* temp table name remapping */
 	if (cacheId == RELNAME)
 	{
-		char *nontemp_relname;
+		char	   *nontemp_relname;
 
 		if ((nontemp_relname =
 			 get_temp_rel_by_username(DatumGetPointer(key1))) != NULL)
@@ -549,7 +551,7 @@ SearchSysCacheTuple(int cacheId,/* cache selection code */
  *		SearchSysCacheTupleCopy(), extract a specific attribute.
  *
  * This is equivalent to using heap_getattr() on a tuple fetched
- * from a non-cached relation.  Usually, this is only used for attributes
+ * from a non-cached relation.	Usually, this is only used for attributes
  * that could be NULL or variable length; the fixed-size attributes in
  * a system table are accessed just by mapping the tuple onto the C struct
  * declarations from include/catalog/.
@@ -563,17 +565,18 @@ SysCacheGetAttr(int cacheId, HeapTuple tup,
 				AttrNumber attributeNumber,
 				bool *isnull)
 {
+
 	/*
-	 * We just need to get the TupleDesc out of the cache entry,
-	 * and then we can apply heap_getattr().  We expect that the cache
-	 * control data is currently valid --- if the caller just fetched
-	 * the tuple, then it should be.
+	 * We just need to get the TupleDesc out of the cache entry, and then
+	 * we can apply heap_getattr().  We expect that the cache control data
+	 * is currently valid --- if the caller just fetched the tuple, then
+	 * it should be.
 	 */
 	if (cacheId < 0 || cacheId >= SysCacheSize)
 		elog(ERROR, "SysCacheGetAttr: Bad cache id %d", cacheId);
-	if (! PointerIsValid(SysCache[cacheId]) ||
+	if (!PointerIsValid(SysCache[cacheId]) ||
 		SysCache[cacheId]->relationId == InvalidOid ||
-		! PointerIsValid(SysCache[cacheId]->cc_tupdesc))
+		!PointerIsValid(SysCache[cacheId]->cc_tupdesc))
 		elog(ERROR, "SysCacheGetAttr: missing cache data for id %d", cacheId);
 
 	return heap_getattr(tup, attributeNumber,

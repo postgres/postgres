@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/error/elog.c,v 1.55 2000/02/13 18:59:50 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/error/elog.c,v 1.56 2000/04/12 17:15:55 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -40,7 +40,7 @@
 extern int	errno;
 extern int	sys_nerr;
 
-extern CommandDest	whereToSendOutput;
+extern CommandDest whereToSendOutput;
 
 #ifdef USE_SYSLOG
 /*
@@ -79,9 +79,10 @@ static int	ElogDebugIndentLevel = 0;
  *--------------------
  */
 void
-elog(int lev, const char *fmt, ...)
+elog(int lev, const char *fmt,...)
 {
 	va_list		ap;
+
 	/*
 	 * The expanded format and final output message are dynamically
 	 * allocated if necessary, but not if they fit in the "reasonable
@@ -95,6 +96,7 @@ elog(int lev, const char *fmt, ...)
 	char		msg_fixedbuf[256];
 	char	   *fmt_buf = fmt_fixedbuf;
 	char	   *msg_buf = msg_fixedbuf;
+
 	/* this buffer is only used if errno has a bogus value: */
 	char		errorstr_buf[32];
 	const char *errorstr;
@@ -103,8 +105,10 @@ elog(int lev, const char *fmt, ...)
 	char	   *bp;
 	int			indent = 0;
 	int			space_needed;
+
 #ifdef USE_SYSLOG
 	int			log_level;
+
 #endif
 	int			len;
 
@@ -160,10 +164,10 @@ elog(int lev, const char *fmt, ...)
 	}
 
 	/*
-	 * Set up the expanded format, consisting of the prefix string
-	 * plus input format, with any %m replaced by strerror() string
-	 * (since vsnprintf won't know what to do with %m).  To keep
-	 * space calculation simple, we only allow one %m.
+	 * Set up the expanded format, consisting of the prefix string plus
+	 * input format, with any %m replaced by strerror() string (since
+	 * vsnprintf won't know what to do with %m).  To keep space
+	 * calculation simple, we only allow one %m.
 	 */
 	space_needed = TIMESTAMP_SIZE + strlen(prefix) + indent + (lineno ? 24 : 0)
 		+ strlen(fmt) + strlen(errorstr) + 1;
@@ -175,7 +179,8 @@ elog(int lev, const char *fmt, ...)
 			/* We're up against it, convert to fatal out-of-memory error */
 			fmt_buf = fmt_fixedbuf;
 			lev = REALLYFATAL;
-			fmt = "elog: out of memory"; /* this must fit in fmt_fixedbuf! */
+			fmt = "elog: out of memory";		/* this must fit in
+												 * fmt_fixedbuf! */
 		}
 	}
 #ifdef ELOG_TIMESTAMPS
@@ -189,10 +194,11 @@ elog(int lev, const char *fmt, ...)
 		*bp++ = ' ';
 
 	/* If error was in CopyFrom() print the offending line number -- dz */
-	if (lineno) {
-	    sprintf(bp, "copy: line %d, ", lineno);
-	    bp = fmt_buf + strlen(fmt_buf);
-	    lineno = 0;
+	if (lineno)
+	{
+		sprintf(bp, "copy: line %d, ", lineno);
+		bp = fmt_buf + strlen(fmt_buf);
+		lineno = 0;
 	}
 
 	for (cp = fmt; *cp; cp++)
@@ -201,15 +207,19 @@ elog(int lev, const char *fmt, ...)
 		{
 			if (cp[1] == 'm')
 			{
-				/* XXX If there are any %'s in errorstr then vsnprintf
-				 * will do the Wrong Thing; do we need to cope?
-				 * Seems unlikely that % would appear in system errors.
+
+				/*
+				 * XXX If there are any %'s in errorstr then vsnprintf
+				 * will do the Wrong Thing; do we need to cope? Seems
+				 * unlikely that % would appear in system errors.
 				 */
 				strcpy(bp, errorstr);
-				/* copy the rest of fmt literally, since we can't
-				 * afford to insert another %m.
+
+				/*
+				 * copy the rest of fmt literally, since we can't afford
+				 * to insert another %m.
 				 */
-				strcat(bp, cp+2);
+				strcat(bp, cp + 2);
 				bp += strlen(bp);
 				break;
 			}
@@ -226,21 +236,22 @@ elog(int lev, const char *fmt, ...)
 	*bp = '\0';
 
 	/*
-	 * Now generate the actual output text using vsnprintf().
-	 * Be sure to leave space for \n added later as well as trailing null.
+	 * Now generate the actual output text using vsnprintf(). Be sure to
+	 * leave space for \n added later as well as trailing null.
 	 */
 	space_needed = sizeof(msg_fixedbuf);
 	for (;;)
 	{
-		int nprinted;
+		int			nprinted;
 
 		va_start(ap, fmt);
 		nprinted = vsnprintf(msg_buf, space_needed - 2, fmt_buf, ap);
 		va_end(ap);
+
 		/*
 		 * Note: some versions of vsnprintf return the number of chars
-		 * actually stored, but at least one returns -1 on failure.
-		 * Be conservative about believing whether the print worked.
+		 * actually stored, but at least one returns -1 on failure. Be
+		 * conservative about believing whether the print worked.
 		 */
 		if (nprinted >= 0 && nprinted < space_needed - 3)
 			break;
@@ -252,8 +263,8 @@ elog(int lev, const char *fmt, ...)
 		if (msg_buf == NULL)
 		{
 			/* We're up against it, convert to fatal out-of-memory error */
-            msg_buf = msg_fixedbuf;
-            lev = REALLYFATAL;
+			msg_buf = msg_fixedbuf;
+			lev = REALLYFATAL;
 #ifdef ELOG_TIMESTAMPS
 			strcpy(msg_buf, tprintf_timestamp());
 			strcat(msg_buf, "FATAL:  elog: out of memory");
@@ -307,7 +318,7 @@ elog(int lev, const char *fmt, ...)
 	 * then writing here can cause this backend to exit without warning
 	 * that is, write() does an exit(). In this case, our only hope of
 	 * finding out what's going on is if Err_file was set to some disk
-	 * log.  This is a major pain.  (It's probably also long-dead code...
+	 * log.  This is a major pain.	(It's probably also long-dead code...
 	 * does anyone still use ultrix?)
 	 */
 	if (lev > DEBUG && Err_file >= 0 &&
@@ -332,6 +343,7 @@ elog(int lev, const char *fmt, ...)
 			msgtype = 'N';
 		else
 		{
+
 			/*
 			 * Abort any COPY OUT in progress when an error is detected.
 			 * This hack is necessary because of poor design of copy
@@ -357,8 +369,10 @@ elog(int lev, const char *fmt, ...)
 
 	if (lev > DEBUG && whereToSendOutput != Remote)
 	{
-		/* We are running as an interactive backend, so just send
-		 * the message to stderr.
+
+		/*
+		 * We are running as an interactive backend, so just send the
+		 * message to stderr.
 		 */
 		fputs(msg_buf, stderr);
 	}
@@ -376,34 +390,37 @@ elog(int lev, const char *fmt, ...)
 	 */
 	if (lev == ERROR || lev == FATAL)
 	{
+
 		/*
 		 * If we have not yet entered the main backend loop (ie, we are in
 		 * the postmaster or in backend startup), then go directly to
 		 * proc_exit.  The same is true if anyone tries to report an error
-		 * after proc_exit has begun to run.  (It's proc_exit's responsibility
-		 * to see that this doesn't turn into infinite recursion!)  But in
-		 * the latter case, we exit with nonzero exit code to indicate that
-		 * something's pretty wrong.
+		 * after proc_exit has begun to run.  (It's proc_exit's
+		 * responsibility to see that this doesn't turn into infinite
+		 * recursion!)	But in the latter case, we exit with nonzero exit
+		 * code to indicate that something's pretty wrong.
 		 */
-		if (proc_exit_inprogress || ! Warn_restart_ready)
+		if (proc_exit_inprogress || !Warn_restart_ready)
 		{
 			fflush(stdout);
 			fflush(stderr);
-			ProcReleaseSpins(NULL); /* get rid of spinlocks we hold */
-			ProcReleaseLocks();		/* get rid of real locks we hold */
+			ProcReleaseSpins(NULL);		/* get rid of spinlocks we hold */
+			ProcReleaseLocks(); /* get rid of real locks we hold */
 			/* XXX shouldn't proc_exit be doing the above?? */
 			proc_exit((int) proc_exit_inprogress);
 		}
+
 		/*
 		 * Guard against infinite loop from elog() during error recovery.
 		 */
 		if (InError)
 			elog(REALLYFATAL, "elog: error during error recovery, giving up!");
 		InError = true;
+
 		/*
-		 * Otherwise we can return to the main loop in postgres.c.
-		 * In the FATAL case, postgres.c will call proc_exit, but not
-		 * till after completing a standard transaction-abort sequence.
+		 * Otherwise we can return to the main loop in postgres.c. In the
+		 * FATAL case, postgres.c will call proc_exit, but not till after
+		 * completing a standard transaction-abort sequence.
 		 */
 		ProcReleaseSpins(NULL); /* get rid of spinlocks we hold */
 		if (lev == FATAL)
@@ -413,19 +430,20 @@ elog(int lev, const char *fmt, ...)
 
 	if (lev > FATAL)
 	{
+
 		/*
-		 * Serious crash time. Postmaster will observe nonzero
-		 * process exit status and kill the other backends too.
+		 * Serious crash time. Postmaster will observe nonzero process
+		 * exit status and kill the other backends too.
 		 *
-		 * XXX: what if we are *in* the postmaster?  proc_exit()
-		 * won't kill our children...
+		 * XXX: what if we are *in* the postmaster?  proc_exit() won't kill
+		 * our children...
 		 */
 		fflush(stdout);
 		fflush(stderr);
 		proc_exit(lev);
 	}
 
-	/* We reach here if lev <= NOTICE.  OK to return to caller. */
+	/* We reach here if lev <= NOTICE.	OK to return to caller. */
 }
 
 #ifndef PG_STANDALONE

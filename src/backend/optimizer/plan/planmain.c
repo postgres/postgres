@@ -14,7 +14,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/optimizer/plan/planmain.c,v 1.54 2000/03/24 21:40:43 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/optimizer/plan/planmain.c,v 1.55 2000/04/12 17:15:22 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -31,7 +31,7 @@
 
 
 static Plan *subplanner(Query *root, List *flat_tlist, List *qual,
-						double tuple_fraction);
+		   double tuple_fraction);
 
 
 /*--------------------
@@ -55,12 +55,12 @@ static Plan *subplanner(Query *root, List *flat_tlist, List *qual,
  * Query field and not a passed parameter is that the low-level routines
  * in indxpath.c need to see it.)  The pathkeys value passed to query_planner
  * has not yet been "canonicalized", since the necessary info does not get
- * computed until subplanner() scans the qual clauses.  We canonicalize it
+ * computed until subplanner() scans the qual clauses.	We canonicalize it
  * inside subplanner() as soon as that task is done.  The output value
  * will be in canonical form as well.
  *
  * tuple_fraction is interpreted as follows:
- *    0 (or less): expect all tuples to be retrieved (normal case)
+ *	  0 (or less): expect all tuples to be retrieved (normal case)
  *	  0 < tuple_fraction < 1: expect the given fraction of tuples available
  *		from the plan to be retrieved
  *	  tuple_fraction >= 1: tuple_fraction is the absolute number of tuples
@@ -91,7 +91,7 @@ query_planner(Query *root,
 		if (root->commandType != CMD_SELECT)
 			elog(ERROR, "Empty range table for non-SELECT query");
 
-		root->query_pathkeys = NIL; /* signal unordered result */
+		root->query_pathkeys = NIL;		/* signal unordered result */
 
 		/* Make childless Result node to evaluate given tlist. */
 		return (Plan *) make_result(tlist, (Node *) qual, (Plan *) NULL);
@@ -115,8 +115,8 @@ query_planner(Query *root,
 	 *
 	 * All subplan nodes will have "flat" (var-only) tlists.
 	 *
-	 * This implies that all expression evaluations are done at the root
-	 * of the plan tree.  Once upon a time there was code to try to push
+	 * This implies that all expression evaluations are done at the root of
+	 * the plan tree.  Once upon a time there was code to try to push
 	 * expensive function calls down to lower plan nodes, but that's dead
 	 * code and has been for a long time...
 	 */
@@ -132,9 +132,10 @@ query_planner(Query *root,
 	 */
 	if (constant_qual)
 	{
+
 		/*
-		 * The result node will also be responsible for evaluating
-		 * the originally requested tlist.
+		 * The result node will also be responsible for evaluating the
+		 * originally requested tlist.
 		 */
 		subplan = (Plan *) make_result(tlist,
 									   (Node *) constant_qual,
@@ -142,9 +143,11 @@ query_planner(Query *root,
 	}
 	else
 	{
+
 		/*
 		 * Replace the toplevel plan node's flattened target list with the
-		 * targetlist given by my caller, so that expressions are evaluated.
+		 * targetlist given by my caller, so that expressions are
+		 * evaluated.
 		 */
 		subplan->targetlist = tlist;
 	}
@@ -180,8 +183,9 @@ subplanner(Query *root,
 	 * Initialize the targetlist and qualification, adding entries to
 	 * base_rel_list as relation references are found (e.g., in the
 	 * qualification, the targetlist, etc.).  Restrict and join clauses
-	 * are added to appropriate lists belonging to the mentioned relations,
-	 * and we also build lists of equijoined keys for pathkey construction.
+	 * are added to appropriate lists belonging to the mentioned
+	 * relations, and we also build lists of equijoined keys for pathkey
+	 * construction.
 	 */
 	root->base_rel_list = NIL;
 	root->join_rel_list = NIL;
@@ -192,9 +196,9 @@ subplanner(Query *root,
 	add_missing_rels_to_query(root);
 
 	/*
-	 * We should now have all the pathkey equivalence sets built,
-	 * so it's now possible to convert the requested query_pathkeys
-	 * to canonical form.
+	 * We should now have all the pathkey equivalence sets built, so it's
+	 * now possible to convert the requested query_pathkeys to canonical
+	 * form.
 	 */
 	root->query_pathkeys = canonicalize_pathkeys(root, root->query_pathkeys);
 
@@ -203,20 +207,22 @@ subplanner(Query *root,
 	 */
 	final_rel = make_one_rel(root);
 
-	if (! final_rel)
+	if (!final_rel)
 	{
+
 		/*
 		 * We expect to end up here for a trivial INSERT ... VALUES query
-		 * (which will have a target relation, so it gets past query_planner's
-		 * check for empty range table; but the target rel is unreferenced
-		 * and not marked inJoinSet, so we find there is nothing to join).
-		 * 
+		 * (which will have a target relation, so it gets past
+		 * query_planner's check for empty range table; but the target rel
+		 * is unreferenced and not marked inJoinSet, so we find there is
+		 * nothing to join).
+		 *
 		 * It's also possible to get here if the query was rewritten by the
-		 * rule processor (creating rangetable entries not marked inJoinSet)
-		 * but the rules either did nothing or were simplified to nothing
-		 * by constant-expression folding.  So, don't complain.
+		 * rule processor (creating rangetable entries not marked
+		 * inJoinSet) but the rules either did nothing or were simplified
+		 * to nothing by constant-expression folding.  So, don't complain.
 		 */
-		root->query_pathkeys = NIL; /* signal unordered result */
+		root->query_pathkeys = NIL;		/* signal unordered result */
 
 		/* Make childless Result node to evaluate given tlist. */
 		return (Plan *) make_result(flat_tlist, (Node *) qual, (Plan *) NULL);
@@ -246,16 +252,16 @@ subplanner(Query *root,
 #endif
 
 	/*
-	 * Now that we have an estimate of the final rel's size, we can convert
-	 * a tuple_fraction specified as an absolute count (ie, a LIMIT option)
-	 * into a fraction of the total tuples.
+	 * Now that we have an estimate of the final rel's size, we can
+	 * convert a tuple_fraction specified as an absolute count (ie, a
+	 * LIMIT option) into a fraction of the total tuples.
 	 */
 	if (tuple_fraction >= 1.0)
 		tuple_fraction /= final_rel->rows;
 
 	/*
 	 * Determine the cheapest path, independently of any ordering
-	 * considerations.  We do, however, take into account whether the
+	 * considerations.	We do, however, take into account whether the
 	 * whole plan is expected to be evaluated or not.
 	 */
 	if (tuple_fraction <= 0.0 || tuple_fraction >= 1.0)
@@ -271,8 +277,8 @@ subplanner(Query *root,
 	/*
 	 * Select the best path and create a subplan to execute it.
 	 *
-	 * If no special sort order is wanted, or if the cheapest path is
-	 * already appropriately ordered, we use the cheapest path found above.
+	 * If no special sort order is wanted, or if the cheapest path is already
+	 * appropriately ordered, we use the cheapest path found above.
 	 */
 	if (root->query_pathkeys == NIL ||
 		pathkeys_contained_in(root->query_pathkeys,
@@ -284,7 +290,8 @@ subplanner(Query *root,
 
 	/*
 	 * Otherwise, look to see if we have an already-ordered path that is
-	 * cheaper than doing an explicit sort on the cheapest-total-cost path.
+	 * cheaper than doing an explicit sort on the cheapest-total-cost
+	 * path.
 	 */
 	cheapestpath = final_rel->cheapest_total_path;
 	presortedpath =
@@ -310,11 +317,11 @@ subplanner(Query *root,
 	}
 
 	/*
-	 * Nothing for it but to sort the cheapest-total-cost path --- but we let
-	 * the caller do that.  union_planner has to be able to add a sort node
-	 * anyway, so no need for extra code here.  (Furthermore, the given
-	 * pathkeys might involve something we can't compute here, such as an
-	 * aggregate function...)
+	 * Nothing for it but to sort the cheapest-total-cost path --- but we
+	 * let the caller do that.	union_planner has to be able to add a sort
+	 * node anyway, so no need for extra code here.  (Furthermore, the
+	 * given pathkeys might involve something we can't compute here, such
+	 * as an aggregate function...)
 	 */
 	root->query_pathkeys = cheapestpath->pathkeys;
 	return create_plan(root, cheapestpath);

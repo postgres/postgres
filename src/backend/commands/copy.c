@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/commands/copy.c,v 1.103 2000/03/23 21:38:58 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/commands/copy.c,v 1.104 2000/04/12 17:14:58 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -64,8 +64,8 @@ static int	CountTuples(Relation relation);
  * Static communication variables ... pretty grotty, but COPY has
  * never been reentrant...
  */
-int		lineno = 0;		/* used by elog() -- dz */
-static bool	fe_eof;
+int			lineno = 0;			/* used by elog() -- dz */
+static bool fe_eof;
 
 /*
  * These static variables are used to avoid incurring overhead for each
@@ -76,9 +76,11 @@ static bool	fe_eof;
  * to attribute_buf's data buffer!
  * encoding, if needed, can be set once at the start of the copy operation.
  */
-static StringInfoData	attribute_buf;
+static StringInfoData attribute_buf;
+
 #ifdef MULTIBYTE
-static int				encoding;
+static int	encoding;
+
 #endif
 
 
@@ -113,11 +115,11 @@ CopySendData(void *databuf, int datasize, FILE *fp)
 			fe_eof = true;
 	}
 	else
-    {
+	{
 		fwrite(databuf, datasize, 1, fp);
-        if (ferror(fp))
-            elog(ERROR, "CopySendData: %s", strerror(errno));
-    }
+		if (ferror(fp))
+			elog(ERROR, "CopySendData: %s", strerror(errno));
+	}
 }
 
 static void
@@ -194,7 +196,8 @@ CopyPeekChar(FILE *fp)
 {
 	if (!fp)
 	{
-		int ch = pq_peekbyte();
+		int			ch = pq_peekbyte();
+
 		if (ch == EOF)
 			fe_eof = true;
 		return ch;
@@ -280,15 +283,15 @@ DoCopy(char *relname, bool binary, bool oids, bool from, bool pipe,
 	 * Open and lock the relation, using the appropriate lock type.
 	 *
 	 * Note: AccessExclusive is probably overkill for copying to a relation,
-	 * but that's what the code grabs on the rel's indices.  If this lock is
-	 * relaxed then I think the index locks need relaxed also.
+	 * but that's what the code grabs on the rel's indices.  If this lock
+	 * is relaxed then I think the index locks need relaxed also.
 	 */
 	rel = heap_openr(relname, (from ? AccessExclusiveLock : AccessShareLock));
 
 	result = pg_aclcheck(relname, UserName, required_access);
 	if (result != ACLCHECK_OK)
 		elog(ERROR, "%s: %s", relname, aclcheck_error_strings[result]);
-    if (!pipe && !superuser())
+	if (!pipe && !superuser())
 		elog(ERROR, "You must have Postgres superuser privilege to do a COPY "
 			 "directly to or from a file.  Anyone can COPY to stdout or "
 			 "from stdin.  Psql's \\copy command also works for anyone.");
@@ -345,13 +348,13 @@ DoCopy(char *relname, bool binary, bool oids, bool from, bool pipe,
 		}
 		else
 		{
-			mode_t		oumask;		/* Pre-existing umask value */
+			mode_t		oumask; /* Pre-existing umask value */
 
-            oumask = umask((mode_t) 022);
+			oumask = umask((mode_t) 022);
 
 			if (*filename != '/')
 				elog(ERROR, "Relative path not allowed for server side"
-							" COPY command.");
+					 " COPY command.");
 
 #ifndef __CYGWIN32__
 			fp = AllocateFile(filename, "w");
@@ -369,9 +372,7 @@ DoCopy(char *relname, bool binary, bool oids, bool from, bool pipe,
 	}
 
 	if (!pipe)
-	{
 		FreeFile(fp);
-	}
 	else if (!from)
 	{
 		if (!binary)
@@ -382,9 +383,10 @@ DoCopy(char *relname, bool binary, bool oids, bool from, bool pipe,
 	pfree(attribute_buf.data);
 
 	/*
-	 * Close the relation.  If reading, we can release the AccessShareLock
-	 * we got; if writing, we should hold the lock until end of transaction
-	 * to ensure that updates will be committed before lock is released.
+	 * Close the relation.	If reading, we can release the AccessShareLock
+	 * we got; if writing, we should hold the lock until end of
+	 * transaction to ensure that updates will be committed before lock is
+	 * released.
 	 */
 	heap_close(rel, (from ? NoLock : AccessShareLock));
 }
@@ -399,9 +401,11 @@ CopyTo(Relation rel, bool binary, bool oids, FILE *fp, char *delim, char *null_p
 
 	int32		attr_count,
 				i;
+
 #ifdef	_DROP_COLUMN_HACK__
-	bool		*valid;
-#endif /* _DROP_COLUMN_HACK__ */
+	bool	   *valid;
+
+#endif	 /* _DROP_COLUMN_HACK__ */
 	Form_pg_attribute *attr;
 	FmgrInfo   *out_functions;
 	Oid			out_func_oid;
@@ -435,7 +439,7 @@ CopyTo(Relation rel, bool binary, bool oids, FILE *fp, char *delim, char *null_p
 		typmod = (int32 *) palloc(attr_count * sizeof(int32));
 #ifdef	_DROP_COLUMN_HACK__
 		valid = (bool *) palloc(attr_count * sizeof(bool));
-#endif /* _DROP_COLUMN_HACK__ */
+#endif	 /* _DROP_COLUMN_HACK__ */
 		for (i = 0; i < attr_count; i++)
 		{
 #ifdef	_DROP_COLUMN_HACK__
@@ -446,7 +450,7 @@ CopyTo(Relation rel, bool binary, bool oids, FILE *fp, char *delim, char *null_p
 			}
 			else
 				valid[i] = true;
-#endif /* _DROP_COLUMN_HACK__ */
+#endif	 /* _DROP_COLUMN_HACK__ */
 			out_func_oid = (Oid) GetOutputFunction(attr[i]->atttypid);
 			fmgr_info(out_func_oid, &out_functions[i]);
 			elements[i] = GetTypeElement(attr[i]->atttypid);
@@ -493,7 +497,7 @@ CopyTo(Relation rel, bool binary, bool oids, FILE *fp, char *delim, char *null_p
 						CopySendChar('\n', fp);
 					continue;
 				}
-#endif /* _DROP_COLUMN_HACK__ */
+#endif	 /* _DROP_COLUMN_HACK__ */
 				if (!isnull)
 				{
 					string = (char *) (*fmgr_faddr(&out_functions[i]))
@@ -502,7 +506,7 @@ CopyTo(Relation rel, bool binary, bool oids, FILE *fp, char *delim, char *null_p
 					pfree(string);
 				}
 				else
-					CopySendString(null_print, fp);	/* null indicator */
+					CopySendString(null_print, fp);		/* null indicator */
 
 				if (i == attr_count - 1)
 					CopySendChar('\n', fp);
@@ -723,7 +727,7 @@ CopyFrom(Relation rel, bool binary, bool oids, FILE *fp, char *delim, char *null
 #ifdef	_DROP_COLUMN_HACK__
 			if (COLUMN_IS_DROPPED(attr[i]))
 				continue;
-#endif /* _DROP_COLUMN_HACK__ */
+#endif	 /* _DROP_COLUMN_HACK__ */
 			in_func_oid = (Oid) GetInputFunction(attr[i]->atttypid);
 			fmgr_info(in_func_oid, &in_functions[i]);
 			elements[i] = GetTypeElement(attr[i]->atttypid);
@@ -756,7 +760,7 @@ CopyFrom(Relation rel, bool binary, bool oids, FILE *fp, char *delim, char *null
 			byval[i] = 'n';
 			continue;
 		}
-#endif /* _DROP_COLUMN_HACK__ */
+#endif	 /* _DROP_COLUMN_HACK__ */
 		byval[i] = (bool) IsTypeByVal(attr[i]->atttypid);
 	}
 
@@ -765,7 +769,8 @@ CopyFrom(Relation rel, bool binary, bool oids, FILE *fp, char *delim, char *null
 
 	while (!done)
 	{
-		if (QueryCancel) {
+		if (QueryCancel)
+		{
 			lineno = 0;
 			CancelQuery();
 		}
@@ -796,7 +801,7 @@ CopyFrom(Relation rel, bool binary, bool oids, FILE *fp, char *delim, char *null
 					nulls[i] = 'n';
 					continue;
 				}
-#endif /* _DROP_COLUMN_HACK__ */
+#endif	 /* _DROP_COLUMN_HACK__ */
 				string = CopyReadAttribute(fp, &isnull, delim, &newline, null_print);
 				if (isnull)
 				{
@@ -937,7 +942,7 @@ CopyFrom(Relation rel, bool binary, bool oids, FILE *fp, char *delim, char *null
 						 */
 						slot->val = tuple;
 						/* SetSlotContents(slot, tuple); */
-						if (! ExecQual((List *) indexPred[i], econtext, false))
+						if (!ExecQual((List *) indexPred[i], econtext, false))
 							continue;
 #endif	 /* OMIT_PARTIAL_INDEX */
 					}
@@ -1189,6 +1194,7 @@ static char *
 CopyReadAttribute(FILE *fp, bool *isnull, char *delim, int *newline, char *null_print)
 {
 	int			c;
+
 #ifdef MULTIBYTE
 	int			mblen;
 	unsigned char s[2];
@@ -1222,9 +1228,7 @@ CopyReadAttribute(FILE *fp, bool *isnull, char *delim, int *newline, char *null_
 			break;
 		}
 		if (strchr(delim, c))
-		{
 			break;
-		}
 		if (c == '\\')
 		{
 			c = CopyGetChar(fp);
@@ -1272,13 +1276,16 @@ CopyReadAttribute(FILE *fp, bool *isnull, char *delim, int *newline, char *null_
 						c = val & 0377;
 					}
 					break;
-                    /* This is a special hack to parse `\N' as <backslash-N>
-                       rather then just 'N' to provide compatibility with
-                       the default NULL output. -- pe */
-                case 'N':
-                    appendStringInfoCharMacro(&attribute_buf, '\\');
-                    c = 'N';
-                    break;
+
+					/*
+					 * This is a special hack to parse `\N' as
+					 * <backslash-N> rather then just 'N' to provide
+					 * compatibility with the default NULL output. -- pe
+					 */
+				case 'N':
+					appendStringInfoCharMacro(&attribute_buf, '\\');
+					c = 'N';
+					break;
 				case 'b':
 					c = '\b';
 					break;
@@ -1332,8 +1339,8 @@ CopyReadAttribute(FILE *fp, bool *isnull, char *delim, int *newline, char *null_
 	}
 #endif
 
-    if (strcmp(attribute_buf.data, null_print)==0)
-        *isnull = true;
+	if (strcmp(attribute_buf.data, null_print) == 0)
+		*isnull = true;
 
 	return attribute_buf.data;
 
@@ -1346,10 +1353,12 @@ CopyAttributeOut(FILE *fp, char *server_string, char *delim)
 {
 	char	   *string;
 	char		c;
+
 #ifdef MULTIBYTE
 	char	   *string_start;
 	int			mblen;
 	int			i;
+
 #endif
 
 #ifdef MULTIBYTE

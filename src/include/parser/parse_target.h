@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2000, PostgreSQL, Inc
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Id: parse_target.h,v 1.18 2000/01/26 05:58:27 momjian Exp $
+ * $Id: parse_target.h,v 1.19 2000/04/12 17:16:45 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -18,14 +18,14 @@
 
 extern List *transformTargetList(ParseState *pstate, List *targetlist);
 extern TargetEntry *transformTargetEntry(ParseState *pstate,
-										 Node *node, Node *expr,
-										 char *colname, bool resjunk);
+					 Node *node, Node *expr,
+					 char *colname, bool resjunk);
 extern void updateTargetListEntry(ParseState *pstate, TargetEntry *tle,
-								  char *colname, int attrno,
-								  List *indirection);
+					  char *colname, int attrno,
+					  List *indirection);
 extern Node *CoerceTargetExpr(ParseState *pstate, Node *expr,
-							  Oid type_id, Oid attrtype, int32 attrtypmod);
+				 Oid type_id, Oid attrtype, int32 attrtypmod);
 extern List *checkInsertTargets(ParseState *pstate, List *cols,
-								List **attrnos);
+				   List **attrnos);
 
 #endif	 /* PARSE_TARGET_H */

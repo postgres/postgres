@@ -152,7 +152,7 @@ typedef struct GISTENTRY
 ** macro to initialize a GISTENTRY
 */
 #define gistentryinit(e, pr, r, pg, o, b, l)\
-   {(e).pred = pr; (e).rel = r; (e).page = pg; (e).offset = o; (e).bytes = b; (e).leafkey = l;}
+   do {(e).pred = pr; (e).rel = r; (e).page = pg; (e).offset = o; (e).bytes = b; (e).leafkey = l;} while (0)
 
 /* defined in gist.c */
 #define TRLOWER(tr) (((tr)->bytes))

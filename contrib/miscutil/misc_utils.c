@@ -38,6 +38,7 @@ extern int	assertTest(int val);
 
 #ifdef ASSERT_CHECKING_TEST
 extern int	assertEnable(int val);
+
 #endif
 
 int
@@ -84,7 +85,8 @@ active_listeners(text *relname)
 	ScanKeyData key;
 	Datum		d;
 	bool		isnull;
-	int			len, pid;
+	int			len,
+				pid;
 	int			count = 0;
 	int			ourpid = getpid();
 	char		listen_name[NAMEDATALEN];
@@ -92,8 +94,9 @@ active_listeners(text *relname)
 	lRel = heap_openr(ListenerRelationName, AccessShareLock);
 	tdesc = RelationGetDescr(lRel);
 
-	if (relname && (VARSIZE(relname) > VARHDRSZ)) {
-		len = MIN(VARSIZE(relname)-VARHDRSZ, NAMEDATALEN-1);
+	if (relname && (VARSIZE(relname) > VARHDRSZ))
+	{
+		len = MIN(VARSIZE(relname) - VARHDRSZ, NAMEDATALEN - 1);
 		strncpy(listen_name, VARDATA(relname), len);
 		listen_name[len] = '\0';
 		ScanKeyEntryInitialize(&key, 0,
@@ -101,15 +104,16 @@ active_listeners(text *relname)
 							   F_NAMEEQ,
 							   PointerGetDatum(listen_name));
 		sRel = heap_beginscan(lRel, 0, SnapshotNow, 1, &key);
-	} else {
-		sRel = heap_beginscan(lRel, 0, SnapshotNow, 0, (ScanKey)NULL);
 	}
+	else
+		sRel = heap_beginscan(lRel, 0, SnapshotNow, 0, (ScanKey) NULL);
 
 	while (HeapTupleIsValid(lTuple = heap_getnext(sRel, 0)))
 	{
 		d = heap_getattr(lTuple, Anum_pg_listener_pid, tdesc, &isnull);
 		pid = DatumGetInt32(d);
-		if ((pid == ourpid) || (kill(pid, SIGTSTP) == 0)) {
+		if ((pid == ourpid) || (kill(pid, SIGTSTP) == 0))
+		{
 			/* elog(NOTICE, "%d ok", pid); */
 			count++;
 		}
@@ -134,6 +138,7 @@ assert_test(int val)
 {
 	return assertTest(val);
 }
+
 #endif
 #endif
 
@@ -141,8 +146,8 @@ assert_test(int val)
 
 /*
  * Local Variables:
- *  tab-width: 4
- *  c-indent-level: 4
- *  c-basic-offset: 4
+ *	tab-width: 4
+ *	c-indent-level: 4
+ *	c-basic-offset: 4
  * End:
  */

@@ -9,7 +9,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/commands/variable.c,v 1.33 2000/04/07 13:39:24 thomas Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/commands/variable.c,v 1.34 2000/04/12 17:15:00 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -436,7 +436,7 @@ parse_geqo(char *value)
 
 	if (strcasecmp(tok, "on") == 0)
 	{
-		int		new_geqo_rels = GEQO_RELS;
+		int			new_geqo_rels = GEQO_RELS;
 
 		if (val != NULL)
 		{
@@ -505,7 +505,7 @@ static bool
 show_effective_cache_size()
 {
 	elog(NOTICE, "EFFECTIVE_CACHE_SIZE is %g (%dK pages)",
-		 effective_cache_size, BLCKSZ/1024);
+		 effective_cache_size, BLCKSZ / 1024);
 	return TRUE;
 }
 
@@ -656,12 +656,12 @@ reset_cpu_operator_cost()
  * DATE_STYLE
  *
  * NOTE: set_default_datestyle() is called during backend startup to check
- * if the PGDATESTYLE environment variable is set.  We want the env var
+ * if the PGDATESTYLE environment variable is set.	We want the env var
  * to determine the value that "RESET DateStyle" will reset to!
  */
 
 /* These get initialized from the "master" values in init/globals.c */
-static int DefaultDateStyle;
+static int	DefaultDateStyle;
 static bool DefaultEuroDates;
 
 static bool
@@ -777,8 +777,9 @@ set_default_datestyle(void)
 {
 	char	   *DBDate;
 
-	/* Initialize from compile-time defaults in init/globals.c.
-	 * NB: this is a necessary step; consider PGDATESTYLE="DEFAULT".
+	/*
+	 * Initialize from compile-time defaults in init/globals.c. NB: this
+	 * is a necessary step; consider PGDATESTYLE="DEFAULT".
 	 */
 	DefaultDateStyle = DateStyle;
 	DefaultEuroDates = EuroDates;
@@ -788,9 +789,11 @@ set_default_datestyle(void)
 	if (DBDate == NULL)
 		return;
 
-	/* Make a modifiable copy --- overwriting the env var doesn't seem
+	/*
+	 * Make a modifiable copy --- overwriting the env var doesn't seem
 	 * like a good idea, even though we currently won't look at it again.
-	 * Note that we cannot use palloc at this early stage of initialization.
+	 * Note that we cannot use palloc at this early stage of
+	 * initialization.
 	 */
 	DBDate = strdup(DBDate);
 
@@ -1041,9 +1044,8 @@ reset_XactIsoLevel()
 static bool
 parse_pg_options(char *value)
 {
-	if (!superuser()) {
+	if (!superuser())
 		elog(ERROR, "Only users with superuser privilege can set pg_options");
-	}
 	if (value == NULL)
 		read_pg_options(0);
 	else
@@ -1061,9 +1063,8 @@ show_pg_options(void)
 static bool
 reset_pg_options(void)
 {
-	if (!superuser()) {
+	if (!superuser())
 		elog(ERROR, "Only users with superuser privilege can set pg_options");
-	}
 	read_pg_options(0);
 	return (TRUE);
 }
@@ -1075,7 +1076,7 @@ reset_pg_options(void)
 static bool
 parse_random_seed(char *value)
 {
-	double seed = 0;
+	double		seed = 0;
 
 	if (value == NULL)
 		reset_random_seed();
@@ -1097,7 +1098,7 @@ show_random_seed(void)
 static bool
 reset_random_seed(void)
 {
-	double seed = 0.5;
+	double		seed = 0.5;
 
 	setseed(&seed);
 	return (TRUE);

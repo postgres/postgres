@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2000, PostgreSQL, Inc
  * Portions Copyright (c) 1995, Regents of the University of California
  *
- * $Id: postgres.h,v 1.37 2000/03/17 02:36:34 tgl Exp $
+ * $Id: postgres.h,v 1.38 2000/04/12 17:16:24 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -74,8 +74,10 @@ typedef Oid RegProcedure;
  * some warnings about int->pointer conversions...
  */
 typedef int32 ((*func_ptr) ());
-#else 
+
+#else
 typedef char *((*func_ptr) ());
+
 #endif
 
 
@@ -116,27 +118,27 @@ typedef Oid oidvector[INDEX_MAX_KEYS];
 #ifdef TUPLE_TOASTER_ACTIVE
 typedef struct varattrib
 {
-	int32				va_header;			/* External/compressed storage */
-											/* flags and item size */
+	int32		va_header;		/* External/compressed storage */
+	/* flags and item size */
 	union
 	{
 		struct
 		{
-			int32		va_rawsize;			/* Plain data size */
-		}				va_compressed;		/* Compressed stored attribute */
+			int32		va_rawsize;		/* Plain data size */
+		}			va_compressed;		/* Compressed stored attribute */
 
 		struct
 		{
-			int32		va_rawsize;			/* Plain data size */
-			Oid			va_valueid;			/* Unique identifier of value */
-			Oid			va_longrelid;		/* RelID where to find chunks */
-			Oid			va_rowid;			/* Main tables row Oid */
-			int16		va_attno;			/* Main tables attno */
-		}				va_external;		/* External stored attribute */
+			int32		va_rawsize;		/* Plain data size */
+			Oid			va_valueid;		/* Unique identifier of value */
+			Oid			va_longrelid;	/* RelID where to find chunks */
+			Oid			va_rowid;		/* Main tables row Oid */
+			int16		va_attno;		/* Main tables attno */
+		}			va_external;/* External stored attribute */
 
-		char			va_data[1];			/* Plain stored attribute */
-	}					va_content;
-} varattrib;
+		char		va_data[1]; /* Plain stored attribute */
+	}			va_content;
+}			varattrib;
 
 #define VARATT_FLAG_EXTERNAL	0x8000
 #define VARATT_FLAG_COMPRESSED	0x4000
@@ -144,7 +146,7 @@ typedef struct varattrib
 #define VARATT_MASK_SIZE		0x3fff
 
 #define VARATT_SIZEP(_PTR)	(((varattrib *)(_PTR))->va_header)
-#define VARATT_SIZE(PTR)	(VARATT_SIZEP(PTR) & VARATT_MASK_SIZE) 
+#define VARATT_SIZE(PTR)	(VARATT_SIZEP(PTR) & VARATT_MASK_SIZE)
 #define VARATT_DATA(PTR)	(((varattrib *)(PTR))->va_content.va_data)
 
 #define VARATT_IS_EXTENDED(PTR)		\
@@ -160,22 +162,22 @@ typedef struct varattrib
  * so we (evil evil evil) declare it here once more.
  * ----------
  */
-extern varattrib *heap_tuple_untoast_attr(varattrib *attr);
+extern varattrib *heap_tuple_untoast_attr(varattrib * attr);
 
 #define VARATT_GETPLAIN(_ARG,_VAR) {								\
 				if (VARATTR_IS_EXTENDED(_ARG))						\
-					(_VAR) = (void *)heap_tuple_untoast_attr(_ARG);	\
+					(_VAR) = (void *)heap_tuple_untoast_attr(_ARG); \
 				else												\
 					(_VAR) = (_ARG);								\
 			}
-#define VARATT_FREE(_ARG,VAR) {										\
+#define VARATT_FREE(_ARG,VAR) do {									\
 				if ((void *)(_VAR) != (void *)(_ARG))				\
 					pfree((void *)(_VAR));							\
-			}
-#else /* TUPLE_TOASTER_ACTIVE */
+			} while (0)
+#else							/* TUPLE_TOASTER_ACTIVE */
 #define VARATT_SIZE(__PTR) VARSIZE(__PTR)
 #define VARATT_SIZEP(__PTR) VARSIZE(__PTR)
-#endif /* TUPLE_TOASTER_ACTIVE */
+#endif	 /* TUPLE_TOASTER_ACTIVE */
 
 
 /* We want NameData to have length NAMEDATALEN and int alignment,
@@ -251,7 +253,8 @@ typedef uint32 CommandId;
  * ---------------
  */
 #ifdef CYR_RECODE
-extern void		SetCharSet();
+extern void SetCharSet();
+
 #endif	 /* CYR_RECODE */
 
 #endif	 /* POSTGRES_H */

@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/executor/nodeAppend.c,v 1.29 2000/01/26 05:56:22 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/executor/nodeAppend.c,v 1.30 2000/04/12 17:15:09 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -251,9 +251,9 @@ ExecInitAppend(Append *node, EState *estate, Plan *parent)
 
 		foreach(rtentryP, rtable)
 		{
-			RangeTblEntry  *rtentry = lfirst(rtentryP);
-			Oid				reloid;
-			RelationInfo   *rri;
+			RangeTblEntry *rtentry = lfirst(rtentryP);
+			Oid			reloid;
+			RelationInfo *rri;
 
 			reloid = rtentry->relid;
 			rri = makeNode(RelationInfo);
@@ -304,6 +304,7 @@ ExecInitAppend(Append *node, EState *estate, Plan *parent)
 		{
 			JunkFilter *j = ExecInitJunkFilter(initNode->targetlist,
 											   ExecGetTupType(initNode));
+
 			junkList = lappend(junkList, j);
 		}
 

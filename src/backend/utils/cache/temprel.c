@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/cache/Attic/temprel.c,v 1.20 2000/01/26 05:57:18 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/cache/Attic/temprel.c,v 1.21 2000/04/12 17:15:54 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -64,7 +64,7 @@ create_temp_relation(const char *relname, HeapTuple pg_class_tuple)
 	/* save user-supplied name */
 	strcpy(temp_rel->user_relname, relname);
 	StrNCpy(temp_rel->relname, NameStr(((Form_pg_class)
-		GETSTRUCT(pg_class_tuple))->relname), NAMEDATALEN);
+					  GETSTRUCT(pg_class_tuple))->relname), NAMEDATALEN);
 	temp_rel->relid = pg_class_tuple->t_data->t_oid;
 	temp_rel->relkind = ((Form_pg_class) GETSTRUCT(pg_class_tuple))->relkind;
 	temp_rel->xid = GetCurrentTransactionId();
@@ -95,7 +95,7 @@ remove_all_temp_relations(void)
 
 		if (temp_rel->relkind != RELKIND_INDEX)
 		{
-			char	relname[NAMEDATALEN];
+			char		relname[NAMEDATALEN];
 
 			/* safe from deallocation */
 			strcpy(relname, temp_rel->user_relname);
@@ -118,7 +118,7 @@ remove_temp_relation(Oid relid)
 	MemoryContext oldcxt;
 	List	   *l,
 			   *prev;
-			   
+
 	oldcxt = MemoryContextSwitchTo((MemoryContext) CacheCxt);
 
 	prev = NIL;

@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/init/miscinit.c,v 1.44 2000/02/18 09:28:58 inoue Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/init/miscinit.c,v 1.45 2000/04/12 17:16:02 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -34,6 +34,7 @@
 #ifdef CYR_RECODE
 unsigned char RecodeForwTable[128];
 unsigned char RecodeBackTable[128];
+
 #endif
 
 ProcessingMode Mode = InitProcessing;
@@ -43,7 +44,7 @@ ProcessingMode Mode = InitProcessing;
  * ----------------------------------------------------------------
  */
 
-static bool	isIgnoringSystemIndexes = false;
+static bool isIgnoringSystemIndexes = false;
 
 /*
  * IsIgnoringSystemIndexes
@@ -74,24 +75,24 @@ IgnoreSystemIndexes(bool mode)
 void
 SetDatabasePath(const char *path)
 {
-    free(DatabasePath);
+	free(DatabasePath);
 	/* use strdup since this is done before memory contexts are set up */
-    if (path)
-    {
-        DatabasePath = strdup(path);
-        AssertState(DatabasePath);
-    }
+	if (path)
+	{
+		DatabasePath = strdup(path);
+		AssertState(DatabasePath);
+	}
 }
 
 void
 SetDatabaseName(const char *name)
 {
-    free(DatabaseName);
-    if (name)
-    {
-        DatabaseName = strdup(name);
-        AssertState(DatabaseName);
-    }
+	free(DatabaseName);
+	if (name)
+	{
+		DatabaseName = strdup(name);
+		AssertState(DatabaseName);
+	}
 }
 
 #ifndef MULTIBYTE
@@ -105,13 +106,15 @@ getdatabaseencoding()
 	return ("");
 }
 
-const char *pg_encoding_to_char(int encoding)
+const char *
+pg_encoding_to_char(int encoding)
 {
 	elog(ERROR, "MultiByte support must be enabled to use this function");
 	return ("");
 }
 
-int	pg_char_to_encoding(const char *encoding_string)
+int
+pg_char_to_encoding(const char *encoding_string)
 {
 	elog(ERROR, "MultiByte support must be enabled to use this function");
 	return (0);
@@ -332,7 +335,7 @@ SetUserId()
 	HeapTuple	userTup;
 	char	   *userName;
 
-	AssertState(!OidIsValid(UserId));/* only once */
+	AssertState(!OidIsValid(UserId));	/* only once */
 
 	/*
 	 * Don't do scans if we're bootstrapping, none of the system catalogs
@@ -361,10 +364,10 @@ SetUserId()
  *
  *	(1) postmaster starts. In this case pid > 0.
  *	(2) postgres starts in standalone mode. In this case
- *	    pid < 0
+ *		pid < 0
  *
  * to gain an interlock.
- * 
+ *
  *	SetPidFname(datadir)
  *		Remember the the pid file name. This is neccesary
  *		UnlinkPidFile() is called from proc_exit().
@@ -392,7 +395,8 @@ static char PidFile[MAXPGPATH];
 /*
  * Remove the pid file. This function is called from proc_exit.
  */
-void UnlinkPidFile(void)
+void
+UnlinkPidFile(void)
 {
 	unlink(PidFile);
 }
@@ -400,7 +404,8 @@ void UnlinkPidFile(void)
 /*
  * Set path to the pid file
  */
-void SetPidFname(char * datadir)
+void
+SetPidFname(char *datadir)
 {
 	snprintf(PidFile, sizeof(PidFile), "%s/%s", datadir, PIDFNAME);
 }
@@ -408,45 +413,50 @@ void SetPidFname(char * datadir)
 /*
  * Get path to the pid file
  */
-char *GetPidFname(void)
+char *
+GetPidFname(void)
 {
-	return(PidFile);
+	return (PidFile);
 }
 
 /*
  * Create the pid file
  */
-int SetPidFile(pid_t pid)
+int
+SetPidFile(pid_t pid)
 {
-	int fd;
-	char *pidfile;
-	char pidstr[32];
-	int len;
-	pid_t post_pid;
-	int is_postgres = 0;
+	int			fd;
+	char	   *pidfile;
+	char		pidstr[32];
+	int			len;
+	pid_t		post_pid;
+	int			is_postgres = 0;
 
 	/*
 	 * Creating pid file
 	 */
 	pidfile = GetPidFname();
 	fd = open(pidfile, O_RDWR | O_CREAT | O_EXCL, 0600);
-	if (fd < 0) {
+	if (fd < 0)
+	{
+
 		/*
-		 * Couldn't create the pid file. Probably
-		 * it already exists. Read the file to see if the process
-		 * actually exists
+		 * Couldn't create the pid file. Probably it already exists. Read
+		 * the file to see if the process actually exists
 		 */
 		fd = open(pidfile, O_RDONLY, 0600);
-		if (fd < 0) {
+		if (fd < 0)
+		{
 			fprintf(stderr, "Can't open pid file: %s\n", pidfile);
 			fprintf(stderr, "Please check the permission and try again.\n");
-			return(-1);
+			return (-1);
 		}
-		if ((len = read(fd, pidstr, sizeof(pidstr)-1)) < 0) {
+		if ((len = read(fd, pidstr, sizeof(pidstr) - 1)) < 0)
+		{
 			fprintf(stderr, "Can't read pid file: %s\n", pidfile);
 			fprintf(stderr, "Please check the permission and try again.\n");
 			close(fd);
-			return(-1);
+			return (-1);
 		}
 		close(fd);
 
@@ -454,56 +464,62 @@ int SetPidFile(pid_t pid)
 		 * Check to see if the process actually exists
 		 */
 		pidstr[len] = '\0';
-		post_pid = (pid_t)atoi(pidstr);
+		post_pid = (pid_t) atoi(pidstr);
 
 		/* if pid < 0, the pid is for postgres, not postmatser */
-		if (post_pid < 0) {
+		if (post_pid < 0)
+		{
 			is_postgres++;
 			post_pid = -post_pid;
 		}
 
-		if (post_pid == 0 || (post_pid > 0 && kill(post_pid, 0) < 0)) {
+		if (post_pid == 0 || (post_pid > 0 && kill(post_pid, 0) < 0))
+		{
+
 			/*
-			 * No, the process did not exist. Unlink
-			 * the file and try to create it
+			 * No, the process did not exist. Unlink the file and try to
+			 * create it
 			 */
-			if (unlink(pidfile) < 0) {
+			if (unlink(pidfile) < 0)
+			{
 				fprintf(stderr, "Can't remove pid file: %s\n", pidfile);
 				fprintf(stderr, "The file seems accidently left, but I couldn't remove it.\n");
 				fprintf(stderr, "Please remove the file by hand and try again.\n");
-				return(-1);
+				return (-1);
 			}
 			fd = open(pidfile, O_RDWR | O_CREAT | O_EXCL, 0600);
-			if (fd < 0) {
+			if (fd < 0)
+			{
 				fprintf(stderr, "Can't create pid file: %s\n", pidfile);
 				fprintf(stderr, "Please check the permission and try again.\n");
-				return(-1);
+				return (-1);
 			}
-		} else {
+		}
+		else
+		{
+
 			/*
 			 * Another postmaster is running
 			 */
 			fprintf(stderr, "Can't create pid file: %s\n", pidfile);
-			if (is_postgres) {
-			  fprintf(stderr, "Is another postgres (pid: %d) running?\n", post_pid);
-			}
+			if (is_postgres)
+				fprintf(stderr, "Is another postgres (pid: %d) running?\n", post_pid);
 			else
-			{
-			  fprintf(stderr, "Is another postmaster (pid: %s) running?\n", pidstr);
-			}
-			return(-1);
+				fprintf(stderr, "Is another postmaster (pid: %s) running?\n", pidstr);
+			return (-1);
 		}
 	}
 
 	sprintf(pidstr, "%d", pid);
-	if (write(fd, pidstr, strlen(pidstr)) != strlen(pidstr)) {
-		fprintf(stderr,"Write to pid file failed\n");
+	if (write(fd, pidstr, strlen(pidstr)) != strlen(pidstr))
+	{
+		fprintf(stderr, "Write to pid file failed\n");
 		fprintf(stderr, "Please check the permission and try again.\n");
 		close(fd);
 		unlink(pidfile);
-		return(-1);
+		return (-1);
 	}
 	close(fd);
 
-	return(0);
+	return (0);
 }

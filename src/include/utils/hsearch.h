@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2000, PostgreSQL, Inc
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Id: hsearch.h,v 1.14 2000/02/26 05:25:53 tgl Exp $
+ * $Id: hsearch.h,v 1.15 2000/04/12 17:16:55 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -27,13 +27,13 @@
  * In a hash table allocated in shared memory, the directory cannot be
  * expanded because it must stay at a fixed address.  The directory size
  * should be selected using hash_select_dirsize (and you'd better have
- * a good idea of the maximum number of entries!).  For non-shared hash
+ * a good idea of the maximum number of entries!).	For non-shared hash
  * tables, the initial directory size can be left at the default.
  */
 #define DEF_SEGSIZE			   256
-#define DEF_SEGSIZE_SHIFT	   8		/* must be log2(DEF_SEGSIZE) */
+#define DEF_SEGSIZE_SHIFT	   8/* must be log2(DEF_SEGSIZE) */
 #define DEF_DIRSIZE			   256
-#define DEF_FFACTOR			   1		/* default fill factor */
+#define DEF_FFACTOR			   1/* default fill factor */
 
 #define PRIME1				   37		/* for the hash function */
 #define PRIME2				   1048583
@@ -68,8 +68,9 @@ typedef struct hashhdr
 	long		nsegs;			/* Number of allocated segments */
 	long		keysize;		/* hash key length in bytes */
 	long		datasize;		/* elem data length in bytes */
-	long		max_dsize;		/* 'dsize' limit if directory is fixed size */
-	BUCKET_INDEX freeBucketIndex;	/* index of first free bucket */
+	long		max_dsize;		/* 'dsize' limit if directory is fixed
+								 * size */
+	BUCKET_INDEX freeBucketIndex;		/* index of first free bucket */
 #ifdef HASH_STATISTICS
 	long		accesses;
 	long		collisions;

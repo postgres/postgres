@@ -16,7 +16,7 @@
  * Portions Copyright (c) 1996-2000, PostgreSQL, Inc
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- *	$Id: pqformat.c,v 1.12 2000/01/26 05:56:29 momjian Exp $
+ *	$Id: pqformat.c,v 1.13 2000/04/12 17:15:14 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -156,6 +156,7 @@ void
 pq_sendstring(StringInfo buf, const char *str)
 {
 	int			slen = strlen(str);
+
 #ifdef MULTIBYTE
 	char	   *p;
 
@@ -237,13 +238,15 @@ int
 pq_puttextmessage(char msgtype, const char *str)
 {
 	int			slen = strlen(str);
+
 #ifdef MULTIBYTE
 	char	   *p;
 
 	p = (char *) pg_server_to_client((unsigned char *) str, slen);
 	if (p != str)				/* actual conversion has been done? */
 	{
-		int result = pq_putmessage(msgtype, p, strlen(p) + 1);
+		int			result = pq_putmessage(msgtype, p, strlen(p) + 1);
+
 		pfree(p);
 		return result;
 	}
@@ -308,8 +311,10 @@ int
 pq_getstr(StringInfo s)
 {
 	int			result;
+
 #ifdef MULTIBYTE
 	char	   *p;
+
 #endif
 
 	result = pq_getstring(s);

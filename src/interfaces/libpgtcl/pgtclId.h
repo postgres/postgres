@@ -10,7 +10,7 @@
  * Portions Copyright (c) 1996-2000, PostgreSQL, Inc
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Id: pgtclId.h,v 1.14 2000/01/26 05:58:43 momjian Exp $
+ * $Id: pgtclId.h,v 1.15 2000/04/12 17:17:12 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -43,9 +43,9 @@ extern int	PgSetResultId(Tcl_Interp *interp, char *connid, PGresult *res);
 extern PGresult *PgGetResultId(Tcl_Interp *interp, char *id);
 extern void PgDelResultId(Tcl_Interp *interp, char *id);
 extern int	PgGetConnByResultId(Tcl_Interp *interp, char *resid);
-extern void PgStartNotifyEventSource(Pg_ConnectionId *connid);
-extern void PgStopNotifyEventSource(Pg_ConnectionId *connid);
-extern void PgNotifyTransferEvents(Pg_ConnectionId *connid);
+extern void PgStartNotifyEventSource(Pg_ConnectionId * connid);
+extern void PgStopNotifyEventSource(Pg_ConnectionId * connid);
+extern void PgNotifyTransferEvents(Pg_ConnectionId * connid);
 extern void PgNotifyInterpDelete(ClientData clientData, Tcl_Interp *interp);
 
 /* GetFileProc is needed in Tcl 7.6 *only* ... it went away again in 8.0 */

@@ -9,7 +9,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/geo_selfuncs.c,v 1.13 2000/02/17 03:39:42 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/geo_selfuncs.c,v 1.14 2000/04/12 17:15:50 momjian Exp $
  *
  *	XXX These are totally bogus.  Perhaps someone will make them do
  *	something reasonable, someday.
@@ -34,7 +34,7 @@
  *	In general, rtrees need to search multiple subtrees in order to guarantee
  *	that all occurrences of the same key have been found.  Because of this,
  *	the estimated cost for scanning the index ought to be higher than the
- *	output selectivity would indicate.  rtcostestimate(), over in selfuncs.c,
+ *	output selectivity would indicate.	rtcostestimate(), over in selfuncs.c,
  *	ought to be adjusted accordingly --- but until we can generate somewhat
  *	realistic numbers here, it hardly matters...
  */

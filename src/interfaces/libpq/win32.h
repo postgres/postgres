@@ -32,4 +32,3 @@
 
 #define DEF_PGPORT "5432"
 #define MAXIMUM_ALIGNOF 4
-

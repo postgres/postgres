@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/init/globals.c,v 1.41 2000/02/16 17:25:49 thomas Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/init/globals.c,v 1.42 2000/04/12 17:16:02 momjian Exp $
  *
  * NOTES
  *	  Globals used all over the place should be declared here and not
@@ -93,7 +93,8 @@ char	   *IndexedCatalogNames[] = {
  * ps status buffer
  */
 #ifndef linux
-char	Ps_status_buffer[1024];
+char		Ps_status_buffer[1024];
+
 #endif
 
 /* ----------------

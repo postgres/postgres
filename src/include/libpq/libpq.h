@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2000, PostgreSQL, Inc
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Id: libpq.h,v 1.35 2000/01/26 05:58:12 momjian Exp $
+ * $Id: libpq.h,v 1.36 2000/04/12 17:16:36 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -139,7 +139,7 @@ extern Exception MemoryError,
  * PQerrormsg[] is used only for error messages generated within backend
  * libpq, none of which are remarkably long.  Note that this length should
  * NOT be taken as any indication of the maximum error message length that
- * the backend can create!  elog() can in fact produce extremely long messages.
+ * the backend can create!	elog() can in fact produce extremely long messages.
  */
 
 #define PQERRORMSG_LENGTH 1024

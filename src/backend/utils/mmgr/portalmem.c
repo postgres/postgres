@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/mmgr/portalmem.c,v 1.35 2000/03/17 02:36:29 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/mmgr/portalmem.c,v 1.36 2000/04/12 17:16:10 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -411,8 +411,8 @@ PortalNameIsSpecial(char *pname)
 {
 	if (strcmp(pname, VACPNAME) == 0)
 		return true;
-	if (strcmp(pname, TRUNCPNAME) == 0) 
-	        return true;
+	if (strcmp(pname, TRUNCPNAME) == 0)
+		return true;
 	return false;
 }
 

@@ -8,7 +8,7 @@
  * Portions Copyright (c) 1996-2000, PostgreSQL, Inc
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Id: libpq-be.h,v 1.18 2000/01/26 05:58:12 momjian Exp $
+ * $Id: libpq-be.h,v 1.19 2000/04/12 17:16:36 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -133,11 +133,11 @@ typedef struct Port
 	char		auth_arg[MAX_AUTH_ARG];
 	UserAuth	auth_method;
 
-        /*
-	 * SSL structures 
+	/*
+	 * SSL structures
 	 */
 #ifdef USE_SSL
-        SSL             *ssl;
+	SSL		   *ssl;
 #endif
 } Port;
 

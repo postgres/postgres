@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/nodes/Attic/freefuncs.c,v 1.39 2000/03/14 23:06:28 thomas Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/nodes/Attic/freefuncs.c,v 1.40 2000/04/12 17:15:16 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -746,7 +746,9 @@ _freeRelOptInfo(RelOptInfo *node)
 
 	freeObject(node->targetlist);
 	freeObject(node->pathlist);
-	/* XXX is this right? cheapest-path fields will typically be pointers
+
+	/*
+	 * XXX is this right? cheapest-path fields will typically be pointers
 	 * into pathlist, not separate structs...
 	 */
 	freeObject(node->cheapest_startup_path);
@@ -870,7 +872,9 @@ FreeJoinPathFields(JoinPath *node)
 {
 	freeObject(node->outerjoinpath);
 	freeObject(node->innerjoinpath);
-	/* XXX probably wrong, since ordinarily a JoinPath would share its
+
+	/*
+	 * XXX probably wrong, since ordinarily a JoinPath would share its
 	 * restrictinfo list with other paths made for the same join?
 	 */
 	freeObject(node->joinrestrictinfo);
@@ -970,7 +974,9 @@ _freeRestrictInfo(RestrictInfo *node)
 	 * ----------------
 	 */
 	freeObject(node->clause);
-	/* this is certainly wrong?  IndexOptInfos don't belong to
+
+	/*
+	 * this is certainly wrong?  IndexOptInfos don't belong to
 	 * RestrictInfo...
 	 */
 	freeObject(node->subclauseindices);
@@ -1131,8 +1137,8 @@ _freeValue(Value *node)
 {
 	switch (node->type)
 	{
-		case T_Float:
-		case T_String:
+			case T_Float:
+			case T_String:
 			pfree(node->val.str);
 			break;
 		default:

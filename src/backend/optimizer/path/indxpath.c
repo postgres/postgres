@@ -9,7 +9,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/optimizer/path/indxpath.c,v 1.81 2000/03/22 22:08:33 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/optimizer/path/indxpath.c,v 1.82 2000/04/12 17:15:19 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -46,62 +46,63 @@
 #define is_indexable_operator(clause,opclass,relam,indexkey_on_left) \
 	(indexable_operator(clause,opclass,relam,indexkey_on_left) != InvalidOid)
 
-typedef enum {
+typedef enum
+{
 	Prefix_None, Prefix_Partial, Prefix_Exact
 } Prefix_Status;
 
 static void match_index_orclauses(RelOptInfo *rel, IndexOptInfo *index,
-								  List *restrictinfo_list);
+					  List *restrictinfo_list);
 static List *match_index_orclause(RelOptInfo *rel, IndexOptInfo *index,
-								  List *or_clauses,
-								  List *other_matching_indices);
+					 List *or_clauses,
+					 List *other_matching_indices);
 static bool match_or_subclause_to_indexkey(RelOptInfo *rel,
-										   IndexOptInfo *index,
-										   Expr *clause);
+							   IndexOptInfo *index,
+							   Expr *clause);
 static List *group_clauses_by_indexkey(RelOptInfo *rel, IndexOptInfo *index,
-									   int *indexkeys, Oid *classes,
-									   List *restrictinfo_list);
+						  int *indexkeys, Oid *classes,
+						  List *restrictinfo_list);
 static List *group_clauses_by_ikey_for_joins(RelOptInfo *rel,
-											 IndexOptInfo *index,
-											 int *indexkeys, Oid *classes,
-											 List *join_cinfo_list,
-											 List *restr_cinfo_list);
+								IndexOptInfo *index,
+								int *indexkeys, Oid *classes,
+								List *join_cinfo_list,
+								List *restr_cinfo_list);
 static bool match_clause_to_indexkey(RelOptInfo *rel, IndexOptInfo *index,
-									 int indexkey, Oid opclass,
-									 Expr *clause, bool join);
+						 int indexkey, Oid opclass,
+						 Expr *clause, bool join);
 static bool pred_test(List *predicate_list, List *restrictinfo_list,
-					  List *joininfo_list);
+		  List *joininfo_list);
 static bool one_pred_test(Expr *predicate, List *restrictinfo_list);
 static bool one_pred_clause_expr_test(Expr *predicate, Node *clause);
 static bool one_pred_clause_test(Expr *predicate, Node *clause);
 static bool clause_pred_clause_test(Expr *predicate, Node *clause);
 static void indexable_joinclauses(RelOptInfo *rel, IndexOptInfo *index,
-								  List *joininfo_list, List *restrictinfo_list,
-								  List **clausegroups, List **outerrelids);
+					  List *joininfo_list, List *restrictinfo_list,
+					  List **clausegroups, List **outerrelids);
 static List *index_innerjoin(Query *root, RelOptInfo *rel, IndexOptInfo *index,
-							 List *clausegroup_list, List *outerrelids_list);
+				List *clausegroup_list, List *outerrelids_list);
 static bool useful_for_mergejoin(RelOptInfo *rel, IndexOptInfo *index,
-								 List *joininfo_list);
+					 List *joininfo_list);
 static bool useful_for_ordering(Query *root, RelOptInfo *rel,
-								IndexOptInfo *index,
-								ScanDirection scandir);
+					IndexOptInfo *index,
+					ScanDirection scandir);
 static bool match_index_to_operand(int indexkey, Var *operand,
-								   RelOptInfo *rel, IndexOptInfo *index);
+					   RelOptInfo *rel, IndexOptInfo *index);
 static bool function_index_operand(Expr *funcOpnd, RelOptInfo *rel,
-								   IndexOptInfo *index);
+					   IndexOptInfo *index);
 static bool match_special_index_operator(Expr *clause, Oid opclass, Oid relam,
-										 bool indexkey_on_left);
+							 bool indexkey_on_left);
 static Prefix_Status like_fixed_prefix(char *patt, char **prefix);
 static Prefix_Status regex_fixed_prefix(char *patt, bool case_insensitive,
-										char **prefix);
+				   char **prefix);
 static List *prefix_quals(Var *leftop, Oid expr_op,
-						  char *prefix, Prefix_Status pstatus);
-static char *make_greater_string(const char * str, Oid datatype);
-static Oid find_operator(const char * opname, Oid datatype);
-static Datum string_to_datum(const char * str, Oid datatype);
-static Const *string_to_const(const char * str, Oid datatype);
-static bool string_lessthan(const char * str1, const char * str2,
-							Oid datatype);
+			 char *prefix, Prefix_Status pstatus);
+static char *make_greater_string(const char *str, Oid datatype);
+static Oid	find_operator(const char *opname, Oid datatype);
+static Datum string_to_datum(const char *str, Oid datatype);
+static Const *string_to_const(const char *str, Oid datatype);
+static bool string_lessthan(const char *str1, const char *str2,
+				Oid datatype);
 
 
 /*
@@ -153,34 +154,34 @@ create_index_paths(Query *root,
 		List	   *joinouterrelids;
 
 		/*
-		 * If this is a partial index, we can only use it if it passes
-		 * the predicate test.
+		 * If this is a partial index, we can only use it if it passes the
+		 * predicate test.
 		 */
 		if (index->indpred != NIL)
 			if (!pred_test(index->indpred, restrictinfo_list, joininfo_list))
 				continue;
 
 		/*
-		 * 1. Try matching the index against subclauses of restriction 'or'
-		 * clauses (ie, 'or' clauses that reference only this relation).
-		 * The restrictinfo nodes for the 'or' clauses are marked with lists
-		 * of the matching indices.  No paths are actually created now;
-		 * that will be done in orindxpath.c after all indexes for the rel
-		 * have been examined.  (We need to do it that way because we can
-		 * potentially use a different index for each subclause of an 'or',
-		 * so we can't build a path for an 'or' clause until all indexes have
-		 * been matched against it.)
+		 * 1. Try matching the index against subclauses of restriction
+		 * 'or' clauses (ie, 'or' clauses that reference only this
+		 * relation). The restrictinfo nodes for the 'or' clauses are
+		 * marked with lists of the matching indices.  No paths are
+		 * actually created now; that will be done in orindxpath.c after
+		 * all indexes for the rel have been examined.	(We need to do it
+		 * that way because we can potentially use a different index for
+		 * each subclause of an 'or', so we can't build a path for an 'or'
+		 * clause until all indexes have been matched against it.)
 		 *
 		 * We don't even think about special handling of 'or' clauses that
-		 * involve more than one relation (ie, are join clauses).
-		 * Can we do anything useful with those?
+		 * involve more than one relation (ie, are join clauses). Can we
+		 * do anything useful with those?
 		 */
 		match_index_orclauses(rel, index, restrictinfo_list);
 
 		/*
-		 * 2. If the keys of this index match any of the available non-'or'
-		 * restriction clauses, then create a path using those clauses
-		 * as indexquals.
+		 * 2. If the keys of this index match any of the available
+		 * non-'or' restriction clauses, then create a path using those
+		 * clauses as indexquals.
 		 */
 		restrictclauses = group_clauses_by_indexkey(rel,
 													index,
@@ -191,7 +192,7 @@ create_index_paths(Query *root,
 		if (restrictclauses != NIL)
 			add_path(rel, (Path *) create_index_path(root, rel, index,
 													 restrictclauses,
-													 NoMovementScanDirection));
+											   NoMovementScanDirection));
 
 		/*
 		 * 3. If this index can be used for a mergejoin, then create an
@@ -205,16 +206,17 @@ create_index_paths(Query *root,
 		if (restrictclauses == NIL)
 		{
 			if (useful_for_mergejoin(rel, index, joininfo_list) ||
-				useful_for_ordering(root, rel, index, ForwardScanDirection))
+			 useful_for_ordering(root, rel, index, ForwardScanDirection))
 				add_path(rel, (Path *)
 						 create_index_path(root, rel, index,
 										   NIL,
 										   ForwardScanDirection));
 		}
+
 		/*
-		 * Currently, backwards scan is never considered except for the case
-		 * of matching a query result ordering.  Possibly should consider
-		 * it in other places?
+		 * Currently, backwards scan is never considered except for the
+		 * case of matching a query result ordering.  Possibly should
+		 * consider it in other places?
 		 */
 		if (useful_for_ordering(root, rel, index, BackwardScanDirection))
 			add_path(rel, (Path *)
@@ -223,11 +225,11 @@ create_index_paths(Query *root,
 									   BackwardScanDirection));
 
 		/*
-		 * 4. Create an innerjoin index path for each combination of
-		 * other rels used in available join clauses.  These paths will
-		 * be considered as the inner side of nestloop joins against
-		 * those sets of other rels.  indexable_joinclauses() finds sets
-		 * of clauses that can be used with each combination of outer rels,
+		 * 4. Create an innerjoin index path for each combination of other
+		 * rels used in available join clauses.  These paths will be
+		 * considered as the inner side of nestloop joins against those
+		 * sets of other rels.	indexable_joinclauses() finds sets of
+		 * clauses that can be used with each combination of outer rels,
 		 * and index_innerjoin builds the paths themselves.  We add the
 		 * paths to the rel's innerjoin list, NOT to the result list.
 		 */
@@ -247,7 +249,7 @@ create_index_paths(Query *root,
 
 
 /****************************************************************************
- *		----  ROUTINES TO PROCESS 'OR' CLAUSES  ----
+ *		----  ROUTINES TO PROCESS 'OR' CLAUSES	----
  ****************************************************************************/
 
 
@@ -280,6 +282,7 @@ match_index_orclauses(RelOptInfo *rel,
 
 		if (restriction_is_or_clause(restrictinfo))
 		{
+
 			/*
 			 * Add this index to the subclause index list for each
 			 * subclause that it matches.
@@ -309,7 +312,7 @@ match_index_orclauses(RelOptInfo *rel,
  *		that have already been matched to subclauses within this
  *		particular 'or' clause (i.e., a list previously generated by
  *		this routine), or NIL if this routine has not previously been
- *	    run for this 'or' clause.
+ *		run for this 'or' clause.
  *
  * Returns a list of the form ((a b c) (d e f) nil (g h) ...) where
  * a,b,c are nodes of indices that match the first subclause in
@@ -326,7 +329,8 @@ match_index_orclause(RelOptInfo *rel,
 	List	   *index_list;
 	List	   *clist;
 
-	/* first time through, we create list of same length as OR clause,
+	/*
+	 * first time through, we create list of same length as OR clause,
 	 * containing an empty sublist for each subclause.
 	 */
 	if (!other_matching_indices)
@@ -374,8 +378,8 @@ match_or_subclause_to_indexkey(RelOptInfo *rel,
 							   IndexOptInfo *index,
 							   Expr *clause)
 {
-	int		indexkey = index->indexkeys[0];
-	Oid		opclass = index->classlist[0];
+	int			indexkey = index->indexkeys[0];
+	Oid			opclass = index->classlist[0];
 
 	if (and_clause((Node *) clause))
 	{
@@ -400,10 +404,10 @@ match_or_subclause_to_indexkey(RelOptInfo *rel,
  * used as indexquals.
  *
  * In the simplest case this just means making a one-element list of the
- * given opclause.  However, if the OR subclause is an AND, we have to
+ * given opclause.	However, if the OR subclause is an AND, we have to
  * scan it to find the opclause(s) that match the index.  (There should
  * be at least one, if match_or_subclause_to_indexkey succeeded, but there
- * could be more.)  Also, we apply expand_indexqual_conditions() to convert
+ * could be more.)	Also, we apply expand_indexqual_conditions() to convert
  * any special matching opclauses to indexable operators.
  *
  * The passed-in clause is not changed.
@@ -413,9 +417,9 @@ extract_or_indexqual_conditions(RelOptInfo *rel,
 								IndexOptInfo *index,
 								Expr *orsubclause)
 {
-	List   *quals = NIL;
-	int		indexkey = index->indexkeys[0];
-	Oid		opclass = index->classlist[0];
+	List	   *quals = NIL;
+	int			indexkey = index->indexkeys[0];
+	Oid			opclass = index->classlist[0];
 
 	if (and_clause((Node *) orsubclause))
 	{
@@ -514,8 +518,9 @@ group_clauses_by_indexkey(RelOptInfo *rel,
 				clausegroup = lappend(clausegroup, rinfo);
 		}
 
-		/* If no clauses match this key, we're done; we don't want to
-		 * look at keys to its right.
+		/*
+		 * If no clauses match this key, we're done; we don't want to look
+		 * at keys to its right.
 		 */
 		if (clausegroup == NIL)
 			break;
@@ -533,7 +538,7 @@ group_clauses_by_indexkey(RelOptInfo *rel,
 
 /*
  * group_clauses_by_ikey_for_joins
- *    Generates a list of join clauses that can be used with an index
+ *	  Generates a list of join clauses that can be used with an index
  *	  to scan the inner side of a nestloop join.
  *
  * This is much like group_clauses_by_indexkey(), but we consider both
@@ -593,8 +598,9 @@ group_clauses_by_ikey_for_joins(RelOptInfo *rel,
 				clausegroup = lappend(clausegroup, rinfo);
 		}
 
-		/* If no clauses match this key, we're done; we don't want to
-		 * look at keys to its right.
+		/*
+		 * If no clauses match this key, we're done; we don't want to look
+		 * at keys to its right.
 		 */
 		if (clausegroup == NIL)
 			break;
@@ -607,8 +613,8 @@ group_clauses_by_ikey_for_joins(RelOptInfo *rel,
 	} while (!DoneMatchingIndexKeys(indexkeys, index));
 
 	/*
-	 * if no join clause was matched then there ain't clauses for
-	 * joins at all.
+	 * if no join clause was matched then there ain't clauses for joins at
+	 * all.
 	 */
 	if (!jfound)
 	{
@@ -623,8 +629,8 @@ group_clauses_by_ikey_for_joins(RelOptInfo *rel,
 
 /*
  * match_clause_to_indexkey()
- *    Determines whether a restriction or join clause matches
- *    a key of an index.
+ *	  Determines whether a restriction or join clause matches
+ *	  a key of an index.
  *
  *	  To match, the clause:
 
@@ -673,43 +679,46 @@ match_clause_to_indexkey(RelOptInfo *rel,
 			   *rightop;
 
 	/* Clause must be a binary opclause. */
-	if (! is_opclause((Node *) clause))
+	if (!is_opclause((Node *) clause))
 		return false;
 	leftop = get_leftop(clause);
 	rightop = get_rightop(clause);
-	if (! leftop || ! rightop)
+	if (!leftop || !rightop)
 		return false;
 
 	if (!join)
 	{
+
 		/*
 		 * Not considering joins, so check for clauses of the form:
 		 * (indexkey operator constant) or (constant operator indexkey).
 		 * We will accept a Param as being constant.
 		 */
 
-		if ((IsA(rightop, Const) || IsA(rightop, Param)) &&
+		if ((IsA(rightop, Const) ||IsA(rightop, Param)) &&
 			match_index_to_operand(indexkey, leftop, rel, index))
 		{
 			if (is_indexable_operator(clause, opclass, index->relam, true))
 				return true;
+
 			/*
-			 * If we didn't find a member of the index's opclass,
-			 * see whether it is a "special" indexable operator.
+			 * If we didn't find a member of the index's opclass, see
+			 * whether it is a "special" indexable operator.
 			 */
 			if (match_special_index_operator(clause, opclass, index->relam,
 											 true))
 				return true;
 			return false;
 		}
-		if ((IsA(leftop, Const) || IsA(leftop, Param)) &&
+		if ((IsA(leftop, Const) ||IsA(leftop, Param)) &&
 			match_index_to_operand(indexkey, rightop, rel, index))
 		{
 			if (is_indexable_operator(clause, opclass, index->relam, false))
 				return true;
+
 			/*
-			 * If we didn't find a member of the index's opclass,
-			 * see whether it is a "special" indexable operator.
+			 * If we didn't find a member of the index's opclass, see
+			 * whether it is a "special" indexable operator.
 			 */
 			if (match_special_index_operator(clause, opclass, index->relam,
 											 false))
@@ -719,20 +728,21 @@ match_clause_to_indexkey(RelOptInfo *rel,
 	}
 	else
 	{
+
 		/*
-		 * Check for an indexqual that could be handled by a nestloop join.
-		 * We need the index key to be compared against an expression
-		 * that uses none of the indexed relation's vars.
+		 * Check for an indexqual that could be handled by a nestloop
+		 * join. We need the index key to be compared against an
+		 * expression that uses none of the indexed relation's vars.
 		 */
 		if (match_index_to_operand(indexkey, leftop, rel, index))
 		{
 			List	   *othervarnos = pull_varnos((Node *) rightop);
 			bool		isIndexable;
 
-			isIndexable = ! intMember(lfirsti(rel->relids), othervarnos);
+			isIndexable = !intMember(lfirsti(rel->relids), othervarnos);
 			freeList(othervarnos);
 			if (isIndexable &&
-				is_indexable_operator(clause, opclass, index->relam, true))
+			  is_indexable_operator(clause, opclass, index->relam, true))
 				return true;
 		}
 		else if (match_index_to_operand(indexkey, rightop, rel, index))
@@ -740,10 +750,10 @@ match_clause_to_indexkey(RelOptInfo *rel,
 			List	   *othervarnos = pull_varnos((Node *) leftop);
 			bool		isIndexable;
 
-			isIndexable = ! intMember(lfirsti(rel->relids), othervarnos);
+			isIndexable = !intMember(lfirsti(rel->relids), othervarnos);
 			freeList(othervarnos);
 			if (isIndexable &&
-				is_indexable_operator(clause, opclass, index->relam, false))
+			 is_indexable_operator(clause, opclass, index->relam, false))
 				return true;
 		}
 	}
@@ -768,7 +778,7 @@ match_clause_to_indexkey(RelOptInfo *rel,
  *
  * Returns the OID of the matching operator, or InvalidOid if no match.
  * Note that the returned OID will be different from the one in the given
- * expression if we used a binary-compatible substitution.  Also note that
+ * expression if we used a binary-compatible substitution.	Also note that
  * if indexkey_on_left is FALSE (meaning we need to commute), the returned
  * OID is *not* commuted; it can be plugged directly into the given clause.
  */
@@ -818,13 +828,14 @@ indexable_operator(Expr *clause, Oid opclass, Oid relam,
 
 		if (HeapTupleIsValid(newop))
 		{
-			Oid		new_expr_op = oprid(newop);
+			Oid			new_expr_op = oprid(newop);
 
 			if (new_expr_op != expr_op)
 			{
+
 				/*
-				 * OK, we found a binary-compatible operator of the same name;
-				 * now does it match the index?
+				 * OK, we found a binary-compatible operator of the same
+				 * name; now does it match the index?
 				 */
 				if (indexkey_on_left)
 					commuted_op = new_expr_op;
@@ -883,12 +894,12 @@ useful_for_mergejoin(RelOptInfo *rel,
 			{
 				if (restrictinfo->left_sortop == ordering[0] &&
 					match_index_to_operand(indexkeys[0],
-										   get_leftop(restrictinfo->clause),
+										get_leftop(restrictinfo->clause),
 										   rel, index))
 					return true;
 				if (restrictinfo->right_sortop == ordering[0] &&
 					match_index_to_operand(indexkeys[0],
-										   get_rightop(restrictinfo->clause),
+									   get_rightop(restrictinfo->clause),
 										   rel, index))
 					return true;
 			}
@@ -1127,7 +1138,7 @@ one_pred_clause_test(Expr *predicate, Node *clause)
  */
 
 static StrategyNumber
-BT_implic_table[BTMaxStrategyNumber][BTMaxStrategyNumber] = {
+			BT_implic_table[BTMaxStrategyNumber][BTMaxStrategyNumber] = {
 	{2, 2, 0, 0, 0},
 	{1, 2, 0, 0, 0},
 	{1, 2, 3, 4, 5},
@@ -1346,13 +1357,13 @@ clause_pred_clause_test(Expr *predicate, Node *clause)
  *	  rel's restrictinfo list.  Therefore, every clause in the group references
  *	  the current rel plus the same set of other rels (except for the restrict
  *	  clauses, which only reference the current rel).  Therefore, this set
- *    of clauses could be used as an indexqual if the relation is scanned
+ *	  of clauses could be used as an indexqual if the relation is scanned
  *	  as the inner side of a nestloop join when the outer side contains
  *	  (at least) all those "other rels".
  *
  *	  XXX Actually, given that we are considering a join that requires an
  *	  outer rel set (A,B,C), we should use all qual clauses that reference
- *	  any subset of these rels, not just the full set or none.  This is
+ *	  any subset of these rels, not just the full set or none.	This is
  *	  doable with a doubly nested loop over joininfo_list; is it worth it?
  *
  * Returns two parallel lists of the same length: the clause groups,
@@ -1430,10 +1441,11 @@ index_innerjoin(Query *root, RelOptInfo *rel, IndexOptInfo *index,
 
 		pathnode->path.pathtype = T_IndexScan;
 		pathnode->path.parent = rel;
+
 		/*
 		 * There's no point in marking the path with any pathkeys, since
-		 * it will only ever be used as the inner path of a nestloop,
-		 * and so its ordering does not matter.
+		 * it will only ever be used as the inner path of a nestloop, and
+		 * so its ordering does not matter.
 		 */
 		pathnode->path.pathkeys = NIL;
 
@@ -1441,7 +1453,8 @@ index_innerjoin(Query *root, RelOptInfo *rel, IndexOptInfo *index,
 		/* expand special operators to indexquals the executor can handle */
 		indexquals = expand_indexqual_conditions(indexquals);
 
-		/* Note that we are making a pathnode for a single-scan indexscan;
+		/*
+		 * Note that we are making a pathnode for a single-scan indexscan;
 		 * therefore, both indexid and indexqual should be single-element
 		 * lists.
 		 */
@@ -1456,14 +1469,15 @@ index_innerjoin(Query *root, RelOptInfo *rel, IndexOptInfo *index,
 
 		/*
 		 * We must compute the estimated number of output rows for the
-		 * indexscan.  This is less than rel->rows because of the additional
-		 * selectivity of the join clauses.  Since clausegroup may contain
-		 * both restriction and join clauses, we have to do a set union to
-		 * get the full set of clauses that must be considered to compute
-		 * the correct selectivity.  (We can't just nconc the two lists;
-		 * then we might have some restriction clauses appearing twice,
-		 * which'd mislead restrictlist_selectivity into double-counting
-		 * their selectivity.)
+		 * indexscan.  This is less than rel->rows because of the
+		 * additional selectivity of the join clauses.	Since clausegroup
+		 * may contain both restriction and join clauses, we have to do a
+		 * set union to get the full set of clauses that must be
+		 * considered to compute the correct selectivity.  (We can't just
+		 * nconc the two lists; then we might have some restriction
+		 * clauses appearing twice, which'd mislead
+		 * restrictlist_selectivity into double-counting their
+		 * selectivity.)
 		 */
 		pathnode->rows = rel->tuples *
 			restrictlist_selectivity(root,
@@ -1490,7 +1504,7 @@ index_innerjoin(Query *root, RelOptInfo *rel, IndexOptInfo *index,
  * match_index_to_operand()
  *	  Generalized test for a match between an index's key
  *	  and the operand on one side of a restriction or join clause.
- *    Now check for functional indices as well.
+ *	  Now check for functional indices as well.
  */
 static bool
 match_index_to_operand(int indexkey,
@@ -1500,6 +1514,7 @@ match_index_to_operand(int indexkey,
 {
 	if (index->indproc == InvalidOid)
 	{
+
 		/*
 		 * Normal index.
 		 */
@@ -1530,7 +1545,7 @@ function_index_operand(Expr *funcOpnd, RelOptInfo *rel, IndexOptInfo *index)
 	/*
 	 * sanity check, make sure we know what we're dealing with here.
 	 */
-	if (funcOpnd == NULL ||	! IsA(funcOpnd, Expr) ||
+	if (funcOpnd == NULL || !IsA(funcOpnd, Expr) ||
 		funcOpnd->opType != FUNC_EXPR ||
 		funcOpnd->oper == NULL || indexKeys == NULL)
 		return false;
@@ -1550,9 +1565,9 @@ function_index_operand(Expr *funcOpnd, RelOptInfo *rel, IndexOptInfo *index)
 	i = 0;
 	foreach(arg, funcargs)
 	{
-		Var	   *var = (Var *) lfirst(arg);
+		Var		   *var = (Var *) lfirst(arg);
 
-		if (! IsA(var, Var))
+		if (!IsA(var, Var))
 			return false;
 		if (indexKeys[i] == 0)
 			return false;
@@ -1578,10 +1593,10 @@ function_index_operand(Expr *funcOpnd, RelOptInfo *rel, IndexOptInfo *index)
  * indexscan machinery.  The key idea is that these operators allow us
  * to derive approximate indexscan qual clauses, such that any tuples
  * that pass the operator clause itself must also satisfy the simpler
- * indexscan condition(s).  Then we can use the indexscan machinery
+ * indexscan condition(s).	Then we can use the indexscan machinery
  * to avoid scanning as much of the table as we'd otherwise have to,
  * while applying the original operator as a qpqual condition to ensure
- * we deliver only the tuples we want.  (In essence, we're using a regular
+ * we deliver only the tuples we want.	(In essence, we're using a regular
  * index as if it were a lossy index.)
  *
  * An example of what we're doing is
@@ -1630,11 +1645,12 @@ match_special_index_operator(Expr *clause, Oid opclass, Oid relam,
 	char	   *patt;
 	char	   *prefix;
 
-	/* Currently, all known special operators require the indexkey
-	 * on the left, but this test could be pushed into the switch statement
-	 * if some are added that do not...
+	/*
+	 * Currently, all known special operators require the indexkey on the
+	 * left, but this test could be pushed into the switch statement if
+	 * some are added that do not...
 	 */
-	if (! indexkey_on_left)
+	if (!indexkey_on_left)
 		return false;
 
 	/* we know these will succeed */
@@ -1643,7 +1659,7 @@ match_special_index_operator(Expr *clause, Oid opclass, Oid relam,
 	expr_op = ((Oper *) clause->oper)->opno;
 
 	/* again, required for all current special ops: */
-	if (! IsA(rightop, Const) ||
+	if (!IsA(rightop, Const) ||
 		((Const *) rightop)->constisnull)
 		return false;
 	constvalue = ((Const *) rightop)->constvalue;
@@ -1657,7 +1673,8 @@ match_special_index_operator(Expr *clause, Oid opclass, Oid relam,
 			/* the right-hand const is type text for all of these */
 			patt = textout((text *) DatumGetPointer(constvalue));
 			isIndexable = like_fixed_prefix(patt, &prefix) != Prefix_None;
-			if (prefix) pfree(prefix);
+			if (prefix)
+				pfree(prefix);
 			pfree(patt);
 			break;
 
@@ -1668,7 +1685,8 @@ match_special_index_operator(Expr *clause, Oid opclass, Oid relam,
 			/* the right-hand const is type text for all of these */
 			patt = textout((text *) DatumGetPointer(constvalue));
 			isIndexable = regex_fixed_prefix(patt, false, &prefix) != Prefix_None;
-			if (prefix) pfree(prefix);
+			if (prefix)
+				pfree(prefix);
 			pfree(patt);
 			break;
 
@@ -1679,13 +1697,14 @@ match_special_index_operator(Expr *clause, Oid opclass, Oid relam,
 			/* the right-hand const is type text for all of these */
 			patt = textout((text *) DatumGetPointer(constvalue));
 			isIndexable = regex_fixed_prefix(patt, true, &prefix) != Prefix_None;
-			if (prefix) pfree(prefix);
+			if (prefix)
+				pfree(prefix);
 			pfree(patt);
 			break;
 	}
 
 	/* done if the expression doesn't look indexable */
-	if (! isIndexable)
+	if (!isIndexable)
 		return false;
 
 	/*
@@ -1699,32 +1718,32 @@ match_special_index_operator(Expr *clause, Oid opclass, Oid relam,
 		case OID_TEXT_LIKE_OP:
 		case OID_TEXT_REGEXEQ_OP:
 		case OID_TEXT_ICREGEXEQ_OP:
-			if (! op_class(find_operator(">=", TEXTOID), opclass, relam) ||
-				! op_class(find_operator("<", TEXTOID), opclass, relam))
+			if (!op_class(find_operator(">=", TEXTOID), opclass, relam) ||
+				!op_class(find_operator("<", TEXTOID), opclass, relam))
 				isIndexable = false;
 			break;
 
 		case OID_BPCHAR_LIKE_OP:
 		case OID_BPCHAR_REGEXEQ_OP:
 		case OID_BPCHAR_ICREGEXEQ_OP:
-			if (! op_class(find_operator(">=", BPCHAROID), opclass, relam) ||
-				! op_class(find_operator("<", BPCHAROID), opclass, relam))
+			if (!op_class(find_operator(">=", BPCHAROID), opclass, relam) ||
+				!op_class(find_operator("<", BPCHAROID), opclass, relam))
 				isIndexable = false;
 			break;
 
 		case OID_VARCHAR_LIKE_OP:
 		case OID_VARCHAR_REGEXEQ_OP:
 		case OID_VARCHAR_ICREGEXEQ_OP:
-			if (! op_class(find_operator(">=", VARCHAROID), opclass, relam) ||
-				! op_class(find_operator("<", VARCHAROID), opclass, relam))
+			if (!op_class(find_operator(">=", VARCHAROID), opclass, relam) ||
+				!op_class(find_operator("<", VARCHAROID), opclass, relam))
 				isIndexable = false;
 			break;
 
 		case OID_NAME_LIKE_OP:
 		case OID_NAME_REGEXEQ_OP:
 		case OID_NAME_ICREGEXEQ_OP:
-			if (! op_class(find_operator(">=", NAMEOID), opclass, relam) ||
-				! op_class(find_operator("<", NAMEOID), opclass, relam))
+			if (!op_class(find_operator(">=", NAMEOID), opclass, relam) ||
+				!op_class(find_operator("<", NAMEOID), opclass, relam))
 				isIndexable = false;
 			break;
 	}
@@ -1736,7 +1755,7 @@ match_special_index_operator(Expr *clause, Oid opclass, Oid relam,
  * expand_indexqual_conditions
  *	  Given a list of (implicitly ANDed) indexqual clauses,
  *	  expand any "special" index operators into clauses that the indexscan
- *	  machinery will know what to do with.  Clauses that were not
+ *	  machinery will know what to do with.	Clauses that were not
  *	  recognized by match_special_index_operator() must be passed through
  *	  unchanged.
  */
@@ -1749,6 +1768,7 @@ expand_indexqual_conditions(List *indexquals)
 	foreach(q, indexquals)
 	{
 		Expr	   *clause = (Expr *) lfirst(q);
+
 		/* we know these will succeed */
 		Var		   *leftop = get_leftop(clause);
 		Var		   *rightop = get_rightop(clause);
@@ -1760,11 +1780,13 @@ expand_indexqual_conditions(List *indexquals)
 
 		switch (expr_op)
 		{
-			/*
-			 * LIKE and regex operators are not members of any index opclass,
-			 * so if we find one in an indexqual list we can assume that
-			 * it was accepted by match_special_index_operator().
-			 */
+
+				/*
+				 * LIKE and regex operators are not members of any index
+				 * opclass, so if we find one in an indexqual list we can
+				 * assume that it was accepted by
+				 * match_special_index_operator().
+				 */
 			case OID_TEXT_LIKE_OP:
 			case OID_BPCHAR_LIKE_OP:
 			case OID_VARCHAR_LIKE_OP:
@@ -1776,7 +1798,8 @@ expand_indexqual_conditions(List *indexquals)
 				resultquals = nconc(resultquals,
 									prefix_quals(leftop, expr_op,
 												 prefix, pstatus));
-				if (prefix) pfree(prefix);
+				if (prefix)
+					pfree(prefix);
 				pfree(patt);
 				break;
 
@@ -1791,7 +1814,8 @@ expand_indexqual_conditions(List *indexquals)
 				resultquals = nconc(resultquals,
 									prefix_quals(leftop, expr_op,
 												 prefix, pstatus));
-				if (prefix) pfree(prefix);
+				if (prefix)
+					pfree(prefix);
 				pfree(patt);
 				break;
 
@@ -1806,7 +1830,8 @@ expand_indexqual_conditions(List *indexquals)
 				resultquals = nconc(resultquals,
 									prefix_quals(leftop, expr_op,
 												 prefix, pstatus));
-				if (prefix) pfree(prefix);
+				if (prefix)
+					pfree(prefix);
 				pfree(patt);
 				break;
 
@@ -1833,7 +1858,7 @@ like_fixed_prefix(char *patt, char **prefix)
 	int			pos,
 				match_pos;
 
-	*prefix = match = palloc(strlen(patt)+1);
+	*prefix = match = palloc(strlen(patt) + 1);
 	match_pos = 0;
 
 	for (pos = 0; patt[pos]; pos++)
@@ -1849,14 +1874,15 @@ like_fixed_prefix(char *patt, char **prefix)
 			if (patt[pos] == '\0')
 				break;
 		}
+
 		/*
-		 * NOTE: this code used to think that %% meant a literal %,
-		 * but textlike() itself does not think that, and the SQL92
-		 * spec doesn't say any such thing either.
+		 * NOTE: this code used to think that %% meant a literal %, but
+		 * textlike() itself does not think that, and the SQL92 spec
+		 * doesn't say any such thing either.
 		 */
 		match[match_pos++] = patt[pos];
 	}
-	
+
 	match[match_pos] = '\0';
 
 	/* in LIKE, an empty pattern is an exact match! */
@@ -1905,7 +1931,7 @@ regex_fixed_prefix(char *patt, bool case_insensitive,
 	}
 
 	/* OK, allocate space for pattern */
-	*prefix = match = palloc(strlen(patt)+1);
+	*prefix = match = palloc(strlen(patt) + 1);
 	match_pos = 0;
 
 	/* note start at pos 1 to skip leading ^ */
@@ -1916,9 +1942,11 @@ regex_fixed_prefix(char *patt, bool case_insensitive,
 			patt[pos] == '*' ||
 			patt[pos] == '[' ||
 			patt[pos] == '$' ||
-			/* XXX I suspect isalpha() is not an adequately locale-sensitive
-			 * test for characters that can vary under case folding?
-			 */
+
+		/*
+		 * XXX I suspect isalpha() is not an adequately locale-sensitive
+		 * test for characters that can vary under case folding?
+		 */
 			(case_insensitive && isalpha(patt[pos])))
 			break;
 		if (patt[pos] == '\\')
@@ -1932,9 +1960,9 @@ regex_fixed_prefix(char *patt, bool case_insensitive,
 
 	match[match_pos] = '\0';
 
-	if (patt[pos] == '$' && patt[pos+1] == '\0')
+	if (patt[pos] == '$' && patt[pos + 1] == '\0')
 		return Prefix_Exact;	/* pattern specifies exact match */
-	
+
 	if (match_pos > 0)
 		return Prefix_Partial;
 	return Prefix_None;
@@ -2020,7 +2048,8 @@ prefix_quals(Var *leftop, Oid expr_op,
 	result = lcons(expr, NIL);
 
 	/*
-	 * If we can create a string larger than the prefix, say "x < greaterstr".
+	 * If we can create a string larger than the prefix, say "x <
+	 * greaterstr".
 	 */
 	greaterstr = make_greater_string(prefix, datatype);
 	if (greaterstr)
@@ -2058,17 +2087,20 @@ prefix_quals(Var *leftop, Oid expr_op,
  * given "foos" and return "foot", will this actually be greater than "fooss"?
  */
 static char *
-make_greater_string(const char * str, Oid datatype)
+make_greater_string(const char *str, Oid datatype)
 {
 	char	   *workstr;
 	int			len;
 
-	/* Make a modifiable copy, which will be our return value if successful */
+	/*
+	 * Make a modifiable copy, which will be our return value if
+	 * successful
+	 */
 	workstr = pstrdup((char *) str);
 
 	while ((len = strlen(workstr)) > 0)
 	{
-		unsigned char  *lastchar = (unsigned char *) (workstr + len - 1);
+		unsigned char *lastchar = (unsigned char *) (workstr + len - 1);
 
 		/*
 		 * Try to generate a larger string by incrementing the last byte.
@@ -2077,14 +2109,15 @@ make_greater_string(const char * str, Oid datatype)
 		{
 			(*lastchar)++;
 			if (string_lessthan(str, workstr, datatype))
-				return workstr;			/* Success! */
+				return workstr; /* Success! */
 		}
+
 		/*
-		 * Truncate off the last character, which might be more than 1 byte
-		 * in MULTIBYTE case.
+		 * Truncate off the last character, which might be more than 1
+		 * byte in MULTIBYTE case.
 		 */
 #ifdef MULTIBYTE
-		len = pg_mbcliplen((const unsigned char *) workstr, len, len-1);
+		len = pg_mbcliplen((const unsigned char *) workstr, len, len - 1);
 		workstr[len] = '\0';
 #else
 		*lastchar = '\0';
@@ -2102,7 +2135,7 @@ make_greater_string(const char * str, Oid datatype)
 
 /* See if there is a binary op of the given name for the given datatype */
 static Oid
-find_operator(const char * opname, Oid datatype)
+find_operator(const char *opname, Oid datatype)
 {
 	HeapTuple	optup;
 
@@ -2122,10 +2155,12 @@ find_operator(const char * opname, Oid datatype)
  * returned value should be pfree'd if no longer needed.
  */
 static Datum
-string_to_datum(const char * str, Oid datatype)
+string_to_datum(const char *str, Oid datatype)
 {
-	/* We cheat a little by assuming that textin() will do for
-	 * bpchar and varchar constants too...
+
+	/*
+	 * We cheat a little by assuming that textin() will do for bpchar and
+	 * varchar constants too...
 	 */
 	if (datatype == NAMEOID)
 		return PointerGetDatum(namein((char *) str));
@@ -2137,7 +2172,7 @@ string_to_datum(const char * str, Oid datatype)
  * Generate a Const node of the appropriate type from a C string.
  */
 static Const *
-string_to_const(const char * str, Oid datatype)
+string_to_const(const char *str, Oid datatype)
 {
 	Datum		conval = string_to_datum(str, datatype);
 
@@ -2151,7 +2186,7 @@ string_to_const(const char * str, Oid datatype)
  * "<" operator function, to ensure we get the right result...
  */
 static bool
-string_lessthan(const char * str1, const char * str2, Oid datatype)
+string_lessthan(const char *str1, const char *str2, Oid datatype)
 {
 	Datum		datum1 = string_to_datum(str1, datatype);
 	Datum		datum2 = string_to_datum(str2, datatype);

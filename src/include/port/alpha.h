@@ -8,4 +8,3 @@ typedef msemaphore slock_t;
 #if defined(__alpha) && !defined(__alpha__)
 #define __alpha__
 #endif
-

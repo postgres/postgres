@@ -9,7 +9,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/nodes/read.c,v 1.21 2000/02/21 18:47:00 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/nodes/read.c,v 1.22 2000/04/12 17:15:16 momjian Exp $
  *
  * HISTORY
  *	  AUTHOR			DATE			MAJOR EVENT
@@ -60,31 +60,31 @@ stringToNode(char *str)
  * (Pass length==NULL to set the string without reading its first token.)
  *
  * The rules for tokens are:
- *  * Whitespace (space, tab, newline) always separates tokens.
- *  * The characters '(', ')', '{', '}' form individual tokens even
- *    without any whitespace around them.
- *  * Otherwise, a token is all the characters up to the next whitespace
- *    or occurrence of one of the four special characters.
- *  * A backslash '\' can be used to quote whitespace or one of the four
- *    special characters, so that it is treated as a plain token character.
- *    Backslashes themselves must also be backslashed for consistency.
- *    Any other character can be, but need not be, backslashed as well.
- *  * If the resulting token is '<>' (with no backslash), it is returned
- *    as a non-NULL pointer to the token but with length == 0.  Note that
- *    there is no other way to get a zero-length token.
+ *	* Whitespace (space, tab, newline) always separates tokens.
+ *	* The characters '(', ')', '{', '}' form individual tokens even
+ *	  without any whitespace around them.
+ *	* Otherwise, a token is all the characters up to the next whitespace
+ *	  or occurrence of one of the four special characters.
+ *	* A backslash '\' can be used to quote whitespace or one of the four
+ *	  special characters, so that it is treated as a plain token character.
+ *	  Backslashes themselves must also be backslashed for consistency.
+ *	  Any other character can be, but need not be, backslashed as well.
+ *	* If the resulting token is '<>' (with no backslash), it is returned
+ *	  as a non-NULL pointer to the token but with length == 0.	Note that
+ *	  there is no other way to get a zero-length token.
  *
  * Returns a pointer to the start of the next token, and the length of the
- * token (including any embedded backslashes!) in *length.  If there are
+ * token (including any embedded backslashes!) in *length.	If there are
  * no more tokens, NULL and 0 are returned.
  *
  * NOTE: this routine doesn't remove backslashes; the caller must do so
  * if necessary (see "debackslash").
  *
  * NOTE: prior to release 7.0, this routine also had a special case to treat
- * a token starting with '"' as extending to the next '"'.  This code was
+ * a token starting with '"' as extending to the next '"'.	This code was
  * broken, however, since it would fail to cope with a string containing an
  * embedded '"'.  I have therefore removed this special case, and instead
- * introduced rules for using backslashes to quote characters.  Higher-level
+ * introduced rules for using backslashes to quote characters.	Higher-level
  * code should add backslashes to a string constant to ensure it is treated
  * as a single token.
  */
@@ -160,8 +160,8 @@ lsptok(char *string, int *length)
 char *
 debackslash(char *token, int length)
 {
-	char   *result = palloc(length+1);
-	char   *ptr = result;
+	char	   *result = palloc(length + 1);
+	char	   *ptr = result;
 
 	while (length > 0)
 	{
@@ -208,22 +208,23 @@ nodeTokenType(char *token, int length)
 	if ((numlen > 0 && isdigit(*numptr)) ||
 		(numlen > 1 && *numptr == '.' && isdigit(numptr[1])))
 	{
+
 		/*
-		 * Yes.  Figure out whether it is integral or float;
-		 * this requires both a syntax check and a range check.
-		 * strtol() can do both for us.
-		 * We know the token will end at a character that strtol will
+		 * Yes.  Figure out whether it is integral or float; this requires
+		 * both a syntax check and a range check. strtol() can do both for
+		 * us. We know the token will end at a character that strtol will
 		 * stop at, so we do not need to modify the string.
 		 */
 		errno = 0;
 		(void) strtol(token, &endptr, 10);
-		if (endptr != token+length || errno == ERANGE)
+		if (endptr != token + length || errno == ERANGE)
 			return T_Float;
 		return T_Integer;
 	}
+
 	/*
-	 * these three cases do not need length checks, since lsptok()
-	 * will always treat them as single-byte tokens
+	 * these three cases do not need length checks, since lsptok() will
+	 * always treat them as single-byte tokens
 	 */
 	else if (*token == '(')
 		retval = LEFT_PAREN;
@@ -233,7 +234,7 @@ nodeTokenType(char *token, int length)
 		retval = PLAN_SYM;
 	else if (*token == '@' && length == 1)
 		retval = AT_SYMBOL;
-	else if (*token == '\"' && length > 1 && token[length-1] == '\"')
+	else if (*token == '\"' && length > 1 && token[length - 1] == '\"')
 		retval = T_String;
 	else
 		retval = ATOM_TOKEN;
@@ -245,10 +246,10 @@ nodeTokenType(char *token, int length)
  *	  Slightly higher-level reader.
  *
  * This routine applies some semantic knowledge on top of the purely
- * lexical tokenizer lsptok().  It can read
+ * lexical tokenizer lsptok().	It can read
  *	* Value token nodes (integers, floats, or strings);
- *  * Plan nodes (via parsePlanString() from readfuncs.c);
- *  * Lists of the above.
+ *	* Plan nodes (via parsePlanString() from readfuncs.c);
+ *	* Lists of the above.
  *
  * Secrets:  He assumes that lsptok already has the string (see above).
  * Any callers should set read_car_only to true.
@@ -305,6 +306,7 @@ nodeRead(bool read_car_only)
 			{
 				/* must be "<>" */
 				this_value = NULL;
+
 				/*
 				 * It might be NULL but it is an atom!
 				 */
@@ -321,13 +323,17 @@ nodeRead(bool read_car_only)
 			}
 			break;
 		case T_Integer:
-			/* we know that the token terminates on a char atol will stop at */
+
+			/*
+			 * we know that the token terminates on a char atol will stop
+			 * at
+			 */
 			this_value = (Node *) makeInteger(atol(token));
 			make_dotted_pair_cell = true;
 			break;
 		case T_Float:
 			{
-				char   *fval = (char *) palloc(tok_len + 1);
+				char	   *fval = (char *) palloc(tok_len + 1);
 
 				memcpy(fval, token, tok_len);
 				fval[tok_len] = '\0';
@@ -337,7 +343,7 @@ nodeRead(bool read_car_only)
 			break;
 		case T_String:
 			/* need to remove leading and trailing quotes, and backslashes */
-			this_value = (Node *) makeString(debackslash(token+1, tok_len-2));
+			this_value = (Node *) makeString(debackslash(token + 1, tok_len - 2));
 			make_dotted_pair_cell = true;
 			break;
 		default:

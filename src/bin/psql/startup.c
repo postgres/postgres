@@ -3,7 +3,7 @@
  *
  * Copyright 2000 by PostgreSQL Global Development Group
  *
- * $Header: /cvsroot/pgsql/src/bin/psql/startup.c,v 1.28 2000/03/18 22:48:29 petere Exp $
+ * $Header: /cvsroot/pgsql/src/bin/psql/startup.c,v 1.29 2000/04/12 17:16:23 momjian Exp $
  */
 #include "postgres.h"
 
@@ -11,11 +11,11 @@
 
 #ifndef WIN32
 #include <unistd.h>
-#else /* WIN32 */
+#else							/* WIN32 */
 #include <io.h>
 #include <windows.h>
 #include <win32.h>
-#endif /* WIN32 */
+#endif	 /* WIN32 */
 
 #ifdef HAVE_GETOPT_H
 #include <getopt.h>
@@ -70,17 +70,17 @@ struct adhoc_opts
 	enum _actions action;
 	char	   *action_string;
 	bool		no_readline;
-    bool        no_psqlrc;
+	bool		no_psqlrc;
 };
 
 static void
-parse_psql_options(int argc, char *argv[], struct adhoc_opts * options);
+			parse_psql_options(int argc, char *argv[], struct adhoc_opts * options);
 
 static void
-process_psqlrc(void);
+			process_psqlrc(void);
 
 static void
-showVersion(void);
+			showVersion(void);
 
 
 
@@ -99,27 +99,27 @@ main(int argc, char *argv[])
 	char	   *password = NULL;
 	bool		need_pass;
 
-    if (!strrchr(argv[0], SEP_CHAR))
-        pset.progname = argv[0];
-    else
-        pset.progname = strrchr(argv[0], SEP_CHAR) + 1;
+	if (!strrchr(argv[0], SEP_CHAR))
+		pset.progname = argv[0];
+	else
+		pset.progname = strrchr(argv[0], SEP_CHAR) + 1;
 
 	pset.cur_cmd_source = stdin;
 	pset.cur_cmd_interactive = false;
-    pset.encoding = PQenv2encoding();
+	pset.encoding = PQenv2encoding();
 
 	pset.vars = CreateVariableSpace();
-    if (!pset.vars)
-    {
-        fprintf(stderr, "%s: out of memory\n", pset.progname);
-        exit(EXIT_FAILURE);
-    }
+	if (!pset.vars)
+	{
+		fprintf(stderr, "%s: out of memory\n", pset.progname);
+		exit(EXIT_FAILURE);
+	}
 	pset.popt.topt.format = PRINT_ALIGNED;
 	pset.queryFout = stdout;
 	pset.popt.topt.border = 1;
 	pset.popt.topt.pager = true;
 
-    SetVariable(pset.vars, "VERSION", PG_VERSION_STR);
+	SetVariable(pset.vars, "VERSION", PG_VERSION_STR);
 
 	pset.notty = (!isatty(fileno(stdin)) || !isatty(fileno(stdout)));
 
@@ -132,18 +132,19 @@ main(int argc, char *argv[])
 
 	parse_psql_options(argc, argv, &options);
 
-    if (!pset.popt.topt.fieldSep)
-        pset.popt.topt.fieldSep = xstrdup(DEFAULT_FIELD_SEP);
-    if (!pset.popt.topt.recordSep)
-        pset.popt.topt.recordSep = xstrdup(DEFAULT_RECORD_SEP);
+	if (!pset.popt.topt.fieldSep)
+		pset.popt.topt.fieldSep = xstrdup(DEFAULT_FIELD_SEP);
+	if (!pset.popt.topt.recordSep)
+		pset.popt.topt.recordSep = xstrdup(DEFAULT_RECORD_SEP);
 
 	if (options.username)
 	{
-        /*
-         * The \001 is a hack to support the deprecated -u option which issues
-         * a username prompt. The recommended option is -U followed by the name
-         * on the command line.
-         */
+
+		/*
+		 * The \001 is a hack to support the deprecated -u option which
+		 * issues a username prompt. The recommended option is -U followed
+		 * by the name on the command line.
+		 */
 		if (strcmp(options.username, "\001") == 0)
 			username = simple_prompt("Username: ", 100, true);
 		else
@@ -158,8 +159,8 @@ main(int argc, char *argv[])
 	{
 		need_pass = false;
 		pset.db = PQsetdbLogin(options.host, options.port, NULL, NULL,
-                               options.action == ACT_LIST_DB ? "template1" : options.dbname,
-                               username, password);
+			options.action == ACT_LIST_DB ? "template1" : options.dbname,
+							   username, password);
 
 		if (PQstatus(pset.db) == CONNECTION_BAD &&
 			strcmp(PQerrorMessage(pset.db), "fe_sendauth: no password supplied\n") == 0)
@@ -176,17 +177,18 @@ main(int argc, char *argv[])
 
 	if (PQstatus(pset.db) == CONNECTION_BAD)
 	{
-        fprintf(stderr, "%s: %s", pset.progname, PQerrorMessage(pset.db));
+		fprintf(stderr, "%s: %s", pset.progname, PQerrorMessage(pset.db));
 		PQfinish(pset.db);
 		exit(EXIT_BADCONN);
 	}
 
-    PQsetNoticeProcessor(pset.db, NoticeProcessor, NULL);
-    /*
-     * We need to save the encoding because we want to have it
-     * available even if the database connection goes bad.
-     */
-    pset.encoding = PQclientEncoding(pset.db);
+	PQsetNoticeProcessor(pset.db, NoticeProcessor, NULL);
+
+	/*
+	 * We need to save the encoding because we want to have it available
+	 * even if the database connection goes bad.
+	 */
+	pset.encoding = PQclientEncoding(pset.db);
 
 	if (options.action == ACT_LIST_DB)
 	{
@@ -196,79 +198,82 @@ main(int argc, char *argv[])
 		exit(success ? EXIT_SUCCESS : EXIT_FAILURE);
 	}
 
-    SetVariable(pset.vars, "DBNAME", PQdb(pset.db));
-    SetVariable(pset.vars, "USER", PQuser(pset.db));
-    SetVariable(pset.vars, "HOST", PQhost(pset.db));
-    SetVariable(pset.vars, "PORT", PQport(pset.db));
-    SetVariable(pset.vars, "ENCODING", pg_encoding_to_char(pset.encoding));
+	SetVariable(pset.vars, "DBNAME", PQdb(pset.db));
+	SetVariable(pset.vars, "USER", PQuser(pset.db));
+	SetVariable(pset.vars, "HOST", PQhost(pset.db));
+	SetVariable(pset.vars, "PORT", PQport(pset.db));
+	SetVariable(pset.vars, "ENCODING", pg_encoding_to_char(pset.encoding));
 
 #ifndef WIN32
 	pqsignal(SIGINT, handle_sigint);	/* control-C => cancel */
 #endif
 
 	/*
-     * Now find something to do
-     */
+	 * Now find something to do
+	 */
 
 	/*
-     * process file given by -f
-     */
+	 * process file given by -f
+	 */
 	if (options.action == ACT_FILE)
-    {
-        if (!options.no_psqlrc)
-            process_psqlrc();
+	{
+		if (!options.no_psqlrc)
+			process_psqlrc();
 
 		successResult = process_file(options.action_string);
-    }
+	}
+
 	/*
-     * process slash command if one was given to -c
-     */
+	 * process slash command if one was given to -c
+	 */
 	else if (options.action == ACT_SINGLE_SLASH)
-    {
-        const char * value;
+	{
+		const char *value;
 
-        if ((value = GetVariable(pset.vars, "ECHO")) && strcmp(value, "all")==0)
-            puts(options.action_string);
+		if ((value = GetVariable(pset.vars, "ECHO")) && strcmp(value, "all") == 0)
+			puts(options.action_string);
 		successResult = HandleSlashCmds(options.action_string, NULL, NULL) != CMD_ERROR
-            ? EXIT_SUCCESS : EXIT_FAILURE;
-    }
+			? EXIT_SUCCESS : EXIT_FAILURE;
+	}
+
 	/*
-     * If the query given to -c was a normal one, send it
-     */
+	 * If the query given to -c was a normal one, send it
+	 */
 	else if (options.action == ACT_SINGLE_QUERY)
-    {
-        const char * value;
+	{
+		const char *value;
 
-        if ((value = GetVariable(pset.vars, "ECHO")) && strcmp(value, "all")==0)
-            puts(options.action_string);
+		if ((value = GetVariable(pset.vars, "ECHO")) && strcmp(value, "all") == 0)
+			puts(options.action_string);
 		successResult = SendQuery(options.action_string)
-            ? EXIT_SUCCESS : EXIT_FAILURE;
-    }
-	/*
-     * or otherwise enter interactive main loop
-     */
-	else
-    {
-        pset.issuper = test_superuser(PQuser(pset.db));
-        if (!QUIET() && !pset.notty)
-        {
-            printf("Welcome to %s, the PostgreSQL interactive terminal.\n\n"
-                   "Type:  \\copyright for distribution terms\n"
-                   "       \\h for help with SQL commands\n"
-                   "       \\? for help on internal slash commands\n"
-                   "       \\g or terminate with semicolon to execute query\n"
-                   "       \\q to quit\n\n", pset.progname);
-        }
+			? EXIT_SUCCESS : EXIT_FAILURE;
+	}
 
-        SetVariable(pset.vars, "PROMPT1", DEFAULT_PROMPT1);
-        SetVariable(pset.vars, "PROMPT2", DEFAULT_PROMPT2);
-        SetVariable(pset.vars, "PROMPT3", DEFAULT_PROMPT3);
-        if (!options.no_psqlrc)
-            process_psqlrc();
-        if (!pset.notty)
-            initializeInput(options.no_readline ? 0 : 1);
+	/*
+	 * or otherwise enter interactive main loop
+	 */
+	else
+	{
+		pset.issuper = test_superuser(PQuser(pset.db));
+		if (!QUIET() && !pset.notty)
+		{
+			printf("Welcome to %s, the PostgreSQL interactive terminal.\n\n"
+				   "Type:  \\copyright for distribution terms\n"
+				   "       \\h for help with SQL commands\n"
+				   "       \\? for help on internal slash commands\n"
+			  "       \\g or terminate with semicolon to execute query\n"
+				   "       \\q to quit\n\n", pset.progname);
+		}
+
+		SetVariable(pset.vars, "PROMPT1", DEFAULT_PROMPT1);
+		SetVariable(pset.vars, "PROMPT2", DEFAULT_PROMPT2);
+		SetVariable(pset.vars, "PROMPT3", DEFAULT_PROMPT3);
+		if (!options.no_psqlrc)
+			process_psqlrc();
+		if (!pset.notty)
+			initializeInput(options.no_readline ? 0 : 1);
 		successResult = MainLoop(stdin);
-    }
+	}
 
 	/* clean up */
 	PQfinish(pset.db);
@@ -286,8 +291,10 @@ main(int argc, char *argv[])
 #ifdef WIN32
 /* getopt is not in the standard includes on Win32 */
 int			getopt(int, char *const[], const char *);
+
 /* And it requires progname to be set */
-char        *__progname = "psql";
+char	   *__progname = "psql";
+
 #endif
 
 static void
@@ -295,8 +302,8 @@ parse_psql_options(int argc, char *argv[], struct adhoc_opts * options)
 {
 #ifdef HAVE_GETOPT_LONG
 	static struct option long_options[] =
-    {
-        {"echo-all", no_argument, NULL, 'a'},
+	{
+		{"echo-all", no_argument, NULL, 'a'},
 		{"no-align", no_argument, NULL, 'A'},
 		{"command", required_argument, NULL, 'c'},
 		{"dbname", required_argument, NULL, 'd'},
@@ -311,7 +318,7 @@ parse_psql_options(int argc, char *argv[], struct adhoc_opts * options)
 		{"port", required_argument, NULL, 'p'},
 		{"pset", required_argument, NULL, 'P'},
 		{"quiet", no_argument, NULL, 'q'},
-        {"record-separator", required_argument, NULL, 'R'},
+		{"record-separator", required_argument, NULL, 'R'},
 		{"single-step", no_argument, NULL, 's'},
 		{"single-line", no_argument, NULL, 'S'},
 		{"tuples-only", no_argument, NULL, 't'},
@@ -322,29 +329,31 @@ parse_psql_options(int argc, char *argv[], struct adhoc_opts * options)
 		{"version", no_argument, NULL, 'V'},
 		{"password", no_argument, NULL, 'W'},
 		{"expanded", no_argument, NULL, 'x'},
-        {"no-psqlrc", no_argument, NULL, 'X'},
+		{"no-psqlrc", no_argument, NULL, 'X'},
 		{"help", no_argument, NULL, '?'},
 	};
 
 	int			optindex;
-#endif /* HAVE_GETOPT_LONG */
+
+#endif	 /* HAVE_GETOPT_LONG */
 
 	extern char *optarg;
 	extern int	optind;
 	int			c;
-    bool        used_old_u_option = false;
+	bool		used_old_u_option = false;
 
 	memset(options, 0, sizeof *options);
 
 #ifdef HAVE_GETOPT_LONG
 	while ((c = getopt_long(argc, argv, "aAc:d:eEf:F:lh:Hno:p:P:qRsStT:uU:v:VWxX?", long_options, &optindex)) != -1)
-#else /* not HAVE_GETOPT_LONG */
+#else							/* not HAVE_GETOPT_LONG */
+
 	/*
 	 * Be sure to leave the '-' in here, so we can catch accidental long
 	 * options.
 	 */
 	while ((c = getopt(argc, argv, "aAc:d:eEf:F:lh:Hno:p:P:qRsStT:uU:v:VWxX?-")) != -1)
-#endif /* not HAVE_GETOPT_LONG */
+#endif	 /* not HAVE_GETOPT_LONG */
 	{
 		switch (c)
 		{
@@ -426,9 +435,9 @@ parse_psql_options(int argc, char *argv[], struct adhoc_opts * options)
 			case 'q':
 				SetVariableBool(pset.vars, "QUIET");
 				break;
-            case 'R':
-                pset.popt.topt.recordSep = xstrdup(optarg);
-                break;
+			case 'R':
+				pset.popt.topt.recordSep = xstrdup(optarg);
+				break;
 			case 's':
 				SetVariableBool(pset.vars, "SINGLESTEP");
 				break;
@@ -443,9 +452,10 @@ parse_psql_options(int argc, char *argv[], struct adhoc_opts * options)
 				break;
 			case 'u':
 				pset.getPassword = true;
-				options->username = "\001"; /* hopefully nobody has that username */
-                /* this option is out */
-                used_old_u_option = true;
+				options->username = "\001";		/* hopefully nobody has
+												 * that username */
+				/* this option is out */
+				used_old_u_option = true;
 				break;
 			case 'U':
 				options->username = optarg;
@@ -462,7 +472,7 @@ parse_psql_options(int argc, char *argv[], struct adhoc_opts * options)
 						if (!DeleteVariable(pset.vars, value))
 						{
 							fprintf(stderr, "%s: could not delete variable %s\n",
-                                    pset.progname, value);
+									pset.progname, value);
 							exit(EXIT_FAILURE);
 						}
 					}
@@ -472,7 +482,7 @@ parse_psql_options(int argc, char *argv[], struct adhoc_opts * options)
 						if (!SetVariable(pset.vars, value, equal_loc + 1))
 						{
 							fprintf(stderr, "%s: could not set variable %s\n",
-                                    pset.progname, value);
+									pset.progname, value);
 							exit(EXIT_FAILURE);
 						}
 					}
@@ -489,22 +499,22 @@ parse_psql_options(int argc, char *argv[], struct adhoc_opts * options)
 			case 'x':
 				pset.popt.topt.expanded = true;
 				break;
-            case 'X':
-                options->no_psqlrc = true;
-                break;
+			case 'X':
+				options->no_psqlrc = true;
+				break;
 			case '?':
-                /* Actual help option given */
-                if (strcmp(argv[optind-1], "-?")==0 || strcmp(argv[optind-1], "--help")==0)
-                {
-                    usage();
-                    exit(EXIT_SUCCESS);
-                }
-                /* unknown option reported by getopt */
-                else
-                {
-                    fputs("Try -? for help.\n", stderr);
-                    exit(EXIT_FAILURE);
-                }
+				/* Actual help option given */
+				if (strcmp(argv[optind - 1], "-?") == 0 || strcmp(argv[optind - 1], "--help") == 0)
+				{
+					usage();
+					exit(EXIT_SUCCESS);
+				}
+				/* unknown option reported by getopt */
+				else
+				{
+					fputs("Try -? for help.\n", stderr);
+					exit(EXIT_FAILURE);
+				}
 				break;
 #ifndef HAVE_GETOPT_LONG
 			case '-':
@@ -532,13 +542,13 @@ parse_psql_options(int argc, char *argv[], struct adhoc_opts * options)
 			options->username = argv[optind];
 		else if (!QUIET())
 			fprintf(stderr, "%s: warning: extra option %s ignored\n",
-                    pset.progname, argv[optind]);
+					pset.progname, argv[optind]);
 
 		optind++;
 	}
 
-    if (used_old_u_option && !QUIET())
-        fprintf(stderr, "%s: Warning: The -u option is deprecated. Use -U.\n", pset.progname);
+	if (used_old_u_option && !QUIET())
+		fprintf(stderr, "%s: Warning: The -u option is deprecated. Use -U.\n", pset.progname);
 
 }
 
@@ -565,7 +575,7 @@ process_psqlrc(void)
 		psqlrc = malloc(strlen(home) + 20);
 		if (!psqlrc)
 		{
-            fprintf(stderr, "%s: out of memory\n", pset.progname);
+			fprintf(stderr, "%s: out of memory\n", pset.progname);
 			exit(EXIT_FAILURE);
 		}
 
@@ -591,41 +601,41 @@ process_psqlrc(void)
 static void
 showVersion(void)
 {
-    puts("psql (PostgreSQL) " PG_RELEASE "." PG_VERSION "." PG_SUBVERSION);
+	puts("psql (PostgreSQL) " PG_RELEASE "." PG_VERSION "." PG_SUBVERSION);
 
 #if defined(USE_READLINE) || defined (USE_HISTORY) || defined(MULTIBYTE)
-    fputs("contains ", stdout);
+	fputs("contains ", stdout);
 
 #ifdef USE_READLINE
-    fputs("readline", stdout);
+	fputs("readline", stdout);
 #define _Feature
 #endif
 
 #ifdef USE_HISTORY
 #ifdef _Feature
-    fputs(", ", stdout);
+	fputs(", ", stdout);
 #else
 #define _Feature
 #endif
-    fputs("history", stdout);
+	fputs("history", stdout);
 #endif
 
 #ifdef MULTIBYTE
 #ifdef _Feature
-    fputs(", ", stdout);
+	fputs(", ", stdout);
 #else
 #define _Feature
 #endif
-    fputs("multibyte", stdout);
+	fputs("multibyte", stdout);
 #endif
-    
+
 #undef _Feature
 
-    puts(" support");
+	puts(" support");
 #endif
 
-    puts("Portions Copyright (c) 1996-2000, PostgreSQL, Inc");
-    puts("Portions Copyright (c) 1996 Regents of the University of California");
-    puts("Read the file COPYRIGHT or use the command \\copyright to see the");
-    puts("usage and distribution terms.");
+	puts("Portions Copyright (c) 1996-2000, PostgreSQL, Inc");
+	puts("Portions Copyright (c) 1996 Regents of the University of California");
+	puts("Read the file COPYRIGHT or use the command \\copyright to see the");
+	puts("usage and distribution terms.");
 }

@@ -6,7 +6,7 @@
  * Portions Copyright (c) 1996-2000, PostgreSQL, Inc
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Id: geqo_eval.c,v 1.48 2000/02/15 20:49:14 tgl Exp $
+ * $Id: geqo_eval.c,v 1.49 2000/04/12 17:15:18 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -99,8 +99,8 @@ geqo_eval(Query *root, Gene *tour, int num_gene)
 	/*
 	 * compute fitness
 	 *
-	 * XXX geqo does not currently support optimization for partial
-	 * result retrieval --- how to fix?
+	 * XXX geqo does not currently support optimization for partial result
+	 * retrieval --- how to fix?
 	 */
 	fitness = joinrel->cheapest_total_path->total_cost;
 
@@ -135,7 +135,7 @@ gimme_tree(Query *root, Gene *tour, int rel_count, int num_gene, RelOptInfo *old
 		/* tour[0] = 3; tour[1] = 1; tour[2] = 2 */
 		base_rel_index = (int) tour[rel_count];
 
-		inner_rel = (RelOptInfo *) nth(base_rel_index-1, root->base_rel_list);
+		inner_rel = (RelOptInfo *) nth(base_rel_index - 1, root->base_rel_list);
 
 		if (rel_count == 0)
 		{						/* processing first join with
@@ -145,15 +145,15 @@ gimme_tree(Query *root, Gene *tour, int rel_count, int num_gene, RelOptInfo *old
 		}
 		else
 		{						/* tree main part */
-			List   *acceptable_rels = lcons(inner_rel, NIL);
+			List	   *acceptable_rels = lcons(inner_rel, NIL);
 
 			new_rel = make_rels_by_clause_joins(root, old_rel,
 												acceptable_rels);
-			if (! new_rel)
+			if (!new_rel)
 			{
 				new_rel = make_rels_by_clauseless_joins(root, old_rel,
 														acceptable_rels);
-				if (! new_rel)
+				if (!new_rel)
 					elog(ERROR, "gimme_tree: failed to construct join rel");
 			}
 

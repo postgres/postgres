@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2000, PostgreSQL, Inc
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Id: bufmgr.h,v 1.36 2000/04/09 04:43:18 tgl Exp $
+ * $Id: bufmgr.h,v 1.37 2000/04/12 17:16:51 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -169,8 +169,8 @@ extern int	BufferPoolCheckLeak(void);
 extern void FlushBufferPool(void);
 extern BlockNumber BufferGetBlockNumber(Buffer buffer);
 extern BlockNumber RelationGetNumberOfBlocks(Relation relation);
-extern int	FlushRelationBuffers(Relation rel, BlockNumber block,
-								 bool doFlush);
+extern int FlushRelationBuffers(Relation rel, BlockNumber block,
+					 bool doFlush);
 extern void ReleaseRelationBuffers(Relation rel);
 extern void DropBuffers(Oid dbid);
 extern void PrintPinnedBufs(void);

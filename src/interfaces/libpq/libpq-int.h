@@ -12,7 +12,7 @@
  * Portions Copyright (c) 1996-2000, PostgreSQL, Inc
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Id: libpq-int.h,v 1.22 2000/03/24 01:39:55 tgl Exp $
+ * $Id: libpq-int.h,v 1.23 2000/04/12 17:17:15 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -81,7 +81,7 @@ typedef struct pgresAttDesc
 	Oid			typid;			/* type id */
 	int			typlen;			/* type size */
 	int			atttypmod;		/* type-specific modifier info */
-} PGresAttDesc;
+}			PGresAttDesc;
 
 /* Data for a single attribute of a single tuple */
 
@@ -106,7 +106,7 @@ typedef struct pgresAttValue
 	int			len;			/* length in bytes of the value */
 	char	   *value;			/* actual value, plus terminating zero
 								 * byte */
-} PGresAttValue;
+}			PGresAttValue;
 
 struct pg_result
 {
@@ -121,12 +121,13 @@ struct pg_result
 												 * last query */
 	int			binary;			/* binary tuple values if binary == 1,
 								 * otherwise ASCII */
+
 	/*
-	 * The conn link in PGresult is no longer used by any libpq code.
-	 * It should be removed entirely, because it could be a dangling link
-	 * (the application could keep the PGresult around longer than it keeps
-	 * the PGconn!)  But there may be apps out there that depend on it,
-	 * so we will leave it here at least for a release or so.
+	 * The conn link in PGresult is no longer used by any libpq code. It
+	 * should be removed entirely, because it could be a dangling link
+	 * (the application could keep the PGresult around longer than it
+	 * keeps the PGconn!)  But there may be apps out there that depend on
+	 * it, so we will leave it here at least for a release or so.
 	 */
 	PGconn	   *xconn;			/* connection we did the query on, if any */
 
@@ -134,9 +135,9 @@ struct pg_result
 	 * These fields are copied from the originating PGconn, so that
 	 * operations on the PGresult don't have to reference the PGconn.
 	 */
-	PQnoticeProcessor noticeHook; /* notice/error message processor */
+	PQnoticeProcessor noticeHook;		/* notice/error message processor */
 	void	   *noticeArg;
-	int			client_encoding; /* encoding id */
+	int			client_encoding;/* encoding id */
 
 
 	char	   *errMsg;			/* error message, or NULL if no error */
@@ -162,7 +163,7 @@ typedef enum
 	PGASYNC_READY,				/* result ready for PQgetResult */
 	PGASYNC_COPY_IN,			/* Copy In data transfer in progress */
 	PGASYNC_COPY_OUT			/* Copy Out data transfer in progress */
-} PGAsyncStatusType;
+}			PGAsyncStatusType;
 
 /* PGSetenvStatusType defines the state of the PQSetenv state machine */
 typedef enum
@@ -170,10 +171,10 @@ typedef enum
 	SETENV_STATE_OPTION_SEND,	/* About to send an Environment Option */
 	SETENV_STATE_OPTION_WAIT,	/* Waiting for above send to complete  */
 	/* these next two are only used in MULTIBYTE mode */
-	SETENV_STATE_ENCODINGS_SEND, /* About to send an "encodings" query */
-	SETENV_STATE_ENCODINGS_WAIT, /* Waiting for query to complete      */
+	SETENV_STATE_ENCODINGS_SEND,/* About to send an "encodings" query */
+	SETENV_STATE_ENCODINGS_WAIT,/* Waiting for query to complete	  */
 	SETENV_STATE_IDLE
-} PGSetenvStatusType;
+}			PGSetenvStatusType;
 
 /* large-object-access data ... allocated only if large-object code is used. */
 typedef struct pgLobjfuncs
@@ -186,7 +187,7 @@ typedef struct pgLobjfuncs
 	Oid			fn_lo_tell;		/* OID of backend function lo_tell		*/
 	Oid			fn_lo_read;		/* OID of backend function LOread		*/
 	Oid			fn_lo_write;	/* OID of backend function LOwrite		*/
-} PGlobjfuncs;
+}			PGlobjfuncs;
 
 /* PGconn stores all the state data associated with a single connection
  * to a backend.
@@ -197,8 +198,8 @@ struct pg_conn
 	char	   *pghost;			/* the machine on which the server is
 								 * running */
 	char	   *pghostaddr;		/* the IPv4 address of the machine on
-								 * which the server is running, in
-								 * IPv4 numbers-and-dots notation. Takes
+								 * which the server is running, in IPv4
+								 * numbers-and-dots notation. Takes
 								 * precedence over above. */
 	char	   *pgport;			/* the server's communication port */
 	char	   *pgtty;			/* tty on which the backend messages is
@@ -243,8 +244,8 @@ struct pg_conn
 	int			inEnd;			/* offset to first position after avail
 								 * data */
 
-	int			nonblocking;	/* whether this connection is using a blocking
-								 * socket to the backend or not */
+	int			nonblocking;	/* whether this connection is using a
+								 * blocking socket to the backend or not */
 
 	/* Buffer for data not yet sent to backend */
 	char	   *outBuffer;		/* currently allocated buffer */
@@ -256,21 +257,21 @@ struct pg_conn
 	PGresAttValue *curTuple;	/* tuple currently being read */
 
 	/* Status for sending environment info.  Used during PQSetenv only. */
-	PGSetenvStatusType	setenv_state;
+	PGSetenvStatusType setenv_state;
 	const struct EnvironmentOptions *next_eo;
 
 #ifdef USE_SSL
-	bool allow_ssl_try;			/* Allowed to try SSL negotiation */
-	SSL *ssl;					/* SSL status, if have SSL connection */
+	bool		allow_ssl_try;	/* Allowed to try SSL negotiation */
+	SSL		   *ssl;			/* SSL status, if have SSL connection */
 #endif
 
 	/* Buffer for current error message */
-	PQExpBufferData	errorMessage;	/* expansible string */
+	PQExpBufferData errorMessage;		/* expansible string */
 
 	/* Buffer for receiving various parts of messages */
-	PQExpBufferData	workBuffer;	/* expansible string */
+	PQExpBufferData workBuffer; /* expansible string */
 
-	int client_encoding;		/* encoding id */
+	int			client_encoding;/* encoding id */
 };
 
 /* String descriptions of the ExecStatusTypes.
@@ -338,7 +339,7 @@ extern char *sys_errlist[];
 #endif	 /* sunos4 */
 #endif	 /* !strerror */
 
-/* 
+/*
  * this is so that we can check is a connection is non-blocking internally
  * without the overhead of a function call
  */

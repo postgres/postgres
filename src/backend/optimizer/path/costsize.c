@@ -19,7 +19,7 @@
  *
  * Obviously, taking constants for these values is an oversimplification,
  * but it's tough enough to get any useful estimates even at this level of
- * detail.  Note that all of these parameters are user-settable, in case
+ * detail.	Note that all of these parameters are user-settable, in case
  * the default values are drastically off for a particular platform.
  *
  * We compute two separate costs for each path:
@@ -37,12 +37,12 @@
  * will be no zero divide.)  RelOptInfos, Paths, and Plans themselves never
  * account for LIMIT.
  *
- * 
+ *
  * Portions Copyright (c) 1996-2000, PostgreSQL, Inc
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/optimizer/path/costsize.c,v 1.56 2000/04/09 04:31:36 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/optimizer/path/costsize.c,v 1.57 2000/04/12 17:15:19 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -118,6 +118,7 @@ cost_seqscan(Path *path, RelOptInfo *baserel)
 	/* disk costs */
 	if (lfirsti(baserel->relids) < 0)
 	{
+
 		/*
 		 * cost of sequentially scanning a materialized temporary relation
 		 */
@@ -125,15 +126,17 @@ cost_seqscan(Path *path, RelOptInfo *baserel)
 	}
 	else
 	{
+
 		/*
 		 * The cost of reading a page sequentially is 1.0, by definition.
 		 * Note that the Unix kernel will typically do some amount of
-		 * read-ahead optimization, so that this cost is less than the true
-		 * cost of reading a page from disk.  We ignore that issue here,
-		 * but must take it into account when estimating the cost of
+		 * read-ahead optimization, so that this cost is less than the
+		 * true cost of reading a page from disk.  We ignore that issue
+		 * here, but must take it into account when estimating the cost of
 		 * non-sequential accesses!
 		 */
-		run_cost += baserel->pages;	/* sequential fetches with cost 1.0 */
+		run_cost += baserel->pages;		/* sequential fetches with cost
+										 * 1.0 */
 	}
 
 	/* CPU costs */
@@ -151,7 +154,7 @@ cost_seqscan(Path *path, RelOptInfo *baserel)
  *
  * The simplistic model that the cost is random_page_cost is what we want
  * to use for large relations; but for small ones that is a serious
- * overestimate because of the effects of caching.  This routine tries to
+ * overestimate because of the effects of caching.	This routine tries to
  * account for that.
  *
  * Unfortunately we don't have any good way of estimating the effective cache
@@ -221,12 +224,12 @@ cost_index(Path *path, Query *root,
 	Cost		cpu_per_tuple;
 	Cost		indexStartupCost;
 	Cost		indexTotalCost;
-	Selectivity	indexSelectivity;
+	Selectivity indexSelectivity;
 	double		tuples_fetched;
 	double		pages_fetched;
 
 	/* Should only be applied to base relations */
-	Assert(IsA(baserel, RelOptInfo) && IsA(index, IndexOptInfo));
+	Assert(IsA(baserel, RelOptInfo) &&IsA(index, IndexOptInfo));
 	Assert(length(baserel->relids) == 1);
 
 	if (!enable_indexscan && !is_injoin)
@@ -234,8 +237,9 @@ cost_index(Path *path, Query *root,
 
 	/*
 	 * Call index-access-method-specific code to estimate the processing
-	 * cost for scanning the index, as well as the selectivity of the index
-	 * (ie, the fraction of main-table tuples we will have to retrieve).
+	 * cost for scanning the index, as well as the selectivity of the
+	 * index (ie, the fraction of main-table tuples we will have to
+	 * retrieve).
 	 */
 	fmgr(index->amcostestimate, root, baserel, index, indexQuals,
 		 &indexStartupCost, &indexTotalCost, &indexSelectivity);
@@ -249,17 +253,18 @@ cost_index(Path *path, Query *root,
 	 *
 	 * If the number of tuples is much smaller than the number of pages in
 	 * the relation, each tuple will cost a separate nonsequential fetch.
-	 * If it is comparable or larger, then probably we will be able to avoid
-	 * some fetches.  We use a growth rate of log(#tuples/#pages + 1) ---
-	 * probably totally bogus, but intuitively it gives the right shape of
-	 * curve at least.
+	 * If it is comparable or larger, then probably we will be able to
+	 * avoid some fetches.	We use a growth rate of log(#tuples/#pages +
+	 * 1) --- probably totally bogus, but intuitively it gives the right
+	 * shape of curve at least.
 	 *
 	 * XXX if the relation has recently been "clustered" using this index,
-	 * then in fact the target tuples will be highly nonuniformly distributed,
-	 * and we will be seriously overestimating the scan cost!  Currently we
-	 * have no way to know whether the relation has been clustered, nor how
-	 * much it's been modified since the last clustering, so we ignore this
-	 * effect.  Would be nice to do better someday.
+	 * then in fact the target tuples will be highly nonuniformly
+	 * distributed, and we will be seriously overestimating the scan cost!
+	 * Currently we have no way to know whether the relation has been
+	 * clustered, nor how much it's been modified since the last
+	 * clustering, so we ignore this effect.  Would be nice to do better
+	 * someday.
 	 */
 
 	tuples_fetched = indexSelectivity * baserel->tuples;
@@ -274,8 +279,8 @@ cost_index(Path *path, Query *root,
 		pages_fetched = tuples_fetched;
 
 	/*
-	 * Now estimate one nonsequential access per page fetched,
-	 * plus appropriate CPU costs per tuple.
+	 * Now estimate one nonsequential access per page fetched, plus
+	 * appropriate CPU costs per tuple.
 	 */
 
 	/* disk costs for main table */
@@ -283,16 +288,18 @@ cost_index(Path *path, Query *root,
 
 	/* CPU costs */
 	cpu_per_tuple = cpu_tuple_cost + baserel->baserestrictcost;
+
 	/*
-	 * Normally the indexquals will be removed from the list of restriction
-	 * clauses that we have to evaluate as qpquals, so we should subtract
-	 * their costs from baserestrictcost.  For a lossy index, however, we
-	 * will have to recheck all the quals and so mustn't subtract anything.
-	 * Also, if we are doing a join then some of the indexquals are join
-	 * clauses and shouldn't be subtracted.  Rather than work out exactly
-	 * how much to subtract, we don't subtract anything in that case either.
+	 * Normally the indexquals will be removed from the list of
+	 * restriction clauses that we have to evaluate as qpquals, so we
+	 * should subtract their costs from baserestrictcost.  For a lossy
+	 * index, however, we will have to recheck all the quals and so
+	 * mustn't subtract anything. Also, if we are doing a join then some
+	 * of the indexquals are join clauses and shouldn't be subtracted.
+	 * Rather than work out exactly how much to subtract, we don't
+	 * subtract anything in that case either.
 	 */
-	if (! index->lossy && ! is_injoin)
+	if (!index->lossy && !is_injoin)
 		cpu_per_tuple -= cost_qual_eval(indexQuals);
 
 	run_cost += cpu_per_tuple * tuples_fetched;
@@ -326,7 +333,7 @@ cost_tidscan(Path *path, RelOptInfo *baserel, List *tideval)
 	path->startup_cost = startup_cost;
 	path->total_cost = startup_cost + run_cost;
 }
- 
+
 /*
  * cost_sort
  *	  Determines and returns the cost of sorting a relation.
@@ -341,7 +348,7 @@ cost_tidscan(Path *path, RelOptInfo *baserel, List *tideval)
  * If the total volume exceeds SortMem, we switch to a tape-style merge
  * algorithm.  There will still be about t*log2(t) tuple comparisons in
  * total, but we will also need to write and read each tuple once per
- * merge pass.  We expect about ceil(log6(r)) merge passes where r is the
+ * merge pass.	We expect about ceil(log6(r)) merge passes where r is the
  * number of initial runs formed (log6 because tuplesort.c uses six-tape
  * merging).  Since the average initial run should be about twice SortMem,
  * we have
@@ -385,8 +392,8 @@ cost_sort(Path *path, List *pathkeys, double tuples, int width)
 	/*
 	 * CPU costs
 	 *
-	 * Assume about two operator evals per tuple comparison
-	 * and N log2 N comparisons
+	 * Assume about two operator evals per tuple comparison and N log2 N
+	 * comparisons
 	 */
 	startup_cost += 2.0 * cpu_operator_cost * tuples * LOG2(tuples);
 
@@ -408,7 +415,7 @@ cost_sort(Path *path, List *pathkeys, double tuples, int width)
 
 	/*
 	 * Note: should we bother to assign a nonzero run_cost to reflect the
-	 * overhead of extracting tuples from the sort result?  Probably not
+	 * overhead of extracting tuples from the sort result?	Probably not
 	 * worth worrying about.
 	 */
 	path->startup_cost = startup_cost;
@@ -440,19 +447,22 @@ cost_nestloop(Path *path,
 		startup_cost += disable_cost;
 
 	/* cost of source data */
+
 	/*
-	 * NOTE: we assume that the inner path's startup_cost is paid once, not
-	 * over again on each restart.  This is certainly correct if the inner
-	 * path is materialized.  Are there any cases where it is wrong?
+	 * NOTE: we assume that the inner path's startup_cost is paid once,
+	 * not over again on each restart.	This is certainly correct if the
+	 * inner path is materialized.	Are there any cases where it is wrong?
 	 */
 	startup_cost += outer_path->startup_cost + inner_path->startup_cost;
 	run_cost += outer_path->total_cost - outer_path->startup_cost;
 	run_cost += outer_path->parent->rows *
 		(inner_path->total_cost - inner_path->startup_cost);
 
-	/* Number of tuples processed (not number emitted!).  If inner path is
+	/*
+	 * Number of tuples processed (not number emitted!).  If inner path is
 	 * an indexscan, be sure to use its estimated output row count, which
-	 * may be lower than the restriction-clause-only row count of its parent.
+	 * may be lower than the restriction-clause-only row count of its
+	 * parent.
 	 */
 	if (IsA(inner_path, IndexPath))
 		ntuples = ((IndexPath *) inner_path)->rows;
@@ -498,11 +508,12 @@ cost_mergejoin(Path *path,
 		startup_cost += disable_cost;
 
 	/* cost of source data */
+
 	/*
 	 * Note we are assuming that each source tuple is fetched just once,
-	 * which is not right in the presence of equal keys.  If we had a way of
-	 * estimating the proportion of equal keys, we could apply a correction
-	 * factor...
+	 * which is not right in the presence of equal keys.  If we had a way
+	 * of estimating the proportion of equal keys, we could apply a
+	 * correction factor...
 	 */
 	if (outersortkeys)			/* do we need to sort outer? */
 	{
@@ -537,10 +548,10 @@ cost_mergejoin(Path *path,
 	}
 
 	/*
-	 * Estimate the number of tuples to be processed in the mergejoin itself
-	 * as one per tuple in the two source relations.  This could be a drastic
-	 * underestimate if there are many equal-keyed tuples in either relation,
-	 * but we have no good way of estimating that...
+	 * Estimate the number of tuples to be processed in the mergejoin
+	 * itself as one per tuple in the two source relations.  This could be
+	 * a drastic underestimate if there are many equal-keyed tuples in
+	 * either relation, but we have no good way of estimating that...
 	 */
 	ntuples = outer_path->parent->rows + inner_path->parent->rows;
 
@@ -575,9 +586,9 @@ cost_hashjoin(Path *path,
 	Cost		cpu_per_tuple;
 	double		ntuples;
 	double		outerbytes = relation_byte_size(outer_path->parent->rows,
-												outer_path->parent->width);
+											  outer_path->parent->width);
 	double		innerbytes = relation_byte_size(inner_path->parent->rows,
-												inner_path->parent->width);
+											  inner_path->parent->width);
 	long		hashtablebytes = SortMem * 1024L;
 
 	if (!enable_hashjoin)
@@ -592,7 +603,8 @@ cost_hashjoin(Path *path,
 	startup_cost += cpu_operator_cost * inner_path->parent->rows;
 	run_cost += cpu_operator_cost * outer_path->parent->rows;
 
-	/* the number of tuple comparisons needed is the number of outer
+	/*
+	 * the number of tuple comparisons needed is the number of outer
 	 * tuples times the typical hash bucket size, which we estimate
 	 * conservatively as the inner disbursion times the inner tuple count.
 	 */
@@ -601,9 +613,9 @@ cost_hashjoin(Path *path,
 
 	/*
 	 * Estimate the number of tuples that get through the hashing filter
-	 * as one per tuple in the two source relations.  This could be a drastic
-	 * underestimate if there are many equal-keyed tuples in either relation,
-	 * but we have no good way of estimating that...
+	 * as one per tuple in the two source relations.  This could be a
+	 * drastic underestimate if there are many equal-keyed tuples in
+	 * either relation, but we have no good way of estimating that...
 	 */
 	ntuples = outer_path->parent->rows + inner_path->parent->rows;
 
@@ -614,33 +626,31 @@ cost_hashjoin(Path *path,
 	/*
 	 * if inner relation is too big then we will need to "batch" the join,
 	 * which implies writing and reading most of the tuples to disk an
-	 * extra time.  Charge one cost unit per page of I/O (correct since
-	 * it should be nice and sequential...).  Writing the inner rel counts
-	 * as startup cost, all the rest as run cost.
+	 * extra time.	Charge one cost unit per page of I/O (correct since it
+	 * should be nice and sequential...).  Writing the inner rel counts as
+	 * startup cost, all the rest as run cost.
 	 */
 	if (innerbytes > hashtablebytes)
 	{
-		double	outerpages = page_size(outer_path->parent->rows,
-									   outer_path->parent->width);
-		double	innerpages = page_size(inner_path->parent->rows,
-									   inner_path->parent->width);
+		double		outerpages = page_size(outer_path->parent->rows,
+										   outer_path->parent->width);
+		double		innerpages = page_size(inner_path->parent->rows,
+										   inner_path->parent->width);
 
 		startup_cost += innerpages;
 		run_cost += innerpages + 2 * outerpages;
 	}
 
 	/*
-	 * Bias against putting larger relation on inside.  We don't want
-	 * an absolute prohibition, though, since larger relation might have
+	 * Bias against putting larger relation on inside.	We don't want an
+	 * absolute prohibition, though, since larger relation might have
 	 * better disbursion --- and we can't trust the size estimates
-	 * unreservedly, anyway.  Instead, inflate the startup cost by
-	 * the square root of the size ratio.  (Why square root?  No real good
+	 * unreservedly, anyway.  Instead, inflate the startup cost by the
+	 * square root of the size ratio.  (Why square root?  No real good
 	 * reason, but it seems reasonable...)
 	 */
 	if (innerbytes > outerbytes && outerbytes > 0)
-	{
 		startup_cost *= sqrt(innerbytes / outerbytes);
-	}
 
 	path->startup_cost = startup_cost;
 	path->total_cost = startup_cost + run_cost;
@@ -656,7 +666,7 @@ cost_hashjoin(Path *path,
 Cost
 cost_qual_eval(List *quals)
 {
-	Cost	total = 0;
+	Cost		total = 0;
 
 	cost_qual_eval_walker((Node *) quals, &total);
 	return total;
@@ -667,10 +677,11 @@ cost_qual_eval_walker(Node *node, Cost *total)
 {
 	if (node == NULL)
 		return false;
+
 	/*
 	 * Our basic strategy is to charge one cpu_operator_cost for each
-	 * operator or function node in the given tree.  Vars and Consts
-	 * are charged zero, and so are boolean operators (AND, OR, NOT).
+	 * operator or function node in the given tree.  Vars and Consts are
+	 * charged zero, and so are boolean operators (AND, OR, NOT).
 	 * Simplistic, but a lot better than no model at all.
 	 *
 	 * Should we try to account for the possibility of short-circuit
@@ -678,7 +689,7 @@ cost_qual_eval_walker(Node *node, Cost *total)
 	 */
 	if (IsA(node, Expr))
 	{
-		Expr   *expr = (Expr *) node;
+		Expr	   *expr = (Expr *) node;
 
 		switch (expr->opType)
 		{
@@ -691,17 +702,19 @@ cost_qual_eval_walker(Node *node, Cost *total)
 			case NOT_EXPR:
 				break;
 			case SUBPLAN_EXPR:
+
 				/*
-				 * A subplan node in an expression indicates that the subplan
-				 * will be executed on each evaluation, so charge accordingly.
-				 * (We assume that sub-selects that can be executed as
-				 * InitPlans have already been removed from the expression.)
+				 * A subplan node in an expression indicates that the
+				 * subplan will be executed on each evaluation, so charge
+				 * accordingly. (We assume that sub-selects that can be
+				 * executed as InitPlans have already been removed from
+				 * the expression.)
 				 *
 				 * NOTE: this logic should agree with the estimates used by
-				 * make_subplan() in plan/subselect.c. 
+				 * make_subplan() in plan/subselect.c.
 				 */
 				{
-					SubPlan	   *subplan = (SubPlan *) expr->oper;
+					SubPlan    *subplan = (SubPlan *) expr->oper;
 					Plan	   *plan = subplan->plan;
 					Cost		subcost;
 
@@ -730,13 +743,14 @@ cost_qual_eval_walker(Node *node, Cost *total)
 		}
 		/* fall through to examine args of Expr node */
 	}
+
 	/*
-	 * expression_tree_walker doesn't know what to do with RestrictInfo nodes,
-	 * but we just want to recurse through them.
+	 * expression_tree_walker doesn't know what to do with RestrictInfo
+	 * nodes, but we just want to recurse through them.
 	 */
 	if (IsA(node, RestrictInfo))
 	{
-		RestrictInfo   *restrictinfo = (RestrictInfo *) node;
+		RestrictInfo *restrictinfo = (RestrictInfo *) node;
 
 		return cost_qual_eval_walker((Node *) restrictinfo->clause, total);
 	}
@@ -755,7 +769,7 @@ cost_qual_eval_walker(Node *node, Cost *total)
  *
  * We set the following fields of the rel node:
  *	rows: the estimated number of output tuples (after applying
- *	      restriction clauses).
+ *		  restriction clauses).
  *	width: the estimated average output tuple width in bytes.
  *	baserestrictcost: estimated cost of evaluating baserestrictinfo clauses.
  */
@@ -769,9 +783,11 @@ set_baserel_size_estimates(Query *root, RelOptInfo *rel)
 		restrictlist_selectivity(root,
 								 rel->baserestrictinfo,
 								 lfirsti(rel->relids));
+
 	/*
 	 * Force estimate to be at least one row, to make explain output look
-	 * better and to avoid possible divide-by-zero when interpolating cost.
+	 * better and to avoid possible divide-by-zero when interpolating
+	 * cost.
 	 */
 	if (rel->rows < 1.0)
 		rel->rows = 1.0;
@@ -812,10 +828,10 @@ set_joinrel_size_estimates(Query *root, RelOptInfo *rel,
 	temp = outer_rel->rows * inner_rel->rows;
 
 	/*
-	 * Apply join restrictivity.  Note that we are only considering clauses
-	 * that become restriction clauses at this join level; we are not
-	 * double-counting them because they were not considered in estimating
-	 * the sizes of the component rels.
+	 * Apply join restrictivity.  Note that we are only considering
+	 * clauses that become restriction clauses at this join level; we are
+	 * not double-counting them because they were not considered in
+	 * estimating the sizes of the component rels.
 	 */
 	temp *= restrictlist_selectivity(root,
 									 restrictlist,
@@ -823,7 +839,8 @@ set_joinrel_size_estimates(Query *root, RelOptInfo *rel,
 
 	/*
 	 * Force estimate to be at least one row, to make explain output look
-	 * better and to avoid possible divide-by-zero when interpolating cost.
+	 * better and to avoid possible divide-by-zero when interpolating
+	 * cost.
 	 */
 	if (temp < 1.0)
 		temp = 1.0;
@@ -833,8 +850,8 @@ set_joinrel_size_estimates(Query *root, RelOptInfo *rel,
 	 * We could apply set_rel_width() to compute the output tuple width
 	 * from scratch, but at present it's always just the sum of the input
 	 * widths, so why work harder than necessary?  If relnode.c is ever
-	 * taught to remove unneeded columns from join targetlists, go back
-	 * to using set_rel_width here.
+	 * taught to remove unneeded columns from join targetlists, go back to
+	 * using set_rel_width here.
 	 */
 	rel->width = outer_rel->width + inner_rel->width;
 }
@@ -859,7 +876,7 @@ set_rel_width(Query *root, RelOptInfo *rel)
  * compute_attribute_width
  *	  Given a target list entry, find the size in bytes of the attribute.
  *
- *	  If a field is variable-length, we make a default assumption.  Would be
+ *	  If a field is variable-length, we make a default assumption.	Would be
  *	  better if VACUUM recorded some stats about the average field width...
  *	  also, we have access to the atttypmod, but fail to use it...
  */

@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/nodes/makefuncs.c,v 1.20 2000/02/15 03:37:09 thomas Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/nodes/makefuncs.c,v 1.21 2000/04/12 17:15:16 momjian Exp $
  *
  * NOTES
  *	  Creator functions in POSTGRES 4.2 are generated automatically. Most of
@@ -62,11 +62,13 @@ makeVar(Index varno,
 	var->vartype = vartype;
 	var->vartypmod = vartypmod;
 	var->varlevelsup = varlevelsup;
+
 	/*
-	 * Since few if any routines ever create Var nodes with varnoold/varoattno
-	 * different from varno/varattno, we don't provide separate arguments
-	 * for them, but just initialize them to the given varno/varattno.
-	 * This reduces code clutter and chance of error for most callers.
+	 * Since few if any routines ever create Var nodes with
+	 * varnoold/varoattno different from varno/varattno, we don't provide
+	 * separate arguments for them, but just initialize them to the given
+	 * varno/varattno. This reduces code clutter and chance of error for
+	 * most callers.
 	 */
 	var->varnoold = varno;
 	var->varoattno = varattno;
@@ -107,7 +109,9 @@ makeResdom(AttrNumber resno,
 	resdom->restype = restype;
 	resdom->restypmod = restypmod;
 	resdom->resname = resname;
-	/* For historical reasons, ressortgroupref defaults to 0 while
+
+	/*
+	 * For historical reasons, ressortgroupref defaults to 0 while
 	 * reskey/reskeyop are passed in explicitly.  This is pretty silly.
 	 */
 	resdom->ressortgroupref = 0;
@@ -159,8 +163,3 @@ makeAttr(char *relname, char *attname)
 
 	return a;
 }
-
-
-
-
-

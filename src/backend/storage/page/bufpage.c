@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/storage/page/bufpage.c,v 1.28 2000/01/26 05:57:04 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/storage/page/bufpage.c,v 1.29 2000/04/12 17:15:40 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -40,7 +40,7 @@ PageInit(Page page, Size pageSize, Size specialSize)
 
 	Assert(pageSize == BLCKSZ);
 	Assert(pageSize >
-			 specialSize + sizeof(PageHeaderData) - sizeof(ItemIdData));
+		   specialSize + sizeof(PageHeaderData) - sizeof(ItemIdData));
 
 	specialSize = MAXALIGN(specialSize);
 

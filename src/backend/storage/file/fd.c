@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/storage/file/fd.c,v 1.55 2000/04/09 04:43:19 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/storage/file/fd.c,v 1.56 2000/04/12 17:15:35 momjian Exp $
  *
  * NOTES:
  *
@@ -417,11 +417,11 @@ ReleaseDataFile()
 	DO_DB(elog(DEBUG, "ReleaseDataFile. Opened %d", nfile));
 
 	if (nfile <= 0)
-		return(false);
+		return (false);
 	Assert(VfdCache[0].lruMoreRecently != 0);
 	LruDelete(VfdCache[0].lruMoreRecently);
 
-	return(true);
+	return (true);
 }
 
 static File
@@ -442,12 +442,16 @@ AllocateVfd()
 
 		SizeVfdCache = 1;
 
-		/* register proc-exit call to ensure temp files are dropped at exit */
+		/*
+		 * register proc-exit call to ensure temp files are dropped at
+		 * exit
+		 */
 		on_proc_exit(AtEOXact_Files, NULL);
 	}
 
 	if (VfdCache[0].nextFree == 0)
 	{
+
 		/*
 		 * The free list is empty so it is time to increase the size of
 		 * the array.  We choose to double it each time this happens.
@@ -511,7 +515,7 @@ FreeVfd(File file)
  *
  * (Generally, this isn't actually necessary, considering that we
  * should be cd'd into the database directory.  Presently it is only
- * necessary to do it in "bootstrap" mode.  Maybe we should change
+ * necessary to do it in "bootstrap" mode.	Maybe we should change
  * bootstrap mode to do the cd, and save a few cycles/bytes here.)
  */
 static char *
@@ -562,6 +566,7 @@ FileAccess(File file)
 	}
 	else if (VfdCache[0].lruLessRecently != file)
 	{
+
 		/*
 		 * We now know that the file is open and that it is not the last
 		 * one accessed, so we need to move it to the head of the Lru
@@ -917,9 +922,11 @@ FileSync(File file)
 		returnCode = 0;
 		VfdCache[file].fdstate &= ~FD_DIRTY;
 	}
-	else 
+	else
 	{
-		/* We don't use FileAccess() because we don't want to force the
+
+		/*
+		 * We don't use FileAccess() because we don't want to force the
 		 * file to the front of the LRU ring; we aren't expecting to
 		 * access it again soon.
 		 */
@@ -941,7 +948,7 @@ FileSync(File file)
  * FileMarkDirty --- mark a file as needing fsync at transaction commit.
  *
  * Since FileWrite marks the file dirty, this routine is not needed in
- * normal use.  It is called when the buffer manager detects that some other
+ * normal use.	It is called when the buffer manager detects that some other
  * backend has written out a shared buffer that this backend dirtied (but
  * didn't write) in the current xact.  In that scenario, we need to fsync
  * the file before we can commit.  We cannot assume that the other backend

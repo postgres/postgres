@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/nodes/print.c,v 1.37 2000/02/15 20:49:12 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/nodes/print.c,v 1.38 2000/04/12 17:15:16 momjian Exp $
  *
  * HISTORY
  *	  AUTHOR			DATE			MAJOR EVENT
@@ -176,7 +176,7 @@ print_expr(Node *expr, List *rtable)
 					rt = rt_fetch(var->varno, rtable);
 					relname = rt->relname;
 					if (rt->ref && rt->ref->relname)
-						relname = rt->ref->relname;	/* table renamed */
+						relname = rt->ref->relname;		/* table renamed */
 					attname = get_attname(rt->relid, var->varattno);
 				}
 				break;
@@ -221,7 +221,7 @@ print_pathkeys(List *pathkeys, List *rtable)
 		printf("(");
 		foreach(k, pathkey)
 		{
-			PathKeyItem	*item = lfirst(k);
+			PathKeyItem *item = lfirst(k);
 
 			print_expr(item->key, rtable);
 			if (lnext(k))

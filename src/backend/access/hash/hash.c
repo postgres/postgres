@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/access/hash/hash.c,v 1.36 2000/03/01 05:39:22 inoue Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/access/hash/hash.c,v 1.37 2000/04/12 17:14:43 momjian Exp $
  *
  * NOTES
  *	  This file contains only the public interface routines.
@@ -149,7 +149,7 @@ hashbuild(Relation heap,
 #ifndef OMIT_PARTIAL_INDEX
 			/* SetSlotContents(slot, htup); */
 			slot->val = htup;
-			if (! ExecQual((List *) pred, econtext, false))
+			if (!ExecQual((List *) pred, econtext, false))
 				continue;
 #endif	 /* OMIT_PARTIAL_INDEX */
 		}
@@ -230,18 +230,18 @@ hashbuild(Relation heap,
 	/*
 	 * Since we just counted the tuples in the heap, we update its stats
 	 * in pg_class to guarantee that the planner takes advantage of the
-	 * index we just created.  But, only update statistics during
-	 * normal index definitions, not for indices on system catalogs
-	 * created during bootstrap processing.  We must close the relations
-	 * before updating statistics to guarantee that the relcache entries
-	 * are flushed when we increment the command counter in UpdateStats().
-	 * But we do not release any locks on the relations; those will be
-	 * held until end of transaction.
+	 * index we just created.  But, only update statistics during normal
+	 * index definitions, not for indices on system catalogs created
+	 * during bootstrap processing.  We must close the relations before
+	 * updating statistics to guarantee that the relcache entries are
+	 * flushed when we increment the command counter in UpdateStats(). But
+	 * we do not release any locks on the relations; those will be held
+	 * until end of transaction.
 	 */
 	if (IsNormalProcessingMode())
 	{
-		Oid		hrelid = RelationGetRelid(heap);
-		Oid		irelid = RelationGetRelid(index);
+		Oid			hrelid = RelationGetRelid(heap);
+		Oid			irelid = RelationGetRelid(index);
 		bool		inplace = IsReindexProcessing();
 
 		heap_close(heap, NoLock);

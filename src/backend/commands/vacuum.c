@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/commands/vacuum.c,v 1.146 2000/04/06 18:12:07 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/commands/vacuum.c,v 1.147 2000/04/12 17:14:59 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -102,15 +102,17 @@ static char *vc_show_rusage(struct rusage * ru0);
 
 /*
  * This routines handle a special cross-transaction portal.
- * However it is automatically closed in case of abort. 
+ * However it is automatically closed in case of abort.
  */
-void CommonSpecialPortalOpen(void)
+void
+CommonSpecialPortalOpen(void)
 {
 	char	   *pname;
 
 
 	if (CommonSpecialPortalInUse)
 		elog(ERROR, "CommonSpecialPortal is in use");
+
 	/*
 	 * Create a portal for safe memory across transactions. We need to
 	 * palloc the name space for it because our hash function expects the
@@ -130,7 +132,8 @@ void CommonSpecialPortalOpen(void)
 	CommonSpecialPortalInUse = true;
 }
 
-void CommonSpecialPortalClose(void)
+void
+CommonSpecialPortalClose(void)
 {
 	/* Clear flag first, to avoid recursion if PortalDrop elog's */
 	CommonSpecialPortalInUse = false;
@@ -141,16 +144,18 @@ void CommonSpecialPortalClose(void)
 	PortalDrop(&vc_portal);
 }
 
-PortalVariableMemory CommonSpecialPortalGetMemory(void)
+PortalVariableMemory
+CommonSpecialPortalGetMemory(void)
 {
 	return PortalGetVariableMemory(vc_portal);
 }
 
-bool CommonSpecialPortalIsOpen(void)
+bool
+CommonSpecialPortalIsOpen(void)
 {
 	return CommonSpecialPortalInUse;
-} 
- 
+}
+
 void
 vacuum(char *vacrel, bool verbose, bool analyze, List *va_spec)
 {
@@ -208,9 +213,9 @@ vacuum(char *vacrel, bool verbose, bool analyze, List *va_spec)
 	 * Start up the vacuum cleaner.
 	 *
 	 * NOTE: since this commits the current transaction, the memory holding
-	 * any passed-in parameters gets freed here.  We must have already copied
-	 * pass-by-reference parameters to safe storage.  Don't make me fix this
-	 * again!
+	 * any passed-in parameters gets freed here.  We must have already
+	 * copied pass-by-reference parameters to safe storage.  Don't make me
+	 * fix this again!
 	 */
 	vc_init();
 
@@ -316,11 +321,12 @@ vc_getrels(NameData *VacRelP)
 
 	if (NameStr(*VacRelP))
 	{
+
 		/*
 		 * we could use the cache here, but it is clearer to use scankeys
 		 * for both vacuum cases, bjm 2000/01/19
 		 */
-		char *nontemp_relname;
+		char	   *nontemp_relname;
 
 		/* We must re-map temp table names bjm 2000-04-06 */
 		if ((nontemp_relname =
@@ -414,7 +420,7 @@ vc_vacone(Oid relid, bool analyze, List *va_cols)
 	int32		nindices,
 				i;
 	VRelStats  *vacrelstats;
-	bool	   reindex = false;
+	bool		reindex = false;
 
 	StartTransactionCommand();
 
@@ -678,7 +684,7 @@ static void
 vc_scanheap(VRelStats *vacrelstats, Relation onerel,
 			VPageList vacuum_pages, VPageList fraged_pages)
 {
-	BlockNumber	nblocks,
+	BlockNumber nblocks,
 				blkno;
 	ItemId		itemid;
 	Buffer		buf;
@@ -1201,7 +1207,7 @@ vc_repair_frag(VRelStats *vacrelstats, Relation onerel,
 				last_vacuum_block = -1;
 			}
 			if (num_fraged_pages > 0 &&
-				fraged_pages->vpl_pagedesc[num_fraged_pages - 1]->vpd_blkno ==
+			fraged_pages->vpl_pagedesc[num_fraged_pages - 1]->vpd_blkno ==
 				(BlockNumber) blkno)
 			{
 				/* page is in fraged_pages too; remove it */
@@ -1456,8 +1462,8 @@ vc_repair_frag(VRelStats *vacrelstats, Relation onerel,
 						 * we stop shrinking here. I could try to find
 						 * real parent row but want not to do it because
 						 * of real solution will be implemented anyway,
-						 * latter, and we are too close to 6.5 release.
-						 * - vadim 06/11/99
+						 * latter, and we are too close to 6.5 release. -
+						 * vadim 06/11/99
 						 */
 						if (Ptp.t_data->t_xmax != tp.t_data->t_xmin)
 						{
@@ -1539,20 +1545,23 @@ vc_repair_frag(VRelStats *vacrelstats, Relation onerel,
 					 * to get t_infomask of inserted heap tuple !!!
 					 */
 					ToPage = BufferGetPage(cur_buffer);
+
 					/*
 					 * If this page was not used before - clean it.
 					 *
 					 * This path is different from the other callers of
 					 * vc_vacpage, because we have already incremented the
 					 * vpd's vpd_offsets_used field to account for the
-					 * tuple(s) we expect to move onto the page.  Therefore
-					 * vc_vacpage's check for vpd_offsets_used == 0 is wrong.
-					 * But since that's a good debugging check for all other
-					 * callers, we work around it here rather than remove it.
+					 * tuple(s) we expect to move onto the page. Therefore
+					 * vc_vacpage's check for vpd_offsets_used == 0 is
+					 * wrong. But since that's a good debugging check for
+					 * all other callers, we work around it here rather
+					 * than remove it.
 					 */
 					if (!PageIsEmpty(ToPage) && vtmove[ti].cleanVpd)
 					{
-						int sv_offsets_used = destvpd->vpd_offsets_used;
+						int			sv_offsets_used = destvpd->vpd_offsets_used;
+
 						destvpd->vpd_offsets_used = 0;
 						vc_vacpage(ToPage, destvpd);
 						destvpd->vpd_offsets_used = sv_offsets_used;
@@ -2267,7 +2276,7 @@ vc_attrstats(Relation onerel, VRelStats *vacrelstats, HeapTuple tuple)
 #ifdef	_DROP_COLUMN_HACK__
 		if (COLUMN_IS_DROPPED(stats->attr))
 			continue;
-#endif	/* _DROP_COLUMN_HACK__ */
+#endif	 /* _DROP_COLUMN_HACK__ */
 		value = heap_getattr(tuple,
 							 stats->attr->attnum, tupDesc, &isnull);
 

@@ -12,7 +12,7 @@
  * Portions Copyright (c) 1996-2000, PostgreSQL, Inc
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Id: tgRecipe.h,v 1.13 2000/01/26 05:57:10 momjian Exp $
+ * $Id: tgRecipe.h,v 1.14 2000/04/12 17:15:45 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -29,6 +29,8 @@ typedef struct
 				y;
 } Point;						/* this should match whatever is in
 
+								 *
+								 *
 								 *
 								 *
 								 *

@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/bin/pg_dump/common.c,v 1.40 2000/01/26 05:57:38 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/bin/pg_dump/common.c,v 1.41 2000/04/12 17:16:14 momjian Exp $
  *
  * Modifications - 6/12/96 - dave@bensoft.com - version 1.13.dhb.2
  *
@@ -190,7 +190,7 @@ parseNumericArray(const char *str, char **array, int arraysize)
 		}
 		else
 		{
-			if (!isdigit(s) || j >= sizeof(temp)-1)
+			if (!isdigit(s) || j >= sizeof(temp) - 1)
 			{
 				fprintf(stderr, "parseNumericArray: bogus number\n");
 				exit(2);
@@ -514,15 +514,15 @@ fmtId(const char *rawid, bool force_quotes)
 {
 	static PQExpBuffer id_return = NULL;
 	const char *cp;
-	
+
 	if (!force_quotes)
 	{
-		if (! islower(*rawid))
+		if (!islower(*rawid))
 			force_quotes = true;
 		else
 			for (cp = rawid; *cp; cp++)
 			{
-				if (! (islower(*cp) || isdigit(*cp) || (*cp == '_')))
+				if (!(islower(*cp) || isdigit(*cp) || (*cp == '_')))
 				{
 					force_quotes = true;
 					break;

@@ -2,13 +2,13 @@
  *
  * tuptoaster.c
  *	  Support routines for external and compressed storage of
- *    variable size attributes.
+ *	  variable size attributes.
  *
  * Copyright (c) 2000, PostgreSQL Global Development Group
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/access/heap/tuptoaster.c,v 1.2 2000/01/20 21:50:59 petere Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/access/heap/tuptoaster.c,v 1.3 2000/04/12 17:14:45 momjian Exp $
  *
  *
  * INTERFACE ROUTINES
@@ -30,17 +30,17 @@
 #ifdef TUPLE_TOASTER_ACTIVE
 
 void
-heap_tuple_toast_attrs (Relation rel, HeapTuple newtup, HeapTuple oldtup)
+heap_tuple_toast_attrs(Relation rel, HeapTuple newtup, HeapTuple oldtup)
 {
 	return;
 }
 
 
-varattrib *
-heap_tuple_untoast_attr (varattrib *attr)
+varattrib  *
+heap_tuple_untoast_attr(varattrib * attr)
 {
 	elog(ERROR, "heap_tuple_untoast_attr() called");
 }
 
 
-#endif /* TUPLE_TOASTER_ACTIVE */
+#endif	 /* TUPLE_TOASTER_ACTIVE */

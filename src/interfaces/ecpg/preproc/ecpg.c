@@ -11,7 +11,8 @@
 
 #include "extern.h"
 
-int		ret_value = OK, autocommit = 0;
+int			ret_value = OK,
+			autocommit = 0;
 struct _include_path *include_paths = NULL;
 struct cursor *cur = NULL;
 struct typedefs *types = NULL;
@@ -85,8 +86,8 @@ main(int argc, char *const argv[])
 				verbose = true;
 				break;
 			case 'D':
-                		add_preprocessor_define(optarg);
-		                break;
+				add_preprocessor_define(optarg);
+				break;
 			default:
 				usage(argv[0]);
 				return ILLEGAL_OPTION;
@@ -102,7 +103,7 @@ main(int argc, char *const argv[])
 		fprintf(stderr, "End of search list.\n");
 		return OK;
 	}
-	
+
 	if (optind >= argc)			/* no files specified */
 	{
 		usage(argv[0]);
@@ -123,7 +124,7 @@ main(int argc, char *const argv[])
 			/* take care of relative paths */
 			ptr2ext = strrchr(input_filename, '/');
 			ptr2ext = (ptr2ext ? strrchr(ptr2ext, '.') : strrchr(input_filename, '.'));
-			
+
 			/* no extension? */
 			if (ptr2ext == NULL)
 			{
@@ -137,7 +138,7 @@ main(int argc, char *const argv[])
 				ptr2ext[4] = '\0';
 			}
 
-			if (out_option == 0) /* calculate the output name */
+			if (out_option == 0)/* calculate the output name */
 			{
 				output_filename = strdup(input_filename);
 
@@ -177,7 +178,8 @@ main(int argc, char *const argv[])
 				for (ptr = cur; ptr != NULL;)
 				{
 					struct cursor *this = ptr;
-					struct arguments *l1, *l2;
+					struct arguments *l1,
+							   *l2;
 
 					free(ptr->command);
 					free(ptr->connection);
@@ -198,26 +200,28 @@ main(int argc, char *const argv[])
 				cur = NULL;
 
 				/* remove non-pertinent old defines as well */
-				while ( defines && !defines->pertinent ) {
-				    defptr = defines;
-				    defines = defines->next;
+				while (defines && !defines->pertinent)
+				{
+					defptr = defines;
+					defines = defines->next;
 
-				    free(defptr->new);
-				    free(defptr->old);
-				    free(defptr);
+					free(defptr->new);
+					free(defptr->old);
+					free(defptr);
 				}
 
-				for (defptr = defines; defptr != NULL; defptr = defptr->next )
+				for (defptr = defines; defptr != NULL; defptr = defptr->next)
 				{
-				    struct _defines *this = defptr->next;
-					
-				    if ( this && !this->pertinent ) {
-					defptr->next = this->next;
+					struct _defines *this = defptr->next;
 
-					free(this->new);
-					free(this->old);
-					free(this);
-				    }
+					if (this && !this->pertinent)
+					{
+						defptr->next = this->next;
+
+						free(this->new);
+						free(this->old);
+						free(this);
+					}
 				}
 
 				/* and old typedefs */
@@ -232,18 +236,18 @@ main(int argc, char *const argv[])
 					free(this);
 				}
 				types = NULL;
-				
+
 				/* initialize whenever structures */
 				memset(&when_error, 0, sizeof(struct when));
 				memset(&when_nf, 0, sizeof(struct when));
 				memset(&when_warn, 0, sizeof(struct when));
-				
+
 				/* and structure member lists */
 				memset(struct_member_list, 0, sizeof(struct_member_list));
-				
+
 				/* finally the actual connection */
 				connection = NULL;
-				
+
 				/* initialize lex */
 				lex_init();
 

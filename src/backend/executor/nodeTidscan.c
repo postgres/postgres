@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/executor/nodeTidscan.c,v 1.5 2000/04/07 00:30:41 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/executor/nodeTidscan.c,v 1.6 2000/04/12 17:15:10 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -32,21 +32,21 @@
 #include "access/heapam.h"
 #include "parser/parsetree.h"
 
-static int TidListCreate(List *, ExprContext *, ItemPointer *);
+static int	TidListCreate(List *, ExprContext *, ItemPointer *);
 static TupleTableSlot *TidNext(TidScan *node);
 
 static int
 TidListCreate(List *evalList, ExprContext *econtext, ItemPointer *tidList)
 {
-	List		*lst;
-	ItemPointer	itemptr;
+	List	   *lst;
+	ItemPointer itemptr;
 	bool		isNull;
-	int		numTids = 0;
+	int			numTids = 0;
 
-	foreach (lst, evalList)
+	foreach(lst, evalList)
 	{
-		itemptr = (ItemPointer)ExecEvalExpr(lfirst(lst), econtext,
-				&isNull, (bool *)0);
+		itemptr = (ItemPointer) ExecEvalExpr(lfirst(lst), econtext,
+											 &isNull, (bool *) 0);
 		if (itemptr && ItemPointerIsValid(itemptr))
 		{
 			tidList[numTids] = itemptr;
@@ -67,20 +67,21 @@ TidListCreate(List *evalList, ExprContext *econtext, ItemPointer *tidList)
 static TupleTableSlot *
 TidNext(TidScan *node)
 {
-	EState		*estate;
+	EState	   *estate;
 	CommonScanState *scanstate;
-	TidScanState	*tidstate;
-	ScanDirection	direction;
+	TidScanState *tidstate;
+	ScanDirection direction;
 	Snapshot	snapshot;
 	Relation	heapRelation;
 	HeapTuple	tuple;
-	TupleTableSlot	*slot;
+	TupleTableSlot *slot;
 	Buffer		buffer = InvalidBuffer;
-	int		numTids;
+	int			numTids;
 
 	bool		bBackward;
-	int		tidNumber;
-	ItemPointer	*tidList, itemptr;
+	int			tidNumber;
+	ItemPointer *tidList,
+				itemptr;
 
 	/* ----------------
 	 *	extract necessary information from tid scan node
@@ -108,7 +109,7 @@ TidNext(TidScan *node)
 		ExecClearTuple(slot);
 		if (estate->es_evTupleNull[node->scan.scanrelid - 1])
 			return slot;		/* return empty slot */
-		
+
 		/* probably ought to use ExecStoreTuple here... */
 		slot->val = estate->es_evTuple[node->scan.scanrelid - 1];
 		slot->ttc_shouldFree = false;
@@ -159,7 +160,7 @@ TidNext(TidScan *node)
 		if (tuple->t_data != NULL)
 		{
 			bool		prev_matches = false;
-			int		prev_tid;
+			int			prev_tid;
 
 			/* ----------------
 			 *	store the scanned tuple in the scan tuple slot of
@@ -169,23 +170,23 @@ TidNext(TidScan *node)
 			 *	were not created with palloc() and so should not be pfree()'d.
 			 * ----------------
 			 */
-			ExecStoreTuple(tuple,	/* tuple to store */
-						   slot,	/* slot to store in */
-						   buffer,	/* buffer associated with tuple  */
-						   false);	/* don't pfree */
+			ExecStoreTuple(tuple,		/* tuple to store */
+						   slot,/* slot to store in */
+						   buffer,		/* buffer associated with tuple  */
+						   false);		/* don't pfree */
 
 			/*
-			 * At this point we have an extra pin on the buffer,
-			 * because ExecStoreTuple incremented the pin count.
-			 * Drop our local pin.
-			*/
-			ReleaseBuffer(buffer);  
+			 * At this point we have an extra pin on the buffer, because
+			 * ExecStoreTuple incremented the pin count. Drop our local
+			 * pin.
+			 */
+			ReleaseBuffer(buffer);
+
 			/*
-			 * We must check to see if the current tuple would have
-			 * been matched by an earlier tid, so we don't double
-			 * report it. We do this by passing the tuple through
-			 * ExecQual and look for failure with all previous
-			 * qualifications.
+			 * We must check to see if the current tuple would have been
+			 * matched by an earlier tid, so we don't double report it. We
+			 * do this by passing the tuple through ExecQual and look for
+			 * failure with all previous qualifications.
 			 */
 			for (prev_tid = 0; prev_tid < tidstate->tss_TidPtr;
 				 prev_tid++)
@@ -209,7 +210,7 @@ TidNext(TidScan *node)
 		else
 			tidstate->tss_TidPtr++;
 		if (slot_is_valid)
-			return slot; 
+			return slot;
 	}
 	/* ----------------
 	 *	if we get here it means the tid scan failed so we
@@ -255,9 +256,9 @@ ExecTidScan(TidScan *node)
 void
 ExecTidReScan(TidScan *node, ExprContext *exprCtxt, Plan *parent)
 {
-	EState		*estate;
-	TidScanState	*tidstate;
-	ItemPointer	*tidList;
+	EState	   *estate;
+	TidScanState *tidstate;
+	ItemPointer *tidList;
 
 	tidstate = node->tidstate;
 	estate = node->scan.plan.state;
@@ -278,7 +279,7 @@ ExecTidReScan(TidScan *node, ExprContext *exprCtxt, Plan *parent)
 	}
 
 	tidstate->tss_NumTids = TidListCreate(node->tideval,
-									node->scan.scanstate->cstate.cs_ExprContext,
+							 node->scan.scanstate->cstate.cs_ExprContext,
 										  tidList);
 
 	/* ----------------
@@ -299,7 +300,7 @@ void
 ExecEndTidScan(TidScan *node)
 {
 	CommonScanState *scanstate;
-	TidScanState	*tidstate;
+	TidScanState *tidstate;
 
 	scanstate = node->scan.scanstate;
 	tidstate = node->tidstate;
@@ -385,18 +386,18 @@ ExecTidRestrPos(TidScan *node)
 bool
 ExecInitTidScan(TidScan *node, EState *estate, Plan *parent)
 {
-	TidScanState	*tidstate;
+	TidScanState *tidstate;
 	CommonScanState *scanstate;
-	ItemPointer	*tidList;
-	int		numTids;
-	int		tidPtr;
-	List		*rangeTable;
-	RangeTblEntry	*rtentry;
-	Oid		relid;
-	Oid		reloid;
+	ItemPointer *tidList;
+	int			numTids;
+	int			tidPtr;
+	List	   *rangeTable;
+	RangeTblEntry *rtentry;
+	Oid			relid;
+	Oid			reloid;
 
 	Relation	currentRelation;
-	int		baseid;
+	int			baseid;
 
 	List	   *execParam = NULL;
 
@@ -473,7 +474,7 @@ ExecInitTidScan(TidScan *node, EState *estate, Plan *parent)
 	 *	get the tid node information
 	 * ----------------
 	 */
-	tidList = (ItemPointer *)palloc(length(node->tideval) * sizeof(ItemPointer));
+	tidList = (ItemPointer *) palloc(length(node->tideval) * sizeof(ItemPointer));
 	numTids = 0;
 	if (!node->needRescan)
 		numTids = TidListCreate(node->tideval, scanstate->cstate.cs_ExprContext, tidList);
@@ -502,8 +503,8 @@ ExecInitTidScan(TidScan *node, EState *estate, Plan *parent)
 	reloid = rtentry->relid;
 
 	currentRelation = heap_open(reloid, AccessShareLock);
-        if (currentRelation == NULL)
-                elog(ERROR, "ExecInitTidScan heap_open failed."); 
+	if (currentRelation == NULL)
+		elog(ERROR, "ExecInitTidScan heap_open failed.");
 	scanstate->css_currentRelation = currentRelation;
 	scanstate->css_currentScanDesc = 0;
 

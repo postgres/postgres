@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/executor/nodeUnique.c,v 1.27 2000/01/27 18:11:27 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/executor/nodeUnique.c,v 1.28 2000/04/12 17:15:10 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -55,7 +55,7 @@ ExecUnique(Unique *node)
 	uniquestate = node->uniquestate;
 	outerPlan = outerPlan((Plan *) node);
 	resultTupleSlot = uniquestate->cstate.cs_ResultTupleSlot;
-	tupDesc = ExecGetResultType(& uniquestate->cstate);
+	tupDesc = ExecGetResultType(&uniquestate->cstate);
 
 	/* ----------------
 	 *	now loop, returning only non-duplicate tuples.
@@ -86,16 +86,16 @@ ExecUnique(Unique *node)
 		 *	 another new tuple from the subplan.
 		 * ----------------
 		 */
-		if (! execTuplesMatch(slot->val, uniquestate->priorTuple,
-							  tupDesc,
-							  node->numCols, node->uniqColIdx,
-							  uniquestate->eqfunctions))
+		if (!execTuplesMatch(slot->val, uniquestate->priorTuple,
+							 tupDesc,
+							 node->numCols, node->uniqColIdx,
+							 uniquestate->eqfunctions))
 			break;
 	}
 
 	/* ----------------
 	 *	We have a new tuple different from the previous saved tuple (if any).
-	 *	Save it and return it.  Note that we make two copies of the tuple:
+	 *	Save it and return it.	Note that we make two copies of the tuple:
 	 *	one to keep for our own future comparisons, and one to return to the
 	 *	caller.  We need to copy the tuple returned by the subplan to avoid
 	 *	holding buffer refcounts, and we need our own copy because the caller
@@ -151,14 +151,14 @@ ExecInitUnique(Unique *node, EState *estate, Plan *parent)
 	 *	they never call ExecQual or ExecTargetList.
 	 * ----------------
 	 */
-	ExecAssignNodeBaseInfo(estate, & uniquestate->cstate, parent);
+	ExecAssignNodeBaseInfo(estate, &uniquestate->cstate, parent);
 
 #define UNIQUE_NSLOTS 1
 	/* ------------
 	 * Tuple table initialization
 	 * ------------
 	 */
-	ExecInitResultTupleSlot(estate, & uniquestate->cstate);
+	ExecInitResultTupleSlot(estate, &uniquestate->cstate);
 
 	/* ----------------
 	 *	then initialize outer plan
@@ -172,14 +172,14 @@ ExecInitUnique(Unique *node, EState *estate, Plan *parent)
 	 *	projection info for this node appropriately
 	 * ----------------
 	 */
-	ExecAssignResultTypeFromOuterPlan((Plan *) node, & uniquestate->cstate);
+	ExecAssignResultTypeFromOuterPlan((Plan *) node, &uniquestate->cstate);
 	uniquestate->cstate.cs_ProjInfo = NULL;
 
 	/*
 	 * Precompute fmgr lookup data for inner loop
 	 */
 	uniquestate->eqfunctions =
-		execTuplesMatchPrepare(ExecGetResultType(& uniquestate->cstate),
+		execTuplesMatchPrepare(ExecGetResultType(&uniquestate->cstate),
 							   node->numCols,
 							   node->uniqColIdx);
 

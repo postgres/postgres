@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/optimizer/prep/prepqual.c,v 1.23 2000/02/27 19:45:44 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/optimizer/prep/prepqual.c,v 1.24 2000/04/12 17:15:23 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -33,7 +33,7 @@ static Expr *and_normalize(List *andlist);
 static Expr *qual_cleanup(Expr *qual);
 static List *remove_duplicates(List *list);
 static void count_bool_nodes(Expr *qual, double *nodes,
-							 double *cnfnodes, double *dnfnodes);
+				 double *cnfnodes, double *dnfnodes);
 
 /*****************************************************************************
  *
@@ -71,7 +71,7 @@ static void count_bool_nodes(Expr *qual, double *nodes,
  *
  * If 'removeAndFlag' is true then it removes explicit AND at the top level,
  * producing a list of implicitly-ANDed conditions.  Otherwise, a regular
- * boolean expression is returned.  Since most callers pass 'true', we
+ * boolean expression is returned.	Since most callers pass 'true', we
  * prefer to declare the result as List *, not Expr *.
  *
  * XXX This code could be much smarter, at the cost of also being slower,
@@ -95,12 +95,14 @@ canonicalize_qual(Expr *qual, bool removeAndFlag)
 	if (qual == NULL)
 		return NIL;
 
-	/* Flatten AND and OR groups throughout the tree.
-	 * This improvement is always worthwhile, so do it unconditionally.
+	/*
+	 * Flatten AND and OR groups throughout the tree. This improvement is
+	 * always worthwhile, so do it unconditionally.
 	 */
 	qual = flatten_andors(qual);
 
-	/* Push down NOTs.  We do this only in the top-level boolean
+	/*
+	 * Push down NOTs.	We do this only in the top-level boolean
 	 * expression, without examining arguments of operators/functions.
 	 * Even so, it might not be a win if we are unable to find negators
 	 * for all the operators involved; perhaps we should compare before-
@@ -109,21 +111,24 @@ canonicalize_qual(Expr *qual, bool removeAndFlag)
 	newqual = find_nots(qual);
 
 	/*
-	 * Choose whether to convert to CNF, or DNF, or leave well enough alone.
+	 * Choose whether to convert to CNF, or DNF, or leave well enough
+	 * alone.
 	 *
 	 * We make an approximate estimate of the number of bottom-level nodes
 	 * that will appear in the CNF and DNF forms of the query.
 	 */
 	count_bool_nodes(newqual, &nodes, &cnfnodes, &dnfnodes);
+
 	/*
 	 * First heuristic is to forget about *both* normal forms if there are
 	 * a huge number of terms in the qual clause.  This would only happen
-	 * with machine-generated queries, presumably; and most likely such
-	 * a query is already in either CNF or DNF.
+	 * with machine-generated queries, presumably; and most likely such a
+	 * query is already in either CNF or DNF.
 	 */
 	cnfok = dnfok = true;
 	if (nodes >= 500.0)
 		cnfok = dnfok = false;
+
 	/*
 	 * Second heuristic is to forget about either CNF or DNF if it shows
 	 * unreasonable growth compared to the original form of the qual,
@@ -134,15 +139,17 @@ canonicalize_qual(Expr *qual, bool removeAndFlag)
 		cnfok = false;
 	if (dnfnodes >= 4.0 * nodes)
 		dnfok = false;
+
 	/*
-	 * Third heuristic is to prefer DNF if top level is already an OR,
-	 * and only one relation is mentioned, and DNF is no larger than
-	 * the CNF representation.  (Pretty shaky; can we improve on this?)
+	 * Third heuristic is to prefer DNF if top level is already an OR, and
+	 * only one relation is mentioned, and DNF is no larger than the CNF
+	 * representation.	(Pretty shaky; can we improve on this?)
 	 */
 	if (cnfok && dnfok && dnfnodes <= cnfnodes &&
 		or_clause((Node *) newqual) &&
 		NumRelids((Node *) newqual) == 1)
 		cnfok = false;
+
 	/*
 	 * Otherwise, we prefer CNF.
 	 *
@@ -150,20 +157,26 @@ canonicalize_qual(Expr *qual, bool removeAndFlag)
 	 */
 	if (cnfok)
 	{
-		/* Normalize into conjunctive normal form, and clean up the result. */
+
+		/*
+		 * Normalize into conjunctive normal form, and clean up the
+		 * result.
+		 */
 		newqual = qual_cleanup(find_ors(newqual));
 	}
 	else if (dnfok)
 	{
-		/* Normalize into disjunctive normal form, and clean up the result. */
+
+		/*
+		 * Normalize into disjunctive normal form, and clean up the
+		 * result.
+		 */
 		newqual = qual_cleanup(find_ands(newqual));
 	}
 
 	/* Convert to implicit-AND list if requested */
 	if (removeAndFlag)
-	{
 		newqual = (Expr *) make_ands_implicit(newqual);
-	}
 
 	return (List *) newqual;
 }
@@ -177,7 +190,7 @@ canonicalize_qual(Expr *qual, bool removeAndFlag)
  *
  * If 'removeAndFlag' is true then it removes explicit AND at the top level,
  * producing a list of implicitly-ANDed conditions.  Otherwise, a regular
- * boolean expression is returned.  Since most callers pass 'true', we
+ * boolean expression is returned.	Since most callers pass 'true', we
  * prefer to declare the result as List *, not Expr *.
  */
 List *
@@ -188,11 +201,14 @@ cnfify(Expr *qual, bool removeAndFlag)
 	if (qual == NULL)
 		return NIL;
 
-	/* Flatten AND and OR groups throughout the tree.
-	 * This improvement is always worthwhile.
+	/*
+	 * Flatten AND and OR groups throughout the tree. This improvement is
+	 * always worthwhile.
 	 */
 	newqual = flatten_andors(qual);
-	/* Push down NOTs.  We do this only in the top-level boolean
+
+	/*
+	 * Push down NOTs.	We do this only in the top-level boolean
 	 * expression, without examining arguments of operators/functions.
 	 */
 	newqual = find_nots(newqual);
@@ -202,9 +218,7 @@ cnfify(Expr *qual, bool removeAndFlag)
 	newqual = qual_cleanup(newqual);
 
 	if (removeAndFlag)
-	{
 		newqual = (Expr *) make_ands_implicit(newqual);
-	}
 
 	return (List *) newqual;
 }
@@ -227,11 +241,14 @@ dnfify(Expr *qual)
 	if (qual == NULL)
 		return NULL;
 
-	/* Flatten AND and OR groups throughout the tree.
-	 * This improvement is always worthwhile.
+	/*
+	 * Flatten AND and OR groups throughout the tree. This improvement is
+	 * always worthwhile.
 	 */
 	newqual = flatten_andors(qual);
-	/* Push down NOTs.  We do this only in the top-level boolean
+
+	/*
+	 * Push down NOTs.	We do this only in the top-level boolean
 	 * expression, without examining arguments of operators/functions.
 	 */
 	newqual = find_nots(newqual);
@@ -280,13 +297,13 @@ flatten_andors(Expr *qual)
 
 		foreach(arg, qual->args)
 		{
-			Expr   *subexpr = flatten_andors((Expr *) lfirst(arg));
+			Expr	   *subexpr = flatten_andors((Expr *) lfirst(arg));
 
 			/*
-			 * Note: we can destructively nconc the subexpression's arglist
-			 * because we know the recursive invocation of flatten_andors
-			 * will have built a new arglist not shared with any other expr.
-			 * Otherwise we'd need a listCopy here.
+			 * Note: we can destructively nconc the subexpression's
+			 * arglist because we know the recursive invocation of
+			 * flatten_andors will have built a new arglist not shared
+			 * with any other expr. Otherwise we'd need a listCopy here.
 			 */
 			if (and_clause((Node *) subexpr))
 				out_list = nconc(out_list, subexpr->args);
@@ -302,13 +319,13 @@ flatten_andors(Expr *qual)
 
 		foreach(arg, qual->args)
 		{
-			Expr   *subexpr = flatten_andors((Expr *) lfirst(arg));
+			Expr	   *subexpr = flatten_andors((Expr *) lfirst(arg));
 
 			/*
-			 * Note: we can destructively nconc the subexpression's arglist
-			 * because we know the recursive invocation of flatten_andors
-			 * will have built a new arglist not shared with any other expr.
-			 * Otherwise we'd need a listCopy here.
+			 * Note: we can destructively nconc the subexpression's
+			 * arglist because we know the recursive invocation of
+			 * flatten_andors will have built a new arglist not shared
+			 * with any other expr. Otherwise we'd need a listCopy here.
 			 */
 			if (or_clause((Node *) subexpr))
 				out_list = nconc(out_list, subexpr->args);
@@ -354,13 +371,13 @@ pull_ors(List *orlist)
 
 	foreach(arg, orlist)
 	{
-		Expr   *subexpr = (Expr *) lfirst(arg);
+		Expr	   *subexpr = (Expr *) lfirst(arg);
 
 		/*
 		 * Note: we can destructively nconc the subexpression's arglist
-		 * because we know the recursive invocation of pull_ors
-		 * will have built a new arglist not shared with any other expr.
-		 * Otherwise we'd need a listCopy here.
+		 * because we know the recursive invocation of pull_ors will have
+		 * built a new arglist not shared with any other expr. Otherwise
+		 * we'd need a listCopy here.
 		 */
 		if (or_clause((Node *) subexpr))
 			out_list = nconc(out_list, pull_ors(subexpr->args));
@@ -385,13 +402,13 @@ pull_ands(List *andlist)
 
 	foreach(arg, andlist)
 	{
-		Expr   *subexpr = (Expr *) lfirst(arg);
+		Expr	   *subexpr = (Expr *) lfirst(arg);
 
 		/*
 		 * Note: we can destructively nconc the subexpression's arglist
-		 * because we know the recursive invocation of pull_ands
-		 * will have built a new arglist not shared with any other expr.
-		 * Otherwise we'd need a listCopy here.
+		 * because we know the recursive invocation of pull_ands will have
+		 * built a new arglist not shared with any other expr. Otherwise
+		 * we'd need a listCopy here.
 		 */
 		if (and_clause((Node *) subexpr))
 			out_list = nconc(out_list, pull_ands(subexpr->args));
@@ -407,7 +424,7 @@ pull_ands(List *andlist)
  *	  For 'NOT' clauses, apply push_not() to try to push down the 'NOT'.
  *	  For all other clause types, simply recurse.
  *
- * Returns the modified qualification.  AND/OR flatness is preserved.
+ * Returns the modified qualification.	AND/OR flatness is preserved.
  */
 static Expr *
 find_nots(Expr *qual)
@@ -468,7 +485,8 @@ static Expr *
 push_nots(Expr *qual)
 {
 	if (qual == NULL)
-		return make_notclause(qual); /* XXX is this right?  Or possible? */
+		return make_notclause(qual);	/* XXX is this right?  Or
+										 * possible? */
 
 	/*
 	 * Negate an operator clause if possible: ("NOT" (< A B)) => (> A B)
@@ -486,6 +504,7 @@ push_nots(Expr *qual)
 											   InvalidOid,
 											   oper->opresulttype,
 											   0, NULL);
+
 			return make_opclause(op, get_leftop(qual), get_rightop(qual));
 		}
 		else
@@ -496,7 +515,7 @@ push_nots(Expr *qual)
 		/*--------------------
 		 * Apply DeMorgan's Laws:
 		 *		("NOT" ("AND" A B)) => ("OR" ("NOT" A) ("NOT" B))
-		 *		("NOT" ("OR" A B))  => ("AND" ("NOT" A) ("NOT" B))
+		 *		("NOT" ("OR" A B))	=> ("AND" ("NOT" A) ("NOT" B))
 		 * i.e., swap AND for OR and negate all the subclauses.
 		 *--------------------
 		 */
@@ -518,6 +537,7 @@ push_nots(Expr *qual)
 	}
 	else if (not_clause((Node *) qual))
 	{
+
 		/*
 		 * Another 'not' cancels this 'not', so eliminate the 'not' and
 		 * stop negating this branch.  But search the subexpression for
@@ -527,6 +547,7 @@ push_nots(Expr *qual)
 	}
 	else
 	{
+
 		/*
 		 * We don't know how to negate anything else, place a 'not' at
 		 * this level.
@@ -544,7 +565,7 @@ push_nots(Expr *qual)
  *	  Note that 'or' clauses will always be turned into 'and' clauses
  *	  if they contain any 'and' subclauses.
  *
- * Returns the modified qualification.  AND/OR flatness is preserved.
+ * Returns the modified qualification.	AND/OR flatness is preserved.
  */
 static Expr *
 find_ors(Expr *qual)
@@ -601,17 +622,17 @@ or_normalize(List *orlist)
 		return lfirst(orlist);	/* single-expression OR (can this happen?) */
 
 	/*
-	 * If we have a choice of AND clauses, pick the one with the
-	 * most subclauses.  Because we initialized num_subclauses = 1,
-	 * any AND clauses with only one arg will be ignored as useless.
+	 * If we have a choice of AND clauses, pick the one with the most
+	 * subclauses.	Because we initialized num_subclauses = 1, any AND
+	 * clauses with only one arg will be ignored as useless.
 	 */
 	foreach(temp, orlist)
 	{
-		Expr   *clause = lfirst(temp);
+		Expr	   *clause = lfirst(temp);
 
 		if (and_clause((Node *) clause))
 		{
-			int		nclauses = length(clause->args);
+			int			nclauses = length(clause->args);
 
 			if (nclauses > num_subclauses)
 			{
@@ -622,12 +643,13 @@ or_normalize(List *orlist)
 	}
 
 	/* if there's no suitable AND clause, we can't transform the OR */
-	if (! distributable)
+	if (!distributable)
 		return make_orclause(orlist);
 
-	/* Caution: lremove destructively modifies the input orlist.
-	 * This should be OK, since or_normalize is only called with
-	 * freshly constructed lists that are not referenced elsewhere.
+	/*
+	 * Caution: lremove destructively modifies the input orlist. This
+	 * should be OK, since or_normalize is only called with freshly
+	 * constructed lists that are not referenced elsewhere.
 	 */
 	orlist = lremove(distributable, orlist);
 
@@ -635,11 +657,12 @@ or_normalize(List *orlist)
 	{
 		Expr	   *andclause = lfirst(temp);
 
-		/* pull_ors is needed here in case andclause has a top-level OR.
-		 * Then we recursively apply or_normalize, since there might
-		 * be an AND subclause in the resulting OR-list.
-		 * Note: we rely on pull_ors to build a fresh list,
-		 * and not damage the given orlist.
+		/*
+		 * pull_ors is needed here in case andclause has a top-level OR.
+		 * Then we recursively apply or_normalize, since there might be an
+		 * AND subclause in the resulting OR-list. Note: we rely on
+		 * pull_ors to build a fresh list, and not damage the given
+		 * orlist.
 		 */
 		andclause = or_normalize(pull_ors(lcons(andclause, orlist)));
 		andclauses = lappend(andclauses, andclause);
@@ -658,7 +681,7 @@ or_normalize(List *orlist)
  *	  Note that 'and' clauses will always be turned into 'or' clauses
  *	  if they contain any 'or' subclauses.
  *
- * Returns the modified qualification.  AND/OR flatness is preserved.
+ * Returns the modified qualification.	AND/OR flatness is preserved.
  */
 static Expr *
 find_ands(Expr *qual)
@@ -712,20 +735,21 @@ and_normalize(List *andlist)
 	if (andlist == NIL)
 		return NULL;			/* probably can't happen */
 	if (lnext(andlist) == NIL)
-		return lfirst(andlist);	/* single-expression AND (can this happen?) */
+		return lfirst(andlist); /* single-expression AND (can this
+								 * happen?) */
 
 	/*
-	 * If we have a choice of OR clauses, pick the one with the
-	 * most subclauses.  Because we initialized num_subclauses = 1,
-	 * any OR clauses with only one arg will be ignored as useless.
+	 * If we have a choice of OR clauses, pick the one with the most
+	 * subclauses.	Because we initialized num_subclauses = 1, any OR
+	 * clauses with only one arg will be ignored as useless.
 	 */
 	foreach(temp, andlist)
 	{
-		Expr   *clause = lfirst(temp);
+		Expr	   *clause = lfirst(temp);
 
 		if (or_clause((Node *) clause))
 		{
-			int		nclauses = length(clause->args);
+			int			nclauses = length(clause->args);
 
 			if (nclauses > num_subclauses)
 			{
@@ -736,12 +760,13 @@ and_normalize(List *andlist)
 	}
 
 	/* if there's no suitable OR clause, we can't transform the AND */
-	if (! distributable)
+	if (!distributable)
 		return make_andclause(andlist);
 
-	/* Caution: lremove destructively modifies the input andlist.
-	 * This should be OK, since and_normalize is only called with
-	 * freshly constructed lists that are not referenced elsewhere.
+	/*
+	 * Caution: lremove destructively modifies the input andlist. This
+	 * should be OK, since and_normalize is only called with freshly
+	 * constructed lists that are not referenced elsewhere.
 	 */
 	andlist = lremove(distributable, andlist);
 
@@ -749,11 +774,12 @@ and_normalize(List *andlist)
 	{
 		Expr	   *orclause = lfirst(temp);
 
-		/* pull_ands is needed here in case orclause has a top-level AND.
-		 * Then we recursively apply and_normalize, since there might
-		 * be an OR subclause in the resulting AND-list.
-		 * Note: we rely on pull_ands to build a fresh list,
-		 * and not damage the given andlist.
+		/*
+		 * pull_ands is needed here in case orclause has a top-level AND.
+		 * Then we recursively apply and_normalize, since there might be
+		 * an OR subclause in the resulting AND-list. Note: we rely on
+		 * pull_ands to build a fresh list, and not damage the given
+		 * andlist.
 		 */
 		orclause = and_normalize(pull_ands(lcons(orclause, andlist)));
 		orclauses = lappend(orclauses, orclause);
@@ -767,7 +793,7 @@ and_normalize(List *andlist)
  * qual_cleanup
  *	  Fix up a qualification by removing duplicate entries (which could be
  *	  created during normalization, if identical subexpressions from different
- *	  parts of the tree are brought together).  Also, check for AND and OR
+ *	  parts of the tree are brought together).	Also, check for AND and OR
  *	  clauses with only one remaining subexpression, and simplify.
  *
  * Returns the modified qualification.
@@ -828,7 +854,7 @@ remove_duplicates(List *list)
 
 	foreach(i, list)
 	{
-		if (! member(lfirst(i), result))
+		if (!member(lfirst(i), result))
 			result = lappend(result, lfirst(i));
 	}
 	return result;
@@ -855,7 +881,9 @@ count_bool_nodes(Expr *qual,
 				 double *dnfnodes)
 {
 	List	   *temp;
-	double		subnodes, subcnfnodes, subdnfnodes;
+	double		subnodes,
+				subcnfnodes,
+				subdnfnodes;
 
 	if (and_clause((Node *) qual))
 	{
@@ -864,13 +892,15 @@ count_bool_nodes(Expr *qual,
 
 		foreach(temp, qual->args)
 		{
-			count_bool_nodes(lfirst(temp), 
+			count_bool_nodes(lfirst(temp),
 							 &subnodes, &subcnfnodes, &subdnfnodes);
 			*nodes += subnodes;
 			*cnfnodes += subcnfnodes;
 			*dnfnodes *= subdnfnodes;
 		}
-		/* we could get dnfnodes < cnfnodes here, if all the sub-nodes are
+
+		/*
+		 * we could get dnfnodes < cnfnodes here, if all the sub-nodes are
 		 * simple ones with count 1.  Make sure dnfnodes isn't too small.
 		 */
 		if (*dnfnodes < *cnfnodes)
@@ -883,13 +913,15 @@ count_bool_nodes(Expr *qual,
 
 		foreach(temp, qual->args)
 		{
-			count_bool_nodes(lfirst(temp), 
+			count_bool_nodes(lfirst(temp),
 							 &subnodes, &subcnfnodes, &subdnfnodes);
 			*nodes += subnodes;
 			*cnfnodes *= subcnfnodes;
 			*dnfnodes += subdnfnodes;
 		}
-		/* we could get cnfnodes < dnfnodes here, if all the sub-nodes are
+
+		/*
+		 * we could get cnfnodes < dnfnodes here, if all the sub-nodes are
 		 * simple ones with count 1.  Make sure cnfnodes isn't too small.
 		 */
 		if (*cnfnodes < *dnfnodes)

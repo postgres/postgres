@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/storage/ipc/ipci.c,v 1.32 2000/01/26 05:56:58 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/storage/ipc/ipci.c,v 1.33 2000/04/12 17:15:37 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -56,14 +56,16 @@ CreateSharedMemoryAndSemaphores(IPCKey key, int maxBackends)
 {
 	int			size;
 	extern int	XLOGShmemSize(void);
-	extern void	XLOGShmemInit(void);
+	extern void XLOGShmemInit(void);
 
 #ifdef HAS_TEST_AND_SET
+
 	/*
 	 * Create shared memory for slocks
 	 */
 	CreateAndInitSLockMemory(IPCKeyGetSLockSharedMemoryKey(key));
 #endif
+
 	/*
 	 * Kill and create the buffer manager buffer pool (and semaphore)
 	 */

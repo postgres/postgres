@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/rewrite/rewriteManip.c,v 1.45 2000/03/16 03:23:18 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/rewrite/rewriteManip.c,v 1.46 2000/04/12 17:15:32 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -52,7 +52,8 @@ checkExprHasAggs_walker(Node *node, void *context)
 	if (node == NULL)
 		return false;
 	if (IsA(node, Aggref))
-		return true;			/* abort the tree traversal and return true */
+		return true;			/* abort the tree traversal and return
+								 * true */
 	return expression_tree_walker(node, checkExprHasAggs_walker, context);
 }
 
@@ -73,7 +74,8 @@ checkExprHasSubLink_walker(Node *node, void *context)
 	if (node == NULL)
 		return false;
 	if (IsA(node, SubLink))
-		return true;			/* abort the tree traversal and return true */
+		return true;			/* abort the tree traversal and return
+								 * true */
 	return expression_tree_walker(node, checkExprHasSubLink_walker, context);
 }
 
@@ -86,11 +88,12 @@ checkExprHasSubLink_walker(Node *node, void *context)
  * The varnoold fields are adjusted similarly.
  *
  * NOTE: although this has the form of a walker, we cheat and modify the
- * Var nodes in-place.  The given expression tree should have been copied
+ * Var nodes in-place.	The given expression tree should have been copied
  * earlier to ensure that no unwanted side-effects occur!
  */
 
-typedef struct {
+typedef struct
+{
 	int			offset;
 	int			sublevels_up;
 } OffsetVarNodes_context;
@@ -113,9 +116,10 @@ OffsetVarNodes_walker(Node *node, OffsetVarNodes_context *context)
 	}
 	if (IsA(node, SubLink))
 	{
+
 		/*
-		 * Standard expression_tree_walker will not recurse into subselect,
-		 * but here we must do so.
+		 * Standard expression_tree_walker will not recurse into
+		 * subselect, but here we must do so.
 		 */
 		SubLink    *sub = (SubLink *) node;
 
@@ -162,14 +166,15 @@ OffsetVarNodes(Node *node, int offset, int sublevels_up)
  *
  * Find all Var nodes in the given tree belonging to a specific relation
  * (identified by sublevels_up and rt_index), and change their varno fields
- * to 'new_index'.  The varnoold fields are changed too.
+ * to 'new_index'.	The varnoold fields are changed too.
  *
  * NOTE: although this has the form of a walker, we cheat and modify the
- * Var nodes in-place.  The given expression tree should have been copied
+ * Var nodes in-place.	The given expression tree should have been copied
  * earlier to ensure that no unwanted side-effects occur!
  */
 
-typedef struct {
+typedef struct
+{
 	int			rt_index;
 	int			new_index;
 	int			sublevels_up;
@@ -194,9 +199,10 @@ ChangeVarNodes_walker(Node *node, ChangeVarNodes_context *context)
 	}
 	if (IsA(node, SubLink))
 	{
+
 		/*
-		 * Standard expression_tree_walker will not recurse into subselect,
-		 * but here we must do so.
+		 * Standard expression_tree_walker will not recurse into
+		 * subselect, but here we must do so.
 		 */
 		SubLink    *sub = (SubLink *) node;
 
@@ -253,11 +259,12 @@ ChangeVarNodes(Node *node, int rt_index, int new_index, int sublevels_up)
  * to the expression's original query level or parents thereof.
  *
  * NOTE: although this has the form of a walker, we cheat and modify the
- * Var nodes in-place.  The given expression tree should have been copied
+ * Var nodes in-place.	The given expression tree should have been copied
  * earlier to ensure that no unwanted side-effects occur!
  */
 
-typedef struct {
+typedef struct
+{
 	int			delta_sublevels_up;
 	int			min_sublevels_up;
 } IncrementVarSublevelsUp_context;
@@ -278,9 +285,10 @@ IncrementVarSublevelsUp_walker(Node *node,
 	}
 	if (IsA(node, SubLink))
 	{
+
 		/*
-		 * Standard expression_tree_walker will not recurse into subselect,
-		 * but here we must do so.
+		 * Standard expression_tree_walker will not recurse into
+		 * subselect, but here we must do so.
 		 */
 		SubLink    *sub = (SubLink *) node;
 
@@ -346,7 +354,8 @@ AddQual(Query *parsetree, Node *qual)
 
 	/*
 	 * Make sure query is marked correctly if added qual has sublinks or
-	 * aggregates (not sure it can ever have aggs, but sublinks definitely).
+	 * aggregates (not sure it can ever have aggs, but sublinks
+	 * definitely).
 	 */
 	parsetree->hasAggs |= checkExprHasAggs(copy);
 	parsetree->hasSubLinks |= checkExprHasSubLink(copy);
@@ -376,7 +385,8 @@ AddHavingQual(Query *parsetree, Node *havingQual)
 
 	/*
 	 * Make sure query is marked correctly if added qual has sublinks or
-	 * aggregates (not sure it can ever have aggs, but sublinks definitely).
+	 * aggregates (not sure it can ever have aggs, but sublinks
+	 * definitely).
 	 */
 	parsetree->hasAggs |= checkExprHasAggs(copy);
 	parsetree->hasSubLinks |= checkExprHasSubLink(copy);
@@ -396,6 +406,7 @@ AddNotHavingQual(Query *parsetree, Node *havingQual)
 
 	AddHavingQual(parsetree, notqual);
 }
+
 #endif
 
 void
@@ -435,7 +446,8 @@ AddGroupClause(Query *parsetree, List *group_by, List *tlist)
 		/* copy the groupclause's TLE from the old tlist */
 		tle = (TargetEntry *) copyObject(tle);
 
-		/* The ressortgroupref number in the old tlist might be already
+		/*
+		 * The ressortgroupref number in the old tlist might be already
 		 * taken in the new tlist, so force assignment of a new number.
 		 */
 		tle->resdom->ressortgroupref = 0;
@@ -528,10 +540,11 @@ FindMatchingTLEntry(List *tlist, char *e_attname)
  * entry with matching resno from targetlist, if there is one.
  */
 
-typedef struct {
-	RewriteInfo	   *info;
-	List		   *targetlist;
-	int				sublevels_up;
+typedef struct
+{
+	RewriteInfo *info;
+	List	   *targetlist;
+	int			sublevels_up;
 } ResolveNew_context;
 
 static Node *
@@ -579,14 +592,15 @@ ResolveNew_mutator(Node *node, ResolveNew_context *context)
 		}
 		/* otherwise fall through to copy the var normally */
 	}
+
 	/*
 	 * Since expression_tree_mutator won't touch subselects, we have to
 	 * handle them specially.
 	 */
 	if (IsA(node, SubLink))
 	{
-		SubLink   *sublink = (SubLink *) node;
-		SubLink   *newnode;
+		SubLink    *sublink = (SubLink *) node;
+		SubLink    *newnode;
 
 		FLATCOPY(newnode, sublink, SubLink);
 		MUTATE(newnode->lefthand, sublink->lefthand, List *,
@@ -599,8 +613,8 @@ ResolveNew_mutator(Node *node, ResolveNew_context *context)
 	}
 	if (IsA(node, Query))
 	{
-		Query  *query = (Query *) node;
-		Query  *newnode;
+		Query	   *query = (Query *) node;
+		Query	   *newnode;
 
 		/*
 		 * XXX original code for ResolveNew only recursed into qual field
@@ -624,7 +638,7 @@ static Node *
 ResolveNew(Node *node, RewriteInfo *info, List *targetlist,
 		   int sublevels_up)
 {
-	ResolveNew_context	context;
+	ResolveNew_context context;
 
 	context.info = info;
 	context.targetlist = targetlist;
@@ -637,13 +651,13 @@ void
 FixNew(RewriteInfo *info, Query *parsetree)
 {
 	info->rule_action->targetList = (List *)
-		ResolveNew((Node *) info->rule_action->targetList,
-				   info, parsetree->targetList, 0);
+	ResolveNew((Node *) info->rule_action->targetList,
+			   info, parsetree->targetList, 0);
 	info->rule_action->qual = ResolveNew(info->rule_action->qual,
 										 info, parsetree->targetList, 0);
 	/* XXX original code didn't fix havingQual; presumably an oversight? */
 	info->rule_action->havingQual = ResolveNew(info->rule_action->havingQual,
-											   info, parsetree->targetList, 0);
+										 info, parsetree->targetList, 0);
 }
 
 /*
@@ -656,14 +670,15 @@ FixNew(RewriteInfo *info, Query *parsetree)
  * XXX Why is this not unified with apply_RIR_view()?
  */
 
-typedef struct {
-	List		   *rtable;
-	List		   *targetlist;
-	int				rt_index;
-	int				attr_num;
-	int			   *modified;
-	int			   *badsql;
-	int				sublevels_up;
+typedef struct
+{
+	List	   *rtable;
+	List	   *targetlist;
+	int			rt_index;
+	int			attr_num;
+	int		   *modified;
+	int		   *badsql;
+	int			sublevels_up;
 } HandleRIRAttributeRule_context;
 
 static Node *
@@ -691,7 +706,7 @@ HandleRIRAttributeRule_mutator(Node *node,
 			}
 			else
 			{
-				char   *name_to_look_for;
+				char	   *name_to_look_for;
 
 				name_to_look_for = get_attname(getrelid(this_varno,
 														context->rtable),
@@ -707,7 +722,11 @@ HandleRIRAttributeRule_mutator(Node *node,
 						return make_null(var->vartype);
 					/* Make a copy of the tlist item to return */
 					n = copyObject(n);
-					/* Adjust varlevelsup if tlist item is from higher query */
+
+					/*
+					 * Adjust varlevelsup if tlist item is from higher
+					 * query
+					 */
 					if (this_varlevelsup > 0)
 						IncrementVarSublevelsUp(n, this_varlevelsup, 0);
 					return n;
@@ -716,14 +735,15 @@ HandleRIRAttributeRule_mutator(Node *node,
 		}
 		/* otherwise fall through to copy the var normally */
 	}
+
 	/*
 	 * Since expression_tree_mutator won't touch subselects, we have to
 	 * handle them specially.
 	 */
 	if (IsA(node, SubLink))
 	{
-		SubLink   *sublink = (SubLink *) node;
-		SubLink   *newnode;
+		SubLink    *sublink = (SubLink *) node;
+		SubLink    *newnode;
 
 		FLATCOPY(newnode, sublink, SubLink);
 		MUTATE(newnode->lefthand, sublink->lefthand, List *,
@@ -736,12 +756,12 @@ HandleRIRAttributeRule_mutator(Node *node,
 	}
 	if (IsA(node, Query))
 	{
-		Query  *query = (Query *) node;
-		Query  *newnode;
+		Query	   *query = (Query *) node;
+		Query	   *newnode;
 
 		/*
 		 * XXX original code for HandleRIRAttributeRule only recursed into
-		 * qual field of subquery.  I'm assuming that was an oversight ...
+		 * qual field of subquery.	I'm assuming that was an oversight ...
 		 */
 
 		FLATCOPY(newnode, query, Query);
@@ -766,7 +786,7 @@ HandleRIRAttributeRule(Query *parsetree,
 					   int *modified,
 					   int *badsql)
 {
-	HandleRIRAttributeRule_context	context;
+	HandleRIRAttributeRule_context context;
 
 	context.rtable = rtable;
 	context.targetlist = targetlist;
@@ -776,7 +796,7 @@ HandleRIRAttributeRule(Query *parsetree,
 	context.badsql = badsql;
 	context.sublevels_up = 0;
 
-	parsetree->targetList = (List *) 
+	parsetree->targetList = (List *)
 		HandleRIRAttributeRule_mutator((Node *) parsetree->targetList,
 									   &context);
 	parsetree->qual = HandleRIRAttributeRule_mutator(parsetree->qual,

@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/nodes/readfuncs.c,v 1.87 2000/03/22 22:08:32 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/nodes/readfuncs.c,v 1.88 2000/04/12 17:15:17 momjian Exp $
  *
  * NOTES
  *	  Most of the read functions for plan nodes are tested. (In fact, they
@@ -538,7 +538,7 @@ _readIndexScan()
 static TidScan *
 _readTidScan()
 {
-	TidScan  *local_node;
+	TidScan    *local_node;
 	char	   *token;
 	int			length;
 
@@ -551,7 +551,7 @@ _readTidScan()
 	local_node->needRescan = atoi(token);
 
 	token = lsptok(NULL, &length);		/* eat :tideval */
-	local_node->tideval = nodeRead(true);	/* now read it */
+	local_node->tideval = nodeRead(true);		/* now read it */
 
 	return local_node;
 }
@@ -1308,17 +1308,17 @@ _readRelOptInfo()
 	local_node->pathlist = nodeRead(true);		/* now read it */
 
 	token = lsptok(NULL, &length);		/* get :cheapest_startup_path */
-	local_node->cheapest_startup_path = nodeRead(true);		/* now read it */
+	local_node->cheapest_startup_path = nodeRead(true); /* now read it */
 
 	token = lsptok(NULL, &length);		/* get :cheapest_total_path */
-	local_node->cheapest_total_path = nodeRead(true);		/* now read it */
+	local_node->cheapest_total_path = nodeRead(true);	/* now read it */
 
 	token = lsptok(NULL, &length);		/* eat :pruneable */
 	token = lsptok(NULL, &length);		/* get :pruneable */
 	local_node->pruneable = (token[0] == 't') ? true : false;
 
 	token = lsptok(NULL, &length);		/* get :baserestrictinfo */
-	local_node->baserestrictinfo = nodeRead(true);	/* now read it */
+	local_node->baserestrictinfo = nodeRead(true);		/* now read it */
 
 	token = lsptok(NULL, &length);		/* get :joininfo */
 	local_node->joininfo = nodeRead(true);		/* now read it */
@@ -1365,7 +1365,7 @@ _readAttr()
 	local_node->relname = debackslash(token, length);
 
 	token = lsptok(NULL, &length);		/* eat :attrs */
-	local_node->attrs = nodeRead(true);	/* now read it */
+	local_node->attrs = nodeRead(true); /* now read it */
 
 	return local_node;
 }
@@ -1526,7 +1526,7 @@ _readIndexPath()
 static TidPath *
 _readTidPath()
 {
-	TidPath  *local_node;
+	TidPath    *local_node;
 	char	   *token;
 	int			length;
 
@@ -1548,7 +1548,7 @@ _readTidPath()
 	local_node->path.pathkeys = nodeRead(true); /* now read it */
 
 	token = lsptok(NULL, &length);		/* get :tideval */
-	local_node->tideval = nodeRead(true);	/* now read it */
+	local_node->tideval = nodeRead(true);		/* now read it */
 
 	token = lsptok(NULL, &length);		/* get :unjoined_relids */
 	local_node->unjoined_relids = toIntList(nodeRead(true));
@@ -1593,7 +1593,7 @@ _readNestPath()
 	local_node->innerjoinpath = nodeRead(true); /* now read it */
 
 	token = lsptok(NULL, &length);		/* get :joinrestrictinfo */
-	local_node->joinrestrictinfo = nodeRead(true); /* now read it */
+	local_node->joinrestrictinfo = nodeRead(true);		/* now read it */
 
 	return local_node;
 }
@@ -1629,13 +1629,13 @@ _readMergePath()
 	local_node->jpath.path.pathkeys = nodeRead(true);	/* now read it */
 
 	token = lsptok(NULL, &length);		/* get :outerjoinpath */
-	local_node->jpath.outerjoinpath = nodeRead(true); /* now read it */
+	local_node->jpath.outerjoinpath = nodeRead(true);	/* now read it */
 
 	token = lsptok(NULL, &length);		/* get :innerjoinpath */
-	local_node->jpath.innerjoinpath = nodeRead(true); /* now read it */
+	local_node->jpath.innerjoinpath = nodeRead(true);	/* now read it */
 
 	token = lsptok(NULL, &length);		/* get :joinrestrictinfo */
-	local_node->jpath.joinrestrictinfo = nodeRead(true); /* now read it */
+	local_node->jpath.joinrestrictinfo = nodeRead(true);		/* now read it */
 
 	token = lsptok(NULL, &length);		/* get :path_mergeclauses */
 	local_node->path_mergeclauses = nodeRead(true);		/* now read it */
@@ -1680,13 +1680,13 @@ _readHashPath()
 	local_node->jpath.path.pathkeys = nodeRead(true);	/* now read it */
 
 	token = lsptok(NULL, &length);		/* get :outerjoinpath */
-	local_node->jpath.outerjoinpath = nodeRead(true); /* now read it */
+	local_node->jpath.outerjoinpath = nodeRead(true);	/* now read it */
 
 	token = lsptok(NULL, &length);		/* get :innerjoinpath */
-	local_node->jpath.innerjoinpath = nodeRead(true); /* now read it */
+	local_node->jpath.innerjoinpath = nodeRead(true);	/* now read it */
 
 	token = lsptok(NULL, &length);		/* get :joinrestrictinfo */
-	local_node->jpath.joinrestrictinfo = nodeRead(true); /* now read it */
+	local_node->jpath.joinrestrictinfo = nodeRead(true);		/* now read it */
 
 	token = lsptok(NULL, &length);		/* get :path_hashclauses */
 	local_node->path_hashclauses = nodeRead(true);		/* now read it */

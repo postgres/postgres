@@ -124,7 +124,7 @@ get_type(enum ECPGttype typ)
 {
 	switch (typ)
 	{
-		case ECPGt_char:
+			case ECPGt_char:
 			return ("ECPGt_char");
 			break;
 		case ECPGt_unsigned_char:
@@ -163,7 +163,7 @@ get_type(enum ECPGttype typ)
 			return ("ECPGt_NO_INDICATOR");
 			break;
 		case ECPGt_char_variable:		/* string that should not be
-							 * quoted */
+										 * quoted */
 			return ("ECPGt_char_variable");
 			break;
 		default:
@@ -200,10 +200,10 @@ ECPGdump_a_type(FILE *o, const char *name, struct ECPGtype * typ, const char *in
 {
 	switch (typ->typ)
 	{
-		case ECPGt_array:
+			case ECPGt_array:
 			switch (typ->u.element->typ)
 			{
-				case ECPGt_array:
+					case ECPGt_array:
 					yyerror("No nested arrays allowed (except strings)");		/* array of array */
 					break;
 				case ECPGt_struct:
@@ -269,7 +269,11 @@ ECPGdump_a_simple(FILE *o, const char *name, enum ECPGttype typ,
 		switch (typ)
 		{
 			case ECPGt_varchar:
-				/* we have to use the pointer except for arrays with given bounds */
+
+				/*
+				 * we have to use the pointer except for arrays with given
+				 * bounds
+				 */
 				if (arrsize > 0)
 					sprintf(variable, "(%s%s)", prefix ? prefix : "", name);
 				else
@@ -280,7 +284,11 @@ ECPGdump_a_simple(FILE *o, const char *name, enum ECPGttype typ,
 			case ECPGt_char:
 			case ECPGt_unsigned_char:
 			case ECPGt_char_variable:
-				/* we have to use the pointer except for arrays with given bounds */
+
+				/*
+				 * we have to use the pointer except for arrays with given
+				 * bounds
+				 */
 				if (varcharsize > 1 || arrsize > 0)
 					sprintf(variable, "(%s%s)", prefix ? prefix : "", name);
 				else
@@ -289,7 +297,11 @@ ECPGdump_a_simple(FILE *o, const char *name, enum ECPGttype typ,
 				sprintf(offset, "%ld*sizeof(char)", varcharsize == 0 ? 1 : varcharsize);
 				break;
 			default:
-				/* we have to use the pointer except for arrays with given bounds */
+
+				/*
+				 * we have to use the pointer except for arrays with given
+				 * bounds
+				 */
 				if (arrsize > 0)
 					sprintf(variable, "(%s%s)", prefix ? prefix : "", name);
 				else
@@ -375,10 +387,10 @@ ECPGfree_type(struct ECPGtype * typ)
 	{
 		switch (typ->typ)
 		{
-			case ECPGt_array:
+				case ECPGt_array:
 				switch (typ->u.element->typ)
 				{
-					case ECPGt_array:
+						case ECPGt_array:
 						yyerror("internal error, found multi-dimensional array\n");
 						break;
 					case ECPGt_struct:
@@ -412,7 +424,7 @@ get_dtype(enum ECPGdtype typ)
 {
 	switch (typ)
 	{
-		case ECPGd_count:
+			case ECPGd_count:
 			return ("ECPGd_countr");
 			break;
 		case ECPGd_data:
@@ -450,10 +462,10 @@ get_dtype(enum ECPGdtype typ)
 		case ECPGd_ret_octet:
 			return ("ECPGd_ret_octet");
 			break;
-		case ECPGd_scale:	
+		case ECPGd_scale:
 			return ("ECPGd_scale");
 			break;
-		case ECPGd_type:	
+		case ECPGd_type:
 			return ("ECPGd_type");
 			break;
 		default:

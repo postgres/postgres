@@ -4,7 +4,8 @@
 #include "extern.h"
 #include <sqlca.h>
 
-static struct connection *all_connections = NULL, *actual_connection = NULL;
+static struct connection *all_connections = NULL,
+		   *actual_connection = NULL;
 
 struct connection *
 get_connection(const char *connection_name)
@@ -58,10 +59,10 @@ ECPGsetcommit(int lineno, const char *mode, const char *connection_name)
 	PGresult   *results;
 
 	if (!ecpg_init(con, connection_name, lineno))
-		return(false);
+		return (false);
 
 	ECPGlog("ECPGsetcommit line %d action = %s connection = %s\n", lineno, mode, con->name);
-	
+
 	if (con->autocommit == true && strncmp(mode, "off", strlen("off")) == 0)
 	{
 		if (con->committed)
@@ -100,7 +101,7 @@ ECPGsetconn(int lineno, const char *connection_name)
 	struct connection *con = get_connection(connection_name);
 
 	if (!ecpg_init(con, connection_name, lineno))
-		return(false);
+		return (false);
 
 	actual_connection = con;
 	return true;
@@ -112,7 +113,7 @@ ECPGconnect(int lineno, const char *dbname, const char *user, const char *passwd
 	struct connection *this;
 
 	init_sqlca();
-	
+
 	if ((this = (struct connection *) ecpg_alloc(sizeof(struct connection), lineno)) == NULL)
 		return false;
 
@@ -171,7 +172,7 @@ ECPGdisconnect(int lineno, const char *connection_name)
 		con = get_connection(connection_name);
 
 		if (!ecpg_init(con, connection_name, lineno))
-		        return(false);
+			return (false);
 		else
 			ecpg_finish(con);
 	}

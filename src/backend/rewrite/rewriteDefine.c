@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/rewrite/rewriteDefine.c,v 1.43 2000/02/26 06:36:44 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/rewrite/rewriteDefine.c,v 1.44 2000/04/12 17:15:32 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -40,7 +40,8 @@ quoteString(StringInfo buf, char *source)
 	appendStringInfoChar(buf, '\'');
 	for (current = source; *current; current++)
 	{
-		char	ch = *current;
+		char		ch = *current;
+
 		if (ch == '\'' || ch == '\\')
 		{
 			appendStringInfoChar(buf, '\\');
@@ -297,7 +298,7 @@ DefineQueryRewrite(RuleStmt *stmt)
 				rule = event_relation->rd_rules->rules[i];
 				if (rule->event == CMD_SELECT)
 					elog(ERROR, "%s is already a view",
-						RelationGetRelationName(event_relation));
+						 RelationGetRelationName(event_relation));
 			}
 		}
 

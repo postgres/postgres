@@ -54,9 +54,9 @@ struct variable
 /* keep a list of memory we allocated for the user */
 static struct auto_mem
 {
-       	void       *pointer;
-        struct auto_mem *next;
-} *auto_allocs = NULL;
+	void	   *pointer;
+	struct auto_mem *next;
+}		   *auto_allocs = NULL;
 
 static void
 add_mem(void *ptr, int lineno)
@@ -67,20 +67,21 @@ add_mem(void *ptr, int lineno)
 	auto_allocs = am;
 }
 
-void free_auto_mem(void)
+void
+free_auto_mem(void)
 {
 	struct auto_mem *am;
-	
-        /* free all memory we have allocated for the user */
-        for (am = auto_allocs; am;)
-        {
-        	struct auto_mem *act = am;
-	        
-	        am = am->next;
-	        free(act->pointer);
-	        free(act);
+
+	/* free all memory we have allocated for the user */
+	for (am = auto_allocs; am;)
+	{
+		struct auto_mem *act = am;
+
+		am = am->next;
+		free(act->pointer);
+		free(act);
 	}
-	
+
 	auto_allocs = NULL;
 }
 
@@ -245,7 +246,7 @@ next_insert(char *text)
 	bool		string = false;
 
 	for (; *ptr != '\0' && (*ptr != '?' || string); ptr++)
-		if (*ptr == '\'' && *(ptr-1) != '\\')
+		if (*ptr == '\'' && *(ptr - 1) != '\\')
 			string = string ? false : true;
 
 	return (*ptr == '\0') ? NULL : ptr;
@@ -256,7 +257,8 @@ ECPGexecute(struct statement * stmt)
 {
 	bool		status = false;
 	char	   *copiedquery;
-	PGresult   *results, *query;
+	PGresult   *results,
+			   *query;
 	PGnotify   *notify;
 	struct variable *var;
 
@@ -275,7 +277,7 @@ ECPGexecute(struct statement * stmt)
 		char	   *mallocedval = NULL;
 		char	   *tobeinserted = NULL;
 		char	   *p;
-		char	    buff[20];
+		char		buff[20];
 
 		/*
 		 * Some special treatment is needed for records since we want
@@ -311,20 +313,20 @@ ECPGexecute(struct statement * stmt)
 		{
 			switch (var->type)
 			{
-				int element;
-				
+					int			element;
+
 				case ECPGt_short:
 					if (!(mallocedval = ecpg_alloc(var->arrsize * 20, stmt->lineno)))
 						return false;
 
 					if (var->arrsize > 1)
 					{
-						strncpy(mallocedval, "'{", sizeof("'{")); 
-						
+						strncpy(mallocedval, "'{", sizeof("'{"));
+
 						for (element = 0; element < var->arrsize; element++)
 							sprintf(mallocedval + strlen(mallocedval), "%hd,", ((short *) var->value)[element]);
-						
-						strncpy(mallocedval + strlen(mallocedval) - 1, "}'", sizeof("}'")); 
+
+						strncpy(mallocedval + strlen(mallocedval) - 1, "}'", sizeof("}'"));
 					}
 					else
 						sprintf(mallocedval, "%hd", *((short *) var->value));
@@ -338,12 +340,12 @@ ECPGexecute(struct statement * stmt)
 
 					if (var->arrsize > 1)
 					{
-						strncpy(mallocedval, "'{", sizeof("'{")); 
-						
+						strncpy(mallocedval, "'{", sizeof("'{"));
+
 						for (element = 0; element < var->arrsize; element++)
 							sprintf(mallocedval + strlen(mallocedval), "%d,", ((int *) var->value)[element]);
-						
-						strncpy(mallocedval + strlen(mallocedval) - 1, "}'", sizeof("}'")); 
+
+						strncpy(mallocedval + strlen(mallocedval) - 1, "}'", sizeof("}'"));
 					}
 					else
 						sprintf(mallocedval, "%d", *((int *) var->value));
@@ -357,12 +359,12 @@ ECPGexecute(struct statement * stmt)
 
 					if (var->arrsize > 1)
 					{
-						strncpy(mallocedval, "'{", sizeof("'{")); 
-						
+						strncpy(mallocedval, "'{", sizeof("'{"));
+
 						for (element = 0; element < var->arrsize; element++)
 							sprintf(mallocedval + strlen(mallocedval), "%hu,", ((unsigned short *) var->value)[element]);
-						
-						strncpy(mallocedval + strlen(mallocedval) - 1, "}'", sizeof("}'")); 
+
+						strncpy(mallocedval + strlen(mallocedval) - 1, "}'", sizeof("}'"));
 					}
 					else
 						sprintf(mallocedval, "%hu", *((unsigned short *) var->value));
@@ -376,12 +378,12 @@ ECPGexecute(struct statement * stmt)
 
 					if (var->arrsize > 1)
 					{
-						strncpy(mallocedval, "'{", sizeof("'{")); 
-						
+						strncpy(mallocedval, "'{", sizeof("'{"));
+
 						for (element = 0; element < var->arrsize; element++)
 							sprintf(mallocedval + strlen(mallocedval), "%u,", ((unsigned int *) var->value)[element]);
-						
-						strncpy(mallocedval + strlen(mallocedval) - 1, "}'", sizeof("}'")); 
+
+						strncpy(mallocedval + strlen(mallocedval) - 1, "}'", sizeof("}'"));
 					}
 					else
 						sprintf(mallocedval, "%u", *((unsigned int *) var->value));
@@ -392,15 +394,15 @@ ECPGexecute(struct statement * stmt)
 				case ECPGt_long:
 					if (!(mallocedval = ecpg_alloc(var->arrsize * 20, stmt->lineno)))
 						return false;
-						
+
 					if (var->arrsize > 1)
 					{
-						strncpy(mallocedval, "'{", sizeof("'{")); 
-						
+						strncpy(mallocedval, "'{", sizeof("'{"));
+
 						for (element = 0; element < var->arrsize; element++)
 							sprintf(mallocedval + strlen(mallocedval), "%ld,", ((long *) var->value)[element]);
-						
-						strncpy(mallocedval + strlen(mallocedval) - 1, "}'", sizeof("}'")); 
+
+						strncpy(mallocedval + strlen(mallocedval) - 1, "}'", sizeof("}'"));
 					}
 					else
 						sprintf(mallocedval, "%ld", *((long *) var->value));
@@ -414,12 +416,12 @@ ECPGexecute(struct statement * stmt)
 
 					if (var->arrsize > 1)
 					{
-						strncpy(mallocedval, "'{", sizeof("'{")); 
-						
+						strncpy(mallocedval, "'{", sizeof("'{"));
+
 						for (element = 0; element < var->arrsize; element++)
 							sprintf(mallocedval + strlen(mallocedval), "%lu,", ((unsigned long *) var->value)[element]);
-						
-						strncpy(mallocedval + strlen(mallocedval) - 1, "}'", sizeof("}'")); 
+
+						strncpy(mallocedval + strlen(mallocedval) - 1, "}'", sizeof("}'"));
 					}
 					else
 						sprintf(mallocedval, "%lu", *((unsigned long *) var->value));
@@ -433,12 +435,12 @@ ECPGexecute(struct statement * stmt)
 
 					if (var->arrsize > 1)
 					{
-						strncpy(mallocedval, "'{", sizeof("'{")); 
-						
+						strncpy(mallocedval, "'{", sizeof("'{"));
+
 						for (element = 0; element < var->arrsize; element++)
 							sprintf(mallocedval + strlen(mallocedval), "%.14g,", ((float *) var->value)[element]);
-						
-						strncpy(mallocedval + strlen(mallocedval) - 1, "}'", sizeof("}'")); 
+
+						strncpy(mallocedval + strlen(mallocedval) - 1, "}'", sizeof("}'"));
 					}
 					else
 						sprintf(mallocedval, "%.14g", *((float *) var->value));
@@ -452,12 +454,12 @@ ECPGexecute(struct statement * stmt)
 
 					if (var->arrsize > 1)
 					{
-						strncpy(mallocedval, "'{", sizeof("'{")); 
-						
+						strncpy(mallocedval, "'{", sizeof("'{"));
+
 						for (element = 0; element < var->arrsize; element++)
 							sprintf(mallocedval + strlen(mallocedval), "%.14g,", ((double *) var->value)[element]);
-						
-						strncpy(mallocedval + strlen(mallocedval) - 1, "}'", sizeof("}'")); 
+
+						strncpy(mallocedval + strlen(mallocedval) - 1, "}'", sizeof("}'"));
 					}
 					else
 						sprintf(mallocedval, "%.14g", *((double *) var->value));
@@ -471,12 +473,12 @@ ECPGexecute(struct statement * stmt)
 
 					if (var->arrsize > 1)
 					{
-						strncpy(mallocedval, "'{", sizeof("'{")); 
-						
+						strncpy(mallocedval, "'{", sizeof("'{"));
+
 						for (element = 0; element < var->arrsize; element++)
 							sprintf(mallocedval + strlen(mallocedval), "%c,", (((char *) var->value)[element]) ? 't' : 'f');
-						
-						strncpy(mallocedval + strlen(mallocedval) - 1, "}'", sizeof("}'")); 
+
+						strncpy(mallocedval + strlen(mallocedval) - 1, "}'", sizeof("}'"));
 					}
 					else
 						sprintf(mallocedval, "'%c'", (*((char *) var->value)) ? 't' : 'f');
@@ -541,7 +543,7 @@ ECPGexecute(struct statement * stmt)
 
 				default:
 					/* Not implemented yet */
-					ECPGraise(stmt->lineno, ECPG_UNSUPPORTED, (char *)ECPGtype_name(var->type));
+					ECPGraise(stmt->lineno, ECPG_UNSUPPORTED, (char *) ECPGtype_name(var->type));
 					return false;
 					break;
 			}
@@ -656,7 +658,7 @@ ECPGexecute(struct statement * stmt)
 				for (act_field = 0; act_field < nfields && status; act_field++)
 				{
 					char	   *array_query;
-					
+
 					if (var == NULL)
 					{
 						ECPGlog("ECPGexecute line %d: Too few arguments.\n", stmt->lineno);
@@ -664,16 +666,21 @@ ECPGexecute(struct statement * stmt)
 						return (false);
 					}
 
-					array_query = (char *)ecpg_alloc(strlen("select typelem from pg_type where oid=") + 11, stmt -> lineno);
+					array_query = (char *) ecpg_alloc(strlen("select typelem from pg_type where oid=") + 11, stmt->lineno);
 					sprintf(array_query, "select typelem from pg_type where oid=%d", PQftype(results, act_field));
 					query = PQexec(stmt->connection->connection, array_query);
 					isarray = 0;
-					if (PQresultStatus(query) == PGRES_TUPLES_OK) {
-						isarray = atol((char *)PQgetvalue(query, 0, 0));
+					if (PQresultStatus(query) == PGRES_TUPLES_OK)
+					{
+						isarray = atol((char *) PQgetvalue(query, 0, 0));
 						if (ECPGDynamicType(PQftype(results, act_field)) == SQL3_CHARACTER ||
-						    ECPGDynamicType(PQftype(results, act_field)) == SQL3_CHARACTER_VARYING)
+							ECPGDynamicType(PQftype(results, act_field)) == SQL3_CHARACTER_VARYING)
 						{
-							/* arrays of character strings are not yet implemented */
+
+							/*
+							 * arrays of character strings are not yet
+							 * implemented
+							 */
 							isarray = false;
 						}
 						ECPGlog("ECPGexecute line %d: TYPE database: %d C: %d array: %s\n", stmt->lineno, PQftype(results, act_field), var->type, isarray ? "yes" : "no");
@@ -682,14 +689,15 @@ ECPGexecute(struct statement * stmt)
 
 					if (!isarray)
 					{
+
 						/*
-						 * if we don't have enough space, we cannot read all
-						 * tuples
+						 * if we don't have enough space, we cannot read
+						 * all tuples
 						 */
 						if ((var->arrsize > 0 && ntuples > var->arrsize) || (var->ind_arrsize > 0 && ntuples > var->ind_arrsize))
 						{
 							ECPGlog("ECPGexecute line %d: Incorrect number of matches: %d don't fit into array of %d\n",
-								stmt->lineno, ntuples, var->arrsize);
+									stmt->lineno, ntuples, var->arrsize);
 							ECPGraise(stmt->lineno, ECPG_TOO_MANY_MATCHES, NULL);
 							status = false;
 							break;
@@ -697,6 +705,7 @@ ECPGexecute(struct statement * stmt)
 					}
 					else
 					{
+
 						/*
 						 * since we read an array, the variable has to be
 						 * an array too
@@ -707,9 +716,9 @@ ECPGexecute(struct statement * stmt)
 							ECPGraise(stmt->lineno, ECPG_NO_ARRAY, NULL);
 							status = false;
 							break;
-						} 
+						}
 					}
-					
+
 					/*
 					 * allocate memory for NULL pointers
 					 */
@@ -744,13 +753,13 @@ ECPGexecute(struct statement * stmt)
 						*((void **) var->pointer) = var->value;
 						add_mem(var->value, stmt->lineno);
 					}
-										
+
 					for (act_tuple = 0; act_tuple < ntuples && status; act_tuple++)
 					{
 						if (!get_data(results, act_tuple, act_field, stmt->lineno,
-						         var->type, var->ind_type, var->value,
-						         var->ind_value, var->varcharsize, var->offset, isarray))
-						         status = false;
+									var->type, var->ind_type, var->value,
+									  var->ind_value, var->varcharsize, var->offset, isarray))
+							status = false;
 					}
 					var = var->next;
 				}
@@ -811,13 +820,13 @@ ECPGexecute(struct statement * stmt)
 }
 
 bool
-ECPGdo(int lineno, const char *connection_name, char *query, ...)
+ECPGdo(int lineno, const char *connection_name, char *query,...)
 {
-	va_list			args;
-	struct statement 	*stmt;
-	struct connection 	*con = get_connection(connection_name);
-	bool			status=true;
-	char 			*locale = setlocale(LC_NUMERIC, NULL);
+	va_list		args;
+	struct statement *stmt;
+	struct connection *con = get_connection(connection_name);
+	bool		status = true;
+	char	   *locale = setlocale(LC_NUMERIC, NULL);
 
 	/* Make sure we do NOT honor the locale for numeric input/output */
 	/* since the database wants teh standard decimal point */
@@ -826,7 +835,7 @@ ECPGdo(int lineno, const char *connection_name, char *query, ...)
 	if (!ecpg_init(con, connection_name, lineno))
 	{
 		setlocale(LC_NUMERIC, locale);
-		return(false);
+		return (false);
 	}
 
 	va_start(args, query);
@@ -859,26 +868,27 @@ ECPGdo(int lineno, const char *connection_name, char *query, ...)
  *
  * Copyright (c) 2000, Christof Petig <christof.petig@wtal.de>
  *
- * $Header: /cvsroot/pgsql/src/interfaces/ecpg/lib/Attic/execute.c,v 1.5 2000/04/05 15:51:25 meskes Exp $
+ * $Header: /cvsroot/pgsql/src/interfaces/ecpg/lib/Attic/execute.c,v 1.6 2000/04/12 17:17:03 momjian Exp $
  */
 
-PGconn *ECPG_internal_get_connection(char *name);
+PGconn	   *ECPG_internal_get_connection(char *name);
 
 extern struct descriptor
 {
-   char *name;
-   PGresult *result;
-   struct descriptor *next;
-} *all_descriptors;
+	char	   *name;
+	PGresult   *result;
+	struct descriptor *next;
+}		   *all_descriptors;
 
 /* like ECPGexecute */
-static bool execute_descriptor(int lineno,const char *query
-							,struct connection *con,PGresult **resultptr)
+static bool
+execute_descriptor(int lineno, const char *query
+				   ,struct connection * con, PGresult **resultptr)
 {
-	bool	status = false;
+	bool		status = false;
 	PGresult   *results;
 	PGnotify   *notify;
-	
+
 	/* Now the request is built. */
 
 	if (con->committed && !con->autocommit)
@@ -902,9 +912,12 @@ static bool execute_descriptor(int lineno,const char *query
 		ECPGraise(lineno, ECPG_PGSQL, PQerrorMessage(con->connection));
 	}
 	else
-	{	*resultptr=results;
+	{
+		*resultptr = results;
 		switch (PQresultStatus(results))
-		{	int ntuples;
+		{
+				int			ntuples;
+
 			case PGRES_TUPLES_OK:
 				status = true;
 				sqlca.sqlerrd[2] = ntuples = PQntuples(results);
@@ -917,7 +930,7 @@ static bool execute_descriptor(int lineno,const char *query
 					break;
 				}
 				break;
-#if 1 /* strictly these are not needed (yet) */
+#if 1							/* strictly these are not needed (yet) */
 			case PGRES_EMPTY_QUERY:
 				/* do nothing */
 				ECPGraise(lineno, ECPG_EMPTY, NULL);
@@ -972,20 +985,22 @@ static bool execute_descriptor(int lineno,const char *query
 }
 
 /* like ECPGdo */
-static bool do_descriptor2(int lineno,const char *connection_name,
-					PGresult **resultptr, const char *query)
+static bool
+do_descriptor2(int lineno, const char *connection_name,
+			   PGresult **resultptr, const char *query)
 {
 	struct connection *con = get_connection(connection_name);
-	bool		status=true;
-	char *locale = setlocale(LC_NUMERIC, NULL);
+	bool		status = true;
+	char	   *locale = setlocale(LC_NUMERIC, NULL);
 
 	/* Make sure we do NOT honor the locale for numeric input/output */
 	/* since the database wants teh standard decimal point */
 	setlocale(LC_NUMERIC, "C");
 
 	if (!ecpg_init(con, connection_name, lineno))
-	{	setlocale(LC_NUMERIC, locale);
-		return(false);
+	{
+		setlocale(LC_NUMERIC, locale);
+		return (false);
 	}
 
 	/* are we connected? */
@@ -997,33 +1012,38 @@ static bool do_descriptor2(int lineno,const char *connection_name,
 		return false;
 	}
 
-	status = execute_descriptor(lineno,query,con,resultptr);
+	status = execute_descriptor(lineno, query, con, resultptr);
 
 	/* and reset locale value so our application is not affected */
 	setlocale(LC_NUMERIC, locale);
 	return (status);
 }
 
-bool ECPGdo_descriptor(int line,const char *connection,
-							const char *descriptor,const char *query)
+bool
+ECPGdo_descriptor(int line, const char *connection,
+				  const char *descriptor, const char *query)
 {
 	struct descriptor *i;
-	for (i=all_descriptors;i!=NULL;i=i->next)
-	{	if (!strcmp(descriptor,i->name)) 
-	    {	
-			bool status;
+
+	for (i = all_descriptors; i != NULL; i = i->next)
+	{
+		if (!strcmp(descriptor, i->name))
+		{
+			bool		status;
 
 			/* free previous result */
-			if (i->result) PQclear(i->result);
-		    	i->result=NULL;
-	    	
-			status=do_descriptor2(line,connection,&i->result,query);
-			
-			if (!i->result) PQmakeEmptyPGresult(NULL, 0);
+			if (i->result)
+				PQclear(i->result);
+			i->result = NULL;
+
+			status = do_descriptor2(line, connection, &i->result, query);
+
+			if (!i->result)
+				PQmakeEmptyPGresult(NULL, 0);
 			return (status);
-	    }
+		}
 	}
-	
+
 	ECPGraise(line, ECPG_UNKNOWN_DESCRIPTOR, (char *) descriptor);
 	return false;
 }

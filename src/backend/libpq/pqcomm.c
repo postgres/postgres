@@ -29,7 +29,7 @@
  * Portions Copyright (c) 1996-2000, PostgreSQL, Inc
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- *	$Id: pqcomm.c,v 1.87 2000/01/26 05:56:29 momjian Exp $
+ *	$Id: pqcomm.c,v 1.88 2000/04/12 17:15:14 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -75,7 +75,7 @@
 #include "postgres.h"
 
 #include "libpq/libpq.h"
-#include "utils/trace.h" /* needed for HAVE_FCNTL_SETLK */
+#include "utils/trace.h"		/* needed for HAVE_FCNTL_SETLK */
 #include "miscadmin.h"
 
 
@@ -270,7 +270,7 @@ StreamServerPort(char *hostName, unsigned short portName, int *fdP)
 	{
 		snprintf(PQerrormsg, PQERRORMSG_LENGTH,
 				 "FATAL: StreamServerPort: bind() failed: %s\n"
-				 "\tIs another postmaster already running on that port?\n",
+			   "\tIs another postmaster already running on that port?\n",
 				 strerror(errno));
 		if (family == AF_UNIX)
 			snprintf(PQerrormsg + strlen(PQerrormsg),
@@ -438,15 +438,15 @@ pq_recvbuf(void)
 	for (;;)
 	{
 		int			r;
-		
+
 #ifdef USE_SSL
 		if (MyProcPort->ssl)
-		  r = SSL_read(MyProcPort->ssl, PqRecvBuffer + PqRecvLength,
-			       PQ_BUFFER_SIZE - PqRecvLength);
+			r = SSL_read(MyProcPort->ssl, PqRecvBuffer + PqRecvLength,
+						 PQ_BUFFER_SIZE - PqRecvLength);
 		else
 #endif
-		  r = recv(MyProcPort->sock, PqRecvBuffer + PqRecvLength,
-			   PQ_BUFFER_SIZE - PqRecvLength, 0);
+			r = recv(MyProcPort->sock, PqRecvBuffer + PqRecvLength,
+					 PQ_BUFFER_SIZE - PqRecvLength, 0);
 
 		if (r < 0)
 		{
@@ -561,9 +561,7 @@ pq_getstring(StringInfo s)
 
 	/* Read until we get the terminating '\0' */
 	while ((c = pq_getbyte()) != EOF && c != '\0')
-	{
 		appendStringInfoChar(s, c);
-	}
 
 	if (c == EOF)
 		return EOF;
@@ -614,12 +612,13 @@ pq_flush(void)
 	while (bufptr < bufend)
 	{
 		int			r;
+
 #ifdef USE_SSL
 		if (MyProcPort->ssl)
-		  r = SSL_write(MyProcPort->ssl, bufptr, bufend - bufptr);
+			r = SSL_write(MyProcPort->ssl, bufptr, bufend - bufptr);
 		else
 #endif
-		  r = send(MyProcPort->sock, bufptr, bufend - bufptr, 0);
+			r = send(MyProcPort->sock, bufptr, bufend - bufptr, 0);
 
 		if (r <= 0)
 		{

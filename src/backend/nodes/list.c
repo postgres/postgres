@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/nodes/list.c,v 1.30 2000/02/21 18:47:00 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/nodes/list.c,v 1.31 2000/04/12 17:15:16 momjian Exp $
  *
  * NOTES
  *	  XXX a few of the following functions are duplicated to handle
@@ -251,9 +251,9 @@ length(List *l)
  *	freeList
  *
  *	Free the List nodes of a list
- *  The pointed-to nodes, if any, are NOT freed.
- *  This works for integer lists too.
- * 
+ *	The pointed-to nodes, if any, are NOT freed.
+ *	This works for integer lists too.
+ *
  */
 void
 freeList(List *list)
@@ -314,7 +314,7 @@ LispUnion(List *l1, List *l2)
 
 	foreach(i, l2)
 	{
-		if (! member(lfirst(i), retval))
+		if (!member(lfirst(i), retval))
 			retval = lappend(retval, lfirst(i));
 	}
 	return retval;
@@ -328,7 +328,7 @@ LispUnioni(List *l1, List *l2)
 
 	foreach(i, l2)
 	{
-		if (! intMember(lfirsti(i), retval))
+		if (!intMember(lfirsti(i), retval))
 			retval = lappendi(retval, lfirsti(i));
 	}
 	return retval;
@@ -459,7 +459,7 @@ intLispRemove(int elem, List *list)
 List *
 ltruncate(int n, List *list)
 {
-	List	*ptr;
+	List	   *ptr;
 
 	if (n <= 0)
 		return NIL;				/* truncate to zero length */
@@ -494,7 +494,7 @@ set_difference(List *l1, List *l2)
 
 	foreach(i, l1)
 	{
-		if (! member(lfirst(i), l2))
+		if (!member(lfirst(i), l2))
 			result = lappend(result, lfirst(i));
 	}
 	return result;
@@ -516,7 +516,7 @@ set_differencei(List *l1, List *l2)
 
 	foreach(i, l1)
 	{
-		if (! intMember(lfirsti(i), l2))
+		if (!intMember(lfirsti(i), l2))
 			result = lappendi(result, lfirsti(i));
 	}
 	return result;

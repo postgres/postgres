@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/cache/Attic/fcache.c,v 1.29 2000/01/26 05:57:17 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/cache/Attic/fcache.c,v 1.30 2000/04/12 17:15:53 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -126,6 +126,7 @@ init_fcache(Oid foid,
 	}
 	else
 	{
+
 		/*
 		 * This is a hack.	We assume here that any function returning a
 		 * relation returns it by reference.  This needs to be fixed.
@@ -137,7 +138,7 @@ init_fcache(Oid foid,
 	retval->func_state = (char *) NULL;
 	retval->setArg = NULL;
 	retval->hasSetArg = false;
-	retval->oneResult = ! procedureStruct->proretset;
+	retval->oneResult = !procedureStruct->proretset;
 	retval->istrusted = procedureStruct->proistrusted;
 
 	/*
@@ -148,7 +149,7 @@ init_fcache(Oid foid,
 	 */
 	if ((retval->language == SQLlanguageId) &&
 		retval->oneResult &&
-		! retval->typbyval)
+		!retval->typbyval)
 	{
 		Form_pg_class relationStruct;
 		HeapTuple	relationTuple;

@@ -9,7 +9,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/access/common/heaptuple.c,v 1.61 2000/01/26 05:55:53 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/access/common/heaptuple.c,v 1.62 2000/04/12 17:14:36 momjian Exp $
  *
  * NOTES
  *	  The old interface functions have been converted to macros
@@ -137,9 +137,9 @@ DataFill(char *data,
 								   *((int32 *) value[i]));
 				break;
 			default:
-                Assert(att[i]->attlen >= 0);
-                memmove(data, DatumGetPointer(value[i]),
-                        (size_t)(att[i]->attlen));
+				Assert(att[i]->attlen >= 0);
+				memmove(data, DatumGetPointer(value[i]),
+						(size_t) (att[i]->attlen));
 				break;
 		}
 		data = (char *) att_addlength((long) data, att[i]->attlen, value[i]);
@@ -326,7 +326,7 @@ nocachegetattr(HeapTuple tuple,
 	Form_pg_attribute *att = tupleDesc->attrs;
 	int			slow = 0;		/* do we have to walk nulls? */
 
-    (void)isnull; /*not used*/
+	(void) isnull;				/* not used */
 #ifdef IN_MACRO
 /* This is handled in the macro */
 	Assert(attnum > 0);
@@ -681,7 +681,7 @@ heap_formtuple(TupleDesc tupleDescriptor,
 		len += bitmaplen;
 	}
 
-	hoff = len = MAXALIGN(len);		/* be conservative here */
+	hoff = len = MAXALIGN(len); /* be conservative here */
 
 	len += ComputeDataSize(tupleDescriptor, value, nulls);
 
@@ -806,11 +806,9 @@ void
 heap_freetuple(HeapTuple htup)
 {
 	if (htup->t_data != NULL)
-		if (htup->t_datamcxt != NULL && (char *)(htup->t_data) != 
-									((char *) htup + HEAPTUPLESIZE))
-		{
+		if (htup->t_datamcxt != NULL && (char *) (htup->t_data) !=
+			((char *) htup + HEAPTUPLESIZE))
 			elog(NOTICE, "TELL Jan Wieck: heap_freetuple() found separate t_data");
-		}
 
 	pfree(htup);
 }
@@ -835,7 +833,7 @@ heap_addheader(uint32 natts,	/* max domain index */
 
 	len = offsetof(HeapTupleHeaderData, t_bits);
 
-	hoff = len = MAXALIGN(len);		/* be conservative */
+	hoff = len = MAXALIGN(len); /* be conservative */
 	len += structlen;
 	tuple = (HeapTuple) palloc(HEAPTUPLESIZE + len);
 	tuple->t_datamcxt = CurrentMemoryContext;
@@ -850,8 +848,8 @@ heap_addheader(uint32 natts,	/* max domain index */
 	td->t_infomask = 0;
 	td->t_infomask |= HEAP_XMAX_INVALID;
 
-    if (structlen > 0)
-        memmove((char *) td + hoff, structure, (size_t)structlen);
+	if (structlen > 0)
+		memmove((char *) td + hoff, structure, (size_t) structlen);
 
 	return tuple;
 }

@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/executor/nodeSort.c,v 1.25 2000/01/26 05:56:23 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/executor/nodeSort.c,v 1.26 2000/04/12 17:15:09 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -126,7 +126,7 @@ ExecSort(Sort *node)
 	 * ----------------
 	 */
 
-	if (! sortstate->sort_Done)
+	if (!sortstate->sort_Done)
 	{
 		Plan	   *outerNode;
 		TupleDesc	tupDesc;
@@ -156,7 +156,7 @@ ExecSort(Sort *node)
 		sortkeys = (ScanKey) sortstate->sort_Keys;
 
 		tuplesortstate = tuplesort_begin_heap(tupDesc, keycount, sortkeys,
-											  true /* randomAccess */);
+											  true /* randomAccess */ );
 
 		sortstate->tuplesortstate = (void *) tuplesortstate;
 
@@ -371,7 +371,7 @@ ExecSortMarkPos(Sort *node)
 	 *	if we haven't sorted yet, just return
 	 * ----------------
 	 */
-	if (! sortstate->sort_Done)
+	if (!sortstate->sort_Done)
 		return;
 
 	tuplesort_markpos((Tuplesortstate *) sortstate->tuplesortstate);
@@ -392,7 +392,7 @@ ExecSortRestrPos(Sort *node)
 	 *	if we haven't sorted yet, just return.
 	 * ----------------
 	 */
-	if (! sortstate->sort_Done)
+	if (!sortstate->sort_Done)
 		return;
 
 	/* ----------------
@@ -412,14 +412,14 @@ ExecReScanSort(Sort *node, ExprContext *exprCtxt, Plan *parent)
 	 * not NULL then it will be re-scanned by ExecProcNode, else - no
 	 * reason to re-scan it at all.
 	 */
-	if (! sortstate->sort_Done)
+	if (!sortstate->sort_Done)
 		return;
 
 	ExecClearTuple(sortstate->csstate.cstate.cs_ResultTupleSlot);
 
 	/*
-	 * If subnode is to be rescanned then we forget previous sort
-	 * results; we have to re-read the subplan and re-sort.
+	 * If subnode is to be rescanned then we forget previous sort results;
+	 * we have to re-read the subplan and re-sort.
 	 *
 	 * Otherwise we can just rewind and rescan the sorted output.
 	 */
@@ -430,7 +430,5 @@ ExecReScanSort(Sort *node, ExprContext *exprCtxt, Plan *parent)
 		sortstate->tuplesortstate = NULL;
 	}
 	else
-	{
 		tuplesort_rescan((Tuplesortstate *) sortstate->tuplesortstate);
-	}
 }

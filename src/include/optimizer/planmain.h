@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2000, PostgreSQL, Inc
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Id: planmain.h,v 1.38 2000/02/15 20:49:26 tgl Exp $
+ * $Id: planmain.h,v 1.39 2000/04/12 17:16:42 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -21,7 +21,7 @@
  * prototypes for plan/planmain.c
  */
 extern Plan *query_planner(Query *root, List *tlist, List *qual,
-						   double tuple_fraction);
+			  double tuple_fraction);
 
 /*
  * prototypes for plan/createplan.c
@@ -49,7 +49,7 @@ extern void add_missing_rels_to_query(Query *root);
  */
 extern void set_plan_references(Plan *plan);
 extern List *join_references(List *clauses, List *outer_tlist,
-							 List *inner_tlist, Index acceptable_rel);
+				List *inner_tlist, Index acceptable_rel);
 extern void fix_opids(Node *node);
 
 /*

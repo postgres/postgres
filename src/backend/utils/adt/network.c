@@ -3,7 +3,7 @@
  *	is for IP V4 CIDR notation, but prepared for V6: just
  *	add the necessary bits where the comments indicate.
  *
- *	$Id: network.c,v 1.20 2000/03/08 01:44:37 momjian Exp $
+ *	$Id: network.c,v 1.21 2000/04/12 17:15:50 momjian Exp $
  *	Jon Postel RIP 16 Oct 1998
  */
 
@@ -448,8 +448,8 @@ network_netmask(inet *ip)
 	if (ip_family(ip) == AF_INET)
 	{
 		/* It's an IP V4 address: */
-		int	addr = htonl(ip_bits(ip) ?
-			(-1 << (32 - ip_bits(ip))) & 0xffffffff : 0x00000000);
+		int			addr = htonl(ip_bits(ip) ?
+				   (-1 << (32 - ip_bits(ip))) & 0xffffffff : 0x00000000);
 
 		if (inet_net_ntop(AF_INET, &addr, 32, tmp, sizeof(tmp)) == NULL)
 			elog(ERROR, "unable to print netmask (%s)", strerror(errno));

@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2000, PostgreSQL, Inc
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Id: itempos.h,v 1.10 2000/01/26 05:58:33 momjian Exp $
+ * $Id: itempos.h,v 1.11 2000/04/12 17:16:51 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -40,6 +40,6 @@ typedef ItemSubpositionData *ItemSubposition;
  *		unsigned		LEN;
  */
 #define PSKIP(OBJP, LEN)\
-		{ (OBJP)->op_cp += (LEN); (OBJP)->op_len -= (LEN); }
+		do { (OBJP)->op_cp += (LEN); (OBJP)->op_len -= (LEN); } while (0)
 
 #endif	 /* ITEMPOS_H */

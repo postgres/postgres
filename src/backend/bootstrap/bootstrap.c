@@ -8,7 +8,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/bootstrap/bootstrap.c,v 1.80 2000/02/18 09:28:39 inoue Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/bootstrap/bootstrap.c,v 1.81 2000/04/12 17:14:54 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -39,13 +39,13 @@
 
 #define ALLOC(t, c)		(t *)calloc((unsigned)(c), sizeof(t))
 
-extern void		BaseInit(void);
-extern void		StartupXLOG(void);
-extern void		ShutdownXLOG(void);
-extern void		BootStrapXLOG(void);
+extern void BaseInit(void);
+extern void StartupXLOG(void);
+extern void ShutdownXLOG(void);
+extern void BootStrapXLOG(void);
 
-extern char		XLogDir[];
-extern char		ControlFilePath[];
+extern char XLogDir[];
+extern char ControlFilePath[];
 
 extern int	Int_yyparse(void);
 static hashnode *AddStr(char *str, int strlength, int mderef);
@@ -107,7 +107,7 @@ static struct typinfo Procid[] = {
 	{"char", CHAROID, 0, 1, F_CHARIN, F_CHAROUT},
 	{"name", NAMEOID, 0, NAMEDATALEN, F_NAMEIN, F_NAMEOUT},
 	{"int2", INT2OID, 0, 2, F_INT2IN, F_INT2OUT},
-	{"int2vector", INT2VECTOROID, 0, INDEX_MAX_KEYS*2, F_INT2VECTORIN, F_INT2VECTOROUT},
+	{"int2vector", INT2VECTOROID, 0, INDEX_MAX_KEYS * 2, F_INT2VECTORIN, F_INT2VECTOROUT},
 	{"int4", INT4OID, 0, 4, F_INT4IN, F_INT4OUT},
 	{"regproc", REGPROCOID, 0, 4, F_REGPROCIN, F_REGPROCOUT},
 	{"text", TEXTOID, 0, -1, F_TEXTIN, F_TEXTOUT},
@@ -115,7 +115,7 @@ static struct typinfo Procid[] = {
 	{"tid", TIDOID, 0, 6, F_TIDIN, F_TIDOUT},
 	{"xid", XIDOID, 0, 4, F_XIDIN, F_XIDOUT},
 	{"cid", CIDOID, 0, 4, F_CIDIN, F_CIDOUT},
-	{"oidvector", 30, 0, INDEX_MAX_KEYS*4, F_OIDVECTORIN, F_OIDVECTOROUT},
+	{"oidvector", 30, 0, INDEX_MAX_KEYS * 4, F_OIDVECTORIN, F_OIDVECTOROUT},
 	{"smgr", 210, 0, 2, F_SMGRIN, F_SMGROUT},
 	{"_int4", 1007, INT4OID, -1, F_ARRAY_IN, F_ARRAY_OUT},
 	{"_aclitem", 1034, 1033, -1, F_ARRAY_IN, F_ARRAY_OUT}
@@ -325,8 +325,8 @@ BootstrapMain(int argc, char *argv[])
 	}
 
 	/*
-	 * Bootstrap under Postmaster means two things:
-	 * (xloginit) ? StartupXLOG : ShutdownXLOG
+	 * Bootstrap under Postmaster means two things: (xloginit) ?
+	 * StartupXLOG : ShutdownXLOG
 	 *
 	 * If !under Postmaster and xloginit then BootStrapXLOG.
 	 */
@@ -345,9 +345,7 @@ BootstrapMain(int argc, char *argv[])
 	}
 
 	if (!IsUnderPostmaster && xloginit)
-	{
 		BootStrapXLOG();
-	}
 
 	/*
 	 * backend initialization
@@ -478,7 +476,7 @@ boot_openrel(char *relname)
 		 */
 		if (namestrcmp(&attrtypes[i]->attname, "attisset") == 0)
 			attrtypes[i]->attisset = get_attisset(RelationGetRelid(reldesc),
-											 NameStr(attrtypes[i]->attname));
+										 NameStr(attrtypes[i]->attname));
 		else
 			attrtypes[i]->attisset = false;
 
@@ -1153,8 +1151,10 @@ build_indices()
 		index_build(heap, ind, ILHead->il_natts, ILHead->il_attnos,
 				 ILHead->il_nparams, ILHead->il_params, ILHead->il_finfo,
 					ILHead->il_predInfo);
-		/* In normal processing mode, index_build would close the heap
-		 * and index, but in bootstrap mode it will not.
+
+		/*
+		 * In normal processing mode, index_build would close the heap and
+		 * index, but in bootstrap mode it will not.
 		 */
 
 		/*

@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2000, PostgreSQL, Inc
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Id: date.h,v 1.2 2000/03/14 23:06:50 thomas Exp $
+ * $Id: date.h,v 1.3 2000/04/12 17:16:54 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -20,8 +20,9 @@ typedef float8 TimeADT;
 
 typedef struct
 {
-	double		time;	/* all time units other than months and years */
-	int4		zone;	/* numeric time zone, in seconds */
+	double		time;			/* all time units other than months and
+								 * years */
+	int4		zone;			/* numeric time zone, in seconds */
 } TimeTzADT;
 
 /* date.c */
@@ -52,9 +53,9 @@ extern bool time_lt(TimeADT *time1, TimeADT *time2);
 extern bool time_le(TimeADT *time1, TimeADT *time2);
 extern bool time_gt(TimeADT *time1, TimeADT *time2);
 extern bool time_ge(TimeADT *time1, TimeADT *time2);
-extern int time_cmp(TimeADT *time1, TimeADT *time2);
+extern int	time_cmp(TimeADT *time1, TimeADT *time2);
 extern bool overlaps_time(TimeADT *time1, TimeADT *time2,
-						  TimeADT *time3, TimeADT *time4);
+			  TimeADT *time3, TimeADT *time4);
 extern TimeADT *time_larger(TimeADT *time1, TimeADT *time2);
 extern TimeADT *time_smaller(TimeADT *time1, TimeADT *time2);
 extern TimeADT *timestamp_time(Timestamp *timestamp);
@@ -68,15 +69,12 @@ extern bool timetz_lt(TimeTzADT *time1, TimeTzADT *time2);
 extern bool timetz_le(TimeTzADT *time1, TimeTzADT *time2);
 extern bool timetz_gt(TimeTzADT *time1, TimeTzADT *time2);
 extern bool timetz_ge(TimeTzADT *time1, TimeTzADT *time2);
-extern int timetz_cmp(TimeTzADT *time1, TimeTzADT *time2);
+extern int	timetz_cmp(TimeTzADT *time1, TimeTzADT *time2);
 extern bool overlaps_timetz(TimeTzADT *time1, TimeTzADT *time2,
-							TimeTzADT *time3, TimeTzADT *time4);
+				TimeTzADT *time3, TimeTzADT *time4);
 extern TimeTzADT *timetz_larger(TimeTzADT *time1, TimeTzADT *time2);
 extern TimeTzADT *timetz_smaller(TimeTzADT *time1, TimeTzADT *time2);
 extern TimeTzADT *timestamp_timetz(Timestamp *timestamp);
 extern Timestamp *datetimetz_timestamp(DateADT date, TimeTzADT *time);
 
 #endif	 /* DATE_H */
-
-
-

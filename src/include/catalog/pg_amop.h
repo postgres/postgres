@@ -8,7 +8,7 @@
  * Portions Copyright (c) 1996-2000, PostgreSQL, Inc
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Id: pg_amop.h,v 1.32 2000/03/14 23:06:43 thomas Exp $
+ * $Id: pg_amop.h,v 1.33 2000/04/12 17:16:28 momjian Exp $
  *
  * NOTES
  *	 the genbki.sh script reads this file and generates .bki
@@ -365,7 +365,7 @@ DATA(insert OID = 0 (  403 1690 1695 4 ));
 DATA(insert OID = 0 (  403 1690   59 5 ));
 
 /*
- *    nbtree lztext
+ *	  nbtree lztext
  */
 
 DATA(insert OID = 0 (  403 1663 1659 1 ));

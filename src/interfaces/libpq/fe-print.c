@@ -10,7 +10,7 @@
  * didn't really belong there.
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/interfaces/libpq/fe-print.c,v 1.36 2000/03/14 23:59:23 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/interfaces/libpq/fe-print.c,v 1.37 2000/04/12 17:17:15 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -38,12 +38,14 @@
 
 #ifdef TIOCGWINSZ
 static struct winsize screen_size;
+
 #else
 static struct winsize
 {
 	int			ws_row;
 	int			ws_col;
 }			screen_size;
+
 #endif
 
 
@@ -54,7 +56,7 @@ static void do_field(const PQprintOpt *po, const PGresult *res,
 		 unsigned char *fieldNotNum, int *fieldMax,
 		 const int fieldMaxLen, FILE *fout);
 static char *do_header(FILE *fout, const PQprintOpt *po, const int nFields,
-		  int *fieldMax, const char **fieldNames, unsigned char *fieldNotNum,
+	  int *fieldMax, const char **fieldNames, unsigned char *fieldNotNum,
 		  const int fs_len, const PGresult *res);
 static void output_row(FILE *fout, const PQprintOpt *po, const int nFields, char **fields,
 		   unsigned char *fieldNotNum, int *fieldMax, char *border,
@@ -77,8 +79,8 @@ static void fill(int length, int max, char filler, FILE *fp);
 
 void
 PQprint(FILE *fout,
-	const PGresult *res,
-	const PQprintOpt *po)
+		const PGresult *res,
+		const PQprintOpt *po)
 {
 	int			nFields;
 
@@ -93,7 +95,7 @@ PQprint(FILE *fout,
 		unsigned char *fieldNotNum = NULL;
 		char	   *border = NULL;
 		char	  **fields = NULL;
-		const char	  **fieldNames;
+		const char **fieldNames;
 		int			fieldMaxLen = 0;
 		int			numFieldName;
 		int			fs_len = strlen(po->fieldSep);
@@ -125,7 +127,7 @@ PQprint(FILE *fout,
 		for (j = 0; j < nFields; j++)
 		{
 			int			len;
-			const char	   *s = (j < numFieldName && po->fieldName[j][0]) ?
+			const char *s = (j < numFieldName && po->fieldName[j][0]) ?
 			po->fieldName[j] : PQfname(res, j);
 
 			fieldNames[j] = s;
@@ -216,7 +218,7 @@ PQprint(FILE *fout,
 
 				for (j = 0; j < nFields; j++)
 				{
-					const char	   *s = fieldNames[j];
+					const char *s = fieldNames[j];
 
 					fputs(s, fout);
 					len += strlen(s) + fs_len;
@@ -313,12 +315,12 @@ static void
 do_field(const PQprintOpt *po, const PGresult *res,
 		 const int i, const int j, const int fs_len,
 		 char **fields,
-		 const int nFields, char const **fieldNames,
+		 const int nFields, char const ** fieldNames,
 		 unsigned char *fieldNotNum, int *fieldMax,
 		 const int fieldMaxLen, FILE *fout)
 {
 
-	const char	   *pval,
+	const char *pval,
 			   *p;
 	int			plen;
 	bool		skipit;
@@ -341,7 +343,7 @@ do_field(const PQprintOpt *po, const PGresult *res,
 
 	if (!skipit)
 	{
-		if (po->align && ! fieldNotNum[j])
+		if (po->align && !fieldNotNum[j])
 		{
 			/* Detect whether field contains non-numeric data */
 			char		ch = '0';
@@ -353,21 +355,22 @@ do_field(const PQprintOpt *po, const PGresult *res,
 #endif
 			{
 				ch = *p;
-				if (! ((ch >= '0' && ch <= '9') ||
-					   ch == '.' ||
-					   ch == 'E' ||
-					   ch == 'e' ||
-					   ch == ' ' ||
-					   ch == '-'))
+				if (!((ch >= '0' && ch <= '9') ||
+					  ch == '.' ||
+					  ch == 'E' ||
+					  ch == 'e' ||
+					  ch == ' ' ||
+					  ch == '-'))
 				{
 					fieldNotNum[j] = 1;
 					break;
 				}
 			}
+
 			/*
-			 * Above loop will believe E in first column is numeric; also, we
-			 * insist on a digit in the last column for a numeric.	This test
-			 * is still not bulletproof but it handles most cases.
+			 * Above loop will believe E in first column is numeric; also,
+			 * we insist on a digit in the last column for a numeric. This
+			 * test is still not bulletproof but it handles most cases.
 			 */
 			if (*pval == 'E' || *pval == 'e' ||
 				!(ch >= '0' && ch <= '9'))
@@ -483,7 +486,7 @@ do_header(FILE *fout, const PQprintOpt *po, const int nFields, int *fieldMax,
 		fputs(po->fieldSep, fout);
 	for (j = 0; j < nFields; j++)
 	{
-		const char	   *s = PQfname(res, j);
+		const char *s = PQfname(res, j);
 
 		if (po->html3)
 		{
@@ -562,11 +565,11 @@ output_row(FILE *fout, const PQprintOpt *po, const int nFields, char **fields,
 
 void
 PQdisplayTuples(const PGresult *res,
-		FILE *fp,		/* where to send the output */
-		int fillAlign,	/* pad the fields with spaces */
-		const char *fieldSep,	/* field separator */
-		int printHeader,/* display headers? */
-		int quiet
+				FILE *fp,		/* where to send the output */
+				int fillAlign,	/* pad the fields with spaces */
+				const char *fieldSep,	/* field separator */
+				int printHeader,/* display headers? */
+				int quiet
 )
 {
 #define DEFAULT_FIELD_SEP " "
@@ -597,7 +600,8 @@ PQdisplayTuples(const PGresult *res,
 			fLength[j] = strlen(PQfname(res, j));
 			for (i = 0; i < nTuples; i++)
 			{
-				int flen = PQgetlength(res, i, j);
+				int			flen = PQgetlength(res, i, j);
+
 				if (flen > fLength[j])
 					fLength[j] = flen;
 			}
@@ -653,11 +657,11 @@ PQdisplayTuples(const PGresult *res,
 
 void
 PQprintTuples(const PGresult *res,
-	      FILE *fout,		/* output stream */
-	      int PrintAttNames,/* print attribute names or not */
-	      int TerseOutput,	/* delimiter bars or not? */
-	      int colWidth		/* width of column, if 0, use variable
-					 * width */
+			  FILE *fout,		/* output stream */
+			  int PrintAttNames,/* print attribute names or not */
+			  int TerseOutput,	/* delimiter bars or not? */
+			  int colWidth		/* width of column, if 0, use variable
+								 * width */
 )
 {
 	int			nFields;
@@ -713,7 +717,7 @@ PQprintTuples(const PGresult *res,
 		{
 			for (j = 0; j < nFields; j++)
 			{
-				const char	   *pval = PQgetvalue(res, i, j);
+				const char *pval = PQgetvalue(res, i, j);
 
 				fprintf(fout, formatString,
 						TerseOutput ? "" : "|",
@@ -730,13 +734,13 @@ PQprintTuples(const PGresult *res,
 
 
 /* simply send out max-length number of filler characters to fp */
- 
+
 static void
 fill(int length, int max, char filler, FILE *fp)
 {
-        int                     count;
- 
-        count = max - length;
-        while (count-- >= 0)
-                putc(filler, fp);
+	int			count;
+
+	count = max - length;
+	while (count-- >= 0)
+		putc(filler, fp);
 }

@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/executor/nodeSubplan.c,v 1.24 2000/03/23 07:32:58 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/executor/nodeSubplan.c,v 1.25 2000/04/12 17:15:10 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -67,20 +67,20 @@ ExecSubPlan(SubPlan *node, List *pvar, ExprContext *econtext, bool *isNull)
 	ExecReScan(plan, (ExprContext *) NULL, plan);
 
 	/*
-	 * For all sublink types except EXPR_SUBLINK, the result is boolean
-	 * as are the results of the combining operators.  We combine results
+	 * For all sublink types except EXPR_SUBLINK, the result is boolean as
+	 * are the results of the combining operators.	We combine results
 	 * within a tuple (if there are multiple columns) using OR semantics
 	 * if "useor" is true, AND semantics if not.  We then combine results
 	 * across tuples (if the subplan produces more than one) using OR
 	 * semantics for ANY_SUBLINK or AND semantics for ALL_SUBLINK.
 	 * (MULTIEXPR_SUBLINK doesn't allow multiple tuples from the subplan.)
 	 * NULL results from the combining operators are handled according to
-	 * the usual SQL semantics for OR and AND.  The result for no input
+	 * the usual SQL semantics for OR and AND.	The result for no input
 	 * tuples is FALSE for ANY_SUBLINK, TRUE for ALL_SUBLINK, NULL for
 	 * MULTIEXPR_SUBLINK.
 	 *
 	 * For EXPR_SUBLINK we require the subplan to produce no more than one
-	 * tuple, else an error is raised.  If zero tuples are produced, we
+	 * tuple, else an error is raised.	If zero tuples are produced, we
 	 * return NULL.  Assuming we get a tuple, we just return its first
 	 * column (there can be only one non-junk column in this case).
 	 */
@@ -106,13 +106,14 @@ ExecSubPlan(SubPlan *node, List *pvar, ExprContext *econtext, bool *isNull)
 			if (found)
 				elog(ERROR, "More than one tuple returned by a subselect used as an expression.");
 			found = true;
+
 			/*
-			 * We need to copy the subplan's tuple in case the result is of
-			 * pass-by-ref type --- our return value will point into this
-			 * copied tuple!  Can't use the subplan's instance of the tuple
-			 * since it won't still be valid after next ExecProcNode() call.
-			 * node->curTuple keeps track of the copied tuple for eventual
-			 * freeing.
+			 * We need to copy the subplan's tuple in case the result is
+			 * of pass-by-ref type --- our return value will point into
+			 * this copied tuple!  Can't use the subplan's instance of the
+			 * tuple since it won't still be valid after next
+			 * ExecProcNode() call. node->curTuple keeps track of the
+			 * copied tuple for eventual freeing.
 			 */
 			tup = heap_copytuple(tup);
 			if (node->curTuple)
@@ -129,7 +130,8 @@ ExecSubPlan(SubPlan *node, List *pvar, ExprContext *econtext, bool *isNull)
 
 		found = true;
 
-		/* For ALL, ANY, and MULTIEXPR sublinks, iterate over combining
+		/*
+		 * For ALL, ANY, and MULTIEXPR sublinks, iterate over combining
 		 * operators for columns of tuple.
 		 */
 		foreach(lst, sublink->oper)
@@ -140,14 +142,14 @@ ExecSubPlan(SubPlan *node, List *pvar, ExprContext *econtext, bool *isNull)
 			bool		expnull;
 
 			/*
-			 * The righthand side of the expression should be either a Const
-			 * or a function call or RelabelType node taking a Const as arg
-			 * (these nodes represent run-time type coercions inserted by
-			 * the parser to get to the input type needed by the operator).
-			 * Find the Const node and insert the actual righthand-side value
-			 * into it.
+			 * The righthand side of the expression should be either a
+			 * Const or a function call or RelabelType node taking a Const
+			 * as arg (these nodes represent run-time type coercions
+			 * inserted by the parser to get to the input type needed by
+			 * the operator). Find the Const node and insert the actual
+			 * righthand-side value into it.
 			 */
-			if (! IsA(con, Const))
+			if (!IsA(con, Const))
 			{
 				switch (con->type)
 				{
@@ -161,16 +163,18 @@ ExecSubPlan(SubPlan *node, List *pvar, ExprContext *econtext, bool *isNull)
 						/* will fail below */
 						break;
 				}
-				if (! IsA(con, Const))
+				if (!IsA(con, Const))
 					elog(ERROR, "ExecSubPlan: failed to find placeholder for subplan result");
 			}
 			con->constvalue = heap_getattr(tup, col, tdesc,
 										   &(con->constisnull));
+
 			/*
 			 * Now we can eval the combining operator for this column.
 			 */
 			expresult = ExecEvalExpr((Node *) expr, econtext, &expnull,
 									 (bool *) NULL);
+
 			/*
 			 * Combine the result into the row result as appropriate.
 			 */
@@ -240,14 +244,16 @@ ExecSubPlan(SubPlan *node, List *pvar, ExprContext *econtext, bool *isNull)
 
 	if (!found)
 	{
-		/* deal with empty subplan result.  result/isNull were previously
+
+		/*
+		 * deal with empty subplan result.	result/isNull were previously
 		 * initialized correctly for all sublink types except EXPR and
 		 * MULTIEXPR; for those, return NULL.
 		 */
 		if (subLinkType == EXPR_SUBLINK || subLinkType == MULTIEXPR_SUBLINK)
 		{
-				result = (Datum) false;
-				*isNull = true;
+			result = (Datum) false;
+			*isNull = true;
 		}
 	}
 
@@ -354,9 +360,9 @@ ExecSetParamPlan(SubPlan *node)
 
 		/*
 		 * We need to copy the subplan's tuple in case any of the params
-		 * are pass-by-ref type --- the pointers stored in the param structs
-		 * will point at this copied tuple!  node->curTuple keeps track
-		 * of the copied tuple for eventual freeing.
+		 * are pass-by-ref type --- the pointers stored in the param
+		 * structs will point at this copied tuple!  node->curTuple keeps
+		 * track of the copied tuple for eventual freeing.
 		 */
 		tup = heap_copytuple(tup);
 		if (node->curTuple)

@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2000, PostgreSQL, Inc
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Id: proc.h,v 1.29 2000/02/22 09:55:26 inoue Exp $
+ * $Id: proc.h,v 1.30 2000/04/12 17:16:51 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -82,9 +82,9 @@ typedef struct procglobal
 	int32		freeSemMap[MAX_PROC_SEMS / PROC_NSEMS_PER_SET];
 
 	/*
-	 * In each freeSemMap entry, the PROC_NSEMS_PER_SET least-significant bits
-	 * flag whether individual semaphores are in use, and the next higher bit
-	 * is set to show that the entire set is allocated.
+	 * In each freeSemMap entry, the PROC_NSEMS_PER_SET least-significant
+	 * bits flag whether individual semaphores are in use, and the next
+	 * higher bit is set to show that the entire set is allocated.
 	 */
 } PROC_HDR;
 

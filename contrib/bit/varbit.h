@@ -2,7 +2,7 @@
 #include <ctype.h>
 #include <errno.h>
 
-#include <float.h>                              /* faked on sunos4 */
+#include <float.h>				/* faked on sunos4 */
 
 #include <math.h>
 
@@ -10,7 +10,7 @@
 #ifdef HAVE_LIMITS_H
 #include <limits.h>
 #ifndef MAXINT
-#define MAXINT            INT_MAX
+#define MAXINT			  INT_MAX
 #endif
 #else
 #ifdef HAVE_VALUES_H
@@ -22,7 +22,7 @@
 #include "utils/builtins.h"
 
 
-#define HEXDIG(z)    (z)<10 ? ((z)+'0') : ((z)-10+'A')
+#define HEXDIG(z)	 (z)<10 ? ((z)+'0') : ((z)-10+'A')
 
 /* Modeled on struct varlena from postgres.h, bu data type is bits8 */
 struct varbita
@@ -49,25 +49,25 @@ struct varbita
 #define VARBITEND(PTR)		((bits8 *) (PTR + VARSIZE(PTR)))
 /* Mask that will cover exactly one byte, i.e. BITSPERBYTE bits */
 #define BITMASK			0xFF
-#define BITHIGH                 0x80
+#define BITHIGH					0x80
 
 
-bits8 * zpbitin(char *s, int dummy,  int32 atttypmod);
-char * zpbitout(bits8 *s);
-char * zpbitsout(bits8 *s);
-bits8 * varbitin(char *s, int dummy,  int32 atttypmod);
-bool biteq (bits8 *arg1, bits8 *arg2);
-bool bitne (bits8 *arg1, bits8 *arg2);
-bool bitge (bits8 *arg1, bits8 *arg2);
-bool bitgt (bits8 *arg1, bits8 *arg2);
-bool bitle (bits8 *arg1, bits8 *arg2);
-bool bitlt (bits8 *arg1, bits8 *arg2);
-int bitcmp (bits8 *arg1, bits8 *arg2);
-bits8 * bitand (bits8 * arg1, bits8 * arg2);
-bits8 * bitor (bits8 * arg1, bits8 * arg2);
-bits8 * bitxor (bits8 * arg1, bits8 * arg2);
-bits8 * bitnot (bits8 * arg);
-bits8 * bitshiftright (bits8 * arg, int shft);
-bits8 * bitshiftleft (bits8 * arg, int shft);
-bits8 * bitcat (bits8 *arg1, bits8 *arg2);
-bits8 * bitsubstr (bits8 *arg, int32 s, int32 l);
+bits8	   *zpbitin(char *s, int dummy, int32 atttypmod);
+char	   *zpbitout(bits8 *s);
+char	   *zpbitsout(bits8 *s);
+bits8	   *varbitin(char *s, int dummy, int32 atttypmod);
+bool		biteq(bits8 *arg1, bits8 *arg2);
+bool		bitne(bits8 *arg1, bits8 *arg2);
+bool		bitge(bits8 *arg1, bits8 *arg2);
+bool		bitgt(bits8 *arg1, bits8 *arg2);
+bool		bitle(bits8 *arg1, bits8 *arg2);
+bool		bitlt(bits8 *arg1, bits8 *arg2);
+int			bitcmp(bits8 *arg1, bits8 *arg2);
+bits8	   *bitand(bits8 *arg1, bits8 *arg2);
+bits8	   *bitor(bits8 *arg1, bits8 *arg2);
+bits8	   *bitxor(bits8 *arg1, bits8 *arg2);
+bits8	   *bitnot(bits8 *arg);
+bits8	   *bitshiftright(bits8 *arg, int shft);
+bits8	   *bitshiftleft(bits8 *arg, int shft);
+bits8	   *bitcat(bits8 *arg1, bits8 *arg2);
+bits8	   *bitsubstr(bits8 *arg, int32 s, int32 l);

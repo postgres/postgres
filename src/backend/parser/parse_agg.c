@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/parser/parse_agg.c,v 1.36 2000/03/17 02:36:17 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/parser/parse_agg.c,v 1.37 2000/04/12 17:15:26 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -24,15 +24,16 @@
 #include "utils/lsyscache.h"
 #include "utils/syscache.h"
 
-typedef struct {
+typedef struct
+{
 	ParseState *pstate;
 	List	   *groupClauses;
 } check_ungrouped_columns_context;
 
 static void check_ungrouped_columns(Node *node, ParseState *pstate,
-									List *groupClauses);
+						List *groupClauses);
 static bool check_ungrouped_columns_walker(Node *node,
-										   check_ungrouped_columns_context *context);
+							   check_ungrouped_columns_context *context);
 
 /*
  * check_ungrouped_columns -
@@ -46,7 +47,7 @@ static bool check_ungrouped_columns_walker(Node *node,
  *
  * NOTE: in the case of a SubLink, expression_tree_walker does not descend
  * into the subquery.  This means we will fail to detect ungrouped columns
- * that appear as outer-level variables within a subquery.  That case seems
+ * that appear as outer-level variables within a subquery.	That case seems
  * unreasonably hard to handle here.  Instead, we expect the planner to check
  * for ungrouped columns after it's found all the outer-level references
  * inside the subquery and converted them into a list of parameters for the
@@ -56,7 +57,7 @@ static void
 check_ungrouped_columns(Node *node, ParseState *pstate,
 						List *groupClauses)
 {
-	check_ungrouped_columns_context	context;
+	check_ungrouped_columns_context context;
 
 	context.pstate = pstate;
 	context.groupClauses = groupClauses;
@@ -71,13 +72,16 @@ check_ungrouped_columns_walker(Node *node,
 
 	if (node == NULL)
 		return false;
-	if (IsA(node, Const) || IsA(node, Param))
+	if (IsA(node, Const) ||IsA(node, Param))
 		return false;			/* constants are always acceptable */
+
 	/*
-	 * If we find an aggregate function, do not recurse into its arguments.
+	 * If we find an aggregate function, do not recurse into its
+	 * arguments.
 	 */
 	if (IsA(node, Aggref))
 		return false;
+
 	/*
 	 * Check to see if subexpression as a whole matches any GROUP BY item.
 	 * We need to do this at every recursion level so that we recognize
@@ -88,17 +92,19 @@ check_ungrouped_columns_walker(Node *node,
 		if (equal(node, lfirst(gl)))
 			return false;		/* acceptable, do not descend more */
 	}
+
 	/*
 	 * If we have an ungrouped Var, we have a failure --- unless it is an
 	 * outer-level Var.  In that case it's a constant as far as this query
-	 * level is concerned, and we can accept it.  (If it's ungrouped as far
-	 * as the upper query is concerned, that's someone else's problem...)
+	 * level is concerned, and we can accept it.  (If it's ungrouped as
+	 * far as the upper query is concerned, that's someone else's
+	 * problem...)
 	 */
 	if (IsA(node, Var))
 	{
-		Var			   *var = (Var *) node;
-		RangeTblEntry  *rte;
-		char		   *attname;
+		Var		   *var = (Var *) node;
+		RangeTblEntry *rte;
+		char	   *attname;
 
 		if (var->varlevelsup > 0)
 			return false;		/* outer-level Var is acceptable */
@@ -107,7 +113,7 @@ check_ungrouped_columns_walker(Node *node,
 			   (int) var->varno <= length(context->pstate->p_rtable));
 		rte = rt_fetch(var->varno, context->pstate->p_rtable);
 		attname = get_attname(rte->relid, var->varattno);
-		if (! attname)
+		if (!attname)
 			elog(ERROR, "cache lookup of attribute %d in relation %u failed",
 				 var->varattno, rte->relid);
 		elog(ERROR, "Attribute %s.%s must be GROUPed or used in an aggregate function",
@@ -139,9 +145,9 @@ parseCheckAggregates(ParseState *pstate, Query *qry)
 	/*
 	 * Aggregates must never appear in WHERE clauses. (Note this check
 	 * should appear first to deliver an appropriate error message;
-	 * otherwise we are likely to complain about some innocent variable
-	 * in the target list, which is outright misleading if the problem
-	 * is in WHERE.)
+	 * otherwise we are likely to complain about some innocent variable in
+	 * the target list, which is outright misleading if the problem is in
+	 * WHERE.)
 	 */
 	if (contain_agg_clause(qry->qual))
 		elog(ERROR, "Aggregates not allowed in WHERE clause");
@@ -149,14 +155,14 @@ parseCheckAggregates(ParseState *pstate, Query *qry)
 	/*
 	 * No aggregates allowed in GROUP BY clauses, either.
 	 *
-	 * While we are at it, build a list of the acceptable GROUP BY expressions
-	 * for use by check_ungrouped_columns() (this avoids repeated scans of the
-	 * targetlist within the recursive routine...)
+	 * While we are at it, build a list of the acceptable GROUP BY
+	 * expressions for use by check_ungrouped_columns() (this avoids
+	 * repeated scans of the targetlist within the recursive routine...)
 	 */
 	foreach(tl, qry->groupClause)
 	{
 		GroupClause *grpcl = lfirst(tl);
-		Node		*expr;
+		Node	   *expr;
 
 		expr = get_sortgroupclause_expr(grpcl, qry->targetList);
 		if (contain_agg_clause(expr))
@@ -198,16 +204,16 @@ ParseAgg(ParseState *pstate, char *aggname, Oid basetype,
 	/*
 	 * There used to be a really ugly hack for count(*) here.
 	 *
-	 * It's gone.  Now, the grammar transforms count(*) into count(1),
-	 * which does the right thing.  (It didn't use to do the right thing,
-	 * because the optimizer had the wrong ideas about semantics of queries
-	 * without explicit variables.  Fixed as of Oct 1999 --- tgl.)
+	 * It's gone.  Now, the grammar transforms count(*) into count(1), which
+	 * does the right thing.  (It didn't use to do the right thing,
+	 * because the optimizer had the wrong ideas about semantics of
+	 * queries without explicit variables.	Fixed as of Oct 1999 --- tgl.)
 	 *
-	 * Since "1" never evaluates as null, we currently have no need of
-	 * the "usenulls" flag, but it should be kept around; in fact, we should
+	 * Since "1" never evaluates as null, we currently have no need of the
+	 * "usenulls" flag, but it should be kept around; in fact, we should
 	 * extend the pg_aggregate table to let usenulls be specified as an
-	 * attribute of user-defined aggregates.  In the meantime, usenulls
-	 * is just always set to "false".
+	 * attribute of user-defined aggregates.  In the meantime, usenulls is
+	 * just always set to "false".
 	 */
 
 	aggform = (Form_pg_aggregate) GETSTRUCT(theAggTuple);

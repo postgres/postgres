@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2000, PostgreSQL, Inc
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Id: nbtree.h,v 1.34 2000/02/18 06:32:28 tgl Exp $
+ * $Id: nbtree.h,v 1.35 2000/04/12 17:16:26 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -204,11 +204,11 @@ typedef struct BTPageState
  * prototypes for functions in nbtinsert.c
  */
 extern InsertIndexResult _bt_doinsert(Relation rel, BTItem btitem,
-									  bool index_is_unique, Relation heapRel);
+			 bool index_is_unique, Relation heapRel);
 extern int32 _bt_tuplecompare(Relation rel, Size keysz, ScanKey scankey,
-							  IndexTuple tuple1, IndexTuple tuple2);
+				 IndexTuple tuple1, IndexTuple tuple2);
 extern bool _bt_itemcmp(Relation rel, Size keysz, ScanKey scankey,
-						BTItem item1, BTItem item2, StrategyNumber strat);
+			BTItem item1, BTItem item2, StrategyNumber strat);
 
 /*
  * prototypes for functions in nbtpage.c
@@ -272,7 +272,7 @@ extern bool _bt_step(IndexScanDesc scan, Buffer *bufP, ScanDirection dir);
  * prototypes for functions in nbtstrat.c
  */
 extern StrategyNumber _bt_getstrat(Relation rel, AttrNumber attno,
-								   RegProcedure proc);
+			 RegProcedure proc);
 
 /*
  * prototypes for functions in nbtutils.c
@@ -289,7 +289,7 @@ extern BTItem _bt_formitem(IndexTuple itup);
  * prototypes for functions in nbtsort.c
  */
 
-typedef struct BTSpool BTSpool;	/* opaque type known only within nbtsort.c */
+typedef struct BTSpool BTSpool; /* opaque type known only within nbtsort.c */
 
 extern BTSpool *_bt_spoolinit(Relation index, bool isunique);
 extern void _bt_spooldestroy(BTSpool *btspool);

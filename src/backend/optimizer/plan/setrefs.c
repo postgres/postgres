@@ -9,7 +9,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/optimizer/plan/setrefs.c,v 1.61 2000/04/04 01:21:47 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/optimizer/plan/setrefs.c,v 1.62 2000/04/12 17:15:22 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -24,13 +24,15 @@
 #include "optimizer/tlist.h"
 #include "optimizer/var.h"
 
-typedef struct {
+typedef struct
+{
 	List	   *outer_tlist;
 	List	   *inner_tlist;
 	Index		acceptable_rel;
 } join_references_context;
 
-typedef struct {
+typedef struct
+{
 	Index		subvarno;
 	List	   *subplanTargetList;
 } replace_vars_with_subplan_refs_context;
@@ -38,12 +40,12 @@ typedef struct {
 static void set_join_references(Join *join);
 static void set_uppernode_references(Plan *plan, Index subvarno);
 static Node *join_references_mutator(Node *node,
-									 join_references_context *context);
+						join_references_context *context);
 static Node *replace_vars_with_subplan_refs(Node *node,
-											Index subvarno,
-											List *subplanTargetList);
+							   Index subvarno,
+							   List *subplanTargetList);
 static Node *replace_vars_with_subplan_refs_mutator(Node *node,
-					replace_vars_with_subplan_refs_context *context);
+						replace_vars_with_subplan_refs_context *context);
 static bool fix_opids_walker(Node *node, void *context);
 
 /*****************************************************************************
@@ -56,7 +58,7 @@ static bool fix_opids_walker(Node *node, void *context);
  * set_plan_references
  *	  This is the final processing pass of the planner/optimizer.  The plan
  *	  tree is complete; we just have to adjust some representational details
- *	  for the convenience of the executor.  We update Vars in upper plan nodes
+ *	  for the convenience of the executor.	We update Vars in upper plan nodes
  *	  to refer to the outputs of their subplans, and we compute regproc OIDs
  *	  for operators (ie, we look up the function that implements each op).
  *	  We must also build lists of all the subplan nodes present in each
@@ -74,7 +76,8 @@ set_plan_references(Plan *plan)
 	if (plan == NULL)
 		return;
 
-	/* We must rebuild the plan's list of subplan nodes, since we are
+	/*
+	 * We must rebuild the plan's list of subplan nodes, since we are
 	 * copying/mutating its expression trees.
 	 */
 	plan->subPlan = NIL;
@@ -92,10 +95,10 @@ set_plan_references(Plan *plan)
 			fix_opids((Node *) ((IndexScan *) plan)->indxqualorig);
 			plan->subPlan =
 				nconc(plan->subPlan,
-					  pull_subplans((Node *) ((IndexScan *) plan)->indxqual));
+				 pull_subplans((Node *) ((IndexScan *) plan)->indxqual));
 			plan->subPlan =
 				nconc(plan->subPlan,
-					  pull_subplans((Node *) ((IndexScan *) plan)->indxqualorig));
+			 pull_subplans((Node *) ((IndexScan *) plan)->indxqualorig));
 			break;
 		case T_NestLoop:
 			set_join_references((Join *) plan);
@@ -105,24 +108,26 @@ set_plan_references(Plan *plan)
 			fix_opids((Node *) ((MergeJoin *) plan)->mergeclauses);
 			plan->subPlan =
 				nconc(plan->subPlan,
-					  pull_subplans((Node *) ((MergeJoin *) plan)->mergeclauses));
+			 pull_subplans((Node *) ((MergeJoin *) plan)->mergeclauses));
 			break;
 		case T_HashJoin:
 			set_join_references((Join *) plan);
 			fix_opids((Node *) ((HashJoin *) plan)->hashclauses);
 			plan->subPlan =
 				nconc(plan->subPlan,
-					  pull_subplans((Node *) ((HashJoin *) plan)->hashclauses));
+			   pull_subplans((Node *) ((HashJoin *) plan)->hashclauses));
 			break;
 		case T_Material:
 		case T_Sort:
 		case T_Unique:
 		case T_Hash:
-			/* These plan types don't actually bother to evaluate their
+
+			/*
+			 * These plan types don't actually bother to evaluate their
 			 * targetlists or quals (because they just return their
 			 * unmodified input tuples).  The optimizer is lazy about
-			 * creating really valid targetlists for them.  Best to
-			 * just leave the targetlist alone.
+			 * creating really valid targetlists for them.	Best to just
+			 * leave the targetlist alone.
 			 */
 			break;
 		case T_Agg:
@@ -130,7 +135,9 @@ set_plan_references(Plan *plan)
 			set_uppernode_references(plan, (Index) 0);
 			break;
 		case T_Result:
-			/* Result may or may not have a subplan; no need to fix up
+
+			/*
+			 * Result may or may not have a subplan; no need to fix up
 			 * subplan references if it hasn't got one...
 			 *
 			 * XXX why does Result use a different subvarno from Agg/Group?
@@ -144,9 +151,7 @@ set_plan_references(Plan *plan)
 			break;
 		case T_Append:
 			foreach(pl, ((Append *) plan)->appendplans)
-			{
 				set_plan_references((Plan *) lfirst(pl));
-			}
 			break;
 		case T_TidScan:
 			/* nothing special */
@@ -158,8 +163,8 @@ set_plan_references(Plan *plan)
 	}
 
 	/*
-	 * For all plan types, fix operators in targetlist and qual expressions,
-	 * and find subplans therein.
+	 * For all plan types, fix operators in targetlist and qual
+	 * expressions, and find subplans therein.
 	 */
 	fix_opids((Node *) plan->targetlist);
 	fix_opids((Node *) plan->qual);
@@ -176,20 +181,21 @@ set_plan_references(Plan *plan)
 	 * NOTE: it is essential that we recurse into subplans AFTER we set
 	 * subplan references in this plan's tlist and quals.  If we did the
 	 * reference-adjustments bottom-up, then we would fail to match this
-	 * plan's var nodes against the already-modified nodes of the subplans.
+	 * plan's var nodes against the already-modified nodes of the
+	 * subplans.
 	 */
 	set_plan_references(plan->lefttree);
 	set_plan_references(plan->righttree);
 	foreach(pl, plan->initPlan)
 	{
-		SubPlan	   *sp = (SubPlan *) lfirst(pl);
+		SubPlan    *sp = (SubPlan *) lfirst(pl);
 
 		Assert(IsA(sp, SubPlan));
 		set_plan_references(sp->plan);
 	}
 	foreach(pl, plan->subPlan)
 	{
-		SubPlan	   *sp = (SubPlan *) lfirst(pl);
+		SubPlan    *sp = (SubPlan *) lfirst(pl);
 
 		Assert(IsA(sp, SubPlan));
 		set_plan_references(sp->plan);
@@ -325,9 +331,10 @@ join_references_mutator(Node *node,
 			newvar->varattno = resdom->resno;
 			return (Node *) newvar;
 		}
+
 		/*
-		 * Var not in either tlist --- either raise an error,
-		 * or return the Var unmodified.
+		 * Var not in either tlist --- either raise an error, or return
+		 * the Var unmodified.
 		 */
 		if (var->varno != context->acceptable_rel)
 			elog(ERROR, "join_references: variable not in subplan target lists");
@@ -370,7 +377,7 @@ replace_vars_with_subplan_refs(Node *node,
 
 static Node *
 replace_vars_with_subplan_refs_mutator(Node *node,
-							 replace_vars_with_subplan_refs_context *context)
+						 replace_vars_with_subplan_refs_context *context)
 {
 	if (node == NULL)
 		return NULL;
@@ -414,7 +421,7 @@ fix_opids(Node *node)
 }
 
 static bool
-fix_opids_walker (Node *node, void *context)
+fix_opids_walker(Node *node, void *context)
 {
 	if (node == NULL)
 		return false;

@@ -9,7 +9,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/parser/scansup.c,v 1.18 2000/01/26 05:56:43 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/parser/scansup.c,v 1.19 2000/04/12 17:15:27 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -44,7 +44,7 @@ scanstr(char *s)
 
 	len = strlen(s);
 
-	newStr = palloc(len+1);		/* string cannot get longer */
+	newStr = palloc(len + 1);	/* string cannot get longer */
 
 	for (i = 0, j = 0; i < len; i++)
 	{

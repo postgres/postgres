@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/access/transam/transam.c,v 1.33 2000/01/26 05:56:03 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/access/transam/transam.c,v 1.34 2000/04/12 17:14:52 momjian Exp $
  *
  * NOTES
  *	  This file contains the high level access-method interface to the
@@ -162,6 +162,7 @@ TransactionLogTest(TransactionId transactionId, /* transaction id to test */
 
 	if (!fail)
 	{
+
 		/*
 		 * DO NOT cache status for transactions in unknown state !!!
 		 */

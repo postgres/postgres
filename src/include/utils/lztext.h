@@ -1,7 +1,7 @@
 /* ----------
  * lztext.h
  *
- * $Header: /cvsroot/pgsql/src/include/utils/Attic/lztext.h,v 1.2 1999/12/28 13:40:53 wieck Exp $
+ * $Header: /cvsroot/pgsql/src/include/utils/Attic/lztext.h,v 1.3 2000/04/12 17:16:55 momjian Exp $
  *
  *	Definitions for the lztext compressed data type
  * ----------
@@ -17,6 +17,6 @@
  * The internal storage format of an LZ compressed text field
  * ----------
  */
-typedef PGLZ_Header		lztext;
+typedef PGLZ_Header lztext;
 
-#endif /* _LZTEXT_H_ */
+#endif	 /* _LZTEXT_H_ */

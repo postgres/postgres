@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/tcop/postgres.c,v 1.150 2000/04/04 23:52:50 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/tcop/postgres.c,v 1.151 2000/04/12 17:15:43 momjian Exp $
  *
  * NOTES
  *	  this is the "main" module of the postgres backend and
@@ -101,14 +101,14 @@ CommandDest whereToSendOutput = Debug;
 PS_DEFINE_BUFFER;
 #endif
 
-extern void		BaseInit(void);
-extern void		StartupXLOG(void);
-extern void		ShutdownXLOG(void);
+extern void BaseInit(void);
+extern void StartupXLOG(void);
+extern void ShutdownXLOG(void);
 
-extern void		HandleDeadLock(SIGNAL_ARGS);
+extern void HandleDeadLock(SIGNAL_ARGS);
 
-extern char		XLogDir[];
-extern char		ControlFilePath[];
+extern char XLogDir[];
+extern char ControlFilePath[];
 
 extern int	lockingOff;
 extern int	NBuffers;
@@ -126,7 +126,7 @@ bool		ExitAfterAbort = false;
 
 extern int	NBuffers;
 
-static bool	EchoQuery = false;		/* default don't echo */
+static bool EchoQuery = false;	/* default don't echo */
 time_t		tim;
 char		pg_pathname[MAXPGPATH];
 FILE	   *StatFp;
@@ -154,9 +154,9 @@ int			XfuncMode = 0;
  *		decls for routines only used in this file
  * ----------------------------------------------------------------
  */
-static int InteractiveBackend(StringInfo inBuf);
-static int SocketBackend(StringInfo inBuf);
-static int ReadCommand(StringInfo inBuf);
+static int	InteractiveBackend(StringInfo inBuf);
+static int	SocketBackend(StringInfo inBuf);
+static int	ReadCommand(StringInfo inBuf);
 static void pg_exec_query(char *query_string);
 
 
@@ -169,7 +169,7 @@ static void pg_exec_query(char *query_string);
  *	InteractiveBackend() is called for user interactive connections
  *	the string entered by the user is placed in its parameter inBuf.
  *
- *  EOF is returned if end-of-file input is seen; time to shut down.
+ *	EOF is returned if end-of-file input is seen; time to shut down.
  * ----------------
  */
 
@@ -277,7 +277,7 @@ InteractiveBackend(StringInfo inBuf)
  *	the function call is processed in HandleFunctionRequest()
  *	(now called from PostgresMain()).
  *
- *  EOF is returned if the connection is lost.
+ *	EOF is returned if the connection is lost.
  * ----------------
  */
 
@@ -349,11 +349,12 @@ SocketBackend(StringInfo inBuf)
 static int
 ReadCommand(StringInfo inBuf)
 {
-	MemoryContext	oldcontext;
-	int				result;
+	MemoryContext oldcontext;
+	int			result;
 
-	/* Make sure any expansion of inBuf happens in permanent memory context,
-	 * so that we can keep using it for future command cycles.
+	/*
+	 * Make sure any expansion of inBuf happens in permanent memory
+	 * context, so that we can keep using it for future command cycles.
 	 */
 	oldcontext = MemoryContextSwitchTo(TopMemoryContext);
 	if (IsUnderPostmaster)
@@ -372,9 +373,9 @@ ReadCommand(StringInfo inBuf)
  * multiple queries and/or the rewriter might expand one query to several.
  */
 List *
-pg_parse_and_rewrite(char *query_string,	/* string to execute */
-					 Oid *typev,			/* argument types */
-					 int nargs,				/* number of arguments */
+pg_parse_and_rewrite(char *query_string,		/* string to execute */
+					 Oid *typev,/* argument types */
+					 int nargs, /* number of arguments */
 					 bool aclOverride)
 {
 	List	   *querytree_list;
@@ -383,9 +384,7 @@ pg_parse_and_rewrite(char *query_string,	/* string to execute */
 	List	   *new_list;
 
 	if (DebugPrintQuery)
-	{
 		TPRINTF(TRACE_QUERY, "query: %s", query_string);
-	}
 
 	/* ----------------
 	 *	(1) parse the request string into a list of parse trees
@@ -436,7 +435,8 @@ pg_parse_and_rewrite(char *query_string,	/* string to execute */
 		else
 		{
 			/* rewrite regular queries */
-			List *rewritten = QueryRewrite(querytree);
+			List	   *rewritten = QueryRewrite(querytree);
+
 			new_list = nconc(new_list, rewritten);
 		}
 	}
@@ -586,11 +586,10 @@ pg_exec_query_dest(char *query_string,	/* string to execute */
 	 * list pointer has been advanced before the query is executed. We
 	 * need to do that because VACUUM has a nasty little habit of doing
 	 * CommitTransactionCommand at startup, and that will release the
-	 * memory holding our parse list :-(.  This needs a better
-	 * solution --- currently, the code will crash if someone submits
-	 * "vacuum; something-else" in a single query string.  But memory
-	 * allocation needs redesigned anyway, so this will have to do for
-	 * now.
+	 * memory holding our parse list :-(.  This needs a better solution
+	 * --- currently, the code will crash if someone submits "vacuum;
+	 * something-else" in a single query string.  But memory allocation
+	 * needs redesigned anyway, so this will have to do for now.
 	 */
 	while (querytree_list)
 	{
@@ -637,7 +636,8 @@ pg_exec_query_dest(char *query_string,	/* string to execute */
 
 				EndCommand(tag, dest);
 
-				/* We continue in the loop, on the off chance that there
+				/*
+				 * We continue in the loop, on the off chance that there
 				 * is a COMMIT or ROLLBACK utility command later in the
 				 * query string.
 				 */
@@ -735,6 +735,7 @@ void
 die(SIGNAL_ARGS)
 {
 	PG_SETMASK(&BlockSig);
+
 	/*
 	 * If ERROR/FATAL is in progress...
 	 */
@@ -840,7 +841,7 @@ PostgresMain(int argc, char *argv[], int real_argc, char *real_argv[])
 
 	extern int	optind;
 	extern char *optarg;
-	extern int  DebugLvl;
+	extern int	DebugLvl;
 
 	/*
 	 * Set default values for command-line options.
@@ -1210,16 +1211,15 @@ PostgresMain(int argc, char *argv[], int real_argc, char *real_argv[])
 		fprintf(stderr, "%s does not know where to find the database system "
 				"data.  You must specify the directory that contains the "
 				"database system either by specifying the -D invocation "
-				"option or by setting the PGDATA environment variable.\n\n",
+			 "option or by setting the PGDATA environment variable.\n\n",
 				argv[0]);
 		proc_exit(1);
 	}
 
 	/*
-	 * 1. Set BlockSig and UnBlockSig masks. 
-	 * 2. Set up signal handlers.
-	 * 3. Allow only SIGUSR1 signal (we never block it) 
-	 *    during initialization.
+	 * 1. Set BlockSig and UnBlockSig masks. 2. Set up signal handlers. 3.
+	 * Allow only SIGUSR1 signal (we never block it) during
+	 * initialization.
 	 *
 	 * Note that postmaster already blocked ALL signals to make us happy.
 	 */
@@ -1235,22 +1235,23 @@ PostgresMain(int argc, char *argv[], int real_argc, char *real_argv[])
 	BlockSig &= ~(sigmask(SIGUSR1));
 #endif
 
-	pqsignal(SIGHUP, read_pg_options);		/* update pg_options from file */
-	pqsignal(SIGINT, QueryCancelHandler);	/* cancel current query */
-	pqsignal(SIGQUIT, handle_warn);			/* handle error */
+	pqsignal(SIGHUP, read_pg_options);	/* update pg_options from file */
+	pqsignal(SIGINT, QueryCancelHandler);		/* cancel current query */
+	pqsignal(SIGQUIT, handle_warn);		/* handle error */
 	pqsignal(SIGTERM, die);
 	pqsignal(SIGALRM, HandleDeadLock);
-	/* 
-	 * Ignore failure to write to frontend. Note: if frontend closes 
-	 * connection, we will notice it and exit cleanly when control next 
-	 * returns to outer loop.  This seems safer than forcing exit in the 
+
+	/*
+	 * Ignore failure to write to frontend. Note: if frontend closes
+	 * connection, we will notice it and exit cleanly when control next
+	 * returns to outer loop.  This seems safer than forcing exit in the
 	 * midst of output during who-knows-what operation...
 	 */
 	pqsignal(SIGPIPE, SIG_IGN);
 	pqsignal(SIGUSR1, quickdie);
-	pqsignal(SIGUSR2, Async_NotifyHandler);	/* flush also sinval cache */
+	pqsignal(SIGUSR2, Async_NotifyHandler);		/* flush also sinval cache */
 	pqsignal(SIGFPE, FloatExceptionHandler);
-	pqsignal(SIGCHLD, SIG_IGN);				/* ignored, sent by LockOwners */
+	pqsignal(SIGCHLD, SIG_IGN); /* ignored, sent by LockOwners */
 	pqsignal(SIGTTIN, SIG_DFL);
 	pqsignal(SIGTTOU, SIG_DFL);
 	pqsignal(SIGCONT, SIG_DFL);
@@ -1298,9 +1299,9 @@ PostgresMain(int argc, char *argv[], int real_argc, char *real_argv[])
 		 * Try to create pid file.
 		 */
 		SetPidFname(DataDir);
-		if (SetPidFile(-getpid())) {
+		if (SetPidFile(-getpid()))
 			proc_exit(0);
-		}
+
 		/*
 		 * Register clean up proc.
 		 */
@@ -1365,6 +1366,7 @@ PostgresMain(int argc, char *argv[], int real_argc, char *real_argv[])
 				remote_info = remote_host = "unknown";
 				break;
 		}
+
 		/*
 		 * Set process params for ps
 		 */
@@ -1425,13 +1427,14 @@ PostgresMain(int argc, char *argv[], int real_argc, char *real_argv[])
 	on_shmem_exit(remove_all_temp_relations, NULL);
 
 	{
-		MemoryContext	oldcontext = MemoryContextSwitchTo(TopMemoryContext);
-		parser_input = makeStringInfo(); /* initialize input buffer */
+		MemoryContext oldcontext = MemoryContextSwitchTo(TopMemoryContext);
+
+		parser_input = makeStringInfo();		/* initialize input buffer */
 		MemoryContextSwitchTo(oldcontext);
 	}
 
-	/* 
-	 * Send this backend's cancellation info to the frontend. 
+	/*
+	 * Send this backend's cancellation info to the frontend.
 	 */
 	if (whereToSendOutput == Remote &&
 		PG_PROTOCOL_MAJOR(FrontendProtocol) >= 2)
@@ -1449,7 +1452,7 @@ PostgresMain(int argc, char *argv[], int real_argc, char *real_argv[])
 	if (!IsUnderPostmaster)
 	{
 		puts("\nPOSTGRES backend interactive interface ");
-		puts("$Revision: 1.150 $ $Date: 2000/04/04 23:52:50 $\n");
+		puts("$Revision: 1.151 $ $Date: 2000/04/12 17:15:43 $\n");
 	}
 
 	/*
@@ -1463,8 +1466,8 @@ PostgresMain(int argc, char *argv[], int real_argc, char *real_argv[])
 	/*
 	 * POSTGRES main processing loop begins here
 	 *
-	 * If an exception is encountered, processing resumes here
-	 * so we abort the current transaction and start a new one.
+	 * If an exception is encountered, processing resumes here so we abort
+	 * the current transaction and start a new one.
 	 */
 
 	if (sigsetjmp(Warn_restart, 1) != 0)
@@ -1478,7 +1481,7 @@ PostgresMain(int argc, char *argv[], int real_argc, char *real_argv[])
 		InError = false;
 		if (ExitAfterAbort)
 		{
-			ProcReleaseLocks();		/* Just to be sure... */
+			ProcReleaseLocks(); /* Just to be sure... */
 			proc_exit(0);
 		}
 	}

@@ -10,7 +10,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/optimizer/plan/createplan.c,v 1.88 2000/04/04 01:21:47 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/optimizer/plan/createplan.c,v 1.89 2000/04/12 17:15:21 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -32,15 +32,15 @@
 
 
 static List *switch_outer(List *clauses);
-static int set_tlist_sort_info(List *tlist, List *pathkeys);
+static int	set_tlist_sort_info(List *tlist, List *pathkeys);
 static Scan *create_scan_node(Query *root, Path *best_path, List *tlist);
 static Join *create_join_node(Query *root, JoinPath *best_path, List *tlist);
 static SeqScan *create_seqscan_node(Path *best_path, List *tlist,
 					List *scan_clauses);
 static IndexScan *create_indexscan_node(Query *root, IndexPath *best_path,
-										List *tlist, List *scan_clauses);
+					  List *tlist, List *scan_clauses);
 static TidScan *create_tidscan_node(TidPath *best_path, List *tlist,
-					  List *scan_clauses); 
+					List *scan_clauses);
 static NestLoop *create_nestloop_node(NestPath *best_path, List *tlist,
 					 List *clauses, Plan *outer_node, List *outer_tlist,
 					 Plan *inner_node, List *inner_tlist);
@@ -52,16 +52,16 @@ static HashJoin *create_hashjoin_node(HashPath *best_path, List *tlist,
 					 Plan *inner_node, List *inner_tlist);
 static List *fix_indxqual_references(List *indexquals, IndexPath *index_path);
 static List *fix_indxqual_sublist(List *indexqual, int baserelid, Oid relam,
-								  Form_pg_index index);
+					 Form_pg_index index);
 static Node *fix_indxqual_operand(Node *node, int baserelid,
-								  Form_pg_index index,
-								  Oid *opclass);
+					 Form_pg_index index,
+					 Oid *opclass);
 static IndexScan *make_indexscan(List *qptlist, List *qpqual, Index scanrelid,
-								 List *indxid, List *indxqual,
-								 List *indxqualorig,
-								 ScanDirection indexscandir);
+			   List *indxid, List *indxqual,
+			   List *indxqualorig,
+			   ScanDirection indexscandir);
 static TidScan *make_tidscan(List *qptlist, List *qpqual, Index scanrelid,
-                        List *tideval);
+			 List *tideval);
 static NestLoop *make_nestloop(List *qptlist, List *qpqual, Plan *lefttree,
 			  Plan *righttree);
 static HashJoin *make_hashjoin(List *tlist, List *qpqual,
@@ -166,8 +166,8 @@ create_scan_node(Query *root, Path *best_path, List *tlist)
 
 		case T_TidScan:
 			node = (Scan *) create_tidscan_node((TidPath *) best_path,
-												  tlist,
-												  scan_clauses);
+												tlist,
+												scan_clauses);
 			break;
 
 		default:
@@ -242,6 +242,7 @@ create_join_node(Query *root, JoinPath *best_path, List *tlist)
 	}
 
 #ifdef NOT_USED
+
 	/*
 	 * * Expensive function pullups may have pulled local predicates *
 	 * into this path node.  Put them in the qpqual of the plan node. *
@@ -250,7 +251,7 @@ create_join_node(Query *root, JoinPath *best_path, List *tlist)
 	if (get_loc_restrictinfo(best_path) != NIL)
 		set_qpqual((Plan) retval,
 				   nconc(get_qpqual((Plan) retval),
-						 get_actual_clauses(get_loc_restrictinfo(best_path))));
+				   get_actual_clauses(get_loc_restrictinfo(best_path))));
 #endif
 
 	return retval;
@@ -345,17 +346,17 @@ create_indexscan_node(Query *root,
 	 * for lossy indices the indxqual predicates need to be double-checked
 	 * after the index fetches the best-guess tuples.
 	 *
-	 * Since the indexquals were generated from the restriction clauses
-	 * given by scan_clauses, there will normally be some duplications
-	 * between the lists.  We get rid of the duplicates, then add back
-	 * if lossy.
+	 * Since the indexquals were generated from the restriction clauses given
+	 * by scan_clauses, there will normally be some duplications between
+	 * the lists.  We get rid of the duplicates, then add back if lossy.
 	 */
 	if (length(indxqual) > 1)
 	{
+
 		/*
 		 * Build an expression representation of the indexqual, expanding
-		 * the implicit OR and AND semantics of the first- and second-level
-		 * lists.
+		 * the implicit OR and AND semantics of the first- and
+		 * second-level lists.
 		 */
 		List	   *orclauses = NIL;
 		List	   *orclause;
@@ -374,8 +375,11 @@ create_indexscan_node(Query *root,
 	}
 	else if (indxqual != NIL)
 	{
-		/* Here, we can simply treat the first sublist as an independent
-		 * set of qual expressions, since there is no top-level OR behavior.
+
+		/*
+		 * Here, we can simply treat the first sublist as an independent
+		 * set of qual expressions, since there is no top-level OR
+		 * behavior.
 		 */
 		List	   *indxqual_list = lfirst(indxqual);
 
@@ -387,8 +391,9 @@ create_indexscan_node(Query *root,
 	else
 		qpqual = scan_clauses;
 
-	/* The executor needs a copy with the indexkey on the left of each clause
-	 * and with index attr numbers substituted for table ones.
+	/*
+	 * The executor needs a copy with the indexkey on the left of each
+	 * clause and with index attr numbers substituted for table ones.
 	 */
 	fixed_indxqual = fix_indxqual_references(indxqual, best_path);
 
@@ -410,11 +415,11 @@ create_indexscan_node(Query *root,
 static TidScan *
 make_tidscan(List *qptlist,
 			 List *qpqual,
-			 Index scanrelid,	
+			 Index scanrelid,
 			 List *tideval)
 {
-	TidScan	*node = makeNode(TidScan);
-	Plan	*plan = &node->scan.plan;
+	TidScan    *node = makeNode(TidScan);
+	Plan	   *plan = &node->scan.plan;
 
 	/* cost should be inserted by caller */
 	plan->state = (EState *) NULL;
@@ -423,7 +428,8 @@ make_tidscan(List *qptlist,
 	plan->lefttree = NULL;
 	plan->righttree = NULL;
 	node->scan.scanrelid = scanrelid;
-	node->tideval = copyObject(tideval); /* XXX do we really need a copy? */
+	node->tideval = copyObject(tideval);		/* XXX do we really need a
+												 * copy? */
 	node->needRescan = false;
 	node->scan.scanstate = (CommonScanState *) NULL;
 
@@ -438,8 +444,8 @@ make_tidscan(List *qptlist,
 static TidScan *
 create_tidscan_node(TidPath *best_path, List *tlist, List *scan_clauses)
 {
-	TidScan	*scan_node;
-	Index	scan_relid;
+	TidScan    *scan_node;
+	Index		scan_relid;
 
 	/* there should be exactly one base rel involved... */
 	Assert(length(best_path->path.parent->relids) == 1);
@@ -452,7 +458,7 @@ create_tidscan_node(TidPath *best_path, List *tlist, List *scan_clauses)
 							 best_path->tideval);
 
 	if (best_path->unjoined_relids)
-		scan_node->needRescan = true; 
+		scan_node->needRescan = true;
 
 	copy_path_costsize(&scan_node->scan.plan, &best_path->path);
 
@@ -467,7 +473,7 @@ create_tidscan_node(TidPath *best_path, List *tlist, List *scan_clauses)
  * once we have changed a Var node to refer to a subplan output rather than
  * the original relation, it is no longer equal() to an unmodified Var node
  * for the same var.  So, we cannot easily compare reference-adjusted qual
- * clauses to clauses that have not been adjusted.  Fortunately, that
+ * clauses to clauses that have not been adjusted.	Fortunately, that
  * doesn't seem to be necessary; all the decisions are made before we do
  * the reference adjustments.
  *
@@ -493,6 +499,7 @@ create_nestloop_node(NestPath *best_path,
 
 	if (IsA(inner_node, IndexScan))
 	{
+
 		/*
 		 * An index is being used to reduce the number of tuples scanned
 		 * in the inner relation.  If there are join clauses being used
@@ -522,12 +529,13 @@ create_nestloop_node(NestPath *best_path,
 		{
 			Index		innerrel = innerscan->scan.scanrelid;
 
-			/* Remove redundant tests from my clauses, if possible.
-			 * Note we must compare against indxqualorig not the "fixed"
-			 * indxqual (which has index attnos instead of relation attnos,
-			 * and may have been commuted as well).
+			/*
+			 * Remove redundant tests from my clauses, if possible. Note
+			 * we must compare against indxqualorig not the "fixed"
+			 * indxqual (which has index attnos instead of relation
+			 * attnos, and may have been commuted as well).
 			 */
-			if (length(indxqualorig) == 1) /* single indexscan? */
+			if (length(indxqualorig) == 1)		/* single indexscan? */
 				clauses = set_difference(clauses, lfirst(indxqualorig));
 
 			/* only refs to outer vars get changed in the inner indexqual */
@@ -549,17 +557,20 @@ create_nestloop_node(NestPath *best_path,
 	}
 	else if (IsA(inner_node, TidScan))
 	{
-		List	*inner_tideval = ((TidScan *) inner_node)->tideval;
-		TidScan	*innerscan = (TidScan *) inner_node; 
+		List	   *inner_tideval = ((TidScan *) inner_node)->tideval;
+		TidScan    *innerscan = (TidScan *) inner_node;
+
 		((TidScan *) inner_node)->tideval = join_references(inner_tideval, outer_tlist, inner_tlist, innerscan->scan.scanrelid);
-	} 
+	}
 	else if (IsA_Join(inner_node))
 	{
+
 		/*
 		 * Materialize the inner join for speed reasons.
 		 *
 		 * XXX It is probably *not* always fastest to materialize an inner
-		 * join --- how can we estimate whether this is a good thing to do?
+		 * join --- how can we estimate whether this is a good thing to
+		 * do?
 		 */
 		inner_node = (Plan *) make_noname(inner_tlist,
 										  NIL,
@@ -595,9 +606,9 @@ create_mergejoin_node(MergePath *best_path,
 	mergeclauses = get_actual_clauses(best_path->path_mergeclauses);
 
 	/*
-	 * Remove the mergeclauses from the list of join qual clauses,
-	 * leaving the list of quals that must be checked as qpquals.
-	 * Set those clauses to contain INNER/OUTER var references.
+	 * Remove the mergeclauses from the list of join qual clauses, leaving
+	 * the list of quals that must be checked as qpquals. Set those
+	 * clauses to contain INNER/OUTER var references.
 	 */
 	qpqual = join_references(set_difference(clauses, mergeclauses),
 							 outer_tlist,
@@ -655,16 +666,16 @@ create_hashjoin_node(HashPath *best_path,
 
 	/*
 	 * NOTE: there will always be exactly one hashclause in the list
-	 * best_path->path_hashclauses (cf. hash_inner_and_outer()).
-	 * We represent it as a list anyway, for convenience with routines
-	 * that want to work on lists of clauses.
+	 * best_path->path_hashclauses (cf. hash_inner_and_outer()). We
+	 * represent it as a list anyway, for convenience with routines that
+	 * want to work on lists of clauses.
 	 */
 	hashclauses = get_actual_clauses(best_path->path_hashclauses);
 
 	/*
-	 * Remove the hashclauses from the list of join qual clauses,
-	 * leaving the list of quals that must be checked as qpquals.
-	 * Set those clauses to contain INNER/OUTER var references.
+	 * Remove the hashclauses from the list of join qual clauses, leaving
+	 * the list of quals that must be checked as qpquals. Set those
+	 * clauses to contain INNER/OUTER var references.
 	 */
 	qpqual = join_references(set_difference(clauses, hashclauses),
 							 outer_tlist,
@@ -779,7 +790,7 @@ fix_indxqual_references(List *indexquals, IndexPath *index_path)
  *
  * For each qual clause, commute if needed to put the indexkey operand on the
  * left, and then change its varno.  (We do not need to change the other side
- * of the clause.)  Also change the operator if necessary.
+ * of the clause.)	Also change the operator if necessary.
  */
 static List *
 fix_indxqual_sublist(List *indexqual, int baserelid, Oid relam,
@@ -803,14 +814,16 @@ fix_indxqual_sublist(List *indexqual, int baserelid, Oid relam,
 			length(clause->args) != 2)
 			elog(ERROR, "fix_indxqual_sublist: indexqual clause is not binary opclause");
 
-		/* Which side is the indexkey on?
+		/*
+		 * Which side is the indexkey on?
 		 *
 		 * get_relattval sets flag&SEL_RIGHT if the indexkey is on the LEFT.
 		 */
 		get_relattval((Node *) clause, baserelid,
 					  &relid, &attno, &constval, &flag);
 
-		/* Make a copy that will become the fixed clause.
+		/*
+		 * Make a copy that will become the fixed clause.
 		 *
 		 * We used to try to do a shallow copy here, but that fails if there
 		 * is a subplan in the arguments of the opclause.  So just do a
@@ -822,18 +835,19 @@ fix_indxqual_sublist(List *indexqual, int baserelid, Oid relam,
 		if ((flag & SEL_RIGHT) == 0)
 			CommuteClause(newclause);
 
-		/* Now, determine which index attribute this is,
-		 * change the indexkey operand as needed,
-		 * and get the index opclass.
+		/*
+		 * Now, determine which index attribute this is, change the
+		 * indexkey operand as needed, and get the index opclass.
 		 */
 		lfirst(newclause->args) = fix_indxqual_operand(lfirst(newclause->args),
 													   baserelid,
 													   index,
 													   &opclass);
 
-		/* Substitute the appropriate operator if the expression operator
-		 * is merely binary-compatible with the index.  This shouldn't fail,
-		 * since indxpath.c found it before...
+		/*
+		 * Substitute the appropriate operator if the expression operator
+		 * is merely binary-compatible with the index.	This shouldn't
+		 * fail, since indxpath.c found it before...
 		 */
 		newopno = indexable_operator(newclause, opclass, relam, true);
 		if (newopno == InvalidOid)
@@ -861,12 +875,14 @@ fix_indxqual_operand(Node *node, int baserelid, Form_pg_index index,
 				if (index->indkey[pos] == varatt)
 				{
 					Node	   *newnode = copyObject(node);
+
 					((Var *) newnode)->varattno = pos + 1;
 					*opclass = index->indclass[pos];
 					return newnode;
 				}
 			}
 		}
+
 		/*
 		 * Oops, this Var isn't the indexkey!
 		 */
@@ -876,13 +892,13 @@ fix_indxqual_operand(Node *node, int baserelid, Form_pg_index index,
 	/*
 	 * Else, it must be a func expression representing a functional index.
 	 *
-	 * Currently, there is no need for us to do anything here for
-	 * functional indexes.  If nodeIndexscan.c sees a func clause as the left
-	 * or right-hand toplevel operand of an indexqual, it assumes that that is
-	 * a reference to the functional index's value and makes the appropriate
-	 * substitution.  (It would be cleaner to make the substitution here, I
-	 * think --- suspect this issue if a join clause involving a function call
-	 * misbehaves...)
+	 * Currently, there is no need for us to do anything here for functional
+	 * indexes.  If nodeIndexscan.c sees a func clause as the left or
+	 * right-hand toplevel operand of an indexqual, it assumes that that
+	 * is a reference to the functional index's value and makes the
+	 * appropriate substitution.  (It would be cleaner to make the
+	 * substitution here, I think --- suspect this issue if a join clause
+	 * involving a function call misbehaves...)
 	 */
 
 	/* indclass[0] is the only class of a functional index */
@@ -915,6 +931,7 @@ switch_outer(List *clauses)
 		Assert(op && IsA(op, Var));
 		if (var_is_outer(op))
 		{
+
 			/*
 			 * Duplicate just enough of the structure to allow commuting
 			 * the clause without changing the original list.  Could use
@@ -954,21 +971,21 @@ set_tlist_sort_info(List *tlist, List *pathkeys)
 
 	foreach(i, pathkeys)
 	{
-		List		   *keysublist = (List *) lfirst(i);
-		PathKeyItem	   *pathkey = NULL;
-		Resdom		   *resdom = NULL;
-		List		   *j;
+		List	   *keysublist = (List *) lfirst(i);
+		PathKeyItem *pathkey = NULL;
+		Resdom	   *resdom = NULL;
+		List	   *j;
 
 		/*
 		 * We can sort by any one of the sort key items listed in this
-		 * sublist.  For now, we take the first one that corresponds to
-		 * an available Var in the tlist.
+		 * sublist.  For now, we take the first one that corresponds to an
+		 * available Var in the tlist.
 		 *
 		 * XXX if we have a choice, is there any way of figuring out which
 		 * might be cheapest to execute?  (For example, int4lt is likely
-		 * much cheaper to execute than numericlt, but both might appear in
-		 * the same pathkey sublist...)  Not clear that we ever will have
-		 * a choice in practice, so it may not matter.
+		 * much cheaper to execute than numericlt, but both might appear
+		 * in the same pathkey sublist...)	Not clear that we ever will
+		 * have a choice in practice, so it may not matter.
 		 */
 		foreach(j, keysublist)
 		{
@@ -982,12 +999,12 @@ set_tlist_sort_info(List *tlist, List *pathkeys)
 			elog(ERROR, "set_tlist_sort_info: cannot find tlist item to sort");
 
 		/*
-		 * The resdom might be already marked as a sort key, if the pathkeys
-		 * contain duplicate entries.  (This can happen in scenarios where
-		 * multiple mergejoinable clauses mention the same var, for example.)
-		 * In that case the current pathkey is essentially a no-op, because
-		 * only one value can be seen within any subgroup where it would be
-		 * consulted.  We can ignore it.
+		 * The resdom might be already marked as a sort key, if the
+		 * pathkeys contain duplicate entries.	(This can happen in
+		 * scenarios where multiple mergejoinable clauses mention the same
+		 * var, for example.) In that case the current pathkey is
+		 * essentially a no-op, because only one value can be seen within
+		 * any subgroup where it would be consulted.  We can ignore it.
 		 */
 		if (resdom->reskey == 0)
 		{
@@ -1195,7 +1212,9 @@ make_hash(List *tlist, Var *hashkey, Plan *lefttree)
 	Plan	   *plan = &node->plan;
 
 	copy_plan_costsize(plan, lefttree);
-	/* For plausibility, make startup & total costs equal total cost of
+
+	/*
+	 * For plausibility, make startup & total costs equal total cost of
 	 * input plan; this only affects EXPLAIN display not decisions.
 	 */
 	plan->startup_cost = plan->total_cost;
@@ -1237,7 +1256,7 @@ make_sort(List *tlist, Oid nonameid, Plan *lefttree, int keycount)
 	Plan	   *plan = &node->plan;
 	Path		sort_path;		/* dummy for result of cost_sort */
 
-	copy_plan_costsize(plan, lefttree);	/* only care about copying size */
+	copy_plan_costsize(plan, lefttree); /* only care about copying size */
 	cost_sort(&sort_path, NIL, lefttree->plan_rows, lefttree->plan_width);
 	plan->startup_cost = sort_path.startup_cost + lefttree->total_cost;
 	plan->total_cost = sort_path.total_cost + lefttree->total_cost;
@@ -1262,9 +1281,11 @@ make_material(List *tlist,
 	Plan	   *plan = &node->plan;
 
 	copy_plan_costsize(plan, lefttree);
-	/* For plausibility, make startup & total costs equal total cost of
-	 * input plan; this only affects EXPLAIN display not decisions.
-	 * XXX shouldn't we charge some additional cost for materialization?
+
+	/*
+	 * For plausibility, make startup & total costs equal total cost of
+	 * input plan; this only affects EXPLAIN display not decisions. XXX
+	 * shouldn't we charge some additional cost for materialization?
 	 */
 	plan->startup_cost = plan->total_cost;
 	plan->state = (EState *) NULL;
@@ -1285,18 +1306,21 @@ make_agg(List *tlist, List *qual, Plan *lefttree)
 	Plan	   *plan = &node->plan;
 
 	copy_plan_costsize(plan, lefttree);
+
 	/*
-	 * Charge one cpu_operator_cost per aggregate function per input tuple.
+	 * Charge one cpu_operator_cost per aggregate function per input
+	 * tuple.
 	 */
 	plan->total_cost += cpu_operator_cost * plan->plan_rows *
 		(length(pull_agg_clause((Node *) tlist)) +
 		 length(pull_agg_clause((Node *) qual)));
+
 	/*
 	 * We will produce a single output tuple if the input is not a Group,
 	 * and a tuple per group otherwise.  For now, estimate the number of
-	 * groups as 10% of the number of tuples --- bogus, but how to do better?
-	 * (Note we assume the input Group node is in "tuplePerGroup" mode,
-	 * so it didn't reduce its row count already.)
+	 * groups as 10% of the number of tuples --- bogus, but how to do
+	 * better? (Note we assume the input Group node is in "tuplePerGroup"
+	 * mode, so it didn't reduce its row count already.)
 	 */
 	if (IsA(lefttree, Group))
 		plan->plan_rows *= 0.1;
@@ -1326,19 +1350,21 @@ make_group(List *tlist,
 	Plan	   *plan = &node->plan;
 
 	copy_plan_costsize(plan, lefttree);
+
 	/*
-	 * Charge one cpu_operator_cost per comparison per input tuple.
-	 * We assume all columns get compared at most of the tuples.
+	 * Charge one cpu_operator_cost per comparison per input tuple. We
+	 * assume all columns get compared at most of the tuples.
 	 */
 	plan->total_cost += cpu_operator_cost * plan->plan_rows * ngrp;
+
 	/*
-	 * If tuplePerGroup (which is named exactly backwards) is true,
-	 * we will return all the input tuples, so the input node's row count
-	 * is OK.  Otherwise, we'll return only one tuple from each group.
-	 * For now, estimate the number of groups as 10% of the number of
-	 * tuples --- bogus, but how to do better?
+	 * If tuplePerGroup (which is named exactly backwards) is true, we
+	 * will return all the input tuples, so the input node's row count is
+	 * OK.	Otherwise, we'll return only one tuple from each group. For
+	 * now, estimate the number of groups as 10% of the number of tuples
+	 * --- bogus, but how to do better?
 	 */
-	if (! tuplePerGroup)
+	if (!tuplePerGroup)
 		plan->plan_rows *= 0.1;
 
 	plan->state = (EState *) NULL;
@@ -1369,11 +1395,13 @@ make_unique(List *tlist, Plan *lefttree, List *distinctList)
 	List	   *slitem;
 
 	copy_plan_costsize(plan, lefttree);
+
 	/*
-	 * Charge one cpu_operator_cost per comparison per input tuple.
-	 * We assume all columns get compared at most of the tuples.
+	 * Charge one cpu_operator_cost per comparison per input tuple. We
+	 * assume all columns get compared at most of the tuples.
 	 */
 	plan->total_cost += cpu_operator_cost * plan->plan_rows * numCols;
+
 	/*
 	 * As for Group, we make the unsupported assumption that there will be
 	 * 10% as many tuples out as in.
@@ -1388,14 +1416,17 @@ make_unique(List *tlist, Plan *lefttree, List *distinctList)
 	node->nonameid = _NONAME_RELATION_ID_;
 	node->keycount = 0;
 
-	/* convert SortClause list into array of attr indexes, as wanted by exec */
+	/*
+	 * convert SortClause list into array of attr indexes, as wanted by
+	 * exec
+	 */
 	Assert(numCols > 0);
 	uniqColIdx = (AttrNumber *) palloc(sizeof(AttrNumber) * numCols);
 
 	foreach(slitem, distinctList)
 	{
-		SortClause	   *sortcl = (SortClause *) lfirst(slitem);
-		TargetEntry	   *tle = get_sortgroupclause_tle(sortcl, tlist);
+		SortClause *sortcl = (SortClause *) lfirst(slitem);
+		TargetEntry *tle = get_sortgroupclause_tle(sortcl, tlist);
 
 		uniqColIdx[keyno++] = tle->resdom->resno;
 	}

@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/executor/execUtils.c,v 1.54 2000/02/18 09:29:57 inoue Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/executor/execUtils.c,v 1.55 2000/04/12 17:15:08 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -776,7 +776,7 @@ ExecOpenIndices(Oid resultRelationOid,
 	if (!RelationGetForm(resultRelationInfo->ri_RelationDesc)->relhasindex)
 		return;
 	if (IsIgnoringSystemIndexes() &&
-	    IsSystemRelationName(RelationGetRelationName(resultRelationInfo->ri_RelationDesc)))
+		IsSystemRelationName(RelationGetRelationName(resultRelationInfo->ri_RelationDesc)))
 		return;
 	/* ----------------
 	 *	open pg_index
@@ -923,8 +923,8 @@ ExecOpenIndices(Oid resultRelationOid,
 
 				/*
 				 * Hack for not btree and hash indices: they use relation
-				 * level exclusive locking on update (i.e. - they are
-				 * not ready for MVCC) and so we have to exclusively lock
+				 * level exclusive locking on update (i.e. - they are not
+				 * ready for MVCC) and so we have to exclusively lock
 				 * indices here to prevent deadlocks if we will scan them
 				 * - index_beginscan places AccessShareLock, indices
 				 * update methods don't use locks at all. We release this
@@ -1186,7 +1186,7 @@ ExecInsertIndexTuples(TupleTableSlot *slot,
 			econtext->ecxt_scantuple = slot;
 
 			/* Skip this index-update if the predicate isn't satisfied */
-			if (! ExecQual((List *) predicate, econtext, false))
+			if (!ExecQual((List *) predicate, econtext, false))
 				continue;
 		}
 

@@ -27,7 +27,7 @@
  * Portions Copyright (c) 1996-2000, PostgreSQL, Inc
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Id: dllist.h,v 1.11 2000/01/26 05:58:09 momjian Exp $
+ * $Id: dllist.h,v 1.12 2000/04/12 17:16:34 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -67,7 +67,7 @@ extern void DLRemove(Dlelem *); /* removes node from list */
 extern void DLAddHead(Dllist *list, Dlelem *node);
 extern void DLAddTail(Dllist *list, Dlelem *node);
 extern Dlelem *DLRemHead(Dllist *list); /* remove and return the head */
-extern void DLMoveToFront(Dlelem *); /* move node to front of its list */
+extern void DLMoveToFront(Dlelem *);	/* move node to front of its list */
 
 #define DLE_VAL(x)	(x->dle_val)
 

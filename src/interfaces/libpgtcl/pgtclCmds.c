@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/interfaces/libpgtcl/Attic/pgtclCmds.c,v 1.48 2000/03/11 03:08:35 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/interfaces/libpgtcl/Attic/pgtclCmds.c,v 1.49 2000/04/12 17:17:11 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -1381,7 +1381,7 @@ Pg_select(ClientData cData, Tcl_Interp *interp, int argc, char **argv)
  */
 
 static int
-Pg_have_listener(Pg_ConnectionId *connid, const char *relname)
+Pg_have_listener(Pg_ConnectionId * connid, const char *relname)
 {
 	Pg_TclNotifies *notifies;
 	Tcl_HashEntry *entry;

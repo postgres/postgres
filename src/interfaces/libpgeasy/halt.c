@@ -20,7 +20,7 @@
 **------------------------------------------------------------------------*/
 
 void
-halt(char *format, ...)
+halt(char *format,...)
 {
 	va_list		arg_ptr;
 	char	   *pstr;

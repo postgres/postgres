@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2000, PostgreSQL, Inc
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Id: builtins.h,v 1.109 2000/04/08 02:13:10 thomas Exp $
+ * $Id: builtins.h,v 1.110 2000/04/12 17:16:54 momjian Exp $
  *
  * NOTES
  *	  This should normally only be included by fmgr.h.
@@ -164,11 +164,12 @@ extern int	namestrcmp(Name name, const char *str);
 #define ltoa pg_ltoa
 #endif	 /* hpux */
 extern int32 pg_atoi(char *s, int size, int c);
+
 /* XXX hack.  QNX has itoa and ltoa (with different arguments) already. */
 #ifdef __QNX__
 #define itoa pg_itoa
 #define ltoa pg_ltoa
-#endif   /* QNX */
+#endif	 /* QNX */
 extern void itoa(int i, char *a);
 extern void ltoa(int32 l, char *a);
 
@@ -363,11 +364,11 @@ extern Oid	regproctooid(RegProcedure rp);
 
 /* ruleutils.c */
 extern text *pg_get_ruledef(NameData *rname);
-extern text	*pg_get_viewdef(NameData *rname);
-extern text	*pg_get_indexdef(Oid indexrelid);
+extern text *pg_get_viewdef(NameData *rname);
+extern text *pg_get_indexdef(Oid indexrelid);
 extern NameData *pg_get_userbyid(int32 uid);
 extern char *deparse_expression(Node *expr, List *rangetables,
-								bool forceprefix);
+				   bool forceprefix);
 
 /* selfuncs.c */
 extern float64 eqsel(Oid opid, Oid relid, AttrNumber attno, Datum value, int32 flag);
@@ -381,35 +382,35 @@ extern float64 scalargtjoinsel(Oid opid, Oid relid1, AttrNumber attno1, Oid reli
 extern bool convert_to_scalar(Datum value, Oid typid, double *scaleval);
 
 extern void btcostestimate(Query *root, RelOptInfo *rel,
-						   IndexOptInfo *index, List *indexQuals,
-						   Cost *indexStartupCost,
-						   Cost *indexTotalCost,
-						   Selectivity *indexSelectivity);
+			   IndexOptInfo *index, List *indexQuals,
+			   Cost *indexStartupCost,
+			   Cost *indexTotalCost,
+			   Selectivity *indexSelectivity);
 extern void rtcostestimate(Query *root, RelOptInfo *rel,
-						   IndexOptInfo *index, List *indexQuals,
-						   Cost *indexStartupCost,
-						   Cost *indexTotalCost,
-						   Selectivity *indexSelectivity);
+			   IndexOptInfo *index, List *indexQuals,
+			   Cost *indexStartupCost,
+			   Cost *indexTotalCost,
+			   Selectivity *indexSelectivity);
 extern void hashcostestimate(Query *root, RelOptInfo *rel,
-							 IndexOptInfo *index, List *indexQuals,
-							 Cost *indexStartupCost,
-							 Cost *indexTotalCost,
-							 Selectivity *indexSelectivity);
+				 IndexOptInfo *index, List *indexQuals,
+				 Cost *indexStartupCost,
+				 Cost *indexTotalCost,
+				 Selectivity *indexSelectivity);
 extern void gistcostestimate(Query *root, RelOptInfo *rel,
-							 IndexOptInfo *index, List *indexQuals,
-							 Cost *indexStartupCost,
-							 Cost *indexTotalCost,
-							 Selectivity *indexSelectivity);
+				 IndexOptInfo *index, List *indexQuals,
+				 Cost *indexStartupCost,
+				 Cost *indexTotalCost,
+				 Selectivity *indexSelectivity);
 
 /* tid.c */
 extern ItemPointer tidin(const char *str);
 extern char *tidout(ItemPointer itemPtr);
-extern bool tideq(ItemPointer,ItemPointer);
-extern bool tidne(ItemPointer,ItemPointer);
+extern bool tideq(ItemPointer, ItemPointer);
+extern bool tidne(ItemPointer, ItemPointer);
 extern text *tid_text(ItemPointer);
-extern ItemPointer text_tid(const text *); 
-extern ItemPointer currtid_byreloid(Oid relOid, ItemPointer); 
-extern ItemPointer currtid_byrelname(const text* relName, ItemPointer); 
+extern ItemPointer text_tid(const text *);
+extern ItemPointer currtid_byreloid(Oid relOid, ItemPointer);
+extern ItemPointer currtid_byrelname(const text *relName, ItemPointer);
 
 /* varchar.c */
 extern char *bpcharin(char *s, int dummy, int32 atttypmod);
@@ -490,7 +491,7 @@ extern text *rpad(text *string1, int4 len, text *string2);
 extern text *btrim(text *string, text *set);
 extern text *ltrim(text *string, text *set);
 extern text *rtrim(text *string, text *set);
-extern text	*substr(text *string, int4 m, int4 n);
+extern text *substr(text *string, int4 m, int4 n);
 extern text *translate(text *string, text *from, text *to);
 extern text *ichar(int4 arg1);
 extern text *repeat(text *string, int4 count);
@@ -503,113 +504,113 @@ extern char *inet_net_ntop(int af, const void *src, int bits, char *dst, size_t 
 extern char *inet_cidr_ntop(int af, const void *src, int bits, char *dst, size_t size);
 
 /* inet_net_pton.c */
-extern int inet_net_pton(int af, const char *src, void *dst, size_t size);
+extern int	inet_net_pton(int af, const char *src, void *dst, size_t size);
 
 /* network.c */
-extern inet	   *inet_in(char *str);
-extern char	   *inet_out(inet *addr);
-extern inet	   *cidr_in(char *str);
-extern char	   *cidr_out(inet *addr);
-extern bool		network_lt(inet *a1, inet *a2);
-extern bool		network_le(inet *a1, inet *a2);
-extern bool		network_eq(inet *a1, inet *a2);
-extern bool		network_ge(inet *a1, inet *a2);
-extern bool		network_gt(inet *a1, inet *a2);
-extern bool		network_ne(inet *a1, inet *a2);
-extern bool		network_sub(inet *a1, inet *a2);
-extern bool		network_subeq(inet *a1, inet *a2);
-extern bool		network_sup(inet *a1, inet *a2);
-extern bool		network_supeq(inet *a1, inet *a2);
-extern int4		network_cmp(inet *a1, inet *a2);
+extern inet *inet_in(char *str);
+extern char *inet_out(inet *addr);
+extern inet *cidr_in(char *str);
+extern char *cidr_out(inet *addr);
+extern bool network_lt(inet *a1, inet *a2);
+extern bool network_le(inet *a1, inet *a2);
+extern bool network_eq(inet *a1, inet *a2);
+extern bool network_ge(inet *a1, inet *a2);
+extern bool network_gt(inet *a1, inet *a2);
+extern bool network_ne(inet *a1, inet *a2);
+extern bool network_sub(inet *a1, inet *a2);
+extern bool network_subeq(inet *a1, inet *a2);
+extern bool network_sup(inet *a1, inet *a2);
+extern bool network_supeq(inet *a1, inet *a2);
+extern int4 network_cmp(inet *a1, inet *a2);
 
-extern text	   *network_network(inet *addr);
-extern text	   *network_netmask(inet *addr);
-extern int4		network_masklen(inet *addr);
-extern text	   *network_broadcast(inet *addr);
-extern text	   *network_host(inet *addr);
+extern text *network_network(inet *addr);
+extern text *network_netmask(inet *addr);
+extern int4 network_masklen(inet *addr);
+extern text *network_broadcast(inet *addr);
+extern text *network_host(inet *addr);
 
 /* mac.c */
 extern macaddr *macaddr_in(char *str);
-extern char	   *macaddr_out(macaddr *addr);
-extern bool		macaddr_lt(macaddr *a1, macaddr *a2);
-extern bool		macaddr_le(macaddr *a1, macaddr *a2);
-extern bool		macaddr_eq(macaddr *a1, macaddr *a2);
-extern bool		macaddr_ge(macaddr *a1, macaddr *a2);
-extern bool		macaddr_gt(macaddr *a1, macaddr *a2);
-extern bool		macaddr_ne(macaddr *a1, macaddr *a2);
-extern int4		macaddr_cmp(macaddr *a1, macaddr *a2);
-extern text	   *macaddr_manuf(macaddr *addr);
+extern char *macaddr_out(macaddr *addr);
+extern bool macaddr_lt(macaddr *a1, macaddr *a2);
+extern bool macaddr_le(macaddr *a1, macaddr *a2);
+extern bool macaddr_eq(macaddr *a1, macaddr *a2);
+extern bool macaddr_ge(macaddr *a1, macaddr *a2);
+extern bool macaddr_gt(macaddr *a1, macaddr *a2);
+extern bool macaddr_ne(macaddr *a1, macaddr *a2);
+extern int4 macaddr_cmp(macaddr *a1, macaddr *a2);
+extern text *macaddr_manuf(macaddr *addr);
 
 /* numeric.c */
-extern Numeric	numeric_in(char *str, int dummy, int32 typmod);
-extern char	   *numeric_out(Numeric num);
-extern Numeric	numeric(Numeric num, int32 typmod);
-extern Numeric	numeric_abs(Numeric num);
-extern Numeric	numeric_uminus(Numeric num);
-extern Numeric	numeric_sign(Numeric num);
-extern Numeric	numeric_round(Numeric num, int32 scale);
-extern Numeric	numeric_trunc(Numeric num, int32 scale);
-extern Numeric	numeric_ceil(Numeric num);
-extern Numeric	numeric_floor(Numeric num);
-extern int32	numeric_cmp(Numeric num1, Numeric num2);
-extern bool		numeric_eq(Numeric num1, Numeric num2);
-extern bool		numeric_ne(Numeric num1, Numeric num2);
-extern bool		numeric_gt(Numeric num1, Numeric num2);
-extern bool		numeric_ge(Numeric num1, Numeric num2);
-extern bool		numeric_lt(Numeric num1, Numeric num2);
-extern bool		numeric_le(Numeric num1, Numeric num2);
-extern Numeric	numeric_add(Numeric num1, Numeric num2);
-extern Numeric	numeric_sub(Numeric num1, Numeric num2);
-extern Numeric	numeric_mul(Numeric num1, Numeric num2);
-extern Numeric	numeric_div(Numeric num1, Numeric num2);
-extern Numeric	numeric_mod(Numeric num1, Numeric num2);
-extern Numeric	numeric_inc(Numeric num);
-extern Numeric	numeric_dec(Numeric num);
-extern Numeric	numeric_smaller(Numeric num1, Numeric num2);
-extern Numeric	numeric_larger(Numeric num1, Numeric num2);
-extern Numeric	numeric_sqrt(Numeric num);
-extern Numeric	numeric_exp(Numeric num);
-extern Numeric	numeric_ln(Numeric num);
-extern Numeric	numeric_log(Numeric num1, Numeric num2);
-extern Numeric	numeric_power(Numeric num1, Numeric num2);
-extern Numeric	int4_numeric(int32 val);
-extern int32	numeric_int4(Numeric num);
-extern Numeric	int8_numeric(int64 *val);
-extern int64   *numeric_int8(Numeric num);
-extern Numeric	int2_numeric(int16 val);
-extern int16	numeric_int2(Numeric num);
-extern Numeric	float4_numeric(float32 val);
-extern float32	numeric_float4(Numeric num);
-extern Numeric	float8_numeric(float64 val);
-extern float64	numeric_float8(Numeric num);
+extern Numeric numeric_in(char *str, int dummy, int32 typmod);
+extern char *numeric_out(Numeric num);
+extern Numeric numeric(Numeric num, int32 typmod);
+extern Numeric numeric_abs(Numeric num);
+extern Numeric numeric_uminus(Numeric num);
+extern Numeric numeric_sign(Numeric num);
+extern Numeric numeric_round(Numeric num, int32 scale);
+extern Numeric numeric_trunc(Numeric num, int32 scale);
+extern Numeric numeric_ceil(Numeric num);
+extern Numeric numeric_floor(Numeric num);
+extern int32 numeric_cmp(Numeric num1, Numeric num2);
+extern bool numeric_eq(Numeric num1, Numeric num2);
+extern bool numeric_ne(Numeric num1, Numeric num2);
+extern bool numeric_gt(Numeric num1, Numeric num2);
+extern bool numeric_ge(Numeric num1, Numeric num2);
+extern bool numeric_lt(Numeric num1, Numeric num2);
+extern bool numeric_le(Numeric num1, Numeric num2);
+extern Numeric numeric_add(Numeric num1, Numeric num2);
+extern Numeric numeric_sub(Numeric num1, Numeric num2);
+extern Numeric numeric_mul(Numeric num1, Numeric num2);
+extern Numeric numeric_div(Numeric num1, Numeric num2);
+extern Numeric numeric_mod(Numeric num1, Numeric num2);
+extern Numeric numeric_inc(Numeric num);
+extern Numeric numeric_dec(Numeric num);
+extern Numeric numeric_smaller(Numeric num1, Numeric num2);
+extern Numeric numeric_larger(Numeric num1, Numeric num2);
+extern Numeric numeric_sqrt(Numeric num);
+extern Numeric numeric_exp(Numeric num);
+extern Numeric numeric_ln(Numeric num);
+extern Numeric numeric_log(Numeric num1, Numeric num2);
+extern Numeric numeric_power(Numeric num1, Numeric num2);
+extern Numeric int4_numeric(int32 val);
+extern int32 numeric_int4(Numeric num);
+extern Numeric int8_numeric(int64 *val);
+extern int64 *numeric_int8(Numeric num);
+extern Numeric int2_numeric(int16 val);
+extern int16 numeric_int2(Numeric num);
+extern Numeric float4_numeric(float32 val);
+extern float32 numeric_float4(Numeric num);
+extern Numeric float8_numeric(float64 val);
+extern float64 numeric_float8(Numeric num);
 
 /* lztext.c */
-lztext       *lztextin(char *str);
-char     *lztextout(lztext *lz);
-text     *lztext_text(lztext *lz);
-lztext       *text_lztext(text *txt);
-int32     lztextlen(lztext *lz);
-int32     lztextoctetlen(lztext *lz);
-int32     lztext_cmp(lztext *lz1, lztext *lz2);
-bool      lztext_eq(lztext *lz1, lztext *lz2);
-bool      lztext_ne(lztext *lz1, lztext *lz2);
-bool      lztext_gt(lztext *lz1, lztext *lz2);
-bool      lztext_ge(lztext *lz1, lztext *lz2);
-bool      lztext_lt(lztext *lz1, lztext *lz2);
-bool      lztext_le(lztext *lz1, lztext *lz2);
+lztext	   *lztextin(char *str);
+char	   *lztextout(lztext *lz);
+text	   *lztext_text(lztext *lz);
+lztext	   *text_lztext(text *txt);
+int32		lztextlen(lztext *lz);
+int32		lztextoctetlen(lztext *lz);
+int32		lztext_cmp(lztext *lz1, lztext *lz2);
+bool		lztext_eq(lztext *lz1, lztext *lz2);
+bool		lztext_ne(lztext *lz1, lztext *lz2);
+bool		lztext_gt(lztext *lz1, lztext *lz2);
+bool		lztext_ge(lztext *lz1, lztext *lz2);
+bool		lztext_lt(lztext *lz1, lztext *lz2);
+bool		lztext_le(lztext *lz1, lztext *lz2);
 
 /* ri_triggers.c */
-extern HeapTuple	RI_FKey_check_ins(FmgrInfo *proinfo);
-extern HeapTuple	RI_FKey_check_upd(FmgrInfo *proinfo);
-extern HeapTuple	RI_FKey_noaction_del(FmgrInfo *proinfo);
-extern HeapTuple	RI_FKey_noaction_upd(FmgrInfo *proinfo);
-extern HeapTuple	RI_FKey_cascade_del(FmgrInfo *proinfo);
-extern HeapTuple	RI_FKey_cascade_upd(FmgrInfo *proinfo);
-extern HeapTuple	RI_FKey_restrict_del(FmgrInfo *proinfo);
-extern HeapTuple	RI_FKey_restrict_upd(FmgrInfo *proinfo);
-extern HeapTuple	RI_FKey_setnull_del(FmgrInfo *proinfo);
-extern HeapTuple	RI_FKey_setnull_upd(FmgrInfo *proinfo);
-extern HeapTuple	RI_FKey_setdefault_del(FmgrInfo *proinfo);
-extern HeapTuple	RI_FKey_setdefault_upd(FmgrInfo *proinfo);
+extern HeapTuple RI_FKey_check_ins(FmgrInfo *proinfo);
+extern HeapTuple RI_FKey_check_upd(FmgrInfo *proinfo);
+extern HeapTuple RI_FKey_noaction_del(FmgrInfo *proinfo);
+extern HeapTuple RI_FKey_noaction_upd(FmgrInfo *proinfo);
+extern HeapTuple RI_FKey_cascade_del(FmgrInfo *proinfo);
+extern HeapTuple RI_FKey_cascade_upd(FmgrInfo *proinfo);
+extern HeapTuple RI_FKey_restrict_del(FmgrInfo *proinfo);
+extern HeapTuple RI_FKey_restrict_upd(FmgrInfo *proinfo);
+extern HeapTuple RI_FKey_setnull_del(FmgrInfo *proinfo);
+extern HeapTuple RI_FKey_setnull_upd(FmgrInfo *proinfo);
+extern HeapTuple RI_FKey_setdefault_del(FmgrInfo *proinfo);
+extern HeapTuple RI_FKey_setdefault_upd(FmgrInfo *proinfo);
 
 #endif	 /* BUILTINS_H */

@@ -50,7 +50,8 @@
  * Trace option names, must match the constants in trace_opts[].
  */
 static char *opt_names[] = {
-	"all",						/* 0=trace some, 1=trace all, -1=trace none */
+	"all",						/* 0=trace some, 1=trace all, -1=trace
+								 * none */
 	"verbose",
 	"query",
 	"plan",
@@ -78,7 +79,7 @@ static char *opt_names[] = {
 	"hostlookup",				/* enable hostname lookup in ps_status */
 	"showportnumber",			/* show port number in ps_status */
 
-	/* NUM_PG_OPTIONS */		/* must be the last item of enum */
+	/* NUM_PG_OPTIONS *//* must be the last item of enum */
 };
 
 /*
@@ -95,8 +96,10 @@ tprintf(int flag, const char *fmt,...)
 {
 	va_list		ap;
 	char		line[TRACEMSG_MAXLEN + TIMESTAMP_SIZE + 1];
+
 #ifdef USE_SYSLOG
 	int			log_level;
+
 #endif
 
 	if ((flag == TRACE_ALL) || (pg_options[TRACE_ALL] > 0))
@@ -161,6 +164,7 @@ tprintf1(const char *fmt,...)
 
 	return 1;
 }
+
 #endif
 
 /*
@@ -212,6 +216,7 @@ write_syslog(int level, char *line)
 		syslog(level, "%s", line);
 	}
 }
+
 #endif
 
 #ifdef ELOG_TIMESTAMPS
@@ -222,7 +227,7 @@ char *
 tprintf_timestamp()
 {
 	struct timeval tv;
-	struct timezone tz = { 0, 0 };
+	struct timezone tz = {0, 0};
 	struct tm  *time;
 	time_t		tm;
 	static char timestamp[32],
@@ -236,10 +241,11 @@ tprintf_timestamp()
 	sprintf(timestamp, "%02d%02d%02d.%02d:%02d:%02d.%03d %7s ",
 			time->tm_year % 100, time->tm_mon + 1, time->tm_mday,
 			time->tm_hour, time->tm_min, time->tm_sec,
-			(int) (tv.tv_usec/1000), pid);
+			(int) (tv.tv_usec / 1000), pid);
 
 	return timestamp;
 }
+
 #endif
 
 #ifdef NOT_USED
@@ -260,6 +266,7 @@ set_option_flag(int flag, int value)
 	pg_options[flag] = value;
 	return value;
 }
+
 #endif
 
 /*
@@ -409,13 +416,12 @@ read_pg_options(SIGNAL_ARGS)
 void
 show_options(void)
 {
-	int		i;
+	int			i;
 
-	for (i=0; i<NUM_PG_OPTIONS; i++) {
+	for (i = 0; i < NUM_PG_OPTIONS; i++)
 		elog(NOTICE, "%s=%d", opt_names[i], pg_options[i]);
-	}
 }
-  
+
 /*
  * Local variables:
  *	tab-width: 4

@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/access/transam/xact.c,v 1.63 2000/04/09 04:43:16 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/access/transam/xact.c,v 1.64 2000/04/12 17:14:53 momjian Exp $
  *
  * NOTES
  *		Transaction aborts can now occur two ways:
@@ -160,7 +160,7 @@
 #include "utils/portal.h"
 #include "utils/relcache.h"
 
-extern bool	SharedBufferChanged;
+extern bool SharedBufferChanged;
 
 static void AbortTransaction(void);
 static void AtAbort_Cache(void);
@@ -517,8 +517,8 @@ CommandCounterIncrement()
 	CurrentTransactionStateData.scanCommandId = CurrentTransactionStateData.commandId;
 
 	/*
-	 * make cache changes visible to me.  AtCommit_LocalCache()
-	 * instead of AtCommit_Cache() is called here.
+	 * make cache changes visible to me.  AtCommit_LocalCache() instead of
+	 * AtCommit_Cache() is called here.
 	 */
 	AtCommit_LocalCache();
 	AtStart_Cache();
@@ -627,16 +627,15 @@ RecordTransactionCommit()
 	 */
 	xid = GetCurrentTransactionId();
 
-	/* 
-	 *	flush the buffer manager pages.  Note: if we have stable
-	 *	main memory, dirty shared buffers are not flushed
-	 *	plai 8/7/90
+	/*
+	 * flush the buffer manager pages.	Note: if we have stable main
+	 * memory, dirty shared buffers are not flushed plai 8/7/90
 	 */
 	leak = BufferPoolCheckLeak();
 
 	/*
-	 * If no one shared buffer was changed by this transaction then
-	 * we don't flush shared buffers and don't record commit status.
+	 * If no one shared buffer was changed by this transaction then we
+	 * don't flush shared buffers and don't record commit status.
 	 */
 	if (SharedBufferChanged)
 	{
@@ -645,13 +644,13 @@ RecordTransactionCommit()
 			ResetBufferPool(true);
 
 		/*
-		 *	have the transaction access methods record the status
-		 *	of this transaction id in the pg_log relation.
+		 * have the transaction access methods record the status of this
+		 * transaction id in the pg_log relation.
 		 */
 		TransactionIdCommit(xid);
 
 		/*
-		 *	Now write the log info to the disk too.
+		 * Now write the log info to the disk too.
 		 */
 		leak = BufferPoolCheckLeak();
 		FlushBufferPool();
@@ -751,10 +750,10 @@ RecordTransactionAbort()
 	 */
 	xid = GetCurrentTransactionId();
 
-	/* 
-	 * Have the transaction access methods record the status of
-	 * this transaction id in the pg_log relation. We skip it
-	 * if no one shared buffer was changed by this transaction.
+	/*
+	 * Have the transaction access methods record the status of this
+	 * transaction id in the pg_log relation. We skip it if no one shared
+	 * buffer was changed by this transaction.
 	 */
 	if (SharedBufferChanged && !TransactionIdDidCommit(xid))
 		TransactionIdAbort(xid);
@@ -936,7 +935,7 @@ CommitTransaction()
 	/* ----------------
 	 *	Tell the trigger manager that this transaction is about to be
 	 *	committed. He'll invoke all trigger deferred until XACT before
-	 *	we really start on committing the transaction. 
+	 *	we really start on committing the transaction.
 	 * ----------------
 	 */
 	DeferredTriggerEndXact();
@@ -965,13 +964,13 @@ CommitTransaction()
 	RecordTransactionCommit();
 
 	/*
-	 * Let others know about no transaction in progress by me.
-	 * Note that this must be done _before_ releasing locks we hold 
-	 * and SpinAcquire(SInvalLock) is required: UPDATE with xid 0 is 
-	 * blocked by xid 1' UPDATE, xid 1 is doing commit while xid 2 
-	 * gets snapshot - if xid 2' GetSnapshotData sees xid 1 as running
-	 * then it must see xid 0 as running as well or it will see two
-	 * tuple versions - one deleted by xid 1 and one inserted by xid 0.
+	 * Let others know about no transaction in progress by me. Note that
+	 * this must be done _before_ releasing locks we hold and
+	 * SpinAcquire(SInvalLock) is required: UPDATE with xid 0 is blocked
+	 * by xid 1' UPDATE, xid 1 is doing commit while xid 2 gets snapshot -
+	 * if xid 2' GetSnapshotData sees xid 1 as running then it must see
+	 * xid 0 as running as well or it will see two tuple versions - one
+	 * deleted by xid 1 and one inserted by xid 0.
 	 */
 	if (MyProc != (PROC *) NULL)
 	{
@@ -995,7 +994,7 @@ CommitTransaction()
 	 * ----------------
 	 */
 	s->state = TRANS_DEFAULT;
-	SharedBufferChanged = false;	/* safest place to do it */
+	SharedBufferChanged = false;/* safest place to do it */
 
 }
 
@@ -1031,7 +1030,7 @@ AbortTransaction()
 
 	/* ----------------
 	 *	Tell the trigger manager that this transaction is about to be
-	 *	aborted. 
+	 *	aborted.
 	 * ----------------
 	 */
 	DeferredTriggerAbortXact();
@@ -1070,7 +1069,7 @@ AbortTransaction()
 	 * ----------------
 	 */
 	s->state = TRANS_DEFAULT;
-	SharedBufferChanged = false;	/* safest place to do it */
+	SharedBufferChanged = false;/* safest place to do it */
 }
 
 /* --------------------------------

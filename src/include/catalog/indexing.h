@@ -8,7 +8,7 @@
  * Portions Copyright (c) 1996-2000, PostgreSQL, Inc
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Id: indexing.h,v 1.36 2000/01/26 05:57:56 momjian Exp $
+ * $Id: indexing.h,v 1.37 2000/04/12 17:16:27 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -35,7 +35,7 @@
 #define Num_pg_opclass_indices		2
 #define Num_pg_operator_indices		2
 #define Num_pg_proc_indices			2
-#define Num_pg_relcheck_indices 	1
+#define Num_pg_relcheck_indices		1
 #define Num_pg_rewrite_indices		2
 #define Num_pg_shadow_indices		2
 #define Num_pg_statistic_indices	1
@@ -114,22 +114,22 @@ extern char *IndexedCatalogNames[];
 extern void CatalogOpenIndices(int nIndices, char **names, Relation *idescs);
 extern void CatalogCloseIndices(int nIndices, Relation *idescs);
 extern void CatalogIndexInsert(Relation *idescs,
-					int nIndices,
-					Relation heapRelation,
-					HeapTuple heapTuple);
+				   int nIndices,
+				   Relation heapRelation,
+				   HeapTuple heapTuple);
 extern bool CatalogHasIndex(char *catName, Oid catId);
 
 extern HeapTuple AccessMethodOpidIndexScan(Relation heapRelation,
-					Oid claid, Oid opopr, Oid opid);
+						  Oid claid, Oid opopr, Oid opid);
 extern HeapTuple AccessMethodStrategyIndexScan(Relation heapRelation,
-					Oid opid, Oid claid, int2 opstrategy);
+							  Oid opid, Oid claid, int2 opstrategy);
 extern HeapTuple AggregateNameTypeIndexScan(Relation heapRelation,
-					char *aggName, Oid aggType);
+						   char *aggName, Oid aggType);
 extern HeapTuple AmNameIndexScan(Relation heapRelation, char *amName);
 extern HeapTuple AttributeRelidNameIndexScan(Relation heapRelation,
-					Oid relid, char *attname);
+							Oid relid, char *attname);
 extern HeapTuple AttributeRelidNumIndexScan(Relation heapRelation,
-					Oid relid, AttrNumber attnum);
+						   Oid relid, AttrNumber attnum);
 extern HeapTuple ClassNameIndexScan(Relation heapRelation, char *relName);
 extern HeapTuple ClassNameIndexScan(Relation heapRelation, char *relName);
 extern HeapTuple ClassOidIndexScan(Relation heapRelation, Oid relId);
@@ -137,25 +137,25 @@ extern HeapTuple GroupNameIndexScan(Relation heapRelation, char *groName);
 extern HeapTuple GroupSysidIndexScan(Relation heapRelation, int4 sysId);
 extern HeapTuple IndexRelidIndexScan(Relation heapRelation, Oid relid);
 extern HeapTuple InheritsRelidSeqnoIndexScan(Relation heapRelation, Oid relid,
-					int4 seqno);
+							int4 seqno);
 extern HeapTuple LanguageNameIndexScan(Relation heapRelation, char *lanName);
 extern HeapTuple LanguageOidIndexScan(Relation heapRelation, Oid lanId);
 extern HeapTuple ListenerRelnamePidIndexScan(Relation heapRelation, char *relName, int4 pid);
 extern HeapTuple OpclassDeftypeIndexScan(Relation heapRelation, Oid defType);
 extern HeapTuple OpclassNameIndexScan(Relation heapRelation, char *opcName);
 extern HeapTuple OperatorNameIndexScan(Relation heapRelation,
-					char *oprName, Oid oprLeft, Oid oprRight, char oprKind);
+				 char *oprName, Oid oprLeft, Oid oprRight, char oprKind);
 extern HeapTuple OperatorOidIndexScan(Relation heapRelation, Oid oprId);
 extern HeapTuple ProcedureNameIndexScan(Relation heapRelation,
-					char *procName, int2 nargs, Oid *argTypes);
+					   char *procName, int2 nargs, Oid *argTypes);
 extern HeapTuple ProcedureOidIndexScan(Relation heapRelation, Oid procId);
 extern HeapTuple RewriteOidIndexScan(Relation heapRelation, Oid rewriteId);
 extern HeapTuple RewriteRulenameIndexScan(Relation heapRelation,
-					char *ruleName);
+						 char *ruleName);
 extern HeapTuple ShadowNameIndexScan(Relation heapRelation, char *useName);
 extern HeapTuple ShadowSysidIndexScan(Relation heapRelation, int4 sysId);
 extern HeapTuple StatisticRelidAttnumIndexScan(Relation heapRelation,
-				 Oid relId, AttrNumber attNum);
+							  Oid relId, AttrNumber attNum);
 extern HeapTuple TypeNameIndexScan(Relation heapRelation, char *typeName);
 extern HeapTuple TypeOidIndexScan(Relation heapRelation, Oid typeId);
 

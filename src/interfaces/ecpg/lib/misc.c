@@ -27,7 +27,7 @@ init_sqlca(void)
 }
 
 bool
-ecpg_init(const struct connection *con, const char * connection_name, const int lineno)
+ecpg_init(const struct connection * con, const char *connection_name, const int lineno)
 {
 	init_sqlca();
 	if (con == NULL)
@@ -35,7 +35,7 @@ ecpg_init(const struct connection *con, const char * connection_name, const int 
 		ECPGraise(lineno, ECPG_NO_CONN, connection_name ? connection_name : "NULL");
 		return (false);
 	}
-	
+
 	return (true);
 }
 
@@ -45,7 +45,7 @@ ECPGstatus(int lineno, const char *connection_name)
 	struct connection *con = get_connection(connection_name);
 
 	if (!ecpg_init(con, connection_name, lineno))
-		return(false);
+		return (false);
 
 	/* are we connected? */
 	if (con->connection == NULL)
@@ -65,7 +65,7 @@ ECPGtrans(int lineno, const char *connection_name, const char *transaction)
 	struct connection *con = get_connection(connection_name);
 
 	if (!ecpg_init(con, connection_name, lineno))
-		return(false);
+		return (false);
 
 	ECPGlog("ECPGtrans line %d action = %s connection = %s\n", lineno, transaction, con->name);
 
@@ -79,14 +79,14 @@ ECPGtrans(int lineno, const char *connection_name, const char *transaction)
 		}
 		PQclear(res);
 	}
-	
+
 	if (strcmp(transaction, "commit") == 0 || strcmp(transaction, "rollback") == 0)
 	{
 		con->committed = true;
 
 		/* deallocate all prepared statements */
 		if (!ECPGdeallocate_all(lineno))
-				return false;
+			return false;
 	}
 
 	return true;

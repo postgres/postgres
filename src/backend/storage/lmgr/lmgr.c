@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/storage/lmgr/lmgr.c,v 1.38 2000/01/26 05:57:00 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/storage/lmgr/lmgr.c,v 1.39 2000/04/12 17:15:38 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -145,14 +145,14 @@ LockRelation(Relation relation, LOCKMODE lockmode)
 	tag.dbId = relation->rd_lockInfo.lockRelId.dbId;
 	tag.objId.blkno = InvalidBlockNumber;
 
-	if (! LockAcquire(LockTableId, &tag, lockmode))
+	if (!LockAcquire(LockTableId, &tag, lockmode))
 		elog(ERROR, "LockRelation: LockAcquire failed");
 
 	/*
-	 * Check to see if the relcache entry has been invalidated
-	 * while we were waiting to lock it.  If so, rebuild it,
-	 * or elog() trying.  Increment the refcount to ensure that
-	 * RelationFlushRelation will rebuild it and not just delete it.
+	 * Check to see if the relcache entry has been invalidated while we
+	 * were waiting to lock it.  If so, rebuild it, or elog() trying.
+	 * Increment the refcount to ensure that RelationFlushRelation will
+	 * rebuild it and not just delete it.
 	 */
 	RelationIncrementReferenceCount(relation);
 	DiscardInvalid();
@@ -194,7 +194,7 @@ LockPage(Relation relation, BlockNumber blkno, LOCKMODE lockmode)
 	tag.dbId = relation->rd_lockInfo.lockRelId.dbId;
 	tag.objId.blkno = blkno;
 
-	if (! LockAcquire(LockTableId, &tag, lockmode))
+	if (!LockAcquire(LockTableId, &tag, lockmode))
 		elog(ERROR, "LockPage: LockAcquire failed");
 }
 
@@ -230,7 +230,7 @@ XactLockTableInsert(TransactionId xid)
 	tag.dbId = InvalidOid;
 	tag.objId.xid = xid;
 
-	if (! LockAcquire(LockTableId, &tag, ExclusiveLock))
+	if (!LockAcquire(LockTableId, &tag, ExclusiveLock))
 		elog(ERROR, "XactLockTableInsert: LockAcquire failed");
 }
 
@@ -263,7 +263,7 @@ XactLockTableWait(TransactionId xid)
 	tag.dbId = InvalidOid;
 	tag.objId.xid = xid;
 
-	if (! LockAcquire(LockTableId, &tag, ShareLock))
+	if (!LockAcquire(LockTableId, &tag, ShareLock))
 		elog(ERROR, "XactLockTableWait: LockAcquire failed");
 
 	LockRelease(LockTableId, &tag, ShareLock);

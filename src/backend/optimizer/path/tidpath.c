@@ -9,7 +9,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/optimizer/path/tidpath.c,v 1.5 2000/02/15 20:49:17 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/optimizer/path/tidpath.c,v 1.6 2000/04/12 17:15:20 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -37,30 +37,34 @@
 #include "utils/lsyscache.h"
 
 static void create_tidscan_joinpaths(RelOptInfo *rel);
-static List	*TidqualFromRestrictinfo(List *relids, List *restrictinfo);
-static bool	isEvaluable(int varno, Node *node);
-static Node	*TidequalClause(int varno, Expr *node);
-static List	*TidqualFromExpr(int varno, Expr *expr);
+static List *TidqualFromRestrictinfo(List *relids, List *restrictinfo);
+static bool isEvaluable(int varno, Node *node);
+static Node *TidequalClause(int varno, Expr *node);
+static List *TidqualFromExpr(int varno, Expr *expr);
 
 static
-bool isEvaluable(int varno, Node *node)
+bool
+isEvaluable(int varno, Node *node)
 {
-	List	*lst;
-	Expr	*expr;
+	List	   *lst;
+	Expr	   *expr;
 
-	if (IsA(node, Const))		return true;
-	if (IsA(node, Param))		return true;
+	if (IsA(node, Const))
+		return true;
+	if (IsA(node, Param))
+		return true;
 	if (IsA(node, Var))
 	{
-		Var	*var = (Var *)node;
+		Var		   *var = (Var *) node;
 
 		if (var->varno == varno)
 			return false;
 		return true;
 	}
-	if (!is_funcclause(node))	return false;
-	expr = (Expr *)node;
-	foreach (lst, expr->args)
+	if (!is_funcclause(node))
+		return false;
+	expr = (Expr *) node;
+	foreach(lst, expr->args)
 	{
 		if (!isEvaluable(varno, lfirst(lst)))
 			return false;
@@ -72,53 +76,60 @@ bool isEvaluable(int varno, Node *node)
 /*
  *	The 2nd parameter should be an opclause
  *	Extract the right node if the opclause is CTID= ....
- *	  or    the left  node if the opclause is ....=CTID
+ *	  or	the left  node if the opclause is ....=CTID
  */
 static
-Node *TidequalClause(int varno, Expr *node)
+Node *
+TidequalClause(int varno, Expr *node)
 {
-	Node	*rnode = 0, *arg1, *arg2, *arg;
-	Oper	*oper;
-	Var	*var;
-	Const	*aconst;
-	Param	*param;
-	Expr	*expr;
+	Node	   *rnode = 0,
+			   *arg1,
+			   *arg2,
+			   *arg;
+	Oper	   *oper;
+	Var		   *var;
+	Const	   *aconst;
+	Param	   *param;
+	Expr	   *expr;
 
-	if (!node->oper)		return rnode;
-	if (!node->args)		return rnode;
-	if (length(node->args) != 2)	return rnode;
-        oper = (Oper *) node->oper;
+	if (!node->oper)
+		return rnode;
+	if (!node->args)
+		return rnode;
+	if (length(node->args) != 2)
+		return rnode;
+	oper = (Oper *) node->oper;
 	if (oper->opno != TIDEqualOperator)
 		return rnode;
 	arg1 = lfirst(node->args);
 	arg2 = lsecond(node->args);
 
-	arg = (Node *)0;
+	arg = (Node *) 0;
 	if (IsA(arg1, Var))
 	{
 		var = (Var *) arg1;
 		if (var->varno == varno &&
-		    var->varattno == SelfItemPointerAttributeNumber &&
-		    var->vartype == TIDOID)
+			var->varattno == SelfItemPointerAttributeNumber &&
+			var->vartype == TIDOID)
 			arg = arg2;
 		else if (var->varnoold == varno &&
-		    	var->varoattno == SelfItemPointerAttributeNumber &&
-		    	var->vartype == TIDOID)
+				 var->varoattno == SelfItemPointerAttributeNumber &&
+				 var->vartype == TIDOID)
 			arg = arg2;
 	}
 	if ((!arg) && IsA(arg2, Var))
 	{
 		var = (Var *) arg2;
 		if (var->varno == varno &&
-		    var->varattno == SelfItemPointerAttributeNumber &&
-		    var->vartype == TIDOID)
+			var->varattno == SelfItemPointerAttributeNumber &&
+			var->vartype == TIDOID)
 			arg = arg1;
 	}
 	if (!arg)
 		return rnode;
 	switch (nodeTag(arg))
 	{
-	 	case T_Const:
+		case T_Const:
 			aconst = (Const *) arg;
 			if (aconst->consttype != TIDOID)
 				return rnode;
@@ -126,27 +137,29 @@ Node *TidequalClause(int varno, Expr *node)
 				return rnode;
 			rnode = arg;
 			break;
-	 	case T_Param:
+		case T_Param:
 			param = (Param *) arg;
 			if (param->paramtype != TIDOID)
 				return rnode;
 			rnode = arg;
 			break;
-	 	case T_Var:
+		case T_Var:
 			var = (Var *) arg;
 			if (var->varno == varno ||
-			    var->vartype != TIDOID)
+				var->vartype != TIDOID)
 				return rnode;
 			rnode = arg;
 			break;
-	 	case T_Expr:
+		case T_Expr:
 			expr = (Expr *) arg;
-			if (expr->typeOid != TIDOID)	return rnode;
-			if (expr->opType != FUNC_EXPR)	return rnode;
-			if (isEvaluable(varno, (Node *)expr))
+			if (expr->typeOid != TIDOID)
+				return rnode;
+			if (expr->opType != FUNC_EXPR)
+				return rnode;
+			if (isEvaluable(varno, (Node *) expr))
 				rnode = arg;
 			break;
-	 	default:
+		default:
 			break;
 	}
 	return rnode;
@@ -160,43 +173,43 @@ Node *TidequalClause(int varno, Expr *node)
  *	When the expr node is an and_clause,we return the list of
  *	CTID values if we could extract the CTID values from a member
  *	node.
- */ 
+ */
 static
-List *TidqualFromExpr(int varno, Expr *expr)
+List *
+TidqualFromExpr(int varno, Expr *expr)
 {
-	List	*rlst = NIL, *lst, *frtn;
-	Node	*node = (Node *) expr, *rnode;
+	List	   *rlst = NIL,
+			   *lst,
+			   *frtn;
+	Node	   *node = (Node *) expr,
+			   *rnode;
 
 	if (is_opclause(node))
 	{
 		rnode = TidequalClause(varno, expr);
 		if (rnode)
-		{
 			rlst = lcons(rnode, rlst);
-		} 
 	}
 	else if (and_clause(node))
 	{
-		foreach (lst, expr->args)
+		foreach(lst, expr->args)
 		{
 			node = lfirst(lst);
-			if (!IsA(node, Expr))	
+			if (!IsA(node, Expr))
 				continue;
-			rlst = TidqualFromExpr(varno, (Expr *)node);
+			rlst = TidqualFromExpr(varno, (Expr *) node);
 			if (rlst)
 				break;
 		}
 	}
 	else if (or_clause(node))
 	{
-		foreach (lst, expr->args)
+		foreach(lst, expr->args)
 		{
 			node = lfirst(lst);
 			if (IsA(node, Expr) &&
-			    (frtn = TidqualFromExpr(varno, (Expr *)node)) )
-			{
+				(frtn = TidqualFromExpr(varno, (Expr *) node)))
 				rlst = nconc(rlst, frtn);
-			}
 			else
 			{
 				if (rlst)
@@ -207,24 +220,26 @@ List *TidqualFromExpr(int varno, Expr *expr)
 		}
 	}
 	return rlst;
-} 
+}
 
 static List *
 TidqualFromRestrictinfo(List *relids, List *restrictinfo)
 {
-	List	*lst, *rlst = NIL;
-	int	varno;
-	Node	*node;
-	Expr	*expr;
+	List	   *lst,
+			   *rlst = NIL;
+	int			varno;
+	Node	   *node;
+	Expr	   *expr;
 
 	if (length(relids) != 1)
 		return NIL;
 	varno = lfirsti(relids);
-	foreach (lst, restrictinfo)
+	foreach(lst, restrictinfo)
 	{
 		node = lfirst(lst);
-		if (!IsA(node, RestrictInfo))	continue;
-		expr = ((RestrictInfo *)node)->clause;
+		if (!IsA(node, RestrictInfo))
+			continue;
+		expr = ((RestrictInfo *) node)->clause;
 		rlst = TidqualFromExpr(varno, expr);
 		if (rlst)
 			break;
@@ -241,20 +256,20 @@ TidqualFromRestrictinfo(List *relids, List *restrictinfo)
 static void
 create_tidscan_joinpaths(RelOptInfo *rel)
 {
-	List		*rlst = NIL,
-				*lst;
+	List	   *rlst = NIL,
+			   *lst;
 
-	foreach (lst, rel->joininfo)
+	foreach(lst, rel->joininfo)
 	{
 		JoinInfo   *joininfo = (JoinInfo *) lfirst(lst);
-		List		*restinfo,
-					*tideval;
+		List	   *restinfo,
+				   *tideval;
 
 		restinfo = joininfo->jinfo_restrictinfo;
 		tideval = TidqualFromRestrictinfo(rel->relids, restinfo);
 		if (length(tideval) == 1)
 		{
-			TidPath		*pathnode = makeNode(TidPath);
+			TidPath    *pathnode = makeNode(TidPath);
 
 			pathnode->path.pathtype = T_TidScan;
 			pathnode->path.parent = rel;
@@ -278,9 +293,9 @@ create_tidscan_joinpaths(RelOptInfo *rel)
 void
 create_tidscan_paths(Query *root, RelOptInfo *rel)
 {
-	List	*tideval = TidqualFromRestrictinfo(rel->relids,
-											   rel->baserestrictinfo);
-	
+	List	   *tideval = TidqualFromRestrictinfo(rel->relids,
+												  rel->baserestrictinfo);
+
 	if (tideval)
 		add_path(rel, (Path *) create_tidscan_path(rel, tideval));
 	create_tidscan_joinpaths(rel);

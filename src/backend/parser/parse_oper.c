@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/parser/parse_oper.c,v 1.39 2000/03/19 00:19:39 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/parser/parse_oper.c,v 1.40 2000/04/12 17:15:27 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -29,10 +29,10 @@ static Oid *oper_select_candidate(int nargs, Oid *input_typeids,
 static Operator oper_exact(char *op, Oid arg1, Oid arg2);
 static Operator oper_inexact(char *op, Oid arg1, Oid arg2);
 static int binary_oper_get_candidates(char *opname,
-									  CandidateList *candidates);
+						   CandidateList *candidates);
 static int unary_oper_get_candidates(char *opname,
-									 CandidateList *candidates,
-									 char rightleft);
+						  CandidateList *candidates,
+						  char rightleft);
 static void op_error(char *op, Oid arg1, Oid arg2);
 static void unary_op_error(char *op, Oid arg, bool is_left_op);
 
@@ -229,8 +229,8 @@ oper_select_candidate(int nargs,
 		return candidates->args;
 
 	/*
-	 * Run through all candidates and keep those with the most matches
-	 * on exact types. Keep all candidates if none match.
+	 * Run through all candidates and keep those with the most matches on
+	 * exact types. Keep all candidates if none match.
 	 */
 	ncandidates = 0;
 	nbestMatch = 0;
@@ -273,10 +273,9 @@ oper_select_candidate(int nargs,
 		return candidates->args;
 
 	/*
-	 * Still too many candidates?
-	 * Run through all candidates and keep those with the most matches
-	 * on exact types + binary-compatible types.
-	 * Keep all candidates if none match.
+	 * Still too many candidates? Run through all candidates and keep
+	 * those with the most matches on exact types + binary-compatible
+	 * types. Keep all candidates if none match.
 	 */
 	ncandidates = 0;
 	nbestMatch = 0;
@@ -323,10 +322,9 @@ oper_select_candidate(int nargs,
 		return candidates->args;
 
 	/*
-	 * Still too many candidates?
-	 * Now look for candidates which are preferred types at the args that
-	 * will require coercion.
-	 * Keep all candidates if none match.
+	 * Still too many candidates? Now look for candidates which are
+	 * preferred types at the args that will require coercion. Keep all
+	 * candidates if none match.
 	 */
 	ncandidates = 0;
 	nbestMatch = 0;
@@ -370,15 +368,16 @@ oper_select_candidate(int nargs,
 		return candidates->args;
 
 	/*
-	 * Still too many candidates?
-	 * Try assigning types for the unknown columns.
+	 * Still too many candidates? Try assigning types for the unknown
+	 * columns.
 	 *
 	 * First try: if we have an unknown and a non-unknown input, see whether
-	 * there is a candidate all of whose input types are the same as the known
-	 * input type (there can be at most one such candidate).  If so, use that
-	 * candidate.  NOTE that this is cool only because operators can't
-	 * have more than 2 args, so taking the last non-unknown as current_type
-	 * can yield only one possibility if there is also an unknown.
+	 * there is a candidate all of whose input types are the same as the
+	 * known input type (there can be at most one such candidate).	If so,
+	 * use that candidate.	NOTE that this is cool only because operators
+	 * can't have more than 2 args, so taking the last non-unknown as
+	 * current_type can yield only one possibility if there is also an
+	 * unknown.
 	 */
 	unknownOids = FALSE;
 	current_type = UNKNOWNOID;
@@ -410,16 +409,16 @@ oper_select_candidate(int nargs,
 	}
 
 	/*
-	 * Second try: examine each unknown argument position to see if all the
-	 * candidates agree on the type category of that slot.  If so, and if some
-	 * candidates accept the preferred type in that category, eliminate the
-	 * candidates with other input types.  If we are down to one candidate
-	 * at the end, we win.
+	 * Second try: examine each unknown argument position to see if all
+	 * the candidates agree on the type category of that slot.	If so, and
+	 * if some candidates accept the preferred type in that category,
+	 * eliminate the candidates with other input types.  If we are down to
+	 * one candidate at the end, we win.
 	 *
 	 * XXX It's kinda bogus to do this left-to-right, isn't it?  If we
-	 * eliminate some candidates because they are non-preferred at the first
-	 * slot, we won't notice that they didn't have the same type category for
-	 * a later slot.
+	 * eliminate some candidates because they are non-preferred at the
+	 * first slot, we won't notice that they didn't have the same type
+	 * category for a later slot.
 	 */
 	for (i = 0; i < nargs; i++)
 	{
@@ -472,7 +471,7 @@ oper_select_candidate(int nargs,
 					last_candidate = current_candidate;
 				}
 			}
-			if (last_candidate)			/* terminate rebuilt list */
+			if (last_candidate) /* terminate rebuilt list */
 				last_candidate->next = NULL;
 		}
 	}
@@ -588,9 +587,7 @@ oper(char *opname, Oid ltypeId, Oid rtypeId, bool noWarnings)
 	{
 	}
 	else if (!noWarnings)
-	{
 		op_error(opname, ltypeId, rtypeId);
-	}
 
 	return (Operator) tup;
 }	/* oper() */
@@ -679,14 +676,12 @@ right_oper(char *op, Oid arg)
 		/* Try for inexact matches */
 		ncandidates = unary_oper_get_candidates(op, &candidates, 'r');
 		if (ncandidates == 0)
-		{
 			unary_op_error(op, arg, FALSE);
-		}
 		else if (ncandidates == 1)
 		{
 			tup = SearchSysCacheTuple(OPERNAME,
 									  PointerGetDatum(op),
-									  ObjectIdGetDatum(candidates->args[0]),
+								   ObjectIdGetDatum(candidates->args[0]),
 									  ObjectIdGetDatum(InvalidOid),
 									  CharGetDatum('r'));
 		}
@@ -731,15 +726,13 @@ left_oper(char *op, Oid arg)
 		/* Try for inexact matches */
 		ncandidates = unary_oper_get_candidates(op, &candidates, 'l');
 		if (ncandidates == 0)
-		{
 			unary_op_error(op, arg, TRUE);
-		}
 		else if (ncandidates == 1)
 		{
 			tup = SearchSysCacheTuple(OPERNAME,
 									  PointerGetDatum(op),
 									  ObjectIdGetDatum(InvalidOid),
-									  ObjectIdGetDatum(candidates->args[0]),
+								   ObjectIdGetDatum(candidates->args[0]),
 									  CharGetDatum('l'));
 		}
 		else

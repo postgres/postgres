@@ -9,4 +9,4 @@ struct sockaddr_un
 	char		sun_path[108];	/* path name (gag) */
 };
 
-#endif /* _SYS_UN_H */
+#endif	 /* _SYS_UN_H */

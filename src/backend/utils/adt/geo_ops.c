@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/geo_ops.c,v 1.49 2000/03/14 23:06:36 thomas Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/geo_ops.c,v 1.50 2000/04/12 17:15:50 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -877,7 +877,7 @@ line_construct_pm(Point *pt, double m)
 	/* use "mx - y + yinter = 0" */
 	result->A = m;
 	result->B = -1.0;
-	if (m==DBL_MAX) 
+	if (m == DBL_MAX)
 		result->C = pt->y;
 	else
 		result->C = pt->y - m * pt->x;

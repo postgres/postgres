@@ -12,7 +12,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/name.c,v 1.27 2000/01/26 05:57:14 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/name.c,v 1.28 2000/04/12 17:15:50 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -149,7 +149,8 @@ namecpy(Name n1, Name n2)
 int
 namecat(Name n1, Name n2)
 {
-	return namestrcat(n1, NameStr(*n2));	/* n2 can't be any longer than n1 */
+	return namestrcat(n1, NameStr(*n2));		/* n2 can't be any longer
+												 * than n1 */
 }
 
 #endif

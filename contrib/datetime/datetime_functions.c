@@ -36,7 +36,7 @@
  * Decode time string 00:00:00 through 24:00:00.
  */
 static int
-decode_24h_time(char *str, struct tm *tm, double *fsec)
+decode_24h_time(char *str, struct tm * tm, double *fsec)
 {
 	char	   *cp;
 
@@ -51,9 +51,7 @@ decode_24h_time(char *str, struct tm *tm, double *fsec)
 		*fsec = 0;
 	}
 	else if (*cp != ':')
-	{
 		return -1;
-	}
 	else
 	{
 		str = cp + 1;
@@ -72,10 +70,10 @@ decode_24h_time(char *str, struct tm *tm, double *fsec)
 	}
 
 	/* do a sanity check */
-	if (   (tm->tm_hour < 0) || (tm->tm_hour > 24)
-		|| (tm->tm_min  < 0) || (tm->tm_min  > 59)
-		|| (tm->tm_sec  < 0) || (tm->tm_sec  > 59)
-		|| (*fsec       < 0) )
+	if ((tm->tm_hour < 0) || (tm->tm_hour > 24)
+		|| (tm->tm_min < 0) || (tm->tm_min > 59)
+		|| (tm->tm_sec < 0) || (tm->tm_sec > 59)
+		|| (*fsec < 0))
 		return -1;
 
 	return 0;
@@ -265,7 +263,7 @@ currentdate()
 int4
 date2mjd(DateADT val)
 {
-	int result;
+	int			result;
 
 	result = val + JDATE_2000 - 2400000.5;
 
@@ -276,8 +274,8 @@ date2mjd(DateADT val)
 
 /*
  * Local Variables:
- *  tab-width: 4
- *  c-indent-level: 4
- *  c-basic-offset: 4
+ *	tab-width: 4
+ *	c-indent-level: 4
+ *	c-basic-offset: 4
  * End:
  */

@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/access/transam/varsup.c,v 1.27 2000/03/31 02:43:31 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/access/transam/varsup.c,v 1.28 2000/04/12 17:14:53 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -331,8 +331,8 @@ ReadNewTransactionId(TransactionId *xid)
 	SpinAcquire(OidGenLockId);	/* not good for concurrency... */
 
 	/*
-	 * Note that we don't check is ShmemVariableCache->xid_count equal
-	 * to 0 or not. This will work as long as we don't call 
+	 * Note that we don't check is ShmemVariableCache->xid_count equal to
+	 * 0 or not. This will work as long as we don't call
 	 * ReadNewTransactionId() before GetNewTransactionId().
 	 */
 	if (ShmemVariableCache->nextXid == 0)

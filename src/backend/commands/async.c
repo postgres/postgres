@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/commands/async.c,v 1.58 2000/01/26 05:56:12 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/commands/async.c,v 1.59 2000/04/12 17:14:57 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -155,12 +155,13 @@ Async_Notify(char *relname)
 	/* no point in making duplicate entries in the list ... */
 	if (!AsyncExistsPendingNotify(relname))
 	{
+
 		/*
 		 * We allocate list memory from the global malloc pool to ensure
-		 * that it will live until we want to use it.  This is probably not
-		 * necessary any longer, since we will use it before the end of the
-		 * transaction. DLList only knows how to use malloc() anyway, but we
-		 * could probably palloc() the strings...
+		 * that it will live until we want to use it.  This is probably
+		 * not necessary any longer, since we will use it before the end
+		 * of the transaction. DLList only knows how to use malloc()
+		 * anyway, but we could probably palloc() the strings...
 		 */
 		notifyName = strdup(relname);
 		DLAddHead(pendingNotifies, DLNewElem(notifyName));
@@ -466,6 +467,7 @@ AtCommit_Notify()
 
 			if (listenerPID == MyProcPid)
 			{
+
 				/*
 				 * Self-notify: no need to bother with table update.
 				 * Indeed, we *must not* clear the notification field in
@@ -491,6 +493,7 @@ AtCommit_Notify()
 				 */
 				if (kill(listenerPID, SIGUSR2) < 0)
 				{
+
 					/*
 					 * Get rid of pg_listener entry if it refers to a PID
 					 * that no longer exists.  Presumably, that backend
@@ -514,7 +517,7 @@ AtCommit_Notify()
 						if (RelationGetForm(lRel)->relhasindex)
 						{
 							Relation	idescs[Num_pg_listener_indices];
-					
+
 							CatalogOpenIndices(Num_pg_listener_indices, Name_pg_listener_indices, idescs);
 							CatalogIndexInsert(idescs, Num_pg_listener_indices, lRel, rTuple);
 							CatalogCloseIndices(Num_pg_listener_indices, idescs);
@@ -780,7 +783,7 @@ ProcessIncomingNotify(void)
 			if (RelationGetForm(lRel)->relhasindex)
 			{
 				Relation	idescs[Num_pg_listener_indices];
-		
+
 				CatalogOpenIndices(Num_pg_listener_indices, Name_pg_listener_indices, idescs);
 				CatalogIndexInsert(idescs, Num_pg_listener_indices, lRel, rTuple);
 				CatalogCloseIndices(Num_pg_listener_indices, idescs);

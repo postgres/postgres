@@ -10,7 +10,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/lib/dllist.c,v 1.16 2000/01/26 05:56:26 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/lib/dllist.c,v 1.17 2000/04/12 17:15:10 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -128,14 +128,16 @@ DLRemove(Dlelem *e)
 
 	if (e->dle_prev)
 		e->dle_prev->dle_next = e->dle_next;
-	else						/* must be the head element */
+	else
+/* must be the head element */
 	{
 		Assert(e == l->dll_head);
 		l->dll_head = e->dle_next;
 	}
 	if (e->dle_next)
 		e->dle_next->dle_prev = e->dle_prev;
-	else						/* must be the tail element */
+	else
+/* must be the tail element */
 	{
 		Assert(e == l->dll_tail);
 		l->dll_tail = e->dle_prev;
@@ -236,7 +238,8 @@ DLMoveToFront(Dlelem *e)
 
 	if (e->dle_next)
 		e->dle_next->dle_prev = e->dle_prev;
-	else						/* must be the tail element */
+	else
+/* must be the tail element */
 	{
 		Assert(e == l->dll_tail);
 		l->dll_tail = e->dle_prev;

@@ -16,7 +16,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/storage/buffer/localbuf.c,v 1.29 2000/01/26 05:56:52 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/storage/buffer/localbuf.c,v 1.30 2000/04/12 17:15:34 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -111,7 +111,10 @@ LocalBufferAlloc(Relation reln, BlockNumber blockNum, bool *foundPtr)
 				  (char *) MAKE_PTR(bufHdr->data));
 		LocalBufferFlushCount++;
 
-		/* drop relcache refcount incremented by RelationIdCacheGetRelation */
+		/*
+		 * drop relcache refcount incremented by
+		 * RelationIdCacheGetRelation
+		 */
 		RelationDecrementReferenceCount(bufrel);
 	}
 

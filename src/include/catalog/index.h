@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2000, PostgreSQL, Inc
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Id: index.h,v 1.22 2000/02/18 09:29:19 inoue Exp $
+ * $Id: index.h,v 1.23 2000/04/12 17:16:27 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -68,4 +68,5 @@ extern bool activate_index(Oid indexId, bool activate);
 extern bool reindex_index(Oid indexId, bool force);
 extern bool activate_indexes_of_a_table(Oid relid, bool activate);
 extern bool reindex_relation(Oid relid, bool force);
+
 #endif	 /* INDEX_H */

@@ -19,12 +19,12 @@ extern char *crypt(const char *, const char *);
 #endif
 
 char	   *comname;
-static void	usage(FILE *stream);
-static void	read_pwd_file(char *filename);
-static void	write_pwd_file(char *filename, char *bkname);
-static void	encrypt_pwd(char key[9], char salt[3], char passwd[14]);
-static void	prompt_for_username(char *username);
-static void	prompt_for_password(char *prompt, char *password);
+static void usage(FILE *stream);
+static void read_pwd_file(char *filename);
+static void write_pwd_file(char *filename, char *bkname);
+static void encrypt_pwd(char key[9], char salt[3], char passwd[14]);
+static void prompt_for_username(char *username);
+static void prompt_for_password(char *prompt, char *password);
 
 static void
 usage(FILE *stream)
@@ -258,6 +258,7 @@ check_pwd(char key[9], char passwd[14])
 
 	return strncmp(shouldbe, passwd, 13) == 0 ? 1 : 0;
 }
+
 #endif
 
 static void

@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/libpq/be-fsstubs.c,v 1.43 2000/01/26 05:56:28 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/libpq/be-fsstubs.c,v 1.44 2000/04/12 17:15:14 momjian Exp $
  *
  * NOTES
  *	  This should be moved to a more appropriate place.  It is here
@@ -18,7 +18,7 @@
  *
  *	  These functions operate in a private GlobalMemoryContext, which means
  *	  that large object descriptors hang around until we destroy the context.
- *	  That happens in lo_commit().  It'd be possible to prolong the lifetime
+ *	  That happens in lo_commit().	It'd be possible to prolong the lifetime
  *	  of the context so that LO FDs are good across transactions (for example,
  *	  we could release the context only if we see that no FDs remain open).
  *	  But we'd need additional state in order to do the right thing at the
@@ -259,9 +259,9 @@ lo_tell(int fd)
 	}
 
 	/*
-	 * We assume we do not need to switch contexts for inv_tell.
-	 * That is true for now, but is probably more than this module
-	 * ought to assume...
+	 * We assume we do not need to switch contexts for inv_tell. That is
+	 * true for now, but is probably more than this module ought to
+	 * assume...
 	 */
 	return inv_tell(cookies[fd]);
 }
@@ -269,10 +269,11 @@ lo_tell(int fd)
 int
 lo_unlink(Oid lobjId)
 {
+
 	/*
-	 * inv_drop does not need a context switch, indeed it doesn't
-	 * touch any LO-specific data structures at all.  (Again, that's
-	 * probably more than this module ought to be assuming.)
+	 * inv_drop does not need a context switch, indeed it doesn't touch
+	 * any LO-specific data structures at all.	(Again, that's probably
+	 * more than this module ought to be assuming.)
 	 *
 	 * XXX there ought to be some code to clean up any open LOs that
 	 * reference the specified relation... as is, they remain "open".
@@ -417,9 +418,9 @@ lo_export(Oid lobjId, text *filename)
 	/*
 	 * open the file to be written to
 	 *
-	 * Note: we reduce backend's normal 077 umask to the slightly
-	 * friendlier 022.  This code used to drop it all the way to 0,
-	 * but creating world-writable export files doesn't seem wise.
+	 * Note: we reduce backend's normal 077 umask to the slightly friendlier
+	 * 022.  This code used to drop it all the way to 0, but creating
+	 * world-writable export files doesn't seem wise.
 	 */
 	nbytes = VARSIZE(filename) - VARHDRSZ + 1;
 	if (nbytes > FNAME_BUFSIZE)
@@ -470,8 +471,9 @@ lo_commit(bool isCommit)
 
 	currentContext = MemoryContextSwitchTo((MemoryContext) fscxt);
 
-	/* Clean out still-open index scans (not necessary if aborting)
-	 * and clear cookies array so that LO fds are no longer good.
+	/*
+	 * Clean out still-open index scans (not necessary if aborting) and
+	 * clear cookies array so that LO fds are no longer good.
 	 */
 	for (i = 0; i < MAX_LOBJ_FDS; i++)
 	{

@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/cache/catcache.c,v 1.62 2000/02/21 03:36:49 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/cache/catcache.c,v 1.63 2000/04/12 17:15:52 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -30,10 +30,10 @@
 static void CatCacheRemoveCTup(CatCache *cache, Dlelem *e);
 static Index CatalogCacheComputeHashIndex(struct catcache * cacheInP);
 static Index CatalogCacheComputeTupleHashIndex(struct catcache * cacheInOutP,
-											   Relation relation,
-											   HeapTuple tuple);
+								  Relation relation,
+								  HeapTuple tuple);
 static void CatalogCacheInitializeCache(struct catcache * cache,
-										Relation relation);
+							Relation relation);
 static uint32 cc_hashname(NameData *n);
 
 /* ----------------
@@ -57,9 +57,10 @@ static uint32 cc_hashname(NameData *n);
 #define CACHE6_elog(a,b,c,d,e,f,g)
 #endif
 
-static CatCache   *Caches = NULL; /* head of list of caches */
+static CatCache *Caches = NULL; /* head of list of caches */
 
 GlobalMemory CacheCxt;			/* context in which caches are allocated */
+
 /* CacheCxt is global because relcache uses it too. */
 
 
@@ -90,8 +91,8 @@ GetCCHashFunc(Oid keytype)
 {
 	switch (keytype)
 	{
-		case BOOLOID:
-		case CHAROID:
+			case BOOLOID:
+			case CHAROID:
 			return (CCHashFunc) hashchar;
 		case NAMEOID:
 			return (CCHashFunc) cc_hashname;
@@ -118,11 +119,12 @@ GetCCHashFunc(Oid keytype)
 static uint32
 cc_hashname(NameData *n)
 {
+
 	/*
 	 * We need our own variant of hashname because we want to accept
-	 * null-terminated C strings as search values for name fields.
-	 * So, we have to make sure the data is correctly padded before
-	 * we compute the hash value.
+	 * null-terminated C strings as search values for name fields. So, we
+	 * have to make sure the data is correctly padded before we compute
+	 * the hash value.
 	 */
 	NameData	my_n;
 
@@ -242,11 +244,14 @@ CatalogCacheInitializeCache(struct catcache * cache,
 
 		if (cache->cc_key[i] > 0)
 		{
-			Oid		keytype = tupdesc->attrs[cache->cc_key[i] - 1]->atttypid;
+			Oid			keytype = tupdesc->attrs[cache->cc_key[i] - 1]->atttypid;
 
 			cache->cc_hashfunc[i] = GetCCHashFunc(keytype);
 
-			/* If GetCCHashFunc liked the type, safe to index into eqproc[] */
+			/*
+			 * If GetCCHashFunc liked the type, safe to index into
+			 * eqproc[]
+			 */
 			cache->cc_skey[i].sk_procedure = EQPROC(keytype);
 
 			fmgr_info(cache->cc_skey[i].sk_procedure,
@@ -314,19 +319,19 @@ CatalogCacheComputeHashIndex(struct catcache * cacheInP)
 	{
 		case 4:
 			hashIndex ^=
-				(*cacheInP->cc_hashfunc[3])(cacheInP->cc_skey[3].sk_argument) << 9;
+				(*cacheInP->cc_hashfunc[3]) (cacheInP->cc_skey[3].sk_argument) << 9;
 			/* FALLTHROUGH */
 		case 3:
 			hashIndex ^=
-				(*cacheInP->cc_hashfunc[2])(cacheInP->cc_skey[2].sk_argument) << 6;
+				(*cacheInP->cc_hashfunc[2]) (cacheInP->cc_skey[2].sk_argument) << 6;
 			/* FALLTHROUGH */
 		case 2:
 			hashIndex ^=
-				(*cacheInP->cc_hashfunc[1])(cacheInP->cc_skey[1].sk_argument) << 3;
+				(*cacheInP->cc_hashfunc[1]) (cacheInP->cc_skey[1].sk_argument) << 3;
 			/* FALLTHROUGH */
 		case 1:
 			hashIndex ^=
-				(*cacheInP->cc_hashfunc[0])(cacheInP->cc_skey[0].sk_argument);
+				(*cacheInP->cc_hashfunc[0]) (cacheInP->cc_skey[0].sk_argument);
 			break;
 		default:
 			elog(FATAL, "CCComputeHashIndex: %d cc_nkeys", cacheInP->cc_nkeys);
@@ -612,10 +617,11 @@ ResetSystemCache()
 void
 SystemCacheRelationFlushed(Oid relId)
 {
+
 	/*
-	 * XXX Ideally we'd search the caches and just zap entries that actually
-	 * refer to or come from the indicated relation.  For now, we take the
-	 * brute-force approach: just flush the caches entirely.
+	 * XXX Ideally we'd search the caches and just zap entries that
+	 * actually refer to or come from the indicated relation.  For now, we
+	 * take the brute-force approach: just flush the caches entirely.
 	 */
 	ResetSystemCache();
 }
@@ -688,6 +694,7 @@ InitSysCache(char *relname,
 	 * ----------------
 	 */
 	{
+
 		/*
 		 * We can only do this optimization because the number of hash
 		 * buckets never changes.  Without it, we call palloc() too much.
@@ -782,8 +789,8 @@ InitSysCache(char *relname,
  *
  *		This call searches for self-referencing information,
  *		which causes infinite recursion in the system catalog cache.
- *      This code short-circuits the normal index lookup for cache loads
- *      in those cases and replaces it with a heap scan.
+ *		This code short-circuits the normal index lookup for cache loads
+ *		in those cases and replaces it with a heap scan.
  *
  *		cache should already be initailized
  * --------------------------------
@@ -791,40 +798,41 @@ InitSysCache(char *relname,
 static HeapTuple
 SearchSelfReferences(struct catcache * cache)
 {
-	HeapTuple		ntp;
-	Relation		rel;
+	HeapTuple	ntp;
+	Relation	rel;
 
 	if (cache->id == INDEXRELID)
 	{
-		static Oid			indexSelfOid = InvalidOid;
-		static HeapTuple	indexSelfTuple = NULL;
+		static Oid	indexSelfOid = InvalidOid;
+		static HeapTuple indexSelfTuple = NULL;
 
 		if (!OidIsValid(indexSelfOid))
 		{
-			ScanKeyData	key;
-			HeapScanDesc	sd;
+			ScanKeyData key;
+			HeapScanDesc sd;
+
 			/* Find oid of pg_index_indexrelid_index */
 			rel = heap_openr(RelationRelationName, AccessShareLock);
 			ScanKeyEntryInitialize(&key, 0, Anum_pg_class_relname,
-					F_NAMEEQ, PointerGetDatum(IndexRelidIndex));
+							 F_NAMEEQ, PointerGetDatum(IndexRelidIndex));
 			sd = heap_beginscan(rel, false, SnapshotNow, 1, &key);
 			ntp = heap_getnext(sd, 0);
 			if (!HeapTupleIsValid(ntp))
 				elog(ERROR, "SearchSelfReferences: %s not found in %s",
-					IndexRelidIndex, RelationRelationName);
+					 IndexRelidIndex, RelationRelationName);
 			indexSelfOid = ntp->t_data->t_oid;
 			heap_endscan(sd);
 			heap_close(rel, AccessShareLock);
 		}
 		/* Looking for something other than pg_index_indexrelid_index? */
-		if ((Oid)cache->cc_skey[0].sk_argument != indexSelfOid)
-			return (HeapTuple)0;
+		if ((Oid) cache->cc_skey[0].sk_argument != indexSelfOid)
+			return (HeapTuple) 0;
 
 		/* Do we need to load our private copy of the tuple? */
 		if (!HeapTupleIsValid(indexSelfTuple))
 		{
-			HeapScanDesc	sd;
-			MemoryContext	oldcxt;
+			HeapScanDesc sd;
+			MemoryContext oldcxt;
 
 			if (!CacheCxt)
 				CacheCxt = CreateGlobalMemory("Cache");
@@ -844,16 +852,16 @@ SearchSelfReferences(struct catcache * cache)
 	else if (cache->id == OPEROID)
 	{
 		/* bootstrapping this requires preloading a range of rows. bjm */
-		static HeapTuple	operatorSelfTuple[MAX_OIDCMP-MIN_OIDCMP+1];
-		Oid					lookup_oid = (Oid)cache->cc_skey[0].sk_argument;
+		static HeapTuple operatorSelfTuple[MAX_OIDCMP - MIN_OIDCMP + 1];
+		Oid			lookup_oid = (Oid) cache->cc_skey[0].sk_argument;
 
 		if (lookup_oid < MIN_OIDCMP || lookup_oid > MAX_OIDCMP)
-			return (HeapTuple)0;
+			return (HeapTuple) 0;
 
-		if (!HeapTupleIsValid(operatorSelfTuple[lookup_oid-MIN_OIDCMP]))
+		if (!HeapTupleIsValid(operatorSelfTuple[lookup_oid - MIN_OIDCMP]))
 		{
-			HeapScanDesc	sd;
-			MemoryContext	oldcxt;
+			HeapScanDesc sd;
+			MemoryContext oldcxt;
 
 			if (!CacheCxt)
 				CacheCxt = CreateGlobalMemory("Cache");
@@ -863,15 +871,15 @@ SearchSelfReferences(struct catcache * cache)
 			if (!HeapTupleIsValid(ntp))
 				elog(ERROR, "SearchSelfReferences: tuple not found");
 			oldcxt = MemoryContextSwitchTo((MemoryContext) CacheCxt);
-			operatorSelfTuple[lookup_oid-MIN_OIDCMP] = heap_copytuple(ntp);
+			operatorSelfTuple[lookup_oid - MIN_OIDCMP] = heap_copytuple(ntp);
 			MemoryContextSwitchTo(oldcxt);
 			heap_endscan(sd);
 			heap_close(rel, AccessShareLock);
 		}
-		return operatorSelfTuple[lookup_oid-MIN_OIDCMP];
+		return operatorSelfTuple[lookup_oid - MIN_OIDCMP];
 	}
 	else
-		return (HeapTuple)0;
+		return (HeapTuple) 0;
 
 }
 
@@ -916,7 +924,7 @@ SearchSysCache(struct catcache * cache,
 	cache->cc_skey[3].sk_argument = v4;
 
 	/*
-	 *	resolve self referencing informtion
+	 * resolve self referencing informtion
 	 */
 	if ((ntp = SearchSelfReferences(cache)))
 		return ntp;
@@ -1052,12 +1060,13 @@ SearchSysCache(struct catcache * cache,
 		}
 		/* ----------
 		 *	Back to Cache context. If we got a tuple copy it
-		 *	into our context.   wieck - 10/18/1996
+		 *	into our context.	wieck - 10/18/1996
 		 *	And free the tuple that was allocated in the
 		 *	transaction's context.   tgl - 02/03/2000
 		 * ----------
 		 */
-		if (HeapTupleIsValid(indextp)) {
+		if (HeapTupleIsValid(indextp))
+		{
 			MemoryContextSwitchTo((MemoryContext) CacheCxt);
 			ntp = heap_copytuple(indextp);
 			MemoryContextSwitchTo(oldcxt);

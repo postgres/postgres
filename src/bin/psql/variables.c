@@ -3,7 +3,7 @@
  *
  * Copyright 2000 by PostgreSQL Global Development Group
  *
- * $Header: /cvsroot/pgsql/src/bin/psql/variables.c,v 1.7 2000/02/16 13:15:26 momjian Exp $
+ * $Header: /cvsroot/pgsql/src/bin/psql/variables.c,v 1.8 2000/04/12 17:16:23 momjian Exp $
  */
 #include "postgres.h"
 #include "variables.h"
@@ -113,7 +113,7 @@ SetVariable(VariableSpace space, const char *name, const char *value)
 bool
 SetVariableBool(VariableSpace space, const char *name)
 {
-    return SetVariable(space, name, "");
+	return SetVariable(space, name, "");
 }
 
 

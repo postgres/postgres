@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2000, PostgreSQL, Inc
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Id: portal.h,v 1.22 2000/02/18 09:30:16 inoue Exp $
+ * $Id: portal.h,v 1.23 2000/04/12 17:16:55 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -61,7 +61,7 @@ struct PortalD
  * Special portals (well, their names anyway)
  */
 #define VACPNAME		"<vacuum>"
-#define TRUNCPNAME              "<truncate>"
+#define TRUNCPNAME				"<truncate>"
 
 extern bool PortalNameIsSpecial(char *pname);
 extern void AtEOXact_portals(void);

@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/cache/lsyscache.c,v 1.40 2000/02/16 01:00:23 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/cache/lsyscache.c,v 1.41 2000/04/12 17:15:53 momjian Exp $
  *
  * NOTES
  *	  Eventually, the index information should go through here, too.
@@ -64,6 +64,7 @@ get_attname(Oid relid, AttrNumber attnum)
 	if (HeapTupleIsValid(tp))
 	{
 		Form_pg_attribute att_tup = (Form_pg_attribute) GETSTRUCT(tp);
+
 		return pstrdup(NameStr(att_tup->attname));
 	}
 	else
@@ -89,6 +90,7 @@ get_attnum(Oid relid, char *attname)
 	if (HeapTupleIsValid(tp))
 	{
 		Form_pg_attribute att_tup = (Form_pg_attribute) GETSTRUCT(tp);
+
 		return att_tup->attnum;
 	}
 	else
@@ -114,6 +116,7 @@ get_atttype(Oid relid, AttrNumber attnum)
 	if (HeapTupleIsValid(tp))
 	{
 		Form_pg_attribute att_tup = (Form_pg_attribute) GETSTRUCT(tp);
+
 		return att_tup->atttypid;
 	}
 	else
@@ -136,6 +139,7 @@ get_attisset(Oid relid, char *attname)
 	if (HeapTupleIsValid(tp))
 	{
 		Form_pg_attribute att_tup = (Form_pg_attribute) GETSTRUCT(tp);
+
 		return att_tup->attisset;
 	}
 	else
@@ -161,6 +165,7 @@ get_atttypmod(Oid relid, AttrNumber attnum)
 	if (HeapTupleIsValid(tp))
 	{
 		Form_pg_attribute att_tup = (Form_pg_attribute) GETSTRUCT(tp);
+
 		return att_tup->atttypmod;
 	}
 	else
@@ -206,8 +211,8 @@ get_attdisbursion(Oid relid, AttrNumber attnum, double min_estimate)
 
 	/*
 	 * Special-case boolean columns: the disbursion of a boolean is highly
-	 * unlikely to be anywhere near 1/numtuples, instead it's probably more
-	 * like 0.5.
+	 * unlikely to be anywhere near 1/numtuples, instead it's probably
+	 * more like 0.5.
 	 *
 	 * Are there any other cases we should wire in special estimates for?
 	 */
@@ -215,8 +220,8 @@ get_attdisbursion(Oid relid, AttrNumber attnum, double min_estimate)
 		return 0.5;
 
 	/*
-	 * Disbursion is either 0 (no data available) or -1 (disbursion
-	 * is 1/numtuples).  Either way, we need the relation size.
+	 * Disbursion is either 0 (no data available) or -1 (disbursion is
+	 * 1/numtuples).  Either way, we need the relation size.
 	 */
 
 	atp = SearchSysCacheTuple(RELOID,
@@ -246,10 +251,9 @@ get_attdisbursion(Oid relid, AttrNumber attnum, double min_estimate)
 		return 1.0 / (double) ntuples;
 
 	/*
-	 * VACUUM ANALYZE has not been run for this table.
-	 * Produce an estimate = 1/numtuples.  This may produce
-	 * unreasonably small estimates for large tables, so limit
-	 * the estimate to no less than min_estimate.
+	 * VACUUM ANALYZE has not been run for this table. Produce an estimate
+	 * = 1/numtuples.  This may produce unreasonably small estimates for
+	 * large tables, so limit the estimate to no less than min_estimate.
 	 */
 	disbursion = 1.0 / (double) ntuples;
 	if (disbursion < min_estimate)
@@ -283,6 +287,7 @@ get_opcode(Oid opno)
 	if (HeapTupleIsValid(tp))
 	{
 		Form_pg_operator optup = (Form_pg_operator) GETSTRUCT(tp);
+
 		return optup->oprcode;
 	}
 	else
@@ -306,6 +311,7 @@ get_opname(Oid opno)
 	if (HeapTupleIsValid(tp))
 	{
 		Form_pg_operator optup = (Form_pg_operator) GETSTRUCT(tp);
+
 		return pstrdup(NameStr(optup->oprname));
 	}
 	else
@@ -401,6 +407,7 @@ get_commutator(Oid opno)
 	if (HeapTupleIsValid(tp))
 	{
 		Form_pg_operator optup = (Form_pg_operator) GETSTRUCT(tp);
+
 		return optup->oprcom;
 	}
 	else
@@ -424,6 +431,7 @@ get_negator(Oid opno)
 	if (HeapTupleIsValid(tp))
 	{
 		Form_pg_operator optup = (Form_pg_operator) GETSTRUCT(tp);
+
 		return optup->oprnegate;
 	}
 	else
@@ -447,6 +455,7 @@ get_oprrest(Oid opno)
 	if (HeapTupleIsValid(tp))
 	{
 		Form_pg_operator optup = (Form_pg_operator) GETSTRUCT(tp);
+
 		return optup->oprrest;
 	}
 	else
@@ -470,6 +479,7 @@ get_oprjoin(Oid opno)
 	if (HeapTupleIsValid(tp))
 	{
 		Form_pg_operator optup = (Form_pg_operator) GETSTRUCT(tp);
+
 		return optup->oprjoin;
 	}
 	else
@@ -520,6 +530,7 @@ get_relnatts(Oid relid)
 	if (HeapTupleIsValid(tp))
 	{
 		Form_pg_class reltup = (Form_pg_class) GETSTRUCT(tp);
+
 		return reltup->relnatts;
 	}
 	else
@@ -543,6 +554,7 @@ get_rel_name(Oid relid)
 	if (HeapTupleIsValid(tp))
 	{
 		Form_pg_class reltup = (Form_pg_class) GETSTRUCT(tp);
+
 		return pstrdup(NameStr(reltup->relname));
 	}
 	else
@@ -568,6 +580,7 @@ get_typlen(Oid typid)
 	if (HeapTupleIsValid(tp))
 	{
 		Form_pg_type typtup = (Form_pg_type) GETSTRUCT(tp);
+
 		return typtup->typlen;
 	}
 	else
@@ -592,6 +605,7 @@ get_typbyval(Oid typid)
 	if (HeapTupleIsValid(tp))
 	{
 		Form_pg_type typtup = (Form_pg_type) GETSTRUCT(tp);
+
 		return (bool) typtup->typbyval;
 	}
 	else
@@ -610,6 +624,7 @@ get_typalign(Oid typid)
 	if (HeapTupleIsValid(tp))
 	{
 		Form_pg_type typtup = (Form_pg_type) GETSTRUCT(tp);
+
 		return typtup->typalign;
 	}
 	else
@@ -649,11 +664,12 @@ get_typdefault(Oid typid)
 	type = (Form_pg_type) GETSTRUCT(typeTuple);
 
 	/*
-	 * First, see if there is a non-null typdefault field (usually there isn't)
+	 * First, see if there is a non-null typdefault field (usually there
+	 * isn't)
 	 */
 	typDefault = (struct varlena *) SysCacheGetAttr(TYPEOID,
 													typeTuple,
-													Anum_pg_type_typdefault,
+												 Anum_pg_type_typdefault,
 													&isNull);
 
 	if (isNull)
@@ -743,6 +759,7 @@ get_typtype(Oid typid)
 	if (HeapTupleIsValid(tp))
 	{
 		Form_pg_type typtup = (Form_pg_type) GETSTRUCT(tp);
+
 		return typtup->typtype;
 	}
 	else

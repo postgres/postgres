@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/parser/parse_clause.c,v 1.58 2000/03/23 07:38:30 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/parser/parse_clause.c,v 1.59 2000/04/12 17:15:26 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -33,15 +33,16 @@
 static char *clauseText[] = {"ORDER BY", "GROUP BY", "DISTINCT ON"};
 
 static TargetEntry *findTargetlistEntry(ParseState *pstate, Node *node,
-										List *tlist, int clause);
+					List *tlist, int clause);
 static void parseFromClause(ParseState *pstate, List *frmList);
 RangeTblEntry *transformTableEntry(ParseState *pstate, RangeVar *r);
 static List *addTargetToSortList(TargetEntry *tle, List *sortlist,
-								 List *targetlist, char *opname);
+					List *targetlist, char *opname);
 static bool exprIsInSortList(Node *expr, List *sortList, List *targetList);
 
 #ifndef DISABLE_OUTER_JOINS
 static Node *transformUsingClause(ParseState *pstate, List *using, List *left, List *right);
+
 #endif
 
 
@@ -63,8 +64,8 @@ makeRangeTable(ParseState *pstate, List *frmList)
  *
  *	  Note that the target is not marked as either inFromCl or inJoinSet.
  *	  For INSERT, we don't want the target to be joined to; it's a
- *	  destination of tuples, not a source.  For UPDATE/DELETE, we do
- *	  need to scan or join the target.  This will happen without the
+ *	  destination of tuples, not a source.	For UPDATE/DELETE, we do
+ *	  need to scan or join the target.	This will happen without the
  *	  inJoinSet flag because the planner's preprocess_targetlist()
  *	  adds the destination's CTID attribute to the targetlist, and
  *	  therefore the destination will be a referenced table even if
@@ -94,7 +95,7 @@ setTargetTable(ParseState *pstate, char *relname)
 
 
 Node *
-mergeInnerJoinQuals(ParseState *pstate, Node *clause);
+			mergeInnerJoinQuals(ParseState *pstate, Node *clause);
 
 Node *
 mergeInnerJoinQuals(ParseState *pstate, Node *clause)
@@ -119,7 +120,7 @@ mergeInnerJoinQuals(ParseState *pstate, Node *clause)
 	pstate->p_join_quals = NULL;
 
 	return (Node *) expr;
-} /* mergeInnerJoinQuals() */
+}	/* mergeInnerJoinQuals() */
 
 /*
  * transformWhereClause -
@@ -150,12 +151,12 @@ transformWhereClause(ParseState *pstate, Node *clause)
 
 #ifndef DISABLE_JOIN_SYNTAX
 char *
-AttrString(Attr *attr);
+			AttrString(Attr *attr);
 
 char *
 AttrString(Attr *attr)
 {
-	Value *val;
+	Value	   *val;
 
 	Assert(length(attr->attrs) == 1);
 
@@ -167,17 +168,18 @@ AttrString(Attr *attr)
 }
 
 List *
-ListTableAsAttrs(ParseState *pstate, char *table);
+			ListTableAsAttrs(ParseState *pstate, char *table);
 List *
 ListTableAsAttrs(ParseState *pstate, char *table)
 {
-	Attr *attr = expandTable(pstate, table, TRUE);
-	List *rlist = NIL;
-	List *col;
+	Attr	   *attr = expandTable(pstate, table, TRUE);
+	List	   *rlist = NIL;
+	List	   *col;
 
 	foreach(col, attr->attrs)
 	{
-		Attr *a = makeAttr(table, strVal((Value *) lfirst(col)));
+		Attr	   *a = makeAttr(table, strVal((Value *) lfirst(col)));
+
 		rlist = lappend(rlist, a);
 	}
 
@@ -185,25 +187,26 @@ ListTableAsAttrs(ParseState *pstate, char *table)
 }
 
 List *
-makeUniqueAttrList(List *candidates, List *idents);
+			makeUniqueAttrList(List *candidates, List *idents);
 List *
 makeUniqueAttrList(List *attrs, List *filter)
 {
-	List *result = NULL;
-	List *candidate;
+	List	   *result = NULL;
+	List	   *candidate;
 
 	foreach(candidate, attrs)
 	{
-		List *fmember;
-		bool match = FALSE;
-		Attr *cattr = lfirst(candidate);
+		List	   *fmember;
+		bool		match = FALSE;
+		Attr	   *cattr = lfirst(candidate);
 
 		Assert(IsA(cattr, Attr));
 		Assert(length(cattr->attrs) == 1);
 
 		foreach(fmember, filter)
 		{
-			Attr *fattr = lfirst(fmember);
+			Attr	   *fattr = lfirst(fmember);
+
 			Assert(IsA(fattr, Attr));
 			Assert(length(fattr->attrs) == 1);
 
@@ -222,19 +225,19 @@ makeUniqueAttrList(List *attrs, List *filter)
 }
 
 List *
-makeAttrList(Attr *attr);
+			makeAttrList(Attr *attr);
 
 List *
 makeAttrList(Attr *attr)
 {
-	List *result = NULL;
+	List	   *result = NULL;
 
-	char *name = attr->relname;
-	List *col;
+	char	   *name = attr->relname;
+	List	   *col;
 
-	foreach (col, attr->attrs)
+	foreach(col, attr->attrs)
 	{
-		Attr *newattr = makeAttr(name, strVal((Value *) lfirst(col)));
+		Attr	   *newattr = makeAttr(name, strVal((Value *) lfirst(col)));
 
 		result = lappend(result, newattr);
 	}
@@ -247,13 +250,13 @@ makeAttrList(Attr *attr)
  * with one attribute name per node.
  */
 List *
-ExpandAttrs(Attr *attr);
+			ExpandAttrs(Attr *attr);
 List *
 ExpandAttrs(Attr *attr)
 {
-	List *col;
-	char *relname = attr->relname;
-	List *rlist = NULL;
+	List	   *col;
+	char	   *relname = attr->relname;
+	List	   *rlist = NULL;
 
 	Assert(attr != NULL);
 
@@ -262,7 +265,7 @@ ExpandAttrs(Attr *attr)
 
 	foreach(col, attr->attrs)
 	{
-		Attr *attr = lfirst(col);
+		Attr	   *attr = lfirst(col);
 
 		rlist = lappend(rlist, makeAttr(relname, AttrString(attr)));
 	}
@@ -281,18 +284,20 @@ transformUsingClause(ParseState *pstate, List *usingList, List *leftList, List *
 
 	foreach(using, usingList)
 	{
-		List *col;
-		A_Expr *e;
+		List	   *col;
+		A_Expr	   *e;
 
-		Attr *uattr = lfirst(using);
-		Attr *lattr = NULL, *rattr = NULL;
+		Attr	   *uattr = lfirst(using);
+		Attr	   *lattr = NULL,
+				   *rattr = NULL;
 
-		/* find the first instances of this column in the shape list
-		 * and the last table in the shape list...
+		/*
+		 * find the first instances of this column in the shape list and
+		 * the last table in the shape list...
 		 */
-		foreach (col, leftList)
+		foreach(col, leftList)
 		{
-			Attr *attr = lfirst(col);
+			Attr	   *attr = lfirst(col);
 
 			if (strcmp(AttrString(attr), AttrString(uattr)) == 0)
 			{
@@ -300,9 +305,9 @@ transformUsingClause(ParseState *pstate, List *usingList, List *leftList, List *
 				break;
 			}
 		}
-		foreach (col, rightList)
+		foreach(col, rightList)
 		{
-			Attr *attr = lfirst(col);
+			Attr	   *attr = lfirst(col);
 
 			if (strcmp(AttrString(attr), AttrString(uattr)) == 0)
 			{
@@ -334,7 +339,8 @@ transformUsingClause(ParseState *pstate, List *usingList, List *leftList, List *
 	}
 
 	return ((Node *) transformExpr(pstate, (Node *) expr, EXPR_COLUMN_FIRST));
-} /* transformUsiongClause() */
+}	/* transformUsiongClause() */
+
 #endif
 
 
@@ -343,9 +349,11 @@ transformTableEntry(ParseState *pstate, RangeVar *r)
 {
 	RelExpr    *baserel = r->relExpr;
 	char	   *relname = baserel->relname;
+
 #if 0
 	char	   *refname;
 	List	   *columns;
+
 #endif
 	RangeTblEntry *rte;
 
@@ -368,7 +376,7 @@ transformTableEntry(ParseState *pstate, RangeVar *r)
 				if (length(columns) != length(r->name->attrs))
 					elog(ERROR, "'%s' has %d columns but %d %s specified",
 						 relname, length(columns), length(r->name->attrs),
-						 ((length(r->name->attrs) != 1)? "aliases": "alias"));
+						 ((length(r->name->attrs) != 1) ? "aliases" : "alias"));
 
 				aliasList = nconc(aliasList, r->name->attrs);
 			}
@@ -380,9 +388,7 @@ transformTableEntry(ParseState *pstate, RangeVar *r)
 			}
 		}
 		else
-		{
 			elog(NOTICE, "transformTableEntry: column aliases not handled (internal error)");
-		}
 #else
 		elog(ERROR, "Column aliases not yet supported");
 #endif
@@ -412,7 +418,7 @@ transformTableEntry(ParseState *pstate, RangeVar *r)
 							 baserel->inh, TRUE, TRUE);
 
 	return rte;
-} /* transformTableEntry() */
+}	/* transformTableEntry() */
 
 
 /*
@@ -432,7 +438,7 @@ transformTableEntry(ParseState *pstate, RangeVar *r)
 static void
 parseFromClause(ParseState *pstate, List *frmList)
 {
-	List *fl;
+	List	   *fl;
 
 	foreach(fl, frmList)
 	{
@@ -452,17 +458,17 @@ parseFromClause(ParseState *pstate, List *frmList)
 
 		/* Plain vanilla inner join, just like we've always had? */
 		if (IsA(n, RangeVar))
-		{
 			transformTableEntry(pstate, (RangeVar *) n);
-		}
 
 		/* A newfangled join expression? */
 		else if (IsA(n, JoinExpr))
 		{
 #ifndef DISABLE_JOIN_SYNTAX
-			RangeTblEntry	   *l_rte, *r_rte;
-			Attr			   *l_name, *r_name = NULL;
-			JoinExpr *j = (JoinExpr *) n;
+			RangeTblEntry *l_rte,
+					   *r_rte;
+			Attr	   *l_name,
+					   *r_name = NULL;
+			JoinExpr   *j = (JoinExpr *) n;
 
 			if (j->alias != NULL)
 				elog(ERROR, "JOIN table aliases are not supported");
@@ -471,7 +477,7 @@ parseFromClause(ParseState *pstate, List *frmList)
 			if (IsA(j->larg, JoinExpr))
 			{
 				parseFromClause(pstate, lcons(j->larg, NIL));
-				l_name = ((JoinExpr *)j->larg)->alias;
+				l_name = ((JoinExpr *) j->larg)->alias;
 			}
 			else
 			{
@@ -483,7 +489,7 @@ parseFromClause(ParseState *pstate, List *frmList)
 			if (IsA(j->rarg, JoinExpr))
 			{
 				parseFromClause(pstate, lcons(j->rarg, NIL));
-				l_name = ((JoinExpr *)j->larg)->alias;
+				l_name = ((JoinExpr *) j->larg)->alias;
 			}
 			else
 			{
@@ -492,25 +498,30 @@ parseFromClause(ParseState *pstate, List *frmList)
 				r_name = expandTable(pstate, r_rte->eref->relname, TRUE);
 			}
 
-			/* Natural join does not explicitly specify columns; must generate columns to join.
-			 * Need to run through the list of columns from each table or join result
-			 * and match up the column names. Use the first table, and check every
-			 * column in the second table for a match.
+			/*
+			 * Natural join does not explicitly specify columns; must
+			 * generate columns to join. Need to run through the list of
+			 * columns from each table or join result and match up the
+			 * column names. Use the first table, and check every column
+			 * in the second table for a match.
 			 */
 			if (j->isNatural)
 			{
-				List *lx, *rx;
-				List *rlist = NULL;
+				List	   *lx,
+						   *rx;
+				List	   *rlist = NULL;
 
 				foreach(lx, l_name->attrs)
 				{
-					Ident *id = NULL;
-					Value *l_col = lfirst(lx);
+					Ident	   *id = NULL;
+					Value	   *l_col = lfirst(lx);
+
 					Assert(IsA(l_col, String));
 
 					foreach(rx, r_name->attrs)
 					{
-						Value *r_col = lfirst(rx);
+						Value	   *r_col = lfirst(rx);
+
 						Assert(IsA(r_col, String));
 
 						if (strcmp(strVal(l_col), strVal(r_col)) == 0)
@@ -534,30 +545,32 @@ parseFromClause(ParseState *pstate, List *frmList)
 			{
 				/* CROSS JOIN */
 				if (j->quals == NULL)
-				{
 					printf("CROSS JOIN...\n");
-				}
 
-				/* JOIN/USING
-				 * This is an inner join, so rip apart the join node and
-				 * transform into a traditional FROM list. NATURAL JOIN
-				 * and JOIN USING both change the shape of the result.
-				 * Need to generate a list of result columns to use for
-				 * target list expansion and validation.
+				/*
+				 * JOIN/USING This is an inner join, so rip apart the join
+				 * node and transform into a traditional FROM list.
+				 * NATURAL JOIN and JOIN USING both change the shape of
+				 * the result. Need to generate a list of result columns
+				 * to use for target list expansion and validation.
 				 */
 				else if (IsA(j->quals, List))
 				{
-					/*
-					 * List of Ident nodes means column names from a real USING
-					 * clause. Determine the shape of the joined table.
-					 */
-					List *ucols, *ucol;
-					List *shape = NULL;
-					List *alias = NULL;
-					List *l_shape, *r_shape;
 
-					List *l_cols = makeAttrList(l_name);
-					List *r_cols = makeAttrList(r_name);
+					/*
+					 * List of Ident nodes means column names from a real
+					 * USING clause. Determine the shape of the joined
+					 * table.
+					 */
+					List	   *ucols,
+							   *ucol;
+					List	   *shape = NULL;
+					List	   *alias = NULL;
+					List	   *l_shape,
+							   *r_shape;
+
+					List	   *l_cols = makeAttrList(l_name);
+					List	   *r_cols = makeAttrList(r_name);
 
 					printf("USING input tables are:\n %s\n %s\n",
 						   nodeToString(l_name), nodeToString(r_name));
@@ -566,14 +579,15 @@ parseFromClause(ParseState *pstate, List *frmList)
 						   nodeToString(l_cols), nodeToString(r_cols));
 
 					/* Columns from the USING clause... */
-					ucols = (List *)j->quals;
+					ucols = (List *) j->quals;
 					foreach(ucol, ucols)
 					{
-						List *col;
-						Attr *l_attr = NULL, *r_attr = NULL;
-						Ident *id = lfirst(ucol);
+						List	   *col;
+						Attr	   *l_attr = NULL,
+								   *r_attr = NULL;
+						Ident	   *id = lfirst(ucol);
 
-						Attr *attr = makeAttr("", id->name);
+						Attr	   *attr = makeAttr("", id->name);
 
 						foreach(col, l_cols)
 						{
@@ -634,9 +648,7 @@ parseFromClause(ParseState *pstate, List *frmList)
 
 				/* otherwise, must be an expression from an ON clause... */
 				else
-				{
 					j->quals = (List *) lcons(j->quals, NIL);
-				}
 
 				pstate->p_join_quals = (Node *) j->quals;
 
@@ -654,24 +666,22 @@ parseFromClause(ParseState *pstate, List *frmList)
 
 #if 0
 					/* merge qualified join clauses... */
-				if (j->quals != NULL)
-				{
-					if (*qual != NULL)
+					if (j->quals != NULL)
 					{
-						A_Expr	   *a = makeNode(A_Expr);
+						if (*qual != NULL)
+						{
+							A_Expr	   *a = makeNode(A_Expr);
 
-						a->oper = AND;
-						a->opname = NULL;
-						a->lexpr = (Node *) *qual;
-						a->rexpr = (Node *) j->quals;
+							a->oper = AND;
+							a->opname = NULL;
+							a->lexpr = (Node *) *qual;
+							a->rexpr = (Node *) j->quals;
 
-						*qual = (Node *)a;
+							*qual = (Node *) a;
+						}
+						else
+							*qual = (Node *) j->quals;
 					}
-					else
-					{
-						*qual = (Node *)j->quals;
-					}
-				}
 #endif
 
 #if 0
@@ -688,8 +698,8 @@ parseFromClause(ParseState *pstate, List *frmList)
 				 * then we will need to replace the node with two nodes.
 				 * Will need access to the previous list item to change
 				 * the link pointer to reference these new nodes. Try
-				 * accumulating and returning a new list.
-				 * - thomas 1999-01-08 Not doing this yet though!
+				 * accumulating and returning a new list. - thomas
+				 * 1999-01-08 Not doing this yet though!
 				 */
 
 			}
@@ -708,7 +718,7 @@ parseFromClause(ParseState *pstate, List *frmList)
 			elog(ERROR, "parseFromClause: unexpected FROM clause node (internal error)"
 				 "\n\t%s", nodeToString(n));
 	}
-} /* parseFromClause() */
+}	/* parseFromClause() */
 
 
 /*
@@ -733,17 +743,17 @@ findTargetlistEntry(ParseState *pstate, Node *node, List *tlist, int clause)
 	 * Handle two special cases as mandated by the SQL92 spec:
 	 *
 	 * 1. Bare ColumnName (no qualifier or subscripts)
-	 *    For a bare identifier, we search for a matching column name
-	 *	  in the existing target list.  Multiple matches are an error
+	 *	  For a bare identifier, we search for a matching column name
+	 *	  in the existing target list.	Multiple matches are an error
 	 *	  unless they refer to identical values; for example,
-	 *	  we allow  SELECT a, a FROM table ORDER BY a
-	 *	  but not   SELECT a AS b, b FROM table ORDER BY b
+	 *	  we allow	SELECT a, a FROM table ORDER BY a
+	 *	  but not	SELECT a AS b, b FROM table ORDER BY b
 	 *	  If no match is found, we fall through and treat the identifier
 	 *	  as an expression.
 	 *	  For GROUP BY, it is incorrect to match the grouping item against
 	 *	  targetlist entries: according to SQL92, an identifier in GROUP BY
 	 *	  is a reference to a column name exposed by FROM, not to a target
-	 *	  list column.  However, many implementations (including pre-7.0
+	 *	  list column.	However, many implementations (including pre-7.0
 	 *	  PostgreSQL) accept this anyway.  So for GROUP BY, we look first
 	 *	  to see if the identifier matches any FROM column name, and only
 	 *	  try for a targetlist name if it doesn't.  This ensures that we
@@ -768,19 +778,21 @@ findTargetlistEntry(ParseState *pstate, Node *node, List *tlist, int clause)
 	 * an expression.
 	 *----------
 	 */
-	if (IsA(node, Ident) && ((Ident *) node)->indirection == NIL)
+	if (IsA(node, Ident) &&((Ident *) node)->indirection == NIL)
 	{
 		char	   *name = ((Ident *) node)->name;
 
 		if (clause == GROUP_CLAUSE)
 		{
+
 			/*
 			 * In GROUP BY, we must prefer a match against a FROM-clause
-			 * column to one against the targetlist.  Look to see if there is
-			 * a matching column.  If so, fall through to let transformExpr()
-			 * do the rest.  NOTE: if name could refer ambiguously to more
-			 * than one column name exposed by FROM, colnameRangeTableEntry
-			 * will elog(ERROR).  That's just what we want here.
+			 * column to one against the targetlist.  Look to see if there
+			 * is a matching column.  If so, fall through to let
+			 * transformExpr() do the rest.  NOTE: if name could refer
+			 * ambiguously to more than one column name exposed by FROM,
+			 * colnameRangeTableEntry will elog(ERROR).  That's just what
+			 * we want here.
 			 */
 			if (colnameRangeTableEntry(pstate, name) != NULL)
 				name = NULL;
@@ -798,7 +810,7 @@ findTargetlistEntry(ParseState *pstate, Node *node, List *tlist, int clause)
 				{
 					if (target_result != NULL)
 					{
-						if (! equal(target_result->expr, tle->expr))
+						if (!equal(target_result->expr, tle->expr))
 							elog(ERROR, "%s '%s' is ambiguous",
 								 clauseText[clause], name);
 					}
@@ -808,7 +820,7 @@ findTargetlistEntry(ParseState *pstate, Node *node, List *tlist, int clause)
 				}
 			}
 			if (target_result != NULL)
-				return target_result; /* return the first match */
+				return target_result;	/* return the first match */
 		}
 	}
 	if (IsA(node, A_Const))
@@ -817,7 +829,7 @@ findTargetlistEntry(ParseState *pstate, Node *node, List *tlist, int clause)
 		int			targetlist_pos = 0;
 		int			target_pos;
 
-		if (! IsA(val, Integer))
+		if (!IsA(val, Integer))
 			elog(ERROR, "Non-integer constant in %s", clauseText[clause]);
 		target_pos = intVal(val);
 		foreach(tl, tlist)
@@ -828,7 +840,7 @@ findTargetlistEntry(ParseState *pstate, Node *node, List *tlist, int clause)
 			if (!resnode->resjunk)
 			{
 				if (++targetlist_pos == target_pos)
-					return tle;	/* return the unique match */
+					return tle; /* return the unique match */
 			}
 		}
 		elog(ERROR, "%s position %d is not in target list",
@@ -836,12 +848,12 @@ findTargetlistEntry(ParseState *pstate, Node *node, List *tlist, int clause)
 	}
 
 	/*
-	 * Otherwise, we have an expression (this is a Postgres extension
-	 * not found in SQL92).  Convert the untransformed node to a
-	 * transformed expression, and search for a match in the tlist.
-	 * NOTE: it doesn't really matter whether there is more than one
-	 * match.  Also, we are willing to match a resjunk target here,
-	 * though the above cases must ignore resjunk targets.
+	 * Otherwise, we have an expression (this is a Postgres extension not
+	 * found in SQL92).  Convert the untransformed node to a transformed
+	 * expression, and search for a match in the tlist. NOTE: it doesn't
+	 * really matter whether there is more than one match.	Also, we are
+	 * willing to match a resjunk target here, though the above cases must
+	 * ignore resjunk targets.
 	 */
 	expr = transformExpr(pstate, node, EXPR_COLUMN_FIRST);
 
@@ -855,8 +867,8 @@ findTargetlistEntry(ParseState *pstate, Node *node, List *tlist, int clause)
 
 	/*
 	 * If no matches, construct a new target entry which is appended to
-	 * the end of the target list.  This target is given resjunk = TRUE
-	 * so that it will not be projected into the final tuple.
+	 * the end of the target list.	This target is given resjunk = TRUE so
+	 * that it will not be projected into the final tuple.
 	 */
 	target_result = transformTargetEntry(pstate, node, expr, NULL, true);
 	lappend(tlist, target_result);
@@ -884,7 +896,7 @@ transformGroupClause(ParseState *pstate, List *grouplist, List *targetlist)
 								  targetlist, GROUP_CLAUSE);
 
 		/* avoid making duplicate grouplist entries */
-		if (! exprIsInSortList(tle->expr, glist, targetlist))
+		if (!exprIsInSortList(tle->expr, glist, targetlist))
 		{
 			GroupClause *grpcl = makeNode(GroupClause);
 
@@ -915,8 +927,8 @@ transformSortClause(ParseState *pstate,
 
 	foreach(olitem, orderlist)
 	{
-		SortGroupBy	   *sortby = lfirst(olitem);
-		TargetEntry	   *tle;
+		SortGroupBy *sortby = lfirst(olitem);
+		TargetEntry *tle;
 
 		tle = findTargetlistEntry(pstate, sortby->node,
 								  targetlist, ORDER_CLAUSE);
@@ -933,7 +945,7 @@ transformSortClause(ParseState *pstate,
  *	  transform a DISTINCT or DISTINCT ON clause
  *
  * Since we may need to add items to the query's sortClause list, that list
- * is passed by reference.  We might also need to add items to the query's
+ * is passed by reference.	We might also need to add items to the query's
  * targetlist, but we assume that cannot be empty initially, so we can
  * lappend to it even though the pointer is passed by value.
  */
@@ -955,10 +967,10 @@ transformDistinctClause(ParseState *pstate, List *distinctlist,
 
 		/*
 		 * All non-resjunk elements from target list that are not already
-		 * in the sort list should be added to it.  (We don't really care
+		 * in the sort list should be added to it.	(We don't really care
 		 * what order the DISTINCT fields are checked in, so we can leave
-		 * the user's ORDER BY spec alone, and just add additional sort keys
-		 * to it to ensure that all targetlist items get sorted.)
+		 * the user's ORDER BY spec alone, and just add additional sort
+		 * keys to it to ensure that all targetlist items get sorted.)
 		 */
 		*sortClause = addAllTargetsToSortList(*sortClause, targetlist);
 
@@ -966,8 +978,8 @@ transformDistinctClause(ParseState *pstate, List *distinctlist,
 		 * Now, DISTINCT list consists of all non-resjunk sortlist items.
 		 * Actually, all the sortlist items had better be non-resjunk!
 		 * Otherwise, user wrote SELECT DISTINCT with an ORDER BY item
-		 * that does not appear anywhere in the SELECT targetlist, and
-		 * we can't implement that with only one sorting pass...
+		 * that does not appear anywhere in the SELECT targetlist, and we
+		 * can't implement that with only one sorting pass...
 		 */
 		foreach(slitem, *sortClause)
 		{
@@ -988,11 +1000,12 @@ transformDistinctClause(ParseState *pstate, List *distinctlist,
 		 * If the user writes both DISTINCT ON and ORDER BY, then the two
 		 * expression lists must match (until one or the other runs out).
 		 * Otherwise the ORDER BY requires a different sort order than the
-		 * DISTINCT does, and we can't implement that with only one sort pass
-		 * (and if we do two passes, the results will be rather unpredictable).
-		 * However, it's OK to have more DISTINCT ON expressions than ORDER BY
-		 * expressions; we can just add the extra DISTINCT values to the sort
-		 * list, much as we did above for ordinary DISTINCT fields.
+		 * DISTINCT does, and we can't implement that with only one sort
+		 * pass (and if we do two passes, the results will be rather
+		 * unpredictable). However, it's OK to have more DISTINCT ON
+		 * expressions than ORDER BY expressions; we can just add the
+		 * extra DISTINCT values to the sort list, much as we did above
+		 * for ordinary DISTINCT fields.
 		 *
 		 * Actually, it'd be OK for the common prefixes of the two lists to
 		 * match in any order, but implementing that check seems like more
@@ -1020,7 +1033,9 @@ transformDistinctClause(ParseState *pstate, List *distinctlist,
 			{
 				*sortClause = addTargetToSortList(tle, *sortClause,
 												  targetlist, NULL);
-				/* Probably, the tle should always have been added at the
+
+				/*
+				 * Probably, the tle should always have been added at the
 				 * end of the sort list ... but search to be safe.
 				 */
 				foreach(slitem, *sortClause)
@@ -1059,7 +1074,7 @@ addAllTargetsToSortList(List *sortlist, List *targetlist)
 	{
 		TargetEntry *tle = (TargetEntry *) lfirst(i);
 
-		if (! tle->resdom->resjunk)
+		if (!tle->resdom->resjunk)
 			sortlist = addTargetToSortList(tle, sortlist, targetlist, NULL);
 	}
 	return sortlist;
@@ -1078,7 +1093,7 @@ addTargetToSortList(TargetEntry *tle, List *sortlist, List *targetlist,
 					char *opname)
 {
 	/* avoid making duplicate sortlist entries */
-	if (! exprIsInSortList(tle->expr, sortlist, targetlist))
+	if (!exprIsInSortList(tle->expr, sortlist, targetlist))
 	{
 		SortClause *sortcl = makeNode(SortClause);
 
@@ -1109,14 +1124,14 @@ assignSortGroupRef(TargetEntry *tle, List *tlist)
 	Index		maxRef;
 	List	   *l;
 
-	if (tle->resdom->ressortgroupref)		/* already has one? */
+	if (tle->resdom->ressortgroupref)	/* already has one? */
 		return tle->resdom->ressortgroupref;
 
 	/* easiest way to pick an unused refnumber: max used + 1 */
 	maxRef = 0;
 	foreach(l, tlist)
 	{
-		Index	ref = ((TargetEntry *) lfirst(l))->resdom->ressortgroupref;
+		Index		ref = ((TargetEntry *) lfirst(l))->resdom->ressortgroupref;
 
 		if (ref > maxRef)
 			maxRef = ref;
@@ -1250,4 +1265,5 @@ transformUnionClause(List *unionClause, List *targetlist)
 	else
 		return NIL;
 }
+
 #endif

@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/cache/relcache.c,v 1.94 2000/03/31 19:39:22 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/cache/relcache.c,v 1.95 2000/04/12 17:15:54 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -80,8 +80,8 @@ static FormData_pg_attribute Desc_pg_log[Natts_pg_log] = {Schema_pg_log};
  *		thus there are two hash tables for referencing them.
  * ----------------
  */
-static HTAB	   *RelationNameCache;
-static HTAB	   *RelationIdCache;
+static HTAB *RelationNameCache;
+static HTAB *RelationIdCache;
 
 /*
  * newlyCreatedRelns -
@@ -204,20 +204,20 @@ do { \
 
 static void RelationClearRelation(Relation relation, bool rebuildIt);
 static void RelationFlushRelation(Relation *relationPtr,
-								  int skipLocalRelations);
+					  int skipLocalRelations);
 static Relation RelationNameCacheGetRelation(const char *relationName);
 static void RelationCacheAbortWalker(Relation *relationPtr, int dummy);
 static void init_irels(void);
 static void write_irels(void);
 
 static void formrdesc(char *relationName, u_int natts,
-					  FormData_pg_attribute *att);
+		  FormData_pg_attribute *att);
 
 static HeapTuple ScanPgRelation(RelationBuildDescInfo buildinfo);
 static HeapTuple scan_pg_rel_seq(RelationBuildDescInfo buildinfo);
 static HeapTuple scan_pg_rel_ind(RelationBuildDescInfo buildinfo);
 static Relation AllocateRelationDesc(Relation relation, u_int natts,
-									 Form_pg_class relp);
+					 Form_pg_class relp);
 static void RelationBuildTupleDesc(RelationBuildDescInfo buildinfo,
 					   Relation relation, u_int natts);
 static void build_tupdesc_seq(RelationBuildDescInfo buildinfo,
@@ -225,12 +225,13 @@ static void build_tupdesc_seq(RelationBuildDescInfo buildinfo,
 static void build_tupdesc_ind(RelationBuildDescInfo buildinfo,
 				  Relation relation, u_int natts);
 static Relation RelationBuildDesc(RelationBuildDescInfo buildinfo,
-								  Relation oldrelation);
+				  Relation oldrelation);
 static void IndexedAccessMethodInitialize(Relation relation);
 static void AttrDefaultFetch(Relation relation);
 static void RelCheckFetch(Relation relation);
 
-static bool	criticalRelcacheBuild = false;
+static bool criticalRelcacheBuild = false;
+
 /* ----------------------------------------------------------------
  *		RelationIdGetRelation() and RelationNameGetRelation()
  *						support functions
@@ -350,7 +351,7 @@ scan_pg_rel_ind(RelationBuildDescInfo buildinfo)
 
 		default:
 			elog(ERROR, "ScanPgRelation: bad buildinfo");
-			return_tuple = NULL; /* keep compiler quiet */
+			return_tuple = NULL;/* keep compiler quiet */
 	}
 
 	heap_close(pg_class_desc, AccessShareLock);
@@ -483,7 +484,7 @@ build_tupdesc_seq(RelationBuildDescInfo buildinfo,
 	int			need;
 	TupleConstr *constr = (TupleConstr *) palloc(sizeof(TupleConstr));
 	AttrDefault *attrdef = NULL;
-	int		ndef = 0;
+	int			ndef = 0;
 
 	constr->has_not_null = false;
 	/* ----------------
@@ -531,7 +532,7 @@ build_tupdesc_seq(RelationBuildDescInfo buildinfo,
 				if (attrdef == NULL)
 				{
 					attrdef = (AttrDefault *) palloc(relation->rd_rel->relnatts *
-												 	sizeof(AttrDefault));
+													 sizeof(AttrDefault));
 					MemSet(attrdef, 0,
 					   relation->rd_rel->relnatts * sizeof(AttrDefault));
 				}
@@ -569,9 +570,11 @@ build_tupdesc_ind(RelationBuildDescInfo buildinfo,
 	AttrDefault *attrdef = NULL;
 	int			ndef = 0;
 	int			i;
+
 #ifdef	_DROP_COLUMN_HACK__
-	bool			columnDropped;
-#endif	/* _DROP_COLUMN_HACK__ */
+	bool		columnDropped;
+
+#endif	 /* _DROP_COLUMN_HACK__ */
 
 	constr->has_not_null = false;
 
@@ -581,7 +584,7 @@ build_tupdesc_ind(RelationBuildDescInfo buildinfo,
 	{
 #ifdef	_DROP_COLUMN_HACK__
 		columnDropped = false;
-#endif	/* _DROP_COLUMN_HACK__ */
+#endif	 /* _DROP_COLUMN_HACK__ */
 		atttup = (HeapTuple) AttributeRelidNumIndexScan(attrel,
 										  RelationGetRelid(relation), i);
 
@@ -589,15 +592,15 @@ build_tupdesc_ind(RelationBuildDescInfo buildinfo,
 #ifdef	_DROP_COLUMN_HACK__
 		{
 			atttup = (HeapTuple) AttributeRelidNumIndexScan(attrel,
-										  			RelationGetRelid(relation), DROPPED_COLUMN_INDEX(i));
+					RelationGetRelid(relation), DROPPED_COLUMN_INDEX(i));
 			if (!HeapTupleIsValid(atttup))
-#endif	/* _DROP_COLUMN_HACK__ */
-			elog(ERROR, "cannot find attribute %d of relation %s", i,
-				 RelationGetRelationName(relation));
+#endif	 /* _DROP_COLUMN_HACK__ */
+				elog(ERROR, "cannot find attribute %d of relation %s", i,
+					 RelationGetRelationName(relation));
 #ifdef	_DROP_COLUMN_HACK__
 			columnDropped = true;
 		}
-#endif	/* _DROP_COLUMN_HACK__ */
+#endif	 /* _DROP_COLUMN_HACK__ */
 		attp = (Form_pg_attribute) GETSTRUCT(atttup);
 
 		relation->rd_att->attrs[i - 1] =
@@ -610,7 +613,7 @@ build_tupdesc_ind(RelationBuildDescInfo buildinfo,
 #ifdef	_DROP_COLUMN_HACK__
 		if (columnDropped)
 			continue;
-#endif	/* _DROP_COLUMN_HACK__ */
+#endif	 /* _DROP_COLUMN_HACK__ */
 		/* Update if this attribute have a constraint */
 		if (attp->attnotnull)
 			constr->has_not_null = true;
@@ -758,7 +761,7 @@ RelationBuildRuleLock(Relation relation)
 static void
 FreeRuleLock(RuleLock *rlock)
 {
-	int		i;
+	int			i;
 
 	if (rlock == NULL)
 		return;
@@ -787,8 +790,8 @@ FreeRuleLock(RuleLock *rlock)
 static bool
 equalRuleLocks(RuleLock *rlock1, RuleLock *rlock2)
 {
-	int		i,
-			j;
+	int			i,
+				j;
 
 	if (rlock1 != NULL)
 	{
@@ -821,9 +824,9 @@ equalRuleLocks(RuleLock *rlock1, RuleLock *rlock2)
 				return false;
 			if (rule1->isInstead != rule2->isInstead)
 				return false;
-			if (! equal(rule1->qual, rule2->qual))
+			if (!equal(rule1->qual, rule2->qual))
 				return false;
-			if (! equal(rule1->actions, rule2->actions))
+			if (!equal(rule1->actions, rule2->actions))
 				return false;
 		}
 	}
@@ -852,7 +855,7 @@ equalRuleLocks(RuleLock *rlock1, RuleLock *rlock2)
  *	Form_pg_am			   rd_am;		 AM tuple
  *	Form_pg_class		   rd_rel;		 RELATION tuple
  *	Oid					   rd_id;		 relation's object id
- *	LockInfoData		   rd_lockInfo;	 lock manager's info
+ *	LockInfoData		   rd_lockInfo;  lock manager's info
  *	TupleDesc			   rd_att;		 tuple descriptor
  *
  *		Note: rd_ismem (rel is in-memory only) is currently unused
@@ -1309,7 +1312,7 @@ RelationNameGetRelation(const char *relationName)
 	 * ----------------
 	 */
 	buildinfo.infotype = INFO_RELNAME;
-	buildinfo.i.info_name = (char *)relationName;
+	buildinfo.i.info_name = (char *) relationName;
 
 	rd = RelationBuildDesc(buildinfo, NULL);
 	return rd;
@@ -1352,11 +1355,11 @@ RelationClearRelation(Relation relation, bool rebuildIt)
 	MemoryContext oldcxt;
 
 	/*
-	 * Make sure smgr and lower levels close the relation's files,
-	 * if they weren't closed already.  We do this unconditionally;
-	 * if the relation is not deleted, the next smgr access should
-	 * reopen the files automatically.  This ensures that the low-level
-	 * file access state is updated after, say, a vacuum truncation.
+	 * Make sure smgr and lower levels close the relation's files, if they
+	 * weren't closed already.  We do this unconditionally; if the
+	 * relation is not deleted, the next smgr access should reopen the
+	 * files automatically.  This ensures that the low-level file access
+	 * state is updated after, say, a vacuum truncation.
 	 *
 	 * NOTE: this call is a no-op if the relation's smgr file is already
 	 * closed or unlinked.
@@ -1364,15 +1367,16 @@ RelationClearRelation(Relation relation, bool rebuildIt)
 	smgrclose(DEFAULT_SMGR, relation);
 
 	/*
-	 * Never, never ever blow away a nailed-in system relation,
-	 * because we'd be unable to recover.
+	 * Never, never ever blow away a nailed-in system relation, because
+	 * we'd be unable to recover.
 	 */
 	if (relation->rd_isnailed)
 		return;
 
 	oldcxt = MemoryContextSwitchTo((MemoryContext) CacheCxt);
 
-	/* Remove relation from hash tables
+	/*
+	 * Remove relation from hash tables
 	 *
 	 * Note: we might be reinserting it momentarily, but we must not have it
 	 * visible in the hash tables until it's valid again, so don't try to
@@ -1384,12 +1388,12 @@ RelationClearRelation(Relation relation, bool rebuildIt)
 	SystemCacheRelationFlushed(RelationGetRelid(relation));
 
 	/*
-	 * Free all the subsidiary data structures of the relcache entry.
-	 * We cannot free rd_att if we are trying to rebuild the entry,
-	 * however, because pointers to it may be cached in various places.
-	 * The trigger manager might also have pointers into the trigdesc,
-	 * and the rule manager might have pointers into the rewrite rules.
-	 * So to begin with, we can only get rid of these fields:
+	 * Free all the subsidiary data structures of the relcache entry. We
+	 * cannot free rd_att if we are trying to rebuild the entry, however,
+	 * because pointers to it may be cached in various places. The trigger
+	 * manager might also have pointers into the trigdesc, and the rule
+	 * manager might have pointers into the rewrite rules. So to begin
+	 * with, we can only get rid of these fields:
 	 */
 	if (relation->rd_am)
 		pfree(relation->rd_am);
@@ -1401,12 +1405,12 @@ RelationClearRelation(Relation relation, bool rebuildIt)
 		pfree(relation->rd_support);
 
 	/*
-	 * If we're really done with the relcache entry, blow it away.
-	 * But if someone is still using it, reconstruct the whole deal
-	 * without moving the physical RelationData record (so that the
-	 * someone's pointer is still valid).
+	 * If we're really done with the relcache entry, blow it away. But if
+	 * someone is still using it, reconstruct the whole deal without
+	 * moving the physical RelationData record (so that the someone's
+	 * pointer is still valid).
 	 */
-	if (! rebuildIt)
+	if (!rebuildIt)
 	{
 		/* ok to zap remaining substructure */
 		FreeTupleDesc(relation->rd_att);
@@ -1416,20 +1420,21 @@ RelationClearRelation(Relation relation, bool rebuildIt)
 	}
 	else
 	{
+
 		/*
 		 * When rebuilding an open relcache entry, must preserve ref count
 		 * and myxactonly flag.  Also attempt to preserve the tupledesc,
-		 * rewrite rules, and trigger substructures in place.
-		 * Furthermore we save/restore rd_nblocks (in case it is a local
-		 * relation) *and* call RelationGetNumberOfBlocks (in case it isn't).
+		 * rewrite rules, and trigger substructures in place. Furthermore
+		 * we save/restore rd_nblocks (in case it is a local relation)
+		 * *and* call RelationGetNumberOfBlocks (in case it isn't).
 		 */
-		uint16			old_refcnt = relation->rd_refcnt;
-		bool			old_myxactonly = relation->rd_myxactonly;
-		TupleDesc		old_att = relation->rd_att;
-		RuleLock	   *old_rules = relation->rd_rules;
-		TriggerDesc	   *old_trigdesc = relation->trigdesc;
-		int				old_nblocks = relation->rd_nblocks;
-		bool			relDescChanged = false;
+		uint16		old_refcnt = relation->rd_refcnt;
+		bool		old_myxactonly = relation->rd_myxactonly;
+		TupleDesc	old_att = relation->rd_att;
+		RuleLock   *old_rules = relation->rd_rules;
+		TriggerDesc *old_trigdesc = relation->trigdesc;
+		int			old_nblocks = relation->rd_nblocks;
+		bool		relDescChanged = false;
 		RelationBuildDescInfo buildinfo;
 
 		buildinfo.infotype = INFO_RELID;
@@ -1478,12 +1483,14 @@ RelationClearRelation(Relation relation, bool rebuildIt)
 			relDescChanged = true;
 		}
 		relation->rd_nblocks = old_nblocks;
-		/* this is kind of expensive, but I think we must do it in case
+
+		/*
+		 * this is kind of expensive, but I think we must do it in case
 		 * relation has been truncated...
 		 */
 		relation->rd_nblocks = RelationGetNumberOfBlocks(relation);
 
-		if (relDescChanged && ! RelationHasReferenceCountZero(relation))
+		if (relDescChanged && !RelationHasReferenceCountZero(relation))
 			elog(ERROR, "RelationClearRelation: relation %u modified while in use",
 				 buildinfo.i.info_id);
 	}
@@ -1514,6 +1521,7 @@ RelationFlushRelation(Relation *relationPtr,
 	{
 		if (skipLocalRelations)
 			return;				/* don't touch local rels if so commanded */
+
 		/*
 		 * Local rels should always be rebuilt, not flushed; the relcache
 		 * entry must live until RelationPurgeLocalRelation().
@@ -1522,10 +1530,11 @@ RelationFlushRelation(Relation *relationPtr,
 	}
 	else
 	{
+
 		/*
 		 * Nonlocal rels can be dropped from the relcache if not open.
 		 */
-		rebuildIt = ! RelationHasReferenceCountZero(relation);
+		rebuildIt = !RelationHasReferenceCountZero(relation);
 	}
 
 	RelationClearRelation(relation, rebuildIt);
@@ -1633,6 +1642,7 @@ RelationFlushIndexes(Relation *r,
 void
 RelationIdInvalidateRelationCacheByAccessMethodId(Oid accessMethodId)
 {
+
 	/*
 	 * 25 aug 1992:  mao commented out the ht walk below.  it should be
 	 * doing the right thing, in theory, but flushing reldescs for index
@@ -1641,13 +1651,14 @@ RelationIdInvalidateRelationCacheByAccessMethodId(Oid accessMethodId)
 	 * so i'm turning it off for now.  after the release is cut, i'll fix
 	 * this up.
 	 *
-	 * 20 nov 1999:  this code has still never done anything, so I'm
-	 * cutting the routine out of the system entirely.  tgl
+	 * 20 nov 1999:  this code has still never done anything, so I'm cutting
+	 * the routine out of the system entirely.	tgl
 	 */
 
 	HashTableWalk(RelationNameCache, (HashtFunc) RelationFlushIndexes,
 				  accessMethodId);
 }
+
 #endif
 
 /*
@@ -1756,7 +1767,7 @@ RelationPurgeLocalRelation(bool xactCommitted)
 
 		Assert(reln != NULL && reln->rd_myxactonly);
 
-		reln->rd_myxactonly = false; /* mark it not on list anymore */
+		reln->rd_myxactonly = false;	/* mark it not on list anymore */
 
 		newlyCreatedRelns = lnext(newlyCreatedRelns);
 		pfree(l);
@@ -1862,8 +1873,8 @@ AttrDefaultFetch(Relation relation)
 	HeapTupleData tuple;
 	HeapTuple	htup;
 	Form_pg_attrdef adform;
-	IndexScanDesc	sd = (IndexScanDesc) NULL;
-	HeapScanDesc	adscan = (HeapScanDesc) NULL;
+	IndexScanDesc sd = (IndexScanDesc) NULL;
+	HeapScanDesc adscan = (HeapScanDesc) NULL;
 	RetrieveIndexResult indexRes;
 	struct varlena *val;
 	bool		isnull;
@@ -1885,7 +1896,7 @@ AttrDefaultFetch(Relation relation)
 		sd = index_beginscan(irel, false, 1, &skey);
 	}
 	else
-		adscan = heap_beginscan(adrel, false, SnapshotNow, 1, &skey); 
+		adscan = heap_beginscan(adrel, false, SnapshotNow, 1, &skey);
 	tuple.t_datamcxt = NULL;
 	tuple.t_data = NULL;
 
@@ -1920,7 +1931,7 @@ AttrDefaultFetch(Relation relation)
 				continue;
 			if (attrdef[i].adbin != NULL)
 				elog(NOTICE, "AttrDefaultFetch: second record found for attr %s in rel %s",
-				NameStr(relation->rd_att->attrs[adform->adnum - 1]->attname),
+					 NameStr(relation->rd_att->attrs[adform->adnum - 1]->attname),
 					 RelationGetRelationName(relation));
 
 			val = (struct varlena *) fastgetattr(htup,
@@ -1928,7 +1939,7 @@ AttrDefaultFetch(Relation relation)
 												 adrel->rd_att, &isnull);
 			if (isnull)
 				elog(NOTICE, "AttrDefaultFetch: adbin IS NULL for attr %s in rel %s",
-				NameStr(relation->rd_att->attrs[adform->adnum - 1]->attname),
+					 NameStr(relation->rd_att->attrs[adform->adnum - 1]->attname),
 					 RelationGetRelationName(relation));
 			attrdef[i].adbin = textout(val);
 			break;
@@ -1962,12 +1973,12 @@ RelCheckFetch(Relation relation)
 	ConstrCheck *check = relation->rd_att->constr->check;
 	int			ncheck = relation->rd_att->constr->num_check;
 	Relation	rcrel;
-	Relation	irel = (Relation)NULL;
+	Relation	irel = (Relation) NULL;
 	ScanKeyData skey;
 	HeapTupleData tuple;
 	HeapTuple	htup;
-	IndexScanDesc	sd = (IndexScanDesc)NULL;
-	HeapScanDesc	rcscan = (HeapScanDesc)NULL;
+	IndexScanDesc sd = (IndexScanDesc) NULL;
+	HeapScanDesc rcscan = (HeapScanDesc) NULL;
 	RetrieveIndexResult indexRes;
 	Name		rcname;
 	struct varlena *val;
@@ -2271,9 +2282,9 @@ write_irels(void)
 	char		finalfilename[MAXPGPATH];
 
 	/*
-	 * We must write a temporary file and rename it into place.  Otherwise,
-	 * another backend starting at about the same time might crash trying to
-	 * read the partially-complete file.
+	 * We must write a temporary file and rename it into place. Otherwise,
+	 * another backend starting at about the same time might crash trying
+	 * to read the partially-complete file.
 	 */
 	snprintf(tempfilename, sizeof(tempfilename), "%s%c%s.%d",
 			 DatabasePath, SEP_CHAR, RELCACHE_INIT_FILENAME, MyProcPid);
@@ -2292,19 +2303,18 @@ write_irels(void)
 
 	/*
 	 * Build relation descriptors for the critical system indexes without
-	 * resort to the descriptor cache.  In order to do this, we set
-	 * ProcessingMode to Bootstrap.  The effect of this is to disable indexed
-	 * relation searches -- a necessary step, since we're trying to
-	 * instantiate the index relation descriptors here.  Once we have the
-	 * descriptors, nail them into cache so we never lose them.
+	 * resort to the descriptor cache.	In order to do this, we set
+	 * ProcessingMode to Bootstrap.  The effect of this is to disable
+	 * indexed relation searches -- a necessary step, since we're trying
+	 * to instantiate the index relation descriptors here.	Once we have
+	 * the descriptors, nail them into cache so we never lose them.
 	 */
 
-	/* Removed the following ProcessingMode change -- inoue
-	 * At this point
-	 * 1) Catalog Cache isn't initialized
-	 * 2) Relation Cache for the following critical indexes aren't built
-	oldmode = GetProcessingMode();
-	SetProcessingMode(BootstrapProcessing);
+	/*
+	 * Removed the following ProcessingMode change -- inoue At this point
+	 * 1) Catalog Cache isn't initialized 2) Relation Cache for the
+	 * following critical indexes aren't built oldmode =
+	 * GetProcessingMode(); SetProcessingMode(BootstrapProcessing);
 	 */
 
 	bi.infotype = INFO_RELNAME;
@@ -2321,8 +2331,10 @@ write_irels(void)
 	irel[2]->rd_isnailed = true;
 
 	criticalRelcacheBuild = true;
-	/* Removed the following ProcessingMode -- inoue 
-	SetProcessingMode(oldmode);
+
+	/*
+	 * Removed the following ProcessingMode -- inoue
+	 * SetProcessingMode(oldmode);
 	 */
 
 	/*
@@ -2411,9 +2423,9 @@ write_irels(void)
 
 	FileClose(fd);
 
-    /*
-     * And rename the temp file to its final name, deleting any previously-
-	 * existing init file.
-     */
-    rename(tempfilename, finalfilename);
+	/*
+	 * And rename the temp file to its final name, deleting any
+	 * previously- existing init file.
+	 */
+	rename(tempfilename, finalfilename);
 }

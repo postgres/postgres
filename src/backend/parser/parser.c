@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/parser/parser.c,v 1.44 2000/03/17 05:29:05 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/parser/parser.c,v 1.45 2000/04/12 17:15:27 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -20,6 +20,7 @@
 
 #if defined(FLEX_SCANNER)
 extern void DeleteBuffer(void);
+
 #endif	 /* FLEX_SCANNER */
 
 char	   *parseString;		/* the char* which holds the string to be

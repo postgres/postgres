@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2000, PostgreSQL, Inc
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Id: int8.h,v 1.19 2000/03/14 23:06:50 thomas Exp $
+ * $Id: int8.h,v 1.20 2000/04/12 17:16:55 momjian Exp $
  *
  * NOTES
  * These data types are supported on all 64-bit architectures, and may
@@ -97,6 +97,7 @@ extern int32 int84(int64 *val);
 
 #ifdef NOT_USED
 extern int16 int82(int64 *val);
+
 #endif
 
 extern float64 i8tod(int64 *val);

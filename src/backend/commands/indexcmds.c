@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/commands/indexcmds.c,v 1.22 2000/02/25 02:58:48 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/commands/indexcmds.c,v 1.23 2000/04/12 17:14:58 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -34,9 +34,9 @@
 #include "parser/parse_func.h"
 #include "utils/builtins.h"
 #include "utils/syscache.h"
-#include "miscadmin.h"	/* ReindexDatabase() */
-#include "utils/portal.h" /* ReindexDatabase() */
-#include "catalog/catalog.h" /* ReindexDatabase() */
+#include "miscadmin.h"			/* ReindexDatabase() */
+#include "utils/portal.h"		/* ReindexDatabase() */
+#include "catalog/catalog.h"	/* ReindexDatabase() */
 
 #define IsFuncIndex(ATTR_LIST) (((IndexElem*)lfirst(ATTR_LIST))->args != NIL)
 
@@ -45,11 +45,11 @@ static void CheckPredicate(List *predList, List *rangeTable, Oid baseRelOid);
 static void CheckPredExpr(Node *predicate, List *rangeTable, Oid baseRelOid);
 static void CheckPredClause(Expr *predicate, List *rangeTable, Oid baseRelOid);
 static void FuncIndexArgs(IndexElem *funcIndex, FuncIndexInfo *funcInfo,
-						  AttrNumber *attNumP, Oid *opOidP, Oid relId);
+			  AttrNumber *attNumP, Oid *opOidP, Oid relId);
 static void NormIndexAttrs(List *attList, AttrNumber *attNumP,
-						   Oid *opOidP, Oid relId);
+			   Oid *opOidP, Oid relId);
 static void ProcessAttrTypename(IndexElem *attribute,
-								Oid defType, int32 defTypmod);
+					Oid defType, int32 defTypmod);
 static Oid	GetAttrOpClass(IndexElem *attribute, Oid attrType);
 static char *GetDefaultOpClass(Oid atttypid);
 
@@ -133,7 +133,7 @@ DefineIndex(char *heapRelationName,
 	 */
 	foreach(pl, parameterList)
 	{
-		DefElem *param = (DefElem *) lfirst(pl);
+		DefElem    *param = (DefElem *) lfirst(pl);
 
 		if (!strcasecmp(param->defname, "islossy"))
 			lossy = TRUE;
@@ -174,7 +174,7 @@ DefineIndex(char *heapRelationName,
 		namestrcpy(&fInfo.funcName, funcIndex->name);
 
 		attributeNumberA = (AttrNumber *) palloc(nargs *
-												 sizeof attributeNumberA[0]);
+											 sizeof attributeNumberA[0]);
 
 		classObjectId = (Oid *) palloc(sizeof(Oid));
 
@@ -192,7 +192,7 @@ DefineIndex(char *heapRelationName,
 	else
 	{
 		attributeNumberA = (AttrNumber *) palloc(numberOfAttributes *
-												 sizeof attributeNumberA[0]);
+											 sizeof attributeNumberA[0]);
 
 		classObjectId = (Oid *) palloc(numberOfAttributes * sizeof(Oid));
 
@@ -490,7 +490,7 @@ NormIndexAttrs(List *attList,	/* list of IndexElem's */
 
 		atttuple = SearchSysCacheTupleCopy(ATTNAME,
 										   ObjectIdGetDatum(relId),
-										   PointerGetDatum(attribute->name),
+										PointerGetDatum(attribute->name),
 										   0, 0);
 		if (!HeapTupleIsValid(atttuple))
 			elog(ERROR, "DefineIndex: attribute \"%s\" not found",
@@ -608,7 +608,7 @@ RemoveIndex(char *name)
  *		...
  */
 void
-ReindexIndex(const char *name, bool force /* currently unused */)
+ReindexIndex(const char *name, bool force /* currently unused */ )
 {
 	HeapTuple	tuple;
 
@@ -667,28 +667,35 @@ ReindexTable(const char *name, bool force)
  *		"ERROR" if table nonexistent.
  *		...
  */
-extern Oid MyDatabaseId;
+extern Oid	MyDatabaseId;
 void
 ReindexDatabase(const char *dbname, bool force, bool all)
 {
-	Relation	relation, relationRelation;
-	HeapTuple	usertuple, dbtuple, tuple;
-	HeapScanDesc	scan;
-	int4		user_id, db_owner;
+	Relation	relation,
+				relationRelation;
+	HeapTuple	usertuple,
+				dbtuple,
+				tuple;
+	HeapScanDesc scan;
+	int4		user_id,
+				db_owner;
 	bool		superuser;
-	Oid		db_id;
-	char		*username;
-	ScanKeyData	scankey;
-	PortalVariableMemory	pmem;
-	MemoryContext	old;
-	int		relcnt, relalc, i, oncealc = 200;
-	Oid		*relids = (Oid *) NULL;
+	Oid			db_id;
+	char	   *username;
+	ScanKeyData scankey;
+	PortalVariableMemory pmem;
+	MemoryContext old;
+	int			relcnt,
+				relalc,
+				i,
+				oncealc = 200;
+	Oid		   *relids = (Oid *) NULL;
 
 	AssertArg(dbname);
 
 	username = GetPgUserName();
 	usertuple = SearchSysCacheTuple(SHADOWNAME, PointerGetDatum(username),
-				0, 0, 0);
+									0, 0, 0);
 	if (!HeapTupleIsValid(usertuple))
 		elog(ERROR, "Current user '%s' is invalid.", username);
 	user_id = ((Form_pg_shadow) GETSTRUCT(usertuple))->usesysid;
@@ -696,7 +703,7 @@ ReindexDatabase(const char *dbname, bool force, bool all)
 
 	relation = heap_openr(DatabaseRelationName, AccessShareLock);
 	ScanKeyEntryInitialize(&scankey, 0, Anum_pg_database_datname,
-			F_NAMEEQ, NameGetDatum(dbname));
+						   F_NAMEEQ, NameGetDatum(dbname));
 	scan = heap_beginscan(relation, 0, SnapshotNow, 1, &scankey);
 	dbtuple = heap_getnext(scan, 0);
 	if (!HeapTupleIsValid(dbtuple))

@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/nodes/copyfuncs.c,v 1.112 2000/04/08 00:21:15 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/nodes/copyfuncs.c,v 1.113 2000/04/12 17:15:16 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -143,7 +143,7 @@ _copyResult(Result *from)
 	 */
 	if (from->plan.subPlan != NIL)
 		newnode->plan.subPlan = nconc(newnode->plan.subPlan,
-									  pull_subplans(newnode->resconstantqual));
+								pull_subplans(newnode->resconstantqual));
 
 	return newnode;
 }
@@ -259,25 +259,25 @@ _copyIndexScan(IndexScan *from)
 	if (from->scan.plan.subPlan != NIL)
 	{
 		newnode->scan.plan.subPlan = nconc(newnode->scan.plan.subPlan,
-										   pull_subplans((Node *) newnode->indxqual));
+							  pull_subplans((Node *) newnode->indxqual));
 		newnode->scan.plan.subPlan = nconc(newnode->scan.plan.subPlan,
-										   pull_subplans((Node *) newnode->indxqualorig));
+						  pull_subplans((Node *) newnode->indxqualorig));
 	}
 
 	return newnode;
 }
 
 /* ----------------
- *              _copyTidScan
+ *				_copyTidScan
  * ----------------
  */
 static TidScan *
 _copyTidScan(TidScan *from)
 {
-	TidScan	*newnode = makeNode(TidScan);
+	TidScan    *newnode = makeNode(TidScan);
 
 	/* ----------------
- 	 *	copy node superclass fields
+	 *	copy node superclass fields
 	 * ----------------
 	 */
 	CopyPlanFields((Plan *) from, (Plan *) newnode);
@@ -292,7 +292,7 @@ _copyTidScan(TidScan *from)
 	return newnode;
 }
 
-    
+
 /* ----------------
  *		CopyJoinFields
  *
@@ -375,7 +375,7 @@ _copyMergeJoin(MergeJoin *from)
 	 */
 	if (from->join.subPlan != NIL)
 		newnode->join.subPlan = nconc(newnode->join.subPlan,
-									  pull_subplans((Node *) newnode->mergeclauses));
+						  pull_subplans((Node *) newnode->mergeclauses));
 
 	return newnode;
 }
@@ -408,7 +408,7 @@ _copyHashJoin(HashJoin *from)
 	 */
 	if (from->join.subPlan != NIL)
 		newnode->join.subPlan = nconc(newnode->join.subPlan,
-									  pull_subplans((Node *) newnode->hashclauses));
+						   pull_subplans((Node *) newnode->hashclauses));
 
 	return newnode;
 }
@@ -871,7 +871,7 @@ _copyAggref(Aggref *from)
 	newnode->usenulls = from->usenulls;
 	newnode->aggstar = from->aggstar;
 	newnode->aggdistinct = from->aggdistinct;
-	newnode->aggno = from->aggno; /* probably not needed */
+	newnode->aggno = from->aggno;		/* probably not needed */
 
 	return newnode;
 }
@@ -905,7 +905,7 @@ _copySubLink(SubLink *from)
 static RelabelType *
 _copyRelabelType(RelabelType *from)
 {
-	RelabelType    *newnode = makeNode(RelabelType);
+	RelabelType *newnode = makeNode(RelabelType);
 
 	/* ----------------
 	 *	copy remainder of node
@@ -1108,6 +1108,7 @@ _copyIndexOptInfo(IndexOptInfo *from)
 static void
 CopyPathFields(Path *from, Path *newnode)
 {
+
 	/*
 	 * Modify the next line, since it causes the copying to cycle (i.e.
 	 * the parent points right back here! -- JMH, 7/7/92. Old version:
@@ -1166,13 +1167,13 @@ _copyIndexPath(IndexPath *from)
 }
 
 /* ----------------
- *              _copyTidPath
+ *				_copyTidPath
  * ----------------
  */
 static TidPath *
 _copyTidPath(TidPath *from)
 {
-	TidPath	*newnode = makeNode(TidPath);
+	TidPath    *newnode = makeNode(TidPath);
 
 	/* ----------------
 	 *	copy the node superclass fields
@@ -1189,6 +1190,7 @@ _copyTidPath(TidPath *from)
 
 	return newnode;
 }
+
 /* ----------------
  *		CopyJoinPathFields
  *
@@ -1282,7 +1284,7 @@ _copyHashPath(HashPath *from)
 static PathKeyItem *
 _copyPathKeyItem(PathKeyItem *from)
 {
-	PathKeyItem   *newnode = makeNode(PathKeyItem);
+	PathKeyItem *newnode = makeNode(PathKeyItem);
 
 	/* ----------------
 	 *	copy remainder of node
@@ -1497,8 +1499,8 @@ _copyQuery(Query *from)
 
 	/*
 	 * We do not copy the planner internal fields: base_rel_list,
-	 * join_rel_list, equi_key_list, query_pathkeys.
-	 * Not entirely clear if this is right?
+	 * join_rel_list, equi_key_list, query_pathkeys. Not entirely clear if
+	 * this is right?
 	 */
 
 	return newnode;
@@ -1507,7 +1509,7 @@ _copyQuery(Query *from)
 static ClosePortalStmt *
 _copyClosePortalStmt(ClosePortalStmt *from)
 {
-	ClosePortalStmt	   *newnode = makeNode(ClosePortalStmt);
+	ClosePortalStmt *newnode = makeNode(ClosePortalStmt);
 
 	if (from->portalname)
 		newnode->portalname = pstrdup(from->portalname);
@@ -1518,7 +1520,7 @@ _copyClosePortalStmt(ClosePortalStmt *from)
 static TruncateStmt *
 _copyTruncateStmt(TruncateStmt *from)
 {
-	TruncateStmt	   *newnode = makeNode(TruncateStmt);
+	TruncateStmt *newnode = makeNode(TruncateStmt);
 
 	newnode->relName = pstrdup(from->relName);
 
@@ -1528,7 +1530,7 @@ _copyTruncateStmt(TruncateStmt *from)
 static NotifyStmt *
 _copyNotifyStmt(NotifyStmt *from)
 {
-	NotifyStmt	   *newnode = makeNode(NotifyStmt);
+	NotifyStmt *newnode = makeNode(NotifyStmt);
 
 	if (from->relname)
 		newnode->relname = pstrdup(from->relname);
@@ -1539,7 +1541,7 @@ _copyNotifyStmt(NotifyStmt *from)
 static ListenStmt *
 _copyListenStmt(ListenStmt *from)
 {
-	ListenStmt	   *newnode = makeNode(ListenStmt);
+	ListenStmt *newnode = makeNode(ListenStmt);
 
 	if (from->relname)
 		newnode->relname = pstrdup(from->relname);
@@ -1550,7 +1552,7 @@ _copyListenStmt(ListenStmt *from)
 static UnlistenStmt *
 _copyUnlistenStmt(UnlistenStmt *from)
 {
-	UnlistenStmt	   *newnode = makeNode(UnlistenStmt);
+	UnlistenStmt *newnode = makeNode(UnlistenStmt);
 
 	if (from->relname)
 		newnode->relname = pstrdup(from->relname);
@@ -1561,7 +1563,7 @@ _copyUnlistenStmt(UnlistenStmt *from)
 static TransactionStmt *
 _copyTransactionStmt(TransactionStmt *from)
 {
-	TransactionStmt	   *newnode = makeNode(TransactionStmt);
+	TransactionStmt *newnode = makeNode(TransactionStmt);
 
 	newnode->command = from->command;
 
@@ -1571,7 +1573,7 @@ _copyTransactionStmt(TransactionStmt *from)
 static LoadStmt *
 _copyLoadStmt(LoadStmt *from)
 {
-	LoadStmt	   *newnode = makeNode(LoadStmt);
+	LoadStmt   *newnode = makeNode(LoadStmt);
 
 	if (from->filename)
 		newnode->filename = pstrdup(from->filename);
@@ -1582,7 +1584,7 @@ _copyLoadStmt(LoadStmt *from)
 static VariableSetStmt *
 _copyVariableSetStmt(VariableSetStmt *from)
 {
-	VariableSetStmt	   *newnode = makeNode(VariableSetStmt);
+	VariableSetStmt *newnode = makeNode(VariableSetStmt);
 
 	if (from->name)
 		newnode->name = pstrdup(from->name);
@@ -1595,7 +1597,7 @@ _copyVariableSetStmt(VariableSetStmt *from)
 static VariableResetStmt *
 _copyVariableResetStmt(VariableResetStmt *from)
 {
-	VariableResetStmt	   *newnode = makeNode(VariableResetStmt);
+	VariableResetStmt *newnode = makeNode(VariableResetStmt);
 
 	if (from->name)
 		newnode->name = pstrdup(from->name);
@@ -1606,7 +1608,7 @@ _copyVariableResetStmt(VariableResetStmt *from)
 static LockStmt *
 _copyLockStmt(LockStmt *from)
 {
-	LockStmt	   *newnode = makeNode(LockStmt);
+	LockStmt   *newnode = makeNode(LockStmt);
 
 	if (from->relname)
 		newnode->relname = pstrdup(from->relname);

@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/optimizer/path/allpaths.c,v 1.59 2000/02/15 20:49:16 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/optimizer/path/allpaths.c,v 1.60 2000/04/12 17:15:19 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -24,8 +24,10 @@
 
 #ifdef GEQO
 bool		enable_geqo = true;
+
 #else
 bool		enable_geqo = false;
+
 #endif
 
 int			geqo_rels = GEQO_RELS;
@@ -36,6 +38,7 @@ static RelOptInfo *make_one_rel_by_joins(Query *root, int levels_needed);
 
 #ifdef OPTIMIZER_DEBUG
 static void debug_print_rel(Query *root, RelOptInfo *rel);
+
 #endif
 
 
@@ -64,6 +67,7 @@ make_one_rel(Query *root)
 
 	if (levels_needed == 1)
 	{
+
 		/*
 		 * Single relation, no more processing is required.
 		 */
@@ -71,6 +75,7 @@ make_one_rel(Query *root)
 	}
 	else
 	{
+
 		/*
 		 * Generate join tree.
 		 */
@@ -100,8 +105,8 @@ set_base_rel_pathlist(Query *root)
 		/*
 		 * Generate paths and add them to the rel's pathlist.
 		 *
-		 * Note: add_path() will discard any paths that are dominated
-		 * by another available path, keeping only those paths that are
+		 * Note: add_path() will discard any paths that are dominated by
+		 * another available path, keeping only those paths that are
 		 * superior along at least one dimension of cost or sortedness.
 		 */
 
@@ -116,9 +121,10 @@ set_base_rel_pathlist(Query *root)
 						   rel->baserestrictinfo,
 						   rel->joininfo);
 
-		/* Note: create_or_index_paths depends on create_index_paths
-		 * to have marked OR restriction clauses with relevant indices;
-		 * this is why it doesn't need to be given the list of indices.
+		/*
+		 * Note: create_or_index_paths depends on create_index_paths to
+		 * have marked OR restriction clauses with relevant indices; this
+		 * is why it doesn't need to be given the list of indices.
 		 */
 		create_or_index_paths(root, rel, rel->baserestrictinfo);
 
@@ -153,11 +159,11 @@ make_one_rel_by_joins(Query *root, int levels_needed)
 		return geqo(root);
 
 	/*
-	 * We employ a simple "dynamic programming" algorithm: we first
-	 * find all ways to build joins of two base relations, then all ways
-	 * to build joins of three base relations (from two-base-rel joins
-	 * and other base rels), then four-base-rel joins, and so on until
-	 * we have considered all ways to join all N relations into one rel.
+	 * We employ a simple "dynamic programming" algorithm: we first find
+	 * all ways to build joins of two base relations, then all ways to
+	 * build joins of three base relations (from two-base-rel joins and
+	 * other base rels), then four-base-rel joins, and so on until we have
+	 * considered all ways to join all N relations into one rel.
 	 */
 
 	for (lev = 2; lev <= levels_needed; lev++)
@@ -185,9 +191,10 @@ make_one_rel_by_joins(Query *root, int levels_needed)
 			rel = (RelOptInfo *) lfirst(x);
 
 #ifdef NOT_USED
+
 			/*
-			 * * for each expensive predicate in each path in each distinct
-			 * rel, * consider doing pullup  -- JMH
+			 * * for each expensive predicate in each path in each
+			 * distinct rel, * consider doing pullup  -- JMH
 			 */
 			if (XfuncMode != XFUNC_NOPULL && XfuncMode != XFUNC_OFF)
 				xfunc_trypullup(rel);

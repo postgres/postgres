@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2000, PostgreSQL, Inc
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Id: lock.h,v 1.36 2000/01/26 05:58:33 momjian Exp $
+ * $Id: lock.h,v 1.37 2000/04/12 17:16:51 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -32,7 +32,7 @@ typedef int LOCKMASK;
  * See LockShmemSize() in lock.c.
  *
  * NLOCKS_PER_XACT - The number of unique locks acquired in a transaction
- *                   (should be configurable!)
+ *					 (should be configurable!)
  * NLOCKENTS - The maximum number of lock entries in the lock table.
  * ----------------------
  */
@@ -62,19 +62,21 @@ typedef int LOCKMETHOD;
 
 typedef struct LTAG
 {
-	Oid				relId;
-	Oid				dbId;
+	Oid			relId;
+	Oid			dbId;
 	union
 	{
-		BlockNumber		blkno;
-		TransactionId	xid;
-	}				objId;
-	/* 
-	 * offnum should be part of objId.tupleId above, but would increase 
-	 * sizeof(LOCKTAG) and so moved here; currently used by userlocks only.
+		BlockNumber blkno;
+		TransactionId xid;
+	}			objId;
+
+	/*
+	 * offnum should be part of objId.tupleId above, but would increase
+	 * sizeof(LOCKTAG) and so moved here; currently used by userlocks
+	 * only.
 	 */
-	OffsetNumber	offnum;
-	uint16			lockmethod;		/* needed by userlocks */
+	OffsetNumber offnum;
+	uint16		lockmethod;		/* needed by userlocks */
 } LOCKTAG;
 
 #define TAGSIZE (sizeof(LOCKTAG))

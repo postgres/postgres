@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2000, PostgreSQL, Inc
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Id: plannodes.h,v 1.38 2000/02/15 20:49:25 tgl Exp $
+ * $Id: plannodes.h,v 1.39 2000/04/12 17:16:40 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -66,10 +66,13 @@ typedef struct Plan
 	NodeTag		type;
 
 	/* estimated execution costs for plan (see costsize.c for more info) */
-	Cost		startup_cost;	/* cost expended before fetching any tuples */
-	Cost		total_cost;		/* total cost (assuming all tuples fetched) */
+	Cost		startup_cost;	/* cost expended before fetching any
+								 * tuples */
+	Cost		total_cost;		/* total cost (assuming all tuples
+								 * fetched) */
 
-	/* planner's estimate of result size (note: LIMIT, if any, is not
+	/*
+	 * planner's estimate of result size (note: LIMIT, if any, is not
 	 * considered in setting plan_rows)
 	 */
 	double		plan_rows;		/* number of rows plan is expected to emit */
@@ -183,12 +186,12 @@ typedef struct IndexScan
 	List	   *indxid;
 	List	   *indxqual;
 	List	   *indxqualorig;
-	ScanDirection	indxorderdir;
+	ScanDirection indxorderdir;
 	IndexScanState *indxstate;
 } IndexScan;
 
 /* ----------------
- *              tid scan node
+ *				tid scan node
  * ----------------
  */
 typedef struct TidScan
@@ -199,7 +202,7 @@ typedef struct TidScan
 	TidScanState *tidstate;
 } TidScan;
 
-/* 
+/*
  * ==========
  * Join nodes
  * ==========
@@ -319,7 +322,8 @@ typedef struct Unique
 	Plan		plan;			/* noname node flattened out */
 	Oid			nonameid;
 	int			keycount;
-	int			numCols;		/* number of columns to check for uniqueness */
+	int			numCols;		/* number of columns to check for
+								 * uniqueness */
 	AttrNumber *uniqColIdx;		/* indexes into the target list */
 	UniqueState *uniquestate;
 } Unique;
@@ -375,10 +379,13 @@ typedef struct SubPlan
 	List	   *setParam;		/* non-correlated EXPR & EXISTS subqueries
 								 * have to set some Params for paren Plan */
 	List	   *parParam;		/* indices of corr. Vars from parent plan */
-	SubLink    *sublink;		/* SubLink node from parser; holds info about
-								 * what to do with subselect's results */
+	SubLink    *sublink;		/* SubLink node from parser; holds info
+								 * about what to do with subselect's
+								 * results */
+
 	/*
-	 * Remaining fields are working state for executor; not used in planning
+	 * Remaining fields are working state for executor; not used in
+	 * planning
 	 */
 	bool		shutdown;		/* TRUE = need to shutdown plan */
 	HeapTuple	curTuple;		/* copy of most recent tuple from subplan */

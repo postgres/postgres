@@ -3,7 +3,7 @@
  *
  * Copyright 2000 by PostgreSQL Global Development Group
  *
- * $Header: /cvsroot/pgsql/src/bin/psql/input.c,v 1.12 2000/02/20 14:28:20 petere Exp $
+ * $Header: /cvsroot/pgsql/src/bin/psql/input.c,v 1.13 2000/04/12 17:16:22 momjian Exp $
  */
 #include "postgres.h"
 #include "input.h"
@@ -37,9 +37,11 @@ char *
 gets_interactive(char *prompt)
 {
 	char	   *s;
+
 #ifdef USE_HISTORY
-    const char *var;
-    static char * prev_hist = NULL;
+	const char *var;
+	static char *prev_hist = NULL;
+
 #endif
 
 #ifdef USE_READLINE
@@ -56,19 +58,19 @@ gets_interactive(char *prompt)
 #endif
 
 #ifdef USE_HISTORY
-    if (useHistory && s && s[0] != '\0')
-    {
-        var = GetVariable(pset.vars, "HISTCONTROL");
-        if (!var || (var
-            && !((strcmp(var, "ignorespace") == 0 || strcmp(var, "ignoreboth") ==0) && s[0] == ' ' )
-            && !((strcmp(var, "ignoredups") == 0 || strcmp(var, "ignoreboth") ==0) && prev_hist && strcmp(s, prev_hist) == 0)
-            ))
-        {
-            free(prev_hist);
-            prev_hist = strdup(s);
-            add_history(s);
-        }
-    }
+	if (useHistory && s && s[0] != '\0')
+	{
+		var = GetVariable(pset.vars, "HISTCONTROL");
+		if (!var || (var
+					 && !((strcmp(var, "ignorespace") == 0 || strcmp(var, "ignoreboth") == 0) && s[0] == ' ')
+					 && !((strcmp(var, "ignoredups") == 0 || strcmp(var, "ignoreboth") == 0) && prev_hist && strcmp(s, prev_hist) == 0)
+					 ))
+		{
+			free(prev_hist);
+			prev_hist = strdup(s);
+			add_history(s);
+		}
+	}
 #endif
 
 	return s;
@@ -122,7 +124,7 @@ initializeInput(int flags)
 	if (flags == 1)
 	{
 		useReadline = true;
-        initialize_readline();
+		initialize_readline();
 	}
 #endif
 
@@ -132,7 +134,7 @@ initializeInput(int flags)
 		const char *home;
 
 		useHistory = true;
-        SetVariable(pset.vars, "HISTSIZE", "500");
+		SetVariable(pset.vars, "HISTSIZE", "500");
 		using_history();
 		home = getenv("HOME");
 		if (home)
@@ -149,7 +151,7 @@ initializeInput(int flags)
 	}
 #endif
 
-    atexit(finishInput);
+	atexit(finishInput);
 }
 
 
@@ -191,9 +193,10 @@ finishInput(void)
 			psql_history = (char *) malloc(strlen(home) + 20);
 			if (psql_history)
 			{
-                const char * var = GetVariable(pset.vars, "HISTSIZE");
-                if (var)
-                    stifle_history(atoi(var));
+				const char *var = GetVariable(pset.vars, "HISTSIZE");
+
+				if (var)
+					stifle_history(atoi(var));
 				sprintf(psql_history, "%s/.psql_history", home);
 				write_history(psql_history);
 				free(psql_history);

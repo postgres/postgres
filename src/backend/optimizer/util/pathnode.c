@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/optimizer/util/pathnode.c,v 1.62 2000/03/22 22:08:35 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/optimizer/util/pathnode.c,v 1.63 2000/04/12 17:15:24 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -42,6 +42,7 @@ compare_path_costs(Path *path1, Path *path2, CostSelector criterion)
 			return -1;
 		if (path1->startup_cost > path2->startup_cost)
 			return +1;
+
 		/*
 		 * If paths have the same startup cost (not at all unlikely),
 		 * order them by total cost.
@@ -57,6 +58,7 @@ compare_path_costs(Path *path1, Path *path2, CostSelector criterion)
 			return -1;
 		if (path1->total_cost > path2->total_cost)
 			return +1;
+
 		/*
 		 * If paths have the same total cost, order them by startup cost.
 		 */
@@ -172,7 +174,8 @@ set_cheapest(RelOptInfo *parent_rel)
 void
 add_path(RelOptInfo *parent_rel, Path *new_path)
 {
-	bool		accept_new = true; /* unless we find a superior old path */
+	bool		accept_new = true;		/* unless we find a superior old
+										 * path */
 	List	   *p1_prev = NIL;
 	List	   *p1;
 
@@ -184,36 +187,39 @@ add_path(RelOptInfo *parent_rel, Path *new_path)
 	foreach(p1, parent_rel->pathlist)
 	{
 		Path	   *old_path = (Path *) lfirst(p1);
-		bool		remove_old = false;	/* unless new proves superior */
+		bool		remove_old = false; /* unless new proves superior */
 		int			costcmp;
 
 		costcmp = compare_path_costs(new_path, old_path, TOTAL_COST);
+
 		/*
-		 * If the two paths compare differently for startup and total cost,
-		 * then we want to keep both, and we can skip the (much slower)
-		 * comparison of pathkeys.  If they compare the same, proceed with
-		 * the pathkeys comparison.  Note this test relies on the fact that
-		 * compare_path_costs will only return 0 if both costs are equal
-		 * (and, therefore, there's no need to call it twice in that case).
+		 * If the two paths compare differently for startup and total
+		 * cost, then we want to keep both, and we can skip the (much
+		 * slower) comparison of pathkeys.	If they compare the same,
+		 * proceed with the pathkeys comparison.  Note this test relies on
+		 * the fact that compare_path_costs will only return 0 if both
+		 * costs are equal (and, therefore, there's no need to call it
+		 * twice in that case).
 		 */
 		if (costcmp == 0 ||
-			costcmp == compare_path_costs(new_path, old_path, STARTUP_COST))
+		 costcmp == compare_path_costs(new_path, old_path, STARTUP_COST))
 		{
 			switch (compare_pathkeys(new_path->pathkeys, old_path->pathkeys))
 			{
 				case PATHKEYS_EQUAL:
 					if (costcmp < 0)
-						remove_old = true; /* new dominates old */
+						remove_old = true;		/* new dominates old */
 					else
-						accept_new = false;	/* old equals or dominates new */
+						accept_new = false;		/* old equals or dominates
+												 * new */
 					break;
 				case PATHKEYS_BETTER1:
 					if (costcmp <= 0)
-						remove_old = true; /* new dominates old */
+						remove_old = true;		/* new dominates old */
 					break;
 				case PATHKEYS_BETTER2:
 					if (costcmp >= 0)
-						accept_new = false;	/* old dominates new */
+						accept_new = false;		/* old dominates new */
 					break;
 				case PATHKEYS_DIFFERENT:
 					/* keep both paths, since they have different ordering */
@@ -241,7 +247,7 @@ add_path(RelOptInfo *parent_rel, Path *new_path)
 		 * scanning the pathlist; we will not add new_path, and we assume
 		 * new_path cannot dominate any other elements of the pathlist.
 		 */
-		if (! accept_new)
+		if (!accept_new)
 			break;
 	}
 
@@ -315,12 +321,14 @@ create_index_path(Query *root,
 	if (pathnode->path.pathkeys == NIL)
 	{
 		/* No ordering available from index, is that OK? */
-		if (! ScanDirectionIsNoMovement(indexscandir))
+		if (!ScanDirectionIsNoMovement(indexscandir))
 			elog(ERROR, "create_index_path: failed to create ordered index scan");
 	}
 	else
 	{
-		/* The index is ordered, and build_index_pathkeys defaulted to
+
+		/*
+		 * The index is ordered, and build_index_pathkeys defaulted to
 		 * forward scan, so make sure we mark the pathnode properly.
 		 */
 		if (ScanDirectionIsNoMovement(indexscandir))
@@ -341,11 +349,11 @@ create_index_path(Query *root,
 	pathnode->indexscandir = indexscandir;
 
 	/*
-	 * This routine is only used to generate "standalone" indexpaths,
-	 * not nestloop inner indexpaths.  So joinrelids is always NIL
-	 * and the number of rows is the same as the parent rel's estimate.
+	 * This routine is only used to generate "standalone" indexpaths, not
+	 * nestloop inner indexpaths.  So joinrelids is always NIL and the
+	 * number of rows is the same as the parent rel's estimate.
 	 */
-	pathnode->joinrelids = NIL;	/* no join clauses here */
+	pathnode->joinrelids = NIL; /* no join clauses here */
 	pathnode->rows = rel->rows;
 
 	cost_index(&pathnode->path, root, rel, index, indexquals, false);
@@ -359,20 +367,23 @@ create_index_path(Query *root,
  *	  pathnode.
  *
  */
-TidPath *
+TidPath    *
 create_tidscan_path(RelOptInfo *rel, List *tideval)
 {
-	TidPath	*pathnode = makeNode(TidPath);
+	TidPath    *pathnode = makeNode(TidPath);
 
 	pathnode->path.pathtype = T_TidScan;
 	pathnode->path.parent = rel;
 	pathnode->path.pathkeys = NIL;
-	pathnode->tideval = copyObject(tideval); /* is copy really necessary? */
+	pathnode->tideval = copyObject(tideval);	/* is copy really
+												 * necessary? */
 	pathnode->unjoined_relids = NIL;
 
 	cost_tidscan(&pathnode->path, rel, tideval);
-	/* divide selectivity for each clause to get an equal selectivity
-	 * as IndexScan does OK ? 
+
+	/*
+	 * divide selectivity for each clause to get an equal selectivity as
+	 * IndexScan does OK ?
 	 */
 
 	return pathnode;
@@ -485,7 +496,7 @@ create_mergejoin_path(RelOptInfo *joinrel,
  * 'innerdisbursion' is an estimate of the disbursion of the inner hash key
  *
  */
-HashPath *
+HashPath   *
 create_hashjoin_path(RelOptInfo *joinrel,
 					 Path *outer_path,
 					 Path *inner_path,

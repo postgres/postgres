@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/interfaces/libpq/fe-connect.c,v 1.125 2000/03/24 01:39:55 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/interfaces/libpq/fe-connect.c,v 1.126 2000/04/12 17:17:14 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -46,18 +46,23 @@
 #endif
 
 #ifdef WIN32
-static int inet_aton(const char *cp, struct in_addr *inp) {
+static int
+inet_aton(const char *cp, struct in_addr * inp)
+{
 	unsigned long a = inet_addr(cp);
+
 	if (a == -1)
 		return 0;
-	inp->s_addr = a;	
+	inp->s_addr = a;
 	return 1;
 }
+
 #endif
 
 
 #ifdef USE_SSL
 static SSL_CTX *SSL_context = NULL;
+
 #endif
 
 #define NOTIFYLIST_INITIAL_SIZE 10
@@ -85,15 +90,17 @@ static SSL_CTX *SSL_context = NULL;
  *
  * PQconninfoOptions[] is a constant static array that we use to initialize
  * a dynamically allocated working copy.  All the "val" fields in
- * PQconninfoOptions[] *must* be NULL.  In a working copy, non-null "val"
+ * PQconninfoOptions[] *must* be NULL.	In a working copy, non-null "val"
  * fields point to malloc'd strings that should be freed when the working
  * array is freed (see PQconninfoFree).
  * ----------
  */
 static const PQconninfoOption PQconninfoOptions[] = {
-	/* "authtype" is no longer used, so mark it "don't show".  We keep it
-	 * in the array so as not to reject conninfo strings from old apps that
-	 * might still try to set it.
+
+	/*
+	 * "authtype" is no longer used, so mark it "don't show".  We keep it
+	 * in the array so as not to reject conninfo strings from old apps
+	 * that might still try to set it.
 	 */
 	{"authtype", "PGAUTHTYPE", DefaultAuthtype, NULL,
 	"Database-Authtype", "D", 20},
@@ -111,7 +118,8 @@ static const PQconninfoOption PQconninfoOptions[] = {
 	"Database-Host", "", 40},
 
 	{"hostaddr", "PGHOSTADDR", NULL, NULL,
-	 "Database-Host-IPv4-Address", "", 15}, /* Room for abc.def.ghi.jkl */
+	"Database-Host-IPv4-Address", "", 15},		/* Room for
+												 * abc.def.ghi.jkl */
 
 	{"port", "PGPORT", DEF_PGPORT, NULL,
 	"Database-Port", "", 6},
@@ -156,22 +164,22 @@ static const struct EnvironmentOptions
 };
 
 
-static int connectDBStart(PGconn *conn);
-static int connectDBComplete(PGconn *conn);
+static int	connectDBStart(PGconn *conn);
+static int	connectDBComplete(PGconn *conn);
 static bool PQsetenvStart(PGconn *conn);
 static PostgresPollingStatusType PQsetenvPoll(PGconn *conn);
 static PGconn *makeEmptyPGconn(void);
 static void freePGconn(PGconn *conn);
 static void closePGconn(PGconn *conn);
 static PQconninfoOption *conninfo_parse(const char *conninfo,
-										PQExpBuffer errorMessage);
+			   PQExpBuffer errorMessage);
 static char *conninfo_getval(PQconninfoOption *connOptions,
-							 const char *keyword);
+				const char *keyword);
 static void defaultNoticeProcessor(void *arg, const char *message);
 
 
 /* ----------------
- *      Connecting to a Database
+ *		Connecting to a Database
  *
  * There are now four different ways a user of this API can connect to the
  * database.  Two are not recommended for use in new code, because of their
@@ -187,7 +195,7 @@ static void defaultNoticeProcessor(void *arg, const char *message);
  *
  * Internally, the static functions connectDBStart, connectDBComplete
  * are part of the connection procedure.
- * 
+ *
  * ----------------
  */
 
@@ -218,7 +226,7 @@ static void defaultNoticeProcessor(void *arg, const char *message);
 PGconn *
 PQconnectdb(const char *conninfo)
 {
-	PGconn *conn = PQconnectStart(conninfo);
+	PGconn	   *conn = PQconnectStart(conninfo);
 
 	if (conn && conn->status != CONNECTION_BAD)
 		(void) connectDBComplete(conn);
@@ -235,7 +243,7 @@ PQconnectdb(const char *conninfo)
  * See comment for PQconnectdb for the definition of the string format.
  *
  * Returns a PGconn*.  If NULL is returned, a malloc error has occurred, and
- * you should not attempt to proceed with this connection.  If the status
+ * you should not attempt to proceed with this connection.	If the status
  * field of the connection returned is CONNECTION_BAD, an error has
  * occurred. In this case you should call PQfinish on the result, (perhaps
  * inspecting the error message first).  Other fields of the structure may not
@@ -258,7 +266,7 @@ PQconnectStart(const char *conninfo)
 	 * Allocate memory for the conn structure
 	 * ----------
 	 */
-	
+
 	conn = makeEmptyPGconn();
 	if (conn == NULL)
 		return (PGconn *) NULL;
@@ -324,7 +332,7 @@ PQconnectStart(const char *conninfo)
  * and their current default values.
  *
  * NOTE: as of PostgreSQL 7.0, the returned array is dynamically allocated
- * and should be freed when no longer needed via PQconninfoFree().  (In prior
+ * and should be freed when no longer needed via PQconninfoFree().	(In prior
  * versions, the returned array was static, but that's not thread-safe.)
  * Pre-7.0 applications that use this function will see a small memory leak
  * until they are updated to call PQconninfoFree.
@@ -333,7 +341,7 @@ PQconnectStart(const char *conninfo)
 PQconninfoOption *
 PQconndefaults(void)
 {
-	PQExpBufferData  errorBuf;
+	PQExpBufferData errorBuf;
 	PQconninfoOption *connOptions;
 
 	initPQExpBuffer(&errorBuf);
@@ -388,7 +396,8 @@ PQsetdbLogin(const char *pghost, const char *pgport, const char *pgoptions,
 			 const char *pwd)
 {
 	PGconn	   *conn;
-	char	   *tmp;	/* An error message from some service we call. */
+	char	   *tmp;			/* An error message from some service we
+								 * call. */
 	bool		error = FALSE;	/* We encountered an error. */
 
 	conn = makeEmptyPGconn();
@@ -466,15 +475,13 @@ PQsetdbLogin(const char *pghost, const char *pgport, const char *pgoptions,
 		conn->dbName = strdup(dbName);
 
 	if (error)
-	{
 		conn->status = CONNECTION_BAD;
-	}
 	else
 	{
 		if (connectDBStart(conn))
 			(void) connectDBComplete(conn);
 	}
-		
+
 	return conn;
 }
 
@@ -595,12 +602,13 @@ connectMakeNonblocking(PGconn *conn)
 #ifndef WIN32
 	if (fcntl(conn->sock, F_SETFL, O_NONBLOCK) < 0)
 #else
-	int on = 1;
+	int			on = 1;
+
 	if (ioctlsocket(conn->sock, FIONBIO, &on) != 0)
 #endif
 	{
 		printfPQExpBuffer(&conn->errorMessage,
-						  "connectMakeNonblocking -- fcntl() failed: errno=%d\n%s\n",
+			  "connectMakeNonblocking -- fcntl() failed: errno=%d\n%s\n",
 						  errno, strerror(errno));
 		return 0;
 	}
@@ -637,7 +645,7 @@ connectNoDelay(PGconn *conn)
 				   sizeof(on)) < 0)
 	{
 		printfPQExpBuffer(&conn->errorMessage,
-						  "connectNoDelay() -- setsockopt failed: errno=%d\n%s\n",
+				 "connectNoDelay() -- setsockopt failed: errno=%d\n%s\n",
 						  errno, strerror(errno));
 #ifdef WIN32
 		printf("Winsock error: %i\n", WSAGetLastError());
@@ -661,13 +669,16 @@ connectDBStart(PGconn *conn)
 {
 	int			portno,
 				family;
+
 #ifdef USE_SSL
-	StartupPacket           np; /* Used to negotiate SSL connection */
-	char                    SSLok;
+	StartupPacket np;			/* Used to negotiate SSL connection */
+	char		SSLok;
+
 #endif
 
 	if (!conn)
 		return 0;
+
 	/*
 	 * parse dbName to get all additional info in it, if any
 	 */
@@ -679,8 +690,8 @@ connectDBStart(PGconn *conn)
 	conn->outCount = 0;
 
 	/*
-	 * Set up the connection to postmaster/backend.
-	 * Note that this supports IPv4 and UDP only.
+	 * Set up the connection to postmaster/backend. Note that this
+	 * supports IPv4 and UDP only.
 	 */
 
 	MemSet((char *) &conn->raddr, 0, sizeof(conn->raddr));
@@ -691,11 +702,11 @@ connectDBStart(PGconn *conn)
 		/* Note that this supports IPv4 only */
 		struct in_addr addr;
 
-		if(!inet_aton(conn->pghostaddr, &addr))
+		if (!inet_aton(conn->pghostaddr, &addr))
 		{
 			printfPQExpBuffer(&conn->errorMessage,
 							  "connectDBStart() -- "
-							  "invalid host address: %s\n", conn->pghostaddr);
+						 "invalid host address: %s\n", conn->pghostaddr);
 			goto connect_errReturn;
 		}
 
@@ -713,7 +724,7 @@ connectDBStart(PGconn *conn)
 		if ((hp == NULL) || (hp->h_addrtype != AF_INET))
 		{
 			printfPQExpBuffer(&conn->errorMessage,
-							  "connectDBStart() --  unknown hostname: %s\n",
+						   "connectDBStart() --  unknown hostname: %s\n",
 							  conn->pghost);
 			goto connect_errReturn;
 		}
@@ -740,8 +751,8 @@ connectDBStart(PGconn *conn)
 		conn->raddr_len = sizeof(struct sockaddr_in);
 	}
 #if !defined(WIN32) && !defined(__CYGWIN32__)
-		else
-			conn->raddr_len = UNIXSOCK_PATH(conn->raddr.un, portno);
+	else
+		conn->raddr_len = UNIXSOCK_PATH(conn->raddr.un, portno);
 #endif
 
 
@@ -775,82 +786,91 @@ connectDBStart(PGconn *conn)
 	 * WIN32_NON_BLOCKING_CONNECTIONS before compilation.  If it works, then
 	 * this code can be cleaned up.
 	 *
-	 *   Ewan Mellor <eem21@cam.ac.uk>.
+	 *	 Ewan Mellor <eem21@cam.ac.uk>.
 	 * ---------- */
 #if (!defined(WIN32) || defined(WIN32_NON_BLOCKING_CONNECTIONS)) && !defined(USE_SSL)
 	if (connectMakeNonblocking(conn) == 0)
 		goto connect_errReturn;
-#endif	
+#endif
 
 #ifdef USE_SSL
-	/* This needs to be done before we set into nonblocking, since SSL
-	 * negotiation does not like that mode */
+
+	/*
+	 * This needs to be done before we set into nonblocking, since SSL
+	 * negotiation does not like that mode
+	 */
 
 	/* Attempt to negotiate SSL usage */
-	if (conn->allow_ssl_try) {
-	  memset((char *)&np, 0, sizeof(np));
-	  np.protoVersion = htonl(NEGOTIATE_SSL_CODE);
-	  if (pqPacketSend(conn, (char *) &np, sizeof(StartupPacket)) != STATUS_OK)
-	    {
-	      sprintf(conn->errorMessage,
-		      "connectDB() -- couldn't send SSL negotiation packet: errno=%d\n%s\n",
-		      errno, strerror(errno));
-	      goto connect_errReturn;
-	    }
-	  /* Now receive the postmasters response */
-	  if (recv(conn->sock, &SSLok, 1, 0) != 1) {
-	    sprintf(conn->errorMessage, "PQconnectDB() -- couldn't read postmaster response: errno=%d\n%s\n",
-		    errno, strerror(errno));
-	    goto connect_errReturn;
-	  }
-	  if (SSLok == 'S') {
-	    if (!SSL_context) 
-	      {
-		SSL_load_error_strings();
-		SSL_library_init();
-		SSL_context = SSL_CTX_new(SSLv23_method());
-		if (!SSL_context) {
-		  sprintf(conn->errorMessage,
-			  "connectDB() -- couldn't create SSL context: %s\n",
-			  ERR_reason_error_string(ERR_get_error()));
-		  goto connect_errReturn;
+	if (conn->allow_ssl_try)
+	{
+		memset((char *) &np, 0, sizeof(np));
+		np.protoVersion = htonl(NEGOTIATE_SSL_CODE);
+		if (pqPacketSend(conn, (char *) &np, sizeof(StartupPacket)) != STATUS_OK)
+		{
+			sprintf(conn->errorMessage,
+					"connectDB() -- couldn't send SSL negotiation packet: errno=%d\n%s\n",
+					errno, strerror(errno));
+			goto connect_errReturn;
 		}
-	      }
-	    if (!(conn->ssl = SSL_new(SSL_context)) ||
-		!SSL_set_fd(conn->ssl, conn->sock) ||
-		SSL_connect(conn->ssl) <= 0) 
-	      {
-		sprintf(conn->errorMessage,
-			"connectDB() -- couldn't establish SSL connection: %s\n",
-			ERR_reason_error_string(ERR_get_error()));
-		goto connect_errReturn;
-	      }
-	    /* SSL connection finished. Continue to send startup packet */
-	  }
-	  else if (SSLok == 'E') {
-	    /* Received error - probably protocol mismatch */
-	    if (conn->Pfdebug)
-	      fprintf(conn->Pfdebug, "Postmaster reports error, attempting fallback to pre-6.6.\n");
-	    close(conn->sock);
-	    conn->allow_ssl_try = FALSE;
-	    return connectDBStart(conn);
-	  }
-	  else if (SSLok != 'N') {
-	    strcpy(conn->errorMessage,
-		   "Received invalid negotiation response.\n");
-	    goto connect_errReturn;
-	  }
+		/* Now receive the postmasters response */
+		if (recv(conn->sock, &SSLok, 1, 0) != 1)
+		{
+			sprintf(conn->errorMessage, "PQconnectDB() -- couldn't read postmaster response: errno=%d\n%s\n",
+					errno, strerror(errno));
+			goto connect_errReturn;
+		}
+		if (SSLok == 'S')
+		{
+			if (!SSL_context)
+			{
+				SSL_load_error_strings();
+				SSL_library_init();
+				SSL_context = SSL_CTX_new(SSLv23_method());
+				if (!SSL_context)
+				{
+					sprintf(conn->errorMessage,
+					  "connectDB() -- couldn't create SSL context: %s\n",
+							ERR_reason_error_string(ERR_get_error()));
+					goto connect_errReturn;
+				}
+			}
+			if (!(conn->ssl = SSL_new(SSL_context)) ||
+				!SSL_set_fd(conn->ssl, conn->sock) ||
+				SSL_connect(conn->ssl) <= 0)
+			{
+				sprintf(conn->errorMessage,
+				"connectDB() -- couldn't establish SSL connection: %s\n",
+						ERR_reason_error_string(ERR_get_error()));
+				goto connect_errReturn;
+			}
+			/* SSL connection finished. Continue to send startup packet */
+		}
+		else if (SSLok == 'E')
+		{
+			/* Received error - probably protocol mismatch */
+			if (conn->Pfdebug)
+				fprintf(conn->Pfdebug, "Postmaster reports error, attempting fallback to pre-6.6.\n");
+			close(conn->sock);
+			conn->allow_ssl_try = FALSE;
+			return connectDBStart(conn);
+		}
+		else if (SSLok != 'N')
+		{
+			strcpy(conn->errorMessage,
+				   "Received invalid negotiation response.\n");
+			goto connect_errReturn;
+		}
 	}
 #endif
 
 	/* ----------
-     * Start / make connection.  We are hopefully in non-blocking mode
+	 * Start / make connection.  We are hopefully in non-blocking mode
 	 * now, but it is possible that:
-	 *   1. Older systems will still block on connect, despite the
-	 *      non-blocking flag. (Anyone know if this is true?)
-	 *   2. We are running under Windows, and aren't even trying
-	 *      to be non-blocking (see above).
-	 *   3. We are using SSL.
+	 *	 1. Older systems will still block on connect, despite the
+	 *		non-blocking flag. (Anyone know if this is true?)
+	 *	 2. We are running under Windows, and aren't even trying
+	 *		to be non-blocking (see above).
+	 *	 3. We are using SSL.
 	 * Thus, we have make arrangements for all eventualities.
 	 * ----------
 	 */
@@ -862,8 +882,11 @@ connectDBStart(PGconn *conn)
 		if (WSAGetLastError() == WSAEINPROGRESS)
 #endif
 		{
-			/* This is fine - we're in non-blocking mode, and the
-			 * connection is in progress. */
+
+			/*
+			 * This is fine - we're in non-blocking mode, and the
+			 * connection is in progress.
+			 */
 			conn->status = CONNECTION_STARTED;
 		}
 		else
@@ -888,12 +911,14 @@ connectDBStart(PGconn *conn)
 		conn->status = CONNECTION_MADE;
 	}
 
-	/* This makes the connection non-blocking, for all those cases which forced us
-	   not to do it above. */
+	/*
+	 * This makes the connection non-blocking, for all those cases which
+	 * forced us not to do it above.
+	 */
 #if (defined(WIN32) && !defined(WIN32_NON_BLOCKING_CONNECTIONS)) || defined(USE_SSL)
 	if (connectMakeNonblocking(conn) == 0)
 		goto connect_errReturn;
-#endif	
+#endif
 
 	return 1;
 
@@ -929,10 +954,13 @@ connectDBComplete(PGconn *conn)
 	if (conn == NULL || conn->status == CONNECTION_BAD)
 		return 0;
 
-	for (;;) {
+	for (;;)
+	{
+
 		/*
-		 * Wait, if necessary.  Note that the initial state (just after
-		 * PQconnectStart) is to wait for the socket to select for writing.
+		 * Wait, if necessary.	Note that the initial state (just after
+		 * PQconnectStart) is to wait for the socket to select for
+		 * writing.
 		 */
 		switch (flag)
 		{
@@ -941,7 +969,7 @@ connectDBComplete(PGconn *conn)
 
 			case PGRES_POLLING_OK:
 				return 1;		/* success! */
-				
+
 			case PGRES_POLLING_READING:
 				if (pqWait(1, 0, conn))
 				{
@@ -963,6 +991,7 @@ connectDBComplete(PGconn *conn)
 				conn->status = CONNECTION_BAD;
 				return 0;
 		}
+
 		/*
 		 * Now try to advance the state machine.
 		 */
@@ -977,23 +1006,23 @@ connectDBComplete(PGconn *conn)
  *
  * Returns a PostgresPollingStatusType.
  * Before calling this function, use select(2) to determine when data arrive.
- * 
+ *
  * You must call PQfinish whether or not this fails.
  *
  * This function and PQconnectStart are intended to allow connections to be
  * made without blocking the execution of your program on remote I/O. However,
  * there are a number of caveats:
  *
- *   o  If you call PQtrace, ensure that the stream object into which you trace
- *      will not block.
- *   o  If you do not supply an IP address for the remote host (i.e. you 
- *      supply a host name instead) then this function will block on
- *      gethostbyname.  You will be fine if using Unix sockets (i.e. by
- *      supplying neither a host name nor a host address).
- *   o  If your backend wants to use Kerberos authentication then you must
- *      supply both a host name and a host address, otherwise this function
- *      may block on gethostname.
- *   o  This function will block if compiled with USE_SSL.
+ *	 o	If you call PQtrace, ensure that the stream object into which you trace
+ *		will not block.
+ *	 o	If you do not supply an IP address for the remote host (i.e. you
+ *		supply a host name instead) then this function will block on
+ *		gethostbyname.	You will be fine if using Unix sockets (i.e. by
+ *		supplying neither a host name nor a host address).
+ *	 o	If your backend wants to use Kerberos authentication then you must
+ *		supply both a host name and a host address, otherwise this function
+ *		may block on gethostname.
+ *	 o	This function will block if compiled with USE_SSL.
  *
  * ----------------
  */
@@ -1008,32 +1037,35 @@ PQconnectPoll(PGconn *conn)
 	/* Get the new data */
 	switch (conn->status)
 	{
-		/* We really shouldn't have been polled in these two cases, but
-		   we can handle it. */
+
+			/*
+			 * We really shouldn't have been polled in these two cases,
+			 * but we can handle it.
+			 */
 		case CONNECTION_BAD:
 			return PGRES_POLLING_FAILED;
 		case CONNECTION_OK:
 			return PGRES_POLLING_OK;
 
-		/* These are reading states */
+			/* These are reading states */
 		case CONNECTION_AWAITING_RESPONSE:
 		case CONNECTION_AUTH_OK:
-		{
-			/* Load waiting data */
-			int n = pqReadData(conn);
-				
-			if (n < 0)
-				goto error_return;
-			if (n == 0)
-				return PGRES_POLLING_READING;
+			{
+				/* Load waiting data */
+				int			n = pqReadData(conn);
 
-			break;
-		}
+				if (n < 0)
+					goto error_return;
+				if (n == 0)
+					return PGRES_POLLING_READING;
 
-		/* These are writing states, so we just proceed. */
+				break;
+			}
+
+			/* These are writing states, so we just proceed. */
 		case CONNECTION_STARTED:
 		case CONNECTION_MADE:
-		   break;
+			break;
 
 		case CONNECTION_SETENV:
 			/* We allow PQsetenvPoll to decide whether to proceed */
@@ -1041,281 +1073,319 @@ PQconnectPoll(PGconn *conn)
 
 		default:
 			printfPQExpBuffer(&conn->errorMessage,
-							  "PQconnectPoll() -- unknown connection state - "
-							  "probably indicative of memory corruption!\n");
+						 "PQconnectPoll() -- unknown connection state - "
+						  "probably indicative of memory corruption!\n");
 			goto error_return;
 	}
 
 
- keep_going: /* We will come back to here until there is nothing left to
-				parse. */
-	switch(conn->status)
+keep_going:						/* We will come back to here until there
+								 * is nothing left to parse. */
+	switch (conn->status)
 	{
 		case CONNECTION_STARTED:
-		{
-			SOCKET_SIZE_TYPE laddrlen;
+			{
+				SOCKET_SIZE_TYPE laddrlen;
+
 #ifndef WIN32
-			int optval;
+				int			optval;
+
 #else
-			char optval;
+				char		optval;
+
 #endif
-			SOCKET_SIZE_TYPE optlen = sizeof(optval);
+				SOCKET_SIZE_TYPE optlen = sizeof(optval);
 
-			/* Write ready, since we've made it here, so the connection
-			 * has been made. */
-
-			/* Now check (using getsockopt) that there is not an error
-			   state waiting for us on the socket. */
-
-			if (getsockopt(conn->sock, SOL_SOCKET, SO_ERROR,
-						   &optval, &optlen) == -1)
-			{
-				printfPQExpBuffer(&conn->errorMessage,
-								  "PQconnectPoll() -- getsockopt() failed: "
-								  "errno=%d\n%s\n",
-								  errno, strerror(errno));
-				goto error_return;
-			}
-			else if (optval != 0)
-			{
 				/*
-				 * When using a nonblocking connect, we will typically see
-				 * connect failures at this point, so provide a friendly
-				 * error message.
+				 * Write ready, since we've made it here, so the
+				 * connection has been made.
 				 */
-				printfPQExpBuffer(&conn->errorMessage,
-								  "PQconnectPoll() -- connect() failed: %s\n"
-								  "\tIs the postmaster running%s at '%s'\n"
-								  "\tand accepting connections on %s '%s'?\n",
-								  strerror(optval),
-								  (conn->raddr.sa.sa_family == AF_INET) ? " (with -i)" : "",
-								  conn->pghost ? conn->pghost : "localhost",
+
+				/*
+				 * Now check (using getsockopt) that there is not an error
+				 * state waiting for us on the socket.
+				 */
+
+				if (getsockopt(conn->sock, SOL_SOCKET, SO_ERROR,
+							   &optval, &optlen) == -1)
+				{
+					printfPQExpBuffer(&conn->errorMessage,
+							   "PQconnectPoll() -- getsockopt() failed: "
+									  "errno=%d\n%s\n",
+									  errno, strerror(errno));
+					goto error_return;
+				}
+				else if (optval != 0)
+				{
+
+					/*
+					 * When using a nonblocking connect, we will typically
+					 * see connect failures at this point, so provide a
+					 * friendly error message.
+					 */
+					printfPQExpBuffer(&conn->errorMessage,
+							  "PQconnectPoll() -- connect() failed: %s\n"
+								"\tIs the postmaster running%s at '%s'\n"
+							 "\tand accepting connections on %s '%s'?\n",
+									  strerror(optval),
+									  (conn->raddr.sa.sa_family == AF_INET) ? " (with -i)" : "",
+							   conn->pghost ? conn->pghost : "localhost",
 								  (conn->raddr.sa.sa_family == AF_INET) ?
-								  "TCP/IP port" : "Unix socket",
-								  conn->pgport);
-				goto error_return;
-			}
+									  "TCP/IP port" : "Unix socket",
+									  conn->pgport);
+					goto error_return;
+				}
 
-			/* Fill in the client address */
-			laddrlen = sizeof(conn->laddr);
-			if (getsockname(conn->sock, &conn->laddr.sa, &laddrlen) < 0)
-			{
-				printfPQExpBuffer(&conn->errorMessage,
-								  "PQconnectPoll() -- getsockname() failed: "
-								  "errno=%d\n%s\n",
-								  errno, strerror(errno));
-				goto error_return;
-			}
+				/* Fill in the client address */
+				laddrlen = sizeof(conn->laddr);
+				if (getsockname(conn->sock, &conn->laddr.sa, &laddrlen) < 0)
+				{
+					printfPQExpBuffer(&conn->errorMessage,
+							  "PQconnectPoll() -- getsockname() failed: "
+									  "errno=%d\n%s\n",
+									  errno, strerror(errno));
+					goto error_return;
+				}
 
-			conn->status = CONNECTION_MADE;
-			return PGRES_POLLING_WRITING;
-		}
+				conn->status = CONNECTION_MADE;
+				return PGRES_POLLING_WRITING;
+			}
 
 		case CONNECTION_MADE:
-		{
-			StartupPacket sp;
-			
-			/*
-			 * Initialize the startup packet.
-			 */
-
-			MemSet((char *) &sp, 0, sizeof(StartupPacket));
-	
-			sp.protoVersion = (ProtocolVersion) htonl(PG_PROTOCOL_LIBPQ);
-			
-			strncpy(sp.user, conn->pguser, SM_USER);
-			strncpy(sp.database, conn->dbName, SM_DATABASE);
-			strncpy(sp.tty, conn->pgtty, SM_TTY);
-
-			if (conn->pgoptions)
-				strncpy(sp.options, conn->pgoptions, SM_OPTIONS);
-
-			/* Send the startup packet.
-			 *
-			 * Theoretically, this could block, but it really shouldn't
-			 * since we only got here if the socket is write-ready.
-			 */
-
-			if (pqPacketSend(conn, (char *) &sp,
-							 sizeof(StartupPacket)) != STATUS_OK)
 			{
-				printfPQExpBuffer(&conn->errorMessage,
-								  "PQconnectPoll() --  "
-								  "couldn't send startup packet: "
-								  "errno=%d\n%s\n",
-								  errno, strerror(errno));
-				goto error_return;
-			}
+				StartupPacket sp;
 
-			conn->status = CONNECTION_AWAITING_RESPONSE;
-			return PGRES_POLLING_READING;
-		}
-
-		/*
-		 * Handle the authentication exchange: wait for postmaster messages
-		 * and respond as necessary.
-		 */
-		case CONNECTION_AWAITING_RESPONSE:
-		{
-			char		beresp;
-			AuthRequest areq;
-
-			/* Scan the message from current point (note that if we find
-			 * the message is incomplete, we will return without advancing
-			 * inStart, and resume here next time).
-			 */
-			conn->inCursor = conn->inStart;
-
-			if (pqGetc(&beresp, conn))
-			{
-				/* We'll come back when there are more data */
-				return PGRES_POLLING_READING;
-			}
-
-			/* Handle errors. */
-			if (beresp == 'E')
-			{
-				if (pqGets(&conn->errorMessage, conn))
-				{
-					/* We'll come back when there are more data */
-					return PGRES_POLLING_READING;
-				}
-				/* OK, we read the message; mark data consumed */
-				conn->inStart = conn->inCursor;
-				/* The postmaster typically won't end its message with a
-				 * newline, so add one to conform to libpq conventions.
+				/*
+				 * Initialize the startup packet.
 				 */
-				appendPQExpBufferChar(&conn->errorMessage, '\n');
-				goto error_return;
-			}
 
-			/* Otherwise it should be an authentication request. */
-			if (beresp != 'R')
-			{
-				printfPQExpBuffer(&conn->errorMessage,
-								  "PQconnectPoll() -- expected "
-								  "authentication request\n");
-				goto error_return;
-			}
+				MemSet((char *) &sp, 0, sizeof(StartupPacket));
 
-			/* Get the type of request. */
-			if (pqGetInt((int *) &areq, 4, conn))
-			{
-				/* We'll come back when there are more data */
+				sp.protoVersion = (ProtocolVersion) htonl(PG_PROTOCOL_LIBPQ);
+
+				strncpy(sp.user, conn->pguser, SM_USER);
+				strncpy(sp.database, conn->dbName, SM_DATABASE);
+				strncpy(sp.tty, conn->pgtty, SM_TTY);
+
+				if (conn->pgoptions)
+					strncpy(sp.options, conn->pgoptions, SM_OPTIONS);
+
+				/*
+				 * Send the startup packet.
+				 *
+				 * Theoretically, this could block, but it really shouldn't
+				 * since we only got here if the socket is write-ready.
+				 */
+
+				if (pqPacketSend(conn, (char *) &sp,
+								 sizeof(StartupPacket)) != STATUS_OK)
+				{
+					printfPQExpBuffer(&conn->errorMessage,
+									  "PQconnectPoll() --  "
+									  "couldn't send startup packet: "
+									  "errno=%d\n%s\n",
+									  errno, strerror(errno));
+					goto error_return;
+				}
+
+				conn->status = CONNECTION_AWAITING_RESPONSE;
 				return PGRES_POLLING_READING;
 			}
 
-			/* Get the password salt if there is one. */
-			if (areq == AUTH_REQ_CRYPT)
+			/*
+			 * Handle the authentication exchange: wait for postmaster
+			 * messages and respond as necessary.
+			 */
+		case CONNECTION_AWAITING_RESPONSE:
 			{
-				if (pqGetnchar(conn->salt, sizeof(conn->salt), conn))
+				char		beresp;
+				AuthRequest areq;
+
+				/*
+				 * Scan the message from current point (note that if we
+				 * find the message is incomplete, we will return without
+				 * advancing inStart, and resume here next time).
+				 */
+				conn->inCursor = conn->inStart;
+
+				if (pqGetc(&beresp, conn))
 				{
 					/* We'll come back when there are more data */
 					return PGRES_POLLING_READING;
 				}
-			}
 
-			/* OK, we successfully read the message; mark data consumed */
-			conn->inStart = conn->inCursor;
+				/* Handle errors. */
+				if (beresp == 'E')
+				{
+					if (pqGets(&conn->errorMessage, conn))
+					{
+						/* We'll come back when there are more data */
+						return PGRES_POLLING_READING;
+					}
+					/* OK, we read the message; mark data consumed */
+					conn->inStart = conn->inCursor;
 
-			/* Respond to the request if necessary. */
-			/* Note that conn->pghost must be non-NULL if we are going to
-			 * avoid the Kerberos code doing a hostname look-up. */
-			/* XXX fe-auth.c has not been fixed to support PQExpBuffers, so: */
-			if (fe_sendauth(areq, conn, conn->pghost, conn->pgpass,
-							conn->errorMessage.data) != STATUS_OK)
-			{
+					/*
+					 * The postmaster typically won't end its message with
+					 * a newline, so add one to conform to libpq
+					 * conventions.
+					 */
+					appendPQExpBufferChar(&conn->errorMessage, '\n');
+					goto error_return;
+				}
+
+				/* Otherwise it should be an authentication request. */
+				if (beresp != 'R')
+				{
+					printfPQExpBuffer(&conn->errorMessage,
+									  "PQconnectPoll() -- expected "
+									  "authentication request\n");
+					goto error_return;
+				}
+
+				/* Get the type of request. */
+				if (pqGetInt((int *) &areq, 4, conn))
+				{
+					/* We'll come back when there are more data */
+					return PGRES_POLLING_READING;
+				}
+
+				/* Get the password salt if there is one. */
+				if (areq == AUTH_REQ_CRYPT)
+				{
+					if (pqGetnchar(conn->salt, sizeof(conn->salt), conn))
+					{
+						/* We'll come back when there are more data */
+						return PGRES_POLLING_READING;
+					}
+				}
+
+				/*
+				 * OK, we successfully read the message; mark data
+				 * consumed
+				 */
+				conn->inStart = conn->inCursor;
+
+				/* Respond to the request if necessary. */
+
+				/*
+				 * Note that conn->pghost must be non-NULL if we are going
+				 * to avoid the Kerberos code doing a hostname look-up.
+				 */
+
+				/*
+				 * XXX fe-auth.c has not been fixed to support
+				 * PQExpBuffers, so:
+				 */
+				if (fe_sendauth(areq, conn, conn->pghost, conn->pgpass,
+								conn->errorMessage.data) != STATUS_OK)
+				{
+					conn->errorMessage.len = strlen(conn->errorMessage.data);
+					goto error_return;
+				}
 				conn->errorMessage.len = strlen(conn->errorMessage.data);
-				goto error_return;
+
+				/*
+				 * Just make sure that any data sent by fe_sendauth is
+				 * flushed out.  Although this theoretically could block,
+				 * it really shouldn't since we don't send large auth
+				 * responses.
+				 */
+				if (pqFlush(conn))
+					goto error_return;
+
+				if (areq == AUTH_REQ_OK)
+				{
+					/* We are done with authentication exchange */
+					conn->status = CONNECTION_AUTH_OK;
+
+					/*
+					 * Set asyncStatus so that PQsetResult will think that
+					 * what comes back next is the result of a query.  See
+					 * below.
+					 */
+					conn->asyncStatus = PGASYNC_BUSY;
+				}
+
+				/* Look to see if we have more data yet. */
+				goto keep_going;
 			}
-			conn->errorMessage.len = strlen(conn->errorMessage.data);
-
-			/* Just make sure that any data sent by fe_sendauth is flushed
-			 * out.  Although this theoretically could block, it really
-			 * shouldn't since we don't send large auth responses.
-			 */
-			if (pqFlush(conn))
-				goto error_return;
-
-			if (areq == AUTH_REQ_OK)
-			{
-				/* We are done with authentication exchange */
-				conn->status = CONNECTION_AUTH_OK;
-				/* Set asyncStatus so that PQsetResult will think that what
-				 * comes back next is the result of a query.  See below.  */
-				conn->asyncStatus = PGASYNC_BUSY;
-			}
-
-			/* Look to see if we have more data yet. */
-			goto keep_going;
-		}
 
 		case CONNECTION_AUTH_OK:
-		{
-			/* ----------
-			 * Now we expect to hear from the backend. A ReadyForQuery
-			 * message indicates that startup is successful, but we might
-			 * also get an Error message indicating failure. (Notice
-			 * messages indicating nonfatal warnings are also allowed by
-			 * the protocol, as is a BackendKeyData message.) Easiest way
-			 * to handle this is to let PQgetResult() read the messages. We
-			 * just have to fake it out about the state of the connection,
-			 * by setting asyncStatus = PGASYNC_BUSY (done above).
-			 *----------
-			 */
-
-			if (PQisBusy(conn))
-				return PGRES_POLLING_READING;
-			
-			res = PQgetResult(conn);
-			/* NULL return indicating we have gone to
-			   IDLE state is expected */
-			if (res)
 			{
-				if (res->resultStatus != PGRES_FATAL_ERROR)
-					printfPQExpBuffer(&conn->errorMessage,
-									  "PQconnectPoll() -- unexpected message "
-									  "during startup\n");
-				/* if the resultStatus is FATAL, then conn->errorMessage
-				 * already has a copy of the error; needn't copy it back.
-				 * But add a newline if it's not there already, since
-				 * postmaster error messages may not have one.
+				/* ----------
+				 * Now we expect to hear from the backend. A ReadyForQuery
+				 * message indicates that startup is successful, but we might
+				 * also get an Error message indicating failure. (Notice
+				 * messages indicating nonfatal warnings are also allowed by
+				 * the protocol, as is a BackendKeyData message.) Easiest way
+				 * to handle this is to let PQgetResult() read the messages. We
+				 * just have to fake it out about the state of the connection,
+				 * by setting asyncStatus = PGASYNC_BUSY (done above).
+				 *----------
 				 */
-				if (conn->errorMessage.len <= 0 ||
-					conn->errorMessage.data[conn->errorMessage.len-1] != '\n')
-					appendPQExpBufferChar(&conn->errorMessage, '\n');
-				PQclear(res);
-				goto error_return;
+
+				if (PQisBusy(conn))
+					return PGRES_POLLING_READING;
+
+				res = PQgetResult(conn);
+
+				/*
+				 * NULL return indicating we have gone to IDLE state is
+				 * expected
+				 */
+				if (res)
+				{
+					if (res->resultStatus != PGRES_FATAL_ERROR)
+						printfPQExpBuffer(&conn->errorMessage,
+								 "PQconnectPoll() -- unexpected message "
+										  "during startup\n");
+
+					/*
+					 * if the resultStatus is FATAL, then
+					 * conn->errorMessage already has a copy of the error;
+					 * needn't copy it back. But add a newline if it's not
+					 * there already, since postmaster error messages may
+					 * not have one.
+					 */
+					if (conn->errorMessage.len <= 0 ||
+						conn->errorMessage.data[conn->errorMessage.len - 1] != '\n')
+						appendPQExpBufferChar(&conn->errorMessage, '\n');
+					PQclear(res);
+					goto error_return;
+				}
+
+				/*
+				 * Post-connection housekeeping. Prepare to send
+				 * environment variables to server.
+				 */
+				if (!PQsetenvStart(conn))
+					goto error_return;
+
+				conn->status = CONNECTION_SETENV;
+
+				goto keep_going;
 			}
 
-			/*
-			 * Post-connection housekeeping. Prepare to send environment
-			 * variables to server.
-			 */
-			if (! PQsetenvStart(conn))
-				goto error_return;
-
-			conn->status = CONNECTION_SETENV;
-
-			goto keep_going;
-		}
-
 		case CONNECTION_SETENV:
-			/* We pretend that the connection is OK for the duration of
-			   these queries. */
+
+			/*
+			 * We pretend that the connection is OK for the duration of
+			 * these queries.
+			 */
 			conn->status = CONNECTION_OK;
 
 			switch (PQsetenvPoll(conn))
 			{
-				case PGRES_POLLING_OK: /* Success */
+				case PGRES_POLLING_OK:	/* Success */
 					conn->status = CONNECTION_OK;
 					return PGRES_POLLING_OK;
 
-				case PGRES_POLLING_READING: /* Still going */
+				case PGRES_POLLING_READING:		/* Still going */
 					conn->status = CONNECTION_SETENV;
 					return PGRES_POLLING_READING;
 
-				case PGRES_POLLING_WRITING: /* Still going */
+				case PGRES_POLLING_WRITING:		/* Still going */
 					conn->status = CONNECTION_SETENV;
 					return PGRES_POLLING_WRITING;
 
@@ -1327,8 +1397,8 @@ PQconnectPoll(PGconn *conn)
 
 		default:
 			printfPQExpBuffer(&conn->errorMessage,
-							  "PQconnectPoll() -- unknown connection state - "
-							  "probably indicative of memory corruption!\n");
+						 "PQconnectPoll() -- unknown connection state - "
+						  "probably indicative of memory corruption!\n");
 			goto error_return;
 	}
 
@@ -1368,7 +1438,7 @@ PQsetenvStart(PGconn *conn)
 #else
 	conn->setenv_state = SETENV_STATE_OPTION_SEND;
 #endif
-	
+
 	conn->next_eo = EnvironmentOptions;
 
 	return true;
@@ -1386,8 +1456,10 @@ static PostgresPollingStatusType
 PQsetenvPoll(PGconn *conn)
 {
 	PGresult   *res;
+
 #ifdef MULTIBYTE
 	static const char envname[] = "PGCLIENTENCODING";
+
 #endif
 
 	if (conn == NULL || conn->status == CONNECTION_BAD)
@@ -1396,168 +1468,175 @@ PQsetenvPoll(PGconn *conn)
 	/* Check whether there are any data for us */
 	switch (conn->setenv_state)
 	{
-		/* These are reading states */
+			/* These are reading states */
 #ifdef MULTIBYTE
 		case SETENV_STATE_ENCODINGS_WAIT:
 #endif
 		case SETENV_STATE_OPTION_WAIT:
-		{
-			/* Load waiting data */
-			int n = pqReadData(conn);
-				
-			if (n < 0)
-				goto error_return;
-			if (n == 0)
-				return PGRES_POLLING_READING;
+			{
+				/* Load waiting data */
+				int			n = pqReadData(conn);
 
-			break;
-		}
+				if (n < 0)
+					goto error_return;
+				if (n == 0)
+					return PGRES_POLLING_READING;
 
-		/* These are writing states, so we just proceed. */
+				break;
+			}
+
+			/* These are writing states, so we just proceed. */
 #ifdef MULTIBYTE
 		case SETENV_STATE_ENCODINGS_SEND:
 #endif
 		case SETENV_STATE_OPTION_SEND:
 			break;
 
-		/* Should we raise an error if called when not active? */
+			/* Should we raise an error if called when not active? */
 		case SETENV_STATE_IDLE:
 			return PGRES_POLLING_OK;
 
 		default:
 			printfPQExpBuffer(&conn->errorMessage,
 							  "PQsetenvPoll() -- unknown state - "
-							  "probably indicative of memory corruption!\n");
+						  "probably indicative of memory corruption!\n");
 			goto error_return;
 	}
 
 
- keep_going: /* We will come back to here until there is nothing left to
-				parse. */
-	switch(conn->setenv_state)
+keep_going:						/* We will come back to here until there
+								 * is nothing left to parse. */
+	switch (conn->setenv_state)
 	{
 
 #ifdef MULTIBYTE
 		case SETENV_STATE_ENCODINGS_SEND:
-		{
-			const char *env;
-			
-			/* query server encoding */
-			env = getenv(envname);
-			if (!env || *env == '\0')
 			{
-				if (!PQsendQuery(conn,
-								 "select getdatabaseencoding()"))
-					goto error_return;
+				const char *env;
 
-				conn->setenv_state = SETENV_STATE_ENCODINGS_WAIT;
-				return PGRES_POLLING_READING;
+				/* query server encoding */
+				env = getenv(envname);
+				if (!env || *env == '\0')
+				{
+					if (!PQsendQuery(conn,
+									 "select getdatabaseencoding()"))
+						goto error_return;
+
+					conn->setenv_state = SETENV_STATE_ENCODINGS_WAIT;
+					return PGRES_POLLING_READING;
+				}
 			}
-		}
 
 		case SETENV_STATE_ENCODINGS_WAIT:
-		{
-			if (PQisBusy(conn))
-				return PGRES_POLLING_READING;
-			
-			res = PQgetResult(conn);
-
-			if (res)
 			{
-				char *encoding;
+				if (PQisBusy(conn))
+					return PGRES_POLLING_READING;
 
-				if (PQresultStatus(res) != PGRES_TUPLES_OK)
+				res = PQgetResult(conn);
+
+				if (res)
 				{
+					char	   *encoding;
+
+					if (PQresultStatus(res) != PGRES_TUPLES_OK)
+					{
+						PQclear(res);
+						goto error_return;
+					}
+
+					/* set client encoding in pg_conn struct */
+					encoding = PQgetvalue(res, 0, 0);
+					if (!encoding)		/* this should not happen */
+						conn->client_encoding = SQL_ASCII;
+					else
+						conn->client_encoding = pg_char_to_encoding(encoding);
 					PQclear(res);
-					goto error_return;
+
+					/*
+					 * We have to keep going in order to clear up the
+					 * query
+					 */
+					goto keep_going;
 				}
 
-				/* set client encoding in pg_conn struct */
-				encoding = PQgetvalue(res, 0, 0);
-				if (!encoding)			/* this should not happen */
-					conn->client_encoding = SQL_ASCII;
-				else
-					conn->client_encoding = pg_char_to_encoding(encoding);
-				PQclear(res);
-				/* We have to keep going in order to clear up the query */
+				/* NULL result indicates that the query is finished */
+
+				/* Move on to setting the environment options */
+				conn->setenv_state = SETENV_STATE_OPTION_SEND;
 				goto keep_going;
 			}
-
-			/* NULL result indicates that the query is finished */
-
-			/* Move on to setting the environment options */
-			conn->setenv_state = SETENV_STATE_OPTION_SEND;
-			goto keep_going;
-		}
 #endif
 
 		case SETENV_STATE_OPTION_SEND:
-		{
-			/* Send an Environment Option */
-			char		setQuery[100];	/* note length limits in sprintf's below */
-
-			if (conn->next_eo->envName)
 			{
-				const char *val;
+				/* Send an Environment Option */
+				char		setQuery[100];		/* note length limits in
+												 * sprintf's below */
 
-				if ((val = getenv(conn->next_eo->envName)))
+				if (conn->next_eo->envName)
 				{
-					if (strcasecmp(val, "default") == 0)
-						sprintf(setQuery, "SET %s = %.60s",
-								conn->next_eo->pgName, val);
-					else
-						sprintf(setQuery, "SET %s = '%.60s'",
-								conn->next_eo->pgName, val);
-#ifdef CONNECTDEBUG
-					printf("Use environment variable %s to send %s\n",
-						   conn->next_eo->envName, setQuery);
-#endif
-					if (!PQsendQuery(conn, setQuery))
-						goto error_return;
+					const char *val;
 
-					conn->setenv_state = SETENV_STATE_OPTION_WAIT;
+					if ((val = getenv(conn->next_eo->envName)))
+					{
+						if (strcasecmp(val, "default") == 0)
+							sprintf(setQuery, "SET %s = %.60s",
+									conn->next_eo->pgName, val);
+						else
+							sprintf(setQuery, "SET %s = '%.60s'",
+									conn->next_eo->pgName, val);
+#ifdef CONNECTDEBUG
+						printf("Use environment variable %s to send %s\n",
+							   conn->next_eo->envName, setQuery);
+#endif
+						if (!PQsendQuery(conn, setQuery))
+							goto error_return;
+
+						conn->setenv_state = SETENV_STATE_OPTION_WAIT;
+					}
+					else
+						conn->next_eo++;
 				}
 				else
 				{
-					conn->next_eo++;
+					/* No more options to send, so we are done. */
+					conn->setenv_state = SETENV_STATE_IDLE;
 				}
-			}
-			else
-			{
-				/* No more options to send, so we are done. */
-				conn->setenv_state = SETENV_STATE_IDLE;
-			}
 
-			goto keep_going;
-		}
-
-		case SETENV_STATE_OPTION_WAIT:
-		{
-			if (PQisBusy(conn))
-				return PGRES_POLLING_READING;
-			
-			res = PQgetResult(conn);
-
-			if (res)
-			{
-				if (PQresultStatus(res) != PGRES_COMMAND_OK)
-				{
-					PQclear(res);
-					goto error_return;
-				}
-				/* Don't need the result */
-				PQclear(res);
-				/* We have to keep going in order to clear up the query */
 				goto keep_going;
 			}
 
-			/* NULL result indicates that the query is finished */
+		case SETENV_STATE_OPTION_WAIT:
+			{
+				if (PQisBusy(conn))
+					return PGRES_POLLING_READING;
 
-			/* Send the next option */
-			conn->next_eo++;
-			conn->setenv_state = SETENV_STATE_OPTION_SEND;
-			goto keep_going;
-		}
+				res = PQgetResult(conn);
+
+				if (res)
+				{
+					if (PQresultStatus(res) != PGRES_COMMAND_OK)
+					{
+						PQclear(res);
+						goto error_return;
+					}
+					/* Don't need the result */
+					PQclear(res);
+
+					/*
+					 * We have to keep going in order to clear up the
+					 * query
+					 */
+					goto keep_going;
+				}
+
+				/* NULL result indicates that the query is finished */
+
+				/* Send the next option */
+				conn->next_eo++;
+				conn->setenv_state = SETENV_STATE_OPTION_SEND;
+				goto keep_going;
+			}
 
 		case SETENV_STATE_IDLE:
 			return PGRES_POLLING_OK;
@@ -1565,13 +1644,13 @@ PQsetenvPoll(PGconn *conn)
 		default:
 			printfPQExpBuffer(&conn->errorMessage,
 							  "PQsetenvPoll() -- unknown state - "
-							  "probably indicative of memory corruption!\n");
+						  "probably indicative of memory corruption!\n");
 			goto error_return;
 	}
 
 	/* Unreachable */
 
- error_return:
+error_return:
 	conn->setenv_state = SETENV_STATE_IDLE;
 	return PGRES_POLLING_FAILED;
 }
@@ -1597,12 +1676,14 @@ PQsetenv(PGconn *conn)
 {
 	PostgresPollingStatusType flag = PGRES_POLLING_WRITING;
 
-	if (! PQsetenvStart(conn))
+	if (!PQsetenvStart(conn))
 		return false;
 
-	for (;;) {
+	for (;;)
+	{
+
 		/*
-		 * Wait, if necessary.  Note that the initial state (just after
+		 * Wait, if necessary.	Note that the initial state (just after
 		 * PQsetenvStart) is to wait for the socket to select for writing.
 		 */
 		switch (flag)
@@ -1612,7 +1693,7 @@ PQsetenv(PGconn *conn)
 
 			case PGRES_POLLING_OK:
 				return true;	/* success! */
-				
+
 			case PGRES_POLLING_READING:
 				if (pqWait(1, 0, conn))
 				{
@@ -1634,6 +1715,7 @@ PQsetenv(PGconn *conn)
 				conn->status = CONNECTION_BAD;
 				return false;
 		}
+
 		/*
 		 * Now try to advance the state machine.
 		 */
@@ -1641,7 +1723,7 @@ PQsetenv(PGconn *conn)
 	}
 }
 
-#endif /* NOT_USED */
+#endif	 /* NOT_USED */
 
 
 /*
@@ -1670,15 +1752,15 @@ makeEmptyPGconn(void)
 #endif
 
 	/*
-	 * The output buffer size is set to 8K, which is the usual size of pipe
-	 * buffers on Unix systems.  That way, when we are sending a large
-	 * amount of data, we avoid incurring extra kernel context swaps for
-	 * partial bufferloads.  Note that we currently don't ever enlarge
+	 * The output buffer size is set to 8K, which is the usual size of
+	 * pipe buffers on Unix systems.  That way, when we are sending a
+	 * large amount of data, we avoid incurring extra kernel context swaps
+	 * for partial bufferloads.  Note that we currently don't ever enlarge
 	 * the output buffer.
 	 *
 	 * With the same goal of minimizing context swaps, the input buffer will
-	 * be enlarged anytime it has less than 8K free, so we initially allocate
-	 * twice that.
+	 * be enlarged anytime it has less than 8K free, so we initially
+	 * allocate twice that.
 	 */
 	conn->inBufSize = 16 * 1024;
 	conn->inBuffer = (char *) malloc(conn->inBufSize);
@@ -1712,7 +1794,7 @@ freePGconn(PGconn *conn)
 	pqClearAsyncResult(conn);	/* deallocate result and curTuple */
 #ifdef USE_SSL
 	if (conn->ssl)
-	  SSL_free(conn->ssl);
+		SSL_free(conn->ssl);
 #endif
 	if (conn->sock >= 0)
 #ifdef WIN32
@@ -1770,7 +1852,7 @@ closePGconn(PGconn *conn)
 		(void) pqFlush(conn);
 	}
 
-	/* 
+	/*
 	 * must reset the blocking status so a possible reconnect will work
 	 * don't call PQsetnonblocking() because it will fail if it's unable
 	 * to flush the connection.
@@ -1861,9 +1943,7 @@ PostgresPollingStatusType
 PQresetPoll(PGconn *conn)
 {
 	if (conn)
-	{
 		return PQconnectPoll(conn);
-	}
 
 	return PGRES_POLLING_FAILED;
 }
@@ -2028,7 +2108,7 @@ conninfo_parse(const char *conninfo, PQExpBuffer errorMessage)
 	if (options == NULL)
 	{
 		printfPQExpBuffer(errorMessage,
-		  "FATAL: cannot allocate memory for copy of PQconninfoOptions\n");
+		"FATAL: cannot allocate memory for copy of PQconninfoOptions\n");
 		return NULL;
 	}
 	memcpy(options, PQconninfoOptions, sizeof(PQconninfoOptions));
@@ -2076,7 +2156,7 @@ conninfo_parse(const char *conninfo, PQExpBuffer errorMessage)
 		if (*cp != '=')
 		{
 			printfPQExpBuffer(errorMessage,
-							  "ERROR: Missing '=' after '%s' in conninfo\n",
+						   "ERROR: Missing '=' after '%s' in conninfo\n",
 							  pname);
 			PQconninfoFree(options);
 			free(buf);
@@ -2125,7 +2205,7 @@ conninfo_parse(const char *conninfo, PQExpBuffer errorMessage)
 				if (*cp == '\0')
 				{
 					printfPQExpBuffer(errorMessage,
-							"ERROR: PQconnectdb() - unterminated quoted string in conninfo\n");
+									  "ERROR: PQconnectdb() - unterminated quoted string in conninfo\n");
 					PQconninfoFree(options);
 					free(buf);
 					return NULL;
@@ -2375,10 +2455,10 @@ PQclientEncoding(const PGconn *conn)
 int
 PQsetClientEncoding(PGconn *conn, const char *encoding)
 {
-	char qbuf[128];
+	char		qbuf[128];
 	static char query[] = "set client_encoding to '%s'";
-	PGresult *res;
-	int status;
+	PGresult   *res;
+	int			status;
 
 	if (!conn || conn->status != CONNECTION_OK)
 		return -1;
@@ -2394,7 +2474,7 @@ PQsetClientEncoding(PGconn *conn, const char *encoding)
 	sprintf(qbuf, query, encoding);
 	res = PQexec(conn, qbuf);
 
-	if (res == (PGresult *)NULL)
+	if (res == (PGresult *) NULL)
 		return -1;
 	if (res->resultStatus != PGRES_COMMAND_OK)
 		status = -1;
@@ -2402,17 +2482,19 @@ PQsetClientEncoding(PGconn *conn, const char *encoding)
 	{
 		/* change libpq internal encoding */
 		conn->client_encoding = pg_char_to_encoding(encoding);
-		status = 0;	/* everything is ok */
+		status = 0;				/* everything is ok */
 	}
 	PQclear(res);
-	return(status);
+	return (status);
 }
+
 #else
 int
 PQsetClientEncoding(PGconn *conn, const char *encoding)
 {
 	return -1;
 }
+
 #endif
 
 void
@@ -2465,7 +2547,7 @@ PQsetNoticeProcessor(PGconn *conn, PQnoticeProcessor proc, void *arg)
 static void
 defaultNoticeProcessor(void *arg, const char *message)
 {
-    (void)arg; /*not used*/
+	(void) arg;					/* not used */
 	/* Note: we expect the supplied string to end with a newline already. */
 	fprintf(stderr, "%s", message);
 }

@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/parser/parse_node.c,v 1.38 2000/02/24 01:59:17 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/parser/parse_node.c,v 1.39 2000/04/12 17:15:27 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -225,7 +225,7 @@ make_var(ParseState *pstate, Oid relid, char *refname,
  *
  * In an array assignment, we are given a destination array value plus a
  * source value that is to be assigned to a single element or a slice of
- * that array.  We produce an expression that represents the new array value
+ * that array.	We produce an expression that represents the new array value
  * with the source data inserted into the right part of the array.
  *
  * pstate		Parse state
@@ -234,7 +234,7 @@ make_var(ParseState *pstate, Oid relid, char *refname,
  * forceSlice	If true, treat subscript as array slice in all cases
  * assignFrom	NULL for array fetch, else transformed expression for source.
  */
-ArrayRef *
+ArrayRef   *
 transformArraySubscripts(ParseState *pstate,
 						 Node *arrayBase,
 						 List *indirection,
@@ -281,19 +281,19 @@ transformArraySubscripts(ParseState *pstate,
 	/*
 	 * A list containing only single subscripts refers to a single array
 	 * element.  If any of the items are double subscripts (lower:upper),
-	 * then the subscript expression means an array slice operation.
-	 * In this case, we supply a default lower bound of 1 for any items
-	 * that contain only a single subscript.
-	 * The forceSlice parameter forces us to treat the operation as a
-	 * slice, even if no lower bounds are mentioned.  Otherwise,
-	 * we have to prescan the indirection list to see if there are any
-	 * double subscripts.
+	 * then the subscript expression means an array slice operation. In
+	 * this case, we supply a default lower bound of 1 for any items that
+	 * contain only a single subscript. The forceSlice parameter forces us
+	 * to treat the operation as a slice, even if no lower bounds are
+	 * mentioned.  Otherwise, we have to prescan the indirection list to
+	 * see if there are any double subscripts.
 	 */
-	if (! isSlice)
+	if (!isSlice)
 	{
-		foreach (idx, indirection)
+		foreach(idx, indirection)
 		{
 			A_Indices  *ai = (A_Indices *) lfirst(idx);
+
 			if (ai->lidx != NULL)
 			{
 				isSlice = true;
@@ -302,9 +302,10 @@ transformArraySubscripts(ParseState *pstate,
 		}
 	}
 
-	/* The type represented by the subscript expression is the element type
-	 * if we are fetching a single element, but it is the same as the array
-	 * type if we are fetching a slice or storing.
+	/*
+	 * The type represented by the subscript expression is the element
+	 * type if we are fetching a single element, but it is the same as the
+	 * array type if we are fetching a slice or storing.
 	 */
 	if (isSlice || assignFrom != NULL)
 		typeresult = typearray;
@@ -314,7 +315,7 @@ transformArraySubscripts(ParseState *pstate,
 	/*
 	 * Transform the subscript expressions.
 	 */
-	foreach (idx, indirection)
+	foreach(idx, indirection)
 	{
 		A_Indices  *ai = (A_Indices *) lfirst(idx);
 		Node	   *subexpr;
@@ -337,7 +338,7 @@ transformArraySubscripts(ParseState *pstate,
 											 sizeof(int32),
 											 Int32GetDatum(1),
 											 false,
-											 true, /* pass by value */
+											 true,		/* pass by value */
 											 false,
 											 false);
 			}
@@ -371,7 +372,7 @@ transformArraySubscripts(ParseState *pstate,
 				if (assignFrom == NULL)
 					elog(ERROR, "Array assignment requires type '%s'"
 						 " but expression is of type '%s'"
-						 "\n\tYou will need to rewrite or cast the expression",
+					"\n\tYou will need to rewrite or cast the expression",
 						 typeidTypeName(typeneeded),
 						 typeidTypeName(typesource));
 			}
@@ -384,7 +385,8 @@ transformArraySubscripts(ParseState *pstate,
 	aref = makeNode(ArrayRef);
 	aref->refattrlength = type_struct_array->typlen;
 	aref->refelemlength = type_struct_element->typlen;
-	aref->refelemtype = typeresult; /* XXX should save element type too */
+	aref->refelemtype = typeresult;		/* XXX should save element type
+										 * too */
 	aref->refelembyval = type_struct_element->typbyval;
 	aref->refupperindexpr = upperIndexpr;
 	aref->reflowerindexpr = lowerIndexpr;
@@ -407,7 +409,7 @@ transformArraySubscripts(ParseState *pstate,
  *	resolution that we're not sure that it should be considered text.
  *	Explicit "NULL" constants are also typed as UNKNOWN.
  *
- *  For integers and floats we produce int4, float8, or numeric depending
+ *	For integers and floats we produce int4, float8, or numeric depending
  *	on the value of the number.  XXX In some cases it would be nice to take
  *	context into account when determining the type to convert to, but in
  *	other cases we can't delay the type choice.  One possibility is to invent
@@ -462,7 +464,7 @@ make_const(Value *value)
 		case T_String:
 			val = PointerGetDatum(textin(strVal(value)));
 
-			typeid = UNKNOWNOID; /* will be coerced later */
+			typeid = UNKNOWNOID;/* will be coerced later */
 			typelen = -1;		/* variable len */
 			typebyval = false;
 			break;
@@ -496,7 +498,7 @@ make_const(Value *value)
 
 /*
  * Decide whether a T_Float value fits in float8, or must be treated as
- * type "numeric".  We check the number of digits and check for overflow/
+ * type "numeric".	We check the number of digits and check for overflow/
  * underflow.  (With standard compilation options, Postgres' NUMERIC type
  * can handle decimal exponents up to 1000, considerably more than most
  * implementations of float8, so this is a sensible test.)
@@ -504,9 +506,9 @@ make_const(Value *value)
 static bool
 fitsInFloat(Value *value)
 {
-	const char	   *ptr;
-	int				ndigits;
-	char		   *endptr;
+	const char *ptr;
+	int			ndigits;
+	char	   *endptr;
 
 	/*
 	 * Count digits, ignoring leading zeroes (but not trailing zeroes).
@@ -525,6 +527,7 @@ fitsInFloat(Value *value)
 	}
 	if (ndigits > DBL_DIG)
 		return false;
+
 	/*
 	 * Use strtod() to check for overflow/underflow.
 	 */

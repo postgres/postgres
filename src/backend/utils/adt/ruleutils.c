@@ -3,7 +3,7 @@
  *			  out of its tuple
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/ruleutils.c,v 1.47 2000/03/17 02:36:23 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/ruleutils.c,v 1.48 2000/04/12 17:15:51 momjian Exp $
  *
  *	  This software is copyrighted by Jan Wieck - Hamburg.
  *
@@ -66,7 +66,8 @@ typedef struct
 	bool		varprefix;		/* TRUE to print prefixes on Vars */
 } deparse_context;
 
-typedef struct {
+typedef struct
+{
 	Index		rt_index;
 	int			levelsup;
 } check_if_rte_used_context;
@@ -113,7 +114,7 @@ static char *get_relation_name(Oid relid);
 static char *get_attribute_name(Oid relid, int2 attnum);
 static bool check_if_rte_used(Node *node, Index rt_index, int levelsup);
 static bool check_if_rte_used_walker(Node *node,
-									 check_if_rte_used_context *context);
+						 check_if_rte_used_context *context);
 
 #define inherit_marker(rte)  ((rte)->inh ? "*" : "")
 
@@ -133,7 +134,7 @@ pg_get_ruledef(NameData *rname)
 	int			spirc;
 	HeapTuple	ruletup;
 	TupleDesc	rulettc;
-	StringInfoData	buf;
+	StringInfoData buf;
 	int			len;
 
 	/* ----------
@@ -231,7 +232,7 @@ pg_get_viewdef(NameData *rname)
 	int			spirc;
 	HeapTuple	ruletup;
 	TupleDesc	rulettc;
-	StringInfoData	buf;
+	StringInfoData buf;
 	int			len;
 	char		name1[NAMEDATALEN + 5];
 	char		name2[NAMEDATALEN + 5];
@@ -338,8 +339,8 @@ pg_get_indexdef(Oid indexrelid)
 	int			spirc;
 	int			len;
 	int			keyno;
-	StringInfoData	buf;
-	StringInfoData	keybuf;
+	StringInfoData buf;
+	StringInfoData keybuf;
 	char	   *sep;
 
 	/* ----------
@@ -427,8 +428,8 @@ pg_get_indexdef(Oid indexrelid)
 	initStringInfo(&buf);
 	appendStringInfo(&buf, "CREATE %sINDEX %s ON %s USING %s (",
 					 idxrec->indisunique ? "UNIQUE " : "",
-					 quote_identifier(pstrdup(NameStr(idxrelrec->relname))),
-					 quote_identifier(pstrdup(NameStr(indrelrec->relname))),
+				  quote_identifier(pstrdup(NameStr(idxrelrec->relname))),
+				  quote_identifier(pstrdup(NameStr(indrelrec->relname))),
 					 quote_identifier(SPI_getvalue(spi_tup, spi_ttc,
 												   spi_fno)));
 
@@ -451,8 +452,8 @@ pg_get_indexdef(Oid indexrelid)
 		 * ----------
 		 */
 		appendStringInfo(&keybuf, "%s",
-				quote_identifier(get_attribute_name(idxrec->indrelid,
-													idxrec->indkey[keyno])));
+					quote_identifier(get_attribute_name(idxrec->indrelid,
+												idxrec->indkey[keyno])));
 
 		/* ----------
 		 * If not a functional index, add the operator class name
@@ -472,8 +473,8 @@ pg_get_indexdef(Oid indexrelid)
 			spi_ttc = SPI_tuptable->tupdesc;
 			spi_fno = SPI_fnumber(spi_ttc, "opcname");
 			appendStringInfo(&keybuf, " %s",
-							 quote_identifier(SPI_getvalue(spi_tup, spi_ttc,
-														   spi_fno)));
+						  quote_identifier(SPI_getvalue(spi_tup, spi_ttc,
+														spi_fno)));
 		}
 	}
 
@@ -493,7 +494,7 @@ pg_get_indexdef(Oid indexrelid)
 
 		procStruct = (Form_pg_proc) GETSTRUCT(proctup);
 		appendStringInfo(&buf, "%s(%s) ",
-						 quote_identifier(pstrdup(NameStr(procStruct->proname))),
+				 quote_identifier(pstrdup(NameStr(procStruct->proname))),
 						 keybuf.data);
 
 		spi_args[0] = ObjectIdGetDatum(idxrec->indclass[0]);
@@ -589,8 +590,8 @@ pg_get_userbyid(int32 uid)
  * tree (ie, not the raw output of gram.y).
  *
  * rangetables is a List of Lists of RangeTblEntry nodes: first sublist is for
- * varlevelsup = 0, next for varlevelsup = 1, etc.  In each sublist the first
- * item is for varno = 1, next varno = 2, etc.  (Each sublist has the same
+ * varlevelsup = 0, next for varlevelsup = 1, etc.	In each sublist the first
+ * item is for varno = 1, next varno = 2, etc.	(Each sublist has the same
  * format as the rtable list of a parsetree or query.)
  *
  * forceprefix is TRUE to force all Vars to be prefixed with their table names.
@@ -603,8 +604,8 @@ pg_get_userbyid(int32 uid)
 char *
 deparse_expression(Node *expr, List *rangetables, bool forceprefix)
 {
-	StringInfoData	buf;
-	deparse_context	context;
+	StringInfoData buf;
+	deparse_context context;
 
 	initStringInfo(&buf);
 	context.buf = &buf;
@@ -710,7 +711,7 @@ make_ruledef(StringInfo buf, HeapTuple ruletup, TupleDesc rulettc)
 	{
 		Node	   *qual;
 		Query	   *query;
-		deparse_context	context;
+		deparse_context context;
 
 		appendStringInfo(buf, " WHERE ");
 
@@ -834,7 +835,7 @@ make_viewdef(StringInfo buf, HeapTuple ruletup, TupleDesc rulettc)
 static void
 get_query_def(Query *query, StringInfo buf, List *parentrtables)
 {
-	deparse_context	context;
+	deparse_context context;
 
 	context.buf = buf;
 	context.rangetables = lcons(query->rtable, parentrtables);
@@ -954,7 +955,7 @@ get_select_query_def(Query *query, deparse_context *context)
 		get_rule_expr(tle->expr, context);
 
 		/* Check if we must say AS ... */
-		if (! IsA(tle->expr, Var))
+		if (!IsA(tle->expr, Var))
 			tell_as = strcmp(tle->resdom->resname, "?column?");
 		else
 		{
@@ -996,11 +997,12 @@ get_select_query_def(Query *query, deparse_context *context)
 				appendStringInfo(buf, "%s%s",
 								 quote_identifier(rte->relname),
 								 inherit_marker(rte));
+
 				/*
 				 * NOTE: SQL92 says you can't write column aliases unless
-				 * you write a table alias --- so, if there's an alias list,
-				 * make sure we emit a table alias even if it's the same as
-				 * the table's real name.
+				 * you write a table alias --- so, if there's an alias
+				 * list, make sure we emit a table alias even if it's the
+				 * same as the table's real name.
 				 */
 				if ((rte->ref != NULL)
 					&& ((strcmp(rte->relname, rte->ref->relname) != 0)
@@ -1010,7 +1012,7 @@ get_select_query_def(Query *query, deparse_context *context)
 									 quote_identifier(rte->ref->relname));
 					if (rte->ref->attrs != NIL)
 					{
-						List *col;
+						List	   *col;
 
 						appendStringInfo(buf, " (");
 						foreach(col, rte->ref->attrs)
@@ -1018,7 +1020,7 @@ get_select_query_def(Query *query, deparse_context *context)
 							if (col != rte->ref->attrs)
 								appendStringInfo(buf, ", ");
 							appendStringInfo(buf, "%s",
-											 quote_identifier(strVal(lfirst(col))));
+								  quote_identifier(strVal(lfirst(col))));
 						}
 						appendStringInfoChar(buf, ')');
 					}
@@ -1042,7 +1044,7 @@ get_select_query_def(Query *query, deparse_context *context)
 		foreach(l, query->groupClause)
 		{
 			GroupClause *grp = (GroupClause *) lfirst(l);
-			Node *groupexpr;
+			Node	   *groupexpr;
 
 			groupexpr = get_sortgroupclause_expr(grp,
 												 query->targetList);
@@ -1228,8 +1230,8 @@ get_delete_query_def(Query *query, deparse_context *context)
 static RangeTblEntry *
 get_rte_for_var(Var *var, deparse_context *context)
 {
-	List   *rtlist = context->rangetables;
-	int		sup = var->varlevelsup;
+	List	   *rtlist = context->rangetables;
+	int			sup = var->varlevelsup;
 
 	while (sup-- > 0)
 		rtlist = lnext(rtlist);
@@ -1281,11 +1283,11 @@ get_rule_expr(Node *node, deparse_context *context)
 						appendStringInfo(buf, "old.");
 					else
 						appendStringInfo(buf, "%s.",
-										 quote_identifier(rte->ref->relname));
+									quote_identifier(rte->ref->relname));
 				}
 				appendStringInfo(buf, "%s",
-						quote_identifier(get_attribute_name(rte->relid,
-															var->varattno)));
+						  quote_identifier(get_attribute_name(rte->relid,
+														var->varattno)));
 			}
 			break;
 
@@ -1307,7 +1309,7 @@ get_rule_expr(Node *node, deparse_context *context)
 							/* binary operator */
 							get_rule_expr((Node *) lfirst(args), context);
 							appendStringInfo(buf, " %s ",
-									get_opname(((Oper *) expr->oper)->opno));
+								get_opname(((Oper *) expr->oper)->opno));
 							get_rule_expr((Node *) lsecond(args), context);
 						}
 						else
@@ -1318,7 +1320,7 @@ get_rule_expr(Node *node, deparse_context *context)
 							Form_pg_operator optup;
 
 							tp = SearchSysCacheTuple(OPEROID,
-													 ObjectIdGetDatum(opno),
+												  ObjectIdGetDatum(opno),
 													 0, 0, 0);
 							Assert(HeapTupleIsValid(tp));
 							optup = (Form_pg_operator) GETSTRUCT(tp);
@@ -1435,7 +1437,7 @@ get_rule_expr(Node *node, deparse_context *context)
 				appendStringInfoChar(buf, '(');
 				get_rule_expr(relabel->arg, context);
 				typetup = SearchSysCacheTuple(TYPEOID,
-									ObjectIdGetDatum(relabel->resulttype),
+								   ObjectIdGetDatum(relabel->resulttype),
 											  0, 0, 0);
 				if (!HeapTupleIsValid(typetup))
 					elog(ERROR, "cache lookup of type %u failed",
@@ -1510,7 +1512,8 @@ get_func_expr(Expr *expr, deparse_context *context)
 	proname = pstrdup(NameStr(procStruct->proname));
 
 	/*
-	 * nullvalue() and nonnullvalue() should get turned into special syntax
+	 * nullvalue() and nonnullvalue() should get turned into special
+	 * syntax
 	 */
 	if (procStruct->pronargs == 1 && procStruct->proargtypes[0] == InvalidOid)
 	{
@@ -1540,18 +1543,19 @@ get_func_expr(Expr *expr, deparse_context *context)
 
 		/*
 		 * Strip off any RelabelType on the input, so we don't print
-		 * redundancies like x::bpchar::char(8).
-		 * XXX Are there any cases where this is a bad idea?
+		 * redundancies like x::bpchar::char(8). XXX Are there any cases
+		 * where this is a bad idea?
 		 */
 		if (IsA(arg, RelabelType))
 			arg = ((RelabelType *) arg)->arg;
 		appendStringInfoChar(buf, '(');
 		get_rule_expr(arg, context);
 		appendStringInfo(buf, ")::");
+
 		/*
-		 * Show typename with appropriate length decoration.
-		 * Note that since exprIsLengthCoercion succeeded, the function
-		 * name is the same as its output type name.
+		 * Show typename with appropriate length decoration. Note that
+		 * since exprIsLengthCoercion succeeded, the function name is the
+		 * same as its output type name.
 		 */
 		if (strcmp(proname, "bpchar") == 0)
 		{
@@ -1571,7 +1575,7 @@ get_func_expr(Expr *expr, deparse_context *context)
 		{
 			if (coercedTypmod >= (int32) VARHDRSZ)
 				appendStringInfo(buf, "numeric(%d,%d)",
-								 ((coercedTypmod - VARHDRSZ) >> 16) & 0xffff,
+							 ((coercedTypmod - VARHDRSZ) >> 16) & 0xffff,
 								 (coercedTypmod - VARHDRSZ) & 0xffff);
 			else
 				appendStringInfo(buf, "numeric");
@@ -1621,8 +1625,8 @@ get_tle_expr(TargetEntry *tle, deparse_context *context)
 	int32		coercedTypmod;
 
 	/*
-	 * If top level is a length coercion to the correct length, suppress it;
-	 * else dump the expression normally.
+	 * If top level is a length coercion to the correct length, suppress
+	 * it; else dump the expression normally.
 	 */
 	if (tle->resdom->restypmod >= 0 &&
 		exprIsLengthCoercion((Node *) expr, &coercedTypmod) &&
@@ -1659,10 +1663,11 @@ get_const_expr(Const *constval, deparse_context *context)
 
 	if (constval->constisnull)
 	{
+
 		/*
 		 * Always label the type of a NULL constant.  This not only
-		 * prevents misdecisions about the type, but it ensures that
-		 * our output is a valid b_expr.
+		 * prevents misdecisions about the type, but it ensures that our
+		 * output is a valid b_expr.
 		 */
 		extval = pstrdup(NameStr(typeStruct->typname));
 		appendStringInfo(buf, "NULL::%s", quote_identifier(extval));
@@ -1681,20 +1686,21 @@ get_const_expr(Const *constval, deparse_context *context)
 		case INT4OID:
 		case OIDOID:			/* int types */
 		case FLOAT4OID:
-		case FLOAT8OID:			/* float types */
+		case FLOAT8OID: /* float types */
 			/* These types are printed without quotes */
 			appendStringInfo(buf, extval);
 			break;
 		default:
+
 			/*
 			 * We must quote any funny characters in the constant's
-			 * representation.
-			 * XXX Any MULTIBYTE considerations here?
+			 * representation. XXX Any MULTIBYTE considerations here?
 			 */
 			appendStringInfoChar(buf, '\'');
 			for (valptr = extval; *valptr; valptr++)
 			{
-				char	ch = *valptr;
+				char		ch = *valptr;
+
 				if (ch == '\'' || ch == '\\')
 				{
 					appendStringInfoChar(buf, '\\');
@@ -1818,10 +1824,11 @@ get_sublink_expr(Node *node, deparse_context *context)
 static char *
 quote_identifier(char *ident)
 {
+
 	/*
 	 * Can avoid quoting if ident starts with a lowercase letter and
-	 * contains only lowercase letters, digits, and underscores,
-	 * *and* is not any SQL keyword.  Otherwise, supply quotes.
+	 * contains only lowercase letters, digits, and underscores, *and* is
+	 * not any SQL keyword.  Otherwise, supply quotes.
 	 */
 	bool		safe;
 	char	   *result;
@@ -1835,20 +1842,21 @@ quote_identifier(char *ident)
 	{
 		char	   *ptr;
 
-		for (ptr = ident+1; *ptr; ptr++)
+		for (ptr = ident + 1; *ptr; ptr++)
 		{
-			char	ch = *ptr;
+			char		ch = *ptr;
 
 			safe = ((ch >= 'a' && ch <= 'z') ||
 					(ch >= '0' && ch <= '9') ||
 					(ch == '_'));
-			if (! safe)
+			if (!safe)
 				break;
 		}
 	}
 
 	if (safe)
 	{
+
 		/*
 		 * Check for keyword.  This test is overly strong, since many of
 		 * the "keywords" known to the parser are usable as column names,
@@ -1955,7 +1963,11 @@ check_if_rte_used_walker(Node *node,
 			check_if_rte_used(query->havingQual,
 							  context->rt_index, context->levelsup + 1))
 			return true;
-		/* fall through to let expression_tree_walker examine lefthand args */
+
+		/*
+		 * fall through to let expression_tree_walker examine lefthand
+		 * args
+		 */
 	}
 	return expression_tree_walker(node, check_if_rte_used_walker,
 								  (void *) context);

@@ -9,7 +9,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/libpq/Attic/pqpacket.c,v 1.25 2000/03/19 22:10:07 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/libpq/Attic/pqpacket.c,v 1.26 2000/04/12 17:15:14 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -54,17 +54,17 @@ int
 PacketReceiveFragment(Port *port)
 {
 	int			got;
-	Packet                  *pkt = &port->pktInfo;
+	Packet	   *pkt = &port->pktInfo;
 
 #ifdef USE_SSL
-	if (port->ssl) 
-	  got = SSL_read(port->ssl, pkt->ptr, pkt->nrtodo);
+	if (port->ssl)
+		got = SSL_read(port->ssl, pkt->ptr, pkt->nrtodo);
 	else
 #endif
-  	  got = read(port->sock, pkt->ptr, pkt->nrtodo);
+		got = read(port->sock, pkt->ptr, pkt->nrtodo);
 	if (got > 0)
 	{
-	        pkt->nrtodo -= got;
+		pkt->nrtodo -= got;
 		pkt->ptr += got;
 
 		/* See if we have got what we need for the packet length. */
@@ -143,14 +143,14 @@ int
 PacketSendFragment(Port *port)
 {
 	int			done;
-        Packet                  *pkt = &port->pktInfo;
+	Packet	   *pkt = &port->pktInfo;
 
 #ifdef USE_SSL
-	if (port->ssl) 
-	  done = SSL_write(port->ssl, pkt->ptr, pkt->nrtodo);
+	if (port->ssl)
+		done = SSL_write(port->ssl, pkt->ptr, pkt->nrtodo);
 	else
 #endif
-	  done = write(port->sock, pkt->ptr, pkt->nrtodo);
+		done = write(port->sock, pkt->ptr, pkt->nrtodo);
 
 	if (done > 0)
 	{

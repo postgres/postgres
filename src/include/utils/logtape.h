@@ -8,7 +8,7 @@
  * Portions Copyright (c) 1996-2000, PostgreSQL, Inc
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Id: logtape.h,v 1.2 2000/01/26 05:58:38 momjian Exp $
+ * $Id: logtape.h,v 1.3 2000/04/12 17:16:55 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -27,16 +27,16 @@ typedef struct LogicalTapeSet LogicalTapeSet;
 extern LogicalTapeSet *LogicalTapeSetCreate(int ntapes);
 extern void LogicalTapeSetClose(LogicalTapeSet *lts);
 extern size_t LogicalTapeRead(LogicalTapeSet *lts, int tapenum,
-							  void *ptr, size_t size);
+				void *ptr, size_t size);
 extern void LogicalTapeWrite(LogicalTapeSet *lts, int tapenum,
-							 void *ptr, size_t size);
+				 void *ptr, size_t size);
 extern void LogicalTapeRewind(LogicalTapeSet *lts, int tapenum, bool forWrite);
 extern void LogicalTapeFreeze(LogicalTapeSet *lts, int tapenum);
 extern bool LogicalTapeBackspace(LogicalTapeSet *lts, int tapenum,
-								 size_t size);
+					 size_t size);
 extern bool LogicalTapeSeek(LogicalTapeSet *lts, int tapenum,
-							long blocknum, int offset);
+				long blocknum, int offset);
 extern void LogicalTapeTell(LogicalTapeSet *lts, int tapenum,
-							long *blocknum, int *offset);
+				long *blocknum, int *offset);
 
 #endif	 /* LOGTAPE_H */

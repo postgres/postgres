@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2000, PostgreSQL, Inc
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Id: nodes.h,v 1.66 2000/02/20 21:32:16 tgl Exp $
+ * $Id: nodes.h,v 1.67 2000/04/12 17:16:40 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -301,7 +301,8 @@ extern bool equal(void *a, void *b);
  * These could have gone into plannodes.h or some such, but many files
  * depend on them...
  */
-typedef double Selectivity;		/* fraction of tuples a qualifier will pass */
+typedef double Selectivity;		/* fraction of tuples a qualifier will
+								 * pass */
 typedef double Cost;			/* execution cost (in page-access units) */
 
 

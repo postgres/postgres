@@ -8,7 +8,7 @@
  * Portions Copyright (c) 1996-2000, PostgreSQL, Inc
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Id: c.h,v 1.68 2000/04/12 05:29:10 momjian Exp $
+ * $Id: c.h,v 1.69 2000/04/12 17:16:24 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -531,9 +531,11 @@ typedef struct Exception
  *
  */
 #define Trap(condition, exception) \
-		{ if ((assert_enabled) && (condition)) \
+		do { \
+			if ((assert_enabled) && (condition)) \
 				ExceptionalCondition(CppAsString(condition), &(exception), \
-						(char*)NULL, __FILE__, __LINE__); }
+						(char*)NULL, __FILE__, __LINE__); \
+		} while (0)
 
 /*
  *	TrapMacro is the same as Trap but it's intended for use in macros:
@@ -577,9 +579,11 @@ extern int	assert_enabled;
  *
  */
 #define LogTrap(condition, exception, printArgs) \
-		{ if ((assert_enabled) && (condition)) \
+		do { \
+			if ((assert_enabled) && (condition)) \
 				ExceptionalCondition(CppAsString(condition), &(exception), \
-						vararg_format printArgs, __FILE__, __LINE__); }
+						vararg_format printArgs, __FILE__, __LINE__); \
+		} while (0)
 
 /*
  *	LogTrapMacro is the same as LogTrap but it's intended for use in macros:
@@ -673,9 +677,9 @@ extern int	assertTest(int val);
  *	overhead.
  *
  *	We got the 64 number by testing this against the stock memset() on
- *	BSD/OS 3.0. Larger values were slower.  bjm 1997/09/11
+ *	BSD/OS 3.0. Larger values were slower.	bjm 1997/09/11
  *
- *  I think the crossover point could be a good deal higher for
+ *	I think the crossover point could be a good deal higher for
  *	most platforms, actually.  tgl 2000-03-19
  */
 #define MemSet(start, val, len) \
@@ -792,10 +796,12 @@ extern char *vararg_format(const char *fmt,...);
 
 #ifndef HAVE_SNPRINTF_DECL
 extern int	snprintf(char *str, size_t count, const char *fmt,...);
+
 #endif
 
 #ifndef HAVE_VSNPRINTF_DECL
 extern int	vsnprintf(char *str, size_t count, const char *fmt, va_list args);
+
 #endif
 
 #ifndef HAVE_MEMMOVE

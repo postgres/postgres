@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2000, PostgreSQL, Inc
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Id: htup.h,v 1.28 2000/01/26 05:57:50 momjian Exp $
+ * $Id: htup.h,v 1.29 2000/04/12 17:16:26 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -81,15 +81,15 @@ extern long heap_sysoffset[];
  *	  he have to add something below...
  *
  * Change for 7.0:
- *    Up to now t_data could be NULL, the memory location directly following
- *    HeapTupleData or pointing into a buffer. Now, it could also point to
- *    a separate allocation that was done in the t_datamcxt memory context.
+ *	  Up to now t_data could be NULL, the memory location directly following
+ *	  HeapTupleData or pointing into a buffer. Now, it could also point to
+ *	  a separate allocation that was done in the t_datamcxt memory context.
  */
 typedef struct HeapTupleData
 {
 	uint32		t_len;			/* length of *t_data */
 	ItemPointerData t_self;		/* SelfItemPointer */
-	MemoryContext   t_datamcxt; /* */
+	MemoryContext t_datamcxt;	/* */
 	HeapTupleHeader t_data;		/* */
 } HeapTupleData;
 
@@ -127,9 +127,9 @@ typedef HeapTupleData *HeapTuple;
 #define HEAP_HASVARLENA			0x0002	/* has variable length
 										 * attribute(s) */
 #define HEAP_HASEXTERNAL		0x0004	/* has external stored */
-										/* attribute(s) */
+ /* attribute(s) */
 #define HEAP_HASCOMPRESSED		0x0008	/* has compressed stored */
-										/* attribute(s) */
+ /* attribute(s) */
 #define HEAP_HASEXTENDED		0x000C	/* the two above combined */
 #define HEAP_XMIN_COMMITTED		0x0100	/* t_xmin committed */
 #define HEAP_XMIN_INVALID		0x0200	/* t_xmin invalid/aborted */

@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/catalog/pg_aggregate.c,v 1.30 2000/03/26 19:43:58 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/catalog/pg_aggregate.c,v 1.31 2000/04/12 17:14:56 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -168,7 +168,7 @@ AggregateCreate(char *aggName,
 	/* handle finalfn */
 	if (aggfinalfnName)
 	{
-		int	nargs = 0;
+		int			nargs = 0;
 
 		if (OidIsValid(xret1))
 			fnArgs[nargs++] = xret1;
@@ -184,7 +184,7 @@ AggregateCreate(char *aggName,
 		{
 			if (nargs == 2)
 				elog(ERROR, "AggregateCreate: '%s'('%s','%s') does not exist",
-					 aggfinalfnName, aggtransfn1typeName, aggtransfn2typeName);
+				aggfinalfnName, aggtransfn1typeName, aggtransfn2typeName);
 			else if (OidIsValid(xret1))
 				elog(ERROR, "AggregateCreate: '%s'('%s') does not exist",
 					 aggfinalfnName, aggtransfn1typeName);
@@ -200,8 +200,10 @@ AggregateCreate(char *aggName,
 	}
 	else
 	{
-		/* If no finalfn, aggregate result type is type of the sole
-		 * state value (we already checked there is only one)
+
+		/*
+		 * If no finalfn, aggregate result type is type of the sole state
+		 * value (we already checked there is only one)
 		 */
 		if (OidIsValid(xret1))
 			fret = xret1;
@@ -284,9 +286,9 @@ AggNameGetInitVal(char *aggName, Oid basetype, int xfuncno, bool *isNull)
 	Assert(xfuncno == 1 || xfuncno == 2);
 
 	/*
-	 * since we will have to use fastgetattr (in case one or both init vals
-	 * are NULL), we will need to open the relation.  Do that first to
-	 * ensure we don't get a stale tuple from the cache.
+	 * since we will have to use fastgetattr (in case one or both init
+	 * vals are NULL), we will need to open the relation.  Do that first
+	 * to ensure we don't get a stale tuple from the cache.
 	 */
 
 	aggRel = heap_openr(AggregateRelationName, AccessShareLock);

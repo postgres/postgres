@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2000, PostgreSQL, Inc
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Id: ibit.h,v 1.12 2000/01/26 05:57:50 momjian Exp $
+ * $Id: ibit.h,v 1.13 2000/04/12 17:16:26 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -18,7 +18,7 @@
 
 typedef struct IndexAttributeBitMapData
 {
-	bits8		bits[(INDEX_MAX_KEYS + 8 - 1)/8];
+	bits8		bits[(INDEX_MAX_KEYS + 8 - 1) / 8];
 } IndexAttributeBitMapData;
 
 typedef IndexAttributeBitMapData *IndexAttributeBitMap;

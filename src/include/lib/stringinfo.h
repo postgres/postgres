@@ -10,7 +10,7 @@
  * Portions Copyright (c) 1996-2000, PostgreSQL, Inc
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Id: stringinfo.h,v 1.17 2000/02/13 13:21:11 momjian Exp $
+ * $Id: stringinfo.h,v 1.18 2000/04/12 17:16:34 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -106,6 +106,6 @@ extern void appendStringInfoChar(StringInfo str, char ch);
  * if necessary.
  */
 extern void appendBinaryStringInfo(StringInfo str,
-								   const char *data, int datalen);
+					   const char *data, int datalen);
 
 #endif	 /* STRINGINFO_H */

@@ -21,7 +21,7 @@ extern		"C"
 		char		sqlerrp[8];
 		long		sqlerrd[6];
 		/* Element 0: empty						*/
-		/* 1: OID of processed tuple if applicable  		*/
+		/* 1: OID of processed tuple if applicable			*/
 		/* 2: number of rows processed	*/
 		/* after an INSERT, UPDATE or */
 		/* DELETE statement			 */
@@ -48,6 +48,7 @@ extern		"C"
 
 #ifdef __cplusplus
 }
+
 #endif
 
 #endif

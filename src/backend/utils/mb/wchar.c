@@ -1,7 +1,7 @@
 /*
  * conversion functions between pg_wchar and multi-byte streams.
  * Tatsuo Ishii
- * $Id: wchar.c,v 1.10 2000/01/25 02:12:27 ishii Exp $
+ * $Id: wchar.c,v 1.11 2000/04/12 17:16:06 momjian Exp $
  *
  * WIN1250 client encoding updated by Pavel Behal
  *
@@ -454,7 +454,7 @@ pg_wchar_tbl pg_wchar_table[] = {
 	{pg_latin12wchar_with_len, pg_latin1_mblen},		/* 31 */
 	{0, pg_sjis_mblen},			/* 32 */
 	{0, pg_big5_mblen},			/* 33 */
-	{pg_latin12wchar_with_len, pg_latin1_mblen}		/* 34 */
+	{pg_latin12wchar_with_len, pg_latin1_mblen} /* 34 */
 };
 
 /* returns the byte length of a word for mule internal code */

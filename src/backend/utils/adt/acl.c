@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/acl.c,v 1.44 2000/01/26 05:57:12 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/acl.c,v 1.45 2000/04/12 17:15:47 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -681,8 +681,8 @@ ChangeACLStmt *
 makeAclStmt(char *privileges, List *rel_list, char *grantee,
 			char grant_or_revoke)
 {
-	ChangeACLStmt  *n = makeNode(ChangeACLStmt);
-	StringInfoData	str;
+	ChangeACLStmt *n = makeNode(ChangeACLStmt);
+	StringInfoData str;
 
 	initStringInfo(&str);
 

@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2000, PostgreSQL, Inc
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Id: parse_relation.h,v 1.15 2000/02/15 03:38:29 thomas Exp $
+ * $Id: parse_relation.h,v 1.16 2000/04/12 17:16:45 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -18,18 +18,18 @@
 
 extern RangeTblEntry *refnameRangeTableEntry(ParseState *pstate, char *refname);
 extern int refnameRangeTablePosn(ParseState *pstate,
-								 char *refname,
-								 int *sublevels_up);
+					  char *refname,
+					  int *sublevels_up);
 extern RangeTblEntry *colnameRangeTableEntry(ParseState *pstate, char *colname);
 extern RangeTblEntry *addRangeTableEntry(ParseState *pstate,
-										 char *relname,
-										 Attr *ref,
-										 bool inh,
-										 bool inFromCl,
-										 bool inJoinSet);
+				   char *relname,
+				   Attr *ref,
+				   bool inh,
+				   bool inFromCl,
+				   bool inJoinSet);
 extern Attr *expandTable(ParseState *pstate, char *refname, bool getaliases);
 extern List *expandAll(ParseState *pstate, char *relname, Attr *ref,
-					   int *this_resno);
+		  int *this_resno);
 extern int	attnameAttNum(Relation rd, char *a);
 extern int	specialAttNum(char *a);
 extern bool attnameIsSet(Relation rd, char *name);

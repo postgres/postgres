@@ -8,14 +8,14 @@
  * version or anything like that.  It is for defining individual relations
  * that have multiple concurrently-existing versions.  Yes, there used to
  * be such a feature in Postgres, but it's been broken for a long time
- * (see src/backend/commands/_deadcode/version.c).  The pg_version table
+ * (see src/backend/commands/_deadcode/version.c).	The pg_version table
  * isn't even created at present.
  *
  *
  * Portions Copyright (c) 1996-2000, PostgreSQL, Inc
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Id: pg_version.h,v 1.10 2000/01/26 05:57:59 momjian Exp $
+ * $Id: pg_version.h,v 1.11 2000/04/12 17:16:30 momjian Exp $
  *
  * NOTES
  *	  the genbki.sh script reads this file and generates .bki

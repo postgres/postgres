@@ -9,7 +9,7 @@
  * Portions Copyright (c) 1996-2000, PostgreSQL, Inc
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Id: datetime.h,v 1.11 2000/03/14 23:06:50 thomas Exp $
+ * $Id: datetime.h,v 1.12 2000/04/12 17:16:54 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -236,39 +236,39 @@ extern void j2date(int jd, int *year, int *month, int *day);
 extern int	date2j(int year, int month, int day);
 
 extern int ParseDateTime(char *timestr, char *lowstr,
-						 char **field, int *ftype,
-						 int maxfields, int *numfields);
+			  char **field, int *ftype,
+			  int maxfields, int *numfields);
 extern int DecodeDateTime(char **field, int *ftype,
-						  int nf, int *dtype,
-						  struct tm * tm, double *fsec, int *tzp);
+			   int nf, int *dtype,
+			   struct tm * tm, double *fsec, int *tzp);
 
 extern int DecodeTimeOnly(char **field, int *ftype,
-						  int nf, int *dtype,
-						  struct tm * tm, double *fsec, int *tzp);
+			   int nf, int *dtype,
+			   struct tm * tm, double *fsec, int *tzp);
 
 extern int DecodeDateDelta(char **field, int *ftype,
-						   int nf, int *dtype,
-						   struct tm * tm, double *fsec);
+				int nf, int *dtype,
+				struct tm * tm, double *fsec);
 
-extern int EncodeDateOnly(struct tm * tm, int style, char *str);
-extern int EncodeTimeOnly(struct tm * tm, double fsec, int *tzp, int style, char *str);
-extern int EncodeDateTime(struct tm * tm, double fsec, int *tzp, char **tzn, int style, char *str);
-extern int EncodeTimeSpan(struct tm * tm, double fsec, int style, char *str);
+extern int	EncodeDateOnly(struct tm * tm, int style, char *str);
+extern int	EncodeTimeOnly(struct tm * tm, double fsec, int *tzp, int style, char *str);
+extern int	EncodeDateTime(struct tm * tm, double fsec, int *tzp, char **tzn, int style, char *str);
+extern int	EncodeTimeSpan(struct tm * tm, double fsec, int style, char *str);
 
-extern int DecodeDate(char *str, int fmask, int *tmask, struct tm * tm);
+extern int	DecodeDate(char *str, int fmask, int *tmask, struct tm * tm);
 extern int DecodeNumber(int flen, char *field,
-						int fmask, int *tmask,
-						struct tm * tm, double *fsec, int *is2digits);
+			 int fmask, int *tmask,
+			 struct tm * tm, double *fsec, int *is2digits);
 extern int DecodeNumberField(int len, char *str,
-							 int fmask, int *tmask,
-							 struct tm * tm, double *fsec, int *is2digits);
-extern int DecodeSpecial(int field, char *lowtoken, int *val);
+				  int fmask, int *tmask,
+				  struct tm * tm, double *fsec, int *is2digits);
+extern int	DecodeSpecial(int field, char *lowtoken, int *val);
 extern int DecodeTime(char *str, int fmask, int *tmask,
-					  struct tm * tm, double *fsec);
-extern int DecodeTimezone(char *str, int *tzp);
-extern int DecodeUnits(int field, char *lowtoken, int *val);
+		   struct tm * tm, double *fsec);
+extern int	DecodeTimezone(char *str, int *tzp);
+extern int	DecodeUnits(int field, char *lowtoken, int *val);
 extern datetkn *datebsearch(char *key, datetkn *base, unsigned int nel);
 
-extern int j2day(int jd);
+extern int	j2day(int jd);
 
 #endif	 /* DATETIME_H */

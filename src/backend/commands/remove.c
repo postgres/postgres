@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/commands/Attic/remove.c,v 1.45 2000/01/26 05:56:13 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/commands/Attic/remove.c,v 1.46 2000/04/12 17:14:59 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -156,14 +156,15 @@ SingleOpOperatorRemove(Oid typeOid)
 	{
 		key[0].sk_attno = attnums[i];
 		scan = heap_beginscan(rel, 0, SnapshotNow, 1, key);
-		while (HeapTupleIsValid(tup = heap_getnext(scan, 0))) {
+		while (HeapTupleIsValid(tup = heap_getnext(scan, 0)))
+		{
 
-		  /*** This is apparently a routine not in use, but remove ***/
-		  /*** any comments anyways ***/
+			/*** This is apparently a routine not in use, but remove ***/
+			/*** any comments anyways ***/
 
-		  DeleteComments(tup->t_data->t_oid);
+			DeleteComments(tup->t_data->t_oid);
 
-		  heap_delete(rel, &tup->t_self, NULL);
+			heap_delete(rel, &tup->t_self, NULL);
 
 		}
 

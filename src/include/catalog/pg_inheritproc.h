@@ -8,7 +8,7 @@
  * Portions Copyright (c) 1996-2000, PostgreSQL, Inc
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Id: pg_inheritproc.h,v 1.8 2000/01/26 05:57:57 momjian Exp $
+ * $Id: pg_inheritproc.h,v 1.9 2000/04/12 17:16:28 momjian Exp $
  *
  * NOTES
  *	  the genbki.sh script reads this file and generates .bki
@@ -52,8 +52,8 @@ typedef FormData_pg_inheritproc *Form_pg_inheritproc;
  */
 #define Natts_pg_inheritproc			4
 #define Anum_pg_inheritproc_inhproname	1
-#define Anum_pg_inheritproc_inhargrelid	2
-#define Anum_pg_inheritproc_inhdefrelid	3
+#define Anum_pg_inheritproc_inhargrelid 2
+#define Anum_pg_inheritproc_inhdefrelid 3
 #define Anum_pg_inheritproc_inhproc		4
 
 

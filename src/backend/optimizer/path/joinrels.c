@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/optimizer/path/joinrels.c,v 1.43 2000/02/07 04:40:59 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/optimizer/path/joinrels.c,v 1.44 2000/04/12 17:15:20 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -22,7 +22,7 @@
 
 
 static RelOptInfo *make_join_rel(Query *root, RelOptInfo *rel1,
-								 RelOptInfo *rel2);
+			  RelOptInfo *rel2);
 
 
 /*
@@ -44,22 +44,23 @@ make_rels_by_joins(Query *root, int level)
 	/*
 	 * First, consider left-sided and right-sided plans, in which rels of
 	 * exactly level-1 member relations are joined against base relations.
-	 * We prefer to join using join clauses, but if we find a rel of level-1
-	 * members that has no join clauses, we will generate Cartesian-product
-	 * joins against all base rels not already contained in it.
+	 * We prefer to join using join clauses, but if we find a rel of
+	 * level-1 members that has no join clauses, we will generate
+	 * Cartesian-product joins against all base rels not already contained
+	 * in it.
 	 *
 	 * In the first pass (level == 2), we try to join each base rel to each
 	 * base rel that appears later in base_rel_list.  (The mirror-image
-	 * joins are handled automatically by make_join_rel.)  In later passes,
-	 * we try to join rels of size level-1 from join_rel_list to each
-	 * base rel in base_rel_list.
+	 * joins are handled automatically by make_join_rel.)  In later
+	 * passes, we try to join rels of size level-1 from join_rel_list to
+	 * each base rel in base_rel_list.
 	 *
 	 * We assume that the rels already present in join_rel_list appear in
 	 * decreasing order of level (number of members).  This should be true
 	 * since we always add new higher-level rels to the front of the list.
 	 */
 	if (level == 2)
-		r = root->base_rel_list;	/* level-1 is base rels */
+		r = root->base_rel_list;/* level-1 is base rels */
 	else
 		r = root->join_rel_list;
 	for (; r != NIL; r = lnext(r))
@@ -68,21 +69,23 @@ make_rels_by_joins(Query *root, int level)
 		int			old_level = length(old_rel->relids);
 		List	   *other_rels;
 
-		if (old_level != level-1)
+		if (old_level != level - 1)
 			break;
 
 		if (level == 2)
-			other_rels = lnext(r); /* only consider remaining base rels */
+			other_rels = lnext(r);		/* only consider remaining base
+										 * rels */
 		else
-			other_rels = root->base_rel_list; /* consider all base rels */
+			other_rels = root->base_rel_list;	/* consider all base rels */
 
 		if (old_rel->joininfo != NIL)
 		{
+
 			/*
-			 * Note that if all available join clauses for this rel require
-			 * more than one other rel, we will fail to make any joins against
-			 * it here.  That's OK; it'll be considered by "bushy plan" join
-			 * code in a higher-level pass.
+			 * Note that if all available join clauses for this rel
+			 * require more than one other rel, we will fail to make any
+			 * joins against it here.  That's OK; it'll be considered by
+			 * "bushy plan" join code in a higher-level pass.
 			 */
 			make_rels_by_clause_joins(root,
 									  old_rel,
@@ -90,6 +93,7 @@ make_rels_by_joins(Query *root, int level)
 		}
 		else
 		{
+
 			/*
 			 * Oops, we have a relation that is not joined to any other
 			 * relation.  Cartesian product time.
@@ -103,10 +107,11 @@ make_rels_by_joins(Query *root, int level)
 	/*
 	 * Now, consider "bushy plans" in which relations of k base rels are
 	 * joined to relations of level-k base rels, for 2 <= k <= level-2.
-	 * The previous loop left r pointing to the first rel of level level-2.
+	 * The previous loop left r pointing to the first rel of level
+	 * level-2.
 	 *
-	 * We only consider bushy-plan joins for pairs of rels where there is
-	 * a suitable join clause, in order to avoid unreasonable growth of
+	 * We only consider bushy-plan joins for pairs of rels where there is a
+	 * suitable join clause, in order to avoid unreasonable growth of
 	 * planning time.
 	 */
 	for (; r != NIL; r = lnext(r))
@@ -115,8 +120,9 @@ make_rels_by_joins(Query *root, int level)
 		int			old_level = length(old_rel->relids);
 		List	   *r2;
 
-		/* We can quit once past the halfway point (make_join_rel took care
-		 * of making the opposite-direction joins)
+		/*
+		 * We can quit once past the halfway point (make_join_rel took
+		 * care of making the opposite-direction joins)
 		 */
 		if (old_level * 2 < level)
 			break;
@@ -137,8 +143,10 @@ make_rels_by_joins(Query *root, int level)
 			{
 				List	   *i;
 
-				/* OK, we can build a rel of the right level from this pair of
-				 * rels.  Do so if there is at least one usable join clause.
+				/*
+				 * OK, we can build a rel of the right level from this
+				 * pair of rels.  Do so if there is at least one usable
+				 * join clause.
 				 */
 				foreach(i, old_rel->joininfo)
 				{
@@ -192,7 +200,7 @@ make_rels_by_clause_joins(Query *root,
 
 		foreach(j, other_rels)
 		{
-			RelOptInfo   *other_rel = (RelOptInfo *) lfirst(j);
+			RelOptInfo *other_rel = (RelOptInfo *) lfirst(j);
 
 			if (is_subseti(unjoined_relids, other_rel->relids))
 				result = make_join_rel(root, old_rel, other_rel);
@@ -251,8 +259,8 @@ make_rels_by_clauseless_joins(Query *root,
 static RelOptInfo *
 make_join_rel(Query *root, RelOptInfo *rel1, RelOptInfo *rel2)
 {
-	RelOptInfo	   *joinrel;
-	List		   *restrictlist;
+	RelOptInfo *joinrel;
+	List	   *restrictlist;
 
 	/*
 	 * Find or build the join RelOptInfo, and compute the restrictlist

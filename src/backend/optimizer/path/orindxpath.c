@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/optimizer/path/orindxpath.c,v 1.38 2000/03/22 22:08:33 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/optimizer/path/orindxpath.c,v 1.39 2000/04/12 17:15:20 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -27,14 +27,14 @@
 
 
 static void best_or_subclause_indices(Query *root, RelOptInfo *rel,
-									  List *subclauses, List *indices,
-									  IndexPath *pathnode);
+						  List *subclauses, List *indices,
+						  IndexPath *pathnode);
 static void best_or_subclause_index(Query *root, RelOptInfo *rel,
-									Expr *subclause, List *indices,
-									List **retIndexQual,
-									Oid *retIndexid,
-									Cost *retStartupCost,
-									Cost *retTotalCost);
+						Expr *subclause, List *indices,
+						List **retIndexQual,
+						Oid *retIndexid,
+						Cost *retStartupCost,
+						Cost *retTotalCost);
 
 
 /*
@@ -61,8 +61,8 @@ create_or_index_paths(Query *root,
 		/*
 		 * Check to see if this clause is an 'or' clause, and, if so,
 		 * whether or not each of the subclauses within the 'or' clause
-		 * has been matched by an index.  The information used was
-		 * saved by create_index_paths().
+		 * has been matched by an index.  The information used was saved
+		 * by create_index_paths().
 		 */
 		if (restriction_is_or_clause(clausenode) &&
 			clausenode->subclauseindices)
@@ -80,6 +80,7 @@ create_or_index_paths(Query *root,
 			}
 			if (all_indexable)
 			{
+
 				/*
 				 * OK, build an IndexPath for this OR clause, using the
 				 * best available index for each subclause.
@@ -88,19 +89,23 @@ create_or_index_paths(Query *root,
 
 				pathnode->path.pathtype = T_IndexScan;
 				pathnode->path.parent = rel;
+
 				/*
-				 * This is an IndexScan, but the overall result will consist
-				 * of tuples extracted in multiple passes (one for each
-				 * subclause of the OR), so the result cannot be claimed
-				 * to have any particular ordering.
+				 * This is an IndexScan, but the overall result will
+				 * consist of tuples extracted in multiple passes (one for
+				 * each subclause of the OR), so the result cannot be
+				 * claimed to have any particular ordering.
 				 */
 				pathnode->path.pathkeys = NIL;
 
-				/* We don't actually care what order the index scans in ... */
+				/*
+				 * We don't actually care what order the index scans in
+				 * ...
+				 */
 				pathnode->indexscandir = NoMovementScanDirection;
 
 				/* This isn't a nestloop innerjoin, so: */
-				pathnode->joinrelids = NIL;	/* no join clauses here */
+				pathnode->joinrelids = NIL;		/* no join clauses here */
 				pathnode->rows = rel->rows;
 
 				best_or_subclause_indices(root,
@@ -125,7 +130,7 @@ create_or_index_paths(Query *root,
  * This routine also creates the indexqual and indexid lists that will
  * be needed by the executor.  The indexqual list has one entry for each
  * scan of the base rel, which is a sublist of indexqual conditions to
- * apply in that scan.  The implicit semantics are AND across each sublist
+ * apply in that scan.	The implicit semantics are AND across each sublist
  * of quals, and OR across the toplevel list (note that the executor
  * takes care not to return any single tuple more than once).  The indexid
  * list gives the OID of the index to be used in each scan.
@@ -181,7 +186,7 @@ best_or_subclause_indices(Query *root,
 
 		pathnode->indexqual = lappend(pathnode->indexqual, best_indexqual);
 		pathnode->indexid = lappendi(pathnode->indexid, best_indexid);
-		if (slist == subclauses)		/* first scan? */
+		if (slist == subclauses)/* first scan? */
 			pathnode->path.startup_cost = best_startup_cost;
 		pathnode->path.total_cost += best_total_cost;
 

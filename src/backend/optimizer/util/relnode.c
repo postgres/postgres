@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/optimizer/util/relnode.c,v 1.25 2000/02/18 23:47:31 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/optimizer/util/relnode.c,v 1.26 2000/04/12 17:15:24 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -24,15 +24,15 @@
 
 static List *new_join_tlist(List *tlist, int first_resdomno);
 static List *build_joinrel_restrictlist(RelOptInfo *joinrel,
-										RelOptInfo *outer_rel,
-										RelOptInfo *inner_rel);
+						   RelOptInfo *outer_rel,
+						   RelOptInfo *inner_rel);
 static void build_joinrel_joinlist(RelOptInfo *joinrel,
-								   RelOptInfo *outer_rel,
-								   RelOptInfo *inner_rel);
+					   RelOptInfo *outer_rel,
+					   RelOptInfo *inner_rel);
 static List *subbuild_joinrel_restrictlist(RelOptInfo *joinrel,
-										   List *joininfo_list);
+							  List *joininfo_list);
 static void subbuild_joinrel_joinlist(RelOptInfo *joinrel,
-									  List *joininfo_list);
+						  List *joininfo_list);
 
 
 /*
@@ -50,7 +50,10 @@ get_base_rel(Query *root, int relid)
 	{
 		rel = (RelOptInfo *) lfirst(baserels);
 
-		/* We know length(rel->relids) == 1 for all members of base_rel_list */
+		/*
+		 * We know length(rel->relids) == 1 for all members of
+		 * base_rel_list
+		 */
 		if (lfirsti(rel->relids) == relid)
 			return rel;
 	}
@@ -75,18 +78,20 @@ get_base_rel(Query *root, int relid)
 
 	if (relid < 0)
 	{
+
 		/*
-		 * If the relation is a materialized relation, assume
-		 * constants for sizes.
+		 * If the relation is a materialized relation, assume constants
+		 * for sizes.
 		 */
 		rel->pages = _NONAME_RELATION_PAGES_;
 		rel->tuples = _NONAME_RELATION_TUPLES_;
 	}
 	else
 	{
+
 		/*
-		 * Otherwise, retrieve relation statistics from the
-		 * system catalogs.
+		 * Otherwise, retrieve relation statistics from the system
+		 * catalogs.
 		 */
 		relation_info(root, relid,
 					  &rel->indexed, &rel->pages, &rel->tuples);
@@ -162,6 +167,7 @@ get_join_rel(Query *root,
 
 	if (joinrel)
 	{
+
 		/*
 		 * Yes, so we only need to figure the restrictlist for this
 		 * particular pair of component relations.
@@ -198,13 +204,13 @@ get_join_rel(Query *root,
 	 * of the outer and inner join relations and then merging the results
 	 * together.
 	 *
-	 * NOTE: the tlist order for a join rel will depend on which pair
-	 * of outer and inner rels we first try to build it from.  But the
+	 * NOTE: the tlist order for a join rel will depend on which pair of
+	 * outer and inner rels we first try to build it from.	But the
 	 * contents should be the same regardless.
 	 *
-	 * XXX someday: consider pruning vars from the join's targetlist
-	 * if they are needed only to evaluate restriction clauses of this
-	 * join, and will never be accessed at higher levels of the plantree.
+	 * XXX someday: consider pruning vars from the join's targetlist if they
+	 * are needed only to evaluate restriction clauses of this join, and
+	 * will never be accessed at higher levels of the plantree.
 	 */
 	new_outer_tlist = new_join_tlist(outer_rel->targetlist, 1);
 	new_inner_tlist = new_join_tlist(inner_rel->targetlist,
@@ -212,9 +218,9 @@ get_join_rel(Query *root,
 	joinrel->targetlist = nconc(new_outer_tlist, new_inner_tlist);
 
 	/*
-	 * Construct restrict and join clause lists for the new joinrel.
-	 * (The caller might or might not need the restrictlist, but
-	 * I need it anyway for set_joinrel_size_estimates().)
+	 * Construct restrict and join clause lists for the new joinrel. (The
+	 * caller might or might not need the restrictlist, but I need it
+	 * anyway for set_joinrel_size_estimates().)
 	 */
 	restrictlist = build_joinrel_restrictlist(joinrel, outer_rel, inner_rel);
 	if (restrictlist_ptr)
@@ -246,7 +252,7 @@ get_join_rel(Query *root,
  *
  *	  XXX the above comment refers to code that is long dead and gone;
  *	  we don't keep track of joinlists for individual targetlist entries
- *	  anymore.  For now, all vars present in either input tlist will be
+ *	  anymore.	For now, all vars present in either input tlist will be
  *	  emitted in the join's tlist.
  *
  * 'tlist' is the target list of one of the join relations
@@ -286,16 +292,16 @@ new_join_tlist(List *tlist,
  *	  the join lists need only be computed once for any join RelOptInfo.
  *	  The join lists are fully determined by the set of rels making up the
  *	  joinrel, so we should get the same results (up to ordering) from any
- *	  candidate pair of sub-relations.  But the restriction list is whatever
+ *	  candidate pair of sub-relations.	But the restriction list is whatever
  *	  is not handled in the sub-relations, so it depends on which
  *	  sub-relations are considered.
  *
  *	  If a join clause from an input relation refers to base rels still not
  *	  present in the joinrel, then it is still a join clause for the joinrel;
- *	  we put it into an appropriate JoinInfo list for the joinrel.  Otherwise,
+ *	  we put it into an appropriate JoinInfo list for the joinrel.	Otherwise,
  *	  the clause is now a restrict clause for the joined relation, and we
  *	  return it to the caller of build_joinrel_restrictlist() to be stored in
- *	  join paths made from this pair of sub-relations.  (It will not need to
+ *	  join paths made from this pair of sub-relations.	(It will not need to
  *	  be considered further up the join tree.)
  *
  * 'joinrel' is a join relation node
@@ -304,11 +310,11 @@ new_join_tlist(List *tlist,
  *
  * build_joinrel_restrictlist() returns a list of relevant restrictinfos,
  * whereas build_joinrel_joinlist() stores its results in the joinrel's
- * joininfo lists.  One or the other must accept each given clause!
+ * joininfo lists.	One or the other must accept each given clause!
  *
  * NB: Formerly, we made deep(!) copies of each input RestrictInfo to pass
  * up to the join relation.  I believe this is no longer necessary, because
- * RestrictInfo nodes are no longer context-dependent.  Instead, just include
+ * RestrictInfo nodes are no longer context-dependent.	Instead, just include
  * the original nodes in the lists made for the join relation.
  */
 static List *
@@ -316,9 +322,10 @@ build_joinrel_restrictlist(RelOptInfo *joinrel,
 						   RelOptInfo *outer_rel,
 						   RelOptInfo *inner_rel)
 {
+
 	/*
-	 * We must eliminate duplicates, since we will see the
-	 * same clauses arriving from both input relations...
+	 * We must eliminate duplicates, since we will see the same clauses
+	 * arriving from both input relations...
 	 */
 	return LispUnion(subbuild_joinrel_restrictlist(joinrel,
 												   outer_rel->joininfo),
@@ -348,6 +355,7 @@ subbuild_joinrel_restrictlist(RelOptInfo *joinrel,
 
 		if (is_subseti(joininfo->unjoined_relids, joinrel->relids))
 		{
+
 			/*
 			 * Clauses in this JoinInfo list become restriction clauses
 			 * for the joinrel, since they refer to no outside rels.
@@ -360,9 +368,10 @@ subbuild_joinrel_restrictlist(RelOptInfo *joinrel,
 		}
 		else
 		{
+
 			/*
-			 * These clauses are still join clauses at this level,
-			 * so we ignore them in this routine.
+			 * These clauses are still join clauses at this level, so we
+			 * ignore them in this routine.
 			 */
 		}
 	}
@@ -385,18 +394,20 @@ subbuild_joinrel_joinlist(RelOptInfo *joinrel,
 											  joinrel->relids);
 		if (new_unjoined_relids == NIL)
 		{
+
 			/*
 			 * Clauses in this JoinInfo list become restriction clauses
-			 * for the joinrel, since they refer to no outside rels.
-			 * So we can ignore them in this routine.
+			 * for the joinrel, since they refer to no outside rels. So we
+			 * can ignore them in this routine.
 			 */
 		}
 		else
 		{
+
 			/*
-			 * These clauses are still join clauses at this level,
-			 * so find or make the appropriate JoinInfo item for the joinrel,
-			 * and add the clauses to it (eliminating duplicates).
+			 * These clauses are still join clauses at this level, so find
+			 * or make the appropriate JoinInfo item for the joinrel, and
+			 * add the clauses to it (eliminating duplicates).
 			 */
 			JoinInfo   *new_joininfo;
 

@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2000, PostgreSQL, Inc
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- *	$Id: be-dumpdata.c,v 1.32 2000/01/26 05:56:28 momjian Exp $
+ *	$Id: be-dumpdata.c,v 1.33 2000/04/12 17:15:14 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -184,7 +184,7 @@ be_typeinit(PortalEntry *entry,
 		for (i = 0; i < natts; ++i)
 		{
 			strncpy(group->types[i].name,
-				NameStr(attrs[i]->attname), NAMEDATALEN);
+					NameStr(attrs[i]->attname), NAMEDATALEN);
 			group->types[i].typid = attrs[i]->atttypid;
 			group->types[i].typlen = attrs[i]->attlen;
 		}

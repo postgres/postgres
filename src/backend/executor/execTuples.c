@@ -15,7 +15,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/executor/execTuples.c,v 1.36 2000/01/27 18:11:27 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/executor/execTuples.c,v 1.37 2000/04/12 17:15:08 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -188,8 +188,8 @@ ExecCreateTupleTable(int initialSize)	/* initial number of slots in
  * --------------------------------
  */
 void
-ExecDropTupleTable(TupleTable table, /* tuple table */
-					  bool shouldFree)	/* true if we should free slot
+ExecDropTupleTable(TupleTable table,	/* tuple table */
+				   bool shouldFree)		/* true if we should free slot
 										 * contents */
 {
 	int			next;			/* next available slot */
@@ -262,7 +262,7 @@ TupleTableSlot *				/* return: the slot allocated in the tuple
 ExecAllocTableSlot(TupleTable table)
 {
 	int			slotnum;		/* new slot number */
-	TupleTableSlot*   slot;
+	TupleTableSlot *slot;
 
 	/* ----------------
 	 *	sanity checks
@@ -335,8 +335,8 @@ ExecAllocTableSlot(TupleTable table)
  *
  *		tuple:	tuple to store
  *		slot:	slot to store it in
- *		buffer:	disk buffer if tuple is in a disk page, else InvalidBuffer
- *		shouldFree:	true if ExecClearTuple should pfree() the tuple
+ *		buffer: disk buffer if tuple is in a disk page, else InvalidBuffer
+ *		shouldFree: true if ExecClearTuple should pfree() the tuple
  *					when done with it
  *
  * If 'buffer' is not InvalidBuffer, the tuple table code acquires a pin
@@ -350,7 +350,7 @@ ExecAllocTableSlot(TupleTable table)
  * Another case where it is 'false' is when the referenced tuple is held
  * in a tuple table slot belonging to a lower-level executor Proc node.
  * In this case the lower-level slot retains ownership and responsibility
- * for eventually releasing the tuple.  When this method is used, we must
+ * for eventually releasing the tuple.	When this method is used, we must
  * be certain that the upper-level Proc node will lose interest in the tuple
  * sooner than the lower-level one does!  If you're not certain, copy the
  * lower-level tuple with heap_copytuple and let the upper-level table
@@ -385,7 +385,8 @@ ExecStoreTuple(HeapTuple tuple,
 	slot->ttc_buffer = buffer;
 	slot->ttc_shouldFree = shouldFree;
 
-	/* If tuple is on a disk page, keep the page pinned as long as we hold
+	/*
+	 * If tuple is on a disk page, keep the page pinned as long as we hold
 	 * a pointer into it.
 	 */
 	if (BufferIsValid(buffer))
@@ -426,7 +427,7 @@ ExecClearTuple(TupleTableSlot *slot)	/* slot in which to store tuple */
 
 	slot->val = (HeapTuple) NULL;
 
-	slot->ttc_shouldFree = true; /* probably useless code... */
+	slot->ttc_shouldFree = true;/* probably useless code... */
 
 	/* ----------------
 	 *	Drop the pin on the referenced buffer, if there is one.
@@ -776,6 +777,7 @@ NodeGetResultTupleSlot(Plan *node)
 		case T_TidScan:
 			{
 				CommonScanState *scanstate = ((IndexScan *) node)->scan.scanstate;
+
 				slot = scanstate->cstate.cs_ResultTupleSlot;
 			}
 			break;

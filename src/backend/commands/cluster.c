@@ -15,7 +15,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/commands/cluster.c,v 1.50 2000/01/26 05:56:13 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/commands/cluster.c,v 1.51 2000/04/12 17:14:57 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -104,8 +104,8 @@ cluster(char *oldrelname, char *oldindexname)
 	 * Like vacuum, cluster spans transactions, so I'm going to handle it
 	 * in the same way: commit and restart transactions where needed.
 	 *
-	 * We grab exclusive access to the target rel and index for the
-	 * duration of the initial transaction.
+	 * We grab exclusive access to the target rel and index for the duration
+	 * of the initial transaction.
 	 */
 
 	OldHeap = heap_openr(oldrelname, AccessExclusiveLock);
@@ -115,7 +115,7 @@ cluster(char *oldrelname, char *oldindexname)
 	LockRelation(OldIndex, AccessExclusiveLock);
 	OIDOldIndex = RelationGetRelid(OldIndex);
 
-	heap_close(OldHeap, NoLock); /* do NOT give up the locks */
+	heap_close(OldHeap, NoLock);/* do NOT give up the locks */
 	index_close(OldIndex);
 
 	/*

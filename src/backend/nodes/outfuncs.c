@@ -6,7 +6,7 @@
  * Portions Copyright (c) 1996-2000, PostgreSQL, Inc
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- *	$Header: /cvsroot/pgsql/src/backend/nodes/outfuncs.c,v 1.113 2000/03/24 02:58:25 tgl Exp $
+ *	$Header: /cvsroot/pgsql/src/backend/nodes/outfuncs.c,v 1.114 2000/04/12 17:15:16 momjian Exp $
  *
  * NOTES
  *	  Every (plan) node in POSTGRES has an associated "out" routine which
@@ -60,10 +60,11 @@ _outToken(StringInfo str, char *s)
 		appendStringInfo(str, "<>");
 		return;
 	}
+
 	/*
 	 * Look for characters or patterns that are treated specially by
-	 * read.c (either in lsptok() or in nodeRead()), and therefore need
-	 * a protective backslash.
+	 * read.c (either in lsptok() or in nodeRead()), and therefore need a
+	 * protective backslash.
 	 */
 	/* These characters only need to be quoted at the start of the string */
 	if (*s == '<' ||
@@ -256,7 +257,7 @@ _outQuery(StringInfo str, Query *node)
 	_outToken(str, node->into);
 
 	appendStringInfo(str,
-					 " :isPortal %s :isBinary %s :isTemp %s :unionall %s :distinctClause ",
+	" :isPortal %s :isBinary %s :isTemp %s :unionall %s :distinctClause ",
 					 node->isPortal ? "true" : "false",
 					 node->isBinary ? "true" : "false",
 					 node->isTemp ? "true" : "false",
@@ -633,7 +634,7 @@ static void
 _outResdom(StringInfo str, Resdom *node)
 {
 	appendStringInfo(str,
-					 " RESDOM :resno %d :restype %u :restypmod %d :resname ",
+				 " RESDOM :resno %d :restype %u :restypmod %d :resname ",
 					 node->resno,
 					 node->restype,
 					 node->restypmod);
@@ -925,7 +926,7 @@ _outRelOptInfo(StringInfo str, RelOptInfo *node)
 	_outIntList(str, node->relids);
 
 	appendStringInfo(str,
-	 " :rows %.0f :width %d :indexed %s :pages %ld :tuples %.0f :targetlist ",
+					 " :rows %.0f :width %d :indexed %s :pages %ld :tuples %.0f :targetlist ",
 					 node->rows,
 					 node->width,
 					 node->indexed ? "true" : "false",
@@ -983,7 +984,7 @@ _outRangeTblEntry(StringInfo str, RangeTblEntry *node)
 	appendStringInfo(str, " :ref ");
 	_outNode(str, node->ref);
 	appendStringInfo(str,
-					 " :relid %u :inh %s :inFromCl %s :inJoinSet %s :skipAcl %s",
+			 " :relid %u :inh %s :inFromCl %s :inJoinSet %s :skipAcl %s",
 					 node->relid,
 					 node->inh ? "true" : "false",
 					 node->inFromCl ? "true" : "false",
@@ -1004,7 +1005,7 @@ static void
 _outPath(StringInfo str, Path *node)
 {
 	appendStringInfo(str,
-					 " PATH :pathtype %d :startup_cost %.2f :total_cost %.2f :pathkeys ",
+	 " PATH :pathtype %d :startup_cost %.2f :total_cost %.2f :pathkeys ",
 					 node->pathtype,
 					 node->startup_cost,
 					 node->total_cost);
@@ -1282,12 +1283,14 @@ _outValue(StringInfo str, Value *value)
 {
 	switch (value->type)
 	{
-		case T_Integer:
+			case T_Integer:
 			appendStringInfo(str, " %ld ", value->val.ival);
 			break;
 		case T_Float:
-			/* We assume the value is a valid numeric literal
-			 * and so does not need quoting.
+
+			/*
+			 * We assume the value is a valid numeric literal and so does
+			 * not need quoting.
 			 */
 			appendStringInfo(str, " %s ", value->val.str);
 			break;

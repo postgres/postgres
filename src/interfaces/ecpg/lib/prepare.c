@@ -8,10 +8,10 @@
 
 static struct prepared_statement
 {
-        char       *name;
-        struct statement *stmt;
-        struct prepared_statement *next;
-}                  *prep_stmts = NULL;
+	char	   *name;
+	struct statement *stmt;
+	struct prepared_statement *next;
+}		   *prep_stmts = NULL;
 
 static bool
 isvarchar(unsigned char c)
@@ -47,7 +47,7 @@ replace_variables(char *text)
 		}
 	}
 }
-                        
+
 /* handle the EXEC SQL PREPARE statement */
 bool
 ECPGprepare(int lineno, char *name, char *variable)
@@ -117,7 +117,7 @@ ECPGdeallocate(int lineno, char *name)
 			prev->next = this->next;
 		else
 			prep_stmts = this->next;
-		
+
 		free(this);
 		return true;
 	}
@@ -130,15 +130,15 @@ bool
 ECPGdeallocate_all(int lineno)
 {
 	/* deallocate all prepared statements */
-	 while(prep_stmts != NULL)
-	 {
-		bool b = ECPGdeallocate(lineno, prep_stmts->name);
-		
-	        if (!b)
+	while (prep_stmts != NULL)
+	{
+		bool		b = ECPGdeallocate(lineno, prep_stmts->name);
+
+		if (!b)
 			return false;
-         }
-         
-         return true;
+	}
+
+	return true;
 }
 
 /* return the prepared statement */

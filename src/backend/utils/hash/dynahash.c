@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/hash/dynahash.c,v 1.30 2000/03/17 02:36:28 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/hash/dynahash.c,v 1.31 2000/04/12 17:16:00 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -701,7 +701,7 @@ hash_search(HTAB *hashp,
 long *
 hash_seq(HTAB *hashp)
 {
-	static long	curBucket = 0;
+	static long curBucket = 0;
 	static BUCKET_INDEX curIndex;
 	ELEMENT    *curElem;
 	long		segment_num;
@@ -813,9 +813,10 @@ expand_table(HTAB *hashp)
 
 	/*
 	 * *Before* changing masks, find old bucket corresponding to same hash
-	 * values; values in that bucket may need to be relocated to new bucket.
-	 * Note that new_bucket is certainly larger than low_mask at this point,
-	 * so we can skip the first step of the regular hash mask calc.
+	 * values; values in that bucket may need to be relocated to new
+	 * bucket. Note that new_bucket is certainly larger than low_mask at
+	 * this point, so we can skip the first step of the regular hash mask
+	 * calc.
 	 */
 	old_bucket = (new_bucket & hctl->low_mask);
 
@@ -829,9 +830,9 @@ expand_table(HTAB *hashp)
 	}
 
 	/*
-	 * Relocate records to the new bucket.  NOTE: because of the way the
+	 * Relocate records to the new bucket.	NOTE: because of the way the
 	 * hash masking is done in call_hash, only one old bucket can need to
-	 * be split at this point.  With a different way of reducing the hash
+	 * be split at this point.	With a different way of reducing the hash
 	 * value, that might not be true!
 	 */
 	old_segnum = old_bucket >> hctl->sshift;

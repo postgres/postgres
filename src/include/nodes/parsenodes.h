@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2000, PostgreSQL, Inc
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Id: parsenodes.h,v 1.103 2000/03/24 23:26:45 tgl Exp $
+ * $Id: parsenodes.h,v 1.104 2000/04/12 17:16:40 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -54,7 +54,7 @@ typedef struct Query
 	Node	   *qual;			/* qualifications applied to tuples */
 	List	   *rowMark;		/* list of RowMark entries */
 
-	List	   *distinctClause;	/* a list of SortClause's */
+	List	   *distinctClause; /* a list of SortClause's */
 
 	List	   *sortClause;		/* a list of SortClause's */
 
@@ -72,7 +72,8 @@ typedef struct Query
 	/* internal to planner */
 	List	   *base_rel_list;	/* list of base-relation RelOptInfos */
 	List	   *join_rel_list;	/* list of join-relation RelOptInfos */
-	List	   *equi_key_list;	/* list of lists of equijoined PathKeyItems */
+	List	   *equi_key_list;	/* list of lists of equijoined
+								 * PathKeyItems */
 	List	   *query_pathkeys; /* pathkeys for query_planner()'s result */
 } Query;
 
@@ -94,12 +95,13 @@ typedef struct Query
 typedef struct AlterTableStmt
 {
 	NodeTag		type;
-    char        subtype;        /* A = add, T = alter, D = drop, C = add constr, X = drop constr */
-	char	   *relname;        /* table to work on */
+	char		subtype;		/* A = add, T = alter, D = drop, C = add
+								 * constr, X = drop constr */
+	char	   *relname;		/* table to work on */
 	bool		inh;			/* recursively on children? */
-    char       *name;           /* column or constraint name to act on */
-    Node       *def;            /* definition of new column or constraint */
-    int         behavior;       /* CASCADE or RESTRICT drop behavior */
+	char	   *name;			/* column or constraint name to act on */
+	Node	   *def;			/* definition of new column or constraint */
+	int			behavior;		/* CASCADE or RESTRICT drop behavior */
 } AlterTableStmt;
 
 /* ----------------------
@@ -137,7 +139,7 @@ typedef struct CopyStmt
 	int			direction;		/* TO or FROM */
 	char	   *filename;		/* if NULL, use stdin/stdout */
 	char	   *delimiter;		/* delimiter character, \t by default */
-    char       *null_print;     /* how to print NULLs, `\N' by default */
+	char	   *null_print;		/* how to print NULLs, `\N' by default */
 } CopyStmt;
 
 /* ----------------------
@@ -177,7 +179,8 @@ typedef struct CreateStmt
 
 typedef enum ConstrType			/* types of constraints */
 {
-	CONSTR_NULL,				/* not SQL92, but a lot of people expect it */
+	CONSTR_NULL,				/* not SQL92, but a lot of people expect
+								 * it */
 	CONSTR_NOTNULL,
 	CONSTR_DEFAULT,
 	CONSTR_CHECK,
@@ -219,14 +222,14 @@ typedef struct Constraint
 typedef struct FkConstraint
 {
 	NodeTag		type;
-	char	   *constr_name;		/* Constraint name */
-	char	   *pktable_name;		/* Primary key table name */
-	List	   *fk_attrs;			/* Attributes of foreign key */
-	List	   *pk_attrs;			/* Corresponding attrs in PK table */
-	char	   *match_type;			/* FULL or PARTIAL */
-	int32		actions;			/* ON DELETE/UPDATE actions */
-	bool		deferrable;			/* DEFERRABLE */
-	bool		initdeferred;		/* INITIALLY DEFERRED */
+	char	   *constr_name;	/* Constraint name */
+	char	   *pktable_name;	/* Primary key table name */
+	List	   *fk_attrs;		/* Attributes of foreign key */
+	List	   *pk_attrs;		/* Corresponding attrs in PK table */
+	char	   *match_type;		/* FULL or PARTIAL */
+	int32		actions;		/* ON DELETE/UPDATE actions */
+	bool		deferrable;		/* DEFERRABLE */
+	bool		initdeferred;	/* INITIALLY DEFERRED */
 } FkConstraint;
 
 
@@ -250,8 +253,8 @@ typedef struct CreateTrigStmt
 	List	   *attr;			/* UPDATE OF a, b,... (NI) or NULL */
 	char	   *when;			/* WHEN 'a > 10 ...' (NI) or NULL */
 
-								/* The following are used for referential */
-								/* integrity constraint triggers */
+	/* The following are used for referential */
+	/* integrity constraint triggers */
 	bool		isconstraint;	/* This is an RI trigger */
 	bool		deferrable;		/* [NOT] DEFERRABLE */
 	bool		initdeferred;	/* INITIALLY {DEFERRED|IMMEDIATE} */
@@ -295,9 +298,9 @@ typedef struct CreateUserStmt
 	NodeTag		type;
 	char	   *user;			/* PostgreSQL user login			  */
 	char	   *password;		/* PostgreSQL user password			  */
-    int         sysid;          /* PgSQL system id (-1 if don't care) */
-	bool        createdb;		/* Can the user create databases?	  */
-	bool 	    createuser;		/* Can this user create users?		  */
+	int			sysid;			/* PgSQL system id (-1 if don't care) */
+	bool		createdb;		/* Can the user create databases?	  */
+	bool		createuser;		/* Can this user create users?		  */
 	List	   *groupElts;		/* The groups the user is a member of */
 	char	   *validUntil;		/* The time the login is valid until  */
 } CreateUserStmt;
@@ -307,43 +310,43 @@ typedef struct AlterUserStmt
 	NodeTag		type;
 	char	   *user;			/* PostgreSQL user login			  */
 	char	   *password;		/* PostgreSQL user password			  */
-	int 	    createdb;		/* Can the user create databases?	  */
-	int 	    createuser;		/* Can this user create users?		  */
+	int			createdb;		/* Can the user create databases?	  */
+	int			createuser;		/* Can this user create users?		  */
 	char	   *validUntil;		/* The time the login is valid until  */
 } AlterUserStmt;
 
 typedef struct DropUserStmt
 {
 	NodeTag		type;
-    List       *users;          /* List of users to remove */
+	List	   *users;			/* List of users to remove */
 } DropUserStmt;
 
 
 /* ----------------------
- *      Create/Alter/Drop Group Statements
+ *		Create/Alter/Drop Group Statements
  * ----------------------
  */
 typedef struct CreateGroupStmt
 {
-    NodeTag     type;
-    char       *name;           /* name of the new group */
-    int         sysid;          /* group id (-1 if pick default) */
-    List       *initUsers;      /* list of initial users */
+	NodeTag		type;
+	char	   *name;			/* name of the new group */
+	int			sysid;			/* group id (-1 if pick default) */
+	List	   *initUsers;		/* list of initial users */
 } CreateGroupStmt;
 
 typedef struct AlterGroupStmt
 {
-    NodeTag     type;
-    char       *name;           /* name of group to alter */
-    int         action;         /* +1 = add, -1 = drop user */
-    int         sysid;          /* sysid change */
-    List       *listUsers;      /* list of users to add/drop */
+	NodeTag		type;
+	char	   *name;			/* name of group to alter */
+	int			action;			/* +1 = add, -1 = drop user */
+	int			sysid;			/* sysid change */
+	List	   *listUsers;		/* list of users to add/drop */
 } AlterGroupStmt;
 
 typedef struct DropGroupStmt
 {
-    NodeTag     type;
-    char       *name;
+	NodeTag		type;
+	char	   *name;
 } DropGroupStmt;
 
 
@@ -396,29 +399,29 @@ typedef struct DropStmt
 } DropStmt;
 
 /* ----------------------
- *              Truncate Table Statement
+ *				Truncate Table Statement
  * ----------------------
  */
 typedef struct TruncateStmt
 {
-        NodeTag         type;
-        char	   *relName;            /* relation to be truncated */
+	NodeTag		type;
+	char	   *relName;		/* relation to be truncated */
 } TruncateStmt;
 
 /* ----------------------
- *              Comment On Statement
+ *				Comment On Statement
  * ----------------------
  */
 typedef struct CommentStmt
 {
-  NodeTag type;
-  int objtype;                         /* Object's type */
-  char *objname;                       /* Name of the object */
-  char *objproperty;                   /* Property Id (such as column) */
-  List *objlist;                       /* Arguments for VAL objects */
-  char *comment;                       /* The comment to insert */
+	NodeTag		type;
+	int			objtype;		/* Object's type */
+	char	   *objname;		/* Name of the object */
+	char	   *objproperty;	/* Property Id (such as column) */
+	List	   *objlist;		/* Arguments for VAL objects */
+	char	   *comment;		/* The comment to insert */
 } CommentStmt;
-      
+
 /* ----------------------
  *		Extend Index Statement
  * ----------------------
@@ -738,7 +741,7 @@ typedef struct LockStmt
 typedef struct ConstraintsSetStmt
 {
 	NodeTag		type;
-	List		*constraints;
+	List	   *constraints;
 	bool		deferred;
 } ConstraintsSetStmt;
 
@@ -749,8 +752,8 @@ typedef struct ConstraintsSetStmt
 typedef struct ReindexStmt
 {
 	NodeTag		type;
-	int		reindexType;		/* INDEX|TABLE|DATABASE */
-	const	char   *name;			/* name to reindex */
+	int			reindexType;	/* INDEX|TABLE|DATABASE */
+	const char *name;			/* name to reindex */
 	bool		force;
 	bool		all;
 } ReindexStmt;
@@ -768,8 +771,9 @@ typedef struct InsertStmt
 {
 	NodeTag		type;
 	char	   *relname;		/* relation to insert into */
-	List	   *distinctClause;	/* NULL, list of DISTINCT ON exprs, or
-								 * lcons(NIL,NIL) for all (SELECT DISTINCT) */
+	List	   *distinctClause; /* NULL, list of DISTINCT ON exprs, or
+								 * lcons(NIL,NIL) for all (SELECT
+								 * DISTINCT) */
 	List	   *cols;			/* names of the columns */
 	List	   *targetList;		/* the target list (of ResTarget) */
 	List	   *fromClause;		/* the from clause */
@@ -813,8 +817,9 @@ typedef struct UpdateStmt
 typedef struct SelectStmt
 {
 	NodeTag		type;
-	List	   *distinctClause;	/* NULL, list of DISTINCT ON exprs, or
-								 * lcons(NIL,NIL) for all (SELECT DISTINCT) */
+	List	   *distinctClause; /* NULL, list of DISTINCT ON exprs, or
+								 * lcons(NIL,NIL) for all (SELECT
+								 * DISTINCT) */
 	char	   *into;			/* name of table (for select into table) */
 	List	   *targetList;		/* the target list (of ResTarget) */
 	List	   *fromClause;		/* the from clause */
@@ -839,7 +844,7 @@ typedef struct SelectStmt
  *	Supporting data structures for Parse Trees
  *
  *	Most of these node types appear in raw parsetrees output by the grammar,
- *	and get transformed to something else by the analyzer.  A few of them
+ *	and get transformed to something else by the analyzer.	A few of them
  *	are used as-is in transformed querytrees.
  ****************************************************************************/
 
@@ -951,7 +956,7 @@ typedef struct CaseWhen
  * in either "raw" form (an untransformed parse tree) or "cooked" form
  * (the nodeToString representation of an executable expression tree),
  * depending on how this ColumnDef node was created (by parsing, or by
- * inheritance from an existing relation).  We should never have both
+ * inheritance from an existing relation).	We should never have both
  * in the same node!
  *
  * The constraints list may contain a CONSTR_DEFAULT item in a raw
@@ -966,8 +971,9 @@ typedef struct ColumnDef
 	TypeName   *typename;		/* type of column */
 	bool		is_not_null;	/* flag to NOT NULL constraint */
 	bool		is_sequence;	/* is a sequence? */
-	Node	   *raw_default;	/* default value (untransformed parse tree) */
-	char	   *cooked_default;	/* nodeToString representation */
+	Node	   *raw_default;	/* default value (untransformed parse
+								 * tree) */
+	char	   *cooked_default; /* nodeToString representation */
 	List	   *constraints;	/* other constraints on column */
 } ColumnDef;
 
@@ -1141,7 +1147,7 @@ typedef struct TargetEntry
  *	  inFromCl marks those range variables that are listed in the FROM clause.
  *	  In SQL, the query can only refer to range variables listed in the
  *	  FROM clause, but POSTQUEL allows you to refer to tables not listed,
- *	  in which case a range table entry will be generated.  We still support
+ *	  in which case a range table entry will be generated.	We still support
  *	  this POSTQUEL feature, although there is some doubt whether it's
  *	  convenient or merely confusing.  The flag is needed since an
  *	  implicitly-added RTE shouldn't change the namespace for unqualified
@@ -1156,7 +1162,7 @@ typedef struct TargetEntry
  *	  Here we should get the product of the sizes of tx and ty.  However,
  *	  the query optimizer can simplify the WHERE clause to "TRUE", so
  *	  ty will no longer be referred to explicitly; without a flag forcing
- *	  it to be included in the join, we will get the wrong answer.  So,
+ *	  it to be included in the join, we will get the wrong answer.	So,
  *	  a POSTQUEL implicit RTE must be marked inJoinSet but not inFromCl.
  *--------------------
  */

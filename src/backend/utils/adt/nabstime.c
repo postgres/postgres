@@ -9,7 +9,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/nabstime.c,v 1.66 2000/02/16 17:24:48 thomas Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/nabstime.c,v 1.67 2000/04/12 17:15:50 momjian Exp $
  *
  * NOTES
  *
@@ -47,6 +47,7 @@
 
 #if 0
 static AbsoluteTime tm2abstime(struct tm * tm, int tz);
+
 #endif
 
 
@@ -101,6 +102,7 @@ static int	sec_tab[] = {
 	1, 1, 60, 60,
 	3600, 3600, 86400, 86400, 604800, 604800,
 2592000, 2592000, 31536000, 31536000};
+
 #endif
 
 /*
@@ -246,8 +248,11 @@ abstime2tm(AbsoluteTime time, int *tzp, struct tm * tm, char *tzn)
 	/* XXX FreeBSD man pages indicate that this should work - tgl 97/04/23 */
 	if (tzn != NULL)
 	{
-		/* Copy no more than MAXTZLEN bytes of timezone to tzn, in case it
-		   contains an error message, which doesn't fit in the buffer */
+
+		/*
+		 * Copy no more than MAXTZLEN bytes of timezone to tzn, in case it
+		 * contains an error message, which doesn't fit in the buffer
+		 */
 		strncpy(tzn, tm->tm_zone, MAXTZLEN);
 		if (strlen(tm->tm_zone) > MAXTZLEN)
 		{
@@ -264,8 +269,11 @@ abstime2tm(AbsoluteTime time, int *tzp, struct tm * tm, char *tzn)
 #endif
 	if (tzn != NULL)
 	{
-		/* Copy no more than MAXTZLEN bytes of timezone to tzn, in case it
-		   contains an error message, which doesn't fit in the buffer */
+
+		/*
+		 * Copy no more than MAXTZLEN bytes of timezone to tzn, in case it
+		 * contains an error message, which doesn't fit in the buffer
+		 */
 		strncpy(tzn, tzname[tm->tm_isdst], MAXTZLEN);
 		if (strlen(tzname[tm->tm_isdst]) > MAXTZLEN)
 		{
@@ -634,10 +642,10 @@ timestamp_abstime(Timestamp *timestamp)
 /* abstime_timestamp()
  * Convert abstime to timestamp.
  */
-Timestamp   *
+Timestamp  *
 abstime_timestamp(AbsoluteTime abstime)
 {
-	Timestamp   *result;
+	Timestamp  *result;
 
 	if (!PointerIsValid(result = palloc(sizeof(Timestamp))))
 		elog(ERROR, "Unable to allocate space to convert abstime to timestamp");

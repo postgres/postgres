@@ -2,11 +2,11 @@
  *
  * tuptoaster.h
  *	  POSTGRES definitions for external and compressed storage
- *    of variable size attributes.
+ *	  of variable size attributes.
  *
  * Copyright (c) 2000, PostgreSQL Development Team
  *
- * $Id: tuptoaster.h,v 1.1 1999/12/21 00:06:42 wieck Exp $
+ * $Id: tuptoaster.h,v 1.2 2000/04/12 17:16:26 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -22,12 +22,12 @@
 #include "utils/rel.h"
 
 
-extern void heap_tuple_toast_attrs(Relation rel, 
-				HeapTuple newtup, HeapTuple oldtup);
+extern void heap_tuple_toast_attrs(Relation rel,
+					   HeapTuple newtup, HeapTuple oldtup);
 
-extern varattrib *heap_tuple_untoast_attr(varattrib *attr);
+extern varattrib *heap_tuple_untoast_attr(varattrib * attr);
 
-#endif /* TUPLE_TOASTER_ACTIVE */
+#endif	 /* TUPLE_TOASTER_ACTIVE */
 
 
 #endif	 /* TUPTOASTER_H */

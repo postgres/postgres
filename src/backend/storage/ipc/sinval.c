@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/storage/ipc/sinval.c,v 1.20 2000/01/26 05:56:58 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/storage/ipc/sinval.c,v 1.21 2000/04/12 17:15:37 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -96,8 +96,8 @@ RegisterSharedInvalid(int cacheId,		/* XXX */
 					  Index hashIndex,
 					  ItemPointer pointer)
 {
-	SharedInvalidData	newInvalid;
-	bool				insertOK;
+	SharedInvalidData newInvalid;
+	bool		insertOK;
 
 	/*
 	 * This code has been hacked to accept two types of messages.  This
@@ -121,7 +121,7 @@ RegisterSharedInvalid(int cacheId,		/* XXX */
 	SpinAcquire(SInvalLock);
 	insertOK = SIInsertDataEntry(shmInvalBuffer, &newInvalid);
 	SpinRelease(SInvalLock);
-	if (! insertOK)
+	if (!insertOK)
 		elog(NOTICE, "RegisterSharedInvalid: SI buffer overflow");
 }
 
@@ -130,12 +130,12 @@ RegisterSharedInvalid(int cacheId,		/* XXX */
  *		Process shared-cache-invalidation messages waiting for this backend
  */
 void
-InvalidateSharedInvalid(void (*invalFunction) (),
-						void (*resetFunction) ())
+			InvalidateSharedInvalid(void (*invalFunction) (),
+									void (*resetFunction) ())
 {
-	SharedInvalidData	data;
-	int					getResult;
-	bool				gotMessage = false;
+	SharedInvalidData data;
+	int			getResult;
+	bool		gotMessage = false;
 
 	for (;;)
 	{
@@ -171,13 +171,13 @@ InvalidateSharedInvalid(void (*invalFunction) (),
 
 
 /****************************************************************************/
-/* Functions that need to scan the PROC structures of all running backends.	*/
+/* Functions that need to scan the PROC structures of all running backends. */
 /* It's a bit strange to keep these in sinval.c, since they don't have any	*/
 /* direct relationship to shared-cache invalidation.  But the procState		*/
 /* array in the SI segment is the only place in the system where we have	*/
-/* an array of per-backend data, so it is the most convenient place to keep	*/
+/* an array of per-backend data, so it is the most convenient place to keep */
 /* pointers to the backends' PROC structures.  We used to implement these	*/
-/* functions with a slow, ugly search through the ShmemIndex hash table ---	*/
+/* functions with a slow, ugly search through the ShmemIndex hash table --- */
 /* now they are simple loops over the SI ProcState array.					*/
 /****************************************************************************/
 
@@ -205,7 +205,7 @@ DatabaseHasActiveBackends(Oid databaseId)
 
 	for (index = 0; index < segP->maxBackends; index++)
 	{
-		SHMEM_OFFSET	pOffset = stateP[index].procStruct;
+		SHMEM_OFFSET pOffset = stateP[index].procStruct;
 
 		if (pOffset != INVALID_OFFSET)
 		{
@@ -239,7 +239,7 @@ TransactionIdIsInProgress(TransactionId xid)
 
 	for (index = 0; index < segP->maxBackends; index++)
 	{
-		SHMEM_OFFSET	pOffset = stateP[index].procStruct;
+		SHMEM_OFFSET pOffset = stateP[index].procStruct;
 
 		if (pOffset != INVALID_OFFSET)
 		{
@@ -277,14 +277,15 @@ GetXmaxRecent(TransactionId *XmaxRecent)
 
 	for (index = 0; index < segP->maxBackends; index++)
 	{
-		SHMEM_OFFSET	pOffset = stateP[index].procStruct;
+		SHMEM_OFFSET pOffset = stateP[index].procStruct;
 
 		if (pOffset != INVALID_OFFSET)
 		{
 			PROC	   *proc = (PROC *) MAKE_PTR(pOffset);
 			TransactionId xmin;
 
-			xmin = proc->xmin;	/* we don't use spin-locking in AbortTransaction() ! */
+			xmin = proc->xmin;	/* we don't use spin-locking in
+								 * AbortTransaction() ! */
 			if (proc == MyProc || xmin < FirstTransactionId)
 				continue;
 			if (xmin < *XmaxRecent)
@@ -307,8 +308,9 @@ GetSnapshotData(bool serializable)
 	int			index;
 	int			count = 0;
 
-	/* There can be no more than maxBackends active transactions,
-	 * so this is enough space:
+	/*
+	 * There can be no more than maxBackends active transactions, so this
+	 * is enough space:
 	 */
 	snapshot->xip = (TransactionId *)
 		malloc(segP->maxBackends * sizeof(TransactionId));
@@ -317,8 +319,8 @@ GetSnapshotData(bool serializable)
 	SpinAcquire(SInvalLock);
 
 	/*
-	 * Unfortunately, we have to call ReadNewTransactionId()
-	 * after acquiring SInvalLock above. It's not good because
+	 * Unfortunately, we have to call ReadNewTransactionId() after
+	 * acquiring SInvalLock above. It's not good because
 	 * ReadNewTransactionId() does SpinAcquire(OidGenLockId) but
 	 * _necessary_.
 	 */
@@ -326,26 +328,27 @@ GetSnapshotData(bool serializable)
 
 	for (index = 0; index < segP->maxBackends; index++)
 	{
-		SHMEM_OFFSET	pOffset = stateP[index].procStruct;
+		SHMEM_OFFSET pOffset = stateP[index].procStruct;
 
 		if (pOffset != INVALID_OFFSET)
 		{
 			PROC	   *proc = (PROC *) MAKE_PTR(pOffset);
 			TransactionId xid;
 
-			/* 
-			 * We don't use spin-locking when changing proc->xid 
-			 * in GetNewTransactionId() and in AbortTransaction() !..
+			/*
+			 * We don't use spin-locking when changing proc->xid in
+			 * GetNewTransactionId() and in AbortTransaction() !..
 			 */
 			xid = proc->xid;
-			if (proc == MyProc || 
+			if (proc == MyProc ||
 				xid < FirstTransactionId || xid >= snapshot->xmax)
 			{
+
 				/*
-				 * Seems that there is no sense to store xid >= snapshot->xmax
-				 * (what we got from ReadNewTransactionId above) in
-				 * snapshot->xip - we just assume that all xacts with such
-				 * xid-s are running and may be ignored.
+				 * Seems that there is no sense to store xid >=
+				 * snapshot->xmax (what we got from ReadNewTransactionId
+				 * above) in snapshot->xip - we just assume that all xacts
+				 * with such xid-s are running and may be ignored.
 				 */
 				continue;
 			}

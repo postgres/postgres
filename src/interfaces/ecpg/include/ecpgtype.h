@@ -50,7 +50,7 @@ extern		"C"
 		ECPGt_NO_INDICATOR		/* no indicator */
 	};
 
-	/* descriptor items */	
+	/* descriptor items */
 	enum ECPGdtype
 	{
 		ECPGd_count,

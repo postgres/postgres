@@ -34,8 +34,10 @@ extern void read_pg_options(SIGNAL_ARGS);
  * Trace options, used as index into pg_options.
  * Must match the constants in pg_options[].
  */
-enum pg_option_enum {
-	TRACE_ALL,					/* 0=trace some, 1=trace all, -1=trace none */
+enum pg_option_enum
+{
+	TRACE_ALL,					/* 0=trace some, 1=trace all, -1=trace
+								 * none */
 	TRACE_VERBOSE,
 	TRACE_QUERY,
 	TRACE_PLAN,
