@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *    $Header: /cvsroot/pgsql/src/backend/utils/hash/dynahash.c,v 1.4 1996/11/08 06:00:23 momjian Exp $
+ *    $Header: /cvsroot/pgsql/src/backend/utils/hash/dynahash.c,v 1.5 1996/11/08 20:46:07 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -70,7 +70,6 @@ static uint32 call_hash(HTAB *hashp, char *k, int len);
 static SEG_OFFSET seg_alloc(HTAB *hashp);
 static int bucket_alloc(HTAB *hashp);
 static int dir_realloc(HTAB *hashp);
-static int my_log2(long num);
 
 typedef long * ((*dhalloc_ptr)());
 

@@ -8,7 +8,7 @@
 #
 #
 # IDENTIFICATION
-#    $Header: /cvsroot/pgsql/src/backend/utils/Attic/Gen_fmgrtab.sh,v 1.6 1996/11/06 10:22:13 scrappy Exp $
+#    $Header: /cvsroot/pgsql/src/backend/utils/Attic/Gen_fmgrtab.sh,v 1.7 1996/11/08 20:45:57 momjian Exp $
 #
 # NOTES
 #    Passes any -D options on to cpp prior to generating the list
@@ -81,7 +81,7 @@ cat > $HFILE <<FuNkYfMgRsTuFf
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: Gen_fmgrtab.sh,v 1.6 1996/11/06 10:22:13 scrappy Exp $
+ * $Id: Gen_fmgrtab.sh,v 1.7 1996/11/08 20:45:57 momjian Exp $
  *
  * NOTES
  *	******************************
@@ -173,7 +173,7 @@ cat > $TABCFILE <<FuNkYfMgRtAbStUfF
  *
  *
  * IDENTIFICATION
- *    $Header: /cvsroot/pgsql/src/backend/utils/Attic/Gen_fmgrtab.sh,v 1.6 1996/11/06 10:22:13 scrappy Exp $
+ *    $Header: /cvsroot/pgsql/src/backend/utils/Attic/Gen_fmgrtab.sh,v 1.7 1996/11/08 20:45:57 momjian Exp $
  *
  * NOTES
  *
@@ -194,8 +194,7 @@ cat > $TABCFILE <<FuNkYfMgRtAbStUfF
 #include <limits.h>
 #else
 # if defined(BSD44_derived) || \
-     defined(bsdi) || \
-     defined(bsdi_2_1)
+     defined(bsdi)
 # include <machine/limits.h>
 # define MAXINT	INT_MAX
 # else
@@ -226,7 +225,7 @@ static int fmgr_nbuiltins = (sizeof(fmgr_builtins) / sizeof(FmgrCall)) - 1;
 
 FmgrCall *fmgr_isbuiltin(Oid id)
 {
-    register int i;
+    register int i = 0;
     int	low = 0;
     int	high = fmgr_nbuiltins;
 

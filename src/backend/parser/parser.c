@@ -6,7 +6,7 @@
  *
  *
  * IDENTIFICATION
- *    $Header: /cvsroot/pgsql/src/backend/parser/parser.c,v 1.6 1996/11/08 05:57:33 momjian Exp $
+ *    $Header: /cvsroot/pgsql/src/backend/parser/parser.c,v 1.7 1996/11/08 20:45:42 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -19,22 +19,23 @@
 
 #include "postgres.h"
 #include "parser/catalog_utils.h"
+#include "parser/gramparse.h"
+#include "parser/parse_query.h"
 #include "nodes/pg_list.h"
+#include "nodes/execnodes.h"
+#include "nodes/makefuncs.h"
+#include "nodes/primnodes.h"
+#include "nodes/plannodes.h"
+#include "nodes/relation.h"
+#include "utils/builtins.h"
 #include "utils/exc.h"
 #include "utils/excid.h"
+#include "utils/lsyscache.h"
 #include "utils/palloc.h"
 #include "utils/syscache.h"
 #include "catalog/pg_aggregate.h"
 #include "catalog/pg_type.h"
-#include "nodes/primnodes.h"
-#include "nodes/plannodes.h"
-#include "nodes/execnodes.h"
-#include "nodes/relation.h"
-#include "parser/parse_query.h"
-#include "utils/builtins.h"
-#include "utils/lsyscache.h"
 #include "access/heapam.h"
-#include "nodes/makefuncs.h"
 #include "optimizer/clauses.h" 
 
 void init_io(); /* from scan.l */

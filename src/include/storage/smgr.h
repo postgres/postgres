@@ -6,7 +6,7 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: smgr.h,v 1.3 1996/11/08 06:02:22 momjian Exp $
+ * $Id: smgr.h,v 1.4 1996/11/08 20:46:33 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -83,6 +83,7 @@ extern int mmabort(void);
 extern int MMShmemSize(void);
 
 /* smgrtype.c */
-char *smgrout(int2 i);
+extern char *smgrout(int2 i);
+extern int2 smgrin(char *s);
 
 #endif	/* SMGR_H */

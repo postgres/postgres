@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *    $Header: /cvsroot/pgsql/src/backend/parser/scan.l,v 1.2 1996/07/23 02:23:34 scrappy Exp $
+ *    $Header: /cvsroot/pgsql/src/backend/parser/scan.l,v 1.3 1996/11/08 20:45:45 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -27,12 +27,11 @@
 #include "miscadmin.h"
 #include "nodes/pg_list.h"
 #include "nodes/parsenodes.h"
+#include "parser/gramparse.h"
 #include "parser/keywords.h"
 #include "parser/scansup.h"
 #include "parser/sysfunc.h"
 #include "parse.h"
-#include "utils/elog.h"
-#include "utils/palloc.h"
 
 extern char *parseString;
 extern char *parseCh;

@@ -13,11 +13,12 @@
  *    columns. (ie. tuples from the same group are consecutive)
  *
  * IDENTIFICATION
- *    $Header: /cvsroot/pgsql/src/backend/executor/nodeGroup.c,v 1.3 1996/11/08 05:56:08 momjian Exp $
+ *    $Header: /cvsroot/pgsql/src/backend/executor/nodeGroup.c,v 1.4 1996/11/08 20:45:20 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
 #include "postgres.h"
+#include "fmgr.h"
 
 #include "access/heapam.h"
 #include "catalog/catalog.h"
