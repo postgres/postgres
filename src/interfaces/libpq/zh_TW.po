@@ -2,12 +2,11 @@
 # Translated and modified from Simplified Chinese translation.
 # Zhenbang Wei <forth@zbwei.net>, 2001.
 #
-#, fuzzy
 msgid ""
 msgstr ""
 "Project-Id-Version: PostgreSQL 7.2\n"
 "POT-Creation-Date: 2001-10-01 10:02+0800\n"
-"PO-Revision-Date: 2001-10-05 01:00:00+0800\n"
+"PO-Revision-Date: 2001-10-24 01:00:00+0800\n"
 "Last-Translator: Zhenbang Wei <forth@zbwei.net>\n"
 "Language-Team: Zhenbang Wei <forth@zbwei.net>\n"
 "MIME-Version: 1.0\n"
