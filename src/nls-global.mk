@@ -1,4 +1,4 @@
-# $Header: /cvsroot/pgsql/src/nls-global.mk,v 1.7 2002/09/02 22:19:42 petere Exp $
+# $Header: /cvsroot/pgsql/src/nls-global.mk,v 1.8 2003/09/14 22:40:38 petere Exp $
 
 # Common rules for Native Language Support (NLS)
 #
@@ -42,17 +42,15 @@ endif
 
 all-po: $(MO_FILES)
 
-distprep: $(srcdir)/po/$(CATALOG_NAME).pot
-
 %.mo: %.po
 	$(MSGFMT) -o $@ $<
 
 ifdef XGETTEXT
 ifeq ($(word 1,$(GETTEXT_FILES)),+)
-$(srcdir)/po/$(CATALOG_NAME).pot: $(word 2, $(GETTEXT_FILES))
+po/$(CATALOG_NAME).pot: $(word 2, $(GETTEXT_FILES))
 	$(XGETTEXT) -D $(srcdir) -n $(addprefix -k, $(GETTEXT_TRIGGERS)) -f $<
 else
-$(srcdir)/po/$(CATALOG_NAME).pot: $(GETTEXT_FILES)
+po/$(CATALOG_NAME).pot: $(GETTEXT_FILES)
 # Change to srcdir explicitly, don't rely on $^.  That way we get
 # consistent #: file references in the po files.
 	$(XGETTEXT) -D $(srcdir) -n $(addprefix -k, $(GETTEXT_TRIGGERS)) $(GETTEXT_FILES)
@@ -81,9 +79,7 @@ uninstall-po:
 clean-po:
 	rm -f $(MO_FILES)
 	@rm -f $(addsuffix .old, $(PO_FILES))
-
-maintainer-clean-po: clean-po
-	rm -f $(srcdir)/po/$(CATALOG_NAME).pot
+	rm -f po/$(CATALOG_NAME).pot
 
 
 maintainer-check-po: $(PO_FILES)
@@ -92,10 +88,10 @@ maintainer-check-po: $(PO_FILES)
 	done
 
 
-init-po: $(srcdir)/po/$(CATALOG_NAME).pot
+init-po: po/$(CATALOG_NAME).pot
 
 
-update-po: $(srcdir)/po/$(CATALOG_NAME).pot
+update-po: po/$(CATALOG_NAME).pot
 ifdef MSGMERGE
 	@for lang in $(LANGUAGES); do \
 	  echo "merging $$lang:"; \
@@ -117,10 +113,9 @@ all: all-po
 install: install-po
 installdirs: installdirs-po
 uninstall: uninstall-po
-clean distclean: clean-po
-maintainer-clean: maintainer-clean-po
+clean distclean maintainer-clean: clean-po
 maintainer-check: maintainer-check-po
 
 .PHONY: all-po install-po installdirs-po uninstall-po clean-po \
-        maintainer-clean-po maintainer-check-po init-po update-po
+        maintainer-check-po init-po update-po
 .SILENT: installdirs-po
