@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *    $Header: /cvsroot/pgsql/src/backend/parser/analyze.c,v 1.29 1997/07/30 04:42:26 vadim Exp $
+ *    $Header: /cvsroot/pgsql/src/backend/parser/analyze.c,v 1.30 1997/08/03 02:35:28 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -1003,9 +1003,9 @@ makeTargetNames(ParseState *pstate, List *cols)
 	for(i=0; i < numcol; i++) {
 	    Ident *id = makeNode(Ident);
 
-	    id->name = palloc(NAMEDATALEN+1);
+	    id->name = palloc(NAMEDATALEN);
 	    strncpy(id->name, attr[i]->attname.data, NAMEDATALEN);
-	    id->name[NAMEDATALEN]='\0';
+	    id->name[NAMEDATALEN-1]='\0';
 	    id->indirection = NIL;
 	    id->isRel = false;
 	    if (tl == NIL)

@@ -10,7 +10,7 @@
  *
  *
  * IDENTIFICATION
- *    $Header: /cvsroot/pgsql/src/backend/postmaster/postmaster.c,v 1.48 1997/07/30 14:08:11 scrappy Exp $
+ *    $Header: /cvsroot/pgsql/src/backend/postmaster/postmaster.c,v 1.49 1997/08/03 02:36:01 momjian Exp $
  *
  * NOTES
  *
@@ -625,7 +625,7 @@ ConnStartup(Port *port, int *status,
             char *errormsg, const int errormsg_len)
 {
     MsgType msgType;
-    char namebuf[NAMEDATALEN + 1];
+    char namebuf[NAMEDATALEN];
     int pid;
     PacketBuf *p;
     StartupInfo sp;
@@ -653,7 +653,7 @@ ConnStartup(Port *port, int *status,
     msgType = (MsgType) ntohl(port->buf.msgtype);
 
     (void) strncpy(namebuf, sp.user, NAMEDATALEN);
-    namebuf[NAMEDATALEN] = '\0';
+    namebuf[NAMEDATALEN-1] = '\0';
     if (!namebuf[0]) {
         strncpy(errormsg, 
                 "No Postgres username specified in startup packet.",

@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *    $Header: /cvsroot/pgsql/src/backend/utils/cache/relcache.c,v 1.10 1997/07/28 00:56:04 momjian Exp $
+ *    $Header: /cvsroot/pgsql/src/backend/utils/cache/relcache.c,v 1.11 1997/08/03 02:37:32 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -1066,7 +1066,6 @@ RelationNameCacheGetRelation(char *relationName)
     
     /* make sure that the name key used for hash lookup is properly
        null-padded */
-    memset(&name,0, NAMEDATALEN); 
     namestrcpy(&name, relationName);
     RelationNameCacheLookup(name.data, rd);
     

@@ -9,7 +9,7 @@
  *
  *
  * IDENTIFICATION
- *    $Header: /cvsroot/pgsql/src/backend/commands/define.c,v 1.11 1996/11/30 17:47:07 momjian Exp $
+ *    $Header: /cvsroot/pgsql/src/backend/commands/define.c,v 1.12 1997/08/03 02:35:01 momjian Exp $
  *
  * DESCRIPTION
  *    The "DefineFoo" routines take the parse tree and pick out the
@@ -187,7 +187,7 @@ CreateFunction(ProcedureStmt *stmt, CommandDest dest)
       /* SQL that executes this function, if any */
     char   *prorettype;
       /* Type of return value (or member of set of values) from function */
-    char   languageName[NAMEDATALEN+1];
+    char   languageName[NAMEDATALEN];
       /* name of language of function, with case adjusted:
          "C", "internal", or "SQL" 
       */

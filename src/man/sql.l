@@ -1,6 +1,6 @@
 .\" This is -*-nroff-*-
 .\" XXX standard disclaimer belongs here....
-.\" $Header: /cvsroot/pgsql/src/man/Attic/sql.l,v 1.3 1996/12/11 00:28:11 momjian Exp $
+.\" $Header: /cvsroot/pgsql/src/man/Attic/sql.l,v 1.4 1997/08/03 02:38:47 momjian Exp $
 .TH INTRODUCTION SQL 11/5/95 PostgreSQL PostgreSQL
 .SH "Section 4 \(em SQL Commands (COMMANDS)"
 .SH "General Information"
@@ -19,9 +19,9 @@ of the line e.g:
 .fi
 .SH "Names"
 .IR Names
-in SQL are sequences of not more than NAMEDATALEN alphanumeric characters,
+in SQL are sequences of less than NAMEDATALEN alphanumeric characters,
 starting with an alphabetic character.  By default, NAMEDATALEN is set
-to 16, but at the time the system is built, NAMEDATALEN can be changed
+to 32, but at the time the system is built, NAMEDATALEN can be changed
 by changing the #ifdef in src/backend/include/postgres.h.  Underscore
 (\*(lq_\*(rq) is considered an alphabetic character. 
 .SH "Keywords"

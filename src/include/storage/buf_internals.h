@@ -6,7 +6,7 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: buf_internals.h,v 1.12 1997/03/28 07:06:48 scrappy Exp $
+ * $Id: buf_internals.h,v 1.13 1997/08/03 02:38:25 momjian Exp $
  *
  * NOTE
  *	If BUFFERPAGE0 is defined, then 0 will be used as a
@@ -118,10 +118,10 @@ struct sbufdesc_unpadded {
 #ifdef HAS_TEST_AND_SET
     slock_t	io_in_progress_lock;
 #endif /* HAS_TEST_AND_SET */
-    char sb_dbname[NAMEDATALEN+1];
+    char sb_dbname[NAMEDATALEN];
 
     /* NOTE NO PADDING OF THE MEMBER HERE */
-    char sb_relname[NAMEDATALEN+1];
+    char sb_relname[NAMEDATALEN];
 };
 
 /* THE REAL STRUCTURE - the structure above must match it, minus sb_pad */
@@ -143,7 +143,7 @@ struct sbufdesc {
     slock_t	io_in_progress_lock;
 #endif /* HAS_TEST_AND_SET */
 
-    char sb_dbname[NAMEDATALEN+1];	/* name of db in which buf belongs */
+    char sb_dbname[NAMEDATALEN];	/* name of db in which buf belongs */
 
     /*
      * I padded this structure to a power of 2 (PADDED_SBUFDESC_SIZE) because
@@ -159,7 +159,7 @@ struct sbufdesc {
     /* please, don't take the sizeof() this member and use it for
 	something important */
 	
-    char sb_relname[NAMEDATALEN+1+	/* name of reln */
+    char sb_relname[NAMEDATALEN+	/* name of reln */
 		PADDED_SBUFDESC_SIZE-sizeof(struct sbufdesc_unpadded)];
 };
 

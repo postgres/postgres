@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *    $Header: /cvsroot/pgsql/src/backend/access/common/tupdesc.c,v 1.11 1996/11/05 07:42:46 scrappy Exp $
+ *    $Header: /cvsroot/pgsql/src/backend/access/common/tupdesc.c,v 1.12 1997/08/03 02:34:19 momjian Exp $
  *
  * NOTES
  *    some of the executor utility code such as "ExecTypeFromTL" should be
@@ -328,7 +328,7 @@ BuildDescForRelation(List *schema, char *relname)
     
     attnum = 0;
     
-    typename = palloc(NAMEDATALEN+1);
+    typename = palloc(NAMEDATALEN);
 
     foreach(p, schema) {
 	ColumnDef *entry;

@@ -11,7 +11,7 @@
  *
  *
  * IDENTIFICATION
- *    $Header: /cvsroot/pgsql/src/backend/utils/adt/name.c,v 1.2 1997/03/14 23:20:43 scrappy Exp $
+ *    $Header: /cvsroot/pgsql/src/backend/utils/adt/name.c,v 1.3 1997/08/03 02:36:57 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -39,8 +39,8 @@ NameData *namein(char *s)
 	return(NULL);
     result = (NameData*) palloc(NAMEDATALEN);
     /* always keep it null-padded */
-    memset(result->data, 0, NAMEDATALEN); 
-    (void) strncpy(result->data, s, NAMEDATALEN-1);
+    (void) strncpy(result->data, s, NAMEDATALEN);
+    result->data[NAMEDATALEN-1] = '\0';
     return(result);
 }
 
@@ -145,8 +145,8 @@ namestrcpy(Name name, char *str)
 {
     if (!name || !str)
 	return(-1);
-    memset(name->data, 0, sizeof(NameData));
     (void) strncpy(name->data, str, NAMEDATALEN);
+    name->data[NAMEDATALEN-1] = '\0';
     return(0);
 }
 

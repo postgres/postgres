@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *    $Header: /cvsroot/pgsql/src/backend/utils/adt/Attic/oidname.c,v 1.2 1996/11/06 06:49:56 scrappy Exp $
+ *    $Header: /cvsroot/pgsql/src/backend/utils/adt/Attic/oidname.c,v 1.3 1997/08/03 02:37:08 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -35,7 +35,7 @@ oidnamein(char *inStr)
     if (*inptr) {
 	oc->id = (Oid) pg_atoi(inStr, sizeof(Oid), ',');
 	/* copy one less to ensure null-padding */
-	strncpy(oc->name.data,++inptr,NAMEDATALEN-1);
+	strncpy(oc->name.data,++inptr,NAMEDATALEN);
 	/* namestrcpy(&oc->name, ++inptr); */
     }else
 	elog(WARN, "Bad input data for type oidname");
