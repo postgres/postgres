@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/tcop/postgres.c,v 1.347 2003/06/11 18:01:14 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/tcop/postgres.c,v 1.348 2003/06/20 21:58:02 tgl Exp $
  *
  * NOTES
  *	  this is the "main" module of the postgres backend and
@@ -1947,7 +1947,7 @@ PostgresMain(int argc, char *argv[], const char *username)
 	char	   *tmp;
 	int			firstchar;
 	StringInfo	input_message;
-	bool		send_rfq;
+	volatile bool send_rfq = true;
 
 	/*
 	 * Catch standard options before doing much else.  This even works on
@@ -2547,7 +2547,7 @@ PostgresMain(int argc, char *argv[], const char *username)
 	if (!IsUnderPostmaster)
 	{
 		puts("\nPOSTGRES backend interactive interface ");
-		puts("$Revision: 1.347 $ $Date: 2003/06/11 18:01:14 $\n");
+		puts("$Revision: 1.348 $ $Date: 2003/06/20 21:58:02 $\n");
 	}
 
 	/*
@@ -2627,7 +2627,8 @@ PostgresMain(int argc, char *argv[], const char *username)
 
 		/*
 		 * If we were handling an extended-query-protocol message,
-		 * initiate skip till next Sync.
+		 * initiate skip till next Sync.  This also causes us not
+		 * to issue ReadyForQuery (until we get Sync).
 		 */
 		if (doing_extended_query_message)
 			ignore_till_sync = true;
@@ -2642,7 +2643,8 @@ PostgresMain(int argc, char *argv[], const char *username)
 
 	PG_SETMASK(&UnBlockSig);
 
-	send_rfq = true;			/* initially, or after error */
+	if (!ignore_till_sync)
+		send_rfq = true;		/* initially, or after error */
 
 	/*
 	 * Non-error queries loop here.
