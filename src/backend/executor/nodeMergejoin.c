@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/executor/nodeMergejoin.c,v 1.24 1999/02/24 10:20:07 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/executor/nodeMergejoin.c,v 1.25 1999/02/28 00:36:05 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -67,6 +67,7 @@
 #include "postgres.h"
 
 #include "access/heapam.h"
+#include "catalog/pg_operator.h"
 #include "executor/executor.h"
 #include "executor/execdefs.h"
 #include "executor/nodeMergejoin.h"
@@ -87,28 +88,31 @@ static bool MergeCompare(List *eqQual, List *compareQual, ExprContext *econtext)
 
 
 /* ----------------------------------------------------------------
- *		MJFormOSortopI
+ *		MJFormSkipQual
  *
  *		This takes the mergeclause which is a qualification of the
  *		form ((= expr expr) (= expr expr) ...) and forms a new
  *		qualification like ((> expr expr) (> expr expr) ...) which
  *		is used by ExecMergeJoin() in order to determine if we should
- *		skip tuples.
- *
- * old comments
- *		The 'qual' must be of the form:
- *		   {(= outerkey1 innerkey1)(= outerkey2 innerkey2) ...}
- *		The "sortOp outerkey innerkey" is formed by substituting the "="
- *		by "sortOp".
+ *		skip tuples.  The replacement operators are named either ">"
+ *		or "<" according to the replaceopname parameter, and have the
+ *		same operand data types as the "=" operators they replace.
+ *		(We expect there to be such operators because the "=" operators
+ *		were marked mergejoinable; however, there might be a different
+ *		one needed in each qual clause.)
  * ----------------------------------------------------------------
  */
 static List *
-MJFormOSortopI(List *qualList, Oid sortOp)
+MJFormSkipQual(List *qualList, char * replaceopname)
 {
 	List	   *qualCopy;
 	List	   *qualcdr;
 	Expr	   *qual;
 	Oper	   *op;
+	HeapTuple	optup;
+	Form_pg_operator opform;
+	Oid			oprleft,
+				oprright;
 
 	/* ----------------
 	 *	qualList is a list: ((op .. ..) ...)
@@ -132,73 +136,50 @@ MJFormOSortopI(List *qualList, Oid sortOp)
 		 */
 		op = (Oper *) qual->oper;
 		if (!IsA(op, Oper))
-		{
-			elog(DEBUG, "MJFormOSortopI: op not an Oper!");
-			return NIL;
-		}
+			elog(ERROR, "MJFormSkipQual: op not an Oper!");
 
 		/* ----------------
-		 *	 change it's opid and since Op nodes now carry around a
-		 *	 cached pointer to the associated op function, we have
-		 *	 to make sure we invalidate this.  Otherwise you get bizarre
-		 *	 behavior when someone runs a mergejoin with _exec_repeat_ > 1
-		 *	 -cim 4/23/91
+		 *	 Get the declared left and right operand types of the operator.
+		 *	 Note we do *not* use the actual operand types, since those might
+		 *	 be different in scenarios with binary-compatible data types.
+		 *	 There should be "<" and ">" operators matching a mergejoinable
+		 *	 "=" operator's declared operand types, but we might not find them
+		 *	 if we search with the actual operand types.
 		 * ----------------
 		 */
-		op->opid = sortOp;
+		optup = get_operator_tuple(op->opno);
+		if (!HeapTupleIsValid(optup))		/* shouldn't happen */
+			elog(ERROR, "MJFormSkipQual: operator %d not found", op->opno);
+		opform = (Form_pg_operator) GETSTRUCT(optup);
+		oprleft = opform->oprleft;
+		oprright = opform->oprright;
+
+		/* ----------------
+		 *	 Now look up the matching "<" or ">" operator.  If there isn't one,
+		 *	 whoever marked the "=" operator mergejoinable was a loser.
+		 * ----------------
+		 */
+		optup = SearchSysCacheTuple(OPRNAME,
+									PointerGetDatum(replaceopname),
+									ObjectIdGetDatum(oprleft),
+									ObjectIdGetDatum(oprright),
+									CharGetDatum('b'));
+		if (!HeapTupleIsValid(optup))
+			elog(ERROR,
+				 "MJFormSkipQual: mergejoin operator %d has no matching %s op",
+				 op->opno, replaceopname);
+		opform = (Form_pg_operator) GETSTRUCT(optup);
+
+		/* ----------------
+		 *	 And replace the data in the copied operator node.
+		 * ----------------
+		 */
+		op->opno = optup->t_data->t_oid;
+		op->opid = opform->oprcode;
 		op->op_fcache = NULL;
 	}
 
 	return qualCopy;
-}
-
-/* ----------------------------------------------------------------
- *		MJFormISortopO
- *
- *		This does the same thing as MJFormOSortopI() except that
- *		it also reverses the expressions in the qualifications.
- *		For example: ((= expr1 expr2)) produces ((> expr2 expr1))
- *
- * old comments
- *		The 'qual' must be of the form:
- *		   {(= outerkey1 innerkey1) (= outerkey2 innerkey2) ...}
- *		The 'sortOp innerkey1 outerkey" is formed by substituting the "="
- *		by "sortOp" and reversing the positions of the keys.
- *	----------------------------------------------------------------
- */
-static List *
-MJFormISortopO(List *qualList, Oid sortOp)
-{
-	List	   *ISortopO;
-	List	   *qualcdr;
-
-	/* ----------------
-	 *	first generate OSortopI, a list of the form
-	 *	((op outer inner) (op outer inner) ... )
-	 * ----------------
-	 */
-	ISortopO = MJFormOSortopI(qualList, sortOp);
-
-	/* ----------------
-	 *	now swap the cadr and caddr of each qual to form ISortopO,
-	 *	((op inner outer) (op inner outer) ... )
-	 * ----------------
-	 */
-	foreach(qualcdr, ISortopO)
-	{
-		Expr	   *qual;
-		List	   *inner;
-		List	   *outer;
-
-		qual = lfirst(qualcdr);
-
-		inner = lfirst(qual->args);
-		outer = lfirst(lnext(qual->args));
-		lfirst(qual->args) = outer;
-		lfirst(lnext(qual->args)) = inner;
-	}
-
-	return ISortopO;
 }
 
 /* ----------------------------------------------------------------
@@ -215,6 +196,7 @@ MJFormISortopO(List *qualList, Oid sortOp)
  *		the first keys being most significant. Therefore, the clauses
  *		are evaluated in order and the 'compareQual' is satisfied
  *		if (key1i > key2i) is true and (key1j = key2j) for 0 < j < i.
+ *		We use the original mergeclause items to detect equality.
  * ----------------------------------------------------------------
  */
 static bool
@@ -386,12 +368,16 @@ ExecMergeTupleDump(ExprContext *econtext, MergeJoinState *mergestate)
  *
  *		Therefore, when initializing the merge-join node, the executor
  *		creates the "greater/smaller" clause by substituting the "="
- *		operator in the join clauses with the sort operator used to
- *		sort the outer and inner relation forming (outerKey sortOp innerKey).
- *		The sort operator is "<" if the relations are in ascending order
- *		otherwise, it is ">" if the relations are in descending order.
- *		The opposite "smaller/greater" clause is formed by reversing the
- *		outer and inner keys forming (innerKey sortOp outerKey).
+ *		operator in the join clauses with the corresponding ">" operator.
+ *		The opposite "smaller/greater" clause is formed by substituting "<".
+ *
+ *		Note: prior to v6.5, the relational clauses were formed using the
+ *		sort op used to sort the inner relation, which of course would fail
+ *		if the outer and inner keys were of different data types.
+ *		In the current code, we instead assume that operators named "<" and ">"
+ *		will do the right thing.  This should be true since the mergejoin "="
+ *		operator's pg_operator entry will have told the planner to sort by
+ *		"<" for each of the left and right sides.
  *
  *		(2) repositioning inner "cursor"
  *
@@ -452,13 +438,13 @@ ExecMergeJoin(MergeJoin *node)
 
 	if (ScanDirectionIsForward(direction))
 	{
-		outerSkipQual = mergestate->mj_OSortopI;
-		innerSkipQual = mergestate->mj_ISortopO;
+		outerSkipQual = mergestate->mj_OuterSkipQual;
+		innerSkipQual = mergestate->mj_InnerSkipQual;
 	}
 	else
 	{
-		outerSkipQual = mergestate->mj_ISortopO;
-		innerSkipQual = mergestate->mj_OSortopI;
+		outerSkipQual = mergestate->mj_InnerSkipQual;
+		innerSkipQual = mergestate->mj_OuterSkipQual;
 	}
 
 	/* ----------------
@@ -1130,13 +1116,7 @@ ExecInitMergeJoin(MergeJoin *node, EState *estate, Plan *parent)
 {
 	MergeJoinState *mergestate;
 	List	   *joinclauses;
-	RegProcedure rightsortop;
-	RegProcedure leftsortop;
-	RegProcedure sortop;
 	TupleTableSlot *mjSlot;
-
-	List	   *OSortopI;
-	List	   *ISortopO;
 
 	MJ1_printf("ExecInitMergeJoin: %s\n",
 			   "initializing node");
@@ -1153,14 +1133,14 @@ ExecInitMergeJoin(MergeJoin *node, EState *estate, Plan *parent)
 	 * ----------------
 	 */
 	mergestate = makeNode(MergeJoinState);
-	mergestate->mj_OSortopI = NIL;
-	mergestate->mj_ISortopO = NIL;
+	mergestate->mj_OuterSkipQual = NIL;
+	mergestate->mj_InnerSkipQual = NIL;
 	mergestate->mj_JoinState = 0;
 	mergestate->mj_MarkedTupleSlot = NULL;
 	node->mergestate = mergestate;
 
 	/* ----------------
-	 *	Miscellanious initialization
+	 *	Miscellaneous initialization
 	 *
 	 *		 +	assign node's base_id
 	 *		 +	assign debugging hooks and
@@ -1185,40 +1165,17 @@ ExecInitMergeJoin(MergeJoin *node, EState *estate, Plan *parent)
 	mergestate->mj_MarkedTupleSlot = mjSlot;
 
 	/* ----------------
-	 *	get merge sort operators.
-	 *
-	 *	XXX for now we assume all quals in the joinclauses were
-	 *		sorted with the same operator in both the inner and
-	 *		outer relations. -cim 11/2/89
+	 *	form merge skip qualifications
 	 * ----------------
 	 */
 	joinclauses = node->mergeclauses;
+	mergestate->mj_OuterSkipQual = MJFormSkipQual(joinclauses, "<");
+	mergestate->mj_InnerSkipQual = MJFormSkipQual(joinclauses, ">");
 
-	rightsortop = get_opcode(node->mergerightorder[0]);
-	leftsortop = get_opcode(node->mergeleftorder[0]);
-
-	if (leftsortop != rightsortop)
-		elog(NOTICE, "ExecInitMergeJoin: %s",
-			 "left and right sortop's are unequal!");
-
-	sortop = rightsortop;
-
-	/* ----------------
-	 *	form merge skip qualifications
-	 *
-	 *	XXX MJform routines need to be extended
-	 *		to take a list of sortops.. -cim 11/2/89
-	 * ----------------
-	 */
-	OSortopI = MJFormOSortopI(joinclauses, sortop);
-	ISortopO = MJFormISortopO(joinclauses, sortop);
-	mergestate->mj_OSortopI = OSortopI;
-	mergestate->mj_ISortopO = ISortopO;
-
-	MJ_printf("\nExecInitMergeJoin: OSortopI is ");
-	MJ_nodeDisplay(OSortopI);
-	MJ_printf("\nExecInitMergeJoin: ISortopO is ");
-	MJ_nodeDisplay(ISortopO);
+	MJ_printf("\nExecInitMergeJoin: OuterSkipQual is ");
+	MJ_nodeDisplay(mergestate->mj_OuterSkipQual);
+	MJ_printf("\nExecInitMergeJoin: InnerSkipQual is ");
+	MJ_nodeDisplay(mergestate->mj_InnerSkipQual);
 	MJ_printf("\n");
 
 	/* ----------------

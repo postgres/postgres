@@ -6,7 +6,7 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: execnodes.h,v 1.25 1999/02/23 07:55:23 thomas Exp $
+ * $Id: execnodes.h,v 1.26 1999/02/28 00:36:04 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -463,8 +463,8 @@ typedef struct NestLoopState
 /* ----------------
  *	 MergeJoinState information
  *
- *		OSortopI		   outerKey1 sortOp innerKey1 ...
- *		ISortopO		   innerkey1 sortOp outerkey1 ...
+ *		OuterSkipQual	   outerKey1 < innerKey1 ...
+ *		InnerSkipQual	   outerKey1 > innerKey1 ...
  *		JoinState		   current "state" of join. see executor.h
  *		MarkedTupleSlot    pointer to slot in tuple table for marked tuple
  *
@@ -483,8 +483,8 @@ typedef struct NestLoopState
 typedef struct MergeJoinState
 {
 	JoinState	jstate;			/* its first field is NodeTag */
-	List	   *mj_OSortopI;
-	List	   *mj_ISortopO;
+	List	   *mj_OuterSkipQual;
+	List	   *mj_InnerSkipQual;
 	int			mj_JoinState;
 	TupleTableSlot *mj_MarkedTupleSlot;
 } MergeJoinState;
