@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/arrayfuncs.c,v 1.25 1998/02/13 19:45:53 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/arrayfuncs.c,v 1.26 1998/02/14 18:00:37 scrappy Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -44,9 +44,9 @@
 /*-=-=--=-=-=-=-=-=-=-=--=-=-=-=-=-=-=-=--=-=-=-=-=-=-=-=--=-=-=-=-=-=-=-*/
 static int	_ArrayCount(char *str, int dim[], int typdelim);
 static char *_ReadArrayStr(char *arrayStr, int nitems, int ndim, int dim[],
-			  FmgrInfo *inputproc, Oid typelem, char typdelim,
-			  int typlen, bool typbyval, char typalign,
-			  int *nbytes, int16 typmod);
+			  FmgrInfo *inputproc, Oid typelem, int16 typmod,
+			  char typdelim, int typlen, bool typbyval,
+			  char typalign, int *nbytes);
 
 #ifdef LOARRAY
 static char *
