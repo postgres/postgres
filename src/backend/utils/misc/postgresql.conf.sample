@@ -83,7 +83,6 @@
 #enable_hashjoin = true
 
 #ksqo = false
-#geqo = true
 
 #effective_cache_size = 1000  # default in 8k pages
 #random_page_cost = 4
@@ -95,6 +94,7 @@
 #
 #	GEQO Optimizer Parameters
 #
+#geqo = true
 #geqo_selection_bias = 2.0 # range 1.5-2.0
 #geqo_threshold = 11
 #geqo_pool_size = 0        # default based on #tables in query, range 128-1024
