@@ -1,5 +1,5 @@
 PostgreSQL 6.3.2             Tue Apr  7 16:53:16 EDT 1998
--------------------------------------------------------------
+=========================================================
 
 A dump/restore is NOT required for those running 6.3.1.  A 
 'make distclean', 'make', and 'make install' is all that is required.
@@ -31,7 +31,7 @@ ASSERT fixes(Bruce)
 
 
 PostgreSQL 6.3.1             Mon Mar 23 10:21:52 EST 1998
--------------------------------------------------------------
+=========================================================
 
 A dump/restore is NOT required for those running 6.3.  A 
 'make distclean', 'make', and 'make install' is all that is required.
@@ -72,7 +72,7 @@ Better identify tcl and tk libs and includes(Bruce)
 
 
 PostgreSQL 6.3               Sun Mar  1 14:57:30 EST 1998
--------------------------------------------------------------
+=========================================================
 
 A dump/restore is required for those wishing to migrate data from
 previous releases of PostgreSQL.
@@ -248,7 +248,7 @@ Remove un-needed malloc() calls and replace with palloc()(Bruce)
 
 
 PostgreSQL 6.2.1                 Fri Oct 17 00:01:27 EDT 1997
--------------------------------------------------------------
+=========================================================
 
 This release does NOT require a dump/restore for those running 6.2, but
 there is an SQL query in /migration/6.2_to_6.2.1 that should be run. See
@@ -271,7 +271,7 @@ Trigger function for inserting user names for INSERT/UPDATE(Brook Milligan)
 
 
 PostgreSQL 6.2               Thu Oct 02 12:53:46 EDT 1997
--------------------------------------------------------------
+=========================================================
 
 A dump/restore is required for those wishing to migrate data from
 previous releases of PostgreSQL.
@@ -387,8 +387,8 @@ SPI and Trigger programming guides (Vadim & D'Arcy)
 
 
 
-PostgreSQL 6.1.1                 Mon Jul 22 18:04:49 EDT 1997
--------------------------------------------------------------
+PostgreSQL 6.1.1             Mon Jul 22 18:04:49 EDT 1997
+=========================================================
 
 This release does NOT require a dump/restore for those running 6.1.
 
@@ -414,8 +414,8 @@ pg_dumpall now returns proper status, portability fix(Bruce)
 
 
 
-PostgreSQL 6.1                   Sun Jun  8 14:41:13 EDT 1997
--------------------------------------------------------------
+PostgreSQL 6.1               Sun Jun  8 14:41:13 EDT 1997
+=========================================================
 
 A dump/restore is required for those wishing to migrate data from
 previous releases of PostgreSQL.
@@ -517,8 +517,8 @@ DG-UX, Ultrix, Irix, AIX portability fixes
 
 
 
-PostgreSQL 6.0                   Wed Jan 29 00:19:54 EST 1997
--------------------------------------------------------------
+PostgreSQL 6.0               Wed Jan 29 00:19:54 EST 1997
+=========================================================
 
 A dump/restore is required for those wishing to migrate data from
 previous releases of PostgreSQL.
@@ -630,7 +630,7 @@ Unused/uninialized variables corrected
 
 
 PostgreSQL 1.09                 ???
--------------------------------------------------------------
+=========================================================
 
 Sorry, we stopped keeping track of changes from 1.02 to 1.09.  Some of
 the changes listed in 6.0 were actually included in the 1.02.1 to 1.09
@@ -638,8 +638,8 @@ releases.
 
 
 
-Postgres95 1.02                 Thu Aug  1 18:00:00 EDT 1996
--------------------------------------------------------------
+Postgres95 1.02              Thu Aug  1 18:00:00 EDT 1996
+=========================================================
 
 Source code maintainenance and development
  * worldwide team of volunteers
@@ -697,8 +697,8 @@ Contributors (appologies to any missed)
 
 
 
-Postgres95 1.01			Fri Feb 23 18:20:36 PST 1996
--------------------------------------------------------------
+Postgres95 1.01              Fri Feb 23 18:20:36 PST 1996
+=========================================================
 Incompatibilities:
  * 1.01 is backwards compatible with 1.0 database provided the user
    follow the steps outlined in the MIGRATION_from_1.0_to_1.01 file.
@@ -734,8 +734,8 @@ Bug fixes:
 
 
 
-Postgres95 1.0			Tue Sep  5 11:24:11 PDT 1995
--------------------------------------------------------------
+Postgres95 1.0               Tue Sep  5 11:24:11 PDT 1995
+=========================================================
 
 Copyright change:
  * The copyright of Postgres 1.0 has been loosened to be freely modifiable
@@ -779,8 +779,8 @@ Bug fixes:
 
 
 
-Postgres95 Beta 0.03		Fri Jul 21 14:49:31 PDT 1995
-------------------------------------------------------
+Postgres95 Beta 0.03         Fri Jul 21 14:49:31 PDT 1995
+=========================================================
 Incompatible changes:
  * BETA-0.3 IS INCOMPATIBLE WITH DATABASES CREATED WITH PREVIOUS VERSIONS
    (due to system catalog changes and indexing structure changes).
@@ -889,8 +889,8 @@ New documentation:
 
 
 
-Postgres95 Beta 0.02	(Thu May 25 16:54:46 PDT 1995)
-------------------------------------------------------
+Postgres95 Beta 0.02         Thu May 25 16:54:46 PDT 1995
+=========================================================
 Incompatible changes:
  * The SQL statement for creating a database is 'CREATE DATABASE' instead
    of 'CREATEDB'. Similarly, dropping a database is 'DROP DATABASE' instead
@@ -927,6 +927,6 @@ The following bugs have been fixed in postgres95-beta-0.02:
 
 
 
-Postgres95 Beta 0.01	(Mon May 1 19:03:10 PDT 1995)
-------------------------------------------------------
+Postgres95 Beta 0.01          Mon May 1 19:03:10 PDT 1995
+=========================================================
 Initial release.
