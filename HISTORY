@@ -43,7 +43,7 @@ Migration to v7.1
 
 
 
-Last updated from CVS logs:  2000-12-11
+Last updated from CVS logs:  2001-01-29
 
 Bug Fixes
 ---------
@@ -86,6 +86,13 @@ Fix INSERT...SELECT with rules (Tom)
 Fix FOR UPDATE inside views and subselects (Tom)
 Fix OVERLAPS operators conform to SQL92 spec regarding NULLs (Tom)
 Fix lpad() and rpad() to handle length less than input string (Tom)
+Fix use of NOTIFY in some rules (Tom)
+Overhaul btree code (Tom)
+Fix NOT NULL use in Pl/PgSQL variables (Tom)
+Overhaul GIST code (Oleg)
+Fix CLUSTER to preserve constraints and column default (Tom)
+Improved deadlock detection handling (Tom)
+Allow multiple SERIAL columns in a table (Tom)
 
 Enhancements
 ------------
@@ -152,6 +159,13 @@ Allow postmaster to listen on a specific IP address (David J. MacKenzie)
 Allow socket path name to be specified in hostname by using leading slash
     (David J. MacKenzie)
 Allow CREATE DATABASE to specify template database (Tom)
+New pg_dump --globals-only option (Peter E)
+New utility to convert MySQL schema dumps to SQL92 and PostgreSQL (Thomas)
+New /contrib/rserv replication toolkit (Vadim)
+New file format for COPY BINARY (Tom)
+New /contrib/oid2name to map numeric files to table names (B Palmer)
+New "idle in transaction" ps status message (Marc)
+Update to pgaccess 0.98.7 (Constantin Teodorescu)
 
 Types
 -----
@@ -162,6 +176,9 @@ New int2 and int8 comparison operators (Tom)
 New BIT and BIT VARYING types (Adriaan Joubert, Tom)
 CHAR() no longer faster than VARCHAR() because of TOAST (Tom)
 New GIST seg/cube examples (Gene Selkov)
+Improved round(numeric) handling (Tom)
+Fix CIDR output formatting (Tom)
+New CIDR abbrev() function (Tom)
 
 Performance
 -----------
@@ -204,6 +221,9 @@ Add IBM S/390 support (Neale Ferguson)
 Moved macmanuf to /contrib (Larry Rosenman)
 Syslog improvements (Larry Rosenman)
 New template0 database that contains no user additions(Tom)
+New /contrib/cube and /contrib/seg GIST sample code (Gene Selkov)
+Allow *BSD's libedit instead of readline (Peter)
+Improved assembly language source code format (Bruce)
 
 
 

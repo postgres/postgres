@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/release.sgml,v 1.74 2001/01/27 11:12:53 petere Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/release.sgml,v 1.75 2001/01/29 18:58:45 momjian Exp $
 -->
 
  <appendix id="release">
@@ -119,7 +119,7 @@ Subqueries in FROM are now supported.
 
     <para>
      <programlisting>
-Last updated from CVS logs:  2000-12-11
+Last updated from CVS logs:  2001-01-29
 
 Bug Fixes
 ---------
@@ -162,6 +162,13 @@ Fix INSERT...SELECT with rules (Tom)
 Fix FOR UPDATE inside views and subselects (Tom)
 Fix OVERLAPS operators conform to SQL92 spec regarding NULLs (Tom)
 Fix lpad() and rpad() to handle length less than input string (Tom)
+Fix use of NOTIFY in some rules (Tom)
+Overhaul btree code (Tom)
+Fix NOT NULL use in Pl/PgSQL variables (Tom)
+Overhaul GIST code (Oleg)
+Fix CLUSTER to preserve constraints and column default (Tom)
+Improved deadlock detection handling (Tom)
+Allow multiple SERIAL columns in a table (Tom)
 
 Enhancements
 ------------
@@ -169,7 +176,7 @@ Add OUTER JOINs (Tom)
 Function manager overhaul (Tom)
 Allow ALTER TABLE RENAME on indexes(Tom)
 Improve CLUSTER(Tom)
-Improve ps status display for more platforms (Peter E)
+Improve ps status display for more platforms(Marc)
 Improve CREATE FUNCTION failure message(Ross)
 JDBC improvements (Peter, Travis Bauer, Christopher Cain, William Webber,
     Gunnar)
@@ -184,12 +191,12 @@ ODBC cleanups/improvements (Nick Gorham, Stephan Szabo, Zoltan Kovacs,
     Michael Fork)
 Allow renaming of temp tables (Tom)
 Overhaul memory manager contexts (Tom)
-pg_dumpall uses CREATE USER or CREATE GROUP rather using COPY (Peter E)
+pg_dump uses CREATE USER or CREATE GROUP rather using COPY (Peter E)
 Overhaul pg_dump (Philip Warner)
-Allow pg_hba.conf secondary password file to specify only username (Peter E)
+Allow pg_hba.conf secondary password file to specify username (Peter E)
 Allow TEMPORARY or TEMP keyword when creating temporary tables (Bruce)
 New memory leak checker (Karel)
-New SET SESSION CHARACTERISTICS (Thomas)
+New SET SESSION CHARACTERISTICS and SET DefaultXactIsoLevel (Thomas, Peter E)
 Allow nested block comments (Thomas)
 Add WITHOUT TIME ZONE type qualifier (Thomas)
 New ALTER TABLE ADD CONSTRAINT (Stephan)
@@ -228,6 +235,13 @@ Allow postmaster to listen on a specific IP address (David J. MacKenzie)
 Allow socket path name to be specified in hostname by using leading slash
     (David J. MacKenzie)
 Allow CREATE DATABASE to specify template database (Tom)
+New pg_dump --globals-only option (Peter E)
+New utility to convert MySQL schema dumps to SQL92 and PostgreSQL (Thomas)
+New /contrib/rserv replication toolkit (Vadim)
+New file format for COPY BINARY (Tom)
+New /contrib/oid2name to map numeric files to table names (B Palmer)
+New "idle in transaction" ps status message (Marc)
+Update to pgaccess 0.98.7 (Constantin Teodorescu)
 
 Types
 -----
@@ -235,9 +249,12 @@ Fix INET/CIDR type ordering and add new functions (Tom)
 Make OID behave as an unsigned type (Tom)
 Allow BIGINT as synonym for INT8 (Peter E)
 New int2 and int8 comparison operators (Tom)
-New BIT and BIT VARYING types (Adriaan Joubert, Tom, Peter E)
+New BIT and BIT VARYING types (Adriaan Joubert, Tom)
 CHAR() no longer faster than VARCHAR() because of TOAST (Tom)
 New GIST seg/cube examples (Gene Selkov)
+Improved round(numeric) handling (Tom)
+Fix CIDR output formatting (Tom)
+New CIDR abbrev() function (Tom)
 
 Performance
 -----------
@@ -253,7 +270,7 @@ Source Code
 -----------
 New function manager call conventions (Tom)
 SGI portability fixes (David Kaelbling)
-New configure --enable-syslog option (Peter E)
+New configure --enable-syslog option (Marc)
 New BSDI README (Bruce)
 configure script moved to top level, not /src (Peter E)
 Makefile/configuration/compilation overhaul (Peter E)
@@ -280,6 +297,9 @@ Add IBM S/390 support (Neale Ferguson)
 Moved macmanuf to /contrib (Larry Rosenman)
 Syslog improvements (Larry Rosenman)
 New template0 database that contains no user additions(Tom)
+New /contrib/cube and /contrib/seg GIST sample code (Gene Selkov)
+Allow *BSD's libedit instead of readline (Peter)
+Improved assembly language source code format (Bruce)
      </programlisting>
     </para>
    </sect2>
