@@ -1,8 +1,8 @@
 --
 --	A quick test of the IP address code
 --
---	$Id: test.sql,v 1.1 1998/02/14 17:58:09 scrappy Exp $
---
+--	$Id: test.sql,v 1.2 1998/06/16 05:35:12 momjian Exp $
+--      This is original test (it was written before my changes in this class). alex.
 
 -- temporary table:
 create table addresses (address ipaddr);

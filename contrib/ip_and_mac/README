@@ -5,8 +5,8 @@ written by (Bergen, Norway, 1998-01-31, Tom Ivar Helbekkmo
 rewritten by me (alex@relcom.EU.net, Aleksei Roudnev, Moscow, Russia,
 25.05.98) and written first by Bergen.
 
-To see the description of macaddr type, read README.ORIG file.
-To see the description of ipaddr type, read ipaddr.html file.
+To see the description of macaddr type, read README.ORIG file. To see
+the description of ipaddr type, read ipaddr.html file.
 					    ^^^^^^^^^^^
 
 This ipaddr type differ slightly from the original one. First, if you

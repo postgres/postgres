@@ -1,10 +1,10 @@
 --
 --	PostgreSQL code for MAC addresses.
 --
---	$Id: mac.sql.in,v 1.1 1998/04/22 04:20:36 scrappy Exp $
+--	$Id: mac.sql,v 1.4 1998/06/16 05:35:11 momjian Exp $
 --
 
-load '_OBJWD_/mac_DLSUFFIX_';
+load '/usr/local/pgsql/contrib/ip_and_macs/mac.so';
 
 --
 --	Input and output functions and the type itself:
@@ -12,12 +12,12 @@ load '_OBJWD_/mac_DLSUFFIX_';
 
 create function macaddr_in(opaque)
 	returns opaque
-	as '_OBJWD_/mac_DLSUFFIX_'
+	as '/usr/local/pgsql/contrib/ip_and_macs/mac.so'
 	language 'c';
 
 create function macaddr_out(opaque)
 	returns opaque
-	as '_OBJWD_/mac_DLSUFFIX_'
+	as '/usr/local/pgsql/contrib/ip_and_macs/mac.so'
 	language 'c';
 
 create type macaddr (
@@ -33,32 +33,32 @@ create type macaddr (
 
 create function macaddr_lt(macaddr, macaddr)
 	returns bool
-	as '_OBJWD_/mac_DLSUFFIX_'
+	as '/usr/local/pgsql/contrib/ip_and_macs/mac.so'
 	language 'c';
 
 create function macaddr_le(macaddr, macaddr)
 	returns bool
-	as '_OBJWD_/mac_DLSUFFIX_'
+	as '/usr/local/pgsql/contrib/ip_and_macs/mac.so'
 	language 'c';
 
 create function macaddr_eq(macaddr, macaddr)
 	returns bool
-	as '_OBJWD_/mac_DLSUFFIX_'
+	as '/usr/local/pgsql/contrib/ip_and_macs/mac.so'
 	language 'c';
 
 create function macaddr_ge(macaddr, macaddr)
 	returns bool
-	as '_OBJWD_/mac_DLSUFFIX_'
+	as '/usr/local/pgsql/contrib/ip_and_macs/mac.so'
 	language 'c';
 
 create function macaddr_gt(macaddr, macaddr)
 	returns bool
-	as '_OBJWD_/mac_DLSUFFIX_'
+	as '/usr/local/pgsql/contrib/ip_and_macs/mac.so'
 	language 'c';
 
 create function macaddr_ne(macaddr, macaddr)
 	returns bool
-	as '_OBJWD_/mac_DLSUFFIX_'
+	as '/usr/local/pgsql/contrib/ip_and_macs/mac.so'
 	language 'c';
 
 --
@@ -117,7 +117,7 @@ create operator <> (
 
 create function macaddr_manuf(macaddr)
 	returns text
-	as '_OBJWD_/mac_DLSUFFIX_'
+	as '/usr/local/pgsql/contrib/ip_and_macs/mac.so'
 	language 'c';
 
 --

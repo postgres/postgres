@@ -1,7 +1,7 @@
 #
 #	PostgreSQL types for IP and MAC addresses
 #
-#	$Id: Makefile,v 1.4 1998/06/16 04:34:29 momjian Exp $
+#	$Id: Makefile,v 1.5 1998/06/16 05:35:10 momjian Exp $
 
 all: ip.so mac.so
 
@@ -18,7 +18,7 @@ mac.o: mac.c mac.h
 	cc -g -O -fPIC -I/usr/local/pgsql/include -c mac.c
 
 install: ip.so mac.so
-	install -c ip.so mac.so /usr/local/pgsql/modules
+	install -c ip.so mac.so /usr/local/pgsql/contrib/ip_and_macs
 
 clean:
 	rm -f *.o *.so *.b

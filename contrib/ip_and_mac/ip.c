@@ -1,7 +1,7 @@
 /*
  *	PostgreSQL type definitions for IP addresses.
  *
- *	$Id: ip.c,v 1.4 1998/06/16 04:34:29 momjian Exp $
+ *	$Id: ip.c,v 1.5 1998/06/16 05:35:10 momjian Exp $
  */
 
 #include <stdio.h>

@@ -1,14 +1,14 @@
 --
 --	PostgreSQL code for IP addresses.
 --
---	$Id: ip.sql,v 1.4 1998/06/16 04:34:30 momjian Exp $
+--	$Id: ip.sql,v 1.5 1998/06/16 05:35:10 momjian Exp $
 --      Invoced from  1998/02/14 17:58:04 scrappy
 --
 --      New - INPUT/OUTPUT, functions, indexing by btree, test.
 --      PART # 1 - ip.sql - load new type, functions and operators.
 --      Then you should execute ipi.sql - add ipaddr_ops class to allow indexing.
 
-load '/usr/local/pgsql/modules/ip.so';
+load '/usr/local/pgsql/contrib/ip_and_macs/ip.so';
 
 --
 --	Input and output functions and the type itself:
@@ -20,14 +20,14 @@ load '/usr/local/pgsql/modules/ip.so';
 
 create function ipaddr_in(opaque)
 	returns opaque
-	as '/usr/local/pgsql/modules/ip.so'
+	as '/usr/local/pgsql/contrib/ip_and_macs/ip.so'
 	language 'c';
 
 
 
 create function ipaddr_out(opaque)
 	returns opaque
-	as '/usr/local/pgsql/modules/ip.so'
+	as '/usr/local/pgsql/contrib/ip_and_macs/ip.so'
 	language 'c';
 
 create type ipaddr (
@@ -46,7 +46,7 @@ create type ipaddr (
 drop function ipaddr_print;
 create function ipaddr_print(ipaddr, text)
 	returns text
-	as '/usr/local/pgsql/modules/ip.so'
+	as '/usr/local/pgsql/contrib/ip_and_macs/ip.so'
 	language 'c';
 );
 
@@ -58,32 +58,32 @@ create function ipaddr_print(ipaddr, text)
 
 create function ipaddr_lt(ipaddr, ipaddr)
 	returns bool
-	as '/usr/local/pgsql/modules/ip.so'
+	as '/usr/local/pgsql/contrib/ip_and_macs/ip.so'
 	language 'c';
 
 create function ipaddr_le(ipaddr, ipaddr)
 	returns bool
-	as '/usr/local/pgsql/modules/ip.so'
+	as '/usr/local/pgsql/contrib/ip_and_macs/ip.so'
 	language 'c';
 
 create function ipaddr_eq(ipaddr, ipaddr)
 	returns bool
-	as '/usr/local/pgsql/modules/ip.so'
+	as '/usr/local/pgsql/contrib/ip_and_macs/ip.so'
 	language 'c';
 
 create function ipaddr_ge(ipaddr, ipaddr)
 	returns bool
-	as '/usr/local/pgsql/modules/ip.so'
+	as '/usr/local/pgsql/contrib/ip_and_macs/ip.so'
 	language 'c';
 
 create function ipaddr_gt(ipaddr, ipaddr)
 	returns bool
-	as '/usr/local/pgsql/modules/ip.so'
+	as '/usr/local/pgsql/contrib/ip_and_macs/ip.so'
 	language 'c';
 
 create function ipaddr_ne(ipaddr, ipaddr)
 	returns bool
-	as '/usr/local/pgsql/modules/ip.so'
+	as '/usr/local/pgsql/contrib/ip_and_macs/ip.so'
 	language 'c';
 
 --
@@ -92,7 +92,7 @@ create function ipaddr_ne(ipaddr, ipaddr)
 --
 create function ipaddr_in_net(ipaddr, ipaddr)
 	returns bool
-	as '/usr/local/pgsql/modules/ip.so'
+	as '/usr/local/pgsql/contrib/ip_and_macs/ip.so'
 	language 'c';
 
 --
@@ -104,7 +104,7 @@ create function ipaddr_in_net(ipaddr, ipaddr)
 
  create function ipaddr_net(ipaddr)
 	returns ipaddr
-	as '/usr/local/pgsql/modules/ip.so'
+	as '/usr/local/pgsql/contrib/ip_and_macs/ip.so'
 	language 'c';
 
 --
@@ -114,7 +114,7 @@ create function ipaddr_in_net(ipaddr, ipaddr)
 
  create function ipaddr_is_net(ipaddr)
 	returns boolean
-	as '/usr/local/pgsql/modules/ip.so'
+	as '/usr/local/pgsql/contrib/ip_and_macs/ip.so'
 	language 'c';
 
 --
@@ -123,7 +123,7 @@ create function ipaddr_in_net(ipaddr, ipaddr)
 
  create function ipaddr_len(ipaddr)
 	returns int4
-	as '/usr/local/pgsql/modules/ip.so'
+	as '/usr/local/pgsql/contrib/ip_and_macs/ip.so'
 	language 'c';
 
 --
@@ -132,7 +132,7 @@ create function ipaddr_in_net(ipaddr, ipaddr)
 
  create function ipaddr_pref(ipaddr)
 	returns int4
-	as '/usr/local/pgsql/modules/ip.so'
+	as '/usr/local/pgsql/contrib/ip_and_macs/ip.so'
 	language 'c';
 
 --
@@ -142,7 +142,7 @@ create function ipaddr_in_net(ipaddr, ipaddr)
 
  create function ipaddr_integer(ipaddr)
 	returns int4
-	as '/usr/local/pgsql/modules/ip.so'
+	as '/usr/local/pgsql/contrib/ip_and_macs/ip.so'
 	language 'c';
 
 --
@@ -152,7 +152,7 @@ create function ipaddr_in_net(ipaddr, ipaddr)
 
  create function ipaddr_compose(int4,int4)
 	returns ipaddr
-	as '/usr/local/pgsql/modules/ip.so'
+	as '/usr/local/pgsql/contrib/ip_and_macs/ip.so'
 	language 'c';
 
 --
@@ -161,7 +161,7 @@ create function ipaddr_in_net(ipaddr, ipaddr)
 
  create function ipaddr_mask(ipaddr)
 	returns ipaddr
-	as '/usr/local/pgsql/modules/ip.so'
+	as '/usr/local/pgsql/contrib/ip_and_macs/ip.so'
 	language 'c';
 
 --
@@ -170,7 +170,7 @@ create function ipaddr_in_net(ipaddr, ipaddr)
 
  create function ipaddr_bcast(ipaddr)
 	returns ipaddr
-	as '/usr/local/pgsql/modules/ip.so'
+	as '/usr/local/pgsql/contrib/ip_and_macs/ip.so'
 	language 'c';
 
 --
@@ -180,7 +180,7 @@ create function ipaddr_in_net(ipaddr, ipaddr)
 
  create function ipaddr_cmp(ipaddr,ipaddr)
 	returns int4
-	as '/usr/local/pgsql/modules/ip.so'
+	as '/usr/local/pgsql/contrib/ip_and_macs/ip.so'
 	language 'c';
 
 --
@@ -189,12 +189,12 @@ create function ipaddr_in_net(ipaddr, ipaddr)
 
  create function ipaddr_plus(ipaddr,int4)
 	returns ipaddr
-	as '/usr/local/pgsql/modules/ip.so'
+	as '/usr/local/pgsql/contrib/ip_and_macs/ip.so'
 	language 'c';
 
  create function ipaddr_minus(ipaddr,int4)
 	returns ipaddr
-	as '/usr/local/pgsql/modules/ip.so'
+	as '/usr/local/pgsql/contrib/ip_and_macs/ip.so'
 	language 'c';
 
 --
