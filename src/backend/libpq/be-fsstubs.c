@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *    $Header: /cvsroot/pgsql/src/backend/libpq/be-fsstubs.c,v 1.4 1996/11/06 08:48:25 scrappy Exp $
+ *    $Header: /cvsroot/pgsql/src/backend/libpq/be-fsstubs.c,v 1.5 1996/11/15 18:38:20 momjian Exp $
  *
  * NOTES
  *    This should be moved to a more appropriate place.  It is here
@@ -24,6 +24,7 @@
 
 #include <fcntl.h>
 #include <sys/types.h>
+#include <sys/stat.h>
 #include <unistd.h>
 
 #include <postgres.h>
@@ -240,7 +241,7 @@ lo_import(text *filename)
     char buf[BUFSIZE];
     LargeObjectDesc *lobj;
     Oid lobjOid;
-    
+
     /*
      * open the file to be read in
      */
@@ -294,6 +295,7 @@ lo_export(Oid lobjId, text *filename)
 #define BUFSIZE        1024
     char buf[BUFSIZE];
     LargeObjectDesc *lobj;
+    mode_t oumask;
 
     /*
      * create an inversion "object"
@@ -307,7 +309,9 @@ lo_export(Oid lobjId, text *filename)
     /*
      * open the file to be written to
      */
+    oumask = umask((mode_t) 0);
     fd = open(VARDATA(filename), O_CREAT|O_WRONLY, 0666);
+    (void) umask(oumask);
     if (fd < 0)  {   /* error */
 	elog(WARN, "lo_export: can't open unix file\"%s\"",
 	     VARDATA(filename));
