@@ -2,7 +2,7 @@
 #
 # Makefile for the plpgsql shared object
 #
-# $Header: /cvsroot/pgsql/src/pl/plpgsql/src/Makefile,v 1.9 2000/10/23 21:44:03 petere Exp $
+# $Header: /cvsroot/pgsql/src/pl/plpgsql/src/Makefile,v 1.10 2001/02/09 01:05:42 tgl Exp $
 #
 #-------------------------------------------------------------------------
 
@@ -71,12 +71,8 @@ endif
 
 distprep: $(srcdir)/pl_scan.c $(srcdir)/pl.tab.h $(srcdir)/pl_gram.c
 
-mklang.sql: mklang.sql.in
-	sed -e 's%__libdir__%$(libdir)%g' -e 's%__DLSUFFIX__%$(DLSUFFIX)%g' < $< > $@
-
-
 clean distclean: clean-lib
-	rm -f $(OBJS) mklang.sql
+	rm -f $(OBJS)
 	@rm -f y.tab.c y.tab.h lex.yy.c
 
 maintainer-clean: clean
