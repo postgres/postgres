@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/optimizer/path/joinrels.c,v 1.48 2000/09/29 18:21:32 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/optimizer/path/joinrels.c,v 1.49 2000/12/18 06:50:51 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -262,9 +262,18 @@ make_rels_by_clause_joins(Query *root,
 			RelOptInfo *other_rel = (RelOptInfo *) lfirst(j);
 
 			if (is_subseti(unjoined_relids, other_rel->relids))
-				result = lcons(make_join_rel(root, old_rel, other_rel,
-											 JOIN_INNER),
-							   result);
+			{
+				RelOptInfo *jrel;
+
+				jrel = make_join_rel(root, old_rel, other_rel, JOIN_INNER);
+				/*
+				 * Avoid entering same joinrel into our output list more
+				 * than once.  (make_rels_by_joins doesn't really care,
+				 * but GEQO does.)
+				 */
+				if (!ptrMember(jrel, result))
+					result = lcons(jrel, result);
+			}
 		}
 	}
 
@@ -297,9 +306,16 @@ make_rels_by_clauseless_joins(Query *root,
 		RelOptInfo *other_rel = (RelOptInfo *) lfirst(i);
 
 		if (nonoverlap_setsi(other_rel->relids, old_rel->relids))
-			result = lcons(make_join_rel(root, old_rel, other_rel,
-										 JOIN_INNER),
-						   result);
+		{
+			RelOptInfo *jrel;
+
+			jrel = make_join_rel(root, old_rel, other_rel, JOIN_INNER);
+			/*
+			 * As long as given other_rels are distinct, don't need
+			 * to test to see if jrel is already part of output list.
+			 */
+			result = lcons(jrel, result);
+		}
 	}
 
 	return result;
