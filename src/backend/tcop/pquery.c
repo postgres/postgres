@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/tcop/pquery.c,v 1.13 1998/01/07 21:06:05 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/tcop/pquery.c,v 1.14 1998/02/13 03:42:32 vadim Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -90,6 +90,7 @@ CreateExecutorState(void)
 	state->es_result_relation_info = NULL;
 
 	state->es_param_list_info = NULL;
+	state->es_param_exec_vals = NULL;
 
 	state->es_BaseId = 0;
 	state->es_tupleTable = NULL;
