@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *    $Header: /cvsroot/pgsql/src/backend/utils/adt/Attic/dt.c,v 1.33 1997/08/21 23:56:40 momjian Exp $
+ *    $Header: /cvsroot/pgsql/src/backend/utils/adt/Attic/dt.c,v 1.34 1997/09/01 06:13:21 thomas Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -331,6 +331,7 @@ SetDateTime( DateTime dt) {
     if (DATETIME_IS_CURRENT(dt)) {
 	GetCurrentTime(&tt);
 	tm2datetime( &tt, 0, NULL, &dt);
+	dt = dt2local( dt, -CTimeZone);
 
 #ifdef DATEDEBUG
 printf( "SetDateTime- current time is %f\n", dt);
@@ -661,6 +662,10 @@ datetime_mi(DateTime *datetime1, DateTime *datetime2)
 
     if (DATETIME_IS_RELATIVE(dt1)) dt1 = SetDateTime(dt1);
     if (DATETIME_IS_RELATIVE(dt2)) dt2 = SetDateTime(dt2);
+
+#ifdef DATEDEBUG
+printf( "datetime_mi- evaluate %f - %f\n", dt1, dt2);
+#endif
 
     if (DATETIME_IS_INVALID(dt1)
      || DATETIME_IS_INVALID(dt2)) {
