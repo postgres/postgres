@@ -65,22 +65,23 @@
     to try out  the  examples  in  this manual. It can be activated for the
     <replaceable class="parameter">dbname</replaceable> database by typing the command:
 
-    <programlisting>
-% psql <replaceable class="parameter">dbname</replaceable>
-    </programlisting>
+<programlisting>
+psql <replaceable class="parameter">dbname</replaceable>
+</programlisting>
 
     You will be greeted with the following message:
 
-    <programlisting>
-Welcome to the Postgres interactive sql monitor:
+<programlisting>
+Welcome to psql, the PostgreSQL interactive terminal.
 
-  type \? for help on slash commands
-  type \q to quit
-  type \g or terminate with semicolon to execute query
-You are currently connected to the database: <replaceable>dbname</replaceable>
+Type:  \copyright for distribution terms
+       \h for help with SQL commands
+       \? for help on internal slash commands
+       \g or terminate with semicolon to execute query
+       \q to quit
 
 <replaceable>dbname</replaceable>=&gt;
-    </programlisting>
+</programlisting>
    </para>
 
    <para>

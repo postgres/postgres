@@ -43,24 +43,22 @@
 
    <Para>
     To create a new database named <Quote>mydb</Quote> from the command line, type
-    <ProgramListing>
+<ProgramListing>
 % createdb mydb
-    </ProgramListing>
+</ProgramListing>
 
     and to do the same from within <Application>psql</Application> type
-    <ProgramListing>
-* CREATE DATABASE mydb;
-    </ProgramListing>
+<ProgramListing>
+=> CREATE DATABASE mydb;
+</ProgramListing>
    </Para>
 
    <Para>
     If you do not have the privileges required to create a database, you will see
     the following:
-    <ProgramListing>
-% createdb mydb
-WARN:user "your username" is not allowed to create/destroy databases
-createdb: database creation failed on mydb.
-    </ProgramListing>
+<ProgramListing>
+ERROR:  CREATE DATABASE: Permission denied.
+</ProgramListing>
    </Para>
 
    <Para>
@@ -123,45 +121,41 @@ createdb: database creation failed on mydb.
     ensure that <FileName>/alt/postgres</FileName> already exists and is writable by 
     the Postgres administrator account.
     Then, from the command line, type
-    <ProgramListing>
-% initlocation $PGDATA2
+<ProgramListing>
+% initlocation PGDATA2
 Creating Postgres database system directory /alt/postgres/data
 Creating Postgres database system directory /alt/postgres/data/base
-    </ProgramListing>
+</ProgramListing>
    </Para>
 
    <Para>
     To create a database in the alternate storage area <envar>PGDATA2</envar>
     from the command line, use the following command: 
-    <ProgramListing>
+<ProgramListing>
 % createdb -D PGDATA2 mydb
-    </ProgramListing>
+</ProgramListing>
 
     and to do the same from within <Application>psql</Application> type
-    <ProgramListing>
-* CREATE DATABASE mydb WITH LOCATION = 'PGDATA2';
-    </ProgramListing>
+<ProgramListing>
+=> CREATE DATABASE mydb WITH LOCATION = 'PGDATA2';
+</ProgramListing>
    </Para>
 
    <Para>
     If you do not have the privileges required to create a database, you will see
     the following:
-    <ProgramListing>
-% createdb mydb
-WARN:user "your username" is not allowed to create/destroy databases
-createdb: database creation failed on mydb.
-    </ProgramListing>
+<ProgramListing>
+ERROR:  CREATE DATABASE: permission denied
+</ProgramListing>
    </Para>
 
    <Para>
     If the specified location does not exist or the database backend does not have
     permission to access it or to write to directories under it, you will see
     the following:
-    <ProgramListing>
-% createdb -D /alt/postgres/data mydb
-ERROR:  Unable to create database directory /alt/postgres/data/base/mydb
-createdb: database creation failed on mydb.
-    </ProgramListing>
+<ProgramListing>
+ERROR:  The database path '/no/where' is invalid. This may be due to a character that is not allowed or because the chosen path isn't permitted for databases. 
+</ProgramListing>
    </Para>
 
   </Sect1>
@@ -176,9 +170,9 @@ createdb: database creation failed on mydb.
 <ItemizedList Mark="bullet" Spacing="compact">
 <ListItem>
 <Para>
-running the <ProductName>Postgres</ProductName>  terminal  monitor  programs  (e.g.
-        <Application>psql</Application>) which allows you to interactively
-        enter, edit, and execute <Acronym>SQL</Acronym> commands.
+running the <ProductName>PostgreSQL</ProductName>  interactive terminal
+<Application>psql</Application> which allows you to interactively
+enter, edit, and execute <Acronym>SQL</Acronym> commands.
 </Para>
 </ListItem>
 <ListItem>
@@ -202,26 +196,26 @@ to try out the examples in this manual.
 
      You will be greeted with the following message:
 <ProgramListing>
-Welcome to the POSTGRESQL interactive sql monitor:
-  Please read the file COPYRIGHT for copyright terms of POSTGRESQL
-
-   type \? for help on slash commands
-   type \q to quit
-   type \g or terminate with semicolon to execute query
- You are currently connected to the database: template1
+Welcome to psql, the PostgreSQL interactive terminal.
+ 
+Type:  \copyright for distribution terms
+       \h for help with SQL commands
+       \? for help on internal slash commands
+       \g or terminate with semicolon to execute query
+       \q to quit
 
 mydb=>
 </ProgramListing>
 </Para>
 
 <Para>
-This prompt indicates that the terminal monitor is listening
+This prompt indicates that psql is listening
   to you and that you can type <Acronym>SQL</Acronym> queries into a
      workspace maintained by the terminal monitor.
      The <Application>psql</Application> program responds to escape  codes  that  begin
      with  the  backslash  character, <Quote>\</Quote>  For example, you
      can get help on the syntax of various
- <ProductName>Postgres</ProductName> <Acronym>SQL</Acronym> commands by typing:
+ <ProductName>PostgreSQL</ProductName> <Acronym>SQL</Acronym> commands by typing:
 <ProgramListing>
 mydb=> \h
 </ProgramListing>
@@ -249,7 +243,7 @@ mydb=> \q
 </ProgramListing>
 
      and  <Application>psql</Application>  will  quit  and  return  you to your command
-     shell. (For more escape codes, type <Command>\h</Command> at  the  monitor
+     shell. (For more escape codes, type <Command>\?</Command> at  the  psql
      prompt.)
      White  space  (i.e.,  spaces, tabs and newlines) may be
      used freely in <Acronym>SQL</Acronym> queries.  Single-line comments  are  denoted  by
@@ -280,14 +274,14 @@ TBD
 <Title>Destroying a Database</Title>
 
 <Para>
-     If you are the database administrator for the  database
+     If you are the owner of the  database
      <Database>mydb</Database>,  you can destroy it using the following Unix command:
 <ProgramListing>
 % dropdb mydb
 </ProgramListing>
-     This action physically removes all of  the  Unix  files
+     This action physically removes all of the Unix files
      associated  with  the database and cannot be undone, so
-     this should only be done with a  great  deal  of  forethought.
+     this should only be done with a great deal of forethought.
 </Para>
 </Sect1>
 

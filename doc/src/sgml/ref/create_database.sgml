@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/ref/create_database.sgml,v 1.11 1999/12/12 05:15:09 momjian Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/ref/create_database.sgml,v 1.12 2000/03/26 18:32:27 petere Exp $
 Postgres documentation
 -->
 
@@ -245,13 +245,15 @@ comment from Olly; response from Thomas...
 <computeroutput>Creating Postgres database system directory /home/olly/private_db/base</computeroutput>
    
 <prompt>$</prompt> <userinput>psql olly</userinput>
-<computeroutput>Welcome to psql, the PostgreSQL interactive terminal.
-(Please type \copyright to see the distribution terms of PostgreSQL.)
+<computeroutput>
+Welcome to psql, the PostgreSQL interactive terminal.
  
-Type \h for help with SQL commands,
-     \? for help on internal slash commands,
-     \q to quit,
-     \g or terminate with semicolon to execute query.
+Type:  \copyright for distribution terms
+       \h for help with SQL commands
+       \? for help on internal slash commands
+       \g or terminate with semicolon to execute query
+       \q to quit
+
 <prompt>olly=></prompt></computeroutput> <userinput>CREATE DATABASE elsewhere WITH LOCATION = '/home/olly/private_db';</userinput>
 <computeroutput>CREATE DATABASE</computeroutput>
    </programlisting>
@@ -272,7 +274,7 @@ Type \h for help with SQL commands,
    </title>
    <para>
     There is no <command>CREATE DATABASE</command> statement in SQL92.
-    The equivalent command in standard SQL is <command>CREATE SCHEMA</command>.
+    Databases are equivalent to catalogs whose creation is implementation-defined.
    </para>
   </refsect2>
  </refsect1>

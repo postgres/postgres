@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/ref/listen.sgml,v 1.7 1999/07/22 15:09:12 thomas Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/ref/listen.sgml,v 1.8 2000/03/26 18:32:27 petere Exp $
 Postgres documentation
 -->
 
@@ -166,12 +166,12 @@ NOTICE Async_Listen: We are already listening on <replaceable class="PARAMETER">
   </title>
   <para>
    Configure and execute a listen/notify sequence from <application>psql</application>:
-   <programlisting>
+<programlisting>
 LISTEN virtual;
 NOTIFY virtual;
 
-ASYNC NOTIFY of 'virtual' from backend pid '11239' received
-   </programlisting>
+Asynchronous NOTIFY 'virtual' from backend with pid '8448' received.
+</programlisting>
   </para>
  </refsect1>
 

@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/ref/move.sgml,v 1.6 1999/07/22 15:09:13 thomas Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/ref/move.sgml,v 1.7 2000/03/26 18:32:27 petere Exp $
 Postgres documentation
 -->
 
@@ -86,28 +86,28 @@ MOVE [ <replaceable class="PARAMETER">selector</replaceable> ] [ <replaceable cl
   <para>
    Set up and use a cursor:
 
-   <programlisting>
+<programlisting>
 BEGIN WORK;
 DECLARE liahona CURSOR  FOR SELECT * FROM films;
---Skip first 5 rows:
+-- Skip first 5 rows:
 MOVE FORWARD 5 IN liahona;
 <computeroutput>
 MOVE
 </computeroutput>
---Fetch 6th row in the cursor liahona:
+-- Fetch 6th row in the cursor liahona:
 FETCH 1 IN liahona;
 <computeroutput>
 FETCH
 
-  code |title |did| date_prod|kind      |len
-  -----+------+---+----------+----------+------
-  P_303|48 Hrs|103|1982-10-22|Action    | 01:37
-  (1 row)
+ code  | title  | did | date_prod | kind   | len
+-------+--------+-----+-----------+--------+-------
+ P_303 | 48 Hrs | 103 | 1982-10-22| Action | 01:37
+(1 row)
 </computeroutput>
 -- close the cursor liahona and commit work:
 CLOSE liahona;
 COMMIT WORK;
-   </programlisting>
+</programlisting>
   </para>
  </refsect1>
 

@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/ref/notify.sgml,v 1.10 1999/07/22 15:09:13 thomas Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/ref/notify.sgml,v 1.11 2000/03/26 18:32:27 petere Exp $
 Postgres documentation
 -->
 
@@ -208,11 +208,11 @@ NOTIFY
    Configure and execute a listen/notify sequence from
    <application>psql</application>:
 
-   <programlisting>
-LISTEN virtual;
-NOTIFY virtual;
-ASYNC NOTIFY of 'virtual' from backend pid '11239' received
-   </programlisting>
+<programlisting>
+=> LISTEN virtual;
+=> NOTIFY virtual;
+Asynchronous NOTIFY 'virtual' from backend with pid '8448' received. 
+</programlisting>
   </para>
  </refsect1>
 

@@ -56,16 +56,12 @@ INSERT INTO SAL_EMP
      whose pay changed in the second quarter:
      
 <ProgramListing>
-SELECT name
-    FROM SAL_EMP
-    WHERE SAL_EMP.pay_by_quarter[1] &lt;&gt;
-    SAL_EMP.pay_by_quarter[2];
+SELECT name FROM sal_emp WHERE pay_by_quarter[1] &lt;&gt; pay_by_quarter[2];
 
-+------+
-|name  |
-+------+
-|Carol |
-+------+
+ name
+-------
+ Carol
+(1 row)
 </ProgramListing>
 </Para>
 
@@ -74,16 +70,13 @@ SELECT name
      employees:
      
 <ProgramListing>
-SELECT SAL_EMP.pay_by_quarter[3] FROM SAL_EMP;
+SELECT pay_by_quarter[3] FROM sal_emp;
 
-
-+---------------+
-|pay_by_quarter |
-+---------------+
-|10000          |
-+---------------+
-|25000          |
-+---------------+
+ pay_by_quarter
+----------------
+          10000
+          25000
+(2 rows)
 </ProgramListing>
 </Para>
 
@@ -93,15 +86,12 @@ SELECT SAL_EMP.pay_by_quarter[3] FROM SAL_EMP;
      Bill's schedule for the first two days of the week.
      
 <ProgramListing>
-SELECT SAL_EMP.schedule[1:2][1:1]
-    FROM SAL_EMP
-    WHERE SAL_EMP.name = 'Bill';
+SELECT schedule[1:2][1:1] FROM sal_emp WHERE name = 'Bill';
 
-+-------------------+
-|schedule           |
-+-------------------+
-|{{"meeting"},{""}} |
-+-------------------+
+      schedule
+--------------------
+ {{"meeting"},{""}}
+(1 row)
 </ProgramListing>
 </Para>
 

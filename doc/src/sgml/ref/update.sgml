@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/ref/update.sgml,v 1.7 2000/01/29 16:58:27 petere Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/ref/update.sgml,v 1.8 2000/03/26 18:32:27 petere Exp $
 Postgres documentation
 -->
 
@@ -150,20 +150,18 @@ UPDATE <replaceable class="parameter">#</replaceable>
   <para>
    Change word "Drama" with "Dramatic" on column kind:
 
-   <programlisting>
-UPDATE films 
-    SET kind = 'Dramatic'
-    WHERE kind = 'Drama';
+<programlisting>
+UPDATE films SET kind = 'Dramatic' WHERE kind = 'Drama';
 SELECT * FROM films WHERE kind = 'Dramatic' OR kind = 'Drama';
 
-   code |title        |did| date_prod|kind      |len
-   -----+-------------+---+----------+----------+------
-   BL101|The Third Man|101|1949-12-23|Dramatic  | 01:44
-   P_302|Becket       |103|1964-02-03|Dramatic  | 02:28
-   M_401|War and Peace|104|1967-02-12|Dramatic  | 05:57
-   T_601|Yojimbo      |106|1961-06-16|Dramatic  | 01:50
-   DA101|Das Boot     |110|1981-11-11|Dramatic  | 02:29
-   </programlisting>
+ code  |     title     | did | date_prod  |   kind   | len
+-------+---------------+-----+------------+----------+-------
+ BL101 | The Third Man | 101 | 1949-12-23 | Dramatic | 01:44
+ P_302 | Becket        | 103 | 1964-02-03 | Dramatic | 02:28
+ M_401 | War and Peace | 104 | 1967-02-12 | Dramatic | 05:57
+ T_601 | Yojimbo       | 106 | 1961-06-16 | Dramatic | 01:50
+ DA101 | Das Boot      | 110 | 1981-11-11 | Dramatic | 02:29
+</programlisting>
   </para>
  </refsect1>
 

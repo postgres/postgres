@@ -6,7 +6,7 @@
    state  capitals  which  are also cities. Naturally, the
    capitals class should inherit from cities.
 
-   <programlisting>
+<programlisting>
 CREATE TABLE cities (
     name            text,
     population      float,
@@ -16,7 +16,7 @@ CREATE TABLE cities (
 CREATE TABLE capitals (
     state           char(2)
 ) INHERITS (cities);
-   </programlisting>
+</programlisting>
 
    In this case, an  instance  of  capitals  <firstterm>inherits</firstterm>  all
    attributes  (name,  population,  and altitude) from its
@@ -40,19 +40,17 @@ CREATE TABLE capitals (
    For example, the  following  query  finds
    all  the cities that are situated at an attitude of 500ft or higher:
 
-   <programlisting>
+<programlisting>
 SELECT name, altitude
     FROM cities
     WHERE altitude &gt; 500;
 
-+----------+----------+
-|name      | altitude |
-+----------+----------+
-|Las Vegas | 2174     |
-+----------+----------+
-|Mariposa  | 1953     |
-+----------+----------+
-   </programlisting>         
+   name    | altitude
+-----------+----------
+ Las Vegas |     2174
+ Mariposa  |     1953
+(2 rows)
+</programlisting>         
   </para>
 
   <para>
@@ -60,25 +58,21 @@ SELECT name, altitude
    including  state capitals, that are located at an altitude 
    over 500ft, the query is:
 
-   <programlisting>
+<programlisting>
 SELECT c.name, c.altitude
     FROM cities* c
     WHERE c.altitude > 500;
-   </programlisting>
+</programlisting>
 
    which returns:
 
-   <programlisting>
-+----------+----------+
-|name      | altitude |
-+----------+----------+
-|Las Vegas | 2174     |
-+----------+----------+
-|Mariposa  | 1953     |
-+----------+----------+
-|Madison   | 845      |
-+----------+----------+
-   </programlisting>
+<programlisting>
+   name    | altitude
+-----------+----------
+ Las Vegas |     2174
+ Mariposa  |     1953
+ Madison   |      845
+</programlisting>
 
    Here the <quote>*</quote> after cities indicates that the query should
    be  run over cities and all classes below cities in the

@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/ref/create_view.sgml,v 1.7 1999/07/22 15:09:08 thomas Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/ref/create_view.sgml,v 1.8 2000/03/26 18:32:27 petere Exp $
 Postgres documentation
 -->
 
@@ -160,10 +160,11 @@ CREATE VIEW kinds AS
 
 SELECT * FROM kinds;
 
-code |title                    |did| date_prod|kind      |len
------+-------------------------+---+----------+----------+------
-UA502|Bananas                  |105|1971-07-13|Comedy    | 01:22
-C_701|There's a Girl in my Soup|107|1970-06-11|Comedy    | 01:36
+ code  |           title           | did | date_prod  |  kind  | len
+-------+---------------------------+-----+------------+--------+-------
+ UA502 | Bananas                   | 105 | 1971-07-13 | Comedy | 01:22
+ C_701 | There's a Girl in my Soup | 107 | 1970-06-11 | Comedy | 01:36
+(2 rows)
    </programlisting>
   </para>
  </refsect1>

@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/ref/select.sgml,v 1.26 2000/03/15 23:31:19 tgl Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/ref/select.sgml,v 1.27 2000/03/26 18:32:27 petere Exp $
 Postgres documentation
 -->
 
@@ -609,43 +609,45 @@ SELECT f.title, f.did, d.name, f.date_prod, f.kind
     FROM distributors d, films f
     WHERE f.did = d.did
 
-title                    |did|name            | date_prod|kind
--------------------------+---+----------------+----------+----------
-The Third Man            |101|British Lion    |1949-12-23|Drama
-The African Queen        |101|British Lion    |1951-08-11|Romantic
-Une Femme est une Femme  |102|Jean Luc Godard |1961-03-12|Romantic
-Vertigo                  |103|Paramount       |1958-11-14|Action
-Becket                   |103|Paramount       |1964-02-03|Drama
-48 Hrs                   |103|Paramount       |1982-10-22|Action
-War and Peace            |104|Mosfilm         |1967-02-12|Drama
-West Side Story          |105|United Artists  |1961-01-03|Musical
-Bananas                  |105|United Artists  |1971-07-13|Comedy
-Yojimbo                  |106|Toho            |1961-06-16|Drama
-There's a Girl in my Soup|107|Columbia        |1970-06-11|Comedy
-Taxi Driver              |107|Columbia        |1975-05-15|Action
-Absence of Malice        |107|Columbia        |1981-11-15|Action
-Storia di una donna      |108|Westward        |1970-08-15|Romantic
-The King and I           |109|20th Century Fox|1956-08-11|Musical
-Das Boot                 |110|Bavaria Atelier |1981-11-11|Drama
-Bed Knobs and Broomsticks|111|Walt Disney     |          |Musical
-   </programlisting>
+           title           | did |   name           | date_prod  | kind
+---------------------------+-----+------------------+------------+----------
+ The Third Man             | 101 | British Lion     | 1949-12-23 | Drama
+ The African Queen         | 101 | British Lion     | 1951-08-11 | Romantic
+ Une Femme est une Femme   | 102 | Jean Luc Godard  | 1961-03-12 | Romantic
+ Vertigo                   | 103 | Paramount        | 1958-11-14 | Action
+ Becket                    | 103 | Paramount        | 1964-02-03 | Drama
+ 48 Hrs                    | 103 | Paramount        | 1982-10-22 | Action
+ War and Peace             | 104 | Mosfilm          | 1967-02-12 | Drama
+ West Side Story           | 105 | United Artists   | 1961-01-03 | Musical
+ Bananas                   | 105 | United Artists   | 1971-07-13 | Comedy
+ Yojimbo                   | 106 | Toho             | 1961-06-16 | Drama
+ There's a Girl in my Soup | 107 | Columbia         | 1970-06-11 | Comedy
+ Taxi Driver               | 107 | Columbia         | 1975-05-15 | Action
+ Absence of Malice         | 107 | Columbia         | 1981-11-15 | Action
+ Storia di una donna       | 108 | Westward         | 1970-08-15 | Romantic
+ The King and I            | 109 | 20th Century Fox | 1956-08-11 | Musical
+ Das Boot                  | 110 | Bavaria Atelier  | 1981-11-11 | Drama
+ Bed Knobs and Broomsticks | 111 | Walt Disney      |            | Musical
+(17 rows)
+</programlisting>
   </para>
 
   <para>
    To sum the column <literal>len</literal> of all films and group
    the results by <literal>kind</literal>:
 
-   <programlisting>
+<programlisting>
 SELECT kind, SUM(len) AS total FROM films GROUP BY kind;
 
-    kind      |total
-    ----------+------
-    Action    | 07:34
-    Comedy    | 02:58
-    Drama     | 14:28
-    Musical   | 06:42
-    Romantic  | 04:38
-   </programlisting>
+   kind   | total
+----------+-------
+ Action   | 07:34
+ Comedy   | 02:58
+ Drama    | 14:28
+ Musical  | 06:42
+ Romantic | 04:38
+(5 rows)
+</programlisting>
   </para>
 
   <para>
@@ -653,17 +655,18 @@ SELECT kind, SUM(len) AS total FROM films GROUP BY kind;
    the results by <literal>kind</literal> and show those group totals
    that are less than 5 hours:
 
-   <programlisting>
+<programlisting>
 SELECT kind, SUM(len) AS total
     FROM films
     GROUP BY kind
     HAVING SUM(len) < INTERVAL '5 hour';
 
-    kind      |total
-    ----------+------
-    Comedy    | 02:58
-    Romantic  | 04:38
-   </programlisting>
+ kind     | total
+----------+-------
+ Comedy   | 02:58
+ Romantic | 04:38
+(2 rows)
+</programlisting>
   </para>
 
   <para>
@@ -675,22 +678,23 @@ SELECT kind, SUM(len) AS total
 SELECT * FROM distributors ORDER BY name;
 SELECT * FROM distributors ORDER BY 2;
 
-    did|name
-    ---+----------------
-    109|20th Century Fox
-    110|Bavaria Atelier
-    101|British Lion
-    107|Columbia
-    102|Jean Luc Godard
-    113|Luso films
-    104|Mosfilm
-    103|Paramount
-    106|Toho
-    105|United Artists
-    111|Walt Disney
-    112|Warner Bros.
-    108|Westward
-   </programlisting>
+ did |       name
+-----+------------------
+ 109 | 20th Century Fox
+ 110 | Bavaria Atelier
+ 101 | British Lion
+ 107 | Columbia
+ 102 | Jean Luc Godard
+ 113 | Luso films
+ 104 | Mosfilm
+ 103 | Paramount
+ 106 | Toho
+ 105 | United Artists
+ 111 | Walt Disney
+ 112 | Warner Bros.
+ 108 | Westward
+(13 rows)
+</programlisting>
   </para>
 
   <para>
@@ -700,14 +704,14 @@ SELECT * FROM distributors ORDER BY 2;
    with letter W in each table.  Only distinct rows are wanted, so the
    ALL keyword is omitted:
 
-   <programlisting>
-    --        distributors:                actors:
-    --        did|name                     id|name
-    --        ---+------------             --+--------------
-    --        108|Westward                  1|Woody Allen
-    --        111|Walt Disney               2|Warren Beatty
-    --        112|Warner Bros.              3|Walter Matthau
-    --        ...                           ...
+<programlisting>
+distributors:               actors:
+ did |     name              id |     name
+-----+--------------        ----+----------------
+ 108 | Westward               1 | Woody Allen
+ 111 | Walt Disney            2 | Warren Beatty
+ 112 | Warner Bros.           3 | Walter Matthau
+ ...                         ...
 
 SELECT distributors.name
     FROM   distributors
@@ -717,15 +721,15 @@ SELECT actors.name
     FROM   actors
     WHERE  actors.name LIKE 'W%'
 
-name
---------------
-Walt Disney
-Walter Matthau
-Warner Bros.
-Warren Beatty
-Westward
-Woody Allen
-   </programlisting>
+      name
+----------------
+ Walt Disney
+ Walter Matthau
+ Warner Bros.
+ Warren Beatty
+ Westward
+ Woody Allen
+</programlisting>
   </para>
  </refsect1>
  
@@ -749,9 +753,9 @@ was retained from the original PostQuel query language:
   <programlisting>
 SELECT distributors.* WHERE name = 'Westwood';
 
-    did|name
-    ---+----------------
-    108|Westward
+ did | name
+-----+----------
+ 108 | Westward
   </programlisting>
    </para>
   </refsect2>

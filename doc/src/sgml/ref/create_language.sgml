@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/ref/create_language.sgml,v 1.8 1999/07/22 15:09:07 thomas Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/ref/create_language.sgml,v 1.9 2000/03/26 18:32:27 petere Exp $
 Postgres documentation
 -->
 
@@ -231,24 +231,24 @@ ERROR:  PL handler function <replaceable class="parameter">funcname</replaceable
    <para>
     Refer to the table <filename>pg_language</filename>
     for further information:
-    <programlisting>
-     <computeroutput>
-Table    = pg_language
-+--------------------------+--------------------------+-------+
-|          Field           |          Type            | Length|
-+--------------------------+--------------------------+-------+
-| lanname                  | name                     |    32 |
-| lancompiler              | text                     |   var |
-+--------------------------+--------------------------+-------+
+<programlisting>
+<computeroutput>
+        Table "pg_language"
+   Attribute   |  Type   | Modifier
+---------------+---------+----------
+ lanname       | name    |
+ lanispl       | boolean |
+ lanpltrusted  | boolean |
+ lanplcallfoid | oid     |
+ lancompiler   | text    |
 
-lanname |lancompiler   
---------+--------------
-internal|n/a           
-lisp    |/usr/ucb/liszt
-C       |/bin/cc       
-sql     |postgres
-     </computeroutput>
-    </programlisting>
+ lanname  | lanispl | lanpltrusted | lanplcallfoid | lancompiler
+----------+---------+--------------+---------------+-------------
+ internal | f       | f            |             0 | n/a
+ C        | f       | f            |             0 | /bin/cc
+ sql      | f       | f            |             0 | postgres
+</computeroutput>
+</programlisting>
    </para>
 
    <para>

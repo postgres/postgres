@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/ref/unlisten.sgml,v 1.8 1999/07/22 15:09:15 thomas Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/ref/unlisten.sgml,v 1.9 2000/03/26 18:32:27 petere Exp $
 Postgres documentation
 -->
 
@@ -142,26 +142,26 @@ UNLISTEN { <replaceable class="PARAMETER">notifyname</replaceable> | * }
   <para>
    To subscribe to an existing registration:
 
-   <programlisting>
+<programlisting>
 postgres=> LISTEN virtual;
 LISTEN
 postgres=> NOTIFY virtual;
 NOTIFY
-ASYNC NOTIFY of 'virtual' from backend pid '12317' received
-   </programlisting>
+Asynchronous NOTIFY 'virtual' from backend with pid '8448' received
+</programlisting>
   </para>
 
   <para>
    Once UNLISTEN has been executed, further NOTIFY commands will be
    ignored:
 
-   <programlisting>
+<programlisting>
 postgres=> UNLISTEN virtual;
 UNLISTEN
 postgres=> NOTIFY virtual;
 NOTIFY
 -- notice no NOTIFY event is received
-   </programlisting>
+</programlisting>
   </para>
  </refsect1>
 

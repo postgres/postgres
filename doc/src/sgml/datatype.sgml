@@ -939,7 +939,7 @@ CREATE TABLE <replaceable class="parameter">tablename</replaceable> (<replaceabl
 	 <entry>ISO-8601</entry>
 	</row>
 	<row>
-	 <entry>040506-08/entry>
+	 <entry>040506-08</entry>
 	 <entry>ISO-8601</entry>
 	</row>
        </tbody>

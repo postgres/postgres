@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/ref/fetch.sgml,v 1.7 1999/07/22 15:09:12 thomas Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/ref/fetch.sgml,v 1.8 2000/03/26 18:32:27 petere Exp $
 Postgres documentation
 -->
 
@@ -299,42 +299,39 @@ FETCH RELATIVE 0 FROM <replaceable class="PARAMETER">cursor</replaceable>
   <para>
    The following examples traverses a table using a cursor.
 
-   <programlisting>
-   --set up and use a cursor:
-   --
-   BEGIN WORK;
-     DECLARE liahona CURSOR
-        FOR SELECT * FROM films;
+<programlisting>
+-- set up and use a cursor:
 
-   --Fetch first 5 rows in the cursor liahona:
-   --
-     FETCH FORWARD 5 IN liahona;
+BEGIN WORK;
+DECLARE liahona CURSOR FOR SELECT * FROM films;
 
-    <computeroutput>
-     code |title                  |did| date_prod|kind      |len
-     -----+-----------------------+---+----------+----------+------
-     BL101|The Third Man          |101|1949-12-23|Drama     | 01:44
-     BL102|The African Queen      |101|1951-08-11|Romantic  | 01:43
-     JL201|Une Femme est une Femme|102|1961-03-12|Romantic  | 01:25
-     P_301|Vertigo                |103|1958-11-14|Action    | 02:08
-     P_302|Becket                 |103|1964-02-03|Drama     | 02:28
-    </computeroutput>
+-- Fetch first 5 rows in the cursor liahona:
+FETCH FORWARD 5 IN liahona;
 
-   --Fetch previous row:
-   --
-     FETCH BACKWARD 1 IN liahona;
+<computeroutput>
+ code  |          title          | did | date_prod  |  kind    | len
+-------+-------------------------+-----+------------+----------+-------
+ BL101 | The Third Man           | 101 | 1949-12-23 | Drama    | 01:44
+ BL102 | The African Queen       | 101 | 1951-08-11 | Romantic | 01:43
+ JL201 | Une Femme est une Femme | 102 | 1961-03-12 | Romantic | 01:25
+ P_301 | Vertigo                 | 103 | 1958-11-14 | Action   | 02:08
+ P_302 | Becket                  | 103 | 1964-02-03 | Drama    | 02:28
+</computeroutput>
 
-    <computeroutput>
-     code |title                  |did| date_prod|kind      |len
-     -----+-----------------------+---+----------+----------+------
-     P_301|Vertigo                |103|1958-11-14|Action    | 02:08
-    </computeroutput>
+-- Fetch previous row:
+FETCH BACKWARD 1 IN liahona;
 
-   -- close the cursor and commit work:
-   --
-     CLOSE liahona;
-   COMMIT WORK;
-   </programlisting>
+<computeroutput>
+ code  | title   | did | date_prod  | kind   | len
+-------+---------+-----+------------+--------+-------
+ P_301 | Vertigo | 103 | 1958-11-14 | Action | 02:08
+</computeroutput>
+
+-- close the cursor and commit work:
+
+CLOSE liahona;
+COMMIT WORK;
+</programlisting>
   </para>        
  </refsect1>
 

@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/commands/dbcommands.c,v 1.51 2000/03/15 06:50:51 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/commands/dbcommands.c,v 1.52 2000/03/26 18:32:28 petere Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -61,6 +61,7 @@ createdb(const char *dbname, const char *dbpath, int encoding)
 {
 	char		buf[2 * MAXPGPATH + 100];
 	char	   *loc;
+    char        locbuf[512];
 	int4		user_id;
     bool        use_super, use_createdb;
 	Relation	pg_database_rel;
@@ -70,23 +71,25 @@ createdb(const char *dbname, const char *dbpath, int encoding)
     char        new_record_nulls[Natts_pg_database] = { ' ', ' ', ' ', ' ' };
 
     if (!get_user_info(GetPgUserName(), &user_id, &use_super, &use_createdb))
-        elog(ERROR, "Current user name is invalid");
+        elog(ERROR, "current user name is invalid");
 
     if (!use_createdb && !use_super)
-        elog(ERROR, "CREATE DATABASE: Permission denied");
+        elog(ERROR, "CREATE DATABASE: permission denied");
 
     if (get_db_info(dbname, NULL, NULL, NULL))
-        elog(ERROR, "CREATE DATABASE: Database \"%s\" already exists", dbname);
+        elog(ERROR, "CREATE DATABASE: database \"%s\" already exists", dbname);
 
     /* don't call this in a transaction block */
 	if (IsTransactionBlock())
-        elog(ERROR, "CREATE DATABASE: May not be called in a transaction block");
+        elog(ERROR, "CREATE DATABASE: may not be called in a transaction block");
 
 	/* Generate directory name for the new database */
-    if (dbpath == NULL)
-        dbpath = dbname;
+    if (dbpath == NULL || strcmp(dbpath, dbname)==0)
+        strcpy(locbuf, dbname);
+    else
+        snprintf(locbuf, sizeof(locbuf), "%s/%s", dbpath, dbname);
 
-	loc = ExpandDatabasePath(dbpath);
+    loc = ExpandDatabasePath(locbuf);
 
 	if (loc == NULL)
 		elog(ERROR,
@@ -105,10 +108,10 @@ createdb(const char *dbname, const char *dbpath, int encoding)
 	pg_database_dsc = RelationGetDescr(pg_database_rel);
 
     /* Form tuple */
-    new_record[Anum_pg_database_datname-1] = NameGetDatum(dbname);
+    new_record[Anum_pg_database_datname-1] = NameGetDatum(namein(dbname));
     new_record[Anum_pg_database_datdba-1] = Int32GetDatum(user_id);
     new_record[Anum_pg_database_encoding-1] = Int32GetDatum(encoding);
-    new_record[Anum_pg_database_datpath-1] = PointerGetDatum(textin((char *)dbpath));
+    new_record[Anum_pg_database_datpath-1] = PointerGetDatum(textin(locbuf));
 
     tuple = heap_formtuple(pg_database_dsc, new_record, new_record_nulls);
 
@@ -137,7 +140,7 @@ createdb(const char *dbname, const char *dbpath, int encoding)
     /* Copy the template database to the new location */
 
 	if (mkdir(loc, S_IRWXU) != 0) {
-		elog(ERROR, "CREATE DATABASE: Unable to create database directory '%s': %s", loc, strerror(errno));
+		elog(ERROR, "CREATE DATABASE: unable to create database directory '%s': %s", loc, strerror(errno));
     }
 
 	snprintf(buf, sizeof(buf), "cp %s%cbase%ctemplate1%c* '%s'",
@@ -147,7 +150,7 @@ createdb(const char *dbname, const char *dbpath, int encoding)
         snprintf(buf, sizeof(buf), "rm -rf '%s'", loc);
         ret = system(buf);
         if (ret == 0)
-            elog(ERROR, "CREATE DATABASE: Could not initialize database directory");
+            elog(ERROR, "CREATE DATABASE: could not initialize database directory");
         else
             elog(ERROR, "CREATE DATABASE: Could not initialize database directory. Delete failed as well");
     }

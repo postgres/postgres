@@ -52,9 +52,9 @@ to start the parser down the correct path. For example, the query
 
 <programlisting>
 tgl=> SELECT text 'Origin' AS "Label", point '(0,0)' AS "Value";
-Label |Value
-------+-----
-Origin|(0,0)
+ Label  | Value
+--------+-------
+ Origin | (0,0)
 (1 row)
 </programlisting>
 
@@ -295,9 +295,9 @@ The scanner assigns an initial type of <type>int4</type> to both arguments
 of this query expression:
 <programlisting>
 tgl=> select 2 ^ 3 AS "Exp";
-Exp
----
-  8
+ Exp
+-----
+   8
 (1 row)
 </programlisting>
 
@@ -306,9 +306,9 @@ is equivalent to
 
 <programlisting>
 tgl=> select float8(2) ^ float8(3) AS "Exp";
-Exp
----
-  8
+ Exp
+-----
+   8
 (1 row)
 </programlisting>
 
@@ -316,9 +316,9 @@ or
 
 <programlisting>
 tgl=> select 2.0 ^ 3.0 AS "Exp";
-Exp
----
-  8
+ Exp
+-----
+   8
 (1 row)
 </programlisting>
 
@@ -345,9 +345,9 @@ Strings with unspecified type are matched with likely operator candidates.
 One unspecified argument:
 <programlisting>
 tgl=> SELECT text 'abc' || 'def' AS "Text and Unknown";
-Text and Unknown
-----------------
-abcdef
+ Text and Unknown
+------------------
+ abcdef
 (1 row)
 </programlisting>
 </para>
@@ -362,9 +362,9 @@ be interpreted as of type <type>text</type>.
 Concatenation on unspecified types:
 <programlisting>
 tgl=> SELECT 'abc' || 'def' AS "Unspecified";
-Unspecified
------------
-abcdef
+ Unspecified
+-------------
+ abcdef
 (1 row)
 </programlisting>
 </para>
@@ -398,9 +398,9 @@ factorial.
 
 <programlisting>
 tgl=> select (4.3 !);
-?column?
---------
-      24
+ ?column?
+----------
+       24
 (1 row)
 </programlisting>
 
@@ -481,18 +481,18 @@ to <type>int4</type>:
 
 <programlisting>
 tgl=> select int4fac(int2 '4');
-int4fac
--------
-     24
+ int4fac
+---------
+      24
 (1 row)
 </programlisting>
 
 and is actually transformed by the parser to
 <programlisting>
 tgl=> select int4fac(int4(int2 '4'));
-int4fac
--------
-     24
+ int4fac
+---------
+      24
 (1 row)
 </programlisting>
 </para>
@@ -511,9 +511,9 @@ If called with a string constant of unspecified type, the type is matched up
 directly with the only candidate function type:
 <programlisting>
 tgl=> select substr('1234', 3);
-substr
-------
-    34
+ substr
+--------
+     34
 (1 row)
 </programlisting>
 </para>
@@ -523,17 +523,17 @@ If the string is declared to be of type <type>varchar</type>, as might be the ca
 if it comes from a table, then the parser will try to coerce it to become <type>text</type>:
 <programlisting>
 tgl=> select substr(varchar '1234', 3);
-substr
-------
-    34
+ substr
+--------
+     34
 (1 row)
 </programlisting>
 which is transformed by the parser to become
 <programlisting>
 tgl=> select substr(text(varchar '1234'), 3);
-substr
-------
-    34
+ substr
+--------
+     34
 (1 row)
 </programlisting>
 </para>
@@ -551,17 +551,17 @@ And, if the function is called with an <type>int4</type>, the parser will
 try to convert that to <type>text</type>:
 <programlisting>
 tgl=> select substr(1234, 3);
-substr
-------
-    34
+ substr
+--------
+     34
 (1 row)
 </programlisting>
 actually executes as
 <programlisting>
 tgl=> select substr(text(1234), 3);
-substr
-------
-    34
+ substr
+--------
+     34
 (1 row)
 </programlisting>
 </para>
@@ -609,11 +609,11 @@ tgl=> CREATE TABLE vv (v varchar(4));
 CREATE
 tgl=> INSERT INTO vv SELECT 'abc' || 'def';
 INSERT 392905 1
-tgl=> select * from vv;
-v
-----
-abcd
-(1 row)
+tgl=> SELECT * FROM vv;
+  v
+------
+ abcd
+(1 row)                                                                                                    
 </programlisting>
 </para>
 </sect3>
@@ -651,10 +651,10 @@ first SELECT clause or the target column.
 <para>
 <programlisting>
 tgl=> SELECT text 'a' AS "Text" UNION SELECT 'b';
-Text
-----
-a
-b
+ Text
+------
+ a
+ b
 (2 rows)
 </programlisting>
 </para>
@@ -665,11 +665,11 @@ b
 
 <para>
 <programlisting>
-tgl=> SELECT 1.2 AS Float8 UNION SELECT 1;
-Float8
-------
-     1
-   1.2
+tgl=> SELECT 1.2 AS "Float8" UNION SELECT 1;
+ Float8
+--------
+      1
+    1.2
 (2 rows)
 </programlisting>
 </para>
@@ -686,11 +686,11 @@ the first/top clause in the union:
 tgl=> SELECT 1 AS "All integers"
 tgl-> UNION SELECT '2.2'::float4
 tgl-> UNION SELECT 3.3;
-All integers
-------------
-           1
-           2
-           3
+ All integers
+--------------
+            1
+            2
+            3
 (3 rows)
 </programlisting>
 </para>
@@ -710,10 +710,10 @@ tgl-> UNION SELECT 3.3;
 INSERT 0 3
 tgl=> SELECT f AS "Floating point" from ff;
   Floating point
-----------------
-               1
-2.20000004768372
-             3.3
+------------------
+                1
+ 2.20000004768372
+              3.3
 (3 rows)
 </programlisting>
 </para>

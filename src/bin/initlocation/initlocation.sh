@@ -8,7 +8,7 @@
 #
 #
 # IDENTIFICATION
-#    $Header: /cvsroot/pgsql/src/bin/initlocation/Attic/initlocation.sh,v 1.6 2000/03/25 19:01:48 tgl Exp $
+#    $Header: /cvsroot/pgsql/src/bin/initlocation/Attic/initlocation.sh,v 1.7 2000/03/26 18:32:30 petere Exp $
 #
 #-------------------------------------------------------------------------
 
@@ -156,9 +156,9 @@ echo "$CMDNAME is complete."
 # path, which the backend won't allow by default.
 if [ "$haveenv" = "t" ]; then
     echo "You can now create a database using"
-    echo "  CREATE DATABASE <name> WITH LOCATION = '$Location/<name>'"
+    echo "  CREATE DATABASE <name> WITH LOCATION = '$Location'"
     echo "in SQL, or"
-    echo "  createdb <name> -D '$Location/<name>'"
+    echo "  createdb <name> -D '$Location'"
     echo "from the shell."
 fi
 echo
