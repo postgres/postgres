@@ -8,7 +8,7 @@
  * Portions Copyright (c) 1996-2000, PostgreSQL, Inc
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Id: pg_operator.h,v 1.78 2000/07/28 05:07:42 tgl Exp $
+ * $Id: pg_operator.h,v 1.79 2000/07/30 22:13:59 tgl Exp $
  *
  * NOTES
  *	  the genbki.sh script reads this file and generates .bki
@@ -135,7 +135,6 @@ DATA(insert OID = 395 (  "="	   PGUID 0 b t f  1022	1022  16  395 0  0	0 array_e
 DATA(insert OID = 396 (  "="	   PGUID 0 b t f  1023	1023  16  396 0  0	0 array_eq eqsel eqjoinsel ));
 DATA(insert OID = 397 (  "="	   PGUID 0 b t f  1024	1024  16  397 0  0	0 array_eq eqsel eqjoinsel ));
 DATA(insert OID = 398 (  "="	   PGUID 0 b t f  1025	1025  16  398 0  0	0 array_eq eqsel eqjoinsel ));
-DATA(insert OID = 399 (  "="	   PGUID 0 b t f  1026	1026  16  399 0  0	0 array_eq eqsel eqjoinsel ));
 DATA(insert OID = 400 (  "="	   PGUID 0 b t f  1027	1027  16  400 0  0	0 array_eq eqsel eqjoinsel ));
 DATA(insert OID = 401 (  "="	   PGUID 0 b t f  1034	1034  16  401 0  0	0 array_eq eqsel eqjoinsel ));
 
@@ -707,14 +706,6 @@ DATA(insert OID = 1760 (  "*"	   PGUID 0 b t f 1700 1700 1700 1760	0 0 0 numeric
 DATA(insert OID = 1761 (  "/"	   PGUID 0 b t f 1700 1700 1700    0	0 0 0 numeric_div - - ));
 DATA(insert OID = 1762 (  "%"	   PGUID 0 b t f 1700 1700 1700    0	0 0 0 numeric_mod - - ));
 DATA(insert OID = 1763 (  "@"	   PGUID 0 l t f	0 1700 1700    0	0 0 0 numeric_abs - - ));
-
-/* LZTEXT type */
-DATA(insert OID = 1657 (  "="	 PGUID 0 b t f 1625 1625   16 1657 1658 1659 1659 lztext_eq eqsel eqjoinsel ));
-DATA(insert OID = 1658 (  "<>"		 PGUID 0 b t f 1625 1625   16 1658 1657 0 0 lztext_ne neqsel neqjoinsel ));
-DATA(insert OID = 1659 (  "<"	 PGUID 0 b t f 1625 1625   16 1661 1662 0 0 lztext_lt scalarltsel scalarltjoinsel ));
-DATA(insert OID = 1660 (  "<="		 PGUID 0 b t f 1625 1625   16 1662 1661 0 0 lztext_le scalarltsel scalarltjoinsel ));
-DATA(insert OID = 1661 (  ">"	 PGUID 0 b t f 1625 1625   16 1659 1660 0 0 lztext_gt scalargtsel scalargtjoinsel ));
-DATA(insert OID = 1662 (  ">="		 PGUID 0 b t f 1625 1625   16 1660 1659 0 0 lztext_ge scalargtsel scalargtjoinsel ));
 
 DATA(insert OID = 1784 (  "="	  PGUID 0 b t f 1560 1560	16 1784 1785 1786 1786 biteq eqsel eqjoinsel ));
 DATA(insert OID = 1785 (  "<>"	  PGUID 0 b t f 1560 1560	16 1785 1784	0	 0 bitne neqsel neqjoinsel ));

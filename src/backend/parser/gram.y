@@ -11,7 +11,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/parser/gram.y,v 2.180 2000/07/28 14:47:23 thomas Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/parser/gram.y,v 2.181 2000/07/30 22:13:50 tgl Exp $
  *
  * HISTORY
  *	  AUTHOR			DATE			MAJOR EVENT
@@ -2360,14 +2360,18 @@ index_elem:  attr_name opt_class
 opt_class:  class
 				{
 					/*
-					 * Release 7.0 removed network_ops, timespan_ops, and datetime_ops, 
-					 * so we suppress it from being passed to the backend so the default 
-					 * *_ops is used.  This can be removed in some later release.  
-					 * bjm 2000/02/07 
+					 * Release 7.0 removed network_ops, timespan_ops, and
+					 * datetime_ops, so we suppress it from being passed to
+					 * the parser so the default *_ops is used.  This can be
+					 * removed in some later release.  bjm 2000/02/07
+					 *
+					 * Release 7.1 removes lztext_ops, so suppress that too
+					 * for a while.  tgl 2000/07/30
 					 */
 					if (strcmp($1, "network_ops") != 0 &&
 						strcmp($1, "timespan_ops") != 0 &&
-						strcmp($1, "datetime_ops") != 0)
+						strcmp($1, "datetime_ops") != 0 &&
+						strcmp($1, "lztext_ops") != 0)
 						$$ = $1;
 					else
 						$$ = NULL;
@@ -5884,6 +5888,10 @@ xlateSqlFunc(char *name)
  *
  * Convert "datetime" and "timespan" to allow a transition to SQL92 type names.
  * Remove this translation for v7.1 - thomas 2000-03-25
+ *
+ * Convert "lztext" to "text" to allow forward compatibility for anyone using
+ * the undocumented "lztext" type in 7.0.  This can go away in 7.2 or later
+ * - tgl 2000-07-30
  */
 static char *
 xlateSqlType(char *name)
@@ -5905,6 +5913,8 @@ xlateSqlType(char *name)
 		return "timestamp";
 	else if (strcmp(name, "timespan") == 0)
 		return "interval";
+	else if (strcmp(name, "lztext") == 0)
+		return "text";
 	else if (strcmp(name, "boolean") == 0)
 		return "bool";
 	else

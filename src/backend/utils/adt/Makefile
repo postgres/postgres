@@ -1,7 +1,7 @@
 #
 # Makefile for utils/adt
 #
-# $Header: /cvsroot/pgsql/src/backend/utils/adt/Makefile,v 1.40 2000/07/22 03:34:43 tgl Exp $
+# $Header: /cvsroot/pgsql/src/backend/utils/adt/Makefile,v 1.41 2000/07/30 22:13:52 tgl Exp $
 #
 
 subdir = src/backend/utils/adt
@@ -16,8 +16,8 @@ endif
 endif
 
 OBJS = acl.o arrayfuncs.o arrayutils.o bool.o cash.o char.o \
-	date.o datetime.o datum.o filename.o float.o format_type.o \
-	geo_ops.o geo_selfuncs.o int.o int8.o like.o lztext.o \
+	date.o datetime.o datum.o float.o format_type.o \
+	geo_ops.o geo_selfuncs.o int.o int8.o like.o \
 	misc.o nabstime.o name.o not_in.o numeric.o numutils.o \
 	oid.o oracle_compat.o \
 	regexp.o regproc.o ruleutils.o selfuncs.o sets.o \

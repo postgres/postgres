@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2000, PostgreSQL, Inc
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Id: pg_proc.h,v 1.152 2000/07/30 20:43:44 tgl Exp $
+ * $Id: pg_proc.h,v 1.153 2000/07/30 22:14:01 tgl Exp $
  *
  * NOTES
  *	  The script catalog/genbki.sh reads this file and generates .bki
@@ -980,11 +980,6 @@ DATA(insert OID = 750 (  array_in		   PGUID 12 f t t t 3 f 23 "0 26 23" 100 0 0 
 DESCR("array");
 DATA(insert OID = 751 (  array_out		   PGUID 12 f t t t 2 f 23 "0 26" 100 0 0 100	array_out - ));
 DESCR("array");
-
-DATA(insert OID = 752 (  filename_in	   PGUID 11 f t t t 1 f 605 "0" 100 0 0 100  filename_in - ));
-DESCR("(internal)");
-DATA(insert OID = 753 (  filename_out	   PGUID 11 f t t t 2 f 23  "0 26" 100 0 0 100  filename_out - ));
-DESCR("(internal)");
 
 DATA(insert OID = 760 (  smgrin			   PGUID 12 f t f t 1 f 210 "0" 100 0 0 100  smgrin - ));
 DESCR("storage manager(internal)");
@@ -2043,38 +2038,6 @@ DESCR("replicate string int4 times");
 DATA(insert OID = 1623 (  varchar			PGUID 12 f t t t 1 f 1043 "20" 100 0 0 100  int8_text - ));
 DESCR("convert int8 to varchar");
 DATA(insert OID = 1624 (  mul_d_interval	PGUID 12 f t t t 2 f 1186 "701 1186" 100 0 0 100	mul_d_interval - ));
-
-/* OID's 1625 - 1639 LZTEXT data type */
-DATA(insert OID = 1626 ( lztextin			  PGUID 11 f t t t 1 f 1625 "0" 100 0 0 100  lztextin - ));
-DESCR("(internal)");
-DATA(insert OID = 1627 ( lztextout			  PGUID 11 f t t t 1 f 23 "0" 100 0 0 100  lztextout - ));
-DESCR("(internal)");
-DATA(insert OID = 1629 ( text				  PGUID 11 f t t t 1 f 25 "1625" 100 0 0 100	lztext_text -));
-DESCR("convert lztext to text");
-DATA(insert OID = 1631 ( lztext				  PGUID 12 f t t t 1 f 1625 "25" 100 0 0 100	text_lztext -));
-DESCR("convert text to lztext");
-DATA(insert OID = 1632 ( lztext				  PGUID 14 f t t t 1 f 1625 "1625" 100 0 0 100  "select $1" -));
-DESCR("convert text to lztext");
-DATA(insert OID = 1633 ( char_length		  PGUID 11 f t t t 1 f 23 "1625" 100 0 1 0  lztextlen - ));
-DESCR("length");
-DATA(insert OID = 1634 ( length				  PGUID 11 f t t t 1 f 23 "1625" 100 0 1 0  lztextlen - ));
-DESCR("length");
-DATA(insert OID = 1635 ( octet_length		  PGUID 11 f t t t 1 f 23 "1625" 100 0 1 0  lztextoctetlen - ));
-DESCR("octet length");
-DATA(insert OID = 1636 ( lztext_cmp			  PGUID 11 f t t t 2 f 23 "1625 1625" 100 0 1 0  lztext_cmp - ));
-DESCR("compare lztext");
-DATA(insert OID = 1637 ( lztext_eq			  PGUID 11 f t t t 2 f 16 "1625 1625" 100 0 1 0  lztext_eq - ));
-DESCR("equal");
-DATA(insert OID = 1638 ( lztext_ne			  PGUID 11 f t t t 2 f 16 "1625 1625" 100 0 1 0  lztext_ne - ));
-DESCR("not equal");
-DATA(insert OID = 1639 ( lztext_gt			  PGUID 11 f t t t 2 f 16 "1625 1625" 100 0 1 0  lztext_gt - ));
-DESCR("greater-than");
-DATA(insert OID = 1664 ( lztext_ge			  PGUID 11 f t t t 2 f 16 "1625 1625" 100 0 1 0  lztext_ge - ));
-DESCR("greater-than-or-equal");
-DATA(insert OID = 1665 ( lztext_lt			  PGUID 11 f t t t 2 f 16 "1625 1625" 100 0 1 0  lztext_lt - ));
-DESCR("less-than");
-DATA(insert OID = 1656 ( lztext_le			  PGUID 11 f t t t 2 f 16 "1625 1625" 100 0 1 0  lztext_le - ));
-DESCR("less-than-or-equal");
 
 DATA(insert OID = 1689 (  update_pg_pwd       PGUID 12 f t f t 0 f 0  ""  100 0 0 100  update_pg_pwd - ));
 DESCR("update pg_pwd file");

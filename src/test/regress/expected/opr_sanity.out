@@ -480,8 +480,8 @@ WHERE p1.aggtransfn = p2.oid AND
           (p2.pronargs = 1 AND p1.aggbasetype = 0)));
   oid  | aggname | oid |   proname   
 -------+---------+-----+-------------
- 16978 | max     | 768 | int4larger
- 16992 | min     | 769 | int4smaller
+ 16972 | max     | 768 | int4larger
+ 16986 | min     | 769 | int4smaller
 (2 rows)
 
 -- Cross-check finalfn (if present) against its entry in pg_proc.

@@ -8,7 +8,7 @@
  * Portions Copyright (c) 1996-2000, PostgreSQL, Inc
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Id: pg_amop.h,v 1.34 2000/06/19 03:54:45 tgl Exp $
+ * $Id: pg_amop.h,v 1.35 2000/07/30 22:13:59 tgl Exp $
  *
  * NOTES
  *	 the genbki.sh script reads this file and generates .bki
@@ -349,16 +349,6 @@ DATA(insert OID = 0 (  403 1690 1694 2 ));
 DATA(insert OID = 0 (  403 1690   91 3 ));
 DATA(insert OID = 0 (  403 1690 1695 4 ));
 DATA(insert OID = 0 (  403 1690   59 5 ));
-
-/*
- *	  nbtree lztext
- */
-
-DATA(insert OID = 0 (  403 1663 1659 1 ));
-DATA(insert OID = 0 (  403 1663 1660 2 ));
-DATA(insert OID = 0 (  403 1663 1657 3 ));
-DATA(insert OID = 0 (  403 1663 1662 4 ));
-DATA(insert OID = 0 (  403 1663 1661 5 ));
 
 
 /*

@@ -8,7 +8,7 @@
  * Portions Copyright (c) 1996-2000, PostgreSQL, Inc
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Id: pg_type.h,v 1.95 2000/07/29 18:46:00 tgl Exp $
+ * $Id: pg_type.h,v 1.96 2000/07/30 22:14:02 tgl Exp $
  *
  * NOTES
  *	  the genbki.sh script reads this file and generates .bki
@@ -276,8 +276,6 @@ DESCR("geometric box '(lower left,upper right)'");
 DATA(insert OID = 604 (  polygon   PGUID -1  -1 f b t \054 0   0 poly_in poly_out poly_in poly_out d x _null_ ));
 DESCR("geometric polygon '(pt1,...)'");
 #define POLYGONOID		604
-DATA(insert OID = 605 (  filename  PGUID 256 -1 f b t \054 0  18 filename_in filename_out filename_in filename_out i p _null_ ));
-DESCR("filename used in system tables");
 
 DATA(insert OID = 628 (  line	   PGUID 32  48 f b t \054 0 701 line_in line_out line_in line_out d p _null_ ));
 DESCR("geometric line '(pt1,pt2)'");
@@ -354,7 +352,6 @@ DATA(insert OID = 1022 (  _float8	 PGUID -1  -1 f b t \054 0 701 array_in array_
 DATA(insert OID = 1023 (  _abstime	 PGUID -1  -1 f b t \054 0 702 array_in array_out array_in array_out i x _null_ ));
 DATA(insert OID = 1024 (  _reltime	 PGUID -1  -1 f b t \054 0 703 array_in array_out array_in array_out i x _null_ ));
 DATA(insert OID = 1025 (  _tinterval PGUID -1  -1 f b t \054 0 704 array_in array_out array_in array_out i x _null_ ));
-DATA(insert OID = 1026 (  _filename  PGUID -1  -1 f b t \054 0 605 array_in array_out array_in array_out i x _null_ ));
 DATA(insert OID = 1027 (  _polygon	 PGUID -1  -1 f b t \054 0 604 array_in array_out array_in array_out d x _null_ ));
 /*
  *	Note: the size of aclitem needs to match sizeof(AclItem) in acl.h.
@@ -412,9 +409,6 @@ DESCR("fixed-length bit string");
 DATA(insert OID = 1563 ( _varbit	 PGUID	-1 -1 f b t \054 0	1562 array_in array_out array_in array_out i x _null_ ));
 
 /* OIDS 1600 - 1699 */
-DATA(insert OID = 1625 ( lztext		 PGUID -1  -1 f b t \054 0	0 lztextin lztextout lztextin lztextout i x _null_ ));
-DESCR("variable-length string, stored compressed");
-#define LZTEXTOID	  1625
 
 /* OIDS 1700 - 1799 */
 DATA(insert OID = 1700 ( numeric	   PGUID -1  -1 f b t \054 0  0 numeric_in numeric_out numeric_in numeric_out i m _null_ ));

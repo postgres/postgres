@@ -8,7 +8,7 @@
  * Portions Copyright (c) 1996-2000, PostgreSQL, Inc
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Id: pg_opclass.h,v 1.34 2000/07/04 06:11:54 tgl Exp $
+ * $Id: pg_opclass.h,v 1.35 2000/07/30 22:13:59 tgl Exp $
  *
  * NOTES
  *	  the genbki.sh script reads this file and generates .bki
@@ -114,8 +114,6 @@ DESCR("");
 DATA(insert OID = 652  (	cidr_ops		650   ));
 DESCR("");
 DATA(insert OID = 1768 (	numeric_ops    1700   ));
-DESCR("");
-DATA(insert OID = 1663 (	lztext_ops	   1625   ));
 DESCR("");
 DATA(insert OID = 1690 (	bool_ops		 16   ));
 DESCR("");

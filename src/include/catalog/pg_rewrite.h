@@ -8,7 +8,7 @@
  * Portions Copyright (c) 1996-2000, PostgreSQL, Inc
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Id: pg_rewrite.h,v 1.11 2000/02/27 12:02:34 wieck Exp $
+ * $Id: pg_rewrite.h,v 1.12 2000/07/30 22:14:02 tgl Exp $
  *
  * NOTES
  *	  the genbki.sh script reads this file and generates .bki
@@ -38,8 +38,9 @@ CATALOG(pg_rewrite)
 	Oid			ev_class;
 	int2		ev_attr;
 	bool		is_instead;
-	lztext		ev_qual;
-	lztext		ev_action;
+	/* NB: remaining fields must be accessed via heap_getattr */
+	text		ev_qual;
+	text		ev_action;
 } FormData_pg_rewrite;
 
 /* ----------------

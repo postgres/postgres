@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/rewrite/rewriteDefine.c,v 1.48 2000/06/30 07:04:22 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/rewrite/rewriteDefine.c,v 1.49 2000/07/30 22:13:51 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -65,8 +65,8 @@ InsertRule(char *rulname,
 	values[i++] = ObjectIdGetDatum(eventrel_oid);
 	values[i++] = Int16GetDatum(evslot_index);
 	values[i++] = BoolGetDatum(evinstead);
-	values[i++] = PointerGetDatum(lztextin(evqual));
-	values[i++] = PointerGetDatum(lztextin(actiontree));
+	values[i++] = DirectFunctionCall1(textin, CStringGetDatum(evqual));
+	values[i++] = DirectFunctionCall1(textin, CStringGetDatum(actiontree));
 
 	/* ----------------
 	 *	create a new pg_rewrite tuple
