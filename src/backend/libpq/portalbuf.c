@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/libpq/Attic/portalbuf.c,v 1.14 1999/05/25 16:09:02 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/libpq/Attic/portalbuf.c,v 1.15 1999/06/19 04:54:13 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -89,7 +89,7 @@ portals_realloc(size_t size)
 		portals = newp;
 	else
 		libpq_raise(&PortalError,
-					form("Cannot alloc more memory in portals_realloc"));
+					varargform("Cannot alloc more memory in portals_realloc"));
 
 	for (i = oldsize; i < portals_array_size; i++)
 		portals[i] = (PortalEntry *) NULL;
@@ -109,11 +109,11 @@ pbuf_alloc(size_t size)
 	caddr_t		addr;
 
 	if (size <= 0)
-		libpq_raise(&MemoryError, form("Invalid argument to pbuf_alloc()."));
+		libpq_raise(&MemoryError, varargform("Invalid argument to pbuf_alloc()."));
 
 	addr = (caddr_t) palloc(size);
 	if (addr == (caddr_t) NULL)
-		libpq_raise(&MemoryError, form("Cannot Allocate space."));
+		libpq_raise(&MemoryError, varargform("Cannot Allocate space."));
 
 	return addr;
 }
@@ -131,7 +131,7 @@ pbuf_free(caddr_t pointer)
 	if (pointer)
 		pfree(pointer);
 	else
-		libpq_raise(&MemoryError, form("Tried to free NULL memory pointer"));
+		libpq_raise(&MemoryError, varargform("Tried to free NULL memory pointer"));
 
 }
 
@@ -437,7 +437,7 @@ pbuf_close(char *pname)
 	int			i;
 
 	if ((i = pbuf_getIndex(pname)) == -1)
-		libpq_raise(&PortalError, form("Portal %s does not exist.", pname));
+		libpq_raise(&PortalError, varargform("Portal %s does not exist.", pname));
 
 	pbuf_freePortal(portals[i]->portal);
 	pbuf_freeEntry(i);
@@ -462,7 +462,7 @@ pbuf_findGroup(PortalBuffer *portal,
 
 	if (group == NULL)
 		libpq_raise(&PortalError,
-					form("Group index %d out of bound.", group_index));
+					varargform("Group index %d out of bound.", group_index));
 
 	return group;
 }
@@ -485,7 +485,7 @@ pbuf_findFnumber(GroupBuffer *group,
 			return i;
 
 	libpq_raise(&PortalError,
-				form("Field-name %s does not exist.", field_name));
+				varargform("Field-name %s does not exist.", field_name));
 
 	/* not reached, here to make compiler happy */
 	return 0;
@@ -502,7 +502,7 @@ pbuf_checkFnumber(GroupBuffer *group,
 {
 	if (field_number < 0 || field_number >= group->no_fields)
 		libpq_raise(&PortalError,
-					form("Field number %d out of bound.", field_number));
+					varargform("Field number %d out of bound.", field_number));
 }
 
 /* --------------------------------

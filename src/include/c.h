@@ -7,7 +7,7 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: c.h,v 1.55 1999/05/25 16:13:22 momjian Exp $
+ * $Id: c.h,v 1.56 1999/06/19 04:54:23 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -591,7 +591,7 @@ extern int	assert_enabled;
 #define LogTrap(condition, exception, printArgs) \
 		{ if ((assert_enabled) && (condition)) \
 				ExceptionalCondition(CppAsString(condition), &(exception), \
-						form printArgs, __FILE__, __LINE__); }
+						varargform printArgs, __FILE__, __LINE__); }
 
 /*
  *	LogTrapMacro is the same as LogTrap but it's intended for use in macros:
@@ -602,7 +602,7 @@ extern int	assert_enabled;
 	((bool) ((! assert_enabled) || (! condition) || \
 			 (ExceptionalCondition(CppAsString(condition), \
 								   &(exception), \
-								   form printArgs, __FILE__, __LINE__))))
+								   varargform printArgs, __FILE__, __LINE__))))
 
 #ifndef USE_ASSERT_CHECKING
 #define LogAssert(condition, printArgs)
@@ -711,10 +711,10 @@ extern int ExceptionalCondition(char *conditionName,
 
 
 /* ----------------
- *		form is used by assert and the exception handling stuff
+ *		varargform is used by assert and the exception handling stuff
  * ----------------
  */
-extern char *form(const char *fmt,...);
+extern char *varargform(const char *fmt,...);
 
 
 

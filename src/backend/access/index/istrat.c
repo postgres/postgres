@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/access/index/Attic/istrat.c,v 1.32 1999/05/25 16:07:15 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/access/index/Attic/istrat.c,v 1.33 1999/06/19 04:54:10 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -612,7 +612,7 @@ IndexSupportInitialize(IndexStrategy indexStrategy,
 			 attributeNumber++)
 		{
 			int16		support;
-			Form_pg_amproc form;
+			Form_pg_amproc aform;
 			RegProcedure *loc;
 
 			loc = &indexSupport[((attributeNumber - 1) * maxSupportNumber)];
@@ -627,8 +627,8 @@ IndexSupportInitialize(IndexStrategy indexStrategy,
 
 			while (HeapTupleIsValid(tuple = heap_getnext(scan, 0)))
 			{
-				form = (Form_pg_amproc) GETSTRUCT(tuple);
-				loc[(form->amprocnum - 1)] = form->amproc;
+				aform = (Form_pg_amproc) GETSTRUCT(tuple);
+				loc[(aform->amprocnum - 1)] = aform->amproc;
 			}
 
 			heap_endscan(scan);
@@ -667,12 +667,12 @@ IndexSupportInitialize(IndexStrategy indexStrategy,
 
 		while (HeapTupleIsValid(tuple = heap_getnext(scan, 0)))
 		{
-			Form_pg_amop form;
+			Form_pg_amop aform;
 
-			form = (Form_pg_amop) GETSTRUCT(tuple);
+			aform = (Form_pg_amop) GETSTRUCT(tuple);
 			OperatorRelationFillScanKeyEntry(operatorRelation,
-											 form->amopopr,
-					StrategyMapGetScanKeyEntry(map, form->amopstrategy));
+											 aform->amopopr,
+					StrategyMapGetScanKeyEntry(map, aform->amopstrategy));
 		}
 
 		heap_endscan(scan);

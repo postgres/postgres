@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/commands/Attic/command.c,v 1.46 1999/05/25 22:40:54 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/commands/Attic/command.c,v 1.47 1999/06/19 04:54:12 momjian Exp $
  *
  * NOTES
  *	  The PortalExecutorHeapMemory crap needs to be eliminated
@@ -435,7 +435,7 @@ PerformAddAttribute(char *relationName,
 
 	{
 		HeapTuple	typeTuple;
-		Form_pg_type form;
+		Form_pg_type tform;
 		char	   *typename;
 		int			attnelems;
 
@@ -469,21 +469,21 @@ PerformAddAttribute(char *relationName,
 		typeTuple = SearchSysCacheTuple(TYPNAME,
 										PointerGetDatum(typename),
 										0, 0, 0);
-		form = (Form_pg_type) GETSTRUCT(typeTuple);
+		tform = (Form_pg_type) GETSTRUCT(typeTuple);
 
 		if (!HeapTupleIsValid(typeTuple))
 			elog(ERROR, "Add: type \"%s\" nonexistent", typename);
 		namestrcpy(&(attribute->attname), colDef->colname);
 		attribute->atttypid = typeTuple->t_data->t_oid;
-		attribute->attlen = form->typlen;
+		attribute->attlen = tform->typlen;
 		attribute->attdisbursion = 0;
 		attribute->attcacheoff = -1;
 		attribute->atttypmod = colDef->typename->typmod;
 		attribute->attnum = i;
-		attribute->attbyval = form->typbyval;
+		attribute->attbyval = tform->typbyval;
 		attribute->attnelems = attnelems;
-		attribute->attisset = (bool) (form->typtype == 'c');
-		attribute->attalign = form->typalign;
+		attribute->attisset = (bool) (tform->typtype == 'c');
+		attribute->attalign = tform->typalign;
 		attribute->attnotnull = false;
 		attribute->atthasdef = (colDef->defval != NULL);
 

@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/optimizer/path/indxpath.c,v 1.56 1999/05/25 22:41:28 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/optimizer/path/indxpath.c,v 1.57 1999/06/19 04:54:14 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -1008,7 +1008,7 @@ clause_pred_clause_test(Expr *predicate, Node *clause)
 	HeapScanDesc scan;
 	HeapTuple	tuple;
 	ScanKeyData entry[3];
-	Form_pg_amop form;
+	Form_pg_amop aform;
 
 	pred_var = (Var *) get_leftop(predicate);
 	pred_const = (Const *) get_rightop(predicate);
@@ -1067,13 +1067,13 @@ clause_pred_clause_test(Expr *predicate, Node *clause)
 		elog(DEBUG, "clause_pred_clause_test: unknown pred_op");
 		return false;
 	}
-	form = (Form_pg_amop) GETSTRUCT(tuple);
+	aform = (Form_pg_amop) GETSTRUCT(tuple);
 
 	/* Get the predicate operator's strategy number (1 to 5) */
-	pred_strategy = (StrategyNumber) form->amopstrategy;
+	pred_strategy = (StrategyNumber) aform->amopstrategy;
 
 	/* Remember which operator class this strategy number came from */
-	opclass_id = form->amopclaid;
+	opclass_id = aform->amopclaid;
 
 	heap_endscan(scan);
 
@@ -1098,10 +1098,10 @@ clause_pred_clause_test(Expr *predicate, Node *clause)
 		elog(DEBUG, "clause_pred_clause_test: unknown clause_op");
 		return false;
 	}
-	form = (Form_pg_amop) GETSTRUCT(tuple);
+	aform = (Form_pg_amop) GETSTRUCT(tuple);
 
 	/* Get the restriction clause operator's strategy number (1 to 5) */
-	clause_strategy = (StrategyNumber) form->amopstrategy;
+	clause_strategy = (StrategyNumber) aform->amopstrategy;
 	heap_endscan(scan);
 
 
@@ -1130,10 +1130,10 @@ clause_pred_clause_test(Expr *predicate, Node *clause)
 		elog(DEBUG, "clause_pred_clause_test: unknown test_op");
 		return false;
 	}
-	form = (Form_pg_amop) GETSTRUCT(tuple);
+	aform = (Form_pg_amop) GETSTRUCT(tuple);
 
 	/* Get the test operator */
-	test_op = form->amopopr;
+	test_op = aform->amopopr;
 	heap_endscan(scan);
 
 
