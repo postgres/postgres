@@ -12,7 +12,7 @@
  * Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/interfaces/libpgtcl/Attic/pgtclId.c,v 1.16 1998/09/21 01:02:03 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/interfaces/libpgtcl/Attic/pgtclId.c,v 1.17 1999/01/17 21:14:33 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -582,6 +582,15 @@ PgNotifyTransferEvents(Pg_ConnectionId * connid)
 		Tcl_QueueEvent((Tcl_Event *) event, TCL_QUEUE_TAIL);
 		free(notify);
 	}
+
+	/*
+	 * This is also a good place to check for unexpected closure of the
+	 * connection (ie, backend crash), in which case we must shut down the
+	 * notify event source to keep Tcl from trying to select() on the now-
+	 * closed socket descriptor.
+	 */
+	if (PQsocket(connid->conn) < 0)
+		PgStopNotifyEventSource(connid);
 }
 
 /*
