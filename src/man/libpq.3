@@ -1,6 +1,6 @@
 .\" This is -*-nroff-*-
 .\" XXX standard disclaimer belongs here....
-.\" $Header: /cvsroot/pgsql/src/man/Attic/libpq.3,v 1.25 1998/10/14 05:31:50 momjian Exp $
+.\" $Header: /cvsroot/pgsql/src/man/Attic/libpq.3,v 1.26 1999/04/17 17:18:41 momjian Exp $
 .TH LIBPQ INTRO 08/08/98 PostgreSQL PostgreSQL
 .SH DESCRIPTION
 Current documentation for this topic is available in the new Programmer's Guide
@@ -975,7 +975,7 @@ main()
 
     /* start a transaction block */
     res = PQexec(conn, "BEGIN");
-    if (PQresultStatus(res) != PGRES_COMMAND_OK)
+    if (!res || PQresultStatus(res) != PGRES_COMMAND_OK)
     {
         fprintf(stderr, "BEGIN command failed\\n");
         PQclear(res);
@@ -993,7 +993,7 @@ main()
      * databases
      */
     res = PQexec(conn, "DECLARE mycursor CURSOR FOR select * from pg_database");
-    if (PQresultStatus(res) != PGRES_COMMAND_OK)
+    if (!res || PQresultStatus(res) != PGRES_COMMAND_OK)
     {
         fprintf(stderr, "DECLARE CURSOR command failed\\n");
         PQclear(res);
@@ -1002,7 +1002,7 @@ main()
     PQclear(res);
 
     res = PQexec(conn, "FETCH ALL in mycursor");
-    if (PQresultStatus(res) != PGRES_TUPLES_OK)
+    if (!res || PQresultStatus(res) != PGRES_TUPLES_OK)
     {
         fprintf(stderr, "FETCH ALL command didn't return tuples properly\\n");
         PQclear(res);
@@ -1115,7 +1115,7 @@ main()
     }
 
     res = PQexec(conn, "LISTEN TBL2");
-    if (PQresultStatus(res) != PGRES_COMMAND_OK)
+    if (!res || PQresultStatus(res) != PGRES_COMMAND_OK)
     {
         fprintf(stderr, "LISTEN command failed\\n");
         PQclear(res);
@@ -1239,7 +1239,7 @@ main()
 
     /* start a transaction block */
     res = PQexec(conn, "BEGIN");
-    if (PQresultStatus(res) != PGRES_COMMAND_OK)
+    if (!res || PQresultStatus(res) != PGRES_COMMAND_OK)
     {
         fprintf(stderr, "BEGIN command failed\\n");
         PQclear(res);
@@ -1257,7 +1257,7 @@ main()
      * databases
      */
     res = PQexec(conn, "DECLARE mycursor BINARY CURSOR FOR select * from test1");
-    if (PQresultStatus(res) != PGRES_COMMAND_OK)
+    if (!res || PQresultStatus(res) != PGRES_COMMAND_OK)
     {
         fprintf(stderr, "DECLARE CURSOR command failed\\n");
         PQclear(res);
@@ -1266,7 +1266,7 @@ main()
     PQclear(res);
 
     res = PQexec(conn, "FETCH ALL in mycursor");
-    if (PQresultStatus(res) != PGRES_TUPLES_OK)
+    if (!res || PQresultStatus(res) != PGRES_TUPLES_OK)
     {
         fprintf(stderr, "FETCH ALL command didn't return tuples properly\\n");
         PQclear(res);
