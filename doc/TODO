@@ -1,6 +1,6 @@
 TODO list for PostgreSQL
 ========================
-Last updated:		Thu Jan 24 20:04:28 EST 2002
+Last updated:		Thu Jan 24 21:32:45 EST 2002
 
 Current maintainer:	Bruce Momjian (pgman@candle.pha.pa.us)
 
@@ -232,7 +232,8 @@ COMMANDS
 	o Allow BINARY option to SELECT, just like DECLARE
 	o MOVE 0 should not move to end of cursor
 	o Allow cursors to be DECLAREd/OPENed/CLOSEed outside transactions
-	o Allow DELETE WHERE CURRENT OF cursor
+	o Allow DELETE WHERE CURRENT OF cursor using per-cursor tid
+	  stored in the backend
 	o Prevent DROP of table being referenced by our own open cursor
 
 * INSERT
