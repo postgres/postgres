@@ -1,6 +1,6 @@
 TODO list for PostgreSQL
 ========================
-Last updated:		Fri Feb  8 01:41:04 EST 2002
+Last updated:		Mon Feb 11 13:14:25 EST 2002
 
 Current maintainer:	Bruce Momjian (pgman@candle.pha.pa.us)
 
@@ -188,7 +188,7 @@ COMMANDS
 
 * CLUSTER
 	o cluster all tables at once
-	o prevent lose of indexes, permissions, inheritance (Bruce)
+	o prevent loss of indexes, permissions, inheritance (Bruce)
 	o Automatically maintain clustering on a table
 
 * COPY
