@@ -4,7 +4,7 @@
  *
  * Copyright 2003, PostgreSQL Global Development Group
  *
- * $Id: information_schema.sql,v 1.15.2.4 2003/12/16 14:56:34 petere Exp $
+ * $Id: information_schema.sql,v 1.15.2.5 2003/12/17 22:11:42 tgl Exp $
  */
 
 /*
@@ -434,7 +434,6 @@ CREATE VIEW constraint_column_usage AS
             AND c.connamespace = nc.oid
             AND c.contype = 'c'
             AND r.relkind = 'r'
-            AND a.attnum > 0
             AND NOT a.attisdropped
 
         UNION ALL
@@ -448,7 +447,6 @@ CREATE VIEW constraint_column_usage AS
             AND nc.oid = c.connamespace
             AND (CASE WHEN c.contype = 'f' THEN r.oid = c.confrelid AND c.confkey[pos.n] = a.attnum
                       ELSE r.oid = c.conrelid AND c.conkey[pos.n] = a.attnum END)
-            AND a.attnum > 0
             AND NOT a.attisdropped
             AND c.contype IN ('p', 'u', 'f')
             AND r.relkind = 'r'
@@ -683,7 +681,6 @@ CREATE VIEW key_column_usage AS
           AND r.oid = c.conrelid
           AND nc.oid = c.connamespace
           AND c.conkey[pos.n] = a.attnum
-          AND a.attnum > 0
           AND NOT a.attisdropped
           AND c.contype IN ('p', 'u', 'f')
           AND r.relkind = 'r'
