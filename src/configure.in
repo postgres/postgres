@@ -96,7 +96,7 @@ dnl Checks for header files.
 AC_HEADER_STDC
 AC_HEADER_SYS_WAIT
 AC_CHECK_HEADERS(fcntl.h limits.h sys/file.h sys/ioctl.h sys/time.h unistd.h)
-AC_CHECK_HEADERS(termios.h values.h)
+AC_CHECK_HEADERS(termios.h values.h sys/select.h)
 
 dnl Checks for typedefs, structures, and compiler characteristics.
 AC_C_CONST
@@ -114,6 +114,6 @@ AC_FUNC_MEMCMP
 AC_TYPE_SIGNAL
 AC_FUNC_VPRINTF
 AC_CHECK_FUNCS(ftime getcwd gethostname gettimeofday putenv regcomp select socket strcspn strdup strerror strftime strspn strtod strtol)
-AC_CHECK_FUNCS(isinf tzset cbrt)
+AC_CHECK_FUNCS(isinf tzset cbrt rint rusage vfork memmove)
 
 AC_OUTPUT(GNUmakefile Makefile.global bin/psql/Makefile)
