@@ -213,6 +213,9 @@ extern void srandom(int seed);
 /* Set to 1 if you want to Enable ASSERT CHECKING */
 #undef USE_ASSERT_CHECKING
 
+/* Set to 1 if your DBL_MIN is problematic */
+#undef HAVE_DBL_MIN_PROBLEM
+
 /*
  * Code below this point should not require changes
  */

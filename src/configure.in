@@ -509,6 +509,13 @@ AC_TRY_LINK([#include <sys/types.h>
 	    [AC_DEFINE(HAVE_UNION_SEMUN) AC_MSG_RESULT(yes)],
 	    AC_MSG_RESULT(no))
 
+AC_MSG_CHECKING(DBL_MIN good)
+AC_TRY_RUN([#include <math.h>
+main()
+{ double d = DBL_MIN; if (d != DBL_MIN) exit -1; else exit 0; }],
+	AC_MSG_RESULT(yes),
+	[AC_MSG_RESULT(no) AC_DEFINE(HAVE_DBL_MIN_PROBLEM)])
+
 dnl Checks for library functions.
 AC_PROG_GCC_TRADITIONAL
 AC_FUNC_MEMCMP
