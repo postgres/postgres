@@ -1,0 +1,132 @@
+QUERY: CREATE TABLE test_missing_target (a int, b int, c char(8));
+QUERY: INSERT INTO test_missing_target VALUES (0, 1, 'XXXX');
+QUERY: INSERT INTO test_missing_target VALUES (1, 2, 'AAAA');
+QUERY: INSERT INTO test_missing_target VALUES (2, 2, 'AAAA');
+QUERY: INSERT INTO test_missing_target VALUES (3, 3, 'BBBB');
+QUERY: INSERT INTO test_missing_target VALUES (4, 3, 'BBBB');
+QUERY: INSERT INTO test_missing_target VALUES (5, 3, 'BBBB');
+QUERY: INSERT INTO test_missing_target VALUES (6, 4, 'CCCC');
+QUERY: INSERT INTO test_missing_target VALUES (7, 4, 'CCCC');
+QUERY: INSERT INTO test_missing_target VALUES (8, 4, 'CCCC');
+QUERY: INSERT INTO test_missing_target VALUES (9, 4, 'CCCC');
+QUERY: SELECT c, count(*) FROM test_missing_target GROUP BY test_missing_target.c;
+c       |count
+--------+-----
+AAAA    |    2
+BBBB    |    3
+CCCC    |    4
+XXXX    |    1
+(4 rows)
+
+QUERY: SELECT count(*) FROM test_missing_target GROUP BY test_missing_target.c;
+count
+-----
+    2
+    3
+    4
+    1
+(4 rows)
+
+QUERY: SELECT count(*) FROM test_missing_target GROUP BY a ORDER BY b;
+ERROR:  parser: illegal use of aggregates or non-group column in target list
+QUERY: SELECT count(*) FROM test_missing_target GROUP BY b ORDER BY b;
+count
+-----
+    1
+    2
+    3
+    4
+(4 rows)
+
+QUERY: SELECT test_missing_target.b, count(*) FROM test_missing_target GROUP BY b ORDER BY b;
+b|count
+-+-----
+1|    1
+2|    2
+3|    3
+4|    4
+(4 rows)
+
+QUERY: SELECT c FROM test_missing_target ORDER BY a;
+c       
+--------
+XXXX    
+AAAA    
+AAAA    
+BBBB    
+BBBB    
+BBBB    
+CCCC    
+CCCC    
+CCCC    
+CCCC    
+(10 rows)
+
+QUERY: SELECT count(*) FROM test_missing_target GROUP BY b ORDER BY b desc;
+count
+-----
+    4
+    3
+    2
+    1
+(4 rows)
+
+QUERY: SELECT count(*) FROM test_missing_target ORDER BY 1 desc;
+count
+-----
+   10
+(1 row)
+
+QUERY: SELECT c, count(*) FROM test_missing_target GROUP BY 1;
+c       |count
+--------+-----
+AAAA    |    2
+BBBB    |    3
+CCCC    |    4
+XXXX    |    1
+(4 rows)
+
+QUERY: SELECT c, count(*) FROM test_missing_target GROUP BY 3;
+ERROR:  left hand side of operator < has an unknown type, probably a bad attribute name
+QUERY: SELECT count(*) FROM test_missing_target x, test_missing_target y
+	WHERE x.a = y.a
+	GROUP BY b ORDER BY b;
+ERROR:  Column b is ambiguous
+QUERY: SELECT x.b, count(*) FROM test_missing_target x, test_missing_target y
+	WHERE x.a = y.a
+	GROUP BY x.b;
+b|count
+-+-----
+1|    1
+2|    2
+3|    3
+4|    4
+(4 rows)
+
+QUERY: SELECT count(*) FROM test_missing_target x, test_missing_target y
+	WHERE x.a = y.a
+	GROUP BY x.b;
+count
+-----
+    1
+    2
+    3
+    4
+(4 rows)
+
+QUERY: SELECT count(*) INTO TABLE test_missing_target2
+FROM test_missing_target x, test_missing_target y
+	WHERE x.a = y.a
+	GROUP BY x.b;
+QUERY: SELECT * FROM test_missing_target2;
+count
+-----
+    1
+    2
+    3
+    4
+(4 rows)
+
+QUERY: drop table test_missing_target;
+QUERY: drop table test_missing_target2;
+
