@@ -9,7 +9,7 @@
  * Portions Copyright (c) 1996-2000, PostgreSQL, Inc
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Id: syscache.h,v 1.25 2000/04/12 17:16:55 momjian Exp $
+ * $Id: syscache.h,v 1.26 2000/06/17 04:56:29 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -18,17 +18,14 @@
 
 #include "access/htup.h"
 
- /* #define CACHEDEBUG *//* turns DEBUG elogs on */
-
-
 /*
  *		Declarations for util/syscache.c.
  *
  *		SysCache identifiers.
  *
  *		The order of these must match the order
- *		they are entered into the structure cacheinfo[] in syscache.c
- *		Keep them in alphabeticall order.
+ *		they are entered into the structure cacheinfo[] in syscache.c.
+ *		Keep them in alphabetical order.
  */
 
 #define AGGNAME			0
@@ -60,30 +57,13 @@
 #define TYPENAME		26
 #define TYPEOID			27
 
-/* ----------------
- *		struct cachedesc:		information needed for a call to InitSysCache()
- * ----------------
- */
-struct cachedesc
-{
-	char	   *name;			/* this is Name so that we can initialize
-								 * it */
-	int			nkeys;
-	int			key[4];
-	int			size;			/* sizeof(appropriate struct) */
-	char	   *indname;		/* index relation for this cache, if
-								 * exists */
-	HeapTuple	(*iScanFunc) ();/* function to handle index scans */
-};
-
 extern void zerocaches(void);
 extern void InitCatalogCache(void);
-extern HeapTuple SearchSysCacheTupleCopy(int cacheId,
-						Datum key1, Datum key2, Datum key3, Datum key4);
 extern HeapTuple SearchSysCacheTuple(int cacheId,
 					Datum key1, Datum key2, Datum key3, Datum key4);
+extern HeapTuple SearchSysCacheTupleCopy(int cacheId,
+						Datum key1, Datum key2, Datum key3, Datum key4);
 extern Datum SysCacheGetAttr(int cacheId, HeapTuple tup,
-				AttrNumber attributeNumber,
-				bool *isnull);
+				AttrNumber attributeNumber, bool *isNull);
 
 #endif	 /* SYSCACHE_H */

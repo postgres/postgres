@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/cache/relcache.c,v 1.99 2000/06/02 15:57:30 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/cache/relcache.c,v 1.100 2000/06/17 04:56:32 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -344,12 +344,13 @@ scan_pg_rel_ind(RelationBuildDescInfo buildinfo)
 	switch (buildinfo.infotype)
 	{
 		case INFO_RELID:
-			return_tuple = ClassOidIndexScan(pg_class_desc, buildinfo.i.info_id);
+			return_tuple = ClassOidIndexScan(pg_class_desc,
+											 ObjectIdGetDatum(buildinfo.i.info_id));
 			break;
 
 		case INFO_RELNAME:
 			return_tuple = ClassNameIndexScan(pg_class_desc,
-											  buildinfo.i.info_name);
+											  PointerGetDatum(buildinfo.i.info_name));
 			break;
 
 		default:
@@ -382,10 +383,17 @@ AllocateRelationDesc(Relation relation, u_int natts,
 	Form_pg_class relationForm;
 
 	/* ----------------
-	 *	allocate space for the relation tuple form
+	 *	Copy the relation tuple form
+	 *
+	 *	We only allocate space for the fixed fields, ie, CLASS_TUPLE_SIZE.
+	 *	relacl is NOT stored in the relcache --- there'd be little point
+	 *	in it, since we don't copy the tuple's nullvalues bitmap and hence
+	 *	wouldn't know if the value is valid ... bottom line is that relacl
+	 *	*cannot* be retrieved from the relcache.  Get it from the syscache
+	 *	if you need it.
 	 * ----------------
 	 */
-	relationForm = (Form_pg_class) palloc(sizeof(FormData_pg_class));
+	relationForm = (Form_pg_class) palloc(CLASS_TUPLE_SIZE);
 
 	memcpy((char *) relationForm, (char *) relp, CLASS_TUPLE_SIZE);
 
@@ -586,14 +594,16 @@ build_tupdesc_ind(RelationBuildDescInfo buildinfo,
 		bool		columnDropped = false;
 #endif	 /* _DROP_COLUMN_HACK__ */
 
-		atttup = (HeapTuple) AttributeRelidNumIndexScan(attrel,
-										  RelationGetRelid(relation), i);
+		atttup = AttributeRelidNumIndexScan(attrel,
+											ObjectIdGetDatum(RelationGetRelid(relation)),
+											Int32GetDatum(i));
 
 		if (!HeapTupleIsValid(atttup))
 		{
 #ifdef	_DROP_COLUMN_HACK__
-			atttup = (HeapTuple) AttributeRelidNumIndexScan(attrel,
-					RelationGetRelid(relation), DROPPED_COLUMN_INDEX(i));
+			atttup = AttributeRelidNumIndexScan(attrel,
+												ObjectIdGetDatum(RelationGetRelid(relation)),
+												Int32GetDatum(DROPPED_COLUMN_INDEX(i)));
 			if (!HeapTupleIsValid(atttup))
 #endif	 /* _DROP_COLUMN_HACK__ */
 				elog(ERROR, "cannot find attribute %d of relation %s", i,

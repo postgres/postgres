@@ -7,17 +7,28 @@
  * Portions Copyright (c) 1996-2000, PostgreSQL, Inc
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Id: catcache.h,v 1.23 2000/06/15 03:33:10 momjian Exp $
+ * $Id: catcache.h,v 1.24 2000/06/17 04:56:29 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
 #ifndef CATCACHE_H
 #define CATCACHE_H
 
-/* #define		CACHEDEBUG		 turns DEBUG elogs on */
+/* #define CACHEDEBUG */	/* turns DEBUG elogs on */
 
 #include "access/htup.h"
 #include "lib/dllist.h"
+
+/*
+ * Functions that implement index scans for caches must match this signature
+ * (except we allow unused key arguments to be omitted --- is that really
+ * portable?)
+ */
+typedef HeapTuple (*ScanFunc) (Relation heapRelation,
+							   Datum key1,
+							   Datum key2,
+							   Datum key3,
+							   Datum key4);
 
 /*
  *		struct catctup:			tuples in the cache.
@@ -26,8 +37,7 @@
 
 typedef struct catctup
 {
-	HeapTuple	ct_tup;			/* A pointer to a tuple			*/
-
+	HeapTuple	ct_tup;			/* A pointer to a tuple */
 	/*
 	 * Each tuple in the cache has two catctup items, one in the LRU list
 	 * and one in the hashbucket list for its hash value.  ct_node in each
@@ -38,7 +48,7 @@ typedef struct catctup
 
 /* voodoo constants */
 #define NCCBUCK 500				/* CatCache buckets */
-#define MAXTUP 300				/* Maximum # of tuples cached per cache */
+#define MAXTUP 300				/* Maximum # of tuples stored per cache */
 
 
 typedef struct catcache
@@ -47,7 +57,7 @@ typedef struct catcache
 	Oid			indexId;
 	char	   *cc_relname;		/* relation name for defered open */
 	char	   *cc_indname;		/* index name for defered open */
-	HeapTuple	(*cc_iscanfunc) ();		/* index scanfunction */
+	ScanFunc	cc_iscanfunc;	/* index scan function */
 	TupleDesc	cc_tupdesc;		/* tuple descriptor from reldesc */
 	int			id;				/* XXX could be improved -hirohama */
 	bool		busy;			/* for detecting recursive lookups */
@@ -71,11 +81,14 @@ extern void CatalogCacheIdInvalidate(int cacheId, Index hashIndex,
 						 ItemPointer pointer);
 extern void ResetSystemCache(void);
 extern void SystemCacheRelationFlushed(Oid relId);
-extern CatCache *InitSysCache(char *relname, char *indname, int id, int nkeys,
-			 int *key, HeapTuple (*iScanfuncP) ());
-extern HeapTuple SearchSysCache(struct catcache * cache, Datum v1, Datum v2,
-			   Datum v3, Datum v4);
+extern CatCache *InitSysCache(char *relname, char *indname, int id,
+							  int nkeys, int *key,
+							  ScanFunc iScanfuncP);
+extern HeapTuple SearchSysCache(CatCache * cache,
+								Datum v1, Datum v2,
+								Datum v3, Datum v4);
 extern void RelationInvalidateCatalogCacheTuple(Relation relation,
-									HeapTuple tuple, void (*function) ());
+								HeapTuple tuple,
+								void (*function) (int, Index, ItemPointer));
 
 #endif	 /* CATCACHE_H */

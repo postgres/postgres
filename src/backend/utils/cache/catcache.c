@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/cache/catcache.c,v 1.65 2000/06/05 07:28:53 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/cache/catcache.c,v 1.66 2000/06/17 04:56:32 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -29,12 +29,12 @@
 #include "utils/syscache.h"
 
 static void CatCacheRemoveCTup(CatCache *cache, Dlelem *e);
-static Index CatalogCacheComputeHashIndex(struct catcache * cacheInP);
-static Index CatalogCacheComputeTupleHashIndex(struct catcache * cacheInOutP,
+static Index CatalogCacheComputeHashIndex(CatCache *cacheInP);
+static Index CatalogCacheComputeTupleHashIndex(CatCache *cacheInOutP,
 								  Relation relation,
 								  HeapTuple tuple);
-static void CatalogCacheInitializeCache(struct catcache * cache,
-							Relation relation);
+static void CatalogCacheInitializeCache(CatCache *cache,
+										Relation relation);
 static Datum cc_hashname(PG_FUNCTION_ARGS);
 
 /* ----------------
@@ -168,7 +168,7 @@ do { \
 #endif
 
 static void
-CatalogCacheInitializeCache(struct catcache * cache,
+CatalogCacheInitializeCache(CatCache * cache,
 							Relation relation)
 {
 	MemoryContext oldcxt;
@@ -196,7 +196,7 @@ CatalogCacheInitializeCache(struct catcache * cache,
 	 */
 	if (!RelationIsValid(relation))
 	{
-		struct catcache *cp;
+		CatCache *cp;
 
 		/* ----------------
 		 *	scan the caches to see if any other cache has opened the relation
@@ -307,7 +307,7 @@ CatalogCacheInitializeCache(struct catcache * cache,
  * --------------------------------
  */
 static Index
-CatalogCacheComputeHashIndex(struct catcache * cacheInP)
+CatalogCacheComputeHashIndex(CatCache * cacheInP)
 {
 	uint32		hashIndex = 0;
 
@@ -351,7 +351,7 @@ CatalogCacheComputeHashIndex(struct catcache * cacheInP)
  * --------------------------------
  */
 static Index
-CatalogCacheComputeTupleHashIndex(struct catcache * cacheInOutP,
+CatalogCacheComputeTupleHashIndex(CatCache * cacheInOutP,
 								  Relation relation,
 								  HeapTuple tuple)
 {
@@ -543,7 +543,7 @@ void
 ResetSystemCache()
 {
 	MemoryContext oldcxt;
-	struct catcache *cache;
+	CatCache *cache;
 
 	CACHE1_elog(DEBUG, "ResetSystemCache called");
 
@@ -632,7 +632,7 @@ SystemCacheRelationFlushed(Oid relId)
 }
 
 /* --------------------------------
- *		InitIndexedSysCache
+ *		InitSysCache
  *
  *	This allocates and initializes a cache for a system catalog relation.
  *	Actually, the cache is only partially initialized to avoid opening the
@@ -666,7 +666,7 @@ InitSysCache(char *relname,
 			 int id,
 			 int nkeys,
 			 int *key,
-			 HeapTuple (*iScanfuncP) ())
+			 ScanFunc iScanfuncP)
 {
 	CatCache   *cp;
 	int			i;
@@ -797,11 +797,11 @@ InitSysCache(char *relname,
  *		This code short-circuits the normal index lookup for cache loads
  *		in those cases and replaces it with a heap scan.
  *
- *		cache should already be initailized
+ *		cache should already be initialized
  * --------------------------------
  */
 static HeapTuple
-SearchSelfReferences(struct catcache * cache)
+SearchSelfReferences(CatCache * cache)
 {
 	HeapTuple	ntp;
 	Relation	rel;
@@ -896,7 +896,7 @@ SearchSelfReferences(struct catcache * cache)
  * --------------------------------
  */
 HeapTuple
-SearchSysCache(struct catcache * cache,
+SearchSysCache(CatCache * cache,
 			   Datum v1,
 			   Datum v2,
 			   Datum v3,
@@ -1035,34 +1035,22 @@ SearchSysCache(struct catcache * cache,
 	if ((RelationGetForm(relation))->relhasindex
 		&& !IsIgnoringSystemIndexes())
 	{
+		HeapTuple	indextp;
+
 		/* ----------
 		 *	Switch back to old memory context so memory not freed
 		 *	in the scan function will go away at transaction end.
 		 *	wieck - 10/18/1996
 		 * ----------
 		 */
-		HeapTuple	indextp;
-
 		MemoryContextSwitchTo(oldcxt);
-		Assert(cache->cc_iscanfunc);
-		switch (cache->cc_nkeys)
-		{
-			case 4:
-				indextp = cache->cc_iscanfunc(relation, v1, v2, v3, v4);
-				break;
-			case 3:
-				indextp = cache->cc_iscanfunc(relation, v1, v2, v3);
-				break;
-			case 2:
-				indextp = cache->cc_iscanfunc(relation, v1, v2);
-				break;
-			case 1:
-				indextp = cache->cc_iscanfunc(relation, v1);
-				break;
-			default:
-				indextp = NULL;
-				break;
-		}
+
+		/* We call the scanfunc with all four arguments to satisfy the
+		 * declared prototype, even though the function will likely not
+		 * use all four.
+		 */
+		indextp = cache->cc_iscanfunc(relation, v1, v2, v3, v4);
+
 		/* ----------
 		 *	Back to Cache context. If we got a tuple copy it
 		 *	into our context.	wieck - 10/18/1996
@@ -1200,7 +1188,7 @@ RelationInvalidateCatalogCacheTuple(Relation relation,
 									HeapTuple tuple,
 							  void (*function) (int, Index, ItemPointer))
 {
-	struct catcache *ccp;
+	CatCache *ccp;
 	MemoryContext oldcxt;
 	Oid			relationId;
 
@@ -1251,6 +1239,4 @@ RelationInvalidateCatalogCacheTuple(Relation relation,
 	 * ----------------
 	 */
 	MemoryContextSwitchTo(oldcxt);
-
-	/* sendpm('I', "Invalidated tuple"); */
 }

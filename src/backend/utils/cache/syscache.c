@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/cache/syscache.c,v 1.53 2000/06/07 04:09:36 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/cache/syscache.c,v 1.54 2000/06/17 04:56:33 tgl Exp $
  *
  * NOTES
  *	  These routines allow the parser/planner/executor to perform
@@ -20,9 +20,11 @@
  */
 #include "postgres.h"
 
-#include "utils/builtins.h"
 #include "access/heapam.h"
+#include "access/transam.h"
+#include "utils/builtins.h"
 #include "catalog/catname.h"
+#include "catalog/indexing.h"
 #include "catalog/pg_aggregate.h"
 #include "catalog/pg_amop.h"
 #include "catalog/pg_group.h"
@@ -38,15 +40,9 @@
 #include "catalog/pg_statistic.h"
 #include "catalog/pg_type.h"
 #include "utils/catcache.h"
+#include "utils/syscache.h"
 #include "utils/temprel.h"
 #include "miscadmin.h"
-
-extern bool AMI_OVERRIDE;		/* XXX style */
-
-#include "utils/syscache.h"
-#include "catalog/indexing.h"
-
-typedef HeapTuple (*ScanFunc) ();
 
 
 /*---------------------------------------------------------------------------
@@ -59,19 +55,18 @@ typedef HeapTuple (*ScanFunc) ();
 
 	Add your entry to the cacheinfo[] array below.	All cache lists are
 	alphabetical, so add it in the proper place.  Specify the relation
-	name, number of arguments, argument names, size of tuple, index lookup
-	function, and index name.
+	name, number of arguments, argument attribute numbers, index name,
+	and index lookup function.
 
 	In include/catalog/indexing.h, add a define for the number of indexes
-	in the relation, add a define for the index name, add an extern
+	on the relation, add define(s) for the index name(s), add an extern
 	array to hold the index names, define the index lookup function
 	prototype, and use DECLARE_UNIQUE_INDEX to define the index.  Cache
 	lookups return only one row, so the index should be unique.
 
 	In backend/catalog/indexing.c, initialize the relation array with
-	the index names for the relation, fixed size of relation (or marking
-	first non-fixed length field), and create the index lookup function.
-	Pick one that has similar arguments and use that one, but keep the
+	the index names for the relation, and create the index lookup function.
+	Pick one that has similar arguments and copy that one, but keep the
 	function names in the same order as the cache list for clarity.
 
 	Finally, any place your relation gets heap_insert() or
@@ -83,6 +78,19 @@ typedef HeapTuple (*ScanFunc) ();
   ---------------------------------------------------------------------------
 */
 
+/* ----------------
+ *		struct cachedesc: information defining a single syscache
+ * ----------------
+ */
+struct cachedesc
+{
+	char	   *name;			/* name of the relation being cached */
+	int			nkeys;			/* # of keys needed for cache lookup */
+	int			key[4];			/* attribute numbers of key attrs */
+	char	   *indname;		/* name of index relation for this cache */
+	ScanFunc	iScanFunc;		/* function to handle index scans */
+};
+
 static struct cachedesc cacheinfo[] = {
 	{AggregateRelationName,		/* AGGNAME */
 		2,
@@ -92,9 +100,8 @@ static struct cachedesc cacheinfo[] = {
 			0,
 			0
 		},
-		offsetof(FormData_pg_aggregate, agginitval1),
-		AggregateNameTypeIndex,
-	AggregateNameTypeIndexScan},
+	AggregateNameTypeIndex,
+	(ScanFunc) AggregateNameTypeIndexScan},
 	{AccessMethodRelationName,	/* AMNAME */
 		1,
 		{
@@ -103,9 +110,8 @@ static struct cachedesc cacheinfo[] = {
 			0,
 			0
 		},
-		sizeof(FormData_pg_am),
-		AmNameIndex,
-	AmNameIndexScan},
+	AmNameIndex,
+	(ScanFunc) AmNameIndexScan},
 	{AccessMethodOperatorRelationName,	/* AMOPOPID */
 		3,
 		{
@@ -114,9 +120,8 @@ static struct cachedesc cacheinfo[] = {
 			Anum_pg_amop_amopid,
 			0
 		},
-		sizeof(FormData_pg_amop),
-		AccessMethodOpidIndex,
-	AccessMethodOpidIndexScan},
+	AccessMethodOpidIndex,
+	(ScanFunc) AccessMethodOpidIndexScan},
 	{AccessMethodOperatorRelationName,	/* AMOPSTRATEGY */
 		3,
 		{
@@ -125,8 +130,7 @@ static struct cachedesc cacheinfo[] = {
 			Anum_pg_amop_amopstrategy,
 			0
 		},
-		sizeof(FormData_pg_amop),
-		AccessMethodStrategyIndex,
+	AccessMethodStrategyIndex,
 	(ScanFunc) AccessMethodStrategyIndexScan},
 	{AttributeRelationName,		/* ATTNAME */
 		2,
@@ -136,9 +140,8 @@ static struct cachedesc cacheinfo[] = {
 			0,
 			0
 		},
-		ATTRIBUTE_TUPLE_SIZE,
-		AttributeRelidNameIndex,
-	AttributeRelidNameIndexScan},
+	AttributeRelidNameIndex,
+	(ScanFunc) AttributeRelidNameIndexScan},
 	{AttributeRelationName,		/* ATTNUM */
 		2,
 		{
@@ -147,8 +150,7 @@ static struct cachedesc cacheinfo[] = {
 			0,
 			0
 		},
-		ATTRIBUTE_TUPLE_SIZE,
-		AttributeRelidNumIndex,
+	AttributeRelidNumIndex,
 	(ScanFunc) AttributeRelidNumIndexScan},
 	{OperatorClassRelationName, /* CLADEFTYPE */
 		1,
@@ -158,9 +160,8 @@ static struct cachedesc cacheinfo[] = {
 			0,
 			0
 		},
-		sizeof(FormData_pg_opclass),
-		OpclassDeftypeIndex,
-	OpclassDeftypeIndexScan},
+	OpclassDeftypeIndex,
+	(ScanFunc) OpclassDeftypeIndexScan},
 	{OperatorClassRelationName, /* CLANAME */
 		1,
 		{
@@ -169,9 +170,8 @@ static struct cachedesc cacheinfo[] = {
 			0,
 			0
 		},
-		sizeof(FormData_pg_opclass),
-		OpclassNameIndex,
-	OpclassNameIndexScan},
+	OpclassNameIndex,
+	(ScanFunc) OpclassNameIndexScan},
 	{GroupRelationName,			/* GRONAME */
 		1,
 		{
@@ -180,9 +180,8 @@ static struct cachedesc cacheinfo[] = {
 			0,
 			0
 		},
-		offsetof(FormData_pg_group, grolist[0]),
-		GroupNameIndex,
-	GroupNameIndexScan},
+	GroupNameIndex,
+	(ScanFunc) GroupNameIndexScan},
 	{GroupRelationName,			/* GROSYSID */
 		1,
 		{
@@ -191,9 +190,8 @@ static struct cachedesc cacheinfo[] = {
 			0,
 			0
 		},
-		offsetof(FormData_pg_group, grolist[0]),
-		GroupSysidIndex,
-	GroupSysidIndexScan},
+	GroupSysidIndex,
+	(ScanFunc) GroupSysidIndexScan},
 	{IndexRelationName,			/* INDEXRELID */
 		1,
 		{
@@ -202,9 +200,8 @@ static struct cachedesc cacheinfo[] = {
 			0,
 			0
 		},
-		offsetof(FormData_pg_index, indpred),
-		IndexRelidIndex,
-	IndexRelidIndexScan},
+	IndexRelidIndex,
+	(ScanFunc) IndexRelidIndexScan},
 	{InheritsRelationName,		/* INHRELID */
 		2,
 		{
@@ -213,9 +210,8 @@ static struct cachedesc cacheinfo[] = {
 			0,
 			0
 		},
-		sizeof(FormData_pg_inherits),
-		InheritsRelidSeqnoIndex,
-	InheritsRelidSeqnoIndexScan},
+	InheritsRelidSeqnoIndex,
+	(ScanFunc) InheritsRelidSeqnoIndexScan},
 	{LanguageRelationName,		/* LANGNAME */
 		1,
 		{
@@ -224,9 +220,8 @@ static struct cachedesc cacheinfo[] = {
 			0,
 			0
 		},
-		offsetof(FormData_pg_language, lancompiler),
-		LanguageNameIndex,
-	LanguageNameIndexScan},
+	LanguageNameIndex,
+	(ScanFunc) LanguageNameIndexScan},
 	{LanguageRelationName,		/* LANGOID */
 		1,
 		{
@@ -235,9 +230,8 @@ static struct cachedesc cacheinfo[] = {
 			0,
 			0
 		},
-		offsetof(FormData_pg_language, lancompiler),
-		LanguageOidIndex,
-	LanguageOidIndexScan},
+	LanguageOidIndex,
+	(ScanFunc) LanguageOidIndexScan},
 	{ListenerRelationName,		/* LISTENREL */
 		2,
 		{
@@ -246,9 +240,8 @@ static struct cachedesc cacheinfo[] = {
 			0,
 			0
 		},
-		sizeof(FormData_pg_listener),
-		ListenerPidRelnameIndex,
-	ListenerPidRelnameIndexScan},
+	ListenerPidRelnameIndex,
+	(ScanFunc) ListenerPidRelnameIndexScan},
 	{OperatorRelationName,		/* OPERNAME */
 		4,
 		{
@@ -257,8 +250,7 @@ static struct cachedesc cacheinfo[] = {
 			Anum_pg_operator_oprright,
 			Anum_pg_operator_oprkind
 		},
-		sizeof(FormData_pg_operator),
-		OperatorNameIndex,
+	OperatorNameIndex,
 	(ScanFunc) OperatorNameIndexScan},
 	{OperatorRelationName,		/* OPEROID */
 		1,
@@ -268,9 +260,8 @@ static struct cachedesc cacheinfo[] = {
 			0,
 			0
 		},
-		sizeof(FormData_pg_operator),
-		OperatorOidIndex,
-	OperatorOidIndexScan},
+	OperatorOidIndex,
+	(ScanFunc) OperatorOidIndexScan},
 	{ProcedureRelationName,		/* PROCNAME */
 		3,
 		{
@@ -279,8 +270,7 @@ static struct cachedesc cacheinfo[] = {
 			Anum_pg_proc_proargtypes,
 			0
 		},
-		offsetof(FormData_pg_proc, prosrc),
-		ProcedureNameIndex,
+	ProcedureNameIndex,
 	(ScanFunc) ProcedureNameIndexScan},
 	{ProcedureRelationName,		/* PROCOID */
 		1,
@@ -290,9 +280,8 @@ static struct cachedesc cacheinfo[] = {
 			0,
 			0
 		},
-		offsetof(FormData_pg_proc, prosrc),
-		ProcedureOidIndex,
-	ProcedureOidIndexScan},
+	ProcedureOidIndex,
+	(ScanFunc) ProcedureOidIndexScan},
 	{RelationRelationName,		/* RELNAME */
 		1,
 		{
@@ -301,9 +290,8 @@ static struct cachedesc cacheinfo[] = {
 			0,
 			0
 		},
-		CLASS_TUPLE_SIZE,
-		ClassNameIndex,
-	ClassNameIndexScan},
+	ClassNameIndex,
+	(ScanFunc) ClassNameIndexScan},
 	{RelationRelationName,		/* RELOID */
 		1,
 		{
@@ -312,9 +300,8 @@ static struct cachedesc cacheinfo[] = {
 			0,
 			0
 		},
-		CLASS_TUPLE_SIZE,
-		ClassOidIndex,
-	ClassOidIndexScan},
+	ClassOidIndex,
+	(ScanFunc) ClassOidIndexScan},
 	{RewriteRelationName,		/* REWRITENAME */
 		1,
 		{
@@ -323,9 +310,8 @@ static struct cachedesc cacheinfo[] = {
 			0,
 			0
 		},
-		offsetof(FormData_pg_rewrite, ev_qual),
-		RewriteRulenameIndex,
-	RewriteRulenameIndexScan},
+	RewriteRulenameIndex,
+	(ScanFunc) RewriteRulenameIndexScan},
 	{RewriteRelationName,		/* RULEOID */
 		1,
 		{
@@ -334,9 +320,8 @@ static struct cachedesc cacheinfo[] = {
 			0,
 			0
 		},
-		offsetof(FormData_pg_rewrite, ev_qual),
-		RewriteOidIndex,
-	RewriteOidIndexScan},
+	RewriteOidIndex,
+	(ScanFunc) RewriteOidIndexScan},
 	{ShadowRelationName,		/* SHADOWNAME */
 		1,
 		{
@@ -345,9 +330,8 @@ static struct cachedesc cacheinfo[] = {
 			0,
 			0
 		},
-		sizeof(FormData_pg_shadow),
-		ShadowNameIndex,
-	ShadowNameIndexScan},
+	ShadowNameIndex,
+	(ScanFunc) ShadowNameIndexScan},
 	{ShadowRelationName,		/* SHADOWSYSID */
 		1,
 		{
@@ -356,9 +340,8 @@ static struct cachedesc cacheinfo[] = {
 			0,
 			0
 		},
-		sizeof(FormData_pg_shadow),
-		ShadowSysidIndex,
-	ShadowSysidIndexScan},
+	ShadowSysidIndex,
+	(ScanFunc) ShadowSysidIndexScan},
 	{StatisticRelationName,		/* STATRELID */
 		2,
 		{
@@ -367,8 +350,7 @@ static struct cachedesc cacheinfo[] = {
 			0,
 			0
 		},
-		offsetof(FormData_pg_statistic, stacommonval),
-		StatisticRelidAttnumIndex,
+	StatisticRelidAttnumIndex,
 	(ScanFunc) StatisticRelidAttnumIndexScan},
 	{TypeRelationName,			/* TYPENAME */
 		1,
@@ -378,9 +360,8 @@ static struct cachedesc cacheinfo[] = {
 			0,
 			0
 		},
-		offsetof(FormData_pg_type, typalign) +sizeof(char),
-		TypeNameIndex,
-	TypeNameIndexScan},
+	TypeNameIndex,
+	(ScanFunc) TypeNameIndexScan},
 	{TypeRelationName,			/* TYPEOID */
 		1,
 		{
@@ -389,16 +370,16 @@ static struct cachedesc cacheinfo[] = {
 			0,
 			0
 		},
-		offsetof(FormData_pg_type, typalign) +sizeof(char),
-		TypeOidIndex,
-	TypeOidIndexScan}
+	TypeOidIndex,
+	(ScanFunc) TypeOidIndexScan}
 };
 
-static struct catcache *SysCache[
-								 lengthof(cacheinfo)];
+static CatCache *SysCache[lengthof(cacheinfo)];
 static int32 SysCacheSize = lengthof(cacheinfo);
 static bool CacheInitialized = false;
-extern bool
+
+
+bool
 IsCacheInitialized(void)
 {
 	return CacheInitialized;
@@ -413,14 +394,12 @@ IsCacheInitialized(void)
 void
 zerocaches()
 {
-	MemSet((char *) SysCache, 0, SysCacheSize * sizeof(struct catcache *));
+	MemSet((char *) SysCache, 0, SysCacheSize * sizeof(CatCache *));
 }
 
+
 /*
- * Note:
- *		This function was written because the initialized catalog caches
- *		are used to determine which caches may contain tuples which need
- *		to be invalidated in other backends.
+ * InitCatalogCache - initialize the caches
  */
 void
 InitCatalogCache()
@@ -431,8 +410,7 @@ InitCatalogCache()
 	{
 		for (cacheId = 0; cacheId < SysCacheSize; cacheId += 1)
 		{
-
-			Assert(!PointerIsValid((Pointer) SysCache[cacheId]));
+			Assert(!PointerIsValid(SysCache[cacheId]));
 
 			SysCache[cacheId] = InitSysCache(cacheinfo[cacheId].name,
 											 cacheinfo[cacheId].indname,
@@ -440,10 +418,10 @@ InitCatalogCache()
 											 cacheinfo[cacheId].nkeys,
 											 cacheinfo[cacheId].key,
 										   cacheinfo[cacheId].iScanFunc);
-			if (!PointerIsValid((char *) SysCache[cacheId]))
+			if (!PointerIsValid(SysCache[cacheId]))
 			{
 				elog(ERROR,
-					 "InitCatalogCache: Can't init cache %s(%d)",
+					 "InitCatalogCache: Can't init cache %s (%d)",
 					 cacheinfo[cacheId].name,
 					 cacheId);
 			}
@@ -451,30 +429,6 @@ InitCatalogCache()
 		}
 	}
 	CacheInitialized = true;
-}
-
-/*
- * SearchSysCacheTupleCopy
- *
- *	This is like SearchSysCacheTuple, except it returns a palloc'd copy of
- *	the tuple.  The caller should heap_freetuple() the returned copy when
- *	done with it.  This routine should be used when the caller intends to
- *	continue to access the tuple for more than a very short period of time.
- */
-HeapTuple
-SearchSysCacheTupleCopy(int cacheId,	/* cache selection code */
-						Datum key1,
-						Datum key2,
-						Datum key3,
-						Datum key4)
-{
-	HeapTuple	cachetup;
-
-	cachetup = SearchSysCacheTuple(cacheId, key1, key2, key3, key4);
-	if (PointerIsValid(cachetup))
-		return heap_copytuple(cachetup);
-	else
-		return cachetup;		/* NULL */
 }
 
 
@@ -492,6 +446,9 @@ SearchSysCacheTupleCopy(int cacheId,	/* cache selection code */
  *	CAUTION: The returned tuple may be flushed from the cache during
  *	subsequent cache lookup operations, or by shared cache invalidation.
  *	Callers should not expect the pointer to remain valid for long.
+ *
+ *  XXX we ought to have some kind of referencecount mechanism for
+ *  cache entries, to ensure entries aren't deleted while in use.
  */
 HeapTuple
 SearchSysCacheTuple(int cacheId,/* cache selection code */
@@ -551,6 +508,31 @@ SearchSysCacheTuple(int cacheId,/* cache selection code */
 
 
 /*
+ * SearchSysCacheTupleCopy
+ *
+ *	This is like SearchSysCacheTuple, except it returns a palloc'd copy of
+ *	the tuple.  The caller should heap_freetuple() the returned copy when
+ *	done with it.  This routine should be used when the caller intends to
+ *	continue to access the tuple for more than a very short period of time.
+ */
+HeapTuple
+SearchSysCacheTupleCopy(int cacheId,	/* cache selection code */
+						Datum key1,
+						Datum key2,
+						Datum key3,
+						Datum key4)
+{
+	HeapTuple	cachetup;
+
+	cachetup = SearchSysCacheTuple(cacheId, key1, key2, key3, key4);
+	if (PointerIsValid(cachetup))
+		return heap_copytuple(cachetup);
+	else
+		return cachetup;		/* NULL */
+}
+
+
+/*
  * SysCacheGetAttr
  *
  *		Given a tuple previously fetched by SearchSysCacheTuple() or
@@ -569,13 +551,13 @@ SearchSysCacheTuple(int cacheId,/* cache selection code */
 Datum
 SysCacheGetAttr(int cacheId, HeapTuple tup,
 				AttrNumber attributeNumber,
-				bool *isnull)
+				bool *isNull)
 {
 
 	/*
 	 * We just need to get the TupleDesc out of the cache entry, and then
 	 * we can apply heap_getattr().  We expect that the cache control data
-	 * is currently valid --- if the caller just fetched the tuple, then
+	 * is currently valid --- if the caller recently fetched the tuple, then
 	 * it should be.
 	 */
 	if (cacheId < 0 || cacheId >= SysCacheSize)
@@ -587,5 +569,5 @@ SysCacheGetAttr(int cacheId, HeapTuple tup,
 
 	return heap_getattr(tup, attributeNumber,
 						SysCache[cacheId]->cc_tupdesc,
-						isnull);
+						isNull);
 }

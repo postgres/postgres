@@ -8,21 +8,16 @@
  * Portions Copyright (c) 1996-2000, PostgreSQL, Inc
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Id: pg_class.h,v 1.37 2000/06/12 03:40:53 momjian Exp $
+ * $Id: pg_class.h,v 1.38 2000/06/17 04:56:31 tgl Exp $
  *
  * NOTES
- *	  ``pg_relation'' is being replaced by ``pg_class''.  currently
- *	  we are only changing the name in the catalogs but someday the
- *	  code will be changed too. -cim 2/26/90
- *	  [it finally happens.	-ay 11/5/94]
- *
  *	  the genbki.sh script reads this file and generates .bki
  *	  information from the DATA() statements.
  *
  *-------------------------------------------------------------------------
  */
-#ifndef PG_RELATION_H
-#define PG_RELATION_H
+#ifndef PG_CLASS_H
+#define PG_CLASS_H
 
 /* ----------------
  *		postgres.h contains the system type definintions and the
@@ -37,18 +32,16 @@
  *
  *		Note: the #if 0, #endif around the BKI_BEGIN.. END block
  *			  below keeps cpp from seeing what is meant for the
- *			  genbki script: pg_relation is now called pg_class, but
- *			  only in the catalogs -cim 2/26/90
+ *			  genbki script
  * ----------------
  */
 
 /* ----------------
  *		This structure is actually variable-length (the last attribute is
  *		a POSTGRES array).	Hence, sizeof(FormData_pg_class) does not
- *		describe the fixed-length or actual size of the structure.
- *		FormData_pg_class.relacl may not be correctly aligned, either,
- *		if aclitem and struct varlena don't align together.  Hence,
- *		you MUST use heap_getattr() to get the relacl field.
+ *		necessarily match the actual length of the structure.  Furthermore
+ *		relacl may be a NULL field.  Hence, you MUST use heap_getattr()
+ *		to get the relacl field ... and don't forget to check isNull.
  * ----------------
  */
 CATALOG(pg_class) BOOTSTRAP
@@ -64,24 +57,26 @@ CATALOG(pg_class) BOOTSTRAP
 	bool		relisshared;
 	char		relkind;
 	int2		relnatts;
-
 	/*
 	 * relnatts is the number of user attributes this class has.  There
 	 * must be exactly this many instances in Class pg_attribute for this
-	 * class which have attnum > 0 (= user attribute).
+	 * class that have attnum > 0 (= user attribute).
 	 */
-	int2		relchecks;		/* # of CHECK constraints, not stored in
-								 * db? */
+	int2		relchecks;		/* # of CHECK constraints for class */
 	int2		reltriggers;	/* # of TRIGGERs */
 	int2		relukeys;		/* # of Unique keys */
 	int2		relfkeys;		/* # of FOREIGN KEYs */
-	int2		relrefs;		/* # of references to this relation */
+	int2		relrefs;		/* # of references to this rel (not used!) */
 	bool		relhaspkey;		/* has PRIMARY KEY */
-	bool		relhasrules;
-	bool		relhassubclass;
-	aclitem		relacl[1];		/* this is here for the catalog */
+	bool		relhasrules;	/* has associated rules */
+	bool		relhassubclass;	/* has derived classes */
+	/*
+	 * relacl may or may not be present, see note above!
+	 */
+	aclitem		relacl[1];		/* we declare this just for the catalog */
 } FormData_pg_class;
 
+/* Size of fixed part of pg_class tuples, not counting relacl or padding */
 #define CLASS_TUPLE_SIZE \
 	 (offsetof(FormData_pg_class,relhassubclass) + sizeof(bool))
 
@@ -123,7 +118,7 @@ typedef FormData_pg_class *Form_pg_class;
 #define Anum_pg_class_relrefs			16
 #define Anum_pg_class_relhaspkey		17
 #define Anum_pg_class_relhasrules		18
-#define Anum_pg_class_relhassubclass		19
+#define Anum_pg_class_relhassubclass	19
 #define Anum_pg_class_relacl			20
 
 /* ----------------
@@ -176,10 +171,10 @@ DESCR("");
 
 #define		  RELKIND_INDEX			  'i'		/* secondary index */
 #define		  RELKIND_LOBJECT		  'l'		/* large objects */
-#define		  RELKIND_RELATION		  'r'		/* cataloged heap */
+#define		  RELKIND_RELATION		  'r'		/* ordinary cataloged heap */
 #define		  RELKIND_SPECIAL		  's'		/* special (non-heap) */
 #define		  RELKIND_SEQUENCE		  'S'		/* SEQUENCE relation */
 #define		  RELKIND_UNCATALOGED	  'u'		/* temporary heap */
 #define		  RELKIND_LONGVALUE		  'v'		/* moved off huge values */
 
-#endif	 /* PG_RELATION_H */
+#endif	 /* PG_CLASS_H */
