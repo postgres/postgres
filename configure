@@ -4241,10 +4241,7 @@ python_version=`${PYTHON} -c "import sys; print sys.version[:3]"`
 python_prefix=`${PYTHON} -c "import sys; print sys.prefix"`
 python_execprefix=`${PYTHON} -c "import sys; print sys.exec_prefix"`
 python_configdir=`${PYTHON} -c "from distutils.sysconfig import get_python_lib as f; import os; print os.path.join(f(plat_specific=1,standard_lib=1),'config')"`
-python_includespec="-I${python_prefix}/include/python${python_version}"
-if test "$python_prefix" != "$python_execprefix"; then
-  python_includespec="-I${python_execprefix}/include/python${python_version} $python_includespec"
-fi
+python_includespec=`${PYTHON} -c "import distutils.sysconfig; print '-I'+distutils.sysconfig.get_python_inc()"`
 
 # This should be enough of a message.
 if test "$python_prefix" != "$python_execprefix"; then
@@ -4259,22 +4256,7 @@ fi
 echo "$as_me:$LINENO: checking how to link an embedded Python application" >&5
 echo $ECHO_N "checking how to link an embedded Python application... $ECHO_C" >&6
 
-if test ! -f "$python_configdir/Makefile"; then
-  echo "$as_me:$LINENO: result: no" >&5
-echo "${ECHO_T}no" >&6
-  { { echo "$as_me:$LINENO: error: Python Makefile not found" >&5
-echo "$as_me: error: Python Makefile not found" >&2;}
-   { (exit 1); exit 1; }; }
-fi
-
-_python_libs=`grep '^LIBS=' $python_configdir/Makefile | sed 's/^.*=//'`
-_python_libc=`grep '^LIBC=' $python_configdir/Makefile | sed 's/^.*=//'`
-_python_libm=`grep '^LIBM=' $python_configdir/Makefile | sed 's/^.*=//'`
-_python_liblocalmod=`grep '^LOCALMODLIBS=' $python_configdir/Makefile | sed 's/^.*=//'`
-_python_libbasemod=`grep '^BASEMODLIBS=' $python_configdir/Makefile | sed 's/^.*=//'`
-
-pgac_tab="	" # tab character
-python_libspec=`echo X"-L$python_configdir $_python_libs $_python_libc $_python_libm -lpython$python_version $_python_liblocalmod $_python_libbasemod" | sed -e 's/^X//' -e "s/[ $pgac_tab][ $pgac_tab]*/ /g"`
+python_libspec=`${PYTHON} -c "import distutils.sysconfig,string;print string.join(filter(None,distutils.sysconfig.get_config_vars('LIBS','LIBC','LIBM','LOCALMODLIBS','BASEMODLIBS')))"`
 
 echo "$as_me:$LINENO: result: ${python_libspec}" >&5
 echo "${ECHO_T}${python_libspec}" >&6
@@ -18778,6 +18760,7 @@ s,@python_prefix@,$python_prefix,;t t
 s,@python_execprefix@,$python_execprefix,;t t
 s,@python_configdir@,$python_configdir,;t t
 s,@python_includespec@,$python_includespec,;t t
+s,@python_version@,$python_version,;t t
 s,@python_libspec@,$python_libspec,;t t
 s,@LIBOBJS@,$LIBOBJS,;t t
 s,@HAVE_IPV6@,$HAVE_IPV6,;t t

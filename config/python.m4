@@ -1,7 +1,7 @@
 #
 # Autoconf macros for configuring the build of Python extension modules
 #
-# $PostgreSQL: pgsql/config/python.m4,v 1.8 2004/09/16 23:30:30 joe Exp $
+# $PostgreSQL: pgsql/config/python.m4,v 1.9 2004/10/06 09:20:40 momjian Exp $
 #
 
 # PGAC_PATH_PYTHON
@@ -34,15 +34,13 @@ python_version=`${PYTHON} -c "import sys; print sys.version[[:3]]"`
 python_prefix=`${PYTHON} -c "import sys; print sys.prefix"`
 python_execprefix=`${PYTHON} -c "import sys; print sys.exec_prefix"`
 python_configdir=`${PYTHON} -c "from distutils.sysconfig import get_python_lib as f; import os; print os.path.join(f(plat_specific=1,standard_lib=1),'config')"`
-python_includespec="-I${python_prefix}/include/python${python_version}"
-if test "$python_prefix" != "$python_execprefix"; then
-  python_includespec="-I${python_execprefix}/include/python${python_version} $python_includespec"
-fi
+python_includespec=`${PYTHON} -c "import distutils.sysconfig; print '-I'+distutils.sysconfig.get_python_inc()"`
 
 AC_SUBST(python_prefix)[]dnl
 AC_SUBST(python_execprefix)[]dnl
 AC_SUBST(python_configdir)[]dnl
 AC_SUBST(python_includespec)[]dnl
+AC_SUBST(python_version)[]dnl
 # This should be enough of a message.
 if test "$python_prefix" != "$python_execprefix"; then
   AC_MSG_RESULT([$python_prefix/lib/python${python_version} and $python_execprefix/lib/python${python_version}])
@@ -54,24 +52,11 @@ fi
 
 # PGAC_CHECK_PYTHON_EMBED_SETUP
 # -----------------------------
-# Courtesy of the INN 2.3.1 package...
 AC_DEFUN([PGAC_CHECK_PYTHON_EMBED_SETUP],
 [AC_REQUIRE([_PGAC_CHECK_PYTHON_DIRS])
 AC_MSG_CHECKING([how to link an embedded Python application])
 
-if test ! -f "$python_configdir/Makefile"; then
-  AC_MSG_RESULT(no)
-  AC_MSG_ERROR([Python Makefile not found])
-fi
-
-_python_libs=`grep '^LIBS=' $python_configdir/Makefile | sed 's/^.*=//'`
-_python_libc=`grep '^LIBC=' $python_configdir/Makefile | sed 's/^.*=//'`
-_python_libm=`grep '^LIBM=' $python_configdir/Makefile | sed 's/^.*=//'`
-_python_liblocalmod=`grep '^LOCALMODLIBS=' $python_configdir/Makefile | sed 's/^.*=//'`
-_python_libbasemod=`grep '^BASEMODLIBS=' $python_configdir/Makefile | sed 's/^.*=//'`
-
-pgac_tab="	" # tab character
-python_libspec=`echo X"-L$python_configdir $_python_libs $_python_libc $_python_libm -lpython$python_version $_python_liblocalmod $_python_libbasemod" | sed -e 's/^X//' -e "s/[[ $pgac_tab]][[ $pgac_tab]]*/ /g"`
+python_libspec=`${PYTHON} -c "import distutils.sysconfig,string;print string.join(filter(None,distutils.sysconfig.get_config_vars('LIBS','LIBC','LIBM','LOCALMODLIBS','BASEMODLIBS')))"`
 
 AC_MSG_RESULT([${python_libspec}])
 

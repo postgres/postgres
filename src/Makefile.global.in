@@ -1,5 +1,5 @@
 # -*-makefile-*-
-# $PostgreSQL: pgsql/src/Makefile.global.in,v 1.197 2004/10/05 19:30:19 momjian Exp $
+# $PostgreSQL: pgsql/src/Makefile.global.in,v 1.198 2004/10/06 09:20:41 momjian Exp $
 
 #------------------------------------------------------------------------------
 # All PostgreSQL makefiles include this file and use the variables it sets,
@@ -137,6 +137,7 @@ enable_thread_safety	= @enable_thread_safety@
 python_includespec	= @python_includespec@
 python_libspec		= @python_libspec@
 python_configdir	= @python_configdir@
+python_version		= @python_version@
 
 krb_srvtab = @krb_srvtab@
 
