@@ -1,5 +1,5 @@
 dnl Process this file with autoconf to produce a configure script.
-dnl $PostgreSQL: pgsql/configure.in,v 1.404 2005/03/02 14:48:22 momjian Exp $
+dnl $PostgreSQL: pgsql/configure.in,v 1.405 2005/03/02 15:42:35 momjian Exp $
 dnl
 dnl Developers, please strive to achieve this order:
 dnl
@@ -1068,7 +1068,7 @@ AC_MSG_ERROR([[
 
 # Force use of our snprintf if system's doesn't do arg control
 # This feature is used by NLS
-if test "$enable_nls" = yes -a $pgac_need_repl_snprintf = no; then
+if test "$enable_nls" = yes && test $pgac_need_repl_snprintf = no; then
   PGAC_FUNC_PRINTF_ARG_CONTROL
   if test $pgac_cv_printf_arg_control != yes ; then
     pgac_need_repl_snprintf=yes

@@ -14528,7 +14528,7 @@ fi
 
 # Force use of our snprintf if system's doesn't do arg control
 # This feature is used by NLS
-if test "$enable_nls" = yes -a $pgac_need_repl_snprintf = no; then
+if test "$enable_nls" = yes && test $pgac_need_repl_snprintf = no; then
   echo "$as_me:$LINENO: checking whether printf supports argument control" >&5
 echo $ECHO_N "checking whether printf supports argument control... $ECHO_C" >&6
 if test "${pgac_cv_printf_arg_control+set}" = set; then
