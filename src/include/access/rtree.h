@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2005, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/include/access/rtree.h,v 1.36 2004/12/31 22:03:21 pgsql Exp $
+ * $PostgreSQL: pgsql/src/include/access/rtree.h,v 1.37 2005/01/18 23:25:55 neilc Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -59,11 +59,14 @@ typedef struct RTSTACK
 /*
  *	When we're doing a scan, we need to keep track of the parent stack
  *	for the marked and current items.  Also, rtrees have the following
- *	property:  if you're looking for the box (1,1,2,2), on the internal
- *	nodes you have to search for all boxes that *contain* (1,1,2,2), and
- *	not the ones that match it.  We have a private scan key for internal
- *	nodes in the opaque structure for rtrees for this reason.  See
- *	access/index-rtree/rtscan.c and rtstrat.c for how it gets initialized.
+ *	property: if you're looking for the box (1,1,2,2), on the internal
+ *	nodes you have to search for all boxes that *contain* (1,1,2,2),
+ *	and not the ones that match it.  We have a private scan key for
+ *	internal nodes in the opaque structure for rtrees for this reason.
+ *	See access/index-rtree/rtscan.c and rtstrat.c for how it gets
+ *	initialized. We also keep pins on the scan's current buffer and
+ *	marked buffer, if any: this avoids the need to invoke ReadBuffer()
+ *	for each tuple produced by the index scan.
  */
 
 typedef struct RTreeScanOpaqueData
@@ -73,6 +76,8 @@ typedef struct RTreeScanOpaqueData
 	uint16		s_flags;
 	int			s_internalNKey;
 	ScanKey		s_internalKey;
+	Buffer		curbuf;
+	Buffer		markbuf;
 } RTreeScanOpaqueData;
 
 typedef RTreeScanOpaqueData *RTreeScanOpaque;

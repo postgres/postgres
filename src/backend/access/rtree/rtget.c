@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/access/rtree/rtget.c,v 1.33 2004/12/31 21:59:26 pgsql Exp $
+ *	  $PostgreSQL: pgsql/src/backend/access/rtree/rtget.c,v 1.34 2005/01/18 23:25:43 neilc Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -19,10 +19,8 @@
 #include "access/relscan.h"
 #include "access/rtree.h"
 
-static OffsetNumber findnext(IndexScanDesc s, Page p, OffsetNumber n,
+static OffsetNumber findnext(IndexScanDesc s, OffsetNumber n,
 		 ScanDirection dir);
-static bool rtscancache(IndexScanDesc s, ScanDirection dir);
-static bool rtfirst(IndexScanDesc s, ScanDirection dir);
 static bool rtnext(IndexScanDesc s, ScanDirection dir);
 
 
@@ -31,138 +29,106 @@ rtgettuple(PG_FUNCTION_ARGS)
 {
 	IndexScanDesc s = (IndexScanDesc) PG_GETARG_POINTER(0);
 	ScanDirection dir = (ScanDirection) PG_GETARG_INT32(1);
-	bool		res;
-
-	/* if we have it cached in the scan desc, just return the value */
-	if (rtscancache(s, dir))
-		PG_RETURN_BOOL(true);
-
-	/* not cached, so we'll have to do some work */
-	if (ItemPointerIsValid(&(s->currentItemData)))
-		res = rtnext(s, dir);
-	else
-		res = rtfirst(s, dir);
-	PG_RETURN_BOOL(res);
-}
-
-static bool
-rtfirst(IndexScanDesc s, ScanDirection dir)
-{
-	Buffer		b;
-	Page		p;
-	OffsetNumber n;
-	OffsetNumber maxoff;
-	RTreePageOpaque po;
+	Page page;
+	OffsetNumber offnum;
 	RTreeScanOpaque so;
-	RTSTACK    *stk;
-	BlockNumber blk;
-	IndexTuple	it;
 
-	b = ReadBuffer(s->indexRelation, P_ROOT);
-	p = BufferGetPage(b);
-	po = (RTreePageOpaque) PageGetSpecialPointer(p);
 	so = (RTreeScanOpaque) s->opaque;
 
+	/*
+	 * If we've already produced a tuple and the executor has informed
+	 * us that it should be marked "killed", do so know.
+	 */
+	if (s->kill_prior_tuple && ItemPointerIsValid(&(s->currentItemData)))
+	{
+		offnum = ItemPointerGetOffsetNumber(&(s->currentItemData));
+		page = BufferGetPage(so->curbuf);
+		PageGetItemId(page, offnum)->lp_flags |= LP_DELETE;
+		SetBufferCommitInfoNeedsSave(so->curbuf);
+	}
+
+	/*
+	 * Get the next tuple that matches the search key; if asked to
+	 * skip killed tuples, find the first non-killed tuple that
+	 * matches. Return as soon as we've run out of matches or we've
+	 * found an acceptable match.
+	 */
 	for (;;)
 	{
-		maxoff = PageGetMaxOffsetNumber(p);
-		if (ScanDirectionIsBackward(dir))
-			n = findnext(s, p, maxoff, dir);
-		else
-			n = findnext(s, p, FirstOffsetNumber, dir);
+		bool res = rtnext(s, dir);
 
-		while (n < FirstOffsetNumber || n > maxoff)
+		if (res == true && s->ignore_killed_tuples)
 		{
-			ReleaseBuffer(b);
-			if (so->s_stack == NULL)
-				return false;
-
-			stk = so->s_stack;
-			b = ReadBuffer(s->indexRelation, stk->rts_blk);
-			p = BufferGetPage(b);
-			po = (RTreePageOpaque) PageGetSpecialPointer(p);
-			maxoff = PageGetMaxOffsetNumber(p);
-
-			if (ScanDirectionIsBackward(dir))
-				n = OffsetNumberPrev(stk->rts_child);
-			else
-				n = OffsetNumberNext(stk->rts_child);
-			so->s_stack = stk->rts_parent;
-			pfree(stk);
-
-			n = findnext(s, p, n, dir);
+			offnum = ItemPointerGetOffsetNumber(&(s->currentItemData));
+			page = BufferGetPage(so->curbuf);
+			if (ItemIdDeleted(PageGetItemId(page, offnum)))
+				continue;
 		}
-		if (po->flags & F_LEAF)
-		{
-			ItemPointerSet(&(s->currentItemData), BufferGetBlockNumber(b), n);
 
-			it = (IndexTuple) PageGetItem(p, PageGetItemId(p, n));
-
-			s->xs_ctup.t_self = it->t_tid;
-
-			ReleaseBuffer(b);
-			return true;
-		}
-		else
-		{
-			stk = (RTSTACK *) palloc(sizeof(RTSTACK));
-			stk->rts_child = n;
-			stk->rts_blk = BufferGetBlockNumber(b);
-			stk->rts_parent = so->s_stack;
-			so->s_stack = stk;
-
-			it = (IndexTuple) PageGetItem(p, PageGetItemId(p, n));
-			blk = ItemPointerGetBlockNumber(&(it->t_tid));
-
-			ReleaseBuffer(b);
-			b = ReadBuffer(s->indexRelation, blk);
-			p = BufferGetPage(b);
-			po = (RTreePageOpaque) PageGetSpecialPointer(p);
-		}
+		PG_RETURN_BOOL(res);
 	}
 }
 
 static bool
 rtnext(IndexScanDesc s, ScanDirection dir)
 {
-	Buffer		b;
 	Page		p;
 	OffsetNumber n;
-	OffsetNumber maxoff;
 	RTreePageOpaque po;
 	RTreeScanOpaque so;
-	RTSTACK    *stk;
-	BlockNumber blk;
-	IndexTuple	it;
 
-	blk = ItemPointerGetBlockNumber(&(s->currentItemData));
-	n = ItemPointerGetOffsetNumber(&(s->currentItemData));
-
-	if (ScanDirectionIsForward(dir))
-		n = OffsetNumberNext(n);
-	else
-		n = OffsetNumberPrev(n);
-
-	b = ReadBuffer(s->indexRelation, blk);
-	p = BufferGetPage(b);
-	po = (RTreePageOpaque) PageGetSpecialPointer(p);
 	so = (RTreeScanOpaque) s->opaque;
+
+	if (!ItemPointerIsValid(&(s->currentItemData)))
+	{
+		/* first call: start at the root */
+		Assert(BufferIsValid(so->curbuf) == false);
+		so->curbuf = ReadBuffer(s->indexRelation, P_ROOT);
+	}
+
+	p = BufferGetPage(so->curbuf);
+	po = (RTreePageOpaque) PageGetSpecialPointer(p);
+
+	if (!ItemPointerIsValid(&(s->currentItemData)))
+	{
+		/* first call: start at first/last offset */
+		if (ScanDirectionIsForward(dir))
+			n = FirstOffsetNumber;
+		else
+			n = PageGetMaxOffsetNumber(p);
+	}
+	else
+	{
+		/* go on to the next offset */
+		n = ItemPointerGetOffsetNumber(&(s->currentItemData));
+		if (ScanDirectionIsForward(dir))
+			n = OffsetNumberNext(n);
+		else
+			n = OffsetNumberPrev(n);
+	}
 
 	for (;;)
 	{
-		maxoff = PageGetMaxOffsetNumber(p);
-		n = findnext(s, p, n, dir);
+		IndexTuple	it;
+		RTSTACK    *stk;
 
-		while (n < FirstOffsetNumber || n > maxoff)
+		n = findnext(s, n, dir);
+
+		/* no match on this page, so read in the next stack entry */
+		if (n == InvalidOffsetNumber)
 		{
-			ReleaseBuffer(b);
+			/* if out of stack entries, we're done */
 			if (so->s_stack == NULL)
+			{
+				ReleaseBuffer(so->curbuf);
+				so->curbuf = InvalidBuffer;
 				return false;
+			}
 
 			stk = so->s_stack;
-			b = ReadBuffer(s->indexRelation, stk->rts_blk);
-			p = BufferGetPage(b);
-			maxoff = PageGetMaxOffsetNumber(p);
+			so->curbuf = ReleaseAndReadBuffer(so->curbuf, s->indexRelation,
+											  stk->rts_blk);
+			p = BufferGetPage(so->curbuf);
 			po = (RTreePageOpaque) PageGetSpecialPointer(p);
 
 			if (ScanDirectionIsBackward(dir))
@@ -172,33 +138,41 @@ rtnext(IndexScanDesc s, ScanDirection dir)
 			so->s_stack = stk->rts_parent;
 			pfree(stk);
 
-			n = findnext(s, p, n, dir);
+			continue;
 		}
+
 		if (po->flags & F_LEAF)
 		{
-			ItemPointerSet(&(s->currentItemData), BufferGetBlockNumber(b), n);
-
+			ItemPointerSet(&(s->currentItemData),
+						   BufferGetBlockNumber(so->curbuf),
+						   n);
 			it = (IndexTuple) PageGetItem(p, PageGetItemId(p, n));
-
 			s->xs_ctup.t_self = it->t_tid;
-
-			ReleaseBuffer(b);
 			return true;
 		}
 		else
 		{
+			BlockNumber blk;
+
 			stk = (RTSTACK *) palloc(sizeof(RTSTACK));
 			stk->rts_child = n;
-			stk->rts_blk = BufferGetBlockNumber(b);
+			stk->rts_blk = BufferGetBlockNumber(so->curbuf);
 			stk->rts_parent = so->s_stack;
 			so->s_stack = stk;
 
 			it = (IndexTuple) PageGetItem(p, PageGetItemId(p, n));
 			blk = ItemPointerGetBlockNumber(&(it->t_tid));
 
-			ReleaseBuffer(b);
-			b = ReadBuffer(s->indexRelation, blk);
-			p = BufferGetPage(b);
+			/*
+			 * Note that we release the pin on the page as we descend
+			 * down the tree, even though there's a good chance we'll
+			 * eventually need to re-read the buffer later in this
+			 * scan. This may or may not be optimal, but it doesn't
+			 * seem likely to make a huge performance difference
+			 * either way.
+			 */
+			so->curbuf = ReleaseAndReadBuffer(so->curbuf, s->indexRelation, blk);
+			p = BufferGetPage(so->curbuf);
 			po = (RTreePageOpaque) PageGetSpecialPointer(p);
 
 			if (ScanDirectionIsBackward(dir))
@@ -209,17 +183,26 @@ rtnext(IndexScanDesc s, ScanDirection dir)
 	}
 }
 
+/*
+ * Return the offset of the next matching index entry. We begin the
+ * search at offset "n" and search for matches in the direction
+ * "dir". If no more matching entries are found on the page,
+ * InvalidOffsetNumber is returned.
+ */
 static OffsetNumber
-findnext(IndexScanDesc s, Page p, OffsetNumber n, ScanDirection dir)
+findnext(IndexScanDesc s, OffsetNumber n, ScanDirection dir)
 {
 	OffsetNumber maxoff;
 	IndexTuple	it;
 	RTreePageOpaque po;
 	RTreeScanOpaque so;
+	Page p;
+
+	so = (RTreeScanOpaque) s->opaque;
+	p = BufferGetPage(so->curbuf);
 
 	maxoff = PageGetMaxOffsetNumber(p);
 	po = (RTreePageOpaque) PageGetSpecialPointer(p);
-	so = (RTreeScanOpaque) s->opaque;
 
 	/*
 	 * If we modified the index during the scan, we may have a pointer to
@@ -256,28 +239,8 @@ findnext(IndexScanDesc s, Page p, OffsetNumber n, ScanDirection dir)
 			n = OffsetNumberNext(n);
 	}
 
-	return n;
-}
-
-static bool
-rtscancache(IndexScanDesc s, ScanDirection dir)
-{
-	Buffer		b;
-	Page		p;
-	OffsetNumber n;
-	IndexTuple	it;
-
-	if (!(ScanDirectionIsNoMovement(dir)
-		  && ItemPointerIsValid(&(s->currentItemData))))
-		return false;
-
-	b = ReadBuffer(s->indexRelation,
-				   ItemPointerGetBlockNumber(&(s->currentItemData)));
-	p = BufferGetPage(b);
-	n = ItemPointerGetOffsetNumber(&(s->currentItemData));
-	it = (IndexTuple) PageGetItem(p, PageGetItemId(p, n));
-	s->xs_ctup.t_self = it->t_tid;
-	ReleaseBuffer(b);
-
-	return true;
+	if (n >= FirstOffsetNumber && n <= maxoff)
+		return n;						/* found a match on this page */
+	else
+		return InvalidOffsetNumber;		/* no match, go to next page */
 }

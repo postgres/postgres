@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/access/rtree/rtscan.c,v 1.56 2004/12/31 21:59:26 pgsql Exp $
+ *	  $PostgreSQL: pgsql/src/backend/access/rtree/rtscan.c,v 1.57 2005/01/18 23:25:48 neilc Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -89,12 +89,24 @@ rtrescan(PG_FUNCTION_ARGS)
 		freestack(p->s_markstk);
 		p->s_stack = p->s_markstk = NULL;
 		p->s_flags = 0x0;
+		/* drop pins on buffers -- no locks held */
+		if (BufferIsValid(p->curbuf))
+		{
+			ReleaseBuffer(p->curbuf);
+			p->curbuf = InvalidBuffer;
+		}
+		if (BufferIsValid(p->markbuf))
+		{
+			ReleaseBuffer(p->markbuf);
+			p->markbuf = InvalidBuffer;
+		}
 	}
 	else
 	{
 		/* initialize opaque data */
 		p = (RTreeScanOpaque) palloc(sizeof(RTreeScanOpaqueData));
 		p->s_stack = p->s_markstk = NULL;
+		p->curbuf = p->markbuf = InvalidBuffer;
 		p->s_internalNKey = s->numberOfKeys;
 		p->s_flags = 0x0;
 		s->opaque = p;
@@ -175,6 +187,18 @@ rtmarkpos(PG_FUNCTION_ARGS)
 	freestack(p->s_markstk);
 	p->s_markstk = o;
 
+	/* Update markbuf: make sure to bump ref count on curbuf */
+	if (BufferIsValid(p->markbuf))
+	{
+		ReleaseBuffer(p->markbuf);
+		p->markbuf = InvalidBuffer;
+	}
+	if (BufferIsValid(p->curbuf))
+	{
+		IncrBufferRefCount(p->curbuf);
+		p->markbuf = p->curbuf;
+	}
+
 	PG_RETURN_VOID();
 }
 
@@ -211,6 +235,18 @@ rtrestrpos(PG_FUNCTION_ARGS)
 	freestack(p->s_stack);
 	p->s_stack = o;
 
+	/* Update curbuf; be sure to bump ref count on markbuf */
+	if (BufferIsValid(p->curbuf))
+	{
+		ReleaseBuffer(p->curbuf);
+		p->curbuf = InvalidBuffer;
+	}
+	if (BufferIsValid(p->markbuf))
+	{
+		IncrBufferRefCount(p->markbuf);
+		p->curbuf = p->markbuf;
+	}
+
 	PG_RETURN_VOID();
 }
 
@@ -226,11 +262,14 @@ rtendscan(PG_FUNCTION_ARGS)
 	{
 		freestack(p->s_stack);
 		freestack(p->s_markstk);
+		if (BufferIsValid(p->curbuf))
+			ReleaseBuffer(p->curbuf);
+		if (BufferIsValid(p->markbuf))
+			ReleaseBuffer(p->markbuf);
 		pfree(s->opaque);
 	}
 
 	rtdropscan(s);
-	/* XXX don't unset read lock -- two-phase locking */
 
 	PG_RETURN_VOID();
 }

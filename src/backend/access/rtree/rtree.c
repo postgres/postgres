@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/access/rtree/rtree.c,v 1.85 2004/12/31 21:59:26 pgsql Exp $
+ *	  $PostgreSQL: pgsql/src/backend/access/rtree/rtree.c,v 1.86 2005/01/18 23:25:47 neilc Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -280,12 +280,8 @@ rtdoinsert(Relation r, IndexTuple itup, RTSTATE *rtstate)
 
 	do
 	{
-		/* let go of current buffer before getting next */
-		if (buffer != InvalidBuffer)
-			ReleaseBuffer(buffer);
-
-		/* get next buffer */
-		buffer = ReadBuffer(r, blk);
+		/* release the current buffer, read in the next one */
+		buffer = ReleaseAndReadBuffer(buffer, r, blk);
 		page = (Page) BufferGetPage(buffer);
 
 		opaque = (RTreePageOpaque) PageGetSpecialPointer(page);
