@@ -447,7 +447,7 @@ Maximum number of tuples to return
    which the query will be executed. For example,
 
 <ProgramListing>
-SPI_exec ("insert into table select * from table", 5);
+SPI_exec ("INSERT INTO tab SELECT * FROM tab", 5);
 </ProgramListing>
 
 will allow at most 5 tuples to be inserted into table.
@@ -2821,19 +2821,19 @@ execq(text *sql, int cnt)
    Now, compile and create the function:
 
 <ProgramListing>
-create function execq (text, int4) returns int4 as '...path_to_so' language 'c';
+CREATE FUNCTION execq (TEXT, INT4) RETURNS INT4 AS '...path_to_so' LANGUAGE 'c';
 </ProgramListing>
 
 <ProgramListing>
-vac=> select execq('create table a (x int4)', 0);
+vac=> SELECT execq('CREATE TABLE a (x INT4)', 0);
 execq
 -----
     0
 (1 row)
 
-vac=> insert into a values (execq('insert into a values (0)',0));
+vac=> INSERT INTO a VALUES (execq('INSERT INTO a VALUES (0)',0));
 INSERT 167631 1
-vac=> select execq('select * from a',0);
+vac=> select execq('SELECT * FROM a',0);
 NOTICE:EXECQ:  0 <<< inserted by execq
 
 NOTICE:EXECQ:  1 <<< value returned by execq and inserted by upper INSERT
@@ -2843,13 +2843,13 @@ execq
     2
 (1 row)
 
-vac=> select execq('insert into a select x + 2 from a',1);
+vac=> SELECT execq('INSERT INTO a SELECT x + 2 FROM a',1);
 execq
 -----
     1
 (1 row)
 
-vac=> select execq('select * from a', 10);
+vac=> SELECT execq('SELECT * FROM a', 10);
 NOTICE:EXECQ:  0 
 
 NOTICE:EXECQ:  1 
@@ -2861,20 +2861,20 @@ execq
     3            <<< 10 is max value only, 3 is real # of tuples
 (1 row)
 
-vac=> delete from a;
+vac=> DELETE FROM a;
 DELETE 3
-vac=> insert into a values (execq('select * from a', 0) + 1);
+vac=> INSERT INTO a VALUES (execq('SELECT * FROM a', 0) + 1);
 INSERT 167712 1
-vac=> select * from a;
+vac=> SELECT * FROM a;
 x
 -
 1                <<< no tuples in a (0) + 1
 (1 row)
 
-vac=> insert into a values (execq('select * from a', 0) + 1);
+vac=> INSERT INTO a VALUES (execq('SELECT * FROM a', 0) + 1);
 NOTICE:EXECQ:  0 
 INSERT 167713 1
-vac=> select * from a;
+vac=> SELECT * FROM a;
 x
 -
 1
@@ -2883,14 +2883,14 @@ x
 
 --   This demonstrates data changes visibility rule:
 
-vac=> insert into a select execq('select * from a', 0) * x from a;
+vac=> INSERT INTO a SELECT execq('SELECT * FROM a', 0) * x FROM a;
 NOTICE:EXECQ:  1 
 NOTICE:EXECQ:  2 
 NOTICE:EXECQ:  1 
 NOTICE:EXECQ:  2 
 NOTICE:EXECQ:  2 
 INSERT 0 2
-vac=> select * from a;
+vac=> SELECT * FROM a;
 x
 -
 1

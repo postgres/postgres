@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/maintenance.sgml,v 1.4 2001/09/23 04:06:24 momjian Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/maintenance.sgml,v 1.5 2001/10/12 23:32:34 momjian Exp $
 -->
 
 <chapter id="maintenance">
@@ -304,7 +304,7 @@ $Header: /cvsroot/pgsql/doc/src/sgml/maintenance.sgml,v 1.4 2001/09/23 04:06:24 
     examine this information is to execute the query
     <informalexample>
 <programlisting>
-select datname, age(datfrozenxid) from pg_database;
+SELECT datname, age(datfrozenxid) FROM pg_database;
 </programlisting>
     </informalexample>
     The <literal>age</> column measures the number of transactions from the

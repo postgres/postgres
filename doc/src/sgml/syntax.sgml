@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/syntax.sgml,v 1.48 2001/10/09 18:46:00 petere Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/syntax.sgml,v 1.49 2001/10/12 23:32:34 momjian Exp $
 -->
 
 <chapter id="sql-syntax">
@@ -909,7 +909,7 @@ $<replaceable>number</replaceable>
 
 <programlisting>
 CREATE FUNCTION dept (text) RETURNS dept
-  AS 'select * from dept where name = $1'
+  AS 'SELECT * FROM dept WHERE name = $1'
   LANGUAGE 'sql';
 </programlisting>
 

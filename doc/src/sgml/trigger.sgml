@@ -486,7 +486,7 @@ trigf(PG_FUNCTION_ARGS)
 		elog(NOTICE, "trigf (fired %s): SPI_connect returned %d", when, ret);
 	
 	/* Get number of tuples in relation */
-	ret = SPI_exec("select count(*) from ttest", 0);
+	ret = SPI_exec("SELECT count(*) FROM ttest", 0);
 	
 	if (ret < 0)
 		elog(NOTICE, "trigf (fired %s): SPI_exec returned %d", when, ret);
@@ -513,70 +513,70 @@ trigf(PG_FUNCTION_ARGS)
     Now, compile and create the trigger function:
 
     <programlisting>
-create function trigf () returns opaque as 
-'...path_to_so' language 'C';
+CREATE FUNCTION trigf () RETURNS OPAQUE AS 
+'...path_to_so' LANGUAGE 'C';
 
-create table ttest (x int4);
+CREATE TABLE ttest (x int4);
     </programlisting>
 
     <programlisting>
-vac=> create trigger tbefore before insert or update or delete on ttest 
-for each row execute procedure trigf();
+vac=> CREATE TRIGGER tbefore BEFORE INSERT OR UPDATE OR DELETE ON ttest 
+FOR EACH ROW EXECUTE PROCEDURE trigf();
 CREATE
-vac=> create trigger tafter after insert or update or delete on ttest 
-for each row execute procedure trigf();
+vac=> CREATE TRIGGER tafter AFTER INSERT OR UPDATE OR DELETE ON ttest 
+FOR EACH ROW EXECUTE PROCEDURE trigf();
 CREATE
-vac=> insert into ttest values (null);
+vac=> INSERT INTO ttest VALUES (NULL);
 NOTICE:trigf (fired before): there are 0 tuples in ttest
 INSERT 0 0
 
 -- Insertion skipped and AFTER trigger is not fired
 
-vac=> select * from ttest;
+vac=> SELECT * FROM ttest;
 x
 -
 (0 rows)
 
-vac=> insert into ttest values (1);
+vac=> INSERT INTO ttest VALUES (1);
 NOTICE:trigf (fired before): there are 0 tuples in ttest
 NOTICE:trigf (fired after ): there are 1 tuples in ttest
                                        ^^^^^^^^
                              remember what we said about visibility.
 INSERT 167793 1
-vac=> select * from ttest;
+vac=> SELECT * FROM ttest;
 x
 -
 1
 (1 row)
 
-vac=> insert into ttest select x * 2 from ttest;
+vac=> INSERT INTO ttest SELECT x * 2 FROM ttest;
 NOTICE:trigf (fired before): there are 1 tuples in ttest
 NOTICE:trigf (fired after ): there are 2 tuples in ttest
                                        ^^^^^^^^
                              remember what we said about visibility.
 INSERT 167794 1
-vac=> select * from ttest;
+vac=> SELECT * FROM ttest;
 x
 -
 1
 2
 (2 rows)
 
-vac=> update ttest set x = null where x = 2;
+vac=> UPDATE ttest SET x = null WHERE x = 2;
 NOTICE:trigf (fired before): there are 2 tuples in ttest
 UPDATE 0
-vac=> update ttest set x = 4 where x = 2;
+vac=> UPDATE ttest SET x = 4 WHERE x = 2;
 NOTICE:trigf (fired before): there are 2 tuples in ttest
 NOTICE:trigf (fired after ): there are 2 tuples in ttest
 UPDATE 1
-vac=> select * from ttest;
+vac=> SELECT * FROM ttest;
 x
 -
 1
 4
 (2 rows)
 
-vac=> delete from ttest;
+vac=> DELETE FROM ttest;
 NOTICE:trigf (fired before): there are 2 tuples in ttest
 NOTICE:trigf (fired after ): there are 1 tuples in ttest
 NOTICE:trigf (fired before): there are 1 tuples in ttest
@@ -584,7 +584,7 @@ NOTICE:trigf (fired after ): there are 0 tuples in ttest
                                        ^^^^^^^^
                              remember what we said about visibility.
 DELETE 2
-vac=> select * from ttest;
+vac=> SELECT * FROM ttest;
 x
 -
 (0 rows)

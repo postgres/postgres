@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/libpq.sgml,v 1.72 2001/09/13 15:55:23 petere Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/libpq.sgml,v 1.73 2001/10/12 23:32:34 momjian Exp $
 -->
 
  <chapter id="libpq">
@@ -302,11 +302,11 @@ PostgresPollingStatusType PQconnectPoll(PGconn *conn)
    proceed with the connection sequence.  Loop thus: Consider a connection
    <quote>inactive</quote> by default. If <function>PQconnectPoll</function> last returned <symbol>PGRES_POLLING_ACTIVE</>,
    consider it <quote>active</quote> instead. If <function>PQconnectPoll(conn)</function> last returned
-   <symbol>PGRES_POLLING_READING</symbol>, perform a select for reading on <function>PQsocket(conn)</function>. If
-   it last returned <symbol>PGRES_POLLING_WRITING</symbol>, perform a select for writing on
+   <symbol>PGRES_POLLING_READING</symbol>, perform a SELECT for reading on <function>PQsocket(conn)</function>. If
+   it last returned <symbol>PGRES_POLLING_WRITING</symbol>, perform a SELECT for writing on
    <function>PQsocket(conn)</function>. If you have yet to call <function>PQconnectPoll</function>, i.e. after the call
    to <function>PQconnectStart</function>, behave as if it last returned <symbol>PGRES_POLLING_WRITING</symbol>.  If
-   the select shows that the socket is ready, consider it <quote>active</quote>. If it has
+   the SELECT shows that the socket is ready, consider it <quote>active</quote>. If it has
    been decided that this connection is <quote>active</quote>, call <function>PQconnectPoll(conn)</function>
    again. If this call returns <symbol>PGRES_POLLING_FAILED</symbol>, the connection procedure
    has failed.  If this call returns <symbol>PGRES_POLLING_OK</symbol>, the connection has been
@@ -1763,8 +1763,8 @@ int PQendcopy(PGconn *conn);
 As an example:
 
 <programlisting>
-PQexec(conn, "create table foo (a int4, b char(16), d double precision)");
-PQexec(conn, "copy foo from stdin");
+PQexec(conn, "CREATE TABLE foo (a int4, b char(16), d double precision)");
+PQexec(conn, "COPY foo FROM STDIN");
 PQputline(conn, "3\thello world\t4.5\n");
 PQputline(conn,"4\tgoodbye world\t7.11\n");
 ...
@@ -2270,7 +2270,7 @@ main()
      * fetch rows from the pg_database, the system catalog of
      * databases
      */
-    res = PQexec(conn, "DECLARE mycursor CURSOR FOR select * from pg_database");
+    res = PQexec(conn, "DECLARE mycursor CURSOR FOR SELECT * FROM pg_database");
     if (!res || PQresultStatus(res) != PGRES_COMMAND_OK)
     {
         fprintf(stderr, "DECLARE CURSOR command failed\n");
@@ -2541,7 +2541,7 @@ main()
      * fetch rows from the pg_database, the system catalog of
      * databases
      */
-    res = PQexec(conn, "DECLARE mycursor BINARY CURSOR FOR select * from test1");
+    res = PQexec(conn, "DECLARE mycursor BINARY CURSOR FOR SELECT * FROM test1");
     if (!res || PQresultStatus(res) != PGRES_COMMAND_OK)
     {
         fprintf(stderr, "DECLARE CURSOR command failed\n");

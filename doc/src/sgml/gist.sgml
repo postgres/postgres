@@ -51,8 +51,8 @@ to check that. Other examples also worked, except polygons: I got an
 error doing
 
 <ProgramListing>
-test=> create index pix on polytmp
-test-> using gist (p:box gist_poly_ops) with (islossy);
+test=> CREATE INDEX pix ON polytmp
+test-> USING GIST (p:box gist_poly_ops) WITH (ISLOSSY);
 ERROR:  cannot open pix
 
 (PostgreSQL 6.3               Sun Feb  1 14:57:30 EST 1998)
@@ -92,7 +92,7 @@ A few notes on the sources:
 
 <ProgramListing>
 -- -- there's a memory leak in rtree poly_ops!!
--- -- create index pix2 on polytmp using rtree (p poly_ops);
+-- -- CREATE INDEX pix2 ON polytmp USING RTREE (p poly_ops);
 </ProgramListing>
 
    Roger that!! I thought it could be related to a number of

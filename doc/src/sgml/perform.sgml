@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/perform.sgml,v 1.11 2001/10/09 18:46:00 petere Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/perform.sgml,v 1.12 2001/10/12 23:32:34 momjian Exp $
 -->
 
  <chapter id="performance-tips">
@@ -95,7 +95,7 @@ $Header: /cvsroot/pgsql/doc/src/sgml/perform.sgml,v 1.11 2001/10/09 18:46:00 pet
     vacuum analyze, and 7.2 development sources):
 
     <programlisting>
-regression=# explain select * from tenk1;
+regression=# EXPLAIN SELECT * FROM tenk1;
 NOTICE:  QUERY PLAN:
 
 Seq Scan on tenk1  (cost=0.00..333.00 rows=10000 width=148)
@@ -106,7 +106,7 @@ Seq Scan on tenk1  (cost=0.00..333.00 rows=10000 width=148)
     This is about as straightforward as it gets.  If you do
 
     <programlisting>
-select * from pg_class where relname = 'tenk1';
+SELECT * FROM pg_class WHERE relname = 'tenk1';
     </programlisting>
 
     you will find out that <classname>tenk1</classname> has 233 disk
@@ -119,7 +119,7 @@ select * from pg_class where relname = 'tenk1';
     Now let's modify the query to add a qualification clause:
 
     <programlisting>
-regression=# explain select * from tenk1 where unique1 &lt; 1000;
+regression=# EXPLAIN SELECT * FROM tenk1 WHERE unique1 &lt; 1000;
 NOTICE:  QUERY PLAN:
 
 Seq Scan on tenk1  (cost=0.00..358.00 rows=1007 width=148)
@@ -144,7 +144,7 @@ Seq Scan on tenk1  (cost=0.00..358.00 rows=1007 width=148)
     Modify the query to restrict the qualification even more:
 
     <programlisting>
-regression=# explain select * from tenk1 where unique1 &lt; 50;
+regression=# EXPLAIN SELECT * FROM tenk1 WHERE unique1 &lt; 50;
 NOTICE:  QUERY PLAN:
 
 Index Scan using tenk1_unique1 on tenk1  (cost=0.00..181.09 rows=49 width=148)
@@ -162,7 +162,7 @@ Index Scan using tenk1_unique1 on tenk1  (cost=0.00..181.09 rows=49 width=148)
     Add another condition to the qualification:
 
     <programlisting>
-regression=# explain select * from tenk1 where unique1 &lt; 50 and
+regression=# EXPLAIN SELECT * FROM tenk1 WHERE unique1 &lt; 50 AND
 regression-# stringu1 = 'xxx';
 NOTICE:  QUERY PLAN:
 
@@ -177,8 +177,8 @@ Index Scan using tenk1_unique1 on tenk1  (cost=0.00..181.22 rows=1 width=148)
     Let's try joining two tables, using the fields we have been discussing:
 
     <programlisting>
-regression=# explain select * from tenk1 t1, tenk2 t2 where t1.unique1 &lt; 50
-regression-# and t1.unique2 = t2.unique2;
+regression=# EXPLAIN SELECT * FROM tenk1 t1, tenk2 t2 WHERE t1.unique1 &lt; 50
+regression-# AND t1.unique2 = t2.unique2;
 NOTICE:  QUERY PLAN:
 
 Nested Loop  (cost=0.00..330.41 rows=49 width=296)
@@ -225,8 +225,8 @@ Nested Loop  (cost=0.00..330.41 rows=49 width=296)
     <programlisting>
 regression=# set enable_nestloop = off;
 SET VARIABLE
-regression=# explain select * from tenk1 t1, tenk2 t2 where t1.unique1 &lt; 50
-regression-# and t1.unique2 = t2.unique2;
+regression=# EXPLAIN SELECT * FROM tenk1 t1, tenk2 t2 WHERE t1.unique1 &lt; 50
+regression-# AND t1.unique2 = t2.unique2;
 NOTICE:  QUERY PLAN:
 
 Hash Join  (cost=181.22..564.83 rows=49 width=296)
@@ -257,9 +257,9 @@ Hash Join  (cost=181.22..564.83 rows=49 width=296)
     For example, we might get a result like this:
 
 <screen>
-regression=# explain analyze
-regression-# select * from tenk1 t1, tenk2 t2
-regression-#          where t1.unique1 &lt; 50 and t1.unique2 = t2.unique2;
+regression=# EXPLAIN ANALYZE
+regression-# SELECT * FROM tenk1 t1, tenk2 t2
+regression-# WHERE t1.unique1 &lt; 50 AND t1.unique2 = t2.unique2;
 NOTICE:  QUERY PLAN:
 
 Nested Loop  (cost=0.00..330.41 rows=49 width=296) (actual time=1.31..28.90 rows=50 loops=1)

@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/Attic/plsql.sgml,v 2.43 2001/10/12 21:19:09 momjian Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/Attic/plsql.sgml,v 2.44 2001/10/12 23:32:34 momjian Exp $
 -->
 
 <chapter id="plpgsql"> 
@@ -709,10 +709,10 @@ PERFORM <replaceable>query</replaceable>
     </para>
 <programlisting>
 PERFORM create_mv(''cs_session_page_requests_mv'',''
-     select   session_id, page_id, count(*) as n_hits,
-              sum(dwell_time) as dwell_time, count(dwell_time) as dwell_count
-     from     cs_fact_table
-     group by session_id, page_id '');
+     SELECT   session_id, page_id, count(*) AS n_hits,
+              sum(dwell_time) AS dwell_time, count(dwell_time) AS dwell_count
+     FROM     cs_fact_table
+     GROUP BY session_id, page_id '');
 </programlisting>
    </sect3>
    
@@ -804,19 +804,19 @@ BEGIN
     -- using the FOR &lt;record&gt; construct.
     --
 
-    FOR referrer_keys IN select * from cs_referrer_keys order by try_order LOOP
-        a_output := a_output || '' if v_'' || referrer_keys.kind || '' like '''''''''' 
-                 || referrer_keys.key_string || '''''''''' then return '''''' 
-                 || referrer_keys.referrer_type || ''''''; end if;''; 
+    FOR referrer_keys IN SELECT * FROM cs_referrer_keys ORDER BY try_order LOOP
+        a_output := a_output || '' IF v_'' || referrer_keys.kind || '' LIKE '''''''''' 
+                 || referrer_keys.key_string || '''''''''' THEN RETURN '''''' 
+                 || referrer_keys.referrer_type || ''''''; END IF;''; 
     END LOOP; 
   
-    a_output := a_output || '' return null; end; '''' language ''''plpgsql'''';''; 
+    a_output := a_output || '' RETURN NULL; END; '''' LANGUAGE ''''plpgsql'''';''; 
  
     -- This works because we are not substituting any variables
     -- Otherwise it would fail. Look at PERFORM for another way to run functions
     
     EXECUTE a_output; 
-end; 
+END; 
 ' LANGUAGE 'plpgsql';
 </programlisting>
     </para>
@@ -1262,7 +1262,7 @@ BEGIN
     IF users_rec.homepage IS NULL THEN
         -- user entered no homepage, return "http://"
 
-        return ''http://'';
+        RETURN ''http://'';
     END IF;
 END;
 </programlisting>
@@ -1283,13 +1283,13 @@ FOR <replaceable>record | row</replaceable> IN <replaceable>select_clause</repla
 END LOOP;
 </synopsis>
      The record or row is assigned all the rows 
-     resulting from the select clause and the loop body executed 
+     resulting from the SELECT clause and the loop body executed 
      for each. Here is an example:
     </para>
 
     <para>
 <programlisting>
-create function cs_refresh_mviews () returns INTEGER as '
+CREATE FUNCTION cs_refresh_mviews () RETURNS INTEGER AS '
 DECLARE
      mviews RECORD;
 
@@ -1310,7 +1310,7 @@ BEGIN
      END LOOP;
 
      PERFORM cs_log(''Done refreshing materialized views.'');
-     return 1;
+     RETURN 1;
 end;
 ' language 'plpgsql';
 </programlisting>
@@ -2030,25 +2030,25 @@ END;
      single quotes in PostgreSQL.
 
 <programlisting>
-create or replace procedure cs_update_referrer_type_proc is 
-    cursor referrer_keys is 
-        select * from cs_referrer_keys 
-        order by try_order;
+CREATE OR REPLACE PROCEDURE cs_update_referrer_type_proc IS
+    CURSOR referrer_keys IS 
+        SELECT * FROM cs_referrer_keys 
+        ORDER BY try_order;
 
-    a_output varchar(4000); 
-begin 
-    a_output := 'create or replace function cs_find_referrer_type(v_host IN varchar, v_domain IN varchar, 
-v_url IN varchar) return varchar is begin'; 
+    a_output VARCHAR(4000); 
+BEGIN 
+    a_output := 'CREATE OR REPLACE FUNCTION cs_find_referrer_type(v_host IN VARCHAR, v_domain IN VARCHAR, 
+v_url IN VARCHAR) RETURN VARCHAR IS BEGIN'; 
 
-    for referrer_key in referrer_keys loop 
-        a_output := a_output || ' if v_' || referrer_key.kind || ' like ''' || 
-referrer_key.key_string || ''' then return ''' || referrer_key.referrer_type || 
-'''; end if;'; 
-    end loop; 
+    FOR referrer_key IN referrer_keys LOOP 
+        a_output := a_output || ' IF v_' || referrer_key.kind || ' LIKE ''' || 
+referrer_key.key_string || ''' THEN RETURN ''' || referrer_key.referrer_type || 
+'''; END IF;'; 
+    END LOOP; 
 
-    a_output := a_output || ' return null; end;'; 
-    execute immediate a_output; 
-end; 
+    a_output := a_output || ' RETURN NULL; END;'; 
+    EXECUTE IMMEDIATE a_output; 
+END; 
 / 
 show errors
 </programlisting>
@@ -2075,19 +2075,19 @@ BEGIN
     -- using the FOR &lt;record&gt; construct.
     --
 
-    FOR referrer_keys IN select * from cs_referrer_keys order by try_order LOOP
-        a_output := a_output || '' if v_'' || referrer_keys.kind || '' like '''''''''' 
-                 || referrer_keys.key_string || '''''''''' then return '''''' 
-                 || referrer_keys.referrer_type || ''''''; end if;''; 
+    FOR referrer_keys IN SELECT * FROM cs_referrer_keys ORDER BY try_order LOOP
+        a_output := a_output || '' IF v_'' || referrer_keys.kind || '' LIKE '''''''''' 
+                 || referrer_keys.key_string || '''''''''' THEN RETURN '''''' 
+                 || referrer_keys.referrer_type || ''''''; END IF;''; 
     END LOOP; 
   
-    a_output := a_output || '' return null; end; '''' language ''''plpgsql'''';''; 
+    a_output := a_output || '' RETURN NULL; END; '''' LANGUAGE ''''plpgsql'''';''; 
  
     -- This works because we are not substituting any variables
     -- Otherwise it would fail. Look at PERFORM for another way to run functions
     
     EXECUTE a_output; 
-end; 
+END; 
 ' LANGUAGE 'plpgsql';
 </programlisting>
     </para>
@@ -2109,41 +2109,41 @@ end;
     </para>
 
 <programlisting>
-create or replace procedure cs_parse_url(
-    v_url IN varchar,
-    v_host OUT varchar,  -- This will be passed back
-    v_path OUT varchar,  -- This one too
-    v_query OUT varchar) -- And this one
+CREATE OR REPLACE PROCEDURE cs_parse_url(
+    v_url IN VARCHAR,
+    v_host OUT VARCHAR,  -- This will be passed back
+    v_path OUT VARCHAR,  -- This one too
+    v_query OUT VARCHAR) -- And this one
 is
-    a_pos1 integer;
-    a_pos2 integer;
+    a_pos1 INTEGER;
+    a_pos2 INTEGER;
 begin
     v_host := NULL;
     v_path := NULL;
     v_query := NULL;
     a_pos1 := instr(v_url, '//'); -- PostgreSQL doesn't have an instr function
 
-    if a_pos1 = 0 then
-        return;
-    end if;
+    IF a_pos1 = 0 THEN
+        RETURN;
+    END IF;
     a_pos2 := instr(v_url, '/', a_pos1 + 2);
-    if a_pos2 = 0 then
+    IF a_pos2 = 0 THEN
         v_host := substr(v_url, a_pos1 + 2);
         v_path := '/';
-        return;
-    end if;
+        RETURN;
+    END IF;
 
     v_host := substr(v_url, a_pos1 + 2, a_pos2 - a_pos1 - 2);
     a_pos1 := instr(v_url, '?', a_pos2 + 1);
 
-    if a_pos1 = 0 then
+    IF a_pos1 = 0 THEN
         v_path := substr(v_url, a_pos2);
-        return;
-    end if;
+        RETURN;
+    END IF;
 
     v_path := substr(v_url, a_pos2, a_pos1 - a_pos2);
     v_query := substr(v_url, a_pos1 + 1);
-end;
+END;
 /
 show errors;
 </programlisting>
@@ -2152,34 +2152,34 @@ show errors;
      Here is how this procedure could be translated for PostgreSQL:
 
 <programlisting>
-drop function cs_parse_url_host(VARCHAR); 
-create function cs_parse_url_host(VARCHAR) RETURNS VARCHAR AS ' 
-declare 
+DROP FUNCTION cs_parse_url_host(VARCHAR); 
+CREATE FUNCTION cs_parse_url_host(VARCHAR) RETURNS VARCHAR AS ' 
+DECLARE 
     v_url ALIAS FOR $1; 
-    v_host varchar; 
-    v_path varchar; 
-    a_pos1 integer; 
-    a_pos2 integer; 
-    a_pos3 integer; 
-begin 
+    v_host VARCHAR; 
+    v_path VARCHAR; 
+    a_pos1 INTEGER; 
+    a_pos2 INTEGER; 
+    a_pos3 INTEGER; 
+BEGIN 
     v_host := NULL; 
     a_pos1 := instr(v_url,''//''); 
 
-    if a_pos1 = 0 then 
-        return '''';  -- Return a blank
-    end if; 
+    IF a_pos1 = 0 THEN 
+        RETURN '''';  -- Return a blank
+    END IF; 
 
     a_pos2 := instr(v_url,''/'',a_pos1 + 2); 
-    if a_pos2 = 0 then 
+    IF a_pos2 = 0 THEN 
         v_host := substr(v_url, a_pos1 + 2); 
         v_path := ''/''; 
-        return v_host; 
-    end if; 
+        RETURN v_host; 
+    END IF; 
 
     v_host := substr(v_url, a_pos1 + 2, a_pos2 - a_pos1 - 2 ); 
-    return v_host; 
-end; 
-' language 'plpgsql';
+    RETURN v_host; 
+END; 
+' LANGUAGE 'plpgsql';
 </programlisting>
     </para>
    </example>
@@ -2211,30 +2211,30 @@ end;
     An example:
 
 <programlisting>
-create or replace procedure cs_create_job(v_job_id in integer)
-is
-    a_running_job_count integer;
-    pragma autonomous_transaction;<co id="co.plpgsql-porting-pragma">
-begin
-    lock table cs_jobs in exclusive mode;<co id="co.plpgsql-porting-locktable">
+CREATE OR REPLACE PROCEDURE cs_create_job(v_job_id IN INTEGER) IS
+    a_running_job_count INTEGER;
+    PRAGMA AUTONOMOUS_TRANSACTION;<co id="co.plpgsql-porting-pragma">
+BEGIN
+    LOCK TABLE cs_jobs IN EXCLUSIVE MODE;<co id="co.plpgsql-porting-locktable">
 
-    select count(*) into a_running_job_count from cs_jobs
-    where end_stamp is null;
+    SELECT count(*) INTO a_running_job_count 
+    FROM cs_jobs
+    WHERE end_stamp IS NULL;
 
-    if a_running_job_count > 0 then
-        commit; -- free lock<co id="co.plpgsql-porting-commit">
+    IF a_running_job_count > 0 THEN
+        COMMIT; -- free lock<co id="co.plpgsql-porting-commit">
         raise_application_error(-20000, 'Unable to create a new job: a job is currently running.');
-    end if;
+    END IF;
 
-    delete from cs_active_job;
-    insert into cs_active_job(job_id) values(v_job_id);
+    DELETE FROM cs_active_job;
+    INSERT INTO cs_active_job(job_id) VALUES (v_job_id);
 
-    begin
-        insert into cs_jobs(job_id, start_stamp) values(v_job_id, sysdate);
-        exception when dup_val_on_index then null; -- don't worry if it already exists<co id="co.plpgsql-porting-exception">
-    end;
-    commit;
-end;
+    BEGIN
+        INSERT INTO cs_jobs (job_id, start_stamp) VALUES (v_job_id, sysdate);
+        EXCEPTION WHEN dup_val_on_index THEN NULL; -- don't worry if it already exists<co id="co.plpgsql-porting-exception">
+    END;
+    COMMIT;
+END;
 /
 show errors
 </programlisting>
@@ -2282,12 +2282,12 @@ show errors
     So let's see one of the ways we could port this procedure to <application>PL/pgSQL</>:
 
 <programlisting>
-drop function cs_create_job(INTEGER);
-create function cs_create_job(INTEGER) RETURNS INTEGER AS ' DECLARE
+DROP FUNCTION cs_create_job(INTEGER);
+CREATE FUNCTION cs_create_job(INTEGER) RETURNS INTEGER AS ' DECLARE
     v_job_id ALIAS FOR $1;
     a_running_job_count INTEGER;
-    a_num integer;
-    -- pragma autonomous_transaction;
+    a_num INTEGER;
+    -- PRAGMA AUTONOMOUS_TRANSACTION;
 BEGIN
     LOCK TABLE cs_jobs IN EXCLUSIVE MODE;
     SELECT count(*) INTO a_running_job_count 
@@ -2351,29 +2351,25 @@ END;
     System</ulink>):
 
 <programlisting>
-create or replace package body acs
-as
-  function add_user (
-    user_id     in users.user_id%TYPE default null,
-    object_type     in acs_objects.object_type%TYPE
-               default 'user',
-    creation_date   in acs_objects.creation_date%TYPE
-               default sysdate,
-    creation_user   in acs_objects.creation_user%TYPE
-               default null,
-    creation_ip     in acs_objects.creation_ip%TYPE default null,
+CREATE OR REPLACE PACKAGE BODY acs
+AS
+  FUNCTION add_user (
+    user_id     IN users.user_id%TYPE DEFAULT NULL,
+    object_type     IN acs_objects.object_type%TYPE DEFAULT 'user',
+    creation_date   IN acs_objects.creation_date%TYPE DEFAULT sysdate,
+    creation_user   IN acs_objects.creation_user%TYPE DEFAULT NULL,
+    creation_ip     IN acs_objects.creation_ip%TYPE DEFAULT NULL,
   ...
-  ) return users.user_id%TYPE
-  is
+  ) RETURN users.user_id%TYPE
+  IS
     v_user_id       users.user_id%TYPE;
     v_rel_id        membership_rels.rel_id%TYPE;
-  begin
+  BEGIN
     v_user_id := acs_user.new (user_id, object_type, creation_date,
-                creation_user, creation_ip, email,
-    ...
-    return v_user_id;
-  end;
-end acs;
+                creation_user, creation_ip, email, ...
+    RETURN v_user_id;
+  END;
+END acs;
 /
 show errors
 </programlisting>
@@ -2491,7 +2487,7 @@ BEGIN
     pos:= instr($1,$2,1);
     RETURN pos;
 END;
-' language 'plpgsql';
+' LANGUAGE 'plpgsql';
 
 
 DROP FUNCTION instr(VARCHAR,VARCHAR,INTEGER);
@@ -2501,10 +2497,10 @@ DECLARE
     string_to_search ALIAS FOR $2;
     beg_index ALIAS FOR $3;
     pos integer NOT NULL DEFAULT 0;
-    temp_str varchar;
-    beg integer;
-    length integer;
-    ss_length integer;
+    temp_str VARCHAR;
+    beg INTEGER;
+    length INTEGER;
+    ss_length INTEGER;
 BEGIN
     IF beg_index > 0 THEN
 
@@ -2522,7 +2518,6 @@ BEGIN
        beg := length + beg_index - ss_length + 2;
 
        WHILE beg > 0 LOOP
-
            temp_str := substring(string FROM beg FOR ss_length);
 	         pos := position(string_to_search IN temp_str);
 
@@ -2549,7 +2544,7 @@ DECLARE
     beg_index ALIAS FOR $3;
     occur_index ALIAS FOR $4;
     pos integer NOT NULL DEFAULT 0;
-    occur_number integer NOT NULL DEFAULT 0;
+    occur_number INTEGER NOT NULL DEFAULT 0;
     temp_str VARCHAR;
     beg INTEGER;
     i INTEGER;

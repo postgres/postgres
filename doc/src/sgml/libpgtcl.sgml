@@ -917,7 +917,7 @@ given chunk of code for each tuple in the result.
 This would work if table <classname>table</> has fields <structfield>control</> and <structfield>name</>
 (and, perhaps, other fields):
 <ProgramListing>
-	pg_select $pgconn "SELECT * from table" array {
+	pg_select $pgconn "SELECT * FROM table" array {
 		puts [format "%5d %s" array(control) array(name)]
 	}
 </ProgramListing>

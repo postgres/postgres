@@ -281,19 +281,18 @@ If only one candidate remains, use it; else continue to the next step.
 </step>
 <step performance="required">
 <para>
-If any input arguments are <quote>unknown</quote>, check the type categories accepted
-at those argument positions by the remaining candidates.  At each position,
-select "string"
-category if any candidate accepts that category (this bias towards string
-is appropriate since an unknown-type literal does look like a string).
-Otherwise, if all the remaining candidates accept the same type category,
-select that category; otherwise fail because
-the correct choice cannot be deduced without more clues.  Also note whether
-any of the candidates accept a preferred data type within the selected category.
-Now discard operator candidates that do not accept the selected type category;
-furthermore, if any candidate accepts a preferred type at a given argument
-position, discard candidates that accept non-preferred types for that
-argument.
+If any input arguments are <quote>unknown</quote>, check the type
+categories accepted at those argument positions by the remaining
+candidates.  At each position, try the "string" category if any
+candidate accepts that category (this bias towards string is appropriate
+since an unknown-type literal does look like a string). Otherwise, if
+all the remaining candidates accept the same type category, select that
+category; otherwise fail because the correct choice cannot be deduced
+without more clues.  Also note whether any of the candidates accept a
+preferred data type within the selected category. Now discard operator
+candidates that do not accept the selected type category; furthermore,
+if any candidate accepts a preferred type at a given argument position,
+discard candidates that accept non-preferred types for that argument.
 </para>
 </step>
 <step performance="required">
@@ -319,7 +318,7 @@ operator defined in the catalog, and it takes arguments of type
 The scanner assigns an initial type of <type>integer</type> to both arguments
 of this query expression:
 <screen>
-tgl=> select 2 ^ 3 AS "Exp";
+tgl=> SELECT 2 ^ 3 AS "Exp";
  Exp
 -----
    8
@@ -330,7 +329,7 @@ So the parser does a type conversion on both operands and the query
 is equivalent to
 
 <screen>
-tgl=> select CAST(2 AS double precision) ^ CAST(3 AS double precision) AS "Exp";
+tgl=> SELECT CAST(2 AS double precision) ^ CAST(3 AS double precision) AS "Exp";
  Exp
 -----
    8
@@ -340,7 +339,7 @@ tgl=> select CAST(2 AS double precision) ^ CAST(3 AS double precision) AS "Exp";
 or
 
 <screen>
-tgl=> select 2.0 ^ 3.0 AS "Exp";
+tgl=> SELECT 2.0 ^ 3.0 AS "Exp";
  Exp
 -----
    8
@@ -417,7 +416,7 @@ will try to convert that argument to an integer for evaluation of the
 factorial.
 
 <screen>
-tgl=> select (4.3 !);
+tgl=> SELECT (4.3 !);
  ?column?
 ----------
        24
@@ -508,8 +507,7 @@ If only one candidate remains, use it; else continue to the next step.
 <para>
 If any input arguments are <type>unknown</type>, check the type categories accepted
 at those argument positions by the remaining candidates.  At each position,
-select <type>string</type>
-category if any candidate accepts that category (this bias towards string
+try the <type>string</type> category if any candidate accepts that category (this bias towards string
 is appropriate since an unknown-type literal does look like a string).
 Otherwise, if all the remaining candidates accept the same type category,
 select that category; otherwise fail because
@@ -543,7 +541,7 @@ So the following query automatically converts the <type>int2</type> argument
 to <type>int4</type>:
 
 <screen>
-tgl=> select int4fac(int2 '4');
+tgl=> SELECT int4fac(int2 '4');
  int4fac
 ---------
       24
@@ -552,7 +550,7 @@ tgl=> select int4fac(int2 '4');
 
 and is actually transformed by the parser to
 <screen>
-tgl=> select int4fac(int4(int2 '4'));
+tgl=> SELECT int4fac(int4(int2 '4'));
  int4fac
 ---------
       24
@@ -573,7 +571,7 @@ only one takes two arguments, of types <type>text</type> and <type>int4</type>.
 If called with a string constant of unspecified type, the type is matched up
 directly with the only candidate function type:
 <screen>
-tgl=> select substr('1234', 3);
+tgl=> SELECT substr('1234', 3);
  substr
 --------
      34
@@ -585,7 +583,7 @@ tgl=> select substr('1234', 3);
 If the string is declared to be of type <type>varchar</type>, as might be the case
 if it comes from a table, then the parser will try to coerce it to become <type>text</type>:
 <screen>
-tgl=> select substr(varchar '1234', 3);
+tgl=> SELECT substr(varchar '1234', 3);
  substr
 --------
      34
@@ -593,7 +591,7 @@ tgl=> select substr(varchar '1234', 3);
 </screen>
 which is transformed by the parser to become
 <screen>
-tgl=> select substr(text(varchar '1234'), 3);
+tgl=> SELECT substr(text(varchar '1234'), 3);
  substr
 --------
      34
@@ -615,7 +613,7 @@ explicit type conversion call is really inserted in this case.
 And, if the function is called with an <type>int4</type>, the parser will
 try to convert that to <type>text</type>:
 <screen>
-tgl=> select substr(1234, 3);
+tgl=> SELECT substr(1234, 3);
  substr
 --------
      34
@@ -623,7 +621,7 @@ tgl=> select substr(1234, 3);
 </screen>
 actually executes as
 <screen>
-tgl=> select substr(text(1234), 3);
+tgl=> SELECT substr(text(1234), 3);
  substr
 --------
      34

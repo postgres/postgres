@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/Attic/jdbc.sgml,v 1.25 2001/09/13 15:55:22 petere Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/Attic/jdbc.sgml,v 1.26 2001/10/12 23:32:33 momjian Exp $
 -->
 
  <chapter id="jdbc">
@@ -2311,21 +2311,21 @@ public void unlink(int oid) throws SQLException
     One of the consequences of this, is that you can have one table
     refer to a row in another table.  For example:
 <screen>
-test=> create table users (username name,fullname text);
+test=> CREATE TABLE users (username NAME,fullname TEXT);
 CREATE
-test=> create table server (servername name,adminuser users);
+test=> CREATE TABLE server (servername NAME,adminuser users);
 CREATE
-test=> insert into users values ('peter','Peter Mount');
+test=> INSERT INTO users VALUES ('peter','Peter Mount');
 INSERT 2610132 1
-test=> insert into server values ('maidast',2610132::users);
+test=> INSERT INTO server VALUES ('maidast',2610132::users);
 INSERT 2610133 1
-test=> select * from users;
+test=> SELECT * FROM users;
 username|fullname      
 --------+--------------
 peter   |Peter Mount   
 (1 row)
 
-test=> select * from server;
+test=> SELECT * FROM server;
 servername|adminuser
 ----------+---------
 maidast   |  2610132
