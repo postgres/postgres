@@ -9,7 +9,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/commands/dbcommands.c,v 1.103 2002/09/03 21:45:41 petere Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/commands/dbcommands.c,v 1.104 2002/09/03 22:17:34 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -328,7 +328,12 @@ createdb(const CreatedbStmt *stmt)
 	/* do not set datpath to null, GetRawDatabaseInfo won't cope */
 	new_record[Anum_pg_database_datpath - 1] =
 		DirectFunctionCall1(textin, CStringGetDatum(dbpath ? dbpath : ""));
-
+	/*
+	 * We deliberately set datconfig and datacl to defaults (NULL), rather
+	 * than copying them from the template database.  Copying datacl would
+	 * be a bad idea when the owner is not the same as the template's owner.
+	 * It's more debatable whether datconfig should be copied.
+	 */
 	new_record_nulls[Anum_pg_database_datconfig - 1] = 'n';
 	new_record_nulls[Anum_pg_database_datacl - 1] = 'n';
 

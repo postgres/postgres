@@ -27,7 +27,7 @@
 # Portions Copyright (c) 1996-2002, PostgreSQL Global Development Group
 # Portions Copyright (c) 1994, Regents of the University of California
 #
-# $Header: /cvsroot/pgsql/src/bin/initdb/Attic/initdb.sh,v 1.171 2002/09/03 21:45:43 petere Exp $
+# $Header: /cvsroot/pgsql/src/bin/initdb/Attic/initdb.sh,v 1.172 2002/09/03 22:17:35 tgl Exp $
 #
 #-------------------------------------------------------------------------
 
@@ -1063,6 +1063,14 @@ UPDATE pg_database SET \
 
 UPDATE pg_database SET datlastsysoid = \
     (SELECT oid - 1 FROM pg_database WHERE datname = 'template0');
+
+-- Explicitly revoke public create-schema and create-temp-table privileges
+-- in template1 and template0; else the latter would be on by default
+
+REVOKE CREATE,TEMPORARY ON DATABASE template1 FROM public;
+REVOKE CREATE,TEMPORARY ON DATABASE template0 FROM public;
+
+-- Finally vacuum to clean up dead rows in pg_database
 
 VACUUM FULL pg_database;
 EOF
