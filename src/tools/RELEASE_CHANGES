@@ -41,7 +41,7 @@ but are not limited to:
 
 3. Removing a field from a public structure.
 
-3. Adding a field to a public structure, unless steps have been
+4. Adding a field to a public structure, unless steps have been
 previously taken to shield users from such a change, for example by
 such structures only ever being allocated/instantiated by a library
 function which would give the new field a suitable default value.

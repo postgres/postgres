@@ -7756,11 +7756,11 @@ if test $ac_cv_header_zlib_h = yes; then
   :
 else
   { { echo "$as_me:$LINENO: error: zlib header not found
-If you have readline already installed, see config.log for details on the
+If you have zlib already installed, see config.log for details on the
 failure.  It is possible the compiler isn't looking in the proper directory.
 Use --without-zlib to disable zlib support." >&5
 echo "$as_me: error: zlib header not found
-If you have readline already installed, see config.log for details on the
+If you have zlib already installed, see config.log for details on the
 failure.  It is possible the compiler isn't looking in the proper directory.
 Use --without-zlib to disable zlib support." >&2;}
    { (exit 1); exit 1; }; }
