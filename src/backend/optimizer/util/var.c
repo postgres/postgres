@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/optimizer/util/var.c,v 1.45 2003/01/16 18:26:02 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/optimizer/util/var.c,v 1.46 2003/01/17 02:01:16 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -18,16 +18,6 @@
 #include "optimizer/clauses.h"
 #include "optimizer/var.h"
 #include "parser/parsetree.h"
-
-
-/* macros borrowed from expression_tree_mutator */
-
-#define FLATCOPY(newnode, node, nodetype)  \
-	( (newnode) = makeNode(nodetype), \
-	  memcpy((newnode), (node), sizeof(nodetype)) )
-
-#define MUTATE(newfield, oldfield, fieldtype, mutator, context)  \
-		( (newfield) = (fieldtype) mutator((Node *) (oldfield), (context)) )
 
 
 typedef struct
@@ -87,14 +77,12 @@ pull_varnos(Node *node)
 
 	/*
 	 * Must be prepared to start with a Query or a bare expression tree;
-	 * if it's a Query, go straight to query_tree_walker to make sure that
-	 * sublevels_up doesn't get incremented prematurely.
+	 * if it's a Query, we don't want to increment sublevels_up.
 	 */
-	if (node && IsA(node, Query))
-		query_tree_walker((Query *) node, pull_varnos_walker,
-						  (void *) &context, 0);
-	else
-		pull_varnos_walker(node, &context);
+	query_or_expression_tree_walker(node,
+									pull_varnos_walker,
+									(void *) &context,
+									0);
 
 	return context.varlist;
 }
@@ -111,24 +99,6 @@ pull_varnos_walker(Node *node, pull_varnos_context *context)
 		if (var->varlevelsup == context->sublevels_up &&
 			!intMember(var->varno, context->varlist))
 			context->varlist = lconsi(var->varno, context->varlist);
-		return false;
-	}
-	if (is_subplan(node))
-	{
-		/*
-		 * Already-planned subquery.  Examine the args list (parameters to
-		 * be passed to subquery), as well as the exprs list which is
-		 * executed by the outer query.  But short-circuit recursion into
-		 * the subquery itself, which would be a waste of effort.
-		 */
-		SubPlan *subplan = (SubPlan *) node;
-
-		if (pull_varnos_walker((Node *) subplan->exprs,
-							   context))
-			return true;
-		if (pull_varnos_walker((Node *) subplan->args,
-							   context))
-			return true;
 		return false;
 	}
 	if (IsA(node, Query))
@@ -169,15 +139,12 @@ contain_var_reference(Node *node, int varno, int varattno, int levelsup)
 
 	/*
 	 * Must be prepared to start with a Query or a bare expression tree;
-	 * if it's a Query, go straight to query_tree_walker to make sure that
-	 * sublevels_up doesn't get incremented prematurely.
+	 * if it's a Query, we don't want to increment sublevels_up.
 	 */
-	if (node && IsA(node, Query))
-		return query_tree_walker((Query *) node,
-								 contain_var_reference_walker,
-								 (void *) &context, 0);
-	else
-		return contain_var_reference_walker(node, &context);
+	return query_or_expression_tree_walker(node,
+										   contain_var_reference_walker,
+										   (void *) &context,
+										   0);
 }
 
 static bool
@@ -193,24 +160,6 @@ contain_var_reference_walker(Node *node,
 		if (var->varno == context->varno &&
 			var->varattno == context->varattno &&
 			var->varlevelsup == context->sublevels_up)
-			return true;
-		return false;
-	}
-	if (is_subplan(node))
-	{
-		/*
-		 * Already-planned subquery.  Examine the args list (parameters to
-		 * be passed to subquery), as well as the exprs list which is
-		 * executed by the outer query.  But short-circuit recursion into
-		 * the subquery itself, which would be a waste of effort.
-		 */
-		SubPlan *subplan = (SubPlan *) node;
-
-		if (contain_var_reference_walker((Node *) subplan->exprs,
-										 context))
-			return true;
-		if (contain_var_reference_walker((Node *) subplan->args,
-										 context))
 			return true;
 		return false;
 	}
@@ -361,32 +310,16 @@ flatten_join_alias_vars_mutator(Node *node,
 		return flatten_join_alias_vars_mutator(newvar, context);
 	}
 
-	/*
-	 * Since expression_tree_mutator won't touch subselects, we have to
-	 * handle them specially.
-	 */
-	if (IsA(node, SubLink))
-	{
-		SubLink    *sublink = (SubLink *) node;
-		SubLink    *newnode;
-
-		FLATCOPY(newnode, sublink, SubLink);
-		MUTATE(newnode->lefthand, sublink->lefthand, List *,
-			   flatten_join_alias_vars_mutator, context);
-		MUTATE(newnode->subselect, sublink->subselect, Node *,
-			   flatten_join_alias_vars_mutator, context);
-		return (Node *) newnode;
-	}
 	if (IsA(node, Query))
 	{
 		/* Recurse into RTE subquery or not-yet-planned sublink subquery */
-		Query	   *query = (Query *) node;
 		Query	   *newnode;
 
-		FLATCOPY(newnode, query, Query);
 		context->sublevels_up++;
-		query_tree_mutator(newnode, flatten_join_alias_vars_mutator,
-						   (void *) context, QTW_IGNORE_JOINALIASES);
+		newnode = query_tree_mutator((Query *) node,
+									 flatten_join_alias_vars_mutator,
+									 (void *) context,
+									 QTW_IGNORE_JOINALIASES);
 		context->sublevels_up--;
 		return (Node *) newnode;
 	}

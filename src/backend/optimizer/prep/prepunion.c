@@ -14,7 +14,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/optimizer/prep/prepunion.c,v 1.86 2003/01/15 19:35:44 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/optimizer/prep/prepunion.c,v 1.87 2003/01/17 02:01:16 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -34,11 +34,6 @@
 #include "parser/parsetree.h"
 #include "utils/lsyscache.h"
 
-/* macros borrowed from expression_tree_mutator */
-
-#define FLATCOPY(newnode, node, nodetype)  \
-	( (newnode) = makeNode(nodetype), \
-	  memcpy((newnode), (node), sizeof(nodetype)) )
 
 typedef struct
 {
@@ -765,12 +760,12 @@ adjust_inherited_attrs(Node *node,
 	 */
 	if (node && IsA(node, Query))
 	{
-		Query	   *query = (Query *) node;
 		Query	   *newnode;
 
-		FLATCOPY(newnode, query, Query);
-		query_tree_mutator(newnode, adjust_inherited_attrs_mutator,
-						   (void *) &context, QTW_IGNORE_SUBQUERIES);
+		newnode = query_tree_mutator((Query *) node,
+									 adjust_inherited_attrs_mutator,
+									 (void *) &context,
+									 QTW_IGNORE_RT_SUBQUERIES);
 		if (newnode->resultRelation == old_rt_index)
 		{
 			newnode->resultRelation = new_rt_index;
@@ -899,6 +894,7 @@ adjust_inherited_attrs_mutator(Node *node,
 	 * already have been converted to subplans before we see them.
 	 */
 	Assert(!IsA(node, SubLink));
+	Assert(!IsA(node, Query));
 
 	/*
 	 * BUT: although we don't need to recurse into subplans, we do need to

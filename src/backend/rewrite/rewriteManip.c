@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/rewrite/rewriteManip.c,v 1.68 2002/12/12 15:49:40 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/rewrite/rewriteManip.c,v 1.69 2003/01/17 02:01:16 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -21,15 +21,6 @@
 #include "rewrite/rewriteManip.h"
 #include "utils/lsyscache.h"
 
-
-/* macros borrowed from expression_tree_mutator */
-
-#define FLATCOPY(newnode, node, nodetype)  \
-	( (newnode) = makeNode(nodetype), \
-	  memcpy((newnode), (node), sizeof(nodetype)) )
-
-#define MUTATE(newfield, oldfield, fieldtype, mutator, context)  \
-		( (newfield) = (fieldtype) mutator((Node *) (oldfield), (context)) )
 
 static bool checkExprHasAggs_walker(Node *node, void *context);
 static bool checkExprHasSubLink_walker(Node *node, void *context);
@@ -47,11 +38,10 @@ checkExprHasAggs(Node *node)
 	 * If a Query is passed, examine it --- but we will not recurse into
 	 * sub-Queries.
 	 */
-	if (node && IsA(node, Query))
-		return query_tree_walker((Query *) node, checkExprHasAggs_walker,
-								 NULL, QTW_IGNORE_SUBQUERIES);
-	else
-		return checkExprHasAggs_walker(node, NULL);
+	return query_or_expression_tree_walker(node,
+										   checkExprHasAggs_walker,
+										   NULL,
+										   QTW_IGNORE_RT_SUBQUERIES);
 }
 
 static bool
@@ -77,11 +67,10 @@ checkExprHasSubLink(Node *node)
 	 * If a Query is passed, examine it --- but we will not recurse into
 	 * sub-Queries.
 	 */
-	if (node && IsA(node, Query))
-		return query_tree_walker((Query *) node, checkExprHasSubLink_walker,
-								 NULL, QTW_IGNORE_SUBQUERIES);
-	else
-		return checkExprHasSubLink_walker(node, NULL);
+	return query_or_expression_tree_walker(node,
+										   checkExprHasSubLink_walker,
+										   NULL,
+										   QTW_IGNORE_RT_SUBQUERIES);
 }
 
 static bool
@@ -380,14 +369,12 @@ IncrementVarSublevelsUp(Node *node, int delta_sublevels_up,
 
 	/*
 	 * Must be prepared to start with a Query or a bare expression tree;
-	 * if it's a Query, go straight to query_tree_walker to make sure that
-	 * sublevels_up doesn't get incremented prematurely.
+	 * if it's a Query, we don't want to increment sublevels_up.
 	 */
-	if (node && IsA(node, Query))
-		query_tree_walker((Query *) node, IncrementVarSublevelsUp_walker,
-						  (void *) &context, 0);
-	else
-		IncrementVarSublevelsUp_walker(node, &context);
+	query_or_expression_tree_walker(node,
+									IncrementVarSublevelsUp_walker,
+									(void *) &context,
+									0);
 }
 
 
@@ -461,14 +448,12 @@ rangeTableEntry_used(Node *node, int rt_index, int sublevels_up)
 
 	/*
 	 * Must be prepared to start with a Query or a bare expression tree;
-	 * if it's a Query, go straight to query_tree_walker to make sure that
-	 * sublevels_up doesn't get incremented prematurely.
+	 * if it's a Query, we don't want to increment sublevels_up.
 	 */
-	if (node && IsA(node, Query))
-		return query_tree_walker((Query *) node, rangeTableEntry_used_walker,
-								 (void *) &context, 0);
-	else
-		return rangeTableEntry_used_walker(node, &context);
+	return query_or_expression_tree_walker(node,
+										   rangeTableEntry_used_walker,
+										   (void *) &context,
+										   0);
 }
 
 
@@ -527,14 +512,12 @@ attribute_used(Node *node, int rt_index, int attno, int sublevels_up)
 
 	/*
 	 * Must be prepared to start with a Query or a bare expression tree;
-	 * if it's a Query, go straight to query_tree_walker to make sure that
-	 * sublevels_up doesn't get incremented prematurely.
+	 * if it's a Query, we don't want to increment sublevels_up.
 	 */
-	if (node && IsA(node, Query))
-		return query_tree_walker((Query *) node, attribute_used_walker,
-								 (void *) &context, 0);
-	else
-		return attribute_used_walker(node, &context);
+	return query_or_expression_tree_walker(node,
+										   attribute_used_walker,
+										   (void *) &context,
+										   0);
 }
 
 
@@ -820,30 +803,16 @@ ResolveNew_mutator(Node *node, ResolveNew_context *context)
 		/* otherwise fall through to copy the var normally */
 	}
 
-	/*
-	 * Since expression_tree_mutator won't touch subselects, we have to
-	 * handle them specially.
-	 */
-	if (IsA(node, SubLink))
-	{
-		SubLink    *sublink = (SubLink *) node;
-		SubLink    *newnode;
-
-		FLATCOPY(newnode, sublink, SubLink);
-		MUTATE(newnode->lefthand, sublink->lefthand, List *,
-			   ResolveNew_mutator, context);
-		MUTATE(newnode->subselect, sublink->subselect, Node *,
-			   ResolveNew_mutator, context);
-		return (Node *) newnode;
-	}
 	if (IsA(node, Query))
 	{
-		Query	   *query = (Query *) node;
+		/* Recurse into RTE subquery or not-yet-planned sublink subquery */
 		Query	   *newnode;
 
-		FLATCOPY(newnode, query, Query);
 		context->sublevels_up++;
-		query_tree_mutator(newnode, ResolveNew_mutator, context, 0);
+		newnode = query_tree_mutator((Query *) node,
+									 ResolveNew_mutator,
+									 (void *) context,
+									 0);
 		context->sublevels_up--;
 		return (Node *) newnode;
 	}
@@ -865,21 +834,12 @@ ResolveNew(Node *node, int target_varno, int sublevels_up,
 
 	/*
 	 * Must be prepared to start with a Query or a bare expression tree;
-	 * if it's a Query, go straight to query_tree_mutator to make sure
-	 * that sublevels_up doesn't get incremented prematurely.
+	 * if it's a Query, we don't want to increment sublevels_up.
 	 */
-	if (node && IsA(node, Query))
-	{
-		Query	   *query = (Query *) node;
-		Query	   *newnode;
-
-		FLATCOPY(newnode, query, Query);
-		query_tree_mutator(newnode, ResolveNew_mutator,
-						   (void *) &context, 0);
-		return (Node *) newnode;
-	}
-	else
-		return ResolveNew_mutator(node, &context);
+	return query_or_expression_tree_mutator(node,
+											ResolveNew_mutator,
+											(void *) &context,
+											0);
 }
 
 
@@ -959,31 +919,16 @@ HandleRIRAttributeRule_mutator(Node *node,
 		/* otherwise fall through to copy the var normally */
 	}
 
-	/*
-	 * Since expression_tree_mutator won't touch subselects, we have to
-	 * handle them specially.
-	 */
-	if (IsA(node, SubLink))
-	{
-		SubLink    *sublink = (SubLink *) node;
-		SubLink    *newnode;
-
-		FLATCOPY(newnode, sublink, SubLink);
-		MUTATE(newnode->lefthand, sublink->lefthand, List *,
-			   HandleRIRAttributeRule_mutator, context);
-		MUTATE(newnode->subselect, sublink->subselect, Node *,
-			   HandleRIRAttributeRule_mutator, context);
-		return (Node *) newnode;
-	}
 	if (IsA(node, Query))
 	{
-		Query	   *query = (Query *) node;
+		/* Recurse into RTE subquery or not-yet-planned sublink subquery */
 		Query	   *newnode;
 
-		FLATCOPY(newnode, query, Query);
 		context->sublevels_up++;
-		query_tree_mutator(newnode, HandleRIRAttributeRule_mutator,
-						   context, 0);
+		newnode = query_tree_mutator((Query *) node,
+									 HandleRIRAttributeRule_mutator,
+									 (void *) context,
+									 0);
 		context->sublevels_up--;
 		return (Node *) newnode;
 	}
@@ -1010,8 +955,10 @@ HandleRIRAttributeRule(Query *parsetree,
 	context.badsql = badsql;
 	context.sublevels_up = 0;
 
-	query_tree_mutator(parsetree, HandleRIRAttributeRule_mutator,
-					   (void *) &context, 0);
+	query_tree_mutator(parsetree,
+					   HandleRIRAttributeRule_mutator,
+					   (void *) &context,
+					   QTW_DONT_COPY_QUERY);
 }
 
 #endif   /* NOT_USED */

@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/rewrite/rewriteDefine.c,v 1.81 2002/12/05 04:04:42 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/rewrite/rewriteDefine.c,v 1.82 2003/01/17 02:01:16 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -467,7 +467,7 @@ setRuleCheckAsUser(Query *qry, AclId userid)
 	/* ignore subqueries in rtable because we already processed them */
 	if (qry->hasSubLinks)
 		query_tree_walker(qry, setRuleCheckAsUser_walker, (void *) &userid,
-						  QTW_IGNORE_SUBQUERIES);
+						  QTW_IGNORE_RT_SUBQUERIES);
 }
 
 /*

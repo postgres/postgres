@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/rewrite/rewriteHandler.c,v 1.115 2002/12/17 01:18:32 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/rewrite/rewriteHandler.c,v 1.116 2003/01/17 02:01:16 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -820,7 +820,7 @@ fireRIRrules(Query *parsetree)
 	 */
 	if (parsetree->hasSubLinks)
 		query_tree_walker(parsetree, fireRIRonSubLink, NULL,
-						  QTW_IGNORE_SUBQUERIES);
+						  QTW_IGNORE_RT_SUBQUERIES);
 
 	/*
 	 * If the query was marked having aggregates, check if this is still

@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/optimizer/plan/subselect.c,v 1.66 2003/01/13 18:10:53 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/optimizer/plan/subselect.c,v 1.67 2003/01/17 02:01:11 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -628,12 +628,12 @@ process_sublinks_mutator(Node *node, bool *isTopQual)
 	}
 
 	/*
-	 * Note that we will never see a SubPlan expression in the input
-	 * (since this is the very routine that creates 'em to begin with). So
-	 * the code in expression_tree_mutator() that might do inappropriate
-	 * things with SubPlans or SubLinks will not be exercised.
+	 * We should never see a SubPlan expression in the input (since this is
+	 * the very routine that creates 'em to begin with).  We shouldn't find
+	 * ourselves invoked directly on a Query, either.
 	 */
 	Assert(!is_subplan(node));
+	Assert(!IsA(node, Query));
 
 	/*
 	 * If we recurse down through anything other than a List node, we are

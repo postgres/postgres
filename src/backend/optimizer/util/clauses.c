@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/optimizer/util/clauses.c,v 1.122 2003/01/15 19:35:44 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/optimizer/util/clauses.c,v 1.123 2003/01/17 02:01:16 tgl Exp $
  *
  * HISTORY
  *	  AUTHOR			DATE			MAJOR EVENT
@@ -2153,7 +2153,7 @@ substitute_actual_parameters_mutator(Node *node,
  *		{
  *			adjust context for subquery;
  *			result = query_tree_walker((Query *) node, my_walker, context,
- *									   0); // to visit rtable items too
+ *									   0); // adjust flags as needed
  *			restore context if needed;
  *			return result;
  *		}
@@ -2414,7 +2414,7 @@ query_tree_walker(Query *query,
 				/* nothing to do */
 				break;
 			case RTE_SUBQUERY:
-				if (! (flags & QTW_IGNORE_SUBQUERIES))
+				if (! (flags & QTW_IGNORE_RT_SUBQUERIES))
 					if (walker(rte->subquery, context))
 						return true;
 				break;
@@ -2477,17 +2477,22 @@ query_tree_walker(Query *query,
  * expression_tree_mutator include all those normally found in target lists
  * and qualifier clauses during the planning stage.
  *
+ * expression_tree_mutator will handle SubLink nodes by recursing normally
+ * into the "lefthand" arguments (which are expressions belonging to the outer
+ * plan).  It will also call the mutator on the sub-Query node; however, when
+ * expression_tree_mutator itself is called on a Query node, it does nothing
+ * and returns the unmodified Query node.  The net effect is that unless the
+ * mutator does something special at a Query node, sub-selects will not be
+ * visited or modified; the original sub-select will be linked to by the new
+ * SubLink node.  Mutators that want to descend into sub-selects will usually
+ * do so by recognizing Query nodes and calling query_tree_mutator (below).
+ *
  * expression_tree_mutator will handle a SubPlan node by recursing into
  * the "exprs" and "args" lists (which belong to the outer plan), but it
  * will simply copy the link to the inner plan, since that's typically what
  * expression tree mutators want.  A mutator that wants to modify the subplan
  * can force appropriate behavior by recognizing SubPlan expression nodes
  * and doing the right thing.
- *
- * SubLink nodes are handled by recursing into the "lefthand" argument list
- * only.  (A SubLink will be seen only if the tree has not yet been
- * processed by subselect.c.)  Again, this can be overridden by the mutator,
- * but it seems to be the most useful default behavior.
  *--------------------
  */
 
@@ -2593,14 +2598,16 @@ expression_tree_mutator(Node *node,
 			break;
 		case T_SubLink:
 			{
-				/*
-				 * We transform the lefthand side, but not the subquery.
-				 */
 				SubLink    *sublink = (SubLink *) node;
 				SubLink    *newnode;
 
 				FLATCOPY(newnode, sublink, SubLink);
 				MUTATE(newnode->lefthand, sublink->lefthand, List *);
+				/*
+				 * Also invoke the mutator on the sublink's Query node, so
+				 * it can recurse into the sub-query if it wants to.
+				 */
+				MUTATE(newnode->subselect, sublink->subselect, Node *);
 				return (Node *) newnode;
 			}
 			break;
@@ -2707,6 +2714,9 @@ expression_tree_mutator(Node *node,
 				return (Node *) newnode;
 			}
 			break;
+		case T_Query:
+			/* Do nothing with a sub-Query, per discussion above */
+			return node;
 		case T_List:
 			{
 				/*
@@ -2781,17 +2791,17 @@ expression_tree_mutator(Node *node,
  * mutator intends to descend into subqueries.	It is also useful for
  * descending into subqueries within a mutator.
  *
- * The specified Query node is modified-in-place; do a FLATCOPY() beforehand
- * if you don't want to change the original.  All substructure is safely
- * copied, however.
- *
- * Some callers want to suppress mutating of certain items in the sub-Query,
+ * Some callers want to suppress mutating of certain items in the Query,
  * typically because they need to process them specially, or don't actually
  * want to recurse into subqueries.  This is supported by the flags argument,
  * which is the bitwise OR of flag values to suppress mutating of
  * indicated items.  (More flag bits may be added as needed.)
+ *
+ * Normally the Query node itself is copied, but some callers want it to be
+ * modified in-place; they must pass QTW_DONT_COPY_QUERY in flags.  All
+ * modified substructure is safely copied in any case.
  */
-void
+Query *
 query_tree_mutator(Query *query,
 				   Node *(*mutator) (),
 				   void *context,
@@ -2801,6 +2811,14 @@ query_tree_mutator(Query *query,
 	List	   *rt;
 
 	Assert(query != NULL && IsA(query, Query));
+
+	if (! (flags & QTW_DONT_COPY_QUERY))
+	{
+		Query  *newquery;
+
+		FLATCOPY(newquery, query, Query);
+		query = newquery;
+	}
 
 	MUTATE(query->targetList, query->targetList, List *);
 	MUTATE(query->jointree, query->jointree, FromExpr *);
@@ -2818,7 +2836,7 @@ query_tree_mutator(Query *query,
 				/* nothing to do, don't bother to make a copy */
 				break;
 			case RTE_SUBQUERY:
-				if (! (flags & QTW_IGNORE_SUBQUERIES))
+				if (! (flags & QTW_IGNORE_RT_SUBQUERIES))
 				{
 					FLATCOPY(newrte, rte, RangeTblEntry);
 					CHECKFLATCOPY(newrte->subquery, rte->subquery, Query);
@@ -2843,4 +2861,51 @@ query_tree_mutator(Query *query,
 		newrt = lappend(newrt, rte);
 	}
 	query->rtable = newrt;
+	return query;
+}
+
+/*
+ * query_or_expression_tree_walker --- hybrid form
+ *
+ * This routine will invoke query_tree_walker if called on a Query node,
+ * else will invoke the walker directly.  This is a useful way of starting
+ * the recursion when the walker's normal change of state is not appropriate
+ * for the outermost Query node.
+ */
+bool
+query_or_expression_tree_walker(Node *node,
+								bool (*walker) (),
+								void *context,
+								int flags)
+{
+	if (node && IsA(node, Query))
+		return query_tree_walker((Query *) node,
+								 walker,
+								 context,
+								 flags);
+	else
+		return walker(node, context);
+}
+
+/*
+ * query_or_expression_tree_mutator --- hybrid form
+ *
+ * This routine will invoke query_tree_mutator if called on a Query node,
+ * else will invoke the mutator directly.  This is a useful way of starting
+ * the recursion when the mutator's normal change of state is not appropriate
+ * for the outermost Query node.
+ */
+Node *
+query_or_expression_tree_mutator(Node *node,
+								 Node *(*mutator) (),
+								 void *context,
+								 int flags)
+{
+	if (node && IsA(node, Query))
+		return (Node *) query_tree_mutator((Query *) node,
+										   mutator,
+										   context,
+										   flags);
+	else
+		return mutator(node, context);
 }
