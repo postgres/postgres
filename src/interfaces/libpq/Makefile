@@ -7,7 +7,7 @@
 #
 #
 # IDENTIFICATION
-#    $Header: /cvsroot/pgsql/src/interfaces/libpq/Makefile,v 1.2 1996/07/29 20:52:24 scrappy Exp $
+#    $Header: /cvsroot/pgsql/src/interfaces/libpq/Makefile,v 1.3 1996/08/01 05:04:29 scrappy Exp $
 #
 #-------------------------------------------------------------------------
 
@@ -66,7 +66,7 @@ HEADERFILES += port/hpux/fixade.h
 endif
 
 
-TEMPDIR=/tmp
+TEMPDIR=obj
 
 install-headers: beforeinstall-headers
 	@for i in ${HEADERFILES}; do \
