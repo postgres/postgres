@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/ref/lock.sgml,v 1.15 2000/03/23 21:38:57 momjian Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/ref/lock.sgml,v 1.16 2000/03/23 22:25:35 momjian Exp $
 Postgres documentation
 -->
 
@@ -123,7 +123,7 @@ LOCK [ TABLE ] <replaceable class="PARAMETER">name</replaceable> IN SHARE ROW EX
        </note>
 
        <para>
-	This is the least restrictive lock mode which conflicts only with 
+	This is the least restrictive lock mode.  It conflicts only with
 	ACCESS EXCLUSIVE mode. It is intended to protect a table being
 	modified by concurrent <command>ALTER TABLE</command>, 
 	<command>DROP TABLE</command> and <command>VACUUM</command> 
@@ -137,8 +137,8 @@ LOCK [ TABLE ] <replaceable class="PARAMETER">name</replaceable> IN SHARE ROW EX
       <listitem>
        <note>
        <para>
-	 Automatically acquired by any <command>SELECT FOR UPDATE</command> statement.
-	 While it is a SHARE lock, there is the intention to later upgrade
+	 Automatically acquired by <command>SELECT...FOR UPDATE</command>.
+	 While it is a shared lock, there is the intention to later upgrade
 	 this to an EXCLUSIVE lock.
 	</para>
        </note>
@@ -154,15 +154,15 @@ LOCK [ TABLE ] <replaceable class="PARAMETER">name</replaceable> IN SHARE ROW EX
       <listitem>
        <note>
 	<para>
-	 Automatically acquired by any <command>UPDATE</command>, 
-	 <command>DELETE</command>, <command>INSERT</command> statement.
+	 Automatically acquired by <command>UPDATE</command>, 
+	 <command>DELETE</command>, and <command>INSERT</command>
+	 statements.
         </para>
        </note>
 
        <para>
 	 Conflicts with SHARE, SHARE ROW EXCLUSIVE, EXCLUSIVE and
-	 ACCESS EXCLUSIVE modes. Generally means that a transaction
-	 updated or inserted some tuples in a table.
+	 ACCESS EXCLUSIVE modes.
        </para>
       </listitem>
      </varlistentry>
@@ -172,8 +172,8 @@ LOCK [ TABLE ] <replaceable class="PARAMETER">name</replaceable> IN SHARE ROW EX
       <listitem>
        <note>
        <para>
-	 Automatically acquired by any <command>CREATE INDEX</command> statement.
-	 Share-locks entire table.
+	 Automatically acquired by <command>CREATE INDEX</command>.
+	 Share-locks the entire table.
        </para>
        </note>
 
@@ -188,10 +188,14 @@ LOCK [ TABLE ] <replaceable class="PARAMETER">name</replaceable> IN SHARE ROW EX
      <varlistentry>
       <term>SHARE ROW EXCLUSIVE MODE</term>
       <listitem>
+       <note>
+       <para>
+	This is like EXCLUSIVE MODE, but allows SHARE ROW locks
+        by others.
+       </para>
+       </note>
 
        <para>
-	This is like an EXCLUSIVE lock, but allows SHARE ROW locks
-        by others.
         Conflicts with ROW EXCLUSIVE, SHARE, SHARE ROW EXCLUSIVE,
 	EXCLUSIVE and ACCESS EXCLUSIVE modes.
        </para>
@@ -202,11 +206,16 @@ LOCK [ TABLE ] <replaceable class="PARAMETER">name</replaceable> IN SHARE ROW EX
       <term>EXCLUSIVE MODE</term>
       <listitem>
 
+       <note>
+       <para>
+	This mode is yet more restrictive than SHARE ROW EXCLUSIVE.  
+	It blocks all concurrent ROW SHARE/SELECT...FOR UPDATE queries.
+       </para>
+       </note>
+
        <para>
 	Conflicts with ROW SHARE, ROW EXCLUSIVE, SHARE, SHARE ROW EXCLUSIVE,
-	EXCLUSIVE and ACCESS EXCLUSIVE modes. This mode is yet more
-	restrictive than that of SHARE ROW EXCLUSIVE; it blocks all concurrent
-	SHARE ROW/SELECT FOR UPDATE queries.
+	EXCLUSIVE and ACCESS EXCLUSIVE modes.
        </para>
       </listitem>
      </varlistentry>
@@ -218,14 +227,11 @@ LOCK [ TABLE ] <replaceable class="PARAMETER">name</replaceable> IN SHARE ROW EX
 	<para>
 	 Automatically acquired by <command>ALTER TABLE</command>,
 	 <command>DROP TABLE</command>, <command>VACUUM</command> statements.
+	 This is the most restrictive lock mode which conflicts with all other
+	 lock modes and protects a locked table from any concurrent operations.
 	</para>
        </note>
 
-       <para>
-	This is the most restrictive lock mode which conflicts with all other
-	lock modes and protects a locked table from any concurrent operations.
-       </para>
-	   
        <note>
 	<para>
 	 This lock mode is also acquired by an unqualified
