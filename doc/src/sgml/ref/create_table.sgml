@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/ref/create_table.sgml,v 1.30 2000/06/09 01:43:57 momjian Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/ref/create_table.sgml,v 1.31 2000/07/14 15:27:14 thomas Exp $
 Postgres documentation
 -->
 
@@ -1849,7 +1849,7 @@ CREATE TABLE distributors (
   <title>
    Compatibility
   </title>
-  
+
   <refsect2 id="R2-SQL-CREATETABLE-4">
    <title>
     SQL92

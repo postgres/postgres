@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/ref/set.sgml,v 1.45 2000/06/18 21:24:52 petere Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/ref/set.sgml,v 1.46 2000/07/14 15:27:14 thomas Exp $
 Postgres documentation
 -->
 
@@ -392,13 +392,19 @@ SELECT CURRENT_TIMESTAMP AS today;
  <refsect1 id="R1-SQL-SET-3">
   <title>Compatibility</title>
 
-  <para>
-   The second syntax shown above (<literal>SET TIME ZONE</literal>)
-   attempts to mimic <acronym>SQL92</acronym>. However, SQL allows
-   only numeric time zone offsets. All other parameter settings as
-   well as the first syntax shown above are a
-   <productname>Postgres</productname> extension.
-  </para>
+  <refsect2 id="R2-SQL-SET-4">
+   <title>
+    SQL92
+   </title>
+
+   <para>
+    The second syntax shown above (<literal>SET TIME ZONE</literal>)
+    attempts to mimic <acronym>SQL92</acronym>. However, SQL allows
+    only numeric time zone offsets. All other parameter settings as
+    well as the first syntax shown above are a
+    <productname>Postgres</productname> extension.
+   </para>
+  </refsect2>
  </refsect1>
 </refentry>
 
