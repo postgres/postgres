@@ -24,7 +24,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/interfaces/libpq/fe-misc.c,v 1.29 1999/08/31 01:37:36 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/interfaces/libpq/fe-misc.c,v 1.30 1999/09/13 03:00:19 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -307,6 +307,7 @@ pqReadReady(PGconn *conn)
 int
 pqReadData(PGconn *conn)
 {
+	int			someread = 0;
 	int			nread;
 
 	if (conn->sock < 0)
@@ -359,11 +360,11 @@ tryAgain:
 		/* Some systems return EAGAIN/EWOULDBLOCK for no data */
 #ifdef EAGAIN
 		if (errno == EAGAIN)
-			return 0;
+			return someread;
 #endif
 #if defined(EWOULDBLOCK) && (!defined(EAGAIN) || (EWOULDBLOCK != EAGAIN))
 		if (errno == EWOULDBLOCK)
-			return 0;
+			return someread;
 #endif
 		/* We might get ECONNRESET here if using TCP and backend died */
 #ifdef ECONNRESET
@@ -378,8 +379,29 @@ tryAgain:
 	if (nread > 0)
 	{
 		conn->inEnd += nread;
+		/*
+		 * Hack to deal with the fact that some kernels will only give us
+		 * back 1 packet per recv() call, even if we asked for more and there
+		 * is more available.  If it looks like we are reading a long message,
+		 * loop back to recv() again immediately, until we run out of data
+		 * or buffer space.  Without this, the block-and-restart behavior of
+		 * libpq's higher levels leads to O(N^2) performance on long messages.
+		 *
+		 * Since we left-justified the data above, conn->inEnd gives the
+		 * amount of data already read in the current message.  We consider
+		 * the message "long" once we have acquired 32k ...
+		 */
+		if (conn->inEnd > 32768 &&
+			(conn->inBufSize - conn->inEnd) >= 8192)
+		{
+			someread = 1;
+			goto tryAgain;
+		}
 		return 1;
 	}
+
+	if (someread)
+		return 1;				/* got a zero read after successful tries */
 
 	/*
 	 * A return value of 0 could mean just that no data is now available,
