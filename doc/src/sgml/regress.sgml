@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/regress.sgml,v 1.43 2004/12/02 20:35:45 momjian Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/regress.sgml,v 1.44 2004/12/03 17:46:19 tgl Exp $ -->
 
  <chapter id="regress">
   <title id="regress-title">Regression Tests</title>
@@ -47,10 +47,6 @@ gmake check
    <filename>src/test/regress</filename> and run the command there.)
    This will first build several auxiliary files, such as
    some sample user-defined trigger functions, and then run the test driver
-   script. On some platforms if you want perform a <literal>make check<literal>
-   without installing it first, you have to build with:
-   <literal>configure --disable-rpath</>.
-   At the end you should see something like
    script.  At the end you should see something like
 <screen>
 <computeroutput>
@@ -83,6 +79,19 @@ gmake check
    </para>
    <para>
     Alternatively, run the tests after installation.
+   </para>
+
+   <para>
+    If you have configured <productname>PostgreSQL</productname> to install
+    into a location where an older <productname>PostgreSQL</productname>
+    installation already exists, and you perform <literal>gmake check</>
+    before installing the new version, you may find that the tests fail
+    because the new programs try to use the already-installed shared
+    libraries.  (Typical symptoms are complaints about undefined symbols.)
+    If you wish to run the tests before overwriting the old installation,
+    you'll need to build with <literal>configure --disable-rpath</>.
+    It is not recommended that you use this option for the final installation,
+    however.
    </para>
 
    <para>
