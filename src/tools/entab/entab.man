@@ -1,0 +1,51 @@
+.TH ENTAB 1 local
+.SH NAME
+entab - tab processor
+.SH SYNOPSIS
+.nf
+entab [-cdq] [-s min_spaces] [-t tab_width] [file ... ]
+detab [-cq]  [-s min_spaces] [-t tab_width] [file ... ]
+.fi
+.SH DESCRIPTION
+Entab is a program designed to selectively add or remove tabs
+from a file based on user-supplied criteria.
+In default mode, entab prints the specified files to standard output
+with the optimal mix of tabs and spaces.
+Tabs default to every 8 characters, and tabs are used only when they
+can replace more than one space, unlike 'col' which uses tabs wherever
+possible.
+.LP
+The options are:
+.in +0.5i
+.nf
+-c 	Clip trailing tabs and spaces from each line.
+-d	Delete all tabs from output
+-q	Protect single and double-quoted strings from tab replacement.
+	(This option is useful when operating on source code.
+	 Line continuation with back-slashes is also understood.)
+-s 	Minimum spaces needed to replace with a tab (default = 2).
+-t	Number of spaces in a tab stop (default = 8).
+.fi
+.in -0.5i
+Detab is equivalent to entab -d.
+.SH NOTES
+Entab has improved tab handling for certain situations.
+It only replaces tabs if there is a user-defined number of spaces
+to be saved.
+Other tab replacement programs put tabs wherever
+possible, so if two words are separated by one space, and that
+space is on a tab stop, a tab is inserted.
+Then, when words are added to the left, the words are shifted over,
+leaving a large gap.
+The quote-protection option allows tab replacement without
+quoted strings being changed.
+Useful when strings in source code will not have the same tab stops
+when executed in the program. 
+.LP
+To change a text file created on a system with one size of tab
+stop to display properly on a device with different tab setting,
+use detab (or entab -d) to remove tabs from the file with the
+tab size set to the original tab size, then use entab to re-tab
+the file with the new tab size.
+.SH AUTHOR
+Bruce Momjian, root@candle.pha.pa.us

@@ -1,0 +1,24 @@
+#!/bin/sh
+trap "rm -f /tmp/$$" 0 1 2 3 15
+entab </dev/null >/dev/null
+if [ "$?" -ne 0 ]
+then	echo "Go to the src/tools/entab directory and do a 'make' and 'make install'." >&2
+	echo "This will put the 'entab' command in your path." >&2
+	echo "Then run $0 again."
+	exit 1
+fi
+indent -st </dev/null >/dev/null
+if [ "$?" -ne 0 ]
+then	echo "You do not appear to have 'indent' installed on your system." >&2
+	exit 1
+fi
+for FILE
+do
+	cat $FILE |
+	sed 's;/\*  *---;/*---;g' |
+	indent -bad -bap -bbb -bc -bl -d0 -ncdb -nce -cli1 -di16 -nfc1 \
+		-lp -nip -nbc -psl -di1 -i4 -st |
+	detab -t8 |
+	entab -qc -t4 |
+	sed 's;/\*---;/* ---;g' >/tmp/$$ && cat /tmp/$$ >$FILE
+done
