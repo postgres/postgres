@@ -1,6 +1,6 @@
 TODO list for PostgreSQL
 ========================
-Last updated:		Fri Jul 12 22:41:48 EDT 2002
+Last updated:		Mon Jul 15 19:34:22 EDT 2002
 
 Current maintainer:	Bruce Momjian (pgman@candle.pha.pa.us)
 
@@ -477,7 +477,6 @@ Source Code
 * -Make one version of simple_prompt() in code (Bruce, Tom)
 * -Compile in syslog functionaility by default (Tatsuo)
 * Modify regression tests to prevent failures do to minor numeric rounding
-* Use our own getopt() for FreeBSD/OpenBSD to allow --xxx flags (Bruce)
 * Add OpenBSD's getpeereid() call for local socket authentication (Bruce)
 * Improve access-permissions check on data directory in Cygwin (Tom)
 * Report failure to find readline or zlib at end of configure run
