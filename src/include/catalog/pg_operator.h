@@ -7,7 +7,7 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: pg_operator.h,v 1.51 1999/03/10 05:02:31 tgl Exp $
+ * $Id: pg_operator.h,v 1.52 1999/03/26 07:32:41 tgl Exp $
  *
  * NOTES
  *	  the genbki.sh script reads this file and generates .bki
@@ -123,11 +123,6 @@ DATA(insert OID = 383 (  "="	   PGUID 0 b t t  1010	1010  16  383 0  0	0 array_e
 DATA(insert OID = 384 (  "="	   PGUID 0 b t t  1011	1011  16  384 0  0	0 array_eq eqsel eqjoinsel ));
 DATA(insert OID = 385 (  "="	   PGUID 0 b t t  1012	1012  16  385 0  0	0 array_eq eqsel eqjoinsel ));
 DATA(insert OID = 386 (  "="	   PGUID 0 b t t  1013	1013  16  386 0  0	0 array_eq eqsel eqjoinsel ));
-/*
-DATA(insert OID = 387 (  "="	   PGUID 0 b t t  1014	1014  16  387 0  0	0 array_eq eqsel eqjoinsel ));
-*/
-DATA(insert OID = 388 (  "="	   PGUID 0 b t t  1015	1015  16  388 0  0	0 array_eq eqsel eqjoinsel ));
-DATA(insert OID = 389 (  "="	   PGUID 0 b t t  1016	1016  16  389 0  0	0 array_eq eqsel eqjoinsel ));
 DATA(insert OID = 390 (  "="	   PGUID 0 b t t  1017	1017  16  390 0  0	0 array_eq eqsel eqjoinsel ));
 DATA(insert OID = 391 (  "="	   PGUID 0 b t t  1018	1018  16  391 0  0	0 array_eq eqsel eqjoinsel ));
 DATA(insert OID = 392 (  "="	   PGUID 0 b t t  1019	1019  16  392 0  0	0 array_eq eqsel eqjoinsel ));

@@ -9,7 +9,7 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: pg_amproc.h,v 1.13 1999/03/14 05:08:58 momjian Exp $
+ * $Id: pg_amproc.h,v 1.14 1999/03/26 07:32:41 tgl Exp $
  *
  * NOTES
  *	  the genbki.sh script reads this file and generates .bki
@@ -75,9 +75,6 @@ DATA(insert OID = 0 (402  434  199 3));
 
 
 /* btree */
-DATA(insert OID = 0 (403  406  689 1));
-DATA(insert OID = 0 (403  407  690 1));
-DATA(insert OID = 0 (403  408  691 1));
 DATA(insert OID = 0 (403  421  350 1));
 DATA(insert OID = 0 (403  423  355 1));
 DATA(insert OID = 0 (403  424  353 1));
@@ -86,12 +83,9 @@ DATA(insert OID = 0 (403  426  351 1));
 DATA(insert OID = 0 (403  427  356 1));
 DATA(insert OID = 0 (403  428  354 1));
 DATA(insert OID = 0 (403  429  358 1));
-DATA(insert OID = 0 (403  430 1274 1));
 DATA(insert OID = 0 (403  431  360 1));
 DATA(insert OID = 0 (403  432  357 1));
 DATA(insert OID = 0 (403  435  404 1));
-DATA(insert OID = 0 (403  436  948 1));
-DATA(insert OID = 0 (403  437  828 1));
 DATA(insert OID = 0 (403  754  842 1));
 DATA(insert OID = 0 (403 1076 1078 1));
 DATA(insert OID = 0 (403 1077 1079 1));
@@ -105,16 +99,12 @@ DATA(insert OID = 0 (403 935 926 1));
 
 
 /* hash */
-DATA(insert OID = 0 (405  406  692 1));
-DATA(insert OID = 0 (405  407  693 1));
-DATA(insert OID = 0 (405  408  694 1));
 DATA(insert OID = 0 (405  421  449 1));
 DATA(insert OID = 0 (405  423  452 1));
 DATA(insert OID = 0 (405  426  450 1));
 DATA(insert OID = 0 (405  427  453 1));
 DATA(insert OID = 0 (405  428  451 1));
 DATA(insert OID = 0 (405  429  454 1));
-DATA(insert OID = 0 (405  430 1281 1));
 DATA(insert OID = 0 (405  431  456 1));
 DATA(insert OID = 0 (405  435  457 1));
 DATA(insert OID = 0 (405 1076 1080 1));

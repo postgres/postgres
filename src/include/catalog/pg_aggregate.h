@@ -7,7 +7,7 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: pg_aggregate.h,v 1.20 1999/02/13 23:21:04 momjian Exp $
+ * $Id: pg_aggregate.h,v 1.21 1999/03/26 07:32:40 tgl Exp $
  *
  * NOTES
  *	  the genbki.sh script reads this file and generates .bki
@@ -113,7 +113,6 @@ DATA(insert OID = 0 ( max	PGUID float4larger		- -  700  700 0  700 _null_ _null_
 DATA(insert OID = 0 ( max	PGUID float8larger		- -  701  701 0  701 _null_ _null_ ));
 DATA(insert OID = 0 ( max	PGUID int4larger		- -  702  702 0  702 _null_ _null_ ));
 DATA(insert OID = 0 ( max	PGUID date_larger		- - 1082 1082 0 1082 _null_ _null_ ));
-DATA(insert OID = 0 ( max	PGUID float8larger		- - 1084 1084 0 1084 _null_ _null_ ));
 DATA(insert OID = 0 ( max	PGUID cashlarger		- -  790  790 0  790 _null_ _null_ ));
 DATA(insert OID = 0 ( max	PGUID datetime_larger	- - 1184 1184 0 1184 _null_ _null_ ));
 DATA(insert OID = 0 ( max	PGUID timespan_larger	- - 1186 1186 0 1186 _null_ _null_ ));
@@ -127,7 +126,6 @@ DATA(insert OID = 0 ( min	PGUID float4smaller		- -  700  700 0  700 _null_ _null
 DATA(insert OID = 0 ( min	PGUID float8smaller		- -  701  701 0  701 _null_ _null_ ));
 DATA(insert OID = 0 ( min	PGUID int4smaller		- -  702  702 0  702 _null_ _null_ ));
 DATA(insert OID = 0 ( min	PGUID date_smaller		- - 1082 1082 0 1082 _null_ _null_ ));
-DATA(insert OID = 0 ( min	PGUID float8smaller		- - 1084 1084 0 1084 _null_ _null_ ));
 DATA(insert OID = 0 ( min	PGUID cashsmaller		- -  790  790 0  790 _null_ _null_ ));
 DATA(insert OID = 0 ( min	PGUID datetime_smaller	- - 1184 1184 0 1184 _null_ _null_ ));
 DATA(insert OID = 0 ( min	PGUID timespan_smaller	- - 1186 1186 0 1186 _null_ _null_ ));

@@ -7,7 +7,7 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: pg_type.h,v 1.56 1999/03/25 03:49:25 tgl Exp $
+ * $Id: pg_type.h,v 1.57 1999/03/26 07:32:42 tgl Exp $
  *
  * NOTES
  *	  the genbki.sh script reads this file and generates .bki
@@ -216,7 +216,7 @@ DESCR("command identifier type, sequence in transaction id");
 
 DATA(insert OID = 30 (	oid8	   PGUID 32  89 f b t \054 0  26 oid8in oid8out oid8in oid8out i _null_ ));
 DESCR("array of 8 oid, used in system tables");
-DATA(insert OID = 32 (	SET		   PGUID -1  -1 f r t \054 0  -1 textin textout textin textout i _null_ ));
+DATA(insert OID = 32 (	SET		   PGUID -1  -1 f r t \054 0   0 textin textout textin textout i _null_ ));
 DESCR("set of tuples");
 
 DATA(insert OID = 71 (	pg_type		 PGUID 4 4 t c t \054 1247 0 foo bar foo bar i _null_));
@@ -237,7 +237,7 @@ DATA(insert OID = 111 (  pg_trigger  PGUID 4 4 t c t \054 1219 0 foo bar foo bar
 
 /* OIDS 200 - 299 */
 
-DATA(insert OID = 210 (  smgr	   PGUID 2	12 t b t \054 0  -1 smgrin smgrout smgrin smgrout s _null_ ));
+DATA(insert OID = 210 (  smgr	   PGUID 2	12 t b t \054 0 0 smgrin smgrout smgrin smgrout s _null_ ));
 DESCR("storage manager");
 
 /* OIDS 300 - 399 */
@@ -259,7 +259,7 @@ DESCR("geometric path '(pt1,...)'");
 DATA(insert OID = 603 (  box	   PGUID 32 100 f b t \073 0 600 box_in box_out box_in box_out d _null_ ));
 DESCR("geometric box '(lower left,upper right)'");
 #define BOXOID			603
-DATA(insert OID = 604 (  polygon   PGUID -1  -1 f b t \054 0  -1 poly_in poly_out poly_in poly_out d _null_ ));
+DATA(insert OID = 604 (  polygon   PGUID -1  -1 f b t \054 0   0 poly_in poly_out poly_in poly_out d _null_ ));
 DESCR("geometric polygon '(pt1,...)'");
 #define POLYGONOID		604
 DATA(insert OID = 605 (  filename  PGUID 256 -1 f b t \054 0  18 filename_in filename_out filename_in filename_out i _null_ ));
@@ -327,9 +327,6 @@ DATA(insert OID = 1010 (  _tid		 PGUID -1  -1 f b t \054 0	27 array_in array_out
 DATA(insert OID = 1011 (  _xid		 PGUID -1  -1 f b t \054 0	28 array_in array_out array_in array_out i _null_ ));
 DATA(insert OID = 1012 (  _cid		 PGUID -1  -1 f b t \054 0	29 array_in array_out array_in array_out i _null_ ));
 DATA(insert OID = 1013 (  _oid8		 PGUID -1  -1 f b t \054 0	30 array_in array_out array_in array_out i _null_ ));
-DATA(insert OID = 1014 (  _lock		 PGUID -1  -1 f b t \054 0	31 array_in array_out array_in array_out i _null_ ));
-DATA(insert OID = 1015 (  _stub		 PGUID -1  -1 f b t \054 0	33 array_in array_out array_in array_out i _null_ ));
-DATA(insert OID = 1016 (  _ref		 PGUID -1  -1 f b t \054 0 591 array_in array_out array_in array_out i _null_ ));
 DATA(insert OID = 1017 (  _point	 PGUID -1  -1 f b t \054 0 600 array_in array_out array_in array_out d _null_ ));
 DATA(insert OID = 1018 (  _lseg		 PGUID -1  -1 f b t \054 0 601 array_in array_out array_in array_out d _null_ ));
 DATA(insert OID = 1019 (  _path		 PGUID -1  -1 f b t \054 0 602 array_in array_out array_in array_out d _null_ ));
