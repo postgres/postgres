@@ -1,4 +1,4 @@
-postgresql 6.5 multi-byte (MB) support README	       1999/1/26 作成
+postgresql 6.5 multi-byte (MB) support README	       1999/3/23 作成
 
 							石井達夫
 						t-ishii@sra.co.jp
@@ -9,7 +9,7 @@ postgresql 6.5 multi-byte (MB) support README	       1999/1/26 作成
   PostgreSQL におけるマルチバイトサポートは以下のような特徴を持っています。
 
     1.マルチバイト文字として、日本語、中国語などの各国の EUC、Unicode、
-      mule internal code, ISO-8859-1 がデータベース作成時に選択可能。
+      mule internal code, ISO-8859-* がデータベース作成時に選択可能。
       データベースにはこのコードのまま格納されます。
     2.テーブル名にマルチバイト文字が使用可能(ただし、OS がマルチバイト
       のファイル名を許していることが必要)
@@ -24,18 +24,15 @@ postgresql 6.5 multi-byte (MB) support README	       1999/1/26 作成
 
 インストール：
 
-  デフォルトでは PostgreSQL はマルチバイトをサポートしていません。
-  マルチバイトサポートを有効にする方法を説明します。
+  デフォルトのコンフィギュレーションでは PostgreSQL はマルチバイトを
+  サポートしていません。マルチバイトサポートを有効にする方法を説明します。
 
-  configure 起動時に以下のように指定します。
+  たとえば日本語 EUC を主に利用する場合は、configure 起動時に以下のよ
+  うに指定します。
 
   % configure --with-mb=EUC_JP
 
-  エンコーディングとしては EUC_JP を含め、以下のコードが initdb による
-  データベース初期化時およびデータベース作成時
-  (Unix コマンドの createdb もしくは SQL の create database)
-  に指定できます。configure で指定したエンコーディングは initdb の省略時の
-  エンコーディングになります。
+  エンコーディングとしては EUC_JP の他、以下が指定できます。
 
 	SQL_ASCII	ASCII
 	EUC_JP		日本語 EUC
@@ -49,12 +46,27 @@ postgresql 6.5 multi-byte (MB) support README	       1999/1/26 作成
 	MULE_INTERNAL	mule の内部コード。ただし、Type N の不定長文字は
 			サポートしていません。
 	LATIN*		ISO8859 Latin シリーズ。* は 1 から 5 まで指定
-			できます。シングルバイトなんですけど、
-			試しということで:-)
+			できます。
+	キリル文字	KOI8(KOI8-R), WIN(CP1251), ALT(CP866)をサポート
+			しています。もちろん ISO 8859-5 も使用可能です。
+			この場合、"LATIN5" として指定して下さい。
 
   選択の目安としては、英語と日本語しか使わない場合は EUC_JP(同様に、中
   国語しか使わない場合は EUC_CN... などとなります)、その他の言語も使いた
   い場合は UNICODE もしくは MULE_INTERNAL となるでしょう。
+
+  なお、configure で選択したエンコーディングは、あくまで initdb のための
+  デフォルト値程度の意味しかありません(initdb では引数でエンコーディングが
+  指定できます)。したがって、異なるエンコーディングを使用するために
+  わざわざPostgreSQL をリコンパイルする必要ありません。
+
+  initdb は shell script なので、デフォルトのエンコーディングは script を
+  適当なエディタで編集することにより簡単に変更できます。initdb の 42行目
+  付近に、
+
+  MULTIBYTE=EUC_JP
+
+  のような行があるので、= 以降を希望するエンコーディングに変えるだけです。
 
   注意：MULE_INTERNAL を選ぶと、たくさんの文字集合に対応できて便利です
   が、正規表現で複数の文字集合にまたがるような範囲指定(たとえば、[a-範]
@@ -94,7 +106,9 @@ initdb/createdb/create database におけるエンコーディングの指定について
 	CREATE DATABASE dbanme WITH LOCATION = 'path' ENCODING = 'エンコーディング';
 
   createdb/create database は、エンコーディング指定を省略した場合は、initdb 
-  で指定したエンコーディングが採用されます。
+  で指定したエンコーディングが採用されます。これは、initdb が作成する
+  テンプレートデータベース(template1)の encoding アトリビュートを継承
+  するからです。
 
   データベースのエンコーディングは、psql の \l や、SQL 文の
   select * from pg_database で参照できます。
@@ -206,23 +220,35 @@ initdb/createdb/create database におけるエンコーディングの指定について
 
 改定履歴：
 
-  1999/1/26 Big5 サポート追加
+  1999/3/23 キリル文字サポート追加他(6.5 に反映済)
+	* エンコーディングとして KOI8(KOI8-R), WIN(CP1251), ALT(CP866) を
+	  サポートしています。これらは、フロントエンド、バックエンド、
+	  どちらのエンコーディングとしても使用可能であり、エンコーディングの
+	  相互変換が可能です。また、従来からサポートしている ISO 8859-5 も
+	  同様に使用可能です。
+	  キリル文字サポートは、Oleg Broytmann <phd@sun.med.ru> 氏の
+	  リクエスト及び協力により実現しました。これは、従来からある
+	  RCODE サポートの機能を取り込むものでもあります。
+	* MB と locale を同時に指定した場合に大文字／小文字を無視した
+	  正規表現検索が正常に動作しないバグを修正
+
+  1999/1/26 Big5 サポート追加(6.4.2-patched/6.5 に反映済)
 	* Big5 がフロントエンド側のエンコーディングとして利用できるよ
 	  うになりました。この場合、バックエンド側のエンコーディングは
 	  EUC_TW または MULE_INTERNAL とします。
 	* EUC_TW の regression test ケースを追加
 	  (contributed by Jonah Kuo <jonahkuo@mail.ttn.com.tw>)
 
-  1998/12/16 本ドキュメント修正。
+  1998/12/16 本ドキュメント修正(6.4.2 に反映済)。
 	* Makefile.custom で MB=EUC_JP などと設定する方法は 6.4 以降
 	  サポートされていないので削除した。
 	* 文字コード → エンコーディング、クライアント→フロントエンド
 	  サーバ→バックエンド にそれぞれ語句を修正。
 
-  1998/12/15 6.4 向けバグ修正パッチリリース。
+  1998/12/15 6.4 向けバグ修正パッチリリース(6.4.2 に反映済)。
 	* SQL_ASCII サポートのバグ修正
 
-  1998/11/21 6.4 向けバグ修正パッチリリース。
+  1998/11/21 6.4 向けバグ修正パッチリリース(6.4.2 に反映済)。
 	* BINARY CURSOR の問題を修正
 	* pg_dumpall のバグ修正
 
