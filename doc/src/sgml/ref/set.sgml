@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/ref/set.sgml,v 1.80 2003/07/29 00:03:17 tgl Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/ref/set.sgml,v 1.81 2003/08/31 17:32:24 petere Exp $
 PostgreSQL documentation
 -->
 
@@ -13,6 +13,10 @@ PostgreSQL documentation
   <refname>SET</refname>
   <refpurpose>change a run-time parameter</refpurpose>
  </refnamediv>
+
+ <indexterm zone="sql-set">
+  <primary>SET</primary>
+ </indexterm>
 
  <refsynopsisdiv>
 <synopsis>

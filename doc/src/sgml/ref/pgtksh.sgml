@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/ref/Attic/pgtksh.sgml,v 1.8 2003/03/25 16:15:43 petere Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/ref/Attic/pgtksh.sgml,v 1.9 2003/08/31 17:32:24 petere Exp $
 PostgreSQL documentation
 -->
 
@@ -16,6 +16,10 @@ PostgreSQL documentation
    <productname>PostgreSQL</productname> <application>Tcl/Tk</application> shell client
   </refpurpose>
  </refnamediv>
+
+ <indexterm zone="app-pgtksh">
+  <primary>pgtksh</primary>
+ </indexterm>
 
  <refsynopsisdiv>
   <cmdsynopsis>

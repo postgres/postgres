@@ -1,4 +1,4 @@
-<!-- $Header: /cvsroot/pgsql/doc/src/sgml/ref/pg_restore.sgml,v 1.40 2003/08/28 20:44:02 tgl Exp $ -->
+<!-- $Header: /cvsroot/pgsql/doc/src/sgml/ref/pg_restore.sgml,v 1.41 2003/08/31 17:32:24 petere Exp $ -->
 
 <refentry id="APP-PGRESTORE">
  <refmeta>
@@ -14,6 +14,10 @@
    restore a <productname>PostgreSQL</productname> database from an archive file created by pg_dump
   </refpurpose>
  </refnamediv>
+
+ <indexterm zone="app-pgrestore">
+  <primary>pg_restore</primary>
+ </indexterm>
 
  <refsynopsisdiv>
   <cmdsynopsis>

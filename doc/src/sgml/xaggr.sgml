@@ -1,13 +1,13 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/xaggr.sgml,v 1.21 2003/08/09 22:50:22 tgl Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/xaggr.sgml,v 1.22 2003/08/31 17:32:20 petere Exp $
 -->
 
  <sect1 id="xaggr">
   <title>User-Defined Aggregates</title>
 
   <indexterm zone="xaggr">
-   <primary>aggregate functions</primary>
-   <secondary>extending</secondary>
+   <primary>aggregate function</primary>
+   <secondary>user-defined</secondary>
   </indexterm>
 
   <para>
@@ -115,7 +115,7 @@ CREATE AGGREGATE avg (
    Aggregate functions may use polymorphic
    state transition functions or final functions, so that the same functions
    can be used to implement multiple aggregates.
-   See <xref linkend="types-polymorphic">
+   See <xref linkend="extend-types-polymorphic">
    for an explanation of polymorphic functions.
    Going a step further, the aggregate function itself may be specified
    with a polymorphic base type and state type, allowing a single

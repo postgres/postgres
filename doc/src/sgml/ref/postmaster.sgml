@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/ref/postmaster.sgml,v 1.36 2003/03/25 16:15:43 petere Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/ref/postmaster.sgml,v 1.37 2003/08/31 17:32:24 petere Exp $
 PostgreSQL documentation
 -->
 
@@ -14,6 +14,10 @@ PostgreSQL documentation
   <refname id="postmaster-ref">postmaster</refname>
   <refpurpose><productname>PostgreSQL</productname> multiuser database server</refpurpose>
  </refnamediv>
+
+ <indexterm zone="app-postmaster">
+  <primary>postmaster</primary>
+ </indexterm>
 
  <refsynopsisdiv>
   <cmdsynopsis>

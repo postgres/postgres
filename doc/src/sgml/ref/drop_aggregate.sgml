@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/ref/drop_aggregate.sgml,v 1.23 2003/06/27 14:45:26 petere Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/ref/drop_aggregate.sgml,v 1.24 2003/08/31 17:32:22 petere Exp $
 PostgreSQL documentation
 -->
 
@@ -13,6 +13,10 @@ PostgreSQL documentation
   <refname>DROP AGGREGATE</refname>
   <refpurpose>remove a user-defined aggregate function</refpurpose>
  </refnamediv>
+
+ <indexterm zone="sql-dropaggregate">
+  <primary>DROP AGGREGATE</primary>
+ </indexterm>
 
  <refsynopsisdiv>
 <synopsis>

@@ -1,9 +1,17 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/Attic/jdbc.sgml,v 1.47 2003/08/07 05:06:40 barry Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/Attic/jdbc.sgml,v 1.48 2003/08/31 17:32:19 petere Exp $
 -->
 
  <chapter id="jdbc">
   <title><acronym>JDBC</acronym> Interface</title>
+
+  <indexterm zone="jdbc">
+   <primary>JDBC</primary>
+  </indexterm>
+
+  <indexterm zone="jdbc">
+   <primary>Java</primary>
+  </indexterm>
 
   <para>
    <acronym>JDBC</acronym> is a core <acronym>API</acronym> of Java 1.1 and later.
@@ -65,6 +73,14 @@ $Header: /cvsroot/pgsql/doc/src/sgml/Attic/jdbc.sgml,v 1.47 2003/08/07 05:06:40 
 
   <sect2 id="jdbc-classpath">
    <title>Setting up the Class Path</title>
+
+   <indexterm zone="jdbc-classpath">
+    <primary>class path</primary>
+   </indexterm>
+
+   <indexterm zone="jdbc-classpath">
+    <primary>CLASSPATH</primary>
+   </indexterm>
 
    <para>
     To use the driver, the JAR archive (named
@@ -315,6 +331,18 @@ db.close();
 
   <sect1 id="jdbc-query">
    <title>Issuing a Query and Processing the Result</title>
+
+   <indexterm zone="jdbc-query">
+    <primary>Statement</primary>
+   </indexterm>
+
+   <indexterm zone="jdbc-query">
+    <primary>PreparedStatement</primary>
+   </indexterm>
+
+   <indexterm zone="jdbc-query">
+    <primary>ResultSet</primary>
+   </indexterm>
 
    <para>
     Any time you want to issue <acronym>SQL</acronym> statements to
@@ -680,6 +708,16 @@ st.close();
 
  <sect1 id="jdbc-binary-data">
   <title>Storing Binary Data</title>
+
+  <indexterm zone="jdbc-binary-data">
+   <primary>bytea</primary>
+   <secondary sortas="JDBC">in JDBC</secondary>
+  </indexterm>
+
+  <indexterm zone="jdbc-binary-data">
+   <primary>large object</primary>
+   <secondary sortas="JDBC">in JDBC</secondary>
+  </indexterm>
 
   <para>
     <application>PostgreSQL</application> provides two distinct ways to 
@@ -2597,6 +2635,11 @@ public void unlink(int oid) throws SQLException
  <sect1 id="jdbc-thread">
   <title>Using the Driver in a Multithreaded or a Servlet Environment</title>
 
+  <indexterm zone="jdbc-thread">
+   <primary>threads</primary>
+   <secondary sortas="JDBC">with JDBC</secondary>
+  </indexterm>
+
   <para>
    A problem with many <acronym>JDBC</acronym> drivers is that only
    one thread can use a <classname>Connection</classname> at any one
@@ -2644,6 +2687,15 @@ public void unlink(int oid) throws SQLException
 
  <sect1 id="jdbc-datasource">
   <title>Connection Pools and Data Sources</title>
+
+  <indexterm zone="jdbc-datasource">
+   <primary>connection pool</primary>
+   <secondary sortas="JDBC">in JDBC</secondary>
+  </indexterm>
+
+  <indexterm zone="jdbc-datasource">
+   <primary>DataSource</primary>
+  </indexterm>
 
   <para>
     <acronym>JDBC</> 2 introduced standard connection pooling features in an
@@ -3029,7 +3081,11 @@ try {
   </sect2>
 
   <sect2 id="jdbc-jndi">
-    <title>Data Sources and <acronym>JNDI</acronym></title>
+   <title>Data Sources and <acronym>JNDI</acronym></title>
+
+   <indexterm zone="jdbc-jndi">
+    <primary>JNDI</primary>
+   </indexterm>
 
     <para>
      All the <literal>ConnectionPoolDataSource</literal> and

@@ -1,7 +1,15 @@
-<!-- $Header: /cvsroot/pgsql/doc/src/sgml/queries.sgml,v 1.22 2003/08/14 23:13:27 tgl Exp $ -->
+<!-- $Header: /cvsroot/pgsql/doc/src/sgml/queries.sgml,v 1.23 2003/08/31 17:32:19 petere Exp $ -->
 
 <chapter id="queries">
  <title>Queries</title>
+
+ <indexterm zone="queries">
+  <primary>query</primary>
+ </indexterm>
+
+ <indexterm zone="queries">
+  <primary>SELECT</primary>
+ </indexterm>
 
  <para>
   The previous chapters explained how to create tables, how to fill
@@ -73,6 +81,10 @@ SELECT random();
  <sect1 id="queries-table-expressions">
   <title>Table Expressions</title>
 
+  <indexterm zone="queries-table-expressions">
+   <primary>table expression</primary>
+  </indexterm>
+
   <para>
    A <firstterm>table expression</firstterm> computes a table.  The
    table expression contains a <literal>FROM</> clause that is
@@ -112,6 +124,10 @@ FROM <replaceable>table_reference</replaceable> <optional>, <replaceable>table_r
     overall table expression.
    </para>
 
+   <indexterm>
+    <primary>ONLY</primary>
+   </indexterm>
+
    <para>
     When a table reference names a table that is the supertable of a
     table inheritance hierarchy, the table reference produces rows of
@@ -125,7 +141,7 @@ FROM <replaceable>table_reference</replaceable> <optional>, <replaceable>table_r
     <title>Joined Tables</title>
 
     <indexterm zone="queries-join">
-     <primary>joins</primary>
+     <primary>join</primary>
     </indexterm>
 
     <para>
@@ -141,8 +157,12 @@ FROM <replaceable>table_reference</replaceable> <optional>, <replaceable>table_r
       <term>Cross join</term>
 
       <indexterm>
-       <primary>joins</primary>
+       <primary>join</primary>
        <secondary>cross</secondary>
+      </indexterm>
+
+      <indexterm>
+       <primary>cross join</primary>
       </indexterm>
 
       <listitem>
@@ -175,8 +195,12 @@ FROM <replaceable>table_reference</replaceable> <optional>, <replaceable>table_r
       <term>Qualified joins</term>
 
       <indexterm>
-       <primary>joins</primary>
+       <primary>join</primary>
        <secondary>outer</secondary>
+      </indexterm>
+
+      <indexterm>
+       <primary>outer join</primary>
       </indexterm>
 
       <listitem>
@@ -227,8 +251,11 @@ FROM <replaceable>table_reference</replaceable> <optional>, <replaceable>table_r
 
        <para>
         <indexterm>
-	 <primary>joins</primary>
+	 <primary>join</primary>
 	 <secondary>natural</secondary>
+	</indexterm>
+        <indexterm>
+	 <primary>natural join</primary>
 	</indexterm>
         Finally, <literal>NATURAL</> is a shorthand form of
         <literal>USING</>: it forms a <literal>USING</> list
@@ -256,8 +283,12 @@ FROM <replaceable>table_reference</replaceable> <optional>, <replaceable>table_r
          <term><literal>LEFT OUTER JOIN</></term>
 
          <indexterm>
-          <primary>joins</primary>
+          <primary>join</primary>
           <secondary>left</secondary>
+         </indexterm>
+
+         <indexterm>
+          <primary>left join</primary>
          </indexterm>
 
          <listitem>
@@ -273,6 +304,15 @@ FROM <replaceable>table_reference</replaceable> <optional>, <replaceable>table_r
          
         <varlistentry>
          <term><literal>RIGHT OUTER JOIN</></term>
+
+         <indexterm>
+          <primary>join</primary>
+          <secondary>right</secondary>
+         </indexterm>
+
+         <indexterm>
+          <primary>right join</primary>
+         </indexterm>
 
          <listitem>
           <para>
@@ -424,13 +464,13 @@ FROM <replaceable>table_reference</replaceable> <optional>, <replaceable>table_r
     <title>Table and Column Aliases</title>
 
     <indexterm zone="queries-table-aliases">
-     <primary>label</primary>
-     <secondary>table</secondary>
+     <primary>alias</primary>
+     <secondary>in the FROM clause</secondary>
     </indexterm>
 
     <indexterm>
-     <primary>alias</primary>
-     <see>label</see>
+     <primary>label</primary>
+     <see>alias</see>
     </indexterm>
 
     <para>
@@ -530,7 +570,7 @@ SELECT a.* FROM (my_table AS a JOIN your_table AS b ON ...) AS c
     <title>Subqueries</title>
 
     <indexterm zone="queries-subqueries">
-     <primary>subqueries</primary>
+     <primary>subquery</primary>
     </indexterm>
 
     <para>
@@ -555,6 +595,11 @@ FROM (SELECT * FROM table1) AS alias_name
     <title>Table Functions</title>
 
     <indexterm zone="queries-tablefunctions"><primary>table function</></>
+
+    <indexterm zone="queries-tablefunctions">
+     <primary>function</>
+     <secondary>in the FROM clause</>
+    </indexterm>
 
     <para>
      Table functions are functions that produce a set of rows, made up
@@ -628,7 +673,7 @@ SELECT *
    <title>The WHERE Clause</title>
 
    <indexterm zone="queries-where">
-    <primary>where</primary>
+    <primary>WHERE</primary>
    </indexterm>
 
    <para>
@@ -716,7 +761,11 @@ SELECT ... FROM fdt WHERE EXISTS (SELECT c1 FROM t2 WHERE c2 > fdt.c1)
    <title>The GROUP BY and HAVING Clauses</title>
 
    <indexterm zone="queries-group">
-    <primary>group</primary>
+    <primary>GROUP BY</primary>
+   </indexterm>
+
+   <indexterm zone="queries-group">
+    <primary>grouping</primary>
    </indexterm>
 
    <para>
@@ -827,6 +876,10 @@ SELECT product_id, p.name, (sum(s.units) * p.price) AS sales
     column names is also allowed.
    </para>
 
+   <indexterm>
+    <primary>HAVING</primary>
+   </indexterm>
+
    <para>
     If a table has been grouped using a <literal>GROUP BY</literal>
     clause, but then only certain groups are of interest, the
@@ -884,7 +937,7 @@ SELECT product_id, p.name, (sum(s.units) * (p.price - p.cost)) AS profit
   <title>Select Lists</title>
 
   <indexterm>
-   <primary>select</primary>
+   <primary>SELECT</primary>
    <secondary>select list</secondary>
   </indexterm>
 
@@ -900,6 +953,10 @@ SELECT product_id, p.name, (sum(s.units) * (p.price - p.cost)) AS profit
 
   <sect2 id="queries-select-list-items">
    <title>Select-List Items</title>
+
+   <indexterm>
+    <primary>*</primary>
+   </indexterm>
 
    <para>
     The simplest kind of select list is <literal>*</literal> which
@@ -944,8 +1001,8 @@ SELECT tbl1.a, tbl2.a, tbl1.b FROM ...
    <title>Column Labels</title>
 
    <indexterm zone="queries-column-labels">
-    <primary>label</primary>
-    <secondary>column</secondary>
+    <primary>alias</primary>
+    <secondary>in the select list</secondary>
    </indexterm>
 
    <para>
@@ -981,7 +1038,11 @@ SELECT a AS value, b + c AS sum FROM ...
    <title>DISTINCT</title>
 
    <indexterm zone="queries-distinct">
-    <primary>distinct</primary>
+    <primary>DISTINCT</primary>
+   </indexterm>
+
+   <indexterm zone="queries-distinct">
+    <primary>duplicates</primary>
    </indexterm>
 
    <para>
@@ -997,6 +1058,8 @@ SELECT DISTINCT <replaceable>select_list</replaceable> ...
    </para>
 
    <para>
+    <indexterm><primary>null value</><secondary sortas="DISTINCT">in
+    DISTINCT</></indexterm>
     Obviously, two rows are considered distinct if they differ in at
     least one column value.  Null values are considered equal in this
     comparison.
@@ -1035,13 +1098,25 @@ SELECT DISTINCT ON (<replaceable>expression</replaceable> <optional>, <replaceab
   <title>Combining Queries</title>
 
   <indexterm zone="queries-union">
-   <primary>union</primary>
+   <primary>UNION</primary>
   </indexterm>
   <indexterm zone="queries-union">
-   <primary>intersection</primary>
+   <primary>INTERSECT</primary>
   </indexterm>
   <indexterm zone="queries-union">
-   <primary>except</primary>
+   <primary>EXCEPT</primary>
+  </indexterm>
+  <indexterm zone="queries-union">
+   <primary>set union</primary>
+  </indexterm>
+  <indexterm zone="queries-union">
+   <primary>set intersection</primary>
+  </indexterm>
+  <indexterm zone="queries-union">
+   <primary>set difference</primary>
+  </indexterm>
+  <indexterm zone="queries-union">
+   <primary>set operation</primary>
   </indexterm>
 
   <para>
@@ -1104,7 +1179,10 @@ SELECT DISTINCT ON (<replaceable>expression</replaceable> <optional>, <replaceab
 
   <indexterm zone="queries-order">
    <primary>sorting</primary>
-   <secondary>query results</secondary>
+  </indexterm>
+
+  <indexterm zone="queries-order">
+   <primary>ORDER BY</primary>
   </indexterm>
 	   
   <para>
@@ -1173,12 +1251,11 @@ SELECT a AS b FROM table1 ORDER BY a;
   <title>LIMIT and OFFSET</title>
 
   <indexterm zone="queries-limit">
-   <primary>limit</primary>
+   <primary>LIMIT</primary>
   </indexterm>
 
   <indexterm zone="queries-limit">
-   <primary>offset</primary>
-   <secondary>with query results</secondary>
+   <primary>OFFSET</primary>
   </indexterm>
 
   <para>

@@ -1,10 +1,10 @@
-<!-- $Header: /cvsroot/pgsql/doc/src/sgml/keywords.sgml,v 2.9 2003/06/12 07:49:43 momjian Exp $ -->
+<!-- $Header: /cvsroot/pgsql/doc/src/sgml/keywords.sgml,v 2.10 2003/08/31 17:32:19 petere Exp $ -->
 
 <appendix id="sql-keywords-appendix">
  <title><acronym>SQL</acronym> Key Words</title>
 
  <indexterm zone="sql-keywords-appendix">
-  <primary>key words</primary>
+  <primary>key word</primary>
   <secondary>list of</secondary>
  </indexterm>
 

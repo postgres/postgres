@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/ref/drop_database.sgml,v 1.16 2003/05/04 02:23:16 petere Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/ref/drop_database.sgml,v 1.17 2003/08/31 17:32:22 petere Exp $
 PostgreSQL documentation
 -->
 
@@ -13,6 +13,10 @@ PostgreSQL documentation
   <refname>DROP DATABASE</refname>
   <refpurpose>remove a database</refpurpose>
  </refnamediv>
+
+ <indexterm zone="sql-dropdatabase">
+  <primary>DROP DATABASE</primary>
+ </indexterm>
 
  <refsynopsisdiv>
 <synopsis>

@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/ref/create_type.sgml,v 1.43 2003/05/09 23:01:44 tgl Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/ref/create_type.sgml,v 1.44 2003/08/31 17:32:22 petere Exp $
 PostgreSQL documentation
 -->
 
@@ -13,6 +13,10 @@ PostgreSQL documentation
   <refname>CREATE TYPE</refname>
   <refpurpose>define a new data type</refpurpose>
  </refnamediv>
+
+ <indexterm zone="sql-createtype">
+  <primary>CREATE TYPE</primary>
+ </indexterm>
 
  <refsynopsisdiv>
 <synopsis>

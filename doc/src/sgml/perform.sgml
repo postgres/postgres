@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/perform.sgml,v 1.30 2003/06/25 02:07:33 momjian Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/perform.sgml,v 1.31 2003/08/31 17:32:19 petere Exp $
 -->
 
  <chapter id="performance-tips">
@@ -14,6 +14,14 @@ $Header: /cvsroot/pgsql/doc/src/sgml/perform.sgml,v 1.30 2003/06/25 02:07:33 mom
 
   <sect1 id="using-explain">
    <title>Using <command>EXPLAIN</command></title>
+
+   <indexterm zone="using-explain">
+    <primary>EXPLAIN</primary>
+   </indexterm>
+
+   <indexterm zone="using-explain">
+    <primary>query plan</primary>
+   </indexterm>
 
    <para>
     <productname>PostgreSQL</productname> devises a <firstterm>query
@@ -336,6 +344,11 @@ EXPLAIN ANALYZE SELECT * FROM tenk1 t1, tenk2 t2 WHERE t1.unique1 &lt; 50 AND t1
  <sect1 id="planner-stats">
   <title>Statistics Used by the Planner</title>
 
+  <indexterm zone="planner-stats">
+   <primary>statistics</primary>
+   <secondary>of the planner</secondary>
+  </indexterm>
+
   <para>
    As we saw in the previous section, the query planner needs to estimate
    the number of rows retrieved by a query in order to make good choices
@@ -381,6 +394,10 @@ SELECT relname, relkind, reltuples, relpages FROM pg_class WHERE relname LIKE 't
    since it does not read every row of the table.
   </para>
 
+  <indexterm>
+   <primary>pg_statistic</primary>
+  </indexterm>
+
   <para>
    Most queries retrieve only a fraction of the rows in a table, due
    to having <literal>WHERE</> clauses that restrict the rows to be examined.
@@ -392,6 +409,10 @@ SELECT relname, relkind, reltuples, relpages FROM pg_class WHERE relname LIKE 't
    updated by <command>ANALYZE</> and <command>VACUUM ANALYZE</> commands
    and are always approximate even when freshly updated.
   </para>
+
+  <indexterm>
+   <primary>pg_stats</primary>
+  </indexterm>
 
   <para>
    Rather than look at <structname>pg_statistic</structname> directly,
@@ -537,6 +558,11 @@ SELECT attname, n_distinct, most_common_vals FROM pg_stats WHERE tablename = 'ro
 
  <sect1 id="explicit-joins">
   <title>Controlling the Planner with Explicit <literal>JOIN</> Clauses</title>
+
+  <indexterm zone="explicit-joins">
+   <primary>join</primary>
+   <secondary>controlling the order</secondary>
+  </indexterm>
 
   <para>
    It is possible
@@ -699,6 +725,10 @@ SELECT * FROM x, y, a, b, c WHERE something AND somethingelse;
 
   <sect2 id="disable-autocommit">
    <title>Disable Autocommit</title>
+
+   <indexterm zone="disable-autocommit">
+    <primary>autocommit</primary>
+   </indexterm>
 
    <para>
     Turn off autocommit and just do one commit at

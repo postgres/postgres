@@ -1,10 +1,10 @@
-<!-- $Header: /cvsroot/pgsql/doc/src/sgml/rules.sgml,v 1.28 2003/04/11 13:22:35 petere Exp $ -->
+<!-- $Header: /cvsroot/pgsql/doc/src/sgml/rules.sgml,v 1.29 2003/08/31 17:32:19 petere Exp $ -->
 
 <Chapter Id="rules">
 <Title>The Rule System</Title>
 
  <indexterm zone="rules">
-  <primary>rules</primary>
+  <primary>rule</primary>
  </indexterm>
 
 <Para>
@@ -34,6 +34,10 @@
 
 <Sect1 id="querytree">
 <Title>The Query Tree</Title>
+
+<indexterm zone="querytree">
+ <primary>query tree</primary>
+</indexterm>
 
 <Para>
     To understand how the rule system works it is necessary to know
@@ -146,6 +150,7 @@
     <Term>
         the target list
     </Term>
+    <indexterm><primary>target list</></>
     <ListItem>
     <Para>
         The target list is a list of expressions that define the
@@ -258,7 +263,16 @@
 
 <Sect1 id="rules-views">
 <Title>Views and the Rule System</Title>
-<indexterm zone="rules-views"><primary>rules</><secondary>and views</></>
+
+<indexterm zone="rules-views">
+ <primary>rule</primary>
+ <secondary>and views</secondary>
+</indexterm>
+
+<indexterm zone="rules-views">
+ <primary>view</>
+ <secondary>implementation through rules</>
+</indexterm>
 
 <Para>
     Views in <ProductName>PostgreSQL</ProductName> are implemented
@@ -286,8 +300,13 @@ CREATE RULE "_RETURN" AS ON SELECT TO myview DO INSTEAD
     same thing: relations.
 </Para>
 
-<Sect2>
+<Sect2 id="rules-select">
 <Title>How <command>SELECT</command> Rules Work</Title>
+
+<indexterm zone="rules-select">
+ <primary>rule</primary>
+ <secondary sortas="SELECT">for SELECT</secondary>
+</indexterm>
 
 <Para>
     Rules <literal>ON SELECT</> are applied to all queries as the last step, even
@@ -736,7 +755,7 @@ SELECT t1.a, t2.b FROM t1, t2 WHERE t1.a = t2.a;
     To resolve this problem, another entry is added to the target list
     in <command>UPDATE</command> (and also in
     <command>DELETE</command>) statements: the current tuple ID
-    (<acronym>CTID</>).  This is a system column containing the
+    (<acronym>CTID</>).<indexterm><primary>CTID</></>  This is a system column containing the
     file block number and position in the block for the row. Knowing
     the table, the <acronym>CTID</> can be used to retrieve the
     original row of <literal>t1</> to be updated.  After adding the <acronym>CTID</>
@@ -816,6 +835,21 @@ SELECT t1.a, t2.b, t1.ctid FROM t1, t2 WHERE t1.a = t2.a;
 
 <Sect1 id="rules-update">
 <Title>Rules on <command>INSERT</>, <command>UPDATE</>, and <command>DELETE</></Title>
+
+<indexterm zone="rules-update">
+ <primary>rule</primary>
+ <secondary sortas="INSERT">for INSERT</secondary>
+</indexterm>
+
+<indexterm zone="rules-update">
+ <primary>rule</primary>
+ <secondary sortas="UPDATE">for UPDATE</secondary>
+</indexterm>
+
+<indexterm zone="rules-update">
+ <primary>rule</primary>
+ <secondary sortas="DELETE">for DELETE</secondary>
+</indexterm>
 
 <Para>
     Rules that are defined on <command>INSERT</>, <command>UPDATE</>,
@@ -1243,7 +1277,7 @@ SELECT shoelace_data.sl_name, 0,
 <Sect2 id="rules-update-views">
 <Title>Cooperation with Views</Title>
 
-<indexterm zone="rules-update-views"><primary>views</><secondary>updating</></>
+<indexterm zone="rules-update-views"><primary>view</><secondary>updating</></>
 
 <Para>
     A simple way to protect view relations from the mentioned
@@ -1654,6 +1688,16 @@ SELECT * FROM shoelace;
 <Sect1 id="rules-privileges">
 <Title>Rules and Privileges</Title>
 
+<indexterm zone="rules-privileges">
+ <primary>privilege</primary>
+ <secondary sortas="Regeln">with rules</secondary>
+</indexterm>
+
+<indexterm zone="rules-privileges">
+ <primary>privilege</primary>
+ <secondary sortas="Sichten">with views</secondary>
+</indexterm>
+
 <Para>
     Due to rewriting of queries by the <ProductName>PostgreSQL</ProductName>
     rule system, other tables/views than those used in the original
@@ -1795,6 +1839,16 @@ GRANT SELECT ON phone_number TO secretary;
 
 <Sect1 id="rules-triggers">
 <Title>Rules versus Triggers</Title>
+
+<indexterm zone="rules-triggers">
+ <primary>rule</primary>
+ <secondary sortas="Trigger">compared with triggers</secondary>
+</indexterm>
+
+<indexterm zone="rules-triggers">
+ <primary>trigger</primary>
+ <secondary sortas="Regeln">compared with rules</secondary>
+</indexterm>
 
 <Para>
     Many things that can be done using triggers can also be

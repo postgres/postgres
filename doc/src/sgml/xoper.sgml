@@ -1,9 +1,14 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/xoper.sgml,v 1.25 2003/08/17 22:09:00 tgl Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/xoper.sgml,v 1.26 2003/08/31 17:32:21 petere Exp $
 -->
 
  <sect1 id="xoper">
   <title>User-defined Operators</title>
+
+  <indexterm zone="xoper">
+   <primary>operator</primary>
+   <secondary>user-defined</secondary>
+  </indexterm>
 
   <Para>
    Every operator is <quote>syntactic sugar</quote> for a call to an
@@ -18,9 +23,10 @@ $Header: /cvsroot/pgsql/doc/src/sgml/xoper.sgml,v 1.25 2003/08/17 22:09:00 tgl E
 
   <Para>
    <productname>PostgreSQL</productname> supports left unary, right
-   unary, and binary operators.  Operators can be overloaded; that is,
-   the same operator name can be used for different operators that
-   have different numbers and types of operands.  When a query is
+   unary, and binary operators.  Operators can be
+   overloaded;<indexterm><primary>overloading</primary><secondary>operators</secondary></indexterm>
+   that is, the same operator name can be used for different operators
+   that have different numbers and types of operands.  When a query is
    executed, the system determines the operator to call from the
    number and types of the provided operands.
   </Para>

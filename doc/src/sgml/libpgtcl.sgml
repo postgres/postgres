@@ -125,8 +125,8 @@
   <para>
    The <function>pg_lo_*</function> commands are interfaces to the
    large object features of
-   <ProductName>PostgreSQL</ProductName>.<indexterm><primary>Large
-   Object</></> The functions are designed to mimic the analogous file
+   <ProductName>PostgreSQL</ProductName>.<indexterm><primary>large
+   object</><secondary>in pgctl</></> The functions are designed to mimic the analogous file
    system functions in the standard Unix file system interface.  The
    <function>pg_lo_*</function> commands should be used within a
    <command>BEGIN</command>/<command>COMMIT</command> transaction
@@ -1043,12 +1043,12 @@ pg_listen <parameter>conn</parameter> <parameter>notifyName</parameter> <optiona
    message bearing the given name arrives from the server.  This
    occurs when any <productname>PostgreSQL</productname> client
    application issues a
-   <command>NOTIFY</command><indexterm><primary>NOTIFY</><secondary>in
-   pgtcl</></> command referencing that name.  The command string is
-   executed from the Tcl idle loop.  That is the normal idle state of
-   an application written with Tk.  In non-Tk Tcl shells, you can
-   execute <function>update</function> or <function>vwait</function>
-   to cause the idle loop to be entered.
+   <command>NOTIFY</command><indexterm><primary>NOTIFY</><secondary
+   sortas="pgtcl">in pgtcl</></> command referencing that name.  The
+   command string is executed from the Tcl idle loop.  That is the
+   normal idle state of an application written with Tk.  In non-Tk Tcl
+   shells, you can execute <function>update</function> or
+   <function>vwait</function> to cause the idle loop to be entered.
   </para>
 
   <para>

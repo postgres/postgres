@@ -1,9 +1,13 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/xplang.sgml,v 1.22 2003/06/30 18:31:42 tgl Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/xplang.sgml,v 1.23 2003/08/31 17:32:21 petere Exp $
 -->
 
  <chapter id="xplang">
   <title id="xplang-title">Procedural Languages</title>
+
+  <indexterm zone="xplang">
+   <primary>procedural language</primary>
+  </indexterm>
 
   <para>
    <productname>PostgreSQL</productname> allows users to add new

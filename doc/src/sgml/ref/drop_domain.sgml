@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/ref/drop_domain.sgml,v 1.10 2003/05/04 02:23:16 petere Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/ref/drop_domain.sgml,v 1.11 2003/08/31 17:32:22 petere Exp $
 PostgreSQL documentation
 -->
 
@@ -13,6 +13,10 @@ PostgreSQL documentation
   <refname>DROP DOMAIN</refname>
   <refpurpose>remove a domain</refpurpose>
  </refnamediv>
+
+ <indexterm zone="sql-dropdomain">
+  <primary>DROP DOMAIN</primary>
+ </indexterm>
 
  <refsynopsisdiv>
 <synopsis>

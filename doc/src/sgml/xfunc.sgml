@@ -1,11 +1,14 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/xfunc.sgml,v 1.72 2003/08/10 01:20:34 tgl Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/xfunc.sgml,v 1.73 2003/08/31 17:32:20 petere Exp $
 -->
 
  <sect1 id="xfunc">
   <title>User-Defined Functions</title>
 
-  <indexterm zone="xfunc"><primary>function</></>
+  <indexterm zone="xfunc">
+   <primary>function</primary>
+   <secondary>user-defined</secondary>
+  </indexterm>
 
   <para>
    <productname>PostgreSQL</productname> provides four kinds of
@@ -70,7 +73,11 @@ $Header: /cvsroot/pgsql/doc/src/sgml/xfunc.sgml,v 1.72 2003/08/10 01:20:34 tgl E
   <sect1 id="xfunc-sql">
    <title>Query Language (<acronym>SQL</acronym>) Functions</title>
 
-   <indexterm zone="xfunc-sql"><primary>function</><secondary>SQL</></>
+   <indexterm zone="xfunc-sql">
+    <primary>function</primary>
+    <secondary>user-defined</secondary>
+    <tertiary>in SQL</tertiary>
+   </indexterm>
 
    <para>
     SQL functions execute an arbitrary list of SQL statements, returning
@@ -84,12 +91,12 @@ $Header: /cvsroot/pgsql/doc/src/sgml/xfunc.sgml,v 1.72 2003/08/10 01:20:34 tgl E
    </para>
 
    <para>
-    <indexterm><primary>SETOF</><seealso>function</></>
-    Alternatively, an SQL function may be declared to return a set,
-    by specifying the function's return type
-    as <literal>SETOF <replaceable>sometype</></literal>.  In this case
-    all rows of the last query's result are returned.  Further details
-    appear below.
+    <indexterm><primary>SETOF</><seealso>function</></> Alternatively,
+    an SQL function may be declared to return a set, by specifying the
+    function's return type as <literal>SETOF
+    <replaceable>sometype</></literal>.<indexterm><primary>SETOF</></>
+    In this case all rows of the last query's result are returned.
+    Further details appear below.
    </para>
 
    <para>
@@ -523,7 +530,7 @@ SELECT name, listchildren(name) FROM nodes;
      <acronym>SQL</acronym> functions may be declared to accept and
      return the <quote>polymorphic</> types
      <type>anyelement</type> and <type>anyarray</type>.
-     See <xref linkend="types-polymorphic"> for a more detailed explanation
+     See <xref linkend="extend-types-polymorphic"> for a more detailed explanation
      of polymorphic functions. Here is a polymorphic function
      <function>make_array</function> that builds up an array from two
      arbitrary data type elements:
@@ -644,6 +651,12 @@ CREATE FUNCTION square_root(double precision) RETURNS double precision
   <sect1 id="xfunc-c">
    <title>C-Language Functions</title>
 
+   <indexterm zone="xfunc-sql">
+    <primary>function</primary>
+    <secondary>user-defined</secondary>
+    <tertiary>in C</tertiary>
+   </indexterm>
+
    <para>
     User-defined functions can be written in C (or a language that can
     be made compatible with C, such as C++).  Such functions are
@@ -669,6 +682,10 @@ CREATE FUNCTION square_root(double precision) RETURNS double precision
 
   <sect2 id="xfunc-c-dynload">
    <title>Dynamic Loading</title>
+
+   <indexterm zone="xfunc-c-dynload">
+    <primary>dynamic loading</primary>
+   </indexterm>
 
    <para>
     The first time a user-defined function in a particular
@@ -787,8 +804,13 @@ CREATE FUNCTION square_root(double precision) RETURNS double precision
 
   </sect2>
 
-   <sect2>
+   <sect2 id="xfunc-c-basetype">
     <title>Base Types in C-Language Functions</title>
+
+    <indexterm zone="xfunc-c-basetype">
+     <primary>data type</primary>
+     <secondary>internal organisation</secondary>
+    </indexterm>
 
     <para>
      To know how to write C-language functions, you need to know how
@@ -1479,7 +1501,7 @@ concat_text(PG_FUNCTION_ARGS)
       <listitem>
        <para>
         Use <literal>pg_config
-        --includedir-server</literal><indexterm><primary>pg_config</></>
+        --includedir-server</literal><indexterm><primary>pg_config</><secondary>with user-defined C functions</></>
         to find out where the <productname>PostgreSQL</> server header
         files are installed on your system (or the system that your
         users will be running on).  This option is new with
@@ -1498,7 +1520,7 @@ concat_text(PG_FUNCTION_ARGS)
        <para>
         When allocating memory, use the
         <productname>PostgreSQL</productname> functions
-        <function>palloc</function> and <function>pfree</function>
+        <function>palloc</function><indexterm><primary>palloc</></> and <function>pfree</function><indexterm><primary>pfree</></>
         instead of the corresponding C library functions
         <function>malloc</function> and <function>free</function>.
         The memory allocated by <function>palloc</function> will be
@@ -2075,7 +2097,7 @@ CREATE OR REPLACE FUNCTION testpassbyval(integer, integer) RETURNS SETOF __testp
      C-language functions may be declared to accept and
      return the <quote>polymorphic</> types
      <type>anyelement</type> and <type>anyarray</type>.
-     See <xref linkend="types-polymorphic"> for a more detailed explanation
+     See <xref linkend="extend-types-polymorphic"> for a more detailed explanation
      of polymorphic functions. When function arguments or return types
      are defined as polymorphic types, the function author cannot know
      in advance what data type it will be called with, or
@@ -2155,7 +2177,10 @@ CREATE FUNCTION make_array(anyelement)
   <sect1 id="xfunc-overload">
    <title>Function Overloading</title>
 
-   <indexterm zone="xfunc-overload"><primary>overloading</></>
+   <indexterm zone="xfunc-overload">
+    <primary>overloading</primary>
+    <secondary>functions</secondary>
+   </indexterm>
 
    <para>
     More than one function may be defined with the same SQL name, so long
@@ -2215,6 +2240,11 @@ CREATE FUNCTION test(int, int) RETURNS int
 
   <sect1 id="xfunc-plhandler">
    <title>Procedural Language Handlers</title>
+
+   <indexterm zone="xfunc-plhandler">
+    <primary>procedural language</primary>
+    <secondary>handler for</secondary>
+   </indexterm>
 
    <para>
     All calls to functions that are written in a language other than

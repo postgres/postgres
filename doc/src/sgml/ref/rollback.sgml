@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/ref/rollback.sgml,v 1.14 2003/04/26 23:56:51 petere Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/ref/rollback.sgml,v 1.15 2003/08/31 17:32:24 petere Exp $
 PostgreSQL documentation
 -->
 
@@ -13,6 +13,10 @@ PostgreSQL documentation
   <refname>ROLLBACK</refname>
   <refpurpose>abort the current transaction</refpurpose>
  </refnamediv>
+
+ <indexterm zone="sql-rollback">
+  <primary>ROLLBACK</primary>
+ </indexterm>
 
  <refsynopsisdiv>
 <synopsis>

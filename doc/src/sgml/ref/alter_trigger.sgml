@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/ref/alter_trigger.sgml,v 1.4 2003/04/15 13:25:08 petere Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/ref/alter_trigger.sgml,v 1.5 2003/08/31 17:32:21 petere Exp $
 PostgreSQL documentation
 -->
 
@@ -13,6 +13,10 @@ PostgreSQL documentation
   <refname>ALTER TRIGGER</refname>
   <refpurpose>change the definition of a trigger</refpurpose>
  </refnamediv>
+
+ <indexterm zone="sql-altertrigger">
+  <primary>ALTER TRIGGER</primary>
+ </indexterm>
 
  <refsynopsisdiv>
 <synopsis>

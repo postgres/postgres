@@ -1,10 +1,10 @@
-<!-- $Header: /cvsroot/pgsql/doc/src/sgml/array.sgml,v 1.30 2003/08/19 06:06:43 tgl Exp $ -->
+<!-- $Header: /cvsroot/pgsql/doc/src/sgml/array.sgml,v 1.31 2003/08/31 17:32:18 petere Exp $ -->
 
 <sect1 id="arrays">
  <title>Arrays</title>
 
  <indexterm>
-  <primary>arrays</primary>
+  <primary>array</primary>
  </indexterm>
 
  <para>

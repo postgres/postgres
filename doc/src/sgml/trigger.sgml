@@ -1,9 +1,13 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/trigger.sgml,v 1.29 2003/08/10 01:20:34 tgl Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/trigger.sgml,v 1.30 2003/08/31 17:32:20 petere Exp $
 -->
 
  <chapter id="triggers">
   <title>Triggers</title>
+
+  <indexterm zone="triggers">
+   <primary>trigger</primary>
+  </indexterm>
 
   <para>
    This chapter describes how to write trigger functions.  In
@@ -98,24 +102,31 @@ $Header: /cvsroot/pgsql/doc/src/sgml/trigger.sgml,v 1.29 2003/08/10 01:20:34 tgl
 
    <para>
     When a trigger is being defined, arguments can be specified for
-    it.  The purpose of including arguments in the trigger definition
-    is to allow different triggers with similar requirements to call
-    the same function.  As an example, there could be a generalized
-    trigger function that takes as its arguments two column names and
-    puts the current user in one and the current time stamp in the
-    other.  Properly written, this trigger function would be
-    independent of the specific table it is triggering on.  So the
-    same function could be used for <command>INSERT</command> events
-    on any table with suitable columns, to automatically track creation
-    of records in a transaction table for example. It could also be
-    used to track last-update events if defined as an
-    <command>UPDATE</command> trigger.
+    it.<indexterm><primary>trigger</><secondary>arguments for trigger
+    functions</></indexterm> The purpose of including arguments in the
+    trigger definition is to allow different triggers with similar
+    requirements to call the same function.  As an example, there
+    could be a generalized trigger function that takes as its
+    arguments two column names and puts the current user in one and
+    the current time stamp in the other.  Properly written, this
+    trigger function would be independent of the specific table it is
+    triggering on.  So the same function could be used for
+    <command>INSERT</command> events on any table with suitable
+    columns, to automatically track creation of records in a
+    transaction table for example. It could also be used to track
+    last-update events if defined as an <command>UPDATE</command>
+    trigger.
    </para>
 
   </sect1>
 
   <sect1 id="trigger-manager">
    <title>Interaction with the Trigger Manager</title>
+
+   <indexterm zone="trigger-manager">
+    <primary>trigger</primary>
+    <secondary>in C</secondary>
+   </indexterm>
 
    <para>
     This section describes the low-level details of the interface to a

@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/ref/create_index.sgml,v 1.39 2003/05/28 16:03:55 tgl Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/ref/create_index.sgml,v 1.40 2003/08/31 17:32:22 petere Exp $
 PostgreSQL documentation
 -->
 
@@ -13,6 +13,10 @@ PostgreSQL documentation
   <refname>CREATE INDEX</refname>
   <refpurpose>define a new index</refpurpose>
  </refnamediv>
+
+ <indexterm zone="sql-createindex">
+  <primary>CREATE INDEX</primary>
+ </indexterm>
 
  <refsynopsisdiv>
 <synopsis>

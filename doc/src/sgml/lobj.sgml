@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/lobj.sgml,v 1.29 2003/06/21 21:51:33 tgl Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/lobj.sgml,v 1.30 2003/08/31 17:32:19 petere Exp $
 -->
 
  <chapter id="largeObjects">
@@ -113,6 +113,7 @@ $Header: /cvsroot/pgsql/doc/src/sgml/lobj.sgml,v 1.29 2003/06/21 21:51:33 tgl Ex
 <synopsis>
 Oid lo_creat(PGconn *conn, int mode);
 </synopsis>
+     <indexterm><primary>lo_creat</></>
      creates a new large  object.  
      <replaceable class="parameter">mode</replaceable>  is  a  bit mask
      describing  several  different  attributes  of  the new
@@ -143,7 +144,8 @@ inv_oid = lo_creat(INV_READ|INV_WRITE);
 <synopsis>
 Oid lo_import(PGconn *conn, const char *filename);
 </synopsis>
-    <replaceable class="parameter">filename</replaceable> 
+     <indexterm><primary>lo_import</></>
+     <replaceable class="parameter">filename</replaceable> 
      specifies the operating system name of
      the file to be imported as a large object.
      The return value is the OID that was assigned to the new large object.
@@ -159,6 +161,7 @@ Oid lo_import(PGconn *conn, const char *filename);
 <synopsis>
 int lo_export(PGconn *conn, Oid lobjId, const char *filename);
 </synopsis>
+     <indexterm><primary>lo_export</></>
      The <parameter>lobjId</parameter> argument specifies  the  OID  of  the  large
      object  to  export  and the <parameter>filename</parameter> argument specifies
      the operating system name name of the file.
@@ -173,6 +176,7 @@ int lo_export(PGconn *conn, Oid lobjId, const char *filename);
 <synopsis>
 int lo_open(PGconn *conn, Oid lobjId, int mode);
 </synopsis>
+     <indexterm><primary>lo_open</></>
      The <parameter>lobjId</parameter> argument specifies  the  OID  of  the  large
      object  to  open.   The  <parameter>mode</parameter>  bits control whether the
      object is opened  for  reading  (<symbol>INV_READ</>),  writing (<symbol>INV_WRITE</symbol>),  or
@@ -194,10 +198,13 @@ int lo_open(PGconn *conn, Oid lobjId, int mode);
 <synopsis>
 int lo_write(PGconn *conn, int fd, const char *buf, size_t len);
 </synopsis>
-     writes <parameter>len</parameter> bytes from <parameter>buf</parameter> to large object <parameter>fd</>.   The <parameter>fd</parameter>
-     argument must have been returned by a previous <function>lo_open</function>.
-     The number of bytes actually written is  returned.   In
-     the event of an error, the return value is negative.
+     <indexterm><primary>lo_write</></> writes
+     <parameter>len</parameter> bytes from <parameter>buf</parameter>
+     to large object <parameter>fd</>.  The <parameter>fd</parameter>
+     argument must have been returned by a previous
+     <function>lo_open</function>.  The number of bytes actually
+     written is returned.  In the event of an error, the return value
+     is negative.
 </para>
 </sect2>
 
@@ -209,10 +216,13 @@ int lo_write(PGconn *conn, int fd, const char *buf, size_t len);
 <synopsis>
 int lo_read(PGconn *conn, int fd, char *buf, size_t len);
 </synopsis>
-     reads <parameter>len</parameter> bytes from large object <parameter>fd</parameter> into <parameter>buf</parameter>. The  <parameter>fd</parameter>
-     argument must have been returned by a previous <function>lo_open</function>.
-     The number of bytes actually read is returned. In
-     the event of an error, the return value is negative.
+     <indexterm><primary>lo_read</></> reads
+     <parameter>len</parameter> bytes from large object
+     <parameter>fd</parameter> into <parameter>buf</parameter>. The
+     <parameter>fd</parameter> argument must have been returned by a
+     previous <function>lo_open</function>.  The number of bytes
+     actually read is returned. In the event of an error, the return
+     value is negative.
 </para>
 </sect2>
 
@@ -225,10 +235,14 @@ int lo_read(PGconn *conn, int fd, char *buf, size_t len);
 <synopsis>
 int lo_lseek(PGconn *conn, int fd, int offset, int whence);
 </synopsis>
-     This function moves the current location pointer for the
-     large object described by <parameter>fd</> to the new location specified 
-     by <parameter>offset</>.  The valid values for <parameter>whence</> are
-     <symbol>SEEK_SET</> (seek from object start), <symbol>SEEK_CUR</> (seek from current position), and <symbol>SEEK_END</> (seek from object end).  The return value is the new location pointer.
+     <indexterm><primary>lo_lseek</></> This function moves the
+     current location pointer for the large object described by
+     <parameter>fd</> to the new location specified by
+     <parameter>offset</>.  The valid values for <parameter>whence</>
+     are <symbol>SEEK_SET</> (seek from object start),
+     <symbol>SEEK_CUR</> (seek from current position), and
+     <symbol>SEEK_END</> (seek from object end).  The return value is
+     the new location pointer.
 </para>
 </sect2>
 
@@ -241,7 +255,8 @@ int lo_lseek(PGconn *conn, int fd, int offset, int whence);
 <synopsis>
 int lo_tell(PGconn *conn, int fd);
 </synopsis>
-     If there is an error, the return value is negative.
+     <indexterm><primary>lo_tell</></> If there is an error, the
+     return value is negative.
 </para>
 </sect2>
 
@@ -253,9 +268,10 @@ int lo_tell(PGconn *conn, int fd);
 <synopsis>
 int lo_close(PGconn *conn, int fd);
 </synopsis>
-     where  <parameter>fd</>  is  a  large  object  descriptor returned by
-     <function>lo_open</function>.  On success, <function>lo_close</function>
-      returns zero.  On error, the return value is negative.
+     <indexterm><primary>lo_close</></> where <parameter>fd</> is a
+     large object descriptor returned by <function>lo_open</function>.
+     On success, <function>lo_close</function> returns zero.  On
+     error, the return value is negative.
 </para>
 
 <para>
@@ -272,8 +288,10 @@ int lo_close(PGconn *conn, int fd);
 <synopsis>
 int lo_unlink(PGconn *conn, Oid lobjId);
 </synopsis>
-     The <parameter>lobjId</parameter> argument specifies  the  OID  of  the  large
-     object  to  remove.  In the event of an error, the return value is negative.
+     <indexterm><primary>lo_unlink</></> The
+     <parameter>lobjId</parameter> argument specifies the OID of the
+     large object to remove.  In the event of an error, the return
+     value is negative.
     </para>
    </sect2>
 
@@ -284,11 +302,13 @@ int lo_unlink(PGconn *conn, Oid lobjId);
 <title>Server-side Functions</title>
 
 <para>
-     There  are two built-in server-side functions, <function>lo_import</function>
-     and <function>lo_export</function>, for large object access, which are available for use
-    in  <acronym>SQL</acronym>
-     commands.
-     Here is an example of their use:
+     There are two built-in server-side functions,
+     <function>lo_import</function><indexterm><primary>lo_import</></>
+     and
+     <function>lo_export</function>,<indexterm><primary>lo_export</></>
+     for large object access, which are available for use in
+     <acronym>SQL</acronym> commands.  Here is an example of their
+     use:
 <programlisting>
 CREATE TABLE image (
     name            text,

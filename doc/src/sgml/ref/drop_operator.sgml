@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/ref/drop_operator.sgml,v 1.19 2003/05/04 02:23:16 petere Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/ref/drop_operator.sgml,v 1.20 2003/08/31 17:32:22 petere Exp $
 PostgreSQL documentation
 -->
 
@@ -14,6 +14,10 @@ PostgreSQL documentation
   <refpurpose>remove a user-defined operator</refpurpose>
  </refnamediv>
   
+ <indexterm zone="sql-dropoperator">
+  <primary>DROP OPERATOR</primary>
+ </indexterm>
+
  <refsynopsisdiv>
 <synopsis>
 DROP OPERATOR <replaceable class="PARAMETER">name</replaceable> ( <replaceable class="PARAMETER">lefttype</replaceable> | NONE , <replaceable class="PARAMETER">righttype</replaceable> | NONE ) [ CASCADE | RESTRICT ]

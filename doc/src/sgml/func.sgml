@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/func.sgml,v 1.168 2003/08/19 06:06:43 tgl Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/func.sgml,v 1.169 2003/08/31 17:32:18 petere Exp $
 PostgreSQL documentation
 -->
 
@@ -7,11 +7,11 @@ PostgreSQL documentation
   <title>Functions and Operators</title>
 
   <indexterm zone="functions">
-   <primary>functions</primary>
+   <primary>function</primary>
   </indexterm>
 
   <indexterm zone="functions">
-   <primary>operators</primary>
+   <primary>operator</primary>
   </indexterm>
 
   <para>
@@ -40,7 +40,7 @@ PostgreSQL documentation
    <title>Logical Operators</title>
 
    <indexterm zone="functions-logical">
-    <primary>operators</primary>
+    <primary>operator</primary>
     <secondary>logical</secondary>
    </indexterm>
 
@@ -54,18 +54,27 @@ PostgreSQL documentation
     The usual logical operators are available:
 
     <indexterm>
-     <primary>and</primary>
-     <secondary>operator</secondary>
+     <primary>AND (operator)</primary>
     </indexterm>
 
     <indexterm>
-     <primary>or</primary>
-     <secondary>operator</secondary>
+     <primary>OR (operator)</primary>
     </indexterm>
 
     <indexterm>
-     <primary>not</primary>
-     <secondary>operator</secondary>
+     <primary>NOT (operator)</primary>
+    </indexterm>
+
+    <indexterm>
+     <primary>conjunction</primary>
+    </indexterm>
+
+    <indexterm>
+     <primary>disjunction</primary>
+    </indexterm>
+
+    <indexterm>
+     <primary>negation</primary>
     </indexterm>
 
     <simplelist>
@@ -252,7 +261,7 @@ PostgreSQL documentation
      <primary>between</primary>
     </indexterm>
     In addition to the comparison operators, the special
-    <token>BETWEEN</token> construct is available.
+    <token>BETWEEN</token> construct is available.<indexterm><primary>BETWEEN</primary></indexterm>
 <synopsis>
 <replaceable>a</replaceable> BETWEEN <replaceable>x</replaceable> AND <replaceable>y</replaceable>
 </synopsis>
@@ -284,6 +293,7 @@ PostgreSQL documentation
 <replaceable>expression</replaceable> ISNULL
 <replaceable>expression</replaceable> NOTNULL
 </synopsis>
+    <indexterm><primary>null value</primary><secondary>comparing</secondary></indexterm>
    </para>
 
    <para>
@@ -847,7 +857,7 @@ PostgreSQL documentation
        <entry>
         String concatenation
         <indexterm>
-         <primary>character strings</primary>
+         <primary>character string</primary>
          <secondary>concatenation</secondary>
         </indexterm>
        </entry>
@@ -869,12 +879,12 @@ PostgreSQL documentation
        <entry>
         Number of characters in string
         <indexterm>
-         <primary>character strings</primary>
+         <primary>character string</primary>
          <secondary>length</secondary>
         </indexterm>
         <indexterm>
          <primary>length</primary>
-         <secondary>character strings</secondary>
+         <secondary sortas="character string">of a character string</secondary>
          <see>character strings, length</see>
         </indexterm>
        </entry>
@@ -1110,12 +1120,12 @@ PostgreSQL documentation
        <entry>
         Number of characters in string
         <indexterm>
-         <primary>character strings</primary>
+         <primary>character string</primary>
          <secondary>length</secondary>
         </indexterm>
         <indexterm>
          <primary>length</primary>
-         <secondary>character strings</secondary>
+         <secondary sortas="character string">of a character string</secondary>
          <see>character strings, length</see>
         </indexterm>
        </entry>
@@ -1174,7 +1184,7 @@ PostgreSQL documentation
       </row>
 
       <row>
-       <entry><literal><function>quote_ident</function>(<parameter>string</parameter> text)</literal></entry>
+       <entry><literal><function>quote_ident</function>(<parameter>string</parameter> text)</literal><indexterm><primary>quote_ident</></></entry>
        <entry><type>text</type></entry>
        <entry>
         Return the given string suitably quoted to be used as an identifier
@@ -1188,7 +1198,7 @@ PostgreSQL documentation
       </row>
 
       <row>
-       <entry><literal><function>quote_literal</function>(<parameter>string</parameter> text)</literal></entry>
+       <entry><literal><function>quote_literal</function>(<parameter>string</parameter> text)</literal><indexterm><primary>quote_literal</></></entry>
        <entry><type>text</type></entry>
        <entry>
         Return the given string suitably quoted to be used as a string literal
@@ -2055,6 +2065,11 @@ PostgreSQL documentation
   <sect1 id="functions-binarystring">
    <title>Binary String Functions and Operators</title>
 
+   <indexterm zone="functions-binarystring">
+    <primary>binary data</primary>
+    <secondary>functions</secondary>
+   </indexterm>
+
    <para>
     This section describes functions and operators for examining and
     manipulating values of type <type>bytea</type>.
@@ -2092,7 +2107,7 @@ PostgreSQL documentation
        <entry>
         String concatenation
         <indexterm>
-         <primary>binary strings</primary>
+         <primary>binary string</primary>
          <secondary>concatenation</secondary>
         </indexterm>
        </entry>
@@ -2243,12 +2258,12 @@ PostgreSQL documentation
       <entry>
        Length of binary string
        <indexterm>
-        <primary>binary strings</primary>
+        <primary>binary string</primary>
 	<secondary>length</secondary>
        </indexterm>
        <indexterm>
         <primary>length</primary>
-	<secondary>binary strings</secondary>
+	<secondary sortas="binary string">of a binary string</secondary>
 	<see>binary strings, length</see>
        </indexterm>
       </entry>
@@ -2321,8 +2336,8 @@ PostgreSQL documentation
   <sect2 id="functions-like">
    <title><function>LIKE</function></title>
 
-   <indexterm>
-    <primary>like</primary>
+   <indexterm zone="functions-like">
+    <primary>LIKE</primary>
    </indexterm>
 
 <synopsis>
@@ -2420,12 +2435,12 @@ PostgreSQL documentation
      Regular Expressions</title>
 
    <indexterm zone="functions-sql99-regexp">
-    <primary>regular expressions</primary>
+    <primary>regular expression</primary>
     <!-- <seealso>pattern matching</seealso> breaks index build -->
    </indexterm>
 
    <indexterm>
-    <primary>similar to</primary>
+    <primary>SIMILAR TO</primary>
    </indexterm>
 
    <indexterm>
@@ -2547,7 +2562,7 @@ substring('foobar' from '#"o_b#"%' for '#')    <lineannotation>NULL</lineannotat
    <title><acronym>POSIX</acronym> Regular Expressions</title>
 
    <indexterm zone="functions-posix-regexp">
-    <primary>regular expressions</primary>
+    <primary>regular expression</primary>
     <seealso>pattern matching</seealso>
    </indexterm>
 
@@ -3792,6 +3807,10 @@ substring('foobar' from 'o(.)b')   <lineannotation>o</lineannotation>
 
    <indexterm zone="functions-formatting">
     <primary>formatting</primary>
+   </indexterm>
+
+   <indexterm zone="functions-formatting">
+    <primary>to_char</primary>
    </indexterm>
 
    <para>
@@ -6004,7 +6023,7 @@ SELECT TIMESTAMP 'now';
   <title>Sequence-Manipulation Functions</title>
 
   <indexterm>
-   <primary>sequences</primary>
+   <primary>sequence</primary>
   </indexterm>
   <indexterm>
    <primary>nextval</primary>
@@ -6167,11 +6186,11 @@ SELECT setval('foo', 42, false);    <lineannotation>Next <function>nextval</> wi
   <title>Conditional Expressions</title>
 
   <indexterm>
-   <primary>case</primary>
+   <primary>CASE</primary>
   </indexterm>
 
   <indexterm>
-   <primary>conditionals</primary>
+   <primary>conditional expression</primary>
   </indexterm>
 
   <para>
@@ -6292,8 +6311,12 @@ SELECT a,
   <sect2>
    <title><literal>COALESCE</></title>
 
+  <indexterm>
+   <primary>COALESCE</primary>
+  </indexterm>
+
 <synopsis>
-<function>COALESCE</function>(<replaceable>value</replaceable> <optional>, ...</optional>)
+<function>coalesce</function>(<replaceable>value</replaceable> <optional>, ...</optional>)
 </synopsis>
 
   <para>
@@ -6502,7 +6525,8 @@ SET search_path TO <replaceable>schema</> <optional>, <replaceable>schema</>, ..
 
    <indexterm zone="functions-misc">
     <primary>configuration</primary>
-    <secondary>server</secondary>
+    <secondary sortas="server">of the server</secondary>
+    <tertiary>functions</tertiary>
    </indexterm>
 
    <para>
@@ -6538,6 +6562,11 @@ SELECT set_config('show_statement_stats', 'off', false);
 (1 row)
 </programlisting>
    </para>
+
+  <indexterm>
+   <primary>privilege</primary>
+   <secondary>querying</secondary>
+  </indexterm>
 
   <para>
    <xref linkend="functions-misc-access-table"> lists functions that
@@ -6971,6 +7000,11 @@ SELECT pg_type_is_visible('myschema.widget'::regtype);
     <primary>col_description</primary>
    </indexterm>
 
+   <indexterm zone="functions-misc">
+    <primary>comment</primary>
+    <secondary sortas="database objects">about database objects</secondary>
+   </indexterm>
+
    <para>
     The function shown in <xref
     linkend="functions-misc-comment-table"> extract comments
@@ -7272,6 +7306,11 @@ SELECT pg_type_is_visible('myschema.widget'::regtype);
  <sect1 id="functions-aggregate">
   <title>Aggregate Functions</title>
 
+  <indexterm zone="functions-aggregate">
+   <primary>aggregate function</primary>
+   <secondary>built-in</secondary>
+  </indexterm>
+
   <para>
    <firstterm>Aggregate functions</firstterm> compute a single result
    value from a set of input values.  <xref
@@ -7300,7 +7339,6 @@ SELECT pg_type_is_visible('myschema.widget'::regtype);
       <entry>
        <indexterm>
         <primary>average</primary>
-        <secondary>function</secondary>
        </indexterm>
        <function>avg(<replaceable class="parameter">expression</replaceable>)</function>
       </entry>
@@ -7482,31 +7520,31 @@ SELECT col FROM sometable ORDER BY col ASC LIMIT 1;
   <title>Subquery Expressions</title>
 
   <indexterm>
-   <primary>exists</primary>
+   <primary>EXISTS</primary>
   </indexterm>
 
   <indexterm>
-   <primary>in</primary>
+   <primary>IN</primary>
   </indexterm>
 
   <indexterm>
-   <primary>not in</primary>
+   <primary>NOT IN</primary>
   </indexterm>
 
   <indexterm>
-   <primary>any</primary>
+   <primary>ANY</primary>
   </indexterm>
 
   <indexterm>
-   <primary>all</primary>
+   <primary>ALL</primary>
   </indexterm>
 
   <indexterm>
-   <primary>some</primary>
+   <primary>SOME</primary>
   </indexterm>
 
   <indexterm>
-   <primary>subqueries</primary>
+   <primary>subquery</primary>
   </indexterm>
 
   <para>
@@ -7807,6 +7845,11 @@ SELECT col1 FROM tab1
 
   <sect2>
    <title>Row-wise Comparison</title>
+
+   <indexterm>
+    <primary>comparison</primary>
+    <secondary>of rows</secondary>
+   </indexterm>
 
 <synopsis>
 (<replaceable>expression</replaceable> <optional>, <replaceable>expression</replaceable> ...</optional>) <replaceable>operator</replaceable> (<replaceable>subquery</replaceable>)

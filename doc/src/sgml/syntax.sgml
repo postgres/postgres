@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/syntax.sgml,v 1.83 2003/08/19 06:06:48 tgl Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/syntax.sgml,v 1.84 2003/08/31 17:32:20 petere Exp $
 -->
 
 <chapter id="sql-syntax">
@@ -25,6 +25,10 @@ $Header: /cvsroot/pgsql/doc/src/sgml/syntax.sgml,v 1.83 2003/08/19 06:06:48 tgl 
 
  <sect1 id="sql-syntax-lexical">
   <title>Lexical Structure</title>
+
+  <indexterm>
+   <primary>token</primary>
+  </indexterm>
 
   <para>
    SQL input consists of a sequence of
@@ -80,12 +84,18 @@ INSERT INTO MY_TABLE VALUES (3, 'hi there');
    <title>Identifiers and Key Words</title>
 
    <indexterm zone="sql-syntax-identifiers">
-    <primary>identifiers</primary>
+    <primary>identifier</primary>
+    <secondary>syntax of</secondary>
    </indexterm>
 
    <indexterm zone="sql-syntax-identifiers">
-    <primary>key words</primary>
-    <secondary>syntax</secondary>
+    <primary>name</primary>
+    <secondary>syntax of</secondary>
+   </indexterm>
+
+   <indexterm zone="sql-syntax-identifiers">
+    <primary>key word</primary>
+    <secondary>syntax of</secondary>
    </indexterm>
 
    <para>
@@ -121,6 +131,7 @@ INSERT INTO MY_TABLE VALUES (3, 'hi there');
    </para>
 
    <para>
+    <indexterm><primary>identifier</primary><secondary>length</secondary></indexterm>
     The system uses no more than <symbol>NAMEDATALEN</symbol>-1
     characters of an identifier; longer names can be written in
     commands, but they will be truncated.  By default,
@@ -133,7 +144,7 @@ INSERT INTO MY_TABLE VALUES (3, 'hi there');
    <para>
     <indexterm>
      <primary>case sensitivity</primary>
-     <secondary>SQL commands</secondary>
+     <secondary>of SQL commands</secondary>
     </indexterm>
     Identifier and key word names are case insensitive.  Therefore
 <programlisting>
@@ -152,7 +163,7 @@ UPDATE my_table SET a = 5;
 
    <para>
     <indexterm>
-     <primary>quotes</primary>
+     <primary>quotation marks</primary>
      <secondary>and identifiers</secondary>
     </indexterm>
     There is a second kind of identifier:  the <firstterm>delimited
@@ -207,7 +218,7 @@ UPDATE "my_table" SET "a" = 5;
    <title>Constants</title>
 
    <indexterm zone="sql-syntax-constants">
-    <primary>constants</primary>
+    <primary>constant</primary>
    </indexterm>
 
    <para>
@@ -224,13 +235,13 @@ UPDATE "my_table" SET "a" = 5;
     <title>String Constants</title>
 
     <indexterm zone="sql-syntax-strings">
-     <primary>character strings</primary>
-     <secondary>constants</secondary>
+     <primary>character string</primary>
+     <secondary>constant</secondary>
     </indexterm>
 
     <para>
      <indexterm>
-      <primary>quotes</primary>
+      <primary>quotation marks</primary>
       <secondary>escaping</secondary>
      </indexterm>
      A string constant in SQL is an arbitrary sequence of characters
@@ -286,8 +297,8 @@ SELECT 'foo'      'bar';
     <title>Bit-String Constants</title>
 
     <indexterm zone="sql-syntax-bit-strings">
-     <primary>bit strings</primary>
-     <secondary>constants</secondary>
+     <primary>bit string</primary>
+     <secondary>constant</secondary>
     </indexterm>
 
     <para>
@@ -316,8 +327,8 @@ SELECT 'foo'      'bar';
     <title>Numeric Constants</title>
 
     <indexterm>
-     <primary>numeric</primary>
-     <secondary>constants</secondary>
+     <primary>number</primary>
+     <secondary>constant</secondary>
     </indexterm>
 
     <para>
@@ -351,6 +362,9 @@ SELECT 'foo'      'bar';
     </para>
 
     <para>
+     <indexterm><primary>integer</primary></indexterm>
+     <indexterm><primary>bigint</primary></indexterm>
+     <indexterm><primary>numeric</primary></indexterm>
      A numeric constant that contains neither a decimal point nor an
      exponent is initially presumed to be type <type>integer</> if its
      value fits in type <type>integer</> (32 bits); otherwise it is
@@ -363,13 +377,13 @@ SELECT 'foo'      'bar';
 
     <para>
      The initially assigned data type of a numeric constant is just a
-     starting point for the type resolution algorithms.  In most
-     cases the constant will be automatically coerced to the most
-     appropriate type depending on context.  When necessary, you
-     can force a numeric value to be interpreted as a specific
-     data type by casting it.  For example, you can force a numeric
-     value to be treated as type <type>real</> (<type>float4</>)
-     by writing
+     starting point for the type resolution algorithms.  In most cases
+     the constant will be automatically coerced to the most
+     appropriate type depending on context.  When necessary, you can
+     force a numeric value to be interpreted as a specific data type
+     by casting it.<indexterm><primary>type cast</primary></indexterm>
+     For example, you can force a numeric value to be treated as type
+     <type>real</> (<type>float4</>) by writing
 
 <programlisting>
 REAL '1.23'  -- string style
@@ -382,8 +396,8 @@ REAL '1.23'  -- string style
     <title>Constants of Other Types</title>
 
     <indexterm>
-     <primary>data types</primary>
-     <secondary>constants</secondary>
+     <primary>data type</primary>
+     <secondary>constant</secondary>
     </indexterm>
 
     <para>
@@ -431,8 +445,8 @@ CAST ( '<replaceable>string</replaceable>' AS <replaceable>type</replaceable> )
     <title>Array constants</title>
 
     <indexterm>
-     <primary>arrays</primary>
-     <secondary>constants</secondary>
+     <primary>array</primary>
+     <secondary>constant</secondary>
     </indexterm>
 
     <para>
@@ -468,7 +482,7 @@ CAST ( '<replaceable>string</replaceable>' AS <replaceable>type</replaceable> )
    <title>Operators</title>
 
    <indexterm zone="sql-syntax-operators">
-    <primary>operators</primary>
+    <primary>operator</primary>
     <secondary>syntax</secondary>
    </indexterm>
 
@@ -600,8 +614,8 @@ CAST ( '<replaceable>string</replaceable>' AS <replaceable>type</replaceable> )
    <title>Comments</title>
 
    <indexterm zone="sql-syntax-comments">
-    <primary>comments</primary>
-    <secondary>in SQL</secondary>
+    <primary>comment</primary>
+    <secondary sortas="SQL">in SQL</secondary>
    </indexterm>
 
    <para>
@@ -636,7 +650,7 @@ CAST ( '<replaceable>string</replaceable>' AS <replaceable>type</replaceable> )
    <title>Lexical Precedence</title>
 
    <indexterm zone="sql-precedence">
-    <primary>operators</primary>
+    <primary>operator</primary>
     <secondary>precedence</secondary>
    </indexterm>
 
@@ -828,6 +842,20 @@ SELECT 3 OPERATOR(pg_catalog.+) 4;
  <sect1 id="sql-expressions">
   <title>Value Expressions</title>
 
+  <indexterm zone="sql-expressions">
+   <primary>expression</primary>
+   <secondary>syntax</secondary>
+  </indexterm>
+
+  <indexterm zone="sql-expressions">
+   <primary>value expression</primary>
+  </indexterm>
+
+  <indexterm>
+   <primary>scalar</primary>
+   <see>expression</see>
+  </indexterm>
+
   <para>
    Value expressions are used in a variety of contexts, such
    as in the target list of the <command>SELECT</command> command, as
@@ -903,7 +931,9 @@ SELECT 3 OPERATOR(pg_catalog.+) 4;
 
     <listitem>
      <para>
-      Another value expression in parentheses, useful to group subexpressions and override precedence.
+      Another value expression in parentheses, useful to group
+      subexpressions and override
+      precedence.<indexterm><primary>parenthesis</></>
      </para>
     </listitem>
    </itemizedlist>
@@ -926,6 +956,10 @@ SELECT 3 OPERATOR(pg_catalog.+) 4;
 
   <sect2>
    <title>Column References</title>
+
+   <indexterm>
+    <primary>column reference</primary>
+   </indexterm>
 
    <para>
     A column can be referenced in the form
@@ -962,6 +996,15 @@ SELECT 3 OPERATOR(pg_catalog.+) 4;
   <sect2>
    <title>Positional Parameters</title>
 
+   <indexterm>
+    <primary>parameter</primary>
+    <secondary>syntax</secondary>
+   </indexterm>
+
+   <indexterm>
+    <primary>$</primary>
+   </indexterm>
+
    <para>
     A positional parameter reference is used to indicate a value
     that is supplied externally to an SQL statement.  Parameters are
@@ -993,6 +1036,11 @@ CREATE FUNCTION dept(text) RETURNS dept
   <sect2>
    <title>Operator Invocations</title>
 
+   <indexterm>
+    <primary>operator</primary>
+    <secondary>invocation</secondary>
+   </indexterm>
+
    <para>
     There are three possible syntaxes for an operator invocation:
     <simplelist>
@@ -1016,6 +1064,11 @@ CREATE FUNCTION dept(text) RETURNS dept
 
   <sect2>
    <title>Function Calls</title>
+
+   <indexterm>
+    <primary>function</primary>
+    <secondary>invocation</secondary>
+   </indexterm>
 
    <para>
     The syntax for a function call is the name of a function
@@ -1044,7 +1097,8 @@ sqrt(2)
    <title>Aggregate Expressions</title>
 
    <indexterm zone="syntax-aggregates">
-    <primary>aggregate functions</primary>
+    <primary>aggregate function</primary>
+    <secondary>invocation</secondary>
    </indexterm>
 
    <para>
@@ -1123,10 +1177,14 @@ sqrt(2)
   <sect2 id="sql-syntax-type-casts">
    <title>Type Casts</title>
 
-    <indexterm>
-     <primary>data types</primary>
-     <secondary>type casts</secondary>
-    </indexterm>
+   <indexterm>
+    <primary>data type</primary>
+    <secondary>type cast</secondary>
+   </indexterm>
+
+   <indexterm>
+    <primary>type cast</primary>
+   </indexterm>
 
    <para>
     A type cast specifies a conversion from one data type to another.
@@ -1193,6 +1251,10 @@ CAST ( <replaceable>expression</replaceable> AS <replaceable>type</replaceable> 
   <sect2 id="sql-syntax-scalar-subqueries">
    <title>Scalar Subqueries</title>
 
+   <indexterm>
+    <primary>subquery</primary>
+   </indexterm>
+
    <para>
     A scalar subquery is an ordinary
     <command>SELECT</command> query in parentheses that returns exactly one
@@ -1221,10 +1283,10 @@ SELECT name, (SELECT max(pop) FROM cities WHERE cities.state = states.name)
   <sect2 id="sql-syntax-array-constructors">
    <title>Array Constructors</title>
 
-    <indexterm>
-     <primary>arrays</primary>
-     <secondary>constructors</secondary>
-    </indexterm>
+   <indexterm>
+    <primary>array</primary>
+    <secondary>constructor</secondary>
+   </indexterm>
 
    <para>
     An <firstterm>array constructor</> is an expression that builds an
@@ -1315,6 +1377,11 @@ SELECT ARRAY(SELECT oid FROM pg_proc WHERE proname LIKE 'bytea%');
 
   <sect2 id="syntax-express-eval">
    <title>Expression Evaluation Rules</title>
+
+   <indexterm>
+    <primary>expression</primary>
+    <secondary>order of evaluation</secondary>
+   </indexterm>
 
    <para>
     The order of evaluation of subexpressions is not defined.  In

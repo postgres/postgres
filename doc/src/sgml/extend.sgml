@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/extend.sgml,v 1.23 2003/08/09 22:50:21 tgl Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/extend.sgml,v 1.24 2003/08/31 17:32:18 petere Exp $
 -->
 
  <chapter id="extend">
@@ -80,16 +80,25 @@ $Header: /cvsroot/pgsql/doc/src/sgml/extend.sgml,v 1.23 2003/08/09 22:50:21 tgl 
    </para>
   </sect1>
 
-  <sect1 id="type-system">
+  <sect1 id="extend-type-system">
    <title>The <productname>PostgreSQL</productname> Type System</title>
 
-   <indexterm zone="type-system">
-    <primary>extending SQL</primary>
-    <secondary>types</secondary>
+   <indexterm zone="extend-type-system">
+    <primary>base type</primary>
    </indexterm>
 
-   <indexterm zone="type-system">
-    <primary>data types</primary>
+   <indexterm zone="extend-type-system">
+    <primary>data type</primary>
+    <secondary>base</secondary>
+   </indexterm>
+
+   <indexterm zone="extend-type-system">
+    <primary>composite type</primary>
+   </indexterm>
+
+   <indexterm zone="extend-type-system">
+    <primary>data type</primary>
+    <secondary>composite</secondary>
    </indexterm>
 
    <para>
@@ -138,15 +147,25 @@ $Header: /cvsroot/pgsql/doc/src/sgml/extend.sgml,v 1.23 2003/08/09 22:50:21 tgl 
     pseudo-types.
    </para>
 
-   <sect2 id="types-polymorphic">
+   <sect2 id="extend-types-polymorphic">
     <title>Polymorphic Types and Functions</title>
 
-   <indexterm>
-    <primary>polymorphic types</primary>
+   <indexterm zone="extend-types-polymorphic">
+    <primary>polymorphic type</primary>
    </indexterm>
 
-   <indexterm>
-    <primary>polymorphic functions</primary>
+   <indexterm zone="extend-types-polymorphic">
+    <primary>polymorphic function</primary>
+   </indexterm>
+
+   <indexterm zone="extend-types-polymorphic">
+    <primary>type</primary>
+    <secondary>polymorphic</secondary>
+   </indexterm>
+
+   <indexterm zone="extend-types-polymorphic">
+    <primary>function</primary>
+    <secondary>polymorphic</secondary>
    </indexterm>
 
     <para>

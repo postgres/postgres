@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/user-manag.sgml,v 1.21 2003/08/10 01:20:34 tgl Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/user-manag.sgml,v 1.22 2003/08/31 17:32:20 petere Exp $
 -->
 
 <chapter id="user-manag">
@@ -22,6 +22,18 @@ $Header: /cvsroot/pgsql/doc/src/sgml/user-manag.sgml,v 1.21 2003/08/10 01:20:34 
  <sect1 id="database-users">
   <title>Database Users</title>
 
+  <indexterm zone="database-users">
+   <primary>user</primary>
+  </indexterm>
+
+  <indexterm>
+   <primary>CREATE USER</primary>
+  </indexterm>
+
+  <indexterm>
+   <primary>DROP USER</primary>
+  </indexterm>
+
   <para>
    Database users are conceptually completely separate from
    operating system users. In practice it might be convenient to
@@ -40,6 +52,14 @@ CREATE USER <replaceable>name</replaceable>;
 DROP USER <replaceable>name</replaceable>;
 </synopsis>
   </para>
+
+  <indexterm>
+   <primary>createuser</primary>
+  </indexterm>
+
+  <indexterm>
+   <primary>dropuser</primary>
+  </indexterm>
 
   <para>
    For convenience, the programs <command>createuser</command>
@@ -99,7 +119,7 @@ dropuser <replaceable>name</replaceable>
 
     <variablelist>
      <varlistentry>
-      <term>superuser</term>
+      <term>superuser<indexterm><primary>superuser</></></term>
       <listitem>
        <para>
         A database superuser bypasses all permission checks. Also,
@@ -111,7 +131,7 @@ dropuser <replaceable>name</replaceable>
      </varlistentry>
 
      <varlistentry>
-      <term>database creation</term>
+      <term>database creation<indexterm><primary>database</><secondary>privilege to create</></></term>
       <listitem>
        <para>
         A user must be explicitly given permission to create databases
@@ -123,7 +143,7 @@ dropuser <replaceable>name</replaceable>
      </varlistentry>
 
      <varlistentry>
-      <term>password</term>
+      <term>password<indexterm><primary>password</></></term>
       <listitem>
        <para>
         A password is only significant if the client authentication
@@ -140,7 +160,7 @@ dropuser <replaceable>name</replaceable>
     </variablelist>
 
     A user's attributes can be modified after creation with
-    <command>ALTER USER</command>.
+    <command>ALTER USER</command>.<indexterm><primary>ALTER USER</></>
     See the reference pages for <command>CREATE USER</command> and
     <command>ALTER USER</command> for details.
    </para>
@@ -166,6 +186,10 @@ ALTER USER myname SET enable_indexscan TO off;
  <sect1 id="groups">
   <title>Groups</title>
 
+  <indexterm zone="groups">
+   <primary>group</primary>
+  </indexterm>
+
   <para>
    As in Unix, groups are a way of logically grouping users to ease
    management of privileges: privileges can be granted to, or revoked
@@ -183,6 +207,22 @@ ALTER GROUP <replaceable>name</replaceable> DROP USER <replaceable>uname1</repla
 
  <sect1 id="privileges">
   <title>Privileges</title>
+
+  <indexterm zone="privileges">
+   <primary>privilege</primary>
+  </indexterm>
+
+  <indexterm zone="privileges">
+   <primary>owner</primary>
+  </indexterm>
+
+  <indexterm zone="privileges">
+   <primary>GRANT</primary>
+  </indexterm>
+
+  <indexterm zone="privileges">
+   <primary>REVOKE</primary>
+  </indexterm>
 
   <comment>Being moved to the DDL chapter.  Will eventually disappear here.</comment>
 

@@ -1,7 +1,16 @@
-<!-- $Header: /cvsroot/pgsql/doc/src/sgml/wal.sgml,v 1.23 2003/03/24 14:32:51 petere Exp $ -->
+<!-- $Header: /cvsroot/pgsql/doc/src/sgml/wal.sgml,v 1.24 2003/08/31 17:32:20 petere Exp $ -->
 
 <chapter id="wal">
  <title>Write-Ahead Logging (<acronym>WAL</acronym>)</title>
+
+ <indexterm zone="wal">
+  <primary>WAL</primary>
+ </indexterm>
+
+ <indexterm>
+  <primary>transaction log</primary>
+  <see>WAL</see>
+ </indexterm>
 
   <para>
    <firstterm>Write-Ahead Logging</firstterm> (<acronym>WAL</acronym>)
@@ -23,6 +32,10 @@
 
   <sect1 id="wal-benefits-now">
    <title>Benefits of <acronym>WAL</acronym></title>
+
+   <indexterm zone="wal-benefits-now">
+    <primary>fsync</primary>
+   </indexterm>
 
    <para>
     The first obvious benefit of using <acronym>WAL</acronym> is a
@@ -86,7 +99,7 @@
 
    <para>
     With UNDO, it will also be possible to implement
-    <firstterm>savepoints</firstterm> to allow partial rollback of
+    <firstterm>savepoints</firstterm><indexterm><primary>savepoint</></> to allow partial rollback of
     invalid transaction operations (parser errors caused by mistyping
     commands, insertion of duplicate primary/unique keys and so on)
     with the ability to continue or commit valid operations made by
@@ -133,7 +146,7 @@
   </para>
 
   <para>
-   <firstterm>Checkpoints</firstterm> are points in the sequence of
+   <firstterm>Checkpoints</firstterm><indexterm><primary>checkpoint</></> are points in the sequence of
    transactions at which it is guaranteed that the data files have
    been updated with all information logged before the checkpoint.  At
    checkpoint time, all dirty data pages are flushed to disk and a
@@ -301,7 +314,7 @@
   <para>
    The aim of <acronym>WAL</acronym>, to ensure that the log is
    written before database records are altered, may be subverted by
-   disk drives that falsely report a successful write to the kernel,
+   disk drives<indexterm><primary>disk drive</></> that falsely report a successful write to the kernel,
    when, in fact, they have only cached the data and not yet stored it
    on the disk.  A power failure in such a situation may still lead to
    irrecoverable data corruption.  Administrators should try to ensure

@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/ref/Attic/initlocation.sgml,v 1.20 2003/03/25 16:15:42 petere Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/ref/Attic/initlocation.sgml,v 1.21 2003/08/31 17:32:23 petere Exp $
 PostgreSQL documentation
 -->
 
@@ -14,6 +14,10 @@ PostgreSQL documentation
   <refname>initlocation</refname>
   <refpurpose>create a secondary <productname>PostgreSQL</productname> database storage area</refpurpose>
  </refnamediv>
+
+ <indexterm zone="app-initlocation">
+  <primary>initlocation</primary>
+ </indexterm>
 
  <refsynopsisdiv>
   <cmdsynopsis>

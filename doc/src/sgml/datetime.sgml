@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/datetime.sgml,v 2.33 2003/08/25 23:30:25 tgl Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/datetime.sgml,v 2.34 2003/08/31 17:32:18 petere Exp $
 -->
 
  <appendix id="datetime-appendix">
@@ -364,7 +364,8 @@ $Header: /cvsroot/pgsql/doc/src/sgml/datetime.sgml,v 2.33 2003/08/25 23:30:25 tg
    </para>
 
    <indexterm>
-    <primary>time zones</primary>
+    <primary>time zone</primary>
+    <secondary>abbreviations</secondary>
    </indexterm>
 
    <para>

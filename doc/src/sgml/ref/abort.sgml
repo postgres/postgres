@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/ref/abort.sgml,v 1.13 2003/04/26 23:56:51 petere Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/ref/abort.sgml,v 1.14 2003/08/31 17:32:21 petere Exp $
 PostgreSQL documentation
 -->
 
@@ -13,6 +13,10 @@ PostgreSQL documentation
   <refname>ABORT</refname>
   <refpurpose>abort the current transaction</refpurpose>
  </refnamediv>
+
+ <indexterm zone="sql-abort">
+  <primary>ABORT</primary>
+ </indexterm>
 
  <refsynopsisdiv>
 <synopsis>

@@ -1,4 +1,4 @@
-<!-- $Header: /cvsroot/pgsql/doc/src/sgml/dml.sgml,v 1.5 2003/08/10 01:20:34 tgl Exp $ -->
+<!-- $Header: /cvsroot/pgsql/doc/src/sgml/dml.sgml,v 1.6 2003/08/31 17:32:18 petere Exp $ -->
 
 <chapter id="dml">
  <title>Data Manipulation</title>
@@ -19,6 +19,14 @@
 
  <sect1 id="dml-insert">
   <title>Inserting Data</title>
+
+  <indexterm zone="dml-insert">
+   <primary>inserting</primary>
+  </indexterm>
+
+  <indexterm zone="dml-insert">
+   <primary>INSERT</primary>
+  </indexterm>
 
   <para>
    When a table is created, it contains no data.  The first thing to
@@ -97,6 +105,14 @@ INSERT INTO products DEFAULT VALUES;
 
  <sect1 id="dml-update">
   <title>Updating Data</title>
+
+  <indexterm zone="dml-update">
+   <primary>updating</primary>
+  </indexterm>
+
+  <indexterm zone="dml-update">
+   <primary>UPDATE</primary>
+  </indexterm>
 
   <para>
    The modification of data that is already in the database is
@@ -181,6 +197,14 @@ UPDATE mytable SET a = 5, b = 3, c = 1 WHERE a > 0;
 
  <sect1 id="dml-delete">
   <title>Deleting Data</title>
+
+  <indexterm zone="dml-delete">
+   <primary>deleting</primary>
+  </indexterm>
+
+  <indexterm zone="dml-delete">
+   <primary>DELETE</primary>
+  </indexterm>
 
   <para>
    So far we have explained how to add data to tables and how to

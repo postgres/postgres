@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/ref/ecpg-ref.sgml,v 1.26 2003/03/25 16:15:39 petere Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/ref/ecpg-ref.sgml,v 1.27 2003/08/31 17:32:23 petere Exp $
 PostgreSQL documentation
 -->
 
@@ -14,6 +14,10 @@ PostgreSQL documentation
   <refname><application>ecpg</application></refname>
   <refpurpose>embedded SQL C preprocessor</refpurpose>
  </refnamediv>
+
+ <indexterm zone="app-ecpg">
+  <primary>ecpg</primary>
+ </indexterm>
 
  <refsynopsisdiv>
   <cmdsynopsis>

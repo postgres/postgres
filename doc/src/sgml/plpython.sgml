@@ -1,4 +1,4 @@
-<!-- $Header: /cvsroot/pgsql/doc/src/sgml/plpython.sgml,v 1.18 2003/07/01 13:52:29 tgl Exp $ -->
+<!-- $Header: /cvsroot/pgsql/doc/src/sgml/plpython.sgml,v 1.19 2003/08/31 17:32:19 petere Exp $ -->
 
 <chapter id="plpython">
  <title>PL/Python - Python Procedural Language</title>
@@ -68,9 +68,10 @@ def __plpython_procedure_myfunc_23456():
 
   <para>
    If you do not provide a return value, Python returns the default
-   <symbol>None</symbol>. The
-   language module translates Python's <symbol>None</symbol> into the
-   SQL null value.
+   <symbol>None</symbol>. The language module translates Python's
+   <symbol>None</symbol> into the SQL null
+   value.<indexterm><primary>null value</><secondary
+   sortas="PL/Python">in PL/Python</></indexterm>
   </para>
 
   <para>
@@ -87,7 +88,9 @@ def __plpython_procedure_myfunc_23456():
    The global dictionary <varname>SD</varname> is available to store
    data between function calls.  This variable is private static data.
    The global dictionary <varname>GD</varname> is public data,
-   available to all Python functions within a session.  Use with care.
+   available to all Python functions within a session.  Use with
+   care.<indexterm><primary>global data</><secondary>in
+   PL/Python</></indexterm>
   </para>
 
   <para>
@@ -101,6 +104,11 @@ def __plpython_procedure_myfunc_23456():
 
  <sect1 id="plpython-trigger">
   <title>Trigger Functions</title>
+
+  <indexterm zone="plpython-trigger">
+   <primary>trigger</primary>
+   <secondary>in PL/Python</secondary>
+  </indexterm>
 
   <para>
    When a function is used in a trigger, the dictionary
@@ -146,7 +154,8 @@ def __plpython_procedure_myfunc_23456():
    <literal>plpy.error("msg")</literal>, and
    <literal>plpy.fatal("msg")</literal>.  They are mostly equivalent
    to calling <literal>elog(<replaceable>LEVEL</>, "msg")</literal>
-   from C code.  <function>plpy.error</function> and
+   from C code.<indexterm><primary>elog</><secondary>in
+   PL/Python</></indexterm>  <function>plpy.error</function> and
    <function>plpy.fatal</function> actually raise a Python exception
    which, if uncaught, causes the PL/Python module to call
    <literal>elog(ERROR, msg)</literal> when the function handler
@@ -187,10 +196,11 @@ foo = rv[i]["my_column"]
   </para>
 
   <para>
-   The second function, <function>plpy.prepare</function>, prepares the
-   execution plan for a query.  It is called with a query string and a
-   list of parameter types, if you have parameter references in the
-   query.  For example:
+   <indexterm><primary>preparing a query</><secondary>in PL/Python</></indexterm>
+   The second function, <function>plpy.prepare</function>, prepares
+   the execution plan for a query.  It is called with a query string
+   and a list of parameter types, if you have parameter references in
+   the query.  For example:
 <programlisting>
 plan = plpy.prepare("SELECT last_name FROM my_users WHERE first_name = $1", [ "text" ])
 </programlisting>
@@ -235,7 +245,8 @@ CREATE FUNCTION usesavedplan() RETURNS trigger AS '
   </para>
  </sect1>
 
-<!-- NOT CURRENTLY SUPPORTED 
+<![IGNORE[
+ <!-- NOT CURRENTLY SUPPORTED -->
 
  <sect1 id="plpython-trusted">
   <title>Restricted Environment</title>
@@ -259,6 +270,6 @@ CREATE FUNCTION usesavedplan() RETURNS trigger AS '
   </para>
  </sect1>
 
--->
+]]>
 
 </chapter>

@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/ref/select_into.sgml,v 1.22 2003/05/04 02:23:16 petere Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/ref/select_into.sgml,v 1.23 2003/08/31 17:32:24 petere Exp $
 PostgreSQL documentation
 -->
 
@@ -13,6 +13,10 @@ PostgreSQL documentation
   <refname>SELECT INTO</refname>
   <refpurpose>create a new table from the results of a query</refpurpose>
  </refnamediv>
+
+ <indexterm zone="sql-selectinto">
+  <primary>SELECT INTO</primary>
+ </indexterm>
 
  <refsynopsisdiv>
 <synopsis>

@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/ref/deallocate.sgml,v 1.2 2003/04/26 23:56:51 petere Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/ref/deallocate.sgml,v 1.3 2003/08/31 17:32:22 petere Exp $
 PostgreSQL documentation
 -->
 
@@ -13,6 +13,10 @@ PostgreSQL documentation
   <refname>DEALLOCATE</refname>
   <refpurpose>deallocate a prepared statement</refpurpose>
  </refnamediv>
+
+ <indexterm zone="sql-deallocate">
+  <primary>DEALLOCATE</primary>
+ </indexterm>
 
  <refsynopsisdiv>
 <synopsis>

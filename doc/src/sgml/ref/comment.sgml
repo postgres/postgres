@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/ref/comment.sgml,v 1.21 2003/04/15 13:25:08 petere Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/ref/comment.sgml,v 1.22 2003/08/31 17:32:21 petere Exp $
 PostgreSQL documentation
 -->
 
@@ -13,6 +13,10 @@ PostgreSQL documentation
   <refname>COMMENT</refname>
   <refpurpose>define or change the comment of an object</refpurpose>
  </refnamediv>
+
+ <indexterm zone="sql-comment">
+  <primary>COMMENT</primary>
+ </indexterm>
 
  <refsynopsisdiv>
 <synopsis>

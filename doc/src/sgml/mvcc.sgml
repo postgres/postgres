@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/mvcc.sgml,v 2.35 2003/03/25 16:15:37 petere Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/mvcc.sgml,v 2.36 2003/08/31 17:32:19 petere Exp $
 -->
 
  <chapter id="mvcc">
@@ -21,6 +21,10 @@ $Header: /cvsroot/pgsql/doc/src/sgml/mvcc.sgml,v 2.35 2003/03/25 16:15:37 petere
 
   <sect1 id="mvcc-intro">
    <title>Introduction</title>
+
+   <indexterm>
+    <primary>MVCC</primary>
+   </indexterm>
 
    <para>
     Unlike traditional database systems which use locks for concurrency control,
@@ -56,6 +60,10 @@ $Header: /cvsroot/pgsql/doc/src/sgml/mvcc.sgml,v 2.35 2003/03/25 16:15:37 petere
 
   <sect1 id="transaction-iso">
    <title>Transaction Isolation</title>
+
+   <indexterm>
+    <primary>transaction isolation</primary>
+   </indexterm>
 
    <para>
     The <acronym>SQL</acronym> standard defines four levels of
@@ -108,7 +116,7 @@ $Header: /cvsroot/pgsql/doc/src/sgml/mvcc.sgml,v 2.35 2003/03/25 16:15:37 petere
 
    <para>
     <indexterm>
-     <primary>isolation levels</primary>
+     <primary>transaction isolation level</primary>
     </indexterm>
     The four transaction isolation levels and the corresponding
     behaviors are described in <xref linkend="mvcc-isolevel-table">.
@@ -206,7 +214,7 @@ $Header: /cvsroot/pgsql/doc/src/sgml/mvcc.sgml,v 2.35 2003/03/25 16:15:37 petere
    <title>Read Committed Isolation Level</title>
 
    <indexterm>
-    <primary>isolation levels</primary>
+    <primary>transaction isolation level</primary>
     <secondary>read committed</secondary>
    </indexterm>
 
@@ -292,7 +300,7 @@ COMMIT;
    <title>Serializable Isolation Level</title>
 
    <indexterm>
-    <primary>isolation levels</primary>
+    <primary>transaction isolation level</primary>
     <secondary>serializable</secondary>
    </indexterm>
 
@@ -376,7 +384,7 @@ ERROR:  Can't serialize access due to concurrent update
    <title>Explicit Locking</title>
 
    <indexterm>
-    <primary>locking</primary>
+    <primary>lock</primary>
    </indexterm>
 
    <para>
@@ -393,6 +401,10 @@ ERROR:  Can't serialize access due to concurrent update
 
   <sect2 id="locking-tables">
    <title>Table-Level Locks</title>
+
+   <indexterm zone="locking-tables">
+    <primary>LOCK</primary>
+   </indexterm>
 
    <para>
     The list below shows the available lock modes and the contexts in
@@ -644,6 +656,10 @@ ERROR:  Can't serialize access due to concurrent update
    <sect2 id="locking-deadlocks">
     <title>Deadlocks</title>
 
+    <indexterm zone="locking-deadlocks">
+     <primary>deadlock</primary>
+    </indexterm>
+
     <para>
      The use of explicit locking can increase the likelyhood of
      <firstterm>deadlocks</>, wherein two (or more) transactions each
@@ -812,6 +828,11 @@ UPDATE accounts SET balance = balance - 100.00 WHERE acctnum = 22222;
 
   <sect1 id="locking-indexes">
    <title>Locking and Indexes</title>
+
+   <indexterm zone="locking-indexes">
+    <primary>index</primary>
+    <secondary>locks</secondary>
+   </indexterm>
 
    <para>
     Though <productname>PostgreSQL</productname>

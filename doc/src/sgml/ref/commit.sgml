@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/ref/commit.sgml,v 1.15 2003/04/15 13:25:08 petere Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/ref/commit.sgml,v 1.16 2003/08/31 17:32:21 petere Exp $
 PostgreSQL documentation
 -->
 
@@ -14,6 +14,10 @@ PostgreSQL documentation
   <refpurpose>commit the current transaction</refpurpose>
  </refnamediv>  
   
+ <indexterm zone="sql-commit">
+  <primary>COMMIT</primary>
+ </indexterm>
+
  <refsynopsisdiv>
 <synopsis>
 COMMIT [ WORK | TRANSACTION ]

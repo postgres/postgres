@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/ref/createuser.sgml,v 1.35 2003/08/17 04:46:59 momjian Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/ref/createuser.sgml,v 1.36 2003/08/31 17:32:22 petere Exp $
 PostgreSQL documentation
 -->
 
@@ -14,6 +14,10 @@ PostgreSQL documentation
   <refname>createuser</refname>
   <refpurpose>define a new <productname>PostgreSQL</productname> user account</refpurpose>
  </refnamediv>
+
+ <indexterm zone="app-createuser">
+  <primary>createuser</primary>
+ </indexterm>
 
  <refsynopsisdiv>
   <cmdsynopsis>

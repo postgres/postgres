@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/ref/clusterdb.sgml,v 1.11 2003/08/17 04:46:59 momjian Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/ref/clusterdb.sgml,v 1.12 2003/08/31 17:32:21 petere Exp $
 PostgreSQL documentation
 -->
 
@@ -14,6 +14,10 @@ PostgreSQL documentation
   <refname id="clusterdb">clusterdb</refname>
   <refpurpose>cluster a <productname>PostgreSQL</productname> database</refpurpose>
  </refnamediv>
+
+ <indexterm zone="app-clusterdb">
+  <primary>clusterdb</primary>
+ </indexterm>
 
  <refsynopsisdiv>
   <cmdsynopsis>

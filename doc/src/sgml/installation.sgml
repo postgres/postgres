@@ -1,4 +1,4 @@
-<!-- $Header: /cvsroot/pgsql/doc/src/sgml/installation.sgml,v 1.138 2003/08/04 04:03:03 tgl Exp $ -->
+<!-- $Header: /cvsroot/pgsql/doc/src/sgml/installation.sgml,v 1.139 2003/08/31 17:32:19 petere Exp $ -->
 
 <chapter id="installation">
  <title><![%standalone-include[<productname>PostgreSQL</>]]>
@@ -383,6 +383,7 @@ JAVACMD=$JAVA_HOME/bin/java
     <para>
      <indexterm>
       <primary>pg_dumpall</primary>
+      <secondary>use during upgrade</secondary>
      </indexterm>
 
      To back up your database installation, type:
@@ -875,8 +876,8 @@ JAVACMD=$JAVA_HOME/bin/java
        <term><option>--with-pam</option></term>
        <listitem>
         <para>
-	 Build with <acronym>PAM</> (Pluggable Authentication Modules)
-	 support.
+	 Build with <acronym>PAM</><indexterm><primary>PAM</></>
+	 (Pluggable Authentication Modules) support.
         </para>
        </listitem>
       </varlistentry>
@@ -1163,7 +1164,7 @@ All of PostgreSQL is successfully made. Ready to install.
    <title>Shared Libraries</title>
 
    <indexterm>
-    <primary>shared libraries</primary>
+    <primary>shared library</primary>
    </indexterm>
 
    <para>
@@ -1284,7 +1285,6 @@ set path = ( /usr/local/pgsql/bin $path )
    <para>
     <indexterm>
      <primary><envar>MANPATH</envar></primary>
-     <seealso>man pages</seealso>
     </indexterm>
     To enable your system to find the <application>man</>
     documentation, you need to add lines like the following to a

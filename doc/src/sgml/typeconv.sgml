@@ -1,9 +1,14 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/typeconv.sgml,v 1.32 2003/08/14 23:13:27 tgl Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/typeconv.sgml,v 1.33 2003/08/31 17:32:20 petere Exp $
 -->
 
 <chapter Id="typeconv">
 <title>Type Conversion</title>
+
+<indexterm zone="typeconv">
+ <primary>data type</primary>
+ <secondary>conversion</secondary>
+</indexterm>
 
 <para>
 <acronym>SQL</acronym> statements can, intentionally or not, require
@@ -139,6 +144,11 @@ between the built-in types has been carefully crafted and is best not
 altered.)
 </para>
 
+<indexterm>
+ <primary>data type</primary>
+ <secondary>category</secondary>
+</indexterm>
+
 <para>
 An additional heuristic is provided in the parser to allow better guesses
 at proper behavior for <acronym>SQL</acronym> standard types. There are
@@ -203,6 +213,11 @@ should use this new function and will no longer do the implicit conversion using
 
 <sect1 id="typeconv-oper">
 <title>Operators</title>
+
+<indexterm zone="typeconv-oper">
+ <primary>operator</primary>
+ <secondary>type resolution in an invocation</secondary>
+</indexterm>
 
   <para>
    The specific operator to be used in an operator invocation is determined
@@ -451,6 +466,11 @@ SELECT CAST('20' AS int8) ! AS "factorial";
 
 <sect1 id="typeconv-func">
 <title>Functions</title>
+
+<indexterm zone="typeconv-func">
+ <primary>function</primary>
+ <secondary>type resolution in an invocation</secondary>
+</indexterm>
 
   <para>
    The specific function to be used in a function invocation is determined
@@ -755,8 +775,22 @@ padding spaces.
 </sect1>
 
 <sect1 id="typeconv-union-case">
-<title><literal>UNION</literal>, <literal>CASE</literal>, and
-<literal>ARRAY</literal> Constructs</title>
+<title><literal>UNION</literal>, <literal>CASE</literal>, and <literal>ARRAY</literal> Constructs</title>
+
+<indexterm zone="typeconv-union-case">
+ <primary>UNION</primary>
+ <secondary>determination of result type</secondary>
+</indexterm>
+
+<indexterm zone="typeconv-union-case">
+ <primary>CASE</primary>
+ <secondary>determination of result type</secondary>
+</indexterm>
+
+<indexterm zone="typeconv-union-case">
+ <primary>ARRAY</primary>
+ <secondary>determination of result type</secondary>
+</indexterm>
 
 <para>
 SQL <literal>UNION</> constructs must match up possibly dissimilar types to

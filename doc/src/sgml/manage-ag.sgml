@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/manage-ag.sgml,v 2.27 2003/03/25 16:15:37 petere Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/manage-ag.sgml,v 2.28 2003/08/31 17:32:19 petere Exp $
 -->
 
 <chapter id="managing-databases">
@@ -18,6 +18,10 @@ $Header: /cvsroot/pgsql/doc/src/sgml/manage-ag.sgml,v 2.27 2003/03/25 16:15:37 p
 
  <sect1 id="manage-ag-overview">
   <title>Overview</title>
+
+  <indexterm zone="manage-ag-overview">
+   <primary>schema</primary>
+  </indexterm>
 
   <para>
    A database is a named collection of <acronym>SQL</acronym> objects
@@ -70,8 +74,8 @@ $Header: /cvsroot/pgsql/doc/src/sgml/manage-ag.sgml,v 2.27 2003/03/25 16:15:37 p
   </para>
 
   <para>
-   Databases are created with the SQL command
-   <command>CREATE DATABASE</command>:
+   Databases are created with the SQL command <command>CREATE
+   DATABASE</command>:<indexterm><primary>CREATE DATABASE</></>
 <synopsis>
 CREATE DATABASE <replaceable>name</>;
 </synopsis>
@@ -93,9 +97,10 @@ CREATE DATABASE <replaceable>name</>;
    question remains how the <emphasis>first</> database at any given
    site can be created. The first database is always created by the
    <command>initdb</> command when the data storage area is
-   initialized. (See <xref linkend="creating-cluster">.)
-   This database is called <literal>template1</>. So to create the
-   first <quote>real</> database you can connect to
+   initialized. (See <xref linkend="creating-cluster">.)  This
+   database is called
+   <literal>template1</>.<indexterm><primary>template1</></> So to
+   create the first <quote>real</> database you can connect to
    <literal>template1</>.
   </para>
 
@@ -112,7 +117,7 @@ CREATE DATABASE <replaceable>name</>;
   <para>
    As an extra convenience, there is also a program that you can
    execute from the shell to create new databases,
-   <command>createdb</>.
+   <command>createdb</>.<indexterm><primary>createdb</></>
 
 <synopsis>
 createdb <replaceable class="parameter">dbname</replaceable>
@@ -157,31 +162,33 @@ createdb -O <replaceable>username</> <replaceable>dbname</>
   <para>
    <command>CREATE DATABASE</> actually works by copying an existing
    database.  By default, it copies the standard system database named
-   <literal>template1</>.  Thus that database is the <quote>template</>
-   from which new databases are made.  If you add objects to
-   <literal>template1</>, these objects 
+   <literal>template1</>.<indexterm><primary>template1</></> Thus that
+   database is the <quote>template</> from which new databases are
+   made.  If you add objects to <literal>template1</>, these objects
    will be copied into subsequently created user databases.  This
    behavior allows site-local modifications to the standard set of
    objects in databases.  For example, if you install the procedural
    language <application>PL/pgSQL</> in <literal>template1</>, it will
-   automatically be available in user databases without any extra action
-   being taken when those databases are made.
+   automatically be available in user databases without any extra
+   action being taken when those databases are made.
   </para>
 
   <para>
-   There is a second standard system database named <literal>template0</>.
-   This database contains the same data as the initial contents of
-   <literal>template1</>, that is, only the standard objects predefined by
-   your version of <productname>PostgreSQL</productname>.
-     <literal>template0</> should never be changed 
-   after <command>initdb</>.  By instructing <command>CREATE DATABASE</> to
-   copy <literal>template0</> instead of <literal>template1</>, you can
-   create a <quote>virgin</> user database that contains none of the
-   site-local additions in <literal>template1</>.  This is particularly
-   handy when restoring a <literal>pg_dump</> dump: the dump script should
-   be restored in a virgin database to ensure that one recreates the
-   correct contents of the dumped database, without any conflicts with
-   additions that may now be present in <literal>template1</>.
+   There is a second standard system database named
+   <literal>template0</>.<indexterm><primary>template0</></> This
+   database contains the same data as the initial contents of
+   <literal>template1</>, that is, only the standard objects
+   predefined by your version of
+   <productname>PostgreSQL</productname>.  <literal>template0</>
+   should never be changed after <command>initdb</>.  By instructing
+   <command>CREATE DATABASE</> to copy <literal>template0</> instead
+   of <literal>template1</>, you can create a <quote>virgin</> user
+   database that contains none of the site-local additions in
+   <literal>template1</>.  This is particularly handy when restoring a
+   <literal>pg_dump</> dump: the dump script should be restored in a
+   virgin database to ensure that one recreates the correct contents
+   of the dumped database, without any conflicts with additions that
+   may now be present in <literal>template1</>.
   </para>
 
   <para>
@@ -214,7 +221,7 @@ createdb -T template0 <replaceable>dbname</>
   </para>
 
   <para>
-   Two useful flags exist in <literal>pg_database</literal> for each
+   Two useful flags exist in <literal>pg_database</literal><indexterm><primary>pg_database</></> for each
    database: the columns <literal>datistemplate</literal> and
    <literal>datallowconn</literal>.  <literal>datistemplate</literal>
    may be set to indicate that a database is intended as a template for
@@ -382,7 +389,8 @@ gmake CPPFLAGS=-DALLOW_ABSOLUTE_DBPATHS all
   <title>Destroying a Database</title>
 
   <para>
-   Databases are destroyed with the command <command>DROP DATABASE</command>:
+   Databases are destroyed with the command <command>DROP
+   DATABASE</command>:<indexterm><primary>DROP DATABASE</></>
 <synopsis>
 DROP DATABASE <replaceable>name</>;
 </synopsis>
@@ -403,7 +411,8 @@ DROP DATABASE <replaceable>name</>;
   </para>
 
   <para>
-   For convenience, there is also a shell program to drop databases:
+   For convenience, there is also a shell program to drop
+   databases:<indexterm><primary>dropdb</></>
 <synopsis>
 dropdb <replaceable class="parameter">dbname</replaceable>
 </synopsis>

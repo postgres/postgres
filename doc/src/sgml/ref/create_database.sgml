@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/ref/create_database.sgml,v 1.34 2003/04/22 10:08:08 petere Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/ref/create_database.sgml,v 1.35 2003/08/31 17:32:22 petere Exp $
 PostgreSQL documentation
 -->
 
@@ -13,6 +13,10 @@ PostgreSQL documentation
   <refname>CREATE DATABASE</refname>
   <refpurpose>create a new database</refpurpose>
  </refnamediv>
+
+ <indexterm zone="sql-createdatabase">
+  <primary>CREATE DATABASE</primary>
+ </indexterm>
 
  <refsynopsisdiv>
 <synopsis>

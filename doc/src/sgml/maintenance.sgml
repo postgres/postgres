@@ -1,9 +1,13 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/maintenance.sgml,v 1.23 2003/06/18 12:19:11 petere Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/maintenance.sgml,v 1.24 2003/08/31 17:32:19 petere Exp $
 -->
 
 <chapter id="maintenance">
  <title>Routine Database Maintenance Tasks</title>
+
+ <indexterm zone="maintenance">
+  <primary>maintenance</primary>
+ </indexterm>
 
   <para>
    There are a few routine maintenance chores that must be performed on
@@ -157,6 +161,15 @@ $Header: /cvsroot/pgsql/doc/src/sgml/maintenance.sgml,v 1.23 2003/06/18 12:19:11
 
   <sect2 id="vacuum-for-statistics">
    <title>Updating planner statistics</title>
+
+   <indexterm zone="vacuum-for-statistics">
+    <primary>statistics</primary>
+    <secondary>of the planner</secondary>
+   </indexterm>
+
+   <indexterm zone="vacuum-for-statistics">
+    <primary>ANALYZE</primary>
+   </indexterm>
 
    <para>
     The <productname>PostgreSQL</productname> query planner relies on
@@ -396,7 +409,8 @@ VACUUM
   <title>Log File Maintenance</title>
 
   <indexterm zone="logfile-maintenance">
-   <primary>log files</primary>
+   <primary>server log</primary>
+   <secondary>log file maintenance</secondary>
   </indexterm>
 
   <para>

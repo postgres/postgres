@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/plperl.sgml,v 2.19 2003/04/07 01:29:25 petere Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/plperl.sgml,v 2.20 2003/08/31 17:32:19 petere Exp $
 -->
 
  <chapter id="plperl">
@@ -73,11 +73,12 @@ CREATE FUNCTION perl_max (integer, integer) RETURNS integer AS '
   </para>
 
   <para>
-   If an SQL null value is passed to a function, the argument value
-   will appear as <quote>undefined</> in Perl.  The above function
-   definition will not behave very nicely with null inputs (in fact,
-   it will act as though they are zeroes).  We could add
-   <literal>STRICT</> to the function definition to make
+   If an SQL null value<indexterm><primary>null value</><secondary
+   sortas="PL/Perl">in PL/Perl</></indexterm> is passed to a function,
+   the argument value will appear as <quote>undefined</> in Perl.  The
+   above function definition will not behave very nicely with null
+   inputs (in fact, it will act as though they are zeroes).  We could
+   add <literal>STRICT</> to the function definition to make
    <productname>PostgreSQL</productname> do something more reasonable:
    if a null value is passed, the function will not be called at all,
    but will just return a null result automatically.  Alternatively,
@@ -170,7 +171,7 @@ SELECT name, empcomp(employee) FROM employee;
    mirror sites</ulink>). This module makes available a
    <acronym>DBI</>-compliant database-handle named
    <varname>$pg_dbh</varname> that can be used to perform queries
-   with normal <acronym>DBI</> syntax.
+   with normal <acronym>DBI</> syntax.<indexterm><primary>DBI</></indexterm>
   </para>
 
   <para>
@@ -180,7 +181,7 @@ SELECT name, empcomp(employee) FROM employee;
     <varlistentry>
      <indexterm>
       <primary>elog</primary>
-      <secondary>PL/Perl</secondary>
+      <secondary>in PL/Perl</secondary>
      </indexterm>
 
      <term><function>elog</> <replaceable>level</replaceable>, <replaceable>msg</replaceable></term>
@@ -201,6 +202,11 @@ SELECT name, empcomp(employee) FROM employee;
 
  <sect1 id="plperl-trusted">
   <title>Trusted and Untrusted PL/Perl</title>
+
+  <indexterm zone="plperl-trusted">
+   <primary>trusted</primary>
+   <secondary>PL/Perl</secondary>
+  </indexterm>
 
   <para>
    Normally, PL/Perl is installed as a <quote>trusted</> programming
@@ -231,13 +237,14 @@ CREATE FUNCTION badfunc() RETURNS integer AS '
 
   <para>
    Sometimes it is desirable to write Perl functions that are not
-   restricted.  For example, one might want a Perl function that
-   sends mail.  To handle these cases, PL/Perl can also be installed
-   as an <quote>untrusted</> language (usually called
-   <application>PL/PerlU</application>).  In this case the full Perl language is
-   available.  If the <command>createlang</command> program is used to
-   install the language, the language name <literal>plperlu</literal>
-   will select the untrusted PL/Perl variant.
+   restricted.  For example, one might want a Perl function that sends
+   mail.  To handle these cases, PL/Perl can also be installed as an
+   <quote>untrusted</> language (usually called
+   <application>PL/PerlU</application><indexterm><primary>PL/PerlU</></indexterm>).
+   In this case the full Perl language is available.  If the
+   <command>createlang</command> program is used to install the
+   language, the language name <literal>plperlu</literal> will select
+   the untrusted PL/Perl variant.
   </para>
 
   <para>
@@ -272,7 +279,9 @@ CREATE FUNCTION badfunc() RETURNS integer AS '
 
     <listitem>
      <para>
-      PL/Perl cannot be used to write trigger functions.
+      PL/Perl cannot be used to write trigger
+      functions.<indexterm><primary>trigger</><secondary>in
+      PL/Perl</></indexterm>
      </para>
     </listitem>
 

@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/ref/alter_group.sgml,v 1.10 2003/06/27 14:45:25 petere Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/ref/alter_group.sgml,v 1.11 2003/08/31 17:32:21 petere Exp $
 PostgreSQL documentation
 -->
 
@@ -13,6 +13,10 @@ PostgreSQL documentation
   <refname>ALTER GROUP</refname>
   <refpurpose>change a user group</refpurpose>
  </refnamediv>
+
+ <indexterm zone="sql-altergroup">
+  <primary>ALTER GROUP</primary>
+ </indexterm>
 
  <refsynopsisdiv>
 <synopsis>

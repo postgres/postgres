@@ -1,4 +1,4 @@
-<!-- $Header: /cvsroot/pgsql/doc/src/sgml/ref/checkpoint.sgml,v 1.9 2003/04/15 13:25:08 petere Exp $ -->
+<!-- $Header: /cvsroot/pgsql/doc/src/sgml/ref/checkpoint.sgml,v 1.10 2003/08/31 17:32:21 petere Exp $ -->
 
 <refentry id="sql-checkpoint">
  <refmeta>
@@ -10,6 +10,10 @@
   <refname>CHECKPOINT</refname>
   <refpurpose>force a transaction log checkpoint</refpurpose>
  </refnamediv>
+
+ <indexterm zone="sql-checkpoint">
+  <primary>CHECKPOINT</primary>
+ </indexterm>
 
  <refsynopsisdiv>
 <synopsis>

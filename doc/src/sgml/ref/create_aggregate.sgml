@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/ref/create_aggregate.sgml,v 1.26 2003/06/27 14:45:26 petere Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/ref/create_aggregate.sgml,v 1.27 2003/08/31 17:32:21 petere Exp $
 PostgreSQL documentation
 -->
 
@@ -13,6 +13,10 @@ PostgreSQL documentation
   <refname>CREATE AGGREGATE</refname>
   <refpurpose>define a new aggregate function</refpurpose>
  </refnamediv>
+
+ <indexterm zone="sql-createaggregate">
+  <primary>CREATE AGGREGATE</primary>
+ </indexterm>
 
  <refsynopsisdiv>
 <synopsis>

@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/ref/alter_aggregate.sgml,v 1.1 2003/06/27 14:45:25 petere Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/ref/alter_aggregate.sgml,v 1.2 2003/08/31 17:32:21 petere Exp $
 PostgreSQL documentation
 -->
 
@@ -14,6 +14,10 @@ PostgreSQL documentation
   <refpurpose>change the definition of an aggregate function</refpurpose>
  </refnamediv>  
   
+ <indexterm zone="sql-alteraggregate">
+  <primary>ALTER AGGREGATE</primary>
+ </indexterm>
+
  <refsynopsisdiv>
 <synopsis>
 ALTER AGGREGATE <replaceable>name</replaceable> ( <replaceable>type</replaceable> ) RENAME TO <replaceable>newname</replaceable>

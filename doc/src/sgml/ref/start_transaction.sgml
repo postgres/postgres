@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/ref/start_transaction.sgml,v 1.5 2003/04/26 23:56:51 petere Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/ref/start_transaction.sgml,v 1.6 2003/08/31 17:32:24 petere Exp $
 PostgreSQL documentation
 -->
 
@@ -13,6 +13,10 @@ PostgreSQL documentation
   <refname>START TRANSACTION</refname>
   <refpurpose>start a transaction block</refpurpose>
  </refnamediv>
+
+ <indexterm zone="sql-start-transaction">
+  <primary>START TRANSACTION</primary>
+ </indexterm>
 
  <refsynopsisdiv>
 <synopsis>

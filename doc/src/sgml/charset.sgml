@@ -1,4 +1,4 @@
-<!-- $Header: /cvsroot/pgsql/doc/src/sgml/charset.sgml,v 2.37 2003/08/04 04:03:03 tgl Exp $ -->
+<!-- $Header: /cvsroot/pgsql/doc/src/sgml/charset.sgml,v 2.38 2003/08/31 17:32:18 petere Exp $ -->
 
 <chapter id="charset">
  <title>Localization</>
@@ -197,7 +197,7 @@ initdb --locale=sv_SE
      <listitem>
       <para>
        Sort order in queries using <command>ORDER BY</>
-       <indexterm><primary>ORDER BY</></>
+       <indexterm><primary>ORDER BY</><secondary>and locales</></indexterm>
       </para>
      </listitem>
 

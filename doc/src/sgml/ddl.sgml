@@ -1,4 +1,4 @@
-<!-- $Header: /cvsroot/pgsql/doc/src/sgml/ddl.sgml,v 1.17 2003/08/14 23:13:27 tgl Exp $ -->
+<!-- $Header: /cvsroot/pgsql/doc/src/sgml/ddl.sgml,v 1.18 2003/08/31 17:32:18 petere Exp $ -->
 
 <chapter id="ddl">
  <title>Data Definition</title>
@@ -18,6 +18,18 @@
 
  <sect1 id="ddl-basics">
   <title>Table Basics</title>
+
+  <indexterm zone="ddl-basics">
+   <primary>table</primary>
+  </indexterm>
+
+  <indexterm>
+   <primary>row</primary>
+  </indexterm>
+
+  <indexterm>
+   <primary>column</primary>
+  </indexterm>
 
   <para>
    A table in a relational database is much like a table on paper: It
@@ -59,6 +71,11 @@
    time-of-day values, and <type>timestamp</type> for values
    containing both date and time.
   </para>
+
+  <indexterm>
+   <primary>table</primary>
+   <secondary>creating</secondary>
+  </indexterm>
 
   <para>
    To create a table, you use the aptly named <literal>CREATE
@@ -114,6 +131,11 @@ CREATE TABLE products (
    highly unusual and often a questionable design.
   </para>
 
+  <indexterm>
+   <primary>table</primary>
+   <secondary>removing</secondary>
+  </indexterm>
+
   <para>
    If you no longer need a table, you can remove it using the
    <command>DROP TABLE</command> command.  For example:
@@ -156,8 +178,8 @@ DROP TABLE products;
   </para>
 
   <indexterm>
-   <primary>columns</primary>
-   <secondary>system columns</secondary>
+   <primary>column</primary>
+   <secondary>system column</secondary>
   </indexterm>
 
   <variablelist>
@@ -167,6 +189,7 @@ DROP TABLE products;
      <para>
       <indexterm>
        <primary>OID</primary>
+       <secondary>column</secondary>
       </indexterm>
       The object identifier (object ID) of a row.  This is a serial
       number that is automatically added by
@@ -182,6 +205,10 @@ DROP TABLE products;
    <varlistentry>
     <term><structfield>tableoid</></term>
     <listitem>
+     <indexterm>
+      <primary>tableoid</primary>
+     </indexterm>
+
      <para>
       The OID of the table containing this row.  This column is
       particularly handy for queries that select from inheritance
@@ -197,6 +224,10 @@ DROP TABLE products;
    <varlistentry>
     <term><structfield>xmin</></term>
     <listitem>
+     <indexterm>
+      <primary>xmin</primary>
+     </indexterm>
+
      <para>
       The identity (transaction ID) of the inserting transaction for
       this tuple.  (Note: In this context, a tuple is an individual
@@ -209,6 +240,10 @@ DROP TABLE products;
    <varlistentry>
     <term><structfield>cmin</></term>
     <listitem>
+     <indexterm>
+      <primary>cmin</primary>
+     </indexterm>
+
      <para>
       The command identifier (starting at zero) within the inserting
       transaction.
@@ -219,6 +254,10 @@ DROP TABLE products;
    <varlistentry>
     <term><structfield>xmax</></term>
     <listitem>
+     <indexterm>
+      <primary>xmax</primary>
+     </indexterm>
+
      <para>
       The identity (transaction ID) of the deleting transaction, or
       zero for an undeleted tuple.  It is possible for this column to
@@ -232,6 +271,10 @@ DROP TABLE products;
    <varlistentry>
     <term><structfield>cmax</></term>
     <listitem>
+     <indexterm>
+      <primary>cmax</primary>
+     </indexterm>
+
      <para>
       The command identifier within the deleting transaction, or zero.
      </para>
@@ -241,6 +284,10 @@ DROP TABLE products;
    <varlistentry>
     <term><structfield>ctid</></term>
     <listitem>
+     <indexterm>
+      <primary>ctid</primary>
+     </indexterm>
+
      <para>
       The physical location of the tuple within its table.  Note that
       although the <structfield>ctid</structfield> can be used to
@@ -292,6 +339,10 @@ DROP TABLE products;
  <sect1 id="ddl-default">
   <title>Default Values</title>
 
+  <indexterm zone="ddl-default">
+   <primary>default value</primary>
+  </indexterm>
+
   <para>
    A column can be assigned a default value.  When a new row is
    created and no values are specified for some of the columns, the
@@ -302,6 +353,7 @@ DROP TABLE products;
   </para>
 
   <para>
+   <indexterm><primary>null value</primary><secondary>default value</secondary></indexterm>
    If no default value is declared explicitly, the null value is the
    default value.  This usually makes sense because a null value can
    be thought to represent unknown data.
@@ -329,6 +381,10 @@ CREATE TABLE products (
  <sect1 id="ddl-constraints">
   <title>Constraints</title>
 
+  <indexterm zone="ddl-constraints">
+   <primary>constraint</primary>
+  </indexterm>
+
   <para>
    Data types are a way to limit the kind of data that can be stored
    in a table.  For many applications, however, the constraint they
@@ -350,6 +406,15 @@ CREATE TABLE products (
 
   <sect2>
    <title>Check Constraints</title>
+
+   <indexterm>
+    <primary>check constraint</primary>
+   </indexterm>
+
+   <indexterm>
+    <primary>constraint</primary>
+    <secondary>check</secondary>
+   </indexterm>
 
    <para>
     A check constraint is the most generic constraint type.  It allows
@@ -374,6 +439,11 @@ CREATE TABLE products (
     involve the column thus constrained, otherwise the constraint
     would not make too much sense.
    </para>
+
+   <indexterm>
+    <primary>constraint</primary>
+    <secondary>name</secondary>
+   </indexterm>
 
    <para>
     You can also give the constraint a separate name.  This clarifies
@@ -444,6 +514,11 @@ CREATE TABLE products (
     It's a matter of taste.
    </para>
 
+   <indexterm>
+    <primary>null value</primary>
+    <secondary sortas="check constraints">with check constraints</secondary>
+   </indexterm>
+
    <para>
     It should be noted that a check constraint is satisfied if the
     check expression evaluates to true or the null value.  Since most
@@ -456,6 +531,15 @@ CREATE TABLE products (
 
   <sect2>
    <title>Not-Null Constraints</title>
+
+   <indexterm>
+    <primary>not-null constraint</primary>
+   </indexterm>
+
+   <indexterm>
+    <primary>constraint</primary>
+    <secondary>NOT NULL</secondary>
+   </indexterm>
 
    <para>
     A not-null constraint simply specifies that a column must not
@@ -526,6 +610,15 @@ CREATE TABLE products (
   <sect2>
    <title>Unique Constraints</title>
 
+   <indexterm>
+    <primary>unique constraint</primary>
+   </indexterm>
+
+   <indexterm>
+    <primary>constraint</primary>
+    <secondary>unique</secondary>
+   </indexterm>
+
    <para>
     Unique constraints ensure that the data contained in a column or a
     group of columns is unique with respect to all the rows in the
@@ -573,6 +666,11 @@ CREATE TABLE products (
 </programlisting>
    </para>
 
+   <indexterm>
+    <primary>null value</primary>
+    <secondary sortas="unique constraints">with unique constraints</secondary>
+   </indexterm>
+
    <para>
     In general, a unique constraint is violated when there are (at
     least) two rows in the table where the values of each of the
@@ -590,6 +688,15 @@ CREATE TABLE products (
 
   <sect2>
    <title>Primary Keys</title>
+
+   <indexterm>
+    <primary>primary key</primary>
+   </indexterm>
+
+   <indexterm>
+    <primary>constraint</primary>
+    <secondary>primary key</secondary>
+   </indexterm>
 
    <para>
     Technically, a primary key constraint is simply a combination of a
@@ -648,6 +755,19 @@ CREATE TABLE example (
 
   <sect2 id="ddl-constraints-fk">
    <title>Foreign Keys</title>
+
+   <indexterm>
+    <primary>foreign key</primary>
+   </indexterm>
+
+   <indexterm>
+    <primary>constraint</primary>
+    <secondary>foreign key</secondary>
+   </indexterm>
+
+   <indexterm>
+    <primary>referential integrity</primary>
+   </indexterm>
 
    <para>
     A foreign key constraint specifies that the values in a column (or
@@ -748,6 +868,16 @@ CREATE TABLE order_items (
     Note also that the primary key overlaps with the foreign keys in
     the last table.
    </para>
+
+   <indexterm>
+    <primary>CASCADE</primary>
+    <secondary>foreign key action</secondary>
+   </indexterm>
+
+   <indexterm>
+    <primary>RESTRICT</primary>
+    <secondary>foreign key action</secondary>
+   </indexterm>
 
    <para>
     We know that the foreign keys disallow creation of orders that
@@ -998,6 +1128,11 @@ SET SQL_Inheritance TO OFF;
  <sect1 id="ddl-alter">
   <title>Modifying Tables</title>
 
+  <indexterm zone="ddl-alter">
+   <primary>table</primary>
+   <secondary>modifying</secondary>
+  </indexterm>
+
   <para>
    When you create a table and you realize that you made a mistake, or
    the requirements of the application changed, then you can drop the
@@ -1042,6 +1177,11 @@ SET SQL_Inheritance TO OFF;
   <sect2>
    <title>Adding a Column</title>
 
+   <indexterm>
+    <primary>column</primary>
+    <secondary>adding</secondary>
+   </indexterm>
+
    <para>
     To add a column, use this command:
 <programlisting>
@@ -1070,6 +1210,11 @@ ALTER TABLE products ADD COLUMN description text CHECK (description &lt;&gt; '')
   <sect2>
    <title>Removing a Column</title>
 
+   <indexterm>
+    <primary>column</primary>
+    <secondary>removing</secondary>
+   </indexterm>
+
    <para>
     To remove a column, use this command:
 <programlisting>
@@ -1080,6 +1225,11 @@ ALTER TABLE products DROP COLUMN description;
 
   <sect2>
    <title>Adding a Constraint</title>
+
+   <indexterm>
+    <primary>constraint</primary>
+    <secondary>adding</secondary>
+   </indexterm>
 
    <para>
     To add a constraint, the table constraint syntax is used.  For example:
@@ -1104,6 +1254,11 @@ ALTER TABLE products ALTER COLUMN product_no SET NOT NULL;
   <sect2>
    <title>Removing a Constraint</title>
 
+   <indexterm>
+    <primary>constraint</primary>
+    <secondary>removing</secondary>
+   </indexterm>
+
    <para>
     To remove a constraint you need to know its name.  If you gave it
     a name then that's easy.  Otherwise the system assigned a
@@ -1127,6 +1282,11 @@ ALTER TABLE products ALTER COLUMN product_no DROP NOT NULL;
   <sect2>
    <title>Changing the Default</title>
 
+   <indexterm>
+    <primary>default value</primary>
+    <secondary>changing</secondary>
+   </indexterm>
+
    <para>
     To set a new default for a column, use a command like this:
 <programlisting>
@@ -1146,6 +1306,11 @@ ALTER TABLE products ALTER COLUMN price DROP DEFAULT;
   <sect2>
    <title>Renaming a Column</title>
 
+   <indexterm>
+    <primary>column</primary>
+    <secondary>renaming</secondary>
+   </indexterm>
+
    <para>
     To rename a column:
 <programlisting>
@@ -1156,6 +1321,11 @@ ALTER TABLE products RENAME COLUMN product_no TO product_number;
 
   <sect2>
    <title>Renaming a Table</title>
+
+   <indexterm>
+    <primary>table</primary>
+    <secondary>renaming</secondary>
+   </indexterm>
 
    <para>
     To rename a table:
@@ -1168,6 +1338,15 @@ ALTER TABLE products RENAME TO items;
  
  <sect1 id="ddl-priv">
   <title>Privileges</title>
+
+  <indexterm zone="ddl-priv">
+   <primary>privilege</primary>
+  </indexterm>
+
+  <indexterm>
+   <primary>permission</primary>
+   <see>privilege</see>
+  </indexterm>
 
   <para>
    When you create a database object, you become its owner.  By
@@ -1241,12 +1420,8 @@ REVOKE ALL ON accounts FROM PUBLIC;
  <sect1 id="ddl-schemas">
   <title>Schemas</title>
 
-  <indexterm>
-   <primary>schemas</primary>
-  </indexterm>
-
-  <indexterm>
-   <primary>namespaces</primary>
+  <indexterm zone="ddl-schemas">
+   <primary>schema</primary>
   </indexterm>
 
   <para>
@@ -1313,6 +1488,11 @@ REVOKE ALL ON accounts FROM PUBLIC;
   <sect2 id="ddl-schemas-create">
    <title>Creating a Schema</title>
 
+   <indexterm zone="ddl-schemas-create">
+    <primary>schema</primary>
+    <secondary>creating</secondary>
+   </indexterm>
+
    <para>
     To create a separate schema, use the command <literal>CREATE
     SCHEMA</literal>.  Give the schema a name of your choice.  For
@@ -1323,11 +1503,11 @@ CREATE SCHEMA myschema;
    </para>
 
    <indexterm>
-    <primary>qualified names</primary>
+    <primary>qualified name</primary>
    </indexterm>
 
    <indexterm>
-    <primary>names</primary>
+    <primary>name</primary>
     <secondary>qualified</secondary>
    </indexterm>
 
@@ -1358,6 +1538,11 @@ CREATE TABLE myschema.mytable (
     modification commands and the data access commands discussed in
     the following chapters.
    </para>
+
+   <indexterm>
+    <primary>schema</primary>
+    <secondary>removing</secondary>
+   </indexterm>
 
    <para>
     To drop a schema if it's empty (all objects in it have been
@@ -1394,6 +1579,11 @@ CREATE SCHEMA <replaceable>schemaname</replaceable> AUTHORIZATION <replaceable>u
   <sect2 id="ddl-schemas-public">
    <title>The Public Schema</title>
 
+   <indexterm zone="ddl-schemas-public">
+    <primary>schema</primary>
+    <secondary>public</secondary>
+   </indexterm>
+
    <para>
     In the previous sections we created tables without specifying any
     schema names.  By default, such tables (and other objects) are
@@ -1417,11 +1607,11 @@ CREATE TABLE public.products ( ... );
    </indexterm>
 
    <indexterm>
-    <primary>unqualified names</primary>
+    <primary>unqualified name</primary>
    </indexterm>
 
    <indexterm>
-    <primary>names</primary>
+    <primary>name</primary>
     <secondary>unqualified</secondary>
    </indexterm>
 
@@ -1437,12 +1627,21 @@ CREATE TABLE public.products ( ... );
     in other schemas in the database.
    </para>
 
+   <indexterm>
+    <primary>schema</primary>
+    <secondary>current</secondary>
+   </indexterm>
+
    <para>
     The first schema named in the search path is called the current schema.
     Aside from being the first schema searched, it is also the schema in
     which new tables will be created if the <command>CREATE TABLE</>
     command does not specify a schema name.
    </para>
+
+   <indexterm>
+    <primary>search_path</primary>
+   </indexterm>
 
    <para>
     To show the current search path, use the following command:
@@ -1523,6 +1722,11 @@ SELECT 3 OPERATOR(pg_catalog.+) 4;
   <sect2 id="ddl-schemas-priv">
    <title>Schemas and Privileges</title>
 
+   <indexterm zone="ddl-schemas-priv">
+    <primary>privilege</primary>
+    <secondary sortas="schemas">for schemas</secondary>
+   </indexterm>
+
    <para>
     By default, users cannot see the objects in schemas they do not
     own.  To allow that, the owner of the schema needs to grant the
@@ -1550,8 +1754,13 @@ REVOKE CREATE ON SCHEMA public FROM PUBLIC;
    </para>
   </sect2>
 
-  <sect2>
+  <sect2 id="ddl-schemas-catalog">
    <title>The System Catalog Schema</title>
+
+   <indexterm zone="ddl-schemas-catalog">
+    <primary>system catalog</primary>
+    <secondary>schema</secondary>
+   </indexterm>
 
    <para>
     In addition to <literal>public</> and user-created schemas, each
@@ -1700,6 +1909,16 @@ REVOKE CREATE ON SCHEMA public FROM PUBLIC;
 
  <sect1 id="ddl-depend">
   <title>Dependency Tracking</title>
+
+  <indexterm zone="ddl-depend">
+   <primary>CASCADE</primary>
+   <secondary sortas="DROP">with DROP</secondary>
+  </indexterm>
+
+  <indexterm zone="ddl-depend">
+   <primary>RESTRICT</primary>
+   <secondary sortas="DROP">with DROP</secondary>
+  </indexterm>
 
   <para>
    When you create complex database structures involving many tables

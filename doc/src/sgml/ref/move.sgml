@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/ref/move.sgml,v 1.22 2003/05/04 02:23:16 petere Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/ref/move.sgml,v 1.23 2003/08/31 17:32:23 petere Exp $
 PostgreSQL documentation
 -->
 
@@ -13,6 +13,10 @@ PostgreSQL documentation
   <refname>MOVE</refname>
   <refpurpose>reposition a cursor</refpurpose>
  </refnamediv>
+
+ <indexterm zone="sql-move">
+  <primary>MOVE</primary>
+ </indexterm>
 
  <refsynopsisdiv>
 <synopsis>

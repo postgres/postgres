@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/runtime.sgml,v 1.200 2003/08/17 22:19:10 tgl Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/runtime.sgml,v 1.201 2003/08/31 17:32:19 petere Exp $
 -->
 
 <Chapter Id="runtime">
@@ -69,7 +69,7 @@ $Header: /cvsroot/pgsql/doc/src/sgml/runtime.sgml,v 1.200 2003/08/17 22:19:10 tg
    default, although locations such as
    <filename>/usr/local/pgsql/data</filename> or
    <filename>/var/lib/pgsql/data</filename> are popular. To initialize a
-   database cluster, use the command <command>initdb</command>, which is
+   database cluster, use the command <command>initdb</command>,<indexterm><primary>initdb</></> which is
    installed with <productname>PostgreSQL</productname>. The desired
    file system location of your database system is indicated by the
    <option>-D</option> option, for example
@@ -120,11 +120,13 @@ postgres$ <userinput>initdb -D /usr/local/pgsql/data</userinput>
   <para>
    However, while the directory contents are secure, the default
    client authentication setup allows any local user to connect to the
-   database and even become the database superuser. If you do not trust
-   other local users, we recommend you use <command>initdb</command>'s
-   <option>-W</option> or <option>--pwprompt</option> option to assign a
-   password to the database superuser. After <command>initdb</command>,
-   modify the <filename>pg_hba.conf</filename> file to use <literal>md5</> or
+   database and even become the database superuser. If you do not
+   trust other local users, we recommend you use
+   <command>initdb</command>'s <option>-W</option> or
+   <option>--pwprompt</option> option to assign a password to the
+   database superuser.<indexterm><primary>password</><secondary>of the
+   superuser</></indexterm> After <command>initdb</command>, modify
+   the <filename>pg_hba.conf</filename> file to use <literal>md5</> or
    <literal>password</> instead of <literal>trust</> authentication
    <emphasis>before</> you start the server for the first time. (Other
    approaches include using <literal>ident</literal> authentication or
@@ -207,8 +209,9 @@ pg_ctl start -l logfile
 
   <para>
    Normally, you will want to start the database server when the
-   computer boots. Autostart scripts are operating system-specific.
-   There are a few distributed with
+   computer boots.<indexterm><primary>booting</><secondary>starting
+   the server during</></> Autostart scripts are operating
+   system-specific.  There are a few distributed with
    <productname>PostgreSQL</productname> in the
    <filename>contrib/start-scripts</> directory. This may require root
    privileges.
@@ -240,7 +243,7 @@ su -c 'pg_ctl start -D /usr/local/pgsql/data -l serverlog' postgres
       For <productname>FreeBSD</productname>, look at the file
       <filename>contrib/start-scripts/freebsd</filename> in the
       <productname>PostgreSQL</productname> source distribution.
-      <indexterm><primary>FreeBSD</></>
+      <indexterm><primary>FreeBSD</><secondary>start script</secondary></>
      </para>
     </listitem>
 
@@ -248,7 +251,7 @@ su -c 'pg_ctl start -D /usr/local/pgsql/data -l serverlog' postgres
      <para>
       On <productname>OpenBSD</productname>, add the following lines
       to the file <filename>/etc/rc.local</filename>:
-      <indexterm><primary>OpenBSD</></>
+      <indexterm><primary>OpenBSD</><secondary>start script</secondary></>
 <programlisting>
 if [ -x /usr/local/pgsql/bin/pg_ctl -a -x /usr/local/pgsql/bin/postmaster ]; then
     su - -c '/usr/local/pgsql/bin/pg_ctl start -l /var/postgresql/log -s' postgres
@@ -261,7 +264,7 @@ fi
     <listitem>
      <para>
       On <productname>Linux</productname> systems either add
-      <indexterm><primary>Linux</></>
+      <indexterm><primary>Linux</><secondary>start script</secondary></>
 <programlisting>
 /usr/local/pgsql/bin/pg_ctl start -l logfile -D /usr/local/pgsql/data
 </programlisting>
@@ -276,7 +279,7 @@ fi
       On <productname>NetBSD</productname>, either use the
       <productname>FreeBSD</productname> or
       <productname>Linux</productname> start scripts, depending on
-      preference. <indexterm><primary>NetBSD</></>
+      preference. <indexterm><primary>NetBSD</><secondary>start script</secondary></>
      </para>
     </listitem>
 
@@ -285,7 +288,7 @@ fi
       On <productname>Solaris</productname>, create a file called
       <filename>/etc/init.d/postgresql</filename> that contains
       the following line:
-      <indexterm><primary>Solaris</></>
+      <indexterm><primary>Solaris</><secondary>start script</secondary></>
 <programlisting>
 su - postgres -c "/usr/local/pgsql/bin/pg_ctl start -l logfile -D /usr/local/pgsql/data"
 </programlisting>
@@ -441,7 +444,7 @@ psql: could not connect to server: Connection refused
 
    <indexterm>
     <primary>configuration</primary>
-    <secondary>server</secondary>
+    <secondary>of the server</secondary>
    </indexterm>
 
    <para>
@@ -462,7 +465,7 @@ psql: could not connect to server: Connection refused
 
    <para>
     One way to set these options is to edit the file
-    <filename>postgresql.conf</filename> in the data directory. (A
+    <filename>postgresql.conf</filename><indexterm><primary>postgresql.conf</></> in the data directory. (A
     default file is installed there.) An example of what this file might
     look like is:
 <programlisting>
@@ -626,7 +629,7 @@ SET ENABLE_SEQSCAN TO OFF;
       <term><varname>TCPIP_SOCKET</varname> (<type>boolean</type>)</term>
       <listitem>
        <para>
-        If this is true, then the server will accept TCP/IP connections.
+        If this is true, then the server will accept TCP/IP connections.<indexterm><primary>TCP/IP</></>
         Otherwise only local Unix domain socket connections are
         accepted. It is off by default. This option can only be set at
         server start.
@@ -781,7 +784,8 @@ SET ENABLE_SEQSCAN TO OFF;
      <variablelist>
      <varlistentry>
       <term><varname>AUTHENTICATION_TIMEOUT</varname> (<type>integer</type>)</term>
-      <indexterm><primary>timeout</><secondary>authentication</></indexterm>
+      <indexterm><primary>timeout</><secondary>client authentication</></indexterm>
+      <indexterm><primary>client authentication</><secondary>timeout during</></indexterm>
       <listitem>
        <para>
         Maximum time to complete client authentication, in seconds. If a
@@ -1514,8 +1518,17 @@ SET ENABLE_SEQSCAN TO OFF;
    <sect2 id="runtime-config-logging">
     <title>Error Reporting and Logging</title>
 
+    <indexterm zone="runtime-config-logging">
+     <primary>server log</primary>
+    </indexterm>
+
     <sect3 id="runtime-config-logging-syslog">
      <title>Syslog</title>
+
+     <indexterm zone="runtime-config-logging-syslog">
+      <primary>syslog</primary>
+     </indexterm>
+
      <variablelist>
 
      <varlistentry>
@@ -2137,7 +2150,7 @@ SET ENABLE_SEQSCAN TO OFF;
 
      <varlistentry>
       <term><varname>AUSTRALIAN_TIMEZONES</varname> (<type>boolean</type>)</term>
-      <indexterm><primary>Australian time zones</></>
+      <indexterm><primary>time zone</><secondary>Australian</></>
       <listitem>
        <para>
         If set to true, <literal>ACST</literal>,
@@ -2154,8 +2167,8 @@ SET ENABLE_SEQSCAN TO OFF;
        <primary>significant digits</primary>
       </indexterm>
       <indexterm>
-       <primary>display</primary>
-       <secondary>of float numbers</secondary>
+       <primary>floating-point</primary>
+       <secondary>display</secondary>
       </indexterm>
 
       <term><varname>EXTRA_FLOAT_DIGITS</varname> (<type>integer</type>)</term>
@@ -2175,7 +2188,7 @@ SET ENABLE_SEQSCAN TO OFF;
 
      <varlistentry>
       <term><varname>CLIENT_ENCODING</varname> (<type>string</type>)</term>
-      <indexterm><primary>character set encoding</></>
+      <indexterm><primary>character set</></>
       <listitem>
        <para>
         Sets the client-side encoding (character set).
@@ -2338,7 +2351,7 @@ dynamic_library_path = '/usr/local/lib/postgresql:/home/my_project/lib:$libdir'
      <varlistentry>
       <indexterm>
        <primary>deadlock</primary>
-       <secondary>timeout</secondary>
+       <secondary>timeout during</secondary>
       </indexterm>
       <indexterm>
        <primary>timeout</primary>
@@ -2388,12 +2401,12 @@ dynamic_library_path = '/usr/local/lib/postgresql:/home/my_project/lib:$libdir'
     <title>Version and Platform Compatibility</title>
 
     <sect3 id="runtime-config-compatible-version">
-     <title>Previous Postgres Versions</title>
+     <title>Previous PostgreSQL Versions</title>
      <variablelist>
 
      <varlistentry>
       <term><varname>ADD_MISSING_FROM</varname> (<type>boolean</type>)</term>
-      <indexterm><primary>missing from</></>
+      <indexterm><primary>FROM</><secondary>missing</></>
       <listitem>
        <para>
         When <literal>true</>, tables that are referenced by a query will be
@@ -2913,7 +2926,7 @@ $ <userinput>postmaster -o '-S 1024 -s'</userinput>
 
      <varlistentry>
       <term><systemitem class="osname">BSD/OS</></term>
-      <indexterm><primary>BSD/OS</></>
+      <indexterm><primary>BSD/OS</><secondary>IPC configuration</></>
       <listitem>
        <formalpara>
         <title>Shared Memory</>
@@ -2974,9 +2987,9 @@ options "SEMMNS=240"
       <term><systemitem class="osname">FreeBSD</></term>
       <term><systemitem class="osname">NetBSD</></term>
       <term><systemitem class="osname">OpenBSD</></term>
-      <indexterm><primary>FreeBSD</></>
-      <indexterm><primary>NetBSD</></>
-      <indexterm><primary>OpenBSD</></>
+      <indexterm><primary>FreeBSD</><secondary>IPC configuration</></>
+      <indexterm><primary>NetBSD</><secondary>IPC configuration</></>
+      <indexterm><primary>OpenBSD</><secondary>IPC configuration</></>
       <listitem>
        <para>
         The options <varname>SYSVSHM</> and <varname>SYSVSEM</> need
@@ -3010,7 +3023,7 @@ options         SEMMAP=256
 
      <varlistentry>
       <term><systemitem class="osname">HP-UX</></term>
-      <indexterm><primary>HP-UX</></>
+      <indexterm><primary>HP-UX</><secondary>IPC configuration</></>
       <listitem>
        <para>
         The default settings tend to suffice for normal installations.
@@ -3031,7 +3044,7 @@ options         SEMMAP=256
 
      <varlistentry>
       <term><systemitem class="osname">Linux</></term>
-      <indexterm><primary>Linux</></>
+      <indexterm><primary>Linux</><secondary>IPC configuration</></>
       <listitem>
        <para>
         The default shared memory limit (both
@@ -3084,7 +3097,7 @@ sysctl -w vm.overcommit_memory=3
 
      <varlistentry>
       <term><systemitem class="osname">MacOS X</></term>
-      <indexterm><primary>MacOS X</></>
+      <indexterm><primary>MacOS X</><secondary>IPC configuration</></>
       <listitem>
        <para>
         Edit the file
@@ -3104,7 +3117,7 @@ sysctl -w kern.sysv.shmall
 
      <varlistentry>
       <term><systemitem class="osname">SCO OpenServer</></term>
-      <indexterm><primary>SCO OpenServer</></>
+      <indexterm><primary>SCO OpenServer</><secondary>IPC configuration</></>
       <listitem>
        <para>
         In the default configuration, only 512 kB of shared memory per
@@ -3132,7 +3145,7 @@ sysctl -w kern.sysv.shmall
 
      <varlistentry>
       <term><systemitem class="osname">Solaris</></term>
-      <indexterm><primary>Solaris</></>
+      <indexterm><primary>Solaris</><secondary>IPC configuration</></>
       <listitem>
        <para>
         At least in version 2.6, the default maximum size of a shared
@@ -3165,7 +3178,7 @@ set semsys:seminfo_semmsl=32
 
      <varlistentry>
       <term><systemitem class="osname">UnixWare</></term>
-      <indexterm><primary>UnixWare</></>
+      <indexterm><primary>UnixWare</><secondary>IPC configuration</></>
       <listitem>
        <para>
         On <productname>UnixWare</> 7, the maximum size for shared
@@ -3285,13 +3298,17 @@ default:\
  <sect1 id="postmaster-shutdown">
   <title>Shutting Down the Server</title>
 
+  <indexterm zone="postmaster-shutdown">
+   <primary>shutdown</>
+  </indexterm>
+
   <para>
    There are several ways to shut down the database server. You control
    the type of shutdown by sending different signals to the server
    process.
    <variablelist>
     <varlistentry>
-     <term><systemitem>SIGTERM</systemitem></term>
+     <term><systemitem>SIGTERM</systemitem><indexterm><primary>SIGTERM</></></term>
      <listitem>
       <para>
        After receiving <systemitem>SIGTERM</systemitem>, the server
@@ -3304,7 +3321,7 @@ default:\
     </varlistentry>
 
     <varlistentry>
-     <term><systemitem>SIGINT</systemitem></term>
+     <term><systemitem>SIGINT</systemitem><indexterm><primary>SIGINT</></></term>
      <listitem>
       <para>
        The server disallows new connections and sends all existing
@@ -3317,7 +3334,7 @@ default:\
     </varlistentry>
 
     <varlistentry>
-     <term><systemitem>SIGQUIT</systemitem></term>
+     <term><systemitem>SIGQUIT</systemitem><indexterm><primary>SIGQUIT</></></term>
      <listitem>
       <para>
       This is the <firstterm>Immediate Shutdown</firstterm>, which

@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/ref/alter_domain.sgml,v 1.7 2003/01/06 00:31:44 tgl Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/ref/alter_domain.sgml,v 1.8 2003/08/31 17:32:21 petere Exp $
 PostgreSQL documentation
 -->
 
@@ -8,6 +8,7 @@ PostgreSQL documentation
   <refentrytitle id="sql-alterdomain-title">ALTER DOMAIN</refentrytitle>
   <refmiscinfo>SQL - Language Statements</refmiscinfo>
  </refmeta>
+
  <refnamediv>
   <refname>
    ALTER DOMAIN
@@ -16,6 +17,11 @@ PostgreSQL documentation
    change the definition of a domain
   </refpurpose>
  </refnamediv>
+
+ <indexterm zone="sql-alterdomain">
+  <primary>ALTER DOMAIN</primary>
+ </indexterm>
+
  <refsynopsisdiv>
   <refsynopsisdivinfo>
    <date>2002-11-27</date>

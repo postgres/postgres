@@ -1,10 +1,10 @@
-<!-- $Header: /cvsroot/pgsql/doc/src/sgml/indices.sgml,v 1.42 2003/05/28 16:03:55 tgl Exp $ -->
+<!-- $Header: /cvsroot/pgsql/doc/src/sgml/indices.sgml,v 1.43 2003/08/31 17:32:19 petere Exp $ -->
 
 <chapter id="indexes">
  <title id="indexes-title">Indexes</title>
 
  <indexterm zone="indexes">
-  <primary>indexes</primary>
+  <primary>index</primary>
  </indexterm>
 
  <para>
@@ -109,12 +109,12 @@ CREATE INDEX test1_id_index ON test1 (id);
    B-tree, R-tree, GiST, and Hash.  Each index type is more appropriate for
    a particular query type because of the algorithm it uses.
    <indexterm>
-    <primary>indexes</primary>
+    <primary>index</primary>
     <secondary>B-tree</secondary>
    </indexterm>
    <indexterm>
     <primary>B-tree</primary>
-    <see>indexes</see>
+    <see>index</see>
    </indexterm>
    By
    default, the <command>CREATE INDEX</command> command will create a
@@ -147,12 +147,12 @@ CREATE INDEX test1_id_index ON test1 (id);
 
   <para>
    <indexterm>
-    <primary>indexes</primary>
+    <primary>index</primary>
     <secondary>R-tree</secondary>
    </indexterm>
    <indexterm>
     <primary>R-tree</primary>
-    <see>indexes</see>
+    <see>index</see>
    </indexterm>
    R-tree indexes are especially suited for spatial data.  To create
    an R-tree index, use a command of the form
@@ -178,12 +178,12 @@ CREATE INDEX <replaceable>name</replaceable> ON <replaceable>table</replaceable>
 
   <para>
    <indexterm>
-    <primary>indexes</primary>
+    <primary>index</primary>
     <secondary>hash</secondary>
    </indexterm>
    <indexterm>
     <primary>hash</primary>
-    <see>indexes</see>
+    <see>index</see>
    </indexterm>
    The query planner will consider using a hash index whenever an
    indexed column is involved in a comparison using the
@@ -219,7 +219,7 @@ CREATE INDEX <replaceable>name</replaceable> ON <replaceable>table</replaceable>
   <title>Multicolumn Indexes</title>
 
   <indexterm zone="indexes-multicolumn">
-   <primary>indexes</primary>
+   <primary>index</primary>
    <secondary>multicolumn</secondary>
   </indexterm>
 
@@ -294,7 +294,7 @@ SELECT name FROM test2 WHERE major = <replaceable>constant</replaceable> OR mino
   <title>Unique Indexes</title>
 
   <indexterm zone="indexes-unique">
-   <primary>indexes</primary>
+   <primary>index</primary>
    <secondary>unique</secondary>
   </indexterm>
 
@@ -337,8 +337,8 @@ CREATE UNIQUE INDEX <replaceable>name</replaceable> ON <replaceable>table</repla
   <title>Indexes on Expressions</title>
 
   <indexterm zone="indexes-expressional">
-   <primary>indexes</primary>
-   <secondary>on expressions</secondary>
+   <primary>index</primary>
+   <secondary sortas="expressions">on expressions</secondary>
   </indexterm>
 
   <para>
@@ -391,6 +391,10 @@ CREATE INDEX people_names ON people ((first_name || ' ' || last_name));
 
  <sect1 id="indexes-opclass">
   <title>Operator Classes</title>
+
+  <indexterm zone="indexes-opclass">
+   <primary>operator class</primary>
+  </indexterm>
 
   <para>
    An index definition may specify an <firstterm>operator
@@ -492,7 +496,7 @@ SELECT am.amname AS index_method,
   <title>Partial Indexes</title>
 
   <indexterm zone="indexes-partial">
-   <primary>indexes</primary>
+   <primary>index</primary>
    <secondary>partial</secondary>
   </indexterm>
 
@@ -708,6 +712,11 @@ CREATE UNIQUE INDEX tests_success_constraint ON tests (subject, target)
 
  <sect1 id="indexes-examine">
   <title>Examining Index Usage</title>
+
+  <indexterm zone="indexes-examine">
+   <primary>index</primary>
+   <secondary>examining usage</secondary>
+  </indexterm>
 
   <para>
    Although indexes in <productname>PostgreSQL</> do not need

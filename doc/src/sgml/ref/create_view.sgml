@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/ref/create_view.sgml,v 1.22 2003/04/22 10:08:08 petere Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/ref/create_view.sgml,v 1.23 2003/08/31 17:32:22 petere Exp $
 PostgreSQL documentation
 -->
 
@@ -13,6 +13,10 @@ PostgreSQL documentation
   <refname>CREATE VIEW</refname>
   <refpurpose>define a new view</refpurpose>
  </refnamediv>
+
+ <indexterm zone="sql-createview">
+  <primary>CREATE VIEW</primary>
+ </indexterm>
 
  <refsynopsisdiv>
 <synopsis>

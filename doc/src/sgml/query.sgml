@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/query.sgml,v 1.32 2003/06/24 23:27:24 momjian Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/query.sgml,v 1.33 2003/08/31 17:32:19 petere Exp $
 -->
 
  <chapter id="tutorial-sql">
@@ -87,7 +87,8 @@ $Header: /cvsroot/pgsql/doc/src/sgml/query.sgml,v 1.32 2003/06/24 23:27:24 momji
    </para>
 
    <para>
-    <indexterm><primary>cluster</primary></indexterm>
+    <indexterm><primary>database cluster</primary></indexterm>
+    <indexterm><primary>cluster</primary><secondary>of databases</secondary><see>database cluster</see></indexterm>
 
     Tables are grouped into databases, and a collection of databases
     managed by a single <productname>PostgreSQL</productname> server
@@ -562,7 +563,7 @@ SELECT *
    <title>Aggregate Functions</title>
 
    <indexterm zone="tutorial-agg">
-    <primary>aggregate</primary>
+    <primary>aggregate function</primary>
    </indexterm>
 
    <para>

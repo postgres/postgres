@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/ref/postgres-ref.sgml,v 1.34 2003/07/29 00:03:17 tgl Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/ref/postgres-ref.sgml,v 1.35 2003/08/31 17:32:24 petere Exp $
 PostgreSQL documentation
 -->
 
@@ -14,6 +14,10 @@ PostgreSQL documentation
   <refname>postgres</refname>
   <refpurpose>run a <productname>PostgreSQL</productname> server in single-user mode</refpurpose>
  </refnamediv>
+
+ <indexterm zone="app-postgres">
+  <primary>postgres (the program)</primary>
+ </indexterm>
 
  <refsynopsisdiv>
   <cmdsynopsis>

@@ -1,11 +1,13 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/ecpg.sgml,v 1.48 2003/08/07 04:17:21 momjian Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/ecpg.sgml,v 1.49 2003/08/31 17:32:18 petere Exp $
 -->
 
 <chapter id="ecpg">
  <title><application>ECPG</application> - Embedded <acronym>SQL</acronym> in C</title>
 
  <indexterm zone="ecpg"><primary>embedded SQL</primary><secondary>in C</secondary></indexterm>
+ <indexterm zone="ecpg"><primary>C</primary></indexterm>
+ <indexterm zone="ecpg"><primary>ECPG</primary></indexterm>
 
  <para>
   This chapter describes the embedded <acronym>SQL</acronym> package

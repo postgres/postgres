@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/ref/drop_group.sgml,v 1.5 2003/05/04 02:23:16 petere Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/ref/drop_group.sgml,v 1.6 2003/08/31 17:32:22 petere Exp $
 PostgreSQL documentation
 -->
 
@@ -13,6 +13,10 @@ PostgreSQL documentation
   <refname>DROP GROUP</refname>
   <refpurpose>remove a user group</refpurpose>
  </refnamediv>
+
+ <indexterm zone="sql-dropgroup">
+  <primary>DROP GROUP</primary>
+ </indexterm>
 
  <refsynopsisdiv>
 <synopsis>

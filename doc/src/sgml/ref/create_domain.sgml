@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/ref/create_domain.sgml,v 1.13 2003/04/22 10:08:08 petere Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/ref/create_domain.sgml,v 1.14 2003/08/31 17:32:22 petere Exp $
 PostgreSQL documentation
 -->
 
@@ -13,6 +13,10 @@ PostgreSQL documentation
   <refname>CREATE DOMAIN</refname>
   <refpurpose>define a new domain</refpurpose>
  </refnamediv>
+
+ <indexterm zone="sql-createdomain">
+  <primary>CREATE DOMAIN</primary>
+ </indexterm>
 
  <refsynopsisdiv>
 <synopsis>

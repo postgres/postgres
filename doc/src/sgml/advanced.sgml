@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/advanced.sgml,v 1.34 2003/03/25 16:15:35 petere Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/advanced.sgml,v 1.35 2003/08/31 17:32:18 petere Exp $
 -->
 
  <chapter id="tutorial-advanced">
@@ -142,7 +142,7 @@ ERROR:  &lt;unnamed&gt; referential integrity violation - key referenced from we
    <title>Transactions</title>
 
    <indexterm zone="tutorial-transactions">
-    <primary>transactions</primary>
+    <primary>transaction</primary>
    </indexterm>
 
    <para>

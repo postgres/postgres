@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/ref/create_table.sgml,v 1.70 2003/06/12 18:34:06 tgl Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/ref/create_table.sgml,v 1.71 2003/08/31 17:32:22 petere Exp $
 PostgreSQL documentation
 -->
 
@@ -13,6 +13,10 @@ PostgreSQL documentation
   <refname>CREATE TABLE</refname>
   <refpurpose>define a new table</refpurpose>
  </refnamediv>
+
+ <indexterm zone="sql-createtable">
+  <primary>CREATE TABLE</primary>
+ </indexterm>
 
  <refsynopsisdiv>
 <synopsis>

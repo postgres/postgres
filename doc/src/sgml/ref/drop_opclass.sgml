@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/ref/drop_opclass.sgml,v 1.4 2003/06/27 14:45:26 petere Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/ref/drop_opclass.sgml,v 1.5 2003/08/31 17:32:22 petere Exp $
 PostgreSQL documentation
 -->
 
@@ -14,6 +14,10 @@ PostgreSQL documentation
   <refpurpose>remove a user-defined operator class</refpurpose>
  </refnamediv>
   
+ <indexterm zone="sql-dropopclass">
+  <primary>DROP OPERATOR CLASS</primary>
+ </indexterm>
+
  <refsynopsisdiv>
 <synopsis>
 DROP OPERATOR CLASS <replaceable class="PARAMETER">name</replaceable> USING <replaceable class="PARAMETER">index_method</replaceable> [ CASCADE | RESTRICT ]

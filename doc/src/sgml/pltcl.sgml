@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/pltcl.sgml,v 2.24 2003/06/22 16:17:00 tgl Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/pltcl.sgml,v 2.25 2003/08/31 17:32:19 petere Exp $
 -->
 
  <chapter id="pltcl">
@@ -190,6 +190,11 @@ CREATE FUNCTION overpaid(employee) RETURNS boolean AS '
    <sect1 id="pltcl-global">
     <title>Global Data in PL/Tcl</title>
 
+    <indexterm zone="pltcl-global">
+     <primary>global data</primary>
+     <secondary>in PL/Tcl</secondary>
+    </indexterm>
+
     <para>
      Sometimes it
      is useful to have some global data that is held between two
@@ -298,8 +303,10 @@ spi_exec -array C "SELECT * FROM pg_class" {
       <term><function>spi_prepare</function> <replaceable>query</replaceable> <replaceable>typelist</replaceable></term>
       <listitem>
        <para>
-	Prepares and saves a query plan for later execution.  The saved plan
-	will be retained for the life of the current session.
+	Prepares and saves a query plan for later execution.  The
+	saved plan will be retained for the life of the current
+	session.<indexterm><primary>preparing a query</><secondary>in
+	PL/Tcl</></>
        </para>
        <para>
         The query may use parameters, that is, placeholders for
@@ -437,7 +444,7 @@ SELECT 'doesn''t' AS ret
      <varlistentry>
       <indexterm>
        <primary>elog</primary>
-       <secondary>PL/Tcl</secondary>
+       <secondary>in PL/Tcl</secondary>
       </indexterm>
       <term><function>elog</> <replaceable>level</replaceable> <replaceable>msg</replaceable></term>
       <listitem>
@@ -466,7 +473,7 @@ SELECT 'doesn''t' AS ret
     <title>Trigger Procedures in PL/Tcl</title>
 
     <indexterm>
-     <primary>triggers</primary>
+     <primary>trigger</primary>
      <secondary>in PL/Tcl</secondary>
     </indexterm>
 

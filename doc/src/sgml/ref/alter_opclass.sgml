@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/ref/alter_opclass.sgml,v 1.1 2003/06/27 14:45:26 petere Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/ref/alter_opclass.sgml,v 1.2 2003/08/31 17:32:21 petere Exp $
 PostgreSQL documentation
 -->
 
@@ -14,6 +14,10 @@ PostgreSQL documentation
   <refpurpose>change the definition of an operator class</refpurpose>
  </refnamediv>  
   
+ <indexterm zone="sql-alteropclass">
+  <primary>ALTER OPERATOR CLASS</primary>
+ </indexterm>
+
  <refsynopsisdiv>
 <synopsis>
 ALTER OPERATOR CLASS <replaceable>name</replaceable> USING <replaceable class="parameter">index_method</replaceable> RENAME TO <replaceable>newname</replaceable>

@@ -1,9 +1,19 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/monitoring.sgml,v 1.20 2003/04/04 03:03:53 tgl Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/monitoring.sgml,v 1.21 2003/08/31 17:32:19 petere Exp $
 -->
 
 <chapter id="monitoring">
  <title>Monitoring Database Activity</title>
+
+ <indexterm zone="monitoring">
+  <primary>monitoring</primary>
+  <secondary>database activity</secondary>
+ </indexterm>
+
+ <indexterm zone="monitoring">
+  <primary>database activity</primary>
+  <secondary>monitoring</secondary>
+ </indexterm>
 
  <para>
   A database administrator frequently wonders, <quote>What is the system
@@ -588,6 +598,11 @@ SELECT pg_stat_get_backend_pid(s.backendid) AS procpid,
 
  <sect1 id="monitoring-locks">
   <title>Viewing Locks</title>
+
+  <indexterm zone="monitoring-locks">
+   <primary>lock</primary>
+   <secondary>monitoring</secondary>
+  </indexterm>
 
   <para>
    Another useful tool for monitoring database activity is the

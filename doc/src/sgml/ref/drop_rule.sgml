@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/ref/drop_rule.sgml,v 1.17 2003/05/04 02:23:16 petere Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/ref/drop_rule.sgml,v 1.18 2003/08/31 17:32:22 petere Exp $
 PostgreSQL documentation
 -->
 
@@ -13,6 +13,10 @@ PostgreSQL documentation
   <refname>DROP RULE</refname>
   <refpurpose>remove a rewrite rule</refpurpose>
  </refnamediv>
+
+ <indexterm zone="sql-droprule">
+  <primary>DROP RULE</primary>
+ </indexterm>
 
  <refsynopsisdiv>
 <synopsis>

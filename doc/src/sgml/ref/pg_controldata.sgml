@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/ref/pg_controldata.sgml,v 1.5 2003/03/24 14:32:51 petere Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/ref/pg_controldata.sgml,v 1.6 2003/08/31 17:32:23 petere Exp $
 PostgreSQL documentation
 -->
 
@@ -14,6 +14,10 @@ PostgreSQL documentation
   <refname>pg_controldata</refname>
   <refpurpose>display control information of a <productname>PostgreSQL</productname> database cluster</refpurpose>
  </refnamediv>
+
+ <indexterm zone="app-pgcontroldata">
+  <primary>pg_controldata</primary>
+ </indexterm>
 
  <refsynopsisdiv>
   <cmdsynopsis>

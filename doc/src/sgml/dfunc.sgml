@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/dfunc.sgml,v 1.25 2003/04/10 01:22:44 petere Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/dfunc.sgml,v 1.26 2003/08/31 17:32:18 petere Exp $
 -->
 
 <sect2 id="dfunc">
@@ -8,9 +8,11 @@ $Header: /cvsroot/pgsql/doc/src/sgml/dfunc.sgml,v 1.25 2003/04/10 01:22:44 peter
  <para>
   Before you are able to use your
   <productname>PostgreSQL</productname> extension functions written in
-  C, they must be compiled and linked in a special way to produce a file
-  that can be dynamically loaded by the server.  To be
-  precise, a <firstterm>shared library</firstterm> needs to be created.
+  C, they must be compiled and linked in a special way to produce a
+  file that can be dynamically loaded by the server.  To be precise, a
+  <firstterm>shared library</firstterm> needs to be
+  created.<indexterm><primary>shared library</></indexterm>
+
  </para>
 
  <para>
@@ -26,17 +28,18 @@ $Header: /cvsroot/pgsql/doc/src/sgml/dfunc.sgml,v 1.25 2003/04/10 01:22:44 peter
  </para>
 
  <para>
-  <indexterm><primary>PIC</></>
-  Creating shared libraries is generally analogous to linking
-  executables:  first the source files are compiled into object files,
-  then the object files are linked together.  The object files need to
-  be created as <firstterm>position-independent code</firstterm>
-  (<acronym>PIC</acronym>), which conceptually means that they can be
-  placed at an arbitrary location in memory when they are loaded by the
-  executable.  (Object files intended for executables are usually not compiled
-  that way.)  The command to link a shared library contains special
-  flags to distinguish it from linking an executable. --- At least
-  this is the theory.  On some systems the practice is much uglier.
+  <indexterm><primary>PIC</></> Creating shared libraries is generally
+  analogous to linking executables: first the source files are
+  compiled into object files, then the object files are linked
+  together.  The object files need to be created as
+  <firstterm>position-independent code</firstterm>
+  (<acronym>PIC</acronym>),<indexterm><primary>PIC</></> which
+  conceptually means that they can be placed at an arbitrary location
+  in memory when they are loaded by the executable.  (Object files
+  intended for executables are usually not compiled that way.)  The
+  command to link a shared library contains special flags to
+  distinguish it from linking an executable. --- At least this is the
+  theory.  On some systems the practice is much uglier.
  </para>
 
  <para>
@@ -57,7 +60,7 @@ $Header: /cvsroot/pgsql/doc/src/sgml/dfunc.sgml,v 1.25 2003/04/10 01:22:44 peter
   <variablelist>
    <varlistentry>
     <term><systemitem class="osname">BSD/OS</></term>
-    <indexterm><primary>BSD/OS</></>
+    <indexterm><primary>BSD/OS</><secondary>shared library</></>
     <listitem>
      <para>
       The compiler flag to create <acronym>PIC</acronym> is
@@ -75,7 +78,7 @@ ld -shared -o foo.so foo.o
 
    <varlistentry>
     <term><systemitem class="osname">FreeBSD</></term>
-    <indexterm><primary>FreeBSD</></>
+    <indexterm><primary>FreeBSD</><secondary>shared library</></>
     <listitem>
      <para>
       The compiler flag to create <acronym>PIC</acronym> is
@@ -93,7 +96,7 @@ gcc -shared -o foo.so foo.o
 
    <varlistentry>
     <term><systemitem class="osname">HP-UX</></term>
-    <indexterm><primary>HP-UX</></>
+    <indexterm><primary>HP-UX</><secondary>shared library</></>
     <listitem>
      <para>
       The compiler flag of the system compiler to create
@@ -120,7 +123,7 @@ ld -b -o foo.sl foo.o
 
    <varlistentry>
     <term><systemitem class="osname">IRIX</></term>
-    <indexterm><primary>IRIX</></>
+    <indexterm><primary>IRIX</><secondary>shared library</></>
     <listitem>
      <para>
       <acronym>PIC</acronym> is the default, no special compiler
@@ -136,7 +139,7 @@ ld -shared -o foo.so foo.o
 
    <varlistentry>
     <term><systemitem class="osname">Linux</></term>
-    <indexterm><primary>Linux</></>
+    <indexterm><primary>Linux</><secondary>shared library</></>
     <listitem>
      <para>
       The compiler flag to create <acronym>PIC</acronym> is
@@ -155,7 +158,7 @@ cc -shared -o foo.so foo.o
 
    <varlistentry>
     <term><systemitem class="osname">MacOS X</></term>
-    <indexterm><primary>MacOS X</></>
+    <indexterm><primary>MacOS X</><secondary>shared library</></>
     <listitem>
      <para>
       Here is an example.  It assumes the developer tools are installed.
@@ -169,7 +172,7 @@ cc -bundle -flat_namespace -undefined suppress -o foo.so foo.o
 
    <varlistentry>
     <term><systemitem class="osname">NetBSD</></term>
-    <indexterm><primary>NetBSD</></>
+    <indexterm><primary>NetBSD</><secondary>shared library</></>
     <listitem>
      <para>
       The compiler flag to create <acronym>PIC</acronym> is
@@ -187,7 +190,7 @@ gcc -shared -o foo.so foo.o
 
    <varlistentry>
     <term><systemitem class="osname">OpenBSD</></term>
-    <indexterm><primary>OpenBSD</></>
+    <indexterm><primary>OpenBSD</><secondary>shared library</></>
     <listitem>
      <para>
       The compiler flag to create <acronym>PIC</acronym> is
@@ -203,7 +206,7 @@ ld -Bshareable -o foo.so foo.o
 
    <varlistentry>
     <term><systemitem class="osname">Solaris</></term>
-    <indexterm><primary>Solaris</></>
+    <indexterm><primary>Solaris</><secondary>shared library</></>
     <listitem>
      <para>
       The compiler flag to create <acronym>PIC</acronym> is
@@ -227,7 +230,7 @@ gcc -G -o foo.so foo.o
 
    <varlistentry>
     <term><systemitem class="osname">Tru64 UNIX</></term>   
-    <indexterm><primary>Tru64 UNIX</></>
+    <indexterm><primary>Tru64 UNIX</><secondary>shared library</></>
     <indexterm><primary>Digital UNIX</><see>Tru64 UNIX</></>
     <listitem>
      <para>
@@ -246,7 +249,7 @@ ld -shared -expect_unresolved '*' -o foo.so foo.o
 
    <varlistentry>
     <term><systemitem class="osname">UnixWare</></term>
-    <indexterm><primary>UnixWare</></>
+    <indexterm><primary>UnixWare</><secondary>shared library</></>
     <listitem>
      <para>
       The compiler flag to create <acronym>PIC</acronym> is <option>-K

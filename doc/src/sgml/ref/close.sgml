@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/ref/close.sgml,v 1.16 2003/08/24 21:02:42 petere Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/ref/close.sgml,v 1.17 2003/08/31 17:32:21 petere Exp $
 PostgreSQL documentation
 -->
 
@@ -13,6 +13,10 @@ PostgreSQL documentation
   <refname>CLOSE</refname>
   <refpurpose>close a cursor</refpurpose>
  </refnamediv>
+
+ <indexterm zone="sql-close">
+  <primary>CLOSE</primary>
+ </indexterm>
 
  <refsynopsisdiv>
 <synopsis>

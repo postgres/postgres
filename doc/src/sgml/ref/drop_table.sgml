@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/ref/drop_table.sgml,v 1.18 2003/05/04 02:23:16 petere Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/ref/drop_table.sgml,v 1.19 2003/08/31 17:32:23 petere Exp $
 PostgreSQL documentation
 -->
 
@@ -13,6 +13,10 @@ PostgreSQL documentation
   <refname>DROP TABLE</refname>
   <refpurpose>remove a table</refpurpose>
  </refnamediv>
+
+ <indexterm zone="sql-droptable">
+  <primary>DROP TABLE</primary>
+ </indexterm>
 
  <refsynopsisdiv>
 <synopsis>

@@ -1,4 +1,4 @@
-<!-- $Header: /cvsroot/pgsql/doc/src/sgml/ref/drop_conversion.sgml,v 1.5 2003/06/27 14:45:26 petere Exp $ -->
+<!-- $Header: /cvsroot/pgsql/doc/src/sgml/ref/drop_conversion.sgml,v 1.6 2003/08/31 17:32:22 petere Exp $ -->
 
 <refentry id="SQL-DROPCONVERSION">
  <refmeta>
@@ -10,6 +10,10 @@
   <refname>DROP CONVERSION</refname>
   <refpurpose>remove a user-defined conversion</refpurpose>
  </refnamediv>
+
+ <indexterm zone="sql-dropconversion">
+  <primary>DROP CONVERSION</primary>
+ </indexterm>
 
  <refsynopsisdiv>
 <synopsis>

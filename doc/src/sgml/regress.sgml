@@ -1,7 +1,15 @@
-<!-- $Header: /cvsroot/pgsql/doc/src/sgml/regress.sgml,v 1.32 2003/04/06 17:47:24 tgl Exp $ -->
+<!-- $Header: /cvsroot/pgsql/doc/src/sgml/regress.sgml,v 1.33 2003/08/31 17:32:19 petere Exp $ -->
 
  <chapter id="regress">
   <title id="regress-title">Regression Tests</title>
+
+  <indexterm zone="regress">
+   <primary>regression tests</primary>
+  </indexterm>
+
+  <indexterm zone="regress">
+   <primary>test</primary>
+  </indexterm>
 
   <para>
    The regression tests are a comprehensive set of tests for the SQL

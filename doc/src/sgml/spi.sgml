@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/spi.sgml,v 1.26 2003/08/27 22:13:35 petere Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/spi.sgml,v 1.27 2003/08/31 17:32:20 petere Exp $
 -->
 
 <chapter id="spi">
@@ -1655,7 +1655,7 @@ char * SPI_getrelname(Relation <parameter>rel</parameter>)
   <para>
    <productname>PostgreSQL</productname> allocates memory within
    <firstterm>memory contexts</firstterm><indexterm><primary>memory
-   context</primary></indexterm>, which provide a convenient method of
+   context</primary><secondary>in SPI</secondary></indexterm>, which provide a convenient method of
    managing allocations made in many different places that need to
    live for differing amounts of time.  Destroying a context releases
    all the memory that was allocated in it.  Thus, it is not necessary

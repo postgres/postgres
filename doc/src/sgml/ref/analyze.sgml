@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/ref/analyze.sgml,v 1.12 2003/04/15 13:25:08 petere Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/ref/analyze.sgml,v 1.13 2003/08/31 17:32:21 petere Exp $
 PostgreSQL documentation
 -->
 
@@ -13,6 +13,10 @@ PostgreSQL documentation
   <refname>ANALYZE</refname>
   <refpurpose>collect statistics about a database</refpurpose>
  </refnamediv>
+
+ <indexterm zone="sql-analyze">
+  <primary>ANALYZE</primary>
+ </indexterm>
 
  <refsynopsisdiv>
 <synopsis>

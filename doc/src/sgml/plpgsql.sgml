@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/plpgsql.sgml,v 1.20 2003/08/09 22:50:22 tgl Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/plpgsql.sgml,v 1.21 2003/08/31 17:32:19 petere Exp $
 -->
 
 <chapter id="plpgsql"> 
@@ -63,20 +63,22 @@ $Header: /cvsroot/pgsql/doc/src/sgml/plpgsql.sgml,v 1.20 2003/08/09 22:50:22 tgl
    </para>
 
    <para>
-    As each expression and <acronym>SQL</acronym> command is first used
-	in the function, the <application>PL/pgSQL</> interpreter creates
-	a prepared execution plan (using the <acronym>SPI</acronym>
-	manager's <function>SPI_prepare</function> and
-	<function>SPI_saveplan</function> functions).  Subsequent visits
-	to that expression or command reuse the prepared plan.  Thus, a
-	function with conditional code that contains many statements for
-	which execution plans might be required will only prepare and save
-	those plans that are really used during the lifetime of the
-	database connection.  This can substantially reduce the total
-	amount of time required to parse, and generate execution plans for the
-	statements in a <application>PL/pgSQL</> function. A disadvantage is
-	that errors in a specific expression or command may not be detected
-	until that part of the function is reached in execution.
+    As each expression and <acronym>SQL</acronym> command is first
+    used in the function, the <application>PL/pgSQL</> interpreter
+    creates a prepared execution plan (using the
+    <acronym>SPI</acronym> manager's <function>SPI_prepare</function>
+    and <function>SPI_saveplan</function>
+    functions).<indexterm><primary>preparing a query</><secondary>in
+    PL/pgSQL</></> Subsequent visits to that expression or command
+    reuse the prepared plan.  Thus, a function with conditional code
+    that contains many statements for which execution plans might be
+    required will only prepare and save those plans that are really
+    used during the lifetime of the database connection.  This can
+    substantially reduce the total amount of time required to parse,
+    and generate execution plans for the statements in a
+    <application>PL/pgSQL</> function. A disadvantage is that errors
+    in a specific expression or command may not be detected until that
+    part of the function is reached in execution.
    </para>
 
    <para>
@@ -196,7 +198,7 @@ END;
      and return the <quote>polymorphic</> types
      <type>anyelement</type> and <type>anyarray</type>.  The actual
      datatypes handled by a polymorphic function can vary from call to
-     call, as discussed in <xref linkend="types-polymorphic">.
+     call, as discussed in <xref linkend="extend-types-polymorphic">.
      An example is shown in <xref linkend="plpgsql-declaration-aliases">.
     </para>
 
@@ -563,7 +565,7 @@ END;
       or <type>anyarray</type>), a special parameter <literal>$0</literal>
       is created.  Its datatype is the actual return type of the function,
       as deduced from the actual input types (see <xref
-      linkend="types-polymorphic">).
+      linkend="extend-types-polymorphic">).
       This allows the function to access its actual return type
       as shown in <xref linkend="plpgsql-declaration-type">.
       <literal>$0</literal> is initialized to NULL and can be modified by
@@ -903,6 +905,11 @@ tax := subtotal * 0.06;
    <sect2 id="plpgsql-select-into">
     <title><command>SELECT INTO</command></title>
 
+    <indexterm zone="plpgsql-select-into">
+     <primary>SELECT INTO</primary>
+     <secondary>in PL/pgSQL</secondary>
+    </indexterm>
+
     <para>
      The result of a <command>SELECT</command> command yielding multiple columns (but
      only one row) can be assigned to a record variable, row-type
@@ -1097,14 +1104,16 @@ EXECUTE ''UPDATE tbl SET ''
     <para>
      This example shows use of the functions
      <function>quote_ident(<type>text</type>)</function> and
-     <function>quote_literal(<type>text</type>)</function>.
-     Variables containing column and table identifiers should be
-     passed to function <function>quote_ident</function>.
-     Variables containing values that should be literal strings in the
-     constructed command should be passed to
-     <function>quote_literal</function>.  Both take the
-     appropriate steps to return the input text enclosed in double
-     or single quotes respectively, with any embedded special characters
+     <function>quote_literal(<type>text</type>)</function>.<indexterm><primary>quote_ident</><secondary>use
+     in
+     PL/pgSQL</></indexterm><indexterm><primary>quote_literal</><secondary>use
+     in PL/pgSQL</></indexterm> Variables containing column and table
+     identifiers should be passed to function
+     <function>quote_ident</function>.  Variables containing values
+     that should be literal strings in the constructed command should
+     be passed to <function>quote_literal</function>.  Both take the
+     appropriate steps to return the input text enclosed in double or
+     single quotes respectively, with any embedded special characters
      properly escaped.
     </para>
 
@@ -1517,6 +1526,11 @@ END IF;
    <sect2 id="plpgsql-control-structures-loops">
     <title>Simple Loops</title>
 
+    <indexterm zone="plpgsql-control-structures-loops">
+     <primary>loop</primary>
+     <secondary>in PL/pgSQL</secondary>
+    </indexterm>
+
     <para>
      With the <literal>LOOP</>, <literal>EXIT</>, <literal>WHILE</>,
      and <literal>FOR</> statements, you can arrange for your
@@ -1733,6 +1747,11 @@ END LOOP;
 
   <sect1 id="plpgsql-cursors">
    <title>Cursors</title>
+
+   <indexterm zone="plpgsql-cursors">
+    <primary>cursor</primary>
+    <secondary>in PL/pgSQL</secondary>
+   </indexterm>
 
    <para>
     Rather than executing a whole query at once, it is possible to set
@@ -2096,6 +2115,11 @@ RAISE EXCEPTION ''Inexistent ID --> %'', user_id;
  <sect1 id="plpgsql-trigger">
   <title>Trigger Procedures</title>
 
+  <indexterm zone="plpgsql-trigger">
+   <primary>trigger</primary>
+   <secondary>in PL/pgSQL</secondary>
+  </indexterm>
+
   <para>
 	<application>PL/pgSQL</application> can be used to define trigger
 	procedures. A trigger procedure is created with the
@@ -2302,10 +2326,12 @@ CREATE TRIGGER emp_stamp BEFORE INSERT OR UPDATE ON emp
 
   <indexterm zone="plpgsql-porting">
    <primary>Oracle</primary>
+   <secondary>porting from PL/SQL to PL/pgSQL</secondary>
   </indexterm>
 
   <indexterm zone="plpgsql-porting">
-   <primary>PL/SQL</primary>
+   <primary>PL/SQL (Oracle)</primary>
+   <secondary>porting to PL/pgSQL</secondary>
   </indexterm>
 
   <para>
@@ -2546,7 +2572,8 @@ END;
     with <literal>OUT</> parameters and string manipulation.
     <productname>PostgreSQL</> does not have an
     <function>instr</function> function, but you can work around it
-    using a combination of other functions.  In <xref
+    using a combination of other
+    functions.<indexterm><primary>instr</></indexterm> In <xref
     linkend="plpgsql-porting-appendix"> there is a
     <application>PL/pgSQL</application> implementation of
     <function>instr</function> that you can use to make your porting

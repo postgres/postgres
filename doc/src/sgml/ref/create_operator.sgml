@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/ref/create_operator.sgml,v 1.36 2003/08/17 22:09:00 tgl Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/ref/create_operator.sgml,v 1.37 2003/08/31 17:32:22 petere Exp $
 PostgreSQL documentation
 -->
 
@@ -13,6 +13,10 @@ PostgreSQL documentation
   <refname>CREATE OPERATOR</refname>
   <refpurpose>define a new operator</refpurpose>
  </refnamediv>
+
+ <indexterm zone="sql-createoperator">
+  <primary>CREATE OPERATOR</primary>
+ </indexterm>
 
  <refsynopsisdiv>
 <synopsis>

@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/ref/psql-ref.sgml,v 1.94 2003/08/02 02:44:38 momjian Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/ref/psql-ref.sgml,v 1.95 2003/08/31 17:32:24 petere Exp $
 PostgreSQL documentation
 -->
 
@@ -16,6 +16,10 @@ PostgreSQL documentation
       <productname>PostgreSQL</productname> interactive terminal
     </refpurpose>
   </refnamediv>
+
+ <indexterm zone="app-psql">
+  <primary>psql</primary>
+ </indexterm>
 
  <refsynopsisdiv>
   <cmdsynopsis>

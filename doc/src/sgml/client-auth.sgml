@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/client-auth.sgml,v 1.55 2003/08/17 04:39:11 momjian Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/client-auth.sgml,v 1.56 2003/08/31 17:32:18 petere Exp $
 -->
 
 <chapter id="client-authentication">
@@ -576,6 +576,7 @@ local   db1,db2,@demodbs  all                                       md5
    </indexterm>
    <indexterm>
     <primary>password</primary>
+    <secondary>authentication</secondary>
    </indexterm>
 
    <para>
@@ -864,6 +865,10 @@ omicron       bryanh            guest1
 
   <sect2 id="auth-pam">
    <title>PAM Authentication</title>
+
+   <indexterm zone="auth-pam">
+    <primary>PAM</primary>
+   </indexterm>
 
    <para>
     This authentication method operates similarly to

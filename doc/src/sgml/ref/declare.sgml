@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/ref/declare.sgml,v 1.25 2003/08/24 21:02:42 petere Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/ref/declare.sgml,v 1.26 2003/08/31 17:32:22 petere Exp $
 PostgreSQL documentation
 -->
 
@@ -13,6 +13,10 @@ PostgreSQL documentation
   <refname>DECLARE</refname>
   <refpurpose>define a cursor</refpurpose>
  </refnamediv>
+
+ <indexterm zone="sql-declare">
+  <primary>DECLARE</primary>
+ </indexterm>
 
  <refsynopsisdiv>
 <synopsis>

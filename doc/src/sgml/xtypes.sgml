@@ -1,13 +1,13 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/xtypes.sgml,v 1.19 2003/08/10 01:20:34 tgl Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/xtypes.sgml,v 1.20 2003/08/31 17:32:21 petere Exp $
 -->
 
  <sect1 id="xtypes">
   <title>User-Defined Types</title>
 
   <indexterm zone="xtypes">
-   <primary>data types</primary>
-   <secondary>extending</secondary>
+   <primary>data type</primary>
+   <secondary>user-defined</secondary>
   </indexterm>
 
  <comment>
@@ -34,13 +34,17 @@ $Header: /cvsroot/pgsql/doc/src/sgml/xtypes.sgml,v 1.19 2003/08/10 01:20:34 tgl 
   <indexterm>
    <primary>output function</primary>
   </indexterm>
-  A user-defined type must always have input and output functions.
+  A user-defined type must always have input and output
+  functions.<indexterm><primary>input function</primary><secondary>of
+  a data type</secondary></indexterm><indexterm><primary>output
+  function</primary><secondary>of a data type</secondary></indexterm>
   These functions determine how the type appears in strings (for input
   by the user and output to the user) and how the type is organized in
   memory.  The input function takes a null-terminated character string
-  as its argument and returns the internal (in memory) representation of
-  the type.  The output function takes the internal representation of
-  the type as argument and returns a null-terminated character string.
+  as its argument and returns the internal (in memory) representation
+  of the type.  The output function takes the internal representation
+  of the type as argument and returns a null-terminated character
+  string.
  </para>
 
  <para>

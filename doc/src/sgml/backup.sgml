@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/backup.sgml,v 2.29 2003/08/17 22:05:13 tgl Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/backup.sgml,v 2.30 2003/08/31 17:32:18 petere Exp $
 -->
 <chapter id="backup">
  <title>Backup and Restore</title>
@@ -285,13 +285,15 @@ pg_dump -Fc <replaceable class="parameter">dbname</replaceable> > <replaceable c
    </para>
 
    <para>
-    For reasons of backward compatibility, <application>pg_dump</> does
-    not dump large objects by default. To dump large objects you must use 
-    either the custom or the TAR output format, and use the <option>-b</> option in 
-    <application>pg_dump</>. See the reference pages for details.
-    The directory <filename>contrib/pg_dumplo</> of the
-    <productname>PostgreSQL</> source tree also contains a program that can
-    dump large objects.
+    For reasons of backward compatibility, <application>pg_dump</>
+    does not dump large objects by default.<indexterm><primary>large
+    object</primary><secondary>backup</secondary></indexterm> To dump
+    large objects you must use either the custom or the TAR output
+    format, and use the <option>-b</> option in
+    <application>pg_dump</>. See the reference pages for details.  The
+    directory <filename>contrib/pg_dumplo</> of the
+    <productname>PostgreSQL</> source tree also contains a program
+    that can dump large objects.
    </para>
 
    <para>
@@ -371,7 +373,15 @@ tar -cf backup.tar /usr/local/pgsql/data
 
  <sect1 id="migration">
   <title>Migration between releases</title>
-  <indexterm zone="migration"><primary>upgrading</></>
+
+  <indexterm zone="migration">
+   <primary>upgrading</primary>
+  </indexterm>
+
+  <indexterm zone="migration">
+   <primary>version</primary>
+   <secondary>compatibility</secondary>
+  </indexterm>
 
   <para>
    As a general rule, the internal data storage format is subject to

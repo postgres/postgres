@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/ref/begin.sgml,v 1.24 2003/05/14 03:26:00 tgl Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/ref/begin.sgml,v 1.25 2003/08/31 17:32:21 petere Exp $
 PostgreSQL documentation
 -->
 
@@ -13,6 +13,10 @@ PostgreSQL documentation
   <refname>BEGIN</refname>
   <refpurpose>start a transaction block</refpurpose>
  </refnamediv>
+
+ <indexterm zone="sql-begin">
+  <primary>BEGIN</primary>
+ </indexterm>
 
  <refsynopsisdiv>
 <synopsis>

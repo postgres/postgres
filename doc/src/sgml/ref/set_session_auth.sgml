@@ -1,4 +1,4 @@
-<!-- $Header: /cvsroot/pgsql/doc/src/sgml/ref/set_session_auth.sgml,v 1.9 2003/05/04 02:23:16 petere Exp $ -->
+<!-- $Header: /cvsroot/pgsql/doc/src/sgml/ref/set_session_auth.sgml,v 1.10 2003/08/31 17:32:24 petere Exp $ -->
 <refentry id="SQL-SET-SESSION-AUTHORIZATION">
  <refmeta>
   <refentrytitle id="sql-set-session-authorization-title">SET SESSION AUTHORIZATION</refentrytitle>
@@ -9,6 +9,10 @@
   <refname>SET SESSION AUTHORIZATION</refname>
   <refpurpose>set the session user identifier and the current user identifier of the current session</refpurpose>
  </refnamediv>
+
+ <indexterm zone="sql-set-session-authorization">
+  <primary>SET SESSION AUTHORIZATION</primary>
+ </indexterm>
 
  <refsynopsisdiv>
 <synopsis>

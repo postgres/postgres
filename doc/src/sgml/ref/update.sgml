@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/ref/update.sgml,v 1.23 2003/07/03 16:32:12 tgl Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/ref/update.sgml,v 1.24 2003/08/31 17:32:24 petere Exp $
 PostgreSQL documentation
 -->
 
@@ -13,6 +13,10 @@ PostgreSQL documentation
   <refname>UPDATE</refname>
   <refpurpose>update rows of a table</refpurpose>
  </refnamediv>
+
+ <indexterm zone="sql-update">
+  <primary>UPDATE</primary>
+ </indexterm>
 
  <refsynopsisdiv>
 <synopsis>

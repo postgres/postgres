@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/ref/prepare.sgml,v 1.5 2003/08/17 04:46:59 momjian Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/ref/prepare.sgml,v 1.6 2003/08/31 17:32:24 petere Exp $
 PostgreSQL documentation
 -->
 
@@ -13,6 +13,10 @@ PostgreSQL documentation
   <refname>PREPARE</refname>
   <refpurpose>prepare a statement for execution</refpurpose>
  </refnamediv>
+
+ <indexterm zone="sql-prepare">
+  <primary>PREPARE</primary>
+ </indexterm>
 
  <refsynopsisdiv>
 <synopsis>

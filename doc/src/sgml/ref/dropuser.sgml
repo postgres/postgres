@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/ref/dropuser.sgml,v 1.27 2003/08/17 04:46:59 momjian Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/ref/dropuser.sgml,v 1.28 2003/08/31 17:32:23 petere Exp $
 PostgreSQL documentation
 -->
 
@@ -14,6 +14,10 @@ PostgreSQL documentation
   <refname>dropuser</refname>
   <refpurpose>remove a <productname>PostgreSQL</productname> user account</refpurpose>
  </refnamediv>
+
+ <indexterm zone="app-dropuser">
+  <primary>dropuser</primary>
+ </indexterm>
 
  <refsynopsisdiv>
   <cmdsynopsis>

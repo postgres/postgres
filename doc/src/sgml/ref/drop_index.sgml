@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/ref/drop_index.sgml,v 1.18 2003/06/24 23:29:25 momjian Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/ref/drop_index.sgml,v 1.19 2003/08/31 17:32:22 petere Exp $
 PostgreSQL documentation
 -->
 
@@ -13,6 +13,10 @@ PostgreSQL documentation
   <refname>DROP INDEX</refname>
   <refpurpose>remove an index</refpurpose>
  </refnamediv>
+
+ <indexterm zone="sql-dropindex">
+  <primary>DROP INDEX</primary>
+ </indexterm>
 
  <refsynopsisdiv>
 <synopsis>

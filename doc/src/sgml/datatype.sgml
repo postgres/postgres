@@ -1,17 +1,17 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/datatype.sgml,v 1.122 2003/08/09 22:50:21 tgl Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/datatype.sgml,v 1.123 2003/08/31 17:32:18 petere Exp $
 -->
 
  <chapter id="datatype">
   <title id="datatype-title">Data Types</title>
 
   <indexterm zone="datatype">
-   <primary>data types</primary>
+   <primary>data type</primary>
   </indexterm>
 
   <indexterm>
-   <primary>types</primary>
-   <see>data types</see>
+   <primary>type</primary>
+   <see>data type</see>
   </indexterm>
 
   <para>
@@ -279,66 +279,8 @@ $Header: /cvsroot/pgsql/doc/src/sgml/datatype.sgml,v 1.122 2003/08/09 22:50:21 t
    <title>Numeric Types</title>
 
    <indexterm zone="datatype-numeric">
-    <primary>data types</primary>
+    <primary>data type</primary>
     <secondary>numeric</secondary>
-   </indexterm>
-
-   <indexterm zone="datatype-numeric">
-    <primary>integer</primary>
-   </indexterm>
-
-   <indexterm zone="datatype-numeric">
-    <primary>smallint</primary>
-   </indexterm>
-
-   <indexterm zone="datatype-numeric">
-    <primary>bigint</primary>
-   </indexterm>
-
-   <indexterm>
-    <primary>int4</primary>
-    <see>integer</see>
-   </indexterm>
-
-   <indexterm>
-    <primary>int2</primary>
-    <see>smallint</see>
-   </indexterm>
-
-   <indexterm>
-    <primary>int8</primary>
-    <see>bigint</see>
-   </indexterm>
-
-   <indexterm zone="datatype-numeric">
-    <primary>numeric (data type)</primary>
-   </indexterm>
-
-   <indexterm>
-    <primary>decimal</primary>
-    <see>numeric</see>
-   </indexterm>
-
-   <indexterm zone="datatype-numeric">
-    <primary>real</primary>
-   </indexterm>
-
-   <indexterm zone="datatype-numeric">
-    <primary>double precision</primary>
-   </indexterm>
-
-   <indexterm>
-    <primary>float4</primary>
-    <see>real</see>
-   </indexterm>
-
-   <indexterm>
-    <primary>float8</primary>
-    <see>double precision</see>
-   </indexterm>
-
-   <indexterm zone="datatype-numeric">
-    <primary>floating point</primary>
    </indexterm>
 
    <para>
@@ -434,6 +376,33 @@ $Header: /cvsroot/pgsql/doc/src/sgml/datatype.sgml,v 1.122 2003/08/09 22:50:21 t
    <sect2 id="datatype-int">
     <title>Integer Types</title>
 
+    <indexterm zone="datatype-int">
+     <primary>integer</primary>
+    </indexterm>
+
+    <indexterm zone="datatype-int">
+     <primary>smallint</primary>
+    </indexterm>
+
+    <indexterm zone="datatype-int">
+     <primary>bigint</primary>
+    </indexterm>
+
+    <indexterm>
+     <primary>int4</primary>
+     <see>integer</see>
+    </indexterm>
+
+    <indexterm>
+     <primary>int2</primary>
+     <see>smallint</see>
+    </indexterm>
+
+    <indexterm>
+     <primary>int8</primary>
+     <see>bigint</see>
+    </indexterm>
+
     <para>
      The types <type>smallint</type>, <type>integer</type>, and
      <type>bigint</type> store whole numbers, that is, numbers without
@@ -494,6 +463,15 @@ $Header: /cvsroot/pgsql/doc/src/sgml/datatype.sgml,v 1.122 2003/08/09 22:50:21 t
 
    <sect2 id="datatype-numeric-decimal">
     <title>Arbitrary Precision Numbers</title>
+
+    <indexterm zone="datatype-numeric-decimal">
+     <primary>numeric (data type)</primary>
+    </indexterm>
+
+    <indexterm>
+     <primary>decimal</primary>
+     <see>numeric</see>
+    </indexterm>
 
     <para>
      The type <type>numeric</type> can store numbers with up to 1000
@@ -561,6 +539,28 @@ NUMERIC
 
    <sect2 id="datatype-float">
     <title>Floating-Point Types</title>
+
+    <indexterm zone="datatype-float">
+     <primary>real</primary>
+    </indexterm>
+
+    <indexterm zone="datatype-float">
+     <primary>double precision</primary>
+    </indexterm>
+
+    <indexterm>
+     <primary>float4</primary>
+     <see>real</see>
+    </indexterm>
+
+    <indexterm>
+     <primary>float8</primary>
+     <see>double precision</see>
+    </indexterm>
+
+    <indexterm zone="datatype-float">
+     <primary>floating point</primary>
+    </indexterm>
 
     <para>
      The data types <type>real</type> and <type>double
@@ -675,7 +675,7 @@ NUMERIC
     </indexterm>
 
     <indexterm>
-     <primary>sequences</primary>
+     <primary>sequence</primary>
      <secondary>and serial type</secondary>
     </indexterm>
 
@@ -807,18 +807,33 @@ CREATE TABLE <replaceable class="parameter">tablename</replaceable> (
    <title>Character Types</title>
 
    <indexterm zone="datatype-character">
-    <primary>character strings</primary>
+    <primary>character string</primary>
     <secondary>data types</secondary>
    </indexterm>
 
    <indexterm>
-    <primary>strings</primary>
-    <see>character strings</see>
+    <primary>string</primary>
+    <see>character string</see>
    </indexterm>
 
-   <indexterm>
+   <indexterm zone="datatype-character">
+    <primary>character</primary>
+   </indexterm>
+
+   <indexterm zone="datatype-character">
+    <primary>character varying</primary>
+   </indexterm>
+
+   <indexterm zone="datatype-character">
     <primary>text</primary>
-    <see>character strings</see>
+   </indexterm>
+
+   <indexterm zone="datatype-character">
+    <primary>char</primary>
+   </indexterm>
+
+   <indexterm zone="datatype-character">
+    <primary>varchar</primary>
    </indexterm>
 
     <table id="datatype-character-table">
@@ -1020,6 +1035,15 @@ SELECT b, char_length(b) FROM test2;
 
  <sect1 id="datatype-binary">
   <title>Binary Data Types</title>
+
+  <indexterm zone="datatype-binary">
+   <primary>binary data</primary>
+  </indexterm>
+
+  <indexterm zone="datatype-binary">
+   <primary>bytea</primary>
+  </indexterm>
+
    <para>
     The <type>bytea</type> data type allows storage of binary strings;
     see <xref linkend="datatype-binary-table">.
@@ -1210,6 +1234,34 @@ SELECT b, char_length(b) FROM test2;
   <sect1 id="datatype-datetime">
    <title>Date/Time Types</title>
 
+   <indexterm zone="datatype-datetime">
+    <primary>date</primary>
+   </indexterm>
+   <indexterm zone="datatype-datetime">
+    <primary>time</primary>
+   </indexterm>
+   <indexterm zone="datatype-datetime">
+    <primary>time without time zone</primary>
+   </indexterm>
+   <indexterm zone="datatype-datetime">
+    <primary>time with time zone</primary>
+   </indexterm>
+   <indexterm zone="datatype-datetime">
+    <primary>timestamp</primary>
+   </indexterm>
+   <indexterm zone="datatype-datetime">
+    <primary>timestamp with time zone</primary>
+   </indexterm>
+   <indexterm zone="datatype-datetime">
+    <primary>timestamp without time zone</primary>
+   </indexterm>
+   <indexterm zone="datatype-datetime">
+    <primary>interval</primary>
+   </indexterm>
+   <indexterm zone="datatype-datetime">
+    <primary>time span</primary>
+   </indexterm>
+
    <para>
     <productname>PostgreSQL</productname> supports the full set of
     <acronym>SQL</acronym> date and time types, shown in <xref
@@ -1387,7 +1439,6 @@ SELECT b, char_length(b) FROM test2;
 
     <indexterm>
      <primary>date</primary>
-     <secondary>data type</secondary>
     </indexterm>
  
     <para>
@@ -1461,15 +1512,12 @@ SELECT b, char_length(b) FROM test2;
 
      <indexterm>
       <primary>time</primary>
-      <secondary>data type</secondary>
      </indexterm>
      <indexterm>
       <primary>time without time zone</primary>
-      <secondary>time</secondary>
      </indexterm>
      <indexterm>
       <primary>time with time zone</primary>
-      <secondary>data type</secondary>
      </indexterm>
 
      <para>
@@ -1587,17 +1635,14 @@ SELECT b, char_length(b) FROM test2;
 
     <indexterm>
      <primary>timestamp</primary>
-     <secondary>data type</secondary>
     </indexterm>
 
     <indexterm>
      <primary>timestamp with time zone</primary>
-     <secondary>data type</secondary>
     </indexterm>
 
     <indexterm>
      <primary>timestamp without time zone</primary>
-     <secondary>data type</secondary>
     </indexterm>
 
      <para>
@@ -1797,13 +1842,13 @@ January 8 04:05:06 1999 PST
     <indexterm>
      <primary>date</primary>
      <secondary>output format</secondary>
-     <seealso>Formatting</seealso>
+     <seealso>formatting</seealso>
     </indexterm>
 
     <indexterm>
      <primary>time</primary>
      <secondary>output format</secondary>
-     <seealso>Formatting</seealso>
+     <seealso>formatting</seealso>
     </indexterm>
 
     <para>
@@ -1924,7 +1969,7 @@ January 8 04:05:06 1999 PST
     <title>Time Zones</title>
 
     <indexterm zone="datatype-timezones">
-     <primary>time zones</primary>
+     <primary>time zone</primary>
     </indexterm>
 
    <para>
@@ -2265,7 +2310,11 @@ SELECT * FROM test1 WHERE a;
     <title>Line Segments</title>
 
     <indexterm>
-     <primary>line</primary>
+     <primary>lseg</primary>
+    </indexterm>
+
+    <indexterm>
+     <primary>line segment</primary>
     </indexterm>
 
     <para>
@@ -2291,6 +2340,10 @@ SELECT * FROM test1 WHERE a;
 
     <indexterm>
      <primary>box (data type)</primary>
+    </indexterm>
+
+    <indexterm>
+     <primary>rectangle</primary>
     </indexterm>
 
     <para>
@@ -2431,7 +2484,7 @@ SELECT * FROM test1 WHERE a;
 
    <indexterm zone="datatype-net-types">
     <primary>network</primary>
-    <secondary>addresses</secondary>
+    <secondary>data types</secondary>
    </indexterm>
 
    <para>
@@ -2708,7 +2761,7 @@ SELECT * FROM test1 WHERE a;
    <title>Bit String Types</title>
 
    <indexterm zone="datatype-bit">
-    <primary>bit strings</primary>
+    <primary>bit string</primary>
     <secondary>data type</secondary>
    </indexterm>
 
@@ -3046,11 +3099,6 @@ SELECT * FROM test;
 
       <tbody>
        <row>
-	<entry><type>record</></entry>
-	<entry>Identifies a function returning an unspecified row type.</entry>
-       </row>
-
-       <row>
 	<entry><type>any</></entry>
 	<entry>Indicates that a function accepts any input data type whatever.</entry>
        </row>
@@ -3058,28 +3106,13 @@ SELECT * FROM test;
        <row>
 	<entry><type>anyarray</></entry>
 	<entry>Indicates that a function accepts any array data type
-	(see <xref linkend="types-polymorphic">).</entry>
+	(see <xref linkend="extend-types-polymorphic">).</entry>
        </row>
 
        <row>
 	<entry><type>anyelement</></entry>
 	<entry>Indicates that a function accepts any data type
-	(see <xref linkend="types-polymorphic">).</entry>
-       </row>
-
-       <row>
-	<entry><type>void</></entry>
-	<entry>Indicates that a function returns no value.</entry>
-       </row>
-
-       <row>
-	<entry><type>trigger</></entry>
-	<entry>A trigger function is declared to return <type>trigger.</></entry>
-       </row>
-
-       <row>
-	<entry><type>language_handler</></entry>
-	<entry>A procedural language call handler is declared to return <type>language_handler</>.</entry>
+	(see <xref linkend="extend-types-polymorphic">).</entry>
        </row>
 
        <row>
@@ -3091,6 +3124,26 @@ SELECT * FROM test;
 	<entry><type>internal</></entry>
 	<entry>Indicates that a function accepts or returns a server-internal
 	data type.</entry>
+       </row>
+
+       <row>
+	<entry><type>language_handler</></entry>
+	<entry>A procedural language call handler is declared to return <type>language_handler</>.</entry>
+       </row>
+
+       <row>
+	<entry><type>record</></entry>
+	<entry>Identifies a function returning an unspecified row type.</entry>
+       </row>
+
+       <row>
+	<entry><type>trigger</></entry>
+	<entry>A trigger function is declared to return <type>trigger.</></entry>
+       </row>
+
+       <row>
+	<entry><type>void</></entry>
+	<entry>Indicates that a function returns no value.</entry>
        </row>
 
        <row>
