@@ -12,7 +12,7 @@
  * Portions Copyright (c) 1996-2001, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Id: libpq-int.h,v 1.42 2001/10/28 06:26:12 momjian Exp $
+ * $Id: libpq-int.h,v 1.43 2001/11/02 20:51:27 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -351,6 +351,18 @@ __attribute__((format_arg(1)));
 
 #else
 #define libpq_gettext(x) (x)
+#endif
+
+/*
+ * These macros are needed to let error-handling code be portable between
+ * Unix and Windows.  (ugh)
+ */
+#ifdef WIN32
+#define SOCK_ERRNO (WSAGetLastError())
+#define SOCK_STRERROR winsock_strerror
+#else
+#define SOCK_ERRNO errno
+#define SOCK_STRERROR strerror
 #endif
 
 #endif	 /* LIBPQ_INT_H */
