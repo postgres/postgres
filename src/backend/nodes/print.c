@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/nodes/print.c,v 1.40 2000/09/12 21:06:49 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/nodes/print.c,v 1.41 2000/09/25 18:14:55 tgl Exp $
  *
  * HISTORY
  *	  AUTHOR			DATE			MAJOR EVENT
@@ -172,11 +172,13 @@ print_expr(Node *expr, List *rtable)
 				break;
 			default:
 				{
-					RangeTblEntry *rt;
+					RangeTblEntry *rte;
 
-					rt = rt_fetch(var->varno, rtable);
-					relname = rt->eref->relname;
-					attname = get_attname(rt->relid, var->varattno);
+					Assert(var->varno > 0 &&
+						   (int) var->varno <= length(rtable));
+					rte = rt_fetch(var->varno, rtable);
+					relname = rte->eref->relname;
+					attname = get_rte_attribute_name(rte, var->varattno);
 				}
 				break;
 		}

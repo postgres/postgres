@@ -3,7 +3,7 @@
  *				back to source text
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/ruleutils.c,v 1.62 2000/09/18 20:14:23 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/ruleutils.c,v 1.63 2000/09/25 18:14:54 tgl Exp $
  *
  *	  This software is copyrighted by Jan Wieck - Hamburg.
  *
@@ -110,7 +110,6 @@ static bool tleIsArrayAssign(TargetEntry *tle);
 static char *quote_identifier(char *ident);
 static char *get_relation_name(Oid relid);
 static char *get_relid_attribute_name(Oid relid, AttrNumber attnum);
-static char *get_rte_attribute_name(RangeTblEntry *rte, AttrNumber attnum);
 
 #define only_marker(rte)  ((rte)->inh ? "" : "ONLY ")
 
@@ -2019,34 +2018,4 @@ get_relid_attribute_name(Oid relid, AttrNumber attnum)
 		elog(ERROR, "cache lookup of attribute %d in relation %u failed",
 			 attnum, relid);
 	return attname;
-}
-
-/* ----------
- * get_rte_attribute_name
- *		Get an attribute name from a RangeTblEntry
- *
- * This is unlike get_relid_attribute_name() because we use aliases if
- * available.
- * ----------
- */
-static char *
-get_rte_attribute_name(RangeTblEntry *rte, AttrNumber attnum)
-{
-	/*
-	 * If there is an alias, use it
-	 */
-	if (attnum > 0 && attnum <= length(rte->eref->attrs))
-		return strVal(nth(attnum-1, rte->eref->attrs));
-	/*
-	 * Can get here for a system attribute (which never has an alias),
-	 * or if alias name list is too short (which probably can't happen
-	 * anymore).  Neither of these cases is valid for a subselect RTE.
-	 */
-	if (rte->relid == InvalidOid)
-		elog(ERROR, "Invalid attnum %d for rangetable entry %s",
-			 attnum, rte->eref->relname);
-	/*
-	 * Use the real name of the table's column
-	 */
-	return get_relid_attribute_name(rte->relid, attnum);
 }

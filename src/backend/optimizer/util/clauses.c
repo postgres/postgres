@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/optimizer/util/clauses.c,v 1.74 2000/09/12 21:06:58 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/optimizer/util/clauses.c,v 1.75 2000/09/25 18:14:55 tgl Exp $
  *
  * HISTORY
  *	  AUTHOR			DATE			MAJOR EVENT
@@ -584,12 +584,9 @@ check_subplans_for_ungrouped_vars_walker(Node *node,
 				char	   *attname;
 
 				Assert(var->varno > 0 &&
-					   var->varno <= length(context->rtable));
+					   (int) var->varno <= length(context->rtable));
 				rte = rt_fetch(var->varno, context->rtable);
-				attname = get_attname(rte->relid, var->varattno);
-				if (!attname)
-					elog(ERROR, "cache lookup of attribute %d in relation %u failed",
-						 var->varattno, rte->relid);
+				attname = get_rte_attribute_name(rte, var->varattno);
 				elog(ERROR, "Sub-SELECT uses un-GROUPed attribute %s.%s from outer query",
 					 rte->eref->relname, attname);
 			}

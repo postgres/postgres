@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/parser/parse_relation.c,v 1.47 2000/09/12 21:07:02 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/parser/parse_relation.c,v 1.48 2000/09/25 18:14:54 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -711,6 +711,43 @@ expandNamesVars(ParseState *pstate, List *names, List *vars)
 	Assert(vars == NIL);		/* lists not same length? */
 
 	return te_list;
+}
+
+/* ----------
+ * get_rte_attribute_name
+ *		Get an attribute name from a RangeTblEntry
+ *
+ * This is unlike get_attname() because we use aliases if available.
+ * In particular, it will work on an RTE for a subselect, whereas
+ * get_attname() only works on real relations.
+ * ----------
+ */
+char *
+get_rte_attribute_name(RangeTblEntry *rte, AttrNumber attnum)
+{
+	char	   *attname;
+
+	/*
+	 * If there is an alias, use it
+	 */
+	if (attnum > 0 && attnum <= length(rte->eref->attrs))
+		return strVal(nth(attnum-1, rte->eref->attrs));
+	/*
+	 * Can get here for a system attribute (which never has an alias),
+	 * or if alias name list is too short (which probably can't happen
+	 * anymore).  Neither of these cases is valid for a subselect RTE.
+	 */
+	if (rte->relid == InvalidOid)
+		elog(ERROR, "Invalid attnum %d for rangetable entry %s",
+			 attnum, rte->eref->relname);
+	/*
+	 * Use the real name of the table's column
+	 */
+	attname = get_attname(rte->relid, attnum);
+	if (attname == NULL)
+		elog(ERROR, "cache lookup of attribute %d in relation %u failed",
+			 attnum, rte->relid);
+	return attname;
 }
 
 /*

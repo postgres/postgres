@@ -8,7 +8,7 @@
  * Portions Copyright (c) 1996-2000, PostgreSQL, Inc
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Id: parsetree.h,v 1.11 2000/09/12 21:07:12 tgl Exp $
+ * $Id: parsetree.h,v 1.12 2000/09/25 18:14:53 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -16,12 +16,8 @@
 #define PARSETREE_H
 
 #include "nodes/parsenodes.h"
-#include "nodes/pg_list.h"
+#include "nodes/pg_list.h"		/* for nth(), etc */
 
-/* ----------------
- *		need pg_list.h for definitions of nth(), etc.
- * ----------------
- */
 
 /* ----------------
  *		range table macros
@@ -33,10 +29,9 @@
  *		rt_store
  *
  *		Access and (destructively) replace rangetable entries.
- *
  */
 #define rt_fetch(rangetable_index, rangetable) \
-	((RangeTblEntry*) nth((rangetable_index)-1, rangetable))
+	((RangeTblEntry *) nth((rangetable_index)-1, rangetable))
 
 #define rt_store(rangetable_index, rangetable, rt) \
 	set_nth(rangetable, (rangetable_index)-1, rt)
@@ -45,9 +40,16 @@
  *		getrelid
  *
  *		Given the range index of a relation, return the corresponding
- *		relation OID.
+ *		relation OID.  Note that InvalidOid will be returned if the
+ *		RTE is for a sub-select rather than a relation.
  */
 #define getrelid(rangeindex,rangetable) \
 	(rt_fetch(rangeindex, rangetable)->relid)
+
+/*
+ * Given an RTE and an attribute number, return the appropriate
+ * variable name or alias for that attribute of that RTE.
+ */
+extern char *get_rte_attribute_name(RangeTblEntry *rte, AttrNumber attnum);
 
 #endif	 /* PARSETREE_H */
