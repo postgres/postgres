@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/nabstime.c,v 1.46.2.1 1998/12/14 00:11:46 thomas Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/nabstime.c,v 1.46.2.2 1998/12/19 03:23:18 thomas Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -75,8 +75,7 @@ GetCurrentAbsoluteTime(void)
 		strftime(CTZName, MAXTZLEN, "%Z", tm);
 #endif
 		/* XXX FreeBSD man pages indicate that this should work - thomas 1998-12-12 */
-		if (tzn != NULL)
-		strcpy(tzn, tm->tm_zone);
+		strcpy(CTZName, tm->tm_zone);
 
 #elif defined(HAVE_INT_TIMEZONE)
 		tm = localtime(&now);
