@@ -1,10 +1,13 @@
 /* ----------
  * lztext.c -
  *
- * $Header: /cvsroot/pgsql/src/backend/utils/adt/Attic/lztext.c,v 1.1 1999/11/17 21:21:50 wieck Exp $
+ * $Header: /cvsroot/pgsql/src/backend/utils/adt/Attic/lztext.c,v 1.2 1999/11/17 22:18:45 wieck Exp $
  *
  *	Text type with internal LZ compressed representation. Uses the
  *	standard PostgreSQL compression method.
+ *
+ *	This code requires that the LZ compressor found in pg_lzcompress
+ *	codes a usable VARSIZE word at the beginning of the output buffer.
  * ----------
  */
 
@@ -42,7 +45,7 @@ lztextin(char *str)
 		return NULL;
 
 	/* ----------
-	 * Determine input size and eventually tuple size
+	 * Determine input size and maximum output Datum size
 	 * ----------
 	 */
 	rawsize = strlen(str);
@@ -56,8 +59,9 @@ lztextin(char *str)
 	pglz_compress(str, rawsize, tmp, NULL);
 
 	/* ----------
-	 * If we miss less than x% bytes at the end of the temp value,
-	 * so be it. Therefore we save a memcpy().
+	 * If we miss less than 25% bytes at the end of the temp value,
+	 * so be it. Therefore we save a palloc()/memcpy()/pfree()
+	 * sequence.
 	 * ----------
 	 */
 	if (tmp_size - tmp->varsize < 256 || 
@@ -141,7 +145,7 @@ lztextlen(lztext *lz)
 	 * without multibyte support, it's the remembered rawsize
 	 * ----------
 	 */
-	return lz->rawsize;
+	return PGLZ_RAW_SIZE(lz);
 }
 
 
@@ -166,7 +170,7 @@ lztextoctetlen(lztext *lz)
 	 * Return the varsize minus the VARSIZE field itself.
 	 * ----------
 	 */
-	return lz->varsize - sizeof(int32);
+	return VARSIZE(lz) - VARHDRSZ;
 }
 
 
@@ -208,8 +212,9 @@ text_lztext(text *txt)
 	pglz_compress(str, rawsize, tmp, NULL);
 
 	/* ----------
-	 * If we miss less than x% bytes at the end of the temp value,
-	 * so be it. Therefore we save a memcpy().
+	 * If we miss less than 25% bytes at the end of the temp value,
+	 * so be it. Therefore we save a palloc()/memcpy()/pfree()
+	 * sequence.
 	 * ----------
 	 */
 	if (tmp_size - tmp->varsize < 256 || 
@@ -250,15 +255,15 @@ lztext_text(lztext *lz)
 	 * Allocate and initialize the text result
 	 * ----------
 	 */
-	result = (text *) palloc(lz->rawsize + VARHDRSZ + 1);
+	result = (text *) palloc(PGLZ_RAW_SIZE(lz) + VARHDRSZ + 1);
 	VARSIZE(result) = lz->rawsize + VARHDRSZ;
 
 	/* ----------
 	 * Decompress directly into the text data area.
 	 * ----------
 	 */
-	pglz_decompress(lz, VARDATA(result));
 	VARDATA(result)[lz->rawsize] = 0;
+	pglz_decompress(lz, VARDATA(result));
 
 	return result;
 }
