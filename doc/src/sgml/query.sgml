@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/query.sgml,v 1.20 2001/11/08 23:34:33 petere Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/query.sgml,v 1.21 2001/11/19 05:37:53 tgl Exp $
 -->
 
  <chapter id="tutorial-sql">
@@ -26,7 +26,8 @@ $Header: /cvsroot/pgsql/doc/src/sgml/query.sgml,v 1.20 2001/11/08 23:34:33 peter
    </para>
 
    <para>
-    Examples in this manual can also be found in source distribution
+    Examples in this manual can also be found in the
+    <productname>PostgreSQL</productname> source distribution
     in the directory <filename>src/tutorial/</filename>.  Refer to the
     <filename>README</filename> file in that directory for how to use
     them.  To start the tutorial, do the following:
@@ -42,7 +43,7 @@ $Header: /cvsroot/pgsql/doc/src/sgml/query.sgml,v 1.20 2001/11/08 23:34:33 peter
 </screen>
 
     The <literal>\i</literal> command reads in commands from the
-    specified files. The <literal>-s</literal> option puts you in
+    specified file. The <literal>-s</literal> option puts you in
     single step mode which pauses before sending a query to the
     server.  The commands used in this section are in the file
     <filename>basics.sql</filename>.
@@ -126,7 +127,7 @@ CREATE TABLE weather (
     differently than above, or even all on one line.  Two dashes
     (<quote><literal>--</literal></quote>) introduce comments.
     Whatever follows them is ignored up to the end of the line.  SQL
-    is also case insensitive about key words and identifiers, except
+    is case insensitive about key words and identifiers, except
     when identifiers are double-quoted to preserve the case (not done
     above).
    </para>
@@ -148,7 +149,7 @@ CREATE TABLE weather (
     precision</type>, <type>char(<replaceable>N</>)</type>,
     <type>varchar(<replaceable>N</>)</type>, <type>date</type>,
     <type>time</type>, <type>timestamp</type>, and
-    <type>interval</type> as well as other types of general utility
+    <type>interval</type>, as well as other types of general utility
     and a rich set of geometric types.
     <productname>PostgreSQL</productname> can be customized with an
     arbitrary number of user-defined data types.  Consequently, type
@@ -165,7 +166,7 @@ CREATE TABLE cities (
     location        point
 );
 </programlisting>
-    The <type>point</type> type is such a
+    The <type>point</type> type is an example of a
     <productname>PostgreSQL</productname>-specific data type.
    </para>
 
@@ -221,7 +222,7 @@ INSERT INTO cities  VALUES ('San Francisco', '(-194.0, 53.0)');
 INSERT INTO weather (city, temp_lo, temp_hi, prcp, date)
     VALUES ('San Francisco', 43, 57, 0.0, '1994-11-29');
 </programlisting>
-    You can also list the columns in a different order if you wish or
+    You can list the columns in a different order if you wish or
     even omit some columns, e.g., unknown precipitation:
 <programlisting>
 INSERT INTO weather (date, city, temp_hi, temp_lo)
@@ -279,7 +280,7 @@ COPY weather FROM '/home/user/weather.txt';
 <programlisting>
 SELECT * FROM weather;
 </programlisting>
-    (where <literal>*</literal> means <quote>all columns</quote>) and
+    (here <literal>*</literal> means <quote>all columns</quote>) and
     the output should be:
 <screen>
      city      | temp_lo | temp_hi | prcp |    date
@@ -373,9 +374,9 @@ SELECT DISTINCT city
     of the same or different tables at one time is called a
     <firstterm>join</firstterm> query.  As an example, say you wish to
     list all the weather records together with the location of the
-    associated city.  In effect, we need to compare the city column of
+    associated city.  To do that, we need to compare the city column of
     each row of the weather table with the name column of all rows in
-    the cities table.
+    the cities table, and select the pairs of rows where these values match.
     <note>
      <para>
       This  is only a conceptual model.  The actual join may
@@ -409,7 +410,7 @@ SELECT *
        There is no result row for the city of Hayward.  This is
        because there is no matching entry in the
        <classname>cities</classname> table for Hayward, so the join
-       cannot process the rows in the weather table.  We will see
+       ignores the unmatched rows in the weather table.  We will see
        shortly how this can be fixed.
       </para>
      </listitem>
@@ -478,7 +479,7 @@ SELECT *
     found we want some <quote>empty values</quote> to be substituted
     for the <classname>cities</classname> table's columns.  This kind
     of query is called an <firstterm>outer join</firstterm>.  (The
-    joins we have seen to far are inner joins.)  The command looks
+    joins we have seen so far are inner joins.)  The command looks
     like this:
 
 <programlisting>
@@ -493,12 +494,13 @@ SELECT *
 (3 rows)
 </programlisting>
 
-    In particular, this query is a <firstterm>left outer
+    This query is called a <firstterm>left outer
     join</firstterm> because the table mentioned on the left of the
     join operator will have each of its rows in the output at least
     once, whereas the table on the right will only have those rows
-    output that match some row of the left table, and will have empty
-    values substituted appropriately.
+    output that match some row of the left table.  When outputting a
+    left-table row for which there is no right-table match, empty (NULL)
+    values are substituted for the right-table columns.
    </para>
 
    <formalpara>
@@ -605,7 +607,11 @@ SELECT city FROM weather WHERE temp_lo = max(temp_lo);     <lineannotation>WRONG
 
     but this will not work since the aggregate
     <function>max</function> cannot be used in the
-    <literal>WHERE</literal> clause.  However, as is often the case
+    <literal>WHERE</literal> clause.  (This restriction exists because
+    the <literal>WHERE</literal> clause determines the rows that will
+    go into the aggregation stage; so it has to be evaluated before
+    aggregate functions are computed.)
+    However, as is often the case
     the query can be restated to accomplish the intended result; here
     by using a <firstterm>subquery</firstterm>:
 
@@ -697,7 +703,7 @@ SELECT city, max(temp_lo)
    </para>
 
    <para>
-    Note that we can apply the city name restriction in
+    Observe that we can apply the city name restriction in
     <literal>WHERE</literal>, since it needs no aggregate.  This is
     more efficient than adding the restriction to <literal>HAVING</literal>,
     because we avoid doing the grouping and aggregate calculations
@@ -718,7 +724,7 @@ SELECT city, max(temp_lo)
     <command>UPDATE</command> command. 
     Suppose you discover the temperature readings are
     all  off  by 2 degrees as of November 28, you may update the
-    data as follow:
+    data as follows:
 
 <programlisting>
 UPDATE weather
@@ -758,7 +764,7 @@ SELECT * FROM weather;
 DELETE FROM weather WHERE city = 'Hayward';
 </programlisting>
 
-    All weather recording belonging to Hayward are removed.
+    All weather records belonging to Hayward are removed.
 
 <programlisting>
 SELECT * FROM weather;
@@ -779,10 +785,10 @@ SELECT * FROM weather;
 DELETE FROM <replaceable>tablename</replaceable>;
 </synopsis>
 
-    Without a qualification, <command>DELETE</command> will simply
-    remove  all  rows from the given table, leaving it
+    Without a qualification, <command>DELETE</command> will
+    remove  <emphasis>all</>  rows from the given table, leaving it
     empty.  The system will not request confirmation before
-    doing this.
+    doing this!
    </para>
   </sect1>
 

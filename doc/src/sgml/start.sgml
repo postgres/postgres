@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/start.sgml,v 1.17 2001/09/02 23:27:49 petere Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/start.sgml,v 1.18 2001/11/19 05:37:53 tgl Exp $
 -->
 
  <chapter id="tutorial-start">
@@ -104,8 +104,8 @@ $Header: /cvsroot/pgsql/doc/src/sgml/start.sgml,v 1.17 2001/09/02 23:27:49 peter
     server can be on different hosts.  In that case they communicate
     over a TCP/IP network connection.  You should keep this in mind,
     because the files that can be accessed on a client machine might
-    not be accessible (or might only be accessed using a different
-    file name) on the database server machine.
+    not be accessible (or might only be accessible using a different
+    file path) on the database server machine.
    </para>
 
    <para>
@@ -231,7 +231,7 @@ createdb: database creation failed
     You can also create databases with other names.
     <productname>PostgreSQL</productname> allows you to create any
     number of databases at a given site.  Database names must have an
-    alphabetic first character and are limited to 32 characters in
+    alphabetic first character and are limited to 31 characters in
     length.  A convenient choice is to create a database with the same
     name as your current user name.  Many tools assume that database
     name as the default, so it can save you some typing.  To create
@@ -372,9 +372,9 @@ mydb=#
 
    <para>
     The <command>psql</command> program has a number of internal
-    commands that are not SQL commands.  They begin the backslash
+    commands that are not SQL commands.  They begin with the backslash
     character, <quote><literal>\</literal></quote>.  Some of these
-    commands were already listed in the welcome message.  For example,
+    commands were listed in the welcome message.  For example,
     you can get help on the syntax of various
     <productname>PostgreSQL</productname> <acronym>SQL</acronym>
     commands by typing:
@@ -396,7 +396,7 @@ mydb=#
     installed correctly you can also type <literal>man psql</literal>
     at the operating system shell prompt to see the documentation.  In
     this tutorial we will not use these features explicitly, but you
-    can use them yourself when you see it fit.
+    can use them yourself when you see fit.
    </para>
 
   </sect1>

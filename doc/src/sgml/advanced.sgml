@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/advanced.sgml,v 1.22 2001/09/02 23:27:49 petere Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/advanced.sgml,v 1.23 2001/11/19 05:37:53 tgl Exp $
 -->
 
  <chapter id="tutorial-advanced">
@@ -10,9 +10,9 @@ $Header: /cvsroot/pgsql/doc/src/sgml/advanced.sgml,v 1.22 2001/09/02 23:27:49 pe
 
    <para>
     In the previous chapter we have covered the basics of using
-    <acronym>SQL</acronym> to store and access your data in a
+    <acronym>SQL</acronym> to store and access your data in
     <productname>PostgreSQL</productname>.  We will now discuss some
-    more advanced features of <acronym>SQL</acronym> that simplify the
+    more advanced features of <acronym>SQL</acronym> that simplify
     management and prevent loss or corruption of your data.  Finally,
     we will look at some <productname>PostgreSQL</productname>
     extensions.
@@ -82,7 +82,7 @@ SELECT * FROM myview;
    </indexterm>
 
    <para>
-    Recall the <classname>weather</classname> and the
+    Recall the <classname>weather</classname> and
     <classname>cities</classname> tables from <xref
     linkend="tutorial-sql">.  Consider the following problem:  You
     want to make sure that no one can insert rows in the
