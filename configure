@@ -13243,6 +13243,11 @@ fi
 # functions are marked "not found", which is perfect.
 #
 if test "$enable_thread_safety" = yes -a "$NEED_REENTRANT_FUNCS" = yes ; then
+
+cat >>confdefs.h <<\_ACEOF
+#define NEED_REENTRANT_FUNCS 1
+_ACEOF
+
 _CFLAGS="$CFLAGS"
 _LIBS="$LIBS"
 CFLAGS="$CFLAGS $THREAD_CPPFLAGS"
