@@ -1,8 +1,8 @@
 This utility allows administrators to view the file structure used by
 PostgreSQL.  Databases are placed in directories based on their OIDs in
-pg_database, and the tables in that directory are named by their OIDs,
-stored in pg_class.relfilenode.  Oid2name connects to the database and
-extracts the OID and table name information.
+pg_database, and the tables in that directory are named by original
+OIDs, stored in pg_class.relfilenode.  Oid2name connects to the database
+and extracts the OID and table name information.
 
 ---------------------------------------------------------------------------
 
