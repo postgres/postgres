@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/error/elog.c,v 1.39 1999/02/13 23:19:47 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/error/elog.c,v 1.40 1999/04/16 06:38:17 ishii Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -221,7 +221,11 @@ elog(int lev, const char *fmt,...)
 		ProcReleaseSpins(NULL); /* get rid of spinlocks we hold */
 		if (!InError)
 		{
-			kill(MyProcPid, SIGQUIT);	/* abort to traffic cop */
+			if (MyProcPid == 0) {
+				kill(getpid(), SIGQUIT);
+			} else {
+				kill(MyProcPid, SIGQUIT);	/* abort to traffic cop */
+			}
 			pause();
 		}
 
