@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/optimizer/path/joinrels.c,v 1.12 1998/08/04 16:44:08 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/optimizer/path/joinrels.c,v 1.13 1998/08/10 02:26:24 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -74,7 +74,7 @@ find_join_rels(Query *root, List *outer_rels)
 			if (BushyPlanFlag)
 				joins = find_clauseless_joins(outer_rel, outer_rels);
 			else
-				joins = find_clauseless_joins(outer_rel, root->base_relation_list_);
+				joins = find_clauseless_joins(outer_rel, root->base_rel_list);
 		}
 
 		join_list = nconc(join_list, joins);

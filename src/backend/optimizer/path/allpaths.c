@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/optimizer/path/allpaths.c,v 1.19 1998/08/07 05:02:15 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/optimizer/path/allpaths.c,v 1.20 1998/08/10 02:26:20 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -45,7 +45,9 @@ int32		_use_geqo_rels_ = GEQO_RELS;
 
 static void find_rel_paths(Query *root, List *rels);
 static List *find_join_paths(Query *root, List *outer_rels, int levels_needed);
+#ifdef OPTIMIZER_DEBUG
 static void debug_print_rel(Query *root, RelOptInfo *rel);
+#endif
 
 /*
  * find-paths--
@@ -74,7 +76,6 @@ find_paths(Query *root, List *rels)
 
 	if (levels_needed <= 1)
 	{
-
 		/*
 		 * Unsorted single relation, no more processing is required.
 		 */
@@ -82,7 +83,6 @@ find_paths(Query *root, List *rels)
 	}
 	else
 	{
-
 		/*
 		 * this means that joins or sorts are required. set selectivities
 		 * of clauses that have not been set by an index.
@@ -115,8 +115,7 @@ find_rel_paths(Query *root, List *rels)
 		List	   *or_index_scan_list;
 		RelOptInfo *rel = (RelOptInfo *) lfirst(temp);
 
-		sequential_scan_list = lcons(create_seqscan_path(rel),
-									 NIL);
+		sequential_scan_list = lcons(create_seqscan_path(rel), NIL);
 
 		rel_index_scan_list =
 			find_index_paths(root,
@@ -181,7 +180,7 @@ find_join_paths(Query *root, List *outer_rels, int levels_needed)
 	 *	  <utesch@aut.tu-freiberg.de>		   *
 	 *******************************************/
 
-	if ((_use_geqo_) && length(root->base_relation_list_) >= _use_geqo_rels_)
+	if ((_use_geqo_) && length(root->base_rel_list) >= _use_geqo_rels_)
 		return lcons(geqo(root), NIL);	/* returns *one* RelOptInfo, so lcons it */
 
 	/*******************************************
@@ -255,10 +254,10 @@ find_join_paths(Query *root, List *outer_rels, int levels_needed)
 			 * merge join rels if then contain the same list of base rels
 			 */
 			outer_rels = merge_joinrels(new_rels, outer_rels);
-			root->join_relation_list_ = outer_rels;
+			root->join_rel_list = outer_rels;
 		}
 		else
-			root->join_relation_list_ = new_rels;
+			root->join_rel_list = new_rels;
 		if (!BushyPlanFlag)
 			outer_rels = new_rels;
 	}

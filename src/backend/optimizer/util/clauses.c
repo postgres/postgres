@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/optimizer/util/clauses.c,v 1.19 1998/08/09 04:59:06 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/optimizer/util/clauses.c,v 1.20 1998/08/10 02:26:29 momjian Exp $
  *
  * HISTORY
  *	  AUTHOR			DATE			MAJOR EVENT
@@ -439,13 +439,13 @@ contains_not(Node *clause)
 }
 
 /*
- * join-clause-p--
+ * is_joinable--
  *
  * Returns t iff 'clause' is a valid join clause.
  *
  */
 bool
-join_clause_p(Node *clause)
+is_joinable(Node *clause)
 {
 	Node	   *leftop,
 			   *rightop;
@@ -460,7 +460,7 @@ join_clause_p(Node *clause)
 	 * One side of the clause (i.e. left or right operands) must either be
 	 * a var node ...
 	 */
-	if (IsA(leftop, Var) ||IsA(rightop, Var))
+	if (IsA(leftop, Var) || IsA(rightop, Var))
 		return true;
 
 	/*

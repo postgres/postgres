@@ -5,7 +5,7 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: geqo_eval.c,v 1.21 1998/08/04 16:44:02 momjian Exp $
+ * $Id: geqo_eval.c,v 1.22 1998/08/10 02:26:16 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -71,9 +71,9 @@ geqo_eval(Query *root, Gene *tour, int num_gene)
 	List	   *temp;
 
 
-/* remember root->join_relation_list_ ... */
-/* because root->join_relation_list_ will be changed during the following */
-	temp = listCopy(root->join_relation_list_);
+/* remember root->join_rel_list ... */
+/* because root->join_rel_list will be changed during the following */
+	temp = listCopy(root->join_rel_list);
 
 /* joinrel is readily processed query tree -- left-sided ! */
 	joinrel = gimme_tree(root, tour, 0, num_gene, NULL);
@@ -81,7 +81,7 @@ geqo_eval(Query *root, Gene *tour, int num_gene)
 /* compute fitness */
 	fitness = (Cost) joinrel->cheapestpath->path_cost;
 
-	root->join_relation_list_ = listCopy(temp);
+	root->join_rel_list = listCopy(temp);
 
 	pfree(joinrel);
 	freeList(temp);
@@ -113,7 +113,7 @@ gimme_tree(Query *root, Gene *tour, int rel_count, int num_gene, RelOptInfo *out
 		/* tour[0] = 3; tour[1] = 1; tour[2] = 2 */
 		base_rel_index = (int) tour[rel_count];
 
-		inner_rel = (RelOptInfo *) geqo_nth(base_rel_index, root->base_relation_list_);
+		inner_rel = (RelOptInfo *) geqo_nth(base_rel_index, root->base_rel_list);
 
 		if (rel_count == 0)
 		{						/* processing first join with
@@ -169,7 +169,7 @@ gimme_tree(Query *root, Gene *tour, int rel_count, int num_gene, RelOptInfo *out
 				new_rel->size = compute_rel_size(new_rel);
 			new_rel->width = compute_rel_width(new_rel);
 
-			root->join_relation_list_ = lcons(new_rel, NIL);
+			root->join_rel_list = lcons(new_rel, NIL);
 
 			return gimme_tree(root, tour, rel_count, num_gene, new_rel);
 		}
@@ -482,7 +482,7 @@ geqo_add_new_joininfos(Query *root, List *joinrels, List *outerrels)
 			 */
 
 			/*
-			 * if ( (root->join_relation_list_) != NIL ) { rel =
+			 * if ( (root->join_rel_list) != NIL ) { rel =
 			 * get_join_rel(root, xrelid); } else { rel =
 			 * get_base_rel(root, lfirsti(xrelid)); }
 			 */
@@ -495,7 +495,7 @@ geqo_add_new_joininfos(Query *root, List *joinrels, List *outerrels)
 			 */
 
 			relids = lconsi(lfirsti(xrelid), NIL);
-			rel = rel_member(relids, root->base_relation_list_);
+			rel = rel_member(relids, root->base_rel_list);
 
 			add_superrels(rel, joinrel);
 		}
@@ -521,7 +521,7 @@ geqo_add_new_joininfos(Query *root, List *joinrels, List *outerrels)
 				 */
 
 				/*
-				 * if ( (root->join_relation_list_) != NIL ) { rel =
+				 * if ( (root->join_rel_list) != NIL ) { rel =
 				 * get_join_rel(root, xrelid); } else { rel =
 				 * get_base_rel(root, lfirsti(xrelid)); }
 				 */
@@ -534,7 +534,7 @@ geqo_add_new_joininfos(Query *root, List *joinrels, List *outerrels)
 				 */
 
 				relids = lconsi(lfirsti(xrelid), NIL);
-				rel = rel_member(relids, root->base_relation_list_);
+				rel = rel_member(relids, root->base_rel_list);
 
 				super_rels = rel->superrels;
 				new_joininfo = makeNode(JInfo);

@@ -6,7 +6,7 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: planmain.h,v 1.13 1998/07/19 05:49:25 momjian Exp $
+ * $Id: planmain.h,v 1.14 1998/08/10 02:26:40 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -45,10 +45,10 @@ extern Unique *make_unique(List *tlist, Plan *lefttree, char *uniqueAttr);
 /*
  * prototypes for plan/initsplan.c
  */
-extern void initialize_base_rels_list(Query *root, List *tlist);
-extern void initialize_base_rels_jinfo(Query *root, List *clauses);
-extern void initialize_join_clause_info(List *rel_list);
-extern void add_missing_vars_to_base_rels(Query *root, List *tlist);
+extern void init_base_rels_tlist(Query *root, List *tlist);
+extern void init_base_rels_qual(Query *root, List *clauses);
+extern void init_join_info(List *rel_list);
+extern void add_missing_vars_to_tlist(Query *root, List *tlist);
 
 /*
  * prototypes for plan/setrefs.c

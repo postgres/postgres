@@ -9,7 +9,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/optimizer/path/Attic/xfunc.c,v 1.17 1998/08/04 16:44:11 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/optimizer/path/Attic/xfunc.c,v 1.18 1998/08/10 02:26:25 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -734,7 +734,7 @@ xfunc_card_unreferenced(Query *queryInfo,
 	LispValue	temp;
 
 	/* find all relids of base relations referenced in query */
-	foreach(temp, queryInfo->base_relation_list_)
+	foreach(temp, queryInfo->base_rel_list)
 	{
 		Assert(lnext(get_relids((RelOptInfo) lfirst(temp))) == LispNil);
 		allrelids = lappend(allrelids,

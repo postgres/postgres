@@ -6,7 +6,7 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: parsenodes.h,v 1.53 1998/08/05 04:49:13 scrappy Exp $
+ * $Id: parsenodes.h,v 1.54 1998/08/10 02:26:37 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -62,8 +62,8 @@ typedef struct Query
 								 * query */
 
 	/* internal to planner */
-	List	   *base_relation_list_;	/* base relation list */
-	List	   *join_relation_list_;	/* list of relations */
+	List	   *base_rel_list;	/* base relation list */
+	List	   *join_rel_list;	/* list of relation involved in joins */
 } Query;
 
 

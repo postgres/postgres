@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/optimizer/plan/planmain.c,v 1.24 1998/08/07 05:02:19 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/optimizer/plan/planmain.c,v 1.25 1998/08/10 02:26:28 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -255,33 +255,33 @@ subplanner(Query *root,
 		   List *flat_tlist,
 		   List *qual)
 {
-	RelOptInfo	*final_relation;
-	List	    *final_relation_list;
+	RelOptInfo	*final_rel;
+	List	    *final_rel_list;
 
 	/*
 	 * Initialize the targetlist and qualification, adding entries to
-	 * *query-relation-list* as relation references are found (e.g., in
+	 * base_rel_list as relation references are found (e.g., in
 	 * the qualification, the targetlist, etc.)
 	 */
-	root->base_relation_list_ = NIL;
-	root->join_relation_list_ = NIL;
-	initialize_base_rels_list(root, flat_tlist);
-	initialize_base_rels_jinfo(root, qual);
-	add_missing_vars_to_base_rels(root, flat_tlist);
+	root->base_rel_list = NIL;
+	root->join_rel_list = NIL;
+
+	init_base_rels_tlist(root, flat_tlist);
+	init_base_rels_qual(root, qual);
+	add_missing_vars_to_tlist(root, flat_tlist);
 
 	/*
 	 * Find all possible scan and join paths. Mark all the clauses and
 	 * relations that can be processed using special join methods, then do
 	 * the exhaustive path search.
 	 */
-	initialize_join_clause_info(root->base_relation_list_);
-	final_relation_list = find_paths(root,
-									 root->base_relation_list_);
+	init_join_info(root->base_rel_list);
+	final_rel_list = find_paths(root, root->base_rel_list);
 
-	if (final_relation_list)
-		final_relation = (RelOptInfo *) lfirst(final_relation_list);
+	if (final_rel_list)
+		final_rel = (RelOptInfo *) lfirst(final_rel_list);
 	else
-		final_relation = (RelOptInfo *) NIL;
+		final_rel = (RelOptInfo *) NIL;
 
 #if 0							/* fix xfunc */
 
@@ -294,14 +294,14 @@ subplanner(Query *root,
 	 * expensive functions left to pull up.  -- JMH, 11/22/92
 	 */
 	if (XfuncMode != XFUNC_OFF && XfuncMode != XFUNC_NOPM &&
-		XfuncMode != XFUNC_NOPULL && !final_relation->pruneable)
+		XfuncMode != XFUNC_NOPULL && !final_rel->pruneable)
 	{
 		List	   *pathnode;
 
-		foreach(pathnode, final_relation->pathlist)
+		foreach(pathnode, final_rel->pathlist)
 		{
 			if (xfunc_do_predmig((Path *) lfirst(pathnode)))
-				set_cheapest(final_relation, final_relation->pathlist);
+				set_cheapest(final_rel, final_rel->pathlist);
 		}
 	}
 #endif
@@ -310,8 +310,8 @@ subplanner(Query *root,
 	 * Determine the cheapest path and create a subplan corresponding to
 	 * it.
 	 */
-	if (final_relation)
-		return (create_plan((Path *) final_relation->cheapestpath));
+	if (final_rel)
+		return (create_plan((Path *) final_rel->cheapestpath));
 	else
 	{
 		elog(NOTICE, "final relation is nil");

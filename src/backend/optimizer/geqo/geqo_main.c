@@ -6,7 +6,7 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: geqo_main.c,v 1.8 1998/07/18 04:22:27 momjian Exp $
+ * $Id: geqo_main.c,v 1.9 1998/08/10 02:26:17 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -104,7 +104,7 @@ geqo(Query *root)
 
 
 /* set tour size */
-	number_of_rels = length(root->base_relation_list_);
+	number_of_rels = length(root->base_rel_list);
 
 /* set GA parameters */
 	geqo_params(number_of_rels);/* out of "$PGDATA/pg_geqo" file */

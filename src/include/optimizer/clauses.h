@@ -6,7 +6,7 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: clauses.h,v 1.11 1998/08/09 04:59:08 momjian Exp $
+ * $Id: clauses.h,v 1.12 1998/08/10 02:26:39 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -38,7 +38,7 @@ extern List *pull_constant_clauses(List *quals, List **constantQual);
 extern void clause_get_relids_vars(Node *clause, List **relids, List **vars);
 extern int	NumRelids(Node *clause);
 extern bool contains_not(Node *clause);
-extern bool join_clause_p(Node *clause);
+extern bool is_joinable(Node *clause);
 extern bool qual_clause_p(Node *clause);
 extern void fix_opid(Node *clause);
 extern List *fix_opids(List *clauses);

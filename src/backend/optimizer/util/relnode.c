@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/optimizer/util/relnode.c,v 1.6 1998/07/18 04:22:41 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/optimizer/util/relnode.c,v 1.7 1998/08/10 02:26:32 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -34,7 +34,7 @@ get_base_rel(Query *root, int relid)
 	RelOptInfo		   *rel;
 
 	relids = lconsi(relid, NIL);
-	rel = rel_member(relids, root->base_relation_list_);
+	rel = rel_member(relids, root->base_rel_list);
 	if (rel == NULL)
 	{
 		rel = makeNode(RelOptInfo);
@@ -56,8 +56,7 @@ get_base_rel(Query *root, int relid)
 		rel->innerjoin = NIL;
 		rel->superrels = NIL;
 
-		root->base_relation_list_ = lcons(rel,
-										  root->base_relation_list_);
+		root->base_rel_list = lcons(rel, root->base_rel_list);
 
 		/*
 		 * ??? the old lispy C code (get_rel) do a listp(relid) here but
@@ -66,7 +65,6 @@ get_base_rel(Query *root, int relid)
 		 */
 		if (relid < 0)
 		{
-
 			/*
 			 * If the relation is a materialized relation, assume
 			 * constants for sizes.
@@ -103,7 +101,7 @@ get_base_rel(Query *root, int relid)
 RelOptInfo *
 get_join_rel(Query *root, List *relid)
 {
-	return rel_member(relid, root->join_relation_list_);
+	return rel_member(relid, root->join_rel_list);
 }
 
 /*

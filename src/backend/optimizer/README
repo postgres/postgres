@@ -9,13 +9,36 @@ planner()
   preprocess target list
   preprocess qualifications(WHERE)
 --query_planner()
-   cnfify qualification, so qual are expressions (were AND's) and OR clauses
+   cnfify()
+    Summary:
+
+     Simple cases with all AND's are handled by removing the AND's:
+
+     convert:   a = 1 AND b = 2 AND c = 3
+     to:        a = 1, b = 2, c = 3
+
+     Qualifications with OR's are handled differently.  OR's inside AND
+     clauses are not modified drastically:
+
+     convert:   a = 1 AND b = 2 AND (c = 3 OR d = 4)
+     to:        a = 1, b = 2, c = 3 OR d = 4
+
+     OR's in the upper level are more complex to handle:
+
+     convert:   (a = 1 AND b = 2) OR c = 3
+     to:        (a = 1 OR c = 3) AND (b = 2 OR c = 3)
+     finally:   (a = 1 OR c = 3), (b = 2 OR c = 3)
+
+     These clauses all have to be true for a result to be returned,
+     so the optimizer can choose the most restrictive clauses.
+
    pull out constants from target list
    get a target list that only contains column names, no expressions
    if none, then return
 ---subplanner()
     make list of relations in target
     make list of relations in where clause
+     split up the qual into restrictions (a=1) and joins (b=c)
     find which relations can do merge sort and hash joins
 ----find_paths()
      find scan and all index paths for each relation not yet joined

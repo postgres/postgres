@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/optimizer/plan/initsplan.c,v 1.17 1998/08/09 04:59:03 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/optimizer/plan/initsplan.c,v 1.18 1998/08/10 02:26:26 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -20,6 +20,10 @@
 #include "nodes/parsenodes.h"
 #include "nodes/relation.h"
 #include "nodes/makefuncs.h"
+
+#include "access/htup.h"
+
+#include "catalog/pg_type.h"
 
 #include "utils/lsyscache.h"
 #include "utils/palloc.h"
@@ -36,9 +40,9 @@
 extern int	Quiet;
 
 static void add_clause_to_rels(Query *root, List *clause);
-static void add_join_clause_info_to_rels(Query *root, CInfo *clauseinfo,
+static void add_join_info_to_rels(Query *root, CInfo *clauseinfo,
 							 List *join_relids);
-static void add_vars_to_rels(Query *root, List *vars, List *join_relids);
+static void add_vars_to_targetlist(Query *root, List *vars, List *join_relids);
 
 static MergeOrder *mergejoinop(Expr *clause);
 static Oid	hashjoinop(Expr *clause);
@@ -51,7 +55,7 @@ static Oid	hashjoinop(Expr *clause);
  *****************************************************************************/
 
 /*
- * initialize_rel_nodes--
+ * init-base-rel-tlist--
  *	  Creates rel nodes for every relation mentioned in the target list
  *	  'tlist' (if a node hasn't already been created) and adds them to
  *	  *query-relation-list*.  Creates targetlist entries for each member of
@@ -60,7 +64,7 @@ static Oid	hashjoinop(Expr *clause);
  *	  Returns nothing.
  */
 void
-initialize_base_rels_list(Query *root, List *tlist)
+init_base_rels_tlist(Query *root, List *tlist)
 {
 	List	   *tlist_vars = NIL;
 	List	   *l = NIL;
@@ -78,7 +82,7 @@ initialize_base_rels_list(Query *root, List *tlist)
 	{
 		Var		   *var;
 		Index		varno;
-		RelOptInfo		   *result;
+		RelOptInfo *result;
 
 		var = (Var *) lfirst(tvar);
 		varno = var->varno;
@@ -89,7 +93,7 @@ initialize_base_rels_list(Query *root, List *tlist)
 }
 
 /*
- * add_missing_variables_to_base_rels -
+ * add_missing-vars-to-tlist--
  *	  If we have range variable(s) in the FROM clause that does not appear
  *	  in the target list nor qualifications, we add it to the base relation
  *	  list. For instance, "select f.x from foo f, foo f2" is a join of f and
@@ -97,7 +101,7 @@ initialize_base_rels_list(Query *root, List *tlist)
  *	  into a join.
  */
 void
-add_missing_vars_to_base_rels(Query *root, List *tlist)
+add_missing_vars_to_tlist(Query *root, List *tlist)
 {
 	List	   *l;
 	int			varno;
@@ -107,16 +111,15 @@ add_missing_vars_to_base_rels(Query *root, List *tlist)
 	{
 		RangeTblEntry *rte = (RangeTblEntry *) lfirst(l);
 		List	   *relids;
-		RelOptInfo		   *result;
+		RelOptInfo *result;
 		Var		   *var;
 
 		relids = lconsi(varno, NIL);
-		if (rte->inFromCl &&
-			!rel_member(relids, root->base_relation_list_))
+		if (rte->inFromCl && !rel_member(relids, root->base_rel_list))
 		{
-
-			var = makeVar(varno, -2, 26, -1, 0, varno, -2);
-			/* add it to base_relation_list_ */
+			var = makeVar(varno, ObjectIdAttributeNumber,
+						  OIDOID, -1, 0, varno, ObjectIdAttributeNumber);
+			/* add it to base_rel_list */
 			result = get_base_rel(root, varno);
 			add_tl_element(result, var);
 		}
@@ -136,7 +139,7 @@ add_missing_vars_to_base_rels(Query *root, List *tlist)
 
 
 /*
- * initialize-qualification--
+ * init-base-rels-qual--
  *	  Initializes ClauseInfo and JoinInfo fields of relation entries for all
  *	  relations appearing within clauses.  Creates new relation entries if
  *	  necessary, adding them to *query-relation-list*.
@@ -144,7 +147,7 @@ add_missing_vars_to_base_rels(Query *root, List *tlist)
  *	  Returns nothing of interest.
  */
 void
-initialize_base_rels_jinfo(Query *root, List *clauses)
+init_base_rels_qual(Query *root, List *clauses)
 {
 	List	   *clause;
 
@@ -174,7 +177,6 @@ add_clause_to_rels(Query *root, List *clause)
 	 */
 	clause_get_relids_vars((Node *) clause, &relids, &vars);
 
-
 	clauseinfo->clause = (Expr *) clause;
 	clauseinfo->notclause = contains_not((Node *) clause);
 	clauseinfo->selectivity = 0;
@@ -184,7 +186,7 @@ add_clause_to_rels(Query *root, List *clause)
 
 	if (length(relids) == 1)
 	{
-		RelOptInfo		   *rel = get_base_rel(root, lfirsti(relids));
+		RelOptInfo *rel = get_base_rel(root, lfirsti(relids));
 
 		/*
 		 * There is only one relation participating in 'clause', so
@@ -197,7 +199,6 @@ add_clause_to_rels(Query *root, List *clause)
 		 */
 		if (is_funcclause((Node *) clause))
 		{
-
 			/*
 			 * XXX If we have a func clause set selectivity to 1/3, really
 			 * need a true selectivity function.
@@ -209,8 +210,7 @@ add_clause_to_rels(Query *root, List *clause)
 			clauseinfo->selectivity =
 				compute_clause_selec(root, (Node *) clause, NIL);
 		}
-		rel->clauseinfo = lcons(clauseinfo,
-								rel->clauseinfo);
+		rel->clauseinfo = lcons(clauseinfo, rel->clauseinfo);
 	}
 	else
 	{
@@ -222,7 +222,6 @@ add_clause_to_rels(Query *root, List *clause)
 
 		if (is_funcclause((Node *) clause))
 		{
-
 			/*
 			 * XXX If we have a func clause set selectivity to 1/3, really
 			 * need a true selectivity function.
@@ -232,16 +231,16 @@ add_clause_to_rels(Query *root, List *clause)
 		else
 		{
 			clauseinfo->selectivity =
-				compute_clause_selec(root, (Node *) clause,
-									 NIL);
+				compute_clause_selec(root, (Node *) clause, NIL);
 		}
-		add_join_clause_info_to_rels(root, clauseinfo, relids);
-		add_vars_to_rels(root, vars, relids);
+		add_join_info_to_rels(root, clauseinfo, relids);
+		/* we are going to be doing a join, so add var to targetlist */
+		add_vars_to_targetlist(root, vars, relids);
 	}
 }
 
 /*
- * add-join-clause-info-to-rels--
+ * add-join-info-to-rels--
  *	  For every relation participating in a join clause, add 'clauseinfo' to
  *	  the appropriate joininfo node(creating a new one and adding it to the
  *	  appropriate rel node if necessary).
@@ -253,7 +252,7 @@ add_clause_to_rels(Query *root, List *clause)
  *
  */
 static void
-add_join_clause_info_to_rels(Query *root, CInfo *clauseinfo, List *join_relids)
+add_join_info_to_rels(Query *root, CInfo *clauseinfo, List *join_relids)
 {
 	List	   *join_relid;
 
@@ -269,8 +268,7 @@ add_join_clause_info_to_rels(Query *root, CInfo *clauseinfo, List *join_relids)
 				other_rels = lappendi(other_rels, lfirsti(rel));
 		}
 
-		joininfo =
-			find_joininfo_node(get_base_rel(root, lfirsti(join_relid)),
+		joininfo = find_joininfo_node(get_base_rel(root, lfirsti(join_relid)),
 							   other_rels);
 		joininfo->jinfoclauseinfo =
 			lcons(copyObject((void *) clauseinfo), joininfo->jinfoclauseinfo);
@@ -279,7 +277,7 @@ add_join_clause_info_to_rels(Query *root, CInfo *clauseinfo, List *join_relids)
 }
 
 /*
- * add-vars-to-rels--
+ * add-vars-to-targetlist--
  *	  For each variable appearing in a clause,
  *	  (1) If a targetlist entry for the variable is not already present in
  *		  the appropriate relation's target list, add one.
@@ -294,11 +292,11 @@ add_join_clause_info_to_rels(Query *root, CInfo *clauseinfo, List *join_relids)
  *	  Returns nothing.
  */
 static void
-add_vars_to_rels(Query *root, List *vars, List *join_relids)
+add_vars_to_targetlist(Query *root, List *vars, List *join_relids)
 {
 	Var		   *var;
 	List	   *temp = NIL;
-	RelOptInfo		   *rel = (RelOptInfo *) NULL;
+	RelOptInfo *rel = (RelOptInfo *) NULL;
 	TargetEntry *tlistentry;
 
 	foreach(temp, vars)
@@ -319,7 +317,7 @@ add_vars_to_rels(Query *root, List *vars, List *join_relids)
  *****************************************************************************/
 
 /*
- * initialize-join-clause-info--
+ * init-join-info--
  *	  Set the MergeJoinable or HashJoinable field for every joininfo node
  *	  (within a rel node) and the MergeJoinOrder or HashJoinOp field for
  *	  each clauseinfo node(within a joininfo node) for all relations in a
@@ -328,12 +326,12 @@ add_vars_to_rels(Query *root, List *vars, List *join_relids)
  *	  Returns nothing.
  */
 void
-initialize_join_clause_info(List *rel_list)
+init_join_info(List *rel_list)
 {
 	List	   *x,
 			   *y,
 			   *z;
-	RelOptInfo		   *rel;
+	RelOptInfo *rel;
 	JInfo	   *joininfo;
 	CInfo	   *clauseinfo;
 	Expr	   *clause;
@@ -348,7 +346,7 @@ initialize_join_clause_info(List *rel_list)
 			{
 				clauseinfo = (CInfo *) lfirst(z);
 				clause = clauseinfo->clause;
-				if (join_clause_p((Node *) clause))
+				if (is_joinable((Node *) clause))
 				{
 					MergeOrder *sortop = (MergeOrder *) NULL;
 					Oid			hashop = (Oid) NULL;
