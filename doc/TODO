@@ -5,7 +5,7 @@ TODO list for PostgreSQL
 Bracketed items "[]" have more detail.
 
 Current maintainer:	Bruce Momjian (pgman@candle.pha.pa.us)
-Last updated:		Wed Sep  1 21:18:44 EDT 2004
+Last updated:		Fri Sep 10 06:03:35 EDT 2004
 
 The most recent version of this document can be viewed at the PostgreSQL web site, http://www.PostgreSQL.org.
 
@@ -852,6 +852,7 @@ Source Code
 * Allow the identifier length to be increased via a configure option
 * Allow binaries to be statically linked so they are more easily relocated
 * Move some /contrib modules out to their own project sites
+* Remove Win32 rename/unlink looping if unnecessary
 
 
 * Wire Protocol Changes
