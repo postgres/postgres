@@ -6540,7 +6540,7 @@ fi
 if eval "test \"`echo '$ac_cv_func_'syslog`\" = yes"; then
   echo "$ac_t""yes" 1>&6
   cat >> confdefs.h <<\EOF
-#define ENABLE_SYSLOG 1
+#define USE_SYSLOG 1
 EOF
 
 else

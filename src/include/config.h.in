@@ -8,7 +8,7 @@
  * or in config.h afterwards.  Of course, if you edit config.h, then your
  * changes will be overwritten the next time you run configure.
  *
- * $Id: config.h.in,v 1.113 2000/05/12 13:58:25 scrappy Exp $
+ * $Id: config.h.in,v 1.113.2.1 2000/08/28 20:27:32 scrappy Exp $
  */
 
 #ifndef CONFIG_H
@@ -163,14 +163,6 @@
  */
 /* #define ELOG_TIMESTAMPS */
 
-/*
- * USE_SYSLOG: use syslog for elog and error messages printed by tprintf
- * and eprintf. This must be activated with the syslog flag in pg_options
- * (syslog=0 for stdio, syslog=1 for stdio+syslog, syslog=2 for syslog).
- * For information see backend/utils/misc/trace.c (Massimo Dal Zotto).
- */
-/* #define USE_SYSLOG */
-
 /* Debug #defines */
 /* #define IPORTAL_DEBUG  */
 /* #define HEAPDEBUGALL  */
@@ -207,6 +199,15 @@
  * Everything past here is set by the configure script.
  *------------------------------------------------------------------------
  */
+
+/*
+ * USE_SYSLOG: use syslog for elog and error messages printed by tprintf
+ * and eprintf. This must be activated with the syslog flag in pg_options
+ * (syslog=0 for stdio, syslog=1 for stdio+syslog, syslog=2 for syslog).
+ * For information see backend/utils/misc/trace.c (Massimo Dal Zotto).
+ */
+#undef USE_SYSLOG 
+
 
 /* Set to 1 if you want to USE_LOCALE */
 #undef USE_LOCALE

@@ -946,7 +946,7 @@ AC_TRY_LINK([#include <setjmp.h>],
 
 AC_ARG_ENABLE(syslog, [  --enable-syslog         enable logging to syslog],
     [case $enableval in y|ye|yes)
-        AC_CHECK_FUNC(syslog, [AC_DEFINE(ENABLE_SYSLOG)], [AC_MSG_ERROR([no syslog interface found])])
+        AC_CHECK_FUNC(syslog, [AC_DEFINE(USE_SYSLOG)], [AC_MSG_ERROR([no syslog interface found])])
         ;;
      esac]
 )
