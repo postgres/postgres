@@ -292,12 +292,6 @@ extern void srandom(int seed);
 /* #define DATEDEBUG */
 
 /*
- * Define this if you want to use date constants with a short year
- * like '01/05/96'.
- */
-/* #define USE_SHORT_YEAR */
-
-/*
  * defining unsafe floats's will make float4 and float8
  * ops faster at the cost of safety, of course!        
  */
@@ -319,15 +313,6 @@ extern void srandom(int seed);
  * of {{"a1","a2"},{"b1","b2"}}.
  */
 #define TCL_ARRAYS
-
-/*
- * The comparison routines for text and char data type give incorrect results
- * if the input data contains characters greater than 127.  As these routines
- * perform the comparison using signed char variables all character codes
- * greater than 127 are interpreted as less than 0.  These codes are used to
- * encode the iso8859 char sets.  Define this flag to correct the problem.
- */
-#define UNSIGNED_CHAR_TEXT
 
 /*
  * The following flag allows limiting the number of rows returned by a query.
@@ -360,11 +345,6 @@ extern void srandom(int seed);
 #define RTDEBUG 
 #define GISTDEBUG 
 /* #define DEBUG_RECIPE */
-/* #define ASYNC_DEBUG */
-/* #define COPY_DEBUG */
-/* #define VACUUM_DEBUG */
-/* #define NBTINSERT_PATCH_DEBUG */
-
 
 /* The following don't have any apparent purpose, but are in the
  * code.  someday, will take them out altogether, but for now, 
