@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/interfaces/libpq/fe-lobj.c,v 1.30 2000/06/02 15:57:42 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/interfaces/libpq/fe-lobj.c,v 1.31 2000/10/24 03:15:14 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -30,7 +30,7 @@
 #include "libpq/libpq-fs.h"		/* must come after sys/stat.h */
 
 
-#define LO_BUFSIZE		  1024
+#define LO_BUFSIZE		  8192
 
 static int	lo_initialize(PGconn *conn);
 
