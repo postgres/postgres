@@ -1,7 +1,7 @@
 --
 -- queries.source
 --
--- $Header: /cvsroot/pgsql/src/test/regress/Attic/queries.source,v 1.6 1996/12/02 14:17:59 momjian Exp $
+-- $Header: /cvsroot/pgsql/src/test/regress/Attic/queries.source,v 1.7 1997/01/14 01:42:38 momjian Exp $
 --
 -- The comments that contain sequences of UNIX commands generate the 
 -- desired output for the POSTQUEL statement(s).
@@ -837,9 +837,9 @@ SELECT '' AS bad, f.f1 * '1e200' from FLOAT8_TBL f;
 
 SELECT '' AS bad, f.f1 ^ '1e200' from FLOAT8_TBL f;
 
-SELECT '' AS bad, : (f.f1) from FLOAT8_TBL f where f.f1 = '0.0' ;
+SELECT '' AS bad, (; (f.f1)) from FLOAT8_TBL f where f.f1 = '0.0' ;
 
-SELECT '' AS bad, : (f.f1) from FLOAT8_TBL f where f.f1 < '0.0' ;
+SELECT '' AS bad, (; (f.f1)) from FLOAT8_TBL f where f.f1 < '0.0' ;
 
 SELECT '' AS bad, : (f.f1) from FLOAT8_TBL f;
 

@@ -2106,11 +2106,11 @@ QUERY: SELECT '' AS bad, f.f1 * '1e200' from FLOAT8_TBL f;
 WARN:	Bad float8 input format -- overflow
 
 QUERY: SELECT '' AS bad, f.f1 ^ '1e200' from FLOAT8_TBL f;
-WARN:pow() returned a floating point out of the range
+WARN:	Bad float8 input format -- overflow
 
-QUERY: SELECT '' AS bad, ; (f.f1) from FLOAT8_TBL f where f.f1 = '0.0' ;
+QUERY: SELECT '' AS bad, (; (f.f1)) from FLOAT8_TBL f where f.f1 = '0.0' ;
 WARN:can't take log of 0!
-QUERY: SELECT '' AS bad, ; (f.f1) from FLOAT8_TBL f where f.f1 < '0.0' ;
+QUERY: SELECT '' AS bad, (; (f.f1)) from FLOAT8_TBL f where f.f1 < '0.0' ;
 WARN:can't take log of a negative number
 QUERY: SELECT '' AS bad, : (f.f1) from FLOAT8_TBL f;
 WARN:exp() returned a floating point out of range
@@ -6521,7 +6521,6 @@ f    |27
 QUERY: ALTER TABLE f_star ADD COLUMN f int4;
 QUERY: UPDATE f_star SET f = 10;
 QUERY: ALTER TABLE e_star* ADD COLUMN e int4;
-
 QUERY: SELECT * FROM e_star*;
 class|aa|cc         | ee|e
 -----+--+-----------+---+-
@@ -6551,7 +6550,6 @@ f    |  |           |   |
 (23 rows)
 
 QUERY: ALTER TABLE a_star* ADD COLUMN a text;
-
 QUERY: SELECT class, aa, a FROM a_star*;
 class|aa|a
 -----+--+-
