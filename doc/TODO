@@ -80,6 +80,7 @@ TYPES
 	o Allow large object vacuuming
 	o Tables that start with xinv confused to be large objects
 * Add IPv6 capability to INET/CIDR types
+* Fix improper masking of some inet/cidr types [cidr]
 * Make a separate SERIAL type?
 * Store binary-compatible type information in the system
 * Add support for & operator
