@@ -1,0 +1,46 @@
+CREATE VIEW tablefunc_config_settings AS
+  SELECT
+    ''::TEXT AS name,
+    ''::TEXT AS setting;
+
+CREATE OR REPLACE FUNCTION show_all_settings()
+  RETURNS setof tablefunc_config_settings
+  AS 'MODULE_PATHNAME','show_all_settings' LANGUAGE 'c' STABLE STRICT;
+
+CREATE OR REPLACE FUNCTION normal_rand(int4, float8, float8, int4)
+  RETURNS setof float8
+  AS 'MODULE_PATHNAME','normal_rand' LANGUAGE 'c' VOLATILE STRICT;
+
+CREATE VIEW tablefunc_crosstab_2 AS
+  SELECT
+    ''::TEXT AS row_name,
+    ''::TEXT AS category_1,
+    ''::TEXT AS category_2;
+
+CREATE VIEW tablefunc_crosstab_3 AS
+  SELECT
+    ''::TEXT AS row_name,
+    ''::TEXT AS category_1,
+    ''::TEXT AS category_2,
+    ''::TEXT AS category_3;
+
+CREATE VIEW tablefunc_crosstab_4 AS
+  SELECT
+    ''::TEXT AS row_name,
+    ''::TEXT AS category_1,
+    ''::TEXT AS category_2,
+    ''::TEXT AS category_3,
+    ''::TEXT AS category_4;
+
+CREATE OR REPLACE FUNCTION crosstab2(text)
+  RETURNS setof tablefunc_crosstab_2
+  AS 'MODULE_PATHNAME','crosstab' LANGUAGE 'c' STABLE STRICT;
+
+CREATE OR REPLACE FUNCTION crosstab3(text)
+  RETURNS setof tablefunc_crosstab_3
+  AS 'MODULE_PATHNAME','crosstab' LANGUAGE 'c' STABLE STRICT;
+
+CREATE OR REPLACE FUNCTION crosstab4(text)
+  RETURNS setof tablefunc_crosstab_4
+  AS 'MODULE_PATHNAME','crosstab' LANGUAGE 'c' STABLE STRICT;
+

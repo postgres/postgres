@@ -1,0 +1,272 @@
+/*
+ * tablefunc
+ *
+ * Sample to demonstrate C functions which return setof scalar
+ * and setof composite.
+ * Joe Conway <mail@joeconway.com>
+ *
+ * Copyright 2002 by PostgreSQL Global Development Group
+ *
+ * Permission to use, copy, modify, and distribute this software and its
+ * documentation for any purpose, without fee, and without a written agreement
+ * is hereby granted, provided that the above copyright notice and this
+ * paragraph and the following two paragraphs appear in all copies.
+ * 
+ * IN NO EVENT SHALL THE AUTHORS OR DISTRIBUTORS BE LIABLE TO ANY PARTY FOR
+ * DIRECT, INDIRECT, SPECIAL, INCIDENTAL, OR CONSEQUENTIAL DAMAGES, INCLUDING
+ * LOST PROFITS, ARISING OUT OF THE USE OF THIS SOFTWARE AND ITS
+ * DOCUMENTATION, EVEN IF THE AUTHOR OR DISTRIBUTORS HAVE BEEN ADVISED OF THE
+ * POSSIBILITY OF SUCH DAMAGE.
+ * 
+ * THE AUTHORS AND DISTRIBUTORS SPECIFICALLY DISCLAIM ANY WARRANTIES,
+ * INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY
+ * AND FITNESS FOR A PARTICULAR PURPOSE.  THE SOFTWARE PROVIDED HEREUNDER IS
+ * ON AN "AS IS" BASIS, AND THE AUTHOR AND DISTRIBUTORS HAS NO OBLIGATIONS TO
+ * PROVIDE MAINTENANCE, SUPPORT, UPDATES, ENHANCEMENTS, OR MODIFICATIONS.
+ *
+ */
+Version 0.1 (20 July, 2002):
+  First release
+
+Release Notes:
+
+  Version 0.1
+    - initial release    
+
+Installation:
+  Place these files in a directory called 'tablefunc' under 'contrib' in the
+  PostgreSQL source tree. Then run:
+
+    make
+    make install
+
+  You can use tablefunc.sql to create the functions in your database of choice, e.g.
+
+    psql -U postgres template1 < tablefunc.sql
+
+  installs following functions into database template1:
+
+    show_all_settings()
+      - returns the same information as SHOW ALL, but as a query result
+
+    normal_rand(int numvals, float8 mean, float8 stddev, int seed)
+      - returns a set of normally distributed float8 values
+
+    crosstabN(text sql)
+      - returns a set of row_name plus N category value columns
+      - crosstab2(), crosstab3(), and crosstab4() are defined for you,
+        but you can create additional crosstab functions per the instructions
+        in the documentation below.
+
+Documentation
+==================================================================
+Name
+
+show_all_settings() - returns the same information as SHOW ALL,
+       but as a query result.
+
+Synopsis
+
+show_all_settings()
+
+Inputs
+
+  none
+
+Outputs
+
+  Returns setof tablefunc_config_settings which is defined by:
+    CREATE VIEW tablefunc_config_settings AS
+    SELECT
+      ''::TEXT AS name,
+      ''::TEXT AS setting;
+
+Example usage
+
+  test=# select * from show_all_settings();
+             name              |                setting
+-------------------------------+---------------------------------------
+ australian_timezones          | off
+ authentication_timeout        | 60
+ checkpoint_segments           | 3
+    .
+    .
+    .
+ wal_debug                     | 0
+ wal_files                     | 0
+ wal_sync_method               | fdatasync
+(94 rows)
+
+==================================================================
+Name
+
+normal_rand(int, float8, float8, int) - returns a set of normally
+       distributed float8 values
+
+Synopsis
+
+normal_rand(int numvals, float8 mean, float8 stddev, int seed)
+
+Inputs
+
+  numvals
+    the number of random values to be returned from the function
+
+  mean
+    the mean of the normal distribution of values
+
+  stddev
+    the standard deviation of the normal distribution of values
+
+  seed
+    a seed value for the pseudo-random number generator
+
+Outputs
+
+  Returns setof float8, where the returned set of random values are normally
+    distributed (Gaussian distribution)
+
+Example usage
+
+  test=# SELECT * FROM
+  test=# normal_rand(1000, 5, 3, EXTRACT(SECONDS FROM CURRENT_TIME(0))::int);
+     normal_rand
+----------------------
+     1.56556322244898
+     9.10040991424657
+     5.36957140345079
+   -0.369151492880995
+    0.283600703686639
+       .
+       .
+       .
+     4.82992125404908
+     9.71308014517282
+     2.49639286969028
+(1000 rows)
+
+  Returns 1000 values with a mean of 5 and a standard deviation of 3.
+
+==================================================================
+Name
+
+crosstabN(text) - returns a set of row_name plus N category value columns
+
+Synopsis
+
+crosstabN(text sql)
+
+Inputs
+
+  sql
+
+    A SQL statement which produces the source set of data. The SQL statement
+    must return one row_name column, one category column, and one value
+    column.
+
+    e.g. provided sql must produce a set something like:
+
+             row_name    cat    value
+            ----------+-------+-------
+              row1      cat1    val1
+              row1      cat2    val2
+              row1      cat3    val3
+              row1      cat4    val4
+              row2      cat1    val5
+              row2      cat2    val6
+              row2      cat3    val7
+              row2      cat4    val8
+
+Outputs
+
+  Returns setof tablefunc_crosstab_N, which is defined by:
+
+    CREATE VIEW tablefunc_crosstab_N AS
+      SELECT
+        ''::TEXT AS row_name,
+        ''::TEXT AS category_1,
+        ''::TEXT AS category_2,
+            .
+            .
+            .
+        ''::TEXT AS category_N;
+
+     for the default installed functions, where N is 2, 3, or 4.
+
+     e.g. the provided crosstab2 function produces a set something like:
+                      <== values  columns ==>
+           row_name   category_1   category_2
+           ---------+------------+------------
+             row1        val1         val2
+             row2        val5         val6
+
+Notes
+
+  1. The sql result must be ordered by 1,2.
+
+  2. The number of values columns depends on the tuple description
+     of the function's declared return type.
+
+  3. Missing values (i.e. not enough adjacent rows of same row_name to
+     fill the number of result values columns) are filled in with nulls.
+
+  4. Extra values (i.e. too many adjacent rows of same row_name to fill
+     the number of result values columns) are skipped.
+
+  5. Rows with all nulls in the values columns are skipped.
+
+  6. The installed defaults are for illustration purposes. You
+     can create your own return types and functions based on the
+     crosstab() function of the installed library.
+
+     The return type must have a first column that matches the data
+     type of the sql set used as its source. The subsequent category
+     columns must have the same data type as the value column of the
+     sql result set.
+
+     Create a VIEW to define your return type, similar to the VIEWS
+     in the provided installation script. Then define a unique function
+     name accepting one text parameter and returning setof your_view_name.
+     For example, if your source data produces row_names that are TEXT,
+     and values that are FLOAT8, and you want 5 category columns:
+
+      CREATE VIEW my_crosstab_float8_5_cols AS
+        SELECT
+          ''::TEXT AS row_name,
+          0::FLOAT8 AS category_1,
+          0::FLOAT8 AS category_2,
+          0::FLOAT8 AS category_3,
+          0::FLOAT8 AS category_4,
+          0::FLOAT8 AS category_5;
+
+      CREATE OR REPLACE FUNCTION crosstab_float8_5_cols(text)
+        RETURNS setof my_crosstab_float8_5_cols
+        AS '$libdir/tablefunc','crosstab' LANGUAGE 'c' STABLE STRICT;
+
+Example usage
+
+create table ct(id serial, rowclass text, rowid text, attribute text, value text);
+insert into ct(rowclass, rowid, attribute, value) values('group1','test1','att1','val1');
+insert into ct(rowclass, rowid, attribute, value) values('group1','test1','att2','val2');
+insert into ct(rowclass, rowid, attribute, value) values('group1','test1','att3','val3');
+insert into ct(rowclass, rowid, attribute, value) values('group1','test1','att4','val4');
+insert into ct(rowclass, rowid, attribute, value) values('group1','test2','att1','val5');
+insert into ct(rowclass, rowid, attribute, value) values('group1','test2','att2','val6');
+insert into ct(rowclass, rowid, attribute, value) values('group1','test2','att3','val7');
+insert into ct(rowclass, rowid, attribute, value) values('group1','test2','att4','val8');
+
+select * from crosstab3(
+  'select rowid, attribute, value
+   from ct
+   where rowclass = ''group1''
+   and (attribute = ''att2'' or attribute = ''att3'') order by 1,2;');
+
+ row_name | category_1 | category_2 | category_3
+----------+------------+------------+------------
+ test1    | val2       | val3       |
+ test2    | val6       | val7       |
+(2 rows)
+
+==================================================================
+-- Joe Conway
+

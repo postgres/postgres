@@ -186,6 +186,10 @@ string -
 	C-like input/output conversion routines for strings
 	by Massimo Dal Zotto <dz@cs.unitn.it>
 
+tablefunc -
+	Examples of tables returning functions
+	by Joe Conway <mail@joeconway.com>
+
 tips/apache_logging -
 	Getting Apache to log to PostgreSQL
 	by Terry Mackintosh <terry@terrym.com>
