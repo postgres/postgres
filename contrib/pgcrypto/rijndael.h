@@ -41,9 +41,9 @@ typedef struct _rijndael_ctx {
 /* require endian conversions for big-endian architectures          */
 
 rijndael_ctx *
-rijndael_set_key __P((rijndael_ctx *, const u4byte *, const u4byte, int));
-void rijndael_encrypt __P((rijndael_ctx *, const u4byte *, u4byte *));
-void rijndael_decrypt __P((rijndael_ctx *, const u4byte *, u4byte *));
+rijndael_set_key (rijndael_ctx *, const u4byte *, const u4byte, int);
+void rijndael_encrypt (rijndael_ctx *, const u4byte *, u4byte *);
+void rijndael_decrypt (rijndael_ctx *, const u4byte *, u4byte *);
 
 /* conventional interface */
 

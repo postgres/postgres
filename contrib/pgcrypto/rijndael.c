@@ -45,7 +45,7 @@ Mean:          500 cycles =    51.2 mbits/sec
 #define PRE_CALC_TABLES
 #define LARGE_TABLES
 
-static void gen_tabs	__P((void));
+static void gen_tabs(void);
 
 /* 3. Basic macros for speeding up generic operations               */
 
