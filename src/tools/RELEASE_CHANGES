@@ -8,6 +8,12 @@
 
 * Release notes
     update doc/src/sgml/release.sgml and generate HISTORY
+      o scan cvs logs, use pgcvslog and flags in comments
+      o run spellchecker on result
+      o check dashed items from TODO to see they are complete
+      o group items into categories
+      o add SGML markup
+      o add comments for items
 
 * Documentation
     document all new features
