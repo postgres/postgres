@@ -3,7 +3,7 @@
  *			  procedural language
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/pl/plpgsql/src/plpgsql.h,v 1.36 2003/05/05 16:46:28 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/pl/plpgsql/src/plpgsql.h,v 1.37 2003/07/01 21:47:09 tgl Exp $
  *
  *	  This software is copyrighted by Jan Wieck - Hamburg.
  *
@@ -487,6 +487,18 @@ typedef struct
 }	PLpgSQL_stmt_dynexecute;
 
 
+typedef struct PLpgSQL_func_hashkey
+{								/* Hash lookup key for functions */
+	Oid		funcOid;
+	/*
+	 * We include actual argument types in the hash key to support
+	 * polymorphic PLpgSQL functions.  Be careful that extra positions
+	 * are zeroed!
+	 */
+	Oid		argtypes[FUNC_MAX_ARGS];
+} PLpgSQL_func_hashkey;
+
+
 typedef struct PLpgSQL_function
 {								/* Complete compiled function	  */
 	char	   *fn_name;
@@ -494,6 +506,7 @@ typedef struct PLpgSQL_function
 	TransactionId fn_xmin;
 	CommandId	fn_cmin;
 	int			fn_functype;
+	PLpgSQL_func_hashkey *fn_hashkey; /* back-link to hashtable key */
 
 	Oid			fn_rettype;
 	int			fn_rettyplen;
@@ -519,8 +532,6 @@ typedef struct PLpgSQL_function
 	int			ndatums;
 	PLpgSQL_datum **datums;
 	PLpgSQL_stmt_block *action;
-
-	struct PLpgSQL_function *next;		/* for chaining list of functions */
 }	PLpgSQL_function;
 
 
@@ -588,7 +599,7 @@ extern PLpgSQL_function *plpgsql_curr_compile;
  * Functions in pl_comp.c
  * ----------
  */
-extern PLpgSQL_function *plpgsql_compile(Oid fn_oid, int functype);
+extern PLpgSQL_function *plpgsql_compile(FunctionCallInfo fcinfo);
 extern int	plpgsql_parse_word(char *word);
 extern int	plpgsql_parse_dblword(char *word);
 extern int	plpgsql_parse_tripword(char *word);

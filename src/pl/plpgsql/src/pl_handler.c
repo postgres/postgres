@@ -3,7 +3,7 @@
  *			  procedural language
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/pl/plpgsql/src/pl_handler.c,v 1.12 2002/08/30 00:28:41 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/pl/plpgsql/src/pl_handler.c,v 1.13 2003/07/01 21:47:09 tgl Exp $
  *
  *	  This software is copyrighted by Jan Wieck - Hamburg.
  *
@@ -45,15 +45,6 @@
 #include "utils/syscache.h"
 
 
-/*
- * Head of list of already-compiled functions
- */
-static PLpgSQL_function *compiled_functions = NULL;
-
-
-static bool func_up_to_date(PLpgSQL_function * func);
-
-
 /* ----------
  * plpgsql_call_handler
  *
@@ -67,8 +58,6 @@ PG_FUNCTION_INFO_V1(plpgsql_call_handler);
 Datum
 plpgsql_call_handler(PG_FUNCTION_ARGS)
 {
-	bool		isTrigger = CALLED_AS_TRIGGER(fcinfo);
-	Oid			funcOid = fcinfo->flinfo->fn_oid;
 	PLpgSQL_function *func;
 	Datum		retval;
 
@@ -78,55 +67,14 @@ plpgsql_call_handler(PG_FUNCTION_ARGS)
 	if (SPI_connect() != SPI_OK_CONNECT)
 		elog(ERROR, "plpgsql: cannot connect to SPI manager");
 
-	/*
-	 * Check if we already compiled this function and saved the pointer
-	 * (ie, current FmgrInfo has been used before)
-	 */
-	func = (PLpgSQL_function *) fcinfo->flinfo->fn_extra;
-	if (func != NULL)
-	{
-		Assert(func->fn_oid == funcOid);
-
-		/*
-		 * But is the function still up to date?
-		 */
-		if (!func_up_to_date(func))
-			func = NULL;
-	}
-
-	if (func == NULL)
-	{
-		/*
-		 * Check if we already compiled this function for another caller
-		 */
-		for (func = compiled_functions; func != NULL; func = func->next)
-		{
-			if (funcOid == func->fn_oid && func_up_to_date(func))
-				break;
-		}
-
-		/*
-		 * If not, do so and add it to the compiled ones
-		 */
-		if (func == NULL)
-		{
-			func = plpgsql_compile(funcOid,
-								   isTrigger ? T_TRIGGER : T_FUNCTION);
-			func->next = compiled_functions;
-			compiled_functions = func;
-		}
-
-		/*
-		 * Save pointer in FmgrInfo to avoid search on subsequent calls
-		 */
-		fcinfo->flinfo->fn_extra = (void *) func;
-	}
+	/* Find or compile the function */
+	func = plpgsql_compile(fcinfo);
 
 	/*
 	 * Determine if called as function or trigger and call appropriate
 	 * subhandler
 	 */
-	if (isTrigger)
+	if (CALLED_AS_TRIGGER(fcinfo))
 		retval = PointerGetDatum(plpgsql_exec_trigger(func,
 									   (TriggerData *) fcinfo->context));
 	else
@@ -139,31 +87,4 @@ plpgsql_call_handler(PG_FUNCTION_ARGS)
 		elog(ERROR, "plpgsql: SPI_finish() failed");
 
 	return retval;
-}
-
-
-/*
- * Check to see if a compiled function is still up-to-date.  This
- * is needed because CREATE OR REPLACE FUNCTION can modify the
- * function's pg_proc entry without changing its OID.
- */
-static bool
-func_up_to_date(PLpgSQL_function * func)
-{
-	HeapTuple	procTup;
-	bool		result;
-
-	procTup = SearchSysCache(PROCOID,
-							 ObjectIdGetDatum(func->fn_oid),
-							 0, 0, 0);
-	if (!HeapTupleIsValid(procTup))
-		elog(ERROR, "plpgsql: cache lookup for proc %u failed",
-			 func->fn_oid);
-
-	result = (func->fn_xmin == HeapTupleHeaderGetXmin(procTup->t_data) &&
-			  func->fn_cmin == HeapTupleHeaderGetCmin(procTup->t_data));
-
-	ReleaseSysCache(procTup);
-
-	return result;
 }

@@ -3,7 +3,7 @@
  *			  procedural language
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/pl/plpgsql/src/pl_comp.c,v 1.58 2003/05/05 16:46:27 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/pl/plpgsql/src/pl_comp.c,v 1.59 2003/07/01 21:47:09 tgl Exp $
  *
  *	  This software is copyrighted by Jan Wieck - Hamburg.
  *
@@ -79,10 +79,38 @@ int			plpgsql_DumpExecTree = 0;
 
 PLpgSQL_function *plpgsql_curr_compile;
 
+/* ----------
+ * Hash table for compiled functions
+ * ----------
+ */
+static HTAB *plpgsql_HashTable = (HTAB *) NULL;
 
+typedef struct plpgsql_hashent
+{
+	PLpgSQL_func_hashkey key;
+	PLpgSQL_function   *function;
+} plpgsql_HashEnt;
+
+#define FUNCS_PER_USER		128		/* initial table size */
+
+
+/* ----------
+ * static prototypes
+ * ----------
+ */
+static PLpgSQL_function *do_compile(FunctionCallInfo fcinfo,
+									HeapTuple procTup,
+									PLpgSQL_func_hashkey *hashkey);
 static void plpgsql_compile_error_callback(void *arg);
 static PLpgSQL_type *build_datatype(HeapTuple typeTup, int32 typmod);
-
+static void compute_function_hashkey(FmgrInfo *flinfo,
+									 Form_pg_proc procStruct,
+									 PLpgSQL_func_hashkey *hashkey);
+static void plpgsql_HashTableInit(void);
+static PLpgSQL_function *plpgsql_HashTableLookup(PLpgSQL_func_hashkey *func_key);
+static void plpgsql_HashTableInsert(PLpgSQL_function *function,
+									PLpgSQL_func_hashkey *func_key);
+static void plpgsql_HashTableDelete(PLpgSQL_function *function);
 
 /*
  * This routine is a crock, and so is everyplace that calls it.  The problem
@@ -103,44 +131,129 @@ perm_fmgr_info(Oid functionId, FmgrInfo *finfo)
 
 
 /* ----------
- * plpgsql_compile		Given a pg_proc's oid, make
- *						an execution tree for it.
+ * plpgsql_compile		Make an execution tree for a PL/pgSQL function.
+ *
+ * Note: it's important for this to fall through quickly if the function
+ * has already been compiled.
  * ----------
  */
 PLpgSQL_function *
-plpgsql_compile(Oid fn_oid, int functype)
+plpgsql_compile(FunctionCallInfo fcinfo)
 {
-	int			parse_rc;
+	Oid			funcOid = fcinfo->flinfo->fn_oid;
 	HeapTuple	procTup;
 	Form_pg_proc procStruct;
+	PLpgSQL_function *function;
+	PLpgSQL_func_hashkey hashkey;
+	bool		hashkey_valid = false;
+
+	/*
+	 * Lookup the pg_proc tuple by Oid; we'll need it in any case
+	 */
+	procTup = SearchSysCache(PROCOID,
+							 ObjectIdGetDatum(funcOid),
+							 0, 0, 0);
+	if (!HeapTupleIsValid(procTup))
+		elog(ERROR, "plpgsql: cache lookup for proc %u failed", funcOid);
+	procStruct = (Form_pg_proc) GETSTRUCT(procTup);
+
+	/*
+	 * See if there's already a cache entry for the current FmgrInfo.
+	 * If not, try to find one in the hash table.
+	 */
+	function = (PLpgSQL_function *) fcinfo->flinfo->fn_extra;
+
+	if (!function)
+	{
+		/* First time through in this backend?  If so, init hashtable */
+		if (!plpgsql_HashTable)
+			plpgsql_HashTableInit();
+
+		/* Compute hashkey using function signature and actual arg types */
+		compute_function_hashkey(fcinfo->flinfo, procStruct, &hashkey);
+		hashkey_valid = true;
+
+		/* And do the lookup */
+		function = plpgsql_HashTableLookup(&hashkey);
+	}
+
+	if (function)
+	{
+		/* We have a compiled function, but is it still valid? */
+		if (!(function->fn_xmin == HeapTupleHeaderGetXmin(procTup->t_data) &&
+			  function->fn_cmin == HeapTupleHeaderGetCmin(procTup->t_data)))
+		{
+			/*
+			 * Nope, drop the hashtable entry.  XXX someday, free all the
+			 * subsidiary storage as well.
+			 */
+			plpgsql_HashTableDelete(function);
+
+			function = NULL;
+		}
+	}
+
+	/*
+	 * If the function wasn't found or was out-of-date, we have to compile it
+	 */
+	if (!function)
+	{
+		/*
+		 * Calculate hashkey if we didn't already; we'll need it to store
+		 * the completed function.
+		 */
+		if (!hashkey_valid)
+			compute_function_hashkey(fcinfo->flinfo, procStruct, &hashkey);
+
+		/*
+		 * Do the hard part.
+		 */
+		function = do_compile(fcinfo, procTup, &hashkey);
+	}
+
+	ReleaseSysCache(procTup);
+
+	/*
+	 * Save pointer in FmgrInfo to avoid search on subsequent calls
+	 */
+	fcinfo->flinfo->fn_extra = (void *) function;
+
+	/*
+	 * Finally return the compiled function
+	 */
+	return function;
+}
+
+/*
+ * This is the slow part of plpgsql_compile().
+ */
+static PLpgSQL_function *
+do_compile(FunctionCallInfo fcinfo,
+		   HeapTuple procTup,
+		   PLpgSQL_func_hashkey *hashkey)
+{
+	Form_pg_proc procStruct = (Form_pg_proc) GETSTRUCT(procTup);
+	int			functype = CALLED_AS_TRIGGER(fcinfo) ? T_TRIGGER : T_FUNCTION;
+	PLpgSQL_function *function;
+	char	   *proc_source;
 	HeapTuple	typeTup;
 	Form_pg_type typeStruct;
-	char	   *proc_source;
-	PLpgSQL_function *function;
 	PLpgSQL_var *var;
 	PLpgSQL_row *row;
 	PLpgSQL_rec *rec;
 	int			i;
 	int			arg_varnos[FUNC_MAX_ARGS];
 	ErrorContextCallback plerrcontext;
+	int			parse_rc;
+	Oid			rettypeid;
 
 	/*
-	 * Lookup the pg_proc tuple by Oid
+	 * Setup the scanner input and error info.  We assume that this
+	 * function cannot be invoked recursively, so there's no need to save
+	 * and restore the static variables used here.
 	 */
-	procTup = SearchSysCache(PROCOID,
-							 ObjectIdGetDatum(fn_oid),
-							 0, 0, 0);
-	if (!HeapTupleIsValid(procTup))
-		elog(ERROR, "plpgsql: cache lookup for proc %u failed", fn_oid);
-
-	/*
-	 * Setup the scanner input and error info.  We assume that this function
-	 * cannot be invoked recursively, so there's no need to save and restore
-	 * the static variables used here.
-	 */
-	procStruct = (Form_pg_proc) GETSTRUCT(procTup);
 	proc_source = DatumGetCString(DirectFunctionCall1(textout,
-								  PointerGetDatum(&procStruct->prosrc)));
+									PointerGetDatum(&procStruct->prosrc)));
 	plpgsql_scanner_init(proc_source, functype);
 	pfree(proc_source);
 
@@ -171,11 +284,11 @@ plpgsql_compile(Oid fn_oid, int functype)
 	 * Create the new function node
 	 */
 	function = malloc(sizeof(PLpgSQL_function));
-	memset(function, 0, sizeof(PLpgSQL_function));
+	MemSet(function, 0, sizeof(PLpgSQL_function));
 	plpgsql_curr_compile = function;
 
 	function->fn_name = strdup(NameStr(procStruct->proname));
-	function->fn_oid = fn_oid;
+	function->fn_oid = fcinfo->flinfo->fn_oid;
 	function->fn_xmin = HeapTupleHeaderGetXmin(procTup->t_data);
 	function->fn_cmin = HeapTupleHeaderGetCmin(procTup->t_data);
 	function->fn_functype = functype;
@@ -185,39 +298,55 @@ plpgsql_compile(Oid fn_oid, int functype)
 		case T_FUNCTION:
 
 			/*
+			 * Check for a polymorphic returntype. If found, use the actual
+			 * returntype type from the caller's FuncExpr node, if we
+			 * have one.
+			 */
+			rettypeid = procStruct->prorettype;
+			if (rettypeid == ANYARRAYOID || rettypeid == ANYELEMENTOID)
+			{
+				rettypeid = get_fn_expr_rettype(fcinfo->flinfo);
+				if (!OidIsValid(rettypeid))
+					elog(ERROR, "could not determine actual return type "
+						 "for polymorphic function %s",
+						 plpgsql_error_funcname);
+			}
+
+			/*
 			 * Normal function has a defined returntype
 			 */
-			function->fn_rettype = procStruct->prorettype;
+			function->fn_rettype = rettypeid;
 			function->fn_retset = procStruct->proretset;
 
 			/*
 			 * Lookup the functions return type
 			 */
 			typeTup = SearchSysCache(TYPEOID,
-								ObjectIdGetDatum(procStruct->prorettype),
+									 ObjectIdGetDatum(rettypeid),
 									 0, 0, 0);
 			if (!HeapTupleIsValid(typeTup))
 				elog(ERROR, "cache lookup for return type %u failed",
-					 procStruct->prorettype);
+					 rettypeid);
 			typeStruct = (Form_pg_type) GETSTRUCT(typeTup);
 
 			/* Disallow pseudotype result, except VOID or RECORD */
+			/* (note we already replaced ANYARRAY/ANYELEMENT) */
 			if (typeStruct->typtype == 'p')
 			{
-				if (procStruct->prorettype == VOIDOID ||
-					procStruct->prorettype == RECORDOID)
-					 /* okay */ ;
-				else if (procStruct->prorettype == TRIGGEROID)
+				if (rettypeid == VOIDOID ||
+					rettypeid == RECORDOID)
+					/* okay */ ;
+				else if (rettypeid == TRIGGEROID)
 					elog(ERROR, "plpgsql functions cannot return type %s"
 						 "\n\texcept when used as triggers",
-						 format_type_be(procStruct->prorettype));
+						 format_type_be(rettypeid));
 				else
 					elog(ERROR, "plpgsql functions cannot return type %s",
-						 format_type_be(procStruct->prorettype));
+						 format_type_be(rettypeid));
 			}
 
 			if (typeStruct->typrelid != InvalidOid ||
-				procStruct->prorettype == RECORDOID)
+				rettypeid == RECORDOID)
 				function->fn_retistuple = true;
 			else
 			{
@@ -229,29 +358,39 @@ plpgsql_compile(Oid fn_oid, int functype)
 			ReleaseSysCache(typeTup);
 
 			/*
-			 * Create the variables for the procedures parameters
+			 * Create the variables for the procedure's parameters
 			 */
 			for (i = 0; i < procStruct->pronargs; i++)
 			{
 				char		buf[32];
+				Oid			argtypeid;
 
-				snprintf(buf, sizeof(buf), "$%d", i + 1);		/* name for variable */
+				/* name for variable */
+				snprintf(buf, sizeof(buf), "$%d", i + 1);
+
+				/*
+				 * Since we already did the replacement of polymorphic
+				 * argument types by actual argument types while computing
+				 * the hashkey, we can just use those results.
+				 */
+				argtypeid = hashkey->argtypes[i];
 
 				/*
 				 * Get the parameters type
 				 */
 				typeTup = SearchSysCache(TYPEOID,
-							ObjectIdGetDatum(procStruct->proargtypes[i]),
+										 ObjectIdGetDatum(argtypeid),
 										 0, 0, 0);
 				if (!HeapTupleIsValid(typeTup))
 					elog(ERROR, "cache lookup for argument type %u failed",
-						 procStruct->proargtypes[i]);
+						 argtypeid);
 				typeStruct = (Form_pg_type) GETSTRUCT(typeTup);
 
 				/* Disallow pseudotype argument */
+				/* (note we already replaced ANYARRAY/ANYELEMENT) */
 				if (typeStruct->typtype == 'p')
 					elog(ERROR, "plpgsql functions cannot take type %s",
-						 format_type_be(procStruct->proargtypes[i]));
+						 format_type_be(argtypeid));
 
 				if (typeStruct->typrelid != InvalidOid)
 				{
@@ -511,7 +650,14 @@ plpgsql_compile(Oid fn_oid, int functype)
 		function->datums[i] = plpgsql_Datums[i];
 	function->action = plpgsql_yylval.program;
 
-	ReleaseSysCache(procTup);
+	/* Debug dump for completed functions */
+	if (plpgsql_DumpExecTree)
+		plpgsql_dumptree(function);
+
+	/*
+	 * add it to the hash table
+	 */
+	plpgsql_HashTableInsert(function, hashkey);
 
 	/*
 	 * Pop the error context stack
@@ -520,11 +666,6 @@ plpgsql_compile(Oid fn_oid, int functype)
 	plpgsql_error_funcname = NULL;
 	plpgsql_error_lineno = 0;
 
-	/*
-	 * Finally return the compiled function
-	 */
-	if (plpgsql_DumpExecTree)
-		plpgsql_dumptree(function);
 	return function;
 }
 
@@ -1499,4 +1640,113 @@ plpgsql_yyerror(const char *s)
 {
 	plpgsql_error_lineno = plpgsql_scanner_lineno();
 	elog(ERROR, "%s at or near \"%s\"", s, plpgsql_yytext);
+}
+
+
+/*
+ * Compute the hashkey for a given function invocation
+ *
+ * The hashkey is returned into the caller-provided storage at *hashkey.
+ */
+static void
+compute_function_hashkey(FmgrInfo *flinfo,
+						 Form_pg_proc procStruct,
+						 PLpgSQL_func_hashkey *hashkey)
+{
+	int		i;
+
+	/* Make sure any unused bytes of the struct are zero */
+	MemSet(hashkey, 0, sizeof(PLpgSQL_func_hashkey));
+
+	hashkey->funcOid = flinfo->fn_oid;
+
+	/* get the argument types */
+	for (i = 0; i < procStruct->pronargs; i++)
+	{
+		Oid			argtypeid = procStruct->proargtypes[i];
+
+		/*
+		 * Check for polymorphic arguments. If found, use the actual
+		 * parameter type from the caller's FuncExpr node, if we
+		 * have one.
+		 *
+		 * We can support arguments of type ANY the same way as normal
+		 * polymorphic arguments.
+		 */
+		if (argtypeid == ANYARRAYOID || argtypeid == ANYELEMENTOID ||
+			argtypeid == ANYOID)
+		{
+			argtypeid = get_fn_expr_argtype(flinfo, i);
+			if (!OidIsValid(argtypeid))
+				elog(ERROR, "could not determine actual argument "
+					 "type for polymorphic function %s",
+					 NameStr(procStruct->proname));
+		}
+
+		hashkey->argtypes[i] = argtypeid;
+	}
+}
+
+static void
+plpgsql_HashTableInit(void)
+{
+	HASHCTL		ctl;
+
+	memset(&ctl, 0, sizeof(ctl));
+	ctl.keysize = sizeof(PLpgSQL_func_hashkey);
+	ctl.entrysize = sizeof(plpgsql_HashEnt);
+	ctl.hash = tag_hash;
+	plpgsql_HashTable = hash_create("PLpgSQL function cache",
+									FUNCS_PER_USER,
+									&ctl,
+									HASH_ELEM | HASH_FUNCTION);
+}
+
+static PLpgSQL_function *
+plpgsql_HashTableLookup(PLpgSQL_func_hashkey *func_key)
+{
+	plpgsql_HashEnt	   *hentry;
+
+	hentry = (plpgsql_HashEnt*) hash_search(plpgsql_HashTable,
+											(void *) func_key,
+											HASH_FIND,
+											NULL);
+	if (hentry)
+		return hentry->function;
+	else
+		return (PLpgSQL_function *) NULL;
+}
+
+static void
+plpgsql_HashTableInsert(PLpgSQL_function *function,
+						PLpgSQL_func_hashkey *func_key)
+{
+	plpgsql_HashEnt	   *hentry;
+	bool				found;
+
+	hentry = (plpgsql_HashEnt*) hash_search(plpgsql_HashTable,
+											(void *) func_key,
+											HASH_ENTER,
+											&found);
+	if (hentry == NULL)
+		elog(ERROR, "out of memory in plpgsql_HashTable");
+	if (found)
+		elog(WARNING, "trying to insert a function that exists");
+
+	hentry->function = function;
+	/* prepare back link from function to hashtable key */
+	function->fn_hashkey = &hentry->key;
+}
+
+static void
+plpgsql_HashTableDelete(PLpgSQL_function *function)
+{
+	plpgsql_HashEnt	   *hentry;
+
+	hentry = (plpgsql_HashEnt*) hash_search(plpgsql_HashTable,
+											(void *) function->fn_hashkey,
+											HASH_REMOVE,
+											NULL);
+	if (hentry == NULL)
+		elog(WARNING, "trying to delete function that does not exist");
 }
