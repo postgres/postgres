@@ -1,6 +1,6 @@
 TODO list for PostgreSQL
 ========================
-Last updated:		Sun Aug 17 01:23:08 EDT 2003
+Last updated:		Sun Aug 17 22:52:44 EDT 2003
 
 Current maintainer:	Bruce Momjian (pgman@candle.pha.pa.us)
 
@@ -149,7 +149,7 @@ Indexes
   INSERT INTO inherit_table (unique_index_col) VALUES (dup) should fail
   [inheritance]
 * Add UNIQUE capability to non-btree indexes
-* Add btree index support for reltime, tinterval, regproc
+* -Add btree index support for reltime, tinterval, regproc (Tom)
 * Add rtree index support for line, lseg, path, point
 * -Certain indexes will not shrink, e.g. indexes on ever-increasing
   columns and indexes with many duplicate keys
@@ -488,7 +488,7 @@ Source Code
 * Acquire lock on a relation before building a relcache entry for it
 * Research interaction of setitimer() and sleep() used by statement_timeout
 * Add checks for fclose() failure
-* Change CVS $Id: TODO,v 1.1122 2003/08/17 05:23:13 momjian Exp $ to $PostgreSQL: pgsql/doc/TODO,v 1.1122 2003/08/17 05:23:13 momjian Exp $
+* Change CVS $Id: TODO,v 1.1123 2003/08/18 02:52:45 momjian Exp $ to $PostgreSQL: pgsql/doc/TODO,v 1.1123 2003/08/18 02:52:45 momjian Exp $
 * Exit postmaster if postgresql.conf can not be opened
 * Rename /scripts directory because they are all C programs now
 * Allow the regression tests to start postmaster with -i so the tests
