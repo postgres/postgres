@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2002, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Id: relation.h,v 1.74 2002/12/12 15:49:40 tgl Exp $
+ * $Id: relation.h,v 1.75 2003/01/12 22:35:29 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -34,6 +34,16 @@ typedef enum CostSelector
 {
 	STARTUP_COST, TOTAL_COST
 } CostSelector;
+
+/*
+ * The cost estimate produced by cost_qual_eval() includes both a one-time
+ * (startup) cost, and a per-tuple cost.
+ */
+typedef struct QualCost
+{
+	Cost		startup;		/* one-time cost */
+	Cost		per_tuple;		/* per-evaluation cost */
+} QualCost;
 
 /*----------
  * RelOptInfo
@@ -199,7 +209,7 @@ typedef struct RelOptInfo
 	/* used by various scans and joins: */
 	List	   *baserestrictinfo;		/* RestrictInfo structures (if
 										 * base rel) */
-	Cost		baserestrictcost;		/* cost of evaluating the above */
+	QualCost	baserestrictcost;		/* cost of evaluating the above */
 	Relids		outerjoinset;	/* integer list of base relids */
 	List	   *joininfo;		/* JoinInfo structures */
 
@@ -570,7 +580,7 @@ typedef struct RestrictInfo
 	/* subclauseindices is a List of Lists of IndexOptInfos */
 
 	/* cache space for costs (currently only used for join clauses) */
-	Cost		eval_cost;		/* eval cost of clause; -1 if not yet set */
+	QualCost	eval_cost;		/* eval cost of clause; -1 if not yet set */
 	Selectivity this_selec;		/* selectivity; -1 if not yet set */
 
 	/* valid if clause is mergejoinable, else InvalidOid: */

@@ -42,7 +42,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/optimizer/path/costsize.c,v 1.98 2002/12/30 15:21:21 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/optimizer/path/costsize.c,v 1.99 2003/01/12 22:35:29 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -87,7 +87,7 @@ bool		enable_hashjoin = true;
 
 static Selectivity estimate_hash_bucketsize(Query *root, Var *var,
 											int nbuckets);
-static bool cost_qual_eval_walker(Node *node, Cost *total);
+static bool cost_qual_eval_walker(Node *node, QualCost *total);
 static Selectivity approx_selectivity(Query *root, List *quals);
 static void set_rel_width(Query *root, RelOptInfo *rel);
 static double relation_byte_size(double tuples, int width);
@@ -131,7 +131,8 @@ cost_seqscan(Path *path, Query *root,
 	run_cost += baserel->pages; /* sequential fetches with cost 1.0 */
 
 	/* CPU costs */
-	cpu_per_tuple = cpu_tuple_cost + baserel->baserestrictcost;
+	startup_cost += baserel->baserestrictcost.startup;
+	cpu_per_tuple = cpu_tuple_cost + baserel->baserestrictcost.per_tuple;
 	run_cost += cpu_per_tuple * baserel->tuples;
 
 	path->startup_cost = startup_cost;
@@ -344,17 +345,25 @@ cost_index(Path *path, Query *root,
 	 *
 	 * Normally the indexquals will be removed from the list of restriction
 	 * clauses that we have to evaluate as qpquals, so we should subtract
-	 * their costs from baserestrictcost.  XXX For a lossy index, not all
-	 * the quals will be removed and so we really shouldn't subtract their
-	 * costs; but detecting that seems more expensive than it's worth.
-	 * Also, if we are doing a join then some of the indexquals are join
-	 * clauses and shouldn't be subtracted.  Rather than work out exactly
-	 * how much to subtract, we don't subtract anything.
+	 * their costs from baserestrictcost.  But if we are doing a join then
+	 * some of the indexquals are join clauses and shouldn't be subtracted.
+	 * Rather than work out exactly how much to subtract, we don't subtract
+	 * anything.
+	 *
+	 * XXX For a lossy index, not all the quals will be removed and so we
+	 * really shouldn't subtract their costs; but detecting that seems more
+	 * expensive than it's worth.
 	 */
-	cpu_per_tuple = cpu_tuple_cost + baserel->baserestrictcost;
+	startup_cost += baserel->baserestrictcost.startup;
+	cpu_per_tuple = cpu_tuple_cost + baserel->baserestrictcost.per_tuple;
 
 	if (!is_injoin)
-		cpu_per_tuple -= cost_qual_eval(indexQuals);
+	{
+		QualCost	index_qual_cost;
+
+		cost_qual_eval(&index_qual_cost, indexQuals);
+		cpu_per_tuple -= index_qual_cost.per_tuple;
+	}
 
 	run_cost += cpu_per_tuple * tuples_fetched;
 
@@ -386,7 +395,8 @@ cost_tidscan(Path *path, Query *root,
 	run_cost += random_page_cost * ntuples;
 
 	/* CPU costs */
-	cpu_per_tuple = cpu_tuple_cost + baserel->baserestrictcost;
+	startup_cost += baserel->baserestrictcost.startup;
+	cpu_per_tuple = cpu_tuple_cost + baserel->baserestrictcost.per_tuple;
 	run_cost += cpu_per_tuple * ntuples;
 
 	path->startup_cost = startup_cost;
@@ -416,7 +426,8 @@ cost_functionscan(Path *path, Query *root, RelOptInfo *baserel)
 	cpu_per_tuple = cpu_operator_cost;
 
 	/* Add scanning CPU costs */
-	cpu_per_tuple += cpu_tuple_cost + baserel->baserestrictcost;
+	startup_cost += baserel->baserestrictcost.startup;
+	cpu_per_tuple += cpu_tuple_cost + baserel->baserestrictcost.per_tuple;
 	run_cost += cpu_per_tuple * baserel->tuples;
 
 	path->startup_cost = startup_cost;
@@ -656,6 +667,7 @@ cost_nestloop(Path *path, Query *root,
 	Cost		startup_cost = 0;
 	Cost		run_cost = 0;
 	Cost		cpu_per_tuple;
+	QualCost	restrict_qual_cost;
 	double		ntuples;
 
 	if (!enable_nestloop)
@@ -703,7 +715,9 @@ cost_nestloop(Path *path, Query *root,
 	ntuples *= outer_path->parent->rows;
 
 	/* CPU costs */
-	cpu_per_tuple = cpu_tuple_cost + cost_qual_eval(restrictlist);
+	cost_qual_eval(&restrict_qual_cost, restrictlist);
+	startup_cost += restrict_qual_cost.startup;
+	cpu_per_tuple = cpu_tuple_cost + restrict_qual_cost.per_tuple;
 	run_cost += cpu_per_tuple * ntuples;
 
 	path->startup_cost = startup_cost;
@@ -736,6 +750,7 @@ cost_mergejoin(Path *path, Query *root,
 	Cost		startup_cost = 0;
 	Cost		run_cost = 0;
 	Cost		cpu_per_tuple;
+	QualCost	restrict_qual_cost;
 	RestrictInfo *firstclause;
 	Var		   *leftvar;
 	double		outer_rows,
@@ -850,7 +865,9 @@ cost_mergejoin(Path *path, Query *root,
 		outer_path->parent->rows * inner_path->parent->rows;
 
 	/* CPU costs */
-	cpu_per_tuple = cpu_tuple_cost + cost_qual_eval(restrictlist);
+	cost_qual_eval(&restrict_qual_cost, restrictlist);
+	startup_cost += restrict_qual_cost.startup;
+	cpu_per_tuple = cpu_tuple_cost + restrict_qual_cost.per_tuple;
 	run_cost += cpu_per_tuple * ntuples;
 
 	path->startup_cost = startup_cost;
@@ -878,6 +895,7 @@ cost_hashjoin(Path *path, Query *root,
 	Cost		startup_cost = 0;
 	Cost		run_cost = 0;
 	Cost		cpu_per_tuple;
+	QualCost	restrict_qual_cost;
 	double		ntuples;
 	double		outerbytes = relation_byte_size(outer_path->parent->rows,
 											  outer_path->parent->width);
@@ -984,7 +1002,9 @@ cost_hashjoin(Path *path, Query *root,
 		outer_path->parent->rows * inner_path->parent->rows;
 
 	/* CPU costs */
-	cpu_per_tuple = cpu_tuple_cost + cost_qual_eval(restrictlist);
+	cost_qual_eval(&restrict_qual_cost, restrictlist);
+	startup_cost += restrict_qual_cost.startup;
+	cpu_per_tuple = cpu_tuple_cost + restrict_qual_cost.per_tuple;
 	run_cost += cpu_per_tuple * ntuples;
 
 	/*
@@ -1185,15 +1205,19 @@ estimate_hash_bucketsize(Query *root, Var *var, int nbuckets)
 
 /*
  * cost_qual_eval
- *		Estimate the CPU cost of evaluating a WHERE clause (once).
+ *		Estimate the CPU costs of evaluating a WHERE clause.
  *		The input can be either an implicitly-ANDed list of boolean
  *		expressions, or a list of RestrictInfo nodes.
+ *		The result includes both a one-time (startup) component,
+ *		and a per-evaluation component.
  */
-Cost
-cost_qual_eval(List *quals)
+void
+cost_qual_eval(QualCost *cost, List *quals)
 {
-	Cost		total = 0;
 	List	   *l;
+
+	cost->startup = 0;
+	cost->per_tuple = 0;
 
 	/* We don't charge any cost for the implicit ANDing at top level ... */
 
@@ -1205,31 +1229,32 @@ cost_qual_eval(List *quals)
 		 * RestrictInfo nodes contain an eval_cost field reserved for this
 		 * routine's use, so that it's not necessary to evaluate the qual
 		 * clause's cost more than once.  If the clause's cost hasn't been
-		 * computed yet, the field will contain -1.
+		 * computed yet, the field's startup value will contain -1.
 		 */
 		if (qual && IsA(qual, RestrictInfo))
 		{
 			RestrictInfo *restrictinfo = (RestrictInfo *) qual;
 
-			if (restrictinfo->eval_cost < 0)
+			if (restrictinfo->eval_cost.startup < 0)
 			{
-				restrictinfo->eval_cost = 0;
+				restrictinfo->eval_cost.startup = 0;
+				restrictinfo->eval_cost.per_tuple = 0;
 				cost_qual_eval_walker((Node *) restrictinfo->clause,
 									  &restrictinfo->eval_cost);
 			}
-			total += restrictinfo->eval_cost;
+			cost->startup += restrictinfo->eval_cost.startup;
+			cost->per_tuple += restrictinfo->eval_cost.per_tuple;
 		}
 		else
 		{
 			/* If it's a bare expression, must always do it the hard way */
-			cost_qual_eval_walker(qual, &total);
+			cost_qual_eval_walker(qual, cost);
 		}
 	}
-	return total;
 }
 
 static bool
-cost_qual_eval_walker(Node *node, Cost *total)
+cost_qual_eval_walker(Node *node, QualCost *total)
 {
 	if (node == NULL)
 		return false;
@@ -1246,43 +1271,96 @@ cost_qual_eval_walker(Node *node, Cost *total)
 	if (IsA(node, FuncExpr) ||
 		IsA(node, OpExpr) ||
 		IsA(node, DistinctExpr))
-		*total += cpu_operator_cost;
+	{
+		total->per_tuple += cpu_operator_cost;
+	}
+	else if (IsA(node, SubLink))
+	{
+		/* This routine should not be applied to un-planned expressions */
+		elog(ERROR, "cost_qual_eval: can't handle unplanned sub-select");
+	}
 	else if (IsA(node, SubPlan))
 	{
 		/*
-		 * A subplan node in an expression indicates that the
-		 * subplan will be executed on each evaluation, so charge
-		 * accordingly. (We assume that sub-selects that can be
-		 * executed as InitPlans have already been removed from
-		 * the expression.)
+		 * A subplan node in an expression typically indicates that the
+		 * subplan will be executed on each evaluation, so charge accordingly.
+		 * (Sub-selects that can be executed as InitPlans have already been
+		 * removed from the expression.)
 		 *
-		 * NOTE: this logic should agree with the estimates used by
-		 * make_subplan() in plan/subselect.c.
+		 * An exception occurs when we have decided we can implement the
+		 * subplan by hashing.
+		 *
 		 */
 		SubPlan	   *subplan = (SubPlan *) node;
 		Plan	   *plan = subplan->plan;
-		Cost		subcost;
 
-		if (subplan->subLinkType == EXISTS_SUBLINK)
+		if (subplan->useHashTable)
 		{
-			/* we only need to fetch 1 tuple */
-			subcost = plan->startup_cost +
-				(plan->total_cost - plan->startup_cost) / plan->plan_rows;
-		}
-		else if (subplan->subLinkType == ALL_SUBLINK ||
-				 subplan->subLinkType == ANY_SUBLINK)
-		{
-			/* assume we need 50% of the tuples */
-			subcost = plan->startup_cost +
-				0.50 * (plan->total_cost - plan->startup_cost);
-			/* XXX what if subplan has been materialized? */
+			/*
+			 * If we are using a hash table for the subquery outputs, then
+			 * the cost of evaluating the query is a one-time cost.
+			 * We charge one cpu_operator_cost per tuple for the work of
+			 * loading the hashtable, too.
+			 */
+			total->startup += plan->total_cost +
+				cpu_operator_cost * plan->plan_rows;
+			/*
+			 * The per-tuple costs include the cost of evaluating the
+			 * lefthand expressions, plus the cost of probing the hashtable.
+			 * Recursion into the exprs list will handle the lefthand
+			 * expressions properly, and will count one cpu_operator_cost
+			 * for each comparison operator.  That is probably too low for
+			 * the probing cost, but it's hard to make a better estimate,
+			 * so live with it for now.
+			 */
 		}
 		else
 		{
-			/* assume we need all tuples */
-			subcost = plan->total_cost;
+			/*
+			 * Otherwise we will be rescanning the subplan output on each
+			 * evaluation.  We need to estimate how much of the output
+			 * we will actually need to scan.  NOTE: this logic should
+			 * agree with the estimates used by make_subplan() in
+			 * plan/subselect.c.
+			 */
+			Cost	plan_run_cost = plan->total_cost - plan->startup_cost;
+
+			if (subplan->subLinkType == EXISTS_SUBLINK)
+			{
+				/* we only need to fetch 1 tuple */
+				total->per_tuple += plan_run_cost / plan->plan_rows;
+			}
+			else if (subplan->subLinkType == ALL_SUBLINK ||
+					 subplan->subLinkType == ANY_SUBLINK)
+			{
+				/* assume we need 50% of the tuples */
+				total->per_tuple += 0.50 * plan_run_cost;
+				/* also charge a cpu_operator_cost per row examined */
+				total->per_tuple += 0.50 * plan->plan_rows * cpu_operator_cost;
+			}
+			else
+			{
+				/* assume we need all tuples */
+				total->per_tuple += plan_run_cost;
+			}
+			/*
+			 * Also account for subplan's startup cost.
+			 * If the subplan is uncorrelated or undirect correlated,
+			 * AND its topmost node is a Sort or Material node, assume
+			 * that we'll only need to pay its startup cost once;
+			 * otherwise assume we pay the startup cost every time.
+			 */
+			if (subplan->parParam == NIL &&
+				(IsA(plan, Sort) ||
+				 IsA(plan, Material)))
+			{
+				total->startup += plan->startup_cost;
+			}
+			else
+			{
+				total->per_tuple += plan->startup_cost;
+			}
 		}
-		*total += subcost;
 	}
 
 	return expression_tree_walker(node, cost_qual_eval_walker,
@@ -1388,7 +1466,7 @@ set_baserel_size_estimates(Query *root, RelOptInfo *rel)
 
 	rel->rows = temp;
 
-	rel->baserestrictcost = cost_qual_eval(rel->baserestrictinfo);
+	cost_qual_eval(&rel->baserestrictcost, rel->baserestrictinfo);
 
 	set_rel_width(root, rel);
 }
@@ -1533,7 +1611,7 @@ set_function_size_estimates(Query *root, RelOptInfo *rel)
 
 	rel->rows = temp;
 
-	rel->baserestrictcost = cost_qual_eval(rel->baserestrictinfo);
+	cost_qual_eval(&rel->baserestrictcost, rel->baserestrictinfo);
 
 	set_rel_width(root, rel);
 }

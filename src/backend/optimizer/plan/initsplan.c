@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/optimizer/plan/initsplan.c,v 1.79 2002/12/17 01:18:25 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/optimizer/plan/initsplan.c,v 1.80 2003/01/12 22:35:29 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -396,7 +396,7 @@ distribute_qual_to_rels(Query *root, Node *clause,
 
 	restrictinfo->clause = (Expr *) clause;
 	restrictinfo->subclauseindices = NIL;
-	restrictinfo->eval_cost = -1;		/* not computed until needed */
+	restrictinfo->eval_cost.startup = -1; /* not computed until needed */
 	restrictinfo->this_selec = -1;		/* not computed until needed */
 	restrictinfo->mergejoinoperator = InvalidOid;
 	restrictinfo->left_sortop = InvalidOid;

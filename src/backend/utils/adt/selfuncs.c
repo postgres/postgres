@@ -15,7 +15,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/selfuncs.c,v 1.124 2002/12/17 01:18:35 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/selfuncs.c,v 1.125 2003/01/12 22:35:29 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -3757,6 +3757,7 @@ genericcostestimate(Query *root, RelOptInfo *rel,
 {
 	double		numIndexTuples;
 	double		numIndexPages;
+	QualCost	index_qual_cost;
 	List	   *selectivityQuals = indexQuals;
 
 	/*
@@ -3826,9 +3827,10 @@ genericcostestimate(Query *root, RelOptInfo *rel,
 	 * tuple. All the costs are assumed to be paid incrementally during
 	 * the scan.
 	 */
-	*indexStartupCost = 0;
+	cost_qual_eval(&index_qual_cost, indexQuals);
+	*indexStartupCost = index_qual_cost.startup;
 	*indexTotalCost = numIndexPages +
-		(cpu_index_tuple_cost + cost_qual_eval(indexQuals)) * numIndexTuples;
+		(cpu_index_tuple_cost + index_qual_cost.per_tuple) * numIndexTuples;
 
 	/*
 	 * Generic assumption about index correlation: there isn't any.
