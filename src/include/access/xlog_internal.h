@@ -11,7 +11,7 @@
  * Portions Copyright (c) 1996-2004, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/include/access/xlog_internal.h,v 1.4 2004/08/29 05:06:55 momjian Exp $
+ * $PostgreSQL: pgsql/src/include/access/xlog_internal.h,v 1.5 2004/08/29 16:34:48 tgl Exp $
  */
 #ifndef XLOG_INTERNAL_H
 #define XLOG_INTERNAL_H
@@ -58,7 +58,7 @@ typedef struct XLogContRecord
 /*
  * Each page of XLOG file has a header like this:
  */
-#define XLOG_PAGE_MAGIC 0xD05B	/* can be used as WAL version indicator */
+#define XLOG_PAGE_MAGIC 0xD05C	/* can be used as WAL version indicator */
 
 typedef struct XLogPageHeaderData
 {
@@ -202,13 +202,6 @@ typedef XLogLongPageHeaderData *XLogLongPageHeader;
 	snprintf(path, MAXPGPATH, "%s/%08X%08X%08X.%08X.backup", XLogDir, tli, log, seg, offset)
 
 extern char XLogDir[MAXPGPATH];
-
-/*
- * _INTL_MAXLOGRECSZ: max space needed for a record including header and
- * any backup-block data.
- */
-#define _INTL_MAXLOGRECSZ	(SizeOfXLogRecord + MAXLOGRECSZ + \
-							 XLR_MAX_BKP_BLOCKS * (sizeof(BkpBlock) + BLCKSZ))
 
 
 /*

@@ -23,7 +23,7 @@
  * Portions Copyright (c) 1996-2004, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/bin/pg_resetxlog/pg_resetxlog.c,v 1.23 2004/08/29 05:06:54 momjian Exp $
+ * $PostgreSQL: pgsql/src/bin/pg_resetxlog/pg_resetxlog.c,v 1.24 2004/08/29 16:34:48 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -645,8 +645,6 @@ WriteEmptyXLOG(void)
 	record = (XLogRecord *) ((char *) page + SizeOfXLogLongPHD);
 	record->xl_prev.xlogid = 0;
 	record->xl_prev.xrecoff = 0;
-	record->xl_xact_prev.xlogid = 0;
-	record->xl_xact_prev.xrecoff = 0;
 	record->xl_xid = InvalidTransactionId;
 	record->xl_len = sizeof(CheckPoint);
 	record->xl_info = XLOG_CHECKPOINT_SHUTDOWN;
