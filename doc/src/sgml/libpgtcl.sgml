@@ -67,6 +67,7 @@
   <ROW>
     <ENTRY><function>pg_execute</function></ENTRY>
     <ENTRY>send a query and optionally loop over the results</ENTRY>
+  </ROW>
   <ROW>
     <ENTRY><function>pg_listen</function></ENTRY>
     <ENTRY>establish a callback for NOTIFY messages</ENTRY>
