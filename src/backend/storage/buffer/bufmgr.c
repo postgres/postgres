@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/storage/buffer/bufmgr.c,v 1.72 2000/01/26 05:56:50 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/storage/buffer/bufmgr.c,v 1.73 2000/02/17 05:00:38 inoue Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -2269,8 +2269,7 @@ extern void	AbortBufferIO(void)
 		}
 		else
 		{
-			Assert(!(buf->flags & BM_DIRTY));
-			/* Assert(!(buf->flags & BM_IO_ERROR)); */
+			Assert((buf->flags & BM_DIRTY) != 0);
 			if (buf->flags & BM_IO_ERROR)
 			{
 				elog(NOTICE, "!!! write error seems permanent !!!");
