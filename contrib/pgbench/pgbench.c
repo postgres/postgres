@@ -1,5 +1,5 @@
 /*
- * $Header: /cvsroot/pgsql/contrib/pgbench/pgbench.c,v 1.6 2000/09/29 13:53:29 petere Exp $
+ * $Header: /cvsroot/pgsql/contrib/pgbench/pgbench.c,v 1.7 2000/11/01 00:45:46 ishii Exp $
  *
  * pgbench: a simple TPC-B like benchmark program for PostgreSQL
  * written by Tatsuo Ishii
@@ -512,8 +512,8 @@ main(int argc, char **argv)
 				opterr,
 				optopt;
 	int			c;
-	char	   *pghost = "";
-	char	   *pgport = "";
+	char	   *pghost = NULL;
+	char	   *pgport = NULL;
 	char	   *dbName;
 	int			is_init_mode = 0;		/* initialize mode? */
 	int			is_no_vacuum = 0;		/* no vacuum at all before
