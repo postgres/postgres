@@ -22,7 +22,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/bin/pg_dump/pg_dump.c,v 1.245 2002/04/05 00:31:31 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/bin/pg_dump/pg_dump.c,v 1.246 2002/04/05 11:51:12 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -77,6 +77,7 @@ typedef enum _formatLiteralOptions
 static void dumpComment(Archive *fout, const char *target, const char *oid,
 			const char *classname, int subid,
 			const char *((*deps)[]));
+static void dumpOneDomain(Archive *fout, TypeInfo *tinfo);
 static void dumpSequence(Archive *fout, TableInfo tbinfo, const bool schemaOnly, const bool dataOnly);
 static void dumpACL(Archive *fout, TableInfo tbinfo);
 static void dumpTriggers(Archive *fout, const char *tablename,
@@ -90,6 +91,7 @@ static void dumpOneFunc(Archive *fout, FuncInfo *finfo, int i,
 static Oid	findLastBuiltinOid_V71(const char *);
 static Oid	findLastBuiltinOid_V70(void);
 static void setMaxOid(Archive *fout);
+
 
 static void AddAcl(char *aclbuf, const char *keyword);
 static char *GetPrivileges(Archive *AH, const char *s);
@@ -1352,6 +1354,7 @@ getTypes(int *numTypes)
 	int			i_typisdefined;
 	int			i_usename;
 	int			i_typedefn;
+	int			i_typtype;
 
 	/* find all base types */
 
@@ -1368,7 +1371,7 @@ getTypes(int *numTypes)
 		  "typinput, typoutput, typreceive, typsend, typelem, typdelim, "
 						  "typdefault, typrelid, typalign, 'p'::char as typstorage, typbyval, typisdefined, "
 						  "(select usename from pg_user where typowner = usesysid) as usename, "
-						  "typname as typedefn "
+						  "typname as typedefn, typtype "
 						  "from pg_type");
 	}
 	else
@@ -1377,7 +1380,7 @@ getTypes(int *numTypes)
 		  "typinput, typoutput, typreceive, typsend, typelem, typdelim, "
 						  "typdefault, typrelid, typalign, typstorage, typbyval, typisdefined, "
 						  "(select usename from pg_user where typowner = usesysid) as usename, "
-						  "format_type(pg_type.oid, NULL) as typedefn "
+						  "format_type(pg_type.oid, NULL) as typedefn, typtype "
 						  "from pg_type");
 	}
 
@@ -1412,6 +1415,7 @@ getTypes(int *numTypes)
 	i_typisdefined = PQfnumber(res, "typisdefined");
 	i_usename = PQfnumber(res, "usename");
 	i_typedefn = PQfnumber(res, "typedefn");
+	i_typtype = PQfnumber(res, "typtype");
 
 	for (i = 0; i < ntups; i++)
 	{
@@ -1435,6 +1439,7 @@ getTypes(int *numTypes)
 		tinfo[i].typstorage = strdup(PQgetvalue(res, i, i_typstorage));
 		tinfo[i].usename = strdup(PQgetvalue(res, i, i_usename));
 		tinfo[i].typedefn = strdup(PQgetvalue(res, i, i_typedefn));
+		tinfo[i].typtype = strdup(PQgetvalue(res, i, i_typtype));
 
 		if (strlen(tinfo[i].usename) == 0)
 			write_msg(NULL, "WARNING: owner of data type %s appears to be invalid\n",
@@ -3189,6 +3194,88 @@ dumpDBComment(Archive *fout)
 }
 
 /*
+ * dumpOneDomain
+ *    wites out to fout the queries to recrease a user-defined domains
+ *    as requested by dumpTypes
+ */
+void
+dumpOneDomain(Archive *fout, TypeInfo *tinfo)
+{
+	PQExpBuffer q = createPQExpBuffer();
+	PQExpBuffer delq = createPQExpBuffer();
+
+	PGresult   *res;
+	PQExpBuffer query = createPQExpBuffer();
+	int			ntups;
+	const char *((*deps)[]);
+	int			depIdx = 0;
+
+
+	deps = malloc(sizeof(char *) * 10);
+
+	/* Fetch domain specific details */
+	resetPQExpBuffer(query);
+	appendPQExpBuffer(query, "SELECT typnotnull, "
+							 "format_type(typbasetype, typtypmod) as typdefn, "
+							 "typbasetype "
+							 "FROM pg_type "
+							 "WHERE typname = '%s'",
+							 tinfo->typname);
+
+	res = PQexec(g_conn, query->data);
+	if (!res ||
+		PQresultStatus(res) != PGRES_TUPLES_OK)
+	{
+		write_msg(NULL, "query to obtain domain information failed: %s", PQerrorMessage(g_conn));
+		exit_nicely();
+	}
+
+	/* Expecting a single result only */
+	ntups = PQntuples(res);
+	if (ntups != 1)
+		write_msg(NULL, "Domain %s non-existant.", fmtId(tinfo->typname, force_quotes));
+
+
+	/* Drop the old copy */
+	resetPQExpBuffer(delq);
+	appendPQExpBuffer(delq, "DROP DOMAIN %s RESTRICT;\n", fmtId(tinfo->typname, force_quotes));
+
+	resetPQExpBuffer(q);
+	appendPQExpBuffer(q,
+					  "CREATE DOMAIN %s AS %s",
+					  fmtId(tinfo->typname, force_quotes),
+					  PQgetvalue(res, 0, PQfnumber(res, "typdefn"))
+					  );
+
+	/* Depends on the base type */
+	(*deps)[depIdx++] = strdup(PQgetvalue(res, 0, PQfnumber(res, "typbasetype")));
+
+	if (PQgetvalue(res, 0, PQfnumber(res, "typnotnull"))[0] == 't')
+		appendPQExpBuffer(q, " NOT NULL");
+
+	if (tinfo->typdefault)
+	{
+		appendPQExpBuffer(q,
+						  " DEFAULT %s",
+						  tinfo->typdefault);
+	}
+
+	appendPQExpBuffer(q, ";\n");
+
+
+	(*deps)[depIdx++] = NULL;		/* End of List */
+
+	ArchiveEntry(fout, tinfo->oid, tinfo->typname, "DOMAIN", deps,
+				 q->data, delq->data, "", tinfo->usename, NULL, NULL);
+
+	/*** Dump Domain Comments ***/
+	resetPQExpBuffer(q);
+
+	appendPQExpBuffer(q, "DOMAIN %s", fmtId(tinfo->typname, force_quotes));
+	dumpComment(fout, q->data, tinfo->oid, "pg_type", 0, NULL);
+}
+
+/*
  * dumpTypes
  *	  writes out to fout the queries to recreate all the user-defined types
  *
@@ -3222,6 +3309,13 @@ dumpTypes(Archive *fout, FuncInfo *finfo, int numFuncs,
 		if ((tinfo[i].typname[0] == '_') &&
 			(strcmp(tinfo[i].typinput, "array_in") == 0))
 			continue;
+
+		/* Dump out domains as we run across them */
+		if (strcmp(tinfo[i].typtype, "d") == 0) {
+			dumpOneDomain(fout, &tinfo[i]);
+			continue;
+		}
+
 
 		deps = malloc(sizeof(char *) * 10);
 		depIdx = 0;
@@ -3317,6 +3411,8 @@ dumpTypes(Archive *fout, FuncInfo *finfo, int numFuncs,
 
 		ArchiveEntry(fout, tinfo[i].oid, tinfo[i].typname, "TYPE", deps,
 				  q->data, delq->data, "", tinfo[i].usename, NULL, NULL);
+
+
 
 		/*** Dump Type Comments ***/
 
@@ -4292,6 +4388,36 @@ dumpTables(Archive *fout, TableInfo *tblinfo, int numTables,
 
 					appendPQExpBuffer(q, "%s",
 									  tblinfo[i].check_expr[k]);
+				}
+
+				/* Primary Key */
+				if (tblinfo[i].pkIndexOid != NULL)
+				{
+					PQExpBuffer consDef;
+
+					/* Find the corresponding index */
+					for (k = 0; k < numIndexes; k++)
+					{
+						if (strcmp(indinfo[k].indexreloid,
+								   tblinfo[i].pkIndexOid) == 0)
+							break;
+					}
+
+					if (k >= numIndexes)
+					{
+						write_msg(NULL, "dumpTables(): failed sanity check, could not find index (%s) for primary key constraint\n",
+								  tblinfo[i].pkIndexOid);
+						exit_nicely();
+					}
+
+					consDef = getPKconstraint(&tblinfo[i], &indinfo[k]);
+
+					if ((actual_atts + tblinfo[i].ncheck) > 0)
+						appendPQExpBuffer(q, ",\n\t");
+
+					appendPQExpBuffer(q, "%s", consDef->data);
+
+					destroyPQExpBuffer(consDef);
 				}
 
 				/*
