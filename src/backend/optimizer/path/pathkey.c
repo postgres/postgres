@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/optimizer/path/Attic/pathkey.c,v 1.2 1999/02/19 02:05:15 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/optimizer/path/Attic/pathkey.c,v 1.3 1999/02/19 05:18:05 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -28,7 +28,7 @@
 
 static int match_pathkey_joinkeys(List *pathkey, List *joinkeys,
 						int outer_or_inner);
-static bool every_func(List *joinkeys, List *pathkey,
+static bool joinkeys_pathkeys_match(List *joinkeys, List *pathkey,
 		   				int outer_or_inner);
 static List *new_join_pathkey(List *subkeys, List *considered_subkeys,
 					 	List *join_rel_tlist, List *joinclauses);
@@ -40,7 +40,7 @@ static List *new_matching_subkeys(Var *subkey, List *considered_subkeys,
  ****************************************************************************/
 
 /*
- * match_pathkeys_joinkeys
+ * order_joinkeys_by_pathkeys
  *	  Attempts to match the keys of a path against the keys of join clauses.
  *	  This is done by looking for a matching join key in 'joinkeys' for
  *	  every path key in the list 'path.keys'. If there is a matching join key
@@ -69,7 +69,7 @@ static List *new_matching_subkeys(Var *subkey, List *considered_subkeys,
  * in matchedJoinClausesPtr.  - ay 11/94
  */
 List *
-match_pathkeys_joinkeys(List *pathkeys,
+order_joinkeys_by_pathkeys(List *pathkeys,
 						List *joinkeys,
 						List *joinclauses,
 						int outer_or_inner,
@@ -92,21 +92,18 @@ match_pathkeys_joinkeys(List *pathkeys,
 			List	   *xjoinkey = nth(matched_joinkey_index, joinkeys);
 			List	   *joinclause = nth(matched_joinkey_index, joinclauses);
 
-			matched_joinkeys = lcons(xjoinkey, matched_joinkeys);
-			matched_joinclauses = lcons(joinclause, matched_joinclauses);
-
-			joinkeys = LispRemove(xjoinkey, joinkeys);
+			matched_joinkeys = lappend(matched_joinkeys, xjoinkey);
+			matched_joinclauses = lappend(matched_joinclauses, joinclause);
 		}
 		else
+		{
+			*matchedJoinClausesPtr = NIL;
 			return NIL;
-
+		}
 	}
-	if (matched_joinkeys == NULL ||
-		length(matched_joinkeys) != length(pathkeys))
-		return NIL;
 
-	*matchedJoinClausesPtr = nreverse(matched_joinclauses);
-	return nreverse(matched_joinkeys);
+	*matchedJoinClausesPtr = matched_joinclauses;
+	return matched_joinkeys;
 }
 
 
@@ -144,7 +141,7 @@ match_pathkey_joinkeys(List *pathkey,
 
 
 /*
- * match_paths_joinkeys
+ * get_cheapest_path_for_joinkeys
  *	  Attempts to find a path in 'paths' whose keys match a set of join
  *	  keys 'joinkeys'.	To match,
  *	  1. the path node ordering must equal 'ordering'.
@@ -165,31 +162,27 @@ match_pathkey_joinkeys(List *pathkey,
  *	Find the cheapest path that matches the join keys
  */
 Path *
-match_paths_joinkeys(List *joinkeys,
-					 PathOrder *ordering,
-					 List *paths,
-					 int outer_or_inner)
+get_cheapest_path_for_joinkeys(List *joinkeys,
+								 PathOrder *ordering,
+								 List *paths,
+								 int outer_or_inner)
 {
 	Path	   *matched_path = NULL;
-	bool		key_match = false;
 	List	   *i = NIL;
 
 	foreach(i, paths)
 	{
 		Path	   *path = (Path *) lfirst(i);
-		int			better_sort;
+		int			better_sort, better_key;
 		
-		key_match = every_func(joinkeys, path->pathkeys, outer_or_inner);
-
-		if (pathorder_match(ordering, path->pathorder, &better_sort) &&
-			better_sort == 0 &&
-			length(joinkeys) == length(path->pathkeys) && key_match)
+		if (joinkeys_pathkeys_match(joinkeys, path->pathkeys, outer_or_inner) &&
+			length(joinkeys) == length(path->pathkeys) &&
+			pathorder_match(ordering, path->pathorder, &better_sort) &&
+			better_sort == 0)
 		{
 			if (matched_path)
-			{
 				if (path->path_cost < matched_path->path_cost)
 					matched_path = path;
-			}
 			else
 				matched_path = path;
 		}
@@ -253,10 +246,10 @@ extract_path_keys(List *joinkeys,
 
 
 /*
- * every_func
+ * joinkeys_pathkeys_match
  */
 static bool
-every_func(List *joinkeys, List *pathkey, int outer_or_inner)
+joinkeys_pathkeys_match(List *joinkeys, List *pathkey, int outer_or_inner)
 {
 	JoinKey    *xjoinkey;
 	Var		   *temp;

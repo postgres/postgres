@@ -7,7 +7,9 @@ The optimizer generates optimial query plans by doing several steps:
 it.  Find each way of accessing the relation, called a Path, including
 sequential and index scans, and add it to RelOptInfo.pathlist.  Also
 create RelOptInfo.joininfo that lists all the joins that involve this
-relation.
+relation.  For example, the WHERE clause "tab1.col1 = tab2.col1"
+generates a JoinInfo for tab1 listing tab2 as an unjoined relation, and
+tab2's joininfo shows tab1 as an unjoined relation.
 
 2) Join each RelOptInfo to other RelOptInfo as specified in
 RelOptInfo.joininfo.  At this point each RelOptInfo is a single

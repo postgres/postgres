@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/optimizer/path/joinpath.c,v 1.29 1999/02/18 19:58:52 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/optimizer/path/joinpath.c,v 1.30 1999/02/19 05:18:04 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -79,8 +79,8 @@ update_rels_pathlist_for_joins(Query *root, List *joinrels)
 		List	   *pathlist = NIL;
 
 		/* flatten out relids later in this function */
-		innerrelids = lsecond(joinrel->relids);
 		outerrelids = lfirst(joinrel->relids);
+		innerrelids = lsecond(joinrel->relids);
 
 		/*
 		 * base relation id is an integer and join relation relid is a
@@ -123,7 +123,7 @@ update_rels_pathlist_for_joins(Query *root, List *joinrels)
 											  outerrel,
 											  innerrel,
 											  outerrel->pathlist,
-										 (Path *) innerrel->cheapestpath,
+											  innerrel->cheapestpath,
 											  bestinnerjoin,
 											  mergeinfo_list));
 
@@ -176,7 +176,6 @@ best_innerjoin(List *join_paths, Relids outer_relids)
 			&& ((cheapest == NULL ||
 				 path_is_cheaper((Path *) lfirst(join_path), cheapest))))
 		{
-
 			cheapest = (Path *) lfirst(join_path);
 		}
 	}
@@ -293,7 +292,7 @@ match_unsorted_outer(RelOptInfo *joinrel,
 		List	   *clauses = NIL;
 		List	   *matchedJoinKeys = NIL;
 		List	   *matchedJoinClauses = NIL;
-		MergeInfo  *xmergeinfo = (MergeInfo *) NULL;
+		MergeInfo  *xmergeinfo = NULL;
 
 		outerpath = (Path *) lfirst(i);
 
@@ -309,9 +308,8 @@ match_unsorted_outer(RelOptInfo *joinrel,
 		if (clauses)
 		{
 			List	   *jmkeys = xmergeinfo->jmethod.jmkeys;
-			List	   *clauses = xmergeinfo->jmethod.clauses;
 
-			matchedJoinKeys = match_pathkeys_joinkeys(outerpath->pathkeys,
+			matchedJoinKeys = order_joinkeys_by_pathkeys(outerpath->pathkeys,
 														jmkeys,
 														clauses,
 														OUTER,
@@ -339,19 +337,18 @@ match_unsorted_outer(RelOptInfo *joinrel,
 		{
 			bool		path_is_cheaper_than_sort;
 			List	   *varkeys = NIL;
-			Path	   *mergeinnerpath = match_paths_joinkeys(matchedJoinKeys,
-								 outerpath_ordering,
-								 innerrel->pathlist,
-								 INNER);
+			Path	   *mergeinnerpath = get_cheapest_path_for_joinkeys(
+														 matchedJoinKeys,
+														 outerpath_ordering,
+														 innerrel->pathlist,
+														 INNER);
 
 			/* Should we use the mergeinner, or sort the cheapest inner? */
 			path_is_cheaper_than_sort = (bool) (mergeinnerpath &&
-						(mergeinnerpath->path_cost <
-						 (cheapest_inner->path_cost +
-						  cost_sort(matchedJoinKeys,
-									innerrel->size,
-									innerrel->width,
-									false))));
+				(mergeinnerpath->path_cost <
+				 (cheapest_inner->path_cost +
+				  cost_sort(matchedJoinKeys, innerrel->size,
+							innerrel->width, false))));
 			if (!path_is_cheaper_than_sort)
 			{
 				varkeys = extract_path_keys(matchedJoinKeys,
@@ -451,11 +448,10 @@ match_unsorted_inner(RelOptInfo *joinrel,
 		if (clauses)
 		{
 			List	   *jmkeys = xmergeinfo->jmethod.jmkeys;
-			List	   *cls = xmergeinfo->jmethod.clauses;
 
-			matchedJoinKeys = match_pathkeys_joinkeys(innerpath->pathkeys,
+			matchedJoinKeys = order_joinkeys_by_pathkeys(innerpath->pathkeys,
 										jmkeys,
-										cls,
+										clauses,
 										INNER,
 										&matchedJoinClauses);
 		}
