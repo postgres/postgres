@@ -1338,6 +1338,12 @@ Fri Feb 14 14:14:25 CET 2003
 
 	- Synced parser and keyword file.
 	- More work on Informix compatibility. 
+
+
+Wed Feb 19 13:39:29 CET 2003
+
+	- Added DATABASE command as alias to CONNECT TO.
+	- Fixed struct parsing bug.
 	- Set ecpg version to 2.12.0.
 	- Set library to 3.4.2.
 

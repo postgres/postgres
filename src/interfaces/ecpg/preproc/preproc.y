@@ -1,4 +1,4 @@
-/* $Header: /cvsroot/pgsql/src/interfaces/ecpg/preproc/Attic/preproc.y,v 1.209 2003/02/17 14:06:40 meskes Exp $ */
+/* $Header: /cvsroot/pgsql/src/interfaces/ecpg/preproc/Attic/preproc.y,v 1.210 2003/02/19 12:36:39 meskes Exp $ */
 
 /* Copyright comment */
 %{
@@ -4442,6 +4442,7 @@ enum_definition: '{' c_list '}'
 struct_type: s_struct '{' variable_declarations '}'
 		{
 			ECPGfree_struct_member(struct_member_list[struct_level]);
+			struct_member_list[struct_level] = NULL;
 			free(actual_storage[struct_level--]);
 			$$ = cat_str(4, $1, make_str("{"), $3, make_str("}"));
 		}
@@ -4450,6 +4451,7 @@ struct_type: s_struct '{' variable_declarations '}'
 union_type: s_union '{' variable_declarations '}'
 		{
 			ECPGfree_struct_member(struct_member_list[struct_level]);
+			struct_member_list[struct_level] = NULL;
 			free(actual_storage[struct_level--]);
 			$$ = cat_str(4, $1, make_str("{"), $3, make_str("}"));
 		}
