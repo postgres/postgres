@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/xfunc.sgml,v 1.43 2001/11/14 22:14:22 tgl Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/xfunc.sgml,v 1.44 2001/11/18 21:28:00 tgl Exp $
 -->
 
  <chapter id="xfunc">
@@ -711,7 +711,7 @@ CREATE FUNCTION square_root(double precision) RETURNS double precision
 	<row>
 	 <entry><type>box</type></entry>
 	 <entry><type>BOX*</type></entry>
-	 <entry><filename>utils/geo-decls.h</filename></entry>
+	 <entry><filename>utils/geo_decls.h</filename></entry>
 	</row>
 	<row>
 	 <entry><type>bytea</type></entry>
@@ -771,7 +771,7 @@ CREATE FUNCTION square_root(double precision) RETURNS double precision
 	<row>
 	 <entry><type>lseg</type></entry>
 	 <entry><type>LSEG*</type></entry>
-	 <entry><filename>utils/geo-decls.h</filename></entry>
+	 <entry><filename>utils/geo_decls.h</filename></entry>
 	</row>
 	<row>
 	 <entry><type>name</type></entry>
@@ -791,12 +791,12 @@ CREATE FUNCTION square_root(double precision) RETURNS double precision
 	<row>
 	 <entry><type>path</type></entry>
 	 <entry><type>PATH*</type></entry>
-	 <entry><filename>utils/geo-decls.h</filename></entry>
+	 <entry><filename>utils/geo_decls.h</filename></entry>
 	</row>
 	<row>
 	 <entry><type>point</type></entry>
 	 <entry><type>POINT*</type></entry>
-	 <entry><filename>utils/geo-decls.h</filename></entry>
+	 <entry><filename>utils/geo_decls.h</filename></entry>
 	</row>
 	<row>
 	 <entry><type>regproc</type></entry>

@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/libpq.sgml,v 1.75 2001/11/12 19:19:39 petere Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/libpq.sgml,v 1.76 2001/11/18 21:28:00 tgl Exp $
 -->
 
  <chapter id="libpq">
@@ -2483,7 +2483,7 @@ main()
  */
 #include &lt;stdio.h&gt;
 #include "libpq-fe.h"
-#include "utils/geo-decls.h"    /* for the POLYGON type */
+#include "utils/geo_decls.h"    /* for the POLYGON type */
 
 void
 exit_nicely(PGconn *conn)
