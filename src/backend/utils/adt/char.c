@@ -9,7 +9,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/char.c,v 1.30 2001/01/24 19:43:13 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/char.c,v 1.31 2001/05/28 21:58:32 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -23,6 +23,8 @@
 
 /*
  *		charin			- converts "x" to 'x'
+ *
+ * Note that an empty input string will implicitly be converted to \0.
  */
 Datum
 charin(PG_FUNCTION_ARGS)
@@ -34,6 +36,10 @@ charin(PG_FUNCTION_ARGS)
 
 /*
  *		charout			- converts 'x' to "x"
+ *
+ * Note that if the char value is \0, the resulting string will appear
+ * to be empty (null-terminated after zero characters).  So this is the
+ * inverse of the charin() function for such data.
  */
 Datum
 charout(PG_FUNCTION_ARGS)
@@ -147,13 +153,24 @@ chardiv(PG_FUNCTION_ARGS)
 	PG_RETURN_CHAR((int8) arg1 / (int8) arg2);
 }
 
+
 Datum
 text_char(PG_FUNCTION_ARGS)
 {
 	text	   *arg1 = PG_GETARG_TEXT_P(0);
+	char		result;
 
-	/* XXX what if arg1 has length zero? */
-	PG_RETURN_CHAR(*(VARDATA(arg1)));
+	/*
+	 * An empty input string is converted to \0 (for consistency with charin).
+	 * If the input is longer than one character, the excess data is silently
+	 * discarded.
+	 */
+	if (VARSIZE(arg1) > VARHDRSZ)
+		result = *(VARDATA(arg1));
+	else
+		result = '\0';
+
+	PG_RETURN_CHAR(result);
 }
 
 Datum
@@ -162,8 +179,19 @@ char_text(PG_FUNCTION_ARGS)
 	char		arg1 = PG_GETARG_CHAR(0);
 	text	   *result = palloc(VARHDRSZ + 1);
 
-	VARATT_SIZEP(result) = VARHDRSZ + 1;
-	*(VARDATA(result)) = arg1;
+	/*
+	 * Convert \0 to an empty string, for consistency with charout (and
+	 * because the text stuff doesn't like embedded nulls all that well).
+	 */
+	if (arg1 != '\0')
+	{
+		VARATT_SIZEP(result) = VARHDRSZ + 1;
+		*(VARDATA(result)) = arg1;
+	}
+	else
+	{
+		VARATT_SIZEP(result) = VARHDRSZ;
+	}
 
 	PG_RETURN_TEXT_P(result);
 }
