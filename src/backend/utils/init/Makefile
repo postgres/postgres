@@ -4,7 +4,7 @@
 #    Makefile for utils/init
 #
 # IDENTIFICATION
-#    $Header: /cvsroot/pgsql/src/backend/utils/init/Makefile,v 1.2 1996/11/09 06:23:41 momjian Exp $
+#    $Header: /cvsroot/pgsql/src/backend/utils/init/Makefile,v 1.3 1996/11/12 06:46:40 bryanh Exp $
 #
 #-------------------------------------------------------------------------
 
@@ -20,7 +20,7 @@ CFLAGS += $(INCLUDE_OPT)
 CFLAGS += -DPOSTGRESDIR='"$(POSTGRESDIR)"' -DPGDATADIR='"$(DATADIR)"' \
           -DPOSTPORT='"$(POSTPORT)"'
 
-OBJS = enbl.o findbe.o globals.o magic.o miscinit.o postinit.o
+OBJS = enbl.o findbe.o globals.o miscinit.o postinit.o
 
 all: SUBSYS.o
 

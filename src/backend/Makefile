@@ -34,7 +34,7 @@
 #
 #
 # IDENTIFICATION
-#    $Header: /cvsroot/pgsql/src/backend/Makefile,v 1.14 1996/11/03 09:05:30 bryanh Exp $
+#    $Header: /cvsroot/pgsql/src/backend/Makefile,v 1.15 1996/11/12 06:46:04 bryanh Exp $
 #
 #-------------------------------------------------------------------------
 
@@ -131,7 +131,8 @@ OBJS = access/SUBSYS.o bootstrap/SUBSYS.o catalog/SUBSYS.o  \
        lib/SUBSYS.o libpq/SUBSYS.o main/SUBSYS.o nodes/SUBSYS.o \
        optimizer/SUBSYS.o parser/SUBSYS.o port/SUBSYS.o \
        postmaster/SUBSYS.o regex/SUBSYS.o rewrite/SUBSYS.o \
-       storage/SUBSYS.o tcop/SUBSYS.o utils/SUBSYS.o
+       storage/SUBSYS.o tcop/SUBSYS.o utils/SUBSYS.o \
+       ../utils/version.o
 
 ifdef TIOGA
 OBJS += tioga/SUBSYS.o
@@ -139,7 +140,7 @@ endif
 
 all: postgres global1.bki.source local1_template1.bki.source
 
-postgres: postgres_group1 postgres_group2 postgres_group3 postgres_group4
+postgres: postgres_group1 postgres_group2 postgres_group3 postgres_group4 
 	$(CC) $(LDFLAGS) -o postgres $(OBJS) $(LDADD)
 
 postgres_group1:
@@ -167,6 +168,7 @@ postgres_group4:
 ifdef TIOGA
 	$(MAKE) -C tioga      all   
 endif
+	$(MAKE) -C ../utils version.o        
 
 global1.bki.source local1_template1.bki.source: 
 	$(MAKE) -C catalog $@

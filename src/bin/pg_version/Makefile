@@ -7,20 +7,34 @@
 #
 #
 # IDENTIFICATION
-#    $Header: /cvsroot/pgsql/src/bin/pg_version/Attic/Makefile,v 1.1.1.1 1996/07/09 06:22:14 scrappy Exp $
+#    $Header: /cvsroot/pgsql/src/bin/pg_version/Attic/Makefile,v 1.2 1996/11/12 06:46:54 bryanh Exp $
 #
 #-------------------------------------------------------------------------
 
-PROG=	pg_version
-
-MKDIR=	../../mk
-include $(MKDIR)/postgres.mk
+SRCDIR= ../..
 include ../Makefile.global
+include ../../Makefile.global
 
-VPATH:=$(VPATH):$(srcdir)/backend/utils/init
-SRCS=	pg_version.c magic.c
+OBJS= pg_version.o ../../utils/version.o
 
-CFLAGS+= -I$(srcdir)/backend/port/$(PORTNAME)
+all: pg_version
 
-include $(MKDIR)/postgres.prog.mk
+pg_version: submake $(OBJS)
+	$(CC) $(LDFLAGS) -o pg_version $(OBJS) $(LD_ADD)
 
+.PHONY: submake
+submake:
+	$(MAKE) -C ../../utils version.o
+
+install: pg_version
+	$(INSTALL) $(INSTL_EXE_OPTS) pg_version $(DESTDIR)$(BINDIR)/pg_version
+
+depend dep:
+	$(CC) -MM $(INCLUDE_OPT) *.c >depend
+
+clean: 
+	rm -f pg_version pg_version.o
+
+ifeq (depend,$(wildcard depend))
+include depend
+endif

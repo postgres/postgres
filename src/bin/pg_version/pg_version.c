@@ -7,38 +7,34 @@
  *
  *
  * IDENTIFICATION
- *    $Header: /cvsroot/pgsql/src/bin/pg_version/Attic/pg_version.c,v 1.5 1996/11/10 03:04:02 momjian Exp $
+ *    $Header: /cvsroot/pgsql/src/bin/pg_version/Attic/pg_version.c,v 1.6 1996/11/12 06:47:00 bryanh Exp $
  *
  *-------------------------------------------------------------------------
  */
 #include <stdlib.h>
 #include <stdio.h>
 
-int Noversion = 0;
-char *DataDir = (char *) NULL;
+#include <version.h>    /* interface to SetPgVersion */
 
-extern void SetPgVersion(const char *);
+
 
 int
 main(int argc, char **argv)
 {
+    int retcode;    /* our eventual return code */
+    char *reason;   /* Reason that SetPgVersion failed, NULL if it didn't. */
+
     if (argc < 2) {
 	fprintf(stderr, "pg_version: missing argument\n");
 	exit(1);
     }
-    SetPgVersion(argv[1]);
-    return(0);
-}
-
-void elog(void); /* make compiler happy */
-
-void
-elog(void) {}
-
-int GetDataHome(void); /* make compiler happy */
-
-int
-GetDataHome(void)
-{
-	return(0);
+    SetPgVersion(argv[1], &reason);
+    if (reason) {
+        fprintf(stderr, 
+                "pg_version is unable to create the PG_VERSION file. "
+                "SetPgVersion gave this reason: %s\n",
+                reason);
+        retcode = 10;
+    } else retcode = 0;
+    return(retcode);
 }

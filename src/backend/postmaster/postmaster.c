@@ -10,7 +10,7 @@
  *
  *
  * IDENTIFICATION
- *    $Header: /cvsroot/pgsql/src/backend/postmaster/postmaster.c,v 1.23 1996/11/10 03:01:41 momjian Exp $
+ *    $Header: /cvsroot/pgsql/src/backend/postmaster/postmaster.c,v 1.24 1996/11/12 06:46:36 bryanh Exp $
  *
  * NOTES
  *
@@ -75,6 +75,7 @@
 #include "libpq/auth.h"
 #include "libpq/pqcomm.h"
 #include "miscadmin.h"
+#include "version.h"
 #include "lib/dllist.h"
 #include "nodes/nodes.h"
 #include "utils/mcxt.h"
@@ -1186,18 +1187,27 @@ checkDataDir(void)
 	    SEP_CHAR);
     if ((fp=fopen(path, "r")) == NULL) {
         fprintf(stderr, "%s does not find the database.  Expected to find it "
-                "in the PGDATA directory \"%s\", but unable to open directory "
+                "in the PGDATA directory \"%s\", but unable to open file "
                 "with pathname \"%s\".\n", 
                 progname, DataDir, path);
 	exit(2);
     }
     fclose(fp);
 
-#ifndef WIN32    
-    if (!ValidPgVersion(DataDir)) {
-	fprintf(stderr, "%s: data base in \"%s\" is of a different version.\n",
-		progname, DataDir);
-	exit(2);
+#ifndef WIN32   
+    {
+        char *reason;   /* reason ValidatePgVersion failed.  NULL if didn't */
+        ValidatePgVersion(DataDir, &reason); 
+        if (reason) {
+            fprintf(stderr, 
+                    "Database system in directory %s "
+                    "is not compatible with this version of "
+                    "Postgres, or we are unable to read the PG_VERSION file. "
+                    "Explanation from ValidatePgVersion: %s\n",
+                    DataDir, reason);
+            free(reason);
+            exit(2);
+        }
     }
 #endif /* WIN32 */
 }
