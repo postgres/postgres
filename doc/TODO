@@ -1,6 +1,6 @@
 TODO list for PostgreSQL
 ========================
-Last updated:		Tue Jan  8 15:04:06 EST 2002
+Last updated:		Fri Jan 18 15:46:23 EST 2002
 
 Current maintainer:	Bruce Momjian (pgman@candle.pha.pa.us)
 
@@ -246,6 +246,7 @@ CLIENTS
 * Add XML interface:  psql, pg_dump, COPY, separate server (?)
 * -Fix libpq to properly handle socket failures under native MS Win32
 * -Add MD5 to ODBC (Bruce)
+* Use thread-safe crypt() in libpq, if available
 * Add config file check for $ODBCINI, $HOME/.odbc.ini, installpath/etc/odbc.ini
 * Add documentation for perl, including mention of DBI/DBD perl location
 * Add PGPASSWORDFILE environment variable or ~/.pgpass to store
