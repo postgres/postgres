@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/tid.c,v 1.24 2001/03/22 03:59:54 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/tid.c,v 1.24.2.1 2001/08/09 19:22:24 inoue Exp $
  *
  * NOTES
  *	  input routine largely stolen from boxin().
@@ -124,22 +124,29 @@ tidne(PG_FUNCTION_ARGS)
  *
  *	Maybe these implementations should be moved to another place
  */
+static	ItemPointerData	Current_last_tid = { {0, 0}, 0};
+void	setLastTid(const ItemPointer tid)
+{
+	Current_last_tid = *tid;
+}
 Datum
 currtid_byreloid(PG_FUNCTION_ARGS)
 {
 	Oid			reloid = PG_GETARG_OID(0);
 	ItemPointer tid = PG_GETARG_ITEMPOINTER(1);
-	ItemPointer result,
-				ret;
+	ItemPointer result;
 	Relation	rel;
 
 	result = (ItemPointer) palloc(sizeof(ItemPointerData));
-	ItemPointerSetInvalid(result);
+	if (!reloid)
+	{
+		*result = Current_last_tid;
+		PG_RETURN_ITEMPOINTER(result);
+	}
+	ItemPointerCopy(tid, result);
 	if ((rel = heap_open(reloid, AccessShareLock)) != NULL)
 	{
-		ret = heap_get_latest_tid(rel, SnapshotNow, tid);
-		if (ret)
-			ItemPointerCopy(ret, result);
+		heap_get_latest_tid(rel, SnapshotNow, result);
 		heap_close(rel, AccessShareLock);
 	}
 	else
@@ -153,8 +160,7 @@ currtid_byrelname(PG_FUNCTION_ARGS)
 {
 	text	   *relname = PG_GETARG_TEXT_P(0);
 	ItemPointer tid = PG_GETARG_ITEMPOINTER(1);
-	ItemPointer result,
-				ret;
+	ItemPointer result;
 	char	   *str;
 	Relation	rel;
 
@@ -162,12 +168,10 @@ currtid_byrelname(PG_FUNCTION_ARGS)
 											  PointerGetDatum(relname)));
 
 	result = (ItemPointer) palloc(sizeof(ItemPointerData));
-	ItemPointerSetInvalid(result);
+	ItemPointerCopy(tid, result);
 	if ((rel = heap_openr(str, AccessShareLock)) != NULL)
 	{
-		ret = heap_get_latest_tid(rel, SnapshotNow, tid);
-		if (ret)
-			ItemPointerCopy(ret, result);
+		heap_get_latest_tid(rel, SnapshotNow, result);
 		heap_close(rel, AccessShareLock);
 	}
 	else

@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/access/heap/heapam.c,v 1.113.2.1 2001/05/17 00:48:45 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/access/heap/heapam.c,v 1.113.2.2 2001/08/09 19:22:24 inoue Exp $
  *
  *
  * INTERFACE ROUTINES
@@ -1256,7 +1256,8 @@ heap_get_latest_tid(Relation relation,
 	{
 		if (linkend)
 			return NULL;
-		return heap_get_latest_tid(relation, snapshot, &ctid);
+		heap_get_latest_tid(relation, snapshot, &ctid);
+		*tid = ctid;
 	}
 
 	return tid;
