@@ -15,7 +15,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/utils/adt/selfuncs.c,v 1.173 2005/03/07 04:30:51 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/utils/adt/selfuncs.c,v 1.174 2005/03/26 20:55:39 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -2309,14 +2309,17 @@ convert_to_scalar(Datum value, Oid valuetypid, double *scaledvalue,
 	 * constant-folding will ensure that any Const passed to the operator
 	 * has been reduced to the correct type).  However, the boundstypid is
 	 * the type of some variable that might be only binary-compatible with
-	 * the declared type; in particular it might be a domain type.	Must
-	 * fold the variable type down to base type so we can recognize it.
-	 * (But we can skip that lookup if the variable type matches the
-	 * const.)
+	 * the declared type; for example it might be a domain type.  So we
+	 * ignore it and work with the valuetypid only.
+	 *
+	 * XXX What's really going on here is that we assume that the scalar
+	 * representations of binary-compatible types are enough alike that we
+	 * can use a histogram generated with one type's operators to estimate
+	 * selectivity for the other's.  This is outright wrong in some cases ---
+	 * in particular signed versus unsigned interpretation could trip us up.
+	 * But it's useful enough in the majority of cases that we do it anyway.
+	 * Should think about more rigorous ways to do it.
 	 */
-	if (boundstypid != valuetypid)
-		boundstypid = getBaseType(boundstypid);
-
 	switch (valuetypid)
 	{
 			/*
@@ -2337,8 +2340,8 @@ convert_to_scalar(Datum value, Oid valuetypid, double *scaledvalue,
 		case REGCLASSOID:
 		case REGTYPEOID:
 			*scaledvalue = convert_numeric_to_scalar(value, valuetypid);
-			*scaledlobound = convert_numeric_to_scalar(lobound, boundstypid);
-			*scaledhibound = convert_numeric_to_scalar(hibound, boundstypid);
+			*scaledlobound = convert_numeric_to_scalar(lobound, valuetypid);
+			*scaledhibound = convert_numeric_to_scalar(hibound, valuetypid);
 			return true;
 
 			/*
@@ -2351,8 +2354,8 @@ convert_to_scalar(Datum value, Oid valuetypid, double *scaledvalue,
 		case NAMEOID:
 			{
 				unsigned char *valstr = convert_string_datum(value, valuetypid);
-				unsigned char *lostr = convert_string_datum(lobound, boundstypid);
-				unsigned char *histr = convert_string_datum(hibound, boundstypid);
+				unsigned char *lostr = convert_string_datum(lobound, valuetypid);
+				unsigned char *histr = convert_string_datum(hibound, valuetypid);
 
 				convert_string_to_scalar(valstr, scaledvalue,
 										 lostr, scaledlobound,
@@ -2387,8 +2390,8 @@ convert_to_scalar(Datum value, Oid valuetypid, double *scaledvalue,
 		case TIMEOID:
 		case TIMETZOID:
 			*scaledvalue = convert_timevalue_to_scalar(value, valuetypid);
-			*scaledlobound = convert_timevalue_to_scalar(lobound, boundstypid);
-			*scaledhibound = convert_timevalue_to_scalar(hibound, boundstypid);
+			*scaledlobound = convert_timevalue_to_scalar(lobound, valuetypid);
+			*scaledhibound = convert_timevalue_to_scalar(hibound, valuetypid);
 			return true;
 
 			/*
@@ -2398,8 +2401,8 @@ convert_to_scalar(Datum value, Oid valuetypid, double *scaledvalue,
 		case CIDROID:
 		case MACADDROID:
 			*scaledvalue = convert_network_to_scalar(value, valuetypid);
-			*scaledlobound = convert_network_to_scalar(lobound, boundstypid);
-			*scaledhibound = convert_network_to_scalar(hibound, boundstypid);
+			*scaledlobound = convert_network_to_scalar(lobound, valuetypid);
+			*scaledhibound = convert_network_to_scalar(hibound, valuetypid);
 			return true;
 	}
 	/* Don't know how to convert */
@@ -2848,8 +2851,7 @@ convert_timevalue_to_scalar(Datum value, Oid typid)
  *
  * Outputs: (these are valid only if TRUE is returned)
  *	*vardata: gets information about variable (see examine_variable)
- *	*other: gets other clause argument, stripped of binary relabeling,
- *		and aggressively reduced to a constant
+ *	*other: gets other clause argument, aggressively reduced to a constant
  *	*varonleft: set TRUE if variable is on the left, FALSE if on the right
  *
  * Returns TRUE if a variable is identified, otherwise FALSE.
@@ -2939,7 +2941,8 @@ get_join_variables(Query *root, List *args,
  *	varRelid: see specs for restriction selectivity functions
  *
  * Outputs: *vardata is filled as follows:
- *	var: the input expression (with any binary relabeling stripped)
+ *	var: the input expression (with any binary relabeling stripped, if
+ *		it is or contains a variable; but otherwise the type is preserved)
  *	rel: RelOptInfo for relation containing variable; NULL if expression
  *		contains no Vars (NOTE this could point to a RelOptInfo of a
  *		subquery, not one in the current query).
@@ -2955,27 +2958,29 @@ static void
 examine_variable(Query *root, Node *node, int varRelid,
 				 VariableStatData *vardata)
 {
+	Node	   *basenode;
 	Relids		varnos;
 	RelOptInfo *onerel;
 
 	/* Make sure we don't return dangling pointers in vardata */
 	MemSet(vardata, 0, sizeof(VariableStatData));
 
-	/* Ignore any binary-compatible relabeling */
+	/* Look inside any binary-compatible relabeling */
 
 	if (IsA(node, RelabelType))
-		node = (Node *) ((RelabelType *) node)->arg;
-
-	vardata->var = node;
+		basenode = (Node *) ((RelabelType *) node)->arg;
+	else
+		basenode = node;
 
 	/* Fast path for a simple Var */
 
-	if (IsA(node, Var) &&
-		(varRelid == 0 || varRelid == ((Var *) node)->varno))
+	if (IsA(basenode, Var) &&
+		(varRelid == 0 || varRelid == ((Var *) basenode)->varno))
 	{
-		Var		   *var = (Var *) node;
+		Var		   *var = (Var *) basenode;
 		Oid			relid;
 
+		vardata->var = basenode;	/* return Var without relabeling */
 		vardata->rel = find_base_rel(root, var->varno);
 		vardata->atttype = var->vartype;
 		vardata->atttypmod = var->vartypmod;
@@ -3009,7 +3014,7 @@ examine_variable(Query *root, Node *node, int varRelid,
 	 * membership.	Note that when varRelid isn't zero, only vars of that
 	 * relation are considered "real" vars.
 	 */
-	varnos = pull_varnos(node);
+	varnos = pull_varnos(basenode);
 
 	onerel = NULL;
 
@@ -3024,6 +3029,7 @@ examine_variable(Query *root, Node *node, int varRelid,
 				onerel = find_base_rel(root,
 				   (varRelid ? varRelid : bms_singleton_member(varnos)));
 				vardata->rel = onerel;
+				node = basenode; /* strip any relabeling */
 			}
 			/* else treat it as a constant */
 			break;
@@ -3032,11 +3038,13 @@ examine_variable(Query *root, Node *node, int varRelid,
 			{
 				/* treat it as a variable of a join relation */
 				vardata->rel = find_join_rel(root, varnos);
+				node = basenode; /* strip any relabeling */
 			}
 			else if (bms_is_member(varRelid, varnos))
 			{
 				/* ignore the vars belonging to other relations */
 				vardata->rel = find_base_rel(root, varRelid);
+				node = basenode; /* strip any relabeling */
 				/* note: no point in expressional-index search here */
 			}
 			/* else treat it as a constant */
@@ -3045,6 +3053,7 @@ examine_variable(Query *root, Node *node, int varRelid,
 
 	bms_free(varnos);
 
+	vardata->var = node;
 	vardata->atttype = exprType(node);
 	vardata->atttypmod = exprTypmod(node);
 
