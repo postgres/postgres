@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/ref/show.sgml,v 1.18 2002/08/04 03:53:11 momjian Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/ref/show.sgml,v 1.19 2002/08/04 05:09:36 momjian Exp $
 PostgreSQL documentation
 -->
 
@@ -54,7 +54,11 @@ SHOW ALL
   <para>
    <command>SHOW</command> will display the current setting of a
    run-time parameter. These variables can be set using the
-   <command>SET</command> statement or are determined at session start.
+   <command>SET</command> statement, by editing the
+   <filename>postgresql.conf</filename>, through the
+   <envar>PGOPTIONS</envar> environmental variable, or through a
+   command-line flag when starting the
+   <application>postmaster</application>.
   </para>
  </refsect1>
 
@@ -64,10 +68,11 @@ SHOW ALL
    <para>
     <variablelist>
      <varlistentry>
-      <term><computeroutput>ERROR:  not a valid option name: <replaceable>name</replaceable></computeroutput></term>
+      <term><computeroutput>ERROR: Option '<replaceable>name</replaceable>'
+	  is not recognized</computeroutput></term>
       <listitem>
        <para>
-	Message returned if <replaceable>variable</replaceable> does
+	Message returned if <replaceable>name</replaceable> does
 	not stand for an existing parameter.
        </para>
       </listitem>
@@ -81,24 +86,25 @@ SHOW ALL
   <para>
    Show the current <literal>DateStyle</literal> setting:
 
-<screen>
+<programlisting>
 SHOW DateStyle;
                DateStyle
 ---------------------------------------
  ISO with US (NonEuropean) conventions
 (1 row)
-</screen>
+</programlisting>
   </para>
 
   <para>
    Show the current genetic optimizer (<literal>geqo</literal>) setting:
+<programlisting>
 <screen>
 SHOW GEQO;
  geqo
 ------
  on
 (1 row)
-</screen>
+</programlisting>
   </para>
 
   <para>

@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/ref/copy.sgml,v 1.35 2002/08/02 18:15:04 tgl Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/ref/copy.sgml,v 1.36 2002/08/04 05:09:36 momjian Exp $
 PostgreSQL documentation
 -->
 
@@ -57,7 +57,7 @@ COPY <replaceable class="parameter">table</replaceable> [ ( <replaceable class="
      </varlistentry>
      
 		 <varlistentry>
-      <term><replaceable class="parameter">column list</replaceable></term>
+      <term><replaceable class="parameter">column</replaceable></term>
       <listitem>
        <para>
 	An optional list of columns to be copied.  If no column list is
@@ -99,7 +99,8 @@ COPY <replaceable class="parameter">table</replaceable> [ ( <replaceable class="
        <para>
 	Changes the behavior of field formatting, forcing all data to be
 	stored or read in binary format rather than as text. You can not
-	specify DELIMITER or NULL in binary mode.
+	specify <option>DELIMITER</option>, <option>NULL</option>, or
+	a column list in binary mode.
        </para>
       </listitem>
      </varlistentry>
@@ -117,7 +118,7 @@ COPY <replaceable class="parameter">table</replaceable> [ ( <replaceable class="
       <term><replaceable class="parameter">delimiter</replaceable></term>
       <listitem>
        <para>
-	The character that separates fields within each row (line) of the file.
+	The single character that separates fields within each row (line) of the file.
        </para>
       </listitem>
      </varlistentry>
@@ -189,9 +190,7 @@ ERROR: <replaceable>reason</replaceable>
   <para>
    <command>COPY</command> moves data between
    <productname>PostgreSQL</productname> tables and standard file-system
-   files.
-
-   <command>COPY TO</command> copies the entire contents of a table
+   files. <command>COPY TO</command> copies the contents of a table
    <emphasis>to</> a file, while <command>COPY FROM</command> copies
    data <emphasis>from</> a file to a table (appending the data to
    whatever is in the table already).
@@ -200,7 +199,7 @@ ERROR: <replaceable>reason</replaceable>
   <para>
    If a list of columns is specified, <command>COPY</command> will
    only copy the data in the specified columns to or from the file.
-   If there are any columns in the table that are not in the file,
+   If there are any columns in the table that are not in the column list,
    <command>COPY FROM</command> will insert the default values for
    those columns.
   </para>
@@ -249,8 +248,8 @@ ERROR: <replaceable>reason</replaceable>
     <para>
     By default, a text copy uses a tab ("\t") character as a delimiter
     between fields. The field delimiter may be changed to any other
-    single character with the keyword DELIMITER. Characters in data
-    fields that happen to match the delimiter character will be
+    single character with the keyword <option>DELIMITER</option>. Characters
+	in data fields that happen to match the delimiter character will be
     backslash quoted.
    </para>
    
@@ -635,15 +634,14 @@ OIDs to be shown as NULL if that ever proves desirable.
    Usage
   </title>
   <para>
-The following example copies a table to standard output,
- using a vertical bar (|) as the field
- delimiter:
+   The following example copies a table to standard output,
+   using a vertical bar (|) as the field delimiter:
   </para>
   <programlisting>
 COPY country TO <filename>stdout</filename> WITH DELIMITER '|';
   </programlisting>
   <para>
-   To copy data from a Unix file into a table country:
+   To copy data from a Unix file into the <literal>country</> table:
   </para>
   <programlisting>
 COPY country FROM '/usr1/proj/bray/sql/country_data';

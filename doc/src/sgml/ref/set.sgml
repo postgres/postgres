@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/ref/set.sgml,v 1.63 2002/08/04 03:53:11 momjian Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/ref/set.sgml,v 1.64 2002/08/04 05:09:36 momjian Exp $
 PostgreSQL documentation
 -->
 
@@ -404,7 +404,8 @@ SELECT setseed(<replaceable>value</replaceable>);
     </varlistentry>
      
     <varlistentry>
-     <term><computeroutput>ERROR:  not a valid option name: <replaceable>name</replaceable></computeroutput></term>
+     <term><computeroutput>ERROR:  '<replaceable>name</replaceable> is not a
+	 valid option name</computeroutput></term>
      <listitem>
       <para>
        The parameter you tried to set does not exist.
@@ -413,7 +414,8 @@ SELECT setseed(<replaceable>value</replaceable>);
     </varlistentry>
      
     <varlistentry>
-     <term><computeroutput>ERROR:  permission denied</computeroutput></term>
+     <term><computeroutput>ERROR:  '<replaceable>name</replaceable>':
+	 permission denied</computeroutput></term>
      <listitem>
       <para>
        You must be a superuser to alter certain settings.
@@ -422,7 +424,8 @@ SELECT setseed(<replaceable>value</replaceable>);
     </varlistentry>
      
     <varlistentry>
-     <term><computeroutput>ERROR:  <replaceable>name</replaceable> can only be set at start-up</computeroutput></term>
+     <term><computeroutput>ERROR:  '<replaceable>name</replaceable>' cannot
+	 be changed after server start</computeroutput></term>
      <listitem>
       <para>
        Some parameters are fixed once the server is started.
