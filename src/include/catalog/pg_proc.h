@@ -6,7 +6,7 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: pg_proc.h,v 1.39 1997/11/30 22:52:24 thomas Exp $
+ * $Id: pg_proc.h,v 1.40 1997/12/16 15:53:17 thomas Exp $
  *
  * NOTES
  *	  The script catalog/genbki.sh reads this file and generates .bki
@@ -213,6 +213,8 @@ DATA(insert OID = 1254 (  textregexeq	   PGUID 11 f t f 2 f 16 "25 25" 100 0 1 0
 DESCR("matches regex., case-sensitive");
 DATA(insert OID = 1256 (  textregexne	   PGUID 11 f t f 2 f 16 "25 25" 100 0 1 0	foo bar ));
 DESCR("does not match regex., case-sensitive");
+DATA(insert OID = 1257 (  textlen		   PGUID 11 f t f 1 f 23 "25" 100 0 1 0	foo bar ));
+DESCR("length");
 DATA(insert OID = 1258 (  textcat		   PGUID 11 f t f 2 f 25 "25 25" 100 0 1 0	foo bar ));
 DESCR("concat");
 DATA(insert OID =  84 (  boolne			   PGUID 11 f t f 2 f 16 "16 16" 100 0 0 100  foo bar ));
@@ -1548,7 +1550,7 @@ DATA(insert OID = 1191 (  text_datetime		 PGUID 11 f t f 1 f 1184 "25" 100 0 0 1
 DESCR("convert");
 DATA(insert OID = 1192 (  datetime_text		 PGUID 11 f t f 1 f   25 "1184" 100 0 0 100  foo bar ));
 DESCR("convert");
-DATA(insert OID = 1193 (  timespan_text		 PGUID 11 f t f 1 f 1186 "25" 100 0 0 100  foo bar ));
+DATA(insert OID = 1193 (  timespan_text		 PGUID 11 f t f 1 f   25 "1186" 100 0 0 100  foo bar ));
 DESCR("convert");
 DATA(insert OID = 1194 (  timespan_reltime	 PGUID 11 f t f 1 f  703 "1186" 100 0 0 100  foo bar ));
 DESCR("convert");
@@ -1585,6 +1587,16 @@ DATA(insert OID = 1240 (  nameicregexeq    PGUID 11 f t f 2 f 16 "19 25" 100 0 0
 DESCR("matches regex., case-insensitive");
 DATA(insert OID = 1241 (  nameicregexne    PGUID 11 f t f 2 f 16 "19 25" 100 0 0 100  foo bar ));
 DESCR("does not match regex., case-insensitive");
+
+DATA(insert OID = 1251 (  bpcharlen        PGUID 11 f t f 1 f 23 "1042" 100 0 0 100  foo bar ));
+DESCR("octet length");
+DATA(insert OID = 1253 (  varcharlen       PGUID 11 f t f 1 f 23 "1043" 100 0 0 100  foo bar ));
+DESCR("octet length");
+
+DATA(insert OID = 1263 (  text_timespan	   PGUID 11 f t f 1 f 1186 "25" 100 0 0 100  foo bar ));
+DESCR("convert");
+DATA(insert OID = 1271 (  timespan_finite  PGUID 11 f t f 1 f	16 "1186" 100 0 0 100  foo bar ));
+DESCR("boolean test");
 
 DATA(insert OID = 1290 (  char2icregexeq   PGUID 11 f t f 2 f 16 "409 25" 100 0 0 100  foo bar ));
 DESCR("matches regex., case-insensitive");
@@ -1696,6 +1708,12 @@ DATA(insert OID = 1369 (  timestamp    PGUID 14 f t f 1 f 1296 "1296" 100 0 0 10
 DESCR("convert");
 DATA(insert OID = 1370 (  timestamp    PGUID 14 f t f 1 f 1296 "1184" 100 0 0 100  "select datetime_stamp($1)" - ));
 DESCR("convert");
+DATA(insert OID = 1371 (  length	   PGUID 14 f t f 1 f   23   "25" 100 0 0 100  "select textlen($1)" - ));
+DESCR("octet length");
+DATA(insert OID = 1372 (  length	   PGUID 14 f t f 1 f   23   "1042" 100 0 0 100  "select bpcharlen($1)" - ));
+DESCR("octet length");
+DATA(insert OID = 1373 (  length	   PGUID 14 f t f 1 f   23   "1043" 100 0 0 100  "select varcharlen($1)" - ));
+DESCR("octet length");
 
 DATA(insert OID = 1380 (  date_part    PGUID 14 f t f 2 f  701 "25 1184" 100 0 0 100  "select datetime_part($1, $2)" - ));
 DESCR("extract field from datetime");
@@ -1719,11 +1737,15 @@ DATA(insert OID = 1389 (  age		   PGUID 14 f t f 1 f 1186 "1184" 100 0 0 100  "s
 DESCR("difference between datetime and today but leave years and months unresolved");
 
 DATA(insert OID = 1390 (  isfinite	   PGUID 14 f t f 1 f	16 "1184" 100 0 0 100  "select datetime_finite($1)" - ));
-DESCR("");
+DESCR("boolean test");
 DATA(insert OID = 1391 (  isfinite	   PGUID 14 f t f 1 f	16 "1186" 100 0 0 100  "select timespan_finite($1)" - ));
-DESCR("");
+DESCR("boolean test");
 DATA(insert OID = 1392 (  isfinite	   PGUID 14 f t f 1 f	16	"702" 100 0 0 100  "select abstime_finite($1)" - ));
-DESCR("");
+DESCR("boolean test");
+
+DATA(insert OID = 1393 (  timespan	   PGUID 14 f t f 1 f 1186 "25" 100 0 0 100  "select text_timespan($1)" - ));
+DESCR("convert");
+
 /* reserve OIDs 1370-1399 for additional date/time conversion routines! tgl 97/04/01 */
 
 /* OIDS 1400 - 1499 */
