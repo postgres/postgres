@@ -5,7 +5,7 @@
    
    Deutsche Übersetzung von Ian Barwick (barwick@gmx.net).
    
-   Letzte Aktualisierung der deutschen Übersetzung: Sbd., den 26.04.2003,
+   Letzte Aktualisierung der deutschen Übersetzung: Mo., den 02.06.2003,
    22:00 CET
    
    Die aktuellste Version dieses Dokuments liegt auf der PostgreSQL
@@ -66,11 +66,12 @@
                                       
    4.1) Worin besteht der Unterschied zwischen Binary Cursors und Normal
    Cursors?
-   4.2) Wie wähle ich per SELECT-Anweisung nur die ersten paar Zeilen in
-   einer Abfrage aus?
+   4.2) Wie wähle ich per SELECT-Anweisung nur die ersten paar Zeilen
+   bzw. eine beliebige Zeile in einer Abfrage aus?
    4.3) Wie bekomme ich eine Liste der Tabellen oder anderen Dinge, die
    ich in psql sehen kann?
-   4.4) Wie entferne ich eine Spalte aus einer Tabelle?
+   4.4) Wie entferne ich eine Spalte aus einer Tabelle? Wie ändere ich
+   den Datentyp einer Spalte?
    4.5) Was ist die Maximalgröße für eine Zeile, eine Tabelle, eine
    Datenbank?
    4.6) Wieviel Plattenplatz wird benötigt, um die Daten aus einer
@@ -291,7 +292,7 @@
    
     1.7) Was ist die neueste Version von PostgreSQL?
     
-   Die neueste Version von PostgreSQL ist 7.3.2 .
+   Die neueste Version von PostgreSQL ist 7.3.3 .
    
    Wir planen alle 4 Monate eine neue Version herauszugeben.
    
@@ -307,8 +308,9 @@
    http://www.commandprompt.com/ppbook/ .
    
    Eine Liste lieferbarer PostgreSQL-Bücher befindet sich unter
-   http://www.ca.PostgreSQL.org/books/ Diverse technische Artikel
-   befinden sich unter http://techdocs.PostgreSQL.org/ .
+   http://techdocs.PostgreSQL.org/techdocs/bookreviews.php Diverse
+   technische Artikel befinden sich unter http://techdocs.PostgreSQL.org/
+   .
    
    psql hat einige nützliche \d-Befehle, um Informationen über Typen,
    Operatoren, Funktionen, Aggregate, usw. zu zeigen.
@@ -444,6 +446,12 @@
    Unterstützung des PostgreSQL-Projekts da und nicht für die
    Finanzierung einer bestimmten Firma. Sie können auch gerne einen
    finanziellen Beitrag an die Kontaktadresse verschicken.
+   
+   Eine Möglichkeit der nicht-finanziellen Untetstützung besteht übrigens
+   darin, für http://advocacy.postgresql.org (en.) bzw.
+   http://advocacy.postgresql.org/?lang=de (dt.) einen Bericht über den
+   erfolgreichen Einsatz von PostgreSQL in Ihrem Unternehmen oder
+   Organisation bereitzustellen.
      _________________________________________________________________
    
                         Fragen zu Benutzerprogrammen
@@ -717,8 +725,8 @@
     
    Vgl. die DECLARE Man-Page für eine Beschreibung.
    
-    4.2) Wie wähle ich per SELECT-Anweisung nur die ersten paar Zeilen in einer
-    Abfrage aus?
+    4.2) Wie wähle ich per SELECT-Anweisung nur die ersten paar Zeilen bzw.
+    eine beliebige Zeile in einer Abfrage aus?
     
    Vgl. die FETCH Man-Page, oder benutzen Sie SELECT ... LIMIT... .
    
@@ -733,6 +741,13 @@
    Bitte beachten Sie, dass mit PostgreSQL 7.3 die Syntax LIMIT n, m
    durch LIMIT n OFFSET m ersetzt wurde.
    
+   Um eine beliebige Zeile auszuwählen, nutzen Sie ORDER BY random():
+       SELECT spalte
+         FROM tabelle
+     ORDER BY random()
+        LIMIT 1;
+
+
     4.3) Wie bekomme ich eine Liste der Tabellen oder anderen Dinge, die ich in
     psql sehen kann?
     
@@ -742,10 +757,10 @@
    Option starten. Danach gibt psql die Abfragen aus, die es bei der
    Ausführung der Befehle benutzt.
    
-    4.4) Wie entferne ich eine Spalte aus einer Tabelle?
+    4.4) Wie entferne ich eine Spalte aus einer Tabelle? Wie ändere ich den
+    Datentyp einer Spalte?
     
-   Der Syntax ALTER TABLE DROP COLUMN wird erst ab PostgreSQL 7.3
-   unterstützt.
+   Der Syntax ALTER TABLE DROP COLUMN wird ab PostgreSQL 7.3 unterstützt.
    
    Bei früheren Versionen bietet das folgende Verfahren Ersatz:
       BEGIN;
@@ -757,6 +772,17 @@
       ALTER TABLE new_table RENAME TO old_table;
       COMMIT;
 
+   Um den Datentyp einer Spalte zu ändern, gehen Sie wie folgt vor:
+       BEGIN;
+       ALTER TABLE tabelle ADD COLUMN neue_spalte neuer_datentyp;
+       UPDATE tabelle SET neue_spalte = CAST(alte_spalte AS neuer_datentyp);
+       ALTER TABLE tabelle DROP COLUMN alte_spalte;
+       COMMIT;
+
+
+   Um den Platz zu reklamieren, der von der gelöschten Spalte verwendet
+   wurde, führen Sie VACUUM FULL aus.
+   
     4.5) Was ist die Maximalgröße für eine Zeile, eine Tabelle, eine Datenbank?
     
    Es bestehen folgende Obergrenzen:

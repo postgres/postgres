@@ -14,7 +14,7 @@ href="mailto:pgman@candle.pha.pa.us">pgman@candle.pha.pa.us</a>).</p>
 
     <p>Deutsche Übersetzung von Ian Barwick (<a href="mailto:barwick@gmx.net">barwick@gmx.net</a>).</p>
 
-    <p>Letzte Aktualisierung der deutschen Übersetzung: Sbd., den 26.04.2003, 22:00 CET</p>
+    <p>Letzte Aktualisierung der deutschen Übersetzung: Mo., den 02.06.2003, 22:00 CET</p>
 
     <p>Die aktuellste Version dieses Dokuments liegt auf der PostgreSQL Website:</p>
     <ul>
@@ -72,9 +72,10 @@ href="mailto:pgman@candle.pha.pa.us">pgman@candle.pha.pa.us</a>).</p>
 
 <a href="#4.1">4.1</a>) Worin besteht der Unterschied zwischen <em>Binary Cursors</em> und <em>Normal Cursors?</em><br />
 <a href="#4.2">4.2</a>) Wie wähle ich per <small>SELECT</small>-Anweisung nur die
-     ersten paar Zeilen in einer Abfrage aus?<br />
+     ersten paar Zeilen bzw. eine beliebige Zeile in einer Abfrage aus?<br />
 <a href="#4.3">4.3</a>) Wie bekomme ich eine Liste der Tabellen oder anderen Dinge, die ich in <em>psql</em> sehen kann?<br />
-<a href="#4.4">4.4</a>) Wie entferne ich eine Spalte aus einer Tabelle?<br />
+<a href="#4.4">4.4</a>) Wie entferne ich eine Spalte aus einer Tabelle? Wie ändere 
+    ich den Datentyp einer Spalte?<br />
 <a href="#4.5">4.5</a>) Was ist die Maximalgröße für eine Zeile, eine Tabelle, eine Datenbank?<br />
 <a href="#4.6">4.6</a>) Wieviel Plattenplatz wird benötigt, um die Daten aus einer typischen Textdatei abzuspeichern?<br />
 <a href="#4.7">4.7</a>) Wie finde ich heraus, welche Indizes oder Operationen in der Datenbank definiert sind?<br />
@@ -283,7 +284,7 @@ href="mailto:pgman@candle.pha.pa.us">pgman@candle.pha.pa.us</a>).</p>
 
     <h4><a name="1.7">1.7</a>) Was ist die neueste Version von PostgreSQL?</h4>
 
-    <p>Die neueste Version von PostgreSQL ist 7.3.2 .</p>
+    <p>Die neueste Version von PostgreSQL ist 7.3.3 .</p>
 
     <p>Wir planen alle 4 Monate eine neue Version herauszugeben.</p>
 
@@ -299,7 +300,7 @@ href="mailto:pgman@candle.pha.pa.us">pgman@candle.pha.pa.us</a>).</p>
     <a href="http://www.commandprompt.com/ppbook/">http://www.commandprompt.com/ppbook/</a> .</p>
 
     <p>Eine Liste lieferbarer PostgreSQL-Bücher befindet sich unter
-      <a href="http://www.ca.PostgreSQL.org/books/">http://www.ca.PostgreSQL.org/books/</a>
+      <a href="http://techdocs.postgresql.org/techdocs/bookreviews.php">http://techdocs.PostgreSQL.org/techdocs/bookreviews.php</a>
     Diverse technische Artikel befinden sich unter
       <a href="http://techdocs.PostgreSQL.org/">http://techdocs.PostgreSQL.org/</a> .</p>
 
@@ -435,6 +436,11 @@ href="mailto:pgman@candle.pha.pa.us">pgman@candle.pha.pa.us</a>).</p>
     Unterstützung des PostgreSQL-Projekts da und nicht für die Finanzierung
     einer bestimmten Firma. Sie können auch gerne einen finanziellen Beitrag
     an die Kontaktadresse verschicken.</p>
+
+    <p>Eine Möglichkeit der nicht-finanziellen Untetstützung besteht übrigens
+    darin, für <a href="http://advocacy.postgresql.org">http://advocacy.postgresql.org</a> (en.) bzw. <a href="http://advocacy.postgresql.org/?lang=de">http://advocacy.postgresql.org/?lang=de</a> (dt.)
+    einen Bericht über den erfolgreichen Einsatz von PostgreSQL in Ihrem 
+    Unternehmen oder Organisation bereitzustellen.</p>
 
     <hr />
 
@@ -715,7 +721,7 @@ href="mailto:pgman@candle.pha.pa.us">pgman@candle.pha.pa.us</a>).</p>
     <p>Vgl. die <small>DECLARE</small> Man-Page für eine Beschreibung.</p>
 
     <h4><a name="4.2">4.2</a>) Wie wähle ich per <small>SELECT</small>-Anweisung nur die ersten paar
-    Zeilen in einer Abfrage aus?</h4>
+    Zeilen bzw. eine beliebige Zeile in einer Abfrage aus?</h4>
 
     <p>Vgl. die <small>FETCH</small> Man-Page, oder benutzen Sie <small>SELECT ... LIMIT...</small> .
 
@@ -729,6 +735,13 @@ href="mailto:pgman@candle.pha.pa.us">pgman@candle.pha.pa.us</a>).</p>
     <p>Bitte beachten Sie, dass mit PostgreSQL 7.3 die Syntax <small>LIMIT <em>n</em>, <em>m</em></small>
     durch <small>LIMIT <em>n</em> OFFSET <em>m</em></small> ersetzt wurde.</p>
 
+    <p>Um eine beliebige Zeile auszuwählen, nutzen Sie <small>ORDER BY random()</small>:</p>
+   <pre>
+       SELECT spalte
+         FROM tabelle
+     ORDER BY random()
+        LIMIT 1;
+   </pre>
 
     <h4><a name="4.3">4.3</a>) Wie bekomme ich eine Liste der Tabellen oder anderen Dinge, die ich
     in <em>psql</em> sehen kann?</h4>
@@ -739,9 +752,10 @@ href="mailto:pgman@candle.pha.pa.us">pgman@candle.pha.pa.us</a>).</p>
     Option starten. Danach gibt <em>psql</em> die Abfragen aus, die es bei der Ausführung der Befehle
     benutzt.</p>
 
-    <h4><a name="4.4">4.4</a>) Wie entferne ich eine Spalte aus einer Tabelle?</h4>
+    <h4><a name="4.4">4.4</a>) Wie entferne ich eine Spalte aus einer Tabelle? Wie ändere 
+    ich den Datentyp einer Spalte?</h4>
 
-    <p>Der Syntax <small>ALTER TABLE DROP COLUMN</small> wird erst ab PostgreSQL 7.3 unterstützt.</p>
+    <p>Der Syntax <small>ALTER TABLE DROP COLUMN</small> wird ab PostgreSQL 7.3 unterstützt.</p>
 
     <p>Bei früheren Versionen bietet das folgende Verfahren Ersatz:</p>
 <pre>
@@ -754,6 +768,16 @@ href="mailto:pgman@candle.pha.pa.us">pgman@candle.pha.pa.us</a>).</p>
       ALTER TABLE new_table RENAME TO old_table;
       COMMIT;
 </pre>
+     <p>Um den Datentyp einer Spalte zu ändern, gehen Sie wie folgt vor:</p>
+     <pre>
+       BEGIN;
+       ALTER TABLE <em>tabelle</em> ADD COLUMN <em>neue_spalte</em> <em>neuer_datentyp</em>;
+       UPDATE <em>tabelle</em> SET <em>neue_spalte</em> = CAST(<em>alte_spalte</em> AS <em>neuer_datentyp</em>);
+       ALTER TABLE <em>tabelle</em> DROP COLUMN <em>alte_spalte</em>;
+       COMMIT;
+    </pre>
+    <p>Um den Platz zu reklamieren, der von der gelöschten Spalte verwendet 
+    wurde, führen Sie <small>VACUUM FULL</small> aus.</p>
 
     <h4><a name="4.5">4.5</a>) Was ist die Maximalgröße für eine Zeile, eine Tabelle, eine Datenbank?</h4>
 
@@ -1307,7 +1331,7 @@ BYTEA         bytea           Bytearray mit variabler Länge
     <h4>Anmerkungen des Übersetzers</h4>
 
     <p>Die englische Vorlage dieser FAQ wird ständig überarbeitet. Daher liegt
-    die Übersetzung nicht immer auf dem aktuellsten Stand.
+    die Übersetzung nicht immer auf dem aktuellsten Stand.</p>
 
     <p>Über Verbesserungshinweise und Korrekturvorschläge sowie Verständnisfragen
     zum Inhalt der FAQ freue ich mich. Ich nehme auch allgemeine Fragen zu PostgreSQL gerne
