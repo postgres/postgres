@@ -1,4 +1,4 @@
-/* $Id: pg_wchar.h,v 1.40 2002/07/18 02:02:30 ishii Exp $ */
+/* $Id: pg_wchar.h,v 1.41 2002/07/29 08:04:55 ishii Exp $ */
 
 #ifndef PG_WCHAR_H
 #define PG_WCHAR_H
@@ -15,12 +15,7 @@
 /*
  * The pg_wchar
  */
-#ifdef MULTIBYTE
 typedef unsigned int pg_wchar;
-
-#else
-#define pg_wchar char
-#endif
 
 /*
  * various definitions for EUC
@@ -197,9 +192,6 @@ typedef enum pg_enc
 #define PG_ENCODING_BE_LAST PG_ISO_8859_8
 #define PG_ENCODING_FE_LAST PG_WIN1256
 
-
-#ifdef MULTIBYTE
-
 /*
  * Please use these tests before access to pg_encconv_tbl[]
  * or to other places...
@@ -284,21 +276,21 @@ typedef struct
 	unsigned int utf;			/* UTF-8 */
 } pg_local_to_utf;
 
-extern int	pg_mb2wchar(const unsigned char *, pg_wchar *);
-extern int	pg_mb2wchar_with_len(const unsigned char *, pg_wchar *, int);
-extern int	pg_char_and_wchar_strcmp(const char *, const pg_wchar *);
-extern int	pg_wchar_strncmp(const pg_wchar *, const pg_wchar *, size_t);
-extern int	pg_char_and_wchar_strncmp(const char *, const pg_wchar *, size_t);
-extern size_t pg_wchar_strlen(const pg_wchar *);
-extern int	pg_mblen(const unsigned char *);
-extern int	pg_encoding_mblen(int, const unsigned char *);
-extern int	pg_mule_mblen(const unsigned char *);
-extern int	pg_mic_mblen(const unsigned char *);
-extern int	pg_mbstrlen(const unsigned char *);
-extern int	pg_mbstrlen_with_len(const unsigned char *, int);
-extern int	pg_mbcliplen(const unsigned char *, int, int);
-extern int	pg_mbcharcliplen(const unsigned char *, int, int);
-extern int	pg_encoding_max_length(int);
+extern int	pg_mb2wchar(const unsigned char *from, pg_wchar *to);
+extern int	pg_mb2wchar_with_len(const unsigned char *from, pg_wchar *to, int len);
+extern int	pg_char_and_wchar_strcmp(const char *s1, const pg_wchar *s2);
+extern int	pg_wchar_strncmp(const pg_wchar *s1, const pg_wchar *s2, size_t n);
+extern int	pg_char_and_wchar_strncmp(const char *s1, const pg_wchar *s2, size_t n);
+extern size_t pg_wchar_strlen(const pg_wchar *wstr);
+extern int	pg_mblen(const unsigned char *mbstr);
+extern int	pg_encoding_mblen(int encoding, const unsigned char *mbstr);
+extern int	pg_mule_mblen(const unsigned char *mbstr);
+extern int	pg_mic_mblen(const unsigned char *mbstr);
+extern int	pg_mbstrlen(const unsigned char *mbstr);
+extern int	pg_mbstrlen_with_len(const unsigned char *mbstr, int len);
+extern int	pg_mbcliplen(const unsigned char *mbstr, int len, int limit);
+extern int	pg_mbcharcliplen(const unsigned char *mbstr, int len, int imit);
+extern int	pg_encoding_max_length(int encoding);
 extern int	pg_database_encoding_max_length(void);
 
 extern void	SetDefaultClientEncoding(void);
@@ -306,7 +298,7 @@ extern int	SetClientEncoding(int encoding, bool doit);
 extern int	pg_get_client_encoding(void);
 extern const char *pg_get_client_encoding_name(void);
 
-extern void SetDatabaseEncoding(int);
+extern void SetDatabaseEncoding(int encoding);
 extern int	GetDatabaseEncoding(void);
 extern const char *GetDatabaseEncodingName(void);
 
@@ -318,11 +310,11 @@ extern unsigned char *pg_do_encoding_conversion(unsigned char *src, int len,
 												int src_encoding,
 												int dest_encoding);
 
-extern unsigned char *pg_client_to_server(unsigned char *, int);
-extern unsigned char *pg_server_to_client(unsigned char *, int);
+extern unsigned char *pg_client_to_server(unsigned char *s, int len);
+extern unsigned char *pg_server_to_client(unsigned char *s, int len);
 
-extern unsigned short BIG5toCNS(unsigned short, unsigned char *);
-extern unsigned short CNStoBIG5(unsigned short, unsigned char);
+extern unsigned short BIG5toCNS(unsigned short big5, unsigned char *lc);
+extern unsigned short CNStoBIG5(unsigned short cns, unsigned char lc);
 
 extern void LocalToUtf(unsigned char *iso, unsigned char *utf,
 					   pg_local_to_utf *map, int size, int encoding, int len);
@@ -330,12 +322,10 @@ extern void LocalToUtf(unsigned char *iso, unsigned char *utf,
 extern void UtfToLocal(unsigned char *utf, unsigned char *iso,
 					   pg_utf_to_local *map, int size, int len);
 
-char	   *pg_verifymbstr(const unsigned char *, int);
+extern char	   *pg_verifymbstr(const unsigned char *mbstr, int len);
 
-void	pg_ascii2mic(unsigned char *src, unsigned char *dest, int len);
-void	pg_mic2ascii(unsigned char *src, unsigned char *dest, int len);
-void	pg_print_bogus_char(unsigned char **mic, unsigned char **p);
-
-#endif   /* MULTIBYTE */
+extern void	pg_ascii2mic(unsigned char *src, unsigned char *dest, int len);
+extern void	pg_mic2ascii(unsigned char *src, unsigned char *dest, int len);
+extern void	pg_print_bogus_char(unsigned char **mic, unsigned char **p);
 
 #endif   /* PG_WCHAR_H */
