@@ -6,7 +6,7 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: fe-auth.h,v 1.1.1.1 1996/07/09 06:22:17 scrappy Exp $
+ * $Id: fe-auth.h,v 1.1.1.1.2.1 1996/09/21 08:15:00 scrappy Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -29,7 +29,7 @@
 #endif /* KRB4 || KRB5 */
 
 extern int fe_sendauth(MsgType msgtype, Port *port, char *hostname, char* PQerromsg);
-extern void fe_setauthsvc(char *name, char* PQerrormsg);
+extern void fe_setauthsvc(const char *name, char* PQerrormsg);
 
 #define	PG_KRB4_VERSION	"PGVER4.1"	/* at most KRB_SENDAUTH_VLEN chars */
 #define	PG_KRB5_VERSION	"PGVER5.1"
