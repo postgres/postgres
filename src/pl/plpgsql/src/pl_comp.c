@@ -3,7 +3,7 @@
  *			  procedural language
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/pl/plpgsql/src/pl_comp.c,v 1.19 2000/04/16 04:16:55 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/pl/plpgsql/src/pl_comp.c,v 1.20 2000/05/11 04:00:00 momjian Exp $
  *
  *	  This software is copyrighted by Jan Wieck - Hamburg.
  *
@@ -1355,18 +1355,22 @@ plpgsql_yyerror(const char *s)
 static char *
 xlateSqlType(char *name)
 {
-	if (!strcasecmp(name, "int")
-		|| !strcasecmp(name, "integer"))
+	if ((strcmp(name,"int") == 0)
+		|| (strcmp(name,"integer") == 0))
 		return "int4";
-	else if (!strcasecmp(name, "smallint"))
+	else if (strcmp(name, "smallint") == 0)
 		return "int2";
-	else if (!strcasecmp(name, "real")
-			 || !strcasecmp(name, "float"))
+	else if ((strcmp(name, "real") == 0)
+			 || (strcmp(name, "float") == 0))
 		return "float8";
-	else if (!strcasecmp(name, "interval"))
-		return "timespan";
-	else if (!strcasecmp(name, "boolean"))
+	else if (strcmp(name, "decimal") == 0)
+		return "numeric";
+	else if (strcmp(name, "datetime") == 0)
+		return "timestamp";
+	else if (strcmp(name, "timespan") == 0)
+		return "interval";
+	else if (strcmp(name, "boolean") == 0)
 		return "bool";
 	else
 		return name;
-}	/* xlateSqlType() */
+} /* xlateSqlType() */
