@@ -1,0 +1,199 @@
+<!-- $Header: /cvsroot/pgsql/doc/src/sgml/dml.sgml,v 1.1 2002/08/05 19:44:57 petere Exp $ -->
+
+<chapter id="dml">
+ <title>Data Manipulation</title>
+
+ <comment>
+  This chapter is still quite incomplete.
+ </comment>
+
+ <para>
+  The previous chapter discussed how to create tables and other
+  structures to hold your data.  Now it is time to fill the tables
+  with data.  This chapter covers how to insert, update, and delete
+  table data.  We also introduce ways to effect automatic data changes
+  when certain events occur: triggers and rewrite rules.  The chapter
+  after this will finally explain how to extract your long-lost data
+  back out of the database.
+ </para>
+
+ <sect1 id="dml-insert">
+  <title>Inserting Data</title>
+
+  <para>
+   When a table is created, it contains no data.  The first thing to
+   do before a database can be of much use is to insert data.  Data is
+   inserted one row at a time.  This does not mean that there are no
+   means to <quote>bulk load</quote> many rows efficiently.  But there
+   is no way to insert less than one row at a time.  Even if you know
+   only some column values, a complete row must be created.
+  </para>
+
+  <para>
+   To create a new row, use the <literal>INSERT</literal> command.
+   The command requires the table name and a value for each of the
+   columns of the table.  For example, consider the products table
+   from <xref linkend="ddl">:
+<programlisting>
+CREATE TABLE products (
+    product_no integer,
+    name text,
+    price numeric
+);
+</programlisting>
+   An example command to insert a row would be:
+<programlisting>
+INSERT INTO products VALUES (1, 'Cheese', 9.99);
+</programlisting>
+   The data values are listed in the order in which the columns appear
+   in the table, separated by commas.  Usually, the data values will
+   be literals (constants), but scalar expressions are also allowed.
+  </para>
+
+  <para>
+   The above syntax has the drawback that you need to know the order
+   of the columns in the table.  To avoid that you can also list the
+   columns explicitly.  For example, both of the following commands
+   have the same effect as the one above:
+<programlisting>
+INSERT INTO products (product_no, name, price) VALUES (1, 'Cheese', 9.99);
+INSERT INTO products (name, price, product_no) VALUES ('Cheese', 9.99, 1);
+</programlisting>
+   Many users consider it good practice to always list the column
+   names.
+  </para>
+
+  <para>
+   If you don't have values for all the columns, you can omit some of
+   them.  In that case, the columns will be filled with their default
+   values.  For example,
+<programlisting>
+INSERT INTO products (product_no, name) VALUES (1, 'Cheese');
+INSERT INTO products VALUES (1, 'Cheese');
+</programlisting>
+   The second form is a <productname>PostgreSQL</productname>
+   extension.  It fills the columns from the left with as many values
+   as are given, and the rest will be defaulted.
+  </para>
+
+  <para>
+   For clarity, you can also request default values explicitly, for
+   individual columns or for the entire row:
+<programlisting>
+INSERT INTO products (product_no, name, price) VALUES (1, 'Cheese', DEFAULT);
+INSERT INTO products DEFAULT VALUES;
+</programlisting>
+  </para>
+ </sect1>
+
+ <sect1 id="dml-update">
+  <title>Updating Data</title>
+
+  <para>
+   The modification of data that is already in the database is
+   referred to as updating.  You can update individual rows, all the
+   rows in a table, or a subset of all rows.  Each column can be
+   updated separately; the other columns are not affected.
+  </para>
+
+  <para>
+   To perform an update, you need three pieces of information:
+   <orderedlist spacing=compact>
+    <listitem>
+     <para>The name of the table and column to update,</para>
+    </listitem>
+
+    <listitem>
+     <para>The new value of the column,</para>
+    </listitem>
+
+    <listitem>
+     <para>Which row(s) to update.</para>
+    </listitem>
+   </orderedlist>
+  </para>
+
+  <para>
+   Recall from <xref linkend="ddl"> that SQL does not, in general,
+   provide a unique identifier for rows.  Therefore it is not
+   necessarily possible to directly specify which row to update.
+   Instead, you specify which conditions a row must meet in order to
+   be updated.  Only if you have a primary key in the table (no matter
+   whether you declared it or not) you can address rows individually
+   by choosing a condition that matches the primary key only.
+   Graphical database access tools rely on this fact to allow you to
+   update rows individually.
+  </para>
+
+  <para>
+   For example, this command updates all products that have a price of
+   5 to have a price of 10:
+<programlisting>
+UPDATE products SET price = 10 WHERE price = 5;
+</programlisting>
+    This may cause zero, one, or many rows to be updated.  It is not
+    an error to attempt an update that does not match any rows.
+  </para>
+
+  <para>
+   Let's look at that command in detail: First is the key word
+   <literal>UPDATE</literal> followed by the table name.  As usual,
+   the table name may be schema-qualified, otherwise it is looked up
+   in the path.  Next is the key word <literal>SET</literal> followed
+   by the column name, an equals sign and the new column value.  The
+   new column value can be any scalar expression, not just a constant.
+   For example, if you want to raise the price of all products by 10%
+   you could use:
+<programlisting>
+UPDATE products SET price = price * 1.10;
+</programlisting>
+   As you see, the expression for the new value can also refer to the
+   old value.  We also left out the <literal>WHERE</literal> clause.
+   If it is omitted, it means that all rows in the table are updated.
+   If it is present, only those rows that match the condition after
+   the <literal>WHERE</literal> are updated.  Note that the equals
+   sign in the <literal>SET</literal> clause is an assignment while
+   the one in the <literal>WHERE</literal> clause is a comparison, but
+   this does not create any ambiguity.  Of course, the condition does
+   not have to be an equality test.  Many other operators are
+   available (see <xref linkend="functions">).  But the expression
+   needs to evaluate to a Boolean result.
+  </para>
+
+  <para>
+   You can also update more than one column in an
+   <literal>UPDATE</literal> command by listing more than one
+   assignment in the <literal>SET</literal> clause.  For example:
+<programlisting>
+UPDATE mytable SET a = 5, b = 3, c = 1 WHERE a > 0;
+</programlisting>
+  </para>
+ </sect1>
+
+ <sect1 id="dml-delete">
+  <title>Deleting Data</title>
+
+  <para>
+   So far we have explained how to add data to tables and how to
+   change data.  What remains is to discuss how to remove data that is
+   no longer needed.  Just as adding data is only possible in whole
+   rows, you can only remove entire rows from a table.  In the
+   previous section we discussed that SQL does not provide a way to
+   directly address individual rows.  Therefore, removing rows can
+   only be done by specifying conditions that the rows to be removed
+   have to match.  If you have a primary key in the table then you can
+   specify the exact row.  But you can also remove groups of rows
+   matching a condition, or you can remove all rows in the table at
+   once.
+  </para>
+
+  <para>
+   You use the <literal>DELETE</literal> command to remove rows; the
+   syntax is very similar to the <literal>UPDATE</literal> command.
+   For instance, to remove all rows from the products table that have a price of 10, use
+<programlisting>
+DELETE FROM products WHERE price = 10;
+</programlisting>
+  </para>
+ </sect1>
+</chapter>

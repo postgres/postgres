@@ -1,0 +1,20 @@
+<![%single-book;[
+
+<!entity cite-admin "the <citetitle>PostgreSQL Administrator's Guide</citetitle>">
+<!entity cite-developer "the <citetitle>PostgreSQL Developer's Guide</citetitle>">
+<!entity cite-programmer "the <citetitle>PostgreSQL Programmer's Guide</citetitle>">
+<!entity cite-reference "the <citetitle>PostgreSQL Reference Manual</citetitle>">
+<!entity cite-tutorial "the <citetitle>PostgreSQL Tutorial</citetitle>">
+<!entity cite-user "the <citetitle>PostgreSQL User's Guide</citetitle>">
+
+]]>
+<![%set-of-books;[
+
+<!entity cite-admin "the <xref linkend='admin'>">
+<!entity cite-developer "the <xref linkend='developer'>">
+<!entity cite-programmer "the <xref linkend='programmer'>">
+<!entity cite-reference "the <xref linkend='reference'>">
+<!entity cite-tutorial "the <xref linkend='tutorial'>">
+<!entity cite-user "the <xref linkend='user'>">
+
+]]>
