@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/bin/psql/Attic/psql.c,v 1.189 1999/09/06 23:30:53 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/bin/psql/Attic/psql.c,v 1.190 1999/10/14 01:28:42 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -301,7 +301,7 @@ slashUsage(PsqlSettings *pset)
 	fprintf(fout, " \\t           -- toggle table headings and row count (currently %s)\n", on(pset->opt.header));
 	fprintf(fout, " \\T [<html>]  -- set html3.0 <table ...> options (currently '%s')\n", pset->opt.tableOpt ? pset->opt.tableOpt : "");
 	fprintf(fout, " \\x           -- toggle expanded output (currently %s)\n", on(pset->opt.expanded));
-	fprintf(fout, " \\w <fname>   -- output current buffer to a file\n");
+	fprintf(fout, " \\w <fname>   -- write current buffer to a file\n");
 	fprintf(fout, " \\z           -- list current grant/revoke permissions\n");
 	fprintf(fout, " \\! [<cmd>]   -- shell escape or command\n");
 

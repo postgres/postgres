@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/ref/psql-ref.sgml,v 1.11 1999/07/30 00:59:50 momjian Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/ref/psql-ref.sgml,v 1.12 1999/10/14 01:28:41 momjian Exp $
 Postgres documentation
 -->
 
@@ -943,7 +943,7 @@ testdb=>
      <term><literal>\w</literal> <replaceable class="parameter">filename</replaceable></term>
      <listitem>
       <para>
-       Outputs the current query buffer to the file
+       Write the current query buffer to the file
        <replaceable class="parameter">filename</replaceable>.
       </para>
      </listitem>
