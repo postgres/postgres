@@ -12,7 +12,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/storage/lmgr/Attic/multi.c,v 1.15 1998/06/26 01:58:45 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/storage/lmgr/Attic/multi.c,v 1.16 1998/06/26 19:57:49 momjian Exp $
  *
  * NOTES:
  *	 (1) The lock.c module assumes that the caller here is doing
@@ -85,7 +85,7 @@ LockTableId ShortTermTableId = (LockTableId) NULL;
  * Create the lock table described by MultiConflicts and Multiprio.
  */
 LockTableId
-InitMultiLevelLockm()
+InitMultiLevelLocks()
 {
 	int			tableId;
 
@@ -99,13 +99,13 @@ InitMultiLevelLockm()
 	tableId = LockTableInit("LockTable", MultiConflicts, MultiPrios, 5);
 	MultiTableId = tableId;
 	if (!(MultiTableId))
-		elog(ERROR, "InitMultiLockm: couldnt initialize lock table");
+		elog(ERROR, "InitMultiLocks: couldnt initialize lock table");
 	/* -----------------------
 	 * No short term lock table for now.  -Jeff 15 July 1991
 	 *
 	 * ShortTermTableId = LockTableRename(tableId);
 	 * if (! (ShortTermTableId)) {
-	 *	 elog(ERROR,"InitMultiLockm: couldnt rename lock table");
+	 *	 elog(ERROR,"InitMultiLocks: couldnt rename lock table");
 	 * }
 	 * -----------------------
 	 */
