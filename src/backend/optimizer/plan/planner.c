@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/optimizer/plan/planner.c,v 1.151 2003/03/10 03:53:50 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/optimizer/plan/planner.c,v 1.152 2003/03/13 16:58:35 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -1489,13 +1489,14 @@ make_groupsortplan(Query *parse,
 				   Plan *subplan)
 {
 	List	   *sort_tlist = new_unsorted_tlist(subplan->targetlist);
+	int			grpno = 0;
 	int			keyno = 0;
 	List	   *gl;
 
 	foreach(gl, groupClause)
 	{
 		GroupClause *grpcl = (GroupClause *) lfirst(gl);
-		TargetEntry *te = nth(grpColIdx[keyno] - 1, sort_tlist);
+		TargetEntry *te = nth(grpColIdx[grpno] - 1, sort_tlist);
 		Resdom	   *resdom = te->resdom;
 
 		/*
@@ -1509,6 +1510,7 @@ make_groupsortplan(Query *parse,
 			resdom->reskey = ++keyno;
 			resdom->reskeyop = grpcl->sortop;
 		}
+		grpno++;
 	}
 
 	Assert(keyno > 0);
