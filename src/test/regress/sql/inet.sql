@@ -18,6 +18,8 @@ INSERT INTO INET_TBL (c, i) VALUES ('10', '11.1.2.3/8');
 INSERT INTO INET_TBL (c, i) VALUES ('10', '9.1.2.3/8');
 -- check that CIDR rejects invalid input:
 INSERT INTO INET_TBL (c, i) VALUES ('192.168.1.2/24', '192.168.1.226');
+-- check that CIDR rejects invalid input when converting from text:
+INSERT INTO INET_TBL (c, i) VALUES (cidr('192.168.1.2/24'), '192.168.1.226');
 
 SELECT '' AS ten, c AS cidr, i AS inet FROM INET_TBL;
 
@@ -45,3 +47,5 @@ SELECT '' AS ten, i, c,
   i >> c AS sup, i >>= c AS spe
   FROM INET_TBL;
 
+-- check the conversion to/from text and set_netmask
+select '' AS ten, set_masklen(inet(text(i)), 24) FROM INET_TBL;

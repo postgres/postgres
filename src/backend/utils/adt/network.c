@@ -3,7 +3,7 @@
  *	is for IP V4 CIDR notation, but prepared for V6: just
  *	add the necessary bits where the comments indicate.
  *
- *	$Header: /cvsroot/pgsql/src/backend/utils/adt/network.c,v 1.30 2001/06/09 22:16:18 tgl Exp $
+ *	$Header: /cvsroot/pgsql/src/backend/utils/adt/network.c,v 1.31 2001/06/13 21:08:59 momjian Exp $
  *
  *	Jon Postel RIP 16 Oct 1998
  */
@@ -21,6 +21,7 @@
 #include "utils/inet.h"
 
 
+static Datum text_network(text *src, int type);
 static int32 network_cmp_internal(inet *a1, inet *a2);
 static int	v4bitncmp(unsigned long a1, unsigned long a2, int bits);
 static bool v4addressOK(unsigned long a1, int bits);
@@ -148,6 +149,51 @@ cidr_out(PG_FUNCTION_ARGS)
 	return inet_out(fcinfo);
 }
 
+
+Datum
+text_network(text *src, int type)
+{
+        int 	len = VARSIZE(src) - VARHDRSZ;
+
+        char 	*str = palloc(len + 1);
+        memcpy(str, VARDATA(src), len);
+        *(str + len) = '\0';
+
+	PG_RETURN_INET_P(network_in( str, type));
+}
+
+Datum
+text_cidr(PG_FUNCTION_ARGS)
+{
+	return text_network( PG_GETARG_TEXT_P(0), 1);
+}
+
+Datum
+text_inet(PG_FUNCTION_ARGS)
+{
+	return text_network( PG_GETARG_TEXT_P(0), 0);
+}
+
+Datum
+inet_set_masklen(PG_FUNCTION_ARGS)
+{
+	inet 	*src = PG_GETARG_INET_P(0);
+	int     bits = PG_GETARG_INT32(1);
+	inet 	*dst;
+
+        if ((bits < 0) || (bits > 32)) /* no support for v6 yet */
+        {
+                elog(ERROR, "set_masklen - invalid value '%d'", bits);
+        }
+
+	/* clone the original data */
+        dst = (inet *) palloc(VARHDRSZ + sizeof(inet_struct));
+	memcpy(dst, src, VARHDRSZ + sizeof(inet_struct));
+
+        ip_bits(dst) = bits;
+
+	PG_RETURN_INET_P(dst);
+}
 
 /*
  *	Basic comparison function for sorting and inet/cidr comparisons.
