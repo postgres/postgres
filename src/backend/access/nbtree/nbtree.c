@@ -12,7 +12,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/access/nbtree/nbtree.c,v 1.67 2000/10/21 15:43:18 vadim Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/access/nbtree/nbtree.c,v 1.68 2000/10/29 18:33:40 vadim Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -787,6 +787,7 @@ _bt_add_item(Page page, OffsetNumber offno,
 	if (PageAddItem(page, (Item) item, size, offno,	
 			LP_USED) == InvalidOffsetNumber)
 	{
+#ifdef NOT_USED		/* it's not valid code currently */
 		/* ops, not enough space - try to deleted dead tuples */
 		bool		result;
 
@@ -795,6 +796,7 @@ _bt_add_item(Page page, OffsetNumber offno,
 		result = _bt_cleanup_page(page, hnode);
 		if (!result || PageAddItem(page, (Item) item, size, offno,	
 				LP_USED) == InvalidOffsetNumber)
+#endif
 			return(false);
 	}
 
@@ -868,7 +870,7 @@ _bt_fix_left_page(Page page, XLogRecord *record, bool onleft)
 					(sizeof(BTItemData) - sizeof(IndexTupleData));
 		itemsz = MAXALIGN(itemsz);
 
-		if (item + itemsz < (char*)record + record->xl_len)
+		if (item + itemsz < (char*)xlrec + record->xl_len)
 		{
 			previtem = item;
 			item += itemsz;
@@ -1173,6 +1175,8 @@ btree_xlog_split(bool redo, bool onleft, XLogRecPtr lsn, XLogRecord *record)
 			else
 				pageop->btpo_next = ItemPointerGetBlockNumber(&(xlrec->target.tid));
 
+			pageop->btpo_flags &= ~BTP_ROOT;
+
 			PageSetLSN(page, lsn);
 			PageSetSUI(page, ThisStartUpID);
 			UnlockAndWriteBuffer(buffer);
@@ -1245,7 +1249,7 @@ btree_xlog_split(bool redo, bool onleft, XLogRecPtr lsn, XLogRecord *record)
 			}
 
 			for (item = (char*)xlrec + hsize;
-					item < (char*)record + record->xl_len; )
+					item < (char*)xlrec + record->xl_len; )
 			{
 				memcpy(&btdata, item, sizeof(BTItemData));
 				itemsz = IndexTupleDSize(btdata.bti_itup) +
@@ -1283,7 +1287,7 @@ btree_xlog_split(bool redo, bool onleft, XLogRecPtr lsn, XLogRecord *record)
 
 			item = (char*)xlrec + SizeOfBtreeSplit +
 					sizeof(CommandId) + sizeof(RelFileNode);
-			for (cnt = 0; item < (char*)record + record->xl_len; )
+			for (cnt = 0; item < (char*)xlrec + record->xl_len; )
 			{
 				BTItem	btitem = (BTItem)
 					(tbuf + cnt * (MAXALIGN(sizeof(BTItemData))));
@@ -1306,6 +1310,9 @@ btree_xlog_split(bool redo, bool onleft, XLogRecPtr lsn, XLogRecord *record)
 
 	/* Right (next) page */
 	blkno = BlockIdGetBlockNumber(&(xlrec->rightblk));
+	if (blkno == P_NONE)
+		return;
+
 	buffer = XLogReadBuffer(false, reln, blkno);
 	if (!BufferIsValid(buffer))
 		elog(STOP, "btree_split_%s: lost next right page", op);
@@ -1385,7 +1392,7 @@ btree_xlog_newroot(bool redo, XLogRecPtr lsn, XLogRecord *record)
 			char	   *item;
 
 			for (item = (char*)xlrec + SizeOfBtreeNewroot;
-					item < (char*)record + record->xl_len; )
+					item < (char*)xlrec + record->xl_len; )
 			{
 				memcpy(&btdata, item, sizeof(BTItemData));
 				itemsz = IndexTupleDSize(btdata.bti_itup) +

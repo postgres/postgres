@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/access/heap/heapam.c,v 1.91 2000/10/24 09:56:07 vadim Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/access/heap/heapam.c,v 1.92 2000/10/29 18:33:39 vadim Exp $
  *
  *
  * INTERFACE ROUTINES
@@ -2058,6 +2058,48 @@ log_heap_move(Relation reln, ItemPointerData from, HeapTuple newtup)
 }
 
 static void
+_heap_cleanup_page_(Page page)
+{
+	OffsetNumber	maxoff = PageGetMaxOffsetNumber(page);
+	OffsetNumber	offnum;
+	ItemId			lp;
+	HeapTupleHeader	htup;
+
+	for (offnum = FirstOffsetNumber;
+		 offnum <= maxoff;
+		 offnum = OffsetNumberNext(offnum))
+	{
+		lp = PageGetItemId(page, offnum);
+
+		if (!ItemIdIsUsed(lp))
+			continue;
+
+		htup = (HeapTupleHeader) PageGetItem(page, lp);
+
+		if (!HeapTupleSatisfiesNow(htup))
+			lp->lp_flags &= ~LP_USED;
+	}
+
+	PageRepairFragmentation(page);
+
+}
+
+static OffsetNumber
+_heap_add_tuple_(Page page, HeapTupleHeader htup, uint32 len, OffsetNumber offnum)
+{
+	ItemId	lp = PageGetItemId(page, offnum);
+
+	if (len > PageGetFreeSpace(page) || 
+			lp->lp_flags & LP_USED || lp->lp_len != 0)
+		_heap_cleanup_page_(page);
+
+	offnum = PageAddItem(page, (Item)htup, len, offnum, 
+							LP_USED | OverwritePageMode);
+
+	return(offnum);
+}
+
+static void
 heap_xlog_delete(bool redo, XLogRecPtr lsn, XLogRecord *record)
 {
 	xl_heap_delete *xlrec = (xl_heap_delete*) XLogRecGetData(record);
@@ -2097,24 +2139,18 @@ heap_xlog_delete(bool redo, XLogRecPtr lsn, XLogRecord *record)
 		elog(STOP, "heap_delete_undo: bad page LSN");
 
 	offnum = ItemPointerGetOffsetNumber(&(xlrec->target.tid));
-	lp = PageGetItemId(page, offnum);
+	if (PageGetMaxOffsetNumber(page) >= offnum)
+		lp = PageGetItemId(page, offnum);
 
-	if (!ItemIdIsUsed(lp) || ItemIdDeleted(lp))
+	/* page removed by vacuum ? */
+	if (PageGetMaxOffsetNumber(page) < offnum || !ItemIdIsUsed(lp))
 	{
-		if (redo)
-			elog(STOP, "heap_delete_redo: unused/deleted target tuple");
-		if (!InRecovery)
-			elog(STOP, "heap_delete_undo: unused/deleted target tuple in rollback");
-		if (ItemIdDeleted(lp))
-		{
-			lp->lp_flags &= ~LP_USED;
-			PageRepairFragmentation(page);
-			UnlockAndWriteBuffer(buffer);
-		}
-		else
-			UnlockAndReleaseBuffer(buffer);
+		PageSetLSN(page, lsn);
+		PageSetSUI(page, ThisStartUpID);
+		UnlockAndWriteBuffer(buffer);
 		return;
 	}
+
 	htup = (HeapTupleHeader) PageGetItem(page, lp);
 
 	if (redo)
@@ -2189,6 +2225,16 @@ heap_xlog_insert(bool redo, XLogRecPtr lsn, XLogRecord *record)
 			return;
 		}
 
+		offnum = ItemPointerGetOffsetNumber(&(xlrec->target.tid));
+		/* page removed by vacuum ? */
+		if (PageGetMaxOffsetNumber(page) + 1 < offnum)
+		{
+			PageSetLSN(page, lsn);
+			PageSetSUI(page, ThisStartUpID);
+			UnlockAndWriteBuffer(buffer);
+			return;
+		}
+
 		memcpy(tbuf + offsetof(HeapTupleHeaderData, t_bits), 
 			(char*)xlrec + SizeOfHeapInsert, newlen);
 		newlen += offsetof(HeapTupleHeaderData, t_bits);
@@ -2200,9 +2246,7 @@ heap_xlog_insert(bool redo, XLogRecPtr lsn, XLogRecord *record)
 		htup->t_xmax = htup->t_cmax = 0;
 		htup->t_infomask = HEAP_XMAX_INVALID | HEAP_XMIN_COMMITTED | xlrec->mask;
 		
-		offnum = PageAddItem(page, (Item)htup, newlen, 
-			ItemPointerGetOffsetNumber(&(xlrec->target.tid)), 
-			LP_USED | OverwritePageMode);
+		offnum = _heap_add_tuple_(page, htup, newlen, offnum);
 		if (offnum == InvalidOffsetNumber)
 			elog(STOP, "heap_insert_redo: failed to add tuple");
 		PageSetLSN(page, lsn);
@@ -2258,6 +2302,9 @@ heap_xlog_update(bool redo, XLogRecPtr lsn, XLogRecord *record, bool move)
 	xl_heap_update *xlrec = (xl_heap_update*) XLogRecGetData(record);
 	Relation		reln = XLogOpenRelation(redo, RM_HEAP_ID, xlrec->target.node);
 	Buffer			buffer;
+	bool			samepage = 
+		(ItemPointerGetBlockNumber(&(xlrec->newtid)) == 
+		ItemPointerGetBlockNumber(&(xlrec->target.tid)));
 	Page			page;
 	OffsetNumber	offnum;
 	ItemId			lp;
@@ -2265,13 +2312,6 @@ heap_xlog_update(bool redo, XLogRecPtr lsn, XLogRecord *record, bool move)
 
 	if (!RelationIsValid(reln))
 		return;
-
-	/* 
-	 * Currently UPDATE is DELETE + INSERT and so code below are near
-	 * exact sum of code in heap_xlog_delete & heap_xlog_insert. We could
-	 * re-structure code better, but keeping in mind upcoming overwriting
-	 * smgr separate heap_xlog_update code seems to be Good Thing.
-	 */
 
 	/* Deal with old tuple version */
 
@@ -2283,6 +2323,8 @@ heap_xlog_update(bool redo, XLogRecPtr lsn, XLogRecord *record, bool move)
 	page = (Page) BufferGetPage(buffer);
 	if (PageIsNew((PageHeader) page))
 	{
+		if (samepage)
+			goto newsame;
 		PageInit(page, BufferGetPageSize(buffer), 0);
 		PageSetLSN(page, lsn);
 		PageSetSUI(page, ThisStartUpID);
@@ -2295,6 +2337,8 @@ heap_xlog_update(bool redo, XLogRecPtr lsn, XLogRecord *record, bool move)
 		if (XLByteLE(lsn, PageGetLSN(page)))	/* changes are applied */
 		{
 			UnlockAndReleaseBuffer(buffer);
+			if (samepage)
+				return;
 			goto newt;
 		}
 	}
@@ -2302,22 +2346,17 @@ heap_xlog_update(bool redo, XLogRecPtr lsn, XLogRecord *record, bool move)
 		elog(STOP, "heap_update_undo: bad old tuple page LSN");
 
 	offnum = ItemPointerGetOffsetNumber(&(xlrec->target.tid));
-	lp = PageGetItemId(page, offnum);
+	if (PageGetMaxOffsetNumber(page) >= offnum)
+		lp = PageGetItemId(page, offnum);
 
-	if (!ItemIdIsUsed(lp) || ItemIdDeleted(lp))
+	/* page removed by vacuum ? */
+	if (PageGetMaxOffsetNumber(page) < offnum || !ItemIdIsUsed(lp))
 	{
-		if (redo)
-			elog(STOP, "heap_update_redo: unused/deleted old tuple");
-		if (!InRecovery)
-			elog(STOP, "heap_update_undo: unused/deleted old tuple in rollback");
-		if (ItemIdDeleted(lp))
-		{
-			lp->lp_flags &= ~LP_USED;
-			PageRepairFragmentation(page);
-			UnlockAndWriteBuffer(buffer);
-		}
-		else
-			UnlockAndReleaseBuffer(buffer);
+		if (samepage)
+			goto newsame;
+		PageSetLSN(page, lsn);
+		PageSetSUI(page, ThisStartUpID);
+		UnlockAndWriteBuffer(buffer);
 		goto newt;
 	}
 	htup = (HeapTupleHeader) PageGetItem(page, lp);
@@ -2338,6 +2377,8 @@ heap_xlog_update(bool redo, XLogRecPtr lsn, XLogRecord *record, bool move)
 			htup->t_infomask &= ~(HEAP_XMAX_COMMITTED |
 								HEAP_XMAX_INVALID | HEAP_MARKED_FOR_UPDATE);
 		}
+		if (samepage)
+			goto newsame;
 		PageSetLSN(page, lsn);
 		PageSetSUI(page, ThisStartUpID);
 		UnlockAndWriteBuffer(buffer);
@@ -2377,6 +2418,8 @@ newt:;
 		return;
 
 	page = (Page) BufferGetPage(buffer);
+
+newsame:;
 	if (PageIsNew((PageHeader) page))
 	{
 		PageInit(page, BufferGetPageSize(buffer), 0);
@@ -2398,6 +2441,16 @@ newt:;
 		if (XLByteLE(lsn, PageGetLSN(page)))	/* changes are applied */
 		{
 			UnlockAndReleaseBuffer(buffer);
+			return;
+		}
+
+		offnum = ItemPointerGetOffsetNumber(&(xlrec->newtid));
+		/* page removed by vacuum ? */
+		if (PageGetMaxOffsetNumber(page) + 1 < offnum)
+		{
+			PageSetLSN(page, lsn);
+			PageSetSUI(page, ThisStartUpID);
+			UnlockAndWriteBuffer(buffer);
 			return;
 		}
 
@@ -2431,9 +2484,8 @@ newt:;
 			htup->t_infomask = HEAP_XMAX_INVALID | xlrec->mask;
 		}
 		
-		offnum = PageAddItem(page, (Item)htup, newlen, 
-			ItemPointerGetOffsetNumber(&(xlrec->newtid)), 
-			LP_USED | OverwritePageMode);
+		offnum = _heap_add_tuple_(page, htup, newlen, 
+			ItemPointerGetOffsetNumber(&(xlrec->newtid)));
 		if (offnum == InvalidOffsetNumber)
 			elog(STOP, "heap_update_redo: failed to add tuple");
 		PageSetLSN(page, lsn);

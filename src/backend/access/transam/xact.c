@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/access/transam/xact.c,v 1.78 2000/10/28 16:20:53 vadim Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/access/transam/xact.c,v 1.79 2000/10/29 18:33:41 vadim Exp $
  *
  * NOTES
  *		Transaction aborts can now occur two ways:
@@ -1807,8 +1807,10 @@ xact_desc(char *buf, uint8 xl_info, char* rec)
 void
 XactPushRollback(void (*func) (void *), void* data)
 {
+#ifdef XLOG_II
 	if (_RollbackFunc != NULL)
 		elog(STOP, "XactPushRollback: already installed");
+#endif
 
 	_RollbackFunc = func;
 	_RollbackData = data;
