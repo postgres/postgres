@@ -37,6 +37,10 @@ do
 	indent -bad -bap -bc -bl -d0 -cdb -nce -nfc1 -di12 -i4 -l75 \
 		-lp -nip -npro $EXTRA_OPTS \
 -TFAR \
+-TDWORD \
+-TBOOL \
+-TRETCODE \
+-TSQL_API \
 -TA_Const \
 -TA_Expr \
 -TA_Indices \

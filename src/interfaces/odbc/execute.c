@@ -39,7 +39,7 @@ extern GLOBAL_VALUES globals;
 
 
 /*		Perform a Prepare on the SQL statement */
-RETCODE		SQL_API
+RETCODE SQL_API
 SQLPrepare(HSTMT hstmt,
 		   UCHAR FAR *szSqlStr,
 		   SDWORD cbSqlStr)
@@ -133,7 +133,7 @@ SQLPrepare(HSTMT hstmt,
 
 /*		Performs the equivalent of SQLPrepare, followed by SQLExecute. */
 
-RETCODE		SQL_API
+RETCODE SQL_API
 SQLExecDirect(
 			  HSTMT hstmt,
 			  UCHAR FAR *szSqlStr,
@@ -195,7 +195,7 @@ SQLExecDirect(
 }
 
 /*		Execute a prepared SQL statement */
-RETCODE		SQL_API
+RETCODE SQL_API
 SQLExecute(
 		   HSTMT hstmt)
 {
@@ -326,7 +326,7 @@ SQLExecute(
 
 
 /*		-		-		-		-		-		-		-		-		- */
-RETCODE		SQL_API
+RETCODE SQL_API
 SQLTransact(
 			HENV henv,
 			HDBC hdbc,
@@ -408,7 +408,7 @@ SQLTransact(
 
 /*		-		-		-		-		-		-		-		-		- */
 
-RETCODE		SQL_API
+RETCODE SQL_API
 SQLCancel(
 		  HSTMT hstmt)			/* Statement to cancel. */
 {
@@ -486,7 +486,7 @@ SQLCancel(
 /*		Returns the SQL string as modified by the driver. */
 /*		Currently, just copy the input string without modification */
 /*		observing buffer limits and truncation. */
-RETCODE		SQL_API
+RETCODE SQL_API
 SQLNativeSql(
 			 HDBC hdbc,
 			 UCHAR FAR *szSqlStrIn,
@@ -540,7 +540,7 @@ SQLNativeSql(
 /*		Supplies parameter data at execution time.		Used in conjuction with */
 /*		SQLPutData. */
 
-RETCODE		SQL_API
+RETCODE SQL_API
 SQLParamData(
 			 HSTMT hstmt,
 			 PTR FAR *prgbValue)
@@ -651,7 +651,7 @@ SQLParamData(
 /*		Supplies parameter data at execution time.		Used in conjunction with */
 /*		SQLParamData. */
 
-RETCODE		SQL_API
+RETCODE SQL_API
 SQLPutData(
 		   HSTMT hstmt,
 		   PTR rgbValue,

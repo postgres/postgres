@@ -51,15 +51,15 @@ typedef int BOOL;
 #define  MEM_FREE(ptr)	 ((ptr)? farfree((void far*)(ptr)):0)
 #define  STRCPY(t, s)	 (_fstrcpy((char FAR*)(t), (char FAR*)(s)))
 #define  STRNCPY(t,s,n)  (_fstrncpy((char FAR*)(t), (char FAR*)(s), (size_t)(n)))
-#define		 STRLEN(str)	 ((str)? _fstrlen((char FAR*)(str)):0)
-#define		 STREQ(a, b)	 (_fstrcmp((char FAR*)(a), (char FAR*)(b) == 0)
+#define  STRLEN(str)	 ((str)? _fstrlen((char FAR*)(str)):0)
+#define  STREQ(a, b)	 (_fstrcmp((char FAR*)(a), (char FAR*)(b) == 0)
 #endif
 
 #endif	 /* WIN32 */
 
-#define    SYSERR	   (-1)
+#define  SYSERR    (-1)
 
-#ifndef    NULL
+#ifndef  NULL
 #define  NULL		 ((void FAR*)0UL)
 #endif
 

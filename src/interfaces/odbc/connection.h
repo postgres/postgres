@@ -200,26 +200,26 @@ struct col_info
 #endif
 
 typedef BOOL (FAR WINAPI * DataSourceToDriverProc) (UDWORD,
-																SWORD,
-																PTR,
-																SDWORD,
-																PTR,
-																SDWORD,
-															SDWORD FAR *,
-															 UCHAR FAR *,
-																SWORD,
-															SWORD FAR *);
+													SWORD,
+													PTR,
+													SDWORD,
+													PTR,
+													SDWORD,
+													SDWORD FAR *,
+													UCHAR FAR *,
+													SWORD,
+													SWORD FAR *);
 
 typedef BOOL (FAR WINAPI * DriverToDataSourceProc) (UDWORD,
-																SWORD,
-																PTR,
-																SDWORD,
-																PTR,
-																SDWORD,
-															SDWORD FAR *,
-															 UCHAR FAR *,
-																SWORD,
-															SWORD FAR *);
+													SWORD,
+													PTR,
+													SDWORD,
+													PTR,
+													SDWORD,
+													SDWORD FAR *,
+													UCHAR FAR *,
+													SWORD,
+													SWORD FAR *);
 
 /*******	The Connection handle	************/
 struct ConnectionClass_

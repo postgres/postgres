@@ -58,7 +58,7 @@ extern GLOBAL_VALUES globals;
 
 /*		-		-		-		-		-		-		-		-		- */
 
-RETCODE		SQL_API
+RETCODE SQL_API
 SQLGetInfo(
 		   HDBC hdbc,
 		   UWORD fInfoType,
@@ -713,7 +713,7 @@ SQLGetInfo(
 /*		-		-		-		-		-		-		-		-		- */
 
 
-RETCODE		SQL_API
+RETCODE SQL_API
 SQLGetTypeInfo(
 			   HSTMT hstmt,
 			   SWORD fSqlType)
@@ -810,7 +810,7 @@ SQLGetTypeInfo(
 
 /*		-		-		-		-		-		-		-		-		- */
 
-RETCODE		SQL_API
+RETCODE SQL_API
 SQLGetFunctions(
 				HDBC hdbc,
 				UWORD fFunction,
@@ -1094,7 +1094,7 @@ SQLGetFunctions(
 
 
 
-RETCODE		SQL_API
+RETCODE SQL_API
 SQLTables(
 		  HSTMT hstmt,
 		  UCHAR FAR *szTableQualifier,
@@ -1419,7 +1419,7 @@ SQLTables(
 
 
 
-RETCODE		SQL_API
+RETCODE SQL_API
 SQLColumns(
 		   HSTMT hstmt,
 		   UCHAR FAR *szTableQualifier,
@@ -1855,7 +1855,7 @@ SQLColumns(
 	return SQL_SUCCESS;
 }
 
-RETCODE		SQL_API
+RETCODE SQL_API
 SQLSpecialColumns(
 				  HSTMT hstmt,
 				  UWORD fColType,
@@ -2004,7 +2004,7 @@ SQLSpecialColumns(
 	return SQL_SUCCESS;
 }
 
-RETCODE		SQL_API
+RETCODE SQL_API
 SQLStatistics(
 			  HSTMT hstmt,
 			  UCHAR FAR *szTableQualifier,
@@ -2393,7 +2393,7 @@ SEEYA:
 		return SQL_SUCCESS;
 }
 
-RETCODE		SQL_API
+RETCODE SQL_API
 SQLColumnPrivileges(
 					HSTMT hstmt,
 					UCHAR FAR *szTableQualifier,
@@ -2419,7 +2419,7 @@ SQLColumnPrivileges(
 /* SQLPrimaryKeys()
  * Retrieve the primary key columns for the specified table.
  */
-RETCODE		SQL_API
+RETCODE SQL_API
 SQLPrimaryKeys(
 			   HSTMT hstmt,
 			   UCHAR FAR *szTableQualifier,
@@ -2595,7 +2595,7 @@ SQLPrimaryKeys(
 	return SQL_SUCCESS;
 }
 
-RETCODE		SQL_API
+RETCODE SQL_API
 SQLForeignKeys(
 			   HSTMT hstmt,
 			   UCHAR FAR *szPkTableQualifier,
@@ -3259,7 +3259,7 @@ SQLForeignKeys(
 
 
 
-RETCODE		SQL_API
+RETCODE SQL_API
 SQLProcedureColumns(
 					HSTMT hstmt,
 					UCHAR FAR *szProcQualifier,
@@ -3279,7 +3279,7 @@ SQLProcedureColumns(
 	return SQL_ERROR;
 }
 
-RETCODE		SQL_API
+RETCODE SQL_API
 SQLProcedures(
 			  HSTMT hstmt,
 			  UCHAR FAR *szProcQualifier,
@@ -3297,7 +3297,7 @@ SQLProcedures(
 	return SQL_ERROR;
 }
 
-RETCODE		SQL_API
+RETCODE SQL_API
 SQLTablePrivileges(
 				   HSTMT hstmt,
 				   UCHAR FAR *szTableQualifier,

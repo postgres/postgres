@@ -65,7 +65,7 @@ extern HINSTANCE NEAR s_hModule;/* Saved module handle. */
 extern GLOBAL_VALUES globals;
 
 
-RETCODE		SQL_API
+RETCODE SQL_API
 SQLDriverConnect(
 				 HDBC hdbc,
 				 HWND hwnd,

@@ -85,7 +85,7 @@ static struct
 };
 
 
-RETCODE		SQL_API
+RETCODE SQL_API
 SQLAllocStmt(HDBC hdbc,
 			 HSTMT FAR *phstmt)
 {
@@ -139,7 +139,7 @@ SQLAllocStmt(HDBC hdbc,
 }
 
 
-RETCODE		SQL_API
+RETCODE SQL_API
 SQLFreeStmt(HSTMT hstmt,
 			UWORD fOption)
 {

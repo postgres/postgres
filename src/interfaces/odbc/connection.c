@@ -34,7 +34,7 @@
 extern GLOBAL_VALUES globals;
 
 
-RETCODE		SQL_API
+RETCODE SQL_API
 SQLAllocConnect(
 				HENV henv,
 				HDBC FAR *phdbc)
@@ -75,7 +75,7 @@ SQLAllocConnect(
 
 /*		-		-		-		-		-		-		-		-		- */
 
-RETCODE		SQL_API
+RETCODE SQL_API
 SQLConnect(
 		   HDBC hdbc,
 		   UCHAR FAR *szDSN,
@@ -132,7 +132,7 @@ SQLConnect(
 
 /*		-		-		-		-		-		-		-		-		- */
 
-RETCODE		SQL_API
+RETCODE SQL_API
 SQLBrowseConnect(
 				 HDBC hdbc,
 				 UCHAR FAR *szConnStrIn,
@@ -151,7 +151,7 @@ SQLBrowseConnect(
 /*		-		-		-		-		-		-		-		-		- */
 
 /* Drop any hstmts open on hdbc and disconnect from database */
-RETCODE		SQL_API
+RETCODE SQL_API
 SQLDisconnect(
 			  HDBC hdbc)
 {
@@ -191,7 +191,7 @@ SQLDisconnect(
 
 /*		-		-		-		-		-		-		-		-		- */
 
-RETCODE		SQL_API
+RETCODE SQL_API
 SQLFreeConnect(
 			   HDBC hdbc)
 {

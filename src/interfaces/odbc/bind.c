@@ -35,7 +35,7 @@
 
 /*		Bind parameters on a statement handle */
 
-RETCODE		SQL_API
+RETCODE SQL_API
 SQLBindParameter(
 				 HSTMT hstmt,
 				 UWORD ipar,
@@ -156,7 +156,7 @@ SQLBindParameter(
 /*		-		-		-		-		-		-		-		-		- */
 
 /*		Associate a user-supplied buffer with a database column. */
-RETCODE		SQL_API
+RETCODE SQL_API
 SQLBindCol(
 		   HSTMT hstmt,
 		   UWORD icol,
@@ -267,7 +267,7 @@ SQLBindCol(
 /*	it is best to say this function is not supported and let the application assume a  */
 /*	data type (most likely varchar). */
 
-RETCODE		SQL_API
+RETCODE SQL_API
 SQLDescribeParam(
 				 HSTMT hstmt,
 				 UWORD ipar,
@@ -321,7 +321,7 @@ SQLDescribeParam(
 
 /*		Sets multiple values (arrays) for the set of parameter markers. */
 
-RETCODE		SQL_API
+RETCODE SQL_API
 SQLParamOptions(
 				HSTMT hstmt,
 				UDWORD crow,
@@ -344,7 +344,7 @@ SQLParamOptions(
 /*	like it does for SQLDescribeParam is that some applications don't care and try  */
 /*	to call it anyway. */
 /*	If the statement does not have parameters, it should just return 0. */
-RETCODE		SQL_API
+RETCODE SQL_API
 SQLNumParams(
 			 HSTMT hstmt,
 			 SWORD FAR *pcpar)

@@ -27,3 +27,6 @@ We get the list of typedef's included in pgindent by running:
 
 	/src/tools/find_typedef
 
+Make sure to do the pgsql/bin directory, and the src/interfaces/odbc
+directory.  Merge the output of these and remove duplicates.
+

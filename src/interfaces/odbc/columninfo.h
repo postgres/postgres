@@ -36,9 +36,9 @@ char		CI_read_fields(ColumnInfoClass *self, ConnectionClass *conn);
 
 /* functions for setting up the fields from within the program, */
 /* without reading from a socket */
-void		CI_set_num_fields(ColumnInfoClass *self, int new_num_fields);
+void CI_set_num_fields(ColumnInfoClass *self, int new_num_fields);
 void CI_set_field_info(ColumnInfoClass *self, int field_num, char *new_name,
-				  Oid new_adtid, Int2 new_adtsize, Int4 atttypmod);
+		  Oid new_adtid, Int2 new_adtsize, Int4 atttypmod);
 
 
 #endif

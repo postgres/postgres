@@ -284,7 +284,7 @@ set_statement_option(ConnectionClass *conn,
 
 
 /* Implements only SQL_AUTOCOMMIT */
-RETCODE		SQL_API
+RETCODE SQL_API
 SQLSetConnectOption(
 					HDBC hdbc,
 					UWORD fOption,
@@ -433,7 +433,7 @@ SQLSetConnectOption(
 /*		-		-		-		-		-		-		-		-		- */
 
 /* This function just can tell you whether you are in Autcommit mode or not */
-RETCODE		SQL_API
+RETCODE SQL_API
 SQLGetConnectOption(
 					HDBC hdbc,
 					UWORD fOption,
@@ -510,7 +510,7 @@ SQLGetConnectOption(
 
 /*		-		-		-		-		-		-		-		-		- */
 
-RETCODE		SQL_API
+RETCODE SQL_API
 SQLSetStmtOption(
 				 HSTMT hstmt,
 				 UWORD fOption,
@@ -537,7 +537,7 @@ SQLSetStmtOption(
 
 /*		-		-		-		-		-		-		-		-		- */
 
-RETCODE		SQL_API
+RETCODE SQL_API
 SQLGetStmtOption(
 				 HSTMT hstmt,
 				 UWORD fOption,

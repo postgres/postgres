@@ -43,7 +43,7 @@ extern GLOBAL_VALUES globals;
 
 
 
-RETCODE		SQL_API
+RETCODE SQL_API
 SQLRowCount(
 			HSTMT hstmt,
 			SDWORD FAR *pcrow)
@@ -113,7 +113,7 @@ SQLRowCount(
 /*		attached to "hstmt". */
 
 
-RETCODE		SQL_API
+RETCODE SQL_API
 SQLNumResultCols(
 				 HSTMT hstmt,
 				 SWORD FAR *pccol)
@@ -176,7 +176,7 @@ SQLNumResultCols(
 
 /*		Return information about the database column the user wants */
 /*		information about. */
-RETCODE		SQL_API
+RETCODE SQL_API
 SQLDescribeCol(
 			   HSTMT hstmt,
 			   UWORD icol,
@@ -375,7 +375,7 @@ SQLDescribeCol(
 
 /*		Returns result column descriptor information for a result set. */
 
-RETCODE		SQL_API
+RETCODE SQL_API
 SQLColAttributes(
 				 HSTMT hstmt,
 				 UWORD icol,
@@ -651,7 +651,7 @@ SQLColAttributes(
 
 /*		Returns result data for a single column in the current row. */
 
-RETCODE		SQL_API
+RETCODE SQL_API
 SQLGetData(
 		   HSTMT hstmt,
 		   UWORD icol,
@@ -836,7 +836,7 @@ SQLGetData(
 /*		Returns data for bound columns in the current row ("hstmt->iCursor"), */
 /*		advances the cursor. */
 
-RETCODE		SQL_API
+RETCODE SQL_API
 SQLFetch(
 		 HSTMT hstmt)
 {
@@ -906,7 +906,7 @@ SQLFetch(
 
 /*		This fetchs a block of data (rowset). */
 
-RETCODE		SQL_API
+RETCODE SQL_API
 SQLExtendedFetch(
 				 HSTMT hstmt,
 				 UWORD fFetchType,
@@ -1202,7 +1202,7 @@ SQLExtendedFetch(
 /*		the "hstmt". */
 
 /* CC: return SQL_NO_DATA_FOUND since we do not support multiple result sets */
-RETCODE		SQL_API
+RETCODE SQL_API
 SQLMoreResults(
 			   HSTMT hstmt)
 {
@@ -1211,7 +1211,7 @@ SQLMoreResults(
 
 /*	   This positions the cursor within a rowset, that was positioned using SQLExtendedFetch. */
 /*	   This will be useful (so far) only when using SQLGetData after SQLExtendedFetch.	 */
-RETCODE		SQL_API
+RETCODE SQL_API
 SQLSetPos(
 		  HSTMT hstmt,
 		  UWORD irow,
@@ -1279,7 +1279,7 @@ SQLSetPos(
 
 /*		Sets options that control the behavior of cursors. */
 
-RETCODE		SQL_API
+RETCODE SQL_API
 SQLSetScrollOptions(
 					HSTMT hstmt,
 					UWORD fConcurrency,
@@ -1295,7 +1295,7 @@ SQLSetScrollOptions(
 
 /*		Set the cursor name on a statement handle */
 
-RETCODE		SQL_API
+RETCODE SQL_API
 SQLSetCursorName(
 				 HSTMT hstmt,
 				 UCHAR FAR *szCursor,
@@ -1329,7 +1329,7 @@ SQLSetCursorName(
 
 /*		Return the cursor name for a statement handle */
 
-RETCODE		SQL_API
+RETCODE SQL_API
 SQLGetCursorName(
 				 HSTMT hstmt,
 				 UCHAR FAR *szCursor,
