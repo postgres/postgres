@@ -1,4 +1,4 @@
-<!-- $Header: /cvsroot/pgsql/doc/src/sgml/installation.sgml,v 1.27 2000/10/21 15:50:32 momjian Exp $ -->
+<!-- $Header: /cvsroot/pgsql/doc/src/sgml/installation.sgml,v 1.28 2000/11/05 20:52:59 petere Exp $ -->
 
 <chapter id="installation">
  <title><![%flattext-install-include[<productname>PostgreSQL</> ]]>Installation Instructions</title>
@@ -7,7 +7,7 @@
   <title>Short Version</title>
 
   <para>
-<programlisting>
+<synopsis>
 ./configure
 gmake
 gmake install
@@ -17,7 +17,7 @@ su - postgres
 /usr/local/pgsql/bin/postmaster -D /usr/local/pgsql/data &gt;logfile 2&gt;&amp;1 &amp;
 /usr/local/pgsql/bin/createdb test
 /usr/local/pgsql/bin/psql test
-</programlisting>
+</synopsis>
    The long version is the rest of this
    <![%flattext-install-include;[document.]]>
    <![%flattext-install-ignore;[chapter.]]>
@@ -149,8 +149,8 @@ su - postgres
 
   <para>
    The internal data storage format changes with new releases of
-   <productname>PostgreSQL</>. Therefore, if you are upgrading an existing installation
-   that does not have a version number
+   <productname>PostgreSQL</>. Therefore, if you are upgrading an
+   existing installation that does not have a version number
    <quote>&majorversion;.x</quote>, you must back up and restore your
    data as shown here. These instructions assume that your existing
    installation is under the <filename>/usr/local/pgsql</> directory,
@@ -207,9 +207,9 @@ su - postgres
      On systems which have <productname>PostgreSQL</> started at boot time, there is
      probably a start-up file that will accomplish the same thing. For
      example, on a Redhat Linux system one might find that
-<programlisting>
-/etc/rc.d/init.d/postgres.init stop
-</programlisting>
+<screen>
+<userinput>/etc/rc.d/init.d/postgres.init stop</userinput>
+</screen>
      works.
     </para>
    </step>
@@ -265,7 +265,7 @@ su - postgres
     The first step of the installation procedure is to configure the
     source tree for your system and choose the options you would like.
     This is done by running the <filename>configure</> script. For a
-    default installation simply type
+    default installation simply enter
 <screen>
 <userinput>./configure</userinput>
 </screen>
@@ -283,7 +283,7 @@ su - postgres
    </para>
 
    <para>
-    You can customize the build and installation process by giving one
+    You can customize the build and installation process by supplying one
     or more of the following command line options to
     <filename>configure</filename>:
 
@@ -507,11 +507,7 @@ su - postgres
        <term>--with-CXX</term>
        <listitem>
         <para>
-         Build the C++ interface library. <filename>configure</> will
-         automatically pick the C++ compiler that goes with the C
-         compiler you are using. It is not recommended or supported to
-         use C and C++ compilers of different origin in the same
-         build.
+         Build the C++ interface library.
         </para>
        </listitem>
       </varlistentry>
@@ -693,11 +689,14 @@ su - postgres
    </para>
 
    <para>
-    You can set the <envar>CC</> environment variable to choose the C
-    compiler to use. If you don't then <filename>configure</> will
-    look for one. For example:
+    If you prefer a C or C++ compiler different from the one
+    <filename>configure</filename> picks then you can set the
+    environment variables <envar>CC</> and <envar>CXX</envar>,
+    respectively, to the program of your choice.  Similarly, you can
+    override the default compiler flags with the <envar>CFLAGS</envar>
+    and <envar>CXXFLAGS</envar> variables.  For example:
 <screen>
-<userinput>CC=/opt/bin/gcc ./configure</>
+<userinput>env CC=/opt/bin/gcc CFLAGS='-02 -pipe' ./configure</>
 </screen>
    </para>
     
@@ -825,12 +824,19 @@ All of PostgreSQL is successfully made. Ready to install.
   <sect2>
    <title>Shared Libraries</title>
    <para>
-    On most systems that have shared libraries (which most systems do)
+    On some systems that have shared libraries (which most systems do)
     you need to tell your system how to find the newly installed
-    shared libraries. How to do this varies between platforms, but the
-    most widely usable method is to set the environment variable
-    <envar>LD_LIBRARY_PATH</> like so: In Bourne shells (sh, ksh,
-    bash, zsh)
+    shared libraries.  The systems on which this is
+    <emphasis>not</emphasis> necessary include FreeBSD, HP/UX, Irix,
+    Linux, NetBSD, OpenBSD, OSF/1 (Digital Unix, Tru64 UNIX), and
+    Solaris.
+   </para>
+
+   <para>
+    The method to set the shared library search path varies between
+    platforms, but the most widely usable method is to set the
+    environment variable <envar>LD_LIBRARY_PATH</> like so: In Bourne
+    shells (sh, ksh, bash, zsh)
 <programlisting>
 LD_LIBRARY_PATH=/usr/local/pgsql/lib
 export LD_LIBRARY_PATH
@@ -842,9 +848,19 @@ setenv LD_LIBRARY_PATH /usr/local/pgsql/lib
     Replace <literal>/usr/local/pgsql/lib</> with whatever you set
     <option><literal>--libdir</></> to in <xref linkend="configure">.
     You should put these commands into a shell start-up file such as
-    <filename>/etc/profile</> or <filename>~/.bash_profile</>.
+    <filename>/etc/profile</> or <filename>~/.bash_profile</>.  Some
+    good information about the caveats associated with the method can
+    be found at <ulink
+    url="http://www.visi.com/~barr/ldpath.html">http://www.visi.com/~barr/ldpath.html</ulink>.
    </para>
 
+   <para>
+    On some systems it might be preferrable to set the environment
+    variable <envar>LD_RUN_PATH</envar> <emphasis>before</emphasis>
+    building.
+   </para>
+
+<!--
    <para>
     On Linux systems the following is the preferred method, but you
     must have root access. Edit the file <filename>/etc/ld.so.conf</>
@@ -854,9 +870,10 @@ setenv LD_LIBRARY_PATH /usr/local/pgsql/lib
 </programlisting>
     Then run command <command>/sbin/ldconfig</>.
    </para>
-
+-->
    <para>
-    If in doubt, refer to the manual pages of your system. If you later
+    If in doubt, refer to the manual pages of your system (perhaps
+    <command>ld.so</command> or <command>rld</command>). If you later
     on get a message like
 <screen>
 psql: error in loading shared libraries
@@ -864,7 +881,6 @@ libpq.so.2.1: cannot open shared object file: No such file or directory
 </screen>
     then this step was necessary.  Simply take care of it then.
    </para>
-
   </sect2>
 
   <sect2>
@@ -921,12 +937,13 @@ MANPATH=$MANPATH:/usr/local/pgsql/man
   <procedure>
    <step>
     <para>
-     Create the <productname>PostgreSQL</> server account. This is the user the server
-     will run as. For production use you should create a separate,
-     unprivileged account (<quote>postgres</> is commonly used). If
-     you do not have root access or just want to play around, your own
-     user account is enough, but running the server as root is a
-     security risk and therefore not allowed.
+     Create a user account for the <productname>PostgreSQL</>
+     server. This is the user the server will run as. For production
+     use you should create a separate, unprivileged account
+     (<quote>postgres</> is commonly used). If you do not have root
+     access or just want to play around, your own user account is
+     enough, but running the server as root is a security risk and
+     will not work.
 <screen>
 <userinput>adduser postgres</>
 </screen>
