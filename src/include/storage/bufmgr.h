@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2002, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Id: bufmgr.h,v 1.60 2002/06/20 20:29:52 momjian Exp $
+ * $Id: bufmgr.h,v 1.61 2002/07/02 05:47:37 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -167,7 +167,9 @@ extern int	FlushRelationBuffers(Relation rel, BlockNumber firstDelBlock);
 extern void DropRelationBuffers(Relation rel);
 extern void DropRelFileNodeBuffers(RelFileNode rnode);
 extern void DropBuffers(Oid dbid);
+#ifdef NOT_USED
 extern void PrintPinnedBufs(void);
+#endif
 extern int	BufferShmemSize(void);
 extern RelFileNode BufferGetFileNode(Buffer buffer);
 

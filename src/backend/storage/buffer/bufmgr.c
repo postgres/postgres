@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/storage/buffer/bufmgr.c,v 1.126 2002/06/20 20:29:34 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/storage/buffer/bufmgr.c,v 1.127 2002/07/02 05:47:37 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -71,7 +71,6 @@ static void WaitIO(BufferDesc *buf);
 static void StartBufferIO(BufferDesc *buf, bool forInput);
 static void TerminateBufferIO(BufferDesc *buf);
 static void ContinueBufferIO(BufferDesc *buf, bool forInput);
-extern void AbortBufferIO(void);
 
 /*
  * Macro : BUFFER_IS_BROKEN
@@ -85,9 +84,14 @@ static BufferDesc *BufferAlloc(Relation reln, BlockNumber blockNum,
 			bool *foundPtr);
 static int	ReleaseBufferWithBufferLock(Buffer buffer);
 static int	BufferReplace(BufferDesc *bufHdr);
+#ifdef NOT_USED
 void		PrintBufferDescs(void);
+#endif
 
 static void write_buffer(Buffer buffer, bool unpin);
+static void drop_relfilenode_buffers(RelFileNode rnode,
+                                     bool do_local, bool do_both);
+static int release_buffer(Buffer buffer, bool havelock);
 
 /*
  * ReadBuffer -- returns a buffer containing the requested
@@ -1097,34 +1101,26 @@ RelationGetNumberOfBlocks(Relation relation)
 	return relation->rd_nblocks;
 }
 
-/* ---------------------------------------------------------------------
- *		DropRelationBuffers
- *
- *		This function removes all the buffered pages for a relation
- *		from the buffer pool.  Dirty pages are simply dropped, without
- *		bothering to write them out first.	This is NOT rollback-able,
- *		and so should be used only with extreme caution!
- *
- *		We assume that the caller holds an exclusive lock on the relation,
- *		which should assure that no new buffers will be acquired for the rel
- *		meanwhile.
+/*
+ * drop_relfilenode_buffers -- common functionality for
+ *                             DropRelationBuffers and
+ *                             DropRelFileNodeBuffers
  *
  *		XXX currently it sequentially searches the buffer pool, should be
  *		changed to more clever ways of searching.
- * --------------------------------------------------------------------
  */
-void
-DropRelationBuffers(Relation rel)
+static void
+drop_relfilenode_buffers(RelFileNode rnode, bool do_local, bool do_both)
 {
 	int			i;
 	BufferDesc *bufHdr;
 
-	if (rel->rd_myxactonly)
+	if (do_local)
 	{
 		for (i = 0; i < NLocBuffer; i++)
 		{
 			bufHdr = &LocalBufferDescriptors[i];
-			if (RelFileNodeEquals(bufHdr->tag.rnode, rel->rd_node))
+			if (RelFileNodeEquals(bufHdr->tag.rnode, rnode))
 			{
 				bufHdr->flags &= ~(BM_DIRTY | BM_JUST_DIRTIED);
 				bufHdr->cntxDirty = false;
@@ -1132,7 +1128,8 @@ DropRelationBuffers(Relation rel)
 				bufHdr->tag.rnode.relNode = InvalidOid;
 			}
 		}
-		return;
+		if (!do_both)
+			return;
 	}
 
 	LWLockAcquire(BufMgrLock, LW_EXCLUSIVE);
@@ -1141,7 +1138,7 @@ DropRelationBuffers(Relation rel)
 	{
 		bufHdr = &BufferDescriptors[i - 1];
 recheck:
-		if (RelFileNodeEquals(bufHdr->tag.rnode, rel->rd_node))
+		if (RelFileNodeEquals(bufHdr->tag.rnode, rnode))
 		{
 			/*
 			 * If there is I/O in progress, better wait till it's done;
@@ -1188,6 +1185,25 @@ recheck:
 }
 
 /* ---------------------------------------------------------------------
+ *		DropRelationBuffers
+ *
+ *		This function removes all the buffered pages for a relation
+ *		from the buffer pool.  Dirty pages are simply dropped, without
+ *		bothering to write them out first.	This is NOT rollback-able,
+ *		and so should be used only with extreme caution!
+ *
+ *		We assume that the caller holds an exclusive lock on the relation,
+ *		which should assure that no new buffers will be acquired for the rel
+ *		meanwhile.
+ * --------------------------------------------------------------------
+ */
+void
+DropRelationBuffers(Relation rel)
+{
+	drop_relfilenode_buffers(rel->rd_node, rel->rd_myxactonly, false);
+}
+
+/* ---------------------------------------------------------------------
  *		DropRelFileNodeBuffers
  *
  *		This is the same as DropRelationBuffers, except that the target
@@ -1201,73 +1217,8 @@ recheck:
 void
 DropRelFileNodeBuffers(RelFileNode rnode)
 {
-	int			i;
-	BufferDesc *bufHdr;
-
 	/* We have to search both local and shared buffers... */
-
-	for (i = 0; i < NLocBuffer; i++)
-	{
-		bufHdr = &LocalBufferDescriptors[i];
-		if (RelFileNodeEquals(bufHdr->tag.rnode, rnode))
-		{
-			bufHdr->flags &= ~(BM_DIRTY | BM_JUST_DIRTIED);
-			bufHdr->cntxDirty = false;
-			LocalRefCount[i] = 0;
-			bufHdr->tag.rnode.relNode = InvalidOid;
-		}
-	}
-
-	LWLockAcquire(BufMgrLock, LW_EXCLUSIVE);
-
-	for (i = 1; i <= NBuffers; i++)
-	{
-		bufHdr = &BufferDescriptors[i - 1];
-recheck:
-		if (RelFileNodeEquals(bufHdr->tag.rnode, rnode))
-		{
-			/*
-			 * If there is I/O in progress, better wait till it's done;
-			 * don't want to delete the relation out from under someone
-			 * who's just trying to flush the buffer!
-			 */
-			if (bufHdr->flags & BM_IO_IN_PROGRESS)
-			{
-				WaitIO(bufHdr);
-
-				/*
-				 * By now, the buffer very possibly belongs to some other
-				 * rel, so check again before proceeding.
-				 */
-				goto recheck;
-			}
-			/* Now we can do what we came for */
-			bufHdr->flags &= ~(BM_DIRTY | BM_JUST_DIRTIED);
-			bufHdr->cntxDirty = false;
-
-			/*
-			 * Release any refcount we may have.
-			 *
-			 * This is very probably dead code, and if it isn't then it's
-			 * probably wrong.	I added the Assert to find out --- tgl
-			 * 11/99.
-			 */
-			if (!(bufHdr->flags & BM_FREE))
-			{
-				/* Assert checks that buffer will actually get freed! */
-				Assert(PrivateRefCount[i - 1] == 1 &&
-					   bufHdr->refcount == 1);
-				ReleaseBufferWithBufferLock(i);
-			}
-
-			/*
-			 * And mark the buffer as no longer occupied by this rel.
-			 */
-			BufTableDelete(bufHdr);
-		}
-	}
-
-	LWLockRelease(BufMgrLock);
+	drop_relfilenode_buffers(rnode, true, true);
 }
 
 /* ---------------------------------------------------------------------
@@ -1343,6 +1294,7 @@ recheck:
  *		use only.
  * -----------------------------------------------------------------
  */
+#ifdef NOT_USED
 void
 PrintBufferDescs()
 {
@@ -1375,7 +1327,9 @@ blockNum=%u, flags=0x%x, refcount=%d %ld)",
 		}
 	}
 }
+#endif
 
+#ifdef NOT_USED
 void
 PrintPinnedBufs()
 {
@@ -1395,6 +1349,7 @@ blockNum=%u, flags=0x%x, refcount=%d %ld)",
 	}
 	LWLockRelease(BufMgrLock);
 }
+#endif
 
 /*
  * BufferPoolBlowaway
@@ -1589,6 +1544,44 @@ FlushRelationBuffers(Relation rel, BlockNumber firstDelBlock)
 	return 0;
 }
 
+/*
+ * release_buffer -- common functionality for
+ *                   ReleaseBuffer and ReleaseBufferWithBufferLock
+ */
+static int
+release_buffer(Buffer buffer, bool havelock)
+{
+	BufferDesc *bufHdr;
+
+	if (BufferIsLocal(buffer))
+	{
+		Assert(LocalRefCount[-buffer - 1] > 0);
+		LocalRefCount[-buffer - 1]--;
+		return STATUS_OK;
+	}
+
+	if (BAD_BUFFER_ID(buffer))
+		return STATUS_ERROR;
+
+	bufHdr = &BufferDescriptors[buffer - 1];
+
+	Assert(PrivateRefCount[buffer - 1] > 0);
+	if (PrivateRefCount[buffer - 1] > 1)
+		PrivateRefCount[buffer - 1]--;
+	else
+	{
+		if (!havelock)
+			LWLockAcquire(BufMgrLock, LW_EXCLUSIVE);
+
+		UnpinBuffer(bufHdr);
+
+		if (!havelock)
+			LWLockRelease(BufMgrLock);
+	}
+
+	return STATUS_OK;
+}
+
 #undef ReleaseBuffer
 
 /*
@@ -1598,31 +1591,7 @@ FlushRelationBuffers(Relation rel, BlockNumber firstDelBlock)
 int
 ReleaseBuffer(Buffer buffer)
 {
-	BufferDesc *bufHdr;
-
-	if (BufferIsLocal(buffer))
-	{
-		Assert(LocalRefCount[-buffer - 1] > 0);
-		LocalRefCount[-buffer - 1]--;
-		return STATUS_OK;
-	}
-
-	if (BAD_BUFFER_ID(buffer))
-		return STATUS_ERROR;
-
-	bufHdr = &BufferDescriptors[buffer - 1];
-
-	Assert(PrivateRefCount[buffer - 1] > 0);
-	if (PrivateRefCount[buffer - 1] > 1)
-		PrivateRefCount[buffer - 1]--;
-	else
-	{
-		LWLockAcquire(BufMgrLock, LW_EXCLUSIVE);
-		UnpinBuffer(bufHdr);
-		LWLockRelease(BufMgrLock);
-	}
-
-	return STATUS_OK;
+	return release_buffer(buffer, false);
 }
 
 /*
@@ -1632,27 +1601,7 @@ ReleaseBuffer(Buffer buffer)
 static int
 ReleaseBufferWithBufferLock(Buffer buffer)
 {
-	BufferDesc *bufHdr;
-
-	if (BufferIsLocal(buffer))
-	{
-		Assert(LocalRefCount[-buffer - 1] > 0);
-		LocalRefCount[-buffer - 1]--;
-		return STATUS_OK;
-	}
-
-	if (BAD_BUFFER_ID(buffer))
-		return STATUS_ERROR;
-
-	bufHdr = &BufferDescriptors[buffer - 1];
-
-	Assert(PrivateRefCount[buffer - 1] > 0);
-	if (PrivateRefCount[buffer - 1] > 1)
-		PrivateRefCount[buffer - 1]--;
-	else
-		UnpinBuffer(bufHdr);
-
-	return STATUS_OK;
+	return release_buffer(buffer, true);
 }
 
 
@@ -1695,7 +1644,7 @@ refcount = %ld, file: %s, line: %d\n",
 #endif
 
 #ifdef NOT_USED
-int
+Buffer
 ReleaseAndReadBuffer_Debug(char *file,
 						   int line,
 						   Buffer buffer,
@@ -2117,7 +2066,7 @@ TerminateBufferIO(BufferDesc *buf)
 {
 	Assert(buf == InProgressBuf);
 	LWLockRelease(buf->io_in_progress_lock);
-	InProgressBuf = (BufferDesc *) 0;
+	InProgressBuf = (BufferDesc *) NULL;
 }
 
 /*
@@ -2142,7 +2091,7 @@ ContinueBufferIO(BufferDesc *buf, bool forInput)
 void
 InitBufferIO(void)
 {
-	InProgressBuf = (BufferDesc *) 0;
+	InProgressBuf = (BufferDesc *) NULL;
 }
 #endif
 
