@@ -1,4 +1,4 @@
-/* $Header: /cvsroot/pgsql/src/interfaces/ecpg/lib/Attic/execute.c,v 1.36 2002/01/13 08:52:08 meskes Exp $ */
+/* $Header: /cvsroot/pgsql/src/interfaces/ecpg/lib/Attic/execute.c,v 1.37 2002/06/12 12:06:53 meskes Exp $ */
 
 /*
  * The aim is to get a simpler inteface to the database routines.
@@ -700,7 +700,7 @@ ECPGstore_input(const struct statement * stmt, const struct variable * var,
 				break;
 #endif   /* HAVE_LONG_LONG_INT_64 */
 			case ECPGt_float:
-				if (!(mallocedval = ECPGalloc(var->arrsize * 20, stmt->lineno)))
+				if (!(mallocedval = ECPGalloc(var->arrsize * 21, stmt->lineno)))
 					return false;
 
 				if (var->arrsize > 1)
@@ -720,7 +720,7 @@ ECPGstore_input(const struct statement * stmt, const struct variable * var,
 				break;
 
 			case ECPGt_double:
-				if (!(mallocedval = ECPGalloc(var->arrsize * 20, stmt->lineno)))
+				if (!(mallocedval = ECPGalloc(var->arrsize * 21, stmt->lineno)))
 					return false;
 
 				if (var->arrsize > 1)
@@ -740,7 +740,7 @@ ECPGstore_input(const struct statement * stmt, const struct variable * var,
 				break;
 
 			case ECPGt_bool:
-				if (!(mallocedval = ECPGalloc(var->arrsize * 20, stmt->lineno)))
+				if (!(mallocedval = ECPGalloc(var->arrsize * 2, stmt->lineno)))
 					return false;
 
 				if (var->arrsize > 1)

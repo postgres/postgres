@@ -1260,6 +1260,11 @@ Mon May 20 10:58:36 CEST 2002
 	- Fixed some parser bugs.
 	- Removed some simple rules to work arounf bison limit for now.
 	- Update c_keywords.c to reflect changes in keywords.c.
+
+Wed Jun 12 14:04:11 CEST 2002
+
+	- Applied Lee Kindness' patch to fix one of memory allocation with
+	  floating point numbers.
 	- Set ecpg version to 2.10.0.
 	- Set library version to 3.4.0.
 
