@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/datetime.c,v 1.77 2001/11/05 17:46:29 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/datetime.c,v 1.78 2001/11/06 16:29:51 thomas Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -92,6 +92,7 @@ static datetkn datetktbl[] = {
 	{"awsst", DTZ, 54},			/* W. Australia */
 	{"awst", TZ, 48},			/* W. Australia */
 	{DB_C, ADBC, BC},			/* "bc" for years < 0 */
+	{"bdst", TZ, 12},			/* British Double Summer Time */
 	{"bst", TZ, 6},				/* British Summer Time */
 	{"bt", TZ, 18},				/* Baghdad Time */
 	{"cadt", DTZ, 63},			/* Central Australian DST */
