@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/storage/lmgr/lock.c,v 1.82 2001/02/22 23:02:33 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/storage/lmgr/lock.c,v 1.83 2001/02/22 23:20:06 momjian Exp $
  *
  * NOTES
  *	  Outside modules can create a lock table and acquire/release
@@ -45,7 +45,7 @@ static int	WaitOnLock(LOCKMETHOD lockmethod, LOCKMODE lockmode,
 static void LockCountMyLocks(SHMEM_OFFSET lockOffset, PROC *proc,
 							 int *myHolding);
 
-static char *lock_types[] =
+static char *lock_mode_names[] =
 {
 	"INVALID",
 	"AccessShareLock",
@@ -65,16 +65,18 @@ static char *DeadLockMessage = "Deadlock detected.\n\tSee the lock(l) manual pag
 /*------
  * The following configuration options are available for lock debugging:
  *
- *     trace_locks      -- give a bunch of output what's going on in this file
- *     trace_userlocks  -- same but for user locks
- *     trace_lock_oidmin-- do not trace locks for tables below this oid
+ *     TRACE_LOCKS      -- give a bunch of output what's going on in this file
+ *     TRACE_USERLOCKS  -- same but for user locks
+ *     TRACE_LOCK_OIDMIN-- do not trace locks for tables below this oid
  *                         (use to avoid output on system tables)
- *     trace_lock_table -- trace locks on this table (oid) unconditionally
- *     debug_deadlocks  -- currently dumps locks at untimely occasions ;)
- * Furthermore, but in storage/ipc/spin.c:
- *     trace_spinlocks  -- trace spinlocks (pretty useless)
+ *     TRACE_LOCK_TABLE -- trace locks on this table (oid) unconditionally
+ *     DEBUG_DEADLOCKS  -- currently dumps locks at untimely occasions ;)
  *
- * Define LOCK_DEBUG at compile time to get all this enabled.
+ * Furthermore, but in storage/ipc/spin.c:
+ *     TRACE_SPINLOCKS  -- trace spinlocks (pretty useless)
+ *
+ * Define LOCK_DEBUG at compile time to get all these enabled.
+ * --------
  */
 
 int  Trace_lock_oidmin  = BootstrapObjectIdData;
@@ -112,7 +114,7 @@ LOCK_PRINT(const char * where, const LOCK * lock, LOCKMODE type)
 			 lock->granted[1], lock->granted[2], lock->granted[3],
 			 lock->granted[4], lock->granted[5], lock->granted[6],
 			 lock->granted[7], lock->nGranted,
-			 lock->waitProcs.size, lock_types[type]);
+			 lock->waitProcs.size, lock_mode_names[type]);
 }
 
 
@@ -494,7 +496,7 @@ LockAcquire(LOCKMETHOD lockmethod, LOCKTAG *locktag,
 #ifdef LOCK_DEBUG
 	if (lockmethod == USER_LOCKMETHOD && Trace_userlocks)
 		elog(DEBUG, "LockAcquire: user lock [%u] %s",
-			 locktag->objId.blkno, lock_types[lockmode]);
+			 locktag->objId.blkno, lock_mode_names[lockmode]);
 #endif
 
 	/* ???????? This must be changed when short term locks will be used */
@@ -615,7 +617,7 @@ LockAcquire(LOCKMETHOD lockmethod, LOCKTAG *locktag,
 					break;		/* safe: we have a lock >= req level */
 				elog(DEBUG, "Deadlock risk: raising lock level"
 					 " from %s to %s on object %u/%u/%u",
-					 lock_types[i], lock_types[lockmode],
+					 lock_mode_names[i], lock_mode_names[lockmode],
 					 lock->tag.relId, lock->tag.dbId, lock->tag.objId.blkno);
 				break;
 			}
@@ -1123,7 +1125,7 @@ LockRelease(LOCKMETHOD lockmethod, LOCKTAG *locktag,
 		Assert(holder->holding[lockmode] >= 0);
 		SpinRelease(masterLock);
 		elog(NOTICE, "LockRelease: you don't own a lock of type %s",
-			 lock_types[lockmode]);
+			 lock_mode_names[lockmode]);
 		return FALSE;
 	}
 	Assert(holder->nHolding > 0);
