@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/commands/copy.c,v 1.218 2004/02/10 01:55:24 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/commands/copy.c,v 1.219 2004/04/06 13:21:33 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -778,6 +778,14 @@ DoCopy(const CopyStmt *stmt)
 		ereport(ERROR,
 				(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
 				 errmsg("COPY delimiter must be a single character")));
+
+	/*
+	 * Don't allow the delimiter to appear in the null string.
+	 */
+	if (strchr(null_print, delim[0]) != NULL)
+		ereport(ERROR,
+				(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
+				 errmsg("COPY delimiter must not appear in the NULL specification")));
 
 	/*
 	 * Don't allow COPY w/ OIDs to or from a table without them
