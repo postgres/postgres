@@ -10,7 +10,7 @@
 #
 #
 # IDENTIFICATION
-#    $Header: /cvsroot/pgsql/src/backend/catalog/Attic/genbki.sh,v 1.1.1.1.2.4 1996/08/22 06:27:25 mcguirk Exp $
+#    $Header: /cvsroot/pgsql/src/backend/catalog/Attic/genbki.sh,v 1.1.1.1.2.5 1996/08/24 20:38:13 scrappy Exp $
 #
 # NOTES
 #    non-essential whitespace is removed from the generated file.
@@ -91,7 +91,7 @@ BEGIN {
 # by the sed above.
 # ----------------
 /^\/\*/           { comment_level += 1; next; }
-/^*\//            { comment_level -= 1; next; }
+/^\*\//           { comment_level -= 1; next; }
 comment_level > 0 { next; }
 
 /^[ 	]*$/      { next; }
