@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/parser/parse_target.c,v 1.13 1998/05/21 03:53:51 scrappy Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/parser/parse_target.c,v 1.14 1998/05/29 14:00:23 thomas Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -24,15 +24,11 @@
 #include "parser/parse_node.h"
 #include "parser/parse_relation.h"
 #include "parser/parse_target.h"
+#include "parser/parse_coerce.h"
 #include "utils/builtins.h"
 #include "utils/lsyscache.h"
 #include "utils/syscache.h"
 
-extern
-bool can_coerce_type(int nargs, Oid *input_typeids, Oid *func_typeids);
-
-extern
-Node *coerce_type(ParseState *pstate, Node *node, Oid inputTypeId, Oid targetTypeId);
 
 static List *expandAllTables(ParseState *pstate);
 static char *figureColname(Node *expr, Node *resval);
@@ -46,11 +42,6 @@ size_target_expr(ParseState *pstate,
 				 Node *expr,
 				 Oid attrtype,
 				 int16 attrtypmod);
-Node *
-coerce_target_expr(ParseState *pstate,
-				   Node *expr,
-				   Oid type_id,
-				   Oid attrtype);
 
 
 /*
@@ -357,7 +348,7 @@ transformTargetList(ParseState *pstate, List *targetlist)
 	}
 
 	return p_target;
-}
+} /* transformTargetList() */
 
 
 Node *

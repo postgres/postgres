@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/parser/parse_clause.c,v 1.16 1998/05/21 03:53:50 scrappy Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/parser/parse_clause.c,v 1.17 1998/05/29 14:00:19 thomas Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -25,11 +25,14 @@
 #include "parser/parse_oper.h"
 #include "parser/parse_relation.h"
 #include "parser/parse_target.h"
+#include "parser/parse_coerce.h"
+
 
 static TargetEntry *
 find_targetlist_entry(ParseState *pstate,
 					  SortGroupBy *sortgroupby, List *tlist);
 static void parseFromClause(ParseState *pstate, List *frmList);
+
 
 /*
  * makeRangeTable -
@@ -78,8 +81,7 @@ transformWhereClause(ParseState *pstate, Node *a_expr)
 
 	if (exprType(qual) != BOOLOID)
 	{
-		elog(ERROR,
-			 "where clause must return type bool, not %s",
+		elog(ERROR, "WHERE clause must return type bool, not type %s",
 			 typeidTypeName(exprType(qual)));
 	}
 	return qual;
@@ -167,7 +169,7 @@ find_targetlist_entry(ParseState *pstate, SortGroupBy *sortgroupby, List *tlist)
 					if (real_rtable_pos == test_rtable_pos)
 					{
 						if (target_result != NULL)
-							elog(ERROR, "Order/Group By '%s' is ambiguous", sortgroupby->name);
+							elog(ERROR, "ORDER/GROUP BY '%s' is ambiguous", sortgroupby->name);
 						else
 							target_result = target;
 					}
@@ -175,7 +177,7 @@ find_targetlist_entry(ParseState *pstate, SortGroupBy *sortgroupby, List *tlist)
 				else
 				{
 					if (target_result != NULL)
-						elog(ERROR, "Order/Group By '%s' is ambiguous", sortgroupby->name);
+						elog(ERROR, "ORDER/GROUP BY '%s' is ambiguous", sortgroupby->name);
 					else
 						target_result = target;
 				}
@@ -372,7 +374,7 @@ transformSortClause(ParseState *pstate,
 					break;
 			}
 			if (i == NIL)
-				elog(ERROR, "The field specified in the UNIQUE ON clause is not in the targetlist");
+				elog(ERROR, "All fields in the UNIQUE ON clause must appear in the target list");
 
 			foreach(s, sortlist)
 			{
@@ -392,23 +394,29 @@ transformSortClause(ParseState *pstate,
 				sortlist = lappend(sortlist, sortcl);
 			}
 		}
-
 	}
 
 	return sortlist;
 }
 
-/*
- * transformUnionClause -
- *	  transform a Union clause
- *
+/* transformUnionClause()
+ * Transform a UNION clause.
+ * Note that the union clause is actually a fully-formed select structure.
+ * So, it is evaluated as a select, then the resulting target fields
+ *  are matched up to ensure correct types in the results.
+ * The select clause parsing is done recursively, so the unions are evaluated
+ *  right-to-left. One might want to look at all columns from all clauses before
+ *  trying to coerce, but unless we keep track of the call depth we won't know
+ *  when to do this because of the recursion.
+ * Let's just try matching in pairs for now (right to left) and see if it works.
+ * - thomas 1998-05-22
  */
 List *
 transformUnionClause(List *unionClause, List *targetlist)
 {
-	List	   *union_list = NIL;
+	List		  *union_list = NIL;
 	QueryTreeList *qlist;
-	int			i;
+	int			   i;
 
 	if (unionClause)
 	{
@@ -421,13 +429,36 @@ transformUnionClause(List *unionClause, List *targetlist)
 			List	   *next_target;
 			
 			if (length(targetlist) != length(qlist->qtrees[i]->targetList))
-				elog(ERROR,"Each UNION query must have the same number of columns.");
+				elog(ERROR,"Each UNION clause must have the same number of columns");
 				
 			foreach(next_target, qlist->qtrees[i]->targetList)
 			{
-				if (((TargetEntry *)lfirst(prev_target))->resdom->restype !=
-				    ((TargetEntry *)lfirst(next_target))->resdom->restype)
-				elog(ERROR,"Each UNION query must have identical target types.");
+				Oid   itype;
+				Oid   otype;
+				otype = ((TargetEntry *)lfirst(prev_target))->resdom->restype;
+				itype = ((TargetEntry *)lfirst(next_target))->resdom->restype;
+				if (itype != otype)
+				{
+					Node *expr;
+
+					expr = ((TargetEntry *)lfirst(next_target))->expr;
+					expr = coerce_target_expr(NULL, expr, itype, otype);
+					if (expr == NULL)
+					{
+						elog(ERROR,"Unable to transform %s to %s"
+							 "\n\tEach UNION clause must have compatible target types",
+							 typeidTypeName(itype),
+							 typeidTypeName(otype));
+					}
+					((TargetEntry *)lfirst(next_target))->expr = expr;
+					((TargetEntry *)lfirst(next_target))->resdom->restype = otype;
+				}
+				/* both are UNKNOWN? then evaluate as text... */
+				else if (itype == UNKNOWNOID)
+				{
+					((TargetEntry *)lfirst(next_target))->resdom->restype = TEXTOID;
+					((TargetEntry *)lfirst(prev_target))->resdom->restype = TEXTOID;
+				}
 				prev_target = lnext(prev_target);
 			}
 			union_list = lappend(union_list, qlist->qtrees[i]);
@@ -436,4 +467,4 @@ transformUnionClause(List *unionClause, List *targetlist)
 	}
 	else
 		return NIL;
-}
+} /* transformUnionClause() */

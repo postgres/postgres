@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/parser/parse_expr.c,v 1.28 1998/05/09 23:29:53 thomas Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/parser/parse_expr.c,v 1.29 1998/05/29 14:00:21 thomas Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -302,12 +302,12 @@ transformExpr(ParseState *pstate, Node *expr, int precedence)
 				break;
 			}
 
-/* These nodes do _not_ come from the original parse tree,
+/* Some nodes do _not_ come from the original parse tree,
  *  but result from parser transformation in this phase.
  * At least one construct (BETWEEN/AND) puts the same nodes
  *  into two branches of the parse tree; hence, some nodes
  *  are transformed twice.
- * These cases below come from transforming function calls.
+ * The three cases below come from transforming function calls.
  * Let's try just passing them through...
  * - thomas 1998-03-14
  */
