@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/init/Attic/findbe.c,v 1.38 2003/11/11 03:53:33 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/init/Attic/findbe.c,v 1.39 2003/11/12 00:04:10 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -49,6 +49,7 @@ ValidateBinary(char *path)
 	uid_t		euid;
 	struct group *gp;
 	struct passwd *pwp;
+#else
 	char		path_exe[MAXPGPATH + 2 + strlen(".exe")];
 #endif
 	int			i;
