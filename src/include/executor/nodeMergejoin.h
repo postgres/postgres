@@ -6,7 +6,7 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: nodeMergejoin.h,v 1.7 1997/11/26 01:12:55 momjian Exp $
+ * $Id: nodeMergejoin.h,v 1.8 1998/02/27 16:12:09 vadim Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -21,5 +21,6 @@ extern TupleTableSlot *ExecMergeJoin(MergeJoin *node);
 extern bool ExecInitMergeJoin(MergeJoin *node, EState *estate, Plan *parent);
 extern int	ExecCountSlotsMergeJoin(MergeJoin *node);
 extern void ExecEndMergeJoin(MergeJoin *node);
+extern void ExecReScanMergeJoin(MergeJoin *node, ExprContext *exprCtxt, Plan *parent);
 
 #endif							/* NODEMERGEJOIN_H; */
