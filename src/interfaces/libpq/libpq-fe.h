@@ -6,7 +6,7 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: libpq-fe.h,v 1.27 1998/02/26 04:45:15 momjian Exp $
+ * $Id: libpq-fe.h,v 1.28 1998/03/20 04:02:57 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -349,7 +349,7 @@ extern		"C"
 #define palloc malloc
 #define pfree free
 
-#if defined(sun) && defined(sparc) && !defined(__svr4)
+#if defined(sun) && defined(sparc) && !defined(__SVR4)
 	extern char *sys_errlist[];
 #define strerror(A) (sys_errlist[(A)])
 #endif							/* sunos4 */
