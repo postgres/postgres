@@ -1,5 +1,5 @@
 <!--
-$PostgreSQL: pgsql/doc/src/sgml/release.sgml,v 1.326 2005/02/02 18:16:13 momjian Exp $
+$PostgreSQL: pgsql/doc/src/sgml/release.sgml,v 1.327 2005/02/06 22:31:50 neilc Exp $
 -->
 
 <appendix id="release">
@@ -464,6 +464,15 @@ typedefs (Michael)</para></listitem>
       <para>
        Now that tablespaces have been implemented,
        <application>initlocation</> has been removed.
+      </para>
+     </listitem>
+
+     <listitem>
+      <para>
+       The API for user-defined GiST indexes has been changed. The
+       Union and PickSplit methods are now passed a pointer to a
+       special <structname>GistEntryVector</structname> structure,
+       rather than a <type>bytea</type>.
       </para>
      </listitem>
 
