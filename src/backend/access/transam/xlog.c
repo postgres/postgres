@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2004, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/backend/access/transam/xlog.c,v 1.178 2004/11/17 16:26:59 tgl Exp $
+ * $PostgreSQL: pgsql/src/backend/access/transam/xlog.c,v 1.179 2004/12/17 00:10:36 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -1201,21 +1201,38 @@ XLogWrite(XLogwrtRqst WriteRqst)
 				UpdateControlFile();
 
 				/*
-				 * Signal postmaster to start a checkpoint if it's been
+				 * Signal bgwriter to start a checkpoint if it's been
 				 * too long since the last one.  (We look at local copy of
 				 * RedoRecPtr which might be a little out of date, but
 				 * should be close enough for this purpose.)
+				 *
+				 * A straight computation of segment number could overflow
+				 * 32 bits.  Rather than assuming we have working 64-bit
+				 * arithmetic, we compare the highest-order bits separately,
+				 * and force a checkpoint immediately when they change.
 				 */
-				if (IsUnderPostmaster &&
-					(openLogId != RedoRecPtr.xlogid ||
-					 openLogSeg >= (RedoRecPtr.xrecoff / XLogSegSize) +
-					 (uint32) CheckPointSegments))
+				if (IsUnderPostmaster)
 				{
+					uint32		old_segno,
+								new_segno;
+					uint32		old_highbits,
+								new_highbits;
+
+					old_segno = (RedoRecPtr.xlogid % XLogSegSize) * XLogSegsPerFile +
+						(RedoRecPtr.xrecoff / XLogSegSize);
+					old_highbits = RedoRecPtr.xlogid / XLogSegSize;
+					new_segno = (openLogId % XLogSegSize) * XLogSegsPerFile +
+						openLogSeg;
+					new_highbits = openLogId / XLogSegSize;
+					if (new_highbits != old_highbits ||
+						new_segno >= old_segno + (uint32) CheckPointSegments)
+					{
 #ifdef WAL_DEBUG
-					if (XLOG_DEBUG)
-						elog(LOG, "time for a checkpoint, signaling bgwriter");
+						if (XLOG_DEBUG)
+							elog(LOG, "time for a checkpoint, signaling bgwriter");
 #endif
-					RequestCheckpoint(false);
+						RequestCheckpoint(false);
+					}
 				}
 			}
 			LWLockRelease(ControlFileLock);
