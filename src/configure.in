@@ -740,15 +740,17 @@ AC_CHECK_FUNC(cbrt,
 # On HPUX 9, rint() is not in regular libm.a but in /lib/pa1.1/libm.a;
 # this hackery with HPUXMATHLIB allows us to cope.
 HPUXMATHLIB=""
+case "$host_cpu" in
+  hppa1.1) 
+	if [[ -r /lib/pa1.1/libm.a ]] ; then
+	    HPUXMATHLIB="-L /lib/pa1.1 -lm"
+	fi ;;
+esac
+AC_SUBST(HPUXMATHLIB)
+
 AC_CHECK_FUNC(rint,
 	      AC_DEFINE(HAVE_RINT),
-[
-if [[ -r /lib/pa1.1/libm.a ]] ; then
-    HPUXMATHLIB="-L /lib/pa1.1 -lm"
-fi
-	      AC_CHECK_LIB(m, rint, AC_DEFINE(HAVE_RINT), , $HPUXMATHLIB)
-])
-AC_SUBST(HPUXMATHLIB)
+	      AC_CHECK_LIB(m, rint, AC_DEFINE(HAVE_RINT), , $HPUXMATHLIB))
 
 dnl Check to see if we have a working 64-bit integer type.
 dnl This breaks down into two steps:
