@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/error/elog.c,v 1.22 1998/01/05 03:45:54 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/error/elog.c,v 1.23 1998/01/05 04:10:07 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -87,8 +87,11 @@ elog(int lev, const char *fmt,...)
 		case NOTICE:
 			cp = "NOTICE:  ";
 			break;
-		case WARN:
-			cp = "WARN:  ";
+		case ERROR:
+			cp = "ERROR:  ";
+			break;
+		case ABORT:
+			cp = "ABORT:  ";
 			break;
 		default:
 			sprintf(line, "FATAL %d:  ", lev);
