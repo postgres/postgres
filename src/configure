@@ -1352,8 +1352,8 @@ fi
 
 
 
-INSTALLPATH="`echo /usr/ucb:$PATH:\`pwd\` | sed 's/:/ /g'`"
-for ac_prog in ginstall installbsd bsdinst scoinst install install-sh
+INSTALLPATH="`echo /usr/ucb:$PATH | sed 's/:/ /g'`"
+for ac_prog in ginstall installbsd bsdinst scoinst install
 do
 # Extract the first word of "$ac_prog", so it can be a program name with args.
 set dummy $ac_prog; ac_word=$2
@@ -1392,8 +1392,8 @@ test -n "$INSTALL" || INSTALL="NONE"
 
 if test "$INSTALL" = "NONE"
 then
-	echo "- No Install Script found - aborting."
-	exit 0
+	# fall back on our own script
+	INSTALL=`pwd`/install-sh
 fi
 
 INSTLOPTS="-m 444"
