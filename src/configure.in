@@ -59,8 +59,8 @@ AC_SUBST(SHARED_LIB)
 AC_SUBST(CFLAGS)
 AC_SUBST(DLSUFFIX)
 AC_SUBST(DL_LIB)
-
-
+AC_SUBST(YACC)
+AC_SUBST(YFLAGS)
 
 dnl ****************************************************************
 dnl Hold off on the C++ stuff until we can figure out why it doesn't 

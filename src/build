@@ -35,6 +35,8 @@ else
 	USE_LOCALE=`grep USE_LOCALE $TEMPLATE | awk -F: '{print $2}'`
 	DLSUFFIX=`grep DLSUFFIX $TEMPLATE | awk -F: '{print $2}'`
 	DL_LIB=`grep DL_LIB $TEMPLATE | awk -F: '{print $2}'`
+	YACC=`grep YACC $TEMPLATE | awk -F: '{print $2}'`
+	YFLAGS=`grep YFLAGS $TEMPLATE | awk -F: '{print $2}'`
 fi
 
 $ECHO_N "Additional directories to search for .h files [$SRCH_INC]: $ECHO_C"
@@ -70,6 +72,7 @@ then
         IDIR=${a}
 fi
 
+echo ""
 echo "Define USE_LOCALE to get Postgres work (sort, search)"
 $ECHO_N "with national alphabet. [$USE_LOCALE]: $ECHO_C"
 read a
@@ -105,8 +108,8 @@ then
         NOHBA=${a}
 fi
 
-export BUILDRUN USE_LOCALE DEF_PGPORT NOHBA AROPT DLSUFFIX DL_LIB
-export SHARED_LIB CFLAGS CPPFLAGS LDFLAGS
+export BUILDRUN USE_LOCALE DEF_PGPORT NOHBA AROPT DLSUFFIX DL_LIB YACC
+export SHARED_LIB CFLAGS CPPFLAGS LDFLAGS YFLAGS
 
 ./configure --prefix=${IDIR}
 

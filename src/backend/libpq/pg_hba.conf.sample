@@ -80,7 +80,7 @@ host         all         127.0.0.1     255.255.255.255   trust
 # The above allows any user on the local system to connect to any database
 # under any username.
  
-host         template1   192.168.0.0   255.255.255.0     ident     sameuser
+#host         template1   192.168.0.0   255.255.255.0     ident     sameuser
  
 # The above allows any user from any host with IP address 192.168.0.x to
 # connect to database template1 as the same username that ident on that host

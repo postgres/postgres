@@ -19,7 +19,7 @@
 # A user always has to specify when he connects what Postgres username he is
 # using.  This file is only used to validate that selection.
 
-testmap   robert   bob
-testmap   lucy     lucy
+#testmap   robert   bob
+#testmap   lucy     lucy
 
 

@@ -7,7 +7,7 @@
 #
 #
 # IDENTIFICATION
-#    $Header: /cvsroot/pgsql/src/Makefile.global.in,v 1.18 1997/04/04 10:38:23 scrappy Exp $
+#    $Header: /cvsroot/pgsql/src/Makefile.global.in,v 1.19 1997/04/04 11:21:39 scrappy Exp $
 #
 # NOTES
 #    Essentially all Postgres make files include this file and use the 
@@ -198,11 +198,6 @@ X11_INCDIR= /usr/include
 X11_LIBDIR= /usr/lib
 X11_LIB= -lX11 @SOCKET_LIB@ @NSL_LIB@
 
-##############################################################################
-#
-#  YACC
-
-YFLAGS= -d
 
 ##############################################################################
 #
@@ -247,6 +242,8 @@ endif
 # See the subdirectory template for default settings for these
 #-------------------------------------------------------------
 CC= @CC@
+YFLAGS= @YFLAGS@
+YACC= @YACC@
 LEX= @LEX@
 AROPT= @AROPT@
 CFLAGS= @CPPFLAGS@ @CFLAGS@
@@ -306,9 +303,6 @@ endif
 ifeq ($(PORTNAME), dgux)
 %.so: %.o
 	$(CC) -shared -o $@ $<
-
-YACC= bison -y
-
 endif
 
 #----------------------------------------------------------------------------
@@ -342,11 +336,8 @@ endif
 #--------------------------------------------------------------------------
 
 ifeq ($(PORTNAME), i386_solaris)
-# cc won't work!
-
 %.so: %.o
 	$(LD) -G -Bdynamic -o $@ $<
-
 endif
 
 #----------------------------------------------------------------------------
@@ -384,17 +375,13 @@ endif
 #----------------------------------------------------------------------------
 
 ifeq ($(PORTNAME), sparc_solaris)
-
 %.so: %.o
 	$(LD) -G -Bdynamic -o $@ $<
-
 endif
 
 #-----------------------------------------------------------------------------
 
 ifeq ($(PORTNAME), svr4)
-YACC= bison -y
-
 # MAKE_EXPORTS is required for svr4 loaders that want a file of
 # symbol names to tell them what to export/import.
 MAKE_EXPORTS= true
@@ -420,8 +407,6 @@ endif
 #	The univel port is almost guaranteed NOT to work yet.
 #
 ifeq ($(PORTNAME), univel)
-YACC= bison -y
-
 # MAKE_EXPORTS is required for svr4 loaders that want a file of
 # symbol names to tell them what to export/import.
 #MAKE_EXPORTS= true
