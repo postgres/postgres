@@ -1936,7 +1936,7 @@ public class DatabaseMetaData implements java.sql.DatabaseMetaData
 
     // Now form the query
     // Modified by Stefan Andreasen <stefan@linux.kapow.dk>
-    r = connection.ExecSQL("select a.oid,c.relname,a.attname,a.atttypid,a.attnum,a.attnotnull,a.attlen,a.atttypmod from pg_class c, pg_attribute a where a.attrelid=c.oid and c.relname like '"+tableNamePattern.toLowerCase()+"' and a.attname like '"+columnNamePattern.toLowerCase()+"' and a.attnum>0 order by c.relname,a.attnum");
+    r = connection.ExecSQL("select a.oid,c.relname,a.attname,a.atttypid,a.attnum,a.attnotnull,a.attlen,a.atttypmod,d.adsrc from pg_class c,pg_attribute a,pg_attrdef d where a.attrelid=c.oid and c.relname like '"+tableNamePattern.toLowerCase()+"' and a.attname like '"+columnNamePattern.toLowerCase()+"' and a.attnum>0 and c.oid=d.adrelid and d.adnum=a.attnum order by c.relname,a.attnum");
 
     byte remarks[];
 
@@ -1983,7 +1983,7 @@ public class DatabaseMetaData implements java.sql.DatabaseMetaData
 	// tuple[10] is below
 	// tuple[11] is above
 
-	tuple[12] = null;	// column default
+	tuple[12] = r.getBytes(9);	// column default
 
 	tuple[13] = null;	// sql data type (unused)
 	tuple[14] = null;	// sql datetime sub (unused)
