@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/ref/create_sequence.sgml,v 1.37 2003/09/22 00:16:57 petere Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/ref/create_sequence.sgml,v 1.38 2003/11/25 19:27:18 petere Exp $
 PostgreSQL documentation
 -->
 
@@ -101,7 +101,7 @@ SELECT * FROM <replaceable>name</replaceable>;
     <listitem>
      <para>
       The optional clause <literal>INCREMENT BY <replaceable
-      class="parameter">increment</replaceable></literal> specified,
+      class="parameter">increment</replaceable></literal> specifies
       which value is added to the current sequence value to create a
       new value.  A positive value will make an ascending sequence, a
       negative one a descending sequence.  The default value is 1.
