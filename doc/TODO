@@ -1,6 +1,6 @@
 TODO list for PostgreSQL
 ========================
-Last updated:		Tue Aug 13 22:49:31 EDT 2002
+Last updated:		Tue Aug 13 22:51:00 EDT 2002
 
 Current maintainer:	Bruce Momjian (pgman@candle.pha.pa.us)
 
@@ -54,6 +54,7 @@ Permissions
 * -Allow permissions for functions (Peter E)
 * -Allow object creation to be disabled for specific users
 
+
 Administration
 ==============
 
@@ -68,6 +69,7 @@ Administration
 * -Prevent SIGHUP and 'pg_ctl reload' from changing command line
   specified parameters to postgresql.conf defaults (Peter E)
 * Allow easy display of usernames in a group
+
 
 Data Types
 ==========
@@ -169,6 +171,7 @@ Indexes
 * Improve concurrency of hash indexes (Neil Conway)
 * -Test hash index performance and discourage usage
 
+
 Commands
 ========
 
@@ -262,6 +265,7 @@ Commands
 	o Allow array declarations and other data types in PL/PgSQl DECLARE
 	o Add PL/PgSQL PROCEDURES that can return multiple values
 
+
 Clients
 =======
 
@@ -324,6 +328,7 @@ Referential Integrity
   in array
 * Fix foreign key constraints to not error on intermediate db states (Stephan)
 * Allow DEFERRABLE UNIQUE constraints
+
 
 Dependency Checking
 ===================
@@ -458,6 +463,7 @@ Optimizer / Executor
 * Improve ability to display optimizer analysis using OPTIMIZER_DEBUG
 * Use CHECK constraints to improve optimizer decisions
 
+
 Miscellaneous
 =============
 
@@ -470,6 +476,7 @@ Miscellaneous
 * Add documentation to lock shared memory into RAM for each OS, if possible
 * -Use faster flex flags for performance improvement (Peter E)
 * -Add BSD-licensed qsort() for Solaris
+
 
 Source Code
 ===========
