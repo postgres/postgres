@@ -3,19 +3,22 @@
 MAKE_EXPORTS= true
 
 EXPSUFF= .exp
+IMPSUFF= .imp
 
-POSTGRES_EXP= $(SRCDIR)/backend/postgres$(EXPSUFF)
+POSTGRES_IMP= postgres$(IMPSUFF)
 
 MKLDEXPORT=$(SRCDIR)/backend/port/aix/mkldexport.sh
 
-%$(EXPSUFF):  %.o
-	$(MKLDEXPORT) $< `pwd` > $@
+$(POSTGRES_IMP):
+	@echo Making $@
+	$(MKLDEXPORT) postgres $(BINDIR) > $@
+	$(CC) -bE:$(SRCDIR)/backend/$@ -o postgres $(OBJS) ../utils/version.o $(LDFLAGS)
 
-$(POSTGRES_EXP): 
-	$(MAKE) -C $(SRCDIR)/backend postgres.exp
+%$(EXPSUFF):
+	$(MKLDEXPORT) $*.o `pwd` > $*$(EXPSUFF)
 
-%.so: %.o %$(EXPSUFF) $(POSTGRES_EXP)
-	@echo Making share library $@ from $*.o, $*$(EXPSUFF), and postgres.exp
-	$(LD) -H512 -T512 -o $@ -e _nostart \
-	  -bI:$(POSTGRES_EXP) -bE:$*$(EXPSUFF) \
-	  $*.o @MATH_LIB@ -lc 2>/dev/null
+%.so: %.o %$(EXPSUFF)
+	@echo Making share library $@ from $*.o, $*$(EXPSUFF), and installed postgres.imp
+	$(LD) -H512 -e _nostart -bM:SRE -bI:$(LIBDIR)/$(POSTGRES_IMP) -bE:$*$(EXPSUFF) -o $@ $*.o $(LDFLAGS)
+	#41  $(LD) -H512 -bnoentry -bM:SRE -bI:$(LIBDIR)/$(POSTGRES_IMP) -bE:$*$(EXPSUFF) -o $@ $*.o $(LDFLAGS)
+	#325 $(LD) -H512 -e _nostart -bM:SRE -bI:$(LIBDIR)/$(POSTGRES_IMP) -bE:$*$(EXPSUFF) -o $@ $*.o $(LDFLAGS)
