@@ -20,7 +20,7 @@
  *
  *
  * IDENTIFICATION
- *    $Header: /cvsroot/pgsql/src/bin/pg_dump/pg_dump.c,v 1.22 1997/01/07 00:04:16 scrappy Exp $
+ *    $Header: /cvsroot/pgsql/src/bin/pg_dump/pg_dump.c,v 1.23 1997/02/09 03:00:09 scrappy Exp $
  *
  * Modifications - 6/10/96 - dave@bensoft.com - version 1.13.dhb
  *
@@ -284,10 +284,13 @@ dumpClasses_dumpData(FILE *fout, const char *classname,
                 switch(PQftype(res,field)) {
                   case 21: case 22: case 23: /* int types */
                   case 810: case 910: /* oldint types */
-                  case 1005: case 1006: case 1007: /* _int types */
                   case 700: case 701: /* float types */
-                  case 1021: case 1022: /* _float types */
                     fprintf(fout, "%s", 
+                            PQgetvalue(res,tuple,field));
+                    break;
+                  case 1005: case 1006: case 1007: /* _int types */
+                  case 1021: case 1022: /* _float types */
+                    fprintf(fout, "'%s'", 
                             PQgetvalue(res,tuple,field));
                     break;
                   default: {
