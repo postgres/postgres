@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *    $Header: /cvsroot/pgsql/src/backend/parser/analyze.c,v 1.35 1997/08/22 00:02:04 momjian Exp $
+ *    $Header: /cvsroot/pgsql/src/backend/parser/analyze.c,v 1.36 1997/09/01 05:56:34 thomas Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -428,6 +428,14 @@ transformSelectStmt(ParseState *pstate, RetrieveStmt *stmt)
 
     /* fix where clause */
     qry->qual = transformWhereClause(pstate,stmt->whereClause);
+
+    /* check subselect clause */
+    if (stmt->selectClause)
+	elog(NOTICE,"UNION not yet supported; using first SELECT only",NULL);
+
+    /* check subselect clause */
+    if (stmt->havingClause)
+	elog(NOTICE,"HAVING not yet supported; ignore clause",NULL);
 
     /* fix order clause */
     qry->sortClause = transformSortClause(pstate,
@@ -1494,6 +1502,11 @@ find_targetlist_entry(ParseState *pstate, SortGroupBy *sortgroupby, List *tlist)
 	char *resname = resnode->resname;
 	int test_rtable_pos = var->varno;
 
+#ifdef PARSEDEBUG
+printf("find_targetlist_entry- target name is %s, position %d, resno %d\n",
+ (sortgroupby->name? sortgroupby->name: "(null)"), target_pos+1, sortgroupby->resno);
+#endif
+
 	if (!sortgroupby->name) {
 	    if (sortgroupby->resno == ++target_pos) {
 	    	target_result = target;
@@ -1534,7 +1547,7 @@ any_ordering_op(int restype)
 
 /*
  * transformGroupClause -
- *    transform an Group By clause
+ *    transform a Group By clause
  *
  */
 static List *
