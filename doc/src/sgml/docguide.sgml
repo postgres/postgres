@@ -1,23 +1,11 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/docguide.sgml,v 1.16 1999/06/14 07:36:11 thomas Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/docguide.sgml,v 1.17 1999/06/23 06:19:36 thomas Exp $
 Documentation Guide
 Thomas Lockhart
-
-$Log: docguide.sgml,v $
-Revision 1.16  1999/06/14 07:36:11  thomas
-Minor updates for release.
 
 Revision 1.15  1999/05/27 15:49:07  thomas
 Markup fixes.
 Update for v6.5 release.
-
-Revision 1.14  1999/01/07 03:01:27  thomas
-Fix column formatting for a table. No content changes.
-
-Revision 1.13  1998/12/29 02:24:14  thomas
-Clean up to ensure tag completion as required by the newest versions
- of Norm's Modular Style Sheets and jade/docbook.
-From Vince Vielhaber <vev@michvhf.com>.
 
 Revision 1.12  1998/12/18 16:17:29  thomas
 Include more details on editing with Emacs.
@@ -31,21 +19,10 @@ Minor editing and markup changes as a result of preparing the Postscript
  documentation for v6.4.
 Bigger updates to the installation instructions (install and config).
 
-Revision 1.10  1998/10/25 00:25:30  thomas
-Update info on source files for v6.4.
-Should add/change ToDo list some more before release...
-
-Revision 1.9  1998/10/15 05:46:54  momjian
-SGML updates from post 6.3.2 manual changes.  Added pg_upgrade man page.
-
 Revision 1.8  1998/08/17 16:17:07  thomas
 Bring document list closer to up to day.
 Add a note on sgml-tools that they are now working with jade and so
  may become the toolset of choice in the future.
-
-Revision 1.7  1998/08/15 06:53:52  thomas
-Include working list of all documentation sources, with current status
- and plans for some of them.
 
 -->
 
@@ -115,27 +92,67 @@ Include working list of all documentation sources, with current status
      </thead>
 
      <tbody>
-      <row><entry>./COPYRIGHT</entry><entry>Copyright notice</entry></row>
-      <row><entry>./INSTALL</entry><entry>Installation instructions (text from sgml->rtf->text)</entry></row>
-      <row><entry>./README</entry><entry>Introductory info</entry></row>
-      <row><entry>./register.txt</entry><entry>Registration message during make</entry></row>
-      <row><entry>./doc/bug.template</entry><entry>Bug report template</entry></row>
-      <row><entry>./doc/postgres.tar.gz</entry><entry>Integrated docs (<acronym>HTML</acronym>)</entry></row>
-      <row><entry>./doc/programmer.ps.gz</entry><entry>Programmer's Guide (Postscript)</entry></row>
-      <row><entry>./doc/programmer.tar.gz</entry><entry>Programmer's Guide (<acronym>HTML</acronym>)</entry></row>
-      <row><entry>./doc/reference.ps.gz</entry><entry>Reference Manual (Postscript)</entry></row>
-      <row><entry>./doc/reference.tar.gz</entry><entry>Reference Manual (<acronym>HTML</acronym>)</entry></row>
-      <row><entry>./doc/tutorial.ps.gz</entry><entry>Introduction (Postscript)</entry></row>
-      <row><entry>./doc/tutorial.tar.gz</entry><entry>Introduction (<acronym>HTML</acronym>)</entry></row>
-      <row><entry>./doc/user.ps.gz</entry><entry>User's Guide (Postscript)</entry></row>
-      <row><entry>./doc/user.tar.gz</entry><entry>User's Guide (<acronym>HTML</acronym>)</entry></row>
+      <row>
+       <entry>./COPYRIGHT</entry><entry>Copyright notice</entry>
+      </row>
+      <row>
+       <entry>./INSTALL</entry>
+       <entry>Installation instructions (text from sgml->rtf->text)</entry>
+      </row>
+      <row>
+       <entry>./README</entry>
+       <entry>Introductory info</entry>
+      </row>
+      <row>
+       <entry>./register.txt</entry>
+       <entry>Registration message during make</entry>
+      </row>
+      <row>
+       <entry>./doc/bug.template</entry>
+       <entry>Bug report template</entry>
+      </row>
+      <row>
+       <entry>./doc/postgres.tar.gz</entry>
+       <entry>Integrated docs (<acronym>HTML</acronym>)</entry>
+      </row>
+      <row>
+       <entry>./doc/programmer.ps.gz</entry>
+       <entry>Programmer's Guide (Postscript)</entry>
+      </row>
+      <row>
+       <entry>./doc/programmer.tar.gz</entry>
+       <entry>Programmer's Guide (<acronym>HTML</acronym>)</entry>
+      </row>
+      <row>
+       <entry>./doc/reference.ps.gz</entry>
+       <entry>Reference Manual (Postscript)</entry>
+      </row>
+      <row>
+       <entry>./doc/reference.tar.gz</entry>
+       <entry>Reference Manual (<acronym>HTML</acronym>)</entry>
+      </row>
+      <row>
+       <entry>./doc/tutorial.ps.gz</entry>
+       <entry>Introduction (Postscript)</entry>
+      </row>
+      <row>
+       <entry>./doc/tutorial.tar.gz</entry>
+       <entry>Introduction (<acronym>HTML</acronym>)</entry>
+      </row>
+      <row>
+       <entry>./doc/user.ps.gz</entry>
+       <entry>User's Guide (Postscript)</entry></row>
+      <row>
+       <entry>./doc/user.tar.gz</entry>
+       <entry>User's Guide (<acronym>HTML</acronym>)</entry>
+      </row>
      </tbody>
     </tgroup>
    </table>
   </para>
 
   <para>
-   There are man pages available for installation, as well as a large number
+   There are man pages available, as well as a large number
    of plain-text README-type files throughout the <productname>Postgres</productname>
    source tree.
   </para>
@@ -166,9 +183,11 @@ Include working list of all documentation sources, with current status
 
   <para>
    See
-   <ulink url="http://nis-www.lanl.gov/~rosalia/mydocs/docbook-intro.html">Introduction to DocBook</ulink>
+   <ulink url="http://nis-www.lanl.gov/~rosalia/mydocs/docbook-intro.html">
+    Introduction to DocBook</ulink>
    for a nice "quickstart" summary of DocBook features.
-   <ulink url="http://www.ora.com/homepages/dtdparse/docbook/3.0/"> DocBook Elements</ulink>
+   <ulink url="http://www.ora.com/homepages/dtdparse/docbook/3.0/">
+    DocBook Elements</ulink>
    provides a powerful cross-reference for features of
    <productname>DocBook</productname>.
   </para>
@@ -176,9 +195,11 @@ Include working list of all documentation sources, with current status
   <para>
    This documentation set is constructed using several tools, including
    James Clark's 
-   <ulink url="http://www.jclark.com/jade/"> <productname>jade</productname></ulink>
+   <ulink url="http://www.jclark.com/jade/">
+    <productname>jade</productname></ulink>
    and Norm Walsh's 
-   <ulink url="http://www.nwalsh.com/docbook/dsssl/">Modular DocBook Stylesheets</ulink>.
+   <ulink url="http://www.nwalsh.com/docbook/dsssl/">
+    Modular DocBook Stylesheets</ulink>.
   </para>
 
   <para>
@@ -191,7 +212,7 @@ Include working list of all documentation sources, with current status
   <para>
    <ulink url="http://sunsite.unc.edu/pub/packages/TeX/systems/unix/">
     <productname>TeX</productname></ulink> is a supported format for
-   <application>jade</application> output, but was not used at this time
+   <application>jade</application> output, but is not used at this time
    for several reasons, including the inability to make minor format
    fixes before committing to hardcopy and generally inadequate table
    support in the <productname>TeX</productname>
@@ -999,7 +1020,97 @@ by typing
 -->
 
   <sect2>
-   <title><acronym>RTF</acronym> Cleanup Procedure</title>
+   <title>Text Hardcopy</title>
+
+   <para>
+    <filename>INSTALL</filename> and <filename>HISTORY</filename> are
+    updated for each release. For historical reasons, these files are
+    in plain text, but are derived from the newer
+    <acronym>SGML</acronym> sources.
+   </para>
+
+   <procedure>
+    <title>Plain Text Generation</title>
+
+    <para>
+     Both <filename>INSTALL</filename> and
+     <filename>HISTORY</filename> are generated from existing
+     <acronym>SGML</acronym> sources. They are extracted from the same 
+     intermediate <acronym>RTF</acronym> file.
+    </para>
+
+    <step performance="required">
+     <para>
+      Generate <acronym>RTF</acronym> by typing:
+      <programlisting>
+% cd doc/src/sgml
+% make installation.rtf
+      </programlisting>
+     </para>
+    </step>
+      
+    <step performance="required">
+     <para>
+      Import <filename>installation.rtf</filename> into
+      <productname>Applix Words</productname>.
+     </para>
+    </step>
+
+    <step performance="required">
+     <para>
+      Set the page width and margins.
+     </para>
+
+     <substeps>
+      <step performance="required">
+       <para>
+	Adjust the page width in File.PageSetup to 10 inches.
+       </para>
+      </step>
+
+      <step performance="required">
+       <para>
+	Select all text.
+	Adjust the right margin using the ruler to 9.5 inches. This
+	will give a maximum column width of 79 characters, within the
+	80 columns upper limit goal.
+       </para>
+      </step>
+     </substeps>
+    </step>
+
+    <step performance="required">
+     <para>
+      Lop off the parts of the document which are not needed.
+     </para>
+
+     <para>
+      For <filename>INSTALL</filename>, remove all release notes from
+      the end of the text, except for those from the current release.
+      For <filename>HISTORY</filename>, remove all text up to the
+      release notes, preserving and modifying the title and ToC.
+     </para>
+    </step>
+
+    <step performance="required">
+     <para>
+      Export the result as <quote>ASCII Layout</quote>.
+     </para>
+    </step>
+
+    <step performance="required">
+     <para>
+      Using emacs or vi, clean up the tabular information in
+      <filename>INSTALL</filename>. Remove the <quote>mailto</quote>
+      <acronym>URLs</acronym> for the porting contributors to shrink
+      the column heights.
+     </para>
+    </step>
+   </procedure>
+  </sect2>
+
+  <sect2>
+   <title>Postscript Hardcopy</title>
 
    <para>
     Several items must be addressed in generating Postscript
@@ -1018,7 +1129,7 @@ by typing
 
     <step performance="required">
      <para>
-      Generate the <acronym>RTF</acronym> input by typing
+      Generate the <acronym>RTF</acronym> input by typing (for example):
       <programlisting>
 % cd doc/src/sgml
 % make tutorial.rtf
@@ -1048,7 +1159,7 @@ by typing
      <para>
       Not all documents have figures.
       You can grep the <acronym>SGML</acronym> source files for
-      the string <quote>Graphic</quote> to identify those parts of the
+      the string <quote>graphic</quote> to identify those parts of the
       documentation which may have figures. A few figures are replicated in
       various parts of the documentation.
      </para>
@@ -1093,7 +1204,8 @@ by typing
 
     <step performance="required">
      <para>
-      Export the document to a file in Postscript format.
+      <quote>Print</quote> the document
+      to a file in Postscript format.
      </para>
     </step>
 
