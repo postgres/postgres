@@ -1,40 +1,11 @@
- #
-# $Header: /cvsroot/pgsql/contrib/string/Attic/Makefile,v 1.15 2001/06/18 21:38:02 momjian Exp $
-#
+# $Header: /cvsroot/pgsql/contrib/string/Attic/Makefile,v 1.16 2001/09/06 10:49:30 petere Exp $
 
 subdir = contrib/string
 top_builddir = ../..
 include $(top_builddir)/src/Makefile.global
 
-NAME	:= string_io
-SONAME	:= $(NAME)$(DLSUFFIX)
+MODULES = string_io
+DATA_built = string_io.sql
+DOCS = README.string_io
 
-override CPPFLAGS := -I$(srcdir) $(CPPFLAGS)
-override CFLAGS += $(CFLAGS_SL)
-override DLLLIBS := $(BE_DLLLIBS) $(DLLLIBS)
-
-all: $(SONAME) $(NAME).sql
-
-%.sql: %.sql.in
-	sed -e 's:MODULE_PATHNAME:$(libdir)/contrib/$(@:.sql=$(DLSUFFIX)):g' < $< > $@
-
-install: all installdirs
-	$(INSTALL_SHLIB) $(SONAME)	$(libdir)/contrib
-	$(INSTALL_DATA) $(NAME).sql	$(datadir)/contrib
-	$(INSTALL_DATA) README.$(NAME)	$(docdir)/contrib
-
-installdirs:
-	$(mkinstalldirs) $(libdir)/contrib $(datadir)/contrib $(docdir)/contrib
-
-uninstall:
-	rm -f $(libdir)/contrib/$(SONAME) $(datadir)/contrib/$(NAME).sql $(docdir)/contrib/README.$(NAME)
-
-clean distclean maintainer-clean:
-	rm -f $(SONAME) $(NAME).sql
-
-depend dep:
-	$(CC) -MM -MG $(CFLAGS) *.c > depend
-
-ifeq (depend,$(wildcard depend))
-include depend
-endif
+include $(top_srcdir)/contrib/contrib-global.mk

@@ -1,42 +1,12 @@
-#
-# $Header: /cvsroot/pgsql/contrib/fulltextindex/Attic/Makefile,v 1.10 2001/06/18 21:38:01 momjian Exp $
-#
+# $Header: /cvsroot/pgsql/contrib/fulltextindex/Attic/Makefile,v 1.11 2001/09/06 10:49:29 petere Exp $
 
 subdir = contrib/fulltextindex
 top_builddir = ../..
-include ../../src/Makefile.global
+include $(top_builddir)/src/Makefile.global
 
-NAME	:= fti
-SONAME	:= $(NAME)$(DLSUFFIX)
+MODULES = fti
+DATA_built = fti.sql
+DOCS = README.fti
+SCRIPTS = fti.pl
 
-override CPPFLAGS := -I$(srcdir) $(CPPFLAGS)
-override CFLAGS += $(CFLAGS_SL)
-override DLLLIBS := $(BE_DLLLIBS) $(DLLLIBS)
-
-all: $(SONAME) $(NAME).sql
-
-$(NAME).sql: $(NAME).sql.in
-	sed -e 's:MODULE_PATHNAME:$(libdir)/contrib/$(SONAME):g' < $< > $@
-
-install: all installdirs
-	$(INSTALL_SCRIPT) fti.pl	$(bindir)
-	$(INSTALL_SHLIB) $(SONAME)	$(libdir)/contrib
-	$(INSTALL_DATA) $(NAME).sql	$(datadir)/contrib
-	$(INSTALL_DATA) README.$(NAME)	$(docdir)/contrib
-
-installdirs:
-	$(mkinstalldirs) $(bindir) $(libdir)/contrib $(datadir)/contrib $(docdir)/contrib
-
-uninstall:
-	rm -f $(bindir)/fti.pl $(libdir)/contrib/$(SONAME) \
-	  $(datadir)/contrib/$(NAME).sql $(docdir)/contrib/README.$(NAME)
-
-clean distclean maintainer-clean:
-	rm -f $(SONAME) $(NAME).sql
-
-depend dep:
-	$(CC) -MM -MG $(CFLAGS) *.c > depend
-
-ifeq (depend,$(wildcard depend))
-include depend
-endif
+include $(top_srcdir)/contrib/contrib-global.mk

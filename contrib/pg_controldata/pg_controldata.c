@@ -6,7 +6,7 @@
  * copyright (c) Oliver Elphick <olly@lfix.co.uk>, 2001;
  * licence: BSD
  *
- * $Header: /cvsroot/pgsql/contrib/pg_controldata/Attic/pg_controldata.c,v 1.3 2001/03/22 03:59:09 momjian Exp $
+ * $Header: /cvsroot/pgsql/contrib/pg_controldata/Attic/pg_controldata.c,v 1.4 2001/09/06 10:49:29 petere Exp $
  */
 #include "postgres.h"
 
@@ -40,7 +40,7 @@ dbState(DBState state)
 
 
 int
-main()
+main(int argc, char *argv[])
 {
 	ControlFileData ControlFile;
 	int			fd;
@@ -50,10 +50,13 @@ main()
 	char		pgctime_str[32];
 	char		ckpttime_str[32];
 
-	DataDir = getenv("PGDATA");
+	if (argc > 1)
+		DataDir = argv[1];
+	else
+		DataDir = getenv("PGDATA");
 	if (DataDir == NULL)
 	{
-		fprintf(stderr, "PGDATA is not defined\n");
+		fprintf(stderr, "no data directory specified\n");
 		exit(1);
 	}
 

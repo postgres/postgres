@@ -1,18 +1,9 @@
-#
-# $Header: /cvsroot/pgsql/contrib/tips/Attic/Makefile,v 1.4 2000/07/09 13:13:43 petere Exp $
-#
+# $Header: /cvsroot/pgsql/contrib/tips/Attic/Makefile,v 1.5 2001/09/06 10:49:30 petere Exp $
 
 subdir = contrib/tips
 top_builddir = ../..
-include ../../src/Makefile.global
+include $(top_builddir)/src/Makefile.global
 
-all:
+DOCS = README.apachelog
 
-install: installdirs
-	$(INSTALL_DATA) README.apachelog $(docdir)/contrib
-
-installdirs:
-	$(mkinstalldirs) $(docdir)/contrib
-
-uninstall:
-	rm -f $(docdir)/contrib/README.apachelog
+include $(top_srcdir)/contrib/contrib-global.mk

@@ -41,9 +41,9 @@ install: all installdirs
 	for file in $(TCLS) $(PERLS) $(SCRIPTS); do \
 	  $(INSTALL_SCRIPT) $$file $(DESTDIR)$(bindir) || exit ; \
 	done
-	$(INSTALL_DATA) RServ.pm $(DESTDIR)$(datadir)/contrib
+	$(INSTALL_DATA) $(srcdir)/RServ.pm $(DESTDIR)$(datadir)/contrib
 	$(INSTALL_SHLIB) $(SONAME) $(DESTDIR)$(libdir)/contrib
-	$(INSTALL_DATA) README.$(NAME) $(DESTDIR)$(docdir)/contrib
+	$(INSTALL_DATA) $(srcdir)/README.$(NAME) $(DESTDIR)$(docdir)/contrib
 
 installdirs:
 	$(mkinstalldirs) $(DESTDIR)$(bindir) $(DESTDIR)$(datadir)/contrib \
