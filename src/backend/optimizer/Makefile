@@ -4,19 +4,23 @@
 #    Makefile for optimizer
 #
 # IDENTIFICATION
-#    $Header: /cvsroot/pgsql/src/backend/optimizer/Makefile,v 1.1 1996/10/27 09:48:14 bryanh Exp $
+#    $Header: /cvsroot/pgsql/src/backend/optimizer/Makefile,v 1.2 1996/11/10 03:12:38 bryanh Exp $
 #
 #-------------------------------------------------------------------------
 
-all: SUBSYS.o
+all: submake SUBSYS.o
 
-SUBSYS.o: 
+OBJS = path/SUBSYS.o plan/SUBSYS.o prep/SUBSYS.o util/SUBSYS.o 
+
+SUBSYS.o: $(OBJS)
+	$(LD) -r -o SUBSYS.o $(OBJS)
+
+.PHONY: submake clean
+submake:
 	$(MAKE) -C path SUBSYS.o
 	$(MAKE) -C plan SUBSYS.o
 	$(MAKE) -C prep SUBSYS.o
 	$(MAKE) -C util SUBSYS.o
-	$(LD) -r -o SUBSYS.o \
-	     path/SUBSYS.o plan/SUBSYS.o prep/SUBSYS.o util/SUBSYS.o 
 
 clean:
 	rm -f SUBSYS.o

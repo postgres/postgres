@@ -19,7 +19,7 @@
 # be converted to Method 2.  
 #
 # IDENTIFICATION
-#    $Header: /cvsroot/pgsql/src/backend/port/Makefile,v 1.3 1996/10/31 17:27:58 momjian Exp $
+#    $Header: /cvsroot/pgsql/src/backend/port/Makefile,v 1.4 1996/11/10 03:13:27 bryanh Exp $
 #
 #-------------------------------------------------------------------------
 
@@ -29,23 +29,25 @@ ifndef PORTNAME
 	@false
 else
 
-OBJS = 
+OBJS = $(PORTNAME)/SUBSYS.o
 
 ifeq ($(PORTNAME), sparc_solaris)
 # Other ports get the inet_aton() function from their standard C libraries.
 OBJS += inet_aton.o
 endif
 
-all: SUBSYS.o
+all: submake SUBSYS.o
 
-SUBSYS.o: $(PORTNAME)/SUBSYS.o $(OBJS)
-	$(LD) -r -o SUBSYS.o $(PORTNAME)/SUBSYS.o $(OBJS)
+SUBSYS.o: $(OBJS)
+	$(LD) -r -o SUBSYS.o $(OBJS)
 
-$(PORTNAME)/SUBSYS.o:
+.PHONY: submake clean dep
+
+submake:
 	$(MAKE) -C $(PORTNAME) SUBSYS.o
 
 clean:
-	rm -f SUBSYS.o $(OBJS) 
+	rm -f $(OBJS)
 	$(MAKE) -C $(PORTNAME) clean
 
 depend dep:

@@ -4,13 +4,21 @@
 #    Makefile for the access methods module
 #
 # IDENTIFICATION
-#    $Header: /cvsroot/pgsql/src/backend/access/Makefile,v 1.1 1996/10/27 09:45:42 bryanh Exp $
+#    $Header: /cvsroot/pgsql/src/backend/access/Makefile,v 1.2 1996/11/10 03:11:46 bryanh Exp $
 #
 #-------------------------------------------------------------------------
 
-all: SUBSYS.o
+OBJS = common/SUBSYS.o gist/SUBSYS.o hash/SUBSYS.o heap/SUBSYS.o \
+       index/SUBSYS.o rtree/SUBSYS.o nbtree/SUBSYS.o transam/SUBSYS.o
 
-SUBSYS.o: 
+
+all: submake SUBSYS.o
+
+SUBSYS.o: $(OBJS)
+	$(LD) -r -o SUBSYS.o $(OBJS)
+
+.PHONY: submake
+submake:
 	$(MAKE) -C common  SUBSYS.o
 	$(MAKE) -C gist    SUBSYS.o
 	$(MAKE) -C hash    SUBSYS.o
@@ -19,9 +27,6 @@ SUBSYS.o:
 	$(MAKE) -C rtree   SUBSYS.o
 	$(MAKE) -C nbtree  SUBSYS.o
 	$(MAKE) -C transam SUBSYS.o
-	$(LD) -r -o SUBSYS.o \
-	    common/SUBSYS.o gist/SUBSYS.o hash/SUBSYS.o heap/SUBSYS.o \
-	    index/SUBSYS.o rtree/SUBSYS.o nbtree/SUBSYS.o transam/SUBSYS.o
 
 clean:
 	rm -f SUBSYS.o
