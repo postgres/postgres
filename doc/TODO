@@ -1,6 +1,6 @@
 TODO list for PostgreSQL
 ========================
-Last updated:		Sat Oct 19 22:51:15 EDT 2002
+Last updated:		Sun Oct 20 20:36:15 EDT 2002
 
 Current maintainer:	Bruce Momjian (pgman@candle.pha.pa.us)
 
@@ -521,7 +521,7 @@ Source Code
 * Remove memory/file descriptor freeing befor elog(ERROR)  (Bruce)
 * Create native Win32 port [win32]
 * -Fix glibc's mktime() to handle pre-1970's dates
-* Move /contrib/retep to gborg.postgresql.org
+* -Move /contrib/retep to gborg.postgresql.org
 
 ---------------------------------------------------------------------------
 
