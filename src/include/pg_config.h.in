@@ -8,7 +8,7 @@
  * or in pg_config.h afterwards.  Of course, if you edit pg_config.h, then your
  * changes will be overwritten the next time you run configure.
  *
- * $Id: pg_config.h.in,v 1.30 2002/09/02 01:05:06 tgl Exp $
+ * $Id: pg_config.h.in,v 1.31 2002/09/04 22:54:18 petere Exp $
  */
 
 #ifndef PG_CONFIG_H
@@ -36,7 +36,7 @@
 /* Set to 1 if you want 64-bit integer timestamp and interval support (--enable-integer-datetimes) */
 #undef USE_INTEGER_DATETIMES
 
-/* Set to 1 if you want cyrillic recode (--enable-recode) */
+/* Set to 1 if you want single-byte recode (--enable-recode) */
 #undef CYR_RECODE
 
 /* Set to 1 if you want ASSERT checking (--enable-cassert) */
@@ -80,12 +80,6 @@
 
 /* location of locale files */
 #undef LOCALEDIR
-
-/* Define to build the ODBC driver for unixODBC */
-#undef WITH_UNIXODBC
-
-/* Define to build the ODBC driver for iODBC */
-#undef WITH_IODBC
 
 
 /*
@@ -648,12 +642,6 @@ extern int fdatasync(int fildes);
 
 /* Define if POSIX signal interface is available */
 #undef HAVE_POSIX_SIGNALS
-
-/* Define if C++ compiler accepts "using namespace std" */
-#undef HAVE_NAMESPACE_STD
-
-/* Define if C++ compiler accepts "#include <string>" */
-#undef HAVE_CXX_STRING_HEADER
 
 /* Define if you have the optreset variable */
 #undef HAVE_INT_OPTRESET

@@ -16,16 +16,8 @@
 
 #define MAXPGPATH 1024
 
-#define BLCKSZ	8192
-
-#define INDEX_MAX_KEYS		32
-#define FUNC_MAX_ARGS		INDEX_MAX_KEYS
-
 #define HAVE_ATEXIT
 #define HAVE_MEMMOVE
-
-#define HAVE_CXX_STRING_HEADER
-#define HAVE_NAMESPACE_STD
 
 /* use _snprintf instead of snprintf */
 #define	HAVE_DECL_SNPRINTF 1

@@ -6,7 +6,7 @@
 # Copyright (c) 1998, Regents of the University of California
 #
 # IDENTIFICATION
-#    $Header: /cvsroot/pgsql/src/Makefile.shlib,v 1.62 2002/09/04 15:45:50 tgl Exp $
+#    $Header: /cvsroot/pgsql/src/Makefile.shlib,v 1.63 2002/09/04 22:54:18 petere Exp $
 #
 #-------------------------------------------------------------------------
 
@@ -58,32 +58,8 @@
 # bjm 2001-02-10
 
 
-ifndef cplusplus
 COMPILER = $(CC) $(CFLAGS)
-else
-COMPILER = $(CXX) $(CXXFLAGS)
-endif
-
-
-# First, a few hacks for building *static* libraries.
-
 LINK.static = $(AR) $(AROPT)
-
-ifdef cplusplus
-
-ifeq ($(PORTNAME), irix5)
-  ifneq ($(GXX), yes)
-    LINK.static = $(CXX) -ar -o
-  endif
-endif
-
-ifeq ($(PORTNAME), solaris)
-  ifneq ($(GXX), yes)
-    LINK.static = $(CXX) -xar -o
-  endif
-endif
-
-endif # cplusplus
 
 
 
@@ -95,14 +71,7 @@ ifeq ($(enable_shared), yes)
 
 # Try to keep the sections in some kind of order, folks...
 
-ifndef cplusplus
-  override CFLAGS	+= $(CFLAGS_SL)
-else
-  ifndef CXXFLAGS_SL
-    CXXFLAGS_SL = $(CFLAGS_SL)
-  endif
-  override CXXFLAGS	+= $(CXXFLAGS_SL)
-endif
+override CFLAGS += $(CFLAGS_SL)
 
 soname = lib$(NAME)$(DLSUFFIX).$(SO_MAJOR_VERSION)
 
@@ -174,18 +143,10 @@ endif
 
 ifeq ($(PORTNAME), solaris)
   shlib			:= lib$(NAME)$(DLSUFFIX).$(SO_MAJOR_VERSION).$(SO_MINOR_VERSION)
-  ifndef cplusplus
-    ifeq ($(GCC), yes)
-      LINK.shared	= $(CC) -shared
-    else
-      LINK.shared	= $(CC) -G
-    endif
+  ifeq ($(GCC), yes)
+    LINK.shared		= $(CC) -shared
   else
-    ifeq ($(GXX), yes)
-      LINK.shared	= $(CXX) -shared
-    else
-      LINK.shared	= $(CXX) -G
-    endif
+    LINK.shared		= $(CC) -G
   endif
   ifeq ($(with_gnu_ld), yes)
     LINK.shared		+= -Wl,-soname,$(soname)
@@ -206,19 +167,11 @@ endif
 
 ifeq ($(PORTNAME), sco)
   shlib			:= lib$(NAME)$(DLSUFFIX).$(SO_MAJOR_VERSION).$(SO_MINOR_VERSION)
-  ifndef cplusplus
-    ifeq ($(GCC), yes)
-      LINK.shared	= $(CC) -shared
-    else
-      LINK.shared	= $(CC) -G
-    endif
+  ifeq ($(GCC), yes)
+    LINK.shared		= $(CC) -shared
   else
-    ifeq ($(GXX), yes)
-      LINK.shared	= $(CXX) -shared
-    else
-      LINK.shared	= $(CXX) -G
+    LINK.shared		= $(CC) -G
     endif
-  endif
   LINK.shared		+= -Wl,-z,text -Wl,-h,$(soname)
 endif
 
@@ -234,27 +187,16 @@ endif
 
 ifeq ($(PORTNAME), unixware)
   shlib			:= lib$(NAME)$(DLSUFFIX).$(SO_MAJOR_VERSION).$(SO_MINOR_VERSION)
-  ifndef cplusplus
-    ifeq ($(GCC), yes)
-      LINK.shared	= $(CC) -shared
-    else
-      LINK.shared	= $(CC) -G
-    endif
+  ifeq ($(GCC), yes)
+    LINK.shared		= $(CC) -shared
   else
-    ifeq ($(GXX), yes)
-      LINK.shared	= $(CXX) -shared
-    else
-      LINK.shared	= $(CXX) -G
-    endif
+    LINK.shared		= $(CC) -G
   endif
   LINK.shared		+= -Wl,-z,text -Wl,-h,$(soname)
 endif
 
 ifeq ($(PORTNAME), win)
   shlib			:= $(NAME)$(DLSUFFIX)
-  ifdef cplusplus
-    SHLIB_LINK		+= --driver-name g++
-  endif
 endif
 
 ifeq ($(PORTNAME), beos)

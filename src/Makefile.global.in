@@ -1,5 +1,5 @@
 # -*-makefile-*-
-# $Header: /cvsroot/pgsql/src/Makefile.global.in,v 1.154 2002/09/03 21:45:41 petere Exp $
+# $Header: /cvsroot/pgsql/src/Makefile.global.in,v 1.155 2002/09/04 22:54:18 petere Exp $
 
 #------------------------------------------------------------------------------
 # All PostgreSQL makefiles include this file and use the variables it sets,
@@ -121,7 +121,6 @@ localedir := @localedir@
 #
 # Records the choice of the various --enable-xxx and --with-xxx options.
 
-with_CXX	= @with_CXX@
 with_java	= @with_java@
 with_perl	= @with_perl@
 with_python	= @with_python@
@@ -177,13 +176,6 @@ ifeq ($(GCC), yes)
   CFLAGS += -Wall -Wmissing-prototypes -Wmissing-declarations
 endif
 
-CXX = @CXX@
-GXX = @GXX@
-CXXFLAGS = @CXXFLAGS@
-ifeq ($(GXX), yes)
-  CXXFLAGS += -Wall
-endif
-
 # Kind-of compilers
 
 YACC = @YACC@
@@ -207,13 +199,10 @@ X = @EXEEXT@
 # Perl 
 
 PERL			= @PERL@
-perl_installsitearch	= @perl_installsitearch@
-perl_installman3dir	= @perl_installman3dir@
 perl_archlibexp		= @perl_archlibexp@
 perl_privlibexp		= @perl_privlibexp@
 perl_useshrplib		= @perl_useshrplib@
 perl_embed_ldflags	= @perl_embed_ldflags@
-perl_man3ext		= @perl_man3ext@
 
 # Miscellaneous
 
@@ -224,7 +213,6 @@ MSGFMT  = @MSGFMT@
 MSGMERGE = @MSGMERGE@
 PYTHON	= @PYTHON@
 TAR	= @TAR@
-WISH	= @WISH@
 XGETTEXT = @XGETTEXT@
 
 GZIP	= gzip
@@ -436,10 +424,6 @@ ifndef COMPILE.c
 COMPILE.c = $(CC) $(CFLAGS) $(CPPFLAGS) -c
 endif
 
-ifndef COMPILE.cc
-COMPILE.cc = $(CXX) $(CXXFLAGS) $(CPPFLAGS) -c
-endif
-
 DEPDIR = .deps
 df = $(DEPDIR)/$(*F)
 
@@ -461,14 +445,6 @@ ifeq ($(GCC), yes)
 	$(postprocess-depend)
 
 endif # GCC
-
-ifeq ($(GXX), yes)
-
-%.o : %.cc
-	$(COMPILE.cc) -o $@ $< -MMD
-	$(postprocess-depend)
-
-endif # GXX
 
 # Include all the dependency files generated for the current
 # directory. List /dev/null as dummy because if the wildcard expands

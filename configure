@@ -838,7 +838,7 @@ Optional Features:
   --disable-FEATURE       do not include FEATURE (same as --enable-FEATURE=no)
   --enable-FEATURE[=ARG]  include FEATURE [ARG=yes]
   --enable-integer-datetimes  enable 64-bit integer date/time support
-  --enable-recode         enable character set recode support
+  --enable-recode         enable single-byte recode support
   --enable-nls[=LANGUAGES]  enable Native Language Support
   --disable-shared        do not build shared libraries
   --disable-rpath         do not embed shared library search path in executables
@@ -860,7 +860,7 @@ Optional Packages:
   --without-tk            do not build Tk interfaces if Tcl is enabled
   --with-tclconfig=DIR    tclConfig.sh and tkConfig.sh are in DIR
   --with-tkconfig=DIR     tkConfig.sh is in DIR
-  --with-perl             build PL/Perl
+  --with-perl             build Perl modules (PL/Perl)
   --with-python           build Python interface module
   --with-java             build JDBC interface and Java tools
   --with-krb4[=DIR]       build with Kerberos 4 support [/usr/athena]
@@ -2935,7 +2935,7 @@ fi;
 
 
 #
-# Optionally build Perl modules (Pg.pm and PL/Perl)
+# Optionally build Perl modules (PL/Perl)
 #
 echo "$as_me:$LINENO: checking whether to build Perl modules" >&5
 echo $ECHO_N "checking whether to build Perl modules... $ECHO_C" >&6
@@ -4105,51 +4105,6 @@ echo "$as_me: WARNING:
 fi
 
 
-if test "$with_tk" = yes; then
-    # Extract the first word of "wish", so it can be a program name with args.
-set dummy wish; ac_word=$2
-echo "$as_me:$LINENO: checking for $ac_word" >&5
-echo $ECHO_N "checking for $ac_word... $ECHO_C" >&6
-if test "${ac_cv_path_WISH+set}" = set; then
-  echo $ECHO_N "(cached) $ECHO_C" >&6
-else
-  case $WISH in
-  [\\/]* | ?:[\\/]*)
-  ac_cv_path_WISH="$WISH" # Let the user override the test with a path.
-  ;;
-  *)
-  as_save_IFS=$IFS; IFS=$PATH_SEPARATOR
-for as_dir in $PATH
-do
-  IFS=$as_save_IFS
-  test -z "$as_dir" && as_dir=.
-  for ac_exec_ext in '' $ac_executable_extensions; do
-  if $as_executable_p "$as_dir/$ac_word$ac_exec_ext"; then
-    ac_cv_path_WISH="$as_dir/$ac_word$ac_exec_ext"
-    echo "$as_me:$LINENO: found $as_dir/$ac_word$ac_exec_ext" >&5
-    break 2
-  fi
-done
-done
-
-  ;;
-esac
-fi
-WISH=$ac_cv_path_WISH
-
-if test -n "$WISH"; then
-  echo "$as_me:$LINENO: result: $WISH" >&5
-echo "${ECHO_T}$WISH" >&6
-else
-  echo "$as_me:$LINENO: result: no" >&5
-echo "${ECHO_T}no" >&6
-fi
-
-    test -z "$WISH" && { { echo "$as_me:$LINENO: error: 'wish' is required for Tk support" >&5
-echo "$as_me: error: 'wish' is required for Tk support" >&2;}
-   { (exit 1); exit 1; }; }
-fi
-
 # Extract the first word of "perl", so it can be a program name with args.
 set dummy perl; ac_word=$2
 echo "$as_me:$LINENO: checking for $ac_word" >&5
@@ -4191,16 +4146,6 @@ fi
 
 if test "$with_perl" = yes; then
 
-echo "$as_me:$LINENO: checking for Perl installsitearch" >&5
-echo $ECHO_N "checking for Perl installsitearch... $ECHO_C" >&6
-perl_installsitearch=`$PERL -MConfig -e 'print $Config{installsitearch}'`
-echo "$as_me:$LINENO: result: $perl_installsitearch" >&5
-echo "${ECHO_T}$perl_installsitearch" >&6
-echo "$as_me:$LINENO: checking for Perl installman3dir" >&5
-echo $ECHO_N "checking for Perl installman3dir... $ECHO_C" >&6
-perl_installman3dir=`$PERL -MConfig -e 'print $Config{installman3dir}'`
-echo "$as_me:$LINENO: result: $perl_installman3dir" >&5
-echo "${ECHO_T}$perl_installman3dir" >&6
 echo "$as_me:$LINENO: checking for Perl archlibexp" >&5
 echo $ECHO_N "checking for Perl archlibexp... $ECHO_C" >&6
 perl_archlibexp=`$PERL -MConfig -e 'print $Config{archlibexp}'`
@@ -4216,11 +4161,6 @@ echo $ECHO_N "checking for Perl useshrplib... $ECHO_C" >&6
 perl_useshrplib=`$PERL -MConfig -e 'print $Config{useshrplib}'`
 echo "$as_me:$LINENO: result: $perl_useshrplib" >&5
 echo "${ECHO_T}$perl_useshrplib" >&6
-echo "$as_me:$LINENO: checking for Perl man3ext" >&5
-echo $ECHO_N "checking for Perl man3ext... $ECHO_C" >&6
-perl_man3ext=`$PERL -MConfig -e 'print $Config{man3ext}'`
-echo "$as_me:$LINENO: result: $perl_man3ext" >&5
-echo "${ECHO_T}$perl_man3ext" >&6
 
 echo "$as_me:$LINENO: checking for flags to link embedded Perl" >&5
 echo $ECHO_N "checking for flags to link embedded Perl... $ECHO_C" >&6
@@ -4306,6 +4246,14 @@ fi
 
 echo "$as_me:$LINENO: checking how to link an embedded Python application" >&5
 echo $ECHO_N "checking how to link an embedded Python application... $ECHO_C" >&6
+
+if test ! -f "$python_configdir/Makefile"; then
+  echo "$as_me:$LINENO: result: no" >&5
+echo "${ECHO_T}no" >&6
+  { { echo "$as_me:$LINENO: error: Python Makefile not found" >&5
+echo "$as_me: error: Python Makefile not found" >&2;}
+   { (exit 1); exit 1; }; }
+fi
 
 _python_libs=`grep '^LIBS=' $python_configdir/Makefile | sed 's/^.*=//'`
 _python_libc=`grep '^LIBC=' $python_configdir/Makefile | sed 's/^.*=//'`
@@ -9425,7 +9373,12 @@ fi
 echo "$as_me:$LINENO: result: $ac_cv_member_krb5_error_e_data" >&5
 echo "${ECHO_T}$ac_cv_member_krb5_error_e_data" >&6
 if test $ac_cv_member_krb5_error_e_data = yes; then
-  :
+
+cat >>confdefs.h <<_ACEOF
+#define HAVE_KRB5_ERROR_E_DATA 1
+_ACEOF
+
+
 else
   { { echo "$as_me:$LINENO: error: could not determine how to extract Kerberos 5 error messages" >&5
 echo "$as_me: error: could not determine how to extract Kerberos 5 error messages" >&2;}
@@ -16310,14 +16263,10 @@ s,@STRIP_STATIC_LIB@,$STRIP_STATIC_LIB,;t t
 s,@STRIP_SHARED_LIB@,$STRIP_SHARED_LIB,;t t
 s,@YACC@,$YACC,;t t
 s,@YFLAGS@,$YFLAGS,;t t
-s,@WISH@,$WISH,;t t
 s,@PERL@,$PERL,;t t
-s,@perl_installsitearch@,$perl_installsitearch,;t t
-s,@perl_installman3dir@,$perl_installman3dir,;t t
 s,@perl_archlibexp@,$perl_archlibexp,;t t
 s,@perl_privlibexp@,$perl_privlibexp,;t t
 s,@perl_useshrplib@,$perl_useshrplib,;t t
-s,@perl_man3ext@,$perl_man3ext,;t t
 s,@perl_embed_ldflags@,$perl_embed_ldflags,;t t
 s,@PYTHON@,$PYTHON,;t t
 s,@python_version@,$python_version,;t t

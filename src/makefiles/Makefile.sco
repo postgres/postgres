@@ -8,11 +8,6 @@ CFLAGS_SL = -fpic
 else
 CFLAGS_SL = -K PIC
 endif
-ifeq ($(GXX), yes)
-CXXFLAGS_SL = -fpic
-else
-CXXFLAGS_SL = -K PIC
-endif
 
 %.so: %.o
 	$(LD) -G -Bdynamic -o $@ $<

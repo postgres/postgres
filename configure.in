@@ -1,5 +1,5 @@
 dnl Process this file with autoconf to produce a configure script.
-dnl $Header: /cvsroot/pgsql/configure.in,v 1.204 2002/09/04 08:08:29 momjian Exp $
+dnl $Header: /cvsroot/pgsql/configure.in,v 1.205 2002/09/04 22:54:18 petere Exp $
 dnl
 dnl Developers, please strive to achieve this order:
 dnl
@@ -155,9 +155,9 @@ AC_MSG_RESULT([$enable_integer_datetimes])
 # Character set recode (--enable-recode)
 #
 AC_MSG_CHECKING([whether to build with recode support])
-PGAC_ARG_BOOL(enable, recode, no, [  --enable-recode         enable character set recode support],
+PGAC_ARG_BOOL(enable, recode, no, [  --enable-recode         enable single-byte recode support],
               [AC_DEFINE([CYR_RECODE], 1,
-                         [Set to 1 if you want cyrillic recode support (--enable-recode)])])
+                         [Set to 1 if you want single-byte recode support (--enable-recode)])])
 AC_MSG_RESULT([$enable_recode])
 
 
@@ -350,10 +350,10 @@ PGAC_ARG_REQ(with, tclconfig, [  --with-tclconfig=DIR    tclConfig.sh and tkConf
 PGAC_ARG_REQ(with, tkconfig,  [  --with-tkconfig=DIR     tkConfig.sh is in DIR])
 
 #
-# Optionally build Perl modules (Pg.pm and PL/Perl)
+# Optionally build Perl modules (PL/Perl)
 #
 AC_MSG_CHECKING([whether to build Perl modules])
-PGAC_ARG_BOOL(with, perl, no, [  --with-perl             build PL/Perl])
+PGAC_ARG_BOOL(with, perl, no, [  --with-perl             build Perl modules (PL/Perl)])
 AC_MSG_RESULT([$with_perl])
 AC_SUBST(with_perl)
 
@@ -570,15 +570,9 @@ if test -z "$YACC"; then
 fi
 AC_SUBST(YFLAGS)
 
-if test "$with_tk" = yes; then
-    AC_PATH_PROG(WISH, wish)
-    test -z "$WISH" && AC_MSG_ERROR(['wish' is required for Tk support])
-fi
-
 PGAC_PATH_PERL
 if test "$with_perl" = yes; then
-  PGAC_CHECK_PERL_CONFIGS([installsitearch,installman3dir,
-                           archlibexp,privlibexp,useshrplib,man3ext])
+  PGAC_CHECK_PERL_CONFIGS([archlibexp,privlibexp,useshrplib])
   PGAC_CHECK_PERL_EMBED_LDFLAGS
 fi
 
@@ -748,9 +742,9 @@ if test "$with_krb5" = yes; then
                                      [#include <krb5.h>])],
                    [#include <krb5.h>])
   AC_CHECK_MEMBERS([krb5_error.text.data], [],
-                   [AC_CHECK_MEMBER([krb5_error.e_data], [],
-                                    [AC_MSG_ERROR([could not determine how to extract Kerberos 5 error messages])],
-                                    [#include <krb5.h>])],
+                   [AC_CHECK_MEMBERS([krb5_error.e_data], [],
+                                     [AC_MSG_ERROR([could not determine how to extract Kerberos 5 error messages])],
+                                     [#include <krb5.h>])],
                    [#include <krb5.h>])
 fi
 

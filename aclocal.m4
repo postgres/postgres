@@ -1,8 +1,7 @@
-dnl $Header: /cvsroot/pgsql/aclocal.m4,v 1.14 2002/03/29 17:32:48 petere Exp $
+dnl $Header: /cvsroot/pgsql/aclocal.m4,v 1.15 2002/09/04 22:54:17 petere Exp $
 m4_include([config/ac_func_accept_argtypes.m4])
 m4_include([config/c-compiler.m4])
 m4_include([config/c-library.m4])
-m4_include([config/cxx.m4])
 m4_include([config/docbook.m4])
 m4_include([config/general.m4])
 m4_include([config/java.m4])

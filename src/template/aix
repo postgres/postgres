@@ -6,5 +6,4 @@ else # not GCC
     aix3.2.5 | aix4.1*)
       CFLAGS='-qmaxmem=16384 -qsrcmsg' ;;
   esac
-  CCC=xlC
 fi # not GCC

@@ -12,7 +12,7 @@
  * Portions Copyright (c) 1996-2002, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Id: c.h,v 1.125 2002/09/04 20:31:36 momjian Exp $
+ * $Id: c.h,v 1.126 2002/09/04 22:54:18 petere Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -149,7 +149,6 @@
 /* BeOS defines bool already, but the compiler chokes on the
  * #ifndef unless we wrap it in this check.
  */
-/* Also defined in interfaces/odbc/md5.h */
 #ifndef __BEOS__
 
 #ifndef __cplusplus

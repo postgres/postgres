@@ -6,11 +6,6 @@ CFLAGS_SL = -fpic
 else
 CFLAGS_SL = -PIC
 endif
-ifeq ($(GXX), yes)
-CXXFLAGS_SL = -fPIC
-else
-CXXFLAGS_SL = -PIC
-endif
 
 %.so: %.o
 	$(LD) -assert pure-text -Bdynamic -o $@ $<

@@ -1,8 +1,6 @@
 if test "$GCC" = yes ; then
   CFLAGS=-O2
-  CCC=g++
 else
   CC="$CC -Ae"
   CFLAGS=+O2
-  CCC=aCC
 fi
