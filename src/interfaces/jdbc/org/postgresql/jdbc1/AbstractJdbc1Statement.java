@@ -8,7 +8,7 @@ import java.util.Vector;
 import org.postgresql.largeobject.*;
 import org.postgresql.util.*;
 
-/* $Header: /cvsroot/pgsql/src/interfaces/jdbc/org/postgresql/jdbc1/Attic/AbstractJdbc1Statement.java,v 1.2 2002/07/24 22:08:39 barry Exp $
+/* $Header: /cvsroot/pgsql/src/interfaces/jdbc/org/postgresql/jdbc1/Attic/AbstractJdbc1Statement.java,v 1.3 2002/07/25 22:45:27 barry Exp $
  * This class defines methods of the jdbc1 specification.  This class is
  * extended by org.postgresql.jdbc2.AbstractJdbc2Statement which adds the jdbc2
  * methods.  The real Statement class (for jdbc1) is org.postgresql.jdbc1.Jdbc1Statement
@@ -47,6 +47,20 @@ public abstract class AbstractJdbc1Statement implements org.postgresql.PGStateme
 	protected String[] templateStrings;
 	protected String[] inStrings;
 
+	//Used by the callablestatement style methods
+	private static final String JDBC_SYNTAX = "{[? =] call <some_function> ([? [,?]*]) }";
+	private static final String RESULT_COLUMN = "result";
+	private String originalSql = "";
+	private boolean isFunction;
+	// functionReturnType contains the user supplied value to check
+	// testReturn contains a modified version to make it easier to 
+	// check the getXXX methods..
+	private int functionReturnType;
+	private int testReturn;
+	// returnTypeSet is true when a proper call to registerOutParameter has been made
+	private boolean returnTypeSet;
+	protected Object callResult;
+
 
 
 	public AbstractJdbc1Statement (AbstractJdbc1Connection connection)
@@ -62,6 +76,10 @@ public abstract class AbstractJdbc1Statement implements org.postgresql.PGStateme
 	}
 
 	protected void parseSqlStmt () throws SQLException {
+	    if (this instanceof CallableStatement) {
+                modifyJdbcCall();
+	    }
+
 		Vector v = new Vector();
 		boolean inQuotes = false;
 		int lastParmEnd = 0, i;
@@ -179,7 +197,23 @@ public abstract class AbstractJdbc1Statement implements org.postgresql.PGStateme
 		// New in 7.1, pass Statement so that ExecSQL can customise to it
 		result = ((AbstractJdbc1Connection)connection).ExecSQL(sql, (java.sql.Statement)this);
 
-		return (result != null && ((AbstractJdbc1ResultSet)result).reallyResultSet());
+                //If we are executing a callable statement function set the return data
+		if (isFunction) {
+  		        if (!((AbstractJdbc1ResultSet)result).reallyResultSet())
+			    throw new PSQLException("postgresql.call.noreturnval");
+			if (!result.next ())
+				throw new PSQLException ("postgresql.call.noreturnval");
+			callResult = result.getObject(1);
+			int columnType = result.getMetaData().getColumnType(1);
+			if (columnType != functionReturnType) 
+				throw new PSQLException ("postgresql.call.wrongrtntype",
+										 new Object[]{
+					"java.sql.Types=" + columnType, "java.sql.Types="+functionReturnType }); 
+		        result.close ();
+                        return true;
+		} else {
+		        return (result != null && ((AbstractJdbc1ResultSet)result).reallyResultSet());
+		}
 	}
 
 	/*
@@ -233,6 +267,8 @@ public abstract class AbstractJdbc1Statement implements org.postgresql.PGStateme
 	{
 		if (result == null)
 			return -1;
+                if (isFunction)
+		        return 1;
 		if (((AbstractJdbc1ResultSet)result).reallyResultSet())
 			return -1;
 		return ((AbstractJdbc1ResultSet)result).getResultCount();
@@ -250,14 +286,6 @@ public abstract class AbstractJdbc1Statement implements org.postgresql.PGStateme
 		result = ((AbstractJdbc1ResultSet)result).getNext();
 		return (result != null && ((AbstractJdbc1ResultSet)result).reallyResultSet());
 	}
-
-
-
-
-
-
-
-
 
 
 
@@ -1215,6 +1243,291 @@ public abstract class AbstractJdbc1Statement implements org.postgresql.PGStateme
 	}
 
 	/*
+	 * Before executing a stored procedure call you must explicitly
+	 * call registerOutParameter to register the java.sql.Type of each
+	 * out parameter.
+	 *
+	 * <p>Note: When reading the value of an out parameter, you must use
+	 * the getXXX method whose Java type XXX corresponds to the
+	 * parameter's registered SQL type.
+	 *
+	 * ONLY 1 RETURN PARAMETER if {?= call ..} syntax is used
+	 *
+	 * @param parameterIndex the first parameter is 1, the second is 2,...
+	 * @param sqlType SQL type code defined by java.sql.Types; for
+	 * parameters of type Numeric or Decimal use the version of
+	 * registerOutParameter that accepts a scale value
+	 * @exception SQLException if a database-access error occurs.
+	 */
+	public void registerOutParameter(int parameterIndex, int sqlType) throws SQLException
+		{
+			if (parameterIndex != 1)
+				throw new PSQLException ("postgresql.call.noinout");
+			if (!isFunction)
+				throw new PSQLException ("postgresql.call.procasfunc", originalSql);
+			
+			// functionReturnType contains the user supplied value to check
+			// testReturn contains a modified version to make it easier to 
+			// check the getXXX methods..
+			functionReturnType = sqlType;
+			testReturn = sqlType;
+			if (functionReturnType == Types.CHAR || 
+				functionReturnType == Types.LONGVARCHAR)
+				testReturn = Types.VARCHAR;
+			else if (functionReturnType == Types.FLOAT)
+				testReturn = Types.REAL; // changes to streamline later error checking
+			returnTypeSet = true;
+		}
+
+	/*
+	 * You must also specify the scale for numeric/decimal types:
+	 *
+	 * <p>Note: When reading the value of an out parameter, you must use
+	 * the getXXX method whose Java type XXX corresponds to the
+	 * parameter's registered SQL type.
+	 *
+	 * @param parameterIndex the first parameter is 1, the second is 2,...
+	 * @param sqlType use either java.sql.Type.NUMERIC or java.sql.Type.DECIMAL
+	 * @param scale a value greater than or equal to zero representing the
+	 * desired number of digits to the right of the decimal point
+	 * @exception SQLException if a database-access error occurs.
+	 */
+	public void registerOutParameter(int parameterIndex, int sqlType,
+									 int scale) throws SQLException
+		{
+			registerOutParameter (parameterIndex, sqlType); // ignore for now..
+		}
+
+	/*
+	 * An OUT parameter may have the value of SQL NULL; wasNull
+	 * reports whether the last value read has this special value.
+	 *
+	 * <p>Note: You must first call getXXX on a parameter to read its
+	 * value and then call wasNull() to see if the value was SQL NULL.
+	 * @return true if the last parameter read was SQL NULL
+	 * @exception SQLException if a database-access error occurs.
+	 */
+	public boolean wasNull() throws SQLException
+	{
+		// check to see if the last access threw an exception
+		return (callResult == null);
+	}
+
+	/*
+	 * Get the value of a CHAR, VARCHAR, or LONGVARCHAR parameter as a
+	 * Java String.
+	 *
+	 * @param parameterIndex the first parameter is 1, the second is 2,...
+	 * @return the parameter value; if the value is SQL NULL, the result is null
+	 * @exception SQLException if a database-access error occurs.
+	 */
+	public String getString(int parameterIndex) throws SQLException
+	{
+		checkIndex (parameterIndex, Types.VARCHAR, "String");
+		return (String)callResult;
+	}
+
+
+	/*
+	 * Get the value of a BIT parameter as a Java boolean.
+	 *
+	 * @param parameterIndex the first parameter is 1, the second is 2,...
+	 * @return the parameter value; if the value is SQL NULL, the result is false
+	 * @exception SQLException if a database-access error occurs.
+	 */
+	public boolean getBoolean(int parameterIndex) throws SQLException
+	{
+		checkIndex (parameterIndex, Types.BIT, "Boolean");
+		if (callResult == null) return false;
+		return ((Boolean)callResult).booleanValue ();
+	}
+
+	/*
+	 * Get the value of a TINYINT parameter as a Java byte.
+	 *
+	 * @param parameterIndex the first parameter is 1, the second is 2,...
+	 * @return the parameter value; if the value is SQL NULL, the result is 0
+	 * @exception SQLException if a database-access error occurs.
+	 */
+	public byte getByte(int parameterIndex) throws SQLException
+	{
+		checkIndex (parameterIndex, Types.TINYINT, "Byte");
+		if (callResult == null) return 0;
+		return (byte)((Integer)callResult).intValue ();
+	}
+
+	/*
+	 * Get the value of a SMALLINT parameter as a Java short.
+	 *
+	 * @param parameterIndex the first parameter is 1, the second is 2,...
+	 * @return the parameter value; if the value is SQL NULL, the result is 0
+	 * @exception SQLException if a database-access error occurs.
+	 */
+	public short getShort(int parameterIndex) throws SQLException
+	{
+		checkIndex (parameterIndex, Types.SMALLINT, "Short");
+		if (callResult == null) return 0;
+		return (short)((Integer)callResult).intValue ();
+	}
+		
+
+	/*
+	 * Get the value of an INTEGER parameter as a Java int.
+	 *
+	 * @param parameterIndex the first parameter is 1, the second is 2,...
+	 * @return the parameter value; if the value is SQL NULL, the result is 0
+	 * @exception SQLException if a database-access error occurs.
+	 */
+	public int getInt(int parameterIndex) throws SQLException
+	{
+		checkIndex (parameterIndex, Types.INTEGER, "Int");
+		if (callResult == null) return 0;
+		return ((Integer)callResult).intValue ();
+	}
+
+	/*
+	 * Get the value of a BIGINT parameter as a Java long.
+	 *
+	 * @param parameterIndex the first parameter is 1, the second is 2,...
+	 * @return the parameter value; if the value is SQL NULL, the result is 0
+	 * @exception SQLException if a database-access error occurs.
+	 */
+	public long getLong(int parameterIndex) throws SQLException
+	{
+		checkIndex (parameterIndex, Types.BIGINT, "Long");
+		if (callResult == null) return 0;
+		return ((Long)callResult).longValue ();
+	}
+
+	/*
+	 * Get the value of a FLOAT parameter as a Java float.
+	 *
+	 * @param parameterIndex the first parameter is 1, the second is 2,...
+	 * @return the parameter value; if the value is SQL NULL, the result is 0
+	 * @exception SQLException if a database-access error occurs.
+	 */
+	public float getFloat(int parameterIndex) throws SQLException
+	{
+		checkIndex (parameterIndex, Types.REAL, "Float");
+		if (callResult == null) return 0;
+		return ((Float)callResult).floatValue ();
+	}
+
+	/*
+	 * Get the value of a DOUBLE parameter as a Java double.
+	 *
+	 * @param parameterIndex the first parameter is 1, the second is 2,...
+	 * @return the parameter value; if the value is SQL NULL, the result is 0
+	 * @exception SQLException if a database-access error occurs.
+	 */
+	public double getDouble(int parameterIndex) throws SQLException
+	{
+		checkIndex (parameterIndex, Types.DOUBLE, "Double");
+		if (callResult == null) return 0;
+		return ((Double)callResult).doubleValue ();
+	}
+
+	/*
+	 * Get the value of a NUMERIC parameter as a java.math.BigDecimal
+	 * object.
+	 *
+	 * @param parameterIndex the first parameter is 1, the second is 2,...
+	 * @param scale a value greater than or equal to zero representing the
+	 * desired number of digits to the right of the decimal point
+	 * @return the parameter value; if the value is SQL NULL, the result is null
+	 * @exception SQLException if a database-access error occurs.
+	 * @deprecated in Java2.0
+	 */
+	public BigDecimal getBigDecimal(int parameterIndex, int scale)
+	throws SQLException
+	{
+		checkIndex (parameterIndex, Types.NUMERIC, "BigDecimal");
+		return ((BigDecimal)callResult);
+	}
+
+	/*
+	 * Get the value of a SQL BINARY or VARBINARY parameter as a Java
+	 * byte[]
+	 *
+	 * @param parameterIndex the first parameter is 1, the second is 2,...
+	 * @return the parameter value; if the value is SQL NULL, the result is null
+	 * @exception SQLException if a database-access error occurs.
+	 */
+	public byte[] getBytes(int parameterIndex) throws SQLException
+	{
+		checkIndex (parameterIndex, Types.VARBINARY, "Bytes");
+		return ((byte [])callResult);
+	}
+
+
+	/*
+	 * Get the value of a SQL DATE parameter as a java.sql.Date object
+	 *
+	 * @param parameterIndex the first parameter is 1, the second is 2,...
+	 * @return the parameter value; if the value is SQL NULL, the result is null
+	 * @exception SQLException if a database-access error occurs.
+	 */
+	public java.sql.Date getDate(int parameterIndex) throws SQLException
+	{
+		checkIndex (parameterIndex, Types.DATE, "Date");
+		return (java.sql.Date)callResult;
+	}
+
+	/*
+	 * Get the value of a SQL TIME parameter as a java.sql.Time object.
+	 *
+	 * @param parameterIndex the first parameter is 1, the second is 2,...
+	 * @return the parameter value; if the value is SQL NULL, the result is null
+	 * @exception SQLException if a database-access error occurs.
+	 */
+	public java.sql.Time getTime(int parameterIndex) throws SQLException
+	{
+		checkIndex (parameterIndex, Types.TIME, "Time");
+		return (java.sql.Time)callResult;
+	}
+
+	/*
+	 * Get the value of a SQL TIMESTAMP parameter as a java.sql.Timestamp object.
+	 *
+	 * @param parameterIndex the first parameter is 1, the second is 2,...
+	 * @return the parameter value; if the value is SQL NULL, the result is null
+	 * @exception SQLException if a database-access error occurs.
+	 */
+	public java.sql.Timestamp getTimestamp(int parameterIndex)
+	throws SQLException
+	{
+		checkIndex (parameterIndex, Types.TIMESTAMP, "Timestamp");
+		return (java.sql.Timestamp)callResult;
+	}
+
+	// getObject returns a Java object for the parameter.
+	// See the JDBC spec's "Dynamic Programming" chapter for details.
+	/*
+	 * Get the value of a parameter as a Java object.
+	 *
+	 * <p>This method returns a Java object whose type coresponds to the
+	 * SQL type that was registered for this parameter using
+	 * registerOutParameter.
+	 *
+	 * <P>Note that this method may be used to read datatabase-specific,
+	 * abstract data types. This is done by specifying a targetSqlType
+	 * of java.sql.types.OTHER, which allows the driver to return a
+	 * database-specific Java type.
+	 *
+	 * <p>See the JDBC spec's "Dynamic Programming" chapter for details.
+	 *
+	 * @param parameterIndex the first parameter is 1, the second is 2,...
+	 * @return A java.lang.Object holding the OUT parameter value.
+	 * @exception SQLException if a database-access error occurs.
+	 */
+	public Object getObject(int parameterIndex)
+	throws SQLException
+	{
+		checkIndex (parameterIndex);		
+		return callResult;
+	}
+
+	/*
 	 * Returns the SQL statement with the current template values
 	 * substituted.
 			* NB: This is identical to compileQuery() except instead of throwing
@@ -1253,6 +1566,8 @@ public abstract class AbstractJdbc1Statement implements org.postgresql.PGStateme
 	{
 		if (paramIndex < 1 || paramIndex > inStrings.length)
 			throw new PSQLException("postgresql.prep.range");
+		if (paramIndex == 1 && isFunction) // need to registerOut instead
+			throw new PSQLException ("postgresql.call.funcover");             
 		inStrings[paramIndex - 1] = s;
 	}
 
@@ -1266,6 +1581,13 @@ public abstract class AbstractJdbc1Statement implements org.postgresql.PGStateme
 	{
 		sbuf.setLength(0);
 		int i;
+
+		if (isFunction && !returnTypeSet)
+			throw new PSQLException("postgresql.call.noreturntype");
+		if (isFunction) { // set entry 1 to dummy entry..
+			inStrings[0] = ""; // dummy entry which ensured that no one overrode
+			// and calls to setXXX (2,..) really went to first arg in a function call..
+		}
 
 		for (i = 0 ; i < inStrings.length ; ++i)
 		{
@@ -1299,5 +1621,67 @@ public abstract class AbstractJdbc1Statement implements org.postgresql.PGStateme
 		set(parameterIndex, Long.toString(x) + "::" + tablename );
 	}
 
+	/** 
+	 * this method will turn a string of the form
+	 * {? = call <some_function> (?, [?,..]) }
+	 * into the PostgreSQL format which is 
+	 * select <some_function> (?, [?, ...]) as result
+	 * 
+	 */
+	private void modifyJdbcCall() throws SQLException {
+		// syntax checking is not complete only a few basics :(
+		originalSql = sql; // save for error msgs..
+		int index = sql.indexOf ("="); // is implied func or proc?
+		boolean isValid = true;
+		if (index != -1) {
+			isFunction = true;
+			isValid = sql.indexOf ("?") < index; // ? before =			
+		}
+		sql = sql.trim ();
+		if (sql.startsWith ("{") && sql.endsWith ("}")) {
+			sql = sql.substring (1, sql.length() -1);
+		} else isValid = false;
+		index = sql.indexOf ("call"); 
+		if (index == -1 || !isValid)
+			throw new PSQLException ("postgresql.call.malformed", 
+									 new Object[]{sql, JDBC_SYNTAX});
+		sql = sql.replace ('{', ' '); // replace these characters
+		sql = sql.replace ('}', ' ');
+		sql = sql.replace (';', ' ');
+		
+		// this removes the 'call' string and also puts a hidden '?'
+		// at the front of the line for functions, this will
+		// allow the registerOutParameter to work correctly
+                // because in the source sql there was one more ? for the return
+                // value that is not needed by the postgres syntax.  But to make 
+                // sure that the parameter numbers are the same as in the original
+                // sql we add a dummy parameter in this case
+		sql = (isFunction ? "?" : "") + sql.substring (index + 4);
+		
+		sql = "select " + sql + " as " + RESULT_COLUMN + ";";	  
+	}
+
+	/** helperfunction for the getXXX calls to check isFunction and index == 1
+	 */
+	protected void checkIndex (int parameterIndex, int type, String getName) 
+		throws SQLException {
+		checkIndex (parameterIndex);
+		if (type != this.testReturn) 
+			throw new PSQLException("postgresql.call.wrongget",
+									new Object[]{"java.sql.Types="+testReturn,
+													 getName,
+													 "java.sql.Types="+type});
+	}
+	/** helperfunction for the getXXX calls to check isFunction and index == 1
+	 * @param parameterIndex index of getXXX (index)
+	 * check to make sure is a function and index == 1
+	 */
+	private void checkIndex (int parameterIndex) throws SQLException {
+		if (!isFunction)
+			throw new PSQLException("postgresql.call.noreturntype");
+		if (parameterIndex != 1)
+			throw new PSQLException("postgresql.call.noinout");
+	}
+		
 
 }

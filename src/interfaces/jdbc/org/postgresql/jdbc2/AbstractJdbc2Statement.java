@@ -2,12 +2,13 @@ package org.postgresql.jdbc2;
 
 
 import java.io.*;
+import java.math.*;
 import java.sql.*;
 import java.util.Vector;
 import org.postgresql.largeobject.*;
 import org.postgresql.util.PSQLException;
 
-/* $Header: /cvsroot/pgsql/src/interfaces/jdbc/org/postgresql/jdbc2/Attic/AbstractJdbc2Statement.java,v 1.2 2002/07/24 22:08:42 barry Exp $
+/* $Header: /cvsroot/pgsql/src/interfaces/jdbc/org/postgresql/jdbc2/Attic/AbstractJdbc2Statement.java,v 1.3 2002/07/25 22:45:28 barry Exp $
  * This class defines methods of the jdbc2 specification.  This class extends
  * org.postgresql.jdbc1.AbstractJdbc1Statement which provides the jdbc1
  * methods.  The real Statement class (for jdbc2) is org.postgresql.jdbc2.Jdbc2Statement
@@ -46,7 +47,7 @@ public abstract class AbstractJdbc2Statement extends org.postgresql.jdbc1.Abstra
 	{
 	        boolean l_return = super.execute(sql);
                 //Now do the jdbc2 specific stuff
-		//required for ResultSet.getStatement() to work
+		//required for ResultSet.getStatement() to work and updateable resultsets
 		((AbstractJdbc2ResultSet)result).setStatement((Statement)this);
 
 		// Added this so that the Updateable resultset knows the query that gave this
@@ -331,4 +332,60 @@ public abstract class AbstractJdbc2Statement extends org.postgresql.jdbc1.Abstra
 			setTimestamp(i, new java.sql.Timestamp(cal.getTime().getTime()));
 		}
 	}
+
+	// ** JDBC 2 Extensions for CallableStatement**
+
+	public java.sql.Array getArray(int i) throws SQLException
+	{
+		throw org.postgresql.Driver.notImplemented();
+	}
+
+	public java.math.BigDecimal getBigDecimal(int parameterIndex) throws SQLException
+	{
+		checkIndex (parameterIndex, Types.NUMERIC, "BigDecimal");
+		return ((BigDecimal)callResult);
+	}
+
+	public Blob getBlob(int i) throws SQLException
+	{
+		throw org.postgresql.Driver.notImplemented();
+	}
+
+	public Clob getClob(int i) throws SQLException
+	{
+		throw org.postgresql.Driver.notImplemented();
+	}
+
+	public Object getObject(int i, java.util.Map map) throws SQLException
+	{
+		throw org.postgresql.Driver.notImplemented();
+	}
+
+	public Ref getRef(int i) throws SQLException
+	{
+		throw org.postgresql.Driver.notImplemented();
+	}
+
+	public java.sql.Date getDate(int i, java.util.Calendar cal) throws SQLException
+	{
+		throw org.postgresql.Driver.notImplemented();
+	}
+
+	public Time getTime(int i, java.util.Calendar cal) throws SQLException
+	{
+		throw org.postgresql.Driver.notImplemented();
+	}
+
+	public Timestamp getTimestamp(int i, java.util.Calendar cal) throws SQLException
+	{
+		throw org.postgresql.Driver.notImplemented();
+	}
+
+	// no custom types allowed yet..
+	public void registerOutParameter(int parameterIndex, int sqlType, String typeName) throws SQLException
+	{
+		throw org.postgresql.Driver.notImplemented();
+	}
+
+
 }

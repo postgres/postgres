@@ -6,747 +6,1348 @@ import java.io.*;
 import java.sql.*;
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
-import java.util.Vector;
+import java.util.*;
+import org.postgresql.Driver;
 import org.postgresql.Field;
 import org.postgresql.core.Encoding;
 import org.postgresql.largeobject.*;
 import org.postgresql.util.PGbytea;
 import org.postgresql.util.PSQLException;
 
-/* $Header: /cvsroot/pgsql/src/interfaces/jdbc/org/postgresql/jdbc2/Attic/AbstractJdbc2ResultSet.java,v 1.2 2002/07/24 22:08:42 barry Exp $
+
+/* $Header: /cvsroot/pgsql/src/interfaces/jdbc/org/postgresql/jdbc2/Attic/AbstractJdbc2ResultSet.java,v 1.3 2002/07/25 22:45:28 barry Exp $
  * This class defines methods of the jdbc2 specification.  This class extends
  * org.postgresql.jdbc1.AbstractJdbc1ResultSet which provides the jdbc1
  * methods.  The real Statement class (for jdbc2) is org.postgresql.jdbc2.Jdbc2ResultSet
  */
-public class AbstractJdbc2ResultSet extends org.postgresql.jdbc1.AbstractJdbc1ResultSet
-{
-	protected Statement statement;
-
-	protected String sqlQuery=null;
-
-	public AbstractJdbc2ResultSet(org.postgresql.PGConnection conn, Field[] fields, Vector tuples, String status, int updateCount, long insertOID, boolean binaryCursor)
-	{
-		super(conn, fields, tuples, status, updateCount, insertOID, binaryCursor);
-	}
-
-	public java.net.URL getURL(int columnIndex) throws SQLException
-	{
-		return null;
-	}
-
-	public java.net.URL getURL(String columnName) throws SQLException
-	{
-		return null;
-	}
-
-	/*
-	 * Get the value of a column in the current row as a Java object
-	 *
-	 * <p>This method will return the value of the given column as a
-	 * Java object.  The type of the Java object will be the default
-	 * Java Object type corresponding to the column's SQL type, following
-	 * the mapping specified in the JDBC specification.
-	 *
-	 * <p>This method may also be used to read database specific abstract
-	 * data types.
-	 *
-	 * @param columnIndex the first column is 1, the second is 2...
-	 * @return a Object holding the column value
-	 * @exception SQLException if a database access error occurs
-	 */
-	public Object getObject(int columnIndex) throws SQLException
-	{
-		Field field;
-
-		checkResultSet( columnIndex );
-
-		wasNullFlag = (this_row[columnIndex - 1] == null);
-		if (wasNullFlag)
-			return null;
-
-		field = fields[columnIndex - 1];
-
-		// some fields can be null, mainly from those returned by MetaData methods
-		if (field == null)
-		{
-			wasNullFlag = true;
-			return null;
-		}
-
-		switch (field.getSQLType())
-		{
-			case Types.BIT:
-				return getBoolean(columnIndex) ? Boolean.TRUE : Boolean.FALSE;
-			case Types.SMALLINT:
-				return new Short(getShort(columnIndex));
-			case Types.INTEGER:
-				return new Integer(getInt(columnIndex));
-			case Types.BIGINT:
-				return new Long(getLong(columnIndex));
-			case Types.NUMERIC:
-				return getBigDecimal
-					   (columnIndex, (field.getMod() == -1) ? -1 : ((field.getMod() - 4) & 0xffff));
-			case Types.REAL:
-				return new Float(getFloat(columnIndex));
-			case Types.DOUBLE:
-				return new Double(getDouble(columnIndex));
-			case Types.CHAR:
-			case Types.VARCHAR:
-				return getString(columnIndex);
-			case Types.DATE:
-				return getDate(columnIndex);
-			case Types.TIME:
-				return getTime(columnIndex);
-			case Types.TIMESTAMP:
-				return getTimestamp(columnIndex);
-			case Types.BINARY:
-			case Types.VARBINARY:
-				return getBytes(columnIndex);
-			case Types.ARRAY:
-				return getArray(columnIndex);
-			default:
-				String type = field.getPGType();
-				// if the backend doesn't know the type then coerce to String
-				if (type.equals("unknown"))
-				{
-					return getString(columnIndex);
-				}
-				else
-				{
-					return connection.getObject(field.getPGType(), getString(columnIndex));
-				}
-		}
-	}
-
-	public boolean absolute(int index) throws SQLException
-	{
-		// index is 1-based, but internally we use 0-based indices
-		int internalIndex;
-
-		if (index == 0)
-			throw new SQLException("Cannot move to index of 0");
-
-		final int rows_size = rows.size();
-
-		//if index<0, count from the end of the result set, but check
-		//to be sure that it is not beyond the first index
-		if (index < 0)
-		{
-			if (index >= -rows_size)
-				internalIndex = rows_size + index;
-			else
-			{
-				beforeFirst();
-				return false;
-			}
-		}
-		else
-		{
-			//must be the case that index>0,
-			//find the correct place, assuming that
-			//the index is not too large
-			if (index <= rows_size)
-				internalIndex = index - 1;
-			else
-			{
-				afterLast();
-				return false;
-			}
-		}
-
-		current_row = internalIndex;
-		this_row = (byte [][])rows.elementAt(internalIndex);
-		return true;
-	}
-
-	public void afterLast() throws SQLException
-	{
-		final int rows_size = rows.size();
-		if (rows_size > 0)
-			current_row = rows_size;
-	}
-
-	public void beforeFirst() throws SQLException
-	{
-		if (rows.size() > 0)
-			current_row = -1;
-	}
-
-	public void cancelRowUpdates() throws SQLException
-	{
-		// only sub-classes implement CONCUR_UPDATEABLE
-		notUpdateable();
-	}
-
-	public void deleteRow() throws SQLException
-	{
-		// only sub-classes implement CONCUR_UPDATEABLE
-		notUpdateable();
-	}
-
-	public boolean first() throws SQLException
-	{
-		if (rows.size() <= 0)
-			return false;
-
-		current_row = 0;
-		this_row = (byte [][])rows.elementAt(current_row);
-
-		rowBuffer=new byte[this_row.length][];
-		System.arraycopy(this_row,0,rowBuffer,0,this_row.length);
-
-		return true;
-	}
-
-	public java.sql.Array getArray(String colName) throws SQLException
-	{
-		return getArray(findColumn(colName));
-	}
-
-	public java.sql.Array getArray(int i) throws SQLException
-	{
-		wasNullFlag = (this_row[i - 1] == null);
-		if (wasNullFlag)
-			return null;
-
-		if (i < 1 || i > fields.length)
-			throw new PSQLException("postgresql.res.colrange");
-		return (java.sql.Array) new org.postgresql.jdbc2.Array( connection, i, fields[i - 1], (java.sql.ResultSet)this );
-	}
-
-	public java.math.BigDecimal getBigDecimal(int columnIndex) throws SQLException
-	{
-		return getBigDecimal(columnIndex, -1);
-	}
-
-	public java.math.BigDecimal getBigDecimal(String columnName) throws SQLException
-	{
-		return getBigDecimal(findColumn(columnName));
-	}
-
-	public Blob getBlob(String columnName) throws SQLException
-	{
-		return getBlob(findColumn(columnName));
-	}
-
-	public Blob getBlob(int i) throws SQLException
-	{
-		return new org.postgresql.largeobject.PGblob(connection, getInt(i));
-	}
-
-	public java.io.Reader getCharacterStream(String columnName) throws SQLException
-	{
-		return getCharacterStream(findColumn(columnName));
-	}
-
-	public java.io.Reader getCharacterStream(int i) throws SQLException
-	{
-		checkResultSet( i );
-		wasNullFlag = (this_row[i - 1] == null);
-		if (wasNullFlag)
-			return null;
-
-		if (((AbstractJdbc2Connection)connection).haveMinimumCompatibleVersion("7.2"))
-		{
-			//Version 7.2 supports AsciiStream for all the PG text types
-			//As the spec/javadoc for this method indicate this is to be used for
-			//large text values (i.e. LONGVARCHAR)	PG doesn't have a separate
-			//long string datatype, but with toast the text datatype is capable of
-			//handling very large values.  Thus the implementation ends up calling
-			//getString() since there is no current way to stream the value from the server
-			return new CharArrayReader(getString(i).toCharArray());
-		}
-		else
-		{
-			// In 7.1 Handle as BLOBS so return the LargeObject input stream
-			Encoding encoding = connection.getEncoding();
-			InputStream input = getBinaryStream(i);
-			return encoding.getDecodingReader(input);
-		}
-	}
-
-	public Clob getClob(String columnName) throws SQLException
-	{
-		return getClob(findColumn(columnName));
-	}
-
-	public Clob getClob(int i) throws SQLException
-	{
-		return new org.postgresql.largeobject.PGclob(connection, getInt(i));
-	}
-
-	public int getConcurrency() throws SQLException
-	{
-		// The standard ResultSet class will now return
-		// CONCUR_READ_ONLY. A sub-class will overide this if the query was
-		// updateable.
-		return java.sql.ResultSet.CONCUR_READ_ONLY;
-	}
-
-	public java.sql.Date getDate(int i, java.util.Calendar cal) throws SQLException
-	{
-		// If I read the specs, this should use cal only if we don't
-		// store the timezone, and if we do, then act just like getDate()?
-		// for now...
-		return getDate(i);
-	}
-
-	public Time getTime(int i, java.util.Calendar cal) throws SQLException
-	{
-		// If I read the specs, this should use cal only if we don't
-		// store the timezone, and if we do, then act just like getTime()?
-		// for now...
-		return getTime(i);
-	}
-
-	public Timestamp getTimestamp(int i, java.util.Calendar cal) throws SQLException
-	{
-		// If I read the specs, this should use cal only if we don't
-		// store the timezone, and if we do, then act just like getDate()?
-		// for now...
-		return getTimestamp(i);
-	}
-
-	public java.sql.Date getDate(String c, java.util.Calendar cal) throws SQLException
-	{
-		return getDate(findColumn(c), cal);
-	}
-
-	public Time getTime(String c, java.util.Calendar cal) throws SQLException
-	{
-		return getTime(findColumn(c), cal);
-	}
-
-	public Timestamp getTimestamp(String c, java.util.Calendar cal) throws SQLException
-	{
-		return getTimestamp(findColumn(c), cal);
-	}
-
-	public int getFetchDirection() throws SQLException
-	{
-		//PostgreSQL normally sends rows first->last
-		return java.sql.ResultSet.FETCH_FORWARD;
-	}
-
-	public int getFetchSize() throws SQLException
-	{
-		// In this implementation we return the entire result set, so
-		// here return the number of rows we have. Sub-classes can return a proper
-		// value
-		return rows.size();
-	}
-
-	public Object getObject(String columnName, java.util.Map map) throws SQLException
-	{
-		return getObject(findColumn(columnName), map);
-	}
-
-	/*
-	 * This checks against map for the type of column i, and if found returns
-	 * an object based on that mapping. The class must implement the SQLData
-	 * interface.
-	 */
-	public Object getObject(int i, java.util.Map map) throws SQLException
-	{
-		throw org.postgresql.Driver.notImplemented();
-	}
-
-	public Ref getRef(String columnName) throws SQLException
-	{
-		return getRef(findColumn(columnName));
-	}
-
-	public Ref getRef(int i) throws SQLException
-	{
-		//The backend doesn't yet have SQL3 REF types
-		throw new PSQLException("postgresql.psqlnotimp");
-	}
-
-	public int getRow() throws SQLException
-	{
-		final int rows_size = rows.size();
-
-		if (current_row < 0 || current_row >= rows_size)
-			return 0;
-
-		return current_row + 1;
-	}
-
-	// This one needs some thought, as not all ResultSets come from a statement
-	public Statement getStatement() throws SQLException
-	{
-		return statement;
-	}
-
-	public int getType() throws SQLException
-	{
-		// This implementation allows scrolling but is not able to
-		// see any changes. Sub-classes may overide this to return a more
-		// meaningful result.
-		return java.sql.ResultSet.TYPE_SCROLL_INSENSITIVE;
-	}
-
-	public void insertRow() throws SQLException
-	{
-		// only sub-classes implement CONCUR_UPDATEABLE
-		notUpdateable();
-	}
-
-	public boolean isAfterLast() throws SQLException
-	{
-		final int rows_size = rows.size();
-		return (current_row >= rows_size && rows_size > 0);
-	}
-
-	public boolean isBeforeFirst() throws SQLException
-	{
-		return (current_row < 0 && rows.size() > 0);
-	}
-
-	public boolean isFirst() throws SQLException
-	{
-		return (current_row == 0 && rows.size() >= 0);
-	}
-
-	public boolean isLast() throws SQLException
-	{
-		final int rows_size = rows.size();
-		return (current_row == rows_size - 1 && rows_size > 0);
-	}
-
-	public boolean last() throws SQLException
-	{
-		final int rows_size = rows.size();
-		if (rows_size <= 0)
-			return false;
-
-		current_row = rows_size - 1;
-		this_row = (byte [][])rows.elementAt(current_row);
-
-		rowBuffer=new byte[this_row.length][];
-		System.arraycopy(this_row,0,rowBuffer,0,this_row.length);
-
-		return true;
-	}
-
-	public void moveToCurrentRow() throws SQLException
-	{
-		// only sub-classes implement CONCUR_UPDATEABLE
-		notUpdateable();
-	}
-
-	public void moveToInsertRow() throws SQLException
-	{
-		// only sub-classes implement CONCUR_UPDATEABLE
-		notUpdateable();
-	}
-
-	public boolean previous() throws SQLException
-	{
-		if (--current_row < 0)
-			return false;
-		this_row = (byte [][])rows.elementAt(current_row);
-		System.arraycopy(this_row,0,rowBuffer,0,this_row.length);
-		return true;
-	}
-
-	public void refreshRow() throws SQLException
-	{
-		throw new PSQLException("postgresql.notsensitive");
-	}
-
-	public boolean relative(int rows) throws SQLException
-	{
-		//have to add 1 since absolute expects a 1-based index
-		return absolute(current_row + 1 + rows);
-	}
-
-	public boolean rowDeleted() throws SQLException
-	{
-		// only sub-classes implement CONCUR_UPDATEABLE
-		notUpdateable();
-		return false; // javac complains about not returning a value!
-	}
-
-	public boolean rowInserted() throws SQLException
-	{
-		// only sub-classes implement CONCUR_UPDATEABLE
-		notUpdateable();
-		return false; // javac complains about not returning a value!
-	}
-
-	public boolean rowUpdated() throws SQLException
-	{
-		// only sub-classes implement CONCUR_UPDATEABLE
-		notUpdateable();
-		return false; // javac complains about not returning a value!
-	}
-
-	public void setFetchDirection(int direction) throws SQLException
-	{
-		throw new PSQLException("postgresql.psqlnotimp");
-	}
-
-	public void setFetchSize(int rows) throws SQLException
-	{
-		// Sub-classes should implement this as part of their cursor support
-		throw org.postgresql.Driver.notImplemented();
-	}
-
-	public void updateAsciiStream(int columnIndex,
-								  java.io.InputStream x,
-								  int length
-								 ) throws SQLException
-	{
-		// only sub-classes implement CONCUR_UPDATEABLE
-		notUpdateable();
-	}
-
-	public void updateAsciiStream(String columnName,
-								  java.io.InputStream x,
-								  int length
-								 ) throws SQLException
-	{
-		updateAsciiStream(findColumn(columnName), x, length);
-	}
-
-	public void updateBigDecimal(int columnIndex,
-								 java.math.BigDecimal x
-								) throws SQLException
-	{
-		// only sub-classes implement CONCUR_UPDATEABLE
-		notUpdateable();
-	}
-
-	public void updateBigDecimal(String columnName,
-								 java.math.BigDecimal x
-								) throws SQLException
-	{
-		updateBigDecimal(findColumn(columnName), x);
-	}
-
-	public void updateBinaryStream(int columnIndex,
-								   java.io.InputStream x,
-								   int length
-								  ) throws SQLException
-	{
-		// only sub-classes implement CONCUR_UPDATEABLE
-		notUpdateable();
-	}
-
-	public void updateBinaryStream(String columnName,
-								   java.io.InputStream x,
-								   int length
-								  ) throws SQLException
-	{
-		updateBinaryStream(findColumn(columnName), x, length);
-	}
-
-	public void updateBoolean(int columnIndex, boolean x) throws SQLException
-	{
-		// only sub-classes implement CONCUR_UPDATEABLE
-		notUpdateable();
-	}
-
-	public void updateBoolean(String columnName, boolean x) throws SQLException
-	{
-		updateBoolean(findColumn(columnName), x);
-	}
-
-	public void updateByte(int columnIndex, byte x) throws SQLException
-	{
-		// only sub-classes implement CONCUR_UPDATEABLE
-		notUpdateable();
-	}
-
-	public void updateByte(String columnName, byte x) throws SQLException
-	{
-		updateByte(findColumn(columnName), x);
-	}
-
-	public void updateBytes(String columnName, byte[] x) throws SQLException
-	{
-		updateBytes(findColumn(columnName), x);
-	}
-
-	public void updateBytes(int columnIndex, byte[] x) throws SQLException
-	{
-		// only sub-classes implement CONCUR_UPDATEABLE
-		notUpdateable();
-	}
-
-	public void updateCharacterStream(int columnIndex,
-									  java.io.Reader x,
-									  int length
-									 ) throws SQLException
-	{
-		// only sub-classes implement CONCUR_UPDATEABLE
-		notUpdateable();
-	}
-
-	public void updateCharacterStream(String columnName,
-									  java.io.Reader x,
-									  int length
-									 ) throws SQLException
-	{
-		updateCharacterStream(findColumn(columnName), x, length);
-	}
-
-	public void updateDate(int columnIndex, java.sql.Date x) throws SQLException
-	{
-		// only sub-classes implement CONCUR_UPDATEABLE
-		notUpdateable();
-	}
-
-	public void updateDate(String columnName, java.sql.Date x) throws SQLException
-	{
-		updateDate(findColumn(columnName), x);
-	}
-
-	public void updateDouble(int columnIndex, double x) throws SQLException
-	{
-		// only sub-classes implement CONCUR_UPDATEABLE
-		notUpdateable();
-	}
-
-	public void updateDouble(String columnName, double x) throws SQLException
-	{
-		updateDouble(findColumn(columnName), x);
-	}
-
-	public void updateFloat(int columnIndex, float x) throws SQLException
-	{
-		// only sub-classes implement CONCUR_UPDATEABLE
-		notUpdateable();
-	}
-
-	public void updateFloat(String columnName, float x) throws SQLException
-	{
-		updateFloat(findColumn(columnName), x);
-	}
-
-	public void updateInt(int columnIndex, int x) throws SQLException
-	{
-		// only sub-classes implement CONCUR_UPDATEABLE
-		notUpdateable();
-	}
-
-	public void updateInt(String columnName, int x) throws SQLException
-	{
-		updateInt(findColumn(columnName), x);
-	}
-
-    	public void updateLong(int columnIndex, long x) throws SQLException
-    	{
-    		// only sub-classes implement CONCUR_UPDATEABLE
-    		notUpdateable();
-    	}
-
-    	public void updateLong(String columnName, long x) throws SQLException
-    	{
-    		updateLong(findColumn(columnName), x);
-    	}
-
-    	public void updateNull(int columnIndex) throws SQLException
-    	{
-    		// only sub-classes implement CONCUR_UPDATEABLE
-    		notUpdateable();
-    	}
-
-	public void updateNull(String columnName) throws SQLException
-	{
-		updateNull(findColumn(columnName));
-	}
-
-	public void updateObject(int columnIndex, Object x) throws SQLException
-	{
-		// only sub-classes implement CONCUR_UPDATEABLE
-		notUpdateable();
-	}
-
-	public void updateObject(String columnName, Object x) throws SQLException
-	{
-		updateObject(findColumn(columnName), x);
-	}
-
-	public void updateObject(int columnIndex, Object x, int scale) throws SQLException
-	{
-		// only sub-classes implement CONCUR_UPDATEABLE
-		notUpdateable();
-	}
-
-	public void updateObject(String columnName, Object x, int scale) throws SQLException
-	{
-		updateObject(findColumn(columnName), x, scale);
-	}
-
-	public void updateRow() throws SQLException
-	{
-		// only sub-classes implement CONCUR_UPDATEABLE
-		notUpdateable();
-	}
-
-	public void updateShort(int columnIndex, short x) throws SQLException
-	{
-		// only sub-classes implement CONCUR_UPDATEABLE
-		notUpdateable();
-	}
-
-	public void updateShort(String columnName, short x) throws SQLException
-	{
-		updateShort(findColumn(columnName), x);
-	}
-
-	public void updateString(int columnIndex, String x) throws SQLException
-	{
-		// only sub-classes implement CONCUR_UPDATEABLE
-		notUpdateable();
-	}
-
-	public void updateString(String columnName, String x) throws SQLException
-	{
-		updateString(findColumn(columnName), x);
-	}
-
-	public void updateTime(int columnIndex, Time x) throws SQLException
-	{
-		// only sub-classes implement CONCUR_UPDATEABLE
-		notUpdateable();
-	}
-
-	public void updateTime(String columnName, Time x) throws SQLException
-	{
-		updateTime(findColumn(columnName), x);
-	}
-
-	public void updateTimestamp(int columnIndex, Timestamp x) throws SQLException
-	{
-		// only sub-classes implement CONCUR_UPDATEABLE
-		notUpdateable();
-	}
-
-	public void updateTimestamp(String columnName, Timestamp x) throws SQLException
-	{
-		updateTimestamp(findColumn(columnName), x);
-	}
-
-	// helper method. Throws an SQLException when an update is not possible
-	public void notUpdateable() throws SQLException
-	{
-		throw new PSQLException("postgresql.noupdate");
-	}
-
-	/*
-	 * It's used currently by getStatement() but may also with the new core
-	 * package.
-	 */
-	public void setStatement(Statement statement)
-	{
-		this.statement = statement;
-	}
-
-	public void setSQLQuery(String sqlQuery) {
-		this.sqlQuery=sqlQuery;
-	}
+public class AbstractJdbc2ResultSet extends org.postgresql.jdbc1.AbstractJdbc1ResultSet {
+  protected String sqlQuery = null;
+
+  //needed for updateable result set support
+  protected boolean updateable = false;
+  protected boolean doingUpdates = false;
+  protected boolean onInsertRow = false;
+  protected Hashtable updateValues = new Hashtable();
+  private boolean usingOID = false;   // are we using the OID for the primary key?
+  private Vector primaryKeys;    // list of primary keys
+  private int numKeys = 0;
+  private boolean singleTable = false;
+  protected String tableName = null;
+  protected PreparedStatement updateStatement = null;
+  protected PreparedStatement insertStatement = null;
+  protected PreparedStatement deleteStatement = null;
+  private PreparedStatement selectStatement = null;
+
+
+
+  public AbstractJdbc2ResultSet(org.postgresql.PGConnection conn, Statement statement, Field[] fields, Vector tuples, String status, int updateCount, long insertOID, boolean binaryCursor) {
+    super (conn, statement, fields, tuples, status, updateCount, insertOID, binaryCursor);
+  }
+
+  public java.net.URL getURL(int columnIndex) throws SQLException {
+    return null;
+  }
+
+
+  public java.net.URL getURL(String columnName) throws SQLException {
+    return null;
+  }
+
+
+  /*
+   * Get the value of a column in the current row as a Java object
+   *
+   * <p>This method will return the value of the given column as a
+   * Java object.  The type of the Java object will be the default
+   * Java Object type corresponding to the column's SQL type, following
+   * the mapping specified in the JDBC specification.
+   *
+   * <p>This method may also be used to read database specific abstract
+   * data types.
+   *
+   * @param columnIndex the first column is 1, the second is 2...
+   * @return a Object holding the column value
+   * @exception SQLException if a database access error occurs
+   */
+  public Object getObject(int columnIndex) throws SQLException {
+    Field field;
+
+    checkResultSet( columnIndex );
+
+    wasNullFlag = (this_row[columnIndex - 1] == null);
+    if (wasNullFlag)
+      return null;
+
+    field = fields[columnIndex - 1];
+
+    // some fields can be null, mainly from those returned by MetaData methods
+    if (field == null) {
+      wasNullFlag = true;
+      return null;
+    }
+
+    switch (field.getSQLType()) {
+    case Types.BIT:
+      return getBoolean(columnIndex) ? Boolean.TRUE : Boolean.FALSE;
+
+    case Types.SMALLINT:
+      return new Short(getShort(columnIndex));
+
+    case Types.INTEGER:
+      return new Integer(getInt(columnIndex));
+
+    case Types.BIGINT:
+      return new Long(getLong(columnIndex));
+
+    case Types.NUMERIC:
+      return getBigDecimal
+        (columnIndex, (field.getMod() == -1) ? -1 : ((field.getMod() - 4) & 0xffff));
+
+    case Types.REAL:
+      return new Float(getFloat(columnIndex));
+
+    case Types.DOUBLE:
+      return new Double(getDouble(columnIndex));
+
+    case Types.CHAR:
+    case Types.VARCHAR:
+      return getString(columnIndex);
+
+    case Types.DATE:
+      return getDate(columnIndex);
+
+    case Types.TIME:
+      return getTime(columnIndex);
+
+    case Types.TIMESTAMP:
+      return getTimestamp(columnIndex);
+
+    case Types.BINARY:
+    case Types.VARBINARY:
+      return getBytes(columnIndex);
+
+    case Types.ARRAY:
+      return getArray(columnIndex);
+
+    default:
+      String type = field.getPGType();
+      // if the backend doesn't know the type then coerce to String
+      if (type.equals("unknown")) {
+        return getString(columnIndex);
+      }
+      else {
+        return connection.getObject(field.getPGType(), getString(columnIndex));
+      }
+    }
+  }
+
+
+  public boolean absolute(int index) throws SQLException {
+    // index is 1-based, but internally we use 0-based indices
+    int internalIndex;
+
+    if (index == 0)
+      throw new SQLException("Cannot move to index of 0");
+
+    final int rows_size = rows.size();
+
+    //if index<0, count from the end of the result set, but check
+    //to be sure that it is not beyond the first index
+    if (index < 0) {
+      if (index >= -rows_size)
+        internalIndex = rows_size + index;
+      else {
+        beforeFirst();
+        return false;
+      }
+    }
+    else {
+      //must be the case that index>0,
+      //find the correct place, assuming that
+      //the index is not too large
+      if (index <= rows_size)
+        internalIndex = index - 1;
+      else {
+        afterLast();
+        return false;
+      }
+    }
+
+    current_row = internalIndex;
+    this_row = (byte[][]) rows.elementAt(internalIndex);
+    return true;
+  }
+
+
+  public void afterLast() throws SQLException {
+    final int rows_size = rows.size();
+    if (rows_size > 0)
+      current_row = rows_size;
+  }
+
+
+  public void beforeFirst() throws SQLException {
+    if (rows.size() > 0)
+      current_row = -1;
+  }
+
+
+  public boolean first() throws SQLException {
+    if (rows.size() <= 0)
+      return false;
+
+    current_row = 0;
+    this_row = (byte[][]) rows.elementAt(current_row);
+
+    rowBuffer = new byte[this_row.length][];
+    System.arraycopy(this_row, 0, rowBuffer, 0, this_row.length);
+
+    return true;
+  }
+
+
+  public java.sql.Array getArray(String colName) throws SQLException {
+    return getArray(findColumn(colName));
+  }
+
+
+  public java.sql.Array getArray(int i) throws SQLException {
+    wasNullFlag = (this_row[i - 1] == null);
+    if (wasNullFlag)
+      return null;
+
+    if (i < 1 || i > fields.length)
+      throw new PSQLException("postgresql.res.colrange");
+    return (java.sql.Array) new org.postgresql.jdbc2.Array( connection, i, fields[i - 1], (java.sql.ResultSet) this );
+  }
+
+
+  public java.math.BigDecimal getBigDecimal(int columnIndex) throws SQLException {
+    return getBigDecimal(columnIndex, -1);
+  }
+
+
+  public java.math.BigDecimal getBigDecimal(String columnName) throws SQLException {
+    return getBigDecimal(findColumn(columnName));
+  }
+
+
+  public Blob getBlob(String columnName) throws SQLException {
+    return getBlob(findColumn(columnName));
+  }
+
+
+  public Blob getBlob(int i) throws SQLException {
+    return new org.postgresql.largeobject.PGblob(connection, getInt(i));
+  }
+
+
+  public java.io.Reader getCharacterStream(String columnName) throws SQLException {
+    return getCharacterStream(findColumn(columnName));
+  }
+
+
+  public java.io.Reader getCharacterStream(int i) throws SQLException {
+    checkResultSet( i );
+    wasNullFlag = (this_row[i - 1] == null);
+    if (wasNullFlag)
+      return null;
+
+    if (((AbstractJdbc2Connection) connection).haveMinimumCompatibleVersion("7.2")) {
+      //Version 7.2 supports AsciiStream for all the PG text types
+      //As the spec/javadoc for this method indicate this is to be used for
+      //large text values (i.e. LONGVARCHAR)	PG doesn't have a separate
+      //long string datatype, but with toast the text datatype is capable of
+      //handling very large values.  Thus the implementation ends up calling
+      //getString() since there is no current way to stream the value from the server
+      return new CharArrayReader(getString(i).toCharArray());
+    }
+    else {
+      // In 7.1 Handle as BLOBS so return the LargeObject input stream
+      Encoding encoding = connection.getEncoding();
+      InputStream input = getBinaryStream(i);
+      return encoding.getDecodingReader(input);
+    }
+  }
+
+
+  public Clob getClob(String columnName) throws SQLException {
+    return getClob(findColumn(columnName));
+  }
+
+
+  public Clob getClob(int i) throws SQLException {
+    return new org.postgresql.largeobject.PGclob(connection, getInt(i));
+  }
+
+
+  public int getConcurrency() throws SQLException {
+    if (statement == null)
+      return java.sql.ResultSet.CONCUR_READ_ONLY;
+    return statement.getResultSetConcurrency();
+  }
+
+
+  public java.sql.Date getDate(int i, java.util.Calendar cal) throws SQLException {
+    // If I read the specs, this should use cal only if we don't
+    // store the timezone, and if we do, then act just like getDate()?
+    // for now...
+    return getDate(i);
+  }
+
+
+  public Time getTime(int i, java.util.Calendar cal) throws SQLException {
+    // If I read the specs, this should use cal only if we don't
+    // store the timezone, and if we do, then act just like getTime()?
+    // for now...
+    return getTime(i);
+  }
+
+
+  public Timestamp getTimestamp(int i, java.util.Calendar cal) throws SQLException {
+    // If I read the specs, this should use cal only if we don't
+    // store the timezone, and if we do, then act just like getDate()?
+    // for now...
+    return getTimestamp(i);
+  }
+
+
+  public java.sql.Date getDate(String c, java.util.Calendar cal) throws SQLException {
+    return getDate(findColumn(c), cal);
+  }
+
+
+  public Time getTime(String c, java.util.Calendar cal) throws SQLException {
+    return getTime(findColumn(c), cal);
+  }
+
+
+  public Timestamp getTimestamp(String c, java.util.Calendar cal) throws SQLException {
+    return getTimestamp(findColumn(c), cal);
+  }
+
+
+  public int getFetchDirection() throws SQLException {
+    //PostgreSQL normally sends rows first->last
+    return java.sql.ResultSet.FETCH_FORWARD;
+  }
+
+
+  public int getFetchSize() throws SQLException {
+    // In this implementation we return the entire result set, so
+    // here return the number of rows we have. Sub-classes can return a proper
+    // value
+    return rows.size();
+  }
+
+
+  public Object getObject(String columnName, java.util.Map map) throws SQLException {
+    return getObject(findColumn(columnName), map);
+  }
+
+
+  /*
+   * This checks against map for the type of column i, and if found returns
+   * an object based on that mapping. The class must implement the SQLData
+   * interface.
+   */
+  public Object getObject(int i, java.util.Map map) throws SQLException {
+    throw org.postgresql.Driver.notImplemented();
+  }
+
+
+  public Ref getRef(String columnName) throws SQLException {
+    return getRef(findColumn(columnName));
+  }
+
+
+  public Ref getRef(int i) throws SQLException {
+    //The backend doesn't yet have SQL3 REF types
+    throw new PSQLException("postgresql.psqlnotimp");
+  }
+
+
+  public int getRow() throws SQLException {
+    final int rows_size = rows.size();
+
+    if (current_row < 0 || current_row >= rows_size)
+      return 0;
+
+    return current_row + 1;
+  }
+
+
+  // This one needs some thought, as not all ResultSets come from a statement
+  public Statement getStatement() throws SQLException {
+    return statement;
+  }
+
+
+  public int getType() throws SQLException {
+    // This implementation allows scrolling but is not able to
+    // see any changes. Sub-classes may overide this to return a more
+    // meaningful result.
+    return java.sql.ResultSet.TYPE_SCROLL_INSENSITIVE;
+  }
+
+
+  public boolean isAfterLast() throws SQLException {
+    final int rows_size = rows.size();
+    return (current_row >= rows_size && rows_size > 0);
+  }
+
+
+  public boolean isBeforeFirst() throws SQLException {
+    return (current_row < 0 && rows.size() > 0);
+  }
+
+
+  public boolean isFirst() throws SQLException {
+    return (current_row == 0 && rows.size() >= 0);
+  }
+
+
+  public boolean isLast() throws SQLException {
+    final int rows_size = rows.size();
+    return (current_row == rows_size - 1 && rows_size > 0);
+  }
+
+
+  public boolean last() throws SQLException {
+    final int rows_size = rows.size();
+    if (rows_size <= 0)
+      return false;
+
+    current_row = rows_size - 1;
+    this_row = (byte[][]) rows.elementAt(current_row);
+
+    rowBuffer = new byte[this_row.length][];
+    System.arraycopy(this_row, 0, rowBuffer, 0, this_row.length);
+
+    return true;
+  }
+
+
+  public boolean previous() throws SQLException {
+    if (--current_row < 0)
+      return false;
+    this_row = (byte[][]) rows.elementAt(current_row);
+    System.arraycopy(this_row, 0, rowBuffer, 0, this_row.length);
+    return true;
+  }
+
+
+  public boolean relative(int rows) throws SQLException {
+    //have to add 1 since absolute expects a 1-based index
+    return absolute(current_row + 1 + rows);
+  }
+
+
+  public void setFetchDirection(int direction) throws SQLException {
+    throw new PSQLException("postgresql.psqlnotimp");
+  }
+
+
+  public void setFetchSize(int rows) throws SQLException {
+    // Sub-classes should implement this as part of their cursor support
+    throw org.postgresql.Driver.notImplemented();
+  }
+
+
+  public synchronized void cancelRowUpdates() throws SQLException {
+    if (doingUpdates) {
+      doingUpdates = false;
+
+      clearRowBuffer();
+    }
+  }
+
+
+  public synchronized void deleteRow() throws SQLException {
+    if ( !isUpdateable() ) {
+      throw new PSQLException( "postgresql.updateable.notupdateable" );
+    }
+
+    if (onInsertRow) {
+      throw new PSQLException( "postgresql.updateable.oninsertrow" );
+    }
+
+    if (rows.size() == 0) {
+      throw new PSQLException( "postgresql.updateable.emptydelete" );
+    }
+    if (isBeforeFirst()) {
+      throw new PSQLException( "postgresql.updateable.beforestartdelete" );
+    }
+    if (isAfterLast()) {
+      throw new PSQLException( "postgresql.updateable.afterlastdelete" );
+    }
+
+
+    int numKeys = primaryKeys.size();
+    if ( deleteStatement == null ) {
+
+
+      StringBuffer deleteSQL = new StringBuffer("DELETE FROM " ).append(tableName).append(" where " );
+
+      for ( int i = 0; i < numKeys; i++ ) {
+        deleteSQL.append( ((PrimaryKey) primaryKeys.get(i)).name ).append( " = ? " );
+        if ( i < numKeys - 1 ) {
+          deleteSQL.append( " and " );
+        }
+      }
+
+      deleteStatement = ((java.sql.Connection) connection).prepareStatement(deleteSQL.toString());
+    }
+    deleteStatement.clearParameters();
+
+    for ( int i = 0; i < numKeys; i++ ) {
+      deleteStatement.setObject(i + 1, ((PrimaryKey) primaryKeys.get(i)).getValue());
+    }
+
+
+    deleteStatement.executeUpdate();
+
+    rows.removeElementAt(current_row);
+  }
+
+
+  public synchronized void insertRow() throws SQLException {
+    if ( !isUpdateable() ) {
+      throw new PSQLException( "postgresql.updateable.notupdateable" );
+    }
+
+    if (!onInsertRow) {
+      throw new PSQLException( "postgresql.updateable.notoninsertrow" );
+    }
+    else {
+
+      // loop through the keys in the insertTable and create the sql statement
+      // we have to create the sql every time since the user could insert different
+      // columns each time
+
+      StringBuffer insertSQL = new StringBuffer("INSERT INTO ").append(tableName).append(" (");
+      StringBuffer paramSQL = new StringBuffer(") values (" );
+
+      Enumeration columnNames = updateValues.keys();
+      int numColumns = updateValues.size();
+
+      for ( int i = 0; columnNames.hasMoreElements(); i++ ) {
+        String columnName = (String) columnNames.nextElement();
+
+        insertSQL.append( columnName );
+        if ( i < numColumns - 1 ) {
+          insertSQL.append(", ");
+          paramSQL.append("?,");
+        }
+        else {
+          paramSQL.append("?)");
+        }
+
+      }
+
+      insertSQL.append(paramSQL.toString());
+      insertStatement = ((java.sql.Connection) connection).prepareStatement(insertSQL.toString());
+
+      Enumeration keys = updateValues.keys();
+
+      for ( int i = 1; keys.hasMoreElements(); i++) {
+        String key = (String) keys.nextElement();
+        insertStatement.setObject(i, updateValues.get( key ) );
+      }
+
+      insertStatement.executeUpdate();
+
+      if ( usingOID ) {
+        // we have to get the last inserted OID and put it in the resultset
+
+        long insertedOID = ((AbstractJdbc2Statement) insertStatement).getLastOID();
+
+        updateValues.put("oid", new Long(insertedOID) );
+
+      }
+
+      // update the underlying row to the new inserted data
+      updateRowBuffer();
+
+      rows.addElement(rowBuffer);
+
+      // we should now reflect the current data in this_row
+      // that way getXXX will get the newly inserted data
+      this_row = rowBuffer;
+
+      // need to clear this in case of another insert
+      clearRowBuffer();
+
+
+    }
+  }
+
+
+  public synchronized void moveToCurrentRow() throws SQLException {
+    if (!updateable) {
+      throw new PSQLException( "postgresql.updateable.notupdateable" );
+    }
+
+    this_row = (byte[][]) rows.elementAt(current_row);
+
+    rowBuffer = new byte[this_row.length][];
+    System.arraycopy(this_row, 0, rowBuffer, 0, this_row.length);
+
+    onInsertRow = false;
+    doingUpdates = false;
+  }
+
+
+  public synchronized void  moveToInsertRow() throws SQLException {
+    if (!updateable) {
+      throw new PSQLException( "postgresql.updateable.notupdateable" );
+    }
+
+    if (insertStatement != null) {
+      insertStatement = null;
+    }
+
+
+    // make sure the underlying data is null
+    clearRowBuffer();
+
+    onInsertRow = true;
+    doingUpdates = false;
+
+  }
+
+
+  private synchronized void clearRowBuffer() throws SQLException {
+    // rowBuffer is the temporary storage for the row
+    rowBuffer = new byte[fields.length][];
+
+    // clear the updateValues hashTable for the next set of updates
+    updateValues.clear();
+
+  }
+
+
+  public boolean rowDeleted() throws SQLException {
+    // only sub-classes implement CONCURuPDATEABLE
+    throw Driver.notImplemented();
+  }
+
+
+  public boolean rowInserted() throws SQLException {
+    // only sub-classes implement CONCURuPDATEABLE
+    throw Driver.notImplemented();
+  }
+
+
+  public boolean rowUpdated() throws SQLException {
+    // only sub-classes implement CONCURuPDATEABLE
+    throw Driver.notImplemented();
+  }
+
+
+  public synchronized void updateAsciiStream(int columnIndex,
+    java.io.InputStream x,
+    int length
+  ) throws SQLException {
+
+    if ( !isUpdateable() ) {
+      throw new PSQLException( "postgresql.updateable.notupdateable" );
+    }
+
+    byte[] theData = null;
+
+    try {
+      x.read(theData, 0, length);
+    }
+    catch (NullPointerException ex ) {
+      throw new PSQLException("postgresql.updateable.inputstream");
+    }
+    catch (IOException ie) {
+      throw new PSQLException("postgresql.updateable.ioerror" + ie);
+    }
+
+    doingUpdates = !onInsertRow;
+
+    updateValues.put( fields[columnIndex - 1].getName(), theData );
+
+  }
+
+
+  public synchronized void updateBigDecimal(int columnIndex,
+    java.math.BigDecimal x )
+  throws SQLException {
+
+    if ( !isUpdateable() ) {
+      throw new PSQLException( "postgresql.updateable.notupdateable" );
+    }
+
+    doingUpdates = !onInsertRow;
+    updateValues.put( fields[columnIndex - 1].getName(), x );
+
+  }
+
+
+  public synchronized void updateBinaryStream(int columnIndex,
+    java.io.InputStream x,
+    int length
+  ) throws SQLException {
+
+    if ( !isUpdateable() ) {
+      throw new PSQLException( "postgresql.updateable.notupdateable" );
+    }
+
+    byte[] theData = null;
+
+    try {
+      x.read(theData, 0, length);
+
+    }
+    catch ( NullPointerException ex ) {
+      throw new PSQLException("postgresql.updateable.inputstream");
+    }
+    catch (IOException ie) {
+      throw new PSQLException("postgresql.updateable.ioerror" + ie);
+    }
+
+    doingUpdates = !onInsertRow;
+
+    updateValues.put( fields[columnIndex - 1].getName(), theData );
+
+  }
+
+
+  public synchronized void updateBoolean(int columnIndex, boolean x) throws SQLException {
+
+    if ( !isUpdateable() ) {
+      throw new PSQLException( "postgresql.updateable.notupdateable" );
+    }
+
+    if ( Driver.logDebug ) Driver.debug("updating boolean " + fields[columnIndex - 1].getName() + "=" + x);
+
+    doingUpdates = !onInsertRow;
+    updateValues.put( fields[columnIndex - 1].getName(), new Boolean(x) );
+
+  }
+
+
+  public synchronized void updateByte(int columnIndex, byte x) throws SQLException {
+    if ( !isUpdateable() ) {
+      throw new PSQLException( "postgresql.updateable.notupdateable" );
+    }
+
+    doingUpdates = true;
+    updateValues.put( fields[columnIndex - 1].getName(), String.valueOf(x) );
+  }
+
+
+  public synchronized void updateBytes(int columnIndex, byte[] x) throws SQLException {
+
+    if ( !isUpdateable() ) {
+      throw new PSQLException( "postgresql.updateable.notupdateable" );
+    }
+
+    doingUpdates = !onInsertRow;
+    updateValues.put( fields[columnIndex - 1].getName(), x );
+
+  }
+
+
+  public synchronized void updateCharacterStream(int columnIndex,
+    java.io.Reader x,
+    int length
+  ) throws SQLException {
+
+    if ( !isUpdateable() ) {
+      throw new PSQLException( "postgresql.updateable.notupdateable" );
+    }
+
+    char[] theData = null;
+
+    try {
+      x.read(theData, 0, length);
+
+    }
+    catch (NullPointerException ex) {
+      throw new PSQLException("postgresql.updateable.inputstream");
+    }
+    catch (IOException ie) {
+      throw new PSQLException("postgresql.updateable.ioerror" + ie);
+    }
+
+    doingUpdates = !onInsertRow;
+    updateValues.put( fields[columnIndex - 1].getName(), theData);
+
+  }
+
+
+  public synchronized void updateDate(int columnIndex, java.sql.Date x) throws SQLException {
+
+    if ( !isUpdateable() ) {
+      throw new PSQLException( "postgresql.updateable.notupdateable" );
+    }
+
+    doingUpdates = !onInsertRow;
+    updateValues.put( fields[columnIndex - 1].getName(), x );
+  }
+
+
+  public synchronized void updateDouble(int columnIndex, double x) throws SQLException {
+    if ( !isUpdateable() ) {
+      throw new PSQLException( "postgresql.updateable.notupdateable" );
+    }
+
+    if ( Driver.logDebug ) Driver.debug("updating double " + fields[columnIndex - 1].getName() + "=" + x);
+
+    doingUpdates = !onInsertRow;
+    updateValues.put( fields[columnIndex - 1].getName(), new Double(x) );
+
+  }
+
+
+  public synchronized void updateFloat(int columnIndex, float x) throws SQLException {
+    if ( !isUpdateable() ) {
+      throw new PSQLException( "postgresql.updateable.notupdateable" );
+    }
+
+    if ( Driver.logDebug ) Driver.debug("updating float " + fields[columnIndex - 1].getName() + "=" + x);
+
+    doingUpdates = !onInsertRow;
+
+    updateValues.put( fields[columnIndex - 1].getName(), new Float(x) );
+
+  }
+
+
+  public synchronized void updateInt(int columnIndex, int x) throws SQLException {
+    if ( !isUpdateable() ) {
+      throw new PSQLException( "postgresql.updateable.notupdateable" );
+    }
+
+    if ( Driver.logDebug ) Driver.debug("updating int " + fields[columnIndex - 1].getName() + "=" + x);
+
+    doingUpdates = !onInsertRow;
+    updateValues.put( fields[columnIndex - 1].getName(), new Integer(x) );
+
+  }
+
+
+  public synchronized void updateLong(int columnIndex, long x) throws SQLException {
+    if ( !isUpdateable() ) {
+      throw new PSQLException( "postgresql.updateable.notupdateable" );
+    }
+
+    if ( Driver.logDebug ) Driver.debug("updating long " + fields[columnIndex - 1].getName() + "=" + x);
+
+    doingUpdates = !onInsertRow;
+    updateValues.put( fields[columnIndex - 1].getName(), new Long(x) );
+
+  }
+
+
+  public synchronized void updateNull(int columnIndex) throws SQLException {
+    if ( !isUpdateable() ) {
+      throw new PSQLException( "postgresql.updateable.notupdateable" );
+    }
+
+    doingUpdates = !onInsertRow;
+    updateValues.put( fields[columnIndex - 1].getName(), null);
+
+
+  }
+
+
+  public synchronized void updateObject(int columnIndex, Object x) throws SQLException {
+    if ( !isUpdateable() ) {
+      throw new PSQLException( "postgresql.updateable.notupdateable" );
+    }
+
+    if ( Driver.logDebug ) Driver.debug("updating object " + fields[columnIndex - 1].getName() + " = " + x);
+
+    doingUpdates = !onInsertRow;
+    updateValues.put( fields[columnIndex - 1].getName(), x );
+  }
+
+
+  public synchronized void updateObject(int columnIndex, Object x, int scale) throws SQLException {
+    if ( !isUpdateable() ) {
+      throw new PSQLException( "postgresql.updateable.notupdateable" );
+    }
+
+    this.updateObject(columnIndex, x);
+
+  }
+
+
+  public void refreshRow() throws SQLException {
+    if ( !isUpdateable() ) {
+      throw new PSQLException( "postgresql.updateable.notupdateable" );
+    }
+
+    try {
+      StringBuffer selectSQL = new StringBuffer( "select ");
+
+      final int numColumns = java.lang.reflect.Array.getLength(fields);
+
+      for (int i = 0; i < numColumns; i++ ) {
+
+        selectSQL.append( fields[i].getName() );
+
+        if ( i < numColumns - 1 ) {
+
+          selectSQL.append(", ");
+        }
+
+      }
+      selectSQL.append(" from " ).append(tableName).append(" where ");
+
+      int numKeys = primaryKeys.size();
+
+      for ( int i = 0; i < numKeys; i++ ) {
+
+        PrimaryKey primaryKey = ((PrimaryKey) primaryKeys.get(i));
+        selectSQL.append(primaryKey.name).append("= ?");
+
+        if ( i < numKeys - 1 ) {
+          selectSQL.append(" and ");
+        }
+      }
+      if ( Driver.logDebug ) Driver.debug("selecting " + selectSQL.toString());
+      selectStatement = ((java.sql.Connection) connection).prepareStatement(selectSQL.toString());
+
+
+      for ( int j = 0, i = 1; j < numKeys; j++, i++) {
+        selectStatement.setObject( i, ((PrimaryKey) primaryKeys.get(j)).getValue() );
+      }
+
+      Jdbc2ResultSet rs = (Jdbc2ResultSet) selectStatement.executeQuery();
+
+      if ( rs.first() ) {
+        rowBuffer = rs.rowBuffer;
+      }
+
+      rows.setElementAt( rowBuffer, current_row );
+      if ( Driver.logDebug ) Driver.debug("done updates");
+
+      rs.close();
+      selectStatement.close();
+      selectStatement = null;
+
+    }
+    catch (Exception e) {
+      if ( Driver.logDebug ) Driver.debug(e.getClass().getName() + e);
+      throw new SQLException( e.getMessage() );
+    }
+
+  }
+
+
+  public synchronized void updateRow() throws SQLException {
+    if ( !isUpdateable() ) {
+      throw new PSQLException( "postgresql.updateable.notupdateable" );
+    }
+
+    if (doingUpdates) {
+
+      try {
+
+        StringBuffer updateSQL = new StringBuffer("UPDATE " + tableName + " SET  ");
+
+        int numColumns = updateValues.size();
+        Enumeration columns = updateValues.keys();
+
+        for (int i = 0; columns.hasMoreElements(); i++ ) {
+
+          String column = (String) columns.nextElement();
+          updateSQL.append( column + "= ?");
+
+          if ( i < numColumns - 1 ) {
+
+            updateSQL.append(", ");
+          }
+
+        }
+        updateSQL.append( " WHERE " );
+
+        int numKeys = primaryKeys.size();
+
+        for ( int i = 0; i < numKeys; i++ ) {
+
+          PrimaryKey primaryKey = ((PrimaryKey) primaryKeys.get(i));
+          updateSQL.append(primaryKey.name).append("= ?");
+
+          if ( i < numKeys - 1 ) {
+            updateSQL.append(" and ");
+          }
+        }
+        if ( Driver.logDebug ) Driver.debug("updating " + updateSQL.toString());
+        updateStatement = ((java.sql.Connection) connection).prepareStatement(updateSQL.toString());
+
+        int i = 0;
+        Iterator iterator = updateValues.values().iterator();
+        for (; iterator.hasNext(); i++) {
+          updateStatement.setObject( i + 1, iterator.next() );
+
+        }
+        for ( int j = 0; j < numKeys; j++, i++) {
+          updateStatement.setObject( i + 1, ((PrimaryKey) primaryKeys.get(j)).getValue() );
+        }
+
+        updateStatement.executeUpdate();
+        updateStatement.close();
+
+        updateStatement = null;
+        updateRowBuffer();
+
+
+        if ( Driver.logDebug ) Driver.debug("copying data");
+        System.arraycopy(rowBuffer, 0, this_row, 0, rowBuffer.length);
+
+        rows.setElementAt( rowBuffer, current_row );
+        if ( Driver.logDebug ) Driver.debug("done updates");
+
+        doingUpdates = false;
+      }
+      catch (Exception e) {
+        if ( Driver.logDebug ) Driver.debug(e.getClass().getName() + e);
+        throw new SQLException( e.getMessage() );
+      }
+
+    }
+
+  }
+
+
+  public synchronized void updateShort(int columnIndex, short x) throws SQLException {
+    if ( Driver.logDebug ) Driver.debug("in update Short " + fields[columnIndex - 1].getName() + " = " + x);
+
+
+    doingUpdates = !onInsertRow;
+    updateValues.put( fields[columnIndex - 1].getName(), new Short(x) );
+
+  }
+
+
+  public synchronized void updateString(int columnIndex, String x) throws SQLException {
+    if ( Driver.logDebug ) Driver.debug("in update String " + fields[columnIndex - 1].getName() + " = " + x);
+
+    doingUpdates = !onInsertRow;
+    updateValues.put( fields[columnIndex - 1].getName(), x );
+
+  }
+
+
+  public synchronized void updateTime(int columnIndex, Time x) throws SQLException {
+    if ( Driver.logDebug ) Driver.debug("in update Time " + fields[columnIndex - 1].getName() + " = " + x);
+
+
+    doingUpdates = !onInsertRow;
+    updateValues.put( fields[columnIndex - 1].getName(), x );
+
+  }
+
+
+  public synchronized void updateTimestamp(int columnIndex, Timestamp x) throws SQLException {
+    if ( Driver.logDebug ) Driver.debug("updating Timestamp " + fields[columnIndex - 1].getName() + " = " + x);
+
+    doingUpdates = !onInsertRow;
+    updateValues.put( fields[columnIndex - 1].getName(), x );
+
+
+  }
+
+
+  public synchronized void updateNull(String columnName) throws SQLException {
+    updateNull(findColumn(columnName));
+  }
+
+
+  public synchronized void updateBoolean(String columnName, boolean x) throws SQLException {
+    updateBoolean(findColumn(columnName), x);
+  }
+
+
+  public synchronized void updateByte(String columnName, byte x) throws SQLException {
+    updateByte(findColumn(columnName), x);
+  }
+
+
+  public synchronized void updateShort(String columnName, short x) throws SQLException {
+    updateShort(findColumn(columnName), x);
+  }
+
+
+  public synchronized void updateInt(String columnName, int x) throws SQLException {
+    updateInt(findColumn(columnName), x);
+  }
+
+
+  public synchronized void updateLong(String columnName, long x) throws SQLException {
+    updateLong(findColumn(columnName), x);
+  }
+
+
+  public synchronized void updateFloat(String columnName, float x) throws SQLException {
+    updateFloat(findColumn(columnName), x);
+  }
+
+
+  public synchronized void updateDouble(String columnName, double x) throws SQLException {
+    updateDouble(findColumn(columnName), x);
+  }
+
+
+  public synchronized void updateBigDecimal(String columnName, BigDecimal x)
+  throws SQLException {
+    updateBigDecimal(findColumn(columnName), x);
+  }
+
+
+  public synchronized void updateString(String columnName, String x) throws SQLException {
+    updateString(findColumn(columnName), x);
+  }
+
+
+  public synchronized void updateBytes(String columnName, byte x[]) throws SQLException {
+    updateBytes(findColumn(columnName), x);
+  }
+
+
+  public synchronized void updateDate(String columnName, java.sql.Date x)
+  throws SQLException {
+    updateDate(findColumn(columnName), x);
+  }
+
+
+  public synchronized void updateTime(String columnName, java.sql.Time x)
+  throws SQLException {
+    updateTime(findColumn(columnName), x);
+  }
+
+
+  public synchronized void updateTimestamp(String columnName, java.sql.Timestamp x)
+  throws SQLException {
+    updateTimestamp(findColumn(columnName), x);
+  }
+
+
+  public synchronized void updateAsciiStream(
+    String columnName,
+    java.io.InputStream x,
+    int length)
+  throws SQLException {
+    updateAsciiStream(findColumn(columnName), x, length);
+  }
+
+
+  public synchronized void updateBinaryStream(
+    String columnName,
+    java.io.InputStream x,
+    int length)
+  throws SQLException {
+    updateBinaryStream(findColumn(columnName), x, length);
+  }
+
+
+  public synchronized void updateCharacterStream(
+    String columnName,
+    java.io.Reader reader,
+    int length)
+  throws SQLException {
+    updateCharacterStream(findColumn(columnName), reader, length);
+  }
+
+
+  public synchronized void updateObject(String columnName, Object x, int scale)
+  throws SQLException {
+    updateObject(findColumn(columnName), x);
+  }
+
+
+  public synchronized void updateObject(String columnName, Object x) throws SQLException {
+    updateObject(findColumn(columnName), x);
+  }
+
+
+  private int _findColumn( String columnName ) {
+    int i;
+
+    final int flen = fields.length;
+    for (i = 0; i < flen; ++i) {
+      if (fields[i].getName().equalsIgnoreCase(columnName)) {
+        return (i + 1);
+      }
+    }
+    return -1;
+  }
+
+
+  /**
+   * Is this ResultSet updateable?
+   */
+
+  boolean isUpdateable() throws SQLException {
+
+    if (updateable) return true;
+
+    if ( Driver.logDebug ) Driver.debug("checking if rs is updateable");
+
+    parseQuery();
+
+    if ( singleTable == false ) {
+      if ( Driver.logDebug ) Driver.debug("not a single table");
+      return false;
+    }
+
+    if ( Driver.logDebug ) Driver.debug("getting primary keys");
+
+    //
+    // Contains the primary key?
+    //
+
+    primaryKeys = new Vector();
+
+    // this is not stricty jdbc spec, but it will make things much faster if used
+    // the user has to select oid, * from table and then we will just use oid
+
+
+    usingOID = false;
+    int oidIndex = _findColumn( "oid" );
+    int i = 0;
+
+
+    // if we find the oid then just use it
+
+    if ( oidIndex > 0 ) {
+      i++;
+      primaryKeys.add( new PrimaryKey( oidIndex, "oid" ) );
+      usingOID = true;
+    }
+    else {
+      // otherwise go and get the primary keys and create a hashtable of keys
+      java.sql.ResultSet rs  = ((java.sql.Connection) connection).getMetaData().getPrimaryKeys("", "", tableName);
+
+
+      for (; rs.next(); i++ ) {
+        String columnName = rs.getString(4);    // get the columnName
+
+        int index = findColumn( columnName );
+
+        if ( index > 0 ) {
+          primaryKeys.add( new PrimaryKey(index, columnName ) ); // get the primary key information
+        }
+      }
+
+      rs.close();
+    }
+
+    numKeys = primaryKeys.size();
+
+    if ( Driver.logDebug ) Driver.debug( "no of keys=" + i );
+
+    if ( i < 1 ) {
+      throw new SQLException("No Primary Keys");
+    }
+
+    updateable = primaryKeys.size() > 0;
+
+    if ( Driver.logDebug ) Driver.debug( "checking primary key " + updateable );
+
+    return updateable;
+  }
+
+
+  public void parseQuery() {
+    StringTokenizer st = new StringTokenizer(sqlQuery, " \r\t");
+    boolean tableFound = false, tablesChecked = false;
+    String name = "";
+
+    singleTable = true;
+
+    while ( !tableFound && !tablesChecked && st.hasMoreTokens() ) {
+      name = st.nextToken();
+      if ( !tableFound ) {
+        if (name.toLowerCase().equals("from")) {
+          tableName = st.nextToken();
+          tableFound = true;
+        }
+      }
+      else {
+        tablesChecked = true;
+        // if the very next token is , then there are multiple tables
+        singleTable =  !name.equalsIgnoreCase(",");
+      }
+    }
+  }
+
+
+  private void updateRowBuffer() throws SQLException {
+
+    Enumeration columns = updateValues.keys();
+
+    while ( columns.hasMoreElements() ) {
+      String columnName = (String) columns.nextElement();
+      int columnIndex = _findColumn( columnName ) - 1;
+
+      switch ( connection.getSQLType( fields[columnIndex].getPGType() ) ) {
+
+      case Types.DECIMAL:
+      case Types.BIGINT:
+      case Types.DOUBLE:
+      case Types.BIT:
+      case Types.VARCHAR:
+      case Types.DATE:
+      case Types.TIME:
+      case Types.TIMESTAMP:
+      case Types.SMALLINT:
+      case Types.FLOAT:
+      case Types.INTEGER:
+      case Types.CHAR:
+      case Types.NUMERIC:
+      case Types.REAL:
+      case Types.TINYINT:
+
+        try {
+          rowBuffer[columnIndex] = String.valueOf( updateValues.get( columnName ) ).getBytes(connection.getEncoding().name() );
+        }
+        catch ( UnsupportedEncodingException ex) {
+          throw new SQLException("Unsupported Encoding " + connection.getEncoding().name());
+        }
+
+      case Types.NULL:
+        continue;
+
+      default:
+        rowBuffer[columnIndex] = (byte[]) updateValues.get( columnName );
+      }
+
+    }
+  }
+
+
+  public void setStatement(Statement statement) {
+    this.statement = statement;
+  }
+
+
+  public void setSQLQuery(String sqlQuery) {
+    this.sqlQuery = sqlQuery;
+  }
+
+
+  private class PrimaryKey {
+    int index;              // where in the result set is this primaryKey
+    String name;            // what is the columnName of this primary Key
+
+    PrimaryKey( int index, String name) {
+      this.index = index;
+      this.name = name;
+    }
+    Object getValue() throws SQLException {
+      return getObject(index);
+    }
+  };
+
+
+
 }
 

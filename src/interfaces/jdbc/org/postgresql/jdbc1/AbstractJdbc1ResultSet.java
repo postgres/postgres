@@ -13,15 +13,15 @@ import org.postgresql.largeobject.*;
 import org.postgresql.util.PGbytea;
 import org.postgresql.util.PSQLException;
 
-/* $Header: /cvsroot/pgsql/src/interfaces/jdbc/org/postgresql/jdbc1/Attic/AbstractJdbc1ResultSet.java,v 1.1 2002/07/23 03:59:55 barry Exp $
+/* $Header: /cvsroot/pgsql/src/interfaces/jdbc/org/postgresql/jdbc1/Attic/AbstractJdbc1ResultSet.java,v 1.2 2002/07/25 22:45:27 barry Exp $
  * This class defines methods of the jdbc1 specification.  This class is
  * extended by org.postgresql.jdbc2.AbstractJdbc2ResultSet which adds the jdbc2
  * methods.  The real ResultSet class (for jdbc1) is org.postgresql.jdbc1.Jdbc1ResultSet
  */
 public abstract class AbstractJdbc1ResultSet
 {
-
 	protected Vector rows;			// The results
+        protected Statement statement;
 	protected Field fields[];		// The field descriptions
 	protected String status;		// Status of the result
 	protected boolean binaryCursor = false; // is the data binary or Strings
@@ -33,7 +33,7 @@ public abstract class AbstractJdbc1ResultSet
 	protected SQLWarning warnings = null;	// The warning chain
 	protected boolean wasNullFlag = false;	// the flag for wasNull()
 
-	//	We can chain multiple resultSets together - this points to
+	// We can chain multiple resultSets together - this points to
 	// next resultSet in the chain.
 	protected ResultSet next = null;
 
@@ -41,9 +41,10 @@ public abstract class AbstractJdbc1ResultSet
 	public byte[][] rowBuffer=null;
 
 
-	public AbstractJdbc1ResultSet(org.postgresql.PGConnection conn, Field[] fields, Vector tuples, String status, int updateCount, long insertOID, boolean binaryCursor)
+	public AbstractJdbc1ResultSet(org.postgresql.PGConnection conn, Statement statement, Field[] fields, Vector tuples, String status, int updateCount, long insertOID, boolean binaryCursor)
 	{
 		this.connection = conn;
+                this.statement = statement;
 		this.fields = fields;
 		this.rows = tuples;
 		this.status = status;
@@ -116,7 +117,7 @@ public abstract class AbstractJdbc1ResultSet
 				throw new PSQLException("postgresql.res.badbyte", s);
 			}
 		}
-		return 0;		// SQL NULL
+		return 0; // SQL NULL
 	}
 
 	public short getShort(int columnIndex) throws SQLException
@@ -134,7 +135,7 @@ public abstract class AbstractJdbc1ResultSet
 				throw new PSQLException("postgresql.res.badshort", s);
 			}
 		}
-		return 0;		// SQL NULL
+		return 0; // SQL NULL
 	}
 
 	public int getInt(int columnIndex) throws SQLException

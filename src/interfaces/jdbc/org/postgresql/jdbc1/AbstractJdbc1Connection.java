@@ -13,7 +13,7 @@ import org.postgresql.largeobject.LargeObjectManager;
 import org.postgresql.util.*;
 
 
-/* $Header: /cvsroot/pgsql/src/interfaces/jdbc/org/postgresql/jdbc1/Attic/AbstractJdbc1Connection.java,v 1.1 2002/07/23 03:59:55 barry Exp $
+/* $Header: /cvsroot/pgsql/src/interfaces/jdbc/org/postgresql/jdbc1/Attic/AbstractJdbc1Connection.java,v 1.2 2002/07/25 22:45:27 barry Exp $
  * This class defines methods of the jdbc1 specification.  This class is
  * extended by org.postgresql.jdbc2.AbstractJdbc2Connection which adds the jdbc2
  * methods.  The real Connection class (for jdbc1) is org.postgresql.jdbc1.Jdbc1Connection
@@ -359,8 +359,7 @@ public abstract class AbstractJdbc1Connection implements org.postgresql.PGConnec
         // are common to all implementations (JDBC1 or 2), they are placed here.
         // This should make it easy to maintain the two specifications.
 
-//BJL TODO this method shouldn't need to take a Connection since this can be used.
-        public abstract java.sql.ResultSet getResultSet(java.sql.Statement stat, org.postgresql.Field[] fields, Vector tuples, String status, int updateCount, long insertOID, boolean binaryCursor) throws SQLException;
+        public abstract java.sql.ResultSet getResultSet(Statement statement, org.postgresql.Field[] fields, Vector tuples, String status, int updateCount, long insertOID, boolean binaryCursor) throws SQLException;
 
         /*
          * This adds a warning to the warning chain.

@@ -340,7 +340,7 @@ public class Array implements java.sql.Array
 			default:
 				throw org.postgresql.Driver.notImplemented();
 		}
-		return new Jdbc2ResultSet((org.postgresql.jdbc2.Jdbc2Connection)conn, fields, rows, "OK", 1 );
+		return ((Jdbc2Connection)conn).getResultSet(null, fields, rows, "OK", 1 );
 	}
 
 	public String toString()

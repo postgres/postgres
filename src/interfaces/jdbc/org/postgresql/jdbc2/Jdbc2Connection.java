@@ -3,9 +3,10 @@ package org.postgresql.jdbc2;
 
 import java.sql.*;
 import java.util.Vector;
+import java.util.Hashtable;
 import org.postgresql.Field;
 
-/* $Header: /cvsroot/pgsql/src/interfaces/jdbc/org/postgresql/jdbc2/Attic/Jdbc2Connection.java,v 1.2 2002/07/24 22:08:42 barry Exp $
+/* $Header: /cvsroot/pgsql/src/interfaces/jdbc/org/postgresql/jdbc2/Attic/Jdbc2Connection.java,v 1.3 2002/07/25 22:45:28 barry Exp $
  * This class implements the java.sql.Connection interface for JDBC2.
  * However most of the implementation is really done in 
  * org.postgresql.jdbc2.AbstractJdbc2Connection or one of it's parents
@@ -32,7 +33,7 @@ public class Jdbc2Connection extends org.postgresql.jdbc2.AbstractJdbc2Connectio
 
         public java.sql.CallableStatement prepareCall(String sql, int resultSetType, int resultSetConcurrency) throws SQLException
         {
-		org.postgresql.jdbc2.CallableStatement s = new org.postgresql.jdbc2.CallableStatement(this,sql);
+		Jdbc2CallableStatement s = new org.postgresql.jdbc2.Jdbc2CallableStatement(this,sql);
 		s.setResultSetType(resultSetType);
 	      	s.setResultSetConcurrency(resultSetConcurrency);
 	       	return s;
@@ -45,15 +46,14 @@ public class Jdbc2Connection extends org.postgresql.jdbc2.AbstractJdbc2Connectio
                 return metadata;
         }
 
-        public java.sql.ResultSet getResultSet(java.sql.Statement stat, Field[] fields, Vector tuples, String status, int updateCount, long insertOID, boolean binaryCursor) throws SQLException
+        public java.sql.ResultSet getResultSet(Statement statement, Field[] fields, Vector tuples, String status, int updateCount, long insertOID, boolean binaryCursor) throws SQLException
         {
-                if (stat != null)
-                {
-                        if (stat.getResultSetConcurrency() == java.sql.ResultSet.CONCUR_UPDATABLE)
-                          return new org.postgresql.jdbc2.UpdateableResultSet(this, fields, tuples, status, updateCount, insertOID, binaryCursor);
-                }
+                return new Jdbc2ResultSet(this, statement, fields, tuples, status, updateCount, insertOID, binaryCursor);
+        }
 
-                return new Jdbc2ResultSet(this, fields, tuples, status, updateCount, insertOID, binaryCursor);
+        public java.sql.ResultSet getResultSet(Statement statement, Field[] fields, Vector tuples, String status, int updateCount) throws SQLException
+        {
+                return new Jdbc2ResultSet(this, statement, fields, tuples, status, updateCount, 0, false);
         }
 
 
