@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/port/path.c,v 1.16 2004/05/26 19:00:31 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/port/path.c,v 1.17 2004/06/03 00:07:38 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -222,32 +222,47 @@ get_locale_path(const char *my_exec_path, char *ret_path)
 
 
 /*
- *	set_pglocale
+ *	set_pglocale_pgservice
  *
- *	Set application-specific locale
+ *	Set application-specific locale and service directory
  *
  *	This function takes an argv[0] rather than a full path.
  */
 void
-set_pglocale(const char *argv0, const char *app)
+set_pglocale_pgservice(const char *argv0, const char *app)
 {
-#ifdef ENABLE_NLS
 	char path[MAXPGPATH];
 	char my_exec_path[MAXPGPATH];
-#endif
+	char env_path[MAXPGPATH + strlen("PGLOCALE=")]; /* longer than PGETC */
 
 	/* don't set LC_ALL in the backend */
 	if (strcmp(app, "postgres") != 0)
 		setlocale(LC_ALL, "");
 
-#ifdef ENABLE_NLS
 	if (find_my_exec(argv0, my_exec_path) < 0)
 		return;
 		
+#ifdef ENABLE_NLS
 	get_locale_path(my_exec_path, path);
 	bindtextdomain(app, path);
 	textdomain(app);
+
+	if (!getenv("PGLOCALE"))
+	{
+		/* set for libpq to use */
+		sprintf(env_path, "PGLOCALE=%s", path);
+		putenv(env_path);
+	}
 #endif
+
+	if (!getenv("PGETC"))
+	{
+		get_etc_path(my_exec_path, path);
+	
+		/* set for libpq to use */
+		sprintf(env_path, "PGETC=%s", path);
+		putenv(env_path);
+	}
 }
 
 

@@ -39,7 +39,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  * Portions taken from FreeBSD.
  *
- * $PostgreSQL: pgsql/src/bin/initdb/initdb.c,v 1.34 2004/06/01 02:53:59 momjian Exp $
+ * $PostgreSQL: pgsql/src/bin/initdb/initdb.c,v 1.35 2004/06/03 00:07:36 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -1788,7 +1788,7 @@ main(int argc, char *argv[])
 	{"global", "pg_xlog", "pg_clog", "base", "base/1"};
 
 	progname = get_progname(argv[0]);
-	set_pglocale(argv[0], "initdb");
+	set_pglocale_pgservice(argv[0], "initdb");
 
     if (argc > 1)
     {

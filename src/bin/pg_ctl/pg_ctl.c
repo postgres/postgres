@@ -4,7 +4,7 @@
  *
  * Portions Copyright (c) 1996-2003, PostgreSQL Global Development Group
  *
- * $PostgreSQL: pgsql/src/bin/pg_ctl/pg_ctl.c,v 1.5 2004/06/01 22:03:18 momjian Exp $
+ * $PostgreSQL: pgsql/src/bin/pg_ctl/pg_ctl.c,v 1.6 2004/06/03 00:07:36 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -824,7 +824,7 @@ main(int argc, char **argv)
 #endif
 
 	progname = get_progname(argv[0]);
-	set_pglocale(argv[0], "pg_ctl");
+	set_pglocale_pgservice(argv[0], "pg_ctl");
 
 	/*
 	 * save argv[0] so do_start() can look for the postmaster if

@@ -34,7 +34,7 @@
  *
  *
  * IDENTIFICATION
- *		$PostgreSQL: pgsql/src/bin/pg_dump/pg_restore.c,v 1.57 2004/05/25 01:00:24 momjian Exp $
+ *		$PostgreSQL: pgsql/src/bin/pg_dump/pg_restore.c,v 1.58 2004/06/03 00:07:37 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -121,7 +121,7 @@ main(int argc, char **argv)
 		{NULL, 0, NULL, 0}
 	};
 
-	set_pglocale(argv[0], "pg_dump");
+	set_pglocale_pgservice(argv[0], "pg_dump");
 
 	opts = NewRestoreOptions();
 

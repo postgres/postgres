@@ -6,7 +6,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  *
- * $PostgreSQL: pgsql/src/bin/pg_dump/pg_dumpall.c,v 1.35 2004/05/25 01:00:24 momjian Exp $
+ * $PostgreSQL: pgsql/src/bin/pg_dump/pg_dumpall.c,v 1.36 2004/06/03 00:07:36 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -101,7 +101,7 @@ main(int argc, char *argv[])
 
 	int			optindex;
 
-	set_pglocale(argv[0], "pg_dump");
+	set_pglocale_pgservice(argv[0], "pg_dump");
 
 	progname = get_progname(argv[0]);
 

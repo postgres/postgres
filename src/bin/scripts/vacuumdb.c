@@ -5,7 +5,7 @@
  * Portions Copyright (c) 1996-2003, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/bin/scripts/vacuumdb.c,v 1.8 2004/06/01 02:54:09 momjian Exp $
+ * $PostgreSQL: pgsql/src/bin/scripts/vacuumdb.c,v 1.9 2004/06/03 00:07:38 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -66,7 +66,7 @@ main(int argc, char *argv[])
 	bool		verbose = false;
 
 	progname = get_progname(argv[0]);
-	set_pglocale(argv[0], "pgscripts");
+	set_pglocale_pgservice(argv[0], "pgscripts");
 
 	handle_help_version_opts(argc, argv, "vacuumdb", help);
 

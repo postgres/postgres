@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/interfaces/libpq/fe-connect.c,v 1.271 2004/05/26 18:35:51 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/interfaces/libpq/fe-connect.c,v 1.272 2004/06/03 00:07:38 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -2363,17 +2363,13 @@ pqPacketSend(PGconn *conn, char pack_type,
 
 
 
-#ifndef SYSCONFDIR
-#error "You must compile this file with SYSCONFDIR defined."
-#endif
-
 #define MAXBUFSIZE 256
 
 static int
 parseServiceInfo(PQconninfoOption *options, PQExpBuffer errorMessage)
 {
 	char	   *service = conninfo_getval(options, "service");
-	char	   *serviceFile = SYSCONFDIR "/pg_service.conf";
+	char		serviceFile[MAXPGPATH];
 	bool		group_found = false;
 	int			linenr = 0,
 				i;
@@ -2385,6 +2381,13 @@ parseServiceInfo(PQconninfoOption *options, PQExpBuffer errorMessage)
 	 */
 	if (service == NULL)
 		service = getenv("PGSERVICE");
+
+	/*
+	 *	This could be used by any application so we can't use the binary
+	 *	location to find our config files.
+	 */	
+	snprintf(serviceFile, MAXPGPATH, "%s/pg_service.conf",
+			 getenv("PGETC") ? getenv("PGETC") : SYSCONFDIR);
 
 	if (service != NULL)
 	{
