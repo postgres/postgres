@@ -159,14 +159,31 @@ CreateTrigger(CreateTrigStmt * stmt)
 
 		foreach(le, stmt->args)
 		{
-			char	   *ar = (char *) lfirst(le);
+			char   *ar = (char *) lfirst(le);
 
 			len += strlen(ar) + 4;
+			for ( ; *ar; ar++)
+			{
+				if (*ar == '\\')
+					len++;
+			}
 		}
 		args = (char *) palloc(len + 1);
 		args[0] = 0;
 		foreach(le, stmt->args)
-			sprintf(args + strlen(args), "%s\\000", (char *) lfirst(le));
+		{
+			char   *s = (char *) lfirst(le);
+			char   *d = args + strlen(args);
+			
+			while (*s)
+			{
+				if (*s == '\\')
+					*d++ = '\\';
+				*d++ = *s++;
+			}
+			*d = 0;
+			strcat(args, "\\000");
+		}
 		values[Anum_pg_trigger_tgnargs - 1] = Int16GetDatum(nargs);
 		values[Anum_pg_trigger_tgargs - 1] = PointerGetDatum(byteain(args));
 	}
