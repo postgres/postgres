@@ -6,7 +6,7 @@
  * Copyright (c) 2003, PostgreSQL Global Development Group
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/array_userfuncs.c,v 1.3 2003/06/25 21:30:32 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/array_userfuncs.c,v 1.4 2003/06/27 00:33:25 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -17,35 +17,6 @@
 #include "utils/array.h"
 #include "utils/lsyscache.h"
 #include "utils/syscache.h"
-
-
-/*-----------------------------------------------------------------------------
- * singleton_array :
- *		Form a multi-dimensional array given one starting element.
- *
- * - first argument is the datum with which to build the array
- * - second argument is the number of dimensions the array should have;
- *     defaults to 1 if no second argument is provided
- *----------------------------------------------------------------------------
- */
-Datum
-singleton_array(PG_FUNCTION_ARGS)
-{
-	Oid			elem_type = get_fn_expr_argtype(fcinfo, 0);
-	int			ndims;
-
-	if (elem_type == InvalidOid)
-		elog(ERROR, "Cannot determine input datatype");
-
-	if (PG_NARGS() == 2)
-		ndims = PG_GETARG_INT32(1);
-	else
-		ndims = 1;
-
-	PG_RETURN_ARRAYTYPE_P(create_singleton_array(elem_type,
-												 PG_GETARG_DATUM(0),
-												 ndims));
-}
 
 /*-----------------------------------------------------------------------------
  * array_push :
@@ -70,6 +41,7 @@ array_push(PG_FUNCTION_ARGS)
 	Oid			arg1_typeid = get_fn_expr_argtype(fcinfo, 1);
 	Oid			arg0_elemid;
 	Oid			arg1_elemid;
+	ArrayMetaState *my_extra;
 
 	if (arg0_typeid == InvalidOid || arg1_typeid == InvalidOid)
 		elog(ERROR, "array_push: cannot determine input data types");
@@ -95,25 +67,54 @@ array_push(PG_FUNCTION_ARGS)
 		PG_RETURN_NULL();		/* keep compiler quiet */
 	}
 
-	/* Sanity check: do we have a one-dimensional array */
-	if (ARR_NDIM(v) != 1)
-		elog(ERROR, "Arrays greater than one-dimension are not supported");
-
-	lb = ARR_LBOUND(v);
-	dimv = ARR_DIMS(v);
-	if (arg0_elemid != InvalidOid)
+	if (ARR_NDIM(v) == 1)
 	{
-		/* append newelem */
-		int	ub = dimv[0] + lb[0] - 1;
-		indx = ub + 1;
+		lb = ARR_LBOUND(v);
+		dimv = ARR_DIMS(v);
+
+		if (arg0_elemid != InvalidOid)
+		{
+			/* append newelem */
+			int	ub = dimv[0] + lb[0] - 1;
+			indx = ub + 1;
+		}
+		else
+		{
+			/* prepend newelem */
+			indx = lb[0] - 1;
+		}
 	}
+	else if (ARR_NDIM(v) == 0)
+		indx = 1;
 	else
+		elog(ERROR, "only empty and one-dimensional arrays are supported");
+
+
+	/*
+	 * We arrange to look up info about element type only once per series
+	 * of calls, assuming the element type doesn't change underneath us.
+	 */
+	my_extra = (ArrayMetaState *) fcinfo->flinfo->fn_extra;
+	if (my_extra == NULL)
 	{
-		/* prepend newelem */
-		indx = lb[0] - 1;
+		fcinfo->flinfo->fn_extra = MemoryContextAlloc(fcinfo->flinfo->fn_mcxt,
+													 sizeof(ArrayMetaState));
+		my_extra = (ArrayMetaState *) fcinfo->flinfo->fn_extra;
+		my_extra->element_type = InvalidOid;
 	}
 
-	get_typlenbyvalalign(element_type, &typlen, &typbyval, &typalign);
+	if (my_extra->element_type != element_type)
+	{
+		/* Get info about element type */
+		get_typlenbyvalalign(element_type,
+							 &my_extra->typlen,
+							 &my_extra->typbyval,
+							 &my_extra->typalign);
+		my_extra->element_type = element_type;
+	}
+	typlen = my_extra->typlen;
+	typbyval = my_extra->typbyval;
+	typalign = my_extra->typalign;
 
 	result = array_set(v, 1, &indx, newelem, -1,
 					   typlen, typbyval, typalign, &isNull);
@@ -145,13 +146,28 @@ array_cat(PG_FUNCTION_ARGS)
 
 	/*
 	 * We must have one of the following combinations of inputs:
-	 * 1) two arrays with ndims1 == ndims2
-	 * 2) ndims1 == ndims2 - 1
-	 * 3) ndims1 == ndims2 + 1
+	 * 1) one empty array, and one non-empty array
+	 * 2) both arrays empty
+	 * 3) two arrays with ndims1 == ndims2
+	 * 4) ndims1 == ndims2 - 1
+	 * 5) ndims1 == ndims2 + 1
 	 */
 	ndims1 = ARR_NDIM(v1);
 	ndims2 = ARR_NDIM(v2);
 
+	/*
+	 * short circuit - if one input array is empty, and the other is not,
+	 * we return the non-empty one as the result
+	 *
+	 * if both are empty, return the first one
+	 */
+	if (ndims1 == 0 && ndims2 > 0)
+		PG_RETURN_ARRAYTYPE_P(v2);
+
+	if (ndims2 == 0)
+		PG_RETURN_ARRAYTYPE_P(v1);
+
+	/* the rest fall into combo 2, 3, or 4 */
 	if (ndims1 != ndims2 && ndims1 != ndims2 - 1 && ndims1 != ndims2 + 1)
 		elog(ERROR, "Cannot concatenate incompatible arrays of %d and "
 					"%d dimensions", ndims1, ndims2);
@@ -266,147 +282,15 @@ array_cat(PG_FUNCTION_ARGS)
 	PG_RETURN_ARRAYTYPE_P(result);
 }
 
-/*----------------------------------------------------------------------------
- * array_accum :
- *		accumulator to build a 1-D array from input values -- this can be used
- *		to create custom aggregates.
- *
- * This function is not marked strict, so we have to be careful about nulls.
- *----------------------------------------------------------------------------
- */
-Datum
-array_accum(PG_FUNCTION_ARGS)
-{
-	/* return NULL if both arguments are NULL */
-	if (PG_ARGISNULL(0) && PG_ARGISNULL(1))
-		PG_RETURN_NULL();
-
-	/* create a new 1-D array from the new element if the array is NULL */
-	if (PG_ARGISNULL(0))
-	{
-		Oid			tgt_type = get_fn_expr_rettype(fcinfo);
-		Oid			tgt_elem_type;
-
-		if (tgt_type == InvalidOid)
-			elog(ERROR, "Cannot determine target array type");
-		tgt_elem_type = get_element_type(tgt_type);
-		if (tgt_elem_type == InvalidOid)
-			elog(ERROR, "Target type is not an array");
-
-		PG_RETURN_ARRAYTYPE_P(create_singleton_array(tgt_elem_type,
-													 PG_GETARG_DATUM(1),
-													 1));
-	}
-
-	/* return the array if the new element is NULL */
-	if (PG_ARGISNULL(1))
-		PG_RETURN_ARRAYTYPE_P(PG_GETARG_ARRAYTYPE_P_COPY(0));
-
-	/*
-	 * Otherwise this is equivalent to array_push.  We hack the call a little
-	 * so that array_push can see the fn_expr information.
-	 */
-	return array_push(fcinfo);
-}
-
-/*-----------------------------------------------------------------------------
- * array_assign :
- *		assign an element of an array to a new value and return the
- *		redefined array
- *----------------------------------------------------------------------------
- */
-Datum
-array_assign(PG_FUNCTION_ARGS)
-{
-	ArrayType  *v;
-	int			idx_to_chg;
-	Datum		newelem;
-	int		   *dimv,
-			   *lb, ub;
-	ArrayType  *result;
-	bool		isNull;
-	Oid			element_type;
-	int16		typlen;
-	bool		typbyval;
-	char		typalign;
-
-	v = PG_GETARG_ARRAYTYPE_P(0);
-	idx_to_chg = PG_GETARG_INT32(1);
-	newelem = PG_GETARG_DATUM(2);
-
-	/* Sanity check: do we have a one-dimensional array */
-	if (ARR_NDIM(v) != 1)
-		elog(ERROR, "Arrays greater than one-dimension are not supported");
-
-	lb = ARR_LBOUND(v);
-	dimv = ARR_DIMS(v);
-	ub = dimv[0] + lb[0] - 1;
-	if (idx_to_chg < lb[0] || idx_to_chg > ub)
-		elog(ERROR, "Cannot alter nonexistent array element: %d", idx_to_chg);
-
-	element_type = ARR_ELEMTYPE(v);
-	/* Sanity check: do we have a non-zero element type */
-	if (element_type == 0)
-		elog(ERROR, "Invalid array element type: %u", element_type);
-
-	get_typlenbyvalalign(element_type, &typlen, &typbyval, &typalign);
-
-	result = array_set(v, 1, &idx_to_chg, newelem, -1,
-					   typlen, typbyval, typalign, &isNull);
-
-	PG_RETURN_ARRAYTYPE_P(result);
-}
-
-/*-----------------------------------------------------------------------------
- * array_subscript :
- *		return specific element of an array
- *----------------------------------------------------------------------------
- */
-Datum
-array_subscript(PG_FUNCTION_ARGS)
-{
-	ArrayType  *v;
-	int			idx;
-	int		   *dimv,
-			   *lb, ub;
-	Datum		result;
-	bool		isNull;
-	Oid			element_type;
-	int16		typlen;
-	bool		typbyval;
-	char		typalign;
-
-	v = PG_GETARG_ARRAYTYPE_P(0);
-	idx = PG_GETARG_INT32(1);
-
-	/* Sanity check: do we have a one-dimensional array */
-	if (ARR_NDIM(v) != 1)
-		elog(ERROR, "Arrays greater than one-dimension are not supported");
-
-	lb = ARR_LBOUND(v);
-	dimv = ARR_DIMS(v);
-	ub = dimv[0] + lb[0] - 1;
-	if (idx < lb[0] || idx > ub)
-		elog(ERROR, "Cannot return nonexistent array element: %d", idx);
-
-	element_type = ARR_ELEMTYPE(v);
-	/* Sanity check: do we have a non-zero element type */
-	if (element_type == 0)
-		elog(ERROR, "Invalid array element type: %u", element_type);
-
-	get_typlenbyvalalign(element_type, &typlen, &typbyval, &typalign);
-
-	result = array_ref(v, 1, &idx, -1, typlen, typbyval, typalign, &isNull);
-
-	PG_RETURN_DATUM(result);
-}
 
 /*
- * actually does the work for singleton_array(), and array_accum() if it is
- * given a null input array.
+ * used by text_to_array() in varlena.c
  */
 ArrayType *
-create_singleton_array(Oid element_type, Datum element, int ndims)
+create_singleton_array(FunctionCallInfo fcinfo,
+					   Oid element_type,
+					   Datum element,
+					   int ndims)
 {
 	Datum	dvalues[1];
 	int16	typlen;
@@ -415,6 +299,7 @@ create_singleton_array(Oid element_type, Datum element, int ndims)
 	int		dims[MAXDIM];
 	int		lbs[MAXDIM];
 	int		i;
+	ArrayMetaState *my_extra;
 
 	if (element_type == 0)
 		elog(ERROR, "Invalid array element type: %u", element_type);
@@ -429,7 +314,31 @@ create_singleton_array(Oid element_type, Datum element, int ndims)
 		lbs[i] = 1;
 	}
 
-	get_typlenbyvalalign(element_type, &typlen, &typbyval, &typalign);
+	/*
+	 * We arrange to look up info about element type only once per series
+	 * of calls, assuming the element type doesn't change underneath us.
+	 */
+	my_extra = (ArrayMetaState *) fcinfo->flinfo->fn_extra;
+	if (my_extra == NULL)
+	{
+		fcinfo->flinfo->fn_extra = MemoryContextAlloc(fcinfo->flinfo->fn_mcxt,
+													 sizeof(ArrayMetaState));
+		my_extra = (ArrayMetaState *) fcinfo->flinfo->fn_extra;
+		my_extra->element_type = InvalidOid;
+	}
+
+	if (my_extra->element_type != element_type)
+	{
+		/* Get info about element type */
+		get_typlenbyvalalign(element_type,
+							 &my_extra->typlen,
+							 &my_extra->typbyval,
+							 &my_extra->typalign);
+		my_extra->element_type = element_type;
+	}
+	typlen = my_extra->typlen;
+	typbyval = my_extra->typbyval;
+	typalign = my_extra->typalign;
 
 	return construct_md_array(dvalues, ndims, dims, lbs, element_type,
 							  typlen, typbyval, typalign);

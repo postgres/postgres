@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2002, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Id: builtins.h,v 1.222 2003/06/25 21:30:33 momjian Exp $
+ * $Id: builtins.h,v 1.223 2003/06/27 00:33:26 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -530,6 +530,8 @@ extern bool SplitIdentifierString(char *rawstring, char separator,
 					  List **namelist);
 extern Datum replace_text(PG_FUNCTION_ARGS);
 extern Datum split_text(PG_FUNCTION_ARGS);
+extern Datum text_to_array(PG_FUNCTION_ARGS);
+extern Datum array_to_text(PG_FUNCTION_ARGS);
 extern Datum to_hex32(PG_FUNCTION_ARGS);
 extern Datum to_hex64(PG_FUNCTION_ARGS);
 extern Datum md5_text(PG_FUNCTION_ARGS);

@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/parser/parse_oper.c,v 1.66 2003/06/25 21:30:32 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/parser/parse_oper.c,v 1.67 2003/06/27 00:33:25 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -137,28 +137,50 @@ Operator
 equality_oper(Oid argtype, bool noError)
 {
 	Operator	optup;
+	Oid			elem_type;
 
 	/*
-	 * Look for an "=" operator for the datatype.  We require it to be
-	 * an exact or binary-compatible match, since most callers are not
-	 * prepared to cope with adding any run-time type coercion steps.
+	 * If the datatype is an array, then we can use array_eq ... but only
+	 * if there is a suitable equality operator for the element type.
+	 * (We must run this test first, since compatible_oper will find
+	 * array_eq, but would not notice the lack of an element operator.)
 	 */
-	optup = compatible_oper(makeList1(makeString("=")),
-							argtype, argtype, true);
-	if (optup != NULL)
+	elem_type = get_element_type(argtype);
+	if (OidIsValid(elem_type))
+	{
+		optup = equality_oper(elem_type, true);
+		if (optup != NULL)
+		{
+			ReleaseSysCache(optup);
+			return SearchSysCache(OPEROID,
+								  ObjectIdGetDatum(ARRAY_EQ_OP),
+								  0, 0, 0);
+		}
+	}
+	else
 	{
 		/*
-		 * Only believe that it's equality if it's mergejoinable,
-		 * hashjoinable, or uses eqsel() as oprrest.
+		 * Look for an "=" operator for the datatype.  We require it to be
+		 * an exact or binary-compatible match, since most callers are not
+		 * prepared to cope with adding any run-time type coercion steps.
 		 */
-		Form_pg_operator pgopform = (Form_pg_operator) GETSTRUCT(optup);
+		optup = compatible_oper(makeList1(makeString("=")),
+								argtype, argtype, true);
+		if (optup != NULL)
+		{
+			/*
+			 * Only believe that it's equality if it's mergejoinable,
+			 * hashjoinable, or uses eqsel() as oprrest.
+			 */
+			Form_pg_operator pgopform = (Form_pg_operator) GETSTRUCT(optup);
 
-		if (OidIsValid(pgopform->oprlsortop) ||
-			pgopform->oprcanhash ||
-			pgopform->oprrest == F_EQSEL)
-			return optup;
+			if (OidIsValid(pgopform->oprlsortop) ||
+				pgopform->oprcanhash ||
+				pgopform->oprrest == F_EQSEL)
+				return optup;
 
-		ReleaseSysCache(optup);
+			ReleaseSysCache(optup);
+		}
 	}
 	if (!noError)
 		elog(ERROR, "Unable to identify an equality operator for type %s",
@@ -175,27 +197,50 @@ Operator
 ordering_oper(Oid argtype, bool noError)
 {
 	Operator	optup;
+	Oid			elem_type;
 
 	/*
-	 * Find the type's equality operator, and use its lsortop (it *must*
-	 * be mergejoinable).  We use this definition because for sorting and
-	 * grouping purposes, it's important that the equality and ordering
-	 * operators are consistent.
+	 * If the datatype is an array, then we can use array_lt ... but only
+	 * if there is a suitable ordering operator for the element type.
+	 * (We must run this test first, since the code below would find
+	 * array_lt if there's an element = operator, but would not notice the
+	 * lack of an element < operator.)
 	 */
-	optup = equality_oper(argtype, noError);
-	if (optup != NULL)
+	elem_type = get_element_type(argtype);
+	if (OidIsValid(elem_type))
 	{
-		Oid		lsortop = ((Form_pg_operator) GETSTRUCT(optup))->oprlsortop;
-
-		ReleaseSysCache(optup);
-
-		if (OidIsValid(lsortop))
+		optup = ordering_oper(elem_type, true);
+		if (optup != NULL)
 		{
-			optup = SearchSysCache(OPEROID,
-								   ObjectIdGetDatum(lsortop),
-								   0, 0, 0);
-			if (optup != NULL)
-				return optup;
+			ReleaseSysCache(optup);
+			return SearchSysCache(OPEROID,
+								  ObjectIdGetDatum(ARRAY_LT_OP),
+								  0, 0, 0);
+		}
+	}
+	else
+	{
+		/*
+		 * Find the type's equality operator, and use its lsortop (it *must*
+		 * be mergejoinable).  We use this definition because for sorting and
+		 * grouping purposes, it's important that the equality and ordering
+		 * operators are consistent.
+		 */
+		optup = equality_oper(argtype, noError);
+		if (optup != NULL)
+		{
+			Oid		lsortop;
+
+			lsortop = ((Form_pg_operator) GETSTRUCT(optup))->oprlsortop;
+			ReleaseSysCache(optup);
+			if (OidIsValid(lsortop))
+			{
+				optup = SearchSysCache(OPEROID,
+									   ObjectIdGetDatum(lsortop),
+									   0, 0, 0);
+				if (optup != NULL)
+					return optup;
+			}
 		}
 	}
 	if (!noError)
@@ -233,6 +278,21 @@ ordering_oper_opid(Oid argtype)
 
 	optup = ordering_oper(argtype, false);
 	result = oprid(optup);
+	ReleaseSysCache(optup);
+	return result;
+}
+
+/*
+ * ordering_oper_funcid - convenience routine for oprfuncid(ordering_oper())
+ */
+Oid
+ordering_oper_funcid(Oid argtype)
+{
+	Operator	optup;
+	Oid			result;
+
+	optup = ordering_oper(argtype, false);
+	result = oprfuncid(optup);
 	ReleaseSysCache(optup);
 	return result;
 }

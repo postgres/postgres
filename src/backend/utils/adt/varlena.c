@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/varlena.c,v 1.100 2003/06/25 21:30:32 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/varlena.c,v 1.101 2003/06/27 00:33:25 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -19,11 +19,14 @@
 #include "mb/pg_wchar.h"
 #include "miscadmin.h"
 #include "access/tuptoaster.h"
+#include "catalog/pg_type.h"
 #include "lib/stringinfo.h"
 #include "libpq/crypt.h"
 #include "libpq/pqformat.h"
+#include "utils/array.h"
 #include "utils/builtins.h"
 #include "utils/pg_locale.h"
+#include "utils/lsyscache.h"
 
 
 typedef struct varlena unknown;
@@ -1983,8 +1986,7 @@ split_text(PG_FUNCTION_ARGS)
 		if (fldnum == 1)		/* first field - just return the input
 								 * string */
 			PG_RETURN_TEXT_P(inputstring);
-		else
-/* otherwise return an empty string */
+		else					/* otherwise return an empty string */
 			PG_RETURN_TEXT_P(PG_STR_GET_TEXT(""));
 	}
 
@@ -2004,8 +2006,7 @@ split_text(PG_FUNCTION_ARGS)
 		if (fldnum == 1)		/* first field - just return the input
 								 * string */
 			PG_RETURN_TEXT_P(inputstring);
-		else
-/* otherwise return an empty string */
+		else					/* otherwise return an empty string */
 			PG_RETURN_TEXT_P(PG_STR_GET_TEXT(""));
 	}
 	else if ((start_posn != 0) && (end_posn == 0))
@@ -2026,6 +2027,176 @@ split_text(PG_FUNCTION_ARGS)
 		result_text = text_substring(PointerGetDatum(inputstring), start_posn + fldsep_len, end_posn - start_posn - fldsep_len, false);
 		PG_RETURN_TEXT_P(result_text);
 	}
+}
+
+/*
+ * text_to_array
+ * parse input string
+ * return text array of elements
+ * based on provided field separator
+ */
+Datum
+text_to_array(PG_FUNCTION_ARGS)
+{
+	text	   *inputstring = PG_GETARG_TEXT_P(0);
+	int			inputstring_len = TEXTLEN(inputstring);
+	text	   *fldsep = PG_GETARG_TEXT_P(1);
+	int			fldsep_len = TEXTLEN(fldsep);
+	int			fldnum;
+	int			start_posn = 0;
+	int			end_posn = 0;
+	text	   *result_text = NULL;
+	ArrayBuildState *astate = NULL;
+	MemoryContext oldcontext = CurrentMemoryContext;
+
+	/* return NULL for empty input string */
+	if (inputstring_len < 1)
+		PG_RETURN_NULL();
+
+	/* empty field separator
+	 * return one element, 1D, array using the input string */
+	if (fldsep_len < 1)
+		PG_RETURN_ARRAYTYPE_P(create_singleton_array(fcinfo, TEXTOID,
+							  CStringGetDatum(inputstring), 1));
+
+	/* start with end position holding the initial start position */
+	end_posn = 0;
+	for (fldnum=1;;fldnum++)	/* field number is 1 based */
+	{
+		Datum	dvalue;
+		bool	disnull = false;
+
+		start_posn = end_posn;
+		end_posn = text_position(PointerGetDatum(inputstring),
+								 PointerGetDatum(fldsep),
+								 fldnum);
+
+		if ((start_posn == 0) && (end_posn == 0))	/* fldsep not found */
+		{
+			if (fldnum == 1)
+			{
+				/* first element
+				 * return one element, 1D, array using the input string */
+				PG_RETURN_ARRAYTYPE_P(create_singleton_array(fcinfo, TEXTOID,
+									  CStringGetDatum(inputstring), 1));
+			}
+			else
+			{
+				/* otherwise create array and exit */
+				PG_RETURN_ARRAYTYPE_P(makeArrayResult(astate, oldcontext));
+			}
+		}
+		else if ((start_posn != 0) && (end_posn == 0))
+		{
+			/* last field requested */
+			result_text = text_substring(PointerGetDatum(inputstring), start_posn + fldsep_len, -1, true);
+		}
+		else if ((start_posn == 0) && (end_posn != 0))
+		{
+			/* first field requested */
+			result_text = LEFT(inputstring, fldsep);
+		}
+		else
+		{
+			/* prior to last field requested */
+			result_text = text_substring(PointerGetDatum(inputstring), start_posn + fldsep_len, end_posn - start_posn - fldsep_len, false);
+		}
+
+		/* stash away current value */
+		dvalue = PointerGetDatum(result_text);
+		astate = accumArrayResult(astate, dvalue,
+								  disnull, TEXTOID, oldcontext);
+
+	}
+
+	/* never reached -- keep compiler quiet */
+	PG_RETURN_NULL();
+}
+
+/*
+ * array_to_text
+ * concatenate Cstring representation of input array elements
+ * using provided field separator
+ */
+Datum
+array_to_text(PG_FUNCTION_ARGS)
+{
+	ArrayType  *v = PG_GETARG_ARRAYTYPE_P(0);
+	char	   *fldsep = PG_TEXTARG_GET_STR(1);
+	int			nitems, *dims, ndims;
+	char	   *p;
+	Oid			element_type;
+	int			typlen;
+	bool		typbyval;
+	char		typalign;
+	Oid			typelem;
+	StringInfo	result_str = makeStringInfo();
+	int			i;
+	ArrayMetaState *my_extra;
+
+	p = ARR_DATA_PTR(v);
+	ndims = ARR_NDIM(v);
+	dims = ARR_DIMS(v);
+	nitems = ArrayGetNItems(ndims, dims);
+
+	/* if there are no elements, return an empty string */
+	if (nitems == 0)
+		PG_RETURN_TEXT_P(PG_STR_GET_TEXT(""));
+
+	element_type = ARR_ELEMTYPE(v);
+
+	/*
+	 * We arrange to look up info about element type, including its output
+	 * conversion proc, only once per series of calls, assuming the element
+	 * type doesn't change underneath us.
+	 */
+	my_extra = (ArrayMetaState *) fcinfo->flinfo->fn_extra;
+	if (my_extra == NULL)
+	{
+		fcinfo->flinfo->fn_extra = MemoryContextAlloc(fcinfo->flinfo->fn_mcxt,
+													 sizeof(ArrayMetaState));
+		my_extra = (ArrayMetaState *) fcinfo->flinfo->fn_extra;
+		my_extra->element_type = InvalidOid;
+	}
+
+	if (my_extra->element_type != element_type)
+	{
+		/* Get info about element type, including its output conversion proc */
+		get_type_io_data(element_type, IOFunc_output,
+						 &my_extra->typlen, &my_extra->typbyval,
+						 &my_extra->typalign, &my_extra->typdelim,
+						 &my_extra->typelem, &my_extra->typiofunc);
+		fmgr_info_cxt(my_extra->typiofunc, &my_extra->proc,
+					  fcinfo->flinfo->fn_mcxt);
+		my_extra->element_type = element_type;
+	}
+	typlen = my_extra->typlen;
+	typbyval = my_extra->typbyval;
+	typalign = my_extra->typalign;
+	typelem = my_extra->typelem;
+
+	for (i = 0; i < nitems; i++)
+	{
+		Datum		itemvalue;
+		char	   *value;
+
+		itemvalue = fetch_att(p, typbyval, typlen);
+
+		value = DatumGetCString(FunctionCall3(&my_extra->proc,
+											  itemvalue,
+											  ObjectIdGetDatum(typelem),
+											  Int32GetDatum(-1)));
+
+		if (i > 0)
+			appendStringInfo(result_str, "%s%s", fldsep, value);
+		else
+			appendStringInfo(result_str, "%s", value);
+
+		p = att_addlength(p, typlen, PointerGetDatum(p));
+		p = (char *) att_align(p, typalign);
+	}
+
+	PG_RETURN_TEXT_P(PG_STR_GET_TEXT(result_str->data));
 }
 
 #define HEXBASE 16

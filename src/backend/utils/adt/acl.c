@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/acl.c,v 1.90 2003/06/25 21:30:32 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/acl.c,v 1.91 2003/06/27 00:33:25 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -34,7 +34,7 @@ static const char *getid(const char *s, char *n);
 static void putid(char *p, const char *s);
 static Acl *allocacl(int n);
 static const char *aclparse(const char *s, AclItem *aip);
-static bool aclitemeq(const AclItem *a1, const AclItem *a2);
+static bool aclitem_match(const AclItem *a1, const AclItem *a2);
 static Acl *recursive_revoke(Acl *acl, AclId grantee,
 							 AclMode revoke_privs, DropBehavior behavior);
 
@@ -415,18 +415,33 @@ aclitemout(PG_FUNCTION_ARGS)
 }
 
 /*
- * aclitemeq
- *		Two AclItems are considered equal iff they have the same
+ * aclitem_match
+ *		Two AclItems are considered to match iff they have the same
  *		grantee and grantor; the privileges are ignored.
  */
 static bool
-aclitemeq(const AclItem *a1, const AclItem *a2)
+aclitem_match(const AclItem *a1, const AclItem *a2)
 {
 	return ACLITEM_GET_IDTYPE(*a1) == ACLITEM_GET_IDTYPE(*a2) &&
 		a1->ai_grantee == a2->ai_grantee &&
 		a1->ai_grantor == a2->ai_grantor;
 }
 
+/*
+ * aclitem equality operator
+ */
+Datum
+aclitem_eq(PG_FUNCTION_ARGS)
+{
+	AclItem	   *a1 = PG_GETARG_ACLITEM_P(0);
+	AclItem	   *a2 = PG_GETARG_ACLITEM_P(1);
+	bool		result;
+
+	result = a1->ai_privs == a2->ai_privs &&
+		a1->ai_grantee == a2->ai_grantee &&
+		a1->ai_grantor == a2->ai_grantor;
+	PG_RETURN_BOOL(result);
+}
 
 /*
  * acldefault()  --- create an ACL describing default access permissions
@@ -535,7 +550,7 @@ aclinsert3(const Acl *old_acl, const AclItem *mod_aip, unsigned modechg, DropBeh
 
 	for (dst = 0; dst < num; ++dst)
 	{
-		if (aclitemeq(mod_aip, old_aip + dst))
+		if (aclitem_match(mod_aip, old_aip + dst))
 		{
 			/* found a match, so modify existing item */
 			new_acl = allocacl(num);
@@ -685,8 +700,10 @@ aclremove(PG_FUNCTION_ARGS)
 	old_aip = ACL_DAT(old_acl);
 
 	/* Search for the matching entry */
-	for (dst = 0; dst < old_num && !aclitemeq(mod_aip, old_aip + dst); ++dst)
-		;
+	for (dst = 0;
+		 dst < old_num && !aclitem_match(mod_aip, old_aip + dst);
+		 ++dst)
+		/* continue */ ;
 
 	if (dst >= old_num)
 	{

@@ -6,7 +6,7 @@
  * Portions Copyright (c) 1996-2002, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Id: lsyscache.h,v 1.74 2003/06/25 21:30:33 momjian Exp $
+ * $Id: lsyscache.h,v 1.75 2003/06/27 00:33:26 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -14,6 +14,15 @@
 #define LSYSCACHE_H
 
 #include "access/htup.h"
+
+/* I/O function selector for get_type_io_data */
+typedef enum IOFuncSelector
+{
+	IOFunc_input,
+	IOFunc_output,
+	IOFunc_receive,
+	IOFunc_send
+} IOFuncSelector;
 
 extern bool op_in_opclass(Oid opno, Oid opclass);
 extern bool op_requires_recheck(Oid opno, Oid opclass);
@@ -56,6 +65,14 @@ extern bool get_typbyval(Oid typid);
 extern void get_typlenbyval(Oid typid, int16 *typlen, bool *typbyval);
 extern void get_typlenbyvalalign(Oid typid, int16 *typlen, bool *typbyval,
 					 char *typalign);
+extern void get_type_io_data(Oid typid,
+							 IOFuncSelector which_func,
+							 int16 *typlen,
+							 bool *typbyval,
+							 char *typalign,
+							 char *typdelim,
+							 Oid *typelem,
+							 Oid *func);
 extern char get_typstorage(Oid typid);
 extern int32 get_typtypmod(Oid typid);
 extern Node *get_typdefault(Oid typid);

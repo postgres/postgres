@@ -16,7 +16,7 @@
  * Portions Copyright (c) 1996-2002, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Id: pg_amop.h,v 1.52 2003/06/25 21:30:32 momjian Exp $
+ * $Id: pg_amop.h,v 1.53 2003/06/27 00:33:25 tgl Exp $
  *
  * NOTES
  *	 the genbki.sh script reads this file and generates .bki
@@ -418,6 +418,15 @@ DATA(insert (	2098 3 f 2334 ));
 DATA(insert (	2098 4 f 2335 ));
 DATA(insert (	2098 5 f 2336 ));
 
+/*
+ *	btree array_ops
+ */
+
+DATA(insert (	 397 1 f 1072 ));
+DATA(insert (	 397 2 f 1074 ));
+DATA(insert (	 397 3 f 1070 ));
+DATA(insert (	 397 4 f 1075 ));
+DATA(insert (	 397 5 f 1073 ));
 
 /*
  *	hash index _ops

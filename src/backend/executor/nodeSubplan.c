@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/executor/nodeSubplan.c,v 1.49 2003/06/25 21:30:29 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/executor/nodeSubplan.c,v 1.50 2003/06/27 00:33:25 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -29,22 +29,6 @@
 #include "utils/lsyscache.h"
 
 
-typedef struct ArrayBuildState
-{
-	MemoryContext mcontext;		/* where all the temp stuff is kept */
-	Datum	   *dvalues;		/* array of accumulated Datums */
-	/*
-	 * The allocated size of dvalues[] is always a multiple of
-	 * ARRAY_ELEMS_CHUNKSIZE
-	 */
-#define ARRAY_ELEMS_CHUNKSIZE	64
-	int			nelems;			/* number of valid Datums in dvalues[] */
-	Oid			element_type;	/* data type of the Datums */
-	int16		typlen;			/* needed info about datatype */
-	bool		typbyval;
-	char		typalign;
-} ArrayBuildState;
-
 static Datum ExecHashSubPlan(SubPlanState *node,
 							 ExprContext *econtext,
 							 bool *isNull);
@@ -54,12 +38,6 @@ static Datum ExecScanSubPlan(SubPlanState *node,
 static void buildSubPlanHash(SubPlanState *node);
 static bool findPartialMatch(TupleHashTable hashtable, TupleTableSlot *slot);
 static bool tupleAllNulls(HeapTuple tuple);
-static ArrayBuildState *accumArrayResult(ArrayBuildState *astate,
-										 Datum dvalue, bool disnull,
-										 Oid element_type,
-										 MemoryContext rcontext);
-static Datum makeArrayResult(ArrayBuildState *astate,
-							 MemoryContext rcontext);
 
 
 /* ----------------------------------------------------------------
@@ -1098,102 +1076,4 @@ ExecReScanSetParamPlan(SubPlanState *node, PlanState *parent)
 		prm->execPlan = node;
 		parent->chgParam = bms_add_member(parent->chgParam, paramid);
 	}
-}
-
-/*
- * accumArrayResult - accumulate one (more) Datum for an ARRAY_SUBLINK
- *
- *	astate is working state (NULL on first call)
- *	rcontext is where to keep working state
- */
-static ArrayBuildState *
-accumArrayResult(ArrayBuildState *astate,
-				 Datum dvalue, bool disnull,
-				 Oid element_type,
-				 MemoryContext rcontext)
-{
-	MemoryContext arr_context,
-				  oldcontext;
-
-	if (astate == NULL)
-	{
-		/* First time through --- initialize */
-
-		/* Make a temporary context to hold all the junk */
-		arr_context = AllocSetContextCreate(rcontext,
-											"ARRAY_SUBLINK Result",
-											ALLOCSET_DEFAULT_MINSIZE,
-											ALLOCSET_DEFAULT_INITSIZE,
-											ALLOCSET_DEFAULT_MAXSIZE);
-		oldcontext = MemoryContextSwitchTo(arr_context);
-		astate = (ArrayBuildState *) palloc(sizeof(ArrayBuildState));
-		astate->mcontext = arr_context;
-		astate->dvalues = (Datum *)
-			palloc(ARRAY_ELEMS_CHUNKSIZE * sizeof(Datum));
-		astate->nelems = 0;
-		astate->element_type = element_type;
-		get_typlenbyvalalign(element_type,
-							 &astate->typlen,
-							 &astate->typbyval,
-							 &astate->typalign);
-	}
-	else
-	{
-		oldcontext = MemoryContextSwitchTo(astate->mcontext);
-		Assert(astate->element_type == element_type);
-		/* enlarge dvalues[] if needed */
-		if ((astate->nelems % ARRAY_ELEMS_CHUNKSIZE) == 0)
-			astate->dvalues = (Datum *)
-				repalloc(astate->dvalues,
-						 (astate->nelems + ARRAY_ELEMS_CHUNKSIZE) * sizeof(Datum));
-	}
-
-	if (disnull)
-		elog(ERROR, "NULL elements not allowed in Arrays");
-
-	/* Use datumCopy to ensure pass-by-ref stuff is copied into mcontext */
-	astate->dvalues[astate->nelems++] =
-		datumCopy(dvalue, astate->typbyval, astate->typlen);
-
-	MemoryContextSwitchTo(oldcontext);
-
-	return astate;
-}
-
-/*
- * makeArrayResult - produce final result of ARRAY_SUBLINK
- *
- *	astate is working state (not NULL)
- *	rcontext is where to construct result
- */
-static Datum
-makeArrayResult(ArrayBuildState *astate,
-				MemoryContext rcontext)
-{
-	ArrayType  *result;
-	int			dims[1];
-	int			lbs[1];
-	MemoryContext oldcontext;
-
-	/* Build the final array result in rcontext */
-	oldcontext = MemoryContextSwitchTo(rcontext);
-
-	dims[0] = astate->nelems;
-	lbs[0] = 1;
-
-	result = construct_md_array(astate->dvalues,
-								1,
-								dims,
-								lbs,
-								astate->element_type,
-								astate->typlen,
-								astate->typbyval,
-								astate->typalign);
-
-	MemoryContextSwitchTo(oldcontext);
-
-	/* Clean up all the junk */
-	MemoryContextDelete(astate->mcontext);
-
-	return PointerGetDatum(result);
 }
