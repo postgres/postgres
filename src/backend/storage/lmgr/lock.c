@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/storage/lmgr/lock.c,v 1.14 1997/09/08 21:47:26 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/storage/lmgr/lock.c,v 1.15 1997/09/18 14:20:22 momjian Exp $
  *
  * NOTES
  *	  Outside modules can create a lock table and acquire/release
@@ -51,7 +51,7 @@
 static int
 WaitOnLock(LOCKTAB *ltable, LockTableId tableId, LOCK *lock,
 		   LOCKT lockt);
-
+		   
 /*#define LOCK_MGR_DEBUG*/
 
 #ifndef LOCK_MGR_DEBUG
@@ -451,6 +451,7 @@ LockTabRename(LockTableId tableId)
  *														DZ - 4 Oct 1996
 #endif
  */
+
 bool
 LockAcquire(LockTableId tableId, LOCKTAG *lockName, LOCKT lockt)
 {
@@ -540,7 +541,7 @@ LockAcquire(LockTableId tableId, LOCKTAG *lockName, LOCKT lockt)
 	 * word alignment and ensures hashing consistency).
 	 * ------------------
 	 */
-	memset(&item, 0, XID_TAGSIZE);
+	memset(&item, 0, XID_TAGSIZE); /* must clear padding, needed */
 	TransactionIdStore(myXid, &item.tag.xid);
 	item.tag.lock = MAKE_OFFSET(lock);
 #if 0

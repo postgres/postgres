@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/storage/ipc/Attic/spin.c,v 1.8 1997/09/08 02:29:02 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/storage/ipc/Attic/spin.c,v 1.9 1997/09/18 14:20:18 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -27,6 +27,7 @@
 #include <errno.h>
 #include "postgres.h"
 #include "storage/ipc.h"
+#include "storage/s_lock.h"
 #include "storage/shmem.h"
 #include "storage/spin.h"
 #include "storage/proc.h"
@@ -80,18 +81,91 @@ InitSpinLocks(int init, IPCKey key)
 	return (TRUE);
 }
 
+#ifdef LOCKDEBUG
+#define PRINT_LOCK(LOCK) printf("(locklock = %d, flag = %d, nshlocks = %d, \
+shlock = %d, exlock =%d)\n", LOCK->locklock, \
+								LOCK->flag, LOCK->nshlocks, LOCK->shlock, \
+								LOCK->exlock)
+#endif
+
+/* from ipc.c */
+extern SLock *SLockArray;
+
 void
-SpinAcquire(SPINLOCK lock)
+SpinAcquire(SPINLOCK lockid)
 {
-	ExclusiveLock(lock);
-	PROC_INCR_SLOCK(lock);
+	SLock	   *slckP;
+
+	/* This used to be in ipc.c, but move here to reduce function calls */
+	slckP = &(SLockArray[lockid]);
+#ifdef LOCKDEBUG
+	printf("SpinAcquire(%d)\n", lockid);
+	printf("IN: ");
+	PRINT_LOCK(slckP);
+#endif
+ex_try_again:
+	S_LOCK(&(slckP->locklock));
+	switch (slckP->flag)
+	{
+		case NOLOCK:
+			slckP->flag = EXCLUSIVELOCK;
+			S_LOCK(&(slckP->exlock));
+			S_LOCK(&(slckP->shlock));
+			S_UNLOCK(&(slckP->locklock));
+#ifdef LOCKDEBUG
+			printf("OUT: ");
+			PRINT_LOCK(slckP);
+#endif
+			return;
+		case SHAREDLOCK:
+		case EXCLUSIVELOCK:
+			S_UNLOCK(&(slckP->locklock));
+			S_LOCK(&(slckP->exlock));
+			S_UNLOCK(&(slckP->exlock));
+			goto ex_try_again;
+	}
+	PROC_INCR_SLOCK(lockid);
 }
 
 void
-SpinRelease(SPINLOCK lock)
+SpinRelease(SPINLOCK lockid)
 {
-	PROC_DECR_SLOCK(lock);
-	ExclusiveUnlock(lock);
+	SLock	   *slckP;
+
+	PROC_DECR_SLOCK(lockid);
+
+	/* This used to be in ipc.c, but move here to reduce function calls */
+	slckP = &(SLockArray[lockid]);
+#ifdef LOCKDEBUG
+	printf("SpinRelease(%d)\n", lockid);
+	printf("IN: ");
+	PRINT_LOCK(slckP);
+#endif
+	S_LOCK(&(slckP->locklock));
+	/* -------------
+	 *	give favor to read processes
+	 * -------------
+	 */
+	slckP->flag = NOLOCK;
+	if (slckP->nshlocks > 0)
+	{
+		while (slckP->nshlocks > 0)
+		{
+			S_UNLOCK(&(slckP->shlock));
+			S_LOCK(&(slckP->comlock));
+		}
+		S_UNLOCK(&(slckP->shlock));
+	}
+	else
+	{
+		S_UNLOCK(&(slckP->shlock));
+	}
+	S_UNLOCK(&(slckP->exlock));
+	S_UNLOCK(&(slckP->locklock));
+#ifdef LOCKDEBUG
+	printf("OUT: ");
+	PRINT_LOCK(slckP);
+#endif
 }
 
 #else							/* HAS_TEST_AND_SET */

@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/storage/ipc/ipc.c,v 1.14 1997/09/08 21:46:59 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/storage/ipc/ipc.c,v 1.15 1997/09/18 14:20:14 momjian Exp $
  *
  * NOTES
  *
@@ -33,6 +33,7 @@
 
 #include "postgres.h"
 #include "storage/ipc.h"
+#include "storage/s_lock.h"
 /* In Ultrix, sem.h and shm.h must be included AFTER ipc.h */
 #include <sys/sem.h>
 #include <sys/shm.h>
@@ -615,7 +616,10 @@ IpcMemoryKill(IpcMemoryKey memKey)
  *	supply of locks.
  * ------------------
  */
-static SLock *SLockArray = NULL;
+
+/* used in spin.c */
+SLock *SLockArray = NULL;
+
 static SLock **FreeSLockPP;
 static int *UnusedSLockIP;
 static slock_t *SLockMemoryLock;
@@ -676,92 +680,13 @@ AttachSLockMemory(IPCKey key)
 	return;
 }
 
-
-#ifdef LOCKDEBUG
-#define PRINT_LOCK(LOCK) printf("(locklock = %d, flag = %d, nshlocks = %d, \
-shlock = %d, exlock =%d)\n", LOCK->locklock, \
-								LOCK->flag, LOCK->nshlocks, LOCK->shlock, \
-								LOCK->exlock)
-#endif
-
-void
-ExclusiveLock(int lockid)
-{
-	SLock	   *slckP;
-
-	slckP = &(SLockArray[lockid]);
-#ifdef LOCKDEBUG
-	printf("ExclusiveLock(%d)\n", lockid);
-	printf("IN: ");
-	PRINT_LOCK(slckP);
-#endif
-ex_try_again:
-	S_LOCK(&(slckP->locklock));
-	switch (slckP->flag)
-	{
-		case NOLOCK:
-			slckP->flag = EXCLUSIVELOCK;
-			S_LOCK(&(slckP->exlock));
-			S_LOCK(&(slckP->shlock));
-			S_UNLOCK(&(slckP->locklock));
-#ifdef LOCKDEBUG
-			printf("OUT: ");
-			PRINT_LOCK(slckP);
-#endif
-			return;
-		case SHAREDLOCK:
-		case EXCLUSIVELOCK:
-			S_UNLOCK(&(slckP->locklock));
-			S_LOCK(&(slckP->exlock));
-			S_UNLOCK(&(slckP->exlock));
-			goto ex_try_again;
-	}
-}
-
-void
-ExclusiveUnlock(int lockid)
-{
-	SLock	   *slckP;
-
-	slckP = &(SLockArray[lockid]);
-#ifdef LOCKDEBUG
-	printf("ExclusiveUnlock(%d)\n", lockid);
-	printf("IN: ");
-	PRINT_LOCK(slckP);
-#endif
-	S_LOCK(&(slckP->locklock));
-	/* -------------
-	 *	give favor to read processes
-	 * -------------
-	 */
-	slckP->flag = NOLOCK;
-	if (slckP->nshlocks > 0)
-	{
-		while (slckP->nshlocks > 0)
-		{
-			S_UNLOCK(&(slckP->shlock));
-			S_LOCK(&(slckP->comlock));
-		}
-		S_UNLOCK(&(slckP->shlock));
-	}
-	else
-	{
-		S_UNLOCK(&(slckP->shlock));
-	}
-	S_UNLOCK(&(slckP->exlock));
-	S_UNLOCK(&(slckP->locklock));
-#ifdef LOCKDEBUG
-	printf("OUT: ");
-	PRINT_LOCK(slckP);
-#endif
-	return;
-}
-
+#ifdef NOT_USED
 bool
 LockIsFree(int lockid)
 {
 	return (SLockArray[lockid].flag == NOLOCK);
 }
+#endif
 
 #endif							/* HAS_TEST_AND_SET */
 

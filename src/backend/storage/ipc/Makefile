@@ -4,7 +4,7 @@
 #    Makefile for storage/ipc
 #
 # IDENTIFICATION
-#    $Header: /cvsroot/pgsql/src/backend/storage/ipc/Makefile,v 1.3 1996/11/09 06:21:47 momjian Exp $
+#    $Header: /cvsroot/pgsql/src/backend/storage/ipc/Makefile,v 1.4 1997/09/18 14:20:08 momjian Exp $
 #
 #-------------------------------------------------------------------------
 
@@ -17,7 +17,7 @@ INCLUDE_OPT = -I../.. \
 
 CFLAGS+=$(INCLUDE_OPT)
 
-OBJS = ipc.o ipci.o s_lock.o shmem.o shmqueue.o sinval.o \
+OBJS = ipc.o ipci.o shmem.o shmqueue.o sinval.o \
        sinvaladt.o spin.o
 
 all: SUBSYS.o

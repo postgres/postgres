@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/cache/catcache.c,v 1.14 1997/09/12 04:08:28 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/cache/catcache.c,v 1.15 1997/09/18 14:20:29 momjian Exp $
  *
  * Notes:
  *		XXX This needs to use exception.h to handle recovery when
@@ -839,16 +839,20 @@ SearchSysCache(struct catcache * cache,
 		 elt;
 		 elt = DLGetSucc(elt))
 	{
+		bool res;
+		
 		ct = (CatCTup *) DLE_VAL(elt);
 		/* ----------------
 		 *	see if the cached tuple matches our key.
 		 *	(should we be worried about time ranges? -cim 10/2/90)
 		 * ----------------
 		 */
-		if (heap_keytest(ct->ct_tup,
+		HeapKeyTest(ct->ct_tup,
 						 cache->cc_tupdesc,
 						 cache->cc_nkeys,
-						 cache->cc_skey))
+						 cache->cc_skey,
+						 res);
+		if (res)
 			break;
 	}
 

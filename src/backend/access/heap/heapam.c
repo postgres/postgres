@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/access/heap/heapam.c,v 1.19 1997/09/08 21:40:57 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/access/heap/heapam.c,v 1.20 1997/09/18 14:19:30 momjian Exp $
  *
  *
  * INTERFACE ROUTINES
@@ -429,8 +429,9 @@ heapgettup(Relation relation,
 			 *	if current tuple qualifies, return it.
 			 * ----------------
 			 */
-			if ((rtup = heap_tuple_satisfies(lpp, relation, *b, (PageHeader) dp,
-										  timeQual, nkeys, key)) != NULL)
+			HeapTupleSatisfies(lpp, relation, *b, (PageHeader) dp,
+							   timeQual, nkeys, key, rtup);
+			if (rtup != NULL)
 			{
 				ItemPointer iptr = &(rtup->t_ctid);
 
@@ -1092,8 +1093,8 @@ heap_fetch(Relation relation,
 	 * ----------------
 	 */
 
-	tuple = heap_tuple_satisfies(lp, relation, buffer, dp,
-								 timeQual, 0, (ScanKey) NULL);
+	HeapTupleSatisfies(lp, relation, buffer, dp,
+					   timeQual, 0, (ScanKey) NULL, tuple);
 
 	if (tuple == NULL)
 	{
@@ -1257,8 +1258,9 @@ heap_delete(Relation relation, ItemPointer tid)
 	 *	check that we're deleteing a valid item
 	 * ----------------
 	 */
-	if (!(tp = heap_tuple_satisfies(lp, relation, b, dp,
-									NowTimeQual, 0, (ScanKey) NULL)))
+	HeapTupleSatisfies(lp, relation, b, dp,
+					   NowTimeQual, 0, (ScanKey) NULL, tp);
+	if (!tp)
 	{
 
 		/* XXX call something else */
@@ -1317,7 +1319,8 @@ heap_replace(Relation relation, ItemPointer otid, HeapTuple tup)
 	HeapTuple	tp;
 	Page		dp;
 	Buffer		buffer;
-
+	HeapTuple	tuple;
+	
 	/* ----------------
 	 *	increment access statistics
 	 * ----------------
@@ -1388,13 +1391,15 @@ heap_replace(Relation relation, ItemPointer otid, HeapTuple tup)
 	 *		 xact, we only want to flag the 'non-functional' NOTICE. -mer
 	 * ----------------
 	 */
-	if (!heap_tuple_satisfies(lp,
-							  relation,
-							  buffer,
-							  (PageHeader) dp,
-							  NowTimeQual,
-							  0,
-							  (ScanKey) NULL))
+	HeapTupleSatisfies(lp,
+						 relation,
+						 buffer,
+						 (PageHeader) dp,
+						 NowTimeQual,
+						 0,
+						 (ScanKey) NULL,
+						 tuple);
+	if (!tuple)
 	{
 		ReleaseBuffer(buffer);
 		elog(WARN, "heap_replace: (am)invalid otid");

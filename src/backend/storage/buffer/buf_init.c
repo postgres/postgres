@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/storage/buffer/buf_init.c,v 1.12 1997/09/08 02:28:27 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/storage/buffer/buf_init.c,v 1.13 1997/09/18 14:19:58 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -26,6 +26,7 @@
 
 #include "storage/fd.h"
 #include "storage/ipc.h"
+#include "storage/s_lock.h"
 #include "storage/shmem.h"
 #include "storage/spin.h"
 #include "storage/smgr.h"

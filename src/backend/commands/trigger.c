@@ -792,8 +792,9 @@ GetTupleForTrigger(Relation relation, ItemPointer tid, bool before)
 			return (NULL);
 		}
 
-		if (!(tuple = heap_tuple_satisfies(lp, relation, b, dp,
-										NowTimeQual, 0, (ScanKey) NULL)))
+		HeapTupleSatisfies(lp, relation, b, dp,
+						   NowTimeQual, 0, (ScanKey) NULL, tuple);
+		if (!tuple)
 		{
 			ReleaseBuffer(b);
 			elog(WARN, "GetTupleForTrigger: (am)invalid tid");

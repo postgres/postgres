@@ -6,7 +6,7 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: ipc.h,v 1.20 1997/09/08 21:54:21 momjian Exp $
+ * $Id: ipc.h,v 1.21 1997/09/18 14:20:54 momjian Exp $
  *
  * NOTES
  *	  This file is very architecture-specific.	This stuff should actually
@@ -27,10 +27,6 @@
 #include <config.h>
 
 #if defined(HAS_TEST_AND_SET)
-
-extern void S_LOCK(slock_t *lock);
-extern void S_UNLOCK(slock_t *lock);
-extern void S_INIT_LOCK(slock_t *lock);
 
 #if (defined(alpha) && !defined(linuxalpha)) || \
 	defined(hpux) || \
@@ -149,10 +145,6 @@ typedef struct slock
 	slock_t		comlock;
 	struct slock *next;
 } SLock;
-
-extern void ExclusiveLock(int lockid);
-extern void ExclusiveUnlock(int lockid);
-extern bool LockIsFree(int lockid);
 
 #else							/* HAS_TEST_AND_SET */
 
