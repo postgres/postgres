@@ -6,7 +6,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/commands/copy.c,v 1.68 1999/01/23 22:27:26 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/commands/copy.c,v 1.69 1999/02/01 20:25:54 wieck Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -651,7 +651,6 @@ CopyFrom(Relation rel, bool binary, bool oids, FILE *fp, char *delim)
 	lineno = 0;
 	while (!done)
 	{
-	  values = (Datum *) palloc(sizeof(Datum) * attr_count);
 		if (!binary)
 		{
 #ifdef COPY_PATCH
