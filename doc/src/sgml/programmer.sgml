@@ -1,10 +1,14 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/Attic/programmer.sgml,v 1.10 1998/10/31 09:36:36 thomas Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/Attic/programmer.sgml,v 1.11 1999/01/07 03:02:27 thomas Exp $
 
 Postgres Programmer's Guide.
 - thomas 1998-10-27
 
 $Log: programmer.sgml,v $
+Revision 1.11  1999/01/07 03:02:27  thomas
+Remove mention of a couple of introductory chapters
+ which are not used here.
+
 Revision 1.10  1998/10/31 09:36:36  thomas
 Cleanup for v6.4 release.
 Make new file current.sgml to hold release info for the current release.
@@ -27,7 +31,6 @@ Bigger updates to the installation instructions (install and config).
 <!entity y2k      SYSTEM "y2k.sgml">
 
 <!entity arch     SYSTEM "arch.sgml">
-<!entity start    SYSTEM "start.sgml">
 <!entity query    SYSTEM "query.sgml">
 
 <!entity advanced SYSTEM "advanced.sgml">
@@ -41,7 +44,6 @@ Bigger updates to the installation instructions (install and config).
 <!entity psql     SYSTEM "psql.sgml">
 <!entity pgaccess SYSTEM "pgaccess.sgml">
 
-<!entity start-ag SYSTEM "start-ag.sgml">
 <!entity install  SYSTEM "install.sgml">
 <!entity recovery SYSTEM "recovery.sgml">
 <!entity regress  SYSTEM "regress.sgml">
