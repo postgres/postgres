@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/release.sgml,v 1.121 2002/03/18 23:03:13 momjian Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/release.sgml,v 1.122 2002/03/19 00:12:09 momjian Exp $
 -->
 
 <appendix id="release">
@@ -32,7 +32,7 @@ $Header: /cvsroot/pgsql/doc/src/sgml/release.sgml,v 1.121 2002/03/18 23:03:13 mo
 
     <para>
      <programlisting>
-Properly set sequence values after backend crash (Tom)
+Ensure that sequence counters do not go backwards after a crash (Tom)
 Fix pgaccess kanji-coversion key binding (Tatsuo)
 Optimizer improvements (Tom)
 cash I/O improvements (Tom)
