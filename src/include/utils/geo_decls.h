@@ -5,7 +5,7 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: geo_decls.h,v 1.21 1998/09/01 04:39:11 momjian Exp $
+ * $Id: geo_decls.h,v 1.22 1999/03/28 01:56:11 tgl Exp $
  *
  * NOTE
  *	  These routines do *not* use the float types from adt/.
@@ -362,7 +362,7 @@ extern double circle_dt(CIRCLE *circle1, CIRCLE *circle2);
 /* geo_selfuncs.c */
 extern float64 areasel(Oid opid, Oid relid, AttrNumber attno,
 		char *value, int32 flag);
-extern float64 areajoinsel(Oid opid, Oid relid, AttrNumber attno,
-			char *value, int32 flag);
+extern float64 areajoinsel(Oid opid, Oid relid1, AttrNumber attno1,
+		Oid relid2, AttrNumber attno2);
 
 #endif	 /* GEO_DECLS_H */

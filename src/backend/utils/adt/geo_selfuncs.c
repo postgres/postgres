@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/geo_selfuncs.c,v 1.7 1999/02/13 23:19:18 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/geo_selfuncs.c,v 1.8 1999/03/28 01:56:12 tgl Exp $
  *
  *		XXX These are totally bogus.
  *
@@ -37,10 +37,10 @@ areasel(Oid opid,
 
 float64
 areajoinsel(Oid opid,
-			Oid relid,
-			AttrNumber attno,
-			char *value,
-			int32 flag)
+			Oid relid1,
+			AttrNumber attno1,
+			Oid relid2,
+			AttrNumber attno2)
 {
 	float64		result;
 
@@ -85,10 +85,10 @@ leftsel(Oid opid,
 #ifdef NOT_USED
 float64
 leftjoinsel(Oid opid,
-			Oid relid,
-			AttrNumber attno,
-			char *value,
-			int32 flag)
+			Oid relid1,
+			AttrNumber attno1,
+			Oid relid2,
+			AttrNumber attno2)
 {
 	float64		result;
 
@@ -122,10 +122,10 @@ contsel(Oid opid,
 #ifdef NOT_USED
 float64
 contjoinsel(Oid opid,
-			Oid relid,
-			AttrNumber attno,
-			char *value,
-			int32 flag)
+			Oid relid1,
+			AttrNumber attno1,
+			Oid relid2,
+			AttrNumber attno2)
 {
 	float64		result;
 
