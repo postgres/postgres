@@ -107,10 +107,6 @@
     <Title>Host-Based Access Control</Title>
 
     <Para>
-.SH NAME
-$PGDATA/pg_hba.conf
-.SH DESCRIPTION
-
      <firstterm>Host-based access control</firstterm>
      is the name for the basic controls PostgreSQL
      exercises on what clients are allowed to access a database and how
