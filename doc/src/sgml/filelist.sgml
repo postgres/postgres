@@ -1,4 +1,4 @@
-<!-- $Header: /cvsroot/pgsql/doc/src/sgml/filelist.sgml,v 1.1 2000/11/24 17:44:21 petere Exp $ -->
+<!-- $Header: /cvsroot/pgsql/doc/src/sgml/filelist.sgml,v 1.2 2000/12/14 22:30:56 petere Exp $ -->
 
 <!entity about      SYSTEM "about.sgml">
 <!entity history    SYSTEM "history.sgml">
@@ -26,7 +26,6 @@
 <!entity inherit    SYSTEM "inherit.sgml">
 <!entity manage     SYSTEM "manage.sgml">
 <!entity mvcc       SYSTEM "mvcc.sgml">
-<!entity oper       SYSTEM "oper.sgml">
 <!entity plan       SYSTEM "plan.sgml">
 <!entity plperl     SYSTEM "plperl.sgml">
 <!entity plsql      SYSTEM "plsql.sgml">

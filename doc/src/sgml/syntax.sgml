@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/syntax.sgml,v 1.25 2000/09/29 20:21:34 petere Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/syntax.sgml,v 1.26 2000/12/14 22:30:56 petere Exp $
 -->
 
  <chapter id="syntax">
@@ -656,7 +656,7 @@ CAST ( '<replaceable>string</replaceable>' AS <replaceable>type</replaceable> )
    <para>
     Any built-in system, or user-defined operator may be used in SQL.
     For the list of built-in and system operators consult
-    <xref linkend="operators" endterm="operators-title">.
+    <xref linkend="functions">.
     For a list of user-defined operators consult your system administrator
     or run a query on the <literal>pg_operator</literal> class.
     Parentheses may be used for arbitrary grouping of operators in expressions.
@@ -669,10 +669,7 @@ CAST ( '<replaceable>string</replaceable>' AS <replaceable>type</replaceable> )
    <para>
     <acronym>SQL92</acronym> allows <firstterm>expressions</firstterm>
     to transform data in tables. Expressions may contain operators
-    (see <xref linkend="operators" endterm="operators-title">
-    for more details) and functions
-    (<xref linkend="functions" endterm="functions-title"> has
-    more information).
+    and functions.
    </para>
 
    <para>
@@ -749,8 +746,8 @@ sqrt(emp.salary)
     </para>
    </sect2>
 
-   <sect2>
-    <title id="aggregates-syntax">Aggregate Expressions</title>
+   <sect2 id="syntax-aggregates">
+    <title>Aggregate Expressions</title>
 
     <para>
      An <firstterm>aggregate expression</firstterm> represents the application
@@ -863,6 +860,177 @@ sqrt(emp.salary)
      before the classname.
     </para>
    </sect2>
+
+
+  <sect2 id="sql-precedence">
+   <title>Lexical Precedence</title>
+
+   <para>
+    The precedence and associativity of the operators is hard-wired
+    into the parser.  Most operators have the same precedence and are
+    left-associative.  This may lead to non-intuitive behavior; for
+    example the boolean operators "&lt;" and "&gt;" have a different
+    precedence than the boolean operators "&lt;=" and "&gt;=".  Also,
+    you will sometimes need to add parenthesis when using combinations
+    of binary and unary operators.  For instance
+<programlisting>
+SELECT 5 &amp; ~ 6;
+</programlisting>
+   will be parsed as
+<programlisting>
+SELECT (5 &amp;) ~ 6;
+</programlisting>
+    because the parser has no idea that <token>&amp;</token> is
+    defined as a binary operator.  This is the price one pays for
+    extensibility.
+   </para>
+
+   <table tocentry="1">
+    <title>Operator Ordering (decreasing precedence)</title>
+
+    <tgroup cols="2">
+     <thead>
+      <row>
+       <entry>OperatorElement</entry>
+       <entry>Associativity</entry>
+       <entry>Description</entry>
+      </row>
+     </thead>
+
+     <tbody>
+      <row>
+       <entry><token>::</token></entry>
+       <entry>left</entry>
+       <entry><productname>Postgres</productname>-style typecast</entry>
+      </row>
+
+      <row>
+       <entry><token>[</token> <token>]</token></entry>
+       <entry>left</entry>
+       <entry>array element selection</entry>
+      </row>
+
+      <row>
+       <entry><token>.</token></entry>
+       <entry>left</entry>
+       <entry>table/column name separator</entry>
+      </row>
+
+      <row>
+       <entry><token>-</token></entry>
+       <entry>right</entry>
+       <entry>unary minus</entry>
+      </row>
+
+      <row>
+       <entry><token>^</token></entry>
+       <entry>left</entry>
+       <entry>exponentiation</entry>
+      </row>
+
+      <row>
+       <entry><token>*</token> <token>/</token> <token>%</token></entry>
+       <entry>left</entry>
+       <entry>multiplication, division, modulo</entry>
+      </row>
+
+      <row>
+       <entry><token>+</token> <token>-</token></entry>
+       <entry>left</entry>
+       <entry>addition, subtraction</entry>
+      </row>
+
+      <row>
+       <entry><token>IS</token></entry>
+       <entry></entry>
+       <entry>test for TRUE, FALSE, NULL</entry>
+      </row>
+
+      <row>
+       <entry><token>ISNULL</token></entry>
+       <entry></entry>
+       <entry>test for NULL</entry>
+      </row>
+
+      <row>
+       <entry><token>NOTNULL</token></entry>
+       <entry></entry>
+       <entry>test for NOT NULL</entry>
+      </row>
+
+      <row>
+       <entry>(any other)</entry>
+       <entry>left</entry>
+       <entry>all other native and user-defined operators</entry>
+      </row>
+
+      <row>
+       <entry><token>IN</token></entry>
+       <entry></entry>
+       <entry>set membership</entry>
+      </row>
+
+      <row>
+       <entry><token>BETWEEN</token></entry>
+       <entry></entry>
+       <entry>containment</entry>
+      </row>
+
+      <row>
+       <entry><token>OVERLAPS</token></entry>
+       <entry></entry>
+       <entry>time interval overlap</entry>
+      </row>
+
+      <row>
+       <entry><token>LIKE</token> <token>ILIKE</token></entry>
+       <entry></entry>
+       <entry>string pattern matching</entry>
+      </row>
+
+      <row>
+       <entry><token>&lt;</token> <token>&gt;</token></entry>
+       <entry></entry>
+       <entry>less than, greater than</entry>
+      </row>
+
+      <row>
+       <entry><token>=</token></entry>
+       <entry>right</entry>
+       <entry>equality, assignment</entry>
+      </row>
+
+      <row>
+       <entry><token>NOT</token></entry>
+       <entry>right</entry>
+       <entry>logical negation</entry>
+      </row>
+
+      <row>
+       <entry><token>AND</token></entry>
+       <entry>left</entry>
+       <entry>logical conjunction</entry>
+      </row>
+
+      <row>
+       <entry><token>OR</token></entry>
+       <entry>left</entry>
+       <entry>logical disjunction</entry>
+      </row>
+     </tbody>
+    </tgroup>
+   </table>
+
+   <para>
+    Note that the operator precedence rules also apply to user-defined
+    operators that <quote>look like</quote> the built-in operators
+    with special treatment.  For example, if you define a
+    <quote>+</quote> operator for some custom data type it will have
+    the same precedence as the built-in <quote>+</quote> operator, no
+    matter what yours does.
+   </para>
+  </sect2>
+
   </sect1>
  </chapter>
 

@@ -8,7 +8,7 @@
 #
 #
 # IDENTIFICATION
-#    $Header: /cvsroot/pgsql/doc/src/sgml/Makefile,v 1.26 2000/11/24 17:44:21 petere Exp $
+#    $Header: /cvsroot/pgsql/doc/src/sgml/Makefile,v 1.27 2000/12/14 22:30:56 petere Exp $
 #
 #----------------------------------------------------------------------------
 
@@ -16,6 +16,7 @@ subdir = doc/src/sgml
 top_builddir = ../../..
 include $(top_builddir)/src/Makefile.global
 
+.SECONDARY:
 
 ifndef DOCBOOKSTYLE
 DOCBOOKSTYLE = /home/projects/pgsql/developers/thomas/db143.d/docbook

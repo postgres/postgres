@@ -1,635 +1,1173 @@
- <chapter id="functions">
-  <title id="functions-title">Functions</title>
+<!-- $Header: /cvsroot/pgsql/doc/src/sgml/func.sgml,v 1.41 2000/12/14 22:30:56 petere Exp $ -->
 
-  <abstract>
+<chapter id="functions">
+ <title>Functions and Operators</title>
+
+ <para>
+  <productname>Postgres</productname> provides a large number of
+  functions and operators for the built-in data types.  Users can also
+  define their own functions and operators, as described in the
+  <citetitle>Programmer's Guide</citetitle>.  The
+  <application>psql</application> commands <command>\df</command> and
+  <command>\do</command> can be used to show the list of all actually
+  available function and operators, respectively.
+ </para>
+
+ <para>
+  If you are concerned about portability then take note that most of
+  the functions and operators described in this chapter, with the
+  exception of the most trivial arithmetic and comparison operators
+  and some explicitly marked functions, are not specified by the SQL
+  standard.  However, many other RDBMS packages provide a lot of the
+  same or similar functions, and some of the ones provided in
+  <productname>Postgres</productname> have in fact been inspired by
+  other implementations.
+ </para>
+
+ <sect1 id="functions-comparison">
+  <title>Comparison Operators</title>
+
+  <table>
+   <title>Comparison Operators</TITLE>
+   <tgroup cols="2">
+    <thead>
+     <row>
+      <entry>Operator</entry>
+      <entry>Description</entry>
+     </row>
+    </thead>
+
+    <tbody>
+     <row>
+      <entry> <literal>&lt;</literal> </entry>
+      <entry>less than</entry>
+     </row>
+
+     <row>
+      <entry> <literal>&gt;</literal> </entry>
+      <entry>greater than</entry>
+     </row>
+
+     <row>
+      <entry> <literal>&lt;=</literal> </entry>
+      <entry>less than or equal to</entry>
+     </row>
+
+     <row>
+      <entry> <literal>&gt;=</literal> </entry>
+      <entry>greater than or equal to</entry>
+     </row>
+
+     <row>
+      <entry> <literal>=</literal> </entry>
+      <entry>equal</entry>
+     </row>
+
+     <row>
+      <entry> <literal>&lt;&gt;</literal> or <literal>!=</literal> </entry>
+      <entry>not equal</entry>
+     </row>
+    </tbody>
+   </tgroup>
+  </table>
+
+  <note>
    <para>
-    Describes the built-in functions available
-    in <productname>Postgres</productname>.
+    The <literal>!=</literal> operator is converted to
+    <literal>&lt;&gt;</literal> in the parser stage.  It is not
+    possible to implement <literal>!=</literal> and
+    <literal>&lt;&gt;</literal> operators that do different things.
    </para>
-  </abstract>
+  </note>
 
   <para>
-   Many data types have functions available for conversion to other related types.
-   In addition, there are some type-specific functions. Some functions are also
-   available through operators and may be documented as operators only.
+   Comparison operators are available for all data types where this
+   makes sense.  All comparison operators are binary operators that
+   return boolean values; expressions like <literal>1 &lt; 2 &lt;
+   3</literal> are not valid (because there is no
+   <literal>&lt;</literal> operator to compare a boolean with
+   <literal>3</literal>).
+  </para>
+ </sect1>
+
+
+ <sect1 id="functions-math">
+  <title>Mathematical Functions and Operators</title>
+
+  <table>
+   <title>Mathematical Operators</TITLE>
+
+   <tgroup cols="4">
+    <thead>
+     <row>
+      <entry>Name</entry>
+      <entry>Description</entry>
+      <entry>Example</entry>
+      <entry>Result</entry>
+     </row>
+    </thead>
+
+    <tbody>
+     <row>
+      <entry> <literal>+</literal> </entry>
+      <entry>Addition</entry>
+      <entry>2 + 3</entry>
+      <entry>5</entry>
+     </row>
+
+     <row>
+      <entry> <literal>-</literal> </entry>
+      <entry>Subtraction</entry>
+      <entry>2 - 3</entry>
+      <entry>-1</entry>
+     </row>
+
+     <row>
+      <entry> <literal>*</literal> </entry>
+      <entry>Multiplication</entry>
+      <entry>2 * 3</entry>
+      <entry>6</entry>
+     </row>
+
+     <row>
+      <entry> <literal>/</literal> </entry>
+      <entry>Division (integer division truncates results)</entry>
+      <entry>4 / 2</entry>
+      <entry>2</entry>
+     </row>
+
+     <row>
+      <entry> <literal>%</literal> </entry>
+      <entry>Modulo (remainder)</entry>
+      <entry>5 % 4</entry>
+      <entry>1</entry>
+     </row>
+
+     <row>
+      <entry> <literal>^</literal> </entry>
+      <entry>Exponentiation</entry>
+      <entry>2.0 ^ 3.0</entry>
+      <entry>8.0</entry>
+     </row>
+
+     <row>
+      <entry> <literal>|/</literal> </entry>
+      <entry>Square root</entry>
+      <entry>|/ 25.0</entry>
+      <entry>5.0</entry>
+     </row>
+
+     <row>
+      <entry> <literal>||/</literal> </entry>
+      <entry>Cube root</entry>
+      <entry>||/ 27.0</entry>
+      <entry>3</entry>
+     </row>
+
+     <row>
+      <entry> <literal>!</literal> </entry>
+      <entry>Factorial</entry>
+      <entry>5 !</entry>
+      <entry>120</entry>
+     </row>
+
+     <row>
+      <entry> <literal>!!</literal> </entry>
+      <entry>Factorial (left operator)</entry>
+      <entry>!! 5</entry>
+      <entry>120</entry>
+     </row>
+
+     <row>
+      <entry> <literal>@</literal> </entry>
+      <entry>Absolute value</entry>
+      <entry>@ -5.0</entry>
+      <entry>5.0</entry>
+     </row>
+    </tbody>
+   </tgroup>
+  </table>
+
+<!--
+       <ROW>
+	<ENTRY> & </ENTRY>
+	<ENTRY>Binary AND</ENTRY>
+	<ENTRY>91 & 15</ENTRY>
+       </ROW>
+       <ROW>
+	<ENTRY> | </ENTRY>
+	<ENTRY>Binary OR</ENTRY>
+	<ENTRY>32 | 3</ENTRY>
+       </ROW>
+       <ROW>
+	<ENTRY> # </ENTRY>
+	<ENTRY>Binary XOR</ENTRY>
+	<ENTRY>15 # 4</ENTRY>
+       </ROW>
+       <ROW>
+	<ENTRY> ~ </ENTRY>
+	<ENTRY>Binary NOT</ENTRY>
+	<ENTRY>~1</ENTRY>
+       </ROW>
+       <ROW>
+	<ENTRY> &lt;&lt; </ENTRY>
+	<ENTRY>Binary shift left</ENTRY>
+	<ENTRY>1 &lt;&lt; 4</ENTRY>
+       </ROW>
+       <ROW>
+	<ENTRY> &gt;&gt; </ENTRY>
+	<ENTRY>Binary shift right</ENTRY>
+	<ENTRY>8 &gt;&gt; 2</ENTRY>
+       </ROW>
+-->
+
+  <table tocentry="1">
+   <title>Mathematical Functions</title>
+   <tgroup cols="5">
+    <thead>
+     <row>
+      <entry>Function</entry>
+      <entry>Return Type</entry>
+      <entry>Description</entry>
+      <entry>Example</entry>
+      <entry>Result</entry>
+     </row>
+    </thead>
+
+    <tbody>
+     <row>
+      <entry>abs(<replaceable>x</replaceable>)</entry>
+      <entry>(same as argument type)</entry>
+      <entry>absolute value</entry>
+      <entry>abs(-17.4)</entry>
+      <entry>17.4</entry>
+     </row>
+
+     <row>
+      <entry>cbrt(<type>double precision</type>)</entry>
+      <entry><type>double precision</type></entry>
+      <entry>cube root</entry>
+      <entry>cbrt(27.0)</entry>
+      <entry>9.0</entry>
+     </row>
+
+     <row>
+      <entry>ceil(<type>numeric</type>)</entry>
+      <entry><type>numeric</type></entry>
+      <entry>smallest integer not less than argument</entry>
+      <entry>ceil(-42.8)</entry>
+      <entry>-42</entry>
+     </row>
+
+     <row>
+      <entry>degrees(<type>double precision</type>)</entry>
+      <entry><type>double precision</type></entry>
+      <entry>convert radians to degrees</entry>
+      <entry>degrees(0.5)</entry>
+      <entry>28.6478897565412</entry>
+     </row>
+
+     <row>
+      <entry>exp(<type>double precision</type>)</entry>
+      <entry><type>double precision</type></entry>
+      <entry>exponential function</entry>
+      <entry>exp(1.0)</entry>
+      <entry>2.71828182845905</entry>
+     </row>
+
+     <row>
+      <entry>floor(<type>numeric</type>)</entry>
+      <entry><type>numeric</type></entry>
+      <entry>largest integer not greater than argument</entry>
+      <entry>floor(-42.8)</entry>
+      <entry>43</entry>
+     </row>
+
+     <row>
+      <entry>ln(<type>double precision</type>)</entry>
+      <entry><type>double precision</type></entry>
+      <entry>natural logarithm</entry>
+      <entry>ln(2.0)</entry>
+      <entry>0.693147180559945</entry>
+     </row>
+
+     <row>
+      <entry>log(<type>double precision</type>)</entry>
+      <entry><type>double precision</type></entry>
+      <entry>base 10 logarithm</entry>
+      <entry>log(100.0)</entry>
+      <entry>2.0</entry>
+     </row>
+
+     <row>
+      <entry>log(<parameter>base</parameter> <type>numeric</type>, <parameter>x</parameter> <type>numeric</type>)</entry>
+      <entry><type>numeric</type></entry>
+      <entry>logarithm to specified base</entry>
+      <entry>log(2.0, 64.0)</entry>
+      <entry>6.0</entry>
+     </row>
+
+     <row>
+      <entry>mod(<parameter>y</parameter>, <parameter>x</parameter>)</entry>
+      <entry>(same as argument types)</entry>
+      <entry>remainder (modulo) of the division <parameter>y</parameter>/<parameter>x</parameter></entry>
+      <entry>mod(9,4)</entry>
+      <entry>1</entry>
+     </row>
+
+     <row>
+      <entry>pi()</entry>
+      <entry><type>double precision</type></entry>
+      <entry><quote>Pi</quote> constant</entry>
+      <entry>pi()</entry>
+      <entry>3.14159265358979</entry>
+     </row>
+
+     <row>
+      <entry>pow(<type>double precision</type>, <type>double precision</type>)</entry>
+      <entry><type>double precision</type></entry>
+      <entry>raise a number to the specified exponent</entry>
+      <entry>pow(9.0, 3.0)</entry>
+      <entry>729.0</entry>
+     </row>
+
+     <row>
+      <entry>radians(<type>double precision</type>)</entry>
+      <entry><type>double precision</type></entry>
+      <entry>convert degrees to radians</entry>
+      <entry>radians(45.0)</entry>
+      <entry>0.785398163397448</entry>
+     </row>
+
+     <row>
+      <entry>random()</entry>
+      <entry><type>double precision</type></entry>
+      <entry>a pseudo-random value between 0.0 to 1.0</entry>
+      <entry>random()</entry>
+      <entry></entry>
+     </row>
+
+     <row>
+      <entry>round(<type>double precision</type>)</entry>
+      <entry><type>double precision</type></entry>
+      <entry>round to nearest integer</entry>
+      <entry>round(42.4)</entry>
+      <entry>42</entry>
+     </row>
+
+     <row>
+      <entry>round(<parameter>value</parameter> <type>numeric</type>, <parameter>scale</parameter> <type>integer</type>)</entry>
+      <entry><type>numeric</type></entry>
+      <entry>round to specified number of decimal places</entry>
+      <entry>round(42.4382, 2)</entry>
+      <entry>42.44</entry>
+     </row>
+<!--
+     <row>
+      <entry>setseed(<replaceable>new-seed</replaceable>)</entry>
+      <entry>set seed for subsequent random() calls</entry>
+      <entry>setseed(0.54823)</entry>
+      <entry></entry>
+     </row>
+-->
+     <row>
+      <entry>sqrt(<type>double precision</type>)</entry>
+      <entry><type>double precision</type></entry>
+      <entry>square root</entry>
+      <entry>sqrt(2.0)</entry>
+      <entry>1.4142135623731</entry>
+     </row>
+
+     <row>
+      <entry>trunc(<type>double precision</type>)</entry>
+      <entry><type>double precision</type></entry>
+      <entry>truncate (toward zero)</entry>
+      <entry>trunc(42.8)</entry>
+      <entry>42</entry>
+     </row>
+
+     <row>
+      <entry>trunc(<parameter>value</parameter> <type>numeric</type>, <parameter>scale</parameter> <type>integer</type>)</entry>
+      <entry><type>numeric</type></entry>
+      <entry>truncate to specified number of decimal places</entry>
+      <entry>round(42.4382, 2)</entry>
+      <entry>42.43</entry>
+     </row>
+
+    </tbody>
+   </tgroup>
+  </table>
+
+  <para>
+   The functions <function>exp</function>, <function>ln</function>,
+   <function>log</function>, <function>pow</function>,
+   <function>round</function> (1 argument), <function>sqrt</function>,
+   and <function>trunc</function> (1 argument) are also available for
+   the type <type>numeric</type> in place of <type>double
+   precision</type>.  Many of these functions are implemented on top
+   of the host system's C library and behavior in boundary cases could
+   therefore vary depending on the operating system.
   </para>
 
-  <sect1 id="sql-functions">
-   <title>SQL Functions</title>
+  <table>
+   <title>Trigonometric Functions</title>
+
+   <tgroup cols="2">
+    <thead>
+     <row>
+      <entry>Function</entry>
+      <entry>Description</entry>
+     </row>
+    </thead>
+
+    <tbody>
+     <row>
+      <entry>acos(<replaceable>x</replaceable>)</entry>
+      <entry>inverse cosine</entry>
+     </row>
+
+     <row>
+      <entry>asin(<replaceable>x</replaceable>)</entry>
+      <entry>inverse sine</entry>
+     </row>
+
+     <row>
+      <entry>atan(<replaceable>x</replaceable>)</entry>
+      <entry>inverse tangent</entry>
+     </row>
+
+     <row>
+      <entry>atan2(<replaceable>x</replaceable>, <replaceable>y</replaceable>)</entry>
+      <entry>inverse tangent of <replaceable>y</replaceable>/<replaceable>x</replaceable></entry>
+     </row>
+
+     <row>
+      <entry>cos(<replaceable>x</replaceable>)</entry>
+      <entry>cosine</entry>
+     </row>
+
+     <row>
+      <entry>cot(<replaceable>x</replaceable>)</entry>
+      <entry>cotangent</entry>
+     </row>
+
+     <row>
+      <entry>sin(<replaceable>x</replaceable>)</entry>
+      <entry>sine</entry>
+     </row>
+
+     <row>
+      <entry>tan(<replaceable>x</replaceable>)</entry>
+      <entry>tangent</entry>
+     </row>
+    </tbody>
+   </tgroup>
+  </table>
+
+  <para>
+   All trigonometric functions have arguments and return values of
+   type <type>double precision</type>.
+  </para>
+
+ </sect1>
+
+
+ <sect1 id="functions-string">
+  <title>String Functions and Operators</title>
+
+  <para>
+   This section describes functions and operators for examining and
+   manipulating string values.  Strings in this context include values
+   of all the types <type>CHARACTER</type>, <type>CHARACTER
+   VARYING</type>, and <type>TEXT</type>.  Unless otherwise noted, all
+   of the functions listed below work on all of these types, but be
+   wary of potential effects of the automatic padding when using the
+   <type>CHARACTER</type> type.  Generally the functions described
+   here also work on data of non-string types by converting that data
+   to a string representation first.
+  </para>
+
+  <para>
+   SQL defines some string functions with a special syntax where
+   certain keywords rather than commas are used to separate the
+   arguments.  Details are in <xref linkend="functions-string-sql">.
+   These functions are also implemented using the regular syntax for
+   function invocation.  (See <xref linkend="functions-string-other">.)
+  </para>
+
+  <table id="functions-string-sql">
+   <title><acronym>SQL</acronym> String Functions and Operators</title>
+   <tgroup cols="5">
+    <thead>
+     <row>
+      <entry>Function</entry>
+      <entry>Return Type</entry>
+      <entry>Description</entry>
+      <entry>Example</entry>
+      <entry>Result</entry>  
+     </row>
+    </thead>
+
+    <tbody>
+     <row>
+      <entry> <parameter>string</parameter> <literal>||</literal> <parameter>string</parameter> </entry>
+      <entry> <type>text</type> </entry>
+      <entry>string concatenation</entry>
+      <entry>'Postgre' || 'SQL'</entry>
+      <entry>PostgreSQL</entry>
+     </row>
+
+     <row>
+      <entry>char_length(<parameter>string</parameter>) or character_length(<parameter>string</parameter>)</entry>
+      <entry><type>integer</type></entry>
+      <entry>length of string</entry>
+      <entry>char_length('jose')</entry>
+      <entry>4</entry>
+     </row>
+
+     <row>
+      <entry>lower(<parameter>string</parameter>)</entry>
+      <entry><type>text</type></entry>
+      <entry>Convert string to lower case.</entry>
+      <entry>lower('TOM')</entry>
+      <entry>tom</entry>
+     </row>
+
+     <row>
+      <entry>octet_length(<parameter>string</parameter>)</entry>
+      <entry><type>integer</type></entry>
+      <entry>number of bytes in string</entry>
+      <entry>octet_length('jose')</entry>
+      <entry>4</entry>
+     </row>
+
+     <row>
+      <entry>position(<parameter>substring</parameter> in <parameter>string</parameter>)</entry>
+      <entry><type>integer</type></entry>
+      <entry>location of specified substring</entry>
+      <entry>position('om' in 'Thomas')</entry>
+      <entry>3</entry>
+     </row>
+
+     <row>
+      <entry>substring(<parameter>string</parameter> <optional>from <type>integer</type></optional> <optional>for <type>integer</type></optional>)</entry>
+      <entry><type>text</type></entry>
+      <entry>extract substring</entry>
+      <entry>substring('Thomas' from 2 for 3)</entry>
+      <entry>oma</entry>
+     </row>
+
+     <row>
+      <entry>
+       trim(<optional>leading | trailing | both</optional>
+       <optional><parameter>characters</parameter></optional> from
+       <parameter>string</parameter>)
+      </entry>
+      <entry><type>text</type></entry>
+      <entry>
+       Removes the longest string containing only the
+       <parameter>characters</parameter> (a space by default) from the
+       beginning/end/both ends of the <parameter>string</parameter>.
+      </entry>
+      <entry>trim(both 'x' from 'xTomx')</entry>
+      <entry>Tom</entry>
+     </row>
+
+     <row>
+      <entry>upper(<parameter>string</parameter>)</entry>
+      <entry><type>text</type></entry>
+      <entry>Convert string to upper case.</entry>
+      <entry>upper('tom')</entry>
+      <entry>TOM</entry>
+     </row>
+    </tbody>
+   </tgroup>
+  </table>
+
+  <para>
+   Additional string manipulation functions are available and are
+   listed below.  Some of them are used internally to implement the
+   SQL string functions listed above.
+  </para>
+
+  <table id="functions-string-other">
+   <title>Other String Functions</title>
+   <tgroup cols="5">
+    <thead>
+     <row>
+      <entry>Function</entry>
+      <entry>Return type</entry>
+      <entry>Description</entry>
+      <entry>Example</entry>
+      <entry>Result</entry>
+     </row>
+    </thead>
+
+    <tbody>
+     <row>
+      <entry>ascii(<type>text</type>)</entry>
+      <entry>integer</entry>
+      <entry>Returns the <acronym>ASCII</acronym> code of the first character of the argument.</entry>
+      <entry>ascii('x')</entry>
+      <entry>120</entry>
+     </row>
+
+     <row>
+      <entry>btrim(<parameter>string</parameter> <type>text</type>, <parameter>trim</parameter> <type>text</type>)</entry>
+      <entry><type>text</type></entry>
+      <entry>
+       Remove (trim) the longest string consisting only of characters
+       in <parameter>trim</parameter> from the start and end of
+       <parameter>string</parameter>.
+      </entry>
+      <entry>btrim('xyxtrimyyx','xy')</entry>
+      <entry>trim</entry>
+     </row>
+
+     <row>
+      <entry>chr(<type>integer</type>)</entry>
+      <entry><type>text</type></entry>
+      <entry>Returns the character with the given <acronym>ASCII</acronym> code.</entry>
+      <entry>chr(65)</entry>
+      <entry>A</entry>
+     </row>
+
+     <row>
+      <entry>initcap(<type>text</type>)</entry>
+      <entry><type>text</type></entry>
+      <entry>Converts first letter of each word (whitespace separated) to upper case.</entry>
+      <entry>initcap('hello thomas')</entry>
+      <entry>Hello Thomas</entry>
+     </row>
+
+     <row>
+      <entry>
+       lpad(<parameter>string</parameter> <type>text</type>,
+       <parameter>length</parameter> <type>integer</type>
+       <optional>, <parameter>fill</parameter> <type>text</type></optional>)
+      </entry>
+      <entry>text</entry>
+      <entry>
+       Fills up the <parameter>string</parameter> to length
+       <parameter>length</parameter> by prepending the characters
+       <parameter>fill</parameter> (a space by default).  If the
+       <parameter>string</parameter> is already longer than
+       <parameter>length</parameter> then it is truncated (on the
+       right).
+      </entry>
+      <entry>lpad('hi', 5, 'xy')</entry>
+      <entry>xyxhi</entry>
+     </row>
+
+     <row>
+      <entry>ltrim(<parameter>string</parameter> <type>text</type>, <parameter>trim</parameter> <type>text</type>)</entry>
+      <entry><type>text</type></entry>
+      <entry>
+       Removes the longest string containing only characters from
+       <parameter>trim</parameter> from the start of the string.
+      </entry>
+      <entry>ltrim('zzzytrim','xyz')</entry>
+      <entry>trim</entry>
+     </row>
+
+     <row>
+      <entry>repeat(<type>text</type>, <type>integer</type>)</entry>
+      <entry><type>text</type></entry>
+      <entry>Repeat text a number of times.</entry>
+      <entry>repeat('Pg', 4)</entry>
+      <entry>PgPgPgPg</entry>
+     </row>
+
+     <row>
+      <entry>
+       rpad(<parameter>string</parameter> <type>text</type>,
+       <parameter>length</parameter> <type>integer</type>
+       <optional>, <parameter>fill</parameter> <type>text</type></optional>)
+      </entry>
+      <entry><type>text</type></entry>
+      <entry>
+       Fills up the <parameter>string</parameter> to length
+       <parameter>length</parameter> by appending the characters
+       <parameter>fill</parameter> (a space by default).  If the
+       <parameter>string</parameter> is already longer than
+       <parameter>length</parameter> then it is truncated.
+      </entry>
+      <entry>rpad('hi', 5, 'xy')</entry>
+      <entry>hixyx</entry>
+     </row>
+
+     <row>
+      <entry>rtrim(<parameter>string</parameter> text, <parameter>trim</parameter> text)</entry>
+      <entry><type>text</type></entry>
+      <entry>
+       Removes the longest string containing only characters from
+       <parameter>trim</parameter> from the end of the string.
+      </entry>
+      <entry>rtrim('trimxxxx','x')</entry>
+      <entry>trim</entry>
+     </row>
+
+     <row>
+      <entry>strpos(<parameter>string</parameter>, <parameter>substring</parameter>)</entry>
+      <entry><type>text</type></entry>
+      <entry>
+       Locates specified substring. (same as
+       <literal>position(<parameter>substring</parameter> in
+       <parameter>string</parameter>)</literal>, but note the reversed
+       argument order)
+      </entry>
+      <entry>strpos('high','ig')</entry>
+     </row>
+
+     <row>
+      <entry>substr(<parameter>string</parameter>, <parameter>from</parameter> <optional>, <parameter>count</parameter></optional>)</entry>
+      <entry><type>text</type></entry>
+      <entry>
+       Extracts specified substring. (same as <literal>substring(<parameter>string</parameter> from <parameter>from</parameter> for <parameter>count</parameter>)</literal>)
+      </entry>
+      <entry>substr('alphabet', 3, 2)</entry>
+      <entry>ph</entry>
+     </row>
+
+     <row>
+      <entry>to_ascii(<type>text</type> <optional>, <parameter>encoding</parameter></optional>)</entry>
+      <entry><type>text</type></entry>
+      <entry>Converts text from multibyte encoding to <acronym>ASCII</acronym>.</entry>
+      <entry>to_ascii('Karel')</entry>
+      <entry></entry>
+     </row>
+
+     <row>
+      <entry>
+       translate(<parameter>string</parameter> <type>text</type>,
+       <parameter>from</parameter> <type>text</type>,
+       <parameter>to</parameter> <type>text</type>)
+      </entry>
+      <entry><type>text</type></entry>
+      <entry>
+       Any character in <parameter>string</parameter> that matches a
+       character in the <parameter>from</parameter> set is replaced by
+       the corresponding character in the <parameter>to</parameter>
+       set.
+      </entry>
+      <entry>translate('12345', '14', 'ax')</entry>
+      <entry>a23x5</entry>
+     </row>       
+
+    </tbody>
+   </tgroup>
+  </table>
+
+  <para>
+   The <function>to_ascii</function> function supports conversion from
+   LATIN1, LATIN2, WIN1250 (CP1250) only.
+  </para>
+ </sect1>
+
+
+ <sect1 id="functions-matching">
+  <title>Pattern Matching</title>
+
+  <para>
+   There are two separate approaches to pattern matching provided by
+   <productname>Postgres</productname>:  The <acronym>SQL</acronym>
+   <function>LIKE</function> operator and
+   <acronym>POSIX</acronym>-style regular expressions.
+  </para>
+
+  <tip>
+   <para>
+    If you have pattern matching needs that go beyond this, or want to
+    make pattern-driven substitutions or translations, consider
+    writing a user-defined function in Perl or Tcl.
+   </para>
+  </tip>
+
+  <sect2 id="functions-like">
+   <title>Pattern Matching with <function>LIKE</function></title>
+
+<synopsis>
+<replaceable>string</replaceable> LIKE <replaceable>pattern</replaceable> <optional> ESCAPE <replaceable>escape-character</replaceable> </optional>
+<replaceable>string</replaceable> NOT LIKE <replaceable>pattern</replaceable> <optional> ESCAPE <replaceable>escape-character</replaceable> </optional>
+</synopsis>
 
    <para>
-    <firstterm><acronym>SQL</acronym> functions</firstterm> are constructs
-    defined by the <acronym>SQL92</acronym> standard which have
-    function-like syntax but which can not be implemented as simple
-    functions. 
+    Every <replaceable>pattern</replaceable> defines a set of strings.
+    The <function>LIKE</function> expression returns true if the
+    <replaceable>string</replaceable> is contained in the set of
+    strings represented by <replaceable>pattern</replaceable>.  (As
+    expected, the <function>NOT LIKE</function> expression returns
+    false if <function>LIKE</function> returns true, and vice versa.
+    An equivalent expression is <literal>NOT
+    (<replaceable>string</replaceable> LIKE
+    <replaceable>pattern</replaceable>)</literal>.)
    </para>
 
    <para>
-    <table tocentry="1">
-     <title>SQL Functions</title>
-     <tgroup cols="4">
-      <thead>
-       <row>
-	<entry>Function</entry>
-	<entry>Returns</entry>
-	<entry>Description</entry>
-	<entry>Example</entry>
-       </row>
-      </thead>
-      <tbody>
-       <row>
-	<entry>COALESCE(<replaceable class="parameter">list</replaceable>)</entry>
-	<entry>non-NULL</entry>
-	<entry>return first non-NULL value in list</entry>
-	<entry>COALESCE(rle, c2 + 5, 0)</entry>
-       </row>
-       <row>
-	<entry>NULLIF(<replaceable class="parameter">input</replaceable>,<replaceable class="parameter">value</replaceable>)</entry>
-	<entry><replaceable class="parameter">input</replaceable> or NULL</entry>
-	<entry>return NULL if
-	<replaceable class="parameter">input</replaceable> =
-	<replaceable class="parameter">value</replaceable>,
-	else <replaceable class="parameter">input</replaceable>
-	</entry>
-	<entry>NULLIF(c1, 'N/A')</entry>
-       </row>
-       <row>
-	<entry>CASE WHEN <replaceable class="parameter">expr</replaceable> THEN <replaceable class="parameter">expr</replaceable> [...] ELSE <replaceable class="parameter">expr</replaceable> END</entry>
-	<entry><replaceable class="parameter">expr</replaceable></entry>
-	<entry>return expression for first true WHEN clause</entry>
-	<entry>CASE WHEN c1 = 1 THEN 'match' ELSE 'no match' END</entry>
-       </row>
-      </tbody>
-     </tgroup>
-    </table>
+    If <replaceable>pattern</replaceable> does not contain percent
+    signs or underscore then the pattern only represents the string
+    itself; in that case <function>LIKE</function> acts like the
+    equals operator.  An underscore (<literal>_</literal>) in
+    <replaceable>pattern</replaceable> stands for (matches) any single
+    character, a percent sign (<literal>%</literal>) matches zero or
+    more characters.
    </para>
-  </sect1>
 
-  <sect1 id="math-functions">
-   <title>Mathematical Functions</title>
+   <informalexample>
+    <para>
+     Some examples:
+<programlisting>
+'abc' LIKE 'abc'    <lineannotation>true</lineannotation>
+'abc' LIKE 'a%'     <lineannotation>true</lineannotation>
+'abc' LIKE '_b_'    <lineannotation>true</lineannotation>
+'abc' LIKE 'c'      <lineannotation>false</lineannotation>
+</programlisting>
+    </para>
+   </informalexample>
 
    <para>
-    <table tocentry="1">
-     <title>Mathematical Functions</title>
-     <tgroup cols="4">
-      <thead>
-       <row>
-	<entry>Function</entry>
-	<entry>Returns</entry>
-	<entry>Description</entry>
-	<entry>Example</entry>
-       </row>
-      </thead>
-      <tbody>
-       <row>
-	<entry>abs(float8)</entry>
-	<entry>float8</entry>
-	<entry>absolute value</entry>
-	<entry>abs(-17.4)</entry>
-       </row>
-       <row>
-	<entry>degrees(float8)</entry>
-	<entry>float8</entry>
-	<entry>radians to degrees</entry>
-	<entry>degrees(0.5)</entry>
-       </row>
-       <row>
-	<entry>exp(float8)</entry>
-	<entry>float8</entry>
-	<entry>raise e to the specified exponent</entry>
-	<entry>exp(2.0)</entry>
-       </row>
-       <row>
-	<entry>ln(float8)</entry>
-	<entry>float8</entry>
-	<entry>natural logarithm</entry>
-	<entry>ln(2.0)</entry>
-       </row>
-       <row>
-	<entry>log(float8)</entry>
-	<entry>float8</entry>
-	<entry>base 10 logarithm</entry>
-	<entry>log(2.0)</entry>
-       </row>
-       <row>
-	<entry>pi()</entry>
-	<entry>float8</entry>
-	<entry>fundamental constant</entry>
-	<entry>pi()</entry>
-       </row>
-       <row>
-	<entry>pow(float8,float8)</entry>
-	<entry>float8</entry>
-	<entry>raise a number to the specified exponent</entry>
-	<entry>pow(2.0, 16.0)</entry>
-       </row>
-       <row>
-	<entry>radians(float8)</entry>
-	<entry>float8</entry>
-	<entry>degrees to radians</entry>
-	<entry>radians(45.0)</entry>
-       </row>
-       <row>
-	<entry>round(float8)</entry>
-	<entry>float8</entry>
-	<entry>round to nearest integer</entry>
-	<entry>round(42.4)</entry>
-       </row>
-       <row>
-	<entry>sqrt(float8)</entry>
-	<entry>float8</entry>
-	<entry>square root</entry>
-	<entry>sqrt(2.0)</entry>
-       </row>
-       <row>
-	<entry>cbrt(float8)</entry>
-	<entry>float8</entry>
-	<entry>cube root</entry>
-	<entry>cbrt(27.0)</entry>
-       </row>
-       <row>
-	<entry>trunc(float8)</entry>
-	<entry>float8</entry>
-	<entry>truncate (towards zero)</entry>
-	<entry>trunc(42.4)</entry>
-       </row>
-       <row>
-	<entry>float(int)</entry>
-	<entry>float8</entry>
-	<entry>convert integer to floating point</entry>
-	<entry>float(2)</entry>
-       </row>
-       <row>
-	<entry>float4(int)</entry>
-	<entry>float4</entry>
-	<entry>convert integer to floating point</entry>
-	<entry>float4(2)</entry>
-       </row>
-       <row>
-	<entry>integer(float)</entry>
-	<entry>int</entry>
-	<entry>convert floating point to integer</entry>
-	<entry>integer(2.0)</entry>
-       </row>
-       <row>
-	<entry>random()</entry>
-	<entry>float8</entry>
-	<entry>random value in the range 0.0 to 1.0</entry>
-	<entry>random()</entry>
-       </row>
-       <row>
-	<entry>setseed(float8)</entry>
-	<entry>int</entry>
-	<entry>set seed for subsequent random() calls</entry>
-	<entry>setseed(0.54823)</entry>
-       </row>
-      </tbody>
-     </tgroup>
-    </table>
+    <function>LIKE</function> pattern matches always cover the entire
+    string.  On order to match a pattern anywhere within a string, the
+    pattern must therefore start and end with a percent sign.
    </para>
 
    <para>
-    Most of the functions listed for FLOAT8 are also available for
-    type NUMERIC.
+    In order to match a literal underscore or percent sign, the
+    respective character in <replaceable>pattern</replaceable> must be
+    preceded by the active escape character.  The default escape
+    character is the backslash but a different one may be selected by
+    using the <literal>ESCAPE</literal> clause.  When using the
+    backslash as escape character in literal strings it must be
+    doubled, because the backslash already has a special meaning in
+    string literals.
    </para>
 
    <para>
-    <table tocentry="1">
-     <title>Transcendental Mathematical Functions</title>
-     <tgroup cols="4">
-      <thead>
-       <row>
-	<entry>Function</entry>
-	<entry>Returns</entry>
-	<entry>Description</entry>
-	<entry>Example</entry>
-       </row>
-      </thead>
-      <tbody>
-       <row>
-	<entry>acos(float8)</entry>
-	<entry>float8</entry>
-	<entry>arccosine</entry>
-	<entry>acos(10.0)</entry>
-       </row>
-       <row>
-	<entry>asin(float8)</entry>
-	<entry>float8</entry>
-	<entry>arcsine</entry>
-	<entry>asin(10.0)</entry>
-       </row>
-       <row>
-	<entry>atan(float8)</entry>
-	<entry>float8</entry>
-	<entry>arctangent</entry>
-	<entry>atan(10.0)</entry>
-       </row>
-       <row>
-	<entry>atan2(float8,float8)</entry>
-	<entry>float8</entry>
-	<entry>arctangent</entry>
-	<entry>atan2(10.0,20.0)</entry>
-       </row>
-       <row>
-	<entry>cos(float8)</entry>
-	<entry>float8</entry>
-	<entry>cosine</entry>
-	<entry>cos(0.4)</entry>
-       </row>
-       <row>
-	<entry>cot(float8)</entry>
-	<entry>float8</entry>
-	<entry>cotangent</entry>
-	<entry>cot(20.0)</entry>
-       </row>
-       <row>
-	<entry>sin(float8)</entry>
-	<entry>float8</entry>
-	<entry>sine</entry>
-	<entry>cos(0.4)</entry>
-       </row>
-       <row>
-	<entry>tan(float8)</entry>
-	<entry>float8</entry>
-	<entry>tangent</entry>
-	<entry>tan(0.4)</entry>
-       </row>
-      </tbody>
-     </tgroup>
-    </table>
-   </para>
-
-  </sect1>
-
-  <sect1 id="string-functions">
-   <title>String Functions</title>
-
-   <para>
-    SQL92 defines string functions with specific syntax. Some of these
-    are implemented using other <productname>Postgres</productname> functions.
-    The supported string types for <acronym>SQL92</acronym> are
-    <type>char</type>, <type>varchar</type>, and <type>text</type>.
+    The keyword <token>ILIKE</token> can be used instead of
+    <token>LIKE</token> to make the match case insensitive according
+    to the active locale.  This is a
+    <productname>Postgres</productname> extension.
    </para>
 
    <para>
-    <table tocentry="1">
-     <title><acronym>SQL92</acronym> String Functions</title>
-     <tgroup cols="4">
-      <thead>
-       <row>
-	<entry>Function</entry>
-	<entry>Returns</entry>
-	<entry>Description</entry>
-	<entry>Example</entry>
-       </row>
-      </thead>
-      <tbody>
-       <row>
-	<entry>char_length(string)</entry>
-	<entry>int4</entry>
-	<entry>length of string</entry>
-	<entry>char_length('jose')</entry>
-       </row>
-       <row>
-	<entry>character_length(string)</entry>
-	<entry>int4</entry>
-	<entry>length of string</entry>
-	<entry>char_length('jose')</entry>
-       </row>
-       <row>
-	<entry>lower(string)</entry>
-	<entry>string</entry>
-	<entry>convert string to lower case</entry>
-	<entry>lower('TOM')</entry>
-       </row>
-       <row>
-	<entry>octet_length(string)</entry>
-	<entry>int4</entry>
-	<entry>storage length of string</entry>
-	<entry>octet_length('jose')</entry>
-       </row>
-       <row>
-	<entry>position(string in string)</entry>
-	<entry>int4</entry>
-	<entry>location of specified substring</entry>
-	<entry>position('o' in 'Tom')</entry>
-       </row>
-       <row>
-	<entry>substring(string [from int] [for int])</entry>
-	<entry>string</entry>
-	<entry>extract specified substring</entry>
-	<entry>substring('Tom' from 2 for 2)</entry>
-       </row>
-       <row>
-	<entry>trim([leading|trailing|both] [string] from string)</entry>
-	<entry>string</entry>
-	<entry>trim characters from string</entry>
-	<entry>trim(both 'x' from 'xTomx')</entry>
-       </row>
-       <row>
-	<entry>upper(text)</entry>
-	<entry>text</entry>
-	<entry>convert text to upper case</entry>
-	<entry>upper('tom')</entry>
-       </row>
-      </tbody>
-     </tgroup>
-    </table>
+    The operator <literal>~~</literal> is equivalent to
+    <function>LIKE</function>, <literal>~~*</literal> corresponds to
+    <literal>ILIKE</literal>.  Finally, there are also
+    <literal>!~~</literal> and <literal>!~~*</literal> operators to
+    represent <function>NOT LIKE</function> and <function>NOT
+    ILIKE</function>.  All of these are also
+    <productname>Postgres</productname>-specific.
+   </para>
+  </sect2>
+
+
+  <sect2 id="functions-regexp">
+   <title>POSIX Regular Expressions</title>
+
+   <para>
+    POSIX regular expressions provide a more powerful means for
+    pattern matching than the <function>LIKE</function> function.
+    Many Unix tools such as <command>egrep</command>,
+    <command>sed</command>, or <command>awk</command> use a pattern
+    matching language that is similar to the one described here.
    </para>
 
    <para>
-    Many additional string functions are available for text, varchar(), and char() types.
-    Some are used internally to implement the SQL92 string functions listed above.
+    A regular expression is a character sequence that is an
+    abbreviated definition of a set of strings (a <firstterm>regular
+    set</firstterm>).  A string is said to match a regular expression
+    if it is a member of the regular set described by the regular
+    expression.  Unlike the <function>LIKE</function> operator, a
+    regular expression also matches anywhere within a string, unless
+    the regular expression is explicitly anchored to the beginning or
+    end of the string.
+   </para>
+
+   <table>
+    <title>Regular Expression Match Operators</title>
+
+    <tgroup cols="3">
+     <thead>
+      <row>
+       <entry>Operator</entry>
+       <entry>Description</entry>
+       <entry>Example</entry>
+      </row>
+     </thead>
+
+     <tbody>
+       <ROW>
+	<ENTRY> <literal>~</literal> </ENTRY>
+	<ENTRY>Matches regular expression, case sensitive</ENTRY>
+	<ENTRY>'thomas' ~ '.*thomas.*'</ENTRY>
+       </ROW>
+       <ROW>
+	<ENTRY> <literal>~*</literal> </ENTRY>
+	<ENTRY>Matches regular expression, case insensitive</ENTRY>
+	<ENTRY>'thomas' ~* '.*Thomas.*'</ENTRY>
+       </ROW>
+       <ROW>
+	<ENTRY> <literal>!~</literal> </ENTRY>
+	<ENTRY>Does not match regular expression, case sensitive</ENTRY>
+	<ENTRY>'thomas' !~ '.*Thomas.*'</ENTRY>
+       </ROW>
+       <ROW>
+	<ENTRY> <literal>!~*</literal> </ENTRY>
+	<ENTRY>Does not match regular expression, case insensitive</ENTRY>
+	<ENTRY>'thomas' !~* '.*vadim.*'</ENTRY>
+       </ROW>
+     </tbody>
+    </tgroup>
+   </table>
+
+
+<!-- derived from the re_format.7 man page -->
+   <para>
+    Regular expressions (<quote>RE</quote>s), as defined in POSIX
+    1003.2, come in two forms: modern REs (roughly those of
+    <command>egrep</command>; 1003.2 calls these
+    <quote>extended</quote> REs) and obsolete REs (roughly those of
+    <command>ed</command>; 1003.2 <quote>basic</quote> REs).  Obsolete
+    REs are not available in <productname>Postgres</productname>.
    </para>
 
    <para>
-    <table tocentry="1">
-     <title>String Functions</title>
-     <tgroup cols="4">
-      <thead>
-       <row>
-	<entry>Function</entry>
-	<entry>Returns</entry>
-	<entry>Description</entry>
-	<entry>Example</entry>
-       </row>
-      </thead>
-      <tbody>
-       <row>
-	<entry>ascii(text)</entry>
-	<entry>int</entry>
-	<entry>returns the decimal representation of the first character from text</entry>
-	<entry>ascii('x')</entry>
-       </row>
-       <row>
-	<entry>btrim(text,set)</entry>
-	<entry>text</entry>
-	<entry>both (left and right) trim characters from text</entry>
-	<entry>btrim('xxxtrimxxx','x')</entry>
-       </row>
-       <row>
-	<entry>char(text)</entry>
-	<entry>char</entry>
-	<entry>convert text to char type</entry>
-	<entry>char('text string')</entry>
-       </row>
-       <row>
-	<entry>char(varchar)</entry>
-	<entry>char</entry>
-	<entry>convert varchar to char type</entry>
-	<entry>char(varchar 'varchar string')</entry>
-       </row>
-       <row>
-	<entry>chr(int)</entry>
-	<entry>text</entry>
-	<entry>returns the character having the binary equivalent to int</entry>
-	<entry>chr(65)</entry>
-       </row>
-       <row>
-	<entry>initcap(text)</entry>
-	<entry>text</entry>
-	<entry>first letter of each word to upper case</entry>
-	<entry>initcap('thomas')</entry>
-       </row>
-       <row>
-	<entry>lpad(text,int,text)</entry>
-	<entry>text</entry>
-	<entry>left pad string to specified length</entry>
-	<entry>lpad('hi',4,'??')</entry>
-       </row>
-       <row>
-	<entry>ltrim(text,text)</entry>
-	<entry>text</entry>
-	<entry>left trim characters from text</entry>
-	<entry>ltrim('xxxxtrim','x')</entry>
-       </row>
-       <row>
-	<entry>repeat(text,int)</entry>
-	<entry>text</entry>
-	<entry>repeat text by int</entry>
-	<entry>repeat('Pg', 4)</entry>
-       </row>
-       <row>
-	<entry>rpad(text,int,text)</entry>
-	<entry>text</entry>
-	<entry>right pad string to specified length</entry>
-	<entry>rpad('hi',4,'x')</entry>
-       </row>
-       <row>
-	<entry>rtrim(text,text)</entry>
-	<entry>text</entry>
-	<entry>right trim characters from text</entry>
-	<entry>rtrim('trimxxxx','x')</entry>
-       </row>
-       <row>
-	<entry>substr(text,int[,int])</entry>
-	<entry>text</entry>
-	<entry>extract specified substring</entry>
-	<entry>substr('hi there',3,5)</entry>
-       </row>
-       <row>
-	<entry>text(char)</entry>
-	<entry>text</entry>
-	<entry>convert char to text type</entry>
-	<entry>text('char string')</entry>
-       </row>
-       <row>
-	<entry>text(varchar)</entry>
-	<entry>text</entry>
-	<entry>convert varchar to text type</entry>
-	<entry>text(varchar 'varchar string')</entry>
-       </row>
-       <row>
-	<entry>strpos(text,text)</entry>
-	<entry>text</entry>
-	<entry>locate specified substring</entry>
-	<entry>strpos('high','ig')</entry>
-       </row>
-       <row>
-	<entry>to_ascii(text [,name|int])</entry>
-	<entry>text</entry>
-	<entry>convert text from multibyte encoding to ASCII</entry>
-	<entry>to_ascii('Karel')</entry>
-       </row>
-       <row>
-	<entry>translate(text,from,to)</entry>
-	<entry>text</entry>
-	<entry>convert character in string</entry>
-	<entry>translate('12345', '1', 'a')</entry>
-       </row>       
-       <row>
-	<entry>varchar(char)</entry>
-	<entry>varchar</entry>
-	<entry>convert char to varchar type</entry>
-	<entry>varchar('char string')</entry>
-       </row>
-       <row>
-	<entry>varchar(text)</entry>
-	<entry>varchar</entry>
-	<entry>convert text to varchar type</entry>
-	<entry>varchar('text string')</entry>
-       </row>
-      </tbody>
-     </tgroup>
-    </table>
+    A (modern) RE is one or more non-empty
+    <firstterm>branches</firstterm>, separated by
+    <literal>|</literal>.  It matches anything that matches one of the
+    branches.
    </para>
 
    <para>
-    Most functions explicitly defined for text will work for char() and varchar() arguments.
-   </para>
-   <para>
-    The to_ascii() support conversion from LATIN1, LATIN2, WIN1250 (CP1250) only.
-   </para>
-  </sect1>
-
-  <sect1 id="datetime-functions">
-   <title>Date/Time Functions</title>
-
-   <para>
-    The date/time functions provide a powerful set of tools
-    for manipulating various date/time types.
+    A branch is one or more <firstterm>pieces</firstterm>,
+    concatenated.  It matches a match for the first, followed by a
+    match for the second, etc.
    </para>
 
    <para>
-    <table tocentry="1">
-     <title>Date/Time Functions</title>
-     <tgroup cols="4">
-      <thead>
-       <row>
-	<entry>Function</entry>
-	<entry>Returns</entry>
-	<entry>Description</entry>
-	<entry>Example</entry>
-       </row>
-      </thead>
-      <tbody>
-       <row>
-	<entry>abstime(timestamp)</entry>
-	<entry>abstime</entry>
-	<entry>convert to abstime</entry>
-	<entry>abstime(timestamp 'now')</entry>
-       </row>
-       <row>
-	<entry>age(timestamp)</entry>
-	<entry>interval</entry>
-	<entry>preserve months and years</entry>
-	<entry>age(timestamp '1957-06-13')</entry>
-       </row>
-       <row>
-	<entry>age(timestamp,timestamp)</entry>
-	<entry>interval</entry>
-	<entry>preserve months and years</entry>
-	<entry>age('now', timestamp '1957-06-13')</entry>
-       </row>
-       <row>
-	<entry>date_part(text,timestamp)</entry>
-	<entry>float8</entry>
-	<entry>portion of date</entry>
-	<entry>date_part('dow',timestamp 'now')</entry>
-       </row>
-       <row>
-	<entry>date_part(text,interval)</entry>
-	<entry>float8</entry>
-	<entry>portion of time</entry>
-	<entry>date_part('hour',interval '4 hrs 3 mins')</entry>
-       </row>
-       <row>
-	<entry>date_trunc(text,timestamp)</entry>
-	<entry>timestamp</entry>
-	<entry>truncate date</entry>
-	<entry>date_trunc('month',abstime 'now')</entry>
-       </row>
-       <row>
-	<entry>interval(reltime)</entry>
-	<entry>interval</entry>
-	<entry>convert to interval</entry>
-	<entry>interval(reltime '4 hours')</entry>
-       </row>
-       <row>
-	<entry>isfinite(timestamp)</entry>
-	<entry>bool</entry>
-	<entry>a finite time?</entry>
-	<entry>isfinite(timestamp 'now')</entry>
-       </row>
-       <row>
-	<entry>isfinite(interval)</entry>
-	<entry>bool</entry>
-	<entry>a finite time?</entry>
-	<entry>isfinite(interval '4 hrs')</entry>
-       </row>
-       <row>
-	<entry>reltime(interval)</entry>
-	<entry>reltime</entry>
-	<entry>convert to reltime</entry>
-	<entry>reltime(interval '4 hrs')</entry>
-       </row>
-       <row>
-	<entry>timestamp(date)</entry>
-	<entry>timestamp</entry>
-	<entry>convert to timestamp</entry>
-	<entry>timestamp(date 'today')</entry>
-       </row>
-       <row>
-	<entry>timestamp(date,time)</entry>
-	<entry>timestamp</entry>
-	<entry>convert to timestamp</entry>
-	<entry>timestamp(timestamp '1998-02-24',time '23:07');</entry>
-       </row>
-       <row>
-	<entry>to_char(timestamp,text)</entry>
-	<entry>text</entry>
-	<entry>convert to string</entry>
-	<entry>to_char(timestamp '1998-02-24','DD');</entry>
-       </row>
-      </tbody>
-     </tgroup>
-    </table>
+    A piece is an <firstterm>atom</firstterm> possibly followed by a
+    single <literal>*</literal>, <literal>+</literal>,
+    <literal>?</literal>, or <firstterm>bound</firstterm>.  An atom
+    followed by <literal>*</literal> matches a sequence of 0 or more
+    matches of the atom.  An atom followed by <literal>+</literal>
+    matches a sequence of 1 or more matches of the atom.  An atom
+    followed by <literal>?</literal> matches a sequence of 0 or 1
+    matches of the atom.
    </para>
 
    <para>
-    For the
-    <function>date_part</function> and <function>date_trunc</function>
-    functions, arguments can be
-    `<literal>year</literal>', `<literal>month</literal>',
-    `<literal>day</literal>', `<literal>hour</literal>',
-    `<literal>minute</literal>', and `<literal>second</literal>',
-    as well as the more specialized quantities
-    `<literal>decade</literal>', `<literal>century</literal>',
-    `<literal>millennium</literal>', `<literal>millisecond</literal>',
-    and `<literal>microsecond</literal>'. 
-    <function>date_part</function> allows `<literal>dow</literal>'
-    to return day of week, '<literal>week</literal>' to return the
-    ISO-defined week of year, and `<literal>epoch</literal>' to return
-    seconds since 1970 (for <type>timestamp</type>)
-    or '<literal>epoch</literal>' to return total elapsed seconds
-    (for <type>interval</type>).
+    A <firstterm>bound</firstterm> is <literal>{</literal> followed by
+    an unsigned decimal integer, possibly followed by
+    <literal>,</literal> possibly followed by another unsigned decimal
+    integer, always followed by <literal>}</literal>.  The integers
+    must lie between 0 and <symbol>RE_DUP_MAX</symbol> (255)
+    inclusive, and if there are two of them, the first may not exceed
+    the second.  An atom followed by a bound containing one integer
+    <replaceable>i</replaceable> and no comma matches a sequence of
+    exactly <replaceable>i</replaceable> matches of the atom.  An atom
+    followed by a bound containing one integer
+    <replaceable>i</replaceable> and a comma matches a sequence of
+    <replaceable>i</replaceable> or more matches of the atom.  An atom
+    followed by a bound containing two integers
+    <replaceable>i</replaceable> and <replaceable>j</replaceable>
+    matches a sequence of <replaceable>i</replaceable> through
+    <replaceable>j</replaceable> (inclusive) matches of the atom.
    </para>
-  </sect1>
 
-  
-  <sect1 id="formatting-functions">
+   <note>
+    <para>
+     A repetition operator (<literal>?</literal>,
+     <literal>*</literal>, <literal>+</literal>, or bounds) cannot
+     follow another repetition operator.  A repetition operator cannot
+     begin an expression or subexpression or follow
+     <literal>^</literal> or <literal>|</literal>.
+    </para>
+   </note>
+
+   <para>
+    An <firstterm>atom</firstterm> is a regular expression enclosed in
+    <literal>()</literal> (matching a match for the regular
+    expression), an empty set of <literal>()</literal> (matching the
+    null string), a <firstterm>bracket expression</firstterm> (see
+    below), <literal>.</literal> (matching any single character),
+    <literal>^</literal> (matching the null string at the beginning of
+    a line), <literal>$</literal> (matching the null string at the end
+    of a line), a <literal>\</literal> followed by one of the
+    characters <literal>^.[$()|*+?{\</literal> (matching that
+    character taken as an ordinary character), a <literal>\</literal>
+    followed by any other character (matching that character taken as
+    an ordinary character, as if the <literal>\</literal> had not been
+    present), or a single character with no other significance
+    (matching that character).  A <literal>{</literal> followed by a
+    character other than a digit is an ordinary character, not the
+    beginning of a bound.  It is illegal to end an RE with
+    <literal>\</literal>.
+   </para>
+
+   <para>
+    A <firstterm>bracket expression</firstterm> is a list of
+    characters enclosed in <literal>[]</literal>.  It normally matches
+    any single character from the list (but see below).  If the list
+    begins with <literal>^</literal>, it matches any single character
+    (but see below) not from the rest of the list.  If two characters
+    in the list are separated by <literal>-</literal>, this is
+    shorthand for the full range of characters between those two
+    (inclusive) in the collating sequence,
+    e.g. <literal>[0-9]</literal> in <acronym>ASCII</acronym> matches
+    any decimal digit.  It is illegal for two ranges to share an
+    endpoint, e.g.  <literal>a-c-e</literal>.  Ranges are very
+    collating-sequence-dependent, and portable programs should avoid
+    relying on them.
+   </para>
+
+   <para>
+    To include a literal <literal>]</literal> in the list, make it the
+    first character (following a possible <literal>^</literal>).  To
+    include a literal <literal>-</literal>, make it the first or last
+    character, or the second endpoint of a range.  To use a literal
+    <literal>-</literal> as the first endpoint of a range, enclose it
+    in <literal>[.</literal> and <literal>.]</literal> to make it a
+    collating element (see below).  With the exception of these and
+    some combinations using <literal>[</literal> (see next
+    paragraphs), all other special characters, including
+    <literal>\</literal>, lose their special significance within a
+    bracket expression.
+   </para>
+
+   <para>
+    Within a bracket expression, a collating element (a character, a
+    multi-character sequence that collates as if it were a single
+    character, or a collating-sequence name for either) enclosed in
+    <literal>[.</literal> and <literal>.]</literal> stands for the
+    sequence of characters of that collating element.  The sequence is
+    a single element of the bracket expression's list.  A bracket
+    expression containing a multi-character collating element can thus
+    match more than one character, e.g. if the collating sequence
+    includes a <literal>ch</literal> collating element, then the RE
+    <literal>[[.ch.]]*c</literal> matches the first five characters of
+    <literal>chchcc</literal>.
+   </para>
+
+   <para>
+    Within a bracket expression, a collating element enclosed in
+    <literal>[=</literal> and <literal>=]</literal> is an equivalence
+    class, standing for the sequences of characters of all collating
+    elements equivalent to that one, including itself.  (If there are
+    no other equivalent collating elements, the treatment is as if the
+    enclosing delimiters were <literal>[.</literal> and
+    <literal>.]</literal>.)  For example, if <literal>o</literal> and
+    <literal>^</literal> are the members of an equivalence class, then
+    <literal>[[=o=]]</literal>, <literal>[[=^=]]</literal>, and
+    <literal>[o^]</literal> are all synonymous.  An equivalence class
+    may not be an endpoint of a range.
+   </para>
+
+   <para>
+    Within a bracket expression, the name of a character class
+    enclosed in <literal>[:</literal> and <literal>:]</literal> stands
+    for the list of all characters belonging to that class.  Standard
+    character class names are: <literal>alnum</literal>,
+    <literal>alpha</literal>, <literal>blank</literal>,
+    <literal>cntrl</literal>, <literal>digit</literal>,
+    <literal>graph</literal>, <literal>lower</literal>,
+    <literal>print</literal>, <literal>punct</literal>,
+    <literal>space</literal>, <literal>upper</literal>,
+    <literal>xdigit</literal>.  These stand for the character classes
+    defined in
+    <citerefentry><refentrytitle>ctype</refentrytitle><manvolnum>3</manvolnum></citerefentry>.
+    A locale may provide others.  A character class may not be used as
+    an endpoint of a range.
+   </para>
+
+   <para>
+    There are two special cases of bracket expressions:  the bracket
+    expressions <literal>[[:<:]]</literal> and
+    <literal>[[:>:]]</literal> match the null string at the beginning
+    and end of a word respectively.  A word is defined as a sequence
+    of word characters which is neither preceded nor followed by word
+    characters.  A word character is an alnum character (as defined by
+    <citerefentry><refentrytitle>ctype</refentrytitle><manvolnum>3</manvolnum></citerefentry>)
+    or an underscore.  This is an extension, compatible with but not
+    specified by POSIX 1003.2, and should be used with caution in
+    software intended to be portable to other systems.
+   </para>
+
+   <para>
+    In the event that an RE could match more than one substring of a
+    given string, the RE matches the one starting earliest in the
+    string.  If the RE could match more than one substring starting at
+    that point, it matches the longest.  Subexpressions also match the
+    longest possible substrings, subject to the constraint that the
+    whole match be as long as possible, with subexpressions starting
+    earlier in the RE taking priority over ones starting later.  Note
+    that higher-level subexpressions thus take priority over their
+    lower-level component subexpressions.
+   </para>
+
+   <para>
+    Match lengths are measured in characters, not collating
+    elements.  A null string is considered longer than no match at
+    all.  For example, <literal>bb*</literal> matches the three middle
+    characters of <literal>abbbc</literal>,
+    <literal>(wee|week)(knights|nights)</literal> matches all ten
+    characters of <literal>weeknights</literal>, when
+    <literal>(.*).*</literal> is matched against
+    <literal>abc</literal> the parenthesized subexpression matches all
+    three characters, and when <literal>(a*)*</literal> is matched
+    against <literal>bc</literal> both the whole RE and the
+    parenthesized subexpression match the null string.
+   </para>
+
+   <para>
+    If case-independent matching is specified, the effect is much as
+    if all case distinctions had vanished from the alphabet.  When an
+    alphabetic that exists in multiple cases appears as an ordinary
+    character outside a bracket expression, it is effectively
+    transformed into a bracket expression containing both cases,
+    e.g. <literal>x</literal> becomes <literal>[xX]</literal>.  When
+    it appears inside a bracket expression, all case counterparts of
+    it are added to the bracket expression, so that (e.g.)
+    <literal>[x]</literal> becomes <literal>[xX]</literal> and
+    <literal>[^x]</literal> becomes <literal>[^xX]</literal>.
+   </para>
+
+   <para>
+    There is no particular limit on the length of REs, except insofar
+    as memory is limited.  Memory usage is approximately linear in RE
+    size, and largely insensitive to RE complexity, except for bounded
+    repetitions.  Bounded repetitions are implemented by macro
+    expansion, which is costly in time and space if counts are large
+    or bounded repetitions are nested.  An RE like, say,
+    <literal>((((a{1,100}){1,100}){1,100}){1,100}){1,100}</literal>
+    will (eventually) run almost any existing machine out of swap
+    space.<footnote><para>This was written in 1994, mind you.  The
+    numbers have probably changed, but the problem
+    persists.</para></footnote>
+   </para>
+<!-- end re_format.7 man page -->
+  </sect2>
+
+ </sect1>
+
+
+  <sect1 id="functions-formatting">
    <title>Formatting Functions</title>
 
    <note>
     <title>Author</title>
     <para>
-     Written by 
-     <ulink url="mailto:zakkr@zf.jcu.cz">Karel Zak</ulink>
-     on 2000-01-24.
+     Written by Karel Zak (<email>zakkr@zf.jcu.cz</email>) on 2000-01-24
     </para>
    </note>
-   <para>
-    The <productname>Postgres</productname>
-    formatting functions provide a powerful set of tools for converting 
-    various datetypes (date/time, int, float, numeric) to formatted strings 
-    and for converting from formatted strings to specific datetypes. 
 
-    <note>
-     <para>
-      The second argument for all formatting functions is a template to
-      be used for the conversion.
-     </para>
-    </note>
+   <para>
+    The <productname>Postgres</productname> formatting functions
+    provide a powerful set of tools for converting various data types
+    (date/time, integer, floating point, numeric) to formatted strings
+    and for converting from formatted strings to specific datetypes.
+    These functions all follow a common calling convention:  The first
+    argument is the value to be formatted and the second argument is a
+    template that defines the output format.
    </para>
 
    <para>
@@ -837,7 +1375,7 @@
        </row>
        <row>
 	<entry>IW</entry>
-	<entry>ISO week number of year</entry>
+	<entry>ISO week number of year (The first Thursday of the new year is in week 1.)</entry>
        </row>
        <row>
 	<entry>CC</entry>
@@ -853,19 +1391,19 @@
        </row>
        <row>
 	<entry>RM</entry>
-	<entry>month in Roman Numerals (I-XII; I=JAN) - upper case</entry>
+	<entry>month in Roman Numerals (I-XII; I=January) - upper case</entry>
        </row>
        <row>
 	<entry>rm</entry>
-	<entry>month in Roman Numerals (I-XII; I=JAN) - lower case</entry>
+	<entry>month in Roman Numerals (I-XII; I=January) - lower case</entry>
        </row>
        <row>
 	<entry>TZ</entry>
-	<entry>timezone string - upper case (not supported in the to_timestamp())</entry>
+	<entry>timezone string - upper case</entry>
        </row>
        <row>
 	<entry>tz</entry>
-	<entry>timezone string - lower case (not supported in the to_timestamp())</entry>
+	<entry>timezone string - lower case</entry>
        </row>
       </tbody>
      </tgroup>
@@ -875,7 +1413,7 @@
    <para>
     All templates allow the use of prefix and suffix modifiers. Modifiers are
     always valid for use in templates. The prefix
-    '<literal>FX</literal>' is a global modifier only.      
+    <quote><literal>FX</literal></quote> is a global modifier only.      
    </para>
 
    <para>
@@ -938,8 +1476,21 @@
 
      <listitem>
       <para>
-       Backslash ("<literal>\</literal>") must be specified with a double backslash
-       ("<literal>\\</literal>"); for example <literal>'\\HH\\MI\\SS'</literal>.
+       If a backslash (<quote><literal>\</literal></quote>) is desired
+       in a string constant, a double backslash
+       (<quote><literal>\\</literal></quote>) must be entered; for
+       example <literal>'\\HH\\MI\\SS'</literal>.  This is true for
+       any string constant in <productname>Postgres</productname>.
+      </para>
+     </listitem>
+
+     <listitem>
+      <para>
+       Ordinary text is allowed in <function>to_char</function>
+       templates but any string between double quotes is guaranteed
+       that it will not be interpreted as a template keyword and it is
+       also processed faster.  (Example: <literal>'"Hello Year:
+       "YYYY'</literal>).
       </para>
      </listitem>
 
@@ -947,31 +1498,21 @@
       <para>
        A double quote (<quote><literal>"</literal></quote>) between
        quotation marks is skipped and is not parsed.  If you want to
-       write a double quote to output you must preceed it with a
-       double backslash (<literal>'\\"</literal>), for example
-       <literal>'\\"YYYY Month\\"'</literal>.
-      </para>
-     </listitem>
-
-     <listitem>
-      <para>
-       <function>to_char</function> supports text without a leading
-       double quote but any string 
-       between a quotation marks is rapidly handled and you are
-       guaranteed that it will not be interpreted as a template
-       keyword (example: <literal>'"Hello Year: "YYYY'</literal>).
+       have a double quote in the output you must preceed it with a
+       double backslash, for example <literal>'\\"YYYY
+       Month\\"'</literal>. <!-- " font-lock sanity :-) -->
       </para>
      </listitem>
 
      <listitem>
       <para>
        <literal>YYYY</literal> conversion from string to timestamp or
-       date is limited if you use a year longer than 4-digits. You must
+       date is restricted if you use a year with more than 4 digits. You must
        use some non-digit character or template after <literal>YYYY</literal>,
-       otherwise the year is always interpreted as 4-digits. For example
+       otherwise the year is always interpreted as 4 digits. For example
        (with year 20000):
        <literal>to_date('200001131', 'YYYYMMDD')</literal> will be 
-       interpreted as a 4-digit year, better is to use a non-digit 
+       interpreted as a 4-digit year; better is to use a non-digit 
        separator after the year, like
        <literal>to_date('20000-1131', 'YYYY-MMDD')</literal> or
        <literal>to_date('20000Nov31', 'YYYYMonDD')</literal>.
@@ -1013,31 +1554,31 @@
        </row>
        <row>
 	<entry>S</entry>
-	<entry>negative value with minus sign (use locales)</entry>
+	<entry>negative value with minus sign (uses locale)</entry>
        </row>
        <row>
 	<entry>L</entry>
-	<entry>currency symbol (use locales)</entry>
+	<entry>currency symbol (uses locale)</entry>
        </row>
        <row>
 	<entry>D</entry>
-	<entry>decimal point (use locales)</entry>
+	<entry>decimal point (uses locale)</entry>
        </row>
        <row>
 	<entry>G</entry>
-	<entry>group separator (use locales)</entry>
+	<entry>group separator (uses locale)</entry>
        </row>
        <row>
 	<entry>MI</entry>
-	<entry>minus sign on specified position (if number < 0)</entry>
+	<entry>minus sign in specified position (if number < 0)</entry>
        </row>
        <row>
 	<entry>PL</entry>
-	<entry>plus sign on specified position (if number > 0)</entry>
+	<entry>plus sign in specified position (if number > 0)</entry>
        </row>
        <row>
 	<entry>SG</entry>
-	<entry>plus/minus sign on specified position</entry>
+	<entry>plus/minus sign in specified position</entry>
        </row>
        <row>
 	<entry>RN</entry>
@@ -1049,12 +1590,12 @@
        </row>
        <row>
 	<entry>V</entry>
-	<entry>Shift <replaceable>n</replaceable> digits (see
+	<entry>shift <replaceable>n</replaceable> digits (see
 	 notes)</entry>
        </row>
        <row>
 	<entry>EEEE</entry>
-	<entry>science numbers. Now not supported.</entry>
+	<entry>scientific numbers (not supported yet)</entry>
        </row>
       </tbody>
      </tgroup>
@@ -1073,7 +1614,7 @@
        but to_char(-12, 'MI9999') produces <literal>'-  12'</literal>.
        The Oracle implementation does not allow the use of
        <literal>MI</literal> ahead of <literal>9</literal>, but rather
-       requires that <literal>9</literal> preceeds
+       requires that <literal>9</literal> preceed
        <literal>MI</literal>.
       </para>
      </listitem>
@@ -1110,8 +1651,8 @@
        <replaceable>n</replaceable> is the number of digits following
        <literal>V</literal>. 
        <function>to_char</function> does not support the use of
-       <literal>V</literal> combined with a decimal point
-       (e.g. "99.9V99" is not allowed).
+       <literal>V</literal> combined with a decimal point.
+       (E.g., <literal>99.9V99</literal> is not allowed.)
       </para>
      </listitem>
     </itemizedlist>
@@ -1267,16 +1808,275 @@
   </sect1>
 
 
-  <sect1 id="geometric-functions">
-   <title>Geometric Functions</title>
+  <sect1 id="functions-datetime">
+   <title>Date/Time Functions</title>
 
    <para>
-    The geometric types point, box, lseg, line, path, polygon, and
-    circle have a large set of native support functions.
+    The date/time functions provide a powerful set of tools
+    for manipulating various date/time types.
    </para>
 
    <para>
     <table tocentry="1">
+     <title>Date/Time Functions</title>
+     <tgroup cols="4">
+      <thead>
+       <row>
+	<entry>Function</entry>
+	<entry>Returns</entry>
+	<entry>Description</entry>
+	<entry>Example</entry>
+       </row>
+      </thead>
+      <tbody>
+       <row>
+	<entry>abstime(timestamp)</entry>
+	<entry>abstime</entry>
+	<entry>convert to abstime</entry>
+	<entry>abstime(timestamp 'now')</entry>
+       </row>
+       <row>
+	<entry>age(timestamp)</entry>
+	<entry>interval</entry>
+	<entry>preserve months and years</entry>
+	<entry>age(timestamp '1957-06-13')</entry>
+       </row>
+       <row>
+	<entry>age(timestamp,timestamp)</entry>
+	<entry>interval</entry>
+	<entry>preserve months and years</entry>
+	<entry>age('now', timestamp '1957-06-13')</entry>
+       </row>
+       <row>
+	<entry>date_part(text,timestamp)</entry>
+	<entry>float8</entry>
+	<entry>portion of date</entry>
+	<entry>date_part('dow',timestamp 'now')</entry>
+       </row>
+       <row>
+	<entry>date_part(text,interval)</entry>
+	<entry>float8</entry>
+	<entry>portion of time</entry>
+	<entry>date_part('hour',interval '4 hrs 3 mins')</entry>
+       </row>
+       <row>
+	<entry>date_trunc(text,timestamp)</entry>
+	<entry>timestamp</entry>
+	<entry>truncate date</entry>
+	<entry>date_trunc('month',abstime 'now')</entry>
+       </row>
+       <row>
+	<entry>interval(reltime)</entry>
+	<entry>interval</entry>
+	<entry>convert to interval</entry>
+	<entry>interval(reltime '4 hours')</entry>
+       </row>
+       <row>
+	<entry>isfinite(timestamp)</entry>
+	<entry>bool</entry>
+	<entry>a finite time?</entry>
+	<entry>isfinite(timestamp 'now')</entry>
+       </row>
+       <row>
+	<entry>isfinite(interval)</entry>
+	<entry>bool</entry>
+	<entry>a finite time?</entry>
+	<entry>isfinite(interval '4 hrs')</entry>
+       </row>
+       <row>
+	<entry>reltime(interval)</entry>
+	<entry>reltime</entry>
+	<entry>convert to reltime</entry>
+	<entry>reltime(interval '4 hrs')</entry>
+       </row>
+       <row>
+	<entry>timestamp(date)</entry>
+	<entry>timestamp</entry>
+	<entry>convert to timestamp</entry>
+	<entry>timestamp(date 'today')</entry>
+       </row>
+       <row>
+	<entry>timestamp(date,time)</entry>
+	<entry>timestamp</entry>
+	<entry>convert to timestamp</entry>
+	<entry>timestamp(timestamp '1998-02-24',time '23:07');</entry>
+       </row>
+       <row>
+	<entry>to_char(timestamp,text)</entry>
+	<entry>text</entry>
+	<entry>convert to string</entry>
+	<entry>to_char(timestamp '1998-02-24','DD');</entry>
+       </row>
+      </tbody>
+     </tgroup>
+    </table>
+   </para>
+
+   <para>
+    For the
+    <function>date_part</function> and <function>date_trunc</function>
+    functions, arguments can be
+    `<literal>year</literal>', `<literal>month</literal>',
+    `<literal>day</literal>', `<literal>hour</literal>',
+    `<literal>minute</literal>', and `<literal>second</literal>',
+    as well as the more specialized quantities
+    `<literal>decade</literal>', `<literal>century</literal>',
+    `<literal>millennium</literal>', `<literal>millisecond</literal>',
+    and `<literal>microsecond</literal>'. 
+    <function>date_part</function> allows `<literal>dow</literal>'
+    to return day of week, '<literal>week</literal>' to return the
+    ISO-defined week of year, and `<literal>epoch</literal>' to return
+    seconds since 1970 (for <type>timestamp</type>)
+    or '<literal>epoch</literal>' to return total elapsed seconds
+    (for <type>interval</type>).
+   </para>
+  </sect1>
+
+  
+ <sect1 id="functions-geometry">
+   <title>Geometric Functions and Operators</title>
+
+   <para>
+    The geometric types point, box, lseg, line, path, polygon, and
+    circle have a large set of native support functions and operators.
+   </para>
+
+   <table>
+     <TITLE>Geometric Operators</TITLE>
+     <TGROUP COLS="3">
+      <THEAD>
+       <ROW>
+	<ENTRY>Operator</ENTRY>
+	<ENTRY>Description</ENTRY>
+	<ENTRY>Usage</ENTRY>
+       </ROW>
+      </THEAD>
+      <TBODY>
+       <ROW>
+	<ENTRY> + </ENTRY>
+	<ENTRY>Translation</ENTRY>
+	<ENTRY>'((0,0),(1,1))'::box + '(2.0,0)'::point</ENTRY>
+       </ROW>
+       <ROW>
+	<ENTRY> - </ENTRY>
+	<ENTRY>Translation</ENTRY>
+	<ENTRY>'((0,0),(1,1))'::box - '(2.0,0)'::point</ENTRY>
+       </ROW>
+       <ROW>
+	<ENTRY> * </ENTRY>
+	<ENTRY>Scaling/rotation</ENTRY>
+	<ENTRY>'((0,0),(1,1))'::box * '(2.0,0)'::point</ENTRY>
+       </ROW>
+       <ROW>
+	<ENTRY> / </ENTRY>
+	<ENTRY>Scaling/rotation</ENTRY>
+	<ENTRY>'((0,0),(2,2))'::box / '(2.0,0)'::point</ENTRY>
+       </ROW>
+       <ROW>
+	<ENTRY> # </ENTRY>
+	<ENTRY>Intersection</ENTRY>
+	<ENTRY>'((1,-1),(-1,1))' # '((1,1),(-1,-1))'</ENTRY>
+       </ROW>
+       <ROW>
+	<ENTRY> # </ENTRY>
+	<ENTRY>Number of points in polygon</ENTRY>
+	<ENTRY># '((1,0),(0,1),(-1,0))'</ENTRY>
+       </ROW>
+       <ROW>
+	<ENTRY> ## </ENTRY>
+	<ENTRY>Point of closest proximity</ENTRY>
+	<ENTRY>'(0,0)'::point ## '((2,0),(0,2))'::lseg</ENTRY>
+       </ROW>
+       <ROW>
+	<ENTRY> &amp;&amp; </ENTRY>
+	<ENTRY>Overlaps?</ENTRY>
+	<ENTRY>'((0,0),(1,1))'::box &amp;&amp; '((0,0),(2,2))'::box</ENTRY>
+       </ROW>
+       <ROW>
+	<ENTRY> &amp;&lt; </ENTRY>
+	<ENTRY>Overlaps to left?</ENTRY>
+	<ENTRY>'((0,0),(1,1))'::box &amp;&lt; '((0,0),(2,2))'::box</ENTRY>
+       </ROW>
+       <ROW>
+	<ENTRY> &amp;&gt; </ENTRY>
+	<ENTRY>Overlaps to right?</ENTRY>
+	<ENTRY>'((0,0),(3,3))'::box &amp;&gt; '((0,0),(2,2))'::box</ENTRY>
+       </ROW>
+       <ROW>
+	<ENTRY> &lt;-&gt; </ENTRY>
+	<ENTRY>Distance between</ENTRY>
+	<ENTRY>'((0,0),1)'::circle &lt;-&gt; '((5,0),1)'::circle</ENTRY>
+       </ROW>
+       <ROW>
+	<ENTRY> &lt;&lt; </ENTRY>
+	<ENTRY>Left of?</ENTRY>
+	<ENTRY>'((0,0),1)'::circle &lt;&lt; '((5,0),1)'::circle</ENTRY>
+       </ROW>
+       <ROW>
+	<ENTRY> &lt;^ </ENTRY>
+	<ENTRY>Is below?</ENTRY>
+	<ENTRY>'((0,0),1)'::circle &lt;^ '((0,5),1)'::circle</ENTRY>
+       </ROW>
+       <ROW>
+	<ENTRY> &gt;&gt; </ENTRY>
+	<ENTRY>Is right of?</ENTRY>
+	<ENTRY>'((5,0),1)'::circle &gt;&gt; '((0,0),1)'::circle</ENTRY>
+       </ROW>
+       <ROW>
+	<ENTRY> &gt;^ </ENTRY>
+	<ENTRY>Is above?</ENTRY>
+	<ENTRY>'((0,5),1)'::circle >^ '((0,0),1)'::circle</ENTRY>
+       </ROW>
+       <ROW>
+	<ENTRY> ?# </ENTRY>
+	<ENTRY>Intersects or overlaps</ENTRY>
+	<ENTRY>'((-1,0),(1,0))'::lseg ?# '((-2,-2),(2,2))'::box;</ENTRY>
+       </ROW>
+       <ROW>
+	<ENTRY> ?- </ENTRY>
+	<ENTRY>Is horizontal?</ENTRY>
+	<ENTRY>'(1,0)'::point ?- '(0,0)'::point</ENTRY>
+       </ROW>
+       <ROW>
+	<ENTRY> ?-| </ENTRY>
+	<ENTRY>Is perpendicular?</ENTRY>
+	<ENTRY>'((0,0),(0,1))'::lseg ?-| '((0,0),(1,0))'::lseg</ENTRY>
+       </ROW>
+       <ROW>
+	<ENTRY> @-@  </ENTRY>
+	<ENTRY>Length or circumference</ENTRY>
+	<ENTRY>@-@ '((0,0),(1,0))'::path</ENTRY>
+       </ROW>
+       <ROW>
+	<ENTRY> ?| </ENTRY>
+	<ENTRY>Is vertical?</ENTRY>
+	<ENTRY>'(0,1)'::point ?| '(0,0)'::point</ENTRY>
+       </ROW>
+       <ROW>
+	<ENTRY> ?|| </ENTRY>
+	<ENTRY>Is parallel?</ENTRY>
+	<ENTRY>'((-1,0),(1,0))'::lseg ?|| '((-1,2),(1,2))'::lseg</ENTRY>
+       </ROW>
+       <ROW>
+	<ENTRY> @ </ENTRY>
+	<ENTRY>Contained or on</ENTRY>
+	<ENTRY>'(1,1)'::point @ '((0,0),2)'::circle</ENTRY>
+       </ROW>
+       <ROW>
+	<ENTRY> @@ </ENTRY>
+	<ENTRY>Center of</ENTRY>
+	<ENTRY>@@ '((0,0),10)'::circle</ENTRY>
+       </ROW>
+       <ROW>
+	<ENTRY> ~= </ENTRY>
+	<ENTRY>Same as</ENTRY>
+	<ENTRY>'((0,0),(1,1))'::polygon ~= '((1,1),(0,0))'::polygon</ENTRY>
+       </ROW>
+      </TBODY>
+     </TGROUP>
+   </TABLE>
+
+   <table>
      <title>Geometric Functions</title>
      <tgroup cols="4">
       <thead>
@@ -1377,11 +2177,10 @@ Not defined by this name. Implements the intersection operator '#'
        </row>
       </tbody>
      </tgroup>
-    </table>
-   </para>
+   </table>
 
-   <para>
-    <table tocentry="1">
+
+   <table>
      <title>Geometric Type Conversion Functions</title>
      <tgroup cols="4">
       <thead>
@@ -1485,14 +2284,91 @@ Not defined by this name. Implements the intersection operator '#'
        </row>
       </tbody>
      </tgroup>
-    </table>
-   </para>
+   </table>
+
   </sect1>
 
-  <sect1 id="net-functions">
+
+  <sect1 id="functions-net">
    <title>Network Address Type Functions</title>
 
-   <para>
+
+    <table tocentry="1" id="cidr-inet-operators-table">
+     <title><type>cidr</> and <type>inet</> Operators</title>
+     <TGROUP COLS="3">
+      <THEAD>
+       <ROW>
+	<ENTRY>Operator</ENTRY>
+	<ENTRY>Description</ENTRY>
+	<ENTRY>Usage</ENTRY>
+       </ROW>
+      </THEAD>
+      <TBODY>
+       <ROW>
+	<ENTRY> &lt; </ENTRY>
+	<ENTRY>Less than</ENTRY>
+	<ENTRY>inet '192.168.1.5' &lt; inet '192.168.1.6'</ENTRY>
+       </ROW>
+       <ROW>
+	<ENTRY> &lt;= </ENTRY>
+	<ENTRY>Less than or equal</ENTRY>
+	<ENTRY>inet '192.168.1.5' &lt;= inet '192.168.1.5'</ENTRY>
+       </ROW>
+       <ROW>
+	<ENTRY> = </ENTRY>
+	<ENTRY>Equals</ENTRY>
+	<ENTRY>inet '192.168.1.5' = inet '192.168.1.5'</ENTRY>
+       </ROW>
+       <ROW>
+	<ENTRY> &gt;= </ENTRY>
+	<ENTRY>Greater or equal</ENTRY>
+	<ENTRY>inet '192.168.1.5' &gt;= inet '192.168.1.5'</ENTRY>
+       </ROW>
+       <ROW>
+	<ENTRY> &gt; </ENTRY>
+	<ENTRY>Greater</ENTRY>
+	<ENTRY>inet '192.168.1.5' &gt; inet '192.168.1.4'</ENTRY>
+       </ROW>
+       <ROW>
+	<ENTRY> &lt;&gt; </ENTRY>
+	<ENTRY>Not equal</ENTRY>
+	<ENTRY>inet '192.168.1.5' &lt;&gt; inet '192.168.1.4'</ENTRY>
+       </ROW>
+       <ROW>
+	<ENTRY> &lt;&lt; </ENTRY>
+	<ENTRY>is contained within</ENTRY>
+	<ENTRY>inet '192.168.1.5' &lt;&lt; inet '192.168.1/24'</ENTRY>
+       </ROW>
+       <ROW>
+	<ENTRY> &lt;&lt;= </ENTRY>
+	<ENTRY>is contained within or equals</ENTRY>
+	<ENTRY>inet '192.168.1/24' &lt;&lt;= inet '192.168.1/24'</ENTRY>
+       </ROW>
+       <ROW>
+	<ENTRY> &gt;&gt; </ENTRY>
+	<ENTRY>contains</ENTRY>
+	<ENTRY>inet'192.168.1/24' &gt;&gt; inet '192.168.1.5'</ENTRY>
+       </ROW>
+       <ROW>
+	<ENTRY> &gt;&gt;= </ENTRY>
+	<ENTRY>contains or equals</ENTRY>
+	<ENTRY>inet '192.168.1/24' &gt;&gt;= inet '192.168.1/24'</ENTRY>
+       </ROW>
+      </TBODY>
+     </TGROUP>
+    </TABLE>
+
+    <para>
+     All of the operators for <type>inet</type> can be applied to
+     <type>cidr</type> values as well.  The operators
+     <literal>&lt;&lt;</>, <literal>&lt;&lt;=</>,
+     <literal>&gt;&gt;</>, <literal>&gt;&gt;=</>
+     test for subnet inclusion: they consider only the network parts
+     of the two addresses, ignoring any host part, and determine whether
+     one network part is identical to or a subnet of the other.
+    </para>
+
+
     <table tocentry="1" id="cidr-inet-functions">
      <title><type>cidr</> and <type>inet</> Functions</title>
      <tgroup cols="5">
@@ -1551,7 +2427,6 @@ Not defined by this name. Implements the intersection operator '#'
       </tbody>
      </tgroup>
     </table>
-   </para>
 
    <para>
     All of the functions for <type>inet</type> can be applied to
@@ -1594,9 +2469,159 @@ Not defined by this name. Implements the intersection operator '#'
     utilities to create and maintain such an association table.
    </para>
 
+   <para>
+    The <type>macaddr</> type also supports the standard relational
+    operators (<literal>&gt;</>, <literal>&lt;=</>, etc.) for
+    lexicographical ordering.
+   </para>
+
   </sect1>
 
-  <sect1 id="misc-functions">
+
+ <sect1 id="functions-conditional">
+  <title>Conditional Expressions</title>
+
+  <para>
+   This section descibes the SQL-compliant conditional expressions
+   available in <productname>Postgres</productname>.
+  </para>
+
+  <tip>
+   <para>
+    If your needs go beyond the capabilities of these conditional
+    expressions you might want to consider writing a stored procedure
+    in a more expressive programming language.
+   </para>
+  </tip>
+
+  <bridgehead renderas="sect2">CASE</bridgehead>
+
+<synopsis>
+CASE WHEN <replaceable>condition</replaceable> THEN <replaceable>result</replaceable>
+     <optional>WHEN ...</optional>
+     <optional>ELSE <replaceable>result</replaceable></optional>
+END
+</synopsis>
+
+  <para>
+   The <acronym>SQL</acronym> <token>CASE</token> expression is a
+   generic conditional expression, similar to if/else statements in
+   other languages.  <token>CASE</token> clauses can be used whereever
+   an expression is valid.  <replaceable>condition</replaceable> is an
+   expression that returns a boolean result.  If the result is true
+   then the value of the <token>CASE</token> expression is
+   <replaceable>result</replaceable>.  If the result is false any
+   subsequent <token>WHEN</token> clauses are searched in the same
+   manner.  If no <token>WHEN</token>
+   <replaceable>condition</replaceable> is true then the value of the
+   case expression is the <replaceable>result</replaceable> in the
+   <token>ELSE</token> clause.  If the <token>ELSE</token> clause is
+   omitted and no condition matches, the result is NULL.
+  </para>
+
+  <informalexample>
+   <para>
+    An example:
+<screen>
+<prompt>=&gt;</prompt> <userinput>SELECT * FROM test;</userinput>
+<computeroutput>
+ a
+---
+ 1
+ 2
+ 3
+</computeroutput>
+
+<prompt>=&gt;</prompt> <userinput>SELECT a, CASE WHEN a=1 THEN 'one' WHEN a=2 THEN 'two' ELSE 'other' END FROM test;</userinput>
+<computeroutput>
+ a | case
+---+-------
+ 1 | one
+ 2 | two
+ 3 | other
+</computeroutput>
+</screen>
+   </para>
+  </informalexample>
+
+  <para>
+   The data types of all possible <replaceable>result</replaceable>
+   expressions must match.
+  </para>
+
+<synopsis>
+CASE <replaceable>expression</replaceable>
+    WHEN <replaceable>value</replaceable> THEN <replaceable>result</replaceable>
+    <optional>WHEN ...</optional>
+    <optional>ELSE <replaceable>result</replaceable></optional>
+END
+</synopsis>
+
+  <para>
+   This <quote>simple</quote> <token>CASE</token> expression is a
+   specialized variant of the general form above.  The
+   <replaceable>expression</replaceable> is computed and compared to
+   all the <replaceable>value</replaceable>s in the
+   <token>WHEN</token> clauses until one is found that is equal.  If
+   no match is found, the <replaceable>result</replaceable> in the
+   <token>ELSE</token> clause (or NULL) is returned.  This is similar
+   to the <function>switch</function> statement in C.
+  </para>
+
+  <informalexample>
+   <para>
+    The example above can be written using the simple
+    <token>CASE</token> syntax:
+<screen>
+<prompt>=&gt;</prompt> <userinput>SELECT a, CASE a WHEN 1 THEN 'one' WHEN 2 THEN 'two' ELSE 'other' END FROM test;</userinput>
+<computeroutput>
+ a | case
+---+-------
+ 1 | one
+ 2 | two
+ 3 | other
+</computeroutput>
+</screen>
+    </para>
+   </informalexample>
+
+   <bridgehead renderas="sect2">COALESCE</bridgehead>
+
+<synopsis>
+<function>COALESCE</function>(<replaceable>value</replaceable><optional>, ...</optional>)
+</synopsis>
+
+  <para>
+   The <function>COALESCE</function> function returns the first of its
+   arguments that is not NULL.  This is often useful to substitute a
+   default value for NULL values when data is retrieved for display,
+   for example:
+<programlisting>
+SELECT COALESCE(description, short_description, '(none)') ...
+</programlisting>
+  </para>
+
+ <bridgehead renderas="sect2">NULLIF</bridgehead>
+
+<synopsis>
+<function>NULLIF</function>(<replaceable>value1</replaceable>, <replaceable>value2</replaceable>)
+</synopsis>
+
+  <para>
+   The <function>NULLIF</function> function returns NULL if and only
+   if <replaceable>value1</replaceable> and
+   <replaceable>value2</replaceable> are equal.  Otherwise it returns
+   <replaceable>value1</replaceable>.  This can be used to perform the
+   inverse operation of the <function>COALESCE</function> example
+   given above:
+<programlisting>
+SELECT NULLIF(value, '(none)') ...
+</programlisting>
+  </para>
+ </sect1>
+
+
+  <sect1 id="functions-misc">
    <title>Miscellaneous Functions</>
 
    <table>
@@ -1613,14 +2638,14 @@ Not defined by this name. Implements the intersection operator '#'
        <entry>user name of current execution context</>
       </row>
       <row>
-       <entry>user</>
-       <entry>name</>
-       <entry>equivalent to <function>current_user</></>
-      </row>
-      <row>
        <entry>session_user</>
        <entry>name</>
        <entry>session user name</>
+      </row>
+      <row>
+       <entry>user</>
+       <entry>name</>
+       <entry>equivalent to <function>current_user</></>
       </row>
      </tbody>
     </tgroup>
@@ -1651,135 +2676,135 @@ Not defined by this name. Implements the intersection operator '#'
    </note>
   </sect1>
 
-  <sect1 id="aggregate-functions">
+
+ <sect1 id="functions-aggregate">
+  <title>Aggregate Functions</title>
+
+  <note>
+   <title>Author</title>
+   <para>
+    Written by Isaac Wilcox <email>isaac@azartmedia.com</email> on 2000-06-16
+   </para>
+  </note>
+
+  <para>
+   <firstterm>Aggregate functions</firstterm> compute a single result
+   value from a set of input values.  The special syntax
+   considerations for aggregate functions are explained in <xref
+   linkend="syntax-aggregates">.  Consult the <citetitle>PostgreSQL
+   Tutorial</citetitle> for additional introductory information.
+  </para>
+
+  <table tocentry="1">
    <title>Aggregate Functions</title>
 
-   <note>
-    <title>Author</title>
-    <para>
-     Written by <ulink url="mailto:isaac@azartmedia.com">Isaac Wilcox</ulink>
-     on 2000-06-16.
-    </para>
-   </note>
+   <tgroup cols="3">
+    <thead>
+     <row>
+      <entry>Function</entry>
+      <entry>Description</entry>
+      <entry>Notes</entry>
+     </row>
+    </thead>
 
-   <para>
-    <firstterm>Aggregate functions</firstterm> allow the generation of simple
-    statistics about the values of given expressions over the selected set
-    of rows.
-<!--
-	See also <xref linkend="sql" endterm="aggregates-tutorial"> and
-    <xref linkend="syntax" endterm="aggregates-syntax">.
--->
-	See also <xref linkend="syntax" endterm="aggregates-syntax">;
-	refer to
-	the <citetitle>PostgreSQL Tutorial</citetitle> for additional
-	introductory information.
-   </para>
+    <tbody>
+     <row>
+      <entry>AVG(<replaceable class="parameter">expression</replaceable>)</entry>
+      <entry>the average (arithmetic mean) of all input values</entry>
+      <entry>
+       Finding the average value is available on the following data
+       types: <type>smallint</type>, <type>integer</type>,
+       <type>bigint</type>, <type>real</type>, <type>double
+       precision</type>, <type>numeric</type>, <type>interval</type>.
+       The result is of type <type>numeric</type> for any integer type
+       input, <type>double precision</type> for floating point input,
+       otherwise the same as the input data type.
+      </entry>
+     </row>
 
-   <para>
-    <table tocentry="1">
-     <title>Aggregate Functions</title>
-     <tgroup cols="4">
-      <thead>
+     <row>
+      <entry>COUNT(*)</entry>
+      <entry>number of input values</entry>
+      <entry>The return value is of type <type>integer</type>.</entry>
+     </row>
 
-       <row>
-        <entry>Function</entry>
-        <entry>Returns</entry>
-        <entry>Description</entry>
-        <entry>Example</entry>
-        <entry>Notes</entry>
-       </row>
+     <row>
+      <entry>COUNT(<replaceable class="parameter">expression</replaceable>)</entry>
+      <entry>
+       Counts the input values for which the value of <replaceable
+       class="parameter">expression</replaceable> is not NULL.
+      </entry>
+      <entry></entry>
+     </row>
 
-      </thead>
-      <tbody>
-       <row>
-        <entry>COUNT(*)</entry>
-        <entry>int4</entry>
-        <entry>Counts the selected rows.</entry>
-        <entry>COUNT(*)</entry>
-        <entry></entry>
-       </row>
+     <row>
+      <entry>MAX(<replaceable class="parameter">expression</replaceable>)</entry>
+      <entry>the maximum value of <replaceable class="parameter">expression</replaceable> across all input values</entry>
+      <entry>
+       Available for all numeric, string, and date/time types.  The
+       result has the same type as the input expression.
+      </entry>
+     </row>
 
-       <row>
-        <entry>COUNT(<replaceable class="parameter">expression</replaceable>)</entry>
-        <entry>int4</entry>
-        <entry>Counts the selected rows for which the value of
-	<replaceable class="parameter">expression</replaceable> is not
-	NULL.</entry>
-        <entry>COUNT(age)</entry>
-        <entry></entry>
-       </row>
+     <row>
+      <entry>MIN(<replaceable class="parameter">expression</replaceable>)</entry>
+      <entry>the minimum value of <replaceable class="parameter">expression</replaceable> across all input values</entry>
+      <entry>
+       Available for all numeric, string, and date/time types.  The
+       result has the same type as the input expression.
+      </entry>
+     </row>
 
-       <row>
-        <entry>SUM(<replaceable class="parameter">expression</replaceable>)</entry>
-        <entry>Depends on the data type being summed.</entry>
-        <entry>Finds the total obtained by adding the values of <replaceable class="parameter">expression</replaceable> across all selected rows.</entry>
-        <entry>SUM(hours)</entry>
-        <entry>Summation is supported on the following data types: int8, int4,
-	int2, float4, float8, money, interval, numeric.  The result is numeric
-	for any integer type, float8 for either float4 or float8 input,
-	otherwise the same as the input data type.</entry>
-       </row>
+     <row>
+      <entry>STDDEV(<replaceable class="parameter">expression</replaceable>)</entry>
+      <entry>the sample standard deviation of the input values</entry>
+      <entry>
+       Finding the standard deviation is available on the following
+       data types: <type>smallint</type>, <type>integer</type>,
+       <type>bigint</type>, <type>real</type>, <type>double
+       precision</type>, <type>numeric</type>.  The result is of type
+       <type>double precision</type> for floating point input,
+       otherwise <type>numeric</type>.
+      </entry>
+     </row>
 
-       <row>
-        <entry>MAX(<replaceable class="parameter">expression</replaceable>)</entry>
-        <entry>Same as the data type of the input expression.</entry>
-        <entry>The maximum value of <replaceable class="parameter">expression</replaceable> across all selected rows.</entry>
-        <entry>MAX(age)</entry>
-        <entry>Finding the maximum value is supported on the following data types: int8, int4, int2, float4, float8, date, time, timetz, money, timestamp, interval, text, numeric.</entry>
-       </row>
+     <row>
+      <entry>SUM(<replaceable class="parameter">expression</replaceable>)</entry>
+      <entry>sum of <replaceable class="parameter">expression</replaceable> across all input values</entry>
+      <entry>
+       Summation is available on the following data types:
+       <type>smallint</type>, <type>integer</type>,
+       <type>bigint</type>, <type>real</type>, <type>double
+       precision</type>, <type>numeric</type>, <type>interval</type>.
+       The result is of type <type>numeric</type> for any integer type
+       input, <type>double precision</type> for floating point input,
+       otherwise the same as the input data type.
+      </entry>
+     </row>
 
-       <row>
-        <entry>MIN(<replaceable class="parameter">expression</replaceable>)</entry>
-        <entry>Same as the data type of the input expression.</entry>
-        <entry>The minimum value of <replaceable class="parameter">expression</replaceable> across all selected rows.</entry>
-        <entry>MIN(age)</entry>
-        <entry>Finding the minimum value is supported on the following data types: int8, int4, int2, float4, float8, date, time, timetz, money, timestamp, interval, text, numeric.</entry>
-       </row>
+     <row>
+      <entry>VARIANCE(<replaceable class="parameter">expression</replaceable>)</entry>
+      <entry>the sample variance of the input values</entry>
+      <entry>
+       The variance is the square of the standard deviation.  The
+       supported data types are the same.
+      </entry>
+     </row>
 
-       <row>
-        <entry>AVG(<replaceable class="parameter">expression</replaceable>)</entry>
-        <entry>Depends on the data type being averaged.</entry>
-        <entry>The average (mean) of the given values across all selected rows.</entry>
-        <entry>AVG(age+1)</entry>
-        <entry>Finding the mean value is supported on the following data
-	types: int8, int4, int2, float4, float8, interval, numeric.  The
-	result is numeric for any integer type, float8 for either float4 or
-	float8 input, otherwise the same as the input data type.</entry>
-       </row>
+    </tbody>
+   </tgroup>
+  </table>
 
-       <row>
-        <entry>VARIANCE(<replaceable class="parameter">expression</replaceable>)</entry>
-        <entry>Depends on the input data type.</entry>
-        <entry>The sample variance of the given values.</entry>
-        <entry>VARIANCE(reading)</entry>
-        <entry>Finding the variance is supported on the following data
-	types: int8, int4, int2, float4, float8, numeric.  The result is
-	float8 for float4 or float8 input, otherwise numeric.</entry>
-       </row>
+  <para>
+   It should be noted that except for <function>COUNT</function>,
+   these functions return NULL when no rows are selected.  In
+   particular, <function>SUM</function> of no rows returns NULL, not
+   zero as one might expect.
+  </para>
 
-       <row>
-        <entry>STDDEV(<replaceable class="parameter">expression</replaceable>)</entry>
-        <entry>Depends on the input data type.</entry>
-        <entry>The sample standard deviation of the given values.</entry>
-        <entry>STDDEV(reading)</entry>
-        <entry>Finding the standard deviation is supported on the following
-	data types: int8, int4, int2, float4, float8, numeric.  The result is
-	float8 for float4 or float8 input, otherwise numeric.</entry>
-       </row>
+ </sect1>
 
-      </tbody>
-     </tgroup>
-    </table>
-   </para>
-
-   <para>
-    It should be noted that except for COUNT, these functions return NULL
-    when no rows are selected.  In particular, SUM of no rows returns NULL,
-    not zero as one might expect.
-   </para>
-  </sect1>
- </chapter>
+</chapter>
 
 <!-- Keep this comment at the end of the file
 Local variables:
