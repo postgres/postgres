@@ -1,5 +1,5 @@
 <!--
-$PostgreSQL: pgsql/doc/src/sgml/ref/psql-ref.sgml,v 1.113 2004/04/22 01:53:17 momjian Exp $
+$PostgreSQL: pgsql/doc/src/sgml/ref/psql-ref.sgml,v 1.114 2004/04/22 14:33:38 momjian Exp $
 PostgreSQL documentation
 -->
 
@@ -440,7 +440,7 @@ PostgreSQL documentation
       <term><option>--no-psqlrc</></term>
       <listitem>
       <para>
-      Do not read the start-up file <filename>/psql.rc</filename> or
+      Do not read the start-up file <filename>/psqlrc</filename> or
       <filename>~/.psqlrc</filename>.
       </para>
       </listitem>
@@ -1861,7 +1861,7 @@ bar
 	 The autocommit-on mode is <productname>PostgreSQL</>'s traditional
 	 behavior, but autocommit-off is closer to the SQL spec.  If you
 	 prefer autocommit-off, you may wish to set it in the system-wide
-         <filename>psql.rc</filename> or your 
+         <filename>psqlrc</filename> or your 
          <filename>.psqlrc</filename> file.
 	</para>
 	</note>
@@ -2491,9 +2491,9 @@ $endif
     <para>
      Before starting up, <application>psql</application> attempts to
      read and execute commands from the the system-wide
-     <filename>psql.rc</filename> file and the  
+     <filename>psqlrc</filename> file and the  
      <filename>$HOME/.psqlrc</filename> file in the user's home
-     directory.  See <filename><replaceable>PREFIX</>/share/psql.rc.sample</> 
+     directory.  See <filename><replaceable>PREFIX</>/share/psqlrc.sample</> 
      for information on setting up the system-wide file.  It could be used 
      to set up the client or the server to taste (using the <command>\set
      </command> and <command>SET</command> commands).

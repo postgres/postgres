@@ -3,7 +3,7 @@
  *
  * Copyright (c) 2000-2003, PostgreSQL Global Development Group
  *
- * $PostgreSQL: pgsql/src/bin/psql/startup.c,v 1.89 2004/04/22 01:53:37 momjian Exp $
+ * $PostgreSQL: pgsql/src/bin/psql/startup.c,v 1.90 2004/04/22 14:33:49 momjian Exp $
  */
 #include "postgres_fe.h"
 
@@ -45,7 +45,7 @@ int			optreset;
 PsqlSettings pset;
 
 #define PSQLRC 		".psqlrc"
-#define SYSPSQLRC	"psql.rc"
+#define SYSPSQLRC	"psqlrc"
 
 /*
  * Structures to pass information between the option parsing routine
