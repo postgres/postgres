@@ -3,7 +3,7 @@
  *
  * Copyright 2000 by PostgreSQL Global Development Group
  *
- * $Header: /cvsroot/pgsql/src/bin/psql/mainloop.c,v 1.30 2000/05/12 16:13:44 petere Exp $
+ * $Header: /cvsroot/pgsql/src/bin/psql/mainloop.c,v 1.31 2000/06/29 16:27:57 momjian Exp $
  */
 #include "postgres.h"
 #include "mainloop.h"
@@ -18,9 +18,7 @@
 
 #ifndef WIN32
 #include <setjmp.h>
-
 sigjmp_buf	main_loop_jmp;
-
 #endif
 
 
@@ -298,17 +296,12 @@ MainLoop(FILE *source)
 				bslash_count = 0;
 
 		rescan:
-			/* in quote? */
-			if (in_quote)
+			/* start of extended comment? */
+			if (line[i] == '/' && line[i + thislen] == '*')
 			{
-				/* end of quote */
-				if (line[i] == in_quote && bslash_count % 2 == 0)
-					in_quote = '\0';
+				xcomment = true;
+				ADVANCE_1;
 			}
-
-			/* start of quote */
-			else if (!was_bslash && (line[i] == '\'' || line[i] == '"'))
-				in_quote = line[i];
 
 			/* in extended comment? */
 			else if (xcomment)
@@ -320,19 +313,25 @@ MainLoop(FILE *source)
 				}
 			}
 
-			/* start of extended comment? */
-			else if (line[i] == '/' && line[i + thislen] == '*')
-			{
-				xcomment = true;
-				ADVANCE_1;
-			}
-
 			/* single-line comment? truncate line */
 			else if (line[i] == '-' && line[i + thislen] == '-')
 			{
 				line[i] = '\0'; /* remove comment */
 				break;
 			}
+
+			/* in quote? */
+			else if (in_quote)
+			{
+				/* end of quote */
+				if (line[i] == in_quote && bslash_count % 2 == 0)
+					in_quote = '\0';
+			}
+
+			/* start of quote */
+			else if (!was_bslash &&
+					 (line[i] == '\'' || line[i] == '"'))
+				in_quote = line[i];
 
 			/* count nested parentheses */
 			else if (line[i] == '(')
