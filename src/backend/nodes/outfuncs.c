@@ -6,7 +6,7 @@
  * Portions Copyright (c) 1996-2000, PostgreSQL, Inc
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- *	$Header: /cvsroot/pgsql/src/backend/nodes/outfuncs.c,v 1.114 2000/04/12 17:15:16 momjian Exp $
+ *	$Header: /cvsroot/pgsql/src/backend/nodes/outfuncs.c,v 1.115 2000/04/26 23:39:10 tgl Exp $
  *
  * NOTES
  *	  Every (plan) node in POSTGRES has an associated "out" routine which
@@ -598,15 +598,19 @@ _outGroup(StringInfo str, Group *node)
 static void
 _outUnique(StringInfo str, Unique *node)
 {
+	int		i;
+
 	appendStringInfo(str, " UNIQUE ");
 	_outPlanInfo(str, (Plan *) node);
 
-	appendStringInfo(str, " :nonameid %u :keycount %d :numCols %d ",
+	appendStringInfo(str, " :nonameid %u :keycount %d :numCols %d :uniqColIdx ",
 					 node->nonameid,
 					 node->keycount,
 					 node->numCols);
-}
 
+	for (i = 0; i < node->numCols; i++)
+		appendStringInfo(str, "%d ", (int) node->uniqColIdx[i]);
+}
 
 /*
  *	Hash is a subclass of Noname
