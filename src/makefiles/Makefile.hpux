@@ -1,13 +1,28 @@
 HPUX_MAJOR= $(shell uname -r|sed 's/^[^.]*\.\([^.]*\).*/\1/')
+# Distinguish HPUX 10 (and later) from HPUX 9
+ifneq ($(HPUX_MAJOR), 09)
+   CFLAGS+= -DHPUX_10
+endif
+
 # HP-UX 10 has a select() in libcurses, so we need to get the libc version first
-ifeq ($(HPUX_MAJOR), 10)
+# We also want to be sure we get the POSIX signal routines in libc,
+# not the BSD-like ones in libBSD.
+ifneq ($(HPUX_MAJOR), 09)
    LDFLAGS:= -Wl,-E -lc $(LDFLAGS)
 endif
 
-# HP-UX 09 needs libc before libPW, so we need to get the libc version first
+# HP-UX 09 provides rint() only in PA1.1 version of libm, so add -L command
+# to get that version. (CAUTION: you need PHSS_4630 to have a working version
+# of rint()!)  Also, libPW exists on this platform but is not helpful, so
+# delete it from LDFLAGS.
+# NOTE: libBSD must be loaded before libc to get BSD signal() semantics.
 ifeq ($(HPUX_MAJOR), 09)
-   LDFLAGS:= -Wl,-E $(LDFLAGS:-lPW=-lc -lPW)
+   LDFLAGS:= -Wl,-E -L /lib/pa1.1 $(LDFLAGS:-lPW=)
 endif
+
+# On all HPUX versions, embed LIBDIR as the shared library search path
+# so that the executables don't need SHLIB_PATH to be set.
+LDFLAGS+= -Wl,+b -Wl,$(LIBDIR)
 
 # Does anyone use this stuff?
 #ifdef ENFORCE_ALIGNMENT

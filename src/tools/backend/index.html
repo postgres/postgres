@@ -123,7 +123,7 @@ HREF="../../include/storage/lock.h">LOCKMETHODCTL</A>).
 HREF="../../include/storage/lock.h">LOCK</A> structure, looked up using
 relation, database object ids(<A
 HREF="../../include/storage/lock.h">LOCKTAG)</A>.  The lock table structure contains the
-lock modes(read, write) and circular linked list of backends (<A
+lock modes(read/write or shared/exclusive) and circular linked list of backends (<A
 HREF="../../include/storage/proc.h">PROC</A> structure pointers) waiting
 on the lock.
 <LI>MultiLevelLockTable (xid hash) - lookup of LOCK structure address
