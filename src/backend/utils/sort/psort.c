@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *    $Header: /cvsroot/pgsql/src/backend/utils/sort/Attic/psort.c,v 1.9 1997/08/06 07:02:48 momjian Exp $
+ *    $Header: /cvsroot/pgsql/src/backend/utils/sort/Attic/psort.c,v 1.10 1997/08/06 07:39:20 momjian Exp $
  *
  * NOTES
  *      Sorts the first relation into the second relation.
@@ -587,7 +587,7 @@ dumptuples(FILE *file, Sort *node)
 	FREEMEM(node,sizeof (struct leftist));
 	FREE(tp);
 	if (PS(node)->using_tape_files) {
-	    PUTTUP(node, tup, PS(node)->Tape->tp_file);
+	    PUTTUP(node, tup, file);
 	    FREEMEM(node,tup->t_len);
 	    FREE(tup);
 	}
