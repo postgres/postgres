@@ -6,7 +6,7 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: index.h,v 1.4 1996/11/13 20:50:49 scrappy Exp $
+ * $Id: index.h,v 1.5 1997/03/19 07:36:35 vadim Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -31,7 +31,7 @@ extern void InitIndexStrategy(int numatts,
 extern void index_create(char *heapRelationName, 
 			 char* indexRelationName,
 			 FuncIndexInfo *funcInfo, 
-			 TypeName *IndexKeyType,
+			 List *attributeList,
 			 Oid accessMethodObjectId,
 			 int numatts, 
 			 AttrNumber attNums[],
