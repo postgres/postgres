@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/interfaces/libpq/fe-connect.c,v 1.85 1998/10/13 20:44:49 scrappy Exp $
+ *	  $Header: /cvsroot/pgsql/src/interfaces/libpq/fe-connect.c,v 1.86 1998/10/14 05:31:48 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -141,6 +141,9 @@ static struct EnvironmentOptions
 	},
 	{
 		"PGGEQO", "geqo"
+	},
+	{
+		"PGQUERY_LIMIT", "query_limit"
 	},
 	{
 		NULL

@@ -1,6 +1,6 @@
 .\" This is -*-nroff-*-
 .\" XXX standard disclaimer belongs here....
-.\" $Header: /cvsroot/pgsql/src/man/Attic/libpq.3,v 1.24 1998/08/15 16:36:21 thomas Exp $
+.\" $Header: /cvsroot/pgsql/src/man/Attic/libpq.3,v 1.25 1998/10/14 05:31:50 momjian Exp $
 .TH LIBPQ INTRO 08/08/98 PostgreSQL PostgreSQL
 .SH DESCRIPTION
 Current documentation for this topic is available in the new Programmer's Guide
@@ -106,6 +106,10 @@ sets the default cost for heap searches for the optimizer.
 \(bu
 .B PGCOSTINDEX
 sets the default cost for indexed searches for the optimizer.
+\(bu
+.B PGQUERY_LIMIT
+sets the maximum number of rows returned by a query.
+.sp
 
 .PP
 See the
