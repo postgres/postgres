@@ -26,7 +26,7 @@
 #
 #
 # IDENTIFICATION
-#    $Header: /cvsroot/pgsql/src/bin/initdb/Attic/initdb.sh,v 1.38 1998/03/16 05:58:46 momjian Exp $
+#    $Header: /cvsroot/pgsql/src/bin/initdb/Attic/initdb.sh,v 1.39 1998/03/22 18:28:39 scrappy Exp $
 #
 #-------------------------------------------------------------------------
 
@@ -348,8 +348,7 @@ echo
 
 # If the COPY is first, the VACUUM generates an error, so we vacuum first
 echo "vacuuming template1"
-echo "vacuum" | postgres -F -Q -D$PGDATA template1 2>&1 > /dev/null |\
-	grep -v "^DEBUG:"
+echo "vacuum" | postgres -o /dev/null -F -Q -D$PGDATA template1 
 
 echo "COPY pg_shadow TO '$PGDATA/pg_pwd' USING DELIMITERS '\\t'" |\
 	postgres -F -Q -D$PGDATA template1 2>&1 > /dev/null |\
@@ -390,6 +389,4 @@ echo "REVOKE ALL on pg_shadow FROM public" |\
 echo "loading pg_description"
 echo "copy pg_description from '$TEMPLATE_DESCR'" | postgres -F -Q -D$PGDATA template1 > /dev/null
 echo "copy pg_description from '$GLOBAL_DESCR'" | postgres -F -Q -D$PGDATA template1 > /dev/null
-echo "vacuum analyze" | postgres -F -Q -D$PGDATA template1 2>&1 > /dev/null |\
-	grep -v "^DEBUG:"
-
+echo "vacuum analyze" | postgres -o /dev/null -F -Q -D$PGDATA template1
