@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/mmgr/portalmem.c,v 1.36 2000/04/12 17:16:10 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/mmgr/portalmem.c,v 1.36.2.1 2000/11/10 04:08:25 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -412,6 +412,12 @@ PortalNameIsSpecial(char *pname)
 	if (strcmp(pname, VACPNAME) == 0)
 		return true;
 	if (strcmp(pname, TRUNCPNAME) == 0)
+		return true;
+	/*
+	 * Quick hack for 7.0.3: treat hashtable portals as special
+	 * so that CollectNamedPortals() won't try to delete them.
+	 */
+	if (strncmp(pname, "<hashtable ", 11) == 0)
 		return true;
 	return false;
 }
