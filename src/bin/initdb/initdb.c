@@ -1,11 +1,9 @@
-
 /*-------------------------------------------------------------------------
  *
  * initdb
  *
  * author: Andrew Dunstan	   mailto:andrew@dunslane.net
  *
- * Copyright (C) 2003 Andrew Dunstan
  * Portions Copyright (c) 1996-2003, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
@@ -14,7 +12,7 @@
  * This is a C implementation of the previous shell script for setting up a
  * PostgreSQL cluster location, and should be highly compatible with it.
  *
- * $Header: /cvsroot/pgsql/src/bin/initdb/initdb.c,v 1.1 2003/11/10 22:51:16 momjian Exp $
+ * $Header: /cvsroot/pgsql/src/bin/initdb/initdb.c,v 1.2 2003/11/10 22:52:10 momjian Exp $
  *
  * TODO:
  *	 - clean up find_postgres code and return values
@@ -53,7 +51,6 @@ char	   *bindir = PGBINDIR;
 char	   *datadir = PGDATADIR;
 
 /* values to be obtained from arguments */
-
 char	   *pg_data = "";
 char	   *encoding = "";
 char	   *locale = "";
@@ -93,8 +90,8 @@ char		infoversion[100];
 bool		not_ok = false;
 
 /* defaults */
-int			n_buffers = 50;
 int			n_connections = 10;
+int			n_buffers = 50;
 
 
 /* platform specific path stuff */
@@ -104,13 +101,13 @@ int			n_connections = 10;
 #else
 #define EXE ""
 #define DEVNULL "/dev/null"
-#endif   /* defined(__CYGWIN__) || defined(WIN32) */
+#endif
 
 #ifdef WIN32
 #define PATHSEP ';'
 #else
 #define PATHSEP ':'
-#endif   /* WIN32 */
+#endif
 
 /* detected path to postgres and (we assume) friends */
 char	   *pgpath;
@@ -118,23 +115,20 @@ char	   *pgpath;
 /* forward declare all our functions */
 static bool rmtree(char *, bool);
 static void exit_nicely(void);
-static void canonicalise_path(char *);
+static void canonicalize_path(char *);
 
 #ifdef WIN32
 static char *expanded_path(char *);
-static int	init_unlink(const char *);
-
 #else
-#define expanded_path(x) ( x )
-#define init_unlink(x) unlink( (x) )
-#endif   /* WIN32 */
+#define expanded_path(x) (x)
+#endif
 
 static char **readfile(char *);
 static void writefile(char *, char **);
 static char *get_id(void);
 static char *get_encoding_id(char *);
 static char *get_short_version(void);
-static int	build_path(char *, mode_t);
+static int	mkdir_p(char *, mode_t);
 static bool check_data_dir(void);
 static bool mkdatadir(char *);
 static bool chklocale(const char *);
@@ -151,7 +145,7 @@ static void test_connections(void);
 static void setup_config(void);
 static void bootstrap_template1(char *);
 static void setup_shadow(void);
-static void get_set_pw(void);
+static void get_set_pwd(void);
 static void unlimit_systables(void);
 static void setup_depend(void);
 static void setup_sysviews(void);
@@ -171,60 +165,41 @@ static void *xmalloc(size_t);
 /*
  * macros for running pipes to postgres
  */
-
 #define PG_CMD_DECL		char cmd[MAXPGPATH]; char ** line ; FILE * pg
 #define PG_CMD_DECL_NOLINE		   char cmd[MAXPGPATH]; FILE * pg
-#define PG_CMD_OPEN		\
-	do {\
-		  pg = popen(cmd,PG_BINARY_W);\
-		  if (pg == NULL) \
-			exit_nicely();\
-	} while (0)
-#define PG_CMD_CLOSE	\
-	do {\
-		 if(pclose(pg)>>8 &0xff)\
-			exit_nicely();\
-	} while (0)
-#define PG_CMD_PUTLINE	\
-	do {\
+
+#define PG_CMD_OPEN \
+do { \
+		  pg = popen(cmd,PG_BINARY_W); \
+		  if (pg == NULL)  \
+			exit_nicely(); \
+} while (0)
+
+#define PG_CMD_CLOSE \
+do { \
+		 if(pclose(pg) >> 8 & 0xff) \
+			exit_nicely(); \
+} while (0)
+
+#define PG_CMD_PUTLINE \
+do { \
 		 if (fputs(*line, pg) < 0) \
 		   exit_nicely(); \
-		 fflush(pg);\
-	} while (0)
+		 fflush(pg); \
+} while (0)
 
-
-
-
-#ifdef WIN32
-
-/* workaround for win32 unlink bug, not using logging like in port/dirmod.c */
-
-/* make sure we call the real unlink from MSVCRT */
-
-#ifdef unlink
-#undef unlink
+#ifndef WIN32
+#define QUOTE_PATH	""
+#else
+#define QUOTE_PATH	"\""
 #endif
 
-static int
-init_unlink(const char *path)
-{
-	while (unlink(path))
-	{
-		if (errno != EACCES)
-			return -1;
-		Sleep(100);				/* ms */
-	}
-	return 0;
-}
-#endif   /* WIN32 */
-
 /*
- * routines to check mem allocations and fail noisily
+ * routines to check mem allocations and fail noisily.
  * Note that we can't call exit_nicely() on a memory failure, as it calls
  * rmtree() which needs memory allocation. So we just exit with a bang.
  *
  */
-
 static void *
 xmalloc(size_t size)
 {
@@ -263,84 +238,31 @@ xstrdup(const char *s)
 static bool
 rmtree(char *path, bool rmtopdir)
 {
-	char		filepath[MAXPGPATH];
-	DIR		   *dir;
-	struct dirent *file;
-	char	  **filenames;
-	char	  **filename;
-	int			numnames = 0;
-	struct stat statbuf;
+	char		buf[MAXPGPATH + 64];
 
-	/*
-	 * we copy all the names out of the directory before we start
-	 * modifying it.
-	 *
-	 */
+#ifndef WIN32
+	/* doesn't handle .* files */
+	snprintf(buf, sizeof(buf), "rm -rf '%s%s'", path,
+		rmtopdir ? "" : "/*");
+#else
+	snprintf(buf, sizeof(buf), "%s /s /q \"%s\"",
+		rmtopdir ? "rmdir" : "del", path);
+#endif
 
-	dir = opendir(path);
-	if (dir == NULL)
-		return false;
-
-	while ((file = readdir(dir)) != NULL)
-	{
-		if (strcmp(file->d_name, ".") != 0 && strcmp(file->d_name, "..") != 0)
-			numnames++;
-	}
-
-	rewinddir(dir);
-
-	filenames = xmalloc((numnames + 2) * sizeof(char *));
-	numnames = 0;
-
-	while ((file = readdir(dir)) != NULL)
-	{
-		if (strcmp(file->d_name, ".") != 0 && strcmp(file->d_name, "..") != 0)
-			filenames[numnames++] = xstrdup(file->d_name);
-	}
-
-	filenames[numnames] = NULL;
-
-	closedir(dir);
-
-	/* now we have the names we can start removing things */
-
-	for (filename = filenames; *filename; filename++)
-	{
-		snprintf(filepath, MAXPGPATH, "%s/%s", path, *filename);
-
-		if (stat(filepath, &statbuf) != 0)
-			return false;
-
-		if (S_ISDIR(statbuf.st_mode))
-		{
-			/* call ourselves recursively for a directory */
-			if (!rmtree(filepath, true))
-				return false;
-		}
-		else
-		{
-			if (init_unlink(filepath) != 0)
-				return false;
-		}
-	}
-
-	if (rmtopdir)
-	{
-		if (rmdir(path) != 0)
-			return false;
-	}
-
-	return true;
+	return !system(buf);
 }
 
 
 /*
  * make all paths look like unix, with forward slashes
- * also strip any trailing slash
+ * also strip any trailing slash.
+ * The Windows command processor will accept suitably quoted paths
+ * with forward slashes, but barfs badly with mixed forward and back
+ * slashes. Removing the trailing slash on a path means we never get
+ * ugly double slashes.
  */
-
 static void
-canonicalise_path(char *path)
+canonicalize_path(char *path)
 {
 	char	   *p;
 
@@ -349,7 +271,7 @@ canonicalise_path(char *path)
 #ifdef WIN32
 		if (*p == '\\')
 			*p = '/';
-#endif   /* WIN32 */
+#endif
 	}
 	if (p != path && *--p == '/')
 		*p = '\0';
@@ -361,7 +283,6 @@ canonicalise_path(char *path)
  * This does most of what sed was used for in the shell script, but
  * doesn't need any regexp stuff.
  */
-
 static char **
 replace_token(char **lines, char *token, char *replacement)
 {
@@ -371,7 +292,6 @@ replace_token(char **lines, char *token, char *replacement)
 	int			toklen,
 				replen,
 				diff;
-
 
 	for (i = 0; lines[i]; i++)
 		numlines++;
@@ -431,9 +351,7 @@ readfile(char *path)
 	char	   *buffer;
 	int			c;
 
-	infile = fopen(path, "r");
-
-	if (!infile)
+	if ((infile = fopen(path, "r")) == NULL)
 	{
 		fprintf(stderr, "could not read %s ... ", path);
 		exit_nicely();
@@ -491,8 +409,8 @@ writefile(char *path, char **lines)
 	FILE	   *out_file;
 	char	  **line;
 
-	out_file = fopen(path, PG_BINARY_W);
-	if (out_file == NULL)
+	;
+	if ((out_file = fopen(path, PG_BINARY_W)) == NULL)
 	{
 		fprintf(stderr, "could not write %s ... ", path);
 		exit_nicely();
@@ -515,9 +433,8 @@ writefile(char *path, char **lines)
  * we also assume it isn't null.
  *
  */
-
 static int
-build_path(char *path, mode_t omode)
+mkdir_p(char *path, mode_t omode)
 {
 	struct stat sb;
 	mode_t		numask,
@@ -532,7 +449,6 @@ build_path(char *path, mode_t omode)
 	retval = 0;
 
 #ifdef WIN32
-
 	/* skip network and drive specifiers for win32 */
 	if (strlen(p) >= 2)
 	{
@@ -551,7 +467,7 @@ build_path(char *path, mode_t omode)
 			p += 2;
 		}
 	}
-#endif   /* WIN32 */
+#endif
 
 	if (p[0] == '/')			/* Skip leading '/'. */
 		++p;
@@ -614,7 +530,7 @@ build_path(char *path, mode_t omode)
 	}
 	if (!first && !last)
 		(void) umask(oumask);
-	return (retval);
+	return retval;
 }
 
 /*
@@ -673,7 +589,7 @@ get_id(void)
 				progname);
 		exit(1);
 	}
-#endif   /* __BEOS__ */
+#endif
 
 #else							/* the windows code */
 
@@ -687,7 +603,7 @@ get_id(void)
 
 	pw->pw_uid = 1;
 	GetUserName(pw->pw_name, &pwname_size);
-#endif   /* ! WIN32 */
+#endif
 
 	return xstrdup(pw->pw_name);
 }
@@ -785,7 +701,7 @@ check_data_dir(void)
 
 	closedir(chkdir);
 
-	return (empty);
+	return empty;
 }
 
 /*
@@ -812,7 +728,7 @@ mkdatadir(char *subdir)
 	else if (subdir == NULL || errno != ENOENT)
 		return false;
 	else
-		return !build_path(path, 0700);
+		return !mkdir_p(path, 0700);
 }
 
 
@@ -853,7 +769,6 @@ check_input(char *path)
  * don't overkill
  *
  */
-
 #define FIND_SUCCESS 0
 #define FIND_NOT_FOUND 1
 #define FIND_STAT_ERR 2
@@ -875,10 +790,8 @@ find_postgres(char *path)
 	char		line[100];
 
 #ifndef WIN32
-
 	int			permmask = S_IROTH | S_IXOTH;
 #endif
-
 
 	struct stat statbuf;
 	FILE	   *pgver;
@@ -900,12 +813,13 @@ find_postgres(char *path)
 		return FIND_NOT_REGFILE;
 
 #ifndef WIN32
-
-	/* on windows a .exe file should be executable - this is the unix test */
-
+	/*
+	 * Only unix requires this test, on WIN32 an .exe file should be
+	 * executable
+	 */
 	if ((statbuf.st_mode & permmask) != permmask)
 		return FIND_BAD_PERM;
-#endif   /* ! WIN32 */
+#endif
 
 	snprintf(cmd, MAXPGPATH, "\"%s/postgres\" -V 2>%s", path, DEVNULL);
 
@@ -913,10 +827,7 @@ find_postgres(char *path)
 		return FIND_EXEC_ERR;
 
 	if (fgets(line, sizeof(line), pgver) == NULL)
-	{
 		perror("fgets failure");
-
-	}
 
 	pclose(pgver);
 
@@ -926,14 +837,12 @@ find_postgres(char *path)
 	return FIND_SUCCESS;
 }
 
-#ifdef WIN32
-
 /*
  * Windows doesn't like relative paths to executables (other things work fine)
  * so we call its builtin function to expand them. Elsewhere this is a NOOP
  *
  */
-
+#ifdef WIN32
 static char *
 expanded_path(char *path)
 {
@@ -944,10 +853,10 @@ expanded_path(char *path)
 		perror("expanded path");
 		return path;
 	}
-	canonicalise_path(abspath);
+	canonicalize_path(abspath);
 	return xstrdup(abspath);
 }
-#endif   /* WIN32 */
+#endif 
 
 /*
  * set the paths pointing to postgres
@@ -992,7 +901,7 @@ set_paths(void)
 				}
 				else
 				{
-					canonicalise_path(cursor);
+					canonicalize_path(cursor);
 					pathbits[pathsegs] = cursor;
 				}
 				pathsegs++;
@@ -1024,7 +933,7 @@ set_paths(void)
 		char	   *cbindir;
 
 		cbindir = xstrdup(bindir);
-		canonicalise_path(cbindir);
+		canonicalize_path(cbindir);
 		res = find_postgres(expanded_path(cbindir));
 		if (res == 0)
 			pgpath = expanded_path(cbindir);
@@ -1078,36 +987,6 @@ set_null_conf(void)
 }
 
 /*
- * check how many buffers we can run with
- *
- */
-static void
-test_buffers(void)
-{
-	char	   *format =
-	"\"%s/postgres\"  -boot -x 0 -F "
-	"-c shared_buffers=%d -c max_connections=5 template1 <%s >%s 2>&1";
-	char		cmd[MAXPGPATH];
-	int			bufs[] =
-	{1000, 900, 800, 700, 600, 500, 400, 300, 200, 100, 50};
-	int			len = sizeof(bufs) / sizeof(int);
-	int			i,
-				status;
-
-	for (i = 0; i < len; i++)
-	{
-		snprintf(cmd, sizeof(cmd), format, pgpath, bufs[i], DEVNULL, DEVNULL);
-		status = system(cmd);
-		if (status == 0)
-			break;
-	}
-	if (i >= len)
-		i = len - 1;
-	n_buffers = bufs[i];
-	printf("buffers set to %d\n", n_buffers);
-}
-
-/*
  * check how many connections we can sustain
  *
  */
@@ -1126,7 +1005,7 @@ test_connections(void)
 	for (i = 0; i < len; i++)
 	{
 		snprintf(cmd, sizeof(cmd), format,
-				 pgpath, n_buffers, conns[i], DEVNULL, DEVNULL);
+				 pgpath, conns[i] * 5, conns[i], DEVNULL, DEVNULL);
 		status = system(cmd);
 		if (status == 0)
 			break;
@@ -1135,6 +1014,36 @@ test_connections(void)
 		i = len - 1;
 	n_connections = conns[i];
 	printf("connections set to %d\n", n_connections);
+}
+
+/*
+ * check how many buffers we can run with
+ *
+ */
+static void
+test_buffers(void)
+{
+	char	   *format =
+	"\"%s/postgres\"  -boot -x 0 -F "
+	"-c shared_buffers=%d -c max_connections=%d template1 <%s >%s 2>&1";
+	char		cmd[MAXPGPATH];
+	int			bufs[] = {1000, 900, 800, 700, 600, 500, 400, 300, 200, 100, 50};
+	int			len = sizeof(bufs) / sizeof(int);
+	int			i,
+				status;
+
+	for (i = 0; i < len; i++)
+	{
+		snprintf(cmd, sizeof(cmd), format, pgpath, bufs[i], n_connections,
+			DEVNULL, DEVNULL);
+		status = system(cmd);
+		if (status == 0)
+			break;
+	}
+	if (i >= len)
+		i = len - 1;
+	n_buffers = bufs[i];
+	printf("buffers set to %d\n", n_buffers);
 }
 
 /*
@@ -1155,11 +1064,11 @@ setup_config(void)
 
 	conflines = readfile(conf_file);
 
-	snprintf(repltok, sizeof(repltok), "shared_buffers = %d", n_buffers);
-	conflines = replace_token(conflines, "#shared_buffers = 1000", repltok);
-
 	snprintf(repltok, sizeof(repltok), "max_connections = %d", n_connections);
 	conflines = replace_token(conflines, "#max_connections = 100", repltok);
+
+	snprintf(repltok, sizeof(repltok), "shared_buffers = %d", n_buffers);
+	conflines = replace_token(conflines, "#shared_buffers = 1000", repltok);
 
 	snprintf(repltok, sizeof(repltok), "lc_messages = '%s'", lc_messages);
 	conflines = replace_token(conflines, "#lc_messages = 'C'", repltok);
@@ -1190,7 +1099,7 @@ setup_config(void)
 	conflines = replace_token(conflines,
 							  "host    all         all         ::1",
 							  "#host    all         all         ::1");
-#endif   /* ! HAVE_IPV6 */
+#endif
 
 	snprintf(path, MAXPGPATH, "%s/pg_hba.conf", pg_data);
 
@@ -1211,7 +1120,6 @@ setup_config(void)
 	free(conflines);
 
 	check_ok();
-
 }
 
 
@@ -1258,7 +1166,6 @@ bootstrap_template1(char *short_version)
 	 * already called setlocale().
 	 *
 	 */
-
 	snprintf(cmd, MAXPGPATH, "LC_COLLATE=%s", lc_collate);
 	putenv(xstrdup(cmd));
 
@@ -1337,23 +1244,23 @@ setup_shadow(void)
  *
  */
 static void
-get_set_pw(void)
+get_set_pwd(void)
 {
 	PG_CMD_DECL_NOLINE;
 
-	char	   *pw1,
-			   *pw2;
-	char		pwpath[MAXPGPATH];
+	char	   *pwd1,
+			   *pwd2;
+	char		pwdpath[MAXPGPATH];
 	struct stat statbuf;
 
-	pw1 = simple_prompt("Enter new superuser password: ", 100, false);
-	pw2 = simple_prompt("Enter it again: ", 100, false);
-	if (strcmp(pw1, pw2) != 0)
+	pwd1 = simple_prompt("Enter new superuser password: ", 100, false);
+	pwd2 = simple_prompt("Enter it again: ", 100, false);
+	if (strcmp(pwd1, pwd2) != 0)
 	{
 		fprintf(stderr, "Passwords didn't match.\n");
 		exit_nicely();
 	}
-	free(pw2);
+	free(pwd2);
 
 	printf("storing the password ... ");
 
@@ -1365,7 +1272,7 @@ get_set_pw(void)
 	PG_CMD_OPEN;
 
 	if (fprintf(
-	   pg, "ALTER USER \"%s\" WITH PASSWORD '%s';\n", username, pw1) < 0)
+	   pg, "ALTER USER \"%s\" WITH PASSWORD '%s';\n", username, pwd1) < 0)
 	{
 		/* write failure */
 		exit_nicely();
@@ -1374,8 +1281,8 @@ get_set_pw(void)
 
 	PG_CMD_CLOSE;
 
-	snprintf(pwpath, MAXPGPATH, "%s/global/pg_pwd", pg_data);
-	if (stat(pwpath, &statbuf) != 0 || !S_ISREG(statbuf.st_mode))
+	snprintf(pwdpath, MAXPGPATH, "%s/global/pg_pwd", pg_data);
+	if (stat(pwdpath, &statbuf) != 0 || !S_ISREG(statbuf.st_mode))
 	{
 		fprintf(stderr,
 				"%s: The password file was not generated - "
@@ -1898,7 +1805,6 @@ make_template0(void)
  * So this will need some testing on Windows.
  *
  */
-
 static void
 trapsig(int signum)
 {
@@ -2009,7 +1915,7 @@ setlocales(void)
 		/* when not available, get the CTYPE setting */
 		lc_messages = xstrdup(setlocale(LC_CTYPE, NULL));
 	}
-#endif   /* LC_MESSAGES */
+#endif
 
 }
 
@@ -2017,7 +1923,6 @@ setlocales(void)
  * help text data
  *
  */
-
 char	   *usage_text[] = {
 	"$CMDNAME initializes a PostgreSQL database cluster.\n",
 	"\n",
@@ -2117,12 +2022,12 @@ main(int argc, char *argv[])
 
 #if defined(__CYGWIN__) || defined(WIN32)
 	char	   *exe;			/* location of exe suffix in progname */
-#endif   /* defined(__CYGWIN__) || defined(WIN32) */
+#endif
 
 	setlocale(LC_ALL, "");
 
 	carg0 = xstrdup(argv[0]);
-	canonicalise_path(carg0);
+	canonicalize_path(carg0);
 
 	lastsep = strrchr(carg0, '/');
 	progname = lastsep ? xstrdup(lastsep + 1) : carg0;
@@ -2135,7 +2040,7 @@ main(int argc, char *argv[])
 		/* strip .exe suffix, regardless of case */
 		*exe = '\0';
 	}
-#endif   /* defined(__CYGWIN__) || defined(WIN32) */
+#endif
 
 	if (lastsep)
 	{
@@ -2253,7 +2158,7 @@ main(int argc, char *argv[])
 		}
 	}
 
-	canonicalise_path(pg_data);
+	canonicalize_path(pg_data);
 
 	/*
 	 * we have to set PGDATA for postgres rather than pass it on the
@@ -2317,7 +2222,6 @@ main(int argc, char *argv[])
 	set_input(&features_file, "sql_features.txt");
 	set_input(&system_views_file, "system_views.sql");
 
-
 	if (show_setting || debug)
 	{
 		fprintf(stderr,
@@ -2335,10 +2239,8 @@ main(int argc, char *argv[])
 				hba_file, ident_file);
 	}
 
-
 	if (show_setting)
 		exit(0);
-
 
 	check_input(bki_file);
 	check_input(desc_file);
@@ -2388,17 +2290,16 @@ main(int argc, char *argv[])
 	/* some of these are not valid on Windows */
 #ifdef SIGHUP
 	pqsignal(SIGHUP, trapsig);
-#endif   /* SIGHUP */
+#endif
 #ifdef SIGINT
 	pqsignal(SIGINT, trapsig);
-#endif   /* SIGINT */
+#endif
 #ifdef SIGQUIT
 	pqsignal(SIGQUIT, trapsig);
-#endif   /* SIGQUIT */
+#endif
 #ifdef SIGTERM
 	pqsignal(SIGTERM, trapsig);
-#endif   /* SIGTERM */
-
+#endif
 
 	/* clear this we'll use it in a few lines */
 	errno = 0;
@@ -2420,7 +2321,6 @@ main(int argc, char *argv[])
 	 * check_data_dir() called opendir - the errno should still be hanging
 	 * around
 	 */
-
 	if (errno == ENOENT)
 	{
 		printf("creating directory \"%s\" ... ", pg_data);
@@ -2447,9 +2347,9 @@ main(int argc, char *argv[])
 
 	set_null_conf();
 
-	test_buffers();
-
+	/* test connections first because it has more constraints */
 	test_connections();
+	test_buffers();
 
 	setup_config();
 
@@ -2458,9 +2358,8 @@ main(int argc, char *argv[])
 	set_short_version(short_version, "base/1");
 
 	setup_shadow();
-
 	if (pwprompt)
-		get_set_pw();
+		get_set_pwd();
 
 	unlimit_systables();
 
@@ -2480,14 +2379,12 @@ main(int argc, char *argv[])
 
 	make_template0();
 
-	printf("\n"
-		   "Success. You can now start the database server using:\n"
-		   "\n"
-		   "    \"%s/postmaster\" -D \"%s\"\n"
+	printf("\nSuccess. You can now start the database server using:\n\n"
+		   "    %s%s%s/postmaster -D %s%s%s\n"
 		   "or\n"
-		   "    \"%s/pg_ctl\" -D \"%s\" -l logfile start\n"
-		   "\n",
-		   pgpath, pg_data, pgpath, pg_data);
+		   "    %s%s%s/pg_ctl -D %s%s%s -l logfile start\n\n",
+			QUOTE_PATH, pgpath, QUOTE_PATH, QUOTE_PATH, pg_data, QUOTE_PATH,
+			QUOTE_PATH, pgpath, QUOTE_PATH, QUOTE_PATH, pg_data, QUOTE_PATH);
 
 	return 0;
 }
