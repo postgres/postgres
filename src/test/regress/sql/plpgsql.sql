@@ -1561,6 +1561,89 @@ SELECT * FROM test_ret_rec_dyn(1500) AS (a int, b int, c int);
 SELECT * FROM test_ret_rec_dyn(5) AS (a int, b numeric, c text);
 
 --
+-- Test handling of OUT parameters, including polymorphic cases
+--
+
+-- wrong way to do it:
+create function f1(in i int, out j int) returns int as $$
+begin
+  return i+1;
+end$$ language plpgsql;
+
+create function f1(in i int, out j int) as $$
+begin
+  j := i+1;
+  return;
+end$$ language plpgsql;
+
+select f1(42);
+select * from f1(42);
+
+create or replace function f1(inout i int) as $$
+begin
+  i := i+1;
+  return;
+end$$ language plpgsql;
+
+select f1(42);
+select * from f1(42);
+
+drop function f1(int);
+
+create function f1(in i int, out j int) returns setof int as $$
+begin
+  j := i+1;
+  return next;
+  j := i+2;
+  return next;
+  return;
+end$$ language plpgsql;
+
+select * from f1(42);
+
+drop function f1(int);
+
+create function f1(in i int, out j int, out k text) as $$
+begin
+  j := i;
+  j := j+1;
+  k := 'foo';
+  return;
+end$$ language plpgsql;
+
+select f1(42);
+select * from f1(42);
+
+drop function f1(int);
+
+create function f1(in i int, out j int, out k text) returns setof record as $$
+begin
+  j := i+1;
+  k := 'foo';
+  return next;
+  j := j+1;
+  k := 'foot';
+  return next;
+  return;
+end$$ language plpgsql;
+
+select * from f1(42);
+
+drop function f1(int);
+
+create function dup(in i anyelement, out j anyelement, out k anyarray) as $$
+begin
+  j := i;
+  k := array[j,j];
+  return;
+end$$ language plpgsql;
+
+select * from dup(42);
+select * from dup('foo'::text);
+
+drop function dup(anyelement);
+
+--
 -- test PERFORM
 --
 

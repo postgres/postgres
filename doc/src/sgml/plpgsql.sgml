@@ -1,5 +1,5 @@
 <!--
-$PostgreSQL: pgsql/doc/src/sgml/plpgsql.sgml,v 1.62 2005/03/13 09:36:30 neilc Exp $
+$PostgreSQL: pgsql/doc/src/sgml/plpgsql.sgml,v 1.63 2005/04/05 06:22:14 tgl Exp $
 -->
 
 <chapter id="plpgsql"> 
@@ -83,7 +83,7 @@ $PostgreSQL: pgsql/doc/src/sgml/plpgsql.sgml,v 1.62 2005/03/13 09:36:30 neilc Ex
     that contains many statements for which execution plans might be
     required will only prepare and save those plans that are really
     used during the lifetime of the database connection.  This can
-    substantially reduce the total amount of time required to parse,
+    substantially reduce the total amount of time required to parse
     and generate execution plans for the statements in a
     <application>PL/pgSQL</> function. A disadvantage is that errors
     in a specific expression or command may not be detected until that
@@ -215,6 +215,7 @@ $$ LANGUAGE plpgsql;
      <type>void</> if it has no useful return value.
     </para>
 
+    <note>
     <para>
      <application>PL/pgSQL</> does not currently have full support for
      domain types: it treats a domain the same as the underlying scalar
@@ -222,6 +223,20 @@ $$ LANGUAGE plpgsql;
      not be enforced.  This is not an issue for function arguments, but
      it is a hazard if you declare a <application>PL/pgSQL</> function
      as returning a domain type.
+    </para>
+    </note>
+
+    <para>
+     <application>PL/pgSQL</> functions can also be declared with output
+     parameters in place of an explicit specification of the return type.
+     This does not add any fundamental capability to the language, but
+     it is often convenient, especially for returning multiple values.
+    </para>
+
+    <para>
+     Specific examples appear in
+     <xref linkend="plpgsql-declaration-aliases"> and
+     <xref linkend="plpgsql-statements-returning">.
     </para>
   </sect2>
  </sect1>
@@ -631,17 +646,60 @@ DECLARE
     v_string ALIAS FOR $1;
     index ALIAS FOR $2;
 BEGIN
-    -- some computations here
+    -- some computations using v_string and index here
 END;
 $$ LANGUAGE plpgsql;
 
 
-CREATE FUNCTION concat_selected_fields(in_t tablename) RETURNS text AS $$
+CREATE FUNCTION concat_selected_fields(in_t sometablename) RETURNS text AS $$
 BEGIN
     RETURN in_t.f1 || in_t.f3 || in_t.f5 || in_t.f7;
 END;
 $$ LANGUAGE plpgsql;
 </programlisting>
+     </para>
+
+     <para>
+      When a <application>PL/pgSQL</application> function is declared
+      with output parameters, the output parameters are given
+      <literal>$<replaceable>n</replaceable></literal> names and optional
+      aliases in just the same way as the normal input parameters.  An
+      output parameter is effectively a variable that starts out NULL;
+      it should be assigned to during the execution of the function.
+      The final value of the parameter is what is returned.  For instance,
+      the sales-tax example could also be done this way:
+
+<programlisting>
+CREATE FUNCTION sales_tax(subtotal real, OUT tax real) AS $$
+BEGIN
+    tax := subtotal * 0.06;
+    RETURN;
+END;
+$$ LANGUAGE plpgsql;
+</programlisting>
+
+      Notice that we omitted <literal>RETURNS real</> &mdash; we could have
+      included it, but it would be redundant.
+     </para>
+
+     <para>
+      Output parameters are most useful when returning multiple values.
+      A trivial example is:
+
+<programlisting>
+CREATE FUNCTION sum_n_product(x int, y int, OUT sum int, OUT prod int) AS $$
+BEGIN
+    sum := x + y;
+    prod := x * y;
+    RETURN;
+END;
+$$ LANGUAGE plpgsql;
+</programlisting>
+
+      As discussed in <xref linkend="xfunc-output-parameters">, this
+      effectively creates an anonymous record type for the function's
+      results.  If a <literal>RETURNS</> clause is given, it must say
+      <literal>RETURNS record</>.
      </para>
 
      <para>
@@ -658,6 +716,7 @@ $$ LANGUAGE plpgsql;
       though that is not required.  <literal>$0</literal> can also be
       given an alias.  For example, this function works on any data type
       that has a <literal>+</> operator:
+
 <programlisting>
 CREATE FUNCTION add_three_values(v1 anyelement, v2 anyelement, v3 anyelement)
 RETURNS anyelement AS $$
@@ -666,6 +725,24 @@ DECLARE
 BEGIN
     result := v1 + v2 + v3;
     RETURN result;
+END;
+$$ LANGUAGE plpgsql;
+</programlisting>
+     </para>
+
+     <para>
+      The same effect can be had by declaring one or more output parameters as
+      <type>anyelement</type> or <type>anyarray</type>.  In this case the
+      special <literal>$0</literal> parameter is not used; the output
+      parameters themselves serve the same purpose.  For example:
+
+<programlisting>
+CREATE FUNCTION add_three_values(v1 anyelement, v2 anyelement, v3 anyelement,
+                                 OUT sum anyelement)
+AS $$
+BEGIN
+    sum := v1 + v2 + v3;
+    RETURN;
 END;
 $$ LANGUAGE plpgsql;
 </programlisting>
@@ -756,18 +833,21 @@ user_id users.user_id%TYPE;
    </para>
 
    <para>
-    Here is an example of using composite types:
+    Here is an example of using composite types.  <structname>table1</>
+    and <structname>table2</> are existing tables having at least the
+    mentioned fields:
+
 <programlisting>
-CREATE FUNCTION merge_fields(t_row tablename) RETURNS text AS $$
+CREATE FUNCTION merge_fields(t_row table1) RETURNS text AS $$
 DECLARE
-    t2_row table2name%ROWTYPE;
+    t2_row table2%ROWTYPE;
 BEGIN
-    SELECT * INTO t2_row FROM table2name WHERE ... ;
+    SELECT * INTO t2_row FROM table2 WHERE ... ;
     RETURN t_row.f1 || t2_row.f3 || t_row.f5 || t2_row.f7;
 END;
 $$ LANGUAGE plpgsql;
 
-SELECT merge_fields(t.*) FROM tablename t WHERE ... ;
+SELECT merge_fields(t.*) FROM table1 t WHERE ... ;
 </programlisting>
    </para>
   </sect2>
@@ -1412,6 +1492,12 @@ RETURN <replaceable>expression</replaceable>;
      </para>
 
      <para>
+      If you declared the function with output parameters, write just
+      <command>RETURN</command> with no expression.  The current values
+      of the output parameter variables will be returned.
+     </para>
+
+     <para>
       The return value of a function cannot be left undefined. If
       control reaches the end of the top-level block of the function
       without hitting a <command>RETURN</command> statement, a run-time
@@ -1441,8 +1527,30 @@ RETURN NEXT <replaceable>expression</replaceable>;
       commands, and then a final <command>RETURN</command> command
       with no argument is used to indicate that the function has
       finished executing.  <command>RETURN NEXT</command> can be used
-      with both scalar and composite data types; in the latter case, an
-      entire <quote>table</quote> of results will be returned.
+      with both scalar and composite data types; with a composite result
+      type, an entire <quote>table</quote> of results will be returned.
+     </para>
+
+     <para>
+      <command>RETURN NEXT</command> does not actually return from the
+      function &mdash; it simply saves away the value of the expression.
+      Execution then continues with the next statement in
+      the <application>PL/pgSQL</> function.  As successive
+      <command>RETURN NEXT</command> commands are executed, the result
+      set is built up.  A final <command>RETURN</command>, which should
+      have no argument, causes control to exit the function.
+     </para>
+
+     <para>
+      If you declared the function with output parameters, write just
+      <command>RETURN NEXT</command> with no expression.  The current values
+      of the output parameter variable(s) will be saved for eventual return.
+      Note that you must declare the function as returning
+      <literal>SETOF record</literal> when there are
+      multiple output parameters, or
+      <literal>SETOF <replaceable>sometype</></literal> when there is
+      just one output parameter of type <replaceable>sometype</>, in
+      order to create a set-returning function with output parameters.
      </para>
 
      <para>
@@ -1455,16 +1563,6 @@ SELECT * FROM some_func();
 
       That is, the function must be used as a table source in a
       <literal>FROM</literal> clause.
-     </para>
-
-     <para>
-      <command>RETURN NEXT</command> does not actually return from the
-      function; it simply saves away the value of the expression.
-      Execution then continues with the next statement in
-      the <application>PL/pgSQL</> function.  As successive
-      <command>RETURN NEXT</command> commands are executed, the result
-      set is built up.  A final <command>RETURN</command>, which should
-      have no argument, causes control to exit the function.
      </para>
 
      <note>

@@ -3,7 +3,7 @@
  *			  procedural language
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/pl/plpgsql/src/pl_exec.c,v 1.133 2005/03/25 01:45:42 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/pl/plpgsql/src/pl_exec.c,v 1.134 2005/04/05 06:22:16 tgl Exp $
  *
  *	  This software is copyrighted by Jan Wieck - Hamburg.
  *
@@ -75,8 +75,6 @@ static PLpgSQL_expr *active_simple_exprs = NULL;
  ************************************************************/
 static void plpgsql_exec_error_callback(void *arg);
 static PLpgSQL_datum *copy_plpgsql_datum(PLpgSQL_datum *datum);
-static PLpgSQL_var *copy_var(PLpgSQL_var *var);
-static PLpgSQL_rec *copy_rec(PLpgSQL_rec *rec);
 
 static int exec_stmt_block(PLpgSQL_execstate *estate,
 				PLpgSQL_stmt_block *block);
@@ -212,11 +210,11 @@ plpgsql_exec_function(PLpgSQL_function *func, FunctionCallInfo fcinfo)
 	 * Make local execution copies of all the datums
 	 */
 	estate.err_text = gettext_noop("during initialization of execution state");
-	for (i = 0; i < func->ndatums; i++)
+	for (i = 0; i < estate.ndatums; i++)
 		estate.datums[i] = copy_plpgsql_datum(func->datums[i]);
 
 	/*
-	 * Store the actual call argument values into the variables
+	 * Store the actual call argument values into the appropriate variables
 	 */
 	estate.err_text = gettext_noop("while storing call arguments into local variables");
 	for (i = 0; i < func->fn_nargs; i++)
@@ -265,36 +263,6 @@ plpgsql_exec_function(PLpgSQL_function *func, FunctionCallInfo fcinfo)
 						exec_move_row(&estate, NULL, row, NULL, NULL);
 					}
 				}
-				break;
-
-			default:
-				elog(ERROR, "unrecognized dtype: %d", func->datums[i]->dtype);
-		}
-	}
-
-	/*
-	 * Initialize the other variables to NULL values for now. The default
-	 * values are set when the blocks are entered.
-	 */
-	estate.err_text = gettext_noop("while initializing local variables to NULL");
-	for (i = estate.found_varno; i < estate.ndatums; i++)
-	{
-		switch (estate.datums[i]->dtype)
-		{
-			case PLPGSQL_DTYPE_VAR:
-				{
-					PLpgSQL_var *var = (PLpgSQL_var *) estate.datums[i];
-
-					var->value = 0;
-					var->isnull = true;
-					var->freeval = false;
-				}
-				break;
-
-			case PLPGSQL_DTYPE_ROW:
-			case PLPGSQL_DTYPE_REC:
-			case PLPGSQL_DTYPE_RECFIELD:
-			case PLPGSQL_DTYPE_ARRAYELEM:
 				break;
 
 			default:
@@ -445,7 +413,7 @@ plpgsql_exec_trigger(PLpgSQL_function *func,
 	 * Make local execution copies of all the datums
 	 */
 	estate.err_text = gettext_noop("during initialization of execution state");
-	for (i = 0; i < func->ndatums; i++)
+	for (i = 0; i < estate.ndatums; i++)
 		estate.datums[i] = copy_plpgsql_datum(func->datums[i]);
 
 	/*
@@ -551,7 +519,7 @@ plpgsql_exec_trigger(PLpgSQL_function *func,
 	var->freeval = false;
 
 	/*
-	 * Store the actual call argument values into the special execution
+	 * Store the trigger argument values into the special execution
 	 * state variables
 	 */
 	estate.err_text = gettext_noop("while storing call arguments into local variables");
@@ -564,37 +532,6 @@ plpgsql_exec_trigger(PLpgSQL_function *func,
 		for (i = 0; i < trigdata->tg_trigger->tgnargs; i++)
 			estate.trig_argv[i] = DirectFunctionCall1(textin,
 					   CStringGetDatum(trigdata->tg_trigger->tgargs[i]));
-	}
-
-	/*
-	 * Initialize the other variables to NULL values for now. The default
-	 * values are set when the blocks are entered.
-	 */
-	estate.err_text = gettext_noop("while initializing local variables to NULL");
-	for (i = estate.found_varno; i < estate.ndatums; i++)
-	{
-		switch (estate.datums[i]->dtype)
-		{
-			case PLPGSQL_DTYPE_VAR:
-				{
-					PLpgSQL_var *var = (PLpgSQL_var *) estate.datums[i];
-
-					var->value = 0;
-					var->isnull = true;
-					var->freeval = false;
-				}
-				break;
-
-			case PLPGSQL_DTYPE_ROW:
-			case PLPGSQL_DTYPE_REC:
-			case PLPGSQL_DTYPE_RECFIELD:
-			case PLPGSQL_DTYPE_ARRAYELEM:
-			case PLPGSQL_DTYPE_TRIGARG:
-				break;
-
-			default:
-				elog(ERROR, "unrecognized dtype: %d", func->datums[i]->dtype);
-		}
 	}
 
 	/*
@@ -710,65 +647,63 @@ plpgsql_exec_error_callback(void *arg)
 
 
 /* ----------
- * Support functions for copying local execution variables
- *
- * NB: this is not a generic copy operation because it assumes that any
- * pass-by-ref original values will live as long as the copy is needed.
+ * Support function for initializing local execution variables
  * ----------
  */
 static PLpgSQL_datum *
 copy_plpgsql_datum(PLpgSQL_datum *datum)
 {
-	PLpgSQL_datum *result = NULL;
+	PLpgSQL_datum *result;
 
 	switch (datum->dtype)
 	{
 		case PLPGSQL_DTYPE_VAR:
-			result = (PLpgSQL_datum *) copy_var((PLpgSQL_var *) datum);
-			break;
+		{
+			PLpgSQL_var *new = palloc(sizeof(PLpgSQL_var));
+
+			memcpy(new, datum, sizeof(PLpgSQL_var));
+			/* Ensure the value is null (possibly not needed?) */
+			new->value = 0;
+			new->isnull = true;
+			new->freeval = false;
+
+			result = (PLpgSQL_datum *) new;
+		}
+		break;
 
 		case PLPGSQL_DTYPE_REC:
-			result = (PLpgSQL_datum *) copy_rec((PLpgSQL_rec *) datum);
-			break;
+		{
+			PLpgSQL_rec *new = palloc(sizeof(PLpgSQL_rec));
+
+			memcpy(new, datum, sizeof(PLpgSQL_rec));
+			/* Ensure the value is null (possibly not needed?) */
+			new->tup = NULL;
+			new->tupdesc = NULL;
+			new->freetup = false;
+			new->freetupdesc = false;
+
+			result = (PLpgSQL_datum *) new;
+		}
+		break;
 
 		case PLPGSQL_DTYPE_ROW:
 		case PLPGSQL_DTYPE_RECFIELD:
 		case PLPGSQL_DTYPE_ARRAYELEM:
 		case PLPGSQL_DTYPE_TRIGARG:
+			/*
+			 * These datum records are read-only at runtime, so no need
+			 * to copy them
+			 */
 			result = datum;
 			break;
 
 		default:
 			elog(ERROR, "unrecognized dtype: %d", datum->dtype);
+			result = NULL;		/* keep compiler quiet */
+			break;
 	}
 
 	return result;
-}
-
-static PLpgSQL_var *
-copy_var(PLpgSQL_var *var)
-{
-	PLpgSQL_var *new = palloc(sizeof(PLpgSQL_var));
-
-	memcpy(new, var, sizeof(PLpgSQL_var));
-	new->freeval = false;
-
-	return new;
-}
-
-
-static PLpgSQL_rec *
-copy_rec(PLpgSQL_rec *rec)
-{
-	PLpgSQL_rec *new = palloc(sizeof(PLpgSQL_rec));
-
-	memcpy(new, rec, sizeof(PLpgSQL_rec));
-	new->tup = NULL;
-	new->tupdesc = NULL;
-	new->freetup = false;
-	new->freetupdesc = false;
-
-	return new;
 }
 
 
@@ -1682,43 +1617,64 @@ exec_stmt_return(PLpgSQL_execstate *estate, PLpgSQL_stmt_return *stmt)
 	if (estate->retisset)
 		return PLPGSQL_RC_RETURN;
 
-	if (estate->retistuple)
+	/* initialize for null result (possibly a tuple) */
+	estate->retval = (Datum) 0;
+	estate->rettupdesc = NULL;
+	estate->retisnull = true;
+
+	if (stmt->retvarno >= 0)
 	{
-		/* initialize for null result tuple */
-		estate->retval = (Datum) 0;
-		estate->rettupdesc = NULL;
-		estate->retisnull = true;
+		PLpgSQL_datum *retvar = estate->datums[stmt->retvarno];
 
-		if (stmt->retrecno >= 0)
+		switch (retvar->dtype)
 		{
-			PLpgSQL_rec *rec = (PLpgSQL_rec *) (estate->datums[stmt->retrecno]);
-
-			if (HeapTupleIsValid(rec->tup))
+			case PLPGSQL_DTYPE_VAR:
 			{
-				estate->retval = (Datum) rec->tup;
-				estate->rettupdesc = rec->tupdesc;
-				estate->retisnull = false;
+				PLpgSQL_var *var = (PLpgSQL_var *) retvar;
+
+				estate->retval = var->value;
+				estate->retisnull = var->isnull;
+				estate->rettype = var->datatype->typoid;
 			}
-			return PLPGSQL_RC_RETURN;
-		}
+			break;
 
-		if (stmt->retrowno >= 0)
-		{
-			PLpgSQL_row *row = (PLpgSQL_row *) (estate->datums[stmt->retrowno]);
-
-			if (row->rowtupdesc)	/* should always be true here */
+			case PLPGSQL_DTYPE_REC:
 			{
+				PLpgSQL_rec *rec = (PLpgSQL_rec *) retvar;
+
+				if (HeapTupleIsValid(rec->tup))
+				{
+					estate->retval = (Datum) rec->tup;
+					estate->rettupdesc = rec->tupdesc;
+					estate->retisnull = false;
+				}
+			}
+			break;
+
+			case PLPGSQL_DTYPE_ROW:
+			{
+				PLpgSQL_row *row = (PLpgSQL_row *) retvar;
+
+				Assert(row->rowtupdesc);
 				estate->retval = (Datum) make_tuple_from_row(estate, row,
-														row->rowtupdesc);
-				if (estate->retval == (Datum) NULL)		/* should not happen */
+															 row->rowtupdesc);
+				if (estate->retval == (Datum) NULL)	/* should not happen */
 					elog(ERROR, "row not compatible with its own tupdesc");
 				estate->rettupdesc = row->rowtupdesc;
 				estate->retisnull = false;
 			}
-			return PLPGSQL_RC_RETURN;
+			break;
+
+			default:
+				elog(ERROR, "unrecognized dtype: %d", retvar->dtype);
 		}
 
-		if (stmt->expr != NULL)
+		return PLPGSQL_RC_RETURN;
+	}
+
+	if (stmt->expr != NULL)
+	{
+		if (estate->retistuple)
 		{
 			exec_run_select(estate, stmt->expr, 1, NULL);
 			if (estate->eval_processed > 0)
@@ -1728,23 +1684,22 @@ exec_stmt_return(PLpgSQL_execstate *estate, PLpgSQL_stmt_return *stmt)
 				estate->retisnull = false;
 			}
 		}
-		return PLPGSQL_RC_RETURN;
+		else
+		{
+			/* Normal case for scalar results */
+			estate->retval = exec_eval_expr(estate, stmt->expr,
+											&(estate->retisnull),
+											&(estate->rettype));
+		}
 	}
 
 	if (estate->fn_rettype == VOIDOID)
 	{
 		/* Special hack for function returning VOID */
-		Assert(stmt->expr == NULL);
+		Assert(stmt->retvarno < 0 && stmt->expr == NULL);
 		estate->retval = (Datum) 0;
 		estate->retisnull = false;
 		estate->rettype = VOIDOID;
-	}
-	else
-	{
-		/* Normal case for scalar results */
-		estate->retval = exec_eval_expr(estate, stmt->expr,
-										&(estate->retisnull),
-										&(estate->rettype));
 	}
 
 	return PLPGSQL_RC_RETURN;
@@ -1777,37 +1732,78 @@ exec_stmt_return_next(PLpgSQL_execstate *estate,
 	tupdesc = estate->rettupdesc;
 	natts = tupdesc->natts;
 
-	if (stmt->rec)
+	if (stmt->retvarno >= 0)
 	{
-		PLpgSQL_rec *rec = (PLpgSQL_rec *) (estate->datums[stmt->rec->recno]);
+		PLpgSQL_datum *retvar = estate->datums[stmt->retvarno];
 
-		if (!HeapTupleIsValid(rec->tup))
-			ereport(ERROR,
-					(errcode(ERRCODE_OBJECT_NOT_IN_PREREQUISITE_STATE),
-					 errmsg("record \"%s\" is not assigned yet",
-							rec->refname),
-					 errdetail("The tuple structure of a not-yet-assigned record is indeterminate.")));
-		if (!compatible_tupdesc(tupdesc, rec->tupdesc))
-			ereport(ERROR,
-					(errcode(ERRCODE_DATATYPE_MISMATCH),
-				   errmsg("wrong record type supplied in RETURN NEXT")));
-		tuple = rec->tup;
-	}
-	else if (stmt->row)
-	{
-		tuple = make_tuple_from_row(estate, stmt->row, tupdesc);
-		if (tuple == NULL)
-			ereport(ERROR,
-					(errcode(ERRCODE_DATATYPE_MISMATCH),
-				   errmsg("wrong record type supplied in RETURN NEXT")));
-		free_tuple = true;
+		switch (retvar->dtype)
+		{
+			case PLPGSQL_DTYPE_VAR:
+			{
+				PLpgSQL_var *var = (PLpgSQL_var *) retvar;
+				Datum		retval = var->value;
+				bool		isNull = var->isnull;
+
+				if (natts != 1)
+					ereport(ERROR,
+							(errcode(ERRCODE_DATATYPE_MISMATCH),
+							 errmsg("wrong result type supplied in RETURN NEXT")));
+
+				/* coerce type if needed */
+				retval = exec_simple_cast_value(retval,
+												var->datatype->typoid,
+												tupdesc->attrs[0]->atttypid,
+												tupdesc->attrs[0]->atttypmod,
+												&isNull);
+
+				tuple = heap_form_tuple(tupdesc, &retval, &isNull);
+
+				free_tuple = true;
+			}
+			break;
+
+			case PLPGSQL_DTYPE_REC:
+			{
+				PLpgSQL_rec *rec = (PLpgSQL_rec *) retvar;
+
+				if (!HeapTupleIsValid(rec->tup))
+					ereport(ERROR,
+							(errcode(ERRCODE_OBJECT_NOT_IN_PREREQUISITE_STATE),
+							 errmsg("record \"%s\" is not assigned yet",
+									rec->refname),
+							 errdetail("The tuple structure of a not-yet-assigned record is indeterminate.")));
+				if (!compatible_tupdesc(tupdesc, rec->tupdesc))
+					ereport(ERROR,
+							(errcode(ERRCODE_DATATYPE_MISMATCH),
+							 errmsg("wrong record type supplied in RETURN NEXT")));
+				tuple = rec->tup;
+			}
+			break;
+
+			case PLPGSQL_DTYPE_ROW:
+			{
+				PLpgSQL_row *row = (PLpgSQL_row *) retvar;
+
+				tuple = make_tuple_from_row(estate, row, tupdesc);
+				if (tuple == NULL)
+					ereport(ERROR,
+							(errcode(ERRCODE_DATATYPE_MISMATCH),
+							 errmsg("wrong record type supplied in RETURN NEXT")));
+				free_tuple = true;
+			}
+			break;
+
+			default:
+				elog(ERROR, "unrecognized dtype: %d", retvar->dtype);
+				tuple = NULL;	/* keep compiler quiet */
+				break;
+		}
 	}
 	else if (stmt->expr)
 	{
 		Datum		retval;
 		bool		isNull;
 		Oid			rettype;
-		char		nullflag;
 
 		if (natts != 1)
 			ereport(ERROR,
@@ -1826,9 +1822,7 @@ exec_stmt_return_next(PLpgSQL_execstate *estate,
 										tupdesc->attrs[0]->atttypmod,
 										&isNull);
 
-		nullflag = isNull ? 'n' : ' ';
-
-		tuple = heap_formtuple(tupdesc, &retval, &nullflag);
+		tuple = heap_form_tuple(tupdesc, &retval, &isNull);
 
 		free_tuple = true;
 

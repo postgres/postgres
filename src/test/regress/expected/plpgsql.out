@@ -1739,6 +1739,125 @@ SELECT * FROM test_ret_rec_dyn(5) AS (a int, b numeric, c text);
 (1 row)
 
 --
+-- Test handling of OUT parameters, including polymorphic cases
+--
+-- wrong way to do it:
+create function f1(in i int, out j int) returns int as $$
+begin
+  return i+1;
+end$$ language plpgsql;
+ERROR:  RETURN cannot have a parameter in function with OUT parameters at or near "i" at character 74
+LINE 3:   return i+1;
+                 ^
+create function f1(in i int, out j int) as $$
+begin
+  j := i+1;
+  return;
+end$$ language plpgsql;
+select f1(42);
+ f1 
+----
+ 43
+(1 row)
+
+select * from f1(42);
+ f1 
+----
+ 43
+(1 row)
+
+create or replace function f1(inout i int) as $$
+begin
+  i := i+1;
+  return;
+end$$ language plpgsql;
+select f1(42);
+ f1 
+----
+ 43
+(1 row)
+
+select * from f1(42);
+ f1 
+----
+ 43
+(1 row)
+
+drop function f1(int);
+create function f1(in i int, out j int) returns setof int as $$
+begin
+  j := i+1;
+  return next;
+  j := i+2;
+  return next;
+  return;
+end$$ language plpgsql;
+select * from f1(42);
+ f1 
+----
+ 43
+ 44
+(2 rows)
+
+drop function f1(int);
+create function f1(in i int, out j int, out k text) as $$
+begin
+  j := i;
+  j := j+1;
+  k := 'foo';
+  return;
+end$$ language plpgsql;
+select f1(42);
+    f1    
+----------
+ (43,foo)
+(1 row)
+
+select * from f1(42);
+ j  |  k  
+----+-----
+ 43 | foo
+(1 row)
+
+drop function f1(int);
+create function f1(in i int, out j int, out k text) returns setof record as $$
+begin
+  j := i+1;
+  k := 'foo';
+  return next;
+  j := j+1;
+  k := 'foot';
+  return next;
+  return;
+end$$ language plpgsql;
+select * from f1(42);
+ j  |  k   
+----+------
+ 43 | foo
+ 44 | foot
+(2 rows)
+
+drop function f1(int);
+create function dup(in i anyelement, out j anyelement, out k anyarray) as $$
+begin
+  j := i;
+  k := array[j,j];
+  return;
+end$$ language plpgsql;
+select * from dup(42);
+ j  |    k    
+----+---------
+ 42 | {42,42}
+(1 row)
+
+select * from dup('foo'::text);
+  j  |     k     
+-----+-----------
+ foo | {foo,foo}
+(1 row)
+
+drop function dup(anyelement);
+--
 -- test PERFORM
 --
 create table perform_test (

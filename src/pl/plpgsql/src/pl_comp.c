@@ -3,7 +3,7 @@
  *			  procedural language
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/pl/plpgsql/src/pl_comp.c,v 1.85 2005/03/29 00:17:23 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/pl/plpgsql/src/pl_comp.c,v 1.86 2005/04/05 06:22:16 tgl Exp $
  *
  *	  This software is copyrighted by Jan Wieck - Hamburg.
  *
@@ -49,6 +49,7 @@
 #include "catalog/pg_class.h"
 #include "catalog/pg_proc.h"
 #include "catalog/pg_type.h"
+#include "funcapi.h"
 #include "nodes/makefuncs.h"
 #include "parser/gramparse.h"
 #include "parser/parse_type.h"
@@ -122,13 +123,20 @@ static PLpgSQL_function *do_compile(FunctionCallInfo fcinfo,
 		   HeapTuple procTup,
 		   PLpgSQL_func_hashkey *hashkey,
 		   bool forValidator);
-static char **fetchArgNames(HeapTuple procTup, int nargs);
-static PLpgSQL_row *build_row_var(Oid classOid);
+static int	fetchArgInfo(HeapTuple procTup,
+						 Oid **p_argtypes, char ***p_argnames,
+						 char **p_argmodes);
+static PLpgSQL_row *build_row_from_class(Oid classOid);
+static PLpgSQL_row *build_row_from_vars(PLpgSQL_variable **vars, int numvars);
 static PLpgSQL_type *build_datatype(HeapTuple typeTup, int32 typmod);
 static void compute_function_hashkey(FunctionCallInfo fcinfo,
 						 Form_pg_proc procStruct,
 						 PLpgSQL_func_hashkey *hashkey,
 						 bool forValidator);
+static void plpgsql_resolve_polymorphic_argtypes(int numargs,
+									 Oid *argtypes, char *argmodes,
+									 Node *call_expr, bool forValidator,
+									 const char *proname);
 static PLpgSQL_function *plpgsql_HashTableLookup(PLpgSQL_func_hashkey *func_key);
 static void plpgsql_HashTableInsert(PLpgSQL_function *function,
 						PLpgSQL_func_hashkey *func_key);
@@ -259,11 +267,17 @@ do_compile(FunctionCallInfo fcinfo,
 	PLpgSQL_variable *var;
 	PLpgSQL_rec *rec;
 	int			i;
-	int			arg_varnos[FUNC_MAX_ARGS];
 	ErrorContextCallback plerrcontext;
 	int			parse_rc;
 	Oid			rettypeid;
+	int			numargs;
+	int			num_in_args;
+	int			num_out_args;
+	Oid		   *argtypes;
 	char	  **argnames;
+	char	   *argmodes;
+	int		   *in_arg_varnos = NULL;
+	PLpgSQL_variable **out_arg_variables;
 	MemoryContext func_cxt;
 
 	/*
@@ -330,10 +344,110 @@ do_compile(FunctionCallInfo fcinfo,
 	function->fn_cmin = HeapTupleHeaderGetCmin(procTup->t_data);
 	function->fn_functype = functype;
 	function->fn_cxt = func_cxt;
+	function->out_param_varno = -1;			/* set up for no OUT param */
 
 	switch (functype)
 	{
 		case T_FUNCTION:
+			/*
+			 * Fetch info about the procedure's parameters. Allocations
+			 * aren't needed permanently, so make them in tmp cxt.
+			 *
+			 * We also need to resolve any polymorphic input or output
+			 * argument types.  In validation mode we won't be able to,
+			 * so we arbitrarily assume we are dealing with integers.
+			 */
+			MemoryContextSwitchTo(compile_tmp_cxt);
+
+			numargs = fetchArgInfo(procTup, &argtypes, &argnames, &argmodes);
+
+			plpgsql_resolve_polymorphic_argtypes(numargs, argtypes, argmodes,
+												 fcinfo->flinfo->fn_expr,
+												 forValidator,
+												 plpgsql_error_funcname);
+
+			in_arg_varnos = (int *) palloc(numargs * sizeof(int));
+			out_arg_variables = (PLpgSQL_variable **) palloc(numargs * sizeof(PLpgSQL_variable *));
+
+			MemoryContextSwitchTo(func_cxt);
+
+			/*
+			 * Create the variables for the procedure's parameters.
+			 */
+			num_in_args = num_out_args = 0;
+			for (i = 0; i < numargs; i++)
+			{
+				char		buf[32];
+				Oid			argtypeid = argtypes[i];
+				char		argmode = argmodes ? argmodes[i] : PROARGMODE_IN;
+				PLpgSQL_type *argdtype;
+				PLpgSQL_variable *argvariable;
+				int			argitemtype;
+
+				/* Create $n name for variable */
+				snprintf(buf, sizeof(buf), "$%d", i + 1);
+
+				/* Create datatype info */
+				argdtype = plpgsql_build_datatype(argtypeid, -1);
+
+				/* Disallow pseudotype argument */
+				/* (note we already replaced ANYARRAY/ANYELEMENT) */
+				/* (build_variable would do this, but wrong message) */
+				if (argdtype->ttype != PLPGSQL_TTYPE_SCALAR &&
+					argdtype->ttype != PLPGSQL_TTYPE_ROW)
+					ereport(ERROR,
+							(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
+						  errmsg("plpgsql functions cannot take type %s",
+								 format_type_be(argtypeid))));
+
+				/* Build variable and add to datum list */
+				argvariable = plpgsql_build_variable(buf, 0,
+													 argdtype, false);
+
+				if (argvariable->dtype == PLPGSQL_DTYPE_VAR)
+				{
+					argitemtype = PLPGSQL_NSTYPE_VAR;
+					/* input argument vars are forced to be CONSTANT */
+					if (argmode == PROARGMODE_IN)
+						((PLpgSQL_var *) argvariable)->isconst = true;
+				}
+				else
+				{
+					Assert(argvariable->dtype == PLPGSQL_DTYPE_ROW);
+					argitemtype = PLPGSQL_NSTYPE_ROW;
+				}
+
+				/* Remember arguments in appropriate arrays */
+				if (argmode == PROARGMODE_IN || argmode == PROARGMODE_INOUT)
+					in_arg_varnos[num_in_args++] = argvariable->dno;
+				if (argmode == PROARGMODE_OUT || argmode == PROARGMODE_INOUT)
+					out_arg_variables[num_out_args++] = argvariable;
+
+				/* Add to namespace under the $n name */
+				plpgsql_ns_additem(argitemtype, argvariable->dno, buf);
+
+				/* If there's a name for the argument, make an alias */
+				if (argnames && argnames[i][0] != '\0')
+					plpgsql_ns_additem(argitemtype, argvariable->dno,
+									   argnames[i]);
+			}
+
+			/*
+			 * If there's just one OUT parameter, out_param_varno points
+			 * directly to it.  If there's more than one, build a row
+			 * that holds all of them.
+			 */
+			if (num_out_args == 1)
+				function->out_param_varno = out_arg_variables[0]->dno;
+			else if (num_out_args > 1)
+			{
+				PLpgSQL_row *row = build_row_from_vars(out_arg_variables,
+													   num_out_args);
+
+				plpgsql_adddatum((PLpgSQL_datum *) row);
+				function->out_param_varno = row->rowno;
+			}
+
 			/*
 			 * Check for a polymorphic returntype. If found, use the
 			 * actual returntype type from the caller's FuncExpr node, if
@@ -355,13 +469,15 @@ do_compile(FunctionCallInfo fcinfo,
 						rettypeid = INT4OID;
 				}
 				else
+				{
 					rettypeid = get_fn_expr_rettype(fcinfo->flinfo);
-				if (!OidIsValid(rettypeid))
-					ereport(ERROR,
-							(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
-						 errmsg("could not determine actual return type "
-								"for polymorphic function \"%s\"",
-								plpgsql_error_funcname)));
+					if (!OidIsValid(rettypeid))
+						ereport(ERROR,
+								(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
+								 errmsg("could not determine actual return type "
+										"for polymorphic function \"%s\"",
+										plpgsql_error_funcname)));
+				}
 			}
 
 			/*
@@ -410,10 +526,12 @@ do_compile(FunctionCallInfo fcinfo,
 
 				/*
 				 * install $0 reference, but only for polymorphic return
-				 * types
+				 * types, and not when the return is specified through an
+				 * output parameter.
 				 */
-				if (procStruct->prorettype == ANYARRAYOID ||
-					procStruct->prorettype == ANYELEMENTOID)
+				if ((procStruct->prorettype == ANYARRAYOID ||
+					 procStruct->prorettype == ANYELEMENTOID) &&
+					num_out_args == 0)
 				{
 					(void) plpgsql_build_variable("$0", 0,
 											 build_datatype(typeTup, -1),
@@ -421,72 +539,6 @@ do_compile(FunctionCallInfo fcinfo,
 				}
 			}
 			ReleaseSysCache(typeTup);
-
-			/*
-			 * Create the variables for the procedure's
-			 * parameters. Allocations aren't needed permanently, so
-			 * make them in tmp cxt.
-			 */
-			MemoryContextSwitchTo(compile_tmp_cxt);
-			argnames = fetchArgNames(procTup, procStruct->pronargs);
-			MemoryContextSwitchTo(func_cxt);
-
-			for (i = 0; i < procStruct->pronargs; i++)
-			{
-				char		buf[32];
-				Oid			argtypeid;
-				PLpgSQL_type *argdtype;
-				PLpgSQL_variable *argvariable;
-				int			argitemtype;
-
-				/* Create $n name for variable */
-				snprintf(buf, sizeof(buf), "$%d", i + 1);
-
-				/*
-				 * Since we already did the replacement of polymorphic
-				 * argument types by actual argument types while computing
-				 * the hashkey, we can just use those results.
-				 */
-				argtypeid = hashkey->argtypes[i];
-				argdtype = plpgsql_build_datatype(argtypeid, -1);
-
-				/* Disallow pseudotype argument */
-				/* (note we already replaced ANYARRAY/ANYELEMENT) */
-				/* (build_variable would do this, but wrong message) */
-				if (argdtype->ttype != PLPGSQL_TTYPE_SCALAR &&
-					argdtype->ttype != PLPGSQL_TTYPE_ROW)
-					ereport(ERROR,
-							(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
-						  errmsg("plpgsql functions cannot take type %s",
-								 format_type_be(argtypeid))));
-
-				/* Build variable and add to datum list */
-				argvariable = plpgsql_build_variable(buf, 0,
-													 argdtype, false);
-
-				if (argvariable->dtype == PLPGSQL_DTYPE_VAR)
-				{
-					/* argument vars are forced to be CONSTANT (why?) */
-					((PLpgSQL_var *) argvariable)->isconst = true;
-					argitemtype = PLPGSQL_NSTYPE_VAR;
-				}
-				else
-				{
-					Assert(argvariable->dtype == PLPGSQL_DTYPE_ROW);
-					argitemtype = PLPGSQL_NSTYPE_ROW;
-				}
-
-				/* Remember datum number */
-				arg_varnos[i] = argvariable->dno;
-
-				/* Add to namespace under the $n name */
-				plpgsql_ns_additem(argitemtype, argvariable->dno, buf);
-
-				/* If there's a name for the argument, make an alias */
-				if (argnames)
-					plpgsql_ns_additem(argitemtype, argvariable->dno,
-									   argnames[i]);
-			}
 			break;
 
 		case T_TRIGGER:
@@ -598,7 +650,7 @@ do_compile(FunctionCallInfo fcinfo,
 	 */
 	function->fn_nargs = procStruct->pronargs;
 	for (i = 0; i < function->fn_nargs; i++)
-		function->fn_argvarnos[i] = arg_varnos[i];
+		function->fn_argvarnos[i] = in_arg_varnos[i];
 	function->ndatums = plpgsql_nDatums;
 	function->datums = palloc(sizeof(PLpgSQL_datum *) * plpgsql_nDatums);
 	for (i = 0; i < plpgsql_nDatums; i++)
@@ -660,40 +712,96 @@ plpgsql_compile_error_callback(void *arg)
 
 
 /*
- * Fetch the argument names, if any, from the proargnames field of the
- * pg_proc tuple.  Results are palloc'd.
+ * Fetch info about the argument types, names, and IN/OUT modes from the
+ * pg_proc tuple.  Return value is the number of arguments.
+ * Other results are palloc'd.
  */
-static char **
-fetchArgNames(HeapTuple procTup, int nargs)
+static int
+fetchArgInfo(HeapTuple procTup, Oid **p_argtypes, char ***p_argnames,
+			 char **p_argmodes)
 {
-	Datum		argnamesDatum;
+	Form_pg_proc procStruct = (Form_pg_proc) GETSTRUCT(procTup);
+	Datum		proallargtypes;
+	Datum		proargmodes;
+	Datum		proargnames;
 	bool		isNull;
+	ArrayType  *arr;
+	int			numargs;
 	Datum	   *elems;
 	int			nelems;
-	char	  **result;
 	int			i;
 
-	if (nargs == 0)
-		return NULL;
+	/* First discover the total number of parameters and get their types */
+	proallargtypes = SysCacheGetAttr(PROCOID, procTup,
+									 Anum_pg_proc_proallargtypes,
+									 &isNull);
+	if (!isNull)
+	{
+		/*
+		 * We expect the arrays to be 1-D arrays of the right types; verify
+		 * that.  For the OID and char arrays, we don't need to use
+		 * deconstruct_array() since the array data is just going to look like
+		 * a C array of values.
+		 */
+		arr = DatumGetArrayTypeP(proallargtypes);	/* ensure not toasted */
+		numargs = ARR_DIMS(arr)[0];
+		if (ARR_NDIM(arr) != 1 ||
+			numargs < 0 ||
+			ARR_ELEMTYPE(arr) != OIDOID)
+			elog(ERROR, "proallargtypes is not a 1-D Oid array");
+		Assert(numargs >= procStruct->pronargs);
+		*p_argtypes = (Oid *) palloc(numargs * sizeof(Oid));
+		memcpy(*p_argtypes, ARR_DATA_PTR(arr),
+			   numargs * sizeof(Oid));
+	}
+	else
+	{
+		/* If no proallargtypes, use proargtypes */
+		numargs = procStruct->proargtypes.dim1;
+		Assert(numargs == procStruct->pronargs);
+		*p_argtypes = (Oid *) palloc(numargs * sizeof(Oid));
+		memcpy(*p_argtypes, procStruct->proargtypes.values,
+			   numargs * sizeof(Oid));
+	}
 
-	argnamesDatum = SysCacheGetAttr(PROCOID, procTup, Anum_pg_proc_proargnames,
-									&isNull);
+	/* Get argument names, if available */
+	proargnames = SysCacheGetAttr(PROCOID, procTup,
+								  Anum_pg_proc_proargnames,
+								  &isNull);
 	if (isNull)
-		return NULL;
+		*p_argnames = NULL;
+	else
+	{
+		deconstruct_array(DatumGetArrayTypeP(proargnames),
+						  TEXTOID, -1, false, 'i',
+						  &elems, &nelems);
+		if (nelems != numargs)		/* should not happen */
+			elog(ERROR, "proargnames must have the same number of elements as the function has arguments");
+		*p_argnames = (char **) palloc(sizeof(char *) * numargs);
+		for (i = 0; i < numargs; i++)
+			(*p_argnames)[i] = DatumGetCString(DirectFunctionCall1(textout,
+																   elems[i]));
+	}
 
-	deconstruct_array(DatumGetArrayTypeP(argnamesDatum),
-					  TEXTOID, -1, false, 'i',
-					  &elems, &nelems);
+	/* Get argument modes, if available */
+	proargmodes = SysCacheGetAttr(PROCOID, procTup,
+								  Anum_pg_proc_proargmodes,
+								  &isNull);
+	if (isNull)
+		*p_argmodes = NULL;
+	else
+	{
+		arr = DatumGetArrayTypeP(proargmodes);	/* ensure not toasted */
+		if (ARR_NDIM(arr) != 1 ||
+			ARR_DIMS(arr)[0] != numargs ||
+			ARR_ELEMTYPE(arr) != CHAROID)
+			elog(ERROR, "proargmodes is not a 1-D char array");
+		*p_argmodes = (char *) palloc(numargs * sizeof(char));
+		memcpy(*p_argmodes, ARR_DATA_PTR(arr),
+			   numargs * sizeof(char));
+	}
 
-	if (nelems != nargs)		/* should not happen */
-		elog(ERROR, "proargnames must have the same number of elements as the function has arguments");
-
-	result = (char **) palloc(sizeof(char *) * nargs);
-
-	for (i = 0; i < nargs; i++)
-		result[i] = DatumGetCString(DirectFunctionCall1(textout, elems[i]));
-
-	return result;
+	return numargs;
 }
 
 
@@ -1449,7 +1557,7 @@ plpgsql_build_variable(const char *refname, int lineno, PLpgSQL_type *dtype,
 				/* Composite type -- build a row variable */
 				PLpgSQL_row *row;
 
-				row = build_row_var(dtype->typrelid);
+				row = build_row_from_class(dtype->typrelid);
 
 				row->dtype = PLPGSQL_DTYPE_ROW;
 				row->refname = pstrdup(refname);
@@ -1504,7 +1612,7 @@ plpgsql_build_variable(const char *refname, int lineno, PLpgSQL_type *dtype,
  * Build a row-variable data structure given the pg_class OID.
  */
 static PLpgSQL_row *
-build_row_var(Oid classOid)
+build_row_from_class(Oid classOid)
 {
 	PLpgSQL_row *row;
 	Relation	rel;
@@ -1585,6 +1693,62 @@ build_row_var(Oid classOid)
 	}
 
 	relation_close(rel, AccessShareLock);
+
+	return row;
+}
+
+/*
+ * Build a row-variable data structure given the component variables.
+ */
+static PLpgSQL_row *
+build_row_from_vars(PLpgSQL_variable **vars, int numvars)
+{
+	PLpgSQL_row *row;
+	int			i;
+
+	row = palloc0(sizeof(PLpgSQL_row));
+	row->dtype = PLPGSQL_DTYPE_ROW;
+	row->rowtupdesc = CreateTemplateTupleDesc(numvars, false);
+	row->nfields = numvars;
+	row->fieldnames = palloc(numvars * sizeof(char *));
+	row->varnos = palloc(numvars * sizeof(int));
+
+	for (i = 0; i < numvars; i++)
+	{
+		PLpgSQL_variable *var = vars[i];
+		Oid		typoid = RECORDOID;
+		int32	typmod = -1;
+
+		switch (var->dtype)
+		{
+			case PLPGSQL_DTYPE_VAR:
+				typoid = ((PLpgSQL_var *) var)->datatype->typoid;
+				typmod = ((PLpgSQL_var *) var)->datatype->atttypmod;
+				break;
+
+			case PLPGSQL_DTYPE_REC:
+				break;
+
+			case PLPGSQL_DTYPE_ROW:
+				if (((PLpgSQL_row *) var)->rowtupdesc)
+				{
+					typoid = ((PLpgSQL_row *) var)->rowtupdesc->tdtypeid;
+					typmod = ((PLpgSQL_row *) var)->rowtupdesc->tdtypmod;
+				}
+				break;
+
+			default:
+				elog(ERROR, "unrecognized dtype: %d", var->dtype);
+		}
+
+		row->fieldnames[i] = var->refname;
+		row->varnos[i] = var->dno;
+
+		TupleDescInitEntry(row->rowtupdesc, i+1,
+						   var->refname,
+						   typoid, typmod,
+						   0);
+	}
 
 	return row;
 }
@@ -1820,8 +1984,6 @@ compute_function_hashkey(FunctionCallInfo fcinfo,
 						 PLpgSQL_func_hashkey *hashkey,
 						 bool forValidator)
 {
-	int			i;
-
 	/* Make sure any unused bytes of the struct are zero */
 	MemSet(hashkey, 0, sizeof(PLpgSQL_func_hashkey));
 
@@ -1840,42 +2002,64 @@ compute_function_hashkey(FunctionCallInfo fcinfo,
 		hashkey->trigrelOid = RelationGetRelid(trigdata->tg_relation);
 	}
 
-	/* get the argument types */
-	for (i = 0; i < procStruct->pronargs; i++)
+	if (procStruct->pronargs > 0)
 	{
-		Oid			argtypeid = procStruct->proargtypes.values[i];
+		/* get the argument types */
+		memcpy(hashkey->argtypes, procStruct->proargtypes.values,
+			   procStruct->pronargs * sizeof(Oid));
 
-		/*
-		 * Check for polymorphic arguments. If found, use the actual
-		 * parameter type from the caller's FuncExpr node, if we have one.
-		 * (In validation mode we arbitrarily assume we are dealing with
-		 * integers.  This lets us build a valid, if possibly useless,
-		 * function hashtable entry.)
-		 *
-		 * We can support arguments of type ANY the same way as normal
-		 * polymorphic arguments.
-		 */
-		if (argtypeid == ANYARRAYOID || argtypeid == ANYELEMENTOID ||
-			argtypeid == ANYOID)
+		/* resolve any polymorphic argument types */
+		plpgsql_resolve_polymorphic_argtypes(procStruct->pronargs,
+											 hashkey->argtypes,
+											 NULL,
+											 fcinfo->flinfo->fn_expr,
+											 forValidator,
+											 NameStr(procStruct->proname));
+	}
+}
+
+/*
+ * This is the same as the standard resolve_polymorphic_argtypes() function,
+ * but with a special case for validation: assume that polymorphic arguments
+ * are integer or integer-array.  Also, we go ahead and report the error
+ * if we can't resolve the types.
+ */
+static void
+plpgsql_resolve_polymorphic_argtypes(int numargs,
+									 Oid *argtypes, char *argmodes,
+									 Node *call_expr, bool forValidator,
+									 const char *proname)
+{
+	int			i;
+
+	if (!forValidator)
+	{
+		/* normal case, pass to standard routine */
+		if (!resolve_polymorphic_argtypes(numargs, argtypes, argmodes,
+										  call_expr))
+			ereport(ERROR,
+					(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
+					 errmsg("could not determine actual argument "
+							"type for polymorphic function \"%s\"",
+							proname)));
+	}
+	else
+	{
+		/* special validation case */
+		for (i = 0; i < numargs; i++)
 		{
-			if (forValidator)
+			switch (argtypes[i])
 			{
-				if (argtypeid == ANYARRAYOID)
-					argtypeid = INT4ARRAYOID;
-				else
-					argtypeid = INT4OID;
+				case ANYELEMENTOID:
+					argtypes[i] = INT4OID;
+					break;
+				case ANYARRAYOID:
+					argtypes[i] = INT4ARRAYOID;
+					break;
+				default:
+					break;
 			}
-			else
-				argtypeid = get_fn_expr_argtype(fcinfo->flinfo, i);
-			if (!OidIsValid(argtypeid))
-				ereport(ERROR,
-						(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
-						 errmsg("could not determine actual argument "
-								"type for polymorphic function \"%s\"",
-								NameStr(procStruct->proname))));
 		}
-
-		hashkey->argtypes[i] = argtypeid;
 	}
 }
 

@@ -7,7 +7,7 @@
  * Copyright (c) 2002-2005, PostgreSQL Global Development Group
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/utils/fmgr/funcapi.c,v 1.19 2005/03/31 22:46:16 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/utils/fmgr/funcapi.c,v 1.20 2005/04/05 06:22:14 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -474,6 +474,108 @@ resolve_polymorphic_tupdesc(TupleDesc tupdesc, oidvector *declared_args,
 								   anyarray_type,
 								   -1,
 								   0);
+				break;
+			default:
+				break;
+		}
+	}
+
+	return true;
+}
+
+/*
+ * Given the declared argument types and modes for a function,
+ * replace any polymorphic types (ANYELEMENT/ANYARRAY) with correct data
+ * types deduced from the input arguments.  Returns TRUE if able to deduce
+ * all types, FALSE if not.  This is the same logic as
+ * resolve_polymorphic_tupdesc, but with a different argument representation.
+ *
+ * argmodes may be NULL, in which case all arguments are assumed to be IN mode.
+ */
+bool
+resolve_polymorphic_argtypes(int numargs, Oid *argtypes, char *argmodes,
+							 Node *call_expr)
+{
+	bool		have_anyelement_result = false;
+	bool		have_anyarray_result = false;
+	Oid			anyelement_type = InvalidOid;
+	Oid			anyarray_type = InvalidOid;
+	int			inargno;
+	int			i;
+
+	/* First pass: resolve polymorphic inputs, check for outputs */
+	inargno = 0;
+	for (i = 0; i < numargs; i++)
+	{
+		char	argmode = argmodes ? argmodes[i] : PROARGMODE_IN;
+
+		switch (argtypes[i])
+		{
+			case ANYELEMENTOID:
+				if (argmode == PROARGMODE_OUT)
+					have_anyelement_result = true;
+				else
+				{
+					if (!OidIsValid(anyelement_type))
+					{
+						anyelement_type = get_call_expr_argtype(call_expr,
+																inargno);
+						if (!OidIsValid(anyelement_type))
+							return false;
+					}
+					argtypes[i] = anyelement_type;
+				}
+				break;
+			case ANYARRAYOID:
+				if (argmode == PROARGMODE_OUT)
+					have_anyarray_result = true;
+				else
+				{
+					if (!OidIsValid(anyarray_type))
+					{
+						anyarray_type = get_call_expr_argtype(call_expr,
+															  inargno);
+						if (!OidIsValid(anyarray_type))
+							return false;
+					}
+					argtypes[i] = anyarray_type;
+				}
+				break;
+			default:
+				break;
+		}
+		if (argmode != PROARGMODE_OUT)
+			inargno++;
+	}
+
+	/* Done? */
+	if (!have_anyelement_result && !have_anyarray_result)
+		return true;
+
+	/* If no input polymorphics, parser messed up */
+	if (!OidIsValid(anyelement_type) && !OidIsValid(anyarray_type))
+		return false;
+
+	/* If needed, deduce one polymorphic type from the other */
+	if (have_anyelement_result && !OidIsValid(anyelement_type))
+		anyelement_type = resolve_generic_type(ANYELEMENTOID,
+											   anyarray_type,
+											   ANYARRAYOID);
+	if (have_anyarray_result && !OidIsValid(anyarray_type))
+		anyarray_type = resolve_generic_type(ANYARRAYOID,
+											 anyelement_type,
+											 ANYELEMENTOID);
+
+	/* And finally replace the output column types as needed */
+	for (i = 0; i < numargs; i++)
+	{
+		switch (argtypes[i])
+		{
+			case ANYELEMENTOID:
+				argtypes[i] = anyelement_type;
+				break;
+			case ANYARRAYOID:
+				argtypes[i] = anyarray_type;
 				break;
 			default:
 				break;

@@ -3,7 +3,7 @@
  *			  procedural language
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/pl/plpgsql/src/plpgsql.h,v 1.57 2005/02/22 07:18:24 neilc Exp $
+ *	  $PostgreSQL: pgsql/src/pl/plpgsql/src/plpgsql.h,v 1.58 2005/04/05 06:22:16 tgl Exp $
  *
  *	  This software is copyrighted by Jan Wieck - Hamburg.
  *
@@ -491,17 +491,15 @@ typedef struct
 	int			cmd_type;
 	int			lineno;
 	PLpgSQL_expr *expr;
-	int			retrecno;
-	int			retrowno;
+	int			retvarno;
 } PLpgSQL_stmt_return;
 
 typedef struct
 {								/* RETURN NEXT statement */
 	int			cmd_type;
 	int			lineno;
-	PLpgSQL_rec *rec;
-	PLpgSQL_row *row;
 	PLpgSQL_expr *expr;
+	int			retvarno;
 } PLpgSQL_stmt_return_next;
 
 typedef struct
@@ -572,6 +570,7 @@ typedef struct PLpgSQL_function
 
 	int			fn_nargs;
 	int			fn_argvarnos[FUNC_MAX_ARGS];
+	int			out_param_varno;
 	int			found_varno;
 	int			new_varno;
 	int			old_varno;

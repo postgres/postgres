@@ -4,7 +4,7 @@
  *						  procedural language
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/pl/plpgsql/src/gram.y,v 1.66 2005/02/22 07:18:24 neilc Exp $
+ *	  $PostgreSQL: pgsql/src/pl/plpgsql/src/gram.y,v 1.67 2005/04/05 06:22:16 tgl Exp $
  *
  *	  This software is copyrighted by Jan Wieck - Hamburg.
  *
@@ -1052,28 +1052,41 @@ stmt_return		: K_RETURN lno
 						PLpgSQL_stmt_return *new;
 
 						new = palloc0(sizeof(PLpgSQL_stmt_return));
+						new->cmd_type = PLPGSQL_STMT_RETURN;
+						new->lineno   = $2;
 						new->expr = NULL;
-						new->retrecno	= -1;
-						new->retrowno	= -1;
+						new->retvarno	= -1;
 
 						if (plpgsql_curr_compile->fn_retset)
 						{
 							if (yylex() != ';')
 								yyerror("RETURN cannot have a parameter in function returning set; use RETURN NEXT");
 						}
+						else if (plpgsql_curr_compile->out_param_varno >= 0)
+						{
+							if (yylex() != ';')
+								yyerror("RETURN cannot have a parameter in function with OUT parameters");
+							new->retvarno = plpgsql_curr_compile->out_param_varno;
+						}
+						else if (plpgsql_curr_compile->fn_rettype == VOIDOID)
+						{
+							if (yylex() != ';')
+								yyerror("function returning void cannot specify RETURN expression");
+						}
 						else if (plpgsql_curr_compile->fn_retistuple)
 						{
 							switch (yylex())
 							{
 								case K_NULL:
+									/* we allow this to support RETURN NULL in triggers */
 									break;
 
 								case T_ROW:
-									new->retrowno = yylval.row->rowno;
+									new->retvarno = yylval.row->rowno;
 									break;
 
 								case T_RECORD:
-									new->retrecno = yylval.rec->recno;
+									new->retvarno = yylval.rec->recno;
 									break;
 
 								default:
@@ -1082,11 +1095,6 @@ stmt_return		: K_RETURN lno
 							}
 							if (yylex() != ';')
 								yyerror("RETURN must specify a record or row variable in function returning tuple");
-						}
-						else if (plpgsql_curr_compile->fn_rettype == VOIDOID)
-						{
-							if (yylex() != ';')
-								yyerror("function returning void cannot specify RETURN expression");
 						}
 						else
 						{
@@ -1097,9 +1105,6 @@ stmt_return		: K_RETURN lno
 							 */
 							new->expr = plpgsql_read_expression(';', ";");
 						}
-
-						new->cmd_type = PLPGSQL_STMT_RETURN;
-						new->lineno   = $2;
 
 						$$ = (PLpgSQL_stmt *)new;
 					}
@@ -1115,18 +1120,31 @@ stmt_return_next: K_RETURN_NEXT lno
 						new = palloc0(sizeof(PLpgSQL_stmt_return_next));
 						new->cmd_type	= PLPGSQL_STMT_RETURN_NEXT;
 						new->lineno		= $2;
+						new->expr = NULL;
+						new->retvarno	= -1;
 
-						if (plpgsql_curr_compile->fn_retistuple)
+						if (plpgsql_curr_compile->out_param_varno >= 0)
 						{
-							int tok = yylex();
+							if (yylex() != ';')
+								yyerror("RETURN NEXT cannot have a parameter in function with OUT parameters");
+							new->retvarno = plpgsql_curr_compile->out_param_varno;
+						}
+						else if (plpgsql_curr_compile->fn_retistuple)
+						{
+							switch (yylex())
+							{
+								case T_ROW:
+									new->retvarno = yylval.row->rowno;
+									break;
 
-							if (tok == T_RECORD)
-								new->rec = yylval.rec;
-							else if (tok == T_ROW)
-								new->row = yylval.row;
-							else
-								yyerror("RETURN NEXT must specify a record or row variable in function returning tuple");
+								case T_RECORD:
+									new->retvarno = yylval.rec->recno;
+									break;
 
+								default:
+									yyerror("RETURN NEXT must specify a record or row variable in function returning tuple");
+									break;
+							}
 							if (yylex() != ';')
 								yyerror("RETURN NEXT must specify a record or row variable in function returning tuple");
 						}
