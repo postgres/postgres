@@ -1,4 +1,4 @@
-<!-- $Header: /cvsroot/pgsql/doc/src/sgml/installation.sgml,v 1.95 2002/10/29 03:07:11 momjian Exp $ -->
+<!-- $Header: /cvsroot/pgsql/doc/src/sgml/installation.sgml,v 1.96 2002/10/29 03:29:42 momjian Exp $ -->
 
 <chapter id="installation">
  <title><![%standalone-include[<productname>PostgreSQL</>]]>
@@ -1532,7 +1532,7 @@ gunzip -c user.ps.gz \
 	<entry>7.3</entry>
         <entry>2002-10-28,
 	 10.20 Tom Lane (<email>tgl@sss.pgh.pa.us</email>)</entry>,
-	 11.00, 11.11, 32 &amp; 64 bit, Giles Lean (<email>giles.lean@hp.com</email>)</entry>
+	 11.00, 11.11, 32 &amp; 64 bit, Giles Lean (<email>giles@nemeton.com.au</email>)</entry>
         <entry>gcc and cc; see also <filename>doc/FAQ_HPUX</filename></entry>
        </row>
        <row>
