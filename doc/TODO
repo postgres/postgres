@@ -81,8 +81,6 @@ RELIABILITY
 * disallow inherited columns with the same name as new columns
 * recover or force failure when disk space is exhausted
 * default char() value not to full length crashes server on some OS's
-* -DISTINCT not on last query fails on UNION but not UNION ALL
-* Negative constants used with int2 or float4 columns fails
 
 ENHANCEMENTS
 ------------
