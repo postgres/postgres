@@ -1,7 +1,7 @@
 
                 Frequently Asked Questions (FAQ) for PostgreSQL
                                        
-   Last updated: Wed Dec 15 20:06:34 EST 2004
+   Last updated: Fri Dec 17 23:12:56 EST 2004
    
    Current maintainer: Bruce Momjian (pgman@candle.pha.pa.us)
    
@@ -262,8 +262,9 @@
    a collection of PostgreSQL technical articles at
    http://techdocs.PostgreSQL.org/.
    
-   psql has some nice \d commands to show information about types,
-   operators, functions, aggregates, etc.
+   The command line client program psql has some \d commands to show
+   information about types, operators, functions, aggregates, etc. - use
+   \? to display the available commands.
    
    Our web site contains even more documentation.
    
@@ -327,20 +328,15 @@
           reduce lock contention.
           
    Performance
-          PostgreSQL has performance similar to other commercial and open
-          source databases. it is faster for some things, slower for
+          PostgreSQL's performance is comparable to other commercial and
+          open source databases. It is faster for some things, slower for
           others. In comparison to MySQL or leaner database systems, we
           are faster for multiple users, complex queries, and a
           read/write query load. MySQL is faster for simple SELECT
           queries done by a few users. Of course, MySQL does not have
           most of the features mentioned in the Features section above.
           We are built for reliability and features, and we continue to
-          improve performance in every release. There is an interesting
-          Web page comparing PostgreSQL to MySQL at
-          http://openacs.org/philosophy/why-not-mysql.html Also, MySQL is
-          is a company that distributes its products via open source, and
-          requires a commercial license for close-source software, not an
-          open source development community like PostgreSQL.
+          improve performance in every release.
           
    Reliability
           We realize that a DBMS must be reliable, or it is worthless. We
@@ -384,10 +380,10 @@
    item is solely to support the PostgreSQL project and does not fund any
    specific company. If you prefer, you can also send a check to the
    contact address.
-     _________________________________________________________________
    
    Also, if you have a success story about PostgreSQL, please submit it
    to our advocacy site at http://advocacy.postgresql.org.
+     _________________________________________________________________
    
                            User Client Questions
                                       
@@ -420,7 +416,7 @@
     2.3) Does PostgreSQL have a graphical user interface?
     
    Yes, there are several graphical interfaces to PostgreSQL available.
-   These include PgAccess http://www.pgaccess.org), PgAdmin III
+   These include PgAccess http://www.pgaccess.org), pgAdmin III
    (http://www.pgadmin.org, RHDB Admin (http://sources.redhat.com/rhdb/
    ), TORA (http://www.globecom.net/tora/ (partly commercial), and Rekall
    ( http://www.thekompany.com/products/rekall/, proprietary). There is
@@ -521,9 +517,9 @@
    exceeded your kernel's limit on shared memory space. Each buffer is 8K
    and the default is 1000 buffers.
    
-   You can also use the sort_mem and work_mem options to increase the
-   maximum amount of memory used by the backend processes for each
-   temporary sort. The default is 1024 (i.e. 1MB).
+   You can also use the sort_mem (from PostgreSQL 8.0: work_mem) options
+   to increase the maximum amount of memory used by the backend processes
+   for each temporary sort. The default is 1024 (i.e. 1MB).
    
    You can also use the CLUSTER command to group data in tables to match
    an index. See the CLUSTER manual page for more details.
@@ -944,9 +940,8 @@ BYTEA           bytea           variable-length byte array (null-byte safe)
    Finally, you could use the OID returned from the INSERT statement to
    look up the default value, though this is probably the least portable
    approach, and the oid value will wrap around when it reaches 4
-   billion. In Perl, using DBI with Edmund Mergl's DBD::Pg module, the
-   oid value is made available via $sth->{pg_oid_status} after
-   $sth->execute().
+   billion. In Perl, using DBI with the DBD::Pg module, the oid value is
+   made available via $sth->{pg_oid_status} after $sth->execute().
    
     4.15.3) Doesn't currval() lead to a race condition with other users?
     
