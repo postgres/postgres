@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/fmgr/fmgr.c,v 1.24 1999/04/03 22:57:29 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/fmgr/fmgr.c,v 1.25 1999/04/09 22:35:42 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -27,6 +27,7 @@
 #include "utils/syscache.h"
 #include "nodes/params.h"
 
+#include "utils/builtins.h"
 #include "utils/elog.h"
 
 #include "nodes/parsenodes.h"
@@ -206,6 +207,7 @@ fmgr_info(Oid procedureId, FmgrInfo *finfo)
 	HeapTuple	languageTuple;
 	Form_pg_language languageStruct;
 	Oid			language;
+	char	   *prosrc;
 
 	finfo->fn_addr = NULL;
 	finfo->fn_plhandler = NULL;
@@ -239,11 +241,21 @@ fmgr_info(Oid procedureId, FmgrInfo *finfo)
 		{
 			case INTERNALlanguageId:
 				/*
-				 * Since we already tried to look up the OID as a builtin
-				 * function, we should never get here...
+				 * For an ordinary builtin function, we should never get here
+				 * because the isbuiltin() search above will have succeeded.
+				 * However, if the user has done a CREATE FUNCTION to create
+				 * an alias for a builtin function, we end up here.  In that
+				 * case we have to look up the function by name.  The name
+				 * of the internal function is stored in prosrc (it doesn't
+				 * have to be the same as the name of the alias!)
 				 */
-				elog(ERROR, "fmgr_info: function %d: not in internal table",
-					 procedureId);
+				prosrc = textout(&(procedureStruct->prosrc));
+				finfo->fn_addr = fmgr_lookupByName(prosrc);
+				if (!finfo->fn_addr)
+					elog(ERROR, "fmgr_info: function %s not in internal table",
+						 prosrc);
+				finfo->fn_nargs = procedureStruct->pronargs;
+				pfree(prosrc);
 				break;
 			case ClanguageId:
 				finfo->fn_addr = fmgr_dynamic(procedureId, &(finfo->fn_nargs));

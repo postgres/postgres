@@ -9,7 +9,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/commands/define.c,v 1.27 1999/02/13 23:15:06 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/commands/define.c,v 1.28 1999/04/09 22:35:41 tgl Exp $
  *
  * DESCRIPTION
  *	  The "DefineFoo" routines take the parse tree and pick out the
@@ -186,14 +186,15 @@ interpret_AS_clause(const char *languageName, const char *as,
 					char **prosrc_str_p, char **probin_str_p)
 {
 
-	if (strcmp(languageName, "C") == 0 ||
-		strcmp(languageName, "internal") == 0)
+	if (strcmp(languageName, "C") == 0)
 	{
+		/* For "C" language, store the given string in probin */
 		*prosrc_str_p = "-";
 		*probin_str_p = (char *) as;
 	}
 	else
 	{
+		/* Everything else wants the given string in prosrc */
 		*prosrc_str_p = (char *) as;
 		*probin_str_p = "-";
 	}

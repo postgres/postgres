@@ -8,7 +8,7 @@
 #
 #
 # IDENTIFICATION
-#    $Header: /cvsroot/pgsql/src/backend/utils/Attic/Gen_fmgrtab.sh.in,v 1.14 1999/03/29 01:30:35 tgl Exp $
+#    $Header: /cvsroot/pgsql/src/backend/utils/Attic/Gen_fmgrtab.sh.in,v 1.15 1999/04/09 22:35:41 tgl Exp $
 #
 # NOTES
 #    Passes any -D options on to cpp prior to generating the list
@@ -83,7 +83,7 @@ cat > $HFILE <<FuNkYfMgRsTuFf
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: Gen_fmgrtab.sh.in,v 1.14 1999/03/29 01:30:35 tgl Exp $
+ * $Id: Gen_fmgrtab.sh.in,v 1.15 1999/04/09 22:35:41 tgl Exp $
  *
  * NOTES
  *	******************************
@@ -206,7 +206,7 @@ cat > $TABCFILE <<FuNkYfMgRtAbStUfF
  *
  *
  * IDENTIFICATION
- *    $Header: /cvsroot/pgsql/src/backend/utils/Attic/Gen_fmgrtab.sh.in,v 1.14 1999/03/29 01:30:35 tgl Exp $
+ *    $Header: /cvsroot/pgsql/src/backend/utils/Attic/Gen_fmgrtab.sh.in,v 1.15 1999/04/09 22:35:41 tgl Exp $
  *
  * NOTES
  *
@@ -225,22 +225,7 @@ cat > $TABCFILE <<FuNkYfMgRtAbStUfF
  */
 
 #include <string.h>
-
 #include <postgres.h>
-
-#ifdef WIN32
-# include <limits.h>
-#else
-# ifdef HAVE_LIMITS_H
-#  include <limits.h>
-#  ifndef MAXINT
-#    define MAXINT	INT_MAX
-#  endif
-# else
-#  include <values.h>
-# endif 
-#endif 
-
 #include "utils/fmgrtab.h"
 
 FuNkYfMgRtAbStUfF
@@ -252,20 +237,14 @@ cat >> $TABCFILE <<FuNkYfMgRtAbStUfF
 static FmgrCall fmgr_builtins[] = {
 FuNkYfMgRtAbStUfF
 
-awk '{ printf ("  {%d, %d, %s },\n"), $1, $8, $(NF-1) }' $RAWFILE >> $TABCFILE
+awk '{ printf ("  {%d, %d, %s, \"%s\" },\n"), $1, $8, $(NF-1), $(NF-1) }' $RAWFILE >> $TABCFILE
 
 cat >> $TABCFILE <<FuNkYfMgRtAbStUfF
-	/* guardian value */
-#ifndef WIN32
-      { MAXINT, 0, (func_ptr) NULL }
-#else
-      { INT_MAX, 0, (func_ptr) NULL }
-#endif /* WIN32 */
+  /* dummy entry is easier than getting rid of comma after last real one */
+  { 0, 0, (func_ptr) NULL, NULL }
 };
 
-/* Note FMGR_NBUILTINS excludes the guardian entry, which is probably
- * not really needed at all ...
- */
+/* Note FMGR_NBUILTINS excludes the dummy entry */
 #define FMGR_NBUILTINS  ((sizeof(fmgr_builtins) / sizeof(FmgrCall)) - 1)
 
 FmgrCall *fmgr_isbuiltin(Oid id)
@@ -287,6 +266,20 @@ FmgrCall *fmgr_isbuiltin(Oid id)
 			high = i - 1;
 	}
 	return (FmgrCall *) NULL;
+}
+
+func_ptr fmgr_lookupByName(char *name) 
+{
+	/* Lookup a builtin by name.  Note there can be more than one entry in
+	 * the array matching this name, but they should all point to the same
+	 * routine.
+	 */
+    int i;
+    for (i=0; i<FMGR_NBUILTINS; i++) {
+		if (strcmp(name, fmgr_builtins[i].funcName) == 0)
+			return fmgr_builtins[i].func;
+    }
+    return (func_ptr) NULL;
 }
 
 FuNkYfMgRtAbStUfF
