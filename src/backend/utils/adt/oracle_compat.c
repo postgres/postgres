@@ -1,7 +1,7 @@
 /*
  *  Edmund Mergl <E.Mergl@bawue.de>
  *
- *  $Id: oracle_compat.c,v 1.1 1997/03/04 05:32:06 scrappy Exp $
+ *  $Id: oracle_compat.c,v 1.2 1997/03/09 20:40:58 momjian Exp $
  *
  */
 
@@ -9,6 +9,7 @@
 #include <ctype.h>
 #include "postgres.h"
 
+#include "utils/builtins.h"	/* where function declarations go */
 
 /********************************************************************
  *

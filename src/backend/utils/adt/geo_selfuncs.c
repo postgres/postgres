@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *    $Header: /cvsroot/pgsql/src/backend/utils/adt/Attic/geo-selfuncs.c,v 1.2 1996/11/10 03:03:13 momjian Exp $
+ *    $Header: /cvsroot/pgsql/src/backend/utils/adt/geo_selfuncs.c,v 1.1 1997/03/09 20:40:57 momjian Exp $
  *
  *	XXX These are totally bogus.
  *

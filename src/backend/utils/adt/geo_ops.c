@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *    $Header: /cvsroot/pgsql/src/backend/utils/adt/Attic/geo-ops.c,v 1.3 1996/11/03 06:53:06 scrappy Exp $
+ *    $Header: /cvsroot/pgsql/src/backend/utils/adt/geo_ops.c,v 1.1 1997/03/09 20:40:55 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */

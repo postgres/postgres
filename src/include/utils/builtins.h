@@ -6,7 +6,7 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: builtins.h,v 1.9 1997/02/19 20:11:05 momjian Exp $
+ * $Id: builtins.h,v 1.10 1997/03/09 20:41:02 momjian Exp $
  *
  * NOTES
  *    This should normally only be included by fmgr.h.
@@ -485,6 +485,18 @@ extern bool namenlike(NameData *s, struct varlena *p);
 extern bool textlike(struct varlena *s, struct varlena *p);
 extern bool textnlike(struct varlena *s, struct varlena *p);
 extern int like(char *text, char *p);
+
+/* oracle_compat.c */
+
+extern text *lower(text *string);
+extern text *upper(text *string);
+extern text *initcap(text *string);
+extern text *lpad(text *string1, int4 len, text *string2);
+extern text *rpad(text *string1, int4 len, text *string2);
+extern text *ltrim(text *string, text *set);
+extern text *rtrim(text *string, text *set);
+extern text *substr(text *string, int4 m, int4 n);
+extern text *translate(text *string, char from, char to);
 
 /* acl.c */
 
