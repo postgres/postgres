@@ -6,7 +6,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  *
- * $Header: /cvsroot/pgsql/src/bin/pg_dump/pg_dumpall.c,v 1.9.2.2 2003/01/16 15:28:06 tgl Exp $
+ * $Header: /cvsroot/pgsql/src/bin/pg_dump/pg_dumpall.c,v 1.9.2.3 2003/03/06 21:45:57 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -77,6 +77,7 @@ main(int argc, char *argv[])
 		{"inserts", no_argument, NULL, 'd'},
 		{"attribute-inserts", no_argument, NULL, 'D'},
 		{"column-inserts", no_argument, NULL, 'D'},
+		{"globals-only", no_argument, NULL, 'g'},
 		{"host", required_argument, NULL, 'h'},
 		{"ignore-version", no_argument, NULL, 'i'},
 		{"oids", no_argument, NULL, 'o'},
