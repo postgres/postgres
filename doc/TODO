@@ -1,6 +1,6 @@
 TODO list for PostgreSQL
 ========================
-Last updated:		Wed Jul 26 21:12:33 EDT 2000
+Last updated:		Thu Jul 27 14:41:53 EDT 2000
 
 Current maintainer:	Bruce Momjian (pgman@candle.pha.pa.us)
 
@@ -93,7 +93,6 @@ TYPES
 * Functions returning sets don't really work right[function]
 * Add hash for int8
 * SELECT col FROM tab WHERE numeric_col = 10.1 fails
-* Allow arrays to hold NULL elements
 * Get BIT type working
 * Allow better handling of numeric constants, type conversion [typeconv]
 * Support multiple simultaneous character sets, per SQL92
