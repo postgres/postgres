@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *    $Header: /cvsroot/pgsql/src/backend/tcop/postgres.c,v 1.8 1996/09/16 05:36:38 scrappy Exp $
+ *    $Header: /cvsroot/pgsql/src/backend/tcop/postgres.c,v 1.9 1996/10/04 20:16:32 scrappy Exp $
  *
  * NOTES
  *    this is the "main" module of the postgres backend and
@@ -707,13 +707,13 @@ pg_eval_dest(char *query_string, /* string to execute */
  */
 
 void
-handle_warn()
+handle_warn(SIGNAL_ARGS)
 {
     siglongjmp(Warn_restart, 1);
 }
 
 void
-quickdie()
+quickdie(SIGNAL_ARGS)
 {
     elog(NOTICE, "I have been signalled by the postmaster.");
     elog(NOTICE, "Some backend process has died unexpectedly and possibly");
@@ -731,14 +731,14 @@ quickdie()
 }
 
 void
-die()
+die(SIGNAL_ARGS)
 {
     ExitPostgres(0);
 }
 
 /* signal handler for floating point exception */
 void
-FloatExceptionHandler()
+FloatExceptionHandler(SIGNAL_ARGS)
 {
    elog(WARN, "floating point exception! the last floating point operation eit\
 her exceeded legal ranges or was a divide by zero");
@@ -1269,7 +1269,7 @@ PostgresMain(int argc, char *argv[])
      */
     if (IsUnderPostmaster == false) {
 	puts("\nPOSTGRES backend interactive interface");
-	puts("$Revision: 1.8 $ $Date: 1996/09/16 05:36:38 $");
+	puts("$Revision: 1.9 $ $Date: 1996/10/04 20:16:32 $");
     }
     
     /* ----------------

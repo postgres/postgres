@@ -10,7 +10,7 @@
  *
  *
  * IDENTIFICATION
- *    $Header: /cvsroot/pgsql/src/backend/postmaster/postmaster.c,v 1.8 1996/09/26 03:17:44 momjian Exp $
+ *    $Header: /cvsroot/pgsql/src/backend/postmaster/postmaster.c,v 1.9 1996/10/04 20:16:18 scrappy Exp $
  *
  * NOTES
  *
@@ -156,20 +156,14 @@ static void pmdaemonize(void);
 static int ConnStartup(Port *port);
 static int ConnCreate(int serverFd, int *newFdP);
 static void reset_shared(short port);
-#if defined(linux)
-static void pmdie(int);
-static void reaper(int);
-static void dumpstatus(int);
-#else
-static void pmdie(void);
-static void reaper(void);
-static void dumpstatus();
-#endif
+static void pmdie(SIGNAL_ARGS);
+static void reaper(SIGNAL_ARGS);
+static void dumpstatus(SIGNAL_ARGS);
 static void CleanupProc(int pid, int exitstatus);
 static int DoExec(StartupInfo *packet, int portFd);
 static void ExitPostmaster(int status);
-static void usage();
-static void checkDataDir();
+static void usage(const char *);
+static void checkDataDir(void);
 
 int ServerLoop(void);
 int BackendStartup(StartupInfo *packet, Port *port, int *pidPtr);
@@ -367,7 +361,7 @@ PostmasterMain(int argc, char *argv[])
 }
 
 static void
-pmdaemonize()
+pmdaemonize(void)
 {
     int i;
     
@@ -387,7 +381,7 @@ pmdaemonize()
 }
 
 static void
-usage(char *progname)
+usage(const char *progname)
 {
     fprintf(stderr, "usage: %s [options..]\n", progname);
     fprintf(stderr, "\t-a authsys\tdo/do not permit use of an authentication system\n");
@@ -405,7 +399,7 @@ usage(char *progname)
 }
 
 int
-ServerLoop()
+ServerLoop(void)
 {
     int		serverFd = ServerSock;
     fd_set	rmask, basemask;
@@ -435,7 +429,7 @@ ServerLoop()
 	    fprintf(stderr, "%s: ServerLoop: select failed\n",
 		    progname);
 	    return(STATUS_ERROR);
-	}
+        }
 	/* [TRH]
 	 * To avoid race conditions, block SIGCHLD signals while we are
 	 * handling the request. (both reaper() and ConnCreate()
@@ -468,7 +462,7 @@ ServerLoop()
 	    --nSelected;
 	    FD_CLR(ServerSock, &rmask);
 	  }
-
+     
 	if (DebugLvl > 1) {
 	    fprintf(stderr, "%s: ServerLoop:\tnSelected=%d\n",
 		    progname, nSelected);
@@ -661,11 +655,7 @@ reset_shared(short port)
  * pmdie -- signal handler for cleaning up after a kill signal.
  */
 static void
-#if defined(PORTNAME_linux)
-pmdie(int i)
-#else
-pmdie()
-#endif
+pmdie(SIGNAL_ARGS)
 {
     exitpg(0);
 }
@@ -674,11 +664,7 @@ pmdie()
  * Reaper -- signal handler to cleanup after a backend (child) dies.
  */
 static void
-#if defined(PORTNAME_linux)
-reaper(int i)
-#else
-reaper()
-#endif
+reaper(SIGNAL_ARGS)
 {
     int	status;		/* backend exit status */
     int	pid;		/* process id of dead backend */
@@ -1083,11 +1069,7 @@ ExitPostmaster(int status)
 }
 
 static void
-#if defined(PORTNAME_linux)
-dumpstatus(int i)
-#else
-dumpstatus()
-#endif
+dumpstatus(SIGNAL_ARGS)
 {
     Dlelem *curr = DLGetHead(PortList); 
     
@@ -1104,7 +1086,7 @@ dumpstatus()
 }
 
 static void
-checkDataDir()
+checkDataDir(void)
 {
     char path[MAXPATHLEN];
     FILE *fp;
