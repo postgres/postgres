@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/varlena.c,v 1.77 2001/11/19 18:21:10 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/varlena.c,v 1.78 2001/11/19 19:15:07 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -260,7 +260,7 @@ textlen(PG_FUNCTION_ARGS)
 Datum
 textoctetlen(PG_FUNCTION_ARGS)
 {
-	text    *arg = PG_GETARG_VARCHAR_P(0);
+	text    *arg = PG_GETARG_TEXT_P(0);
 
 	PG_RETURN_INT32(VARSIZE(arg) - VARHDRSZ);
 }
