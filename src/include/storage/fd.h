@@ -6,7 +6,7 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: fd.h,v 1.14 1999/05/25 16:14:41 momjian Exp $
+ * $Id: fd.h,v 1.15 1999/05/25 22:43:24 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -91,11 +91,11 @@ extern void FreeFile(FILE *);
  * atop virtual Files...
  */
 extern BufFile *BufFileCreate(File file);
-extern void BufFileClose(BufFile * file);
-extern size_t BufFileRead(BufFile * file, void *ptr, size_t size);
-extern size_t BufFileWrite(BufFile * file, void *ptr, size_t size);
-extern int	BufFileFlush(BufFile * file);
-extern long BufFileSeek(BufFile * file, long offset, int whence);
+extern void BufFileClose(BufFile *file);
+extern size_t BufFileRead(BufFile *file, void *ptr, size_t size);
+extern size_t BufFileWrite(BufFile *file, void *ptr, size_t size);
+extern int	BufFileFlush(BufFile *file);
+extern long BufFileSeek(BufFile *file, long offset, int whence);
 
 /* Miscellaneous support routines */
 extern int	FileNameUnlink(char *filename);

@@ -14,7 +14,7 @@
  *		ExecInitTee
  *		ExecEndTee
  *
- *	$Id: nodeTee.c,v 1.2 1999/05/25 16:08:50 momjian Exp $
+ *	$Id: nodeTee.c,v 1.3 1999/05/25 22:41:04 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -44,7 +44,7 @@
  * ------------------------------------------------------------------
  */
 bool
-ExecInitTee(Tee *node, EState *currentEstate, Plan *parent)
+ExecInitTee(Tee * node, EState *currentEstate, Plan *parent)
 {
 	TeeState   *teeState;
 	Plan	   *outerPlan;
@@ -207,7 +207,7 @@ ExecInitTee(Tee *node, EState *currentEstate, Plan *parent)
 }
 
 int
-ExecCountSlotsTee(Tee *node)
+ExecCountSlotsTee(Tee * node)
 {
 	/* Tee nodes can't have innerPlans */
 	return ExecCountSlotsNode(outerPlan(node)) + TEE_NSLOTS;
@@ -223,7 +223,7 @@ ExecCountSlotsTee(Tee *node)
 * ----------------------------------------------------------------
 */
 static void
-initTeeScanDescs(Tee *node)
+initTeeScanDescs(Tee * node)
 {
 	TeeState   *teeState;
 	Relation	bufferRel;
@@ -285,7 +285,7 @@ initTeeScanDescs(Tee *node)
  */
 
 TupleTableSlot *
-ExecTee(Tee *node, Plan *parent)
+ExecTee(Tee * node, Plan *parent)
 {
 	EState	   *estate;
 	TeeState   *teeState;
@@ -437,7 +437,7 @@ ExecTee(Tee *node, Plan *parent)
  */
 
 void
-ExecEndTee(Tee *node, Plan *parent)
+ExecEndTee(Tee * node, Plan *parent)
 {
 	EState	   *estate;
 	TeeState   *teeState;

@@ -6,7 +6,7 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: plannodes.h,v 1.26 1999/05/25 16:14:10 momjian Exp $
+ * $Id: plannodes.h,v 1.27 1999/05/25 22:42:58 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -264,7 +264,7 @@ typedef struct Noname
 	Plan		plan;
 	Oid			nonameid;
 	int			keycount;
-}			Noname;
+} Noname;
 
 /* ----------------
  *		materialization node
@@ -338,7 +338,7 @@ typedef struct Tee
 	List	   *rtentries;		/* the range table for the plan below the
 								 * Tee may be different than the parent
 								 * plans */
-} Tee;
+}			Tee;
 
 #endif
 

@@ -6,7 +6,7 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: int8.h,v 1.13 1999/05/25 16:14:55 momjian Exp $
+ * $Id: int8.h,v 1.14 1999/05/25 22:43:35 momjian Exp $
  *
  * NOTES
  * These data types are supported on all 64-bit architectures, and may
@@ -47,60 +47,60 @@ typedef long int int64;
 
 
 extern int64 *int8in(char *str);
-extern char *int8out(int64 * val);
+extern char *int8out(int64 *val);
 
-extern bool int8eq(int64 * val1, int64 * val2);
-extern bool int8ne(int64 * val1, int64 * val2);
-extern bool int8lt(int64 * val1, int64 * val2);
-extern bool int8gt(int64 * val1, int64 * val2);
-extern bool int8le(int64 * val1, int64 * val2);
-extern bool int8ge(int64 * val1, int64 * val2);
+extern bool int8eq(int64 *val1, int64 *val2);
+extern bool int8ne(int64 *val1, int64 *val2);
+extern bool int8lt(int64 *val1, int64 *val2);
+extern bool int8gt(int64 *val1, int64 *val2);
+extern bool int8le(int64 *val1, int64 *val2);
+extern bool int8ge(int64 *val1, int64 *val2);
 
-extern bool int84eq(int64 * val1, int32 val2);
-extern bool int84ne(int64 * val1, int32 val2);
-extern bool int84lt(int64 * val1, int32 val2);
-extern bool int84gt(int64 * val1, int32 val2);
-extern bool int84le(int64 * val1, int32 val2);
-extern bool int84ge(int64 * val1, int32 val2);
+extern bool int84eq(int64 *val1, int32 val2);
+extern bool int84ne(int64 *val1, int32 val2);
+extern bool int84lt(int64 *val1, int32 val2);
+extern bool int84gt(int64 *val1, int32 val2);
+extern bool int84le(int64 *val1, int32 val2);
+extern bool int84ge(int64 *val1, int32 val2);
 
-extern bool int48eq(int32 val1, int64 * val2);
-extern bool int48ne(int32 val1, int64 * val2);
-extern bool int48lt(int32 val1, int64 * val2);
-extern bool int48gt(int32 val1, int64 * val2);
-extern bool int48le(int32 val1, int64 * val2);
-extern bool int48ge(int32 val1, int64 * val2);
+extern bool int48eq(int32 val1, int64 *val2);
+extern bool int48ne(int32 val1, int64 *val2);
+extern bool int48lt(int32 val1, int64 *val2);
+extern bool int48gt(int32 val1, int64 *val2);
+extern bool int48le(int32 val1, int64 *val2);
+extern bool int48ge(int32 val1, int64 *val2);
 
-extern int64 *int8um(int64 * val);
-extern int64 *int8pl(int64 * val1, int64 * val2);
-extern int64 *int8mi(int64 * val1, int64 * val2);
-extern int64 *int8mul(int64 * val1, int64 * val2);
-extern int64 *int8div(int64 * val1, int64 * val2);
-extern int64 *int8larger(int64 * val1, int64 * val2);
-extern int64 *int8smaller(int64 * val1, int64 * val2);
+extern int64 *int8um(int64 *val);
+extern int64 *int8pl(int64 *val1, int64 *val2);
+extern int64 *int8mi(int64 *val1, int64 *val2);
+extern int64 *int8mul(int64 *val1, int64 *val2);
+extern int64 *int8div(int64 *val1, int64 *val2);
+extern int64 *int8larger(int64 *val1, int64 *val2);
+extern int64 *int8smaller(int64 *val1, int64 *val2);
 
-extern int64 *int84pl(int64 * val1, int32 val2);
-extern int64 *int84mi(int64 * val1, int32 val2);
-extern int64 *int84mul(int64 * val1, int32 val2);
-extern int64 *int84div(int64 * val1, int32 val2);
+extern int64 *int84pl(int64 *val1, int32 val2);
+extern int64 *int84mi(int64 *val1, int32 val2);
+extern int64 *int84mul(int64 *val1, int32 val2);
+extern int64 *int84div(int64 *val1, int32 val2);
 
-extern int64 *int48pl(int32 val1, int64 * val2);
-extern int64 *int48mi(int32 val1, int64 * val2);
-extern int64 *int48mul(int32 val1, int64 * val2);
-extern int64 *int48div(int32 val1, int64 * val2);
+extern int64 *int48pl(int32 val1, int64 *val2);
+extern int64 *int48mi(int32 val1, int64 *val2);
+extern int64 *int48mul(int32 val1, int64 *val2);
+extern int64 *int48div(int32 val1, int64 *val2);
 
 extern int64 *int48(int32 val);
-extern int32 int84(int64 * val);
+extern int32 int84(int64 *val);
 
 #if NOT_USED
 extern int64 *int28 (int16 val);
-extern int16 int82(int64 * val);
+extern int16 int82(int64 *val);
 
 #endif
 
-extern float64 i8tod(int64 * val);
+extern float64 i8tod(int64 *val);
 extern int64 *dtoi8(float64 val);
 
-extern text *int8_text(int64 * val);
+extern text *int8_text(int64 *val);
 extern int64 *text_int8(text *str);
 
 #endif	 /* INT8_H */

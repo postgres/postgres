@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/optimizer/path/joinpath.c,v 1.37 1999/05/25 16:09:25 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/optimizer/path/joinpath.c,v 1.38 1999/05/25 22:41:30 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -30,14 +30,14 @@
 								 * _enable_mergejoin} */
 
 static Path *best_innerjoin(List *join_paths, List *outer_relid);
-static List *sort_inner_and_outer(RelOptInfo * joinrel, RelOptInfo * outerrel, RelOptInfo * innerrel,
+static List *sort_inner_and_outer(RelOptInfo *joinrel, RelOptInfo *outerrel, RelOptInfo *innerrel,
 					 List *mergeinfo_list);
-static List *match_unsorted_outer(RelOptInfo * joinrel, RelOptInfo * outerrel, RelOptInfo * innerrel,
+static List *match_unsorted_outer(RelOptInfo *joinrel, RelOptInfo *outerrel, RelOptInfo *innerrel,
 		List *outerpath_list, Path *cheapest_inner, Path *best_innerjoin,
 					 List *mergeinfo_list);
-static List *match_unsorted_inner(RelOptInfo * joinrel, RelOptInfo * outerrel, RelOptInfo * innerrel,
+static List *match_unsorted_inner(RelOptInfo *joinrel, RelOptInfo *outerrel, RelOptInfo *innerrel,
 					 List *innerpath_list, List *mergeinfo_list);
-static List *hash_inner_and_outer(RelOptInfo * joinrel, RelOptInfo * outerrel, RelOptInfo * innerrel,
+static List *hash_inner_and_outer(RelOptInfo *joinrel, RelOptInfo *outerrel, RelOptInfo *innerrel,
 					 List *hashinfo_list);
 
 /*
@@ -194,9 +194,9 @@ best_innerjoin(List *join_paths, Relids outer_relids)
  * Returns a list of mergejoin paths.
  */
 static List *
-sort_inner_and_outer(RelOptInfo * joinrel,
-					 RelOptInfo * outerrel,
-					 RelOptInfo * innerrel,
+sort_inner_and_outer(RelOptInfo *joinrel,
+					 RelOptInfo *outerrel,
+					 RelOptInfo *innerrel,
 					 List *mergeinfo_list)
 {
 	List	   *ms_list = NIL;
@@ -268,9 +268,9 @@ sort_inner_and_outer(RelOptInfo * joinrel,
  * Returns a list of possible join path nodes.
  */
 static List *
-match_unsorted_outer(RelOptInfo * joinrel,
-					 RelOptInfo * outerrel,
-					 RelOptInfo * innerrel,
+match_unsorted_outer(RelOptInfo *joinrel,
+					 RelOptInfo *outerrel,
+					 RelOptInfo *innerrel,
 					 List *outerpath_list,
 					 Path *cheapest_inner,
 					 Path *best_innerjoin,
@@ -411,9 +411,9 @@ match_unsorted_outer(RelOptInfo * joinrel,
  * Returns a list of possible merge paths.
  */
 static List *
-match_unsorted_inner(RelOptInfo * joinrel,
-					 RelOptInfo * outerrel,
-					 RelOptInfo * innerrel,
+match_unsorted_inner(RelOptInfo *joinrel,
+					 RelOptInfo *outerrel,
+					 RelOptInfo *innerrel,
 					 List *innerpath_list,
 					 List *mergeinfo_list)
 {
@@ -503,9 +503,9 @@ match_unsorted_inner(RelOptInfo * joinrel,
  * Returns a list of hashjoin paths.
  */
 static List *
-hash_inner_and_outer(RelOptInfo * joinrel,
-					 RelOptInfo * outerrel,
-					 RelOptInfo * innerrel,
+hash_inner_and_outer(RelOptInfo *joinrel,
+					 RelOptInfo *outerrel,
+					 RelOptInfo *innerrel,
 					 List *hashinfo_list)
 {
 	List	   *hjoin_list = NIL;

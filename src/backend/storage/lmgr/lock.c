@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/storage/lmgr/lock.c,v 1.53 1999/05/25 16:11:21 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/storage/lmgr/lock.c,v 1.54 1999/05/25 22:42:03 momjian Exp $
  *
  * NOTES
  *	  Outside modules can create a lock table and acquire/release
@@ -231,7 +231,7 @@ LockDisable(int status)
  * Notes: just copying.  Should only be called once.
  */
 static void
-LockMethodInit(LOCKMETHODTABLE * lockMethodTable,
+LockMethodInit(LOCKMETHODTABLE *lockMethodTable,
 			   MASK *conflictsP,
 			   int *prioP,
 			   int numModes)
@@ -1843,7 +1843,7 @@ LockOwners(LOCKMETHOD lockmethod, LOCKTAG *locktag)
 	if (is_user_lock)
 	{
 		TPRINTF(TRACE_USERLOCKS, "LockOwners: user lock tag [%u]",
-				locktag->objId.blkno;
+				locktag->objId.blkno);
 	}
 #endif
 

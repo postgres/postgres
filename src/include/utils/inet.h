@@ -6,7 +6,7 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: inet.h,v 1.4 1999/05/25 16:14:54 momjian Exp $
+ * $Id: inet.h,v 1.5 1999/05/25 22:43:34 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -27,7 +27,7 @@ typedef struct
 		unsigned int ipv4_addr; /* network byte order */
 		/* add IPV6 address type here */
 	}			addr;
-}			inet_struct;
+} inet_struct;
 
 typedef struct varlena inet;
 
@@ -51,7 +51,7 @@ typedef struct manufacturer
 	unsigned char b;
 	unsigned char c;
 	char	   *name;
-}			manufacturer;
+} manufacturer;
 
 extern manufacturer manufacturers[];
 

@@ -3,7 +3,7 @@
  *			  out of it's tuple
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/ruleutils.c,v 1.16 1999/05/25 22:04:41 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/ruleutils.c,v 1.17 1999/05/25 22:42:13 momjian Exp $
  *
  *	  This software is copyrighted by Jan Wieck - Hamburg.
  *
@@ -67,7 +67,7 @@ typedef struct QryHier
 {
 	struct QryHier *parent;
 	Query	   *query;
-}			QryHier;
+} QryHier;
 
 
 /* ----------
@@ -101,16 +101,16 @@ NameData   *pg_get_userbyid(int4 uid);
  */
 static char *make_ruledef(HeapTuple ruletup, TupleDesc rulettc);
 static char *make_viewdef(HeapTuple ruletup, TupleDesc rulettc);
-static char *get_query_def(Query *query, QryHier * parentqh);
-static char *get_select_query_def(Query *query, QryHier * qh);
-static char *get_insert_query_def(Query *query, QryHier * qh);
-static char *get_update_query_def(Query *query, QryHier * qh);
-static char *get_delete_query_def(Query *query, QryHier * qh);
-static char *get_rule_expr(QryHier * qh, int rt_index, Node *node, bool varprefix);
-static char *get_func_expr(QryHier * qh, int rt_index, Expr *expr, bool varprefix);
-static char *get_tle_expr(QryHier * qh, int rt_index, TargetEntry *tle, bool varprefix);
+static char *get_query_def(Query *query, QryHier *parentqh);
+static char *get_select_query_def(Query *query, QryHier *qh);
+static char *get_insert_query_def(Query *query, QryHier *qh);
+static char *get_update_query_def(Query *query, QryHier *qh);
+static char *get_delete_query_def(Query *query, QryHier *qh);
+static char *get_rule_expr(QryHier *qh, int rt_index, Node *node, bool varprefix);
+static char *get_func_expr(QryHier *qh, int rt_index, Expr *expr, bool varprefix);
+static char *get_tle_expr(QryHier *qh, int rt_index, TargetEntry *tle, bool varprefix);
 static char *get_const_expr(Const *constval);
-static char *get_sublink_expr(QryHier * qh, int rt_index, Node *node, bool varprefix);
+static char *get_sublink_expr(QryHier *qh, int rt_index, Node *node, bool varprefix);
 static char *get_relation_name(Oid relid);
 static char *get_attribute_name(Oid relid, int2 attnum);
 static bool check_if_rte_used(int rt_index, Node *node, int sup);
@@ -806,7 +806,7 @@ make_viewdef(HeapTuple ruletup, TupleDesc rulettc)
  * ----------
  */
 static char *
-get_query_def(Query *query, QryHier * parentqh)
+get_query_def(Query *query, QryHier *parentqh)
 {
 	QryHier		qh;
 
@@ -850,7 +850,7 @@ get_query_def(Query *query, QryHier * parentqh)
  * ----------
  */
 static char *
-get_select_query_def(Query *query, QryHier * qh)
+get_select_query_def(Query *query, QryHier *qh)
 {
 	char		buf[BUFSIZE];
 	char	   *sep;
@@ -1020,7 +1020,7 @@ get_select_query_def(Query *query, QryHier * qh)
  * ----------
  */
 static char *
-get_insert_query_def(Query *query, QryHier * qh)
+get_insert_query_def(Query *query, QryHier *qh)
 {
 	char		buf[BUFSIZE];
 	char	   *sep;
@@ -1130,7 +1130,7 @@ get_insert_query_def(Query *query, QryHier * qh)
  * ----------
  */
 static char *
-get_update_query_def(Query *query, QryHier * qh)
+get_update_query_def(Query *query, QryHier *qh)
 {
 	char		buf[BUFSIZE];
 	char	   *sep;
@@ -1183,7 +1183,7 @@ get_update_query_def(Query *query, QryHier * qh)
  * ----------
  */
 static char *
-get_delete_query_def(Query *query, QryHier * qh)
+get_delete_query_def(Query *query, QryHier *qh)
 {
 	char		buf[BUFSIZE];
 	RangeTblEntry *rte;
@@ -1217,7 +1217,7 @@ get_delete_query_def(Query *query, QryHier * qh)
  * ----------
  */
 static char *
-get_rule_expr(QryHier * qh, int rt_index, Node *node, bool varprefix)
+get_rule_expr(QryHier *qh, int rt_index, Node *node, bool varprefix)
 {
 	char		buf[BUFSIZE];
 
@@ -1417,7 +1417,7 @@ get_rule_expr(QryHier * qh, int rt_index, Node *node, bool varprefix)
  * ----------
  */
 static char *
-get_func_expr(QryHier * qh, int rt_index, Expr *expr, bool varprefix)
+get_func_expr(QryHier *qh, int rt_index, Expr *expr, bool varprefix)
 {
 	char		buf[BUFSIZE];
 	HeapTuple	proctup;
@@ -1496,7 +1496,7 @@ get_func_expr(QryHier * qh, int rt_index, Expr *expr, bool varprefix)
  * ----------
  */
 static char *
-get_tle_expr(QryHier * qh, int rt_index, TargetEntry *tle, bool varprefix)
+get_tle_expr(QryHier *qh, int rt_index, TargetEntry *tle, bool varprefix)
 {
 	HeapTuple	proctup;
 	Form_pg_proc procStruct;
@@ -1605,7 +1605,7 @@ get_const_expr(Const *constval)
  * ----------
  */
 static char *
-get_sublink_expr(QryHier * qh, int rt_index, Node *node, bool varprefix)
+get_sublink_expr(QryHier *qh, int rt_index, Node *node, bool varprefix)
 {
 	SubLink    *sublink = (SubLink *) node;
 	Query	   *query = (Query *) (sublink->subselect);

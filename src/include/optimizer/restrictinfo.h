@@ -6,7 +6,7 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: restrictinfo.h,v 1.3 1999/05/25 16:14:22 momjian Exp $
+ * $Id: restrictinfo.h,v 1.4 1999/05/25 22:43:12 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -16,7 +16,7 @@
 #include "nodes/pg_list.h"
 #include "nodes/relation.h"
 
-extern bool valid_or_clause(RestrictInfo * restrictinfo);
+extern bool valid_or_clause(RestrictInfo *restrictinfo);
 extern List *get_actual_clauses(List *restrictinfo_list);
 extern void get_relattvals(List *restrictinfo_list, List **attnos,
 			   List **values, List **flags);

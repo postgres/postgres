@@ -5,7 +5,7 @@
  *
  *	1998 Jan Wieck
  *
- * $Header: /cvsroot/pgsql/src/include/utils/numeric.h,v 1.5 1999/05/25 16:14:56 momjian Exp $
+ * $Header: /cvsroot/pgsql/src/include/utils/numeric.h,v 1.6 1999/05/25 22:43:37 momjian Exp $
  *
  * ----------
  */
@@ -58,7 +58,7 @@ typedef struct NumericData
 	uint16		n_rscale;		/* Result scale			*/
 	uint16		n_sign_dscale;	/* Sign + display scale */
 	unsigned char n_data[1];	/* Digit data			*/
-}			NumericData;
+} NumericData;
 typedef NumericData *Numeric;
 
 #define NUMERIC_HDRSZ	(sizeof(int32) + sizeof(uint16) * 3)

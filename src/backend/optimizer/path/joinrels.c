@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/optimizer/path/joinrels.c,v 1.33 1999/05/25 16:09:26 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/optimizer/path/joinrels.c,v 1.34 1999/05/25 22:41:31 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -26,8 +26,8 @@
 static List *new_joininfo_list(List *joininfo_list, Relids join_relids);
 static bool nonoverlap_sets(List *s1, List *s2);
 static bool is_subset(List *s1, List *s2);
-static void set_joinrel_size(RelOptInfo * joinrel, RelOptInfo * outer_rel,
-				 RelOptInfo * inner_rel, JoinInfo * jinfo);
+static void set_joinrel_size(RelOptInfo *joinrel, RelOptInfo *outer_rel,
+				 RelOptInfo *inner_rel, JoinInfo *jinfo);
 
 /*
  * make_rels_by_joins
@@ -89,7 +89,7 @@ make_rels_by_joins(Query *root, List *old_rels)
  * Returns a list of new join relations.
  */
 List *
-make_rels_by_clause_joins(Query *root, RelOptInfo * old_rel,
+make_rels_by_clause_joins(Query *root, RelOptInfo *old_rel,
 						  List *joininfo_list, Relids only_relids)
 {
 	List	   *join_list = NIL;
@@ -159,7 +159,7 @@ make_rels_by_clause_joins(Query *root, RelOptInfo * old_rel,
  * Returns a list of new join relations.
  */
 List *
-make_rels_by_clauseless_joins(RelOptInfo * old_rel, List *inner_rels)
+make_rels_by_clauseless_joins(RelOptInfo *old_rel, List *inner_rels)
 {
 	RelOptInfo *inner_rel;
 	List	   *t_list = NIL;
@@ -192,7 +192,7 @@ make_rels_by_clauseless_joins(RelOptInfo * old_rel, List *inner_rels)
  * Returns the new join relation node.
  */
 RelOptInfo *
-make_join_rel(RelOptInfo * outer_rel, RelOptInfo * inner_rel, JoinInfo * joininfo)
+make_join_rel(RelOptInfo *outer_rel, RelOptInfo *inner_rel, JoinInfo *joininfo)
 {
 	RelOptInfo *joinrel = makeNode(RelOptInfo);
 	List	   *joinrel_joininfo_list = NIL;
@@ -436,7 +436,7 @@ is_subset(List *s1, List *s2)
 }
 
 static void
-set_joinrel_size(RelOptInfo * joinrel, RelOptInfo * outer_rel, RelOptInfo * inner_rel, JoinInfo * jinfo)
+set_joinrel_size(RelOptInfo *joinrel, RelOptInfo *outer_rel, RelOptInfo *inner_rel, JoinInfo *jinfo)
 {
 	int			ntuples;
 	float		selec;

@@ -6,7 +6,7 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- *	$Id: be-dumpdata.c,v 1.24 1999/05/25 16:08:57 momjian Exp $
+ *	$Id: be-dumpdata.c,v 1.25 1999/05/25 22:41:06 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -208,7 +208,7 @@ be_typeinit(PortalEntry *entry,
  * ----------------
  */
 void
-be_printtup(HeapTuple tuple, TupleDesc typeinfo, DestReceiver * self)
+be_printtup(HeapTuple tuple, TupleDesc typeinfo, DestReceiver *self)
 {
 	int			i;
 	Datum		attr;

@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/optimizer/util/restrictinfo.c,v 1.3 1999/05/25 16:10:02 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/optimizer/util/restrictinfo.c,v 1.4 1999/05/25 22:41:50 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -27,7 +27,7 @@
  *
  */
 bool
-valid_or_clause(RestrictInfo * restrictinfo)
+valid_or_clause(RestrictInfo *restrictinfo)
 {
 	if (restrictinfo != NULL &&
 		!single_node((Node *) restrictinfo->clause) &&

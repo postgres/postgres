@@ -7,7 +7,7 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: tqual.h,v 1.21 1999/05/25 16:14:58 momjian Exp $
+ * $Id: tqual.h,v 1.22 1999/05/25 22:43:39 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -23,7 +23,7 @@ typedef struct SnapshotData
 	uint32		xcnt;			/* # of xact below */
 	TransactionId *xip;			/* array of xacts in progress */
 	ItemPointerData tid;		/* required for Dirty snapshot -:( */
-}			SnapshotData;
+} SnapshotData;
 
 typedef SnapshotData *Snapshot;
 

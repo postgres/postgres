@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/cache/Attic/temprel.c,v 1.3 1999/05/25 16:12:24 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/cache/Attic/temprel.c,v 1.4 1999/05/25 22:42:16 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -49,7 +49,7 @@ typedef struct TempTable
 {
 	char	   *user_relname;
 	HeapTuple	pg_class_tuple;
-}			TempTable;
+} TempTable;
 
 
 void

@@ -6,7 +6,7 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: shmem.h,v 1.17 1999/05/25 16:14:45 momjian Exp $
+ * $Id: shmem.h,v 1.18 1999/05/25 22:43:27 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -90,7 +90,7 @@ typedef struct
 	char		key[SHMEM_INDEX_KEYSIZE];		/* string name */
 	unsigned long location;		/* location in shared mem */
 	unsigned long size;			/* numbytes allocated for the structure */
-}			ShmemIndexEnt;
+} ShmemIndexEnt;
 
 /*
  * prototypes for functions in shmqueue.c

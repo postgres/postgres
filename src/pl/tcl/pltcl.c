@@ -3,7 +3,7 @@
  *			  procedural language (PL)
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/pl/tcl/pltcl.c,v 1.10 1999/05/25 16:15:19 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/pl/tcl/pltcl.c,v 1.11 1999/05/25 22:43:51 momjian Exp $
  *
  *	  This software is copyrighted by Jan Wieck - Hamburg.
  *
@@ -121,22 +121,22 @@ static Datum pltcl_func_handler(FmgrInfo *proinfo,
 
 static HeapTuple pltcl_trigger_handler(FmgrInfo *proinfo);
 
-static int pltcl_elog(ClientData cdata, Tcl_Interp * interp,
+static int pltcl_elog(ClientData cdata, Tcl_Interp *interp,
 		   int argc, char *argv[]);
-static int pltcl_quote(ClientData cdata, Tcl_Interp * interp,
+static int pltcl_quote(ClientData cdata, Tcl_Interp *interp,
 			int argc, char *argv[]);
 
-static int pltcl_SPI_exec(ClientData cdata, Tcl_Interp * interp,
+static int pltcl_SPI_exec(ClientData cdata, Tcl_Interp *interp,
 			   int argc, char *argv[]);
-static int pltcl_SPI_prepare(ClientData cdata, Tcl_Interp * interp,
+static int pltcl_SPI_prepare(ClientData cdata, Tcl_Interp *interp,
 				  int argc, char *argv[]);
-static int pltcl_SPI_execp(ClientData cdata, Tcl_Interp * interp,
+static int pltcl_SPI_execp(ClientData cdata, Tcl_Interp *interp,
 				int argc, char *argv[]);
 
-static void pltcl_set_tuple_values(Tcl_Interp * interp, char *arrayname,
+static void pltcl_set_tuple_values(Tcl_Interp *interp, char *arrayname,
 					   int tupno, HeapTuple tuple, TupleDesc tupdesc);
 static void pltcl_build_tuple_argument(HeapTuple tuple, TupleDesc tupdesc,
-						   Tcl_DString * retval);
+						   Tcl_DString *retval);
 
 /**********************************************************************
  * pltcl_init_all()		- Initialize all
@@ -1167,7 +1167,7 @@ pltcl_trigger_handler(FmgrInfo *proinfo)
  * pltcl_elog()		- elog() support for PLTcl
  **********************************************************************/
 static int
-pltcl_elog(ClientData cdata, Tcl_Interp * interp,
+pltcl_elog(ClientData cdata, Tcl_Interp *interp,
 		   int argc, char *argv[])
 {
 	int			level;
@@ -1233,7 +1233,7 @@ pltcl_elog(ClientData cdata, Tcl_Interp * interp,
  *			  be used in SPI_exec query strings
  **********************************************************************/
 static int
-pltcl_quote(ClientData cdata, Tcl_Interp * interp,
+pltcl_quote(ClientData cdata, Tcl_Interp *interp,
 			int argc, char *argv[])
 {
 	char	   *tmp;
@@ -1287,7 +1287,7 @@ pltcl_quote(ClientData cdata, Tcl_Interp * interp,
  *				  for the safe interpreter
  **********************************************************************/
 static int
-pltcl_SPI_exec(ClientData cdata, Tcl_Interp * interp,
+pltcl_SPI_exec(ClientData cdata, Tcl_Interp *interp,
 			   int argc, char *argv[])
 {
 	int			spi_rc;
@@ -1519,7 +1519,7 @@ pltcl_SPI_exec(ClientData cdata, Tcl_Interp * interp,
  *				  and not save the plan currently.
  **********************************************************************/
 static int
-pltcl_SPI_prepare(ClientData cdata, Tcl_Interp * interp,
+pltcl_SPI_prepare(ClientData cdata, Tcl_Interp *interp,
 				  int argc, char *argv[])
 {
 	int			nargs;
@@ -1700,7 +1700,7 @@ pltcl_SPI_prepare(ClientData cdata, Tcl_Interp * interp,
  * pltcl_SPI_execp()		- Execute a prepared plan
  **********************************************************************/
 static int
-pltcl_SPI_execp(ClientData cdata, Tcl_Interp * interp,
+pltcl_SPI_execp(ClientData cdata, Tcl_Interp *interp,
 				int argc, char *argv[])
 {
 	int			spi_rc;
@@ -2085,7 +2085,7 @@ pltcl_SPI_execp(ClientData cdata, Tcl_Interp * interp,
  *				  of a given tuple
  **********************************************************************/
 static void
-pltcl_set_tuple_values(Tcl_Interp * interp, char *arrayname,
+pltcl_set_tuple_values(Tcl_Interp *interp, char *arrayname,
 					   int tupno, HeapTuple tuple, TupleDesc tupdesc)
 {
 	int			i;
@@ -2181,7 +2181,7 @@ pltcl_set_tuple_values(Tcl_Interp * interp, char *arrayname,
  **********************************************************************/
 static void
 pltcl_build_tuple_argument(HeapTuple tuple, TupleDesc tupdesc,
-						   Tcl_DString * retval)
+						   Tcl_DString *retval)
 {
 	int			i;
 	char	   *outputstr;

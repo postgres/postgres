@@ -6,7 +6,7 @@
  * Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $Id: fd.c,v 1.40 1999/05/25 16:11:03 momjian Exp $
+ *	  $Id: fd.c,v 1.41 1999/05/25 22:41:57 momjian Exp $
  *
  * NOTES:
  *
@@ -1064,7 +1064,7 @@ BufFileCreate(File file)
  * Like fclose(), this also implicitly FileCloses the underlying File.
  */
 void
-BufFileClose(BufFile * file)
+BufFileClose(BufFile *file)
 {
 	/* flush any unwritten data */
 	BufFileFlush(file);
@@ -1079,7 +1079,7 @@ BufFileClose(BufFile * file)
  * Like fread() except we assume 1-byte element size.
  */
 size_t
-BufFileRead(BufFile * file, void *ptr, size_t size)
+BufFileRead(BufFile *file, void *ptr, size_t size)
 {
 	size_t		nread = 0;
 	size_t		nthistime;
@@ -1125,7 +1125,7 @@ BufFileRead(BufFile * file, void *ptr, size_t size)
  * Like fwrite() except we assume 1-byte element size.
  */
 size_t
-BufFileWrite(BufFile * file, void *ptr, size_t size)
+BufFileWrite(BufFile *file, void *ptr, size_t size)
 {
 	size_t		nwritten = 0;
 	size_t		nthistime;
@@ -1169,7 +1169,7 @@ BufFileWrite(BufFile * file, void *ptr, size_t size)
  * Like fflush()
  */
 int
-BufFileFlush(BufFile * file)
+BufFileFlush(BufFile *file)
 {
 	if (file->dirty)
 	{
@@ -1187,7 +1187,7 @@ BufFileFlush(BufFile * file)
  * the new file offset (or -1 in case of error).
  */
 long
-BufFileSeek(BufFile * file, long offset, int whence)
+BufFileSeek(BufFile *file, long offset, int whence)
 {
 	if (BufFileFlush(file) < 0)
 		return -1L;

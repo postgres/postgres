@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/interfaces/libpgtcl/Attic/pgtclCmds.c,v 1.43 1999/05/25 16:15:06 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/interfaces/libpgtcl/Attic/pgtclCmds.c,v 1.44 1999/05/25 22:43:43 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -237,7 +237,7 @@ tcl_value(char *value)
  **********************************/
 
 int
-Pg_conndefaults(ClientData cData, Tcl_Interp * interp, int argc, char **argv)
+Pg_conndefaults(ClientData cData, Tcl_Interp *interp, int argc, char **argv)
 {
 	PQconninfoOption *option;
 	Tcl_DString result;
@@ -276,7 +276,7 @@ Pg_conndefaults(ClientData cData, Tcl_Interp * interp, int argc, char **argv)
  **********************************/
 
 int
-Pg_connect(ClientData cData, Tcl_Interp * interp, int argc, char *argv[])
+Pg_connect(ClientData cData, Tcl_Interp *interp, int argc, char *argv[])
 {
 	char	   *pghost = NULL;
 	char	   *pgtty = NULL;
@@ -387,7 +387,7 @@ Pg_connect(ClientData cData, Tcl_Interp * interp, int argc, char *argv[])
  **********************************/
 
 int
-Pg_disconnect(ClientData cData, Tcl_Interp * interp, int argc, char *argv[])
+Pg_disconnect(ClientData cData, Tcl_Interp *interp, int argc, char *argv[])
 {
 	Tcl_Channel conn_chan;
 
@@ -420,7 +420,7 @@ Pg_disconnect(ClientData cData, Tcl_Interp * interp, int argc, char *argv[])
  **********************************/
 
 int
-Pg_exec(ClientData cData, Tcl_Interp * interp, int argc, char *argv[])
+Pg_exec(ClientData cData, Tcl_Interp *interp, int argc, char *argv[])
 {
 	Pg_ConnectionId *connid;
 	PGconn	   *conn;
@@ -520,7 +520,7 @@ Pg_exec(ClientData cData, Tcl_Interp * interp, int argc, char *argv[])
 
  **********************************/
 int
-Pg_result(ClientData cData, Tcl_Interp * interp, int argc, char *argv[])
+Pg_result(ClientData cData, Tcl_Interp *interp, int argc, char *argv[])
 {
 	PGresult   *result;
 	char	   *opt;
@@ -777,7 +777,7 @@ Pg_result_errReturn:
 **********************/
 
 int
-Pg_lo_open(ClientData cData, Tcl_Interp * interp, int argc, char *argv[])
+Pg_lo_open(ClientData cData, Tcl_Interp *interp, int argc, char *argv[])
 {
 	PGconn	   *conn;
 	int			lobjId;
@@ -847,7 +847,7 @@ Pg_lo_open(ClientData cData, Tcl_Interp * interp, int argc, char *argv[])
 
 **********************/
 int
-Pg_lo_close(ClientData cData, Tcl_Interp * interp, int argc, char *argv[])
+Pg_lo_close(ClientData cData, Tcl_Interp *interp, int argc, char *argv[])
 {
 	PGconn	   *conn;
 	int			fd;
@@ -880,7 +880,7 @@ Pg_lo_close(ClientData cData, Tcl_Interp * interp, int argc, char *argv[])
 
 **********************/
 int
-Pg_lo_read(ClientData cData, Tcl_Interp * interp, int argc, char *argv[])
+Pg_lo_read(ClientData cData, Tcl_Interp *interp, int argc, char *argv[])
 {
 	PGconn	   *conn;
 	int			fd;
@@ -931,7 +931,7 @@ Pg_lo_write
 
 ***********************************/
 int
-Pg_lo_write(ClientData cData, Tcl_Interp * interp, int argc, char *argv[])
+Pg_lo_write(ClientData cData, Tcl_Interp *interp, int argc, char *argv[])
 {
 	PGconn	   *conn;
 	char	   *buf;
@@ -978,7 +978,7 @@ whence can be either
 "SEEK_CUR", "SEEK_END", or "SEEK_SET"
 ***********************************/
 int
-Pg_lo_lseek(ClientData cData, Tcl_Interp * interp, int argc, char *argv[])
+Pg_lo_lseek(ClientData cData, Tcl_Interp *interp, int argc, char *argv[])
 {
 	PGconn	   *conn;
 	int			fd;
@@ -1031,7 +1031,7 @@ for now, we don't support any additional storage managers.
 
 ***********************************/
 int
-Pg_lo_creat(ClientData cData, Tcl_Interp * interp, int argc, char *argv[])
+Pg_lo_creat(ClientData cData, Tcl_Interp *interp, int argc, char *argv[])
 {
 	PGconn	   *conn;
 	char	   *modeStr;
@@ -1091,7 +1091,7 @@ Pg_lo_tell
 
 ***********************************/
 int
-Pg_lo_tell(ClientData cData, Tcl_Interp * interp, int argc, char *argv[])
+Pg_lo_tell(ClientData cData, Tcl_Interp *interp, int argc, char *argv[])
 {
 	PGconn	   *conn;
 	int			fd;
@@ -1124,7 +1124,7 @@ Pg_lo_unlink
 
 ***********************************/
 int
-Pg_lo_unlink(ClientData cData, Tcl_Interp * interp, int argc, char *argv[])
+Pg_lo_unlink(ClientData cData, Tcl_Interp *interp, int argc, char *argv[])
 {
 	PGconn	   *conn;
 	int			lobjId;
@@ -1166,7 +1166,7 @@ Pg_lo_import
 ***********************************/
 
 int
-Pg_lo_import(ClientData cData, Tcl_Interp * interp, int argc, char *argv[])
+Pg_lo_import(ClientData cData, Tcl_Interp *interp, int argc, char *argv[])
 {
 	PGconn	   *conn;
 	char	   *filename;
@@ -1205,7 +1205,7 @@ Pg_lo_export
 ***********************************/
 
 int
-Pg_lo_export(ClientData cData, Tcl_Interp * interp, int argc, char *argv[])
+Pg_lo_export(ClientData cData, Tcl_Interp *interp, int argc, char *argv[])
 {
 	PGconn	   *conn;
 	char	   *filename;
@@ -1257,7 +1257,7 @@ Pg_lo_export(ClientData cData, Tcl_Interp * interp, int argc, char *argv[])
  **********************************/
 
 int
-Pg_select(ClientData cData, Tcl_Interp * interp, int argc, char **argv)
+Pg_select(ClientData cData, Tcl_Interp *interp, int argc, char **argv)
 {
 	Pg_ConnectionId *connid;
 	PGconn	   *conn;
@@ -1375,7 +1375,7 @@ Pg_select(ClientData cData, Tcl_Interp * interp, int argc, char **argv)
  */
 
 static int
-Pg_have_listener(Pg_ConnectionId * connid, const char *relname)
+Pg_have_listener(Pg_ConnectionId *connid, const char *relname)
 {
 	Pg_TclNotifies *notifies;
 	Tcl_HashEntry *entry;
@@ -1414,7 +1414,7 @@ Pg_listen
    vwait or update can be used to enter the Tcl event loop.
 ***********************************/
 int
-Pg_listen(ClientData cData, Tcl_Interp * interp, int argc, char *argv[])
+Pg_listen(ClientData cData, Tcl_Interp *interp, int argc, char *argv[])
 {
 	char	   *origrelname;
 	char	   *caserelname;

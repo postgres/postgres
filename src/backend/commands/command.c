@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/commands/Attic/command.c,v 1.45 1999/05/25 16:08:17 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/commands/Attic/command.c,v 1.46 1999/05/25 22:40:54 momjian Exp $
  *
  * NOTES
  *	  The PortalExecutorHeapMemory crap needs to be eliminated
@@ -519,7 +519,7 @@ PerformAddAttribute(char *relationName,
 }
 
 void
-LockTableCommand(LockStmt * lockstmt)
+LockTableCommand(LockStmt *lockstmt)
 {
 	Relation	rel;
 	int			aclresult;

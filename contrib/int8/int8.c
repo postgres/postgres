@@ -24,7 +24,8 @@
 #endif
 
 #ifndef HAVE_64BIT_INTS
-typedef char[8] int64;
+typedef char[8]
+int64;
 
 #elif defined(__alpha)
 typedef long int int64;
@@ -43,38 +44,38 @@ typedef long int int64;
 #endif
 
 int64	   *int8in(char *str);
-char	   *int8out(int64 * val);
+char	   *int8out(int64 *val);
 
-bool		int8eq(int64 * val1, int64 * val2);
-bool		int8ne(int64 * val1, int64 * val2);
-bool		int8lt(int64 * val1, int64 * val2);
-bool		int8gt(int64 * val1, int64 * val2);
-bool		int8le(int64 * val1, int64 * val2);
-bool		int8ge(int64 * val1, int64 * val2);
+bool		int8eq(int64 *val1, int64 *val2);
+bool		int8ne(int64 *val1, int64 *val2);
+bool		int8lt(int64 *val1, int64 *val2);
+bool		int8gt(int64 *val1, int64 *val2);
+bool		int8le(int64 *val1, int64 *val2);
+bool		int8ge(int64 *val1, int64 *val2);
 
-bool		int84eq(int64 * val1, int32 val2);
-bool		int84ne(int64 * val1, int32 val2);
-bool		int84lt(int64 * val1, int32 val2);
-bool		int84gt(int64 * val1, int32 val2);
-bool		int84le(int64 * val1, int32 val2);
-bool		int84ge(int64 * val1, int32 val2);
+bool		int84eq(int64 *val1, int32 val2);
+bool		int84ne(int64 *val1, int32 val2);
+bool		int84lt(int64 *val1, int32 val2);
+bool		int84gt(int64 *val1, int32 val2);
+bool		int84le(int64 *val1, int32 val2);
+bool		int84ge(int64 *val1, int32 val2);
 
-int64	   *int8um(int64 * val);
-int64	   *int8pl(int64 * val1, int64 * val2);
-int64	   *int8mi(int64 * val1, int64 * val2);
-int64	   *int8mul(int64 * val1, int64 * val2);
-int64	   *int8div(int64 * val1, int64 * val2);
+int64	   *int8um(int64 *val);
+int64	   *int8pl(int64 *val1, int64 *val2);
+int64	   *int8mi(int64 *val1, int64 *val2);
+int64	   *int8mul(int64 *val1, int64 *val2);
+int64	   *int8div(int64 *val1, int64 *val2);
 
 int64	   *int48(int32 val);
-int32		int84(int64 * val);
+int32		int84(int64 *val);
 
 #if FALSE
 int64	   *int28 (int16 val);
-int16		int82(int64 * val);
+int16		int82(int64 *val);
 
 #endif
 
-float64		i8tod(int64 * val);
+float64		i8tod(int64 *val);
 int64	   *dtoi8(float64 val);
 
 /***********************************************************************
@@ -113,7 +114,7 @@ int8in(char *str)
 /* int8out()
  */
 char *
-int8out(int64 * val)
+int8out(int64 *val)
 {
 	char	   *result;
 
@@ -148,37 +149,37 @@ int8out(int64 * val)
  * Is val1 relop val2?
  */
 bool
-int8eq(int64 * val1, int64 * val2)
+int8eq(int64 *val1, int64 *val2)
 {
 	return (*val1 == *val2);
 }	/* int8eq() */
 
 bool
-int8ne(int64 * val1, int64 * val2)
+int8ne(int64 *val1, int64 *val2)
 {
 	return (*val1 != *val2);
 }	/* int8ne() */
 
 bool
-int8lt(int64 * val1, int64 * val2)
+int8lt(int64 *val1, int64 *val2)
 {
 	return (*val1 < *val2);
 }	/* int8lt() */
 
 bool
-int8gt(int64 * val1, int64 * val2)
+int8gt(int64 *val1, int64 *val2)
 {
 	return (*val1 > *val2);
 }	/* int8gt() */
 
 bool
-int8le(int64 * val1, int64 * val2)
+int8le(int64 *val1, int64 *val2)
 {
 	return (*val1 <= *val2);
 }	/* int8le() */
 
 bool
-int8ge(int64 * val1, int64 * val2)
+int8ge(int64 *val1, int64 *val2)
 {
 	return (*val1 >= *val2);
 }	/* int8ge() */
@@ -188,37 +189,37 @@ int8ge(int64 * val1, int64 * val2)
  * Is 64-bit val1 relop 32-bit val2?
  */
 bool
-int84eq(int64 * val1, int32 val2)
+int84eq(int64 *val1, int32 val2)
 {
 	return (*val1 == val2);
 }	/* int84eq() */
 
 bool
-int84ne(int64 * val1, int32 val2)
+int84ne(int64 *val1, int32 val2)
 {
 	return (*val1 != val2);
 }	/* int84ne() */
 
 bool
-int84lt(int64 * val1, int32 val2)
+int84lt(int64 *val1, int32 val2)
 {
 	return (*val1 < val2);
 }	/* int84lt() */
 
 bool
-int84gt(int64 * val1, int32 val2)
+int84gt(int64 *val1, int32 val2)
 {
 	return (*val1 > val2);
 }	/* int84gt() */
 
 bool
-int84le(int64 * val1, int32 val2)
+int84le(int64 *val1, int32 val2)
 {
 	return (*val1 <= val2);
 }	/* int84le() */
 
 bool
-int84ge(int64 * val1, int32 val2)
+int84ge(int64 *val1, int32 val2)
 {
 	return (*val1 >= val2);
 }	/* int84ge() */
@@ -229,7 +230,7 @@ int84ge(int64 * val1, int32 val2)
  *---------------------------------------------------------*/
 
 int64 *
-int8um(int64 * val)
+int8um(int64 *val)
 {
 	int64	   *result = palloc(sizeof(int64));
 
@@ -242,7 +243,7 @@ int8um(int64 * val)
 }	/* int8um() */
 
 int64 *
-int8pl(int64 * val1, int64 * val2)
+int8pl(int64 *val1, int64 *val2)
 {
 	int64	   *result = palloc(sizeof(int64));
 
@@ -255,7 +256,7 @@ int8pl(int64 * val1, int64 * val2)
 }	/* int8pl() */
 
 int64 *
-int8mi(int64 * val1, int64 * val2)
+int8mi(int64 *val1, int64 *val2)
 {
 	int64	   *result = palloc(sizeof(int64));
 
@@ -268,7 +269,7 @@ int8mi(int64 * val1, int64 * val2)
 }	/* int8mi() */
 
 int64 *
-int8mul(int64 * val1, int64 * val2)
+int8mul(int64 *val1, int64 *val2)
 {
 	int64	   *result = palloc(sizeof(int64));
 
@@ -281,7 +282,7 @@ int8mul(int64 * val1, int64 * val2)
 }	/* int8mul() */
 
 int64 *
-int8div(int64 * val1, int64 * val2)
+int8div(int64 *val1, int64 *val2)
 {
 	int64	   *result = palloc(sizeof(int64));
 
@@ -309,7 +310,7 @@ int48(int32 val)
 }	/* int48() */
 
 int32
-int84(int64 * val)
+int84(int64 *val)
 {
 	int32		result;
 
@@ -339,7 +340,7 @@ int28		(int16 val)
 }	/* int28() */
 
 int16
-int82(int64 * val)
+int82(int64 *val)
 {
 	int16		result;
 
@@ -354,7 +355,7 @@ int82(int64 * val)
 #endif
 
 float64
-i8tod(int64 * val)
+i8tod(int64 *val)
 {
 	float64		result = palloc(sizeof(float64data));
 

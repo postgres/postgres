@@ -45,7 +45,7 @@ typedef struct AggFuncInfo
 	FmgrInfo	finalfn;
 } AggFuncInfo;
 
-static Datum aggGetAttr(TupleTableSlot *tuple, Aggref * aggref, bool *isNull);
+static Datum aggGetAttr(TupleTableSlot *tuple, Aggref *aggref, bool *isNull);
 
 
 /* ---------------------------------------
@@ -582,7 +582,7 @@ ExecEndAgg(Agg *node)
  */
 static Datum
 aggGetAttr(TupleTableSlot *slot,
-		   Aggref * aggref,
+		   Aggref *aggref,
 		   bool *isNull)
 {
 	Datum		result;

@@ -6,7 +6,7 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: parsenodes.h,v 1.73 1999/05/25 16:14:09 momjian Exp $
+ * $Id: parsenodes.h,v 1.74 1999/05/25 22:42:57 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -457,7 +457,7 @@ typedef struct UnlistenStmt
 {
 	NodeTag		type;
 	char	   *relname;		/* relation to unlisten on */
-}			UnlistenStmt;
+} UnlistenStmt;
 
 /* ----------------------
  *		{Begin|Abort|End} Transaction Statement
@@ -590,7 +590,7 @@ typedef struct LockStmt
 	NodeTag		type;
 	char	   *relname;		/* relation to lock */
 	int			mode;			/* lock mode */
-}			LockStmt;
+} LockStmt;
 
 /*****************************************************************************
  *		Optimizable Statements
@@ -748,7 +748,7 @@ typedef struct CaseExpr
 	Node	   *arg;			/* implicit equality comparison argument */
 	List	   *args;			/* the arguments (list of WHEN clauses) */
 	Node	   *defresult;		/* the default result (ELSE clause) */
-}			CaseExpr;
+} CaseExpr;
 
 /*
  * CaseWhen - an argument to a CASE expression
@@ -758,7 +758,7 @@ typedef struct CaseWhen
 	NodeTag		type;
 	Node	   *expr;			/* comparison expression */
 	Node	   *result;			/* substitution result */
-}			CaseWhen;
+} CaseWhen;
 
 /*
  * ColumnDef - column definition (used in various creates)
@@ -896,7 +896,7 @@ typedef struct JoinExpr
 	RangeVar   *larg;
 	Node	   *rarg;
 	List	   *quals;
-}			JoinExpr;
+} JoinExpr;
 
 
 /****************************************************************************
@@ -972,6 +972,6 @@ typedef struct RowMark
 	NodeTag		type;
 	Index		rti;			/* index in Query->rtable */
 	bits8		info;			/* as above */
-}			RowMark;
+} RowMark;
 
 #endif	 /* PARSENODES_H */

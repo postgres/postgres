@@ -71,7 +71,7 @@ int8in(char *str)
 /* int8out()
  */
 char *
-int8out(int64 * val)
+int8out(int64 *val)
 {
 	char	   *result;
 
@@ -100,37 +100,37 @@ int8out(int64 * val)
  * Is val1 relop val2?
  */
 bool
-int8eq(int64 * val1, int64 * val2)
+int8eq(int64 *val1, int64 *val2)
 {
 	return *val1 == *val2;
 }	/* int8eq() */
 
 bool
-int8ne(int64 * val1, int64 * val2)
+int8ne(int64 *val1, int64 *val2)
 {
 	return *val1 != *val2;
 }	/* int8ne() */
 
 bool
-int8lt(int64 * val1, int64 * val2)
+int8lt(int64 *val1, int64 *val2)
 {
 	return *val1 < *val2;
 }	/* int8lt() */
 
 bool
-int8gt(int64 * val1, int64 * val2)
+int8gt(int64 *val1, int64 *val2)
 {
 	return *val1 > *val2;
 }	/* int8gt() */
 
 bool
-int8le(int64 * val1, int64 * val2)
+int8le(int64 *val1, int64 *val2)
 {
 	return *val1 <= *val2;
 }	/* int8le() */
 
 bool
-int8ge(int64 * val1, int64 * val2)
+int8ge(int64 *val1, int64 *val2)
 {
 	return *val1 >= *val2;
 }	/* int8ge() */
@@ -140,37 +140,37 @@ int8ge(int64 * val1, int64 * val2)
  * Is 64-bit val1 relop 32-bit val2?
  */
 bool
-int84eq(int64 * val1, int32 val2)
+int84eq(int64 *val1, int32 val2)
 {
 	return *val1 == val2;
 }	/* int84eq() */
 
 bool
-int84ne(int64 * val1, int32 val2)
+int84ne(int64 *val1, int32 val2)
 {
 	return *val1 != val2;
 }	/* int84ne() */
 
 bool
-int84lt(int64 * val1, int32 val2)
+int84lt(int64 *val1, int32 val2)
 {
 	return *val1 < val2;
 }	/* int84lt() */
 
 bool
-int84gt(int64 * val1, int32 val2)
+int84gt(int64 *val1, int32 val2)
 {
 	return *val1 > val2;
 }	/* int84gt() */
 
 bool
-int84le(int64 * val1, int32 val2)
+int84le(int64 *val1, int32 val2)
 {
 	return *val1 <= val2;
 }	/* int84le() */
 
 bool
-int84ge(int64 * val1, int32 val2)
+int84ge(int64 *val1, int32 val2)
 {
 	return *val1 >= val2;
 }	/* int84ge() */
@@ -180,37 +180,37 @@ int84ge(int64 * val1, int32 val2)
  * Is 32-bit val1 relop 64-bit val2?
  */
 bool
-int48eq(int32 val1, int64 * val2)
+int48eq(int32 val1, int64 *val2)
 {
 	return val1 == *val2;
 }	/* int48eq() */
 
 bool
-int48ne(int32 val1, int64 * val2)
+int48ne(int32 val1, int64 *val2)
 {
 	return val1 != *val2;
 }	/* int48ne() */
 
 bool
-int48lt(int32 val1, int64 * val2)
+int48lt(int32 val1, int64 *val2)
 {
 	return val1 < *val2;
 }	/* int48lt() */
 
 bool
-int48gt(int32 val1, int64 * val2)
+int48gt(int32 val1, int64 *val2)
 {
 	return val1 > *val2;
 }	/* int48gt() */
 
 bool
-int48le(int32 val1, int64 * val2)
+int48le(int32 val1, int64 *val2)
 {
 	return val1 <= *val2;
 }	/* int48le() */
 
 bool
-int48ge(int32 val1, int64 * val2)
+int48ge(int32 val1, int64 *val2)
 {
 	return val1 >= *val2;
 }	/* int48ge() */
@@ -221,7 +221,7 @@ int48ge(int32 val1, int64 * val2)
  *---------------------------------------------------------*/
 
 int64 *
-int8um(int64 * val)
+int8um(int64 *val)
 {
 	int64		temp = 0;
 	int64	   *result = palloc(sizeof(int64));
@@ -236,7 +236,7 @@ int8um(int64 * val)
 
 
 int64 *
-int8pl(int64 * val1, int64 * val2)
+int8pl(int64 *val1, int64 *val2)
 {
 	int64	   *result = palloc(sizeof(int64));
 
@@ -249,7 +249,7 @@ int8pl(int64 * val1, int64 * val2)
 }	/* int8pl() */
 
 int64 *
-int8mi(int64 * val1, int64 * val2)
+int8mi(int64 *val1, int64 *val2)
 {
 	int64	   *result = palloc(sizeof(int64));
 
@@ -262,7 +262,7 @@ int8mi(int64 * val1, int64 * val2)
 }	/* int8mi() */
 
 int64 *
-int8mul(int64 * val1, int64 * val2)
+int8mul(int64 *val1, int64 *val2)
 {
 	int64	   *result = palloc(sizeof(int64));
 
@@ -275,7 +275,7 @@ int8mul(int64 * val1, int64 * val2)
 }	/* int8mul() */
 
 int64 *
-int8div(int64 * val1, int64 * val2)
+int8div(int64 *val1, int64 *val2)
 {
 	int64	   *result = palloc(sizeof(int64));
 
@@ -288,7 +288,7 @@ int8div(int64 * val1, int64 * val2)
 }	/* int8div() */
 
 int64 *
-int8larger(int64 * val1, int64 * val2)
+int8larger(int64 *val1, int64 *val2)
 {
 	int64	   *result = palloc(sizeof(int64));
 
@@ -301,7 +301,7 @@ int8larger(int64 * val1, int64 * val2)
 }	/* int8larger() */
 
 int64 *
-int8smaller(int64 * val1, int64 * val2)
+int8smaller(int64 *val1, int64 *val2)
 {
 	int64	   *result = palloc(sizeof(int64));
 
@@ -315,7 +315,7 @@ int8smaller(int64 * val1, int64 * val2)
 
 
 int64 *
-int84pl(int64 * val1, int32 val2)
+int84pl(int64 *val1, int32 val2)
 {
 	int64	   *result = palloc(sizeof(int64));
 
@@ -328,7 +328,7 @@ int84pl(int64 * val1, int32 val2)
 }	/* int84pl() */
 
 int64 *
-int84mi(int64 * val1, int32 val2)
+int84mi(int64 *val1, int32 val2)
 {
 	int64	   *result = palloc(sizeof(int64));
 
@@ -341,7 +341,7 @@ int84mi(int64 * val1, int32 val2)
 }	/* int84mi() */
 
 int64 *
-int84mul(int64 * val1, int32 val2)
+int84mul(int64 *val1, int32 val2)
 {
 	int64	   *result = palloc(sizeof(int64));
 
@@ -354,7 +354,7 @@ int84mul(int64 * val1, int32 val2)
 }	/* int84mul() */
 
 int64 *
-int84div(int64 * val1, int32 val2)
+int84div(int64 *val1, int32 val2)
 {
 	int64	   *result = palloc(sizeof(int64));
 
@@ -368,7 +368,7 @@ int84div(int64 * val1, int32 val2)
 
 
 int64 *
-int48pl(int32 val1, int64 * val2)
+int48pl(int32 val1, int64 *val2)
 {
 	int64	   *result = palloc(sizeof(int64));
 
@@ -381,7 +381,7 @@ int48pl(int32 val1, int64 * val2)
 }	/* int48pl() */
 
 int64 *
-int48mi(int32 val1, int64 * val2)
+int48mi(int32 val1, int64 *val2)
 {
 	int64	   *result = palloc(sizeof(int64));
 
@@ -394,7 +394,7 @@ int48mi(int32 val1, int64 * val2)
 }	/* int48mi() */
 
 int64 *
-int48mul(int32 val1, int64 * val2)
+int48mul(int32 val1, int64 *val2)
 {
 	int64	   *result = palloc(sizeof(int64));
 
@@ -407,7 +407,7 @@ int48mul(int32 val1, int64 * val2)
 }	/* int48mul() */
 
 int64 *
-int48div(int32 val1, int64 * val2)
+int48div(int32 val1, int64 *val2)
 {
 	int64	   *result = palloc(sizeof(int64));
 
@@ -435,7 +435,7 @@ int48(int32 val)
 }	/* int48() */
 
 int32
-int84(int64 * val)
+int84(int64 *val)
 {
 	int32		result;
 
@@ -473,7 +473,7 @@ int28		(int16 val)
 }	/* int28() */
 
 int16
-int82(int64 * val)
+int82(int64 *val)
 {
 	int16		result;
 
@@ -491,7 +491,7 @@ int82(int64 * val)
 #endif
 
 float64
-i8tod(int64 * val)
+i8tod(int64 *val)
 {
 	float64		result = palloc(sizeof(float64data));
 
@@ -546,7 +546,7 @@ text_int8(text *str)
 /* int8_text()
  */
 text *
-int8_text(int64 * val)
+int8_text(int64 *val)
 {
 	text	   *result;
 

@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/nodes/copyfuncs.c,v 1.81 1999/05/25 16:09:04 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/nodes/copyfuncs.c,v 1.82 1999/05/25 22:41:11 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -371,7 +371,7 @@ _copyHashJoin(HashJoin *from)
  * ----------------
  */
 static void
-CopyNonameFields(Noname * from, Noname * newnode)
+CopyNonameFields(Noname *from, Noname *newnode)
 {
 	newnode->nonameid = from->nonameid;
 	newnode->keycount = from->keycount;
@@ -384,7 +384,7 @@ CopyNonameFields(Noname * from, Noname * newnode)
  * ----------------
  */
 static Noname *
-_copyNoname(Noname * from)
+_copyNoname(Noname *from)
 {
 	Noname	   *newnode = makeNode(Noname);
 
@@ -862,7 +862,7 @@ _copyFunc(Func *from)
  * ----------------
  */
 static Aggref *
-_copyAggref(Aggref * from)
+_copyAggref(Aggref *from)
 {
 	Aggref	   *newnode = makeNode(Aggref);
 
@@ -907,7 +907,7 @@ _copySubLink(SubLink *from)
  * ----------------
  */
 static CaseExpr *
-_copyCaseExpr(CaseExpr * from)
+_copyCaseExpr(CaseExpr *from)
 {
 	CaseExpr   *newnode = makeNode(CaseExpr);
 
@@ -929,7 +929,7 @@ _copyCaseExpr(CaseExpr * from)
  * ----------------
  */
 static CaseWhen *
-_copyCaseWhen(CaseWhen * from)
+_copyCaseWhen(CaseWhen *from)
 {
 	CaseWhen   *newnode = makeNode(CaseWhen);
 
@@ -1000,7 +1000,7 @@ _copyArrayRef(ArrayRef *from)
  *		-- JMH, 8/2/93
  */
 static RelOptInfo *
-_copyRelOptInfo(RelOptInfo * from)
+_copyRelOptInfo(RelOptInfo *from)
 {
 	RelOptInfo *newnode = makeNode(RelOptInfo);
 	int			i,
@@ -1173,7 +1173,7 @@ _copyIndexPath(IndexPath *from)
  * ----------------
  */
 static void
-CopyNestPathFields(NestPath * from, NestPath * newnode)
+CopyNestPathFields(NestPath *from, NestPath *newnode)
 {
 	Node_Copy(from, newnode, pathinfo);
 	Node_Copy(from, newnode, outerjoinpath);
@@ -1185,7 +1185,7 @@ CopyNestPathFields(NestPath * from, NestPath * newnode)
  * ----------------
  */
 static NestPath *
-_copyNestPath(NestPath * from)
+_copyNestPath(NestPath *from)
 {
 	NestPath   *newnode = makeNode(NestPath);
 
@@ -1319,7 +1319,7 @@ _copyMergeOrder(MergeOrder *from)
  * ----------------
  */
 static RestrictInfo *
-_copyRestrictInfo(RestrictInfo * from)
+_copyRestrictInfo(RestrictInfo *from)
 {
 	RestrictInfo *newnode = makeNode(RestrictInfo);
 
@@ -1374,7 +1374,7 @@ _copyJoinMethod(JoinMethod *from)
  * ----------------
  */
 static HashInfo *
-_copyHashInfo(HashInfo * from)
+_copyHashInfo(HashInfo *from)
 {
 	HashInfo   *newnode = makeNode(HashInfo);
 
@@ -1393,7 +1393,7 @@ _copyHashInfo(HashInfo * from)
  * ----------------
  */
 static MergeInfo *
-_copyMergeInfo(MergeInfo * from)
+_copyMergeInfo(MergeInfo *from)
 {
 	MergeInfo  *newnode = makeNode(MergeInfo);
 
@@ -1412,7 +1412,7 @@ _copyMergeInfo(MergeInfo * from)
  * ----------------
  */
 static JoinInfo *
-_copyJoinInfo(JoinInfo * from)
+_copyJoinInfo(JoinInfo *from)
 {
 	JoinInfo   *newnode = makeNode(JoinInfo);
 
@@ -1496,7 +1496,7 @@ _copyRangeTblEntry(RangeTblEntry *from)
 }
 
 static RowMark *
-_copyRowMark(RowMark * from)
+_copyRowMark(RowMark *from)
 {
 	RowMark    *newnode = makeNode(RowMark);
 

@@ -3,7 +3,7 @@
  * spi.c
  *				Server Programming Interface
  *
- * $Id: spi.c,v 1.38 1999/05/25 16:08:48 momjian Exp $
+ * $Id: spi.c,v 1.39 1999/05/25 22:41:02 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -555,7 +555,7 @@ SPI_pfree(void *pointer)
  *
  */
 void
-spi_printtup(HeapTuple tuple, TupleDesc tupdesc, DestReceiver * self)
+spi_printtup(HeapTuple tuple, TupleDesc tupdesc, DestReceiver *self)
 {
 	SPITupleTable *tuptable;
 	MemoryContext oldcxt;

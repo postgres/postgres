@@ -5,7 +5,7 @@
  *
  *	1998 Jan Wieck
  *
- * $Header: /cvsroot/pgsql/src/backend/utils/adt/numeric.c,v 1.15 1999/05/25 22:04:40 momjian Exp $
+ * $Header: /cvsroot/pgsql/src/backend/utils/adt/numeric.c,v 1.16 1999/05/25 22:42:13 momjian Exp $
  *
  * ----------
  */
@@ -63,7 +63,7 @@ typedef struct NumericDigitBuf
 	struct NumericDigitBuf *prev;
 	struct NumericDigitBuf *next;
 	int			size;
-}			NumericDigitBuf;
+} NumericDigitBuf;
 
 typedef struct NumericVar
 {
@@ -74,7 +74,7 @@ typedef struct NumericVar
 	int			sign;
 	NumericDigitBuf *buf;
 	NumericDigit *digits;
-}			NumericVar;
+} NumericVar;
 
 
 /* ----------
@@ -114,7 +114,7 @@ static NumericVar const_nan =
 
 #ifdef NUMERIC_DEBUG
 static void dump_numeric(char *str, Numeric num);
-static void dump_var(char *str, NumericVar * var);
+static void dump_var(char *str, NumericVar *var);
 
 #else
 #define dump_numeric(s,n)
@@ -122,37 +122,37 @@ static void dump_var(char *str, NumericVar * var);
 #endif
 
 static NumericDigitBuf *digitbuf_alloc(int size);
-static void digitbuf_free(NumericDigitBuf * buf);
+static void digitbuf_free(NumericDigitBuf *buf);
 
 #define init_var(v)		memset(v,0,sizeof(NumericVar))
-static void free_var(NumericVar * var);
+static void free_var(NumericVar *var);
 static void free_allvars(void);
 
-static void set_var_from_str(char *str, NumericVar * dest);
-static void set_var_from_num(Numeric value, NumericVar * dest);
-static void set_var_from_var(NumericVar * value, NumericVar * dest);
-static Numeric make_result(NumericVar * var);
+static void set_var_from_str(char *str, NumericVar *dest);
+static void set_var_from_num(Numeric value, NumericVar *dest);
+static void set_var_from_var(NumericVar *value, NumericVar *dest);
+static Numeric make_result(NumericVar *var);
 
-static void apply_typmod(NumericVar * var, int32 typmod);
+static void apply_typmod(NumericVar *var, int32 typmod);
 
-static int	cmp_var(NumericVar * var1, NumericVar * var2);
-static void add_var(NumericVar * var1, NumericVar * var2, NumericVar * result);
-static void sub_var(NumericVar * var1, NumericVar * var2, NumericVar * result);
-static void mul_var(NumericVar * var1, NumericVar * var2, NumericVar * result);
-static void div_var(NumericVar * var1, NumericVar * var2, NumericVar * result);
-static void mod_var(NumericVar * var1, NumericVar * var2, NumericVar * result);
-static void ceil_var(NumericVar * var, NumericVar * result);
-static void floor_var(NumericVar * var, NumericVar * result);
+static int	cmp_var(NumericVar *var1, NumericVar *var2);
+static void add_var(NumericVar *var1, NumericVar *var2, NumericVar *result);
+static void sub_var(NumericVar *var1, NumericVar *var2, NumericVar *result);
+static void mul_var(NumericVar *var1, NumericVar *var2, NumericVar *result);
+static void div_var(NumericVar *var1, NumericVar *var2, NumericVar *result);
+static void mod_var(NumericVar *var1, NumericVar *var2, NumericVar *result);
+static void ceil_var(NumericVar *var, NumericVar *result);
+static void floor_var(NumericVar *var, NumericVar *result);
 
-static void sqrt_var(NumericVar * arg, NumericVar * result);
-static void exp_var(NumericVar * arg, NumericVar * result);
-static void ln_var(NumericVar * arg, NumericVar * result);
-static void log_var(NumericVar * base, NumericVar * num, NumericVar * result);
-static void power_var(NumericVar * base, NumericVar * exp, NumericVar * result);
+static void sqrt_var(NumericVar *arg, NumericVar *result);
+static void exp_var(NumericVar *arg, NumericVar *result);
+static void ln_var(NumericVar *arg, NumericVar *result);
+static void log_var(NumericVar *base, NumericVar *num, NumericVar *result);
+static void power_var(NumericVar *base, NumericVar *exp, NumericVar *result);
 
-static int	cmp_abs(NumericVar * var1, NumericVar * var2);
-static void add_abs(NumericVar * var1, NumericVar * var2, NumericVar * result);
-static void sub_abs(NumericVar * var1, NumericVar * var2, NumericVar * result);
+static int	cmp_abs(NumericVar *var1, NumericVar *var2);
+static void add_abs(NumericVar *var1, NumericVar *var2, NumericVar *result);
+static void sub_abs(NumericVar *var1, NumericVar *var2, NumericVar *result);
 
 
 
@@ -1835,7 +1835,7 @@ dump_numeric(char *str, Numeric num)
  * ----------
  */
 static void
-dump_var(char *str, NumericVar * var)
+dump_var(char *str, NumericVar *var)
 {
 	int			i;
 
@@ -1962,7 +1962,7 @@ digitbuf_alloc(int size)
  * ----------
  */
 static void
-digitbuf_free(NumericDigitBuf * buf)
+digitbuf_free(NumericDigitBuf *buf)
 {
 	NumericDigitBuf *smallest;
 
@@ -2048,7 +2048,7 @@ digitbuf_free(NumericDigitBuf * buf)
  * ----------
  */
 static void
-free_var(NumericVar * var)
+free_var(NumericVar *var)
 {
 	if (var->buf != NULL)
 	{
@@ -2096,7 +2096,7 @@ free_allvars(void)
  * ----------
  */
 static void
-set_var_from_str(char *str, NumericVar * dest)
+set_var_from_str(char *str, NumericVar *dest)
 {
 	char	   *cp = str;
 	bool		have_dp = FALSE;
@@ -2238,7 +2238,7 @@ set_var_from_str(char *str, NumericVar * dest)
  *
  */
 static void
-set_var_from_num(Numeric num, NumericVar * dest)
+set_var_from_num(Numeric num, NumericVar *dest)
 {
 	NumericDigit *digit;
 	int			i;
@@ -2275,7 +2275,7 @@ set_var_from_num(Numeric num, NumericVar * dest)
  * ----------
  */
 static void
-set_var_from_var(NumericVar * value, NumericVar * dest)
+set_var_from_var(NumericVar *value, NumericVar *dest)
 {
 	NumericDigitBuf *newbuf;
 	NumericDigit *newdigits;
@@ -2299,7 +2299,7 @@ set_var_from_var(NumericVar * value, NumericVar * dest)
  * ----------
  */
 static Numeric
-make_result(NumericVar * var)
+make_result(NumericVar *var)
 {
 	Numeric		result;
 	NumericDigit *digit = var->digits;
@@ -2368,7 +2368,7 @@ make_result(NumericVar * var)
  * ----------
  */
 static void
-apply_typmod(NumericVar * var, int32 typmod)
+apply_typmod(NumericVar *var, int32 typmod)
 {
 	int			precision;
 	int			scale;
@@ -2439,7 +2439,7 @@ apply_typmod(NumericVar * var, int32 typmod)
  * ----------
  */
 static int
-cmp_var(NumericVar * var1, NumericVar * var2)
+cmp_var(NumericVar *var1, NumericVar *var2)
 {
 	if (var1->ndigits == 0)
 	{
@@ -2478,7 +2478,7 @@ cmp_var(NumericVar * var1, NumericVar * var2)
  * ----------
  */
 static void
-add_var(NumericVar * var1, NumericVar * var2, NumericVar * result)
+add_var(NumericVar *var1, NumericVar *var2, NumericVar *result)
 {
 	/* ----------
 	 * Decide on the signs of the two variables what to do
@@ -2506,10 +2506,10 @@ add_var(NumericVar * var1, NumericVar * var2, NumericVar * result)
 			switch (cmp_abs(var1, var2))
 			{
 				case 0: /* ----------
-										 * ABS(var1) == ABS(var2)
-										 * result = ZERO
-										 * ----------
-										 */
+												 * ABS(var1) == ABS(var2)
+												 * result = ZERO
+												 * ----------
+												 */
 					digitbuf_free(result->buf);
 					result->buf = digitbuf_alloc(0);
 					result->ndigits = 0;
@@ -2522,10 +2522,10 @@ add_var(NumericVar * var1, NumericVar * var2, NumericVar * result)
 					break;
 
 				case 1: /* ----------
-										 * ABS(var1) > ABS(var2)
-										 * result = +(ABS(var1) - ABS(var2))
-										 * ----------
-										 */
+												 * ABS(var1) > ABS(var2)
+												 * result = +(ABS(var1) - ABS(var2))
+												 * ----------
+												 */
 					sub_abs(var1, var2, result);
 					result->sign = NUMERIC_POS;
 					break;
@@ -2553,10 +2553,10 @@ add_var(NumericVar * var1, NumericVar * var2, NumericVar * result)
 			switch (cmp_abs(var1, var2))
 			{
 				case 0: /* ----------
-										 * ABS(var1) == ABS(var2)
-										 * result = ZERO
-										 * ----------
-										 */
+												 * ABS(var1) == ABS(var2)
+												 * result = ZERO
+												 * ----------
+												 */
 					digitbuf_free(result->buf);
 					result->buf = digitbuf_alloc(0);
 					result->ndigits = 0;
@@ -2569,10 +2569,10 @@ add_var(NumericVar * var1, NumericVar * var2, NumericVar * result)
 					break;
 
 				case 1: /* ----------
-										 * ABS(var1) > ABS(var2)
-										 * result = -(ABS(var1) - ABS(var2))
-										 * ----------
-										 */
+												 * ABS(var1) > ABS(var2)
+												 * result = -(ABS(var1) - ABS(var2))
+												 * ----------
+												 */
 					sub_abs(var1, var2, result);
 					result->sign = NUMERIC_NEG;
 					break;
@@ -2609,7 +2609,7 @@ add_var(NumericVar * var1, NumericVar * var2, NumericVar * result)
  * ----------
  */
 static void
-sub_var(NumericVar * var1, NumericVar * var2, NumericVar * result)
+sub_var(NumericVar *var1, NumericVar *var2, NumericVar *result)
 {
 	/* ----------
 	 * Decide on the signs of the two variables what to do
@@ -2637,10 +2637,10 @@ sub_var(NumericVar * var1, NumericVar * var2, NumericVar * result)
 			switch (cmp_abs(var1, var2))
 			{
 				case 0: /* ----------
-										 * ABS(var1) == ABS(var2)
-										 * result = ZERO
-										 * ----------
-										 */
+												 * ABS(var1) == ABS(var2)
+												 * result = ZERO
+												 * ----------
+												 */
 					digitbuf_free(result->buf);
 					result->buf = digitbuf_alloc(0);
 					result->ndigits = 0;
@@ -2653,10 +2653,10 @@ sub_var(NumericVar * var1, NumericVar * var2, NumericVar * result)
 					break;
 
 				case 1: /* ----------
-										 * ABS(var1) > ABS(var2)
-										 * result = +(ABS(var1) - ABS(var2))
-										 * ----------
-										 */
+												 * ABS(var1) > ABS(var2)
+												 * result = +(ABS(var1) - ABS(var2))
+												 * ----------
+												 */
 					sub_abs(var1, var2, result);
 					result->sign = NUMERIC_POS;
 					break;
@@ -2684,10 +2684,10 @@ sub_var(NumericVar * var1, NumericVar * var2, NumericVar * result)
 			switch (cmp_abs(var1, var2))
 			{
 				case 0: /* ----------
-										 * ABS(var1) == ABS(var2)
-										 * result = ZERO
-										 * ----------
-										 */
+												 * ABS(var1) == ABS(var2)
+												 * result = ZERO
+												 * ----------
+												 */
 					digitbuf_free(result->buf);
 					result->buf = digitbuf_alloc(0);
 					result->ndigits = 0;
@@ -2700,10 +2700,10 @@ sub_var(NumericVar * var1, NumericVar * var2, NumericVar * result)
 					break;
 
 				case 1: /* ----------
-										 * ABS(var1) > ABS(var2)
-										 * result = -(ABS(var1) - ABS(var2))
-										 * ----------
-										 */
+												 * ABS(var1) > ABS(var2)
+												 * result = -(ABS(var1) - ABS(var2))
+												 * ----------
+												 */
 					sub_abs(var1, var2, result);
 					result->sign = NUMERIC_NEG;
 					break;
@@ -2740,7 +2740,7 @@ sub_var(NumericVar * var1, NumericVar * var2, NumericVar * result)
  * ----------
  */
 static void
-mul_var(NumericVar * var1, NumericVar * var2, NumericVar * result)
+mul_var(NumericVar *var1, NumericVar *var2, NumericVar *result)
 {
 	NumericDigitBuf *res_buf;
 	NumericDigit *res_digits;
@@ -2825,7 +2825,7 @@ mul_var(NumericVar * var1, NumericVar * var2, NumericVar * result)
  * ----------
  */
 static void
-div_var(NumericVar * var1, NumericVar * var2, NumericVar * result)
+div_var(NumericVar *var1, NumericVar *var2, NumericVar *result)
 {
 	NumericDigit *res_digits;
 	int			res_ndigits;
@@ -3046,7 +3046,7 @@ div_var(NumericVar * var1, NumericVar * var2, NumericVar * result)
  * ----------
  */
 static void
-mod_var(NumericVar * var1, NumericVar * var2, NumericVar * result)
+mod_var(NumericVar *var1, NumericVar *var2, NumericVar *result)
 {
 	NumericVar	tmp;
 	int			save_global_rscale;
@@ -3083,7 +3083,7 @@ mod_var(NumericVar * var1, NumericVar * var2, NumericVar * result)
  * ----------
  */
 static void
-ceil_var(NumericVar * var, NumericVar * result)
+ceil_var(NumericVar *var, NumericVar *result)
 {
 	NumericVar	tmp;
 
@@ -3108,7 +3108,7 @@ ceil_var(NumericVar * var, NumericVar * result)
  * ----------
  */
 static void
-floor_var(NumericVar * var, NumericVar * result)
+floor_var(NumericVar *var, NumericVar *result)
 {
 	NumericVar	tmp;
 
@@ -3132,7 +3132,7 @@ floor_var(NumericVar * var, NumericVar * result)
  * ----------
  */
 static void
-sqrt_var(NumericVar * arg, NumericVar * result)
+sqrt_var(NumericVar *arg, NumericVar *result)
 {
 	NumericVar	tmp_arg;
 	NumericVar	tmp_val;
@@ -3210,7 +3210,7 @@ sqrt_var(NumericVar * arg, NumericVar * result)
  * ----------
  */
 static void
-exp_var(NumericVar * arg, NumericVar * result)
+exp_var(NumericVar *arg, NumericVar *result)
 {
 	NumericVar	x;
 	NumericVar	xpow;
@@ -3304,7 +3304,7 @@ exp_var(NumericVar * arg, NumericVar * result)
  * ----------
  */
 static void
-ln_var(NumericVar * arg, NumericVar * result)
+ln_var(NumericVar *arg, NumericVar *result)
 {
 	NumericVar	x;
 	NumericVar	xx;
@@ -3382,7 +3382,7 @@ ln_var(NumericVar * arg, NumericVar * result)
  * ----------
  */
 static void
-log_var(NumericVar * base, NumericVar * num, NumericVar * result)
+log_var(NumericVar *base, NumericVar *num, NumericVar *result)
 {
 	NumericVar	ln_base;
 	NumericVar	ln_num;
@@ -3411,7 +3411,7 @@ log_var(NumericVar * base, NumericVar * num, NumericVar * result)
  * ----------
  */
 static void
-power_var(NumericVar * base, NumericVar * exp, NumericVar * result)
+power_var(NumericVar *base, NumericVar *exp, NumericVar *result)
 {
 	NumericVar	ln_base;
 	NumericVar	ln_num;
@@ -3455,7 +3455,7 @@ power_var(NumericVar * base, NumericVar * exp, NumericVar * result)
  * ----------
  */
 static int
-cmp_abs(NumericVar * var1, NumericVar * var2)
+cmp_abs(NumericVar *var1, NumericVar *var2)
 {
 	int			i1 = 0;
 	int			i2 = 0;
@@ -3513,7 +3513,7 @@ cmp_abs(NumericVar * var1, NumericVar * var2)
  * ----------
  */
 static void
-add_abs(NumericVar * var1, NumericVar * var2, NumericVar * result)
+add_abs(NumericVar *var1, NumericVar *var2, NumericVar *result)
 {
 	NumericDigitBuf *res_buf;
 	NumericDigit *res_digits;
@@ -3582,7 +3582,7 @@ add_abs(NumericVar * var1, NumericVar * var2, NumericVar * result)
  * ----------
  */
 static void
-sub_abs(NumericVar * var1, NumericVar * var2, NumericVar * result)
+sub_abs(NumericVar *var1, NumericVar *var2, NumericVar *result)
 {
 	NumericDigitBuf *res_buf;
 	NumericDigit *res_digits;

@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/optimizer/path/Attic/prune.c,v 1.38 1999/05/25 16:09:28 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/optimizer/path/Attic/prune.c,v 1.39 1999/05/25 22:41:33 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -24,7 +24,7 @@
 #include "utils/elog.h"
 
 
-static List *merge_rel_with_same_relids(RelOptInfo * rel, Relids unjoined_relids);
+static List *merge_rel_with_same_relids(RelOptInfo *rel, Relids unjoined_relids);
 
 /*
  * merge_rels_with_same_relids
@@ -59,7 +59,7 @@ merge_rels_with_same_relids(List *rel_list)
  *
  */
 static List *
-merge_rel_with_same_relids(RelOptInfo * rel, Relids unjoined_relids)
+merge_rel_with_same_relids(RelOptInfo *rel, Relids unjoined_relids)
 {
 	List	   *i = NIL;
 	List	   *result = NIL;

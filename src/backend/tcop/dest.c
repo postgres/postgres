@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/tcop/dest.c,v 1.30 1999/05/25 16:11:37 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/tcop/dest.c,v 1.31 1999/05/25 22:42:06 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -60,17 +60,17 @@ static char CommandInfo[32] = {0};
  * ----------------
  */
 static void
-donothingReceive(HeapTuple tuple, TupleDesc typeinfo, DestReceiver * self)
+donothingReceive(HeapTuple tuple, TupleDesc typeinfo, DestReceiver *self)
 {
 }
 
 static void
-donothingSetup(DestReceiver * self, TupleDesc typeinfo)
+donothingSetup(DestReceiver *self, TupleDesc typeinfo)
 {
 }
 
 static void
-donothingCleanup(DestReceiver * self)
+donothingCleanup(DestReceiver *self)
 {
 }
 

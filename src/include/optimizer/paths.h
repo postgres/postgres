@@ -7,7 +7,7 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: paths.h,v 1.28 1999/05/25 16:14:21 momjian Exp $
+ * $Id: paths.h,v 1.29 1999/05/25 22:43:11 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -27,7 +27,7 @@ extern RelOptInfo *make_one_rel(Query *root, List *rels);
  * indxpath.h
  *	  routines to generate index paths
  */
-extern List *create_index_paths(Query *root, RelOptInfo * rel, List *indices,
+extern List *create_index_paths(Query *root, RelOptInfo *rel, List *indices,
 				   List *restrictinfo_list,
 				   List *joininfo_list);
 
@@ -41,7 +41,7 @@ extern void update_rels_pathlist_for_joins(Query *root, List *joinrels);
 /*
  * orindxpath.h
  */
-extern List *create_or_index_paths(Query *root, RelOptInfo * rel, List *clauses);
+extern List *create_or_index_paths(Query *root, RelOptInfo *rel, List *clauses);
 
 /*
  * hashutils.h
@@ -79,11 +79,11 @@ extern MergeInfo *match_order_mergeinfo(PathOrder *ordering,
  *	  routines to determine which relations to join
  */
 extern List *make_rels_by_joins(Query *root, List *old_rels);
-extern List *make_rels_by_clause_joins(Query *root, RelOptInfo * old_rel,
+extern List *make_rels_by_clause_joins(Query *root, RelOptInfo *old_rel,
 						  List *joininfo_list, Relids only_relids);
-extern List *make_rels_by_clauseless_joins(RelOptInfo * old_rel,
+extern List *make_rels_by_clauseless_joins(RelOptInfo *old_rel,
 							  List *inner_rels);
-extern RelOptInfo *make_join_rel(RelOptInfo * outer_rel, RelOptInfo * inner_rel, JoinInfo * joininfo);
+extern RelOptInfo *make_join_rel(RelOptInfo *outer_rel, RelOptInfo *inner_rel, JoinInfo *joininfo);
 extern List *new_join_tlist(List *tlist, int first_resdomno);
 extern RelOptInfo *get_cheapest_complete_rel(List *join_rel_list);
 

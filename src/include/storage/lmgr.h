@@ -6,7 +6,7 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: lmgr.h,v 1.19 1999/05/07 01:23:05 vadim Exp $
+ * $Id: lmgr.h,v 1.20 1999/05/25 22:43:26 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -32,7 +32,7 @@ typedef struct LockRelId
 {
 	Oid			relId;			/* a relation identifier */
 	Oid			dbId;			/* a database identifier */
-}			LockRelId;
+} LockRelId;
 
 typedef struct LockInfoData
 {

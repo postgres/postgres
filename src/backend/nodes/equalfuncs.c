@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/nodes/equalfuncs.c,v 1.37 1999/05/25 16:09:06 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/nodes/equalfuncs.c,v 1.38 1999/05/25 22:41:13 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -283,7 +283,7 @@ _equalFunc(Func *a, Func *b)
  * RestrictInfo is a subclass of Node.
  */
 static bool
-_equalRestrictInfo(RestrictInfo * a, RestrictInfo * b)
+_equalRestrictInfo(RestrictInfo *a, RestrictInfo *b)
 {
 	Assert(IsA(a, RestrictInfo));
 	Assert(IsA(b, RestrictInfo));
@@ -307,7 +307,7 @@ _equalRestrictInfo(RestrictInfo * a, RestrictInfo * b)
  * RelOptInfo is a subclass of Node.
  */
 static bool
-_equalRelOptInfo(RelOptInfo * a, RelOptInfo * b)
+_equalRelOptInfo(RelOptInfo *a, RelOptInfo *b)
 {
 	Assert(IsA(a, RelOptInfo));
 	Assert(IsA(b, RelOptInfo));
@@ -392,7 +392,7 @@ _equalIndexPath(IndexPath *a, IndexPath *b)
 }
 
 static bool
-_equalNestPath(NestPath * a, NestPath * b)
+_equalNestPath(NestPath *a, NestPath *b)
 {
 	Assert(IsA_JoinPath(a));
 	Assert(IsA_JoinPath(b));
@@ -477,7 +477,7 @@ _equalMergeOrder(MergeOrder *a, MergeOrder *b)
 }
 
 static bool
-_equalHashInfo(HashInfo * a, HashInfo * b)
+_equalHashInfo(HashInfo *a, HashInfo *b)
 {
 	Assert(IsA(a, HashInfo));
 	Assert(IsA(b, HashInfo));
@@ -524,7 +524,7 @@ _equalSubPlan(SubPlan *a, SubPlan *b)
 }
 
 static bool
-_equalJoinInfo(JoinInfo * a, JoinInfo * b)
+_equalJoinInfo(JoinInfo *a, JoinInfo *b)
 {
 	Assert(IsA(a, JoinInfo));
 	Assert(IsA(b, JoinInfo));

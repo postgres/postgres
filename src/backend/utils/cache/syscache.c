@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/cache/syscache.c,v 1.25 1999/05/25 16:12:23 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/cache/syscache.c,v 1.26 1999/05/25 22:42:15 momjian Exp $
  *
  * NOTES
  *	  These routines allow the parser/planner/executor to perform
@@ -205,7 +205,7 @@ static struct cachedesc cacheinfo[] = {
 			0,
 			0
 		},
-		offsetof(FormData_pg_type, typalign) + sizeof(char),
+		offsetof(FormData_pg_type, typalign) +sizeof(char),
 		TypeNameIndex,
 	TypeNameIndexScan},
 	{TypeRelationName,			/* TYPOID */

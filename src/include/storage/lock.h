@@ -6,7 +6,7 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: lock.h,v 1.27 1999/05/25 16:14:42 momjian Exp $
+ * $Id: lock.h,v 1.28 1999/05/25 22:43:26 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -100,7 +100,7 @@ typedef struct LOCKMETHODCTL
 	int			conflictTab[MAX_LOCKMODES];
 	int			prio[MAX_LOCKMODES];
 	SPINLOCK	masterLock;
-}			LOCKMETHODCTL;
+} LOCKMETHODCTL;
 
 /*
  * lockHash -- hash table on lock Ids,
@@ -113,7 +113,7 @@ typedef struct LOCKMETHODTABLE
 	HTAB	   *lockHash;
 	HTAB	   *xidHash;
 	LOCKMETHODCTL *ctl;
-}			LOCKMETHODTABLE;
+} LOCKMETHODTABLE;
 
 /* -----------------------
  * A transaction never conflicts with its own locks.  Hence, if

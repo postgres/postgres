@@ -26,7 +26,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/executor/execMain.c,v 1.84 1999/05/25 16:08:36 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/executor/execMain.c,v 1.85 1999/05/25 22:40:57 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -71,9 +71,9 @@ static TupleTableSlot *ExecutePlan(EState *estate, Plan *plan,
 			int offsetTuples,
 			int numberTuples,
 			ScanDirection direction,
-			DestReceiver * destfunc);
+			DestReceiver *destfunc);
 static void ExecRetrieve(TupleTableSlot *slot,
-			 DestReceiver * destfunc,
+			 DestReceiver *destfunc,
 			 EState *estate);
 static void ExecAppend(TupleTableSlot *slot, ItemPointer tupleid,
 		   EState *estate);
@@ -548,7 +548,7 @@ typedef struct execRowMark
 	Relation	relation;
 	Index		rti;
 	char		resname[32];
-}			execRowMark;
+} execRowMark;
 
 typedef struct evalPlanQual
 {
@@ -556,7 +556,7 @@ typedef struct evalPlanQual
 	Index		rti;
 	EState		estate;
 	struct evalPlanQual *free;
-}			evalPlanQual;
+} evalPlanQual;
 
 /* ----------------------------------------------------------------
  *		InitPlan
@@ -884,7 +884,7 @@ ExecutePlan(EState *estate,
 			int offsetTuples,
 			int numberTuples,
 			ScanDirection direction,
-			DestReceiver * destfunc)
+			DestReceiver *destfunc)
 {
 	JunkFilter *junkfilter;
 	TupleTableSlot *slot;
@@ -1124,7 +1124,7 @@ lnext:	;
  */
 static void
 ExecRetrieve(TupleTableSlot *slot,
-			 DestReceiver * destfunc,
+			 DestReceiver *destfunc,
 			 EState *estate)
 {
 	HeapTuple	tuple;

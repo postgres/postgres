@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/optimizer/util/pathnode.c,v 1.41 1999/05/25 16:09:58 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/optimizer/util/pathnode.c,v 1.42 1999/05/25 22:41:49 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -62,7 +62,7 @@ path_is_cheaper(Path *path1, Path *path2)
  *
  */
 Path *
-set_cheapest(RelOptInfo * parent_rel, List *pathlist)
+set_cheapest(RelOptInfo *parent_rel, List *pathlist)
 {
 	List	   *p;
 	Path	   *cheapest_so_far;
@@ -99,7 +99,7 @@ set_cheapest(RelOptInfo * parent_rel, List *pathlist)
  *
  */
 List *
-add_pathlist(RelOptInfo * parent_rel, List *unique_paths, List *new_paths)
+add_pathlist(RelOptInfo *parent_rel, List *unique_paths, List *new_paths)
 {
 	List	   *p1;
 
@@ -278,7 +278,7 @@ better_path(Path *new_path, List *unique_paths, bool *is_new)
  *
  */
 Path *
-create_seqscan_path(RelOptInfo * rel)
+create_seqscan_path(RelOptInfo *rel)
 {
 	int			relid = 0;
 
@@ -326,8 +326,8 @@ create_seqscan_path(RelOptInfo * rel)
  */
 IndexPath  *
 create_index_path(Query *root,
-				  RelOptInfo * rel,
-				  RelOptInfo * index,
+				  RelOptInfo *rel,
+				  RelOptInfo *index,
 				  List *restriction_clauses,
 				  bool is_join_scan)
 {
@@ -473,8 +473,8 @@ create_index_path(Query *root,
  *
  */
 NestPath   *
-create_nestloop_path(RelOptInfo * joinrel,
-					 RelOptInfo * outer_rel,
+create_nestloop_path(RelOptInfo *joinrel,
+					 RelOptInfo *outer_rel,
 					 Path *outer_path,
 					 Path *inner_path,
 					 List *pathkeys)
@@ -541,7 +541,7 @@ create_nestloop_path(RelOptInfo * joinrel,
  *
  */
 MergePath  *
-create_mergejoin_path(RelOptInfo * joinrel,
+create_mergejoin_path(RelOptInfo *joinrel,
 					  int outersize,
 					  int innersize,
 					  int outerwidth,
@@ -604,7 +604,7 @@ create_mergejoin_path(RelOptInfo * joinrel,
  *
  */
 HashPath   *
-create_hashjoin_path(RelOptInfo * joinrel,
+create_hashjoin_path(RelOptInfo *joinrel,
 					 int outersize,
 					 int innersize,
 					 int outerwidth,

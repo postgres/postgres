@@ -6,7 +6,7 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: htup.h,v 1.15 1999/05/25 16:13:31 momjian Exp $
+ * $Id: htup.h,v 1.16 1999/05/25 22:42:32 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -48,7 +48,7 @@ typedef struct HeapTupleHeaderData
 	/* bit map of domains */
 
 	/* MORE DATA FOLLOWS AT END OF STRUCT */
-}			HeapTupleHeaderData;
+} HeapTupleHeaderData;
 
 typedef HeapTupleHeaderData *HeapTupleHeader;
 

@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/optimizer/util/Attic/keys.c,v 1.20 1999/05/25 16:09:56 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/optimizer/util/Attic/keys.c,v 1.21 1999/05/25 22:41:48 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -54,7 +54,7 @@ static bool equal_indexkey_var(int index_key, Var *var);
  *
  */
 bool
-match_indexkey_operand(int indexkey, Var *operand, RelOptInfo * rel)
+match_indexkey_operand(int indexkey, Var *operand, RelOptInfo *rel)
 {
 	if (IsA(operand, Var) &&
 		(lfirsti(rel->relids) == operand->varno) &&

@@ -44,7 +44,7 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: dest.h,v 1.19 1999/05/25 16:14:47 momjian Exp $
+ * $Id: dest.h,v 1.20 1999/05/25 22:43:29 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -82,10 +82,10 @@ struct _DestReceiver
 {
 	/* Called for each tuple to be output: */
 	void		(*receiveTuple) (HeapTuple tuple, TupleDesc typeinfo,
-											 DestReceiver * self);
+											 DestReceiver *self);
 	/* Initialization and teardown: */
-	void		(*setup) (DestReceiver * self, TupleDesc typeinfo);
-	void		(*cleanup) (DestReceiver * self);
+	void		(*setup) (DestReceiver *self, TupleDesc typeinfo);
+	void		(*cleanup) (DestReceiver *self);
 	/* Private fields might appear beyond this point... */
 };
 

@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/access/common/printtup.c,v 1.46 1999/05/25 16:06:39 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/access/common/printtup.c,v 1.47 1999/05/25 22:40:47 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -25,9 +25,9 @@
 #include "libpq/pqformat.h"
 #include "utils/syscache.h"
 
-static void printtup_setup(DestReceiver * self, TupleDesc typeinfo);
-static void printtup(HeapTuple tuple, TupleDesc typeinfo, DestReceiver * self);
-static void printtup_cleanup(DestReceiver * self);
+static void printtup_setup(DestReceiver *self, TupleDesc typeinfo);
+static void printtup(HeapTuple tuple, TupleDesc typeinfo, DestReceiver *self);
+static void printtup_cleanup(DestReceiver *self);
 
 /* ----------------------------------------------------------------
  *		printtup / debugtup support
@@ -76,7 +76,7 @@ typedef struct
 	Oid			typoutput;		/* Oid for the attribute's type output fn */
 	Oid			typelem;		/* typelem value to pass to the output fn */
 	FmgrInfo	finfo;			/* Precomputed call info for typoutput */
-}			PrinttupAttrInfo;
+} PrinttupAttrInfo;
 
 typedef struct
 {
@@ -84,7 +84,7 @@ typedef struct
 	TupleDesc	attrinfo;		/* The attr info we are set up for */
 	int			nattrs;
 	PrinttupAttrInfo *myinfo;	/* Cached info about each attr */
-}			DR_printtup;
+} DR_printtup;
 
 /* ----------------
  *		Initialize: create a DestReceiver for printtup
@@ -107,7 +107,7 @@ printtup_create_DR()
 }
 
 static void
-printtup_setup(DestReceiver * self, TupleDesc typeinfo)
+printtup_setup(DestReceiver *self, TupleDesc typeinfo)
 {
 	/* ----------------
 	 * We could set up the derived attr info at this time, but we postpone it
@@ -123,7 +123,7 @@ printtup_setup(DestReceiver * self, TupleDesc typeinfo)
 }
 
 static void
-printtup_prepare_info(DR_printtup * myState, TupleDesc typeinfo, int numAttrs)
+printtup_prepare_info(DR_printtup *myState, TupleDesc typeinfo, int numAttrs)
 {
 	int			i;
 
@@ -151,7 +151,7 @@ printtup_prepare_info(DR_printtup * myState, TupleDesc typeinfo, int numAttrs)
  * ----------------
  */
 static void
-printtup(HeapTuple tuple, TupleDesc typeinfo, DestReceiver * self)
+printtup(HeapTuple tuple, TupleDesc typeinfo, DestReceiver *self)
 {
 	DR_printtup *myState = (DR_printtup *) self;
 	StringInfoData buf;
@@ -228,7 +228,7 @@ printtup(HeapTuple tuple, TupleDesc typeinfo, DestReceiver * self)
  * ----------------
  */
 static void
-printtup_cleanup(DestReceiver * self)
+printtup_cleanup(DestReceiver *self)
 {
 	DR_printtup *myState = (DR_printtup *) self;
 
@@ -280,7 +280,7 @@ showatts(char *name, TupleDesc tupleDesc)
  * ----------------
  */
 void
-debugtup(HeapTuple tuple, TupleDesc typeinfo, DestReceiver * self)
+debugtup(HeapTuple tuple, TupleDesc typeinfo, DestReceiver *self)
 {
 	int			i;
 	Datum		attr;
@@ -316,7 +316,7 @@ debugtup(HeapTuple tuple, TupleDesc typeinfo, DestReceiver * self)
  * ----------------
  */
 void
-printtup_internal(HeapTuple tuple, TupleDesc typeinfo, DestReceiver * self)
+printtup_internal(HeapTuple tuple, TupleDesc typeinfo, DestReceiver *self)
 {
 	StringInfoData buf;
 	int			i,

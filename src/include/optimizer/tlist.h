@@ -6,7 +6,7 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: tlist.h,v 1.17 1999/05/25 16:14:23 momjian Exp $
+ * $Id: tlist.h,v 1.18 1999/05/25 22:43:13 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -19,7 +19,7 @@
 
 extern TargetEntry *tlistentry_member(Var *var, List *targetlist);
 extern Expr *matching_tlist_var(Var *var, List *targetlist);
-extern void add_var_to_tlist(RelOptInfo * rel, Var *var);
+extern void add_var_to_tlist(RelOptInfo *rel, Var *var);
 extern TargetEntry *create_tl_element(Var *var, int resdomno);
 extern List *get_actual_tlist(List *tlist);
 extern Resdom *tlist_member(Var *var, List *tlist);

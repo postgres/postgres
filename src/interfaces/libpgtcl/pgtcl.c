@@ -9,7 +9,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/interfaces/libpgtcl/Attic/pgtcl.c,v 1.14 1999/02/13 23:22:37 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/interfaces/libpgtcl/Attic/pgtcl.c,v 1.15 1999/05/25 22:43:43 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -28,7 +28,7 @@
  */
 
 int
-Pgtcl_Init(Tcl_Interp * interp)
+Pgtcl_Init(Tcl_Interp *interp)
 {
 
 	/*
@@ -133,7 +133,7 @@ Pgtcl_Init(Tcl_Interp * interp)
 
 
 int
-Pgtcl_SafeInit(Tcl_Interp * interp)
+Pgtcl_SafeInit(Tcl_Interp *interp)
 {
 	return Pgtcl_Init(interp);
 }

@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/optimizer/plan/createplan.c,v 1.56 1999/05/25 16:09:34 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/optimizer/plan/createplan.c,v 1.57 1999/05/25 22:41:38 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -53,7 +53,7 @@ static SeqScan *create_seqscan_node(Path *best_path, List *tlist,
 					List *scan_clauses);
 static IndexScan *create_indexscan_node(IndexPath *best_path, List *tlist,
 					  List *scan_clauses);
-static NestLoop *create_nestloop_node(NestPath * best_path, List *tlist,
+static NestLoop *create_nestloop_node(NestPath *best_path, List *tlist,
 					 List *clauses, Plan *outer_node, List *outer_tlist,
 					 Plan *inner_node, List *inner_tlist);
 static MergeJoin *create_mergejoin_node(MergePath *best_path, List *tlist,
@@ -418,7 +418,7 @@ create_indexscan_node(IndexPath *best_path,
  *****************************************************************************/
 
 static NestLoop *
-create_nestloop_node(NestPath * best_path,
+create_nestloop_node(NestPath *best_path,
 					 List *tlist,
 					 List *clauses,
 					 Plan *outer_node,

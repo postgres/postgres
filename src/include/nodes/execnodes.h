@@ -6,7 +6,7 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: execnodes.h,v 1.29 1999/05/25 16:14:07 momjian Exp $
+ * $Id: execnodes.h,v 1.30 1999/05/25 22:42:54 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -698,7 +698,7 @@ typedef struct TeeState
 	MemoryContext tee_mcxt;
 	HeapScanDesc tee_leftScanDesc,
 				tee_rightScanDesc;
-} TeeState;
+}			TeeState;
 
 #endif
 

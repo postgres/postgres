@@ -7,7 +7,7 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: libpgtcl.h,v 1.7 1999/02/13 23:22:36 momjian Exp $
+ * $Id: libpgtcl.h,v 1.8 1999/05/25 22:43:42 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -17,7 +17,7 @@
 
 #include "tcl.h"
 
-extern int	Pgtcl_Init(Tcl_Interp * interp);
-extern int	Pgtcl_SafeInit(Tcl_Interp * interp);
+extern int	Pgtcl_Init(Tcl_Interp *interp);
+extern int	Pgtcl_SafeInit(Tcl_Interp *interp);
 
 #endif	 /* LIBPGTCL_H */

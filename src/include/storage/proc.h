@@ -6,7 +6,7 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: proc.h,v 1.23 1999/05/25 16:14:45 momjian Exp $
+ * $Id: proc.h,v 1.24 1999/05/25 22:43:27 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -119,7 +119,7 @@ extern bool ProcRemove(int pid);
 /* make static in storage/lmgr/proc.c -- jolly */
 
 extern void ProcQueueInit(PROC_QUEUE *queue);
-extern int ProcSleep(PROC_QUEUE *queue, LOCKMETHODCTL * lockctl, int token,
+extern int ProcSleep(PROC_QUEUE *queue, LOCKMETHODCTL *lockctl, int token,
 		  LOCK *lock);
 extern PROC *ProcWakeup(PROC *proc, int errType);
 extern int ProcLockWakeup(PROC_QUEUE *queue, LOCKMETHOD lockmethod,

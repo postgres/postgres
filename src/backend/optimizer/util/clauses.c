@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/optimizer/util/clauses.c,v 1.34 1999/05/25 16:09:50 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/optimizer/util/clauses.c,v 1.35 1999/05/25 22:41:46 momjian Exp $
  *
  * HISTORY
  *	  AUTHOR			DATE			MAJOR EVENT
@@ -369,7 +369,7 @@ pull_constant_clauses(List *quals, List **constantQual)
  *
  */
 void
-clause_get_relids_vars(Node *clause, Relids * relids, List **vars)
+clause_get_relids_vars(Node *clause, Relids *relids, List **vars)
 {
 	List	   *clvars = pull_var_clause(clause);
 	List	   *var_list = NIL;

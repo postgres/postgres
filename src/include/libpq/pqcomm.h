@@ -8,7 +8,7 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: pqcomm.h,v 1.35 1999/05/03 19:10:24 momjian Exp $
+ * $Id: pqcomm.h,v 1.36 1999/05/25 22:42:51 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -156,6 +156,6 @@ typedef struct CancelRequestPacket
 										 * request */
 	uint32		backendPID;		/* PID of client's backend */
 	uint32		cancelAuthCode; /* secret key to authorize cancel */
-}			CancelRequestPacket;
+} CancelRequestPacket;
 
 #endif	 /* PQCOMM_H */

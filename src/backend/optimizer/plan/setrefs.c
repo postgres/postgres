@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/optimizer/plan/setrefs.c,v 1.47 1999/05/25 16:09:39 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/optimizer/plan/setrefs.c,v 1.48 1999/05/25 22:41:41 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -35,7 +35,7 @@
 
 static void set_join_tlist_references(Join *join);
 static void set_nonamescan_tlist_references(SeqScan *nonamescan);
-static void set_noname_tlist_references(Noname * noname);
+static void set_noname_tlist_references(Noname *noname);
 static Node *replace_clause_joinvar_refs(Node *clause,
 							List *outer_tlist,
 							List *inner_tlist);
@@ -161,7 +161,7 @@ set_nonamescan_tlist_references(SeqScan *nonamescan)
  *
  */
 static void
-set_noname_tlist_references(Noname * noname)
+set_noname_tlist_references(Noname *noname)
 {
 	Plan	   *source = ((Plan *) noname)->lefttree;
 

@@ -9,7 +9,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/optimizer/path/_deadcode/Attic/xfunc.c,v 1.3 1999/05/25 16:09:31 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/optimizer/path/_deadcode/Attic/xfunc.c,v 1.4 1999/05/25 22:41:36 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -144,7 +144,7 @@ xfunc_shouldpull(Query *queryInfo,
 				 Path childpath,
 				 JoinPath parentpath,
 				 int whichchild,
-				 RestrictInfo * maxcinfopt)		/* Out: pointer to clause
+				 RestrictInfo *maxcinfopt)		/* Out: pointer to clause
 												 * to pullup */
 {
 	LispValue	clauselist,
@@ -225,7 +225,7 @@ xfunc_shouldpull(Query *queryInfo,
 			  || (!is_join(childpath)
 				  && (whichchild == INNER)
 				  && IsA(parentpath, NestPath)
-				  && !IsA(parentpath, HashPath)
+				  &&!IsA(parentpath, HashPath)
 				  &&!IsA(parentpath, MergePath)))))
 		{
 
@@ -1423,7 +1423,7 @@ do { \
  **   Just like _copyRel, but doesn't copy the paths
  */
 bool
-xfunc_copyrel(RelOptInfo from, RelOptInfo * to)
+xfunc_copyrel(RelOptInfo from, RelOptInfo *to)
 {
 	RelOptInfo	newnode;
 

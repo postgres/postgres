@@ -6,7 +6,7 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: relation.h,v 1.31 1999/05/25 16:14:12 momjian Exp $
+ * $Id: relation.h,v 1.32 1999/05/25 22:43:01 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -100,7 +100,7 @@ typedef struct RelOptInfo
 	List	   *restrictinfo;	/* RestrictInfo structures */
 	List	   *joininfo;		/* JoinInfo structures */
 	List	   *innerjoin;
-}			RelOptInfo;
+} RelOptInfo;
 
 extern Var *get_expr(TargetEntry *foo);
 extern Var *get_groupclause_expr(GroupClause *groupClause, List *targetList);
@@ -167,7 +167,7 @@ typedef struct NestPath
 	List	   *pathinfo;
 	Path	   *outerjoinpath;
 	Path	   *innerjoinpath;
-}			NestPath;
+} NestPath;
 
 typedef NestPath JoinPath;
 
@@ -223,7 +223,7 @@ typedef struct RestrictInfo
 	/* hashjoin only */
 	Oid			hashjoinoperator;
 	Relids		restrictinfojoinid;
-}			RestrictInfo;
+} RestrictInfo;
 
 typedef struct JoinMethod
 {
@@ -236,13 +236,13 @@ typedef struct HashInfo
 {
 	JoinMethod	jmethod;
 	Oid			hashop;
-}			HashInfo;
+} HashInfo;
 
 typedef struct MergeInfo
 {
 	JoinMethod	jmethod;
 	MergeOrder *m_ordering;
-}			MergeInfo;
+} MergeInfo;
 
 typedef struct JoinInfo
 {
@@ -251,7 +251,7 @@ typedef struct JoinInfo
 	List	   *jinfo_restrictinfo;
 	bool		mergejoinable;
 	bool		hashjoinable;
-}			JoinInfo;
+} JoinInfo;
 
 typedef struct Iter
 {

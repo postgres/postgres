@@ -12,7 +12,7 @@
  * Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/interfaces/libpgtcl/Attic/pgtclId.c,v 1.19 1999/05/25 16:15:07 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/interfaces/libpgtcl/Attic/pgtclId.c,v 1.20 1999/05/25 22:43:46 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -27,7 +27,7 @@
 
 
 static int
-PgEndCopy(Pg_ConnectionId * connid, int *errorCodePtr)
+PgEndCopy(Pg_ConnectionId *connid, int *errorCodePtr)
 {
 	connid->res_copyStatus = RES_COPY_NONE;
 	if (PQendcopy(connid->conn))
@@ -156,7 +156,7 @@ Tcl_ChannelType Pg_ConnType = {
  * Create and register a new channel for the connection
  */
 void
-PgSetConnectionId(Tcl_Interp * interp, PGconn *conn)
+PgSetConnectionId(Tcl_Interp *interp, PGconn *conn)
 {
 	Tcl_Channel conn_chan;
 	Pg_ConnectionId *connid;
@@ -198,7 +198,7 @@ PgSetConnectionId(Tcl_Interp * interp, PGconn *conn)
  * Get back the connection from the Id
  */
 PGconn *
-PgGetConnectionId(Tcl_Interp * interp, char *id, Pg_ConnectionId ** connid_p)
+PgGetConnectionId(Tcl_Interp *interp, char *id, Pg_ConnectionId **connid_p)
 {
 	Tcl_Channel conn_chan;
 	Pg_ConnectionId *connid;
@@ -283,7 +283,7 @@ PgDelConnectionId(DRIVER_DEL_PROTO)
  * is probably just not clearing result handles like they should.
  */
 int
-PgSetResultId(Tcl_Interp * interp, char *connid_c, PGresult *res)
+PgSetResultId(Tcl_Interp *interp, char *connid_c, PGresult *res)
 {
 	Tcl_Channel conn_chan;
 	Pg_ConnectionId *connid;
@@ -334,7 +334,7 @@ PgSetResultId(Tcl_Interp * interp, char *connid_c, PGresult *res)
 }
 
 static int
-getresid(Tcl_Interp * interp, char *id, Pg_ConnectionId ** connid_p)
+getresid(Tcl_Interp *interp, char *id, Pg_ConnectionId **connid_p)
 {
 	Tcl_Channel conn_chan;
 	char	   *mark;
@@ -376,7 +376,7 @@ getresid(Tcl_Interp * interp, char *id, Pg_ConnectionId ** connid_p)
  * Get back the result pointer from the Id
  */
 PGresult   *
-PgGetResultId(Tcl_Interp * interp, char *id)
+PgGetResultId(Tcl_Interp *interp, char *id)
 {
 	Pg_ConnectionId *connid;
 	int			resid;
@@ -394,7 +394,7 @@ PgGetResultId(Tcl_Interp * interp, char *id)
  * Remove a result Id from the hash tables
  */
 void
-PgDelResultId(Tcl_Interp * interp, char *id)
+PgDelResultId(Tcl_Interp *interp, char *id)
 {
 	Pg_ConnectionId *connid;
 	int			resid;
@@ -410,7 +410,7 @@ PgDelResultId(Tcl_Interp * interp, char *id)
  * Get the connection Id from the result Id
  */
 int
-PgGetConnByResultId(Tcl_Interp * interp, char *resid_c)
+PgGetConnByResultId(Tcl_Interp *interp, char *resid_c)
 {
 	char	   *mark;
 	Tcl_Channel conn_chan;
@@ -478,12 +478,12 @@ typedef struct
 	Tcl_Event	header;			/* Standard Tcl event info */
 	PGnotify	info;			/* Notify name from SQL server */
 	Pg_ConnectionId *connid;	/* Connection for server */
-}			NotifyEvent;
+} NotifyEvent;
 
 /* Dispatch a NotifyEvent that has reached the front of the event queue */
 
 static int
-Pg_Notify_EventProc(Tcl_Event * evPtr, int flags)
+Pg_Notify_EventProc(Tcl_Event *evPtr, int flags)
 {
 	NotifyEvent *event = (NotifyEvent *) evPtr;
 	Pg_TclNotifies *notifies;
@@ -570,7 +570,7 @@ Pg_Notify_EventProc(Tcl_Event * evPtr, int flags)
  */
 
 void
-PgNotifyTransferEvents(Pg_ConnectionId * connid)
+PgNotifyTransferEvents(Pg_ConnectionId *connid)
 {
 	PGnotify   *notify;
 
@@ -605,7 +605,7 @@ PgNotifyTransferEvents(Pg_ConnectionId * connid)
  */
 
 void
-PgNotifyInterpDelete(ClientData clientData, Tcl_Interp * interp)
+PgNotifyInterpDelete(ClientData clientData, Tcl_Interp *interp)
 {
 	/* Mark the interpreter dead, but don't do anything else yet */
 	Pg_TclNotifies *notifies = (Pg_TclNotifies *) clientData;
@@ -626,7 +626,7 @@ PgNotifyInterpDelete(ClientData clientData, Tcl_Interp * interp)
  * events are executed.
  */
 static int
-NotifyEventDeleteProc(Tcl_Event * evPtr, ClientData clientData)
+NotifyEventDeleteProc(Tcl_Event *evPtr, ClientData clientData)
 {
 	Pg_ConnectionId *connid = (Pg_ConnectionId *) clientData;
 
@@ -679,7 +679,7 @@ Pg_Notify_FileHandler(ClientData clientData, int mask)
  */
 
 void
-PgStartNotifyEventSource(Pg_ConnectionId * connid)
+PgStartNotifyEventSource(Pg_ConnectionId *connid)
 {
 	/* Start the notify event source if it isn't already running */
 	if (!connid->notifier_running)
@@ -706,7 +706,7 @@ PgStartNotifyEventSource(Pg_ConnectionId * connid)
 }
 
 void
-PgStopNotifyEventSource(Pg_ConnectionId * connid)
+PgStopNotifyEventSource(Pg_ConnectionId *connid)
 {
 	/* Remove the event source */
 	if (connid->notifier_running)

@@ -6,7 +6,7 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: transam.h,v 1.20 1999/05/25 16:13:35 momjian Exp $
+ * $Id: transam.h,v 1.21 1999/05/25 22:42:35 momjian Exp $
  *
  *	 NOTES
  *		Transaction System Version 101 now support proper oid
@@ -128,7 +128,7 @@ typedef struct VariableCacheData
 	TransactionId nextXid;
 	uint32		oid_count;		/* not implemented, yet */
 	Oid			nextOid;
-}			VariableCacheData;
+} VariableCacheData;
 
 typedef VariableCacheData *VariableCache;
 

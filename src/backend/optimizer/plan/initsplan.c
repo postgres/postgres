@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/optimizer/plan/initsplan.c,v 1.30 1999/05/25 16:09:36 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/optimizer/plan/initsplan.c,v 1.31 1999/05/25 22:41:39 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -40,7 +40,7 @@
 extern int	Quiet;
 
 static void add_restrict_and_join_to_rel(Query *root, List *clause);
-static void add_join_info_to_rels(Query *root, RestrictInfo * restrictinfo,
+static void add_join_info_to_rels(Query *root, RestrictInfo *restrictinfo,
 					  Relids join_relids);
 static void add_vars_to_targetlist(Query *root, List *vars, Relids join_relids);
 
@@ -240,7 +240,7 @@ add_restrict_and_join_to_rel(Query *root, List *clause)
  *
  */
 static void
-add_join_info_to_rels(Query *root, RestrictInfo * restrictinfo,
+add_join_info_to_rels(Query *root, RestrictInfo *restrictinfo,
 					  Relids join_relids)
 {
 	List	   *join_relid;

@@ -6,7 +6,7 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: hashjoin.h,v 1.12 1999/05/25 16:13:54 momjian Exp $
+ * $Id: hashjoin.h,v 1.13 1999/05/25 22:42:45 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -44,7 +44,7 @@ typedef struct HashJoinTupleData
 	struct HashJoinTupleData *next;		/* link to next tuple in same
 										 * bucket */
 	HeapTupleData htup;			/* tuple header */
-}			HashJoinTupleData;
+} HashJoinTupleData;
 
 typedef HashJoinTupleData *HashJoinTuple;
 

@@ -6,7 +6,7 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: parse_coerce.h,v 1.11 1999/05/25 16:14:26 momjian Exp $
+ * $Id: parse_coerce.h,v 1.12 1999/05/25 22:43:17 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -26,7 +26,7 @@ typedef enum CATEGORY
 	NETWORK_TYPE,
 	USER_TYPE,
 	MIXED_TYPE
-}			CATEGORY;
+} CATEGORY;
 
 
 /* IS_BUILTIN_TYPE()

@@ -6,7 +6,7 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: libpq.h,v 1.29 1999/05/25 16:14:00 momjian Exp $
+ * $Id: libpq.h,v 1.30 1999/05/25 22:42:50 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -220,7 +220,7 @@ extern PortalEntry *be_newportal(void);
 extern void be_typeinit(PortalEntry *entry, TupleDesc attrs,
 			int natts);
 extern void be_printtup(HeapTuple tuple, TupleDesc typeinfo,
-			DestReceiver * self);
+			DestReceiver *self);
 
 
 /* in be-pqexec.c */

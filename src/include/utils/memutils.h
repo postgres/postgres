@@ -15,7 +15,7 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: memutils.h,v 1.25 1999/05/25 16:14:56 momjian Exp $
+ * $Id: memutils.h,v 1.26 1999/05/25 22:43:36 momjian Exp $
  *
  * NOTES
  *	  some of the information in this file will be moved to
@@ -168,7 +168,7 @@ typedef struct AllocBlockData
 	struct AllocBlockData *next;
 	char	   *freeptr;
 	char	   *endptr;
-}			AllocBlockData;
+} AllocBlockData;
 
 typedef AllocBlockData *AllocBlock;
 
@@ -182,7 +182,7 @@ typedef struct AllocChunkData
 	void	   *aset;
 	/* size is always the chunk size */
 	Size		size;
-}			AllocChunkData;
+} AllocChunkData;
 
 typedef AllocChunkData *AllocChunk;
 

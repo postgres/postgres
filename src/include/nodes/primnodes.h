@@ -6,7 +6,7 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: primnodes.h,v 1.28 1999/05/25 16:14:11 momjian Exp $
+ * $Id: primnodes.h,v 1.29 1999/05/25 22:42:59 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -273,7 +273,7 @@ typedef struct Aggref
 	Node	   *target;
 	int			aggno;
 	bool		usenulls;
-}			Aggref;
+} Aggref;
 
 /* ----------------
  * SubLink

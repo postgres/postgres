@@ -6,7 +6,7 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: memnodes.h,v 1.12 1999/05/25 16:14:09 momjian Exp $
+ * $Id: memnodes.h,v 1.13 1999/05/25 22:42:55 momjian Exp $
  *
  * XXX the typedefs in this file are different from the other ???nodes.h;
  *	  they are pointers to structures instead of the structures themselves.
@@ -60,7 +60,7 @@ typedef struct MemoryContextData
 {
 	NodeTag		type;
 	MemoryContextMethods method;
-}			MemoryContextData;
+} MemoryContextData;
 
 /* utils/mcxt.h contains typedef struct MemoryContextData *MemoryContext */
 
@@ -73,7 +73,7 @@ typedef struct GlobalMemoryData
 	AllocSetData setData;
 	char	   *name;
 	OrderedElemData elemData;
-}			GlobalMemoryData;
+} GlobalMemoryData;
 
 /* utils/mcxt.h contains typedef struct GlobalMemoryData *GlobalMemory */
 

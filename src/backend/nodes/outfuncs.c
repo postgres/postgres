@@ -5,7 +5,7 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- *	$Id: outfuncs.c,v 1.85 1999/05/25 16:09:09 momjian Exp $
+ *	$Id: outfuncs.c,v 1.86 1999/05/25 22:41:14 momjian Exp $
  *
  * NOTES
  *	  Every (plan) node in POSTGRES has an associated "out" routine which
@@ -456,7 +456,7 @@ _outIndexScan(StringInfo str, IndexScan *node)
  *	Noname is a subclass of Plan
  */
 static void
-_outNoname(StringInfo str, Noname * node)
+_outNoname(StringInfo str, Noname *node)
 {
 	appendStringInfo(str, " NONAME ");
 	_outPlanInfo(str, (Plan *) node);
@@ -660,7 +660,7 @@ _outConst(StringInfo str, Const *node)
  *	Aggref
  */
 static void
-_outAggref(StringInfo str, Aggref * node)
+_outAggref(StringInfo str, Aggref *node)
 {
 	appendStringInfo(str,
 				 " AGGREG :aggname %s :basetype %u :aggtype %u :target ",
@@ -816,7 +816,7 @@ _outEState(StringInfo str, EState *node)
  *	Stuff from relation.h
  */
 static void
-_outRelOptInfo(StringInfo str, RelOptInfo * node)
+_outRelOptInfo(StringInfo str, RelOptInfo *node)
 {
 	appendStringInfo(str, " RELOPTINFO :relids ");
 	_outIntList(str, node->relids);
@@ -879,7 +879,7 @@ _outRangeTblEntry(StringInfo str, RangeTblEntry *node)
 }
 
 static void
-_outRowMark(StringInfo str, RowMark * node)
+_outRowMark(StringInfo str, RowMark *node)
 {
 	appendStringInfo(str, " ROWMARK :rti %u :info %u", node->rti, node->info);
 }
@@ -954,7 +954,7 @@ _outIndexPath(StringInfo str, IndexPath *node)
  *	NestPath is a subclass of Path
  */
 static void
-_outNestPath(StringInfo str, NestPath * node)
+_outNestPath(StringInfo str, NestPath *node)
 {
 	appendStringInfo(str,
 					 " NESTPATH :pathtype %d :cost %f :pathkeys ",
@@ -1109,7 +1109,7 @@ _outMergeOrder(StringInfo str, MergeOrder *node)
  *	RestrictInfo is a subclass of Node.
  */
 static void
-_outRestrictInfo(StringInfo str, RestrictInfo * node)
+_outRestrictInfo(StringInfo str, RestrictInfo *node)
 {
 	appendStringInfo(str, " RESTRICTINFO :clause ");
 	_outNode(str, node->clause);
@@ -1144,7 +1144,7 @@ _outJoinMethod(StringInfo str, JoinMethod *node)
  * HashInfo is a subclass of JoinMethod.
  */
 static void
-_outHashInfo(StringInfo str, HashInfo * node)
+_outHashInfo(StringInfo str, HashInfo *node)
 {
 	appendStringInfo(str, " HASHINFO :hashop %u :jmkeys ", node->hashop);
 	_outNode(str, node->jmethod.jmkeys);
@@ -1157,7 +1157,7 @@ _outHashInfo(StringInfo str, HashInfo * node)
  *	JoinInfo is a subclass of Node.
  */
 static void
-_outJoinInfo(StringInfo str, JoinInfo * node)
+_outJoinInfo(StringInfo str, JoinInfo *node)
 {
 	appendStringInfo(str, " JINFO :unjoined_relids ");
 	_outIntList(str, node->unjoined_relids);
@@ -1365,7 +1365,7 @@ _outConstraint(StringInfo str, Constraint *node)
 }
 
 static void
-_outCaseExpr(StringInfo str, CaseExpr * node)
+_outCaseExpr(StringInfo str, CaseExpr *node)
 {
 	appendStringInfo(str, "CASE ");
 	_outNode(str, node->args);
@@ -1377,7 +1377,7 @@ _outCaseExpr(StringInfo str, CaseExpr * node)
 }
 
 static void
-_outCaseWhen(StringInfo str, CaseWhen * node)
+_outCaseWhen(StringInfo str, CaseWhen *node)
 {
 	appendStringInfo(str, " WHEN ");
 	_outNode(str, node->expr);

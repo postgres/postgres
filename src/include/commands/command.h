@@ -6,7 +6,7 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: command.h,v 1.13 1999/05/25 16:13:49 momjian Exp $
+ * $Id: command.h,v 1.14 1999/05/25 22:42:41 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -44,6 +44,6 @@ extern void PortalCleanup(Portal portal);
 extern void PerformAddAttribute(char *relationName, char *userName,
 					bool inh, ColumnDef *colDef);
 
-extern void LockTableCommand(LockStmt * lockstmt);
+extern void LockTableCommand(LockStmt *lockstmt);
 
 #endif	 /* COMMAND_H */

@@ -6,7 +6,7 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: cost.h,v 1.19 1999/05/25 16:14:16 momjian Exp $
+ * $Id: cost.h,v 1.20 1999/05/25 22:43:04 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -43,8 +43,8 @@ extern Cost cost_mergejoin(Cost outercost, Cost innercost,
 extern Cost cost_hashjoin(Cost outercost, Cost innercost, List *outerkeys,
 			  List *innerkeys, int outersize, int innersize,
 			  int outerwidth, int innerwidth);
-extern int	compute_rel_size(RelOptInfo * rel);
-extern int	compute_rel_width(RelOptInfo * rel);
+extern int	compute_rel_size(RelOptInfo *rel);
+extern int	compute_rel_width(RelOptInfo *rel);
 extern int	compute_joinrel_size(JoinPath *joinpath);
 extern int	page_size(int tuples, int width);
 

@@ -6,7 +6,7 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: vacuum.h,v 1.19 1999/05/25 16:13:50 momjian Exp $
+ * $Id: vacuum.h,v 1.20 1999/05/25 22:42:43 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -99,7 +99,7 @@ typedef struct VTupleLinkData
 {
 	ItemPointerData new_tid;
 	ItemPointerData this_tid;
-}			VTupleLinkData;
+} VTupleLinkData;
 
 typedef VTupleLinkData *VTupleLink;
 
@@ -108,7 +108,7 @@ typedef struct VTupleMoveData
 	ItemPointerData tid;		/* tuple ID */
 	VPageDescr	vpd;			/* where to move */
 	bool		cleanVpd;		/* clean vpd before using */
-}			VTupleMoveData;
+} VTupleMoveData;
 
 typedef VTupleMoveData *VTupleMove;
 

@@ -4,7 +4,7 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- *	  $Id: psort.c,v 1.52 1999/05/25 16:12:59 momjian Exp $
+ *	  $Id: psort.c,v 1.53 1999/05/25 22:42:22 momjian Exp $
  *
  * NOTES
  *		Sorts the first relation into the second relation.
@@ -55,9 +55,9 @@
 #include "utils/rel.h"
 
 static bool createfirstrun(Sort *node);
-static bool createrun(Sort *node, BufFile * file);
-static void destroytape(BufFile * file);
-static void dumptuples(BufFile * file, Sort *node);
+static bool createrun(Sort *node, BufFile *file);
+static void destroytape(BufFile *file);
+static void dumptuples(BufFile *file, Sort *node);
 static BufFile *gettape(void);
 static void initialrun(Sort *node);
 static void inittapes(Sort *node);
@@ -473,7 +473,7 @@ createfirstrun(Sort *node)
  *				Tuples contains the tuples for the following run upon exit
  */
 static bool
-createrun(Sort *node, BufFile * file)
+createrun(Sort *node, BufFile *file)
 {
 	HeapTuple	lasttuple;
 	HeapTuple	tup;
@@ -720,7 +720,7 @@ merge(Sort *node, struct tape * dest)
  * dumptuples	- stores all the tuples in tree into file
  */
 static void
-dumptuples(BufFile * file, Sort *node)
+dumptuples(BufFile *file, Sort *node)
 {
 	struct leftist *tp;
 	struct leftist *newp;
@@ -996,7 +996,7 @@ gettape()
  *		destroytape		- unlinks the tape
  */
 static void
-destroytape(BufFile * file)
+destroytape(BufFile *file)
 {
 	BufFileClose(file);
 }
