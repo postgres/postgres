@@ -39,7 +39,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  * Portions taken from FreeBSD.
  *
- * $PostgreSQL: pgsql/src/bin/initdb/initdb.c,v 1.70 2004/11/29 03:05:03 tgl Exp $
+ * $PostgreSQL: pgsql/src/bin/initdb/initdb.c,v 1.71 2004/12/27 20:39:21 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -147,9 +147,10 @@ char		backend_exec[MAXPGPATH];
 
 static void *xmalloc(size_t size);
 static char *xstrdup(const char *s);
-static char **replace_token(char **lines, char *token, char *replacement);
+static char **replace_token(char **lines,
+							const char *token, const char *replacement);
 #ifndef HAVE_UNIX_SOCKETS
-static char **filter_lines_with_token(char **lines, char *token);
+static char **filter_lines_with_token(char **lines, const char *token);
 #endif
 static char **readfile(char *path);
 static void writefile(char *path, char **lines);
@@ -275,7 +276,7 @@ xstrdup(const char *s)
  * doesn't need any regexp stuff.
  */
 static char **
-replace_token(char **lines, char *token, char *replacement)
+replace_token(char **lines, const char *token, const char *replacement)
 {
 	int			numlines = 1;
 	int			i;
@@ -300,7 +301,6 @@ replace_token(char **lines, char *token, char *replacement)
 		int			pre;
 
 		/* just copy pointer if NULL or no change needed */
-
 		if (lines[i] == NULL || (where = strstr(lines[i], token)) == NULL)
 		{
 			result[i] = lines[i];
@@ -320,21 +320,19 @@ replace_token(char **lines, char *token, char *replacement)
 		strcpy(newline + pre + replen, lines[i] + pre + toklen);
 
 		result[i] = newline;
-
 	}
 
 	return result;
-
 }
 
 /*
  * make a copy of lines without any that contain the token
- * a sort of poor man's grep -v
  *
+ * a sort of poor man's grep -v
  */
 #ifndef HAVE_UNIX_SOCKETS
 static char **
-filter_lines_with_token(char **lines, char *token)
+filter_lines_with_token(char **lines, const char *token)
 {
 	int			numlines = 1;
 	int			i, src, dst;
@@ -1164,6 +1162,11 @@ setup_config(void)
 
 	snprintf(repltok, sizeof(repltok), "shared_buffers = %d", n_buffers);
 	conflines = replace_token(conflines, "#shared_buffers = 1000", repltok);
+
+#if DEF_PGPORT != 5432
+	snprintf(repltok, sizeof(repltok), "#port = %d", DEF_PGPORT);
+	conflines = replace_token(conflines, "#port = 5432", repltok);
+#endif
 
 	lc_messages = escape_quotes(lc_messages);
 	snprintf(repltok, sizeof(repltok), "lc_messages = '%s'", lc_messages);
