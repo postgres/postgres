@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/access/rtree/Attic/rtree.c,v 1.80 2003/09/25 06:57:57 petere Exp $
+ *	  $PostgreSQL: pgsql/src/backend/access/rtree/rtree.c,v 1.81 2003/11/29 19:51:40 pgsql Exp $
  *
  *-------------------------------------------------------------------------
  */

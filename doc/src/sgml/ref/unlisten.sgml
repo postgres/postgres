@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/ref/unlisten.sgml,v 1.26 2003/09/15 03:32:24 tgl Exp $
+$PostgreSQL: pgsql/doc/src/sgml/ref/unlisten.sgml,v 1.27 2003/11/29 19:51:39 pgsql Exp $
 PostgreSQL documentation
 -->
 

@@ -1,4 +1,4 @@
-$Header: /cvsroot/pgsql/src/backend/access/nbtree/README,v 1.7 2003/02/21 00:06:21 tgl Exp $
+$PostgreSQL: pgsql/src/backend/access/nbtree/README,v 1.8 2003/11/29 19:51:40 pgsql Exp $
 
 This directory contains a correct implementation of Lehman and Yao's
 high-concurrency B-tree management algorithm (P. Lehman and S. Yao,

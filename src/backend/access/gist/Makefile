@@ -4,7 +4,7 @@
 #    Makefile for access/gist
 #
 # IDENTIFICATION
-#    $Header: /cvsroot/pgsql/src/backend/access/gist/Makefile,v 1.11 2003/11/09 21:30:35 tgl Exp $
+#    $PostgreSQL: pgsql/src/backend/access/gist/Makefile,v 1.12 2003/11/29 19:51:39 pgsql Exp $
 #
 #-------------------------------------------------------------------------
 

@@ -4,7 +4,7 @@
 #    Makefile for optimizer/util
 #
 # IDENTIFICATION
-#    $Header: /cvsroot/pgsql/src/backend/optimizer/util/Makefile,v 1.14 2000/09/29 18:21:23 tgl Exp $
+#    $PostgreSQL: pgsql/src/backend/optimizer/util/Makefile,v 1.15 2003/11/29 19:51:51 pgsql Exp $
 #
 #-------------------------------------------------------------------------
 

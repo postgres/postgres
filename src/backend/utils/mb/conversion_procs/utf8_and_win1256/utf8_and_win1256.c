@@ -6,7 +6,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/mb/conversion_procs/utf8_and_win1256/Attic/utf8_and_win1256.c,v 1.6 2003/08/04 02:40:08 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/utils/mb/conversion_procs/utf8_and_win1256/utf8_and_win1256.c,v 1.7 2003/11/29 19:52:03 pgsql Exp $
  *
  *-------------------------------------------------------------------------
  */

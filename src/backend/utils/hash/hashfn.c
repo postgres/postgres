@@ -9,7 +9,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/hash/hashfn.c,v 1.19 2003/08/19 01:13:41 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/utils/hash/hashfn.c,v 1.20 2003/11/29 19:52:01 pgsql Exp $
  *
  *-------------------------------------------------------------------------
  */

@@ -1,4 +1,4 @@
-# $Header: /cvsroot/pgsql/contrib/dbmirror/Attic/Makefile,v 1.1 2002/06/23 21:58:07 momjian Exp $
+# $PostgreSQL: pgsql/contrib/dbmirror/Makefile,v 1.2 2003/11/29 19:51:34 pgsql Exp $
 
 subdir = contrib/dbmirror
 top_builddir = ../..

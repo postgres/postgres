@@ -1,4 +1,4 @@
-# $Header: /cvsroot/pgsql/contrib/fulltextindex/Attic/Makefile,v 1.11 2001/09/06 10:49:29 petere Exp $
+# $PostgreSQL: pgsql/contrib/fulltextindex/Makefile,v 1.12 2003/11/29 19:51:35 pgsql Exp $
 
 subdir = contrib/fulltextindex
 top_builddir = ../..

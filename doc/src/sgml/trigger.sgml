@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/trigger.sgml,v 1.32 2003/11/15 19:46:31 tgl Exp $
+$PostgreSQL: pgsql/doc/src/sgml/trigger.sgml,v 1.33 2003/11/29 19:51:38 pgsql Exp $
 -->
 
  <chapter id="triggers">

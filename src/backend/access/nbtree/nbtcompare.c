@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/access/nbtree/nbtcompare.c,v 1.47 2003/11/12 21:15:46 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/access/nbtree/nbtcompare.c,v 1.48 2003/11/29 19:51:40 pgsql Exp $
  *
  * NOTES
  *

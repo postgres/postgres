@@ -1,4 +1,4 @@
-$Header: /cvsroot/pgsql/src/backend/catalog/README,v 1.7 2002/04/27 21:24:33 tgl Exp $
+$PostgreSQL: pgsql/src/backend/catalog/README,v 1.8 2003/11/29 19:51:42 pgsql Exp $
 
 This directory contains .c files that manipulate the system catalogs;
 src/include/catalog contains the .h files that define the structure

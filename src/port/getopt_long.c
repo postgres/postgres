@@ -35,7 +35,7 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- * $Header: /cvsroot/pgsql/src/port/getopt_long.c,v 1.2 2003/08/04 00:43:33 momjian Exp $
+ * $PostgreSQL: pgsql/src/port/getopt_long.c,v 1.3 2003/11/29 19:52:13 pgsql Exp $
  */
 
 #include <stdio.h>

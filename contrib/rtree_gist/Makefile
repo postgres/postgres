@@ -1,4 +1,4 @@
-# $Header: /cvsroot/pgsql/contrib/rtree_gist/Attic/Makefile,v 1.3 2001/09/06 10:49:30 petere Exp $
+# $PostgreSQL: pgsql/contrib/rtree_gist/Makefile,v 1.4 2003/11/29 19:51:35 pgsql Exp $
 
 subdir = contrib/rtree_gist
 top_builddir = ../..

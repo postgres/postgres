@@ -6,7 +6,7 @@
  * Copyright (c) 2003, PostgreSQL Global Development Group
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/interfaces/jdbc/org/postgresql/geometric/Attic/PGpolygon.java,v 1.5 2003/05/29 04:39:48 barry Exp $
+ *	  $PostgreSQL: pgsql/src/interfaces/jdbc/org/postgresql/geometric/PGpolygon.java,v 1.6 2003/11/29 19:52:09 pgsql Exp $
  *
  *-------------------------------------------------------------------------
  */

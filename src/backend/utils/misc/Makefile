@@ -1,4 +1,4 @@
-# $Header: /cvsroot/pgsql/src/backend/utils/misc/Makefile,v 1.21 2003/07/04 16:41:21 tgl Exp $
+# $PostgreSQL: pgsql/src/backend/utils/misc/Makefile,v 1.22 2003/11/29 19:52:03 pgsql Exp $
 
 subdir = src/backend/utils/misc
 top_builddir = ../../../..

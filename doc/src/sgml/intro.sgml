@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/intro.sgml,v 1.23 2003/10/21 22:47:54 tgl Exp $
+$PostgreSQL: pgsql/doc/src/sgml/intro.sgml,v 1.24 2003/11/29 19:51:37 pgsql Exp $
 -->
 
 <preface id="preface">

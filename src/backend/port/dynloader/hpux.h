@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/port/dynloader/hpux.h,v 1.7 2003/08/04 02:40:02 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/port/dynloader/hpux.h,v 1.8 2003/11/29 19:51:54 pgsql Exp $
  *
  *	NOTES
  *		all functions are defined here -- it's impossible to trace the

@@ -1,4 +1,4 @@
-/* $Header: /cvsroot/pgsql/src/include/port/win32.h,v 1.12 2003/08/04 00:43:32 momjian Exp $ */
+/* $PostgreSQL: pgsql/src/include/port/win32.h,v 1.13 2003/11/29 19:52:08 pgsql Exp $ */
 
 /* undefine and redefine after #include */
 #undef mkdir

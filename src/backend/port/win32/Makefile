@@ -4,7 +4,7 @@
 #    Makefile for port/win32
 #
 # IDENTIFICATION
-#    $Header: /cvsroot/pgsql/src/backend/port/win32/Makefile,v 1.1 2003/04/24 21:25:34 momjian Exp $
+#    $PostgreSQL: pgsql/src/backend/port/win32/Makefile,v 1.2 2003/11/29 19:51:54 pgsql Exp $
 #
 #-------------------------------------------------------------------------
 

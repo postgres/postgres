@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/contrib/vacuumlo/vacuumlo.c,v 1.25 2003/09/24 05:38:38 tgl Exp $
+ *	  $PostgreSQL: pgsql/contrib/vacuumlo/vacuumlo.c,v 1.26 2003/11/29 19:51:36 pgsql Exp $
  *
  *-------------------------------------------------------------------------
  */

@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/ref/start_transaction.sgml,v 1.8 2003/11/06 22:08:14 petere Exp $
+$PostgreSQL: pgsql/doc/src/sgml/ref/start_transaction.sgml,v 1.9 2003/11/29 19:51:39 pgsql Exp $
 PostgreSQL documentation
 -->
 

@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/storage/page/bufpage.c,v 1.56 2003/09/29 00:05:25 petere Exp $
+ *	  $PostgreSQL: pgsql/src/backend/storage/page/bufpage.c,v 1.57 2003/11/29 19:51:57 pgsql Exp $
  *
  *-------------------------------------------------------------------------
  */

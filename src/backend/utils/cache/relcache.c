@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/cache/relcache.c,v 1.192 2003/11/12 21:15:56 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/utils/cache/relcache.c,v 1.193 2003/11/29 19:52:00 pgsql Exp $
  *
  *-------------------------------------------------------------------------
  */

@@ -1,5 +1,5 @@
 /*
- * $Header: /cvsroot/pgsql/src/test/regress/regress.c,v 1.58 2003/08/04 00:43:34 momjian Exp $
+ * $PostgreSQL: pgsql/src/test/regress/regress.c,v 1.59 2003/11/29 19:52:14 pgsql Exp $
  */
 
 #include "postgres.h"

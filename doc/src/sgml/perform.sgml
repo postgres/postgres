@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/perform.sgml,v 1.37 2003/11/01 01:56:29 petere Exp $
+$PostgreSQL: pgsql/doc/src/sgml/perform.sgml,v 1.38 2003/11/29 19:51:37 pgsql Exp $
 -->
 
  <chapter id="performance-tips">

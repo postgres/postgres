@@ -1,4 +1,4 @@
-# $Header: /cvsroot/pgsql/contrib/tsearch2/ispell/Attic/Makefile,v 1.4 2003/08/23 04:25:29 petere Exp $
+# $PostgreSQL: pgsql/contrib/tsearch2/ispell/Makefile,v 1.5 2003/11/29 19:51:36 pgsql Exp $
 
 subdir = contrib/tsearch2/ispell
 top_builddir = ../../..

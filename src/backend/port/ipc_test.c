@@ -21,7 +21,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/port/ipc_test.c,v 1.10 2003/08/26 15:38:24 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/port/ipc_test.c,v 1.11 2003/11/29 19:51:54 pgsql Exp $
  *
  *-------------------------------------------------------------------------
  */

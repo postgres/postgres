@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/storage/ipc/shmqueue.c,v 1.25 2003/08/04 02:40:03 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/storage/ipc/shmqueue.c,v 1.26 2003/11/29 19:51:56 pgsql Exp $
  *
  * NOTES
  *

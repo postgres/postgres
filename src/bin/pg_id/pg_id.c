@@ -6,7 +6,7 @@
  *
  * Copyright (c) 2000-2003, PostgreSQL Global Development Group
  *
- * $Header: /cvsroot/pgsql/src/bin/pg_id/Attic/pg_id.c,v 1.25 2003/10/10 01:34:51 momjian Exp $
+ * $PostgreSQL: pgsql/src/bin/pg_id/pg_id.c,v 1.26 2003/11/29 19:52:06 pgsql Exp $
  */
 #include "postgres_fe.h"
 

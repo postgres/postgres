@@ -9,7 +9,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/nodes/nodes.c,v 1.21 2003/08/04 02:39:59 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/nodes/nodes.c,v 1.22 2003/11/29 19:51:49 pgsql Exp $
  *
  * HISTORY
  *	  Andrew Yu			Oct 20, 1994	file creation

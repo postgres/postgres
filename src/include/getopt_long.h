@@ -4,7 +4,7 @@
  *
  * Portions Copyright (c) 2003, PostgreSQL Global Development Group
  *
- * $Header: /cvsroot/pgsql/src/include/getopt_long.h,v 1.4 2003/08/08 21:42:31 momjian Exp $
+ * $PostgreSQL: pgsql/src/include/getopt_long.h,v 1.5 2003/11/29 19:52:08 pgsql Exp $
  */
 #ifndef GETOPT_LONG_H
 #define GETOPT_LONG_H

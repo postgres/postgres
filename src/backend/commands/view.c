@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/commands/view.c,v 1.78 2003/09/25 06:57:59 petere Exp $
+ *	  $PostgreSQL: pgsql/src/backend/commands/view.c,v 1.79 2003/11/29 19:51:48 pgsql Exp $
  *
  *-------------------------------------------------------------------------
  */

@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/query.sgml,v 1.34 2003/11/01 01:56:29 petere Exp $
+$PostgreSQL: pgsql/doc/src/sgml/query.sgml,v 1.35 2003/11/29 19:51:37 pgsql Exp $
 -->
 
  <chapter id="tutorial-sql">

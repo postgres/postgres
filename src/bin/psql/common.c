@@ -3,7 +3,7 @@
  *
  * Copyright (c) 2000-2003, PostgreSQL Global Development Group
  *
- * $Header: /cvsroot/pgsql/src/bin/psql/common.c,v 1.77 2003/11/12 22:53:16 tgl Exp $
+ * $PostgreSQL: pgsql/src/bin/psql/common.c,v 1.78 2003/11/29 19:52:06 pgsql Exp $
  */
 #include "postgres_fe.h"
 #include "common.h"

@@ -1,4 +1,4 @@
-# $Header: /cvsroot/pgsql/src/backend/storage/smgr/README,v 1.1.1.1 1996/07/09 06:21:59 scrappy Exp $
+# $PostgreSQL: pgsql/src/backend/storage/smgr/README,v 1.2 2003/11/29 19:51:57 pgsql Exp $
 
 This directory contains the code that supports the Postgres storage manager
 switch and all of the installed storage managers.  In released systems,

@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/arrayfuncs.c,v 1.100 2003/09/25 06:58:03 petere Exp $
+ *	  $PostgreSQL: pgsql/src/backend/utils/adt/arrayfuncs.c,v 1.101 2003/11/29 19:51:57 pgsql Exp $
  *
  *-------------------------------------------------------------------------
  */

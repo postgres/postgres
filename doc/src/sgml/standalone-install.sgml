@@ -1,4 +1,4 @@
-<!-- $Header: /cvsroot/pgsql/doc/src/sgml/standalone-install.sgml,v 2.5 2003/11/24 19:08:02 petere Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/standalone-install.sgml,v 2.6 2003/11/29 19:51:37 pgsql Exp $ -->
 
 <!--
 This file helps in generating the INSTALL text file that lives in the

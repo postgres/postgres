@@ -11,7 +11,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/parser/gram.y,v 2.439 2003/11/24 16:54:07 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/parser/gram.y,v 2.440 2003/11/29 19:51:51 pgsql Exp $
  *
  * HISTORY
  *	  AUTHOR			DATE			MAJOR EVENT

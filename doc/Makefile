@@ -4,7 +4,7 @@
 #
 # Copyright (c) 1994, Regents of the University of California
 #
-# $Header: /cvsroot/pgsql/doc/Makefile,v 1.26 2003/11/24 14:52:58 petere Exp $
+# $PostgreSQL: pgsql/doc/Makefile,v 1.27 2003/11/29 19:51:36 pgsql Exp $
 #
 #----------------------------------------------------------------------------
 

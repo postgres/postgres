@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/port/fseeko.c,v 1.12 2003/08/04 02:40:20 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/port/fseeko.c,v 1.13 2003/11/29 19:52:13 pgsql Exp $
  *
  *-------------------------------------------------------------------------
  */

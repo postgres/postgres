@@ -1,5 +1,5 @@
 # Makefile for PL/Perl
-# $Header: /cvsroot/pgsql/src/pl/plperl/GNUmakefile,v 1.10 2002/05/28 16:57:53 petere Exp $
+# $PostgreSQL: pgsql/src/pl/plperl/GNUmakefile,v 1.11 2003/11/29 19:52:12 pgsql Exp $
 
 subdir = src/pl/plperl
 top_builddir = ../../..

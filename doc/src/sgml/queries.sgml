@@ -1,4 +1,4 @@
-<!-- $Header: /cvsroot/pgsql/doc/src/sgml/queries.sgml,v 1.27 2003/11/06 22:21:47 tgl Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/queries.sgml,v 1.28 2003/11/29 19:51:37 pgsql Exp $ -->
 
 <chapter id="queries">
  <title>Queries</title>

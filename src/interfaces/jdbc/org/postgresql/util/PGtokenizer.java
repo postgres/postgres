@@ -6,7 +6,7 @@
  * Copyright (c) 2003, PostgreSQL Global Development Group
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/interfaces/jdbc/org/postgresql/util/Attic/PGtokenizer.java,v 1.7 2003/05/29 04:39:51 barry Exp $
+ *	  $PostgreSQL: pgsql/src/interfaces/jdbc/org/postgresql/util/PGtokenizer.java,v 1.8 2003/11/29 19:52:11 pgsql Exp $
  *
  *-------------------------------------------------------------------------
  */

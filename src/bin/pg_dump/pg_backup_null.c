@@ -17,7 +17,7 @@
  *
  *
  * IDENTIFICATION
- *		$Header: /cvsroot/pgsql/src/bin/pg_dump/pg_backup_null.c,v 1.11 2002/09/04 20:31:34 momjian Exp $
+ *		$PostgreSQL: pgsql/src/bin/pg_dump/pg_backup_null.c,v 1.12 2003/11/29 19:52:05 pgsql Exp $
  *
  *-------------------------------------------------------------------------
  */

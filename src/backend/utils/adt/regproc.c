@@ -13,7 +13,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/regproc.c,v 1.84 2003/11/12 21:15:54 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/utils/adt/regproc.c,v 1.85 2003/11/29 19:51:59 pgsql Exp $
  *
  *-------------------------------------------------------------------------
  */

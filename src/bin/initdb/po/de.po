@@ -3,7 +3,7 @@
 #
 # Use these quotes: »%s«
 #
-# $Header: /cvsroot/pgsql/src/bin/initdb/po/de.po,v 1.1 2003/11/25 19:19:21 petere Exp $
+# $PostgreSQL: pgsql/src/bin/initdb/po/de.po,v 1.2 2003/11/29 19:52:04 pgsql Exp $
 #
 msgid ""
 msgstr ""

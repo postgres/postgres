@@ -4,7 +4,7 @@
 #    Makefile for port/qnx4
 #
 # IDENTIFICATION
-#    $Header: /cvsroot/pgsql/src/backend/port/qnx4/Attic/Makefile,v 1.5 2003/05/09 16:26:29 momjian Exp $
+#    $PostgreSQL: pgsql/src/backend/port/qnx4/Makefile,v 1.6 2003/11/29 19:51:54 pgsql Exp $
 #
 #-------------------------------------------------------------------------
 

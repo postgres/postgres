@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/date.c,v 1.93 2003/09/26 15:27:36 petere Exp $
+ *	  $PostgreSQL: pgsql/src/backend/utils/adt/date.c,v 1.94 2003/11/29 19:51:58 pgsql Exp $
  *
  *-------------------------------------------------------------------------
  */

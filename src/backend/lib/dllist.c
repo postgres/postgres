@@ -9,7 +9,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/lib/dllist.c,v 1.27 2003/08/04 02:39:59 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/lib/dllist.c,v 1.28 2003/11/29 19:51:49 pgsql Exp $
  *
  *-------------------------------------------------------------------------
  */

@@ -1,4 +1,4 @@
-/* $Header: /cvsroot/pgsql/src/include/port/solaris.h,v 1.8 2003/03/10 22:28:21 tgl Exp $ */
+/* $PostgreSQL: pgsql/src/include/port/solaris.h,v 1.9 2003/11/29 19:52:08 pgsql Exp $ */
 
 #define HAS_TEST_AND_SET
 typedef unsigned char slock_t;

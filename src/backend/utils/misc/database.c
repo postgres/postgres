@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/misc/Attic/database.c,v 1.58 2003/08/04 02:40:08 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/utils/misc/database.c,v 1.59 2003/11/29 19:52:03 pgsql Exp $
  *
  *-------------------------------------------------------------------------
  */

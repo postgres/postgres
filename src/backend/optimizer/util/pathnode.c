@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/optimizer/util/pathnode.c,v 1.95 2003/08/04 02:40:01 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/optimizer/util/pathnode.c,v 1.96 2003/11/29 19:51:51 pgsql Exp $
  *
  *-------------------------------------------------------------------------
  */

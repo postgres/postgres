@@ -4,7 +4,7 @@
 #    Makefile for utils/fmgr
 #
 # IDENTIFICATION
-#    $Header: /cvsroot/pgsql/src/backend/utils/fmgr/Makefile,v 1.13 2002/06/20 17:19:08 momjian Exp $
+#    $PostgreSQL: pgsql/src/backend/utils/fmgr/Makefile,v 1.14 2003/11/29 19:52:01 pgsql Exp $
 #
 #-------------------------------------------------------------------------
 

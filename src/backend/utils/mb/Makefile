@@ -4,7 +4,7 @@
 #    Makefile for utils/mb
 #
 # IDENTIFICATION
-#    $Header: /cvsroot/pgsql/src/backend/utils/mb/Makefile,v 1.21 2002/09/04 15:45:50 tgl Exp $
+#    $PostgreSQL: pgsql/src/backend/utils/mb/Makefile,v 1.22 2003/11/29 19:52:02 pgsql Exp $
 #
 #-------------------------------------------------------------------------
 

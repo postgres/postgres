@@ -1,5 +1,5 @@
 /*
- * $Header: /cvsroot/pgsql/src/bin/pg_dump/pg_backup_tar.h,v 1.4 2002/08/28 20:46:24 momjian Exp $
+ * $PostgreSQL: pgsql/src/bin/pg_dump/pg_backup_tar.h,v 1.5 2003/11/29 19:52:05 pgsql Exp $
  *
  * TAR Header
  *

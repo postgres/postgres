@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/install-win32.sgml,v 1.16 2003/11/12 22:47:47 petere Exp $
+$PostgreSQL: pgsql/doc/src/sgml/install-win32.sgml,v 1.17 2003/11/29 19:51:37 pgsql Exp $
 -->
 
 <chapter id="install-win32">

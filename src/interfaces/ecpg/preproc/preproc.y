@@ -1,4 +1,4 @@
-/* $Header: /cvsroot/pgsql/src/interfaces/ecpg/preproc/Attic/preproc.y,v 1.265 2003/11/19 13:18:13 meskes Exp $ */
+/* $PostgreSQL: pgsql/src/interfaces/ecpg/preproc/preproc.y,v 1.266 2003/11/29 19:52:08 pgsql Exp $ */
 
 /* Copyright comment */
 %{

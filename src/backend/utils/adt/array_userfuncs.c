@@ -6,7 +6,7 @@
  * Copyright (c) 2003, PostgreSQL Global Development Group
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/array_userfuncs.c,v 1.11 2003/09/25 06:58:03 petere Exp $
+ *	  $PostgreSQL: pgsql/src/backend/utils/adt/array_userfuncs.c,v 1.12 2003/11/29 19:51:57 pgsql Exp $
  *
  *-------------------------------------------------------------------------
  */

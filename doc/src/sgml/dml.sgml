@@ -1,4 +1,4 @@
-<!-- $Header: /cvsroot/pgsql/doc/src/sgml/dml.sgml,v 1.7 2003/11/24 19:08:01 petere Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/dml.sgml,v 1.8 2003/11/29 19:51:36 pgsql Exp $ -->
 
 <chapter id="dml">
  <title>Data Manipulation</title>

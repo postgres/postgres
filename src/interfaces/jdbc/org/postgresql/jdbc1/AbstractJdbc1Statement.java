@@ -26,7 +26,7 @@ import java.sql.Timestamp;
 import java.sql.Types;
 import java.util.Vector;
 
-/* $Header: /cvsroot/pgsql/src/interfaces/jdbc/org/postgresql/jdbc1/Attic/AbstractJdbc1Statement.java,v 1.41 2003/10/29 02:39:09 davec Exp $
+/* $PostgreSQL: pgsql/src/interfaces/jdbc/org/postgresql/jdbc1/AbstractJdbc1Statement.java,v 1.42 2003/11/29 19:52:10 pgsql Exp $
  * This class defines methods of the jdbc1 specification.  This class is
  * extended by org.postgresql.jdbc2.AbstractJdbc2Statement which adds the jdbc2
  * methods.  The real Statement class (for jdbc1) is org.postgresql.jdbc1.Jdbc1Statement

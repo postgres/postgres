@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/ref/truncate.sgml,v 1.15 2003/09/19 21:06:39 tgl Exp $
+$PostgreSQL: pgsql/doc/src/sgml/ref/truncate.sgml,v 1.16 2003/11/29 19:51:39 pgsql Exp $
 PostgreSQL documentation
 -->
 

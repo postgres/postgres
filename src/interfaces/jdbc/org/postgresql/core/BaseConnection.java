@@ -6,7 +6,7 @@
  * Copyright (c) 2003, PostgreSQL Global Development Group
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/interfaces/jdbc/org/postgresql/core/Attic/BaseConnection.java,v 1.4 2003/10/29 02:39:09 davec Exp $
+ *	  $PostgreSQL: pgsql/src/interfaces/jdbc/org/postgresql/core/BaseConnection.java,v 1.5 2003/11/29 19:52:09 pgsql Exp $
  *
  *-------------------------------------------------------------------------
  */

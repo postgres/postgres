@@ -1,7 +1,7 @@
 /* -------------------------------------------------------------------------
  * pg_dumplo
  *
- * $Header: /cvsroot/pgsql/contrib/pg_dumplo/Attic/lo_export.c,v 1.11 2002/09/05 21:01:16 tgl Exp $
+ * $PostgreSQL: pgsql/contrib/pg_dumplo/lo_export.c,v 1.12 2003/11/29 19:51:35 pgsql Exp $
  *
  *					Karel Zak 1999-2000
  * -------------------------------------------------------------------------

@@ -2,7 +2,7 @@
 # Peter Eisentraut <peter_e@gmx.net>, 2001.
 # Dennis Björklund <db@zigo.dhs.org>, 2002, 2003.
 #
-# $Header: /cvsroot/pgsql/src/interfaces/libpq/po/sv.po,v 1.9 2003/10/10 08:01:44 petere Exp $
+# $PostgreSQL: pgsql/src/interfaces/libpq/po/sv.po,v 1.10 2003/11/29 19:52:12 pgsql Exp $
 #
 # Use these quotes: "%s"
 #

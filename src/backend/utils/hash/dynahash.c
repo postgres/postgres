@@ -9,7 +9,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/hash/dynahash.c,v 1.48 2003/08/19 01:13:41 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/utils/hash/dynahash.c,v 1.49 2003/11/29 19:52:01 pgsql Exp $
  *
  *-------------------------------------------------------------------------
  */

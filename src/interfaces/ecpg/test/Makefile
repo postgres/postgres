@@ -1,4 +1,4 @@
-# $Header: /cvsroot/pgsql/src/interfaces/ecpg/test/Makefile,v 1.41 2003/09/27 15:32:48 momjian Exp $
+# $PostgreSQL: pgsql/src/interfaces/ecpg/test/Makefile,v 1.42 2003/11/29 19:52:09 pgsql Exp $
 
 subdir = src/interfaces/ecpg/test
 top_builddir = ../../../..

@@ -10,7 +10,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/misc/superuser.c,v 1.27 2003/08/04 02:40:08 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/utils/misc/superuser.c,v 1.28 2003/11/29 19:52:04 pgsql Exp $
  *
  *-------------------------------------------------------------------------
  */

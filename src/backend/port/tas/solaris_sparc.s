@@ -1,5 +1,5 @@
 	!!
-	!! $Header: /cvsroot/pgsql/src/backend/port/tas/Attic/solaris_sparc.s,v 1.1 1998/06/18 16:32:49 momjian Exp $
+	!! $PostgreSQL: pgsql/src/backend/port/tas/solaris_sparc.s,v 1.2 2003/11/29 19:51:54 pgsql Exp $
 	!!
 	!! this would be a piece of inlined assembler but it appears
 	!! to be easier to just write the assembler than to try to 

@@ -1,4 +1,4 @@
-<!-- $Header: /cvsroot/pgsql/doc/src/sgml/charset.sgml,v 2.40 2003/11/04 09:55:38 petere Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/charset.sgml,v 2.41 2003/11/29 19:51:36 pgsql Exp $ -->
 
 <chapter id="charset">
  <title>Localization</>

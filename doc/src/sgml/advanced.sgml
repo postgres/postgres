@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/advanced.sgml,v 1.37 2003/09/30 03:22:32 tgl Exp $
+$PostgreSQL: pgsql/doc/src/sgml/advanced.sgml,v 1.38 2003/11/29 19:51:36 pgsql Exp $
 -->
 
  <chapter id="tutorial-advanced">

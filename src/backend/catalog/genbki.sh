@@ -10,7 +10,7 @@
 #
 #
 # IDENTIFICATION
-#    $Header: /cvsroot/pgsql/src/backend/catalog/Attic/genbki.sh,v 1.30 2003/07/29 14:12:50 tgl Exp $
+#    $PostgreSQL: pgsql/src/backend/catalog/genbki.sh,v 1.31 2003/11/29 19:51:42 pgsql Exp $
 #
 # NOTES
 #    non-essential whitespace is removed from the generated file.

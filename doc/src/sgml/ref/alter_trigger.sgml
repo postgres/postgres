@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/ref/alter_trigger.sgml,v 1.7 2003/09/22 00:16:57 petere Exp $
+$PostgreSQL: pgsql/doc/src/sgml/ref/alter_trigger.sgml,v 1.8 2003/11/29 19:51:38 pgsql Exp $
 PostgreSQL documentation
 -->
 

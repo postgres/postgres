@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/storage/file/fd.c,v 1.102 2003/09/25 06:58:02 petere Exp $
+ *	  $PostgreSQL: pgsql/src/backend/storage/file/fd.c,v 1.103 2003/11/29 19:51:56 pgsql Exp $
  *
  * NOTES:
  *

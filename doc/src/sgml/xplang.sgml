@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/xplang.sgml,v 1.25 2003/10/22 22:28:10 tgl Exp $
+$PostgreSQL: pgsql/doc/src/sgml/xplang.sgml,v 1.26 2003/11/29 19:51:38 pgsql Exp $
 -->
 
  <chapter id="xplang">

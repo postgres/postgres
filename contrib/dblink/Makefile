@@ -1,4 +1,4 @@
-# $Header: /cvsroot/pgsql/contrib/dblink/Makefile,v 1.7 2002/09/14 20:28:54 tgl Exp $
+# $PostgreSQL: pgsql/contrib/dblink/Makefile,v 1.8 2003/11/29 19:51:34 pgsql Exp $
 
 subdir = contrib/dblink
 top_builddir = ../..

@@ -1,4 +1,4 @@
-/* $Header: /cvsroot/pgsql/src/backend/port/dynloader/darwin.h,v 1.4 2001/03/22 03:59:42 momjian Exp $ */
+/* $PostgreSQL: pgsql/src/backend/port/dynloader/darwin.h,v 1.5 2003/11/29 19:51:54 pgsql Exp $ */
 
 #include "fmgr.h"
 

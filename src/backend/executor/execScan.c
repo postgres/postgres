@@ -12,7 +12,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/executor/execScan.c,v 1.28 2003/09/25 19:41:49 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/executor/execScan.c,v 1.29 2003/11/29 19:51:48 pgsql Exp $
  *
  *-------------------------------------------------------------------------
  */

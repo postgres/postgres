@@ -28,7 +28,7 @@
  * OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF
  * ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  *
- * $Header: /cvsroot/pgsql/src/backend/regex/regcomp.c,v 1.39 2003/09/29 00:21:58 tgl Exp $
+ * $PostgreSQL: pgsql/src/backend/regex/regcomp.c,v 1.40 2003/11/29 19:51:55 pgsql Exp $
  *
  */
 

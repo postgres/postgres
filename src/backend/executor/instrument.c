@@ -7,7 +7,7 @@
  * Copyright (c) 2001-2003, PostgreSQL Global Development Group
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/executor/instrument.c,v 1.5 2003/08/04 23:59:37 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/executor/instrument.c,v 1.6 2003/11/29 19:51:48 pgsql Exp $
  *
  *-------------------------------------------------------------------------
  */

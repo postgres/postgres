@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/pltcl.sgml,v 2.27 2003/11/12 22:47:47 petere Exp $
+$PostgreSQL: pgsql/doc/src/sgml/pltcl.sgml,v 2.28 2003/11/29 19:51:37 pgsql Exp $
 -->
 
  <chapter id="pltcl">

@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/access/transam/xact.c,v 1.156 2003/10/16 16:50:41 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/access/transam/xact.c,v 1.157 2003/11/29 19:51:40 pgsql Exp $
  *
  * NOTES
  *		Transaction aborts can now occur two ways:

@@ -10,7 +10,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/commands/functioncmds.c,v 1.41 2003/11/21 22:32:48 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/commands/functioncmds.c,v 1.42 2003/11/29 19:51:47 pgsql Exp $
  *
  * DESCRIPTION
  *	  These routines take the parse tree and pick out the

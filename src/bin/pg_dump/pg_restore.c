@@ -34,7 +34,7 @@
  *
  *
  * IDENTIFICATION
- *		$Header: /cvsroot/pgsql/src/bin/pg_dump/pg_restore.c,v 1.53 2003/10/20 21:05:12 tgl Exp $
+ *		$PostgreSQL: pgsql/src/bin/pg_dump/pg_restore.c,v 1.54 2003/11/29 19:52:05 pgsql Exp $
  *
  *-------------------------------------------------------------------------
  */

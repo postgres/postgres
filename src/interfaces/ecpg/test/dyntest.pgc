@@ -2,7 +2,7 @@
  *
  * Copyright (c) 2000, Christof Petig <christof.petig@wtal.de>
  *
- * $Header: /cvsroot/pgsql/src/interfaces/ecpg/test/Attic/dyntest.pgc,v 1.9 2001/11/14 11:11:49 meskes Exp $
+ * $PostgreSQL: pgsql/src/interfaces/ecpg/test/dyntest.pgc,v 1.10 2003/11/29 19:52:09 pgsql Exp $
  */
 
 #include <stdio.h>

@@ -12,7 +12,7 @@
  *	by PostgreSQL
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/bin/pg_dump/pg_dump.c,v 1.357 2003/11/24 17:25:14 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/bin/pg_dump/pg_dump.c,v 1.358 2003/11/29 19:52:05 pgsql Exp $
  *
  *-------------------------------------------------------------------------
  */

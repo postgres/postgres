@@ -1,5 +1,5 @@
 #!/bin/sh
-# $Header: /cvsroot/pgsql/src/test/bench/Attic/runwisc.sh,v 1.4 1999/05/23 18:53:30 momjian Exp $
+# $PostgreSQL: pgsql/src/test/bench/runwisc.sh,v 1.5 2003/11/29 19:52:14 pgsql Exp $
 # 
 # Note that in our published benchmark numbers, we executed the command in the
 # following fashion:

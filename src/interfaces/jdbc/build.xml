@@ -6,7 +6,7 @@
 
   This file now requires Ant 1.4.1.  2002-04-18
 
-  $Header: /cvsroot/pgsql/src/interfaces/jdbc/Attic/build.xml,v 1.37 2003/11/03 15:28:26 davec Exp $
+  $PostgreSQL: pgsql/src/interfaces/jdbc/build.xml,v 1.38 2003/11/29 19:52:09 pgsql Exp $
 
 -->
 

@@ -4,7 +4,7 @@
 #    Makefile for access/common
 #
 # IDENTIFICATION
-#    $Header: /cvsroot/pgsql/src/backend/access/common/Makefile,v 1.19 2000/08/31 16:09:30 petere Exp $
+#    $PostgreSQL: pgsql/src/backend/access/common/Makefile,v 1.20 2003/11/29 19:51:39 pgsql Exp $
 #
 #-------------------------------------------------------------------------
 

@@ -27,7 +27,7 @@
  * OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF
  * ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  *
- * $Header: /cvsroot/pgsql/src/backend/regex/regexec.c,v 1.23 2003/08/08 21:41:56 momjian Exp $
+ * $PostgreSQL: pgsql/src/backend/regex/regexec.c,v 1.24 2003/11/29 19:51:55 pgsql Exp $
  *
  */
 

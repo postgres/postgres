@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/ref/postmaster.sgml,v 1.41 2003/10/16 17:38:01 momjian Exp $
+$PostgreSQL: pgsql/doc/src/sgml/ref/postmaster.sgml,v 1.42 2003/11/29 19:51:39 pgsql Exp $
 PostgreSQL documentation
 -->
 

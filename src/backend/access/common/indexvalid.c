@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/access/common/Attic/indexvalid.c,v 1.30 2003/11/09 21:30:35 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/access/common/indexvalid.c,v 1.31 2003/11/29 19:51:39 pgsql Exp $
  *
  *-------------------------------------------------------------------------
  */

@@ -1,4 +1,4 @@
-# $Header: /cvsroot/pgsql/src/pl/plpython/Makefile,v 1.11 2002/09/05 18:28:46 petere Exp $
+# $PostgreSQL: pgsql/src/pl/plpython/Makefile,v 1.12 2003/11/29 19:52:12 pgsql Exp $
 
 subdir = src/pl/plpython
 top_builddir = ../../..

@@ -3,7 +3,7 @@
  *				back to source text
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/ruleutils.c,v 1.159 2003/11/12 21:15:55 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/utils/adt/ruleutils.c,v 1.160 2003/11/29 19:51:59 pgsql Exp $
  *
  *	  This software is copyrighted by Jan Wieck - Hamburg.
  *

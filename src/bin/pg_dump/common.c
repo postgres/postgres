@@ -11,7 +11,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/bin/pg_dump/common.c,v 1.76 2003/11/21 22:32:49 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/bin/pg_dump/common.c,v 1.77 2003/11/29 19:52:04 pgsql Exp $
  *
  *-------------------------------------------------------------------------
  */

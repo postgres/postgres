@@ -1,4 +1,4 @@
-# $Header: /cvsroot/pgsql/config/perl.m4,v 1.2 2002/05/28 16:57:53 petere Exp $
+# $PostgreSQL: pgsql/config/perl.m4,v 1.3 2003/11/29 19:51:17 pgsql Exp $
 
 
 # PGAC_PATH_PERL

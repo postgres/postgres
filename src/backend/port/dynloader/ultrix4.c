@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/port/dynloader/ultrix4.c,v 1.18 2003/08/04 02:40:02 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/port/dynloader/ultrix4.c,v 1.19 2003/11/29 19:51:54 pgsql Exp $
  *
  *-------------------------------------------------------------------------
  */

@@ -1,7 +1,7 @@
 # German message translation file for pg_dump and friends
 # Peter Eisentraut <peter_e@gmx.net>, 2001, 2002, 2003.
 #
-# $Header: /cvsroot/pgsql/src/bin/pg_dump/po/de.po,v 1.7 2003/10/24 12:07:56 petere Exp $
+# $PostgreSQL: pgsql/src/bin/pg_dump/po/de.po,v 1.8 2003/11/29 19:52:05 pgsql Exp $
 #
 # Use these quotes: »%s«
 #

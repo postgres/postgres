@@ -1,6 +1,6 @@
 # PSQL Translated Messages into the Russian Language (KOI8-R)
 #
-# $Header: /cvsroot/pgsql/src/bin/psql/po/Attic/ru.po,v 1.8 2003/10/13 21:38:37 petere Exp $
+# $PostgreSQL: pgsql/src/bin/psql/po/ru.po,v 1.9 2003/11/29 19:52:07 pgsql Exp $
 #
 # ChangeLog:
 #   - July 26 - October 12, 2003: Update for 7.4.x; <mokhov@cs.concordia.ca>

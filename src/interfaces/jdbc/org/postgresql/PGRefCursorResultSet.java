@@ -6,7 +6,7 @@
  * Copyright (c) 2003, PostgreSQL Global Development Group
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/interfaces/jdbc/org/postgresql/Attic/PGRefCursorResultSet.java,v 1.1 2003/05/03 20:40:45 barry Exp $
+ *	  $PostgreSQL: pgsql/src/interfaces/jdbc/org/postgresql/PGRefCursorResultSet.java,v 1.2 2003/11/29 19:52:09 pgsql Exp $
  *
  *-------------------------------------------------------------------------
  */

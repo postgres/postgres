@@ -7,7 +7,7 @@ import org.postgresql.PGRefCursorResultSet;
 import org.postgresql.core.BaseResultSet;
 import org.postgresql.core.Field;
 
-/* $Header: /cvsroot/pgsql/src/interfaces/jdbc/org/postgresql/jdbc1/Attic/Jdbc1Statement.java,v 1.6 2003/05/03 20:40:45 barry Exp $
+/* $PostgreSQL: pgsql/src/interfaces/jdbc/org/postgresql/jdbc1/Jdbc1Statement.java,v 1.7 2003/11/29 19:52:10 pgsql Exp $
  * This class implements the java.sql.Statement interface for JDBC1.
  * However most of the implementation is really done in
  * org.postgresql.jdbc1.AbstractJdbc1Statement

@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/mvcc.sgml,v 2.41 2003/11/06 22:08:14 petere Exp $
+$PostgreSQL: pgsql/doc/src/sgml/mvcc.sgml,v 2.42 2003/11/29 19:51:37 pgsql Exp $
 -->
 
  <chapter id="mvcc">

@@ -4,7 +4,7 @@
 #
 # Copyright (c) 1998-2002, PostgreSQL Global Development Group
 #
-# $Header: /cvsroot/pgsql/src/bin/pg_resetxlog/Makefile,v 1.2 2002/08/17 04:03:36 tgl Exp $
+# $PostgreSQL: pgsql/src/bin/pg_resetxlog/Makefile,v 1.3 2003/11/29 19:52:06 pgsql Exp $
 #
 #-------------------------------------------------------------------------
 

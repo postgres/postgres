@@ -4,7 +4,7 @@
 #    Makefile for storage/page
 #
 # IDENTIFICATION
-#    $Header: /cvsroot/pgsql/src/backend/storage/page/Makefile,v 1.10 2000/08/31 16:10:37 petere Exp $
+#    $PostgreSQL: pgsql/src/backend/storage/page/Makefile,v 1.11 2003/11/29 19:51:57 pgsql Exp $
 #
 #-------------------------------------------------------------------------
 

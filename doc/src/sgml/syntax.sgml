@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/syntax.sgml,v 1.88 2003/11/06 22:21:47 tgl Exp $
+$PostgreSQL: pgsql/doc/src/sgml/syntax.sgml,v 1.89 2003/11/29 19:51:37 pgsql Exp $
 -->
 
 <chapter id="sql-syntax">

@@ -11,7 +11,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/interfaces/libpq/fe-secure.c,v 1.32 2003/09/29 16:38:04 petere Exp $
+ *	  $PostgreSQL: pgsql/src/interfaces/libpq/fe-secure.c,v 1.33 2003/11/29 19:52:12 pgsql Exp $
  *
  * NOTES
  *	  The client *requires* a valid server certificate.  Since

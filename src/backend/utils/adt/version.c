@@ -5,7 +5,7 @@
  *
  * IDENTIFICATION
  *
- * $Header: /cvsroot/pgsql/src/backend/utils/adt/version.c,v 1.12 2000/07/06 05:48:11 tgl Exp $
+ * $PostgreSQL: pgsql/src/backend/utils/adt/version.c,v 1.13 2003/11/29 19:52:00 pgsql Exp $
  *
  *-------------------------------------------------------------------------
  */

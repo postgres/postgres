@@ -1,4 +1,4 @@
-# $Header: /cvsroot/pgsql/src/bin/pg_dump/nls.mk,v 1.11 2003/10/15 09:49:07 petere Exp $
+# $PostgreSQL: pgsql/src/bin/pg_dump/nls.mk,v 1.12 2003/11/29 19:52:05 pgsql Exp $
 CATALOG_NAME	:= pg_dump
 AVAIL_LANGUAGES	:= cs de es it nb pt_BR ru sv zh_CN zh_TW
 GETTEXT_FILES	:= pg_dump.c common.c pg_backup_archiver.c pg_backup_custom.c \

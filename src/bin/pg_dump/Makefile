@@ -5,7 +5,7 @@
 # Portions Copyright (c) 1996-2002, PostgreSQL Global Development Group
 # Portions Copyright (c) 1994, Regents of the University of California
 #
-# $Header: /cvsroot/pgsql/src/bin/pg_dump/Makefile,v 1.40 2003/08/08 04:52:21 momjian Exp $
+# $PostgreSQL: pgsql/src/bin/pg_dump/Makefile,v 1.41 2003/11/29 19:52:04 pgsql Exp $
 #
 #-------------------------------------------------------------------------
 

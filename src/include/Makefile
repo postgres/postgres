@@ -6,7 +6,7 @@
 # programming.  'make install-all-headers' installs the whole contents
 # of src/include.
 #
-# $Header: /cvsroot/pgsql/src/include/Makefile,v 1.11 2003/11/25 19:09:02 petere Exp $
+# $PostgreSQL: pgsql/src/include/Makefile,v 1.12 2003/11/29 19:52:08 pgsql Exp $
 #
 #-------------------------------------------------------------------------
 

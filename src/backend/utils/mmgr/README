@@ -1,4 +1,4 @@
-$Header: /cvsroot/pgsql/src/backend/utils/mmgr/README,v 1.4 2003/04/30 19:04:12 tgl Exp $
+$PostgreSQL: pgsql/src/backend/utils/mmgr/README,v 1.5 2003/11/29 19:52:04 pgsql Exp $
 
 Notes about memory allocation redesign
 --------------------------------------

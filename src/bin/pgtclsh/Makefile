@@ -6,7 +6,7 @@
 # Portions Copyright (c) 1996-2002, PostgreSQL Global Development Group
 # Portions Copyright (c) 1994, Regents of the University of California
 #
-# $Header: /cvsroot/pgsql/src/bin/pgtclsh/Attic/Makefile,v 1.41 2003/08/01 19:01:49 tgl Exp $
+# $PostgreSQL: pgsql/src/bin/pgtclsh/Makefile,v 1.42 2003/11/29 19:52:06 pgsql Exp $
 #
 #-------------------------------------------------------------------------
 

@@ -1,4 +1,4 @@
-$Header: /cvsroot/pgsql/src/test/locale/README,v 1.4 2002/09/03 21:45:44 petere Exp $
+$PostgreSQL: pgsql/src/test/locale/README,v 1.5 2003/11/29 19:52:14 pgsql Exp $
 
 This directory contains a set of tests for locales.  I provided one C
 program test-ctype.c to test CTYPE support in libc and the installed

@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/xaggr.sgml,v 1.23 2003/11/12 22:47:47 petere Exp $
+$PostgreSQL: pgsql/doc/src/sgml/xaggr.sgml,v 1.24 2003/11/29 19:51:38 pgsql Exp $
 -->
 
  <sect1 id="xaggr">

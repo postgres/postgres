@@ -6,7 +6,7 @@
  * Copyright (c) 2003, PostgreSQL Global Development Group
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/interfaces/jdbc/org/postgresql/largeobject/Attic/LargeObject.java,v 1.10 2003/03/07 18:39:45 barry Exp $
+ *	  $PostgreSQL: pgsql/src/interfaces/jdbc/org/postgresql/largeobject/LargeObject.java,v 1.11 2003/11/29 19:52:11 pgsql Exp $
  *
  *-------------------------------------------------------------------------
  */

@@ -4,7 +4,7 @@
 #    Makefile for access/nbtree
 #
 # IDENTIFICATION
-#    $Header: /cvsroot/pgsql/src/backend/access/nbtree/Makefile,v 1.13 2003/11/09 21:30:35 tgl Exp $
+#    $PostgreSQL: pgsql/src/backend/access/nbtree/Makefile,v 1.14 2003/11/29 19:51:40 pgsql Exp $
 #
 #-------------------------------------------------------------------------
 

@@ -6,7 +6,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/mb/conversion_procs/utf8_and_gb18030/utf8_and_gb18030.c,v 1.6 2003/08/04 02:40:07 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/utils/mb/conversion_procs/utf8_and_gb18030/utf8_and_gb18030.c,v 1.7 2003/11/29 19:52:03 pgsql Exp $
  *
  *-------------------------------------------------------------------------
  */

@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/access/hash/hashinsert.c,v 1.31 2003/09/25 06:57:56 petere Exp $
+ *	  $PostgreSQL: pgsql/src/backend/access/hash/hashinsert.c,v 1.32 2003/11/29 19:51:40 pgsql Exp $
  *
  *-------------------------------------------------------------------------
  */

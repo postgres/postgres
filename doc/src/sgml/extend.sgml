@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/extend.sgml,v 1.26 2003/11/12 22:47:47 petere Exp $
+$PostgreSQL: pgsql/doc/src/sgml/extend.sgml,v 1.27 2003/11/29 19:51:37 pgsql Exp $
 -->
 
  <chapter id="extend">

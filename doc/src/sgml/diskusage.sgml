@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/diskusage.sgml,v 1.9 2003/03/24 14:32:50 petere Exp $
+$PostgreSQL: pgsql/doc/src/sgml/diskusage.sgml,v 1.10 2003/11/29 19:51:36 pgsql Exp $
 -->
 
 <chapter id="diskusage">

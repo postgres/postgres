@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/parser/parse_type.c,v 1.63 2003/10/20 17:25:42 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/parser/parse_type.c,v 1.64 2003/11/29 19:51:52 pgsql Exp $
  *
  *-------------------------------------------------------------------------
  */

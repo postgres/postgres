@@ -26,7 +26,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/executor/execMain.c,v 1.221 2003/11/06 22:08:14 petere Exp $
+ *	  $PostgreSQL: pgsql/src/backend/executor/execMain.c,v 1.222 2003/11/29 19:51:48 pgsql Exp $
  *
  *-------------------------------------------------------------------------
  */

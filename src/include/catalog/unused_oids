@@ -1,7 +1,7 @@
 #!/bin/sh
 # unused_oids
 #
-# $Header: /cvsroot/pgsql/src/include/catalog/unused_oids,v 1.4 2001/08/10 18:57:41 tgl Exp $
+# $PostgreSQL: pgsql/src/include/catalog/unused_oids,v 1.5 2003/11/29 19:52:08 pgsql Exp $
 #
 #	finds blocks of oids that have not already been claimed by 
 #	post_hackers for internal purposes.  primarily useful for

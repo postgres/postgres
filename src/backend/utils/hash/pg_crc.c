@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/hash/pg_crc.c,v 1.9 2003/08/04 02:40:06 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/utils/hash/pg_crc.c,v 1.10 2003/11/29 19:52:01 pgsql Exp $
  *
  *-------------------------------------------------------------------------
  */

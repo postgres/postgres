@@ -14,7 +14,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/name.c,v 1.49 2003/08/04 02:40:05 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/utils/adt/name.c,v 1.50 2003/11/29 19:51:59 pgsql Exp $
  *
  *-------------------------------------------------------------------------
  */

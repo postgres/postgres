@@ -1,4 +1,4 @@
-<!-- $Header: /cvsroot/pgsql/doc/src/sgml/ref/drop_conversion.sgml,v 1.7 2003/09/22 00:16:58 petere Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/ref/drop_conversion.sgml,v 1.8 2003/11/29 19:51:38 pgsql Exp $ -->
 
 <refentry id="SQL-DROPCONVERSION">
  <refmeta>

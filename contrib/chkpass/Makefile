@@ -1,4 +1,4 @@
-# $Header: /cvsroot/pgsql/contrib/chkpass/Makefile,v 1.4 2002/10/21 18:55:10 petere Exp $
+# $PostgreSQL: pgsql/contrib/chkpass/Makefile,v 1.5 2003/11/29 19:51:19 pgsql Exp $
 
 subdir = contrib/chkpass
 top_builddir = ../..

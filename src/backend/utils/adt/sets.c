@@ -10,7 +10,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/Attic/sets.c,v 1.60 2003/09/15 20:03:37 petere Exp $
+ *	  $PostgreSQL: pgsql/src/backend/utils/adt/sets.c,v 1.61 2003/11/29 19:51:59 pgsql Exp $
  *
  *-------------------------------------------------------------------------
  */

@@ -4,7 +4,7 @@
 #    Makefile for utils/error
 #
 # IDENTIFICATION
-#    $Header: /cvsroot/pgsql/src/backend/utils/error/Makefile,v 1.10 2002/08/10 20:29:18 momjian Exp $
+#    $PostgreSQL: pgsql/src/backend/utils/error/Makefile,v 1.11 2003/11/29 19:52:01 pgsql Exp $
 #
 #-------------------------------------------------------------------------
 

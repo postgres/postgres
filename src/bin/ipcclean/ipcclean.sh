@@ -1,6 +1,6 @@
 #!/bin/sh
 #
-# $Header: /cvsroot/pgsql/src/bin/ipcclean/Attic/ipcclean.sh,v 1.14 2003/07/23 08:47:23 petere Exp $
+# $PostgreSQL: pgsql/src/bin/ipcclean/ipcclean.sh,v 1.15 2003/11/29 19:52:04 pgsql Exp $
 #
 
 CMDNAME=`basename $0`

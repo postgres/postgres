@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/ref/create_function.sgml,v 1.54 2003/11/12 22:47:47 petere Exp $
+$PostgreSQL: pgsql/doc/src/sgml/ref/create_function.sgml,v 1.55 2003/11/29 19:51:38 pgsql Exp $
 -->
 
 <refentry id="SQL-CREATEFUNCTION">

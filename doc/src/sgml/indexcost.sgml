@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/Attic/indexcost.sgml,v 2.17 2003/11/01 01:56:29 petere Exp $
+$PostgreSQL: pgsql/doc/src/sgml/indexcost.sgml,v 2.18 2003/11/29 19:51:37 pgsql Exp $
 -->
 
  <chapter id="indexcost">

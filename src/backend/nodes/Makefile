@@ -4,7 +4,7 @@
 #    Makefile for backend/nodes
 #
 # IDENTIFICATION
-#    $Header: /cvsroot/pgsql/src/backend/nodes/Makefile,v 1.14 2003/02/08 20:20:53 tgl Exp $
+#    $PostgreSQL: pgsql/src/backend/nodes/Makefile,v 1.15 2003/11/29 19:51:49 pgsql Exp $
 #
 #-------------------------------------------------------------------------
 

@@ -1,4 +1,4 @@
-# $Header: /cvsroot/pgsql/src/pl/tcl/modules/Makefile,v 1.2 2002/01/08 23:40:02 tgl Exp $
+# $PostgreSQL: pgsql/src/pl/tcl/modules/Makefile,v 1.3 2003/11/29 19:52:13 pgsql Exp $
 
 subdir = src/pl/tcl/modules
 top_builddir = ../../../..

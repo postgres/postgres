@@ -4,7 +4,7 @@
 #    Makefile for rewrite
 #
 # IDENTIFICATION
-#    $Header: /cvsroot/pgsql/src/backend/rewrite/Makefile,v 1.14 2000/09/29 18:21:24 tgl Exp $
+#    $PostgreSQL: pgsql/src/backend/rewrite/Makefile,v 1.15 2003/11/29 19:51:55 pgsql Exp $
 #
 #-------------------------------------------------------------------------
 

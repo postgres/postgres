@@ -2,7 +2,7 @@
 #
 # Makefile for the bootstrap module
 #
-# $Header: /cvsroot/pgsql/src/backend/bootstrap/Makefile,v 1.31 2002/11/01 22:52:33 tgl Exp $
+# $PostgreSQL: pgsql/src/backend/bootstrap/Makefile,v 1.32 2003/11/29 19:51:40 pgsql Exp $
 #
 #-------------------------------------------------------------------------
 

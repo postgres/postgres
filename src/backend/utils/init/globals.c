@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/init/globals.c,v 1.75 2003/08/26 15:38:25 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/utils/init/globals.c,v 1.76 2003/11/29 19:52:01 pgsql Exp $
  *
  * NOTES
  *	  Globals used all over the place should be declared here and not

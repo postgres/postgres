@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/encode.c,v 1.9 2003/09/25 06:58:03 petere Exp $
+ *	  $PostgreSQL: pgsql/src/backend/utils/adt/encode.c,v 1.10 2003/11/29 19:51:58 pgsql Exp $
  *
  *-------------------------------------------------------------------------
  */

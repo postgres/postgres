@@ -1,5 +1,5 @@
 #! /bin/sh
-# $Header: /cvsroot/pgsql/src/test/regress/Attic/pg_regress.sh,v 1.36 2003/11/02 21:56:15 tgl Exp $
+# $PostgreSQL: pgsql/src/test/regress/pg_regress.sh,v 1.37 2003/11/29 19:52:14 pgsql Exp $
 
 me=`basename $0`
 : ${TMPDIR=/tmp}

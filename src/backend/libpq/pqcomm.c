@@ -30,7 +30,7 @@
  * Portions Copyright (c) 1996-2003, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- *	$Header: /cvsroot/pgsql/src/backend/libpq/pqcomm.c,v 1.166 2003/09/25 06:57:59 petere Exp $
+ *	$PostgreSQL: pgsql/src/backend/libpq/pqcomm.c,v 1.167 2003/11/29 19:51:49 pgsql Exp $
  *
  *-------------------------------------------------------------------------
  */

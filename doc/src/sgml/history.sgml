@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/history.sgml,v 1.22 2003/09/11 21:42:19 momjian Exp $
+$PostgreSQL: pgsql/doc/src/sgml/history.sgml,v 1.23 2003/11/29 19:51:37 pgsql Exp $
 -->
 
 <sect1 id="history">

@@ -4,7 +4,7 @@
 #
 # Copyright (c) 1994, Regents of the University of California
 #
-# $Header: /cvsroot/pgsql/src/interfaces/libpq/Makefile,v 1.94 2003/09/27 15:32:48 momjian Exp $
+# $PostgreSQL: pgsql/src/interfaces/libpq/Makefile,v 1.95 2003/11/29 19:52:11 pgsql Exp $
 #
 #-------------------------------------------------------------------------
 

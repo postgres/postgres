@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/access/common/scankey.c,v 1.24 2003/11/12 21:15:46 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/access/common/scankey.c,v 1.25 2003/11/29 19:51:39 pgsql Exp $
  *
  *-------------------------------------------------------------------------
  */

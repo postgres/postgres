@@ -1,4 +1,4 @@
-# $Header: /cvsroot/pgsql/config/docbook.m4,v 1.5 2003/11/06 10:30:42 petere Exp $
+# $PostgreSQL: pgsql/config/docbook.m4,v 1.6 2003/11/29 19:51:17 pgsql Exp $
 
 # PGAC_PROG_JADE
 # --------------

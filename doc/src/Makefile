@@ -1,5 +1,5 @@
 # Postgres documentation makefile
-# $Header: /cvsroot/pgsql/doc/src/Makefile,v 1.31 2003/03/25 16:15:35 petere Exp $
+# $PostgreSQL: pgsql/doc/src/Makefile,v 1.32 2003/11/29 19:51:36 pgsql Exp $
 
 subdir = doc/src
 top_builddir = ../..

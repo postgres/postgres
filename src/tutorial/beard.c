@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/tutorial/Attic/beard.c,v 1.9 2003/08/04 02:40:20 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/tutorial/beard.c,v 1.10 2003/11/29 19:52:14 pgsql Exp $
  *
  *-------------------------------------------------------------------------
  */

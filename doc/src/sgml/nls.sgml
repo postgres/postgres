@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/nls.sgml,v 1.8 2003/11/24 19:08:02 petere Exp $
+$PostgreSQL: pgsql/doc/src/sgml/nls.sgml,v 1.9 2003/11/29 19:51:37 pgsql Exp $
 -->
 
 <chapter id="nls">

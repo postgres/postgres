@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/geqo.sgml,v 1.25 2003/11/24 19:08:02 petere Exp $
+$PostgreSQL: pgsql/doc/src/sgml/geqo.sgml,v 1.26 2003/11/29 19:51:37 pgsql Exp $
 Genetic Optimizer
 -->
 

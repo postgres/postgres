@@ -1,7 +1,7 @@
 # German message translation file for pg_controldata
 # Peter Eisentraut <peter_e@gmx.net>, 2002, 2003.
 #
-# $Header: /cvsroot/pgsql/src/bin/pg_controldata/po/de.po,v 1.4 2003/07/23 08:49:28 petere Exp $
+# $PostgreSQL: pgsql/src/bin/pg_controldata/po/de.po,v 1.5 2003/11/29 19:52:04 pgsql Exp $
 #
 # Use these quotes: »%s«
 #

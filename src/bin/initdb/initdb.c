@@ -43,7 +43,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  * Portions taken from FreeBSD.
  *
- * $Header: /cvsroot/pgsql/src/bin/initdb/initdb.c,v 1.14 2003/11/25 19:18:26 petere Exp $
+ * $PostgreSQL: pgsql/src/bin/initdb/initdb.c,v 1.15 2003/11/29 19:52:04 pgsql Exp $
  *
  *-------------------------------------------------------------------------
  */

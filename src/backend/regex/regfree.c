@@ -27,7 +27,7 @@
  * OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF
  * ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  *
- * $Header: /cvsroot/pgsql/src/backend/regex/regfree.c,v 1.17 2003/08/04 00:43:21 momjian Exp $
+ * $PostgreSQL: pgsql/src/backend/regex/regfree.c,v 1.18 2003/11/29 19:51:55 pgsql Exp $
  *
  *
  * You might think that this could be incorporated into regcomp.c, and

@@ -2,7 +2,7 @@
 #
 # PostgreSQL documentation makefile
 #
-# $Header: /cvsroot/pgsql/doc/src/sgml/Makefile,v 1.59 2003/08/31 17:28:39 petere Exp $
+# $PostgreSQL: pgsql/doc/src/sgml/Makefile,v 1.60 2003/11/29 19:51:36 pgsql Exp $
 #
 #----------------------------------------------------------------------------
 

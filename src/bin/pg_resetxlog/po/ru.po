@@ -1,7 +1,7 @@
 # ru.po
 # PG_RESETXLOG Translated Messages into the Russian Language (KOI8-R)
 #
-# $Header: /cvsroot/pgsql/src/bin/pg_resetxlog/po/ru.po,v 1.5 2003/08/24 21:18:51 petere Exp $
+# $PostgreSQL: pgsql/src/bin/pg_resetxlog/po/ru.po,v 1.6 2003/11/29 19:52:06 pgsql Exp $
 #
 # ChangeLog:
 #   - July 24 - August 23, 2003: Update for 7.4.*; <mokhov@cs.concordia.ca>

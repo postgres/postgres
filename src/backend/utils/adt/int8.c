@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/int8.c,v 1.48 2003/09/25 06:58:04 petere Exp $
+ *	  $PostgreSQL: pgsql/src/backend/utils/adt/int8.c,v 1.49 2003/11/29 19:51:58 pgsql Exp $
  *
  *-------------------------------------------------------------------------
  */

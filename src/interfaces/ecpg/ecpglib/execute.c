@@ -1,4 +1,4 @@
-/* $Header: /cvsroot/pgsql/src/interfaces/ecpg/ecpglib/execute.c,v 1.28 2003/11/10 20:28:30 meskes Exp $ */
+/* $PostgreSQL: pgsql/src/interfaces/ecpg/ecpglib/execute.c,v 1.29 2003/11/29 19:52:08 pgsql Exp $ */
 
 /*
  * The aim is to get a simpler inteface to the database routines.

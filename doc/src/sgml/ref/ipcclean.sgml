@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/ref/Attic/ipcclean.sgml,v 1.9 2003/08/31 17:32:23 petere Exp $
+$PostgreSQL: pgsql/doc/src/sgml/ref/ipcclean.sgml,v 1.10 2003/11/29 19:51:39 pgsql Exp $
 PostgreSQL documentation
 -->
 

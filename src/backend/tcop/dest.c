@@ -8,7 +8,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/tcop/dest.c,v 1.61 2003/08/04 02:40:04 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/tcop/dest.c,v 1.62 2003/11/29 19:51:57 pgsql Exp $
  *
  *-------------------------------------------------------------------------
  */

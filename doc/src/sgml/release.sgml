@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/release.sgml,v 1.244 2003/11/17 04:50:56 momjian Exp $
+$PostgreSQL: pgsql/doc/src/sgml/release.sgml,v 1.245 2003/11/29 19:51:37 pgsql Exp $
 -->
 
 <appendix id="release">

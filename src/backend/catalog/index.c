@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/catalog/index.c,v 1.222 2003/11/19 15:55:07 wieck Exp $
+ *	  $PostgreSQL: pgsql/src/backend/catalog/index.c,v 1.223 2003/11/29 19:51:43 pgsql Exp $
  *
  *
  * INTERFACE ROUTINES

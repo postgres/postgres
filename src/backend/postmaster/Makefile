@@ -4,7 +4,7 @@
 #    Makefile for postmaster
 #
 # IDENTIFICATION
-#    $Header: /cvsroot/pgsql/src/backend/postmaster/Makefile,v 1.13 2001/06/22 19:16:22 wieck Exp $
+#    $PostgreSQL: pgsql/src/backend/postmaster/Makefile,v 1.14 2003/11/29 19:51:55 pgsql Exp $
 #
 #-------------------------------------------------------------------------
 

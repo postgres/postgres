@@ -4,7 +4,7 @@
 #
 # Copyright (c) 1994, Regents of the University of California
 #
-# $Header: /cvsroot/pgsql/src/interfaces/Makefile,v 1.50 2003/08/01 04:24:57 scrappy Exp $
+# $PostgreSQL: pgsql/src/interfaces/Makefile,v 1.51 2003/11/29 19:52:08 pgsql Exp $
 #
 #-------------------------------------------------------------------------
 

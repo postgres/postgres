@@ -1,4 +1,4 @@
-$Header: /cvsroot/pgsql/src/backend/storage/buffer/README,v 1.5 2003/11/14 04:32:11 wieck Exp $
+$PostgreSQL: pgsql/src/backend/storage/buffer/README,v 1.6 2003/11/29 19:51:56 pgsql Exp $
 
 Notes about shared buffer access rules
 --------------------------------------

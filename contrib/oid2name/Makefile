@@ -1,4 +1,4 @@
-# $Header: /cvsroot/pgsql/contrib/oid2name/Makefile,v 1.4 2001/09/06 10:49:29 petere Exp $
+# $PostgreSQL: pgsql/contrib/oid2name/Makefile,v 1.5 2003/11/29 19:51:35 pgsql Exp $
 
 subdir = contrib/oid2name
 top_builddir = ../..

@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/error/assert.c,v 1.24 2003/08/04 02:40:06 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/utils/error/assert.c,v 1.25 2003/11/29 19:52:01 pgsql Exp $
  *
  * NOTE
  *	  This should eventually work with elog()

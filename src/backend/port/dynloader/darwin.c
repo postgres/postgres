@@ -3,7 +3,7 @@
  * available with a PostgreSQL-compatible license.	Kudos Wilfredo
  * Sánchez <wsanchez@apple.com>.
  *
- * $Header: /cvsroot/pgsql/src/backend/port/dynloader/darwin.c,v 1.8 2003/08/04 00:43:21 momjian Exp $
+ * $PostgreSQL: pgsql/src/backend/port/dynloader/darwin.c,v 1.9 2003/11/29 19:51:54 pgsql Exp $
  */
 #include "postgres.h"
 

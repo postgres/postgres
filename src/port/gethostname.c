@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/port/gethostname.c,v 1.3 2003/11/11 23:52:45 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/port/gethostname.c,v 1.4 2003/11/29 19:52:13 pgsql Exp $
  *
  *-------------------------------------------------------------------------
  */

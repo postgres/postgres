@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/ref/drop_operator.sgml,v 1.22 2003/09/22 00:16:58 petere Exp $
+$PostgreSQL: pgsql/doc/src/sgml/ref/drop_operator.sgml,v 1.23 2003/11/29 19:51:38 pgsql Exp $
 PostgreSQL documentation
 -->
 

@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/Attic/jdbc.sgml,v 1.50 2003/11/01 01:56:29 petere Exp $
+$PostgreSQL: pgsql/doc/src/sgml/jdbc.sgml,v 1.51 2003/11/29 19:51:37 pgsql Exp $
 -->
 
  <chapter id="jdbc">

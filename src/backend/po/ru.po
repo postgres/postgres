@@ -1,7 +1,7 @@
 # ru.po
 # POSTGRES Translated Messages into the Russian Language (KOI8-R)
 #
-# $Header: /cvsroot/pgsql/src/backend/po/Attic/ru.po,v 1.12 2003/08/24 21:18:50 petere Exp $
+# $PostgreSQL: pgsql/src/backend/po/ru.po,v 1.13 2003/11/29 19:51:53 pgsql Exp $
 #
 # ChangeLog:
 #   - July - August 23, 2003: updates for 7.4.x; <mokhov@cs.concordia.ca>

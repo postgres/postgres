@@ -1,4 +1,4 @@
-<!-- $Header: /cvsroot/pgsql/doc/src/sgml/ref/set_transaction.sgml,v 1.18 2003/11/06 22:08:14 petere Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/ref/set_transaction.sgml,v 1.19 2003/11/29 19:51:39 pgsql Exp $ -->
 <refentry id="SQL-SET-TRANSACTION">
  <refmeta>
   <refentrytitle id="SQL-SET-TRANSACTION-TITLE">SET TRANSACTION</refentrytitle>

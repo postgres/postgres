@@ -6,7 +6,7 @@
  * Copyright (c) 2003, PostgreSQL Global Development Group
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/interfaces/jdbc/org/postgresql/core/Attic/QueryExecutor.java,v 1.27 2003/09/17 08:21:36 barry Exp $
+ *	  $PostgreSQL: pgsql/src/interfaces/jdbc/org/postgresql/core/QueryExecutor.java,v 1.28 2003/11/29 19:52:09 pgsql Exp $
  *
  *-------------------------------------------------------------------------
  */

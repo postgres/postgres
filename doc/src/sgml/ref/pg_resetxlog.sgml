@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/ref/pg_resetxlog.sgml,v 1.7 2003/03/24 14:32:51 petere Exp $
+$PostgreSQL: pgsql/doc/src/sgml/ref/pg_resetxlog.sgml,v 1.8 2003/11/29 19:51:39 pgsql Exp $
 PostgreSQL documentation
 -->
 

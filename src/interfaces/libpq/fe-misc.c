@@ -23,7 +23,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/interfaces/libpq/fe-misc.c,v 1.103 2003/10/19 21:36:41 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/interfaces/libpq/fe-misc.c,v 1.104 2003/11/29 19:52:12 pgsql Exp $
  *
  *-------------------------------------------------------------------------
  */

@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/nodes/outfuncs.c,v 1.221 2003/11/25 21:00:53 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/nodes/outfuncs.c,v 1.222 2003/11/29 19:51:49 pgsql Exp $
  *
  * NOTES
  *	  Every node type that can appear in stored rules' parsetrees *must*

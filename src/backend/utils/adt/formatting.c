@@ -1,7 +1,7 @@
 /* -----------------------------------------------------------------------
  * formatting.c
  *
- * $Header: /cvsroot/pgsql/src/backend/utils/adt/formatting.c,v 1.69 2003/09/29 00:05:25 petere Exp $
+ * $PostgreSQL: pgsql/src/backend/utils/adt/formatting.c,v 1.70 2003/11/29 19:51:58 pgsql Exp $
  *
  *
  *	 Portions Copyright (c) 1999-2003, PostgreSQL Global Development Group

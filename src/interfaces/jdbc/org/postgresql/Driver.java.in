@@ -6,7 +6,7 @@
  * Copyright (c) 2003, PostgreSQL Global Development Group
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/interfaces/jdbc/org/postgresql/Attic/Driver.java.in,v 1.37 2003/11/03 15:22:06 davec Exp $
+ *	  $PostgreSQL: pgsql/src/interfaces/jdbc/org/postgresql/Driver.java.in,v 1.38 2003/11/29 19:52:09 pgsql Exp $
  *
  *-------------------------------------------------------------------------
  */

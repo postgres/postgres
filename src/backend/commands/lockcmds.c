@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/commands/lockcmds.c,v 1.7 2003/08/04 02:39:58 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/commands/lockcmds.c,v 1.8 2003/11/29 19:51:47 pgsql Exp $
  *
  *-------------------------------------------------------------------------
  */

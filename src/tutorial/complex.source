@@ -8,7 +8,7 @@
 -- Portions Copyright (c) 1996-2003, PostgreSQL Global Development Group
 -- Portions Copyright (c) 1994, Regents of the University of California
 --
--- $Header: /cvsroot/pgsql/src/tutorial/complex.source,v 1.16 2003/10/21 22:51:14 tgl Exp $
+-- $PostgreSQL: pgsql/src/tutorial/complex.source,v 1.17 2003/11/29 19:52:14 pgsql Exp $
 --
 ---------------------------------------------------------------------------
 

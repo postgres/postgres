@@ -5,7 +5,7 @@
  * Portions Copyright (c) 1996-2003, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Header: /cvsroot/pgsql/src/backend/port/dynloader/cygwin.h,v 1.2 2003/08/04 02:40:02 momjian Exp $
+ * $PostgreSQL: pgsql/src/backend/port/dynloader/cygwin.h,v 1.3 2003/11/29 19:51:54 pgsql Exp $
  *
  *-------------------------------------------------------------------------
   */

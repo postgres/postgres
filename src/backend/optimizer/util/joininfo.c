@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/optimizer/util/joininfo.c,v 1.36 2003/08/04 02:40:01 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/optimizer/util/joininfo.c,v 1.37 2003/11/29 19:51:51 pgsql Exp $
  *
  *-------------------------------------------------------------------------
  */

@@ -3,7 +3,7 @@
  *
  * Copyright (c) 2000-2003, PostgreSQL Global Development Group
  *
- * $Header: /cvsroot/pgsql/src/bin/psql/print.h,v 1.19 2003/08/04 23:59:40 tgl Exp $
+ * $PostgreSQL: pgsql/src/bin/psql/print.h,v 1.20 2003/11/29 19:52:07 pgsql Exp $
  */
 #ifndef PRINT_H
 #define PRINT_H

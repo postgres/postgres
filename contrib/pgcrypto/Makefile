@@ -1,5 +1,5 @@
 #
-# $Header: /cvsroot/pgsql/contrib/pgcrypto/Makefile,v 1.9 2001/09/30 22:18:29 momjian Exp $
+# $PostgreSQL: pgsql/contrib/pgcrypto/Makefile,v 1.10 2003/11/29 19:51:35 pgsql Exp $
 #
 
 subdir = contrib/pgcrypto

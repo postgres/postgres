@@ -8,7 +8,7 @@
 #
 #
 # IDENTIFICATION
-#    $Header: /cvsroot/pgsql/src/bin/pg_ctl/Attic/pg_ctl.sh,v 1.36 2003/08/14 18:56:41 tgl Exp $
+#    $PostgreSQL: pgsql/src/bin/pg_ctl/pg_ctl.sh,v 1.37 2003/11/29 19:52:04 pgsql Exp $
 #
 #-------------------------------------------------------------------------
 

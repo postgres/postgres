@@ -9,7 +9,7 @@
  * workings can be found in the book "Software Solutions in C" by
  * Dale Schumacher, Academic Press, ISBN: 0-12-632360-7.
  *
- * $Header: /cvsroot/pgsql/src/backend/utils/adt/cash.c,v 1.61 2003/09/25 06:58:03 petere Exp $
+ * $PostgreSQL: pgsql/src/backend/utils/adt/cash.c,v 1.62 2003/11/29 19:51:58 pgsql Exp $
  */
 
 #include "postgres.h"

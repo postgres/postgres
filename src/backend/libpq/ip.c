@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/libpq/ip.c,v 1.23 2003/09/12 20:18:51 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/libpq/ip.c,v 1.24 2003/11/29 19:51:49 pgsql Exp $
  *
  * This file and the IPV6 implementation were initially provided by
  * Nigel Kukard <nkukard@lbsd.net>, Linux Based Systems Design

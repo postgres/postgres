@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/bin/pg_encoding/Attic/pg_encoding.c,v 1.13 2003/08/04 23:59:39 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/bin/pg_encoding/pg_encoding.c,v 1.14 2003/11/29 19:52:05 pgsql Exp $
  *
  *-------------------------------------------------------------------------
  */

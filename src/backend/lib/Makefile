@@ -4,7 +4,7 @@
 #    Makefile for lib (miscellaneous stuff)
 #
 # IDENTIFICATION
-#    $Header: /cvsroot/pgsql/src/backend/lib/Makefile,v 1.17 2003/01/09 01:23:55 momjian Exp $
+#    $PostgreSQL: pgsql/src/backend/lib/Makefile,v 1.18 2003/11/29 19:51:49 pgsql Exp $
 #
 #-------------------------------------------------------------------------
 

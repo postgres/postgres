@@ -1,7 +1,7 @@
 # Turkish translated messages for PostgreSQL backend
 # Nicolai Tufar <ntufar@APB.com.TR>, 2002.
 #
-# $Header: /cvsroot/pgsql/src/backend/po/tr.po,v 1.2 2003/06/29 10:13:12 petere Exp $
+# $PostgreSQL: pgsql/src/backend/po/tr.po,v 1.3 2003/11/29 19:51:54 pgsql Exp $
 #
 #
 msgid ""

@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/xindex.sgml,v 1.35 2003/11/12 21:15:45 tgl Exp $
+$PostgreSQL: pgsql/doc/src/sgml/xindex.sgml,v 1.36 2003/11/29 19:51:38 pgsql Exp $
 -->
 
 <sect1 id="xindex">

@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/catalog/pg_aggregate.c,v 1.64 2003/09/25 06:57:58 petere Exp $
+ *	  $PostgreSQL: pgsql/src/backend/catalog/pg_aggregate.c,v 1.65 2003/11/29 19:51:45 pgsql Exp $
  *
  *-------------------------------------------------------------------------
  */

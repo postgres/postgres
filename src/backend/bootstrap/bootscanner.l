@@ -9,7 +9,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/bootstrap/bootscanner.l,v 1.31 2003/11/09 21:30:35 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/bootstrap/bootscanner.l,v 1.32 2003/11/29 19:51:41 pgsql Exp $
  *
  *-------------------------------------------------------------------------
  */

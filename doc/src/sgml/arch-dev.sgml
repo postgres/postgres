@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/arch-dev.sgml,v 2.23 2003/11/01 01:56:28 petere Exp $
+$PostgreSQL: pgsql/doc/src/sgml/arch-dev.sgml,v 2.24 2003/11/29 19:51:36 pgsql Exp $
 -->
 
  <chapter id="overview">

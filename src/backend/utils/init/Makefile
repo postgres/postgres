@@ -4,7 +4,7 @@
 #    Makefile for utils/init
 #
 # IDENTIFICATION
-#    $Header: /cvsroot/pgsql/src/backend/utils/init/Makefile,v 1.15 2000/08/31 16:10:52 petere Exp $
+#    $PostgreSQL: pgsql/src/backend/utils/init/Makefile,v 1.16 2003/11/29 19:52:01 pgsql Exp $
 #
 #-------------------------------------------------------------------------
 

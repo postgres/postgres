@@ -1,4 +1,4 @@
-# $Header: /cvsroot/pgsql/config/general.m4,v 1.2 2002/03/29 17:32:53 petere Exp $
+# $PostgreSQL: pgsql/config/general.m4,v 1.3 2003/11/29 19:51:17 pgsql Exp $
 
 # This file defines new macros to process configure command line
 # arguments, to replace the brain-dead AC_ARG_WITH and AC_ARG_ENABLE.

@@ -1,4 +1,4 @@
-# $Header: /cvsroot/pgsql/contrib/cube/Makefile,v 1.10 2003/09/14 01:52:25 tgl Exp $
+# $PostgreSQL: pgsql/contrib/cube/Makefile,v 1.11 2003/11/29 19:51:21 pgsql Exp $
 
 subdir = contrib/cube
 top_builddir = ../..

@@ -1,4 +1,4 @@
-$Header: /cvsroot/pgsql/contrib/vacuumlo/Attic/README.vacuumlo,v 1.3 2003/08/04 22:03:39 tgl Exp $
+$PostgreSQL: pgsql/contrib/vacuumlo/README.vacuumlo,v 1.4 2003/11/29 19:51:36 pgsql Exp $
 
 This is a simple utility that will remove any orphaned large objects out of a
 PostgreSQL database.  An orphaned LO is considered to be any LO whose OID

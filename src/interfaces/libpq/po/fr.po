@@ -1,6 +1,6 @@
 # French message translation file for libpq
 #
-# $Header: /cvsroot/pgsql/src/interfaces/libpq/po/fr.po,v 1.5 2003/09/15 20:42:40 petere Exp $
+# $PostgreSQL: pgsql/src/interfaces/libpq/po/fr.po,v 1.6 2003/11/29 19:52:12 pgsql Exp $
 #
 # Use these quotes: «%s»
 # Peter Eisentraut <peter_e@gmx.net>, 2001.

@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/ref/create_operator.sgml,v 1.39 2003/09/22 00:16:57 petere Exp $
+$PostgreSQL: pgsql/doc/src/sgml/ref/create_operator.sgml,v 1.40 2003/11/29 19:51:38 pgsql Exp $
 PostgreSQL documentation
 -->
 

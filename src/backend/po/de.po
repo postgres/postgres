@@ -1,7 +1,7 @@
 # German message translation file for PostgreSQL server
 # Peter Eisentraut <peter_e@gmx.net>, 2001, 2003.
 #
-# $Header: /cvsroot/pgsql/src/backend/po/de.po,v 1.12 2003/11/14 02:08:17 petere Exp $
+# $PostgreSQL: pgsql/src/backend/po/de.po,v 1.13 2003/11/29 19:51:52 pgsql Exp $
 #
 # Use these quotes: »%s«
 #

@@ -1,4 +1,4 @@
-# $Header: /cvsroot/pgsql/contrib/spi/Makefile,v 1.22 2002/10/03 18:40:02 tgl Exp $
+# $PostgreSQL: pgsql/contrib/spi/Makefile,v 1.23 2003/11/29 19:51:35 pgsql Exp $
 
 subdir = contrib/spi
 top_builddir = ../..

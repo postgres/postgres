@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/client-auth.sgml,v 1.60 2003/11/04 09:55:38 petere Exp $
+$PostgreSQL: pgsql/doc/src/sgml/client-auth.sgml,v 1.61 2003/11/29 19:51:36 pgsql Exp $
 -->
 
 <chapter id="client-authentication">

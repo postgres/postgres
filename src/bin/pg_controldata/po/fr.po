@@ -1,6 +1,6 @@
 # French Translation for pg_controldata messages
 #
-# $Header: /cvsroot/pgsql/src/bin/pg_controldata/po/fr.po,v 1.3 2003/08/04 14:01:30 petere Exp $
+# $PostgreSQL: pgsql/src/bin/pg_controldata/po/fr.po,v 1.4 2003/11/29 19:52:04 pgsql Exp $
 # Loïc Hennequin <loic.hennequin@wanadoo.fr>, 2002.
 # Guillaume Lelarge <gleu@wanadoo.fr>, 2003
 #

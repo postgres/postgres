@@ -1,4 +1,4 @@
-# $Header: /cvsroot/pgsql/contrib/contrib-global.mk,v 1.6 2003/08/23 04:23:38 petere Exp $
+# $PostgreSQL: pgsql/contrib/contrib-global.mk,v 1.7 2003/11/29 19:51:18 pgsql Exp $
 
 # This file contains generic rules to build many kinds of simple
 # contrib modules.  You only need to set a few variables and include

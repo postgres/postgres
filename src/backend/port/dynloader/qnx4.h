@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/port/dynloader/Attic/qnx4.h,v 1.3 2001/03/01 19:03:44 petere Exp $
+ *	  $PostgreSQL: pgsql/src/backend/port/dynloader/qnx4.h,v 1.4 2003/11/29 19:51:54 pgsql Exp $
  *
  *	NOTES
  *

@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/access/rtree/Attic/rtget.c,v 1.29 2003/08/04 02:39:57 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/access/rtree/rtget.c,v 1.30 2003/11/29 19:51:40 pgsql Exp $
  *
  *-------------------------------------------------------------------------
  */

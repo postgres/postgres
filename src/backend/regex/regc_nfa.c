@@ -28,7 +28,7 @@
  * OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF
  * ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  *
- * $Header: /cvsroot/pgsql/src/backend/regex/regc_nfa.c,v 1.2 2003/08/04 00:43:21 momjian Exp $
+ * $PostgreSQL: pgsql/src/backend/regex/regc_nfa.c,v 1.3 2003/11/29 19:51:55 pgsql Exp $
  *
  *
  * One or two things that technically ought to be in here

@@ -1,5 +1,5 @@
 <!-- reference.sgml
-$Header: /cvsroot/pgsql/doc/src/sgml/reference.sgml,v 1.45 2003/06/27 14:45:25 petere Exp $
+$PostgreSQL: pgsql/doc/src/sgml/reference.sgml,v 1.46 2003/11/29 19:51:37 pgsql Exp $
 
 PostgreSQL Reference Manual
 -->

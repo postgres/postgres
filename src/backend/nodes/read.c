@@ -9,7 +9,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/nodes/read.c,v 1.35 2003/08/04 02:39:59 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/nodes/read.c,v 1.36 2003/11/29 19:51:49 pgsql Exp $
  *
  * HISTORY
  *	  AUTHOR			DATE			MAJOR EVENT

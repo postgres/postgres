@@ -3,7 +3,7 @@
  *
  * Copyright (c) 2000-2003, PostgreSQL Global Development Group
  *
- * $Header: /cvsroot/pgsql/src/bin/psql/prompt.c,v 1.30 2003/10/04 01:04:46 petere Exp $
+ * $PostgreSQL: pgsql/src/bin/psql/prompt.c,v 1.31 2003/11/29 19:52:07 pgsql Exp $
  */
 #include "postgres_fe.h"
 #include "prompt.h"

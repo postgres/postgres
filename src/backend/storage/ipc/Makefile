@@ -1,7 +1,7 @@
 #
 # Makefile for storage/ipc
 #
-# $Header: /cvsroot/pgsql/src/backend/storage/ipc/Makefile,v 1.17 2001/11/04 19:55:31 tgl Exp $
+# $PostgreSQL: pgsql/src/backend/storage/ipc/Makefile,v 1.18 2003/11/29 19:51:56 pgsql Exp $
 #
 
 subdir = src/backend/storage/ipc

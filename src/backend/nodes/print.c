@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/nodes/print.c,v 1.64 2003/08/11 23:04:49 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/nodes/print.c,v 1.65 2003/11/29 19:51:49 pgsql Exp $
  *
  * HISTORY
  *	  AUTHOR			DATE			MAJOR EVENT

@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/port/qnx4/Attic/sem.h,v 1.7 2001/11/08 20:37:52 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/port/qnx4/sem.h,v 1.8 2003/11/29 19:51:54 pgsql Exp $
  *
  *-------------------------------------------------------------------------
  */

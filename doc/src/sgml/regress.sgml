@@ -1,4 +1,4 @@
-<!-- $Header: /cvsroot/pgsql/doc/src/sgml/regress.sgml,v 1.36 2003/11/04 09:55:38 petere Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/regress.sgml,v 1.37 2003/11/29 19:51:37 pgsql Exp $ -->
 
  <chapter id="regress">
   <title id="regress-title">Regression Tests</title>

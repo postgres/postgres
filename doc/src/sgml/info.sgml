@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/info.sgml,v 1.20 2003/09/12 22:17:23 tgl Exp $
+$PostgreSQL: pgsql/doc/src/sgml/info.sgml,v 1.21 2003/11/29 19:51:37 pgsql Exp $
 -->
 
 <sect1 id="resources">

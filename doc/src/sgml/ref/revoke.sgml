@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/ref/revoke.sgml,v 1.28 2003/10/31 20:00:48 tgl Exp $
+$PostgreSQL: pgsql/doc/src/sgml/ref/revoke.sgml,v 1.29 2003/11/29 19:51:39 pgsql Exp $
 PostgreSQL documentation
 -->
 

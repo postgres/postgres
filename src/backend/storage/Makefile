@@ -1,7 +1,7 @@
 #
 # Makefile for the storage manager subsystem
 #
-# $Header: /cvsroot/pgsql/src/backend/storage/Makefile,v 1.10 2002/08/10 17:59:28 petere Exp $
+# $PostgreSQL: pgsql/src/backend/storage/Makefile,v 1.11 2003/11/29 19:51:56 pgsql Exp $
 #
 
 subdir = src/backend/storage

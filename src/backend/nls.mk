@@ -1,4 +1,4 @@
-# $Header: /cvsroot/pgsql/src/backend/nls.mk,v 1.10 2003/11/14 23:59:12 petere Exp $
+# $PostgreSQL: pgsql/src/backend/nls.mk,v 1.11 2003/11/29 19:51:39 pgsql Exp $
 CATALOG_NAME	:= postgres
 AVAIL_LANGUAGES	:= cs de es hr hu it nb pt_BR ru sv tr zh_CN zh_TW
 GETTEXT_FILES	:= + gettext-files

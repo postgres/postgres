@@ -1,4 +1,4 @@
-# $Header: /cvsroot/pgsql/src/nls-global.mk,v 1.8 2003/09/14 22:40:38 petere Exp $
+# $PostgreSQL: pgsql/src/nls-global.mk,v 1.9 2003/11/29 19:51:39 pgsql Exp $
 
 # Common rules for Native Language Support (NLS)
 #

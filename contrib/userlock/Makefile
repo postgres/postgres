@@ -1,4 +1,4 @@
-# $Header: /cvsroot/pgsql/contrib/userlock/Attic/Makefile,v 1.16 2001/09/06 10:49:30 petere Exp $
+# $PostgreSQL: pgsql/contrib/userlock/Makefile,v 1.17 2003/11/29 19:51:36 pgsql Exp $
 
 subdir = contrib/userlock
 top_builddir = ../..

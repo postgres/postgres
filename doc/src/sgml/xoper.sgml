@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/xoper.sgml,v 1.30 2003/11/02 12:59:28 petere Exp $
+$PostgreSQL: pgsql/doc/src/sgml/xoper.sgml,v 1.31 2003/11/29 19:51:38 pgsql Exp $
 -->
 
  <sect1 id="xoper">

@@ -3,7 +3,7 @@
  *
  * Copyright (c) 2000-2003, PostgreSQL Global Development Group
  *
- * $Header: /cvsroot/pgsql/src/bin/psql/large_obj.c,v 1.30 2003/11/21 22:32:49 tgl Exp $
+ * $PostgreSQL: pgsql/src/bin/psql/large_obj.c,v 1.31 2003/11/29 19:52:06 pgsql Exp $
  */
 #include "postgres_fe.h"
 #include "large_obj.h"

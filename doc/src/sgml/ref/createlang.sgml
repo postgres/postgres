@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/ref/createlang.sgml,v 1.32 2003/08/31 17:32:22 petere Exp $
+$PostgreSQL: pgsql/doc/src/sgml/ref/createlang.sgml,v 1.33 2003/11/29 19:51:38 pgsql Exp $
 PostgreSQL documentation
 -->
 

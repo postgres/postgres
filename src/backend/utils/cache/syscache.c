@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/cache/syscache.c,v 1.92 2003/11/12 21:15:56 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/utils/cache/syscache.c,v 1.93 2003/11/29 19:52:00 pgsql Exp $
  *
  * NOTES
  *	  These routines allow the parser/planner/executor to perform

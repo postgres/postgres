@@ -1,7 +1,7 @@
 #
 # Makefile for utils/adt
 #
-# $Header: /cvsroot/pgsql/src/backend/utils/adt/Makefile,v 1.55 2003/05/12 23:08:50 tgl Exp $
+# $PostgreSQL: pgsql/src/backend/utils/adt/Makefile,v 1.56 2003/11/29 19:51:57 pgsql Exp $
 #
 
 subdir = src/backend/utils/adt

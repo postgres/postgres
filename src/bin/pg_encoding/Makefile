@@ -4,7 +4,7 @@
 #
 # Copyright (c) 1998, PostgreSQL Global Development Group
 #
-# $Header: /cvsroot/pgsql/src/bin/pg_encoding/Attic/Makefile,v 1.15 2002/07/27 20:10:05 petere Exp $
+# $PostgreSQL: pgsql/src/bin/pg_encoding/Makefile,v 1.16 2003/11/29 19:52:05 pgsql Exp $
 #
 #-------------------------------------------------------------------------
 

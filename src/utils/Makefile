@@ -2,7 +2,7 @@
 #
 # Makefile for utils
 #
-# $Header: /cvsroot/pgsql/src/utils/Attic/Makefile,v 1.19 2002/11/02 02:00:35 momjian Exp $
+# $PostgreSQL: pgsql/src/utils/Makefile,v 1.20 2003/11/29 19:52:15 pgsql Exp $
 #
 # dllinit.o is only built on Win32 platform.
 #

@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/dfunc.sgml,v 1.26 2003/08/31 17:32:18 petere Exp $
+$PostgreSQL: pgsql/doc/src/sgml/dfunc.sgml,v 1.27 2003/11/29 19:51:36 pgsql Exp $
 -->
 
 <sect2 id="dfunc">

@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/ref/lock.sgml,v 1.38 2003/09/11 21:42:20 momjian Exp $
+$PostgreSQL: pgsql/doc/src/sgml/ref/lock.sgml,v 1.39 2003/11/29 19:51:39 pgsql Exp $
 PostgreSQL documentation
 -->
 

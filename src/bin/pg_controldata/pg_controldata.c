@@ -6,7 +6,7 @@
  * copyright (c) Oliver Elphick <olly@lfix.co.uk>, 2001;
  * licence: BSD
  *
- * $Header: /cvsroot/pgsql/src/bin/pg_controldata/pg_controldata.c,v 1.11 2003/08/04 00:43:27 momjian Exp $
+ * $PostgreSQL: pgsql/src/bin/pg_controldata/pg_controldata.c,v 1.12 2003/11/29 19:52:04 pgsql Exp $
  */
 #include "postgres.h"
 

@@ -4,7 +4,7 @@
 #    Makefile for backend/regex
 #
 # IDENTIFICATION
-#    $Header: /cvsroot/pgsql/src/backend/regex/Makefile,v 1.20 2003/02/05 17:41:32 tgl Exp $
+#    $PostgreSQL: pgsql/src/backend/regex/Makefile,v 1.21 2003/11/29 19:51:55 pgsql Exp $
 #
 #-------------------------------------------------------------------------
 

@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/datatype.sgml,v 1.131 2003/11/16 20:29:16 tgl Exp $
+$PostgreSQL: pgsql/doc/src/sgml/datatype.sgml,v 1.132 2003/11/29 19:51:36 pgsql Exp $
 -->
 
  <chapter id="datatype">

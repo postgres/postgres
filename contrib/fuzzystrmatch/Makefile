@@ -1,4 +1,4 @@
-# $Header: /cvsroot/pgsql/contrib/fuzzystrmatch/Makefile,v 1.2 2001/09/06 10:49:29 petere Exp $
+# $PostgreSQL: pgsql/contrib/fuzzystrmatch/Makefile,v 1.3 2003/11/29 19:51:35 pgsql Exp $
 
 subdir = contrib/fuzzystrmatch
 top_builddir = ../..

@@ -6,7 +6,7 @@
  * Portions Copyright (c) 1996-2003, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Header: /cvsroot/pgsql/src/backend/optimizer/geqo/geqo_misc.c,v 1.39 2003/08/04 02:39:59 momjian Exp $
+ * $PostgreSQL: pgsql/src/backend/optimizer/geqo/geqo_misc.c,v 1.40 2003/11/29 19:51:50 pgsql Exp $
  *
  *-------------------------------------------------------------------------
  */

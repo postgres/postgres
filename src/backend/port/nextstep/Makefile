@@ -4,7 +4,7 @@
 #    Makefile for port/nextstep
 #
 # IDENTIFICATION
-#    $Header: /cvsroot/pgsql/src/backend/port/nextstep/Makefile,v 1.7 2003/04/24 17:16:13 momjian Exp $
+#    $PostgreSQL: pgsql/src/backend/port/nextstep/Makefile,v 1.8 2003/11/29 19:51:54 pgsql Exp $
 #
 #-------------------------------------------------------------------------
 

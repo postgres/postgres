@@ -9,7 +9,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/commands/variable.c,v 1.89 2003/11/06 22:08:14 petere Exp $
+ *	  $PostgreSQL: pgsql/src/backend/commands/variable.c,v 1.90 2003/11/29 19:51:48 pgsql Exp $
  *
  *-------------------------------------------------------------------------
  */

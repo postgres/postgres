@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/init/postinit.c,v 1.129 2003/11/12 21:15:56 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/utils/init/postinit.c,v 1.130 2003/11/29 19:52:01 pgsql Exp $
  *
  *
  *-------------------------------------------------------------------------

@@ -1,4 +1,4 @@
-# $Header: /cvsroot/pgsql/config/tcl.m4,v 1.4 2002/05/24 18:10:17 petere Exp $
+# $PostgreSQL: pgsql/config/tcl.m4,v 1.5 2003/11/29 19:51:17 pgsql Exp $
 
 # Autoconf macros to check for Tcl related things
 

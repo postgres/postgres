@@ -1,7 +1,7 @@
 # simplified Chinese translation file for PostgreSQL server
 # Weiping He <laser@zhengmai.com.cn>, 2001.
 #
-# $Header: /cvsroot/pgsql/src/backend/po/Attic/zh_CN.po,v 1.6 2003/09/15 20:41:58 petere Exp $
+# $PostgreSQL: pgsql/src/backend/po/zh_CN.po,v 1.7 2003/11/29 19:51:54 pgsql Exp $
 #
 msgid ""
 msgstr ""

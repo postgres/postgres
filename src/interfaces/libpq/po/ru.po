@@ -1,7 +1,7 @@
 # ru.po
 # LIBPQ Translated Messages into the Russian Language (KOI8-R)
 #
-# $Header: /cvsroot/pgsql/src/interfaces/libpq/po/ru.po,v 1.8 2003/10/05 21:52:37 petere Exp $
+# $PostgreSQL: pgsql/src/interfaces/libpq/po/ru.po,v 1.9 2003/11/29 19:52:12 pgsql Exp $
 #
 # ChangeLog:
 #   - July 24 - October 5, 2003: Update for 7.4.*; <mokhov@cs.concordia.ca>

@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/test/examples/testlo.c,v 1.20 2003/08/04 02:40:20 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/test/examples/testlo.c,v 1.21 2003/11/29 19:52:14 pgsql Exp $
  *
  *-------------------------------------------------------------------------
  */

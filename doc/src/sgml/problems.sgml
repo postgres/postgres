@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/problems.sgml,v 2.15 2003/08/10 01:19:18 tgl Exp $
+$PostgreSQL: pgsql/doc/src/sgml/problems.sgml,v 2.16 2003/11/29 19:51:37 pgsql Exp $
 -->
 
 <sect1 id="bug-reporting">

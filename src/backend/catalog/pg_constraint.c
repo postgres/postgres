@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/catalog/pg_constraint.c,v 1.18 2003/11/12 21:15:48 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/catalog/pg_constraint.c,v 1.19 2003/11/29 19:51:46 pgsql Exp $
  *
  *-------------------------------------------------------------------------
  */

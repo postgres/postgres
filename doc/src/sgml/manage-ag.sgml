@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/manage-ag.sgml,v 2.28 2003/08/31 17:32:19 petere Exp $
+$PostgreSQL: pgsql/doc/src/sgml/manage-ag.sgml,v 2.29 2003/11/29 19:51:37 pgsql Exp $
 -->
 
 <chapter id="managing-databases">

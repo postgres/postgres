@@ -31,7 +31,7 @@
  *	  ENHANCEMENTS, OR MODIFICATIONS.
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/pl/tcl/pltcl.c,v 1.79 2003/09/29 19:24:06 wieck Exp $
+ *	  $PostgreSQL: pgsql/src/pl/tcl/pltcl.c,v 1.80 2003/11/29 19:52:13 pgsql Exp $
  *
  **********************************************************************/
 

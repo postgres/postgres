@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/plhandler.sgml,v 1.1 2003/10/22 22:28:10 tgl Exp $
+$PostgreSQL: pgsql/doc/src/sgml/plhandler.sgml,v 1.2 2003/11/29 19:51:37 pgsql Exp $
 -->
 
  <chapter id="plhandler">

@@ -1,4 +1,4 @@
-$Header: /cvsroot/pgsql/src/backend/storage/ipc/README,v 1.3 2003/07/24 22:04:09 tgl Exp $
+$PostgreSQL: pgsql/src/backend/storage/ipc/README,v 1.4 2003/11/29 19:51:56 pgsql Exp $
 Mon Jul 18 11:09:22 PDT 1988  W.KLAS
 
 Cache invalidation synchronization routines:

@@ -9,7 +9,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/parser/scansup.c,v 1.24 2003/08/04 02:40:02 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/parser/scansup.c,v 1.25 2003/11/29 19:51:52 pgsql Exp $
  *
  *-------------------------------------------------------------------------
  */

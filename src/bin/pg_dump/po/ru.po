@@ -1,7 +1,7 @@
 # ru.po
 # PG_DUMP Translated Messages into the Russian Language (KOI8-R)
 #
-# $Header: /cvsroot/pgsql/src/bin/pg_dump/po/Attic/ru.po,v 1.6 2003/10/05 21:52:37 petere Exp $
+# $PostgreSQL: pgsql/src/bin/pg_dump/po/ru.po,v 1.7 2003/11/29 19:52:05 pgsql Exp $
 #
 # ChangeLog:
 #   - July 24 - October 5, 2003: Updates for 7.4.x; <mokhov@cs.concordia.ca>

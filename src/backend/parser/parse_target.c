@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/parser/parse_target.c,v 1.113 2003/09/25 06:58:01 petere Exp $
+ *	  $PostgreSQL: pgsql/src/backend/parser/parse_target.c,v 1.114 2003/11/29 19:51:52 pgsql Exp $
  *
  *-------------------------------------------------------------------------
  */

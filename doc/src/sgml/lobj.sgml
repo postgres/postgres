@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/lobj.sgml,v 1.32 2003/11/12 22:47:47 petere Exp $
+$PostgreSQL: pgsql/doc/src/sgml/lobj.sgml,v 1.33 2003/11/29 19:51:37 pgsql Exp $
 -->
 
  <chapter id="largeObjects">

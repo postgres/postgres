@@ -6,7 +6,7 @@
  * Portions Copyright (c) 1996-2003, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- *	$Header: /cvsroot/pgsql/src/backend/executor/execAmi.c,v 1.75 2003/08/08 21:41:34 momjian Exp $
+ *	$PostgreSQL: pgsql/src/backend/executor/execAmi.c,v 1.76 2003/11/29 19:51:48 pgsql Exp $
  *
  *-------------------------------------------------------------------------
  */
