@@ -15,7 +15,7 @@ import org.postgresql.util.PGbytea;
 import org.postgresql.util.PSQLException;
 
 
-/* $Header: /cvsroot/pgsql/src/interfaces/jdbc/org/postgresql/jdbc2/Attic/AbstractJdbc2ResultSet.java,v 1.10.2.1 2003/02/24 16:38:25 barry Exp $
+/* $Header: /cvsroot/pgsql/src/interfaces/jdbc/org/postgresql/jdbc2/Attic/AbstractJdbc2ResultSet.java,v 1.10.2.2 2003/03/08 06:09:37 barry Exp $
  * This class defines methods of the jdbc2 specification.  This class extends
  * org.postgresql.jdbc1.AbstractJdbc1ResultSet which provides the jdbc1
  * methods.  The real Statement class (for jdbc2) is org.postgresql.jdbc2.Jdbc2ResultSet
@@ -188,6 +188,10 @@ public abstract class AbstractJdbc2ResultSet extends org.postgresql.jdbc1.Abstra
 
 		current_row = internalIndex;
 		this_row = (byte[][]) rows.elementAt(internalIndex);
+
+		rowBuffer = new byte[this_row.length][];
+		System.arraycopy(this_row, 0, rowBuffer, 0, this_row.length);
+
 		return true;
 	}
 

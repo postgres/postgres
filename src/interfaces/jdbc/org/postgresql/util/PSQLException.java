@@ -111,6 +111,6 @@ public class PSQLException extends SQLException
 	 */
 	public String toString()
 	{
-		return message;
+		return message != null ? message : "";
 	}
 }
