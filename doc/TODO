@@ -1,6 +1,6 @@
 TODO list for PostgreSQL
 ========================
-Last updated:		Thu Feb 21 19:11:38 EST 2002
+Last updated:		Thu Feb 21 20:17:02 EST 2002
 
 Current maintainer:	Bruce Momjian (pgman@candle.pha.pa.us)
 
@@ -465,7 +465,7 @@ SOURCE CODE
 * Change representation of whole-tuple parameters to functions
 * Evaluate AIX cs() spinlock macro for performance optimizations (Tatsuo)
 * Clarify use of 'application' and 'command' tags in SGML docs
-* Allow ability to easily build only certain interfaces (Marc)
+* Better document ability to build only certain interfaces (Marc)
 * Remove or relicense modules that are not under the BSD license, if possible
 
 
