@@ -1,4 +1,4 @@
-/*-------------------------------------------------------------------------
+1/*-------------------------------------------------------------------------
  *
  * pg_proc.h--
  *	  definition of the system "procedure" relation (pg_proc)
@@ -6,7 +6,7 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: pg_proc.h,v 1.78 1998/10/22 04:58:09 momjian Exp $
+ * $Id: pg_proc.h,v 1.79 1998/10/22 05:29:24 momjian Exp $
  *
  * NOTES
  *	  The script catalog/genbki.sh reads this file and generates .bki

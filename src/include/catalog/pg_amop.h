@@ -7,7 +7,7 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: pg_amop.h,v 1.16 1998/10/03 05:40:51 momjian Exp $
+ * $Id: pg_amop.h,v 1.17 1998/10/22 05:29:23 momjian Exp $
  *
  * NOTES
  *	 the genbki.sh script reads this file and generates .bki
@@ -309,7 +309,7 @@ DATA(insert OID = 0 (  403 810 1225 4 btreesel btreenpage ));
 DATA(insert OID = 0 (  403 810 1224 5 btreesel btreenpage ));
 
 /*
- *	nbtree ip
+ *	nbtree inet
  */
 
 DATA(insert OID = 0 (  403 935 1203 1 btreesel btreenpage ));
@@ -317,6 +317,16 @@ DATA(insert OID = 0 (  403 935 1204 2 btreesel btreenpage ));
 DATA(insert OID = 0 (  403 935 1201 3 btreesel btreenpage ));
 DATA(insert OID = 0 (  403 935 1206 4 btreesel btreenpage ));
 DATA(insert OID = 0 (  403 935 1205 5 btreesel btreenpage ));
+
+/*
+ *	nbtree cidr
+ */
+
+DATA(insert OID = 0 (  403 652 822 1 btreesel btreenpage ));
+DATA(insert OID = 0 (  403 652 823 2 btreesel btreenpage ));
+DATA(insert OID = 0 (  403 652 820 3 btreesel btreenpage ));
+DATA(insert OID = 0 (  403 652 825 4 btreesel btreenpage ));
+DATA(insert OID = 0 (  403 652 824 5 btreesel btreenpage ));
 
 /*
  *	hash table _ops
@@ -352,5 +362,11 @@ DATA(insert OID = 0 (  405 1115 1108 1 hashsel hashnpage ));
 DATA(insert OID = 0 (  405 1312 1320 1 hashsel hashnpage ));
 /* timespan_ops */
 DATA(insert OID = 0 (  405 1313 1330 1 hashsel hashnpage ));
+/* macaddr_ops */
+DATA(insert OID = 0 (  405 810 1220 1 hashsel hashnpage ));
+/* inet_ops */
+DATA(insert OID = 0 (  405 935 1201 1 hashsel hashnpage ));
+/* cidr_ops */
+DATA(insert OID = 0 (  405 652 820 1 hashsel hashnpage ));
 
 #endif	 /* PG_AMOP_H */
