@@ -23,7 +23,7 @@
 #
 # Copyright (c) 1994, Regents of the University of California
 #
-# $Header: /cvsroot/pgsql/src/bin/initdb/Attic/initdb.sh,v 1.103 2000/09/01 13:15:27 petere Exp $
+# $Header: /cvsroot/pgsql/src/bin/initdb/Attic/initdb.sh,v 1.104 2000/09/29 13:38:02 petere Exp $
 #
 #-------------------------------------------------------------------------
 
@@ -385,7 +385,7 @@ then
 else
     if [ ! -d "$PGDATA" ]; then
         echo "Creating directory $PGDATA"
-        mkdir "$PGDATA" || exit_nicely
+        mkdir -p "$PGDATA" >/dev/null 2>&1 || mkdir "$PGDATA" || exit_nicely
         made_new_pgdata=yes
     else
         echo "Fixing permissions on existing directory $PGDATA"
