@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/rewrite/rewriteManip.c,v 1.67 2002/10/20 00:58:55 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/rewrite/rewriteManip.c,v 1.67.2.1 2003/10/20 20:02:30 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -74,7 +74,7 @@ bool
 checkExprHasSubLink(Node *node)
 {
 	/*
-	 * If a Query is passed, examine it --- but we will not recurse into
+	 * If a Query is passed, examine it --- but we need not recurse into
 	 * sub-Queries.
 	 */
 	if (node && IsA(node, Query))
@@ -644,10 +644,12 @@ AddQual(Query *parsetree, Node *qual)
 	/*
 	 * Make sure query is marked correctly if added qual has sublinks or
 	 * aggregates (not sure it can ever have aggs, but sublinks
-	 * definitely).
+	 * definitely).  Need not search qual when query is already marked.
 	 */
-	parsetree->hasAggs |= checkExprHasAggs(copy);
-	parsetree->hasSubLinks |= checkExprHasSubLink(copy);
+	if (!parsetree->hasAggs)
+		parsetree->hasAggs = checkExprHasAggs(copy);
+	if (!parsetree->hasSubLinks)
+		parsetree->hasSubLinks = checkExprHasSubLink(copy);
 }
 
 /*
@@ -684,10 +686,12 @@ AddHavingQual(Query *parsetree, Node *havingQual)
 	/*
 	 * Make sure query is marked correctly if added qual has sublinks or
 	 * aggregates (not sure it can ever have aggs, but sublinks
-	 * definitely).
+	 * definitely).  Need not search qual when query is already marked.
 	 */
-	parsetree->hasAggs |= checkExprHasAggs(copy);
-	parsetree->hasSubLinks |= checkExprHasSubLink(copy);
+	if (!parsetree->hasAggs)
+		parsetree->hasAggs = checkExprHasAggs(copy);
+	if (!parsetree->hasSubLinks)
+		parsetree->hasSubLinks = checkExprHasSubLink(copy);
 }
 
 
@@ -758,6 +762,12 @@ FindMatchingTLEntry(List *tlist, char *e_attname)
  * entry with matching resno from targetlist, if there is one.
  * If not, we either change the unmatched Var's varno to update_varno
  * (when event == CMD_UPDATE) or replace it with a constant NULL.
+ *
+ * Note: the business with inserted_sublink is needed to update hasSubLinks
+ * in subqueries when the replacement adds a subquery inside a subquery.
+ * Messy, isn't it?  We do not need to do similar pushups for hasAggs,
+ * because it isn't possible for this transformation to insert a level-zero
+ * aggregate reference into a subquery --- it could only insert outer aggs.
  */
 
 typedef struct
@@ -767,6 +777,7 @@ typedef struct
 	List	   *targetlist;
 	int			event;
 	int			update_varno;
+	bool		inserted_sublink;
 } ResolveNew_context;
 
 static Node *
@@ -814,6 +825,9 @@ ResolveNew_mutator(Node *node, ResolveNew_context *context)
 				/* Adjust varlevelsup if tlist item is from higher query */
 				if (this_varlevelsup > 0)
 					IncrementVarSublevelsUp(n, this_varlevelsup, 0);
+				/* Report it if we are adding a sublink to query */
+				if (!context->inserted_sublink)
+					context->inserted_sublink = checkExprHasSubLink(n);
 				return n;
 			}
 		}
@@ -840,10 +854,15 @@ ResolveNew_mutator(Node *node, ResolveNew_context *context)
 	{
 		Query	   *query = (Query *) node;
 		Query	   *newnode;
+		bool		save_inserted_sublink;
 
 		FLATCOPY(newnode, query, Query);
 		context->sublevels_up++;
+		save_inserted_sublink = context->inserted_sublink;
+		context->inserted_sublink = false;
 		query_tree_mutator(newnode, ResolveNew_mutator, context, 0);
+		newnode->hasSubLinks |= context->inserted_sublink;
+		context->inserted_sublink = save_inserted_sublink;
 		context->sublevels_up--;
 		return (Node *) newnode;
 	}
@@ -862,6 +881,7 @@ ResolveNew(Node *node, int target_varno, int sublevels_up,
 	context.targetlist = targetlist;
 	context.event = event;
 	context.update_varno = update_varno;
+	context.inserted_sublink = false;
 
 	/*
 	 * Must be prepared to start with a Query or a bare expression tree;
