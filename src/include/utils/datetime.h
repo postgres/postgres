@@ -9,7 +9,7 @@
  * Portions Copyright (c) 1996-2001, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Id: datetime.h,v 1.27 2001/12/29 18:31:48 thomas Exp $
+ * $Id: datetime.h,v 1.28 2002/01/01 02:54:33 thomas Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -109,8 +109,8 @@
 #define ABS_BEFORE		18
 #define ABS_AFTER		19
 /* generic fields to help with parsing */
-#define DATE	20
-#define TIME	21
+#define ISODATE	20
+#define ISOTIME	21
 /* reserved for unrecognized string values */
 #define UNKNOWN_FIELD	31
 
