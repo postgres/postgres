@@ -298,7 +298,6 @@ int			EncodeInterval(struct tm * tm, fsec_t fsec, int style, char *str);
 int			tm2timestamp(struct tm *, fsec_t, int *, timestamp *);
 
 int			DecodeUnits(int field, char *lowtoken, int *val);
-bool		ClearDateCache(bool, bool, bool);
 
 bool		CheckDateTokenTables(void);
 
