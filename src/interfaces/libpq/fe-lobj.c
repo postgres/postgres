@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *    $Header: /cvsroot/pgsql/src/interfaces/libpq/fe-lobj.c,v 1.1.1.1 1996/07/09 06:22:17 scrappy Exp $
+ *    $Header: /cvsroot/pgsql/src/interfaces/libpq/fe-lobj.c,v 1.2 1996/10/31 05:58:32 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -17,7 +17,7 @@
 #include <sys/types.h>
 #include "postgres.h"
 #include "libpq-fe.h"
-#include "obj/fmgr.h" 
+#include "fmgr.h" 
 #include "libpq/libpq-fs.h"
 
 #ifndef MAXPATHLEN
