@@ -13,7 +13,7 @@
   alink="#0000ff">
     <H1>Ответы на часто задаваемые вопросы по PostgreSQL</H1>
 
-    <P>Дата последнего обновления: Понедельник 17 Марта 11:32:59 EDT 2003</P>
+    <P>Дата последнего обновления: Понедельник 22 Апреля 14:02:41 EDT 2003</P>
 
     <P>Английский вариант сопровождает: Брюс Момьян (Bruce Momjian) (<A href=
     "mailto:pgman@candle.pha.pa.us">pgman@candle.pha.pa.us</A>)<BR>
@@ -26,7 +26,7 @@
     <A href="http://www.postgresql.org/docs/faqs/FAQ.html">http://www.PostgreSQL.org/docs/faqs/FAQ.html</A>.</P>
 
     <P>Ответы на вопросы специфичные для конкретных платформ можно найти на
-    <A href="http://www.postgresql.org/users-lounge/docs/index.html">http://www.PostgreSQL.org/docs/index.html</A>.</P>
+    <A href="http://www.postgresql.org/docs/index.html">http://www.PostgreSQL.org/docs/index.html</A>.</P>
     <HR>
 
     <H2 align="center">Общие вопросы</H2>
@@ -246,13 +246,18 @@
     <P><STRONG>Сервер</STRONG></P>
 
     <P>Сервер БД может быть запущен на Windows NT и Win2k, используя
-    библиотеку Cygwin, разработанную для переноса программного обеспечения Unix
-    в NT. Смотрите <I>pgsql/doc/FAQ_MSWIN</I> в дистрибутиве или
-    MS Windows FAQ на <A href="http://www.postgresql.org/docs/faqs/faq-mswin.html">
-    http://www.PostgreSQL.org/docs/faqs/faq-mswin.html</A>.</P>
+    библиотеку Cygwin, разработанную компанией Cygnus для переноса программного
+    обеспечения Unix в NT. Смотрите <I>pgsql/doc/FAQ_MSWIN</I> в дистрибутиве
+    или MS Windows FAQ на <A href="http://www.postgresql.org/docs/faqs/text/FAQ_MSWIN">
+    http://www.PostgreSQL.org/docs/faqs/text/FAQ_MSWIN</A>.</P>
 
     <P>PostgreSQL, спортированный специально для MS Win NT/2000/XP в
-    настоящий момент начал работать.</P>
+    настоящий момент начал работать. Подробности текущего состояния PostgreSQL
+    для Windows смотрите на <a href="http://techdocs.postgresql.org/guides/Windows">
+    http://techdocs.postgresql.org/guides/Windows</a>.</P>
+    
+    <P>Также существует версия спортированная под Novell Netware 6 на
+    <a href="http://forge.novell.com/">http://forge.novell.com</a>.</P>
 
     <H4><A name="1.5">1.5</A>) Где можно взять PostgreSQL?</H4>
 
@@ -312,7 +317,7 @@
       <A href="http://www.PostgreSQL.org">http://www.PostgreSQL.org</A>
     </BLOCKQUOTE>
 
-    <P>Еще существует IRC канал на EFNet, с названием
+    <P>Еще существует IRC канал на EFNet и OpenProjects, с названием
     <I>#PostgreSQL</I>. Я использую для подключения к этому каналу команду Unix
     <CODE>irc -c '#PostgreSQL' "$USER" irc.phoenix.net.</CODE></P>
 
@@ -331,7 +336,7 @@
     электронного руководства man и некоторые маленькие тестовые примеры.
     Смотрите в каталог <I>/doc</I>. Вы также можете просматривать
     документацию в Интернет по адресу
-    <A href="http://www.ca.postgresql.org/users-lounge/docs/">http://www.ca.PostgreSQL.org/users-lounge/docs/</A>.</P>
+    <A href="http://www.postgresql.org/docs">http://www.PostgreSQL.org/docs</A>.</P>
 
     <P>Существует две книги по PostgreSQL доступные по адресам <A href=
     "http://www.PostgreSQL.org/docs/awbook.html">http://www.PostgreSQL.org/docs/awbook.html</A>
@@ -609,7 +614,7 @@
     с количеством буферов и процессов по умолчанию, необходимый минимум -
     это около 1 мегабайта. Подробности о разделяемой памяти и семафорах
     смотрите в <A href=
-    "http://www.postgresql.org/idocs/index.php?kernel-resources.html">Руководстве
+    "http://www.postgresql.org/docs/viev.php?version=current&amp;idoc=1&amp;file=kernel-resources.html">Руководстве
     администратора PostgreSQL</A>.</P>
 
     <H4><A name="3.4">3.4</A>) Когда я пытаюсь запустить <I>postmaster</I>, я
@@ -1377,11 +1382,10 @@ BYTEA           bytea           массив байт переменной длины (можно использовать
 
     <H4><A name="4.25">4.25</A>) Как мне вернуть из функции несколько записей?</H4>
 
-    <P>Вы можете возвращать из функций PL/pgSQL списки результатов, используя
-    <i>refcursors</i>. Смотрите <A
-     href="http://www.postgresql.org/idocs/index.php?plpgsql-cursors.html">
-     http://www.PostgreSQL.org/idocs/index.php?plpgsql-cursors.html</a>,
-     секцию 23.7.3.3.</P>
+    <P>В версии 7.3, вы можете легко вернуть несколько записей или колонок из
+     какой-либо функции,
+     <href="http://techdocs.postgresql.org/guides/SetReturningFunctions">
+     http://techdocs.postgresql.org/guides/SetReturningFunctions</a>.</P>
 
     <H4><A name="4.26">4.26</A>) Почему я не могу надежно создавать/удалять
     временные таблицы в функциях PL/PgSQL?</H4>

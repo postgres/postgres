@@ -1,7 +1,7 @@
 
                Otvety na chasto zadavaemye voprosy po PostgreSQL
                                        
-   Data poslednego obnovleniya: Ponedel'nik 17 Marta 11:32:59 EDT 2003
+   Data poslednego obnovleniya: Ponedel'nik 22 Aprelya 14:02:41 EDT 2003
    
    Anglijskij variant soprovozhdaet: Bryus Mom'yan (Bruce Momjian)
    (pgman@candle.pha.pa.us)
@@ -213,13 +213,18 @@
    Server
    
    Server BD mozhet byt' zapuschen na Windows NT i Win2k, ispol'zuya
-   biblioteku Cygwin, razrabotannuyu dlya perenosa programmnogo
-   obespecheniya Unix v NT. Smotrite pgsql/doc/FAQ_MSWIN v distributive
-   ili MS Windows FAQ na
-   http://www.PostgreSQL.org/docs/faqs/faq-mswin.html.
+   biblioteku Cygwin, razrabotannuyu kompaniej Cygnus dlya perenosa
+   programmnogo obespecheniya Unix v NT. Smotrite pgsql/doc/FAQ_MSWIN v
+   distributive ili MS Windows FAQ na
+   http://www.PostgreSQL.org/docs/faqs/text/FAQ_MSWIN.
    
    PostgreSQL, sportirovannyj special'no dlya MS Win NT/2000/XP v
-   nastoyaschij moment nachal rabotat'.
+   nastoyaschij moment nachal rabotat'. Podrobnosti tekuschego
+   sostoyaniya PostgreSQL dlya Windows smotrite na
+   http://techdocs.postgresql.org/guides/Windows.
+   
+   Takzhe suschestvuet versiya sportirovannaya pod Novell Netware 6 na
+   http://forge.novell.com.
    
     1.5) Gde mozhno vzyat' PostgreSQL?
     
@@ -267,9 +272,9 @@
    
      http://www.PostgreSQL.org
      
-   Esche suschestvuet IRC kanal na EFNet, s nazvaniem #PostgreSQL. YA
-   ispol'zuyu dlya podklyucheniya k `etomu kanalu komandu Unix irc -c
-   '#PostgreSQL' "$USER" irc.phoenix.net.
+   Esche suschestvuet IRC kanal na EFNet i OpenProjects, s nazvaniem
+   #PostgreSQL. YA ispol'zuyu dlya podklyucheniya k `etomu kanalu komandu
+   Unix irc -c '#PostgreSQL' "$USER" irc.phoenix.net.
    
    Spisok kommercheskoj podderzhki kompanij dostupen na
    http://www.ca.PostgreSQL.org/users-lounge/commercial-support.html.
@@ -285,7 +290,7 @@
    V distributiv vklyuchayutsya razlichnye rukovodstva, stranicy
    `elektronnogo rukovodstva man i nekotorye malen'kie testovye primery.
    Smotrite v katalog /doc. Vy takzhe mozhete prosmatrivat' dokumentaciyu
-   v Internet po adresu http://www.ca.PostgreSQL.org/users-lounge/docs/.
+   v Internet po adresu http://www.PostgreSQL.org/docs.
    
    Suschestvuet dve knigi po PostgreSQL dostupnye po adresam
    http://www.PostgreSQL.org/docs/awbook.html i
@@ -1195,10 +1200,10 @@ CREATE TABLE test (x int, modtime timestamp DEFAULT CURRENT_TIMESTAMP );
    
     4.25) Kak mne vernut' iz funkcii neskol'ko zapisej?
     
-   Vy mozhete vozvraschat' iz funkcij PL/pgSQL spiski rezul'tatov,
-   ispol'zuya refcursors. Smotrite
-   http://www.PostgreSQL.org/idocs/index.php?plpgsql-cursors.html,
-   sekciyu 23.7.3.3.
+   V versii 7.3, vy mozhete legko vernut' neskol'ko zapisej ili kolonok
+   iz kakoj-libo funkcii,
+   http://techdocs.postgresql.org/guides/SetReturningFunctions
+   .
    
     4.26) Pochemu ya ne mogu nadezhno sozdavat'/udalyat' vremennye tablicy v
     funkciyah PL/PgSQL?
