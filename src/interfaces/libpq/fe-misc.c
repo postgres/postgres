@@ -25,7 +25,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/interfaces/libpq/fe-misc.c,v 1.85 2002/10/24 23:35:55 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/interfaces/libpq/fe-misc.c,v 1.85.2.1 2003/08/04 17:25:28 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -553,7 +553,18 @@ retry3:
 	 * file is ready. Grumble.	Fortunately, we don't expect this path to
 	 * be taken much, since in normal practice we should not be trying to
 	 * read data unless the file selected for reading already.
+	 *
+	 * In SSL mode it's even worse: SSL_read() could say WANT_READ and then
+	 * data could arrive before we make the pqReadReady() test.  So we must
+	 * play dumb and assume there is more data, relying on the SSL layer to
+	 * detect true EOF.
 	 */
+
+#ifdef USE_SSL
+	if (conn->ssl)
+		return 0;
+#endif
+
 	switch (pqReadReady(conn))
 	{
 		case 0:
