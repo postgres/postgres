@@ -174,8 +174,10 @@ make_name(void)
 %token		SQL_VALUE SQL_VAR SQL_WHENEVER
 
 /* C token */
-%token		S_AND S_ANYTHING S_AUTO S_CONST S_EXTERN S_LSHIFT
-%token		S_MEMBER S_OR S_REGISTER S_RSHIFT S_STATIC S_VOLATILE
+%token		S_ADD S_AND S_ANYTHING S_AUTO S_CONST S_DEC S_DIV S_DOTPOINT
+%token		S_EQUAL S_EXTERN S_INC S_LSHIFT
+%token		S_MEMPOINT S_MEMBER S_MOD S_MUL S_NEQUAL S_OR
+%token		S_REGISTER S_RSHIFT S_STATIC S_SUB S_VOLATILE
 
 /* I need this and don't know where it is defined inside the backend */
 %token		TYPECAST
@@ -5298,17 +5300,28 @@ c_anything:  IDENT 	{ $$ = $1; }
 	| '-'		{ $$ = make_str("-"); }
 	| '/'		{ $$ = make_str("/"); }
 	| '%'		{ $$ = make_str("%"); }
+	| NULL_P	{ $$ = make_str("NULL"); }
+	| S_ADD		{ $$ = make_str("+="); } 
 	| S_AND		{ $$ = make_str("&&"); } 
 	| S_ANYTHING	{ $$ = make_name(); }
 	| S_AUTO	{ $$ = make_str("auto"); }
 	| S_CONST	{ $$ = make_str("const"); }
+	| S_DEC		{ $$ = make_str("--"); } 
+	| S_DIV		{ $$ = make_str("/="); } 
+	| S_DOTPOINT	{ $$ = make_str(".*"); } 
+	| S_EQUAL	{ $$ = make_str("=="); } 
 	| S_EXTERN	{ $$ = make_str("extern"); }
+	| S_INC		{ $$ = make_str("++"); } 
 	| S_LSHIFT	{ $$ = make_str("<<"); } 
 	| S_MEMBER	{ $$ = make_str("->"); } 
+	| S_MEMPOINT	{ $$ = make_str("->*"); } 
+	| S_MUL		{ $$ = make_str("*="); } 
+	| S_NEQUAL	{ $$ = make_str("!="); } 
 	| S_OR		{ $$ = make_str("||"); } 
 	| S_REGISTER	{ $$ = make_str("register"); }
 	| S_RSHIFT	{ $$ = make_str(">>"); } 
 	| S_STATIC	{ $$ = make_str("static"); }
+	| S_SUB		{ $$ = make_str("-="); } 
 	| SQL_BOOL	{ $$ = make_str("bool"); }
 	| SQL_ENUM	{ $$ = make_str("enum"); }
         | SQL_INT	{ $$ = make_str("int"); }

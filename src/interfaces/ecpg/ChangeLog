@@ -982,5 +982,8 @@ Sun Oct 22 15:35:53 CEST 2000
 
 	- Fixed typos in descriptor.c.
 
+Wed Oct 25 08:53:07 CEST 2000
+
+	- Added some more C constructs to the parser.
 	- Set ecpg version to 2.8.0. 
 	- Set library version to 3.2.0.
