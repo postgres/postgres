@@ -1,4 +1,4 @@
-<!-- $Header: /cvsroot/pgsql/doc/src/sgml/array.sgml,v 1.17 2001/11/28 20:49:09 petere Exp $ -->
+<!-- $Header: /cvsroot/pgsql/doc/src/sgml/array.sgml,v 1.18 2001/11/29 21:02:41 tgl Exp $ -->
 
 <chapter id="arrays">
  <title>Arrays</title>
@@ -247,5 +247,37 @@ SELECT * FROM sal_emp WHERE pay_by_quarter **= 10000;
    not.  Fixing this is on the TODO list.
   </para>
  </note>
+
+ <formalpara>
+  <title>Quoting array elements.</title>
+  <para>
+   As shown above, when writing an array literal value you may write double
+   quotes around any individual array
+   element.  You <emphasis>must</> do so if the element value would otherwise
+   confuse the array-value parser.  For example, elements containing curly
+   braces, commas, double quotes, backslashes, or white space must be
+   double-quoted.  To put a double quote or backslash in an array element
+   value, precede it with a backslash.
+  </para>
+ </formalpara>
+
+ <tip>
+  <para>
+   Remember that what you write in an SQL query will first be interpreted
+   as a string literal, and then as an array.  This doubles the number of
+   backslashes you need.  For example, to insert a <type>text</> array
+   value containing a backslash and a double quote, you'd need to write
+<programlisting>
+INSERT ... VALUES ('{"\\\\","\\""}');
+</programlisting>
+   The string-literal processor removes one level of backslashes, so that
+   what arrives at the array-value parser looks like <literal>{"\\","\""}</>.
+   In turn, the strings fed to the <type>text</> datatype's input routine
+   become <literal>\</> and <literal>"</> respectively.  (If we were working
+   with a datatype whose input routine also treated backslashes specially,
+   <type>bytea</> for example, we might need as many as eight backslashes
+   in the query to get one backslash into the stored array element.)
+  </para>
+ </tip>
 
 </chapter>

@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/arrayfuncs.c,v 1.71 2001/10/25 05:49:43 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/arrayfuncs.c,v 1.72 2001/11/29 21:02:41 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -346,6 +346,7 @@ ArrayCount(char *str, int *dim, int typdelim)
  *	 If element type is pass-by-ref, the Datums point to palloc'd values.
  *	 *nbytes is set to the amount of data space needed for the array,
  *	 including alignment padding but not including array header overhead.
+ *	 CAUTION: the contents of "arrayStr" may be modified!
  *---------------------------------------------------------------------------
  */
 static Datum *
@@ -564,16 +565,13 @@ array_out(PG_FUNCTION_ARGS)
 	char	   *p,
 			   *tmp,
 			   *retval,
-			  **values,
-				delim[2];
+			  **values;
+	bool	   *needquotes;
 	int			nitems,
 				overall_length,
 				i,
 				j,
 				k,
-#ifndef TCL_ARRAYS
-				l,
-#endif
 				indx[MAXDIM];
 	int			ndim,
 			   *dim;
@@ -581,26 +579,29 @@ array_out(PG_FUNCTION_ARGS)
 	system_cache_lookup(element_type, false, &typlen, &typbyval,
 						&typdelim, &typelem, &typoutput, &typalign);
 	fmgr_info(typoutput, &outputproc);
-	sprintf(delim, "%c", typdelim);
 	ndim = ARR_NDIM(v);
 	dim = ARR_DIMS(v);
 	nitems = ArrayGetNItems(ndim, dim);
 
 	if (nitems == 0)
 	{
-		retval = (char *) palloc(3);
-		retval[0] = '{';
-		retval[1] = '}';
-		retval[2] = '\0';
+		retval = pstrdup("{}");
 		PG_RETURN_CSTRING(retval);
 	}
 
+	/*
+	 * Convert all values to string form, count total space needed
+	 * (including any overhead such as escaping backslashes),
+	 * and detect whether each item needs double quotes.
+	 */
+	values = (char **) palloc(nitems * sizeof(char *));
+	needquotes = (bool *) palloc(nitems * sizeof(bool));
 	p = ARR_DATA_PTR(v);
 	overall_length = 1;			/* [TRH] don't forget to count \0 at end. */
-	values = (char **) palloc(nitems * sizeof(char *));
 	for (i = 0; i < nitems; i++)
 	{
 		Datum		itemvalue;
+		bool		nq;
 
 		itemvalue = fetch_att(p, typbyval, typlen);
 		values[i] = DatumGetCString(FunctionCall3(&outputproc,
@@ -612,20 +613,32 @@ array_out(PG_FUNCTION_ARGS)
 		else
 			p += INTALIGN(*(int32 *) p);
 
-		/*
-		 * For the pair of double quotes
-		 */
-		if (!typbyval)
-			overall_length += 2;
-
+		/* count data plus backslashes; detect chars needing quotes */
+		nq = (values[i][0] == '\0');	/* force quotes for empty string */
 		for (tmp = values[i]; *tmp; tmp++)
 		{
+			char	ch = *tmp;
+
 			overall_length += 1;
+			if (ch == '"' || ch == '\\')
+			{
+				nq = true;
 #ifndef TCL_ARRAYS
-			if (*tmp == '"')
 				overall_length += 1;
 #endif
+			}
+			else if (ch == '{' || ch == '}' || ch == typdelim ||
+					 isspace((unsigned char) ch))
+				nq = true;
 		}
+
+		needquotes[i] = nq;
+
+		/* Count the pair of double quotes, if needed */
+		if (nq)
+			overall_length += 2;
+
+		/* and the comma */
 		overall_length += 1;
 	}
 
@@ -634,41 +647,41 @@ array_out(PG_FUNCTION_ARGS)
 	 */
 	for (i = j = 0, k = 1; i < ndim; k *= dim[i++], j += k);
 
-	p = (char *) palloc(overall_length + 2 * j);
-	retval = p;
+	retval = (char *) palloc(overall_length + 2 * j);
+	p = retval;
 
-	strcpy(p, "{");
+#define APPENDSTR(str)	(strcpy(p, (str)), p += strlen(p))
+#define APPENDCHAR(ch)	(*p++ = (ch), *p = '\0')
+
+	APPENDCHAR('{');
 	for (i = 0; i < ndim; indx[i++] = 0);
 	j = 0;
 	k = 0;
 	do
 	{
 		for (i = j; i < ndim - 1; i++)
-			strcat(p, "{");
+			APPENDCHAR('{');
 
-		/*
-		 * Surround anything that is not passed by value in double quotes.
-		 * See above for more details.
-		 */
-		if (!typbyval)
+		if (needquotes[k])
 		{
-			strcat(p, "\"");
+			APPENDCHAR('"');
 #ifndef TCL_ARRAYS
-			l = strlen(p);
 			for (tmp = values[k]; *tmp; tmp++)
 			{
-				if (*tmp == '"')
-					p[l++] = '\\';
-				p[l++] = *tmp;
+				char	ch = *tmp;
+
+				if (ch == '"' || ch == '\\')
+					*p++ = '\\';
+				*p++ = ch;
 			}
-			p[l] = '\0';
+			*p = '\0';
 #else
-			strcat(p, values[k]);
+			APPENDSTR(values[k]);
 #endif
-			strcat(p, "\"");
+			APPENDCHAR('"');
 		}
 		else
-			strcat(p, values[k]);
+			APPENDSTR(values[k]);
 		pfree(values[k++]);
 
 		for (i = ndim - 1; i >= 0; i--)
@@ -676,16 +689,21 @@ array_out(PG_FUNCTION_ARGS)
 			indx[i] = (indx[i] + 1) % dim[i];
 			if (indx[i])
 			{
-				strcat(p, delim);
+				APPENDCHAR(typdelim);
 				break;
 			}
 			else
-				strcat(p, "}");
+				APPENDCHAR('}');
 		}
 		j = i;
 	} while (j != -1);
 
+#undef APPENDSTR
+#undef APPENDCHAR
+
 	pfree(values);
+	pfree(needquotes);
+
 	PG_RETURN_CSTRING(retval);
 }
 
