@@ -10,7 +10,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/access/transam/xact.c,v 1.178 2004/08/11 04:07:15 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/access/transam/xact.c,v 1.179 2004/08/25 18:43:42 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -1716,11 +1716,16 @@ CommitTransactionCommand(void)
 			/*
 			 * We were issued a RELEASE command, so we end the current
 			 * subtransaction and return to the parent transaction.
+			 *
+			 * Since RELEASE can exit multiple levels of subtransaction,
+			 * we must loop here until we get out of all SUBEND'ed levels.
 			 */
 		case TBLOCK_SUBEND:
-			CommitSubTransaction();
-			PopTransaction();
-			s = CurrentTransactionState;		/* changed by pop */
+			do {
+				CommitSubTransaction();
+				PopTransaction();
+				s = CurrentTransactionState; /* changed by pop */
+			} while (s->blockState == TBLOCK_SUBEND);
 			break;
 
 			/*
@@ -2411,9 +2416,10 @@ void
 ReleaseSavepoint(List *options)
 {
 	TransactionState	s = CurrentTransactionState;
-	TransactionState	target = s;
-	char			   *name = NULL;
+	TransactionState target,
+					 xact;
 	ListCell		   *cell;
+	char			   *name = NULL;
 
 	/*
 	 * Check valid block state transaction status.
@@ -2462,11 +2468,10 @@ ReleaseSavepoint(List *options)
 
 	Assert(PointerIsValid(name));
 
-	while (target != NULL)
+	for (target = s; PointerIsValid(target); target = target->parent)
 	{
 		if (PointerIsValid(target->name) && strcmp(target->name, name) == 0)
 			break;
-		target = target->parent;
 	}
 
 	if (!PointerIsValid(target))
@@ -2474,7 +2479,27 @@ ReleaseSavepoint(List *options)
 				(errcode(ERRCODE_S_E_INVALID_SPECIFICATION),
 				 errmsg("no such savepoint")));
 
-	CommitTransactionToLevel(target->nestingLevel);
+	/* disallow crossing savepoint level boundaries */
+	if (target->savepointLevel != s->savepointLevel)
+		ereport(ERROR,
+				(errcode(ERRCODE_S_E_INVALID_SPECIFICATION),
+				 errmsg("no such savepoint")));
+
+	/*
+	 * Mark "commit pending" all subtransactions up to the target
+	 * subtransaction.  The actual commits will happen when control
+	 * gets to CommitTransactionCommand.
+	 */
+	xact = CurrentTransactionState;
+	for (;;)
+	{
+		Assert(xact->blockState == TBLOCK_SUBINPROGRESS);
+		xact->blockState = TBLOCK_SUBEND;
+		if (xact == target)
+			break;
+		xact = xact->parent;
+		Assert(PointerIsValid(xact));
+	}
 }
 
 /*
@@ -2969,18 +2994,13 @@ CommitSubTransaction(void)
 
 	CallXactCallbacks(XACT_EVENT_COMMIT_SUB, s->parent->transactionIdData);
 
-	/*
-	 * Note that we just release the resource owner's resources and don't
-	 * delete it.  This is because locks are not actually released here.
-	 * The owner object continues to exist as a child of its parent owner
-	 * (namely my parent transaction's resource owner), and the locks
-	 * effectively become that owner object's responsibility.
-	 */
 	ResourceOwnerRelease(s->curTransactionOwner,
 						 RESOURCE_RELEASE_BEFORE_LOCKS,
 						 true, false);
 	AtEOSubXact_Inval(true);
-	/* we can skip the LOCKS phase */
+	ResourceOwnerRelease(s->curTransactionOwner,
+						 RESOURCE_RELEASE_LOCKS,
+						 true, false);
 	ResourceOwnerRelease(s->curTransactionOwner,
 						 RESOURCE_RELEASE_AFTER_LOCKS,
 						 true, false);
@@ -3003,6 +3023,7 @@ CommitSubTransaction(void)
 
 	CurrentResourceOwner = s->parent->curTransactionOwner;
 	CurTransactionResourceOwner = s->parent->curTransactionOwner;
+	ResourceOwnerDelete(s->curTransactionOwner);
 	s->curTransactionOwner = NULL;
 
 	AtSubCommit_Memory();

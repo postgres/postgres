@@ -14,7 +14,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/utils/resowner/resowner.c,v 1.2 2004/07/31 00:45:40 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/utils/resowner/resowner.c,v 1.3 2004/08/25 18:43:43 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -277,25 +277,40 @@ ResourceOwnerReleaseInternal(ResourceOwner owner,
 			/* Mark object as holding no locks, just for sanity */
 			owner->nlocks = 0;
 		}
-		else if (!isCommit)
+		else
 		{
 			/*
 			 * Release locks retail.  Note that LockRelease will remove
 			 * the lock entry from my list, so I just have to iterate till
 			 * there are none.  Also note that if we are committing a
-			 * subtransaction, we do NOT release its locks yet.
+			 * subtransaction, we do NOT release its locks yet, but transfer
+			 * them to the parent.
 			 *
 			 * XXX as above, this is a bit inefficient but probably not worth
 			 * the trouble to optimize more.
 			 */
+			Assert(owner->parent != NULL);
 			while (owner->nlocks > 0)
 			{
 				LockIdData *lockid = &owner->locks[owner->nlocks - 1];
 
-				LockRelease(lockid->locktag.lockmethodid,
-							&lockid->locktag,
-							lockid->xid,
-							lockid->lockmode);
+				if (isCommit)
+				{
+					ResourceOwnerEnlargeLocks(owner->parent);
+					ResourceOwnerRememberLock(owner->parent,
+											  &lockid->locktag,
+											  lockid->xid,
+											  lockid->lockmode);
+					owner->nlocks--;
+				}
+				else
+				{
+					LockRelease(lockid->locktag.lockmethodid,
+								&lockid->locktag,
+								lockid->xid,
+								lockid->lockmode);
+					/* LockRelease will have removed the entry from list */
+				}
 			}
 		}
 	}

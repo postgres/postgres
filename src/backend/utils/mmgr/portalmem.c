@@ -12,7 +12,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/utils/mmgr/portalmem.c,v 1.68 2004/08/02 21:42:18 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/utils/mmgr/portalmem.c,v 1.69 2004/08/25 18:43:43 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -354,8 +354,7 @@ PortalDrop(Portal portal, bool isTopCommit)
 		ResourceOwnerRelease(portal->resowner,
 							 RESOURCE_RELEASE_AFTER_LOCKS,
 							 isCommit, false);
-		if (!isCommit)
-			ResourceOwnerDelete(portal->resowner);
+		ResourceOwnerDelete(portal->resowner);
 	}
 	portal->resowner = NULL;
 
