@@ -1,6 +1,6 @@
 TODO list for PostgreSQL
 ========================
-Last updated:		Thu Nov 22 12:18:38 EST 2001
+Last updated:		Thu Nov 22 20:48:31 EST 2001
 
 Current maintainer:	Bruce Momjian (pgman@candle.pha.pa.us)
 
@@ -162,11 +162,6 @@ COMMANDS
 * Add BETWEEN ASYMMETRIC/SYMMETRIC
 * Remove LIMIT #,# and force use LIMIT and OFFSET clauses in 7.3 (Bruce)
 * Allow LIMIT/OFFSET to use expressions
-* Allow PL/PgSQL's RAISE function to take expressions
-* PL/PgSQL does not handle quoted mixed-case identifiers
-* Change PL/PgSQL to use palloc() instead of malloc()
-* Add untrusted version of plpython
-* Add plsh server-side shell language (Peter E)
 * -Allow GRANT/REVOKE to handle multiple user/group names
 * -Allow CREATEUSER/CREATEDB ordering in CREATE/ALTER USER (Vince)
 * Disallow TRUNCATE on tables that are involved in referential constraints
@@ -215,6 +210,12 @@ COMMANDS
 	o Add SET PERFORMANCE_TIPS option to suggest INDEX, VACUUM, VACUUM
 	  ANALYZE, and CLUSTER
 	o Add SHOW command to see locale
+SERVER-SIDE LANGUAGES
+	o Allow PL/PgSQL's RAISE function to take expressions
+	o PL/PgSQL does not handle quoted mixed-case identifiers
+	o Change PL/PgSQL to use palloc() instead of malloc()
+	o Add untrusted version of plpython
+	o Add plsh server-side shell language (Peter E)
 
 CLIENTS
 
@@ -270,6 +271,8 @@ REFERENTIAL INTEGRITY
 * Allow user to control trigger firing order
 * Change foreign key constraint for array -> element to mean element
   in array
+* Fix foreign key constraints to not error on intermediate states
+  of the database (Stephan)
 
 DEPENDENCY CHECKING
 
