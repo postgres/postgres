@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/runtime.sgml,v 1.219 2003/11/16 03:38:34 tgl Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/runtime.sgml,v 1.220 2003/11/16 03:58:10 tgl Exp $
 -->
 
 <Chapter Id="runtime">
@@ -3071,9 +3071,9 @@ kernel.shmmax = 134217728
       <indexterm><primary>MacOS X</><secondary>IPC configuration</></>
       <listitem>
        <para>
-        Edit the file
-        <filename>/System/Library/StartupItems/SystemTuning/SystemTuning
-        </> and change the following values:
+        In OS X 10.2 and earlier, edit the file
+        <filename>/System/Library/StartupItems/SystemTuning/SystemTuning</>
+	and change the values in the following commands:
 <programlisting>
 sysctl -w kern.sysv.shmmax
 sysctl -w kern.sysv.shmmin
@@ -3081,6 +3081,8 @@ sysctl -w kern.sysv.shmmni
 sysctl -w kern.sysv.shmseg
 sysctl -w kern.sysv.shmall
 </programlisting>
+        In OS X 10.3, these commands have been moved to <filename>/etc/rc</>
+	and must be edited there.
        </para>
       </listitem>
      </varlistentry>
