@@ -1,4 +1,4 @@
-PostgreSQL 6.1                   Wed May 14 15:59:24 EDT 1997
+PostgreSQL 6.1                   Tue Jun  3 16:32:44 EDT 1997
 -------------------------------------------------------------
 
 A dump/restore is required for those wishing to migrate data from
@@ -98,8 +98,6 @@ more shared library support
 c++ include file cleanup(Bruce)
 warn about buggy flex(Bruce)
 DG-UX, Ultrix, Irix, AIX portability fixes
-
-
 PostgreSQL 6.0                   Wed Jan 29 00:19:54 EST 1997
 -------------------------------------------------------------
 

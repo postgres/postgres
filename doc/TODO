@@ -1,7 +1,7 @@
 ====================================================
 TODO list (FAQ) for PostgreSQL
 ====================================================
-last updated:		Tue Jun  3 16:22:07 EDT 1997
+last updated:		Tue Jun  3 16:30:57 EDT 1997
 
 current maintainer:	Bruce Momjian (maillist@candle.pha.pa.us)
 
@@ -52,7 +52,6 @@ CREATE VIEW requires super-user priviledge
 SELECT a[1] FROM test fails, it needs test.a[1]
 INSERT INTO ... SELECT DISTINCT ... generates error on DISTINCT
 pg_database.datdba is oid, should be int4
-fix array diffs in regression test
 can lo_export()/lo_import() read/write anywhere, causing a security problem?
 -SELECT ... INTO TABLE ... with varchar()/char() types have zero-length fields
 Fix UPDATE key_table SET keyval=max(reftab.NUM)+1 WHERE tblname='reftab'
@@ -116,7 +115,7 @@ can't reduce index file size with vacuum
 Remove restriction that ORDER BY field must be in SELECT list(?)
 Allow queries about owner of datbases, tables like:
         SELECT u.usesysid FROM postgres.pg_user u;
-DROP AGGREGATE should take in basetype as an arg(Darren)
+-DROP AGGREGATE should take in basetype as an arg(Darren)
 Add word index for text fields, maybe with trigrams, i.e.:
     ' (cat | dog) & ! fox ' meaning text has cat or dog, but not fox
 -Add common-sense constant type promotions(Bruce)
@@ -128,7 +127,7 @@ Remove stale files upon startup(Vivek)
 Add command to show privileges
 Allow INSERT INTO ... SELECT to convert column types
 Add syslog functionality
-Allow aggregate for all types, like count(Darren)
+-Allow aggregate for all types, like count(Darren)
 Improve optimizer plan choice(Darren)
 Add STDDEV/VARIANCE() function for standard deviation computation/variance
 Add table/column/function discription table indexed by oid
@@ -162,7 +161,7 @@ Allow LIKE/wildcard matches to use indexes if the wildcard character is not firs
 Add FILLFACTOR to index creation
 Allow indexes to be used with OR clauses(Vadim)
 -Add column optimization statistics to vacuum(Bruce)
--Change pg_attribute.attnvals name to attdispursion and change type float4
+Change pg_attribute.attnvals name to attdispursion and change type float4
 	update pg_statistic table to remove operator column
 
 DOCUMENTATION
@@ -174,7 +173,6 @@ add DECLARE manual page
 
 PORTABILITY
 -----------
-Change c.h "Index" and "bool" so they do not conflict with c++
  
 
 ---------------------------------------------------------------------------
