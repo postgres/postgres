@@ -1,7 +1,7 @@
 
                 Frequently Asked Questions (FAQ) for PostgreSQL
                                        
-   Last updated: Wed Jan 19 14:45:22 EST 2005
+   Last updated: Sat Jan 29 21:05:17 EST 2005
    
    Current maintainer: Bruce Momjian (pgman@candle.pha.pa.us)
    
@@ -956,32 +956,16 @@ BYTEA           bytea           variable-length byte array (null-byte safe)
    
     4.15) What is an OID? What is a TID?
     
-   OIDs are PostgreSQL's answer to unique row ids. Every row that is
-   created in PostgreSQL gets a unique OID. All OIDs generated during
-   initdb are less than 16384 (from include/access/transam.h). All
-   user-created OIDs are equal to or greater than this. By default, all
-   these OIDs are unique not only within a table or database, but unique
-   within the entire PostgreSQL installation.
+   Every row that is created in PostgreSQL gets a unique OID unless
+   created WITHOUT OIDS. OIDs are autotomatically assigned unique 4-byte
+   integers that are unique across the entire installation. However, they
+   overflow at 4 billion, and then the OIDs start being duplicated.
+   PostgreSQL uses OIDs to link its internal system tables together.
    
-   PostgreSQL uses OIDs in its internal system tables to link rows
-   between tables. These OIDs can be used to identify specific user rows
-   and used in joins. It is recommended you use column type OID to store
-   OID values. You can create an index on the OID field for faster
-   access.
-   
-   OIDs are assigned to all new rows from a central area that is used by
-   all databases. If you want to change the OID to something else, or if
-   you want to make a copy of the table, with the original OIDs, there is
-   no reason you can't do it:
-        CREATE TABLE new_table(mycol int);
-        SELECT oid AS old_oid, mycol INTO tmp_table FROM old_table;
-        COPY tmp_table TO '/tmp/pgtable';
-        COPY new_table WITH OIDS FROM '/tmp/pgtable';
-        DROP TABLE tmp_table;
-
-   OIDs are stored as 4-byte integers, and will overflow at 4 billion. No
-   one has reported this ever happening, and we plan to have the limit
-   removed before anyone does.
+   To uniquely number columns in user tables, it is best to use SERIAL
+   rather than OIDs because SERIAL sequences are unique only within a
+   single table. and are therefore less likely to overflow. SERIAL8 is
+   available for storing eight-byte sequence values.
    
    TIDs are used to identify specific physical rows with block and offset
    values. TIDs change after rows are modified or reloaded. They are used
