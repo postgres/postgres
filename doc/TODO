@@ -1,6 +1,6 @@
 TODO list for PostgreSQL
 ========================
-Last updated:		Fri Mar 14 15:19:49 EST 2003
+Last updated:		Mon Mar 17 13:49:58 EST 2003
 
 Current maintainer:	Bruce Momjian (pgman@candle.pha.pa.us)
 
@@ -166,6 +166,7 @@ Commands
 * Add ROLLUP, CUBE, GROUPING SETS options to GROUP BY
 * Add schema option to createlang
 * Allow savepoints / nested transactions [transactions] (Bruce)
+* Allow UPDATE tab SET ROW (col, ...) = (...) for updating multiple columns
 
 
 * ALTER
