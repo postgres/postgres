@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2004, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/backend/access/transam/xlog.c,v 1.171 2004/10/07 15:21:51 momjian Exp $
+ * $PostgreSQL: pgsql/src/backend/access/transam/xlog.c,v 1.172 2004/10/09 02:46:40 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -1513,8 +1513,7 @@ XLogFileInit(uint32 log, uint32 seg,
 	 * up pre-creating an extra log segment.  That seems OK, and better
 	 * than holding the lock throughout this lengthy process.
 	 */
-	snprintf(tmppath, MAXPGPATH, "%s/xlogtemp.%d",
-			 XLogDir, (int) getpid());
+	snprintf(tmppath, MAXPGPATH, "%s/xlogtemp.%d", XLogDir, getpid());
 
 	unlink(tmppath);
 
@@ -1634,8 +1633,7 @@ XLogFileCopy(uint32 log, uint32 seg,
 	/*
 	 * Copy into a temp file name.
 	 */
-	snprintf(tmppath, MAXPGPATH, "%s/xlogtemp.%d",
-			 XLogDir, (int) getpid());
+	snprintf(tmppath, MAXPGPATH, "%s/xlogtemp.%d", XLogDir, getpid());
 
 	unlink(tmppath);
 
@@ -2900,8 +2898,7 @@ writeTimeLineHistory(TimeLineID newTLI, TimeLineID parentTLI,
 	/*
 	 * Write into a temp file name.
 	 */
-	snprintf(tmppath, MAXPGPATH, "%s/xlogtemp.%d",
-			 XLogDir, (int) getpid());
+	snprintf(tmppath, MAXPGPATH, "%s/xlogtemp.%d", XLogDir, getpid());
 
 	unlink(tmppath);
 

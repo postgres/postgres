@@ -1,4 +1,4 @@
-/* $PostgreSQL: pgsql/src/interfaces/ecpg/ecpglib/misc.c,v 1.22 2004/08/29 05:06:59 momjian Exp $ */
+/* $PostgreSQL: pgsql/src/interfaces/ecpg/ecpglib/misc.c,v 1.23 2004/10/09 02:46:42 momjian Exp $ */
 
 #define POSTGRES_ECPG_INTERNAL
 #include "postgres_fe.h"
@@ -253,7 +253,7 @@ ECPGlog(const char *format,...)
 			return;
 		}
 
-		sprintf(f, "[%d]: %s", (int) getpid(), format);
+		sprintf(f, "[%d]: %s", getpid(), format);
 
 		va_start(ap, format);
 		vfprintf(debugstream, f, ap);
