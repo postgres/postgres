@@ -6,7 +6,7 @@
 # Copyright (c) 1994, Regents of the University of California
 #
 # IDENTIFICATION
-#    $Header: /cvsroot/pgsql/src/interfaces/libpq++/Attic/Makefile.in,v 1.25 2000/05/29 05:45:50 tgl Exp $
+#    $Header: /cvsroot/pgsql/src/interfaces/libpq++/Attic/Makefile.in,v 1.26 2000/06/06 22:01:06 petere Exp $
 #
 #-------------------------------------------------------------------------
 
@@ -14,7 +14,7 @@ NAME= pq++
 SO_MAJOR_VERSION= 3
 SO_MINOR_VERSION= 1
 
-SRCDIR= @top_srcdir@
+SRCDIR= ../..
 include $(SRCDIR)/Makefile.global
 
 CXX=@CXX@

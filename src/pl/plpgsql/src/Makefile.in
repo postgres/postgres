@@ -4,7 +4,7 @@
 #    Makefile for the plpgsql shared object
 #
 # IDENTIFICATION
-#    $Header: /cvsroot/pgsql/src/pl/plpgsql/src/Attic/Makefile.in,v 1.23 2000/05/29 05:45:53 tgl Exp $
+#    $Header: /cvsroot/pgsql/src/pl/plpgsql/src/Attic/Makefile.in,v 1.24 2000/06/06 22:01:12 petere Exp $
 #
 #-------------------------------------------------------------------------
 
@@ -12,7 +12,7 @@ NAME= plpgsql
 SO_MAJOR_VERSION= 1
 SO_MINOR_VERSION= 0
 
-SRCDIR= @top_srcdir@
+SRCDIR= ../../..
 include $(SRCDIR)/Makefile.global
 
 # If using flex, ask for a case-insensitive, lex-compatible lexer.

@@ -25,53 +25,51 @@
 # Select make to use --- default gmake, can be overridden by env var
 MAKE=${MAKE:-gmake}
 
-cd src
-
 # Configure ... should we run autoconf here???
 
 ./configure
 
 # Generate parser's yacc and lex files
 
-cd backend/parser
+cd src/backend/parser
 rm -f gram.c parse.h scan.c
 $MAKE gram.c parse.h scan.c
-cd ../..
+cd ../../..
 
 # Generate bootstrap parser's yacc and lex files
 
-cd backend/bootstrap
+cd src/backend/bootstrap
 rm -f bootstrap_tokens.h bootparse.c bootscanner.c
 $MAKE bootstrap_tokens.h bootparse.c bootscanner.c
-cd ../..
+cd ../../..
 
 # Generate configuration file scanner
 
-cd backend/utils/misc
+cd src/backend/utils/misc
 rm -f guc-file.c lex.yy.c
 $MAKE guc-file.c
-cd ../../..
+cd ../../../..
 
 # Generate ecpg preprocessor's yacc and lex files
 
-cd interfaces/ecpg/preproc
+cd src/interfaces/ecpg/preproc
 rm -f preproc.c preproc.h pgc.c
 $MAKE preproc.c preproc.h pgc.c
-cd ../../..
+cd ../../../..
 
 # Generate plpgsql's yacc and lex files
 
-cd pl/plpgsql/src
+cd src/pl/plpgsql/src
 rm -f pl_scan.c pl.tab.h pl_gram.c
 $MAKE pl_scan.c pl.tab.h pl_gram.c
-cd ../../..
+cd ../../../..
 
 # Generate psql's help on SQL command from the SGML docs
 
-cd bin/psql
+cd src/bin/psql
 rm -f sql_help.h
 $MAKE sql_help.h
-cd ../..
+cd ../../..
 
 # Clean up
 

@@ -1,11 +1,10 @@
 dnl Process this file with autoconf to produce a configure script.
-AC_INIT(backend/access/common/heaptuple.c)
+AC_INIT(src/backend/access/common/heaptuple.c)
 AC_PREFIX_DEFAULT(/usr/local/pgsql)
-AC_CONFIG_HEADER(include/config.h)
+AC_CONFIG_HEADER(src/include/config.h)
 
-dnl Autoconf 2.12, at least, generates a useless relative path to install-sh
-dnl unless we do this.
-AC_CONFIG_AUX_DIR(`pwd`)
+AC_PREREQ(2.13)
+AC_CONFIG_AUX_DIR(config)
 
 AC_CANONICAL_HOST
 
@@ -58,14 +57,14 @@ esac
 
 PORTNAME=${os}
 CPU=${host_cpu}
-AC_LINK_FILES(backend/port/dynloader/${os}.c, backend/port/dynloader.c)
-AC_LINK_FILES(backend/port/dynloader/${os}.h, include/dynloader.h)
-AC_LINK_FILES(include/port/${os}.h, include/os.h)
-AC_LINK_FILES(makefiles/Makefile.${os}, Makefile.port)
+AC_LINK_FILES(src/backend/port/dynloader/${os}.c, src/backend/port/dynloader.c)
+AC_LINK_FILES(src/backend/port/dynloader/${os}.h, src/include/dynloader.h)
+AC_LINK_FILES(src/include/port/${os}.h, src/include/os.h)
+AC_LINK_FILES(src/makefiles/Makefile.${os}, src/Makefile.port)
 
 if test "X$need_tas" = "Xyes"
 then
-	AC_LINK_FILES(backend/port/tas/${tas_file}, backend/port/tas.s)
+	AC_LINK_FILES(src/backend/port/tas/${tas_file}, src/backend/port/tas.s)
 	TAS=tas.o
 	AC_SUBST(TAS)
 fi
@@ -94,7 +93,7 @@ AC_ARG_WITH(template,
 host="`echo $host | tr 'ABCDEFGHIJKLMNOPQRSTUVWXYZ' 'abcdefghijklmnopqrstuvwxyz'`"
 
 # First, try for a template exactly matching $host
-if test -f "template/$host"
+if test -f "src/template/$host"
 then TEMPLATE="$host"
 else
     # Scan template/.similar for a rule that tells us which template to use.
@@ -117,7 +116,7 @@ else
 	then
 	    echo "$LINE" | sed 's/^.*=//' > $TMPFILE
 	fi
-    done <template/.similar
+    done <src/template/.similar
     GUESS=`cat $TMPFILE`
     rm -f $TMPFILE
     if test "$GUESS"
@@ -131,7 +130,7 @@ fi
 AC_MSG_RESULT($TEMPLATE)
 
 export TEMPLATE
-if test ! -f "template/$TEMPLATE"; then
+if test ! -f "src/template/$TEMPLATE"; then
 	echo ""
 	echo "$TEMPLATE does not exist"
 	echo ""
@@ -152,7 +151,7 @@ dnl the IDENTIFIER: lines translated, then source it.
 
 [
 rm -f conftest.sh
-sed 's/^\([A-Za-z_]*\):\(.*\)$/\1="\2"/' "template/$TEMPLATE" >conftest.sh
+sed 's/^\([A-Za-z_]*\):\(.*\)$/\1="\2"/' "src/template/$TEMPLATE" >conftest.sh
 . ./conftest.sh
 rm -f conftest.sh
 ]
@@ -381,10 +380,10 @@ dnl Link in the port and template directories
 dnl to help build a "standalone ODBC" tar file
 if test "X$USE_ODBC" = "Xtrue"
 then
-   AC_LINK_FILES(include/port, interfaces/odbc/port)
-   AC_LINK_FILES(makefiles, interfaces/odbc/makefiles)
-   AC_LINK_FILES(template, interfaces/odbc/template)
-   AC_LINK_FILES(include/config.h, interfaces/odbc/config.h)
+   AC_LINK_FILES(src/include/port, src/interfaces/odbc/port)
+   AC_LINK_FILES(src/makefiles, src/interfaces/odbc/makefiles)
+   AC_LINK_FILES(src/template, src/interfaces/odbc/template)
+   AC_LINK_FILES(src/include/config.h, src/interfaces/odbc/config.h)
 
    AC_MSG_CHECKING(setting ODBCINST)
    AC_ARG_WITH(
@@ -1365,26 +1364,27 @@ dnl Finally ready to produce output files ...
 
 AC_OUTPUT(
 	GNUmakefile
-	Makefile.global
-	backend/port/Makefile
-	backend/catalog/genbki.sh
-	backend/utils/Gen_fmgrtab.sh
-	bin/pg_dump/Makefile
-	bin/pg_version/Makefile
-	bin/pgtclsh/mkMakefile.tcldefs.sh
-	bin/pgtclsh/mkMakefile.tkdefs.sh
-	bin/psql/Makefile
-	include/version.h
-	interfaces/libpq/Makefile
-	interfaces/ecpg/lib/Makefile
-	interfaces/ecpg/preproc/Makefile
-	interfaces/libpq++/Makefile
-	interfaces/libpgeasy/Makefile
-	interfaces/libpgtcl/Makefile
-	interfaces/odbc/GNUmakefile
-	interfaces/odbc/Makefile.global
-	pl/plpgsql/src/Makefile
-	pl/plpgsql/src/mklang.sql
-	pl/tcl/mkMakefile.tcldefs.sh
-	test/regress/GNUmakefile
+	src/GNUmakefile
+	src/Makefile.global
+	src/backend/port/Makefile
+	src/backend/catalog/genbki.sh
+	src/backend/utils/Gen_fmgrtab.sh
+	src/bin/pg_dump/Makefile
+	src/bin/pg_version/Makefile
+	src/bin/pgtclsh/mkMakefile.tcldefs.sh
+	src/bin/pgtclsh/mkMakefile.tkdefs.sh
+	src/bin/psql/Makefile
+	src/include/version.h
+	src/interfaces/libpq/Makefile
+	src/interfaces/ecpg/lib/Makefile
+	src/interfaces/ecpg/preproc/Makefile
+	src/interfaces/libpq++/Makefile
+	src/interfaces/libpgeasy/Makefile
+	src/interfaces/libpgtcl/Makefile
+	src/interfaces/odbc/GNUmakefile
+	src/interfaces/odbc/Makefile.global
+	src/pl/plpgsql/src/Makefile
+	src/pl/plpgsql/src/mklang.sql
+	src/pl/tcl/mkMakefile.tcldefs.sh
+	src/test/regress/GNUmakefile
 )

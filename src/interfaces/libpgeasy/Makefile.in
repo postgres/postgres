@@ -4,7 +4,7 @@
 #    Makefile for pgeasy library
 #
 # IDENTIFICATION
-#    $Header: /cvsroot/pgsql/src/interfaces/libpgeasy/Attic/Makefile.in,v 1.6 2000/03/08 01:58:33 momjian Exp $
+#    $Header: /cvsroot/pgsql/src/interfaces/libpgeasy/Attic/Makefile.in,v 1.7 2000/06/06 22:00:53 petere Exp $
 #
 #-------------------------------------------------------------------------
 
@@ -12,7 +12,7 @@ NAME= pgeasy
 SO_MAJOR_VERSION= 2
 SO_MINOR_VERSION= 1
 
-SRCDIR= @top_srcdir@
+SRCDIR= ../..
 include $(SRCDIR)/Makefile.global
 
 CFLAGS+= -I$(LIBPQDIR)

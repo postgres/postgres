@@ -7,7 +7,7 @@
 #
 #
 # IDENTIFICATION
-#    $Header: /cvsroot/pgsql/src/Attic/GNUmakefile.in,v 1.50 2000/02/28 23:28:40 momjian Exp $
+#    $Header: /cvsroot/pgsql/src/Attic/GNUmakefile.in,v 1.51 2000/06/06 22:00:47 petere Exp $
 #
 #-------------------------------------------------------------------------
 
@@ -29,9 +29,6 @@ all:
 	$(MAKE) -C interfaces all
 	$(MAKE) -C bin all
 	$(MAKE) -C pl all
-	@if test $@. = all. -o $@. = .; then \
-	echo All of PostgreSQL is successfully made.  Ready to install. ;\
-        fi
 
 install: installdirs
 	$(MAKE) -C utils install
@@ -39,10 +36,9 @@ install: installdirs
 	$(MAKE) -C interfaces install
 	$(MAKE) -C bin install
 	$(MAKE) -C pl install
-	cat ../register.txt
 
-installdirs: mkinstalldirs
-	$(SRCDIR)/mkinstalldirs $(BINDIR) $(LIBDIR) $(INCLUDEDIR)
+installdirs:
+	../config/mkinstalldirs $(BINDIR) $(LIBDIR) $(INCLUDEDIR)
 
 clean:
 	$(MAKE) -C utils clean
@@ -53,13 +49,10 @@ clean:
 	$(MAKE) -C test clean
 	$(MAKE) -C ../contrib/spi clean
 
+# Remove files and symlinks created by configure script
 distclean: clean
-	# Remove files and symlinks created by configure script
 	rm -f \
 		Makefile.port \
-		config.cache \
-		config.status \
-		config.log \
 		include/config.h \
 		include/dynloader.h \
 		include/os.h \
@@ -103,9 +96,6 @@ distclean: clean
 	$(MAKE) -C interfaces $@
 	$(MAKE) -C bin $@
 	$(MAKE) -C pl $@
-	@if test $@. = all. -o $@. = .; then \
-	echo All of PostgreSQL is successfully made.  Ready to install. ;\
-        fi
 
 TAGS:
 	rm -f TAGS; \
