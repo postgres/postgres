@@ -11,14 +11,14 @@
 ##  Problems
 ## 1) Don't know what to do with TRANSACTION ISOLATION LEVEL
 
-## if an option is valid but shows up in only one file (guc.h or 
+## if an option is valid but shows up in only one file (guc.c or 
 ## postgresql.conf.sample, it should be listed here so that it 
 ## can be ignored
 INTENTIONALLY_NOT_INCLUDED="pre_auth_delay lc_messages lc_monetary \
 lc_time lc_numeric fixbtree"
 
 ### What options are listed in postgresql.conf.sample, but don't appear 
-### in guc.h?
+### in guc.c?
 
 # grab everything that looks like a setting and convert it to lower case
 SETTINGS=`grep ' =' postgresql.conf.sample | 
@@ -45,7 +45,7 @@ for i in $SETTINGS ; do
   fi
 done
 
-### What options are listed in guc.h, but don't appear 
+### What options are listed in guc.c, but don't appear 
 ### in postgresql.conf.sample?
 
 # grab everything that looks like a setting and convert it to lower case
