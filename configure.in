@@ -409,6 +409,23 @@ AC_ARG_WITH(
 )
 export USE_ODBC
 
+dnl check if we want to use unixODBC to provide access to the odbc.ini
+dnl files
+
+use_unixODBC=no
+AC_MSG_CHECKING(setting USE_UNIXODBC)
+AC_ARG_WITH(
+    unixODBC,
+    [  --with-unixODBC[=DIR]   Use unixODBC located in DIR],
+    [
+        use_unixODBC=yes;
+        unixODBC="$withval";
+        USE_ODBC=true;
+        AC_MSG_RESULT(enabled);
+    ],
+    [ USE_ODBC=false; use_unixODBC=no; AC_MSG_RESULT(disabled) ]
+)
+export USE_ODBC
 
 dnl Allow for overriding the default location of the odbcinst.ini
 dnl file which is normally ${prefix}/share or ${prefix} if this is
@@ -436,53 +453,145 @@ then
 fi
 AC_SUBST(ODBCINSTDIR)
 
-# check for unixODBC
-
-use_unixODBC=no
-AC_ARG_WITH(unixODBC,
-    [  --with-unixODBC[=DIR]   Use unixODBC located in DIR],
-    [use_unixODBC=yes; unixODBC="$withval"],
-    use_unixODBC=no)
+#check for unixODBC libs
 
 if test "x$use_unixODBC" = "xyes"
 then
 
-# default to /usr if not specified
-if test "x$unixODBC" = "x"
+  # default to /usr/local if not specified
+  if test "x$unixODBC" = "x"
+  then
+      unixODBC="/usr/local";
+  fi
+  
+  unixODBC_libs="$unixODBC/lib"
+  unixODBC_includes="$unixODBC/include"
+
+  CPPFLAGS="$CPPFLAGS -I$unixODBC_includes"
+  AC_CHECK_HEADERS(sql.h sqlext.h odbcinst.h,
+          unixODBC_ok=yes;
+          odbc_headers="$odbc_headers $ac_hdr",
+          unixODBC_ok=no )
+  
+  if test "x$unixODBC_ok" != "xyes"
+  then
+      AC_MSG_ERROR([Unable to find the unixODBC headers in $1])
+  fi
+ 
+  save_LIBS="$LIBS"
+  LIBS="-L$unixODBC_libs $LIBS"
+  
+  AC_CHECK_LIB(odbcinst,SQLGetPrivateProfileString,
+    [AC_DEFINE(HAVE_SQLGETPRIVATEPROFILESTRING)
+    SHLIB_ODBC="$LDFLAGS_ODBC -L$unixODBC_libs -lodbcinst" ],
+    [LIBS="$save_LIBS"] )
+fi
+export SHLIB_ODBC
+
+#check for unixODBC libs
+
+if test "x$use_unixODBC" = "xyes"
 then
-    unixODBC="/usr";
+
+  # default to /usr/local if not specified
+  if test "x$unixODBC" = "x"
+  then
+      unixODBC="/usr/local";
+  fi
+  
+  unixODBC_libs="$unixODBC/lib"
+  unixODBC_includes="$unixODBC/include"
+
+  CPPFLAGS="$CPPFLAGS -I$unixODBC_includes"
+  AC_CHECK_HEADERS(sql.h sqlext.h odbcinst.h,
+          unixODBC_ok=yes;
+          odbc_headers="$odbc_headers $ac_hdr",
+          unixODBC_ok=no )
+  
+  if test "x$unixODBC_ok" != "xyes"
+  then
+      AC_MSG_ERROR([Unable to find the unixODBC headers in $1])
+  fi
+ 
+  save_LIBS="$LIBS"
+  LIBS="-L$unixODBC_libs $LIBS"
+  
+  AC_CHECK_LIB(odbcinst,SQLGetPrivateProfileString,
+    [AC_DEFINE(HAVE_SQLGETPRIVATEPROFILESTRING)
+    SHLIB_ODBC="$LDFLAGS_ODBC -L$unixODBC_libs -lodbcinst" ],
+    [LIBS="$save_LIBS"] )
 fi
+export SHLIB_ODBC
 
-AC_ARG_WITH(unixODBC-includes,
-    [  --with-unixODBC-includes=DIR Find unixODBC headers in DIR],
-    unixODBC_includes="$withval",
-    unixODBC_includes="$unixODBC/include")
+#check for unixODBC libs
 
-AC_ARG_WITH(unixODBC-libs,
-    [  --with-unixODBC-libs=DIR Find unixODBC libraries in DIR],
-    unixODBC_libs="$withval",
-    unixODBC_libs="$unixODBC/lib")
-
-PGSQL_INCLUDES="$PGSQL_INCLUDES -I$unixODBC_includes"
-
-AC_CHECK_HEADERS(sql.h sqlext.h odbcinst.h,
-    [unixODBC_ok=yes; odbc_headers="$odbc_headers $ac_hdr"],
-    [unixODBC_ok=no; break])
-
-if test "x$unixODBC_ok" != "xyes"
+if test "x$use_unixODBC" = "xyes"
 then
-    AC_MSG_ERROR([Unable to find the unixODBC headers in $1])
+
+  # default to /usr/local if not specified
+  if test "x$unixODBC" = "x"
+  then
+      unixODBC="/usr/local";
+  fi
+  
+  unixODBC_libs="$unixODBC/lib"
+  unixODBC_includes="$unixODBC/include"
+
+  CPPFLAGS="$CPPFLAGS -I$unixODBC_includes"
+  AC_CHECK_HEADERS(sql.h sqlext.h odbcinst.h,
+          unixODBC_ok=yes;
+          odbc_headers="$odbc_headers $ac_hdr",
+          unixODBC_ok=no )
+  
+  if test "x$unixODBC_ok" != "xyes"
+  then
+      AC_MSG_ERROR([Unable to find the unixODBC headers in $1])
+  fi
+ 
+  save_LIBS="$LIBS"
+  LIBS="-L$unixODBC_libs $LIBS"
+  
+  AC_CHECK_LIB(odbcinst,SQLGetPrivateProfileString,
+    [AC_DEFINE(HAVE_SQLGETPRIVATEPROFILESTRING)
+    SHLIB_ODBC="$LDFLAGS_ODBC -L$unixODBC_libs -lodbcinst" ],
+    [LIBS="$save_LIBS"] )
 fi
+export SHLIB_ODBC
 
-save_LIBS="$LIBS"
-LIBS="$LIBS -L$unixODBC_libs"
+#check for unixODBC libs
 
-AC_CHECK_LIB(odbcinst, SQLGetPrivateProfileString,
-	[AC_DEFINE(HAVE_SQLGETPRIVATEPROFILESTRING)
-	 LIBS="$LIBS -lodbcinst"],
-	[LIBS="$save_LIBS"])
+if test "x$use_unixODBC" = "xyes"
+then
 
+  # default to /usr/local if not specified
+  if test "x$unixODBC" = "x"
+  then
+      unixODBC="/usr/local";
+  fi
+  
+  unixODBC_libs="$unixODBC/lib"
+  unixODBC_includes="$unixODBC/include"
+
+  CPPFLAGS="$CPPFLAGS -I$unixODBC_includes"
+  AC_CHECK_HEADERS(sql.h sqlext.h odbcinst.h,
+          unixODBC_ok=yes;
+          odbc_headers="$odbc_headers $ac_hdr",
+          unixODBC_ok=no )
+  
+  if test "x$unixODBC_ok" != "xyes"
+  then
+      AC_MSG_ERROR([Unable to find the unixODBC headers in $1])
+  fi
+ 
+  save_LIBS="$LIBS"
+  LIBS="-L$unixODBC_libs $LIBS"
+  
+  AC_CHECK_LIB(odbcinst,SQLGetPrivateProfileString,
+    [AC_DEFINE(HAVE_SQLGETPRIVATEPROFILESTRING)
+    SHLIB_ODBC="$LDFLAGS_ODBC -L$unixODBC_libs -lodbcinst" ],
+    [LIBS="$save_LIBS"] )
 fi
+export SHLIB_ODBC
 
 dnl Unless we specify the command line options
 dnl	--enable cassert	to explicitly enable it
@@ -554,6 +663,7 @@ AC_SUBST(USE_TCL)
 AC_SUBST(USE_TK)
 AC_SUBST(WISH)
 AC_SUBST(USE_ODBC)
+AC_SUBST(SHLIB_ODBC)
 AC_SUBST(MULTIBYTE)
 
 

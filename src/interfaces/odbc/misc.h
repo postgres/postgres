@@ -15,7 +15,8 @@
 #endif
 
 #ifndef WIN32
-#ifndef HAVE_SQLGETPRIVATEPROFILESTRING
+#include "gpps.h"
+#ifdef HAVE_SQLGETPRIVATEPROFILESTRING
 #define SQLGetPrivateProfileString(a,b,c,d,e,f) GetPrivateProfileString(a,b,c,d,e,f)
 #endif
 #endif
