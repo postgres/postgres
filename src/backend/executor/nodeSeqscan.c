@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/executor/nodeSeqscan.c,v 1.14 1998/09/01 04:28:37 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/executor/nodeSeqscan.c,v 1.15 1998/09/25 13:38:32 thomas Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -29,6 +29,7 @@
 #include "executor/nodeSeqscan.h"
 #include "access/heapam.h"
 #include "parser/parsetree.h"
+#include "nodes/print.h"
 
 static Oid InitScanRelation(SeqScan *node, EState *estate,
 				 CommonScanState *scanstate, Plan *outerPlan);
