@@ -95,14 +95,16 @@ static bool is_stopword(char *);
 static bool new_tuple = false;
 
 
+#ifdef USE_STOP_WORDS
+
 /* THIS LIST MUST BE IN SORTED ORDER, A BINARY SEARCH IS USED!!!! */
 char	   *StopWords[] = {		/* list of words to skip in indexing */
-#ifdef SAMPLE_STOP_WORDS
-	"no"
+	"no",
 	"the",
-	"yes",
-#endif
+	"yes"
 };
+
+#endif /* USE_STOP_WORDS */
 
 /* stuff for caching query-plans, stolen from contrib/spi/\*.c */
 typedef struct
@@ -385,6 +387,7 @@ breakup(char *string, char *substring)
 static bool
 is_stopword(char *text)
 {
+#ifdef USE_STOP_WORDS
 	char	  **StopLow;		/* for list of stop-words */
 	char	  **StopHigh;
 	char	  **StopMiddle;
@@ -406,6 +409,7 @@ is_stopword(char *text)
 		else
 			StopHigh = StopMiddle;
 	}
+#endif /* USE_STOP_WORDS */
 
 	return (false);
 }
