@@ -5,7 +5,7 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: geqo_eval.c,v 1.2 1997/02/19 14:26:42 scrappy Exp $
+ * $Id: geqo_eval.c,v 1.3 1997/02/19 14:29:22 scrappy Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -18,15 +18,15 @@
    =*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=
  */
 
+#include "postgres.h"
+
 #include <math.h>
-#if HAVE_LIMITS_H
+#ifdef HAVE_LIMITS_H
 # include <machine/limits.h>
 # define MAXINT	INT_MAX
 #else
 # include <values.h>
 #endif 
-
-#include "postgres.h"
 
 #include "nodes/pg_list.h"
 #include "nodes/relation.h"
