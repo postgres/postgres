@@ -2,6 +2,11 @@ create_function
 create_type
 create_table
 create_misc
+create_aggregate
+create_view
+create_operator
+create_index
+sanity_check
 reltime
 abstime
 boolean
@@ -23,3 +28,4 @@ point
 polygon
 text
 tinterval
+misc

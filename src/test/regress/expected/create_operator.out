@@ -1,0 +1,24 @@
+QUERY: CREATE OPERATOR ## (
+   leftarg = path,
+   rightarg = path,
+   procedure = path_inter,
+   commutator = ##
+);
+QUERY: CREATE OPERATOR <% (
+   leftarg = point,
+   rightarg = circle,
+   procedure = pt_in_circle,
+   commutator = >=%
+);
+QUERY: CREATE OPERATOR @#@ (
+   rightarg = int4,		
+   procedure = int4fac
+);
+QUERY: CREATE OPERATOR #@# (
+   leftarg = int4,		
+   procedure = int4fac
+);
+QUERY: CREATE OPERATOR #%# (
+   leftarg = int4,		
+   procedure = int4fac
+);
