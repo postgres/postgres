@@ -1,0 +1,152 @@
+This is a simple readme describing how to compile and use the jdbc driver.
+
+This isn't a guide on how to use JDBC - for that refer to Javasoft's web site:
+
+	http://www.javasoft.com
+
+or the JDBC mailing list:
+
+	jdbc@java.blackdown.org
+
+	http://www.blackdown.org
+
+---------------------------------------------------------------------------
+
+COMPILING
+
+To compile the driver, simply use make in the src/interfaces/jdbc directory.
+This will compile the driver, and build a .jar file (Java ARchive).
+
+REMEMBER: once you have compiled the driver, it will work on ALL platforms
+that support the JDK 1.1 api or later.
+
+That means you don't have to compile it on every platform. Believe me, I
+still hear from people who ask me "I've compiled it ok under Solaris, but it
+won't compile under Linux" - there's no difference.
+
+PS: When you run make, don't worry if you see just one or two calls to javac.
+    If, while compiling a class, javac needs another class that's not compiled,
+    it will compile it automatically. This reduces the numer of calls to javac
+    that make has to do.
+
+---------------------------------------------------------------------------
+
+INSTALLING THE DRIVER
+
+To install the driver, the .class files have to be in the classpath. This can be
+done in two ways:
+
+1: create a directory "postgresql" (and it must be called this) in the current
+   directory (or a directory in the class path), and copy all .class files
+   into it.
+
+2: copy the postgres.jar file into a directory, and add it to the classpath.
+
+   ie: under LINUX/SOLARIS (the example here is my linux box):
+
+	export CLASSPATH=.:/usr/local/lib/postgresql.jar:/usr/local/jdk1.1.1/lib/classes.zip
+
+   note: in java, .zip and .jar files hold collections of classes.
+
+---------------------------------------------------------------------------
+
+USING THE DRIVER
+
+To use the driver, you must introduce it to JDBC. Again, there's two ways
+of doing this:
+
+1: Hardcoded.
+
+   This method hardcodes your driver into your application/applet. You
+   introduce the driver using the following snippet of code:
+
+	try {
+	  Class.forName("postgresql.Driver");
+	} catch(Exception e) {
+	  // your error handling code goes here
+	}
+
+   Remember, this method restricts your code to just the postgresql database.
+
+2: Parameters
+
+   This method specifies the driver from the command line. When running the
+   application, you specify the driver using the option:
+
+	-Djdbc.drivers=postgresql.Driver
+
+   eg: This is an example of running one of my other projects with the driver:
+
+	java -Djdbc.drivers=postgresql.Driver finder.finder
+
+   note: This method only works with Applications (not for Applets).
+	 However, the application is not tied to one driver, so if you needed
+	 to switch databases (why I don't know ;-) ), you don't need to
+	 recompile the application (as long as you havent hardcoded the url's).
+
+---------------------------------------------------------------------------
+
+JDBC URL syntax
+
+The driver recognises JDBC URL's of the form:
+
+	jdbc:postgresql:database
+
+	jdbc:postgresql://host/database
+
+	jdbc:postgresql://host:port/database
+
+Also, you can supply both username and passwords as arguments, by appending
+them to the URL. eg:
+
+	jdbc:postgresql:database?user=me
+	jdbc:postgresql:database?user=me&password=mypass
+
+---------------------------------------------------------------------------
+
+That's the basics related to this driver. You'll need to read the JDBC Docs
+on how to use it.
+
+POSTGRESQL SPECIFICS
+--------------------
+
+JDBC supports database specific data types using the getObject() call. The
+following types have their own Java equivalents supplied by the driver:
+
+	box, circle, lseg, path, point, polygon
+
+When using the getObject() method on a resultset, it returns a PG_Object,
+which holds the postgres type, and its value. This object also supports
+methods to retrive these types.
+
+	Eg: column 3 contains a point, and rs is the ResultSet:
+
+	PG_Object o = (PG_Object)rs.getObject(3);
+	PGpoint p = o.getPoint();
+	System.out.println("point returned x="+p.x+", y="+p.y);
+
+Also, when using these classes, their toString() methods return the correct
+syntax for writing these to the database.
+
+TODO
+----
+
+Currently only host authentication is supported. Password authentication
+will be in there in a few days.
+
+Incorporating more features from the other driver (esp. in the MetaData's)
+
+Large Object support will also go in there, although it may not be done as
+pure JDBC, but as an extra API.
+
+Producing some documentation with javadoc - not all of the sources have them
+yet.
+
+---------------------------------------------------------------------------
+
+Peter T Mount, August 30 1997
+home email: pmount@maidast.demon.co.uk	http://www.demon.co.uk/finder
+work email: peter@maidstone.gov.uk	http://www.maidstone.gov.uk
+
+Adrian Hall
+     email: adrian@hottub.org
