@@ -5,7 +5,7 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: psqlHelp.h,v 1.77 1999/10/02 21:33:29 tgl Exp $
+ * $Id: psqlHelp.h,v 1.78 1999/10/26 03:48:58 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -25,9 +25,9 @@ static struct _helpStruct QL_HELP[] = {
 	{"alter table",
 		"add/rename columns, rename tables",
 	"\
-\tALTER TABLE tablename [*] ADD COLUMN colname type\n\
-\tALTER TABLE tablename [*] RENAME [COLUMN] colname1 TO colname2\n\
-\tALTER TABLE tablename1 RENAME TO tablename2"},
+\tALTER TABLE table_name [*] ADD COLUMN column_name type\n\
+\tALTER TABLE table_name [*] RENAME [COLUMN] column_name1 TO column_name2\n\
+\tALTER TABLE table_name1 RENAME TO table_name2"},
 	{"alter user",
 		"alter system information for a user",
 	"\
@@ -41,14 +41,26 @@ static struct _helpStruct QL_HELP[] = {
 		"begin a new transaction",
 	"\
 \tBEGIN [WORK|TRANSACTION];"},
-	{"cluster",
-		"create a clustered index (from an existing index)",
-	"\
-\tCLUSTER index_name ON relation_name"},
 	{"close",
 		"close an existing cursor (cursor)",
 	"\
 \tCLOSE cursorname;"},
+	{"cluster",
+		"create a clustered index (from an existing index)",
+	"\
+\tCLUSTER index_name ON relation_name"},
+	{"comment",
+		"add comment on object",
+	"\
+\tCOMMENT ON\n\
+[\n\
+  [ DATABASE | INDEX | RULE | SEQUENCE | TABLE | TYPE | VIEW ] <object_name> |\n\
+  COLUMN <table_name>.<column_name>|\n\
+  AGGREGATE <agg_name> <agg_type>|\n\
+  FUNCTION <func_name> (arg1, arg2, ...)|\n\
+  OPERATOR <op> (leftoperand_type rightoperand_type) |\n\
+  TRIGGER <trigger_name> ON <table_name>\n\
+] IS 'text'},
 	{"commit work",
 		"commit a transaction",
 	"\
@@ -56,7 +68,7 @@ static struct _helpStruct QL_HELP[] = {
 	{"copy",
 		"copy data to and from a table",
 	"\
-\tCOPY [BINARY] tablename [WITH OIDS]\n\
+\tCOPY [BINARY] table_name [WITH OIDS]\n\
 \tTO|FROM filename|STDIN|STDOUT [USING DELIMITERS 'delim'];"},
 	{"create",
 		"Please be more specific:",
@@ -88,21 +100,22 @@ static struct _helpStruct QL_HELP[] = {
 		"create a user-defined function",
 	"\
 \tCREATE FUNCTION function_name ([type1, ...typeN]) RETURNS return_type\n\
-\t[WITH ( attributes )]\n\
+\t[WITH ( column_names )]\n\
 \tAS 'sql_queries'|'builtin_function_name'|'procedural_commands'\n\
 \tLANGUAGE 'sql'|'internal'|'procedural_language_name';\n\
 \n\
 OR\n\
 \n\
 \tCREATE FUNCTION function_name ([type1, ...typeN]) RETURNS return_type\n\
-\t[WITH ( attributes )]\n\
+\t[WITH ( column_names )]\n\
 \tAS 'object_filename' [, 'link_symbol']\n\
 \tLANGUAGE 'C';"},
 	{"create index",
 		"construct an index",
 	"\
-\tCREATE [UNIQUE] INDEX indexname ON tablename [USING access_method]\n\
-( colname1 [type_class1], ...colnameN | funcname(colname1, ...) [type_class] );"},
+\tCREATE [UNIQUE] INDEX indexname ON table_name [USING access_method]\n\
+( column_name1 [type_class1], ...column_nameN |\n\
+  funcname(column_name1, ...) [type_class] );"},
 	{"create operator",
 		"create a user-defined operator",
 	"\
@@ -117,7 +130,7 @@ OR\n\
 	"\
 \tCREATE RULE rule_name AS ON\n\
 \t{ SELECT | UPDATE | DELETE | INSERT }\n\
-\tTO object [WHERE qual]\n\
+\tTO object_name [WHERE qual]\n\
 \tDO [INSTEAD] [action|NOTHING|[actions]];"},
 	{"create sequence",
 		"create a new sequence number generator",
@@ -132,16 +145,16 @@ OR\n\
 	{"create table",
 		"create a new table",
 	"\
-\tCREATE [TEMP] TABLE tablename\n\
-\t(colname1 type1 [DEFAULT expression] [NOT NULL], ...colnameN\n\
+\tCREATE [TEMP] TABLE table_name\n\
+\t(column_name1 type1 [DEFAULT expression] [NOT NULL], ...column_nameN\n\
 \t[[CONSTRAINT name] CHECK condition1, ...conditionN] )\n\
-\t[INHERITS (tablename1, ...tablenameN)\n\
+\t[INHERITS (table_name1, ...table_nameN)\n\
 ;"},
 	{"create trigger",
 		"create a new trigger",
 	"\
 \tCREATE TRIGGER trigger_name AFTER|BEFORE event1 [OR event2 [OR event3] ]\n\
-\tON tablename FOR EACH ROW|STATEMENT\n\
+\tON table_name FOR EACH ROW|STATEMENT\n\
 \tEXECUTE PROCEDURE func_name ([arguments])\n\
 \n\
 \teventX is one of INSERT, DELETE, UPDATE"},
@@ -167,27 +180,27 @@ OR\n\
 		"create a view",
 	"\
 \tCREATE VIEW view_name AS\n\
-\tSELECT [DISTINCT [ON colnameN]]\n\
-\texpr1 [AS colname1], ...exprN\n\
-\t[FROM from_list]\n\
+\tSELECT [DISTINCT [ON column_nameN]]\n\
+\texpr1 [AS column_name1], ...exprN\n\
+\t[FROM table_list]\n\
 \t[WHERE qual]\n\
 \t[GROUP BY group_list];"},
 	{"declare",
 		"set up a cursor",
 	"\
 \tDECLARE cursorname [BINARY] CURSOR FOR\n\
-\tSELECT [DISTINCT [ON colnameN]]\n\
-\texpr1 [AS colname1], ...exprN\n\
-\t[FROM from_list]\n\
+\tSELECT [DISTINCT [ON column_nameN]]\n\
+\texpr1 [AS column_name1], ...exprN\n\
+\t[FROM table_list]\n\
 \t[WHERE qual]\n\
 \t[GROUP BY group_list]\n\
 \t[HAVING having_clause]\n\
-\t[ORDER BY colname1 [USING op1], ...colnameN]\n\
+\t[ORDER BY column_name1 [USING op1], ...column_nameN]\n\
 \t[ { UNION [ALL] | INTERSECT | EXCEPT } SELECT ...];"},
 	{"delete",
 		"delete tuples",
 	"\
-\tDELETE FROM tablename [WHERE qual];"},
+\tDELETE FROM table_name [WHERE qual];"},
 	{"drop",
 		"Please be more specific:",
 	"\
@@ -233,11 +246,11 @@ OR\n\
 	{"drop table",
 		"remove a table",
 	"\
-\tDROP TABLE tablename1, ...tablenameN;"},
+\tDROP TABLE table_name1, ...table_nameN;"},
 	{"drop trigger",
 		"remove a trigger",
 	"\
-\tDROP TRIGGER trigger_name ON tablename;"},
+\tDROP TRIGGER trigger_name ON table_name;"},
 	{"drop type",
 		"remove a user-defined base type",
 	"\
@@ -271,11 +284,11 @@ OR\n\
 	{"insert",
 		"insert tuples",
 	"\
-\tINSERT INTO tablename [(colname1, ...colnameN)]\n\
+\tINSERT INTO table_name [(column_name1, ...column_nameN)]\n\
 \tVALUES (expr1,..exprN) |\n\
-\tSELECT [DISTINCT [ON colnameN]]\n\
+\tSELECT [DISTINCT [ON column_nameN]]\n\
 \texpr1, ...exprN\n\
-\t[FROM from_clause]\n\
+\t[FROM table_list]\n\
 \t[WHERE qual]\n\
 \t[GROUP BY group_list]\n\
 \t[HAVING having_clause]\n\
@@ -291,7 +304,7 @@ OR\n\
 	{"lock",
 		"exclusive lock a table inside a transaction",
 	"\
-\tLOCK [TABLE] tablename \n\
+\tLOCK [TABLE] table_name \n\
 \t[IN [ROW|ACCESS] [SHARE|EXCLUSIVE] | [SHARE ROW EXCLUSIVE] MODE];"},
 	{"move",
 		"move an cursor position",
@@ -319,15 +332,15 @@ TIMEZONE|XACTISOLEVEL|CLIENT_ENCODING|SERVER_ENCODING"},
 	{"select",
 		"retrieve tuples",
 	"\
-\tSELECT [DISTINCT [ON colnameN]] expr1 [AS colname1], ...exprN\n\
-\t[INTO [TEMP] [TABLE] tablename]\n\
-\t[FROM from_list]\n\
+\tSELECT [DISTINCT [ON column_nameN]] expr1 [AS column_name1], ...exprN\n\
+\t[INTO [TEMP] [TABLE] table_name]\n\
+\t[FROM table_list]\n\
 \t[WHERE qual]\n\
 \t[GROUP BY group_list]\n\
 \t[HAVING having_clause]\n\
 \t[ { UNION [ALL] | INTERSECT | EXCEPT } SELECT ...]\n\
-\t[ORDER BY colname1 [ASC|DESC] [USING op1], ...colnameN ]\n\
-\t[FOR UPDATE [OF tablename...]]\n\
+\t[ORDER BY column_name1 [ASC|DESC] [USING op1], ...column_nameN ]\n\
+\t[FOR UPDATE [OF table_name...]]\n\
 \t[LIMIT count [OFFSET|, count]];"},
 	{"set",
 		"set run-time environment",
@@ -358,18 +371,18 @@ TIMEZONE|XACTISOLEVEL|CLIENT_ENCODING|SERVER_ENCODING"},
 	{"truncate",
 		"quickly removes all rows from a table",
 	"\
-\tTRUNCATE TABLE tablename"},
+\tTRUNCATE TABLE table_name"},
 	{"update",
 		"update tuples",
 	"\
-\tUPDATE tablename SET colname1 = expr1, ...colnameN = exprN\n\
-\t[FROM from_clause]\n\
+\tUPDATE table_name SET column_name1 = expr1, ...column_nameN = exprN\n\
+\t[FROM table_list]\n\
 \t[WHERE qual];"},
 	{"vacuum",
 		"vacuum the database, i.e. cleans out deleted records, updates statistics",
 	"\
 \tVACUUM [VERBOSE] [ANALYZE] [table]\n\
 \tor\n\
-\tVACUUM [VERBOSE]  ANALYZE  [table [(colname1, ...colnameN)]];"},
+\tVACUUM [VERBOSE]  ANALYZE  [table [(column_name1, ...column_nameN)]];"},
 	{NULL, NULL, NULL}			/* important to keep a NULL terminator here!*/
 };
