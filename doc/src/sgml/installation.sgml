@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/installation.sgml,v 1.206 2004/10/06 08:49:59 momjian Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/installation.sgml,v 1.207 2004/12/06 23:47:08 petere Exp $ -->
 
 <chapter id="installation">
  <title><![%standalone-include[<productname>PostgreSQL</>]]>
@@ -1419,7 +1419,9 @@ kill `cat /usr/local/pgsql/data/postmaster.pid`
    community to work on the platforms listed below. A supported
    platform generally means that <productname>PostgreSQL</> builds and
    installs according to these instructions and that the regression
-   tests pass.
+   tests pass.  <quote>Build farm</quote> entries refer to builds
+   reported by the <ulink url="http://www.pgbuildfarm.org/">PostgreSQL
+   Build Farm</ulink>.
   </para>
 
   <note>
@@ -1446,9 +1448,8 @@ kill `cat /usr/local/pgsql/data/postmaster.pid`
        <row>
         <entry><systemitem class="osname">AIX</></entry>
         <entry><systemitem>RS6000</></entry>
-        <entry>7.4</entry>
-        <entry>2003-10-25,
-          Hans-J&uuml;rgen Sch&ouml;nig (<email>hs@cybertec.at</email>)</entry>
+        <entry>8.0.0</entry>
+        <entry>Hans-J&uuml;rgen Sch&ouml;nig (<email>hs@cybertec.at</email>), 2004-12-06</entry>
         <entry>see also <filename>doc/FAQ_AIX</filename></entry>
        </row>
        <row>
@@ -1458,6 +1459,90 @@ kill `cat /usr/local/pgsql/data/postmaster.pid`
         <entry>2003-10-24,
          Bruce Momjian (<email>pgman@candle.pha.pa.us</email>)</entry>
         <entry>4.3</entry>
+       </row>
+       <row>
+        <entry><systemitem class="osname">Debian GNU/Linux</></entry>
+        <entry><systemitem>Alpha</></entry>
+        <entry>7.4</entry>
+        <entry>2003-10-25,
+         No&egrave;l K&ouml;the (<email>noel@debian.org</email>)</entry>
+        <entry>2.4</entry>
+       </row>
+       <row>
+        <entry><systemitem class="osname">Debian GNU/Linux</></entry>
+        <entry><systemitem>AMD64</></entry>
+        <entry>8.0.0</entry>
+        <entry>Build farm <systemitem class="systemname">panda</systemitem>, snapshot 2004-12-06 01:20:02</entry>
+        <entry>sid, kernel 2.6</entry>
+       </row>
+       <row>
+        <entry><systemitem class="osname">Debian GNU/Linux</></entry>
+        <entry><systemitem>arm41</></entry>
+        <entry>7.4</entry>
+        <entry>2003-10-25,
+         No&egrave;l K&ouml;the (<email>noel@debian.org</email>)</entry>
+        <entry>2.4</entry>
+       </row>
+       <row>
+        <entry><systemitem class="osname">Debian GNU/Linux</></entry>
+        <entry><systemitem>Itanium</></entry>
+        <entry>7.4</entry>
+        <entry>2003-10-25,
+         No&egrave;l K&ouml;the (<email>noel@debian.org</email>)</entry>
+        <entry>2.4</entry>
+       </row>
+       <row>
+        <entry><systemitem class="osname">Debian GNU/Linux</></entry>
+        <entry><systemitem>m68k</></entry>
+        <entry>7.4</entry>
+        <entry>2003-10-25,
+         No&egrave;l K&ouml;the (<email>noel@debian.org</email>)</entry>
+        <entry>2.4</entry>
+       </row>
+       <row>
+        <entry><systemitem class="osname">Debian GNU/Linux</></entry>
+        <entry><systemitem>MIPS</></entry>
+        <entry>8.0.0</entry>
+        <entry>Build farm <systemitem class="systemname">lionfish</systemitem>, snapshot 2004-12-06 11:00:08</entry>
+        <entry>3.1 (sarge), kernel 2.4</entry>
+       </row>
+       <row>
+        <entry><systemitem class="osname">Debian GNU/Linux</></entry>
+        <entry><systemitem>PPC</></entry>
+        <entry>7.4</entry>
+        <entry>2003-10-25,
+         No&egrave;l K&ouml;the (<email>noel@debian.org</email>)</entry>
+        <entry></entry>
+       </row>
+       <row>
+        <entry><systemitem class="osname">Debian GNU/Linux</></entry>
+        <entry><systemitem>S/390</></entry>
+        <entry>7.4</entry>
+        <entry>2003-10-25,
+         No&egrave;l K&ouml;the (<email>noel@debian.org</email>)</entry>
+        <entry>2.4</entry>
+       </row>
+       <row>
+        <entry><systemitem class="osname">Debian GNU/Linux</></entry>
+        <entry><systemitem>Sparc</></entry>
+        <entry>7.4</entry>
+        <entry>2003-10-24, 
+         Peter Eisentraut (<email>peter_e@gmx.net</email>)</entry>
+        <entry>2.4, 32-bit</entry>
+       </row>
+       <row>
+        <entry><systemitem class="osname">Debian GNU/Linux</></entry>
+        <entry><systemitem>x86</></entry>
+        <entry>8.0.0</entry>
+        <entry>Peter Eisentraut (<email>peter_e@gmx.net</email>), 2004-12-06</entry>
+        <entry>3.1 (sarge), kernel 2.6</entry>
+       </row>
+       <row>
+        <entry><systemitem class="osname">Fedora</></entry>
+        <entry><systemitem>x86</></entry>
+        <entry>8.0.0</entry>
+        <entry>Build farm <systemitem class="systemname">dog</systemitem>, snapshot 2004-12-06 02:06:01</entry>
+        <entry>FC1</entry>
        </row>
        <row>
         <entry><systemitem class="osname">FreeBSD</></entry>
@@ -1470,10 +1555,9 @@ kill `cat /usr/local/pgsql/data/postmaster.pid`
        <row>
         <entry><systemitem class="osname">FreeBSD</></entry>
         <entry><systemitem>x86</></entry>
-        <entry>7.4</entry>
-        <entry>2003-10-24,
-         Peter Eisentraut (<email>peter_e@gmx.net</email>)</entry>
-        <entry>4.9</entry>
+        <entry>8.0.0</entry>
+        <entry>Build farm <systemitem class="systemname">cockatoo</systemitem>, snapshot 2004-12-06 14:10:01</entry>
+        <entry>4.10</entry>
        </row>
        <row>
         <entry><systemitem class="osname">HP-UX</></entry>
@@ -1494,86 +1578,6 @@ kill `cat /usr/local/pgsql/data/postmaster.pid`
         <entry>6.5.20, <command>cc</command> only</entry>
        </row>
        <row>
-        <entry><systemitem class="osname">Linux</></entry>
-        <entry><systemitem>Alpha</></entry>
-        <entry>7.4</entry>
-        <entry>2003-10-25,
-         No&egrave;l K&ouml;the (<email>noel@debian.org</email>)</entry>
-        <entry>2.4</entry>
-       </row>
-       <row>
-        <entry><systemitem class="osname">Linux</></entry>
-        <entry><systemitem>arm41</></entry>
-        <entry>7.4</entry>
-        <entry>2003-10-25,
-         No&egrave;l K&ouml;the (<email>noel@debian.org</email>)</entry>
-        <entry>2.4</entry>
-       </row>
-       <row>
-        <entry><systemitem class="osname">Linux</></entry>
-        <entry><systemitem>Itanium</></entry>
-        <entry>7.4</entry>
-        <entry>2003-10-25,
-         No&egrave;l K&ouml;the (<email>noel@debian.org</email>)</entry>
-        <entry>2.4</entry>
-       </row>
-       <row>
-        <entry><systemitem class="osname">Linux</></entry>
-        <entry><systemitem>m68k</></entry>
-        <entry>7.4</entry>
-        <entry>2003-10-25,
-         No&egrave;l K&ouml;the (<email>noel@debian.org</email>)</entry>
-        <entry>2.4</entry>
-       </row>
-       <row>
-        <entry><systemitem class="osname">Linux</></entry>
-        <entry><systemitem>MIPS</></entry>
-        <entry>7.4</entry>
-        <entry>2003-10-25,
-         No&egrave;l K&ouml;the (<email>noel@debian.org</email>)</entry>
-        <entry>2.4</entry>
-       </row>
-       <row>
-        <entry><systemitem class="osname">Linux</></entry>
-        <entry><systemitem>Opteron</></entry>
-        <entry>7.4</entry>
-        <entry>2003-11-01,
-         Jani Averbach (<email>jaa@cc.jyu.fi</email>)</entry>
-        <entry>2.6</entry>
-       </row>
-       <row>
-        <entry><systemitem class="osname">Linux</></entry>
-        <entry><systemitem>PPC</></entry>
-        <entry>7.4</entry>
-        <entry>2003-10-25,
-         No&egrave;l K&ouml;the (<email>noel@debian.org</email>)</entry>
-        <entry></entry>
-       </row>
-       <row>
-        <entry><systemitem class="osname">Linux</></entry>
-        <entry><systemitem>S/390</></entry>
-        <entry>7.4</entry>
-        <entry>2003-10-25,
-         No&egrave;l K&ouml;the (<email>noel@debian.org</email>)</entry>
-        <entry>2.4</entry>
-       </row>
-       <row>
-        <entry><systemitem class="osname">Linux</></entry>
-        <entry><systemitem>Sparc</></entry>
-        <entry>7.4</entry>
-        <entry>2003-10-24, 
-         Peter Eisentraut (<email>peter_e@gmx.net</email>)</entry>
-        <entry>2.4, 32-bit</entry>
-       </row>
-       <row>
-        <entry><systemitem class="osname">Linux</></entry>
-        <entry><systemitem>x86</></entry>
-        <entry>7.4</entry>
-        <entry>2003-10-24,
-         Peter Eisentraut (<email>peter_e@gmx.net</email>)</entry>
-        <entry>2.4</entry>
-       </row>
-       <row>
         <entry><systemitem class="osname">Mac OS X</></entry>
         <entry><systemitem>PPC</></entry>
         <entry>7.4</entry>
@@ -1581,6 +1585,13 @@ kill `cat /usr/local/pgsql/data/postmaster.pid`
          10.2.8, Adam Witney (<email>awitney@sghms.ac.uk</email>),
          10.3, Marko Karppinen (<email>marko@karppinen.fi</email>)</entry>
         <entry></entry>
+       </row>
+       <row>
+        <entry><systemitem class="osname">Mandrakelinux</></entry>
+        <entry><systemitem>x86</></entry>
+        <entry>8.0.0</entry>
+        <entry>Build farm <systemitem class="systemname">shrew</systemitem>, snapshot 2004-12-06 02:02:01</entry>
+        <entry>10.0</entry>
        </row>
        <row>
         <entry><systemitem class="osname">NetBSD</></entry>
@@ -1601,9 +1612,8 @@ kill `cat /usr/local/pgsql/data/postmaster.pid`
        <row>
         <entry><systemitem class="osname">NetBSD</></entry>
         <entry><systemitem>x86</></entry>
-        <entry>7.4</entry>
-        <entry>2003-10-24,
-         Peter Eisentraut (<email>peter_e@gmx.net</email>)</entry>
+        <entry>8.0.0</entry>
+        <entry>Build farm <systemitem class="systemname">canary</systemitem>, snapshot 2004-12-06 03:30:00</entry>
         <entry>1.6</entry>
        </row>
        <row>
@@ -1617,10 +1627,9 @@ kill `cat /usr/local/pgsql/data/postmaster.pid`
        <row>
         <entry><systemitem class="osname">OpenBSD</></entry>
         <entry><systemitem>x86</></entry>
-        <entry>7.4</entry>
-        <entry>2003-10-24,
-         Peter Eisentraut (<email>peter_e@gmx.net</email>)</entry>
-        <entry>3.2</entry>
+        <entry>8.0.0</entry>
+        <entry>Build farm <systemitem class="systemname">emu</systemitem>, snapshot 2004-12-06 11:35:03</entry>
+        <entry>3.6</entry>
        </row>
        <row>
         <entry><systemitem class="osname">Solaris</></entry>
