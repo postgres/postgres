@@ -30,10 +30,10 @@
       </thead>
       <tbody>
        <row>
-	<entry>AIX 4.2.1</entry>
+	<entry>AIX 4.3.2</entry>
 	<entry>RS6000</entry>
-	<entry>v6.4</entry>
-	<entry>1998-10-27</entry>
+	<entry>v6.5</entry>
+	<entry>1999-05-26</entry>
 	<entry>(<ulink url="mailto:Andreas.Zeugswetter@telecom.at">Andreas Zeugswetter</ulink>)</entry>
        </row>
        <row>
@@ -44,7 +44,7 @@
 	<entry>(<ulink url="mailto:maillist@candle.pha.pa.us">Bruce Momjian</ulink></entry>
        </row>
        <row>
-	<entry>FreeBSD 2.2.x-3.x</entry>
+	<entry>FreeBSD 2.2.x-4.0</entry>
 	<entry>x86</entry>
 	<entry>v6.5</entry>
 	<entry>1999-05-25</entry>
@@ -238,10 +238,10 @@
        <row>
 	<entry>Windows NT</entry>
 	<entry>x86</entry>
-	<entry>v6.4</entry>
-	<entry>1998-10-08</entry>
+	<entry>v6.5</entry>
+	<entry>1999-05-26</entry>
 	<entry>Working with the Cygwin library.
-	 (<ulink url="mailto:Dan.Horak@email.cz">Horak Daniel</ulink>) </entry>
+	 (<ulink url="mailto:Dan.Horak@email.cz">Daniel Horak</ulink>) </entry>
        </row>
       </tbody>
      </tgroup>
