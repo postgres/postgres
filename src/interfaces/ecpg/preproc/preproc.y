@@ -1,4 +1,4 @@
-/* $PostgreSQL: pgsql/src/interfaces/ecpg/preproc/preproc.y,v 1.263.2.13 2004/05/10 13:46:39 meskes Exp $ */
+/* $PostgreSQL: pgsql/src/interfaces/ecpg/preproc/preproc.y,v 1.263.2.14 2004/05/21 13:50:59 meskes Exp $ */
 
 /* Copyright comment */
 %{
@@ -712,7 +712,7 @@ stmt:  AlterDatabaseSetStmt		{ output_statement($1, 0, connection); }
 		{
 			if (connection)
 				mmerror(PARSE_ERROR, ET_ERROR, "no at option for deallocate statement.\n");
-			fprintf(yyout, "{ ECPGdeallocate(__LINE__, \"%s\");", $1);
+			fprintf(yyout, "{ ECPGdeallocate(__LINE__, %d, %s);", compat, $1);
 			whenever_action(2);
 			free($1);
 		}
