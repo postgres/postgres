@@ -51,6 +51,7 @@
 /* IRIX doesn't do 'long long' in va_arg(), so use a typedef */
 #ifdef HAVE_LONG_LONG_INT_64
 typedef long long long_long;
+typedef unsigned long long ulong_long;
 #endif
 
 /*
@@ -75,7 +76,7 @@ typedef long long long_long;
  * causing nast effects.
  **************************************************************/
 
-/*static char _id[] = "$Id: snprintf.c,v 1.10.2.2 1998/12/18 07:03:29 momjian Exp $";*/
+/*static char _id[] = "$Id: snprintf.c,v 1.10.2.3 1998/12/25 02:20:41 momjian Exp $";*/
 static char *end;
 static int	SnprfOverflow;
 
@@ -363,7 +364,7 @@ int			base,
 {
 	int			signvalue = 0;
 #ifdef HAVE_LONG_LONG_INT_64
-	unsigned long long uvalue;
+	ulong_long uvalue;
 #else
 	unsigned long uvalue;
 #endif
