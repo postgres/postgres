@@ -8,10 +8,10 @@ import org.postgresql.Field;
 import org.postgresql.fastpath.*;
 import org.postgresql.largeobject.*;
 import org.postgresql.util.*;
-import org.postgresql.core.Encoding;
+import org.postgresql.core.*;
 
 /**
- * $Id: Connection.java,v 1.26 2001/08/24 16:50:12 momjian Exp $
+ * $Id: Connection.java,v 1.27 2001/09/06 03:13:34 momjian Exp $
  *
  * This abstract class is used by org.postgresql.Driver to open either the JDBC1 or
  * JDBC2 versions of the Connection class.
@@ -348,166 +348,9 @@ public abstract class Connection
      * @return a ResultSet holding the results
      * @exception SQLException if a database error occurs
      */
-    public java.sql.ResultSet ExecSQL(String sql,java.sql.Statement stat) throws SQLException
+    public java.sql.ResultSet ExecSQL(String sql, java.sql.Statement stat) throws SQLException
     {
-      // added Jan 30 2001 to correct maxrows per statement
-      int maxrows=0;
-      if(stat!=null)
-        maxrows=stat.getMaxRows();
-
-	// added Oct 7 1998 to give us thread safety.
-	synchronized(pg_stream) {
- 	    // Deallocate all resources in the stream associated
-  	    // with a previous request.
-  	    // This will let the driver reuse byte arrays that has already
-  	    // been allocated instead of allocating new ones in order
-  	    // to gain performance improvements.
-  	    // PM 17/01/01: Commented out due to race bug. See comments in
-            // PG_Stream
-            //pg_stream.deallocate();
-
-	    Field[] fields = null;
-	    Vector tuples = new Vector();
-	    byte[] buf = null;
-	    int fqp = 0;
-	    boolean hfr = false;
-	    String recv_status = null, msg;
-	    int update_count = 1;
-	    int insert_oid = 0;
-	    SQLException final_error = null;
-
-	    buf = encoding.encode(sql);
-	    try
-		{
-		    pg_stream.SendChar('Q');
-		    pg_stream.Send(buf);
-		    pg_stream.SendChar(0);
-		    pg_stream.flush();
-		} catch (IOException e) {
-		    throw new PSQLException("postgresql.con.ioerror",e);
-		}
-
-	    while (!hfr || fqp > 0)
-		{
-		    Object tup=null;	// holds rows as they are recieved
-
-		    int c = pg_stream.ReceiveChar();
-
-		    switch (c)
-			{
-			case 'A':	// Asynchronous Notify
-			    pid = pg_stream.ReceiveInteger(4);
-                            msg = pg_stream.ReceiveString(encoding);
-			    break;
-			case 'B':	// Binary Data Transfer
-			    if (fields == null)
-				throw new PSQLException("postgresql.con.tuple");
-			    tup = pg_stream.ReceiveTuple(fields.length, true);
-			    // This implements Statement.setMaxRows()
-			    if(maxrows==0 || tuples.size()<maxrows)
-				tuples.addElement(tup);
-			    break;
-			case 'C':	// Command Status
-                            recv_status = pg_stream.ReceiveString(encoding);
-
-				// Now handle the update count correctly.
-				if(recv_status.startsWith("INSERT") || recv_status.startsWith("UPDATE") || recv_status.startsWith("DELETE") || recv_status.startsWith("MOVE")) {
-					try {
-						update_count = Integer.parseInt(recv_status.substring(1+recv_status.lastIndexOf(' ')));
-					} catch(NumberFormatException nfe) {
-						throw new PSQLException("postgresql.con.fathom",recv_status);
-					}
-					if(recv_status.startsWith("INSERT")) {
-					    try {
-						insert_oid = Integer.parseInt(recv_status.substring(1+recv_status.indexOf(' '),recv_status.lastIndexOf(' ')));
-					    } catch(NumberFormatException nfe) {
-						throw new PSQLException("postgresql.con.fathom",recv_status);
-					    }
-					}
-				}
-			    if (fields != null)
-				hfr = true;
-			    else
-				{
-				    try
-					{
-					    pg_stream.SendChar('Q');
-					    pg_stream.SendChar(' ');
-					    pg_stream.SendChar(0);
-					    pg_stream.flush();
-					} catch (IOException e) {
-					    throw new PSQLException("postgresql.con.ioerror",e);
-					}
-				    fqp++;
-				}
-			    break;
-			case 'D':	// Text Data Transfer
-			    if (fields == null)
-				throw new PSQLException("postgresql.con.tuple");
-			    tup = pg_stream.ReceiveTuple(fields.length, false);
-			    // This implements Statement.setMaxRows()
-			    if(maxrows==0 || tuples.size()<maxrows)
-				tuples.addElement(tup);
-			    break;
-			case 'E':	// Error Message
-                            msg = pg_stream.ReceiveString(encoding);
-			    final_error = new SQLException(msg);
-			    hfr = true;
-			    break;
-			case 'I':	// Empty Query
-			    int t = pg_stream.ReceiveChar();
-
-			    if (t != 0)
-				throw new PSQLException("postgresql.con.garbled");
-			    if (fqp > 0)
-				fqp--;
-			    if (fqp == 0)
-				hfr = true;
-			    break;
-			case 'N':	// Error Notification
-                            addWarning(pg_stream.ReceiveString(encoding));
-			    break;
-			case 'P':	// Portal Name
-                            String pname = pg_stream.ReceiveString(encoding);
-			    break;
-			case 'T':	// MetaData Field Description
-			    if (fields != null)
-				throw new PSQLException("postgresql.con.multres");
-			    fields = ReceiveFields();
-			    break;
-			case 'Z':       // backend ready for query, ignore for now :-)
-			    break;
-			default:
-			    throw new PSQLException("postgresql.con.type",new Character((char)c));
-			}
-		}
-	    if (final_error != null)
-		throw final_error;
-
-	    return getResultSet(this, stat, fields, tuples, recv_status, update_count, insert_oid);
-	}
-    }
-
-    /**
-     * Receive the field descriptions from the back end
-     *
-     * @return an array of the Field object describing the fields
-     * @exception SQLException if a database error occurs
-     */
-    private Field[] ReceiveFields() throws SQLException
-    {
-	int nf = pg_stream.ReceiveIntegerR(2), i;
-	Field[] fields = new Field[nf];
-
-	for (i = 0 ; i < nf ; ++i)
-	    {
-                String typname = pg_stream.ReceiveString(encoding);
-		int typid = pg_stream.ReceiveIntegerR(4);
-		int typlen = pg_stream.ReceiveIntegerR(2);
-		int typmod = pg_stream.ReceiveIntegerR(4);
-		fields[i] = new Field(this, typname, typid, typlen, typmod);
-	    }
-	return fields;
+	return new QueryExecutor(sql, stat, pg_stream, this).execute();
     }
 
     /**
@@ -793,7 +636,7 @@ public abstract class Connection
      * This returns a resultset. It must be overridden, so that the correct
      * version (from jdbc1 or jdbc2) are returned.
      */
-    protected abstract java.sql.ResultSet getResultSet(org.postgresql.Connection conn,java.sql.Statement stat, Field[] fields, Vector tuples, String status, int updateCount,int insertOID) throws SQLException;
+    public abstract java.sql.ResultSet getResultSet(org.postgresql.Connection conn,java.sql.Statement stat, Field[] fields, Vector tuples, String status, int updateCount,int insertOID) throws SQLException;
 
     /**
      * In some cases, it is desirable to immediately release a Connection's
