@@ -24,7 +24,7 @@
 #
 # Copyright (c) 1994, Regents of the University of California
 #
-# $Header: /cvsroot/pgsql/src/bin/initdb/Attic/initdb.sh,v 1.114 2000/11/14 18:37:45 tgl Exp $
+# $Header: /cvsroot/pgsql/src/bin/initdb/Attic/initdb.sh,v 1.115 2000/11/21 01:11:49 tgl Exp $
 #
 #-------------------------------------------------------------------------
 
@@ -583,12 +583,10 @@ echo "CREATE VIEW pg_views AS \
             pg_get_userbyid(C.relowner) AS viewowner, \
             pg_get_viewdef(C.relname) AS definition \
         FROM pg_class C \
-        WHERE C.relhasrules \
-            AND	EXISTS ( \
-                SELECT rulename FROM pg_rewrite R \
-                    WHERE ev_class = C.oid AND ev_type = '1' \
-            )" \
+        WHERE C.relkind = 'v';" \
 	| "$PGPATH"/postgres $PGSQL_OPT template1 > /dev/null || exit_nicely
+
+# XXX why does pg_tables include sequences?
 
 echo "CREATE VIEW pg_tables AS \
         SELECT \
@@ -598,11 +596,7 @@ echo "CREATE VIEW pg_tables AS \
 	    C.relhasrules AS hasrules, \
 	    (C.reltriggers > 0) AS hastriggers \
         FROM pg_class C \
-        WHERE C.relkind IN ('r', 's') \
-            AND NOT EXISTS ( \
-                SELECT rulename FROM pg_rewrite \
-                    WHERE ev_class = C.oid AND ev_type = '1' \
-            )" \
+        WHERE C.relkind IN ('r', 's');" \
 	| "$PGPATH"/postgres $PGSQL_OPT template1 > /dev/null || exit_nicely
 
 echo "CREATE VIEW pg_indexes AS \
@@ -611,8 +605,9 @@ echo "CREATE VIEW pg_indexes AS \
 	    I.relname AS indexname, \
             pg_get_indexdef(X.indexrelid) AS indexdef \
         FROM pg_index X, pg_class C, pg_class I \
-	WHERE C.oid = X.indrelid \
-            AND I.oid = X.indexrelid" \
+	WHERE C.relkind = 'r' AND I.relkind = 'i' \
+	    AND C.oid = X.indrelid \
+            AND I.oid = X.indexrelid;" \
         | "$PGPATH"/postgres $PGSQL_OPT template1 > /dev/null || exit_nicely
 
 echo "Loading pg_description."
