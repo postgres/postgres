@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *    $Header: /cvsroot/pgsql/src/backend/commands/async.c,v 1.2 1996/10/05 20:30:31 momjian Exp $
+ *    $Header: /cvsroot/pgsql/src/backend/commands/async.c,v 1.3 1996/10/18 05:59:15 scrappy Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -295,13 +295,13 @@ Async_NotifyAtCommit()
 			notifyFrontEndPending = 1;
 		    } else {
 			elog(DEBUG, "Notifying others");
-#ifndef WIN32
+#ifndef win32
 			if (kill(DatumGetInt32(d), SIGUSR2) < 0) {
 			    if (errno == ESRCH) {
 				heap_delete(lRel, &lTuple->t_ctid);
 			    }
 			}
-#endif /* WIN32 */
+#endif /* win32 */
 		    }
 		}
 		ReleaseBuffer(b);

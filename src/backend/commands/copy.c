@@ -6,7 +6,7 @@
  *
  *
  * IDENTIFICATION
- *    $Header: /cvsroot/pgsql/src/backend/commands/copy.c,v 1.7 1996/08/27 22:17:08 scrappy Exp $
+ *    $Header: /cvsroot/pgsql/src/backend/commands/copy.c,v 1.8 1996/10/18 05:59:17 scrappy Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -43,6 +43,9 @@
 #include "utils/memutils.h"
 #include "utils/palloc.h"
 #include "fmgr.h"
+
+#define ISOCTAL(c)    (((c) >= '0') && ((c) <= '7'))
+#define VALUE(c)        ((c) - '0')
 
 /*
  * New copy code.
@@ -745,9 +748,6 @@ CopyReadAttribute(FILE *fp, bool *isnull, char *delim)
 	    return(NULL);
 	else if (c == '\\') {
 	    c = getc(fp);
-#ifdef ESCAPE_PATCH
-#define ISOCTAL(c)    (((c) >= '0') && ((c) <= '7'))
-#define       VALUE(c)        ((c) - '0')
             if (feof(fp))
                 return(NULL);
             switch (c) {
@@ -809,7 +809,6 @@ CopyReadAttribute(FILE *fp, bool *isnull, char *delim)
 		return(NULL);
 		break;
             }
-#endif
 	}else if (inString(c,delim) || c == '\n') {
 	    done = 1;
 	}
@@ -821,7 +820,6 @@ CopyReadAttribute(FILE *fp, bool *isnull, char *delim)
     return(&attribute[0]);
 }
 
-#ifdef ESCAPE_PATCH
 static void
 CopyAttributeOut(FILE *fp, char *string, char *delim)
 {
@@ -853,21 +851,6 @@ CopyAttributeOut(FILE *fp, char *string, char *delim)
       fputc(*string, fp);
     }
 }
-#else
-static void
-CopyAttributeOut(FILE *fp, char *string, char *delim)
-{
-    int i;
-    int len = strlen(string);
-    
-    for (i = 0; i < len; i++) {
-	if (string[i] == delim[0] || string[i] == '\n' || string[i] == '\\') {
-	    fputc('\\', fp);
-	}
-	fputc(string[i], fp);
-    }
-}
-#endif
 
 /*
  * Returns the number of tuples in a relation.  Unfortunately, currently
