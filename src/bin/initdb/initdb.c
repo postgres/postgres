@@ -39,7 +39,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  * Portions taken from FreeBSD.
  *
- * $PostgreSQL: pgsql/src/bin/initdb/initdb.c,v 1.73 2005/01/08 22:51:12 tgl Exp $
+ * $PostgreSQL: pgsql/src/bin/initdb/initdb.c,v 1.74 2005/01/28 00:34:32 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -476,6 +476,9 @@ popen_check(const char *command, const char *mode)
  * this tries to build all the elements of a path to a directory a la mkdir -p
  * we assume the path is in canonical form, i.e. uses / as the separator
  * we also assume it isn't null.
+ *
+ * note that on failure, the path arg has been modified to show the particular
+ * directory level we had problems with.
  */
 static int
 mkdir_p(char *path, mode_t omode)
@@ -544,30 +547,24 @@ mkdir_p(char *path, mode_t omode)
 		}
 		if (last)
 			(void) umask(oumask);
-		if (mkdir(path, last ? omode : S_IRWXU | S_IRWXG | S_IRWXO) < 0)
+
+		/* check for pre-existing directory; ok if it's a parent */
+		if (stat(path, &sb) == 0)
 		{
-			if (errno == EEXIST || errno == EISDIR)
+			if (!S_ISDIR(sb.st_mode))
 			{
-				if (stat(path, &sb) < 0)
-				{
-					retval = 1;
-					break;
-				}
-				else if (!S_ISDIR(sb.st_mode))
-				{
-					if (last)
-						errno = EEXIST;
-					else
-						errno = ENOTDIR;
-					retval = 1;
-					break;
-				}
-			}
-			else
-			{
+				if (last)
+					errno = EEXIST;
+				else
+					errno = ENOTDIR;
 				retval = 1;
 				break;
 			}
+		}
+		else if (mkdir(path, last ? omode : S_IRWXU | S_IRWXG | S_IRWXO) < 0)
+		{
+			retval = 1;
+			break;
 		}
 		if (!last)
 			*p = '/';
