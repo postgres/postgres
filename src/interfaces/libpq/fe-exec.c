@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/interfaces/libpq/fe-exec.c,v 1.135 2003/05/08 18:16:37 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/interfaces/libpq/fe-exec.c,v 1.136 2003/05/26 20:05:20 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -55,7 +55,7 @@ static void parseInput(PGconn *conn);
 static void handleSendFailure(PGconn *conn);
 static void handleSyncLoss(PGconn *conn, char id, int msgLength);
 static int	getRowDescriptions(PGconn *conn);
-static int	getAnotherTuple(PGconn *conn);
+static int	getAnotherTuple(PGconn *conn, int msgLength);
 static int	getParameterStatus(PGconn *conn);
 static int	getNotify(PGconn *conn);
 
@@ -835,17 +835,28 @@ parseInput(PGconn *conn)
 					}
 					break;
 				case 'D':		/* Data Row */
-					if (conn->result != NULL)
+					if (conn->result != NULL &&
+						conn->result->resultStatus == PGRES_TUPLES_OK)
 					{
 						/* Read another tuple of a normal query response */
-						if (getAnotherTuple(conn))
+						if (getAnotherTuple(conn, msgLength))
 							return;
+					}
+					else if (conn->result != NULL &&
+							 conn->result->resultStatus == PGRES_FATAL_ERROR)
+					{
+						/*
+						 * We've already choked for some reason.  Just discard
+						 * tuples till we get to the end of the query.
+						 */
+						conn->inCursor += msgLength;
 					}
 					else
 					{
-						snprintf(noticeWorkspace, sizeof(noticeWorkspace),
+						/* Set up to report error at end of query */
+						printfPQExpBuffer(&conn->errorMessage,
 								 libpq_gettext("server sent data (\"D\" message) without prior row description (\"T\" message)\n"));
-						DONOTICE(conn, noticeWorkspace);
+						saveErrorResult(conn);
 						/* Discard the unexpected message */
 						conn->inCursor += msgLength;
 					}
@@ -888,6 +899,7 @@ parseInput(PGconn *conn)
 									  id);
 					/* build an error result holding the error message */
 					saveErrorResult(conn);
+					/* not sure if we will see more, so go to ready state */
 					conn->asyncStatus = PGASYNC_READY;
 					/* Discard the unexpected message */
 					conn->inCursor += msgLength;
@@ -931,6 +943,7 @@ handleSyncLoss(PGconn *conn, char id, int msgLength)
 	pqsecure_close(conn);
 	closesocket(conn->sock);
 	conn->sock = -1;
+	conn->asyncStatus = PGASYNC_READY; /* drop out of GetResult wait loop */
 }
 
 /*
@@ -1023,7 +1036,7 @@ getRowDescriptions(PGconn *conn)
  */
 
 static int
-getAnotherTuple(PGconn *conn)
+getAnotherTuple(PGconn *conn, int msgLength)
 {
 	PGresult   *result = conn->result;
 	int			nfields = result->numAttributes;
@@ -1050,12 +1063,11 @@ getAnotherTuple(PGconn *conn)
 	if (tupnfields != nfields)
 	{
 		/* Replace partially constructed result with an error result */
-		pqClearAsyncResult(conn);
 		printfPQExpBuffer(&conn->errorMessage,
 						  libpq_gettext("unexpected field count in D message\n"));
 		saveErrorResult(conn);
-		conn->asyncStatus = PGASYNC_READY;
 		/* Discard the failed message by pretending we read it */
+		conn->inCursor = conn->inStart + 5 + msgLength;
 		return 0;
 	}
 
@@ -1102,14 +1114,15 @@ outOfMemory:
 
 	/*
 	 * we do NOT use saveErrorResult() here, because of the likelihood
-	 * that there's not enough memory to concatenate messages...
+	 * that there's not enough memory to concatenate messages.  Instead,
+	 * discard the old result first to try to win back some memory.
 	 */
 	pqClearAsyncResult(conn);
 	printfPQExpBuffer(&conn->errorMessage,
-					  libpq_gettext("out of memory\n"));
+					  libpq_gettext("out of memory for query result\n"));
 	conn->result = PQmakeEmptyPGresult(conn, PGRES_FATAL_ERROR);
-	conn->asyncStatus = PGASYNC_READY;
 	/* Discard the failed message by pretending we read it */
+	conn->inCursor = conn->inStart + 5 + msgLength;
 	return 0;
 }
 
