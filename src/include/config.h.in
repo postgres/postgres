@@ -77,6 +77,38 @@
 /* Set to 1 if you have <dld.h> */
 #undef HAVE_DLD_H
 
+/* Define if you have the ANSI C header files.  */
+#undef STDC_HEADERS
+
+/* default path for the location of the odbcinst.ini file */
+#undef ODBCINST
+
+/* Define if you have the stricmp function.  */
+#undef HAVE_STRICMP
+
+/*
+ * Block of parameters for the ODBC code.
+ */
+
+/* Set to 1 if you have <pwd.h> */
+#undef HAVE_PWD_H
+
+/* Define if you have the <sys/param.h> header file.  */
+#undef HAVE_SYS_PARAM_H
+
+/* Define if you have the c library (-lc).  */
+#undef HAVE_LIBC
+
+/* Define if you have the dl library (-ldl).  */
+#undef HAVE_LIBDL
+
+/* Define if you have the m library (-lm).  */
+#undef HAVE_LIBM
+
+/*
+ * End parameters for ODBC code.
+ */
+
 /* Set to 1 if you gettimeofday(a,b) vs gettimeofday(a) */
 #undef HAVE_GETTIMEOFDAY_2_ARGS
 #ifndef HAVE_GETTIMEOFDAY_2_ARGS
@@ -292,6 +324,10 @@ extern void srandom(int seed);
  */
 #define INDEXSCAN_PATCH 
 
+/*
+ * Enables debugging print statements in the date/time support routines.
+ * Particularly useful for porting to a new platform/OS combination.
+ */
 /* #define DATEDEBUG */
 
 /*
