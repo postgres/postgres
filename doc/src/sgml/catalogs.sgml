@@ -1,6 +1,6 @@
 <!--
  Documentation of the system catalogs, directed toward PostgreSQL developers
- $Header: /cvsroot/pgsql/doc/src/sgml/catalogs.sgml,v 2.44 2002/06/20 15:44:06 momjian Exp $
+ $Header: /cvsroot/pgsql/doc/src/sgml/catalogs.sgml,v 2.45 2002/07/12 18:43:12 tgl Exp $
  -->
 
 <chapter id="catalogs">
@@ -72,8 +72,18 @@
      </row>
 
      <row>
+      <entry>pg_constraint</entry>
+      <entry>check constraints, unique / primary key constraints, foreign key constraints</entry>
+     </row>
+
+     <row>
       <entry>pg_database</entry>
       <entry>databases within this database cluster</entry>
+     </row>
+
+     <row>
+      <entry>pg_depend</entry>
+      <entry>dependencies between database objects</entry>
      </row>
 
      <row>
@@ -129,11 +139,6 @@
      <row>
       <entry>pg_proc</entry>
       <entry>functions and procedures</entry>
-     </row>
-
-     <row>
-      <entry>pg_relcheck</entry>
-      <entry>check constraints</entry>
      </row>
 
      <row>
@@ -680,7 +685,7 @@
       <entry></entry>
       <entry>
        Number of check constraints on the table; see
-       <structname>pg_relcheck</structname> catalog
+       <structname>pg_constraint</structname> catalog
       </entry>
      </row>
 
@@ -764,6 +769,167 @@
   </table>
  </sect1>
 
+ <sect1 id="catalog-pg-constraint">
+  <title>pg_constraint</title>
+
+  <para>
+   This system catalog stores CHECK, PRIMARY KEY, UNIQUE, and FOREIGN KEY
+   constraints on tables.  (Column
+   constraints are not treated specially.  Every column constraint is
+   equivalent to some table constraint.)  See under <command>CREATE
+   TABLE</command> for more information.
+  </para>
+
+  <note>
+   <para>
+    NOT NULL constraints are represented in the <structname>pg_attribute</>
+    catalog.
+   </para>
+  </note>
+
+  <para>
+   CHECK constraints on domains are stored here, too.  Global ASSERTIONS
+   (a currently-unsupported SQL feature) may someday appear here as well.
+  </para>
+
+  <table>
+   <title>pg_constraint Columns</title>
+
+   <tgroup cols=4>
+    <thead>
+     <row>
+      <entry>Name</entry>
+      <entry>Type</entry>
+      <entry>References</entry>
+      <entry>Description</entry>
+     </row>
+    </thead>
+
+    <tbody>
+     <row>
+      <entry>conname</entry>
+      <entry><type>name</type></entry>
+      <entry></entry>
+      <entry>Constraint name (not necessarily unique!)</entry>
+     </row>
+
+     <row>
+      <entry>connamespace</entry>
+      <entry><type>oid</type></entry>
+      <entry>pg_namespace.oid</entry>
+      <entry>
+       The OID of the namespace that contains this constraint
+      </entry>
+     </row>
+
+     <row>
+      <entry>contype</entry>
+      <entry><type>char</type></entry>
+      <entry></entry>
+      <entry>
+        'c' = check constraint,
+	'f' = foreign key constraint,
+	'p' = primary key constraint,
+        'u' = unique constraint
+      </entry>
+     </row>
+
+     <row>
+      <entry>condeferrable</entry>
+      <entry><type>boolean</type></entry>
+      <entry></entry>
+      <entry>Is the constraint deferrable?</entry>
+     </row>
+
+     <row>
+      <entry>condeferred</entry>
+      <entry><type>boolean</type></entry>
+      <entry></entry>
+      <entry>Is the constraint deferred by default?</entry>
+     </row>
+
+     <row>
+      <entry>conrelid</entry>
+      <entry><type>oid</type></entry>
+      <entry>pg_class.oid</entry>
+      <entry>The table this constraint is on; 0 if not a table constraint</entry>
+     </row>
+
+     <row>
+      <entry>contypid</entry>
+      <entry><type>oid</type></entry>
+      <entry>pg_type.oid</entry>
+      <entry>The domain this constraint is on; 0 if not a domain constraint</entry>
+     </row>
+
+     <row>
+      <entry>confrelid</entry>
+      <entry><type>oid</type></entry>
+      <entry>pg_class.oid</entry>
+      <entry>If a foreign key, the referenced table; else 0</entry>
+     </row>
+
+     <row>
+      <entry>confupdtype</entry>
+      <entry><type>char</type></entry>
+      <entry></entry>
+      <entry>Foreign key update action code</entry>
+     </row>
+
+     <row>
+      <entry>confdeltype</entry>
+      <entry><type>char</type></entry>
+      <entry></entry>
+      <entry>Foreign key deletion action code</entry>
+     </row>
+
+     <row>
+      <entry>confmatchtype</entry>
+      <entry><type>char</type></entry>
+      <entry></entry>
+      <entry>Foreign key match type</entry>
+     </row>
+
+     <row>
+      <entry>conkey</entry>
+      <entry><type>smallint[]</type></entry>
+      <entry>pg_attribute.attnum</entry>
+      <entry>If a table constraint, list of columns which the constraint constrains</entry>
+     </row>
+
+     <row>
+      <entry>confkey</entry>
+      <entry><type>smallint[]</type></entry>
+      <entry>pg_attribute.attnum</entry>
+      <entry>If a foreign key, list of the referenced columns</entry>
+     </row>
+
+     <row>
+      <entry>conbin</entry>
+      <entry><type>text</type></entry>
+      <entry></entry>
+      <entry>If a check constraint, an internal representation of the expression</entry>
+     </row>
+
+     <row>
+      <entry>consrc</entry>
+      <entry><type>text</type></entry>
+      <entry></entry>
+      <entry>If a check constraint, a human-readable representation of the expression</entry>
+     </row>
+    </tbody>
+   </tgroup>
+  </table>
+
+  <note>
+   <para>
+    <structname>pg_class</structname>.<structfield>relchecks</structfield>
+    needs to agree with the number of check-constraint entries found in this
+    table for the given relation.
+   </para>
+  </note>
+
+ </sect1>
 
  <sect1 id="catalog-pg-database">
   <title>pg_database</title>
@@ -900,6 +1066,151 @@
     </tbody>
    </tgroup>
   </table>
+ </sect1>
+
+
+ <sect1 id="catalog-pg-depend">
+  <title>pg_depend</title>
+
+  <para>
+   The <structname>pg_depend</structname> table records the dependency
+   relationships between database objects.  This information allows
+   <command>DROP</> commands to find which other objects must be dropped
+   by <command>DROP CASCADE</>, or prevent dropping in the <command>DROP
+   RESTRICT</> case.
+  </para>
+
+  <table>
+   <title>pg_depend Columns</title>
+
+   <tgroup cols=4>
+    <thead>
+     <row>
+      <entry>Name</entry>
+      <entry>Type</entry>
+      <entry>References</entry>
+      <entry>Description</entry>
+     </row>
+    </thead>
+
+    <tbody>
+     <row>
+      <entry>classid</entry>
+      <entry><type>oid</type></entry>
+      <entry>pg_class.oid</entry>
+      <entry>The oid of the system catalog the dependent object is in</entry>
+     </row>
+
+     <row>
+      <entry>objid</entry>
+      <entry><type>oid</type></entry>
+      <entry>any oid attribute</entry>
+      <entry>The oid of the specific dependent object</entry>
+     </row>
+
+     <row>
+      <entry>objsubid</entry>
+      <entry><type>integer</type></entry>
+      <entry></entry>
+      <entry>For a table attribute, this is the attribute's
+       column number (the objid and classid refer to the table itself).
+       For all other object types, this field is presently zero.
+      </entry>
+     </row>
+
+     <row>
+      <entry>refclassid</entry>
+      <entry><type>oid</type></entry>
+      <entry>pg_class.oid</entry>
+      <entry>The oid of the system catalog the referenced object is in</entry>
+     </row>
+
+     <row>
+      <entry>refobjid</entry>
+      <entry><type>oid</type></entry>
+      <entry>any oid attribute</entry>
+      <entry>The oid of the specific referenced object</entry>
+     </row>
+
+     <row>
+      <entry>refobjsubid</entry>
+      <entry><type>integer</type></entry>
+      <entry></entry>
+      <entry>For a table attribute, this is the attribute's
+       column number (the objid and classid refer to the table itself).
+       For all other object types, this field is presently zero.
+      </entry>
+     </row>
+
+     <row>
+      <entry>deptype</entry>
+      <entry><type>char</type></entry>
+      <entry></entry>
+      <entry>
+       A code defining the specific semantics of this dependency relationship.
+      </entry>
+     </row>
+
+    </tbody>
+   </tgroup>
+  </table>
+
+  <para>
+   In all cases, a <structname>pg_depend</structname> entry indicates that the
+   referenced object may not be dropped without also dropping the dependent
+   object.  However, there are several subflavors identified by
+   <structfield>deptype</>:
+
+   <itemizedlist>
+    <listitem>
+     <para>
+      DEPENDENCY_NORMAL ('n'): normal relationship between separately-created
+      objects.  The dependent object may be dropped without affecting the
+      referenced object.  The referenced object may only be dropped by
+      specifying CASCADE, in which case the dependent object is dropped too.
+      Example: a table column has a normal dependency on its datatype.
+     </para>
+    </listitem>
+
+    <listitem>
+     <para>
+      DEPENDENCY_AUTO ('a'): the dependent object can be dropped separately
+      from the referenced object, and should be automatically dropped
+      (regardless of RESTRICT or CASCADE mode) if the referenced object
+      is dropped.
+      Example: a named constraint on a table is made auto-dependent on
+      the table, so that it will go away if the table is dropped.
+     </para>
+    </listitem>
+
+    <listitem>
+     <para>
+      DEPENDENCY_INTERNAL ('i'): the dependent object was created as part
+      of creation of the referenced object, and is really just a part of
+      its internal implementation.  A DROP of the dependent object will be
+      disallowed outright (we'll tell the user to issue a DROP against the
+      referenced object, instead).  A DROP of the referenced object will be
+      propagated through to drop the dependent object whether CASCADE is
+      specified or not.
+      Example: a trigger that's created to enforce a foreign-key constraint
+      is made internally dependent on the constraint's pg_constraint entry.
+     </para>
+    </listitem>
+
+    <listitem>
+     <para>
+      DEPENDENCY_PIN ('p'): there is no dependent object; this type of entry
+      is a signal that the system itself depends on the referenced object,
+      and so that object must never be deleted.  Entries of this type are
+      created only during initdb.  The fields for the dependent object
+      contain zeroes.
+     </para>
+    </listitem>
+   </itemizedlist>
+
+   Other dependency flavors may be needed in future.
+  </para>
+
  </sect1>
 
 
@@ -1865,72 +2176,6 @@
   </para>
 
  </sect1>
-
-
- <sect1 id="catalog-pg-relcheck">
-  <title>pg_relcheck</title>
-
-  <para>
-   This system catalog stores CHECK constraints on tables.  (Column
-   constraints are not treated specially.  Every column constraint is
-   equivalent to some table constraint.)  See under <command>CREATE
-   TABLE</command> for more information.
-  </para>
-
-  <table>
-   <title>pg_relcheck Columns</title>
-
-   <tgroup cols=4>
-    <thead>
-     <row>
-      <entry>Name</entry>
-      <entry>Type</entry>
-      <entry>References</entry>
-      <entry>Description</entry>
-     </row>
-    </thead>
-
-    <tbody>
-     <row>
-      <entry>rcrelid</entry>
-      <entry><type>oid</type></entry>
-      <entry>pg_class.oid</entry>
-      <entry>The table this check constraint is on</entry>
-     </row>
-
-     <row>
-      <entry>rcname</entry>
-      <entry><type>name</type></entry>
-      <entry></entry>
-      <entry>Constraint name</entry>
-     </row>
-
-     <row>
-      <entry>rcbin</entry>
-      <entry><type>text</type></entry>
-      <entry></entry>
-      <entry>An internal representation of the constraint expression</entry>
-     </row>
-
-     <row>
-      <entry>rcsrc</entry>
-      <entry><type>text</type></entry>
-      <entry></entry>
-      <entry>A human-readable representation of the constraint expression</entry>
-     </row>
-    </tbody>
-   </tgroup>
-  </table>
-
-  <note>
-   <para>
-    <structname>pg_class</structname>.<structfield>relchecks</structfield>
-    needs to match up with the entries in this table.
-   </para>
-  </note>
-
- </sect1>
-
 
  <sect1 id="catalog-pg-rewrite">
   <title>pg_rewrite</title>

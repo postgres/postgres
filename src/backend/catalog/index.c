@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/catalog/index.c,v 1.181 2002/06/20 20:29:26 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/catalog/index.c,v 1.182 2002/07/12 18:43:13 tgl Exp $
  *
  *
  * INTERFACE ROUTINES
@@ -29,14 +29,15 @@
 #include "bootstrap/bootstrap.h"
 #include "catalog/catalog.h"
 #include "catalog/catname.h"
+#include "catalog/dependency.h"
 #include "catalog/heap.h"
 #include "catalog/index.h"
 #include "catalog/indexing.h"
+#include "catalog/pg_constraint.h"
 #include "catalog/pg_index.h"
 #include "catalog/pg_opclass.h"
 #include "catalog/pg_proc.h"
 #include "catalog/pg_type.h"
-#include "commands/comment.h"
 #include "executor/executor.h"
 #include "miscadmin.h"
 #include "optimizer/clauses.h"
@@ -535,6 +536,7 @@ index_create(Oid heapRelationId,
 			 Oid accessMethodObjectId,
 			 Oid *classObjectId,
 			 bool primary,
+			 bool isconstraint,
 			 bool allow_system_table_mods)
 {
 	Relation	heapRelation;
@@ -543,6 +545,7 @@ index_create(Oid heapRelationId,
 	bool		shared_relation;
 	Oid			namespaceId;
 	Oid			indexoid;
+	int			i;
 
 	SetReindexProcessing(false);
 
@@ -660,7 +663,89 @@ index_create(Oid heapRelationId,
 						classObjectId, primary);
 
 	/*
-	 * fill in the index strategy structure with information from the
+	 * Register constraint and dependencies for the index.
+	 *
+	 * If the index is from a CONSTRAINT clause, construct a pg_constraint
+	 * entry.  The index is then linked to the constraint, which in turn is
+	 * linked to the table.  If it's not a CONSTRAINT, make the dependency
+	 * directly on the table.
+	 *
+	 * During bootstrap we can't register any dependencies, and we don't
+	 * try to make a constraint either.
+	 */
+	if (!IsBootstrapProcessingMode())
+	{
+		ObjectAddress	myself,
+						referenced;
+
+		myself.classId = RelOid_pg_class;
+		myself.objectId = indexoid;
+		myself.objectSubId = 0;
+
+		if (isconstraint)
+		{
+			char		constraintType;
+			Oid			conOid;
+
+			if (primary)
+				constraintType = CONSTRAINT_PRIMARY;
+			else if (indexInfo->ii_Unique)
+				constraintType = CONSTRAINT_UNIQUE;
+			else
+			{
+				elog(ERROR, "index_create: constraint must be PRIMARY or UNIQUE");
+				constraintType = 0;	/* keep compiler quiet */
+			}
+
+			conOid = CreateConstraintEntry(indexRelationName,
+										   namespaceId,
+										   constraintType,
+										   false, /* isDeferrable */
+										   false, /* isDeferred */
+										   heapRelationId,
+										   indexInfo->ii_KeyAttrNumbers,
+										   indexInfo->ii_NumIndexAttrs,
+										   InvalidOid, /* no domain */
+										   InvalidOid, /* no foreign key */
+										   NULL,
+										   0,
+										   ' ',
+										   ' ',
+										   ' ',
+										   NULL, /* Constraint Bin & Src */
+										   NULL);
+
+			referenced.classId = get_system_catalog_relid(ConstraintRelationName);
+			referenced.objectId = conOid;
+			referenced.objectSubId = 0;
+
+			recordDependencyOn(&myself, &referenced, DEPENDENCY_INTERNAL);
+		}
+		else
+		{
+			for (i = 0; i < indexInfo->ii_NumIndexAttrs; i++)
+			{
+				referenced.classId = RelOid_pg_class;
+				referenced.objectId = heapRelationId;
+				referenced.objectSubId = indexInfo->ii_KeyAttrNumbers[i];
+
+				recordDependencyOn(&myself, &referenced, DEPENDENCY_AUTO);
+			}
+		}
+
+		/* Store the dependency on the function (if appropriate) */
+		if (OidIsValid(indexInfo->ii_FuncOid))
+		{
+			referenced.classId = RelOid_pg_proc;
+			referenced.objectId = indexInfo->ii_FuncOid;
+			referenced.objectSubId = 0;
+
+			recordDependencyOn(&myself, &referenced, DEPENDENCY_NORMAL);
+		}
+	}
+
+	/*
+	 * Fill in the index strategy structure with information from the
 	 * catalogs.  First we must advance the command counter so that we
 	 * will see the newly-entered index catalog tuples.
 	 */
@@ -691,11 +776,11 @@ index_create(Oid heapRelationId,
 	return indexoid;
 }
 
-/* ----------------------------------------------------------------
- *
+/*
  *		index_drop
  *
- * ----------------------------------------------------------------
+ * NOTE: this routine should now only be called through performDeletion(),
+ * else associated dependencies won't be cleaned up.
  */
 void
 index_drop(Oid indexId)
@@ -729,17 +814,6 @@ index_drop(Oid indexId)
 
 	userIndexRelation = index_open(indexId);
 	LockRelation(userIndexRelation, AccessExclusiveLock);
-
-	/*
-	 * Note: unlike heap_drop_with_catalog, we do not need to prevent
-	 * deletion of system indexes here; that's checked for upstream. If we
-	 * did check it here, deletion of TOAST tables would fail...
-	 */
-
-	/*
-	 * fix DESCRIPTION relation
-	 */
-	DeleteComments(indexId, RelOid_pg_class);
 
 	/*
 	 * fix RELATION relation

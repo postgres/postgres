@@ -123,7 +123,7 @@ INSERT INTO INSERT_TBL(y) VALUES ('Y');
 ERROR:  ExecInsert: rejected due to CHECK constraint insert_con
 INSERT INTO INSERT_TBL(y) VALUES ('Y');
 INSERT INTO INSERT_TBL(x,z) VALUES (1, -2);
-ERROR:  ExecInsert: rejected due to CHECK constraint $2
+ERROR:  ExecInsert: rejected due to CHECK constraint $1
 INSERT INTO INSERT_TBL(z,x) VALUES (-7,  7);
 INSERT INTO INSERT_TBL VALUES (5, 'check failed', -5);
 ERROR:  ExecInsert: rejected due to CHECK constraint insert_con
@@ -139,7 +139,7 @@ SELECT '' AS four, * FROM INSERT_TBL;
 (4 rows)
 
 INSERT INTO INSERT_TBL(y,z) VALUES ('check failed', 4);
-ERROR:  ExecInsert: rejected due to CHECK constraint $2
+ERROR:  ExecInsert: rejected due to CHECK constraint $1
 INSERT INTO INSERT_TBL(x,y) VALUES (5, 'check failed');
 ERROR:  ExecInsert: rejected due to CHECK constraint insert_con
 INSERT INTO INSERT_TBL(x,y) VALUES (5, '!check failed');

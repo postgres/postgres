@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2002, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Id: heap.h,v 1.51 2002/06/20 20:29:43 momjian Exp $
+ * $Id: heap.h,v 1.52 2002/07/12 18:43:19 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -44,7 +44,7 @@ extern Oid heap_create_with_catalog(const char *relname,
 						 bool relhasoids,
 						 bool allow_system_table_mods);
 
-extern void heap_drop_with_catalog(Oid rid, bool allow_system_table_mods);
+extern void heap_drop_with_catalog(Oid rid);
 
 extern void heap_truncate(Oid rid);
 
@@ -58,7 +58,8 @@ extern Node *cookDefault(ParseState *pstate,
 						 int32 atttypmod,
 						 char *attname);
 
-extern int	RemoveCheckConstraint(Relation rel, const char *constrName, bool inh);
+extern int	RemoveRelConstraints(Relation rel, const char *constrName,
+								 DropBehavior behavior);
 
 extern Form_pg_attribute SystemAttributeDefinition(AttrNumber attno,
 						  bool relhasoids);

@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/ref/drop_operator.sgml,v 1.16 2002/05/18 15:44:47 petere Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/ref/drop_operator.sgml,v 1.17 2002/07/12 18:43:13 tgl Exp $
 PostgreSQL documentation
 -->
 
@@ -22,7 +22,7 @@ PostgreSQL documentation
    <date>1999-07-20</date>
   </refsynopsisdivinfo>
   <synopsis>
-DROP OPERATOR <replaceable class="PARAMETER">id</replaceable> ( <replaceable class="PARAMETER">lefttype</replaceable> | NONE , <replaceable class="PARAMETER">righttype</replaceable> | NONE )
+DROP OPERATOR <replaceable class="PARAMETER">id</replaceable> ( <replaceable class="PARAMETER">lefttype</replaceable> | NONE , <replaceable class="PARAMETER">righttype</replaceable> | NONE ) [ CASCADE | RESTRICT ]
   </synopsis>
   
   <refsect2 id="R2-SQL-DROPOPERATOR-1">
@@ -57,6 +57,23 @@ DROP OPERATOR <replaceable class="PARAMETER">id</replaceable> ( <replaceable cla
        <para>
 	The type of the operator's right argument; write <literal>NONE</literal> if the
 	operator has no right argument.
+       </para>
+      </listitem>
+     </varlistentry>
+     <varlistentry>
+      <term>CASCADE</term>
+      <listitem>
+       <para>
+        Automatically drop objects that depend on the operator.
+       </para>
+      </listitem>
+     </varlistentry>
+     <varlistentry>
+      <term>RESTRICT</term>
+      <listitem>
+       <para>
+        Refuse to drop the operator if there are any dependent objects.
+	This is the default.
        </para>
       </listitem>
      </varlistentry>

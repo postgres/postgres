@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2002, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Id: tupdesc.h,v 1.35 2002/06/20 20:29:43 momjian Exp $
+ * $Id: tupdesc.h,v 1.36 2002/07/12 18:43:19 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -43,7 +43,7 @@ typedef struct tupleConstr
 
 /*
  * This structure contains all information (i.e. from Classes
- * pg_attribute, pg_attrdef, pg_relcheck) for a tuple.
+ * pg_attribute, pg_attrdef, pg_constraint) for a tuple.
  */
 typedef struct tupleDesc
 {

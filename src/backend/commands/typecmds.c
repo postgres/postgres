@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/commands/typecmds.c,v 1.4 2002/07/01 15:27:48 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/commands/typecmds.c,v 1.5 2002/07/12 18:43:16 tgl Exp $
  *
  * DESCRIPTION
  *	  The "DefineFoo" routines take the parse tree and pick out the
@@ -33,10 +33,10 @@
 
 #include "access/heapam.h"
 #include "catalog/catname.h"
+#include "catalog/dependency.h"
 #include "catalog/heap.h"
 #include "catalog/namespace.h"
 #include "catalog/pg_type.h"
-#include "commands/comment.h"
 #include "commands/defrem.h"
 #include "miscadmin.h"
 #include "parser/parse_func.h"
@@ -262,25 +262,20 @@ DefineType(List *names, List *parameters)
 /*
  *	RemoveType
  *		Removes a datatype.
- *
- * NOTE: since this tries to remove the associated array type too, it'll
- * only work on scalar types.
  */
 void
 RemoveType(List *names, DropBehavior behavior)
 {
 	TypeName   *typename;
-	Relation	relation;
 	Oid			typeoid;
 	HeapTuple	tup;
+	ObjectAddress object;
 
 	/* Make a TypeName so we can use standard type lookup machinery */
 	typename = makeNode(TypeName);
 	typename->names = names;
 	typename->typmod = -1;
 	typename->arrayBounds = NIL;
-
-	relation = heap_openr(TypeRelationName, RowExclusiveLock);
 
 	/* Use LookupTypeName here so that shell types can be removed. */
 	typeoid = LookupTypeName(typename);
@@ -301,30 +296,36 @@ RemoveType(List *names, DropBehavior behavior)
 								 GetUserId()))
 		aclcheck_error(ACLCHECK_NOT_OWNER, TypeNameToString(typename));
 
-	/* Delete any comments associated with this type */
-	DeleteComments(typeoid, RelationGetRelid(relation));
-
-	/* Remove the type tuple from pg_type */
-	simple_heap_delete(relation, &tup->t_self);
-
 	ReleaseSysCache(tup);
 
-	/* Now, delete the "array of" that type */
-	typename->arrayBounds = makeList1(makeInteger(1));
+	/*
+	 * Do the deletion
+	 */
+	object.classId = RelOid_pg_type;
+	object.objectId = typeoid;
+	object.objectSubId = 0;
 
-	typeoid = LookupTypeName(typename);
-	if (!OidIsValid(typeoid))
-		elog(ERROR, "Type \"%s\" does not exist",
-			 TypeNameToString(typename));
+	performDeletion(&object, behavior);
+}
+
+
+/*
+ * Guts of type deletion.
+ */
+void
+RemoveTypeById(Oid typeOid)
+{
+	Relation	relation;
+	HeapTuple	tup;
+
+	relation = heap_openr(TypeRelationName, RowExclusiveLock);
 
 	tup = SearchSysCache(TYPEOID,
-						 ObjectIdGetDatum(typeoid),
+						 ObjectIdGetDatum(typeOid),
 						 0, 0, 0);
 	if (!HeapTupleIsValid(tup))
-		elog(ERROR, "Type \"%s\" does not exist",
-			 TypeNameToString(typename));
-
-	DeleteComments(typeoid, RelationGetRelid(relation));
+		elog(ERROR, "RemoveTypeById: type %u not found",
+			 typeOid);
 
 	simple_heap_delete(relation, &tup->t_self);
 
@@ -365,6 +366,8 @@ DefineDomain(CreateDomainStmt *stmt)
 	HeapTuple	typeTup;
 	List	   *schema = stmt->constraints;
 	List	   *listptr;
+	Oid			basetypeoid;
+	Form_pg_type	baseType;
 
 	/* Convert list of names to a name and namespace */
 	domainNamespace = QualifiedNameGetCreationNamespace(stmt->domainname,
@@ -389,40 +392,43 @@ DefineDomain(CreateDomainStmt *stmt)
 	 */
 	typeTup = typenameType(stmt->typename);
 
+	baseType = (Form_pg_type) GETSTRUCT(typeTup);
+	basetypeoid = typeTup->t_data->t_oid;
+
 	/*
 	 * What we really don't want is domains of domains.  This could cause all sorts
 	 * of neat issues if we allow that.
 	 *
 	 * With testing, we may determine complex types should be allowed
 	 */
-	typtype = ((Form_pg_type) GETSTRUCT(typeTup))->typtype;
+	typtype = baseType->typtype;
 	if (typtype != 'b')
 		elog(ERROR, "DefineDomain: %s is not a basetype",
 			 TypeNameToString(stmt->typename));
 
 	/* passed by value */
-	byValue = ((Form_pg_type) GETSTRUCT(typeTup))->typbyval;
+	byValue = baseType->typbyval;
 
 	/* Required Alignment */
-	alignment = ((Form_pg_type) GETSTRUCT(typeTup))->typalign;
+	alignment = baseType->typalign;
 
 	/* TOAST Strategy */
-	storage = ((Form_pg_type) GETSTRUCT(typeTup))->typstorage;
+	storage = baseType->typstorage;
 
 	/* Storage Length */
-	internalLength = ((Form_pg_type) GETSTRUCT(typeTup))->typlen;
+	internalLength = baseType->typlen;
 
 	/* External Length (unused) */
-	externalLength = ((Form_pg_type) GETSTRUCT(typeTup))->typprtlen;
+	externalLength = baseType->typprtlen;
 
 	/* Array element Delimiter */
-	delimiter = ((Form_pg_type) GETSTRUCT(typeTup))->typdelim;
+	delimiter = baseType->typdelim;
 
 	/* I/O Functions */
-	inputProcedure = ((Form_pg_type) GETSTRUCT(typeTup))->typinput;
-	outputProcedure = ((Form_pg_type) GETSTRUCT(typeTup))->typoutput;
-	receiveProcedure = ((Form_pg_type) GETSTRUCT(typeTup))->typreceive;
-	sendProcedure = ((Form_pg_type) GETSTRUCT(typeTup))->typsend;
+	inputProcedure = baseType->typinput;
+	outputProcedure = baseType->typoutput;
+	receiveProcedure = baseType->typreceive;
+	sendProcedure = baseType->typsend;
 
 	/* Inherited default value */
 	datum =	SysCacheGetAttr(TYPEOID, typeTup,
@@ -441,7 +447,7 @@ DefineDomain(CreateDomainStmt *stmt)
 	 *
 	 * This is what enables us to make a domain of an array
 	 */
-	basetypelem = ((Form_pg_type) GETSTRUCT(typeTup))->typelem;
+	basetypelem = baseType->typelem;
 
 	/*
 	 * Run through constraints manually to avoid the additional
@@ -474,7 +480,7 @@ DefineDomain(CreateDomainStmt *stmt)
 				 * Note: Name is strictly for error message
 				 */
 				expr = cookDefault(pstate, colDef->raw_expr,
-								   typeTup->t_data->t_oid,
+								   basetypeoid,
 								   stmt->typename->typmod,
 								   domainName);
 				/*
@@ -540,7 +546,7 @@ DefineDomain(CreateDomainStmt *stmt)
 	 */
 	TypeCreate(domainName,			/* type name */
 			   domainNamespace,		/* namespace */
-			   InvalidOid,			/* preassigned type oid (not done here) */
+			   InvalidOid,			/* preassigned type oid (none here) */
 			   InvalidOid,			/* relation oid (n/a here) */
 			   internalLength,		/* internal size */
 			   externalLength,		/* external size */
@@ -551,7 +557,7 @@ DefineDomain(CreateDomainStmt *stmt)
 			   receiveProcedure,	/* receive procedure */
 			   sendProcedure,		/* send procedure */
 			   basetypelem,			/* element type ID */
-			   typeTup->t_data->t_oid,	/* base type ID */
+			   basetypeoid,			/* base type ID */
 			   defaultValue,		/* default type value (text) */
 			   defaultValueBin,		/* default type value (binary) */
 			   byValue,				/* passed by value */
@@ -571,19 +577,17 @@ DefineDomain(CreateDomainStmt *stmt)
 /*
  *	RemoveDomain
  *		Removes a domain.
+ *
+ * This is identical to RemoveType except we insist it be a domain.
  */
 void
 RemoveDomain(List *names, DropBehavior behavior)
 {
 	TypeName   *typename;
-	Relation	relation;
 	Oid			typeoid;
 	HeapTuple	tup;
 	char		typtype;
-
-	/* CASCADE unsupported */
-	if (behavior == DROP_CASCADE)
-		elog(ERROR, "DROP DOMAIN does not support the CASCADE keyword");
+	ObjectAddress object;
 
 	/* Make a TypeName so we can use standard type lookup machinery */
 	typename = makeNode(TypeName);
@@ -591,15 +595,17 @@ RemoveDomain(List *names, DropBehavior behavior)
 	typename->typmod = -1;
 	typename->arrayBounds = NIL;
 
-	relation = heap_openr(TypeRelationName, RowExclusiveLock);
-
-	typeoid = typenameTypeId(typename);
+	/* Use LookupTypeName here so that shell types can be removed. */
+	typeoid = LookupTypeName(typename);
+	if (!OidIsValid(typeoid))
+		elog(ERROR, "Type \"%s\" does not exist",
+			 TypeNameToString(typename));
 
 	tup = SearchSysCache(TYPEOID,
 						 ObjectIdGetDatum(typeoid),
 						 0, 0, 0);
 	if (!HeapTupleIsValid(tup))
-		elog(ERROR, "RemoveDomain: type '%s' does not exist",
+		elog(ERROR, "RemoveDomain: type \"%s\" does not exist",
 			 TypeNameToString(typename));
 
 	/* Permission check: must own type or its namespace */
@@ -615,17 +621,16 @@ RemoveDomain(List *names, DropBehavior behavior)
 		elog(ERROR, "%s is not a domain",
 			 TypeNameToString(typename));
 
-	/* Delete any comments associated with this type */
-	DeleteComments(typeoid, RelationGetRelid(relation));
-
-	/* Remove the type tuple from pg_type */
-	simple_heap_delete(relation, &tup->t_self);
-
 	ReleaseSysCache(tup);
 
-	/* At present, domains don't have associated array types */
+	/*
+	 * Do the deletion
+	 */
+	object.classId = RelOid_pg_type;
+	object.objectId = typeoid;
+	object.objectSubId = 0;
 
-	heap_close(relation, RowExclusiveLock);
+	performDeletion(&object, behavior);
 }
 
 

@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/cache/lsyscache.c,v 1.75 2002/07/06 20:16:36 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/cache/lsyscache.c,v 1.76 2002/07/12 18:43:18 tgl Exp $
  *
  * NOTES
  *	  Eventually, the index information should go through here, too.
@@ -671,6 +671,25 @@ get_relname_relid(const char *relname, Oid relnamespace)
 						  0, 0);
 }
 
+/*
+ * get_system_catalog_relid
+ *		Get the OID of a system catalog identified by name.
+ */
+Oid
+get_system_catalog_relid(const char *catname)
+{
+	Oid		relid;
+
+	relid = GetSysCacheOid(RELNAMENSP,
+						   PointerGetDatum(catname),
+						   ObjectIdGetDatum(PG_CATALOG_NAMESPACE),
+						   0, 0);
+	if (!OidIsValid(relid))
+		elog(ERROR, "get_system_catalog_relid: cannot find %s", catname);
+
+	return relid;
+}
+
 #ifdef NOT_USED
 /*
  * get_relnatts
@@ -1060,7 +1079,7 @@ getBaseType(Oid typid)
 /*
  * getBaseTypeTypeMod
  *		If the given type is a domain, return its base type;
- *		otherwise return the type's own OID.
+ *		otherwise return the type's own OID.  Also return base typmod.
  */
 Oid
 getBaseTypeTypeMod(Oid typid, int32 *typmod)
@@ -1077,7 +1096,7 @@ getBaseTypeTypeMod(Oid typid, int32 *typmod)
 							 ObjectIdGetDatum(typid),
 							 0, 0, 0);
 		if (!HeapTupleIsValid(tup))
-			elog(ERROR, "getBaseType: failed to lookup type %u", typid);
+			elog(ERROR, "getBaseTypeTypeMod: failed to lookup type %u", typid);
 		typTup = (Form_pg_type) GETSTRUCT(tup);
 		if (typTup->typtype != 'd')
 		{

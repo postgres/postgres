@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2002, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Id: catname.h,v 1.27 2002/07/11 07:39:27 ishii Exp $
+ * $Id: catname.h,v 1.28 2002/07/12 18:43:19 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -20,8 +20,10 @@
 #define  AccessMethodOperatorRelationName "pg_amop"
 #define  AccessMethodProcedureRelationName "pg_amproc"
 #define  AttributeRelationName "pg_attribute"
+#define  ConstraintRelationName "pg_constraint"
 #define  ConversionRelationName "pg_conversion"
 #define  DatabaseRelationName "pg_database"
+#define  DependRelationName "pg_depend"
 #define  DescriptionRelationName "pg_description"
 #define  GroupRelationName "pg_group"
 #define  IndexRelationName "pg_index"
@@ -40,7 +42,6 @@
 #define  TypeRelationName "pg_type"
 #define  VersionRelationName "pg_version"
 #define  AttrDefaultRelationName "pg_attrdef"
-#define  RelCheckRelationName "pg_relcheck"
 #define  TriggerRelationName "pg_trigger"
 
 #endif   /* CATNAME_H */

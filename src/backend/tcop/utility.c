@@ -10,7 +10,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/tcop/utility.c,v 1.161 2002/07/11 07:39:26 ishii Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/tcop/utility.c,v 1.162 2002/07/12 18:43:17 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -582,6 +582,7 @@ ProcessUtility(Node *parsetree,
 							stmt->indexParams,			/* parameters */
 							stmt->unique,
 							stmt->primary,
+							stmt->isconstraint,
 							(Expr *) stmt->whereClause,
 							stmt->rangetable);
 			}
@@ -596,19 +597,11 @@ ProcessUtility(Node *parsetree,
 			break;
 
 		case T_RemoveAggrStmt:
-			{
-				RemoveAggrStmt *stmt = (RemoveAggrStmt *) parsetree;
-
-				RemoveAggregate(stmt->aggname, stmt->aggtype);
-			}
+			RemoveAggregate((RemoveAggrStmt *) parsetree);
 			break;
 
 		case T_RemoveFuncStmt:
-			{
-				RemoveFuncStmt *stmt = (RemoveFuncStmt *) parsetree;
-
-				RemoveFunction(stmt->funcname, stmt->args);
-			}
+			RemoveFunction((RemoveFuncStmt *) parsetree);
 			break;
 
 		case T_RemoveOperStmt:
@@ -719,7 +712,7 @@ ProcessUtility(Node *parsetree,
 			break;
 
 		case T_CreateTrigStmt:
-			CreateTrigger((CreateTrigStmt *) parsetree);
+			CreateTrigger((CreateTrigStmt *) parsetree, false);
 			break;
 
 		case T_DropPropertyStmt:
@@ -733,11 +726,13 @@ ProcessUtility(Node *parsetree,
 				{
 					case DROP_RULE:
 						/* RemoveRewriteRule checks permissions */
-						RemoveRewriteRule(relId, stmt->property);
+						RemoveRewriteRule(relId, stmt->property,
+										  stmt->behavior);
 						break;
 					case DROP_TRIGGER:
 						/* DropTrigger checks permissions */
-						DropTrigger(relId, stmt->property);
+						DropTrigger(relId, stmt->property,
+									stmt->behavior);
 						break;
 				}
 			}

@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/rewrite/rewriteDefine.c,v 1.73 2002/06/20 20:29:33 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/rewrite/rewriteDefine.c,v 1.74 2002/07/12 18:43:17 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -16,6 +16,7 @@
 
 #include "access/heapam.h"
 #include "catalog/catname.h"
+#include "catalog/dependency.h"
 #include "catalog/indexing.h"
 #include "catalog/pg_rewrite.h"
 #include "commands/view.h"
@@ -57,6 +58,8 @@ InsertRule(char *rulname,
 	TupleDesc	tupDesc;
 	HeapTuple	tup;
 	Oid			rewriteObjectId;
+	ObjectAddress	myself,
+					referenced;
 
 	if (IsDefinedRewriteRule(eventrel_oid, rulname))
 		elog(ERROR, "Attempt to insert rule \"%s\" failed: already exists",
@@ -102,6 +105,23 @@ InsertRule(char *rulname,
 	}
 
 	heap_freetuple(tup);
+
+	/*
+	 * Install dependency on rule's relation to ensure it will go away
+	 * on relation deletion.  If the rule is ON SELECT, make the dependency
+	 * implicit --- this prevents deleting a view's SELECT rule.  Other
+	 * kinds of rules can be AUTO.
+	 */
+	myself.classId = RelationGetRelid(pg_rewrite_desc);
+	myself.objectId = rewriteObjectId;
+	myself.objectSubId = 0;
+
+	referenced.classId = RelOid_pg_class;
+	referenced.objectId = eventrel_oid;
+	referenced.objectSubId = 0;
+
+	recordDependencyOn(&myself, &referenced,
+		(evtype == CMD_SELECT) ? DEPENDENCY_INTERNAL : DEPENDENCY_AUTO);
 
 	heap_close(pg_rewrite_desc, RowExclusiveLock);
 

@@ -3,7 +3,7 @@
  *
  * Copyright 2000 by PostgreSQL Global Development Group
  *
- * $Header: /cvsroot/pgsql/src/bin/psql/describe.c,v 1.54 2002/05/13 17:45:30 tgl Exp $
+ * $Header: /cvsroot/pgsql/src/bin/psql/describe.c,v 1.55 2002/07/12 18:43:19 tgl Exp $
  */
 #include "postgres_fe.h"
 #include "describe.h"
@@ -747,7 +747,7 @@ describeTableDetails(const char *name, bool desc)
 				   *result3 = NULL,
 				   *result4 = NULL;
 		int			index_count = 0,
-					constr_count = 0,
+					check_count = 0,
 					rule_count = 0,
 					trigger_count = 0;
 		int			count_footers = 0;
@@ -770,19 +770,20 @@ describeTableDetails(const char *name, bool desc)
 				index_count = PQntuples(result1);
 		}
 
-		/* count table (and column) constraints */
+		/* count table (and column) check constraints */
 		if (tableinfo.checks)
 		{
 			printfPQExpBuffer(&buf,
-					"SELECT rcsrc, rcname\n"
-					"FROM pg_relcheck r, pg_class c\n"
-					"WHERE c.relname='%s' AND c.oid = r.rcrelid",
+					"SELECT consrc, conname\n"
+					"FROM pg_constraint r, pg_class c\n"
+					"WHERE c.relname='%s' AND c.oid = r.conrelid\n"
+					"AND r.contype = 'c'",
 					name);
 			result2 = PSQLexec(buf.data);
 			if (!result2)
 				goto error_return;
 			else
-				constr_count = PQntuples(result2);
+				check_count = PQntuples(result2);
 		}
 
 		/* count rules */
@@ -815,7 +816,7 @@ describeTableDetails(const char *name, bool desc)
 				trigger_count = PQntuples(result4);
 		}
 
-		footers = xmalloc((index_count + constr_count + rule_count + trigger_count + 1)
+		footers = xmalloc((index_count + check_count + rule_count + trigger_count + 1)
 						  * sizeof(*footers));
 
 		/* print indexes */
@@ -846,8 +847,8 @@ describeTableDetails(const char *name, bool desc)
 		}
 
 
-		/* print constraints */
-		for (i = 0; i < constr_count; i++)
+		/* print check constraints */
+		for (i = 0; i < check_count; i++)
 		{
 			char	   *s = _("Check constraints");
 

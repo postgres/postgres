@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/ref/drop_aggregate.sgml,v 1.18 2002/05/18 15:44:47 petere Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/ref/drop_aggregate.sgml,v 1.19 2002/07/12 18:43:12 tgl Exp $
 PostgreSQL documentation
 -->
 
@@ -21,7 +21,7 @@ PostgreSQL documentation
    <date>1999-07-20</date>
   </refsynopsisdivinfo>
   <synopsis>
-DROP AGGREGATE <replaceable class="PARAMETER">name</replaceable> ( <replaceable class="PARAMETER">type</replaceable> )
+DROP AGGREGATE <replaceable class="PARAMETER">name</replaceable> ( <replaceable class="PARAMETER">type</replaceable> ) [ CASCADE | RESTRICT ]
   </synopsis>
 
   <refsect2 id="R2-SQL-DROPAGGREGATE-1">
@@ -51,6 +51,23 @@ DROP AGGREGATE <replaceable class="PARAMETER">name</replaceable> ( <replaceable 
 	further information about data types.)
 	<comment>This should become a cross-reference rather than a
 	 hard-coded chapter number</comment>
+       </para>
+      </listitem>
+     </varlistentry>
+     <varlistentry>
+      <term>CASCADE</term>
+      <listitem>
+       <para>
+        Automatically drop objects that depend on the aggregate.
+       </para>
+      </listitem>
+     </varlistentry>
+     <varlistentry>
+      <term>RESTRICT</term>
+      <listitem>
+       <para>
+        Refuse to drop the aggregate if there are any dependent objects.
+	This is the default.
        </para>
       </listitem>
      </varlistentry>

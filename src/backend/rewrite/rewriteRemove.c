@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/rewrite/rewriteRemove.c,v 1.50 2002/06/20 20:29:34 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/rewrite/rewriteRemove.c,v 1.51 2002/07/12 18:43:17 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -17,14 +17,15 @@
 #include "access/genam.h"
 #include "access/heapam.h"
 #include "catalog/catname.h"
+#include "catalog/dependency.h"
 #include "catalog/indexing.h"
 #include "catalog/pg_rewrite.h"
-#include "commands/comment.h"
 #include "miscadmin.h"
 #include "rewrite/rewriteRemove.h"
 #include "rewrite/rewriteSupport.h"
 #include "utils/acl.h"
 #include "utils/fmgroids.h"
+#include "utils/lsyscache.h"
 #include "utils/syscache.h"
 
 
@@ -34,15 +35,62 @@
  * Delete a rule given its name.
  */
 void
-RemoveRewriteRule(Oid owningRel, const char *ruleName)
+RemoveRewriteRule(Oid owningRel, const char *ruleName, DropBehavior behavior)
+{
+	HeapTuple	tuple;
+	Oid			eventRelationOid;
+	AclResult	aclresult;
+	ObjectAddress object;
+
+	/*
+	 * Find the tuple for the target rule.
+	 */
+	tuple = SearchSysCache(RULERELNAME,
+						   ObjectIdGetDatum(owningRel),
+						   PointerGetDatum(ruleName),
+						   0, 0);
+
+	/*
+	 * complain if no rule with such name exists
+	 */
+	if (!HeapTupleIsValid(tuple))
+		elog(ERROR, "Rule \"%s\" not found", ruleName);
+
+	/*
+	 * Verify user has appropriate permissions.
+	 */
+	eventRelationOid = ((Form_pg_rewrite) GETSTRUCT(tuple))->ev_class;
+	Assert(eventRelationOid == owningRel);
+	aclresult = pg_class_aclcheck(eventRelationOid, GetUserId(), ACL_RULE);
+	if (aclresult != ACLCHECK_OK)
+		aclcheck_error(aclresult, get_rel_name(eventRelationOid));
+
+	/*
+	 * Do the deletion
+	 */
+	object.classId = get_system_catalog_relid(RewriteRelationName);
+	object.objectId = tuple->t_data->t_oid;
+	object.objectSubId = 0;
+
+	ReleaseSysCache(tuple);
+
+	performDeletion(&object, behavior);
+}
+
+
+/*
+ * Guts of rule deletion.
+ */
+void
+RemoveRewriteRuleById(Oid ruleOid)
 {
 	Relation	RewriteRelation;
+	ScanKeyData		skey[1];
+	SysScanDesc		rcscan;
 	Relation	event_relation;
 	HeapTuple	tuple;
-	Oid			ruleId;
 	Oid			eventRelationOid;
 	bool		hasMoreRules;
-	AclResult	aclresult;
 
 	/*
 	 * Open the pg_rewrite relation.
@@ -52,24 +100,18 @@ RemoveRewriteRule(Oid owningRel, const char *ruleName)
 	/*
 	 * Find the tuple for the target rule.
 	 */
-	tuple = SearchSysCacheCopy(RULERELNAME,
-							   ObjectIdGetDatum(owningRel),
-							   PointerGetDatum(ruleName),
-							   0, 0);
+	ScanKeyEntryInitialize(&skey[0], 0x0,
+						   ObjectIdAttributeNumber, F_OIDEQ,
+						   ObjectIdGetDatum(ruleOid));
 
-	/*
-	 * complain if no rule with such name existed
-	 */
+	rcscan = systable_beginscan(RewriteRelation, RewriteOidIndex, true,
+								SnapshotNow, 1, skey);
+
+	tuple = systable_getnext(rcscan);
+
 	if (!HeapTupleIsValid(tuple))
-		elog(ERROR, "Rule \"%s\" not found", ruleName);
-
-	/*
-	 * Save the OID of the rule (i.e. the tuple's OID) and the event
-	 * relation's OID
-	 */
-	ruleId = tuple->t_data->t_oid;
-	eventRelationOid = ((Form_pg_rewrite) GETSTRUCT(tuple))->ev_class;
-	Assert(eventRelationOid == owningRel);
+		elog(ERROR, "RemoveRewriteRuleById: Rule %u does not exist",
+			 ruleOid);
 
 	/*
 	 * We had better grab AccessExclusiveLock so that we know no other
@@ -77,34 +119,18 @@ RemoveRewriteRule(Oid owningRel, const char *ruleName)
 	 * cannot set relhasrules correctly.  Besides, we don't want to be
 	 * changing the ruleset while queries are executing on the rel.
 	 */
+	eventRelationOid = ((Form_pg_rewrite) GETSTRUCT(tuple))->ev_class;
 	event_relation = heap_open(eventRelationOid, AccessExclusiveLock);
-
-	/*
-	 * Verify user has appropriate permissions.
-	 */
-	aclresult = pg_class_aclcheck(eventRelationOid, GetUserId(), ACL_RULE);
-	if (aclresult != ACLCHECK_OK)
-		aclcheck_error(aclresult, RelationGetRelationName(event_relation));
-
-	/* do not allow the removal of a view's SELECT rule */
-	if (event_relation->rd_rel->relkind == RELKIND_VIEW &&
-		((Form_pg_rewrite) GETSTRUCT(tuple))->ev_type == '1')
-		elog(ERROR, "Cannot remove a view's SELECT rule");
 
 	hasMoreRules = event_relation->rd_rules != NULL &&
 		event_relation->rd_rules->numLocks > 1;
-
-	/*
-	 * Delete any comments associated with this rule
-	 */
-	DeleteComments(ruleId, RelationGetRelid(RewriteRelation));
 
 	/*
 	 * Now delete the pg_rewrite tuple for the rule
 	 */
 	simple_heap_delete(RewriteRelation, &tuple->t_self);
 
-	heap_freetuple(tuple);
+	systable_endscan(rcscan);
 
 	heap_close(RewriteRelation, RowExclusiveLock);
 
@@ -119,50 +145,4 @@ RemoveRewriteRule(Oid owningRel, const char *ruleName)
 
 	/* Close rel, but keep lock till commit... */
 	heap_close(event_relation, NoLock);
-}
-
-/*
- * RelationRemoveRules -
- *	  removes all rules associated with the relation when the relation is
- *	  being removed.
- */
-void
-RelationRemoveRules(Oid relid)
-{
-	Relation	RewriteRelation;
-	SysScanDesc scanDesc;
-	ScanKeyData scanKeyData;
-	HeapTuple	tuple;
-
-	/*
-	 * Open the pg_rewrite relation.
-	 */
-	RewriteRelation = heap_openr(RewriteRelationName, RowExclusiveLock);
-
-	/*
-	 * Scan pg_rewrite for all the tuples that have the same ev_class
-	 * as relid (the relation to be removed).
-	 */
-	ScanKeyEntryInitialize(&scanKeyData,
-						   0,
-						   Anum_pg_rewrite_ev_class,
-						   F_OIDEQ,
-						   ObjectIdGetDatum(relid));
-
-	scanDesc = systable_beginscan(RewriteRelation,
-								  RewriteRelRulenameIndex,
-								  true, SnapshotNow,
-								  1, &scanKeyData);
-
-	while (HeapTupleIsValid(tuple = systable_getnext(scanDesc)))
-	{
-		/* Delete any comments associated with this rule */
-		DeleteComments(tuple->t_data->t_oid, RelationGetRelid(RewriteRelation));
-
-		simple_heap_delete(RewriteRelation, &tuple->t_self);
-	}
-
-	systable_endscan(scanDesc);
-
-	heap_close(RewriteRelation, RowExclusiveLock);
 }

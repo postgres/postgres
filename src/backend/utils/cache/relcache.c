@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/cache/relcache.c,v 1.165 2002/06/20 20:29:39 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/cache/relcache.c,v 1.166 2002/07/12 18:43:18 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -43,11 +43,11 @@
 #include "catalog/pg_amproc.h"
 #include "catalog/pg_attrdef.h"
 #include "catalog/pg_attribute.h"
+#include "catalog/pg_constraint.h"
 #include "catalog/pg_index.h"
 #include "catalog/pg_namespace.h"
 #include "catalog/pg_opclass.h"
 #include "catalog/pg_proc.h"
-#include "catalog/pg_relcheck.h"
 #include "catalog/pg_rewrite.h"
 #include "catalog/pg_type.h"
 #include "commands/trigger.h"
@@ -296,7 +296,7 @@ static void RelationBuildTupleDesc(RelationBuildDescInfo buildinfo,
 static Relation RelationBuildDesc(RelationBuildDescInfo buildinfo,
 				  Relation oldrelation);
 static void AttrDefaultFetch(Relation relation);
-static void RelCheckFetch(Relation relation);
+static void CheckConstraintFetch(Relation relation);
 static List *insert_ordered_oid(List *list, Oid datum);
 static void IndexSupportInitialize(Form_pg_index iform,
 								   IndexStrategy indexStrategy,
@@ -451,7 +451,7 @@ AllocateRelationDesc(Relation relation, Form_pg_class relp)
  *		RelationBuildTupleDesc
  *
  *		Form the relation's tuple descriptor from information in
- *		the pg_attribute, pg_attrdef & pg_relcheck system catalogs.
+ *		the pg_attribute, pg_attrdef & pg_constraint system catalogs.
  */
 static void
 RelationBuildTupleDesc(RelationBuildDescInfo buildinfo,
@@ -603,7 +603,7 @@ RelationBuildTupleDesc(RelationBuildDescInfo buildinfo,
 				MemoryContextAlloc(CacheMemoryContext,
 								constr->num_check * sizeof(ConstrCheck));
 			MemSet(constr->check, 0, constr->num_check * sizeof(ConstrCheck));
-			RelCheckFetch(relation);
+			CheckConstraintFetch(relation);
 		}
 		else
 			constr->num_check = 0;
@@ -2483,62 +2483,60 @@ AttrDefaultFetch(Relation relation)
 }
 
 static void
-RelCheckFetch(Relation relation)
+CheckConstraintFetch(Relation relation)
 {
 	ConstrCheck *check = relation->rd_att->constr->check;
 	int			ncheck = relation->rd_att->constr->num_check;
-	Relation	rcrel;
-	SysScanDesc rcscan;
-	ScanKeyData skey;
+	Relation	conrel;
+	SysScanDesc conscan;
+	ScanKeyData skey[1];
 	HeapTuple	htup;
-	Name		rcname;
 	Datum		val;
 	bool		isnull;
-	int			found;
+	int			found = 0;
 
-	ScanKeyEntryInitialize(&skey,
-						   (bits16) 0x0,
-						   (AttrNumber) Anum_pg_relcheck_rcrelid,
-						   (RegProcedure) F_OIDEQ,
+	ScanKeyEntryInitialize(&skey[0], 0x0,
+						   Anum_pg_constraint_conrelid, F_OIDEQ,
 						   ObjectIdGetDatum(RelationGetRelid(relation)));
 
-	rcrel = heap_openr(RelCheckRelationName, AccessShareLock);
-	rcscan = systable_beginscan(rcrel, RelCheckIndex, true,
-								SnapshotNow,
-								1, &skey);
-	found = 0;
+	conrel = heap_openr(ConstraintRelationName, AccessShareLock);
+	conscan = systable_beginscan(conrel, ConstraintRelidIndex, true,
+								 SnapshotNow, 1, skey);
 
-	while (HeapTupleIsValid(htup = systable_getnext(rcscan)))
+	while (HeapTupleIsValid(htup = systable_getnext(conscan)))
 	{
+		Form_pg_constraint conform = (Form_pg_constraint) GETSTRUCT(htup);
+
+		/* We want check constraints only */
+		if (conform->contype != CONSTRAINT_CHECK)
+			continue;
+
 		if (found == ncheck)
-			elog(ERROR, "RelCheckFetch: unexpected record found for rel %s",
+			elog(ERROR, "CheckConstraintFetch: unexpected record found for rel %s",
 				 RelationGetRelationName(relation));
 
-		rcname = (Name) fastgetattr(htup,
-									Anum_pg_relcheck_rcname,
-									rcrel->rd_att, &isnull);
-		if (isnull)
-			elog(ERROR, "RelCheckFetch: rcname IS NULL for rel %s",
-				 RelationGetRelationName(relation));
 		check[found].ccname = MemoryContextStrdup(CacheMemoryContext,
-												  NameStr(*rcname));
+												  NameStr(conform->conname));
+
+		/* Grab and test conbin is actually set */
 		val = fastgetattr(htup,
-						  Anum_pg_relcheck_rcbin,
-						  rcrel->rd_att, &isnull);
+						  Anum_pg_constraint_conbin,
+						  conrel->rd_att, &isnull);
 		if (isnull)
-			elog(ERROR, "RelCheckFetch: rcbin IS NULL for rel %s",
+			elog(ERROR, "CheckConstraintFetch: conbin IS NULL for rel %s",
 				 RelationGetRelationName(relation));
+
 		check[found].ccbin = MemoryContextStrdup(CacheMemoryContext,
 							 DatumGetCString(DirectFunctionCall1(textout,
 																 val)));
 		found++;
 	}
 
-	systable_endscan(rcscan);
-	heap_close(rcrel, AccessShareLock);
+	systable_endscan(conscan);
+	heap_close(conrel, AccessShareLock);
 
 	if (found != ncheck)
-		elog(ERROR, "RelCheckFetch: %d record(s) not found for rel %s",
+		elog(ERROR, "CheckConstraintFetch: %d record(s) not found for rel %s",
 			 ncheck - found, RelationGetRelationName(relation));
 }
 

@@ -13,7 +13,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/catalog/namespace.c,v 1.23 2002/06/20 20:29:26 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/catalog/namespace.c,v 1.24 2002/07/12 18:43:15 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -23,6 +23,7 @@
 #include "access/xact.h"
 #include "catalog/catalog.h"
 #include "catalog/catname.h"
+#include "catalog/dependency.h"
 #include "catalog/heap.h"
 #include "catalog/namespace.h"
 #include "catalog/pg_inherits.h"
@@ -128,25 +129,10 @@ static Oid	mySpecialNamespace = InvalidOid;
 char *namespace_search_path = NULL;
 
 
-/*
- * Deletion ordering constraint item.
- */
-typedef struct DelConstraint
-{
-	Oid			referencer;		/* table to delete first */
-	Oid			referencee;		/* table to delete second */
-	int			pred;			/* workspace for TopoSortRels */
-	struct DelConstraint *link;	/* workspace for TopoSortRels */
-} DelConstraint;
-
-
 /* Local functions */
 static void recomputeNamespacePath(void);
 static void InitTempTableNamespace(void);
 static void RemoveTempRelations(Oid tempNamespaceId);
-static List *FindTempRelations(Oid tempNamespaceId);
-static List *FindDeletionConstraints(List *relOids);
-static List *TopoSortRels(List *relOids, List *constraintList);
 static void RemoveTempRelationsCallback(void);
 static void NamespaceCallback(Datum arg, Oid relid);
 
@@ -1531,56 +1517,22 @@ AtEOXact_Namespace(bool isCommit)
 static void
 RemoveTempRelations(Oid tempNamespaceId)
 {
-	List	   *tempRelList;
-	List	   *constraintList;
-	List	   *lptr;
-
-	/* Get a list of relations to delete */
-	tempRelList = FindTempRelations(tempNamespaceId);
-
-	if (tempRelList == NIL)
-		return;					/* nothing to do */
-
-	/* If more than one, sort them to respect any deletion-order constraints */
-	if (length(tempRelList) > 1)
-	{
-		constraintList = FindDeletionConstraints(tempRelList);
-		if (constraintList != NIL)
-			tempRelList = TopoSortRels(tempRelList, constraintList);
-	}
-
-	/* Scan the list and delete all entries */
-	foreach(lptr, tempRelList)
-	{
-		Oid			reloid = (Oid) lfirsti(lptr);
-
-		heap_drop_with_catalog(reloid, true);
-		/*
-		 * Advance cmd counter to make catalog changes visible, in case
-		 * a later entry depends on this one.
-		 */
-		CommandCounterIncrement();
-	}
-}
-
-/*
- * Find all relations in the specified temp namespace.
- *
- * Returns a list of relation OIDs.
- */
-static List *
-FindTempRelations(Oid tempNamespaceId)
-{
-	List	   *tempRelList = NIL;
 	Relation	pgclass;
 	HeapScanDesc scan;
 	HeapTuple	tuple;
 	ScanKeyData key;
+	ObjectAddress object;
 
 	/*
 	 * Scan pg_class to find all the relations in the target namespace.
 	 * Ignore indexes, though, on the assumption that they'll go away
 	 * when their tables are deleted.
+	 *
+	 * NOTE: if there are deletion constraints between temp relations,
+	 * then our CASCADE delete call may cause as-yet-unvisited objects
+	 * to go away.  This is okay because we are using SnapshotNow; when
+	 * the scan does reach those pg_class tuples, they'll be ignored as
+	 * already deleted.
 	 */
 	ScanKeyEntryInitialize(&key, 0x0,
 						   Anum_pg_class_relnamespace,
@@ -1597,7 +1549,10 @@ FindTempRelations(Oid tempNamespaceId)
 			case RELKIND_RELATION:
 			case RELKIND_SEQUENCE:
 			case RELKIND_VIEW:
-				tempRelList = lconsi(tuple->t_data->t_oid, tempRelList);
+				object.classId = RelOid_pg_class;
+				object.objectId = tuple->t_data->t_oid;
+				object.objectSubId = 0;
+				performDeletion(&object, DROP_CASCADE);
 				break;
 			default:
 				break;
@@ -1606,164 +1561,6 @@ FindTempRelations(Oid tempNamespaceId)
 
 	heap_endscan(scan);
 	heap_close(pgclass, AccessShareLock);
-
-	return tempRelList;
-}
-
-/*
- * Find deletion-order constraints involving the given relation OIDs.
- *
- * Returns a list of DelConstraint objects.
- */
-static List *
-FindDeletionConstraints(List *relOids)
-{
-	List	   *constraintList = NIL;
-	Relation	inheritsrel;
-	HeapScanDesc scan;
-	HeapTuple	tuple;
-
-	/*
-	 * Scan pg_inherits to find parents and children that are in the list.
-	 */
-	inheritsrel = heap_openr(InheritsRelationName, AccessShareLock);
-	scan = heap_beginscan(inheritsrel, SnapshotNow, 0, NULL);
-
-	while ((tuple = heap_getnext(scan, ForwardScanDirection)) != NULL)
-	{
-		Oid		inhrelid = ((Form_pg_inherits) GETSTRUCT(tuple))->inhrelid;
-		Oid		inhparent = ((Form_pg_inherits) GETSTRUCT(tuple))->inhparent;
-
-		if (intMember(inhrelid, relOids) && intMember(inhparent, relOids))
-		{
-			DelConstraint  *item;
-
-			item = (DelConstraint *) palloc(sizeof(DelConstraint));
-			item->referencer = inhrelid;
-			item->referencee = inhparent;
-			constraintList = lcons(item, constraintList);
-		}
-	}
-
-	heap_endscan(scan);
-	heap_close(inheritsrel, AccessShareLock);
-
-	return constraintList;
-}
-
-/*
- * TopoSortRels -- topological sort of a list of rels to delete
- *
- * This is a lot simpler and slower than, for example, the topological sort
- * algorithm shown in Knuth's Volume 1.  However, we are not likely to be
- * working with more than a few constraints, so the apparent slowness of the
- * algorithm won't really matter.
- */
-static List *
-TopoSortRels(List *relOids, List *constraintList)
-{
-	int			queue_size = length(relOids);
-	Oid		   *rels;
-	int		   *beforeConstraints;
-	DelConstraint **afterConstraints;
-	List	   *resultList = NIL;
-	List	   *lptr;
-	int			i,
-				j,
-				k,
-				last;
-
-	/* Allocate workspace */
-	rels = (Oid *) palloc(queue_size * sizeof(Oid));
-	beforeConstraints = (int *) palloc(queue_size * sizeof(int));
-	afterConstraints = (DelConstraint **)
-		palloc(queue_size * sizeof(DelConstraint*));
-
-	/* Build an array of the target relation OIDs */
-	i = 0;
-	foreach(lptr, relOids)
-	{
-		rels[i++] = (Oid) lfirsti(lptr);
-	}
-
-	/*
-	 * Scan the constraints, and for each rel in the array, generate a
-	 * count of the number of constraints that say it must be before
-	 * something else, plus a list of the constraints that say it must be
-	 * after something else. The count for the j'th rel is stored in
-	 * beforeConstraints[j], and the head of its list in
-	 * afterConstraints[j].  Each constraint stores its list link in
-	 * its link field (note any constraint will be in just one list).
-	 * The array index for the before-rel of each constraint is
-	 * remembered in the constraint's pred field.
-	 */
-	MemSet(beforeConstraints, 0, queue_size * sizeof(int));
-	MemSet(afterConstraints, 0, queue_size * sizeof(DelConstraint*));
-	foreach(lptr, constraintList)
-	{
-		DelConstraint  *constraint = (DelConstraint *) lfirst(lptr);
-		Oid			rel;
-
-		/* Find the referencer rel in the array */
-		rel = constraint->referencer;
-		for (j = queue_size; --j >= 0;)
-		{
-			if (rels[j] == rel)
-				break;
-		}
-		Assert(j >= 0);			/* should have found a match */
-		/* Find the referencee rel in the array */
-		rel = constraint->referencee;
-		for (k = queue_size; --k >= 0;)
-		{
-			if (rels[k] == rel)
-				break;
-		}
-		Assert(k >= 0);			/* should have found a match */
-		beforeConstraints[j]++; /* referencer must come before */
-		/* add this constraint to list of after-constraints for referencee */
-		constraint->pred = j;
-		constraint->link = afterConstraints[k];
-		afterConstraints[k] = constraint;
-	}
-	/*--------------------
-	 * Now scan the rels array backwards.	At each step, output the
-	 * last rel that has no remaining before-constraints, and decrease
-	 * the beforeConstraints count of each of the rels it was constrained
-	 * against.  (This is the right order since we are building the result
-	 * list back-to-front.)
-	 * i = counter for number of rels left to output
-	 * j = search index for rels[]
-	 * dc = temp for scanning constraint list for rel j
-	 * last = last valid index in rels (avoid redundant searches)
-	 *--------------------
-	 */
-	last = queue_size - 1;
-	for (i = queue_size; --i >= 0;)
-	{
-		DelConstraint  *dc;
-
-		/* Find next candidate to output */
-		while (rels[last] == InvalidOid)
-			last--;
-		for (j = last; j >= 0; j--)
-		{
-			if (rels[j] != InvalidOid && beforeConstraints[j] == 0)
-				break;
-		}
-		/* If no available candidate, topological sort fails */
-		if (j < 0)
-			elog(ERROR, "TopoSortRels: failed to find a workable deletion ordering");
-		/* Output candidate, and mark it done by zeroing rels[] entry */
-		resultList = lconsi(rels[j], resultList);
-		rels[j] = InvalidOid;
-		/* Update beforeConstraints counts of its predecessors */
-		for (dc = afterConstraints[j]; dc; dc = dc->link)
-			beforeConstraints[dc->pred]--;
-	}
-
-	/* Done */
-	return resultList;
 }
 
 /*

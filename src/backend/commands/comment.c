@@ -7,7 +7,7 @@
  * Copyright (c) 1996-2001, PostgreSQL Global Development Group
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/commands/comment.c,v 1.49 2002/06/20 20:51:45 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/commands/comment.c,v 1.50 2002/07/12 18:43:15 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -225,38 +225,45 @@ CreateComments(Oid oid, Oid classoid, int32 subid, char *comment)
 }
 
 /*
- * DeleteComments --
+ * DeleteComments -- remove comments for an object
  *
- * This routine is used to purge all comments associated with an object,
- * regardless of their objsubid.  It is called, for example, when a relation
- * is destroyed.
+ * If subid is nonzero then only comments matching it will be removed.
+ * If subid is zero, all comments matching the oid/classoid will be removed
+ * (this corresponds to deleting a whole object).
  */
 void
-DeleteComments(Oid oid, Oid classoid)
+DeleteComments(Oid oid, Oid classoid, int32 subid)
 {
 	Relation	description;
-	ScanKeyData skey[2];
+	ScanKeyData skey[3];
+	int			nkeys;
 	SysScanDesc	sd;
 	HeapTuple	oldtuple;
 
 	/* Use the index to search for all matching old tuples */
 
-	ScanKeyEntryInitialize(&skey[0],
-						   (bits16) 0x0,
-						   (AttrNumber) 1,
-						   (RegProcedure) F_OIDEQ,
+	ScanKeyEntryInitialize(&skey[0], 0x0,
+						   Anum_pg_description_objoid, F_OIDEQ,
 						   ObjectIdGetDatum(oid));
 
-	ScanKeyEntryInitialize(&skey[1],
-						   (bits16) 0x0,
-						   (AttrNumber) 2,
-						   (RegProcedure) F_OIDEQ,
+	ScanKeyEntryInitialize(&skey[1], 0x0,
+						   Anum_pg_description_classoid, F_OIDEQ,
 						   ObjectIdGetDatum(classoid));
+
+	if (subid != 0)
+	{
+		ScanKeyEntryInitialize(&skey[2], 0x0,
+							   Anum_pg_description_objsubid, F_INT4EQ,
+							   Int32GetDatum(subid));
+		nkeys = 3;
+	}
+	else
+		nkeys = 2;
 
 	description = heap_openr(DescriptionRelationName, RowExclusiveLock);
 
 	sd = systable_beginscan(description, DescriptionObjIndex, true,
-							SnapshotNow, 2, skey);
+							SnapshotNow, nkeys, skey);
 
 	while ((oldtuple = systable_getnext(sd)) != NULL)
 	{
@@ -266,7 +273,7 @@ DeleteComments(Oid oid, Oid classoid)
 	/* Done */
 
 	systable_endscan(sd);
-	heap_close(description, NoLock);
+	heap_close(description, RowExclusiveLock);
 }
 
 /*

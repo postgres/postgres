@@ -9,7 +9,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/commands/operatorcmds.c,v 1.4 2002/07/01 15:27:46 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/commands/operatorcmds.c,v 1.5 2002/07/12 18:43:16 tgl Exp $
  *
  * DESCRIPTION
  *	  The "DefineFoo" routines take the parse tree and pick out the
@@ -36,9 +36,9 @@
 
 #include "access/heapam.h"
 #include "catalog/catname.h"
+#include "catalog/dependency.h"
 #include "catalog/namespace.h"
 #include "catalog/pg_operator.h"
-#include "commands/comment.h"
 #include "commands/defrem.h"
 #include "miscadmin.h"
 #include "parser/parse_oper.h"
@@ -217,17 +217,15 @@ RemoveOperator(RemoveOperStmt *stmt)
 	TypeName *typeName1 = (TypeName *) lfirst(stmt->args);
 	TypeName *typeName2 = (TypeName *) lsecond(stmt->args);
 	Oid			operOid;
-	Relation	relation;
 	HeapTuple	tup;
+	ObjectAddress object;
 
 	operOid = LookupOperNameTypeNames(operatorName, typeName1, typeName2,
 									  "RemoveOperator");
 
-	relation = heap_openr(OperatorRelationName, RowExclusiveLock);
-
-	tup = SearchSysCacheCopy(OPEROID,
-							 ObjectIdGetDatum(operOid),
-							 0, 0, 0);
+	tup = SearchSysCache(OPEROID,
+						 ObjectIdGetDatum(operOid),
+						 0, 0, 0);
 	if (!HeapTupleIsValid(tup))	/* should not happen */
 		elog(ERROR, "RemoveOperator: failed to find tuple for operator '%s'",
 			 NameListToString(operatorName));
@@ -238,11 +236,39 @@ RemoveOperator(RemoveOperStmt *stmt)
 								 GetUserId()))
 		aclcheck_error(ACLCHECK_NOT_OWNER, NameListToString(operatorName));
 
-	/* Delete any comments associated with this operator */
-	DeleteComments(operOid, RelationGetRelid(relation));
+	ReleaseSysCache(tup);
+
+	/*
+	 * Do the deletion
+	 */
+	object.classId = get_system_catalog_relid(OperatorRelationName);
+	object.objectId = operOid;
+	object.objectSubId = 0;
+
+	performDeletion(&object, stmt->behavior);
+}
+
+/*
+ * Guts of operator deletion.
+ */
+void
+RemoveOperatorById(Oid operOid)
+{
+	Relation	relation;
+	HeapTuple	tup;
+
+	relation = heap_openr(OperatorRelationName, RowExclusiveLock);
+
+	tup = SearchSysCache(OPEROID,
+						 ObjectIdGetDatum(operOid),
+						 0, 0, 0);
+	if (!HeapTupleIsValid(tup))	/* should not happen */
+		elog(ERROR, "RemoveOperatorById: failed to find tuple for operator %u",
+			 operOid);
 
 	simple_heap_delete(relation, &tup->t_self);
 
-	heap_freetuple(tup);
+	ReleaseSysCache(tup);
+
 	heap_close(relation, RowExclusiveLock);
 }

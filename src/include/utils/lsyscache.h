@@ -6,7 +6,7 @@
  * Portions Copyright (c) 1996-2002, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Id: lsyscache.h,v 1.54 2002/07/06 20:16:36 momjian Exp $
+ * $Id: lsyscache.h,v 1.55 2002/07/12 18:43:19 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -42,6 +42,7 @@ extern Oid	get_func_rettype(Oid funcid);
 extern bool	get_func_retset(Oid funcid);
 extern char func_volatile(Oid funcid);
 extern Oid	get_relname_relid(const char *relname, Oid relnamespace);
+extern Oid	get_system_catalog_relid(const char *catname);
 extern char *get_rel_name(Oid relid);
 extern Oid	get_rel_namespace(Oid relid);
 extern Oid	get_rel_type_id(Oid relid);

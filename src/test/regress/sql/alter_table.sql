@@ -250,7 +250,7 @@ CREATE TEMP TABLE FKTABLE (ftest1 varchar);
 ALTER TABLE FKTABLE ADD FOREIGN KEY(ftest1) references pktable;
 -- As should this
 ALTER TABLE FKTABLE ADD FOREIGN KEY(ftest1) references pktable(ptest1);
-DROP TABLE pktable;
+DROP TABLE pktable cascade;
 DROP TABLE fktable;
 
 CREATE TEMP TABLE PKTABLE (ptest1 int, ptest2 inet,
@@ -258,13 +258,13 @@ CREATE TEMP TABLE PKTABLE (ptest1 int, ptest2 inet,
 -- This should fail, because we just chose really odd types
 CREATE TEMP TABLE FKTABLE (ftest1 cidr, ftest2 timestamp);
 ALTER TABLE FKTABLE ADD FOREIGN KEY(ftest1, ftest2) references pktable;
--- Again, so should this...
 DROP TABLE FKTABLE;
+-- Again, so should this...
 CREATE TEMP TABLE FKTABLE (ftest1 cidr, ftest2 timestamp);
 ALTER TABLE FKTABLE ADD FOREIGN KEY(ftest1, ftest2)
      references pktable(ptest1, ptest2);
--- This fails because we mixed up the column ordering
 DROP TABLE FKTABLE;
+-- This fails because we mixed up the column ordering
 CREATE TEMP TABLE FKTABLE (ftest1 int, ftest2 inet);
 ALTER TABLE FKTABLE ADD FOREIGN KEY(ftest1, ftest2)
      references pktable(ptest2, ptest1);
@@ -486,7 +486,7 @@ alter table foo alter column bar drop not null;
 create table atacc1 (test int not null);
 alter table atacc1 add constraint "atacc1_pkey" primary key (test);
 alter table atacc1 alter column test drop not null;
-drop index atacc1_pkey;
+alter table atacc1 drop constraint "atacc1_pkey";
 alter table atacc1 alter column test drop not null;
 insert into atacc1 values (null);
 alter table atacc1 alter test set not null;

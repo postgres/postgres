@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/ref/drop_view.sgml,v 1.14 2002/05/18 15:44:47 petere Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/ref/drop_view.sgml,v 1.15 2002/07/12 18:43:13 tgl Exp $
 PostgreSQL documentation
 -->
 
@@ -21,7 +21,7 @@ PostgreSQL documentation
    <date>1999-07-20</date>
   </refsynopsisdivinfo>
   <synopsis>
-DROP VIEW <replaceable class="PARAMETER">name</replaceable> [, ...]
+DROP VIEW <replaceable class="PARAMETER">name</replaceable> [, ...] [ CASCADE | RESTRICT ]
   </synopsis>
   
   <refsect2 id="R2-SQL-DROPVIEW-1">
@@ -42,7 +42,26 @@ DROP VIEW <replaceable class="PARAMETER">name</replaceable> [, ...]
        </para>
       </listitem>
      </varlistentry>
+     <varlistentry>
+      <term>CASCADE</term>
+      <listitem>
+       <para>
+        Automatically drop objects that depend on the view
+	(such as other views).
+       </para>
+      </listitem>
+     </varlistentry>
+     <varlistentry>
+      <term>RESTRICT</term>
+      <listitem>
+       <para>
+        Refuse to drop the view if there are any dependent objects.
+	This is the default.
+       </para>
+      </listitem>
+     </varlistentry>
     </variablelist>
+
    </para>
   </refsect2>
 
@@ -134,58 +153,7 @@ DROP VIEW kinds;
     SQL92
    </title>
    <para>
-    <acronym>SQL92</acronym> specifies some additional capabilities for
-    <command>DROP VIEW</command>:
-   
-    <synopsis>
-DROP VIEW <replaceable class="parameter">view</replaceable> { RESTRICT | CASCADE }
-    </synopsis>
    </para>
-
-   <refsect3 id="R3-SQL-DROPVIEW-1">
-    <refsect3info>
-     <date>1998-09-22</date>
-    </refsect3info>
-    <title>
-     Inputs
-    </title>
-    <para>
-     <variablelist>
-      <varlistentry>
-       <term>RESTRICT</term>
-       <listitem>
-	<para>
-	 Ensures that only a view with no dependent views or
-	 integrity constraints can be destroyed.
-	</para>
-       </listitem>
-      </varlistentry>
-      <varlistentry>
-       <term>CASCADE</term>
-       <listitem>
-	<para>
-	 Any referencing views and integrity constraints
-	 will be dropped as well.
-	</para>
-       </listitem>
-      </varlistentry>
-     </variablelist>
-    </para>
-   </refsect3>
-
-  <refsect3 id="R3-SQL-DROPVIEW-2">
-   <refsect3info>
-    <date>1998-09-22</date>
-   </refsect3info>
-   <title>
-    Notes
-    </title>
-    <para>
-     At present, to remove a referencing view from a
-     <productname>PostgreSQL</productname> database, 
-     you must drop it explicitly.
-    </para>
-   </refsect3>
   </refsect2>
  </refsect1>
 </refentry>

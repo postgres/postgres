@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2002, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Id: index.h,v 1.48 2002/06/20 20:29:43 momjian Exp $
+ * $Id: index.h,v 1.49 2002/07/12 18:43:19 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -35,6 +35,7 @@ extern Oid index_create(Oid heapRelationId,
 			 Oid accessMethodObjectId,
 			 Oid *classObjectId,
 			 bool primary,
+			 bool isconstraint,
 			 bool allow_system_table_mods);
 
 extern void index_drop(Oid indexId);

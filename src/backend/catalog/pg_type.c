@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/catalog/pg_type.c,v 1.72 2002/06/20 20:29:26 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/catalog/pg_type.c,v 1.73 2002/07/12 18:43:15 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -16,6 +16,7 @@
 
 #include "access/heapam.h"
 #include "catalog/catname.h"
+#include "catalog/dependency.h"
 #include "catalog/indexing.h"
 #include "catalog/pg_type.h"
 #include "miscadmin.h"
@@ -166,6 +167,8 @@ TypeCreate(const char *typeName,
 	NameData	name;
 	TupleDesc	tupDesc;
 	int			i;
+	ObjectAddress	myself,
+					referenced;
 
 	/*
 	 * validate size specifications: either positive (fixed-length) or -1
@@ -296,6 +299,77 @@ TypeCreate(const char *typeName,
 		CatalogOpenIndices(Num_pg_type_indices, Name_pg_type_indices, idescs);
 		CatalogIndexInsert(idescs, Num_pg_type_indices, pg_type_desc, tup);
 		CatalogCloseIndices(Num_pg_type_indices, idescs);
+	}
+
+	/*
+	 * Create dependencies
+	 */
+	myself.classId = RelOid_pg_type;
+	myself.objectId = typeObjectId;
+	myself.objectSubId = 0;
+
+	/* Normal dependencies on the I/O functions */
+	referenced.classId = RelOid_pg_proc;
+	referenced.objectId = inputProcedure;
+	referenced.objectSubId = 0;
+	recordDependencyOn(&myself, &referenced, DEPENDENCY_NORMAL);
+
+	referenced.classId = RelOid_pg_proc;
+	referenced.objectId = outputProcedure;
+	referenced.objectSubId = 0;
+	recordDependencyOn(&myself, &referenced, DEPENDENCY_NORMAL);
+
+	if (receiveProcedure != inputProcedure)
+	{
+		referenced.classId = RelOid_pg_proc;
+		referenced.objectId = receiveProcedure;
+		referenced.objectSubId = 0;
+		recordDependencyOn(&myself, &referenced, DEPENDENCY_NORMAL);
+	}
+
+	if (sendProcedure != outputProcedure)
+	{
+		referenced.classId = RelOid_pg_proc;
+		referenced.objectId = sendProcedure;
+		referenced.objectSubId = 0;
+		recordDependencyOn(&myself, &referenced, DEPENDENCY_NORMAL);
+	}
+
+	/*
+	 * If the type is a rowtype for a relation, mark it as internally
+	 * dependent on the relation.  This allows it to be auto-dropped
+	 * when the relation is, and not otherwise.
+	 */
+	if (OidIsValid(relationOid))
+	{
+		referenced.classId = RelOid_pg_class;
+		referenced.objectId = relationOid;
+		referenced.objectSubId = 0;
+		recordDependencyOn(&myself, &referenced, DEPENDENCY_INTERNAL);
+	}
+
+	/*
+	 * If the type is an array type, mark it auto-dependent on the
+	 * base type.  (This is a compromise between the typical case where the
+	 * array type is automatically generated and the case where it is manually
+	 * created: we'd prefer INTERNAL for the former case and NORMAL for the
+	 * latter.)
+	 */
+	if (OidIsValid(elementType))
+	{
+		referenced.classId = RelOid_pg_type;
+		referenced.objectId = elementType;
+		referenced.objectSubId = 0;
+		recordDependencyOn(&myself, &referenced, DEPENDENCY_AUTO);
+	}
+
+	/* Normal dependency from a domain to its base type. */
+	if (OidIsValid(baseType))
+	{
+		referenced.classId = RelOid_pg_type;
+		referenced.objectId = baseType;
+		referenced.objectSubId = 0;
+		recordDependencyOn(&myself, &referenced, DEPENDENCY_NORMAL);
 	}
 
 	/*

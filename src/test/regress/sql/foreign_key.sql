@@ -40,8 +40,8 @@ UPDATE PKTABLE SET ptest1=1 WHERE ptest1=2;
 -- Check FKTABLE for update of matched row
 SELECT * FROM FKTABLE;
 
-DROP TABLE PKTABLE;
 DROP TABLE FKTABLE;
+DROP TABLE PKTABLE;
 
 --
 -- check set NULL and table constraint on multiple columns
@@ -92,7 +92,7 @@ UPDATE PKTABLE SET ptest1=1 WHERE ptest1=2;
 -- Check FKTABLE for update of matched row
 SELECT * FROM FKTABLE;
 
-DROP TABLE PKTABLE;
+DROP TABLE PKTABLE CASCADE;
 DROP TABLE FKTABLE;
 
 --
@@ -147,7 +147,9 @@ UPDATE PKTABLE SET ptest1=1 WHERE ptest1=2;
 -- Check FKTABLE for update of matched row
 SELECT * FROM FKTABLE;
 
+-- this should fail for lack of CASCADE
 DROP TABLE PKTABLE;
+DROP TABLE PKTABLE CASCADE;
 DROP TABLE FKTABLE;
 
 
@@ -197,8 +199,8 @@ UPDATE PKTABLE SET ptest1=0 WHERE ptest1=4;
 -- Check PKTABLE for updates
 SELECT * FROM PKTABLE;
 
-DROP TABLE PKTABLE;
 DROP TABLE FKTABLE;
+DROP TABLE PKTABLE;
 
 
 -- MATCH unspecified

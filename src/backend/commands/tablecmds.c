@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/commands/tablecmds.c,v 1.19 2002/07/06 20:16:35 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/commands/tablecmds.c,v 1.20 2002/07/12 18:43:16 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -18,11 +18,13 @@
 #include "access/tuptoaster.h"
 #include "catalog/catalog.h"
 #include "catalog/catname.h"
+#include "catalog/dependency.h"
 #include "catalog/heap.h"
 #include "catalog/index.h"
 #include "catalog/indexing.h"
 #include "catalog/namespace.h"
 #include "catalog/pg_attrdef.h"
+#include "catalog/pg_constraint.h"
 #include "catalog/pg_inherits.h"
 #include "catalog/pg_namespace.h"
 #include "catalog/pg_opclass.h"
@@ -36,6 +38,7 @@
 #include "optimizer/clauses.h"
 #include "optimizer/planmain.h"
 #include "optimizer/prep.h"
+#include "parser/gramparse.h"
 #include "parser/parse_coerce.h"
 #include "parser/parse_expr.h"
 #include "parser/parse_relation.h"
@@ -57,6 +60,13 @@ static void setRelhassubclassInRelation(Oid relationId, bool relhassubclass);
 static void drop_default(Oid relid, int16 attnum);
 static void CheckTupleType(Form_pg_class tuple_class);
 static bool needs_toast_table(Relation rel);
+static void validateForeignKeyConstraint(FkConstraint *fkconstraint,
+										 Relation rel, Relation pkrel);
+static Oid	createForeignKeyConstraint(Relation rel, Relation pkrel,
+									   FkConstraint *fkconstraint);
+static void createForeignKeyTriggers(Relation rel, FkConstraint *fkconstraint,
+									 Oid constrOid);
+static char *fkMatchTypeToString(char match_type);
 
 /* Used by attribute and relation renaming routines: */
 
@@ -147,6 +157,7 @@ DefineRelation(CreateStmt *stmt, char relkind)
 		ConstrCheck *check = (ConstrCheck *) palloc(length(old_constraints) *
 													sizeof(ConstrCheck));
 		int			ncheck = 0;
+		int			constr_name_ctr = 0;
 
 		foreach(listptr, old_constraints)
 		{
@@ -167,8 +178,16 @@ DefineRelation(CreateStmt *stmt, char relkind)
 			}
 			else
 			{
+				/*
+				 * Generate a constraint name.  NB: this should match the
+				 * form of names that GenerateConstraintName() may produce
+				 * for names added later.  We are assured that there is
+				 * no name conflict, because MergeAttributes() did not pass
+				 * back any names of this form.
+				 */
 				check[ncheck].ccname = (char *) palloc(NAMEDATALEN);
-				snprintf(check[ncheck].ccname, NAMEDATALEN, "$%d", ncheck + 1);
+				snprintf(check[ncheck].ccname, NAMEDATALEN, "$%d",
+						 ++constr_name_ctr);
 			}
 			Assert(cdef->raw_expr == NULL && cdef->cooked_expr != NULL);
 			check[ncheck].ccbin = pstrdup(cdef->cooked_expr);
@@ -262,21 +281,20 @@ DefineRelation(CreateStmt *stmt, char relkind)
 /*
  * RemoveRelation
  *		Deletes a relation.
- *
- * Exceptions:
- *		BadArg if name is invalid.
- *
- * Note:
- *		If the relation has indices defined on it, then the index relations
- * themselves will be destroyed, too.
  */
 void
 RemoveRelation(const RangeVar *relation, DropBehavior behavior)
 {
 	Oid			relOid;
+	ObjectAddress object;
 
 	relOid = RangeVarGetRelid(relation, false);
-	heap_drop_with_catalog(relOid, allowSystemTableMods);
+
+	object.classId = RelOid_pg_class;
+	object.objectId = relOid;
+	object.objectSubId = 0;
+
+	performDeletion(&object, behavior);
 }
 
 /*
@@ -580,7 +598,13 @@ MergeAttributes(List *schema, List *supers, bool istemp,
 				Node	   *expr;
 
 				cdef->contype = CONSTR_CHECK;
-				if (check[i].ccname[0] == '$')
+				/*
+				 * Do not inherit generated constraint names, since they
+				 * might conflict across multiple inheritance parents.
+				 * (But conflicts between user-assigned names will cause
+				 * an error.)
+				 */
+				if (ConstraintNameIsGenerated(check[i].ccname))
 					cdef->name = NULL;
 				else
 					cdef->name = pstrdup(check[i].ccname);
@@ -684,7 +708,7 @@ MergeAttributes(List *schema, List *supers, bool istemp,
 /*
  * complementary static functions for MergeAttributes().
  *
- * Varattnos of pg_relcheck.rcbin must be rewritten when subclasses inherit
+ * Varattnos of pg_constraint.conbin must be rewritten when subclasses inherit
  * constraints from parent classes, since the inherited attributes could
  * be given different column numbers in multiple-inheritance cases.
  *
@@ -747,7 +771,8 @@ StoreCatalogInheritance(Oid relationId, List *supers)
 		return;
 
 	/*
-	 * Catalog INHERITS information using direct ancestors only.
+	 * Store INHERITS information in pg_inherits using direct ancestors only.
+	 * Also enter dependencies on the direct ancestors.
 	 */
 	relation = heap_openr(InheritsRelationName, RowExclusiveLock);
 	desc = RelationGetDescr(relation);
@@ -758,6 +783,8 @@ StoreCatalogInheritance(Oid relationId, List *supers)
 		Oid			entryOid = lfirsti(entry);
 		Datum		datum[Natts_pg_inherits];
 		char		nullarr[Natts_pg_inherits];
+		ObjectAddress childobject,
+					parentobject;
 
 		datum[0] = ObjectIdGetDatum(relationId);		/* inhrel */
 		datum[1] = ObjectIdGetDatum(entryOid);	/* inhparent */
@@ -781,6 +808,18 @@ StoreCatalogInheritance(Oid relationId, List *supers)
 		}
 
 		heap_freetuple(tuple);
+
+		/*
+		 * Store a dependency too
+		 */
+		parentobject.classId = RelOid_pg_class;
+		parentobject.objectId = entryOid;
+		parentobject.objectSubId = 0;
+		childobject.classId = RelOid_pg_class;
+		childobject.objectId = relationId;
+		childobject.objectSubId = 0;
+
+		recordDependencyOn(&childobject, &parentobject, DEPENDENCY_NORMAL);
 
 		seqNumber += 1;
 	}
@@ -2299,6 +2338,7 @@ AlterTableAddConstraint(Oid myrelid,
 {
 	Relation	rel;
 	List	   *listptr;
+	int			counter = 0;
 
 	/*
 	 * Grab an exclusive lock on the target table, which we will NOT
@@ -2343,7 +2383,12 @@ AlterTableAddConstraint(Oid myrelid,
 
 	foreach(listptr, newConstraints)
 	{
-		Node	   *newConstraint = lfirst(listptr);
+		/*
+		 * copy is because we may destructively alter the node below
+		 * by inserting a generated name; this name is not necessarily
+		 * correct for children or parents.
+		 */
+		Node	   *newConstraint = copyObject(lfirst(listptr));
 
 		switch (nodeTag(newConstraint))
 		{
@@ -2370,12 +2415,23 @@ AlterTableAddConstraint(Oid myrelid,
 								RangeTblEntry *rte;
 								List	   *qual;
 								Node	   *expr;
-								char	   *name;
 
+								/*
+								 * Assign or validate constraint name
+								 */
 								if (constr->name)
-									name = constr->name;
+								{
+									if (ConstraintNameIsUsed(RelationGetRelid(rel),
+															 RelationGetNamespace(rel),
+															 constr->name))
+										elog(ERROR, "constraint \"%s\" already exists for relation \"%s\"",
+											 constr->name,
+											 RelationGetRelationName(rel));
+								}
 								else
-									name = "<unnamed>";
+									constr->name = GenerateConstraintName(RelationGetRelid(rel),
+																		  RelationGetNamespace(rel),
+																		  &counter);
 
 								/*
 								 * We need to make a parse state and range
@@ -2458,7 +2514,8 @@ AlterTableAddConstraint(Oid myrelid,
 								pfree(slot);
 
 								if (!successful)
-									elog(ERROR, "AlterTableAddConstraint: rejected due to CHECK constraint %s", name);
+									elog(ERROR, "AlterTableAddConstraint: rejected due to CHECK constraint %s",
+										 constr->name);
 
 								/*
 								 * Call AddRelationRawConstraints to do
@@ -2481,17 +2538,32 @@ AlterTableAddConstraint(Oid myrelid,
 				{
 					FkConstraint *fkconstraint = (FkConstraint *) newConstraint;
 					Relation	pkrel;
-					HeapScanDesc scan;
-					HeapTuple	tuple;
-					Trigger		trig;
-					List	   *list;
-					int			count;
+					Oid			constrOid;
+
+					/*
+					 * Assign or validate constraint name
+					 */
+					if (fkconstraint->constr_name)
+					{
+						if (ConstraintNameIsUsed(RelationGetRelid(rel),
+												 RelationGetNamespace(rel),
+												 fkconstraint->constr_name))
+							elog(ERROR, "constraint \"%s\" already exists for relation \"%s\"",
+								 fkconstraint->constr_name,
+								 RelationGetRelationName(rel));
+					}
+					else
+						fkconstraint->constr_name = GenerateConstraintName(RelationGetRelid(rel),
+																		   RelationGetNamespace(rel),
+																		   &counter);
 
 					/*
 					 * Grab an exclusive lock on the pk table, so that
 					 * someone doesn't delete rows out from under us.
-					 *
-					 * XXX wouldn't a lesser lock be sufficient?
+					 * (Although a lesser lock would do for that purpose,
+					 * we'll need exclusive lock anyway to add triggers
+					 * to the pk table; trying to start with a lesser lock
+					 * will just create a risk of deadlock.)
 					 */
 					pkrel = heap_openrv(fkconstraint->pktable,
 										AccessExclusiveLock);
@@ -2500,100 +2572,46 @@ AlterTableAddConstraint(Oid myrelid,
 					 * Validity checks
 					 */
 					if (pkrel->rd_rel->relkind != RELKIND_RELATION)
-						elog(ERROR, "referenced table \"%s\" not a relation",
-							 fkconstraint->pktable->relname);
+						elog(ERROR, "referenced relation \"%s\" is not a table",
+							 RelationGetRelationName(pkrel));
+
+					if (!allowSystemTableMods
+						&& IsSystemRelation(pkrel))
+						elog(ERROR, "ALTER TABLE: relation \"%s\" is a system catalog",
+							 RelationGetRelationName(pkrel));
+
+					/* XXX shouldn't there be a permission check too? */
 
 					if (isTempNamespace(RelationGetNamespace(pkrel)) &&
 						!isTempNamespace(RelationGetNamespace(rel)))
-						elog(ERROR, "ALTER TABLE / ADD CONSTRAINT: Unable to reference temporary table from permanent table constraint.");
+						elog(ERROR, "ALTER TABLE / ADD CONSTRAINT: Unable to reference temporary table from permanent table constraint");
 
 					/*
-					 * First we check for limited correctness of the
-					 * constraint.
+					 * Check that the constraint is satisfied by existing
+					 * rows (we can skip this during table creation).
 					 *
 					 * NOTE: we assume parser has already checked for
 					 * existence of an appropriate unique index on the
 					 * referenced relation, and that the column datatypes
 					 * are comparable.
-					 *
-					 * Scan through each tuple, calling RI_FKey_check_ins
-					 * (insert trigger) as if that tuple had just been
-					 * inserted.  If any of those fail, it should
-					 * elog(ERROR) and that's that.
 					 */
-					MemSet(&trig, 0, sizeof(trig));
-					trig.tgoid = InvalidOid;
-					if (fkconstraint->constr_name)
-						trig.tgname = fkconstraint->constr_name;
-					else
-						trig.tgname = "<unknown>";
-					trig.tgenabled = TRUE;
-					trig.tgisconstraint = TRUE;
-					trig.tgconstrrelid = RelationGetRelid(pkrel);
-					trig.tgdeferrable = FALSE;
-					trig.tginitdeferred = FALSE;
+					if (!fkconstraint->skip_validation)
+						validateForeignKeyConstraint(fkconstraint, rel, pkrel);
 
-					trig.tgargs = (char **) palloc(
-					 sizeof(char *) * (4 + length(fkconstraint->fk_attrs)
-									   + length(fkconstraint->pk_attrs)));
+					/*
+					 * Record the FK constraint in pg_constraint.
+					 */
+					constrOid = createForeignKeyConstraint(rel, pkrel,
+														   fkconstraint);
 
-					trig.tgargs[0] = trig.tgname;
-					trig.tgargs[1] = RelationGetRelationName(rel);
-					trig.tgargs[2] = RelationGetRelationName(pkrel);
-					trig.tgargs[3] = fkconstraint->match_type;
-					count = 4;
-					foreach(list, fkconstraint->fk_attrs)
-					{
-						Ident	   *fk_at = lfirst(list);
+					/*
+					 * Create the triggers that will enforce the constraint.
+					 */
+					createForeignKeyTriggers(rel, fkconstraint, constrOid);
 
-						trig.tgargs[count] = fk_at->name;
-						count += 2;
-					}
-					count = 5;
-					foreach(list, fkconstraint->pk_attrs)
-					{
-						Ident	   *pk_at = lfirst(list);
-
-						trig.tgargs[count] = pk_at->name;
-						count += 2;
-					}
-					trig.tgnargs = count - 1;
-
-					scan = heap_beginscan(rel, SnapshotNow, 0, NULL);
-
-					while ((tuple = heap_getnext(scan, ForwardScanDirection)) != NULL)
-					{
-						/* Make a call to the check function */
-
-						/*
-						 * No parameters are passed, but we do set a
-						 * context
-						 */
-						FunctionCallInfoData fcinfo;
-						TriggerData trigdata;
-
-						MemSet(&fcinfo, 0, sizeof(fcinfo));
-
-						/*
-						 * We assume RI_FKey_check_ins won't look at
-						 * flinfo...
-						 */
-
-						trigdata.type = T_TriggerData;
-						trigdata.tg_event = TRIGGER_EVENT_INSERT | TRIGGER_EVENT_ROW;
-						trigdata.tg_relation = rel;
-						trigdata.tg_trigtuple = tuple;
-						trigdata.tg_newtuple = NULL;
-						trigdata.tg_trigger = &trig;
-
-						fcinfo.context = (Node *) &trigdata;
-
-						RI_FKey_check_ins(&fcinfo);
-					}
-					heap_endscan(scan);
-
-					pfree(trig.tgargs);
-
+					/*
+					 * Close pk table, but keep lock until we've committed.
+					 */
 					heap_close(pkrel, NoLock);
 
 					break;
@@ -2607,12 +2625,418 @@ AlterTableAddConstraint(Oid myrelid,
 	heap_close(rel, NoLock);
 }
 
+/*
+ * Scan the existing rows in a table to verify they meet a proposed FK
+ * constraint.
+ *
+ * Caller must have opened and locked both relations.
+ */
+static void
+validateForeignKeyConstraint(FkConstraint *fkconstraint,
+							 Relation rel,
+							 Relation pkrel)
+{
+	HeapScanDesc scan;
+	HeapTuple	tuple;
+	Trigger		trig;
+	List	   *list;
+	int			count;
+
+	/*
+	 * Scan through each tuple, calling RI_FKey_check_ins
+	 * (insert trigger) as if that tuple had just been
+	 * inserted.  If any of those fail, it should
+	 * elog(ERROR) and that's that.
+	 */
+	MemSet(&trig, 0, sizeof(trig));
+	trig.tgoid = InvalidOid;
+	trig.tgname = fkconstraint->constr_name;
+	trig.tgenabled = TRUE;
+	trig.tgisconstraint = TRUE;
+	trig.tgconstrrelid = RelationGetRelid(pkrel);
+	trig.tgdeferrable = FALSE;
+	trig.tginitdeferred = FALSE;
+
+	trig.tgargs = (char **) palloc(sizeof(char *) *
+								   (4 + length(fkconstraint->fk_attrs)
+									+ length(fkconstraint->pk_attrs)));
+
+	trig.tgargs[0] = trig.tgname;
+	trig.tgargs[1] = RelationGetRelationName(rel);
+	trig.tgargs[2] = RelationGetRelationName(pkrel);
+	trig.tgargs[3] = fkMatchTypeToString(fkconstraint->fk_matchtype);
+	count = 4;
+	foreach(list, fkconstraint->fk_attrs)
+	{
+		Ident	   *fk_at = lfirst(list);
+
+		trig.tgargs[count] = fk_at->name;
+		count += 2;
+	}
+	count = 5;
+	foreach(list, fkconstraint->pk_attrs)
+	{
+		Ident	   *pk_at = lfirst(list);
+
+		trig.tgargs[count] = pk_at->name;
+		count += 2;
+	}
+	trig.tgnargs = count - 1;
+
+	scan = heap_beginscan(rel, SnapshotNow, 0, NULL);
+
+	while ((tuple = heap_getnext(scan, ForwardScanDirection)) != NULL)
+	{
+		FunctionCallInfoData fcinfo;
+		TriggerData trigdata;
+
+		/*
+		 * Make a call to the trigger function
+		 *
+		 * No parameters are passed, but we do set a context
+		 */
+		MemSet(&fcinfo, 0, sizeof(fcinfo));
+
+		/*
+		 * We assume RI_FKey_check_ins won't look at flinfo...
+		 */
+		trigdata.type = T_TriggerData;
+		trigdata.tg_event = TRIGGER_EVENT_INSERT | TRIGGER_EVENT_ROW;
+		trigdata.tg_relation = rel;
+		trigdata.tg_trigtuple = tuple;
+		trigdata.tg_newtuple = NULL;
+		trigdata.tg_trigger = &trig;
+
+		fcinfo.context = (Node *) &trigdata;
+
+		RI_FKey_check_ins(&fcinfo);
+	}
+
+	heap_endscan(scan);
+
+	pfree(trig.tgargs);
+}
+
+/*
+ * Record an FK constraint in pg_constraint.
+ */
+static Oid
+createForeignKeyConstraint(Relation rel, Relation pkrel,
+						   FkConstraint *fkconstraint)
+{
+	int16	   *fkattr;
+	int16	   *pkattr;
+	int			fkcount;
+	int			pkcount;
+	List	   *l;
+	int			i;
+
+	/* Convert foreign-key attr names to attr number array */
+	fkcount = length(fkconstraint->fk_attrs);
+	fkattr = (int16 *) palloc(fkcount * sizeof(int16));
+	i = 0;
+	foreach(l, fkconstraint->fk_attrs)
+	{
+		Ident *id = (Ident *) lfirst(l);
+
+		fkattr[i++] = get_attnum(RelationGetRelid(rel), id->name);
+	}
+
+	/* The same for the referenced primary key attrs */
+	pkcount = length(fkconstraint->pk_attrs);
+	pkattr = (int16 *) palloc(pkcount * sizeof(int16));
+	i = 0;
+	foreach(l, fkconstraint->pk_attrs)
+	{
+		Ident *id = (Ident *) lfirst(l);
+
+		pkattr[i++] = get_attnum(RelationGetRelid(pkrel), id->name);
+	}
+
+	/* Now we can make the pg_constraint entry */
+	return CreateConstraintEntry(fkconstraint->constr_name,
+								 RelationGetNamespace(rel),
+								 CONSTRAINT_FOREIGN,
+								 fkconstraint->deferrable,
+								 fkconstraint->initdeferred,
+								 RelationGetRelid(rel),
+								 fkattr,
+								 fkcount,
+								 InvalidOid, /* not a domain constraint */
+								 RelationGetRelid(pkrel),
+								 pkattr,
+								 pkcount,
+								 fkconstraint->fk_upd_action,
+								 fkconstraint->fk_del_action,
+								 fkconstraint->fk_matchtype,
+								 NULL,
+								 NULL);
+}
+
+/*
+ * Create the triggers that implement an FK constraint.
+ */
+static void
+createForeignKeyTriggers(Relation rel, FkConstraint *fkconstraint,
+						 Oid constrOid)
+{
+	RangeVar   *myRel;
+	CreateTrigStmt *fk_trigger;
+	List	   *fk_attr;
+	List	   *pk_attr;
+	Ident	   *id;
+	ObjectAddress trigobj,
+				constrobj;
+
+	/*
+	 * Reconstruct a RangeVar for my relation (not passed in, unfortunately).
+	 */
+	myRel = makeRangeVar(get_namespace_name(RelationGetNamespace(rel)),
+						 RelationGetRelationName(rel));
+
+	/*
+	 * Preset objectAddress fields
+	 */
+	constrobj.classId = get_system_catalog_relid(ConstraintRelationName);
+	constrobj.objectId = constrOid;
+	constrobj.objectSubId = 0;
+	trigobj.classId = get_system_catalog_relid(TriggerRelationName);
+	trigobj.objectSubId = 0;
+
+	/* Make changes-so-far visible */
+	CommandCounterIncrement();
+
+	/*
+	 * Build and execute a CREATE CONSTRAINT TRIGGER statement for the
+	 * CHECK action.
+	 */
+	fk_trigger = makeNode(CreateTrigStmt);
+	fk_trigger->trigname = fkconstraint->constr_name;
+	fk_trigger->relation = myRel;
+	fk_trigger->funcname = SystemFuncName("RI_FKey_check_ins");
+	fk_trigger->before = false;
+	fk_trigger->row = true;
+	fk_trigger->actions[0] = 'i';
+	fk_trigger->actions[1] = 'u';
+	fk_trigger->actions[2] = '\0';
+	fk_trigger->lang = NULL;
+	fk_trigger->text = NULL;
+
+	fk_trigger->attr = NIL;
+	fk_trigger->when = NULL;
+	fk_trigger->isconstraint = true;
+	fk_trigger->deferrable = fkconstraint->deferrable;
+	fk_trigger->initdeferred = fkconstraint->initdeferred;
+	fk_trigger->constrrel = fkconstraint->pktable;
+
+	fk_trigger->args = NIL;
+	fk_trigger->args = lappend(fk_trigger->args,
+							   makeString(fkconstraint->constr_name));
+	fk_trigger->args = lappend(fk_trigger->args,
+							   makeString(myRel->relname));
+	fk_trigger->args = lappend(fk_trigger->args,
+							   makeString(fkconstraint->pktable->relname));
+	fk_trigger->args = lappend(fk_trigger->args,
+							   makeString(fkMatchTypeToString(fkconstraint->fk_matchtype)));
+	fk_attr = fkconstraint->fk_attrs;
+	pk_attr = fkconstraint->pk_attrs;
+	if (length(fk_attr) != length(pk_attr))
+		elog(ERROR, "number of key attributes in referenced table must be equal to foreign key"
+			 "\n\tIllegal FOREIGN KEY definition references \"%s\"",
+			 fkconstraint->pktable->relname);
+
+	while (fk_attr != NIL)
+	{
+		id = (Ident *) lfirst(fk_attr);
+		fk_trigger->args = lappend(fk_trigger->args, makeString(id->name));
+
+		id = (Ident *) lfirst(pk_attr);
+		fk_trigger->args = lappend(fk_trigger->args, makeString(id->name));
+
+		fk_attr = lnext(fk_attr);
+		pk_attr = lnext(pk_attr);
+	}
+
+	trigobj.objectId = CreateTrigger(fk_trigger, true);
+
+	/* Register dependency from trigger to constraint */
+	recordDependencyOn(&trigobj, &constrobj, DEPENDENCY_INTERNAL);
+
+	/* Make changes-so-far visible */
+	CommandCounterIncrement();
+
+	/*
+	 * Build and execute a CREATE CONSTRAINT TRIGGER statement for the
+	 * ON DELETE action on the referenced table.
+	 */
+	fk_trigger = makeNode(CreateTrigStmt);
+	fk_trigger->trigname = fkconstraint->constr_name;
+	fk_trigger->relation = fkconstraint->pktable;
+	fk_trigger->before = false;
+	fk_trigger->row = true;
+	fk_trigger->actions[0] = 'd';
+	fk_trigger->actions[1] = '\0';
+	fk_trigger->lang = NULL;
+	fk_trigger->text = NULL;
+
+	fk_trigger->attr = NIL;
+	fk_trigger->when = NULL;
+	fk_trigger->isconstraint = true;
+	fk_trigger->deferrable = fkconstraint->deferrable;
+	fk_trigger->initdeferred = fkconstraint->initdeferred;
+	fk_trigger->constrrel = myRel;
+	switch (fkconstraint->fk_del_action)
+	{
+		case FKCONSTR_ACTION_NOACTION:
+			fk_trigger->funcname = SystemFuncName("RI_FKey_noaction_del");
+			break;
+		case FKCONSTR_ACTION_RESTRICT:
+			fk_trigger->deferrable = false;
+			fk_trigger->initdeferred = false;
+			fk_trigger->funcname = SystemFuncName("RI_FKey_restrict_del");
+			break;
+		case FKCONSTR_ACTION_CASCADE:
+			fk_trigger->funcname = SystemFuncName("RI_FKey_cascade_del");
+			break;
+		case FKCONSTR_ACTION_SETNULL:
+			fk_trigger->funcname = SystemFuncName("RI_FKey_setnull_del");
+			break;
+		case FKCONSTR_ACTION_SETDEFAULT:
+			fk_trigger->funcname = SystemFuncName("RI_FKey_setdefault_del");
+			break;
+		default:
+			elog(ERROR, "Unrecognized ON DELETE action for FOREIGN KEY constraint");
+			break;
+	}
+
+	fk_trigger->args = NIL;
+	fk_trigger->args = lappend(fk_trigger->args,
+							   makeString(fkconstraint->constr_name));
+	fk_trigger->args = lappend(fk_trigger->args,
+							   makeString(myRel->relname));
+	fk_trigger->args = lappend(fk_trigger->args,
+							   makeString(fkconstraint->pktable->relname));
+	fk_trigger->args = lappend(fk_trigger->args,
+							   makeString(fkMatchTypeToString(fkconstraint->fk_matchtype)));
+	fk_attr = fkconstraint->fk_attrs;
+	pk_attr = fkconstraint->pk_attrs;
+	while (fk_attr != NIL)
+	{
+		id = (Ident *) lfirst(fk_attr);
+		fk_trigger->args = lappend(fk_trigger->args, makeString(id->name));
+
+		id = (Ident *) lfirst(pk_attr);
+		fk_trigger->args = lappend(fk_trigger->args, makeString(id->name));
+
+		fk_attr = lnext(fk_attr);
+		pk_attr = lnext(pk_attr);
+	}
+
+	trigobj.objectId = CreateTrigger(fk_trigger, true);
+
+	/* Register dependency from trigger to constraint */
+	recordDependencyOn(&trigobj, &constrobj, DEPENDENCY_INTERNAL);
+
+	/* Make changes-so-far visible */
+	CommandCounterIncrement();
+
+	/*
+	 * Build and execute a CREATE CONSTRAINT TRIGGER statement for the
+	 * ON UPDATE action on the referenced table.
+	 */
+	fk_trigger = makeNode(CreateTrigStmt);
+	fk_trigger->trigname = fkconstraint->constr_name;
+	fk_trigger->relation = fkconstraint->pktable;
+	fk_trigger->before = false;
+	fk_trigger->row = true;
+	fk_trigger->actions[0] = 'u';
+	fk_trigger->actions[1] = '\0';
+	fk_trigger->lang = NULL;
+	fk_trigger->text = NULL;
+
+	fk_trigger->attr = NIL;
+	fk_trigger->when = NULL;
+	fk_trigger->isconstraint = true;
+	fk_trigger->deferrable = fkconstraint->deferrable;
+	fk_trigger->initdeferred = fkconstraint->initdeferred;
+	fk_trigger->constrrel = myRel;
+	switch (fkconstraint->fk_upd_action)
+	{
+		case FKCONSTR_ACTION_NOACTION:
+			fk_trigger->funcname = SystemFuncName("RI_FKey_noaction_upd");
+			break;
+		case FKCONSTR_ACTION_RESTRICT:
+			fk_trigger->deferrable = false;
+			fk_trigger->initdeferred = false;
+			fk_trigger->funcname = SystemFuncName("RI_FKey_restrict_upd");
+			break;
+		case FKCONSTR_ACTION_CASCADE:
+			fk_trigger->funcname = SystemFuncName("RI_FKey_cascade_upd");
+			break;
+		case FKCONSTR_ACTION_SETNULL:
+			fk_trigger->funcname = SystemFuncName("RI_FKey_setnull_upd");
+			break;
+		case FKCONSTR_ACTION_SETDEFAULT:
+			fk_trigger->funcname = SystemFuncName("RI_FKey_setdefault_upd");
+			break;
+		default:
+			elog(ERROR, "Unrecognized ON UPDATE action for FOREIGN KEY constraint");
+			break;
+	}
+
+	fk_trigger->args = NIL;
+	fk_trigger->args = lappend(fk_trigger->args,
+							   makeString(fkconstraint->constr_name));
+	fk_trigger->args = lappend(fk_trigger->args,
+							   makeString(myRel->relname));
+	fk_trigger->args = lappend(fk_trigger->args,
+							   makeString(fkconstraint->pktable->relname));
+	fk_trigger->args = lappend(fk_trigger->args,
+							   makeString(fkMatchTypeToString(fkconstraint->fk_matchtype)));
+	fk_attr = fkconstraint->fk_attrs;
+	pk_attr = fkconstraint->pk_attrs;
+	while (fk_attr != NIL)
+	{
+		id = (Ident *) lfirst(fk_attr);
+		fk_trigger->args = lappend(fk_trigger->args, makeString(id->name));
+
+		id = (Ident *) lfirst(pk_attr);
+		fk_trigger->args = lappend(fk_trigger->args, makeString(id->name));
+
+		fk_attr = lnext(fk_attr);
+		pk_attr = lnext(pk_attr);
+	}
+
+	trigobj.objectId = CreateTrigger(fk_trigger, true);
+
+	/* Register dependency from trigger to constraint */
+	recordDependencyOn(&trigobj, &constrobj, DEPENDENCY_INTERNAL);
+}
+
+/*
+ * fkMatchTypeToString -
+ *	  convert FKCONSTR_MATCH_xxx code to string to use in trigger args
+ */
+static char *
+fkMatchTypeToString(char match_type)
+{
+	switch (match_type) 
+	{
+		case FKCONSTR_MATCH_FULL:
+			return pstrdup("FULL");
+		case FKCONSTR_MATCH_PARTIAL:
+			return pstrdup("PARTIAL");
+		case FKCONSTR_MATCH_UNSPECIFIED:
+			return pstrdup("UNSPECIFIED");
+		default:
+			elog(ERROR, "fkMatchTypeToString: Unknown MATCH TYPE '%c'",
+				 match_type);
+	}
+	return NULL;				/* can't get here */
+}
 
 /*
  * ALTER TABLE DROP CONSTRAINT
- * Note: It is legal to remove a constraint with name "" as it is possible
- * to add a constraint with name "".
- * Christopher Kings-Lynne
  */
 void
 AlterTableDropConstraint(Oid myrelid,
@@ -2620,14 +3044,7 @@ AlterTableDropConstraint(Oid myrelid,
 						 DropBehavior behavior)
 {
 	Relation	rel;
-	int			deleted;
-
-	/*
-	 * We don't support CASCADE yet  - in fact, RESTRICT doesn't work to
-	 * the spec either!
-	 */
-	if (behavior == DROP_CASCADE)
-		elog(ERROR, "ALTER TABLE / DROP CONSTRAINT does not support the CASCADE keyword");
+	int			deleted = 0;
 
 	/*
 	 * Acquire an exclusive lock on the target relation for the duration
@@ -2649,26 +3066,39 @@ AlterTableDropConstraint(Oid myrelid,
 		aclcheck_error(ACLCHECK_NOT_OWNER, RelationGetRelationName(rel));
 
 	/*
-	 * Since all we have is the name of the constraint, we have to look
-	 * through all catalogs that could possibly contain a constraint for
-	 * this relation. We also keep a count of the number of constraints
-	 * removed.
+	 * Process child tables if requested.
 	 */
+	if (inh)
+	{
+		List	   *child,
+				   *children;
 
-	deleted = 0;
+		/* This routine is actually in the planner */
+		children = find_all_inheritors(myrelid);
+
+		/*
+		 * find_all_inheritors does the recursive search of the
+		 * inheritance hierarchy, so all we have to do is process all of
+		 * the relids in the list that it returns.
+		 */
+		foreach(child, children)
+		{
+			Oid			childrelid = lfirsti(child);
+			Relation	inhrel;
+
+			if (childrelid == myrelid)
+				continue;
+			inhrel = heap_open(childrelid, AccessExclusiveLock);
+			/* do NOT count child constraints in deleted. */
+			RemoveRelConstraints(inhrel, constrName, behavior);
+			heap_close(inhrel, NoLock);
+		}
+	}
 
 	/*
-	 * First, we remove all CHECK constraints with the given name
+	 * Now do the thing on this relation.
 	 */
-
-	deleted += RemoveCheckConstraint(rel, constrName, inh);
-
-	/*
-	 * Now we remove NULL, UNIQUE, PRIMARY KEY and FOREIGN KEY
-	 * constraints.
-	 *
-	 * Unimplemented.
-	 */
+	deleted += RemoveRelConstraints(rel, constrName, behavior);
 
 	/* Close the target relation */
 	heap_close(rel, NoLock);
@@ -2797,6 +3227,8 @@ AlterTableCreateToastTable(Oid relOid, bool silent)
 	char		toast_idxname[NAMEDATALEN];
 	IndexInfo  *indexInfo;
 	Oid			classObjectId[2];
+	ObjectAddress baseobject,
+				toastobject;
 
 	/*
 	 * Grab an exclusive lock on the target table, which we will NOT
@@ -2957,7 +3389,7 @@ AlterTableCreateToastTable(Oid relOid, bool silent)
 
 	toast_idxid = index_create(toast_relid, toast_idxname, indexInfo,
 							   BTREE_AM_OID, classObjectId,
-							   true, true);
+							   true, false, true);
 
 	/*
 	 * Update toast rel's pg_class entry to show that it has an index. The
@@ -2980,6 +3412,19 @@ AlterTableCreateToastTable(Oid relOid, bool silent)
 	CatalogCloseIndices(Num_pg_class_indices, ridescs);
 
 	heap_freetuple(reltup);
+
+	/*
+	 * Register dependency from the toast table to the master, so that
+	 * the toast table will be deleted if the master is.
+	 */
+	baseobject.classId = RelOid_pg_class;
+	baseobject.objectId = relOid;
+	baseobject.objectSubId = 0;
+	toastobject.classId = RelOid_pg_class;
+	toastobject.objectId = toast_relid;
+	toastobject.objectSubId = 0;
+
+	recordDependencyOn(&toastobject, &baseobject, DEPENDENCY_INTERNAL);
 
 	/*
 	 * Close relations and make changes visible

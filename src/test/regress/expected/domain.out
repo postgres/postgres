@@ -1,11 +1,13 @@
 -- Test Comment / Drop
 create domain domaindroptest int4;
 comment on domain domaindroptest is 'About to drop this..';
+-- currently this will be disallowed
 create domain basetypetest domaindroptest;
 ERROR:  DefineDomain: domaindroptest is not a basetype
-drop domain domaindroptest cascade;
-ERROR:  DROP DOMAIN does not support the CASCADE keyword
 drop domain domaindroptest;
+-- this should fail because already gone
+drop domain domaindroptest cascade;
+ERROR:  Type "domaindroptest" does not exist
 -- TEST Domains.
 create domain domainvarchar varchar(5);
 create domain domainnumeric numeric(8,2);

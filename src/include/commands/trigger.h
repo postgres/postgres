@@ -6,7 +6,7 @@
  * Portions Copyright (c) 1996-2002, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Id: trigger.h,v 1.36 2002/06/20 20:29:49 momjian Exp $
+ * $Id: trigger.h,v 1.37 2002/07/12 18:43:19 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -101,9 +101,11 @@ typedef struct TriggerData
 #define RI_MAX_ARGUMENTS		(RI_FIRST_ATTNAME_ARGNO + (RI_MAX_NUMKEYS * 2))
 
 
-extern void CreateTrigger(CreateTrigStmt *stmt);
-extern void DropTrigger(Oid relid, const char *trigname);
-extern void RelationRemoveTriggers(Relation rel);
+extern Oid	CreateTrigger(CreateTrigStmt *stmt, bool forConstraint);
+
+extern void DropTrigger(Oid relid, const char *trigname,
+						DropBehavior behavior);
+extern void RemoveTriggerById(Oid trigOid);
 
 extern void renametrig(Oid relid, const char *oldname, const char *newname);
 

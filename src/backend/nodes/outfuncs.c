@@ -5,7 +5,7 @@
  * Portions Copyright (c) 1996-2002, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- *	$Header: /cvsroot/pgsql/src/backend/nodes/outfuncs.c,v 1.161 2002/07/04 15:23:53 thomas Exp $
+ *	$Header: /cvsroot/pgsql/src/backend/nodes/outfuncs.c,v 1.162 2002/07/12 18:43:16 tgl Exp $
  *
  * NOTES
  *	  Every (plan) node in POSTGRES has an associated "out" routine which
@@ -136,9 +136,10 @@ _outIndexStmt(StringInfo str, IndexStmt *node)
 	_outNode(str, node->whereClause);
 	appendStringInfo(str, " :rangetable ");
 	_outNode(str, node->rangetable);
-	appendStringInfo(str, " :unique %s :primary %s ",
+	appendStringInfo(str, " :unique %s :primary %s :isconstraint %s ",
 					 booltostr(node->unique),
-					 booltostr(node->primary));
+					 booltostr(node->primary),
+					 booltostr(node->isconstraint));
 }
 
 static void
@@ -1447,12 +1448,13 @@ _outFkConstraint(StringInfo str, FkConstraint *node)
 	_outNode(str, node->fk_attrs);
 	appendStringInfo(str, " :pk_attrs ");
 	_outNode(str, node->pk_attrs);
-	appendStringInfo(str, " :match_type ");
-	_outToken(str, node->match_type);
-	appendStringInfo(str, " :actions %d :deferrable %s :initdeferred %s",
-					 node->actions,
+	appendStringInfo(str, " :fk_matchtype %c :fk_upd_action %c :fk_del_action %c :deferrable %s :initdeferred %s :skip_validation %s",
+					 node->fk_matchtype,
+					 node->fk_upd_action,
+					 node->fk_del_action,
 					 booltostr(node->deferrable),
-					 booltostr(node->initdeferred));
+					 booltostr(node->initdeferred),
+					 booltostr(node->skip_validation));
 }
 
 static void

@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/ref/drop_rule.sgml,v 1.15 2002/05/18 15:44:47 petere Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/ref/drop_rule.sgml,v 1.16 2002/07/12 18:43:13 tgl Exp $
 PostgreSQL documentation
 -->
 
@@ -21,7 +21,7 @@ PostgreSQL documentation
    <date>1998-09-22</date>
   </refsynopsisdivinfo>
   <synopsis>
-DROP RULE <replaceable class="PARAMETER">name</replaceable> ON <replaceable class="PARAMETER">relation</replaceable>
+DROP RULE <replaceable class="PARAMETER">name</replaceable> ON <replaceable class="PARAMETER">relation</replaceable> [ CASCADE | RESTRICT ]
   </synopsis>
   
   <refsect2 id="R2-SQL-DROPRULE-1">
@@ -50,7 +50,25 @@ DROP RULE <replaceable class="PARAMETER">name</replaceable> ON <replaceable clas
        </para>
       </listitem>
      </varlistentry>
+     <varlistentry>
+      <term>CASCADE</term>
+      <listitem>
+       <para>
+        Automatically drop objects that depend on the rule.
+       </para>
+      </listitem>
+     </varlistentry>
+     <varlistentry>
+      <term>RESTRICT</term>
+      <listitem>
+       <para>
+        Refuse to drop the rule if there are any dependent objects.
+	This is the default.
+       </para>
+      </listitem>
+     </varlistentry>
     </variablelist>
+
    </para>
   </refsect2>
 

@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/ref/drop_domain.sgml,v 1.6 2002/05/18 15:44:47 petere Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/ref/drop_domain.sgml,v 1.7 2002/07/12 18:43:13 tgl Exp $
 PostgreSQL documentation
 -->
 
@@ -48,8 +48,8 @@ DROP DOMAIN <replaceable class="PARAMETER">domainname</replaceable> [, ...]  [ C
       <term><literal>CASCADE</></term>
       <listitem>
        <para>
-        Automatically drop objects that depend on the domain.  This
-	behavior is not currently supported.
+        Automatically drop objects that depend on the domain
+	(such as table columns).
        </para>
       </listitem>
      </varlistentry>
@@ -58,7 +58,8 @@ DROP DOMAIN <replaceable class="PARAMETER">domainname</replaceable> [, ...]  [ C
       <term><literal>RESTRICT</></term>
       <listitem>
        <para>
-        Do not drop dependent objects.  This is the default.
+        Refuse to drop the domain if there are any dependent objects.
+	This is the default.
        </para>
       </listitem>
      </varlistentry>
@@ -143,19 +144,14 @@ DROP DOMAIN box;
 
  <refsect1 id="SQL-DROPDOMAIN-compatibility">
   <title>Compatibility</title>
+  
+  <refsect2 id="R2-SQL-DROPDOMAIN-sql92">
+   <title>
+    SQL92
+   </title>
 
-  <para>
-   A <command>DROP DOMAIN</command> statement exists in SQL99.  As with
-   most other <quote>drop</quote> commands, <command>DROP
-   DOMAIN</command> in SQL99 requires a <quote>drop behavior</quote>
-   clause to select between dropping all dependent objects or refusing
-   to drop if dependent objects exist:
-<synopsis>
-DROP DOMAIN <replaceable>name</replaceable> { CASCADE | RESTRICT }
-</synopsis>
-   <productname>PostgreSQL</productname> accepts only the RESTRICT
-   option, and currently does not check for existence of dependent objects.
-  </para>
+   <para></para>
+  </refsect2>
  </refsect1>
 
  <refsect1 id="SQL-DROPDOMAIN-see-also">

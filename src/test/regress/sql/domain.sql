@@ -4,10 +4,13 @@
 create domain domaindroptest int4;
 comment on domain domaindroptest is 'About to drop this..';
 
+-- currently this will be disallowed
 create domain basetypetest domaindroptest;
 
-drop domain domaindroptest cascade;
 drop domain domaindroptest;
+
+-- this should fail because already gone
+drop domain domaindroptest cascade;
 
 
 -- TEST Domains.

@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/ref/drop_type.sgml,v 1.17 2002/05/18 15:44:47 petere Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/ref/drop_type.sgml,v 1.18 2002/07/12 18:43:13 tgl Exp $
 PostgreSQL documentation
 -->
 
@@ -21,7 +21,8 @@ PostgreSQL documentation
    <date>1999-07-20</date>
   </refsynopsisdivinfo>
   <synopsis>
-DROP TYPE <replaceable class="PARAMETER">typename</replaceable> [, ...]
+DROP TYPE <replaceable class="PARAMETER">typename</replaceable> [, ...] [ CASCADE | RESTRICT ]
+
   </synopsis>
   
   <refsect2 id="R2-SQL-DROPTYPE-1">
@@ -38,6 +39,24 @@ DROP TYPE <replaceable class="PARAMETER">typename</replaceable> [, ...]
       <listitem>
        <para>
 	The name (optionally schema-qualified) of an existing type.
+       </para>
+      </listitem>
+     </varlistentry>
+     <varlistentry>
+      <term>CASCADE</term>
+      <listitem>
+       <para>
+        Automatically drop objects that depend on the type
+	(such as table columns, functions, operators, etc).
+       </para>
+      </listitem>
+     </varlistentry>
+     <varlistentry>
+      <term>RESTRICT</term>
+      <listitem>
+       <para>
+        Refuse to drop the type if there are any dependent objects.
+	This is the default.
        </para>
       </listitem>
      </varlistentry>
@@ -75,6 +94,7 @@ ERROR:  RemoveType: type '<replaceable class="parameter">typename</replaceable>'
       </listitem>
      </varlistentry>
     </variablelist>
+
    </para>
   </refsect2>
  </refsynopsisdiv>
@@ -131,19 +151,6 @@ DROP TYPE box;
 
  <refsect1 id="SQL-DROPTYPE-compatibility">
   <title>Compatibility</title>
-
-  <para>
-   A <command>DROP TYPE</command> statement exists in SQL99.  As with
-   most other <quote>drop</quote> commands, <command>DROP
-   TYPE</command> in SQL99 requires a <quote>drop behavior</quote>
-   clause to select between dropping all dependent objects or refusing
-   to drop if dependent objects exist:
-<synopsis>
-DROP TYPE <replaceable>name</replaceable> { CASCADE | RESTRICT }
-</synopsis>
-   <productname>PostgreSQL</productname> currently ignores
-   dependencies altogether.
-  </para>
 
   <para>
    Note that the <command>CREATE TYPE</command> command and the data

@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/ref/drop_index.sgml,v 1.15 2002/05/18 15:44:47 petere Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/ref/drop_index.sgml,v 1.16 2002/07/12 18:43:13 tgl Exp $
 PostgreSQL documentation
 -->
 
@@ -21,7 +21,7 @@ PostgreSQL documentation
    <date>1999-07-20</date>
   </refsynopsisdivinfo>
   <synopsis>
-DROP INDEX <replaceable class="PARAMETER">index_name</replaceable> [, ...]
+DROP INDEX <replaceable class="PARAMETER">index_name</replaceable> [, ...] [ CASCADE | RESTRICT ]
   </synopsis>
 
   <refsect2 id="R2-SQL-DROPINDEX-1">
@@ -38,6 +38,23 @@ DROP INDEX <replaceable class="PARAMETER">index_name</replaceable> [, ...]
       <listitem>
        <para>
 	The name (optionally schema-qualified) of an index to remove.
+       </para>
+      </listitem>
+     </varlistentry>
+     <varlistentry>
+      <term>CASCADE</term>
+      <listitem>
+       <para>
+        Automatically drop objects that depend on the index.
+       </para>
+      </listitem>
+     </varlistentry>
+     <varlistentry>
+      <term>RESTRICT</term>
+      <listitem>
+       <para>
+        Refuse to drop the index if there are any dependent objects.
+	This is the default.
        </para>
       </listitem>
      </varlistentry>

@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/ref/drop_trigger.sgml,v 1.12 2002/05/18 15:44:47 petere Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/ref/drop_trigger.sgml,v 1.13 2002/07/12 18:43:13 tgl Exp $
 PostgreSQL documentation
 -->
 
@@ -21,7 +21,7 @@ PostgreSQL documentation
    <date>1998-09-22</date>
   </refsynopsisdivinfo>
   <synopsis>
-DROP TRIGGER <replaceable class="PARAMETER">name</replaceable> ON <replaceable class="PARAMETER">table</replaceable>
+DROP TRIGGER <replaceable class="PARAMETER">name</replaceable> ON <replaceable class="PARAMETER">table</replaceable> [ CASCADE | RESTRICT ]
   </synopsis>
 
   <refsect2 id="R2-SQL-DROPTRIGGER-1">
@@ -47,6 +47,23 @@ DROP TRIGGER <replaceable class="PARAMETER">name</replaceable> ON <replaceable c
       <listitem>
        <para>
 	The name (optionally schema-qualified) of a table.
+       </para>
+      </listitem>
+     </varlistentry>
+     <varlistentry>
+      <term>CASCADE</term>
+      <listitem>
+       <para>
+        Automatically drop objects that depend on the trigger.
+       </para>
+      </listitem>
+     </varlistentry>
+     <varlistentry>
+      <term>RESTRICT</term>
+      <listitem>
+       <para>
+        Refuse to drop the trigger if there are any dependent objects.
+	This is the default.
        </para>
       </listitem>
      </varlistentry>

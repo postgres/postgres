@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/commands/proclang.c,v 1.34 2002/06/20 20:29:27 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/commands/proclang.c,v 1.35 2002/07/12 18:43:16 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -17,6 +17,7 @@
 
 #include "access/heapam.h"
 #include "catalog/catname.h"
+#include "catalog/dependency.h"
 #include "catalog/indexing.h"
 #include "catalog/namespace.h"
 #include "catalog/pg_language.h"
@@ -140,7 +141,7 @@ DropProceduralLanguage(DropPLangStmt *stmt)
 {
 	char		languageName[NAMEDATALEN];
 	HeapTuple	langTup;
-	Relation	rel;
+	ObjectAddress object;
 
 	/*
 	 * Check permission
@@ -155,11 +156,9 @@ DropProceduralLanguage(DropPLangStmt *stmt)
 	 */
 	case_translate_language_name(stmt->plname, languageName);
 
-	rel = heap_openr(LanguageRelationName, RowExclusiveLock);
-
-	langTup = SearchSysCacheCopy(LANGNAME,
-								 PointerGetDatum(languageName),
-								 0, 0, 0);
+	langTup = SearchSysCache(LANGNAME,
+							 CStringGetDatum(languageName),
+							 0, 0, 0);
 	if (!HeapTupleIsValid(langTup))
 		elog(ERROR, "Language %s doesn't exist", languageName);
 
@@ -167,8 +166,39 @@ DropProceduralLanguage(DropPLangStmt *stmt)
 		elog(ERROR, "Language %s isn't a created procedural language",
 			 languageName);
 
+	object.classId = get_system_catalog_relid(LanguageRelationName);
+	object.objectId = langTup->t_data->t_oid;
+	object.objectSubId = 0;
+
+	ReleaseSysCache(langTup);
+
+	/*
+	 * Do the deletion
+	 */
+	performDeletion(&object, stmt->behavior);
+}
+
+/*
+ * Guts of language dropping.
+ */
+void
+DropProceduralLanguageById(Oid langOid)
+{
+	Relation	rel;
+	HeapTuple	langTup;
+
+	rel = heap_openr(LanguageRelationName, RowExclusiveLock);
+
+	langTup = SearchSysCache(LANGOID,
+							 ObjectIdGetDatum(langOid),
+							 0, 0, 0);
+	if (!HeapTupleIsValid(langTup))
+		elog(ERROR, "DropProceduralLanguageById: language %u not found",
+			 langOid);
+
 	simple_heap_delete(rel, &langTup->t_self);
 
-	heap_freetuple(langTup);
+	ReleaseSysCache(langTup);
+
 	heap_close(rel, RowExclusiveLock);
 }

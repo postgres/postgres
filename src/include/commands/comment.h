@@ -27,7 +27,7 @@
 
 extern void CommentObject(CommentStmt *stmt);
 
-extern void DeleteComments(Oid oid, Oid classoid);
+extern void DeleteComments(Oid oid, Oid classoid, int32 subid);
 
 extern void CreateComments(Oid oid, Oid classoid, int32 subid, char *comment);
 

@@ -22,7 +22,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/bin/pg_dump/pg_dump.c,v 1.270 2002/07/04 15:35:07 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/bin/pg_dump/pg_dump.c,v 1.271 2002/07/12 18:43:18 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -4656,8 +4656,8 @@ dumpOneTable(Archive *fout, TableInfo *tbinfo, TableInfo *g_tblinfo)
 		if (tbinfo->ncheck > 0)
 		{
 			PGresult   *res2;
-			int			i_rcname,
-						i_rcsrc;
+			int			i_conname,
+						i_consrc;
 			int			ntups2;
 
 			if (g_verbose)
@@ -4666,24 +4666,25 @@ dumpOneTable(Archive *fout, TableInfo *tbinfo, TableInfo *g_tblinfo)
 
 			resetPQExpBuffer(query);
 			if (g_fout->remoteVersion >= 70300)
-				appendPQExpBuffer(query, "SELECT rcname, rcsrc"
-								  " from pg_catalog.pg_relcheck c1"
-								  " where rcrelid = '%s'::pg_catalog.oid "
+				appendPQExpBuffer(query, "SELECT conname, consrc"
+								  " from pg_catalog.pg_constraint c1"
+								  " where conrelid = '%s'::pg_catalog.oid "
+								  "   and contype = 'c' "
 								  "   and not exists "
 								  "  (select 1 from "
-								  "    pg_catalog.pg_relcheck c2, "
+								  "    pg_catalog.pg_constraint c2, "
 								  "    pg_catalog.pg_inherits i "
-								  "    where i.inhrelid = c1.rcrelid "
-								  "      and (c2.rcname = c1.rcname "
-								  "          or (c2.rcname[0] = '$' "
-								  "              and c1.rcname[0] = '$')"
+								  "    where i.inhrelid = c1.conrelid "
+								  "      and (c2.conname = c1.conname "
+								  "          or (c2.conname[0] = '$' "
+								  "              and c1.conname[0] = '$')"
 								  "          )"
-								  "      and c2.rcsrc = c1.rcsrc "
-								  "      and c2.rcrelid = i.inhparent) "
-								  " order by rcname ",
+								  "      and c2.consrc = c1.consrc "
+								  "      and c2.conrelid = i.inhparent) "
+								  " order by conname ",
 								  tbinfo->oid);
 			else
-				appendPQExpBuffer(query, "SELECT rcname, rcsrc"
+				appendPQExpBuffer(query, "SELECT rcname as conname, rcsrc as consrc"
 								  " from pg_relcheck c1"
 								  " where rcrelid = '%s'::oid "
 								  "   and not exists "
@@ -4714,13 +4715,13 @@ dumpOneTable(Archive *fout, TableInfo *tbinfo, TableInfo *g_tblinfo)
 				exit_nicely();
 			}
 
-			i_rcname = PQfnumber(res2, "rcname");
-			i_rcsrc = PQfnumber(res2, "rcsrc");
+			i_conname = PQfnumber(res2, "conname");
+			i_consrc = PQfnumber(res2, "consrc");
 
 			for (j = 0; j < ntups2; j++)
 			{
-				const char *name = PQgetvalue(res2, j, i_rcname);
-				const char *expr = PQgetvalue(res2, j, i_rcsrc);
+				const char *name = PQgetvalue(res2, j, i_conname);
+				const char *expr = PQgetvalue(res2, j, i_consrc);
 
 				if (actual_atts + j > 0)
 					appendPQExpBuffer(q, ",\n\t");

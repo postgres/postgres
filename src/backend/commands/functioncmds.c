@@ -9,7 +9,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/commands/functioncmds.c,v 1.7 2002/06/20 20:29:27 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/commands/functioncmds.c,v 1.8 2002/07/12 18:43:16 tgl Exp $
  *
  * DESCRIPTION
  *	  These routines take the parse tree and pick out the
@@ -33,11 +33,11 @@
 
 #include "access/heapam.h"
 #include "catalog/catname.h"
+#include "catalog/dependency.h"
 #include "catalog/namespace.h"
 #include "catalog/pg_language.h"
 #include "catalog/pg_proc.h"
 #include "catalog/pg_type.h"
-#include "commands/comment.h"
 #include "commands/defrem.h"
 #include "miscadmin.h"
 #include "optimizer/cost.h"
@@ -532,24 +532,21 @@ CreateFunction(CreateFunctionStmt *stmt)
 /*
  * RemoveFunction
  *		Deletes a function.
- *
- * Exceptions:
- *		BadArg if name is invalid.
- *		"ERROR" if function nonexistent.
- *		...
  */
 void
-RemoveFunction(List *functionName,		/* function name to be removed */
-			   List *argTypes)	/* list of TypeName nodes */
+RemoveFunction(RemoveFuncStmt *stmt)
 {
+	List	   *functionName = stmt->funcname;
+	List	   *argTypes = stmt->args; /* list of TypeName nodes */
 	Oid			funcOid;
-	Relation	relation;
 	HeapTuple	tup;
+	ObjectAddress object;
 
+	/*
+	 * Find the function, do permissions and validity checks
+	 */
 	funcOid = LookupFuncNameTypeNames(functionName, argTypes, 
 									  true, "RemoveFunction");
-
-	relation = heap_openr(ProcedureRelationName, RowExclusiveLock);
 
 	tup = SearchSysCache(PROCOID,
 						 ObjectIdGetDatum(funcOid),
@@ -576,12 +573,69 @@ RemoveFunction(List *functionName,		/* function name to be removed */
 			 NameListToString(functionName));
 	}
 
-	/* Delete any comments associated with this function */
-	DeleteComments(funcOid, RelationGetRelid(relation));
+	ReleaseSysCache(tup);
+
+	/*
+	 * Do the deletion
+	 */
+	object.classId = RelOid_pg_proc;
+	object.objectId = funcOid;
+	object.objectSubId = 0;
+
+	performDeletion(&object, stmt->behavior);
+}
+
+/*
+ * Guts of function deletion.
+ *
+ * Note: this is also used for aggregate deletion, since the OIDs of
+ * both functions and aggregates point to pg_proc.
+ */
+void
+RemoveFunctionById(Oid funcOid)
+{
+	Relation	relation;
+	HeapTuple	tup;
+	bool		isagg;
+
+	/*
+	 * Delete the pg_proc tuple.
+	 */
+	relation = heap_openr(ProcedureRelationName, RowExclusiveLock);
+
+	tup = SearchSysCache(PROCOID,
+						 ObjectIdGetDatum(funcOid),
+						 0, 0, 0);
+	if (!HeapTupleIsValid(tup))	/* should not happen */
+		elog(ERROR, "RemoveFunctionById: couldn't find tuple for function %u",
+			 funcOid);
+
+	isagg = ((Form_pg_proc) GETSTRUCT(tup))->proisagg;
 
 	simple_heap_delete(relation, &tup->t_self);
 
 	ReleaseSysCache(tup);
 
 	heap_close(relation, RowExclusiveLock);
+
+	/*
+	 * If there's a pg_aggregate tuple, delete that too.
+	 */
+	if (isagg)
+	{
+		relation = heap_openr(AggregateRelationName, RowExclusiveLock);
+
+		tup = SearchSysCache(AGGFNOID,
+							 ObjectIdGetDatum(funcOid),
+							 0, 0, 0);
+		if (!HeapTupleIsValid(tup))	/* should not happen */
+			elog(ERROR, "RemoveFunctionById: couldn't find pg_aggregate tuple for %u",
+				 funcOid);
+
+		simple_heap_delete(relation, &tup->t_self);
+
+		ReleaseSysCache(tup);
+
+		heap_close(relation, RowExclusiveLock);
+	}
 }

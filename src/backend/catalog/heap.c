@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/catalog/heap.c,v 1.204 2002/06/20 20:29:26 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/catalog/heap.c,v 1.205 2002/07/12 18:43:13 tgl Exp $
  *
  *
  * INTERFACE ROUTINES
@@ -33,21 +33,20 @@
 #include "access/genam.h"
 #include "catalog/catalog.h"
 #include "catalog/catname.h"
+#include "catalog/dependency.h"
 #include "catalog/heap.h"
 #include "catalog/index.h"
 #include "catalog/indexing.h"
 #include "catalog/pg_attrdef.h"
+#include "catalog/pg_constraint.h"
 #include "catalog/pg_inherits.h"
-#include "catalog/pg_relcheck.h"
 #include "catalog/pg_statistic.h"
 #include "catalog/pg_type.h"
-#include "commands/comment.h"
 #include "commands/trigger.h"
 #include "miscadmin.h"
 #include "nodes/makefuncs.h"
 #include "optimizer/clauses.h"
 #include "optimizer/planmain.h"
-#include "optimizer/prep.h"
 #include "optimizer/var.h"
 #include "parser/parse_coerce.h"
 #include "parser/parse_expr.h"
@@ -69,8 +68,6 @@ static void AddNewRelationTuple(Relation pg_class_desc,
 					char relkind, bool relhasoids);
 static void DeleteAttributeTuples(Relation rel);
 static void DeleteRelationTuple(Relation rel);
-static void DeleteTypeTuple(Relation rel);
-static void RelationRemoveIndexes(Relation relation);
 static void RelationRemoveInheritance(Relation relation);
 static void AddNewRelationType(const char *typeName,
 							   Oid typeNamespace,
@@ -80,7 +77,7 @@ static void StoreAttrDefault(Relation rel, AttrNumber attnum, char *adbin);
 static void StoreRelCheck(Relation rel, char *ccname, char *ccbin);
 static void StoreConstraints(Relation rel, TupleDesc tupdesc);
 static void SetRelationNumChecks(Relation rel, int numchecks);
-static void RemoveConstraints(Relation rel);
+static void RemoveDefaults(Relation rel);
 static void RemoveStatistics(Relation rel);
 
 
@@ -760,106 +757,42 @@ heap_create_with_catalog(const char *relname,
 }
 
 
-/* --------------------------------
+/*
  *		RelationRemoveInheritance
  *
- *		Note: for now, we cause an exception if relation is a
- *		superclass.  Someday, we may want to allow this and merge
- *		the type info into subclass procedures....	this seems like
- *		lots of work.
- * --------------------------------
+ * Formerly, this routine checked for child relations and aborted the
+ * deletion if any were found.  Now we rely on the dependency mechanism
+ * to check for or delete child relations.  By the time we get here,
+ * there are no children and we need only remove the pg_inherits rows.
  */
 static void
 RelationRemoveInheritance(Relation relation)
 {
 	Relation	catalogRelation;
 	HeapTuple	tuple;
-	HeapScanDesc scan;
+	SysScanDesc scan;
 	ScanKeyData entry;
-	bool		found = false;
 
-	/*
-	 * open pg_inherits
-	 */
 	catalogRelation = heap_openr(InheritsRelationName, RowExclusiveLock);
 
-	/*
-	 * form a scan key for the subclasses of this class and begin scanning
-	 */
-	ScanKeyEntryInitialize(&entry, 0x0, Anum_pg_inherits_inhparent,
-						   F_OIDEQ,
+	ScanKeyEntryInitialize(&entry, 0x0,
+						   Anum_pg_inherits_inhrelid, F_OIDEQ,
 						   ObjectIdGetDatum(RelationGetRelid(relation)));
 
-	scan = heap_beginscan(catalogRelation,
-						  SnapshotNow,
-						  1,
-						  &entry);
+	scan = systable_beginscan(catalogRelation, InheritsRelidSeqnoIndex, true,
+							  SnapshotNow, 1, &entry);
 
-	/*
-	 * if any subclasses exist, then we disallow the deletion.
-	 */
-	if ((tuple = heap_getnext(scan, ForwardScanDirection)) != NULL)
-	{
-		Oid			subclass = ((Form_pg_inherits) GETSTRUCT(tuple))->inhrelid;
-		char	   *subclassname;
-
-		subclassname = get_rel_name(subclass);
-		/* Just in case get_rel_name fails... */
-		if (subclassname)
-			elog(ERROR, "Relation \"%s\" inherits from \"%s\"",
-				 subclassname, RelationGetRelationName(relation));
-		else
-			elog(ERROR, "Relation %u inherits from \"%s\"",
-				 subclass, RelationGetRelationName(relation));
-	}
-	heap_endscan(scan);
-
-	/*
-	 * If we get here, it means the relation has no subclasses so we can
-	 * trash it.  First we remove dead INHERITS tuples.
-	 */
-	entry.sk_attno = Anum_pg_inherits_inhrelid;
-
-	scan = heap_beginscan(catalogRelation,
-						  SnapshotNow,
-						  1,
-						  &entry);
-
-	while ((tuple = heap_getnext(scan, ForwardScanDirection)) != NULL)
+	while (HeapTupleIsValid(tuple = systable_getnext(scan)))
 	{
 		simple_heap_delete(catalogRelation, &tuple->t_self);
-		found = true;
 	}
 
-	heap_endscan(scan);
+	systable_endscan(scan);
 	heap_close(catalogRelation, RowExclusiveLock);
 }
 
 /*
- *		RelationRemoveIndexes
- */
-static void
-RelationRemoveIndexes(Relation relation)
-{
-	List	   *indexoidlist,
-			   *indexoidscan;
-
-	indexoidlist = RelationGetIndexList(relation);
-
-	foreach(indexoidscan, indexoidlist)
-	{
-		Oid			indexoid = lfirsti(indexoidscan);
-
-		index_drop(indexoid);
-	}
-
-	freeList(indexoidlist);
-}
-
-/* --------------------------------
  *		DeleteRelationTuple
- *
- * --------------------------------
  */
 static void
 DeleteRelationTuple(Relation rel)
@@ -1049,163 +982,34 @@ DeleteAttributeTuples(Relation rel)
 	heap_close(pg_attribute_desc, RowExclusiveLock);
 }
 
-/* --------------------------------
- *		DeleteTypeTuple
- *
- *		If the user attempts to destroy a relation and there
- *		exists attributes in other relations of type
- *		"relation we are deleting", then we have to do something
- *		special.  presently we disallow the destroy.
- * --------------------------------
- */
-static void
-DeleteTypeTuple(Relation rel)
-{
-	Relation	pg_type_desc;
-	HeapScanDesc pg_type_scan;
-	Relation	pg_attribute_desc;
-	HeapScanDesc pg_attribute_scan;
-	ScanKeyData key;
-	ScanKeyData attkey;
-	HeapTuple	tup;
-	HeapTuple	atttup;
-	Oid			typoid;
-
-	/*
-	 * open pg_type
-	 */
-	pg_type_desc = heap_openr(TypeRelationName, RowExclusiveLock);
-
-	/*
-	 * create a scan key to locate the type tuple corresponding to this
-	 * relation.
-	 */
-	ScanKeyEntryInitialize(&key, 0,
-						   Anum_pg_type_typrelid,
-						   F_OIDEQ,
-						   ObjectIdGetDatum(RelationGetRelid(rel)));
-
-	pg_type_scan = heap_beginscan(pg_type_desc,
-								  SnapshotNow,
-								  1,
-								  &key);
-
-	/*
-	 * use heap_getnext() to fetch the pg_type tuple.  If this tuple is
-	 * not valid then something's wrong.
-	 */
-	tup = heap_getnext(pg_type_scan, ForwardScanDirection);
-
-	if (!HeapTupleIsValid(tup))
-	{
-		heap_endscan(pg_type_scan);
-		heap_close(pg_type_desc, RowExclusiveLock);
-		elog(ERROR, "DeleteTypeTuple: type \"%s\" does not exist",
-			 RelationGetRelationName(rel));
-	}
-
-	/*
-	 * now scan pg_attribute.  if any other relations have attributes of
-	 * the type of the relation we are deleteing then we have to disallow
-	 * the deletion.  should talk to stonebraker about this.  -cim 6/19/90
-	 */
-	typoid = tup->t_data->t_oid;
-
-	pg_attribute_desc = heap_openr(AttributeRelationName, RowExclusiveLock);
-
-	ScanKeyEntryInitialize(&attkey,
-						   0,
-						   Anum_pg_attribute_atttypid,
-						   F_OIDEQ,
-						   ObjectIdGetDatum(typoid));
-
-	pg_attribute_scan = heap_beginscan(pg_attribute_desc,
-									   SnapshotNow,
-									   1,
-									   &attkey);
-
-	/*
-	 * try and get a pg_attribute tuple.  if we succeed it means we can't
-	 * delete the relation because something depends on the schema.
-	 */
-	atttup = heap_getnext(pg_attribute_scan, ForwardScanDirection);
-
-	if (HeapTupleIsValid(atttup))
-	{
-		Oid			relid = ((Form_pg_attribute) GETSTRUCT(atttup))->attrelid;
-
-		heap_endscan(pg_attribute_scan);
-		heap_close(pg_attribute_desc, RowExclusiveLock);
-		heap_endscan(pg_type_scan);
-		heap_close(pg_type_desc, RowExclusiveLock);
-
-		elog(ERROR, "DeleteTypeTuple: column of type %s exists in relation %u",
-			 RelationGetRelationName(rel), relid);
-	}
-	heap_endscan(pg_attribute_scan);
-	heap_close(pg_attribute_desc, RowExclusiveLock);
-
-	/*
-	 * Ok, it's safe so we delete the relation tuple from pg_type and
-	 * finish up.
-	 */
-	simple_heap_delete(pg_type_desc, &tup->t_self);
-
-	heap_endscan(pg_type_scan);
-	heap_close(pg_type_desc, RowExclusiveLock);
-}
-
 /* ----------------------------------------------------------------
- *		heap_drop_with_catalog	- removes all record of named relation from catalogs
+ *		heap_drop_with_catalog	- removes specified relation from catalogs
  *
- *		1)	open relation, check for existence, etc.
- *		2)	remove inheritance information
- *		3)	remove indexes
- *		4)	remove pg_class tuple
- *		5)	remove pg_attribute tuples and related descriptions
- *		6)	remove pg_description tuples
- *		7)	remove pg_type tuples
- *		8)	RemoveConstraints ()
- *		9)	unlink relation
+ *		1)	open relation, acquire exclusive lock.
+ *		2)	flush relation buffers from bufmgr
+ *		3)	remove inheritance information
+ *		4)	remove pg_statistic tuples
+ *		5)	remove pg_attribute tuples and related items
+ *		6)	remove pg_class tuple
+ *		7)	unlink relation file
  *
- * old comments
- *		Except for vital relations, removes relation from
- *		relation catalog, and related attributes from
- *		attribute catalog (needed?).  (Anything else?)
- *
- *		get proper relation from relation catalog (if not arg)
- *		scan attribute catalog deleting attributes of reldesc
- *				(necessary?)
- *		delete relation from relation catalog
- *		(How are the tuples of the relation discarded?)
- *
- *		XXX Must fix to work with indexes.
- *		There may be a better order for doing things.
- *		Problems with destroying a deleted database--cannot create
- *		a struct reldesc without having an open file descriptor.
+ * Note that this routine is not responsible for dropping objects that are
+ * linked to the pg_class entry via dependencies (for example, indexes and
+ * constraints).  Those are deleted by the dependency-tracing logic in
+ * dependency.c before control gets here.  In general, therefore, this routine
+ * should never be called directly; go through performDeletion() instead.
  * ----------------------------------------------------------------
  */
 void
-heap_drop_with_catalog(Oid rid,
-					   bool allow_system_table_mods)
+heap_drop_with_catalog(Oid rid)
 {
 	Relation	rel;
-	Oid			toasttableOid;
 	int			i;
 
 	/*
 	 * Open and lock the relation.
 	 */
 	rel = heap_open(rid, AccessExclusiveLock);
-	toasttableOid = rel->rd_rel->reltoastrelid;
-
-	/*
-	 * prevent deletion of system relations
-	 */
-	if (!allow_system_table_mods &&
-		IsSystemRelation(rel))
-		elog(ERROR, "System relation \"%s\" may not be dropped",
-			 RelationGetRelationName(rel));
 
 	/*
 	 * Release all buffers that belong to this relation, after writing any
@@ -1217,42 +1021,21 @@ heap_drop_with_catalog(Oid rid,
 			 i);
 
 	/*
-	 * remove rules if necessary
-	 */
-	if (rel->rd_rules != NULL)
-		RelationRemoveRules(rid);
-
-	/* triggers */
-	RelationRemoveTriggers(rel);
-
-	/*
 	 * remove inheritance information
 	 */
 	RelationRemoveInheritance(rel);
 
 	/*
-	 * remove indexes if necessary
+	 * delete statistics
 	 */
-	RelationRemoveIndexes(rel);
+	RemoveStatistics(rel);
 
 	/*
-	 * delete attribute tuples
+	 * delete attribute tuples and associated defaults
 	 */
 	DeleteAttributeTuples(rel);
 
-	/*
-	 * delete comments, statistics, and constraints
-	 */
-	DeleteComments(rid, RelOid_pg_class);
-
-	RemoveStatistics(rel);
-
-	RemoveConstraints(rel);
-
-	/*
-	 * delete type tuple
-	 */
-	DeleteTypeTuple(rel);
+	RemoveDefaults(rel);
 
 	/*
 	 * delete relation tuple
@@ -1276,10 +1059,6 @@ heap_drop_with_catalog(Oid rid,
 	 * flush the relation from the relcache
 	 */
 	RelationForgetRelation(rid);
-
-	/* If it has a toast table, recurse to get rid of that too */
-	if (OidIsValid(toasttableOid))
-		heap_drop_with_catalog(toasttableOid, true);
 }
 
 
@@ -1374,11 +1153,9 @@ StoreRelCheck(Relation rel, char *ccname, char *ccbin)
 {
 	Node	   *expr;
 	char	   *ccsrc;
-	Relation	rcrel;
-	Relation	idescs[Num_pg_relcheck_indices];
-	HeapTuple	tuple;
-	Datum		values[4];
-	static char nulls[4] = {' ', ' ', ' ', ' '};
+	List	   *varList;
+	int			keycount;
+	int16	   *attNos;
 
 	/*
 	 * Convert condition to a normal boolean expression tree.
@@ -1394,26 +1171,55 @@ StoreRelCheck(Relation rel, char *ccname, char *ccbin)
 											RelationGetRelid(rel)),
 							   false);
 
-	values[Anum_pg_relcheck_rcrelid - 1] = RelationGetRelid(rel);
-	values[Anum_pg_relcheck_rcname - 1] = DirectFunctionCall1(namein,
-												CStringGetDatum(ccname));
-	values[Anum_pg_relcheck_rcbin - 1] = DirectFunctionCall1(textin,
-												 CStringGetDatum(ccbin));
-	values[Anum_pg_relcheck_rcsrc - 1] = DirectFunctionCall1(textin,
-												 CStringGetDatum(ccsrc));
-	rcrel = heap_openr(RelCheckRelationName, RowExclusiveLock);
-	tuple = heap_formtuple(rcrel->rd_att, values, nulls);
-	simple_heap_insert(rcrel, tuple);
-	CatalogOpenIndices(Num_pg_relcheck_indices, Name_pg_relcheck_indices,
-					   idescs);
-	CatalogIndexInsert(idescs, Num_pg_relcheck_indices, rcrel, tuple);
-	CatalogCloseIndices(Num_pg_relcheck_indices, idescs);
-	heap_close(rcrel, RowExclusiveLock);
+	/*
+	 * Find columns of rel that are used in ccbin
+	 */
+	varList = pull_var_clause(expr, false);
+	keycount = length(varList);
 
-	pfree(DatumGetPointer(values[Anum_pg_relcheck_rcname - 1]));
-	pfree(DatumGetPointer(values[Anum_pg_relcheck_rcbin - 1]));
-	pfree(DatumGetPointer(values[Anum_pg_relcheck_rcsrc - 1]));
-	heap_freetuple(tuple);
+	if (keycount > 0)
+	{
+		List	   *vl;
+		int			i = 0;
+
+		attNos = (int16 *) palloc(keycount * sizeof(int16));
+		foreach(vl, varList)
+		{
+			Var	   *var = (Var *) lfirst(vl);
+			int		j;
+
+			for (j = 0; j < i; j++)
+				if (attNos[j] == var->varattno)
+					break;
+			if (j == i)
+				attNos[i++] = var->varattno;
+		}
+		keycount = i;
+	}
+	else
+		attNos = NULL;
+
+	/*
+	 * Create the Check Constraint
+	 */
+	CreateConstraintEntry(ccname, 	/* Constraint Name */
+						  RelationGetNamespace(rel), /* namespace */
+						  CONSTRAINT_CHECK, /* Constraint Type */
+						  false, 	/* Is Deferrable */
+						  false,	/* Is Deferred */
+						  RelationGetRelid(rel), /* relation */
+						  attNos,	/* List of attributes in the constraint */
+						  keycount,	/* # attributes in the constraint */
+						  InvalidOid, /* not a domain constraint */
+						  InvalidOid, /* Foreign key fields */
+						  NULL,
+						  0,
+						  ' ',
+						  ' ',
+						  ' ',
+						  ccbin,	/* Binary form check constraint */
+						  ccsrc);	/* Source form check constraint */
+
 	pfree(ccsrc);
 }
 
@@ -1488,6 +1294,7 @@ AddRelationRawConstraints(Relation rel,
 	ParseState *pstate;
 	RangeTblEntry *rte;
 	int			numchecks;
+	int			constr_name_ctr = 0;
 	List	   *listptr;
 	Node	   *expr;
 
@@ -1549,18 +1356,17 @@ AddRelationRawConstraints(Relation rel,
 		/* Check name uniqueness, or generate a new name */
 		if (cdef->name != NULL)
 		{
-			int			i;
 			List	   *listptr2;
 
 			ccname = cdef->name;
-			/* Check against old constraints */
-			for (i = 0; i < numoldchecks; i++)
-			{
-				if (strcmp(oldchecks[i].ccname, ccname) == 0)
-					elog(ERROR, "Duplicate CHECK constraint name: '%s'",
-						 ccname);
-			}
+			/* Check against pre-existing constraints */
+			if (ConstraintNameIsUsed(RelationGetRelid(rel),
+									 RelationGetNamespace(rel),
+									 ccname))
+				elog(ERROR, "constraint \"%s\" already exists for relation \"%s\"",
+					 ccname, RelationGetRelationName(rel));
 			/* Check against other new constraints */
+			/* Needed because we don't do CommandCounterIncrement in loop */
 			foreach(listptr2, rawConstraints)
 			{
 				Constraint *cdef2 = (Constraint *) lfirst(listptr2);
@@ -1577,55 +1383,40 @@ AddRelationRawConstraints(Relation rel,
 		}
 		else
 		{
-			int			i;
-			int			j;
 			bool		success;
-			List	   *listptr2;
 
-			ccname = (char *) palloc(NAMEDATALEN);
-
-			/* Loop until we find a non-conflicting constraint name */
-			/* What happens if this loops forever? */
-			j = numchecks + 1;
 			do
 			{
-				success = true;
-				snprintf(ccname, NAMEDATALEN, "$%d", j);
+				List	   *listptr2;
 
-				/* Check against old constraints */
-				for (i = 0; i < numoldchecks; i++)
+				/*
+				 * Generate a name that does not conflict with pre-existing
+				 * constraints, nor with any auto-generated names so far.
+				 */
+				ccname = GenerateConstraintName(RelationGetRelid(rel),
+												RelationGetNamespace(rel),
+												&constr_name_ctr);
+				/*
+				 * Check against other new constraints, in case the user
+				 * has specified a name that looks like an auto-generated
+				 * name.
+				 */
+				success = true;
+				foreach(listptr2, rawConstraints)
 				{
-					if (strcmp(oldchecks[i].ccname, ccname) == 0)
+					Constraint *cdef2 = (Constraint *) lfirst(listptr2);
+
+					if (cdef2 == cdef ||
+						cdef2->contype != CONSTR_CHECK ||
+						cdef2->raw_expr == NULL ||
+						cdef2->name == NULL)
+						continue;
+					if (strcmp(cdef2->name, ccname) == 0)
 					{
 						success = false;
 						break;
 					}
 				}
-
-				/*
-				 * Check against other new constraints, if the check
-				 * hasn't already failed
-				 */
-				if (success)
-				{
-					foreach(listptr2, rawConstraints)
-					{
-						Constraint *cdef2 = (Constraint *) lfirst(listptr2);
-
-						if (cdef2 == cdef ||
-							cdef2->contype != CONSTR_CHECK ||
-							cdef2->raw_expr == NULL ||
-							cdef2->name == NULL)
-							continue;
-						if (strcmp(cdef2->name, ccname) == 0)
-						{
-							success = false;
-							break;
-						}
-					}
-				}
-
-				++j;
 			} while (!success);
 		}
 
@@ -1852,157 +1643,74 @@ RemoveAttrDefaults(Relation rel)
 	heap_close(adrel, RowExclusiveLock);
 }
 
-static void
-RemoveRelChecks(Relation rel)
-{
-	Relation	rcrel;
-	HeapScanDesc rcscan;
-	ScanKeyData key;
-	HeapTuple	tup;
-
-	rcrel = heap_openr(RelCheckRelationName, RowExclusiveLock);
-
-	ScanKeyEntryInitialize(&key, 0, Anum_pg_relcheck_rcrelid,
-						   F_OIDEQ,
-						   ObjectIdGetDatum(RelationGetRelid(rel)));
-
-	rcscan = heap_beginscan(rcrel, SnapshotNow, 1, &key);
-
-	while ((tup = heap_getnext(rcscan, ForwardScanDirection)) != NULL)
-		simple_heap_delete(rcrel, &tup->t_self);
-
-	heap_endscan(rcscan);
-	heap_close(rcrel, RowExclusiveLock);
-
-}
-
 /*
- * Removes all CHECK constraints on a relation that match the given name.
- * It is the responsibility of the calling function to acquire a lock on
- * the relation.
- * Returns: The number of CHECK constraints removed.
+ * Removes all constraints on a relation that match the given name.
+ *
+ * It is the responsibility of the calling function to acquire a suitable
+ * lock on the relation.
+ *
+ * Returns: The number of constraints removed.
  */
 int
-RemoveCheckConstraint(Relation rel, const char *constrName, bool inh)
+RemoveRelConstraints(Relation rel, const char *constrName,
+					 DropBehavior behavior)
 {
-	Oid			relid;
-	Relation	rcrel;
-	TupleDesc	tupleDesc;
-	TupleConstr *oldconstr;
-	int			numoldchecks;
-	int			numchecks;
-	HeapScanDesc rcscan;
-	ScanKeyData key[2];
-	HeapTuple	rctup;
-	int			rel_deleted = 0;
-	int			all_deleted = 0;
+	int			ndeleted = 0;
+	Relation	conrel;
+	SysScanDesc	conscan;
+	ScanKeyData key[1];
+	HeapTuple	contup;
 
-	/* Find id of the relation */
-	relid = RelationGetRelid(rel);
+	/* Grab an appropriate lock on the pg_constraint relation */
+	conrel = heap_openr(ConstraintRelationName, RowExclusiveLock);
+
+	/* Use the index to scan only constraints of the target relation */
+	ScanKeyEntryInitialize(&key[0], 0x0,
+						   Anum_pg_constraint_conrelid, F_OIDEQ,
+						   ObjectIdGetDatum(RelationGetRelid(rel)));
+
+	conscan = systable_beginscan(conrel, ConstraintRelidIndex, true,
+								 SnapshotNow, 1, key);
 
 	/*
-	 * Process child tables and remove constraints of the same name.
+	 * Scan over the result set, removing any matching entries.
 	 */
-	if (inh)
+	while ((contup = systable_getnext(conscan)) != NULL)
 	{
-		List	   *child,
-				   *children;
+		Form_pg_constraint	con = (Form_pg_constraint) GETSTRUCT(contup);
 
-		/* This routine is actually in the planner */
-		children = find_all_inheritors(relid);
-
-		/*
-		 * find_all_inheritors does the recursive search of the
-		 * inheritance hierarchy, so all we have to do is process all of
-		 * the relids in the list that it returns.
-		 */
-		foreach(child, children)
+		if (strcmp(NameStr(con->conname), constrName) == 0)
 		{
-			Oid			childrelid = lfirsti(child);
-			Relation	inhrel;
+			ObjectAddress	conobj;
 
-			if (childrelid == relid)
-				continue;
-			inhrel = heap_open(childrelid, AccessExclusiveLock);
-			all_deleted += RemoveCheckConstraint(inhrel, constrName, false);
-			heap_close(inhrel, NoLock);
+			conobj.classId = RelationGetRelid(conrel);
+			conobj.objectId = contup->t_data->t_oid;
+			conobj.objectSubId = 0;
+
+			performDeletion(&conobj, behavior);
+
+			ndeleted++;
 		}
 	}
 
-	/*
-	 * Get number of existing constraints.
-	 */
-	tupleDesc = RelationGetDescr(rel);
-	oldconstr = tupleDesc->constr;
-	if (oldconstr)
-		numoldchecks = oldconstr->num_check;
-	else
-		numoldchecks = 0;
-
-	/* Grab an appropriate lock on the pg_relcheck relation */
-	rcrel = heap_openr(RelCheckRelationName, RowExclusiveLock);
-
-	/*
-	 * Create two scan keys.  We need to match on the oid of the table the
-	 * CHECK is in and also we need to match the name of the CHECK
-	 * constraint.
-	 */
-	ScanKeyEntryInitialize(&key[0], 0, Anum_pg_relcheck_rcrelid,
-						   F_OIDEQ,
-						   ObjectIdGetDatum(RelationGetRelid(rel)));
-
-	ScanKeyEntryInitialize(&key[1], 0, Anum_pg_relcheck_rcname,
-						   F_NAMEEQ,
-						   PointerGetDatum(constrName));
-
-	/* Begin scanning the heap */
-	rcscan = heap_beginscan(rcrel, SnapshotNow, 2, key);
-
-	/*
-	 * Scan over the result set, removing any matching entries.  Note that
-	 * this has the side-effect of removing ALL CHECK constraints that
-	 * share the specified constraint name.
-	 */
-	while ((rctup = heap_getnext(rcscan, ForwardScanDirection)) != NULL)
-	{
-		simple_heap_delete(rcrel, &rctup->t_self);
-		++rel_deleted;
-		++all_deleted;
-	}
-
 	/* Clean up after the scan */
-	heap_endscan(rcscan);
-	heap_close(rcrel, RowExclusiveLock);
+	systable_endscan(conscan);
+	heap_close(conrel, RowExclusiveLock);
 
-	if (rel_deleted)
-	{
-		/*
-		 * Update the count of constraints in the relation's pg_class tuple.
-		 */
-		numchecks = numoldchecks - rel_deleted;
-		if (numchecks < 0)
-			elog(ERROR, "check count became negative");
-
-		SetRelationNumChecks(rel, numchecks);
-	}
-
-	/* Return the number of tuples deleted, including all children */
-	return all_deleted;
+	return ndeleted;
 }
 
 static void
-RemoveConstraints(Relation rel)
+RemoveDefaults(Relation rel)
 {
 	TupleConstr *constr = rel->rd_att->constr;
 
-	if (!constr)
-		return;
-
-	if (constr->num_defval > 0)
+	/*
+	 * We can skip looking at pg_attrdef if there are no defaults recorded
+	 * in the Relation.
+	 */
+	if (constr && constr->num_defval > 0)
 		RemoveAttrDefaults(rel);
-
-	if (constr->num_check > 0)
-		RemoveRelChecks(rel);
 }
 
 static void

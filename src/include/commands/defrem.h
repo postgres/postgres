@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2002, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Id: defrem.h,v 1.40 2002/07/01 15:27:56 tgl Exp $
+ * $Id: defrem.h,v 1.41 2002/07/12 18:43:19 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -27,6 +27,7 @@ extern void DefineIndex(RangeVar *heapRelation,
 			List *attributeList,
 			bool unique,
 			bool primary,
+			bool isconstraint,
 			Expr *predicate,
 			List *rangetable);
 extern void RemoveIndex(RangeVar *relation, DropBehavior behavior);
@@ -39,16 +40,19 @@ extern void ReindexDatabase(const char *databaseName, bool force, bool all);
  */
 
 extern void CreateFunction(CreateFunctionStmt *stmt);
-extern void RemoveFunction(List *functionName, List *argTypes);
+extern void RemoveFunction(RemoveFuncStmt *stmt);
+extern void RemoveFunctionById(Oid funcOid);
 
 extern void DefineOperator(List *names, List *parameters);
 extern void RemoveOperator(RemoveOperStmt *stmt);
+extern void RemoveOperatorById(Oid operOid);
 
 extern void DefineAggregate(List *names, List *parameters);
-extern void RemoveAggregate(List *aggName, TypeName *aggType);
+extern void RemoveAggregate(RemoveAggrStmt *stmt);
 
 extern void DefineType(List *names, List *parameters);
 extern void RemoveType(List *names, DropBehavior behavior);
+extern void RemoveTypeById(Oid typeOid);
 extern void DefineDomain(CreateDomainStmt *stmt);
 extern void RemoveDomain(List *names, DropBehavior behavior);
 

@@ -9,7 +9,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/catalog/indexing.c,v 1.95 2002/07/11 07:39:27 ishii Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/catalog/indexing.c,v 1.96 2002/07/12 18:43:14 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -45,10 +45,14 @@ char	   *Name_pg_attrdef_indices[Num_pg_attrdef_indices] =
 {AttrDefaultIndex};
 char	   *Name_pg_class_indices[Num_pg_class_indices] =
 {ClassNameNspIndex, ClassOidIndex};
+char	   *Name_pg_constraint_indices[Num_pg_constraint_indices] =
+{ConstraintNameNspIndex, ConstraintOidIndex, ConstraintRelidIndex};
 char	   *Name_pg_conversion_indices[Num_pg_conversion_indices] =
 {ConversionNameNspIndex, ConversionDefaultIndex};
 char	   *Name_pg_database_indices[Num_pg_database_indices] =
 {DatabaseNameIndex, DatabaseOidIndex};
+char	   *Name_pg_depend_indices[Num_pg_depend_indices] =
+{DependDependerIndex, DependReferenceIndex};
 char	   *Name_pg_group_indices[Num_pg_group_indices] =
 {GroupNameIndex, GroupSysidIndex};
 char	   *Name_pg_index_indices[Num_pg_index_indices] =
@@ -67,8 +71,6 @@ char	   *Name_pg_operator_indices[Num_pg_operator_indices] =
 {OperatorOidIndex, OperatorNameNspIndex};
 char	   *Name_pg_proc_indices[Num_pg_proc_indices] =
 {ProcedureOidIndex, ProcedureNameNspIndex};
-char	   *Name_pg_relcheck_indices[Num_pg_relcheck_indices] =
-{RelCheckIndex};
 char	   *Name_pg_rewrite_indices[Num_pg_rewrite_indices] =
 {RewriteOidIndex, RewriteRelRulenameIndex};
 char	   *Name_pg_shadow_indices[Num_pg_shadow_indices] =

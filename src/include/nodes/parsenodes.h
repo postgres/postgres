@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2002, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Id: parsenodes.h,v 1.184 2002/07/11 07:39:27 ishii Exp $
+ * $Id: parsenodes.h,v 1.185 2002/07/12 18:43:19 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -762,6 +762,8 @@ typedef struct AlterTableStmt
 								 *  M = alter column storage
 								 *	D = drop column
 								 *	C = add constraint
+								 *	c = pre-processed add constraint
+								 *		(local in parser/analyze.c)
 								 *	X = drop constraint
 								 *	E = create toast table
 								 *	U = change owner
@@ -929,31 +931,41 @@ typedef struct Constraint
 
 /* ----------
  * Definitions for FOREIGN KEY constraints in CreateStmt
+ *
+ * Note: FKCONSTR_ACTION_xxx values are stored into pg_constraint.confupdtype
+ * and pg_constraint.confdeltype columns; FKCONSTR_MATCH_xxx values are
+ * stored into pg_constraint.confmatchtype.  Changing the code values may
+ * require an initdb!
+ *
+ * If skip_validation is true then we skip checking that the existing rows
+ * in the table satisfy the constraint, and just install the catalog entries
+ * for the constraint.  This is currently used only during CREATE TABLE
+ * (when we know the table must be empty).
  * ----------
  */
-#define FKCONSTR_ON_KEY_NOACTION		0x0000
-#define FKCONSTR_ON_KEY_RESTRICT		0x0001
-#define FKCONSTR_ON_KEY_CASCADE			0x0002
-#define FKCONSTR_ON_KEY_SETNULL			0x0004
-#define FKCONSTR_ON_KEY_SETDEFAULT		0x0008
+#define FKCONSTR_ACTION_NOACTION	'a'
+#define FKCONSTR_ACTION_RESTRICT	'r'
+#define FKCONSTR_ACTION_CASCADE		'c'
+#define FKCONSTR_ACTION_SETNULL		'n'
+#define FKCONSTR_ACTION_SETDEFAULT	'd'
 
-#define FKCONSTR_ON_DELETE_MASK			0x000F
-#define FKCONSTR_ON_DELETE_SHIFT		0
-
-#define FKCONSTR_ON_UPDATE_MASK			0x00F0
-#define FKCONSTR_ON_UPDATE_SHIFT		4
+#define FKCONSTR_MATCH_FULL			'f'
+#define FKCONSTR_MATCH_PARTIAL		'p'
+#define FKCONSTR_MATCH_UNSPECIFIED	'u'
 
 typedef struct FkConstraint
 {
 	NodeTag		type;
-	char	   *constr_name;	/* Constraint name */
+	char	   *constr_name;	/* Constraint name, or NULL if unnamed */
 	RangeVar   *pktable;		/* Primary key table */
 	List	   *fk_attrs;		/* Attributes of foreign key */
 	List	   *pk_attrs;		/* Corresponding attrs in PK table */
-	char	   *match_type;		/* FULL or PARTIAL */
-	int32		actions;		/* ON DELETE/UPDATE actions */
+	char		fk_matchtype;	/* FULL, PARTIAL, UNSPECIFIED */
+	char		fk_upd_action;	/* ON UPDATE action */
+	char		fk_del_action;	/* ON DELETE action */
 	bool		deferrable;		/* DEFERRABLE */
 	bool		initdeferred;	/* INITIALLY DEFERRED */
+	bool		skip_validation; /* skip validation of existing rows? */
 } FkConstraint;
 
 /* ----------------------
@@ -1201,6 +1213,7 @@ typedef struct IndexStmt
 								 * transformStmt() */
 	bool		unique;			/* is index unique? */
 	bool		primary;		/* is index on primary key? */
+	bool		isconstraint;	/* is it from a CONSTRAINT clause? */
 } IndexStmt;
 
 /* ----------------------

@@ -22,7 +22,7 @@ INSERT INTO FKTABLE VALUES (3, 4);
 INSERT INTO FKTABLE VALUES (NULL, 1);
 -- Insert a failed row into FK TABLE
 INSERT INTO FKTABLE VALUES (100, 2);
-ERROR:  <unnamed> referential integrity violation - key referenced from fktable not found in pktable
+ERROR:  $1 referential integrity violation - key referenced from fktable not found in pktable
 -- Check FKTABLE
 SELECT * FROM FKTABLE;
  ftest1 | ftest2 
@@ -55,9 +55,8 @@ SELECT * FROM FKTABLE;
       1 |      3
 (3 rows)
 
-DROP TABLE PKTABLE;
-NOTICE:  DROP TABLE implicitly drops referential integrity trigger from table "fktable"
 DROP TABLE FKTABLE;
+DROP TABLE PKTABLE;
 --
 -- check set NULL and table constraint on multiple columns
 --
@@ -138,8 +137,8 @@ SELECT * FROM FKTABLE;
         |        |      8
 (5 rows)
 
-DROP TABLE PKTABLE;
-NOTICE:  DROP TABLE implicitly drops referential integrity trigger from table "fktable"
+DROP TABLE PKTABLE CASCADE;
+NOTICE:  Drop cascades to constraint constrname on table fktable
 DROP TABLE FKTABLE;
 --
 -- check set default and table constraint on multiple columns
@@ -223,8 +222,13 @@ SELECT * FROM FKTABLE;
      -1 |     -2 |      8
 (5 rows)
 
+-- this should fail for lack of CASCADE
 DROP TABLE PKTABLE;
-NOTICE:  DROP TABLE implicitly drops referential integrity trigger from table "fktable"
+NOTICE:  constraint constrname2 on table fktable depends on table pktable
+ERROR:  Cannot drop table pktable because other objects depend on it
+	Use DROP ... CASCADE to drop the dependent objects too
+DROP TABLE PKTABLE CASCADE;
+NOTICE:  Drop cascades to constraint constrname2 on table fktable
 DROP TABLE FKTABLE;
 --
 -- First test, check with no on delete or on update
@@ -246,7 +250,7 @@ INSERT INTO FKTABLE VALUES (3, 4);
 INSERT INTO FKTABLE VALUES (NULL, 1);
 -- Insert a failed row into FK TABLE
 INSERT INTO FKTABLE VALUES (100, 2);
-ERROR:  <unnamed> referential integrity violation - key referenced from fktable not found in pktable
+ERROR:  $1 referential integrity violation - key referenced from fktable not found in pktable
 -- Check FKTABLE
 SELECT * FROM FKTABLE;
  ftest1 | ftest2 
@@ -270,7 +274,7 @@ SELECT * FROM PKTABLE;
 
 -- Delete a row from PK TABLE (should fail)
 DELETE FROM PKTABLE WHERE ptest1=1;
-ERROR:  <unnamed> referential integrity violation - key in pktable still referenced from fktable
+ERROR:  $1 referential integrity violation - key in pktable still referenced from fktable
 -- Delete a row from PK TABLE (should succeed)
 DELETE FROM PKTABLE WHERE ptest1=5;
 -- Check PKTABLE for deletes
@@ -285,7 +289,7 @@ SELECT * FROM PKTABLE;
 
 -- Update a row from PK TABLE (should fail)
 UPDATE PKTABLE SET ptest1=0 WHERE ptest1=2;
-ERROR:  <unnamed> referential integrity violation - key in pktable still referenced from fktable
+ERROR:  $1 referential integrity violation - key in pktable still referenced from fktable
 -- Update a row from PK TABLE (should succeed)
 UPDATE PKTABLE SET ptest1=0 WHERE ptest1=4;
 -- Check PKTABLE for updates
@@ -298,9 +302,8 @@ SELECT * FROM PKTABLE;
       0 | Test4
 (4 rows)
 
-DROP TABLE PKTABLE;
-NOTICE:  DROP TABLE implicitly drops referential integrity trigger from table "fktable"
 DROP TABLE FKTABLE;
+DROP TABLE PKTABLE;
 -- MATCH unspecified
 -- Base test restricting update/delete
 CREATE TABLE PKTABLE ( ptest1 int, ptest2 int, ptest3 int, ptest4 text, PRIMARY KEY(ptest1, ptest2, ptest3) );
@@ -363,8 +366,6 @@ SELECT * from FKTABLE;
 (5 rows)
 
 DROP TABLE FKTABLE;
-NOTICE:  DROP TABLE implicitly drops referential integrity trigger from table "pktable"
-NOTICE:  DROP TABLE implicitly drops referential integrity trigger from table "pktable"
 DROP TABLE PKTABLE;
 -- cascade update/delete
 CREATE TABLE PKTABLE ( ptest1 int, ptest2 int, ptest3 int, ptest4 text, PRIMARY KEY(ptest1, ptest2, ptest3) );
@@ -462,8 +463,6 @@ SELECT * from FKTABLE;
 (4 rows)
 
 DROP TABLE FKTABLE;
-NOTICE:  DROP TABLE implicitly drops referential integrity trigger from table "pktable"
-NOTICE:  DROP TABLE implicitly drops referential integrity trigger from table "pktable"
 DROP TABLE PKTABLE;
 -- set null update / set default delete
 CREATE TABLE PKTABLE ( ptest1 int, ptest2 int, ptest3 int, ptest4 text, PRIMARY KEY(ptest1, ptest2, ptest3) );
@@ -568,8 +567,6 @@ SELECT * from FKTABLE;
 (6 rows)
 
 DROP TABLE FKTABLE;
-NOTICE:  DROP TABLE implicitly drops referential integrity trigger from table "pktable"
-NOTICE:  DROP TABLE implicitly drops referential integrity trigger from table "pktable"
 DROP TABLE PKTABLE;
 -- set default update / set null delete
 CREATE TABLE PKTABLE ( ptest1 int, ptest2 int, ptest3 int, ptest4 text, PRIMARY KEY(ptest1, ptest2, ptest3) );
@@ -687,8 +684,6 @@ SELECT * from FKTABLE;
 (7 rows)
 
 DROP TABLE FKTABLE;
-NOTICE:  DROP TABLE implicitly drops referential integrity trigger from table "pktable"
-NOTICE:  DROP TABLE implicitly drops referential integrity trigger from table "pktable"
 DROP TABLE PKTABLE;
 CREATE TABLE PKTABLE (ptest1 int PRIMARY KEY);
 NOTICE:  CREATE TABLE / PRIMARY KEY will create implicit index 'pktable_pkey' for table 'pktable'
@@ -734,14 +729,10 @@ ERROR:  Unable to identify an operator '=' for types 'inet' and 'integer'
 CREATE TABLE FKTABLE (ftest1 varchar REFERENCES pktable);
 NOTICE:  CREATE TABLE will create implicit trigger(s) for FOREIGN KEY check(s)
 DROP TABLE FKTABLE;
-NOTICE:  DROP TABLE implicitly drops referential integrity trigger from table "pktable"
-NOTICE:  DROP TABLE implicitly drops referential integrity trigger from table "pktable"
 -- As should this
 CREATE TABLE FKTABLE (ftest1 varchar REFERENCES pktable(ptest1));
 NOTICE:  CREATE TABLE will create implicit trigger(s) for FOREIGN KEY check(s)
 DROP TABLE FKTABLE;
-NOTICE:  DROP TABLE implicitly drops referential integrity trigger from table "pktable"
-NOTICE:  DROP TABLE implicitly drops referential integrity trigger from table "pktable"
 DROP TABLE PKTABLE;
 -- Two columns, two tables
 CREATE TABLE PKTABLE (ptest1 int, ptest2 inet, PRIMARY KEY(ptest1, ptest2));
@@ -775,14 +766,10 @@ ERROR:  Unable to identify an operator '=' for types 'integer' and 'inet'
 CREATE TABLE FKTABLE (ftest1 int, ftest2 inet, FOREIGN KEY(ftest2, ftest1) REFERENCES pktable(ptest2, ptest1));
 NOTICE:  CREATE TABLE will create implicit trigger(s) for FOREIGN KEY check(s)
 DROP TABLE FKTABLE;
-NOTICE:  DROP TABLE implicitly drops referential integrity trigger from table "pktable"
-NOTICE:  DROP TABLE implicitly drops referential integrity trigger from table "pktable"
 -- As does this
 CREATE TABLE FKTABLE (ftest1 int, ftest2 inet, FOREIGN KEY(ftest1, ftest2) REFERENCES pktable(ptest1, ptest2));
 NOTICE:  CREATE TABLE will create implicit trigger(s) for FOREIGN KEY check(s)
 DROP TABLE FKTABLE;
-NOTICE:  DROP TABLE implicitly drops referential integrity trigger from table "pktable"
-NOTICE:  DROP TABLE implicitly drops referential integrity trigger from table "pktable"
 DROP TABLE PKTABLE;
 -- Two columns, same table
 -- Make sure this still works...
@@ -832,25 +819,23 @@ insert into pktable(base1) values (1);
 insert into pktable(base1) values (2);
 --  let's insert a non-existant fktable value
 insert into fktable(ftest1) values (3);
-ERROR:  <unnamed> referential integrity violation - key referenced from fktable not found in pktable
+ERROR:  $1 referential integrity violation - key referenced from fktable not found in pktable
 --  let's make a valid row for that
 insert into pktable(base1) values (3);
 insert into fktable(ftest1) values (3);
 -- let's try removing a row that should fail from pktable
 delete from pktable where base1>2;
-ERROR:  <unnamed> referential integrity violation - key in pktable still referenced from fktable
+ERROR:  $1 referential integrity violation - key in pktable still referenced from fktable
 -- okay, let's try updating all of the base1 values to *4
 -- which should fail.
 update pktable set base1=base1*4;
-ERROR:  <unnamed> referential integrity violation - key in pktable still referenced from fktable
+ERROR:  $1 referential integrity violation - key in pktable still referenced from fktable
 -- okay, let's try an update that should work.
 update pktable set base1=base1*4 where base1<3;
 -- and a delete that should work
 delete from pktable where base1>3;
 -- cleanup
 drop table fktable;
-NOTICE:  DROP TABLE implicitly drops referential integrity trigger from table "pktable"
-NOTICE:  DROP TABLE implicitly drops referential integrity trigger from table "pktable"
 delete from pktable;
 -- Now 2 columns 2 tables, matching types
 create table fktable (ftest1 int, ftest2 int, foreign key(ftest1, ftest2) references pktable(base1, ptest1));
@@ -860,25 +845,23 @@ insert into pktable(base1, ptest1) values (1, 1);
 insert into pktable(base1, ptest1) values (2, 2);
 --  let's insert a non-existant fktable value
 insert into fktable(ftest1, ftest2) values (3, 1);
-ERROR:  <unnamed> referential integrity violation - key referenced from fktable not found in pktable
+ERROR:  $1 referential integrity violation - key referenced from fktable not found in pktable
 --  let's make a valid row for that
 insert into pktable(base1,ptest1) values (3, 1);
 insert into fktable(ftest1, ftest2) values (3, 1);
 -- let's try removing a row that should fail from pktable
 delete from pktable where base1>2;
-ERROR:  <unnamed> referential integrity violation - key in pktable still referenced from fktable
+ERROR:  $1 referential integrity violation - key in pktable still referenced from fktable
 -- okay, let's try updating all of the base1 values to *4
 -- which should fail.
 update pktable set base1=base1*4;
-ERROR:  <unnamed> referential integrity violation - key in pktable still referenced from fktable
+ERROR:  $1 referential integrity violation - key in pktable still referenced from fktable
 -- okay, let's try an update that should work.
 update pktable set base1=base1*4 where base1<3;
 -- and a delete that should work
 delete from pktable where base1>3;
 -- cleanup
 drop table fktable;
-NOTICE:  DROP TABLE implicitly drops referential integrity trigger from table "pktable"
-NOTICE:  DROP TABLE implicitly drops referential integrity trigger from table "pktable"
 drop table pktable;
 drop table pktable_base;
 -- Now we'll do one all in 1 table with 2 columns of matching types
@@ -893,13 +876,13 @@ insert into pktable (base1, ptest1, base2, ptest2) values (2, 2, 2, 1);
 insert into pktable (base1, ptest1, base2, ptest2) values (1, 3, 2, 2);
 -- fails (3,2) isn't in base1, ptest1
 insert into pktable (base1, ptest1, base2, ptest2) values (2, 3, 3, 2);
-ERROR:  <unnamed> referential integrity violation - key referenced from pktable not found in pktable
+ERROR:  $1 referential integrity violation - key referenced from pktable not found in pktable
 -- fails (2,2) is being referenced
 delete from pktable where base1=2;
-ERROR:  <unnamed> referential integrity violation - key in pktable still referenced from pktable
+ERROR:  $1 referential integrity violation - key in pktable still referenced from pktable
 -- fails (1,1) is being referenced (twice)
 update pktable set base1=3 where base1=1;
-ERROR:  <unnamed> referential integrity violation - key referenced from pktable not found in pktable
+ERROR:  $1 referential integrity violation - key referenced from pktable not found in pktable
 -- this sequence of two deletes will work, since after the first there will be no (2,*) references
 delete from pktable where base2=2;
 delete from pktable where base1=2;

@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/ref/drop_function.sgml,v 1.20 2002/05/18 15:44:47 petere Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/ref/drop_function.sgml,v 1.21 2002/07/12 18:43:13 tgl Exp $
 PostgreSQL documentation
 -->
 
@@ -21,7 +21,7 @@ PostgreSQL documentation
    <date>1999-07-20</date>
   </refsynopsisdivinfo>
   <synopsis>
-DROP FUNCTION <replaceable class="parameter">name</replaceable> ( [ <replaceable class="parameter">type</replaceable> [, ...] ] )
+DROP FUNCTION <replaceable class="parameter">name</replaceable> ( [ <replaceable class="parameter">type</replaceable> [, ...] ] ) [ CASCADE | RESTRICT ]
   </synopsis>
 
   <refsect2 id="R2-SQL-DROPFUNCTION-1">
@@ -46,6 +46,24 @@ DROP FUNCTION <replaceable class="parameter">name</replaceable> ( [ <replaceable
       <listitem>
        <para>
 	The type of a parameter of the function.
+       </para>
+      </listitem>
+     </varlistentry>
+     <varlistentry>
+      <term>CASCADE</term>
+      <listitem>
+       <para>
+        Automatically drop objects that depend on the function
+	(such as operators or triggers).
+       </para>
+      </listitem>
+     </varlistentry>
+     <varlistentry>
+      <term>RESTRICT</term>
+      <listitem>
+       <para>
+        Refuse to drop the function if there are any dependent objects.
+	This is the default.
        </para>
       </listitem>
      </varlistentry>
@@ -136,15 +154,8 @@ DROP FUNCTION sqrt(integer);
   <title>Compatibility</title>
   
   <para>
-   A <command>DROP FUNCTION</command> statement is defined in SQL99.  One of its syntax forms is:
-
-<synopsis>
-DROP FUNCTION <replaceable class="parameter">name</replaceable> (<replaceable>arg</>, ...) { RESTRICT | CASCADE }
-</synopsis>
-
-   where <literal>CASCADE</> specifies dropping all objects that
-   depend on the function and <literal>RESTRICT</literal> refuses to
-   drop the function if dependent objects exist.
+   A <command>DROP FUNCTION</command> statement is defined in SQL99.  One of
+   its syntax forms is similar to PostgreSQL's.
   </para>
  </refsect1>
 

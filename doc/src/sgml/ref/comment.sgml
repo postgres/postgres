@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/ref/comment.sgml,v 1.19 2002/05/13 17:45:30 tgl Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/ref/comment.sgml,v 1.20 2002/07/12 18:43:12 tgl Exp $
 PostgreSQL documentation
 -->
 
@@ -26,6 +26,7 @@ COMMENT ON
   TABLE <replaceable class="PARAMETER">object_name</replaceable> |
   COLUMN <replaceable class="PARAMETER">table_name</replaceable>.<replaceable class="PARAMETER">column_name</replaceable> |
   AGGREGATE <replaceable class="PARAMETER">agg_name</replaceable> (<replaceable class="PARAMETER">agg_type</replaceable>) |
+  CONSTRAINT <replaceable class="PARAMETER">constraint_name</replaceable> ON <replaceable class="PARAMETER">table_name</replaceable> |
   DATABASE <replaceable class="PARAMETER">object_name</replaceable> |
   DOMAIN <replaceable class="PARAMETER">object_name</replaceable> |
   FUNCTION <replaceable class="PARAMETER">func_name</replaceable> (<replaceable class="PARAMETER">arg1_type</replaceable>, <replaceable class="PARAMETER">arg2_type</replaceable>, ...) |
@@ -52,7 +53,7 @@ COMMENT ON
     <variablelist>
      <varlistentry>
       <term><replaceable class="PARAMETER">object_name,
-      table_name.column_name, agg_name, func_name, op, rule_name, trigger_name</replaceable></term>
+      table_name.column_name, agg_name, constraint_name, func_name, op, rule_name, trigger_name</replaceable></term>
       <listitem>
        <para>
 	The name of the object to be be commented.  Names of tables,

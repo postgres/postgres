@@ -15,7 +15,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/commands/cluster.c,v 1.82 2002/06/20 20:29:26 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/commands/cluster.c,v 1.83 2002/07/12 18:43:15 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -24,6 +24,7 @@
 
 #include "access/genam.h"
 #include "access/heapam.h"
+#include "catalog/dependency.h"
 #include "catalog/heap.h"
 #include "catalog/index.h"
 #include "catalog/pg_index.h"
@@ -64,6 +65,7 @@ cluster(RangeVar *oldrelation, char *oldindexname)
 				OldIndex;
 	char		NewHeapName[NAMEDATALEN];
 	char		NewIndexName[NAMEDATALEN];
+	ObjectAddress object;
 
 	/*
 	 * We grab exclusive access to the target rel and index for the
@@ -119,9 +121,14 @@ cluster(RangeVar *oldrelation, char *oldindexname)
 	CommandCounterIncrement();
 
 	/* Destroy old heap (along with its index) and rename new. */
-	heap_drop_with_catalog(OIDOldHeap, allowSystemTableMods);
+	object.classId = RelOid_pg_class;
+	object.objectId = OIDOldHeap;
+	object.objectSubId = 0;
 
-	CommandCounterIncrement();
+	/* XXX better to use DROP_CASCADE here? */
+	performDeletion(&object, DROP_RESTRICT);
+
+	/* performDeletion does CommandCounterIncrement at end */
 
 	renamerel(OIDNewHeap, oldrelation->relname);
 
@@ -198,6 +205,7 @@ copy_index(Oid OIDOldIndex, Oid OIDNewHeap, const char *NewIndexName)
 							   OldIndex->rd_rel->relam,
 							   OldIndex->rd_index->indclass,
 							   OldIndex->rd_index->indisprimary,
+							   false, /* XXX losing constraint status */
 							   allowSystemTableMods);
 
 	setRelhasindex(OIDNewHeap, true,

@@ -11,7 +11,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/parser/gram.y,v 2.338 2002/07/11 07:39:25 ishii Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/parser/gram.y,v 2.339 2002/07/12 18:43:17 tgl Exp $
  *
  * HISTORY
  *	  AUTHOR			DATE			MAJOR EVENT
@@ -309,8 +309,7 @@ static void doNegateFloat(Value *v);
 %type <node>	TableConstraint, TableLikeClause
 %type <list>	ColQualList
 %type <node>	ColConstraint, ColConstraintElem, ConstraintAttr
-%type <ival>	key_actions, key_delete, key_update, key_reference
-%type <str>		key_match
+%type <ival>	key_actions, key_delete, key_match, key_update, key_action
 %type <ival>	ConstraintAttributeSpec, ConstraintDeferrabilitySpec,
 				ConstraintTimeSpec
 
@@ -1594,8 +1593,9 @@ ColConstraintElem:
 					n->pktable			= $2;
 					n->fk_attrs			= NIL;
 					n->pk_attrs			= $3;
-					n->match_type		= $4;
-					n->actions			= $5;
+					n->fk_matchtype		= $4;
+					n->fk_upd_action	= (char) ($5 >> 8);
+					n->fk_del_action	= (char) ($5 & 0xFF);
 					n->deferrable		= FALSE;
 					n->initdeferred		= FALSE;
 					$$ = (Node *)n;
@@ -1714,16 +1714,16 @@ ConstraintElem:
 					$$ = (Node *)n;
 				}
 			| FOREIGN KEY '(' columnList ')' REFERENCES qualified_name
-			opt_column_list
-				key_match key_actions ConstraintAttributeSpec
+				opt_column_list key_match key_actions ConstraintAttributeSpec
 				{
 					FkConstraint *n = makeNode(FkConstraint);
 					n->constr_name		= NULL;
 					n->pktable			= $7;
 					n->fk_attrs			= $4;
 					n->pk_attrs			= $8;
-					n->match_type		= $9;
-					n->actions			= $10;
+					n->fk_matchtype		= $9;
+					n->fk_upd_action	= (char) ($10 >> 8);
+					n->fk_del_action	= (char) ($10 & 0xFF);
 					n->deferrable		= ($11 & 1) != 0;
 					n->initdeferred		= ($11 & 2) != 0;
 					$$ = (Node *)n;
@@ -1750,45 +1750,54 @@ columnElem: ColId
 
 key_match:  MATCH FULL
 			{
-				$$ = "FULL";
+				$$ = FKCONSTR_MATCH_FULL;
 			}
 		| MATCH PARTIAL
 			{
 				elog(ERROR, "FOREIGN KEY/MATCH PARTIAL not yet implemented");
-				$$ = "PARTIAL";
+				$$ = FKCONSTR_MATCH_PARTIAL;
 			}
 		| MATCH SIMPLE
 			{
-				$$ = "UNSPECIFIED";
+				$$ = FKCONSTR_MATCH_UNSPECIFIED;
 			}
 		| /*EMPTY*/
 			{
-				$$ = "UNSPECIFIED";
+				$$ = FKCONSTR_MATCH_UNSPECIFIED;
 			}
 		;
 
+/*
+ * We combine the update and delete actions into one value temporarily
+ * for simplicity of parsing, and then break them down again in the
+ * calling production.  update is in the left 8 bits, delete in the right.
+ * Note that NOACTION is the default.
+ */
 key_actions:
-			key_delete								{ $$ = $1; }
-			| key_update							{ $$ = $1; }
-			| key_delete key_update					{ $$ = $1 | $2; }
-			| key_update key_delete					{ $$ = $1 | $2; }
-			| /*EMPTY*/								{ $$ = 0; }
+			key_update
+				{ $$ = ($1 << 8) | (FKCONSTR_ACTION_NOACTION & 0xFF); }
+			| key_delete
+				{ $$ = (FKCONSTR_ACTION_NOACTION << 8) | ($1 & 0xFF); }
+			| key_update key_delete
+				{ $$ = ($1 << 8) | ($2 & 0xFF); }
+			| key_delete key_update
+				{ $$ = ($2 << 8) | ($1 & 0xFF); }
+			| /*EMPTY*/
+				{ $$ = (FKCONSTR_ACTION_NOACTION << 8) | (FKCONSTR_ACTION_NOACTION & 0xFF); }
 		;
 
-key_delete: ON DELETE_P key_reference
-								{ $$ = $3 << FKCONSTR_ON_DELETE_SHIFT; }
+key_update: ON UPDATE key_action		{ $$ = $3; }
 		;
 
-key_update: ON UPDATE key_reference
-								{ $$ = $3 << FKCONSTR_ON_UPDATE_SHIFT; }
+key_delete: ON DELETE_P key_action		{ $$ = $3; }
 		;
 
-key_reference:
-			NO ACTION					{ $$ = FKCONSTR_ON_KEY_NOACTION; }
-			| RESTRICT					{ $$ = FKCONSTR_ON_KEY_RESTRICT; }
-			| CASCADE					{ $$ = FKCONSTR_ON_KEY_CASCADE; }
-			| SET NULL_P				{ $$ = FKCONSTR_ON_KEY_SETNULL; }
-			| SET DEFAULT				{ $$ = FKCONSTR_ON_KEY_SETDEFAULT; }
+key_action:
+			NO ACTION					{ $$ = FKCONSTR_ACTION_NOACTION; }
+			| RESTRICT					{ $$ = FKCONSTR_ACTION_RESTRICT; }
+			| CASCADE					{ $$ = FKCONSTR_ACTION_CASCADE; }
+			| SET NULL_P				{ $$ = FKCONSTR_ACTION_SETNULL; }
+			| SET DEFAULT				{ $$ = FKCONSTR_ACTION_SETDEFAULT; }
 		;
 
 OptInherit: INHERITS '(' qualified_name_list ')'	{ $$ = $3; }
@@ -2300,7 +2309,7 @@ drop_type:	TABLE									{ $$ = DROP_TABLE; }
 			| INDEX									{ $$ = DROP_INDEX; }
 			| TYPE_P								{ $$ = DROP_TYPE; }
 			| DOMAIN_P								{ $$ = DROP_DOMAIN; }
-			| CONVERSION_P								{ $$ = DROP_CONVERSION; }
+			| CONVERSION_P							{ $$ = DROP_CONVERSION; }
 		;
 
 any_name_list:
@@ -6673,6 +6682,7 @@ unreserved_keyword:
 			| COMMIT
 			| COMMITTED
 			| CONSTRAINTS
+			| CONVERSION_P
 			| COPY
 			| CREATEDB
 			| CREATEUSER
@@ -6857,6 +6867,7 @@ col_name_keyword:
 			| SUBSTRING
 			| TIME
 			| TIMESTAMP
+			| TREAT
 			| TRIM
 			| VARCHAR
 		;
@@ -6963,7 +6974,6 @@ reserved_keyword:
 			| THEN
 			| TO
 			| TRAILING
-			| TREAT
 			| TRUE_P
 			| UNION
 			| UNIQUE

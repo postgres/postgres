@@ -9,7 +9,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/commands/aggregatecmds.c,v 1.2 2002/04/27 03:45:00 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/commands/aggregatecmds.c,v 1.3 2002/07/12 18:43:15 tgl Exp $
  *
  * DESCRIPTION
  *	  The "DefineFoo" routines take the parse tree and pick out the
@@ -24,10 +24,10 @@
 
 #include "access/heapam.h"
 #include "catalog/catname.h"
+#include "catalog/dependency.h"
 #include "catalog/namespace.h"
 #include "catalog/pg_aggregate.h"
 #include "catalog/pg_proc.h"
-#include "commands/comment.h"
 #include "commands/defrem.h"
 #include "miscadmin.h"
 #include "parser/parse_func.h"
@@ -141,13 +141,19 @@ DefineAggregate(List *names, List *parameters)
 }
 
 
+/*
+ * RemoveAggregate
+ *		Deletes an aggregate.
+ */
 void
-RemoveAggregate(List *aggName, TypeName *aggType)
+RemoveAggregate(RemoveAggrStmt *stmt)
 {
-	Relation	relation;
-	HeapTuple	tup;
+	List	   *aggName = stmt->aggname;
+	TypeName   *aggType = stmt->aggtype;
 	Oid			basetypeID;
 	Oid			procOid;
+	HeapTuple	tup;
+	ObjectAddress object;
 
 	/*
 	 * if a basetype is passed in, then attempt to find an aggregate for
@@ -164,8 +170,9 @@ RemoveAggregate(List *aggName, TypeName *aggType)
 
 	procOid = find_aggregate_func("RemoveAggregate", aggName, basetypeID);
 
-	relation = heap_openr(ProcedureRelationName, RowExclusiveLock);
-
+	/*
+	 * Find the function tuple, do permissions and validity checks
+	 */
 	tup = SearchSysCache(PROCOID,
 						 ObjectIdGetDatum(procOid),
 						 0, 0, 0);
@@ -179,30 +186,16 @@ RemoveAggregate(List *aggName, TypeName *aggType)
 								 GetUserId()))
 		aclcheck_error(ACLCHECK_NOT_OWNER, NameListToString(aggName));
 
-	/* Delete any comments associated with this function */
-	DeleteComments(procOid, RelationGetRelid(relation));
-
-	/* Remove the pg_proc tuple */
-	simple_heap_delete(relation, &tup->t_self);
+	/* find_aggregate_func already checked it is an aggregate */
 
 	ReleaseSysCache(tup);
 
-	heap_close(relation, RowExclusiveLock);
+	/*
+	 * Do the deletion
+	 */
+	object.classId = RelOid_pg_proc;
+	object.objectId = procOid;
+	object.objectSubId = 0;
 
-	/* Remove the pg_aggregate tuple */
-
-	relation = heap_openr(AggregateRelationName, RowExclusiveLock);
-
-	tup = SearchSysCache(AGGFNOID,
-						 ObjectIdGetDatum(procOid),
-						 0, 0, 0);
-	if (!HeapTupleIsValid(tup))	/* should not happen */
-		elog(ERROR, "RemoveAggregate: couldn't find pg_aggregate tuple for %s",
-			 NameListToString(aggName));
-
-	simple_heap_delete(relation, &tup->t_self);
-
-	ReleaseSysCache(tup);
-
-	heap_close(relation, RowExclusiveLock);
+	performDeletion(&object, stmt->behavior);
 }

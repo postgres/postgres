@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/ref/drop_table.sgml,v 1.15 2002/05/18 15:44:47 petere Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/ref/drop_table.sgml,v 1.16 2002/07/12 18:43:13 tgl Exp $
 PostgreSQL documentation
 -->
 
@@ -21,7 +21,8 @@ PostgreSQL documentation
    <date>1999-07-20</date>
   </refsynopsisdivinfo>
   <synopsis>
-DROP TABLE <replaceable class="PARAMETER">name</replaceable> [, ...]
+DROP TABLE <replaceable class="PARAMETER">name</replaceable> [, ...] [ CASCADE | RESTRICT ]
+
   </synopsis>
   
   <refsect2 id="R2-SQL-DROPTABLE-1">
@@ -38,6 +39,24 @@ DROP TABLE <replaceable class="PARAMETER">name</replaceable> [, ...]
       <listitem>
        <para>
 	The name (optionally schema-qualified) of an existing table to drop.
+       </para>
+      </listitem>
+     </varlistentry>
+     <varlistentry>
+      <term>CASCADE</term>
+      <listitem>
+       <para>
+        Automatically drop objects that depend on the table
+	(such as views).
+       </para>
+      </listitem>
+     </varlistentry>
+     <varlistentry>
+      <term>RESTRICT</term>
+      <listitem>
+       <para>
+        Refuse to drop the table if there are any dependent objects.
+	This is the default.
        </para>
       </listitem>
      </varlistentry>
@@ -136,44 +155,11 @@ DROP TABLE films, distributors;
   </title>
   
   <refsect2 id="R2-SQL-DROPTABLE-4">
-   <refsect2info>
-    <date>1998-09-22</date>
-   </refsect2info>
    <title>
     SQL92
    </title>
    <para>
-    SQL92 specifies some additional capabilities for DROP TABLE:
    </para>
-   <synopsis>
-DROP TABLE <replaceable class="parameter">table</replaceable> { RESTRICT | CASCADE }
-   </synopsis>
-   <variablelist>
-    <varlistentry>
-     <term>RESTRICT</term>
-     <listitem>
-      <para>
-       Ensures that only a table with no dependent views or
-       integrity constraints can be destroyed.
-      </para>
-     </listitem>
-    </varlistentry>
-    <varlistentry>
-     <term>CASCADE</term>
-     <listitem>
-      <para>
-       Any referencing views or integrity constraints
-       will also be dropped.
-      </para>
-     </listitem>
-    </varlistentry>
-   </variablelist>
-    <tip>
-    <para>
-     At present, to remove a referencing view you must drop
-     it explicitly.
-    </para>
-   </tip>
    </refsect2>
  </refsect1>
 </refentry>

@@ -38,8 +38,10 @@ SELECT relname, relhasindex
  pg_attrdef          | t
  pg_attribute        | t
  pg_class            | t
+ pg_constraint       | t
  pg_conversion       | t
  pg_database         | t
+ pg_depend           | t
  pg_description      | t
  pg_group            | t
  pg_index            | t
@@ -50,7 +52,6 @@ SELECT relname, relhasindex
  pg_opclass          | t
  pg_operator         | t
  pg_proc             | t
- pg_relcheck         | t
  pg_rewrite          | t
  pg_shadow           | t
  pg_statistic        | t
@@ -61,5 +62,5 @@ SELECT relname, relhasindex
  shighway            | t
  tenk1               | t
  tenk2               | t
-(51 rows)
+(52 rows)
 
