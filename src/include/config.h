@@ -168,8 +168,9 @@
 #  define HAVE_TZSET
 #  define NEED_UNION_SEMUN 
 #  define SYSV_DIRENT
-#  define NEED_NOFILE_KLUDGE
 #  define SB_PAD 56
+#  define HAS_TEST_AND_SET
+typedef unsigned char slock_t;
 #endif
 
 #if defined(sunos4)
