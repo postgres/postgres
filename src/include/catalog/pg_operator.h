@@ -7,7 +7,7 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: pg_operator.h,v 1.46 1998/10/29 04:22:52 tgl Exp $
+ * $Id: pg_operator.h,v 1.47 1998/10/29 18:10:23 thomas Exp $
  *
  * NOTES
  *	  the genbki.sh script reads this file and generates .bki
@@ -183,7 +183,7 @@ DATA(insert OID = 508 (  ">>"	   PGUID 0 b t f 600 600  16   0   0   0   0 point
 DATA(insert OID = 509 (  "<^"	   PGUID 0 b t f 600 600  16   0   0   0   0 point_below intltsel intltjoinsel ));
 DATA(insert OID = 510 (  "~="	   PGUID 0 b t f 600 600  16 510   0   0   0 point_eq intltsel intltjoinsel ));
 DATA(insert OID = 511 (  "@"	   PGUID 0 b t f 600 603  16   0   0   0   0 on_pb intltsel intltjoinsel ));
-DATA(insert OID = 512 (  "@"	   PGUID 0 b t f 600 602  16   0   0   0   0 on_ppath intltsel intltjoinsel ));
+DATA(insert OID = 512 (  "@"	   PGUID 0 b t f 600 602  16 755   0   0   0 on_ppath intltsel intltjoinsel ));
 DATA(insert OID = 513 (  "@@"	   PGUID 0 l t f   0 603 600   0   0   0   0 box_center intltsel intltjoinsel ));
 DATA(insert OID = 514 (  "*"	   PGUID 0 b t f  23  23  23 514   0   0   0 int4mul intltsel intltjoinsel ));
 DATA(insert OID = 515 (  "!"	   PGUID 0 r t f  23   0  23   0   0   0   0 int4fac intltsel intltjoinsel ));
@@ -371,8 +371,7 @@ DATA(insert OID = 736 (  "+"	   PGUID 0 b t f  602  600	602    0  0 0 0 path_add
 DATA(insert OID = 737 (  "-"	   PGUID 0 b t f  602  600	602    0  0 0 0 path_sub_pt - - ));
 DATA(insert OID = 738 (  "*"	   PGUID 0 b t f  602  600	602    0  0 0 0 path_mul_pt - - ));
 DATA(insert OID = 739 (  "/"	   PGUID 0 b t f  602  600	602    0  0 0 0 path_div_pt - - ));
-DATA(insert OID = 754 (  "@"	   PGUID 0 b t f  600  602	 16  755  0 0 0 pt_contained_path - - ));
-DATA(insert OID = 755 (  "~"	   PGUID 0 b t f  602  600	 16  754  0 0 0 path_contain_pt - - ));
+DATA(insert OID = 755 (  "~"	   PGUID 0 b t f  602  600	 16  512  0 0 0 path_contain_pt - - ));
 DATA(insert OID = 756 (  "@"	   PGUID 0 b t f  600  604	 16  757  0 0 0 pt_contained_poly - - ));
 DATA(insert OID = 757 (  "~"	   PGUID 0 b t f  604  600	 16  756  0 0 0 poly_contain_pt - - ));
 DATA(insert OID = 758 (  "@"	   PGUID 0 b t f  600  718	 16  759  0 0 0 pt_contained_circle - - ));
