@@ -1,3 +1,10 @@
+Sun Apr 11 17:00:00 BST 1999
+	- getUpdateCount() now returns the actual update count (before it
+	  simply returned 1 for everything).
+	- added some updates to example.basic so it would test the new update
+	  count code.
+	- corrected typo in a comment in Statement.java
+
 Mon Jan 25 19:45:00 GMT 1999
 	- created subfolders example/corba and example/corba/idl to hold the
 	  new example showing how to hook CORBA and PostgreSQL via JDBC

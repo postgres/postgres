@@ -77,6 +77,10 @@ public class basic
     st.executeUpdate("insert into basic values (2,1)");
     st.executeUpdate("insert into basic values (3,1)");
     
+    // Now change the value of b from 1 to 8
+    st.executeUpdate("update basic set b=8");
+    System.out.println("Updated "+st.getUpdateCount()+" rows");
+    
     // For large inserts, a PreparedStatement is more efficient, because it
     // supports the idea of precompiling the SQL statement, and to store
     // directly, a Java object into any column. PostgreSQL doesnt support

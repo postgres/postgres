@@ -35,7 +35,7 @@ public class Statement implements java.sql.Statement
 	}
 
 	/**
-	 * Execute a SQL statement that retruns a single ResultSet
+	 * Execute a SQL statement that returns a single ResultSet
 	 *
 	 * @param sql typically a static SQL SELECT statement
 	 * @return a ResulSet that contains the data produced by the query
