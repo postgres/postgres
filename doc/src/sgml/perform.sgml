@@ -1,5 +1,5 @@
 <!--
-$PostgreSQL: pgsql/doc/src/sgml/perform.sgml,v 1.49 2004/12/23 23:07:38 tgl Exp $
+$PostgreSQL: pgsql/doc/src/sgml/perform.sgml,v 1.50 2005/02/03 07:12:37 neilc Exp $
 -->
 
  <chapter id="performance-tips">
@@ -362,12 +362,13 @@ EXPLAIN ANALYZE SELECT * FROM tenk1 t1, tenk2 t2 WHERE t1.unique1 &lt; 50 AND t1
   </para>
 
   <para>
-   One component of the statistics is the total number of entries in each
-   table and index, as well as the number of disk blocks occupied by each
-   table and index.  This information is kept in the table
-   <structname>pg_class</structname> in the columns <structfield>reltuples</structfield>
-   and <structfield>relpages</structfield>.  We can look at it
-   with queries similar to this one:
+   One component of the statistics is the total number of entries in
+   each table and index, as well as the number of disk blocks occupied
+   by each table and index.  This information is kept in the table
+   <link linkend="catalog-pg-class"><structname>pg_class</structname></link>, in
+   the columns <structfield>reltuples</structfield> and
+   <structfield>relpages</structfield>.  We can look at it with
+   queries similar to this one:
 
 <screen>
 SELECT relname, relkind, reltuples, relpages FROM pg_class WHERE relname LIKE 'tenk1%';
@@ -406,14 +407,16 @@ SELECT relname, relkind, reltuples, relpages FROM pg_class WHERE relname LIKE 't
 
   <para>
    Most queries retrieve only a fraction of the rows in a table, due
-   to having <literal>WHERE</> clauses that restrict the rows to be examined.
-   The planner thus needs to make an estimate of the
-   <firstterm>selectivity</> of <literal>WHERE</> clauses, that is, the fraction of
-   rows that match each condition in the <literal>WHERE</> clause.  The information
-   used for this task is stored in the <structname>pg_statistic</structname>
-   system catalog.  Entries in <structname>pg_statistic</structname> are
-   updated by <command>ANALYZE</> and <command>VACUUM ANALYZE</> commands
-   and are always approximate even when freshly updated.
+   to having <literal>WHERE</> clauses that restrict the rows to be
+   examined.  The planner thus needs to make an estimate of the
+   <firstterm>selectivity</> of <literal>WHERE</> clauses, that is,
+   the fraction of rows that match each condition in the
+   <literal>WHERE</> clause.  The information used for this task is
+   stored in the <link linkend="catalog-pg-statistic"><structname>pg_statistic</structname></link>
+   system catalog.  Entries in <structname>pg_statistic</structname>
+   are updated by the <command>ANALYZE</> and <command>VACUUM
+   ANALYZE</> commands and are always approximate even when freshly
+   updated.
   </para>
 
   <indexterm>
