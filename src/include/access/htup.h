@@ -6,7 +6,7 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: htup.h,v 1.17 1999/07/03 00:32:55 momjian Exp $
+ * $Id: htup.h,v 1.18 1999/07/03 01:57:53 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -15,6 +15,7 @@
 
 #include <storage/bufpage.h>
 #include <storage/itemptr.h>
+#include <utils/memutils.h>
 
 #define MinHeapTupleBitmapSize	32		/* 8 * 4 */
 
@@ -52,8 +53,8 @@ typedef struct HeapTupleHeaderData
 
 typedef HeapTupleHeaderData *HeapTupleHeader;
 
-#define MinTupleSize	(sizeof (PageHeaderData) + \
-						 sizeof(HeapTupleHeaderData) + sizeof(int4))
+#define MinTupleSize	(DOUBLEALIGN(sizeof (PageHeaderData) + \
+						 sizeof(HeapTupleHeaderData) + sizeof(int4)))
 
 #define MaxTupleSize	(BLCKSZ/2 - MinTupleSize)
 
