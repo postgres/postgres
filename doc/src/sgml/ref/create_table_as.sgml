@@ -1,11 +1,11 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/ref/create_table_as.sgml,v 1.10 2002/04/23 02:07:16 tgl Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/ref/create_table_as.sgml,v 1.10.2.1 2002/11/21 23:31:57 petere Exp $
 PostgreSQL documentation
 -->
 
 <refentry id="SQL-CREATETABLEAS">
  <refmeta>
-  <refentrytitle>CREATE TABLE AS</refentrytitle>
+  <refentrytitle id="sql-createtableas-title">CREATE TABLE AS</refentrytitle>
   <refmiscinfo>SQL - Language Statements</refmiscinfo>
  </refmeta>
 
@@ -57,7 +57,7 @@ CREATE [ [ LOCAL ] { TEMPORARY | TEMP } ] TABLE <replaceable>table_name</replace
     <listitem>
      <para>
       If specified, the table is created as a temporary table.
-      Refer to <xref linkend="sql-createtable"> for details.
+      Refer to <xref linkend="sql-createtable" endterm="sql-createtable-title"> for details.
      </para>
     </listitem>
    </varlistentry>
@@ -89,7 +89,7 @@ CREATE [ [ LOCAL ] { TEMPORARY | TEMP } ] TABLE <replaceable>table_name</replace
      <para>
       A query statement (that is, a <command>SELECT</command>
       command).  Refer to
-      <xref linkend="sql-select">
+      <xref linkend="sql-select" endterm="sql-select-title">
       for a description of the allowed syntax.
      </para>
     </listitem>
@@ -101,8 +101,8 @@ CREATE [ [ LOCAL ] { TEMPORARY | TEMP } ] TABLE <replaceable>table_name</replace
   <title>Diagnostics</title>
 
   <para>
-   Refer to <xref linkend="sql-createtable"> and
-   <xref linkend="sql-select">
+   Refer to <xref linkend="sql-createtable" endterm="sql-createtable-title"> and
+   <xref linkend="sql-select" endterm="sql-select-title">
    for a summary of possible output messages.
   </para>
  </refsect1>
@@ -112,7 +112,7 @@ CREATE [ [ LOCAL ] { TEMPORARY | TEMP } ] TABLE <replaceable>table_name</replace
 
   <para>
    This command is functionally equivalent to <xref
-   linkend="sql-selectinto">, but it is preferred since it is less
+   linkend="sql-selectinto" endterm="sql-selectinto-title">, but it is preferred since it is less
    likely to be confused with other uses of the <command>SELECT
    ... INTO</command> syntax.
   </para>
@@ -143,10 +143,10 @@ CREATE [ [ LOCAL ] { TEMPORARY | TEMP } ] TABLE <replaceable>table_name</replace
   <title>See Also</title>
 
   <simplelist type="inline">
-   <member><xref linkend="sql-createtable"></member>
-   <member><xref linkend="sql-createview"></member>
-   <member><xref linkend="sql-select"></member>
-   <member><xref linkend="sql-selectinto"></member>
+   <member><xref linkend="sql-createtable" endterm="sql-createtable-title"></member>
+   <member><xref linkend="sql-createview" endterm="sql-createview-title"></member>
+   <member><xref linkend="sql-select" endterm="sql-select-title"></member>
+   <member><xref linkend="sql-selectinto" endterm="sql-selectinto-title"></member>
   </simplelist>
  </refsect1>
  

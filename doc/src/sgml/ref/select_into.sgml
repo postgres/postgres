@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/ref/select_into.sgml,v 1.20 2002/08/29 00:17:01 tgl Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/ref/select_into.sgml,v 1.20.2.1 2002/11/21 23:31:58 petere Exp $
 PostgreSQL documentation
 -->
 
@@ -50,7 +50,7 @@ SELECT [ ALL | DISTINCT [ ON ( <replaceable class="PARAMETER">expression</replac
      <listitem>
       <para>
        If specified, the table is created as a temporary table.
-       Refer to <xref linkend="sql-createtable"> for details.
+       Refer to <xref linkend="sql-createtable" endterm="sql-createtable-title"> for details.
       </para>
      </listitem>
     </varlistentry>
@@ -68,7 +68,7 @@ SELECT [ ALL | DISTINCT [ ON ( <replaceable class="PARAMETER">expression</replac
 
    <para>
     All other inputs are described in detail for
-    <xref linkend="sql-select">.
+    <xref linkend="sql-select" endterm="sql-select-title">.
    </para>
   </refsect2>
 
@@ -82,9 +82,9 @@ SELECT [ ALL | DISTINCT [ ON ( <replaceable class="PARAMETER">expression</replac
 
    <para>
     Refer to
-    <xref linkend="sql-createtable">
+    <xref linkend="sql-createtable" endterm="sql-createtable-title">
     and
-    <xref linkend="sql-select">
+    <xref linkend="sql-select" endterm="sql-select-title">
     for a summary of possible output messages.
    </para>
   </refsect2>
@@ -107,7 +107,7 @@ SELECT [ ALL | DISTINCT [ ON ( <replaceable class="PARAMETER">expression</replac
 
    <note>
     <para>
-     <xref linkend="sql-createtableas">
+     <xref linkend="sql-createtableas" endterm="sql-createtableas-title">
      is functionally equivalent to <command>SELECT INTO</command>.
      <command>CREATE TABLE AS</command> is the recommended syntax, since
      <command>SELECT INTO</command> is not standard.  In fact, this form of

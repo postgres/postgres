@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/ref/grant.sgml,v 1.30 2002/09/24 23:14:25 tgl Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/ref/grant.sgml,v 1.30.2.1 2002/11/21 23:31:58 petere Exp $
 PostgreSQL documentation
 -->
 
@@ -375,7 +375,7 @@ GRANT <replaceable class="PARAMETER">privilege</replaceable> [, ...]
   <title>See Also</title>
 
   <simpara>
-   <xref linkend="sql-revoke">
+   <xref linkend="sql-revoke" endterm="sql-revoke-title">
   </simpara>
  </refsect1>
 

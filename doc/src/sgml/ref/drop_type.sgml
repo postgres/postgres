@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/ref/drop_type.sgml,v 1.19 2002/07/14 22:47:56 tgl Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/ref/drop_type.sgml,v 1.19.2.1 2002/11/21 23:31:58 petere Exp $
 PostgreSQL documentation
 -->
 
@@ -140,7 +140,7 @@ DROP TYPE box;
   <title>See Also</title>
 
   <simplelist type="inline">
-   <member><xref linkend="sql-createtype"></member>
+   <member><xref linkend="sql-createtype" endterm="sql-createtype-title"></member>
   </simplelist>
  </refsect1>
 </refentry>

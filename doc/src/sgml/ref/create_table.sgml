@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/ref/create_table.sgml,v 1.56 2002/09/02 06:20:53 momjian Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/ref/create_table.sgml,v 1.56.2.1 2002/11/21 23:31:57 petere Exp $
 PostgreSQL documentation
 -->
 
@@ -878,8 +878,8 @@ CREATE ASSERTION <replaceable>name</replaceable> CHECK ( <replaceable>condition<
   <title>See Also</title>
 
   <simplelist type="inline">
-   <member><xref linkend="sql-altertable"></member>
-   <member><xref linkend="sql-droptable"></member>
+   <member><xref linkend="sql-altertable" endterm="sql-altertable-title"></member>
+   <member><xref linkend="sql-droptable" endterm="sql-droptable-title"></member>
   </simplelist>
  </refsect1>
 </refentry>

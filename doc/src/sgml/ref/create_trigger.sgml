@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/ref/create_trigger.sgml,v 1.28 2002/09/21 18:39:25 tgl Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/ref/create_trigger.sgml,v 1.28.2.1 2002/11/21 23:31:57 petere Exp $
 PostgreSQL documentation
 -->
 
@@ -181,7 +181,7 @@ CREATE TRIGGER
   </para>
 
   <para>
-   Refer to the <xref linkend="sql-droptrigger"> command for
+   Refer to the <xref linkend="sql-droptrigger" endterm="sql-droptrigger-title"> command for
    information on how to remove triggers.
   </para>
  </refsect1>
@@ -302,9 +302,9 @@ CREATE TABLE distributors (
   <title>See Also</title>
 
   <simplelist type="inline">
-   <member><xref linkend="sql-createfunction"></member>
-   <member><xref linkend="sql-altertrigger"></member>
-   <member><xref linkend="sql-droptrigger"></member>
+   <member><xref linkend="sql-createfunction" endterm="sql-createfunction-title"></member>
+   <member><xref linkend="sql-altertrigger" endterm="sql-altertrigger-title"></member>
+   <member><xref linkend="sql-droptrigger" endterm="sql-droptrigger-title"></member>
    <member><citetitle>PostgreSQL Programmer's Guide</citetitle></member>
   </simplelist>
  </refsect1>

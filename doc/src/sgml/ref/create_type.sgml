@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/ref/create_type.sgml,v 1.36 2002/09/21 18:39:25 tgl Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/ref/create_type.sgml,v 1.36.2.1 2002/11/21 23:31:58 petere Exp $
 PostgreSQL documentation
 -->
 
@@ -466,8 +466,8 @@ CREATE FUNCTION getfoo() RETURNS SETOF compfoo AS 'SELECT fooid, fooname FROM fo
   <title>See Also</title>
 
   <simplelist type="inline">
-   <member><xref linkend="sql-createfunction"></member>
-   <member><xref linkend="sql-droptype"></member>
+   <member><xref linkend="sql-createfunction" endterm="sql-createfunction-title"></member>
+   <member><xref linkend="sql-droptype" endterm="sql-droptype-title"></member>
    <member><citetitle>PostgreSQL Programmer's Guide</citetitle></member>
   </simplelist>
  </refsect1>
