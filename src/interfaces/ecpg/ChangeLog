@@ -1697,6 +1697,10 @@ Sun Oct 26 10:47:05 CET 2003
 
 	- Fixed bug with indicators when storage for the
 	  string is dynamically allocated
+	  
+Thu Oct 30 11:12:37 CET 2003
+
+	- Applied patch by Dave Cramer fixing several bugs in compatlib.
 	- Set ecpg version to 3.0.0
 	- Set ecpg library to 4.0.0
 	- Set pgtypes library to 1.0.0

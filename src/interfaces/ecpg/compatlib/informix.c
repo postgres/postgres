@@ -59,11 +59,10 @@ deccall3(decimal * arg1, decimal * arg2, decimal * result, int (*ptr) (numeric *
 			   *nres;
 	int			i;
 
-	if (risnull(CDECIMALTYPE, (char *) arg1) || risnull(CDECIMALTYPE, (char *) arg2))
-	{
+	/* set it to null in case it errors out later */
 		rsetnull(CDECIMALTYPE, (char *) result);
+	if (risnull(CDECIMALTYPE, (char *) arg1) || risnull(CDECIMALTYPE, (char *) arg2))
 		return 0;
-	}
 
 	if ((a1 = PGTYPESnumeric_new()) == NULL)
 		return ECPG_INFORMIX_OUT_OF_MEMORY;
@@ -263,9 +262,13 @@ deccvlong(long lng, decimal * np)
 }
 
 int
-decdiv(decimal * n1, decimal * n2, decimal * n3)
+decdiv(decimal * n1, decimal * n2, decimal * result)
 {
-	int			i = deccall3(n1, n2, n3, PGTYPESnumeric_div);
+	
+	int			i;
+
+	rsetnull(CDECIMALTYPE, (char *) result);
+	i = deccall3(n1, n2, result, PGTYPESnumeric_div);
 
 	if (i != 0)
 		switch (errno)
@@ -285,9 +288,12 @@ decdiv(decimal * n1, decimal * n2, decimal * n3)
 }
 
 int
-decmul(decimal * n1, decimal * n2, decimal * n3)
+decmul(decimal * n1, decimal * n2, decimal * result)
 {
-	int			i = deccall3(n1, n2, n3, PGTYPESnumeric_mul);
+	int			i;
+	
+	rsetnull(CDECIMALTYPE, (char *) result);	
+	i = deccall3(n1, n2, result, PGTYPESnumeric_mul);
 
 	if (i != 0)
 		switch (errno)
@@ -304,9 +310,12 @@ decmul(decimal * n1, decimal * n2, decimal * n3)
 }
 
 int
-decsub(decimal * n1, decimal * n2, decimal * n3)
+decsub(decimal * n1, decimal * n2, decimal * result)
 {
-	int			i = deccall3(n1, n2, n3, PGTYPESnumeric_sub);
+	int			i;
+	
+	rsetnull(CDECIMALTYPE, (char *) result);
+	i = deccall3(n1, n2, result, PGTYPESnumeric_sub);
 
 	if (i != 0)
 		switch (errno)
@@ -341,7 +350,7 @@ dectoasc(decimal * np, char *cp, int len, int right)
 	if (right >= 0)
 		str = PGTYPESnumeric_to_asc(nres, right);
 	else
-		str = PGTYPESnumeric_to_asc(nres, -1);
+		str = PGTYPESnumeric_to_asc(nres, nres->dscale);
 
 	PGTYPESnumeric_free(nres);
 	if (!str)
@@ -431,10 +440,60 @@ rdatestr(date d, char *str)
 	return 0;
 }
 
+/*
+*
+* the input for this function is mmddyyyy and any non-numeric
+* character can be used as a separator
+*
+*/
 int
 rstrdate(char *str, date * d)
 {
-	date		dat = PGTYPESdate_from_asc(str, NULL);
+	date		dat;
+	char strbuf[10];
+	int i,j;
+
+	rsetnull(CDATETYPE, (char *)&dat);	
+	/* 
+	* we have to flip the year month date around for postgres
+	* expects yyyymmdd
+	*
+	*/
+	
+	for (i=0,j=0; i < 10; i++ )
+	{
+		/* ignore non-digits */
+		if ( isdigit(str[i]) )
+		{
+			
+			/* j only increments if it is a digit */
+			switch(j)
+			{
+				/* stick the month into the 4th, 5th position */
+				case 0:
+				case 1:
+					strbuf[j+4] = str[i];
+					break;
+				/* stick the day into the 6th, and 7th position */
+				case 2:
+				case 3:
+					strbuf[j+4] = str[i];
+					break;
+
+				/* stick the year into the first 4 positions */
+				case 4:
+				case 5:
+				case 6:
+				case 7:
+					strbuf[j-4] = str[i];
+					break;
+				
+			}
+			j++;
+		} 
+	}	
+	strbuf[8] = '\0';
+	dat = PGTYPESdate_from_asc(strbuf, NULL);
 
 	if (errno && errno != PGTYPES_DATE_BAD_DATE)
 		return ECPG_INFORMIX_BAD_DATE;
@@ -617,7 +676,7 @@ initValue(long lng_val)
 	value.maxdigits = log10(2) * (8 * sizeof(long) - 1);
 
 	/* determine the number of digits */
-	for (i = 1; i <= value.maxdigits; i++)
+	for (i = 0; i <= value.maxdigits; i++)
 	{
 		if ((int) (value.val / pow(10, i)) != 0)
 			value.digits = i + 1;
@@ -635,8 +694,6 @@ initValue(long lng_val)
 	}
 	/* safety-net */
 	value.val_string[value.digits] = '\0';
-	/* clean up */
-	free(tmp);
 }
 
 /* return the position oft the right-most dot in some string */
