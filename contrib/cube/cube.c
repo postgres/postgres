@@ -121,8 +121,15 @@ cube_out(NDBOX * cube)
 	bool		equal = true;
 	int			dim = cube->dim;
 	int			i;
+	int		ndig;
 
 	initStringInfo(&buf);
+
+	/*
+	 * Get the number of digits to display.
+	 */
+	ndig = DBL_DIG + extra_float_digits;
+	if (ndig < 1) ndig = 1;
 
 	/*
 	 * while printing the first (LL) corner, check if it is equal to the
@@ -133,7 +140,7 @@ cube_out(NDBOX * cube)
 	{
 		if (i > 0)
 			appendStringInfo(&buf, ", ");
-		appendStringInfo(&buf, "%.16g", cube->x[i]);
+		appendStringInfo(&buf, "%.*g", ndig, cube->x[i]);
 		if (cube->x[i] != cube->x[i + dim])
 			equal = false;
 	}
@@ -146,7 +153,7 @@ cube_out(NDBOX * cube)
 		{
 			if (i > 0)
 				appendStringInfo(&buf, ", ");
-			appendStringInfo(&buf, "%.16g", cube->x[i + dim]);
+			appendStringInfo(&buf, "%.*g", ndig, cube->x[i + dim]);
 		}
 		appendStringInfoChar(&buf, ')');
 	}
