@@ -18,7 +18,7 @@ Content-Type: TEXT/PLAIN; charset=US-ASCII
 X-Sender: 520083510237-0001@t-dialin.net
 X-Archive-Number: 200104/704
 X-Sequence-Number: 7734
-Status: OR
+Status: RO
 
 Oldtimers might recall the last thread about enhancements of the access
 privilege system.  See
@@ -111,7 +111,7 @@ User-Agent: Mutt/1.0i
 In-Reply-To: <Pine.LNX.4.30.0104182009040.762-100000@peter.localdomain>; from peter_e@gmx.net on Thu, Apr 19, 2001 at 05:58:12PM +0200
 Precedence: bulk
 Sender: pgsql-hackers-owner@postgresql.org
-Status: OR
+Status: RO
 
 So, this will remove the relacl field from pg_class, making pg_class
 a fixed tuple-length table: that might actually speed access: there
@@ -176,7 +176,7 @@ Content-Type: text/plain; charset=us-ascii
 Content-Transfer-Encoding: 7bit
 Precedence: bulk
 Sender: pgsql-hackers-owner@postgresql.org
-Status: OR
+Status: RO
 
 Peter Eisentraut wrote:
 
@@ -285,7 +285,7 @@ Content-Type: TEXT/PLAIN; charset=US-ASCII
 X-Sender: 520083510237-0001@t-dialin.net
 Precedence: bulk
 Sender: pgsql-hackers-owner@postgresql.org
-Status: OR
+Status: RO
 
 Mike Mascari writes:
 
@@ -386,7 +386,7 @@ Message-ID: <22759.987717206@sss.pgh.pa.us>
 From: Tom Lane <tgl@sss.pgh.pa.us>
 Precedence: bulk
 Sender: pgsql-hackers-owner@postgresql.org
-Status: OR
+Status: RO
 
 Peter Eisentraut <peter_e@gmx.net> writes:
 > pg_privilege (
@@ -475,7 +475,7 @@ Content-Type: text/plain; charset=us-ascii
 Content-Transfer-Encoding: 7bit
 Precedence: bulk
 Sender: pgsql-hackers-owner@postgresql.org
-Status: OR
+Status: RO
 
 First, let me say that just because Oracle does it this way doesn't make
 it better but...
@@ -662,7 +662,7 @@ Content-Type: TEXT/PLAIN; charset=US-ASCII
 X-Sender: 520083510237-0001@t-dialin.net
 Precedence: bulk
 Sender: pgsql-hackers-owner@postgresql.org
-Status: OR
+Status: RO
 
 Tom Lane writes:
 
@@ -745,7 +745,7 @@ Message-ID: <26834.987784546@sss.pgh.pa.us>
 From: Tom Lane <tgl@sss.pgh.pa.us>
 Precedence: bulk
 Sender: pgsql-hackers-owner@postgresql.org
-Status: OR
+Status: RO
 
 Peter Eisentraut <peter_e@gmx.net> writes:
 >> Alternatively, since you really only need two bits per privilege,
@@ -792,522 +792,4 @@ seems like a needed component.
 TIP 5: Have you checked our extensive FAQ?
 
 http://www.postgresql.org/users-lounge/docs/faq.html
-
-From pgsql-hackers-owner+M4091@postgresql.org Mon Jan 29 17:00:26 2001
-Received: from mail.postgresql.org (webmail.postgresql.org [216.126.85.28])
-	by candle.pha.pa.us (8.9.0/8.9.0) with ESMTP id SAA13925
-	for <pgman@candle.pha.pa.us>; Mon, 29 Jan 2001 18:00:25 -0500 (EST)
-Received: from mail.postgresql.org (webmail.postgresql.org [216.126.85.28])
-	by mail.postgresql.org (8.11.1/8.11.1) with SMTP id f0TMq7q43267;
-	Mon, 29 Jan 2001 17:52:07 -0500 (EST)
-	(envelope-from pgsql-hackers-owner+M4091@postgresql.org)
-Received: from ara.zf.jcu.cz (ara.zf.jcu.cz [160.217.161.4])
-	by mail.postgresql.org (8.11.1/8.11.1) with ESMTP id f0TMbYq42245
-	for <pgsql-hackers@postgreSQL.org>; Mon, 29 Jan 2001 17:37:34 -0500 (EST)
-	(envelope-from zakkr@zf.jcu.cz)
-Received: from localhost (zakkr@localhost)
-	by ara.zf.jcu.cz (8.9.3/8.9.3/Debian 8.9.3-21) with SMTP id XAA32063;
-	Mon, 29 Jan 2001 23:37:08 +0100
-Date: Mon, 29 Jan 2001 23:37:08 +0100 (CET)
-From: Karel Zak <zakkr@zf.jcu.cz>
-To: =?koi8-r?B?7cHL08nNIO0uIPDPzNHLz9c=?= <max@bresttelecom.by>
-cc: pgsql-hackers <pgsql-hackers@postgresql.org>
-Subject: [HACKERS] NOCREATETABLE patch (was: Re: Please, help!(about Postgres))
-In-Reply-To: <005d01c08772$de689030$1e01a8c0@bresttelecom>
-Message-ID: <Pine.LNX.3.96.1010129230017.31607B-100000@ara.zf.jcu.cz>
-MIME-Version: 1.0
-Content-Type: TEXT/PLAIN; charset=ISO-8859-2
-Content-Transfer-Encoding: 8bit
-X-MIME-Autoconverted: from QUOTED-PRINTABLE to 8bit by mail.postgresql.org id f0TMbYq42246
-Precedence: bulk
-Sender: pgsql-hackers-owner@postgresql.org
-Status: ORr
-
-
-On Fri, 26 Jan 2001, [koi8-r] Максим М. Поляков wrote:
-
->     Good Day, Dear Karel Zak!
-> 
-> Please, forgive me for my bad english and if i do not right with your 
-> day time.
-
-my English is more poor :-) 
-
- You are right, it is (was?) in TODO and it will implemented - I hope - 
-in some next release (may be in 7.2 during ACL overhaul, Peter?). 
-
-Before some time I wrote patch that resolve it for 7.0.2 (anyone -
-I forgot his name..)  port it to 7.0.2, my original patch was for 7.0.0. 
-May be will possible use it for last stable 7.0.3 too. 
-
-The patch is at:
-	 ftp://ftp2.zf.jcu.cz/users/zakkr/pg/7.0.2-user.patch.gz
-
-This patch add to 7.0.2 code NOCREATETABLE and NOLOCKTABLE feature:
-
-CREATE USER username
-    [ WITH
-     [ SYSID uid ]
-     [ PASSWORD 'password' ] ]
-    [ CREATEDB   | NOCREATEDB ] [ CREATEUSER | NOCREATEUSER ]
-->  [ CREATETABLE | NOCREATETABLE ] [ LOCKTABLE | NOLOCKTABLE ]
-    ...etc.
-
- If CREATETABLE or LOCKTABLE is not specific in CREATE USER command,
-as default is set CREATETABLE or LOCKTABLE (true).
-
-
- But, don't forget - it's temporarily solution, I hope that some next
-release resolve it more systematic. More is in the patche@postgresql.org
-archive where was send original patch.
-
- Because you are not first person that ask me, I re-post (CC:) it to 
-hackers@postgresql.org, more admins happy with this :-)
-  
-				Karel
-
-> I want to ask You about "access control over who can create tables and 
-> use locks in PostgreSQL". This message was placed in PostgreSQL site 
-> TODO list. But now it was deleted. I so need help about this question, 
-> becouse i'll making a site witch will give hosting for our users. 
-> And i want to make a PostgreSQL access to their own databases. But there 
-> is (how You now) one problem. Anyone user may to connect to the different
-> user database and he may to create himself tables.
-> I don't like it.
-
-
-
-From mascarm@mascari.com Mon May  7 15:57:48 2001
-Return-path: <mascarm@mascari.com>
-Received: from corvette.mascari.com (dhcp065-024-161-045.columbus.rr.com [65.24.161.45])
-	by candle.pha.pa.us (8.10.1/8.10.1) with ESMTP id f47Jvku26379
-	for <pgman@candle.pha.pa.us>; Mon, 7 May 2001 15:57:47 -0400 (EDT)
-Received: from ferrari (ferrari.mascari.com [192.168.2.1])
-	by corvette.mascari.com (8.9.3/8.9.3) with SMTP id PAA06587;
-	Mon, 7 May 2001 15:47:59 -0400
-Received: by localhost with Microsoft MAPI; Mon, 7 May 2001 15:55:53 -0400
-Message-ID: <01C0D70E.3241C920.mascarm@mascari.com>
-From: Mike Mascari <mascarm@mascari.com>
-Reply-To: "mascarm@mascari.com" <mascarm@mascari.com>
-To: "'Bruce Momjian'" <pgman@candle.pha.pa.us>, Karel Zak <zakkr@zf.jcu.cz>
-cc: pgsql-hackers <pgsql-hackers@postgresql.org>
-Subject: RE: [HACKERS] NOCREATETABLE patch (was: Re: Please, help!(about Postgres))
-Date: Mon, 7 May 2001 15:55:52 -0400
-Organization: Mascari Development Inc.
-X-Mailer: Microsoft Internet E-mail/MAPI - 8.0.0.4211
-MIME-Version: 1.0
-Content-Type: text/plain; charset="us-ascii"
-Content-Transfer-Encoding: 7bit
-Status: OR
-
-Peter E. posted his proposal for the revamping of the 
-authentication/security system a few weeks ago. There was a 
-discussion, but I don't know if he came to any definitive 
-conclusions, such as implementing System Privileges as well as Object 
-Privileges. If he does, then the dba (or anyone who has been granted 
-GRANT ANY PRIVILEGE system privilege & CREATE USER system privilege) 
-should be able to do:
-
-CREATE USER mascarm IDENTIFIED BY manager;
-GRANT CREATE TABLE to mascarm;
-
-It would also be good if PostgreSQL came with 2 groups by default - 
-connect and dba.
-
-The connect group would be granted these System Privileges:
-
-CREATE AGGREGATE privilege
-CREATE INDEX privilege
-CREATE FUNCTION privilege
-CREATE OPERATOR privilege
-CREATE RULE privilege
-CREATE SESSION privilege
-CREATE SYNONYM privilege
-CREATE TABLE privilege
-CREATE TRIGGER privilege
-CREATE TYPE privilege
-CREATE VIEW privilege
-
-These allow the user to create the above objects in their own schema 
-only. We're getting schemas in 7.2, right? ;-).
-
-The dba group would be granted the rest, like these:
-
-CREATE ANY AGGREGATE privilege
-CREATE ANY INDEX privilege...
-(and so on)
-
-as well as:
-
-CREATE/ALTER/DROP USER
-GRANT ANY PRIVILEGE
-COMMENT ANY TABLE
-INSERT ANY TABLE
-UPDATE ANY TABLE
-DELETE ANY TABLE
-SELECT ANY TABLE
-ANALYZE ANY TABLE
-LOCK ANY TABLE
-CREATE PUBLIC SYNONYM (needed when schemas roll around)
-DROP PUBLIC SYNONYM
-(and so on)
-
-Then, the dba could do a:
-
-GRANT connect TO mascarm;
-
-Or a:
-
-CREATE USER mascarm
-IDENTIFIED BY manager
-IN GROUP connect;
-
-It seems Karel's patch is a solution to the problem of people who 
-want to create separate PostgreSQL user accounts, but want to ensure 
-that a user can't create tables. In Oracle, I would just do a:
-
-CREATE USER mascarm
-IDENTIFIED BY manager;
-
-GRANT CREATE SESSION TO mascarm;
-
-Now mascarm has the ability to connect, but that's it.
-
-Currently, if I know for instance that a background process DROPS a 
-table, CREATES a new one, and then imports some data, I can create my 
-own table by the same name, in between the DROP and CREATE and can 
-cause havoc (if its not done in a single transaction). Hopefully 
-Peter E's ACL design will allow for Oracle-like System Privileges to 
-take place. That would allow for a much finer granularity of 
-permissions then everyone either being the Unix equivalent of 'root' 
-or 'user'.
-
-Just my humble opinion though,
-
-Mike Mascari
-mascarm@mascari.com
-
------Original Message-----
-From:	Bruce Momjian [SMTP:pgman@candle.pha.pa.us]
-
-Can someone remind me what we are going to do with this?
-
-
-[ Charset ISO-8859-2 unsupported, converting... ]
->
-> On Fri, 26 Jan 2001, [koi8-r] ______ _. _______ wrote:
->
-> >     Good Day, Dear Karel Zak!
-> >
-> > Please, forgive me for my bad english and if i do not right with 
-your
-> > day time.
->
-> my English is more poor :-)
->
->  You are right, it is (was?) in TODO and it will implemented - I 
-hope -
-> in some next release (may be in 7.2 during ACL overhaul, Peter?).
->
-> Before some time I wrote patch that resolve it for 7.0.2 (anyone -
-> I forgot his name..)  port it to 7.0.2, my original patch was for 
-7.0.0.
-> May be will possible use it for last stable 7.0.3 too.
->
-> The patch is at:
-> 	 ftp://ftp2.zf.jcu.cz/users/zakkr/pg/7.0.2-user.patch.gz
->
-> This patch add to 7.0.2 code NOCREATETABLE and NOLOCKTABLE feature:
->
-> CREATE USER username
->     [ WITH
->      [ SYSID uid ]
->      [ PASSWORD 'password' ] ]
->     [ CREATEDB   | NOCREATEDB ] [ CREATEUSER | NOCREATEUSER ]
-> ->  [ CREATETABLE | NOCREATETABLE ] [ LOCKTABLE | NOLOCKTABLE ]
->     ...etc.
->
->  If CREATETABLE or LOCKTABLE is not specific in CREATE USER 
-command,
-> as default is set CREATETABLE or LOCKTABLE (true).
->
->
->  But, don't forget - it's temporarily solution, I hope that some 
-next
-> release resolve it more systematic. More is in the 
-patche@postgresql.org
-> archive where was send original patch.
->
->  Because you are not first person that ask me, I re-post (CC:) it 
-to
-> hackers@postgresql.org, more admins happy with this :-)
->
-> 				Karel
->
-> > I want to ask You about "access control over who can create 
-tables and
-> > use locks in PostgreSQL". This message was placed in PostgreSQL 
-site
-> > TODO list. But now it was deleted. I so need help about this 
-question,
-> > becouse i'll making a site witch will give hosting for our users. 
-> > And i want to make a PostgreSQL access to their own databases. 
-But there
-> > is (how You now) one problem. Anyone user may to connect to the 
-different
-> > user database and he may to create himself tables.
-> > I don't like it.
->
->
->
-
---
-  Bruce Momjian                        |  http://candle.pha.pa.us
-  pgman@candle.pha.pa.us               |  (610) 853-3000
-  +  If your life is a hard drive,     |  830 Blythe Avenue
-  +  Christ can be your backup.        |  Drexel Hill, Pennsylvania 
-19026
-
-
-
-From tgl@sss.pgh.pa.us Mon May  7 17:33:41 2001
-Return-path: <tgl@sss.pgh.pa.us>
-Received: from sss.pgh.pa.us (tgl@sss.pgh.pa.us [216.151.103.158])
-	by candle.pha.pa.us (8.10.1/8.10.1) with ESMTP id f47LXeu02566
-	for <pgman@candle.pha.pa.us>; Mon, 7 May 2001 17:33:40 -0400 (EDT)
-Received: from sss2.sss.pgh.pa.us (tgl@localhost [127.0.0.1])
-	by sss.pgh.pa.us (8.11.3/8.11.3) with ESMTP id f47LXgR23236;
-	Mon, 7 May 2001 17:33:42 -0400 (EDT)
-To: Bruce Momjian <pgman@candle.pha.pa.us>
-cc: Karel Zak <zakkr@zf.jcu.cz>,
-   =?KOI8-R?Q?=ED=C1=CB=D3=C9=CD_=ED=2E_=F0=CF=CC=D1=CB=CF=D7?= <max@bresttelecom.by>,
-   pgsql-hackers <pgsql-hackers@postgresql.org>
-Subject: Re: [HACKERS] NOCREATETABLE patch (was: Re: Please, help!(about Postgres)) 
-In-Reply-To: <200105071848.f47ImBh20345@candle.pha.pa.us> 
-References: <200105071848.f47ImBh20345@candle.pha.pa.us>
-Comments: In-reply-to Bruce Momjian <pgman@candle.pha.pa.us>
-	message dated "Mon, 07 May 2001 14:48:11 -0400"
-Date: Mon, 07 May 2001 17:33:42 -0400
-Message-ID: <23233.989271222@sss.pgh.pa.us>
-From: Tom Lane <tgl@sss.pgh.pa.us>
-Status: OR
-
-Bruce Momjian <pgman@candle.pha.pa.us> writes:
-> Can someone remind me what we are going to do with this?
-
-I'd like to see some effort put into implementing the SQL-standard
-privilege model, rather than adding yet more ad-hoc user properties.
-The more of these we make, the more painful it's going to be to meet
-the spec later.
-
-Possibly, after we have the SQL semantics we'll still feel that we
-need some additional features ... but how about spec first and
-extensions afterwards?
-
-			regards, tom lane
-
-From zakkr@zf.jcu.cz Wed May  9 05:12:41 2001
-Return-path: <zakkr@zf.jcu.cz>
-Received: from ara.zf.jcu.cz (zakkr@ara.zf.jcu.cz [160.217.161.4])
-	by candle.pha.pa.us (8.10.1/8.10.1) with ESMTP id f499Cbu05406
-	for <pgman@candle.pha.pa.us>; Wed, 9 May 2001 05:12:37 -0400 (EDT)
-Received: (from zakkr@localhost)
-	by ara.zf.jcu.cz (8.9.3/8.9.3/Debian 8.9.3-21) id LAA20000;
-	Wed, 9 May 2001 11:12:35 +0200
-Date: Wed, 9 May 2001 11:12:35 +0200
-From: Karel Zak <zakkr@zf.jcu.cz>
-To: Bruce Momjian <pgman@candle.pha.pa.us>
-cc: pgsql-hackers <pgsql-hackers@postgresql.org>
-Subject: Re: [HACKERS] NOCREATETABLE patch (was: Re: Please, help!(about Postgres))
-Message-ID: <20010509111235.A18101@ara.zf.jcu.cz>
-References: <Pine.LNX.3.96.1010129230017.31607B-100000@ara.zf.jcu.cz> <200105071848.f47ImBh20345@candle.pha.pa.us>
-MIME-Version: 1.0
-Content-Type: text/plain; charset=us-ascii
-User-Agent: Mutt/1.0.1i
-In-Reply-To: <200105071848.f47ImBh20345@candle.pha.pa.us>; from pgman@candle.pha.pa.us on Mon, May 07, 2001 at 02:48:11PM -0400
-Status: ORr
-
-On Mon, May 07, 2001 at 02:48:11PM -0400, Bruce Momjian wrote:
-> 
-> Can someone remind me what we are going to do with this?
-> 
-> > This patch add to 7.0.2 code NOCREATETABLE and NOLOCKTABLE feature:
-
-
- It's my old patch, it's usable and some people use it for 7.0.x. But 
-it's really temporary solution and it was 1 day in official CVS :-) 
-We remove it after discussion with Peter E. More correct will implement 
-better privilege system.
-
- A privilege system is *very* important for real multiuser and 
-sophisticated systems. For example if you compare PostgreSQL with Oracle, 
-the PostgreSQL is really not winner in this part. Peter has some idea
-about it and Jan sent something about it too, but I not sure if somebody
-works on this and plannig it for some next release (or...? -- will good 
-if I not right:-) 
-
-			Karel 
-
-From pgsql-hackers-owner+M8485@postgresql.org Wed May  9 10:11:53 2001
-Return-path: <pgsql-hackers-owner+M8485@postgresql.org>
-Received: from postgresql.org (webmail.postgresql.org [216.126.85.28])
-	by candle.pha.pa.us (8.10.1/8.10.1) with ESMTP id f49EBqu24085
-	for <pgman@candle.pha.pa.us>; Wed, 9 May 2001 10:11:52 -0400 (EDT)
-Received: from postgresql.org.org (webmail.postgresql.org [216.126.85.28])
-	by postgresql.org (8.11.3/8.11.1) with SMTP id f49EBiA44525;
-	Wed, 9 May 2001 10:11:44 -0400 (EDT)
-	(envelope-from pgsql-hackers-owner+M8485@postgresql.org)
-Received: from corvette.mascari.com (dhcp065-024-161-045.columbus.rr.com [65.24.161.45])
-	by postgresql.org (8.11.3/8.11.1) with ESMTP id f49DVoA25183
-	for <pgsql-hackers@postgresql.org>; Wed, 9 May 2001 09:31:51 -0400 (EDT)
-	(envelope-from mascarm@mascari.com)
-Received: from ferrari (ferrari.mascari.com [192.168.2.1])
-	by corvette.mascari.com (8.9.3/8.9.3) with SMTP id JAA11700;
-	Wed, 9 May 2001 09:20:46 -0400
-Received: by localhost with Microsoft MAPI; Wed, 9 May 2001 09:29:01 -0400
-Message-ID: <01C0D86A.7B6E19C0.mascarm@mascari.com>
-From: Mike Mascari <mascarm@mascari.com>
-Reply-To: "mascarm@mascari.com" <mascarm@mascari.com>
-To: "'Zeugswetter Andreas SB'" <ZeugswetterA@wien.spardat.at>,
-   "'Bruce Momjian'"
-  <pgman@candle.pha.pa.us>
-cc: Karel Zak <zakkr@zf.jcu.cz>,
-   pgsql-hackers
-  <pgsql-hackers@postgresql.org>
-Subject: RE: [HACKERS] NOCREATETABLE patch (was: Re: Please, help!(about P	ostgres))
-Date: Wed, 9 May 2001 09:29:01 -0400
-Organization: Mascari Development Inc.
-X-Mailer: Microsoft Internet E-mail/MAPI - 8.0.0.4211
-MIME-Version: 1.0
-Content-Type: text/plain; charset="us-ascii"
-Content-Transfer-Encoding: 7bit
-Precedence: bulk
-Sender: pgsql-hackers-owner@postgresql.org
-Status: OR
-
-That makes perfect sense to me. I was only going by what System 
-Privileges are granted to the Oracle roles of the same name. Oracle 
-has:
-
-CONNECT -
-ALTER SESSION	
-CREATE CLUSTER	
-CREATE DATABASE LINK	
-CREATE SEQUENCE	
-CREATE SESSION	
-CREATE SYNONYM	
-CREATE TABLE	
-CREATE VIEW	
-
-RESOURCE -
-CREATE CLUSTER	
-CREATE PROCEDURE	
-CREATE SEQUENCE	
-CREATE TABLE	
-CREATE TRIGGER	
-
-DBA -
-All systems privileges WITH ADMIN OPTION	
-
-But I agree with you. When I was first learning Oracle, I thought it 
-strange that the CONNECT role had anything more than CREATE/ALTER 
-SESSION privilege.
-
-Mike Mascari
-mascarm@mascari.com
-
------Original Message-----
-From:	Zeugswetter Andreas SB [SMTP:ZeugswetterA@wien.spardat.at]
-Sent:	Wednesday, May 09, 2001 3:20 AM
-To:	'Bruce Momjian'; mascarm@mascari.com
-Cc:	Karel Zak; pgsql-hackers
-Subject:	AW: [HACKERS] NOCREATETABLE patch (was: Re: Please, 
-help!(about P	ostgres))
-
-
-> > The connect group would be granted these System Privileges:
-
-If we keep it like others (e.g. Informix) this System Privilege would 
-be called
-"resource". I like this name better, because it more describes the 
-detailed
-priviledges.
-
-> >
-> > CREATE AGGREGATE privilege
-> > CREATE INDEX privilege
-> > CREATE FUNCTION privilege
-> > CREATE OPERATOR privilege
-> > CREATE RULE privilege
-> > CREATE SESSION privilege
-> > CREATE SYNONYM privilege
-> > CREATE TABLE privilege
-> > CREATE TRIGGER privilege
-> > CREATE TYPE privilege
-> > CREATE VIEW privilege
-
-The "connect" group would only have the priviledge to connect to the 
-db [and
-create temp tables ?] and rights they where granted, or that were 
-granted to public.
-They would not be allowed to create anything.
-
-Andreas
-
-
----------------------------(end of broadcast)---------------------------
-TIP 6: Have you searched our list archives?
-
-http://www.postgresql.org/search.mpl
-
-From ZeugswetterA@wien.spardat.at Wed May  9 03:21:37 2001
-Return-path: <ZeugswetterA@wien.spardat.at>
-Received: from fizbanrsm.server.lan.at (zep4.it-austria.net [213.150.1.74])
-	by candle.pha.pa.us (8.10.1/8.10.1) with ESMTP id f497LZu00341
-	for <pgman@candle.pha.pa.us>; Wed, 9 May 2001 03:21:35 -0400 (EDT)
-Received: from gz0153.gc.spardat.at (gz0153.gc.spardat.at [172.20.10.149])
-	by fizbanrsm.server.lan.at (8.11.2/8.11.2) with ESMTP id f497LSl28442
-	for <pgman@candle.pha.pa.us>; Wed, 9 May 2001 09:21:28 +0200
-Received: by sdexcgtw01.f000.d0188.sd.spardat.at with Internet Mail Service (5.5.2650.21)
-	id <KJFDP52V>; Wed, 9 May 2001 09:20:30 +0200
-Message-ID: <11C1E6749A55D411A9670001FA6879633682BB@sdexcsrv1.f000.d0188.sd.spardat.at>
-From: Zeugswetter Andreas SB  <ZeugswetterA@wien.spardat.at>
-To: "'Bruce Momjian'" <pgman@candle.pha.pa.us>, mascarm@mascari.com
-cc: Karel Zak <zakkr@zf.jcu.cz>,
-   pgsql-hackers
-  <pgsql-hackers@postgresql.org>
-Subject: AW: [HACKERS] NOCREATETABLE patch (was: Re: Please, help!(about P
-	ostgres))
-Date: Wed, 9 May 2001 09:20:28 +0200 
-MIME-Version: 1.0
-X-Mailer: Internet Mail Service (5.5.2650.21)
-Content-Type: text/plain;
-	charset="iso-8859-1"
-Status: OR
-
-
-> > The connect group would be granted these System Privileges:
-
-If we keep it like others (e.g. Informix) this System Privilege would be called
-"resource". I like this name better, because it more describes the detailed 
-priviledges.
-
-> > 
-> > CREATE AGGREGATE privilege
-> > CREATE INDEX privilege
-> > CREATE FUNCTION privilege
-> > CREATE OPERATOR privilege
-> > CREATE RULE privilege
-> > CREATE SESSION privilege
-> > CREATE SYNONYM privilege
-> > CREATE TABLE privilege
-> > CREATE TRIGGER privilege
-> > CREATE TYPE privilege
-> > CREATE VIEW privilege
-
-The "connect" group would only have the priviledge to connect to the db [and
-create temp tables ?] and rights they where granted, or that were granted to public.
-They would not be allowed to create anything.
-
-Andreas
 
