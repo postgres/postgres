@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/mmgr/mcxt.c,v 1.12 1999/02/13 23:20:10 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/mmgr/mcxt.c,v 1.13 1999/03/22 16:45:27 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -67,7 +67,7 @@ static OrderedSetData ActiveGlobalMemorySetData;		/* uninitialized */
  * CurrentMemoryContext 
  *		Memory context for general global allocations.
  */
-MemoryContext CurrentMemoryContext = NULL;
+DLLIMPORT MemoryContext CurrentMemoryContext = NULL;
 
 /*****************************************************************************
  *	  PRIVATE DEFINITIONS													 *

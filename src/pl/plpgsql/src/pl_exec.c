@@ -3,7 +3,7 @@
  *			  procedural language
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/pl/plpgsql/src/pl_exec.c,v 1.7 1999/02/03 21:17:58 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/pl/plpgsql/src/pl_exec.c,v 1.8 1999/03/22 16:45:30 momjian Exp $
  *
  *	  This software is copyrighted by Jan Wieck - Hamburg.
  *
@@ -75,7 +75,7 @@
 #define siglongjmp		longjmp
 #endif
 
-extern sigjmp_buf Warn_restart; /* in tcop/postgres.c */
+extern DLLIMPORT sigjmp_buf Warn_restart; /* in tcop/postgres.c */
 
 static PLpgSQL_function *error_info_func = NULL;
 static PLpgSQL_stmt *error_info_stmt = NULL;

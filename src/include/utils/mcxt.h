@@ -6,7 +6,7 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: mcxt.h,v 1.13 1999/03/07 23:03:31 tgl Exp $
+ * $Id: mcxt.h,v 1.14 1999/03/22 16:45:28 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -22,7 +22,7 @@ typedef struct MemoryContextData *MemoryContext;
 typedef struct GlobalMemoryData *GlobalMemory;
 
 
-extern MemoryContext CurrentMemoryContext;
+extern DLLIMPORT MemoryContext CurrentMemoryContext;
 extern MemoryContext TopMemoryContext;
 
 
