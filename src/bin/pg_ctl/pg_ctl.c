@@ -4,7 +4,7 @@
  *
  * Portions Copyright (c) 1996-2004, PostgreSQL Global Development Group
  *
- * $PostgreSQL: pgsql/src/bin/pg_ctl/pg_ctl.c,v 1.40 2004/10/16 03:32:08 momjian Exp $
+ * $PostgreSQL: pgsql/src/bin/pg_ctl/pg_ctl.c,v 1.41 2004/10/19 13:38:53 petere Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -489,7 +489,7 @@ do_start(void)
 		}
 		else if (optlines[0] == NULL || optlines[1] != NULL)
 		{
-			write_stderr(_("%s: option file \"%s\" must have exactly 1 line\n"),
+			write_stderr(_("%s: option file \"%s\" must have exactly one line\n"),
 						 progname, ctl_command == RESTART_COMMAND ?
 						 postopts_file : def_postopts_file);
 			exit(1);
@@ -583,7 +583,10 @@ do_start(void)
 		if (test_postmaster_connection() == false)
 			printf(_("could not start postmaster\n"));
 		else
-			print_msg(_(" done\npostmaster started\n"));
+		{
+			print_msg(_(" done\n"));
+			print_msg(_("postmaster started\n"));
+		}
 	}
 	else
 		print_msg(_("postmaster starting\n"));
@@ -669,7 +672,8 @@ do_restart(void)
 	if (pid == 0)				/* no pid file */
 	{
 		write_stderr(_("%s: PID file \"%s\" does not exist\n"), progname, pid_file);
-		write_stderr(_("Is postmaster running?\nstarting postmaster anyway\n"));
+		write_stderr(_("Is postmaster running?\n"));
+		write_stderr(_("starting postmaster anyway\n"));
 		do_start();
 		return;
 	}
@@ -743,8 +747,8 @@ do_reload(void)
 
 	if (kill((pid_t) pid, sig) != 0)
 	{
-		write_stderr(_("could not send reload signal (PID: %ld): %s\n"), pid,
-					 strerror(errno));
+		write_stderr(_("%s: could not send reload signal (PID: %ld): %s\n"),
+					 progname, pid, strerror(errno));
 		exit(1);
 	}
 
@@ -763,7 +767,7 @@ do_status(void)
 	pid = get_pgpid();
 	if (pid == 0)				/* no pid file */
 	{
-		write_stderr(_("%s: postmaster or postgres not running\n"), progname);
+		write_stderr(_("%s: neither postmaster nor postgres running\n"), progname);
 		exit(1);
 	}
 	else if (pid < 0)			/* standalone backend */
@@ -818,13 +822,22 @@ pgwin32_CommandLine(bool registration)
 	int			ret;
 
 	if (registration)
-		ret = find_my_exec(argv0, cmdLine);
-	else
-		ret = find_other_exec(argv0, "postmaster", PM_VERSIONSTR, cmdLine);
-	if (ret != 0)
 	{
-		write_stderr(_("%s: could not find exe"), progname);
-		exit(1);
+		ret = find_my_exec(argv0, cmdLine);
+		if (ret != 0)
+		{
+			write_stderr(_("%s: could not find own program executable\n"), progname);
+			exit(1);
+		}
+	}
+	else
+	{
+		ret = find_other_exec(argv0, "postmaster", PM_VERSIONSTR, cmdLine);
+		if (ret != 0)
+		{
+			write_stderr(_("%s: could not find postmaster program executable\n"), progname);
+			exit(1);
+		}
 	}
 
 	if (registration)
@@ -887,7 +900,7 @@ pgwin32_doRegister(void)
 	NULL, NULL, "RPCSS\0", register_username, register_password)) == NULL)
 	{
 		CloseServiceHandle(hSCM);
-		write_stderr(_("%s: could not register service \"%s\" [%d]\n"), progname, register_servicename, (int) GetLastError());
+		write_stderr(_("%s: could not register service \"%s\": error code %d\n"), progname, register_servicename, (int) GetLastError());
 		exit(1);
 	}
 	CloseServiceHandle(hService);
@@ -915,14 +928,14 @@ pgwin32_doUnregister(void)
 	if ((hService = OpenService(hSCM, register_servicename, DELETE)) == NULL)
 	{
 		CloseServiceHandle(hSCM);
-		write_stderr(_("%s: could not open service \"%s\" [%d]\n"), progname, register_servicename, (int) GetLastError());
+		write_stderr(_("%s: could not open service \"%s\": error code %d\n"), progname, register_servicename, (int) GetLastError());
 		exit(1);
 	}
 	if (!DeleteService(hService))
 	{
 		CloseServiceHandle(hService);
 		CloseServiceHandle(hSCM);
-		write_stderr(_("%s: could not unregister service \"%s\" [%d]\n"), progname, register_servicename, (int) GetLastError());
+		write_stderr(_("%s: could not unregister service \"%s\": error code %d\n"), progname, register_servicename, (int) GetLastError());
 		exit(1);
 	}
 	CloseServiceHandle(hService);
@@ -1059,7 +1072,7 @@ pgwin32_doRunAsService(void)
 static void
 do_advice(void)
 {
-	write_stderr(_("\nTry \"%s --help\" for more information.\n"), progname);
+	write_stderr(_("Try \"%s --help\" for more information.\n"), progname);
 }
 
 
@@ -1068,47 +1081,55 @@ static void
 do_help(void)
 {
 	printf(_("%s is a utility to start, stop, restart, reload configuration files,\n"
-			 "report the status of a PostgreSQL server, or kill a PostgreSQL process\n\n"), progname);
+			 "report the status of a PostgreSQL server, or signal a PostgreSQL process.\n\n"), progname);
 	printf(_("Usage:\n"));
 	printf(_("  %s start   [-w] [-D DATADIR] [-s] [-l FILENAME] [-o \"OPTIONS\"]\n"), progname);
 	printf(_("  %s stop    [-W] [-D DATADIR] [-s] [-m SHUTDOWN-MODE]\n"), progname);
 	printf(_("  %s restart [-w] [-D DATADIR] [-s] [-m SHUTDOWN-MODE] [-o \"OPTIONS\"]\n"), progname);
 	printf(_("  %s reload  [-D DATADIR] [-s]\n"), progname);
 	printf(_("  %s status  [-D DATADIR]\n"), progname);
-	printf(_("  %s kill    SIGNALNAME PROCESSID\n"), progname);
+	printf(_("  %s kill    SIGNALNAME PID\n"), progname);
 #if defined(WIN32) || defined(__CYGWIN__)
-	printf(_("  %s register   [-N SERVICENAME] [-U USERNAME] [-P PASSWORD] [-D DATADIR] [-w] [-o \"OPTIONS\"]\n"), progname);
+	printf(_("  %s register   [-N SERVICENAME] [-U USERNAME] [-P PASSWORD] [-D DATADIR]\n"
+			 "                    [-w] [-o \"OPTIONS\"]\n"), progname);
 	printf(_("  %s unregister [-N SERVICENAME]\n"), progname);
 #endif
-	printf(_("Common options:\n"));
+
+	printf(_("\nCommon options:\n"));
 	printf(_("  -D, --pgdata DATADIR   location of the database storage area\n"));
-	printf(_("  -s, --silent only print errors, no informational messages\n"));
-#if defined(WIN32) || defined(__CYGWIN__)
-	printf(_("  -N       service name with which to register PostgreSQL server\n"));
-	printf(_("  -P       password of account to register PostgreSQL server\n"));
-	printf(_("  -U       user name of account to register PostgreSQL server\n"));
-#endif
-	printf(_("  -w           wait until operation completes\n"));
-	printf(_("  -W           do not wait until operation completes\n"));
-	printf(_("  --help       show this help, then exit\n"));
-	printf(_("  --version    output version information, then exit\n"));
+	printf(_("  -s, --silent           only print errors, no informational messages\n"));
+	printf(_("  -w                     wait until operation completes\n"));
+	printf(_("  -W                     do not wait until operation completes\n"));
+	printf(_("  --help                 show this help, then exit\n"));
+	printf(_("  --version              output version information, then exit\n"));
 	printf(_("(The default is to wait for shutdown, but not for start or restart.)\n\n"));
-	printf(_("If the -D option is omitted, the environment variable PGDATA is used.\n\n"));
-	printf(_("Options for start or restart:\n"));
-	printf(_("  -l, --log FILENAME      write (or append) server log to FILENAME.  The\n"
-			 "                          use of this option is highly recommended.\n"));
-	printf(_("  -o OPTIONS              command line options to pass to the postmaster\n"
-		  "                          (PostgreSQL server executable)\n"));
-	printf(_("  -p PATH-TO-POSTMASTER   normally not necessary\n\n"));
-	printf(_("Options for stop or restart:\n"));
-	printf(_("  -m SHUTDOWN-MODE   may be \"smart\", \"fast\", or \"immediate\"\n\n"));
-	printf(_("Allowed signal names for kill:\n"));
-	printf(_("  HUP INT QUIT ABRT TERM USR1 USR2\n\n"));
-	printf(_("Shutdown modes are:\n"));
+	printf(_("If the -D option is omitted, the environment variable PGDATA is used.\n"));
+
+	printf(_("\nOptions for start or restart:\n"));
+	printf(_("  -l, --log FILENAME     write (or append) server log to FILENAME\n"));
+	printf(_("  -o OPTIONS             command line options to pass to the postmaster\n"
+			 "                         (PostgreSQL server executable)\n"));
+	printf(_("  -p PATH-TO-POSTMASTER  normally not necessary\n"));
+
+	printf(_("\nOptions for stop or restart:\n"));
+	printf(_("  -m SHUTDOWN-MODE   may be \"smart\", \"fast\", or \"immediate\"\n"));
+
+	printf(_("\nShutdown modes are:\n"));
 	printf(_("  smart       quit after all clients have disconnected\n"));
 	printf(_("  fast        quit directly, with proper shutdown\n"));
-	printf(_("  immediate   quit without complete shutdown; will lead to recovery on restart\n\n"));
-	printf(_("Report bugs to <pgsql-bugs@postgresql.org>.\n"));
+	printf(_("  immediate   quit without complete shutdown; will lead to recovery on restart\n"));
+
+	printf(_("\nAllowed signal names for kill:\n"));
+	printf("  HUP INT QUIT ABRT TERM USR1 USR2\n");
+
+#if defined(WIN32) || defined(__CYGWIN__)
+	printf(_("\nOptions for register and unregister:\n"));
+	printf(_("  -N SERVICENAME  service name with which to register PostgreSQL server\n"));
+	printf(_("  -P PASSWORD     password of account to register PostgreSQL server\n"));
+	printf(_("  -U USERNAME     user name of account to register PostgreSQL server\n"));
+#endif
+
+	printf(_("\nReport bugs to <pgsql-bugs@postgresql.org>.\n"));
 }
 
 
@@ -1312,7 +1333,7 @@ main(int argc, char **argv)
 		{
 			if (ctl_command != NO_COMMAND)
 			{
-				write_stderr(_("%s: extra operation mode \"%s\"\n"), progname, argv[optind]);
+				write_stderr(_("%s: too many command-line arguments (first is \"%s\")\n"), progname, argv[optind]);
 				do_advice();
 				exit(1);
 			}
@@ -1331,7 +1352,7 @@ main(int argc, char **argv)
 			{
 				if (argc - optind < 3)
 				{
-					write_stderr(_("%s: invalid kill syntax\n"), progname);
+					write_stderr(_("%s: missing arguments for kill mode\n"), progname);
 					do_advice();
 					exit(1);
 				}
