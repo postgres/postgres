@@ -10,7 +10,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/tcop/utility.c,v 1.86 2000/04/12 17:15:43 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/tcop/utility.c,v 1.87 2000/04/25 10:38:38 inoue Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -865,11 +865,11 @@ ProcessUtility(Node *parsetree,
 						if (IsSystemRelationName(relname))
 						{
 							if (!allowSystemTableMods && IsSystemRelationName(relname))
-								elog(ERROR, "class \"%s\" is a system catalog index",
-									 relname);
+								elog(ERROR, "\"%s\" is a system index. call REINDEX under standalone postgres with -O -P options",
+								 relname);
 							if (!IsIgnoringSystemIndexes())
-								elog(ERROR, "class \"%s\" is a system catalog index",
-									 relname);
+								elog(ERROR, "\"%s\" is a system index. call REINDEX under standalone postgres with -P -O options",
+								 relname);
 						}
 #ifndef NO_SECURITY
 						if (!pg_ownercheck(userName, relname, RELNAME))
@@ -882,11 +882,12 @@ ProcessUtility(Node *parsetree,
 						if (IsSystemRelationName(relname))
 						{
 							if (!allowSystemTableMods && IsSystemRelationName(relname))
-								elog(ERROR, "class \"%s\" is a system catalog index",
-									 relname);
+								elog(ERROR, "\"%s\" is a system table. call REINDEX under standalone postgres with -O -P options",
+								 relname);
 							if (!IsIgnoringSystemIndexes())
-								elog(ERROR, "class \"%s\" is a system catalog index",
-									 relname);
+								elog(ERROR, "\"%s\" is a system table. call REINDEX under standalone postgres with -P -O options",
+
+								 relname);
 						}
 #ifndef NO_SECURITY
 						if (!pg_ownercheck(userName, relname, RELNAME))
@@ -897,9 +898,9 @@ ProcessUtility(Node *parsetree,
 					case DATABASE:
 						relname = (char *) stmt->name;
 						if (!allowSystemTableMods)
-							elog(ERROR, "-O option is needed");
+							elog(ERROR, "must be called under standalone postgres with -O -P options");
 						if (!IsIgnoringSystemIndexes())
-							elog(ERROR, "-P option is needed");
+							elog(ERROR, "must be called under standalone postgres with -P -O options");
 						ReindexDatabase(relname, stmt->force, false);
 						break;
 				}
