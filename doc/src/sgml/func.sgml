@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/func.sgml,v 1.129.2.1 2002/11/10 12:45:42 petere Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/func.sgml,v 1.129.2.2 2002/11/21 23:31:37 tgl Exp $
 PostgreSQL documentation
 -->
 
@@ -3549,9 +3549,14 @@ SUBSTRING('foobar' FROM 'o(.)b')   <lineannotation>o</lineannotation>
    <literal>*</literal>, etc.).  For formatting functions, refer to
    <xref linkend="functions-formatting">.  You should be familiar with
    the background information on date/time data types (see <xref
-   linkend="datatype-datetime">).  The date/time operators described
-   below behave similarly for types involving time zones as well as
-   those without.
+   linkend="datatype-datetime">).
+  </para>
+
+  <para>
+   All the functions and operators described below that take time or timestamp
+   inputs actually come in two variants: one that takes time or timestamp
+   with time zone, and one that takes time or timestamp without time zone.
+   For brevity, these variants are not shown separately.
   </para>
 
     <table id="operators-datetime-table">
@@ -3771,7 +3776,7 @@ SUBSTRING('foobar' FROM 'o(.)b')   <lineannotation>o</lineannotation>
 
        <row>
 	<entry><function>now</function>()</entry>
-	<entry><type>timestamp</type></entry>
+	<entry><type>timestamp with time zone</type></entry>
 	<entry>Current date and time (equivalent to
 	 <function>current_timestamp</function>); see <xref
                                                      linkend="functions-datetime-current">
@@ -3898,8 +3903,8 @@ SELECT EXTRACT(DOY FROM TIMESTAMP '2001-02-16 20:38:40');
       <listitem>
        <para>
         For <type>date</type> and <type>timestamp</type> values, the
-        number of seconds since 1970-01-01 00:00:00-00 (Result may be
-        negative.); for <type>interval</type> values, the total number
+        number of seconds since 1970-01-01 00:00:00-00 (can be negative);
+	for <type>interval</type> values, the total number
         of seconds in the interval
        </para>
 
@@ -4122,12 +4127,12 @@ SELECT EXTRACT(YEAR FROM TIMESTAMP '2001-02-16 20:38:40');
    <para>
     The <function>date_part</function> function is modeled on the traditional
     <productname>Ingres</productname> equivalent to the
-    <acronym>SQL</acronym>-function <function>extract</function>:
+    <acronym>SQL</acronym>-standard function <function>extract</function>:
 <synopsis>
 date_part('<replaceable>field</replaceable>', <replaceable>source</replaceable>)
 </synopsis>
-    Note that here the <replaceable>field</replaceable> value needs to
-    be a string.  The valid field values for
+    Note that here the <replaceable>field</replaceable> parameter needs to
+    be a string value, not a name.  The valid field values for
     <function>date_part</function> are the same as for
     <function>extract</function>.
    </para>
@@ -4192,6 +4197,95 @@ SELECT date_trunc('year', TIMESTAMP '2001-02-16 20:38:40');
    </para>
   </sect2>
 
+  <sect2 id="functions-datetime-zoneconvert">
+   <title><function>AT TIME ZONE</function></title>
+
+   <indexterm>
+    <primary>timezone</primary>
+    <secondary>conversion</secondary>
+   </indexterm>
+
+   <para>
+    The <function>AT TIME ZONE</function> construct allows conversions
+    of timestamps to different timezones.
+   </para>
+
+    <table id="functions-datetime-zoneconvert-table">
+     <title>AT TIME ZONE Variants</title>
+     <tgroup cols="3">
+      <thead>
+       <row>
+	<entry>Expression</entry>
+	<entry>Returns</entry>
+	<entry>Description</entry>
+       </row>
+      </thead>
+
+      <tbody>
+
+       <row>
+	<entry>
+	 <type>timestamp without time zone</type>
+	 <literal>AT TIME ZONE</literal>
+	 <replaceable>zone</>
+	</entry>
+	<entry><type>timestamp with time zone</type></entry>
+	<entry>Convert local time in given timezone to UTC</entry>
+       </row>
+
+       <row>
+	<entry>
+	 <type>timestamp with time zone</type>
+	 <literal>AT TIME ZONE</literal>
+	 <replaceable>zone</>
+	</entry>
+	<entry><type>timestamp without time zone</type></entry>
+	<entry>Convert UTC to local time in given timezone</entry>
+       </row>
+
+       <row>
+	<entry>
+	 <type>time with time zone</type>
+	 <literal>AT TIME ZONE</literal>
+	 <replaceable>zone</>
+	</entry>
+	<entry><type>time with time zone</type></entry>
+	<entry>Convert local time across timezones</entry>
+       </row>
+
+      </tbody>
+     </tgroup>
+    </table>
+
+   <para>
+    In these expressions, the desired time <replaceable>zone</> can be
+    specified either as a text string (e.g., <literal>'PST'</literal>)
+    or as an interval (e.g., <literal>INTERVAL '-08:00'</literal>).
+   </para>
+
+   <para>
+    Examples (supposing that <varname>TimeZone</> is <literal>PST8PDT</>):
+<screen>
+SELECT TIMESTAMP '2001-02-16 20:38:40' AT TIME ZONE 'MST';
+<lineannotation>Result: </lineannotation><computeroutput>2001-02-16 19:38:40-08</computeroutput>
+
+SELECT TIMESTAMP WITH TIME ZONE '2001-02-16 20:38:40-05' AT TIME ZONE 'MST';
+<lineannotation>Result: </lineannotation><computeroutput>2001-02-16 18:38:40</computeroutput>
+</screen>
+    The first example takes a zone-less timestamp and interprets it as MST time
+    (GMT-7) to produce a UTC timestamp, which is then rotated to PST (GMT-8)
+    for display.  The second example takes a timestamp specified in EST
+    (GMT-5) and converts it to local time in MST (GMT-7).
+   </para>
+
+   <para>
+    The function <function>timezone</function>(<replaceable>zone</>,
+    <replaceable>timestamp</>) is equivalent to the SQL-compliant construct
+    <replaceable>timestamp</> <literal>AT TIME ZONE</literal>
+    <replaceable>zone</>. 
+   </para>
+  </sect2>
+
   <sect2 id="functions-datetime-current">
    <title>Current Date/Time</title>
 
@@ -4219,6 +4313,16 @@ LOCALTIMESTAMP
 LOCALTIME ( <replaceable>precision</replaceable> )
 LOCALTIMESTAMP ( <replaceable>precision</replaceable> )
 </synopsis>
+    </para>
+
+    <para>
+     <function>CURRENT_TIME</function> and
+     <function>CURRENT_TIMESTAMP</function> deliver values with time zone;
+     <function>LOCALTIME</function> and
+     <function>LOCALTIMESTAMP</function> deliver values without time zone.
+    </para>
+
+    <para>
      <function>CURRENT_TIME</function>,
      <function>CURRENT_TIMESTAMP</function>,
      <function>LOCALTIME</function>, and
