@@ -3,7 +3,7 @@
  *
  * Copyright 2000 by PostgreSQL Global Development Group
  *
- * $Header: /cvsroot/pgsql/src/bin/psql/command.c,v 1.29 2000/04/14 23:43:44 petere Exp $
+ * $Header: /cvsroot/pgsql/src/bin/psql/command.c,v 1.30 2000/04/16 15:46:40 petere Exp $
  */
 #include "postgres.h"
 #include "command.h"
@@ -137,8 +137,10 @@ HandleSlashCmds(const char *line,
 
 		status = exec_command(new_cmd, my_line + 1, &continue_parse, query_buf);
 
+#if 0 /* turned out to be too annoying */
 		if (status != CMD_UNKNOWN && isalpha(new_cmd[0]))
 			psql_error("Warning: this syntax is deprecated\n");
+#endif
 	}
 
 	if (status == CMD_UNKNOWN)
@@ -179,7 +181,8 @@ exec_command(const char *cmd,
 	bool		quiet = QUIET();
 	backslashResult status = CMD_SKIP_LINE;
 	char	   *string,
-			   *string_cpy;
+			   *string_cpy,
+		       *val;
 
 	/*
 	 * The 'string' variable will be overwritten to point to the next
@@ -777,7 +780,8 @@ exec_command(const char *cmd,
 		status = CMD_ERROR;
 
 	/* eat the rest of the options string */
-	while (scan_option(&string, OT_NORMAL, NULL));
+	while ((val = scan_option(&string, OT_NORMAL, NULL)))
+		psql_error("\\%s: extra argument '%s' ignored\n", cmd, val);
 
 	if (options_string && continue_parse)
 		*continue_parse = options_string + (string - string_cpy);

@@ -3,7 +3,7 @@
  *
  * Copyright 2000 by PostgreSQL Global Development Group
  *
- * $Header: /cvsroot/pgsql/src/bin/psql/describe.c,v 1.19 2000/04/12 17:16:22 momjian Exp $
+ * $Header: /cvsroot/pgsql/src/bin/psql/describe.c,v 1.20 2000/04/16 15:46:40 petere Exp $
  */
 #include "postgres.h"
 #include "describe.h"
@@ -52,7 +52,7 @@ describeAggregates(const char *name)
 
 	if (name)
 	{
-		strcat(buf, "  AND a.aggname ~* '^");
+		strcat(buf, "  AND a.aggname ~ '^");
 		strncat(buf, name, REGEXP_CUTOFF);
 		strcat(buf, "'\n");
 	}
@@ -67,7 +67,7 @@ describeAggregates(const char *name)
 
 	if (name)
 	{
-		strcat(buf, "  AND a.aggname ~* '^");
+		strcat(buf, "  AND a.aggname ~ '^");
 		strncat(buf, name, REGEXP_CUTOFF);
 		strcat(buf, "'\n");
 	}
@@ -121,7 +121,7 @@ describeFunctions(const char *name, bool verbose)
 
 	if (name)
 	{
-		strcat(buf, "  AND p.proname ~* '^");
+		strcat(buf, "  AND p.proname ~ '^");
 		strncat(buf, name, REGEXP_CUTOFF);
 		strcat(buf, "'\n");
 	}
@@ -166,7 +166,7 @@ describeTypes(const char *name, bool verbose)
 
 	if (name)
 	{
-		strcat(buf, "  AND t.typname ~* '^");
+		strcat(buf, "  AND t.typname ~ '^");
 		strncat(buf, name, REGEXP_CUTOFF);
 		strcat(buf, "' ");
 	}
@@ -212,7 +212,7 @@ describeOperators(const char *name)
 		   "       o.oprright = t2.oid\n");
 	if (name)
 	{
-		strcat(buf, "  AND o.oprname ~ '^");
+		strcat(buf, "  AND o.oprname = '");
 		strncat(buf, name, REGEXP_CUTOFF);
 		strcat(buf, "'\n");
 	}
@@ -230,7 +230,7 @@ describeOperators(const char *name)
 		   "       o.oprright = t1.oid\n");
 	if (name)
 	{
-		strcat(buf, "AND o.oprname ~ '^");
+		strcat(buf, "AND o.oprname = '");
 		strncat(buf, name, REGEXP_CUTOFF);
 		strcat(buf, "'\n");
 	}
@@ -248,7 +248,7 @@ describeOperators(const char *name)
 		   "       o.oprleft = t1.oid\n");
 	if (name)
 	{
-		strcat(buf, "AND o.oprname ~ '^");
+		strcat(buf, "AND o.oprname = '");
 		strncat(buf, name, REGEXP_CUTOFF);
 		strcat(buf, "'\n");
 	}
@@ -388,7 +388,7 @@ objectDescription(const char *object)
 		   "WHERE a.oid = d.objoid\n");
 	if (object)
 	{
-		strcat(descbuf, "  AND a.aggname ~* '^");
+		strcat(descbuf, "  AND a.aggname ~ '^");
 		strncat(descbuf, object, REGEXP_CUTOFF);
 		strcat(descbuf, "'\n");
 	}
@@ -400,7 +400,7 @@ objectDescription(const char *object)
 		   "WHERE p.oid = d.objoid AND (p.pronargs = 0 or oidvectortypes(p.proargtypes) != '')\n");
 	if (object)
 	{
-		strcat(descbuf, "  AND p.proname ~* '^");
+		strcat(descbuf, "  AND p.proname ~ '^");
 		strncat(descbuf, object, REGEXP_CUTOFF);
 		strcat(descbuf, "'\n");
 	}
@@ -413,7 +413,7 @@ objectDescription(const char *object)
 		   "WHERE RegprocToOid(o.oprcode) = d.objoid\n");
 	if (object)
 	{
-		strcat(descbuf, "  AND o.oprname ~ '^");
+		strcat(descbuf, "  AND o.oprname = '");
 		strncat(descbuf, object, REGEXP_CUTOFF);
 		strcat(descbuf, "'\n");
 	}
@@ -425,7 +425,7 @@ objectDescription(const char *object)
 		   "WHERE t.oid = d.objoid\n");
 	if (object)
 	{
-		strcat(descbuf, "  AND t.typname ~* '^");
+		strcat(descbuf, "  AND t.typname ~ '^");
 		strncat(descbuf, object, REGEXP_CUTOFF);
 		strcat(descbuf, "'\n");
 	}
@@ -437,7 +437,7 @@ objectDescription(const char *object)
 		   "WHERE c.oid = d.objoid\n");
 	if (object)
 	{
-		strcat(descbuf, "  AND c.relname ~* '^");
+		strcat(descbuf, "  AND c.relname ~ '^");
 		strncat(descbuf, object, REGEXP_CUTOFF);
 		strcat(descbuf, "'\n");
 	}
@@ -449,7 +449,7 @@ objectDescription(const char *object)
 		   "WHERE r.oid = d.objoid AND r.rulename !~ '^_RET'\n");
 	if (object)
 	{
-		strcat(descbuf, "  AND r.rulename ~* '^");
+		strcat(descbuf, "  AND r.rulename ~ '^");
 		strncat(descbuf, object, REGEXP_CUTOFF);
 		strcat(descbuf, "'\n");
 	}
@@ -461,7 +461,7 @@ objectDescription(const char *object)
 		   "WHERE t.oid = d.objoid\n");
 	if (object)
 	{
-		strcat(descbuf, "  AND t.tgname ~* '^");
+		strcat(descbuf, "  AND t.tgname ~ '^");
 		strncat(descbuf, object, REGEXP_CUTOFF);
 		strcat(descbuf, "'\n");
 	}

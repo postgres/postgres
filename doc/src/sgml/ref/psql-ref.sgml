@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/ref/psql-ref.sgml,v 1.30 2000/03/27 17:14:43 thomas Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/ref/psql-ref.sgml,v 1.31 2000/04/16 15:46:39 petere Exp $
 Postgres documentation
 -->
 
@@ -443,16 +443,12 @@ testdb=>
 
 
       <varlistentry>
-        <term><literal>\do [ <replaceable class="parameter">pattern</replaceable> ]</literal></term>
+        <term><literal>\do [ <replaceable class="parameter">name</replaceable> ]</literal></term>
         <listitem>
         <para>
         Lists available operators with their operand and return types.
-        If <replaceable class="parameter">pattern</replaceable>
+        If <replaceable class="parameter">name</replaceable>
         is specified, only operators with that name will be shown.
-        (Since this is a regular expression, be sure to quote all special
-        characters in you operator name with backslashes. To prevent
-        interpretation of the backslash as a new command, you might also
-        wish to quote the argument.)
         </para>
         </listitem>
       </varlistentry>
