@@ -1,8 +1,8 @@
-CPPFLAGS="-D_XOPEN_SOURCE_EXTENDED"
+CPPFLAGS="$CPPFLAGS -D_XOPEN_SOURCE_EXTENDED"
 
 if test "$GCC" != yes ; then
   CC="$CC -Ae"
-  CFLAGS="+O2"
+  CFLAGS="$CFLAGS +O2"
 fi
 
 # Pick right test-and-set (TAS) code.  We need out-of-line assembler

@@ -1,2 +1,2 @@
 # Force _GNU_SOURCE on; plperl is broken with Perl 5.8.0 otherwise
-CPPFLAGS="-D_GNU_SOURCE"
+CPPFLAGS="$CPPFLAGS -D_GNU_SOURCE"

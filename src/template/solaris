@@ -1,6 +1,6 @@
 if test "$GCC" != yes ; then
   CC="$CC -Xa"			# relaxed ISO C mode
-  CFLAGS="-O -v"		# -v is like gcc -Wall
+  CFLAGS="$CFLAGS -O -v"		# -v is like gcc -Wall
 fi
 
 # Pick right test-and-set (TAS) code.  We need out-of-line assembler
