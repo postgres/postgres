@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *    $Header: /cvsroot/pgsql/src/backend/storage/lmgr/lock.c,v 1.5 1996/11/08 05:58:51 momjian Exp $
+ *    $Header: /cvsroot/pgsql/src/backend/storage/lmgr/lock.c,v 1.6 1996/12/26 17:50:26 momjian Exp $
  *
  * NOTES
  *    Outside modules can create a lock table and acquire/release
@@ -33,6 +33,8 @@
  */
 #include <stdio.h>		/* for sprintf() */
 #include <string.h>
+#include <sys/types.h>
+#include <unistd.h>
 
 #include "postgres.h"
 #include "storage/shmem.h"
