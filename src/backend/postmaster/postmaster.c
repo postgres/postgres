@@ -37,7 +37,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/postmaster/postmaster.c,v 1.234 2001/08/04 00:14:43 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/postmaster/postmaster.c,v 1.235 2001/08/05 02:06:50 tgl Exp $
  *
  * NOTES
  *
@@ -227,7 +227,6 @@ extern int	optreset;
 static void pmdaemonize(int argc, char *argv[]);
 static Port *ConnCreate(int serverFd);
 static void ConnFree(Port *port);
-static void ClosePostmasterPorts(void);
 static void reset_shared(unsigned short port);
 static void SIGHUP_handler(SIGNAL_ARGS);
 static void pmdie(SIGNAL_ARGS);
@@ -1241,8 +1240,8 @@ ConnFree(Port *conn)
  * that are not needed by that child process.  The postmaster still has
  * them open, of course.
  */
-static void
-ClosePostmasterPorts(void)
+void
+ClosePostmasterPorts(bool pgstat_too)
 {
 	/* Close the listen sockets */
 	if (NetServer)
@@ -1252,6 +1251,9 @@ ClosePostmasterPorts(void)
 	StreamClose(ServerSock_UNIX);
 	ServerSock_UNIX = INVALID_SOCK;
 #endif
+	/* Close pgstat control sockets, unless we're starting pgstat itself */
+	if (pgstat_too)
+		pgstat_close_sockets();
 }
 
 
@@ -1900,7 +1902,7 @@ DoBackend(Port *port)
 	 */
 
 	/* Close the postmaster's other sockets */
-	ClosePostmasterPorts();
+	ClosePostmasterPorts(true);
 
 	/* Save port etc. for ps status */
 	MyProcPort = port;
@@ -2224,7 +2226,7 @@ SSDataBase(int xlop)
 		on_exit_reset();
 
 		/* Close the postmaster's sockets */
-		ClosePostmasterPorts();
+		ClosePostmasterPorts(true);
 
 		/* Set up command-line arguments for subprocess */
 		av[ac++] = "postgres";

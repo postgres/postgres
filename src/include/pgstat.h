@@ -5,7 +5,7 @@
  *
  *	Copyright (c) 2001, PostgreSQL Global Development Group
  *
- *  $Id: pgstat.h,v 1.5 2001/08/04 00:14:43 tgl Exp $
+ *  $Id: pgstat.h,v 1.6 2001/08/05 02:06:50 tgl Exp $
  * ----------
  */
 #ifndef PGSTAT_H
@@ -24,11 +24,11 @@
  * ----------
  */
 #define PGSTAT_STAT_INTERVAL	500		/* How often to write the status	*/
-										/* file in milliseconds.			*/
+										/* file, in milliseconds.			*/
 
 #define PGSTAT_DESTROY_DELAY	10000	/* How long to keep destroyed		*/
 										/* objects known to give delayed	*/
-										/* UDP packets time to arrive		*/
+										/* UDP packets time to arrive,		*/
 										/* in milliseconds.					*/
 
 #define PGSTAT_DESTROY_COUNT	(PGSTAT_DESTROY_DELAY 					\
@@ -36,7 +36,7 @@
 
 
 /* ----------
- * How much of the actual query to send to the collector.
+ * How much of the actual query string to send to the collector.
  * ----------
  */
 #define PGSTAT_ACTIVITY_SIZE	256
@@ -56,13 +56,10 @@
 #define	PGSTAT_MTYPE_RESETCOUNTER	7
 
 /* ----------
- * TODO
- * For simplicity now, the number of messages buffered in
- * pgstat_recvbuffer(). Should be an amount of bytes used
- * for a gapless wraparound buffer.
+ * Amount of space reserved in pgstat_recvbuffer().
  * ----------
  */
-#define	PGSTAT_RECVBUFFERSZ		1024
+#define	PGSTAT_RECVBUFFERSZ		((int) (1024 * sizeof(PgStat_Msg)))
 
 
 /* ----------
@@ -338,6 +335,7 @@ extern bool		pgstat_collect_blocklevel;
 extern int		pgstat_init(void);
 extern int		pgstat_start(int real_argc, char *real_argv[]);
 extern int		pgstat_ispgstat(int pid);
+extern void		pgstat_close_sockets(void);
 extern void		pgstat_beterm(int pid);
 
 /* ----------
