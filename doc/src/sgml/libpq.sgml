@@ -1,5 +1,5 @@
 <!--
-$PostgreSQL: pgsql/doc/src/sgml/libpq.sgml,v 1.148 2004/03/21 22:29:10 tgl Exp $
+$PostgreSQL: pgsql/doc/src/sgml/libpq.sgml,v 1.149 2004/03/23 23:37:17 tgl Exp $
 -->
 
  <chapter id="libpq">
@@ -1487,7 +1487,7 @@ Note that error fields are only available from
           Every command result should be freed via <function>PQclear</function> when
           it  is  no  longer needed.
 <synopsis>
-void PQclear(PQresult *res);
+void PQclear(PGresult *res);
 </synopsis>
 </para>
 
