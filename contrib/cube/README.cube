@@ -99,7 +99,7 @@ Tokens
 
 n		[0-9]+
 integer		[+-]?{n}
-real		[+-]?({n}\.{n}?)|(\.{n})
+real		[+-]?({n}\.{n}?|\.{n})
 FLOAT		({integer}|{real})([eE]{integer})?
 O_BRACKET	\[
 C_BRACKET	\]
@@ -182,8 +182,8 @@ t
 PRECISION
 =========
 
-Values are stored internally as 32-bit floating point numbers. This means that
-numbers with more than 7 significant digits will be truncated.
+Values are stored internally as 64-bit floating point numbers. This means that
+numbers with more than about 16 significant digits will be truncated.
 
 
 USAGE
@@ -253,6 +253,44 @@ Other operators:
 	reasonably good sorting in most cases, which is useful if
 	you want to use ORDER BY with this type
 
+The following functions are available:
+
+cube_distance(cube, cube) returns double
+  cube_distance returns the distance between two cubes. If both cubes are
+  points, this is the normal distance function.
+
+cube(text) returns cube
+  cube takes text input and returns a cube. This is useful for making cubes
+  from computed strings.
+
+cube_dim(cube) returns int
+  cube_dim returns the number of dimensions stored in the the data structure
+  for a cube. This is useful for constraints on the dimensions of a cube.
+
+cube_ll_coord(cube, int) returns double
+  cube_ll_coord returns the nth coordinate value for the lower left corner
+  of a cube. This is useful for doing coordinate transformations.
+
+cube_ur_coord(cube, int) returns double
+  cube_ur_coord returns the nth coordinate value for the upper right corner
+  of a cube. This is useful for doing coordinate transformations.
+
+cube_is_point(cube) returns bool
+  cube_is_point returns true if a cube is also a point. This is true when the
+  two defining corners are the same.
+
+cube_enlarge(cube, double, int) returns cube
+  cube_enlarge increases the size of a cube by a specified radius in at least
+  n dimensions. If the radius is negative the box is shrunk instead. This
+  is useful for creating bounding boxes around a point for searching for
+  nearby points. All defined dimensions are changed by the radius. If n
+  is greater than the number of defined dimensions and the cube is being
+  increased (r >= 0) then 0 is used as the base for the extra coordinates.
+  LL coordinates are decreased by r and UR coordinates are increased by r. If
+  a LL coordinate is increased to larger than the corresponding UR coordinate
+  (this can only happen when r < 0) than both coordinates are set to their
+  average.
+
 There are a few other potentially useful functions defined in cube.c 
 that vanished from the schema because I stopped using them. Some of 
 these were meant to support type casting. Let me know if I was wrong: 
@@ -287,3 +325,11 @@ Building 221
 Argonne, IL 60439-4844
 
 selkovjr@mcs.anl.gov
+
+------------------------------------------------------------------------
+
+Minor updates to this package were made by Bruno Wolff III <bruno@wolff.to>
+in August of 2002.
+
+These include changing the precision from single precision to double
+precision and adding some new functions.

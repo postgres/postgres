@@ -23,20 +23,26 @@ SELECT '.1'::cube AS cube;
 SELECT '-.1'::cube AS cube;
 SELECT '1.0'::cube AS cube;
 SELECT '-1.0'::cube AS cube;
-SELECT '1e7'::cube AS cube;
-SELECT '-1e7'::cube AS cube;
-SELECT '1.0e7'::cube AS cube;
-SELECT '-1.0e7'::cube AS cube;
-SELECT '1e+7'::cube AS cube;
-SELECT '-1e+7'::cube AS cube;
-SELECT '1.0e+7'::cube AS cube;
-SELECT '-1.0e+7'::cube AS cube;
+SELECT '1e27'::cube AS cube;
+SELECT '-1e27'::cube AS cube;
+SELECT '1.0e27'::cube AS cube;
+SELECT '-1.0e27'::cube AS cube;
+SELECT '1e+27'::cube AS cube;
+SELECT '-1e+27'::cube AS cube;
+SELECT '1.0e+27'::cube AS cube;
+SELECT '-1.0e+27'::cube AS cube;
 SELECT '1e-7'::cube AS cube;
 SELECT '-1e-7'::cube AS cube;
 SELECT '1.0e-7'::cube AS cube;
 SELECT '-1.0e-7'::cube AS cube;
 SELECT '1e-700'::cube AS cube;
 SELECT '-1e-700'::cube AS cube;
+SELECT '1234567890123456'::cube AS cube;
+SELECT '+1234567890123456'::cube AS cube;
+SELECT '-1234567890123456'::cube AS cube;
+SELECT '.1234567890123456'::cube AS cube;
+SELECT '+.1234567890123456'::cube AS cube;
+SELECT '-.1234567890123456'::cube AS cube;
 
 -- simple lists (points)
 SELECT '1,2'::cube AS cube;
@@ -230,6 +236,60 @@ SELECT '(-1,-1),(1,1)'::cube            @ '(-1),(1)'::cube          AS bool;
 SELECT '(-1),(1)'::cube                 @ '(-2),(1)'::cube          AS bool;
 SELECT '(-1,-1),(1,1)'::cube            @ '(-2),(1)'::cube          AS bool;
 
+-- Test of distance function
+--
+SELECT cube_distance('(0)'::cube,'(2,2,2,2)'::cube);
+SELECT cube_distance('(0)'::cube,'(.3,.4)'::cube);
+
+-- Test of cube function (text to cube)
+--
+SELECT cube('('||1||','||1.2||')');
+SELECT cube(NULL);
+
+-- Test of cube_dim function (dimensions stored in cube)
+--
+SELECT cube_dim('(0)'::cube);
+SELECT cube_dim('(0,0)'::cube);
+SELECT cube_dim('(0,0,0)'::cube);
+
+-- Test of cube_ll_coord function (retrieves LL coodinate values)
+--
+SELECT cube_ll_coord('(-1,1),(2,-2)'::cube, 1);
+SELECT cube_ll_coord('(-1,1),(2,-2)'::cube, 2);
+SELECT cube_ll_coord('(-1,1),(2,-2)'::cube, 3);
+
+-- Test of cube_ur_coord function (retrieves UR coodinate values)
+--
+SELECT cube_ur_coord('(-1,1),(2,-2)'::cube, 1);
+SELECT cube_ur_coord('(-1,1),(2,-2)'::cube, 2);
+SELECT cube_ur_coord('(-1,1),(2,-2)'::cube, 3);
+
+-- Test of cube_is_point
+--
+SELECT cube_is_point('(0)'::cube);
+SELECT cube_is_point('(0,1,2)'::cube);
+SELECT cube_is_point('(0,1,2),(0,1,2)'::cube);
+SELECT cube_is_point('(0,1,2),(-1,1,2)'::cube);
+SELECT cube_is_point('(0,1,2),(0,-1,2)'::cube);
+SELECT cube_is_point('(0,1,2),(0,1,-2)'::cube);
+
+-- Test of cube_enlarge (enlarging and shrinking cubes)
+--
+SELECT cube_enlarge('(0)'::cube, 0, 0);
+SELECT cube_enlarge('(0)'::cube, 0, 1);
+SELECT cube_enlarge('(0)'::cube, 0, 2);
+SELECT cube_enlarge('(0)'::cube, 1, 0);
+SELECT cube_enlarge('(0)'::cube, 1, 1);
+SELECT cube_enlarge('(0)'::cube, 1, 2);
+SELECT cube_enlarge('(0)'::cube, -1, 0);
+SELECT cube_enlarge('(0)'::cube, -1, 1);
+SELECT cube_enlarge('(0)'::cube, -1, 2);
+SELECT cube_enlarge('(0,0,0)'::cube, 1, 0);
+SELECT cube_enlarge('(0,0,0)'::cube, 1, 2);
+SELECT cube_enlarge('(2,-2),(-3,7)'::cube, 1, 2);
+SELECT cube_enlarge('(2,-2),(-3,7)'::cube, 3, 2);
+SELECT cube_enlarge('(2,-2),(-3,7)'::cube, -1, 2);
+SELECT cube_enlarge('(2,-2),(-3,7)'::cube, -3, 2);
 
 -- Load some example data and build the index
 -- 

@@ -198,9 +198,10 @@ write_box(unsigned int dim, char *str1, char *str2)
   NDBOX * bp;
   char * s;
   int i; 
-  int size = offsetof(NDBOX, x[0]) + sizeof(float) * dim * 2;
+  int size = offsetof(NDBOX, x[0]) + sizeof(double) * dim * 2;
 	    
   bp = palloc(size);
+  memset(bp, 0, size);
   bp->size = size;
   bp->dim = dim;
 	    
@@ -217,7 +218,7 @@ write_box(unsigned int dim, char *str1, char *str2)
     s++; i++;
     bp->x[i] = strtod(s, NULL);
   }	
-  
+
   return(bp);
 }
 
@@ -230,9 +231,10 @@ static NDBOX * write_point_as_box(char *str)
   int dim = delim_count(str, ',') + 1;
   char * s = str;
   
-  size = offsetof(NDBOX, x[0]) + sizeof(float) * dim * 2;
+  size = offsetof(NDBOX, x[0]) + sizeof(double) * dim * 2;
 
   bp = palloc(size);
+  memset(bp, 0, size);
   bp->size = size;
   bp->dim = dim;
   

@@ -28,6 +28,7 @@ extern int	cube_yyparse();
 ** Input/Output routines
 */
 NDBOX	   *cube_in(char *str);
+NDBOX	   *cube(text *str);
 char	   *cube_out(NDBOX * cube);
 
 
@@ -55,8 +56,8 @@ bool		cube_contained(NDBOX * a, NDBOX * b);
 bool		cube_overlap(NDBOX * a, NDBOX * b);
 NDBOX	   *cube_union(NDBOX * a, NDBOX * b);
 NDBOX	   *cube_inter(NDBOX * a, NDBOX * b);
-float	   *cube_size(NDBOX * a);
-void		rt_cube_size(NDBOX * a, float *sz);
+double	   *cube_size(NDBOX * a);
+void		rt_cube_size(NDBOX * a, double *sz);
 
 /*
 ** These make no sense for this type, but R-tree wants them
@@ -71,13 +72,18 @@ bool		cube_right(NDBOX * a, NDBOX * b);
 */
 bool		cube_lt(NDBOX * a, NDBOX * b);
 bool		cube_gt(NDBOX * a, NDBOX * b);
-float	   *cube_distance(NDBOX * a, NDBOX * b);
+double	   *cube_distance(NDBOX * a, NDBOX * b);
+int	cube_dim(NDBOX *a);
+double	*cube_ll_coord(NDBOX * a, int n);
+double	*cube_ur_coord(NDBOX * a, int n);
+bool	cube_is_point(NDBOX * a);
+NDBOX	   *cube_enlarge(NDBOX * a, double * r, int n);
+
 
 /*
 ** Auxiliary funxtions
 */
-static float distance_1D(float a1, float a2, float b1, float b2);
-static NDBOX *swap_corners(NDBOX * a);
+static double distance_1D(double a1, double a2, double b1, double b2);
 
 
 /*****************************************************************************
@@ -99,6 +105,15 @@ cube_in(char *str)
 	return ((NDBOX *) result);
 }
 
+/* Allow conversion from text to cube to allow input of computed strings */
+/* There may be issues with toasted data here. I don't know enough to be sure.*/
+NDBOX *
+cube(text *str)
+{
+	return cube_in(DatumGetCString(DirectFunctionCall1(textout,
+           PointerGetDatum(str))));
+}
+
 char *
 cube_out(NDBOX *cube)
 {
@@ -118,7 +133,7 @@ cube_out(NDBOX *cube)
 	{
 		if (i > 0)
 			appendStringInfo(&buf, ", ");
-		appendStringInfo(&buf, "%g", cube->x[i]);
+		appendStringInfo(&buf, "%.16g", cube->x[i]);
 		if (cube->x[i] != cube->x[i + dim])
 			equal = false;
 	}
@@ -131,7 +146,7 @@ cube_out(NDBOX *cube)
 		{
 			if (i > 0)
 				appendStringInfo(&buf, ", ");
-			appendStringInfo(&buf, "%g", cube->x[i + dim]);
+			appendStringInfo(&buf, "%.16g", cube->x[i + dim]);
 		}
 		appendStringInfoChar(&buf, ')');
 	}
@@ -228,14 +243,14 @@ float *
 g_cube_penalty(GISTENTRY *origentry, GISTENTRY *newentry, float *result)
 {
 	NDBOX	   *ud;
-	float		tmp1,
+	double		tmp1,
 				tmp2;
 
 	ud = cube_union((NDBOX *) DatumGetPointer(origentry->key),
 					(NDBOX *) DatumGetPointer(newentry->key));
 	rt_cube_size(ud, &tmp1);
 	rt_cube_size((NDBOX *) DatumGetPointer(origentry->key), &tmp2);
-	*result = tmp1 - tmp2;
+	*result = (float) (tmp1 - tmp2);
 	pfree(ud);
 
 	/*
@@ -265,13 +280,13 @@ g_cube_picksplit(bytea *entryvec,
 			   *union_dr;
 	NDBOX	   *inter_d;
 	bool		firsttime;
-	float		size_alpha,
+	double		size_alpha,
 				size_beta,
 				size_union,
 				size_inter;
-	float		size_waste,
+	double		size_waste,
 				waste;
-	float		size_l,
+	double		size_l,
 				size_r;
 	int			nbytes;
 	OffsetNumber seed_1 = 0,
@@ -519,22 +534,22 @@ g_cube_binary_union(NDBOX * r1, NDBOX * r2, int *sizep)
 
 /* cube_union */
 NDBOX *
-cube_union(NDBOX * box_a, NDBOX * box_b)
+cube_union(NDBOX * a, NDBOX * b)
 {
 	int			i;
 	NDBOX	   *result;
-	NDBOX	   *a = swap_corners(box_a);
-	NDBOX	   *b = swap_corners(box_b);
 
 	if (a->dim >= b->dim)
 	{
 		result = palloc(a->size);
+                memset(result, 0, a->size);
 		result->size = a->size;
 		result->dim = a->dim;
 	}
 	else
 	{
 		result = palloc(b->size);
+                memset(result, 0, b->size);
 		result->size = b->size;
 		result->dim = b->dim;
 	}
@@ -554,8 +569,8 @@ cube_union(NDBOX * box_a, NDBOX * box_b)
 	 */
 	for (i = 0; i < b->dim; i++)
 	{
-		result->x[i] = b->x[i];
-		result->x[i + a->dim] = b->x[i + b->dim];
+		result->x[i] = min(b->x[i], b->x[i + b->dim]);
+		result->x[i + a->dim] = max(b->x[i], b->x[i + b->dim]);
 	}
 	for (i = b->dim; i < a->dim; i++)
 	{
@@ -565,34 +580,34 @@ cube_union(NDBOX * box_a, NDBOX * box_b)
 
 	/* compute the union */
 	for (i = 0; i < a->dim; i++)
-		result->x[i] = min(a->x[i], result->x[i]);
-	for (i = a->dim; i < a->dim * 2; i++)
-		result->x[i] = max(a->x[i], result->x[i]);
-
-	pfree(a);
-	pfree(b);
+        {
+		result->x[i] =
+                  min(min(a->x[i], a->x[i + a->dim]), result->x[i]);
+		result->x[i + a->dim] = max(max(a->x[i],
+                  a->x[i + a->dim]), result->x[i + a->dim]);
+        }
 
 	return (result);
 }
 
 /* cube_inter */
 NDBOX *
-cube_inter(NDBOX * box_a, NDBOX * box_b)
+cube_inter(NDBOX * a, NDBOX * b)
 {
 	int			i;
 	NDBOX	   *result;
-	NDBOX	   *a = swap_corners(box_a);
-	NDBOX	   *b = swap_corners(box_b);
 
 	if (a->dim >= b->dim)
 	{
 		result = palloc(a->size);
+                memset(result, 0, a->size);
 		result->size = a->size;
 		result->dim = a->dim;
 	}
 	else
 	{
 		result = palloc(b->size);
+                memset(result, 0, b->size);
 		result->size = b->size;
 		result->dim = b->dim;
 	}
@@ -612,8 +627,8 @@ cube_inter(NDBOX * box_a, NDBOX * box_b)
 	 */
 	for (i = 0; i < b->dim; i++)
 	{
-		result->x[i] = b->x[i];
-		result->x[i + a->dim] = b->x[i + b->dim];
+		result->x[i] = min(b->x[i], b->x[i + b->dim]);
+		result->x[i + a->dim] = max(b->x[i], b->x[i + b->dim]);
 	}
 	for (i = b->dim; i < a->dim; i++)
 	{
@@ -623,12 +638,12 @@ cube_inter(NDBOX * box_a, NDBOX * box_b)
 
 	/* compute the intersection */
 	for (i = 0; i < a->dim; i++)
-		result->x[i] = max(a->x[i], result->x[i]);
-	for (i = a->dim; i < a->dim * 2; i++)
-		result->x[i] = min(a->x[i], result->x[i]);
-
-	pfree(a);
-	pfree(b);
+        {
+		result->x[i] =
+                  max(min(a->x[i], a->x[i + a->dim]), result->x[i]);
+		result->x[i + a->dim] = min(max(a->x[i],
+                  a->x[i + a->dim]), result->x[i + a->dim]);
+        }
 
 	/*
 	 * Is it OK to return a non-null intersection for non-overlapping
@@ -638,14 +653,14 @@ cube_inter(NDBOX * box_a, NDBOX * box_b)
 }
 
 /* cube_size */
-float *
+double *
 cube_size(NDBOX * a)
 {
 	int			i,
 				j;
-	float	   *result;
+	double	   *result;
 
-	result = (float *) palloc(sizeof(float));
+	result = (double *) palloc(sizeof(double));
 
 	*result = 1.0;
 	for (i = 0, j = a->dim; i < a->dim; i++, j++)
@@ -655,7 +670,7 @@ cube_size(NDBOX * a)
 }
 
 void
-rt_cube_size(NDBOX * a, float *size)
+rt_cube_size(NDBOX * a, double *size)
 {
 	int			i,
 				j;
@@ -679,114 +694,84 @@ rt_cube_size(NDBOX * a, float *size)
 /*	is the right edge of (a) located to the left of
 	the right edge of (b)? */
 bool
-cube_over_left(NDBOX * box_a, NDBOX * box_b)
+cube_over_left(NDBOX * a, NDBOX * b)
 {
-	NDBOX	   *a;
-	NDBOX	   *b;
-
-	if ((box_a == NULL) || (box_b == NULL))
+	if ((a == NULL) || (b == NULL))
 		return (FALSE);
 
-	a = swap_corners(box_a);
-	b = swap_corners(box_b);
-
-	return (a->x[a->dim - 1] <= b->x[b->dim - 1] && !cube_left(a, b) && !cube_right(a, b));
+	return (min(a->x[a->dim - 1], a->x[2 * a->dim - 1]) <=
+          min(b->x[b->dim - 1], b->x[2 * b->dim - 1]) &&
+          !cube_left(a, b) && !cube_right(a, b));
 }
 
 /*	is the left edge of (a) located to the right of
 	the left edge of (b)? */
 bool
-cube_over_right(NDBOX * box_a, NDBOX * box_b)
+cube_over_right(NDBOX * a, NDBOX * b)
 {
-	NDBOX	   *a;
-	NDBOX	   *b;
-
-	if ((box_a == NULL) || (box_b == NULL))
+	if ((a == NULL) || (b == NULL))
 		return (FALSE);
 
-	a = swap_corners(box_a);
-	b = swap_corners(box_b);
-
-	return (a->x[a->dim - 1] >= b->x[b->dim - 1] && !cube_left(a, b) && !cube_right(a, b));
+	return (min(a->x[a->dim - 1], a->x[2 * a->dim - 1]) >=
+          min(b->x[b->dim - 1], b->x[2 * b->dim - 1]) &&
+          !cube_left(a, b) && !cube_right(a, b));
 }
 
 
 /* return 'true' if the projection of 'a' is
    entirely on the left of the projection of 'b' */
 bool
-cube_left(NDBOX * box_a, NDBOX * box_b)
+cube_left(NDBOX * a, NDBOX * b)
 {
-	NDBOX	   *a;
-	NDBOX	   *b;
-
-	if ((box_a == NULL) || (box_b == NULL))
+	if ((a == NULL) || (b == NULL))
 		return (FALSE);
 
-	a = swap_corners(box_a);
-	b = swap_corners(box_b);
-
-	return (a->x[a->dim - 1] < b->x[0]);
+	return (min(a->x[a->dim - 1], a->x[2 * a->dim - 1]) <
+          min(b->x[0], b->x[b->dim]));
 }
 
 /* return 'true' if the projection of 'a' is
    entirely on the right  of the projection of 'b' */
 bool
-cube_right(NDBOX * box_a, NDBOX * box_b)
+cube_right(NDBOX * a, NDBOX * b)
 {
-	NDBOX	   *a;
-	NDBOX	   *b;
-
-	if ((box_a == NULL) || (box_b == NULL))
+	if ((a == NULL) || (b == NULL))
 		return (FALSE);
 
-	a = swap_corners(box_a);
-	b = swap_corners(box_b);
-
-	return (a->x[0] > b->x[b->dim - 1]);
+	return (min(a->x[0], a->x[a->dim]) >
+          min(b->x[b->dim - 1], b->x[2 * b->dim - 1]));
 }
 
 /* make up a metric in which one box will be 'lower' than the other
-   -- this can be useful for srting and to determine uniqueness */
+   -- this can be useful for sorting and to determine uniqueness */
 bool
-cube_lt(NDBOX * box_a, NDBOX * box_b)
+cube_lt(NDBOX * a, NDBOX * b)
 {
 	int			i;
 	int			dim;
-	NDBOX	   *a;
-	NDBOX	   *b;
 
-	if ((box_a == NULL) || (box_b == NULL))
+	if ((a == NULL) || (b == NULL))
 		return (FALSE);
 
-	a = swap_corners(box_a);
-	b = swap_corners(box_b);
 	dim = min(a->dim, b->dim);
-
-	/*
-	 * if all common dimensions are equal, the cube with more dimensions
-	 * wins
-	 */
-	if (cube_same(a, b))
-	{
-		if (a->dim < b->dim)
-			return (TRUE);
-		else
-			return (FALSE);
-	}
 
 	/* compare the common dimensions */
 	for (i = 0; i < dim; i++)
 	{
-		if (a->x[i] > b->x[i])
+		if (min(a->x[i], a->x[a->dim + i]) >
+                    min(b->x[i], b->x[b->dim + i]))
 			return (FALSE);
-		if (a->x[i] < b->x[i])
+		if (min(a->x[i], a->x[a->dim + i]) <
+                    min(b->x[i], b->x[b->dim + i]))
 			return (TRUE);
 	}
 	for (i = 0; i < dim; i++)
 	{
-		if (a->x[i + a->dim] > b->x[i + b->dim])
+		if (max(a->x[i], a->x[a->dim + i]) >
+                    max(b->x[i], b->x[b->dim + i]))
 			return (FALSE);
-		if (a->x[i + a->dim] < b->x[i + b->dim])
+		if (max(a->x[i], a->x[a->dim + i]) <
+                    max(b->x[i], b->x[b->dim + i]))
 			return (TRUE);
 	}
 
@@ -795,35 +780,45 @@ cube_lt(NDBOX * box_a, NDBOX * box_b)
 	{
 		for (i = dim; i < a->dim; i++)
 		{
-			if (a->x[i] > 0)
+			if (min(a->x[i], a->x[a->dim + i]) > 0)
 				return (FALSE);
-			if (a->x[i] < 0)
+			if (min(a->x[i], a->x[a->dim + i]) < 0)
 				return (TRUE);
 		}
-		for (i = 0; i < dim; i++)
+		for (i = dim; i < a->dim; i++)
 		{
-			if (a->x[i + a->dim] > 0)
+			if (max(a->x[i], a->x[a->dim + i]) > 0)
 				return (FALSE);
-			if (a->x[i + a->dim] < 0)
+			if (max(a->x[i], a->x[a->dim + i]) < 0)
 				return (TRUE);
 		}
+	        /*
+	         * if all common dimensions are equal, the cube with more
+	         * dimensions wins
+	         */
+                return (FALSE);
 	}
 	if (a->dim < b->dim)
 	{
 		for (i = dim; i < b->dim; i++)
 		{
-			if (b->x[i] > 0)
+			if (min(b->x[i], b->x[b->dim + i]) > 0)
 				return (TRUE);
-			if (b->x[i] < 0)
+			if (min(b->x[i], b->x[b->dim + i]) < 0)
 				return (FALSE);
 		}
-		for (i = 0; i < dim; i++)
+		for (i = dim; i < b->dim; i++)
 		{
-			if (b->x[i + b->dim] > 0)
+			if (max(b->x[i], b->x[b->dim + i]) > 0)
 				return (TRUE);
-			if (b->x[i + b->dim] < 0)
+			if (max(b->x[i], b->x[b->dim + i]) < 0)
 				return (FALSE);
 		}
+	        /*
+	         * if all common dimensions are equal, the cube with more
+	         * dimensions wins
+	         */
+                return (TRUE);
 	}
 
 	return (FALSE);
@@ -831,45 +826,33 @@ cube_lt(NDBOX * box_a, NDBOX * box_b)
 
 
 bool
-cube_gt(NDBOX * box_a, NDBOX * box_b)
+cube_gt(NDBOX * a, NDBOX * b)
 {
 	int			i;
 	int			dim;
-	NDBOX	   *a;
-	NDBOX	   *b;
 
-	if ((box_a == NULL) || (box_b == NULL))
+	if ((a == NULL) || (b == NULL))
 		return (FALSE);
 
-	a = swap_corners(box_a);
-	b = swap_corners(box_b);
 	dim = min(a->dim, b->dim);
-
-	/*
-	 * if all common dimensions are equal, the cube with more dimensions
-	 * wins
-	 */
-	if (cube_same(a, b))
-	{
-		if (a->dim > b->dim)
-			return (TRUE);
-		else
-			return (FALSE);
-	}
 
 	/* compare the common dimensions */
 	for (i = 0; i < dim; i++)
 	{
-		if (a->x[i] < b->x[i])
+		if (min(a->x[i], a->x[a->dim + i]) <
+                    min(b->x[i], b->x[b->dim + i]))
 			return (FALSE);
-		if (a->x[i] > b->x[i])
+		if (min(a->x[i], a->x[a->dim + i]) >
+                    min(b->x[i], b->x[b->dim + i]))
 			return (TRUE);
 	}
 	for (i = 0; i < dim; i++)
 	{
-		if (a->x[i + a->dim] < b->x[i + b->dim])
+		if (max(a->x[i], a->x[a->dim + i]) <
+                    max(b->x[i], b->x[b->dim + i]))
 			return (FALSE);
-		if (a->x[i + a->dim] > b->x[i + b->dim])
+		if (max(a->x[i], a->x[a->dim + i]) >
+                    max(b->x[i], b->x[b->dim + i]))
 			return (TRUE);
 	}
 
@@ -879,35 +862,45 @@ cube_gt(NDBOX * box_a, NDBOX * box_b)
 	{
 		for (i = dim; i < a->dim; i++)
 		{
-			if (a->x[i] < 0)
+			if (min(a->x[i], a->x[a->dim + i]) < 0)
 				return (FALSE);
-			if (a->x[i] > 0)
+			if (min(a->x[i], a->x[a->dim + i]) > 0)
 				return (TRUE);
 		}
-		for (i = 0; i < dim; i++)
+		for (i = dim; i < a->dim; i++)
 		{
-			if (a->x[i + a->dim] < 0)
+			if (max(a->x[i], a->x[a->dim + i]) < 0)
 				return (FALSE);
-			if (a->x[i + a->dim] > 0)
+			if (max(a->x[i], a->x[a->dim + i]) > 0)
 				return (TRUE);
 		}
+	        /*
+	         * if all common dimensions are equal, the cube with more
+	         * dimensions wins
+	         */
+                return (TRUE);
 	}
 	if (a->dim < b->dim)
 	{
 		for (i = dim; i < b->dim; i++)
 		{
-			if (b->x[i] < 0)
+			if (min(b->x[i], b->x[b->dim + i]) < 0)
 				return (TRUE);
-			if (b->x[i] > 0)
+			if (min(b->x[i], b->x[b->dim + i]) > 0)
 				return (FALSE);
 		}
-		for (i = 0; i < dim; i++)
+		for (i = dim; i < b->dim; i++)
 		{
-			if (b->x[i + b->dim] < 0)
+			if (max(b->x[i], b->x[b->dim + i]) < 0)
 				return (TRUE);
-			if (b->x[i + b->dim] > 0)
+			if (max(b->x[i], b->x[b->dim + i]) > 0)
 				return (FALSE);
 		}
+	        /*
+	         * if all common dimensions are equal, the cube with more
+	         * dimensions wins
+	         */
+                return (FALSE);
 	}
 
 	return (FALSE);
@@ -916,17 +909,12 @@ cube_gt(NDBOX * box_a, NDBOX * box_b)
 
 /* Equal */
 bool
-cube_same(NDBOX * box_a, NDBOX * box_b)
+cube_same(NDBOX * a, NDBOX * b)
 {
 	int			i;
-	NDBOX	   *a;
-	NDBOX	   *b;
 
-	if ((box_a == NULL) || (box_b == NULL))
+	if ((a == NULL) || (b == NULL))
 		return (FALSE);
-
-	a = swap_corners(box_a);
-	b = swap_corners(box_b);
 
 	/* swap the box pointers if necessary */
 	if (a->dim < b->dim)
@@ -939,15 +927,19 @@ cube_same(NDBOX * box_a, NDBOX * box_b)
 
 	for (i = 0; i < b->dim; i++)
 	{
-		if (a->x[i] != b->x[i])
+		if (min(a->x[i], a->x[a->dim + i]) !=
+                  min(b->x[i], b->x[b->dim + i]))
 			return (FALSE);
-		if (a->x[i + a->dim] != b->x[i + b->dim])
+		if (max(a->x[i], a->x[a->dim + i]) !=
+                  max(b->x[i], b->x[b->dim + i]))
 			return (FALSE);
 	}
 
 	/*
 	 * all dimensions of (b) are compared to those of (a); instead of
 	 * those in (a) absent in (b), compare (a) to zero
+         * Since both LL and UR coordinates are compared to zero, we can
+         * just check them all without worrying about which is which.
 	 */
 	for (i = b->dim; i < a->dim; i++)
 	{
@@ -957,40 +949,34 @@ cube_same(NDBOX * box_a, NDBOX * box_b)
 			return (FALSE);
 	}
 
-	pfree(a);
-	pfree(b);
-
 	return (TRUE);
 }
 
 /* Different */
 bool
-cube_different(NDBOX * box_a, NDBOX * box_b)
+cube_different(NDBOX * a, NDBOX * b)
 {
-	return (!cube_same(box_a, box_b));
+	return (!cube_same(a, b));
 }
 
 
 /* Contains */
 /* Box(A) CONTAINS Box(B) IFF pt(A) < pt(B) */
 bool
-cube_contains(NDBOX * box_a, NDBOX * box_b)
+cube_contains(NDBOX * a, NDBOX * b)
 {
 	int			i;
-	NDBOX	   *a;
-	NDBOX	   *b;
 
-	if ((box_a == NULL) || (box_b == NULL))
+	if ((a == NULL) || (b == NULL))
 		return (FALSE);
-
-	a = swap_corners(box_a);
-	b = swap_corners(box_b);
 
 	if (a->dim < b->dim)
 	{
 		/*
 		 * the further comparisons will make sense if the excess
 		 * dimensions of (b) were zeroes
+                 * Since both UL and UR coordinates must be zero, we can
+                 * check them all without worrying about which is which.
 		 */
 		for (i = a->dim; i < b->dim; i++)
 		{
@@ -1004,14 +990,13 @@ cube_contains(NDBOX * box_a, NDBOX * box_b)
 	/* Can't care less about the excess dimensions of (a), if any */
 	for (i = 0; i < min(a->dim, b->dim); i++)
 	{
-		if (a->x[i] > b->x[i])
+		if (min(a->x[i], a->x[a->dim + i]) >
+                  min(b->x[i], b->x[b->dim + i]))
 			return (FALSE);
-		if (a->x[i + a->dim] < b->x[i + b->dim])
+		if (max(a->x[i], a->x[a->dim + i]) <
+                  max(b->x[i], b->x[b->dim + i]))
 			return (FALSE);
 	}
-
-	pfree(a);
-	pfree(b);
 
 	return (TRUE);
 }
@@ -1030,21 +1015,16 @@ cube_contained(NDBOX * a, NDBOX * b)
 /* Overlap */
 /* Box(A) Overlap Box(B) IFF (pt(a)LL < pt(B)UR) && (pt(b)LL < pt(a)UR) */
 bool
-cube_overlap(NDBOX * box_a, NDBOX * box_b)
+cube_overlap(NDBOX * a, NDBOX * b)
 {
 	int			i;
-	NDBOX	   *a;
-	NDBOX	   *b;
 
 	/*
 	 * This *very bad* error was found in the source: if ( (a==NULL) ||
 	 * (b=NULL) ) return(FALSE);
 	 */
-	if ((box_a == NULL) || (box_b == NULL))
+	if ((a == NULL) || (b == NULL))
 		return (FALSE);
-
-	a = swap_corners(box_a);
-	b = swap_corners(box_b);
 
 	/* swap the box pointers if needed */
 	if (a->dim < b->dim)
@@ -1058,23 +1038,22 @@ cube_overlap(NDBOX * box_a, NDBOX * box_b)
 	/* compare within the dimensions of (b) */
 	for (i = 0; i < b->dim; i++)
 	{
-		if (a->x[i] > b->x[i + b->dim])
+		if (min(a->x[i], a->x[a->dim + i]) >
+                  max(b->x[i], b->x[b->dim + i]))
 			return (FALSE);
-		if (a->x[i + a->dim] < b->x[i])
+		if (max(a->x[i], a->x[a->dim + i]) <
+                  min(b->x[i], b->x[b->dim + i]))
 			return (FALSE);
 	}
 
 	/* compare to zero those dimensions in (a) absent in (b) */
 	for (i = b->dim; i < a->dim; i++)
 	{
-		if (a->x[i] > 0)
+		if (min(a->x[i], a->x[a->dim + i]) > 0)
 			return (FALSE);
-		if (a->x[i + a->dim] < 0)
+		if (max(a->x[i], a->x[a->dim + i]) < 0)
 			return (FALSE);
 	}
-
-	pfree(a);
-	pfree(b);
 
 	return (TRUE);
 }
@@ -1085,15 +1064,15 @@ cube_overlap(NDBOX * box_a, NDBOX * box_b)
    between 1D projections of the boxes onto Cartesian axes. Assuming zero
    distance between overlapping projections, this metric coincides with the
    "common sense" geometric distance */
-float *
+double *
 cube_distance(NDBOX * a, NDBOX * b)
 {
 	int			i;
 	double		d,
 				distance;
-	float	   *result;
+	double	   *result;
 
-	result = (float *) palloc(sizeof(float));
+	result = (double *) palloc(sizeof(double));
 
 	/* swap the box pointers if needed */
 	if (a->dim < b->dim)
@@ -1119,13 +1098,13 @@ cube_distance(NDBOX * a, NDBOX * b)
 		distance += d * d;
 	}
 
-	*result = (float) sqrt(distance);
+	*result = (double) sqrt(distance);
 
 	return (result);
 }
 
-static float
-distance_1D(float a1, float a2, float b1, float b2)
+static double
+distance_1D(double a1, double a2, double b1, double b2)
 {
 	/* interval (a) is entirely on the left of (b) */
 	if ((a1 <= b1) && (a2 <= b1) && (a1 <= b2) && (a2 <= b2))
@@ -1139,25 +1118,91 @@ distance_1D(float a1, float a2, float b1, float b2)
 	return (0.0);
 }
 
-/* normalize the box's co-ordinates by placing min(xLL,xUR) to LL
-   and max(xLL,xUR) to UR
-*/
-static NDBOX *
-swap_corners(NDBOX * a)
+/* Test if a box is also a point */
+bool
+cube_is_point(NDBOX * a)
 {
-	int			i,
-				j;
-	NDBOX	   *result;
-
-	result = palloc(a->size);
-	result->size = a->size;
-	result->dim = a->dim;
-
+        int i,
+            j;
 	for (i = 0, j = a->dim; i < a->dim; i++, j++)
-	{
-		result->x[i] = min(a->x[i], a->x[j]);
-		result->x[j] = max(a->x[i], a->x[j]);
-	}
+        {
+                if (a->x[i] != a->x[j]) return FALSE;
+        }
 
-	return (result);
+        return TRUE;
+}
+
+/* Return dimensions in use in the data structure */
+int
+cube_dim(NDBOX * a)
+{
+        /* Other things will break before unsigned int doesn't fit. */
+        return a->dim;
+}
+
+/* Return a specific normalized LL coordinate */
+double *
+cube_ll_coord(NDBOX * a, int n)
+{
+        double *result;
+	result = (double *) palloc(sizeof(double));
+        *result = 0;
+        if (a->dim >= n && n > 0)
+               *result = min(a->x[n-1], a->x[a->dim + n-1]);
+        return result;
+}
+
+/* Return a specific normalized UR coordinate */
+double *
+cube_ur_coord(NDBOX * a, int n)
+{
+        double *result;
+	result = (double *) palloc(sizeof(double));
+        *result = 0;
+        if (a->dim >= n && n > 0)
+                *result = max(a->x[n-1], a->x[a->dim + n-1]);
+        return result;
+}
+
+/* Increase or decrease box size by a radius in at least n dimensions. */
+NDBOX *
+cube_enlarge(NDBOX * a, double * r, int n)
+{
+        NDBOX *result;
+        int dim = 0;
+        int size;
+        int i,
+            j;
+        if (*r > 0 && n > 0) dim = n;
+        if (a->dim > dim) dim = a->dim;
+        size = offsetof(NDBOX, x[0]) + sizeof(double) * dim * 2;
+        result = (NDBOX *) palloc(size);
+        memset(result, 0, size);
+        result->size = size;
+        result->dim = dim;
+	for (i = 0, j = dim; i < a->dim; i++, j++)
+        {
+                if (a->x[i] >= a->x[j])
+                {
+                        result->x[i] = a->x[j] - *r;
+                        result->x[j] = a->x[i] + *r;
+                }
+                else
+                {
+                        result->x[i] = a->x[i] - *r;
+                        result->x[j] = a->x[j] + *r;
+                }
+                if (result->x[i] > result->x[j])
+                {
+                        result->x[i] = (result->x[i] + result->x[j]) / 2;
+                        result->x[j] = result->x[i];
+                }
+        }
+        /* dim > a->dim only if r > 0 */
+	for (; i < dim; i++, j++)
+        {
+                result->x[i] = -*r;
+                result->x[j] = *r;
+        }
+        return result;
 }

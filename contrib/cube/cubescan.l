@@ -34,7 +34,7 @@ void cube_flush_scanner_buffer(void);
 
 n            [0-9]+
 integer      [+-]?{n}
-real         [+-]?({n}\.{n}?)|(\.{n})
+real         [+-]?({n}\.{n}?|\.{n})
 float        ({integer}|{real})([eE]{integer})?
 
 %%

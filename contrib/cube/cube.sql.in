@@ -8,12 +8,12 @@ SET search_path = public;
 CREATE FUNCTION cube_in(cstring)
 RETURNS cube
 AS 'MODULE_PATHNAME'
-LANGUAGE 'c' WITH (isStrict);
+LANGUAGE 'c'IMMUTABLE STRICT;
 
 CREATE FUNCTION cube_out(cube)
 RETURNS cstring
 AS 'MODULE_PATHNAME'
-LANGUAGE 'c' WITH (isStrict);
+LANGUAGE 'c'IMMUTABLE STRICT;
 
 CREATE TYPE cube (
 internallength = variable,
@@ -24,6 +24,16 @@ output = cube_out
 COMMENT ON TYPE cube IS
 'multi-dimensional cube ''(FLOAT-1, FLOAT-2, ..., FLOAT-N), (FLOAT-1, FLOAT-2, ..., FLOAT-N)''';
 
+-- Convert from text to cube
+
+CREATE FUNCTION cube(text)
+RETURNS cube
+AS 'MODULE_PATHNAME'
+LANGUAGE 'c' IMMUTABLE STRICT;
+
+COMMENT ON FUNCTION cube(text) IS
+'convert text to cube';
+
 --
 -- External C-functions for R-tree methods
 --
@@ -31,25 +41,25 @@ COMMENT ON TYPE cube IS
 -- Left/Right methods
 
 CREATE FUNCTION cube_over_left(cube, cube) RETURNS bool
-	AS 'MODULE_PATHNAME' LANGUAGE 'c' with (isstrict);
+	AS 'MODULE_PATHNAME' LANGUAGE 'c' IMMUTABLE STRICT;
 
 COMMENT ON FUNCTION cube_over_left(cube, cube) IS
 'is over and left of (NOT IMPLEMENTED)';
 
 CREATE FUNCTION cube_over_right(cube, cube) RETURNS bool
-	AS 'MODULE_PATHNAME' LANGUAGE 'c' with (isstrict);
+	AS 'MODULE_PATHNAME' LANGUAGE 'c' IMMUTABLE STRICT;
 
 COMMENT ON FUNCTION cube_over_right(cube, cube) IS
 'is over and right of (NOT IMPLEMENTED)';
 
 CREATE FUNCTION cube_left(cube, cube) RETURNS bool
-	AS 'MODULE_PATHNAME' LANGUAGE 'c' with (isstrict);
+	AS 'MODULE_PATHNAME' LANGUAGE 'c' IMMUTABLE STRICT;
 
 COMMENT ON FUNCTION cube_left(cube, cube) IS
 'is left of (NOT IMPLEMENTED)';
 
 CREATE FUNCTION cube_right(cube, cube) RETURNS bool
-	AS 'MODULE_PATHNAME' LANGUAGE 'c' with (isstrict);
+	AS 'MODULE_PATHNAME' LANGUAGE 'c' IMMUTABLE STRICT;
 
 COMMENT ON FUNCTION cube_right(cube, cube) IS
 'is right of (NOT IMPLEMENTED)';
@@ -58,43 +68,43 @@ COMMENT ON FUNCTION cube_right(cube, cube) IS
 -- Comparison methods
 
 CREATE FUNCTION cube_lt(cube, cube) RETURNS bool
-	AS 'MODULE_PATHNAME' LANGUAGE 'c' with (isstrict);
+	AS 'MODULE_PATHNAME' LANGUAGE 'c' IMMUTABLE STRICT;
 
 COMMENT ON FUNCTION cube_lt(cube, cube) IS
 'lower than';
 
 CREATE FUNCTION cube_gt(cube, cube) RETURNS bool
-	AS 'MODULE_PATHNAME' LANGUAGE 'c' with (isstrict);
+	AS 'MODULE_PATHNAME' LANGUAGE 'c' IMMUTABLE STRICT;
 
 COMMENT ON FUNCTION cube_gt(cube, cube) IS
 'greater than';
 
 CREATE FUNCTION cube_contains(cube, cube) RETURNS bool
-	AS 'MODULE_PATHNAME' LANGUAGE 'c' with (isstrict);
+	AS 'MODULE_PATHNAME' LANGUAGE 'c' IMMUTABLE STRICT;
 
 COMMENT ON FUNCTION cube_contains(cube, cube) IS
 'contains';
 
 CREATE FUNCTION cube_contained(cube, cube) RETURNS bool
-	AS 'MODULE_PATHNAME' LANGUAGE 'c' with (isstrict);
+	AS 'MODULE_PATHNAME' LANGUAGE 'c' IMMUTABLE STRICT;
 
 COMMENT ON FUNCTION cube_contained(cube, cube) IS
 'contained in';
 
 CREATE FUNCTION cube_overlap(cube, cube) RETURNS bool
-	AS 'MODULE_PATHNAME' LANGUAGE 'c' with (isstrict);
+	AS 'MODULE_PATHNAME' LANGUAGE 'c' IMMUTABLE STRICT;
 
 COMMENT ON FUNCTION cube_overlap(cube, cube) IS
 'overlaps';
 
 CREATE FUNCTION cube_same(cube, cube) RETURNS bool
-	AS 'MODULE_PATHNAME' LANGUAGE 'c' with (isstrict);
+	AS 'MODULE_PATHNAME' LANGUAGE 'c' IMMUTABLE STRICT;
 
 COMMENT ON FUNCTION cube_same(cube, cube) IS
 'same as';
 
 CREATE FUNCTION cube_different(cube, cube) RETURNS bool
-	AS 'MODULE_PATHNAME' LANGUAGE 'c' with (isstrict);
+	AS 'MODULE_PATHNAME' LANGUAGE 'c' IMMUTABLE STRICT;
 
 COMMENT ON FUNCTION cube_different(cube, cube) IS
 'different';
@@ -102,22 +112,42 @@ COMMENT ON FUNCTION cube_different(cube, cube) IS
 -- support routines for indexing
 
 CREATE FUNCTION cube_union(cube, cube) RETURNS cube
-	AS 'MODULE_PATHNAME' LANGUAGE 'c' with (isstrict);
+	AS 'MODULE_PATHNAME' LANGUAGE 'c' IMMUTABLE STRICT;
 
 CREATE FUNCTION cube_inter(cube, cube) RETURNS cube
-	AS 'MODULE_PATHNAME' LANGUAGE 'c' with (isstrict);
+	AS 'MODULE_PATHNAME' LANGUAGE 'c' IMMUTABLE STRICT;
 
-CREATE FUNCTION cube_size(cube) RETURNS float4
-	AS 'MODULE_PATHNAME' LANGUAGE 'c' with (isstrict);
+CREATE FUNCTION cube_size(cube) RETURNS float8
+	AS 'MODULE_PATHNAME' LANGUAGE 'c' IMMUTABLE STRICT;
 
 
 -- Misc N-dimensional functions
 
 -- proximity routines
 
-CREATE FUNCTION cube_distance(cube, cube) RETURNS float4
-	AS 'MODULE_PATHNAME' LANGUAGE 'c' with (isstrict);
+CREATE FUNCTION cube_distance(cube, cube) RETURNS float8
+	AS 'MODULE_PATHNAME' LANGUAGE 'c' IMMUTABLE STRICT;
 
+-- Extracting elements functions
+
+CREATE FUNCTION cube_dim(cube) RETURNS int4
+        AS 'MODULE_PATHNAME' LANGUAGE 'c' IMMUTABLE STRICT;
+
+CREATE FUNCTION cube_ll_coord(cube, int4) RETURNS float8
+        AS 'MODULE_PATHNAME' LANGUAGE 'c' IMMUTABLE STRICT;
+
+CREATE FUNCTION cube_ur_coord(cube, int4) RETURNS float8
+        AS 'MODULE_PATHNAME' LANGUAGE 'c' IMMUTABLE STRICT;
+
+-- Test if cube is also a point
+
+CREATE FUNCTION cube_is_point(cube) RETURNS bool
+        AS 'MODULE_PATHNAME' LANGUAGE 'c' IMMUTABLE STRICT;
+
+-- Increasing the size of a cube by a radius in at least n dimensions
+
+CREATE FUNCTION cube_enlarge(cube, float8, int4) RETURNS cube
+        AS 'MODULE_PATHNAME' LANGUAGE 'c' IMMUTABLE STRICT;
 
 --
 -- OPERATORS
@@ -202,7 +232,7 @@ CREATE FUNCTION g_cube_decompress(internal) RETURNS internal
 	AS 'MODULE_PATHNAME' LANGUAGE 'c';
 
 CREATE FUNCTION g_cube_penalty(internal,internal,internal) RETURNS internal
-	AS 'MODULE_PATHNAME' LANGUAGE 'c' with (isstrict);
+	AS 'MODULE_PATHNAME' LANGUAGE 'c' STRICT;
 
 CREATE FUNCTION g_cube_picksplit(internal, internal) RETURNS internal
 	AS 'MODULE_PATHNAME' LANGUAGE 'c';
