@@ -1,6 +1,6 @@
 TODO list for PostgreSQL
 ========================
-Last updated:		Wed May 23 12:02:28 EDT 2001
+Last updated:		Thu May 24 10:36:09 EDT 2001
 
 Current maintainer:	Bruce Momjian (pgman@candle.pha.pa.us)
 
@@ -16,7 +16,7 @@ http://www.postgresql.org/docs/todo.html.
 RELIABILITY
 -----------
 
-* -SELECT pg_class FROM pg_class generates strange error
+* -SELECT pg_class FROM pg_class generates strange error (Bruce)
 * PL/PgSQL does not handle quoted mixed-case identifiers
 
 ENHANCEMENTS
@@ -64,7 +64,7 @@ TYPES
 * Allow better handling of numeric constants, type conversion [typeconv]
 * Missing optimizer selectivities for date, r-tree, etc. [optimizer]
 * SELECT cash_out(2) crashes because of opaque
-* Add SQL standard function bit_length()
+* -Add SQL standard function bit_length() (Peter E)
 * Make oid use unsigned int more reliably, pg_atoi()
 * ARRAYS
 	* Allow nulls in arrays
@@ -112,7 +112,7 @@ INDEXES
 * Use indexes with CIDR '<<' (contains) operator
 * Allow LIKE indexing optimization for non-ASCII locales
 * Be smarter about insertion of already-ordered data into btree index
-* -Gather more accurate dispersion statistics using indexes
+* -Gather more accurate dispersion statistics using indexes (Tom)
 * Add deleted bit to index tuples to reduce heap access
 * Prevent index uniqueness checks when UPDATE does not modifying column
 
@@ -123,7 +123,7 @@ SYSTEM TABLES
 * Add unique indexes on pg_database
 * Check all system tables and add unique indexes as needed
 * Remove pg_listener index
-* -Remove unused pg_variable, pg_inheritproc, pg_ipl tables
+* -Remove unused pg_variable, pg_inheritproc, pg_ipl tables (Bruce)
 * Add pg_depend table to track object dependencies
 
 COMMANDS
@@ -253,8 +253,8 @@ VACUUM
 * Improve speed with indexes (perhaps recreate index instead) [vacuum]
 * Reduce lock time by moving tuples with read lock, then write
   lock and truncate table [vacuum]
-* -Make ANALYZE a separate command
-* -Allow ANALYZE to ESTIMATE based on certain random precentage of rows
+* -Make ANALYZE a separate command (Tom)
+* -Allow ANALYZE to ESTIMATE based on certain random precentage of rows (Tom)
 * Add LAZY VACUUM (Vadim)
 
 MISCELLANEOUS
@@ -270,7 +270,7 @@ MISCELLANEOUS
 * improve dynamic memory allocation by introducing tuple-context memory
   allocation (Tom)
 * allow configuration of maximum number of open files
-* -Improve statistics storage in pg_class [performance]
+* -Improve statistics storage in pg_class [performance] (Tom)
 * Add connection pooling [pool]
 * Allow persistent backends [persistent]
 * Create a transaction processor to aid in persistent connections and
@@ -299,7 +299,7 @@ SOURCE CODE
 * Remove warnings created by -Wcast-align
 * Move platform-specific ps status display info from ps_status.c to ports
 * Allow ps status display to work on Solaris/SVr4-based systems
-* -Decide on spelling of indexes/indices
+* -Decide on spelling of indexes/indices (Peter E)
 * Add mention of VACUUM, log rotation to Administrator's Guide
 * Use BlockNumber rather than int where appropriate
 
