@@ -1,69 +1,62 @@
 #-------------------------------------------------------------------------
 #
-# Makefile--
-#    Makefile for the bootstrap module
+# Makefile for the bootstrap module
 #
-# IDENTIFICATION
-#    $Header: /cvsroot/pgsql/src/backend/bootstrap/Makefile,v 1.23 2000/06/07 16:26:37 petere Exp $
-#
-#
-# We must build bootparse.c and bootscanner.c with yacc and lex and sed,
-# but bootstrap.c is part of the distribution.
-#
-# Another kinda weird Makefile cause we need two
-#  scanner/parsers in the backend and most yaccs and lexs
-#  don't have the prefix option.
-#
-#	sed files are HACK CITY! - redo...
+# $Header: /cvsroot/pgsql/src/backend/bootstrap/Makefile,v 1.24 2000/07/19 16:29:47 petere Exp $
 #
 #-------------------------------------------------------------------------
 
-SRCDIR= ../..
-include $(SRCDIR)/Makefile.global
+subdir = src/backend/bootstrap
+top_builddir = ../../..
+include $(top_builddir)/src/Makefile.global
 
-ifeq ($(CC), gcc)
+ifeq ($(GCC), yes)
 CFLAGS+= -Wno-error
 endif
 
-BOOTYACCS= bootstrap_tokens.h bootparse.c
-
+# qnx4's wlink currently crashes with bootstrap.o
 ifneq ($(PORTNAME), qnx4)
 OBJS= bootparse.o bootscanner.o bootstrap.o 
 else
-# qnx4's wlink currently crashes with bootstrap.o
 OBJS= bootparse.o bootscanner.o
 endif
+
 
 # make sure bootstrap.o is built even on qnx4
 all: SUBSYS.o bootstrap.o
 
 SUBSYS.o: $(OBJS)
-	$(LD) $(LDREL) $(LDOUT) SUBSYS.o $(OBJS)
+	$(LD) $(LDREL) $(LDOUT) $@ $^
 
-# bootstrap.o's dependency on bootstrap_tokens.h is computed by the
-# make depend, but we state it here explicitly anyway because 
-# bootstrap_tokens.h doesn't even exist at first and if user fails to 
-# do make depend, we still want the build to succeed.
 
-bootstrap.o: bootstrap_tokens.h
+bootstrap.o bootscanner.c: $(srcdir)/bootstrap_tokens.h
 
-bootstrap_tokens.h bootparse.c: bootparse.y
+
+# `sed' rules to remove conflicts between bootstrap scanner and parser
+# and the SQL scanner and parser. For correctness' sake the rules that
+# use this must depend on this Makefile.
+define sed-magic
+sed -e 's/^yy/Int_yy/g' \
+    -e 's/\([^a-zA-Z0-9_]\)yy/\1Int_yy/g'
+endef
+
+
+$(srcdir)/bootparse.c $(srcdir)/bootstrap_tokens.h: bootparse.y Makefile
 	$(YACC) -d $(YFLAGS) $<
-	grep -v "^#" boot.sed > sedfile
-	sed -f sedfile < y.tab.c > bootparse.c
-	mv y.tab.h bootstrap_tokens.h
-	rm -f y.tab.c sedfile
+	$(sed-magic) < y.tab.c > $(srcdir)/bootparse.c
+	$(sed-magic) < y.tab.h > $(srcdir)/bootstrap_tokens.h
+	rm -f y.tab.c y.tab.h
 
-bootscanner.c: bootscanner.l
+$(srcdir)/bootscanner.c: bootscanner.l Makefile
 	$(LEX) $(LFLAGS) $<
-	grep -v "^#" boot.sed > sedfile
-	sed -f sedfile < lex.yy.c > bootscanner.c
-	rm -f lex.yy.c sedfile
+	$(sed-magic) < lex.yy.c > $@
+	rm -f lex.yy.c
 
 clean:
 	rm -f SUBSYS.o $(OBJS) bootstrap.o
 # And the garbage that might have been left behind by partial build:
-	rm -f y.tab.h y.tab.c y.output lex.yy.c
+	@rm -f y.tab.h y.tab.c y.output lex.yy.c
+
 
 # This is unusual:  We actually have to build some of the parts before
 # we know what the header file dependencies are.  

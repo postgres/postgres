@@ -1,7 +1,7 @@
 #
 # PostgreSQL top level makefile
 #
-# $Header: /cvsroot/pgsql/GNUmakefile.in,v 1.8 2000/07/17 22:31:56 petere Exp $
+# $Header: /cvsroot/pgsql/GNUmakefile.in,v 1.9 2000/07/19 16:29:41 petere Exp $
 #
 
 subdir =
@@ -18,7 +18,7 @@ install:
 	$(MAKE) -C src install
 	@cat $(srcdir)/register.txt
 
-installdirs uninstall clean:
+installdirs uninstall clean distprep:
 	$(MAKE) -C doc $@
 	$(MAKE) -C src $@
 
@@ -51,3 +51,73 @@ endif
 # aclocal.m4' or `make configure'.
 $(top_srcdir)/aclocal.m4: $(wildcard $(top_srcdir)/config/*.m4)
 	cat $^ > $@
+
+
+##########################################################################
+
+distdir	:= postgresql-$(VERSION)
+dummy	:= =install=
+garbage := =*  "#"*  ."#"*  *~*  *.orig  *.rej  core  postgresql-*
+
+
+dist: $(distdir).tar.gz
+ifeq ($(split-dist), yes)
+dist: $(distdir).base.tar.gz $(distdir).docs.tar.gz $(distdir).support.tar.gz $(distdir).test.tar.gz
+endif
+dist:
+	-rm -rf $(distdir)
+
+$(distdir).tar: distdir
+	$(TAR) chf $@ $(distdir)
+
+$(distdir).base.tar: distdir
+	$(TAR) -c $(addprefix --exclude $(distdir)/, doc src/test src/interfaces src/bin) \
+	  -f $@ $(distdir)
+
+$(distdir).docs.tar: distdir
+	$(TAR) cf $@ $(distdir)/doc
+
+$(distdir).support.tar: distdir
+	$(TAR) cf $@ $(distdir)/src/interfaces $(distdir)/src/bin
+
+$(distdir).test.tar: distdir
+	$(TAR) cf $@ $(distdir)/src/test
+
+%.gz: %
+	gzip -f --best $<
+	@text="$@ is ready for distribution." ; \
+	 frame=`echo "$$text" | sed -e 's/./=/g'` ; \
+	 echo "$$frame" ; echo "$$text" ; echo "$$frame"
+
+distdir: distprep
+	-rm -rf $(distdir)* $(install)
+	for x in `cd $(top_srcdir) && find . -name CVS -prune -o -print`; do \
+	  file=`expr $$x : '\./\(.*\)'`; \
+	  if test -d "$(top_srcdir)/$$file" ; then \
+	    mkdir "$(distdir)/$$file" && chmod 777 "$(distdir)/$$file";	\
+	  else \
+	    ln "$(top_srcdir)/$$file" "$(distdir)/$$file"; \
+	  fi || exit; \
+	done
+	$(MAKE) -C $(distdir) distclean
+
+distcheck: dist
+	-rm -rf $(dummy)
+	mkdir $(dummy)
+	gunzip -c $(distdir).tar.gz | $(TAR) xf -
+	install_prefix=`cd $(dummy) && pwd`; \
+	cd $(distdir) \
+	&& ./configure --prefix="$$install_prefix"
+	$(MAKE) -C $(distdir) -q distprep
+	$(MAKE) -C $(distdir)
+	$(MAKE) -C $(distdir) install
+	$(MAKE) -C $(distdir) uninstall
+	@echo "checking whether \`$(MAKE) uninstall' works"
+	test `find $(dummy) -not -type d | wc -l` -eq 0
+	$(MAKE) -C $(distdir) dist
+# Room for improvement: Check here whether this distribution tarball
+# is sufficiently similar to the original one.
+	-rm -rf $(distdir) $(dummy)
+	@echo "Distribution integrity checks out."
+
+.PHONY: dist distdir distcheck

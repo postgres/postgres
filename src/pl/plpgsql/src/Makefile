@@ -2,7 +2,7 @@
 #
 # Makefile for the plpgsql shared object
 #
-# $Header: /cvsroot/pgsql/src/pl/plpgsql/src/Makefile,v 1.4 2000/06/28 18:30:16 petere Exp $
+# $Header: /cvsroot/pgsql/src/pl/plpgsql/src/Makefile,v 1.5 2000/07/19 16:30:24 petere Exp $
 #
 #-------------------------------------------------------------------------
 
@@ -65,6 +65,9 @@ $(srcdir)/pl_scan.c: scan.l
 	$(LEX) $(LFLAGS) -i -l $<
 	sed -e 's/yy/plpgsql_yy/g' -e 's/YY/PLPGSQL_YY/g' < lex.yy.c > $@
 	rm -f lex.yy.c
+
+
+distprep: $(srcdir)/pl_scan.c $(srcdir)/pl.tab.h $(srcdir)/pl_gram.c
 
 mklang.sql: mklang.sql.in
 	sed -e 's%__libdir__%$(libdir)%g' -e 's%__DLSUFFIX__%$(DLSUFFIX)%g' < $< > $@

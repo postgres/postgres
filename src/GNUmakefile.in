@@ -4,7 +4,7 @@
 #
 # Copyright (c) 1994, Regents of the University of California
 #
-# $Header: /cvsroot/pgsql/src/Attic/GNUmakefile.in,v 1.57 2000/07/06 21:33:12 petere Exp $
+# $Header: /cvsroot/pgsql/src/Attic/GNUmakefile.in,v 1.58 2000/07/19 16:29:42 petere Exp $
 #
 #-------------------------------------------------------------------------
 
@@ -13,7 +13,7 @@ top_builddir = ..
 include Makefile.global
 
 
-all install installdirs uninstall dep depend:
+all install installdirs uninstall dep depend distprep:
 	$(MAKE) -C backend $@
 	$(MAKE) -C include $@
 	$(MAKE) -C interfaces $@

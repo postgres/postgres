@@ -4,7 +4,7 @@
 #
 # Copyright (c) 1994, Regents of the University of California
 #
-# $Header: /cvsroot/pgsql/src/bin/psql/Makefile,v 1.22 2000/06/28 18:29:31 petere Exp $
+# $Header: /cvsroot/pgsql/src/bin/psql/Makefile,v 1.23 2000/07/19 16:29:56 petere Exp $
 #
 #-------------------------------------------------------------------------
 
@@ -64,6 +64,8 @@ endif
 
 submake:
 	$(MAKE) -C $(LIBPQDIR) all
+
+distprep: $(srcdir)/sql_help.h
 
 install: all installdirs
 	$(INSTALL_PROGRAM) psql$(X) $(bindir)/psql$(X)

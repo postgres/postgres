@@ -4,7 +4,7 @@
 #
 # Copyright (c) 1994, Regents of the University of California
 #
-# $Header: /cvsroot/pgsql/src/backend/Makefile,v 1.62 2000/07/16 14:50:44 petere Exp $
+# $Header: /cvsroot/pgsql/src/backend/Makefile,v 1.63 2000/07/19 16:29:44 petere Exp $
 #
 #-------------------------------------------------------------------------
 
@@ -108,6 +108,14 @@ $(top_builddir)/src/include/utils/fmgroids.h: utils/fmgroids.h
 
 ##########################################################################
 
+distprep:
+	$(MAKE) -C parser	gram.c parse.h scan.c
+	$(MAKE) -C bootstrap	bootparse.c bootstrap_tokens.h bootscanner.c
+	$(MAKE) -C utils/misc	guc-file.c
+
+
+##########################################################################
+
 install: all installdirs install-bin
 ifeq ($(PORTNAME), win)
 ifeq ($(MAKE_DLL), true)
@@ -122,7 +130,7 @@ endif
 installdirs:
 	$(mkinstalldirs) $(bindir) $(libdir) $(datadir)
 
-install-bin:
+install-bin: postgres $(POSTGRES_IMP) installdirs
 	$(INSTALL_PROGRAM) postgres$(X) $(bindir)/postgres$(X)
 	@rm -f $(bindir)/postmaster
 	ln -s postgres$(X) $(bindir)/postmaster
@@ -130,7 +138,7 @@ ifeq ($(MAKE_EXPORTS), true)
 	$(INSTALL_DATA) $(POSTGRES_IMP) $(libdir)/$(POSTGRES_IMP)
 endif
 
-.PHONY: install installdirs install-bin
+.PHONY: install-bin
 
 ##########################################################################
 

@@ -1,4 +1,4 @@
-#!/bin/sh
+#! /bin/sh
 #
 # release_prep: prepare the Postgres source tree for distribution
 #
@@ -9,70 +9,18 @@
 # Run the script from the toplevel Postgres directory, ie, do
 #	cd pgsql
 #	src/tools/release_prep
-# (Right now, the cleanup tasks are all in the src subdirectory, but we
-# might want to add housekeeping in doc too?)
 #
 # The script's tasks are:
 # 1. Run configure to prepare usable Makefiles on the local system.
 # 2. Generate distribution copies of some derived files such as gram.c.
 #    (We do this so that recipients of the distribution don't have to have
 #    tools that can create these files.)
-#    Note we force these files to be recreated, to ensure they will have
-#    newer timestamps than their master files.
 # 3. "make distclean" to get rid of the configure outputs, as well as any
 #    other cruft that might be laying about.
 
 # Select make to use --- default gmake, can be overridden by env var
-MAKE=${MAKE:-gmake}
+: ${MAKE=gmake}
 
-# Configure ... should we run autoconf here???
-
-./configure
-
-# Generate parser's yacc and lex files
-
-cd src/backend/parser
-rm -f gram.c parse.h scan.c
-$MAKE gram.c parse.h scan.c
-cd ../../..
-
-# Generate bootstrap parser's yacc and lex files
-
-cd src/backend/bootstrap
-rm -f bootstrap_tokens.h bootparse.c bootscanner.c
-$MAKE bootstrap_tokens.h bootparse.c bootscanner.c
-cd ../../..
-
-# Generate configuration file scanner
-
-cd src/backend/utils/misc
-rm -f guc-file.c lex.yy.c
-$MAKE guc-file.c
-cd ../../../..
-
-# Generate ecpg preprocessor's yacc and lex files
-
-cd src/interfaces/ecpg/preproc
-rm -f preproc.c preproc.h pgc.c
-$MAKE preproc.c preproc.h pgc.c
-cd ../../../..
-
-# Generate plpgsql's yacc and lex files
-
-cd src/pl/plpgsql/src
-rm -f pl_scan.c pl.tab.h pl_gram.c
-$MAKE pl_scan.c pl.tab.h pl_gram.c
-cd ../../../..
-
-# Generate psql's help on SQL command from the SGML docs
-
-cd src/bin/psql
-rm -f sql_help.h
-$MAKE sql_help.h
-cd ../../..
-
-# Clean up
-
+./configure && \
+$MAKE distprep && \
 $MAKE distclean
-
-exit 0

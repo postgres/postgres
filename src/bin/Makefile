@@ -4,7 +4,7 @@
 #
 # Copyright (c) 1994, Regents of the University of California
 #
-# $Header: /cvsroot/pgsql/src/bin/Makefile,v 1.28 2000/07/02 15:20:56 petere Exp $
+# $Header: /cvsroot/pgsql/src/bin/Makefile,v 1.29 2000/07/19 16:29:53 petere Exp $
 #
 #-------------------------------------------------------------------------
 
@@ -27,8 +27,8 @@ endif
 	DIRS += pgtclsh
 endif
 
-all install installdirs uninstall depend:
-	@for dir in $(DIRS); do $(MAKE) -C $$dir $@ || exit 1; done
+all install installdirs uninstall depend distprep:
+	@for dir in $(DIRS); do $(MAKE) -C $$dir $@ || exit; done
 
 clean distclean maintainer-clean:
 	-@for dir in $(DIRS); do $(MAKE) -C $$dir $@; done

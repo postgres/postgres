@@ -35,6 +35,8 @@ $(srcdir)/pgc.c: pgc.l
 	$(LEX) $(LFLAGS) $<
 	mv lex.yy.c $@
 
+distprep: $(srcdir)/preproc.c $(srcdir)/preproc.h $(srcdir)/pgc.c
+
 install: all installdirs
 	$(INSTALL_PROGRAM) ecpg$(X) $(bindir)
 

@@ -1,17 +1,16 @@
 #-------------------------------------------------------------------------
 #
-# Makefile--
-#    Makefile for parser
+# Makefile for parser
 #
-# IDENTIFICATION
-#    $Header: /cvsroot/pgsql/src/backend/parser/Makefile,v 1.27 2000/07/14 15:32:04 thomas Exp $
+# $Header: /cvsroot/pgsql/src/backend/parser/Makefile,v 1.28 2000/07/19 16:29:50 petere Exp $
 #
 #-------------------------------------------------------------------------
 
-SRCDIR= ../..
-include $(SRCDIR)/Makefile.global
+subdir = src/backend/parser
+top_builddir = ../../..
+include $(top_builddir)/src/Makefile.global
 
-ifeq ($(CC), gcc)
+ifeq ($(GCC), yes)
 CFLAGS+= -Wno-error
 endif
 
@@ -19,46 +18,38 @@ OBJS= analyze.o gram.o keywords.o parser.o parse_agg.o parse_clause.o \
       parse_expr.o parse_func.o parse_node.o parse_oper.o parse_relation.o \
       parse_type.o parse_coerce.o parse_target.o scan.o scansup.o
 
-all: $(SRCDIR)/include/parser/parse.h SUBSYS.o
+
+all: SUBSYS.o
 
 SUBSYS.o: $(OBJS)
-	$(LD) $(LDREL) $(LDOUT) SUBSYS.o $(OBJS)
+	$(LD) $(LDREL) $(LDOUT) $@ $^
 
-$(SRCDIR)/include/parser/parse.h: parse.h
-	cp $< $@
-
-gram.c parse.h: gram.y
+$(srcdir)/gram.c $(srcdir)/parse.h: gram.y
 	$(YACC) -d $(YFLAGS) $<
-	mv y.tab.c gram.c
-	mv y.tab.h parse.h
+	mv y.tab.c $(srcdir)/gram.c
+	mv y.tab.h $(srcdir)/parse.h
 
-scan.c:	scan.l
+$(srcdir)/scan.c: scan.l
 	$(LEX) $(LFLAGS) $<
-	mv lex.yy.c scan.c
+	mv lex.yy.c $@
 
-# The following dependencies on parse.h are computed by
-# make depend, but we state them here explicitly anyway because 
-# parse.h doesn't even exist at first and if user fails to 
-# do make depend, we still want the build to succeed.
 
-analyze.o keywords.o scan.o: parse.h
+analyze.o keywords.o parse_clause.o parse_expr.o scan.o: $(srcdir)/parse.h
+
+
+# gram.c, parse.h, and scan.c are in the distribution tarball, so they
+# are not cleaned here.
+clean: 
+	rm -f SUBSYS.o $(OBJS)
+# And the garbage that might have been left behind by partial build:
+	@rm -f y.tab.c y.tab.h lex.yy.c
+
 
 # This is unusual:  We actually have to build some of the parts before
 # we know what the header file dependencies are.  
 dep depend: gram.c scan.c
 	$(CC) -MM $(CFLAGS) *.c >depend
 
-# Remove scan.c from the clean since we want to avoid rebuilding when using
-# the original source distribution. This should help Solaris machines whose
-# lex has trouble with exclusive states.
-# Remove gram.c, parse.h from the clean since we have now started to exceed
-# internal limits for some non-bison yaccs. - thomas 1998-02-17
-clean: 
-	rm -f SUBSYS.o $(OBJS) # gram.c parse.h # scan.c
-# And the garbage that might have been left behind by partial build:
-	rm -f y.tab.c y.tab.h lex.yy.c
-
 ifeq (depend,$(wildcard depend))
 include depend
 endif
-

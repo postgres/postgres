@@ -4,7 +4,7 @@
 #
 # Copyright (c) 1994, Regents of the University of California
 #
-# $Header: /cvsroot/pgsql/src/pl/Makefile,v 1.10 2000/07/01 15:02:27 petere Exp $
+# $Header: /cvsroot/pgsql/src/pl/Makefile,v 1.11 2000/07/19 16:30:16 petere Exp $
 #
 #-------------------------------------------------------------------------
 
@@ -23,8 +23,8 @@ endif
 #DIRS += plperl
 #endif
 
-all install installdirs uninstall depend:
-	@for dir in $(DIRS); do $(MAKE) -C $$dir $@ || exit 1; done
+all install installdirs uninstall depend distprep:
+	@for dir in $(DIRS); do $(MAKE) -C $$dir $@ || exit; done
 
 clean distclean maintainer-clean:
 	@for dir in $(DIRS); do $(MAKE) -C $$dir $@; done

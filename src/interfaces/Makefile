@@ -4,7 +4,7 @@
 #
 # Copyright (c) 1994, Regents of the University of California
 #
-# $Header: /cvsroot/pgsql/src/interfaces/Makefile,v 1.40 2000/06/28 18:29:35 petere Exp $
+# $Header: /cvsroot/pgsql/src/interfaces/Makefile,v 1.41 2000/07/19 16:30:06 petere Exp $
 #
 #-------------------------------------------------------------------------
 
@@ -37,8 +37,8 @@ DIRS += python
 endif
 
 
-all install installdirs uninstall dep depend:
-	@for dir in $(DIRS); do $(MAKE) -C $$dir $@ || exit 1; done
+all install installdirs uninstall dep depend distprep:
+	@for dir in $(DIRS); do $(MAKE) -C $$dir $@ || exit; done
 
 clean:
 	@for dir in $(DIRS); do $(MAKE) -C $$dir $@; done

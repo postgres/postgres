@@ -5,7 +5,7 @@
 # Install exported headers to the include directory (these headers are
 # the minimal ones needed to build loadable backend extensions).
 #
-# $Header: /cvsroot/pgsql/src/include/Makefile,v 1.1 2000/07/06 21:33:44 petere Exp $
+# $Header: /cvsroot/pgsql/src/include/Makefile,v 1.2 2000/07/19 16:29:58 petere Exp $
 #
 #-------------------------------------------------------------------------
 
@@ -52,4 +52,4 @@ clean:
 	rm -f utils/fmgroids.h parser/parse.h
 
 distclean maintainer-clean: clean
-	rm -f config.h dynloader.h os.h
+	rm -f config.h dynloader.h os.h stamp-h
