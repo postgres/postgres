@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/catalog/index.c,v 1.140 2001/01/29 00:39:16 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/catalog/index.c,v 1.141 2001/02/23 09:26:14 inoue Exp $
  *
  *
  * INTERFACE ROUTINES
@@ -2087,7 +2087,12 @@ reindex_index(Oid indexId, bool force, bool inplace)
 
 #ifndef OLD_FILE_NAMING
 	if (!inplace)
-		setNewRelfilenode(iRel);
+        {
+                inplace = IsSharedSystemRelationName(NameStr(iRel->rd_rel->relna
+me));
+		if (!inplace)
+			setNewRelfilenode(iRel);
+	}
 #endif /* OLD_FILE_NAMING */
 	/* Obtain exclusive lock on it, just to be sure */
 	LockRelation(iRel, AccessExclusiveLock);
@@ -2196,6 +2201,20 @@ reindex_relation(Oid relid, bool force)
 			elog(ERROR, "the target relation %u is nailed", relid);
 	}
 #endif /* ENABLE_REINDEX_NAILED_RELATIONS */
+	/*
+	 * Shared system indexes must be overwritten because it's
+	 * impossible to update pg_class tuples of all databases.
+	 */
+	if (IsSharedSystemRelationName(NameStr(rel->rd_rel->relname)))
+	{
+		if (IsIgnoringSystemIndexes())
+		{
+			overwrite = true;
+			deactivate_needed = true;
+		}
+		else
+			elog(ERROR, "the target relation %u is shared", relid);
+	}
 	RelationClose(rel);
 #endif /* OLD_FILE_NAMING */
 	old = SetReindexProcessing(true);
