@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/catalog/indexing.c,v 1.22 1998/08/20 22:07:36 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/catalog/indexing.c,v 1.23 1998/08/30 23:25:55 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -227,31 +227,26 @@ CatalogIndexFetchTuple(Relation heapRelation,
 {
 	IndexScanDesc sd;
 	RetrieveIndexResult indexRes;
-	HeapTuple	tuple;
+	HeapTuple	tuple = NULL;
 	Buffer		buffer;
 	
 	sd = index_beginscan(idesc, false, num_keys, skey);
-	tuple = (HeapTuple) NULL;
-	do
+	while ((indexRes = index_getnext(sd, ForwardScanDirection)))
 	{
-		indexRes = index_getnext(sd, ForwardScanDirection);
-		if (indexRes)
-		{
-			ItemPointer iptr;
+		ItemPointer iptr;
 
-			iptr = &indexRes->heap_iptr;
-			tuple = heap_fetch(heapRelation, SnapshotNow, iptr, &buffer);
-			pfree(indexRes);
-		}
-		else
+		iptr = &indexRes->heap_iptr;
+		tuple = heap_fetch(heapRelation, SnapshotNow, iptr, &buffer);
+		pfree(indexRes);
+		if (HeapTupleIsValid(tuple))
 			break;
-	} while (!HeapTupleIsValid(tuple));
+	} 
 
 	if (HeapTupleIsValid(tuple))
+	{
 		tuple = heap_copytuple(tuple);
-
-	if (BufferIsValid(buffer))
 		ReleaseBuffer(buffer);
+	}
 
 	index_endscan(sd);
 	pfree(sd);
@@ -333,7 +328,7 @@ ProcedureOidIndexScan(Relation heapRelation, Oid procId)
 						   (bits16) 0x0,
 						   (AttrNumber) 1,
 						   (RegProcedure) F_OIDEQ,
-						   (Datum) procId);
+						   ObjectIdGetDatum(procId));
 
 	idesc = index_openr(ProcedureOidIndex);
 	tuple = CatalogIndexFetchTuple(heapRelation, idesc, skey, 1);
@@ -359,7 +354,7 @@ ProcedureNameIndexScan(Relation heapRelation,
 						   (bits16) 0x0,
 						   (AttrNumber) 1,
 						   (RegProcedure) F_NAMEEQ,
-						   (Datum) procName);
+						   PointerGetDatum(procName));
 
 	ScanKeyEntryInitialize(&skey[1],
 						   (bits16) 0x0,
@@ -371,7 +366,7 @@ ProcedureNameIndexScan(Relation heapRelation,
 						   (bits16) 0x0,
 						   (AttrNumber) 3,
 						   (RegProcedure) F_OID8EQ,
-						   (Datum) argTypes);
+						   PointerGetDatum(argTypes));
 
 	idesc = index_openr(ProcedureNameIndex);
 	tuple = CatalogIndexFetchTuple(heapRelation, idesc, skey, 3);
@@ -394,7 +389,7 @@ ProcedureSrcIndexScan(Relation heapRelation, text *procSrc)
 						   (bits16) 0x0,
 						   (AttrNumber) 1,
 						   (RegProcedure) F_TEXTEQ,
-						   (Datum) procSrc);
+						   PointerGetDatum(procSrc));
 
 	idesc = index_openr(ProcedureSrcIndex);
 	tuple = CatalogIndexFetchTuple(heapRelation, idesc, skey, 1);
@@ -415,7 +410,7 @@ TypeOidIndexScan(Relation heapRelation, Oid typeId)
 						   (bits16) 0x0,
 						   (AttrNumber) 1,
 						   (RegProcedure) F_OIDEQ,
-						   (Datum) typeId);
+						   ObjectIdGetDatum(typeId));
 
 	idesc = index_openr(TypeOidIndex);
 	tuple = CatalogIndexFetchTuple(heapRelation, idesc, skey, 1);
@@ -436,7 +431,7 @@ TypeNameIndexScan(Relation heapRelation, char *typeName)
 						   (bits16) 0x0,
 						   (AttrNumber) 1,
 						   (RegProcedure) F_NAMEEQ,
-						   (Datum) typeName);
+						   PointerGetDatum(typeName));
 
 	idesc = index_openr(TypeNameIndex);
 	tuple = CatalogIndexFetchTuple(heapRelation, idesc, skey, 1);
@@ -477,7 +472,7 @@ ClassOidIndexScan(Relation heapRelation, Oid relId)
 						   (bits16) 0x0,
 						   (AttrNumber) 1,
 						   (RegProcedure) F_OIDEQ,
-						   (Datum) relId);
+						   ObjectIdGetDatum(relId));
 
 	idesc = index_openr(ClassOidIndex);
 	tuple = CatalogIndexFetchTuple(heapRelation, idesc, skey, 1);
