@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/interfaces/libpq/fe-exec.c,v 1.91 2000/02/24 04:50:51 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/interfaces/libpq/fe-exec.c,v 1.92 2000/03/11 03:08:36 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -39,6 +39,7 @@ char * const pgresStatus[] = {
 };
 
 
+/* Note: DONOTICE macro will work if applied to either PGconn or PGresult */
 #define DONOTICE(conn,message) \
 	((*(conn)->noticeHook) ((conn)->noticeArg, (message)))
 
@@ -135,7 +136,7 @@ PQmakeEmptyPGresult(PGconn *conn, ExecStatusType status)
 
 	result = (PGresult *) malloc(sizeof(PGresult));
 
-	result->conn = conn;		/* might be NULL */
+	result->xconn = conn;		/* might be NULL */
 	result->ntups = 0;
 	result->numAttributes = 0;
 	result->attDescs = NULL;
@@ -150,8 +151,11 @@ PQmakeEmptyPGresult(PGconn *conn, ExecStatusType status)
 	result->curOffset = 0;
 	result->spaceLeft = 0;
 
-	if (conn)					/* consider copying conn's errorMessage */
+	if (conn)
 	{
+		result->noticeHook = conn->noticeHook;
+		result->noticeArg = conn->noticeArg;
+		/* consider copying conn's errorMessage */
 		switch (status)
 		{
 			case PGRES_EMPTY_QUERY:
@@ -166,6 +170,12 @@ PQmakeEmptyPGresult(PGconn *conn, ExecStatusType status)
 				break;
 		}
 	}
+	else
+	{
+		result->noticeHook = NULL;
+		result->noticeArg = NULL;
+	}
+
 	return result;
 }
 
@@ -1833,12 +1843,12 @@ check_field_number(const char *routineName, const PGresult *res, int field_num)
 		return FALSE;			/* no way to display error message... */
 	if (field_num < 0 || field_num >= res->numAttributes)
 	{
-		if (res->conn)
+		if (res->noticeHook)
 		{
 			sprintf(noticeBuf,
 					"%s: ERROR! field number %d is out of range 0..%d\n",
 					routineName, field_num, res->numAttributes - 1);
-			DONOTICE(res->conn, noticeBuf);
+			DONOTICE(res, noticeBuf);
 		}
 		return FALSE;
 	}
@@ -1855,23 +1865,23 @@ check_tuple_field_number(const char *routineName, const PGresult *res,
 		return FALSE;			/* no way to display error message... */
 	if (tup_num < 0 || tup_num >= res->ntups)
 	{
-		if (res->conn)
+		if (res->noticeHook)
 		{
 			sprintf(noticeBuf,
 					"%s: ERROR! tuple number %d is out of range 0..%d\n",
 					routineName, tup_num, res->ntups - 1);
-			DONOTICE(res->conn, noticeBuf);
+			DONOTICE(res, noticeBuf);
 		}
 		return FALSE;
 	}
 	if (field_num < 0 || field_num >= res->numAttributes)
 	{
-		if (res->conn)
+		if (res->noticeHook)
 		{
 			sprintf(noticeBuf,
 					"%s: ERROR! field number %d is out of range 0..%d\n",
 					routineName, field_num, res->numAttributes - 1);
-			DONOTICE(res->conn, noticeBuf);
+			DONOTICE(res, noticeBuf);
 		}
 		return FALSE;
 	}
@@ -1982,11 +1992,11 @@ PQcmdStatus(PGresult *res)
 char *
 PQoidStatus(const PGresult *res)
 {
-        /* 
-         * This must be enough to hold the result. Don't laugh, this is
-         * better than what this function used to do.
-         */
-        static char buf[24];
+	/* 
+	 * This must be enough to hold the result. Don't laugh, this is
+	 * better than what this function used to do.
+	 */
+	static char buf[24];
 
 	size_t len;
 
@@ -1995,7 +2005,7 @@ PQoidStatus(const PGresult *res)
 
 	len = strspn(res->cmdStatus + 7, "0123456789");
 	if (len > 23)
-	        len = 23;
+		len = 23;
 	strncpy(buf, res->cmdStatus + 7, len);
 	buf[23] = '\0';
 
@@ -2046,12 +2056,12 @@ PQcmdTuples(PGresult *res)
 
 		if (*p == 0)
 		{
-			if (res->conn)
+			if (res->noticeHook)
 			{
 				sprintf(noticeBuf,
 						"PQcmdTuples (%s) -- bad input from server\n",
 						res->cmdStatus);
-				DONOTICE(res->conn, noticeBuf);
+				DONOTICE(res, noticeBuf);
 			}
 			return "";
 		}
@@ -2062,11 +2072,11 @@ PQcmdTuples(PGresult *res)
 			p++;				/* INSERT: skip oid */
 		if (*p == 0)
 		{
-			if (res->conn)
+			if (res->noticeHook)
 			{
 				sprintf(noticeBuf,
 					 "PQcmdTuples (INSERT) -- there's no # of tuples\n");
-				DONOTICE(res->conn, noticeBuf);
+				DONOTICE(res, noticeBuf);
 			}
 			return "";
 		}

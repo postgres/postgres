@@ -1,6 +1,6 @@
 /*-------------------------------------------------------
  *
- * $Id: Pg.xs,v 1.13 1999/10/13 02:26:37 momjian Exp $ with patch for NULs
+ * $Id: Pg.xs,v 1.14 2000/03/11 03:08:37 tgl Exp $ with patch for NULs
  *
  * Copyright (c) 1997, 1998  Edmund Mergl
  *
@@ -247,17 +247,18 @@ PQsetdb(pghost, pgport, pgoptions, pgtty, dbname)
 HV *
 PQconndefaults()
 	CODE:
-		PQconninfoOption *infoOption;
+		PQconninfoOption *infoOptions;
 		RETVAL = newHV();
-                if (infoOption = PQconndefaults()) {
-			while (infoOption->keyword != NULL) {
-				if (infoOption->val != NULL) {
-					hv_store(RETVAL, infoOption->keyword, strlen(infoOption->keyword), newSVpv(infoOption->val, 0), 0);
+		if (infoOptions = PQconndefaults()) {
+			PQconninfoOption *option;
+			for (option = infoOptions; option->keyword != NULL; option++) {
+				if (option->val != NULL) {
+					hv_store(RETVAL, option->keyword, strlen(option->keyword), newSVpv(option->val, 0), 0);
 				} else {
-					hv_store(RETVAL, infoOption->keyword, strlen(infoOption->keyword), newSVpv("", 0), 0);
+					hv_store(RETVAL, option->keyword, strlen(option->keyword), newSVpv("", 0), 0);
 				}
-				infoOption++;
 			}
+			PQconninfoFree(infoOptions);
 		}
 	OUTPUT:
 		RETVAL
@@ -774,17 +775,18 @@ setdb(pghost, pgport, pgoptions, pgtty, dbname)
 HV *
 conndefaults()
 	CODE:
-		PQconninfoOption *infoOption;
+		PQconninfoOption *infoOptions;
 		RETVAL = newHV();
-                if (infoOption = PQconndefaults()) {
-			while (infoOption->keyword != NULL) {
-				if (infoOption->val != NULL) {
-					hv_store(RETVAL, infoOption->keyword, strlen(infoOption->keyword), newSVpv(infoOption->val, 0), 0);
+		if (infoOptions = PQconndefaults()) {
+			PQconninfoOption *option;
+			for (option = infoOptions; option->keyword != NULL; option++) {
+				if (option->val != NULL) {
+					hv_store(RETVAL, option->keyword, strlen(option->keyword), newSVpv(option->val, 0), 0);
 				} else {
-					hv_store(RETVAL, infoOption->keyword, strlen(infoOption->keyword), newSVpv("", 0), 0);
+					hv_store(RETVAL, option->keyword, strlen(option->keyword), newSVpv("", 0), 0);
 				}
-				infoOption++;
 			}
+			PQconninfoFree(infoOptions);
 		}
 	OUTPUT:
 		RETVAL

@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2000, PostgreSQL, Inc
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Id: libpq-fe.h,v 1.60 2000/02/07 23:10:11 petere Exp $
+ * $Id: libpq-fe.h,v 1.61 2000/03/11 03:08:37 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -130,6 +130,10 @@ extern		"C"
 
 /* ----------------
  * Structure for the conninfo parameter definitions returned by PQconndefaults
+ *
+ * All fields except "val" point at static strings which must not be altered.
+ * "val" is either NULL or a malloc'd current-value string.  PQconninfoFree()
+ * will release both the val strings and the PQconninfoOption array itself.
  * ----------------
  */
 	typedef struct _PQconninfoOption
@@ -137,14 +141,14 @@ extern		"C"
 		char	   *keyword;	/* The keyword of the option			*/
 		char	   *envvar;		/* Fallback environment variable name	*/
 		char	   *compiled;	/* Fallback compiled in default value	*/
-		char	   *val;		/* Options value						*/
+		char	   *val;		/* Option's current value, or NULL		*/
 		char	   *label;		/* Label for field in connect dialog	*/
-		char	   *dispchar;	/* Character to display for this field	*/
-		/* in a connect dialog. Values are:		*/
-		/* ""	Display entered value as is  */
-		/* "*"	Password field - hide value  */
-		/* "D"	Debug options - don't 	 */
-		/* create a field by default	*/
+		char	   *dispchar;	/* Character to display for this field
+								 * in a connect dialog. Values are:
+								 * ""	Display entered value as is
+								 * "*"	Password field - hide value
+								 * "D"	Debug option - don't show by default
+								 */
 		int			dispsize;	/* Field size in characters for dialog	*/
 	} PQconninfoOption;
 
@@ -183,11 +187,14 @@ extern		"C"
 #define PQsetdb(M_PGHOST,M_PGPORT,M_PGOPT,M_PGTTY,M_DBNAME)  \
 	PQsetdbLogin(M_PGHOST, M_PGPORT, M_PGOPT, M_PGTTY, M_DBNAME, NULL, NULL)
 
+	/* close the current connection and free the PGconn data structure */
+	extern void PQfinish(PGconn *conn);
+
 	/* get info about connection options known to PQconnectdb */
 	extern PQconninfoOption *PQconndefaults(void);
 
-	/* close the current connection and free the PGconn data structure */
-	extern void PQfinish(PGconn *conn);
+	/* free the data structure returned by PQconndefaults() */
+	extern void PQconninfoFree(PQconninfoOption *connOptions);
 
 	/*
 	 * close the current connection and restablish a new one with the same

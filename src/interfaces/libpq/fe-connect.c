@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/interfaces/libpq/fe-connect.c,v 1.122 2000/02/24 15:53:12 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/interfaces/libpq/fe-connect.c,v 1.123 2000/03/11 03:08:36 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -76,23 +76,12 @@ struct pg_setenv_state
 	} state;
 	PGconn *conn;
 	PGresult *res;
-	struct EnvironmentOptions *eo;
+	const struct EnvironmentOptions *eo;
 } ;
-
-static int connectDBStart(PGconn *conn);
-static int connectDBComplete(PGconn *conn);
 
 #ifdef USE_SSL
 static SSL_CTX *SSL_context = NULL;
 #endif
-
-static PGconn *makeEmptyPGconn(void);
-static void freePGconn(PGconn *conn);
-static void closePGconn(PGconn *conn);
-static int	conninfo_parse(const char *conninfo, PQExpBuffer errorMessage);
-static char *conninfo_getval(char *keyword);
-static void conninfo_free(void);
-static void defaultNoticeProcessor(void *arg, const char *message);
 
 #define NOTIFYLIST_INITIAL_SIZE 10
 #define NOTIFYLIST_GROWBY 10
@@ -100,11 +89,12 @@ static void defaultNoticeProcessor(void *arg, const char *message);
 
 /* ----------
  * Definition of the conninfo parameters and their fallback resources.
+ *
  * If Environment-Var and Compiled-in are specified as NULL, no
  * fallback is available. If after all no value can be determined
  * for an option, an error is returned.
  *
- * The values for dbname and user are treated special in conninfo_parse.
+ * The values for dbname and user are treated specially in conninfo_parse.
  * If the Compiled-in resource is specified as a NULL value, the
  * user is determined by fe_getauthname() and for dbname the user
  * name is copied.
@@ -112,23 +102,30 @@ static void defaultNoticeProcessor(void *arg, const char *message);
  * The Label and Disp-Char entries are provided for applications that
  * want to use PQconndefaults() to create a generic database connection
  * dialog. Disp-Char is defined as follows:
- *	   ""		Normal input field
+ *		""		Normal input field
+ *		"*"		Password field - hide value
+ *		"D"		Debug option - don't show by default
+ *
+ * PQconninfoOptions[] is a constant static array that we use to initialize
+ * a dynamically allocated working copy.  All the "val" fields in
+ * PQconninfoOptions[] *must* be NULL.  In a working copy, non-null "val"
+ * fields point to malloc'd strings that should be freed when the working
+ * array is freed (see PQconninfoFree).
  * ----------
  */
-static PQconninfoOption PQconninfoOptions[] = {
-/* ----------------------------------------------------------------- */
-/*	  Option-name		Environment-Var Compiled-in		Current value	*/
-/*						Label							Disp-Char		*/
-/* ----------------- --------------- --------------- --------------- */
-	/* "authtype" is ignored as it is no longer used. */
+static const PQconninfoOption PQconninfoOptions[] = {
+	/* "authtype" is no longer used, so mark it "don't show".  We keep it
+	 * in the array so as not to reject conninfo strings from old apps that
+	 * might still try to set it.
+	 */
 	{"authtype", "PGAUTHTYPE", DefaultAuthtype, NULL,
-	"Database-Authtype", "", 20},
+	"Database-Authtype", "D", 20},
 
 	{"user", "PGUSER", NULL, NULL,
 	"Database-User", "", 20},
 
 	{"password", "PGPASSWORD", DefaultPassword, NULL,
-	"Database-Password", "", 20},
+	"Database-Password", "*", 20},
 
 	{"dbname", "PGDATABASE", NULL, NULL,
 	"Database-Name", "", 20},
@@ -147,12 +144,13 @@ static PQconninfoOption PQconninfoOptions[] = {
 
 	{"options", "PGOPTIONS", DefaultOption, NULL,
 	"Backend-Debug-Options", "D", 40},
-/* ----------------- --------------- --------------- --------------- */
+
+	/* Terminating entry --- MUST BE LAST */
 	{NULL, NULL, NULL, NULL,
 	NULL, NULL, 0}
 };
 
-static struct EnvironmentOptions
+static const struct EnvironmentOptions
 {
 	const char *envName,
 			   *pgName;
@@ -179,6 +177,18 @@ static struct EnvironmentOptions
 		NULL, NULL
 	}
 };
+
+
+static int connectDBStart(PGconn *conn);
+static int connectDBComplete(PGconn *conn);
+static PGconn *makeEmptyPGconn(void);
+static void freePGconn(PGconn *conn);
+static void closePGconn(PGconn *conn);
+static PQconninfoOption *conninfo_parse(const char *conninfo,
+										PQExpBuffer errorMessage);
+static char *conninfo_getval(PQconninfoOption *connOptions,
+							 const char *keyword);
+static void defaultNoticeProcessor(void *arg, const char *message);
 
 
 /* ----------------
@@ -262,6 +272,7 @@ PGconn *
 PQconnectStart(const char *conninfo)
 {
 	PGconn	   *conn;
+	PQconninfoOption *connOptions;
 	char	   *tmp;
 
 	/* ----------
@@ -274,37 +285,42 @@ PQconnectStart(const char *conninfo)
 		return (PGconn *) NULL;
 
 	/* ----------
-	 * Parse the conninfo string and save settings in conn structure
+	 * Parse the conninfo string
 	 * ----------
 	 */
-	if (conninfo_parse(conninfo, &conn->errorMessage) < 0)
+	connOptions = conninfo_parse(conninfo, &conn->errorMessage);
+	if (connOptions == NULL)
 	{
 		conn->status = CONNECTION_BAD;
-		conninfo_free();
+		/* errorMessage is already set */
 		return conn;
 	}
-	tmp = conninfo_getval("hostaddr");
+
+	/*
+	 * Move option values into conn structure
+	 */
+	tmp = conninfo_getval(connOptions, "hostaddr");
 	conn->pghostaddr = tmp ? strdup(tmp) : NULL;
-	tmp = conninfo_getval("host");
+	tmp = conninfo_getval(connOptions, "host");
 	conn->pghost = tmp ? strdup(tmp) : NULL;
-	tmp = conninfo_getval("port");
+	tmp = conninfo_getval(connOptions, "port");
 	conn->pgport = tmp ? strdup(tmp) : NULL;
-	tmp = conninfo_getval("tty");
+	tmp = conninfo_getval(connOptions, "tty");
 	conn->pgtty = tmp ? strdup(tmp) : NULL;
-	tmp = conninfo_getval("options");
+	tmp = conninfo_getval(connOptions, "options");
 	conn->pgoptions = tmp ? strdup(tmp) : NULL;
-	tmp = conninfo_getval("dbname");
+	tmp = conninfo_getval(connOptions, "dbname");
 	conn->dbName = tmp ? strdup(tmp) : NULL;
-	tmp = conninfo_getval("user");
+	tmp = conninfo_getval(connOptions, "user");
 	conn->pguser = tmp ? strdup(tmp) : NULL;
-	tmp = conninfo_getval("password");
+	tmp = conninfo_getval(connOptions, "password");
 	conn->pgpass = tmp ? strdup(tmp) : NULL;
 
 	/* ----------
-	 * Free the connection info - all is in conn now
+	 * Free the option info - all is in conn now
 	 * ----------
 	 */
-	conninfo_free();
+	PQconninfoFree(connOptions);
 
 	/* ----------
 	 * Connect to the database
@@ -323,20 +339,28 @@ PQconnectStart(const char *conninfo)
  *		PQconndefaults
  *
  * Parse an empty string like PQconnectdb() would do and return the
- * address of the connection options structure. Using this function
- * an application might determine all possible options and their
- * current default values.
+ * working connection options array.
+ *
+ * Using this function, an application may determine all possible options
+ * and their current default values.
+ *
+ * NOTE: as of PostgreSQL 7.0, the returned array is dynamically allocated
+ * and should be freed when no longer needed via PQconninfoFree().  (In prior
+ * versions, the returned array was static, but that's not thread-safe.)
+ * Pre-7.0 applications that use this function will see a small memory leak
+ * until they are updated to call PQconninfoFree.
  * ----------------
  */
 PQconninfoOption *
 PQconndefaults(void)
 {
 	PQExpBufferData  errorBuf;
+	PQconninfoOption *connOptions;
 
 	initPQExpBuffer(&errorBuf);
-	conninfo_parse("", &errorBuf);
+	connOptions = conninfo_parse("", &errorBuf);
 	termPQExpBuffer(&errorBuf);
-	return PQconninfoOptions;
+	return connOptions;
 }
 
 /* ----------------
@@ -565,7 +589,7 @@ update_db_info(PGconn *conn)
 				{
 					printfPQExpBuffer(&conn->errorMessage,
 									  "connectDBStart() -- "
-									  "non-tcp access only possible on "
+									  "non-TCP access only possible on "
 									  "localhost\n");
 					return 1;
 				}
@@ -2037,9 +2061,13 @@ pqPacketSend(PGconn *conn, const char *buf, size_t len)
 
 /* ----------------
  * Conninfo parser routine
+ *
+ * If successful, a malloc'd PQconninfoOption array is returned.
+ * If not successful, NULL is returned and an error message is
+ * left in errorMessage.
  * ----------------
  */
-static int
+static PQconninfoOption *
 conninfo_parse(const char *conninfo, PQExpBuffer errorMessage)
 {
 	char	   *pname;
@@ -2048,16 +2076,27 @@ conninfo_parse(const char *conninfo, PQExpBuffer errorMessage)
 	char	   *tmp;
 	char	   *cp;
 	char	   *cp2;
+	PQconninfoOption *options;
 	PQconninfoOption *option;
 	char		errortmp[INITIAL_EXPBUFFER_SIZE];
 
-	conninfo_free();
+	/* Make a working copy of PQconninfoOptions */
+	options = malloc(sizeof(PQconninfoOptions));
+	if (options == NULL)
+	{
+		printfPQExpBuffer(errorMessage,
+		  "FATAL: cannot allocate memory for copy of PQconninfoOptions\n");
+		return NULL;
+	}
+	memcpy(options, PQconninfoOptions, sizeof(PQconninfoOptions));
 
+	/* Need a modifiable copy of the input string */
 	if ((buf = strdup(conninfo)) == NULL)
 	{
 		printfPQExpBuffer(errorMessage,
 		  "FATAL: cannot allocate memory for copy of conninfo string\n");
-		return -1;
+		PQconninfoFree(options);
+		return NULL;
 	}
 	cp = buf;
 
@@ -2094,10 +2133,11 @@ conninfo_parse(const char *conninfo, PQExpBuffer errorMessage)
 		if (*cp != '=')
 		{
 			printfPQExpBuffer(errorMessage,
-				"ERROR: PQconnectdb() - Missing '=' after '%s' in conninfo\n",
+							  "ERROR: Missing '=' after '%s' in conninfo\n",
 							  pname);
+			PQconninfoFree(options);
 			free(buf);
-			return -1;
+			return NULL;
 		}
 		*cp++ = '\0';
 
@@ -2109,6 +2149,7 @@ conninfo_parse(const char *conninfo, PQExpBuffer errorMessage)
 			cp++;
 		}
 
+		/* Get the parameter value */
 		pval = cp;
 
 		if (*cp != '\'')
@@ -2142,8 +2183,9 @@ conninfo_parse(const char *conninfo, PQExpBuffer errorMessage)
 				{
 					printfPQExpBuffer(errorMessage,
 							"ERROR: PQconnectdb() - unterminated quoted string in conninfo\n");
+					PQconninfoFree(options);
 					free(buf);
-					return -1;
+					return NULL;
 				}
 				if (*cp == '\\')
 				{
@@ -2167,27 +2209,31 @@ conninfo_parse(const char *conninfo, PQExpBuffer errorMessage)
 		 * for the param record.
 		 * ----------
 		 */
-		for (option = PQconninfoOptions; option->keyword != NULL; option++)
+		for (option = options; option->keyword != NULL; option++)
 		{
-			if (!strcmp(option->keyword, pname))
+			if (strcmp(option->keyword, pname) == 0)
 				break;
 		}
 		if (option->keyword == NULL)
 		{
 			printfPQExpBuffer(errorMessage,
-							  "ERROR: PQconnectdb() - unknown option '%s'\n",
+							  "ERROR: Unknown conninfo option '%s'\n",
 							  pname);
+			PQconninfoFree(options);
 			free(buf);
-			return -1;
+			return NULL;
 		}
 
 		/* ----------
 		 * Store the value
 		 * ----------
 		 */
+		if (option->val)
+			free(option->val);
 		option->val = strdup(pval);
 	}
 
+	/* Done with the modifiable input string */
 	free(buf);
 
 	/* ----------
@@ -2195,7 +2241,7 @@ conninfo_parse(const char *conninfo, PQExpBuffer errorMessage)
 	 * in the conninfo string.
 	 * ----------
 	 */
-	for (option = PQconninfoOptions; option->keyword != NULL; option++)
+	for (option = options; option->keyword != NULL; option++)
 	{
 		if (option->val != NULL)
 			continue;			/* Value was in conninfo */
@@ -2228,7 +2274,7 @@ conninfo_parse(const char *conninfo, PQExpBuffer errorMessage)
 		 * Special handling for user
 		 * ----------
 		 */
-		if (!strcmp(option->keyword, "user"))
+		if (strcmp(option->keyword, "user") == 0)
 		{
 			option->val = fe_getauthname(errortmp);
 			/* note any error message is thrown away */
@@ -2239,27 +2285,28 @@ conninfo_parse(const char *conninfo, PQExpBuffer errorMessage)
 		 * Special handling for dbname
 		 * ----------
 		 */
-		if (!strcmp(option->keyword, "dbname"))
+		if (strcmp(option->keyword, "dbname") == 0)
 		{
-			tmp = conninfo_getval("user");
+			tmp = conninfo_getval(options, "user");
 			if (tmp)
 				option->val = strdup(tmp);
 			continue;
 		}
 	}
 
-	return 0;
+	return options;
 }
 
 
 static char *
-conninfo_getval(char *keyword)
+conninfo_getval(PQconninfoOption *connOptions,
+				const char *keyword)
 {
 	PQconninfoOption *option;
 
-	for (option = PQconninfoOptions; option->keyword != NULL; option++)
+	for (option = connOptions; option->keyword != NULL; option++)
 	{
-		if (!strcmp(option->keyword, keyword))
+		if (strcmp(option->keyword, keyword) == 0)
 			return option->val;
 	}
 
@@ -2267,19 +2314,20 @@ conninfo_getval(char *keyword)
 }
 
 
-static void
-conninfo_free()
+void
+PQconninfoFree(PQconninfoOption *connOptions)
 {
 	PQconninfoOption *option;
 
-	for (option = PQconninfoOptions; option->keyword != NULL; option++)
+	if (connOptions == NULL)
+		return;
+
+	for (option = connOptions; option->keyword != NULL; option++)
 	{
 		if (option->val != NULL)
-		{
 			free(option->val);
-			option->val = NULL;
-		}
 	}
+	free(connOptions);
 }
 
 /* =========== accessor functions for PGconn ========= */
@@ -2350,10 +2398,9 @@ PQstatus(const PGconn *conn)
 char *
 PQerrorMessage(const PGconn *conn)
 {
-	static char noConn[] = "PQerrorMessage: conn pointer is NULL\n";
-
 	if (!conn)
-		return noConn;
+		return "PQerrorMessage: conn pointer is NULL\n";
+
 	return conn->errorMessage.data;
 }
 
@@ -2452,13 +2499,15 @@ PQnoticeProcessor
 PQsetNoticeProcessor(PGconn *conn, PQnoticeProcessor proc, void *arg)
 {
 	PQnoticeProcessor old;
+
 	if (conn == NULL)
 		return NULL;
 
 	old = conn->noticeHook;
-	if (proc) {
-	conn->noticeHook = proc;
-	conn->noticeArg = arg;
+	if (proc)
+	{
+		conn->noticeHook = proc;
+		conn->noticeArg = arg;
 	}
 	return old;
 }

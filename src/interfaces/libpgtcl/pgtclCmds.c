@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/interfaces/libpgtcl/Attic/pgtclCmds.c,v 1.47 2000/02/27 07:44:22 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/interfaces/libpgtcl/Attic/pgtclCmds.c,v 1.48 2000/03/11 03:08:35 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -237,25 +237,32 @@ tcl_value(char *value)
 int
 Pg_conndefaults(ClientData cData, Tcl_Interp *interp, int argc, char **argv)
 {
+	PQconninfoOption *options = PQconndefaults();
 	PQconninfoOption *option;
 	Tcl_DString result;
 	char		ibuf[32];
 
-	Tcl_DStringInit(&result);
-	for (option = PQconndefaults(); option->keyword != NULL; option++)
+	if (options)
 	{
-		char	   *val = option->val ? option->val : "";
+		Tcl_DStringInit(&result);
 
-		sprintf(ibuf, "%d", option->dispsize);
-		Tcl_DStringStartSublist(&result);
-		Tcl_DStringAppendElement(&result, option->keyword);
-		Tcl_DStringAppendElement(&result, option->label);
-		Tcl_DStringAppendElement(&result, option->dispchar);
-		Tcl_DStringAppendElement(&result, ibuf);
-		Tcl_DStringAppendElement(&result, val);
-		Tcl_DStringEndSublist(&result);
+		for (option = options; option->keyword != NULL; option++)
+		{
+			char	   *val = option->val ? option->val : "";
+
+			sprintf(ibuf, "%d", option->dispsize);
+			Tcl_DStringStartSublist(&result);
+			Tcl_DStringAppendElement(&result, option->keyword);
+			Tcl_DStringAppendElement(&result, option->label);
+			Tcl_DStringAppendElement(&result, option->dispchar);
+			Tcl_DStringAppendElement(&result, ibuf);
+			Tcl_DStringAppendElement(&result, val);
+			Tcl_DStringEndSublist(&result);
+		}
+		Tcl_DStringResult(interp, &result);
+
+		PQconninfoFree(options);
 	}
-	Tcl_DStringResult(interp, &result);
 
 	return TCL_OK;
 }

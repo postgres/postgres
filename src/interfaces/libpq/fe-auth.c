@@ -10,7 +10,7 @@
  * exceed INITIAL_EXPBUFFER_SIZE (currently 256 bytes).
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/interfaces/libpq/fe-auth.c,v 1.37 2000/02/07 23:10:08 petere Exp $
+ *	  $Header: /cvsroot/pgsql/src/interfaces/libpq/fe-auth.c,v 1.38 2000/03/11 03:08:36 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -75,7 +75,7 @@ struct authsvc
  * allowed.  Unauthenticated connections are disallowed unless there
  * isn't any authentication system.
  */
-static struct authsvc authsvcs[] = {
+static const struct authsvc authsvcs[] = {
 #ifdef KRB4
 	{"krb4", STARTUP_KRB4_MSG, 1},
 	{"kerberos", STARTUP_KRB4_MSG, 1},
@@ -94,7 +94,7 @@ static struct authsvc authsvcs[] = {
 	{"password", STARTUP_PASSWORD_MSG, 0}
 };
 
-static int	n_authsvcs = sizeof(authsvcs) / sizeof(struct authsvc);
+static const int	n_authsvcs = sizeof(authsvcs) / sizeof(struct authsvc);
 
 #ifdef KRB4
 /*----------------------------------------------------------------
@@ -549,7 +549,14 @@ fe_sendauth(AuthRequest areq, PGconn *conn, const char *hostname,
  *
  * Set/return the authentication service currently selected for use by the
  * frontend. (You can only use one in the frontend, obviously.)
+ *
+ * NB: This is not thread-safe if different threads try to select different
+ * authentication services!  It's OK for fe_getauthsvc to select the default,
+ * since that will be the same for all threads, but direct application use
+ * of fe_setauthsvc is not thread-safe.  However, use of fe_setauthsvc is
+ * deprecated anyway...
  */
+
 static int	pg_authsvc = -1;
 
 void
@@ -558,7 +565,7 @@ fe_setauthsvc(const char *name, char *PQerrormsg)
 	int			i;
 
 	for (i = 0; i < n_authsvcs; ++i)
-		if (!strcmp(name, authsvcs[i].name))
+		if (strcmp(name, authsvcs[i].name) == 0)
 		{
 			pg_authsvc = i;
 			break;
