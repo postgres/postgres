@@ -1,13 +1,11 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/ref/comment.sgml,v 1.16 2002/04/18 20:01:09 tgl Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/ref/comment.sgml,v 1.17 2002/04/21 19:02:39 thomas Exp $
 PostgreSQL documentation
 -->
 
 <refentry id="SQL-COMMENT">
  <refmeta>
-  <refentrytitle id="SQL-COMMENT-TITLE">
-   COMMENT
-  </refentrytitle>
+  <refentrytitle id="SQL-COMMENT-TITLE">COMMENT</refentrytitle>
   <refmiscinfo>SQL - Language Statements</refmiscinfo>
  </refmeta>
  <refnamediv>

@@ -1,13 +1,9 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/ref/dropdb.sgml,v 1.14 2002/01/20 22:19:56 petere Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/ref/dropdb.sgml,v 1.15 2002/04/21 19:02:39 thomas Exp $
 PostgreSQL documentation
 -->
 
 <refentry id="APP-DROPDB">
- <docinfo>
-  <date>2000-11-11</date>
- </docinfo>
-
  <refmeta>
   <refentrytitle id="APP-DROPDB-TITLE"><application>dropdb</application></refentrytitle>
   <manvolnum>1</manvolnum>

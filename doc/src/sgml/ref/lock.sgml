@@ -1,13 +1,11 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/ref/lock.sgml,v 1.30 2002/01/18 01:05:43 tgl Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/ref/lock.sgml,v 1.31 2002/04/21 19:02:39 thomas Exp $
 PostgreSQL documentation
 -->
 
 <refentry id="SQL-LOCK">
  <refmeta>
-  <refentrytitle id="sql-lock-title">
-   LOCK
-  </refentrytitle>
+  <refentrytitle id="sql-lock-title">LOCK</refentrytitle>
   <refmiscinfo>SQL - Language Statements</refmiscinfo>
  </refmeta>
  <refnamediv>

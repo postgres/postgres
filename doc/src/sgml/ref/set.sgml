@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/ref/set.sgml,v 1.58 2002/02/26 15:59:08 tgl Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/ref/set.sgml,v 1.59 2002/04/21 19:02:39 thomas Exp $
 PostgreSQL documentation
 -->
 
@@ -26,7 +26,7 @@ SET TIME ZONE { '<replaceable class="PARAMETER">timezone</replaceable>' | LOCAL 
       <term><replaceable class="PARAMETER">variable</replaceable></term>
       <listitem>
        <para>
-	A settable run-time parameter.
+        A settable run-time parameter.
        </para>
       </listitem>
      </varlistentry>
@@ -34,10 +34,10 @@ SET TIME ZONE { '<replaceable class="PARAMETER">timezone</replaceable>' | LOCAL 
       <term><replaceable class="PARAMETER">value</replaceable></term>
       <listitem>
        <para>
-	New value of parameter.  <option>DEFAULT</option> can be
-	used to specify resetting the parameter to its default
-	value. Lists of strings are allowed, but more complex
-	constructs may need to be single or double quoted.
+        New value of parameter.  <option>DEFAULT</option> can be
+        used to specify resetting the parameter to its default
+        value. Lists of strings are allowed, but more complex
+        constructs may need to be single or double quoted.
        </para>
       </listitem>
      </varlistentry>
@@ -173,10 +173,13 @@ SET TIME ZONE { '<replaceable class="PARAMETER">timezone</replaceable>' | LOCAL 
 	</member>
        </simplelist>
       </para>
+
       <para>
-       The <option>DateStyle</option> option is really only intended
-       for porting applications. To format your date/time values to
-       choice, use the <function>to_char</function> family of
+       <command>SET DATESTYLE</command> affects interpretation of
+       input and provides several standard output formats. For
+       applications needing different variations or tighter control
+       over input or output, consider using
+       the <function>to_char</function> family of
        functions.
       </para>
      </listitem>
@@ -384,34 +387,38 @@ SELECT setseed(<replaceable>value</replaceable>);
   <para>
    Set the style of date to traditional
    <productname>PostgreSQL</productname> with European conventions:
-<screen>
+   <screen>
 SET DATESTYLE TO PostgreSQL,European;
-</screen>
+   </screen>
+  </para>
 
-   Set the time zone for Berkeley, California, using double quotes to
+  <para>
+   Set the time zone for Berkeley, California, using quotes to
    preserve the uppercase attributes of the time zone specifier (note
-   that the date/time format is ISO here):
+   that the date style is <literal>PostgreSQL</literal> for this
+   example): 
 
-<screen> 
+   <screen>
 SET TIME ZONE 'PST8PDT';
 SELECT CURRENT_TIMESTAMP AS today;
-   
-         today
-------------------------
- 1998-03-31 07:41:21-08
-</screen>
+               today                
+------------------------------------
+ Tue Feb 26 07:32:21.42834 2002 PST
+   </screen>
+  </para>
 
-   Set the time zone for Italy (note the required single or double quotes to handle 
+  <para>
+   Set the time zone for Italy (note the required single quotes to handle 
    the special characters):
 
-<screen> 
+   <screen>
 SET TIME ZONE 'Europe/Rome';
 SELECT CURRENT_TIMESTAMP AS today;
    
          today
 ------------------------
  1998-03-31 17:41:31+02
-</screen>
+   </screen>
   </para>
  </refsect1>
 
@@ -424,10 +431,13 @@ SELECT CURRENT_TIMESTAMP AS today;
    </title>
 
    <para>
-    The second syntax shown above (<literal>SET TIME ZONE</literal>)
-    attempts to mimic <acronym>SQL92</acronym>. However, SQL allows
-    only numeric time zone offsets. All other parameter settings as
-    well as the first syntax shown above are a
+    <literal>SET TIME ZONE</literal>
+    extends syntax defined in
+    <acronym>SQL9x</acronym>. <acronym>SQL9x</acronym> allows
+    only numeric time zone offsets while
+    <productname>PostgreSQL</productname> allows full time zone
+    specifier strings as well. All other <literal>SET</literal>
+    features are a 
     <productname>PostgreSQL</productname> extension.
    </para>
   </refsect2>

@@ -1,17 +1,11 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/ref/pg_dump.sgml,v 1.43 2002/03/22 19:20:42 petere Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/ref/pg_dump.sgml,v 1.44 2002/04/21 19:02:39 thomas Exp $
 PostgreSQL documentation
 -->
 
 <refentry id="APP-PGDUMP">
- <docinfo>
-  <date>2001-03-06</date>
- </docinfo>
-
  <refmeta>
-  <refentrytitle>
-   pg_dump
-  </refentrytitle>
+  <refentrytitle>pg_dump</refentrytitle>
   <manvolnum>1</manvolnum>
   <refmiscinfo>Application</refmiscinfo>
  </refmeta>

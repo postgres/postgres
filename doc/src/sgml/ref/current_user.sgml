@@ -1,13 +1,11 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/ref/Attic/current_user.sgml,v 1.5 2001/12/08 03:24:35 thomas Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/ref/Attic/current_user.sgml,v 1.6 2002/04/21 19:02:39 thomas Exp $
 PostgreSQL documentation
 -->
 
 <REFENTRY ID="SQL-CURRENT-USER">
  <REFMETA>
-  <REFENTRYTITLE>
-   SQL_CURRENT_USER
-  </REFENTRYTITLE>
+  <REFENTRYTITLE>CURRENT_USER</REFENTRYTITLE>
   <REFMISCINFO>SQL - Functions</REFMISCINFO>
  </REFMETA>
  <REFNAMEDIV>

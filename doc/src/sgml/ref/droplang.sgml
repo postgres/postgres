@@ -1,13 +1,9 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/ref/droplang.sgml,v 1.17 2002/01/06 03:33:26 tgl Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/ref/droplang.sgml,v 1.18 2002/04/21 19:02:39 thomas Exp $
 PostgreSQL documentation
 -->
 
 <refentry id="APP-DROPLANG">
- <docinfo>
-  <date>2001-05-09</date>
- </docinfo>
-
  <refmeta>
   <refentrytitle id="APP-DROPLANG-TITLE"><application>droplang</application></refentrytitle>
   <manvolnum>1</manvolnum>

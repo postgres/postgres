@@ -1,13 +1,9 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/ref/createdb.sgml,v 1.25 2002/02/24 23:27:57 tgl Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/ref/createdb.sgml,v 1.26 2002/04/21 19:02:39 thomas Exp $
 PostgreSQL documentation
 -->
 
 <refentry id="APP-CREATEDB">
- <docinfo>
-  <date>2000-11-11</date>
- </docinfo>
-
  <refmeta>
   <refentrytitle id="APP-CREATEDB-TITLE"><application>createdb</application></refentrytitle>
   <manvolnum>1</manvolnum>

@@ -1,10 +1,6 @@
-<!-- $Header: /cvsroot/pgsql/doc/src/sgml/ref/checkpoint.sgml,v 1.5 2001/09/03 12:57:49 petere Exp $ -->
+<!-- $Header: /cvsroot/pgsql/doc/src/sgml/ref/checkpoint.sgml,v 1.6 2002/04/21 19:02:39 thomas Exp $ -->
 
 <refentry id="sql-checkpoint">
- <docinfo>
-  <date>2001-01-24</date>
- </docinfo>
-
  <refmeta>
   <refentrytitle id="sql-checkpoint-title">CHECKPOINT</refentrytitle>
   <refmiscinfo>SQL - Language Statements</refmiscinfo>

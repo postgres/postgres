@@ -1,13 +1,9 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/ref/Attic/pgaccess-ref.sgml,v 1.13 2001/12/08 03:24:38 thomas Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/ref/Attic/pgaccess-ref.sgml,v 1.14 2002/04/21 19:02:39 thomas Exp $
 PostgreSQL documentation
 -->
 
 <refentry id="APP-PGACCESS">
- <docinfo>
-  <date>2000-12-30</date>
- </docinfo>
-
  <refmeta>
   <refentrytitle id="app-pgaccess-title"><application>pgaccess</application></refentrytitle>
   <manvolnum>1</manvolnum>

@@ -1,13 +1,11 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/ref/create_sequence.sgml,v 1.25 2002/03/22 19:20:40 petere Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/ref/create_sequence.sgml,v 1.26 2002/04/21 19:02:39 thomas Exp $
 PostgreSQL documentation
 -->
 
 <refentry id="SQL-CREATESEQUENCE">
  <refmeta>
-  <refentrytitle id="sql-createsequence-title">
-   CREATE SEQUENCE
-  </refentrytitle>
+  <refentrytitle id="sql-createsequence-title">CREATE SEQUENCE</refentrytitle>
   <refmiscinfo>SQL - Language Statements</refmiscinfo>
  </refmeta>
  <refnamediv>

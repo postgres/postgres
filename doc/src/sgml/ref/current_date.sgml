@@ -1,18 +1,16 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/ref/Attic/current_date.sgml,v 1.4 1999/07/22 15:09:09 thomas Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/ref/Attic/current_date.sgml,v 1.5 2002/04/21 19:02:39 thomas Exp $
 Postgres documentation
 -->
 
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/ref/Attic/current_date.sgml,v 1.4 1999/07/22 15:09:09 thomas Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/ref/Attic/current_date.sgml,v 1.5 2002/04/21 19:02:39 thomas Exp $
 Postgres documentation
 -->
 
 <REFENTRY ID="SQL-CURRENT-DATE">
  <REFMETA>
-  <REFENTRYTITLE>
-   SQL_CURRENT_DATE
-  </REFENTRYTITLE>
+  <REFENTRYTITLE>CURRENT_DATE</REFENTRYTITLE>
   <REFMISCINFO>SQL - Functions</REFMISCINFO>
  </REFMETA>
  <REFNAMEDIV>

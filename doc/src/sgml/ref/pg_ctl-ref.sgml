@@ -1,13 +1,9 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/ref/pg_ctl-ref.sgml,v 1.13 2002/03/22 19:20:41 petere Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/ref/pg_ctl-ref.sgml,v 1.14 2002/04/21 19:02:39 thomas Exp $
 PostgreSQL documentation
 -->
 
 <refentry id="app-pg-ctl">
- <docinfo>
-  <date>2001-02-08</date>
- </docinfo>
-
  <refmeta>
   <refentrytitle id="app-pg-ctl-title"><application>pg_ctl</application></refentrytitle>
   <manvolnum>1</manvolnum>

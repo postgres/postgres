@@ -1,4 +1,4 @@
-<!-- $Header: /cvsroot/pgsql/doc/src/sgml/ref/pg_restore.sgml,v 1.23 2002/03/22 19:20:42 petere Exp $ -->
+<!-- $Header: /cvsroot/pgsql/doc/src/sgml/ref/pg_restore.sgml,v 1.24 2002/04/21 19:02:39 thomas Exp $ -->
 
 <refentry id="APP-PGRESTORE">
  <docinfo>
@@ -6,9 +6,7 @@
  </docinfo>
 
  <refmeta>
-  <refentrytitle>
-   pg_restore
-  </refentrytitle>
+  <refentrytitle>pg_restore</refentrytitle>
   <manvolnum>1</manvolnum>
   <refmiscinfo>Application</refmiscinfo>
  </refmeta>

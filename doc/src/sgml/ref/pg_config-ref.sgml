@@ -1,10 +1,6 @@
-<!-- $Header: /cvsroot/pgsql/doc/src/sgml/ref/pg_config-ref.sgml,v 1.9 2002/01/20 22:19:57 petere Exp $ -->
+<!-- $Header: /cvsroot/pgsql/doc/src/sgml/ref/pg_config-ref.sgml,v 1.10 2002/04/21 19:02:39 thomas Exp $ -->
 
 <refentry id="app-pgconfig">
- <docinfo>
-  <date>2000-11-11</date>
- </docinfo>
-
  <refmeta>
   <refentrytitle id="app-pgconfig-title">pg_config</refentrytitle>
   <manvolnum>1</manvolnum>

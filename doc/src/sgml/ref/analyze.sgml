@@ -1,13 +1,11 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/ref/analyze.sgml,v 1.6 2002/01/20 22:19:56 petere Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/ref/analyze.sgml,v 1.7 2002/04/21 19:02:39 thomas Exp $
 PostgreSQL documentation
 -->
 
 <refentry id="SQL-ANALYZE">
  <refmeta>
-  <refentrytitle id="sql-analyze-title">
-   ANALYZE
-  </refentrytitle>
+  <refentrytitle id="sql-analyze-title">ANALYZE</refentrytitle>
   <refmiscinfo>SQL - Language Statements</refmiscinfo>
  </refmeta>
  <refnamediv>

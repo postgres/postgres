@@ -1,13 +1,11 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/ref/reindex.sgml,v 1.9 2002/03/22 19:20:45 petere Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/ref/reindex.sgml,v 1.10 2002/04/21 19:02:39 thomas Exp $
 PostgreSQL documentation
 -->
 
 <refentry id="SQL-REINDEX">
  <refmeta>
-  <refentrytitle id="SQL-REINDEX-TITLE">
-   REINDEX
-  </refentrytitle>
+  <refentrytitle id="SQL-REINDEX-TITLE">REINDEX</refentrytitle>
   <refmiscinfo>SQL - Language Statements</refmiscinfo>
  </refmeta>
  <refnamediv>

@@ -1,13 +1,11 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/ref/drop_database.sgml,v 1.14 2001/12/08 03:24:35 thomas Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/ref/drop_database.sgml,v 1.15 2002/04/21 19:02:39 thomas Exp $
 PostgreSQL documentation
 -->
 
 <refentry id="SQL-DROPDATABASE">
  <refmeta>
-  <refentrytitle id="SQL-DROPDATABASE-TITLE">
-   DROP DATABASE
-  </refentrytitle>
+  <refentrytitle id="SQL-DROPDATABASE-TITLE">DROP DATABASE</refentrytitle>
   <refmiscinfo>SQL - Language Statements</refmiscinfo>
  </refmeta>
  <refnamediv>
