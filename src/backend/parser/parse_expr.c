@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/parser/parse_expr.c,v 1.101 2001/09/20 23:31:08 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/parser/parse_expr.c,v 1.102 2001/09/28 08:09:09 thomas Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -40,11 +40,11 @@ bool		Transform_null_equals = false;
 
 static Node *parser_typecast_constant(Value *expr, TypeName *typename);
 static Node *parser_typecast_expression(ParseState *pstate,
-						   Node *expr, TypeName *typename);
+										Node *expr, TypeName *typename);
 static Node *transformAttr(ParseState *pstate, Attr *att, int precedence);
 static Node *transformIdent(ParseState *pstate, Ident *ident, int precedence);
 static Node *transformIndirection(ParseState *pstate, Node *basenode,
-					 List *indirection);
+								  List *indirection);
 
 
 /*

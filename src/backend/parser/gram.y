@@ -11,7 +11,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/parser/gram.y,v 2.253 2001/09/23 03:39:01 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/parser/gram.y,v 2.254 2001/09/28 08:09:09 thomas Exp $
  *
  * HISTORY
  *	  AUTHOR			DATE			MAJOR EVENT
@@ -259,7 +259,7 @@ static void doNegateFloat(Value *v);
 %type <str>		opt_charset, opt_collate
 %type <str>		opt_float
 %type <ival>	opt_numeric, opt_decimal
-%type <boolean>	opt_varying, opt_timezone
+%type <boolean>	opt_varying, opt_timezone, opt_timezone_x
 
 %type <ival>	Iconst
 %type <str>		Sconst, comment_text
@@ -4229,10 +4229,16 @@ ConstDatetime:  datetime
 					$$->name = xlateSqlType($1);
 					$$->typmod = -1;
 				}
-		| TIMESTAMP opt_timezone
+		| TIMESTAMP opt_timezone_x
 				{
 					$$ = makeNode(TypeName);
-					$$->name = xlateSqlType("timestamp");
+					if ($2)
+						$$->name = xlateSqlType("timestamptz");
+					else
+						$$->name = xlateSqlType("timestamp");
+					/* XXX the timezone field seems to be unused
+					 * - thomas 2001-09-06
+					 */
 					$$->timezone = $2;
 					$$->typmod = -1;
 				}
@@ -4261,6 +4267,16 @@ datetime:  YEAR_P								{ $$ = "year"; }
 		| HOUR_P								{ $$ = "hour"; }
 		| MINUTE_P								{ $$ = "minute"; }
 		| SECOND_P								{ $$ = "second"; }
+		;
+
+/* XXX Make the default be WITH TIME ZONE for 7.2 to help with database upgrades
+ * but revert this back to WITHOUT TIME ZONE for 7.3.
+ * Do this by simply reverting opt_timezone_x to opt_timezone - thomas 2001-09-06
+ */
+
+opt_timezone_x:  WITH TIME ZONE					{ $$ = TRUE; }
+		| WITHOUT TIME ZONE						{ $$ = FALSE; }
+		| /*EMPTY*/								{ $$ = TRUE; }
 		;
 
 opt_timezone:  WITH TIME ZONE					{ $$ = TRUE; }

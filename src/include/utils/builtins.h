@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2001, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Id: builtins.h,v 1.164 2001/09/14 17:46:40 momjian Exp $
+ * $Id: builtins.h,v 1.165 2001/09/28 08:09:14 thomas Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -16,7 +16,7 @@
 
 #include "fmgr.h"
 #include "nodes/primnodes.h"
-
+#include "storage/itemptr.h"  /* for setLastTid() */
 
 /*
  *		Defined in adt/
@@ -345,6 +345,7 @@ extern char *deparse_expression(Node *expr, List *dpcontext,
 extern List *deparse_context_for(char *relname, Oid relid);
 
 /* tid.c */
+extern void  setLastTid(const ItemPointer tid);
 extern Datum tidin(PG_FUNCTION_ARGS);
 extern Datum tidout(PG_FUNCTION_ARGS);
 extern Datum tideq(PG_FUNCTION_ARGS);

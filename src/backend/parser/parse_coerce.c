@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/parser/parse_coerce.c,v 2.60 2001/06/24 02:41:21 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/parser/parse_coerce.c,v 2.61 2001/09/28 08:09:09 thomas Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -240,7 +240,7 @@ can_coerce_type(int nargs, Oid *input_typeids, Oid *func_typeids)
 		oid_array[0] = inputTypeId;
 
 		ftup = SearchSysCache(PROCNAME,
-						   PointerGetDatum(typeidTypeName(targetTypeId)),
+							  PointerGetDatum(typeidTypeName(targetTypeId)),
 							  Int32GetDatum(1),
 							  PointerGetDatum(oid_array),
 							  0);
@@ -498,6 +498,7 @@ TypeCategory(Oid inType)
 		case (TIMETZOID):
 		case (ABSTIMEOID):
 		case (TIMESTAMPOID):
+		case (TIMESTAMPTZOID):
 			result = DATETIME_TYPE;
 			break;
 
@@ -577,7 +578,10 @@ PreferredType(CATEGORY category, Oid type)
 			break;
 
 		case (DATETIME_TYPE):
-			result = TIMESTAMPOID;
+			if (type == DATEOID)
+				result = TIMESTAMPOID;
+			else
+				result = TIMESTAMPTZOID;
 			break;
 
 		case (TIMESPAN_TYPE):
@@ -634,8 +638,12 @@ PromoteTypeToNext(Oid inType)
 			break;
 
 		case (DATEOID):
-		case (ABSTIMEOID):
 			result = TIMESTAMPOID;
+			break;
+
+		case (ABSTIMEOID):
+		case (TIMESTAMPOID):
+			result = TIMESTAMPTZOID;
 			break;
 
 		case (TIMEOID):
@@ -646,7 +654,7 @@ PromoteTypeToNext(Oid inType)
 		case (BOOLOID):
 		case (TEXTOID):
 		case (FLOAT8OID):
-		case (TIMESTAMPOID):
+		case (TIMESTAMPTZOID):
 		case (INTERVALOID):
 		default:
 			result = inType;

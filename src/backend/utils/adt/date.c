@@ -8,21 +8,24 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/date.c,v 1.57 2001/05/03 19:00:36 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/date.c,v 1.58 2001/09/28 08:09:10 thomas Exp $
  *
  *-------------------------------------------------------------------------
  */
 
 #include "postgres.h"
 
+#include <ctype.h>
 #include <limits.h>
 #include <time.h>
 #include <float.h>
 
 #include "access/hash.h"
 #include "miscadmin.h"
+#include "utils/builtins.h"
 #include "utils/date.h"
 #include "utils/nabstime.h"
+#include "utils/timestamp.h"
 
 
 /*****************************************************************************
@@ -58,13 +61,13 @@ date_in(PG_FUNCTION_ARGS)
 			break;
 
 		case DTK_CURRENT:
+			elog(ERROR, "Date CURRENT no longer supported"
+				 "\n\tdate_in() internal coding error");
 			GetCurrentTime(tm);
 			break;
 
 		case DTK_EPOCH:
-			tm->tm_year = 1970;
-			tm->tm_mon = 1;
-			tm->tm_mday = 1;
+			GetEpochTime(tm);
 			break;
 
 		default:
@@ -224,6 +227,46 @@ date_timestamp(PG_FUNCTION_ARGS)
 {
 	DateADT		dateVal = PG_GETARG_DATEADT(0);
 	Timestamp	result;
+
+	/* date is days since 2000, timestamp is seconds since same... */
+	result = dateVal * 86400.0;
+
+	PG_RETURN_TIMESTAMP(result);
+}
+
+
+/* timestamp_date()
+ * Convert timestamp to date data type.
+ */
+Datum
+timestamp_date(PG_FUNCTION_ARGS)
+{
+	Timestamp	timestamp = PG_GETARG_TIMESTAMP(0);
+	DateADT		result;
+	struct tm	tt,
+			   *tm = &tt;
+	double		fsec;
+
+	if (TIMESTAMP_NOT_FINITE(timestamp))
+		PG_RETURN_NULL();
+
+	if (timestamp2tm(timestamp, NULL, tm, &fsec, NULL) != 0)
+		elog(ERROR, "Unable to convert timestamp to date");
+
+	result = date2j(tm->tm_year, tm->tm_mon, tm->tm_mday) - date2j(2000, 1, 1);
+
+	PG_RETURN_DATEADT(result);
+}
+
+
+/* date_timestamptz()
+ * Convert date to timestamp with time zone data type.
+ */
+Datum
+date_timestamptz(PG_FUNCTION_ARGS)
+{
+	DateADT		dateVal = PG_GETARG_DATEADT(0);
+	TimestampTz	result;
 	struct tm	tt,
 			   *tm = &tt;
 	time_t		utime;
@@ -259,32 +302,25 @@ date_timestamp(PG_FUNCTION_ARGS)
 }
 
 
-/* timestamp_date()
- * Convert timestamp to date data type.
+/* timestamptz_date()
+ * Convert timestamp with time zone to date data type.
  */
 Datum
-timestamp_date(PG_FUNCTION_ARGS)
+timestamptz_date(PG_FUNCTION_ARGS)
 {
-	Timestamp	timestamp = PG_GETARG_TIMESTAMP(0);
+	TimestampTz	timestamp = PG_GETARG_TIMESTAMP(0);
 	DateADT		result;
 	struct tm	tt,
 			   *tm = &tt;
-	int			tz;
 	double		fsec;
+	int			tz;
 	char	   *tzn;
 
 	if (TIMESTAMP_NOT_FINITE(timestamp))
-		elog(ERROR, "Unable to convert timestamp to date");
+		PG_RETURN_NULL();
 
-	if (TIMESTAMP_IS_EPOCH(timestamp))
-		timestamp2tm(SetTimestamp(timestamp), NULL, tm, &fsec, NULL);
-	else if (TIMESTAMP_IS_CURRENT(timestamp))
-		timestamp2tm(SetTimestamp(timestamp), &tz, tm, &fsec, &tzn);
-	else
-	{
-		if (timestamp2tm(timestamp, &tz, tm, &fsec, &tzn) != 0)
-			elog(ERROR, "Unable to convert timestamp to date");
-	}
+	if (timestamp2tm(timestamp, &tz, tm, &fsec, &tzn) != 0)
+		elog(ERROR, "Unable to convert timestamp to date");
 
 	result = date2j(tm->tm_year, tm->tm_mon, tm->tm_mday) - date2j(2000, 1, 1);
 
@@ -315,15 +351,6 @@ abstime_date(PG_FUNCTION_ARGS)
 			 * pretend to drop through to make compiler think that result
 			 * will be set
 			 */
-
-		case EPOCH_ABSTIME:
-			result = date2j(1970, 1, 1) - date2j(2000, 1, 1);
-			break;
-
-		case CURRENT_ABSTIME:
-			GetCurrentTime(tm);
-			result = date2j(tm->tm_year, tm->tm_mon, tm->tm_mday) - date2j(2000, 1, 1);
-			break;
 
 		default:
 			abstime2tm(abstime, &tz, tm, NULL);
@@ -664,22 +691,13 @@ timestamp_time(PG_FUNCTION_ARGS)
 	TimeADT		result;
 	struct tm	tt,
 			   *tm = &tt;
-	int			tz;
 	double		fsec;
-	char	   *tzn;
 
 	if (TIMESTAMP_NOT_FINITE(timestamp))
-		elog(ERROR, "Unable to convert timestamp to date");
+		PG_RETURN_NULL();
 
-	if (TIMESTAMP_IS_EPOCH(timestamp))
-		timestamp2tm(SetTimestamp(timestamp), NULL, tm, &fsec, NULL);
-	else if (TIMESTAMP_IS_CURRENT(timestamp))
-		timestamp2tm(SetTimestamp(timestamp), &tz, tm, &fsec, &tzn);
-	else
-	{
-		if (timestamp2tm(timestamp, &tz, tm, &fsec, &tzn) != 0)
-			elog(ERROR, "Unable to convert timestamp to date");
-	}
+	if (timestamp2tm(timestamp, NULL, tm, &fsec, NULL) != 0)
+		elog(ERROR, "Unable to convert timestamp to date");
 
 	result = ((((tm->tm_hour * 60) + tm->tm_min) * 60) + tm->tm_sec + fsec);
 
@@ -734,6 +752,24 @@ interval_time(PG_FUNCTION_ARGS)
 	TMODULO(result, span1.time, 86400e0);
 
 	PG_RETURN_TIMEADT(result);
+}
+
+/* time_mi_time()
+ * Subtract two times to produce an interval.
+ */
+Datum
+time_mi_time(PG_FUNCTION_ARGS)
+{
+	TimeADT		time1 = PG_GETARG_TIMEADT(0);
+	TimeADT		time2 = PG_GETARG_TIMEADT(1);
+	Interval   *result;
+
+	result = (Interval *) palloc(sizeof(Interval));
+
+	result->time = time2 - time1;
+	result->month = 0;
+
+	PG_RETURN_INTERVAL_P(result);
 }
 
 /* time_pl_interval()
@@ -918,7 +954,12 @@ timetz_cmp_internal(TimeTzADT *time1, TimeTzADT *time2)
 	 * If same GMT time, sort by timezone; we only want to say that two
 	 * timetz's are equal if both the time and zone parts are equal.
 	 */
-	return time1->zone - time2->zone;
+	if (time1->zone > time2->zone)
+		return 1;
+	if (time1->zone < time2->zone)
+		return -1;
+
+	return 0;
 }
 
 Datum
@@ -1199,13 +1240,48 @@ overlaps_timetz(PG_FUNCTION_ARGS)
 #undef TIMETZ_LT
 }
 
-/* timestamp_timetz()
+
+Datum
+timetz_time(PG_FUNCTION_ARGS)
+{
+	TimeTzADT  *timetz = PG_GETARG_TIMETZADT_P(0);
+	TimeADT		result;
+
+	/* swallow the time zone and just return the time */
+	result = timetz->time;
+
+	PG_RETURN_TIMEADT(result);
+}
+
+
+Datum
+time_timetz(PG_FUNCTION_ARGS)
+{
+	TimeADT		time = PG_GETARG_TIMEADT(0);
+	TimeTzADT  *result;
+	struct tm	tt,
+			   *tm = &tt;
+	int			tz;
+
+	GetCurrentTime(tm);
+	tz = DetermineLocalTimeZone(tm);
+
+	result = (TimeTzADT *) palloc(sizeof(TimeTzADT));
+
+	result->time = time;
+	result->zone = tz;
+
+	PG_RETURN_TIMETZADT_P(result);
+}
+
+
+/* timestamptz_timetz()
  * Convert timestamp to timetz data type.
  */
 Datum
-timestamp_timetz(PG_FUNCTION_ARGS)
+timestamptz_timetz(PG_FUNCTION_ARGS)
 {
-	Timestamp	timestamp = PG_GETARG_TIMESTAMP(0);
+	TimestampTz	timestamp = PG_GETARG_TIMESTAMP(0);
 	TimeTzADT  *result;
 	struct tm	tt,
 			   *tm = &tt;
@@ -1214,20 +1290,10 @@ timestamp_timetz(PG_FUNCTION_ARGS)
 	char	   *tzn;
 
 	if (TIMESTAMP_NOT_FINITE(timestamp))
-		elog(ERROR, "Unable to convert timestamp to date");
+		PG_RETURN_NULL();
 
-	if (TIMESTAMP_IS_EPOCH(timestamp))
-	{
-		timestamp2tm(SetTimestamp(timestamp), NULL, tm, &fsec, NULL);
-		tz = 0;
-	}
-	else if (TIMESTAMP_IS_CURRENT(timestamp))
-		timestamp2tm(SetTimestamp(timestamp), &tz, tm, &fsec, &tzn);
-	else
-	{
-		if (timestamp2tm(timestamp, &tz, tm, &fsec, &tzn) != 0)
-			elog(ERROR, "Unable to convert timestamp to date");
-	}
+	if (timestamp2tm(timestamp, &tz, tm, &fsec, &tzn) != 0)
+		elog(ERROR, "Unable to convert timestamp to date");
 
 	result = (TimeTzADT *) palloc(sizeof(TimeTzADT));
 
@@ -1238,18 +1304,18 @@ timestamp_timetz(PG_FUNCTION_ARGS)
 }
 
 
-/* datetimetz_timestamp()
- * Convert date and timetz to timestamp data type.
+/* datetimetz_timestamptz()
+ * Convert date and timetz to timestamp with time zone data type.
  * Timestamp is stored in GMT, so add the time zone
  * stored with the timetz to the result.
  * - thomas 2000-03-10
  */
 Datum
-datetimetz_timestamp(PG_FUNCTION_ARGS)
+datetimetz_timestamptz(PG_FUNCTION_ARGS)
 {
 	DateADT		date = PG_GETARG_DATEADT(0);
 	TimeTzADT  *time = PG_GETARG_TIMETZADT_P(1);
-	Timestamp	result;
+	TimestampTz	result;
 
 	result = date * 86400.0 + time->time + time->zone;
 
@@ -1310,3 +1376,83 @@ text_timetz(PG_FUNCTION_ARGS)
 	return DirectFunctionCall1(timetz_in,
 							   CStringGetDatum(dstr));
 }
+
+/* timetz_zone()
+ * Encode time with time zone type with specified time zone.
+ */
+Datum
+timetz_zone(PG_FUNCTION_ARGS)
+{
+	text	   *zone = PG_GETARG_TEXT_P(0);
+	TimeTzADT  *time = PG_GETARG_TIMETZADT_P(1);
+	TimeTzADT  *result;
+	TimeADT		time1;
+	int			tz;
+	int			type,
+				val;
+	int			i;
+	char	   *up,
+			   *lp,
+				lowzone[MAXDATELEN + 1];
+
+	if (VARSIZE(zone) - VARHDRSZ > MAXDATELEN)
+		elog(ERROR, "Time zone '%s' not recognized",
+			 DatumGetCString(DirectFunctionCall1(textout,
+												 PointerGetDatum(zone))));
+	up = VARDATA(zone);
+	lp = lowzone;
+	for (i = 0; i < (VARSIZE(zone) - VARHDRSZ); i++)
+		*lp++ = tolower((unsigned char) *up++);
+	*lp = '\0';
+
+	type = DecodeSpecial(0, lowzone, &val);
+
+	result = (TimeTzADT *) palloc(sizeof(TimeTzADT));
+
+	if ((type == TZ) || (type == DTZ))
+	{
+		tz = val * 60;
+		time1 = time->time - time->zone + tz;
+		TMODULO(result->time, time1, 86400e0);
+		if (result->time < 0)
+			result->time += 86400;
+		result->zone = tz;
+	}
+	else
+	{
+		elog(ERROR, "Time zone '%s' not recognized", lowzone);
+		PG_RETURN_NULL();
+	}
+
+	PG_RETURN_TIMETZADT_P(result);
+}	/* timetz_zone() */
+
+/* timetz_izone()
+ * Encode time with time zone type with specified time interval as time zone.
+ */
+Datum
+timetz_izone(PG_FUNCTION_ARGS)
+{
+	Interval   *zone = PG_GETARG_INTERVAL_P(0);
+	TimeTzADT  *time = PG_GETARG_TIMETZADT_P(1);
+	TimeTzADT  *result;
+	TimeADT		time1;
+	int			tz;
+
+	if (zone->month != 0)
+		elog(ERROR, "INTERVAL time zone '%s' not legal (month specified)",
+			 DatumGetCString(DirectFunctionCall1(interval_out,
+												 PointerGetDatum(zone))));
+
+	tz = -(zone->time);
+
+	result = (TimeTzADT *) palloc(sizeof(TimeTzADT));
+
+	time1 = time->time - time->zone + tz;
+	TMODULO(result->time, time1, 86400e0);
+	if (result->time < 0)
+		result->time += 86400;
+	result->zone = tz;
+
+	PG_RETURN_TIMETZADT_P(result);
+}	/* timetz_izone() */

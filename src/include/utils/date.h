@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2001, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Id: date.h,v 1.11 2001/03/22 04:01:11 momjian Exp $
+ * $Id: date.h,v 1.12 2001/09/28 08:09:14 thomas Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -68,6 +68,8 @@ extern Datum date_pli(PG_FUNCTION_ARGS);
 extern Datum date_mii(PG_FUNCTION_ARGS);
 extern Datum date_timestamp(PG_FUNCTION_ARGS);
 extern Datum timestamp_date(PG_FUNCTION_ARGS);
+extern Datum date_timestamptz(PG_FUNCTION_ARGS);
+extern Datum timestamptz_date(PG_FUNCTION_ARGS);
 extern Datum datetime_timestamp(PG_FUNCTION_ARGS);
 extern Datum abstime_date(PG_FUNCTION_ARGS);
 extern Datum text_date(PG_FUNCTION_ARGS);
@@ -85,6 +87,7 @@ extern Datum time_cmp(PG_FUNCTION_ARGS);
 extern Datum overlaps_time(PG_FUNCTION_ARGS);
 extern Datum time_larger(PG_FUNCTION_ARGS);
 extern Datum time_smaller(PG_FUNCTION_ARGS);
+extern Datum time_mi_time(PG_FUNCTION_ARGS);
 extern Datum timestamp_time(PG_FUNCTION_ARGS);
 extern Datum time_interval(PG_FUNCTION_ARGS);
 extern Datum interval_time(PG_FUNCTION_ARGS);
@@ -107,10 +110,14 @@ extern Datum timetz_hash(PG_FUNCTION_ARGS);
 extern Datum overlaps_timetz(PG_FUNCTION_ARGS);
 extern Datum timetz_larger(PG_FUNCTION_ARGS);
 extern Datum timetz_smaller(PG_FUNCTION_ARGS);
-extern Datum timestamp_timetz(PG_FUNCTION_ARGS);
-extern Datum datetimetz_timestamp(PG_FUNCTION_ARGS);
+extern Datum timetz_time(PG_FUNCTION_ARGS);
+extern Datum time_timetz(PG_FUNCTION_ARGS);
+extern Datum timestamptz_timetz(PG_FUNCTION_ARGS);
+extern Datum datetimetz_timestamptz(PG_FUNCTION_ARGS);
 extern Datum text_timetz(PG_FUNCTION_ARGS);
 extern Datum timetz_text(PG_FUNCTION_ARGS);
+extern Datum timetz_zone(PG_FUNCTION_ARGS);
+extern Datum timetz_izone(PG_FUNCTION_ARGS);
 extern Datum timetz_pl_interval(PG_FUNCTION_ARGS);
 extern Datum timetz_mi_interval(PG_FUNCTION_ARGS);
 

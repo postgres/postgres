@@ -8,7 +8,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/format_type.c,v 1.15 2001/09/21 15:27:38 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/format_type.c,v 1.16 2001/09/28 08:09:10 thomas Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -205,6 +205,10 @@ format_type_internal(Oid type_oid, int32 typemod, bool allow_invalid)
 			break;
 
 		case TIMESTAMPOID:
+			buf = pstrdup("timestamp without time zone");
+			break;
+
+		case TIMESTAMPTZOID:
 			buf = pstrdup("timestamp with time zone");
 			break;
 

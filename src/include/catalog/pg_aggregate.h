@@ -8,7 +8,7 @@
  * Portions Copyright (c) 1996-2001, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Id: pg_aggregate.h,v 1.31 2001/08/14 22:21:58 tgl Exp $
+ * $Id: pg_aggregate.h,v 1.32 2001/09/28 08:09:13 thomas Exp $
  *
  * NOTES
  *	  the genbki.sh script reads this file and generates .bki
@@ -109,7 +109,8 @@ DATA(insert OID = 0 ( max	PGUID date_larger		- 1082 1082 1082 _null_ ));
 DATA(insert OID = 0 ( max	PGUID time_larger		- 1083 1083 1083 _null_ ));
 DATA(insert OID = 0 ( max	PGUID timetz_larger		- 1266 1266 1266 _null_ ));
 DATA(insert OID = 0 ( max	PGUID cashlarger		-  790	790  790 _null_ ));
-DATA(insert OID = 0 ( max	PGUID timestamp_larger	- 1184 1184 1184 _null_ ));
+DATA(insert OID = 0 ( max	PGUID timestamp_larger	- 1114 1114 1114 _null_ ));
+DATA(insert OID = 0 ( max	PGUID timestamptz_larger - 1184 1184 1184 _null_ ));
 DATA(insert OID = 0 ( max	PGUID interval_larger	- 1186 1186 1186 _null_ ));
 DATA(insert OID = 0 ( max	PGUID text_larger		-	25	 25   25 _null_ ));
 DATA(insert OID = 0 ( max	PGUID numeric_larger	- 1700 1700 1700 _null_ ));
@@ -125,7 +126,8 @@ DATA(insert OID = 0 ( min	PGUID date_smaller		- 1082 1082 1082 _null_ ));
 DATA(insert OID = 0 ( min	PGUID time_smaller		- 1083 1083 1083 _null_ ));
 DATA(insert OID = 0 ( min	PGUID timetz_smaller	- 1266 1266 1266 _null_ ));
 DATA(insert OID = 0 ( min	PGUID cashsmaller		-  790	790  790 _null_ ));
-DATA(insert OID = 0 ( min	PGUID timestamp_smaller - 1184 1184 1184 _null_ ));
+DATA(insert OID = 0 ( min	PGUID timestamp_smaller - 1114 1114 1114 _null_ ));
+DATA(insert OID = 0 ( min	PGUID timestamptz_smaller - 1184 1184 1184 _null_ ));
 DATA(insert OID = 0 ( min	PGUID interval_smaller	- 1186 1186 1186 _null_ ));
 DATA(insert OID = 0 ( min	PGUID text_smaller		-	25	 25   25 _null_ ));
 DATA(insert OID = 0 ( min	PGUID numeric_smaller	- 1700 1700 1700 _null_ ));

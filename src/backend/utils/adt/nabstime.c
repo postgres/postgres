@@ -9,7 +9,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/nabstime.c,v 1.85 2001/05/03 19:00:36 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/nabstime.c,v 1.86 2001/09/28 08:09:11 thomas Exp $
  *
  * NOTES
  *
@@ -179,6 +179,84 @@ GetCurrentAbsoluteTime(void)
 }	/* GetCurrentAbsoluteTime() */
 
 
+/* GetCurrentAbsoluteTime()
+ * Get the current system time. Set timezone parameters if not specified elsewhere.
+ * Define HasTZSet to allow clients to specify the default timezone.
+ *
+ * Returns the number of seconds since epoch (January 1 1970 GMT)
+ */
+AbsoluteTime
+GetCurrentAbsoluteTimeUsec(int *usec)
+{
+	time_t now;
+	struct timeval tp;
+//	struct timezone tpz;
+#if defined(HAVE_TM_ZONE) || defined(HAVE_INT_TIMEZONE)
+	struct tm  *tm;
+#else
+	struct timeb tb;			/* the old V7-ism */
+#endif
+
+	gettimeofday(&tp, NULL);
+
+	now = tp.tv_sec;
+	*usec = tp.tv_usec;
+
+#ifdef NOT_USED
+#if defined(HAVE_TM_ZONE) || defined(HAVE_INT_TIMEZONE)
+	now = time(NULL);
+#else
+	ftime(&tb);
+	now = tb.time;
+#endif
+#endif
+
+	if (!HasCTZSet)
+	{
+#if defined(HAVE_TM_ZONE)
+		tm = localtime(&now);
+
+		CTimeZone = -tm->tm_gmtoff;		/* tm_gmtoff is Sun/DEC-ism */
+		CDayLight = (tm->tm_isdst > 0);
+
+#ifdef NOT_USED
+
+		/*
+		 * XXX is there a better way to get local timezone string w/o
+		 * tzname? - tgl 97/03/18
+		 */
+		strftime(CTZName, MAXTZLEN, "%Z", tm);
+#endif
+
+		/*
+		 * XXX FreeBSD man pages indicate that this should work - thomas
+		 * 1998-12-12
+		 */
+		strcpy(CTZName, tm->tm_zone);
+
+#elif defined(HAVE_INT_TIMEZONE)
+		tm = localtime(&now);
+
+		CDayLight = tm->tm_isdst;
+		CTimeZone = ((tm->tm_isdst > 0) ? (TIMEZONE_GLOBAL - 3600) : TIMEZONE_GLOBAL);
+		strcpy(CTZName, tzname[tm->tm_isdst]);
+#else							/* neither HAVE_TM_ZONE nor
+								 * HAVE_INT_TIMEZONE */
+		CTimeZone = tb.timezone * 60;
+		CDayLight = (tb.dstflag != 0);
+
+		/*
+		 * XXX does this work to get the local timezone string in V7? -
+		 * tgl 97/03/18
+		 */
+		strftime(CTZName, MAXTZLEN, "%Z", localtime(&now));
+#endif
+	};
+
+	return (AbsoluteTime) now;
+}	/* GetCurrentAbsoluteTime() */
+
+
 void
 GetCurrentTime(struct tm * tm)
 {
@@ -188,6 +266,19 @@ GetCurrentTime(struct tm * tm)
 
 	return;
 }	/* GetCurrentTime() */
+
+
+void
+GetCurrentTimeUsec(struct tm *tm, double *fsec)
+{
+	int			tz;
+	int			usec;
+
+	abstime2tm(GetCurrentTransactionStartTimeUsec(&usec), &tz, tm, NULL);
+	*fsec = usec * 1.0e-6;
+
+	return;
+}	/* GetCurrentTimeUsec() */
 
 
 void
@@ -357,11 +448,9 @@ nabstimein(PG_FUNCTION_ARGS)
 			break;
 
 		case DTK_EPOCH:
-			result = EPOCH_ABSTIME;
-			break;
-
-		case DTK_CURRENT:
-			result = CURRENT_ABSTIME;
+			/* Don't bother retaining this as a reserved value,
+			 * but instead just set to the actual epoch time (1970-01-01) */
+			result = 0;
 			break;
 
 		case DTK_LATE:
@@ -404,14 +493,11 @@ nabstimeout(PG_FUNCTION_ARGS)
 
 	switch (time)
 	{
-		case EPOCH_ABSTIME:
-			strcpy(buf, EPOCH);
-			break;
+		/* Note that timestamp no longer supports 'invalid'.
+		 * Retain 'invalid' for abstime for now, but dump it someday.
+		 */
 		case INVALID_ABSTIME:
 			strcpy(buf, INVALID);
-			break;
-		case CURRENT_ABSTIME:
-			strcpy(buf, DCURRENT);
 			break;
 		case NOEND_ABSTIME:
 			strcpy(buf, LATE);
@@ -449,37 +535,37 @@ abstime_finite(PG_FUNCTION_ARGS)
 static int
 abstime_cmp_internal(AbsoluteTime a, AbsoluteTime b)
 {
-	/*
-	 * We consider all INVALIDs to be equal and larger than any non-INVALID.
-	 * This is somewhat arbitrary; the important thing is to have a
-	 * consistent sort order.
-	 */
+/*
+ * We consider all INVALIDs to be equal and larger than any non-INVALID.
+ * This is somewhat arbitrary; the important thing is to have a
+ * consistent sort order.
+ */
 	if (a == INVALID_ABSTIME)
 	{
-		if (b == INVALID_ABSTIME)
-			return 0;			/* INVALID = INVALID */
-		else
-			return 1;			/* INVALID > non-INVALID */
+        if (b == INVALID_ABSTIME)
+			return 0;	/* INVALID = INVALID */
+        else
+			return 1;	/* INVALID > non-INVALID */
 	}
-	else if (b == INVALID_ABSTIME)
-	{
-		return -1;				/* non-INVALID < INVALID */
-	}
-	else
-	{
-		/* XXX this is broken, should go away: */
-		if (a == CURRENT_ABSTIME)
-			a = GetCurrentTransactionStartTime();
-		if (b == CURRENT_ABSTIME)
-			b = GetCurrentTransactionStartTime();
 
-		if (a > b)
-			return 1;
-		else if (a == b)
-			return 0;
-		else
-			return -1;
-	}
+	if (b == INVALID_ABSTIME)
+        return -1;		/* non-INVALID < INVALID */
+
+#if 0
+/* CURRENT is no longer stored internally... */
+	/* XXX this is broken, should go away: */
+	if (a == CURRENT_ABSTIME)
+		a = GetCurrentTransactionStartTime();
+	if (b == CURRENT_ABSTIME)
+		b = GetCurrentTransactionStartTime();
+#endif
+
+	if (a > b)
+		return 1;
+	else if (a == b)
+		return 0;
+	else
+		return -1;
 }
 
 Datum
@@ -546,7 +632,7 @@ btabstimecmp(PG_FUNCTION_ARGS)
 }
 
 
-/* datetime_abstime()
+/* timestamp_abstime()
  * Convert timestamp to abstime.
  */
 Datum
@@ -555,26 +641,23 @@ timestamp_abstime(PG_FUNCTION_ARGS)
 	Timestamp	timestamp = PG_GETARG_TIMESTAMP(0);
 	AbsoluteTime result;
 	double		fsec;
+	int			tz;
 	struct tm	tt,
 			   *tm = &tt;
 
-	if (TIMESTAMP_IS_INVALID(timestamp))
-		result = INVALID_ABSTIME;
-	else if (TIMESTAMP_IS_NOBEGIN(timestamp))
+	if (TIMESTAMP_IS_NOBEGIN(timestamp))
 		result = NOSTART_ABSTIME;
 	else if (TIMESTAMP_IS_NOEND(timestamp))
 		result = NOEND_ABSTIME;
+	else if (timestamp2tm(timestamp, NULL, tm, &fsec, NULL) == 0)
+	{
+		tz = DetermineLocalTimeZone(tm);
+		result = tm2abstime(tm, tz);
+	}
 	else
 	{
-		if (TIMESTAMP_IS_RELATIVE(timestamp))
-		{
-			timestamp2tm(SetTimestamp(timestamp), NULL, tm, &fsec, NULL);
-			result = tm2abstime(tm, 0);
-		}
-		else if (timestamp2tm(timestamp, NULL, tm, &fsec, NULL) == 0)
-			result = tm2abstime(tm, 0);
-		else
-			result = INVALID_ABSTIME;
+		elog(ERROR, "Unable to convert timestamp to abstime");
+		result = INVALID_ABSTIME;
 	}
 
 	PG_RETURN_ABSOLUTETIME(result);
@@ -588,11 +671,16 @@ abstime_timestamp(PG_FUNCTION_ARGS)
 {
 	AbsoluteTime abstime = PG_GETARG_ABSOLUTETIME(0);
 	Timestamp	result;
+	struct tm	tt,
+			   *tm = &tt;
+	int			tz;
+	char		tzn[MAXTZLEN];
 
 	switch (abstime)
 	{
 		case INVALID_ABSTIME:
-			TIMESTAMP_INVALID(result);
+			elog(ERROR, "Unable to convert abstime 'invalid' to timestamp");
+			TIMESTAMP_NOBEGIN(result);
 			break;
 
 		case NOSTART_ABSTIME:
@@ -603,12 +691,65 @@ abstime_timestamp(PG_FUNCTION_ARGS)
 			TIMESTAMP_NOEND(result);
 			break;
 
-		case EPOCH_ABSTIME:
-			TIMESTAMP_EPOCH(result);
+		default:
+			abstime2tm(abstime, &tz, tm, tzn);
+			result = abstime + ((date2j(1970, 1, 1) - date2j(2000, 1, 1)) * 86400) + tz;
+			break;
+	};
+
+	PG_RETURN_TIMESTAMP(result);
+}
+
+
+/* timestamptz_abstime()
+ * Convert timestamp with time zone to abstime.
+ */
+Datum
+timestamptz_abstime(PG_FUNCTION_ARGS)
+{
+	TimestampTz	timestamp = PG_GETARG_TIMESTAMP(0);
+	AbsoluteTime result;
+	double		fsec;
+	struct tm	tt,
+			   *tm = &tt;
+
+	if (TIMESTAMP_IS_NOBEGIN(timestamp))
+		result = NOSTART_ABSTIME;
+	else if (TIMESTAMP_IS_NOEND(timestamp))
+		result = NOEND_ABSTIME;
+	else if (timestamp2tm(timestamp, NULL, tm, &fsec, NULL) == 0)
+		result = tm2abstime(tm, 0);
+	else
+	{
+		elog(ERROR, "Unable to convert timestamp to abstime");
+		result = INVALID_ABSTIME;
+	}
+
+	PG_RETURN_ABSOLUTETIME(result);
+}
+
+/* abstime_timestamptz()
+ * Convert abstime to timestamp.
+ */
+Datum
+abstime_timestamptz(PG_FUNCTION_ARGS)
+{
+	AbsoluteTime abstime = PG_GETARG_ABSOLUTETIME(0);
+	TimestampTz	result;
+
+	switch (abstime)
+	{
+		case INVALID_ABSTIME:
+			elog(ERROR, "Unable to convert abstime 'invalid' to timestamptz");
+			TIMESTAMP_NOBEGIN(result);
 			break;
 
-		case CURRENT_ABSTIME:
-			TIMESTAMP_CURRENT(result);
+		case NOSTART_ABSTIME:
+			TIMESTAMP_NOBEGIN(result);
+			break;
+
+		case NOEND_ABSTIME:
+			TIMESTAMP_NOEND(result);
 			break;
 
 		default:
@@ -653,14 +794,15 @@ reltimein(PG_FUNCTION_ARGS)
 		case DTK_DELTA:
 			result = ((((tm->tm_hour * 60) + tm->tm_min) * 60) + tm->tm_sec);
 			result += (((tm->tm_year * 365) + (tm->tm_mon * 30) + tm->tm_mday) * (24 * 60 * 60));
-			PG_RETURN_RELATIVETIME(result);
+			break;
 
 		default:
-			PG_RETURN_RELATIVETIME(INVALID_RELTIME);
+			elog(ERROR, "Bad reltime (internal coding error) '%s'", str);
+			result = INVALID_RELTIME;
+			break;
 	}
 
-	elog(ERROR, "Bad reltime (internal coding error) '%s'", str);
-	PG_RETURN_RELATIVETIME(INVALID_RELTIME);
+	PG_RETURN_RELATIVETIME(result);
 }
 
 
@@ -676,13 +818,8 @@ reltimeout(PG_FUNCTION_ARGS)
 			   *tm = &tt;
 	char		buf[MAXDATELEN + 1];
 
-	if (time == INVALID_RELTIME)
-		strcpy(buf, INVALID_RELTIME_STR);
-	else
-	{
-		reltime2tm(time, tm);
-		EncodeTimeSpan(tm, 0, DateStyle, buf);
-	}
+	reltime2tm(time, tm);
+	EncodeTimeSpan(tm, 0, DateStyle, buf);
 
 	result = pstrdup(buf);
 	PG_RETURN_CSTRING(result);
@@ -702,44 +839,6 @@ reltime2tm(RelativeTime time, struct tm * tm)
 	return;
 }	/* reltime2tm() */
 
-#ifdef NOT_USED
-int
-dummyfunc()
-{
-	char	   *timestring;
-	long		quantity;
-	int			i;
-	int			unitnr;
-
-	timestring = (char *) palloc(Max(strlen(INVALID_RELTIME_STR),
-									 UNITMAXLEN) + 1);
-	if (timevalue == INVALID_RELTIME)
-	{
-		strcpy(timestring, INVALID_RELTIME_STR);
-		return timestring;
-	}
-
-	if (timevalue == 0)
-		i = 1;					/* unit = 'seconds' */
-	else
-		for (i = 12; i >= 0; i = i - 2)
-			if ((timevalue % sec_tab[i]) == 0)
-				break;			/* appropriate unit found */
-	unitnr = i;
-	quantity = (timevalue / sec_tab[unitnr]);
-	if (quantity > 1 || quantity < -1)
-		unitnr++;				/* adjust index for PLURAL of unit */
-	if (quantity >= 0)
-		sprintf(timestring, "%c %lu %s", RELTIME_LABEL,
-				quantity, unit_tab[unitnr]);
-	else
-		sprintf(timestring, "%c %lu %s %s", RELTIME_LABEL,
-				(quantity * -1), unit_tab[unitnr], RELTIME_PAST);
-	return timestring;
-}
-
-#endif
-
 
 /*
  *		tintervalin		- converts an interval string to internal format
@@ -749,26 +848,25 @@ tintervalin(PG_FUNCTION_ARGS)
 {
 	char	   *intervalstr = PG_GETARG_CSTRING(0);
 	TimeInterval interval;
-	int			error;
 	AbsoluteTime i_start,
 				i_end,
 				t1,
 				t2;
 
 	interval = (TimeInterval) palloc(sizeof(TimeIntervalData));
-	error = istinterval(intervalstr, &t1, &t2);
-	if (error == 0)
-		interval->status = T_INTERVAL_INVAL;
+	if (istinterval(intervalstr, &t1, &t2) == 0)
+		elog(ERROR, "Unable to decode tinterval '%s'", intervalstr);
+
 	if (t1 == INVALID_ABSTIME || t2 == INVALID_ABSTIME)
-		interval->status = T_INTERVAL_INVAL;	/* undefined  */
+        interval->status = T_INTERVAL_INVAL;    /* undefined  */
 	else
-	{
-		i_start = ABSTIMEMIN(t1, t2);
-		i_end = ABSTIMEMAX(t1, t2);
-		interval->data[0] = i_start;
-		interval->data[1] = i_end;
 		interval->status = T_INTERVAL_VALID;
-	}
+
+	i_start = ABSTIMEMIN(t1, t2);
+	i_end = ABSTIMEMAX(t1, t2);
+	interval->data[0] = i_start;
+	interval->data[1] = i_end;
+
 	PG_RETURN_TIMEINTERVAL(interval);
 }
 
@@ -818,30 +916,28 @@ interval_reltime(PG_FUNCTION_ARGS)
 				month;
 	double		span;
 
-	if (INTERVAL_IS_INVALID(*interval))
-		time = INVALID_RELTIME;
+	if (interval->month == 0)
+	{
+		year = 0;
+		month = 0;
+	}
+	else if (abs(interval->month) >= 12)
+	{
+		year = (interval->month / 12);
+		month = (interval->month % 12);
+	}
 	else
 	{
-		if (interval->month == 0)
-		{
-			year = 0;
-			month = 0;
-		}
-		else if (abs(interval->month) >= 12)
-		{
-			year = (interval->month / 12);
-			month = (interval->month % 12);
-		}
-		else
-		{
-			year = 0;
-			month = interval->month;
-		}
-
-		span = (((((double) 365 * year) + ((double) 30 * month)) * 86400) + interval->time);
-
-		time = (((span > INT_MIN) && (span < INT_MAX)) ? span : INVALID_RELTIME);
+		year = 0;
+		month = interval->month;
 	}
+
+	span = (((((double) 365 * year) + ((double) 30 * month)) * 86400) + interval->time);
+
+	if ((span < INT_MIN) || (span > INT_MAX))
+		time = INVALID_RELTIME;
+	else
+		time = span;
 
 	PG_RETURN_RELATIVETIME(time);
 }
@@ -860,7 +956,9 @@ reltime_interval(PG_FUNCTION_ARGS)
 	switch (reltime)
 	{
 		case INVALID_RELTIME:
-			INTERVAL_INVALID(*result);
+			elog(ERROR, "Unable to convert reltime 'invalid' to interval");
+			result->time = 0;
+			result->month = 0;
 			break;
 
 		default:
@@ -884,11 +982,12 @@ mktinterval(PG_FUNCTION_ARGS)
 {
 	AbsoluteTime t1 = PG_GETARG_ABSOLUTETIME(0);
 	AbsoluteTime t2 = PG_GETARG_ABSOLUTETIME(1);
-	AbsoluteTime tstart = ABSTIMEMIN(t1, t2),
-				tend = ABSTIMEMAX(t1, t2);
+	AbsoluteTime tstart = ABSTIMEMIN(t1, t2);
+	AbsoluteTime tend = ABSTIMEMAX(t1, t2);
 	TimeInterval interval;
 
 	interval = (TimeInterval) palloc(sizeof(TimeIntervalData));
+
 	if (t1 == INVALID_ABSTIME || t2 == INVALID_ABSTIME)
 		interval->status = T_INTERVAL_INVAL;
 	else
@@ -909,7 +1008,7 @@ mktinterval(PG_FUNCTION_ARGS)
  */
 
 /*
- *		timepl			- returns the value of (abstime t1 + relime t2)
+ *		timepl			- returns the value of (abstime t1 + reltime t2)
  */
 Datum
 timepl(PG_FUNCTION_ARGS)
@@ -917,8 +1016,10 @@ timepl(PG_FUNCTION_ARGS)
 	AbsoluteTime t1 = PG_GETARG_ABSOLUTETIME(0);
 	RelativeTime t2 = PG_GETARG_RELATIVETIME(1);
 
+#if 0
 	if (t1 == CURRENT_ABSTIME)
 		t1 = GetCurrentTransactionStartTime();
+#endif
 
 	if (AbsoluteTimeIsReal(t1) &&
 		RelativeTimeIsValid(t2) &&
@@ -939,8 +1040,10 @@ timemi(PG_FUNCTION_ARGS)
 	AbsoluteTime t1 = PG_GETARG_ABSOLUTETIME(0);
 	RelativeTime t2 = PG_GETARG_RELATIVETIME(1);
 
+#if 0
 	if (t1 == CURRENT_ABSTIME)
 		t1 = GetCurrentTransactionStartTime();
+#endif
 
 	if (AbsoluteTimeIsReal(t1) &&
 		RelativeTimeIsValid(t2) &&
@@ -949,27 +1052,6 @@ timemi(PG_FUNCTION_ARGS)
 		PG_RETURN_ABSOLUTETIME(t1 - t2);
 
 	PG_RETURN_ABSOLUTETIME(INVALID_ABSTIME);
-}
-
-
-/*
- *		abstimemi		- returns the value of (abstime t1 - abstime t2)
- *
- * This is not exported, so it's not been made fmgr-compatible.
- */
-static RelativeTime
-abstimemi(AbsoluteTime t1, AbsoluteTime t2)
-{
-	if (t1 == CURRENT_ABSTIME)
-		t1 = GetCurrentTransactionStartTime();
-	if (t2 == CURRENT_ABSTIME)
-		t2 = GetCurrentTransactionStartTime();
-
-	if (AbsoluteTimeIsReal(t1) &&
-		AbsoluteTimeIsReal(t2))
-		return t1 - t2;
-
-	return INVALID_RELTIME;
 }
 
 
@@ -1002,12 +1084,19 @@ Datum
 tintervalrel(PG_FUNCTION_ARGS)
 {
 	TimeInterval interval = PG_GETARG_TIMEINTERVAL(0);
+	AbsoluteTime t1 = interval->data[0];
+	AbsoluteTime t2 = interval->data[1];
 
 	if (interval->status != T_INTERVAL_VALID)
 		PG_RETURN_RELATIVETIME(INVALID_RELTIME);
 
-	PG_RETURN_RELATIVETIME(abstimemi(interval->data[1], interval->data[0]));
+	if (AbsoluteTimeIsReal(t1) &&
+		AbsoluteTimeIsReal(t2))
+		PG_RETURN_RELATIVETIME(t2 - t1);
+
+	PG_RETURN_RELATIVETIME(INVALID_RELTIME);
 }
+
 
 /*
  *		timenow			- returns  time "now", internal format
@@ -1021,6 +1110,7 @@ timenow(PG_FUNCTION_ARGS)
 
 	if (time(&sec) < 0)
 		PG_RETURN_ABSOLUTETIME(INVALID_ABSTIME);
+
 	PG_RETURN_ABSOLUTETIME((AbsoluteTime) sec);
 }
 
@@ -1113,11 +1203,11 @@ tintervalsame(PG_FUNCTION_ARGS)
 		PG_RETURN_BOOL(false);
 
 	if (DatumGetBool(DirectFunctionCall2(abstimeeq,
-									   AbsoluteTimeGetDatum(i1->data[0]),
-								   AbsoluteTimeGetDatum(i2->data[0]))) &&
+										 AbsoluteTimeGetDatum(i1->data[0]),
+										 AbsoluteTimeGetDatum(i2->data[0]))) &&
 		DatumGetBool(DirectFunctionCall2(abstimeeq,
-									   AbsoluteTimeGetDatum(i1->data[1]),
-									 AbsoluteTimeGetDatum(i2->data[1]))))
+										 AbsoluteTimeGetDatum(i1->data[1]),
+										 AbsoluteTimeGetDatum(i2->data[1]))))
 		PG_RETURN_BOOL(true);
 	PG_RETURN_BOOL(false);
 }
@@ -1133,9 +1223,9 @@ tintervaleq(PG_FUNCTION_ARGS)
 	TimeInterval i1 = PG_GETARG_TIMEINTERVAL(0);
 	TimeInterval i2 = PG_GETARG_TIMEINTERVAL(1);
 	AbsoluteTime t10,
-				t11,
-				t20,
-				t21;
+				 t11,
+				 t20,
+				 t21;
 
 	if (i1->status == T_INTERVAL_INVAL || i2->status == T_INTERVAL_INVAL)
 		PG_RETURN_BOOL(false);
@@ -1145,18 +1235,9 @@ tintervaleq(PG_FUNCTION_ARGS)
 	t20 = i2->data[0];
 	t21 = i2->data[1];
 
-	if ((t10 == INVALID_ABSTIME) || (t20 == INVALID_ABSTIME)
+	if ((t10 == INVALID_ABSTIME) || (t11 == INVALID_ABSTIME)
 		|| (t20 == INVALID_ABSTIME) || (t21 == INVALID_ABSTIME))
 		PG_RETURN_BOOL(false);
-
-	if (t10 == CURRENT_ABSTIME)
-		t10 = GetCurrentTransactionStartTime();
-	if (t11 == CURRENT_ABSTIME)
-		t11 = GetCurrentTransactionStartTime();
-	if (t20 == CURRENT_ABSTIME)
-		t20 = GetCurrentTransactionStartTime();
-	if (t21 == CURRENT_ABSTIME)
-		t21 = GetCurrentTransactionStartTime();
 
 	PG_RETURN_BOOL((t11 - t10) == (t21 - t20));
 }
@@ -1167,9 +1248,9 @@ tintervalne(PG_FUNCTION_ARGS)
 	TimeInterval i1 = PG_GETARG_TIMEINTERVAL(0);
 	TimeInterval i2 = PG_GETARG_TIMEINTERVAL(1);
 	AbsoluteTime t10,
-				t11,
-				t20,
-				t21;
+				 t11,
+				 t20,
+				 t21;
 
 	if (i1->status == T_INTERVAL_INVAL || i2->status == T_INTERVAL_INVAL)
 		PG_RETURN_BOOL(false);
@@ -1179,18 +1260,9 @@ tintervalne(PG_FUNCTION_ARGS)
 	t20 = i2->data[0];
 	t21 = i2->data[1];
 
-	if ((t10 == INVALID_ABSTIME) || (t20 == INVALID_ABSTIME)
+	if ((t10 == INVALID_ABSTIME) || (t11 == INVALID_ABSTIME)
 		|| (t20 == INVALID_ABSTIME) || (t21 == INVALID_ABSTIME))
 		PG_RETURN_BOOL(false);
-
-	if (t10 == CURRENT_ABSTIME)
-		t10 = GetCurrentTransactionStartTime();
-	if (t11 == CURRENT_ABSTIME)
-		t11 = GetCurrentTransactionStartTime();
-	if (t20 == CURRENT_ABSTIME)
-		t20 = GetCurrentTransactionStartTime();
-	if (t21 == CURRENT_ABSTIME)
-		t21 = GetCurrentTransactionStartTime();
 
 	PG_RETURN_BOOL((t11 - t10) != (t21 - t20));
 }
@@ -1201,9 +1273,9 @@ tintervallt(PG_FUNCTION_ARGS)
 	TimeInterval i1 = PG_GETARG_TIMEINTERVAL(0);
 	TimeInterval i2 = PG_GETARG_TIMEINTERVAL(1);
 	AbsoluteTime t10,
-				t11,
-				t20,
-				t21;
+				 t11,
+				 t20,
+				 t21;
 
 	if (i1->status == T_INTERVAL_INVAL || i2->status == T_INTERVAL_INVAL)
 		PG_RETURN_BOOL(false);
@@ -1213,18 +1285,9 @@ tintervallt(PG_FUNCTION_ARGS)
 	t20 = i2->data[0];
 	t21 = i2->data[1];
 
-	if ((t10 == INVALID_ABSTIME) || (t20 == INVALID_ABSTIME)
+	if ((t10 == INVALID_ABSTIME) || (t11 == INVALID_ABSTIME)
 		|| (t20 == INVALID_ABSTIME) || (t21 == INVALID_ABSTIME))
 		PG_RETURN_BOOL(false);
-
-	if (t10 == CURRENT_ABSTIME)
-		t10 = GetCurrentTransactionStartTime();
-	if (t11 == CURRENT_ABSTIME)
-		t11 = GetCurrentTransactionStartTime();
-	if (t20 == CURRENT_ABSTIME)
-		t20 = GetCurrentTransactionStartTime();
-	if (t21 == CURRENT_ABSTIME)
-		t21 = GetCurrentTransactionStartTime();
 
 	PG_RETURN_BOOL((t11 - t10) < (t21 - t20));
 }
@@ -1235,9 +1298,9 @@ tintervalle(PG_FUNCTION_ARGS)
 	TimeInterval i1 = PG_GETARG_TIMEINTERVAL(0);
 	TimeInterval i2 = PG_GETARG_TIMEINTERVAL(1);
 	AbsoluteTime t10,
-				t11,
-				t20,
-				t21;
+				 t11,
+				 t20,
+				 t21;
 
 	if (i1->status == T_INTERVAL_INVAL || i2->status == T_INTERVAL_INVAL)
 		PG_RETURN_BOOL(false);
@@ -1247,18 +1310,9 @@ tintervalle(PG_FUNCTION_ARGS)
 	t20 = i2->data[0];
 	t21 = i2->data[1];
 
-	if ((t10 == INVALID_ABSTIME) || (t20 == INVALID_ABSTIME)
+	if ((t10 == INVALID_ABSTIME) || (t11 == INVALID_ABSTIME)
 		|| (t20 == INVALID_ABSTIME) || (t21 == INVALID_ABSTIME))
 		PG_RETURN_BOOL(false);
-
-	if (t10 == CURRENT_ABSTIME)
-		t10 = GetCurrentTransactionStartTime();
-	if (t11 == CURRENT_ABSTIME)
-		t11 = GetCurrentTransactionStartTime();
-	if (t20 == CURRENT_ABSTIME)
-		t20 = GetCurrentTransactionStartTime();
-	if (t21 == CURRENT_ABSTIME)
-		t21 = GetCurrentTransactionStartTime();
 
 	PG_RETURN_BOOL((t11 - t10) <= (t21 - t20));
 }
@@ -1281,18 +1335,9 @@ tintervalgt(PG_FUNCTION_ARGS)
 	t20 = i2->data[0];
 	t21 = i2->data[1];
 
-	if ((t10 == INVALID_ABSTIME) || (t20 == INVALID_ABSTIME)
+	if ((t10 == INVALID_ABSTIME) || (t11 == INVALID_ABSTIME)
 		|| (t20 == INVALID_ABSTIME) || (t21 == INVALID_ABSTIME))
 		PG_RETURN_BOOL(false);
-
-	if (t10 == CURRENT_ABSTIME)
-		t10 = GetCurrentTransactionStartTime();
-	if (t11 == CURRENT_ABSTIME)
-		t11 = GetCurrentTransactionStartTime();
-	if (t20 == CURRENT_ABSTIME)
-		t20 = GetCurrentTransactionStartTime();
-	if (t21 == CURRENT_ABSTIME)
-		t21 = GetCurrentTransactionStartTime();
 
 	PG_RETURN_BOOL((t11 - t10) > (t21 - t20));
 }
@@ -1315,18 +1360,9 @@ tintervalge(PG_FUNCTION_ARGS)
 	t20 = i2->data[0];
 	t21 = i2->data[1];
 
-	if ((t10 == INVALID_ABSTIME) || (t20 == INVALID_ABSTIME)
+	if ((t10 == INVALID_ABSTIME) || (t11 == INVALID_ABSTIME)
 		|| (t20 == INVALID_ABSTIME) || (t21 == INVALID_ABSTIME))
 		PG_RETURN_BOOL(false);
-
-	if (t10 == CURRENT_ABSTIME)
-		t10 = GetCurrentTransactionStartTime();
-	if (t11 == CURRENT_ABSTIME)
-		t11 = GetCurrentTransactionStartTime();
-	if (t20 == CURRENT_ABSTIME)
-		t20 = GetCurrentTransactionStartTime();
-	if (t21 == CURRENT_ABSTIME)
-		t21 = GetCurrentTransactionStartTime();
 
 	PG_RETURN_BOOL((t11 - t10) >= (t21 - t20));
 }
@@ -1356,8 +1392,8 @@ tintervalleneq(PG_FUNCTION_ARGS)
 	if (i->status == T_INTERVAL_INVAL || t == INVALID_RELTIME)
 		PG_RETURN_BOOL(false);
 	rt = DatumGetRelativeTime(DirectFunctionCall1(tintervalrel,
-											   TimeIntervalGetDatum(i)));
-	PG_RETURN_BOOL(rt != INVALID_RELTIME && rt == t);
+												  TimeIntervalGetDatum(i)));
+	PG_RETURN_BOOL((rt != INVALID_RELTIME) && (rt == t));
 }
 
 Datum
@@ -1371,7 +1407,7 @@ tintervallenne(PG_FUNCTION_ARGS)
 		PG_RETURN_BOOL(false);
 	rt = DatumGetRelativeTime(DirectFunctionCall1(tintervalrel,
 											   TimeIntervalGetDatum(i)));
-	PG_RETURN_BOOL(rt != INVALID_RELTIME && rt != t);
+	PG_RETURN_BOOL((rt != INVALID_RELTIME) && (rt != t));
 }
 
 Datum
@@ -1385,7 +1421,7 @@ tintervallenlt(PG_FUNCTION_ARGS)
 		PG_RETURN_BOOL(false);
 	rt = DatumGetRelativeTime(DirectFunctionCall1(tintervalrel,
 											   TimeIntervalGetDatum(i)));
-	PG_RETURN_BOOL(rt != INVALID_RELTIME && rt < t);
+	PG_RETURN_BOOL((rt != INVALID_RELTIME) && (rt < t));
 }
 
 Datum
@@ -1399,7 +1435,7 @@ tintervallengt(PG_FUNCTION_ARGS)
 		PG_RETURN_BOOL(false);
 	rt = DatumGetRelativeTime(DirectFunctionCall1(tintervalrel,
 											   TimeIntervalGetDatum(i)));
-	PG_RETURN_BOOL(rt != INVALID_RELTIME && rt > t);
+	PG_RETURN_BOOL((rt != INVALID_RELTIME) && (rt > t));
 }
 
 Datum
@@ -1413,7 +1449,7 @@ tintervallenle(PG_FUNCTION_ARGS)
 		PG_RETURN_BOOL(false);
 	rt = DatumGetRelativeTime(DirectFunctionCall1(tintervalrel,
 											   TimeIntervalGetDatum(i)));
-	PG_RETURN_BOOL(rt != INVALID_RELTIME && rt <= t);
+	PG_RETURN_BOOL((rt != INVALID_RELTIME) && (rt <= t));
 }
 
 Datum
@@ -1427,7 +1463,7 @@ tintervallenge(PG_FUNCTION_ARGS)
 		PG_RETURN_BOOL(false);
 	rt = DatumGetRelativeTime(DirectFunctionCall1(tintervalrel,
 											   TimeIntervalGetDatum(i)));
-	PG_RETURN_BOOL(rt != INVALID_RELTIME && rt >= t);
+	PG_RETURN_BOOL((rt != INVALID_RELTIME) && (rt >= t));
 }
 
 /*
@@ -1463,11 +1499,11 @@ tintervalov(PG_FUNCTION_ARGS)
 	if (i1->status == T_INTERVAL_INVAL || i2->status == T_INTERVAL_INVAL)
 		PG_RETURN_BOOL(false);
 	if (DatumGetBool(DirectFunctionCall2(abstimelt,
-									   AbsoluteTimeGetDatum(i1->data[1]),
-								   AbsoluteTimeGetDatum(i2->data[0]))) ||
+										 AbsoluteTimeGetDatum(i1->data[1]),
+										 AbsoluteTimeGetDatum(i2->data[0]))) ||
 		DatumGetBool(DirectFunctionCall2(abstimegt,
-									   AbsoluteTimeGetDatum(i1->data[0]),
-									 AbsoluteTimeGetDatum(i2->data[1]))))
+										 AbsoluteTimeGetDatum(i1->data[0]),
+										 AbsoluteTimeGetDatum(i2->data[1]))))
 		PG_RETURN_BOOL(false);
 	PG_RETURN_BOOL(true);
 }
@@ -1502,222 +1538,6 @@ tintervalend(PG_FUNCTION_ARGS)
 /*****************************************************************************
  *	 PRIVATE ROUTINES														 *
  *****************************************************************************/
-
-#ifdef NOT_USED
-/*
- *		isreltime		- returns 1, iff datestring is of type reltime
- *								  2, iff datestring is 'invalid time' identifier
- *								  0, iff datestring contains a syntax error
- *		VALID time	less or equal +/-  `@ 68 years'
- *
- */
-int
-isreltime(char *str)
-{
-	struct tm	tt,
-			   *tm = &tt;
-	double		fsec;
-	int			dtype;
-	char	   *field[MAXDATEFIELDS];
-	int			nf,
-				ftype[MAXDATEFIELDS];
-	char		lowstr[MAXDATELEN + 1];
-
-	if (!PointerIsValid(str))
-		return 0;
-
-	if (strlen(str) > MAXDATELEN)
-		return 0;
-
-	if ((ParseDateTime(str, lowstr, field, ftype, MAXDATEFIELDS, &nf) != 0)
-		|| (DecodeDateDelta(field, ftype, nf, &dtype, tm, &fsec) != 0))
-		return 0;
-
-	switch (dtype)
-	{
-		case (DTK_DELTA):
-			return (abs(tm->tm_year) <= 68) ? 1 : 0;
-			break;
-
-		case (DTK_INVALID):
-			return 2;
-			break;
-
-		default:
-			return 0;
-			break;
-	}
-
-	return 0;
-}	/* isreltime() */
-
-#endif
-
-#ifdef NOT_USED
-int
-dummyfunc()
-{
-	char	   *p;
-	char		c;
-	int			i;
-	char		unit[UNITMAXLEN];
-	char		direction[DIRMAXLEN];
-	int			localSign;
-	int			localUnitNumber;
-	long		localQuantity;
-
-	if (!PointerIsValid(sign))
-		sign = &localSign;
-
-	if (!PointerIsValid(unitnr))
-		unitnr = &localUnitNumber;
-
-	if (!PointerIsValid(quantity))
-		quantity = &localQuantity;
-
-	unit[0] = '\0';
-	direction[0] = '\0';
-	p = timestring;
-	/* skip leading blanks */
-	while ((c = *p) != '\0')
-	{
-		if (c != ' ')
-			break;
-		p++;
-	}
-
-	/* Test whether 'invalid time' identifier or not */
-	if (!strncmp(INVALID_RELTIME_STR, p, strlen(INVALID_RELTIME_STR) + 1))
-		return 2;				/* correct 'invalid time' identifier found */
-
-	/* handle label of relative time */
-	if (c != RELTIME_LABEL)
-		return 0;				/* syntax error */
-	c = *++p;
-	if (c != ' ')
-		return 0;				/* syntax error */
-	p++;
-	/* handle the quantity */
-	*quantity = 0;
-	for (;;)
-	{
-		c = *p;
-		if (isdigit((unsigned char) c))
-		{
-			*quantity = *quantity * 10 + (c - '0');
-			p++;
-		}
-		else
-		{
-			if (c == ' ')
-				break;			/* correct quantity found */
-			else
-				return 0;		/* syntax error */
-		}
-	}
-
-	/* handle unit */
-	p++;
-	i = 0;
-	for (;;)
-	{
-		c = *p;
-		if (c >= 'a' && c <= 'z' && i <= (UNITMAXLEN - 1))
-		{
-			unit[i] = c;
-			p++;
-			i++;
-		}
-		else
-		{
-			if ((c == ' ' || c == '\0')
-				&& correct_unit(unit, unitnr))
-				break;			/* correct unit found */
-			else
-				return 0;		/* syntax error */
-		}
-	}
-
-	/* handle optional direction */
-	if (c == ' ')
-		p++;
-	i = 0;
-	*sign = 1;
-	for (;;)
-	{
-		c = *p;
-		if (c >= 'a' && c <= 'z' && i <= (DIRMAXLEN - 1))
-		{
-			direction[i] = c;
-			p++;
-			i++;
-		}
-		else
-		{
-			if ((c == ' ' || c == '\0') && i == 0)
-			{
-				*sign = 1;
-				break;			/* no direction specified */
-			}
-			if ((c == ' ' || c == '\0') && i != 0)
-			{
-				direction[i] = '\0';
-				correct_dir(direction, sign);
-				break;			/* correct direction found */
-			}
-			else
-				return 0;		/* syntax error */
-		}
-	}
-
-	return 1;
-}
-
-/*
- *		correct_unit	- returns 1, iff unit is a correct unit description
- *
- *		output parameter:
- *				unptr: points to an integer which is the appropriate unit number
- *					   (see function isreltime())
- */
-static int
-correct_unit(char *unit, int *unptr)
-{
-	int			j = 0;
-
-	while (j < NUNITS)
-	{
-		if (strncmp(unit, unit_tab[j], strlen(unit_tab[j])) == 0)
-		{
-			*unptr = j;
-			return 1;
-		}
-		j++;
-	}
-	return 0;					/* invalid unit descriptor */
-}
-
-/*
- *		correct_dir		- returns 1, iff direction is a correct identifier
- *
- *		output parameter:
- *				signptr: points to -1 if dir corresponds to past tense
- *						 else  to 1
- */
-static int
-correct_dir(char *direction, int *signptr)
-{
-	*signptr = 1;
-	if (strncmp(RELTIME_PAST, direction, strlen(RELTIME_PAST) + 1) == 0)
-	{
-		*signptr = -1;
-		return 1;
-	}
-	else
-		return 0;				/* invalid direction descriptor */
-}
-
-#endif
 
 /*
  *		istinterval		- returns 1, iff i_string is a valid interval descr.

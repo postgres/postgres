@@ -16,7 +16,7 @@
  * Portions Copyright (c) 1996-2001, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Id: pg_amop.h,v 1.41 2001/08/21 16:36:05 tgl Exp $
+ * $Id: pg_amop.h,v 1.42 2001/09/28 08:09:13 thomas Exp $
  *
  * NOTES
  *	 the genbki.sh script reads this file and generates .bki
@@ -282,6 +282,16 @@ DATA(insert (	2000 5 f 1554 ));
  *	btree timestamp_ops
  */
 
+DATA(insert (	2039 1 f 2062 ));
+DATA(insert (	2039 2 f 2063 ));
+DATA(insert (	2039 3 f 2060 ));
+DATA(insert (	2039 4 f 2065 ));
+DATA(insert (	2039 5 f 2064 ));
+
+/*
+ *	btree timestamptz_ops
+ */
+
 DATA(insert (	1998 1 f 1322 ));
 DATA(insert (	1998 2 f 1323 ));
 DATA(insert (	1998 3 f 1320 ));
@@ -407,11 +417,13 @@ DATA(insert (	1992 1 f  649 ));
 DATA(insert (	1995 1 f   98 ));
 /* time_ops */
 DATA(insert (	1997 1 f 1108 ));
-/* timestamp_ops */
+/* timestamptz_ops */
 DATA(insert (	1999 1 f 1320 ));
 /* timetz_ops */
 DATA(insert (	2001 1 f 1550 ));
 /* varchar_ops */
 DATA(insert (	2004 1 f 1062 ));
+/* timestamp_ops */
+DATA(insert (	2040 1 f 2060 ));
 
 #endif	 /* PG_AMOP_H */

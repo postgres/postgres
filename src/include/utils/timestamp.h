@@ -6,7 +6,7 @@
  * Portions Copyright (c) 1996-2001, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Id: timestamp.h,v 1.17 2001/09/06 03:22:42 momjian Exp $
+ * $Id: timestamp.h,v 1.18 2001/09/28 08:09:14 thomas Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -33,12 +33,12 @@
 
 typedef double Timestamp;
 
+typedef double TimestampTz;
+
 typedef struct
 {
-	double		time;			/* all time units other than months and
-								 * years */
-	int32		month;			/* months and years, after time for
-								 * alignment */
+	double		time;	/* all time units other than months and years */
+	int32		month;	/* months and years, after time for alignment */
 } Interval;
 
 
@@ -49,38 +49,28 @@ typedef struct
  * Therefore Timestamp is pass-by-reference if and only if float8 is!
  */
 #define DatumGetTimestamp(X)  ((Timestamp) DatumGetFloat8(X))
+#define DatumGetTimestampTz(X)  ((Timestamp) DatumGetFloat8(X))
 #define DatumGetIntervalP(X)  ((Interval *) DatumGetPointer(X))
 
-#define TimestampGetDatum(X)  Float8GetDatum(X)
-#define IntervalPGetDatum(X)  PointerGetDatum(X)
+#define TimestampGetDatum(X) Float8GetDatum(X)
+#define TimestampTzGetDatum(X) Float8GetDatum(X)
+#define IntervalPGetDatum(X) PointerGetDatum(X)
 
-#define PG_GETARG_TIMESTAMP(n)	DatumGetTimestamp(PG_GETARG_DATUM(n))
+#define PG_GETARG_TIMESTAMP(n) DatumGetTimestamp(PG_GETARG_DATUM(n))
+#define PG_GETARG_TIMESTAMPTZ(n) DatumGetTimestampTz(PG_GETARG_DATUM(n))
 #define PG_GETARG_INTERVAL_P(n) DatumGetIntervalP(PG_GETARG_DATUM(n))
 
-#define PG_RETURN_TIMESTAMP(x)	return TimestampGetDatum(x)
+#define PG_RETURN_TIMESTAMP(x) return TimestampGetDatum(x)
+#define PG_RETURN_TIMESTAMPTZ(x) return TimestampTzGetDatum(x)
 #define PG_RETURN_INTERVAL_P(x) return IntervalPGetDatum(x)
 
 
-#ifdef NAN
-#define DT_INVALID		(NAN)
-#else
-#define DT_INVALID		(DBL_MIN+DBL_MIN)
-#endif
 #ifdef HUGE_VAL
 #define DT_NOBEGIN		(-HUGE_VAL)
 #define DT_NOEND		(HUGE_VAL)
 #else
 #define DT_NOBEGIN		(-DBL_MAX)
 #define DT_NOEND		(DBL_MAX)
-#endif
-#define DT_CURRENT		(DBL_MIN)
-#define DT_EPOCH		(-DBL_MIN)
-
-#define TIMESTAMP_INVALID(j)	do {j = DT_INVALID;} while (0)
-#ifdef NAN
-#define TIMESTAMP_IS_INVALID(j) (isnan(j))
-#else
-#define TIMESTAMP_IS_INVALID(j) ((j) == DT_INVALID)
 #endif
 
 #define TIMESTAMP_NOBEGIN(j)	do {j = DT_NOBEGIN;} while (0)
@@ -89,24 +79,7 @@ typedef struct
 #define TIMESTAMP_NOEND(j)		do {j = DT_NOEND;} while (0)
 #define TIMESTAMP_IS_NOEND(j)	((j) == DT_NOEND)
 
-#define TIMESTAMP_CURRENT(j)	do {j = DT_CURRENT;} while (0)
-#define TIMESTAMP_IS_CURRENT(j) ((j) == DT_CURRENT)
-
-#define TIMESTAMP_EPOCH(j)		do {j = DT_EPOCH;} while (0)
-#define TIMESTAMP_IS_EPOCH(j)	((j) == DT_EPOCH)
-
-#define TIMESTAMP_IS_RELATIVE(j) (TIMESTAMP_IS_CURRENT(j) || TIMESTAMP_IS_EPOCH(j))
-#define TIMESTAMP_NOT_FINITE(j) (TIMESTAMP_IS_INVALID(j) \
-								|| TIMESTAMP_IS_NOBEGIN(j) || TIMESTAMP_IS_NOEND(j))
-#define TIMESTAMP_IS_RESERVED(j) (TIMESTAMP_IS_RELATIVE(j) || TIMESTAMP_NOT_FINITE(j))
-
-#define INTERVAL_INVALID(j)		do {(j).time = DT_INVALID;} while (0)
-#ifdef NAN
-#define INTERVAL_IS_INVALID(j)	(isnan((j).time))
-#else
-#define INTERVAL_IS_INVALID(j)	((j).time == DT_INVALID)
-#endif
-#define INTERVAL_NOT_FINITE(j)	INTERVAL_IS_INVALID(j)
+#define TIMESTAMP_NOT_FINITE(j) (TIMESTAMP_IS_NOBEGIN(j) || TIMESTAMP_IS_NOEND(j))
 
 #define TIME_PREC_INV 1000000.0
 #define JROUND(j) (rint(((double) (j))*TIME_PREC_INV)/TIME_PREC_INV)
@@ -153,6 +126,14 @@ extern Datum timestamp_part(PG_FUNCTION_ARGS);
 extern Datum interval_part(PG_FUNCTION_ARGS);
 extern Datum timestamp_zone(PG_FUNCTION_ARGS);
 extern Datum timestamp_izone(PG_FUNCTION_ARGS);
+extern Datum timestamp_timestamptz(PG_FUNCTION_ARGS);
+
+extern Datum timestamptz_in(PG_FUNCTION_ARGS);
+extern Datum timestamptz_out(PG_FUNCTION_ARGS);
+extern Datum timestamptz_timestamp(PG_FUNCTION_ARGS);
+extern Datum timestamptz_zone(PG_FUNCTION_ARGS);
+extern Datum timestamptz_izone(PG_FUNCTION_ARGS);
+extern Datum timestamptz_timestamptz(PG_FUNCTION_ARGS);
 
 extern Datum interval_um(PG_FUNCTION_ARGS);
 extern Datum interval_pl(PG_FUNCTION_ARGS);
@@ -169,18 +150,28 @@ extern Datum timestamp_mi_span(PG_FUNCTION_ARGS);
 extern Datum timestamp_age(PG_FUNCTION_ARGS);
 extern Datum overlaps_timestamp(PG_FUNCTION_ARGS);
 
+extern Datum timestamptz_text(PG_FUNCTION_ARGS);
+extern Datum text_timestamptz(PG_FUNCTION_ARGS);
+extern Datum timestamptz_pl_span(PG_FUNCTION_ARGS);
+extern Datum timestamptz_mi_span(PG_FUNCTION_ARGS);
+extern Datum timestamptz_age(PG_FUNCTION_ARGS);
+extern Datum timestamptz_trunc(PG_FUNCTION_ARGS);
+extern Datum timestamptz_part(PG_FUNCTION_ARGS);
+
 extern Datum now(PG_FUNCTION_ARGS);
 
 /* Internal routines (not fmgr-callable) */
 
 extern int	tm2timestamp(struct tm * tm, double fsec, int *tzp, Timestamp *dt);
-extern int timestamp2tm(Timestamp dt, int *tzp, struct tm * tm,
-			 double *fsec, char **tzn);
+extern int	timestamp2tm(Timestamp dt, int *tzp, struct tm * tm,
+						 double *fsec, char **tzn);
+extern void	dt2time(Timestamp dt, int *hour, int *min, double *sec);
 
 extern int	interval2tm(Interval span, struct tm * tm, float8 *fsec);
 extern int	tm2interval(struct tm * tm, double fsec, Interval *span);
 
-extern Timestamp SetTimestamp(Timestamp timestamp);
+extern Timestamp SetEpochTimestamp(void);
+extern void GetEpochTime(struct tm * tm);
 
 extern void isoweek2date(int woy, int *year, int *mon, int *mday);
 extern int	date2isoweek(int year, int mon, int mday);

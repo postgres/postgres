@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2001, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Id: nabstime.h,v 1.30 2001/05/03 19:00:37 tgl Exp $
+ * $Id: nabstime.h,v 1.31 2001/09/28 08:09:14 thomas Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -74,11 +74,8 @@ typedef TimeIntervalData *TimeInterval;
  * These were chosen as special 32-bit bit patterns,
  *	so redefine them explicitly using these bit patterns. - tgl 97/02/24
  */
-#define EPOCH_ABSTIME	((AbsoluteTime) 0)
 #define INVALID_ABSTIME ((AbsoluteTime) 0x7FFFFFFE)		/* 2147483647 (2^31 - 1) */
-#define CURRENT_ABSTIME ((AbsoluteTime) 0x7FFFFFFD)		/* 2147483646 (2^31 - 2) */
 #define NOEND_ABSTIME	((AbsoluteTime) 0x7FFFFFFC)		/* 2147483645 (2^31 - 3) */
-#define BIG_ABSTIME		((AbsoluteTime) 0x7FFFFFFB)		/* 2147483644 (2^31 - 4) */
 #define NOSTART_ABSTIME ((AbsoluteTime) INT_MIN)		/* -2147483648 */
 
 #define INVALID_RELTIME ((RelativeTime) 0x7FFFFFFE)		/* 2147483647 (2^31 - 1) */
@@ -116,6 +113,8 @@ extern Datum abstime_finite(PG_FUNCTION_ARGS);
 
 extern Datum timestamp_abstime(PG_FUNCTION_ARGS);
 extern Datum abstime_timestamp(PG_FUNCTION_ARGS);
+extern Datum timestamptz_abstime(PG_FUNCTION_ARGS);
+extern Datum abstime_timestamptz(PG_FUNCTION_ARGS);
 
 extern Datum reltimein(PG_FUNCTION_ARGS);
 extern Datum reltimeout(PG_FUNCTION_ARGS);
@@ -158,6 +157,7 @@ extern Datum timeofday(PG_FUNCTION_ARGS);
 
 /* non-fmgr-callable support routines */
 extern AbsoluteTime GetCurrentAbsoluteTime(void);
+extern AbsoluteTime GetCurrentAbsoluteTimeUsec(int *usec);
 extern void abstime2tm(AbsoluteTime time, int *tzp, struct tm * tm, char *tzn);
 
 #endif	 /* NABSTIME_H */

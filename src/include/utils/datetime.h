@@ -9,7 +9,7 @@
  * Portions Copyright (c) 1996-2001, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Id: datetime.h,v 1.21 2001/08/27 20:02:10 tgl Exp $
+ * $Id: datetime.h,v 1.22 2001/09/28 08:09:14 thomas Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -86,7 +86,7 @@
 #define MONTH	1
 #define YEAR	2
 #define DAY		3
-#define TIMES	4				/* not used - thomas 1997-07-14 */
+#define JULIAN	4
 #define TZ		5
 #define DTZ		6
 #define DTZMOD	7
@@ -103,6 +103,8 @@
 #define AGO		17
 #define ABS_BEFORE		18
 #define ABS_AFTER		19
+/* reserved for unrecognized string values */
+#define UNKNOWN_FIELD	31
 
 /*
  * Token field definitions for time parsing and decoding.
@@ -149,11 +151,16 @@
 #define DTK_MILLENNIUM	28
 #define DTK_MILLISEC	29
 #define DTK_MICROSEC	30
+#define DTK_JULIAN		31
 
 #define DTK_DOW			32
 #define DTK_DOY			33
 #define DTK_TZ_HOUR		34
 #define DTK_TZ_MINUTE	35
+
+#define DTK_ISO_DATE	36
+#define DTK_ISO_TIME	37
+
 
 /*
  * Bit mask definitions for time parsing.
@@ -238,6 +245,7 @@ extern int	day_tab[2][13];
 
 
 extern void GetCurrentTime(struct tm * tm);
+extern void GetCurrentTimeUsec(struct tm * tm, double *fsec);
 extern void j2date(int jd, int *year, int *month, int *day);
 extern int	date2j(int year, int month, int day);
 

@@ -1,7 +1,7 @@
 /* -----------------------------------------------------------------------
  * formatting.c
  *
- * $Header: /cvsroot/pgsql/src/backend/utils/adt/formatting.c,v 1.40 2001/09/12 04:01:57 momjian Exp $
+ * $Header: /cvsroot/pgsql/src/backend/utils/adt/formatting.c,v 1.41 2001/09/28 08:09:11 thomas Exp $
  *
  *
  *	 Portions Copyright (c) 1999-2000, PostgreSQL Global Development Group
@@ -2753,6 +2753,30 @@ timestamp_to_char(PG_FUNCTION_ARGS)
 	Timestamp dt = PG_GETARG_TIMESTAMP(0);
 	text *fmt = PG_GETARG_TEXT_P(1), *res;
 	TmToChar tmtc;
+	int r = 0;
+
+	if ((VARSIZE(fmt) - VARHDRSZ) <=0 || TIMESTAMP_NOT_FINITE(dt))
+		PG_RETURN_NULL();
+
+	ZERO_tmtc(&tmtc);
+
+	r = timestamp2tm(dt, NULL, tmtcTm(&tmtc), &tmtcFsec(&tmtc), NULL);
+
+	if (r != 0)
+		elog(ERROR, "to_char(): Unable to convert timestamp to tm");
+
+	if (!(res=datetime_to_char_body(&tmtc, fmt)))
+		PG_RETURN_NULL();
+
+	PG_RETURN_TEXT_P(res);
+}
+
+Datum
+timestamptz_to_char(PG_FUNCTION_ARGS)
+{
+	TimestampTz dt = PG_GETARG_TIMESTAMP(0);
+	text *fmt = PG_GETARG_TEXT_P(1), *res;
+	TmToChar tmtc;
 	int tz, r = 0;
 
 	if ((VARSIZE(fmt) - VARHDRSZ) <=0 || TIMESTAMP_NOT_FINITE(dt))
@@ -2760,12 +2784,7 @@ timestamp_to_char(PG_FUNCTION_ARGS)
 
 	ZERO_tmtc(&tmtc);
 
-	if (TIMESTAMP_IS_EPOCH(dt))
-		r = timestamp2tm(SetTimestamp(dt), NULL, tmtcTm(&tmtc), &tmtcFsec(&tmtc), NULL);
-	else if (TIMESTAMP_IS_CURRENT(dt))
-		r = timestamp2tm(SetTimestamp(dt), &tz, tmtcTm(&tmtc), &tmtcFsec(&tmtc), &tmtcTzn(&tmtc));
-	else
-		r = timestamp2tm(dt, &tz, tmtcTm(&tmtc), &tmtcFsec(&tmtc), &tmtcTzn(&tmtc));
+	r = timestamp2tm(dt, &tz, tmtcTm(&tmtc), &tmtcFsec(&tmtc), &tmtcTzn(&tmtc));
 
 	if (r != 0)
 		elog(ERROR, "to_char(): Unable to convert timestamp to tm");
@@ -2805,7 +2824,7 @@ interval_to_char(PG_FUNCTION_ARGS)
 /* ---------------------
  * TO_TIMESTAMP()
  *
- * Make Timestamp from date_str which is formated at argument 'fmt'
+ * Make Timestamp from date_str which is formatted at argument 'fmt'
  * ( to_timestamp is reverse to_char() )
  * ---------------------
  */

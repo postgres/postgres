@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/parser/parse_target.c,v 1.72 2001/09/17 01:06:36 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/parser/parse_target.c,v 1.73 2001/09/28 08:09:09 thomas Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -462,10 +462,13 @@ FigureColname(Node *node)
 {
 	if (node == NULL)
 		return "?column?";
+
 	switch (nodeTag(node))
 	{
 		case T_Ident:
 			return ((Ident *) node)->name;
+		case T_A_Const:
+			return (FigureColname((Node *)((A_Const *) node)->typename));
 		case T_Attr:
 			{
 				List	   *attrs = ((Attr *) node)->attrs;
@@ -481,7 +484,15 @@ FigureColname(Node *node)
 		case T_FuncCall:
 			return ((FuncCall *) node)->funcname;
 		case T_TypeCast: 
-			return FigureColname(((TypeCast *) node)->arg);
+			{
+				char	   *name;
+
+				name = FigureColname(((TypeCast *) node)->arg);
+				if (strcmp(name, "?column?") == 0)
+				  name = FigureColname((Node *)((TypeCast *) node)->typename);
+				return name;
+			}
+			break;
 		case T_CaseExpr:
 			{
 				char	   *name;
@@ -492,6 +503,8 @@ FigureColname(Node *node)
 				return name;
 			}
 			break;
+		case T_TypeName:
+			return ((TypeName *) node)->name;
 		default:
 			break;
 	}

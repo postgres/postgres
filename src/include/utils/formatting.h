@@ -2,7 +2,7 @@
 /* -----------------------------------------------------------------------
  * formatting.h
  *
- * $Id: formatting.h,v 1.8 2001/09/06 03:22:42 momjian Exp $
+ * $Id: formatting.h,v 1.9 2001/09/28 08:09:14 thomas Exp $
  *
  *
  *	 Portions Copyright (c) 1999-2000, PostgreSQL Global Development Group
@@ -22,6 +22,7 @@
 
 
 extern Datum timestamp_to_char(PG_FUNCTION_ARGS);
+extern Datum timestamptz_to_char(PG_FUNCTION_ARGS);
 extern Datum interval_to_char(PG_FUNCTION_ARGS);
 extern Datum to_timestamp(PG_FUNCTION_ARGS);
 extern Datum to_date(PG_FUNCTION_ARGS);
