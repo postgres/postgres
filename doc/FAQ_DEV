@@ -1,7 +1,7 @@
 
           Developer's Frequently Asked Questions (FAQ) for PostgreSQL
                                        
-   Last updated: Mon Jun 7 11:11:06 EDT 2004
+   Last updated: Mon Jul 19 16:30:05 EDT 2004
    
    Current maintainer: Bruce Momjian (pgman@candle.pha.pa.us)
    
@@ -131,10 +131,10 @@
    copy of the source tree with any new changes. Using CVS, you don't
    have to download the entire source each time, only the changed files.
    Anonymous CVS does not allows developers to update the remote source
-   tree, though privileged developers can do this. There is a CVS FAQ on
-   our web site that describes how to use remote CVS. You can also use
-   CVSup, which has similarly functionality, and is available from
-   ftp.postgresql.org.
+   tree, though privileged developers can do this. There is a CVS section
+   in our documentation that describes how to use remote CVS. You can
+   also use CVSup, which has similarly functionality, and is available
+   from ftp.postgresql.org.
    
    To update the source tree, there are two ways. You can generate a
    patch against your current source tree, perhaps using the make_diff
