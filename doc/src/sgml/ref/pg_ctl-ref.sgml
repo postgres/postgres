@@ -1,5 +1,5 @@
 <!--
-$PostgreSQL: pgsql/doc/src/sgml/ref/pg_ctl-ref.sgml,v 1.26 2004/05/14 20:01:19 momjian Exp $
+$PostgreSQL: pgsql/doc/src/sgml/ref/pg_ctl-ref.sgml,v 1.27 2004/05/27 03:50:25 momjian Exp $
 PostgreSQL documentation
 -->
 
@@ -65,6 +65,11 @@ PostgreSQL documentation
    <command>pg_ctl</command>
    <arg choice="plain">status</arg>
    <arg>-D <replaceable>datadir</replaceable></arg>
+   <sbr>
+   <command>pg_ctl</command>
+   <arg choice="plain">kill</arg>
+   <arg><replaceable>signal_name</replaceable></arg>
+   <arg><replaceable>process_id</replaceable></arg>
   </cmdsynopsis>
  </refsynopsisdiv>
 
@@ -130,6 +135,12 @@ PostgreSQL documentation
    the specified data directory. If it is, the <acronym>PID</acronym>
    and the command line options that were used to invoke it are
    displayed.
+  </para>
+
+  <para>
+   <option>kill</option> mode allows you to send a signal to a specified
+    process.  This is particularly valuable for <productname>MS Windows</>
+    which does not have a <application>kill</> command.
   </para>
  </refsect1>
 
