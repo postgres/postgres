@@ -63,7 +63,7 @@ BSD44_derived_dlerror(void)
 void *
 BSD44_derived_dlopen(const char *file, int num)
 {
-#if defined(__mips__) || (defined(__NetBSD__) && defined(__vax__))
+#if defined(__mips__)
 	sprintf(error_message, "dlopen (%s) not supported", file);
 	return NULL;
 #else
@@ -78,7 +78,7 @@ BSD44_derived_dlopen(const char *file, int num)
 void *
 BSD44_derived_dlsym(void *handle, const char *name)
 {
-#if defined(__mips__) || (defined(__NetBSD__) && defined(__vax__))
+#if defined(__mips__)
 	sprintf(error_message, "dlsym (%s) failed", name);
 	return NULL;
 #else
@@ -101,7 +101,7 @@ BSD44_derived_dlsym(void *handle, const char *name)
 void
 BSD44_derived_dlclose(void *handle)
 {
-#if defined(__mips__) || (defined(__NetBSD__) && defined(__vax__))
+#if defined(__mips__)
 #else
 	dlclose(handle);
 #endif
