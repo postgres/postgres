@@ -11,7 +11,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/postmaster/postmaster.c,v 1.177 2000/11/01 21:14:02 petere Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/postmaster/postmaster.c,v 1.178 2000/11/04 12:43:23 petere Exp $
  *
  * NOTES
  *
@@ -268,12 +268,12 @@ extern void GetCharSetByHost(char *, int, char *);
 
 
 static void
-checkDataDir(const char *DataDir)
+checkDataDir(const char *checkdir)
 {
 	char		path[MAXPGPATH];
 	FILE	   *fp;
 
-	if (DataDir == NULL)
+	if (checkdir == NULL)
 	{
 		fprintf(stderr, "%s does not know where to find the database system "
 				"data.  You must specify the directory that contains the "
@@ -285,10 +285,10 @@ checkDataDir(const char *DataDir)
 
 #ifdef OLD_FILE_NAMING
 	snprintf(path, sizeof(path), "%s%cbase%ctemplate1%cpg_class",
-			 DataDir, SEP_CHAR, SEP_CHAR, SEP_CHAR);
+			 checkdir, SEP_CHAR, SEP_CHAR, SEP_CHAR);
 #else
 	snprintf(path, sizeof(path), "%s%cbase%c%u%c%u",
-			 DataDir, SEP_CHAR, SEP_CHAR, 
+			 checkdir, SEP_CHAR, SEP_CHAR, 
 			 TemplateDbOid, SEP_CHAR, RelOid_pg_class);
 #endif
 
@@ -298,13 +298,13 @@ checkDataDir(const char *DataDir)
 		fprintf(stderr, "%s does not find the database system."
 				"\n\tExpected to find it in the PGDATA directory \"%s\","
 				"\n\tbut unable to open file \"%s\": %s\n\n",
-				progname, DataDir, path, strerror(errno));
+				progname, checkdir, path, strerror(errno));
 		exit(2);
 	}
 
 	FreeFile(fp);
 
-	ValidatePgVersion(DataDir);
+	ValidatePgVersion(checkdir);
 }
 
 
@@ -314,6 +314,7 @@ PostmasterMain(int argc, char *argv[])
 	int			opt;
 	int			status;
 	char		original_extraoptions[MAXPGPATH];
+	char       *potential_DataDir = NULL;
 
 	IsUnderPostmaster = true;	/* so that backends know this */
 
@@ -353,8 +354,7 @@ PostmasterMain(int argc, char *argv[])
 	/*
 	 * Options setup
 	 */
-	if (getenv("PGDATA"))
-		DataDir = strdup(getenv("PGDATA")); /* default value */
+	potential_DataDir = getenv("PGDATA"); /* default value */
 
 	ResetAllOptions();
 
@@ -377,9 +377,7 @@ PostmasterMain(int argc, char *argv[])
 		switch(opt)
 		{
 			case 'D':
-				if (DataDir)
-					free(DataDir);
-				DataDir = strdup(optarg);
+				potential_DataDir = optarg;
 				break;
 
 			case '-':
@@ -415,12 +413,14 @@ PostmasterMain(int argc, char *argv[])
 		}
 	}
 
-	optind = 1; /* start over */
-	checkDataDir(DataDir);	/* issues error messages */
+	checkDataDir(potential_DataDir);	/* issues error messages */
+	SetDataDir(potential_DataDir);
 
 	ProcessConfigFile(PGC_POSTMASTER);
 
 	IgnoreSystemIndexes(false);
+
+	optind = 1; /* start over */
 	while ((opt = getopt(argc, argv, "A:a:B:b:D:d:Film:MN:no:p:Ss-:?")) != EOF)
 	{
 		switch (opt)

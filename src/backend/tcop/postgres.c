@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/tcop/postgres.c,v 1.184 2000/10/28 18:27:56 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/tcop/postgres.c,v 1.185 2000/11/04 12:43:24 petere Exp $
  *
  * NOTES
  *	  this is the "main" module of the postgres backend and
@@ -29,7 +29,7 @@
 #include <errno.h>
 #if HAVE_SYS_SELECT_H
 #include <sys/select.h>
-#endif	 /* aix */
+#endif
 #include <netinet/in.h>
 #include <arpa/inet.h>
 #include <netdb.h>
@@ -1058,6 +1058,8 @@ PostgresMain(int argc, char *argv[], int real_argc, char *real_argv[], const cha
 	char	   *remote_host;
 	unsigned short remote_port;
 
+	char       *potential_DataDir = NULL;
+
 	extern int	optind;
 	extern char *optarg;
 	extern int	DebugLvl;
@@ -1082,8 +1084,7 @@ PostgresMain(int argc, char *argv[], int real_argc, char *real_argv[], const cha
 	if (!IsUnderPostmaster)
 	{
 		ResetAllOptions();
-		if (getenv("PGDATA"))
-			DataDir = strdup(getenv("PGDATA"));
+		potential_DataDir = getenv("PGDATA");
 	}
 	StatFp = stderr;
 
@@ -1142,9 +1143,7 @@ PostgresMain(int argc, char *argv[], int real_argc, char *real_argv[], const cha
 			case 'D':			/* PGDATA directory */
 				if (secure)
 				{
-					if (DataDir)
-						free(DataDir);
-					DataDir = strdup(optarg);
+					potential_DataDir = optarg;
 				}
 				break;
 
@@ -1429,15 +1428,20 @@ PostgresMain(int argc, char *argv[], int real_argc, char *real_argv[], const cha
 		Show_query_stats = false;
 	}
 
-	if (!DataDir)
+	if (!IsUnderPostmaster)
 	{
-		fprintf(stderr, "%s does not know where to find the database system "
-				"data.  You must specify the directory that contains the "
-				"database system either by specifying the -D invocation "
-			 "option or by setting the PGDATA environment variable.\n\n",
-				argv[0]);
-		proc_exit(1);
+		if (!potential_DataDir)
+		{
+			fprintf(stderr, "%s does not know where to find the database system "
+					"data.  You must specify the directory that contains the "
+					"database system either by specifying the -D invocation "
+					"option or by setting the PGDATA environment variable.\n\n",
+					argv[0]);
+			proc_exit(1);
+		}
+		SetDataDir(potential_DataDir);
 	}
+	Assert(DataDir);
 
 	/*
 	 * 1. Set BlockSig and UnBlockSig masks. 2. Set up signal handlers. 3.
@@ -1631,7 +1635,7 @@ PostgresMain(int argc, char *argv[], int real_argc, char *real_argv[], const cha
 	if (!IsUnderPostmaster)
 	{
 		puts("\nPOSTGRES backend interactive interface ");
-		puts("$Revision: 1.184 $ $Date: 2000/10/28 18:27:56 $\n");
+		puts("$Revision: 1.185 $ $Date: 2000/11/04 12:43:24 $\n");
 	}
 
 	/*

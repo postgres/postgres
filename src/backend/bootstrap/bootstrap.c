@@ -8,10 +8,12 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/bootstrap/bootstrap.c,v 1.95 2000/10/24 09:56:09 vadim Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/bootstrap/bootstrap.c,v 1.96 2000/11/04 12:43:23 petere Exp $
  *
  *-------------------------------------------------------------------------
  */
+#include "postgres.h"
+
 #include <unistd.h>
 #include <time.h>
 #include <signal.h>
@@ -19,7 +21,6 @@
 
 #define BOOTSTRAP_INCLUDE		/* mask out stuff in tcop/tcopprot.h */
 
-#include "postgres.h"
 #ifdef HAVE_GETOPT_H
 #include <getopt.h>
 #endif
@@ -220,6 +221,7 @@ BootstrapMain(int argc, char *argv[])
 	char	   *dbName;
 	int			flag;
 	bool		xloginit = false;
+	char       *potential_DataDir = NULL;
 
 	extern int	optind;
 	extern char *optarg;
@@ -255,7 +257,7 @@ BootstrapMain(int argc, char *argv[])
 	if (!IsUnderPostmaster)
 	{
 		ResetAllOptions();
-		DataDir = getenv("PGDATA"); /* Null if no PGDATA variable */
+		potential_DataDir = getenv("PGDATA"); /* Null if no PGDATA variable */
 	}
 
 	while ((flag = getopt(argc, argv, "D:dCQxpB:F")) != EOF)
@@ -263,7 +265,7 @@ BootstrapMain(int argc, char *argv[])
 		switch (flag)
 		{
 			case 'D':
-				DataDir = optarg;
+				potential_DataDir = optarg;
 				break;
 			case 'd':
 				DebugMode = true;		/* print out debugging info while
@@ -301,15 +303,20 @@ BootstrapMain(int argc, char *argv[])
 	SetProcessingMode(BootstrapProcessing);
 	IgnoreSystemIndexes(true);
 
-	if (!DataDir)
+	if (!IsUnderPostmaster)
 	{
-		fprintf(stderr, "%s does not know where to find the database system "
-				"data.  You must specify the directory that contains the "
-				"database system either by specifying the -D invocation "
-			 "option or by setting the PGDATA environment variable.\n\n",
-				argv[0]);
-		proc_exit(1);
+		if (!potential_DataDir)
+		{
+			fprintf(stderr, "%s does not know where to find the database system "
+					"data.  You must specify the directory that contains the "
+					"database system either by specifying the -D invocation "
+					"option or by setting the PGDATA environment variable.\n\n",
+					argv[0]);
+			proc_exit(1);
+		}
+		SetDataDir(potential_DataDir);
 	}
+	Assert(DataDir);
 
 	if (dbName == NULL)
 	{
