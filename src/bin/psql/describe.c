@@ -3,7 +3,7 @@
  *
  * Copyright (c) 2000-2003, PostgreSQL Global Development Group
  *
- * $PostgreSQL: pgsql/src/bin/psql/describe.c,v 1.101 2004/07/13 02:46:21 momjian Exp $
+ * $PostgreSQL: pgsql/src/bin/psql/describe.c,v 1.102 2004/07/13 16:48:16 momjian Exp $
  */
 #include "postgres_fe.h"
 #include "describe.h"
@@ -1693,7 +1693,7 @@ listCasts(const char *pattern)
  * Describes schemas (namespaces)
  */
 bool
-listSchemas(const char *pattern)
+listSchemas(const char *pattern, bool verbose)
 {
 	PQExpBufferData buf;
 	PGresult   *res;
@@ -1702,13 +1702,21 @@ listSchemas(const char *pattern)
 	initPQExpBuffer(&buf);
 	printfPQExpBuffer(&buf,
 		"SELECT n.nspname AS \"%s\",\n"
-		"       u.usename AS \"%s\"\n"
-		"FROM pg_catalog.pg_namespace n LEFT JOIN pg_catalog.pg_user u\n"
+		"       u.usename AS \"%s\"",
+		_("Name"), _("Owner"));
+		
+	if (verbose)
+		appendPQExpBuffer(&buf,
+			",\n  n.nspacl as \"%s\","
+			"  pg_catalog.obj_description(n.oid, 'pg_namespace') as \"%s\"",
+			_("Access privileges"), _("Description"));
+						  
+	appendPQExpBuffer(&buf,
+		"\nFROM pg_catalog.pg_namespace n LEFT JOIN pg_catalog.pg_user u\n"
 		"       ON n.nspowner=u.usesysid\n"
 		"WHERE	(n.nspname NOT LIKE 'pg\\\\_temp\\\\_%%' OR\n"
-		"		 n.nspname = (pg_catalog.current_schemas(true))[1])\n",	/* temp schema is first */
-					  _("Name"),
-					  _("Owner"));
+		"		 n.nspname = (pg_catalog.current_schemas(true))[1])\n");	/* temp schema is first */
+
 	processNamePattern(&buf, pattern, true, false,
 					   NULL, "n.nspname", NULL,
 					   NULL);

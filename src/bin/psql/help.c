@@ -3,7 +3,7 @@
  *
  * Copyright (c) 2000-2003, PostgreSQL Global Development Group
  *
- * $PostgreSQL: pgsql/src/bin/psql/help.c,v 1.88 2004/06/18 06:14:04 tgl Exp $
+ * $PostgreSQL: pgsql/src/bin/psql/help.c,v 1.89 2004/07/13 16:48:16 momjian Exp $
  */
 #include "postgres_fe.h"
 #include "common.h"
@@ -218,7 +218,7 @@ slashUsage(unsigned short int pager)
 	fprintf(output, _("  \\dD [PATTERN]  list domains\n"));
 	fprintf(output, _("  \\df [PATTERN]  list functions (add \"+\" for more detail)\n"));
 	fprintf(output, _("  \\dg [PATTERN]  list groups\n"));
-	fprintf(output, _("  \\dn [PATTERN]  list schemas\n"));
+	fprintf(output, _("  \\dn [PATTERN]  list schemas (add \"+\" for more detail)\n"));
 	fprintf(output, _("  \\do [NAME]     list operators\n"));
 	fprintf(output, _("  \\dl            list large objects, same as \\lo_list\n"));
 	fprintf(output, _("  \\dp [PATTERN]  list table, view and sequence access privileges\n"));
