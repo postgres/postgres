@@ -465,7 +465,15 @@ stmt:  AlterSchemaStmt 			{ output_statement($1, 0, NULL, connection); }
 						if (connection)
 							mmerror(ET_ERROR, "no at option for connect statement.\n");
 
-						fprintf(yyout, "{ ECPGconnect(__LINE__, %s, %d);", $1, autocommit);
+						fputs("{ ECPGconnect(__LINE__,", yyout);
+
+						if ($1[1] == '?')
+							fprintf(yyout, "%s, %s, %d);", argsinsert->variable->name, $1 + sizeof("\"?\","), autocommit);
+						else				
+							fprintf(yyout, "%s, %d); ", $1, autocommit);
+
+				                reset_variables();
+
 						whenever_action(2);
 						free($1);
 					} 
@@ -3965,10 +3973,10 @@ connection_target: database_name opt_server opt_port
 		}
 	| StringConst
 		{
-		  $$ = mm_strdup($1);
-		  $$[0] = '\"';
-		  $$[strlen($$) - 1] = '\"';
-		  free($1);
+		  if ($1[0] == '\"')
+			$$ = $1;
+		  else
+			$$ = make3_str(make_str("\""), $1, make_str("\""));
 		}
 
 db_prefix: ident cvariable
@@ -4032,12 +4040,18 @@ ora_user: user_name
         		$$ = cat_str(3, $1, make_str(","), $3);
                 }
 
-user_name: UserId       { if ($1[0] == '\"')
+user_name: UserId       {
+			 if ($1[0] == '\"')
 				$$ = $1;
 			  else
 				$$ = make3_str(make_str("\""), $1, make_str("\""));
 			}
-        | StringConst        { $$ = make3_str(make_str("\""), $1, make_str("\"")); }
+        | StringConst   { 
+			  if ($1[0] == '\"')
+				$$ = $1;
+			  else
+				$$ = make3_str(make_str("\""), $1, make_str("\""));
+			}
 
 char_variable: cvariable
 		{ /* check if we have a char variable */

@@ -204,11 +204,11 @@ static void ECPGdump_a_struct(FILE *o, const char *name, const char *ind_name, l
 void
 ECPGdump_a_type(FILE *o, const char *name, struct ECPGtype * typ, const char *ind_name, struct ECPGtype * ind_typ, const char *prefix, const char *ind_prefix)
 {
-	if (ind_typ == NULL)
+/*	if (ind_typ == NULL)
 	{
 	        ind_typ = &ecpg_no_indicator;
 	        ind_name = "no_indicator";
-	}
+	}*/
 	
 	switch (typ->typ)
 	{
@@ -228,17 +228,20 @@ ECPGdump_a_type(FILE *o, const char *name, struct ECPGtype * typ, const char *in
 
 					ECPGdump_a_simple(o, name, typ->u.element->typ,
 						  typ->u.element->size, typ->size, NULL, prefix);
-					if (ind_typ->typ == ECPGt_NO_INDICATOR)
-						ECPGdump_a_simple(o, ind_name, ind_typ->typ, ind_typ->size, -1, NULL, ind_prefix);
-					else
+					if (ind_typ != NULL)
 					{
-						if (ind_typ->typ != ECPGt_array)
+						if (ind_typ->typ == ECPGt_NO_INDICATOR)
+							ECPGdump_a_simple(o, ind_name, ind_typ->typ, ind_typ->size, -1, NULL, ind_prefix);
+						else
 						{
-							fprintf(stderr, "Indicator for an array has to be array too.\n");
-							exit(INDICATOR_NOT_ARRAY);
+							if (ind_typ->typ != ECPGt_array)
+							{
+								fprintf(stderr, "Indicator for an array has to be array too.\n");
+								exit(INDICATOR_NOT_ARRAY);
+							}
+							ECPGdump_a_simple(o, ind_name, ind_typ->u.element->typ,
+											  ind_typ->u.element->size, ind_typ->size, NULL, prefix);
 						}
-						ECPGdump_a_simple(o, ind_name, ind_typ->u.element->typ,
-										  ind_typ->u.element->size, ind_typ->size, NULL, prefix);
 					}
 			}
 			break;

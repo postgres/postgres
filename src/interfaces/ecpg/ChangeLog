@@ -965,5 +965,9 @@ Thu Oct 12 20:13:00 CEST 2000
 
 	- Changed parser to accept a variable instead of a constant wherever
 	  possible.
+
+Mon Oct 16 21:33:17 CEST 2000
+
+	- Fixed handling of variables in connect rule.
 	- Set ecpg version to 2.8.0. 
 	- Set library version to 3.2.0.

@@ -113,8 +113,7 @@ drop_descriptor(char *name, char *connection)
 }
 
 struct descriptor
-		   *
-lookup_descriptor(char *name, char *connection)
+*lookup_descriptor(char *name, char *connection)
 {
 	struct descriptor *i;
 
