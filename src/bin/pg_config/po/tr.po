@@ -4,8 +4,8 @@
 msgid ""
 msgstr ""
 "Project-Id-Version: pg_config-tr\n"
-"POT-Creation-Date: 2004-10-13 19:08+0100\n"
-"PO-Revision-Date: 2004-10-13 22:31+0300\n"
+"POT-Creation-Date: 2004-10-19 01:08+0100\n"
+"PO-Revision-Date: 2004-10-19 12:25+0300\n"
 "Last-Translator: Devrim GUNDUZ <devrim@PostgreSQL.org>\n"
 "Language-Team: Turkish <pgsql-tr-genel@PostgreSQL.org>\n"
 "MIME-Version: 1.0\n"
@@ -43,14 +43,17 @@ msgstr "Seçenekler:\n"
 
 #: pg_config.c:40
 msgid "  --bindir              show location of user executables\n"
-msgstr "  --bindir              kullanıcı tarafından çalıştırılabilir dosyaların yerlerini göster\n"
+msgstr ""
+"  --bindir              kullanıcı tarafından çalıştırılabilir dosyaların "
+"yerlerini göster\n"
 
 #: pg_config.c:41
 msgid ""
 "  --includedir          show location of C header files of the client\n"
 "                        interfaces\n"
 msgstr ""
-"  --includedir         Istenci arabirimlerinin C başlık dosyalarının yerlerini\n"
+"  --includedir         Istenci arabirimlerinin C başlık dosyalarının "
+"yerlerini\n"
 "                        göster\n"
 
 #: pg_config.c:43
@@ -63,7 +66,9 @@ msgstr "  --libdir              nesne kod kütüphanelerinin yerini göster\n"
 
 #: pg_config.c:45
 msgid "  --pkglibdir           show location of dynamically loadable modules\n"
-msgstr "  --pkglibdir           Dinamik olarak yüklenebilen modüllerin yerlerini göster\n"
+msgstr ""
+"  --pkglibdir           Dinamik olarak yüklenebilen modüllerin yerlerini "
+"göster\n"
 
 #: pg_config.c:46
 msgid "  --pgxs                show location of extension makefile\n"
@@ -71,10 +76,10 @@ msgstr "  --pgxs                extension makefile dosyasının yerini göster\n
 
 #: pg_config.c:47
 msgid ""
-"  --configure           show options given to 'configure' script when\n"
+"  --configure           show options given to \"configure\" script when\n"
 "                        PostgreSQL was built\n"
 msgstr ""
-"  --configure           PostgreSQL yapılandırıldığında configure betiğine verilen\n"
+"  --configure           PostgreSQL yapılandırıldığında \"configure\" betiğine verilen\n"
 "                        seçeneklerin listesini göster\n"
 
 #: pg_config.c:49
@@ -102,13 +107,18 @@ msgstr ""
 "\n"
 "Daha fazla bilgi için\"%s --help\" parametresini kullanabilirsiniz\n"
 
-#: pg_config.c:73
+#: pg_config.c:75
 #, c-format
 msgid "%s: argument required\n"
 msgstr "%s: argüman gerekli\n"
 
-#: pg_config.c:102
+#: pg_config.c:104
 #, c-format
 msgid "%s: invalid argument: %s\n"
 msgstr "%s: geçersiz argüman: %s\n"
+
+#: pg_config.c:113
+#, c-format
+msgid "%s: could not find own executable\n"
+msgstr "%s: çalıştırılabilir dosya bulunamadı\n"
 
