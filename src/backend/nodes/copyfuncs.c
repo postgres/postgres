@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/nodes/copyfuncs.c,v 1.21 1997/12/18 19:13:49 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/nodes/copyfuncs.c,v 1.22 1997/12/18 19:46:37 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -1550,7 +1550,7 @@ _copyQuery(Query *from)
 			newnode->qry_aggs[i] = _copyAggreg(from->qry_aggs[i]);
 	}
 	else
-		newnode->query_aggs = NULL;
+		newnode->qry_aggs = NULL;
 		
 	return newnode;
 }
