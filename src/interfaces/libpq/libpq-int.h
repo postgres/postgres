@@ -12,7 +12,7 @@
  * Portions Copyright (c) 1996-2003, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Id: libpq-int.h,v 1.82 2003/09/05 02:08:36 momjian Exp $
+ * $Id: libpq-int.h,v 1.82.2.1 2004/03/05 01:54:13 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -277,7 +277,7 @@ struct pg_conn
 	SockAddr	laddr;			/* Local address */
 	SockAddr	raddr;			/* Remote address */
 	ProtocolVersion pversion;	/* FE/BE protocol version in use */
-	char		sversion[8];	/* The first few bytes of server version */
+	int			sversion;		/* server version, e.g. 70401 for 7.4.1 */
 
 	/* Transient state needed while establishing connection */
 	struct addrinfo *addrlist;	/* list of possible backend addresses */
