@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/commands/vacuum.c,v 1.98 1999/04/02 04:51:04 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/commands/vacuum.c,v 1.99 1999/04/12 16:56:36 vadim Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -1328,6 +1328,12 @@ vc_rpfheap(VRelStats *vacrelstats, Relation onerel,
 					tuple_len = tuple.t_len = ItemIdGetLength(Citemid);
 					/* Get page to move in */
 					cur_buffer = ReadBuffer(onerel, vtmove[ti].vpd->vpd_blkno);
+					/*
+					 * We should LockBuffer(cur_buffer) but don't, at the 
+					 * moment. If you'll do LockBuffer then UNLOCK it 
+					 * before index_insert: unique btree-s call heap_fetch 
+					 * to get t_infomask of inserted heap tuple !!!
+					 */
 					ToPage = BufferGetPage(cur_buffer);
 					/* if this page was not used before - clean it */
 					if (!PageIsEmpty(ToPage) && vtmove[i].cleanVpd)
@@ -1766,7 +1772,6 @@ vc_vacpage(Page page, VPageDescr vpd)
 	ItemId		itemid;
 	int			i;
 
-	Assert(vpd->vpd_offsets_used == 0);
 	for (i = 0; i < vpd->vpd_offsets_free; i++)
 	{
 		itemid = &(((PageHeader) page)->pd_linp[vpd->vpd_offsets[i] - 1]);
