@@ -7,7 +7,7 @@
 #
 #
 # IDENTIFICATION
-#    $Header: /cvsroot/pgsql/src/Attic/Makefile.global,v 1.102 1997/01/26 20:21:43 momjian Exp $
+#    $Header: /cvsroot/pgsql/src/Attic/Makefile.global,v 1.103 1997/01/28 03:46:58 momjian Exp $
 #
 # NOTES
 #    Essentially all Postgres make files include this file and use the 
@@ -150,19 +150,35 @@ ENFORCE_ALIGNMENT= true
 #    psql does not require the GNU readline and history libraries. Hence, we
 #    do not compile with them by default. However, there are hooks in the
 #    program which supports the use of GNU readline and history. Should you
-#    decide to use them, change USE_READLINE to true and change READLINE_INCDIR
-#    and READLINE_LIBDIR to reflect the location of the readline and history
-#    headers and libraries.
+#    decide to use them, change USE_READLINE to true and change the other
+#    defines to reflect the location of the readline and history headers
+#    and libraries.
 #
 USE_READLINE= false
 
-# directories for the readline and history libraries.
-#READLINE_INC= -I/home/tools/include
-#READLINE_LIB= -L/home/tools/lib -lreadline
+# not optional if USE_READLINE enabled
+#READLINE_INC+=	-DHAVE_LIBREADLINE
 
-# use the following if your readline has a separate history lib
-#HISTORY_INC= -I/home/tools/include -I/home/tools/include/readline
-#HISTORY_LIB= -L/home/tools/lib -lhistory
+# if <readline.h>, define this
+#READLINE_INC+=	-DHAVE_READLINE_H 
+
+# if you have either <history.h> or <readline/history.h>
+#READLINE_INC+=	-DHAVE_HISTORY 
+
+# if you have a libhistory.a
+#READLINE_INC+=	-DHAVE_LIBHISTORY
+
+# where to find includes
+#READLINE_INC+=	-I/home/tools/include
+
+# where to find library files
+#READLINE_LIB+= -L/home/tools/lib
+
+# not optional if USE_READLINE enabled
+#READLINE_LIB+= -lreadline 
+
+# if you have a libhistory.a
+#READLINE_LIB+= -lhistory
 
 # curses is required by readline.  Ncurses has obsoleted curses, and may
 # in fact be what goes by the name "curses" on this system.
