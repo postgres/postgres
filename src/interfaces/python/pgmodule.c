@@ -1496,7 +1496,7 @@ pgconnect(pgobject * self, PyObject * args, PyObject * dict)
 	 * don't declare kwlist as const char *kwlist[] then it complains when
 	 * I try to assign all those constant strings to it.
 	 */
-	if (!PyArg_ParseTupleAndKeywords(args, dict, "|zzlzzzz", (char **) kwlist,
+	if (!PyArg_ParseTupleAndKeywords(args, dict, "|zzizzzz", (char **) kwlist,
 		&pgdbname, &pghost, &pgport, &pgopt, &pgtty, &pguser, &pgpasswd))
 		return NULL;
 
