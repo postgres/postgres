@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/access/heap/heapam.c,v 1.144 2002/08/06 02:36:33 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/access/heap/heapam.c,v 1.145 2002/08/13 20:11:03 tgl Exp $
  *
  *
  * INTERFACE ROUTINES
@@ -1150,6 +1150,7 @@ heap_insert(Relation relation, HeapTuple tup, CommandId cid)
 
 	/* NO ELOG(ERROR) from here till changes are logged */
 	START_CRIT_SECTION();
+
 	RelationPutHeapTuple(relation, buffer, tup);
 
 	pgstat_count_heap_insert(&relation->pgstat_info);
@@ -1336,6 +1337,8 @@ l1:
 							 HEAP_XMAX_INVALID | HEAP_MARKED_FOR_UPDATE);
 	HeapTupleHeaderSetXmax(tp.t_data, GetCurrentTransactionId());
 	HeapTupleHeaderSetCmax(tp.t_data, cid);
+	/* Make sure there is no forward chain link in t_ctid */
+	tp.t_data->t_ctid = tp.t_self;
 
 	/* XLOG stuff */
 	if (!relation->rd_istemp)
@@ -1844,6 +1847,8 @@ l3:
 	tuple->t_data->t_infomask |= HEAP_MARKED_FOR_UPDATE;
 	HeapTupleHeaderSetXmax(tuple->t_data, GetCurrentTransactionId());
 	HeapTupleHeaderSetCmax(tuple->t_data, cid);
+	/* Make sure there is no forward chain link in t_ctid */
+	tuple->t_data->t_ctid = *tid;
 
 	LockBuffer(*buffer, BUFFER_LOCK_UNLOCK);
 
@@ -2126,6 +2131,9 @@ heap_xlog_clean(bool redo, XLogRecPtr lsn, XLogRecord *record)
 	}
 
 	PageRepairFragmentation(page, NULL);
+
+	PageSetLSN(page, lsn);
+	PageSetSUI(page, ThisStartUpID); /* prev sui */
 	UnlockAndWriteBuffer(buffer);
 }
 
@@ -2133,7 +2141,7 @@ static void
 heap_xlog_delete(bool redo, XLogRecPtr lsn, XLogRecord *record)
 {
 	xl_heap_delete *xlrec = (xl_heap_delete *) XLogRecGetData(record);
-	Relation	reln = XLogOpenRelation(redo, RM_HEAP_ID, xlrec->target.node);
+	Relation	reln;
 	Buffer		buffer;
 	Page		page;
 	OffsetNumber offnum;
@@ -2142,6 +2150,8 @@ heap_xlog_delete(bool redo, XLogRecPtr lsn, XLogRecord *record)
 
 	if (redo && (record->xl_info & XLR_BKP_BLOCK_1))
 		return;
+
+	reln = XLogOpenRelation(redo, RM_HEAP_ID, xlrec->target.node);
 
 	if (!RelationIsValid(reln))
 		return;
@@ -2186,6 +2196,8 @@ heap_xlog_delete(bool redo, XLogRecPtr lsn, XLogRecord *record)
 							  HEAP_XMAX_INVALID | HEAP_MARKED_FOR_UPDATE);
 		HeapTupleHeaderSetXmax(htup, record->xl_xid);
 		HeapTupleHeaderSetCmax(htup, FirstCommandId);
+		/* Make sure there is no forward chain link in t_ctid */
+		htup->t_ctid = xlrec->target.tid;
 		PageSetLSN(page, lsn);
 		PageSetSUI(page, ThisStartUpID);
 		UnlockAndWriteBuffer(buffer);
@@ -2199,13 +2211,15 @@ static void
 heap_xlog_insert(bool redo, XLogRecPtr lsn, XLogRecord *record)
 {
 	xl_heap_insert *xlrec = (xl_heap_insert *) XLogRecGetData(record);
-	Relation	reln = XLogOpenRelation(redo, RM_HEAP_ID, xlrec->target.node);
+	Relation	reln;
 	Buffer		buffer;
 	Page		page;
 	OffsetNumber offnum;
 
 	if (redo && (record->xl_info & XLR_BKP_BLOCK_1))
 		return;
+
+	reln = XLogOpenRelation(redo, RM_HEAP_ID, xlrec->target.node);
 
 	if (!RelationIsValid(reln))
 		return;
@@ -2263,6 +2277,7 @@ heap_xlog_insert(bool redo, XLogRecPtr lsn, XLogRecord *record)
 		HeapTupleHeaderSetCmin(htup, FirstCommandId);
 		HeapTupleHeaderSetXmaxInvalid(htup);
 		HeapTupleHeaderSetCmax(htup, FirstCommandId);
+		htup->t_ctid = xlrec->target.tid;
 		if (reln->rd_rel->relhasoids)
 		{
 			AssertTupleDescHasOid(reln->rd_att);
@@ -2352,6 +2367,8 @@ heap_xlog_update(bool redo, XLogRecPtr lsn, XLogRecord *record, bool move)
 				~(HEAP_XMIN_COMMITTED | HEAP_XMIN_INVALID | HEAP_MOVED_IN);
 			htup->t_infomask |= HEAP_MOVED_OFF;
 			HeapTupleHeaderSetXvac(htup, record->xl_xid);
+			/* Make sure there is no forward chain link in t_ctid */
+			htup->t_ctid = xlrec->target.tid;
 		}
 		else
 		{
@@ -2363,6 +2380,8 @@ heap_xlog_update(bool redo, XLogRecPtr lsn, XLogRecord *record, bool move)
 							 HEAP_XMAX_INVALID | HEAP_MARKED_FOR_UPDATE);
 			HeapTupleHeaderSetXmax(htup, record->xl_xid);
 			HeapTupleHeaderSetCmax(htup, FirstCommandId);
+			/* Set forward chain link in t_ctid */
+			htup->t_ctid = xlrec->newtid;
 		}
 		if (samepage)
 			goto newsame;
@@ -2465,6 +2484,8 @@ newsame:;
 			HeapTupleHeaderSetXmaxInvalid(htup);
 			HeapTupleHeaderSetCmax(htup, FirstCommandId);
 		}
+		/* Make sure there is no forward chain link in t_ctid */
+		htup->t_ctid = xlrec->newtid;
 
 		offnum = PageAddItem(page, (Item) htup, newlen, offnum,
 							 LP_USED | OverwritePageMode);
