@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/port/dynloader/hpux.h,v 1.7 2003/08/04 02:40:02 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/port/dynloader/hpux.h,v 1.7.4.1 2004/01/04 04:06:45 tgl Exp $
  *
  *	NOTES
  *		all functions are defined here -- it's impossible to trace the
@@ -19,7 +19,7 @@
 /* System includes */
 #include "fmgr.h"
 
-void	   *pg_dlopen(char *filename);
-PGFunction	pg_dlsym(void *handle, char *funcname);
-void		pg_dlclose(void *handle);
-char	   *pg_dlerror();
+extern void *pg_dlopen(char *filename);
+extern PGFunction pg_dlsym(void *handle, char *funcname);
+extern void pg_dlclose(void *handle);
+extern char *pg_dlerror(void);
