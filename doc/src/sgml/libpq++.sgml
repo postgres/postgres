@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/Attic/libpq++.sgml,v 1.29 2001/05/09 17:29:09 momjian Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/Attic/libpq++.sgml,v 1.30 2001/05/09 17:46:11 momjian Exp $
 -->
 
  <chapter id="libpqplusplus">
@@ -430,7 +430,7 @@ $Header: /cvsroot/pgsql/doc/src/sgml/Attic/libpq++.sgml,v 1.29 2001/05/09 17:29:
        Returns the size in bytes of the field associated with the given 
        field index. Field indices start at 0. 
        <synopsis>
-	short PgDatabase::FieldSize(int field_num) const
+	int PgDatabase::FieldSize(int field_num) const
        </synopsis>
        Returns the space allocated for this field in a database tuple given
        the field number. In other words the size of the server's binary 
@@ -444,7 +444,7 @@ $Header: /cvsroot/pgsql/doc/src/sgml/Attic/libpq++.sgml,v 1.29 2001/05/09 17:29:
        Returns the size in bytes of the field associated with the given 
        field index. Field indices start at 0. 
        <synopsis>
-	short PgDatabase::FieldSize(const char *field_name) const
+	int PgDatabase::FieldSize(const char *field_name) const
        </synopsis>
        Returns the space allocated for this field in a database tuple given
        the field name. In other words the size of the server's binary 

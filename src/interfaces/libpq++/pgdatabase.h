@@ -14,7 +14,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  *
- *  $Id: pgdatabase.h,v 1.10 2001/05/09 17:29:10 momjian Exp $
+ *  $Id: pgdatabase.h,v 1.11 2001/05/09 17:46:11 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -51,8 +51,8 @@ public:
   int FieldNum(const char* field_name) const;
   Oid FieldType(int field_num) const;
   Oid FieldType(const char* field_name) const;
-  short FieldSize(int field_num) const;
-  short FieldSize(const char* field_name) const;
+  int FieldSize(int field_num) const;
+  int FieldSize(const char* field_name) const;
   const char* GetValue(size_type tup_num, int field_num) const;
   const char* GetValue(size_type tup_num, const char* field_name) const;
   bool GetIsNull(size_type tup_num, int field_num) const;

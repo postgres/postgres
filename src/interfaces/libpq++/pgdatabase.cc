@@ -10,7 +10,7 @@
  * Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/interfaces/libpq++/Attic/pgdatabase.cc,v 1.10 2001/05/09 17:29:10 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/interfaces/libpq++/Attic/pgdatabase.cc,v 1.11 2001/05/09 17:46:11 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -106,13 +106,13 @@ return PQftype(pgResult, FieldNum(field_name));
 }
 
 
-short PgDatabase::FieldSize(int field_num) const
+int PgDatabase::FieldSize(int field_num) const
 { 
 return PQfsize(pgResult, field_num); 
 }
 
 
-short PgDatabase::FieldSize(const char* field_name) const
+int PgDatabase::FieldSize(const char* field_name) const
 { 
 return PQfsize(pgResult, FieldNum(field_name)); 
 }

@@ -1,5 +1,4 @@
 
 *	Implement exceptions
 *	Many other things I have yet to discover
-*	fix getLength to return an int and not a short
 
