@@ -11,6 +11,7 @@ A slightly modified version of this file and a discussion of the
 workings can be found in the book "Software Solutions in C" by
 Dale Schumacher, Academic Press, ISBN: 0-12-632360-7.
 
+	$Header: /cvsroot/pgsql/src/backend/utils/adt/cash.c,v 1.3 1997/04/10 20:51:13 scrappy Exp $
 */
 
 #include	<stdio.h>
@@ -271,32 +272,3 @@ cash_words_out(long value)
 	*buf = toupper(*buf);
 	return(buf);
 }
-
-#include	<stdlib.h>
-
-#ifdef	TEST_MAIN
-int
-main(void)
-{
-	char	p[64], *q;
-	long	v;			/* the long value representing the amount */
-	int		d;			/* number of decimal places - default 2 */
-
-	while (fgets(p, sizeof(p), stdin) != NULL)
-	{
-		if ((q = strchr(p, '\n')) != NULL)
-			*q = 0;
-
-		for (q = p; *q && !isspace(*q); q++)
-			;
-
-		v = cash_in(p);
-		d = *q ? atoi(q) : 2;
-
-		printf("%12.12s %10ld ", p, v);
-		printf("%12s %s\n", cash_out(v), cash_words_out(v));
-	}
-
-	return(0);
-}
-#endif	/* TEST_MAIN */
