@@ -6,7 +6,7 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: catalog_utils.h,v 1.1.1.1 1996/07/09 06:21:40 scrappy Exp $
+ * $Id: catalog_utils.h,v 1.2 1996/07/29 20:49:02 scrappy Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -24,8 +24,6 @@
     
 typedef HeapTuple	Type;
 typedef HeapTuple	Operator;
-
-extern	Oid	typeid_get_relid();
 
 extern bool check_typeid(long id);
 extern Type get_id_type(long id);
