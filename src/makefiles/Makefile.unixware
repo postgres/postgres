@@ -12,7 +12,6 @@ else
 	rpath = -Wl,-R$(rpathdir)
 endif
 endif
-shlib_symbolic = -Wl,-Bsymbolic
 
 DLSUFFIX = .so
 ifeq ($(GCC), yes)

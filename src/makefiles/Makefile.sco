@@ -1,6 +1,5 @@
 AROPT = cr
 export_dynamic = -Wl,-Bexport
-shlib_symbolic = -Wl,-Bsymbolic
 
 DLSUFFIX = .so
 ifeq ($(GCC), yes)

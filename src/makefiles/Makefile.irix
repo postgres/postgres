@@ -1,7 +1,6 @@
 MK_NO_LORDER= true
 AROPT = crs
 rpath = -Wl,-rpath,$(rpathdir)
-shlib_symbolic = -Wl,-B,symbolic
 
 DLSUFFIX = .so
 # PIC is default

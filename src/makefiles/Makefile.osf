@@ -1,7 +1,7 @@
 AROPT = crs
 DLSUFFIX = .so
 CFLAGS_SL =
-rpath = -rpath $(rpathdir)
+rpath = -Wl,-rpath -Wl,$(rpathdir)
 
 %.so: %.o
 	$(LD) -shared -expect_unresolved '*' -o $@ $<
