@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/interfaces/libpq/fe-connect.c,v 1.103 1999/09/27 03:13:16 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/interfaces/libpq/fe-connect.c,v 1.104 1999/10/26 04:49:00 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -1575,13 +1575,19 @@ PQuntrace(PGconn *conn)
 	}
 }
 
-void
+PQnoticeProcessor
 PQsetNoticeProcessor(PGconn *conn, PQnoticeProcessor proc, void *arg)
 {
+	PQnoticeProcessor old;
 	if (conn == NULL)
-		return;
+		return NULL;
+
+	old = conn->noticeHook;
+	if (proc) {
 	conn->noticeHook = proc;
 	conn->noticeArg = arg;
+	}
+	return old;
 }
 
 /*

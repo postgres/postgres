@@ -6,7 +6,7 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: libpq-fe.h,v 1.50 1999/05/25 16:15:13 momjian Exp $
+ * $Id: libpq-fe.h,v 1.51 1999/10/26 04:49:00 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -193,9 +193,7 @@ extern		"C"
 	extern void PQuntrace(PGconn *conn);
 
 	/* Override default notice processor */
-	extern void PQsetNoticeProcessor(PGconn *conn,
-												 PQnoticeProcessor proc,
-												 void *arg);
+	extern PQnoticeProcessor PQsetNoticeProcessor(PGconn *conn, PQnoticeProcessor proc, void *arg);
 
 /* === in fe-exec.c === */
 
