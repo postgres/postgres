@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/ref/create_function.sgml,v 1.46 2003/03/25 16:15:39 petere Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/ref/create_function.sgml,v 1.47 2003/04/22 10:08:08 petere Exp $
 -->
 
 <refentry id="SQL-CREATEFUNCTION">
@@ -38,25 +38,48 @@ CREATE [ OR REPLACE ] FUNCTION <replaceable class="parameter">name</replaceable>
   </para>
 
   <para>
-   The user that creates the function becomes the owner of the function.
+   If a schema name is included, then the function is created in the
+   specified schema.  Otherwise it is created in the current schema.
+   The name of the new function must not match any existing function
+   with the same argument types in the same schema.  However,
+   functions of different argument types may share a name (this is
+   called <firstterm>overloading</>).
   </para>
 
+  <para>
+   To update the definition of an existing function, use
+   <command>CREATE OR REPLACE FUNCTION</command>.  It is not possible
+   to change the name or argument types of a function this way (if you
+   tried, you'd just be creating a new, distinct function).  Also,
+   <command>CREATE OR REPLACE FUNCTION</command> will not let you
+   change the return type of an existing function.  To do that, you
+   must drop and recreate the function.
+  </para>
+
+  <para>
+   If you drop and then recreate a function, the new function is not
+   the same entity as the old; you will break existing rules, views,
+   triggers, etc. that referred to the old function.  Use
+   <command>CREATE OR REPLACE FUNCTION</command> to change a function
+   definition without breaking objects that refer to the function.
+  </para>
+
+  <para>
+   The user that creates the function becomes the owner of the function.
+  </para>
+ </refsect1>
+
+ <refsect1>
+  <title>Parameters</title>
+
    <variablelist>
-    <title>Parameters</title>
 
     <varlistentry>
      <term><replaceable class="parameter">name</replaceable></term>
 
      <listitem>
       <para>
-       The name of a function to create.  If a schema name is included,
-       then the function is created in the
-       specified schema.  Otherwise it is created in the current schema (the
-       one at the front of the search path; see <literal>CURRENT_SCHEMA()</>).
-       The name of the new function must not match any existing function
-       with the same argument types in the same schema.  However, functions of
-       different argument types may share a name (this is called
-       <firstterm>overloading</>).
+       The name of a function to create.
       </para>
      </listitem>
     </varlistentry>
@@ -67,20 +90,21 @@ CREATE [ OR REPLACE ] FUNCTION <replaceable class="parameter">name</replaceable>
      <listitem>
       <para>
        The data type(s) of the function's arguments (optionally 
-       schema-qualified), if any. The input types may be base, complex, or 
-       domain types, or the same as the type of an existing column.
+       schema-qualified), if any. The argument types may be base, complex, or 
+       domain types, or copy the type of an existing column.
       </para>
       <para>
-       The type of a column is referenced by writing <replaceable
+       The type of a column is referenced by writing
+       <literal><replaceable
        class="parameter">tablename</replaceable>.<replaceable
-       class="parameter">columnname</replaceable><literal>%TYPE</literal>;
+       class="parameter">columnname</replaceable>%TYPE</literal>;
        using this can sometimes help make a function independent from
        changes to the definition of a table.
       </para>
       <para>
        Depending on the implementation language it may also be allowed
-       to specify <quote>pseudo-types</> such as <type>cstring</>.
-       Pseudo-types indicate that the actual argument type is either
+       to specify <quote>pseudotypes</> such as <type>cstring</>.
+       Pseudotypes indicate that the actual argument type is either
        incompletely specified, or outside the set of ordinary SQL data types.
       </para>
      </listitem>
@@ -92,15 +116,15 @@ CREATE [ OR REPLACE ] FUNCTION <replaceable class="parameter">name</replaceable>
      <listitem>
       <para>
        The return data type (optionally schema-qualified). The return type 
-       may be specified as a base, complex, domain type 
-       or the same as the type of an existing column. See the description
+       may be specified as a base, complex, or domain type,
+       or may copy the type of an existing column. See the description
        under <literal>argtype</literal> above on how to reference the type
        of an existing column.
       </para>
       <para>
        Depending on the implementation language it may also be allowed
-       to specify <quote>pseudo-types</> such as <type>cstring</>.
-       The <literal>setof</literal>
+       to specify <quote>pseudotypes</> such as <type>cstring</>.
+       The <literal>SETOF</literal>
        modifier indicates that the function will return a set of
        items, rather than a single item.
       </para>
@@ -123,9 +147,9 @@ CREATE [ OR REPLACE ] FUNCTION <replaceable class="parameter">name</replaceable>
     </varlistentry>
 
     <varlistentry>
-     <term>IMMUTABLE</term>
-     <term>STABLE</term>
-     <term>VOLATILE</term>
+     <term><literal>IMMUTABLE</literal></term>
+     <term><literal>STABLE</literal></term>
+     <term><literal>VOLATILE</literal></term>
 
      <listitem>
       <para>
@@ -140,7 +164,7 @@ CREATE [ OR REPLACE ] FUNCTION <replaceable class="parameter">name</replaceable>
        <literal>IMMUTABLE</literal> indicates that the function always
        returns the same result when given the same argument values; that
        is, it does not do database lookups or otherwise use information not
-       directly present in its parameter list.  If this option is given,
+       directly present in its argument list.  If this option is given,
        any call of the function with all-constant arguments can be
        immediately replaced with the function value.
       </para>
@@ -152,7 +176,7 @@ CREATE [ OR REPLACE ] FUNCTION <replaceable class="parameter">name</replaceable>
        result could change across SQL statements.  This is the appropriate
        selection for functions whose results depend on database lookups,
        parameter variables (such as the current time zone), etc.  Also note
-       that the <literal>CURRENT_TIMESTAMP</> family of functions qualify
+       that the <function>current_timestamp</> family of functions qualify
        as stable, since their values do not change within a transaction.
       </para>
 
@@ -170,9 +194,9 @@ CREATE [ OR REPLACE ] FUNCTION <replaceable class="parameter">name</replaceable>
     </varlistentry>
 
     <varlistentry>
-     <term>CALLED ON NULL INPUT</term>
-     <term>RETURNS NULL ON NULL INPUT</term>
-     <term>STRICT</term>
+     <term><literal>CALLED ON NULL INPUT</literal></term>
+     <term><literal>RETURNS NULL ON NULL INPUT</literal></term>
+     <term><literal>STRICT</literal></term>
 
      <listitem>
       <para>
@@ -186,17 +210,17 @@ CREATE [ OR REPLACE ] FUNCTION <replaceable class="parameter">name</replaceable>
       <para>
        <literal>RETURNS NULL ON NULL INPUT</literal> or
        <literal>STRICT</literal> indicates that the function always
-       returns NULL whenever any of its arguments are NULL.  If this
+       returns null whenever any of its arguments are null.  If this
        parameter is specified, the function is not executed when there
-       are NULL arguments; instead a NULL result is assumed
+       are null arguments; instead a null result is assumed
        automatically.
       </para>
      </listitem>
     </varlistentry>
 
    <varlistentry>
-    <term><optional>EXTERNAL</optional> SECURITY INVOKER</term>
-    <term><optional>EXTERNAL</optional> SECURITY DEFINER</term>
+    <term><literal><optional>EXTERNAL</optional> SECURITY INVOKER</literal></term>
+    <term><literal><optional>EXTERNAL</optional> SECURITY DEFINER</literal></term>
 
     <listitem>
      <para>
@@ -209,7 +233,7 @@ CREATE [ OR REPLACE ] FUNCTION <replaceable class="parameter">name</replaceable>
 
      <para>
       The key word <literal>EXTERNAL</literal> is present for SQL
-      compatibility but is optional since, unlike in SQL, this feature
+      conformance but is optional since, unlike in SQL, this feature
       does not only apply to external functions.
      </para>
     </listitem>
@@ -222,25 +246,26 @@ CREATE [ OR REPLACE ] FUNCTION <replaceable class="parameter">name</replaceable>
       <para>
        A string defining the function; the meaning depends on the
        language.  It may be an internal function name, the path to an
-       object file, an SQL query, or text in a procedural language.
+       object file, an SQL command, or text in a procedural language.
       </para>
      </listitem>
     </varlistentry>
 
     <varlistentry>
-     <term><replaceable class="parameter">obj_file</replaceable>, <replaceable class="parameter">link_symbol</replaceable></term>
+     <term><literal><replaceable class="parameter">obj_file</replaceable>, <replaceable class="parameter">link_symbol</replaceable></literal></term>
 
      <listitem>
       <para>
        This form of the <literal>AS</literal> clause is used for
-       dynamically linked C language functions when the function name
+       dynamically loadable C language functions when the function name
        in the C language source code is not the same as the name of
        the SQL function. The string <replaceable
        class="parameter">obj_file</replaceable> is the name of the
        file containing the dynamically loadable object, and
        <replaceable class="parameter">link_symbol</replaceable> is the
-       object's link symbol, that is, the name of the function in the C
-       language source code.
+       function's link symbol, that is, the name of the function in the C
+       language source code.  If the link symbol is omitted, it is assumed
+       to be the same as the name of the SQL function being defined.
       </para>
      </listitem>
     </varlistentry>
@@ -285,48 +310,47 @@ CREATE [ OR REPLACE ] FUNCTION <replaceable class="parameter">name</replaceable>
 
  </refsect1>
 
+ <refsect1>
+  <title>Diagnostics</title>
+
+  <variablelist>
+   <varlistentry>
+    <term><computeroutput>CREATE FUNCTION</computeroutput></term>
+    <listitem>
+     <para>
+      Message returned if the function was successfully created.
+     </para>
+    </listitem>
+   </varlistentry>
+  </variablelist>
+ </refsect1>
+
  <refsect1 id="sql-createfunction-notes">
   <title>Notes</title>
 
    <para>
     Refer to <xref linkend="xfunc"> for further information on writing
-    external functions.
+    functions.
    </para>
 
    <para>
     The full <acronym>SQL</acronym> type syntax is allowed for
     input arguments and return value. However, some details of the
     type specification (e.g., the precision field for
-    <type>numeric</type> types) are the responsibility of the
+    type <type>numeric</type>) are the responsibility of the
     underlying function implementation and are silently swallowed
     (i.e., not recognized or
     enforced) by the <command>CREATE FUNCTION</command> command.
    </para>
 
    <para>
-    <productname>PostgreSQL</productname> allows function <firstterm>overloading</firstterm>;
-    that is, the same name can be used for several different functions
-    so long as they have distinct argument types.  This facility must
-    be used with caution for internal and C-language functions, however.    
-   </para>
-
-   <para>
-    Two <literal>internal</literal>
-    functions cannot have the same C name without causing
-    errors at link time.  To get around that, give them different C names
-    (for example, use the argument types as part of the C names), then
-    specify those names in the AS clause of <command>CREATE FUNCTION</command>.
-    If the AS clause is left empty, then <command>CREATE FUNCTION</command>
-    assumes the C name of the function is the same as the SQL name.
-   </para>
-
-   <para>
-    Similarly, when overloading SQL function names with multiple C-language
-    functions, give
-    each C-language instance of the function a distinct name, then use
-    the alternative form of the <command>AS</command> clause in the
-    <command>CREATE FUNCTION</command> syntax to select the appropriate
-    C-language implementation of each overloaded SQL function.
+    <productname>PostgreSQL</productname> allows function
+    <firstterm>overloading</firstterm>; that is, the same name can be
+    used for several different functions so long as they have distinct
+    argument types.  However, the C names of all functions must be
+    different, so you must give overloaded C functions different C
+    names (for example, use the argument types as part of the C
+    names).
    </para>
 
    <para>
@@ -341,34 +365,9 @@ CREATE [ OR REPLACE ] FUNCTION <replaceable class="parameter">name</replaceable>
     to remove user-defined functions.
    </para>
 
-   <para>
-    To update the definition of an existing function, use
-    <command>CREATE OR REPLACE FUNCTION</command>.  Note that it is
-    not possible to change the name or argument types of a function
-    this way (if you tried, you'd just be creating a new, distinct
-    function).  Also, <command>CREATE OR REPLACE FUNCTION</command>
-    will not let you change the return type of an existing function.
-    To do that, you must drop and re-create the function.
-   </para>
-
-   <para>
-    If you drop and then re-create a function, the new function is not
-    the same entity as the old; you will break existing rules, views,
-    triggers, etc that referred to the old function.  Use 
-    <command>CREATE OR REPLACE FUNCTION</command> to change a function
-    definition without breaking objects that refer to the function.
-   </para>
-
   <para>
    To be able to define a function, the user must have the
    <literal>USAGE</literal> privilege on the language.
-  </para>
-
-  <para>
-   By default, only the owner (creator) of the function has the right
-   to execute it.  Other users must be granted the
-   <literal>EXECUTE</literal> privilege on the function to be able to
-   use it.
   </para>
  </refsect1>
 
@@ -376,81 +375,16 @@ CREATE [ OR REPLACE ] FUNCTION <replaceable class="parameter">name</replaceable>
   <title>Examples</title>
 
   <para>
-   To create a simple SQL function:
-
+   Here is a trivial example to help you get startet.  For more
+   information and examples, see <xref linkend="xfunc">.
 <programlisting>
-CREATE FUNCTION one() RETURNS integer
-    AS 'SELECT 1 AS RESULT;'
-    LANGUAGE SQL;
-
-SELECT one() AS answer;
-<computeroutput>
- answer 
---------
-      1
-</computeroutput>
+CREATE FUNCTION add(integer, integer) RETURNS integer
+    AS 'select $1 + $2;'
+    LANGUAGE SQL
+    IMMUTABLE
+    RETURNS NULL ON NULL INPUT;
 </programlisting>
   </para>
-
-  <para>
-   The next example creates a C function by calling a routine from a
-   user-created shared library named <filename>funcs.so</> (the extension
-   may vary across platforms).  The shared library file is sought in the
-   server's dynamic library search path.  This particular routine calculates
-   a check digit and returns true if the check digit in the function
-   parameters is correct.  It is intended for use in a CHECK
-   constraint.
-
-<programlisting>
-CREATE FUNCTION ean_checkdigit(char, char) RETURNS boolean
-    AS 'funcs' LANGUAGE C;
-    
-CREATE TABLE product (
-    id        char(8) PRIMARY KEY,
-    eanprefix char(8) CHECK (eanprefix ~ '[0-9]{2}-[0-9]{5}')
-                      REFERENCES brandname(ean_prefix),
-    eancode   char(6) CHECK (eancode ~ '[0-9]{6}'),
-    CONSTRAINT ean    CHECK (ean_checkdigit(eanprefix, eancode))
-);
-</programlisting>
-  </para>
-
-  <para>
-   The next example creates a function that does type conversion from the
-   user-defined type complex to the built-in type point.  The
-   function is implemented by a dynamically loaded object that was
-   compiled from C source (we illustrate the now-deprecated alternative
-   of specifying the absolute file name to the shared object file).
-   For <productname>PostgreSQL</productname> to
-   find a type conversion function automatically, the SQL function has
-   to have the same name as the return type, and so overloading is
-   unavoidable.  The function name is overloaded by using the second
-   form of the <command>AS</command> clause in the SQL definition:
-
-<programlisting>
-CREATE FUNCTION point(complex) RETURNS point
-    AS '/home/bernie/pgsql/lib/complex.so', 'complex_to_point'
-    LANGUAGE C STRICT;
-</programlisting>
-
-  The C declaration of the function could be:
-
-<programlisting>
-Point * complex_to_point (Complex *z)
-{
-    Point *p;
-
-    p = (Point *) palloc(sizeof(Point));
-    p->x = z->x;
-    p->y = z->y;
-        
-    return p;
-}
-</programlisting>
-
-   Note that the function is marked <quote>strict</>; this allows us
-   to skip checking for NULL input in the function body.
-  </para>    
  </refsect1>
 
  

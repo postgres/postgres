@@ -1,28 +1,21 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/ref/create_domain.sgml,v 1.12 2003/03/25 16:15:39 petere Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/ref/create_domain.sgml,v 1.13 2003/04/22 10:08:08 petere Exp $
 PostgreSQL documentation
 -->
 
 <refentry id="SQL-CREATEDOMAIN">
  <refmeta>
-  <refentrytitle id="sql-createdomain-title">
-   CREATE DOMAIN
-  </refentrytitle>
+  <refentrytitle id="sql-createdomain-title">CREATE DOMAIN</refentrytitle>
   <refmiscinfo>SQL - Language Statements</refmiscinfo>
  </refmeta>
+
  <refnamediv>
-  <refname>
-   CREATE DOMAIN
-  </refname>
-  <refpurpose>
-   define a new domain
-  </refpurpose>
+  <refname>CREATE DOMAIN</refname>
+  <refpurpose>define a new domain</refpurpose>
  </refnamediv>
+
  <refsynopsisdiv>
-  <refsynopsisdivinfo>
-   <date>2002-02-24</date>
-  </refsynopsisdivinfo>
-  <synopsis>
+<synopsis>
 CREATE DOMAIN <replaceable class="parameter">domainname</replaceable> [AS] <replaceable class="parameter">data_type</replaceable>
     [ DEFAULT <replaceable>default_expr</> ]
     [ <replaceable class="PARAMETER">constraint</replaceable> [ ... ] ]
@@ -31,16 +24,35 @@ where <replaceable class="PARAMETER">constraint</replaceable> is:
 
 [ CONSTRAINT <replaceable class="PARAMETER">constraint_name</replaceable> ]
 { NOT NULL | NULL | CHECK (<replaceable class="PARAMETER">expression</replaceable>) }
-  </synopsis>
+</synopsis>
+ </refsynopsisdiv>
 
-  <refsect2 id="R2-SQL-CREATEDOMAIN-1">
-   <refsect2info>
-    <date>2002-02-24</date>
-   </refsect2info>
-   <title>
-    Parameters
-   </title>
-   <para>
+ <refsect1>
+  <title>Description</title>
+
+  <para>
+   <command>CREATE DOMAIN</command> creates a new data domain.  The
+   user who defines a domain becomes its owner.
+  </para>
+
+  <para>
+   If a schema name is given (for example, <literal>CREATE DOMAIN
+   myschema.mydomain ...</>) then the domain is created in the
+   specified schema.  Otherwise it is created in the current schema.
+   The domain name must be unique among the types and domains existing
+   in its schema.
+  </para>
+
+  <para>
+   Domains are useful for abstracting common fields between tables into
+   a single location for maintenance.  For example, an email address column may be used
+   in several tables, all with the same properties.  Define a domain and
+   use that rather than setting up each table's constraints individually.
+  </para>
+ </refsect1>
+
+ <refsect1>
+  <title>Parameters</title>
 
     <variablelist>
      <varlistentry>
@@ -63,32 +75,26 @@ where <replaceable class="PARAMETER">constraint</replaceable> is:
      </varlistentry>
 
      <varlistentry>
-      <term><literal>DEFAULT
-      <replaceable>default_expr</replaceable></literal></term>
+      <term><literal>DEFAULT <replaceable>default_expr</replaceable></literal></term>
+
       <listitem>
        <para>
         The <literal>DEFAULT</> clause specifies a default value for
-	columns of the domain data type.  The value
-        is any variable-free expression (but subselects are not allowed).
-	The
-        data type of the default expression must match the data type of the
-        domain.
+        columns of the domain data type.  The value is any
+        variable-free expression (but subqueries are not allowed).
+        The data type of the default expression must match the data
+        type of the domain.  If no default value is specified, then
+        the default value is the null value.
        </para>
 
        <para>
-        The default expression will be used in any insert operation that
-        does not specify a value for the column.  If there is no default
-        for a domain, then the default is NULL.
+        The default expression will be used in any insert operation
+        that does not specify a value for the column.  If a default
+        value is defined for a particular column, it overrides any
+        default associated with the domain.  In turn, the domain
+        default overrides any default value associated with the
+        underlying data type.
        </para>
-
-       <note>
-        <para>
-         If a default value is specified for a particular column, it
-	 overrides any default associated with the domain.  In turn,
-	 the domain default overrides any default value associated with
-	 the underlying data type.
-        </para>
-       </note>
       </listitem>
      </varlistentry>
 
@@ -106,7 +112,7 @@ where <replaceable class="PARAMETER">constraint</replaceable> is:
       <term><literal>NOT NULL</></term>
       <listitem>
        <para>
-        Values of this domain are not allowed to be NULL.  
+        Values of this domain are not allowed to be null.
        </para>
       </listitem>
      </varlistentry>
@@ -115,12 +121,12 @@ where <replaceable class="PARAMETER">constraint</replaceable> is:
       <term><literal>NULL</></term>
       <listitem>
        <para>
-        Values of this domain are allowed to be NULL.  This is the default.
+        Values of this domain are allowed to be null.  This is the default.
        </para>
 
        <para>
-        This clause is only available for compatibility with
-        non-standard SQL databases.  Its use is discouraged in new
+        This clause is only intended for compatibility with
+        nonstandard SQL databases.  Its use is discouraged in new
         applications.
        </para>
       </listitem>
@@ -139,81 +145,47 @@ where <replaceable class="PARAMETER">constraint</replaceable> is:
 
      <para>
       Currently, <literal>CHECK</literal> expressions cannot contain
-      subselects nor refer to variables other than <literal>VALUE</>.
+      subqueries nor refer to variables other than <literal>VALUE</>.
      </para>
-
     </listitem>
    </varlistentry>
+  </variablelist>
+ </refsect1>
 
-    </variablelist>
-   </para>
-  </refsect2>
+ <refsect1>
+  <title>Diagnostics</title>
 
-  <refsect2 id="R2-SQL-CREATEDOMAIN-2">
-   <refsect2info>
-    <date>2002-02-24</date>
-   </refsect2info>
-   <title>
-    Outputs
-   </title>
-   <para>
-
-    <variablelist>
-     <varlistentry>
-      <term><computeroutput>
-CREATE DOMAIN
-       </computeroutput></term>
-      <listitem>
-       <para>
-	Message returned if the domain is successfully created.
-       </para>
-      </listitem>
-     </varlistentry>
-    </variablelist>
-   </para>
-  </refsect2>
- </refsynopsisdiv>
-
- <refsect1 id="R1-SQL-CREATEDOMAIN-1">
-  <refsect1info>
-   <date>2002-02-24</date>
-  </refsect1info>
-  <title>
-   Description
-  </title>
-
-  <para>
-   <command>CREATE DOMAIN</command>  allows  the user to register a new
-   data domain with <productname>PostgreSQL</> for use in the
-   current data base.   The user  who  defines  a domain becomes its owner.
-  </para>
-
-  <para>
-   If a schema name is given (for example, <literal>CREATE DOMAIN
-   myschema.mydomain ...</>) then the domain is created in the
-   specified schema.  Otherwise it is created in the current schema (the one
-   at the front of the search path; see <literal>CURRENT_SCHEMA()</>).
-   The domain name must be unique among the types and domains existing
-   in its schema.
-  </para>
-
-  <para>
-   Domains are useful for abstracting common fields between tables into
-   a single location for maintenance.  An email address column may be used
-   in several tables, all with the same properties.  Define a domain and
-   use that rather than setting up each table's constraints individually.
-  </para>
+  <variablelist>
+   <varlistentry>
+    <term><computeroutput>CREATE DOMAIN</computeroutput></term>
+    <listitem>
+     <para>
+      Message returned if the domain was successfully created.
+     </para>
+    </listitem>
+   </varlistentry>
+  </variablelist>
  </refsect1>
 
  <refsect1>
   <title>Examples</title>
+
   <para>
    This example creates the <type>country_code</type> data type and then uses the
    type in a table definition:
 <programlisting>
 CREATE DOMAIN country_code char(2) NOT NULL;
-CREATE TABLE countrylist (id INT4, country country_code);
+CREATE TABLE countrylist (id integer, country country_code);
 </programlisting>
+  </para>
+ </refsect1>
+
+ <refsect1 id="SQL-CREATEDOMAIN-compatibility">
+  <title>Compatibility</title>
+
+  <para>
+   The command <command>CREATE DOMAIN</command> conforms to the SQL
+   standard.
   </para>
  </refsect1>
 

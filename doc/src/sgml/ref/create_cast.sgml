@@ -1,4 +1,4 @@
-<!-- $Header: /cvsroot/pgsql/doc/src/sgml/ref/create_cast.sgml,v 1.10 2003/03/25 16:15:39 petere Exp $ -->
+<!-- $Header: /cvsroot/pgsql/doc/src/sgml/ref/create_cast.sgml,v 1.11 2003/04/22 10:08:08 petere Exp $ -->
 
 <refentry id="SQL-CREATECAST">
  <refmeta>
@@ -58,11 +58,11 @@ SELECT CAST(42 AS text);
 
   <para>
    If the cast is marked <literal>AS ASSIGNMENT</> then it can be invoked
-   implicitly when assigning to a column of the target data type.
+   implicitly when assigning a value to a column of the target data type.
    For example, supposing that <literal>foo.f1</literal> is a column of
    type <type>text</type>, then
 <programlisting>
-INSERT INTO foo(f1) VALUES(42);
+INSERT INTO foo (f1) VALUES (42);
 </programlisting>
    will be allowed if the cast from type <type>integer</type> to type
    <type>text</type> is marked <literal>AS ASSIGNMENT</>, otherwise
@@ -75,7 +75,7 @@ INSERT INTO foo(f1) VALUES(42);
    If the cast is marked <literal>AS IMPLICIT</> then it can be invoked
    implicitly in any context, whether assignment or internally in an
    expression.  For example, since <literal>||</> takes <type>text</>
-   arguments,
+   operands,
 <programlisting>
 SELECT 'The time is ' || now();
 </programlisting>
@@ -106,14 +106,16 @@ SELECT 'The time is ' || CAST(now() AS text);
 
   <para>
    To be able to create a cast, you must own the source or the target
-   data type.  To create a binary-compatible cast, you must be superuser
-   (this restriction is made because an erroneous binary-compatible cast
-   conversion can easily crash the server).
+   data type.  To create a binary-compatible cast, you must be superuser.
+   (This restriction is made because an erroneous binary-compatible cast
+   conversion can easily crash the server.)
   </para>
+ </refsect1>
+
+ <refsect1>
+  <title>Parameters</title>
 
    <variablelist>
-    <title>Parameters</title>
-
     <varlistentry>
      <term><replaceable>sourcetype</replaceable></term>
 
@@ -183,6 +185,21 @@ SELECT 'The time is ' || CAST(now() AS text);
 
  </refsect1>
 
+ <refsect1>
+  <title>Diagnostics</title>
+
+  <variablelist>
+   <varlistentry>
+    <term><computeroutput>CREATE CAST</computeroutput></term>
+    <listitem>
+     <para>
+      Message returned if the cast was successfully created.
+     </para>
+    </listitem>
+   </varlistentry>
+  </variablelist>
+ </refsect1>
+
  <refsect1 id="sql-createcast-notes">
   <title>Notes</title>
 
@@ -201,8 +218,8 @@ SELECT 'The time is ' || CAST(now() AS text);
    argument of a different type was automatically a cast function.
    This convention has been abandoned in face of the introduction of
    schemas and to be able to represent binary compatible casts in the
-   catalogs.  (The built-in cast functions still follow this naming
-   scheme, but they have to be shown as casts in <literal>pg_cast</>
+   system catalogs.  (The built-in cast functions still follow this naming
+   scheme, but they have to be shown as casts in the system catalog <literal>pg_cast</>
    now.)
   </para>
  </refsect1>
@@ -227,7 +244,7 @@ CREATE CAST (text AS int4) WITH FUNCTION int4(text);
 
   <para>
    The <command>CREATE CAST</command> command conforms to SQL99,
-   except that SQL99 does not make provisions for binary compatible
+   except that SQL99 does not make provisions for binary-compatible
    types.  <literal>AS IMPLICIT</> is a <productname>PostgreSQL</productname>
    extension, too.
   </para>

@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/ref/create_opclass.sgml,v 1.6 2003/03/25 16:15:39 petere Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/ref/create_opclass.sgml,v 1.7 2003/04/22 10:08:08 petere Exp $
 PostgreSQL documentation
 -->
 
@@ -8,206 +8,44 @@ PostgreSQL documentation
   <refentrytitle id="sql-createopclass-title">CREATE OPERATOR CLASS</refentrytitle>
   <refmiscinfo>SQL - Language Statements</refmiscinfo>
  </refmeta>
+
  <refnamediv>
-  <refname>
-   CREATE OPERATOR CLASS
-  </refname>
-  <refpurpose>
-   define a new operator class for indexes
-  </refpurpose>
-  </refnamediv>
+  <refname>CREATE OPERATOR CLASS</refname>
+  <refpurpose>define a new operator class for indexes</refpurpose>
+ </refnamediv>
+
  <refsynopsisdiv>
-  <refsynopsisdivinfo>
-   <date>2002-07-28</date>
-  </refsynopsisdivinfo>
-  <synopsis>
-CREATE OPERATOR CLASS <replaceable class="parameter">name</replaceable> [ DEFAULT ] FOR TYPE <replaceable class="parameter">data_type</replaceable> USING <replaceable class="parameter">access_method</replaceable> AS
-  {  OPERATOR <replaceable class="parameter">strategy_number</replaceable> <replaceable class="parameter">operator_id</replaceable> [ ( <replaceable class="parameter">type</replaceable>, <replaceable class="parameter">type</replaceable> ) ] [ RECHECK ]
-   | FUNCTION <replaceable class="parameter">support_number</replaceable> <replaceable class="parameter">func_name</replaceable> ( <replaceable class="parameter">parameter_types</replaceable> )
+<synopsis>
+CREATE OPERATOR CLASS <replaceable class="parameter">name</replaceable> [ DEFAULT ] FOR TYPE <replaceable class="parameter">data_type</replaceable> USING <replaceable class="parameter">index_method</replaceable> AS
+  {  OPERATOR <replaceable class="parameter">strategy_number</replaceable> <replaceable class="parameter">operator_name</replaceable> [ ( <replaceable class="parameter">op_type</replaceable>, <replaceable class="parameter">op_type</replaceable> ) ] [ RECHECK ]
+   | FUNCTION <replaceable class="parameter">support_number</replaceable> <replaceable class="parameter">func_name</replaceable> ( <replaceable class="parameter">argument_types</replaceable> )
    | STORAGE <replaceable class="parameter">storage_type</replaceable>
   } [, ... ]
-  </synopsis>
-  
-  <refsect2 id="R2-SQL-CREATEOPCLASS-1">
-   <refsect2info>
-    <date>2002-07-28</date>
-   </refsect2info>
-   <title>
-    Inputs
-   </title>
-   <para>
-
-    <variablelist>
-     <varlistentry>
-      <term><replaceable class="parameter">name</replaceable></term>
-      <listitem>
-       <para>
-	The name of the operator class to be created.
-	The name may be schema-qualified.
-       </para>
-      </listitem>
-     </varlistentry>
-     <varlistentry>
-      <term><literal>DEFAULT</></term>
-      <listitem>
-       <para>
-        If present, the operator class will become the default index
-	operator class for its data type.  At most one operator class
-	can be the default for a specific data type and access method.
-       </para>
-      </listitem>
-     </varlistentry>
-     <varlistentry>
-      <term><replaceable class="parameter">data_type</replaceable></term>
-      <listitem>
-       <para>
-        The column data type that this operator class is for.
-       </para>
-      </listitem>
-     </varlistentry>
-     <varlistentry>
-      <term><replaceable class="parameter">access_method</replaceable></term>
-      <listitem>
-       <para>
-	The name of the index access method this operator class is for.
-       </para>
-      </listitem>
-     </varlistentry>
-     <varlistentry>
-      <term><replaceable class="parameter">strategy_number</replaceable></term>
-      <listitem>
-       <para>
-        The index access method's strategy number for an operator associated
-	with the operator class.
-       </para>
-      </listitem>
-     </varlistentry>
-     <varlistentry>
-      <term><replaceable class="parameter">operator_id</replaceable></term>
-      <listitem>
-       <para>
-	The identifier (optionally schema-qualified) of an operator associated
-	with the operator class.
-       </para>
-      </listitem>
-     </varlistentry>
-     <varlistentry>
-      <term><replaceable class="parameter">type</replaceable></term>
-      <listitem>
-       <para>
-        The input data type(s) of an operator, or <literal>NONE</> to
-	signify a left-unary or right-unary operator.  The input data types
-	may be omitted in the normal case where they are the same as the
-	operator class's data type.
-       </para>
-      </listitem>
-     </varlistentry>
-     <varlistentry>
-      <term><literal>RECHECK</></term>
-      <listitem>
-       <para>
-        If present, the index is <quote>lossy</> for this operator,
-	and so the tuples retrieved using the index must be rechecked
-	to verify that they actually satisfy the qualification clause
-	involving this operator.
-       </para>
-      </listitem>
-     </varlistentry>
-     <varlistentry>
-      <term><replaceable class="parameter">support_number</replaceable></term>
-      <listitem>
-       <para>
-        The index access method's support procedure number for a function
-	associated with the operator class.
-       </para>
-      </listitem>
-     </varlistentry>
-     <varlistentry>
-      <term><replaceable class="parameter">func_name</replaceable></term>
-      <listitem>
-       <para>
-        The name (optionally schema-qualified) of a function that is
-	an index access method support procedure for the operator class.
-       </para>
-      </listitem>
-     </varlistentry>
-     <varlistentry>
-      <term><replaceable class="parameter">parameter_types</replaceable></term>
-      <listitem>
-       <para>
-        The parameter data type(s) of the function.
-       </para>
-      </listitem>
-     </varlistentry>
-     <varlistentry>
-      <term><replaceable class="parameter">storage_type</replaceable></term>
-      <listitem>
-       <para>
-        The data type actually stored in the index.  Normally this is the
-	same as the column data type, but some index access methods (only
-	GIST at this writing) allow it to be different.  The
-	<literal>STORAGE</> clause must be omitted unless the index access
-	method allows a different type to be used.
-       </para>
-      </listitem>
-     </varlistentry>
-    </variablelist>
-   </para>
-  </refsect2>
-
-  <refsect2 id="R2-SQL-CREATEOPCLASS-2">
-   <refsect2info>
-    <date>2002-07-28</date>
-   </refsect2info>
-   <title>
-    Outputs
-   </title>
-   <para>
-    <variablelist>
-     <varlistentry>
-      <term><computeroutput>
-CREATE OPERATOR CLASS
-       </computeroutput></term>
-      <listitem>
-       <para>
-	Message returned if the operator class is successfully created.
-       </para>
-      </listitem>
-     </varlistentry>
-    </variablelist>
-   </para>
-  </refsect2>
+</synopsis>
  </refsynopsisdiv>
 
- <refsect1 id="R1-SQL-CREATEOPCLASS-1">
-  <refsect1info>
-   <date>2002-07-28</date>
-  </refsect1info>
-  <title>
-   Description
-  </title>
+ <refsect1>
+  <title>Description</title>
+
   <para>
-   <command>CREATE OPERATOR CLASS</command> defines a new operator class,
-   <replaceable class="parameter">name</replaceable>.
-  </para>
-  <para>
+   <command>CREATE OPERATOR CLASS</command> creates a new operator class.
    An operator class defines how a particular data type can be used with
    an index.  The operator class specifies that certain operators will fill
    particular roles or <quote>strategies</> for this data type and this
-   access method.  The operator class also specifies the support procedures to
+   index method.  The operator class also specifies the support procedures to
    be used by 
-   the index access method when the operator class is selected for an
+   the index method when the operator class is selected for an
    index column.  All the operators and functions used by an operator
    class must be defined before the operator class is created.
   </para>
 
   <para>
    If a schema name is given then the operator class is created in the
-   specified schema.  Otherwise it is created in the current schema (the one
-   at the front of the search path; see <literal>CURRENT_SCHEMA()</>).
+   specified schema.  Otherwise it is created in the current schema.
    Two operator classes in the same schema can have the same name only if they
-   are for different index access methods.
+   are for different index methods.
   </para>
+
   <para>
    The user who defines an operator class becomes its owner.  Presently,
    the creating user must be a superuser.  (This restriction is made because
@@ -217,41 +55,187 @@ CREATE OPERATOR CLASS
 
   <para>
    <command>CREATE OPERATOR CLASS</command> does not presently check
-   whether the class definition includes all the operators and functions
-   required by the index access method.  It is the user's
+   whether the operator class definition includes all the operators and functions
+   required by the index method.  It is the user's
    responsibility to define a valid operator class.
   </para>
 
   <para>
    Refer to <xref linkend="xindex"> for further information.
   </para>
-  
-  <refsect2 id="R2-SQL-CREATEOPCLASS-3">
-   <refsect2info>
-    <date>2002-07-28</date>
-   </refsect2info>
-   <title>
-    Notes
-   </title>
-   <para>
-    Refer to
-    <xref linkend="sql-dropopclass" endterm="sql-dropopclass-title">
-    to delete user-defined operator classes from a database.
-   </para>
-  </refsect2>
  </refsect1>
   
- <refsect1 id="R1-SQL-CREATEOPCLASS-2">
-  <title>
-   Usage
-  </title>
+ <refsect1>
+  <title>Parameters</title>
+
+  <variablelist>
+   <varlistentry>
+    <term><replaceable class="parameter">name</replaceable></term>
+    <listitem>
+     <para>
+      The name of the operator class to be created.  The name may be
+      schema-qualified.
+     </para>
+    </listitem>
+   </varlistentry>
+
+   <varlistentry>
+    <term><literal>DEFAULT</></term>
+    <listitem>
+     <para>
+      If present, the operator class will become the default
+      operator class for its data type.  At most one operator class
+      can be the default for a specific data type and index method.
+     </para>
+    </listitem>
+   </varlistentry>
+
+   <varlistentry>
+    <term><replaceable class="parameter">data_type</replaceable></term>
+    <listitem>
+     <para>
+      The column data type that this operator class is for.
+     </para>
+    </listitem>
+   </varlistentry>
+
+   <varlistentry>
+    <term><replaceable class="parameter">index_method</replaceable></term>
+    <listitem>
+     <para>
+      The name of the index method this operator class is for.
+     </para>
+    </listitem>
+   </varlistentry>
+
+   <varlistentry>
+    <term><replaceable class="parameter">strategy_number</replaceable></term>
+    <listitem>
+     <para>
+      The index method's strategy number for an operator
+      associated with the operator class.
+     </para>
+    </listitem>
+   </varlistentry>
+
+   <varlistentry>
+    <term><replaceable class="parameter">operator_name</replaceable></term>
+    <listitem>
+     <para>
+      The name (optionally schema-qualified) of an operator associated
+      with the operator class.
+     </para>
+    </listitem>
+   </varlistentry>
+
+   <varlistentry>
+    <term><replaceable class="parameter">op_type</replaceable></term>
+    <listitem>
+     <para>
+      The operand data type(s) of an operator, or <literal>NONE</> to
+      signify a left-unary or right-unary operator.  The operand data
+      types may be omitted in the normal case where they are the same
+      as the operator class's data type.
+     </para>
+    </listitem>
+   </varlistentry>
+
+   <varlistentry>
+    <term><literal>RECHECK</></term>
+    <listitem>
+     <para>
+      If present, the index is <quote>lossy</> for this operator, and
+      so the rows retrieved using the index must be rechecked to
+      verify that they actually satisfy the qualification clause
+      involving this operator.
+     </para>
+    </listitem>
+   </varlistentry>
+
+   <varlistentry>
+    <term><replaceable class="parameter">support_number</replaceable></term>
+    <listitem>
+     <para>
+      The index method's support procedure number for a
+      function associated with the operator class.
+     </para>
+    </listitem>
+   </varlistentry>
+
+   <varlistentry>
+    <term><replaceable class="parameter">func_name</replaceable></term>
+    <listitem>
+     <para>
+      The name (optionally schema-qualified) of a function that is an
+      index method support procedure for the operator class.
+     </para>
+    </listitem>
+   </varlistentry>
+
+   <varlistentry>
+    <term><replaceable class="parameter">argument_types</replaceable></term>
+    <listitem>
+     <para>
+      The parameter data type(s) of the function.
+     </para>
+    </listitem>
+   </varlistentry>
+
+   <varlistentry>
+    <term><replaceable class="parameter">storage_type</replaceable></term>
+    <listitem>
+     <para>
+      The data type actually stored in the index.  Normally this is
+      the same as the column data type, but some index methods
+      (only GiST at this writing) allow it to be different.  The
+      <literal>STORAGE</> clause must be omitted unless the index
+      method allows a different type to be used.
+     </para>
+    </listitem>
+   </varlistentry>
+  </variablelist>
+
+  <para>
+   The <literal>OPERATOR</>, <literal>FUNCTION</>, and <literal>STORAGE</>
+   clauses may appear in any order.
+  </para>
+ </refsect1>
+
+ <refsect1>
+  <title>Diagnostics</title>
+
+  <variablelist>
+   <varlistentry>
+    <term><computeroutput>CREATE OPERATOR CLASS</computeroutput></term>
+    <listitem>
+     <para>
+      Message returned if the operator class was successfully created.
+     </para>
+    </listitem>
+   </varlistentry>
+  </variablelist>
+ </refsect1>
+  
+ <refsect1>
+  <title>Notes</title>
+
+  <para>
+   Refer to
+   <xref linkend="sql-dropopclass" endterm="sql-dropopclass-title">
+   to delete user-defined operator classes from a database.
+  </para>
+ </refsect1>
+  
+ <refsect1>
+  <title>Examples</title>
+
   <para>
    The following example command defines a GiST index operator class
-   for data type <literal>_int4</> (array of int4).  See
+   for the data type <literal>_int4</> (array of <type>int4</type>).  See
    <filename>contrib/intarray/</> for the complete example.
   </para>
 
-  <programlisting>
+<programlisting>
 CREATE OPERATOR CLASS gist__int_ops
     DEFAULT FOR TYPE _int4 USING gist AS
         OPERATOR        3       &&,
@@ -266,34 +250,18 @@ CREATE OPERATOR CLASS gist__int_ops
         FUNCTION        5       g_int_penalty (internal, internal, internal),
         FUNCTION        6       g_int_picksplit (internal, internal),
         FUNCTION        7       g_int_same (_int4, _int4, internal);
-  </programlisting>  
-
-  <para>
-   The <literal>OPERATOR</>, <literal>FUNCTION</>, and <literal>STORAGE</>
-   clauses may appear in any order.
-  </para>
+</programlisting>  
  </refsect1>
  
- <refsect1 id="R1-SQL-CREATEOPCLASS-3">
-  <title>
-   Compatibility
-  </title>
-  
-  <refsect2 id="R2-SQL-CREATEOPCLASS-4">
-   <refsect2info>
-    <date>2002-07-28</date>
-   </refsect2info>
-   <title>
-    SQL92
-   </title>
+ <refsect1>
+  <title>Compatibility</title>
 
-   <para>
-    <command>CREATE OPERATOR CLASS</command>
-    is a <productname>PostgreSQL</productname> extension.
-    There is no <command>CREATE OPERATOR CLASS</command>
-    statement in <acronym>SQL92</acronym>.
-   </para>
-  </refsect2>
+  <para>
+   <command>CREATE OPERATOR CLASS</command> is a
+   <productname>PostgreSQL</productname> extension.  There is no
+   <command>CREATE OPERATOR CLASS</command> statement in the SQL
+   standard.
+  </para>
  </refsect1>
 </refentry>
 

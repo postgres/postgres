@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/ref/create_constraint.sgml,v 1.8 2002/05/18 15:44:47 petere Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/ref/create_constraint.sgml,v 1.9 2003/04/22 10:08:08 petere Exp $
 PostgreSQL documentation
 -->
 
@@ -8,30 +8,35 @@ PostgreSQL documentation
   <refentrytitle id="sql-createconstraint-title">CREATE CONSTRAINT TRIGGER</refentrytitle>
   <refmiscinfo>SQL - Language Statements</refmiscinfo>
  </refmeta>
+
  <refnamediv>
-  <refname>
-   CREATE CONSTRAINT TRIGGER
-  </refname>
-  <refpurpose>
-   define a new constraint trigger
-  </refpurpose>
+  <refname>CREATE CONSTRAINT TRIGGER</refname>
+  <refpurpose>define a new constraint trigger</refpurpose>
  </refnamediv>
+
  <refsynopsisdiv>
-  <refsynopsisdivinfo>
-   <date>2000-04-13</date>
-  </refsynopsisdivinfo>
-  <synopsis>
+<synopsis>
 CREATE CONSTRAINT TRIGGER <replaceable class="parameter">name</replaceable>
     AFTER <replaceable class="parameter">events</replaceable> ON
-    <replaceable class="parameter">relation</replaceable> <replaceable class="parameter">constraint</replaceable> <replaceable class="parameter">attributes</replaceable>
-    FOR EACH ROW EXECUTE PROCEDURE <replaceable class="parameter">func</replaceable> '(' <replaceable class="parameter">args</replaceable> ')'
-  </synopsis>
+    <replaceable class="parameter">table</replaceable> <replaceable class="parameter">constraint</replaceable> <replaceable class="parameter">attributes</replaceable>
+    FOR EACH ROW EXECUTE PROCEDURE <replaceable class="parameter">func</replaceable> ( <replaceable class="parameter">args</replaceable> )
+</synopsis>
+ </refsynopsisdiv>
 
-  <refsect2 id="R2-SQL-CREATECONSTRAINT-1">
-   <title>
-    Inputs
-   </title>
-   <para>
+ <refsect1>
+  <title>Description</title>
+
+  <para>
+   <command>CREATE CONSTRAINT TRIGGER</command> is used within
+   <command>CREATE TABLE</command>/<command>ALTER TABLE</command> and by
+   <application>pg_dump</application>  to  create  the  special  triggers  for
+   referential  integrity.
+   It is not intended for general use.
+  </para>
+ </refsect1>
+
+ <refsect1>
+   <title>Parameters</title>
 		
     <variablelist>
      <varlistentry>
@@ -53,10 +58,10 @@ CREATE CONSTRAINT TRIGGER <replaceable class="parameter">name</replaceable>
      </varlistentry>
 
      <varlistentry>
-      <term><replaceable class="PARAMETER">relation</replaceable></term>
+      <term><replaceable class="PARAMETER">table</replaceable></term>
       <listitem>
        <para>
-	The name (possibly schema-qualified) of the relation in which
+	The name (possibly schema-qualified) of the table in which
 	the triggering events occur.
        </para>
       </listitem>
@@ -75,7 +80,7 @@ CREATE CONSTRAINT TRIGGER <replaceable class="parameter">name</replaceable>
       <term><replaceable class="PARAMETER">attributes</replaceable></term>
       <listitem>
        <para>
-	Constraint attributes.
+	The constraint attributes.
        </para>
       </listitem>
      </varlistentry>
@@ -84,25 +89,19 @@ CREATE CONSTRAINT TRIGGER <replaceable class="parameter">name</replaceable>
       <term><replaceable class="PARAMETER">func</replaceable>(<replaceable class="PARAMETER">args</replaceable>)</term>
       <listitem>
        <para>
-	Function to call as part of the trigger processing.
+	The function to call as part of the trigger processing.
        </para>
       </listitem>
      </varlistentry>
     </variablelist>
-   </para>
-  </refsect2>
+ </refsect1>
 
-  <refsect2 id="R2-SQL-CREATECONSTRAINT-2">
-   <title>
-    Outputs
-   </title>
-   <para>
+ <refsect1>
+  <title>Diagnostics</title>
     
     <variablelist>
      <varlistentry>
-      <term><computeroutput>
-CREATE TRIGGER
-       </computeroutput></term>
+      <term><computeroutput>CREATE TRIGGER</computeroutput></term>
       <listitem>
        <para>
 	Message returned if successful.
@@ -110,24 +109,6 @@ CREATE TRIGGER
       </listitem>
      </varlistentry>
     </variablelist>
-   </para>
-  </refsect2>
- </refsynopsisdiv>
-
- <refsect1 id="R1-SQL-CREATECONSTRAINT-1">
-  <title>
-   Description
-  </title>
-  <para>
-   <command>CREATE CONSTRAINT TRIGGER</command> is used within
-   <command>CREATE/ALTER TABLE</command> and by
-   <application>pg_dump</application>  to  create  the  special  triggers  for
-   referential  integrity.
-  </para>
-
-  <para>
-   It is not intended for general use.
-  </para>
  </refsect1>
 </refentry>
 

@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/ref/create_language.sgml,v 1.31 2003/03/25 16:15:39 petere Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/ref/create_language.sgml,v 1.32 2003/04/22 10:08:08 petere Exp $
 PostgreSQL documentation
 -->
 
@@ -60,7 +60,7 @@ CREATE [ TRUSTED ] [ PROCEDURAL ] LANGUAGE <replaceable class="parameter">langna
        <literal>TRUSTED</literal> specifies that the call handler for
        the language is safe, that is, it does not offer an
        unprivileged user any functionality to bypass access
-       restrictions. If this keyword is omitted when registering the
+       restrictions. If this key word is omitted when registering the
        language, only users with the
        <productname>PostgreSQL</productname> superuser privilege can
        use this language to create new functions.
@@ -84,8 +84,8 @@ CREATE [ TRUSTED ] [ PROCEDURAL ] LANGUAGE <replaceable class="parameter">langna
      <listitem>
       <para>
        The name of the new procedural language.  The language name is
-       case insensitive. A procedural language cannot override one of
-       the built-in languages of <productname>PostgreSQL</productname>.
+       case insensitive. The name must be unique among the languages
+       in the database.
       </para>
 
       <para>
@@ -146,45 +146,16 @@ CREATE [ TRUSTED ] [ PROCEDURAL ] LANGUAGE <replaceable class="parameter">langna
  <refsect1 id="sql-createlanguage-diagnostics">
   <title>Diagnostics</title>
 
-  <msgset>
-   <msgentry>
-    <msg>
-     <msgmain>
-      <msgtext>
-<screen>
-CREATE LANGUAGE
-</screen>
-      </msgtext>
-     </msgmain>
-    </msg>
- 
-    <msgexplan>
+  <variablelist>
+   <varlistentry>
+    <term><computeroutput>CREATE LANGUAGE</computeroutput></term>
+    <listitem>
      <para>
-      This message is returned if the language is successfully
-      created.
+      Message returned if the language was successfully created.
      </para>
-    </msgexplan>
-   </msgentry>
-
-   <msgentry>
-    <msg>
-     <msgmain>
-      <msgtext>
-<screen>
-ERROR:  PL handler function <replaceable class="parameter">funcname</replaceable>() doesn't exist
-</screen>
-      </msgtext>
-     </msgmain>
-    </msg>
-
-    <msgexplan>
-     <para>
-      This error is returned if the function <replaceable
-      class="parameter">funcname</replaceable>() is not found.
-     </para>
-    </msgexplan>
-   </msgentry>
-  </msgset>
+    </listitem>
+   </varlistentry>
+  </variablelist>
  </refsect1>
 
  <refsect1 id="sql-createlanguage-notes">
@@ -194,7 +165,7 @@ ERROR:  PL handler function <replaceable class="parameter">funcname</replaceable
    This command normally should not be executed directly by users.
    For the procedural languages supplied in the
    <productname>PostgreSQL</productname> distribution, the <xref
-   linkend="app-createlang"> script should be used, which will also
+   linkend="app-createlang"> program should be used, which will also
    install the correct call handler.  (<command>createlang</command>
    will call <command>CREATE LANGUAGE</command> internally.)
   </para>
@@ -205,7 +176,7 @@ ERROR:  PL handler function <replaceable class="parameter">funcname</replaceable
    type <type>opaque</>, rather than <type>language_handler</>.
    To support loading 
    of old dump files, <command>CREATE LANGUAGE</> will accept a function
-   declared as returning <type>opaque</>, but it will issue a NOTICE and
+   declared as returning <type>opaque</>, but it will issue a notice and
    change the function's declared return type to <type>language_handler</>.
   </para>
 
@@ -216,35 +187,19 @@ ERROR:  PL handler function <replaceable class="parameter">funcname</replaceable
 
   <para>
    Use <xref linkend="sql-droplanguage" endterm="sql-droplanguage-title">, or better yet the <xref
-   linkend="app-droplang"> script, to drop procedural languages.
+   linkend="app-droplang"> program, to drop procedural languages.
   </para>
 
   <para>
-   The system catalog <classname>pg_language</classname> records
-   information about the currently installed procedural languages.
-
-<screen>
-        Table "pg_language"
-   Attribute   |   Type    | Modifier
----------------+-----------+----------
- lanname       | name      |
- lanispl       | boolean   |
- lanpltrusted  | boolean   |
- lanplcallfoid | oid       |
- lanvalidator  | oid       |
- lanacl        | aclitem[] |
-
-   lanname   | lanispl | lanpltrusted | lanplcallfoid | lanvalidator | lanacl
--------------+---------+--------------+---------------+--------------+--------
- internal    | f       | f            |             0 |         2246 |
- c           | f       | f            |             0 |         2247 |
- sql         | f       | t            |             0 |         2248 | {=U}
-</screen>
+   The system catalog <classname>pg_language</classname> (see <xref
+   linkend="catalog-pg-language">) records information about the
+   currently installed languages.  Also <command>createlang</command>
+   has an option to list the installed languages.
   </para>
 
   <para>
-   At present, with the exception of the permissions, the definition 
-   of a procedural language cannot be changed once it has been created.
+   The definition of a procedural language cannot be changed once it
+   has been created, with the exception of the privileges.
   </para>
 
   <para>
@@ -262,7 +217,7 @@ ERROR:  PL handler function <replaceable class="parameter">funcname</replaceable
    The following two commands executed in sequence will register a new
    procedural language and the associated call handler.
 <programlisting>
-CREATE FUNCTION plsample_call_handler () RETURNS language_handler
+CREATE FUNCTION plsample_call_handler() RETURNS language_handler
     AS '$libdir/plsample'
     LANGUAGE C;
 CREATE LANGUAGE plsample
@@ -277,15 +232,6 @@ CREATE LANGUAGE plsample
   <para>
    <command>CREATE LANGUAGE</command> is a
    <productname>PostgreSQL</productname> extension.
-  </para>
- </refsect1>
-
- <refsect1>
-  <title>History</title>
-
-  <para>
-   The <command>CREATE LANGUAGE</command> command first appeared in
-   <productname>PostgreSQL</productname> 6.3.
   </para>
  </refsect1>
 

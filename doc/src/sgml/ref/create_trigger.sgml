@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/ref/create_trigger.sgml,v 1.33 2003/03/25 16:15:39 petere Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/ref/create_trigger.sgml,v 1.34 2003/04/22 10:08:08 petere Exp $
 PostgreSQL documentation
 -->
 
@@ -8,186 +8,57 @@ PostgreSQL documentation
   <refentrytitle id="SQL-CREATETRIGGER-TITLE">CREATE TRIGGER</refentrytitle>
   <refmiscinfo>SQL - Language Statements</refmiscinfo>
  </refmeta>
+
  <refnamediv>
-  <refname>
-   CREATE TRIGGER
-  </refname>
-  <refpurpose>
-   define a new trigger
-  </refpurpose>
+  <refname>CREATE TRIGGER</refname>
+  <refpurpose>define a new trigger</refpurpose>
  </refnamediv>
+
  <refsynopsisdiv>
-  <refsynopsisdivinfo>
-   <date>2000-03-25</date>
-  </refsynopsisdivinfo>
-  <synopsis>
+<synopsis>
 CREATE TRIGGER <replaceable class="PARAMETER">name</replaceable> { BEFORE | AFTER } { <replaceable class="PARAMETER">event</replaceable> [ OR ... ] }
     ON <replaceable class="PARAMETER">table</replaceable> [ FOR [ EACH ] { ROW | STATEMENT } ]
     EXECUTE PROCEDURE <replaceable class="PARAMETER">func</replaceable> ( <replaceable class="PARAMETER">arguments</replaceable> )
-  </synopsis>
-  
-  <refsect2 id="R2-SQL-CREATETRIGGER-1">
-   <refsect2info>
-    <date>1998-09-21</date>
-   </refsect2info>
-   <title>
-    Inputs
-   </title>
-   <para>
-
-    <variablelist>
-     <varlistentry>
-      <term><replaceable class="parameter">name</replaceable></term>
-      <listitem>
-       <para>
-	The name to give the new trigger.  This must be distinct from the name
-	of any other trigger for the same table.
-       </para>
-      </listitem>
-     </varlistentry>
-
-     <varlistentry>
-      <term>BEFORE</term>
-      <term>AFTER</term>
-      <listitem>
-       <para>
-		Determines whether the function is called before or after the
-		event.
-       </para>
-      </listitem>
-     </varlistentry>
-
-     <varlistentry>
-      <term><replaceable class="parameter">event</replaceable></term>
-      <listitem>
-       <para>
-		One of <command>INSERT</command>, <command>DELETE</command> or
-		<command>UPDATE</command>; this specifies the event that will
-		fire the trigger. Multiple events can be specified using
-		<literal>OR</literal>.
-       </para>
-      </listitem>
-     </varlistentry>
-     <varlistentry>
-      <term><replaceable class="parameter">table</replaceable></term>
-      <listitem>
-       <para>
-		The name (optionally schema-qualified) of the table the
-		trigger is for.
-       </para>
-      </listitem>
-     </varlistentry>
-
-	 <varlistentry>
-	  <term>FOR EACH ROW</term>
-	  <term>FOR EACH STATEMENT</term>
-
-	  <listitem>
-	   <para>
-		This specifies whether the trigger procedure should be fired
-		once for every row affected by the trigger event, or just once
-		per SQL statement. If neither is specified, <literal>FOR EACH
-		STATEMENT</literal> is the default.
-	   </para>
-	  </listitem>
-	 </varlistentry>
-
-     <varlistentry>
-      <term><replaceable class="parameter">func</replaceable></term>
-      <listitem>
-       <para>
-	A user-supplied function that is declared as taking no arguments
-	and returning type <literal>trigger</>.
-       </para>
-      </listitem>
-     </varlistentry>
-     <varlistentry>
-      <term><replaceable class="parameter">arguments</replaceable></term>
-      <listitem>
-       <para>
-    An optional comma-separated list of arguments to be provided to
-	the function when the trigger is executed, along with the standard
-	trigger data such as old and new tuple contents.  The arguments
-	are literal string constants.  Simple names and numeric constants
-	may be written here too, but they will all be converted to
-	strings. Note that these arguments are not provided as normal
-	function parameters (since a trigger procedure must be declared to
-	take zero parameters), but are instead accessed through the
-	<literal>TG_ARGV</literal> array.
-       </para>
-      </listitem>
-     </varlistentry>
-    </variablelist>
-   </para>
-  </refsect2>
-
-  <refsect2 id="R2-SQL-CREATETRIGGER-2">
-   <refsect2info>
-    <date>1998-09-21</date>
-   </refsect2info>
-   <title>
-    Outputs
-   </title>
-   <para>
-
-    <variablelist>
-     <varlistentry>
-      <term><computeroutput>
-CREATE TRIGGER
-       </computeroutput></term>
-      <listitem>
-       <para>
-	This message is returned if the trigger is successfully created.
-       </para>
-      </listitem>
-     </varlistentry>
-    </variablelist>
-   </para>
-  </refsect2>
+</synopsis>
  </refsynopsisdiv>
  
- <refsect1 id="R1-SQL-CREATETRIGGER-1">
-  <refsect1info>
-   <date>1998-09-21</date>
-  </refsect1info>
-  <title>
-   Description
-  </title>
+ <refsect1>
+  <title>Description</title>
 
   <para>
-   <command>CREATE TRIGGER</command> will enter a new trigger into the current
-   database.  The trigger will be associated with the relation
-   <replaceable class="parameter">table</replaceable> and will execute
-   the specified function <replaceable class="parameter">func</replaceable>.
+   <command>CREATE TRIGGER</command> creates a new trigger.  The
+   trigger will be associated with the specified table and will
+   execute the specified function <replaceable
+   class="parameter">func</replaceable> when certain events occur.
   </para>
 
   <para>
-   The trigger can be specified to fire either before BEFORE the
-   operation is attempted on a tuple (before constraints are checked and
-   the <command>INSERT</command>, <command>UPDATE</command> or
-   <command>DELETE</command> is attempted) or AFTER the operation has
-   been attempted (e.g., after constraints are checked and the
-   <command>INSERT</command>, <command>UPDATE</command> or
-   <command>DELETE</command> has completed). If the trigger fires before
-   the event, the trigger may skip the operation for the current tuple,
-   or change the tuple being inserted (for <command>INSERT</command> and
-   <command>UPDATE</command> operations only). If the trigger fires
-   after the event, all changes, including the last insertion, update,
-   or deletion, are <quote>visible</quote> to the trigger.
+   The trigger can be specified to fire either before before the
+   operation is attempted on a row (before constraints are checked and
+   the <command>INSERT</command>, <command>UPDATE</command>, or
+   <command>DELETE</command> is attempted) or after the operation has
+   completed (after constraints are checked and the
+   <command>INSERT</command>, <command>UPDATE</command>, or
+   <command>DELETE</command> has completed). If the trigger fires
+   before the event, the trigger may skip the operation for the
+   current row, or change the row being inserted (for
+   <command>INSERT</command> and <command>UPDATE</command> operations
+   only). If the trigger fires after the event, all changes, including
+   the last insertion, update, or deletion, are <quote>visible</quote>
+   to the trigger.
   </para>
 
   <para>
-   A trigger that executes <literal>FOR EACH ROW</literal> of the
-   specified operation is called once for every row that the operation
-   modifies. For example, a <command>DELETE</command> that affects 10
-   rows will cause any <literal>ON DELETE</literal> triggers on the
-   target relation to be called 10 separate times, once for each
-   deleted tuple. In contrast, a trigger that executes <literal>FOR
-   EACH STATEMENT</literal> of the specified operation only executes
-   once for any given operation, regardless of how many rows it
-   modifies (in particular, an operation that modifies zero rows will
-   still result in the execution of any applicable <literal>FOR EACH
-   STATEMENT</literal> triggers).
+   A trigger that is marked <literal>FOR EACH ROW</literal> is called
+   once for every row that the operation modifies. For example, a
+   <command>DELETE</command> that affects 10 rows will cause any
+   <literal>ON DELETE</literal> triggers on the target relation to be
+   called 10 separate times, once for each deleted row. In contrast, a
+   trigger that is marked <literal>FOR EACH STATEMENT</literal> only
+   executes once for any given operation, regardless of how many rows
+   it modifies (in particular, an operation that modifies zero rows
+   will still result in the execution of any applicable <literal>FOR
+   EACH STATEMENT</literal> triggers).
   </para>
 
   <para>
@@ -202,8 +73,113 @@ CREATE TRIGGER
   </para>
 
   <para>
-   Refer to <xref linkend="server-programming"> for more information.
+   Refer to <xref linkend="triggers"> for more information about triggers.
   </para>
+ </refsect1>
+  
+ <refsect1>
+  <title>Parameters</title>
+
+  <variablelist>
+   <varlistentry>
+    <term><replaceable class="parameter">name</replaceable></term>
+    <listitem>
+     <para>
+      The name to give the new trigger.  This must be distinct from
+      the name of any other trigger for the same table.
+     </para>
+    </listitem>
+   </varlistentry>
+
+   <varlistentry>
+    <term><literal>BEFORE</literal></term>
+    <term><literal>AFTER</literal></term>
+    <listitem>
+     <para>
+      Determines whether the function is called before or after the
+      event.
+     </para>
+    </listitem>
+   </varlistentry>
+
+   <varlistentry>
+    <term><replaceable class="parameter">event</replaceable></term>
+    <listitem>
+     <para>
+      One of <command>INSERT</command>, <command>UPDATE</command>, or
+      <command>DELETE</command>; this specifies the event that will
+      fire the trigger. Multiple events can be specified using
+      <literal>OR</literal>.
+     </para>
+    </listitem>
+   </varlistentry>
+
+   <varlistentry>
+    <term><replaceable class="parameter">table</replaceable></term>
+    <listitem>
+     <para>
+      The name (optionally schema-qualified) of the table the trigger
+      is for.
+     </para>
+    </listitem>
+   </varlistentry>
+
+   <varlistentry>
+    <term><literal>FOR EACH ROW</literal></term>
+    <term><literal>FOR EACH STATEMENT</literal></term>
+
+    <listitem>
+     <para>
+      This specifies whether the trigger procedure should be fired
+      once for every row affected by the trigger event, or just once
+      per SQL statement. If neither is specified, <literal>FOR EACH
+      STATEMENT</literal> is the default.
+     </para>
+    </listitem>
+   </varlistentry>
+
+   <varlistentry>
+    <term><replaceable class="parameter">func</replaceable></term>
+    <listitem>
+     <para>
+      A user-supplied function that is declared as taking no arguments
+      and returning type <literal>trigger</>, which is executed when
+      the trigger fires.
+     </para>
+    </listitem>
+   </varlistentry>
+
+   <varlistentry>
+    <term><replaceable class="parameter">arguments</replaceable></term>
+    <listitem>
+     <para>
+      An optional comma-separated list of arguments to be provided to
+      the function when the trigger is executed.  The arguments are
+      literal string constants.  Simple names and numeric constants
+      may be written here, too, but they will all be converted to
+      strings.  Please check the description of the implementation
+      language of the trigger function about how the trigger arguments
+      are accessible within the function; it may be different from
+      normal function arguments.
+     </para>
+    </listitem>
+   </varlistentry>
+  </variablelist>
+ </refsect1>
+
+ <refsect1>
+  <title>Diagnostics</title>
+
+  <variablelist>
+   <varlistentry>
+    <term><computeroutput>CREATE TRIGGER</computeroutput></term>
+    <listitem>
+     <para>
+      Message returned if the trigger was successfully created.
+     </para>
+    </listitem>
+   </varlistentry>
+  </variablelist>
  </refsect1>
 
  <refsect1 id="SQL-CREATETRIGGER-notes">
@@ -219,13 +195,13 @@ CREATE TRIGGER
    necessary to declare trigger functions as returning the placeholder
    type <type>opaque</>, rather than <type>trigger</>.  To support loading
    of old dump files, <command>CREATE TRIGGER</> will accept a function
-   declared as returning <type>opaque</>, but it will issue a NOTICE and
+   declared as returning <type>opaque</>, but it will issue a notice and
    change the function's declared return type to <type>trigger</>.
   </para>
 
   <para>
-   Refer to the <xref linkend="sql-droptrigger" endterm="sql-droptrigger-title"> command for
-   information on how to remove triggers.
+   Use <xref linkend="sql-droptrigger"
+   endterm="sql-droptrigger-title"> to remove a trigger.
   </para>
  </refsect1>
 
@@ -233,111 +209,64 @@ CREATE TRIGGER
   <title>Examples</title>
 
   <para>
-   Check if the specified distributor code exists in the distributors
-   table before appending or updating a row in the table films:
-
-<programlisting>
-CREATE TRIGGER if_dist_exists
-    BEFORE INSERT OR UPDATE ON films FOR EACH ROW
-    EXECUTE PROCEDURE check_primary_key ('did', 'distributors', 'did');
-</programlisting>
-  </para>
-
-  <para>
-   Before cancelling a distributor or updating its code, remove every
-   reference to the table films:
-<programlisting>
-CREATE TRIGGER if_film_exists 
-    BEFORE DELETE OR UPDATE ON distributors FOR EACH ROW
-    EXECUTE PROCEDURE check_foreign_key (1, 'CASCADE', 'did', 'films', 'did');
-</programlisting>
-  </para>
-
-  <para>
-   The second example can also be done by using a foreign key,
-   constraint as in:
-
-<programlisting>
-CREATE TABLE distributors (
-    did      DECIMAL(3),
-    name     VARCHAR(40),
-    CONSTRAINT if_film_exists
-    FOREIGN KEY(did) REFERENCES films
-    ON UPDATE CASCADE ON DELETE CASCADE  
-);
-</programlisting>
+   <xref linkend="trigger-example"> contains a complete example.
   </para>
  </refsect1>
 
  <refsect1 id="SQL-CREATETRIGGER-compatibility">
   <title>Compatibility</title>
   
-  <variablelist>
-   <varlistentry>
-    <term>SQL92</term>
+  <para>
+   The <command>CREATE TRIGGER</command> statement in
+   <productname>PostgreSQL</productname> implements a subset of the
+   SQL99 standard.  (There are no provisions for triggers in SQL92.)
+   The following functionality is missing:
+
+   <itemizedlist>
     <listitem>
      <para>
-      There is no <command>CREATE TRIGGER</command> statement in <acronym>SQL92</acronym>.
+      SQL99 allows triggers to fire on updates to specific columns
+      (e.g., <literal>AFTER UPDATE OF col1, col2</literal>).
      </para>
     </listitem>
-   </varlistentry>
 
-   <varlistentry>
-    <term>SQL99</term>
     <listitem>
      <para>
-      The <command>CREATE TRIGGER</command> statement in
-      <productname>PostgreSQL</productname> implements a subset of the
-      SQL99 standard.  The following functionality is missing:
-      <itemizedlist>
-       <listitem>
-        <para>
-         SQL99 allows triggers to fire on updates to specific columns
-         (e.g., <literal>AFTER UPDATE OF col1, col2</literal>).
-        </para>
-       </listitem>
-
-       <listitem>
-        <para>
-         SQL99 allows you to define aliases for the <quote>old</quote>
-         and <quote>new</quote> rows or tables for use in the definition
-         of the triggered action (e.g., <literal>CREATE TRIGGER ... ON
-         tablename REFERENCING OLD ROW AS somename NEW ROW AS
-         othername ...</literal>).  Since
-         <productname>PostgreSQL</productname> allows trigger
-         procedures to be written in any number of user-defined
-         languages, access to the data is handled in a
-         language-specific way.
-        </para>
-       </listitem>
-
-       <listitem>
-        <para>
-         <productname>PostgreSQL</productname> only allows the
-         execution of a stored procedure for the triggered action.
-         SQL99 allows the execution of a number of other SQL commands,
-         such as <command>CREATE TABLE</command> as triggered action.
-         This limitation is not hard to work around by creating a
-         stored procedure that executes these commands.
-        </para>
-       </listitem>
-      </itemizedlist>
-     </para>
-
-     <para>
-      SQL99 specifies that multiple triggers should be fired in
-      time-of-creation order.  <productname>PostgreSQL</productname>
-      uses name order, which was judged more convenient to work with.
-     </para>
-
-     <para>
-      The ability to specify multiple actions for a single trigger
-      using <literal>OR</literal> is a <productname>PostgreSQL</>
-      extension of the SQL standard.
+      SQL99 allows you to define aliases for the <quote>old</quote>
+      and <quote>new</quote> rows or tables for use in the definition
+      of the triggered action (e.g., <literal>CREATE TRIGGER ... ON
+      tablename REFERENCING OLD ROW AS somename NEW ROW AS othername
+      ...</literal>).  Since <productname>PostgreSQL</productname>
+      allows trigger procedures to be written in any number of
+      user-defined languages, access to the data is handled in a
+      language-specific way.
      </para>
     </listitem>
-   </varlistentry>
-  </variablelist>
+
+    <listitem>
+     <para>
+      <productname>PostgreSQL</productname> only allows the execution
+      of a user-defined function for the triggered action.  SQL99
+      allows the execution of a number of other SQL commands, such as
+      <command>CREATE TABLE</command> as triggered action.  This
+      limitation is not hard to work around by creating a user-defined
+      function that executes the desired commands.
+     </para>
+    </listitem>
+   </itemizedlist>
+  </para>
+
+  <para>
+   SQL99 specifies that multiple triggers should be fired in
+   time-of-creation order.  <productname>PostgreSQL</productname> uses
+   name order, which was judged more convenient to work with.
+  </para>
+
+  <para>
+   The ability to specify multiple actions for a single trigger using
+   <literal>OR</literal> is a <productname>PostgreSQL</> extension of
+   the SQL standard.
+  </para>
  </refsect1>
 
  <refsect1>

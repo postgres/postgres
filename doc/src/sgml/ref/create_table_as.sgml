@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/ref/create_table_as.sgml,v 1.11 2002/11/21 23:34:43 petere Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/ref/create_table_as.sgml,v 1.12 2003/04/22 10:08:08 petere Exp $
 PostgreSQL documentation
 -->
 
@@ -18,16 +18,12 @@ PostgreSQL documentation
 <synopsis>
 CREATE [ [ LOCAL ] { TEMPORARY | TEMP } ] TABLE <replaceable>table_name</replaceable> [ (<replaceable>column_name</replaceable> [, ...] ) ]
     AS <replaceable>query</replaceable>
-  </synopsis>
+</synopsis>
  </refsynopsisdiv>
   
  <refsect1>
-  <refsect1info>
-   <date>2001-03-20</date>
-  </refsect1info>
-  <title>
-   Description
-  </title>
+  <title>Description</title>
+
   <para>
    <command>CREATE TABLE AS</command> creates a table and fills it
    with data computed by a <command>SELECT</command> command.  The
@@ -75,10 +71,9 @@ CREATE [ [ LOCAL ] { TEMPORARY | TEMP } ] TABLE <replaceable>table_name</replace
     <term><replaceable>column_name</replaceable></term>
     <listitem>
      <para>
-      The name of a column in the new table. Multiple column names can
-      be specified using a comma-delimited list of column names.  If
-      column names are not provided, they are taken from the output
-      column names of the query.
+      The name of a column in the new table.  If column names are not
+      provided, they are taken from the output column names of the
+      query.
      </para>
     </listitem>
    </varlistentry>
@@ -124,18 +119,9 @@ CREATE [ [ LOCAL ] { TEMPORARY | TEMP } ] TABLE <replaceable>table_name</replace
   <para>
    This command is modeled after an <productname>Oracle</productname>
    feature.  There is no command with equivalent functionality in
-   SQL92 or SQL99.  However, a combination of <literal>CREATE
+   the SQL standard.  However, a combination of <literal>CREATE
    TABLE</literal> and <literal>INSERT ... SELECT</literal> can
    accomplish the same thing with little more effort.
-  </para>
- </refsect1>
-
- <refsect1>
-  <title>History</title>
-
-  <para>
-   The <command>CREATE TABLE AS</command> command has been available
-   since <productname>PostgreSQL</productname> 6.3.
   </para>
  </refsect1>
 

@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/ref/create_group.sgml,v 1.10 2003/03/25 16:15:39 petere Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/ref/create_group.sgml,v 1.11 2003/04/22 10:08:08 petere Exp $
 PostgreSQL documentation
 -->
 
@@ -8,35 +8,41 @@ PostgreSQL documentation
   <refentrytitle id="sql-creategroup-title">CREATE GROUP</refentrytitle>
   <refmiscinfo>SQL - Language Statements</refmiscinfo>
  </refmeta>
+
  <refnamediv>
-  <refname>
-   CREATE GROUP
-  </refname>
-  <refpurpose>
-   define a new user group
-  </refpurpose>
+  <refname>CREATE GROUP</refname>
+  <refpurpose>define a new user group</refpurpose>
  </refnamediv>
+
  <refsynopsisdiv>
-  <refsynopsisdivinfo>
-   <date>2000-01-14</date>
-  </refsynopsisdivinfo>
-  <synopsis>
+<synopsis>
 CREATE GROUP <replaceable class="PARAMETER">name</replaceable> [ [ WITH ] <replaceable class="PARAMETER">option</replaceable> [ ... ] ]
 
 where <replaceable class="PARAMETER">option</replaceable> can be:
 
      SYSID <replaceable class="PARAMETER">gid</replaceable>
    | USER  <replaceable class="PARAMETER">username</replaceable> [, ...]
-  </synopsis>
+</synopsis>
+ </refsynopsisdiv>
+
+ <refsect1>
+  <title>Description</title>
+
+  <para>
+   <command>CREATE GROUP</command> will create a new group in the
+   database cluster.  You must be a database
+   superuser to use this command.
+  </para>
+
+  <para>
+   Use <xref linkend="SQL-ALTERGROUP" endterm="SQL-ALTERGROUP-title">
+   to change a group's membership, and <xref linkend="SQL-DROPGROUP"
+   endterm="SQL-DROPGROUP-title"> to remove a group.
+  </para>  
+ </refsect1> 
   
-  <refsect2 id="R2-SQL-CREATEGROUP-1">
-   <refsect2info>
-    <date>2000-01-14</date>
-   </refsect2info>
-   <title>
-    Inputs
-   </title>
-   <para>
+ <refsect1>
+  <title>Parameters</title>
 
     <variablelist>
      <varlistentry>
@@ -53,11 +59,11 @@ where <replaceable class="PARAMETER">option</replaceable> can be:
       <listitem>
        <para>
         The <literal>SYSID</literal> clause can be used to choose
-        the <productname>PostgreSQL</productname> group id of the new
+        the <productname>PostgreSQL</productname> group ID of the new
         group. It is not necessary to do so, however.
        </para>
        <para>
-        If this is not specified, the highest assigned group id plus one,
+        If this is not specified, the highest assigned group ID plus one,
         starting at 1, will be used as default.
        </para>
       </listitem>
@@ -73,54 +79,26 @@ where <replaceable class="PARAMETER">option</replaceable> can be:
      </varlistentry>
 
     </variablelist>
-   </para>
-  </refsect2>
+ </refsect1>
   
-  <refsect2 id="R2-SQL-CREATEGROUP-2">
-   <refsect2info>
-    <date>2000-01-14</date>
-   </refsect2info>
-   <title>
-    Outputs
-   </title>
+ <refsect1>
+  <title>Diagnostics</title>
 
-   <para>
     <variablelist>
      <varlistentry>
       <term><computeroutput>CREATE GROUP</computeroutput></term>
       <listitem>
        <para>
-	Message returned if the command completes successfully.
+	Message returned if the group was successfully created.
        </para>
       </listitem>
      </varlistentry>
     </variablelist>
-   </para>
-  </refsect2>
- </refsynopsisdiv>
+ </refsect1>
 
- <refsect1 id="R1-SQL-CREATEGROUP-1">
-  <refsect1info>
-   <date>2000-01-14</date>
-  </refsect1info>
-  <title>
-   Description
-  </title>
-  <para>
-   <command>CREATE GROUP</command> will create a new group in the
-   database installation.  You must be a database
-   superuser to use this command.
-  </para>
-  <para>
-   Use <xref linkend="SQL-ALTERGROUP" endterm="SQL-ALTERGROUP-title">
-   to change a group's membership, and <xref linkend="SQL-DROPGROUP"
-   endterm="SQL-DROPGROUP-title"> to remove a group.
-  </para>  
- </refsect1> 
- <refsect1 id="R1-SQL-CREATEGROUP-2">
-  <title>
-   Usage
-  </title>
+ <refsect1>
+  <title>Examples</title>
+
   <para>
    Create an empty group:
 <programlisting>
@@ -136,24 +114,13 @@ CREATE GROUP marketing WITH USER jonathan, david;
   </para>
  </refsect1>
  
- <refsect1 id="R1-SQL-CREATEGROUP-3">
-  <title>
-   Compatibility
-  </title>
+ <refsect1>
+  <title>Compatibility</title>
   
-  <refsect2 id="R2-SQL-CREATEGROUP-4">
-   <refsect2info>
-    <date>2000-01-14</date>
-   </refsect2info>
-   <title>
-    SQL92
-   </title>
-
-   <para>
-    There is no <command>CREATE GROUP</command> statement in SQL92.
-    Roles are similar in concept to groups.
-   </para>
-  </refsect2>
+  <para>
+   There is no <command>CREATE GROUP</command> statement in the SQL
+   standard.  Roles are similar in concept to groups.
+  </para>
  </refsect1>
 </refentry>
 

@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/ref/create_user.sgml,v 1.25 2003/03/25 16:15:39 petere Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/ref/create_user.sgml,v 1.26 2003/04/22 10:08:08 petere Exp $
 PostgreSQL documentation
 -->
 
@@ -33,16 +33,17 @@ where <replaceable class="PARAMETER">option</replaceable> can be:
   <title>Description</title>
 
   <para>
-   <command>CREATE USER</command> will add a new user to an instance
-   of <productname>PostgreSQL</productname>. Refer to <xref linkend="user-manag">
-   for information about managing users and authentication.  You must
-   be a database superuser to use this command.
+   <command>CREATE USER</command> adds a new user to a
+   <productname>PostgreSQL</productname> database cluster.  Refer to
+   <xref linkend="user-manag"> and <xref
+   linkend="client-authentication"> for information about managing
+   users and authentication.  You must be a database superuser to use
+   this command.
   </para>
+ </refsect1>
 
-  <refsect2>
-   <title>Parameters</title>
-
-   <para>
+ <refsect1>
+  <title>Parameters</title>
 
     <variablelist>
      <varlistentry>
@@ -60,9 +61,9 @@ where <replaceable class="PARAMETER">option</replaceable> can be:
        <para>
         The <literal>SYSID</literal> clause can be used to choose the
         <productname>PostgreSQL</productname> user ID of the user that
-        is being created. It is not at all necessary that those match
-        the Unix user IDs, but some people choose to keep the numbers
-        the same.
+        is being created. This is not normally not necessary, but may
+        be useful if you need to recreate the owner of an orphaned
+        object.
        </para>
        <para>
         If this is not specified, the highest assigned user ID plus one
@@ -76,10 +77,11 @@ where <replaceable class="PARAMETER">option</replaceable> can be:
       <listitem>
        <para>
         Sets the user's password. If you do not plan to use password
-        authentication you can omit this option, but the user
-        won't be able to connect to a password-authenticated server.
-	The password can be set or changed later, using
-	<xref linkend="SQL-ALTERUSER" endterm="SQL-ALTERUSER-title">.
+        authentication you can omit this option, but then the user
+        won't be able to connect if you decide to switch to password
+        authentication.  The password can be set or changed later,
+        using <xref linkend="SQL-ALTERUSER"
+        endterm="SQL-ALTERUSER-title">.
        </para>
       </listitem>
      </varlistentry>
@@ -89,23 +91,22 @@ where <replaceable class="PARAMETER">option</replaceable> can be:
       <term><literal>UNENCRYPTED</></term>
       <listitem>
        <para>
-	These keywords control whether the password is stored
-	encrypted in <literal>pg_shadow</>.  (If neither is specified,
-	the default behavior is determined by the
-	<varname>PASSWORD_ENCRYPTION</varname> server parameter.)  If
-	the presented string is already in MD5-encrypted format, then
-	it is stored as-is, regardless of whether
-	<literal>ENCRYPTED</> or <literal>UNENCRYPTED</> is specified.
-	This allows reloading of encrypted passwords during
-	dump/restore.
+	These key words control whether the password is stored
+	encrypted in the system catalogs.  (If neither is specified,
+	the default behavior is determined by the configuration
+	parameter <varname>password_encryption</varname>.)  If the
+	presented password string is already in MD5-encrypted format,
+	then it is stored encrypted as-is, regardless of whether
+	<literal>ENCRYPTED</> or <literal>UNENCRYPTED</> is specified
+	(since the system cannot decrypt the specified encrypted
+	password string).  This allows reloading of encrypted
+	passwords during dump/restore.
        </para>
 
        <para>
-        See <xref linkend="client-authentication">
-        for details on how to set up authentication mechanisms.  Note
-        that older clients may lack support for the MD5 authentication
-        mechanism that is needed to work with passwords that are
-        stored encrypted.
+        Note that older clients may lack support for the MD5
+        authentication mechanism that is needed to work with passwords
+        that are stored encrypted.
        </para>
       </listitem>
      </varlistentry>
@@ -160,26 +161,21 @@ where <replaceable class="PARAMETER">option</replaceable> can be:
       </listitem>
      </varlistentry>
     </variablelist>
-   </para>
-  </refsect2>
-
  </refsect1> 
 
  <refsect1>
   <title>Diagnostics</title>
 
-  <para>
    <variablelist>
     <varlistentry>
      <term><computeroutput>CREATE USER</computeroutput></term>
      <listitem>
       <para>
-       Message returned if the command completes successfully.
+       Message returned if the user account was successfully created.
       </para>
      </listitem>
     </varlistentry>
    </variablelist>
-  </para>
  </refsect1>
 
  <refsect1>
@@ -191,9 +187,12 @@ where <replaceable class="PARAMETER">option</replaceable> can be:
    endterm="SQL-DROPUSER-title"> to remove a user.  Use <xref
    linkend="SQL-ALTERGROUP" endterm="SQL-ALTERGROUP-title"> to add the
    user to groups or remove the user from groups.
+  </para>
+
+  <para>
    <productname>PostgreSQL</productname> includes a program <xref
    linkend="APP-CREATEUSER" endterm="APP-CREATEUSER-title"> that has
-   the same functionality as this command (in fact, it calls this
+   the same functionality as <command>CREATE USER</command> (in fact, it calls this
    command) but can be run from the command shell.
   </para>
  </refsect1>
@@ -216,12 +215,12 @@ CREATE USER davide WITH PASSWORD 'jw8s0F4';
   </para>
 
   <para>
-   Create a user with a password, whose account is valid until the end of 2001.
-   Note that after one second has ticked in 2002, the account is not
-   valid:
+   Create a user with a password that is valid until the end of 2004.
+   After one second has ticked in 2005, the password is no longer
+   valid.
 
 <programlisting>
-CREATE USER miriam WITH PASSWORD 'jw8s0F4' VALID UNTIL 'Jan 1 2002';
+CREATE USER miriam WITH PASSWORD 'jw8s0F4' VALID UNTIL '2005-01-01';
 </programlisting>
   </para>
 

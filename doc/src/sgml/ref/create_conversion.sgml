@@ -1,4 +1,4 @@
-<!-- $Header: /cvsroot/pgsql/doc/src/sgml/ref/create_conversion.sgml,v 1.7 2003/03/25 16:15:39 petere Exp $ -->
+<!-- $Header: /cvsroot/pgsql/doc/src/sgml/ref/create_conversion.sgml,v 1.8 2003/04/22 10:08:08 petere Exp $ -->
 
 <refentry id="SQL-CREATECONVERSION">
  <refmeta>
@@ -23,21 +23,24 @@ CREATE [DEFAULT] CONVERSION <replaceable>conversion_name</replaceable>
 
   <para>
    <command>CREATE CONVERSION</command> defines a new encoding
-   conversion.  Conversion names may be used in the CONVERT() function
+   conversion.  Conversion names may be used in the <function>convert</function> function
    to specify a particular encoding conversion.  Also, conversions that
-   are marked DEFAULT can be used for automatic encoding conversion between
-   frontend and backend. For this purpose, two conversions, from encoding A to
-   B AND from encoding B to A, must be defined.
+   are marked <literal>DEFAULT</> can be used for automatic encoding conversion between
+   client and server. For this purpose, two conversions, from encoding A to
+   B <emphasis>and</emphasis> from encoding B to A, must be defined.
  </para>
 
   <para>
-   To be able to create a conversion, you must have the execute right
-   on the function and the create right on the destination schema.
+   To be able to create a conversion, you must have <literal>EXECUTE</literal> privilege
+   on the function and <literal>CREATE</literal> privilege on the destination schema.
   </para>
+ </refsect1>
+
+
+ <refsect1>
+  <title>Parameters</title>
 
    <variablelist>
-    <title>Parameters</title>
-
     <varlistentry>
      <term><literal>DEFAULT</literal></term>
 
@@ -75,7 +78,7 @@ CREATE [DEFAULT] CONVERSION <replaceable>conversion_name</replaceable>
     </varlistentry>
 
     <varlistentry>
-     <term><replaceable>source_encoding</replaceable></term>
+     <term><replaceable>dest_encoding</replaceable></term>
 
      <listitem>
       <para>
@@ -92,25 +95,39 @@ CREATE [DEFAULT] CONVERSION <replaceable>conversion_name</replaceable>
        The function used to perform the conversion.  The function name may
        be schema-qualified.  If it is not, the function will be looked
        up in the path.
-       </para>
+      </para>
 
-       <para>
+      <para>
        The function must have the following signature:
 
-       <programlisting>
-	conv_proc(
-	INTEGER,	-- source encoding id
-	INTEGER,	-- destination encoding id
-	CSTRING,	-- source string (null terminated C string)
-	CSTRING,	-- destination string (null terminated C string)
-	INTEGER		-- source string length
-	) returns VOID;
-       </programlisting>
+<programlisting>
+conv_proc(
+    integer,  -- source encoding ID
+    integer,  -- destination encoding ID
+    cstring,  -- source string (null terminated C string)
+    cstring,  -- destination string (null terminated C string)
+    integer   -- source string length
+) RETURNS void;
+</programlisting>
       </para>
      </listitem>
     </varlistentry>
    </variablelist>
+ </refsect1>
 
+ <refsect1>
+  <title>Diagnostics</title>
+
+  <variablelist>
+   <varlistentry>
+    <term><computeroutput>CREATE CONVERSION</computeroutput></term>
+    <listitem>
+     <para>
+      Message returned if the conversion was successfully created.
+     </para>
+    </listitem>
+   </varlistentry>
+  </variablelist>
  </refsect1>
 
  <refsect1 id="sql-createconversion-notes">
@@ -124,15 +141,14 @@ CREATE [DEFAULT] CONVERSION <replaceable>conversion_name</replaceable>
    The privileges required to create a conversion may be changed in a future
    release.
   </para>
-
  </refsect1>
-
 
  <refsect1 id="sql-createconversion-examples">
   <title>Examples</title>
 
   <para>
-   To create a conversion from encoding UNICODE to LATIN1 using <function>myfunc</>:
+   To create a conversion from encoding <literal>UNICODE</literal> to
+   <literal>LATIN1</literal> using <function>myfunc</>:
 <programlisting>
 CREATE CONVERSION myconv FOR 'UNICODE' TO 'LATIN1' FROM myfunc;
 </programlisting>
@@ -147,7 +163,7 @@ CREATE CONVERSION myconv FOR 'UNICODE' TO 'LATIN1' FROM myfunc;
     <command>CREATE CONVERSION</command>
     is a <productname>PostgreSQL</productname> extension.
     There is no <command>CREATE CONVERSION</command>
-    statement in <acronym>SQL99</acronym>.
+    statement in the SQL standard.
   </para>
  </refsect1>
 

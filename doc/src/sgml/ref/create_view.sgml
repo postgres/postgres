@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/ref/create_view.sgml,v 1.21 2002/11/21 23:34:43 petere Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/ref/create_view.sgml,v 1.22 2003/04/22 10:08:08 petere Exp $
 PostgreSQL documentation
 -->
 
@@ -8,136 +8,26 @@ PostgreSQL documentation
   <refentrytitle id="SQL-CREATEVIEW-TITLE">CREATE VIEW</refentrytitle>
   <refmiscinfo>SQL - Language Statements</refmiscinfo>
  </refmeta>
+
  <refnamediv>
-  <refname>
-   CREATE VIEW
-  </refname>
-  <refpurpose>
-   define a new view
-  </refpurpose>
+  <refname>CREATE VIEW</refname>
+  <refpurpose>define a new view</refpurpose>
  </refnamediv>
+
  <refsynopsisdiv>
-  <refsynopsisdivinfo>
-   <date>2000-03-25</date>
-  </refsynopsisdivinfo>
-  <synopsis>
-CREATE [ OR REPLACE ] VIEW <replaceable class="PARAMETER">view</replaceable> [ ( <replaceable
-class="PARAMETER">column name list</replaceable> ) ] AS SELECT <replaceable class="PARAMETER">query</replaceable>
-  </synopsis>
-
-  <refsect2 id="R2-SQL-CREATEVIEW-1">
-   <refsect2info> 
-    <date>2000-03-25</date>
-   </refsect2info>
-   <title>
-    Inputs
-   </title>
-   <para>
-
-    <variablelist>
-     <varlistentry>
-      <term><replaceable class="parameter">view</replaceable></term>
-      <listitem>
-       <para>
-	The name (optionally schema-qualified) of a view to be created.
-       </para>
-      </listitem>
-     </varlistentry>
-     <varlistentry>
-      <term><replaceable class="parameter">column name list</replaceable></term>
-      <listitem>
-       <para>
-        An optional list of names to be used for columns of the view.
-	If given, these names override the column names that would be
-	deduced from the SQL query.
-       </para>
-      </listitem>
-     </varlistentry>
-     <varlistentry>
-      <term><replaceable class="parameter">query</replaceable></term>
-      <listitem>
-       <para>
-	An SQL query (that is, a <command>SELECT</> statement)
-	which will provide the columns and rows of the view.
-       </para>
-       <para>
-	Refer to <xref linkend="sql-select" endterm="sql-select-title"> for more information
-	about valid arguments.
-       </para>
-      </listitem>
-     </varlistentry>
-    </variablelist>
-   </para>
-  </refsect2>
-
-  <refsect2 id="R2-SQL-CREATEVIEW-2">
-   <refsect2info>
-    <date>2000-03-25</date>
-   </refsect2info>
-   <title>
-    Outputs
-   </title>
-   <para>
-    <variablelist>
-     <varlistentry>
-      <term><computeroutput>
-CREATE VIEW
-       </computeroutput></term>
-      <listitem>
-       <para>
-	The message returned if the view is successfully created.
-       </para>
-      </listitem>
-     </varlistentry>
-     <varlistentry>
-      <term><computeroutput>
-ERROR:  Relation '<replaceable class="parameter">view</replaceable>' already exists
-       </computeroutput></term>
-      <listitem>
-       <para>
-	This error occurs if the view specified already exists in the database.
-       </para>
-      </listitem>
-     </varlistentry>
-     <varlistentry>
-      <term><computeroutput>
-WARNING:  Attribute '<replaceable class="parameter">column</replaceable>' has an unknown type
-       </computeroutput></term>
-      <listitem>
-       <para>
-	The view will be created having a column with an unknown type
-	if you do not specify it. For example, the following command gives
-	a warning:
-	<programlisting>
-CREATE VIEW vista AS SELECT 'Hello World'
-	</programlisting>
-
-	whereas this command does not:
-
-	<programlisting>
-CREATE VIEW vista AS SELECT text 'Hello World'
-	</programlisting>
-       </para>
-      </listitem>
-     </varlistentry>
-    </variablelist>
-   </para>
-  </refsect2>
+<synopsis>
+CREATE [ OR REPLACE ] VIEW <replaceable class="PARAMETER">name</replaceable> [ ( <replaceable
+class="PARAMETER">column_name</replaceable> [, ...] ) ] AS <replaceable class="PARAMETER">query</replaceable>
+</synopsis>
  </refsynopsisdiv>
 
- <refsect1 id="R1-SQL-CREATEVIEW-1">
-  <refsect1info>
-   <date>2000-03-25</date>
-  </refsect1info>
-  <title>
-   Description
-  </title>
+ <refsect1>
+  <title>Description</title>
 
   <para>
-   <command>CREATE VIEW</command> defines a view of a query.
-   The view is not physically materialized. Instead, a query
-   rewrite rule (an <literal>ON SELECT</> rule) is automatically generated to
-   support SELECT operations on views.
+   <command>CREATE VIEW</command> defines a view of a query.  The view
+   is not physically materialized. Instead, the query is run everytime
+   the view is referenced in a query.
   </para>
 
   <para>
@@ -150,19 +40,87 @@ CREATE VIEW vista AS SELECT text 'Hello World'
   <para>
    If a schema name is given (for example, <literal>CREATE VIEW
    myschema.myview ...</>) then the view is created in the
-   specified schema.  Otherwise it is created in the current schema (the one
-   at the front of the search path; see <literal>CURRENT_SCHEMA()</>).
+   specified schema.  Otherwise it is created in the current schema.
    The view name must be distinct from the name of any other view, table,
    sequence, or index in the same schema.
   </para>
+ </refsect1>
 
-  <refsect2 id="R2-SQL-CREATEVIEW-3">
-   <refsect2info>
-    <date>2000-03-25</date>
-   </refsect2info>
-   <title>
-    Notes
-   </title>
+ <refsect1>
+  <title>Parameters</title>
+
+  <variablelist>
+   <varlistentry>
+    <term><replaceable class="parameter">name</replaceable></term>
+    <listitem>
+     <para>
+      The name (optionally schema-qualified) of a view to be created.
+     </para>
+    </listitem>
+   </varlistentry>
+
+   <varlistentry>
+    <term><replaceable class="parameter">column_name</replaceable></term>
+    <listitem>
+     <para>
+      An optional list of names to be used for columns of the view.
+      If not given, the column names are deduced from the query.
+     </para>
+    </listitem>
+   </varlistentry>
+
+   <varlistentry>
+    <term><replaceable class="parameter">query</replaceable></term>
+    <listitem>
+     <para>
+      A query (that is, a <command>SELECT</> statement) which will
+      provide the columns and rows of the view.
+     </para>
+
+     <para>
+      Refer to <xref linkend="sql-select" endterm="sql-select-title">
+      for more information about valid queries.
+     </para>
+    </listitem>
+   </varlistentry>
+  </variablelist>
+ </refsect1>
+
+ <refsect1>
+  <title>Diagnostics</title>
+
+  <variablelist>
+   <varlistentry>
+    <term><computeroutput>CREATE VIEW</computeroutput></term>
+    <listitem>
+     <para>
+      Message returned if the view was successfully created.
+     </para>
+    </listitem>
+   </varlistentry>
+
+   <varlistentry>
+    <term><computeroutput>WARNING:  Attribute '<replaceable class="parameter">column</replaceable>' has an unknown type</computeroutput></term>
+    <listitem>
+     <para>
+      The view will be created having a column with an unknown type if
+      you do not specify it. For example, the following command gives
+      this warning:
+<programlisting>
+CREATE VIEW vista AS SELECT 'Hello World'
+</programlisting>
+      whereas this command does not:
+<programlisting>
+CREATE VIEW vista AS SELECT text 'Hello World'
+</programlisting>
+     </para>
+    </listitem>
+   </varlistentry>
+  </variablelist>
+ </refsect1>
+
+ <refsect1>
+  <title>Notes</title>
 
    <para>
     Currently, views are read only: the system will not allow an insert,
@@ -175,100 +133,79 @@ CREATE VIEW vista AS SELECT text 'Hello World'
    <para>
     Use the <command>DROP VIEW</command> statement to drop views.
    </para>
-  </refsect2>
  </refsect1>
 
- <refsect1 id="R1-SQL-CREATEVIEW-2">
-  <title>
-   Usage
-  </title>
-  <para>
-   Create a view consisting of all Comedy films:
+ <refsect1>
+  <title>Examples</title>
 
-   <programlisting>
-CREATE VIEW kinds AS
+  <para>
+   Create a view consisting of all comedy films:
+
+<programlisting>
+CREATE VIEW comedies AS
     SELECT *
     FROM films
     WHERE kind = 'Comedy';
-
-SELECT * FROM kinds;
-
- code  |           title           | did | date_prod  |  kind  | len
--------+---------------------------+-----+------------+--------+-------
- UA502 | Bananas                   | 105 | 1971-07-13 | Comedy | 01:22
- C_701 | There's a Girl in my Soup | 107 | 1970-06-11 | Comedy | 01:36
-(2 rows)
-   </programlisting>
+</programlisting>
   </para>
  </refsect1>
  
- <refsect1 id="R1-SQL-CREATEVIEW-3">
-  <title>
-   Compatibility
-  </title>
-  
-  <refsect2 id="R2-SQL-CREATEVIEW-5">
-   <refsect2info>
-    <date>2000-03-25</date>
-   </refsect2info>
-   <title>
-    SQL92
-   </title>
+ <refsect1>
+  <title>Compatibility</title>
 
-   <para>
-    SQL92 specifies some additional capabilities for the
-    <command>CREATE VIEW</command> statement:
-   </para>
-   <synopsis>
-CREATE VIEW <replaceable class="parameter">view</replaceable> [ <replaceable class="parameter">column</replaceable> [, ...] ]
-    AS SELECT <replaceable class="parameter">expression</replaceable> [ AS <replaceable class="parameter">colname</replaceable> ] [, ...]
-    FROM <replaceable class="parameter">table</replaceable> [ WHERE <replaceable class="parameter">condition</replaceable> ]
+  <para>
+   The SQL standard specifies some additional capabilities for the
+   <command>CREATE VIEW</command> statement:
+<synopsis>
+CREATE VIEW <replaceable class="parameter">name</replaceable> [ ( <replaceable class="parameter">column</replaceable> [, ...] ) ]
+    AS query
     [ WITH [ CASCADE | LOCAL ] CHECK OPTION ]
-   </synopsis>
+</synopsis>
+  </para>
 
-   <para>
-    The optional clauses for the full SQL92 command are:
+  <para>
+   The optional clauses for the full SQL command are:
 
    <variablelist>
      <varlistentry>
-      <term>CHECK OPTION</term>
+      <term><literal>CHECK OPTION</literal></term>
       <listitem>
        <para>
-	This option is to do with updatable views.
-	All <command>INSERT</> and <command>UPDATE</> commands on the view will be
-	checked to ensure data satisfy the view-defining
-	condition. If they do not, the update will be rejected.
+        This option is to do with updatable views.  All
+        <command>INSERT</> and <command>UPDATE</> commands on the view
+        will be checked to ensure data satisfy the view-defining
+        condition (that is, the new data would be visible through the
+        view). If they do not, the update will be rejected.
        </para>
       </listitem>
      </varlistentry>
 
      <varlistentry>
-      <term>LOCAL</term>
+      <term><literal>LOCAL</literal></term>
       <listitem>
        <para>
-	Check for integrity on this view.
+        Check for integrity on this view.
        </para>
       </listitem>
      </varlistentry>
 
      <varlistentry>
-      <term>CASCADE</term>
+      <term><literal>CASCADE</literal></term>
       <listitem>
        <para>
-	Check for integrity on this view and on any dependent
-	view. CASCADE is assumed if neither CASCADE nor LOCAL is specified.
+        Check for integrity on this view and on any dependent
+        view. <literal>CASCADE</> is assumed if neither
+        <literal>CASCADE</> nor <literal>LOCAL</> is specified.
        </para>
       </listitem>
      </varlistentry>
-    </variablelist>
-   </para>
+   </variablelist>
+  </para>
 
-   <para>
-    <command>CREATE OR REPLACE VIEW</command> is a
-    <productname>PostgreSQL</productname> language extension.
-   </para>
-
-  </refsect2>
+  <para>
+   <command>CREATE OR REPLACE VIEW</command> is a
+   <productname>PostgreSQL</productname> language extension.
+  </para>
  </refsect1>
 </refentry>
 

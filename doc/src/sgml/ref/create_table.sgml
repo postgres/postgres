@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/ref/create_table.sgml,v 1.66 2003/04/14 18:08:58 tgl Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/ref/create_table.sgml,v 1.67 2003/04/22 10:08:08 petere Exp $
 PostgreSQL documentation
 -->
 
@@ -29,7 +29,7 @@ where <replaceable class="PARAMETER">column_constraint</replaceable> is:
 [ CONSTRAINT <replaceable class="PARAMETER">constraint_name</replaceable> ]
 { NOT NULL | NULL | UNIQUE | PRIMARY KEY |
   CHECK (<replaceable class="PARAMETER">expression</replaceable>) |
-  REFERENCES <replaceable class="PARAMETER">reftable</replaceable> [ ( <replaceable class="PARAMETER">refcolumn</replaceable> ) ] [ MATCH FULL | MATCH PARTIAL ]
+  REFERENCES <replaceable class="PARAMETER">reftable</replaceable> [ ( <replaceable class="PARAMETER">refcolumn</replaceable> ) ] [ MATCH FULL | MATCH PARTIAL | MATCH SIMPLE ]
     [ ON DELETE <replaceable class="parameter">action</replaceable> ] [ ON UPDATE <replaceable class="parameter">action</replaceable> ] }
 [ DEFERRABLE | NOT DEFERRABLE ] [ INITIALLY DEFERRED | INITIALLY IMMEDIATE ]
 
@@ -40,7 +40,7 @@ and <replaceable class="PARAMETER">table_constraint</replaceable> is:
   PRIMARY KEY ( <replaceable class="PARAMETER">column_name</replaceable> [, ... ] ) |
   CHECK ( <replaceable class="PARAMETER">expression</replaceable> ) |
   FOREIGN KEY ( <replaceable class="PARAMETER">column_name</replaceable> [, ... ] ) REFERENCES <replaceable class="PARAMETER">reftable</replaceable> [ ( <replaceable class="PARAMETER">refcolumn</replaceable> [, ... ] ) ]
-    [ MATCH FULL | MATCH PARTIAL ] [ ON DELETE <replaceable class="parameter">action</replaceable> ] [ ON UPDATE <replaceable class="parameter">action</replaceable> ] }
+    [ MATCH FULL | MATCH PARTIAL | MATCH SIMPLE ] [ ON DELETE <replaceable class="parameter">action</replaceable> ] [ ON UPDATE <replaceable class="parameter">action</replaceable> ] }
 [ DEFERRABLE | NOT DEFERRABLE ] [ INITIALLY DEFERRED | INITIALLY IMMEDIATE ]
 </synopsis>
   
@@ -58,17 +58,16 @@ and <replaceable class="PARAMETER">table_constraint</replaceable> is:
   <para>
    If a schema name is given (for example, <literal>CREATE TABLE
    myschema.mytable ...</>) then the table is created in the
-   specified schema.  Otherwise it is created in the current schema (the one
-   at the front of the search path; see <literal>CURRENT_SCHEMA()</>).
-   TEMP tables exist in a special schema, so a schema name may not be
-   given when creating a TEMP table.
+   specified schema.  Otherwise it is created in the current schema.
+   Temporary tables exist in a special schema, so a schema name may not be
+   given when creating a temporary table.
    The table name must be distinct from the name of any other table,
    sequence, index, or view in the same schema.
   </para>
 
   <para>
    <command>CREATE TABLE</command> also automatically creates a data
-   type that represents the tuple type (structure type) corresponding
+   type that represents the composite type corresponding
    to one row of the table.  Therefore, tables cannot have the same
    name as any existing data type in the same schema.
   </para>
@@ -81,9 +80,8 @@ and <replaceable class="PARAMETER">table_constraint</replaceable> is:
   <para>
    The optional constraint clauses specify constraints (or tests) that
    new or updated rows must satisfy for an insert or update operation
-   to succeed.  A constraint is a named rule: an SQL object which
-   helps define valid sets of values by putting limits on the results
-   of insert, update, or delete operations performed on a table.
+   to succeed.  A constraint is an SQL object that helps define the
+   set of valid values in the table in various ways.
   </para>
 
   <para>
@@ -158,7 +156,7 @@ and <replaceable class="PARAMETER">table_constraint</replaceable> is:
      <para>
       The <literal>DEFAULT</> clause assigns a default data value for
       the column whose column definition it appears within.  The value
-      is any variable-free expression (subselects and cross-references
+      is any variable-free expression (subqueries and cross-references
       to other columns in the current table are not allowed).  The
       data type of the default expression must match the data type of the
       column.
@@ -167,7 +165,7 @@ and <replaceable class="PARAMETER">table_constraint</replaceable> is:
      <para>
       The default expression will be used in any insert operation that
       does not specify a value for the column.  If there is no default
-      for a column, then the default is NULL.
+      for a column, then the default is null.
      </para>
     </listitem>
    </varlistentry>
@@ -212,7 +210,8 @@ and <replaceable class="PARAMETER">table_constraint</replaceable> is:
    </varlistentry>
 
    <varlistentry>
-    <term><literal>WITH OIDS</> or <literal>WITHOUT OIDS</></term>
+    <term><literal>WITH OIDS</></term>
+    <term><literal>WITHOUT OIDS</></term>
     <listitem>
      <para>
       This optional clause specifies whether rows of the new table
@@ -250,7 +249,7 @@ and <replaceable class="PARAMETER">table_constraint</replaceable> is:
     <term><literal>NOT NULL</></term>
     <listitem>
      <para>
-      The column is not allowed to contain NULL values.
+      The column is not allowed to contain null values.
      </para>
     </listitem>
    </varlistentry>
@@ -259,7 +258,7 @@ and <replaceable class="PARAMETER">table_constraint</replaceable> is:
     <term><literal>NULL</></term>
     <listitem>
      <para>
-      The column is allowed to contain NULL values. This is the default.
+      The column is allowed to contain null values. This is the default.
      </para>
 
      <para>
@@ -276,7 +275,7 @@ and <replaceable class="PARAMETER">table_constraint</replaceable> is:
 
     <listitem>
      <para>
-      The <literal>UNIQUE</literal> constraint specifies a rule that a
+      The <literal>UNIQUE</literal> constraint specifies that a
       group of one or more distinct columns of a table may contain
       only unique values. The behavior of the unique table constraint
       is the same as that for column constraints, with the additional
@@ -284,7 +283,7 @@ and <replaceable class="PARAMETER">table_constraint</replaceable> is:
      </para>
 
      <para>
-      For the purpose of a unique constraint, NULL values are not
+      For the purpose of a unique constraint, null values are not
       considered equal.
      </para>
 
@@ -303,11 +302,11 @@ and <replaceable class="PARAMETER">table_constraint</replaceable> is:
     <listitem>
      <para>
       The primary key constraint specifies that a column or columns of a table
-      may contain only unique (non-duplicate), non-NULL values.
+      may contain only unique (non-duplicate), nonnull values.
       Technically, <literal>PRIMARY KEY</literal> is merely a
       combination of <literal>UNIQUE</> and <literal>NOT NULL</>, but
       identifying a set of columns as primary key also provides
-      meta-data about the design of the schema, as a primary key
+      metadata about the design of the schema, as a primary key
       implies that other tables
       may rely on this set of columns as a unique identifier for rows.
      </para>
@@ -329,21 +328,19 @@ and <replaceable class="PARAMETER">table_constraint</replaceable> is:
     <term><literal>CHECK (<replaceable class="PARAMETER">expression</replaceable>)</literal></term>
     <listitem>
      <para>
-      <literal>CHECK</> clauses specify integrity constraints or tests
-      which new or updated rows must satisfy for an insert or update
-      operation to succeed. Each constraint must be an expression
-      producing a Boolean result.  A condition appearing within a
-      column definition should reference that column's value only,
-      while a condition appearing as a table constraint may reference
-      multiple columns.
+      The <literal>CHECK</> clause specifies an expression producing a
+      Boolean result which new or updated rows must satisfy for an
+      insert or update operation to succeed.  A check constraint
+      specified as a column constraint should reference that column's
+      value only, while an expression appearing in a table constraint
+      may reference multiple columns.
      </para>
 
      <para>
       Currently, <literal>CHECK</literal> expressions cannot contain
-      subselects nor refer to variables other than columns of the
+      subqueries nor refer to variables other than columns of the
       current row.
      </para>
-
     </listitem>
    </varlistentry>
 
@@ -360,7 +357,7 @@ and <replaceable class="PARAMETER">table_constraint</replaceable> is:
 
     <listitem>
      <para>
-      The <literal>REFERENCES</literal> column constraint specifies
+      Theses clauses specify a foreign key constraint, which specifies
       that a group of one or more columns of the new table must only
       contain values which match against values in the referenced
       column(s) <replaceable class="parameter">refcolumn</replaceable>
@@ -374,23 +371,23 @@ and <replaceable class="PARAMETER">table_constraint</replaceable> is:
      </para>
 
      <para>
-      A value added to these columns is matched against the values of
-      the referenced table and referenced columns using the given
-      match type.  There are three match types: <literal>MATCH
-      FULL</>, <literal>MATCH PARTIAL</>, and a default match type if
-      none is specified. <literal>MATCH FULL</> will not allow one
-      column of a multicolumn foreign key to be NULL unless all
-      foreign key columns are NULL. The default match type allows some
-      foreign key columns to be NULL while other parts of the foreign
-      key are not NULL. <literal>MATCH PARTIAL</> is not yet
-      implemented.
+      A value inserted into these columns is matched against the
+      values of the referenced table and referenced columns using the
+      given match type.  There are three match types: <literal>MATCH
+      FULL</>, <literal>MATCH PARTIAL</>, and <literal>MATCH
+      SIMPLE</literal>, which is also the default.  <literal>MATCH
+      FULL</> will not allow one column of a multicolumn foreign key
+      to be null unless all foreign key columns are null.
+      <literal>MATCH SIMPLE</literal> allows some foreign key columns
+      to be null while other parts of the foreign key are not
+      null. <literal>MATCH PARTIAL</> is not yet implemented.
      </para>
 
      <para>
       In addition, when the data in the referenced columns is changed,
       certain actions are performed on the data in this table's
       columns.  The <literal>ON DELETE</literal> clause specifies the
-      action to do when a referenced row in the referenced table is
+      action to perform when a referenced row in the referenced table is
       being deleted.  Likewise, the <literal>ON UPDATE</literal>
       clause specifies the action to perform when a referenced column
       in the referenced table is being updated to a new value. If the
@@ -434,7 +431,7 @@ and <replaceable class="PARAMETER">table_constraint</replaceable> is:
         <term><literal>SET NULL</literal></term>
         <listitem>
          <para>
-          Set the referencing column values to NULL.
+          Set the referencing column values to null.
          </para>
         </listitem>
        </varlistentry>
@@ -449,19 +446,20 @@ and <replaceable class="PARAMETER">table_constraint</replaceable> is:
        </varlistentry>
       </variablelist>
      </para>
+
      <para>
       If primary key column is updated frequently, it may be wise to
-      add an index to the <literal>REFERENCES</literal> column so that
-      <literal>NO ACTION</literal> and <literal>CASCADE</literal>
-      actions associated with the <literal>REFERENCES</literal>
-      column can be more efficiently performed.
+      add an index to the foreign key column so that <literal>NO
+      ACTION</literal> and <literal>CASCADE</literal> actions
+      associated with the foreign key column can be more efficiently
+      performed.
      </para>
-
     </listitem>
    </varlistentry>
    
    <varlistentry>
-    <term><literal>DEFERRABLE</literal> or <literal>NOT DEFERRABLE</literal></term>
+    <term><literal>DEFERRABLE</literal></term>
+    <term><literal>NOT DEFERRABLE</literal></term>
     <listitem>
      <para>
       This controls whether the constraint can be deferred.  A
@@ -477,7 +475,8 @@ and <replaceable class="PARAMETER">table_constraint</replaceable> is:
    </varlistentry>
 
    <varlistentry>
-    <term><literal>INITIALLY IMMEDIATE</literal> or <literal>INITIALLY DEFERRED</literal></term>
+    <term><literal>INITIALLY IMMEDIATE</literal></term>
+    <term><literal>INITIALLY DEFERRED</literal></term>
     <listitem>
      <para>
       If a constraint is deferrable, this clause specifies the default
@@ -541,45 +540,16 @@ and <replaceable class="PARAMETER">table_constraint</replaceable> is:
  <refsect1 id="SQL-CREATETABLE-diagnostics">
   <title>Diagnostics</title>
 
-  <msgset>
-   <msgentry>
-    <msg>
-     <msgmain>
-      <msgtext>
-       <simpara><computeroutput>CREATE TABLE</computeroutput></simpara>
-      </msgtext>
-     </msgmain>
-    </msg>
-
-    <msgexplan>
+  <variablelist>
+   <varlistentry>
+    <term><computeroutput>CREATE TABLE</computeroutput></term>
+    <listitem>
      <para>
-      Message returned if table is successfully created.
+      Message returned if the table was successfully created.
      </para>
-    </msgexplan>
-   </msgentry>
-
-
-   <msgentry>
-    <msg>
-     <msgmain>
-      <msgtext>
-       <simpara><computeroutput>ERROR</computeroutput></simpara>
-      </msgtext>
-     </msgmain>
-    </msg>
-
-    <msgexplan>
-     <para>
-      Message returned if table creation failed.  This is usually
-      accompanied by some descriptive text, such as:
-      <computeroutput>ERROR: Relation '<replaceable
-      class="parameter">table</replaceable>' already
-      exists</computeroutput>, which occurs at run time if the table
-      specified already exists in the database.
-     </para>
-    </msgexplan>
-   </msgentry>
-  </msgset>
+    </listitem>
+   </varlistentry>
+  </variablelist>
  </refsect1>
 
 
@@ -624,17 +594,6 @@ and <replaceable class="PARAMETER">table_constraint</replaceable> is:
 
    <listitem>
     <para>
-     The SQL92 standard says that <literal>CHECK</> column constraints
-     may only refer to the column they apply to; only
-     <literal>CHECK</> table constraints may refer to multiple
-     columns.  <productname>PostgreSQL</productname> does not enforce
-     this restriction; it treats column and table check constraints
-     alike.
-    </para>
-   </listitem>
-
-   <listitem>
-    <para>
      Unique constraints and primary keys are not inherited in the
      current implementation.  This makes the combination of
      inheritance and unique constraints rather dysfunctional.
@@ -653,19 +612,19 @@ and <replaceable class="PARAMETER">table_constraint</replaceable> is:
 
 <programlisting>
 CREATE TABLE films (
-    code        CHARACTER(5) CONSTRAINT firstkey PRIMARY KEY,
-    title       CHARACTER VARYING(40) NOT NULL,
-    did         DECIMAL(3) NOT NULL,
-    date_prod   DATE,
-    kind        CHAR(10),
-    len         INTERVAL HOUR TO MINUTE
+    code        char(5) CONSTRAINT firstkey PRIMARY KEY,
+    title       varchar(40) NOT NULL,
+    did         integer NOT NULL,
+    date_prod   date,
+    kind        varchar(10),
+    len         interval hour to minute
 );
 </programlisting>
 
 <programlisting>
 CREATE TABLE distributors (
-     did    DECIMAL(3) PRIMARY KEY DEFAULT NEXTVAL('serial'),
-     name   VARCHAR(40) NOT NULL CHECK (name &lt;&gt; '')
+     did    integer PRIMARY KEY DEFAULT nextval('serial'),
+     name   varchar(40) NOT NULL CHECK (name &lt;&gt; '')
 );
 </programlisting>
   </para>
@@ -675,23 +634,24 @@ CREATE TABLE distributors (
 
 <programlisting>
 CREATE TABLE array (
-    vector  INT[][]
+    vector  int[][]
 );
 </programlisting>
   </para>
 
   <para>
-   Define a unique table constraint for the table films.  Unique table
-   constraints can be defined on one or more columns of the table:
+   Define a unique table constraint for the table
+   <literal>films</literal>.  Unique table constraints can be defined
+   on one or more columns of the table.
 
 <programlisting>
 CREATE TABLE films (
-    code        CHAR(5),
-    title       VARCHAR(40),
-    did         DECIMAL(3),
-    date_prod   DATE,
-    kind        VARCHAR(10),
-    len         INTERVAL HOUR TO MINUTE,
+    code        char(5),
+    title       varchar(40),
+    did         integer,
+    date_prod   date,
+    kind        varchar(10),
+    len         interval hour to minute,
     CONSTRAINT production UNIQUE(date_prod)
 );
 </programlisting>
@@ -702,8 +662,8 @@ CREATE TABLE films (
 
 <programlisting>
 CREATE TABLE distributors (
-    did     DECIMAL(3) CHECK (did > 100),
-    name    VARCHAR(40)
+    did     integer CHECK (did > 100),
+    name    varchar(40)
 );
 </programlisting>
   </para>
@@ -713,8 +673,8 @@ CREATE TABLE distributors (
 
 <programlisting>
 CREATE TABLE distributors (
-    did     DECIMAL(3),
-    name    VARCHAR(40)
+    did     integer,
+    name    varchar(40)
     CONSTRAINT con1 CHECK (did > 100 AND name &lt;&gt; '')
 );
 </programlisting>
@@ -727,12 +687,12 @@ CREATE TABLE distributors (
 
 <programlisting>
 CREATE TABLE films (
-    code        CHAR(5),
-    title       VARCHAR(40),
-    did         DECIMAL(3),
-    date_prod   DATE,
-    kind        VARCHAR(10),
-    len         INTERVAL HOUR TO MINUTE,
+    code        char(5),
+    title       varchar(40),
+    did         integer,
+    date_prod   date,
+    kind        varchar(10),
+    len         interval hour to minute,
     CONSTRAINT code_title PRIMARY KEY(code,title)
 );
 </programlisting>
@@ -746,33 +706,33 @@ CREATE TABLE films (
 
 <programlisting>
 CREATE TABLE distributors (
-    did     DECIMAL(3),
-    name    CHAR VARYING(40),
+    did     integer,
+    name    varchar(40),
     PRIMARY KEY(did)
 ); 
 </programlisting>
 
 <programlisting>
 CREATE TABLE distributors (
-    did     DECIMAL(3) PRIMARY KEY,
-    name    VARCHAR(40)
+    did     integer PRIMARY KEY,
+    name    varchar(40)
 );
 </programlisting>
   </para>
 
   <para>
    This assigns a literal constant default value for the column
-   <literal>name</literal>, and arranges for the default value of
-   column <literal>did</literal> to be generated by selecting the next
-   value of a sequence object.  The default value of
-   <literal>modtime</literal> will be the time at which the row is
+   <literal>name</literal>, arranges for the default value of column
+   <literal>did</literal> to be generated by selecting the next value
+   of a sequence object, and makes the default value of
+   <literal>modtime</literal> be the time at which the row is
    inserted.
 
 <programlisting>
 CREATE TABLE distributors (
-    name      VARCHAR(40) DEFAULT 'luso films',
-    did       INTEGER DEFAULT NEXTVAL('distributors_serial'),
-    modtime   TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+    name      varchar(40) DEFAULT 'Luso Films',
+    did       integer DEFAULT nextval('distributors_serial'),
+    modtime   timestamp DEFAULT current_timestamp
 );
 </programlisting>
   </para>
@@ -784,8 +744,8 @@ CREATE TABLE distributors (
 
 <programlisting>
 CREATE TABLE distributors (
-    did     DECIMAL(3) CONSTRAINT no_null NOT NULL,
-    name    VARCHAR(40) NOT NULL
+    did     integer CONSTRAINT no_null NOT NULL,
+    name    varchar(40) NOT NULL
 );
 </programlisting>
     </para>
@@ -795,8 +755,8 @@ CREATE TABLE distributors (
 
 <programlisting>
 CREATE TABLE distributors (
-    did     DECIMAL(3),
-    name    VARCHAR(40) UNIQUE
+    did     integer,
+    name    varchar(40) UNIQUE
 );
 </programlisting>
 
@@ -804,8 +764,8 @@ CREATE TABLE distributors (
 
 <programlisting>
 CREATE TABLE distributors (
-    did     DECIMAL(3),
-    name    VARCHAR(40),
+    did     integer,
+    name    varchar(40),
     UNIQUE(name)
 );
 </programlisting>
@@ -818,8 +778,7 @@ CREATE TABLE distributors (
 
   <para>
    The <command>CREATE TABLE</command> command conforms to SQL92
-   and to a subset of SQL99, with exceptions listed below and in the
-   descriptions above.
+   and to a subset of SQL99, with exceptions listed below.
   </para>
 
   <refsect2>
@@ -827,27 +786,25 @@ CREATE TABLE distributors (
 
    <para>
     Although the syntax of <literal>CREATE TEMPORARY TABLE</literal>
-    resembles that of SQL92, the effect is not the same.  In the standard,
+    resembles that of SQL standard, the effect is not the same.  In the standard,
     temporary tables are defined just once and automatically exist (starting
     with empty contents) in every session that needs them.
     <productname>PostgreSQL</productname> instead
     requires each session to issue its own <literal>CREATE TEMPORARY
     TABLE</literal> command for each temporary table to be used.  This allows
     different sessions to use the same temporary table name for different
-    purposes, whereas the spec's approach constrains all instances of a
+    purposes, whereas the standard's approach constrains all instances of a
     given temporary table name to have the same table structure.
    </para>
 
-   <note>
-    <para>
-     The spec-mandated behavior of temporary tables is widely ignored.
-     <productname>PostgreSQL</productname>'s behavior on this point is similar
-     to that of several other RDBMSs.
-    </para>
-   </note>
+   <para>
+    The behavior of temporary tables mandated by the standard is
+    widely ignored.  <productname>PostgreSQL</productname>'s behavior
+    on this point is similar to that of several other SQL databases.
+   </para>
 
    <para>
-    SQL92's distinction between global and local temporary tables
+    The standard's distinction between global and local temporary tables
     is not in <productname>PostgreSQL</productname>, since that distinction
     depends on the concept of modules, which
     <productname>PostgreSQL</productname> does not have.
@@ -855,12 +812,24 @@ CREATE TABLE distributors (
 
    <para>
     The <literal>ON COMMIT</literal> clause for temporary tables
-    also resembles SQL92, but has some differences.
-    If the <literal>ON COMMIT</> clause is omitted, SQL92 specifies that the
+    also resembles the SQL standard, but has some differences.
+    If the <literal>ON COMMIT</> clause is omitted, SQL specifies that the
     default behavior is <literal>ON COMMIT DELETE ROWS</>.  However, the
     default behavior in <productname>PostgreSQL</productname> is
     <literal>ON COMMIT PRESERVE ROWS</literal>.  The <literal>ON COMMIT
-    DROP</literal> option does not exist in SQL92.
+    DROP</literal> option does not exist in SQL.
+   </para>
+  </refsect2>
+
+  <refsect2>
+   <title>Column Check Constraints</title>
+
+   <para>
+    The SQL standard says that <literal>CHECK</> column constraints
+    may only refer to the column they apply to; only <literal>CHECK</>
+    table constraints may refer to multiple columns.
+    <productname>PostgreSQL</productname> does not enforce this
+    restriction; it treats column and table check constraints alike.
    </para>
   </refsect2>
 
@@ -870,48 +839,12 @@ CREATE TABLE distributors (
    <para>
     The <literal>NULL</> <quote>constraint</quote> (actually a
     non-constraint) is a <productname>PostgreSQL</productname>
-    extension to SQL92 that is included for compatibility with some
-    other RDBMSs (and for symmetry with the <literal>NOT
+    extension to the SQL standard that is included for compatibility with some
+    other database systems (and for symmetry with the <literal>NOT
     NULL</literal> constraint).  Since it is the default for any
     column, its presence is simply noise.
    </para>
   </refsect2>
-   
-  <refsect2>
-   <title>Assertions</title>
-
-   <para>
-    An assertion is a special type of integrity constraint and shares
-    the same namespace as other constraints. However, an assertion is
-    not necessarily dependent on one particular table as constraints
-    are, so SQL92 provides the <command>CREATE ASSERTION</command>
-    statement as an alternate method for defining a constraint:
-
-<synopsis>
-CREATE ASSERTION <replaceable>name</replaceable> CHECK ( <replaceable>condition</replaceable> )
-</synopsis>
-   </para>
-
-   <para>
-    <productname>PostgreSQL</> does not implement assertions at present.
-   </para>
-  </refsect2>
-
-<!--    
-    <para>
-     Domain constraints are defined by <command>CREATE
-     DOMAIN</command> or <command>ALTER DOMAIN</command> statements:
-    </para>
-    <para>
-     Domain constraint: 
-
-     <synopsis>
-[ CONSTRAINT <replaceable>constraint_name</replaceable> ] CHECK <replaceable>constraint</replaceable> 
-    [ {INITIALLY DEFERRED | INITIALLY IMMEDIATE} ]
-    [ [ NOT ] DEFERRABLE ]
-     </synopsis>
-    </para>
--->
    
   <refsect2>
    <title>Inheritance</title>

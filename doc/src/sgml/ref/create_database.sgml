@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/ref/create_database.sgml,v 1.33 2003/03/25 16:15:39 petere Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/ref/create_database.sgml,v 1.34 2003/04/22 10:08:08 petere Exp $
 PostgreSQL documentation
 -->
 
@@ -8,34 +8,81 @@ PostgreSQL documentation
   <refentrytitle id="sql-createdatabase-title">CREATE DATABASE</refentrytitle>
   <refmiscinfo>SQL - Language Statements</refmiscinfo>
  </refmeta>
+
  <refnamediv>
-  <refname>
-   CREATE DATABASE
-  </refname>
-  <refpurpose>
-   create a new database
-  </refpurpose>
+  <refname>CREATE DATABASE</refname>
+  <refpurpose>create a new database</refpurpose>
  </refnamediv>
+
  <refsynopsisdiv>
-  <refsynopsisdivinfo>
-   <date>1999-12-11</date>
-  </refsynopsisdivinfo>
-  <synopsis>
+<synopsis>
 CREATE DATABASE <replaceable class="PARAMETER">name</replaceable>
     [ [ WITH ] [ OWNER [=] <replaceable class="parameter">dbowner</replaceable> ]
            [ LOCATION [=] '<replaceable class="parameter">dbpath</replaceable>' ]
            [ TEMPLATE [=] <replaceable class="parameter">template</replaceable> ]
            [ ENCODING [=] <replaceable class="parameter">encoding</replaceable> ] ]
-  </synopsis>
+</synopsis>
+ </refsynopsisdiv>
 
-  <refsect2 id="R2-SQL-CREATEDATABASE-1">
-   <refsect2info>
-    <date>1999-12-11</date>
-   </refsect2info>
-   <title>
-    Inputs
-   </title>
-   <para>
+ <refsect1>
+  <title>Description</title>
+
+  <para>
+   <command>CREATE DATABASE</command> creates a new
+   <productname>PostgreSQL</productname> database.
+  </para>
+
+  <para>
+   Normally, the creator becomes the owner of the new database.
+   Superusers can create databases owned by other users using the
+   <literal>OWNER</> clause. They can even create databases owned by
+   users with no special privileges. Non-superusers with <literal>CREATEDB</>
+   privilege can only create databases owned by themselves.
+  </para>
+
+  <para>
+   An alternative location can be specified in order to,
+   for example, store the database on a different disk.
+   The path must have been prepared with the 
+   <xref linkend="APP-INITLOCATION" endterm="APP-INITLOCATION-title">
+   command.
+  </para>
+
+  <para>
+   If the path name does not contain a slash, it is interpreted
+   as an environment variable name, which must be known to the
+   server process. This way the database administrator can
+   exercise control over locations in which databases can be created.
+   (A customary choice is, e.g., <envar>PGDATA2</envar>.)
+   If the server is compiled with <literal>ALLOW_ABSOLUTE_DBPATHS</literal>
+   (not so by default), absolute path names, as identified by
+   a leading slash
+   (e.g., <filename>/usr/local/pgsql/data</filename>),
+   are allowed as well.
+  </para>
+
+  <para>
+   By default, the new database will be created by cloning the standard
+   system database <literal>template1</>.  A different template can be
+   specified by writing <literal>TEMPLATE
+   <replaceable class="parameter">name</replaceable></literal>.  In particular,
+   by writing <literal>TEMPLATE template0</>, you can create a virgin
+   database containing only the standard objects predefined by your
+   version of <productname>PostgreSQL</productname>.  This is useful
+   if you wish to avoid copying
+   any installation-local objects that may have been added to
+   <literal>template1</>. 
+  </para>
+
+  <para>
+   The optional encoding parameter allows selection of the database
+   encoding.  When not specified, it defaults to the encoding used by
+   the selected template database.
+  </para>
+ </refsect1>
+
+ <refsect1>
+  <title>Parameter</title>
 
     <variablelist>
      <varlistentry>
@@ -50,7 +97,7 @@ CREATE DATABASE <replaceable class="PARAMETER">name</replaceable>
       <term><replaceable class="parameter">dbowner</replaceable></term>
       <listitem>
        <para>
-        Name of the database user who will own the new database,
+        The name of the database user who will own the new database,
 	or <literal>DEFAULT</literal> to use the default (namely, the
 	user executing the command).
        </para>
@@ -70,7 +117,7 @@ CREATE DATABASE <replaceable class="PARAMETER">name</replaceable>
       <term><replaceable class="parameter">template</replaceable></term>
       <listitem>
        <para>
-        Name of template from which to create the new database,
+        The name of the template from which to create the new database,
 	or <literal>DEFAULT</literal> to use the default template
 	(<literal>template1</literal>).
        </para>
@@ -80,32 +127,30 @@ CREATE DATABASE <replaceable class="PARAMETER">name</replaceable>
       <term><replaceable class="parameter">encoding</replaceable></term>
       <listitem>
        <para>
-        Multibyte encoding method to use in the new database.  Specify
-	a string literal name (e.g., <literal>'SQL_ASCII'</literal>),
+        Character set encoding to use in the new database.  Specify
+	a string constant (e.g., <literal>'SQL_ASCII'</literal>),
 	or an integer encoding number, or <literal>DEFAULT</literal>
 	to use the default encoding.
        </para>
       </listitem>
      </varlistentry>
     </variablelist>
-   </para>
-  </refsect2>
 
-  <refsect2 id="R2-SQL-CREATEDATABASE-2">
-   <refsect2info>
-    <date>1999-12-11</date>
-   </refsect2info>
-   <title>
-    Outputs
-   </title>
-   <para>
+  <para>
+   Optional parameters can be written in any order, not only the order
+   illustrated above.
+  </para>
+ </refsect1>
+
+ <refsect1>
+  <title>Diagnostics</title>
 
     <variablelist>
      <varlistentry>
       <term><computeroutput>CREATE DATABASE</computeroutput></term>
       <listitem>
        <para>
-	Message returned if the command completes successfully.
+	Message returned if the database was successfully created.
        </para>
       </listitem>
      </varlistentry>
@@ -125,8 +170,8 @@ CREATE DATABASE <replaceable class="PARAMETER">name</replaceable>
       <term><computeroutput>ERROR:  createdb: database "<replaceable class="parameter">name</replaceable>" already exists</computeroutput></term>
       <listitem>
        <para>
-	This occurs if a database with the <replaceable class="parameter">name</replaceable>
-        specified already exists.
+	This occurs if a database with the specified name already
+	exists.
        </para>
       </listitem>
      </varlistentry>
@@ -166,186 +211,73 @@ CREATE DATABASE <replaceable class="PARAMETER">name</replaceable>
      </varlistentry>
 
     </variablelist>
-   </para>
-  </refsect2>
- </refsynopsisdiv>
+ </refsect1>
 
- <refsect1 id="R1-SQL-CREATEDATABASE-1">
-  <refsect1info>
-   <date>1999-12-11</date>
-  </refsect1info>
-  <title>
-   Description
-  </title>
-  <para>
-   <command>CREATE DATABASE</command> creates a new
-   <productname>PostgreSQL</productname> database.
-  </para>
+ <refsect1>
+  <title>Notes</title>
 
-  <para>
-   Normally, the creator becomes the owner of the new database.
-   Superusers can create databases owned by other users using the
-   <option>OWNER</> clause. They can even create databases owned by
-   users with no special privileges. Non-superusers with <literal>CREATEDB</>
-   privilege can only create databases owned by themselves.
-  </para>
-
-  <para>
-   An alternate location can be specified in order to,
-   for example, store the database on a different disk.
-   The path must have been prepared with the 
-   <xref linkend="APP-INITLOCATION" endterm="APP-INITLOCATION-title">
-   command.
-  </para>
-  <para>
-   If the path name does not contain a slash, it is interpreted
-   as an environment variable name, which must be known to the
-   server process. This way the database administrator can
-   exercise control over locations in which databases can be created.
-   (A customary choice is, e.g., <envar>PGDATA2</envar>.)
-   If the server is compiled with <literal>ALLOW_ABSOLUTE_DBPATHS</literal>
-   (not so by default), absolute path names, as identified by
-   a leading slash
-   (e.g., <filename>/usr/local/pgsql/data</filename>),
-   are allowed as well.
-  </para>
-
-  <para>
-   By default, the new database will be created by cloning the standard
-   system database <literal>template1</>.  A different template can be
-   specified by writing <literal>TEMPLATE =</>
-   <replaceable class="parameter">name</replaceable>.  In particular,
-   by writing <literal>TEMPLATE = template0</>, you can create a virgin
-   database containing only the standard objects predefined by your
-   version of <productname>PostgreSQL</productname>.  This is useful
-   if you wish to avoid copying
-   any installation-local objects that may have been added to
-   <literal>template1</>. 
-  </para>
-
-  <para>
-   The optional encoding parameter allows selection of the database
-   encoding.  When not specified, it defaults to the encoding used by
-   the selected template database.
-  </para>
-
-  <para>
-   Optional parameters can be written in any order, not only the order
-   illustrated above.
-  </para>
-
-  <refsect2 id="R2-SQL-CREATEDATABASE-3">
-   <refsect2info>
-    <date>1999-12-11</date>
-   </refsect2info>
-   <title>
-    Notes
-   </title>
-   <para>
-    <command>CREATE DATABASE</command> is a <productname>PostgreSQL</productname>
-    language extension.
-   </para>
    <para>
     Use <xref linkend="SQL-DROPDATABASE" endterm="SQL-DROPDATABASE-title"> to remove a database.
    </para>
+
    <para>
     The program <xref linkend="APP-CREATEDB" endterm="APP-CREATEDB-title"> is a
-    shell script wrapper around this command, provided for convenience.
+    wrapper program around this command, provided for convenience.
    </para>
 
-   <para>
-    There are security and data integrity issues
-    involved with using alternate database locations
-    specified with absolute path names, and by default
-    only an environment variable known to the backend may be
-    specified for an alternate location.
-    See <xref linkend="manage-ag-alternate-locs"> for more information.
-   </para>
-
-<!--
-comment from Olly; response from Thomas...
-  <comment>
-   initlocation does not create a PG_VERSION file in the specified location.
-   How will PostgreSQL handle the situation if it is upgraded to an 
-   incompatible database version?
-  </comment>
-   Hmm. This isn't an issue since the upgrade would do
-   a dump/reload from the main database area also.
-   Not sure if the dump/reload would guarantee that
-   the alternate data area gets refreshed though...
--->
+  <para>
+   There are security issues involved with using alternate database
+   locations specified with absolute path names.  See <xref
+   linkend="manage-ag-alternate-locs"> for more information.
+  </para>
 
   <para>
    Although it is possible to copy a database other than <literal>template1</>
    by specifying its name as the template, this is not (yet) intended as
-   a general-purpose COPY DATABASE facility.
+   a general-purpose <quote><command>COPY DATABASE</command></quote> facility.
    We recommend that databases used as templates be treated as read-only.
-   See <xref linkend="user-manag"> for more information.
+   See <xref linkend="manage-ag-templatedbs"> for more information.
   </para>
-  </refsect2>
  </refsect1>
 
- <refsect1 id="R1-SQL-CREATEDATABASE-2">
-  <title>
-   Usage
-  </title>
+ <refsect1>
+  <title>Examples</title>
+
   <para>
    To create a new database:
 
-   <programlisting>
-<prompt>olly=></prompt> <userinput>create database lusiadas;</userinput>
-   </programlisting>
+<programlisting>
+CREATE DATABASE lusiadas;
+</programlisting>
   </para>
 
   <para>
-   To create a new database in an alternate area <filename>~/private_db</filename>:
+   To create a new database in an alternate area
+   <filename>~/private_db</filename>, execute the following from the
+   shell:
 
-   <programlisting>
-<prompt>$</prompt> <userinput>mkdir private_db</userinput>
-<prompt>$</prompt> <userinput>initlocation ~/private_db</userinput>
-    <computeroutput>
-The location will be initialized with username "olly".
-This user will own all the files and must also own the server process.
-Creating directory /home/olly/private_db
-Creating directory /home/olly/private_db/base
+<programlisting>
+mkdir private_db
+initlocation ~/private_db
+</programlisting>
 
-initlocation is complete.
-    </computeroutput>
-   
-<prompt>$</prompt> <userinput>psql olly</userinput>
-<computeroutput>
-Welcome to psql, the PostgreSQL interactive terminal.
- 
-Type:  \copyright for distribution terms
-       \h for help with SQL commands
-       \? for help on internal slash commands
-       \g or terminate with semicolon to execute query
-       \q to quit
+   Then execute the following from within a
+   <application>psql</application> session:
 
-<prompt>olly=></prompt></computeroutput> <userinput>CREATE DATABASE elsewhere WITH LOCATION = '/home/olly/private_db';</userinput>
-<computeroutput>CREATE DATABASE</computeroutput>
-   </programlisting>
+<programlisting>
+CREATE DATABASE elsewhere WITH LOCATION '/home/olly/private_db';
+</programlisting>
   </para>
  </refsect1>
 
- <refsect1 id="R1-SQL-CREATEDATABASE-4">
-  <title>
-   Compatibility
-  </title>
+ <refsect1>
+  <title>Compatibility</title>
 
-  <refsect2 id="R2-SQL-CREATEDATABASE-4">
-   <refsect2info>
-    <date>1998-04-15</date>
-   </refsect2info>
-   <title>
-    SQL92
-   </title>
-   <para>
-    There is no <command>CREATE DATABASE</command> statement in SQL92.
-    Databases are equivalent to catalogs, whose creation is
-    implementation-defined.
-   </para>
-  </refsect2>
+  <para>
+   There is no <command>CREATE DATABASE</command> statement in the SQL
+   standard.  Databases are equivalent to catalogs, whose creation is
+   implementation-defined.
+  </para>
  </refsect1>
 </refentry>
 

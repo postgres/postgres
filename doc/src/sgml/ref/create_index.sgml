@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/ref/create_index.sgml,v 1.37 2002/09/21 18:32:54 petere Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/ref/create_index.sgml,v 1.38 2003/04/22 10:08:08 petere Exp $
 PostgreSQL documentation
 -->
 
@@ -8,39 +8,101 @@ PostgreSQL documentation
   <refentrytitle id="sql-createindex-title">CREATE INDEX</refentrytitle>
   <refmiscinfo>SQL - Language Statements</refmiscinfo>
  </refmeta>
- <refnamediv>
-  <refname>
-   CREATE INDEX
-  </refname>
-  <refpurpose>
-   define a new index
-  </refpurpose>
- </refnamediv>
- <refsynopsisdiv>
-  <refsynopsisdivinfo>
-   <date>2001-07-15</date>
-  </refsynopsisdivinfo>
-  <synopsis>
-CREATE [ UNIQUE ] INDEX <replaceable class="parameter">index_name</replaceable> ON <replaceable class="parameter">table</replaceable>
-    [ USING <replaceable class="parameter">acc_method</replaceable> ] ( <replaceable class="parameter">column</replaceable> [ <replaceable class="parameter">ops_name</replaceable> ] [, ...] )
-    [ WHERE <replaceable class="parameter">predicate</replaceable> ]
-CREATE [ UNIQUE ] INDEX <replaceable class="parameter">index_name</replaceable> ON <replaceable class="parameter">table</replaceable>
-    [ USING <replaceable class="parameter">acc_method</replaceable> ] ( <replaceable class="parameter">func_name</replaceable>( <replaceable class="parameter">column</replaceable> [, ... ]) [ <replaceable class="parameter">ops_name</replaceable> ] )
-    [ WHERE <replaceable class="parameter">predicate</replaceable> ]
-  </synopsis>
 
-  <refsect2 id="R2-SQL-CREATEINDEX-1">
-   <refsect2info>
-    <date>1998-09-09</date>
-   </refsect2info>
-   <title>
-    Inputs
-   </title>
-   <para>
+ <refnamediv>
+  <refname>CREATE INDEX</refname>
+  <refpurpose>define a new index</refpurpose>
+ </refnamediv>
+
+ <refsynopsisdiv>
+<synopsis>
+CREATE [ UNIQUE ] INDEX <replaceable class="parameter">index_name</replaceable> ON <replaceable class="parameter">table</replaceable>
+    [ USING <replaceable class="parameter">method</replaceable> ] ( <replaceable class="parameter">column</replaceable> [ <replaceable class="parameter">ops_name</replaceable> ] [, ...] )
+    [ WHERE <replaceable class="parameter">predicate</replaceable> ]
+
+CREATE [ UNIQUE ] INDEX <replaceable class="parameter">index_name</replaceable> ON <replaceable class="parameter">table</replaceable>
+    [ USING <replaceable class="parameter">method</replaceable> ] ( <replaceable class="parameter">func_name</replaceable>( <replaceable class="parameter">column</replaceable> [, ... ]) [ <replaceable class="parameter">ops_name</replaceable> ] )
+    [ WHERE <replaceable class="parameter">predicate</replaceable> ]
+</synopsis>
+ </refsynopsisdiv>
+
+ <refsect1>
+  <title>Description</title>
+
+  <para>
+   <command>CREATE INDEX</command> constructs an index <replaceable
+   class="parameter">index_name</replaceable> on the specified table.
+   Indexes are primarily used to enhance database performance.  But
+   inappropriate use will result in slower performance.
+  </para>
+
+  <para>
+   In the first syntax shown above, the key field(s) for the
+   index are specified as column names.
+   Multiple fields can be specified if the index method supports
+   multicolumn indexes.
+  </para>
+
+  <para>
+   In the second syntax shown above, an index is defined on the result
+   of a user-specified function <replaceable
+   class="parameter">func_name</replaceable> applied to one or more
+   columns of a single table. These <firstterm>functional
+   indexes</firstterm> can be used to obtain fast access to data based
+   on operators that would normally require some transformation to apply
+   them to the base data. For example, a functional index on
+   <literal>upper(col)</> would allow the clause
+   <literal>WHERE upper(col) = 'JIM'</> to use an index.
+  </para>
+
+  <para>
+   <application>PostgreSQL</application> provides the index methods
+   B-tree, R-tree, hash, and GiST. The B-tree index method is an
+   implementation of Lehman-Yao high-concurrency B-trees. The R-tree
+   index method implements standard R-trees using Guttman's quadratic
+   split algorithm. The hash index method is an implementation of
+   Litwin's linear hashing.  Users can also define their own index
+   methods, but that is fairly complicated.
+  </para>
+
+  <para>
+    When the <literal>WHERE</literal> clause is present, a
+    <firstterm>partial index</firstterm> is created.
+    A partial index is an index that contains entries for only a portion of
+    a table, usually a portion that is somehow more interesting than the
+    rest of the table. For example, if you have a table that contains both
+    billed and unbilled orders where the unbilled orders take up a small
+    fraction of the total table and yet that is an often used section, you
+    can improve performance by creating an index on just that portion.
+    Another possible application is to use <literal>WHERE</literal> with
+    <literal>UNIQUE</literal> to enforce uniqueness over a subset of a
+    table.
+  </para>
+
+  <para>
+    The expression used in the <literal>WHERE</literal> clause may refer
+    only to columns of the underlying table (but it can use all columns,
+    not only the one(s) being indexed).  Presently, subqueries and
+    aggregate expressions are also forbidden in <literal>WHERE</literal>.
+  </para>
+
+  <para>
+   All functions and operators used in an index definition must be
+   <quote>immutable</>, that is, their results must depend only on
+   their arguments and never on any outside influence (such as
+   the contents of another table or the current time).  This restriction
+   ensures that the behavior of the index is well-defined.  To use a
+   user-defined function in an index, remember to mark the function immutable
+   when you create it.
+  </para>
+ </refsect1>
+
+ <refsect1>
+  <title>Parameters</title>
 
     <variablelist>
      <varlistentry>
-      <term>UNIQUE</term>
+      <term><literal>UNIQUE</literal></term>
       <listitem>
        <para>
 	Causes the system to check for
@@ -73,52 +135,13 @@ CREATE [ UNIQUE ] INDEX <replaceable class="parameter">index_name</replaceable> 
      </varlistentry>
 
      <varlistentry>
-      <term><replaceable class="parameter">acc_method</replaceable></term>
+      <term><replaceable class="parameter">method</replaceable></term>
       <listitem>
        <para>
-	The name of the access method to be used for the index. The
-	default access method is <literal>BTREE</literal>.
-	<application>PostgreSQL</application> provides four access
-	methods for indexes:
-
-	<variablelist>
-	 <varlistentry>
-	  <term><literal>BTREE</></term>
-	  <listitem>
-	   <para>
-	    an implementation of Lehman-Yao
-	    high-concurrency B-trees.
-	   </para>
-	  </listitem>
-	 </varlistentry>
-
-	 <varlistentry>
-	  <term><literal>RTREE</></term>
-	  <listitem>
-	   <para>implements standard R-trees using Guttman's
-	    quadratic split algorithm.
-	   </para>
-	  </listitem>
-	 </varlistentry>
-
-	 <varlistentry>
-	  <term><literal>HASH</></term>
-	  <listitem>
-	   <para>
-	    an implementation of Litwin's linear hashing.
-	   </para>
-	  </listitem>
-	 </varlistentry>
-
-	 <varlistentry>
-	  <term><literal>GIST</></term>
-	  <listitem>
-	   <para>
-	    Generalized Index Search Trees.
-	   </para>
-	  </listitem>
-	 </varlistentry>
-	</variablelist>
+        The name of the method to be used for the index.  Choices are
+        <literal>btree</literal>, <literal>hash</literal>,
+        <literal>rtree</literal>, and <literal>gist</literal>.  The
+        default method is <literal>btree</literal>.
        </para>
       </listitem>
      </varlistentry>
@@ -159,191 +182,39 @@ CREATE [ UNIQUE ] INDEX <replaceable class="parameter">index_name</replaceable> 
       </listitem>
      </varlistentry>
     </variablelist>
-   </para>
-  </refsect2>
+ </refsect1>
 
-  <refsect2 id="R2-SQL-CREATEINDEX-2">
-   <refsect2info>
-    <date>1998-09-09</date>
-   </refsect2info>
-   <title>
-    Outputs
-   </title>
-   <para>
+ <refsect1>
+  <title>Diagnostics</title>
 
-    <variablelist>
-     <varlistentry>
-      <term><computeroutput>
-CREATE INDEX
-       </computeroutput></term>
-      <listitem>
-       <para>
-	The message returned if the index is successfully created.
-       </para>
-      </listitem>
-     </varlistentry>
+  <variablelist>
+   <varlistentry>
+    <term><computeroutput>CREATE INDEX</computeroutput></term>
+    <listitem>
+     <para>
+      Message returned if the index was successfully created.
+     </para>
+    </listitem>
+   </varlistentry>
+  </variablelist>
+ </refsect1>
 
-     <varlistentry>
-      <term><computeroutput>
-ERROR: Cannot create index: 'index_name' already exists.
-       </computeroutput></term>
-      <listitem>
-       <para>
-	This error occurs if it is impossible to create the index.
-       </para>
-      </listitem>
-     </varlistentry>
-    </variablelist>
-   </para>
-  </refsect2>
- </refsynopsisdiv>
+ <refsect1>
+  <title>Notes</title>
 
- <refsect1 id="R1-SQL-CREATEINDEX-1">
-  <refsect1info>
-   <date>1998-09-09</date>
-  </refsect1info>
-  <title>
-   Description
-  </title>
   <para>
-   <command>CREATE INDEX</command> constructs an index 
-   <replaceable class="parameter">index_name</replaceable>
-   on the specified <replaceable class="parameter">table</replaceable>.
-
-   <tip>
-    <para>
-     Indexes are primarily used to enhance database performance.
-     But inappropriate use will result in slower performance.
-    </para>
-   </tip>
+   See <xref linkend="indexes"> for information about when indexes can
+   be used, when they are not used, and in which particular situations
+   can be useful.
   </para>
 
   <para>
-   In the first syntax shown above, the key field(s) for the
-   index are specified as column names.
-   Multiple fields can be specified if the index access method supports
-   multicolumn indexes.
+   Currently, only the B-tree and GiST index methods support
+   multicolumn indexes. Up to 32 fields may be specified by default.
+   (This limit can be altered when building
+   <application>PostgreSQL</application>.)  Only B-tree currently
+   supports unique indexes.
   </para>
-
-  <para>
-   In the second syntax shown above, an index is defined on the result
-   of a user-specified function <replaceable
-   class="parameter">func_name</replaceable> applied to one or more
-   columns of a single table. These <firstterm>functional
-   indexes</firstterm> can be used to obtain fast access to data based
-   on operators that would normally require some transformation to apply
-   them to the base data. For example, a functional index on
-   <literal>upper(col)</> would allow the clause
-   <literal>WHERE upper(col) = 'JIM'</> to use an index.
-  </para>
-
-  <para>
-   <application>PostgreSQL</application> provides B-tree, R-tree, hash,
-   and GiST access methods for indexes. The B-tree access method is an
-   implementation of Lehman-Yao high-concurrency B-trees. The R-tree
-   access method implements standard R-trees using Guttman's quadratic
-   split algorithm. The hash access method is an implementation of
-   Litwin's linear hashing. We mention the algorithms used solely to
-   indicate that all of these access methods are fully dynamic and do
-   not have to be optimized periodically (as is the case with, for
-   example, static hash access methods).
-  </para>
-
-  <para>
-    When the <command>WHERE</command> clause is present, a
-    <firstterm>partial index</firstterm> is created.
-    A partial index is an index that contains entries for only a portion of
-    a table, usually a portion that is somehow more interesting than the
-    rest of the table. For example, if you have a table that contains both
-    billed and unbilled orders where the unbilled orders take up a small
-    fraction of the total table and yet that is an often used section, you
-    can improve performance by creating an index on just that portion.
-    Another possible application is to use <command>WHERE</command> with
-    <command>UNIQUE</command> to enforce uniqueness over a subset of a
-    table.
-  </para>
-
-  <para>
-    The expression used in the <command>WHERE</command> clause may refer
-    only to columns of the underlying table (but it can use all columns,
-    not only the one(s) being indexed).  Presently, subqueries and
-    aggregate expressions are also forbidden in <command>WHERE</command>.
-  </para>
-
-  <para>
-   All functions and operators used in an index definition must be
-   <firstterm>immutable</>, that is, their results must depend only on
-   their input arguments and never on any outside influence (such as
-   the contents of another table or the current time).  This restriction
-   ensures that the behavior of the index is well-defined.  To use a
-   user-defined function in an index, remember to mark the function immutable
-   when you create it.
-  </para>
-
-  <para>
-   Use <xref linkend="sql-dropindex" endterm="sql-dropindex-title">
-   to remove an index.
-  </para>
-
-  <refsect2 id="R2-SQL-CREATEINDEX-3">
-   <refsect2info>
-    <date>1998-09-09</date>
-   </refsect2info>
-   <title>
-    Notes
-   </title>
-
-   <para>
-    The <productname>PostgreSQL</productname>
-    query optimizer will consider using a B-tree index whenever
-    an indexed attribute is involved in a comparison using one of:
-
-    <simplelist type="inline">
-     <member>&lt;</member>
-     <member>&lt;=</member>
-     <member>=</member>
-     <member>&gt;=</member>
-     <member>&gt;</member>
-    </simplelist>
-   </para>
-
-   <para>
-    The <productname>PostgreSQL</productname>
-    query optimizer will consider using an R-tree index whenever
-    an indexed attribute is involved in a comparison using one of:
-
-    <simplelist type="inline">
-     <member>&lt;&lt;</member>
-     <member>&amp;&lt;</member>
-     <member>&amp;&gt;</member>
-     <member>&gt;&gt;</member>
-     <member>@</member>
-     <member>~=</member>
-     <member>&amp;&amp;</member>
-    </simplelist>
-   </para>
-
-   <para>
-    The <productname>PostgreSQL</productname>
-    query optimizer will consider using a hash index whenever
-    an indexed attribute is involved in a comparison using
-    the <literal>=</literal> operator.
-   </para>
-   <para>
-     Testing has shown PostgreSQL's hash indexes to be similar or slower
-     than B-tree indexes, and the index size and build time for hash
-     indexes is much worse. Hash indexes also suffer poor performance
-     under high concurrency. For these reasons, hash index use is
-     discouraged.
-   </para>
-
-   <para>
-    Currently, only the B-tree and gist access methods support multicolumn
-    indexes. Up to 32 keys may be specified by default (this limit
-    can be altered when building
-    <application>PostgreSQL</application>).  Only B-tree currently supports
-    unique indexes.
-   </para>
 
   <para>
    An <firstterm>operator class</firstterm> can be specified for each
@@ -351,57 +222,33 @@ ERROR: Cannot create index: 'index_name' already exists.
    used by the index for that column. For example, a B-tree index on
    four-byte integers would use the <literal>int4_ops</literal> class;
    this operator class includes comparison functions for four-byte
-   integers. In practice the default operator class for the field's data
+   integers. In practice the default operator class for the column's data
    type is usually sufficient. The main point of having operator classes
    is that for some data types, there could be more than one meaningful
    ordering. For example, we might want to sort a complex-number data
    type either by absolute value or by real part. We could do this by
    defining two operator classes for the data type and then selecting
-   the proper class when making an index. There are also some operator
-   classes with special purposes:
-
-   <itemizedlist>
-    <listitem>
-     <para>
-      The operator classes <literal>box_ops</literal> and
-      <literal>bigbox_ops</literal> both support R-tree indexes on the
-      <literal>box</literal> data type.
-      The difference between them is that <literal>bigbox_ops</literal>
-      scales box coordinates down, to avoid floating-point exceptions from
-      doing multiplication, addition, and subtraction on very large
-      floating-point coordinates.  (Note: this was true some time ago,
-      but currently the two operator classes both use floating point
-      and are effectively identical.)
-     </para>
-    </listitem>
-   </itemizedlist>
+   the proper class when making an index.  More information about
+   operator classes is in <xref linkend="indexes-opclass"> and in <xref
+   linkend="xindex">.
   </para>
 
-   <para>
-    The following query shows all defined operator classes:
-
-    <programlisting>
-SELECT am.amname AS acc_method,
-       opc.opcname AS ops_name
-    FROM pg_am am, pg_opclass opc
-    WHERE opc.opcamid = am.oid
-    ORDER BY acc_method, ops_name;
-    </programlisting>
-   </para>
-  </refsect2>
+  <para>
+   Use <xref linkend="sql-dropindex" endterm="sql-dropindex-title">
+   to remove an index.
+  </para>
  </refsect1>
 
- <refsect1 id="R1-SQL-CREATEINDEX-2">
-  <title>
-   Usage
-  </title>
-  <para>To create a B-tree index on the field <literal>title</literal>
-   in the table <literal>films</literal>:
+ <refsect1>
+  <title>Examples</title>
+
+  <para>
+   To create a B-tree index on the column <literal>title</literal> in
+   the table <literal>films</literal>:
+<programlisting>
+CREATE UNIQUE INDEX title_idx ON films (title);
+</programlisting>
   </para>
-  <programlisting>
-CREATE UNIQUE INDEX title_idx
-    ON films (title);
-  </programlisting>
 
 <!--
 <comment>
@@ -422,25 +269,14 @@ SELECT * FROM points
 
  </refsect1>
  
- <refsect1 id="R1-SQL-CREATEINDEX-3">
-  <title>
-   Compatibility
-  </title>
-  
-  <refsect2 id="R2-SQL-CREATEINDEX-4">
-   <refsect2info>
-    <date>1998-09-09</date>
-   </refsect2info>
-   <title>
-    SQL92
-   </title>
-   <para>
-    CREATE INDEX is a <productname>PostgreSQL</productname> language extension.
-   </para>
-   <para>
-    There is no <command>CREATE INDEX</command> command in SQL92.
-   </para>
-  </refsect2>
+ <refsect1>
+  <title>Compatibility</title>
+
+  <para>
+   <command>CREATE INDEX</command> is a
+   <productname>PostgreSQL</productname> language extension.  There
+   are no provisions for indexes in the SQL standard.
+  </para>
  </refsect1>
 </refentry>
 

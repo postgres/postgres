@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/ref/create_operator.sgml,v 1.34 2003/03/25 16:15:39 petere Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/ref/create_operator.sgml,v 1.35 2003/04/22 10:08:08 petere Exp $
 PostgreSQL documentation
 -->
 
@@ -8,218 +8,43 @@ PostgreSQL documentation
   <refentrytitle id="sql-createoperator-title">CREATE OPERATOR</refentrytitle>
   <refmiscinfo>SQL - Language Statements</refmiscinfo>
  </refmeta>
+
  <refnamediv>
-  <refname>
-   CREATE OPERATOR
-  </refname>
-  <refpurpose>
-   define a new operator
-  </refpurpose>
-  </refnamediv>
+  <refname>CREATE OPERATOR</refname>
+  <refpurpose>define a new operator</refpurpose>
+ </refnamediv>
+
  <refsynopsisdiv>
-  <refsynopsisdivinfo>
-   <date>2000-03-25</date>
-  </refsynopsisdivinfo>
-  <synopsis>
-CREATE OPERATOR <replaceable>name</replaceable> ( PROCEDURE = <replaceable class="parameter">func_name</replaceable>
-     [, LEFTARG = <replaceable class="parameter">lefttype</replaceable>
-     ] [, RIGHTARG = <replaceable class="parameter">righttype</replaceable> ]
-     [, COMMUTATOR = <replaceable class="parameter">com_op</replaceable> ] [, NEGATOR = <replaceable class="parameter">neg_op</replaceable> ]
-     [, RESTRICT = <replaceable class="parameter">res_proc</replaceable> ] [, JOIN = <replaceable class="parameter">join_proc</replaceable> ]
-     [, HASHES ] [, MERGES ]
-     [, SORT1 = <replaceable class="parameter">left_sort_op</replaceable> ] [, SORT2 = <replaceable class="parameter">right_sort_op</replaceable> ]
-     [, LTCMP = <replaceable class="parameter">less_than_op</replaceable> ] [, GTCMP = <replaceable class="parameter">greater_than_op</replaceable> ] )
-  </synopsis>
-  
-  <refsect2 id="R2-SQL-CREATEOPERATOR-1">
-   <refsect2info>
-    <date>2000-03-25</date>
-   </refsect2info>
-   <title>
-    Inputs
-   </title>
-   <para>
-
-    <variablelist>
-     <varlistentry>
-      <term><replaceable class="parameter">name</replaceable></term>
-      <listitem>
-       <para>
-	The operator to be defined. See below for allowable characters.
-	The name may be schema-qualified, for example
-	<literal>CREATE OPERATOR myschema.+ (...)</>.
-       </para>
-      </listitem>
-     </varlistentry>
-     <varlistentry>
-      <term><replaceable class="parameter">func_name</replaceable></term>
-      <listitem>
-       <para>
-	The function used to implement this operator.
-       </para>
-      </listitem>
-     </varlistentry>
-     <varlistentry>
-      <term><replaceable class="parameter">lefttype</replaceable></term>
-      <listitem>
-       <para>
-	The type of the left-hand argument of the operator, if any.
-	This option would be omitted for a left-unary operator.
-       </para>
-      </listitem>
-     </varlistentry>
-     <varlistentry>
-      <term><replaceable class="parameter">righttype</replaceable></term>
-      <listitem>
-       <para>
-	The type of the right-hand argument of the operator, if any.
-	This option would be omitted for a right-unary operator.
-       </para>
-      </listitem>
-     </varlistentry>
-     <varlistentry>
-      <term><replaceable class="parameter">com_op</replaceable></term>
-      <listitem>
-       <para>
-	The commutator of this operator.
-       </para>
-      </listitem>
-     </varlistentry>
-     <varlistentry>
-      <term><replaceable class="parameter">neg_op</replaceable></term>
-      <listitem>
-       <para>
-	The negator of this operator.
-       </para>
-      </listitem>
-     </varlistentry>
-     <varlistentry>
-      <term><replaceable class="parameter">res_proc</replaceable></term>
-      <listitem>
-       <para>
-	The restriction selectivity estimator function for this operator.
-       </para>
-      </listitem>
-     </varlistentry>
-     <varlistentry>
-      <term><replaceable class="parameter">join_proc</replaceable></term>
-      <listitem>
-       <para>
-	The join selectivity estimator function for this operator.
-       </para>
-      </listitem>
-     </varlistentry>
-     <varlistentry>
-      <term>HASHES</term>
-      <listitem>
-       <para>
-       Indicates this operator can support a hash join.
-       </para>
-      </listitem>
-     </varlistentry>
-     <varlistentry>
-      <term>MERGES</term>
-      <listitem>
-       <para>
-       Indicates this operator can support a merge join.
-       </para>
-      </listitem>
-     </varlistentry>
-     <varlistentry>
-      <term><replaceable class="parameter">left_sort_op</replaceable></term>
-      <listitem>
-       <para>
-	If this operator can support a merge join, the less-than
-	operator that sorts the left-hand data type of this operator.
-       </para>
-      </listitem>
-     </varlistentry>
-     <varlistentry>
-      <term><replaceable class="parameter">right_sort_op</replaceable></term>
-      <listitem>
-       <para>
-	If this operator can support a merge join, the less-than
-	operator that sorts the right-hand data type of this operator.
-       </para>
-      </listitem>
-     </varlistentry>
-     <varlistentry>
-      <term><replaceable class="parameter">less_than_op</replaceable></term>
-      <listitem>
-       <para>
-	If this operator can support a merge join, the less-than
-	operator that compares the input data types of this operator.
-       </para>
-      </listitem>
-     </varlistentry>
-     <varlistentry>
-      <term><replaceable class="parameter">greater_than_op</replaceable></term>
-      <listitem>
-       <para>
-	If this operator can support a merge join, the greater-than
-	operator that compares the input data types of this operator.
-       </para>
-      </listitem>
-     </varlistentry>
-    </variablelist>
-   </para>
-  </refsect2>
-
-  <refsect2 id="R2-SQL-CREATEOPERATOR-2">
-   <refsect2info>
-    <date>2000-03-25</date>
-   </refsect2info>
-   <title>
-    Outputs
-   </title>
-   <para>
-    <variablelist>
-     <varlistentry>
-      <term><computeroutput>
-CREATE OPERATOR
-       </computeroutput></term>
-      <listitem>
-       <para>
-	Message returned if the operator is successfully created.
-       </para>
-      </listitem>
-     </varlistentry>
-    </variablelist>
-   </para>
-  </refsect2>
+<synopsis>
+CREATE OPERATOR <replaceable>name</replaceable> (
+    PROCEDURE = <replaceable class="parameter">func_name</replaceable>
+    [, LEFTARG = <replaceable class="parameter">lefttype</replaceable> ] [, RIGHTARG = <replaceable class="parameter">righttype</replaceable> ]
+    [, COMMUTATOR = <replaceable class="parameter">com_op</replaceable> ] [, NEGATOR = <replaceable class="parameter">neg_op</replaceable> ]
+    [, RESTRICT = <replaceable class="parameter">res_proc</replaceable> ] [, JOIN = <replaceable class="parameter">join_proc</replaceable> ]
+    [, HASHES ] [, MERGES ]
+    [, SORT1 = <replaceable class="parameter">left_sort_op</replaceable> ] [, SORT2 = <replaceable class="parameter">right_sort_op</replaceable> ]
+    [, LTCMP = <replaceable class="parameter">less_than_op</replaceable> ] [, GTCMP = <replaceable class="parameter">greater_than_op</replaceable> ]
+)
+</synopsis>
  </refsynopsisdiv>
 
- <refsect1 id="R1-SQL-CREATEOPERATOR-1">
-  <refsect1info>
-   <date>2000-03-25</date>
-  </refsect1info>
-  <title>
-   Description
-  </title>
+ <refsect1>
+  <title>Description</title>
+
   <para>
-   <command>CREATE OPERATOR</command>  defines a new operator,
-   <replaceable class="parameter">name</replaceable>.
-   The user who defines an operator becomes its owner.
-  </para>
-  <para>
-   If a schema name is given then the operator is created in the
-   specified schema.  Otherwise it is created in the current schema (the one
-   at the front of the search path; see <literal>CURRENT_SCHEMA()</>).
-  </para>
-  <para>
-   Two operators in the same schema can have the same name if they operate on
-   different data types.  This is called <firstterm>overloading</>.  The
-   system will attempt to pick the intended operator based on the actual
-   input data types when there is ambiguity.
+   <command>CREATE OPERATOR</command> defines a new operator,
+   <replaceable class="parameter">name</replaceable>.  The user who
+   defines an operator becomes its owner.  If a schema name is given
+   then the operator is created in the specified schema.  Otherwise it
+   is created in the current schema.
   </para>
 
   <para>
-   The operator <replaceable class="parameter">name</replaceable>
-   is a sequence of up to <symbol>NAMEDATALEN</>-1 (63 by default) characters
-   from the following list:
-   <literallayout>
+   The operator name is a sequence of up to <symbol>NAMEDATALEN</>-1
+   (63 by default) characters from the following list:
+<literallayout>
 + - * / &lt; &gt; = ~ ! @ # % ^ &amp; | ` ? $
-   </literallayout>
+</literallayout>
 
    There are a few restrictions on your choice of name:
    <itemizedlist>
@@ -240,263 +65,258 @@ CREATE OPERATOR
      A multicharacter operator name cannot end in <literal>+</literal> or
      <literal>-</literal>,
      unless the name also contains at least one of these characters:
-     <literallayout>
+<literallayout>
 ~ ! @ # % ^ &amp; | ` ? $
-     </literallayout>
+</literallayout>
      For example, <literal>@-</literal> is an allowed operator name,
      but <literal>*-</literal> is not.
      This restriction allows <productname>PostgreSQL</productname> to
-     parse SQL-compliant queries without requiring spaces between tokens.
+     parse SQL-compliant commands without requiring spaces between tokens.
      </para>
     </listitem>
    </itemizedlist>
+  </para>
 
-   <note>
-    <para>
-     When working with non-SQL-standard operator names, you will usually
-     need to separate adjacent operators with spaces to avoid ambiguity.
-     For example, if you have defined a left-unary operator named <literal>@</literal>,
-     you cannot write <literal>X*@Y</literal>; you must write
-     <literal>X* @Y</literal> to ensure that
-     <productname>PostgreSQL</productname> reads it as two operator names
-     not one.
-     </para>
-   </note>   
-  </para>
   <para>
-   The operator <literal>!=</literal> is mapped to <literal>&lt;&gt;</literal> on input, so these two names
-   are always equivalent.
+   The operator <literal>!=</literal> is mapped to
+   <literal>&lt;&gt;</literal> on input, so these two names are always
+   equivalent.
   </para>
+
   <para>
    At least one of <literal>LEFTARG</> and <literal>RIGHTARG</> must be defined.  For
-   binary operators, both should be defined. For right  unary
-   operators,  only  <literal>LEFTARG</>  should  be defined, while for left
+   binary operators, both must be defined. For right  unary
+   operators, only <literal>LEFTARG</> should be defined, while for left
    unary operators only <literal>RIGHTARG</> should be defined.
   </para>
-  <para>
-   The
-   <replaceable class="parameter">func_name</replaceable> procedure must have
-   been previously defined using <command>CREATE FUNCTION</command> and  must
-   be defined to accept the correct number of arguments
-   (either  one or two) of the indicated types.
-  </para>
-  <para>
-   The commutator operator should be identified if one exists,
-   so that <productname>PostgreSQL</productname> can
-   reverse the order of the operands if it wishes.
-   For example, the operator area-less-than, &lt;&lt;&lt;,
-   would probably have a commutator
-   operator, area-greater-than, &gt;&gt;&gt;.
-   Hence, the query optimizer could freely  convert:
 
-   <programlisting>
-box '((0,0), (1,1))'  &gt;&gt;&gt; MYBOXES.description
-   </programlisting>
+  <para>
+   The <replaceable class="parameter">func_name</replaceable>
+   procedure must have been previously defined using <command>CREATE
+   FUNCTION</command> and must be defined to accept the correct number
+   of arguments (either one or two) of the indicated types.
+  </para>
 
-   to
+  <para>
+   The other clauses specify optional operator optimization clauses.
+   Their meaning is detailed in <xref linkend="xoper">.
+  </para>
+ </refsect1>
 
-   <programlisting>
-MYBOXES.description &lt;&lt;&lt; box '((0,0), (1,1))'
-   </programlisting>
-  </para>
+ <refsect1>
+  <title>Parameters</title>
+
+    <variablelist>
+     <varlistentry>
+      <term><replaceable class="parameter">name</replaceable></term>
+      <listitem>
+       <para>
+	The name of the operator to be defined. See above for allowable
+	characters.  The name may be schema-qualified, for example
+	<literal>CREATE OPERATOR myschema.+ (...)</>.  If not, then
+	the operator is created in the current schema.  Two operators
+	in the same schema can have the same name if they operate on
+	different data types.  This is called
+	<firstterm>overloading</>.
+       </para>
+      </listitem>
+     </varlistentry>
+
+     <varlistentry>
+      <term><replaceable class="parameter">func_name</replaceable></term>
+      <listitem>
+       <para>
+	The function used to implement this operator.
+       </para>
+      </listitem>
+     </varlistentry>
+
+     <varlistentry>
+      <term><replaceable class="parameter">lefttype</replaceable></term>
+      <listitem>
+       <para>
+	The type of the left-hand argument of the operator, if any.
+	This option would be omitted for a left-unary operator.
+       </para>
+      </listitem>
+     </varlistentry>
+
+     <varlistentry>
+      <term><replaceable class="parameter">righttype</replaceable></term>
+      <listitem>
+       <para>
+	The type of the right-hand argument of the operator, if any.
+	This option would be omitted for a right-unary operator.
+       </para>
+      </listitem>
+     </varlistentry>
+
+     <varlistentry>
+      <term><replaceable class="parameter">com_op</replaceable></term>
+      <listitem>
+       <para>
+	The commutator of this operator.
+       </para>
+      </listitem>
+     </varlistentry>
+
+     <varlistentry>
+      <term><replaceable class="parameter">neg_op</replaceable></term>
+      <listitem>
+       <para>
+	The negator of this operator.
+       </para>
+      </listitem>
+     </varlistentry>
+
+     <varlistentry>
+      <term><replaceable class="parameter">res_proc</replaceable></term>
+      <listitem>
+       <para>
+	The restriction selectivity estimator function for this operator.
+       </para>
+      </listitem>
+     </varlistentry>
+
+     <varlistentry>
+      <term><replaceable class="parameter">join_proc</replaceable></term>
+      <listitem>
+       <para>
+	The join selectivity estimator function for this operator.
+       </para>
+      </listitem>
+     </varlistentry>
+
+     <varlistentry>
+      <term><literal>HASHES</literal></term>
+      <listitem>
+       <para>
+       Indicates this operator can support a hash join.
+       </para>
+      </listitem>
+     </varlistentry>
+
+     <varlistentry>
+      <term><literal>MERGES</literal></term>
+      <listitem>
+       <para>
+       Indicates this operator can support a merge join.
+       </para>
+      </listitem>
+     </varlistentry>
+
+     <varlistentry>
+      <term><replaceable class="parameter">left_sort_op</replaceable></term>
+      <listitem>
+       <para>
+	If this operator can support a merge join, the less-than
+	operator that sorts the left-hand data type of this operator.
+       </para>
+      </listitem>
+     </varlistentry>
+
+     <varlistentry>
+      <term><replaceable class="parameter">right_sort_op</replaceable></term>
+      <listitem>
+       <para>
+	If this operator can support a merge join, the less-than
+	operator that sorts the right-hand data type of this operator.
+       </para>
+      </listitem>
+     </varlistentry>
+
+     <varlistentry>
+      <term><replaceable class="parameter">less_than_op</replaceable></term>
+      <listitem>
+       <para>
+	If this operator can support a merge join, the less-than
+	operator that compares the input data types of this operator.
+       </para>
+      </listitem>
+     </varlistentry>
+
+     <varlistentry>
+      <term><replaceable class="parameter">greater_than_op</replaceable></term>
+      <listitem>
+       <para>
+	If this operator can support a merge join, the greater-than
+	operator that compares the input data types of this operator.
+       </para>
+      </listitem>
+     </varlistentry>
+    </variablelist>
+
   <para>
-   This  allows  the  execution code to always use the latter
-   representation and simplifies the  query  optimizer  somewhat.
-  </para>
-  <para>
-   Similarly, if there is a negator operator then it should be
-   identified.
-   Suppose  that  an
-   operator,  area-equal, ===, exists, as well as an area not
-   equal, !==.
-   The negator link allows the query optimizer to simplify
-   <programlisting>
-NOT MYBOXES.description === box '((0,0), (1,1))'
-   </programlisting>
-   to
-   <programlisting>
-MYBOXES.description !== box '((0,0), (1,1))'
-   </programlisting>
-  </para>
-  <para>
-   If  a  commutator  operator  name  is  supplied,  
-   <productname>PostgreSQL</productname>
-   searches  for  it  in  the catalog.  If it is found and it
-   does not yet have a commutator itself, then the commutator's
-   entry is updated to have the newly created operator as its
-   commutator.  This applies to the negator, as well.
-   This  is to allow the definition of two operators that are
-   the commutators or the negators of each other.  The  first
-   operator should be defined without a commutator or negator
-   (as appropriate).  When the second  operator  is  defined,
-   name  the  first  as the commutator or negator.  The first
-   will be updated as a side effect.  (As of
-   <application>PostgreSQL</application> <literal>6.5</literal>, 
-   it also works to just have both operators refer to each other.)
-  </para>
-  <para>
-   The <literal>HASHES</>, <literal>MERGES</>, <literal>SORT1</>,
-   <literal>SORT2</>, <literal>LTCMP</>, and <literal>GTCMP</> options
-   are present to support the query optimizer in performing joins.
-   <productname>PostgreSQL</productname> can always evaluate a join
-   (i.e., processing a clause with two tuple variables separated by an
-   operator that returns a <type>boolean</type>) by iterative
-   substitution <!--[WONG76]-->.  In addition,
-   <productname>PostgreSQL</productname> can use a hash-join algorithm
-   <!--along the lines of [SHAP86]-->; however, it must know whether this
-   strategy is applicable.  The current hash-join algorithm is only
-   correct for operators that represent equality tests; furthermore,
-   equality of the data type must mean bitwise equality of the
-   representation of the type.  (For example, a data type that
-   contains unused bits that don't matter for equality tests could not
-   be hash-joined.)  The <literal>HASHES</> flag indicates to the query optimizer
-   that a hash join may safely be used with this operator.
-  </para>
-  <para>
-   Similarly, the <literal>MERGES</> flag indicates whether merge-sort
-   is a usable join strategy for this operator.  A merge join requires
-   that the two input data types have consistent orderings, and that
-   the merge-join operator behave like equality with respect to that
-   ordering.  For example, it is possible to merge-join equality
-   between an integer and a float variable by sorting both inputs in
-   ordinary numeric order.  Execution of a merge join requires that
-   the system be able to identify four operators related to the
-   merge-join equality operator: less-than comparison for the left
-   input data type, less-than comparison for the right input data
-   type, less-than comparison between the two data types, and
-   greater-than comparison between the two data types.  It is possible
-   to specify these by name, as the <literal>SORT1</>,
-   <literal>SORT2</>, <literal>LTCMP</>, and <literal>GTCMP</> options
-   respectively.  The system will fill in the default names
-   <literal>&lt;</>, <literal>&lt;</>, <literal>&lt;</>,
-   <literal>&gt;</> respectively if any of these are omitted when
-   <literal>MERGES</> is specified.  Also, <literal>MERGES</> will be
-   assumed to be implied if any of these four operator options appear.
-  </para>
-  <para>
-   If  other join strategies are found to be practical,
-   <productname>PostgreSQL</productname>
-   will change the optimizer and run-time system to  use
-   them  and  will  require  additional specification when an
-   operator is defined.  Fortunately, the research  community
-   invents  new  join  strategies infrequently, and the added
-   generality of user-defined join strategies was not felt to
-   be worth the complexity involved.
-  </para>
-  <para>
-   The <literal>RESTRICT</> and <literal>JOIN</> options assist the
-   query optimizer in estimating result sizes.  If a clause of the
-   form:
+   To give a schema-qualified operator name in <replaceable
+   class="parameter">com_op</replaceable> or the other optional
+   arguments, use the <literal>OPERATOR()</> syntax, for example
 <programlisting>
-myboxes.description &lt;&lt;&lt; box '((0,0), (1,1))'
-</programlisting>
-   is present in the qualification,
-   then <productname>PostgreSQL</productname> may have to
-   estimate the fraction of the  instances  in <literal>myboxes</> that
-   satisfy  the clause.  The function
-   <replaceable class="parameter">res_proc</replaceable>
-   must be a registered function (meaning  it  is  already  defined  using
-   <command>CREATE FUNCTION</command>) which accepts arguments of the correct
-   data types and returns a floating-point number.   The
-   query  optimizer  simply  calls this function, passing the
-   parameter <literal>((0,0), (1,1))</literal> and multiplies the result by the relation
-   size to get the expected number of instances.
-  </para>
-  <para>
-   Similarly, when the operands of the operator both  contain
-   instance  variables, the query optimizer must estimate the
-   size of the resulting join.  The function <function>join_proc</> will
-   return  another floating-point number which will be multiplied
-   by the cardinalities of the two tables involved  to
-   compute the expected result size.
-  </para>
-  <para>
-   The difference between the function
-   <programlisting>
-my_procedure_1 (MYBOXES.description, box '((0,0), (1,1))')
-   </programlisting>
-   and the operator
-   <programlisting>
-MYBOXES.description === box '((0,0), (1,1))'
-   </programlisting>
-   is  that  <productname>PostgreSQL</productname>
-   attempts to optimize operators and can
-   decide to use an index to restrict the search  space  when
-   operators  are  involved.  However, there is no attempt to
-   optimize functions, and they are performed by brute force.
-   Moreover, functions can have any number of arguments while
-   operators are restricted to one or two.
-  </para>
-  
-  <refsect2 id="R2-SQL-CREATEOPERATOR-3">
-   <refsect2info>
-    <date>2000-03-25</date>
-   </refsect2info>
-   <title>
-    Notes
-   </title>
-   <para>
-    Refer to <xref linkend="xoper"> for further information.
-    Use <command>DROP OPERATOR</command> to delete
-    user-defined operators from a database.
-   </para>
-
-   <para>
-    To give a schema-qualified operator name in <replaceable
-    class="parameter">com_op</replaceable> or the other optional
-    arguments, use the <literal>OPERATOR()</> syntax, for example
-<programlisting>
-   COMMUTATOR = OPERATOR(myschema.===) ,
+COMMUTATOR = OPERATOR(myschema.===) ,
 </programlisting>  
-   </para>
-  </refsect2>
+  </para>
+ </refsect1>
+
+ <refsect1>
+  <title>Diagnostics</title>
+
+  <variablelist>
+   <varlistentry>
+    <term><computeroutput>CREATE OPERATOR</computeroutput></term>
+    <listitem>
+     <para>
+      Message returned if the operator was successfully created.
+     </para>
+    </listitem>
+   </varlistentry>
+  </variablelist>
  </refsect1>
   
- <refsect1 id="R1-SQL-CREATEOPERATOR-2">
-  <title>
-   Usage
-  </title>
-  <para>The following command defines a new operator,
-   area-equality, for the BOX data type:
+ <refsect1>
+  <title>Notes</title>
+
+  <para>
+   Refer to <xref linkend="xoper"> for further information.
   </para>
-  <programlisting>
+
+  <para>
+   Use <command>DROP OPERATOR</command> to delete user-defined
+   operators from a database.
+  </para>
+ </refsect1>
+  
+ <refsect1>
+  <title>Examples</title>
+
+  <para>
+   The following command defines a new operator, area-equality, for
+   the data type <type>box</type>:
+<programlisting>
 CREATE OPERATOR === (
-   LEFTARG = box,
-   RIGHTARG = box,
-   PROCEDURE = area_equal_procedure,
-   COMMUTATOR = ===,
-   NEGATOR = !==,
-   RESTRICT = area_restriction_procedure,
-   JOIN = area_join_procedure,
-   HASHES,
-   SORT1 = &lt;&lt;&lt;,
-   SORT2 = &lt;&lt;&lt;
-   -- Since sort operators were given, MERGES is implied.
-   -- LTCMP and GTCMP are assumed to be &lt; and &gt; respectively
+    LEFTARG = box,
+    RIGHTARG = box,
+    PROCEDURE = area_equal_procedure,
+    COMMUTATOR = ===,
+    NEGATOR = !==,
+    RESTRICT = area_restriction_procedure,
+    JOIN = area_join_procedure,
+    HASHES,
+    SORT1 = &lt;&lt;&lt;,
+    SORT2 = &lt;&lt;&lt;
+    -- Since sort operators were given, MERGES is implied.
+    -- LTCMP and GTCMP are assumed to be &lt; and &gt; respectively
 );
-  </programlisting>  
+</programlisting>  
+  </para>
  </refsect1>
  
- <refsect1 id="R1-SQL-CREATEOPERATOR-3">
-  <title>
-   Compatibility
-  </title>
-  
-  <refsect2 id="R2-SQL-CREATEOPERATOR-4">
-   <refsect2info>
-    <date>2000-03-25</date>
-   </refsect2info>
-   <title>
-    SQL92
-   </title>
+ <refsect1>
+  <title>Compatibility</title>
 
-   <para>
-    <command>CREATE OPERATOR</command>
-    is a <productname>PostgreSQL</productname> extension.
-    There is no <command>CREATE OPERATOR</command>
-    statement in <acronym>SQL92</acronym>.
-   </para>
-  </refsect2>
+  <para>
+   <command>CREATE OPERATOR</command> is a
+   <productname>PostgreSQL</productname> extension.  There are no
+   provisions for user-defined operators in the SQL standard.
+  </para>
  </refsect1>
 </refentry>
 

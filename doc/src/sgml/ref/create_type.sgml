@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/ref/create_type.sgml,v 1.40 2003/03/25 16:15:39 petere Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/ref/create_type.sgml,v 1.41 2003/04/22 10:08:08 petere Exp $
 PostgreSQL documentation
 -->
 
@@ -8,22 +8,17 @@ PostgreSQL documentation
   <refentrytitle id="sql-createtype-title">CREATE TYPE</refentrytitle>
   <refmiscinfo>SQL - Language Statements</refmiscinfo>
  </refmeta>
+
  <refnamediv>
-  <refname>
-   CREATE TYPE
-  </refname>
-  <refpurpose>
-   define a new data type
-  </refpurpose>
+  <refname>CREATE TYPE</refname>
+  <refpurpose>define a new data type</refpurpose>
  </refnamediv>
+
  <refsynopsisdiv>
-  <refsynopsisdivinfo>
-   <date>1999-07-20</date>
-  </refsynopsisdivinfo>
-  <synopsis>
-CREATE TYPE <replaceable class="parameter">typename</replaceable> ( INPUT = <replaceable class="parameter">input_function</replaceable>, OUTPUT = <replaceable class="parameter">output_function</replaceable>
-      , INTERNALLENGTH = { <replaceable
-      class="parameter">internallength</replaceable> | VARIABLE }
+<synopsis>
+CREATE TYPE <replaceable class="parameter">typename</replaceable> (
+    INPUT = <replaceable class="parameter">input_function</replaceable>, OUTPUT = <replaceable class="parameter">output_function</replaceable>
+      , INTERNALLENGTH = { <replaceable class="parameter">internallength</replaceable> | VARIABLE }
     [ , DEFAULT = <replaceable class="parameter">default</replaceable> ]
     [ , ELEMENT = <replaceable class="parameter">element</replaceable> ] [ , DELIMITER = <replaceable class="parameter">delimiter</replaceable> ]
     [ , PASSEDBYVALUE ]
@@ -32,184 +27,26 @@ CREATE TYPE <replaceable class="parameter">typename</replaceable> ( INPUT = <rep
 )
 
 CREATE TYPE <replaceable class="parameter">typename</replaceable> AS
-    ( <replaceable class="PARAMETER">column_name</replaceable> <replaceable class="PARAMETER">data_type</replaceable> [, ... ] )
-  </synopsis>
-  
-  <refsect2 id="R2-SQL-CREATETYPE-1">
-   <refsect2info>
-    <date>1998-09-21</date>
-   </refsect2info>
-   <title>
-    Inputs
-   </title>
-   <para>
-
-    <variablelist>
-     <varlistentry>
-      <term><replaceable class="parameter">typename</replaceable></term>
-      <listitem>
-       <para>
-	The name (optionally schema-qualified) of a type to be created.
-       </para>
-      </listitem>
-     </varlistentry>
-
-     <varlistentry>
-      <term><replaceable class="parameter">internallength</replaceable></term>
-      <listitem>
-       <para>
-	A literal value, which specifies the internal length of
-	the new type.
-       </para>
-      </listitem>
-     </varlistentry>
-
-     <varlistentry>
-      <term><replaceable class="parameter">input_function</replaceable></term>
-      <listitem>
-       <para>
-	The name of a function, created by
-	<command>CREATE FUNCTION</command>, which
-	converts data from its external form to the type's
-	internal form.
-       </para>
-      </listitem>
-     </varlistentry>
-
-     <varlistentry>
-      <term><replaceable class="parameter">output_function</replaceable></term>
-      <listitem>
-       <para>
-	The name of a function, created by
-	<command>CREATE FUNCTION</command>, which
-	converts data from its internal form to a form suitable
-	for display.
-       </para>
-      </listitem>
-     </varlistentry>
-
-     <varlistentry>
-      <term><replaceable class="parameter">element</replaceable></term>
-      <listitem>
-       <para>
-	The type being created is an array; this specifies
-	the type of the array elements.
-       </para>
-      </listitem>
-     </varlistentry>
-
-     <varlistentry>
-      <term><replaceable class="parameter">delimiter</replaceable></term>
-      <listitem>
-       <para>
-	The delimiter character to be used between values in arrays made
-	of this type.
-       </para>
-      </listitem>
-     </varlistentry>
-
-     <varlistentry>
-      <term><replaceable class="parameter">default</replaceable></term>
-      <listitem>
-       <para>
-	The default value for the data type.  Usually this is omitted,
-	so that the default is NULL.
-       </para>
-      </listitem>
-     </varlistentry>
-
-     <varlistentry>
-      <term><replaceable class="parameter">alignment</replaceable></term>
-      <listitem>
-       <para>
-        Storage alignment requirement of the data type.  If specified, must
-	be <literal>char</literal>, <literal>int2</literal>,
-	<literal>int4</literal>, or <literal>double</literal>;
-	the default is <literal>int4</literal>.
-       </para>
-      </listitem>
-     </varlistentry>
-
-     <varlistentry>
-      <term><replaceable class="parameter">storage</replaceable></term>
-      <listitem>
-       <para>
-        Storage technique for the data type.  If specified, must
-	be <literal>plain</literal>, <literal>external</literal>,
-	<literal>extended</literal>, or <literal>main</literal>;
-	the default is <literal>plain</literal>.
-       </para>
-      </listitem>
-     </varlistentry>
-
-     <varlistentry>
-      <term><replaceable class="PARAMETER">column_name</replaceable></term>
-      <listitem>
-       <para>
-        The name of a column of the composite type.
-       </para>
-      </listitem>
-     </varlistentry>
-
-     <varlistentry>
-      <term><replaceable class="PARAMETER">data_type</replaceable></term>
-      <listitem>
-       <para>
-        The name of an existing data type.
-       </para>
-      </listitem>
-     </varlistentry>
-
-    </variablelist>
-   </para>
-  </refsect2>
-
-  <refsect2 id="R2-SQL-CREATETYPE-2">
-   <refsect2info>
-    <date>1998-09-21</date>
-   </refsect2info>
-   <title>
-    Outputs
-   </title>
-   <para>
-
-    <variablelist>
-     <varlistentry>
-      <term><computeroutput>
-CREATE TYPE
-       </computeroutput></term>
-      <listitem>
-       <para>
-	Message returned if the type is successfully created.
-       </para>
-      </listitem>
-     </varlistentry>
-    </variablelist>
-   </para>
-  </refsect2>
+    ( <replaceable class="PARAMETER">attribute_name</replaceable> <replaceable class="PARAMETER">data_type</replaceable> [, ... ] )
+</synopsis>
  </refsynopsisdiv>
 
- <refsect1 id="R1-SQL-CREATETYPE-1">
-  <refsect1info>
-   <date>1998-09-21</date>
-  </refsect1info>
-  <title>
-   Description
-  </title>
+ <refsect1>
+  <title>Description</title>
 
   <para>
-   <command>CREATE TYPE</command>  allows  the user to register a new data
-   type with <productname>PostgreSQL</> for use in the current data base.
-   The user  who  defines  a type becomes its owner.
+   <command>CREATE TYPE</command> registers a new data type for use in
+   the current data base.  The user who defines a type becomes its
+   owner.
   </para>
 
   <para>
-   If a schema name is given then the type is created in the
-   specified schema.  Otherwise it is created in the current schema (the one
-   at the front of the search path; see <literal>CURRENT_SCHEMA()</>).
-   The type name must be distinct from the name of any existing type or
-   domain in the same schema.  (Because tables have associated data types,
-   type names also must not conflict with table names in the same schema.)
+   If a schema name is given then the type is created in the specified
+   schema.  Otherwise it is created in the current schema.  The type
+   name must be distinct from the name of any existing type or domain
+   in the same schema.  (Because tables have associated data types,
+   the type name must also be distinct from the name of any existing
+   table in the same schema.)
   </para>
 
   <refsect2>
@@ -220,74 +57,59 @@ CREATE TYPE
    (scalar type).  It  requires  the
    registration of two functions (using <command>CREATE
    FUNCTION</command>) before defining the
-   type. The representation of a new base type is determined by
+   type. The internal representation of the new base type is determined by
    <replaceable class="parameter">input_function</replaceable>, which
-   converts the type's external  representation  to  an  internal
+   converts the type's external  representation to an internal
    representation  usable by the
-   operators and functions defined for the type.   Naturally,
+   operators and functions defined for the type.
    <replaceable class="parameter">output_function</replaceable>
    performs the reverse transformation.  The input function may be
    declared as taking one argument of type <type>cstring</type>,
    or as taking three arguments of types
-   <type>cstring</type>, <type>OID</type>, <type>int4</type>.
-   (The first argument is the input text as a C string, the second
+   <type>cstring</type>, <type>oid</type>, <type>integer</type>.
+   The first argument is the input text as a C string, the second
    argument is the element type in case this is an array type,
-   and the third is the <literal>typmod</> of the destination column, if known.)
+   and the third is the <literal>typmod</> of the destination column, if known.
    It should return a value of the data type itself.
    The output function may be
    declared as taking one argument of the new data type,  or as taking
-   two arguments of which the second is type <type>OID</type>.
-   (The second argument is again the array element type for array types.)
+   two arguments of which the second is type <type>oid</type>.
+   The second argument is again the array element type for array types.
    The output function should return type <type>cstring</type>.
   </para>
 
   <para>
    You should at this point be wondering how the input and output functions
-   can be declared to have results or inputs of the new type, when they have
+   can be declared to have results or arguments of the new type, when they have
    to be created before the new type can be created.  The answer is that the
    input function must be created first, then the output function, then the
    data type.
    <productname>PostgreSQL</productname> will first see the name of the new
    data type as the return type of the input function.  It will create a
    <quote>shell</> type, which is simply a placeholder entry in
-   <literal>pg_type</>, and link the input function definition to the shell
+   the system catalog, and link the input function definition to the shell
    type.  Similarly the output function will be linked to the (now already
    existing) shell type.  Finally, <command>CREATE TYPE</> replaces the
    shell entry with a complete type definition, and the new type can be used.
   </para>
 
-  <note>
   <para>
-   In <productname>PostgreSQL</productname> versions before 7.3, it was
-   customary to avoid creating a shell type by replacing the functions'
-   forward references to the type name with the placeholder pseudo-type
-   <type>OPAQUE</>.  The <type>cstring</> inputs and
-   results also had to be declared as <type>OPAQUE</> before 7.3.
-   To support loading 
-   of old dump files, <command>CREATE TYPE</> will accept functions
-   declared using <type>opaque</>, but it will issue a NOTICE and
-   change the function's declaration to use the correct types.
-  </para>
-  </note>
-
-  <para>
-   New  base  data  types  can be fixed length, in which case
+   Base data types can be fixed-length, in which case
    <replaceable class="parameter">internallength</replaceable> is a
    positive integer, or variable  length, indicated by setting
    <replaceable class="parameter">internallength</replaceable>
-   to <option>VARIABLE</option>.  (Internally, this is represented
+   to <literal>VARIABLE</literal>.  (Internally, this is represented
    by setting <literal>typlen</> to -1.)  The internal representation of all
-   variable-length types must start with an integer giving the total
+   variable-length types must start with a 4-byte integer giving the total
    length of this value of the type.
   </para>
 
   <para>
-   To indicate that a type is an array,
-   specify the type  of  the  array
-   elements using the <option>ELEMENT</> keyword.  For example, to define
-   an array of 4-byte integers ("int4"), specify
-   <programlisting>ELEMENT = int4</programlisting>
-   More details about array types appear below.
+   To indicate that a type is an array, specify the type of the array
+   elements using the <literal>ELEMENT</> key word.  For example, to
+   define an array of 4-byte integers (<type>int4</type>), specify
+   <literal>ELEMENT = int4</literal> More details about array types
+   appear below.
   </para>
 
   <para>
@@ -295,29 +117,28 @@ CREATE TYPE
    representation of arrays of this type, <replaceable
    class="parameter">delimiter</replaceable> can be
    set to a specific character.  The default delimiter is the comma
-   ('<literal>,</literal>').  Note that the delimiter is associated
+   (<literal>,</literal>).  Note that the delimiter is associated
    with the array element type, not the array type itself.
   </para>
 
   <para>
    A default value may be specified, in case a user wants columns of the
-   data type to default to something other than NULL.
-   Specify the default with the <option>DEFAULT</option> keyword.
-   (Such a default may be overridden by an explicit <option>DEFAULT</option>
+   data type to default to something other than the null value.
+   Specify the default with the <literal>DEFAULT</literal> key word.
+   (Such a default may be overridden by an explicit <literal>DEFAULT</literal>
    clause attached to a particular column.)
   </para>
 
   <para>
-   The  optional flag,  <option>PASSEDBYVALUE</option>, indicates that
-   values of this data type are passed
-   by  value  rather  than by reference.  Note that you
-   may not pass by value types whose internal representation is 
-   longer than the width of the <type>Datum</> type (four bytes on
-   most machines, eight bytes on a few).
+   The optional flag <literal>PASSEDBYVALUE</literal> indicates that
+   values of this data type are passed by value rather than by
+   reference.  You may not pass by value types whose internal
+   representation is larger than the size of the <type>Datum</> type
+   (4 bytes on most machines, 8 bytes on a few).
   </para>
 
   <para>
-   The <replaceable class="parameter">alignment</replaceable> keyword
+   The <replaceable class="parameter">alignment</replaceable> parameter
    specifies the storage alignment required for the data type.  The
    allowed values equate to alignment on 1, 2, 4, or 8 byte boundaries.
    Note that variable-length types must have an alignment of at least
@@ -325,21 +146,22 @@ CREATE TYPE
   </para>
 
   <para>
-   The <replaceable class="parameter">storage</replaceable> keyword
-   allows selection of storage strategies for variable-length data types
-   (only <literal>plain</literal> is allowed for fixed-length types).
-   <literal>plain</literal> disables TOAST for the data type: it will always
-   be stored in-line and not compressed.
-   <literal>extended</literal> gives full TOAST capability: the system will
-   first try to compress a long data value, and will move the value out of
+   The <replaceable class="parameter">storage</replaceable> parameter
+   allows selection of storage strategies for variable-length data
+   types.  (Only <literal>plain</literal> is allowed for fixed-length
+   types.)  <literal>plain</literal> specifies that data of the type
+   will always be stored in-line and not compressed.
+   <literal>extended</literal> specifies that the system will first
+   try to compress a long data value, and will move the value out of
    the main table row if it's still too long.
-   <literal>external</literal> allows the value to be moved out of the main
-   table, but the system will not try to compress it.
-   <literal>main</literal> allows compression, but discourages moving the
-   value out of the main table.  (Data items with this storage method may
-   still be moved out of the main table if there is no other way to make
-   a row fit, but they will be kept in the main table preferentially over
-   <literal>extended</literal> and <literal>external</literal> items.)
+   <literal>external</literal> allows the value to be moved out of the
+   main table, but the system will not try to compress it.
+   <literal>main</literal> allows compression, but discourages moving
+   the value out of the main table.  (Data items with this storage
+   strategy may still be moved out of the main table if there is no
+   other way to make a row fit, but they will be kept in the main
+   table preferentially over <literal>extended</literal> and
+   <literal>external</literal> items.)
   </para>
   </refsect2>
 
@@ -349,7 +171,7 @@ CREATE TYPE
   <para>
    The second form of <command>CREATE TYPE</command>
    creates a composite type.
-   The composite type is specified by a list of column names and data types.
+   The composite type is specified by a list of attribute names and data types.
    This is essentially the same as the row type
    of a table, but using <command>CREATE TYPE</command> avoids the need to
    create an actual table when all that is wanted is to define a type.
@@ -373,19 +195,19 @@ CREATE TYPE
    </para>
 
    <para>
-    You might reasonably ask <quote>why is there an <option>ELEMENT</>
-    option, if the system makes the correct array type automatically?</quote>
+    You might reasonably ask why there is an <option>ELEMENT</>
+    option, if the system makes the correct array type automatically.
     The only case where it's useful to use <option>ELEMENT</> is when you are
-    making a fixed-length type that happens to be internally an array of N
-    identical things, and you want to allow the N things to be accessed
+    making a fixed-length type that happens to be internally an array of a number of
+    identical things, and you want to allow these things to be accessed
     directly by subscripting, in addition to whatever operations you plan
     to provide for the type as a whole.  For example, type <type>name</>
-    allows its constituent <type>char</>s to be accessed this way.
-    A 2-D <type>point</> type could allow its two component floats to be
+    allows its constituent <type>char</> elements to be accessed this way.
+    A 2-D <type>point</> type could allow its two component numbers to be
     accessed like <literal>point[0]</> and <literal>point[1]</>.
     Note that
     this facility only works for fixed-length types whose internal form
-    is exactly a sequence of N identical fixed-length fields.  A subscriptable
+    is exactly a sequence of identical fixed-length fields.  A subscriptable
     variable-length type must have the generalized internal representation
     used by <literal>array_in</> and <literal>array_out</>.
     For historical reasons (i.e., this is clearly wrong but it's far too
@@ -394,41 +216,196 @@ CREATE TYPE
    </para>
   </refsect2>
  </refsect1>
+  
+ <refsect1>
+  <title>Parameter</title>
+
+  <variablelist>
+   <varlistentry>
+    <term><replaceable class="parameter">typename</replaceable></term>
+    <listitem>
+     <para>
+      The name (optionally schema-qualified) of a type to be created.
+     </para>
+    </listitem>
+   </varlistentry>
+
+   <varlistentry>
+    <term><replaceable class="parameter">internallength</replaceable></term>
+    <listitem>
+     <para>
+      A numeric constant that specifies the internal length of the new
+      type.
+     </para>
+    </listitem>
+   </varlistentry>
+
+   <varlistentry>
+    <term><replaceable class="parameter">input_function</replaceable></term>
+    <listitem>
+     <para>
+      The name of a function that converts data from the type's
+      external form to the its internal form.
+     </para>
+    </listitem>
+   </varlistentry>
+
+   <varlistentry>
+    <term><replaceable class="parameter">output_function</replaceable></term>
+    <listitem>
+     <para>
+      The name of a function that converts data from the type's
+      internal form to a form suitable for display.
+     </para>
+    </listitem>
+   </varlistentry>
+
+   <varlistentry>
+    <term><replaceable class="parameter">element</replaceable></term>
+    <listitem>
+     <para>
+      The type being created is an array; this specifies the type of
+      the array elements.
+     </para>
+    </listitem>
+   </varlistentry>
+
+   <varlistentry>
+    <term><replaceable class="parameter">delimiter</replaceable></term>
+    <listitem>
+     <para>
+      The delimiter character to be used between values in arrays made
+      of this type.
+     </para>
+    </listitem>
+   </varlistentry>
+
+   <varlistentry>
+    <term><replaceable class="parameter">default</replaceable></term>
+    <listitem>
+     <para>
+      The default value for the data type.  If this is omitted, the
+      default is null.
+     </para>
+    </listitem>
+   </varlistentry>
+
+   <varlistentry>
+    <term><replaceable class="parameter">alignment</replaceable></term>
+    <listitem>
+     <para>
+      The storage alignment requirement of the data type.  If specified,
+      it must be <literal>char</literal>, <literal>int2</literal>,
+      <literal>int4</literal>, or <literal>double</literal>; the
+      default is <literal>int4</literal>.
+     </para>
+    </listitem>
+   </varlistentry>
+
+   <varlistentry>
+    <term><replaceable class="parameter">storage</replaceable></term>
+    <listitem>
+     <para>
+      The storage strateg for the data type.  If specified, must be
+      <literal>plain</literal>, <literal>external</literal>,
+      <literal>extended</literal>, or <literal>main</literal>; the
+      default is <literal>plain</literal>.
+     </para>
+    </listitem>
+   </varlistentry>
+
+   <varlistentry>
+    <term><replaceable class="parameter">attribute_name</replaceable></term>
+    <listitem>
+     <para>
+      The name of an attribute of the composite type.
+     </para>
+    </listitem>
+   </varlistentry>
+
+   <varlistentry>
+    <term><replaceable class="parameter">data_type</replaceable></term>
+    <listitem>
+     <para>
+      The name of an existing data type.
+     </para>
+    </listitem>
+   </varlistentry>
+  </variablelist>
+ </refsect1>
+
+ <refsect1>
+  <title>Diagnostics</title>
+
+  <variablelist>
+   <varlistentry>
+    <term><computeroutput>CREATE TYPE</computeroutput></term>
+    <listitem>
+     <para>
+      Message returned if the type was successfully created.
+     </para>
+    </listitem>
+   </varlistentry>
+  </variablelist>
+ </refsect1>
 
  <refsect1 id="SQL-CREATETYPE-notes">
   <title>Notes</title>
 
-   <para>
-    User-defined type names cannot begin with the underscore character
-    (<quote><literal>_</literal></quote>) and can only be 62
-    characters long (or in general <symbol>NAMEDATALEN</symbol> - 2, rather than
-    the <symbol>NAMEDATALEN</symbol> - 1 characters allowed for other names).
-    Type names beginning with underscore are
-    reserved for internally-created array type names.
-   </para>
+  <para>
+   User-defined type names cannot begin with the underscore character
+   (<literal>_</literal>) and can only be 62 characters
+   long (or in general <symbol>NAMEDATALEN</symbol> - 2, rather than
+   the <symbol>NAMEDATALEN</symbol> - 1 characters allowed for other
+   names).  Type names beginning with underscore are reserved for
+   internally-created array type names.
+  </para>
+
+  <para>
+   In <productname>PostgreSQL</productname> versions before 7.3, it
+   was customary to avoid creating a shell type by replacing the
+   functions' forward references to the type name with the placeholder
+   pseudotype <type>opaque</>.  The <type>cstring</> arguments and
+   results also had to be declared as <type>opaque</> before 7.3.  To
+   support loading of old dump files, <command>CREATE TYPE</> will
+   accept functions declared using <type>opaque</>, but it will issue
+   a notice and change the function's declaration to use the correct
+   types.
+  </para>
  </refsect1>
  
  <refsect1>
   <title>Examples</title>
+
   <para>
-   This example creates the <type>box</type> data type and then uses the
+   This example creates the data type <type>box</type> and then uses the
    type in a table definition:
 <programlisting>
-CREATE TYPE box (INTERNALLENGTH = 16,
-    INPUT = my_procedure_1, OUTPUT = my_procedure_2);
-CREATE TABLE myboxes (id INT4, description box);
+CREATE TYPE box (
+    INTERNALLENGTH = 16,
+    INPUT = my_box_in_function,
+    OUTPUT = my_box_out_function
+);
+
+CREATE TABLE myboxes (
+    id integer,
+    description box
+);
 </programlisting>
   </para>
 
   <para>
-   If <type>box</type>'s internal structure were an array of four
-   <type>float4</>s, we might instead say
+   If the internal structure of <type>box</type> were an array of four
+   <type>float4</> elements, we might instead use
 <programlisting>
-CREATE TYPE box (INTERNALLENGTH = 16,
-    INPUT = my_procedure_1, OUTPUT = my_procedure_2,
-    ELEMENT = float4);
+CREATE TYPE box (
+    INTERNALLENGTH = 16,
+    INPUT = my_box_in_function,
+    OUTPUT = my_box_out_function,
+    ELEMENT = float4
+);
 </programlisting>
-   which would allow a box value's component floats to be accessed
+   which would allow a box value's component numbers to be accessed
    by subscripting.  Otherwise the type behaves the same as before.
   </para>
 
@@ -436,19 +413,29 @@ CREATE TYPE box (INTERNALLENGTH = 16,
    This example creates a large object type and uses it in
    a table definition:
 <programlisting>
-CREATE TYPE bigobj (INPUT = lo_filein, OUTPUT = lo_fileout,
-    INTERNALLENGTH = VARIABLE);
-CREATE TABLE big_objs (id int4, obj bigobj);
+CREATE TYPE bigobj (
+    INPUT = lo_filein, OUTPUT = lo_fileout,
+    INTERNALLENGTH = VARIABLE
+);
+CREATE TABLE big_objs (
+    id integer,
+    obj bigobj
+);
 </programlisting>
   </para>
 
   <para>
    This example creates a composite type and uses it in
-   a table function definition:
+   a function definition:
 <programlisting>
 CREATE TYPE compfoo AS (f1 int, f2 text);
 CREATE FUNCTION getfoo() RETURNS SETOF compfoo AS 'SELECT fooid, fooname FROM foo' LANGUAGE SQL;
 </programlisting>
+  </para>
+
+  <para>
+   More examples, including suitable input and output functions, are
+   in <xref linkend="extend">.
   </para>
  </refsect1>
 

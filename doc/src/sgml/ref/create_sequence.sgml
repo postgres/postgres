@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/ref/create_sequence.sgml,v 1.32 2003/03/25 16:15:39 petere Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/ref/create_sequence.sgml,v 1.33 2003/04/22 10:08:08 petere Exp $
 PostgreSQL documentation
 -->
 
@@ -8,248 +8,36 @@ PostgreSQL documentation
   <refentrytitle id="sql-createsequence-title">CREATE SEQUENCE</refentrytitle>
   <refmiscinfo>SQL - Language Statements</refmiscinfo>
  </refmeta>
+
  <refnamediv>
-  <refname>
-   CREATE SEQUENCE
-  </refname>
-  <refpurpose>
-   define a new sequence generator
-  </refpurpose>
+  <refname>CREATE SEQUENCE</refname>
+  <refpurpose>define a new sequence generator</refpurpose>
  </refnamediv> 
+
  <refsynopsisdiv>
-  <refsynopsisdivinfo>
-   <date>1999-07-20</date>
-  </refsynopsisdivinfo>
-  <synopsis>
+<synopsis>
 CREATE [ TEMPORARY | TEMP ] SEQUENCE <replaceable class="parameter">seqname</replaceable> [ INCREMENT [ BY ] <replaceable class="parameter">increment</replaceable> ]
     [ MINVALUE <replaceable class="parameter">minvalue</replaceable> | NO MINVALUE ] [ MAXVALUE <replaceable class="parameter">maxvalue</replaceable> | NO MAXVALUE ]
     [ START [ WITH ] <replaceable class="parameter">start</replaceable> ] [ CACHE <replaceable class="parameter">cache</replaceable> ] [ [ NO ] CYCLE ]
-  </synopsis>
-  
-  <refsect2 id="R2-SQL-CREATESEQUENCE-1">
-   <refsect2info>
-    <date>1998-09-11</date>
-   </refsect2info>
-   <title>
-    Inputs
-   </title>
-   <para>
-
-    <variablelist>
-     <varlistentry>
-      <term>TEMPORARY or TEMP</term>
-      <listitem>
-       <para>
-	If specified, the sequence object is created only for this session,
-	and is automatically dropped on session exit.
-	Existing permanent sequences with the same name are not visible
-	(in this session) while the temporary sequence exists, unless
-	they are referenced with schema-qualified names.
-       </para>
-      </listitem>
-     </varlistentry>
-
-     <varlistentry>
-      <term><replaceable class="parameter">seqname</replaceable></term>
-      <listitem>
-       <para>
-	The name (optionally schema-qualified) of a sequence to be created.
-       </para>
-      </listitem>
-     </varlistentry>
-
-     <varlistentry>
-      <term><replaceable class="parameter">increment</replaceable></term>
-      <listitem>
-       <para>
-	The
-	<option>INCREMENT BY <replaceable class="parameter">increment</replaceable></option>
-	clause is optional. A positive value will make an
-	ascending sequence, a negative one a descending sequence.
-	The default value is one (1).
-       </para>
-      </listitem>
-     </varlistentry>
-
-     <varlistentry>
-      <term><replaceable class="parameter">minvalue</replaceable></term>
-      <term>NO MINVALUE</term>
-      <listitem>
-       <para>
-	The optional clause <option>MINVALUE
-	 <replaceable class="parameter">minvalue</replaceable></option>
-	determines the minimum value
-	a sequence can generate. If this clause is not supplied or <option>NO MINVALUE</option>
-    is specified, then defaults will be used.  The defaults are 1 and -2^63-1 for
-	ascending and descending sequences, respectively.
-       </para>
-      </listitem>
-     </varlistentry>
-
-     <varlistentry>
-      <term><replaceable class="parameter">maxvalue</replaceable></term>
-      <term>NO MAXVALUE</term>
-      <listitem>
-       <para>
-	The optional clause <option>MAXVALUE
-	 <replaceable class="parameter">maxvalue</replaceable></option>
-	determines the maximum
-	value for the sequence. If this clause is not supplied or 
-    <option>NO MAXVALUE</option> is specified, then default values will be used.
-    The defaults are 2^63-1 and -1 for ascending and descending sequences, respectively.
-       </para>
-      </listitem>
-     </varlistentry>
-
-     <varlistentry>
-      <term><replaceable class="parameter">start</replaceable></term>
-      <listitem>
-       <para>
-	The optional <option>START WITH
-	 <replaceable class="parameter">start</replaceable>
-	 clause</option> enables the sequence to begin anywhere.
-	The default starting value is
-	<replaceable class="parameter">minvalue</replaceable>
-	for ascending sequences and
-	<replaceable class="parameter">maxvalue</replaceable>
-	for descending ones.
-       </para>
-      </listitem>
-     </varlistentry>
-
-     <varlistentry>
-      <term><replaceable class="parameter">cache</replaceable></term>
-      <listitem>
-       <para>
-	The <option>CACHE <replaceable class="parameter">cache</replaceable></option> option
-	enables sequence numbers to be preallocated
-	and stored in memory for faster access. The  minimum
-	value is 1 (only one value can be generated at a time, i.e., no cache)
-	and this is also the default.
-       </para>
-      </listitem>
-     </varlistentry>
-
-     <varlistentry>
-      <term>CYCLE</term>
-      <listitem>
-       <para>
-	The optional <option>CYCLE</option> keyword may be used to enable
-	the sequence to wrap around when the
-	<replaceable class="parameter">maxvalue</replaceable> or
-	<replaceable class="parameter">minvalue</replaceable> has been
-	reached by
-	an ascending or descending sequence respectively. If the limit is
-	reached, the next number generated will be the
-	<replaceable class="parameter">minvalue</replaceable> or
-	<replaceable class="parameter">maxvalue</replaceable>,
-	respectively.
-       </para>
-      </listitem>
-     </varlistentry>
-
-	 <varlistentry>
-	  <term>NO CYCLE</term>
-	  <listitem>
-	   <para>
-	If the optional <option>NO CYCLE</option> keyword is specified, any
-	calls to <function>nextval</function> after the sequence has reached
-	its maximum value will return an error.  If neither
-	<option>CYCLE</option> or <option>NO CYCLE</option> are specified,
-	<option>NO CYCLE</option> is the default.
-	   </para>
-	  </listitem>
-	</varlistentry>
-    </variablelist>
-   </para>
-  </refsect2>
-
-  <refsect2 id="R2-SQL-CREATESEQUENCE-2">
-   <refsect2info>
-    <date>1998-09-11</date>
-   </refsect2info>
-   <title>
-    Outputs
-   </title>
-   <para>
-
-    <variablelist>
-     <varlistentry>
-      <term><computeroutput>
-CREATE SEQUENCE
-       </computeroutput></term>
-      <listitem>
-       <para>
-	Message returned if the command is successful.
-       </para>
-      </listitem>
-     </varlistentry>
-     <varlistentry>
-      <term><computeroutput>
-ERROR:  Relation '<replaceable class="parameter">seqname</replaceable>' already exists
-       </computeroutput></term>
-      <listitem>
-       <para>
-	If the sequence specified already exists.
-       </para>
-      </listitem>
-     </varlistentry>
-     <varlistentry>
-      <term><computeroutput>
-ERROR:  DefineSequence: MINVALUE (<replaceable class="parameter">start</replaceable>) can't be >= MAXVALUE (<replaceable class="parameter">max</replaceable>)
-       </computeroutput></term>
-      <listitem>
-       <para>
-	If the specified starting value is out of range.
-       </para>
-      </listitem>
-     </varlistentry>
-     <varlistentry>
-      <term><computeroutput>
-ERROR:  DefineSequence: START value (<replaceable class="parameter">start</replaceable>) can't be < MINVALUE (<replaceable class="parameter">min</replaceable>)
-       </computeroutput></term>
-      <listitem>
-       <para>
-	If the specified starting value is out of range.
-       </para>
-      </listitem>
-     </varlistentry>
-     <varlistentry>
-      <term><computeroutput>
-ERROR:  DefineSequence: MINVALUE (<replaceable class="parameter">min</replaceable>) can't be >= MAXVALUE (<replaceable class="parameter">max</replaceable>)
-       </computeroutput></term>
-      <listitem>
-       <para>
-	If the minimum and maximum values are inconsistent.
-       </para>
-      </listitem>
-     </varlistentry>
-    </variablelist>
-   </para>
-  </refsect2>
+</synopsis>
  </refsynopsisdiv>
 
- <refsect1 id="R1-SQL-CREATESEQUENCE-1">
-  <refsect1info>
-   <date>1998-09-11</date>
-  </refsect1info>
-  <title>
-   Description
-  </title>
+ <refsect1>
+  <title>Description</title>
+
   <para>
-   <command>CREATE SEQUENCE</command> will enter a new sequence number generator
-   into the current database. This involves creating and initializing a
-   new single-row
-   table with the name <replaceable class="parameter">seqname</replaceable>.
-   The generator will be owned by the user issuing the command.
+   <command>CREATE SEQUENCE</command> creates a new sequence number
+   generator.  This involves creating and initializing a new special
+   single-row table with the name <replaceable
+   class="parameter">seqname</replaceable>.  The generator will be
+   owned by the user issuing the command.
   </para>
 
   <para>
    If a schema name is given then the sequence is created in the
-   specified schema.  Otherwise it is created in the current schema (the one
-   at the front of the search path; see <literal>CURRENT_SCHEMA()</>).
-   TEMP sequences exist in a special schema, so a schema name may not be
-   given when creating a TEMP sequence.
+   specified schema.  Otherwise it is created in the current schema.
+   Temporary sequences exist in a special schema, so a schema name may not be
+   given when creating a temporary sequence.
    The sequence name must be distinct from the name of any other sequence,
    table, index, or view in the same schema.
   </para>
@@ -257,7 +45,7 @@ ERROR:  DefineSequence: MINVALUE (<replaceable class="parameter">min</replaceabl
   <para>
    After a sequence is created, you use the functions
    <function>nextval</function>,
-   <function>currval</function> and
+   <function>currval</function>, and
    <function>setval</function>
    to operate on the sequence.  These functions are documented in
    <xref linkend="functions-sequence">.
@@ -266,132 +54,293 @@ ERROR:  DefineSequence: MINVALUE (<replaceable class="parameter">min</replaceabl
   <para>
    Although you cannot update a sequence directly, you can use a query like
 
-   <programlisting>
+<programlisting>
 SELECT * FROM <replaceable>seqname</replaceable>;
-   </programlisting>
+</programlisting>
 
    to examine the parameters and current state of a sequence.  In particular,
    the <literal>last_value</> field of the sequence shows the last value
-   allocated by any backend process.  (Of course, this value may be obsolete
-   by the time it's printed, if other processes are actively doing
+   allocated by any session.  (Of course, this value may be obsolete
+   by the time it's printed, if other sessions are actively doing
    <function>nextval</> calls.)
   </para>
-
-  <caution>
-   <para>
-    Unexpected results may be obtained if a <replaceable class="parameter">cache</replaceable> setting greater than one
-    is used for a sequence object that will be used concurrently by multiple
-    backends.  Each backend will allocate and cache successive sequence values
-    during one access to the sequence object and increase the sequence
-    object's <literal>last_value</> accordingly.  Then, the next <replaceable class="parameter">cache</replaceable>-1 uses of <function>nextval</>
-    within that backend simply return the preallocated values without touching
-    the shared object.  So, any numbers allocated but not used within a session
-    will be lost when that session ends.  Furthermore, although multiple backends are guaranteed to
-    allocate distinct sequence values, the values may be generated out of
-    sequence when all the backends are considered.  (For example, with a <replaceable class="parameter">cache</replaceable>
-    setting of 10, backend A might reserve values 1..10 and return <function>nextval</function>=1, 
-    then
-    backend B might reserve values 11..20 and return <function>nextval</function>=11 before backend
-    A has generated <literal>nextval</literal>=2.)  Thus, with a <replaceable class="parameter">cache</replaceable> setting of one it is safe
-    to assume that <function>nextval</> values are generated sequentially; with a <replaceable class="parameter">cache</replaceable>
-    setting greater than one you should only assume that the <function>nextval</> values
-    are all distinct, not that they are generated purely sequentially.
-    Also, <literal>last_value</> will reflect the latest value reserved by any backend,
-    whether or not it has yet been returned by <function>nextval</>.
-    Another consideration is that a <function>setval</> executed on such a sequence
-    will not be noticed by other backends until they have used up any
-    preallocated values they have cached.
-   </para>
-  </caution>
-
-  <refsect2 id="R2-SQL-CREATESEQUENCE-3">
-   <refsect2info>
-    <date>1998-09-11</date>
-   </refsect2info>
-   <title>
-    Notes
-   </title>
-
-   <para>
-    Use <command>DROP SEQUENCE</command> to remove a sequence.
-   </para>
-
-   <para>
-    Sequences are based on <type>bigint</> arithmetic, so the range cannot
-    exceed the range of an eight-byte integer
-    (-9223372036854775808 to 9223372036854775807).  On some older platforms,
-    there may be no compiler support for eight-byte integers, in which case
-    sequences use regular <type>integer</> arithmetic (range
-    -2147483648 to +2147483647).
-   </para>
-
-   <para>
-    When <replaceable class="parameter">cache</replaceable> is greater than
-    one, each backend uses its own cache to store preallocated numbers.
-    Numbers that are cached but not used in the current session will be
-    lost, resulting in <quote>holes</quote> in the sequence.
-   </para>
-  </refsect2>
  </refsect1>
 
- <refsect1 id="R1-SQL-CREATESEQUENCE-2">
-  <title>
-   Usage
-  </title>
+ <refsect1>
+  <title>Parameters</title>
+
+  <variablelist>
+   <varlistentry>
+    <term><literal>TEMPORARY</literal> or <literal>TEMP</literal></term>
+    <listitem>
+     <para>
+      If specified, the sequence object is created only for this
+      session, and is automatically dropped on session exit.  Existing
+      permanent sequences with the same name are not visible (in this
+      session) while the temporary sequence exists, unless they are
+      referenced with schema-qualified names.
+     </para>
+    </listitem>
+   </varlistentry>
+
+   <varlistentry>
+    <term><replaceable class="parameter">seqname</replaceable></term>
+    <listitem>
+     <para>
+      The name (optionally schema-qualified) of the sequence to be created.
+     </para>
+    </listitem>
+   </varlistentry>
+
+   <varlistentry>
+    <term><replaceable class="parameter">increment</replaceable></term>
+    <listitem>
+     <para>
+      The optional clause <literal>INCREMENT BY <replaceable
+      class="parameter">increment</replaceable></literal> specified,
+      which value is added to the current sequence value to create a
+      new value.  A positive value will make an ascending sequence, a
+      negative one a descending sequence.  The default value is 1.
+     </para>
+    </listitem>
+   </varlistentry>
+
+   <varlistentry>
+    <term><replaceable class="parameter">minvalue</replaceable></term>
+    <term><literal>NO MINVALUE</literal></term>
+    <listitem>
+     <para>
+      The optional clause <literal>MINVALUE <replaceable
+      class="parameter">minvalue</replaceable></literal> determines
+      the minimum value a sequence can generate. If this clause is not
+      supplied or <option>NO MINVALUE</option> is specified, then
+      defaults will be used.  The defaults are 1 and
+      -2<superscript>63</>-1 for ascending and descending sequences,
+      respectively.
+     </para>
+    </listitem>
+   </varlistentry>
+
+   <varlistentry>
+    <term><replaceable class="parameter">maxvalue</replaceable></term>
+    <term><literal>NO MAXVALUE</literal></term>
+    <listitem>
+     <para>
+      The optional clause <literal>MAXVALUE <replaceable
+      class="parameter">maxvalue</replaceable></literal> determines
+      the maximum value for the sequence. If this clause is not
+      supplied or <option>NO MAXVALUE</option> is specified, then
+      default values will be used.  The defaults are
+      2<superscript>63</>-1 and -1 for ascending and descending
+      sequences, respectively.
+     </para>
+    </listitem>
+   </varlistentry>
+
+   <varlistentry>
+    <term><replaceable class="parameter">start</replaceable></term>
+    <listitem>
+     <para>
+      The optional clause <literal>START WITH <replaceable
+      class="parameter">start</replaceable> </literal> allows the
+      sequence to begin anywhere.  The default starting value is
+      <replaceable class="parameter">minvalue</replaceable> for
+      ascending sequences and <replaceable
+      class="parameter">maxvalue</replaceable> for descending ones.
+     </para>
+    </listitem>
+   </varlistentry>
+
+   <varlistentry>
+    <term><replaceable class="parameter">cache</replaceable></term>
+    <listitem>
+     <para>
+      The optional clause <literal>CACHE <replaceable
+      class="parameter">cache</replaceable></literal> specifies how
+      many sequence numbers are to be preallocated and stored in
+      memory for faster access. The minimum value is 1 (only one value
+      can be generated at a time, i.e., no cache), and this is also the
+      default.
+     </para>
+    </listitem>
+   </varlistentry>
+
+   <varlistentry>
+    <term><literal>CYCLE</literal></term>
+    <term><literal>NO CYCLE</literal></term>
+    <listitem>
+     <para>
+      The <literal>CYCLE</literal> option allows the sequence to wrap
+      around when the <replaceable
+      class="parameter">maxvalue</replaceable> or <replaceable
+      class="parameter">minvalue</replaceable> has been reached by an
+      ascending or descending sequence respectively. If the limit is
+      reached, the next number generated will be the <replaceable
+      class="parameter">minvalue</replaceable> or <replaceable
+      class="parameter">maxvalue</replaceable>, respectively.
+     </para>
+
+     <para>
+      If <literal>NO CYCLE</literal> is specified, any calls to
+      <function>nextval</function> after the sequence has reached its
+      maximum value will return an error.  If neither
+      <literal>CYCLE</literal> or <literal>NO CYCLE</literal> are
+      specified, <literal>NO CYCLE</literal> is the default.
+     </para>
+    </listitem>
+   </varlistentry>
+  </variablelist>
+ </refsect1>
+
+ <refsect1>
+  <title>Diagnostics</title>
+
+  <variablelist>
+   <varlistentry>
+    <term><computeroutput>CREATE SEQUENCE</computeroutput></term>
+    <listitem>
+     <para>
+      Message returned if the sequence was successfully created.
+     </para>
+    </listitem>
+   </varlistentry>
+
+   <varlistentry>
+    <term><computeroutput>ERROR:  Relation '<replaceable class="parameter">seqname</replaceable>' already exists</computeroutput></term>
+    <listitem>
+     <para>
+      A sequence, table, view, or index of the specified name already exists.
+     </para>
+    </listitem>
+   </varlistentry>
+
+   <varlistentry>
+    <term><computeroutput>ERROR:  DefineSequence: MINVALUE (<replaceable class="parameter">start</replaceable>) can't be >= MAXVALUE (<replaceable class="parameter">max</replaceable>)</computeroutput></term>
+    <term><computeroutput>ERROR:  DefineSequence: START value (<replaceable class="parameter">start</replaceable>) can't be < MINVALUE (<replaceable class="parameter">min</replaceable>)</computeroutput></term>
+    <listitem>
+     <para>
+      The specified starting value is out of range.
+     </para>
+    </listitem>
+   </varlistentry>
+
+   <varlistentry>
+    <term><computeroutput>ERROR:  DefineSequence: MINVALUE (<replaceable class="parameter">min</replaceable>) can't be >= MAXVALUE (<replaceable class="parameter">max</replaceable>)</computeroutput></term>
+    <listitem>
+     <para>
+      The minimum and maximum values are inconsistent.
+     </para>
+    </listitem>
+   </varlistentry>
+  </variablelist>
+ </refsect1>
+
+ <refsect1>
+  <title>Notes</title>
+
+  <para>
+   Use <command>DROP SEQUENCE</command> to remove a sequence.
+  </para>
+
+  <para>
+   Sequences are based on <type>bigint</> arithmetic, so the range
+   cannot exceed the range of an eight-byte integer
+   (-9223372036854775808 to 9223372036854775807).  On some older
+   platforms, there may be no compiler support for eight-byte
+   integers, in which case sequences use regular <type>integer</>
+   arithmetic (range -2147483648 to +2147483647).
+  </para>
+
+  <para>
+   Unexpected results may be obtained if a <replaceable
+   class="parameter">cache</replaceable> setting greater than one is
+   used for a sequence object that will be used concurrently by
+   multiple sessions.  Each session will allocate and cache successive
+   sequence values during one access to the sequence object and
+   increase the sequence object's <literal>last_value</> accordingly.
+   Then, the next <replaceable class="parameter">cache</replaceable>-1
+   uses of <function>nextval</> within that session simply return the
+   preallocated values without touching the sequence object.  So, any
+   numbers allocated but not used within a session will be lost when
+   that session ends, resulting in <quote>holes</quote> in the
+   sequence.
+  </para>
+
+  <para>
+   Furthermore, although multiple sessions are guaranteed to allocate
+   distinct sequence values, the values may be generated out of
+   sequence when all the sessions are considered.  FFor example, with
+   a <replaceable class="parameter">cache</replaceable> setting of 10,
+   session A might reserve values 1..10 and return
+   <function>nextval</function>=1, then session B might reserve values
+   11..20 and return <function>nextval</function>=11 before session A
+   has generated <literal>nextval</literal>=2.  Thus, with a
+   <replaceable class="parameter">cache</replaceable> setting of one
+   it is safe to assume that <function>nextval</> values are generated
+   sequentially; with a <replaceable
+   class="parameter">cache</replaceable> setting greater than one you
+   should only assume that the <function>nextval</> values are all
+   distinct, not that they are generated purely sequentially.  Also,
+   <literal>last_value</> will reflect the latest value reserved by
+   any session, whether or not it has yet been returned by
+   <function>nextval</>.
+  </para>
+
+  <para>
+   Another consideration is that a <function>setval</> executed on
+   such a sequence will not be noticed by other sessions until they
+   have used up any preallocated values they have cached.
+  </para>
+ </refsect1>
+
+ <refsect1>
+  <title>Examples</title>
+
   <para>
    Create an ascending sequence called <literal>serial</literal>, starting at 101:
-  </para>
-  <programlisting>
+<programlisting>
 CREATE SEQUENCE serial START 101;
-  </programlisting>
-  <para>
-   Select the next number from this sequence:
-   <programlisting>
-SELECT nextval('serial');
-    
-nextval
--------
-    114
-   </programlisting>
-  </para>
-  <para>
-   Use this sequence in an INSERT:
-   <programlisting>
-INSERT INTO distributors VALUES (nextval('serial'), 'nothing');
-   </programlisting>
+</programlisting>
   </para>
 
   <para>
-   Update the sequence value after a COPY FROM:
-   <programlisting>
+   Select the next number from this sequence:
+<programlisting>
+SELECT nextval('serial');
+    
+ nextval
+---------
+     114
+</programlisting>
+  </para>
+
+  <para>
+   Use this sequence in an <command>INSERT</command> command:
+<programlisting>
+INSERT INTO distributors VALUES (nextval('serial'), 'nothing');
+</programlisting>
+  </para>
+
+  <para>
+   Update the sequence value after a <command>COPY FROM</command>:
+<programlisting>
 BEGIN;
-    COPY distributors FROM 'input_file';
-    SELECT setval('serial', max(id)) FROM distributors;
+COPY distributors FROM 'input_file';
+SELECT setval('serial', max(id)) FROM distributors;
 END;
-   </programlisting>
+</programlisting>
   </para>
  </refsect1>
 
- <refsect1 id="R1-SQL-CREATESEQUENCE-3">
-  <title>
-   Compatibility
-  </title>
+ <refsect1>
+  <title>Compatibility</title>
 
-  <refsect2 id="R2-SQL-CREATESEQUENCE-4">
-   <refsect2info>
-    <date>1998-09-11</date>
-   </refsect2info>
-   <title>
-    SQL92
-   </title>
-
-   <para>
-    <command>CREATE SEQUENCE</command> is a <productname>PostgreSQL</productname>
-    language extension.
-    There is no <command>CREATE SEQUENCE</command> statement
-    in <acronym>SQL92</acronym>.
-   </para>
-  </refsect2>
+  <para>
+   <command>CREATE SEQUENCE</command> is a
+   <productname>PostgreSQL</productname> language extension.  There is
+   no <command>CREATE SEQUENCE</command> statement in the SQL
+   standard.
+  </para>
  </refsect1>
 </refentry>
 
