@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *    $Header: /cvsroot/pgsql/src/backend/catalog/indexing.c,v 1.6 1996/11/13 20:47:57 scrappy Exp $
+ *    $Header: /cvsroot/pgsql/src/backend/catalog/indexing.c,v 1.7 1996/11/26 02:45:05 bryanh Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -352,26 +352,36 @@ ProcedureOidIndexScan(Relation heapRelation, Oid procId)
     return tuple;
 }
 
+
+
 HeapTuple
 ProcedureNameIndexScan(Relation heapRelation,
-		       char *procName,
-		       int nargs,
-		       Oid *argTypes)
+                       char *procName,
+                       int nargs,
+                       Oid *argTypes)
 {
     Relation idesc;
     ScanKeyData skey;
-    HeapTuple tuple;
+    HeapTuple tuple;         /* tuple being tested */
+    HeapTuple return_tuple;  /* The tuple pointer we eventually return */
     IndexScanDesc sd;
     RetrieveIndexResult indexRes;
     Buffer buffer;
     Form_pg_proc pgProcP;
-    bool bufferUsed = FALSE;
+    bool ScanComplete;  
+      /* The index scan is complete, i.e. we've scanned everything there
+         is to scan. 
+         */
+    bool FoundMatch;
+      /* In scanning pg_proc, we have found a row that meets our search 
+         criteria.
+         */
     
     ScanKeyEntryInitialize(&skey,
-			   (bits16)0x0,
-			   (AttrNumber)1,
-			   (RegProcedure)NameEqualRegProcedure,
-			   (Datum)procName);
+                           (bits16)0x0,
+                           (AttrNumber)1,
+                           (RegProcedure)NameEqualRegProcedure,
+                           (Datum)procName);
     
     idesc = index_openr(ProcedureNameIndex);
     
@@ -382,40 +392,45 @@ ProcedureNameIndexScan(Relation heapRelation,
      * by hand, so that we can check that the other keys match.  when
      * multi-key indices are added, they will be used here.
      */
-    do {  
-	tuple = (HeapTuple)NULL;
-	if (bufferUsed) {
-	    ReleaseBuffer(buffer);
-	    bufferUsed = FALSE;
-        }
-	
-	indexRes = index_getnext(sd, ForwardScanDirection);
-	if (indexRes) {
-	    ItemPointer iptr;
-	    
-	    iptr = &indexRes->heap_iptr;
-	    tuple = heap_fetch(heapRelation, NowTimeQual, iptr, &buffer);
-	    pfree(indexRes);
-	    if (HeapTupleIsValid(tuple)) {
-		pgProcP = (Form_pg_proc)GETSTRUCT(tuple);
-		bufferUsed = TRUE;
-	    }
-	} else
-	    break;
-    } while (!HeapTupleIsValid(tuple) ||
-	     pgProcP->pronargs != nargs ||
-	     !oid8eq(&(pgProcP->proargtypes[0]), argTypes));
-    
-    if (HeapTupleIsValid(tuple)) {
-	tuple = heap_copytuple(tuple);
-	ReleaseBuffer(buffer);
+    tuple = (HeapTuple) NULL;  /* initial value */
+    ScanComplete = false;      /* Scan hasn't begun yet */
+    FoundMatch = false;        /* No match yet; haven't even looked. */
+    while (!FoundMatch && !ScanComplete) {  
+        indexRes = index_getnext(sd, ForwardScanDirection);
+        if (indexRes) {
+            ItemPointer iptr;
+        
+            iptr = &indexRes->heap_iptr;
+            tuple = heap_fetch(heapRelation, NowTimeQual, iptr, &buffer);
+            pfree(indexRes);
+            if (HeapTupleIsValid(tuple)) {
+                /* Here's a row for a procedure that has the sought procedure
+                   name.  To be a match, though, we need it to have the
+                   right number and type of arguments too, so we check that
+                   now.
+                   */
+                pgProcP = (Form_pg_proc)GETSTRUCT(tuple);
+                if (pgProcP->pronargs == nargs &&
+                    oid8eq(&(pgProcP->proargtypes[0]), argTypes)) 
+                    FoundMatch = true;
+                else ReleaseBuffer(buffer);
+            }
+        } else ScanComplete = true;
     }
+
+    if (FoundMatch) {
+        Assert(HeapTupleIsValid(tuple));
+        return_tuple = heap_copytuple(tuple);
+        ReleaseBuffer(buffer);
+    } else return_tuple = (HeapTuple)NULL;
     
     index_endscan(sd);
     index_close(idesc);
     
-    return tuple;
+    return return_tuple;
 }
+
+
 
 HeapTuple
 ProcedureSrcIndexScan(Relation heapRelation, text *procSrc)
