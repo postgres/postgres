@@ -1,4 +1,4 @@
-<!-- $Header: /cvsroot/pgsql/doc/src/sgml/protocol.sgml,v 1.22 2001/11/21 05:53:41 thomas Exp $ -->
+<!-- $Header: /cvsroot/pgsql/doc/src/sgml/protocol.sgml,v 1.23 2001/11/22 01:22:10 tgl Exp $ -->
 
 <chapter id="protocol">
  <title>Frontend/Backend Protocol</title>
@@ -38,7 +38,7 @@
 
   <para>
    A frontend opens a connection to the server and sends a start-up
-   packet.  This includes the names of the user and the database the
+   packet.  This includes the names of the user and of the database the
    user wants to connect to.  The server then uses this, and the
    information in the <filename>pg_hba.conf</filename> file to
    determine what further authentication information it requires the
@@ -53,19 +53,15 @@
   </para>
 
   <para>
-   In order to serve multiple clients efficiently, the server would
-   normally create a new child process to handle each incoming
-   connection.  However, this is not required.  In the current
-   implementation, a new child process is created immediately after an
-   incoming connection is detected.  In earlier versions of
-   <productname>PostgreSQL</> 
-   (7.1 and earlier), the child process was created after sending the
-   authentication confirmation message.
+   In order to serve multiple clients efficiently, the server launches
+   a new <quote>backend</> process for each client.  This is transparent
+   to the protocol, however.  In the current implementation, a new child
+   process is created immediately after an incoming connection is detected.
   </para>
 
   <para>
    When the frontend wishes to disconnect it sends an appropriate packet and
-   closes the connection without waiting for a response for the backend.
+   closes the connection without waiting for a response from the backend.
   </para>
 
   <para>
@@ -319,47 +315,26 @@
       <Term>CursorResponse</Term>
       <ListItem>
        <Para>
-        The query was either an <literal>INSERT</literal>,
-        <literal>UPDATE</literal>, <literal>DELETE</literal>,
-        <literal>FETCH</literal>, or a <literal>SELECT</literal>
-        command.  If the transaction has been aborted then the backend
-        sends a CompletedResponse message with a tag of <literal>*ABORT
-        STATE*</literal>.  Otherwise the following responses are sent.
+        Beginning of the response to a <command>SELECT</command>,
+        <command>FETCH</command>, <command>INSERT</command>,
+        <command>UPDATE</command>, or <command>DELETE</command>
+        query.  In the <command>FETCH</command> case the name of the
+	cursor being fetched from is included in the message.  Otherwise
+	the message always mentions the <quote>blank</> cursor.
        </Para>
+      </ListItem>
+     </VarListEntry>
 
+     <VarListEntry>
+      <Term>RowDescription</Term>
+      <ListItem>
        <Para>
-        For an <literal>INSERT</literal> command, the backend then
-        sends a CompletedResponse message with a tag of
-        <literal>INSERT <replaceable>oid</replaceable>
-        <replaceable>rows</replaceable></literal>, where
-        <replaceable>rows</replaceable> is the number of rows
-        inserted, and <replaceable>oid</replaceable> is the object ID
-        of the inserted row if <Replaceable>rows</Replaceable> is 1,
-        otherwise <Replaceable>oid</Replaceable> is 0.
-       </Para>
-
-       <Para>
-        For a <literal>DELETE</literal> command, the backend then
-        sends a CompletedResponse message with a tag of <literal>DELETE
-        <Replaceable>rows</Replaceable></literal> where
-        <Replaceable>rows</Replaceable> is the number of rows deleted.
-       </Para>
-
-       <Para>
-        For an <literal>UPDATE</literal> command, the backend then
-        sends a CompletedResponse message with a tag of <literal>UPDATE
-        <Replaceable>rows</Replaceable></literal> where
-        <Replaceable>rows</Replaceable> is the number of rows affected
-        by the update.
-       </Para>
-
-       <Para>
-        For a <literal>FETCH</literal> or <literal>SELECT</literal>
-        command, the backend sends a RowDescription message.  This is
-        then followed by an AsciiRow or BinaryRow message (depending
-        on whether a binary cursor was specified) for each row being
-        returned to the frontend.  Finally, the backend sends a
-        CompletedResponse message with a tag of <literal>SELECT</literal>.
+        Indicates that rows are about to be returned in response to
+	a <command>SELECT</command> or <command>FETCH</command> query.
+	The message contents describe the layout of the rows.  This
+	will be followed by an AsciiRow or BinaryRow message (depending on
+	whether a binary cursor was specified) for each row being returned
+        to the frontend.
        </Para>
       </ListItem>
      </VarListEntry>
@@ -368,8 +343,7 @@
       <Term>EmptyQueryResponse</Term>
       <ListItem>
        <Para>
-        An empty query string was recognized.  (The need to specially
-        distinguish this case is historical.)
+        An empty query string was recognized.
        </Para>
       </ListItem>
      </VarListEntry>
@@ -411,6 +385,41 @@
     </VariableList>
    </Para>
 
+   <Para>
+    The response to a <command>SELECT</> or <command>FETCH</> query
+    normally consists of CursorResponse, RowDescription, zero or more
+    AsciiRow or BinaryRow messages, and finally CompletedResponse.
+    <command>INSERT</command>, <command>UPDATE</command>, and
+    <command>DELETE</command> queries produce CursorResponse followed by
+    CompletedResponse.
+    <command>COPY</> to or from the frontend invokes special protocol
+    as mentioned above.
+    All other query types normally produce only
+    a CompletedResponse message.
+   </Para>
+
+   <Para>
+    Since a query string could contain several queries (separated by
+    semicolons), there might be several such response sequences before the
+    backend finishes processing the query string.  ReadyForQuery is issued
+    when the entire string has been processed and the backend is ready to
+    accept a new query string.
+   </Para>
+
+   <Para>
+    If a completely empty (no contents other than whitespace) query string
+    is received, the response is EmptyQueryResponse followed by ReadyForQuery.
+    (The need to specially distinguish this case is historical.)
+   </Para>
+
+   <Para>
+    In the event of an error, ErrorResponse is issued followed by
+    ReadyForQuery.  All further processing of the query string is aborted by
+    ErrorResponse (even if more queries remained in it).  Note that this
+    may occur partway through the sequence of messages generated by an
+    individual query.
+   </Para>
+
    <para>
     A frontend must be prepared to accept ErrorResponse and
     NoticeResponse messages whenever it is expecting any other type of
@@ -428,9 +437,15 @@
    </para>
 
    <Para>
-    Also, if the frontend issues any <literal>LISTEN</literal>
+    Also, if the frontend issues any <command>LISTEN</command>
     commands then it must be prepared to accept NotificationResponse
     messages at any time; see below.
+   </para>
+
+   <para>
+    Recommended practice is to code frontends in a state-machine style
+    that will accept any message type at any time that it could make sense,
+    rather than wiring in assumptions about the exact sequence of messages.
    </para>
   </sect2>
 
@@ -504,7 +519,7 @@
    <para>
     A frontend must be prepared to accept ErrorResponse and
     NoticeResponse messages whenever it is expecting any other type of
-    message.  Also, if it issues any <literal>LISTEN</literal>
+    message.  Also, if it issues any <command>LISTEN</command>
     commands then it must be prepared to accept NotificationResponse
     messages at any time; see below.
    </para>
@@ -514,10 +529,10 @@
    <title>Notification Responses</title>
 
    <Para>
-    If a frontend issues a <literal>LISTEN</literal> command, then the
+    If a frontend issues a <command>LISTEN</command> command, then the
     backend will send a NotificationResponse message (not to be
     confused with NoticeResponse!)  whenever a
-    <literal>NOTIFY</literal> command is executed for the same
+    <command>NOTIFY</command> command is executed for the same
     notification name.
    </para>
 
@@ -534,8 +549,8 @@
       <Term>NotificationResponse</Term>
       <ListItem>
        <Para>
-        A <literal>NOTIFY</literal> command has been executed for a
-        name for which a previous <literal>LISTEN</literal> command
+        A <command>NOTIFY</command> command has been executed for a
+        name for which a previous <command>LISTEN</command> command
         was executed.  Notifications may be sent at any time.
        </Para>
       </ListItem>
@@ -579,7 +594,7 @@
     same key data (PID and secret key) passed to the frontend during
     connection start-up.  If the request matches the PID and secret
     key for a currently executing backend, the processing of the
-    current query is aborted.  (In the existing implemenation, this is
+    current query is aborted.  (In the existing implementation, this is
     done by sending a special signal to the backend process that is
     processing the query.)
    </para>
@@ -632,6 +647,61 @@
     terminate.  The frontend has the option of launching a new backend
     by recontacting the server if it doesn't want to terminate
     itself.
+   </para>
+
+   <para>
+    For either normal or abnormal termination, any open transaction is
+    rolled back, not committed.  One should note however that if a
+    frontend disconnects while a query is being processed, the backend
+    will probably finish the query before noticing the disconnection.
+    If the query is outside any transaction block (<command>BEGIN</>
+    ... <command>COMMIT</> sequence) then its results may be committed
+    before the disconnection is recognized.
+   </para>
+  </sect2>
+
+  <Sect2>
+   <Title>SSL Session Encryption</Title>
+
+   <Para>
+    Recent releases of <productname>PostgreSQL</> allow frontend/backend
+    communication to be encrypted using SSL.  This provides communication
+    security in environments where attackers might be able to capture the
+    session traffic.
+   </para>
+
+   <para>
+    To initiate an SSL-encrypted connection, the frontend initially sends
+    an SSLRequest message rather than a StartupPacket.  The server then
+    responds with a single byte containing <literal>Y</> or <literal>N</>,
+    indicating that it is willing or unwilling to perform SSL, respectively.
+    The frontend may close the connection at this point if it is dissatisfied
+    with the response.  To continue after <literal>Y</>, perform an SSL
+    startup handshake (not described here, part of the SSL specification)
+    with the server.  If this is successful, continue with
+    sending the usual StartupPacket.  In this case the StartupPacket and
+    all subsequent data will be SSL-encrypted.  To continue after
+    <literal>N</>, send the usual StartupPacket and proceed without
+    encryption.
+   </para>
+
+   <para>
+    The frontend should also be prepared to handle an ErrorMessage response
+    to SSLRequest from the server.  This would only occur if the server
+    predates the addition of SSL support to <productname>PostgreSQL</>.
+    In this case the connection must be closed, but the frontend may choose
+    to open a fresh connection and proceed without requesting SSL.
+   </para>
+
+   <para>
+    An initial SSLRequest may also be used in a connection that is being
+    opened to send a CancelRequest message.
+   </para>
+
+   <para>
+    While the protocol itself does not provide a way for the server to
+    force SSL encryption, the administrator may configure the server to
+    reject unencrypted sessions as a byproduct of authentication checking.
    </para>
   </sect2>
  </sect1>
@@ -1240,8 +1310,30 @@ CompletedResponse (B)
 </Term>
 <ListItem>
 <Para>
-                The command tag.  This is usually (but not always) a single
-                word that identifies which SQL command was completed.
+        The command tag.  This is usually a single
+        word that identifies which SQL command was completed.
+       </Para>
+
+       <Para>
+        For an <command>INSERT</command> command, the tag is
+        <literal>INSERT <replaceable>oid</replaceable>
+        <replaceable>rows</replaceable></literal>, where
+        <replaceable>rows</replaceable> is the number of rows
+        inserted, and <replaceable>oid</replaceable> is the object ID
+        of the inserted row if <Replaceable>rows</Replaceable> is 1,
+        otherwise <Replaceable>oid</Replaceable> is 0.
+       </Para>
+
+       <Para>
+        For a <command>DELETE</command> command, the tag is
+	<literal>DELETE <Replaceable>rows</Replaceable></literal> where
+        <Replaceable>rows</Replaceable> is the number of rows deleted.
+       </Para>
+
+       <Para>
+        For an <command>UPDATE</command> command, the tag is
+	<literal>UPDATE <Replaceable>rows</Replaceable></literal> where
+        <Replaceable>rows</Replaceable> is the number of rows updated.
 </Para>
 </ListItem>
 </VarListEntry>
@@ -1853,6 +1945,44 @@ RowDescription (B)
 </Para>
 </ListItem>
 </VarListEntry>
+
+<VarListEntry>
+<Term>
+SSLRequest (F)
+</Term>
+<ListItem>
+<Para>
+
+<VariableList>
+<VarListEntry>
+<Term>
+        Int32(8)
+</Term>
+<ListItem>
+<Para>
+                The size of the packet in bytes.
+</Para>
+</ListItem>
+</VarListEntry>
+<VarListEntry>
+<Term>
+        Int32(80877103)
+</Term>
+<ListItem>
+<Para>
+                The SSL request code.  The value is chosen to contain
+                <literal>1234</> in the most significant 16 bits, and <literal>5679</> in the
+                least 16 significant bits.  (To avoid confusion, this code
+                must not be the same as any protocol version number.)
+</Para>
+</ListItem>
+</VarListEntry>
+</VariableList>
+
+</Para>
+</ListItem>
+</VarListEntry>
+
 <VarListEntry>
 <Term>
 StartupPacket (F)
@@ -1931,6 +2061,7 @@ StartupPacket (F)
 <ListItem>
 <Para>
                 The optional tty the backend should use for debugging messages.
+		(Currently, this field is unsupported and ignored.)
 </Para>
 </ListItem>
 </VarListEntry>
