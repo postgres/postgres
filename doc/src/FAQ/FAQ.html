@@ -10,7 +10,7 @@
   alink="#0000ff">
     <H1>Frequently Asked Questions (FAQ) for PostgreSQL</H1>
 
-    <P>Last updated: Mon Mar 17 11:32:59 EST 2003</P>
+    <P>Last updated: Tue Apr 22 14:02:41 EDT 2003</P>
 
     <P>Current maintainer: Bruce Momjian (<A href=
     "mailto:pgman@candle.pha.pa.us">pgman@candle.pha.pa.us</A>)<BR>
@@ -21,7 +21,7 @@
     "http://www.PostgreSQL.org/docs/faqs/FAQ.html">http://www.PostgreSQL.org/docs/faqs/FAQ.html</A>.</P>
 
     <P>Platform-specific questions are answered at <A href=
-    "http://www.PostgreSQL.org/users-lounge/docs/index.html">http://www.PostgreSQL.org/docs/index.html</A>.</P>
+    "http://www.PostgreSQL.org/docs/index.html">http://www.PostgreSQL.org/docs/index.html</A>.</P>
     <HR>
 
     <H2 align="center">General Questions</H2>
@@ -245,11 +245,16 @@
     <P>The database server can run on Windows NT and Win2k using
     Cygwin, the Cygnus Unix/NT porting library. See
     <I>pgsql/doc/FAQ_MSWIN</I> in the distribution or the MS Windows FAQ
-    at <A href="http://www.PostgreSQL.org/docs/faqs/faq-mswin.html">
-    http://www.PostgreSQL.org/docs/faqs/faq-mswin.html</A>.</P>
+    at <A href="http://www.PostgreSQL.org/docs/faqs/text/FAQ_MSWIN">
+    http://www.PostgreSQL.org/docs/faqs/text/FAQ_MSWIN</A>.</P>
 
     <p>A native port to MS Win NT/2000/XP is currently being worked
-    on.</p>
+    on. For more details on the current status of PostgreSQL on Windows see
+    <a href="http://techdocs.postgresql.org/guides/Windows">
+    http://techdocs.postgresql.org/guides/Windows</a>.</p>
+
+    <p>There is also a Novell Netware 6 port at
+    <a href="http://forge.novell.com">http://forge.novell.com</a>.</p>
 
     <H4><A name="1.5">1.5</A>) Where can I get PostgreSQL?</H4>
 
@@ -309,8 +314,8 @@
       <A href="http://www.PostgreSQL.org">http://www.PostgreSQL.org</A>
     </BLOCKQUOTE>
 
-    <P>There is also an IRC channel on EFNet, channel
-    <I>#PostgreSQL</I>. I use the Unix command <CODE>irc -c
+    <P>There is also an IRC channel on EFNet and OpenProjects,
+    channel <I>#PostgreSQL</I>. I use the Unix command <CODE>irc -c
     '#PostgreSQL' "$USER" irc.phoenix.net.</CODE></P>
 
     <P>A list of commercial support companies is available at <A href=
@@ -326,8 +331,8 @@
 
     <P>Several manuals, manual pages, and some small test examples are
     included in the distribution. See the <I>/doc</I> directory. You
-    can also browse the manual online at <A href=
-    "http://www.ca.PostgreSQL.org/users-lounge/docs/">http://www.ca.PostgreSQL.org/users-lounge/docs/</A>.</P>
+    can also browse the manuals online at <A href=
+    "http://www.PostgreSQL.org/docs">http://www.PostgreSQL.org/docs</A>.</P>
 
     <P>There are two PostgreSQL books available online at <A href=
     "http://www.PostgreSQL.org/docs/awbook.html">http://www.PostgreSQL.org/docs/awbook.html</A>
@@ -602,7 +607,7 @@
     <I>postmaster</I>. For most systems, with default numbers of
     buffers and processes, you need a minimum of ~1 MB. See the <A
     href=
-    "http://www.postgresql.org/idocs/index.php?kernel-resources.html">PostgreSQL
+    "http://www.PostgreSQL.org/docs/view.php?version=current&idoc=1&file=kernel-resources.html">PostgreSQL
     Administrator's Guide</A> for more detailed information about
     shared memory and semaphores.</P>
 
@@ -1342,11 +1347,10 @@ BYTEA           bytea           variable-length byte array (null-byte safe)
     <H4><A name="4.25">4.25</A>) How do I return multiple rows or
     columns from a function?</H4>
 
-    <P>You can return result sets from PL/pgSQL functions using
-    <I>refcursors</I>. See <A href=
-    "http://www.PostgreSQL.org/idocs/index.php?plpgsql-cursors.html">
-    http://www.PostgreSQL.org/idocs/index.php?plpgsql-cursors.html</A>,
-    section 23.7.3.3.</P>
+    <P>In 7.3, you can easily return multiple rows or columns from a
+    function,
+    <a href="http://techdocs.postgresql.org/guides/SetReturningFunctions">
+    http://techdocs.postgresql.org/guides/SetReturningFunctions</a>.
 
     <H4><A name="4.26">4.26</A>) Why can't I reliably create/drop
     temporary tables in PL/PgSQL functions?</H4>
