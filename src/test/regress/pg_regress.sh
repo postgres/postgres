@@ -1,5 +1,5 @@
 #! /bin/sh
-# $PostgreSQL: pgsql/src/test/regress/pg_regress.sh,v 1.49 2004/10/31 19:14:16 tgl Exp $
+# $PostgreSQL: pgsql/src/test/regress/pg_regress.sh,v 1.50 2004/11/17 18:06:04 tgl Exp $
 
 me=`basename $0`
 : ${TMPDIR=/tmp}
@@ -49,6 +49,14 @@ message(){
 # ----------
 
 unset LC_COLLATE LC_CTYPE LC_MONETARY LC_MESSAGES LC_NUMERIC LC_TIME LC_ALL LANG LANGUAGE
+
+# On Windows the default locale may not be English, so force it
+case $host_platform in
+    *-*-cygwin*|*-*-mingw32*)
+	LANG=en
+	export LANG
+	;;
+esac
 
 
 # ----------
