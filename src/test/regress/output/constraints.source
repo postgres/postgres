@@ -274,7 +274,7 @@ SELECT '' AS two, * FROM COPY_TBL;
 (2 rows)
 
 COPY COPY_TBL FROM '_OBJWD_/data/constrf.data';
-ERROR:  CopyFrom: rejected due to CHECK constraint copy_con
+ERROR:  copy: line 2, CopyFrom: rejected due to CHECK constraint copy_con
 SELECT * FROM COPY_TBL;
  x |       y       | z 
 ---+---------------+---
