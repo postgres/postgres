@@ -4,7 +4,7 @@
 #
 # Copyright (c) 1994, Regents of the University of California
 #
-# $Header: /cvsroot/pgsql/doc/Makefile,v 1.23 2002/07/28 15:19:59 petere Exp $
+# $Header: /cvsroot/pgsql/doc/Makefile,v 1.24 2002/11/27 23:21:12 tgl Exp $
 #
 #----------------------------------------------------------------------------
 
@@ -53,7 +53,7 @@ man$(sqlmansect_dummy)/.timestamp: man.tar.gz
 	for file in man1/*.1; do \
 	  mv $$file $$file.bak && \
 	  sed -e 's/\\fR($(sqlmansect_dummy))/\\fR($(sqlmansectnum))/' $$file.bak >$$file && \
-	  rm $$file.bak || exit; \
+	  rm -f $$file.bak || exit; \
 	done
 	@echo timestamp >$@
 
