@@ -25,7 +25,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/interfaces/libpq/fe-misc.c,v 1.83 2002/10/14 18:11:17 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/interfaces/libpq/fe-misc.c,v 1.84 2002/10/16 02:55:30 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -779,11 +779,11 @@ pqFlush(PGconn *conn)
 int
 pqWait(int forRead, int forWrite, PGconn *conn)
 {
-	return pqWaitTimed(forRead, forWrite, conn, (const struct timeval *) NULL);
+	return pqWaitTimed(forRead, forWrite, conn, -1);
 }
 
 int
-pqWaitTimed(int forRead, int forWrite, PGconn *conn, const struct timeval *timeout)
+pqWaitTimed(int forRead, int forWrite, PGconn *conn, time_t finish_time)
 {
 	fd_set		input_mask;
 	fd_set		output_mask;
@@ -820,7 +820,7 @@ retry5:
 			FD_SET(conn->sock, &output_mask);
 		FD_SET(conn->sock, &except_mask);
 
-		if (NULL != timeout)
+		if (finish_time != -1)
 		{
 			/*
 			 * 	select() may modify timeout argument on some platforms so
@@ -831,7 +831,9 @@ retry5:
 			 *	incorrect timings when select() is interrupted.
 			 *	bjm 2002-10-14
 			 */
-			tmp_timeout = *timeout;
+			if ((tmp_timeout.tv_sec = finish_time - time(NULL)) < 0)
+				tmp_timeout.tv_sec = 0;  /* possible? */
+			tmp_timeout.tv_usec = 0;
 			ptmp_timeout = &tmp_timeout;
 		}
 		if (select(conn->sock + 1, &input_mask, &output_mask,

@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/interfaces/libpq/fe-connect.c,v 1.210 2002/10/15 01:48:25 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/interfaces/libpq/fe-connect.c,v 1.211 2002/10/16 02:55:30 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -1052,10 +1052,7 @@ connectDBComplete(PGconn *conn)
 {
 	PostgresPollingStatusType flag = PGRES_POLLING_WRITING;
 
-	time_t			finish_time = 0,
-					current_time;
-	struct timeval	remains,
-				   *rp = NULL;
+	time_t			finish_time = -1;
 
 	if (conn == NULL || conn->status == CONNECTION_BAD)
 		return 0;
@@ -1065,20 +1062,21 @@ connectDBComplete(PGconn *conn)
 	 */
 	if (conn->connect_timeout != NULL)
 	{
-		remains.tv_sec = atoi(conn->connect_timeout);
-		if (!remains.tv_sec)
+		int timeout = atoi(conn->connect_timeout);
+
+		if (timeout == 0)
 		{
 			conn->status = CONNECTION_BAD;
 			return 0;
 		}
-		remains.tv_usec = 0;	/* We don't use subsecond timing */
-		rp = &remains;
-
+		/* Rounding could cause connection to fail;we need at least 2 secs */
+		if (timeout == 1)
+			timeout++;
 		/* calculate the finish time based on start + timeout */
-		finish_time = time((time_t *) NULL) + remains.tv_sec;
+		finish_time = time(NULL) + timeout;
 	}
 
-	while (rp == NULL || remains.tv_sec > 0)
+	while (finish_time == -1 || time(NULL) >= finish_time)
 	{
 		/*
 		 * Wait, if necessary.	Note that the initial state (just after
@@ -1094,7 +1092,7 @@ connectDBComplete(PGconn *conn)
 				return 1;		/* success! */
 
 			case PGRES_POLLING_READING:
-				if (pqWaitTimed(1, 0, conn, rp))
+				if (pqWaitTimed(1, 0, conn, finish_time))
 				{
 					conn->status = CONNECTION_BAD;
 					return 0;
@@ -1102,7 +1100,7 @@ connectDBComplete(PGconn *conn)
 				break;
 
 			case PGRES_POLLING_WRITING:
-				if (pqWaitTimed(0, 1, conn, rp))
+				if (pqWaitTimed(0, 1, conn, finish_time))
 				{
 					conn->status = CONNECTION_BAD;
 					return 0;
@@ -1119,20 +1117,6 @@ connectDBComplete(PGconn *conn)
 		 * Now try to advance the state machine.
 		 */
 		flag = PQconnectPoll(conn);
-
-		/*
-		 * If connecting timeout is set, calculate remaining time.
-		 */
-		if (rp != NULL)
-		{
-			if (time(&current_time) == -1)
-			{
-				conn->status = CONNECTION_BAD;
-				return 0;
-			}
-
-			remains.tv_sec = finish_time - current_time;
-		}
 	}
 	conn->status = CONNECTION_BAD;
 	return 0;
