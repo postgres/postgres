@@ -37,7 +37,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/postmaster/postmaster.c,v 1.442 2004/12/31 22:00:40 pgsql Exp $
+ *	  $PostgreSQL: pgsql/src/backend/postmaster/postmaster.c,v 1.443 2005/01/12 16:38:17 tgl Exp $
  *
  * NOTES
  *
@@ -92,6 +92,7 @@
 #include <DNSServiceDiscovery/DNSServiceDiscovery.h>
 #endif
 
+#include "catalog/pg_control.h"
 #include "catalog/pg_database.h"
 #include "commands/async.h"
 #include "lib/dllist.h"
@@ -167,7 +168,7 @@ int			ReservedBackends;
 static const char *progname = NULL;
 
 /* The socket(s) we're listening to. */
-#define MAXLISTEN	10
+#define MAXLISTEN	64
 static int	ListenSocket[MAXLISTEN];
 
 /*
@@ -337,8 +338,8 @@ typedef struct
 #endif
 	char my_exec_path[MAXPGPATH];
 	char ExtraOptions[MAXPGPATH];
-	char lc_collate[MAXPGPATH];
-	char lc_ctype[MAXPGPATH];
+	char lc_collate[LOCALE_NAME_BUFLEN];
+	char lc_ctype[LOCALE_NAME_BUFLEN];
 } BackendParameters;
 
 static void read_backend_variables(char *id, Port *port);
@@ -3682,8 +3683,8 @@ save_backend_variables(BackendParameters *param, Port *port,
 
 	StrNCpy(param->ExtraOptions, ExtraOptions, MAXPGPATH);
 
-	StrNCpy(param->lc_collate, setlocale(LC_COLLATE, NULL), MAXPGPATH);
-	StrNCpy(param->lc_ctype, setlocale(LC_CTYPE, NULL), MAXPGPATH);
+	StrNCpy(param->lc_collate, setlocale(LC_COLLATE, NULL), LOCALE_NAME_BUFLEN);
+	StrNCpy(param->lc_ctype, setlocale(LC_CTYPE, NULL), LOCALE_NAME_BUFLEN);
 
 	return true;
 }
