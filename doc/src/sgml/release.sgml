@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/release.sgml,v 1.82 2001/02/12 13:09:33 momjian Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/release.sgml,v 1.83 2001/02/13 22:05:47 petere Exp $
 -->
 
  <appendix id="release">
@@ -9,7 +9,7 @@ $Header: /cvsroot/pgsql/doc/src/sgml/release.sgml,v 1.82 2001/02/12 13:09:33 mom
    <title>Release 7.1</title>
 
    <note>
-   <title>Release date<title>
+   <title>Release date</title>
    <simpara>2001-??-??</simpara>
    </note>
 
@@ -312,7 +312,7 @@ Improved assembly language source code format (Bruce)
    <title>Release 7.0.3</title>
 
    <note>
-   <title>Release date<title>
+   <title>Release date</title>
    <simpara>2000-11-11</simpara>
    </note>
 
@@ -395,7 +395,7 @@ Fix for crash of backend, on abort (Tom)
    <title>Release 7.0.2</title>
 
    <note>
-   <title>Release date<title>
+   <title>Release date</title>
    <simpara>2000-06-05</simpara>
    </note>
 
@@ -440,7 +440,7 @@ Added documentation to tarball.
    <title>Release 7.0.1</title>
 
    <note>
-   <title>Release date<title>
+   <title>Release date</title>
    <simpara>2000-06-01</simpara>
    </note>
 
@@ -506,7 +506,7 @@ ecpg changes (Michael)
    <title>Release 7.0</title>
 
    <note>
-   <title>Release date<title>
+   <title>Release date</title>
    <simpara>2000-05-08</simpara>
    </note>
 
@@ -997,7 +997,7 @@ New multibyte encodings
    <title>Release 6.5.3</title>
 
    <note>
-   <title>Release date<title>
+   <title>Release date</title>
    <simpara>1999-10-13</simpara>
    </note>
 
@@ -1044,7 +1044,7 @@ Fix dumping rules on inherited tables
    <title>Release 6.5.2</title>
 
    <note>
-   <title>Release date<title>
+   <title>Release date</title>
    <simpara>1999-09-15</simpara>
    </note>
 
@@ -1112,7 +1112,7 @@ Updated version of pgaccess 0.98
    <title>Release 6.5.1</title>
 
    <note>
-   <title>Release date<title>
+   <title>Release date</title>
    <simpara>1999-07-15</simpara>
    </note>
 
@@ -1178,7 +1178,7 @@ Add Win1250 (Czech) support (Pavel Behal)
    <title>Release 6.5</title>
 
    <note>
-   <title>Release date<title>
+   <title>Release date</title>
    <simpara>1999-06-09</simpara>
    </note>
 
@@ -1587,7 +1587,7 @@ New install commands for plpgsql(Jan)
 <title>Release 6.4.2</title>
 
    <note>
-   <title>Release date<title>
+   <title>Release date</title>
    <simpara>1999-12-20</simpara>
    </note>
 
@@ -1633,7 +1633,7 @@ Fix for datetime constant problem on some platforms(Thomas)
 <title>Release 6.4.1</title>
 
    <note>
-   <title>Release date<title>
+   <title>Release date</title>
    <simpara>1999-12-18</simpara>
    </note>
 
@@ -1708,7 +1708,7 @@ Upgrade to PyGreSQL 2.2(D'Arcy)
 <title>Release 6.4</title>
 
    <note>
-   <title>Release date<title>
+   <title>Release date</title>
    <simpara>1998-10-30</simpara>
    </note>
 
@@ -2016,7 +2016,7 @@ new Makefile.shlib for shared library configuration(Tom)
 <title>Release 6.3.2</title>
 
    <note>
-   <title>Release date<title>
+   <title>Release date</title>
    <simpara>1998-04-07</simpara>
    </note>
 
@@ -2097,7 +2097,7 @@ ASSERT fixes(Bruce)
    <title>Release 6.3.1</title>
 
    <note>
-   <title>Release date<title>
+   <title>Release date</title>
    <simpara>1998-03-23</simpara>
    </note>
 
@@ -2194,7 +2194,7 @@ Better identify tcl and tk libs and includes(Bruce)
    <title>Release 6.3</title>
 
    <note>
-   <title>Release date<title>
+   <title>Release date</title>
    <simpara>1998-03-01</simpara>
    </note>
 
@@ -2517,7 +2517,7 @@ Remove un-needed malloc() calls and replace with palloc()(Bruce)
 <title>Release 6.2.1</title>
 
    <note>
-   <title>Release date<title>
+   <title>Release date</title>
    <simpara>1997-10-17</simpara>
    </note>
 
@@ -2610,7 +2610,7 @@ Trigger function for inserting user names for INSERT/UPDATE(Brook Milligan)
 <title>Release 6.2</title>
 
    <note>
-   <title>Release date<title>
+   <title>Release date</title>
    <simpara>1997-10-02</simpara>
    </note>
 
@@ -2774,7 +2774,7 @@ SPI and Trigger programming guides (Vadim & D'Arcy)
 <title>Release 6.1.1</title>
 
    <note>
-   <title>Release date<title>
+   <title>Release date</title>
    <simpara>1997-07-22</simpara>
    </note>
 
@@ -2831,7 +2831,7 @@ pg_dumpall now returns proper status, portability fix(Bruce)
 <title>Release 6.1</title>
 
    <note>
-   <title>Release date<title>
+   <title>Release date</title>
    <simpara>1997-06-08</simpara>
    </note>
 
@@ -3013,7 +3013,7 @@ DG-UX, Ultrix, Irix, AIX portability fixes
 <title>Release 6.0</title>
 
    <note>
-   <title>Release date<title>
+   <title>Release date</title>
    <simpara>1997-01-29</simpara>
    </note>
 
@@ -3193,7 +3193,7 @@ releases.
 <title>Release 1.02</title>
 
    <note>
-   <title>Release date<title>
+   <title>Release date</title>
    <simpara>1996-08-01</simpara>
    </note>
 
@@ -3353,7 +3353,7 @@ Contributors (appologies to any missed)
 <title>Release 1.01</title>
 
    <note>
-   <title>Release date<title>
+   <title>Release date</title>
    <simpara>1996-02-23</simpara>
    </note>
 
@@ -3555,7 +3555,7 @@ Bug fixes:
 <title>Release 1.0</title>
 
    <note>
-   <title>Release date<title>
+   <title>Release date</title>
    <simpara>1995-09-05</simpara>
    </note>
 
@@ -3623,7 +3623,7 @@ Bug fixes:
 <title><productname>Postgres95</productname>Release 0.03</title>
 
    <note>
-   <title>Release date<title>
+   <title>Release date</title>
    <simpara>1995-07-21</simpara>
    </note>
 
@@ -3756,7 +3756,7 @@ New documentation:
 <title><productname>Postgres95</productname>Release 0.02</title>
 
    <note>
-   <title>Release date<title>
+   <title>Release date</title>
    <simpara>1995-03-25</simpara>
    </note>
 
@@ -3818,7 +3818,7 @@ The following bugs have been fixed in postgres95-beta-0.02:
 <title><productname>Postgres95</productname>Release 0.01</title>
 
    <note>
-   <title>Release date<title>
+   <title>Release date</title>
    <simpara>1995-05-01</simpara>
    </note>
 
