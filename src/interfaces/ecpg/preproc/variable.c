@@ -218,7 +218,7 @@ find_variable(char *name)
 		{
 			/*
 			 * We don't care about what's inside the array braces so just
-			 * eat up the character
+			 * eat up the characters
 			 */
 			for (count = 1, end = next + 1; count; end++)
 			{
@@ -242,6 +242,11 @@ find_variable(char *name)
 
 				*next = '\0';
 				p = find_simple(name);
+				if (p == NULL)
+				{
+					snprintf(errortext, sizeof(errortext), "The variable %s is not declared", name);
+					mmerror(PARSE_ERROR, ET_FATAL, errortext);
+				}			   
 				*next = c;
 				switch (p->type->u.element->type)
 				{
