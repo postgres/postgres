@@ -1717,6 +1717,12 @@ Mon Nov  3 15:43:19 CET 2003
 Wed Dec  3 09:45:21 CET 2003
 
 	- Added patch for array handling by Dave Cramer
+	
+Wed Dec 17 16:11:16 CET 2003
+
+	- Added just another patch by Dave that fixes a reversed order in
+	  variable listing for output variables in cursor definitions
+	- Fixed incorrect if call in long=>numeric conversion.
 	- Set ecpg version to 3.1.0
 	- Set ecpg library to 4.1.0
 	- Set pgtypes library to 1.1.0

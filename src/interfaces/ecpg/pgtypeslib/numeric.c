@@ -1353,7 +1353,7 @@ PGTYPESnumeric_from_long(signed long int long_val, numeric *var)
 		reach_limit *= 10;
 	} while ((reach_limit - 1) < abs_long_val && reach_limit <= LONG_MAX/10);
 
-	if (reach_limit <= LONG_MAX/10)
+	if (reach_limit > LONG_MAX/10)
 	{
 		/* add the first digit and a .0 */
 		size += 2;

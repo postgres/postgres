@@ -1,4 +1,4 @@
-/* $PostgreSQL: pgsql/src/interfaces/ecpg/preproc/preproc.y,v 1.266 2003/11/29 19:52:08 pgsql Exp $ */
+/* $PostgreSQL: pgsql/src/interfaces/ecpg/preproc/preproc.y,v 1.267 2003/12/17 15:23:45 meskes Exp $ */
 
 /* Copyright comment */
 %{
@@ -271,12 +271,12 @@ add_additional_variables(char *name, bool insert)
 		/* add all those input variables that were given earlier 
 		 * note that we have to append here but have to keep the existing order */
 		for (p = ptr->argsinsert; p; p = p->next)
-			append_variable(&argsinsert, p->variable, p->indicator);
+			add_variable_to_tail(&argsinsert, p->variable, p->indicator);
 	}
 
 	/* add all those output variables that were given earlier */
 	for (p = ptr->argsresult; p; p = p->next)
-		add_variable(&argsresult, p->variable, p->indicator);
+		add_variable_to_tail(&argsresult, p->variable, p->indicator);
 	
 	return ptr;
 }
@@ -4385,7 +4385,7 @@ ECPGCursorStmt:  DECLARE name cursor_options CURSOR opt_hold FOR prepared_name
 			sprintf(thisquery->name, "ECPGprepared_statement(%s)", $7);
 
 			this->argsinsert = NULL;
-			add_variable(&(this->argsinsert), thisquery, &no_indicator);
+			add_variable_to_head(&(this->argsinsert), thisquery, &no_indicator);
 
 			cur = this;
 
@@ -5211,7 +5211,7 @@ ECPGExecute : EXECUTE IMMEDIATE execstring
 			thisquery->next = NULL;
 			thisquery->name = $3;
 
-			add_variable(&argsinsert, thisquery, &no_indicator);
+			add_variable_to_head(&argsinsert, thisquery, &no_indicator);
 
 			$$ = make_str("?");
 		}
@@ -5225,7 +5225,7 @@ ECPGExecute : EXECUTE IMMEDIATE execstring
 			thisquery->name = (char *) mm_alloc(sizeof("ECPGprepared_statement()") + strlen($2));
 			sprintf(thisquery->name, "ECPGprepared_statement(%s)", $2);
 
-			add_variable(&argsinsert, thisquery, &no_indicator);
+			add_variable_to_head(&argsinsert, thisquery, &no_indicator);
 		}
 		execute_rest
 		{
@@ -5270,14 +5270,14 @@ ecpg_using:	USING using_list 	{ $$ = EMPTY; }
 
 using_descriptor: USING opt_sql SQL_DESCRIPTOR quoted_ident_stringvar
 		{
-			add_variable(&argsresult, descriptor_variable($4,0), &no_indicator);
+			add_variable_to_head(&argsresult, descriptor_variable($4,0), &no_indicator);
 			$$ = EMPTY;
 		}
 		;
 
 into_descriptor: INTO opt_sql SQL_DESCRIPTOR quoted_ident_stringvar
 		{
-			add_variable(&argsresult, descriptor_variable($4,0), &no_indicator);
+			add_variable_to_head(&argsresult, descriptor_variable($4,0), &no_indicator);
 			$$ = EMPTY;
 		}
 		;
@@ -5301,7 +5301,7 @@ UsingConst: AllConst
 				char *length = mm_alloc(32);
 
 				sprintf(length, "%d", (int) strlen($1));
-				add_variable(&argsinsert, new_variable($1, ECPGmake_simple_type(ECPGt_const, length), 0), &no_indicator);
+				add_variable_to_head(&argsinsert, new_variable($1, ECPGmake_simple_type(ECPGt_const, length), 0), &no_indicator);
 			}
 		}
 		;
@@ -6147,9 +6147,9 @@ c_args: /*EMPTY*/		{ $$ = EMPTY; }
 		;
 
 coutputvariable: CVARIABLE indicator
-			{ add_variable(&argsresult, find_variable($1), find_variable($2)); }
+			{ add_variable_to_head(&argsresult, find_variable($1), find_variable($2)); }
 		| CVARIABLE
-			{ add_variable(&argsresult, find_variable($1), &no_indicator); }
+			{ add_variable_to_head(&argsresult, find_variable($1), &no_indicator); }
 		;
 
 
@@ -6158,14 +6158,14 @@ civarind: CVARIABLE indicator
 			if (find_variable($2)->type->type == ECPGt_array)
 				mmerror(PARSE_ERROR, ET_ERROR, "arrays of indicators are not allowed on input");
 
-			add_variable(&argsinsert, find_variable($1), find_variable($2));
+			add_variable_to_head(&argsinsert, find_variable($1), find_variable($2));
 			$$ = create_questionmarks($1, false);
 		}
 		;
 
 civar: CVARIABLE
 			{
-				add_variable(&argsinsert, find_variable($1), &no_indicator);
+				add_variable_to_head(&argsinsert, find_variable($1), &no_indicator);
 				$$ = create_questionmarks($1, false);
 			}
 		;
