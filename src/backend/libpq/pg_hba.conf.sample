@@ -117,9 +117,9 @@
 # 
 #   md5:  	Same as "password", but authentication is done by
 #		encrypting the password sent over the network. This is
-#		always preferable to "password" except for old clients
+#		always preferable to "password" except for pre-7.2 clients
 #		that don't support it. Also, md5 can use usernames stored
-#		in secondary password files but not secondary passwords.
+#		in secondary password files but not passwords stored there.
 # 
 #   crypt:  	Same as "md5", but uses crypt for pre-7.2 clients.  You can
 #		not store encrypted passwords if you use this option.
