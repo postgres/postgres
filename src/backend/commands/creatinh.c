@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *    $Header: /cvsroot/pgsql/src/backend/commands/Attic/creatinh.c,v 1.13 1997/08/21 04:05:22 vadim Exp $
+ *    $Header: /cvsroot/pgsql/src/backend/commands/Attic/creatinh.c,v 1.14 1997/08/22 03:03:56 vadim Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -35,7 +35,7 @@
 
 static int checkAttrExists(char *attributeName, 
  			   char *attributeType, List *schema);
-static List *MergeAttributes(List *schema, List *supers);
+static List *MergeAttributes(List *schema, List *supers, List **supconstr);
 static void StoreCatalogInheritance(Oid relationId, List *supers);
 
 /* ----------------------------------------------------------------
@@ -46,15 +46,16 @@ static void StoreCatalogInheritance(Oid relationId, List *supers);
 void
 DefineRelation(CreateStmt *stmt)
 {
-    char *relname = palloc(NAMEDATALEN);
-    List *schema = stmt->tableElts;
-    int			numberOfAttributes;
-    Oid			relationId;
-    char		archChar;
-    List		*inheritList 	= NULL;
-    char *archiveName 	= NULL;
+    char	*relname = palloc(NAMEDATALEN);
+    List	*schema = stmt->tableElts;
+    int		numberOfAttributes;
+    Oid		relationId;
+    char	archChar;
+    List	*inheritList 	= NULL;
+    char	*archiveName 	= NULL;
     TupleDesc	descriptor;
-    int			heaploc, archloc;
+    List 	*constraints;
+    int		heaploc, archloc;
     
     char*   typename = NULL;  /* the typename of this relation. not useod for now */
 
@@ -116,7 +117,8 @@ DefineRelation(CreateStmt *stmt)
      *	generate relation schema, including inherited attributes.
      * ----------------
      */
-    schema = MergeAttributes(schema, inheritList);
+    schema = MergeAttributes(schema, inheritList, &constraints);
+    constraints = nconc (constraints, stmt->constraints);
     
     numberOfAttributes = length(schema);
     if (numberOfAttributes <= 0) {
@@ -130,6 +132,55 @@ DefineRelation(CreateStmt *stmt)
      * ----------------
      */
     descriptor = BuildDescForRelation(schema, relname);
+    
+    if ( constraints != NIL )
+    {
+    	List *entry;
+    	int nconstr = length (constraints);
+    	ConstrCheck *check = (ConstrCheck *) palloc (nconstr * sizeof (ConstrCheck));
+    	int ncheck = 0;
+    	int i;
+    	
+    	foreach (entry, constraints)
+    	{
+    	    ConstraintDef *cdef = (ConstraintDef *) lfirst (entry);
+    	    
+    	    if ( cdef->type == CONSTR_CHECK )
+    	    {
+    	    	if ( cdef->name != NULL )
+    	    	{
+    	    	    for (i = 0; i < ncheck; i++)
+    	    	    {
+    	    	    	if ( strcmp (check[i].ccname, cdef->name) == 0 )
+    	    	    	    elog (WARN, "DefineRelation: name (%s) of CHECK constraint duplicated", cdef->name);
+    	    	    }
+    	    	    check[ncheck].ccname = cdef->name;
+    	    	}
+    	    	else
+    	    	{
+    	    	    check[ncheck].ccname = (char*) palloc (NAMEDATALEN);
+    	    	    sprintf (check[ncheck].ccname, "$%d", ncheck + 1);
+    	    	}
+    	        check[ncheck].ccbin = NULL;
+    	        check[ncheck].ccsrc = (char*) cdef->def;
+    	        ncheck++;
+    	    }
+    	}
+    	if ( ncheck > 0 )
+    	{
+    	    if ( ncheck < nconstr )
+    	    	check = (ConstrCheck *) repalloc (check, ncheck * sizeof (ConstrCheck));
+    	    if ( descriptor->constr == NULL )
+    	    {
+    	    	descriptor->constr = (TupleConstr *) palloc(sizeof(TupleConstr));
+    	    	descriptor->constr->num_defval = 0;
+    	    	descriptor->constr->has_not_null = false;
+    	    }
+    	    descriptor->constr->num_check = ncheck;
+    	    descriptor->constr->check = check;
+    	}
+    }
+    
     relationId = heap_create(relname,
 			     typename,
 			     archChar,
@@ -138,11 +189,12 @@ DefineRelation(CreateStmt *stmt)
     
     StoreCatalogInheritance(relationId, inheritList);
     
-    /* ----------------
+    /* 
      *	create an archive relation if necessary
-     * ----------------
      */
-    if (archChar != 'n') {
+    if (archChar != 'n')
+    {
+    	TupleDesc tupdesc;
 	/*
 	 *  Need to create an archive relation for this heap relation.
 	 *  We cobble up the command by hand, and increment the command
@@ -152,12 +204,15 @@ DefineRelation(CreateStmt *stmt)
 	CommandCounterIncrement();
 	archiveName = MakeArchiveName(relationId);
 	
-	relationId = heap_create(archiveName,
-				 typename,
-				 'n',		/* archive isn't archived */
-				 archloc,
-				 descriptor);
+	tupdesc = CreateTupleDescCopy (descriptor);	/* get rid of constraints */
+	(void) heap_create(archiveName,
+			   typename,
+			   'n',		/* archive isn't archived */
+			    archloc,
+			    tupdesc);
 	
+	FreeTupleDesc (tupdesc);
+	FreeTupleDesc (descriptor);
 	pfree(archiveName);
     }
 }
@@ -213,10 +268,11 @@ RemoveRelation(char *name)
  *                         stud_emp {7:percent}
  */
 static List *
-MergeAttributes(List *schema, List *supers)
+MergeAttributes(List *schema, List *supers, List **supconstr)
 {
     List *entry;
     List *inhSchema = NIL;
+    List *constraints = NIL;
     
     /*
      * Validates that there are no duplications.
@@ -258,6 +314,7 @@ MergeAttributes(List *schema, List *supers)
 	List		*partialResult = NIL;
 	AttrNumber	attrno;
 	TupleDesc	tupleDesc;
+	TupleConstr 	*constr;
 	
 	relation =  heap_openr(name);
 	if (relation==NULL) {
@@ -271,12 +328,12 @@ MergeAttributes(List *schema, List *supers)
 		 name);
 	}
 	tupleDesc = RelationGetTupleDescriptor(relation);
+	constr = tupleDesc->constr;
 	
 	for (attrno = relation->rd_rel->relnatts - 1; attrno >= 0; attrno--) {
 	    AttributeTupleForm	attribute = tupleDesc->attrs[attrno];
 	    char *attributeName;
 	    char *attributeType;
-	    TupleConstr  constraints;
 	    HeapTuple	tuple;
 	    ColumnDef	*def;
 	    TypeName	*typename;
@@ -285,7 +342,6 @@ MergeAttributes(List *schema, List *supers)
 	     * form name, type and constraints
 	     */
 	    attributeName = (attribute->attname).data;
-            constraints.has_not_null = attribute->attnotnull;
 	    tuple =
 		SearchSysCacheTuple(TYPOID,
 				    ObjectIdGetDatum(attribute->atttypid),
@@ -313,8 +369,44 @@ MergeAttributes(List *schema, List *supers)
 	    def->colname = pstrdup(attributeName);
 	    typename->name = pstrdup(attributeType); 
 	    def->typename = typename;
-	    def->is_not_null = constraints.has_not_null;
+	    def->is_not_null = attribute->attnotnull;
+	    def->defval = NULL;
+	    if ( attribute->atthasdef )
+	    {
+	    	AttrDefault *attrdef = constr->defval;
+	    	int i;
+	    	
+	    	Assert ( constr != NULL && constr->num_defval > 0 );
+	    	
+	    	for (i = 0; i < constr->num_defval; i++)
+	    	{
+	    	    if ( attrdef[i].adnum != attrno + 1 )
+	    	    	continue;
+	    	    def->defval = pstrdup (attrdef[i].adsrc);
+	    	    break;
+	    	}
+	    	Assert ( def->defval != NULL );
+	    }
             partialResult = lcons(def, partialResult);
+	}
+	
+	if ( constr && constr->num_check > 0 )
+	{
+	    ConstrCheck *check = constr->check;
+	    int i;
+	    
+	    for (i = 0; i < constr->num_check; i++)
+	    {
+	    	ConstraintDef *cdef = (ConstraintDef *) palloc (sizeof (ConstraintDef));
+	    	
+	    	cdef->type = CONSTR_CHECK;
+	    	if ( check[i].ccname[0] == '$' )
+	    	    cdef->name = NULL;
+	    	else
+	    	    cdef->name = pstrdup (check[i].ccname);
+	    	cdef->def = (void*) pstrdup (check[i].ccsrc);
+	    	constraints = lappend (constraints, cdef);
+	    }
 	}
 	
 	/*
@@ -333,7 +425,7 @@ MergeAttributes(List *schema, List *supers)
      * put the inherited schema before our the schema for this table
      */
     schema = nconc(inhSchema, schema);
-    
+    *supconstr = constraints;
     return (schema);
 }
 
@@ -557,4 +649,3 @@ MakeArchiveName(Oid relationId)
 
     return arch;
 }
-
