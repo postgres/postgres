@@ -8,7 +8,7 @@
 #
 #
 # IDENTIFICATION
-#    $Header: /cvsroot/pgsql/doc/src/sgml/Makefile,v 1.11 1999/12/04 04:53:14 momjian Exp $
+#    $Header: /cvsroot/pgsql/doc/src/sgml/Makefile,v 1.12 1999/12/05 20:21:59 momjian Exp $
 #
 #----------------------------------------------------------------------------
 
@@ -67,11 +67,10 @@ vpath %.sgml ./ref
 
 MANSOURCES= $(wildcard ref/*.sgml)
 
-APPLICATIONS= \
-	createdb.sgml
-	createuser.sgml \
-	dropdb.sgml
-	dropuser.sgml \
+APPLICATIONS= createdb.sgml createuser.sgml \
+	createlang.sgml \
+	dropdb.sgml dropuser.sgml \
+	droplang.sgml \
 	initdb.sgml initlocation.sgml \
 	ipcclean.sgml \
 	pg_dump.sgml \
