@@ -1,6 +1,6 @@
 TODO list for PostgreSQL
 ========================
-Last updated:		Mon Jul 26 11:27:29 EDT 1999
+Last updated:		Mon Jul 26 16:11:20 EDT 1999
 
 Current maintainer:	Bruce Momjian (maillist@candle.pha.pa.us)
 
@@ -53,6 +53,7 @@ MISC
 * User who can create databases can modify pg_database table
 * Plpgsql does not handle quoted mixed-case identifiers
 * Fix btree to give a useful elog when key > 1/2 (page - overhead)
+* pg_dump should preserve primary key information
 
 ENHANCEMENTS
 ------------
