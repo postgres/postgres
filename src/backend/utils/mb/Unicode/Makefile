@@ -4,7 +4,7 @@
 #
 # Copyright 2001 by PostgreSQL Global Development Group
 #
-# $Header: /cvsroot/pgsql/src/backend/utils/mb/Unicode/Makefile,v 1.3 2001/09/06 04:57:29 ishii Exp $
+# $Header: /cvsroot/pgsql/src/backend/utils/mb/Unicode/Makefile,v 1.4 2002/06/14 03:30:56 ishii Exp $
 #
 #-------------------------------------------------------------------------
 
@@ -26,7 +26,7 @@ MAPS= $(ISO8859MAPS) $(CYRILLICMAPS)\
 	euc_kr_to_utf8.map euc_tw_to_utf8.map sjis_to_utf8.map \
 	utf8_to_big5.map utf8_to_euc_cn.map utf8_to_euc_jp.map \
 	utf8_to_euc_kr.map utf8_to_euc_tw.map utf8_to_iso8859_2.map \
-	utf8_to_sjis.map
+	utf8_to_sjis.map gb18030_to_utf8.map utf8_to_gb18030.map
 
 ISO8859TEXTS= 8859-2.TXT 8859-3.TXT 8859-4.TXT 8859-5.TXT
 CYRILLICTEXTS=cp866.txt cp1251.txt koi8-r.txt
@@ -34,7 +34,7 @@ CYRILLICTEXTS=cp866.txt cp1251.txt koi8-r.txt
 TEXTS=$(ISO8859TEXTS) $(CYRILLICTEXTS) \
 	BIG5.TXT CNS11643.TXT GB2312.TXT \
 	JIS0201.TXT JIS0208.TXT JIS0212.TXT \
-	OLD5601.TXT SHIFTJIS.TXT
+	OLD5601.TXT SHIFTJIS.TXT ISO10646-GB18030.TXT
 
 all: $(MAPS)
 
@@ -61,6 +61,8 @@ sjis_to_utf8.map utf8_to_sjis.map : SHIFTJIS.TXT
 big5_to_utf8.map utf8_to_big5.map : BIG5.TXT
 	./UCS_to_BIG5.pl
 
+gb18030_to_utf8.map  utf8_to_gb18030.map : ISO10646-GB18030.TXT
+	./UCS_to_GB18030.pl
 clean:
 	rm -f $(MAPS)
 
