@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/port/qnx4/Attic/rint.c,v 1.3 2001/08/24 14:07:49 petere Exp $
+ *	  $Header: /cvsroot/pgsql/src/port/rint.c,v 1.1 2003/05/09 16:26:29 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */

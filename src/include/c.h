@@ -12,7 +12,7 @@
  * Portions Copyright (c) 1996-2002, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Id: c.h,v 1.142 2003/05/09 01:16:29 momjian Exp $
+ * $Id: c.h,v 1.143 2003/05/09 16:26:29 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -809,6 +809,10 @@ extern int isinf(double x);
 
 #ifndef HAVE_GETHOSTNAME
 extern int gethostname(char *name, int namelen);
+#endif
+
+#ifndef HAVE_RINT
+extern double rint(double x);
 #endif
 
 #ifndef HAVE_INET_ATON

@@ -299,7 +299,6 @@ int DecodeDateTime(char **, int *, int, int *, struct tm *, fsec_t *, int *, boo
 void j2date(int, int *, int *, int *);
 void GetCurrentDateTime(struct tm*);
 int date2j(int, int, int);
-double rint(double x);
 
 extern char* pgtypes_date_weekdays_short[];
 extern char* pgtypes_date_months[];
