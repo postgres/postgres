@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/optimizer/path/allpaths.c,v 1.101 2003/03/22 17:11:25 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/optimizer/path/allpaths.c,v 1.102 2003/04/24 23:43:09 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -49,9 +49,14 @@ static void set_function_pathlist(Query *root, RelOptInfo *rel,
 					  RangeTblEntry *rte);
 static RelOptInfo *make_one_rel_by_joins(Query *root, int levels_needed,
 					  List *initial_rels);
-static bool subquery_is_pushdown_safe(Query *subquery, Query *topquery);
-static bool recurse_pushdown_safe(Node *setOp, Query *topquery);
-static bool qual_is_pushdown_safe(Query *subquery, Index rti, Node *qual);
+static bool subquery_is_pushdown_safe(Query *subquery, Query *topquery,
+									  bool *differentTypes);
+static bool recurse_pushdown_safe(Node *setOp, Query *topquery,
+								  bool *differentTypes);
+static void compare_tlist_datatypes(List *tlist, List *colTypes,
+									bool *differentTypes);
+static bool qual_is_pushdown_safe(Query *subquery, Index rti, Node *qual,
+								  bool *differentTypes);
 static void subquery_push_qual(Query *subquery, Index rti, Node *qual);
 static void recurse_push_qual(Node *setOp, Query *topquery,
 				  Index rti, Node *qual);
@@ -294,7 +299,12 @@ set_subquery_pathlist(Query *root, RelOptInfo *rel,
 					  Index rti, RangeTblEntry *rte)
 {
 	Query	   *subquery = rte->subquery;
+	bool	   *differentTypes;
 	List	   *pathkeys;
+
+	/* We need a workspace for keeping track of set-op type coercions */
+	differentTypes = (bool *)
+		palloc0((length(subquery->targetList) + 1) * sizeof(bool));
 
 	/*
 	 * If there are any restriction clauses that have been attached to the
@@ -318,7 +328,7 @@ set_subquery_pathlist(Query *root, RelOptInfo *rel,
 	 * push down a pushable qual, because it'd result in a worse plan?
 	 */
 	if (rel->baserestrictinfo != NIL &&
-		subquery_is_pushdown_safe(subquery, subquery))
+		subquery_is_pushdown_safe(subquery, subquery, differentTypes))
 	{
 		/* OK to consider pushing down individual quals */
 		List	   *upperrestrictlist = NIL;
@@ -329,7 +339,7 @@ set_subquery_pathlist(Query *root, RelOptInfo *rel,
 			RestrictInfo *rinfo = (RestrictInfo *) lfirst(lst);
 			Node	   *clause = (Node *) rinfo->clause;
 
-			if (qual_is_pushdown_safe(subquery, rti, clause))
+			if (qual_is_pushdown_safe(subquery, rti, clause, differentTypes))
 			{
 				/* Push it down */
 				subquery_push_qual(subquery, rti, clause);
@@ -342,6 +352,8 @@ set_subquery_pathlist(Query *root, RelOptInfo *rel,
 		}
 		rel->baserestrictinfo = upperrestrictlist;
 	}
+
+	pfree(differentTypes);
 
 	/* Generate the plan for the subquery */
 	rel->subplan = subquery_planner(subquery, 0.0 /* default case */ );
@@ -532,15 +544,19 @@ make_one_rel_by_joins(Query *root, int levels_needed, List *initial_rels)
  * since that could change the set of rows returned.
  *
  * 2. If the subquery contains EXCEPT or EXCEPT ALL set ops we cannot push
- * quals into it, because that would change the results.  For subqueries
- * using UNION/UNION ALL/INTERSECT/INTERSECT ALL, we can push the quals
- * into each component query, so long as all the component queries share
- * identical output types.	(That restriction could probably be relaxed,
- * but it would take much more code to include type coercion code into
- * the quals, and I'm also concerned about possible semantic gotchas.)
+ * quals into it, because that would change the results.
+ *
+ * 3. For subqueries using UNION/UNION ALL/INTERSECT/INTERSECT ALL, we can
+ * push quals into each component query, but the quals can only reference
+ * subquery columns that suffer no type coercions in the set operation.
+ * Otherwise there are possible semantic gotchas.  So, we check the
+ * component queries to see if any of them have different output types;
+ * differentTypes[k] is set true if column k has different type in any
+ * component.
  */
 static bool
-subquery_is_pushdown_safe(Query *subquery, Query *topquery)
+subquery_is_pushdown_safe(Query *subquery, Query *topquery,
+						  bool *differentTypes)
 {
 	SetOperationStmt *topop;
 
@@ -553,7 +569,8 @@ subquery_is_pushdown_safe(Query *subquery, Query *topquery)
 	{
 		/* Top level, so check any component queries */
 		if (subquery->setOperations != NULL)
-			if (!recurse_pushdown_safe(subquery->setOperations, topquery))
+			if (!recurse_pushdown_safe(subquery->setOperations, topquery,
+									   differentTypes))
 				return false;
 	}
 	else
@@ -561,14 +578,12 @@ subquery_is_pushdown_safe(Query *subquery, Query *topquery)
 		/* Setop component must not have more components (too weird) */
 		if (subquery->setOperations != NULL)
 			return false;
-		/* Setop component output types must match top level */
+		/* Check whether setop component output types match top level */
 		topop = (SetOperationStmt *) topquery->setOperations;
 		Assert(topop && IsA(topop, SetOperationStmt));
-		if (!tlist_same_datatypes(subquery->targetList,
-								  topop->colTypes,
-								  true))
-			return false;
-
+		compare_tlist_datatypes(subquery->targetList,
+								topop->colTypes,
+								differentTypes);
 	}
 	return true;
 }
@@ -577,7 +592,8 @@ subquery_is_pushdown_safe(Query *subquery, Query *topquery)
  * Helper routine to recurse through setOperations tree
  */
 static bool
-recurse_pushdown_safe(Node *setOp, Query *topquery)
+recurse_pushdown_safe(Node *setOp, Query *topquery,
+					  bool *differentTypes)
 {
 	if (IsA(setOp, RangeTblRef))
 	{
@@ -586,7 +602,7 @@ recurse_pushdown_safe(Node *setOp, Query *topquery)
 		Query	   *subquery = rte->subquery;
 
 		Assert(subquery != NULL);
-		return subquery_is_pushdown_safe(subquery, topquery);
+		return subquery_is_pushdown_safe(subquery, topquery, differentTypes);
 	}
 	else if (IsA(setOp, SetOperationStmt))
 	{
@@ -596,9 +612,9 @@ recurse_pushdown_safe(Node *setOp, Query *topquery)
 		if (op->op == SETOP_EXCEPT)
 			return false;
 		/* Else recurse */
-		if (!recurse_pushdown_safe(op->larg, topquery))
+		if (!recurse_pushdown_safe(op->larg, topquery, differentTypes))
 			return false;
-		if (!recurse_pushdown_safe(op->rarg, topquery))
+		if (!recurse_pushdown_safe(op->rarg, topquery, differentTypes))
 			return false;
 	}
 	else
@@ -607,6 +623,33 @@ recurse_pushdown_safe(Node *setOp, Query *topquery)
 			 (int) nodeTag(setOp));
 	}
 	return true;
+}
+
+/*
+ * Compare tlist's datatypes against the list of set-operation result types.
+ * For any items that are different, mark the appropriate element of
+ * differentTypes[] to show that this column will have type conversions.
+ */
+static void
+compare_tlist_datatypes(List *tlist, List *colTypes,
+						bool *differentTypes)
+{
+	List	   *i;
+
+	foreach(i, tlist)
+	{
+		TargetEntry *tle = (TargetEntry *) lfirst(i);
+
+		if (tle->resdom->resjunk)
+			continue;			/* ignore resjunk columns */
+		if (colTypes == NIL)
+			elog(ERROR, "wrong number of tlist entries");
+		if (tle->resdom->restype != lfirsto(colTypes))
+			differentTypes[tle->resdom->resno] = true;
+		colTypes = lnext(colTypes);
+	}
+	if (colTypes != NIL)
+		elog(ERROR, "wrong number of tlist entries");
 }
 
 /*
@@ -621,7 +664,11 @@ recurse_pushdown_safe(Node *setOp, Query *topquery)
  * it will work correctly: sublinks will already have been transformed into
  * subplans in the qual, but not in the subquery).
  *
- * 2. If the subquery uses DISTINCT ON, we must not push down any quals that
+ * 2. The qual must not refer to any subquery output columns that were
+ * found to have inconsistent types across a set operation tree by
+ * subquery_is_pushdown_safe().
+ *
+ * 3. If the subquery uses DISTINCT ON, we must not push down any quals that
  * refer to non-DISTINCT output columns, because that could change the set
  * of rows returned.  This condition is vacuous for DISTINCT, because then
  * there are no non-DISTINCT output columns, but unfortunately it's fairly
@@ -629,12 +676,13 @@ recurse_pushdown_safe(Node *setOp, Query *topquery)
  * parsetree representation.  It's cheaper to just make sure all the Vars
  * in the qual refer to DISTINCT columns.
  *
- * 3. We must not push down any quals that refer to subselect outputs that
+ * 4. We must not push down any quals that refer to subselect outputs that
  * return sets, else we'd introduce functions-returning-sets into the
  * subquery's WHERE/HAVING quals.
  */
 static bool
-qual_is_pushdown_safe(Query *subquery, Index rti, Node *qual)
+qual_is_pushdown_safe(Query *subquery, Index rti, Node *qual,
+					  bool *differentTypes)
 {
 	bool		safe = true;
 	List	   *vars;
@@ -666,6 +714,14 @@ qual_is_pushdown_safe(Query *subquery, Index rti, Node *qual)
 			continue;
 		tested = bms_add_member(tested, var->varattno);
 
+		/* Check point 2 */
+		if (differentTypes[var->varattno])
+		{
+			safe = false;
+			break;
+		}
+
+		/* Must find the tlist element referenced by the Var */
 		foreach(tl, subquery->targetList)
 		{
 			tle = (TargetEntry *) lfirst(tl);
@@ -675,7 +731,7 @@ qual_is_pushdown_safe(Query *subquery, Index rti, Node *qual)
 		Assert(tl != NIL);
 		Assert(!tle->resdom->resjunk);
 
-		/* If subquery uses DISTINCT or DISTINCT ON, check point 2 */
+		/* If subquery uses DISTINCT or DISTINCT ON, check point 3 */
 		if (subquery->distinctClause != NIL &&
 			!targetIsInSortList(tle, subquery->distinctClause))
 		{
@@ -684,7 +740,7 @@ qual_is_pushdown_safe(Query *subquery, Index rti, Node *qual)
 			break;
 		}
 
-		/* Refuse functions returning sets (point 3) */
+		/* Refuse functions returning sets (point 4) */
 		if (expression_returns_set((Node *) tle->expr))
 		{
 			safe = false;
