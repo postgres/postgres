@@ -7,12 +7,13 @@
  *
  *
  * IDENTIFICATION
- *    $Header: /cvsroot/pgsql/src/backend/utils/adt/datetime.c,v 1.3 1997/04/04 08:55:29 scrappy Exp $
+ *    $Header: /cvsroot/pgsql/src/backend/utils/adt/datetime.c,v 1.4 1997/04/17 13:50:34 scrappy Exp $
  *
  *-------------------------------------------------------------------------
  */
 #include <stdio.h>		/* for sprintf() */
 #include <string.h>
+#include <limits.h>
 
 #include "postgres.h"
 #ifdef HAVE_FLOAT_H
