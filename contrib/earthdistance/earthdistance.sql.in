@@ -1,16 +1,12 @@
+begin;
 
 --------------- geo_distance
 
-DROP FUNCTION geo_distance (point, point);
-CREATE FUNCTION geo_distance (point, point) RETURNS float8
-  AS 'MODULE_PATHNAME' LANGUAGE 'c'
-  WITH (isstrict);
-
-SELECT geo_distance ('(1,2)'::point, '(3,4)'::point);
+CREATE OR REPLACE FUNCTION geo_distance (point, point) RETURNS float8
+  LANGUAGE 'c' IMMUTABLE STRICT AS 'MODULE_PATHNAME';
 
 --------------- geo_distance as operator <@>
 
-DROP OPERATOR <@> (point, point);
 CREATE OPERATOR <@> (
   leftarg = point,
   rightarg = point,
@@ -18,7 +14,11 @@ CREATE OPERATOR <@> (
   commutator = <@>
 );
 
--- ( 87.6, 41.8) is in Chicago
--- (106.7, 35.1) is in Albuquerque
--- The cities are about 1100 miles apart
-SELECT '(87.6,41.8)'::point <@> '(106.7,35.1)'::point;
+--
+-- By default this function is made executable by anyone. To restrict
+-- access by default, comment out the following grant command.
+--
+
+grant execute on function geo_distance(point, point) to public;
+
+commit;

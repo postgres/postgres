@@ -1,3 +1,13 @@
+---------------------------------------------------------------------
+I corrected a bug in the geo_distance code where two double constants
+were declared as int. I changed the distance function to use the
+haversine formula which is more accurate for small distances.
+I added a regression test to the package. I added a grant statement
+to give execute access for geo_distance to public.
+
+Bruno Wolff III
+September 2002
+---------------------------------------------------------------------
 Date: Wed, 1 Apr 1998 15:19:32 -0600 (CST)
 From: Hal Snyder <hal@vailsys.com>
 To: vmehr@ctp.com
