@@ -69,24 +69,24 @@ PGLOGFILE="/tmp/postgres.log"
 #
 # only used if syslog is disabled
 #
-PGOPTS="-B 256"
+PGOPTS="" # -B 256
 #
 # The B option sets the number of shared buffers
 #
 # Add the "-i" option to enable TCP/IP sockets in addition
 # to unix domain sockets.  This is needed for Java's JDBC
 #
-# PGOPTS="-i -B 256"
+# PGOPTS="-i"
 #
 # Add the -D option if you want to ovverride the PGDATA 
 # environment variable defined in
 #
-# PGOPTS="-B 256 -D/opt/pgsql/data
+# PGOPTS="-D/opt/pgsql/data
 #
 # Add the -p option if you would like the listener to
 # attach to a port other than the one configured (5432?)
 #
-# PGOPTS="-B 256 -D/opt/pgsql_beta/data -p 5433"
+# PGOPTS="-D/opt/pgsql_beta/data -p 5433"
 #
 
 # Source function library.

@@ -14,13 +14,13 @@
 PGACCOUNT="postgres"		# the postgres account (you called it something else?)
 POSTMASTER="postmaster"		# this probably won't change
 
-USE_SOCKET="yes"		# "no" to disable Unix sockets on localhost
+USE_SOCKET="yes"		# "no" to enable tcp/ip(remote) access
 PGSOCKETFILE="/tmp/.s.PGSQL.5432"
 USE_SYSLOG="yes"		# "yes" to enable syslog, "no" to go to /tmp/postgres.log
 FACILITY="local5"		# can assign local0-local7 as the facility for logging
 PGLOGFILE="/tmp/postgres.log"	# only used if syslog is disabled
 
-PGOPTS="-i -B 1024" #  -S -o '-Fe'"
+PGOPTS="" #-B 1024 -S -o '-Fe'
 if [ ${USE_SOCKET} = "no" ]
 then
 	PGOPTS="-i ${PGOPTS}"	# -i to enable TCP/IP rather than Unix socket
