@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2000, PostgreSQL, Inc
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Id: libpq-fe.h,v 1.65 2000/04/12 17:17:15 momjian Exp $
+ * $Id: libpq-fe.h,v 1.66 2000/04/14 00:24:52 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -24,7 +24,7 @@ extern		"C"
 /* postgres_ext.h defines the backend's externally visible types,
  * such as Oid.
  */
-#include <postgres_ext.h>
+#include "postgres_ext.h"
 
 /* Application-visible enum types */
 
