@@ -1,7 +1,7 @@
 
                 Frequently Asked Questions (FAQ) for PostgreSQL
                                        
-   Last updated: Mon Nov 12 02:38:47 EST 2001
+   Last updated: Tue Nov 27 14:16:49 EST 2001
    
    Current maintainer: Bruce Momjian (pgman@candle.pha.pa.us)
    
@@ -28,6 +28,7 @@
    1.12) How do I join the development team?
    1.13) How do I submit a bug report?
    1.14) How does PostgreSQL compare to other DBMS's?
+   1.14) How can I financially assist PostgreSQL?
    
                            User Client Questions
                                       
@@ -358,6 +359,28 @@
           We are free for all use, both commercial and non-commercial.
           You can add our code to your product with no limitations,
           except those outlined in our BSD-style license stated above.
+          
+    1.13) How can I financially assist PostgreSQL?
+    
+   PostgreSQL has had a first-class infrastructure since we started five
+   years ago. This is all thanks to Marc Fournier, who has created and
+   managed this infrastructure over the years.
+   
+   Quality infrastructure is very important to an open-source project. It
+   prevents disruptions that can greatly delay forward movement of the
+   project.
+   
+   Of course, this infrastructure is not cheap. There are a variety of
+   monthly and one-time expenses that are required to keep it going. If
+   you or your company has money it can donate to help fund this effort,
+   please go to the following URL and make a donation:
+   
+   http://www.pgsql.com/pg_goodies
+   
+   Although the web page mentions PostgreSQL, Inc, the "contributions"
+   item is solely to support the PostgreSQL project and does not fund any
+   specific company. If you prefer, you can also send a check to the
+   contact address.
      _________________________________________________________________
    
                            User Client Questions
