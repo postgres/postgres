@@ -275,7 +275,7 @@ Built-in types have been improved, including new wide-range date/time types and 
 </ListItem>
 <ListItem>
 <Para>
-Overall backend code speed has been increased by approximately 20%, and backend startup speed has decreased 80%.
+Overall backend code speed has been increased by approximately 20%, and backend startup time has decreased 80%.
 </Para>
 </ListItem>
 </ItemizedList>

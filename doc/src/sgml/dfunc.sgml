@@ -9,9 +9,9 @@
      previously mentioned, <ProductName>Postgres</ProductName> loads your code at  
      runtime,  as  required.  In order to allow your code to be
      dynamically loaded, you may have to compile  and  
-     linkedit  it  in  a  special  way.   This  section  briefly
+     link-edit  it  in  a  special  way.   This  section  briefly
      describes how to  perform  the  compilation  and  
-     linkediting  required before you can load your user-defined
+     link-editing  required before you can load your user-defined
      functions into a running <ProductName>Postgres</ProductName>  server.   Note  that
      this process has  changed  as  of  Version  4.2.
 <Tip>
@@ -126,7 +126,7 @@ The GNU C compiler usually does not provide the special
 
 <Para>
      It is very  easy  to  build  dynamically-loaded  object
-     files  under  ULTRIX.  ULTRIX does not have any sharedlibrary 
+     files  under  ULTRIX.  ULTRIX does not have any shared library 
      mechanism and hence does not place any restrictions  on  
      the  dynamic loader interface.  On the other
      hand, we had to (re)write a non-portable dynamic loader
@@ -140,7 +140,8 @@ The GNU C compiler usually does not provide the special
 % cc -G 0 -c foo.c
 </ProgramListing>
      produces an object file called foo.o that can  then  be
-     dynamically  loaded into <ProductName>Postgres</ProductName>.  No additional loading or link-editing must be performed.
+     dynamically  loaded into <ProductName>Postgres</ProductName>.
+No additional loading or link-editing must be performed.
 </Para>
 </Sect1>
 
@@ -149,7 +150,8 @@ The GNU C compiler usually does not provide the special
 
 <Para>
      Under DEC OSF/1, you can take any  simple  object  file
-     and produce a shared object file by running the ld command over it with the correct options.  The commands to
+     and produce a shared object file by running the ld command
+ over it with the correct options.  The commands to
      do this look like:
 <ProgramListing>
 # simple DEC OSF/1 example
@@ -168,7 +170,8 @@ Actually, <ProductName>Postgres</ProductName> does not care
 what  you  name  the
 file  as  long as it is a shared object file.  If you prefer
 to name your shared object files with the extension .o, this
-is fine with <ProductName>Postgres</ProductName> so long as you make sure that the correct 
+is fine with <ProductName>Postgres</ProductName>
+ so long as you make sure that the correct 
 file name is given to the create function command.   In
 other words, you must simply be consistent.  However, from a
 pragmatic point of view, we discourage this practice because
@@ -205,8 +208,8 @@ If the file you specify is
      very simple, since the commands to do it are just:
 <ProgramListing>
 # simple HP-UX example
-              &percnt; cc +z +u -c foo.c
-              &percnt; ld -b -o foo.sl foo.o
+&percnt; cc +z +u -c foo.c
+&percnt; ld -b -o foo.sl foo.o
 </ProgramListing>
 </Para>
 
@@ -218,17 +221,21 @@ If the file you specify is
      Under SunOS 4.x, the commands look like:
 <ProgramListing>
 # simple SunOS 4.x example
-              &percnt; cc -PIC -c foo.c
-              &percnt; ld -dc -dp -Bdynamic -o foo.so foo.o
+&percnt; cc -PIC -c foo.c
+&percnt; ld -dc -dp -Bdynamic -o foo.so foo.o
 </ProgramListing>
 
      and the equivalent lines under Solaris 2.x are:
 <ProgramListing>
 # simple Solaris 2.x example
-              &percnt; cc -K PIC -c foo.c
-                   or
-              &percnt; gcc -fPIC -c foo.c
-              &percnt; ld -G -Bdynamic -o foo.so foo.o
+&percnt; cc -K PIC -c foo.c
+&percnt; ld -G -Bdynamic -o foo.so foo.o
+</ProgramListing>
+    or
+<ProgramListing>
+# simple Solaris 2.x example
+&percnt; gcc -fPIC -c foo.c
+&percnt; ld -G -Bdynamic -o foo.so foo.o
 </ProgramListing>
 </Para>
 
