@@ -85,6 +85,10 @@ oid2name -
 	maps numeric files to table names
 	by B Palmer <bpalmer@crimelabs.net>
 
+pg_controldata -
+	Dump internal database site structures
+	by Oliver Elphick <olly@lfix.co.uk>
+
 pg_dumplo -
 	Dump large objects
 	by Karel Zak <zakkr@zf.jcu.cz>
