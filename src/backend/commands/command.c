@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/commands/Attic/command.c,v 1.141 2001/08/21 16:36:01 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/commands/Attic/command.c,v 1.142 2001/09/07 21:57:53 momjian Exp $
  *
  * NOTES
  *	  The PerformAddAttribute() code, like most of the relation
@@ -32,6 +32,7 @@
 #include "catalog/pg_type.h"
 #include "commands/command.h"
 #include "commands/trigger.h"
+#include "commands/defrem.h" /* For add constraint unique, primary */
 #include "executor/execdefs.h"
 #include "executor/executor.h"
 #include "miscadmin.h"
@@ -42,6 +43,7 @@
 #include "parser/parse_expr.h"
 #include "parser/parse_oper.h"
 #include "parser/parse_relation.h"
+#include "parser/analyze.h" /* For add constraint unique, primary */
 #include "utils/acl.h"
 #include "utils/builtins.h"
 #include "utils/fmgroids.h"
@@ -1339,11 +1341,160 @@ AlterTableAddConstraint(char *relationName,
 
 							break;
 						}
-					case CONSTR_PRIMARY:
+               case CONSTR_UNIQUE:
 						{
+                            char  *iname = constr->name;
+                            bool  istemp = is_temp_rel_name(relationName);
+                            Relation rel;
+                            List	   *indexoidlist;
+                            List     *indexoidscan;
+                            Form_pg_attribute *rel_attrs;
+                            int num_keys = 0;
+                            int keys_matched = 0;
+                            bool index_found = false;
+                            bool index_found_unique = false;
+                            bool index_found_primary = false;
 
-							break;
-						}
+                            /* If the constraint name is not specified, generate a name */
+                            if (iname == NULL) {
+                               Oid	indoid;
+                               int   pass = 0;
+                               char  *typename = palloc(NAMEDATALEN);
+                               Ident *key;
+
+                               /* Assume that the length of the attr list is already > 0 */
+
+                               /* Get the first attribute so we can use its name */
+                               key = (Ident *)lfirst(constr->keys);
+
+                               /* Initialise typename to 'key' */
+                               snprintf(typename, NAMEDATALEN, "key");
+
+                               for (;;)
+                               {
+                                  iname = makeObjectName(relationName, key->name, typename);
+
+                                  /* Check for a conflict */
+                                  indoid = RelnameFindRelid(iname);
+
+                                  /* If the oid was not found, then we have a safe name */
+                                  if ((!istemp && !OidIsValid(indoid)) ||
+                                     (istemp && !is_temp_rel_name(iname)))
+                                     break;
+
+                                  /* Found a conflict, so try a new name component */
+                                  pfree(iname);
+                                  snprintf(typename, NAMEDATALEN, "key%d", ++pass);
+                               }
+                            }
+
+                            /* Need to check for unique key already on field(s) */
+                            rel = heap_openr(relationName, AccessExclusiveLock);
+
+                            /*
+                             * First we check for limited correctness of the
+                             * constraint
+                             */
+
+                            rel_attrs = rel->rd_att->attrs;
+
+                            /* Retrieve the oids of all indices on the relation */
+                            indexoidlist = RelationGetIndexList(rel);
+                            index_found = false;
+                            index_found_unique = false;
+                            index_found_primary = false;
+
+                            /* Loop over all indices on the relation */
+                            foreach(indexoidscan, indexoidlist)
+                            {
+                               Oid			indexoid = lfirsti(indexoidscan);
+                               HeapTuple	indexTuple;
+                               Form_pg_index indexStruct;
+                               List	   *keyl;
+                               int         i;
+
+                               indexTuple = SearchSysCache(INDEXRELID,
+                                                 ObjectIdGetDatum(indexoid),
+                                                    0, 0, 0);
+
+                               if (!HeapTupleIsValid(indexTuple))
+                                  elog(ERROR, "ALTER TABLE/ADD CONSTRAINT: Index \"%u\" not found",
+                                     indexoid);
+                               indexStruct = (Form_pg_index) GETSTRUCT(indexTuple);
+
+                               /*
+                               * Make sure this index has the same number of
+                               * keys as the constraint -- It obviously won't match otherwise.
+                               */
+                               for (i = 0; i < INDEX_MAX_KEYS && indexStruct->indkey[i] != 0; i++);
+                               num_keys = length(constr->keys);
+                               keys_matched = 0;
+
+                               if (i == num_keys)
+                               {
+                                  /* Loop over each key in the constraint and check that there is a
+                                     corresponding key in the index. */
+                                  i = 0;
+                                  foreach(keyl, constr->keys)
+                                  {
+                                     Ident    *key = lfirst(keyl);
+
+                                     /* Look at key[i] in the index and check that it is over the same column
+                                        as key[i] in the constraint.  This is to differentiate between (a,b)
+                                        and (b,a) */
+                                     if (i < INDEX_MAX_KEYS && indexStruct->indkey[i] != 0)
+                                     {
+                                        int	   keyno = indexStruct->indkey[i];
+
+                                        if (keyno > 0)
+                                        {
+                                           char  *name = NameStr(rel_attrs[keyno - 1]->attname);
+                                           if (strcmp(name, key->name) == 0) keys_matched++;
+                                        }
+                                     }
+                                     else elog(ERROR, "ALTER TABLE/ADD CONSTRAINT: Key \"%u[%u]\" not found", indexoid, i);
+                                     i++;
+                                  }
+                                  if (keys_matched == num_keys) {
+                                     index_found = true;
+                                     index_found_unique = indexStruct->indisunique;
+                                     index_found_primary = indexStruct->indisprimary;
+                                     if (index_found_unique || index_found_primary) break;
+                                  }
+                               }
+                               ReleaseSysCache(indexTuple);
+                            }
+
+                            freeList(indexoidlist);
+
+                            if (index_found_primary)
+                               elog(ERROR, "Unique primary key already defined on relation \"%s\"", relationName);
+                            else if (index_found_unique)
+                               elog(ERROR, "Unique constraint already defined on the specified attributes in relation \"%s\"", relationName);
+
+                            /* If everything is ok, create the new index (constraint) */
+                            DefineIndex(
+                               relationName,
+                               iname,
+                               "btree",
+                               constr->keys,
+                               true,
+                               false,
+                               NULL,
+                               NIL);
+
+                            /* Issue notice */
+                            elog(NOTICE, "ALTER TABLE/ADD UNIQUE will create implicit index '%s' for table '%s'",
+                               iname, relationName);
+                            if (index_found)
+                               elog(NOTICE, "Unique constraint supercedes existing index on relation \"%s\".  Drop the existing index to remove redundancy.", relationName);
+                            pfree(iname);
+
+                            /* Finally, close relation */
+                            heap_close(rel, NoLock);
+
+           					break;
+                         }
 					default:
 						elog(ERROR, "ALTER TABLE / ADD CONSTRAINT is not implemented for that constraint type.");
 				}

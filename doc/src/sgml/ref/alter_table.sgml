@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/ref/alter_table.sgml,v 1.26 2001/09/03 12:57:49 petere Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/ref/alter_table.sgml,v 1.27 2001/09/07 21:57:53 momjian Exp $
 Postgres documentation
 -->
 
@@ -211,9 +211,9 @@ ALTER TABLE <replaceable class="PARAMETER">table</replaceable>
    </para>
 
    <para>
-    In the current implementation, only FOREIGN KEY and CHECK constraints can
-    be added to a table.  To create a unique constraint, create 
-    a unique index (see <xref linkend="SQL-CREATEINDEX" 
+    In the current implementation, only UNIQUE, FOREIGN KEY and CHECK constraints can
+    be added to a table.  To create a primary constraint, create 
+    a unique, not null index (see <xref linkend="SQL-CREATEINDEX" 
     endterm="SQL-CREATEINDEX-title">).
    </para>
 
@@ -295,6 +295,13 @@ ALTER TABLE distributors DROP CONSTRAINT zipchk
    To add a foreign key constraint to a table:
    <programlisting>
 ALTER TABLE distributors ADD CONSTRAINT distfk FOREIGN KEY (address) REFERENCES addresses(address) MATCH FULL
+   </programlisting>
+  </para>
+
+  <para> 
+   To add a (multi-column) unique constraint to a table:
+   <programlisting>
+ALTER TABLE distributors ADD CONSTRAINT dist_id_zipcode_key UNIQUE (dist_id, zipcode)
    </programlisting>
   </para>
  </refsect1>

@@ -6,7 +6,7 @@
  * Portions Copyright (c) 1996-2001, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Id: analyze.h,v 1.14 2001/01/24 19:43:26 momjian Exp $
+ * $Id: analyze.h,v 1.15 2001/09/07 21:57:53 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -18,5 +18,8 @@
 extern List *parse_analyze(Node *parseTree, ParseState *parentParseState);
 
 extern void CheckSelectForUpdate(Query *qry);
+
+/* This was exported to allow ADD CONSTRAINT to make use of it */
+extern char *makeObjectName(char *name1, char *name2, char *typename);
 
 #endif	 /* ANALYZE_H */

@@ -6,7 +6,7 @@
  * Portions Copyright (c) 1996-2001, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- *	$Header: /cvsroot/pgsql/src/backend/parser/analyze.c,v 1.197 2001/08/24 20:03:45 petere Exp $
+ *	$Header: /cvsroot/pgsql/src/backend/parser/analyze.c,v 1.198 2001/09/07 21:57:53 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -562,7 +562,7 @@ transformInsertStmt(ParseState *pstate, InsertStmt *stmt)
  *	from the truncated characters.	Currently it seems best to keep it simple,
  *	so that the generated names are easily predictable by a person.
  */
-static char *
+char *
 makeObjectName(char *name1, char *name2, char *typename)
 {
 	char	   *name;
