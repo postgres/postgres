@@ -7,7 +7,7 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: c.h,v 1.15 1997/08/24 23:07:56 momjian Exp $
+ * $Id: c.h,v 1.16 1997/08/25 04:15:40 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -686,7 +686,7 @@ typedef struct Exception {
  *	Does string copy, and forces terminating NULL
  */
 /* we do this so if the macro is used in an if action, it will work */
-#define strNcpy(dst,src,len)	(strncpy((dst),(src),(len)),*((dst)+(len))='\0',dst)
+#define strNcpy(dst,src,len)	(strncpy((dst),(src),(len)),*((dst)+(len))='\0')
 
 /* ----------------------------------------------------------------
  *		Section 9: externs

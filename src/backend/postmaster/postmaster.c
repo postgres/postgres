@@ -10,7 +10,7 @@
  *
  *
  * IDENTIFICATION
- *    $Header: /cvsroot/pgsql/src/backend/postmaster/postmaster.c,v 1.52 1997/08/19 21:32:27 momjian Exp $
+ *    $Header: /cvsroot/pgsql/src/backend/postmaster/postmaster.c,v 1.53 1997/08/25 04:15:31 momjian Exp $
  *
  * NOTES
  *
@@ -887,10 +887,10 @@ CleanupProc(int pid,
          * SIGUSR1 is the special signal that sez exit without exitpg
          * and let the user know what's going on. ProcSemaphoreKill()
          * cleans up the backends semaphore.  If SendStop is set (-s on
-                                                                  * the command line), then we send a SIGSTOP so that we can
-                                                                  * collect core dumps from all backends by hand.
-                                                                  * -----------------
-                                                                  */
+	 * command line), then we send a SIGSTOP so that we can
+         * core dumps from all backends by hand.
+         * -----------------
+         */
         sig = (SendStop) ? SIGSTOP : SIGUSR1;
         if (bp->pid != pid) {
             if (DebugLvl)
