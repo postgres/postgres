@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/varlena.c,v 1.69 2001/03/22 03:59:55 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/varlena.c,v 1.70 2001/05/03 19:00:36 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -440,72 +440,6 @@ textpos(PG_FUNCTION_ARGS)
 	PG_RETURN_INT32(pos);
 }
 
-/*
- *		texteq			- returns true iff arguments are equal
- *		textne			- returns true iff arguments are not equal
- *
- * Note: btree indexes need these routines not to leak memory; therefore,
- * be careful to free working copies of toasted datums.  Most places don't
- * need to be so careful.
- */
-Datum
-texteq(PG_FUNCTION_ARGS)
-{
-	text	   *arg1 = PG_GETARG_TEXT_P(0);
-	text	   *arg2 = PG_GETARG_TEXT_P(1);
-	bool		result;
-
-	if (VARSIZE(arg1) != VARSIZE(arg2))
-		result = false;
-	else
-	{
-		int			len;
-		char	   *a1p,
-				   *a2p;
-
-		len = VARSIZE(arg1) - VARHDRSZ;
-
-		a1p = VARDATA(arg1);
-		a2p = VARDATA(arg2);
-
-		result = (memcmp(a1p, a2p, len) == 0);
-	}
-
-	PG_FREE_IF_COPY(arg1, 0);
-	PG_FREE_IF_COPY(arg2, 1);
-
-	PG_RETURN_BOOL(result);
-}
-
-Datum
-textne(PG_FUNCTION_ARGS)
-{
-	text	   *arg1 = PG_GETARG_TEXT_P(0);
-	text	   *arg2 = PG_GETARG_TEXT_P(1);
-	bool		result;
-
-	if (VARSIZE(arg1) != VARSIZE(arg2))
-		result = true;
-	else
-	{
-		int			len;
-		char	   *a1p,
-				   *a2p;
-
-		len = VARSIZE(arg1) - VARHDRSZ;
-
-		a1p = VARDATA(arg1);
-		a2p = VARDATA(arg2);
-
-		result = (memcmp(a1p, a2p, len) != 0);
-	}
-
-	PG_FREE_IF_COPY(arg1, 0);
-	PG_FREE_IF_COPY(arg2, 1);
-
-	PG_RETURN_BOOL(result);
-}
-
 /* varstr_cmp()
  * Comparison function for text strings with given lengths.
  * Includes locale support, but must copy strings to temporary memory
@@ -520,8 +454,8 @@ varstr_cmp(char *arg1, int len1, char *arg2, int len2)
 			   *a2p;
 
 #ifdef USE_LOCALE
-	a1p = (unsigned char *) palloc(len1 + 1);
-	a2p = (unsigned char *) palloc(len2 + 1);
+	a1p = (char *) palloc(len1 + 1);
+	a2p = (char *) palloc(len2 + 1);
 
 	memcpy(a1p, arg1, len1);
 	*(a1p + len1) = '\0';
@@ -548,11 +482,7 @@ varstr_cmp(char *arg1, int len1, char *arg2, int len2)
 
 
 /* text_cmp()
- * Comparison function for text strings.
- * Includes locale support, but must copy strings to temporary memory
- *	to allow null-termination for inputs to strcoll().
- * XXX HACK code for textlen() indicates that there can be embedded nulls
- *	but it appears that most routines (incl. this one) assume not! - tgl 97/04/07
+ * Internal comparison function for text strings.
  * Returns -1, 0 or 1
  */
 static int
@@ -579,6 +509,44 @@ text_cmp(text *arg1, text *arg2)
  * be careful to free working copies of toasted datums.  Most places don't
  * need to be so careful.
  */
+
+Datum
+texteq(PG_FUNCTION_ARGS)
+{
+	text	   *arg1 = PG_GETARG_TEXT_P(0);
+	text	   *arg2 = PG_GETARG_TEXT_P(1);
+	bool		result;
+
+	/* fast path for different-length inputs */
+	if (VARSIZE(arg1) != VARSIZE(arg2))
+		result = false;
+	else
+		result = (text_cmp(arg1, arg2) == 0);
+
+	PG_FREE_IF_COPY(arg1, 0);
+	PG_FREE_IF_COPY(arg2, 1);
+
+	PG_RETURN_BOOL(result);
+}
+
+Datum
+textne(PG_FUNCTION_ARGS)
+{
+	text	   *arg1 = PG_GETARG_TEXT_P(0);
+	text	   *arg2 = PG_GETARG_TEXT_P(1);
+	bool		result;
+
+	/* fast path for different-length inputs */
+	if (VARSIZE(arg1) != VARSIZE(arg2))
+		result = true;
+	else
+		result = (text_cmp(arg1, arg2) != 0);
+
+	PG_FREE_IF_COPY(arg1, 0);
+	PG_FREE_IF_COPY(arg2, 1);
+
+	PG_RETURN_BOOL(result);
+}
 
 Datum
 text_lt(PG_FUNCTION_ARGS)
@@ -639,6 +607,22 @@ text_ge(PG_FUNCTION_ARGS)
 
 	PG_RETURN_BOOL(result);
 }
+
+Datum
+bttextcmp(PG_FUNCTION_ARGS)
+{
+	text	   *arg1 = PG_GETARG_TEXT_P(0);
+	text	   *arg2 = PG_GETARG_TEXT_P(1);
+	int32		result;
+
+	result = text_cmp(arg1, arg2);
+
+	PG_FREE_IF_COPY(arg1, 0);
+	PG_FREE_IF_COPY(arg2, 1);
+
+	PG_RETURN_INT32(result);
+}
+
 
 Datum
 text_larger(PG_FUNCTION_ARGS)

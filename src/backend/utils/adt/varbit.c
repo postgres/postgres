@@ -9,7 +9,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/varbit.c,v 1.16 2001/03/22 03:59:54 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/varbit.c,v 1.17 2001/05/03 19:00:36 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -537,56 +537,6 @@ _varbit(PG_FUNCTION_ARGS)
  * need to be so careful.
  */
 
-Datum
-biteq(PG_FUNCTION_ARGS)
-{
-	VarBit	   *arg1 = PG_GETARG_VARBIT_P(0);
-	VarBit	   *arg2 = PG_GETARG_VARBIT_P(1);
-	bool		result;
-	int			bitlen1,
-				bitlen2;
-
-	bitlen1 = VARBITLEN(arg1);
-	bitlen2 = VARBITLEN(arg2);
-	if (bitlen1 != bitlen2)
-		result = false;
-	else
-	{
-		/* bit strings are always stored in a full number of bytes */
-		result = memcmp(VARBITS(arg1), VARBITS(arg2), VARBITBYTES(arg1)) == 0;
-	}
-
-	PG_FREE_IF_COPY(arg1, 0);
-	PG_FREE_IF_COPY(arg2, 1);
-
-	PG_RETURN_BOOL(result);
-}
-
-Datum
-bitne(PG_FUNCTION_ARGS)
-{
-	VarBit	   *arg1 = PG_GETARG_VARBIT_P(0);
-	VarBit	   *arg2 = PG_GETARG_VARBIT_P(1);
-	bool		result;
-	int			bitlen1,
-				bitlen2;
-
-	bitlen1 = VARBITLEN(arg1);
-	bitlen2 = VARBITLEN(arg2);
-	if (bitlen1 != bitlen2)
-		result = true;
-	else
-	{
-		/* bit strings are always stored in a full number of bytes */
-		result = memcmp(VARBITS(arg1), VARBITS(arg2), VARBITBYTES(arg1)) != 0;
-	}
-
-	PG_FREE_IF_COPY(arg1, 0);
-	PG_FREE_IF_COPY(arg2, 1);
-
-	PG_RETURN_BOOL(result);
-}
-
 /* bit_cmp
  *
  * Compares two bitstrings and returns <0, 0, >0 depending on whether the first
@@ -615,6 +565,54 @@ bit_cmp(VarBit *arg1, VarBit *arg2)
 			cmp = (bitlen1 < bitlen2) ? -1 : 1;
 	}
 	return cmp;
+}
+
+Datum
+biteq(PG_FUNCTION_ARGS)
+{
+	VarBit	   *arg1 = PG_GETARG_VARBIT_P(0);
+	VarBit	   *arg2 = PG_GETARG_VARBIT_P(1);
+	bool		result;
+	int			bitlen1,
+				bitlen2;
+
+	bitlen1 = VARBITLEN(arg1);
+	bitlen2 = VARBITLEN(arg2);
+
+	/* fast path for different-length inputs */
+	if (bitlen1 != bitlen2)
+		result = false;
+	else
+		result = (bit_cmp(arg1, arg2) == 0);
+
+	PG_FREE_IF_COPY(arg1, 0);
+	PG_FREE_IF_COPY(arg2, 1);
+
+	PG_RETURN_BOOL(result);
+}
+
+Datum
+bitne(PG_FUNCTION_ARGS)
+{
+	VarBit	   *arg1 = PG_GETARG_VARBIT_P(0);
+	VarBit	   *arg2 = PG_GETARG_VARBIT_P(1);
+	bool		result;
+	int			bitlen1,
+				bitlen2;
+
+	bitlen1 = VARBITLEN(arg1);
+	bitlen2 = VARBITLEN(arg2);
+
+	/* fast path for different-length inputs */
+	if (bitlen1 != bitlen2)
+		result = true;
+	else
+		result = (bit_cmp(arg1, arg2) != 0);
+
+	PG_FREE_IF_COPY(arg1, 0);
+	PG_FREE_IF_COPY(arg2, 1);
+
+	PG_RETURN_BOOL(result);
 }
 
 Datum

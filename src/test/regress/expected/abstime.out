@@ -62,7 +62,8 @@ SELECT '' AS six, ABSTIME_TBL.*
      | current
      | infinity
      | Sat May 10 23:59:12 1947 PST
-(6 rows)
+     | invalid
+(7 rows)
 
 SELECT '' AS six, ABSTIME_TBL.*
    WHERE abstime 'May 10, 1947 23:59:12' <> ABSTIME_TBL.f1;
@@ -74,7 +75,8 @@ SELECT '' AS six, ABSTIME_TBL.*
      | current
      | infinity
      | -infinity
-(6 rows)
+     | invalid
+(7 rows)
 
 SELECT '' AS one, ABSTIME_TBL.*
    WHERE abstime 'current' = ABSTIME_TBL.f1;

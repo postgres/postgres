@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/date.c,v 1.56 2001/03/22 03:59:49 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/date.c,v 1.57 2001/05/03 19:00:36 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -899,13 +899,35 @@ timetz_out(PG_FUNCTION_ARGS)
 }
 
 
+static int
+timetz_cmp_internal(TimeTzADT *time1, TimeTzADT *time2)
+{
+	double		t1,
+				t2;
+
+	/* Primary sort is by true (GMT-equivalent) time */
+	t1 = time1->time + time1->zone;
+	t2 = time2->time + time2->zone;
+
+	if (t1 > t2)
+		return 1;
+	if (t1 < t2)
+		return -1;
+
+	/*
+	 * If same GMT time, sort by timezone; we only want to say that two
+	 * timetz's are equal if both the time and zone parts are equal.
+	 */
+	return time1->zone - time2->zone;
+}
+
 Datum
 timetz_eq(PG_FUNCTION_ARGS)
 {
 	TimeTzADT  *time1 = PG_GETARG_TIMETZADT_P(0);
 	TimeTzADT  *time2 = PG_GETARG_TIMETZADT_P(1);
 
-	PG_RETURN_BOOL(((time1->time + time1->zone) == (time2->time + time2->zone)));
+	PG_RETURN_BOOL(timetz_cmp_internal(time1, time2) == 0);
 }
 
 Datum
@@ -914,7 +936,7 @@ timetz_ne(PG_FUNCTION_ARGS)
 	TimeTzADT  *time1 = PG_GETARG_TIMETZADT_P(0);
 	TimeTzADT  *time2 = PG_GETARG_TIMETZADT_P(1);
 
-	PG_RETURN_BOOL(((time1->time + time1->zone) != (time2->time + time2->zone)));
+	PG_RETURN_BOOL(timetz_cmp_internal(time1, time2) != 0);
 }
 
 Datum
@@ -923,7 +945,7 @@ timetz_lt(PG_FUNCTION_ARGS)
 	TimeTzADT  *time1 = PG_GETARG_TIMETZADT_P(0);
 	TimeTzADT  *time2 = PG_GETARG_TIMETZADT_P(1);
 
-	PG_RETURN_BOOL(((time1->time + time1->zone) < (time2->time + time2->zone)));
+	PG_RETURN_BOOL(timetz_cmp_internal(time1, time2) < 0);
 }
 
 Datum
@@ -932,7 +954,7 @@ timetz_le(PG_FUNCTION_ARGS)
 	TimeTzADT  *time1 = PG_GETARG_TIMETZADT_P(0);
 	TimeTzADT  *time2 = PG_GETARG_TIMETZADT_P(1);
 
-	PG_RETURN_BOOL(((time1->time + time1->zone) <= (time2->time + time2->zone)));
+	PG_RETURN_BOOL(timetz_cmp_internal(time1, time2) <= 0);
 }
 
 Datum
@@ -941,7 +963,7 @@ timetz_gt(PG_FUNCTION_ARGS)
 	TimeTzADT  *time1 = PG_GETARG_TIMETZADT_P(0);
 	TimeTzADT  *time2 = PG_GETARG_TIMETZADT_P(1);
 
-	PG_RETURN_BOOL(((time1->time + time1->zone) > (time2->time + time2->zone)));
+	PG_RETURN_BOOL(timetz_cmp_internal(time1, time2) > 0);
 }
 
 Datum
@@ -950,7 +972,7 @@ timetz_ge(PG_FUNCTION_ARGS)
 	TimeTzADT  *time1 = PG_GETARG_TIMETZADT_P(0);
 	TimeTzADT  *time2 = PG_GETARG_TIMETZADT_P(1);
 
-	PG_RETURN_BOOL(((time1->time + time1->zone) >= (time2->time + time2->zone)));
+	PG_RETURN_BOOL(timetz_cmp_internal(time1, time2) >= 0);
 }
 
 Datum
@@ -959,15 +981,7 @@ timetz_cmp(PG_FUNCTION_ARGS)
 	TimeTzADT  *time1 = PG_GETARG_TIMETZADT_P(0);
 	TimeTzADT  *time2 = PG_GETARG_TIMETZADT_P(1);
 
-	if (DatumGetBool(DirectFunctionCall2(timetz_lt,
-										 TimeTzADTPGetDatum(time1),
-										 TimeTzADTPGetDatum(time2))))
-		PG_RETURN_INT32(-1);
-	if (DatumGetBool(DirectFunctionCall2(timetz_gt,
-										 TimeTzADTPGetDatum(time1),
-										 TimeTzADTPGetDatum(time2))))
-		PG_RETURN_INT32(1);
-	PG_RETURN_INT32(0);
+	PG_RETURN_INT32(timetz_cmp_internal(time1, time2));
 }
 
 /*

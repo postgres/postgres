@@ -8,11 +8,11 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/float.c,v 1.70 2001/03/22 03:59:50 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/float.c,v 1.71 2001/05/03 19:00:36 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
-/*
+/*----------
  * OLD COMMENTS
  *		Basic float4 ops:
  *		 float4in, float4out, float4abs, float4um
@@ -22,8 +22,8 @@
  *		 float4pl, float4mi, float4mul, float4div
  *		 float8pl, float8mi, float8mul, float8div
  *		Comparison operators:
- *		 float4eq, float4ne, float4lt, float4le, float4gt, float4ge
- *		 float8eq, float8ne, float8lt, float8le, float8gt, float8ge
+ *		 float4eq, float4ne, float4lt, float4le, float4gt, float4ge, float4cmp
+ *		 float8eq, float8ne, float8lt, float8le, float8gt, float8ge, float8cmp
  *		Conversion routines:
  *		 ftod, dtof, i4tod, dtoi4, i2tod, dtoi2, itof, ftoi, i2tof, ftoi2
  *
@@ -37,7 +37,8 @@
  *		 float84eq, float84ne, float84lt, float84le, float84gt, float84ge
  *
  *		(You can do the arithmetic and comparison stuff using conversion
- *		 routines, but then you pay the overhead of converting...)
+ *		 routines, but then you pay the overhead of invoking a separate
+ *		 conversion function...)
  *
  * XXX GLUESOME STUFF. FIX IT! -AY '94
  *
@@ -45,13 +46,14 @@
  *		 a bit of the existing code. Need to change the error checking
  *		 for calls to pow(), exp() since on some machines (my Linux box
  *		 included) these routines do not set errno. - tgl 97/05/10
+ *----------
  */
+#include "postgres.h"
+
 #include <ctype.h>
 #include <errno.h>
 #include <float.h>				/* faked on sunos4 */
 #include <math.h>
-
-#include "postgres.h"
 
 #include <limits.h>
 /* for finite() on Solaris */
@@ -197,7 +199,7 @@ float4in(PG_FUNCTION_ARGS)
 	val = strtod(num, &endptr);
 	if (*endptr != '\0')
 	{
-		/* Should we accept "NaN" or "Infinity" for float4? */
+		/* Shouldn't we accept "NaN" or "Infinity" for float4? */
 		elog(ERROR, "Bad float4 input format '%s'", num);
 	}
 	else
@@ -224,6 +226,11 @@ float4out(PG_FUNCTION_ARGS)
 {
 	float4		num = PG_GETARG_FLOAT4(0);
 	char	   *ascii = (char *) palloc(MAXFLOATWIDTH + 1);
+
+	if (isnan(num))
+		PG_RETURN_CSTRING(strcpy(ascii, "NaN"));
+	if (isinf(num))
+		PG_RETURN_CSTRING(strcpy(ascii, "Infinity"));
 
 	sprintf(ascii, "%.*g", FLT_DIG, num);
 	PG_RETURN_CSTRING(ascii);
@@ -536,13 +543,43 @@ float8div(PG_FUNCTION_ARGS)
 /*
  *		float4{eq,ne,lt,le,gt,ge}		- float4/float4 comparison operations
  */
+static int
+float4_cmp_internal(float4 a, float4 b)
+{
+	/*
+	 * We consider all NANs to be equal and larger than any non-NAN.
+	 * This is somewhat arbitrary; the important thing is to have a
+	 * consistent sort order.
+	 */
+	if (isnan(a))
+	{
+		if (isnan(b))
+			return 0;			/* NAN = NAN */
+		else
+			return 1;			/* NAN > non-NAN */
+	}
+	else if (isnan(b))
+	{
+		return -1;				/* non-NAN < NAN */
+	}
+	else
+	{
+		if (a > b)
+			return 1;
+		else if (a == b)
+			return 0;
+		else
+			return -1;
+	}
+}
+
 Datum
 float4eq(PG_FUNCTION_ARGS)
 {
 	float4		arg1 = PG_GETARG_FLOAT4(0);
 	float4		arg2 = PG_GETARG_FLOAT4(1);
 
-	PG_RETURN_BOOL(arg1 == arg2);
+	PG_RETURN_BOOL(float4_cmp_internal(arg1, arg2) == 0);
 }
 
 Datum
@@ -551,7 +588,7 @@ float4ne(PG_FUNCTION_ARGS)
 	float4		arg1 = PG_GETARG_FLOAT4(0);
 	float4		arg2 = PG_GETARG_FLOAT4(1);
 
-	PG_RETURN_BOOL(arg1 != arg2);
+	PG_RETURN_BOOL(float4_cmp_internal(arg1, arg2) != 0);
 }
 
 Datum
@@ -560,7 +597,7 @@ float4lt(PG_FUNCTION_ARGS)
 	float4		arg1 = PG_GETARG_FLOAT4(0);
 	float4		arg2 = PG_GETARG_FLOAT4(1);
 
-	PG_RETURN_BOOL(arg1 < arg2);
+	PG_RETURN_BOOL(float4_cmp_internal(arg1, arg2) < 0);
 }
 
 Datum
@@ -569,7 +606,7 @@ float4le(PG_FUNCTION_ARGS)
 	float4		arg1 = PG_GETARG_FLOAT4(0);
 	float4		arg2 = PG_GETARG_FLOAT4(1);
 
-	PG_RETURN_BOOL(arg1 <= arg2);
+	PG_RETURN_BOOL(float4_cmp_internal(arg1, arg2) <= 0);
 }
 
 Datum
@@ -578,7 +615,7 @@ float4gt(PG_FUNCTION_ARGS)
 	float4		arg1 = PG_GETARG_FLOAT4(0);
 	float4		arg2 = PG_GETARG_FLOAT4(1);
 
-	PG_RETURN_BOOL(arg1 > arg2);
+	PG_RETURN_BOOL(float4_cmp_internal(arg1, arg2) > 0);
 }
 
 Datum
@@ -587,19 +624,58 @@ float4ge(PG_FUNCTION_ARGS)
 	float4		arg1 = PG_GETARG_FLOAT4(0);
 	float4		arg2 = PG_GETARG_FLOAT4(1);
 
-	PG_RETURN_BOOL(arg1 >= arg2);
+	PG_RETURN_BOOL(float4_cmp_internal(arg1, arg2) >= 0);
+}
+
+Datum
+btfloat4cmp(PG_FUNCTION_ARGS)
+{
+	float4		arg1 = PG_GETARG_FLOAT4(0);
+	float4		arg2 = PG_GETARG_FLOAT4(1);
+
+	PG_RETURN_INT32(float4_cmp_internal(arg1, arg2));
 }
 
 /*
  *		float8{eq,ne,lt,le,gt,ge}		- float8/float8 comparison operations
  */
+static int
+float8_cmp_internal(float8 a, float8 b)
+{
+	/*
+	 * We consider all NANs to be equal and larger than any non-NAN.
+	 * This is somewhat arbitrary; the important thing is to have a
+	 * consistent sort order.
+	 */
+	if (isnan(a))
+	{
+		if (isnan(b))
+			return 0;			/* NAN = NAN */
+		else
+			return 1;			/* NAN > non-NAN */
+	}
+	else if (isnan(b))
+	{
+		return -1;				/* non-NAN < NAN */
+	}
+	else
+	{
+		if (a > b)
+			return 1;
+		else if (a == b)
+			return 0;
+		else
+			return -1;
+	}
+}
+
 Datum
 float8eq(PG_FUNCTION_ARGS)
 {
 	float8		arg1 = PG_GETARG_FLOAT8(0);
 	float8		arg2 = PG_GETARG_FLOAT8(1);
 
-	PG_RETURN_BOOL(arg1 == arg2);
+	PG_RETURN_BOOL(float8_cmp_internal(arg1, arg2) == 0);
 }
 
 Datum
@@ -608,7 +684,7 @@ float8ne(PG_FUNCTION_ARGS)
 	float8		arg1 = PG_GETARG_FLOAT8(0);
 	float8		arg2 = PG_GETARG_FLOAT8(1);
 
-	PG_RETURN_BOOL(arg1 != arg2);
+	PG_RETURN_BOOL(float8_cmp_internal(arg1, arg2) != 0);
 }
 
 Datum
@@ -617,7 +693,7 @@ float8lt(PG_FUNCTION_ARGS)
 	float8		arg1 = PG_GETARG_FLOAT8(0);
 	float8		arg2 = PG_GETARG_FLOAT8(1);
 
-	PG_RETURN_BOOL(arg1 < arg2);
+	PG_RETURN_BOOL(float8_cmp_internal(arg1, arg2) < 0);
 }
 
 Datum
@@ -626,7 +702,7 @@ float8le(PG_FUNCTION_ARGS)
 	float8		arg1 = PG_GETARG_FLOAT8(0);
 	float8		arg2 = PG_GETARG_FLOAT8(1);
 
-	PG_RETURN_BOOL(arg1 <= arg2);
+	PG_RETURN_BOOL(float8_cmp_internal(arg1, arg2) <= 0);
 }
 
 Datum
@@ -635,7 +711,7 @@ float8gt(PG_FUNCTION_ARGS)
 	float8		arg1 = PG_GETARG_FLOAT8(0);
 	float8		arg2 = PG_GETARG_FLOAT8(1);
 
-	PG_RETURN_BOOL(arg1 > arg2);
+	PG_RETURN_BOOL(float8_cmp_internal(arg1, arg2) > 0);
 }
 
 Datum
@@ -644,7 +720,16 @@ float8ge(PG_FUNCTION_ARGS)
 	float8		arg1 = PG_GETARG_FLOAT8(0);
 	float8		arg2 = PG_GETARG_FLOAT8(1);
 
-	PG_RETURN_BOOL(arg1 >= arg2);
+	PG_RETURN_BOOL(float8_cmp_internal(arg1, arg2) >= 0);
+}
+
+Datum
+btfloat8cmp(PG_FUNCTION_ARGS)
+{
+	float8		arg1 = PG_GETARG_FLOAT8(0);
+	float8		arg2 = PG_GETARG_FLOAT8(1);
+
+	PG_RETURN_INT32(float8_cmp_internal(arg1, arg2));
 }
 
 
@@ -1650,7 +1735,7 @@ float48eq(PG_FUNCTION_ARGS)
 	float4		arg1 = PG_GETARG_FLOAT4(0);
 	float8		arg2 = PG_GETARG_FLOAT8(1);
 
-	PG_RETURN_BOOL(arg1 == arg2);
+	PG_RETURN_BOOL(float8_cmp_internal(arg1, arg2) == 0);
 }
 
 Datum
@@ -1659,7 +1744,7 @@ float48ne(PG_FUNCTION_ARGS)
 	float4		arg1 = PG_GETARG_FLOAT4(0);
 	float8		arg2 = PG_GETARG_FLOAT8(1);
 
-	PG_RETURN_BOOL(arg1 != arg2);
+	PG_RETURN_BOOL(float8_cmp_internal(arg1, arg2) != 0);
 }
 
 Datum
@@ -1668,7 +1753,7 @@ float48lt(PG_FUNCTION_ARGS)
 	float4		arg1 = PG_GETARG_FLOAT4(0);
 	float8		arg2 = PG_GETARG_FLOAT8(1);
 
-	PG_RETURN_BOOL(arg1 < arg2);
+	PG_RETURN_BOOL(float8_cmp_internal(arg1, arg2) < 0);
 }
 
 Datum
@@ -1677,7 +1762,7 @@ float48le(PG_FUNCTION_ARGS)
 	float4		arg1 = PG_GETARG_FLOAT4(0);
 	float8		arg2 = PG_GETARG_FLOAT8(1);
 
-	PG_RETURN_BOOL(arg1 <= arg2);
+	PG_RETURN_BOOL(float8_cmp_internal(arg1, arg2) <= 0);
 }
 
 Datum
@@ -1686,7 +1771,7 @@ float48gt(PG_FUNCTION_ARGS)
 	float4		arg1 = PG_GETARG_FLOAT4(0);
 	float8		arg2 = PG_GETARG_FLOAT8(1);
 
-	PG_RETURN_BOOL(arg1 > arg2);
+	PG_RETURN_BOOL(float8_cmp_internal(arg1, arg2) > 0);
 }
 
 Datum
@@ -1695,7 +1780,7 @@ float48ge(PG_FUNCTION_ARGS)
 	float4		arg1 = PG_GETARG_FLOAT4(0);
 	float8		arg2 = PG_GETARG_FLOAT8(1);
 
-	PG_RETURN_BOOL(arg1 >= arg2);
+	PG_RETURN_BOOL(float8_cmp_internal(arg1, arg2) >= 0);
 }
 
 /*
@@ -1707,7 +1792,7 @@ float84eq(PG_FUNCTION_ARGS)
 	float8		arg1 = PG_GETARG_FLOAT8(0);
 	float4		arg2 = PG_GETARG_FLOAT4(1);
 
-	PG_RETURN_BOOL(arg1 == arg2);
+	PG_RETURN_BOOL(float8_cmp_internal(arg1, arg2) == 0);
 }
 
 Datum
@@ -1716,7 +1801,7 @@ float84ne(PG_FUNCTION_ARGS)
 	float8		arg1 = PG_GETARG_FLOAT8(0);
 	float4		arg2 = PG_GETARG_FLOAT4(1);
 
-	PG_RETURN_BOOL(arg1 != arg2);
+	PG_RETURN_BOOL(float8_cmp_internal(arg1, arg2) != 0);
 }
 
 Datum
@@ -1725,7 +1810,7 @@ float84lt(PG_FUNCTION_ARGS)
 	float8		arg1 = PG_GETARG_FLOAT8(0);
 	float4		arg2 = PG_GETARG_FLOAT4(1);
 
-	PG_RETURN_BOOL(arg1 < arg2);
+	PG_RETURN_BOOL(float8_cmp_internal(arg1, arg2) < 0);
 }
 
 Datum
@@ -1734,7 +1819,7 @@ float84le(PG_FUNCTION_ARGS)
 	float8		arg1 = PG_GETARG_FLOAT8(0);
 	float4		arg2 = PG_GETARG_FLOAT4(1);
 
-	PG_RETURN_BOOL(arg1 <= arg2);
+	PG_RETURN_BOOL(float8_cmp_internal(arg1, arg2) <= 0);
 }
 
 Datum
@@ -1743,7 +1828,7 @@ float84gt(PG_FUNCTION_ARGS)
 	float8		arg1 = PG_GETARG_FLOAT8(0);
 	float4		arg2 = PG_GETARG_FLOAT4(1);
 
-	PG_RETURN_BOOL(arg1 > arg2);
+	PG_RETURN_BOOL(float8_cmp_internal(arg1, arg2) > 0);
 }
 
 Datum
@@ -1752,7 +1837,7 @@ float84ge(PG_FUNCTION_ARGS)
 	float8		arg1 = PG_GETARG_FLOAT8(0);
 	float4		arg2 = PG_GETARG_FLOAT4(1);
 
-	PG_RETURN_BOOL(arg1 >= arg2);
+	PG_RETURN_BOOL(float8_cmp_internal(arg1, arg2) >= 0);
 }
 
 /* ========== PRIVATE ROUTINES ========== */

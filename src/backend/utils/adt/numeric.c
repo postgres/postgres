@@ -5,7 +5,7 @@
  *
  *	1998 Jan Wieck
  *
- * $Header: /cvsroot/pgsql/src/backend/utils/adt/numeric.c,v 1.40 2001/04/14 02:10:57 tgl Exp $
+ * $Header: /cvsroot/pgsql/src/backend/utils/adt/numeric.c,v 1.41 2001/05/03 19:00:36 tgl Exp $
  *
  * ----------
  */
@@ -153,6 +153,7 @@ static Numeric make_result(NumericVar *var);
 
 static void apply_typmod(NumericVar *var, int32 typmod);
 
+static int	cmp_numerics(Numeric num1, Numeric num2);
 static int	cmp_var(NumericVar *var1, NumericVar *var2);
 static void add_var(NumericVar *var1, NumericVar *var2, NumericVar *result);
 static void sub_var(NumericVar *var1, NumericVar *var2, NumericVar *result);
@@ -664,8 +665,126 @@ numeric_cmp(PG_FUNCTION_ARGS)
 	Numeric		num2 = PG_GETARG_NUMERIC(1);
 	int			result;
 
-	if (NUMERIC_IS_NAN(num1) || NUMERIC_IS_NAN(num2))
-		result = 0;
+	result = cmp_numerics(num1, num2);
+
+	PG_FREE_IF_COPY(num1, 0);
+	PG_FREE_IF_COPY(num2, 1);
+
+	PG_RETURN_INT32(result);
+}
+
+
+Datum
+numeric_eq(PG_FUNCTION_ARGS)
+{
+	Numeric		num1 = PG_GETARG_NUMERIC(0);
+	Numeric		num2 = PG_GETARG_NUMERIC(1);
+	bool		result;
+
+	result = cmp_numerics(num1, num2) == 0;
+
+	PG_FREE_IF_COPY(num1, 0);
+	PG_FREE_IF_COPY(num2, 1);
+
+	PG_RETURN_BOOL(result);
+}
+
+Datum
+numeric_ne(PG_FUNCTION_ARGS)
+{
+	Numeric		num1 = PG_GETARG_NUMERIC(0);
+	Numeric		num2 = PG_GETARG_NUMERIC(1);
+	bool		result;
+
+	result = cmp_numerics(num1, num2) != 0;
+
+	PG_FREE_IF_COPY(num1, 0);
+	PG_FREE_IF_COPY(num2, 1);
+
+	PG_RETURN_BOOL(result);
+}
+
+Datum
+numeric_gt(PG_FUNCTION_ARGS)
+{
+	Numeric		num1 = PG_GETARG_NUMERIC(0);
+	Numeric		num2 = PG_GETARG_NUMERIC(1);
+	bool		result;
+
+	result = cmp_numerics(num1, num2) > 0;
+
+	PG_FREE_IF_COPY(num1, 0);
+	PG_FREE_IF_COPY(num2, 1);
+
+	PG_RETURN_BOOL(result);
+}
+
+Datum
+numeric_ge(PG_FUNCTION_ARGS)
+{
+	Numeric		num1 = PG_GETARG_NUMERIC(0);
+	Numeric		num2 = PG_GETARG_NUMERIC(1);
+	bool		result;
+
+	result = cmp_numerics(num1, num2) >= 0;
+
+	PG_FREE_IF_COPY(num1, 0);
+	PG_FREE_IF_COPY(num2, 1);
+
+	PG_RETURN_BOOL(result);
+}
+
+Datum
+numeric_lt(PG_FUNCTION_ARGS)
+{
+	Numeric		num1 = PG_GETARG_NUMERIC(0);
+	Numeric		num2 = PG_GETARG_NUMERIC(1);
+	bool		result;
+
+	result = cmp_numerics(num1, num2) < 0;
+
+	PG_FREE_IF_COPY(num1, 0);
+	PG_FREE_IF_COPY(num2, 1);
+
+	PG_RETURN_BOOL(result);
+}
+
+Datum
+numeric_le(PG_FUNCTION_ARGS)
+{
+	Numeric		num1 = PG_GETARG_NUMERIC(0);
+	Numeric		num2 = PG_GETARG_NUMERIC(1);
+	bool		result;
+
+	result = cmp_numerics(num1, num2) <= 0;
+
+	PG_FREE_IF_COPY(num1, 0);
+	PG_FREE_IF_COPY(num2, 1);
+
+	PG_RETURN_BOOL(result);
+}
+
+static int
+cmp_numerics(Numeric num1, Numeric num2)
+{
+	int			result;
+
+	/*
+	 * We consider all NANs to be equal and larger than any non-NAN.
+	 * This is somewhat arbitrary; the important thing is to have a
+	 * consistent sort order.
+	 */
+	if (NUMERIC_IS_NAN(num1))
+	{
+		if (NUMERIC_IS_NAN(num2))
+			result = 0;			/* NAN = NAN */
+		else
+			result = 1;			/* NAN > non-NAN */
+	}
+	else if (NUMERIC_IS_NAN(num2))
+	{
+		result = -1;			/* non-NAN < NAN */
+	}
 	else
 	{
 		NumericVar	arg1;
@@ -683,203 +802,7 @@ numeric_cmp(PG_FUNCTION_ARGS)
 		free_var(&arg2);
 	}
 
-	PG_FREE_IF_COPY(num1, 0);
-	PG_FREE_IF_COPY(num2, 1);
-
-	PG_RETURN_INT32(result);
-}
-
-
-Datum
-numeric_eq(PG_FUNCTION_ARGS)
-{
-	Numeric		num1 = PG_GETARG_NUMERIC(0);
-	Numeric		num2 = PG_GETARG_NUMERIC(1);
-	bool		result;
-
-	if (NUMERIC_IS_NAN(num1) || NUMERIC_IS_NAN(num2))
-		result = false;
-	else
-	{
-		NumericVar	arg1;
-		NumericVar	arg2;
-
-		init_var(&arg1);
-		init_var(&arg2);
-
-		set_var_from_num(num1, &arg1);
-		set_var_from_num(num2, &arg2);
-
-		result = cmp_var(&arg1, &arg2) == 0;
-
-		free_var(&arg1);
-		free_var(&arg2);
-	}
-
-	PG_FREE_IF_COPY(num1, 0);
-	PG_FREE_IF_COPY(num2, 1);
-
-	PG_RETURN_BOOL(result);
-}
-
-Datum
-numeric_ne(PG_FUNCTION_ARGS)
-{
-	Numeric		num1 = PG_GETARG_NUMERIC(0);
-	Numeric		num2 = PG_GETARG_NUMERIC(1);
-	bool		result;
-
-	if (NUMERIC_IS_NAN(num1) || NUMERIC_IS_NAN(num2))
-		result = false;
-	else
-	{
-		NumericVar	arg1;
-		NumericVar	arg2;
-
-		init_var(&arg1);
-		init_var(&arg2);
-
-		set_var_from_num(num1, &arg1);
-		set_var_from_num(num2, &arg2);
-
-		result = cmp_var(&arg1, &arg2) != 0;
-
-		free_var(&arg1);
-		free_var(&arg2);
-	}
-
-	PG_FREE_IF_COPY(num1, 0);
-	PG_FREE_IF_COPY(num2, 1);
-
-	PG_RETURN_BOOL(result);
-}
-
-Datum
-numeric_gt(PG_FUNCTION_ARGS)
-{
-	Numeric		num1 = PG_GETARG_NUMERIC(0);
-	Numeric		num2 = PG_GETARG_NUMERIC(1);
-	bool		result;
-
-	if (NUMERIC_IS_NAN(num1) || NUMERIC_IS_NAN(num2))
-		result = false;
-	else
-	{
-		NumericVar	arg1;
-		NumericVar	arg2;
-
-		init_var(&arg1);
-		init_var(&arg2);
-
-		set_var_from_num(num1, &arg1);
-		set_var_from_num(num2, &arg2);
-
-		result = cmp_var(&arg1, &arg2) > 0;
-
-		free_var(&arg1);
-		free_var(&arg2);
-	}
-
-	PG_FREE_IF_COPY(num1, 0);
-	PG_FREE_IF_COPY(num2, 1);
-
-	PG_RETURN_BOOL(result);
-}
-
-Datum
-numeric_ge(PG_FUNCTION_ARGS)
-{
-	Numeric		num1 = PG_GETARG_NUMERIC(0);
-	Numeric		num2 = PG_GETARG_NUMERIC(1);
-	bool		result;
-
-	if (NUMERIC_IS_NAN(num1) || NUMERIC_IS_NAN(num2))
-		result = false;
-	else
-	{
-		NumericVar	arg1;
-		NumericVar	arg2;
-
-		init_var(&arg1);
-		init_var(&arg2);
-
-		set_var_from_num(num1, &arg1);
-		set_var_from_num(num2, &arg2);
-
-		result = cmp_var(&arg1, &arg2) >= 0;
-
-		free_var(&arg1);
-		free_var(&arg2);
-	}
-
-	PG_FREE_IF_COPY(num1, 0);
-	PG_FREE_IF_COPY(num2, 1);
-
-	PG_RETURN_BOOL(result);
-}
-
-Datum
-numeric_lt(PG_FUNCTION_ARGS)
-{
-	Numeric		num1 = PG_GETARG_NUMERIC(0);
-	Numeric		num2 = PG_GETARG_NUMERIC(1);
-	bool		result;
-
-	if (NUMERIC_IS_NAN(num1) || NUMERIC_IS_NAN(num2))
-		result = false;
-	else
-	{
-		NumericVar	arg1;
-		NumericVar	arg2;
-
-		init_var(&arg1);
-		init_var(&arg2);
-
-		set_var_from_num(num1, &arg1);
-		set_var_from_num(num2, &arg2);
-
-		result = cmp_var(&arg1, &arg2) < 0;
-
-		free_var(&arg1);
-		free_var(&arg2);
-	}
-
-	PG_FREE_IF_COPY(num1, 0);
-	PG_FREE_IF_COPY(num2, 1);
-
-	PG_RETURN_BOOL(result);
-}
-
-Datum
-numeric_le(PG_FUNCTION_ARGS)
-{
-	Numeric		num1 = PG_GETARG_NUMERIC(0);
-	Numeric		num2 = PG_GETARG_NUMERIC(1);
-	bool		result;
-
-	if (NUMERIC_IS_NAN(num1) || NUMERIC_IS_NAN(num2))
-		result = false;
-	else
-	{
-		NumericVar	arg1;
-		NumericVar	arg2;
-
-		init_var(&arg1);
-		init_var(&arg2);
-
-		set_var_from_num(num1, &arg1);
-		set_var_from_num(num2, &arg2);
-
-		result = cmp_var(&arg1, &arg2) <= 0;
-
-		free_var(&arg1);
-		free_var(&arg2);
-	}
-
-	PG_FREE_IF_COPY(num1, 0);
-	PG_FREE_IF_COPY(num2, 1);
-
-	PG_RETURN_BOOL(result);
+	return result;
 }
 
 
@@ -1663,6 +1586,7 @@ numeric_int2(PG_FUNCTION_ARGS)
 	char	   *str;
 	Datum		result;
 
+	/* XXX would it be better to return NULL? */
 	if (NUMERIC_IS_NAN(num))
 		elog(ERROR, "Cannot convert NaN to int2");
 

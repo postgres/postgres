@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/timestamp.c,v 1.47 2001/04/03 18:05:53 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/timestamp.c,v 1.48 2001/05/03 19:00:36 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -542,22 +542,34 @@ SetTimestamp(Timestamp dt)
 
 /*
  *		timestamp_relop - is timestamp1 relop timestamp2
+ *
+ *		collate invalid timestamp at the end
  */
+static int
+timestamp_cmp_internal(Timestamp dt1, Timestamp dt2)
+{
+	if (TIMESTAMP_IS_INVALID(dt1))
+		return (TIMESTAMP_IS_INVALID(dt2) ? 0 : 1);
+	else if (TIMESTAMP_IS_INVALID(dt2))
+		return -1;
+	else
+	{
+		if (TIMESTAMP_IS_RELATIVE(dt1))
+			dt1 = SetTimestamp(dt1);
+		if (TIMESTAMP_IS_RELATIVE(dt2))
+			dt2 = SetTimestamp(dt2);
+
+		return ((dt1 < dt2) ? -1 : ((dt1 > dt2) ? 1 : 0));
+	}
+}
+
 Datum
 timestamp_eq(PG_FUNCTION_ARGS)
 {
 	Timestamp	dt1 = PG_GETARG_TIMESTAMP(0);
 	Timestamp	dt2 = PG_GETARG_TIMESTAMP(1);
 
-	if (TIMESTAMP_IS_INVALID(dt1) || TIMESTAMP_IS_INVALID(dt2))
-		PG_RETURN_BOOL(false);
-
-	if (TIMESTAMP_IS_RELATIVE(dt1))
-		dt1 = SetTimestamp(dt1);
-	if (TIMESTAMP_IS_RELATIVE(dt2))
-		dt2 = SetTimestamp(dt2);
-
-	PG_RETURN_BOOL(dt1 == dt2);
+	PG_RETURN_BOOL(timestamp_cmp_internal(dt1, dt2) == 0);
 }
 
 Datum
@@ -566,15 +578,7 @@ timestamp_ne(PG_FUNCTION_ARGS)
 	Timestamp	dt1 = PG_GETARG_TIMESTAMP(0);
 	Timestamp	dt2 = PG_GETARG_TIMESTAMP(1);
 
-	if (TIMESTAMP_IS_INVALID(dt1) || TIMESTAMP_IS_INVALID(dt2))
-		PG_RETURN_BOOL(false);
-
-	if (TIMESTAMP_IS_RELATIVE(dt1))
-		dt1 = SetTimestamp(dt1);
-	if (TIMESTAMP_IS_RELATIVE(dt2))
-		dt2 = SetTimestamp(dt2);
-
-	PG_RETURN_BOOL(dt1 != dt2);
+	PG_RETURN_BOOL(timestamp_cmp_internal(dt1, dt2) != 0);
 }
 
 Datum
@@ -583,15 +587,7 @@ timestamp_lt(PG_FUNCTION_ARGS)
 	Timestamp	dt1 = PG_GETARG_TIMESTAMP(0);
 	Timestamp	dt2 = PG_GETARG_TIMESTAMP(1);
 
-	if (TIMESTAMP_IS_INVALID(dt1) || TIMESTAMP_IS_INVALID(dt2))
-		PG_RETURN_BOOL(false);
-
-	if (TIMESTAMP_IS_RELATIVE(dt1))
-		dt1 = SetTimestamp(dt1);
-	if (TIMESTAMP_IS_RELATIVE(dt2))
-		dt2 = SetTimestamp(dt2);
-
-	PG_RETURN_BOOL(dt1 < dt2);
+	PG_RETURN_BOOL(timestamp_cmp_internal(dt1, dt2) < 0);
 }
 
 Datum
@@ -600,15 +596,7 @@ timestamp_gt(PG_FUNCTION_ARGS)
 	Timestamp	dt1 = PG_GETARG_TIMESTAMP(0);
 	Timestamp	dt2 = PG_GETARG_TIMESTAMP(1);
 
-	if (TIMESTAMP_IS_INVALID(dt1) || TIMESTAMP_IS_INVALID(dt2))
-		PG_RETURN_BOOL(false);
-
-	if (TIMESTAMP_IS_RELATIVE(dt1))
-		dt1 = SetTimestamp(dt1);
-	if (TIMESTAMP_IS_RELATIVE(dt2))
-		dt2 = SetTimestamp(dt2);
-
-	PG_RETURN_BOOL(dt1 > dt2);
+	PG_RETURN_BOOL(timestamp_cmp_internal(dt1, dt2) > 0);
 }
 
 Datum
@@ -617,15 +605,7 @@ timestamp_le(PG_FUNCTION_ARGS)
 	Timestamp	dt1 = PG_GETARG_TIMESTAMP(0);
 	Timestamp	dt2 = PG_GETARG_TIMESTAMP(1);
 
-	if (TIMESTAMP_IS_INVALID(dt1) || TIMESTAMP_IS_INVALID(dt2))
-		PG_RETURN_BOOL(false);
-
-	if (TIMESTAMP_IS_RELATIVE(dt1))
-		dt1 = SetTimestamp(dt1);
-	if (TIMESTAMP_IS_RELATIVE(dt2))
-		dt2 = SetTimestamp(dt2);
-
-	PG_RETURN_BOOL(dt1 <= dt2);
+	PG_RETURN_BOOL(timestamp_cmp_internal(dt1, dt2) <= 0);
 }
 
 Datum
@@ -634,57 +614,54 @@ timestamp_ge(PG_FUNCTION_ARGS)
 	Timestamp	dt1 = PG_GETARG_TIMESTAMP(0);
 	Timestamp	dt2 = PG_GETARG_TIMESTAMP(1);
 
-	if (TIMESTAMP_IS_INVALID(dt1) || TIMESTAMP_IS_INVALID(dt2))
-		PG_RETURN_BOOL(false);
-
-	if (TIMESTAMP_IS_RELATIVE(dt1))
-		dt1 = SetTimestamp(dt1);
-	if (TIMESTAMP_IS_RELATIVE(dt2))
-		dt2 = SetTimestamp(dt2);
-
-	PG_RETURN_BOOL(dt1 >= dt2);
+	PG_RETURN_BOOL(timestamp_cmp_internal(dt1, dt2) >= 0);
 }
 
-
-/*		timestamp_cmp	- 3-state comparison for timestamp
- *		collate invalid timestamp at the end
- */
 Datum
 timestamp_cmp(PG_FUNCTION_ARGS)
 {
 	Timestamp	dt1 = PG_GETARG_TIMESTAMP(0);
 	Timestamp	dt2 = PG_GETARG_TIMESTAMP(1);
 
-	if (TIMESTAMP_IS_INVALID(dt1))
-		PG_RETURN_INT32(TIMESTAMP_IS_INVALID(dt2) ? 0 : 1);
-	else if (TIMESTAMP_IS_INVALID(dt2))
-		PG_RETURN_INT32(-1);
-	else
-	{
-		if (TIMESTAMP_IS_RELATIVE(dt1))
-			dt1 = SetTimestamp(dt1);
-		if (TIMESTAMP_IS_RELATIVE(dt2))
-			dt2 = SetTimestamp(dt2);
-	}
-
-	PG_RETURN_INT32((dt1 < dt2) ? -1 : ((dt1 > dt2) ? 1 : 0));
+	PG_RETURN_INT32(timestamp_cmp_internal(dt1, dt2));
 }
 
 
 /*
  *		interval_relop	- is interval1 relop interval2
+ *
+ *		collate invalid interval at the end
  */
+static int
+interval_cmp_internal(Interval *interval1, Interval *interval2)
+{
+	if (INTERVAL_IS_INVALID(*interval1))
+		return (INTERVAL_IS_INVALID(*interval2) ? 0 : 1);
+	else if (INTERVAL_IS_INVALID(*interval2))
+		return -1;
+	else
+	{
+		double		span1,
+					span2;
+
+		span1 = interval1->time;
+		if (interval1->month != 0)
+			span1 += (interval1->month * (30.0 * 86400));
+		span2 = interval2->time;
+		if (interval2->month != 0)
+			span2 += (interval2->month * (30.0 * 86400));
+
+		return ((span1 < span2) ? -1 : (span1 > span2) ? 1 : 0);
+	}
+}
+
 Datum
 interval_eq(PG_FUNCTION_ARGS)
 {
 	Interval   *interval1 = PG_GETARG_INTERVAL_P(0);
 	Interval   *interval2 = PG_GETARG_INTERVAL_P(1);
 
-	if (INTERVAL_IS_INVALID(*interval1) || INTERVAL_IS_INVALID(*interval2))
-		PG_RETURN_BOOL(false);
-
-	PG_RETURN_BOOL((interval1->time == interval2->time) &&
-				   (interval1->month == interval2->month));
+	PG_RETURN_BOOL(interval_cmp_internal(interval1, interval2) == 0);
 }
 
 Datum
@@ -693,11 +670,7 @@ interval_ne(PG_FUNCTION_ARGS)
 	Interval   *interval1 = PG_GETARG_INTERVAL_P(0);
 	Interval   *interval2 = PG_GETARG_INTERVAL_P(1);
 
-	if (INTERVAL_IS_INVALID(*interval1) || INTERVAL_IS_INVALID(*interval2))
-		PG_RETURN_BOOL(false);
-
-	PG_RETURN_BOOL((interval1->time != interval2->time) ||
-				   (interval1->month != interval2->month));
+	PG_RETURN_BOOL(interval_cmp_internal(interval1, interval2) != 0);
 }
 
 Datum
@@ -705,20 +678,8 @@ interval_lt(PG_FUNCTION_ARGS)
 {
 	Interval   *interval1 = PG_GETARG_INTERVAL_P(0);
 	Interval   *interval2 = PG_GETARG_INTERVAL_P(1);
-	double		span1,
-				span2;
 
-	if (INTERVAL_IS_INVALID(*interval1) || INTERVAL_IS_INVALID(*interval2))
-		PG_RETURN_BOOL(false);
-
-	span1 = interval1->time;
-	if (interval1->month != 0)
-		span1 += (interval1->month * (30.0 * 86400));
-	span2 = interval2->time;
-	if (interval2->month != 0)
-		span2 += (interval2->month * (30.0 * 86400));
-
-	PG_RETURN_BOOL(span1 < span2);
+	PG_RETURN_BOOL(interval_cmp_internal(interval1, interval2) < 0);
 }
 
 Datum
@@ -726,20 +687,8 @@ interval_gt(PG_FUNCTION_ARGS)
 {
 	Interval   *interval1 = PG_GETARG_INTERVAL_P(0);
 	Interval   *interval2 = PG_GETARG_INTERVAL_P(1);
-	double		span1,
-				span2;
 
-	if (INTERVAL_IS_INVALID(*interval1) || INTERVAL_IS_INVALID(*interval2))
-		PG_RETURN_BOOL(false);
-
-	span1 = interval1->time;
-	if (interval1->month != 0)
-		span1 += (interval1->month * (30.0 * 86400));
-	span2 = interval2->time;
-	if (interval2->month != 0)
-		span2 += (interval2->month * (30.0 * 86400));
-
-	PG_RETURN_BOOL(span1 > span2);
+	PG_RETURN_BOOL(interval_cmp_internal(interval1, interval2) > 0);
 }
 
 Datum
@@ -747,20 +696,8 @@ interval_le(PG_FUNCTION_ARGS)
 {
 	Interval   *interval1 = PG_GETARG_INTERVAL_P(0);
 	Interval   *interval2 = PG_GETARG_INTERVAL_P(1);
-	double		span1,
-				span2;
 
-	if (INTERVAL_IS_INVALID(*interval1) || INTERVAL_IS_INVALID(*interval2))
-		PG_RETURN_BOOL(false);
-
-	span1 = interval1->time;
-	if (interval1->month != 0)
-		span1 += (interval1->month * (30.0 * 86400));
-	span2 = interval2->time;
-	if (interval2->month != 0)
-		span2 += (interval2->month * (30.0 * 86400));
-
-	PG_RETURN_BOOL(span1 <= span2);
+	PG_RETURN_BOOL(interval_cmp_internal(interval1, interval2) <= 0);
 }
 
 Datum
@@ -768,46 +705,17 @@ interval_ge(PG_FUNCTION_ARGS)
 {
 	Interval   *interval1 = PG_GETARG_INTERVAL_P(0);
 	Interval   *interval2 = PG_GETARG_INTERVAL_P(1);
-	double		span1,
-				span2;
 
-	if (INTERVAL_IS_INVALID(*interval1) || INTERVAL_IS_INVALID(*interval2))
-		PG_RETURN_BOOL(false);
-
-	span1 = interval1->time;
-	if (interval1->month != 0)
-		span1 += (interval1->month * (30.0 * 86400));
-	span2 = interval2->time;
-	if (interval2->month != 0)
-		span2 += (interval2->month * (30.0 * 86400));
-
-	PG_RETURN_BOOL(span1 >= span2);
+	PG_RETURN_BOOL(interval_cmp_internal(interval1, interval2) >= 0);
 }
 
-
-/*		interval_cmp	- 3-state comparison for interval
- */
 Datum
 interval_cmp(PG_FUNCTION_ARGS)
 {
 	Interval   *interval1 = PG_GETARG_INTERVAL_P(0);
 	Interval   *interval2 = PG_GETARG_INTERVAL_P(1);
-	double		span1,
-				span2;
 
-	if (INTERVAL_IS_INVALID(*interval1))
-		PG_RETURN_INT32(INTERVAL_IS_INVALID(*interval2) ? 0 : 1);
-	else if (INTERVAL_IS_INVALID(*interval2))
-		PG_RETURN_INT32(-1);
-
-	span1 = interval1->time;
-	if (interval1->month != 0)
-		span1 += (interval1->month * (30.0 * 86400));
-	span2 = interval2->time;
-	if (interval2->month != 0)
-		span2 += (interval2->month * (30.0 * 86400));
-
-	PG_RETURN_INT32((span1 < span2) ? -1 : (span1 > span2) ? 1 : 0);
+	PG_RETURN_INT32(interval_cmp_internal(interval1, interval2));
 }
 
 /*

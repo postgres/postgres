@@ -9,7 +9,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/nabstime.c,v 1.84 2001/04/26 21:52:17 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/nabstime.c,v 1.85 2001/05/03 19:00:36 tgl Exp $
  *
  * NOTES
  *
@@ -430,37 +430,6 @@ nabstimeout(PG_FUNCTION_ARGS)
 }
 
 
-/*
- *	AbsoluteTimeIsBefore -- true iff time1 is before time2.
- *	AbsoluteTimeIsAfter -- true iff time1 is after time2.
- */
-bool
-AbsoluteTimeIsBefore(AbsoluteTime time1, AbsoluteTime time2)
-{
-	if (time1 == CURRENT_ABSTIME)
-		time1 = GetCurrentTransactionStartTime();
-
-	if (time2 == CURRENT_ABSTIME)
-		time2 = GetCurrentTransactionStartTime();
-
-	return time1 < time2;
-}
-
-#ifdef NOT_USED
-bool
-AbsoluteTimeIsAfter(AbsoluteTime time1, AbsoluteTime time2)
-{
-	if (time1 == CURRENT_ABSTIME)
-		time1 = GetCurrentTransactionStartTime();
-
-	if (time2 == CURRENT_ABSTIME)
-		time2 = GetCurrentTransactionStartTime();
-
-	return time1 > time2;
-}
-
-#endif
-
 /* abstime_finite()
  */
 Datum
@@ -475,27 +444,51 @@ abstime_finite(PG_FUNCTION_ARGS)
 
 
 /*
- *		abstimeeq		- returns true iff arguments are equal
- *		abstimene		- returns true iff arguments are not equal
- *		abstimelt		- returns true iff t1 less than t2
- *		abstimegt		- returns true iff t1 greater than t2
- *		abstimele		- returns true iff t1 less than or equal to t2
- *		abstimege		- returns true iff t1 greater than or equal to t2
+ * abstime comparison routines
  */
+static int
+abstime_cmp_internal(AbsoluteTime a, AbsoluteTime b)
+{
+	/*
+	 * We consider all INVALIDs to be equal and larger than any non-INVALID.
+	 * This is somewhat arbitrary; the important thing is to have a
+	 * consistent sort order.
+	 */
+	if (a == INVALID_ABSTIME)
+	{
+		if (b == INVALID_ABSTIME)
+			return 0;			/* INVALID = INVALID */
+		else
+			return 1;			/* INVALID > non-INVALID */
+	}
+	else if (b == INVALID_ABSTIME)
+	{
+		return -1;				/* non-INVALID < INVALID */
+	}
+	else
+	{
+		/* XXX this is broken, should go away: */
+		if (a == CURRENT_ABSTIME)
+			a = GetCurrentTransactionStartTime();
+		if (b == CURRENT_ABSTIME)
+			b = GetCurrentTransactionStartTime();
+
+		if (a > b)
+			return 1;
+		else if (a == b)
+			return 0;
+		else
+			return -1;
+	}
+}
+
 Datum
 abstimeeq(PG_FUNCTION_ARGS)
 {
 	AbsoluteTime t1 = PG_GETARG_ABSOLUTETIME(0);
 	AbsoluteTime t2 = PG_GETARG_ABSOLUTETIME(1);
 
-	if (t1 == INVALID_ABSTIME || t2 == INVALID_ABSTIME)
-		PG_RETURN_BOOL(false);
-	if (t1 == CURRENT_ABSTIME)
-		t1 = GetCurrentTransactionStartTime();
-	if (t2 == CURRENT_ABSTIME)
-		t2 = GetCurrentTransactionStartTime();
-
-	PG_RETURN_BOOL(t1 == t2);
+	PG_RETURN_BOOL(abstime_cmp_internal(t1, t2) == 0);
 }
 
 Datum
@@ -504,14 +497,7 @@ abstimene(PG_FUNCTION_ARGS)
 	AbsoluteTime t1 = PG_GETARG_ABSOLUTETIME(0);
 	AbsoluteTime t2 = PG_GETARG_ABSOLUTETIME(1);
 
-	if (t1 == INVALID_ABSTIME || t2 == INVALID_ABSTIME)
-		PG_RETURN_BOOL(false);
-	if (t1 == CURRENT_ABSTIME)
-		t1 = GetCurrentTransactionStartTime();
-	if (t2 == CURRENT_ABSTIME)
-		t2 = GetCurrentTransactionStartTime();
-
-	PG_RETURN_BOOL(t1 != t2);
+	PG_RETURN_BOOL(abstime_cmp_internal(t1, t2) != 0);
 }
 
 Datum
@@ -520,14 +506,7 @@ abstimelt(PG_FUNCTION_ARGS)
 	AbsoluteTime t1 = PG_GETARG_ABSOLUTETIME(0);
 	AbsoluteTime t2 = PG_GETARG_ABSOLUTETIME(1);
 
-	if (t1 == INVALID_ABSTIME || t2 == INVALID_ABSTIME)
-		PG_RETURN_BOOL(false);
-	if (t1 == CURRENT_ABSTIME)
-		t1 = GetCurrentTransactionStartTime();
-	if (t2 == CURRENT_ABSTIME)
-		t2 = GetCurrentTransactionStartTime();
-
-	PG_RETURN_BOOL(t1 < t2);
+	PG_RETURN_BOOL(abstime_cmp_internal(t1, t2) < 0);
 }
 
 Datum
@@ -536,14 +515,7 @@ abstimegt(PG_FUNCTION_ARGS)
 	AbsoluteTime t1 = PG_GETARG_ABSOLUTETIME(0);
 	AbsoluteTime t2 = PG_GETARG_ABSOLUTETIME(1);
 
-	if (t1 == INVALID_ABSTIME || t2 == INVALID_ABSTIME)
-		PG_RETURN_BOOL(false);
-	if (t1 == CURRENT_ABSTIME)
-		t1 = GetCurrentTransactionStartTime();
-	if (t2 == CURRENT_ABSTIME)
-		t2 = GetCurrentTransactionStartTime();
-
-	PG_RETURN_BOOL(t1 > t2);
+	PG_RETURN_BOOL(abstime_cmp_internal(t1, t2) > 0);
 }
 
 Datum
@@ -552,14 +524,7 @@ abstimele(PG_FUNCTION_ARGS)
 	AbsoluteTime t1 = PG_GETARG_ABSOLUTETIME(0);
 	AbsoluteTime t2 = PG_GETARG_ABSOLUTETIME(1);
 
-	if (t1 == INVALID_ABSTIME || t2 == INVALID_ABSTIME)
-		PG_RETURN_BOOL(false);
-	if (t1 == CURRENT_ABSTIME)
-		t1 = GetCurrentTransactionStartTime();
-	if (t2 == CURRENT_ABSTIME)
-		t2 = GetCurrentTransactionStartTime();
-
-	PG_RETURN_BOOL(t1 <= t2);
+	PG_RETURN_BOOL(abstime_cmp_internal(t1, t2) <= 0);
 }
 
 Datum
@@ -568,14 +533,16 @@ abstimege(PG_FUNCTION_ARGS)
 	AbsoluteTime t1 = PG_GETARG_ABSOLUTETIME(0);
 	AbsoluteTime t2 = PG_GETARG_ABSOLUTETIME(1);
 
-	if (t1 == INVALID_ABSTIME || t2 == INVALID_ABSTIME)
-		PG_RETURN_BOOL(false);
-	if (t1 == CURRENT_ABSTIME)
-		t1 = GetCurrentTransactionStartTime();
-	if (t2 == CURRENT_ABSTIME)
-		t2 = GetCurrentTransactionStartTime();
+	PG_RETURN_BOOL(abstime_cmp_internal(t1, t2) >= 0);
+}
 
-	PG_RETURN_BOOL(t1 >= t2);
+Datum
+btabstimecmp(PG_FUNCTION_ARGS)
+{
+	AbsoluteTime t1 = PG_GETARG_ABSOLUTETIME(0);
+	AbsoluteTime t2 = PG_GETARG_ABSOLUTETIME(1);
+
+	PG_RETURN_INT32(abstime_cmp_internal(t1, t2));
 }
 
 

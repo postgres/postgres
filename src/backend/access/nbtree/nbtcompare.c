@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/access/nbtree/nbtcompare.c,v 1.41 2001/03/22 03:59:14 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/access/nbtree/nbtcompare.c,v 1.42 2001/05/03 19:00:36 tgl Exp $
  *
  * NOTES
  *
@@ -25,7 +25,20 @@
  *	NOTE: although any negative int32 is acceptable for reporting "<",
  *	and any positive int32 is acceptable for reporting ">", routines
  *	that work on 32-bit or wider datatypes can't just return "a - b".
- *	That could overflow and give the wrong answer.
+ *	That could overflow and give the wrong answer.  Also, one should not
+ *	return INT_MIN to report "<", since some callers will negate the result.
+ *
+ *	NOTE: it is critical that the comparison function impose a total order
+ *	on all non-NULL values of the data type, and that the datatype's
+ *	boolean comparison operators (= < >= etc) yield results consistent
+ *	with the comparison routine.  Otherwise bad behavior may ensue.
+ *	(For example, the comparison operators must NOT punt when faced with
+ *	NAN or other funny values; you must devise some collation sequence for
+ *	all such values.)  If the datatype is not trivial, this is most
+ *	reliably done by having the boolean operators invoke the same
+ *	three-way comparison code that the btree function does.  Therefore,
+ *	this file contains only btree support for "trivial" datatypes ---
+ *	all others are in the /utils/adt/ files that implement their datatypes.
  *
  *	NOTE: these routines must not leak memory, since memory allocated
  *	during an index access won't be recovered till end of query.  This
@@ -33,11 +46,10 @@
  *	they have to be careful to free any detoasted copy of an input datum.
  *-------------------------------------------------------------------------
  */
-
 #include "postgres.h"
 
-#include "utils/nabstime.h"
 #include "utils/builtins.h"
+
 
 Datum
 btboolcmp(PG_FUNCTION_ARGS)
@@ -86,34 +98,6 @@ btint8cmp(PG_FUNCTION_ARGS)
 }
 
 Datum
-btfloat4cmp(PG_FUNCTION_ARGS)
-{
-	float4		a = PG_GETARG_FLOAT4(0);
-	float4		b = PG_GETARG_FLOAT4(1);
-
-	if (a > b)
-		PG_RETURN_INT32(1);
-	else if (a == b)
-		PG_RETURN_INT32(0);
-	else
-		PG_RETURN_INT32(-1);
-}
-
-Datum
-btfloat8cmp(PG_FUNCTION_ARGS)
-{
-	float8		a = PG_GETARG_FLOAT8(0);
-	float8		b = PG_GETARG_FLOAT8(1);
-
-	if (a > b)
-		PG_RETURN_INT32(1);
-	else if (a == b)
-		PG_RETURN_INT32(0);
-	else
-		PG_RETURN_INT32(-1);
-}
-
-Datum
 btoidcmp(PG_FUNCTION_ARGS)
 {
 	Oid			a = PG_GETARG_OID(0);
@@ -148,20 +132,6 @@ btoidvectorcmp(PG_FUNCTION_ARGS)
 }
 
 Datum
-btabstimecmp(PG_FUNCTION_ARGS)
-{
-	AbsoluteTime a = PG_GETARG_ABSOLUTETIME(0);
-	AbsoluteTime b = PG_GETARG_ABSOLUTETIME(1);
-
-	if (AbsoluteTimeIsBefore(a, b))
-		PG_RETURN_INT32(-1);
-	else if (AbsoluteTimeIsBefore(b, a))
-		PG_RETURN_INT32(1);
-	else
-		PG_RETURN_INT32(0);
-}
-
-Datum
 btcharcmp(PG_FUNCTION_ARGS)
 {
 	char		a = PG_GETARG_CHAR(0);
@@ -178,80 +148,4 @@ btnamecmp(PG_FUNCTION_ARGS)
 	Name		b = PG_GETARG_NAME(1);
 
 	PG_RETURN_INT32(strncmp(NameStr(*a), NameStr(*b), NAMEDATALEN));
-}
-
-Datum
-bttextcmp(PG_FUNCTION_ARGS)
-{
-	text	   *a = PG_GETARG_TEXT_P(0);
-	text	   *b = PG_GETARG_TEXT_P(1);
-	int			res;
-	unsigned char *ap,
-			   *bp;
-
-#ifdef USE_LOCALE
-	int			la = VARSIZE(a) - VARHDRSZ;
-	int			lb = VARSIZE(b) - VARHDRSZ;
-
-	ap = (unsigned char *) palloc(la + 1);
-	bp = (unsigned char *) palloc(lb + 1);
-
-	memcpy(ap, VARDATA(a), la);
-	*(ap + la) = '\0';
-	memcpy(bp, VARDATA(b), lb);
-	*(bp + lb) = '\0';
-
-	res = strcoll(ap, bp);
-
-	pfree(ap);
-	pfree(bp);
-
-#else
-	int			len = VARSIZE(a);
-
-	/* len is the length of the shorter of the two strings */
-	if (len > VARSIZE(b))
-		len = VARSIZE(b);
-
-	len -= VARHDRSZ;
-
-	ap = (unsigned char *) VARDATA(a);
-	bp = (unsigned char *) VARDATA(b);
-
-	/*
-	 * If the two strings differ in the first len bytes, or if they're the
-	 * same in the first len bytes and they're both len bytes long, we're
-	 * done.
-	 */
-
-	res = 0;
-	if (len > 0)
-	{
-		do
-		{
-			res = (int) *ap++ - (int) *bp++;
-			len--;
-		} while (res == 0 && len != 0);
-	}
-
-	if (res == 0 && VARSIZE(a) != VARSIZE(b))
-	{
-
-		/*
-		 * The two strings are the same in the first len bytes, and they
-		 * are of different lengths.
-		 */
-		if (VARSIZE(a) < VARSIZE(b))
-			res = -1;
-		else
-			res = 1;
-	}
-
-#endif
-
-	/* Avoid leaking memory when handed toasted input. */
-	PG_FREE_IF_COPY(a, 0);
-	PG_FREE_IF_COPY(b, 1);
-
-	PG_RETURN_INT32(res);
 }
