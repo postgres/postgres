@@ -58,8 +58,6 @@ AC_LINK_FILES(backend/port/dynloader/${os}.h, include/dynloader.h)
 AC_LINK_FILES(include/port/${os}.h, include/os.h)
 AC_LINK_FILES(makefiles/Makefile.${os}, Makefile.port)
 
-AC_SUBST(PORTNAME)
-
 echo "checking echo setting..."
 if echo '\c' | grep -s c >/dev/null 2>&1
 then
@@ -279,8 +277,7 @@ AC_ARG_WITH(
 #fi
 export USE_PERL
 
-dnl We disable odbc support unless we override it with --enable-odbc
-#USE_ODBC=false
+dnl We disable odbc support unless we override it with --with-odbc
 AC_MSG_CHECKING(setting USE_ODBC)
 AC_ARG_WITH(
    odbc,
@@ -293,12 +290,28 @@ AC_ARG_WITH(
    ],
    [ USE_ODBC=false; AC_MSG_RESULT(disabled) ]
 )
-#
-#if test "$enable_odbc." != "."
-#then
-#        USE_ODBC=$enable_odbc
-#fi
 export USE_ODBC
+
+dnl Allow for overriding the default location of the odbcinst.ini
+dnl file which is normally ${prefix}/share or ${prefix} if this is
+dnl being compiled inside the postgres distribution.
+if test "X$USE_ODBC" = "Xtrue"
+then
+   AC_LINK_FILES(include/config.h, interfaces/odbc/config.h)
+
+   AC_MSG_CHECKING(setting ODBCINST)
+   AC_ARG_WITH(
+      odbcinst,
+      [   --with-odbcinst=dir    change default directory for odbcinst.ini],
+      AC_DEFINE_UNQUOTED(ODBCINST, ${with_odbcinst}) AC_MSG_RESULT($with_odbcinst),
+      AC_DEFINE_UNQUOTED(ODBCINST, ${ODBCINSTDIR}) AC_MSG_RESULT(${ODBCINSTDIR})
+   )
+fi
+if test "X$with_odbcinst" != "X"
+then
+    ODBCINSTDIR=$with_odbcinst
+fi
+AC_SUBST(ODBCINSTDIR)
 
 dnl Unless we specify the command line options
 dnl	--enable cassert	to explicitly enable it
@@ -346,6 +359,7 @@ dnl Checks for programs.
 AC_PROG_CPP
 
 AC_SUBST(PORTNAME)
+AC_SUBST(SRCDIR)
 AC_SUBST(LDFLAGS)
 AC_SUBST(CPPFLAGS)
 AC_SUBST(AROPT)
@@ -516,6 +530,8 @@ AC_CHECK_HEADERS(sys/resource.h netdb.h arpa/inet.h getopt.h)
 AC_CHECK_HEADERS(readline.h history.h dld.h crypt.h endian.h float.h)
 AC_CHECK_HEADERS(readline/readline.h readline/history.h ieeefp.h fp_class.h)
 AC_CHECK_HEADERS(netinet/in.h string.h strings.h)
+dnl ODBC headers...
+AC_CHECK_HEADERS(sys/param.h pwd.h)
 
 dnl Checks for typedefs, structures, and compiler characteristics.
 AC_C_CONST
@@ -854,6 +870,17 @@ dnl - thomas 1998-10-05
 #then
 #	AC_CONFIG_SUBDIRS(interfaces/odbc)
 #fi
-#
-#AC_OUTPUT(GNUmakefile Makefile.global backend/port/Makefile bin/pg_version/Makefile bin/psql/Makefile bin/pg_dump/Makefile backend/utils/Gen_fmgrtab.sh interfaces/libpq/Makefile interfaces/libpq++/Makefile interfaces/libpgtcl/Makefile interfaces/ecpg/lib/Makefile include/version.h)
+if test "$USE_ODBC" = "true"
+then
+	PWD_INCDIR=no
+	AC_CHECK_HEADER(pwd.h, PWD_INCDIR=yes)
+	if test "$PWD_INCDIR" = "no"; then
+		AC_MSG_WARN(odbc support disabled; pwd.h missing)
+		USE_ODBC=
+	fi
+	AC_SUBST(USE_ODBC)
+fi
+ 
+AC_CONFIG_HEADER(interfaces/odbc/config.h)
+
 AC_OUTPUT(GNUmakefile Makefile.global backend/port/Makefile bin/pg_version/Makefile bin/psql/Makefile bin/pg_dump/Makefile backend/utils/Gen_fmgrtab.sh interfaces/libpq/Makefile interfaces/libpq++/Makefile interfaces/libpgtcl/Makefile interfaces/ecpg/lib/Makefile include/version.h interfaces/odbc/Makefile.global interfaces/odbc/GNUmakefile)
