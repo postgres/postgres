@@ -1,10 +1,10 @@
 #ifndef __PARSER_H__
 #define __PARSER_H__
 
-char	   *token;
-int			tokenlen;
+extern char	   *token;
+extern int			tokenlen;
 int			tsearch2_yylex(void);
-void		start_parse_str(char *, int);
-void		end_parse(void);
+void		tsearch2_start_parse_str(char *, int);
+void		tsearch2_end_parse(void);
 
 #endif

@@ -42,7 +42,7 @@ Datum		prsd_start(PG_FUNCTION_ARGS);
 Datum
 prsd_start(PG_FUNCTION_ARGS)
 {
-	start_parse_str((char *) PG_GETARG_POINTER(0), PG_GETARG_INT32(1));
+	tsearch2_start_parse_str((char *) PG_GETARG_POINTER(0), PG_GETARG_INT32(1));
 	PG_RETURN_POINTER(NULL);
 }
 
@@ -67,7 +67,7 @@ Datum
 prsd_end(PG_FUNCTION_ARGS)
 {
 	/* ParserState *p=(ParserState*)PG_GETARG_POINTER(0); */
-	end_parse();
+	tsearch2_end_parse();
 	PG_RETURN_VOID();
 }
 
