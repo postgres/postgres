@@ -6,7 +6,7 @@
  *
  *
  * IDENTIFICATION
- *    $Header: /cvsroot/pgsql/src/backend/commands/copy.c,v 1.22 1997/03/12 20:47:32 scrappy Exp $
+ *    $Header: /cvsroot/pgsql/src/backend/commands/copy.c,v 1.23 1997/04/02 03:57:03 vadim Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -119,6 +119,8 @@ DoCopy(char *relname, bool binary, bool oids, bool from, bool pipe,
         /* Above should not return. */
     else {
         if (from) {  /* copy from file to database */
+	    if ( rel->rd_rel->relkind == RELKIND_SEQUENCE )
+	    	elog (WARN, "You can't change sequence relation %s", relname);
             if (pipe) {
                 if (IsUnderPostmaster) {
                     ReceiveCopyBegin();
