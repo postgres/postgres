@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/varlena.c,v 1.25 1997/12/16 15:59:11 thomas Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/varlena.c,v 1.26 1998/01/01 05:50:50 thomas Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -37,13 +37,13 @@
  *				The input is scaned twice.
  *				The error checking of input is minimal.
  */
-struct varlena *
+text *
 byteain(char *inputText)
 {
-	register char *tp;
-	register char *rp;
-	register int byte;
-	struct varlena *result;
+	char	   *tp;
+	char	   *rp;
+	int			byte;
+	text	   *result;
 
 	if (inputText == NULL)
 		elog(WARN, "Bad input string for type bytea");
@@ -60,7 +60,7 @@ byteain(char *inputText)
 		}
 	tp = inputText;
 	byte += VARHDRSZ;
-	result = (struct varlena *) palloc(byte);
+	result = (text *) palloc(byte);
 	result->vl_len = byte;		/* varlena? */
 	rp = result->vl_dat;
 	while (*tp != '\0')
@@ -78,28 +78,6 @@ byteain(char *inputText)
 }
 
 /*
- * Shoves a bunch of memory pointed at by bytes into varlena.
- * BUGS:  Extremely unportable as things shoved can be string
- * representations of structs, etc.
- */
-#ifdef NOT_USED
-struct varlena *
-shove_bytes(unsigned char *stuff, int len)
-{
-	struct varlena *result;
-
-	result = (struct varlena *) palloc(len + VARHDRSZ);
-	result->vl_len = len;
-	memmove(result->vl_dat,
-			stuff + VARHDRSZ,
-			len - VARHDRSZ);
-	return (result);
-}
-
-#endif
-
-
-/*
  *		byteaout		- converts to printable representation of byte array
  *
  *		Non-printable characters are inserted as '\nnn' (octal) and '\' as
@@ -107,15 +85,16 @@ shove_bytes(unsigned char *stuff, int len)
  *
  *		NULL vlena should be an error--returning string with NULL for now.
  */
-char	   *
-byteaout(struct varlena * vlena)
+char *
+byteaout(text *vlena)
 {
-	register char *vp;
-	register char *rp;
-	register int val;			/* holds unprintable chars */
+	char	   *result;
+
+	char	   *vp;
+	char	   *rp;
+	int			val;			/* holds unprintable chars */
 	int			i;
 	int			len;
-	static char *result;
 
 	if (vlena == NULL)
 	{
@@ -164,17 +143,19 @@ byteaout(struct varlena * vlena)
 /*
  *		textin			- converts "..." to internal representation
  */
-struct varlena *
+text *
 textin(char *inputText)
 {
-	struct varlena *result;
+	text	   *result;
 	int			len;
 
 	if (inputText == NULL)
 		return (NULL);
+
 	len = strlen(inputText) + VARHDRSZ;
-	result = (struct varlena *) palloc(len);
+	result = (text *) palloc(len);
 	VARSIZE(result) = len;
+
 	memmove(VARDATA(result), inputText, len - VARHDRSZ);
 	return (result);
 }
@@ -182,8 +163,8 @@ textin(char *inputText)
 /*
  *		textout			- converts internal representation to "..."
  */
-char	   *
-textout(struct varlena * vlena)
+char *
+textout(text *vlena)
 {
 	int			len;
 	char	   *result;
@@ -207,10 +188,10 @@ textout(struct varlena * vlena)
 
 /*
  * textlen -
- *	  returns the actual length of a text* (which may be less than
- *	  the VARSIZE of the text*)
+ *	  returns the actual length of a text*
+ *     (which is less than the VARSIZE of the text*)
  */
-int
+int32
 textlen(text *t)
 {
 	if (!PointerIsValid(t))
@@ -231,8 +212,7 @@ textlen(text *t)
  * As in previous code, allow concatenation when one string is NULL.
  * Is this OK?
  */
-
-text	   *
+text *
 textcat(text *t1, text *t2)
 {
 	int			len1,
@@ -269,7 +249,57 @@ textcat(text *t1, text *t2)
 	VARSIZE(result) = len;
 
 	return (result);
-}								/* textcat() */
+} /* textcat() */
+
+/*
+ * text_substr()
+ * Return a substring starting at the specified position.
+ * - thomas 1997-12-31
+ *
+ * Input:
+ *  - string
+ *  - starting position (is one-based)
+ *  - string length
+ *
+ * If the starting position is zero or less, then return the entire string.
+ * XXX Note that this may not be the right behavior:
+ *  if we are calculating the starting position we might want it to start at one.
+ * If the length is less than zero, return the remaining string.
+ *
+ * Note that the arguments operate on octet length,
+ *  so not aware of multi-byte character sets.
+ */
+text *
+text_substr(text *string, int32 m, int32 n)
+{
+	text	   *ret;
+	int			len;
+
+	if ((string == (text *) NULL) || (m <= 0))
+		return string;
+
+	len = VARSIZE(string) - VARHDRSZ;
+
+	/* m will now become a zero-based starting position */
+	if (m >= len)
+	{
+		m = 0;
+		n = 0;
+	}
+	else
+	{
+		m--;
+		if (((m+n) > len) || (n < 0))
+			n = (len-m);
+	}
+
+	ret = (text *) PALLOC(VARHDRSZ + n);
+	VARSIZE(ret) = VARHDRSZ + n;
+
+	memcpy(VARDATA(ret), VARDATA(string)+m, n);
+
+	return ret;
+} /* text_substr() */
 
 /*
  * textpos -
@@ -278,7 +308,6 @@ textcat(text *t1, text *t2)
  *	  Ref: A Guide To The SQL Standard, Date & Darwen, 1997
  * - thomas 1997-07-27
  */
-
 int32
 textpos(text *t1, text *t2)
 {
@@ -312,17 +341,17 @@ textpos(text *t1, text *t2)
 		p1++;
 	};
 	return (pos);
-}								/* textpos() */
+} /* textpos() */
 
 /*
  *		texteq			- returns 1 iff arguments are equal
  *		textne			- returns 1 iff arguments are not equal
  */
 bool
-texteq(struct varlena * arg1, struct varlena * arg2)
+texteq(text *arg1, text *arg2)
 {
-	register int len;
-	register char *a1p,
+	int			len;
+	char	   *a1p,
 			   *a2p;
 
 	if (arg1 == NULL || arg2 == NULL)
@@ -342,10 +371,10 @@ texteq(struct varlena * arg1, struct varlena * arg2)
 		if (*a1p++ != *a2p++)
 			return ((bool) 0);
 	return ((bool) 1);
-}								/* texteq() */
+} /* texteq() */
 
 bool
-textne(struct varlena * arg1, struct varlena * arg2)
+textne(text *arg1, text *arg2)
 {
 	return ((bool) !texteq(arg1, arg2));
 }
@@ -358,7 +387,7 @@ textne(struct varlena * arg1, struct varlena * arg2)
  *	but it appears that most routines (incl. this one) assume not! - tgl 97/04/07
  */
 bool
-text_lt(struct varlena * arg1, struct varlena * arg2)
+text_lt(text *arg1, text *arg2)
 {
 	bool		result;
 
@@ -404,7 +433,7 @@ text_lt(struct varlena * arg1, struct varlena * arg2)
 #endif
 
 	return (result);
-}								/* text_lt() */
+} /* text_lt() */
 
 /* text_le()
  * Comparison function for text strings.
@@ -414,7 +443,7 @@ text_lt(struct varlena * arg1, struct varlena * arg2)
  *	but it appears that most routines (incl. this one) assume not! - tgl 97/04/07
  */
 bool
-text_le(struct varlena * arg1, struct varlena * arg2)
+text_le(text *arg1, text *arg2)
 {
 	bool		result;
 
@@ -460,16 +489,16 @@ text_le(struct varlena * arg1, struct varlena * arg2)
 #endif
 
 	return (result);
-}								/* text_le() */
+} /* text_le() */
 
 bool
-text_gt(struct varlena * arg1, struct varlena * arg2)
+text_gt(text *arg1, text *arg2)
 {
 	return ((bool) !text_le(arg1, arg2));
 }
 
 bool
-text_ge(struct varlena * arg1, struct varlena * arg2)
+text_ge(text *arg1, text *arg2)
 {
 	return ((bool) !text_lt(arg1, arg2));
 }
@@ -481,9 +510,9 @@ text_ge(struct varlena * arg1, struct varlena * arg2)
  *-------------------------------------------------------------
  */
 int32
-byteaGetSize(struct varlena * v)
+byteaGetSize(text *v)
 {
-	register int len;
+	int			len;
 
 	len = v->vl_len - sizeof(v->vl_len);
 
@@ -499,7 +528,7 @@ byteaGetSize(struct varlena * v)
  *-------------------------------------------------------------
  */
 int32
-byteaGetByte(struct varlena * v, int32 n)
+byteaGetByte(text *v, int32 n)
 {
 	int			len;
 	int			byte;
@@ -527,7 +556,7 @@ byteaGetByte(struct varlena * v, int32 n)
  *-------------------------------------------------------------
  */
 int32
-byteaGetBit(struct varlena * v, int32 n)
+byteaGetBit(text *v, int32 n)
 {
 	int			byteNo,
 				bitNo;
@@ -556,11 +585,11 @@ byteaGetBit(struct varlena * v, int32 n)
  *
  *-------------------------------------------------------------
  */
-struct varlena *
-byteaSetByte(struct varlena * v, int32 n, int32 newByte)
+text *
+byteaSetByte(text *v, int32 n, int32 newByte)
 {
 	int			len;
-	struct varlena *res;
+	text	   *res;
 
 	len = byteaGetSize(v);
 
@@ -574,7 +603,7 @@ byteaSetByte(struct varlena * v, int32 n, int32 newByte)
 	/*
 	 * Make a copy of the original varlena.
 	 */
-	res = (struct varlena *) palloc(VARSIZE(v));
+	res = (text *) palloc(VARSIZE(v));
 	if (res == NULL)
 	{
 		elog(WARN, "byteaSetByte: Out of memory (%d bytes requested)",
@@ -598,10 +627,10 @@ byteaSetByte(struct varlena * v, int32 n, int32 newByte)
  *
  *-------------------------------------------------------------
  */
-struct varlena *
-byteaSetBit(struct varlena * v, int32 n, int32 newBit)
+text *
+byteaSetBit(text *v, int32 n, int32 newBit)
 {
-	struct varlena *res;
+	text	   *res;
 	int			oldByte,
 				newByte;
 	int			byteNo,
