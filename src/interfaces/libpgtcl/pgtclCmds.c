@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/interfaces/libpgtcl/Attic/pgtclCmds.c,v 1.17 1997/10/30 05:00:56 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/interfaces/libpgtcl/Attic/pgtclCmds.c,v 1.18 1997/10/30 17:29:57 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -1331,8 +1331,8 @@ Pg_select(ClientData cData, Tcl_Interp * interp, int argc, char **argv)
 
 		for (column = 0; column < ncols; column++)
 		{
-			strcpy(buffer, PQgetvalue(result, tupno, column));
-			Tcl_SetVar2(interp, argv[3], info[column].cname, buffer, 0);
+			Tcl_SetVar2(interp, argv[3], info[column].cname, 
+				PQgetvalue(result, tupno, column), 0);
 		}
 
 		Tcl_SetVar2(interp, argv[3], ".command", "update", 0);
