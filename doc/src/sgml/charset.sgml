@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/charset.sgml,v 2.43 2004/03/09 16:57:46 neilc Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/charset.sgml,v 2.44 2004/03/23 02:47:35 neilc Exp $ -->
 
 <chapter id="charset">
  <title>Localization</>
@@ -52,24 +52,24 @@
     Locale support is automatically initialized when a database
     cluster is created using <command>initdb</command>.
     <command>initdb</command> will initialize the database cluster
-    with the locale setting of its execution environment; so if your
-    system is already set to use the locale that you want in your
-    database cluster then there is nothing else you need to do.  If
-    you want to use a different locale (or you are not sure which
-    locale your system is set to), you can tell
-    <command>initdb</command> exactly which locale you want with the
-    option <option>--locale</option>.  For example:
+    with the locale setting of its execution environment by default,
+    so if your system is already set to use the locale that you want
+    in your database cluster then there is nothing else you need to
+    do.  If you want to use a different locale (or you are not sure
+    which locale your system is set to), you can instruct
+    <command>initdb</command> exactly which locale to use by
+    specifying the <option>--locale</option> option. For example:
 <screen>
 initdb --locale=sv_SE
 </screen>
    </para>
 
    <para>
-    This example sets the locale to Swedish (<literal>sv</>) as spoken in
-    Sweden (<literal>SE</>).  Other possibilities might be
-    <literal>en_US</> (U.S. English) and <literal>fr_CA</> (Canada,
-    French).  If more than one character set can be useful for a locale
-    then the specifications look like this:
+    This example sets the locale to Swedish (<literal>sv</>) as spoken
+    in Sweden (<literal>SE</>).  Other possibilities might be
+    <literal>en_US</> (U.S. English) and <literal>fr_CA</> (French
+    Canadian).  If more than one character set can be useful for a
+    locale then the specifications look like this:
     <literal>cs_CZ.ISO8859-2</>. What locales are available under what
     names on your system depends on what was provided by the operating
     system vendor and what was installed.
@@ -141,7 +141,7 @@ initdb --locale=sv_SE
     The other locale categories can be changed as desired whenever the
     server is running by setting the run-time configuration variables
     that have the same name as the locale categories (see <xref
-    linkend="runtime-config"> for details).  The defaults that are
+    linkend="runtime-config-client-format"> for details).  The defaults that are
     chosen by <command>initdb</command> are actually only written into
     the configuration file <filename>postgresql.conf</filename> to
     serve as defaults when the server is started.  If you delete the
@@ -196,7 +196,7 @@ initdb --locale=sv_SE
     <itemizedlist>
      <listitem>
       <para>
-       Sort order in queries using <command>ORDER BY</>
+       Sort order in queries using <literal>ORDER BY</>
        <indexterm><primary>ORDER BY</><secondary>and locales</></indexterm>
       </para>
      </listitem>
@@ -286,7 +286,7 @@ initdb --locale=sv_SE
    databases each with a different character set.
   </para>
 
-   <sect2>
+   <sect2 id="multibyte-charset-supported">
     <title>Supported Character Sets</title>
 
     <para>

@@ -1,5 +1,5 @@
 <!--
-$PostgreSQL: pgsql/doc/src/sgml/ref/createdb.sgml,v 1.37 2003/11/29 19:51:38 pgsql Exp $
+$PostgreSQL: pgsql/doc/src/sgml/ref/createdb.sgml,v 1.38 2004/03/23 02:47:35 neilc Exp $
 PostgreSQL documentation
 -->
 
@@ -112,7 +112,10 @@ PostgreSQL documentation
       <term><option>--encoding <replaceable class="parameter">encoding</replaceable></></term>
       <listitem>
        <para>
-        Specifies the character encoding scheme to be used in this database.
+        Specifies the character encoding scheme to be used in this
+        database. The character sets supported by the
+        <productname>PostgreSQL</productname> server are described in
+        <xref linkend="multibyte-charset-supported">.
        </para>
       </listitem>
      </varlistentry>

@@ -1,5 +1,5 @@
 <!--
-$PostgreSQL: pgsql/doc/src/sgml/ref/create_database.sgml,v 1.37 2003/11/29 19:51:38 pgsql Exp $
+$PostgreSQL: pgsql/doc/src/sgml/ref/create_database.sgml,v 1.38 2004/03/23 02:47:35 neilc Exp $
 PostgreSQL documentation
 -->
 
@@ -139,10 +139,12 @@ CREATE DATABASE <replaceable class="PARAMETER">name</replaceable>
       <term><replaceable class="parameter">encoding</replaceable></term>
       <listitem>
        <para>
-        Character set encoding to use in the new database.  Specify
+    Character set encoding to use in the new database.  Specify
 	a string constant (e.g., <literal>'SQL_ASCII'</literal>),
 	or an integer encoding number, or <literal>DEFAULT</literal>
-	to use the default encoding.
+	to use the default encoding. The character sets supported by the
+	<productname>PostgreSQL</productname> server are described in
+	<xref linkend="multibyte-charset-supported">.
        </para>
       </listitem>
      </varlistentry>

@@ -1,5 +1,5 @@
 <!--
-$PostgreSQL: pgsql/doc/src/sgml/ref/postmaster.sgml,v 1.47 2004/03/23 01:23:48 tgl Exp $
+$PostgreSQL: pgsql/doc/src/sgml/ref/postmaster.sgml,v 1.48 2004/03/23 02:47:35 neilc Exp $
 PostgreSQL documentation
 -->
 
@@ -93,8 +93,9 @@ PostgreSQL documentation
       <listitem>
        <para>
         Enables run-time assertion checks, which is a debugging aid to
-        detect programming mistakes.  This is only available if it was
-        enabled during compilation.  If so, the default is on.
+        detect programming mistakes.  This option is only available if
+        assertions were enabled when <productname>PostgreSQL</> was
+        compiled. If so, the default is on.
        </para>
       </listitem>
      </varlistentry>
@@ -104,8 +105,9 @@ PostgreSQL documentation
       <listitem>
        <para>
 	Sets the number of shared buffers for use by the server
-	processes.  This value defaults to 64 buffers, where each
-	buffer is 8 kB.
+	processes.  The default value of this parameter is chosen
+	automatically by <application>initdb</application>; refer to <xref
+	linkend="runtime-config-resource-memory"> for more information.
        </para>
       </listitem>
      </varlistentry>
@@ -114,11 +116,12 @@ PostgreSQL documentation
       <term><option>-c <replaceable>name</replaceable>=<replaceable>value</replaceable></option></term>
       <listitem>
        <para>
-        Sets a named run-time parameter. Consult <xref linkend="runtime-config"> for
-        a list and descriptions.  Most of the other command line
-        options are in fact short forms of such a parameter
-        assignment.  <option>-c</> can appear multiple times to set
-        multiple parameters.
+        Sets a named run-time parameter. The configuration parameters
+        supported by <productname>PostgreSQL</productname> are
+        described in <xref linkend="runtime-config">. Most of the
+        other command line options are in fact short forms of such a
+        parameter assignment.  <option>-c</> can appear multiple times
+        to set multiple parameters.
        </para>
       </listitem>
      </varlistentry>
@@ -129,7 +132,7 @@ PostgreSQL documentation
        <para>
         Sets the debug level.  The higher this value is set, the more
         debugging output is written to the server log.  Values are from
-	1 to 5.
+        1 to 5.
        </para>
       </listitem>
      </varlistentry>
@@ -150,10 +153,11 @@ PostgreSQL documentation
        <para>
         Disables <function>fsync</function> calls for performance
         improvement, at the risk of data corruption in event of a
-        system crash.  This option corresponds to setting
-        <literal>fsync=false</> in <filename>postgresql.conf</>. Read the detailed
-        documentation before using this!
+        system crash.  Specifying this option is equivalent to
+        disabling the <xref linkend="guc-fsync"> configuration
+        parameter. Read the detailed documentation before using this!
        </para>
+
        <para>
         <option>--fsync=true</option> has the opposite effect
         of this option.
@@ -167,15 +171,15 @@ PostgreSQL documentation
        <para>
         Specifies the IP host name or address on which the
         <command>postmaster</command> is to listen for TCP/IP
-        connections from client applications.  The value can also be
-        a space-separated list of addresses, or <literal>*</> to specify
-        listening on all available interfaces.  An empty value specifies
-        not listening on any IP addresses, in which case only Unix-domain
-        sockets can be used to connect to the <command>postmaster</command>.
-        Defaults to listening only
-        on <systemitem class="systemname">localhost</systemitem>.
-        This option is equivalent to setting <literal>listen_addresses</> in
-        <filename>postgresql.conf</>.
+        connections from client applications.  The value can also be a
+        space-separated list of addresses, or <literal>*</> to specify
+        listening on all available interfaces.  An empty value
+        specifies not listening on any IP addresses, in which case
+        only Unix-domain sockets can be used to connect to the
+        <command>postmaster</command>.  Defaults to listening only on
+        <systemitem class="systemname">localhost</systemitem>.
+        Specifying this option is equivalent to setting the <xref
+        linkend="guc-listen-addresses">.
        </para>
       </listitem>
      </varlistentry>
@@ -187,13 +191,13 @@ PostgreSQL documentation
         Allows remote clients to connect via TCP/IP (Internet domain)
         connections.  Without this option, only local connections are
         accepted.  This option is equivalent to setting
-        <literal>listen_addresses</> to <literal>*</> in
+        <varname>listen_addresses</> to <literal>*</> in
         <filename>postgresql.conf</> or via <option>-h</>.
        </para>
        <para>
         This option is deprecated since it does not allow access to the
-        full functionality of <literal>listen_addresses</>.  It's usually
-        better to set <literal>listen_addresses</> directly.
+        full functionality of <xref linkend="guc-listen-addresses">.
+        It's usually better to set <varname>listen_addresses</> directly.
        </para>
       </listitem>
      </varlistentry>
@@ -214,8 +218,11 @@ PostgreSQL documentation
       <term><option>-l</option></term>
       <listitem>
        <para>
-	Enables secure connections using SSL.  You must have compiled with SSL
-	enabled to use this option.
+	Enables secure connections using <acronym>SSL</acronym>.
+	<productname>PostgreSQL</productname> must have been compiled with
+	support for <acronym>SSL</acronym> for this option to be
+	available. For more information on using <acronym>SSL</acronym>,
+	refer to <xref linkend="ssl-tcp">.
        </para>
       </listitem>
      </varlistentry>
@@ -231,7 +238,8 @@ PostgreSQL documentation
 	<option>-B</option> is required to be at least twice
 	<option>-N</option>.  See <xref linkend="kernel-resources"> for a discussion of
 	system resource requirements for large numbers of client
-	connections.)
+	connections.) Specifying this option is equivalent to setting the
+	<xref linkend="guc-max-connections"> configuration parameter.
        </para>
       </listitem>
      </varlistentry>
