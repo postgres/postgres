@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/tcop/postgres.c,v 1.91 1998/10/06 02:40:01 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/tcop/postgres.c,v 1.92 1998/10/13 19:51:50 scrappy Exp $
  *
  * NOTES
  *	  this is the "main" module of the postgres backend and
@@ -1052,6 +1052,7 @@ PostgresMain(int argc, char *argv[], int real_argc, char *real_argv[])
 
 			case 'D':			/* PGDATA directory */
 				DataDir = optarg;
+				break;
 
 			case 'd':			/* debug level */
 				flagQ = false;
@@ -1511,7 +1512,7 @@ PostgresMain(int argc, char *argv[], int real_argc, char *real_argv[])
 	if (!IsUnderPostmaster)
 	{
 		puts("\nPOSTGRES backend interactive interface ");
-		puts("$Revision: 1.91 $ $Date: 1998/10/06 02:40:01 $\n");
+		puts("$Revision: 1.92 $ $Date: 1998/10/13 19:51:50 $\n");
 	}
 
 	/* ----------------
