@@ -514,7 +514,9 @@ public class ResultSet extends org.postgresql.ResultSet implements java.sql.Resu
 		StringBuffer sbuf = new StringBuffer(s);
 		SimpleDateFormat df = null;
 
-		if (s.length() > 19)
+		int slen = s.length();
+
+		if (slen > 19)
 		{
 			// The len of the ISO string to the second value is 19 chars. If
 			// greater then 19, there should be tz info and perhaps fractional
@@ -534,7 +536,7 @@ public class ResultSet extends org.postgresql.ResultSet implements java.sql.Resu
 					if (i < 24)
 						sbuf.append(c);
 					c = s.charAt(i++);
-				} while (Character.isDigit(c));
+				} while (i < slen && Character.isDigit(c));
 
 				// If there wasn't at least 3 digits we should add some zeros
 				// to make up the 3 digits we tell java to expect.
@@ -547,21 +549,28 @@ public class ResultSet extends org.postgresql.ResultSet implements java.sql.Resu
 				sbuf.append(".000");
 			}
 
-			// prepend the GMT part and then add the remaining bit of
-			// the string.
-			sbuf.append(" GMT");
-			sbuf.append(c);
-			sbuf.append(s.substring(i, s.length()));
+			if (i < slen)
+			{
+				// prepend the GMT part and then add the remaining bit of
+				// the string.
+				sbuf.append(" GMT");
+				sbuf.append(c);
+				sbuf.append(s.substring(i, slen));
 
-			// Lastly, if the tz part doesn't specify the :MM part then
-			// we add ":00" for java.
-			if (s.length() - i < 5)
-				sbuf.append(":00");
+				// Lastly, if the tz part doesn't specify the :MM part then
+				// we add ":00" for java.
+				if (slen - i < 5)
+					sbuf.append(":00");
 
-			// we'll use this dateformat string to parse the result.
-			df = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss.SSS z");
+				// we'll use this dateformat string to parse the result.
+				df = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss.SSS z");
+			}
+			else
+			{
+				df = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss.SSS");
+			}
 		}
-		else if (s.length() == 19)
+		else if (slen == 19)
 		{
 			// No tz or fractional second info. 
 			// I'm not sure if it is
