@@ -11,7 +11,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/interfaces/libpq/fe-secure.c,v 1.59 2004/12/02 23:20:21 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/interfaces/libpq/fe-secure.c,v 1.60 2004/12/03 01:58:43 momjian Exp $
  *
  * NOTES
  *	  [ Most of these notes are wrong/obsolete, but perhaps not all ]
@@ -429,8 +429,10 @@ pqsecure_write(PGconn *conn, const void *ptr, size_t len)
 
 					if (n == -1)
 					{
+#ifdef ENABLE_THREAD_SAFETY
 						if (SOCK_ERRNO == EPIPE)
 							got_epipe = true;
+#endif
 						printfPQExpBuffer(&conn->errorMessage,
 								libpq_gettext("SSL SYSCALL error: %s\n"),
 						SOCK_STRERROR(SOCK_ERRNO, sebuf, sizeof(sebuf)));
