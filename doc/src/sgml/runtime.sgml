@@ -1,5 +1,5 @@
 <!--
-$PostgreSQL: pgsql/doc/src/sgml/runtime.sgml,v 1.224 2003/12/01 22:07:56 momjian Exp $
+$PostgreSQL: pgsql/doc/src/sgml/runtime.sgml,v 1.225 2003/12/04 21:24:56 petere Exp $
 -->
 
 <Chapter Id="runtime">
@@ -830,7 +830,7 @@ SET ENABLE_SEQSCAN TO OFF;
         server. The default is typically 1000, but may be less if your
         kernel settings will not support it (as determined during
         <application>initdb</>).  Each buffer is 8192 bytes, unless a
-        different value of <literal>BLCKSZ</> was chosen when building
+        different value of <symbol>BLCKSZ</symbol> was chosen when building
         the server.  This setting must be at least 16, as well as at
         least twice the value of <varname>max_connections</varname>;
         however, settings significantly higher than the minimum are
@@ -2538,11 +2538,11 @@ dynamic_library_path = '/usr/local/lib/postgresql:/home/my_project/lib:$libdir'
         Turns on various assertion checks. This is a debugging aid. If
         you are experiencing strange problems or crashes you might want
         to turn this on, as it might expose programming mistakes. To use
-        this option, the macro <literal>USE_ASSERT_CHECKING</literal>
+        this option, the macro <symbol>USE_ASSERT_CHECKING</symbol>
         must be defined when <productname>PostgreSQL</productname> is
         built (accomplished by the <command>configure</command> option
         <option>--enable-cassert</option>). Note that
-        <literal>DEBUG_ASSERTIONS</literal> defaults to on if
+        <varname>debug_assertions</varname> defaults to on if
         <productname>PostgreSQL</productname> has been built with
         assertions enabled.
        </para>
