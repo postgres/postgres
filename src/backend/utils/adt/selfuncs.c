@@ -15,7 +15,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/selfuncs.c,v 1.62 2000/03/30 00:53:30 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/selfuncs.c,v 1.63 2000/04/09 04:31:37 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -902,10 +902,19 @@ genericcostestimate(Query *root, RelOptInfo *rel,
 											   lfirsti(rel->relids));
 
 	/* Estimate the number of index tuples that will be visited */
-	numIndexTuples = ceil(*indexSelectivity * index->tuples);
+	numIndexTuples = *indexSelectivity * index->tuples;
 
 	/* Estimate the number of index pages that will be retrieved */
-	numIndexPages = ceil(*indexSelectivity * index->pages);
+	numIndexPages = *indexSelectivity * index->pages;
+
+	/*
+	 * Always estimate at least one tuple and page are touched,
+	 * even when indexSelectivity estimate is tiny.
+	 */
+	if (numIndexTuples < 1.0)
+		numIndexTuples = 1.0;
+	if (numIndexPages < 1.0)
+		numIndexPages = 1.0;
 
 	/*
 	 * Compute the index access cost.

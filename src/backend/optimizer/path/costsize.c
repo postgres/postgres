@@ -42,7 +42,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/optimizer/path/costsize.c,v 1.55 2000/03/30 00:53:29 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/optimizer/path/costsize.c,v 1.56 2000/04/09 04:31:36 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -262,9 +262,12 @@ cost_index(Path *path, Query *root,
 	 * effect.  Would be nice to do better someday.
 	 */
 
-	tuples_fetched = ceil(indexSelectivity * baserel->tuples);
+	tuples_fetched = indexSelectivity * baserel->tuples;
+	/* Don't believe estimates less than 1... */
+	if (tuples_fetched < 1.0)
+		tuples_fetched = 1.0;
 
-	if (tuples_fetched > 0 && baserel->pages > 0)
+	if (baserel->pages > 0)
 		pages_fetched = ceil(baserel->pages *
 							 log(tuples_fetched / baserel->pages + 1.0));
 	else
