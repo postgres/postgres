@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/ref/alter_table.sgml,v 1.24 2001/05/09 13:27:15 momjian Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/ref/alter_table.sgml,v 1.25 2001/05/30 13:01:08 momjian Exp $
 Postgres documentation
 -->
 
@@ -38,6 +38,8 @@ ALTER TABLE <replaceable class="PARAMETER">table</replaceable>
     RENAME TO <replaceable class="PARAMETER">newtable</replaceable>
 ALTER TABLE <replaceable class="PARAMETER">table</replaceable>
     ADD <replaceable class="PARAMETER">table constraint definition</replaceable>
+ALTER TABLE [ ONLY ] <replaceable class="PARAMETER">table</replaceable> 
+	DROP CONSTRAINT <replaceable class="PARAMETER">constraint</replaceable> { RESTRICT | CASCADE }
 ALTER TABLE <replaceable class="PARAMETER">table</replaceable>
 	OWNER TO <replaceable class="PARAMETER">new owner</replaceable> 
   </synopsis>
@@ -177,6 +179,8 @@ ALTER TABLE <replaceable class="PARAMETER">table</replaceable>
    The ADD <replaceable class="PARAMETER">table constraint definition</replaceable> clause 
    adds a new constraint to the table using the same syntax as <xref
    linkend="SQL-CREATETABLE" endterm="SQL-CREATETABLE-title">. 
+   The DROP CONSTRAINT <replaceable class="PARAMETER">constraint</replaceable> clause 
+   drops all CHECK constraints on the table (and its children) that match <replaceable class="PARAMETER">constraint</replaceable>.
    The OWNER clause changes the owner of the table to the user <replaceable class="PARAMETER">
    new user</replaceable>.
   </para>
@@ -208,9 +212,29 @@ ALTER TABLE <replaceable class="PARAMETER">table</replaceable>
 
    <para>
     In the current implementation, only FOREIGN KEY and CHECK constraints can
-    be added to a table.  To create or remove a unique constraint, create 
+    be added to a table.  To create a unique constraint, create 
     a unique index (see <xref linkend="SQL-CREATEINDEX" 
     endterm="SQL-CREATEINDEX-title">).
+   </para>
+
+	<para>
+    Currently only CHECK constraints can be dropped from a table.  The RESTRICT
+	 keyword is required, although dependencies are not checked.  The CASCADE
+	 option is unsupported.  To remove a PRIMARY or UNIQUE constraint, drop the 
+	 relevant index using the <xref linkend="SQL-DROPINDEX" endterm="SQL-DROPINDEX-TITLE"> command.
+    To remove FOREIGN KEY constraints you need to recreate
+    and reload the table, using other parameters to the
+    <xref linkend="SQL-CREATETABLE" endterm="SQL-CREATETABLE-title">
+    command.
+   </para>
+   <para>
+    For example, to drop all constraints on a table <literal>distributors</literal>:
+    <programlisting>
+CREATE TABLE temp AS SELECT * FROM distributors;
+DROP TABLE distributors;
+CREATE TABLE distributors AS SELECT * FROM temp;
+DROP TABLE temp;
+    </programlisting>
    </para>
 
    <para>
@@ -261,6 +285,13 @@ ALTER TABLE distributors ADD CONSTRAINT zipchk CHECK (char_length(zipcode) = 5)
   </para>
 
   <para> 
+   To remove a check constraint from a table and all its children:
+   <programlisting>
+ALTER TABLE distributors DROP CONSTRAINT zipchk
+   </programlisting>
+  </para>
+
+  <para> 
    To add a foreign key constraint to a table:
    <programlisting>
 ALTER TABLE distributors ADD CONSTRAINT distfk FOREIGN KEY (address) REFERENCES addresses(address) MATCH FULL
@@ -289,34 +320,6 @@ ALTER TABLE distributors ADD CONSTRAINT distfk FOREIGN KEY (address) REFERENCES 
      statement which are not yet directly supported by <productname>Postgres</productname>:
 
     <variablelist>
-     <varlistentry>
-      <term>
-       <synopsis>
-ALTER TABLE <replaceable class="PARAMETER">table</replaceable> DROP CONSTRAINT <replaceable class="PARAMETER">constraint</replaceable> { RESTRICT | CASCADE }
-      </synopsis>
-     </term>
-     <listitem>
-      <para>
-       Removes a table constraint (such as a check constraint,
-       unique constraint, or foreign key constraint). To 
-       remove a unique constraint, drop a unique index.
-       To remove other kinds of constraints you need to recreate
-       and reload the table, using other parameters to the
-       <xref linkend="SQL-CREATETABLE" endterm="SQL-CREATETABLE-title">
-       command.
-      </para>
-      <para>
-       For example, to drop any constraints on a table <literal>distributors</literal>:
-       <programlisting>
-CREATE TABLE temp AS SELECT * FROM distributors;
-DROP TABLE distributors;
-CREATE TABLE distributors AS SELECT * FROM temp;
-DROP TABLE temp;
-       </programlisting>
-      </para>
-     </listitem>
-    </varlistentry>
-
     <varlistentry>
      <term>
       <synopsis>
