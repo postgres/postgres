@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/libpq.sgml,v 1.133 2003/08/31 17:32:19 petere Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/libpq.sgml,v 1.134 2003/09/01 23:04:49 petere Exp $
 -->
 
  <chapter id="libpq">
@@ -856,21 +856,20 @@ is not known.
 <para>
 Parameters reported as of the current release include
 <literal>server_version</> (cannot change after startup);
-<literal>server_encoding</> (also not presently changeable after start);
 <literal>client_encoding</>,
 <literal>is_superuser</>, and
 <literal>DateStyle</>.
 </para>
 
 <para>
-Pre-3.0-protocol servers do not report parameter settings,
-but <application>libpq</> includes logic to obtain values for 
-<literal>server_version</>, <literal>server_encoding</>, and
-<literal>client_encoding</>.  Applications are encouraged to use
-<function>PQparameterStatus</> rather than ad-hoc code to determine these
-values.  (Beware however that on a pre-3.0 connection, changing
-<literal>client_encoding</> via <command>SET</> after connection startup
-will not be reflected by <function>PQparameterStatus</>.)
+Pre-3.0-protocol servers do not report parameter settings, but
+<application>libpq</> includes logic to obtain values for
+<literal>server_version</>, and <literal>client_encoding</>.
+Applications are encouraged to use <function>PQparameterStatus</>
+rather than ad-hoc code to determine these values.  (Beware however
+that on a pre-3.0 connection, changing <literal>client_encoding</> via
+<command>SET</> after connection startup will not be reflected by
+<function>PQparameterStatus</>.)
 </para>
 </listitem>
 </varlistentry>

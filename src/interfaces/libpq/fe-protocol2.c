@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/interfaces/libpq/fe-protocol2.c,v 1.7 2003/08/27 00:33:34 petere Exp $
+ *	  $Header: /cvsroot/pgsql/src/interfaces/libpq/fe-protocol2.c,v 1.8 2003/09/01 23:04:49 petere Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -177,10 +177,10 @@ pqSetenvPoll(PGconn *conn)
 					 * must use begin/commit in case autocommit is off by
 					 * default in a 7.3 server.
 					 *
-					 * Note: version() and getdatabaseencoding() exist in all
+					 * Note: version() exists in all
 					 * protocol-2.0-supporting backends.
 					 */
-					if (!PQsendQuery(conn, "begin; select version(), getdatabaseencoding(); end"))
+					if (!PQsendQuery(conn, "begin; select version(); end"))
 						goto error_return;
 
 					conn->setenv_state = SETENV_STATE_QUERY1_WAIT;
@@ -213,8 +213,8 @@ pqSetenvPoll(PGconn *conn)
 						}
 
 						/*
-						 * Extract server version and database encoding,
-						 * and save as if ParameterStatus
+						 * Extract server version and save as if
+						 * ParameterStatus
 						 */
 						val = PQgetvalue(res, 0, 0);
 						if (val && strncmp(val, "PostgreSQL ", 11) == 0)
@@ -235,12 +235,6 @@ pqSetenvPoll(PGconn *conn)
 							pqSaveParameterStatus(conn, "server_version",
 												  val);
 						}
-
-						val = PQgetvalue(res, 0, 1);
-						if (val && *val)		/* null should not happen,
-												 * but */
-							pqSaveParameterStatus(conn, "server_encoding",
-												  val);
 
 						PQclear(res);
 						/* Keep reading until PQgetResult returns NULL */
@@ -306,21 +300,17 @@ pqSetenvPoll(PGconn *conn)
 						else
 						{
 							/*
-							 * Error: presumably function not available,
-							 * so use PGCLIENTENCODING or database
-							 * encoding as the fallback.
+							 * Error: presumably function not
+							 * available, so use PGCLIENTENCODING or
+							 * SQL_ASCII as the fallback.
 							 */
 							val = getenv("PGCLIENTENCODING");
 							if (val && *val)
 								pqSaveParameterStatus(conn, "client_encoding",
 													  val);
 							else
-							{
-								val = PQparameterStatus(conn, "server_encoding");
-								if (val && *val)
-									pqSaveParameterStatus(conn, "client_encoding",
-														  val);
-							}
+								pqSaveParameterStatus(conn, "client_encoding",
+													  "SQL_ASCII");
 						}
 
 						PQclear(res);

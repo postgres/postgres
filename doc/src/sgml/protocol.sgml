@@ -1,4 +1,4 @@
-<!-- $Header: /cvsroot/pgsql/doc/src/sgml/protocol.sgml,v 1.41 2003/08/14 20:09:31 tgl Exp $ -->
+<!-- $Header: /cvsroot/pgsql/doc/src/sgml/protocol.sgml,v 1.42 2003/09/01 23:04:49 petere Exp $ -->
 
 <chapter id="protocol">
  <title>Frontend/Backend Protocol</title>
@@ -1005,7 +1005,6 @@
     ParameterStatus will be generated: they are
     <literal>server_version</> (a pseudo-parameter that cannot change after
     startup);
-    <literal>server_encoding</> (also not presently changeable after start);
     <literal>client_encoding</>,
     <literal>is_superuser</>, and
     <literal>DateStyle</>.

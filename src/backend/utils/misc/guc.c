@@ -10,7 +10,7 @@
  * Written by Peter Eisentraut <peter_e@gmx.net>.
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/misc/guc.c,v 1.152 2003/09/01 04:15:50 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/misc/guc.c,v 1.153 2003/09/01 23:04:49 petere Exp $
  *
  *--------------------------------------------------------------------
  */
@@ -1479,7 +1479,7 @@ static struct config_string ConfigureNamesString[] =
 		{"server_encoding", PGC_INTERNAL, CLIENT_CONN_LOCALE,
 			gettext_noop("Server (database) character set encoding"),
 			NULL,
-			GUC_REPORT | GUC_NOT_IN_SAMPLE | GUC_DISALLOW_IN_FILE
+			GUC_NOT_IN_SAMPLE | GUC_DISALLOW_IN_FILE
 		},
 		&server_encoding_string,
 		"SQL_ASCII", NULL, NULL
