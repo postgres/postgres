@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *    $Header: /cvsroot/pgsql/src/backend/commands/explain.c,v 1.6 1996/12/29 00:53:20 momjian Exp $
+ *    $Header: /cvsroot/pgsql/src/backend/commands/explain.c,v 1.7 1996/12/29 19:30:55 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -27,8 +27,8 @@
 
 typedef struct ExplainState {
     /* options */
-    int		printCost;	/* print cost */
-    int		printNodes;	/* do nodeToString() instead */
+    bool		printCost;	/* print cost */
+    bool		printNodes;	/* do nodeToString() instead */
     /* other states */
     List 	*rtable;	/* range table */
 } ExplainState;
@@ -69,18 +69,25 @@ ExplainQuery(Query *query, List *options, CommandDest dest)
     memset(es, 0, sizeof(ExplainState));
 
     /* parse options */
-    es->printCost = 1;	/* default */
     while (options) {
 	char *ostr = strVal(lfirst(options));
 	if (!strcasecmp(ostr, "cost"))
-	    es->printCost = 1;
-	else if (!strcasecmp(ostr, "full"))
-	    es->printNodes = 1;
+	    es->printCost = true;
+	else if (!strcasecmp(ostr, "plan"))
+	    es->printNodes = true;
+	else if (!strcasecmp(ostr, "full")) {
+	    es->printCost = true;
+	    es->printNodes = true;
+	}
 	else
 	    elog(WARN, "Unknown EXPLAIN option: %s", ostr);
 
 	options = lnext(options);
     }
+
+    if (!es->printCost && !es->printNodes)
+        es->printCost = true;	/* default */
+
     es->rtable = query->rtable;
 
     if (es->printNodes)
