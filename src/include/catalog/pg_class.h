@@ -8,7 +8,7 @@
  * Portions Copyright (c) 1996-2000, PostgreSQL, Inc
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Id: pg_class.h,v 1.41 2000/10/16 14:52:26 vadim Exp $
+ * $Id: pg_class.h,v 1.42 2000/10/16 16:19:14 momjian Exp $
  *
  * NOTES
  *	  the genbki.sh script reads this file and generates .bki
@@ -180,6 +180,6 @@ DESCR("");
 #define		  RELKIND_SEQUENCE		  'S'		/* SEQUENCE relation */
 #define		  RELKIND_UNCATALOGED	  'u'		/* temporary heap */
 #define		  RELKIND_TOASTVALUE	  't'		/* moved off huge values */
-#define		  RELKIND_VIEW				'v'	/* view */
+#define		  RELKIND_VIEW			  'v'		/* view */
 
 #endif	 /* PG_CLASS_H */
