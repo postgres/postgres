@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/executor/execUtils.c,v 1.107 2003/11/29 19:51:48 pgsql Exp $
+ *	  $PostgreSQL: pgsql/src/backend/executor/execUtils.c,v 1.108 2003/12/18 20:21:37 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -18,6 +18,7 @@
  *		FreeExecutorState
  *		CreateExprContext
  *		FreeExprContext
+ *		ReScanExprContext
  *
  *		ExecAssignExprContext	Common code for plan node init routines.
  *		ExecAssignResultType
@@ -350,6 +351,24 @@ FreeExprContext(ExprContext *econtext)
 	estate->es_exprcontexts = lremove(econtext, estate->es_exprcontexts);
 	/* And delete the ExprContext node */
 	pfree(econtext);
+}
+
+/*
+ * ReScanExprContext
+ *
+ *		Reset an expression context in preparation for a rescan of its
+ *		plan node.  This requires calling any registered shutdown callbacks,
+ *		since any partially complete set-returning-functions must be canceled.
+ *
+ * Note we make no assumption about the caller's memory context.
+ */
+void
+ReScanExprContext(ExprContext *econtext)
+{
+	/* Call any registered callbacks */
+	ShutdownExprContext(econtext);
+	/* And clean up the memory used */
+	MemoryContextReset(econtext->ecxt_per_tuple_memory);
 }
 
 /*

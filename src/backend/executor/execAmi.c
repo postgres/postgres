@@ -6,7 +6,7 @@
  * Portions Copyright (c) 1996-2003, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- *	$PostgreSQL: pgsql/src/backend/executor/execAmi.c,v 1.76 2003/11/29 19:51:48 pgsql Exp $
+ *	$PostgreSQL: pgsql/src/backend/executor/execAmi.c,v 1.77 2003/12/18 20:21:37 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -39,13 +39,20 @@
 #include "executor/nodeUnique.h"
 
 
-/* ----------------------------------------------------------------
- *		ExecReScan
+/*
+ * ExecReScan
+ *		Reset a plan node so that its output can be re-scanned.
  *
- *		takes the new expression context as an argument, so that
- *		index scans needn't have their scan keys updated separately
- *		- marcel 09/20/94
- * ----------------------------------------------------------------
+ * Note that if the plan node has parameters that have changed value,
+ * the output might be different from last time.
+ *
+ * The second parameter is currently only used to pass a NestLoop plan's
+ * econtext down to its inner child plan, in case that is an indexscan that
+ * needs access to variables of the current outer tuple.  (The handling of
+ * this parameter is currently pretty inconsistent: some callers pass NULL
+ * and some pass down their parent's value; so don't rely on it in other
+ * situations.  It'd probably be better to remove the whole thing and use
+ * the generalized parameter mechanism instead.)
  */
 void
 ExecReScan(PlanState *node, ExprContext *exprCtxt)
@@ -85,6 +92,11 @@ ExecReScan(PlanState *node, ExprContext *exprCtxt)
 			UpdateChangedParamSet(node->righttree, node->chgParam);
 	}
 
+	/* Shut down any SRFs in the plan node's targetlist */
+	if (node->ps_ExprContext)
+		ReScanExprContext(node->ps_ExprContext);
+
+	/* And do node-type-specific processing */
 	switch (nodeTag(node))
 	{
 		case T_ResultState:
