@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/storage/lmgr/lock.c,v 1.47 1999/04/30 02:04:50 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/storage/lmgr/lock.c,v 1.48 1999/04/30 16:22:46 momjian Exp $
  *
  * NOTES
  *	  Outside modules can create a lock table and acquire/release
@@ -829,7 +829,7 @@ LockResolveConflicts(LOCKMETHOD lockmethod,
 		PROC_QUEUE *waitQueue = &(lock->waitProcs);
 		PROC	   *topproc = (PROC *) MAKE_PTR(waitQueue->links.prev);
 
-		if (SHMQueueEmpty(lockQueue) && waitQueue->size &&
+		if (SHMQueueEmpty(&MyProc->lockQueue) && waitQueue->size &&
 			topproc->prio > myprio)
 		{
 			XID_PRINT("LockResolveConflicts: higher priority proc waiting",
