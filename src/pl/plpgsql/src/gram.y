@@ -4,7 +4,7 @@
  *						  procedural language
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/pl/plpgsql/src/gram.y,v 1.64 2004/10/25 06:27:21 neilc Exp $
+ *	  $PostgreSQL: pgsql/src/pl/plpgsql/src/gram.y,v 1.65 2005/02/13 01:25:50 momjian Exp $
  *
  *	  This software is copyrighted by Jan Wieck - Hamburg.
  *
@@ -1277,7 +1277,7 @@ raise_level		: K_EXCEPTION
 					}
 				| K_DEBUG
 					{
-						$$ = DEBUG2;
+						$$ = DEBUG1;
 					}
 				;
 
