@@ -6,7 +6,7 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: lsyscache.h,v 1.12 1998/08/04 16:44:31 momjian Exp $
+ * $Id: lsyscache.h,v 1.13 1998/08/11 05:09:30 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -16,7 +16,7 @@
 #include <access/attnum.h>
 #include <access/htup.h>
 
-extern bool op_class(Oid opid, int32 opclass, Oid amopid);
+extern bool op_class(Oid opno, int32 opclass, Oid amopid);
 extern char *get_attname(Oid relid, AttrNumber attnum);
 extern AttrNumber get_attnum(Oid relid, char *attname);
 extern Oid	get_atttype(Oid relid, AttrNumber attnum);
