@@ -1,7 +1,7 @@
 
                 Frequently Asked Questions (FAQ) for PostgreSQL
                                        
-   Last updated: Sun Jan 12 00:16:01 EST 2003
+   Last updated: Sun Jan 12 09:58:38 EST 2003
    
    Current maintainer: Bruce Momjian (pgman@candle.pha.pa.us)
    
@@ -839,9 +839,10 @@ BYTEA           bytea           variable-length byte array (null-byte safe)
    maximum 1 gigabyte.
    
    CHAR(n) is for storing strings that are all the same length. CHAR(n)
-   stores trailing spaces, while VARCHAR(n) trims them. BYTEA is for
-   storing binary data, particularly values that include NULL bytes.
-   These types have similar performance characteristics.
+   pads with blanks to the specified length, while VARCHAR(n) only stores
+   the characters supplied. BYTEA is for storing binary data,
+   particularly values that include NULL bytes. These types have similar
+   performance characteristics.
    
     4.15.1) How do I create a serial/auto-incrementing field?
     
