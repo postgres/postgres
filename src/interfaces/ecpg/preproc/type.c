@@ -263,7 +263,7 @@ ECPGdump_a_type(FILE *o, const char *name, struct ECPGtype * type,
 						else
 						{
 							ECPGdump_a_simple(o, ind_name, ind_type->u.element->type,
-											  ind_type->u.element->size, ind_type->size, NULL, prefix);
+											  ind_type->u.element->size, ind_type->size, NULL, ind_prefix);
 						}
 					}
 			}
