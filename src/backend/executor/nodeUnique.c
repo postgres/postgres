@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/executor/nodeUnique.c,v 1.34 2002/06/20 20:29:28 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/executor/nodeUnique.c,v 1.34.2.1 2003/02/02 19:09:08 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -58,6 +58,11 @@ ExecUnique(Unique *node)
 	/*
 	 * now loop, returning only non-duplicate tuples. We assume that the
 	 * tuples arrive in sorted order so we can detect duplicates easily.
+	 *
+	 * We return the first tuple from each group of duplicates (or the
+	 * last tuple of each group, when moving backwards).  At either end
+	 * of the subplan, clear priorTuple so that we correctly return the
+	 * first/last tuple when reversing direction.
 	 */
 	for (;;)
 	{
@@ -66,10 +71,16 @@ ExecUnique(Unique *node)
 		 */
 		slot = ExecProcNode(outerPlan, (Plan *) node);
 		if (TupIsNull(slot))
+		{
+			/* end of subplan; reset in case we change direction */
+			if (uniquestate->priorTuple != NULL)
+				heap_freetuple(uniquestate->priorTuple);
+			uniquestate->priorTuple = NULL;
 			return NULL;
+		}
 
 		/*
-		 * Always return the first tuple from the subplan.
+		 * Always return the first/last tuple from the subplan.
 		 */
 		if (uniquestate->priorTuple == NULL)
 			break;
