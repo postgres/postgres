@@ -130,7 +130,7 @@ There was a problem with creating the required directory; this operation will
    Description
   </TITLE>
   <PARA>
-   CREATE DATABASE creates a new PostgreSQL database.
+   <command>CREATE DATABASE</command> creates a new Postgres database.
    The creator becomes the administrator of the new database.
   </PARA>
   
@@ -142,10 +142,10 @@ There was a problem with creating the required directory; this operation will
     Notes
    </TITLE>
    <PARA>
-    CREATE DATABASE statement is a PostgreSQL language extension.
+    <command>CREATE DATABASE</command> statement is a Postgres language extension.
    </PARA>
    <para>
-    Refer to DROP DATABASE statement to remove a database.
+    Refer to <command>DROP DATABASE</command> statement to remove a database.
    </para>
   </REFSECT2>
   
@@ -157,19 +157,17 @@ There was a problem with creating the required directory; this operation will
    To create a new database:
   </PARA>
   <ProgramListing>
-   CREATE DATABASE lusiadas;
+   <prompt>olly=></prompt></computeroutput> <userinput>create database lusiadas;</userinput>
   </ProgramListing>
   <PARA>
-   To create a new database in <filename>~/private_db</filename>:
+   To create a new database in an alternate area <filename>~/private_db</filename>:
   </PARA>
   <ProgramListing>
-   $ mkdir private_db
-   $ initlocation ~/private_db
+   <prompt>$</prompt> <userinput>mkdir private_db</userinput>
+   <prompt>$</prompt> <userinput>initlocation ~/private_db</userinput>
    <computeroutput>Creating Postgres database system directory /home/olly/private_db/base</computeroutput>
 
-   $ chmod a+rx private_db
-   $ chmod a+rwx private_db/base
-   $ psql 
+   <prompt>$</prompt> <userinput>psql olly</userinput>
    <computeroutput>Welcome to the POSTGRESQL interactive sql monitor:
      Please read the file COPYRIGHT for copyright terms of POSTGRESQL
 
@@ -178,7 +176,7 @@ There was a problem with creating the required directory; this operation will
       type \g or terminate with semicolon to execute query
     You are currently connected to the database: template1
 
-    template1=></computeroutput> <userinput>create database elsewhere with location = '/home/olly/private_db';</userinput>
+    <prompt>olly=></prompt></computeroutput> <userinput>create database elsewhere with location = '/home/olly/private_db';</userinput>
     <computeroutput>CREATEDB</computeroutput>
   </ProgramListing>
  </REFSECT1>
@@ -188,23 +186,19 @@ There was a problem with creating the required directory; this operation will
    Bugs
   </TITLE>
   <PARA>
-   Where an ordinary user cannot change the ownership of files to other users
-   (which is correct from a security point of view), there is no easy way
-   to give the postgres backend access to files in a  database at a
-   non-standard location without
-   giving similar access to all users.  The situation shown in the usage
-   example makes <filename>/home/olly/private_db</filename> world-accessible.
+   There are security and data integrity issues involved with using alternate database locations
+   specified with absolute path names. See the Administrator's Guide for more information.
   </PARA>
-  <para>
-   If, on the other hand, the user gets the system administrator to give
-   file ownership to the <literal>postgres</literal> superuser and restrict access, he will
-   then be unable to delete the <filename><replaceable>directory</replaceable>/base</filename> directory.
-  </para>
+<!-- ------------------
+comment from Olly; response from Thomas...
   <comment>
    initlocation does not create a PG_VERSION file in the specified location.
-   How will PostgreSQL handle the situation if it is upgraded to an 
+   How will Postgres handle the situation if it is upgraded to an 
    incompatible database version?
   </comment>
+Hmm. This isn't an issue since the upgrade would do a dump/reload from the main database area also.
+Not sure if the dump/reload would guarantee that the alternate data area gets refreshed though...
+-------------------- -->
  </refsect1>
  
  <REFSECT1 ID="R1-SQL-CREATEDATABASE-4">
