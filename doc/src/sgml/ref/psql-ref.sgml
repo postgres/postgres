@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/ref/psql-ref.sgml,v 1.31 2000/04/16 15:46:39 petere Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/ref/psql-ref.sgml,v 1.32 2000/05/09 18:55:56 momjian Exp $
 Postgres documentation
 -->
 
@@ -851,7 +851,7 @@ lo_import 152801
 	  The second argument is a string that should be printed whenever a field
 	  is null. The default is not to print anything, which can easily be mistaken
 	  for, say, an empty string. Thus, one might choose to write
-	  <literal>\pset null "(null)"</literal>.
+	  <literal>\pset null '(null)'</literal>.
 	  </para>
 	  </listitem>
 	  </varlistentry>
@@ -863,8 +863,8 @@ lo_import 152801
 	  Specifies the field separator to be used in unaligned output mode. That way
 	  one can create, for example, tab- or comma-separated output, which other
 	  programs might prefer. To set a tab as field separator, type
-	  <literal>\pset fieldsep "\t"</literal>. The default field separator is
-	  <quote><literal>|</literal></quote> (a <quote>pipe</quote> symbol).
+	  <literal>\pset fieldsep '\t'</literal>. The default field separator is
+	  <literal>'|'</literal> (a <quote>pipe</quote> symbol).
 	  </para>
 	  </listitem>
 	  </varlistentry>
@@ -2151,8 +2151,8 @@ $ ./configure --with-includes=/opt/gnu/include --with-libs=/opt/gnu/lib  ...
   Notice the changing prompt.
 <programlisting>
 testdb=> <userinput>CREATE TABLE my_table (</userinput>
-testdb-> <userinput> first integer not null default 0,</userinput>
-testdb-> <userinput> second text</userinput>
+testdb(> <userinput> first integer not null default 0,</userinput>
+testdb(> <userinput> second text</userinput>
 testdb-> <userinput>);</userinput>
 CREATE
 </programlisting>
