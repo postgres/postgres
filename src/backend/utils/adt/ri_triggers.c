@@ -17,7 +17,7 @@
  *
  * Portions Copyright (c) 1996-2002, PostgreSQL Global Development Group
  *
- * $Header: /cvsroot/pgsql/src/backend/utils/adt/ri_triggers.c,v 1.51 2003/06/11 15:02:25 momjian Exp $
+ * $Header: /cvsroot/pgsql/src/backend/utils/adt/ri_triggers.c,v 1.52 2003/07/22 22:14:57 tgl Exp $
  *
  * ----------
  */
@@ -204,16 +204,8 @@ RI_FKey_check(PG_FUNCTION_ARGS)
 	 */
 	ri_CheckTrigger(fcinfo, "RI_FKey_check", RI_TRIGTYPE_INUP);
 
-	/*
-	 * Check for the correct # of call arguments
-	 */
 	tgnargs = trigdata->tg_trigger->tgnargs;
 	tgargs = trigdata->tg_trigger->tgargs;
-	if (tgnargs < 4 || (tgnargs % 2) != 0)
-		elog(ERROR, "wrong # of arguments in call to RI_FKey_check()");
-	if (tgnargs > RI_MAX_ARGUMENTS)
-		elog(ERROR, "too many keys (%d max) in call to RI_FKey_check()",
-			 RI_MAX_NUMKEYS);
 
 	/*
 	 * Get the relation descriptors of the FK and PK tables and the new
@@ -221,16 +213,7 @@ RI_FKey_check(PG_FUNCTION_ARGS)
 	 *
 	 * pk_rel is opened in RowShareLock mode since that's what our eventual
 	 * SELECT FOR UPDATE will get on it.
-	 *
-	 * Error check here is needed because of ancient pg_dump bug; see notes
-	 * in CreateTrigger().
 	 */
-	if (!OidIsValid(trigdata->tg_trigger->tgconstrrelid))
-		elog(ERROR, "No target table given for trigger \"%s\" on \"%s\""
-			 "\n\tRemove these RI triggers and do ALTER TABLE ADD CONSTRAINT",
-			 trigdata->tg_trigger->tgname,
-			 RelationGetRelationName(trigdata->tg_relation));
-
 	pk_rel = heap_open(trigdata->tg_trigger->tgconstrrelid, RowShareLock);
 	fk_rel = trigdata->tg_relation;
 	if (TRIGGER_FIRED_BY_UPDATE(trigdata->tg_event))
@@ -277,7 +260,7 @@ RI_FKey_check(PG_FUNCTION_ARGS)
 							 tgnargs, tgargs);
 
 		if (SPI_connect() != SPI_OK_CONNECT)
-			elog(ERROR, "SPI_connect() failed in RI_FKey_check()");
+			elog(ERROR, "SPI_connect failed");
 
 		if ((qplan = ri_FetchPreparedPlan(&qkey)) == NULL)
 		{
@@ -308,7 +291,7 @@ RI_FKey_check(PG_FUNCTION_ARGS)
 						tgargs[RI_CONSTRAINT_NAME_ARGNO]);
 
 		if (SPI_finish() != SPI_OK_FINISH)
-			elog(ERROR, "SPI_finish() failed in RI_FKey_check()");
+			elog(ERROR, "SPI_finish failed");
 
 		heap_close(pk_rel, RowShareLock);
 
@@ -319,10 +302,9 @@ RI_FKey_check(PG_FUNCTION_ARGS)
 	match_type = ri_DetermineMatchType(tgargs[RI_MATCH_TYPE_ARGNO]);
 
 	if (match_type == RI_MATCH_TYPE_PARTIAL)
-	{
-		elog(ERROR, "MATCH PARTIAL not yet supported");
-		return PointerGetDatum(NULL);
-	}
+		ereport(ERROR,
+				(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
+				 errmsg("MATCH PARTIAL not yet implemented")));
 
 	ri_BuildQueryKeyFull(&qkey, trigdata->tg_trigger->tgoid,
 						 RI_PLAN_CHECK_LOOKUPPK, fk_rel, pk_rel,
@@ -356,10 +338,12 @@ RI_FKey_check(PG_FUNCTION_ARGS)
 					 * Not allowed - MATCH FULL says either all or none of
 					 * the attributes can be NULLs
 					 */
-					elog(ERROR, "%s referential integrity violation - "
-						 "MATCH FULL doesn't allow mixing of NULL "
-						 "and NON-NULL key values",
-						 tgargs[RI_CONSTRAINT_NAME_ARGNO]);
+					ereport(ERROR,
+							(errcode(ERRCODE_FOREIGN_KEY_VIOLATION),
+							 errmsg("insert or update on \"%s\" violates foreign key constraint \"%s\"",
+									RelationGetRelationName(trigdata->tg_relation),
+									tgargs[RI_CONSTRAINT_NAME_ARGNO]),
+							 errdetail("MATCH FULL does not allow mixing of NULL and non-NULL key values.")));
 					heap_close(pk_rel, RowShareLock);
 					return PointerGetDatum(NULL);
 
@@ -380,7 +364,9 @@ RI_FKey_check(PG_FUNCTION_ARGS)
 					 * query below to only include non-null columns, or by
 					 * writing a special version here)
 					 */
-					elog(ERROR, "MATCH PARTIAL not yet implemented");
+					ereport(ERROR,
+							(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
+							 errmsg("MATCH PARTIAL not yet implemented")));
 					heap_close(pk_rel, RowShareLock);
 					return PointerGetDatum(NULL);
 			}
@@ -409,7 +395,7 @@ RI_FKey_check(PG_FUNCTION_ARGS)
 	}
 
 	if (SPI_connect() != SPI_OK_CONNECT)
-		elog(ERROR, "SPI_connect() failed in RI_FKey_check()");
+		elog(ERROR, "SPI_connect failed");
 
 	/*
 	 * Fetch or prepare a saved plan for the real check
@@ -462,7 +448,7 @@ RI_FKey_check(PG_FUNCTION_ARGS)
 					tgargs[RI_CONSTRAINT_NAME_ARGNO]);
 
 	if (SPI_finish() != SPI_OK_FINISH)
-		elog(ERROR, "SPI_finish() failed in RI_FKey_check()");
+		elog(ERROR, "SPI_finish failed");
 
 	heap_close(pk_rel, RowShareLock);
 
@@ -554,7 +540,9 @@ ri_Check_Pk_Match(Relation pk_rel, Relation fk_rel,
 					 * query below to only include non-null columns, or by
 					 * writing a special version here)
 					 */
-					elog(ERROR, "MATCH PARTIAL not yet implemented");
+					ereport(ERROR,
+							(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
+							 errmsg("MATCH PARTIAL not yet implemented")));
 					break;
 			}
 
@@ -568,7 +556,7 @@ ri_Check_Pk_Match(Relation pk_rel, Relation fk_rel,
 	}
 
 	if (SPI_connect() != SPI_OK_CONNECT)
-		elog(ERROR, "SPI_connect() failed in RI_FKey_check()");
+		elog(ERROR, "SPI_connect failed");
 
 	/*
 	 * Fetch or prepare a saved plan for the real check
@@ -620,7 +608,7 @@ ri_Check_Pk_Match(Relation pk_rel, Relation fk_rel,
 							 SPI_OK_SELECT, NULL);
 
 	if (SPI_finish() != SPI_OK_FINISH)
-		elog(ERROR, "SPI_finish() failed in ri_Check_Pk_Match()");
+		elog(ERROR, "SPI_finish failed");
 
 	return result;
 }
@@ -656,16 +644,8 @@ RI_FKey_noaction_del(PG_FUNCTION_ARGS)
 	 */
 	ri_CheckTrigger(fcinfo, "RI_FKey_noaction_del", RI_TRIGTYPE_DELETE);
 
-	/*
-	 * Check for the correct # of call arguments
-	 */
 	tgnargs = trigdata->tg_trigger->tgnargs;
 	tgargs = trigdata->tg_trigger->tgargs;
-	if (tgnargs < 4 || (tgnargs % 2) != 0)
-		elog(ERROR, "wrong # of arguments in call to RI_FKey_noaction_del()");
-	if (tgnargs > RI_MAX_ARGUMENTS)
-		elog(ERROR, "too many keys (%d max) in call to RI_FKey_noaction_del()",
-			 RI_MAX_NUMKEYS);
 
 	/*
 	 * Nothing to do if no column names to compare given
@@ -680,12 +660,6 @@ RI_FKey_noaction_del(PG_FUNCTION_ARGS)
 	 * fk_rel is opened in RowShareLock mode since that's what our eventual
 	 * SELECT FOR UPDATE will get on it.
 	 */
-	if (!OidIsValid(trigdata->tg_trigger->tgconstrrelid))
-		elog(ERROR, "No target table given for trigger \"%s\" on \"%s\""
-			 "\n\tRemove these RI triggers and do ALTER TABLE ADD CONSTRAINT",
-			 trigdata->tg_trigger->tgname,
-			 RelationGetRelationName(trigdata->tg_relation));
-
 	fk_rel = heap_open(trigdata->tg_trigger->tgconstrrelid, RowShareLock);
 	pk_rel = trigdata->tg_relation;
 	old_row = trigdata->tg_trigtuple;
@@ -740,7 +714,7 @@ RI_FKey_noaction_del(PG_FUNCTION_ARGS)
 			}
 
 			if (SPI_connect() != SPI_OK_CONNECT)
-				elog(ERROR, "SPI_connect() failed in RI_FKey_noaction_del()");
+				elog(ERROR, "SPI_connect failed");
 
 			/*
 			 * Fetch or prepare a saved plan for the restrict delete
@@ -794,7 +768,7 @@ RI_FKey_noaction_del(PG_FUNCTION_ARGS)
 							tgargs[RI_CONSTRAINT_NAME_ARGNO]);
 
 			if (SPI_finish() != SPI_OK_FINISH)
-				elog(ERROR, "SPI_finish() failed in RI_FKey_noaction_del()");
+				elog(ERROR, "SPI_finish failed");
 
 			heap_close(fk_rel, RowShareLock);
 
@@ -804,14 +778,16 @@ RI_FKey_noaction_del(PG_FUNCTION_ARGS)
 			 * Handle MATCH PARTIAL restrict delete.
 			 */
 		case RI_MATCH_TYPE_PARTIAL:
-			elog(ERROR, "MATCH PARTIAL not yet supported");
+			ereport(ERROR,
+					(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
+					 errmsg("MATCH PARTIAL not yet implemented")));
 			return PointerGetDatum(NULL);
 	}
 
 	/*
 	 * Never reached
 	 */
-	elog(ERROR, "internal error #2 in ri_triggers.c");
+	elog(ERROR, "invalid match_type");
 	return PointerGetDatum(NULL);
 }
 
@@ -847,16 +823,8 @@ RI_FKey_noaction_upd(PG_FUNCTION_ARGS)
 	 */
 	ri_CheckTrigger(fcinfo, "RI_FKey_noaction_upd", RI_TRIGTYPE_UPDATE);
 
-	/*
-	 * Check for the correct # of call arguments
-	 */
 	tgnargs = trigdata->tg_trigger->tgnargs;
 	tgargs = trigdata->tg_trigger->tgargs;
-	if (tgnargs < 4 || (tgnargs % 2) != 0)
-		elog(ERROR, "wrong # of arguments in call to RI_FKey_noaction_upd()");
-	if (tgnargs > RI_MAX_ARGUMENTS)
-		elog(ERROR, "too many keys (%d max) in call to RI_FKey_noaction_upd()",
-			 RI_MAX_NUMKEYS);
 
 	/*
 	 * Nothing to do if no column names to compare given
@@ -871,12 +839,6 @@ RI_FKey_noaction_upd(PG_FUNCTION_ARGS)
 	 * fk_rel is opened in RowShareLock mode since that's what our eventual
 	 * SELECT FOR UPDATE will get on it.
 	 */
-	if (!OidIsValid(trigdata->tg_trigger->tgconstrrelid))
-		elog(ERROR, "No target table given for trigger \"%s\" on \"%s\""
-			 "\n\tRemove these RI triggers and do ALTER TABLE ADD CONSTRAINT",
-			 trigdata->tg_trigger->tgname,
-			 RelationGetRelationName(trigdata->tg_relation));
-
 	fk_rel = heap_open(trigdata->tg_trigger->tgconstrrelid, RowShareLock);
 	pk_rel = trigdata->tg_relation;
 	new_row = trigdata->tg_newtuple;
@@ -943,7 +905,7 @@ RI_FKey_noaction_upd(PG_FUNCTION_ARGS)
 			}
 
 			if (SPI_connect() != SPI_OK_CONNECT)
-				elog(ERROR, "SPI_connect() failed in RI_FKey_noaction_upd()");
+				elog(ERROR, "SPI_connect failed");
 
 			/*
 			 * Fetch or prepare a saved plan for the noaction update
@@ -997,7 +959,7 @@ RI_FKey_noaction_upd(PG_FUNCTION_ARGS)
 							tgargs[RI_CONSTRAINT_NAME_ARGNO]);
 
 			if (SPI_finish() != SPI_OK_FINISH)
-				elog(ERROR, "SPI_finish() failed in RI_FKey_noaction_upd()");
+				elog(ERROR, "SPI_finish failed");
 
 			heap_close(fk_rel, RowShareLock);
 
@@ -1007,14 +969,16 @@ RI_FKey_noaction_upd(PG_FUNCTION_ARGS)
 			 * Handle MATCH PARTIAL noaction update.
 			 */
 		case RI_MATCH_TYPE_PARTIAL:
-			elog(ERROR, "MATCH PARTIAL not yet supported");
+			ereport(ERROR,
+					(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
+					 errmsg("MATCH PARTIAL not yet implemented")));
 			return PointerGetDatum(NULL);
 	}
 
 	/*
 	 * Never reached
 	 */
-	elog(ERROR, "internal error #3 in ri_triggers.c");
+	elog(ERROR, "invalid match_type");
 	return PointerGetDatum(NULL);
 }
 
@@ -1046,16 +1010,8 @@ RI_FKey_cascade_del(PG_FUNCTION_ARGS)
 	 */
 	ri_CheckTrigger(fcinfo, "RI_FKey_cascade_del", RI_TRIGTYPE_DELETE);
 
-	/*
-	 * Check for the correct # of call arguments
-	 */
 	tgnargs = trigdata->tg_trigger->tgnargs;
 	tgargs = trigdata->tg_trigger->tgargs;
-	if (tgnargs < 4 || (tgnargs % 2) != 0)
-		elog(ERROR, "wrong # of arguments in call to RI_FKey_cascade_del()");
-	if (tgnargs > RI_MAX_ARGUMENTS)
-		elog(ERROR, "too many keys (%d max) in call to RI_FKey_cascade_del()",
-			 RI_MAX_NUMKEYS);
 
 	/*
 	 * Nothing to do if no column names to compare given
@@ -1070,12 +1026,6 @@ RI_FKey_cascade_del(PG_FUNCTION_ARGS)
 	 * fk_rel is opened in RowExclusiveLock mode since that's what our
 	 * eventual DELETE will get on it.
 	 */
-	if (!OidIsValid(trigdata->tg_trigger->tgconstrrelid))
-		elog(ERROR, "No target table given for trigger \"%s\" on \"%s\""
-			 "\n\tRemove these RI triggers and do ALTER TABLE ADD CONSTRAINT",
-			 trigdata->tg_trigger->tgname,
-			 RelationGetRelationName(trigdata->tg_relation));
-
 	fk_rel = heap_open(trigdata->tg_trigger->tgconstrrelid, RowExclusiveLock);
 	pk_rel = trigdata->tg_relation;
 	old_row = trigdata->tg_trigtuple;
@@ -1117,7 +1067,7 @@ RI_FKey_cascade_del(PG_FUNCTION_ARGS)
 			}
 
 			if (SPI_connect() != SPI_OK_CONNECT)
-				elog(ERROR, "SPI_connect() failed in RI_FKey_cascade_del()");
+				elog(ERROR, "SPI_connect failed");
 
 			/*
 			 * Fetch or prepare a saved plan for the cascaded delete
@@ -1171,7 +1121,7 @@ RI_FKey_cascade_del(PG_FUNCTION_ARGS)
 							tgargs[RI_CONSTRAINT_NAME_ARGNO]);
 
 			if (SPI_finish() != SPI_OK_FINISH)
-				elog(ERROR, "SPI_finish() failed in RI_FKey_cascade_del()");
+				elog(ERROR, "SPI_finish failed");
 
 			heap_close(fk_rel, RowExclusiveLock);
 
@@ -1181,14 +1131,16 @@ RI_FKey_cascade_del(PG_FUNCTION_ARGS)
 			 * Handle MATCH PARTIAL cascaded delete.
 			 */
 		case RI_MATCH_TYPE_PARTIAL:
-			elog(ERROR, "MATCH PARTIAL not yet supported");
+			ereport(ERROR,
+					(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
+					 errmsg("MATCH PARTIAL not yet implemented")));
 			return PointerGetDatum(NULL);
 	}
 
 	/*
 	 * Never reached
 	 */
-	elog(ERROR, "internal error #4 in ri_triggers.c");
+	elog(ERROR, "invalid match_type");
 	return PointerGetDatum(NULL);
 }
 
@@ -1222,16 +1174,8 @@ RI_FKey_cascade_upd(PG_FUNCTION_ARGS)
 	 */
 	ri_CheckTrigger(fcinfo, "RI_FKey_cascade_upd", RI_TRIGTYPE_UPDATE);
 
-	/*
-	 * Check for the correct # of call arguments
-	 */
 	tgnargs = trigdata->tg_trigger->tgnargs;
 	tgargs = trigdata->tg_trigger->tgargs;
-	if (tgnargs < 4 || (tgnargs % 2) != 0)
-		elog(ERROR, "wrong # of arguments in call to RI_FKey_cascade_upd()");
-	if (tgnargs > RI_MAX_ARGUMENTS)
-		elog(ERROR, "too many keys (%d max) in call to RI_FKey_cascade_upd()",
-			 RI_MAX_NUMKEYS);
 
 	/*
 	 * Nothing to do if no column names to compare given
@@ -1246,12 +1190,6 @@ RI_FKey_cascade_upd(PG_FUNCTION_ARGS)
 	 * fk_rel is opened in RowExclusiveLock mode since that's what our
 	 * eventual UPDATE will get on it.
 	 */
-	if (!OidIsValid(trigdata->tg_trigger->tgconstrrelid))
-		elog(ERROR, "No target table given for trigger \"%s\" on \"%s\""
-			 "\n\tRemove these RI triggers and do ALTER TABLE ADD CONSTRAINT",
-			 trigdata->tg_trigger->tgname,
-			 RelationGetRelationName(trigdata->tg_relation));
-
 	fk_rel = heap_open(trigdata->tg_trigger->tgconstrrelid, RowExclusiveLock);
 	pk_rel = trigdata->tg_relation;
 	new_row = trigdata->tg_newtuple;
@@ -1304,7 +1242,7 @@ RI_FKey_cascade_upd(PG_FUNCTION_ARGS)
 			}
 
 			if (SPI_connect() != SPI_OK_CONNECT)
-				elog(ERROR, "SPI_connect() failed in RI_FKey_cascade_upd()");
+				elog(ERROR, "SPI_connect failed");
 
 			/*
 			 * Fetch or prepare a saved plan for the cascaded update of
@@ -1367,7 +1305,7 @@ RI_FKey_cascade_upd(PG_FUNCTION_ARGS)
 							tgargs[RI_CONSTRAINT_NAME_ARGNO]);
 
 			if (SPI_finish() != SPI_OK_FINISH)
-				elog(ERROR, "SPI_finish() failed in RI_FKey_cascade_upd()");
+				elog(ERROR, "SPI_finish failed");
 
 			heap_close(fk_rel, RowExclusiveLock);
 
@@ -1377,14 +1315,16 @@ RI_FKey_cascade_upd(PG_FUNCTION_ARGS)
 			 * Handle MATCH PARTIAL cascade update.
 			 */
 		case RI_MATCH_TYPE_PARTIAL:
-			elog(ERROR, "MATCH PARTIAL not yet supported");
+			ereport(ERROR,
+					(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
+					 errmsg("MATCH PARTIAL not yet implemented")));
 			return PointerGetDatum(NULL);
 	}
 
 	/*
 	 * Never reached
 	 */
-	elog(ERROR, "internal error #5 in ri_triggers.c");
+	elog(ERROR, "invalid match_type");
 	return PointerGetDatum(NULL);
 }
 
@@ -1423,16 +1363,8 @@ RI_FKey_restrict_del(PG_FUNCTION_ARGS)
 	 */
 	ri_CheckTrigger(fcinfo, "RI_FKey_restrict_del", RI_TRIGTYPE_DELETE);
 
-	/*
-	 * Check for the correct # of call arguments
-	 */
 	tgnargs = trigdata->tg_trigger->tgnargs;
 	tgargs = trigdata->tg_trigger->tgargs;
-	if (tgnargs < 4 || (tgnargs % 2) != 0)
-		elog(ERROR, "wrong # of arguments in call to RI_FKey_restrict_del()");
-	if (tgnargs > RI_MAX_ARGUMENTS)
-		elog(ERROR, "too many keys (%d max) in call to RI_FKey_restrict_del()",
-			 RI_MAX_NUMKEYS);
 
 	/*
 	 * Nothing to do if no column names to compare given
@@ -1447,12 +1379,6 @@ RI_FKey_restrict_del(PG_FUNCTION_ARGS)
 	 * fk_rel is opened in RowShareLock mode since that's what our eventual
 	 * SELECT FOR UPDATE will get on it.
 	 */
-	if (!OidIsValid(trigdata->tg_trigger->tgconstrrelid))
-		elog(ERROR, "No target table given for trigger \"%s\" on \"%s\""
-			 "\n\tRemove these RI triggers and do ALTER TABLE ADD CONSTRAINT",
-			 trigdata->tg_trigger->tgname,
-			 RelationGetRelationName(trigdata->tg_relation));
-
 	fk_rel = heap_open(trigdata->tg_trigger->tgconstrrelid, RowShareLock);
 	pk_rel = trigdata->tg_relation;
 	old_row = trigdata->tg_trigtuple;
@@ -1494,7 +1420,7 @@ RI_FKey_restrict_del(PG_FUNCTION_ARGS)
 			}
 
 			if (SPI_connect() != SPI_OK_CONNECT)
-				elog(ERROR, "SPI_connect() failed in RI_FKey_restrict_del()");
+				elog(ERROR, "SPI_connect failed");
 
 			/*
 			 * Fetch or prepare a saved plan for the restrict delete
@@ -1548,7 +1474,7 @@ RI_FKey_restrict_del(PG_FUNCTION_ARGS)
 							tgargs[RI_CONSTRAINT_NAME_ARGNO]);
 
 			if (SPI_finish() != SPI_OK_FINISH)
-				elog(ERROR, "SPI_finish() failed in RI_FKey_restrict_del()");
+				elog(ERROR, "SPI_finish failed");
 
 			heap_close(fk_rel, RowShareLock);
 
@@ -1558,14 +1484,16 @@ RI_FKey_restrict_del(PG_FUNCTION_ARGS)
 			 * Handle MATCH PARTIAL restrict delete.
 			 */
 		case RI_MATCH_TYPE_PARTIAL:
-			elog(ERROR, "MATCH PARTIAL not yet supported");
+			ereport(ERROR,
+					(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
+					 errmsg("MATCH PARTIAL not yet implemented")));
 			return PointerGetDatum(NULL);
 	}
 
 	/*
 	 * Never reached
 	 */
-	elog(ERROR, "internal error #6 in ri_triggers.c");
+	elog(ERROR, "invalid match_type");
 	return PointerGetDatum(NULL);
 }
 
@@ -1605,16 +1533,8 @@ RI_FKey_restrict_upd(PG_FUNCTION_ARGS)
 	 */
 	ri_CheckTrigger(fcinfo, "RI_FKey_restrict_upd", RI_TRIGTYPE_UPDATE);
 
-	/*
-	 * Check for the correct # of call arguments
-	 */
 	tgnargs = trigdata->tg_trigger->tgnargs;
 	tgargs = trigdata->tg_trigger->tgargs;
-	if (tgnargs < 4 || (tgnargs % 2) != 0)
-		elog(ERROR, "wrong # of arguments in call to RI_FKey_restrict_upd()");
-	if (tgnargs > RI_MAX_ARGUMENTS)
-		elog(ERROR, "too many keys (%d max) in call to RI_FKey_restrict_upd()",
-			 RI_MAX_NUMKEYS);
 
 	/*
 	 * Nothing to do if no column names to compare given
@@ -1629,12 +1549,6 @@ RI_FKey_restrict_upd(PG_FUNCTION_ARGS)
 	 * fk_rel is opened in RowShareLock mode since that's what our eventual
 	 * SELECT FOR UPDATE will get on it.
 	 */
-	if (!OidIsValid(trigdata->tg_trigger->tgconstrrelid))
-		elog(ERROR, "No target table given for trigger \"%s\" on \"%s\""
-			 "\n\tRemove these RI triggers and do ALTER TABLE ADD CONSTRAINT",
-			 trigdata->tg_trigger->tgname,
-			 RelationGetRelationName(trigdata->tg_relation));
-
 	fk_rel = heap_open(trigdata->tg_trigger->tgconstrrelid, RowShareLock);
 	pk_rel = trigdata->tg_relation;
 	new_row = trigdata->tg_newtuple;
@@ -1687,7 +1601,7 @@ RI_FKey_restrict_upd(PG_FUNCTION_ARGS)
 			}
 
 			if (SPI_connect() != SPI_OK_CONNECT)
-				elog(ERROR, "SPI_connect() failed in RI_FKey_restrict_upd()");
+				elog(ERROR, "SPI_connect failed");
 
 			/*
 			 * Fetch or prepare a saved plan for the restrict update
@@ -1741,7 +1655,7 @@ RI_FKey_restrict_upd(PG_FUNCTION_ARGS)
 							tgargs[RI_CONSTRAINT_NAME_ARGNO]);
 
 			if (SPI_finish() != SPI_OK_FINISH)
-				elog(ERROR, "SPI_finish() failed in RI_FKey_restrict_upd()");
+				elog(ERROR, "SPI_finish failed");
 
 			heap_close(fk_rel, RowShareLock);
 
@@ -1751,14 +1665,16 @@ RI_FKey_restrict_upd(PG_FUNCTION_ARGS)
 			 * Handle MATCH PARTIAL restrict update.
 			 */
 		case RI_MATCH_TYPE_PARTIAL:
-			elog(ERROR, "MATCH PARTIAL not yet supported");
+			ereport(ERROR,
+					(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
+					 errmsg("MATCH PARTIAL not yet implemented")));
 			return PointerGetDatum(NULL);
 	}
 
 	/*
 	 * Never reached
 	 */
-	elog(ERROR, "internal error #7 in ri_triggers.c");
+	elog(ERROR, "invalid match_type");
 	return PointerGetDatum(NULL);
 }
 
@@ -1790,16 +1706,8 @@ RI_FKey_setnull_del(PG_FUNCTION_ARGS)
 	 */
 	ri_CheckTrigger(fcinfo, "RI_FKey_setnull_del", RI_TRIGTYPE_DELETE);
 
-	/*
-	 * Check for the correct # of call arguments
-	 */
 	tgnargs = trigdata->tg_trigger->tgnargs;
 	tgargs = trigdata->tg_trigger->tgargs;
-	if (tgnargs < 4 || (tgnargs % 2) != 0)
-		elog(ERROR, "wrong # of arguments in call to RI_FKey_setnull_del()");
-	if (tgnargs > RI_MAX_ARGUMENTS)
-		elog(ERROR, "too many keys (%d max) in call to RI_FKey_setnull_del()",
-			 RI_MAX_NUMKEYS);
 
 	/*
 	 * Nothing to do if no column names to compare given
@@ -1814,12 +1722,6 @@ RI_FKey_setnull_del(PG_FUNCTION_ARGS)
 	 * fk_rel is opened in RowExclusiveLock mode since that's what our
 	 * eventual UPDATE will get on it.
 	 */
-	if (!OidIsValid(trigdata->tg_trigger->tgconstrrelid))
-		elog(ERROR, "No target table given for trigger \"%s\" on \"%s\""
-			 "\n\tRemove these RI triggers and do ALTER TABLE ADD CONSTRAINT",
-			 trigdata->tg_trigger->tgname,
-			 RelationGetRelationName(trigdata->tg_relation));
-
 	fk_rel = heap_open(trigdata->tg_trigger->tgconstrrelid, RowExclusiveLock);
 	pk_rel = trigdata->tg_relation;
 	old_row = trigdata->tg_trigtuple;
@@ -1861,7 +1763,7 @@ RI_FKey_setnull_del(PG_FUNCTION_ARGS)
 			}
 
 			if (SPI_connect() != SPI_OK_CONNECT)
-				elog(ERROR, "SPI_connect() failed in RI_FKey_setnull_del()");
+				elog(ERROR, "SPI_connect failed");
 
 			/*
 			 * Fetch or prepare a saved plan for the set null delete
@@ -1923,7 +1825,7 @@ RI_FKey_setnull_del(PG_FUNCTION_ARGS)
 							tgargs[RI_CONSTRAINT_NAME_ARGNO]);
 
 			if (SPI_finish() != SPI_OK_FINISH)
-				elog(ERROR, "SPI_finish() failed in RI_FKey_setnull_del()");
+				elog(ERROR, "SPI_finish failed");
 
 			heap_close(fk_rel, RowExclusiveLock);
 
@@ -1933,14 +1835,16 @@ RI_FKey_setnull_del(PG_FUNCTION_ARGS)
 			 * Handle MATCH PARTIAL set null delete.
 			 */
 		case RI_MATCH_TYPE_PARTIAL:
-			elog(ERROR, "MATCH PARTIAL not yet supported");
+			ereport(ERROR,
+					(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
+					 errmsg("MATCH PARTIAL not yet implemented")));
 			return PointerGetDatum(NULL);
 	}
 
 	/*
 	 * Never reached
 	 */
-	elog(ERROR, "internal error #8 in ri_triggers.c");
+	elog(ERROR, "invalid match_type");
 	return PointerGetDatum(NULL);
 }
 
@@ -1975,16 +1879,8 @@ RI_FKey_setnull_upd(PG_FUNCTION_ARGS)
 	 */
 	ri_CheckTrigger(fcinfo, "RI_FKey_setnull_upd", RI_TRIGTYPE_UPDATE);
 
-	/*
-	 * Check for the correct # of call arguments
-	 */
 	tgnargs = trigdata->tg_trigger->tgnargs;
 	tgargs = trigdata->tg_trigger->tgargs;
-	if (tgnargs < 4 || (tgnargs % 2) != 0)
-		elog(ERROR, "wrong # of arguments in call to RI_FKey_setnull_upd()");
-	if (tgnargs > RI_MAX_ARGUMENTS)
-		elog(ERROR, "too many keys (%d max) in call to RI_FKey_setnull_upd()",
-			 RI_MAX_NUMKEYS);
 
 	/*
 	 * Nothing to do if no column names to compare given
@@ -1999,12 +1895,6 @@ RI_FKey_setnull_upd(PG_FUNCTION_ARGS)
 	 * fk_rel is opened in RowExclusiveLock mode since that's what our
 	 * eventual UPDATE will get on it.
 	 */
-	if (!OidIsValid(trigdata->tg_trigger->tgconstrrelid))
-		elog(ERROR, "No target table given for trigger \"%s\" on \"%s\""
-			 "\n\tRemove these RI triggers and do ALTER TABLE ADD CONSTRAINT",
-			 trigdata->tg_trigger->tgname,
-			 RelationGetRelationName(trigdata->tg_relation));
-
 	fk_rel = heap_open(trigdata->tg_trigger->tgconstrrelid, RowExclusiveLock);
 	pk_rel = trigdata->tg_relation;
 	new_row = trigdata->tg_newtuple;
@@ -2058,7 +1948,7 @@ RI_FKey_setnull_upd(PG_FUNCTION_ARGS)
 			}
 
 			if (SPI_connect() != SPI_OK_CONNECT)
-				elog(ERROR, "SPI_connect() failed in RI_FKey_setnull_upd()");
+				elog(ERROR, "SPI_connect failed");
 
 			/*
 			 * "MATCH <unspecified>" only changes columns corresponding to
@@ -2153,7 +2043,7 @@ RI_FKey_setnull_upd(PG_FUNCTION_ARGS)
 							tgargs[RI_CONSTRAINT_NAME_ARGNO]);
 
 			if (SPI_finish() != SPI_OK_FINISH)
-				elog(ERROR, "SPI_finish() failed in RI_FKey_setnull_upd()");
+				elog(ERROR, "SPI_finish failed");
 
 			heap_close(fk_rel, RowExclusiveLock);
 
@@ -2163,14 +2053,16 @@ RI_FKey_setnull_upd(PG_FUNCTION_ARGS)
 			 * Handle MATCH PARTIAL set null update.
 			 */
 		case RI_MATCH_TYPE_PARTIAL:
-			elog(ERROR, "MATCH PARTIAL not yet supported");
+			ereport(ERROR,
+					(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
+					 errmsg("MATCH PARTIAL not yet implemented")));
 			return PointerGetDatum(NULL);
 	}
 
 	/*
 	 * Never reached
 	 */
-	elog(ERROR, "internal error #9 in ri_triggers.c");
+	elog(ERROR, "invalid match_type");
 	return PointerGetDatum(NULL);
 }
 
@@ -2201,16 +2093,8 @@ RI_FKey_setdefault_del(PG_FUNCTION_ARGS)
 	 */
 	ri_CheckTrigger(fcinfo, "RI_FKey_setdefault_del", RI_TRIGTYPE_DELETE);
 
-	/*
-	 * Check for the correct # of call arguments
-	 */
 	tgnargs = trigdata->tg_trigger->tgnargs;
 	tgargs = trigdata->tg_trigger->tgargs;
-	if (tgnargs < 4 || (tgnargs % 2) != 0)
-		elog(ERROR, "wrong # of arguments in call to RI_FKey_setdefault_del()");
-	if (tgnargs > RI_MAX_ARGUMENTS)
-		elog(ERROR, "too many keys (%d max) in call to RI_FKey_setdefault_del()",
-			 RI_MAX_NUMKEYS);
 
 	/*
 	 * Nothing to do if no column names to compare given
@@ -2225,12 +2109,6 @@ RI_FKey_setdefault_del(PG_FUNCTION_ARGS)
 	 * fk_rel is opened in RowExclusiveLock mode since that's what our
 	 * eventual UPDATE will get on it.
 	 */
-	if (!OidIsValid(trigdata->tg_trigger->tgconstrrelid))
-		elog(ERROR, "No target table given for trigger \"%s\" on \"%s\""
-			 "\n\tRemove these RI triggers and do ALTER TABLE ADD CONSTRAINT",
-			 trigdata->tg_trigger->tgname,
-			 RelationGetRelationName(trigdata->tg_relation));
-
 	fk_rel = heap_open(trigdata->tg_trigger->tgconstrrelid, RowExclusiveLock);
 	pk_rel = trigdata->tg_relation;
 	old_row = trigdata->tg_trigtuple;
@@ -2272,7 +2150,7 @@ RI_FKey_setdefault_del(PG_FUNCTION_ARGS)
 			}
 
 			if (SPI_connect() != SPI_OK_CONNECT)
-				elog(ERROR, "SPI_connect() failed in RI_FKey_setdefault_del()");
+				elog(ERROR, "SPI_connect failed");
 
 			/*
 			 * Prepare a plan for the set default delete operation.
@@ -2365,7 +2243,7 @@ RI_FKey_setdefault_del(PG_FUNCTION_ARGS)
 							tgargs[RI_CONSTRAINT_NAME_ARGNO]);
 
 			if (SPI_finish() != SPI_OK_FINISH)
-				elog(ERROR, "SPI_finish() failed in RI_FKey_setdefault_del()");
+				elog(ERROR, "SPI_finish failed");
 
 			heap_close(fk_rel, RowExclusiveLock);
 
@@ -2385,14 +2263,16 @@ RI_FKey_setdefault_del(PG_FUNCTION_ARGS)
 			 * Handle MATCH PARTIAL set null delete.
 			 */
 		case RI_MATCH_TYPE_PARTIAL:
-			elog(ERROR, "MATCH PARTIAL not yet supported");
+			ereport(ERROR,
+					(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
+					 errmsg("MATCH PARTIAL not yet implemented")));
 			return PointerGetDatum(NULL);
 	}
 
 	/*
 	 * Never reached
 	 */
-	elog(ERROR, "internal error #10 in ri_triggers.c");
+	elog(ERROR, "invalid match_type");
 	return PointerGetDatum(NULL);
 }
 
@@ -2425,16 +2305,8 @@ RI_FKey_setdefault_upd(PG_FUNCTION_ARGS)
 	 */
 	ri_CheckTrigger(fcinfo, "RI_FKey_setdefault_upd", RI_TRIGTYPE_UPDATE);
 
-	/*
-	 * Check for the correct # of call arguments
-	 */
 	tgnargs = trigdata->tg_trigger->tgnargs;
 	tgargs = trigdata->tg_trigger->tgargs;
-	if (tgnargs < 4 || (tgnargs % 2) != 0)
-		elog(ERROR, "wrong # of arguments in call to RI_FKey_setdefault_upd()");
-	if (tgnargs > RI_MAX_ARGUMENTS)
-		elog(ERROR, "too many keys (%d max) in call to RI_FKey_setdefault_upd()",
-			 RI_MAX_NUMKEYS);
 
 	/*
 	 * Nothing to do if no column names to compare given
@@ -2449,12 +2321,6 @@ RI_FKey_setdefault_upd(PG_FUNCTION_ARGS)
 	 * fk_rel is opened in RowExclusiveLock mode since that's what our
 	 * eventual UPDATE will get on it.
 	 */
-	if (!OidIsValid(trigdata->tg_trigger->tgconstrrelid))
-		elog(ERROR, "No target table given for trigger \"%s\" on \"%s\""
-			 "\n\tRemove these RI triggers and do ALTER TABLE ADD CONSTRAINT",
-			 trigdata->tg_trigger->tgname,
-			 RelationGetRelationName(trigdata->tg_relation));
-
 	fk_rel = heap_open(trigdata->tg_trigger->tgconstrrelid, RowExclusiveLock);
 	pk_rel = trigdata->tg_relation;
 	new_row = trigdata->tg_newtuple;
@@ -2509,7 +2375,7 @@ RI_FKey_setdefault_upd(PG_FUNCTION_ARGS)
 			}
 
 			if (SPI_connect() != SPI_OK_CONNECT)
-				elog(ERROR, "SPI_connect() failed in RI_FKey_setdefault_upd()");
+				elog(ERROR, "SPI_connect failed");
 
 			/*
 			 * Prepare a plan for the set default delete operation.
@@ -2612,7 +2478,7 @@ RI_FKey_setdefault_upd(PG_FUNCTION_ARGS)
 							tgargs[RI_CONSTRAINT_NAME_ARGNO]);
 
 			if (SPI_finish() != SPI_OK_FINISH)
-				elog(ERROR, "SPI_finish() failed in RI_FKey_setdefault_upd()");
+				elog(ERROR, "SPI_finish failed");
 
 			heap_close(fk_rel, RowExclusiveLock);
 
@@ -2632,14 +2498,16 @@ RI_FKey_setdefault_upd(PG_FUNCTION_ARGS)
 			 * Handle MATCH PARTIAL set null delete.
 			 */
 		case RI_MATCH_TYPE_PARTIAL:
-			elog(ERROR, "MATCH PARTIAL not yet supported");
+			ereport(ERROR,
+					(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
+					 errmsg("MATCH PARTIAL not yet implemented")));
 			return PointerGetDatum(NULL);
 	}
 
 	/*
 	 * Never reached
 	 */
-	elog(ERROR, "internal error #11 in ri_triggers.c");
+	elog(ERROR, "invalid match_type");
 	return PointerGetDatum(NULL);
 }
 
@@ -2669,11 +2537,13 @@ RI_FKey_keyequal_upd(TriggerData *trigdata)
 	 */
 	tgnargs = trigdata->tg_trigger->tgnargs;
 	tgargs = trigdata->tg_trigger->tgargs;
-	if (tgnargs < 4 || (tgnargs % 2) != 0)
-		elog(ERROR, "wrong # of arguments in call to RI_FKey_keyequal_upd()");
-	if (tgnargs > RI_MAX_ARGUMENTS)
-		elog(ERROR, "too many keys (%d max) in call to RI_FKey_keyequal_upd()",
-			 RI_MAX_NUMKEYS);
+	if (tgnargs < 4 ||
+		tgnargs > RI_MAX_ARGUMENTS ||
+		(tgnargs % 2) != 0)
+		ereport(ERROR,
+				(errcode(ERRCODE_E_R_I_E_TRIGGER_PROTOCOL_VIOLATED),
+				 errmsg("%s() called with wrong number of trigger arguments",
+						"RI_FKey_keyequal_upd")));
 
 	/*
 	 * Nothing to do if no column names to compare given
@@ -2688,10 +2558,12 @@ RI_FKey_keyequal_upd(TriggerData *trigdata)
 	 * Use minimal locking for fk_rel here.
 	 */
 	if (!OidIsValid(trigdata->tg_trigger->tgconstrrelid))
-		elog(ERROR, "No target table given for trigger \"%s\" on \"%s\""
-			 "\n\tRemove these RI triggers and do ALTER TABLE ADD CONSTRAINT",
-			 trigdata->tg_trigger->tgname,
-			 RelationGetRelationName(trigdata->tg_relation));
+		ereport(ERROR,
+				(errcode(ERRCODE_INVALID_OBJECT_DEFINITION),
+				 errmsg("no target table given for trigger \"%s\" on \"%s\"",
+						trigdata->tg_trigger->tgname,
+						RelationGetRelationName(trigdata->tg_relation)),
+				 errhint("Remove this RI trigger and its mates, then do ALTER TABLE ADD CONSTRAINT.")));
 
 	fk_rel = heap_open(trigdata->tg_trigger->tgconstrrelid, AccessShareLock);
 	pk_rel = trigdata->tg_relation;
@@ -2722,14 +2594,16 @@ RI_FKey_keyequal_upd(TriggerData *trigdata)
 			 * Handle MATCH PARTIAL set null delete.
 			 */
 		case RI_MATCH_TYPE_PARTIAL:
-			elog(ERROR, "MATCH PARTIAL not yet supported");
+			ereport(ERROR,
+					(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
+					 errmsg("MATCH PARTIAL not yet implemented")));
 			break;
 	}
 
 	/*
 	 * Never reached
 	 */
-	elog(ERROR, "internal error #12 in ri_triggers.c");
+	elog(ERROR, "invalid match_type");
 	return false;
 }
 
@@ -2794,7 +2668,7 @@ ri_DetermineMatchType(char *str)
 	if (strcmp(str, "PARTIAL") == 0)
 		return RI_MATCH_TYPE_PARTIAL;
 
-	elog(ERROR, "unrecognized referential integrity MATCH type '%s'", str);
+	elog(ERROR, "unrecognized referential integrity match type \"%s\"", str);
 	return 0;
 }
 
@@ -2844,18 +2718,22 @@ ri_BuildQueryKeyFull(RI_QueryKey *key, Oid constr_id, int32 constr_queryno,
 	{
 		fno = SPI_fnumber(fk_rel->rd_att, argv[j]);
 		if (fno == SPI_ERROR_NOATTRIBUTE)
-			elog(ERROR, "constraint %s: table %s does not have an attribute %s",
-				 argv[RI_CONSTRAINT_NAME_ARGNO],
-				 RelationGetRelationName(fk_rel),
-				 argv[j]);
+			ereport(ERROR,
+					(errcode(ERRCODE_UNDEFINED_COLUMN),
+					 errmsg("table \"%s\" does not have attribute \"%s\" referenced by constraint \"%s\"",
+							RelationGetRelationName(fk_rel),
+							argv[j],
+							argv[RI_CONSTRAINT_NAME_ARGNO])));
 		key->keypair[i][RI_KEYPAIR_FK_IDX] = fno;
 
 		fno = SPI_fnumber(pk_rel->rd_att, argv[j + 1]);
 		if (fno == SPI_ERROR_NOATTRIBUTE)
-			elog(ERROR, "constraint %s: table %s does not have an attribute %s",
-				 argv[RI_CONSTRAINT_NAME_ARGNO],
-				 RelationGetRelationName(pk_rel),
-				 argv[j + 1]);
+			ereport(ERROR,
+					(errcode(ERRCODE_UNDEFINED_COLUMN),
+					 errmsg("table \"%s\" does not have attribute \"%s\" referenced by constraint \"%s\"",
+							RelationGetRelationName(pk_rel),
+							argv[j + 1],
+							argv[RI_CONSTRAINT_NAME_ARGNO])));
 		key->keypair[i][RI_KEYPAIR_PK_IDX] = fno;
 	}
 }
@@ -2867,34 +2745,75 @@ static void
 ri_CheckTrigger(FunctionCallInfo fcinfo, const char *funcname, int tgkind)
 {
 	TriggerData *trigdata = (TriggerData *) fcinfo->context;
+	int			tgnargs;
 
 	if (!CALLED_AS_TRIGGER(fcinfo))
-		elog(ERROR, "%s() not fired by trigger manager", funcname);
+		ereport(ERROR,
+				(errcode(ERRCODE_E_R_I_E_TRIGGER_PROTOCOL_VIOLATED),
+				 errmsg("%s() was not fired by trigger manager", funcname)));
+
+	/*
+	 * Check proper event
+	 */
 	if (!TRIGGER_FIRED_AFTER(trigdata->tg_event) ||
 		!TRIGGER_FIRED_FOR_ROW(trigdata->tg_event))
-		elog(ERROR, "%s() must be fired AFTER ROW", funcname);
+		ereport(ERROR,
+				(errcode(ERRCODE_E_R_I_E_TRIGGER_PROTOCOL_VIOLATED),
+				 errmsg("%s() must be fired AFTER ROW", funcname)));
 
 	switch (tgkind)
 	{
 		case RI_TRIGTYPE_INSERT:
 			if (!TRIGGER_FIRED_BY_INSERT(trigdata->tg_event))
-				elog(ERROR, "%s() must be fired for INSERT", funcname);
+				ereport(ERROR,
+						(errcode(ERRCODE_E_R_I_E_TRIGGER_PROTOCOL_VIOLATED),
+						 errmsg("%s() must be fired for INSERT", funcname)));
 			break;
 		case RI_TRIGTYPE_UPDATE:
 			if (!TRIGGER_FIRED_BY_UPDATE(trigdata->tg_event))
-				elog(ERROR, "%s() must be fired for UPDATE", funcname);
+				ereport(ERROR,
+						(errcode(ERRCODE_E_R_I_E_TRIGGER_PROTOCOL_VIOLATED),
+						 errmsg("%s() must be fired for UPDATE", funcname)));
 			break;
 		case RI_TRIGTYPE_INUP:
 			if (!TRIGGER_FIRED_BY_INSERT(trigdata->tg_event) &&
 				!TRIGGER_FIRED_BY_UPDATE(trigdata->tg_event))
-				elog(ERROR, "%s() must be fired for INSERT or UPDATE",
-					 funcname);
+				ereport(ERROR,
+						(errcode(ERRCODE_E_R_I_E_TRIGGER_PROTOCOL_VIOLATED),
+						 errmsg("%s() must be fired for INSERT or UPDATE",
+					 funcname)));
 			break;
 		case RI_TRIGTYPE_DELETE:
 			if (!TRIGGER_FIRED_BY_DELETE(trigdata->tg_event))
-				elog(ERROR, "%s() must be fired for DELETE", funcname);
+				ereport(ERROR,
+						(errcode(ERRCODE_E_R_I_E_TRIGGER_PROTOCOL_VIOLATED),
+						 errmsg("%s() must be fired for DELETE", funcname)));
 			break;
 	}
+
+	/*
+	 * Check for the correct # of call arguments
+	 */
+	tgnargs = trigdata->tg_trigger->tgnargs;
+	if (tgnargs < 4 ||
+		tgnargs > RI_MAX_ARGUMENTS ||
+		(tgnargs % 2) != 0)
+		ereport(ERROR,
+				(errcode(ERRCODE_E_R_I_E_TRIGGER_PROTOCOL_VIOLATED),
+				 errmsg("%s() called with wrong number of trigger arguments",
+						funcname)));
+
+	/*
+	 * Check that tgconstrrelid is known.  We need to check here because of
+	 * ancient pg_dump bug; see notes in CreateTrigger().
+	 */
+	if (!OidIsValid(trigdata->tg_trigger->tgconstrrelid))
+		ereport(ERROR,
+				(errcode(ERRCODE_INVALID_OBJECT_DEFINITION),
+				 errmsg("no target table given for trigger \"%s\" on \"%s\"",
+						trigdata->tg_trigger->tgname,
+						RelationGetRelationName(trigdata->tg_relation)),
+				 errhint("Remove this RI trigger and its mates, then do ALTER TABLE ADD CONSTRAINT.")));
 }
 
 
@@ -3025,7 +2944,7 @@ ri_PerformCheck(RI_QueryKey *qkey, void *qplan,
 
 	/* Check result */
 	if (spi_result < 0)
-		elog(ERROR, "SPI_execp() failed in ri_PerformCheck()");
+		elog(ERROR, "SPI_execp failed");
 
 	if (expect_OK >= 0 && spi_result != expect_OK)
 		ri_ReportViolation(qkey, constrname ? constrname : "",
@@ -3069,9 +2988,9 @@ ri_ExtractValues(RI_QueryKey *qkey, int key_idx,
  *
  * If the failed constraint was on insert/update to the FK table,
  * we want the key names and values extracted from there, and the error
- * message to look like 'key blah referenced from FK not found in PK'.
+ * message to look like 'key blah is not present in PK'.
  * Otherwise, the attr names and values come from the PK table and the
- * message looks like 'key blah in PK still referenced from FK'.
+ * message looks like 'key blah is still referenced from FK'.
  */
 static void
 ri_ReportViolation(RI_QueryKey *qkey, const char *constrname,
@@ -3084,27 +3003,31 @@ ri_ReportViolation(RI_QueryKey *qkey, const char *constrname,
 	char	   *name_ptr = key_names;
 	char	   *val_ptr = key_values;
 	bool		onfk;
-	Relation	rel,
-				other_rel;
+	Relation	rel;
 	int			idx,
 				key_idx;
 
+	if (spi_err)
+		ereport(ERROR,
+				(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
+				 errmsg("referential integrity query on \"%s\" from constraint \"%s\" on \"%s\" gave unexpected result",
+						RelationGetRelationName(pk_rel),
+						constrname,
+						RelationGetRelationName(fk_rel)),
+				 errhint("This is most likely due to a rule having rewritten the query.")));
+
 	/*
-	 * rel is set to where the tuple description is coming from, and it also
-	 * is the first relation mentioned in the message, other_rel is
-	 * respectively the other relation.
+	 * rel is set to where the tuple description is coming from.
 	 */
 	onfk = (qkey->constr_queryno == RI_PLAN_CHECK_LOOKUPPK);
 	if (onfk)
 	{
 		rel = fk_rel;
-		other_rel = pk_rel;
 		key_idx = RI_KEYPAIR_FK_IDX;
 	}
 	else
 	{
 		rel = pk_rel;
-		other_rel = fk_rel;
 		key_idx = RI_KEYPAIR_PK_IDX;
 	}
 
@@ -3115,14 +3038,12 @@ ri_ReportViolation(RI_QueryKey *qkey, const char *constrname,
 	 */
 	if (qkey->nkeypairs == 0)
 	{
-		if (spi_err)
-			elog(ERROR, "%s referential action on %s from %s rewritten by rule",
-				 constrname,
-				 RelationGetRelationName(fk_rel),
-				 RelationGetRelationName(pk_rel));
-		else
-			elog(ERROR, "%s referential integrity violation - no rows found in %s",
-				 constrname, RelationGetRelationName(pk_rel));
+		ereport(ERROR,
+				(errcode(ERRCODE_FOREIGN_KEY_VIOLATION),
+				 errmsg("insert or update on \"%s\" violates foreign key constraint \"%s\"",
+						RelationGetRelationName(fk_rel), constrname),
+				 errdetail("No rows were found in \"%s\".",
+						   RelationGetRelationName(pk_rel))));
 	}
 
 	/* Get printable versions of the keys involved */
@@ -3151,24 +3072,25 @@ ri_ReportViolation(RI_QueryKey *qkey, const char *constrname,
 
 		name_ptr += sprintf(name_ptr, "%s%s", idx > 0 ? "," : "", name);
 		val_ptr += sprintf(val_ptr, "%s%s", idx > 0 ? "," : "", val);
-  }
+	}
 
-  if (spi_err)
-	  elog(ERROR, "%s referential action on %s from %s for (%s)=(%s) rewritten by rule",
-		   constrname,
-		   RelationGetRelationName(fk_rel),
-		   RelationGetRelationName(pk_rel),
-		   key_names, key_values);
-  else if (onfk)
-	  elog(ERROR, "%s referential integrity violation - key (%s)=(%s) referenced from %s not found in %s",
-		   constrname, key_names, key_values,
-		   RelationGetRelationName(rel),
-		   RelationGetRelationName(other_rel));
-  else
-	  elog(ERROR, "%s referential integrity violation - key (%s)=(%s) in %s still referenced from %s",
-		   constrname, key_names, key_values,
-		   RelationGetRelationName(rel),
-		   RelationGetRelationName(other_rel));
+	if (onfk)
+	  ereport(ERROR,
+			  (errcode(ERRCODE_FOREIGN_KEY_VIOLATION),
+			   errmsg("insert or update on \"%s\" violates foreign key constraint \"%s\"",
+					  RelationGetRelationName(fk_rel), constrname),
+			   errdetail("Key (%s)=(%s) is not present in \"%s\".",
+						 key_names, key_values,
+						 RelationGetRelationName(pk_rel))));
+	else
+	  ereport(ERROR,
+			  (errcode(ERRCODE_FOREIGN_KEY_VIOLATION),
+			   errmsg("update or delete on \"%s\" violates foreign key constraint \"%s\" on \"%s\"",
+					  RelationGetRelationName(pk_rel),
+					  constrname, RelationGetRelationName(fk_rel)),
+			   errdetail("Key (%s)=(%s) is still referenced from \"%s\".",
+						 key_names, key_values,
+						 RelationGetRelationName(fk_rel))));
 }
 
 /* ----------
@@ -3215,10 +3137,12 @@ ri_BuildQueryKeyPkCheck(RI_QueryKey *key, Oid constr_id, int32 constr_queryno,
 	{
 		fno = SPI_fnumber(pk_rel->rd_att, argv[j]);
 		if (fno == SPI_ERROR_NOATTRIBUTE)
-			elog(ERROR, "constraint %s: table %s does not have an attribute %s",
-				 argv[RI_CONSTRAINT_NAME_ARGNO],
-				 RelationGetRelationName(pk_rel),
-				 argv[j + 1]);
+			ereport(ERROR,
+					(errcode(ERRCODE_UNDEFINED_COLUMN),
+					 errmsg("table \"%s\" does not have attribute \"%s\" referenced by constraint \"%s\"",
+							RelationGetRelationName(pk_rel),
+							argv[j],
+							argv[RI_CONSTRAINT_NAME_ARGNO])));
 		key->keypair[i][RI_KEYPAIR_PK_IDX] = fno;
 		key->keypair[i][RI_KEYPAIR_FK_IDX] = 0;
 	}
@@ -3343,7 +3267,9 @@ ri_HashPreparedPlan(RI_QueryKey *key, void *plan)
 											  (void *) key,
 											  HASH_ENTER, &found);
 	if (entry == NULL)
-		elog(ERROR, "out of memory for RI plan cache");
+		ereport(ERROR,
+				(errcode(ERRCODE_OUT_OF_MEMORY),
+				 errmsg("out of memory")));
 	entry->plan = plan;
 }
 
@@ -3532,7 +3458,7 @@ ri_AttributesEqual(Oid typeid, Datum oldvalue, Datum newvalue)
 
 		/*
 		 * Since fmgr_info could fail, call it *before* creating the
-		 * hashtable entry --- otherwise we could elog leaving an
+		 * hashtable entry --- otherwise we could ereport leaving an
 		 * incomplete entry in the hashtable.  Also, because this will be
 		 * a permanent table entry, we must make sure any subsidiary
 		 * structures of the fmgr record are kept in TopMemoryContext.
@@ -3543,7 +3469,9 @@ ri_AttributesEqual(Oid typeid, Datum oldvalue, Datum newvalue)
 												  (void *) &typeid,
 												  HASH_ENTER, &found);
 		if (entry == NULL)
-			elog(ERROR, "out of memory for RI operator cache");
+			ereport(ERROR,
+					(errcode(ERRCODE_OUT_OF_MEMORY),
+					 errmsg("out of memory")));
 
 		entry->typeid = typeid;
 		memcpy(&(entry->oprfmgrinfo), &finfo, sizeof(FmgrInfo));

@@ -316,7 +316,8 @@ ERROR:  column "b" referenced in foreign key constraint does not exist
 -- Try (and fail) to add constraint due to invalid data
 ALTER TABLE tmp3 add constraint tmpconstr foreign key (a) references tmp2 match full;
 NOTICE:  ALTER TABLE will create implicit trigger(s) for FOREIGN KEY check(s)
-ERROR:  tmpconstr referential integrity violation - key (a)=(5) referenced from tmp3 not found in tmp2
+ERROR:  insert or update on "tmp3" violates foreign key constraint "tmpconstr"
+DETAIL:  Key (a)=(5) is not present in "tmp2".
 -- Delete failing row
 DELETE FROM tmp3 where a=5;
 -- Try (and succeed)

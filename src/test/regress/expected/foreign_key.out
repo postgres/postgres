@@ -22,7 +22,8 @@ INSERT INTO FKTABLE VALUES (3, 4);
 INSERT INTO FKTABLE VALUES (NULL, 1);
 -- Insert a failed row into FK TABLE
 INSERT INTO FKTABLE VALUES (100, 2);
-ERROR:  $1 referential integrity violation - key (ftest1)=(100) referenced from fktable not found in pktable
+ERROR:  insert or update on "fktable" violates foreign key constraint "$1"
+DETAIL:  Key (ftest1)=(100) is not present in "pktable".
 -- Check FKTABLE
 SELECT * FROM FKTABLE;
  ftest1 | ftest2 
@@ -80,13 +81,17 @@ INSERT INTO FKTABLE VALUES (3, 6, 12);
 INSERT INTO FKTABLE VALUES (NULL, NULL, 0);
 -- Insert failed rows into FK TABLE
 INSERT INTO FKTABLE VALUES (100, 2, 4);
-ERROR:  constrname referential integrity violation - key (ftest1,ftest2)=(100,2) referenced from fktable not found in pktable
+ERROR:  insert or update on "fktable" violates foreign key constraint "constrname"
+DETAIL:  Key (ftest1,ftest2)=(100,2) is not present in "pktable".
 INSERT INTO FKTABLE VALUES (2, 2, 4);
-ERROR:  constrname referential integrity violation - key (ftest1,ftest2)=(2,2) referenced from fktable not found in pktable
+ERROR:  insert or update on "fktable" violates foreign key constraint "constrname"
+DETAIL:  Key (ftest1,ftest2)=(2,2) is not present in "pktable".
 INSERT INTO FKTABLE VALUES (NULL, 2, 4);
-ERROR:  constrname referential integrity violation - MATCH FULL doesn't allow mixing of NULL and NON-NULL key values
+ERROR:  insert or update on "fktable" violates foreign key constraint "constrname"
+DETAIL:  MATCH FULL does not allow mixing of NULL and non-NULL key values.
 INSERT INTO FKTABLE VALUES (1, NULL, 4);
-ERROR:  constrname referential integrity violation - MATCH FULL doesn't allow mixing of NULL and NON-NULL key values
+ERROR:  insert or update on "fktable" violates foreign key constraint "constrname"
+DETAIL:  MATCH FULL does not allow mixing of NULL and non-NULL key values.
 -- Check FKTABLE
 SELECT * FROM FKTABLE;
  ftest1 | ftest2 | ftest3 
@@ -165,13 +170,17 @@ INSERT INTO FKTABLE VALUES (3, 6, 12);
 INSERT INTO FKTABLE VALUES (NULL, NULL, 0);
 -- Insert failed rows into FK TABLE
 INSERT INTO FKTABLE VALUES (100, 2, 4);
-ERROR:  constrname2 referential integrity violation - key (ftest1,ftest2)=(100,2) referenced from fktable not found in pktable
+ERROR:  insert or update on "fktable" violates foreign key constraint "constrname2"
+DETAIL:  Key (ftest1,ftest2)=(100,2) is not present in "pktable".
 INSERT INTO FKTABLE VALUES (2, 2, 4);
-ERROR:  constrname2 referential integrity violation - key (ftest1,ftest2)=(2,2) referenced from fktable not found in pktable
+ERROR:  insert or update on "fktable" violates foreign key constraint "constrname2"
+DETAIL:  Key (ftest1,ftest2)=(2,2) is not present in "pktable".
 INSERT INTO FKTABLE VALUES (NULL, 2, 4);
-ERROR:  constrname2 referential integrity violation - MATCH FULL doesn't allow mixing of NULL and NON-NULL key values
+ERROR:  insert or update on "fktable" violates foreign key constraint "constrname2"
+DETAIL:  MATCH FULL does not allow mixing of NULL and non-NULL key values.
 INSERT INTO FKTABLE VALUES (1, NULL, 4);
-ERROR:  constrname2 referential integrity violation - MATCH FULL doesn't allow mixing of NULL and NON-NULL key values
+ERROR:  insert or update on "fktable" violates foreign key constraint "constrname2"
+DETAIL:  MATCH FULL does not allow mixing of NULL and non-NULL key values.
 -- Check FKTABLE
 SELECT * FROM FKTABLE;
  ftest1 | ftest2 | ftest3 
@@ -250,7 +259,8 @@ INSERT INTO FKTABLE VALUES (3, 4);
 INSERT INTO FKTABLE VALUES (NULL, 1);
 -- Insert a failed row into FK TABLE
 INSERT INTO FKTABLE VALUES (100, 2);
-ERROR:  $1 referential integrity violation - key (ftest1)=(100) referenced from fktable not found in pktable
+ERROR:  insert or update on "fktable" violates foreign key constraint "$1"
+DETAIL:  Key (ftest1)=(100) is not present in "pktable".
 -- Check FKTABLE
 SELECT * FROM FKTABLE;
  ftest1 | ftest2 
@@ -274,7 +284,8 @@ SELECT * FROM PKTABLE;
 
 -- Delete a row from PK TABLE (should fail)
 DELETE FROM PKTABLE WHERE ptest1=1;
-ERROR:  $1 referential integrity violation - key (ptest1)=(1) in pktable still referenced from fktable
+ERROR:  update or delete on "pktable" violates foreign key constraint "$1" on "fktable"
+DETAIL:  Key (ptest1)=(1) is still referenced from "fktable".
 -- Delete a row from PK TABLE (should succeed)
 DELETE FROM PKTABLE WHERE ptest1=5;
 -- Check PKTABLE for deletes
@@ -289,7 +300,8 @@ SELECT * FROM PKTABLE;
 
 -- Update a row from PK TABLE (should fail)
 UPDATE PKTABLE SET ptest1=0 WHERE ptest1=2;
-ERROR:  $1 referential integrity violation - key (ptest1)=(2) in pktable still referenced from fktable
+ERROR:  update or delete on "pktable" violates foreign key constraint "$1" on "fktable"
+DETAIL:  Key (ptest1)=(2) is still referenced from "fktable".
 -- Update a row from PK TABLE (should succeed)
 UPDATE PKTABLE SET ptest1=0 WHERE ptest1=4;
 -- Check PKTABLE for updates
@@ -324,7 +336,8 @@ INSERT INTO FKTABLE VALUES (NULL, 2, 7, 4);
 INSERT INTO FKTABLE VALUES (NULL, 3, 4, 5);
 -- Insert a failed values
 INSERT INTO FKTABLE VALUES (1, 2, 7, 6);
-ERROR:  constrname3 referential integrity violation - key (ftest1,ftest2,ftest3)=(1,2,7) referenced from fktable not found in pktable
+ERROR:  insert or update on "fktable" violates foreign key constraint "constrname3"
+DETAIL:  Key (ftest1,ftest2,ftest3)=(1,2,7) is not present in "pktable".
 -- Show FKTABLE
 SELECT * from FKTABLE;
  ftest1 | ftest2 | ftest3 | ftest4 
@@ -338,12 +351,14 @@ SELECT * from FKTABLE;
 
 -- Try to update something that should fail
 UPDATE PKTABLE set ptest2=5 where ptest2=2;
-ERROR:  constrname3 referential integrity violation - key (ptest1,ptest2,ptest3)=(1,2,3) in pktable still referenced from fktable
+ERROR:  update or delete on "pktable" violates foreign key constraint "constrname3" on "fktable"
+DETAIL:  Key (ptest1,ptest2,ptest3)=(1,2,3) is still referenced from "fktable".
 -- Try to update something that should succeed
 UPDATE PKTABLE set ptest1=1 WHERE ptest2=3;
 -- Try to delete something that should fail
 DELETE FROM PKTABLE where ptest1=1 and ptest2=2 and ptest3=3;
-ERROR:  constrname3 referential integrity violation - key (ptest1,ptest2,ptest3)=(1,2,3) in pktable still referenced from fktable
+ERROR:  update or delete on "pktable" violates foreign key constraint "constrname3" on "fktable"
+DETAIL:  Key (ptest1,ptest2,ptest3)=(1,2,3) is still referenced from "fktable".
 -- Try to delete something that should work
 DELETE FROM PKTABLE where ptest1=2;
 -- Show PKTABLE and FKTABLE
@@ -387,7 +402,8 @@ INSERT INTO FKTABLE VALUES (NULL, 2, 7, 4);
 INSERT INTO FKTABLE VALUES (NULL, 3, 4, 5);
 -- Insert a failed values
 INSERT INTO FKTABLE VALUES (1, 2, 7, 6);
-ERROR:  constrname3 referential integrity violation - key (ftest1,ftest2,ftest3)=(1,2,7) referenced from fktable not found in pktable
+ERROR:  insert or update on "fktable" violates foreign key constraint "constrname3"
+DETAIL:  Key (ftest1,ftest2,ftest3)=(1,2,7) is not present in "pktable".
 -- Show FKTABLE
 SELECT * from FKTABLE;
  ftest1 | ftest2 | ftest3 | ftest4 
@@ -485,7 +501,8 @@ INSERT INTO FKTABLE VALUES (NULL, 2, 7, 4);
 INSERT INTO FKTABLE VALUES (NULL, 3, 4, 5);
 -- Insert a failed values
 INSERT INTO FKTABLE VALUES (1, 2, 7, 6);
-ERROR:  constrname3 referential integrity violation - key (ftest1,ftest2,ftest3)=(1,2,7) referenced from fktable not found in pktable
+ERROR:  insert or update on "fktable" violates foreign key constraint "constrname3"
+DETAIL:  Key (ftest1,ftest2,ftest3)=(1,2,7) is not present in "pktable".
 -- Show FKTABLE
 SELECT * from FKTABLE;
  ftest1 | ftest2 | ftest3 | ftest4 
@@ -591,7 +608,8 @@ INSERT INTO FKTABLE VALUES (NULL, 2, 7, 4);
 INSERT INTO FKTABLE VALUES (NULL, 3, 4, 5);
 -- Insert a failed values
 INSERT INTO FKTABLE VALUES (1, 2, 7, 6);
-ERROR:  constrname3 referential integrity violation - key (ftest1,ftest2,ftest3)=(1,2,7) referenced from fktable not found in pktable
+ERROR:  insert or update on "fktable" violates foreign key constraint "constrname3"
+DETAIL:  Key (ftest1,ftest2,ftest3)=(1,2,7) is not present in "pktable".
 -- Show FKTABLE
 SELECT * from FKTABLE;
  ftest1 | ftest2 | ftest3 | ftest4 
@@ -607,7 +625,8 @@ SELECT * from FKTABLE;
 
 -- Try to update something that will fail
 UPDATE PKTABLE set ptest2=5 where ptest2=2;
-ERROR:  constrname3 referential integrity violation - key (ftest1,ftest2,ftest3)=(1,-1,3) referenced from fktable not found in pktable
+ERROR:  insert or update on "fktable" violates foreign key constraint "constrname3"
+DETAIL:  Key (ftest1,ftest2,ftest3)=(1,-1,3) is not present in "pktable".
 -- Try to update something that will set default
 UPDATE PKTABLE set ptest1=0, ptest2=5, ptest3=10 where ptest2=2;
 UPDATE PKTABLE set ptest2=10 where ptest2=4;
@@ -819,17 +838,20 @@ insert into pktable(base1) values (1);
 insert into pktable(base1) values (2);
 --  let's insert a non-existant fktable value
 insert into fktable(ftest1) values (3);
-ERROR:  $1 referential integrity violation - key (ftest1)=(3) referenced from fktable not found in pktable
+ERROR:  insert or update on "fktable" violates foreign key constraint "$1"
+DETAIL:  Key (ftest1)=(3) is not present in "pktable".
 --  let's make a valid row for that
 insert into pktable(base1) values (3);
 insert into fktable(ftest1) values (3);
 -- let's try removing a row that should fail from pktable
 delete from pktable where base1>2;
-ERROR:  $1 referential integrity violation - key (base1)=(3) in pktable still referenced from fktable
+ERROR:  update or delete on "pktable" violates foreign key constraint "$1" on "fktable"
+DETAIL:  Key (base1)=(3) is still referenced from "fktable".
 -- okay, let's try updating all of the base1 values to *4
 -- which should fail.
 update pktable set base1=base1*4;
-ERROR:  $1 referential integrity violation - key (base1)=(3) in pktable still referenced from fktable
+ERROR:  update or delete on "pktable" violates foreign key constraint "$1" on "fktable"
+DETAIL:  Key (base1)=(3) is still referenced from "fktable".
 -- okay, let's try an update that should work.
 update pktable set base1=base1*4 where base1<3;
 -- and a delete that should work
@@ -845,17 +867,20 @@ insert into pktable(base1, ptest1) values (1, 1);
 insert into pktable(base1, ptest1) values (2, 2);
 --  let's insert a non-existant fktable value
 insert into fktable(ftest1, ftest2) values (3, 1);
-ERROR:  $1 referential integrity violation - key (ftest1,ftest2)=(3,1) referenced from fktable not found in pktable
+ERROR:  insert or update on "fktable" violates foreign key constraint "$1"
+DETAIL:  Key (ftest1,ftest2)=(3,1) is not present in "pktable".
 --  let's make a valid row for that
 insert into pktable(base1,ptest1) values (3, 1);
 insert into fktable(ftest1, ftest2) values (3, 1);
 -- let's try removing a row that should fail from pktable
 delete from pktable where base1>2;
-ERROR:  $1 referential integrity violation - key (base1,ptest1)=(3,1) in pktable still referenced from fktable
+ERROR:  update or delete on "pktable" violates foreign key constraint "$1" on "fktable"
+DETAIL:  Key (base1,ptest1)=(3,1) is still referenced from "fktable".
 -- okay, let's try updating all of the base1 values to *4
 -- which should fail.
 update pktable set base1=base1*4;
-ERROR:  $1 referential integrity violation - key (base1,ptest1)=(3,1) in pktable still referenced from fktable
+ERROR:  update or delete on "pktable" violates foreign key constraint "$1" on "fktable"
+DETAIL:  Key (base1,ptest1)=(3,1) is still referenced from "fktable".
 -- okay, let's try an update that should work.
 update pktable set base1=base1*4 where base1<3;
 -- and a delete that should work
@@ -876,13 +901,16 @@ insert into pktable (base1, ptest1, base2, ptest2) values (2, 2, 2, 1);
 insert into pktable (base1, ptest1, base2, ptest2) values (1, 3, 2, 2);
 -- fails (3,2) isn't in base1, ptest1
 insert into pktable (base1, ptest1, base2, ptest2) values (2, 3, 3, 2);
-ERROR:  $1 referential integrity violation - key (base2,ptest2)=(3,2) referenced from pktable not found in pktable
+ERROR:  insert or update on "pktable" violates foreign key constraint "$1"
+DETAIL:  Key (base2,ptest2)=(3,2) is not present in "pktable".
 -- fails (2,2) is being referenced
 delete from pktable where base1=2;
-ERROR:  $1 referential integrity violation - key (base1,ptest1)=(2,2) in pktable still referenced from pktable
+ERROR:  update or delete on "pktable" violates foreign key constraint "$1" on "pktable"
+DETAIL:  Key (base1,ptest1)=(2,2) is still referenced from "pktable".
 -- fails (1,1) is being referenced (twice)
 update pktable set base1=3 where base1=1;
-ERROR:  $1 referential integrity violation - key (base1,ptest1)=(1,1) in pktable still referenced from pktable
+ERROR:  update or delete on "pktable" violates foreign key constraint "$1" on "pktable"
+DETAIL:  Key (base1,ptest1)=(1,1) is still referenced from "pktable".
 -- this sequence of two deletes will work, since after the first there will be no (2,*) references
 delete from pktable where base2=2;
 delete from pktable where base1=2;
@@ -963,7 +991,8 @@ NOTICE:  CREATE TABLE / PRIMARY KEY will create implicit index "fktable_pkey" fo
 NOTICE:  CREATE TABLE will create implicit trigger(s) for FOREIGN KEY check(s)
 -- default to immediate: should fail
 INSERT INTO fktable VALUES (5, 10);
-ERROR:  $1 referential integrity violation - key (fk)=(10) referenced from fktable not found in pktable
+ERROR:  insert or update on "fktable" violates foreign key constraint "$1"
+DETAIL:  Key (fk)=(10) is not present in "pktable".
 -- explicitely defer the constraint
 BEGIN;
 SET CONSTRAINTS ALL DEFERRED;
@@ -993,7 +1022,8 @@ BEGIN;
 SET CONSTRAINTS ALL IMMEDIATE;
 -- should fail
 INSERT INTO fktable VALUES (500, 1000);
-ERROR:  $1 referential integrity violation - key (fk)=(1000) referenced from fktable not found in pktable
+ERROR:  insert or update on "fktable" violates foreign key constraint "$1"
+DETAIL:  Key (fk)=(1000) is not present in "pktable".
 COMMIT;
 DROP TABLE fktable, pktable;
 -- tricky behavior: according to SQL99, if a deferred constraint is set
@@ -1017,7 +1047,8 @@ SET CONSTRAINTS ALL DEFERRED;
 INSERT INTO fktable VALUES (1000, 2000);
 -- should cause transaction abort, due to preceding error
 SET CONSTRAINTS ALL IMMEDIATE;
-ERROR:  $1 referential integrity violation - key (fk)=(2000) referenced from fktable not found in pktable
+ERROR:  insert or update on "fktable" violates foreign key constraint "$1"
+DETAIL:  Key (fk)=(2000) is not present in "pktable".
 INSERT INTO pktable VALUES (2000, 3); -- too late
 ERROR:  current transaction is aborted, queries ignored until end of transaction block
 COMMIT;

@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2002, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Id: elog.h,v 1.54 2003/07/22 19:00:12 tgl Exp $
+ * $Id: elog.h,v 1.55 2003/07/22 22:14:57 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -162,7 +162,7 @@
 #define ERRCODE_INTEGRITY_CONSTRAINT_VIOLATION		MAKE_SQLSTATE('2','3', '0','0','0')
 #define ERRCODE_RESTRICT_VIOLATION			MAKE_SQLSTATE('2','3', '0','0','1')
 #define ERRCODE_NOT_NULL_VIOLATION			MAKE_SQLSTATE('2','3', '5','0','2')
-#define ERRCODE_FOREIGN_KEY_VALUE_NOT_FOUND	MAKE_SQLSTATE('2','3', '5','0','3')
+#define ERRCODE_FOREIGN_KEY_VIOLATION		MAKE_SQLSTATE('2','3', '5','0','3')
 #define ERRCODE_UNIQUE_VIOLATION			MAKE_SQLSTATE('2','3', '5','0','5')
 #define ERRCODE_CHECK_VIOLATION				MAKE_SQLSTATE('2','3', '5','1','4')
 
