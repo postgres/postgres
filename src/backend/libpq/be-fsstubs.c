@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/libpq/be-fsstubs.c,v 1.34 1999/05/31 22:53:57 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/libpq/be-fsstubs.c,v 1.35 1999/06/04 21:13:38 tgl Exp $
  *
  * NOTES
  *	  This should be moved to a more appropriate place.  It is here
@@ -334,10 +334,12 @@ lo_import(text *filename)
 	LargeObjectDesc *lobj;
 	Oid			lobjOid;
 
+#ifndef ALLOW_DANGEROUS_LO_FUNCTIONS
 	if (!superuser())
 		elog(ERROR, "You must have Postgres superuser privilege to use "
 			 "server-side lo_import().\n\tAnyone can use the "
 			 "client-side lo_import() provided by libpq.");
+#endif
 
 	/*
 	 * open the file to be read in
@@ -405,10 +407,12 @@ lo_export(Oid lobjId, text *filename)
 	LargeObjectDesc *lobj;
 	mode_t		oumask;
 
+#ifndef ALLOW_DANGEROUS_LO_FUNCTIONS
 	if (!superuser())
 		elog(ERROR, "You must have Postgres superuser privilege to use "
 			 "server-side lo_export().\n\tAnyone can use the "
 			 "client-side lo_export() provided by libpq.");
+#endif
 
 	/*
 	 * open the inversion "object"

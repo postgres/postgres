@@ -342,7 +342,7 @@ extern void srandom(unsigned int seed);
 #undef USE_POSIX_SIGNALS
 
 /*
- * Code below this point should not require changes
+ * Pull in OS-specific declarations (using link created by configure)
  */
 
 #include "os.h"
@@ -493,6 +493,16 @@ extern void srandom(unsigned int seed);
  * for password authentication.
  */
 /* #define PSQL_ALWAYS_GET_PASSWORDS */
+
+/*
+ * Define this if you want to allow the lo_import and lo_export SQL functions
+ * to be executed by ordinary users.  By default these functions are only
+ * available to the Postgres superuser.  CAUTION: these functions are
+ * SECURITY HOLES since they can read and write any file that the Postgres
+ * backend has permission to access.  If you turn this on, don't say we
+ * didn't warn you.
+ */
+/* #define ALLOW_DANGEROUS_LO_FUNCTIONS */
 
 /*
  * Use btree bulkload code: 
