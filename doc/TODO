@@ -1,6 +1,6 @@
 TODO list for PostgreSQL
 ========================
-Last updated:		Tue Feb  6 12:42:28 EST 2001
+Last updated:		Tue Feb  6 19:52:31 EST 2001
 
 Current maintainer:	Bruce Momjian (pgman@candle.pha.pa.us)
 
@@ -196,7 +196,6 @@ CLIENTS
 * -add pg_dump option to dump type names as standard ANSI types
 * have pg_dump use LEFT OUTER JOIN in multi-table SELECTs
   or multiple SELECTS to avoid bad system catalog entries
-
 * -make pg_dump dump in oid order, so dependencies are resolved (Philip)
 * allow psql \d to show primary and foreign keys
 * allow psql \d to show temporary table structure
@@ -315,6 +314,7 @@ MISC
 * Add SET PERFORMANCE_TIPS option to suggest INDEX, VACUUM, VACUUM
   ANALYZE, and CLUSTER
 * Delay fsync() when other backends are about to commit too [fsync]
+* Prevent pg_attribute from having duplicate oids for indexes
 
 SOURCE CODE
 -----------
