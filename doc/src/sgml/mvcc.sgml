@@ -1,5 +1,5 @@
 <!--
-$PostgreSQL: pgsql/doc/src/sgml/mvcc.sgml,v 2.46 2004/12/23 23:07:38 tgl Exp $
+$PostgreSQL: pgsql/doc/src/sgml/mvcc.sgml,v 2.47 2005/02/26 18:37:17 tgl Exp $
 -->
 
  <chapter id="mvcc">
@@ -677,8 +677,9 @@ SELECT SUM(value) FROM mytab WHERE class = 2;
 	</para>
 
 	<para>
-         This lock mode is not automatically acquired by any
-         <productname>PostgreSQL</productname> command.
+         This lock mode is not automatically acquired on user tables by any
+         <productname>PostgreSQL</productname> command.  However it is
+         acquired on certain system catalogs in some operations.
 	</para>
        </listitem>
       </varlistentry>
