@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/commands/async.c,v 1.67 2000/08/27 19:00:24 petere Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/commands/async.c,v 1.68 2000/08/29 09:36:39 petere Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -587,7 +587,7 @@ AtAbort_Notify()
  */
 
 void
-Async_NotifyHandler(int signum)
+Async_NotifyHandler(SIGNAL_ARGS)
 {
 
 	/*

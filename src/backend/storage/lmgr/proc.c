@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/storage/lmgr/proc.c,v 1.78 2000/08/27 19:00:28 petere Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/storage/lmgr/proc.c,v 1.79 2000/08/29 09:36:44 petere Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -47,7 +47,7 @@
  *		This is so that we can support more backends. (system-wide semaphore
  *		sets run out pretty fast.)				  -ay 4/95
  *
- * $Header: /cvsroot/pgsql/src/backend/storage/lmgr/proc.c,v 1.78 2000/08/27 19:00:28 petere Exp $
+ * $Header: /cvsroot/pgsql/src/backend/storage/lmgr/proc.c,v 1.79 2000/08/29 09:36:44 petere Exp $
  */
 #include <sys/time.h>
 #include <unistd.h>
@@ -68,7 +68,7 @@
 
 #include "storage/proc.h"
 
-void		HandleDeadLock(int signum);
+void		HandleDeadLock(SIGNAL_ARGS);
 static void ProcFreeAllSemaphores(void);
 static bool GetOffWaitqueue(PROC *);
 
@@ -812,7 +812,7 @@ ProcAddLock(SHM_QUEUE *elem)
  * --------------------
  */
 void
-HandleDeadLock(int signum)
+HandleDeadLock(SIGNAL_ARGS)
 {
 	LOCK	   *mywaitlock;
 

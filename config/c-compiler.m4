@@ -1,5 +1,35 @@
 # Macros to detect C compiler features
-# $Header: /cvsroot/pgsql/config/c-compiler.m4,v 1.2 2000/08/27 19:00:22 petere Exp $
+# $Header: /cvsroot/pgsql/config/c-compiler.m4,v 1.3 2000/08/29 09:36:37 petere Exp $
+
+
+# PGAC_C_SIGNED
+# -------------
+# Check if the C compiler understands signed types.
+AC_DEFUN([PGAC_C_SIGNED],
+[AC_CACHE_CHECK(for signed types, pgac_cv_c_signed,
+[AC_TRY_COMPILE([],
+[signed char c; signed short s; signed int i;],
+[pgac_cv_c_signed=yes],
+[pgac_cv_c_signed=no])])
+if test x"$pgac_cv_c_signed" = xno ; then
+  AC_DEFINE(signed,, [Define empty if the C compiler does not understand signed types])
+fi])# PGAC_C_SIGNED
+
+
+
+# PGAC_C_VOLATILE
+# ---------------
+# Check if the C compiler understands `volatile'. Note that if it doesn't
+# then this will potentially break the program semantics.
+AC_DEFUN([PGAC_C_VOLATILE],
+[AC_CACHE_CHECK(for volatile, pgac_cv_c_volatile,
+[AC_TRY_COMPILE([],
+[extern volatile int i;],
+[pgac_cv_c_volatile=yes],
+[pgac_cv_c_volatile=no])])
+if test x"$pgac_cv_c_volatile" = xno ; then
+  AC_DEFINE(volatile,, [Define empty if the C compiler does not understand `volatile'])
+fi])# PGAC_C_VOLATILE
 
 
 

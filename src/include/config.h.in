@@ -8,7 +8,7 @@
  * or in config.h afterwards.  Of course, if you edit config.h, then your
  * changes will be overwritten the next time you run configure.
  *
- * $Id: config.h.in,v 1.133 2000/08/27 19:00:39 petere Exp $
+ * $Id: config.h.in,v 1.134 2000/08/29 09:36:49 petere Exp $
  */
 
 #ifndef CONFIG_H
@@ -300,6 +300,12 @@
 /* Define as your compiler's spelling of "inline", or empty if no inline. */
 #undef inline
 
+/* Define as empty if the C compiler doesn't understand "signed". */
+#undef signed
+
+/* Define as empty if the C compiler doesn't understand "volatile". */
+#undef volatile
+
 /* Define if your cpp understands the ANSI stringizing operators in macros */
 #undef HAVE_STRINGIZE
 
@@ -581,5 +587,19 @@ extern void srandom(unsigned int seed);
  */
 
 #include "os.h"
+
+/*
+ * The following is used as the arg list for signal handlers.  Any ports
+ * that take something other than an int argument should override this in
+ * the port-specific os.h file.  Note that variable names are required
+ * because it is used in both the prototypes as well as the definitions.
+ * Note also the long name.  We expect that this won't collide with
+ * other names causing compiler warnings.
+ */ 
+
+#ifndef SIGNAL_ARGS
+#define SIGNAL_ARGS  int postgres_signal_arg
+#endif
+
 
 #endif /* CONFIG_H */
