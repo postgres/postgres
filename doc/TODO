@@ -28,7 +28,6 @@ PARSER
 * Be smarter about promoting types when UNION merges different data types
 * redesign INSERT ... SELECT to have two levels of target list
 * have INTERSECT/EXCEPT prevent duplicates unless ALL is specified
-* SELECT DISTINCT ON col1 col1 col2 FROM tab1 is broken [distinct]
 * SELECT col::DECIMAL(12,10); fails
 
 VIEWS
@@ -67,7 +66,6 @@ ADMIN
 * Test syslog functionality
 * Allow elog() to return error codes, not just messages
 * Allow international error message support and add error codes
-* Add ability to specifiy location of lock/socket files [flock]
 * Unify configuration into one configuration file (Peter E)
 * use setproctitle() if it exists for 'ps' display of status
 
@@ -252,7 +250,6 @@ SOURCE CODE
 -----------
 * Add use of 'const' for variables in source tree
 * -Fix C optimizer problem where fmgr_ptr calls return different types (Tom)
-  [alpha]
 * Does Mariposa source contain any other bug fixes?
 * Remove SET KSQO option now that OR processing is improved(Tom)
 * -Use macros to define NT open() file parameters, remove NT-specific defines
