@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/storage/ipc/shmem.c,v 1.48 2000/01/26 05:56:58 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/storage/ipc/shmem.c,v 1.49 2000/02/26 05:25:55 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -332,7 +332,7 @@ ShmemIsValid(unsigned long addr)
 HTAB *
 ShmemInitHash(char *name,		/* table string name for shmem index */
 			  long init_size,	/* initial table size */
-			  long max_size,	/* max size of the table (NOT USED) */
+			  long max_size,	/* max size of the table */
 			  HASHCTL *infoP,	/* info about key and bucket size */
 			  int hash_flags)	/* info about infoP */
 {
@@ -340,19 +340,21 @@ ShmemInitHash(char *name,		/* table string name for shmem index */
 	long	   *location;
 
 	/*
-	 * Hash tables allocated in shared memory have a fixed directory; it
-	 * can't grow or other backends wouldn't be able to find it. The
-	 * segbase is for calculating pointer values. The shared memory
+	 * Hash tables allocated in shared memory have a fixed directory;
+	 * it can't grow or other backends wouldn't be able to find it.
+	 * So, make sure we make it big enough to start with.
+	 *
+	 * The segbase is for calculating pointer values. The shared memory
 	 * allocator must be specified too.
 	 */
-	infoP->dsize = infoP->max_dsize = DEF_DIRSIZE;
+	infoP->dsize = infoP->max_dsize = hash_select_dirsize(max_size);
 	infoP->segbase = (long *) ShmemBase;
 	infoP->alloc = ShmemAlloc;
 	hash_flags |= HASH_SHARED_MEM | HASH_DIRSIZE;
 
 	/* look it up in the shmem index */
 	location = ShmemInitStruct(name,
-						 sizeof(HHDR) + DEF_DIRSIZE * sizeof(SEG_OFFSET),
+						 sizeof(HHDR) + infoP->dsize * sizeof(SEG_OFFSET),
 							   &found);
 
 	/*

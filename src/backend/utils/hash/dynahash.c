@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/hash/dynahash.c,v 1.28 2000/01/26 05:57:24 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/hash/dynahash.c,v 1.29 2000/02/26 05:25:54 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -328,10 +328,7 @@ init_htab(HTAB *hashp, int nelem)
 	{
 		*segp = seg_alloc(hashp);
 		if (*segp == (SEG_OFFSET) 0)
-		{
-			hash_destroy(hashp);
-			return 0;
-		}
+			return -1;
 	}
 
 #if HASH_DEBUG
@@ -390,6 +387,34 @@ hash_estimate_size(long num_entries, long keysize, long datasize)
 	size += nRecordAllocs * BUCKET_ALLOC_INCR * recordSize;
 
 	return size;
+}
+
+/*
+ * Select an appropriate directory size for a hashtable with the given
+ * maximum number of entries.
+ * This is only needed for hashtables in shared memory, whose directories
+ * cannot be expanded dynamically.
+ * NB: assumes that all hash structure parameters have default values!
+ *
+ * XXX this had better agree with the behavior of init_htab()...
+ */
+long
+hash_select_dirsize(long num_entries)
+{
+	long		nBuckets,
+				nSegments,
+				nDirEntries;
+
+	/* estimate number of buckets wanted */
+	nBuckets = 1L << my_log2((num_entries - 1) / DEF_FFACTOR + 1);
+	/* # of segments needed for nBuckets */
+	nSegments = 1L << my_log2((nBuckets - 1) / DEF_SEGSIZE + 1);
+	/* directory entries */
+	nDirEntries = DEF_DIRSIZE;
+	while (nDirEntries < nSegments)
+		nDirEntries <<= 1;		/* dir_alloc doubles dsize at each call */
+
+	return nDirEntries;
 }
 
 

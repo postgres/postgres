@@ -1,13 +1,13 @@
 /*-------------------------------------------------------------------------
  *
  * hsearch.h
- *	  for hashing in the new buffer manager
+ *	  for hash tables, particularly hash tables in shared memory
  *
  *
  * Portions Copyright (c) 1996-2000, PostgreSQL, Inc
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Id: hsearch.h,v 1.13 2000/01/26 05:58:38 momjian Exp $
+ * $Id: hsearch.h,v 1.14 2000/02/26 05:25:53 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -25,12 +25,15 @@
  * whole lot of records per bucket or performance goes down.
  *
  * In a hash table allocated in shared memory, the directory cannot be
- * expanded because it must stay at a fixed address.
+ * expanded because it must stay at a fixed address.  The directory size
+ * should be selected using hash_select_dirsize (and you'd better have
+ * a good idea of the maximum number of entries!).  For non-shared hash
+ * tables, the initial directory size can be left at the default.
  */
 #define DEF_SEGSIZE			   256
-#define DEF_SEGSIZE_SHIFT	   8/* log2(SEGSIZE)  */
+#define DEF_SEGSIZE_SHIFT	   8		/* must be log2(DEF_SEGSIZE) */
 #define DEF_DIRSIZE			   256
-#define DEF_FFACTOR			   1/* default fill factor */
+#define DEF_FFACTOR			   1		/* default fill factor */
 
 #define PRIME1				   37		/* for the hash function */
 #define PRIME2				   1048583
@@ -42,13 +45,13 @@
  */
 typedef struct element
 {
-	unsigned long next;			/* secret from user		 */
+	unsigned long next;			/* secret from user */
 	long		key;
 } ELEMENT;
 
 typedef unsigned long BUCKET_INDEX;
 
-/* segment is an array of bucket pointers  */
+/* segment is an array of bucket pointers */
 typedef BUCKET_INDEX *SEGMENT;
 typedef unsigned long SEG_OFFSET;
 
@@ -65,10 +68,8 @@ typedef struct hashhdr
 	long		nsegs;			/* Number of allocated segments */
 	long		keysize;		/* hash key length in bytes */
 	long		datasize;		/* elem data length in bytes */
-	long		max_dsize;		/* 'dsize' limit if directory is fixed
-								 * size */
-	BUCKET_INDEX freeBucketIndex;
-	/* index of first free bucket */
+	long		max_dsize;		/* 'dsize' limit if directory is fixed size */
+	BUCKET_INDEX freeBucketIndex;	/* index of first free bucket */
 #ifdef HASH_STATISTICS
 	long		accesses;
 	long		collisions;
@@ -84,7 +85,6 @@ typedef struct htab
 	SEG_OFFSET *dir;			/* 'directory' of segm starts */
 	long	   *(*alloc) ();	/* memory allocator (long * for alignment
 								 * reasons) */
-
 } HTAB;
 
 typedef struct hashctl
@@ -115,7 +115,7 @@ typedef struct hashctl
 #define HASH_ALLOC		0x100	/* Setting memory allocator */
 
 
-/* seg_alloc assumes that INVALID_INDEX is 0*/
+/* seg_alloc assumes that INVALID_INDEX is 0 */
 #define INVALID_INDEX			(0)
 #define NO_MAX_DSIZE			(-1)
 /* number of hash buckets allocated at once */
@@ -141,6 +141,7 @@ extern long *hash_search(HTAB *hashp, char *keyPtr, HASHACTION action,
 			bool *foundPtr);
 extern long *hash_seq(HTAB *hashp);
 extern long hash_estimate_size(long num_entries, long keysize, long datasize);
+extern long hash_select_dirsize(long num_entries);
 
 /*
  * prototypes from functions in hashfn.c
