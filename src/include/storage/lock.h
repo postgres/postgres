@@ -6,16 +6,16 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: lock.h,v 1.33 1999/07/16 17:07:38 momjian Exp $
+ * $Id: lock.h,v 1.34 1999/09/06 19:37:37 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
 #ifndef LOCK_H_
 #define LOCK_H_
 
+#include "storage/ipc.h"
 #include "storage/itemptr.h"
 #include "storage/shmem.h"
-#include "storage/sinvaladt.h"
 #include "utils/array.h"
 
 extern SPINLOCK LockMgrLock;

@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/storage/ipc/sinval.c,v 1.17 1999/09/04 18:36:45 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/storage/ipc/sinval.c,v 1.18 1999/09/06 19:37:38 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -21,12 +21,6 @@
 #include "storage/sinval.h"
 #include "storage/sinvaladt.h"
 
-extern SISeg *shmInvalBuffer;	/* the shared buffer segment, set by
-								 * SISegmentAttach()
-								 */
-extern BackendId MyBackendId;
-extern BackendTag MyBackendTag;
-
 SPINLOCK	SInvalLock = (SPINLOCK) NULL;
 
 /****************************************************************************/
@@ -39,11 +33,6 @@ CreateSharedInvalidationState(IPCKey key, int maxBackends)
 {
 	int			status;
 
-	/*
-	 * REMOVED SISyncKill(IPCKeyGetSIBufferMemorySemaphoreKey(key));
-	 * SISyncInit(IPCKeyGetSIBufferMemorySemaphoreKey(key));
-	 */
-
 	/* SInvalLock gets set in spin.c, during spinlock init */
 	status = SISegmentInit(true, IPCKeyGetSIBufferMemoryBlock(key),
 						   maxBackends);
@@ -53,9 +42,9 @@ CreateSharedInvalidationState(IPCKey key, int maxBackends)
 }
 
 /****************************************************************************/
-/*	AttachSharedInvalidationState(key)	 Attach a buffer segment			*/
+/*	AttachSharedInvalidationState(key)	 Attach to existing buffer segment	*/
 /*																			*/
-/*	should be called only by the POSTMASTER									*/
+/*	should be called by each backend during startup							*/
 /****************************************************************************/
 void
 AttachSharedInvalidationState(IPCKey key)
@@ -74,6 +63,11 @@ AttachSharedInvalidationState(IPCKey key)
 		elog(FATAL, "AttachSharedInvalidationState: failed segment init");
 }
 
+/*
+ * InitSharedInvalidationState
+ *		Initialize new backend's state info in buffer segment.
+ *		Must be called after AttachSharedInvalidationState().
+ */
 void
 InitSharedInvalidationState(void)
 {
@@ -88,24 +82,19 @@ InitSharedInvalidationState(void)
 
 /*
  * RegisterSharedInvalid
- *	Returns a new local cache invalidation state containing a new entry.
+ *	Add a shared-cache-invalidation message to the global SI message queue.
  *
  * Note:
  *	Assumes hash index is valid.
  *	Assumes item pointer is valid.
  */
-/****************************************************************************/
-/*	RegisterSharedInvalid(cacheId, hashIndex, pointer)						*/
-/*																			*/
-/*	register a message in the buffer										*/
-/*	should be called by a backend											*/
-/****************************************************************************/
 void
 RegisterSharedInvalid(int cacheId,		/* XXX */
 					  Index hashIndex,
 					  ItemPointer pointer)
 {
-	SharedInvalidData newInvalid;
+	SharedInvalidData	newInvalid;
+	bool				insertOK;
 
 	/*
 	 * This code has been hacked to accept two types of messages.  This
@@ -127,34 +116,16 @@ RegisterSharedInvalid(int cacheId,		/* XXX */
 		ItemPointerSetInvalid(&newInvalid.pointerData);
 
 	SpinAcquire(SInvalLock);
-	while (!SISetDataEntry(shmInvalBuffer, &newInvalid))
-	{
-		/* buffer full */
-		/* release a message, mark process cache states to be invalid */
-		SISetProcStateInvalid(shmInvalBuffer);
-
-		if (!SIDelDataEntries(shmInvalBuffer, 1))
-		{
-			/* inconsistent buffer state -- shd never happen */
-			SpinRelease(SInvalLock);
-			elog(FATAL, "RegisterSharedInvalid: inconsistent buffer state");
-		}
-
-		/* loop around to try write again */
-	}
+	insertOK = SIInsertDataEntry(shmInvalBuffer, &newInvalid);
 	SpinRelease(SInvalLock);
+	if (! insertOK)
+		elog(NOTICE, "RegisterSharedInvalid: SI buffer overflow");
 }
 
 /*
  * InvalidateSharedInvalid
- *	Processes all entries in a shared cache invalidation state.
+ *		Process shared-cache-invalidation messages waiting for this backend
  */
-/****************************************************************************/
-/*	InvalidateSharedInvalid(invalFunction, resetFunction)					*/
-/*																			*/
-/*	invalidate a message in the buffer	 (read and clean up)				*/
-/*	should be called by a backend											*/
-/****************************************************************************/
 void
 InvalidateSharedInvalid(void (*invalFunction) (),
 						void (*resetFunction) ())

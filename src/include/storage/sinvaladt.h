@@ -6,7 +6,7 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: sinvaladt.h,v 1.17 1999/09/04 18:36:44 tgl Exp $
+ * $Id: sinvaladt.h,v 1.18 1999/09/06 19:37:37 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -17,72 +17,50 @@
 #include "storage/itemptr.h"
 
 /*
- * The structure of the shared cache invaidation segment
+ * The shared cache invalidation manager is responsible for transmitting
+ * invalidation messages between backends.  Any message sent by any backend
+ * must be delivered to all already-running backends before it can be
+ * forgotten.
  *
+ * Conceptually, the messages are stored in an infinite array, where
+ * maxMsgNum is the next array subscript to store a submitted message in,
+ * minMsgNum is the smallest array subscript containing a message not yet
+ * read by all backends, and we always have maxMsgNum >= minMsgNum.  (They
+ * are equal when there are no messages pending.)  For each active backend,
+ * there is a nextMsgNum pointer indicating the next message it needs to read;
+ * we have maxMsgNum >= nextMsgNum >= minMsgNum for every backend.
+ *
+ * In reality, the messages are stored in a circular buffer of MAXNUMMESSAGES
+ * entries.  We translate MsgNum values into circular-buffer indexes by
+ * computing MsgNum % MAXNUMMESSAGES (this should be fast as long as
+ * MAXNUMMESSAGES is a constant and a power of 2).  As long as maxMsgNum
+ * doesn't exceed minMsgNum by more than MAXNUMMESSAGES, we have enough space
+ * in the buffer.  If the buffer does overflow, we reset it to empty and
+ * force each backend to "reset", ie, discard all its invalidatable state.
+ *
+ * We would have problems if the MsgNum values overflow an integer, so
+ * whenever minMsgNum exceeds MSGNUMWRAPAROUND, we subtract MSGNUMWRAPAROUND
+ * from all the MsgNum variables simultaneously.  MSGNUMWRAPAROUND can be
+ * large so that we don't need to do this often.  It must be a multiple of
+ * MAXNUMMESSAGES so that the existing circular-buffer entries don't need
+ * to be moved when we do it.
  */
+
+
 /*
-A------------- Header info --------------
-	criticalSectionSemaphoreId
-	generalSemaphoreId
-	startEntrySection	(offset a)
-	endEntrySection		(offset a + b)
-	startFreeSpace		(offset relative to B)
-	startEntryChain		(offset relatiev to B)
-	endEntryChain		(offset relative to B)
-	numEntries
-	maxNumEntries
-	maxBackends
-	procState[maxBackends] --> limit
-								resetState (bool)
-a								tag (POSTID)
-B------------- Start entry section -------
-	SISegEntry	--> entryData --> ... (see	SharedInvalidData!)
-					isfree	(bool)
-					next  (offset to next entry in chain )
-b	  .... (dynamically growing down)
-C----------------End shared segment -------
+ * Configurable parameters.
+ *
+ * MAXNUMMESSAGES: max number of shared-inval messages we can buffer.
+ * Must be a power of 2 for speed.
+ *
+ * MSGNUMWRAPAROUND: how often to reduce MsgNum variables to avoid overflow.
+ * Must be a multiple of MAXNUMMESSAGES.  Should be large.
+ */
 
-*/
+#define MAXNUMMESSAGES 4096
+#define MSGNUMWRAPAROUND (MAXNUMMESSAGES * 4096)
 
-/* Parameters (configurable)  *******************************************/
-#define MAXNUMMESSAGES 4000		/* maximum number of messages in seg */
-
-
-#define InvalidOffset	1000000000		/* a invalid offset  (End of
-										 * chain) */
-
-typedef struct ProcState
-{
-	int			limit;			/* the number of read messages			*/
-	bool		resetState;		/* true, if backend has to reset its state */
-	int			tag;			/* special tag, recieved from the
-								 * postmaster */
-} ProcState;
-
-
-typedef struct SISeg
-{
-	IpcSemaphoreId criticalSectionSemaphoreId;	/* semaphore id		*/
-	IpcSemaphoreId generalSemaphoreId;	/* semaphore id		*/
-	Offset		startEntrySection;		/* (offset a)					*/
-	Offset		endEntrySection;/* (offset a + b)				*/
-	Offset		startFreeSpace; /* (offset relative to B)		*/
-	Offset		startEntryChain;/* (offset relative to B)		*/
-	Offset		endEntryChain;	/* (offset relative to B)		*/
-	int			numEntries;
-	int			maxNumEntries;
-	int			maxBackends;	/* size of procState array */
-	/*
-	 * We declare procState as 1 entry because C wants a fixed-size array,
-	 * but actually it is maxBackends entries long.
-	 */
-	ProcState	procState[1];	/* reflects the invalidation state */
-	/*
-	 * The entry section begins after the end of the procState array.
-	 * Everything there is controlled by offsets.
-	 */
-} SISeg;
-
+/* The content of one shared-invalidation message */
 typedef struct SharedInvalidData
 {
 	int			cacheId;		/* XXX */
@@ -92,45 +70,53 @@ typedef struct SharedInvalidData
 
 typedef SharedInvalidData *SharedInvalid;
 
-
-typedef struct SISegEntry
+/* Per-backend state in shared invalidation structure */
+typedef struct ProcState
 {
-	SharedInvalidData entryData;/* the message data */
-	bool		isfree;			/* entry free? */
-	Offset		next;			/* offset to next entry */
-} SISegEntry;
+	/* nextMsgNum is -1 in an inactive ProcState array entry. */
+	int			nextMsgNum;		/* next message number to read, or -1 */
+	bool		resetState;		/* true, if backend has to reset its state */
+	int			tag;			/* backend tag received from postmaster */
+} ProcState;
 
-typedef struct SISegOffsets
+/* Shared cache invalidation memory segment */
+typedef struct SISeg
 {
-	Offset		startSegment;	/* always 0 (for now) */
-	Offset		offsetToFirstEntry;		/* A + a = B */
-	Offset		offsetToEndOfSegment;	/* A + a + b */
-} SISegOffsets;
+	/*
+	 * General state information
+	 */
+	int			minMsgNum;		/* oldest message still needed */
+	int			maxMsgNum;		/* next message number to be assigned */
+	int			maxBackends;	/* size of procState array */
+	/*
+	 * Circular buffer holding shared-inval messages
+	 */
+	SharedInvalidData	buffer[MAXNUMMESSAGES];
+	/*
+	 * Per-backend state info.
+	 *
+	 * We declare procState as 1 entry because C wants a fixed-size array,
+	 * but actually it is maxBackends entries long.
+	 */
+	ProcState	procState[1];	/* reflects the invalidation state */
+} SISeg;
 
 
-/****************************************************************************/
-/* synchronization of the shared buffer access								*/
-/*	  access to the buffer is synchronized by the lock manager !!			*/
-/****************************************************************************/
+extern SISeg *shmInvalBuffer;	/* pointer to the shared buffer segment,
+								 * set by SISegmentAttach()
+								 */
 
-#define SI_LockStartValue  255
-#define SI_SharedLock	  (-1)
-#define SI_ExclusiveLock  (-255)
-
-extern SISeg *shmInvalBuffer;
 
 /*
  * prototypes for functions in sinvaladt.c
  */
-extern int	SIBackendInit(SISeg *segInOutP);
-extern int	SISegmentInit(bool killExistingSegment, IPCKey key,
+extern int	SISegmentInit(bool createNewSegment, IPCKey key,
 						  int maxBackends);
+extern int	SIBackendInit(SISeg *segP);
 
-extern bool SISetDataEntry(SISeg *segP, SharedInvalidData *data);
-extern void SISetProcStateInvalid(SISeg *segP);
+extern bool SIInsertDataEntry(SISeg *segP, SharedInvalidData *data);
 extern int	SIGetDataEntry(SISeg *segP, int backendId,
 						   SharedInvalidData *data);
-extern bool SIDelDataEntries(SISeg *segP, int n);
 extern void SIDelExpiredDataEntries(SISeg *segP);
 
 #endif	 /* SINVALADT_H */
