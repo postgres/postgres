@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/release.sgml,v 1.210 2003/10/16 03:47:28 momjian Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/release.sgml,v 1.211 2003/10/16 03:55:31 momjian Exp $
 -->
 
 <appendix id="release">
@@ -129,8 +129,10 @@ required for those wishing to migrate data from any previous release.</para>
      <listitem><para> <function>FLOAT(p)</function> now measures 'p' in bits, not digits</para></listitem>
      <listitem><para> Ambiguous date values now must match the ordering specified by DateStyle</para></listitem>
      <listitem><para> The <function>oidrand()</function>, <function>oidsrand()</function>,
-	and <function>userfntest()</function> functions have been
-       removed.</para></listitem>
+	and <function>userfntest()</function> functions have been removed.</para></listitem>
+     <listitem><para> <literal>'now'</literal> will no longer work as a column default; <function>now()</> should be
+        used instead
+</para></listitem>
 </itemizedlist></para></sect2>
 
 <sect2> <title> Changes </title>
@@ -189,7 +191,7 @@ required for those wishing to migrate data from any previous release.</para>
 <listitem><para>Improve speed of col IN (const, const, const, ...) (Tom)</para></listitem>
 <listitem><para>Fix hash indexes which were broken in rare cases (Tom)</para></listitem>
 <listitem><para>Improve hash index concurrency and speed (Tom)</para></listitem>
-<listitem><para>Align shared buffers on 32-byte boundary for copy speed improvement</para></listitem>
+<listitem><para>Align shared buffers on 32-byte boundary for copy speed improvement (Manfred Spraul)</para></listitem>
 </itemizedlist></sect3>
 
 <sect3><title>Server Configuration</title>
