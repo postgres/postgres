@@ -1,0 +1,680 @@
+# Czech translation of pg_scripts messages.
+# Karel Zak <zakkr@zf.jcu.cz>, 2003.
+#
+# $Id: cs.po,v 1.1 2003/07/23 09:36:42 petere Exp $
+#
+msgid ""
+msgstr ""
+"Project-Id-Version: PostgreSQL 7.4\n"
+"POT-Creation-Date: 2003-06-29 12:25+0200\n"
+"PO-Revision-Date: 2003-07-22 13:44+0100\n"
+"Last-Translator: Karel Zak <zakkr@zf.jcu.cz>\n"
+"Language-Team: Karel Zak <zakkr@zf.jcu.cz>\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=iso-8859-2\n"
+"Content-Transfer-Encoding: 8bit\n"
+
+#: createdb.c:101
+#: createdb.c:120
+#: createlang.c:94
+#: createlang.c:115
+#: createlang.c:157
+#: createuser.c:116
+#: createuser.c:131
+#: dropdb.c:83
+#: dropdb.c:92
+#: dropdb.c:100
+#: droplang.c:88
+#: droplang.c:109
+#: droplang.c:151
+#: dropuser.c:83
+#: dropuser.c:98
+#: clusterdb.c:94
+#: clusterdb.c:109
+#: vacuumdb.c:110
+#: vacuumdb.c:125
+#, c-format
+msgid "Try '%s --help' for more information.\n"
+msgstr "Zkuste '%s --help' pro více informací.\n"
+
+#: createdb.c:118
+#: createlang.c:113
+#: createuser.c:129
+#: dropdb.c:98
+#: dropuser.c:96
+#: clusterdb.c:107
+#: vacuumdb.c:123
+#, c-format
+msgid "%s: too many command-line arguments (first is '%s')\n"
+msgstr "%s: pøíli¹ mnoho parametrù pøíkazové øádky (první je '%s')\n"
+
+#: createdb.c:128
+#, c-format
+msgid "%s: \"%s\" is not a valid encoding name\n"
+msgstr "%s: \"%s\" není platné jméno kódování\n"
+
+#: createdb.c:170
+#, c-format
+msgid "%s: database creation failed: %s"
+msgstr "%s: tvorba databáze selhala: %s"
+
+#: createdb.c:195
+#, c-format
+msgid "%s: comment creation failed (database was created): %s"
+msgstr "%s: tvorba komentáøe selhala (databáze byla vytvoøena): %s"
+
+#: createdb.c:213
+#, c-format
+msgid ""
+"%s creates a PostgreSQL database.\n"
+"\n"
+msgstr ""
+"%s tvoøí PostgreSQL databázi.\n"
+"\n"
+
+#: createdb.c:214
+#: createlang.c:272
+#: createuser.c:235
+#: dropdb.c:143
+#: droplang.c:241
+#: dropuser.c:143
+#: clusterdb.c:228
+#: vacuumdb.c:252
+msgid "Usage:\n"
+msgstr "Pou¾ití:\n"
+
+#: createdb.c:215
+#, c-format
+msgid "  %s [OPTION]... [DBNAME] [DESCRIPTION]\n"
+msgstr "  %s [PØEPÍNAÈ]... [DATABÁZE] [POPISKA]\n"
+
+#: createdb.c:216
+#: createlang.c:274
+#: createuser.c:237
+#: dropdb.c:145
+#: droplang.c:243
+#: dropuser.c:145
+#: clusterdb.c:230
+#: vacuumdb.c:254
+msgid ""
+"\n"
+"Options:\n"
+msgstr ""
+"\n"
+"Pøepínaè:\n"
+
+#: createdb.c:217
+msgid "  -D, --location=PATH       alternative place to store the database\n"
+msgstr "  -D, --location=CESTA      alternativní místo na ulo¾ení databáze\n"
+
+#: createdb.c:218
+msgid "  -E, --encoding=ENCODING   encoding for the database\n"
+msgstr "  -E, --encoding=KÓDOVÁNÍ   kódování databáze\n"
+
+#: createdb.c:219
+msgid "  -O, --owner=OWNER         database user to own the new database\n"
+msgstr "  -O, --owner=VLASTNÍK         u¾ivatel databáze, který má být vlastníkem nové databáze\n"
+
+#: createdb.c:220
+msgid "  -T, --template=TEMPLATE   template database to copy\n"
+msgstr "  -T, --template=©ABLONA   ¹ablona databáze ke kopírování\n"
+
+#: createdb.c:221
+#: createlang.c:276
+#: createuser.c:246
+#: dropdb.c:146
+#: droplang.c:245
+#: dropuser.c:146
+#: clusterdb.c:234
+msgid "  -e, --echo                show the commands being sent to the server\n"
+msgstr "  -e, --echo                ukazovat pøíkazy posílané na server\n"
+
+#: createdb.c:222
+#: createuser.c:247
+#: dropdb.c:148
+#: dropuser.c:148
+#: clusterdb.c:235
+msgid "  -q, --quiet               don't write any messages\n"
+msgstr "  -q, --quiet               tichý mód\n"
+
+#: createdb.c:223
+#: createlang.c:283
+#: createuser.c:248
+#: dropdb.c:153
+#: droplang.c:251
+#: dropuser.c:153
+#: clusterdb.c:236
+msgid "  --help                    show this help, then exit\n"
+msgstr "  --help                    uká¾e tuto nápovìdu a skonèí\n"
+
+#: createdb.c:224
+#: createlang.c:284
+#: createuser.c:249
+#: dropdb.c:154
+#: droplang.c:252
+#: dropuser.c:154
+#: clusterdb.c:237
+msgid "  --version                 output version information, then exit\n"
+msgstr "  --version                 uká¾e informaci o verzi a skonèí\n"
+
+#: createdb.c:225
+#: createuser.c:250
+#: clusterdb.c:238
+#: vacuumdb.c:265
+msgid ""
+"\n"
+"Connection options:\n"
+msgstr ""
+"\n"
+"Parametry spojení:\n"
+
+#: createdb.c:226
+#: createlang.c:279
+#: createuser.c:251
+#: dropdb.c:149
+#: droplang.c:247
+#: dropuser.c:149
+#: clusterdb.c:239
+#: vacuumdb.c:266
+msgid "  -h, --host=HOSTNAME       database server host or socket directory\n"
+msgstr "  -h, --host=HOSTNAME       jméno databázového serveru nebo adresáøe se soketem\n"
+
+#: createdb.c:227
+#: createlang.c:280
+#: createuser.c:252
+#: dropdb.c:150
+#: droplang.c:248
+#: dropuser.c:150
+#: clusterdb.c:240
+#: vacuumdb.c:267
+msgid "  -p, --port=PORT           database server port\n"
+msgstr "  -p, --port=PORT          port databázového serveru\n"
+
+#: createdb.c:228
+#: createlang.c:281
+#: dropdb.c:151
+#: droplang.c:249
+#: clusterdb.c:241
+#: vacuumdb.c:268
+msgid "  -U, --username=USERNAME   user name to connect as\n"
+msgstr "  -U, --username=U®IVATEL   jméno u¾ivatele pro spojení se serverem\n"
+
+#: createdb.c:229
+#: createlang.c:282
+#: dropdb.c:152
+#: droplang.c:250
+#: clusterdb.c:242
+#: vacuumdb.c:269
+msgid "  -W, --password            prompt for password\n"
+msgstr "  -W, --password            dotaz na heslo\n"
+
+#: createdb.c:230
+msgid ""
+"\n"
+"By default, a database with the same name as the current user is created.\n"
+msgstr ""
+"\n"
+"Implicitnì je vytvoøena databáze stejného jména jako je jméno aktuálního u¾ivatele.\n"
+
+#: createdb.c:231
+#: createlang.c:285
+#: createuser.c:257
+#: dropdb.c:155
+#: droplang.c:253
+#: dropuser.c:155
+#: clusterdb.c:244
+#: vacuumdb.c:271
+msgid ""
+"\n"
+"Report bugs to <pgsql-bugs@postgresql.org>.\n"
+msgstr ""
+"\n"
+"Chyby posílejte do <pgsql-bugs@postgresql.org>.\n"
+
+#: createlang.c:140
+#: droplang.c:134
+msgid "Name"
+msgstr "Jméno"
+
+#: createlang.c:140
+#: droplang.c:134
+msgid "yes"
+msgstr "ano"
+
+#: createlang.c:140
+#: droplang.c:134
+msgid "no"
+msgstr "ne"
+
+#: createlang.c:140
+#: droplang.c:134
+msgid "Trusted?"
+msgstr "Dùvìrný?"
+
+#: createlang.c:147
+#: droplang.c:141
+msgid "Procedural Languages"
+msgstr "Procedurální jazyky"
+
+#: createlang.c:156
+#: droplang.c:150
+#, c-format
+msgid "%s: missing required argument language name\n"
+msgstr "%s: chybí povinný parametr jméno jazyka\n"
+
+#: createlang.c:206
+#, c-format
+msgid "%s: unsupported language \"%s\"\n"
+msgstr "%s: nepodporovaný jazyk \"%s\"\n"
+
+#: createlang.c:207
+msgid "Supported languages are plpgsql, pltcl, pltclu, plperl, plperlu, and plpythonu.\n"
+msgstr "Podporované jazyky jsou plpgsql, pltcl, pltclu, plperl, plperlu a plpythonu.\n"
+
+#: createlang.c:222
+#, c-format
+msgid "%s: language \"%s\" is already installed in database \"%s\"\n"
+msgstr "%s: jazyk \"%s\" je ji¾ v databázi \"%s\" instalován\n"
+
+#: createlang.c:256
+#, c-format
+msgid "%s: language installation failed: %s"
+msgstr "%s: instalace jazyka selhala: %s"
+
+#: createlang.c:271
+#, c-format
+msgid ""
+"%s installs a procedural language into a PostgreSQL database.\n"
+"\n"
+msgstr ""
+"%s instaluji procedurální jazyk do PostgreSQL databáze.\n"
+"\n"
+
+#: createlang.c:273
+#: droplang.c:242
+#, c-format
+msgid "  %s [OPTION]... LANGNAME [DBNAME]\n"
+msgstr "  %s [PØEPÍNAÈ]... JAZYK [DATABÁZE]\n"
+
+#: createlang.c:275
+#: droplang.c:244
+msgid "  -d, --dbname=DBNAME       database to install language in\n"
+msgstr "  -d, --dbname=DATABÁZE       databáze do které bude instalován jazyka\n"
+
+#: createlang.c:277
+#: droplang.c:246
+msgid "  -l, --list                show a list of currently installed languages\n"
+msgstr "  -l, --list                uká¾e seznam ji¾ nainstalovaných jazykù\n"
+
+#: createlang.c:278
+msgid "  -L, --pglib=DIRECTORY     find language interpreter file in DIRECTORY\n"
+msgstr "  -L, --pglib=ADRESÁØ     adresáø s interpretrem jazyka\n"
+
+#: createuser.c:141
+#, c-format
+msgid "%s: user ID must be a positive number\n"
+msgstr "%s: ID u¾ivatele musí být kladné èíslo\n"
+
+#: createuser.c:147
+msgid "Enter name of user to add: "
+msgstr "Vlo¾te jméno nového u¾ivatele: "
+
+#: createuser.c:153
+msgid "Enter password for new user: "
+msgstr "Vlo¾te heslo nového u¾ivatele: "
+
+#: createuser.c:154
+msgid "Enter it again: "
+msgstr "Zadejte znova: "
+
+#: createuser.c:157
+msgid "Passwords didn't match.\n"
+msgstr "Heslo se neshoduje.\n"
+
+#: createuser.c:168
+msgid "Shall the new user be allowed to create databases? (y/n) "
+msgstr "Mìl by mít nový u¾ivatel právo vytváøet databáze? (y/n) "
+
+#: createuser.c:179
+msgid "Shall the new user be allowed to create more new users? (y/n) "
+msgstr "Mìl by mít nový u¾ivatel právo vytváøet dal¹í nové u¾ivatele? (y/n) "
+
+#: createuser.c:218
+#, c-format
+msgid "%s: creation of new user failed: %s"
+msgstr "%s: tvorba nového u¾ivatele selhala: %s"
+
+#: createuser.c:234
+#, c-format
+msgid ""
+"%s creates a new PostgreSQL user.\n"
+"\n"
+msgstr ""
+"%s tvoøí nového PostgreSQL u¾ivatele.\n"
+"\n"
+
+#: createuser.c:236
+#: dropuser.c:144
+#, c-format
+msgid "  %s [OPTION]... [USERNAME]\n"
+msgstr "  %s [PØEPÍNAÈ]... [U®IVATELSKÉ_JMÉNO]\n"
+
+#: createuser.c:238
+msgid "  -a, --adduser             user can add new users\n"
+msgstr "  -a, --adduser             u¾ivatel mù¾e pøidávat dal¹í u¾ivatele\n"
+
+#: createuser.c:239
+msgid "  -A, --no-adduser          user cannot add new users\n"
+msgstr "  -A, --no-adduser          u¾ivatel nemù¾e pøidávat dal¹í u¾ivatele\n"
+
+#: createuser.c:240
+msgid "  -d, --createdb            user can create new databases\n"
+msgstr "  -d, --createdb            u¾ivatel mù¾e vytváøet nové databáze\n"
+
+#: createuser.c:241
+msgid "  -D, --no-createdb         user cannot create databases\n"
+msgstr "  -D, --no-createdb         u¾ivatel nemù¾e vytváøet nové databáze\n"
+
+#: createuser.c:242
+msgid "  -P, --pwprompt            assign a password to new user\n"
+msgstr "  -P, --pwprompt            nastavit heslo pro nového u¾ivatele\n"
+
+#: createuser.c:243
+msgid "  -E, --encrypted           encrypt stored password\n"
+msgstr "  -E, --encrypted           ulo¾it heslo v za¹ifrované podobì\n"
+
+#: createuser.c:244
+msgid "  -N, --unencrypted         do no encrypt stored password\n"
+msgstr "  -N, --unencrypted         ulo¾it heslo v otevøeném tvaru\n"
+
+#: createuser.c:245
+msgid "  -i, --sysid=SYSID         select sysid for new user\n"
+msgstr "  -i, --sysid=SYSID         nastavit systémové ID nového u¾ivatele\n"
+
+#: createuser.c:253
+msgid "  -U, --username=USERNAME   user name to connect as (not the one to create)\n"
+msgstr "  -U, --username=U®IVATEL   jméno u¾ivatele pro spojení (ne pro tvorbu)\n"
+
+#: createuser.c:254
+#: dropuser.c:152
+msgid "  -W, --password            prompt for password to connect\n"
+msgstr "  -W, --password            dotázat se na heslo pro spojení\n"
+
+#: createuser.c:255
+msgid ""
+"\n"
+"If one of -a, -A, -d, -D, and USERNAME is not specified, you will\n"
+"be prompted interactively.\n"
+msgstr ""
+"\n"
+"Je-li -a, -A, -d nebo -D specifikováno a u¾ivatelské jméno ne, bude\n"
+"dotázán interaktivnì.\n"
+
+#: dropdb.c:91
+#, c-format
+msgid "%s: missing required argument database name\n"
+msgstr "%s: chybí vy¾adovaný parametr databázové jméno\n"
+
+#: dropdb.c:108
+#, c-format
+msgid "Database \"%s\" will be permanently deleted.\n"
+msgstr "Databáze \"%s\" bude odstranìna.\n"
+
+#: dropdb.c:109
+#: dropuser.c:110
+msgid "Are you sure? (y/n) "
+msgstr "Urèitì? (a/n) "
+
+#: dropdb.c:126
+#, c-format
+msgid "%s: database removal failed: %s"
+msgstr "%s: odstraòování databáze selhalo: %s"
+
+#: dropdb.c:142
+#, c-format
+msgid ""
+"%s removes a PostgreSQL database.\n"
+"\n"
+msgstr ""
+"%s odstraòuje PostgreSQL databázi.\n"
+"\n"
+
+#: dropdb.c:144
+#, c-format
+msgid "  %s [OPTION]... DBNAME\n"
+msgstr "  %s [PØEPÍNAÈ]... DATABÁZE\n"
+
+#: dropdb.c:147
+#: dropuser.c:147
+msgid "  -i, --interactive         prompt before deleting anything\n"
+msgstr "  -i, --interactive         interaktivní mód\n"
+
+#: droplang.c:107
+#, c-format
+msgid "%s: too many command line options (first is '%s')\n"
+msgstr "%s: pøíli¹ mnoho pøepínaèù pøíkazové øádky (první je '%s')\n"
+
+#: droplang.c:169
+#, c-format
+msgid "%s: language \"%s\" is not installed in database \"%s\"\n"
+msgstr "%s: jazyk \"%s\" není instalován v databázi \"%s\"\n"
+
+#: droplang.c:185
+#, c-format
+msgid "%s: There are %s functions declared in language \"%s\".  Language not removed.\n"
+msgstr "%s: Je definována funkce %s v jazyce \"%s\".  Jazyk nemù¾e být odstranìn.\n"
+
+#: droplang.c:226
+#, c-format
+msgid "%s: language removal failed: %s"
+msgstr "%s: odstraòování jazyka selhalo: %s"
+
+#: droplang.c:240
+#, c-format
+msgid ""
+"%s removes a procedural language from a database.\n"
+"\n"
+msgstr ""
+"%s odstraòuje procedurální jazyk z databáze.\n"
+"\n"
+
+#: dropuser.c:103
+msgid "Enter name of user to drop: "
+msgstr "Vlo¾te u¾ivatelské jméno pro odstranìní: "
+
+#: dropuser.c:109
+#, c-format
+msgid "User \"%s\" will be permanently deleted.\n"
+msgstr "U¾ivatel \"%s\" bude odstranìn.\n"
+
+#: dropuser.c:126
+#, c-format
+msgid "%s: deletion of user %s failed: %s"
+msgstr "%s: odstraòování u¾ivatele %s selhalo: %s"
+
+#: dropuser.c:142
+#, c-format
+msgid ""
+"%s removes a PostgreSQL user.\n"
+"\n"
+msgstr ""
+"%s odstraòuje PostgreSQL u¾ivatele.\n"
+"\n"
+
+#: dropuser.c:151
+msgid "  -U, --username=USERNAME   user name to connect as (not the one to drop)\n"
+msgstr "  -U, --username=U®IVATEL   jméno u¾ivatele pro spojení (ne pro odstranìní)\n"
+
+#: clusterdb.c:117
+#, c-format
+msgid "%s: cannot cluster all databases and a specific one at the same time\n"
+msgstr "%s: nelze vytvoøit cluster ve v¹ech databázích a zároveò specifikovat jen jednu\n"
+
+#: clusterdb.c:123
+#, c-format
+msgid "%s: cannot cluster a specific table in all databases\n"
+msgstr "%s: nelze vytvoøit cluster pro po¾adovanou tabulku ve v¹ech databázích\n"
+
+#: clusterdb.c:178
+#, c-format
+msgid "%s: clustering of table \"%s\" in database \"%s\" failed: %s"
+msgstr "%s: vytváøení clusteru tabulky \"%s\" v databázi \"%s\" selhalo: %s"
+
+#: clusterdb.c:181
+#, c-format
+msgid "%s: clustering of database \"%s\" failed: %s"
+msgstr "%s: vytváøení clusterù databáze \"%s\" selhalo: %s"
+
+#: clusterdb.c:213
+#, c-format
+msgid "%s: clustering database \"%s\"\n"
+msgstr "%s: provádí se cluster databáze \"%s\"\n"
+
+#: clusterdb.c:227
+#, c-format
+msgid "%s clusters all previously clustered tables in a database.\n"
+msgstr "%s vytváøí cluster v¹ech ji¾ døíve clusterovaných tabulek v databázi.\n"
+
+#: clusterdb.c:229
+#: vacuumdb.c:253
+#, c-format
+msgid "  %s [OPTION]... [DBNAME]\n"
+msgstr "  %s [PØEPÍNAÈ]... [DATABÁZE]\n"
+
+#: clusterdb.c:231
+msgid "  -a, --all                 cluster all databases\n"
+msgstr "  -a, --all                 clusterovat v¹echny databáze\n"
+
+#: clusterdb.c:232
+msgid "  -d, --dbname=DBNAME       database to cluster\n"
+msgstr "  -d, --dbname=DATABÁZE       databáze pro cluster\n"
+
+#: clusterdb.c:233
+msgid "  -t, --table=TABLE         cluster specific table only"
+msgstr "  -t, --table=TABULKA         vytvoøit cluster pro danou tabulku"
+
+#: clusterdb.c:243
+msgid ""
+"\n"
+"Read the description of the SQL command CLUSTER for details.\n"
+msgstr ""
+"\n"
+"Pro detaily ètìte popis SQL pøíkazu CLUSTER.\n"
+
+#: vacuumdb.c:133
+#, c-format
+msgid "%s: cannot vacuum all databases and a specific one at the same time\n"
+msgstr "%s: nelze provádìt vacuum u v¹ech databází a zároveò specifikovat jen jednu\n"
+
+#: vacuumdb.c:139
+#, c-format
+msgid "%s: cannot vacuum a specific table in all databases\n"
+msgstr "%s: nelze provést vacuum specifikované tabulky ve v¹ech databázích\n"
+
+#: vacuumdb.c:201
+#, c-format
+msgid "%s: vacuuming of table \"%s\" in database \"%s\" failed: %s"
+msgstr "%s: provádìné vacuum tabulky \"%s\" v databázi \"%s\" selhalo: %s"
+
+#: vacuumdb.c:204
+#, c-format
+msgid "%s: vacuuming of database \"%s\" failed: %s"
+msgstr "%s: provádìné vacuum databáze \"%s\" selhalo: %s"
+
+#: vacuumdb.c:237
+#, c-format
+msgid "%s: vacuuming database \"%s\"\n"
+msgstr "%s: provádí se vacuum databáze \"%s\"\n"
+
+#: vacuumdb.c:251
+#, c-format
+msgid ""
+"%s cleans and analyzes a PostgreSQL database.\n"
+"\n"
+msgstr ""
+"%s proèi¹»uje a analyzuje a PostgreSQL databáze.\n"
+"\n"
+
+#: vacuumdb.c:255
+msgid "  -a, --all                       vacuum all databases\n"
+msgstr "  -a, --all                       provést vacuum u v¹ech databází\n"
+
+#: vacuumdb.c:256
+msgid "  -d, --dbname=DBNAME             database to vacuum\n"
+msgstr "  -d, --dbname=DATABÁZE             jméno databáze k provedení pøíkazu vacuum\n"
+
+#: vacuumdb.c:257
+msgid "  -t, --table='TABLE[(COLUMNS)]'  vacuum specific table only\n"
+msgstr "  -t, --table='TABULKA[(SLOUPCE)]'  provést vacuum pouze u specifikované tabulky\n"
+
+#: vacuumdb.c:258
+msgid "  -f, --full                      do full vacuuming\n"
+msgstr "  -f, --full                      provést plné vacuum\n"
+
+#: vacuumdb.c:259
+msgid "  -z, --analyze                   update optimizer hints\n"
+msgstr "  -z, --analyze                   update informací pou¾ívaných pro optimalizaci dotazù\n"
+
+#: vacuumdb.c:260
+msgid "  -e, --echo                      show the commands being sent to the server\n"
+msgstr "  -e, --echo                      ukázat pøíkazy posílané na server\n"
+
+#: vacuumdb.c:261
+msgid "  -q, --quiet                     don't write any messages\n"
+msgstr "  -q, --quiet                     tichý mód\n"
+
+#: vacuumdb.c:262
+msgid "  -v, --verbose                   write a lot of output\n"
+msgstr "  -v, --verbose                   vypisovat více informací\n"
+
+#: vacuumdb.c:263
+msgid "  --help                          show this help, then exit\n"
+msgstr "  --help                          uká¾e tento text a skonèí\n"
+
+#: vacuumdb.c:264
+msgid "  --version                       output version information, then exit\n"
+msgstr "  --version                       uká¾e informace o verzi a skonèí\n"
+
+#: vacuumdb.c:270
+msgid ""
+"\n"
+"Read the description of the SQL command VACUUM for details.\n"
+msgstr ""
+"\n"
+"Pro detaily ètìte popis SQL pøíkazu VACUUM.\n"
+
+#: common.c:88
+#: common.c:114
+msgid "Password: "
+msgstr "Heslo: "
+
+#: common.c:101
+#, c-format
+msgid "%s: could not connect to database %s\n"
+msgstr "%s: nelze navázat spojení s databází %s\n"
+
+#: common.c:124
+#, c-format
+msgid "%s: could not connect to database %s: %s"
+msgstr "%s: nelze navázat spojení s databází %s: %s"
+
+#: common.c:148
+#, c-format
+msgid "%s: query failed: %s"
+msgstr "%s: dotaz selhal: %s"
+
+#: common.c:149
+#, c-format
+msgid "%s: query was: %s\n"
+msgstr "%s: dotaz byls: %s\n"
+
+#. translator: Make sure the (y/n) prompts match the translation of this.
+#: common.c:163
+msgid "y"
+msgstr "a"
+
+#. translator: Make sure the (y/n) prompts match the translation of this.
+#: common.c:165
+msgid "n"
+msgstr "n"
+

@@ -1,0 +1,230 @@
+# Czech translation of pg_controldata messages.
+# Karel Zak <zakkr@zf.jcu.cz>, 2003.
+#
+# $Id: cs.po,v 1.1 2003/07/23 09:34:56 petere Exp $
+#
+msgid ""
+msgstr ""
+"Project-Id-Version: PostgreSQL 7.4\n"
+"POT-Creation-Date: 2003-06-29 12:25+0200\n"
+"PO-Revision-Date: 2003-07-12 23:20-0000\n"
+"Last-Translator: Karel Zak <zakkr@zf.jcu.cz>\n"
+"Language-Team: Karel Zak <zakkr@zf.jcu.cz>\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=iso-8859-2\n"
+"Content-Transfer-Encoding: 8bit\n"
+
+#: pg_controldata.c:31
+#, c-format
+msgid ""
+"Usage:\n"
+"  %s [OPTION]\n"
+"\n"
+"Options:\n"
+"  DATADIR        show cluster control information for DATADIR\n"
+"  -?, --help     display this help and exit\n"
+"  -V, --version  display pg_controldata's version and exit\n"
+"\n"
+msgstr ""
+"Pou¾ití:\n"
+"   %s [PØEPÍNAÈ]\n"
+"\n"
+"Pøepínaèe:\n"
+" ADRESÁØ        uká¾e kontrolní informace pro ADRESÁØ\n"
+" -?, --help     uká¾e tuto nápovìdu a skonèí\n"
+" -V, --version  uká¾e verzi tohoto programu a skonèí\n"
+"\n"
+
+#: pg_controldata.c:40
+#, c-format
+msgid "%s displays PostgreSQL database cluster control information.\n"
+msgstr "%s uká¾e kontrolní informace o PostgreSQL databázi.\n"
+
+#: pg_controldata.c:41
+msgid ""
+"If no data directory is specified, the environment variable PGDATA\n"
+"is used.\n"
+"\n"
+msgstr ""
+"Není-li specifikován datový adresáø je pou¾ita promìnná prostøedí\n"
+"PGDATA.\n"
+"\n"
+
+#: pg_controldata.c:42
+msgid "Report bugs to <pgsql-bugs@postgresql.org>.\n"
+msgstr "Chyby posílejte do <pgsql-bugs@postgresql.org>.\n"
+
+#: pg_controldata.c:52
+msgid "starting up"
+msgstr "startování"
+
+#: pg_controldata.c:54
+msgid "shut down"
+msgstr "ukonèení"
+
+#: pg_controldata.c:56
+msgid "shutting down"
+msgstr "ukonèování"
+
+#: pg_controldata.c:58
+msgid "in recovery"
+msgstr "obnovuje se"
+
+#: pg_controldata.c:60
+msgid "in production"
+msgstr "v provozu"
+
+#: pg_controldata.c:62
+msgid "unrecognized status code"
+msgstr "neoèekávaný stavový kód"
+
+#: pg_controldata.c:107
+#, c-format
+msgid "%s: no data directory specified\n"
+msgstr "%s: není specifikován datový adresáø\n"
+
+#: pg_controldata.c:108
+#, c-format
+msgid "Try '%s --help' for more information.\n"
+msgstr "Zkuste '%s --help' pro více informací.\n"
+
+#: pg_controldata.c:116
+#, c-format
+msgid "%s: could not open file \"%s\" for reading (%s)\n"
+msgstr "%s: nelze otevøít soubor \"%s\" pro ètení (%s)\n"
+
+#: pg_controldata.c:123
+#, c-format
+msgid "%s: could not read file \"%s\" (%s)\n"
+msgstr "%s: nelze èíst soubor \"%s\" (%s)\n"
+
+#: pg_controldata.c:137
+msgid ""
+"WARNING: Calculated CRC checksum does not match value stored in file.\n"
+"Either the file is corrupt, or it has a different layout than this program\n"
+"is expecting.  The results below are untrustworthy.\n"
+"\n"
+msgstr ""
+"UPOZORNÌNÍ: Spoèítaný CRC kontrolní souèet nesouhlasí s hodnotou ulo¾enou v souboru.\n"
+"Buï je soubor po¹kozen nebo má jinou úpravu ne¾ tento program\n"
+"oèekává.  Ní¾e uvedené výsledky jsou nedùvìryhodné.\n"
+"\n"
+
+#: pg_controldata.c:150
+#, c-format
+msgid "pg_control version number:            %u\n"
+msgstr "Èíslo verze pg_controlu:            %u\n"
+
+#: pg_controldata.c:151
+#, c-format
+msgid "Catalog version number:               %u\n"
+msgstr "Èíslo verze katalogu:               %u\n"
+
+#: pg_controldata.c:152
+#, c-format
+msgid "Database cluster state:               %s\n"
+msgstr "Status seskupení databáze:               %s\n"
+
+#: pg_controldata.c:153
+#, c-format
+msgid "pg_control last modified:             %s\n"
+msgstr "Poslední modifikace pg_controlu:             %s\n"
+
+#: pg_controldata.c:154
+#, c-format
+msgid "Current log file ID:                  %u\n"
+msgstr "ID souèasného log souboru:                  %u\n"
+
+#: pg_controldata.c:155
+#, c-format
+msgid "Next log file segment:                %u\n"
+msgstr "Následující segment log souboru:                %u\n"
+
+#: pg_controldata.c:156
+#, c-format
+msgid "Latest checkpoint location:           %X/%X\n"
+msgstr "Poslední umístìní kontrolního bodu:           %X/%X\n"
+
+#: pg_controldata.c:158
+#, c-format
+msgid "Prior checkpoint location:            %X/%X\n"
+msgstr "Pøede¹lé umístìní kontrolního bodu:            %X/%X\n"
+
+#: pg_controldata.c:160
+#, c-format
+msgid "Latest checkpoint's REDO location:    %X/%X\n"
+msgstr "Poslednìj¹í umístìní REDO kontrolního bodu:    %X/%X\n"
+
+#: pg_controldata.c:162
+#, c-format
+msgid "Latest checkpoint's UNDO location:    %X/%X\n"
+msgstr "Poslední umístìní UNDO kontrolního bodu:    %X/%X\n"
+
+#: pg_controldata.c:164
+#, c-format
+msgid "Latest checkpoint's StartUpID:        %u\n"
+msgstr "Poslední umístìní StartUpID kontrolního bodu:        %u\n"
+
+#: pg_controldata.c:165
+#, c-format
+msgid "Latest checkpoint's NextXID:          %u\n"
+msgstr "Poslední umístìní NextXID kontrolního bodu:          %u\n"
+
+#: pg_controldata.c:166
+#, c-format
+msgid "Latest checkpoint's NextOID:          %u\n"
+msgstr "Poslední umístìní NextOID kontrolního bodu:          %u\n"
+
+#: pg_controldata.c:167
+#, c-format
+msgid "Time of latest checkpoint:            %s\n"
+msgstr "Èas posledního kontrolního bodu:            %s\n"
+
+#: pg_controldata.c:168
+#, c-format
+msgid "Database block size:                  %u\n"
+msgstr "Velikost databázového bloku:                  %u\n"
+
+#: pg_controldata.c:169
+#, c-format
+msgid "Blocks per segment of large relation: %u\n"
+msgstr "Blokù v segmentu velké relace: %u\n"
+
+#: pg_controldata.c:170
+#, c-format
+msgid "Maximum length of identifiers:        %u\n"
+msgstr "Maximální délka identifikátorù:        %u\n"
+
+#: pg_controldata.c:171
+#, c-format
+msgid "Maximum number of function arguments: %u\n"
+msgstr "Maximální poèet argumentù funkcí: %u\n"
+
+#: pg_controldata.c:172
+#, c-format
+msgid "Date/time type storage:               %s\n"
+msgstr "Zpùsob ulo¾ení typu date/time:               %s\n"
+
+#: pg_controldata.c:173
+msgid "64-bit integers"
+msgstr "64-bitová èísla"
+
+#: pg_controldata.c:173
+msgid "Floating point"
+msgstr "Plovoucí èárka"
+
+#: pg_controldata.c:174
+#, c-format
+msgid "Maximum length of locale name:        %u\n"
+msgstr "Maximální délka jména locale:        %u\n"
+
+#: pg_controldata.c:175
+#, c-format
+msgid "LC_COLLATE:                           %s\n"
+msgstr "LC_COLLATE (porovnávání øetìzcù):                           %s\n"
+
+#: pg_controldata.c:176
+#, c-format
+msgid "LC_CTYPE:                             %s\n"
+msgstr "LC_CTYPE (typy znakù):                             %s\n"
+
