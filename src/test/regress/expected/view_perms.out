@@ -1,0 +1,101 @@
+QUERY: CREATE FUNCTION viewperms_nextid () RETURNS int4 AS '
+	SELECT max(usesysid) + 1 AS ret FROM pg_user;
+    ' LANGUAGE 'sql';
+QUERY: CREATE FUNCTION viewperms_testid () RETURNS oid AS '
+    	SELECT oid(textin(int4out(usesysid))) FROM pg_user
+		WHERE usename = ''viewperms_testuser'';
+    ' LANGUAGE 'sql';
+QUERY: INSERT INTO pg_shadow VALUES (
+	'viewperms_testuser',
+	viewperms_nextid(),
+	false, true, false, true,
+	NULL, NULL
+    );
+QUERY: CREATE TABLE viewperms_t1 (
+    	a	int4,
+	b	text
+    );
+QUERY: CREATE TABLE viewperms_t2 (
+    	a	int4,
+	b	text
+    );
+QUERY: INSERT INTO viewperms_t1 VALUES (1, 'one');
+QUERY: INSERT INTO viewperms_t1 VALUES (2, 'two');
+QUERY: INSERT INTO viewperms_t1 VALUES (3, 'three');
+QUERY: INSERT INTO viewperms_t2 VALUES (1, 'one');
+QUERY: INSERT INTO viewperms_t2 VALUES (2, 'two');
+QUERY: INSERT INTO viewperms_t2 VALUES (3, 'three');
+QUERY: CREATE VIEW viewperms_v1 AS SELECT * FROM viewperms_t1;
+QUERY: CREATE VIEW viewperms_v2 AS SELECT * FROM viewperms_t2;
+QUERY: CREATE VIEW viewperms_v3 AS SELECT * FROM viewperms_t1;
+QUERY: CREATE VIEW viewperms_v4 AS SELECT * FROM viewperms_t2;
+QUERY: CREATE VIEW viewperms_v5 AS SELECT * FROM viewperms_v1;
+QUERY: CREATE VIEW viewperms_v6 AS SELECT * FROM viewperms_v4;
+QUERY: CREATE VIEW viewperms_v7 AS SELECT * FROM viewperms_v2;
+QUERY: UPDATE pg_class SET relowner = viewperms_testid()
+	WHERE relname = 'viewperms_t1';
+QUERY: UPDATE pg_class SET relowner = viewperms_testid()
+	WHERE relname = 'viewperms_v3';
+QUERY: UPDATE pg_class SET relowner = viewperms_testid()
+	WHERE relname = 'viewperms_v4';
+QUERY: UPDATE pg_class SET relowner = viewperms_testid()
+	WHERE relname = 'viewperms_v7';
+QUERY: SELECT * FROM viewperms_v1;
+a|b    
+-+-----
+1|one  
+2|two  
+3|three
+(3 rows)
+
+QUERY: SELECT * FROM viewperms_v2;
+a|b    
+-+-----
+1|one  
+2|two  
+3|three
+(3 rows)
+
+QUERY: SELECT * FROM viewperms_v3;
+a|b    
+-+-----
+1|one  
+2|two  
+3|three
+(3 rows)
+
+QUERY: SELECT * FROM viewperms_v4;
+ERROR:  viewperms_t2: Permission denied.
+QUERY: SELECT * FROM viewperms_v5;
+a|b    
+-+-----
+1|one  
+2|two  
+3|three
+(3 rows)
+
+QUERY: SELECT * FROM viewperms_v6;
+ERROR:  viewperms_t2: Permission denied.
+QUERY: SELECT * FROM viewperms_v7;
+ERROR:  viewperms_v2: Permission denied.
+QUERY: GRANT SELECT ON viewperms_v2 TO PUBLIC;
+QUERY: SELECT * FROM viewperms_v7;
+a|b    
+-+-----
+1|one  
+2|two  
+3|three
+(3 rows)
+
+QUERY: DROP VIEW viewperms_v1;
+QUERY: DROP VIEW viewperms_v2;
+QUERY: DROP VIEW viewperms_v3;
+QUERY: DROP VIEW viewperms_v4;
+QUERY: DROP VIEW viewperms_v5;
+QUERY: DROP VIEW viewperms_v6;
+QUERY: DROP VIEW viewperms_v7;
+QUERY: DROP TABLE viewperms_t1;
+QUERY: DROP TABLE viewperms_t2;
+QUERY: DROP FUNCTION viewperms_nextid ();
+QUERY: DROP FUNCTION viewperms_testid ();
+QUERY: DELETE FROM pg_shadow WHERE usename = 'viewperms_testuser';
