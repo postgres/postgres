@@ -4,7 +4,7 @@
 #    Makefile for access/common
 #
 # IDENTIFICATION
-#    $Header: /cvsroot/pgsql/src/backend/access/common/Makefile,v 1.4 1996/11/01 09:41:33 scrappy Exp $
+#    $Header: /cvsroot/pgsql/src/backend/access/common/Makefile,v 1.5 1996/11/03 09:06:42 scrappy Exp $
 #
 #-------------------------------------------------------------------------
 
@@ -14,7 +14,7 @@ include ../../../Makefile.global
 INCLUDE_OPT = -I../../port/$(PORTNAME) \
               -I../../../include
 
-CFLAGS+=$(INCLUDE_OPT) -Wall -Werror
+CFLAGS+=$(INCLUDE_OPT) 
 
 OBJS = heaptuple.o heapvalid.o indextuple.o indexvalid.o printtup.o \
        scankey.o tupdesc.o  
