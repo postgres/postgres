@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/parser/parse_expr.c,v 1.90 2001/02/14 21:35:04 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/parser/parse_expr.c,v 1.91 2001/02/16 03:16:58 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -383,6 +383,11 @@ transformExpr(ParseState *pstate, Node *expr, int precedence)
 						lexpr = lfirst(left_list);
 						left_list = lnext(left_list);
 
+						/*
+						 * It's OK to use oper() not compatible_oper() here,
+						 * because make_subplan() will insert type coercion
+						 * calls if needed.
+						 */
 						optup = oper(op,
 									 exprType(lexpr),
 									 exprType(tent->expr),

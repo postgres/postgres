@@ -9,7 +9,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/optimizer/path/indxpath.c,v 1.101 2001/01/24 19:42:57 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/optimizer/path/indxpath.c,v 1.102 2001/02/16 03:16:57 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -878,7 +878,7 @@ indexable_operator(Expr *clause, Oid opclass, Oid relam,
 	 * (In theory this might find a non-semantically-comparable operator,
 	 * but in practice that seems pretty unlikely for binary-compatible types.)
 	 */
-	new_op = oper_oid(opname, indexkeytype, indexkeytype, true);
+	new_op = compatible_oper_opid(opname, indexkeytype, indexkeytype, true);
 
 	if (OidIsValid(new_op))
 	{

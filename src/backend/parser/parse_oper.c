@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/parser/parse_oper.c,v 1.46 2001/01/24 19:43:02 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/parser/parse_oper.c,v 1.47 2001/02/16 03:16:58 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -40,15 +40,15 @@ static void unary_op_error(char *op, Oid arg, bool is_left_op);
 
 /* Select an ordering operator for the given datatype */
 Oid
-any_ordering_op(Oid restype)
+any_ordering_op(Oid argtype)
 {
 	Oid			order_opid;
 
-	order_opid = oper_oid("<", restype, restype, true);
+	order_opid = compatible_oper_opid("<", argtype, argtype, true);
 	if (!OidIsValid(order_opid))
 		elog(ERROR, "Unable to identify an ordering operator '%s' for type '%s'"
 			 "\n\tUse an explicit ordering operator or modify the query",
-			 "<", typeidTypeName(restype));
+			 "<", typeidTypeName(argtype));
 	return order_opid;
 }
 
@@ -57,6 +57,15 @@ Oid
 oprid(Operator op)
 {
 	return op->t_data->t_oid;
+}
+
+/* given operator tuple, return the underlying function's OID */
+Oid
+oprfuncid(Operator op)
+{
+	Form_pg_operator	pgopform = (Form_pg_operator) GETSTRUCT(op);
+
+	return pgopform->oprcode;
 }
 
 
@@ -119,7 +128,7 @@ binary_oper_get_candidates(char *opname,
 
 
 /* oper_select_candidate()
- * Given the input argtype array and more than one candidate
+ * Given the input argtype array and one or more candidates
  * for the function argtype array, attempt to resolve the conflict.
  * Returns the selected argtype array if the conflict can be resolved,
  * otherwise returns NULL.
@@ -593,40 +602,32 @@ oper_inexact(char *op, Oid arg1, Oid arg2)
 	if (ncandidates == 0)
 		return NULL;
 
-	/* Or found exactly one? Then proceed... */
-	else if (ncandidates == 1)
+	/* Otherwise, check for compatible datatypes, and then try to resolve
+	 * the conflict if more than one candidate remains.
+	 */
+	inputOids[0] = arg1;
+	inputOids[1] = arg2;
+	targetOids = oper_select_candidate(2, inputOids, candidates);
+	if (targetOids != NULL)
 	{
 		tup = SearchSysCache(OPERNAME,
 							 PointerGetDatum(op),
-							 ObjectIdGetDatum(candidates->args[0]),
-							 ObjectIdGetDatum(candidates->args[1]),
+							 ObjectIdGetDatum(targetOids[0]),
+							 ObjectIdGetDatum(targetOids[1]),
 							 CharGetDatum('b'));
-		Assert(HeapTupleIsValid(tup));
 	}
-
-	/* Otherwise, multiple operators of the desired types found... */
 	else
-	{
-		inputOids[0] = arg1;
-		inputOids[1] = arg2;
-		targetOids = oper_select_candidate(2, inputOids, candidates);
-		if (targetOids != NULL)
-		{
-			tup = SearchSysCache(OPERNAME,
-								 PointerGetDatum(op),
-								 ObjectIdGetDatum(targetOids[0]),
-								 ObjectIdGetDatum(targetOids[1]),
-								 CharGetDatum('b'));
-		}
-		else
-			tup = NULL;
-	}
+		tup = NULL;
 	return (Operator) tup;
 }
 
 
 /* oper() -- search for a binary operator
  * Given operator name, types of arg1 and arg2, return oper struct.
+ *
+ * IMPORTANT: the returned operator (if any) is only promised to be
+ * coercion-compatible with the input datatypes.  Do not use this if
+ * you need an exact- or binary-compatible match; see compatible_oper.
  *
  * If no matching operator found, return NULL if noError is true,
  * raise an error if it is false.
@@ -653,22 +654,76 @@ oper(char *opname, Oid ltypeId, Oid rtypeId, bool noError)
 	return (Operator) NULL;
 }
 
-/* oper_oid() -- get OID of a binary operator
+/* compatible_oper()
+ *	given an opname and input datatypes, find a compatible binary operator
+ *
+ *	This is tighter than oper() because it will not return an operator that
+ *	requires coercion of the input datatypes (but binary-compatible operators
+ *	are accepted).  Otherwise, the semantics are the same.
+ */
+Operator
+compatible_oper(char *op, Oid arg1, Oid arg2, bool noError)
+{
+	Operator	optup;
+	Form_pg_operator	opform;
+
+	/* oper() will find the best available match */
+	optup = oper(op, arg1, arg2, noError);
+	if (optup == (Operator) NULL)
+		return (Operator) NULL;	/* must be noError case */
+
+	/* but is it good enough? */
+	opform = (Form_pg_operator) GETSTRUCT(optup);
+	if ((opform->oprleft == arg1 ||
+		 IS_BINARY_COMPATIBLE(opform->oprleft, arg1)) &&
+		(opform->oprright == arg2 ||
+		 IS_BINARY_COMPATIBLE(opform->oprright, arg2)))
+		return optup;
+
+	if (!noError)
+		op_error(op, arg1, arg2);
+
+	return (Operator) NULL;
+}
+
+/* compatible_oper_opid() -- get OID of a binary operator
  *
  * This is a convenience routine that extracts only the operator OID
- * from the result of oper().  InvalidOid is returned if the lookup
- * fails and noError is true.
+ * from the result of compatible_oper().  InvalidOid is returned if the
+ * lookup fails and noError is true.
  */
 Oid
-oper_oid(char *op, Oid arg1, Oid arg2, bool noError)
+compatible_oper_opid(char *op, Oid arg1, Oid arg2, bool noError)
 {
 	Operator	optup;
 	Oid			result;
 
-	optup = oper(op, arg1, arg2, noError);
+	optup = compatible_oper(op, arg1, arg2, noError);
 	if (optup != NULL)
 	{
 		result = oprid(optup);
+		ReleaseSysCache(optup);
+		return result;
+	}
+	return InvalidOid;
+}
+
+/* compatible_oper_funcid() -- get OID of a binary operator's function
+ *
+ * This is a convenience routine that extracts only the function OID
+ * from the result of compatible_oper().  InvalidOid is returned if the
+ * lookup fails and noError is true.
+ */
+Oid
+compatible_oper_funcid(char *op, Oid arg1, Oid arg2, bool noError)
+{
+	Operator	optup;
+	Oid			result;
+
+	optup = compatible_oper(op, arg1, arg2, noError);
+	if (optup != NULL)
+	{
+		result = oprfuncid(optup);
 		ReleaseSysCache(optup);
 		return result;
 	}
@@ -738,6 +793,10 @@ unary_oper_get_candidates(char *opname,
 
 /* Given unary right operator (operator on right), return oper struct
  *
+ * IMPORTANT: the returned operator (if any) is only promised to be
+ * coercion-compatible with the input datatype.  Do not use this if
+ * you need an exact- or binary-compatible match.
+ *
  * Always raises error on failure.
  *
  * NOTE: on success, the returned object is a syscache entry.  The caller
@@ -764,16 +823,11 @@ right_oper(char *op, Oid arg)
 		ncandidates = unary_oper_get_candidates(op, &candidates, 'r');
 		if (ncandidates == 0)
 			unary_op_error(op, arg, FALSE);
-		else if (ncandidates == 1)
-		{
-			tup = SearchSysCache(OPERNAME,
-								 PointerGetDatum(op),
-								 ObjectIdGetDatum(candidates->args[0]),
-								 ObjectIdGetDatum(InvalidOid),
-								 CharGetDatum('r'));
-		}
 		else
 		{
+			/* We must run oper_select_candidate even if only one candidate,
+			 * otherwise we may falsely return a non-type-compatible operator.
+			 */
 			targetOid = oper_select_candidate(1, &arg, candidates);
 			if (targetOid != NULL)
 				tup = SearchSysCache(OPERNAME,
@@ -792,6 +846,10 @@ right_oper(char *op, Oid arg)
 
 
 /* Given unary left operator (operator on left), return oper struct
+ *
+ * IMPORTANT: the returned operator (if any) is only promised to be
+ * coercion-compatible with the input datatype.  Do not use this if
+ * you need an exact- or binary-compatible match.
  *
  * Always raises error on failure.
  *
@@ -819,16 +877,11 @@ left_oper(char *op, Oid arg)
 		ncandidates = unary_oper_get_candidates(op, &candidates, 'l');
 		if (ncandidates == 0)
 			unary_op_error(op, arg, TRUE);
-		else if (ncandidates == 1)
-		{
-			tup = SearchSysCache(OPERNAME,
-								 PointerGetDatum(op),
-								 ObjectIdGetDatum(InvalidOid),
-								 ObjectIdGetDatum(candidates->args[0]),
-								 CharGetDatum('l'));
-		}
 		else
 		{
+			/* We must run oper_select_candidate even if only one candidate,
+			 * otherwise we may falsely return a non-type-compatible operator.
+			 */
 			targetOid = oper_select_candidate(1, &arg, candidates);
 			if (targetOid != NULL)
 				tup = SearchSysCache(OPERNAME,

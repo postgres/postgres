@@ -46,7 +46,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/executor/nodeAgg.c,v 1.74 2001/02/15 21:47:08 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/executor/nodeAgg.c,v 1.75 2001/02/16 03:16:57 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -909,21 +909,19 @@ ExecInitAgg(Agg *node, EState *estate, Plan *parent)
 			 * (Consider COUNT(*).)
 			 */
 			Oid			inputType = exprType(aggref->target);
-			Operator	eq_operator;
-			Form_pg_operator pgopform;
+			Oid			eq_function;
 
 			peraggstate->inputType = inputType;
 			get_typlenbyval(inputType,
 							&peraggstate->inputtypeLen,
 							&peraggstate->inputtypeByVal);
 
-			eq_operator = oper("=", inputType, inputType, true);
-			if (!HeapTupleIsValid(eq_operator))
+			eq_function = compatible_oper_funcid("=", inputType, inputType,
+												 true);
+			if (!OidIsValid(eq_function))
 				elog(ERROR, "Unable to identify an equality operator for type '%s'",
 					 typeidTypeName(inputType));
-			pgopform = (Form_pg_operator) GETSTRUCT(eq_operator);
-			fmgr_info(pgopform->oprcode, &(peraggstate->equalfn));
-			ReleaseSysCache(eq_operator);
+			fmgr_info(eq_function, &(peraggstate->equalfn));
 			peraggstate->sortOperator = any_ordering_op(inputType);
 			peraggstate->sortstate = NULL;
 		}

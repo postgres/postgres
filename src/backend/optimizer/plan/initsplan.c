@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/optimizer/plan/initsplan.c,v 1.56 2001/01/24 19:42:58 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/optimizer/plan/initsplan.c,v 1.57 2001/02/16 03:16:57 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -617,7 +617,7 @@ process_implied_equality(Query *root, Node *item1, Node *item2,
 	 */
 	ltype = exprType(item1);
 	rtype = exprType(item2);
-	eq_operator = oper("=", ltype, rtype, true);
+	eq_operator = compatible_oper("=", ltype, rtype, true);
 	if (!HeapTupleIsValid(eq_operator))
 	{
 		/*

@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/commands/analyze.c,v 1.13 2001/01/24 19:42:52 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/commands/analyze.c,v 1.14 2001/02/16 03:16:58 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -152,7 +152,6 @@ analyze_rel(Oid relid, List *anal_cols2, int MESSAGE_LEVEL)
 	for (i = 0; i < attr_cnt; i++)
 	{
 		Operator	func_operator;
-		Form_pg_operator pgopform;
 		VacAttrStats *stats;
 
 		stats = &vacattrstats[i];
@@ -167,21 +166,25 @@ analyze_rel(Oid relid, List *anal_cols2, int MESSAGE_LEVEL)
 		stats->best_cnt = stats->guess1_cnt = stats->guess1_hits = stats->guess2_hits = 0;
 		stats->max_cnt = stats->min_cnt = stats->null_cnt = stats->nonnull_cnt = 0;
 
-		func_operator = oper("=", stats->attr->atttypid, stats->attr->atttypid, true);
+		func_operator = compatible_oper("=",
+										stats->attr->atttypid,
+										stats->attr->atttypid,
+										true);
 		if (func_operator != NULL)
 		{
-			pgopform = (Form_pg_operator) GETSTRUCT(func_operator);
-			fmgr_info(pgopform->oprcode, &(stats->f_cmpeq));
+			fmgr_info(oprfuncid(func_operator), &(stats->f_cmpeq));
 			ReleaseSysCache(func_operator);
 		}
 		else
 			stats->f_cmpeq.fn_addr = NULL;
 
-		func_operator = oper("<", stats->attr->atttypid, stats->attr->atttypid, true);
+		func_operator = compatible_oper("<",
+										stats->attr->atttypid,
+										stats->attr->atttypid,
+										true);
 		if (func_operator != NULL)
 		{
-			pgopform = (Form_pg_operator) GETSTRUCT(func_operator);
-			fmgr_info(pgopform->oprcode, &(stats->f_cmplt));
+			fmgr_info(oprfuncid(func_operator), &(stats->f_cmplt));
 			stats->op_cmplt = oprid(func_operator);
 			ReleaseSysCache(func_operator);
 		}
@@ -191,11 +194,13 @@ analyze_rel(Oid relid, List *anal_cols2, int MESSAGE_LEVEL)
 			stats->op_cmplt = InvalidOid;
 		}
 
-		func_operator = oper(">", stats->attr->atttypid, stats->attr->atttypid, true);
+		func_operator = compatible_oper(">",
+										stats->attr->atttypid,
+										stats->attr->atttypid,
+										true);
 		if (func_operator != NULL)
 		{
-			pgopform = (Form_pg_operator) GETSTRUCT(func_operator);
-			fmgr_info(pgopform->oprcode, &(stats->f_cmpgt));
+			fmgr_info(oprfuncid(func_operator), &(stats->f_cmpgt));
 			ReleaseSysCache(func_operator);
 		}
 		else
