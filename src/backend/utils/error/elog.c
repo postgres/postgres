@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/error/elog.c,v 1.87 2001/06/20 18:07:56 petere Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/error/elog.c,v 1.88 2001/08/06 21:55:13 petere Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -720,7 +720,11 @@ static const char *useful_strerror(int errnum)
 	static char	errorstr_buf[48];
 	char	   *str;
 
-	str = strerror(errnum);
+	if (errnum == ERANGE)
+		/* small trick to save creating many regression test result files */
+		str = gettext("Numerical result out of range");
+	else
+		str = strerror(errnum);
 
 	/*
 	 * Some strerror()s return an empty string for out-of-range errno.
