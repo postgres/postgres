@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/libpq.sgml,v 1.48 2000/11/22 01:41:12 momjian Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/libpq.sgml,v 1.49 2000/11/28 06:53:32 momjian Exp $
 -->
 
  <chapter id="libpq-chapter">
@@ -560,16 +560,6 @@ char *PQhost(const PGconn *conn)
          Returns the port of the connection.
 <synopsis>
 char *PQport(const PGconn *conn)
-</synopsis>
-</para>
-</listitem>
-
-<listitem>
-<para>
-<function>PQunixsocket</function>
-         Returns the directory of the Unix-domain socket of the connection.
-<synopsis>
-char *PQunixsocket(const PGconn *conn)
 </synopsis>
 </para>
 </listitem>

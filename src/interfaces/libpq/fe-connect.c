@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/interfaces/libpq/fe-connect.c,v 1.149 2000/11/27 21:12:25 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/interfaces/libpq/fe-connect.c,v 1.150 2000/11/28 06:53:33 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -2625,14 +2625,6 @@ PQport(const PGconn *conn)
 	if (!conn)
 		return (char *) NULL;
 	return conn->pgport;
-}
-
-char *
-PQunixsocket(const PGconn *conn)
-{
-	if (!conn)
-		return (char *) NULL;
-	return conn->pgunixsocket;
 }
 
 char *
