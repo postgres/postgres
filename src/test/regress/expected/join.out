@@ -1802,10 +1802,10 @@ SELECT '' AS "xxx", *
      | 6 | 6 | six   |   
      | 7 | 7 | seven |   
      | 8 | 8 | eight |   
-     |   |   |       |  0
      |   |   | null  |   
      |   | 0 | zero  |   
      |   |   |       |   
+     |   |   |       |  0
 (15 rows)
 
 SELECT '' AS "xxx", *
@@ -1824,10 +1824,10 @@ SELECT '' AS "xxx", *
      | 6 | 6 | six   |   
      | 7 | 7 | seven |   
      | 8 | 8 | eight |   
-     |   |   |       |  0
      |   |   | null  |   
      |   | 0 | zero  |   
      |   |   |       |   
+     |   |   |       |  0
 (15 rows)
 
 SELECT '' AS "xxx", *
