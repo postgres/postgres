@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *    $Header: /cvsroot/pgsql/src/backend/utils/adt/varchar.c,v 1.1.1.1 1996/07/09 06:22:05 scrappy Exp $
+ *    $Header: /cvsroot/pgsql/src/backend/utils/adt/varchar.c,v 1.2 1996/07/15 19:11:23 scrappy Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -68,8 +68,13 @@ bpcharin(char *s, int dummy, int typlen)
 	typlen = len + 4;
     }
     
+#ifndef OPENLINK_PATCHES
     if (len < 1 || len > 4096)
 	elog(WARN, "bpcharin: length of char() must be between 1 and 4096");
+#else
+    if (len > 4096)
+	elog(WARN, "bpcharin: length of char() must be less than 4096");
+#endif
     
     result = (char *) palloc(typlen);
     *(int32*)result = typlen;
@@ -132,8 +137,13 @@ varcharin(char *s, int dummy, int typlen)
 	typlen = len + 4;
     }
     
+#ifndef OPENLINK_PATCHES
     if (len < 1 || len > 4096)
 	elog(WARN, "bpcharin: length of char() must be between 1 and 4096");
+#else
+    if (len > 4096)
+	elog(WARN, "varcharin: length of char() must be less than 4096");
+#endif
     
     result = (char *) palloc(typlen);
     *(int32*)result = typlen;
