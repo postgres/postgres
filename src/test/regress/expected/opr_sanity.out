@@ -83,10 +83,10 @@ oid|oprcode|oid|oprcode
 QUERY: SELECT p1.oid, p1.oprcode, p2.oid, p2.oprcode
 FROM pg_operator AS p1, pg_operator AS p2
 WHERE p1.oprlsortop = p2.oid AND
-    (p1.oprname != '=' OR
+    (p1.oprname != '=' OR p2.oprname != '<' OR
      p1.oprkind != 'b' OR p2.oprkind != 'b' OR
      p1.oprleft != p2.oprleft OR
-     p1.oprright != p2.oprright OR
+     p1.oprleft != p2.oprright OR
      p1.oprresult != 16 OR
      p2.oprresult != 16 OR
      p1.oprrsortop = 0);
@@ -97,9 +97,9 @@ oid|oprcode|oid|oprcode
 QUERY: SELECT p1.oid, p1.oprcode, p2.oid, p2.oprcode
 FROM pg_operator AS p1, pg_operator AS p2
 WHERE p1.oprrsortop = p2.oid AND
-    (p1.oprname != '=' OR
+    (p1.oprname != '=' OR p2.oprname != '<' OR
      p1.oprkind != 'b' OR p2.oprkind != 'b' OR
-     p1.oprleft != p2.oprleft OR
+     p1.oprright != p2.oprleft OR
      p1.oprright != p2.oprright OR
      p1.oprresult != 16 OR
      p2.oprresult != 16 OR

@@ -81,18 +81,18 @@ WHERE p1.oprnegate = p2.oid AND
      p2.oprresult != 16 OR
      p1.oid != p2.oprnegate);
 
--- Look for sort operators that don't match.
--- A sort link normally leads from an '='
--- operator to the matching '<' operator.
--- Sort links are not commutative.
+-- Look for mergesort operators that don't match.
+-- A mergesort link leads from an '=' operator to the
+-- sort operator ('<' operator) that's appropriate for
+-- its left-side or right-side data type.
 
 SELECT p1.oid, p1.oprcode, p2.oid, p2.oprcode
 FROM pg_operator AS p1, pg_operator AS p2
 WHERE p1.oprlsortop = p2.oid AND
-    (p1.oprname != '=' OR
+    (p1.oprname != '=' OR p2.oprname != '<' OR
      p1.oprkind != 'b' OR p2.oprkind != 'b' OR
      p1.oprleft != p2.oprleft OR
-     p1.oprright != p2.oprright OR
+     p1.oprleft != p2.oprright OR
      p1.oprresult != 16 OR
      p2.oprresult != 16 OR
      p1.oprrsortop = 0);
@@ -100,9 +100,9 @@ WHERE p1.oprlsortop = p2.oid AND
 SELECT p1.oid, p1.oprcode, p2.oid, p2.oprcode
 FROM pg_operator AS p1, pg_operator AS p2
 WHERE p1.oprrsortop = p2.oid AND
-    (p1.oprname != '=' OR
+    (p1.oprname != '=' OR p2.oprname != '<' OR
      p1.oprkind != 'b' OR p2.oprkind != 'b' OR
-     p1.oprleft != p2.oprleft OR
+     p1.oprright != p2.oprleft OR
      p1.oprright != p2.oprright OR
      p1.oprresult != 16 OR
      p2.oprresult != 16 OR
