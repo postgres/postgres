@@ -1,6 +1,6 @@
 TODO list for PostgreSQL
 ========================
-Last updated:		Thu Nov 29 00:53:42 EST 2001
+Last updated:		Thu Nov 29 10:39:07 EST 2001
 
 Current maintainer:	Bruce Momjian (pgman@candle.pha.pa.us)
 
@@ -180,7 +180,7 @@ COMMANDS
 	o ALTER TABLE ADD UNIQUE (Christopher Kings-Lynne)
 	o ALTER TABLE ADD COLUMN column SERIAL doesn't create sequence
 	o ALTER TABLE ADD COLUMN column SET DEFAULT should fill existing
-	  rows with DEFAULT value or allow NULLs in existing rows
+	  rows with DEFAULT value
 * CLUSTER
 	o cluster all tables at once
 	o prevent lose of indexes, permissions, inheritance (Bruce)
