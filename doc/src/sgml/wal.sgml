@@ -1,4 +1,4 @@
-<!-- $Header: /cvsroot/pgsql/doc/src/sgml/wal.sgml,v 1.14 2001/11/28 20:49:10 petere Exp $ -->
+<!-- $Header: /cvsroot/pgsql/doc/src/sgml/wal.sgml,v 1.15 2002/02/11 23:25:14 momjian Exp $ -->
 
 <chapter id="wal">
  <title>Write-Ahead Logging (<acronym>WAL</acronym>)</title>
@@ -70,8 +70,8 @@
     Problems with indexes (problems 1 and 2) could possibly have been
     fixed by additional <function>fsync()</function> calls, but it is
     not obvious how to handle the last case without
-    <acronym>WAL</acronym>; <acronym>WAL</acronym> saves the entire
-    data page content in the log if that is required to ensure page
+    <acronym>WAL</acronym>; <acronym>WAL</acronym> saves the entire data
+    page content in the log if that is required to ensure page
     consistency for after-crash recovery.
    </para>
   </sect2>
@@ -85,11 +85,11 @@
     made by aborted transactions will still occupy disk space and that
     we still need a permanent <filename>pg_clog</filename> file to hold
     the status of transactions, since we are not able to re-use
-    transaction identifiers.  Once UNDO is implemented,
+    transaction identifiers. Once UNDO is implemented,
     <filename>pg_clog</filename> will no longer be required to be
     permanent; it will be possible to remove
-    <filename>pg_clog</filename> at shutdown.  (However, the urgency
-    of this concern has decreased greatly with the adoption of a segmented
+    <filename>pg_clog</filename> at shutdown. (However, the urgency of
+    this concern has decreased greatly with the adoption of a segmented
     storage method for <filename>pg_clog</filename> --- it is no longer
     necessary to keep old <filename>pg_clog</filename> entries around
     forever.)
@@ -121,15 +121,15 @@
    </para>
 
    <para>
-    A difficulty standing in the way of realizing these benefits is that they
-    require saving <acronym>WAL</acronym> entries for considerable periods
-    of time (eg, as long as the longest possible transaction if transaction
-    UNDO is wanted).  The present <acronym>WAL</acronym> format is
-    extremely bulky since it includes many disk page snapshots.
-    This is not a serious concern at present, since the entries only need
-    to be kept for one or two checkpoint intervals; but to achieve
-    these future benefits some sort of compressed <acronym>WAL</acronym>
-    format will be needed.
+    A difficulty standing in the way of realizing these benefits is that
+    they require saving <acronym>WAL</acronym> entries for considerable
+    periods of time (eg, as long as the longest possible transaction if
+    transaction UNDO is wanted). The present <acronym>WAL</acronym>
+    format is extremely bulky since it includes many disk page
+    snapshots. This is not a serious concern at present, since the
+    entries only need to be kept for one or two checkpoint intervals;
+    but to achieve these future benefits some sort of compressed
+    <acronym>WAL</acronym> format will be needed.
    </para>
   </sect2>
  </sect1>
@@ -244,9 +244,10 @@
    not occur often enough to prevent <acronym>WAL</acronym> buffers
    being written by <function>LogInsert</function>. On such systems
    one should increase the number of <acronym>WAL</acronym> buffers by
-   modifying the <varname>WAL_BUFFERS</varname> parameter. The default
-   number of <acronym>WAL</acronym> buffers is 8.  Increasing this
-   value will correspondingly increase shared memory usage.
+   modifying the <filename>postgresql.conf</filename> <varname>
+   WAL_BUFFERS</varname> parameter. The default number of <acronym>
+   WAL</acronym> buffers is 8.  Increasing this value will 
+   correspondingly increase shared memory usage.
   </para>
 
   <para>
@@ -293,31 +294,33 @@
 
   <para>
    Reducing <varname>CHECKPOINT_SEGMENTS</varname> and/or
-   <varname>CHECKPOINT_TIMEOUT</varname> causes checkpoints to be
-   done more often.  This allows faster after-crash recovery (since
-   less work will need to be redone).  However, one must balance this against
-   the increased cost of flushing dirty data pages more often.  In addition,
-   to ensure data page consistency, the first modification of a data page
-   after each checkpoint results in logging the entire page content.
-   Thus a smaller checkpoint interval increases the volume of output to
-   the log, partially negating the goal of using a smaller interval, and
-   in any case causing more disk I/O.
+   <varname>CHECKPOINT_TIMEOUT</varname> causes checkpoints to be done
+   more often. This allows faster after-crash recovery (since less work
+   will need to be redone). However, one must balance this against the
+   increased cost of flushing dirty data pages more often. In addition,
+   to ensure data page consistency, the first modification of a data
+   page after each checkpoint results in logging the entire page
+   content. Thus a smaller checkpoint interval increases the volume of
+   output to the log, partially negating the goal of using a smaller
+   interval, and in any case causing more disk I/O.
   </para>
 
   <para>
    The number of 16MB segment files will always be at least
    <varname>WAL_FILES</varname> + 1, and will normally not exceed
-   <varname>WAL_FILES</varname> + 2 * <varname>CHECKPOINT_SEGMENTS</varname>
-   + 1.  This may be used to estimate space requirements for WAL.  Ordinarily,
-   when an old log segment file is no longer needed, it is recycled (renamed
-   to become the next sequential future segment).  If, due to a short-term
-   peak of log output rate, there are more than <varname>WAL_FILES</varname> +
-   2 * <varname>CHECKPOINT_SEGMENTS</varname> + 1 segment files, then unneeded
-   segment files will be deleted instead of recycled until the system gets
-   back under this limit.  (If this happens on a regular basis,
-   <varname>WAL_FILES</varname> should be increased to avoid it.  Deleting log
-   segments that will only have to be created again later is expensive and
-   pointless.)
+   <varname>WAL_FILES</varname> + MAX(<varname>WAL_FILES</varname>,
+   <varname>CHECKPOINT_SEGMENTS</varname>) + 1. This may be used to
+   estimate space requirements for WAL. Ordinarily, when an old log
+   segment files are no longer needed, they are recycled (renamed to
+   become the next sequential future segments). If, due to a short-term
+   peak of log output rate, there are more than
+   <varname>WAL_FILES</varname> + MAX(<varname>WAL_FILES</varname>,
+   <varname>CHECKPOINT_SEGMENTS</varname>) + 1 segment files, then
+   unneeded segment files will be deleted instead of recycled until the
+   system gets back under this limit. (If this happens on a regular
+   basis, <varname>WAL_FILES</varname> should be increased to avoid it.
+   Deleting log segments that will only have to be created again later
+   is expensive and pointless.)
   </para>
 
   <para>
