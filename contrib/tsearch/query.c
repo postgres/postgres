@@ -240,9 +240,18 @@ pushval_morph(QPRS_STATE * state, int typeval, char *strval, int lenval)
 		lemm = lemmatize(token, &lenlemm, type);
 		if (lemm)
 		{
+			if ( lemm==token ) {
+				char *ptrs=token,*ptrd;
+				ptrd = lemm = palloc(lenlemm+1);
+				while(ptrs-token<lenlemm) {
+					*ptrd = tolower((unsigned char) *ptrs);
+					ptrs++;
+					ptrd++;
+				}
+				*ptrd='\0';
+			}	
 			pushval_asis(state, VAL, lemm, lenlemm);
-			if (lemm != token)
-				pfree(lemm);
+			pfree(lemm);
 		}
 		else
 			pushval_asis(state, VALTRUE, 0, 0);
