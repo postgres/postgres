@@ -1,7 +1,7 @@
 
                 Frequently Asked Questions (FAQ) for PostgreSQL
                                        
-   Last updated: Sat Nov 20 17:28:23 EST 2004
+   Last updated: Sat Nov 27 00:14:59 EST 2004
    
    Current maintainer: Bruce Momjian (pgman@candle.pha.pa.us)
    
@@ -188,7 +188,8 @@
    Starting with version 8.0, PostgreSQL now runs natively on Microsoft
    Windows NT-based operating systems like Win2000, WinXP, and Win2003. A
    prepackaged installer is available at
-   http://pgfoundry.org/projects/pginstaller.
+   http://pgfoundry.org/projects/pginstaller. MSDOS-based versions of
+   Windows (Win95, Win98, WinMe) can run PostgreSQL using Cygwin.
    
    There is also a Novell Netware 6 port at http://forge.novell.com.
    
@@ -241,7 +242,7 @@
    
     1.7) What is the latest release?
     
-   The latest release of PostgreSQL is version 7.4.5.
+   The latest release of PostgreSQL is version 7.4.6.
    
    We plan to have major releases every six to eight months.
    
