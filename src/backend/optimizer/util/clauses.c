@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/optimizer/util/clauses.c,v 1.29 1999/02/13 23:16:42 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/optimizer/util/clauses.c,v 1.30 1999/02/14 22:24:25 tgl Exp $
  *
  * HISTORY
  *	  AUTHOR			DATE			MAJOR EVENT
@@ -101,7 +101,10 @@ make_opclause(Oper *op, Var *leftop, Var *rightop)
 	expr->typeOid = InvalidOid; /* assume type checking done */
 	expr->opType = OP_EXPR;
 	expr->oper = (Node *) op;
-	expr->args = makeList(leftop, rightop, -1);
+	if (rightop)
+		expr->args = lcons(leftop, lcons(rightop, NIL));
+	else
+		expr->args = lcons(leftop, NIL);
 	return expr;
 }
 
@@ -125,7 +128,7 @@ get_leftop(Expr *clause)
  * get_rightop
  *
  * Returns the right operand in a clause of the form (op expr expr).
- *
+ * NB: result will be NULL if applied to a unary op clause.
  */
 Var *
 get_rightop(Expr *clause)
@@ -470,6 +473,9 @@ is_joinable(Node *clause)
 	leftop = (Node *) get_leftop((Expr *) clause);
 	rightop = (Node *) get_rightop((Expr *) clause);
 
+	if (!rightop)
+		return false;			/* unary opclauses need not apply */
+
 	/*
 	 * One side of the clause (i.e. left or right operands) must either be
 	 * a var node ...
@@ -491,19 +497,27 @@ is_joinable(Node *clause)
  *
  * Returns t iff 'clause' is a valid qualification clause.
  *
+ * For now we accept only "var op const" or "const op var".
  */
 bool
 qual_clause_p(Node *clause)
 {
+	Node	   *leftop,
+			   *rightop;
+
 	if (!is_opclause(clause))
 		return false;
 
+	leftop = (Node *) get_leftop((Expr *) clause);
+	rightop = (Node *) get_rightop((Expr *) clause);
+
+	if (!rightop)
+		return false;			/* unary opclauses need not apply */
+
 	/* How about Param-s ?	- vadim 02/03/98 */
-	if (IsA(get_leftop((Expr *) clause), Var) &&
-		IsA(get_rightop((Expr *) clause), Const))
+	if (IsA(leftop, Var) && IsA(rightop, Const))
 		return true;
-	else if (IsA(get_rightop((Expr *) clause), Var) &&
-			 IsA(get_leftop((Expr *) clause), Const))
+	if (IsA(rightop, Var) && IsA(leftop, Const))
 		return true;
 	return false;
 }
@@ -618,42 +632,35 @@ get_relattval(Node *clause,
 			  Datum *constval,
 			  int *flag)
 {
-	Var		   *left = get_leftop((Expr *) clause);
-	Var		   *right = get_rightop((Expr *) clause);
+	Var		   *left,
+			   *right;
 
-	if (is_opclause(clause) && IsA(left, Var) &&
-		IsA(right, Const))
+	/* Careful; the passed clause might not be a binary operator at all */
+
+	if (!is_opclause(clause))
+		goto default_results;
+
+	left = get_leftop((Expr *) clause);
+	right = get_rightop((Expr *) clause);
+
+	if (!right)
+		goto default_results;
+
+	if (IsA(left, Var) && IsA(right, Const))
 	{
-
-		if (right != NULL)
-		{
-
-			*relid = left->varno;
-			*attno = left->varattno;
-			*constval = ((Const *) right)->constvalue;
-			*flag = (_SELEC_CONSTANT_RIGHT_ | _SELEC_IS_CONSTANT_);
-
-		}
-		else
-		{
-
-			*relid = left->varno;
-			*attno = left->varattno;
-			*constval = 0;
-			*flag = (_SELEC_CONSTANT_RIGHT_ | _SELEC_NOT_CONSTANT_);
-
-		}
+		*relid = left->varno;
+		*attno = left->varattno;
+		*constval = ((Const *) right)->constvalue;
+		*flag = (_SELEC_CONSTANT_RIGHT_ | _SELEC_IS_CONSTANT_);
 	}
-	else if (is_opclause(clause) && IsA(left, Var) &&IsA(right, Param))
+	else if (IsA(left, Var) && IsA(right, Param))
 	{
 		*relid = left->varno;
 		*attno = left->varattno;
 		*constval = 0;
 		*flag = (_SELEC_NOT_CONSTANT_);
 	}
-	else if (is_opclause(clause) &&
-			 is_funcclause((Node *) left) &&
-			 IsA(right, Const))
+	else if (is_funcclause((Node *) left) && IsA(right, Const))
 	{
 		List	   *vars = pull_var_clause((Node *) left);
 
@@ -662,9 +669,21 @@ get_relattval(Node *clause,
 		*constval = ((Const *) right)->constvalue;
 		*flag = (_SELEC_CONSTANT_RIGHT_ | _SELEC_IS_CONSTANT_);
 	}
-	else if (is_opclause(clause) &&
-			 is_funcclause((Node *) right) &&
-			 IsA(left, Const))
+	else if (IsA(right, Var) && IsA(left, Const))
+	{
+		*relid = right->varno;
+		*attno = right->varattno;
+		*constval = ((Const *) left)->constvalue;
+		*flag = (_SELEC_IS_CONSTANT_);
+	}
+	else if (IsA(right, Var) &&IsA(left, Param))
+	{
+		*relid = right->varno;
+		*attno = right->varattno;
+		*constval = 0;
+		*flag = (_SELEC_NOT_CONSTANT_);
+	}
+	else if (is_funcclause((Node *) right) && IsA(left, Const))
 	{
 		List	   *vars = pull_var_clause((Node *) right);
 
@@ -672,42 +691,11 @@ get_relattval(Node *clause,
 		*attno = InvalidAttrNumber;
 		*constval = ((Const *) left)->constvalue;
 		*flag = (_SELEC_IS_CONSTANT_);
-
-	}
-	else if (is_opclause(clause) && IsA(right, Var) &&
-			 IsA(left, Const))
-	{
-		if (left != NULL)
-		{
-
-			*relid = right->varno;
-			*attno = right->varattno;
-			*constval = ((Const *) left)->constvalue;
-			*flag = (_SELEC_IS_CONSTANT_);
-		}
-		else
-		{
-
-			*relid = right->varno;
-			*attno = right->varattno;
-			*constval = 0;
-			*flag = (_SELEC_NOT_CONSTANT_);
-		}
-	}
-	else if (is_opclause(clause) && IsA(right, Var) &&IsA(left, Param))
-	{
-		*relid = right->varno;
-		*attno = right->varattno;
-		*constval = 0;
-		*flag = (_SELEC_NOT_CONSTANT_);
 	}
 	else
 	{
-
-		/*
-		 * One or more of the operands are expressions (e.g., oper
-		 * clauses)
-		 */
+		/* Duh, it's too complicated for me... */
+default_results:
 		*relid = _SELEC_VALUE_UNKNOWN_;
 		*attno = _SELEC_VALUE_UNKNOWN_;
 		*constval = 0;
@@ -733,43 +721,47 @@ get_rels_atts(Node *clause,
 			  int *relid2,
 			  AttrNumber *attno2)
 {
-	Var		   *left = get_leftop((Expr *) clause);
-	Var		   *right = get_rightop((Expr *) clause);
-	bool		var_left = (IsA(left, Var));
-	bool		var_right = (IsA(right, Var));
-	bool		varexpr_left = (bool) ((IsA(left, Func) ||IsA(left, Oper)) &&
-									   contain_var_clause((Node *) left));
-	bool		varexpr_right = (bool) ((IsA(right, Func) ||IsA(right, Oper)) &&
-									 contain_var_clause((Node *) right));
-
 	if (is_opclause(clause))
 	{
-		if (var_left && var_right)
-		{
+		Var	   *left = get_leftop((Expr *) clause);
+		Var	   *right = get_rightop((Expr *) clause);
 
-			*relid1 = left->varno;
-			*attno1 = left->varoattno;
-			*relid2 = right->varno;
-			*attno2 = right->varoattno;
-			return;
-		}
-		else if (var_left && varexpr_right)
+		if (left && right)
 		{
+			bool	var_left = IsA(left, Var);
+			bool	var_right = IsA(right, Var);
+			bool	varexpr_left = (bool) ((IsA(left, Func) || IsA(left, Oper)) &&
+									   contain_var_clause((Node *) left));
+			bool	varexpr_right = (bool) ((IsA(right, Func) || IsA(right, Oper)) &&
+									 contain_var_clause((Node *) right));
 
-			*relid1 = left->varno;
-			*attno1 = left->varoattno;
-			*relid2 = _SELEC_VALUE_UNKNOWN_;
-			*attno2 = _SELEC_VALUE_UNKNOWN_;
-			return;
-		}
-		else if (varexpr_left && var_right)
-		{
+			if (var_left && var_right)
+			{
 
-			*relid1 = _SELEC_VALUE_UNKNOWN_;
-			*attno1 = _SELEC_VALUE_UNKNOWN_;
-			*relid2 = right->varno;
-			*attno2 = right->varoattno;
-			return;
+				*relid1 = left->varno;
+				*attno1 = left->varoattno;
+				*relid2 = right->varno;
+				*attno2 = right->varoattno;
+				return;
+			}
+			if (var_left && varexpr_right)
+			{
+
+				*relid1 = left->varno;
+				*attno1 = left->varoattno;
+				*relid2 = _SELEC_VALUE_UNKNOWN_;
+				*attno2 = _SELEC_VALUE_UNKNOWN_;
+				return;
+			}
+			if (varexpr_left && var_right)
+			{
+
+				*relid1 = _SELEC_VALUE_UNKNOWN_;
+				*attno1 = _SELEC_VALUE_UNKNOWN_;
+				*relid2 = right->varno;
+				*attno2 = right->varoattno;
+				return;
+			}
 		}
 	}
 
@@ -777,7 +769,6 @@ get_rels_atts(Node *clause,
 	*attno1 = _SELEC_VALUE_UNKNOWN_;
 	*relid2 = _SELEC_VALUE_UNKNOWN_;
 	*attno2 = _SELEC_VALUE_UNKNOWN_;
-	return;
 }
 
 void
@@ -813,4 +804,3 @@ CommuteClause(Node *clause)
 	lfirst(((Expr *) clause)->args) = lsecond(((Expr *) clause)->args);
 	lsecond(((Expr *) clause)->args) = temp;
 }
-
