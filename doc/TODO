@@ -1,6 +1,6 @@
 TODO list for PostgreSQL
 ========================
-Last updated:		Mon Jul 16 01:01:38 EDT 2001
+Last updated:		Mon Jul 16 10:34:15 EDT 2001
 
 Current maintainer:	Bruce Momjian (pgman@candle.pha.pa.us)
 
@@ -216,8 +216,9 @@ REFERENTIAL INTEGRITY
 * Change foreign key constraint for array -> element to mean element
    in array
 
-DEPENDENCY CHECKING - pg_depend
+DEPENDENCY CHECKING
 
+* Add pg_depend table for dependency recording
 * Auto-destroy sequence on DROP of table with SERIAL; perhaps a separate
   SERIAL type
 * Prevent column dropping if column is used by foreign key
