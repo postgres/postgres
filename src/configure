@@ -3872,7 +3872,7 @@ fi
 
 fi
 
-for ac_func in tzset vfork memmove sigsetjmp kill sysconf fpclass
+for ac_func in tzset memmove sigsetjmp kill sysconf fpclass
 do
 echo $ac_n "checking for $ac_func""... $ac_c" 1>&6
 echo "configure:3879: checking for $ac_func" >&5
