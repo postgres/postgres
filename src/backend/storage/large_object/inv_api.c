@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/storage/large_object/inv_api.c,v 1.47 1999/02/03 21:17:20 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/storage/large_object/inv_api.c,v 1.48 1999/02/04 14:52:00 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -540,10 +540,16 @@ inv_write(LargeObjectDesc *obj_desc, char *buf, int nbytes)
 		else
 		{
 			if (obj_desc->offset > obj_desc->highbyte)
+			{
 				tuplen = inv_wrnew(obj_desc, buf, nbytes - nwritten);
+				ReleaseBuffer(buffer);
+			}
 			else
 				tuplen = inv_wrold(obj_desc, buf, nbytes - nwritten, &tuple, buffer);
-			ReleaseBuffer(buffer);
+				/* inv_wrold() has already issued WriteBuffer()
+				   which has decremented local reference counter
+				   (LocalRefCount). So we should not call
+				   ReleaseBuffer() here. -- Tatsuo 99/2/4 */
 		}
 
 		/* move pointers past the amount we just wrote */
