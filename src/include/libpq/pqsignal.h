@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2001, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Id: pqsignal.h,v 1.15 2001/01/24 19:43:25 momjian Exp $
+ * $Id: pqsignal.h,v 1.16 2001/09/07 16:12:49 wieck Exp $
  *
  * NOTES
  *	  This shouldn't be in libpq, but the monitor and some other
@@ -22,7 +22,8 @@
 
 #ifdef HAVE_SIGPROCMASK
 extern sigset_t UnBlockSig,
-			BlockSig;
+			BlockSig,
+			AuthBlockSig;
 
 #define PG_SETMASK(mask)	sigprocmask(SIG_SETMASK, mask, NULL)
 #else

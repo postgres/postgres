@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/tcop/postgres.c,v 1.230 2001/08/04 00:14:43 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/tcop/postgres.c,v 1.231 2001/09/07 16:12:48 wieck Exp $
  *
  * NOTES
  *	  this is the "main" module of the postgres backend and
@@ -966,6 +966,16 @@ die(SIGNAL_ARGS)
 }
 
 /*
+ * Shutdown signal from postmaster during client authentication.
+ * Simply exit(0).
+ */
+void
+authdie(SIGNAL_ARGS)
+{
+	exit(0);
+}
+
+/*
  * Query-cancel signal from postmaster: abort current transaction
  * at soonest convenient time
  */
@@ -1713,7 +1723,7 @@ PostgresMain(int argc, char *argv[],
 	if (!IsUnderPostmaster)
 	{
 		puts("\nPOSTGRES backend interactive interface ");
-		puts("$Revision: 1.230 $ $Date: 2001/08/04 00:14:43 $\n");
+		puts("$Revision: 1.231 $ $Date: 2001/09/07 16:12:48 $\n");
 	}
 
 	/*

@@ -37,7 +37,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/postmaster/postmaster.c,v 1.239 2001/09/07 00:46:42 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/postmaster/postmaster.c,v 1.240 2001/09/07 16:12:48 wieck Exp $
  *
  * NOTES
  *
@@ -112,10 +112,12 @@
 
 #ifdef HAVE_SIGPROCMASK
 sigset_t	UnBlockSig,
-			BlockSig;
+			BlockSig,
+			AuthBlockSig;
 #else
 int			UnBlockSig,
-			BlockSig;
+			BlockSig,
+			AuthBlockSig;
 #endif
 
 /*
@@ -1933,6 +1935,16 @@ DoBackend(Port *port)
 	whereToSendOutput = Remote;	/* XXX probably doesn't belong here */
 
 	/*
+	 * We arrange for a simple exit(0) if we receive SIGTERM or SIGQUIT
+	 * during any client authentication related communication. Otherwise
+	 * the postmaster cannot shutdown the database FAST or IMMED cleanly
+	 * if a buggy client blocks a backend during authentication.
+	 */
+	pqsignal(SIGTERM, authdie);
+	pqsignal(SIGQUIT, authdie);
+	PG_SETMASK(&AuthBlockSig);
+
+	/*
 	 * Receive the startup packet (which might turn out to be a cancel
 	 * request packet); then perform client authentication.
 	 */
@@ -1942,6 +1954,8 @@ DoBackend(Port *port)
 		return 0;				/* cancel request processed */
 
 	ClientAuthentication(MyProcPort); /* might not return, if failure */
+
+	PG_SETMASK(&BlockSig);
 
 	/*
 	 * Don't want backend to be able to see the postmaster random number
