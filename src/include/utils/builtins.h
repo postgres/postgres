@@ -6,7 +6,7 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: builtins.h,v 1.27 1997/10/09 05:07:25 thomas Exp $
+ * $Id: builtins.h,v 1.28 1997/10/25 05:40:43 thomas Exp $
  *
  * NOTES
  *	  This should normally only be included by fmgr.h.
@@ -99,6 +99,10 @@ extern int32 int4in(char *num);
 extern char *int4out(int32 l);
 extern int32 i2toi4(int16 arg1);
 extern int16 i4toi2(int32 arg1);
+extern text *int2_text(int16 arg1);
+extern int16 text_int2(text *arg1);
+extern text *int4_text(int32 arg1);
+extern int32 text_int4(text *arg1);
 extern bool int4eq(int32 arg1, int32 arg2);
 extern bool int4ne(int32 arg1, int32 arg2);
 extern bool int4lt(int32 arg1, int32 arg2);
@@ -371,6 +375,8 @@ extern bool oidne(Oid arg1, Oid arg2);
 extern bool oid8eq(Oid arg1[], Oid arg2[]);
 extern bool oideqint4(Oid arg1, int32 arg2);
 extern bool int4eqoid(int32 arg1, Oid arg2);
+extern text *oid_text(Oid arg1);
+extern Oid text_oid(text *arg1);
 
 /* regexp.c */
 extern bool char2regexeq(uint16 arg1, struct varlena * p);
@@ -439,7 +445,8 @@ bool		timestamplt(time_t t1, time_t t2);
 bool		timestampgt(time_t t1, time_t t2);
 bool		timestample(time_t t1, time_t t2);
 bool		timestampge(time_t t1, time_t t2);
-DateTime   *timestamp_datetime(time_t timestamp);
+DateTime   *stamp_datetime(time_t timestamp);
+time_t		datetime_stamp(DateTime *datetime);
 
 /* varchar.c */
 extern char *bpcharin(char *s, int dummy, int typlen);
@@ -499,7 +506,7 @@ extern DateADT date_pli(DateADT dateVal, int32 days);
 extern DateADT date_mii(DateADT dateVal, int32 days);
 extern DateTime *date_datetime(DateADT date);
 extern DateADT datetime_date(DateTime *datetime);
-extern DateTime *datetime_datetime(DateADT date, TimeADT *time);
+extern DateTime *datet_datetime(DateADT date, TimeADT *time);
 extern DateADT abstime_date(AbsoluteTime abstime);
 
 extern TimeADT *time_in(char *timestr);
@@ -511,6 +518,7 @@ extern bool time_le(TimeADT *time1, TimeADT *time2);
 extern bool time_gt(TimeADT *time1, TimeADT *time2);
 extern bool time_ge(TimeADT *time1, TimeADT *time2);
 extern int	time_cmp(TimeADT *time1, TimeADT *time2);
+extern TimeADT *datetime_time(DateTime *datetime);
 extern int32 int42reltime(int32 timevalue);
 
 /* like.c */
