@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2000, PostgreSQL, Inc
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Id: nodes.h,v 1.73 2000/08/08 15:42:59 tgl Exp $
+ * $Id: nodes.h,v 1.74 2000/08/11 23:46:54 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -145,7 +145,7 @@ typedef enum NodeTag
 	T_UpdateStmt,
 	T_SelectStmt,
 	T_AlterTableStmt,
-	T_AggregateStmt,
+	T_AggregateStmtXXX,			/* not used anymore; this tag# is available */
 	T_ChangeACLStmt,
 	T_ClosePortalStmt,
 	T_ClusterStmt,
@@ -216,7 +216,7 @@ typedef enum NodeTag
 	T_RangeTblEntry,
 	T_SortClause,
 	T_GroupClause,
-	T_SubSelect,
+	T_SubSelectXXX,				/* not used anymore; this tag# is available */
 	T_JoinExpr,
 	T_CaseExpr,
 	T_CaseWhen,
