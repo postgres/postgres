@@ -46,6 +46,16 @@ public class DatabaseMetaData implements java.sql.DatabaseMetaData
   // This is a default value for remarks
   private static final byte defaultRemarks[]="no remarks".getBytes();
 
+
+  private boolean haveMinimumServerVersion(String ver) throws SQLException
+  {
+      if (getDatabaseProductVersion().compareTo(ver)>=0)
+	  return true;
+      else
+	  return false;
+  }
+
+
   public DatabaseMetaData(Connection conn)
   {
     this.connection = conn;
@@ -116,7 +126,7 @@ public class DatabaseMetaData implements java.sql.DatabaseMetaData
    */
   public boolean nullsAreSortedHigh() throws SQLException
   {
-    return false;
+      return haveMinimumServerVersion("7.2");
   }
 
   /**
@@ -149,7 +159,7 @@ public class DatabaseMetaData implements java.sql.DatabaseMetaData
    */
   public boolean nullsAreSortedAtEnd() throws SQLException
   {
-    return true;
+      return ! haveMinimumServerVersion("7.2");
   }
 
   /**
@@ -305,10 +315,6 @@ public class DatabaseMetaData implements java.sql.DatabaseMetaData
    * case sensitive and as a result store them in mixed case?  A
    * JDBC compliant driver will always return true.
    *
-   * <p>Predicament - what do they mean by "SQL identifiers" - if it
-   * means the names of the tables and columns, then the answers
-   * given below are correct - otherwise I don't know.
-   *
    * @return true if so
    * @exception SQLException if a database access error occurs
    */
@@ -354,9 +360,6 @@ public class DatabaseMetaData implements java.sql.DatabaseMetaData
    * What is the string used to quote SQL identifiers?  This returns
    * a space if identifier quoting isn't supported.  A JDBC Compliant
    * driver will always use a double quote character.
-   *
-   * <p>If an SQL identifier is a table name, column name, etc. then
-   * we do not support it.
    *
    * @return the quoting string
    * @exception SQLException if a database access error occurs
@@ -510,15 +513,27 @@ public class DatabaseMetaData implements java.sql.DatabaseMetaData
     return false;
   }
 
+  /**
+   * Are table correlation names supported? A JDBC Compliant
+   * driver always returns true.
+   *
+   * @return true if so; false otherwise
+   * @exception SQLException - if a database access error occurs
+   */
   public boolean supportsTableCorrelationNames() throws SQLException
   {
-    // XXX-Not Implemented
-    return false;
+      return true;
   }
 
+  /**
+   * If table correlation names are supported, are they restricted to
+   * be different from the names of the tables?
+   *
+   * @return true if so; false otherwise
+   * @exception SQLException - if a database access error occurs
+   */
   public boolean supportsDifferentTableCorrelationNames() throws SQLException
   {
-    // XXX-Not Implemented
     return false;
   }
 
@@ -537,14 +552,13 @@ public class DatabaseMetaData implements java.sql.DatabaseMetaData
 
   /**
    * Can an "ORDER BY" clause use columns not in the SELECT?
-   * I checked it, and you can't.
    *
    * @return true if so
    * @exception SQLException if a database access error occurs
    */
   public boolean supportsOrderByUnrelated() throws SQLException
   {
-    return false;
+      return haveMinimumServerVersion("6.4");
   }
 
   /**
@@ -561,14 +575,13 @@ public class DatabaseMetaData implements java.sql.DatabaseMetaData
 
   /**
    * Can a "GROUP BY" clause use columns not in the SELECT?
-   * I checked it - it seems to allow it
    *
    * @return true if so
    * @exception SQLException if a database access error occurs
    */
   public boolean supportsGroupByUnrelated() throws SQLException
   {
-    return true;
+      return haveMinimumServerVersion("6.4");
   }
 
   /**
@@ -576,12 +589,14 @@ public class DatabaseMetaData implements java.sql.DatabaseMetaData
    * it specifies all the columns in the SELECT?  Does anyone actually
    * understand what they mean here?
    *
+   * (I think this is a subset of the previous function. -- petere)
+   *
    * @return true if so
    * @exception SQLException if a database access error occurs
    */
   public boolean supportsGroupByBeyondSelect() throws SQLException
   {
-    return true;		// For now...
+      return supportsGroupByUnrelated();
   }
 
   /**
@@ -593,7 +608,7 @@ public class DatabaseMetaData implements java.sql.DatabaseMetaData
    */
   public boolean supportsLikeEscapeClause() throws SQLException
   {
-    return true;
+    return haveMinimumServerVersion("7.1");
   }
 
   /**
@@ -681,8 +696,7 @@ public class DatabaseMetaData implements java.sql.DatabaseMetaData
 
   /**
    * Does this driver support the ANSI-92 entry level SQL grammar?
-   * All JDBC Compliant drivers must return true.  I think we have
-   * to support outer joins for this to be true.
+   * All JDBC Compliant drivers must return true.
    *
    * @return true if so
    * @exception SQLException if a database access error occurs
@@ -694,8 +708,7 @@ public class DatabaseMetaData implements java.sql.DatabaseMetaData
 
   /**
    * Does this driver support the ANSI-92 intermediate level SQL
-   * grammar?  Anyone who does not support Entry level cannot support
-   * Intermediate level.
+   * grammar?
    *
    * @return true if so
    * @exception SQLException if a database access error occurs
@@ -736,7 +749,7 @@ public class DatabaseMetaData implements java.sql.DatabaseMetaData
    */
   public boolean supportsOuterJoins() throws SQLException
   {
-    return true; // yes 7.1 does
+      return haveMinimumServerVersion("7.1");
   }
 
   /**
@@ -748,7 +761,7 @@ public class DatabaseMetaData implements java.sql.DatabaseMetaData
    */
   public boolean supportsFullOuterJoins() throws SQLException
   {
-    return true; // yes in 7.1
+      return haveMinimumServerVersion("7.1");
   }
 
   /**
@@ -760,44 +773,43 @@ public class DatabaseMetaData implements java.sql.DatabaseMetaData
    */
   public boolean supportsLimitedOuterJoins() throws SQLException
   {
-    return true; // yes in 7.1
+      return supportsFullOuterJoins();
   }
 
   /**
-   * What is the database vendor's preferred term for "schema" - well,
-   * we do not provide support for schemas, so lets just use that
-   * term.
+   * What is the database vendor's preferred term for "schema"?
+   * PostgreSQL doesn't have schemas, but when it does, we'll use the
+   * term "schema".
    *
    * @return the vendor term
    * @exception SQLException if a database access error occurs
    */
   public String getSchemaTerm() throws SQLException
   {
-    return "Schema";
+    return "schema";
   }
 
   /**
-   * What is the database vendor's preferred term for "procedure" -
-   * I kind of like "Procedure" myself.
+   * What is the database vendor's preferred term for "procedure"?
+   * Traditionally, "function" has been used.
    *
    * @return the vendor term
    * @exception SQLException if a database access error occurs
    */
   public String getProcedureTerm() throws SQLException
   {
-    return "Procedure";
+    return "function";
   }
 
   /**
-   * What is the database vendor's preferred term for "catalog"? -
-   * we dont have a preferred term, so just use Catalog
+   * What is the database vendor's preferred term for "catalog"?
    *
    * @return the vendor term
    * @exception SQLException if a database access error occurs
    */
   public String getCatalogTerm() throws SQLException
   {
-    return "Catalog";
+    return "database";
   }
 
   /**
@@ -809,21 +821,18 @@ public class DatabaseMetaData implements java.sql.DatabaseMetaData
    */
   public boolean isCatalogAtStart() throws SQLException
   {
-    return false;
+      throw org.postgresql.Driver.notImplemented();
   }
 
   /**
-   * What is the Catalog separator.  Hmmm....well, I kind of like
-   * a period (so we get catalog.table definitions). - I don't think
-   * PostgreSQL supports catalogs anyhow, so it makes no difference.
+   * What is the Catalog separator.
    *
    * @return the catalog separator string
    * @exception SQLException if a database access error occurs
    */
   public String getCatalogSeparator() throws SQLException
   {
-    // PM Sep 29 97 - changed from "." as we don't support catalogs.
-    return "";
+      throw org.postgresql.Driver.notImplemented();
   }
 
   /**
@@ -959,68 +968,114 @@ public class DatabaseMetaData implements java.sql.DatabaseMetaData
     return false;			// For now...
   }
 
+  /**
+   * Is SELECT for UPDATE supported?
+   *
+   * @return true if so; false otherwise
+   * @exception SQLException - if a database access error occurs
+   */
   public boolean supportsSelectForUpdate() throws SQLException
   {
-    // XXX-Not Implemented
-    return false;
+      return haveMinimumServerVersion("6.5");
   }
 
+  /**
+   * Are stored procedure calls using the stored procedure escape
+   * syntax supported?
+   *
+   * @return true if so; false otherwise
+   * @exception SQLException - if a database access error occurs
+   */
   public boolean supportsStoredProcedures() throws SQLException
   {
-    // XXX-Not Implemented
-    return false;
-  }
-
-  public boolean supportsSubqueriesInComparisons() throws SQLException
-  {
-    // XXX-Not Implemented
-    return false;
-  }
-
-  public boolean supportsSubqueriesInExists() throws SQLException
-  {
-    // XXX-Not Implemented
-    return false;
-  }
-
-  public boolean supportsSubqueriesInIns() throws SQLException
-  {
-    // XXX-Not Implemented
-    return false;
-  }
-
-  public boolean supportsSubqueriesInQuantifieds() throws SQLException
-  {
-    // XXX-Not Implemented
-    return false;
-  }
-
-  public boolean supportsCorrelatedSubqueries() throws SQLException
-  {
-    // XXX-Not Implemented
     return false;
   }
 
   /**
-   * Is SQL UNION supported?  Nope.
+   * Are subqueries in comparison expressions supported? A JDBC
+   * Compliant driver always returns true.
+   *
+   * @return true if so; false otherwise
+   * @exception SQLException - if a database access error occurs
+   */
+  public boolean supportsSubqueriesInComparisons() throws SQLException
+  {
+      return true;
+  }
+
+  /**
+   * Are subqueries in 'exists' expressions supported? A JDBC
+   * Compliant driver always returns true.
+   *
+   * @return true if so; false otherwise
+   * @exception SQLException - if a database access error occurs
+   */
+  public boolean supportsSubqueriesInExists() throws SQLException
+  {
+      return true;
+  }
+
+  /**
+   * Are subqueries in 'in' statements supported? A JDBC
+   * Compliant driver always returns true.
+   *
+   * @return true if so; false otherwise
+   * @exception SQLException - if a database access error occurs
+   */
+  public boolean supportsSubqueriesInIns() throws SQLException
+  {
+      return true;
+  }
+
+  /**
+   * Are subqueries in quantified expressions supported? A JDBC
+   * Compliant driver always returns true.
+   *
+   * (No idea what this is, but we support a good deal of
+   * subquerying.)
+   *
+   * @return true if so; false otherwise
+   * @exception SQLException - if a database access error occurs
+   */
+  public boolean supportsSubqueriesInQuantifieds() throws SQLException
+  {
+      return true;
+  }
+
+  /**
+   * Are correlated subqueries supported? A JDBC Compliant driver
+   * always returns true.
+   *
+   * (a.k.a. subselect in from?)
+   *
+   * @return true if so; false otherwise
+   * @exception SQLException - if a database access error occurs
+   */
+  public boolean supportsCorrelatedSubqueries() throws SQLException
+  {
+      return haveMinimumServerVersion("7.1");
+  }
+
+  /**
+   * Is SQL UNION supported?
    *
    * @return true if so
    * @exception SQLException if a database access error occurs
    */
   public boolean supportsUnion() throws SQLException
   {
-    return true; // 7.0?
+      return true; // since 6.3
   }
 
   /**
-   * Is SQL UNION ALL supported?  Nope.
+   * Is SQL UNION ALL supported?
    *
    * @return true if so
    * @exception SQLException if a database access error occurs
    */
   public boolean supportsUnionAll() throws SQLException
   {
-    return false;
+      return haveMinimumServerVersion("7.1");
   }
 
   /**
@@ -1081,7 +1136,7 @@ public class DatabaseMetaData implements java.sql.DatabaseMetaData
    */
   public int getMaxBinaryLiteralLength() throws SQLException
   {
-    return 0;				// For now...
+      return 0; // no limit
   }
 
   /**
@@ -1093,7 +1148,7 @@ public class DatabaseMetaData implements java.sql.DatabaseMetaData
    */
   public int getMaxCharLiteralLength() throws SQLException
   {
-    return 65535;
+      return 0; // no limit
   }
 
   /**
@@ -1117,7 +1172,7 @@ public class DatabaseMetaData implements java.sql.DatabaseMetaData
    */
   public int getMaxColumnsInGroupBy() throws SQLException
   {
-    return getMaxColumnsInTable();
+      return 0; // no limit
   }
 
   /**
@@ -1135,26 +1190,24 @@ public class DatabaseMetaData implements java.sql.DatabaseMetaData
 
   /**
    * What's the maximum number of columns in an "ORDER BY clause?
-   * Theoretically, all of them!
    *
    * @return the max columns
    * @exception SQLException if a database access error occurs
    */
   public int getMaxColumnsInOrderBy() throws SQLException
   {
-    return getMaxColumnsInTable();
+      return 0; // no limit
   }
 
   /**
    * What is the maximum number of columns in a "SELECT" list?
-   * Theoretically, all of them!
    *
    * @return the max columns
    * @exception SQLException if a database access error occurs
    */
   public int getMaxColumnsInSelect() throws SQLException
   {
-    return getMaxColumnsInTable();
+      return 0; // no limit
   }
 
   /**
@@ -1204,20 +1257,17 @@ public class DatabaseMetaData implements java.sql.DatabaseMetaData
   }
 
   /**
-   * What is the maximum length of an index (in bytes)?  Now, does
-   * the spec. mean name of an index (in which case its 32, the
-   * same as a table) or does it mean length of an index element
-   * (in which case its 8192, the size of a row) or does it mean
-   * the number of rows it can access (in which case it 2^32 -
-   * a 4 byte OID number)?  I think its the length of an index
-   * element, personally, so Im setting it to 8192.
+   * Retrieves the maximum number of bytes for an index, including all
+   * of the parts of the index.
    *
-   * @return max index length in bytes
+   * @return max index length in bytes, which includes the composite
+   * of all the constituent parts of the index; a result of zero means
+   * that there is no limit or the limit is not known
    * @exception SQLException if a database access error occurs
    */
   public int getMaxIndexLength() throws SQLException
   {
-    return 65535;
+      return 0; // no limit (larger than an int anyway)
   }
 
   public int getMaxSchemaNameLength() throws SQLException
@@ -1246,15 +1296,17 @@ public class DatabaseMetaData implements java.sql.DatabaseMetaData
   }
 
   /**
-   * What is the maximum length of a single row?  (not including
-   * blobs).  65535 is defined in PostgreSQL.
+   * What is the maximum length of a single row?
    *
    * @return max row size in bytes
    * @exception SQLException if a database access error occurs
    */
   public int getMaxRowSize() throws SQLException
   {
-    return 65535;
+      if (haveMinimumServerVersion("7.1"))
+	  return 1073741824;	// 1 GB
+      else
+	  return 8192;		// XXX could be altered
   }
 
   /**
@@ -1277,7 +1329,10 @@ public class DatabaseMetaData implements java.sql.DatabaseMetaData
    */
   public int getMaxStatementLength() throws SQLException
   {
-    return 65535;
+      if (haveMinimumServerVersion("7.0"))
+	  return 0;		// actually whatever fits in size_t
+      else
+	  return 16384;
   }
 
   /**
@@ -1310,19 +1365,14 @@ public class DatabaseMetaData implements java.sql.DatabaseMetaData
 
   /**
    * What is the maximum number of tables that can be specified
-   * in a SELECT?  Theoretically, this is the same number as the
-   * number of tables allowable.  In practice tho, it is much smaller
-   * since the number of tables is limited by the statement, we
-   * return 1024 here - this is just a number I came up with (being
-   * the number of tables roughly of three characters each that you
-   * can fit inside a 8192 character buffer with comma separators).
+   * in a SELECT?
    *
    * @return the maximum
    * @exception SQLException if a database access error occurs
    */
   public int getMaxTablesInSelect() throws SQLException
   {
-    return 1024;
+      return 0; // no limit
   }
 
   /**
@@ -1386,15 +1436,14 @@ public class DatabaseMetaData implements java.sql.DatabaseMetaData
 
   /**
    * Are both data definition and data manipulation transactions
-   * supported?  I checked it, and could not do a CREATE TABLE
-   * within a transaction, so I am assuming that we don't
+   * supported?
    *
    * @return true if so
    * @exception SQLException if a database access error occurs
    */
   public boolean supportsDataDefinitionAndDataManipulationTransactions() throws SQLException
   {
-    return false;
+      return true;
   }
 
   /**
@@ -1406,7 +1455,7 @@ public class DatabaseMetaData implements java.sql.DatabaseMetaData
    */
   public boolean supportsDataManipulationTransactionsOnly() throws SQLException
   {
-    return true;
+    return false;
   }
 
   /**
@@ -2699,27 +2748,99 @@ public class DatabaseMetaData implements java.sql.DatabaseMetaData
     return new ResultSet(connection, f, v, "OK", 1);
   }
 
+
     // ** JDBC 2 Extensions **
 
     /**
-     * New in 7.1 - we don't support deletes so this must be false!
+     * Does the database support the given result set type?
+     *
+     * @param type - defined in java.sql.ResultSet
+     * @return true if so; false otherwise
+     * @exception SQLException - if a database access error occurs
      */
-    public boolean deletesAreDetected(int i) throws SQLException
+    public boolean supportsResultSetType(int type) throws SQLException
+    {
+	// The only type we don't support
+	return type != java.sql.ResultSet.TYPE_SCROLL_SENSITIVE;
+    }
+
+
+    /**
+     * Does the database support the concurrency type in combination
+     * with the given result set type?
+     *
+     * @param type - defined in java.sql.ResultSet
+     * @param concurrency - type defined in java.sql.ResultSet
+     * @return true if so; false otherwise
+     * @exception SQLException - if a database access error occurs
+    */
+    public boolean supportsResultSetConcurrency(int type,int concurrency) throws SQLException
+    {
+	// These combinations are not supported!
+	if(type == java.sql.ResultSet.TYPE_SCROLL_SENSITIVE)
+	    return false;
+
+	// We don't yet support Updateable ResultSets
+	if(concurrency == java.sql.ResultSet.CONCUR_UPDATABLE)
+	    return false;
+
+	// Everything else we do
+	return true;
+    }
+
+
+    /* lots of unsupported stuff... */
+    public boolean ownUpdatesAreVisible(int type) throws SQLException
     {
 	return false;
     }
 
-    /**
-     * New in 7.1 - we don't support deletes so this must be false!
-     */
+    public boolean ownDeletesAreVisible(int type) throws SQLException
+    {
+	return false;
+    }
+
+    public boolean ownInsertsAreVisible(int type) throws SQLException
+    {
+	return false;
+    }
+
+    public boolean othersUpdatesAreVisible(int type) throws SQLException
+    {
+	return false;
+    }
+
     public boolean othersDeletesAreVisible(int i) throws SQLException
     {
 	return false;
     }
 
-    public java.sql.Connection getConnection() throws SQLException
+    public boolean othersInsertsAreVisible(int type) throws SQLException
     {
-	return (java.sql.Connection)connection;
+	return false;
+    }
+
+    public boolean updatesAreDetected(int type) throws SQLException
+    {
+	return false;
+    }
+
+    public boolean deletesAreDetected(int i) throws SQLException
+    {
+	return false;
+    }
+
+    public boolean insertsAreDetected(int type) throws SQLException
+    {
+	return false;
+    }
+
+    /**
+     * New in 7.1 - If this is for PreparedStatement yes, ResultSet no
+     */
+    public boolean supportsBatchUpdates() throws SQLException
+    {
+	return true;
     }
 
     /**
@@ -2734,49 +2855,18 @@ public class DatabaseMetaData implements java.sql.DatabaseMetaData
 	throw org.postgresql.Driver.notImplemented();
     }
 
-    /**
-     * New in 7.1 - we don't support visible inserts so this must be false!
-     */
-    public boolean othersInsertsAreVisible(int type) throws SQLException
-    {
-	return false;
-    }
 
     /**
-     * New in 7.1 - we don't support visible updates so this must be false!
+     * Retrieves the connection that produced this metadata object.
+     *
+     * @return the connection that produced this metadata object
      */
-    public boolean updatesAreDetected(int type) throws SQLException
+    public java.sql.Connection getConnection() throws SQLException
     {
-	return false;
+	return (java.sql.Connection)connection;
     }
 
-    /**
-     * New in 7.1 - we don't support visible updates so this must be false!
-     */
-    public boolean othersUpdatesAreVisible(int type) throws SQLException
-    {
-	return false;
-    }
-
-    public boolean ownUpdatesAreVisible(int type) throws SQLException
-    {
-	return false;
-    }
-
-    public boolean ownInsertsAreVisible(int type) throws SQLException
-    {
-	return false;
-    }
-
-    public boolean insertsAreDetected(int type) throws SQLException
-    {
-	return false;
-    }
-
-    public boolean ownDeletesAreVisible(int type) throws SQLException
-    {
-	return false;
-    }
+    /* I don't find these in the spec!?! */
 
     public boolean rowChangesAreDetected(int type) throws SQLException
     {
@@ -2787,36 +2877,4 @@ public class DatabaseMetaData implements java.sql.DatabaseMetaData
     {
 	return false;
     }
-
-    /**
-     * New in 7.1 - If this is for PreparedStatement yes, ResultSet no
-     */
-    public boolean supportsBatchUpdates() throws SQLException
-    {
-	return true;
-    }
-
-    /**
-     * New in 7.1
-     */
-    public boolean supportsResultSetConcurrency(int type,int concurrency) throws SQLException
-    {
-      // These combinations are not supported!
-      if(type==java.sql.ResultSet.TYPE_SCROLL_SENSITIVE)
-        return false;
-
-      // We don't yet support Updateable ResultSets
-      if(concurrency==java.sql.ResultSet.CONCUR_UPDATABLE)
-        return false;
-
-      // Everything else we do
-      return true;
-    }
-
-    public boolean supportsResultSetType(int type) throws SQLException
-    {
-      // The only type we don't support
-      return type!=java.sql.ResultSet.TYPE_SCROLL_SENSITIVE;
-    }
-
 }
