@@ -1,7 +1,12 @@
-#if defined(__i386__)
+#if defined(__i386__) || defined(__x86_64__)
 #define NEED_I386_TAS_ASM
 #define HAS_TEST_AND_SET
 typedef unsigned char slock_t;
+#endif
+
+#if defined(__ia64)
+#define HAS_TEST_AND_SET
+typedef unsigned int slock_t;
 #endif
 
 #if defined(__sparc__)
