@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/ref/create_type.sgml,v 1.23 2001/09/13 19:05:29 petere Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/ref/create_type.sgml,v 1.24 2001/11/03 21:42:47 tgl Exp $
 Postgres documentation
 -->
 
@@ -27,7 +27,7 @@ CREATE TYPE <replaceable class="parameter">typename</replaceable> ( INPUT = <rep
       , INTERNALLENGTH = { <replaceable
       class="parameter">internallength</replaceable> | VARIABLE }
     [ , EXTERNALLENGTH = { <replaceable class="parameter">externallength</replaceable> | VARIABLE } ]
-    [ , DEFAULT = "<replaceable class="parameter">default</replaceable>" ]
+    [ , DEFAULT = <replaceable class="parameter">default</replaceable> ]
     [ , ELEMENT = <replaceable class="parameter">element</replaceable> ] [ , DELIMITER = <replaceable class="parameter">delimiter</replaceable> ]
     [ , SEND = <replaceable class="parameter">send_function</replaceable> ] [ , RECEIVE = <replaceable class="parameter">receive_function</replaceable> ]
     [ , PASSEDBYVALUE ]
@@ -113,7 +113,8 @@ CREATE TYPE <replaceable class="parameter">typename</replaceable> ( INPUT = <rep
       <term><replaceable class="parameter">delimiter</replaceable></term>
       <listitem>
        <para>
-	The delimiter character for the array elements.
+	The delimiter character to be used between values in arrays made
+	of this type.
        </para>
       </listitem>
      </varlistentry>
@@ -219,82 +220,101 @@ CREATE
 
   <para>
    <command>CREATE TYPE</command>  requires  the  registration of two functions
-   (using create function) before defining the type.   The
+   (using CREATE FUNCTION) before defining the type.   The
    representation  of  a  new  base  type  is  determined  by
    <replaceable class="parameter">input_function</replaceable>, which
    converts the type's external  representation  to  an  internal
    representation  usable by the
    operators and functions defined for the type.   Naturally,
    <replaceable class="parameter">output_function</replaceable>
-   performs the reverse transformation.  Both
-   the input and output functions must be  declared  to  take
-   one or two arguments of type <type>opaque</type>.
+   performs the reverse transformation.  The input function may be
+   declared as taking one argument of type <type>opaque</type>,
+   or as taking three arguments of types
+   <type>opaque</type>, <type>OID</type>, <type>int4</type>.
+   (The first argument is the input text as a C string, the second
+   argument is the element type in case this is an array type,
+   and the third is the typmod of the destination column, if known.)
+   The output function may be
+   declared as taking one argument of type <type>opaque</type>,
+   or as taking two arguments of types
+   <type>opaque</type>, <type>OID</type>.
+   (The first argument is actually of the datatype itself, but since the
+   output function must be declared first, it's easier to declare it as
+   accepting type <type>opaque</type>.  The second argument is again
+   the array element type for array types.)
   </para>
 
   <para>
    New  base  data  types  can be fixed length, in which case
    <replaceable class="parameter">internallength</replaceable> is a
-   positive integer, or variable  length,
-   in  which  case PostgreSQL assumes that the new type has the
-   same format
-   as the PostgreSQL-supplied  data  type, <type>text</type>.
-   To  indicate that a type is variable length, set
+   positive integer, or variable  length, indicated by setting
    <replaceable class="parameter">internallength</replaceable>
-   to <option>VARIABLE</option>.
-   The external representation is  similarly specified using the
-   <replaceable class="parameter">externallength</replaceable>
-   keyword.
+   to <option>VARIABLE</option>.  (Internally, this is represented
+   by setting typlen to -1.)  The internal representation of all
+   variable-length types must start with an integer giving the total
+   length of this value of the type.
   </para>
 
   <para>
-   To indicate that a type is an array and to indicate that a
-   type has array elements, indicate the type  of  the  array
-   element using the element keyword.  For example, to define
+   The external representation length is  similarly specified using the
+   <replaceable class="parameter">externallength</replaceable>
+   keyword.  (This value is not presently used, and is typically omitted,
+   letting it default to <option>VARIABLE</option>.)
+  </para>
+
+  <para>
+   To indicate that a type is an array,
+   specify the type  of  the  array
+   elements using the <option>ELEMENT</> keyword.  For example, to define
    an array of 4-byte integers ("int4"), specify
    <programlisting>ELEMENT = int4</programlisting>
+   More details about array types appear below.
   </para>
 
   <para>
-   To indicate the delimiter to be used  on  arrays  of  this
-   type,  <replaceable class="parameter">delimiter</replaceable>
-   can be
+   To indicate the delimiter to be used between values in the external
+   representation of arrays of this type, <replaceable
+   class="parameter">delimiter</replaceable> can be
    set to a specific character.  The default delimiter is the comma
-   ("<literal>,</literal>").
+   ('<literal>,</literal>').  Note that the delimiter is associated
+   with the array element type, not the array type itself.
   </para>
 
   <para>
-   A default value is optionally available  in  case  a  user
-   wants  some  specific  bit  pattern to mean <quote>data not present</quote>.
-   Specify the default with the <literal>DEFAULT</literal> keyword.
-   <comment>How does the user specify that bit pattern and associate
-    it with the fact that the data is not present></comment>
+   A default value may be specified, in case a user wants columns of the
+   datatype to default to something other than NULL.
+   Specify the default with the <option>DEFAULT</option> keyword.
+   (Such a default may be overridden by an explicit <option>DEFAULT</option>
+   clause attached to a particular column.)
   </para>
 
   <para>
    The optional arguments
    <replaceable class="parameter">send_function</replaceable> and
    <replaceable class="parameter">receive_function</replaceable>
-   are  used when the application program requesting PostgreSQL
-   services resides on a different machine.   In  this  case,
-   the  machine  on  which  PostgreSQL runs may use a format for the data
-   type different from that used on the remote  machine.
-   In  this case it is appropriate to convert data items to a
-   standard form when sending from the server to  the  client
-   and  converting  from  the  standard format to the machine
-   specific format when the server receives the data from the
-   client.   If these functions are not specified, then it is
-   assumed that the internal format of the type is acceptable
-   on  all relevant machine architectures.  For example, single
-   characters do not have to be converted if passed  from
-   a Sun-4 to a DECstation, but many other types do.
+   are not currently used, and are usually omitted (allowing them
+   to default to the 
+   <replaceable class="parameter">output_function</replaceable> and
+   <replaceable class="parameter">input_function</replaceable>
+   respectively).  These functions may someday be resurrected for use
+   in specifying machine-independent binary representations.
   </para>
 
   <para>
-   The  optional flag,  <option>PASSEDBYVALUE</option>, indicates that operators
-   and functions which use this data type should be passed an
-   argument  by  value  rather  than by reference.  Note that you
+   The  optional flag,  <option>PASSEDBYVALUE</option>, indicates that
+   values of this data type are passed
+   by  value  rather  than by reference.  Note that you
    may not pass by value types whose internal representation is 
-   more than four bytes.
+   longer than the width of the <type>Datum</> type (four bytes on
+   most machines, eight bytes on a few).
+  </para>
+
+  <para>
+   The <replaceable class="parameter">alignment</replaceable> keyword
+   specifies the storage alignment required for the datatype.  The
+   allowed values equate to alignment on 1, 2, 4, or 8 byte boundaries.
+   Note that variable-length types must have an alignment of at least
+   4, since they necessarily contain an <type>int4</> as their first component.
   </para>
 
   <para>
@@ -315,19 +335,40 @@ CREATE
    <literal>extended</literal> and <literal>external</literal> items.)
   </para>
 
-  <para>
-   For new base types, a user can define operators, functions
-   and aggregates using the appropriate facilities  described
-   in this section.
-  </para>
-
   <refsect2>
    <title>Array Types</title>
+
    <para>
-    Two   generalized   built-in   functions,   array_in   and
-    array_out, exist for  quick  creation  of  variable-length
-    array  types.   These  functions  operate on arrays of any
-    existing PostgreSQL type.
+    Whenever a user-defined datatype is created, 
+    <productname>PostgreSQL</productname> automatically creates an
+    associated array type, whose name consists of the base type's
+    name prepended with an underscore.  The parser understands this
+    naming convention, and translates requests for columns of type
+    <literal>foo[]</> into requests for type <literal>_foo</>.
+    The implicitly-created array type is variable length and uses the
+    built-in input and output functions <literal>array_in</> and
+    <literal>array_out</>.
+   </para>
+
+   <para>
+    You might reasonably ask <quote>why is there an <option>ELEMENT</>
+    option, if the system makes the correct array type automatically?</quote>
+    The only case where it's useful to use <option>ELEMENT</> is when you are
+    making a fixed-length type that happens to be internally an array of N
+    identical things, and you want to allow the N things to be accessed
+    directly by subscripting, in addition to whatever operations you plan
+    to provide for the type as a whole.  For example, type <type>name</>
+    allows its constitutent <type>char</>s to be accessed this way.
+    A 2-D <type>point</> type could allow its two component floats to be
+    accessed like <literal>point[0]</> and <literal>point[1]</>.
+    Note that
+    this facility only works for fixed-length types whose internal form
+    is exactly a sequence of N identical fields.  A subscriptable
+    variable-length type must have the generalized internal representation
+    used by <literal>array_in</> and <literal>array_out</>.
+    For historical reasons (i.e., this is clearly wrong but it's far too
+    late to change it), subscripting of fixed-length array types starts from
+    zero, rather than from one as for variable-length arrays.
    </para>
   </refsect2>
  </refsect1>
@@ -336,41 +377,42 @@ CREATE
   <title>Notes</title>
 
    <para>
-    Type names cannot begin with the underscore character
-    (<quote><literal>_</literal></quote>) and can only be 31
-    characters long.  This is because PostgreSQL silently creates an
-    array type for each base type with a name consisting of the base
-    type's name prepended with an underscore.
+    User-defined type names cannot begin with the underscore character
+    (<quote><literal>_</literal></quote>) and can only be 30
+    characters long (or in general <literal>NAMEDATALEN-2</>, rather than
+    the <literal>NAMEDATALEN-1</> characters allowed for other names).
+    Type names beginning with underscore are
+    reserved for internally-created array type names.
    </para>
  </refsect1>
  
  <refsect1>
   <title>Examples</title>
   <para>
-   This command creates the <type>box</type> data type and then uses the
+   This example creates the <type>box</type> data type and then uses the
    type in a table definition:
 <programlisting>
-CREATE TYPE box (INTERNALLENGTH = 8,
+CREATE TYPE box (INTERNALLENGTH = 16,
     INPUT = my_procedure_1, OUTPUT = my_procedure_2);
 CREATE TABLE myboxes (id INT4, description box);
 </programlisting>
   </para>
 
   <para>
-   This command creates a variable length array type with
-   <type>integer</type> elements:
-
+   If <type>box</type>'s internal structure were an array of four
+   <type>float4</>s, we might instead say
 <programlisting>
-CREATE TYPE int4array (INPUT = array_in, OUTPUT = array_out,
-    INTERNALLENGTH = VARIABLE, ELEMENT = int4);
-CREATE TABLE myarrays (id int4, numbers int4array);
+CREATE TYPE box (INTERNALLENGTH = 16,
+    INPUT = my_procedure_1, OUTPUT = my_procedure_2,
+    ELEMENT = float4);
 </programlisting>
+   which would allow a box value's component floats to be accessed
+   by subscripting.  Otherwise the type behaves the same as before.
   </para>
 
   <para>
-   This command creates a large object type and uses it in
+   This example creates a large object type and uses it in
    a table definition:
-
 <programlisting>
 CREATE TYPE bigobj (INPUT = lo_filein, OUTPUT = lo_fileout,
     INTERNALLENGTH = VARIABLE);

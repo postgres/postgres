@@ -1,6 +1,6 @@
 <!--
  Documentation of the system catalogs, directed toward PostgreSQL developers
- $Header: /cvsroot/pgsql/doc/src/sgml/catalogs.sgml,v 2.26 2001/10/15 22:47:47 tgl Exp $
+ $Header: /cvsroot/pgsql/doc/src/sgml/catalogs.sgml,v 2.27 2001/11/03 21:42:47 tgl Exp $
  -->
 
 <chapter id="catalogs">
@@ -420,7 +420,9 @@
       <entry><type>int4</type></entry>
       <entry></entry>
       <entry>
-       Number of dimensions, if the column is an array; otherwise 0.
+       Number of dimensions, if the column is an array type; otherwise 0.
+       (Presently, the number of dimensions of an array is not enforced,
+       so any nonzero value effectively means <quote>it's an array</>.)
       </entry>
      </row>
 
@@ -1064,7 +1066,7 @@
       <entry><type>int2vector</type></entry>
       <entry>pg_attribute.attnum</entry>
       <entry>
-       This is an vector (array) of up to
+       This is a vector (array) of up to
        <symbol>INDEX_MAX_KEYS</symbol> values that indicate which
        table columns this index pertains to.  For example a value of
        <literal>1 3</literal> would mean that the first and the third
@@ -2336,7 +2338,9 @@
       <entry>typdelim</entry>
       <entry><type>char</type></entry>
       <entry></entry>
-      <entry>Character that separates two values of this type when parsing array input</entry>
+      <entry>Character that separates two values of this type when parsing
+      array input.  Note that the delimiter is associated with the array
+      element datatype, not the array datatype.</entry>
      </row>
 
      <row>
@@ -2360,14 +2364,17 @@
        If <structfield>typelem</structfield> is not 0 then it
        identifies another row in <structname>pg_type</structname>.
        The current type can then be subscripted like an array yielding
-       values of type <structfield>typelem</structfield>. A non-zero
-       <structfield>typelem</structfield> does not guarantee this type
-       to be a <quote>real</quote> array type; some ordinary
-       fixed-length types can also be subscripted (e.g.,
-       <type>oidvector</type>). Variable-length types can
-       <emphasis>not</emphasis> be turned into pseudo-arrays like
-       that. Hence, the way to determine whether a type is a
-       <quote>true</quote> array type is typelem != 0 and typlen < 0.
+       values of type <structfield>typelem</structfield>.  A
+       <quote>true</quote> array type is variable length
+       (<structfield>typlen</structfield> = -1),
+       but some fixed-length (<structfield>typlen</structfield> &gt; 0) types
+       also have nonzero <structfield>typelem</structfield>, for example
+       <type>name</type> and <type>oidvector</type>.
+       If a fixed-length type has a <structfield>typelem</structfield> then
+       its internal representation must be N values of the
+       <structfield>typelem</structfield> datatype with no other data.
+       Variable-length array types have a header defined by the array
+       subroutines.
       </entry>
      </row>
 
