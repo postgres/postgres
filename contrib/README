@@ -35,6 +35,10 @@ ip_and_mac -
 	PostgreSQL type extensions for IP and MAC addresses
 	by Tom Ivar Helbekkmo <tih@Hamartun.Priv.NO>
 
+isbn_issn -
+	PostgreSQL type extensions for ISBN (books) and ISSN (serials)
+	by Garrett A. Wollman <wollman@khavrinen.lcs.mit.edu>
+
 linux -
 	Start postgres back end system
 	by Thomas Lockhart <lockhart@alumni.caltech.edu>
@@ -79,4 +83,6 @@ unixdate -
 userlock -
 	User locks
 	by Massimo Dal Zotto <dz@cs.unitn.it>
+
+
 
