@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/commands/indexcmds.c,v 1.88 2002/09/18 21:35:20 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/commands/indexcmds.c,v 1.89 2002/09/19 23:40:56 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -535,21 +535,14 @@ void
 RemoveIndex(RangeVar *relation, DropBehavior behavior)
 {
 	Oid			indOid;
-	HeapTuple	tuple;
+	char		relkind;
 	ObjectAddress object;
 
 	indOid = RangeVarGetRelid(relation, false);
-	tuple = SearchSysCache(RELOID,
-						   ObjectIdGetDatum(indOid),
-						   0, 0, 0);
-	if (!HeapTupleIsValid(tuple))
-		elog(ERROR, "index \"%s\" does not exist", relation->relname);
-
-	if (((Form_pg_class) GETSTRUCT(tuple))->relkind != RELKIND_INDEX)
+	relkind = get_rel_relkind(indOid);
+	if (relkind != RELKIND_INDEX)
 		elog(ERROR, "relation \"%s\" is of type \"%c\"",
-		 relation->relname, ((Form_pg_class) GETSTRUCT(tuple))->relkind);
-
-	ReleaseSysCache(tuple);
+			 relation->relname, relkind);
 
 	object.classId = RelOid_pg_class;
 	object.objectId = indOid;
@@ -616,7 +609,6 @@ void
 ReindexTable(RangeVar *relation, bool force)
 {
 	Oid			heapOid;
-	HeapTuple	tuple;
 	char		relkind;
 
 	/*
@@ -628,18 +620,11 @@ ReindexTable(RangeVar *relation, bool force)
 		elog(ERROR, "REINDEX cannot run inside a BEGIN/END block");
 
 	heapOid = RangeVarGetRelid(relation, false);
-	tuple = SearchSysCache(RELOID,
-						   ObjectIdGetDatum(heapOid),
-						   0, 0, 0);
-	if (!HeapTupleIsValid(tuple))
-		elog(ERROR, "table \"%s\" does not exist", relation->relname);
-	relkind = ((Form_pg_class) GETSTRUCT(tuple))->relkind;
+	relkind = get_rel_relkind(heapOid);
 
 	if (relkind != RELKIND_RELATION && relkind != RELKIND_TOASTVALUE)
 		elog(ERROR, "relation \"%s\" is of type \"%c\"",
 			 relation->relname, relkind);
-
-	ReleaseSysCache(tuple);
 
 	if (!reindex_relation(heapOid, force))
 		elog(WARNING, "table \"%s\" wasn't reindexed", relation->relname);

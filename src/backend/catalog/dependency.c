@@ -8,7 +8,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/catalog/dependency.c,v 1.10 2002/09/11 14:48:54 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/catalog/dependency.c,v 1.11 2002/09/19 23:40:56 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -552,20 +552,7 @@ doDeletion(const ObjectAddress *object)
 	{
 		case OCLASS_CLASS:
 			{
-				HeapTuple	relTup;
-				char		relKind;
-
-				/*
-				 * Need the relkind to figure out how to drop.
-				 */
-				relTup = SearchSysCache(RELOID,
-									  ObjectIdGetDatum(object->objectId),
-										0, 0, 0);
-				if (!HeapTupleIsValid(relTup))
-					elog(ERROR, "doDeletion: Relation %u does not exist",
-						 object->objectId);
-				relKind = ((Form_pg_class) GETSTRUCT(relTup))->relkind;
-				ReleaseSysCache(relTup);
+				char		relKind = get_rel_relkind(object->objectId);
 
 				if (relKind == RELKIND_INDEX)
 				{
@@ -1502,6 +1489,10 @@ getRelationDescription(StringInfo buffer, Oid relid)
 			break;
 		case RELKIND_VIEW:
 			appendStringInfo(buffer, "view %s",
+							 relname);
+			break;
+		case RELKIND_COMPOSITE_TYPE:
+			appendStringInfo(buffer, "composite type %s",
 							 relname);
 			break;
 		default:

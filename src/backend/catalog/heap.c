@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/catalog/heap.c,v 1.228 2002/09/19 22:48:33 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/catalog/heap.c,v 1.229 2002/09/19 23:40:56 tgl Exp $
  *
  *
  * INTERFACE ROUTINES
@@ -384,20 +384,33 @@ CheckAttributeNames(TupleDesc tupdesc, char relkind)
 	 * Warn user, but don't fail, if column to be created has UNKNOWN type
 	 * (usually as a result of a 'retrieve into' - jolly)
 	 *
-	 * Refuse any attempt to create a pseudo-type column.
+	 * Refuse any attempt to create a pseudo-type column or one that uses
+	 * a standalone composite type.  (Eventually we should probably refuse
+	 * all references to complex types, but for now there's still some
+	 * Berkeley-derived code that thinks it can do this...)
 	 */
 	for (i = 0; i < natts; i++)
 	{
 		Oid			att_type = tupdesc->attrs[i]->atttypid;
+		char		att_typtype = get_typtype(att_type);
 
 		if (att_type == UNKNOWNOID)
 			elog(WARNING, "Attribute \"%s\" has an unknown type"
 				 "\n\tProceeding with relation creation anyway",
 				 NameStr(tupdesc->attrs[i]->attname));
-		if (get_typtype(att_type) == 'p')
+		if (att_typtype == 'p')
 			elog(ERROR, "Attribute \"%s\" has pseudo-type %s",
 				 NameStr(tupdesc->attrs[i]->attname),
 				 format_type_be(att_type));
+		if (att_typtype == 'c')
+		{
+			Oid		typrelid = get_typ_typrelid(att_type);
+
+			if (get_rel_relkind(typrelid) == RELKIND_COMPOSITE_TYPE)
+				elog(ERROR, "Attribute \"%s\" has composite type %s",
+					 NameStr(tupdesc->attrs[i]->attname),
+					 format_type_be(att_type));
+		}
 	}
 }
 

@@ -3,7 +3,7 @@
  *				back to source text
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/ruleutils.c,v 1.123 2002/09/19 22:48:33 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/ruleutils.c,v 1.124 2002/09/19 23:40:56 tgl Exp $
  *
  *	  This software is copyrighted by Jan Wieck - Hamburg.
  *
@@ -2087,24 +2087,14 @@ get_rule_expr(Node *node, deparse_context *context,
 			{
 				FieldSelect *fselect = (FieldSelect *) node;
 				Oid			argType = exprType(fselect->arg);
-				HeapTuple	typetup;
-				Form_pg_type typeStruct;
 				Oid			typrelid;
 				char	   *fieldname;
 
 				/* lookup arg type and get the field name */
-				typetup = SearchSysCache(TYPEOID,
-										 ObjectIdGetDatum(argType),
-										 0, 0, 0);
-				if (!HeapTupleIsValid(typetup))
-					elog(ERROR, "cache lookup of type %u failed",
-						 argType);
-				typeStruct = (Form_pg_type) GETSTRUCT(typetup);
-				typrelid = typeStruct->typrelid;
+				typrelid = get_typ_typrelid(argType);
 				if (!OidIsValid(typrelid))
 					elog(ERROR, "Argument type %s of FieldSelect is not a tuple type",
 						 format_type_be(argType));
-				ReleaseSysCache(typetup);
 				fieldname = get_relid_attribute_name(typrelid,
 													 fselect->fieldnum);
 
