@@ -1,6 +1,6 @@
 TODO list for PostgreSQL
 ========================
-Last updated:		Fri Jul 25 18:08:35 EDT 2003
+Last updated:		Wed Jul 30 14:52:01 EDT 2003
 
 Current maintainer:	Bruce Momjian (pgman@candle.pha.pa.us)
 
@@ -58,6 +58,7 @@ Administration
 * Add the concept of dataspaces/tablespaces [tablespaces]
 * -Allow CIDR format to be used in pg_hba.conf
 * Allow logging of only data definition(DDL), or DDL and modification statements
+* Add database name and user name to logging options
 
 
 Data Types
@@ -472,7 +473,7 @@ Source Code
 * Acquire lock on a relation before building a relcache entry for it
 * Research interaction of setitimer() and sleep() used by statement_timeout
 * Add checks for fclose() failure
-* Change CVS $Id: TODO,v 1.1097 2003/07/25 22:08:36 momjian Exp $ to $PostgreSQL: pgsql/doc/TODO,v 1.1097 2003/07/25 22:08:36 momjian Exp $
+* Change CVS $Id: TODO,v 1.1098 2003/07/30 18:52:06 momjian Exp $ to $PostgreSQL: pgsql/doc/TODO,v 1.1098 2003/07/30 18:52:06 momjian Exp $
 * Exit postmaster if postgresql.conf can not be opened
 * Rename /scripts directory because they are all C programs now
 * Allow the regression tests to start postmaster with -i so the tests
