@@ -1,8 +1,12 @@
 These utilities help clean up #include file usage:
 
 pgfixinclude	change #include's to <> or ""
-pgrminclude	remove extra #include's
-pginclude [-v]	report which #include files can not compile on their own
+
+pgrminclude [-v]
+		remove extra #include's
+
+pgcompinclude [-v]
+		report which #include files can not compile on their own
 
 pgdefine	create macro calls for all defines in the file (used by
 		the above routines)
