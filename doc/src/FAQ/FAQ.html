@@ -14,7 +14,7 @@
   alink="#0000ff">
     <H1>Frequently Asked Questions (FAQ) for PostgreSQL</H1>
 
-    <P>Last updated: Sun Mar  3 11:02:16 EST 2002</P>
+    <P>Last updated: Sun Mar  3 13:35:39 EST 2002</P>
 
     <P>Current maintainer: Bruce Momjian (<A href=
     "mailto:pgman@candle.pha.pa.us">pgman@candle.pha.pa.us</A>)<BR>
@@ -903,7 +903,7 @@
     <H4><A name="4.8">4.8</A>) My queries are slow or don't make use of
     the indexes. Why?</H4>
     Indexes are not automatically used by every query. Indexes are only
-    used if the table is larger than a minimum size, and the index
+    used if the table is larger than a minimum size, and the query
     selects only a small percentage of the rows in the table. This is
     because the random disk access caused by an index scan is sometimes
     slower than a straight read through the table, or sequential scan. 

@@ -1,7 +1,7 @@
 
                 Frequently Asked Questions (FAQ) for PostgreSQL
                                        
-   Last updated: Sun Mar 3 11:02:16 EST 2002
+   Last updated: Sun Mar 3 13:35:39 EST 2002
    
    Current maintainer: Bruce Momjian (pgman@candle.pha.pa.us)
    
@@ -707,7 +707,7 @@
     4.8) My queries are slow or don't make use of the indexes. Why?
     
    Indexes are not automatically used by every query. Indexes are only
-   used if the table is larger than a minimum size, and the index selects
+   used if the table is larger than a minimum size, and the query selects
    only a small percentage of the rows in the table. This is because the
    random disk access caused by an index scan is sometimes slower than a
    straight read through the table, or sequential scan.
