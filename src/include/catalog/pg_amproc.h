@@ -9,7 +9,7 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: pg_amproc.h,v 1.6 1997/09/08 02:34:57 momjian Exp $
+ * $Id: pg_amproc.h,v 1.7 1997/11/30 22:58:07 thomas Exp $
  *
  * NOTES
  *	  the genbki.sh script reads this file and generates .bki
@@ -21,7 +21,7 @@
 #define PG_AMPROC_H
 
 /* ----------------
- *		postgres.h contains the system type definintions and the
+ *		postgres.h contains the system type definitions and the
  *		CATALOG(), BOOTSTRAP and DATA() sugar words so this file
  *		can be read by both genbki.sh and the C compiler.
  * ----------------
@@ -133,6 +133,8 @@ DATA(insert OID = 0 (405  431  456 1));
 DATA(insert OID = 0 (405 1076 1080 1));
 DATA(insert OID = 0 (405 1077 1081 1));
 DATA(insert OID = 0 (405 1114  450 1));
-DATA(insert OID = 0 (405 1115  694 1));
+DATA(insert OID = 0 (405 1115  452 1));
+DATA(insert OID = 0 (405 1312  452 1));
+DATA(insert OID = 0 (405 1313  452 1));
 
 #endif							/* PG_AMPROC_H */
