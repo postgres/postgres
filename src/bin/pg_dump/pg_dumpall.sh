@@ -6,7 +6,7 @@
 # and "pg_group" tables, which belong to the whole installation rather
 # than any one individual database.
 #
-# $Header: /cvsroot/pgsql/src/bin/pg_dump/Attic/pg_dumpall.sh,v 1.19 2002/04/11 21:16:28 momjian Exp $
+# $Header: /cvsroot/pgsql/src/bin/pg_dump/Attic/pg_dumpall.sh,v 1.20 2002/04/11 21:22:27 momjian Exp $
 
 CMDNAME="`basename $0`"
 
@@ -29,8 +29,8 @@ if echo "$0" | grep '/' > /dev/null 2>&1 ; then
     PGPATH=`echo "$0" | sed 's,/[^/]*$,,'`       # (dirname command is not portable)
 else
     # look for it in PATH ('which' command is not portable)
-    echo "$PATH" | sed 's/:/\
-/g' | while :; do
+    echo "$PATH" | sed "s/:/$NL/g" | 
+    while :; do
         IFS="$NL"
         read dir || break
         IFS="$_IFS"
@@ -203,8 +203,8 @@ echo "DELETE FROM pg_group;"
 echo
 
 
-$PSQL -d template1 -At -F '
-' -c 'SELECT groname,grosysid,grolist FROM pg_group;' | \
+$PSQL -d template1 -At -F "$NL" \
+    -c 'SELECT groname,grosysid,grolist FROM pg_group;' | \
 while : ; do
     IFS="$NL"
     read GRONAME || break
@@ -232,8 +232,8 @@ exec 4<&0
 # We skip databases marked not datallowconn, since we'd be unable to
 # connect to them anyway (and besides, we don't want to dump template0).
 
-$PSQL -d template1 -At -F '
-' -c "SELECT datname, coalesce(usename, (select usename from pg_shadow where usesysid=(select datdba from pg_database where datname='template0'))), pg_encoding_to_char(d.encoding), datistemplate, datpath FROM pg_database d LEFT JOIN pg_shadow u ON (datdba = usesysid) WHERE datallowconn ORDER BY 1;" | \
+$PSQL -d template1 -At -F "$NL" \
+    -c "SELECT datname, coalesce(usename, (select usename from pg_shadow where usesysid=(select datdba from pg_database where datname='template0'))), pg_encoding_to_char(d.encoding), datistemplate, datpath FROM pg_database d LEFT JOIN pg_shadow u ON (datdba = usesysid) WHERE datallowconn ORDER BY 1;" | \
 while read DATABASE ; do
     IFS="$NL"
     read DBOWNER
@@ -262,8 +262,8 @@ while read DATABASE ; do
     fi
 done
 
-$PSQL -d template1 -At -F '
-' -c "SELECT datname FROM pg_database WHERE datallowconn ORDER BY 1;" | \
+$PSQL -d template1 -At -F "$NL" \
+    -c "SELECT datname FROM pg_database WHERE datallowconn ORDER BY 1;" | \
 while :; do
     IFS="$NL"
     read DATABASE || break
