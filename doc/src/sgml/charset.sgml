@@ -1,4 +1,4 @@
-<!-- $Header: /cvsroot/pgsql/doc/src/sgml/charset.sgml,v 2.7 2001/04/20 15:52:33 thomas Exp $ -->
+<!-- $Header: /cvsroot/pgsql/doc/src/sgml/charset.sgml,v 2.8 2001/05/03 21:38:44 momjian Exp $ -->
 
 <chapter id="charset">
  <title>Localization</>
@@ -353,7 +353,7 @@ perl: warning: Falling back to the standard locale ("C").
 	</row>
 	<row>
 	 <entry>KOI8</entry>
-	 <entry>KOI8-R</entry>
+	 <entry>KOI8-R(U)</entry>
 	</row>
 	<row>
 	 <entry>WIN</entry>

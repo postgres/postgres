@@ -21,7 +21,7 @@
 #define LATIN7				13	/* ISO-8859 Latin 7 */
 #define LATIN8				14	/* ISO-8859 Latin 8 */
 #define LATIN9				15	/* ISO-8859 Latin 9 */
-#define KOI8				16	/* KOI8-R */
+#define KOI8				16	/* KOI8-R/U */
 #define WIN					17	/* windows-1251 */
 #define ALT					18	/* Alternativny Variant (MS-DOS CP866) */
 #define SJIS				32	/* Shift JIS */
