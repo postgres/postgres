@@ -8,12 +8,10 @@
 #
 #
 # IDENTIFICATION
-#    $Header: /cvsroot/pgsql/src/bin/pg_ctl/Attic/pg_ctl.sh,v 1.11 2000/03/27 02:12:03 ishii Exp $
+#    $Header: /cvsroot/pgsql/src/bin/pg_ctl/Attic/pg_ctl.sh,v 1.12 2000/04/25 01:07:23 ishii Exp $
 #
 #-------------------------------------------------------------------------
 CMDNAME=`basename $0`
-tmp=/tmp/tmp$$
-trap "rm -f $tmp; exit" 0 1 2 13 15
 
 # Check for echo -n vs echo \c
 
@@ -221,17 +219,17 @@ if [ $op = "start" -o $op = "restart" ];then
 	if [ $op = "start" ];then
 	    # if we are in start mode, then look for postmaster.opts.default
 	    if [ -f $DEFPOSTOPTS ];then
-		eval "$po_path `cat $DEFPOSTOPTS`" >$tmp 2>&1&
+		eval "$po_path `cat $DEFPOSTOPTS`" &
 	    else
 		$ECHO "$CMDNAME: Can't find $DEFPOSTOPTS"
 		exit 1
 	    fi
 	else
 	    # if we are in restart mode, then look postmaster.opts
-	    eval `cat $POSTOPTSFILE` >$tmp 2>&1 &
+	    eval `cat $POSTOPTSFILE` &
 	fi
     else
-	eval "$po_path $POSTOPTS " >$tmp 2>&1&
+	eval "$po_path $POSTOPTS " &
     fi
 
     if [ -f $PIDFILE ];then
@@ -255,11 +253,6 @@ if [ $op = "start" -o $op = "restart" ];then
 		cnt=`expr $cnt + 1`
 		if [ $cnt -gt 60 ];then
 		    $ECHO "$CMDNAME: postmaster does not start up"
-		    if [ -r $tmp ];then
-			$ECHO "$CMDNAME: messages from postmaster:"
-			$ECHO
-			cat $tmp
-		    fi
 		    exit 1
 		fi
 		sleep 1
