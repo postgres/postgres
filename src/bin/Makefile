@@ -5,7 +5,7 @@
 # Portions Copyright (c) 1996-2002, PostgreSQL Global Development Group
 # Portions Copyright (c) 1994, Regents of the University of California
 #
-# $Header: /cvsroot/pgsql/src/bin/Makefile,v 1.36 2002/06/20 20:29:41 momjian Exp $
+# $Header: /cvsroot/pgsql/src/bin/Makefile,v 1.37 2002/08/17 04:03:35 tgl Exp $
 #
 #-------------------------------------------------------------------------
 
@@ -14,7 +14,7 @@ top_builddir = ../..
 include $(top_builddir)/src/Makefile.global
 
 DIRS := initdb initlocation ipcclean pg_ctl pg_dump pg_id \
-	psql scripts pg_config
+	psql scripts pg_config pg_controldata pg_resetxlog
 
 ifdef MULTIBYTE
 DIRS += pg_encoding

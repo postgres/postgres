@@ -2,9 +2,9 @@
 #
 # Makefile for src/bin/pg_resetxlog
 #
-# Copyright (c) 1998, PostgreSQL Global Development Group
+# Copyright (c) 1998-2002, PostgreSQL Global Development Group
 #
-# $Header: /cvsroot/pgsql/src/bin/pg_resetxlog/Makefile,v 1.1 2002/08/17 02:44:24 momjian Exp $
+# $Header: /cvsroot/pgsql/src/bin/pg_resetxlog/Makefile,v 1.2 2002/08/17 04:03:36 tgl Exp $
 #
 #-------------------------------------------------------------------------
 
@@ -14,13 +14,13 @@ include $(top_builddir)/src/Makefile.global
 
 OBJS= pg_resetxlog.o pg_crc.o
 
-pg_crc.c: $(top_builddir)/src/backend/utils/hash/pg_crc.c
-	rm -f $@ && $(LN_S) $< .
-
 all: submake-libpgport pg_resetxlog
 
 pg_resetxlog: $(OBJS)
 	$(CC) $(CFLAGS) $^ $(libpq) $(LDFLAGS) $(LIBS) -o $@
+
+pg_crc.c: $(top_srcdir)/src/backend/utils/hash/pg_crc.c
+	rm -f $@ && $(LN_S) $< .
 
 install: all installdirs
 	$(INSTALL_PROGRAM) pg_resetxlog$(X) $(DESTDIR)$(bindir)/pg_resetxlog$(X)
