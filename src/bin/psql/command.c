@@ -3,7 +3,7 @@
  *
  * Copyright 2000 by PostgreSQL Global Development Group
  *
- * $Header: /cvsroot/pgsql/src/bin/psql/command.c,v 1.52 2001/05/09 17:29:10 momjian Exp $
+ * $Header: /cvsroot/pgsql/src/bin/psql/command.c,v 1.53 2001/05/12 17:37:15 tgl Exp $
  */
 #include "postgres_fe.h"
 #include "command.h"
@@ -132,16 +132,16 @@ HandleSlashCmds(const char *line,
 	{
 
 		/*
-		 * If the command was not recognized, try inserting a space after
-		 * the first letter and call again. The one letter commands allow
-		 * arguments to start immediately after the command, but that is
-		 * no longer encouraged.
+		 * If the command was not recognized, try to parse it as a one-letter
+		 * command with immediately following argument (a still-supported,
+		 * but no longer encouraged, syntax).
 		 */
 		char		new_cmd[2];
 
 		new_cmd[0] = my_line[0];
 		new_cmd[1] = '\0';
 
+		/* use line for options, because my_line was clobbered above */
 		status = exec_command(new_cmd, line + 1, &continue_parse, query_buf);
 
 		/* continue_parse must be relative to my_line for calculation below */
