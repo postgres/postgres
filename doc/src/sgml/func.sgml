@@ -1,5 +1,5 @@
 <!--
-$PostgreSQL: pgsql/doc/src/sgml/func.sgml,v 1.233 2005/01/08 05:19:18 tgl Exp $
+$PostgreSQL: pgsql/doc/src/sgml/func.sgml,v 1.234 2005/01/09 20:08:50 tgl Exp $
 PostgreSQL documentation
 -->
 
@@ -3772,45 +3772,109 @@ substring('foobar' from 'o(.)b')   <lineannotation>o</lineannotation>
     In the event that an RE could match more than one substring of a given
     string, the RE matches the one starting earliest in the string.
     If the RE could match more than one substring starting at that point,
-    its choice is determined by its <firstterm>preference</>:
-    either the longest substring, or the shortest.
+    either the longest possible match or the shortest possible match will
+    be taken, depending on whether the RE is <firstterm>greedy</> or
+    <firstterm>non-greedy</>.
    </para>
 
    <para>
-    Most atoms, and all constraints, have no preference.
-    A parenthesized RE has the same preference (possibly none) as the RE.
-    A quantified atom with quantifier
-    <literal>{</><replaceable>m</><literal>}</>
-    or
-    <literal>{</><replaceable>m</><literal>}?</>
-    has the same preference (possibly none) as the atom itself.
-    A quantified atom with other normal quantifiers (including
-    <literal>{</><replaceable>m</><literal>,</><replaceable>n</><literal>}</>
-    with <replaceable>m</> equal to <replaceable>n</>)
-    prefers longest match.
-    A quantified atom with other non-greedy quantifiers (including
-    <literal>{</><replaceable>m</><literal>,</><replaceable>n</><literal>}?</>
-    with <replaceable>m</> equal to <replaceable>n</>)
-    prefers shortest match.
-    A branch has the same preference as the first quantified atom in it
-    which has a preference.
-    An RE consisting of two or more branches connected by the
-    <literal>|</> operator prefers longest match.
+    Whether an RE is greedy or not is determined by the following rules:
+    <itemizedlist>
+     <listitem>
+      <para>
+       Most atoms, and all constraints, have no greediness attribute (because
+       they cannot match variable amounts of text anyway).
+      </para>
+     </listitem>
+     <listitem>
+      <para>
+       Adding parentheses around an RE does not change its greediness.
+      </para>
+     </listitem>
+     <listitem>
+      <para>
+       A quantified atom with a fixed-repetition quantifier
+       (<literal>{</><replaceable>m</><literal>}</>
+       or
+       <literal>{</><replaceable>m</><literal>}?</>)
+       has the same greediness (possibly none) as the atom itself.
+      </para>
+     </listitem>
+     <listitem>
+      <para>
+       A quantified atom with other normal quantifiers (including
+       <literal>{</><replaceable>m</><literal>,</><replaceable>n</><literal>}</>
+       with <replaceable>m</> equal to <replaceable>n</>)
+       is greedy (prefers longest match).
+      </para>
+     </listitem>
+     <listitem>
+      <para>
+       A quantified atom with a non-greedy quantifier (including
+       <literal>{</><replaceable>m</><literal>,</><replaceable>n</><literal>}?</>
+       with <replaceable>m</> equal to <replaceable>n</>)
+       is non-greedy (prefers shortest match).
+      </para>
+     </listitem>
+     <listitem>
+      <para>
+       A branch &mdash; that is, an RE that has no top-level
+       <literal>|</> operator &mdash; has the same greediness as the first
+       quantified atom in it that has a greediness attribute.
+      </para>
+     </listitem>
+     <listitem>
+      <para>
+       An RE consisting of two or more branches connected by the
+       <literal>|</> operator is always greedy.
+      </para>
+     </listitem>
+    </itemizedlist>
    </para>
 
    <para>
-    Subject to the constraints imposed by the rules for matching the whole RE,
-    subexpressions also match the longest or shortest possible substrings,
-    based on their preferences,
-    with subexpressions starting earlier in the RE taking priority over
-    ones starting later.
-    Note that outer subexpressions thus take priority over
-    their component subexpressions.
+    The above rules associate greediness attributes not only with individual
+    quantified atoms, but with branches and entire REs that contain quantified
+    atoms.  What that means is that the matching is done in such a way that
+    the branch, or whole RE, matches the longest or shortest possible
+    substring <emphasis>as a whole</>.  Once the length of the entire match
+    is determined, the part of it that matches any particular subexpression
+    is determined on the basis of the greediness attribute of that
+    subexpression, with subexpressions starting earlier in the RE taking
+    priority over ones starting later.
+   </para>
+
+   <para>
+    An example of what this means:
+<screen>
+SELECT SUBSTRING('XY1234Z', 'Y*([0-9]{1,3})');
+<lineannotation>Result: </lineannotation><computeroutput>123</computeroutput>
+SELECT SUBSTRING('XY1234Z', 'Y*?([0-9]{1,3})');
+<lineannotation>Result: </lineannotation><computeroutput>1</computeroutput>
+</screen>
+    In the first case, the RE as a whole is greedy because <literal>Y*</>
+    is greedy.  It can match beginning at the <literal>Y</>, and it matches
+    the longest possible string starting there, i.e., <literal>Y123</>.
+    The output is the parenthesized part of that, or <literal>123</>.
+    In the second case, the RE as a whole is non-greedy because <literal>Y*?</>
+    is non-greedy.  It can match beginning at the <literal>Y</>, and it matches
+    the shortest possible string starting there, i.e., <literal>Y1</>.
+    The subexpression <literal>[0-9]{1,3}</> is greedy but it cannot change
+    the decision as to the overall match length; so it is forced to match
+    just <literal>1</>.
+   </para>
+
+   <para>
+    In short, when an RE contains both greedy and non-greedy subexpressions,
+    the total match length is either as long as possible or as short as
+    possible, according to the attribute assigned to the whole RE.  The
+    attributes assigned to the subexpressions only affect how much of that
+    match they are allowed to <quote>eat</> relative to each other.
    </para>
 
    <para>
     The quantifiers <literal>{1,1}</> and <literal>{1,1}?</>
-    can be used to force longest and shortest preference, respectively,
+    can be used to force greediness or non-greediness, respectively,
     on a subexpression or a whole RE.
    </para>
 
