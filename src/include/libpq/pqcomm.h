@@ -9,7 +9,7 @@
  * Portions Copyright (c) 1996-2002, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Id: pqcomm.h,v 1.71 2002/12/06 03:46:33 momjian Exp $
+ * $Id: pqcomm.h,v 1.72 2002/12/06 04:37:05 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -47,7 +47,6 @@ typedef union SockAddr
 {
 	struct sockaddr sa;
 	struct sockaddr_in in;
-	struct sockaddr_in6 in6;
 	struct sockaddr_un un;
 } SockAddr;
 

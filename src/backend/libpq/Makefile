@@ -4,7 +4,7 @@
 #    Makefile for libpq subsystem (backend half of libpq interface)
 #
 # IDENTIFICATION
-#    $Header: /cvsroot/pgsql/src/backend/libpq/Makefile,v 1.34 2002/12/06 03:46:24 momjian Exp $
+#    $Header: /cvsroot/pgsql/src/backend/libpq/Makefile,v 1.35 2002/12/06 04:37:02 momjian Exp $
 #
 #-------------------------------------------------------------------------
 
@@ -15,7 +15,7 @@ include $(top_builddir)/src/Makefile.global
 # be-fsstubs is here for historical reasons, probably belongs elsewhere
 
 OBJS = be-fsstubs.o be-secure.o auth.o crypt.o hba.o md5.o pqcomm.o \
-	pqformat.o pqsignal.o v6util.o
+	pqformat.o pqsignal.o
 
 
 all: SUBSYS.o

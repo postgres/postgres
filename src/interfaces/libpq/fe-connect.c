@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/interfaces/libpq/fe-connect.c,v 1.214 2002/12/06 03:46:37 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/interfaces/libpq/fe-connect.c,v 1.215 2002/12/06 04:37:05 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -38,9 +38,6 @@
 #endif
 #include <arpa/inet.h>
 #endif
-
-#include "libpq/v6util.h"
-
 
 #ifndef HAVE_STRDUP
 #include "strdup.h"
@@ -789,15 +786,6 @@ connectDBStart(PGconn *conn)
 {
 	int			portno,
 				family;
-	struct addrinfo*        addrs         = NULL;
-	struct addrinfo*        addr_cur      = NULL;
-	struct addrinfo         hint;
-	const char*             node          = NULL;
-	const char*             unix_node     = "unix";
-	char                    portNoStr[64];
-	int   ret;
-	int   sockfd;
-
 
 #ifdef USE_SSL
 	StartupPacket np;			/* Used to negotiate SSL connection */
@@ -827,67 +815,101 @@ connectDBStart(PGconn *conn)
 
 	MemSet((char *) &conn->raddr, 0, sizeof(conn->raddr));
 
-	MemSet(&hint, 0, sizeof(hint));
-	hint.ai_socktype = SOCK_STREAM;
-	if(conn->pghostaddr != NULL && conn->pghostaddr[0] != '\0'){
-	  node = conn->pghostaddr;
-	  hint.ai_family = AF_UNSPEC;
-	}
-	else if (conn->pghost != NULL && conn->pghost[0] != '\0'){
-	  node = conn->pghost;
-	  hint.ai_family = AF_UNSPEC;
-	}
-#ifdef HAVE_UNIX_SOCKETS
-	else {
-	  node = unix_node;
-	  hint.ai_family = AF_UNIX;
-	}
-#endif   /* HAVE_UNIX_SOCKETS */
+	if (conn->pghostaddr != NULL && conn->pghostaddr[0] != '\0')
+	{
+		/* Using pghostaddr avoids a hostname lookup */
+		/* Note that this supports IPv4 only */
+		struct in_addr addr;
 
-	if (conn->pgport != NULL && conn->pgport[0] != '\0')
-	  portno = atoi(conn->pgport);
+		if (!inet_aton(conn->pghostaddr, &addr))
+		{
+			printfPQExpBuffer(&conn->errorMessage,
+							  libpq_gettext("invalid host address: %s\n"),
+							  conn->pghostaddr);
+			goto connect_errReturn;
+		}
+
+		family = AF_INET;
+
+		memmove((char *) &(conn->raddr.in.sin_addr),
+				(char *) &addr, sizeof(addr));
+	}
+	else if (conn->pghost != NULL && conn->pghost[0] != '\0')
+	{
+		/* Using pghost, so we have to look-up the hostname */
+		struct hostent *hp;
+
+		hp = gethostbyname(conn->pghost);
+		if ((hp == NULL) || (hp->h_addrtype != AF_INET))
+		{
+			printfPQExpBuffer(&conn->errorMessage,
+							  libpq_gettext("unknown host name: %s\n"),
+							  conn->pghost);
+			goto connect_errReturn;
+		}
+		family = AF_INET;
+
+		memmove((char *) &(conn->raddr.in.sin_addr),
+				(char *) hp->h_addr,
+				hp->h_length);
+	}
 	else
-	  portno = DEF_PGPORT;
-	
-	if(hint.ai_family == AF_UNSPEC){
-	  snprintf(portNoStr, sizeof(portNoStr)/sizeof(char),
-		   "%d", portno);
+	{
+		/* pghostaddr and pghost are NULL, so use Unix domain socket */
+		family = AF_UNIX;
+	}
+
+	/* Set family */
+	conn->raddr.sa.sa_family = family;
+
+	/* Set port number */
+	if (conn->pgport != NULL && conn->pgport[0] != '\0')
+		portno = atoi(conn->pgport);
+	else
+		portno = DEF_PGPORT;
+
+	if (family == AF_INET)
+	{
+		conn->raddr.in.sin_port = htons((unsigned short) (portno));
+		conn->raddr_len = sizeof(struct sockaddr_in);
 	}
 #ifdef HAVE_UNIX_SOCKETS
-	else {
-	  UNIXSOCK_PATH(conn->raddr.un, portno, conn->pgunixsocket);
-	  conn->raddr_len = UNIXSOCK_LEN(conn->raddr.un);
-	  strcpy(portNoStr, conn->raddr.un.sun_path);
+	else
+	{
+		UNIXSOCK_PATH(conn->raddr.un, portno, conn->pgunixsocket);
+		conn->raddr_len = UNIXSOCK_LEN(conn->raddr.un);
 #ifdef USE_SSL
 		/* Don't bother requesting SSL over a Unix socket */
 		conn->allow_ssl_try = false;
 		conn->require_ssl = false;
 #endif
 	}
-#endif   /* HAVE_UNIX_SOCKETS */
+#endif
 
-	ret = getaddrinfo2(node, portNoStr, &hint, &addrs);
-	if(ret || addrs == NULL){
-	  printfPQExpBuffer(&conn->errorMessage,
-			    libpq_gettext("failed to getaddrinfo(): %s\n"),
-			    gai_strerror(ret) );
-	  goto connect_errReturn;
+	/* Open a socket */
+	if ((conn->sock = socket(family, SOCK_STREAM, 0)) < 0)
+	{
+		printfPQExpBuffer(&conn->errorMessage,
+						  libpq_gettext("could not create socket: %s\n"),
+						  SOCK_STRERROR(SOCK_ERRNO));
+		goto connect_errReturn;
 	}
-	addr_cur = addrs;
-	do {
-	  sockfd = socket(addr_cur->ai_family, addr_cur->ai_socktype, 
-			  addr_cur->ai_protocol);
-	  if(sockfd < 0){
-	    continue;
-	  }
-	  conn->sock = sockfd;
-	  if (isAF_INETx2(addr_cur->ai_family) ){
-	    if (!connectNoDelay(conn))
-	      goto connect_errReturn;
-	  }
+
+	/*
+	 * Set the right options. Normally, we need nonblocking I/O, and we
+	 * don't want delay of outgoing data for AF_INET sockets.  If we are
+	 * using SSL, then we need the blocking I/O (XXX Can this be fixed?).
+	 */
+
+	if (family == AF_INET)
+	{
+		if (!connectNoDelay(conn))
+			goto connect_errReturn;
+	}
+
 #if !defined(USE_SSL)
-	  if (connectMakeNonblocking(conn) == 0)
-	    goto connect_errReturn;
+	if (connectMakeNonblocking(conn) == 0)
+		goto connect_errReturn;
 #endif
 
 	/* ----------
@@ -900,42 +922,31 @@ connectDBStart(PGconn *conn)
 	 * ----------
 	 */
 retry1:
-	  if(connect(sockfd, addr_cur->ai_addr, addr_cur->ai_addrlen) == 0){
-	    /* We're connected already */
-	    conn->status = CONNECTION_MADE;
-	    break;
-	  }
-	  else {
+	if (connect(conn->sock, &conn->raddr.sa, conn->raddr_len) < 0)
+	{
 		if (SOCK_ERRNO == EINTR)
 			/* Interrupted system call - we'll just try again */
 			goto retry1;
 
-	    if (SOCK_ERRNO == EINPROGRESS || SOCK_ERRNO == EWOULDBLOCK || SOCK_ERRNO == 0){
-
-		/*
-		 * This is fine - we're in non-blocking mode, and the
-		 * connection is in progress.
-		 */
-		conn->status = CONNECTION_STARTED;
-		break;
-	    }
-	  }
-	  close(sockfd);
-	} while( (addr_cur = addr_cur->ai_next) != NULL);
-
-	if(addr_cur == NULL){
-	  printfPQExpBuffer(&conn->errorMessage,
-			    libpq_gettext("could not create socket: %s\n"),
-			    SOCK_STRERROR(SOCK_ERRNO));
-
-	  goto connect_errReturn;
+		if (SOCK_ERRNO == EINPROGRESS || SOCK_ERRNO == EWOULDBLOCK || SOCK_ERRNO == 0)
+		{
+			/*
+			 * This is fine - we're in non-blocking mode, and the
+			 * connection is in progress.
+			 */
+			conn->status = CONNECTION_STARTED;
+		}
+		else
+		{
+			/* Something's gone wrong */
+			connectFailureMessage(conn, SOCK_ERRNO);
+			goto connect_errReturn;
+		}
 	}
-	else {
-	  family = addr_cur->ai_family;
-	  memmove(&conn->raddr, addr_cur->ai_addr, addr_cur->ai_addrlen);
-	  conn->raddr_len = addr_cur->ai_addrlen;
-	  freeaddrinfo2(hint.ai_family, addrs);
-	  addrs = NULL;
+	else
+	{
+		/* We're connected already */
+		conn->status = CONNECTION_MADE;
 	}
 
 #ifdef USE_SSL
@@ -1027,9 +1038,7 @@ connect_errReturn:
 		conn->sock = -1;
 	}
 	conn->status = CONNECTION_BAD;
-	if(addrs != NULL){
-	  freeaddrinfo2(hint.ai_family, addrs);
-	}
+
 	return 0;
 }
 

@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2002, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Id: libpq.h,v 1.53 2002/12/06 03:46:32 momjian Exp $
+ * $Id: libpq.h,v 1.54 2002/12/06 04:37:05 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -19,7 +19,6 @@
 
 #include "lib/stringinfo.h"
 #include "libpq/libpq-be.h"
-#include "libpq/v6util.h"
 
 /* ----------------
  * PQArgBlock

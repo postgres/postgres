@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/libpq/auth.c,v 1.93 2002/12/06 03:46:24 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/libpq/auth.c,v 1.94 2002/12/06 04:37:02 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -410,12 +410,9 @@ ClientAuthentication(Port *port)
 			 */
 			{
 				const char *hostinfo = "localhost";
-				char ip_hostinfo[INET6_ADDRSTRLEN];
-				if (isAF_INETx(&port->raddr.sa) ){
-				  hostinfo = SockAddr_ntop(&port->raddr, ip_hostinfo,
-							   INET6_ADDRSTRLEN, 1);
-				}
 
+				if (port->raddr.sa.sa_family == AF_INET)
+					hostinfo = inet_ntoa(port->raddr.in.sin_addr);
 				elog(FATAL,
 				"No pg_hba.conf entry for host %s, user %s, database %s",
 					 hostinfo, port->user, port->database);

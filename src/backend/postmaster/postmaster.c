@@ -37,7 +37,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/postmaster/postmaster.c,v 1.300 2002/12/06 03:46:29 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/postmaster/postmaster.c,v 1.301 2002/12/06 04:37:02 momjian Exp $
  *
  * NOTES
  *
@@ -669,7 +669,7 @@ PostmasterMain(int argc, char *argv[])
 	 */
 	if (NetServer)
 	{
-		status = StreamServerPort(AF_INET6, VirtualHost,
+		status = StreamServerPort(AF_INET, VirtualHost,
 								  (unsigned short) PostPortNumber,
 								  UnixSocketDir,
 								  &ServerSock_INET);
@@ -2091,14 +2091,13 @@ DoBackend(Port *port)
 	/*
 	 * Get the remote host name and port for logging and status display.
 	 */
-	if (isAF_INETx(&port->raddr))
+	if (port->raddr.sa.sa_family == AF_INET)
 	{
 		unsigned short remote_port;
 		char	   *host_addr;
-		char	   ip_hostinfo[INET6_ADDRSTRLEN]; 
 
 		remote_port = ntohs(port->raddr.in.sin_port);
-		host_addr = SockAddr_ntop(&port->raddr, ip_hostinfo, INET6_ADDRSTRLEN, 1);
+		host_addr = inet_ntoa(port->raddr.in.sin_addr);
 
 		remote_host = NULL;
 
