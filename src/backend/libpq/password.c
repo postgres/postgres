@@ -4,7 +4,7 @@
 #include <libpq/libpq.h>
 #include <string.h>
 #include <unistd.h>
-#ifdef HAVE_CRYPT
+#ifdef HAVE_CRYPT_H
 # include <crypt.h>
 #endif
 
