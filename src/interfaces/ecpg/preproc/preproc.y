@@ -641,7 +641,7 @@ output_statement(char * stmt, int mode)
 %type  <str> 	join_using where_clause relation_expr row_op sub_type
 %type  <str>	opt_column_list insert_rest InsertStmt OptimizableStmt
 %type  <str>    columnList DeleteStmt LockStmt UpdateStmt CursorStmt
-%type  <str>    NotifyStmt columnElem copy_dirn SubUnion c_expr
+%type  <str>    NotifyStmt columnElem copy_dirn SubUnion c_expr UnlistenStmt
 %type  <str>    copy_delimiter ListenStmt CopyStmt copy_file_name opt_binary
 %type  <str>    opt_with_copy FetchStmt opt_direction fetch_how_many opt_portal_name
 %type  <str>    ClosePortalStmt DestroyStmt VacuumStmt opt_verbose

@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/commands/Attic/defind.c,v 1.23 1998/08/26 05:22:36 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/commands/Attic/defind.c,v 1.24 1998/08/26 16:43:41 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -468,7 +468,7 @@ NormIndexAttrs(List *attList,	/* list of IndexElem's */
 			   Oid relId)
 {
 	List	   *rest;
-	HeapTuple	tuple;
+	HeapTuple	atttuple, tuple;
 
 	/*
 	 * process attributeList
@@ -484,19 +484,33 @@ NormIndexAttrs(List *attList,	/* list of IndexElem's */
 		if (attribute->name == NULL)
 			elog(ERROR, "missing attribute for define index");
 
-		tuple = SearchSysCacheTuple(ATTNAME,
+		atttuple = SearchSysCacheTupleCopy(ATTNAME,
 									ObjectIdGetDatum(relId),
 									PointerGetDatum(attribute->name),
 									0, 0);
-		if (!HeapTupleIsValid(tuple))
+		if (!HeapTupleIsValid(atttuple))
 		{
 			elog(ERROR,
 				 "DefineIndex: attribute \"%s\" not found",
 				 attribute->name);
 		}
 
-		attform = (AttributeTupleForm) GETSTRUCT(tuple);
+		attform = (AttributeTupleForm) GETSTRUCT(atttuple);
 		*attNumP++ = attform->attnum;
+
+		/* we want the type so we can set the proper alignment, etc. */
+		if (attribute->typename == NULL)
+		{
+			tuple = SearchSysCacheTuple(TYPOID,
+									  ObjectIdGetDatum(attform->atttypid),
+									  0, 0, 0);
+			if (!HeapTupleIsValid(tuple))
+				elog(ERROR, "create index: type for attribute '%s' undefined",
+					 attribute->name);
+			/* we just set the type name because that is all we need */
+			attribute->typename = makeNode(TypeName);
+			attribute->typename->name = nameout(&((TypeTupleForm) GETSTRUCT(tuple))->typname);
+		}
 
 		if (attribute->class == NULL)
 		{
@@ -520,21 +534,7 @@ NormIndexAttrs(List *attList,	/* list of IndexElem's */
 				 attribute->class);
 		}
 		*classOidP++ = tuple->t_oid;
-		/* we want the type so we can set the proper alignment, etc. */
-		if (attribute->typename == NULL)
-		{
-			Oid typoid = ((Form_pg_opclass) GETSTRUCT(tuple))->opcdeftype;
-			
-			tuple = SearchSysCacheTuple(TYPOID,
-									  ObjectIdGetDatum(typoid),
-									  0, 0, 0);
-			if (!HeapTupleIsValid(tuple))
-				elog(ERROR, "create index: type for class '%s' undefined",
-					 attribute->class);
-			/* we just set the name because that is all we need */
-			attribute->typename = makeNode(TypeName);
-			attribute->typename->name = nameout(&((TypeTupleForm) GETSTRUCT(tuple))->typname);
-		}
+		pfree(atttuple);
 	}
 }
 

@@ -7,7 +7,7 @@
 #
 #
 # IDENTIFICATION
-#    $Header: /cvsroot/pgsql/src/interfaces/Makefile,v 1.14 1998/08/26 05:22:58 momjian Exp $
+#    $Header: /cvsroot/pgsql/src/interfaces/Makefile,v 1.15 1998/08/26 16:43:51 momjian Exp $
 #
 #-------------------------------------------------------------------------
 
@@ -23,7 +23,7 @@ endif
 
 .DEFAULT all install clean dep depend distclean: $(perl-makefile-dep)
 	$(MAKE) -C libpq $@
-#	$(MAKE) -C ecpg $@
+	$(MAKE) -C ecpg $@
 ifeq ($(HAVE_Cplusplus), true)
 	$(MAKE) -C libpq++ $@
 else

@@ -7,7 +7,7 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: pg_attribute.h,v 1.37 1998/08/26 05:51:24 momjian Exp $
+ * $Id: pg_attribute.h,v 1.38 1998/08/26 16:43:48 momjian Exp $
  *
  * NOTES
  *	  the genbki.sh script reads this file and generates .bki
@@ -339,7 +339,7 @@ DATA(insert OID = 0 ( 1249 attlen			21 0  2   5 0 -1 -1 t f s f f));
 DATA(insert OID = 0 ( 1249 attnum			21 0  2   6 0 -1 -1 t f s f f));
 DATA(insert OID = 0 ( 1249 attnelems		23 0  4   7 0 -1 -1 t f i f f));
 DATA(insert OID = 0 ( 1249 attcacheoff		23 0  4   8 0 -1 -1 t f i f f));
-DATA(insert OID = 0 ( 1249 atttypmod		21 0  4   9 0 -1 -1 t f s f f));
+DATA(insert OID = 0 ( 1249 atttypmod		23 0  4   9 0 -1 -1 t f i f f));
 DATA(insert OID = 0 ( 1249 attbyval			16 0  1  10 0 -1 -1 t f c f f));
 DATA(insert OID = 0 ( 1249 attisset			16 0  1  11 0 -1 -1 t f c f f));
 DATA(insert OID = 0 ( 1249 attalign			18 0  1  12 0 -1 -1 t f c f f));
