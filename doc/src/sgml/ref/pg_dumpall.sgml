@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/ref/pg_dumpall.sgml,v 1.7 2000/01/24 19:34:13 petere Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/ref/pg_dumpall.sgml,v 1.8 2000/07/21 00:24:37 momjian Exp $
 Postgres documentation
 -->
 
@@ -277,7 +277,7 @@ dumpSequence(<replaceable class="parameter">table</replaceable>): SELECT failed
    To dump all databases:
 
    <programlisting>
-% pg_dumpall > db.out
+$ pg_dumpall > db.out
    </programlisting>
 
    <tip>
@@ -291,7 +291,7 @@ dumpSequence(<replaceable class="parameter">table</replaceable>): SELECT failed
    To reload this database:
 
    <programlisting>
-% psql -e template1 < db.out
+$ psql -e template1 < db.out
    </programlisting>
   </para>
   <tip>

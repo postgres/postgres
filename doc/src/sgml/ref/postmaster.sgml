@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/ref/postmaster.sgml,v 1.9 2000/05/02 20:02:03 thomas Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/ref/postmaster.sgml,v 1.10 2000/07/21 00:24:37 momjian Exp $
 Postgres documentation
 -->
 
@@ -299,11 +299,11 @@ StreamServerPort: cannot bind to port
 	process already running on the same port number.  The easiest way to
 	determine this is by using the command
 	<programlisting>
-% ps -ax | grep postmaster
+$ ps -ax | grep postmaster
 	</programlisting>
 on BSD-based systems, or
 	<programlisting>
-% ps -e | grep postmast
+$ ps -e | grep postmast
 	</programlisting>
 	for System V-like or POSIX-compliant systems such as HP-UX.
        </para>
@@ -408,13 +408,13 @@ IpcMemoryAttach: shmat() failed: Permission denied
    should be used instead. Using
 
    <programlisting>
-% kill -KILL
+$ kill -KILL
    </programlisting>
 
 or its alternative form
 
    <programlisting>
-% kill -9
+$ kill -9
    </programlisting>
 
    will prevent <application>postmaster</application>
@@ -443,7 +443,7 @@ or its alternative form
    values, type:
 
    <programlisting>
-% nohup postmaster >logfile 2>&1 &
+$ nohup postmaster >logfile 2>&1 &
    </programlisting>
 
    This command will start up <application>postmaster</application>
@@ -456,7 +456,7 @@ or its alternative form
    To start <application>postmaster</application> with a specific port:
 
    <programlisting>
-% nohup postmaster -p 1234 &
+$ nohup postmaster -p 1234 &
    </programlisting>
 
    This command will start up <application>postmaster</application>
@@ -465,14 +465,14 @@ or its alternative form
    using psql, you would need to run it as
 
    <programlisting>
-% psql -p 1234
+$ psql -p 1234
    </programlisting>
 
    or set the environment variable <envar>PGPORT</envar>:
 
    <programlisting>
-% setenv PGPORT 1234
-% psql
+$ setenv PGPORT 1234
+$ psql
    </programlisting>
   </para>
  </refsect1>

@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/ref/Attic/pg_upgrade.sgml,v 1.9 2000/03/27 17:14:43 thomas Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/ref/Attic/pg_upgrade.sgml,v 1.10 2000/07/21 00:24:37 momjian Exp $
 Postgres documentation
 -->
 
@@ -57,7 +57,7 @@ pg_upgrade [ -f <replaceable class="parameter">filename</replaceable> ] <replace
     <para>
      Then do:
      <programlisting>
-% pg_dumpall -s >db.out
+$ pg_dumpall -s >db.out
      </programlisting>
      to dump out your old database's table definitions without any data.
     </para>
@@ -80,7 +80,7 @@ pg_upgrade [ -f <replaceable class="parameter">filename</replaceable> ] <replace
     <para>
      Do
      <programlisting>
-% make install
+$ make install
      </programlisting>
      to install the new binaries.
     </para>
@@ -107,7 +107,7 @@ pg_upgrade [ -f <replaceable class="parameter">filename</replaceable> ] <replace
      Change your working directory to the 
      pgsql main directory, and type:
      <programlisting>
-% pg_upgrade -f db.out data.old
+$ pg_upgrade -f db.out data.old
      </programlisting>
      The program will do some checking to make sure everything is properly
      configured, and will run your db.out script to recreate all the databases

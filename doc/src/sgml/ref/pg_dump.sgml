@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/ref/pg_dump.sgml,v 1.17 2000/04/11 14:43:54 momjian Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/ref/pg_dump.sgml,v 1.18 2000/07/21 00:24:37 momjian Exp $
 Postgres documentation
 -->
 
@@ -387,7 +387,7 @@ dumpSequence(<replaceable class="parameter">table</replaceable>): SELECT failed
    To dump a database of the same name as the user:
 
    <programlisting>
-% pg_dump > db.out
+$ pg_dump > db.out
    </programlisting>
   </para>
 
@@ -395,7 +395,7 @@ dumpSequence(<replaceable class="parameter">table</replaceable>): SELECT failed
    To reload this database:
 
    <programlisting>
-% psql -e database < db.out
+$ psql -e database < db.out
    </programlisting>
   </para>
  </refsect1>
