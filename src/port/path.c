@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/port/path.c,v 1.24 2004/07/12 19:15:14 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/port/path.c,v 1.25 2004/07/12 19:27:31 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -106,6 +106,7 @@ canonicalize_path(char *path)
 		if (*p == '\\')
 			*p = '/';
 	}
+
 	/*	In Win32, if you do:
 	 *		prog.exe "a b" "\c\d\"
 	 *	the system will pass \c\d" as argv[2].
