@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/cache/lsyscache.c,v 1.72 2002/04/30 01:26:26 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/cache/lsyscache.c,v 1.73 2002/05/12 23:43:03 tgl Exp $
  *
  * NOTES
  *	  Eventually, the index information should go through here, too.
@@ -608,6 +608,27 @@ get_func_rettype(Oid funcid)
 		elog(ERROR, "Function OID %u does not exist", funcid);
 
 	result = ((Form_pg_proc) GETSTRUCT(tp))->prorettype;
+	ReleaseSysCache(tp);
+	return result;
+}
+
+/*
+ * get_func_retset
+ *		Given procedure id, return the function's proretset flag.
+ */
+bool
+get_func_retset(Oid funcid)
+{
+	HeapTuple	tp;
+	bool		result;
+
+	tp = SearchSysCache(PROCOID,
+						ObjectIdGetDatum(funcid),
+						0, 0, 0);
+	if (!HeapTupleIsValid(tp))
+		elog(ERROR, "Function OID %u does not exist", funcid);
+
+	result = ((Form_pg_proc) GETSTRUCT(tp))->proretset;
 	ReleaseSysCache(tp);
 	return result;
 }

@@ -20,7 +20,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/nodes/equalfuncs.c,v 1.131 2002/05/12 20:10:03 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/nodes/equalfuncs.c,v 1.132 2002/05/12 23:43:02 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -130,6 +130,8 @@ _equalOper(Oper *a, Oper *b)
 		return false;
 	if (a->opresulttype != b->opresulttype)
 		return false;
+	if (a->opretset != b->opretset)
+		return false;
 
 	/*
 	 * We do not examine opid or op_fcache, since these are logically
@@ -139,7 +141,8 @@ _equalOper(Oper *a, Oper *b)
 	 * (Besides, op_fcache is executor state, which we don't check --- see
 	 * notes at head of file.)
 	 *
-	 * It's probably not really necessary to check opresulttype either...
+	 * It's probably not really necessary to check opresulttype or opretset,
+	 * either...
 	 */
 
 	return true;
@@ -210,7 +213,9 @@ _equalFunc(Func *a, Func *b)
 {
 	if (a->funcid != b->funcid)
 		return false;
-	if (a->functype != b->functype)
+	if (a->funcresulttype != b->funcresulttype)
+		return false;
+	if (a->funcretset != b->funcretset)
 		return false;
 	/* Note we do not look at func_fcache; see notes for _equalOper */
 
@@ -536,12 +541,6 @@ _equalJoinInfo(JoinInfo *a, JoinInfo *b)
 	if (!equal(a->jinfo_restrictinfo, b->jinfo_restrictinfo))
 		return false;
 	return true;
-}
-
-static bool
-_equalIter(Iter *a, Iter *b)
-{
-	return equal(a->iterexpr, b->iterexpr);
 }
 
 static bool
@@ -1883,9 +1882,6 @@ equal(void *a, void *b)
 			break;
 		case T_ArrayRef:
 			retval = _equalArrayRef(a, b);
-			break;
-		case T_Iter:
-			retval = _equalIter(a, b);
 			break;
 		case T_RelabelType:
 			retval = _equalRelabelType(a, b);

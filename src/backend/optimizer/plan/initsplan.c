@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/optimizer/plan/initsplan.c,v 1.69 2002/04/28 19:54:28 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/optimizer/plan/initsplan.c,v 1.70 2002/05/12 23:43:03 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -764,9 +764,10 @@ process_implied_equality(Query *root, Node *item1, Node *item2,
 	clause = makeNode(Expr);
 	clause->typeOid = BOOLOID;
 	clause->opType = OP_EXPR;
-	clause->oper = (Node *) makeOper(oprid(eq_operator),		/* opno */
+	clause->oper = (Node *) makeOper(oprid(eq_operator),/* opno */
 									 InvalidOid,		/* opid */
-									 BOOLOID);	/* operator result type */
+									 BOOLOID,			/* opresulttype */
+									 false);			/* opretset */
 	clause->args = makeList2(item1, item2);
 
 	ReleaseSysCache(eq_operator);

@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/nodes/makefuncs.c,v 1.31 2002/04/16 23:08:10 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/nodes/makefuncs.c,v 1.32 2002/05/12 23:43:02 tgl Exp $
  */
 #include "postgres.h"
 
@@ -56,13 +56,15 @@ makeSimpleA_Expr(int oper, const char *name,
 Oper *
 makeOper(Oid opno,
 		 Oid opid,
-		 Oid opresulttype)
+		 Oid opresulttype,
+		 bool opretset)
 {
 	Oper	   *oper = makeNode(Oper);
 
 	oper->opno = opno;
 	oper->opid = opid;
 	oper->opresulttype = opresulttype;
+	oper->opretset = opretset;
 	oper->op_fcache = NULL;
 	return oper;
 }

@@ -10,7 +10,7 @@
  * Portions Copyright (c) 1996-2001, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Id: primnodes.h,v 1.62 2002/05/12 20:10:05 tgl Exp $
+ * $Id: primnodes.h,v 1.63 2002/05/12 23:43:04 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -151,11 +151,50 @@ typedef struct Expr
 {
 	NodeTag		type;
 	Oid			typeOid;		/* oid of the type of this expression */
-	OpType		opType;			/* type of this expression */
+	OpType		opType;			/* kind of expression */
 	Node	   *oper;			/* operator node if needed (Oper, Func, or
 								 * SubPlan) */
 	List	   *args;			/* arguments to this expression */
 } Expr;
+
+/*
+ * Oper - Expr subnode for an OP_EXPR
+ *
+ * NOTE: in the good old days 'opno' used to be both (or either, or
+ * neither) the pg_operator oid, and/or the pg_proc oid depending
+ * on the postgres module in question (parser->pg_operator,
+ * executor->pg_proc, planner->both), the mood of the programmer,
+ * and the phase of the moon (rumors that it was also depending on the day
+ * of the week are probably false). To make things even more postgres-like
+ * (i.e. a mess) some comments were referring to 'opno' using the name
+ * 'opid'. Anyway, now we have two separate fields, and of course that
+ * immediately removes all bugs from the code...		[ sp :-) ].
+ *
+ * Note also that opid is not necessarily filled in immediately on creation
+ * of the node.  The planner makes sure it is valid before passing the node
+ * tree to the executor, but during parsing/planning opid is typically 0.
+ */
+typedef struct Oper
+{
+	NodeTag		type;
+	Oid			opno;			/* PG_OPERATOR OID of the operator */
+	Oid			opid;			/* PG_PROC OID of underlying function */
+	Oid			opresulttype;	/* PG_TYPE OID of result value */
+	bool		opretset;		/* true if operator returns set */
+	FunctionCachePtr op_fcache;	/* runtime state, else NULL */
+} Oper;
+
+/*
+ * Func - Expr subnode for a FUNC_EXPR
+ */
+typedef struct Func
+{
+	NodeTag		type;
+	Oid			funcid;			/* PG_PROC OID of the function */
+	Oid			funcresulttype;	/* PG_TYPE OID of result value */
+	bool		funcretset;		/* true if function returns set */
+	FunctionCachePtr func_fcache; /* runtime state, or NULL */
+} Func;
 
 /*
  * Var
@@ -195,37 +234,6 @@ typedef struct Var
 	Index		varnoold;		/* original value of varno, for debugging */
 	AttrNumber	varoattno;		/* original value of varattno */
 } Var;
-
-/*--------------------
- * Oper
- *
- * NOTE: in the good old days 'opno' used to be both (or either, or
- * neither) the pg_operator oid, and/or the pg_proc oid depending
- * on the postgres module in question (parser->pg_operator,
- * executor->pg_proc, planner->both), the mood of the programmer,
- * and the phase of the moon (rumors that it was also depending on the day
- * of the week are probably false). To make things even more postgres-like
- * (i.e. a mess) some comments were referring to 'opno' using the name
- * 'opid'. Anyway, now we have two separate fields, and of course that
- * immediately removes all bugs from the code...		[ sp :-) ].
- *
- * Note also that opid is not necessarily filled in immediately on creation
- * of the node.  The planner makes sure it is valid before passing the node
- * tree to the executor, but during parsing/planning opid is typically 0.
- *--------------------
- */
-typedef struct Oper
-{
-	NodeTag		type;
-	Oid			opno;			/* PG_OPERATOR OID of the operator */
-	Oid			opid;			/* PG_PROC OID for the operator's
-								 * underlying function */
-	Oid			opresulttype;
-	/* PG_TYPE OID of the operator's return value */
-	FunctionCachePtr op_fcache;
-	/* runtime state while running the function */
-} Oper;
-
 
 /*
  * Const
@@ -282,39 +290,6 @@ typedef struct Param
 								 * parameters ("$.foo") */
 	Oid			paramtype;		/* PG_TYPE OID of the parameter's value */
 } Param;
-
-
-/*
- * Func
- */
-typedef struct Func
-{
-	NodeTag		type;
-	Oid			funcid;			/* PG_PROC OID of the function */
-	Oid			functype;		/* PG_TYPE OID of the function's return
-								 * value */
-	FunctionCachePtr func_fcache;
-
-	/*
-	 * runtime state while running this function. Where we are in the
-	 * execution of the function if it returns more than one value, etc.
-	 * See utils/fcache.h
-	 */
-} Func;
-
-/* ----------------
- * Iter
- *		can anyone explain what this is for?  Seems to have something to do
- *		with evaluation of functions that return sets...
- * ----------------
- */
-typedef struct Iter
-{
-	NodeTag		type;
-	Node	   *iterexpr;
-	Oid			itertype;		/* type of the iter expr (use for type
-								 * checking) */
-} Iter;
 
 /*
  * Aggref

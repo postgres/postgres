@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/parser/parse_coerce.c,v 2.71 2002/04/25 02:56:55 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/parser/parse_coerce.c,v 2.72 2002/05/12 23:43:03 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -313,26 +313,37 @@ coerce_type_typmod(ParseState *pstate, Node *node,
 
 /* coerce_to_boolean()
  *		Coerce an argument of a construct that requires boolean input
- *		(AND, OR, NOT, etc).
+ *		(AND, OR, NOT, etc).  Also check that input is not a set.
  *
- * If successful, update *pnode to be the transformed argument (if any
- * transformation is needed), and return TRUE.	If fail, return FALSE.
- * (The caller must check for FALSE and emit a suitable error message.)
+ * Returns the possibly-transformed node tree.
  */
-bool
-coerce_to_boolean(ParseState *pstate, Node **pnode)
+Node *
+coerce_to_boolean(Node *node, const char *constructName)
 {
-	Oid			inputTypeId = exprType(*pnode);
+	Oid			inputTypeId = exprType(node);
 	Oid			targetTypeId;
 
-	if (inputTypeId == BOOLOID)
-		return true;			/* no work */
-	targetTypeId = BOOLOID;
-	if (!can_coerce_type(1, &inputTypeId, &targetTypeId, false))
-		return false;			/* fail, but let caller choose error msg */
-	*pnode = coerce_type(pstate, *pnode, inputTypeId, targetTypeId, -1,
-						 false);
-	return true;
+	if (inputTypeId != BOOLOID)
+	{
+		targetTypeId = BOOLOID;
+		if (!can_coerce_type(1, &inputTypeId, &targetTypeId, false))
+		{
+			/* translator: first %s is name of a SQL construct, eg WHERE */
+			elog(ERROR, "Argument of %s must be type boolean, not type %s",
+				 constructName, format_type_be(inputTypeId));
+		}
+		node = coerce_type(NULL, node, inputTypeId, targetTypeId, -1,
+						   false);
+	}
+
+	if (expression_returns_set(node))
+	{
+		/* translator: %s is name of a SQL construct, eg WHERE */
+		elog(ERROR, "Argument of %s must not be a set function",
+			 constructName);
+	}
+
+	return node;
 }
 
 
@@ -782,7 +793,8 @@ build_func_call(Oid funcid, Oid rettype, List *args)
 
 	funcnode = makeNode(Func);
 	funcnode->funcid = funcid;
-	funcnode->functype = rettype;
+	funcnode->funcresulttype = rettype;
+	funcnode->funcretset = false; /* only possible case here */
 	funcnode->func_fcache = NULL;
 
 	expr = makeNode(Expr);

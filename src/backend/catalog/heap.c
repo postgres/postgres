@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/catalog/heap.c,v 1.198 2002/05/03 04:11:08 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/catalog/heap.c,v 1.199 2002/05/12 23:43:02 tgl Exp $
  *
  *
  * INTERFACE ROUTINES
@@ -49,6 +49,7 @@
 #include "optimizer/planmain.h"
 #include "optimizer/prep.h"
 #include "optimizer/var.h"
+#include "parser/parse_coerce.h"
 #include "parser/parse_expr.h"
 #include "parser/parse_relation.h"
 #include "parser/parse_target.h"
@@ -1626,9 +1627,7 @@ AddRelationRawConstraints(Relation rel,
 		/*
 		 * Make sure it yields a boolean result.
 		 */
-		if (exprType(expr) != BOOLOID)
-			elog(ERROR, "CHECK constraint expression '%s' does not yield boolean result",
-				 ccname);
+		expr = coerce_to_boolean(expr, "CHECK");
 
 		/*
 		 * Make sure no outside relations are referred to.
@@ -1763,6 +1762,12 @@ cookDefault(ParseState *pstate,
 	 */
 	if (contain_var_clause(expr))
 		elog(ERROR, "cannot use column references in DEFAULT clause");
+
+	/*
+	 * It can't return a set either.
+	 */
+	if (expression_returns_set(expr))
+		elog(ERROR, "DEFAULT clause must not return a set");
 
 	/*
 	 * No subplans or aggregates, either...

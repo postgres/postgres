@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/parser/parse_func.c,v 1.128 2002/05/12 20:10:04 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/parser/parse_func.c,v 1.129 2002/05/12 23:43:03 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -280,7 +280,8 @@ ParseFuncOrColumn(ParseState *pstate, List *funcname, List *fargs,
 		Func	   *funcnode = makeNode(Func);
 
 		funcnode->funcid = funcid;
-		funcnode->functype = rettype;
+		funcnode->funcresulttype = rettype;
+		funcnode->funcretset = retset;
 		funcnode->func_fcache = NULL;
 
 		expr->typeOid = rettype;
@@ -289,21 +290,6 @@ ParseFuncOrColumn(ParseState *pstate, List *funcname, List *fargs,
 		expr->args = fargs;
 
 		retval = (Node *) expr;
-
-		/*
-		 * if the function returns a set of values, then we need to iterate
-		 * over all the returned values in the executor, so we stick an iter
-		 * node here.  if it returns a singleton, then we don't need the iter
-		 * node.
-		 */
-		if (retset)
-		{
-			Iter	   *iter = makeNode(Iter);
-
-			iter->itertype = rettype;
-			iter->iterexpr = retval;
-			retval = (Node *) iter;
-		}
 	}
 	else
 	{
@@ -1186,26 +1172,6 @@ ParseComplexProjection(ParseState *pstate,
 	 */
 	switch (nodeTag(first_arg))
 	{
-		case T_Iter:
-			{
-				Iter	   *iter = (Iter *) first_arg;
-
-				/*
-				 * If it's an Iter, we stick the FieldSelect
-				 * *inside* the Iter --- this is klugy, but necessary
-				 * because ExecTargetList() currently does the right thing
-				 * only when the Iter node is at the top level of a
-				 * targetlist item.
-				 *
-				 * XXX Iter should go away altogether...
-				 */
-				fselect = setup_field_select(iter->iterexpr,
-											 funcname, argrelid);
-				iter->iterexpr = (Node *) fselect;
-				iter->itertype = fselect->resulttype;
-				return (Node *) iter;
-				break;
-			}
 		case T_Var:
 			{
 				Var		   *var = (Var *) first_arg;

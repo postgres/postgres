@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/parser/parse_expr.c,v 1.116 2002/04/28 00:49:12 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/parser/parse_expr.c,v 1.117 2002/05/12 23:43:03 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -31,6 +31,7 @@
 #include "parser/parse_target.h"
 #include "parser/parse_type.h"
 #include "utils/builtins.h"
+#include "utils/lsyscache.h"
 #include "utils/syscache.h"
 
 
@@ -230,15 +231,8 @@ transformExpr(ParseState *pstate, Node *expr)
 															  a->rexpr);
 							Expr	   *expr = makeNode(Expr);
 
-							if (!coerce_to_boolean(pstate, &lexpr))
-								elog(ERROR, "left-hand side of AND is type '%s', not '%s'",
-									 format_type_be(exprType(lexpr)),
-									 format_type_be(BOOLOID));
-
-							if (!coerce_to_boolean(pstate, &rexpr))
-								elog(ERROR, "right-hand side of AND is type '%s', not '%s'",
-									 format_type_be(exprType(rexpr)),
-									 format_type_be(BOOLOID));
+							lexpr = coerce_to_boolean(lexpr, "AND");
+							rexpr = coerce_to_boolean(rexpr, "AND");
 
 							expr->typeOid = BOOLOID;
 							expr->opType = AND_EXPR;
@@ -254,15 +248,8 @@ transformExpr(ParseState *pstate, Node *expr)
 															  a->rexpr);
 							Expr	   *expr = makeNode(Expr);
 
-							if (!coerce_to_boolean(pstate, &lexpr))
-								elog(ERROR, "left-hand side of OR is type '%s', not '%s'",
-									 format_type_be(exprType(lexpr)),
-									 format_type_be(BOOLOID));
-
-							if (!coerce_to_boolean(pstate, &rexpr))
-								elog(ERROR, "right-hand side of OR is type '%s', not '%s'",
-									 format_type_be(exprType(rexpr)),
-									 format_type_be(BOOLOID));
+							lexpr = coerce_to_boolean(lexpr, "OR");
+							rexpr = coerce_to_boolean(rexpr, "OR");
 
 							expr->typeOid = BOOLOID;
 							expr->opType = OR_EXPR;
@@ -276,10 +263,7 @@ transformExpr(ParseState *pstate, Node *expr)
 															  a->rexpr);
 							Expr	   *expr = makeNode(Expr);
 
-							if (!coerce_to_boolean(pstate, &rexpr))
-								elog(ERROR, "argument to NOT is type '%s', not '%s'",
-									 format_type_be(exprType(rexpr)),
-									 format_type_be(BOOLOID));
+							rexpr = coerce_to_boolean(rexpr, "NOT");
 
 							expr->typeOid = BOOLOID;
 							expr->opType = NOT_EXPR;
@@ -426,9 +410,15 @@ transformExpr(ParseState *pstate, Node *expr)
 								 opname, typeidTypeName(opform->oprresult),
 								 typeidTypeName(BOOLOID));
 
+						if (get_func_retset(opform->oprcode))
+							elog(ERROR, "'%s' must not return a set"
+								 " to be used with quantified predicate subquery",
+								 opname);
+
 						newop = makeOper(oprid(optup),	/* opno */
 										 InvalidOid,	/* opid */
-										 opform->oprresult);
+										 opform->oprresult,
+										 false);
 						sublink->oper = lappend(sublink->oper, newop);
 						ReleaseSysCache(optup);
 					}
@@ -467,8 +457,7 @@ transformExpr(ParseState *pstate, Node *expr)
 					}
 					neww->expr = transformExpr(pstate, warg);
 
-					if (!coerce_to_boolean(pstate, &neww->expr))
-						elog(ERROR, "WHEN clause must have a boolean result");
+					neww->expr = coerce_to_boolean(neww->expr, "CASE/WHEN");
 
 					/*
 					 * result is NULL for NULLIF() construct - thomas
@@ -553,42 +542,38 @@ transformExpr(ParseState *pstate, Node *expr)
 		case T_BooleanTest:
 			{
 				BooleanTest *b = (BooleanTest *) expr;
+				const char *clausename;
+
+				switch (b->booltesttype)
+				{
+					case IS_TRUE:
+						clausename = "IS TRUE";
+						break;
+					case IS_NOT_TRUE:
+						clausename = "IS NOT TRUE";
+						break;
+					case IS_FALSE:
+						clausename = "IS FALSE";
+						break;
+					case IS_NOT_FALSE:
+						clausename = "IS NOT FALSE";
+						break;
+					case IS_UNKNOWN:
+						clausename = "IS UNKNOWN";
+						break;
+					case IS_NOT_UNKNOWN:
+						clausename = "IS NOT UNKNOWN";
+						break;
+					default:
+						elog(ERROR, "transformExpr: unexpected booltesttype %d",
+							 (int) b->booltesttype);
+						clausename = NULL;	/* keep compiler quiet */
+				}
 
 				b->arg = transformExpr(pstate, b->arg);
 
-				if (!coerce_to_boolean(pstate, &b->arg))
-				{
-					const char *clausename;
+				b->arg = coerce_to_boolean(b->arg, clausename);
 
-					switch (b->booltesttype)
-					{
-						case IS_TRUE:
-							clausename = "IS TRUE";
-							break;
-						case IS_NOT_TRUE:
-							clausename = "IS NOT TRUE";
-							break;
-						case IS_FALSE:
-							clausename = "IS FALSE";
-							break;
-						case IS_NOT_FALSE:
-							clausename = "IS NOT FALSE";
-							break;
-						case IS_UNKNOWN:
-							clausename = "IS UNKNOWN";
-							break;
-						case IS_NOT_UNKNOWN:
-							clausename = "IS NOT UNKNOWN";
-							break;
-						default:
-							elog(ERROR, "transformExpr: unexpected booltesttype %d",
-								 (int) b->booltesttype);
-							clausename = NULL;	/* keep compiler quiet */
-					}
-
-					elog(ERROR, "Argument of %s must be boolean",
-						 clausename);
-				}
 				result = expr;
 				break;
 			}
@@ -833,12 +818,6 @@ exprType(Node *expr)
 
 	switch (nodeTag(expr))
 	{
-		case T_Func:
-			type = ((Func *) expr)->functype;
-			break;
-		case T_Iter:
-			type = ((Iter *) expr)->itertype;
-			break;
 		case T_Var:
 			type = ((Var *) expr)->vartype;
 			break;

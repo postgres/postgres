@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2001, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Id: makefuncs.h,v 1.35 2002/04/16 23:08:12 tgl Exp $
+ * $Id: makefuncs.h,v 1.36 2002/05/12 23:43:04 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -22,8 +22,9 @@ extern A_Expr *makeSimpleA_Expr(int oper, const char *name,
 								Node *lexpr, Node *rexpr);
 
 extern Oper *makeOper(Oid opno,
-		 Oid opid,
-		 Oid opresulttype);
+					  Oid opid,
+					  Oid opresulttype,
+					  bool opretset);
 
 extern Var *makeVar(Index varno,
 		AttrNumber varattno,

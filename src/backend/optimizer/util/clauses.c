@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/optimizer/util/clauses.c,v 1.98 2002/05/12 20:10:03 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/optimizer/util/clauses.c,v 1.99 2002/05/12 23:43:03 tgl Exp $
  *
  * HISTORY
  *	  AUTHOR			DATE			MAJOR EVENT
@@ -47,7 +47,7 @@ typedef struct
 
 static bool contain_agg_clause_walker(Node *node, void *context);
 static bool pull_agg_clause_walker(Node *node, List **listptr);
-static bool contain_iter_clause_walker(Node *node, void *context);
+static bool expression_returns_set_walker(Node *node, void *context);
 static bool contain_subplans_walker(Node *node, void *context);
 static bool pull_subplans_walker(Node *node, List **listptr);
 static bool check_subplans_for_ungrouped_vars_walker(Node *node,
@@ -74,7 +74,7 @@ make_clause(int type, Node *oper, List *args)
 			expr->typeOid = ((Oper *) oper)->opresulttype;
 			break;
 		case FUNC_EXPR:
-			expr->typeOid = ((Func *) oper)->functype;
+			expr->typeOid = ((Func *) oper)->funcresulttype;
 			break;
 		default:
 			elog(ERROR, "make_clause: unsupported type %d", type);
@@ -195,7 +195,7 @@ make_funcclause(Func *func, List *funcargs)
 {
 	Expr	   *expr = makeNode(Expr);
 
-	expr->typeOid = func->functype;
+	expr->typeOid = func->funcresulttype;
 	expr->opType = FUNC_EXPR;
 	expr->oper = (Node *) func;
 	expr->args = funcargs;
@@ -453,36 +453,61 @@ pull_agg_clause_walker(Node *node, List **listptr)
 
 
 /*****************************************************************************
- *		Iter clause manipulation
+ *		Support for expressions returning sets
  *****************************************************************************/
 
 /*
- * contain_iter_clause
- *	  Recursively search for Iter nodes within a clause.
+ * expression_returns_set
+ *	  Test whethe an expression returns a set result.
  *
- *	  Returns true if any Iter found.
- *
- * XXX Iter is a crock.  It'd be better to look directly at each function
- * or operator to see if it can return a set.  However, that would require
- * a lot of extra cycles as things presently stand.  The return-type info
- * for function and operator nodes should be extended to include whether
- * the return is a set.
+ * Because we use expression_tree_walker(), this can also be applied to
+ * whole targetlists; it'll produce TRUE if any one of the tlist items
+ * returns a set.
  */
 bool
-contain_iter_clause(Node *clause)
+expression_returns_set(Node *clause)
 {
-	return contain_iter_clause_walker(clause, NULL);
+	return expression_returns_set_walker(clause, NULL);
 }
 
 static bool
-contain_iter_clause_walker(Node *node, void *context)
+expression_returns_set_walker(Node *node, void *context)
 {
 	if (node == NULL)
 		return false;
-	if (IsA(node, Iter))
-		return true;			/* abort the tree traversal and return
-								 * true */
-	return expression_tree_walker(node, contain_iter_clause_walker, context);
+	if (IsA(node, Expr))
+	{
+		Expr   *expr = (Expr *) node;
+
+		switch (expr->opType)
+		{
+			case OP_EXPR:
+				if (((Oper *) expr->oper)->opretset)
+					return true;
+				/* else fall through to check args */
+				break;
+			case FUNC_EXPR:
+				if (((Func *) expr->oper)->funcretset)
+					return true;
+				/* else fall through to check args */
+				break;
+			case OR_EXPR:
+			case AND_EXPR:
+			case NOT_EXPR:
+				/* Booleans can't return a set, so no need to recurse */
+				return false;
+			case SUBPLAN_EXPR:
+				/* Subplans can't presently return sets either */
+				return false;
+		}
+	}
+	/* Avoid recursion for some other cases that can't return a set */
+	if (IsA(node, Aggref))
+		return false;
+	if (IsA(node, SubLink))
+		return false;
+	return expression_tree_walker(node, expression_returns_set_walker,
+								  context);
 }
 
 /*****************************************************************************
@@ -1043,7 +1068,8 @@ CommuteClause(Expr *clause)
 
 	commu = makeOper(optup->t_data->t_oid,
 					 commuTup->oprcode,
-					 commuTup->oprresult);
+					 commuTup->oprresult,
+					 ((Oper *) clause->oper)->opretset);
 
 	ReleaseSysCache(optup);
 
@@ -1073,8 +1099,7 @@ CommuteClause(Expr *clause)
  * results even with constant inputs, "nextval()" being the classic
  * example.  Functions that are not marked "immutable" in pg_proc
  * will not be pre-evaluated here, although we will reduce their
- * arguments as far as possible.  Functions that are the arguments
- * of Iter nodes are also not evaluated.
+ * arguments as far as possible.
  *
  * We assume that the tree has already been type-checked and contains
  * only operators and functions that are reasonable to try to execute.
@@ -1398,37 +1423,6 @@ eval_const_expressions_mutator(Node *node, void *context)
 		newcase->defresult = defresult;
 		return (Node *) newcase;
 	}
-	if (IsA(node, Iter))
-	{
-		/*
-		 * The argument of an Iter is normally a function call. We must
-		 * not try to eliminate the function, but we can try to simplify
-		 * its arguments.  If, by chance, the arg is NOT a function then
-		 * we go ahead and try to simplify it (by falling into
-		 * expression_tree_mutator). Is that the right thing?
-		 */
-		Iter	   *iter = (Iter *) node;
-
-		if (is_funcclause(iter->iterexpr))
-		{
-			Expr	   *func = (Expr *) iter->iterexpr;
-			Expr	   *newfunc;
-			Iter	   *newiter;
-
-			newfunc = makeNode(Expr);
-			newfunc->typeOid = func->typeOid;
-			newfunc->opType = func->opType;
-			newfunc->oper = func->oper;
-			newfunc->args = (List *)
-				expression_tree_mutator((Node *) func->args,
-										eval_const_expressions_mutator,
-										(void *) context);
-			newiter = makeNode(Iter);
-			newiter->iterexpr = (Node *) newfunc;
-			newiter->itertype = iter->itertype;
-			return (Node *) newiter;
-		}
-	}
 
 	/*
 	 * For any node type not handled above, we recurse using
@@ -1501,8 +1495,9 @@ simplify_op_or_func(Expr *expr, List *args)
 	 * Get the function procedure's OID and look to see whether it is
 	 * marked immutable.
 	 *
-	 * XXX would it be better to take the result type from the pg_proc tuple,
-	 * rather than the Oper or Func node?
+	 * Note we take the result type from the Oper or Func node, not the
+	 * pg_proc tuple; probably necessary for binary-compatibility cases.
+	 *
 	 */
 	if (expr->opType == OP_EXPR)
 	{
@@ -1517,7 +1512,7 @@ simplify_op_or_func(Expr *expr, List *args)
 		Func	   *func = (Func *) expr->oper;
 
 		funcid = func->funcid;
-		result_typeid = func->functype;
+		result_typeid = func->funcresulttype;
 	}
 
 	/*
@@ -1747,8 +1742,6 @@ expression_tree_walker(Node *node,
 			break;
 		case T_Aggref:
 			return walker(((Aggref *) node)->target, context);
-		case T_Iter:
-			return walker(((Iter *) node)->iterexpr, context);
 		case T_ArrayRef:
 			{
 				ArrayRef   *aref = (ArrayRef *) node;
@@ -2080,16 +2073,6 @@ expression_tree_mutator(Node *node,
 
 				FLATCOPY(newnode, aggref, Aggref);
 				MUTATE(newnode->target, aggref->target, Node *);
-				return (Node *) newnode;
-			}
-			break;
-		case T_Iter:
-			{
-				Iter	   *iter = (Iter *) node;
-				Iter	   *newnode;
-
-				FLATCOPY(newnode, iter, Iter);
-				MUTATE(newnode->iterexpr, iter->iterexpr, Node *);
 				return (Node *) newnode;
 			}
 			break;

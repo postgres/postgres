@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/parser/parse_clause.c,v 1.91 2002/05/12 20:10:04 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/parser/parse_clause.c,v 1.92 2002/05/12 23:43:03 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -285,14 +285,7 @@ transformJoinUsingClause(ParseState *pstate, List *leftVars, List *rightVars)
 	 */
 	result = transformExpr(pstate, result);
 
-	/*
-	 * We expect the result to yield bool directly, otherwise complain. We
-	 * could try coerce_to_boolean() here, but it seems likely that an "="
-	 * operator that doesn't return bool is wrong anyway.
-	 */
-	if (exprType(result) != BOOLOID)
-		elog(ERROR, "JOIN/USING clause must return type boolean, not type %s",
-			 format_type_be(exprType(result)));
+	result = coerce_to_boolean(result, "JOIN/USING");
 
 	return result;
 }	/* transformJoinUsingClause() */
@@ -326,9 +319,7 @@ transformJoinOnClause(ParseState *pstate, JoinExpr *j,
 	/* This part is just like transformWhereClause() */
 	result = transformExpr(pstate, j->quals);
 
-	if (!coerce_to_boolean(pstate, &result))
-		elog(ERROR, "JOIN/ON clause must return type boolean, not type %s",
-			 format_type_be(exprType(result)));
+	result = coerce_to_boolean(result, "JOIN/ON");
 
 	pstate->p_namespace = save_namespace;
 
@@ -486,14 +477,7 @@ transformRangeFunction(ParseState *pstate, RangeFunction *r)
 		elog(ERROR, "cannot use subselect in FROM function expression");
 
 	/*
-	 * Remove any Iter nodes added by parse_func.c.  We oughta get rid of
-	 * Iter completely ...
-	 */
-	while (funcexpr && IsA(funcexpr, Iter))
-		funcexpr = ((Iter *) funcexpr)->iterexpr;
-
-	/*
-	 * Insist we now have a bare function call (explain.c is the only place
+	 * Insist we have a bare function call (explain.c is the only place
 	 * that depends on this, I think).  If this fails, it's probably because
 	 * transformExpr interpreted the function notation as a type coercion.
 	 */
@@ -947,9 +931,7 @@ transformWhereClause(ParseState *pstate, Node *clause)
 
 	qual = transformExpr(pstate, clause);
 
-	if (!coerce_to_boolean(pstate, &qual))
-		elog(ERROR, "WHERE clause must return type boolean, not type %s",
-			 format_type_be(exprType(qual)));
+	qual = coerce_to_boolean(qual, "WHERE");
 
 	return qual;
 }

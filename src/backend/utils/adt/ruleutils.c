@@ -3,7 +3,7 @@
  *				back to source text
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/ruleutils.c,v 1.103 2002/05/12 20:10:04 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/ruleutils.c,v 1.104 2002/05/12 23:43:03 tgl Exp $
  *
  *	  This software is copyrighted by Jan Wieck - Hamburg.
  *
@@ -1671,10 +1671,6 @@ get_rule_expr(Node *node, deparse_context *context)
 
 		case T_Aggref:
 			get_agg_expr((Aggref *) node, context);
-			break;
-
-		case T_Iter:
-			get_rule_expr(((Iter *) node)->iterexpr, context);
 			break;
 
 		case T_ArrayRef:

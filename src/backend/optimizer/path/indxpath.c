@@ -9,7 +9,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/optimizer/path/indxpath.c,v 1.116 2002/04/16 23:08:10 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/optimizer/path/indxpath.c,v 1.117 2002/05/12 23:43:02 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -1316,7 +1316,8 @@ pred_test_simple_clause(Expr *predicate, Node *clause)
 	 */
 	test_oper = makeOper(test_op,		/* opno */
 						 InvalidOid,	/* opid */
-						 BOOLOID);		/* opresulttype */
+						 BOOLOID,		/* opresulttype */
+						 false);		/* opretset */
 	replace_opid(test_oper);
 	test_expr = make_opclause(test_oper,
 							  (Var *) clause_const,
@@ -2020,7 +2021,7 @@ prefix_quals(Var *leftop, Oid expr_op,
 		if (oproid == InvalidOid)
 			elog(ERROR, "prefix_quals: no = operator for type %u", datatype);
 		con = string_to_const(prefix, datatype);
-		op = makeOper(oproid, InvalidOid, BOOLOID);
+		op = makeOper(oproid, InvalidOid, BOOLOID, false);
 		expr = make_opclause(op, leftop, (Var *) con);
 		result = makeList1(expr);
 		return result;
@@ -2035,7 +2036,7 @@ prefix_quals(Var *leftop, Oid expr_op,
 	if (oproid == InvalidOid)
 		elog(ERROR, "prefix_quals: no >= operator for type %u", datatype);
 	con = string_to_const(prefix, datatype);
-	op = makeOper(oproid, InvalidOid, BOOLOID);
+	op = makeOper(oproid, InvalidOid, BOOLOID, false);
 	expr = make_opclause(op, leftop, (Var *) con);
 	result = makeList1(expr);
 
@@ -2051,7 +2052,7 @@ prefix_quals(Var *leftop, Oid expr_op,
 		if (oproid == InvalidOid)
 			elog(ERROR, "prefix_quals: no < operator for type %u", datatype);
 		con = string_to_const(greaterstr, datatype);
-		op = makeOper(oproid, InvalidOid, BOOLOID);
+		op = makeOper(oproid, InvalidOid, BOOLOID, false);
 		expr = make_opclause(op, leftop, (Var *) con);
 		result = lappend(result, expr);
 		pfree(greaterstr);
@@ -2116,7 +2117,7 @@ network_prefix_quals(Var *leftop, Oid expr_op, Datum rightop)
 
 	opr1right = network_scan_first(rightop);
 
-	op = makeOper(opr1oid, InvalidOid, BOOLOID);
+	op = makeOper(opr1oid, InvalidOid, BOOLOID, false);
 	expr = make_opclause(op, leftop,
 						 (Var *) makeConst(datatype, -1, opr1right,
 										   false, false, false, false));
@@ -2131,7 +2132,7 @@ network_prefix_quals(Var *leftop, Oid expr_op, Datum rightop)
 
 	opr2right = network_scan_last(rightop);
 
-	op = makeOper(opr2oid, InvalidOid, BOOLOID);
+	op = makeOper(opr2oid, InvalidOid, BOOLOID, false);
 	expr = make_opclause(op, leftop,
 						 (Var *) makeConst(datatype, -1, opr2right,
 										   false, false, false, false));

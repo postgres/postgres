@@ -5,7 +5,7 @@
  * Portions Copyright (c) 1996-2001, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- *	$Header: /cvsroot/pgsql/src/backend/nodes/outfuncs.c,v 1.158 2002/05/12 20:10:03 tgl Exp $
+ *	$Header: /cvsroot/pgsql/src/backend/nodes/outfuncs.c,v 1.159 2002/05/12 23:43:02 tgl Exp $
  *
  * NOTES
  *	  Every (plan) node in POSTGRES has an associated "out" routine which
@@ -850,9 +850,11 @@ _outArrayRef(StringInfo str, ArrayRef *node)
 static void
 _outFunc(StringInfo str, Func *node)
 {
-	appendStringInfo(str, " FUNC :funcid %u :functype %u ",
+	appendStringInfo(str,
+					 " FUNC :funcid %u :funcresulttype %u :funcretset %s ",
 					 node->funcid,
-					 node->functype);
+					 node->funcresulttype,
+					 booltostr(node->funcretset));
 }
 
 /*
@@ -862,10 +864,11 @@ static void
 _outOper(StringInfo str, Oper *node)
 {
 	appendStringInfo(str,
-					 " OPER :opno %u :opid %u :opresulttype %u ",
+					 " OPER :opno %u :opid %u :opresulttype %u :opretset %s ",
 					 node->opno,
 					 node->opid,
-					 node->opresulttype);
+					 node->opresulttype,
+					 booltostr(node->opretset));
 }
 
 /*
@@ -1244,13 +1247,6 @@ _outDatum(StringInfo str, Datum value, int typlen, bool typbyval)
 			appendStringInfo(str, "] ");
 		}
 	}
-}
-
-static void
-_outIter(StringInfo str, Iter *node)
-{
-	appendStringInfo(str, " ITER :iterexpr ");
-	_outNode(str, node->iterexpr);
 }
 
 static void
@@ -1730,9 +1726,6 @@ _outNode(StringInfo str, void *obj)
 				break;
 			case T_JoinInfo:
 				_outJoinInfo(str, obj);
-				break;
-			case T_Iter:
-				_outIter(str, obj);
 				break;
 			case T_Stream:
 				_outStream(str, obj);

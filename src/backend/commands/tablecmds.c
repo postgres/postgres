@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/commands/tablecmds.c,v 1.12 2002/04/27 21:24:34 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/commands/tablecmds.c,v 1.13 2002/05/12 23:43:02 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -37,6 +37,7 @@
 #include "optimizer/planmain.h"
 #include "optimizer/prep.h"
 #include "parser/parse.h"
+#include "parser/parse_coerce.h"
 #include "parser/parse_expr.h"
 #include "parser/parse_relation.h"
 #include "parser/parse_type.h"
@@ -2461,9 +2462,7 @@ AlterTableAddConstraint(Oid myrelid,
 								/*
 								 * Make sure it yields a boolean result.
 								 */
-								if (exprType(expr) != BOOLOID)
-									elog(ERROR, "CHECK '%s' does not yield boolean result",
-										 name);
+								expr = coerce_to_boolean(expr, "CHECK");
 
 								/*
 								 * Make sure no outside relations are
@@ -2472,6 +2471,14 @@ AlterTableAddConstraint(Oid myrelid,
 								if (length(pstate->p_rtable) != 1)
 									elog(ERROR, "Only relation '%s' can be referenced in CHECK",
 										 RelationGetRelationName(rel));
+
+								/*
+								 * No subplans or aggregates, either...
+								 */
+								if (contain_subplans(expr))
+									elog(ERROR, "cannot use subselect in CHECK constraint expression");
+								if (contain_agg_clause(expr))
+									elog(ERROR, "cannot use aggregate function in CHECK constraint expression");
 
 								/*
 								 * Might as well try to reduce any

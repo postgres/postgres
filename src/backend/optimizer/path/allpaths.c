@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/optimizer/path/allpaths.c,v 1.84 2002/05/12 20:10:03 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/optimizer/path/allpaths.c,v 1.85 2002/05/12 23:43:02 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -312,8 +312,8 @@ set_subquery_pathlist(Query *root, RelOptInfo *rel,
 	 * checking that seems more work than it's worth.  In any case, a
 	 * plain DISTINCT is safe to push down past.)
 	 *
-	 * 3. If the subquery has any ITER nodes (ie, functions returning sets)
-	 * in its target list, we do not push down any quals, since the quals
+	 * 3. If the subquery has any functions returning sets in its target list,
+	 * we do not push down any quals, since the quals
 	 * might refer to those tlist items, which would mean we'd introduce
 	 * functions-returning-sets into the subquery's WHERE/HAVING quals.
 	 * (It'd be sufficient to not push down quals that refer to those
@@ -333,7 +333,7 @@ set_subquery_pathlist(Query *root, RelOptInfo *rel,
 		subquery->limitOffset == NULL &&
 		subquery->limitCount == NULL &&
 		!has_distinct_on_clause(subquery) &&
-		!contain_iter_clause((Node *) subquery->targetList))
+		!expression_returns_set((Node *) subquery->targetList))
 	{
 		/* OK to consider pushing down individual quals */
 		List	   *upperrestrictlist = NIL;

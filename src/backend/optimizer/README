@@ -42,7 +42,8 @@ base rels of the query.
 Possible Paths for a primitive table relation include plain old sequential
 scan, plus index scans for any indexes that exist on the table.  A subquery
 base relation just has one Path, a "SubqueryScan" path (which links to the
-subplan that was built by a recursive invocation of the planner).
+subplan that was built by a recursive invocation of the planner).  Likewise
+a function-RTE base relation has only one possible Path.
 
 Joins always occur using two RelOptInfos.  One is outer, the other inner.
 Outers drive lookups of values in the inner.  In a nested loop, lookups of
