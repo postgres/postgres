@@ -1,5 +1,5 @@
 <!--
-$PostgreSQL: pgsql/doc/src/sgml/plpgsql.sgml,v 1.39 2004/07/04 02:48:52 tgl Exp $
+$PostgreSQL: pgsql/doc/src/sgml/plpgsql.sgml,v 1.40 2004/07/11 21:48:24 momjian Exp $
 -->
 
 <chapter id="plpgsql"> 
@@ -2120,7 +2120,7 @@ RAISE <replaceable class="parameter">level</replaceable> '<replaceable class="pa
 </synopsis>
 
     Possible levels are <literal>DEBUG</literal>,
-    <literal>LOG</literal>, <literal>INFO</literal>,
+    <literal>LOG</literal>,
     <literal>NOTICE</literal>, <literal>WARNING</literal>,
     and <literal>EXCEPTION</literal>.
     <literal>EXCEPTION</literal> raises an error and aborts the current

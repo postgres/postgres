@@ -167,7 +167,7 @@
 
 #client_min_messages = notice	# Values, in order of decreasing detail:
 				#   debug5, debug4, debug3, debug2, debug1,
-				#   log, info, notice, warning, error
+				#   log, notice, warning, error
 
 #log_min_messages = notice	# Values, in order of decreasing detail:
 				#   debug5, debug4, debug3, debug2, debug1,
