@@ -3,7 +3,7 @@
  *			  procedural language
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/pl/plpgsql/src/pl_exec.c,v 1.28 2000/08/24 03:29:15 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/pl/plpgsql/src/pl_exec.c,v 1.29 2000/08/31 13:26:16 wieck Exp $
  *
  *	  This software is copyrighted by Jan Wieck - Hamburg.
  *
@@ -100,6 +100,10 @@ static int exec_stmt_raise(PLpgSQL_execstate * estate,
 				PLpgSQL_stmt_raise * stmt);
 static int exec_stmt_execsql(PLpgSQL_execstate * estate,
 				  PLpgSQL_stmt_execsql * stmt);
+static int exec_stmt_dynexecute(PLpgSQL_execstate * estate,
+				  PLpgSQL_stmt_dynexecute * stmt);
+static int exec_stmt_dynfors(PLpgSQL_execstate * estate,
+			   PLpgSQL_stmt_dynfors * stmt);
 
 static void exec_prepare_plan(PLpgSQL_execstate * estate,
 				  PLpgSQL_expr * expr);
@@ -218,6 +222,12 @@ plpgsql_exec_function(PLpgSQL_function * func, FunctionCallInfo fcinfo)
 						break;
 					case PLPGSQL_STMT_EXECSQL:
 						stmttype = "SQL statement";
+						break;
+					case PLPGSQL_STMT_DYNEXECUTE:
+						stmttype = "execute statement";
+						break;
+					case PLPGSQL_STMT_DYNFORS:
+						stmttype = "for over execute statement";
 						break;
 					default:
 						stmttype = "unknown";
@@ -521,6 +531,12 @@ plpgsql_exec_trigger(PLpgSQL_function * func,
 						break;
 					case PLPGSQL_STMT_EXECSQL:
 						stmttype = "SQL statement";
+						break;
+					case PLPGSQL_STMT_DYNEXECUTE:
+						stmttype = "execute statement";
+						break;
+					case PLPGSQL_STMT_DYNFORS:
+						stmttype = "for over execute statement";
 						break;
 					default:
 						stmttype = "unknown";
@@ -993,6 +1009,14 @@ exec_stmt(PLpgSQL_execstate * estate, PLpgSQL_stmt * stmt)
 
 		case PLPGSQL_STMT_EXECSQL:
 			rc = exec_stmt_execsql(estate, (PLpgSQL_stmt_execsql *) stmt);
+			break;
+
+		case PLPGSQL_STMT_DYNEXECUTE:
+			rc = exec_stmt_dynexecute(estate, (PLpgSQL_stmt_dynexecute *) stmt);
+			break;
+
+		case PLPGSQL_STMT_DYNFORS:
+			rc = exec_stmt_dynfors(estate, (PLpgSQL_stmt_dynfors *) stmt);
 			break;
 
 		default:
@@ -1847,6 +1871,234 @@ exec_stmt_execsql(PLpgSQL_execstate * estate,
 	}
 	pfree(values);
 	pfree(nulls);
+
+	return PLPGSQL_RC_OK;
+}
+
+
+/* ----------
+ * exec_stmt_dynexecute			Execute a dynamic SQL query not
+ *					returning any data.
+ * ----------
+ */
+static int
+exec_stmt_dynexecute(PLpgSQL_execstate * estate,
+				  PLpgSQL_stmt_dynexecute * stmt)
+{
+	Datum		query;
+	bool		isnull = false;
+	Oid			restype;
+	char	   *querystr;
+	HeapTuple	typetup;
+	Form_pg_type typeStruct;
+	FmgrInfo	finfo_output;
+
+	/* ----------
+	 * First we evaluate the string expression after the
+	 * EXECUTE keyword. It's result is the querystring we have
+	 * to execute.
+	 * ----------
+	 */
+	query = exec_eval_expr(estate, stmt->query, &isnull, &restype);
+	if (isnull)
+		elog(ERROR, "cannot EXECUTE NULL-query");
+
+	/* ----------
+	 * Get the C-String representation.
+	 * ----------
+	 */
+	typetup = SearchSysCacheTuple(TYPEOID,
+		ObjectIdGetDatum(restype), 0, 0, 0);
+	if (!HeapTupleIsValid(typetup))
+		elog(ERROR, "cache lookup for type %u failed (1)", restype);
+	typeStruct = (Form_pg_type) GETSTRUCT(typetup);
+
+	fmgr_info(typeStruct->typoutput, &finfo_output);
+	querystr = DatumGetCString(FunctionCall3(&finfo_output,
+				query,
+				ObjectIdGetDatum(typeStruct->typelem),
+				Int32GetDatum(-1)));
+
+	if(!typeStruct->typbyval)
+		pfree((void *)query);
+
+	/* ----------
+	 * Call SPI_exec() without preparing a saved plan. 
+	 * The returncode can be any OK except for OK_SELECT.
+	 * ----------
+	 */
+	switch(SPI_exec(querystr, 0))
+	{
+		case SPI_OK_UTILITY:
+		case SPI_OK_SELINTO:
+		case SPI_OK_INSERT:
+		case SPI_OK_UPDATE:
+		case SPI_OK_DELETE:
+			break;
+
+		case SPI_OK_SELECT:
+			elog(ERROR, "unexpected SELECT operation in EXECUTE of query '%s'",
+						querystr);
+			break;
+
+		default:
+			elog(ERROR, "unexpected error in EXECUTE for query '%s'",
+						querystr);
+			break;
+	}
+
+	pfree(querystr);
+	return PLPGSQL_RC_OK;
+}
+
+
+/* ----------
+ * exec_stmt_dynfors			Execute a dynamic query, assign each
+ *					tuple to a record or row and
+ *					execute a group of statements
+ *					for it.
+ * ----------
+ */
+static int
+exec_stmt_dynfors(PLpgSQL_execstate * estate, PLpgSQL_stmt_dynfors * stmt)
+{
+	Datum		query;
+	bool		isnull = false;
+	Oid			restype;
+	char	   *querystr;
+	PLpgSQL_rec *rec = NULL;
+	PLpgSQL_row *row = NULL;
+	SPITupleTable *tuptab;
+	int			rc;
+	int			i;
+	int			n;
+	HeapTuple	typetup;
+	Form_pg_type typeStruct;
+	FmgrInfo	finfo_output;
+
+	/* ----------
+	 * Initialize the global found variable to false
+	 * ----------
+	 */
+	exec_set_found(estate, false);
+
+	/* ----------
+	 * Determine if we assign to a record or a row
+	 * ----------
+	 */
+	if (stmt->rec != NULL)
+		rec = (PLpgSQL_rec *) (estate->datums[stmt->rec->recno]);
+	else
+	{
+		if (stmt->row != NULL)
+			row = (PLpgSQL_row *) (estate->datums[stmt->row->rowno]);
+		else
+			elog(ERROR, "unsupported target in exec_stmt_fors()");
+	}
+
+	/* ----------
+	 * Evaluate the string expression after the
+	 * EXECUTE keyword. It's result is the querystring we have
+	 * to execute.
+	 * ----------
+	 */
+	query = exec_eval_expr(estate, stmt->query, &isnull, &restype);
+	if (isnull)
+		elog(ERROR, "cannot EXECUTE NULL-query");
+
+	/* ----------
+	 * Get the C-String representation.
+	 * ----------
+	 */
+	typetup = SearchSysCacheTuple(TYPEOID,
+		ObjectIdGetDatum(restype), 0, 0, 0);
+	if (!HeapTupleIsValid(typetup))
+		elog(ERROR, "cache lookup for type %u failed (1)", restype);
+	typeStruct = (Form_pg_type) GETSTRUCT(typetup);
+
+	fmgr_info(typeStruct->typoutput, &finfo_output);
+	querystr = DatumGetCString(FunctionCall3(&finfo_output,
+				query,
+				ObjectIdGetDatum(typeStruct->typelem),
+				Int32GetDatum(-1)));
+
+	if(!typeStruct->typbyval)
+		pfree((void *)query);
+
+	/* ----------
+	 * Run the query
+	 * ----------
+	 */
+	if (SPI_exec(querystr, 0) != SPI_OK_SELECT)
+		elog(ERROR, "FOR ... EXECUTE query '%s' was no SELECT", querystr);
+	pfree(querystr);
+
+	n = SPI_processed;
+
+	/* ----------
+	 * If the query didn't return any row, set the target
+	 * to NULL and return.
+	 * ----------
+	 */
+	if (n == 0)
+	{
+		exec_move_row(estate, rec, row, NULL, NULL);
+		return PLPGSQL_RC_OK;
+	}
+
+	/* ----------
+	 * There are tuples, so set found to true
+	 * ----------
+	 */
+	exec_set_found(estate, true);
+
+	/* ----------
+	 * Now do the loop
+	 * ----------
+	 */
+	tuptab = SPI_tuptable;
+	SPI_tuptable = NULL;
+
+	for (i = 0; i < n; i++)
+	{
+		/* ----------
+		 * Assign the tuple to the target
+		 * ----------
+		 */
+		exec_move_row(estate, rec, row, tuptab->vals[i], tuptab->tupdesc);
+
+		/* ----------
+		 * Execute the statements
+		 * ----------
+		 */
+		rc = exec_stmts(estate, stmt->body);
+
+		/* ----------
+		 * Check returncode
+		 * ----------
+		 */
+		switch (rc)
+		{
+			case PLPGSQL_RC_OK:
+				break;
+
+			case PLPGSQL_RC_EXIT:
+				if (estate->exitlabel == NULL)
+					return PLPGSQL_RC_OK;
+				if (stmt->label == NULL)
+					return PLPGSQL_RC_EXIT;
+				if (strcmp(stmt->label, estate->exitlabel))
+					return PLPGSQL_RC_EXIT;
+				estate->exitlabel = NULL;
+				return PLPGSQL_RC_OK;
+
+			case PLPGSQL_RC_RETURN:
+				return PLPGSQL_RC_RETURN;
+
+			default:
+				elog(ERROR, "unknown rc %d from exec_stmts()", rc);
+		}
+	}
 
 	return PLPGSQL_RC_OK;
 }

@@ -3,7 +3,7 @@
  *			  procedural language
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/pl/plpgsql/src/plpgsql.h,v 1.9 2000/05/28 17:56:28 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/pl/plpgsql/src/plpgsql.h,v 1.10 2000/08/31 13:26:16 wieck Exp $
  *
  *	  This software is copyrighted by Jan Wieck - Hamburg.
  *
@@ -91,7 +91,9 @@ enum
 	PLPGSQL_STMT_EXIT,
 	PLPGSQL_STMT_RETURN,
 	PLPGSQL_STMT_RAISE,
-	PLPGSQL_STMT_EXECSQL
+	PLPGSQL_STMT_EXECSQL,
+	PLPGSQL_STMT_DYNEXECUTE,
+	PLPGSQL_STMT_DYNFORS
 };
 
 
@@ -319,6 +321,18 @@ typedef struct
 
 
 typedef struct
+{								/* FOR statement running over EXECUTE	*/
+	int			cmd_type;
+	int			lineno;
+	char	   *label;
+	PLpgSQL_rec *rec;
+	PLpgSQL_row *row;
+	PLpgSQL_expr *query;
+	PLpgSQL_stmts *body;
+}			PLpgSQL_stmt_dynfors;
+
+
+typedef struct
 {								/* SELECT ... INTO statement		*/
 	int			cmd_type;
 	int			lineno;
@@ -364,6 +378,14 @@ typedef struct
 	int			lineno;
 	PLpgSQL_expr *sqlstmt;
 }			PLpgSQL_stmt_execsql;
+
+
+typedef struct
+{								/* Dynamic SQL string to execute */
+	int			cmd_type;
+	int			lineno;
+	PLpgSQL_expr *query;
+}			PLpgSQL_stmt_dynexecute;
 
 
 typedef struct PLpgSQL_function

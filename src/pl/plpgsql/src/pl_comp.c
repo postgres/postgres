@@ -3,7 +3,7 @@
  *			  procedural language
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/pl/plpgsql/src/pl_comp.c,v 1.22 2000/08/03 16:34:57 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/pl/plpgsql/src/pl_comp.c,v 1.23 2000/08/31 13:26:16 wieck Exp $
  *
  *	  This software is copyrighted by Jan Wieck - Hamburg.
  *
@@ -159,8 +159,8 @@ plpgsql_compile(Oid fn_oid, int functype)
 
 	function->fn_functype = functype;
 	function->fn_oid = fn_oid;
-	function->fn_name = DatumGetCString(DirectFunctionCall1(nameout,
-						NameGetDatum(&(procStruct->proname))));
+	function->fn_name = strdup(DatumGetCString(DirectFunctionCall1(nameout,
+						NameGetDatum(&(procStruct->proname)))));
 
 	switch (functype)
 	{

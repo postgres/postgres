@@ -4,7 +4,7 @@
  *			  procedural language
  *
  * IDENTIFICATION
- *    $Header: /cvsroot/pgsql/src/pl/plpgsql/src/gram.y,v 1.10 2000/06/05 07:29:14 tgl Exp $
+ *    $Header: /cvsroot/pgsql/src/pl/plpgsql/src/gram.y,v 1.11 2000/08/31 13:26:15 wieck Exp $
  *
  *    This software is copyrighted by Jan Wieck - Hamburg.
  *
@@ -113,6 +113,7 @@ static	PLpgSQL_expr	*make_tupret_expr(PLpgSQL_row *row);
 %type <stmt>	stmt_assign, stmt_if, stmt_loop, stmt_while, stmt_exit
 %type <stmt>	stmt_return, stmt_raise, stmt_execsql, stmt_fori
 %type <stmt>	stmt_fors, stmt_select, stmt_perform
+%type <stmt>	stmt_dynexecute, stmt_dynfors
 
 %type <dtlist>	raise_params
 %type <ival>	raise_level, raise_param
@@ -134,6 +135,7 @@ static	PLpgSQL_expr	*make_tupret_expr(PLpgSQL_row *row);
 %token	K_ELSE
 %token	K_END
 %token	K_EXCEPTION
+%token	K_EXECUTE
 %token	K_EXIT
 %token	K_FOR
 %token	K_FROM
@@ -568,6 +570,10 @@ proc_stmt	: pl_block
 			{ $$ = $1; }
 		| stmt_execsql
 			{ $$ = $1; }
+		| stmt_dynexecute
+			{ $$ = $1; }
+		| stmt_dynfors
+			{ $$ = $1; }
 		| stmt_perform
 			{ $$ = $1; }
 		;
@@ -844,6 +850,35 @@ stmt_fors	: opt_label K_FOR lno fors_target K_IN K_SELECT expr_until_loop loop_b
 			$$ = (PLpgSQL_stmt *)new;
 		    }
 
+stmt_dynfors : opt_label K_FOR lno fors_target K_IN K_EXECUTE expr_until_loop loop_body
+		    {
+			PLpgSQL_stmt_dynfors	*new;
+
+			new = malloc(sizeof(PLpgSQL_stmt_dynfors));
+			memset(new, 0, sizeof(PLpgSQL_stmt_dynfors));
+
+			new->cmd_type = PLPGSQL_STMT_DYNFORS;
+			new->lineno   = $3;
+			new->label    = $1;
+			switch ($4->dtype) {
+			    case PLPGSQL_DTYPE_REC:
+			        new->rec = $4;
+				break;
+			    case PLPGSQL_DTYPE_ROW:
+			        new->row = (PLpgSQL_row *)$4;
+				break;
+			    default:
+				plpgsql_comperrinfo();
+			        elog(ERROR, "unknown dtype %d in stmt_dynfors", $4->dtype);
+			}
+			new->query = $7;
+			new->body  = $8;
+
+			plpgsql_ns_pop();
+
+			$$ = (PLpgSQL_stmt *)new;
+		    }
+
 fors_target	: T_RECORD
 		    {
 		        $$ = yylval.rec;
@@ -1026,6 +1061,19 @@ stmt_execsql	: execsql_start lno
 
 			$$ = (PLpgSQL_stmt *)new;
 		    }
+		;
+
+stmt_dynexecute	: K_EXECUTE lno expr_until_semi
+			{
+				PLpgSQL_stmt_dynexecute	*new;
+
+			new = malloc(sizeof(PLpgSQL_stmt_dynexecute));
+			new->cmd_type = PLPGSQL_STMT_DYNEXECUTE;
+			new->lineno   = $2;
+			new->query    = $3;
+
+			$$ = (PLpgSQL_stmt *)new;
+			}
 		;
 
 execsql_start	: T_WORD
