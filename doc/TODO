@@ -1,6 +1,6 @@
 TODO list for PostgreSQL
 ========================
-Last updated:		Tue Nov 27 14:31:03 EST 2001
+Last updated:		Tue Nov 27 14:35:32 EST 2001
 
 Current maintainer:	Bruce Momjian (pgman@candle.pha.pa.us)
 
@@ -261,7 +261,7 @@ CLIENTS
 
 REFERENTIAL INTEGRITY
 
-* Add MATCH PARTIAL referential integrity
+* Add MATCH PARTIAL referential integrity [foreign]
 * -Check that primary key exists at foreign key definition time
 * Add deferred trigger queue file (Jan)
 * Allow oid to act as a foreign key
@@ -269,7 +269,7 @@ REFERENTIAL INTEGRITY
 * Make triggers refer to columns by number, not name
 * Enforce referential integrity for system tables
 * -INSERT & UPDATE/DELETE in transaction of primary key fails with
-  deferredTriggerGetPreviousEvent or "change violation" [foreign]
+  deferredTriggerGetPreviousEvent or "change violation"
 * Allow user to control trigger firing order
 * Change foreign key constraint for array -> element to mean element
   in array
