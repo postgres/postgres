@@ -22,36 +22,6 @@ char *s     = NULL;  /* to return WHOLE hyphenated-word */
 
 YY_BUFFER_STATE buf = NULL; /* buffer to parse; it need for parse from string */
 
-int lrlimit = -1;	/* for limiting read from filehandle ( -1 - unlimited read ) */
-int bytestoread = 0;	/* for limiting read from filehandle */
-
-/* redefine macro for read limited length */
-#define YY_INPUT(buf,result,max_size) \
-	if ( yy_current_buffer->yy_is_interactive ) { \
-                int c = '*', n; \
-                for ( n = 0; n < max_size && \
-                             (c = getc( tsearch_yyin )) != EOF && c != '\n'; ++n ) \
-                        buf[n] = (char) c; \
-                if ( c == '\n' ) \
-                        buf[n++] = (char) c; \
-                if ( c == EOF && ferror( tsearch_yyin ) ) \
-                        YY_FATAL_ERROR( "input in flex scanner failed" ); \
-                result = n; \
-        }  else { \
-		if ( lrlimit == 0 ) \
-			result=YY_NULL; \
-		else { \
-			if ( lrlimit>0 ) { \
-				bytestoread = ( lrlimit > max_size ) ? max_size : lrlimit; \
-				lrlimit -= bytestoread; \
-			} else \
-				bytestoread = max_size; \
-        		if ( ((result = fread( buf, 1, bytestoread, tsearch_yyin )) == 0) \
-                  		&& ferror( tsearch_yyin ) ) \
-                		YY_FATAL_ERROR( "input in flex scanner failed" ); \
-		} \
-	}
-
 %}
 
 %option 8bit
@@ -323,15 +293,6 @@ void end_parse() {
 void start_parse_str(char* str, int limit) {
 	if (buf) end_parse();
 	buf = tsearch_yy_scan_bytes( str, limit );
-	tsearch_yy_switch_to_buffer( buf );
-	BEGIN INITIAL;
-}
-
-/* start parse from filehandle */
-void start_parse_fh( FILE* fh, int limit ) {
-	if (buf) end_parse();
-	lrlimit = ( limit ) ? limit : -1;
-	buf = tsearch_yy_create_buffer( fh, YY_BUF_SIZE );
 	tsearch_yy_switch_to_buffer( buf );
 	BEGIN INITIAL;
 }
