@@ -159,14 +159,14 @@ create trigger tg_room_ad after delete
 -- * BEFORE INSERT or UPDATE on WSlot
 -- *	- Check that room exists
 -- ************************************************************
-create function tg_wslot_biu() returns trigger as '
+create function tg_wslot_biu() returns trigger as $$
 begin
     if count(*) = 0 from Room where roomno = new.roomno then
-        raise exception ''Room % does not exist'', new.roomno;
+        raise exception 'Room % does not exist', new.roomno;
     end if;
     return new;
 end;
-' language 'plpgsql';
+$$ language plpgsql;
 
 create trigger tg_wslot_biu before insert or update
     on WSlot for each row execute procedure tg_wslot_biu();
@@ -208,18 +208,18 @@ create trigger tg_pfield_ad after delete
 -- * BEFORE INSERT or UPDATE on PSlot
 -- *	- Ensure that our patchfield does exist
 -- ************************************************************
-create function tg_pslot_biu() returns trigger as '
+create function tg_pslot_biu() returns trigger as $proc$
 declare
     pfrec	record;
     rename new to ps;
 begin
     select into pfrec * from PField where name = ps.pfname;
     if not found then
-        raise exception ''Patchfield "%" does not exist'', ps.pfname;
+        raise exception $$Patchfield "%" does not exist$$, ps.pfname;
     end if;
     return ps;
 end;
-' language 'plpgsql';
+$proc$ language plpgsql;
 
 create trigger tg_pslot_biu before insert or update
     on PSlot for each row execute procedure tg_pslot_biu();
@@ -246,25 +246,25 @@ create trigger tg_system_au after update
 -- * BEFORE INSERT or UPDATE on IFace
 -- *	- set the slotname to IF.sysname.ifname
 -- ************************************************************
-create function tg_iface_biu() returns trigger as '
+create function tg_iface_biu() returns trigger as $$
 declare
     sname	text;
     sysrec	record;
 begin
     select into sysrec * from system where name = new.sysname;
     if not found then
-        raise exception ''system "%" does not exist'', new.sysname;
+        raise exception $q$system "%" does not exist$q$, new.sysname;
     end if;
-    sname := ''IF.'' || new.sysname;
-    sname := sname || ''.'';
+    sname := 'IF.' || new.sysname;
+    sname := sname || '.';
     sname := sname || new.ifname;
     if length(sname) > 20 then
-        raise exception ''IFace slotname "%" too long (20 char max)'', sname;
+        raise exception 'IFace slotname "%" too long (20 char max)', sname;
     end if;
     new.slotname := sname;
     return new;
 end;
-' language 'plpgsql';
+$$ language plpgsql;
 
 create trigger tg_iface_biu before insert or update
     on IFace for each row execute procedure tg_iface_biu();
@@ -304,12 +304,10 @@ create trigger tg_hub_a after insert or update or delete
 -- ************************************************************
 -- * Support function to add/remove slots of Hub
 -- ************************************************************
-create function tg_hub_adjustslots(bpchar, integer, integer)
+create function tg_hub_adjustslots(hname bpchar,
+                                   oldnslots integer,
+                                   newnslots integer)
 returns integer as '
-declare
-    hname	alias for $1;
-    oldnslots	alias for $2;
-    newnslots	alias for $3;
 begin
     if newnslots = oldnslots then
         return 0;
@@ -323,7 +321,7 @@ begin
 		values (''HS.dummy'', hname, i, '''');
     end loop;
     return 0;
-end;
+end
 ' language 'plpgsql';
 
 -- Test comments
@@ -700,11 +698,9 @@ create trigger tg_backlink_a after insert or update or delete
 -- * Support function to set the opponents backlink field
 -- * if it does not already point to the requested slot
 -- ************************************************************
-create function tg_backlink_set(bpchar, bpchar)
+create function tg_backlink_set(myname bpchar, blname bpchar)
 returns integer as '
 declare
-    myname	alias for $1;
-    blname	alias for $2;
     mytype	char(2);
     link	char(4);
     rec		record;
@@ -797,8 +793,8 @@ begin
 	end if;
 	return 0;
     end if;
-end;
-' language 'plpgsql';
+end
+' language plpgsql;
 
 
 -- ************************************************************
