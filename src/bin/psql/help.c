@@ -3,7 +3,7 @@
  *
  * Copyright 2000 by PostgreSQL Global Development Group
  *
- * $Header: /cvsroot/pgsql/src/bin/psql/help.c,v 1.46 2002/03/07 17:54:42 momjian Exp $
+ * $Header: /cvsroot/pgsql/src/bin/psql/help.c,v 1.47 2002/03/11 18:22:03 momjian Exp $
  */
 #include "postgres_fe.h"
 #include "help.h"
@@ -193,47 +193,47 @@ slashUsage(void)
 	fprintf(fout, _(" \\c[onnect] [DBNAME|- [USER]]\n"
 		 "                connect to new database (currently \"%s\")\n"),
 			PQdb(pset.db));
-	fprintf(fout, _(" \\C TITLE       set table title\n"));
-	fprintf(fout, _(" \\cd [DIRNAME]  change the current working directory\n"));
+	fprintf(fout, _(" \\C [TITLE]     set table title, or unset with no title\n"));
+	fprintf(fout, _(" \\cd [DIR]      change the current working directory\n"));
 	fprintf(fout, _(" \\copy ...      perform SQL COPY with data stream to the client host\n"));
 	fprintf(fout, _(" \\copyright     show PostgreSQL usage and distribution terms\n"));
-	fprintf(fout, _(" \\d TABLE       describe table (or view, index, sequence)\n"));
+	fprintf(fout, _(" \\d [TABLE]     describe table (or view, index, sequence)\n"));
 	fprintf(fout, _(" \\d{t|i|s|v}... list tables/indexes/sequences/views\n"));
 	fprintf(fout, _(" \\d{p|S|l}      list access privileges, system tables, or large objects\n"));
 	fprintf(fout, _(" \\da            list aggregate functions\n"));
-	fprintf(fout, _(" \\dd NAME       show comment for table, type, function, or operator\n"));
+	fprintf(fout, _(" \\dd [NAME]     show comment for table, type, function, or operator\n"));
 	fprintf(fout, _(" \\df            list functions\n"));
 	fprintf(fout, _(" \\do            list operators\n"));
 	fprintf(fout, _(" \\dT            list data types\n"));
-	fprintf(fout, _(" \\du [PATTERN]  Lists all configured users or only those that match pattern\n"));
-	fprintf(fout, _(" \\e FILENAME    edit the current query buffer or file with external editor\n"));
+	fprintf(fout, _(" \\du [PATTERN]  lists all configured users or only those that match pattern\n"));
+	fprintf(fout, _(" \\e [FILE]      edit the current query buffer or file with external editor\n"));
 	fprintf(fout, _(" \\echo TEXT     write text to standard output\n"));
 	fprintf(fout, _(" \\encoding ENCODING  set client encoding\n"));
-	fprintf(fout, _(" \\f STRING      set field separator\n"));
-	fprintf(fout, _(" \\g FILENAME    send SQL command to server (and write results to file or |pipe)\n"));
+	fprintf(fout, _(" \\f [SEPARATOR] set field separator, or unset if none\n"));
+	fprintf(fout, _(" \\g [FILE]      send SQL command to server (and write results to file or |pipe)\n"));
 	fprintf(fout, _(" \\h NAME        help on syntax of SQL commands, * for all commands\n"));
 	fprintf(fout, _(" \\H             toggle HTML output mode (currently %s)\n"),
 			ON(pset.popt.topt.format == PRINT_HTML));
-	fprintf(fout, _(" \\i FILENAME    execute commands from file\n"));
+	fprintf(fout, _(" \\i FILE        execute commands from file\n"));
 	fprintf(fout, _(" \\l             list all databases\n"));
 	fprintf(fout, _(" \\lo_export, \\lo_import, \\lo_list, \\lo_unlink\n"
-					"                large object operations\n"));
-	fprintf(fout, _(" \\o FILENAME    send all query results to file or |pipe\n"));
+					"                 large object operations\n"));
+	fprintf(fout, _(" \\o FILE        send all query results to file or |pipe\n"));
 	fprintf(fout, _(" \\p             show the content of the current query buffer\n"));
 	fprintf(fout, _(" \\pset VAR      set table output option (VAR := {format|border|expanded|\n"
-					"                fieldsep|null|recordsep|tuples_only|title|tableattr|pager})\n"));
+					"                 fieldsep|null|recordsep|tuples_only|title|tableattr|pager})\n"));
 	fprintf(fout, _(" \\q             quit psql\n"));
 	fprintf(fout, _(" \\qecho TEXT    write text to query output stream (see \\o)\n"));
 	fprintf(fout, _(" \\r             reset (clear) the query buffer\n"));
-	fprintf(fout, _(" \\s FILENAME    print history or save it to file\n"));
+	fprintf(fout, _(" \\s [FILE]      print history or save it to file\n"));
 	fprintf(fout, _(" \\set NAME VALUE  set internal variable\n"));
 	fprintf(fout, _(" \\t             show only rows (currently %s)\n"),
 			ON(pset.popt.topt.tuples_only));
-	fprintf(fout, _(" \\T TEXT        set HTML table tag attributes\n"));
+	fprintf(fout, _(" \\T [TAG_ATTR]  set HTML table tag attributes, or unset if none\n"));
 	fprintf(fout, _(" \\timing        toggle timing of queries (currently %s)\n"),
 			ON(pset.timing));
 	fprintf(fout, _(" \\unset NAME    unset (delete) internal variable\n"));
-	fprintf(fout, _(" \\w FILENAME    write current query buffer to file\n"));
+	fprintf(fout, _(" \\w FILE        write current query buffer to file\n"));
 	fprintf(fout, _(" \\x             toggle expanded output (currently %s)\n"),
 			ON(pset.popt.topt.expanded));
 	fprintf(fout, _(" \\z             list table access privileges\n"));
