@@ -1696,6 +1696,24 @@ reset statement_timeout;
 
 select * from foo;
 
+-- Test for pass-by-ref values being stored in proper context
+create function test_variable_storage() returns text as $$
+declare x text;
+begin
+  x := '1234';
+  begin
+    x := x || '5678';
+    -- force error inside subtransaction SPI context
+    perform trap_zero_divide(-100);
+  exception
+    when others then
+      x := x || '9012';
+  end;
+  return x;
+end$$ language plpgsql;
+
+select test_variable_storage();
+
 --
 -- test foreign key error trapping
 --

@@ -3,7 +3,7 @@
  *			  procedural language
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/pl/plpgsql/src/pl_exec.c,v 1.120 2004/09/16 16:58:44 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/pl/plpgsql/src/pl_exec.c,v 1.121 2004/11/16 18:10:14 tgl Exp $
  *
  *	  This software is copyrighted by Jan Wieck - Hamburg.
  *
@@ -899,19 +899,10 @@ exec_stmt_block(PLpgSQL_execstate *estate, PLpgSQL_stmt_block *block)
 		MemoryContext oldcontext = CurrentMemoryContext;
 		ResourceOwner oldowner = CurrentResourceOwner;
 		volatile bool caught = false;
-		int			xrc;
 
-		/*
-		 * Start a subtransaction, and re-connect to SPI within it
-		 */
-		SPI_push();
 		BeginInternalSubTransaction(NULL);
 		/* Want to run statements inside function's memory context */
 		MemoryContextSwitchTo(oldcontext);
-
-		if ((xrc = SPI_connect()) != SPI_OK_CONNECT)
-			elog(ERROR, "SPI_connect failed: %s",
-				 SPI_result_code_string(xrc));
 
 		PG_TRY();
 		{
@@ -928,12 +919,17 @@ exec_stmt_block(PLpgSQL_execstate *estate, PLpgSQL_stmt_block *block)
 			edata = CopyErrorData();
 			FlushErrorState();
 
-			/* Abort the inner transaction (and inner SPI connection) */
+			/* Abort the inner transaction */
 			RollbackAndReleaseCurrentSubTransaction();
 			MemoryContextSwitchTo(oldcontext);
 			CurrentResourceOwner = oldowner;
 
-			SPI_pop();
+			/*
+			 * If AtEOSubXact_SPI() popped any SPI context of the subxact,
+			 * it will have left us in a disconnected state.  We need this
+			 * hack to return to connected state.
+			 */
+			SPI_restore_connection();
 
 			/* Look for a matching exception handler */
 			exceptions = block->exceptions;
@@ -960,15 +956,14 @@ exec_stmt_block(PLpgSQL_execstate *estate, PLpgSQL_stmt_block *block)
 		/* Commit the inner transaction, return to outer xact context */
 		if (!caught)
 		{
-			if ((xrc = SPI_finish()) != SPI_OK_FINISH)
-				elog(ERROR, "SPI_finish failed: %s",
-					 SPI_result_code_string(xrc));
-
 			ReleaseCurrentSubTransaction();
 			MemoryContextSwitchTo(oldcontext);
 			CurrentResourceOwner = oldowner;
-
-			SPI_pop();
+			/*
+			 * AtEOSubXact_SPI() should not have popped any SPI context,
+			 * but just in case it did, make sure we remain connected.
+			 */
+			SPI_restore_connection();
 		}
 	}
 	else

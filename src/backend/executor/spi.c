@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/executor/spi.c,v 1.131 2004/10/13 01:25:10 neilc Exp $
+ *	  $PostgreSQL: pgsql/src/backend/executor/spi.c,v 1.132 2004/11/16 18:10:13 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -268,6 +268,14 @@ void
 SPI_pop(void)
 {
 	_SPI_curid--;
+}
+
+/* Restore state of SPI stack after aborting a subtransaction */
+void
+SPI_restore_connection(void)
+{
+	Assert(_SPI_connected >= 0);
+	_SPI_curid = _SPI_connected - 1;
 }
 
 /* Parse, plan, and execute a querystring */
