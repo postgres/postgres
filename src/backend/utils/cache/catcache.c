@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *    $Header: /cvsroot/pgsql/src/backend/utils/cache/catcache.c,v 1.9 1997/08/26 14:05:47 momjian Exp $
+ *    $Header: /cvsroot/pgsql/src/backend/utils/cache/catcache.c,v 1.10 1997/08/26 19:24:36 momjian Exp $
  *
  * Notes:
  *	XXX This needs to use exception.h to handle recovery when
@@ -665,7 +665,7 @@ InitSysCache(char *relname,
          */
     	Dllist *cache_begin = malloc((NCCBUCK+1)*sizeof(Dllist));
 	for (i = 0; i <= NCCBUCK; ++i) {
-	    cp->cc_cache[i] = cache_begin[i];
+	    cp->cc_cache[i] = &cache_begin[i];
 	    cp->cc_cache[i]->dll_head = 0;
 	    cp->cc_cache[i]->dll_tail = 0;
 	}
