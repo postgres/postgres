@@ -13,7 +13,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/main/main.c,v 1.61 2003/08/04 02:39:59 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/main/main.c,v 1.62 2003/09/09 15:19:31 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -123,13 +123,12 @@ main(int argc, char *argv[])
 	new_argv[argc] = NULL;
 
 	/*
-	 * Set up locale information from environment.	Note that CTYPE and
-	 * COLLATE will be overridden later from pg_control if we are in an
+	 * Set up locale information from environment.	Note that LC_CTYPE and
+	 * LC_COLLATE will be overridden later from pg_control if we are in an
 	 * already-initialized database.  We set them here so that they will
-	 * be available to fill pg_control during initdb.  The other ones will
-	 * get reset later in InitializeGUCOptions, but we set them here to
-	 * get already localized behavior during startup (e.g., error
-	 * messages).
+	 * be available to fill pg_control during initdb.  LC_MESSAGES will get
+	 * set later during GUC option processing, but we set it here to allow
+	 * startup error messages to be localized.
 	 */
 	setlocale(LC_COLLATE, "");
 	setlocale(LC_CTYPE, "");
@@ -138,8 +137,8 @@ main(int argc, char *argv[])
 #endif
 
 	/*
-	 * We don't use these during startup.  See also pg_locale.c about why
-	 * these are set to "C".
+	 * We keep these set to "C" always, except transiently in pg_locale.c;
+	 * see that file for explanations.
 	 */
 	setlocale(LC_MONETARY, "C");
 	setlocale(LC_NUMERIC, "C");
