@@ -55,7 +55,7 @@
 
 /*
  *	@(#)cdefs.h	8.1 (Berkeley) 6/2/93
- *	$Id: cdefs.h,v 1.1 1996/09/20 05:29:23 scrappy Exp $
+ *	$Id: cdefs.h,v 1.2 1996/09/21 06:31:13 scrappy Exp $
  */
 
 #ifndef	_CDEFS_H_
@@ -77,7 +77,14 @@
  * strings produced by the __STRING macro, but this only works with ANSI C.
  */
 #if defined(__STDC__) || defined(__cplusplus)
+/* 
+ * Some headers in the Linux C library define __P the same as here,
+ * but with different argument variable name.  This causes a compiler
+ * warning!  So we avoid the redefinition.
+ */
+#if !defined(__P)
 #define	__P(protos)	protos		/* full-blown ANSI C */
+#endif
 #define	__CONCAT(x,y)	x ## y
 #define	__STRING(x)	#x
 
