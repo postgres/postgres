@@ -8,13 +8,14 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/optimizer/util/plancat.c,v 1.38 1999/09/18 19:07:06 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/optimizer/util/plancat.c,v 1.39 1999/11/21 23:25:47 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
 #include <math.h>
 
 #include "postgres.h"
+
 #include "access/genam.h"
 #include "access/heapam.h"
 #include "catalog/catname.h"
@@ -38,8 +39,8 @@ static void IndexSelectivity(Oid indexrelid, Oid baserelid, int nIndexKeys,
 
 /*
  * relation_info -
- *	  Retrieves catalog information for a given relation. Given the oid of
- *	  the relation, return the following information:
+ *	  Retrieves catalog information for a given relation.
+ *	  Given the rangetable index of the relation, return the following info:
  *				whether the relation has secondary indices
  *				number of pages
  *				number of tuples
@@ -54,166 +55,141 @@ relation_info(Query *root, Index relid,
 
 	relationObjectId = getrelid(relid, root->rtable);
 	relationTuple = SearchSysCacheTuple(RELOID,
-									  ObjectIdGetDatum(relationObjectId),
+										ObjectIdGetDatum(relationObjectId),
 										0, 0, 0);
 	if (HeapTupleIsValid(relationTuple))
 	{
 		relation = (Form_pg_class) GETSTRUCT(relationTuple);
 
-		*hasindex = (relation->relhasindex) ? TRUE : FALSE;
+		*hasindex = (relation->relhasindex) ? true : false;
 		*pages = relation->relpages;
 		*tuples = relation->reltuples;
 	}
 	else
 	{
-		elog(ERROR, "RelationCatalogInformation: Relation %u not found",
+		elog(ERROR, "relation_info: Relation %u not found",
 			 relationObjectId);
 	}
-
-	return;
 }
 
-
 /*
- * index_info
- *	  Retrieves catalog information on an index on a given relation.
+ * find_secondary_indexes
+ *	  Creates a list of RelOptInfo nodes containing information for each
+ *	  secondary index defined on the given relation.
  *
- *	  The index relation is opened on the first invocation. The current
- *	  retrieves the next index relation within the catalog that has not
- *	  already been retrieved by a previous call.  The index catalog
- *	  is closed when no more indices for 'relid' can be found.
+ * 'relid' is the RT index of the relation for which indices are being located
  *
- * 'first' is 1 if this is the first call
- *
- * Returns true if successful and false otherwise. Index info is returned
- * via the transient data structure 'info'.
- *
+ * Returns a list of new index RelOptInfo nodes.
  */
-bool
-index_info(Query *root, bool first, int relid, IdxInfoRetval *info)
+List *
+find_secondary_indexes(Query *root, Index relid)
 {
-	int			i;
-	HeapTuple	indexTuple,
-				amopTuple;
-	Form_pg_index index;
-	Relation	indexRelation;
-	uint16		amstrategy;
-	Oid			relam;
-	Oid			indrelid;
+	List	   *indexes = NIL;
+	Oid			indrelid = getrelid(relid, root->rtable);
+	Relation	relation;
+	HeapScanDesc scan;
+	ScanKeyData	indexKey;
+	HeapTuple	indexTuple;
 
-	static Relation relation = (Relation) NULL;
-	static HeapScanDesc scan = (HeapScanDesc) NULL;
-	static ScanKeyData indexKey;
+	/* Scan pg_index for tuples describing indexes of this rel */
+	relation = heap_openr(IndexRelationName, AccessShareLock);
 
+	ScanKeyEntryInitialize(&indexKey, 0,
+						   Anum_pg_index_indrelid,
+						   F_OIDEQ,
+						   ObjectIdGetDatum(indrelid));
 
-	/* find the oid of the indexed relation */
-	indrelid = getrelid(relid, root->rtable);
+	scan = heap_beginscan(relation, 0, SnapshotNow,
+						  1, &indexKey);
 
-	MemSet(info, 0, sizeof(IdxInfoRetval));
-
-	/*
-	 * the maximum number of elements in each of the following arrays is
-	 * 8. We allocate one more for a terminating 0 to indicate the end of
-	 * the array.
-	 */
-	info->indexkeys = (int *) palloc(sizeof(int) * 9);
-	MemSet(info->indexkeys, 0, sizeof(int) * 9);
-	info->orderOprs = (Oid *) palloc(sizeof(Oid) * 9);
-	MemSet(info->orderOprs, 0, sizeof(Oid) * 9);
-	info->classlist = (Oid *) palloc(sizeof(Oid) * 9);
-	MemSet(info->classlist, 0, sizeof(Oid) * 9);
-
-	/* Find an index on the given relation */
-	if (first)
+	while (HeapTupleIsValid(indexTuple = heap_getnext(scan, 0)))
 	{
-		if (HeapScanIsValid(scan))
-			heap_endscan(scan);
-		scan = (HeapScanDesc) NULL;
-		if (RelationIsValid(relation))
-			heap_close(relation, AccessShareLock);
-		relation = (Relation) NULL;
-
-		ScanKeyEntryInitialize(&indexKey, 0,
-							   Anum_pg_index_indrelid,
-							   F_OIDEQ,
-							   ObjectIdGetDatum(indrelid));
-
-		relation = heap_openr(IndexRelationName, AccessShareLock);
-		scan = heap_beginscan(relation, 0, SnapshotNow,
-							  1, &indexKey);
-	}
-	if (!HeapScanIsValid(scan))
-		elog(ERROR, "index_info: scan not started");
-	indexTuple = heap_getnext(scan, 0);
-	if (!HeapTupleIsValid(indexTuple))
-	{
-		heap_endscan(scan);
-		heap_close(relation, AccessShareLock);
-		scan = (HeapScanDesc) NULL;
-		relation = (Relation) NULL;
-		return 0;
-	}
-
-	/* Extract info from the index tuple */
-	index = (Form_pg_index) GETSTRUCT(indexTuple);
-	info->relid = index->indexrelid;	/* index relation */
-	for (i = 0; i < INDEX_MAX_KEYS; i++)
-		info->indexkeys[i] = index->indkey[i];
-	for (i = 0; i < INDEX_MAX_KEYS; i++)
-		info->classlist[i] = index->indclass[i];
-
-	info->indproc = index->indproc;		/* functional index ?? */
-
-	/* partial index ?? */
-	if (VARSIZE(&index->indpred) != 0)
-	{
+		Form_pg_index	index = (Form_pg_index) GETSTRUCT(indexTuple);
+		RelOptInfo	   *info = makeNode(RelOptInfo);
+		int				i;
+		Relation		indexRelation;
+		uint16			amstrategy;
+		Oid				relam;
 
 		/*
-		 * The memory allocated here for the predicate (in lispReadString)
-		 * only needs to stay around until it's used in find_index_paths,
-		 * which is all within a command, so the automatic pfree at end of
-		 * transaction should be ok.
+		 * Need to make these arrays large enough to be sure there is a
+		 * terminating 0 at the end of each one.
 		 */
-		char	   *predString;
+		info->classlist = (Oid *) palloc(sizeof(Oid) * (INDEX_MAX_KEYS+1));
+		info->indexkeys = (int *) palloc(sizeof(int) * (INDEX_MAX_KEYS+1));
+		info->ordering = (Oid *) palloc(sizeof(Oid) * (INDEX_MAX_KEYS+1));
 
-		predString = fmgr(F_TEXTOUT, &index->indpred);
-		info->indpred = (Node *) stringToNode(predString);
-		pfree(predString);
-	}
+		/* Extract info from the pg_index tuple */
+		info->relids = lconsi(index->indexrelid, NIL);
+		info->indproc = index->indproc;		/* functional index ?? */
+		if (VARSIZE(&index->indpred) != 0)	/* partial index ?? */
+		{
+			char	   *predString = fmgr(F_TEXTOUT, &index->indpred);
+			info->indpred = (List *) stringToNode(predString);
+			pfree(predString);
+		}
+		else
+			info->indpred = NIL;
 
-	/* Extract info from the relation descriptor for the index */
-	indexRelation = index_open(index->indexrelid);
+		for (i = 0; i < INDEX_MAX_KEYS; i++)
+			info->indexkeys[i] = index->indkey[i];
+		info->indexkeys[INDEX_MAX_KEYS] = 0;
+		for (i = 0; i < INDEX_MAX_KEYS; i++)
+			info->classlist[i] = index->indclass[i];
+		info->classlist[INDEX_MAX_KEYS] = (Oid) 0;
+
+		/* Extract info from the relation descriptor for the index */
+		indexRelation = index_open(index->indexrelid);
 #ifdef notdef
-	/* XXX should iterate through strategies -- but how?  use #1 for now */
-	amstrategy = indexRelation->rd_am->amstrategies;
+		/* XXX should iterate through strategies -- but how?  use #1 for now */
+		amstrategy = indexRelation->rd_am->amstrategies;
 #endif	 /* notdef */
-	amstrategy = 1;
-	relam = indexRelation->rd_rel->relam;
-	info->relam = relam;
-	info->pages = indexRelation->rd_rel->relpages;
-	info->tuples = indexRelation->rd_rel->reltuples;
-	index_close(indexRelation);
+		amstrategy = 1;
+		relam = indexRelation->rd_rel->relam;
+		info->relam = relam;
+		info->pages = indexRelation->rd_rel->relpages;
+		info->tuples = indexRelation->rd_rel->reltuples;
+		index_close(indexRelation);
 
-	/*
-	 * Find the index ordering keys
-	 *
-	 * Must use indclass to know when to stop looking since with functional
-	 * indices there could be several keys (args) for one opclass. -mer 27
-	 * Sept 1991
-	 */
-	for (i = 0; i < 8 && index->indclass[i]; ++i)
-	{
-		amopTuple = SearchSysCacheTuple(AMOPSTRATEGY,
+		/*
+		 * Fetch the ordering operators associated with the index.
+		 *
+		 * XXX what if it's a hash or other unordered index?
+		 */
+		MemSet(info->ordering, 0, sizeof(Oid) * (INDEX_MAX_KEYS+1));
+		for (i = 0; i < INDEX_MAX_KEYS && index->indclass[i]; i++)
+		{
+			HeapTuple		amopTuple;
+
+			amopTuple = SearchSysCacheTuple(AMOPSTRATEGY,
 										ObjectIdGetDatum(relam),
-									ObjectIdGetDatum(index->indclass[i]),
+										ObjectIdGetDatum(index->indclass[i]),
 										UInt16GetDatum(amstrategy),
 										0);
-		if (!HeapTupleIsValid(amopTuple))
-			elog(ERROR, "index_info: no amop %u %u %d",
-				 relam, index->indclass[i], amstrategy);
-		info->orderOprs[i] = ((Form_pg_amop) GETSTRUCT(amopTuple))->amopopr;
+			if (!HeapTupleIsValid(amopTuple))
+				elog(ERROR, "find_secondary_indexes: no amop %u %u %d",
+					 relam, index->indclass[i], amstrategy);
+			info->ordering[i] = ((Form_pg_amop) GETSTRUCT(amopTuple))->amopopr;
+		}
+
+		info->indexed = false;		/* not indexed itself */
+		info->size = 0;
+		info->width = 0;
+		info->targetlist = NIL;
+		info->pathlist = NIL;
+		info->cheapestpath = NULL;
+		info->pruneable = true;
+		info->restrictinfo = NIL;
+		info->joininfo = NIL;
+		info->innerjoin = NIL;
+
+		indexes = lcons(info, indexes);
 	}
-	return TRUE;
+
+	heap_endscan(scan);
+	heap_close(relation, AccessShareLock);
+
+	return indexes;
 }
 
 /*
@@ -370,10 +346,10 @@ join_selectivity(Oid functionObjectId,
 }
 
 /*
- * find_all_inheritors
+ * find_inheritance_children
  *
- * Returns a LISP list containing the OIDs of all relations which
- * inherits from the relation with OID 'inhparent'.
+ * Returns an integer list containing the OIDs of all relations which
+ * inherit *directly* from the relation with OID 'inhparent'.
  */
 List *
 find_inheritance_children(Oid inhparent)
@@ -390,8 +366,8 @@ find_inheritance_children(Oid inhparent)
 
 	fmgr_info(F_OIDEQ, &key[0].sk_func);
 	key[0].sk_nargs = key[0].sk_func.fn_nargs;
+	key[0].sk_argument = ObjectIdGetDatum(inhparent);
 
-	key[0].sk_argument = ObjectIdGetDatum((Oid) inhparent);
 	relation = heap_openr(InheritsRelationName, AccessShareLock);
 	scan = heap_beginscan(relation, 0, SnapshotNow, 1, key);
 	while (HeapTupleIsValid(inheritsTuple = heap_getnext(scan, 0)))

@@ -7,20 +7,15 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/optimizer/util/Attic/indexnode.c,v 1.20 1999/08/16 02:17:57 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/optimizer/util/Attic/indexnode.c,v 1.21 1999/11/21 23:25:47 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
-#include <sys/types.h>
-
 #include "postgres.h"
-
 
 #include "optimizer/pathnode.h"
 #include "optimizer/plancat.h"
 
-
-static List *find_secondary_index(Query *root, Oid relid);
 
 /*
  * find_relation_indices
@@ -32,56 +27,7 @@ List *
 find_relation_indices(Query *root, RelOptInfo *rel)
 {
 	if (rel->indexed)
-		return find_secondary_index(root, lfirsti(rel->relids));
+		return find_secondary_indexes(root, lfirsti(rel->relids));
 	else
 		return NIL;
-}
-
-/*
- * find_secondary_index
- *	  Creates a list of RelOptInfo nodes containing information for each
- *	  secondary index defined on a relation by searching through the index
- *	  catalog.
- *
- * 'relid' is the OID of the relation for which indices are being located
- *
- * Returns a list of new index RelOptInfo nodes.
- */
-static List *
-find_secondary_index(Query *root, Oid relid)
-{
-	IdxInfoRetval indexinfo;
-	List	   *indexes = NIL;
-	bool		first = true;
-
-	while (index_info(root, first, relid, &indexinfo))
-	{
-		RelOptInfo *indexnode = makeNode(RelOptInfo);
-
-		indexnode->relids = lconsi(indexinfo.relid, NIL);
-		indexnode->relam = indexinfo.relam;
-		indexnode->pages = indexinfo.pages;
-		indexnode->tuples = indexinfo.tuples;
-		indexnode->classlist = indexinfo.classlist;
-		indexnode->indexkeys = indexinfo.indexkeys;
-		indexnode->ordering = indexinfo.orderOprs;
-		indexnode->indproc = indexinfo.indproc;
-		indexnode->indpred = (List *) indexinfo.indpred;
-
-		indexnode->indexed = false;		/* not indexed itself */
-		indexnode->size = 0;
-		indexnode->width = 0;
-		indexnode->targetlist = NIL;
-		indexnode->pathlist = NIL;
-		indexnode->cheapestpath = NULL;
-		indexnode->pruneable = true;
-		indexnode->restrictinfo = NIL;
-		indexnode->joininfo = NIL;
-		indexnode->innerjoin = NIL;
-
-		indexes = lcons(indexnode, indexes);
-		first = false;
-	}
-
-	return indexes;
 }
