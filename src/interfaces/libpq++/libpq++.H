@@ -30,7 +30,7 @@ extern "C" {
 #include "libpq-fe.h"
 }
 
-static char rcsid[] = "$Id: libpq++.H,v 1.5 1999/10/04 15:17:06 momjian Exp $";
+static char rcsid[] = "$Id: libpq++.H,v 1.6 1999/10/06 03:00:16 momjian Exp $";
 
 
 // ****************************************************************
@@ -79,6 +79,7 @@ public:
   ~PgDatabase() {}; // close connection and clean up
   // query result access
   int Tuples();
+  int CmdTuples();
   int Fields();
   const char* FieldName(int field_num);
   int FieldNum(const char *field_name);

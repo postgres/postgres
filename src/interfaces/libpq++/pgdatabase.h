@@ -13,7 +13,7 @@
  * Copyright (c) 1994, Regents of the University of California
  *
  *
- *  $Id: pgdatabase.h,v 1.4 1999/09/28 04:49:22 momjian Exp $
+ *  $Id: pgdatabase.h,v 1.5 1999/10/06 03:00:16 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -23,6 +23,7 @@
  
 #include "pgconnection.h"
 
+#include <stdlib.h>
 
 // ****************************************************************
 //
