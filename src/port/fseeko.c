@@ -8,12 +8,12 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/port/fseeko.c,v 1.3 2002/10/23 21:39:27 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/port/fseeko.c,v 1.4 2002/10/24 03:11:05 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
 
-#ifdef __bsdi__
+#if defined(bsdi) || defined(netbsd)
 
 #include <pthread.h>
 #include <stdio.h>
@@ -22,11 +22,11 @@
 #include <errno.h>
 
 /*
- *	On BSD/OS, off_t and fpos_t are the same.  Standards say
- *	off_t is an arithmetic type, but not necessarily integral,
+ *	On BSD/OS and NetBSD, off_t and fpos_t are the same.  Standards
+ *	say off_t is an arithmetic type, but not necessarily integral,
  *	while fpos_t might be neither.
  *
- *	This is thread-safe using flockfile/funlockfile.
+ *	This is thread-safe on BSD/OS using flockfile/funlockfile.
  */
 
 int
@@ -38,13 +38,17 @@ fseeko(FILE *stream, off_t offset, int whence)
 	switch (whence)
 	{
 		case SEEK_CUR:
+#ifdef bsdi
 			flockfile(stream);
+#endif
 			if (fgetpos(stream, &floc) != 0)
 				goto failure;
 			floc += offset;
 			if (fsetpos(stream, &floc) != 0)
 				goto failure;
+#ifdef bsdi
 			flockfile(stream);
+#endif
 			return 0;
 			break;
 		case SEEK_SET:
@@ -53,13 +57,17 @@ fseeko(FILE *stream, off_t offset, int whence)
 			return 0;
 			break;
 		case SEEK_END:
+#ifdef bsdi
 			flockfile(stream);
+#endif
 			if (fstat(fileno(stream), &filestat) != 0)
 				goto failure;
 			floc = filestat.st_size;
 			if (fsetpos(stream, &floc) != 0)
 				goto failure;
+#ifdef bsdi
 			funlockfile(stream);
+#endif
 			return 0;
 			break;
 		default:
@@ -68,7 +76,9 @@ fseeko(FILE *stream, off_t offset, int whence)
 	}
 
 failure:
+#ifdef bsdi
 	funlockfile(stream);
+#endif
 	return -1;
 }
 

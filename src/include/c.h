@@ -12,7 +12,7 @@
  * Portions Copyright (c) 1996-2002, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Id: c.h,v 1.129 2002/10/23 23:37:47 momjian Exp $
+ * $Id: c.h,v 1.130 2002/10/24 03:11:05 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -639,7 +639,7 @@ typedef NameData *Name;
 #include <unistd.h>
 #endif
 
-#if defined(bsdi)
+#if defined(bsdi) || defined(netbsd)
 int fseeko(FILE *stream, off_t offset, int whence);
 off_t ftello(FILE *stream);
 #endif
