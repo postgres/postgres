@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/optimizer/plan/initsplan.c,v 1.75 2002/09/04 20:31:21 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/optimizer/plan/initsplan.c,v 1.76 2002/11/19 23:21:58 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -782,6 +782,71 @@ process_implied_equality(Query *root, Node *item1, Node *item2,
 	distribute_qual_to_rels(root, (Node *) clause,
 							true, false, true,
 							pull_varnos((Node *) clause));
+}
+
+/*
+ * vars_known_equal
+ *	  Detect whether two Vars are known equal due to equijoin clauses.
+ *
+ * This is not completely accurate since we avoid adding redundant restriction
+ * clauses to individual base rels (see qual_is_redundant).  However, after
+ * the implied-equality-deduction phase, it is complete for Vars of different
+ * rels; that's sufficient for planned uses.
+ */
+bool
+vars_known_equal(Query *root, Var *var1, Var *var2)
+{
+	Index		irel1;
+	Index		irel2;
+	RelOptInfo *rel1;
+	List	   *restrictlist;
+	List	   *itm;
+
+	/*
+	 * Would need more work here if we wanted to check for known equality
+	 * of general clauses: there might be multiple base rels involved.
+	 */
+	Assert(IsA(var1, Var));
+	irel1 = var1->varno;
+	Assert(IsA(var2, Var));
+	irel2 = var2->varno;
+
+	/*
+	 * If both vars belong to same rel, we need to look at that rel's
+	 * baserestrictinfo list.  If different rels, each will have a
+	 * joininfo node for the other, and we can scan either list.
+	 */
+	rel1 = find_base_rel(root, irel1);
+	if (irel1 == irel2)
+		restrictlist = rel1->baserestrictinfo;
+	else
+	{
+		JoinInfo   *joininfo = find_joininfo_node(rel1,
+												  makeListi1(irel2));
+
+		restrictlist = joininfo->jinfo_restrictinfo;
+	}
+
+	/*
+	 * Scan to see if equality is known.
+	 */
+	foreach(itm, restrictlist)
+	{
+		RestrictInfo *restrictinfo = (RestrictInfo *) lfirst(itm);
+		Node	   *left,
+				   *right;
+
+		if (restrictinfo->mergejoinoperator == InvalidOid)
+			continue;			/* ignore non-mergejoinable clauses */
+		/* We now know the restrictinfo clause is a binary opclause */
+		left = (Node *) get_leftop(restrictinfo->clause);
+		right = (Node *) get_rightop(restrictinfo->clause);
+		if ((equal(var1, left) && equal(var2, right)) ||
+			(equal(var2, left) && equal(var1, right)))
+			return true;		/* found a matching clause */
+	}
+
+	return false;
 }
 
 /*

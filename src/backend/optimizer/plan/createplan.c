@@ -10,7 +10,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/optimizer/plan/createplan.c,v 1.122 2002/11/15 02:36:53 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/optimizer/plan/createplan.c,v 1.123 2002/11/19 23:21:58 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -1684,7 +1684,8 @@ make_material(List *tlist, Plan *lefttree)
 
 Agg *
 make_agg(List *tlist, List *qual, AggStrategy aggstrategy,
-		 int ngrp, AttrNumber *grpColIdx, Plan *lefttree)
+		 int ngrp, AttrNumber *grpColIdx, long numGroups, int numAggs,
+		 Plan *lefttree)
 {
 	Agg		   *node = makeNode(Agg);
 	Plan	   *plan = &node->plan;
@@ -1692,6 +1693,7 @@ make_agg(List *tlist, List *qual, AggStrategy aggstrategy,
 	node->aggstrategy = aggstrategy;
 	node->numCols = ngrp;
 	node->grpColIdx = grpColIdx;
+	node->numGroups = numGroups;
 
 	copy_plan_costsize(plan, lefttree);
 
@@ -1699,15 +1701,11 @@ make_agg(List *tlist, List *qual, AggStrategy aggstrategy,
 	 * Charge one cpu_operator_cost per aggregate function per input
 	 * tuple.
 	 */
-	plan->total_cost += cpu_operator_cost * plan->plan_rows *
-		(length(pull_agg_clause((Node *) tlist)) +
-		 length(pull_agg_clause((Node *) qual)));
+	plan->total_cost += cpu_operator_cost * plan->plan_rows * numAggs;
 
 	/*
 	 * We will produce a single output tuple if not grouping,
-	 * and a tuple per group otherwise.  For now, estimate the number of
-	 * groups as 10% of the number of tuples --- bogus, but how to do
-	 * better?
+	 * and a tuple per group otherwise.
 	 */
 	if (aggstrategy == AGG_PLAIN)
 	{
@@ -1716,10 +1714,7 @@ make_agg(List *tlist, List *qual, AggStrategy aggstrategy,
 	}
 	else
 	{
-		plan->plan_rows *= 0.1;
-		if (plan->plan_rows < 1)
-			plan->plan_rows = 1;
-		node->numGroups = (long) plan->plan_rows;
+		plan->plan_rows = numGroups;
 	}
 
 	plan->state = (EState *) NULL;
@@ -1735,6 +1730,7 @@ Group *
 make_group(List *tlist,
 		   int ngrp,
 		   AttrNumber *grpColIdx,
+		   double numGroups,
 		   Plan *lefttree)
 {
 	Group	   *node = makeNode(Group);
@@ -1748,13 +1744,8 @@ make_group(List *tlist,
 	 */
 	plan->total_cost += cpu_operator_cost * plan->plan_rows * ngrp;
 
-	/*
-	 * Estimate the number of groups as 10% of the number of tuples
-	 * --- bogus, but how to do better?
-	 */
-	plan->plan_rows *= 0.1;
-	if (plan->plan_rows < 1)
-		plan->plan_rows = 1;
+	/* One output tuple per estimated result group */
+	plan->plan_rows = numGroups;
 
 	plan->state = (EState *) NULL;
 	plan->qual = NULL;
@@ -1786,17 +1777,16 @@ make_unique(List *tlist, Plan *lefttree, List *distinctList)
 
 	/*
 	 * Charge one cpu_operator_cost per comparison per input tuple. We
-	 * assume all columns get compared at most of the tuples.
+	 * assume all columns get compared at most of the tuples.  (XXX probably
+	 * this is an overestimate.)
 	 */
 	plan->total_cost += cpu_operator_cost * plan->plan_rows * numCols;
 
 	/*
-	 * As for Group, we make the unsupported assumption that there will be
-	 * 10% as many tuples out as in.
+	 * plan->plan_rows is left as a copy of the input subplan's plan_rows;
+	 * ie, we assume the filter removes nothing.  The caller must alter this
+	 * if he has a better idea.
 	 */
-	plan->plan_rows *= 0.1;
-	if (plan->plan_rows < 1)
-		plan->plan_rows = 1;
 
 	plan->state = (EState *) NULL;
 	plan->targetlist = tlist;
@@ -1850,8 +1840,8 @@ make_setop(SetOpCmd cmd, List *tlist, Plan *lefttree,
 	plan->total_cost += cpu_operator_cost * plan->plan_rows * numCols;
 
 	/*
-	 * As for Group, we make the unsupported assumption that there will be
-	 * 10% as many tuples out as in.
+	 * We make the unsupported assumption that there will be 10% as many
+	 * tuples out as in.  Any way to do better?
 	 */
 	plan->plan_rows *= 0.1;
 	if (plan->plan_rows < 1)

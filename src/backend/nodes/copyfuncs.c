@@ -15,7 +15,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/nodes/copyfuncs.c,v 1.218 2002/11/15 02:50:06 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/nodes/copyfuncs.c,v 1.219 2002/11/19 23:21:58 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -1865,8 +1865,8 @@ _copyQuery(Query *from)
 
 	/*
 	 * We do not copy the planner internal fields: base_rel_list,
-	 * other_rel_list, join_rel_list, equi_key_list, query_pathkeys. Not
-	 * entirely clear if this is right?
+	 * other_rel_list, join_rel_list, equi_key_list, query_pathkeys,
+	 * hasJoinRTEs.  Not entirely clear if this is right?
 	 */
 
 	return newnode;

@@ -20,7 +20,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/nodes/equalfuncs.c,v 1.164 2002/11/15 02:50:06 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/nodes/equalfuncs.c,v 1.165 2002/11/19 23:21:58 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -628,9 +628,9 @@ _equalQuery(Query *a, Query *b)
 
 	/*
 	 * We do not check the internal-to-the-planner fields: base_rel_list,
-	 * other_rel_list, join_rel_list, equi_key_list, query_pathkeys. They
-	 * might not be set yet, and in any case they should be derivable from
-	 * the other fields.
+	 * other_rel_list, join_rel_list, equi_key_list, query_pathkeys,
+	 * hasJoinRTEs.  They might not be set yet, and in any case they should
+	 * be derivable from the other fields.
 	 */
 	return true;
 }

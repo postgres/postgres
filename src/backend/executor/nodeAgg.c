@@ -45,7 +45,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/executor/nodeAgg.c,v 1.95 2002/11/13 00:39:47 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/executor/nodeAgg.c,v 1.96 2002/11/19 23:21:57 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -618,6 +618,9 @@ lookup_hash_entry(Agg *node, TupleTableSlot *slot)
 		AttrNumber	att = node->grpColIdx[i];
 		Datum		attr;
 		bool		isNull;
+
+		/* rotate hashkey left 1 bit at each step */
+		hashkey = (hashkey << 1) | ((hashkey & 0x80000000) ? 1 : 0);
 
 		attr = heap_getattr(tuple, att, tupdesc, &isNull);
 		if (isNull)

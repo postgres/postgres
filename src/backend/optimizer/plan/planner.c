@@ -8,14 +8,17 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/optimizer/plan/planner.c,v 1.128 2002/11/14 19:00:36 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/optimizer/plan/planner.c,v 1.129 2002/11/19 23:21:59 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
 
 #include "postgres.h"
 
+#include <limits.h>
+
 #include "catalog/pg_type.h"
+#include "miscadmin.h"
 #include "nodes/makefuncs.h"
 #ifdef OPTIMIZER_DEBUG
 #include "nodes/print.h"
@@ -35,6 +38,7 @@
 #include "parser/parse_expr.h"
 #include "rewrite/rewriteManip.h"
 #include "utils/lsyscache.h"
+#include "utils/selfuncs.h"
 
 
 /* Expression kind codes for preprocess_expression */
@@ -159,6 +163,23 @@ subquery_planner(Query *parse, double tuple_fraction)
 	 */
 	parse->jointree = (FromExpr *)
 		preprocess_jointree(parse, (Node *) parse->jointree);
+
+	/*
+	 * Detect whether any rangetable entries are RTE_JOIN kind; if not,
+	 * we can avoid the expense of doing flatten_join_alias_vars().
+	 * This must be done after we have done pull_up_subqueries, of course.
+	 */
+	parse->hasJoinRTEs = false;
+	foreach(lst, parse->rtable)
+	{
+		RangeTblEntry *rte = (RangeTblEntry *) lfirst(lst);
+
+		if (rte->rtekind == RTE_JOIN)
+		{
+			parse->hasJoinRTEs = true;
+			break;
+		}
+	}
 
 	/*
 	 * Do expression preprocessing on targetlist and quals.
@@ -694,9 +715,6 @@ preprocess_jointree(Query *parse, Node *jtnode)
 static Node *
 preprocess_expression(Query *parse, Node *expr, int kind)
 {
-	bool		has_join_rtes;
-	List	   *rt;
-
 	/*
 	 * Simplify constant expressions.
 	 *
@@ -737,22 +755,8 @@ preprocess_expression(Query *parse, Node *expr, int kind)
 	 * with base-relation variables, to allow quals to be pushed down. We
 	 * must do this after sublink processing, since it does not recurse
 	 * into sublinks.
-	 *
-	 * The flattening pass is expensive enough that it seems worthwhile to
-	 * scan the rangetable to see if we can avoid it.
 	 */
-	has_join_rtes = false;
-	foreach(rt, parse->rtable)
-	{
-		RangeTblEntry *rte = lfirst(rt);
-
-		if (rte->rtekind == RTE_JOIN)
-		{
-			has_join_rtes = true;
-			break;
-		}
-	}
-	if (has_join_rtes)
+	if (parse->hasJoinRTEs)
 		expr = flatten_join_alias_vars(expr, parse->rtable, false);
 
 	return expr;
@@ -931,6 +935,9 @@ grouping_planner(Query *parse, double tuple_fraction)
 		AttrNumber *groupColIdx = NULL;
 		Path	   *cheapest_path;
 		Path	   *sorted_path;
+		double		dNumGroups = 0;
+		long		numGroups = 0;
+		int			numAggs = 0;
 		bool		use_hashed_grouping = false;
 
 		/* Preprocess targetlist in case we are inside an INSERT/UPDATE. */
@@ -1005,6 +1012,19 @@ grouping_planner(Query *parse, double tuple_fraction)
 													   tlist);
 		sort_pathkeys = make_pathkeys_for_sortclauses(parse->sortClause,
 													  tlist);
+
+		/*
+		 * Will need actual number of aggregates for estimating costs.
+		 * Also, it's possible that optimization has eliminated all
+		 * aggregates, and we may as well check for that here.
+		 */
+		if (parse->hasAggs)
+		{
+			numAggs = length(pull_agg_clause((Node *) tlist)) +
+				length(pull_agg_clause(parse->havingQual));
+			if (numAggs == 0)
+				parse->hasAggs = false;
+		}
 
 		/*
 		 * Figure out whether we need a sorted result from query_planner.
@@ -1216,6 +1236,14 @@ grouping_planner(Query *parse, double tuple_fraction)
 		if (parse->groupClause)
 		{
 			/*
+			 * Always estimate the number of groups.
+			 */
+			dNumGroups = estimate_num_groups(parse,
+											 parse->groupClause,
+											 cheapest_path->parent->rows);
+			numGroups = (long) Min(dNumGroups, (double) LONG_MAX);
+
+			/*
 			 * Executor doesn't support hashed aggregation with DISTINCT
 			 * aggregates.  (Doing so would imply storing *all* the input
 			 * values in the hash table, which seems like a certain loser.)
@@ -1226,10 +1254,30 @@ grouping_planner(Query *parse, double tuple_fraction)
 				use_hashed_grouping = false;
 			else
 			{
-#if 0							/* much more to do here */
-				/* TEMPORARY HOTWIRE FOR TESTING */
-				use_hashed_grouping = true;
+				/*
+				 * Use hashed grouping if (a) we think we can fit the
+				 * hashtable into SortMem, *and* (b) the estimated cost
+				 * is no more than doing it the other way.  While avoiding
+				 * the need for sorted input is usually a win, the fact
+				 * that the output won't be sorted may be a loss; so we
+				 * need to do an actual cost comparison.
+				 *
+				 * In most cases we have no good way to estimate the size of
+				 * the transition value needed by an aggregate; arbitrarily
+				 * assume it is 100 bytes.  Also set the overhead per hashtable
+				 * entry at 64 bytes.
+				 */
+				int		hashentrysize = cheapest_path->parent->width + 64 +
+					numAggs * 100;
+
+				if (hashentrysize * dNumGroups <= SortMem * 1024L)
+				{
+					/* much more to do here */
+#if 0
+					/* TEMPORARY HOTWIRE FOR TESTING */
+					use_hashed_grouping = true;
 #endif
+				}
 			}
 		}
 
@@ -1319,6 +1367,8 @@ grouping_planner(Query *parse, double tuple_fraction)
 											AGG_HASHED,
 											length(parse->groupClause),
 											groupColIdx,
+											numGroups,
+											numAggs,
 											result_plan);
 			/* Hashed aggregation produces randomly-ordered results */
 			current_pathkeys = NIL;
@@ -1356,6 +1406,8 @@ grouping_planner(Query *parse, double tuple_fraction)
 											aggstrategy,
 											length(parse->groupClause),
 											groupColIdx,
+											numGroups,
+											numAggs,
 											result_plan);
 		}
 		else
@@ -1387,6 +1439,7 @@ grouping_planner(Query *parse, double tuple_fraction)
 				result_plan = (Plan *) make_group(tlist,
 												  length(parse->groupClause),
 												  groupColIdx,
+												  dNumGroups,
 												  result_plan);
 			}
 		}
@@ -1410,6 +1463,16 @@ grouping_planner(Query *parse, double tuple_fraction)
 	{
 		result_plan = (Plan *) make_unique(tlist, result_plan,
 										   parse->distinctClause);
+		/*
+		 * If there was grouping or aggregation, leave plan_rows as-is
+		 * (ie, assume the result was already mostly unique).  If not,
+		 * it's reasonable to assume the UNIQUE filter has effects
+		 * comparable to GROUP BY.
+		 */
+		if (!parse->groupClause && !parse->hasAggs)
+			result_plan->plan_rows = estimate_num_groups(parse,
+														 parse->distinctClause,
+														 result_plan->plan_rows);
 	}
 
 	/*

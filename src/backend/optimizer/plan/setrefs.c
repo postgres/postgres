@@ -9,7 +9,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/optimizer/plan/setrefs.c,v 1.81 2002/09/04 20:31:21 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/optimizer/plan/setrefs.c,v 1.82 2002/11/19 23:21:59 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -439,7 +439,14 @@ join_references_mutator(Node *node,
 			return (Node *) newvar;
 		}
 
-		/* Perhaps it's a join alias that can be resolved to input vars? */
+		/* Return the Var unmodified, if it's for acceptable_rel */
+		if (var->varno == context->acceptable_rel)
+			return (Node *) copyObject(var);
+
+		/*
+		 * Perhaps it's a join alias that can be resolved to input vars?
+		 * We try this last since it's relatively slow.
+		 */
 		newnode = flatten_join_alias_vars((Node *) var,
 										  context->rtable,
 										  true);
@@ -450,13 +457,8 @@ join_references_mutator(Node *node,
 			return newnode;
 		}
 
-		/*
-		 * No referent found for Var --- either raise an error, or return
-		 * the Var unmodified if it's for acceptable_rel.
-		 */
-		if (var->varno != context->acceptable_rel)
-			elog(ERROR, "join_references: variable not in subplan target lists");
-		return (Node *) copyObject(var);
+		/* No referent found for Var */
+		elog(ERROR, "join_references: variable not in subplan target lists");
 	}
 	return expression_tree_mutator(node,
 								   join_references_mutator,

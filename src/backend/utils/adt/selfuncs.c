@@ -15,7 +15,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/selfuncs.c,v 1.120 2002/11/08 20:23:57 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/selfuncs.c,v 1.121 2002/11/19 23:21:59 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -85,7 +85,10 @@
 #include "optimizer/cost.h"
 #include "optimizer/pathnode.h"
 #include "optimizer/plancat.h"
+#include "optimizer/planmain.h"
 #include "optimizer/prep.h"
+#include "optimizer/tlist.h"
+#include "optimizer/var.h"
 #include "parser/parse_func.h"
 #include "parser/parse_oper.h"
 #include "parser/parsetree.h"
@@ -1810,6 +1813,251 @@ mergejoinscansel(Query *root, Node *clause,
 }
 
 /*
+ * estimate_num_groups		- Estimate number of groups in a grouped query
+ *
+ * Given a query having a GROUP BY clause, estimate how many groups there
+ * will be --- ie, the number of distinct combinations of the GROUP BY
+ * expressions.
+ *
+ * This routine is also used to estimate the number of rows emitted by
+ * a DISTINCT filtering step; that is an isomorphic problem.  (Note:
+ * actually, we only use it for DISTINCT when there's no grouping or
+ * aggregation ahead of the DISTINCT.)
+ *
+ * Inputs:
+ *	root - the query
+ *	groupClauses - list of GroupClauses (or SortClauses for the DISTINCT
+ *		case, but those are equivalent structs)
+ *	input_rows - number of rows estimated to arrive at the group/unique
+ *		filter step
+ *
+ * Given the lack of any cross-correlation statistics in the system, it's
+ * impossible to do anything really trustworthy with GROUP BY conditions
+ * involving multiple Vars.  We should however avoid assuming the worst
+ * case (all possible cross-product terms actually appear as groups) since
+ * very often the grouped-by Vars are highly correlated.  Our current approach
+ * is as follows:
+ *	1.	Reduce the given expressions to a list of unique Vars used.  For
+ *		example, GROUP BY a, a + b is treated the same as GROUP BY a, b.
+ *		It is clearly correct not to count the same Var more than once.
+ *		It is also reasonable to treat f(x) the same as x: f() cannot
+ *		increase the number of distinct values (unless it is volatile,
+ *		which we consider unlikely for grouping), but it probably won't
+ *		reduce the number of distinct values much either.
+ *	2.	If the list contains Vars of different relations that are known equal
+ *		due to equijoin clauses, then drop all but one of the Vars from each
+ *		known-equal set, keeping the one with smallest estimated # of values
+ *		(since the extra values of the others can't appear in joined rows).
+ *		Note the reason we only consider Vars of different relations is that
+ *		if we considered ones of the same rel, we'd be double-counting the
+ *		restriction selectivity of the equality in the next step.
+ *	3.	For Vars within a single source rel, we multiply together the numbers
+ *		of values, clamp to the number of rows in the rel, and then multiply
+ *		by the selectivity of the restriction clauses for that rel.  The
+ *		initial product is probably too high (it's the worst case) but since
+ *		we can clamp to the rel's rows it won't be hugely bad.  Multiplying
+ *		by the restriction selectivity is effectively assuming that the
+ *		restriction clauses are independent of the grouping, which is a crummy
+ *		assumption, but it's hard to do better.
+ *	4.	If there are Vars from multiple rels, we repeat step 3 for each such
+ *		rel, and multiply the results together.
+ * Note that rels not containing grouped Vars are ignored completely, as are
+ * join clauses other than the equijoin clauses used in step 2.  Such rels
+ * cannot increase the number of groups, and we assume such clauses do not
+ * reduce the number either (somewhat bogus, but we don't have the info to
+ * do better).
+ */
+double
+estimate_num_groups(Query *root, List *groupClauses, double input_rows)
+{
+	List	   *allvars = NIL;
+	List	   *varinfos = NIL;
+	double		numdistinct;
+	List	   *l;
+	typedef struct {			/* varinfos is a List of these */
+		Var	   *var;
+		double	ndistinct;
+	} MyVarInfo;
+
+	/* We should not be called unless query has GROUP BY (or DISTINCT) */
+	Assert(groupClauses != NIL);
+
+	/* Step 1: get the unique Vars used */
+	foreach(l, groupClauses)
+	{
+		GroupClause *grpcl = (GroupClause *) lfirst(l);
+		Node	   *groupexpr = get_sortgroupclause_expr(grpcl,
+														 root->targetList);
+		List	   *varshere;
+
+		varshere = pull_var_clause(groupexpr, false);
+		/*
+		 * Replace any JOIN alias Vars with the underlying Vars.  (This
+		 * is not really right for FULL JOIN ...)
+		 */
+		if (root->hasJoinRTEs)
+		{
+			varshere = (List *) flatten_join_alias_vars((Node *) varshere,
+														root->rtable,
+														true);
+			varshere = pull_var_clause((Node *) varshere, false);
+		}
+		/*
+		 * If we find any variable-free GROUP BY item, then either it is
+		 * a constant (and we can ignore it) or it contains a volatile
+		 * function; in the latter case we punt and assume that each input
+		 * row will yield a distinct group.
+		 */
+		if (varshere == NIL)
+		{
+			if (contain_volatile_functions(groupexpr))
+				return input_rows;
+			continue;
+		}
+		allvars = nconc(allvars, varshere);
+	}
+
+	/* If now no Vars, we must have an all-constant GROUP BY list. */
+	if (allvars == NIL)
+		return 1.0;
+
+	/* Use set_union() to discard duplicates */
+	allvars = set_union(NIL, allvars);
+
+	/*
+	 * Step 2: acquire statistical estimate of number of distinct values
+	 * of each Var (total in its table, without regard for filtering).
+	 * Also, detect known-equal Vars and discard the ones we don't want.
+	 */
+	foreach(l, allvars)
+	{
+		Var	   *var = (Var *) lfirst(l);
+		Oid		relid = getrelid(var->varno, root->rtable);
+		HeapTuple	statsTuple = NULL;
+		Form_pg_statistic stats = NULL;
+		double ndistinct;
+		bool	keep = true;
+		List   *l2;
+
+		if (OidIsValid(relid))
+		{
+			statsTuple = SearchSysCache(STATRELATT,
+										ObjectIdGetDatum(relid),
+										Int16GetDatum(var->varattno),
+										0, 0);
+			if (HeapTupleIsValid(statsTuple))
+				stats = (Form_pg_statistic) GETSTRUCT(statsTuple);
+		}
+		ndistinct = get_att_numdistinct(root, var, stats);
+		if (HeapTupleIsValid(statsTuple))
+			ReleaseSysCache(statsTuple);
+
+		foreach(l2, varinfos)
+		{
+			MyVarInfo  *varinfo = (MyVarInfo *) lfirst(l2);
+
+			if (var->varno != varinfo->var->varno &&
+				vars_known_equal(root, var, varinfo->var))
+			{
+				/* Found a match */
+				if (varinfo->ndistinct <= ndistinct)
+				{
+					/* Keep older item, forget new one */
+					keep = false;
+					break;
+				}
+				else
+				{
+					/*
+					 * Delete the older item.  We assume lremove() will not
+					 * break the lnext link of the item...
+					 */
+					varinfos = lremove(varinfo, varinfos);
+				}
+			}
+		}
+
+		if (keep)
+		{
+			MyVarInfo  *varinfo = (MyVarInfo *) palloc(sizeof(MyVarInfo));
+
+			varinfo->var = var;
+			varinfo->ndistinct = ndistinct;
+			varinfos = lcons(varinfo, varinfos);
+		}
+	}
+
+	/*
+	 * Steps 3/4: group Vars by relation and estimate total numdistinct.
+	 *
+	 * For each iteration of the outer loop, we process the frontmost
+	 * Var in varinfos, plus all other Vars in the same relation.  We
+	 * remove these Vars from the newvarinfos list for the next iteration.
+	 * This is the easiest way to group Vars of same rel together.
+	 */
+	Assert(varinfos != NIL);
+	numdistinct = 1.0;
+
+	do
+	{
+		MyVarInfo  *varinfo1 = (MyVarInfo *) lfirst(varinfos);
+		RelOptInfo *rel = find_base_rel(root, varinfo1->var->varno);
+		double	reldistinct = varinfo1->ndistinct;
+		List   *newvarinfos = NIL;
+
+		/*
+		 * Get the largest numdistinct estimate of the Vars for this rel.
+		 * Also, construct new varinfos list of remaining Vars.
+		 */
+		foreach(l, lnext(varinfos))
+		{
+			MyVarInfo  *varinfo2 = (MyVarInfo *) lfirst(l);
+
+			if (varinfo2->var->varno == varinfo1->var->varno)
+			{
+				reldistinct *= varinfo2->ndistinct;
+			}
+			else
+			{
+				/* not time to process varinfo2 yet */
+				newvarinfos = lcons(varinfo2, newvarinfos);
+			}
+		}
+
+		/*
+		 * Clamp to size of rel, multiply by restriction selectivity.
+		 */
+		Assert(rel->reloptkind == RELOPT_BASEREL);
+		if (reldistinct > rel->tuples)
+			reldistinct = rel->tuples;
+		reldistinct *= rel->rows / rel->tuples;
+
+		/*
+		 * Update estimate of total distinct groups.
+		 */
+		numdistinct *= reldistinct;
+
+		varinfos = newvarinfos;
+	} while (varinfos != NIL);
+
+	/* Guard against out-of-range answers */
+	if (numdistinct > input_rows)
+		numdistinct = input_rows;
+	if (numdistinct < 1.0)
+		numdistinct = 1.0;
+
+	return numdistinct;
+}
+
+
+/*-------------------------------------------------------------------------
+ *
+ * Support routines
+ *
+ *-------------------------------------------------------------------------
+ */
+
+/*
  * get_var_maximum
  *		Estimate the maximum value of the specified variable.
  *		If successful, store value in *max and return TRUE.
@@ -3271,7 +3519,7 @@ pattern_selectivity(Const *patt, Pattern_Type ptype)
 
 
 /*
- * We want test whether the database's LC_COLLATE setting is safe for
+ * We want to test whether the database's LC_COLLATE setting is safe for
  * LIKE/regexp index optimization.
  *
  * The key requirement here is that given a prefix string, say "foo",
@@ -3284,7 +3532,7 @@ pattern_selectivity(Const *patt, Pattern_Type ptype)
  *
  * (In theory, locales other than C may be LIKE-safe so this function
  * could be different from lc_collate_is_c(), but in a different
- * theory, non-C locales are completely unpredicable so it's unlikely
+ * theory, non-C locales are completely unpredictable so it's unlikely
  * to happen.)
  *
  * Be sure to maintain the correspondence with the code in initdb.
