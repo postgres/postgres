@@ -426,6 +426,8 @@ appreciate your input. So far, below some (rather obvious) results:
 
 CHANGES
 
+Aug 9, 2002
+   Fixed very stupid but important bug :-)
 July 31, 2002
    Now works on 64-bit platforms.
    Added function lca - lowest common ancestor
@@ -437,7 +439,7 @@ July 13, 2002
 TODO
 
   * Testing on 64-bit platforms. There are several known problems with byte
-    alignment;
+    alignment; -- RESOLVED
   * Better documentation;
   * We plan (probably) to improve regular expressions processing using
     non-deterministic automata;

@@ -95,7 +95,7 @@ static const unsigned int crc32tab[256] = {
 };
 
 unsigned int
-crc32_sz(char *buf, int size)
+ltree_crc32_sz(char *buf, int size)
 {
 	unsigned int crc = ~0;
 	char	   *p;

@@ -13,23 +13,23 @@ PG_FUNCTION_INFO_V1(ltxtq_rexec);
  * check for boolean condition
  */
 bool 
-execute(ITEM * curitem, void *checkval, bool calcnot, bool (*chkcond) (void *checkval, ITEM * val)) {
+ltree_execute(ITEM * curitem, void *checkval, bool calcnot, bool (*chkcond) (void *checkval, ITEM * val)) {
 	if (curitem->type == VAL)
 		return (*chkcond) (checkval, curitem);
 	else if (curitem->val == (int4) '!') {
 		return (calcnot) ?
-			((execute(curitem + 1, checkval, calcnot, chkcond)) ? false : true)
+			((ltree_execute(curitem + 1, checkval, calcnot, chkcond)) ? false : true)
 			: true;
 	} else if (curitem->val == (int4) '&') {
-		if (execute(curitem + curitem->left, checkval, calcnot, chkcond))   
-			return execute(curitem + 1, checkval, calcnot, chkcond);
+		if (ltree_execute(curitem + curitem->left, checkval, calcnot, chkcond))   
+			return ltree_execute(curitem + 1, checkval, calcnot, chkcond);
 		else
 			return false;
 	} else   {						       /* |-operator */
-		if (execute(curitem + curitem->left, checkval, calcnot, chkcond))
+		if (ltree_execute(curitem + curitem->left, checkval, calcnot, chkcond))
 			return true;
 		else
-			return execute(curitem + 1, checkval, calcnot, chkcond);
+			return ltree_execute(curitem + 1, checkval, calcnot, chkcond);
 	}
 	return false;
 }
@@ -76,7 +76,7 @@ ltxtq_exec(PG_FUNCTION_ARGS) {
 	chkval.node = val;
 	chkval.operand = GETOPERAND(query);
 
-	result = execute(
+	result = ltree_execute(
 		GETQUERY(query),
 		&chkval,
 		true,

@@ -130,7 +130,7 @@ hashing(BITVECP sign, ltree *t) {
 	int  hash;
 
 	while(tlen > 0) {
-		hash = crc32_sz( cur->name, cur->len );
+		hash = ltree_crc32_sz( cur->name, cur->len );
 		HASH( sign, hash );
 		cur = LEVEL_NEXT(cur);
 		tlen--;
@@ -511,7 +511,7 @@ gist_qtxt(ltree_gist *key, ltxtquery* query) {
 	if ( LTG_ISALLTRUE(key) )
 		return true;
  
-	return execute(
+	return ltree_execute(
 		GETQUERY(query),
 		(void*)LTG_SIGN(key), false,
 		checkcondition_bit

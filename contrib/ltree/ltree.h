@@ -152,7 +152,7 @@ Datum   ltree_textadd(PG_FUNCTION_ARGS);
 /* Util function */
 Datum ltree_in(PG_FUNCTION_ARGS);
 
-bool execute(ITEM * curitem, void *checkval,
+bool ltree_execute(ITEM * curitem, void *checkval,
                 bool calcnot, bool (*chkcond) (void *checkval, ITEM * val));
 
 int ltree_compare(const ltree *a, const ltree *b);

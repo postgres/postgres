@@ -45,7 +45,7 @@ hashing(BITVECP sign, ltree *t) {
 	int  hash;
 
 	while(tlen > 0) {
-		hash = crc32_sz( cur->name, cur->len );
+		hash = ltree_crc32_sz( cur->name, cur->len );
 		AHASH( sign, hash );
 		cur = LEVEL_NEXT(cur);
 		tlen--;
@@ -455,7 +455,7 @@ gist_te(ltree_gist *key, ltree* query) {
 		return true;
 
 	while( qlen>0 ) {
-		hv = crc32_sz(curq->name,curq->len);
+		hv = ltree_crc32_sz(curq->name,curq->len);
 		if ( ! GETBIT( sign, AHASHVAL(hv) ) )
 			return false; 
 		curq = LEVEL_NEXT(curq);
@@ -475,7 +475,7 @@ gist_qtxt(ltree_gist *key, ltxtquery* query) {
 	if ( LTG_ISALLTRUE(key) )
 		return true;
             
-	return execute(
+	return ltree_execute(
 		GETQUERY(query),
 		(void*)LTG_SIGN(key), false,
 		checkcondition_bit
