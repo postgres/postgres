@@ -1,26 +1,36 @@
+dnl psqlodbc standalone configuration.
 dnl Process this file with autoconf to produce a configure script.
+
+dnl Confirm that this is being run from the ODBC source directory,
+dnl and halt if not...
 AC_INIT(bind.c)
 AC_PREFIX_DEFAULT(/usr/local)
 
+echo "*** configuring psqlodbc ***"
+
 if test -d ../../interfaces
 then
-	TEMPLATEDIR=../../template
-	if test "$prefix" = "NONE"
-	then
-		ac_default_prefix=/usr/local/pgsql
-	fi
-	ODBCINSTDIR=
-else
-	TEMPLATEDIR=./template
-	if test "$prefix" = "NONE"
-	then
-		ODBCINSTDIR=/share
-	else
-		ODBCINSTDIR=
-	fi
+	echo "psqlodbc can be configured either standalone or integrated"
+	echo "into the Postgres main distribution."
+	echo "It appears that you are running the standalone configure"
+	echo "from within the main distribution. The recommended (and required)"
+	echo "procedure is to configure ODBC using the integrated configuration"
+	echo "procedure using the --with-odbc option."
+	exit
 fi
 
-echo "*** configuring psqlodbc ***"
+TEMPLATEDIR=./template
+if test "$prefix" = "NONE"
+then
+	if test -d "/share"
+	then
+		ODBCINST=/share/odbcinst.ini
+	else
+		ODBCINST=/etc/odbcinst.ini
+	fi
+else
+	ODBCINST=$prefix/odbcinst.ini
+fi
 
 AC_CANONICAL_HOST
 
@@ -65,8 +75,7 @@ esac
 
 
 PORTNAME=${os}
-
-AC_SUBST(PORTNAME)
+AC_LINK_FILES(makefiles/Makefile.${os}, Makefile.port)
 
 echo "checking echo setting..."
 if echo '\c' | grep -s c >/dev/null 2>&1
@@ -101,8 +110,7 @@ dnl fi
 AC_MSG_CHECKING(setting template to)
 AC_ARG_WITH(template,
 	[  --with-template=TEMPLATE
-							use operating system template file
-								see template directory],
+	                           use operating system template file; see template directory],
 	[  TEMPLATE=$withval ],
 	[  host_no_ver=`echo "$host" | sed 's/[[0-9.]]*$//'`
 		GUESS=`grep "$host_no_ver" $TEMPLATEDIR/.similar | sed 's/.*=//' | tail -1`
@@ -136,7 +144,7 @@ distribution's 'interfaces/odbc' directory and try
 again.
 
 If neither of these is the case than please complain
-kindly to the maintainers, their e-mail addresses can
+kindly to the maintainers; their e-mail addresses can
 be found in the Readme files.
 *************************************************************
 EOT
@@ -212,18 +220,14 @@ dnl file which is normally ${prefix}/share or ${prefix} if this is
 dnl being compiled inside the postgres distribution.
 AC_MSG_CHECKING(setting ODBCINST)
 AC_ARG_WITH(
-   odbcinst,
-   [   --with-odbcinst=<datadir> change default directory for odbcinst.ini],
+	odbcinst,
+	[  --with-odbcinst=<pathname>
+                               change default directory for odbcinst.ini ],
    AC_DEFINE_UNQUOTED(ODBCINST, ${with_odbcinst}) AC_MSG_RESULT($with_odbcinst),
-   AC_DEFINE_UNQUOTED(ODBCINST, ${ODBCINSTDIR}) AC_MSG_RESULT(${ODBCINSTDIR})
+   AC_DEFINE_UNQUOTED(ODBCINST, /etc/odbcinst.ini) AC_MSG_RESULT(${ODBCINST})
 )
 
-if test "X$with_odbcinst" != "X"
-then
-	ODBCINSTDIR=$with_odbcinst
-fi
-
-AC_SUBST(ODBCINSTDIR)
+AC_SUBST(ODBCINST)
 
 if test "X$with_compiler" != "X"
 then

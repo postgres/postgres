@@ -14,10 +14,10 @@ ac_default_prefix=/usr/local
 ac_default_prefix=/usr/local
 ac_help="$ac_help
   --with-template=TEMPLATE
-							use operating system template file
-								see template directory"
+	                           use operating system template file; see template directory"
 ac_help="$ac_help
-   --with-odbcinst=<datadir> change default directory for odbcinst.ini"
+  --with-odbcinst=<pathname>
+                               change default directory for odbcinst.ini "
 
 # Initialize some variables set by options.
 # The variables have the same names as the options, with
@@ -527,25 +527,31 @@ fi
 
 
 
+echo "*** configuring psqlodbc ***"
+
 if test -d ../../interfaces
 then
-	TEMPLATEDIR=../../template
-	if test "$prefix" = "NONE"
-	then
-		ac_default_prefix=/usr/local/pgsql
-	fi
-	ODBCINSTDIR=
-else
-	TEMPLATEDIR=./template
-	if test "$prefix" = "NONE"
-	then
-		ODBCINSTDIR=/share
-	else
-		ODBCINSTDIR=
-	fi
+	echo "psqlodbc can be configured either standalone or integrated"
+	echo "into the Postgres main distribution."
+	echo "It appears that you are running the standalone configure"
+	echo "from within the main distribution. The recommended (and required)"
+	echo "procedure is to configure ODBC using the integrated configuration"
+	echo "procedure using the --with-odbc option."
+	exit
 fi
 
-echo "*** configuring psqlodbc ***"
+TEMPLATEDIR=./template
+if test "$prefix" = "NONE"
+then
+	if test -d "/share"
+	then
+		ODBCINST=/share/odbcinst.ini
+	else
+		ODBCINST=/etc/odbcinst.ini
+	fi
+else
+	ODBCINST=$prefix/odbcinst.ini
+fi
 
 ac_aux_dir=
 for ac_dir in $srcdir $srcdir/.. $srcdir/../..; do
@@ -573,7 +579,7 @@ else { echo "configure: error: can not run $ac_config_sub" 1>&2; exit 1; }
 fi
 
 echo $ac_n "checking host system type""... $ac_c" 1>&6
-echo "configure:577: checking host system type" >&5
+echo "configure:583: checking host system type" >&5
 
 host_alias=$host
 case "$host_alias" in
@@ -637,7 +643,6 @@ esac
 PORTNAME=${os}
 
 
-
 echo "checking echo setting..."
 if echo '\c' | grep -s c >/dev/null 2>&1
 then
@@ -652,7 +657,7 @@ fi
 
 
 echo $ac_n "checking setting template to""... $ac_c" 1>&6
-echo "configure:656: checking setting template to" >&5
+echo "configure:661: checking setting template to" >&5
 # Check whether --with-template or --without-template was given.
 if test "${with_template+set}" = set; then
   withval="$with_template"
@@ -692,7 +697,7 @@ distribution's 'interfaces/odbc' directory and try
 again.
 
 If neither of these is the case than please complain
-kindly to the maintainers, their e-mail addresses can
+kindly to the maintainers; their e-mail addresses can
 be found in the Readme files.
 *************************************************************
 EOT
@@ -764,7 +769,7 @@ export LDFLAGS
 echo "- setting LDFLAGS=$LDFLAGS"
 
 echo $ac_n "checking setting ODBCINST""... $ac_c" 1>&6
-echo "configure:768: checking setting ODBCINST" >&5
+echo "configure:773: checking setting ODBCINST" >&5
 # Check whether --with-odbcinst or --without-odbcinst was given.
 if test "${with_odbcinst+set}" = set; then
   withval="$with_odbcinst"
@@ -774,17 +779,12 @@ EOF
  echo "$ac_t""$with_odbcinst" 1>&6
 else
   cat >> confdefs.h <<EOF
-#define ODBCINST ${ODBCINSTDIR}
+#define ODBCINST /etc/odbcinst.ini
 EOF
- echo "$ac_t""${ODBCINSTDIR}" 1>&6
+ echo "$ac_t""${ODBCINST}" 1>&6
 
 fi
 
-
-if test "X$with_odbcinst" != "X"
-then
-	ODBCINSTDIR=$with_odbcinst
-fi
 
 
 
@@ -1755,10 +1755,10 @@ s%@host_alias@%$host_alias%g
 s%@host_cpu@%$host_cpu%g
 s%@host_vendor@%$host_vendor%g
 s%@host_os@%$host_os%g
-s%@PORTNAME@%$PORTNAME%g
-s%@ODBCINSTDIR@%$ODBCINSTDIR%g
+s%@ODBCINST@%$ODBCINST%g
 s%@CC@%$CC%g
 s%@CPP@%$CPP%g
+s%@PORTNAME@%$PORTNAME%g
 s%@AROPT@%$AROPT%g
 s%@SHARED_LIB@%$SHARED_LIB%g
 s%@DLSUFFIX@%$DLSUFFIX%g
@@ -1977,6 +1977,51 @@ cat >> $CONFIG_STATUS <<\EOF
   fi
 fi; done
 
+EOF
+
+cat >> $CONFIG_STATUS <<EOF
+ac_sources="makefiles/Makefile.${os}"
+ac_dests="Makefile.port"
+EOF
+
+cat >> $CONFIG_STATUS <<\EOF
+srcdir=$ac_given_srcdir
+while test -n "$ac_sources"; do
+  set $ac_dests; ac_dest=$1; shift; ac_dests=$*
+  set $ac_sources; ac_source=$1; shift; ac_sources=$*
+
+  echo "linking $srcdir/$ac_source to $ac_dest"
+
+  if test ! -r $srcdir/$ac_source; then
+    { echo "configure: error: $srcdir/$ac_source: File not found" 1>&2; exit 1; }
+  fi
+  rm -f $ac_dest
+
+  # Make relative symlinks.
+  # Remove last slash and all that follows it.  Not all systems have dirname.
+  ac_dest_dir=`echo $ac_dest|sed 's%/[^/][^/]*$%%'`
+  if test "$ac_dest_dir" != "$ac_dest" && test "$ac_dest_dir" != .; then
+    # The dest file is in a subdirectory.
+    test ! -d "$ac_dest_dir" && mkdir "$ac_dest_dir"
+    ac_dest_dir_suffix="/`echo $ac_dest_dir|sed 's%^\./%%'`"
+    # A "../" for each directory in $ac_dest_dir_suffix.
+    ac_dots=`echo $ac_dest_dir_suffix|sed 's%/[^/]*%../%g'`
+  else
+    ac_dest_dir_suffix= ac_dots=
+  fi
+
+  case "$srcdir" in
+  [/$]*) ac_rel_source="$srcdir/$ac_source" ;;
+  *) ac_rel_source="$ac_dots$srcdir/$ac_source" ;;
+  esac
+
+  # Make a symlink if possible; otherwise try a hard link.
+  if ln -s $ac_rel_source $ac_dest 2>/dev/null ||
+    ln $srcdir/$ac_source $ac_dest; then :
+  else
+    { echo "configure: error: can not link $ac_dest to $srcdir/$ac_source" 1>&2; exit 1; }
+  fi
+done
 EOF
 cat >> $CONFIG_STATUS <<EOF
 

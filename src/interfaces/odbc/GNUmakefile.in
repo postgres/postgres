@@ -1,13 +1,13 @@
 #-------------------------------------------------------------------------
 #
-# Makefile.inc--
-#    Build and install postgres.
+# GNUMakefile.in--
+#    Build and install psqlodbc (Postgres ODBC driver).
 #
 # Copyright (c) 1994, Regents of the University of California
 #
 #
 # IDENTIFICATION
-#    $Header: /cvsroot/pgsql/src/interfaces/odbc/Attic/GNUmakefile.in,v 1.2 1998/10/07 06:49:19 thomas Exp $
+#    $Header: /cvsroot/pgsql/src/interfaces/odbc/Attic/GNUmakefile.in,v 1.3 1998/10/09 07:04:49 thomas Exp $
 #
 #-------------------------------------------------------------------------
 @SET_MAKE@
@@ -40,11 +40,11 @@ ifeq ($(PORTNAME), bsd)
   endif
 endif
 
-SOURCES = *.c *.h *.in Config.mk Makefile Makefile.unx README.Linux \
+SOURCES = *.c *.h *.in Config.mk \
 	TODO.txt Version.mk config.guess config.sub configure \
-	install-sh license.txt notice.txt odbcinst.ini patch \
-	psqlodbc.aps psqlodbc.def psqlodbc.mak psqlodbc.mdp \
-	psqlodbc.ncb psqlodbc.rc readme.txt
+	install-sh license.txt notice.txt odbcinst.ini \
+	psqlodbc.def \
+	psqlodbc.rc readme.txt
 
 OBJECTS = info.o bind.o columninfo.o connection.o convert.o drvconn.o \
         environ.o execute.o lobj.o misc.o options.o \
@@ -92,7 +92,7 @@ install-shlib: $(shlib)
 	cd $(DESTDIR)$(LIBDIR) && $(LN_S) -f lib$(NAME)$(DLSUFFIX).$(SO_MAJOR_VERSION) lib$(NAME)$(DLSUFFIX)
 
 install-ini: odbcinst.ini
-	$(INSTALL) $(INSTL_LIB_OPTS) odbcinst.ini $(ODBCINST)/odbcinst.ini
+	$(INSTALL) $(INSTL_LIB_OPTS) odbcinst.ini $(ODBCINST)
 
 depend dep:
 	$(CC) -MM *.c >depend
@@ -101,24 +101,32 @@ depend dep:
 
 clean:
 	-rm -f lib$(NAME).a $(shlib) $(OBJECTS) lib$(NAME)$(DLSUFFIX)
-	-rm -f config.log config.cache config.status
-	
+
 .PHONY: distclean
 
 distclean: clean
 	-rm -f config.h GNUmakefile Makefile.global
+	-rm -f config.cache config.log config.status
+	@if [ $SRCDIR ne $ODBCSRCDIR ]; then rm -f template makefiles port
 
 .PHONY: standalone
 
 standalone:
+	@if test "$SRCDIR" = "$ODBCSRCDIR"; then \
+		echo "****************************************************"; \
+		echo "Note: This was a standalone installation already"; \
+		echo "This may produce a slightly inconsistant tar file..."; \
+		echo "You should use the original tar file instead"; \
+		echo "****************************************************"; \
+	fi
 	-rm -f psqlodbc-$(SO_MAJOR_VERSION)$(SO_MINOR_VERSION).tar.gz
-	tar -cf psqlodbc-$(SO_MAJOR_VERSION)$(SO_MINOR_VERSION).tar $(SOURCES)
-	tar -r -C ../.. -f psqlodbc-$(SO_MAJOR_VERSION)$(SO_MINOR_VERSION).tar template
+	$(TAR) -chf psqlodbc-$(SO_MAJOR_VERSION)$(SO_MINOR_VERSION).tar \
+	    $(SOURCES) -C @top_srcdir@ makefiles template
 	gzip psqlodbc-$(SO_MAJOR_VERSION)$(SO_MINOR_VERSION).tar
 
 .PHONY: integrated
 
 integrated:
 	-rm -f psqlodbc-$(SO_MAJOR_VERSION)$(SO_MINOR_VERSION)-int.tar.gz
-	tar -cf psqlodbc-$(SO_MAJOR_VERSION)$(SO_MINOR_VERSION)-int.tar $(SOURCES)
+	$(TAR) -cf psqlodbc-$(SO_MAJOR_VERSION)$(SO_MINOR_VERSION)-int.tar $(SOURCES)
 	gzip psqlodbc-$(SO_MAJOR_VERSION)$(SO_MINOR_VERSION)-int.tar

@@ -1,13 +1,13 @@
 #----------------------------------------------------------------------------
 #
 # Makefile.global--
-#    global configuration for the Makefiles
+#    global configuration for pgsqlodbc (Postgres ODBC driver)
 #
 # Copyright (c) 1994, Regents of the University of California
 #
 #
 # IDENTIFICATION
-#    $Header: /cvsroot/pgsql/src/interfaces/odbc/Attic/Makefile.global.in,v 1.1 1998/10/06 05:57:56 thomas Exp $
+#    $Header: /cvsroot/pgsql/src/interfaces/odbc/Attic/Makefile.global.in,v 1.2 1998/10/09 07:04:50 thomas Exp $
 #
 # NOTES
 #    This is derived from the main Postgres makefile.
@@ -71,18 +71,18 @@ BINDIR= $(POSTGRESDIR)/bin
 
 LIBDIR= $(POSTGRESDIR)/lib
 
-# Where the man pages (suitable for use with "man") get installed.
-POSTMANDIR= $(POSTGRESDIR)/man
-
+## Where the man pages (suitable for use with "man") get installed.
+#POSTMANDIR= $(POSTGRESDIR)/man
+#
 # Where the formatted documents (e.g., the reference manual) get installed.
-POSTDOCDIR= $(POSTGRESDIR)/doc
+#POSTDOCDIR= $(POSTGRESDIR)/doc
 
 # Where the header files necessary to build frontend programs get installed.
 HEADERDIR= $(POSTGRESDIR)/include
 
 # Where the odbcinst.ini file will be placed
 
-ODBCINST= $(POSTGRESDIR)@ODBCINSTDIR@
+ODBCINST= @ODBCINST@
 
 ##############################################################################
 #
@@ -119,7 +119,6 @@ DASH_N= @DASH_N@
 BACKSLASH_C= @BACKSLASH_C@ 
 
 
-
 #-------------------------------------------------------------
 # See the subdirectory template for default settings for these
 #-------------------------------------------------------------
@@ -131,30 +130,30 @@ LDFLAGS= @LDFLAGS@ @LIBS@
 DLSUFFIX= @DLSUFFIX@
 LN_S = @LN_S@
 
+ifneq ($(wildcard $(SRCDIR)/Makefile.port), )
+  include $(SRCDIR)/Makefile.port
+endif
+
+
 ##############################################################################
 #
 # Customization.
 #
-# This includes local customizations. If we're being build from
+# This includes local customizations. If we're being built from
 # within the Postgres distribution and a Makefile.custom exists
-# in the top level Postgres directory it overrides any local customization
-# that might be in Makefile.custom of the odbc driver directory. These
-# files don't exist in the original
-# distribution so that they don't get overwritten when you upgrade.
+# in the top level Postgres directory it will take precedence
+# over any local Makefile.custom in the odbc driver directory.
 
 ifneq ($(wildcard $(SRCDIR)/Makefile.custom), )
-include $(SRCDIR)/Makefile.custom
+   include $(SRCDIR)/Makefile.custom
 endif
 
-ifneq ($(wildcard ../../Makefile.custom), )
-include ../../Makefile.custom
-endif
 
 # This goes here so that customization in Makefile.custom is effective
 ##############################################################################
 
 ifneq ($(CUSTOM_INSTALL),)
-INSTALL= $(CUSTOM_INSTALL)
+  INSTALL= $(CUSTOM_INSTALL)
 endif
 
 #
@@ -193,9 +192,9 @@ ifneq ($(CUSTOM_COPT),)
 endif
 
 ifeq ($(CC), gcc)
-CFLAGS+= -Wall -Wmissing-prototypes
+  CFLAGS+= -Wall -Wmissing-prototypes
 endif
 
 ifdef COPT
-   CFLAGS+= $(COPT)
+  CFLAGS+= $(COPT)
 endif
