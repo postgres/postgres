@@ -15,7 +15,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/utils/adt/selfuncs.c,v 1.151 2003/12/28 21:57:37 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/utils/adt/selfuncs.c,v 1.152 2003/12/29 22:22:45 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -3901,23 +3901,22 @@ genericcostestimate(Query *root, RelOptInfo *rel,
 	/*
 	 * If the index is partial, AND the index predicate with the
 	 * explicitly given indexquals to produce a more accurate idea of the
-	 * index restriction.  This may produce redundant clauses, which we
-	 * hope that canonicalize_qual and clauselist_selectivity will deal with
-	 * intelligently.
+	 * index selectivity.  This may produce redundant clauses.  We can get
+	 * rid of exact duplicates by using set_union().  We expect that most
+	 * cases of partial redundancy (such as "x < 4" from the qual and
+	 * "x < 5" from the predicate) will be recognized and handled correctly
+	 * by clauselist_selectivity().  This assumption is somewhat fragile,
+	 * since it depends on pred_test() and clauselist_selectivity() having
+	 * similar capabilities, and there are certainly many cases where we will
+	 * end up with a too-low selectivity estimate.  This will bias the system
+	 * in favor of using partial indexes where possible, which is not
+	 * necessarily a bad thing.  But it'd be nice to do better someday.
 	 *
-	 * Note that index->indpred and indexQuals are both in implicit-AND form
-	 * to start with, which we have to make explicit to hand to
-	 * canonicalize_qual, and then we convert back to implicit-AND form.
+	 * Note that index->indpred and indexQuals are both in implicit-AND form,
+	 * so ANDing them together just takes merging the lists.
 	 */
 	if (index->indpred != NIL)
-	{
-		Expr	   *andedQuals;
-
-		andedQuals = make_ands_explicit(nconc(listCopy(index->indpred),
-											  indexQuals));
-		andedQuals = canonicalize_qual(andedQuals);
-		selectivityQuals = make_ands_implicit(andedQuals);
-	}
+		selectivityQuals = set_union(index->indpred, indexQuals);
 
 	/* Estimate the fraction of main-table tuples that will be visited */
 	*indexSelectivity = clauselist_selectivity(root, selectivityQuals,
