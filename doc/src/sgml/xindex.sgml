@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/xindex.sgml,v 1.24 2002/04/17 20:57:56 tgl Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/xindex.sgml,v 1.25 2002/05/29 17:36:40 tgl Exp $
 PostgreSQL documentation
 -->
 
@@ -104,6 +104,22 @@ PostgreSQL documentation
     </tgroup>
    </table>
   </para>
+
+  <note>
+   <para>
+    An index AM that supports multiple columns (has
+    <structfield>amcanmulticol</structfield> true) <emphasis>must</>
+    support indexing nulls in columns after the first, because the planner
+    will assume the index can be used for queries on just the first
+    column(s).  For example, consider an index on (a,b) and a query
+    WHERE a = 4.  The system will assume the index can be used to scan for
+    rows with a = 4, which is wrong if the index omits rows where b is null.
+    However it is okay to omit rows where the first indexed column is null.
+    (GiST currently does so.)
+    <structfield>amindexnulls</structfield> should be set true only if the
+    index AM indexes all rows, including arbitrary combinations of nulls.
+   </para>
+  </note>
 
   <para>
    The <acronym>OID</acronym> of the row in
