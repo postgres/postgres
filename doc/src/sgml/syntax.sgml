@@ -1,9 +1,9 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/syntax.sgml,v 1.31 2000/12/22 18:57:50 petere Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/syntax.sgml,v 1.32 2001/01/06 11:58:56 petere Exp $
 -->
 
- <chapter id="syntax">
-  <title>SQL Syntax</title>
+<chapter id="sql-syntax">
+ <title>SQL Syntax</title>
 
   <abstract>
    <para>
@@ -11,505 +11,325 @@ $Header: /cvsroot/pgsql/doc/src/sgml/syntax.sgml,v 1.31 2000/12/22 18:57:50 pete
    </para>
   </abstract>
 
+ <sect1 id="sql-syntax-lexical">
+  <title>Lexical Structure</title>
+
   <para>
-   <acronym>SQL</acronym> manipulates sets of data. The language is
-   composed of various <firstterm>key words</firstterm>. Arithmetic
-   and procedural expressions are allowed. We will cover these topics
-   in this chapter; subsequent chapters will include details on data
-   types, functions, and operators.
+   SQL input consists of a sequence of
+   <firstterm>commands</firstterm>.  A command is composed of a
+   sequence of <firstterm>tokens</firstterm>, which depend on the
+   syntax of the particular command, terminated by a semicolon
+   (<quote>;</quote>).  The end of the input stream also terminates a
+   command.
   </para>
 
-  <sect1 id="sql-keywords">
-   <title>Key Words</title>
+  <para>
+   A token can be a <firstterm>key word</firstterm>, an
+   <firstterm>identifier</firstterm>, a <firstterm>quoted
+   identifier</firstterm>, a <firstterm>literal</firstterm> (or
+   constant), or a special character symbol.  Tokens are normally
+   separated by whitespace (space, tab, newline), but need not be if
+   there is no ambiguity (which is generally only the case if a
+   special character is adjacent to some other token type).
+  </para>
+
+  <para>
+   Additionally, <firstterm>comments</firstterm> can occur in SQL
+   input.  They are not tokens, they are effectively equivalent to
+   whitespace.
+  </para>
+
+  <informalexample id="sql-syntax-ex-commands">
+   <para>
+    For example, the following is (lexically) valid SQL input:
+<programlisting>
+SELECT * FROM MY_TABLE;
+UPDATE MY_TABLE SET A = 5;
+INSERT INTO MY_TABLE VALUES (3, 'hi there');
+</programlisting>
+    This is a sequence of three commands, one per line (although this
+    is not required; more than one command can be on a line, and
+    commands can be usefully split across lines).
+   </para>
+  </informalexample>
+
+  <para>
+   The SQL syntax is not very consistent regarding what tokens
+   identify commands and which are operands or parameters.  The first
+   few tokens are generally the command name, so in the above example
+   we would usually speak of a <quote>SELECT</quote>, an
+   <quote>UPDATE</quote>, and an <quote>INSERT</quote> command.  But
+   for instance the <command>UPDATE</command> command always requires
+   a <token>SET</token> token to appear in a certain position, and
+   this particular variation of <command>INSERT</command> also
+   requires a <token>VALUES</token> in order to be complete.  The
+   precise syntax rules for each command are described in the
+   <citetitle>Reference Manual</citetitle>.
+  </para>
+
+  <sect2 id="sql-syntax-identifiers">
+   <title>Identifiers and Key Words</title>
 
    <para>
-    <acronym>SQL92</acronym> defines <firstterm>key words</firstterm> 
-    for the language
-    which have specific meaning. Some key words are
-    <firstterm>reserved</firstterm>, which indicates that they are
-    restricted to appear in only certain contexts. Other key words are
-    <firstterm>not restricted</firstterm>, which indicates that in certain 
-    contexts they
-    have a specific meaning but are not otherwise constrained.
+    Tokens such as <token>SELECT</token>, <token>UPDATE</token>, or
+    <token>VALUES</token> in the example above are examples of
+    <firstterm>key words</firstterm>, that is, words that have a fixed
+    meaning in the SQL language.  The tokens <token>MY_TABLE</token>
+    and <token>A</token> are examples of
+    <firstterm>identifiers</firstterm>.  They identify names of
+    tables, columns, or other database objects, depending on the
+    command they are used in.  Therefore they are sometimes simply
+    called <quote>names</quote>.  Key words and identifiers have the
+    same lexical structure, meaning that one cannot know whether a
+    token is an identifier or a key word without knowing the language.
+    A complete list of key words can be found in <xref
+    linkend="sql-keywords-appendix">.
    </para>
 
    <para>
-    <productname>Postgres</productname> implements an extended subset of the
-    <acronym>SQL92</acronym> and <acronym>SQL3</acronym> languages. Some language
-    elements are not as restricted in this implementation as is
-    called for in the language standards, in part due
-    to the extensibility features of <productname>Postgres</productname>. 
-   </para>
-
-   <para>
-    Information on <acronym>SQL92</acronym> and <acronym>SQL3</acronym> key words
-    is derived from <xref linkend="DATE97" endterm="DATE97">.
-   </para>
-
-   <sect2>
-    <title>Reserved Key Words</title>
-
-    <para>
-     <acronym>SQL92</acronym> and <acronym>SQL3</acronym> have 
-     <firstterm>reserved key words</firstterm> which are not allowed 
-     as identifiers and not allowed in any usage other than as fundamental
-     tokens in <acronym>SQL</acronym> statements.
-     <productname>Postgres</productname> has additional key words
-     which have similar restrictions. In particular, these key words
-     are not allowed as column or table names, though in some cases
-     they are allowed to be column labels (i.e. in AS clauses).
-    </para>
-
-    <tip>
-     <para>
-      Any string can be used as an identifier if surrounded by
-      double quotes (<quote>like this!</quote>). Some care is required since
-      such an identifier will be case sensitive
-      and will retain embedded whitespace and most other special characters.
-     </para>
-    </tip>
-
-    <para>
-     The following are <productname>Postgres</productname>
-     reserved words that are neither <acronym>SQL92</acronym>
-     nor <acronym>SQL3</acronym> reserved words. These are allowed
-     to be present as column labels, but not as identifiers:
-
-     <programlisting>
-ABORT ANALYZE 
-BINARY 
-CLUSTER CONSTRAINT COPY
-DO 
-EXPLAIN EXTEND
-LISTEN LOAD LOCK 
-MOVE 
-NEW NONE NOTIFY 
-OFFSET 
-RESET 
-SETOF SHOW
-UNLISTEN UNTIL 
-VACUUM VERBOSE
-     </programlisting>
-    </para>
-
-    <para>
-     The following are <productname>Postgres</productname>
-     reserved words that are also <acronym>SQL92</acronym> 
-     or <acronym>SQL3</acronym> reserved words, and that
-     are allowed to be present as column labels, but not as identifiers:
-
-     <programlisting>
-ALL ANY ASC BETWEEN BIT BOTH 
-CASE CAST CHAR CHARACTER CHECK COALESCE COLLATE COLUMN
- CONSTRAINT CROSS CURRENT CURRENT_DATE CURRENT_TIME
- CURRENT_TIMESTAMP CURRENT_USER 
-DEC DECIMAL DEFAULT DESC DISTINCT 
-ELSE END EXCEPT EXISTS EXTRACT 
-FALSE FLOAT FOR FOREIGN FROM FULL 
-GLOBAL GROUP 
-HAVING 
-IN INNER INTERSECT INTO IS 
-JOIN 
-LEADING LEFT LIKE LOCAL
-NATURAL NCHAR NOT NULL NULLIF NUMERIC 
-ON OR ORDER OUTER OVERLAPS 
-POSITION PRECISION PRIMARY PUBLIC
-REFERENCES RIGHT 
-SELECT SESSION_USER SOME SUBSTRING 
-TABLE THEN TO TRANSACTION TRIM TRUE
-UNION UNIQUE USER 
-VARCHAR 
-WHEN WHERE 
-     </programlisting>
-
-     The following are <productname>Postgres</productname>
-     reserved words that are also <acronym>SQL92</acronym> 
-     or <acronym>SQL3</acronym> reserved words:
-
-     <programlisting>
-ADD ALTER AND AS 
-BEGIN BY
-CASCADE CLOSE COMMIT CREATE CURSOR
-DECLARE DEFAULT DELETE DESC DISTINCT DROP
-EXECUTE EXISTS EXTRACT
-FETCH FLOAT FOR FROM FULL
-GRANT 
-HAVING
-IN INNER INSERT INTERVAL INTO INOUT IS
-JOIN 
-LEADING LEFT LIKE LOCAL
-NAMES NATIONAL NATURAL NCHAR NO NOT NULL 
-ON OR OUT OUTER
-PARTIAL PRIMARY PRIVILEGES PROCEDURE PUBLIC
-REFERENCES REVOKE RIGHT ROLLBACK
-SELECT SESSION SET SUBSTRING
-TO TRAILING TRIM 
-UNION UNIQUE UPDATE USING
-VALUES VARCHAR VARYING VIEW
-WHERE WITH WITHOUT WORK 
-     </programlisting>
-    </para>
-
-    <para>
-     The following are <acronym>SQL92</acronym> reserved key words that
-     are not <productname>Postgres</productname> reserved key words, but that
-     if used as function names are always translated into the function
-     <function>CHAR_LENGTH</function>:
-
-     <programlisting>
-CHARACTER_LENGTH
-     </programlisting>
-    </para>
-
-    <para>
-     The following are <acronym>SQL92</acronym> or <acronym>SQL3</acronym> 
-     reserved key words that
-     are not <productname>Postgres</productname> reserved key words, but
-     if used as type names are always translated into an alternate, native type:
-
-     <programlisting>
-BOOLEAN DOUBLE FLOAT INT INTEGER INTERVAL REAL SMALLINT
-     </programlisting>
-    </para>
-
-    <para>
-     The following are not keywords of any kind, but when used in the
-     context of a type name are translated into a native
-     <productname>Postgres</productname> type, and when used in the
-     context of a function name are translated into a native function:
-
-     <programlisting>
-DATETIME TIMESPAN
-     </programlisting>
-
-     (translated to <type>TIMESTAMP</type> and <type>INTERVAL</type>,
-     respectively). This feature is intended to help with
-     transitioning to version 7.0, and will be removed in a future release.
-    </para>
-
-    <para>
-     The following are either <acronym>SQL92</acronym>
-     or <acronym>SQL3</acronym> reserved key words
-     that are not key words in <productname>Postgres</productname>.
-     These have no proscribed usage in <productname>Postgres</productname>
-     at the time of writing (version 7.0) but may become reserved key words in the
-     future:
-
-     <note>
-      <para>
-       Some of these key words represent functions in <acronym>SQL92</acronym>.
-       These functions are defined in <productname>Postgres</productname>,
-       but the parser does not consider the names to be key words and they are allowed
-       in other contexts.
-      </para>
-     </note>
-
-     <programlisting>
-ALLOCATE ARE ASSERTION AT AUTHORIZATION AVG 
-BIT_LENGTH
-CASCADED CATALOG CHAR_LENGTH CHARACTER_LENGTH COLLATION
- CONNECT CONNECTION CONTINUE CONVERT CORRESPONDING COUNT
- CURRENT_SESSION
-DATE DEALLOCATE DEC DESCRIBE DESCRIPTOR
- DIAGNOSTICS DISCONNECT DOMAIN 
-ESCAPE EXCEPT EXCEPTION EXEC EXTERNAL 
-FIRST FOUND
-GET GO GOTO 
-IDENTITY INDICATOR INPUT INTERSECT
-LAST LOWER 
-MAX MIN MODULE 
-OCTET_LENGTH OPEN OUTPUT OVERLAPS 
-PREPARE PRESERVE 
-ROWS
-SCHEMA SECTION SESSION SIZE SOME 
- SQL SQLCODE SQLERROR SQLSTATE SUM SYSTEM_USER
-TEMPORARY TRANSLATE TRANSLATION 
-UNKNOWN UPPER USAGE
-VALUE 
-WHENEVER WRITE
-     </programlisting>
-    </para>
-   </sect2>
-
-   <sect2>
-    <title>Non-reserved Keywords</title>
-
-    <para>
-     <acronym>SQL92</acronym> and <acronym>SQL3</acronym> have 
-     <firstterm>non-reserved keywords</firstterm> which have
-     a prescribed meaning in the language but which are also allowed
-     as identifiers.
-     <productname>Postgres</productname> has additional keywords
-     which allow similar unrestricted usage.
-     In particular, these keywords
-     are allowed as column or table names.
-    </para>
-
-    <para>
-     The following are <productname>Postgres</productname>
-     non-reserved key words that are neither <acronym>SQL92</acronym>
-     nor <acronym>SQL3</acronym> non-reserved key words:
-
-     <programlisting>
-ACCESS AFTER AGGREGATE 
-BACKWARD BEFORE 
-CACHE COMMENT CREATEDB CREATEUSER CYCLE
-DATABASE DELIMITERS 
-EACH ENCODING EXCLUSIVE
-FORCE FORWARD FUNCTION 
-HANDLER
-INCREMENT INDEX INHERITS INSENSITIVE INSTEAD ISNULL
-LANCOMPILER LOCATION 
-MAXVALUE MINVALUE MODE
-NOCREATEDB NOCREATEUSER NOTHING NOTIFY NOTNULL 
-OIDS OPERATOR 
-PASSWORD PROCEDURAL
-RECIPE REINDEX RENAME RETURNS ROW RULE
-SEQUENCE SERIAL SHARE START STATEMENT STDIN STDOUT 
-TEMP TRUSTED 
-UNLISTEN UNTIL 
-VALID VERSION
-     </programlisting>
-    </para>
-
-    <para>
-     The following are <productname>Postgres</productname>
-     non-reserved key words that are <acronym>SQL92</acronym>
-     or <acronym>SQL3</acronym> reserved key words:
-
-     <programlisting>
-ABSOLUTE ACTION
-CHARACTERISTICS CONSTRAINTS
-DAY DEFERRABLE DEFERRED 
-HOUR
-IMMEDIATE INITIALLY INSENSITIVE ISOLATION 
-KEY 
-LANGUAGE LEVEL 
-MATCH MINUTE MONTH
-NEXT 
-OF ONLY OPTION 
-PATH PENDANT PRIOR PRIVILEGES 
-READ RELATIVE RESTRICT 
-SCHEMA SCROLL SECOND
-TIME TIMESTAMP TIMEZONE_HOUR TIMEZONE_MINUTE TRIGGER 
-YEAR
-ZONE
-     </programlisting>
-    </para>
-
-    <para>
-     The following are <productname>Postgres</productname>
-     non-reserved key words that are also either <acronym>SQL92</acronym>
-     or <acronym>SQL3</acronym> non-reserved key words:
-
-     <programlisting>
-COMMITTED SERIALIZABLE TYPE
-     </programlisting>
-    </para>
-
-    <para>
-     The following are either <acronym>SQL92</acronym>
-     or <acronym>SQL3</acronym> non-reserved key words that are not
-     key words of any kind in <productname>Postgres</productname>:
-
-     <programlisting>
-ADA
-C CATALOG_NAME CHARACTER_SET_CATALOG CHARACTER_SET_NAME 
- CHARACTER_SET_SCHEMA CLASS_ORIGIN COBOL COLLATION_CATALOG
- COLLATION_NAME COLLATION_SCHEMA COLUMN_NAME
- COMMAND_FUNCTION CONDITION_NUMBER
- CONNECTION_NAME CONSTRAINT_CATALOG CONSTRAINT_NAME
- CONSTRAINT_SCHEMA CURSOR_NAME
-DATA DATE_TIME_INTERVAL_CODE DATE_TIME_INTERVAL_PRECISION
- DYNAMIC_FUNCTION
-FORTRAN
-LENGTH
-MESSAGE_LENGTH MESSAGE_OCTET_LENGTH MORE MUMPS
-NAME NULLABLE NUMBER
-PAD PASCAL PLI
-REPEATABLE RETURNED_LENGTH RETURNED_OCTET_LENGTH
- RETURNED_SQLSTATE ROW_COUNT
-SCALE SCHEMA_NAME SERVER_NAME SPACE SUBCLASS_ORIGIN
-TABLE_NAME
-UNCOMMITTED UNNAMED
-     </programlisting>
-    </para>
-   </sect2>
-  </sect1>
-
-  <sect1 id="sql-comments">
-   <title>Comments</title>
-
-   <para>
-    A <firstterm>comment</firstterm>
-    is an arbitrary sequence of characters beginning with double dashes
-    and extending to the end of the line, e.g.:
-
-    <programlisting>
--- This is a standard SQL comment
-    </programlisting>
-   </para>
-
-   <para>
-    We also support C-style block comments, e.g.:
-
-    <programlisting>
-/* multi-line comment
- * with nesting: /* nested block comment */
- */
-    </programlisting>
-
-    where the comment begins with "<literal>/*</literal>" and extends
-    to the matching occurrence of "<literal>*/</literal>". These block
-    comments nest, as specified in SQL99, so that one can comment out
-    larger blocks of code that may contain existing block comments.
-   </para>
-  </sect1>
-
-  <sect1 id="sql-names">
-   <title>Names</title>
-
-   <para>
-    Names in SQL must begin with a letter
+    SQL identifiers and key words must begin with a letter
     (<literal>a</literal>-<literal>z</literal>) or underscore
-    (<literal>_</literal>).
-    Subsequent characters in a name can be letters, digits
-    (<literal>0</literal>-<literal>9</literal>),
-    or underscores.  The system uses no more than NAMEDATALEN-1 characters
-    of a name; longer names can be written in queries, but they will be
-    truncated.
-    By default, NAMEDATALEN is 32 so the maximum name length is 31 (but
-    at the time the system is built, NAMEDATALEN can be changed in
+    (<literal>_</literal>).  Subsequent characters in an identifier or
+    key word can be letters, digits
+    (<literal>0</literal>-<literal>9</literal>), or underscores,
+    although the SQL standard will not define a key word that contains
+    digits or start or ends with an underscore.
+   </para>
+
+   <para>
+    The system uses no more than <symbol>NAMEDATALEN</symbol>-1
+    characters of an identifier; longer names can be written in
+    commands, but they will be truncated.  By default,
+    <symbol>NAMEDATALEN</symbol> is 32 so the maximum identifier length
+    is 31 (but at the time the system is built,
+    <symbol>NAMEDATALEN</symbol> can be changed in
     <filename>src/include/postgres_ext.h</filename>).
    </para>
 
    <para>
-    Names containing other characters may be formed by surrounding them
-    with double quotes (<literal>"</literal>).  For example, table or column
-    names may contain
-    otherwise disallowed characters such as spaces, ampersands, etc. if
-    quoted.  Quoting a name also makes it case-sensitive,
-    whereas unquoted names are always folded to lower case.  For example,
-    the names <literal>FOO</literal>, <literal>foo</literal>
-    and <literal>"foo"</literal> are
-    considered the same by <productname>Postgres</productname>, but
-    <literal>"Foo"</literal> is a different name.
+    Identifier and key word names are case insensitive.  Therefore
+<programlisting>
+UPDATE MY_TABLE SET A = 5;
+</programlisting>
+    can equivalently be written as
+<programlisting>
+uPDaTE my_TabLE SeT a = 5;
+</programlisting>
+    A good convention to adopt is perhaps to write key words in upper
+    case and names in lower case, e.g.,
+<programlisting>
+UPDATE my_table SET a = 5;
+</programlisting>
    </para>
 
    <para>
-    Double quotes can also be used to protect a name that would otherwise
-    be taken to be an SQL keyword.  For example, <literal>IN</literal>
-    is a keyword but <literal>"IN"</literal> is a name.
+    There is a second kind of identifier:  the <firstterm>delimited
+    identifier</firstterm> or <firstterm>quoted
+    identifier</firstterm>.  It is formed by enclosing an arbitrary
+    sequence of characters in double-quotes
+    (<literal>"</literal>). <!-- " font-lock mania --> A delimited
+    identifier is always an identifier, never a key word.  So
+    <literal>"select"</literal> could be used to refer to a column or
+    table named <quote>select</quote>, whereas an unquoted
+    <literal>select</literal> would be taken as part of a command and
+    would therefore provoke a parse error when used where a table or
+    column name is expected.  The example can be written with quoted
+    identifiers like so:
+<programlisting>
+UPDATE "my_table" SET "a" = 5;
+</programlisting>
    </para>
-  </sect1>
 
-  <sect1 id="sql-constants">
+   <para>
+    Quoted identifiers can contain any character other than a double
+    quote itself.  This allows constructing table or column names that
+    would otherwise not be possible, such as ones containing spaces or
+    ampersands.  The length limitation still applies.
+   </para>
+
+   <para>
+    Quoting an identifier also makes it case-sensitive, whereas
+    unquoted names are always folded to lower case.  For example, the
+    identifiers <literal>FOO</literal>, <literal>foo</literal> and
+    <literal>"foo"</literal> are considered the same by
+    <productname>Postgres</productname>, but <literal>"Foo"</literal>
+    and <literal>"FOO"</literal> are different from these three and
+    each other.
+    <footnote>
+     <para>
+      This is incompatible with SQL, where unquoted names are folded to
+      upper case.  Thus, <literal>foo</literal> is equivalent to
+      <literal>"FOO"</literal>.  If you want to write portable
+      applications you are advised to always quote a particular name or
+      never quote it.
+     </para>
+    </footnote>
+   </para>
+  </sect2>
+
+
+  <sect2 id="sql-syntax-constants">
    <title>Constants</title>
 
    <para>
-    There are three kinds of <firstterm>implicitly typed constants</firstterm>
-    in <productname>Postgres</productname>: strings, integers, 
-    and floating point numbers.  Constants can
-    also be specified with explicit types, which can enable more
-    accurate representation and more efficient handling by the
-    backend. The implicit constants are described below; explicit
+    There are four kinds of <firstterm>implicitly typed
+    constants</firstterm> in <productname>Postgres</productname>:
+    strings, bit strings, integers, and floating point numbers.
+    Constants can also be specified with explicit types, which can
+    enable more accurate representation and more efficient handling by
+    the system. The implicit constants are described below; explicit
     constants are discussed afterwards.
    </para>
 
-   <sect2>
+   <sect3>
     <title>String Constants</title>
 
     <para>
-     <firstterm>Strings</firstterm>
-     in SQL are arbitrary sequences of ASCII characters bounded by single
-     quotes ("'", e.g. <literal>'This is a string'</literal>).
-     SQL92 allows single quotes to be embedded in strings by typing two 
-     adjacent single quotes (e.g. <literal>'Dianne''s horse'</literal>).
-     In <productname>Postgres</productname> single quotes may alternatively
-     be escaped with a backslash ("\", e.g.
-     <literal>'Dianne\'s horse'</literal>).  To include a
-     backslash in a string constant, type two backslashes.
-     Non-printing characters may also be embedded within strings by
-     prepending them with a backslash
-     (e.g. <literal>'\<replaceable>tab</replaceable>'</literal>).
+     A string constant in SQL is an arbitrary sequence of characters
+     bounded by single quotes (<quote>'</quote>), e.g., <literal>'This
+     is a string'</literal>.  SQL allows single quotes to be embedded
+     in strings by typing two adjacent single quotes (e.g.,
+     <literal>'Dianne''s horse'</literal>).  In
+     <productname>Postgres</productname> single quotes may
+     alternatively be escaped with a backslash (<quote>\</quote>,
+     e.g., <literal>'Dianne\'s horse'</literal>).
     </para>
 
-   </sect2>
+    <para>
+     C-style backslash escapes are also available:
+     <literal>\b</literal> is a backspace, <literal>\f</literal> is a
+     form feed, <literal>\n</literal> is a newline,
+     <literal>\r</literal> is a carriage return, <literal>\t</literal>
+     is a tab, and <literal>\<replaceable>xxx</replaceable></literal>,
+     where <replaceable>xxx</replaceable> is an octal number, is the
+     character with the corresponding ASCII code.  Any other character
+     following a backslash is taken literally.  Thus, to include a
+     backslash in a string constant, type two backslashes.
+    </para>
 
-   <sect2>
+    <para>
+     The character with the code zero cannot be in a string constant.
+    </para>
+
+    <para>
+     Two string constants that are only separated by whitespace
+     <emphasis>with at least one newline</emphasis> are concatenated
+     and effectively treated as if the string had been written in one
+     constant.  For example:
+<programlisting>
+SELECT 'foo'
+'bar';
+</programlisting>
+     is equivalent to
+<programlisting>
+SELECT 'foobar';
+</programlisting>
+     but
+<programlisting>
+SELECT 'foo'      'bar';
+</programlisting>
+     is not valid syntax.
+    </para>
+   </sect3>
+
+   <sect3>
+    <title>Bit String Constants</title>
+
+    <para>
+     Bit string constants look like string constants with a
+     <literal>B</literal> (upper or lower case) immediately before the
+     opening quote (no intervening whitespace), e.g.,
+     <literal>B'1001'</literal>.  The only characters allowed within
+     bit string constants are <literal>0</literal> and
+     <literal>1</literal>.  Bit strings constants can be continued
+     across lines in the same way as regular string constants.
+    </para>
+   </sect3>
+
+   <sect3>
     <title>Integer Constants</title>
 
     <para>
-     <firstterm>Integer constants</firstterm>
-     in SQL are sequences of ASCII digits with no decimal point.
-     The range of legal values depends on which integer datatype is
-     used, but the plain <literal>integer</literal> type accepts values
-     ranging from -2147483648 to +2147483647.
+     Integer constants in SQL are sequences of decimal digits (0
+     though 9) with no decimal point.  The range of legal values
+     depends on which integer data type is used, but the plain
+     <type>integer</type> type accepts values ranging from -2147483648
+     to +2147483647.  (The optional plus or minus sign is actually a
+     separate unary operator and not part of the integer constant.)
     </para>
-   </sect2>
+   </sect3>
 
-   <sect2>
+   <sect3>
     <title>Floating Point Constants</title>
 
     <para>
-     <firstterm>Floating point constants</firstterm>
-     consist of an integer part, a decimal point, and a fraction part or
-     scientific notation of the following format:
-
-     <synopsis>
-{<replaceable>dig</replaceable>}.{<replaceable>dig</replaceable>} [e [+-] {<replaceable>dig</replaceable>}]
-     </synopsis>
-
-     where <replaceable>dig</replaceable> is one or more digits.
-     You must include at least one <replaceable>dig</replaceable> after the
-     period and after the [+-] if you use those options.  An exponent with
-     a missing mantissa has a mantissa of 1 inserted.  There may be no
-     extra characters embedded in the string.
+     Floating point constants are accepted in these general forms:
+<synopsis>
+<replaceable>digits</replaceable>.<optional><replaceable>digits</replaceable></optional><optional>e<optional>+-</optional><replaceable>digits</replaceable></optional>
+<optional><replaceable>digits</replaceable></optional>.<replaceable>digits</replaceable><optional>e<optional>+-</optional><replaceable>digits</replaceable></optional>
+<replaceable>digits</replaceable>e<optional>+-</optional><replaceable>digits</replaceable>
+</synopsis>
+     where <replaceable>digits</replaceable> is one or more decimal
+     digits.  At least one digit must be before or after the decimal
+     point and after the <literal>e</literal> if you use that option.
+     Thus, a floating point constant is distinguished from an integer
+     constant by the presence of either the decimal point or the
+     exponent clause (or both).  There must not be a space or other
+     characters embedded in the constant.
     </para>
 
+    <informalexample>
+     <para>
+      These are some examples of valid floating point constants:
+<literallayout>
+3.5
+4.
+.001
+5e2
+1.925e-3
+</literallayout>
+     </para>
+    </informalexample>
+
     <para>
-     Floating point constaints are of type
-     <type>float8</type>. <type>float4</type> can be specified
-     explicitly by using <acronym>SQL92</acronym> string notation or
+     Floating point constants are of type <type>DOUBLE
+     PRECISION</type>. <type>REAL</type> can be specified explicitly
+     by using <acronym>SQL</acronym> string notation or
      <productname>Postgres</productname> type notation:
 
-     <programlisting>
-float4 '1.23'  -- string style
-'1.23'::float4 -- Postgres (historical) style
+<programlisting>
+REAL '1.23'  -- string style
+'1.23'::REAL -- Postgres (historical) style
      </programlisting>
     </para>
-   </sect2>
+   </sect3>
 
-   <sect2>
-    <title>Constants of Postgres User-Defined Types</title>
+   <sect3>
+    <title>Constants of Other Types</title>
 
     <para>
-     A constant of an
-     <emphasis>arbitrary</emphasis>
-     type can be entered using any one of the following notations:
-
-     <synopsis>
+     A constant of an <emphasis>arbitrary</emphasis> type can be
+     entered using any one of the following notations:
+<synopsis>
 <replaceable>type</replaceable> '<replaceable>string</replaceable>'
 '<replaceable>string</replaceable>'::<replaceable>type</replaceable>
 CAST ( '<replaceable>string</replaceable>' AS <replaceable>type</replaceable> )
-     </synopsis>
-
-     The value inside the string is passed to the input
-     conversion routine for the type called
-     <replaceable>type</replaceable>. The result is a
-     constant of the indicated type.  The explicit typecast may be omitted
-     if there is no ambiguity as to the type the constant must be, in which
-     case it is automatically coerced.
+</synopsis>
+     The value inside the string is passed to the input conversion
+     routine for the type called <replaceable>type</replaceable>. The
+     result is a constant of the indicated type.  The explicit type
+     cast may be omitted if there is no ambiguity as to the type the
+     constant must be (for example, when it is passed as an argument
+     to a non-overloaded function), in which case it is automatically
+     coerced.
     </para>
 
     <para>
      It is also possible to specify a type coercion using a function-like
      syntax:
-
-     <synopsis>
+<synopsis>
 <replaceable>typename</replaceable> ( <replaceable>value</replaceable> )
-     </synopsis>
-
+</synopsis>
      although this only works for types whose names are also valid as
      function names.  (For example, <literal>double precision</literal>
      can't be used this way --- but the equivalent <literal>float8</literal>
@@ -517,52 +337,222 @@ CAST ( '<replaceable>string</replaceable>' AS <replaceable>type</replaceable> )
     </para>
 
     <para>
-     The <literal>::</literal>, <literal>CAST()</literal>, and function-call
-     syntaxes can also be used to specify run-time type conversions.  But
-     the form <replaceable>type</replaceable>
-     '<replaceable>string</replaceable>' can only be used to specify the
-     type of a literal constant.
+     The <literal>::</literal>, <literal>CAST()</literal>, and
+     function-call syntaxes can also be used to specify the type of
+     arbitrary expressions, but the form
+     <replaceable>type</replaceable>
+     '<replaceable>string</replaceable>' can only be used to specify
+     the type of a literal constant.
     </para>
-   </sect2>
+   </sect3>
 
-   <sect2>
+   <sect3>
     <title>Array constants</title>
 
     <para>
-     <firstterm>Array constants</firstterm>
-     are n-dimensional arrays of any Postgres datatype.
      The general format of an array constant is the following:
-
-     <synopsis>
-{ <replaceable>val1</replaceable> <replaceable>delim</replaceable> <replaceable>val2</replaceable> <replaceable>delim</replaceable> ... }
-     </synopsis>
-
-     where <replaceable>delim</replaceable>
-     is the delimiter character for the type, as recorded in its
-     <literal>pg_type</literal> class entry.
-     (For all built-in types, this is the comma character ",".)
-     Each <replaceable>val</replaceable> is either a constant
-     of the array element type, or a sub-array.
-     An example of an array constant is
-
-     <programlisting>
-{{1,2,3},{4,5,6},{7,8,9}}
-     </programlisting>
-
+<synopsis>
+'{ <replaceable>val1</replaceable> <replaceable>delim</replaceable> <replaceable>val2</replaceable> <replaceable>delim</replaceable> ... }'
+</synopsis>
+     where <replaceable>delim</replaceable> is the delimiter character
+     for the type, as recorded in its <literal>pg_type</literal>
+     entry.  (For all built-in types, this is the comma character
+     ",".)  Each <replaceable>val</replaceable> is either a constant
+     of the array element type, or a sub-array.  An example of an
+     array constant is
+<programlisting>
+'{{1,2,3},{4,5,6},{7,8,9}}'
+</programlisting>
      This constant is a two-dimensional, 3 by 3 array consisting of three
      sub-arrays of integers.
     </para>
 
     <para>
      Individual array elements can be placed between double-quote
-     marks (<literal>"</literal>) to avoid ambiguity problems with respect to
-     white space.
-     Without quote marks, the array-value parser will skip leading white space.
+     marks (<literal>"</literal>) <!-- " --> to avoid ambiguity
+     problems with respect to white space.  Without quote marks, the
+     array-value parser will skip leading white space.
     </para>
-   </sect2>
-  </sect1>
 
-  <sect1 id="sql-columns">
+    <para>
+     (Array constants are actually only a special case of the generic
+     type constants discussed in the previous section.  The constant
+     is initially treated as a string and passed to the array input
+     conversion routine.  An explicit type specification might be
+     necessary.)
+    </para>
+   </sect3>
+  </sect2>
+
+
+  <sect2 id="sql-syntax-operators">
+   <title>Operators</title>
+
+   <para>
+    An operator is a sequence of up to <symbol>NAMEDATALEN</symbol>-1
+    (31 by default) characters from the following list:
+<literallayout>
++ - * / &lt; &gt; = ~ ! @ # % ^ &amp; | ` ? $
+</literallayout>
+
+    There are a few restrictions on operator names, however:
+    <itemizedlist>
+     <listitem>
+      <para>
+       "$" (dollar) cannot be a single-character operator, although it
+       can be part of a multi-character operator name.
+      </para>
+     </listitem>
+
+     <listitem>
+      <para>
+       <literal>--</literal> and <literal>/*</literal> cannot appear
+       anywhere in an operator name, since they will be taken as the
+       start of a comment.
+      </para>
+     </listitem>
+
+     <listitem>
+      <para>
+       A multi-character operator name cannot end in "+" or "-",
+       unless the name also contains at least one of these characters:
+<literallayout>
+~ ! @ # % ^ &amp; | ` ? $
+</literallayout>
+       For example, <literal>@-</literal> is an allowed operator name,
+       but <literal>*-</literal> is not.  This restriction allows
+       <productname>Postgres</productname> to parse SQL-compliant
+       queries without requiring spaces between tokens.
+      </para>
+     </listitem>
+    </itemizedlist>
+   </para>
+
+   <para>
+    When working with non-SQL-standard operator names, you will usually
+    need to separate adjacent operators with spaces to avoid ambiguity.
+    For example, if you have defined a left-unary operator named "@",
+    you cannot write <literal>X*@Y</literal>; you must write
+    <literal>X* @Y</literal> to ensure that
+    <productname>Postgres</productname> reads it as two operator names
+    not one.
+   </para>
+  </sect2>
+
+  <sect2>
+   <title>Special Characters</title>
+
+  <para>
+   Some characters that are not alphanumeric have a special meaning
+   that is different from being an operator.  Details on the usage can
+   be found at the location where the respective syntax element is
+   described.  This section only exists to advise the existence and
+   summarize the purposes of these characters.
+
+   <itemizedlist>
+    <listitem>
+     <para>
+      A dollar sign (<literal>$</literal>) followed by digits is used
+      to represent the positional parameters in the body of a function
+      definition.  In other contexts the dollar sign may be part of an
+      operator name.
+     </para>
+    </listitem>
+
+    <listitem>
+     <para>
+      Parentheses (<literal>()</literal>) have their usual meaning to
+      group expressions and enforce precedence.  In some cases
+      parentheses are required as part of the fixed syntax of a
+      particular SQL command.
+     </para>
+    </listitem>
+
+    <listitem>
+     <para>
+      Brackets (<literal>[]</literal>) are used to select the elements
+      of an array.  See <xref linkend="arrays"> for more information
+      on arrays.
+     </para>
+    </listitem>
+
+    <listitem>
+     <para>
+      Commas (<literal>,</literal>) are used in some syntactical
+      constructs to separate the elements of a list.
+     </para>
+    </listitem>
+
+    <listitem>
+     <para>
+      The semicolon (<literal>;</literal>) terminates an SQL command.
+      It cannot appear anywhere within a command, except when quoted
+      as a string constant or identifier.
+     </para>
+    </listitem>
+
+    <listitem>
+     <para>
+      The colon (<literal>:</literal>) is used to select
+      <quote>slices</quote> from arrays. (See <xref
+      linkend="arrays">.)  In certain SQL dialects (such as Embedded
+      SQL), the colon is used to prefix variable names.
+     </para>
+    </listitem>
+
+    <listitem>
+     <para>
+      The asterisk (<literal>*</literal>) has a special meaning when
+      used in the <command>SELECT</command> command or with the
+      <function>COUNT</function> aggregate function.
+     </para>
+    </listitem>
+
+    <listitem>
+     <para>
+      The period (<literal>.</literal>) is used in floating point
+      constants, and to separate table and column names.
+     </para>
+    </listitem>
+   </itemizedlist>
+
+   </para>
+  </sect2>
+
+  <sect2 id="sql-syntax-comments">
+   <title>Comments</title>
+
+   <para>
+    A comment is an arbitrary sequence of characters beginning with
+    double dashes and extending to the end of the line, e.g.:
+<programlisting>
+-- This is a standard SQL92 comment
+</programlisting>
+   </para>
+
+   <para>
+    Alternatively, C-style block comments can be used:
+<programlisting>
+/* multi-line comment
+ * with nesting: /* nested block comment */
+ */
+</programlisting>
+    where the comment begins with <literal>/*</literal> and extends to
+    the matching occurrence of <literal>*/</literal>. These block
+    comments nest, as specified in SQL99 but unlike C, so that one can
+    comment out larger blocks of code that may contain existing block
+    comments.
+   </para>
+
+   <para>
+    A comment is removed from the input stream before further syntax
+    analysis and is effectively replaced by whitespace.
+   </para>
+  </sect2>
+ </sect1>
+
+
+  <sect1 id="sql-syntax-columns">
    <title>Fields and Columns</title>
 
    <sect2>
@@ -662,18 +652,6 @@ CAST ( '<replaceable>string</replaceable>' AS <replaceable>type</replaceable> )
      provided, then the whole array is selected.
     </para>
    </sect2>
-  </sect1>
-
-  <sect1 id="sql-operators">
-   <title>Operators</title>
-
-   <para>
-    Any built-in or user-defined operator may be used in SQL.
-    For the list of built-in operators consult <xref linkend="functions">.
-    For a list of user-defined operators consult your system administrator
-    or run a query on the <literal>pg_operator</literal> class.
-    Parentheses may be used for arbitrary grouping of operators in expressions.
-   </para>
   </sect1>
 
   <sect1 id="sql-expressions">

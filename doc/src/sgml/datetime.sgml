@@ -1,9 +1,9 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/datetime.sgml,v 2.15 2000/12/22 21:51:57 petere Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/datetime.sgml,v 2.16 2001/01/06 11:58:55 petere Exp $
 Date/time details
 -->
 
-<appendix label="UG1" id="datetime-appendix">
+<appendix id="datetime-appendix">
  <title id="datetime-appendix-title">Date/Time Support</title>
 
  <sect1 id="timezones">
