@@ -15,7 +15,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/storage/lmgr/lwlock.c,v 1.5 2001/12/28 23:26:04 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/storage/lmgr/lwlock.c,v 1.6 2001/12/29 21:28:18 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -195,7 +195,8 @@ void
 LWLockAcquire(LWLockId lockid, LWLockMode mode)
 {
 	volatile LWLock *lock = LWLockArray + lockid;
-	bool		mustwait;
+	PROC	   *proc = MyProc;
+	int			extraWaits = 0;
 
 	PRINT_LWDEBUG("LWLockAcquire", lockid, lock);
 
@@ -206,43 +207,57 @@ LWLockAcquire(LWLockId lockid, LWLockMode mode)
 	 */
 	HOLD_INTERRUPTS();
 
-	/* Acquire mutex.  Time spent holding mutex should be short! */
-	SpinLockAcquire_NoHoldoff(&lock->mutex);
-
-	/* If I can get the lock, do so quickly. */
-	if (mode == LW_EXCLUSIVE)
+	/*
+	 * Loop here to try to acquire lock after each time we are signaled
+	 * by LWLockRelease.
+	 *
+	 * NOTE: it might seem better to have LWLockRelease actually grant us
+	 * the lock, rather than retrying and possibly having to go back to
+	 * sleep.  But in practice that is no good because it means a process
+	 * swap for every lock acquisition when two or more processes are
+	 * contending for the same lock.  Since LWLocks are normally used to
+	 * protect not-very-long sections of computation, a process needs to
+	 * be able to acquire and release the same lock many times during a
+	 * single process dispatch cycle, even in the presence of contention.
+	 * The efficiency of being able to do that outweighs the inefficiency of
+	 * sometimes wasting a dispatch cycle because the lock is not free when a
+	 * released waiter gets to run.  See pgsql-hackers archives for 29-Dec-01.
+	 */
+	for (;;)
 	{
-		if (lock->exclusive == 0 && lock->shared == 0)
+		bool		mustwait;
+
+		/* Acquire mutex.  Time spent holding mutex should be short! */
+		SpinLockAcquire_NoHoldoff(&lock->mutex);
+
+		/* If I can get the lock, do so quickly. */
+		if (mode == LW_EXCLUSIVE)
 		{
-			lock->exclusive++;
-			mustwait = false;
+			if (lock->exclusive == 0 && lock->shared == 0)
+			{
+				lock->exclusive++;
+				mustwait = false;
+			}
+			else
+				mustwait = true;
 		}
 		else
-			mustwait = true;
-	}
-	else
-	{
-		/*
-		 * If there is someone waiting (presumably for exclusive access),
-		 * queue up behind him even though I could get the lock.  This
-		 * prevents a stream of read locks from starving a writer.
-		 */
-		if (lock->exclusive == 0 && lock->head == NULL)
 		{
-			lock->shared++;
-			mustwait = false;
+			if (lock->exclusive == 0)
+			{
+				lock->shared++;
+				mustwait = false;
+			}
+			else
+				mustwait = true;
 		}
-		else
-			mustwait = true;
-	}
 
-	if (mustwait)
-	{
-		/* Add myself to wait queue */
-		PROC	   *proc = MyProc;
-		int			extraWaits = 0;
+		if (!mustwait)
+			break;				/* got the lock */
 
 		/*
+		 * Add myself to wait queue.
+		 *
 		 * If we don't have a PROC structure, there's no way to wait. This
 		 * should never occur, since MyProc should only be null during
 		 * shared memory initialization.
@@ -267,9 +282,9 @@ LWLockAcquire(LWLockId lockid, LWLockMode mode)
 		 *
 		 * Since we share the process wait semaphore with the regular lock
 		 * manager and ProcWaitForSignal, and we may need to acquire an
-		 * LWLock while one of those is pending, it is possible that we
-		 * get awakened for a reason other than being granted the LWLock.
-		 * If so, loop back and wait again.  Once we've gotten the lock,
+		 * LWLock while one of those is pending, it is possible that we get
+		 * awakened for a reason other than being signaled by LWLockRelease.
+		 * If so, loop back and wait again.  Once we've gotten the LWLock,
 		 * re-increment the sema by the number of additional signals
 		 * received, so that the lock manager or signal manager will see
 		 * the received signal when it next waits.
@@ -287,23 +302,21 @@ LWLockAcquire(LWLockId lockid, LWLockMode mode)
 
 		LOG_LWDEBUG("LWLockAcquire", lockid, "awakened");
 
-		/*
-		 * The awakener already updated the lock struct's state, so we
-		 * don't need to do anything more to it.  Just need to fix the
-		 * semaphore count.
-		 */
-		while (extraWaits-- > 0)
-			IpcSemaphoreUnlock(proc->sem.semId, proc->sem.semNum);
+		/* Now loop back and try to acquire lock again. */
 	}
-	else
-	{
-		/* Got the lock without waiting */
-		SpinLockRelease_NoHoldoff(&lock->mutex);
-	}
+
+	/* We are done updating shared state of the lock itself. */
+	SpinLockRelease_NoHoldoff(&lock->mutex);
 
 	/* Add lock to list of locks held by this backend */
 	Assert(num_held_lwlocks < MAX_SIMUL_LWLOCKS);
 	held_lwlocks[num_held_lwlocks++] = lockid;
+
+	/*
+	 * Fix the process wait semaphore's count for any absorbed wakeups.
+	 */
+	while (extraWaits-- > 0)
+		IpcSemaphoreUnlock(proc->sem.semId, proc->sem.semNum);
 }
 
 /*
@@ -344,12 +357,7 @@ LWLockConditionalAcquire(LWLockId lockid, LWLockMode mode)
 	}
 	else
 	{
-		/*
-		 * If there is someone waiting (presumably for exclusive access),
-		 * queue up behind him even though I could get the lock.  This
-		 * prevents a stream of read locks from starving a writer.
-		 */
-		if (lock->exclusive == 0 && lock->head == NULL)
+		if (lock->exclusive == 0)
 		{
 			lock->shared++;
 			mustwait = false;
@@ -427,20 +435,17 @@ LWLockRelease(LWLockId lockid)
 		if (lock->exclusive == 0 && lock->shared == 0)
 		{
 			/*
-			 * Remove the to-be-awakened PROCs from the queue, and update
-			 * the lock state to show them as holding the lock.
+			 * Remove the to-be-awakened PROCs from the queue.  If the
+			 * front waiter wants exclusive lock, awaken him only.
+			 * Otherwise awaken as many waiters as want shared access.
 			 */
 			proc = head;
-			if (proc->lwExclusive)
-				lock->exclusive++;
-			else
+			if (!proc->lwExclusive)
 			{
-				lock->shared++;
 				while (proc->lwWaitLink != NULL &&
 					   !proc->lwWaitLink->lwExclusive)
 				{
 					proc = proc->lwWaitLink;
-					lock->shared++;
 				}
 			}
 			/* proc is now the last PROC to be released */

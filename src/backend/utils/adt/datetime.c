@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/datetime.c,v 1.84 2001/12/29 18:40:58 thomas Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/datetime.c,v 1.85 2001/12/29 21:28:18 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -959,7 +959,7 @@ DecodeDateTime(char **field, int *ftype, int nf,
 					if (tzp == NULL)
 						return -1;
 
-					if ((isdigit(*field[i]) || (ptype != 0))
+					if (isdigit(*field[i]) || ptype != 0)
 					{
 						char *cp;
 
