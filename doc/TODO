@@ -1,6 +1,6 @@
 TODO list for PostgreSQL
 ========================
-Last updated:		Wed Jul 11 16:39:57 EDT 2001
+Last updated:		Wed Jul 11 23:53:03 EDT 2001
 
 Current maintainer:	Bruce Momjian (pgman@candle.pha.pa.us)
 
@@ -147,6 +147,7 @@ COMMANDS
 * Add BETWEEN ASYMMETRIC/SYMMETRIC
 * Change LIMIT val,val to offset,limit to match MySQL
 * Allow PL/PgSQL's RAISE function to take expressions
+* Change PL/PgSQL to use palloc() instead of malloc()
 * Allow GRANT/REVOKE to handle multiple user/group names
 * Allow CREATEUSER/CREATEDB ordering in CREATE/ALTER USER
 * ALTER
