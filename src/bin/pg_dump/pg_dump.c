@@ -21,7 +21,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/bin/pg_dump/pg_dump.c,v 1.103 1999/04/14 23:47:19 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/bin/pg_dump/pg_dump.c,v 1.104 1999/05/04 15:47:35 thomas Exp $
  *
  * Modifications - 6/10/96 - dave@bensoft.com - version 1.13.dhb
  *
@@ -606,10 +606,21 @@ main(int argc, char **argv)
 					int			i;
 
 					tablename = strdup(optarg);
-					for (i = 0; tablename[i]; i++)
-						if (isascii((unsigned char) tablename[i]) &&
-							isupper(tablename[i]))
-							tablename[i] = tolower(tablename[i]);
+					/* quoted string? Then strip quotes and preserve case... */
+					if (tablename[0] == '"')
+					{
+						strcpy(tablename, &tablename[1]);
+						if (*(tablename+strlen(tablename)-1) == '"')
+							*(tablename+strlen(tablename)-1) = '\0';
+					}
+					/* otherwise, convert table name to lowercase... */
+					else
+					{
+						for (i = 0; tablename[i]; i++)
+							if (isascii((unsigned char) tablename[i]) &&
+								isupper(tablename[i]))
+								tablename[i] = tolower(tablename[i]);
+					}
 				}
 				break;
 			case 'v':			/* verbose */
