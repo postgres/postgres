@@ -11,7 +11,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/mmgr/aset.c,v 1.30 2000/07/12 02:37:23 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/mmgr/aset.c,v 1.31 2000/07/12 05:15:20 tgl Exp $
  *
  * NOTE:
  *	This is a new (Feb. 05, 1999) implementation of the allocation set
@@ -696,7 +696,17 @@ AllocSetRealloc(MemoryContext context, void *pointer, Size size)
 	 */
 	oldsize = AllocPointerGetSize(pointer);
 	if (oldsize >= size)
+	{
+#ifdef MEMORY_CONTEXT_CHECKING		
+		AllocChunk	chunk = AllocPointerGetChunk(pointer);
+
+		/* mark memory for memory leak searching */
+		memset(((char *) chunk) + (ALLOC_CHUNKHDRSZ + size), 
+				0x7F, chunk->size - size);
+		chunk->data_size = size;
+#endif
 		return pointer;
+	}
 
 	if (oldsize >= ALLOC_BIGCHUNK_LIMIT)
 	{
@@ -711,7 +721,6 @@ AllocSetRealloc(MemoryContext context, void *pointer, Size size)
 		AllocBlock	block = set->blocks;
 		AllocBlock	prevblock = NULL;
 		Size		blksize;
-
 #ifdef MEMORY_CONTEXT_CHECKING		
 		Size		data_size = size;
 #endif
