@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2002, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Id: pg_proc.h,v 1.256 2002/08/17 13:04:15 momjian Exp $
+ * $Id: pg_proc.h,v 1.257 2002/08/20 04:45:59 momjian Exp $
  *
  * NOTES
  *	  The script catalog/genbki.sh reads this file and generates .bki
@@ -1105,6 +1105,9 @@ DESCR("does not match LIKE expression");
 
 DATA(insert OID =  860 (  bpchar		   PGNSP PGUID 12 f f t f i 1 1042 "18"  char_bpchar - _null_ ));
 DESCR("convert char to char()");
+
+DATA(insert OID = 861 ( current_database       PGNSP PGUID 12 f f t f i 0 19 "0" current_database - _null_ ));
+DESCR("returns the current database");
 
 DATA(insert OID =  862 (  int4_mul_cash		   PGNSP PGUID 12 f f t f i 2 790 "23 790"  int4_mul_cash - _null_ ));
 DESCR("multiply");

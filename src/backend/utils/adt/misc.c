@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/misc.c,v 1.24 2002/06/20 20:29:37 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/misc.c,v 1.25 2002/08/20 04:45:59 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -17,6 +17,7 @@
 #include <time.h>
 
 #include "postgres.h"
+#include "miscadmin.h"
 
 #include "utils/builtins.h"
 
@@ -110,4 +111,20 @@ userfntest(PG_FUNCTION_ARGS)
 	int32		i = PG_GETARG_INT32(0);
 
 	PG_RETURN_INT32(i);
+}
+
+/*
+ * current_database()
+ *	Expose the current database to the user
+ */
+Datum
+current_database(PG_FUNCTION_ARGS)
+{
+	Name   db;
+
+	db = (Name) palloc(NAMEDATALEN);
+
+	namestrcpy(db, DatabaseName);
+
+	PG_RETURN_NAME(db);
 }

@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2002, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Id: builtins.h,v 1.192 2002/08/16 23:01:21 tgl Exp $
+ * $Id: builtins.h,v 1.193 2002/08/20 04:46:00 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -315,6 +315,7 @@ extern Datum nonnullvalue(PG_FUNCTION_ARGS);
 extern Datum oidrand(PG_FUNCTION_ARGS);
 extern Datum oidsrand(PG_FUNCTION_ARGS);
 extern Datum userfntest(PG_FUNCTION_ARGS);
+extern Datum current_database(PG_FUNCTION_ARGS);
 
 /* not_in.c */
 extern Datum int4notin(PG_FUNCTION_ARGS);
