@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2002, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Id: nbtree.h,v 1.66 2003/02/23 06:17:13 tgl Exp $
+ * $Id: nbtree.h,v 1.67 2003/02/23 22:43:09 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -263,14 +263,18 @@ typedef struct xl_btree_split
 #define SizeOfBtreeSplit	(offsetof(xl_btree_split, leftlen) + sizeof(uint16))
 
 /*
- * This is what we need to know about delete of an individual leaf btitem
+ * This is what we need to know about delete of individual leaf btitems.
+ * The WAL record can represent deletion of any number of btitems on a
+ * single index page.
  */
 typedef struct xl_btree_delete
 {
-	xl_btreetid target;			/* deleted tuple id */
+	RelFileNode node;
+	BlockNumber block;
+	/* TARGET OFFSET NUMBERS FOLLOW AT THE END */
 } xl_btree_delete;
 
-#define SizeOfBtreeDelete	(offsetof(xl_btreetid, tid) + SizeOfIptrData)
+#define SizeOfBtreeDelete	(offsetof(xl_btree_delete, block) + sizeof(BlockNumber))
 
 /*
  * This is what we need to know about deletion of a btree page.  The target
@@ -453,7 +457,8 @@ extern void _bt_wrtnorelbuf(Relation rel, Buffer buf);
 extern void _bt_pageinit(Page page, Size size);
 extern bool _bt_page_recyclable(Page page);
 extern void _bt_metaproot(Relation rel, BlockNumber rootbknum, uint32 level);
-extern void _bt_itemdel(Relation rel, Buffer buf, ItemPointer tid);
+extern void _bt_delitems(Relation rel, Buffer buf,
+						 OffsetNumber *itemnos, int nitems);
 extern int	_bt_pagedel(Relation rel, Buffer buf, bool vacuum_full);
 
 /*

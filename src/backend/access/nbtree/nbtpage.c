@@ -9,7 +9,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/access/nbtree/nbtpage.c,v 1.61 2003/02/23 06:17:13 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/access/nbtree/nbtpage.c,v 1.62 2003/02/23 22:43:08 tgl Exp $
  *
  *	NOTES
  *	   Postgres btree pages look like ordinary relation pages.	The opaque
@@ -618,26 +618,34 @@ _bt_metaproot(Relation rel, BlockNumber rootbknum, uint32 level)
 }
 
 /*
- * Delete an item from a btree page.
+ * Delete item(s) from a btree page.
  *
  * This must only be used for deleting leaf items.  Deleting an item on a
  * non-leaf page has to be done as part of an atomic action that includes
  * deleting the page it points to.
  *
  * This routine assumes that the caller has pinned and locked the buffer,
- * and will write the buffer afterwards.
+ * and will write the buffer afterwards.  Also, the given itemnos *must*
+ * appear in increasing order in the array.
  */
 void
-_bt_itemdel(Relation rel, Buffer buf, ItemPointer tid)
+_bt_delitems(Relation rel, Buffer buf,
+			 OffsetNumber *itemnos, int nitems)
 {
 	Page		page = BufferGetPage(buf);
-	OffsetNumber offno;
+	int			i;
 
-	offno = ItemPointerGetOffsetNumber(tid);
-
+	/* No elog(ERROR) until changes are logged */
 	START_CRIT_SECTION();
 
-	PageIndexTupleDelete(page, offno);
+	/*
+	 * Delete the items in reverse order so we don't have to think about
+	 * adjusting item numbers for previous deletions.
+	 */
+	for (i = nitems - 1; i >= 0; i--)
+	{
+		PageIndexTupleDelete(page, itemnos[i]);
+	}
 
 	/* XLOG stuff */
 	if (!rel->rd_istemp)
@@ -646,17 +654,30 @@ _bt_itemdel(Relation rel, Buffer buf, ItemPointer tid)
 		XLogRecPtr	recptr;
 		XLogRecData rdata[2];
 
-		xlrec.target.node = rel->rd_node;
-		xlrec.target.tid = *tid;
+		xlrec.node = rel->rd_node;
+		xlrec.block = BufferGetBlockNumber(buf);
 
 		rdata[0].buffer = InvalidBuffer;
 		rdata[0].data = (char *) &xlrec;
 		rdata[0].len = SizeOfBtreeDelete;
 		rdata[0].next = &(rdata[1]);
 
+		/*
+		 * The target-offsets array is not in the buffer, but pretend
+		 * that it is.  When XLogInsert stores the whole buffer, the offsets
+		 * array need not be stored too.
+		 */
 		rdata[1].buffer = buf;
-		rdata[1].data = NULL;
-		rdata[1].len = 0;
+		if (nitems > 0)
+		{
+			rdata[1].data = (char *) itemnos;
+			rdata[1].len = nitems * sizeof(OffsetNumber);
+		}
+		else
+		{
+			rdata[1].data = NULL;
+			rdata[1].len = 0;
+		}
 		rdata[1].next = NULL;
 
 		recptr = XLogInsert(RM_BTREE_ID, XLOG_BTREE_DELETE, rdata);

@@ -8,7 +8,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/access/nbtree/nbtxlog.c,v 1.2 2003/02/23 06:17:13 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/access/nbtree/nbtxlog.c,v 1.3 2003/02/23 22:43:08 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -379,11 +379,10 @@ btree_xlog_delete(bool redo, XLogRecPtr lsn, XLogRecord *record)
 		return;
 
 	xlrec = (xl_btree_delete *) XLogRecGetData(record);
-	reln = XLogOpenRelation(redo, RM_BTREE_ID, xlrec->target.node);
+	reln = XLogOpenRelation(redo, RM_BTREE_ID, xlrec->node);
 	if (!RelationIsValid(reln))
 		return;
-	buffer = XLogReadBuffer(false, reln,
-						ItemPointerGetBlockNumber(&(xlrec->target.tid)));
+	buffer = XLogReadBuffer(false, reln, xlrec->block);
 	if (!BufferIsValid(buffer))
 		elog(PANIC, "btree_delete_redo: block unfound");
 	page = (Page) BufferGetPage(buffer);
@@ -396,7 +395,21 @@ btree_xlog_delete(bool redo, XLogRecPtr lsn, XLogRecord *record)
 		return;
 	}
 
-	PageIndexTupleDelete(page, ItemPointerGetOffsetNumber(&(xlrec->target.tid)));
+	if (record->xl_len > SizeOfBtreeDelete)
+	{
+		OffsetNumber *unused;
+		OffsetNumber *unend;
+
+		unused = (OffsetNumber *) ((char *) xlrec + SizeOfBtreeDelete);
+		unend = (OffsetNumber *) ((char *) xlrec + record->xl_len);
+
+		/* be careful to delete from back to front */
+		while (unused < unend)
+		{
+			unend--;
+			PageIndexTupleDelete(page, *unend);
+		}
+	}
 
 	PageSetLSN(page, lsn);
 	PageSetSUI(page, ThisStartUpID);
@@ -853,8 +866,8 @@ btree_desc(char *buf, uint8 xl_info, char *rec)
 		{
 			xl_btree_delete *xlrec = (xl_btree_delete *) rec;
 
-			strcat(buf, "delete: ");
-			out_target(buf, &(xlrec->target));
+			sprintf(buf + strlen(buf), "delete: node %u/%u; blk %u",
+					xlrec->node.tblNode, xlrec->node.relNode, xlrec->block);
 			break;
 		}
 		case XLOG_BTREE_DELETE_PAGE:

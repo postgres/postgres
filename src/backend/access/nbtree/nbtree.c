@@ -12,7 +12,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/access/nbtree/nbtree.c,v 1.97 2003/02/23 06:17:13 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/access/nbtree/nbtree.c,v 1.98 2003/02/23 22:43:08 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -572,120 +572,109 @@ btbulkdelete(PG_FUNCTION_ARGS)
 	IndexBulkDeleteCallback callback = (IndexBulkDeleteCallback) PG_GETARG_POINTER(1);
 	void	   *callback_state = (void *) PG_GETARG_POINTER(2);
 	IndexBulkDeleteResult *result;
-	BlockNumber num_pages;
 	double		tuples_removed;
 	double		num_index_tuples;
-	IndexScanDesc scan;
-	BTScanOpaque so;
-	ItemPointer current;
+	OffsetNumber deletable[BLCKSZ / sizeof(OffsetNumber)];
+	int			ndeletable;
+	Buffer		buf;
+	BlockNumber num_pages;
 
 	tuples_removed = 0;
 	num_index_tuples = 0;
 
 	/*
-	 * We use a standard IndexScanDesc scan object, but to speed up the
-	 * loop, we skip most of the wrapper layers of index_getnext and
-	 * instead call _bt_step directly.	This implies holding buffer lock
-	 * on a target page throughout the loop over the page's tuples.
+	 * The outer loop iterates over index leaf pages, the inner over items
+	 * on a leaf page.  We issue just one _bt_delitems() call per page,
+	 * so as to minimize WAL traffic.
 	 *
-	 * Whenever we step onto a new page, we have to trade in the read
-	 * lock acquired by _bt_first or _bt_step for an exclusive write lock
-	 * (fortunately, _bt_relbuf doesn't care which kind of lock it's
-	 * releasing when it comes time for _bt_step to release our lock).
-	 *
-	 * Note that we exclusive-lock every leaf page, or at least every one
-	 * containing data items.  It sounds attractive to only exclusive-lock
+	 * Note that we exclusive-lock every leaf page containing data items,
+	 * in sequence left to right.  It sounds attractive to only exclusive-lock
 	 * those containing items we need to delete, but unfortunately that
 	 * is not safe: we could then pass a stopped indexscan, which could
 	 * in rare cases lead to deleting the item it needs to find when it
 	 * resumes.  (See _bt_restscan --- this could only happen if an indexscan
 	 * stops on a deletable item and then a page split moves that item
 	 * into a page further to its right, which the indexscan will have no
-	 * pin on.)
+	 * pin on.)  We can skip obtaining exclusive lock on empty pages
+	 * though, since no indexscan could be stopped on those.
 	 */
-	scan = index_beginscan(NULL, rel, SnapshotAny, 0, (ScanKey) NULL);
-	so = (BTScanOpaque) scan->opaque;
-	current = &(scan->currentItemData);
-
-	/* Use _bt_first to get started, then _bt_step to remaining tuples */
-	if (_bt_first(scan, ForwardScanDirection))
+	buf = _bt_get_endpoint(rel, 0, false);
+	if (BufferIsValid(buf))		/* check for empty index */
 	{
-		Buffer		buf;
-		BlockNumber lockedBlock = InvalidBlockNumber;
-
-		/* we have the buffer pinned and read-locked */
-		buf = so->btso_curbuf;
-		Assert(BufferIsValid(buf));
-
-		do
+		for (;;)
 		{
 			Page		page;
-			BlockNumber blkno;
-			OffsetNumber offnum;
-			BTItem		btitem;
 			BTPageOpaque opaque;
-			IndexTuple	itup;
-			ItemPointer htup;
+			OffsetNumber offnum,
+						minoff,
+						maxoff;
+			BlockNumber	nextpage;
 
 			CHECK_FOR_INTERRUPTS();
 
-			/* current is the next index tuple */
+			ndeletable = 0;
 			page = BufferGetPage(buf);
-			blkno = ItemPointerGetBlockNumber(current);
-
-			/*
-			 * Make sure we have a super-exclusive write lock on this page.
-			 *
-			 * We assume that only concurrent insertions, not deletions,
-			 * can occur while we're not holding the page lock (the
-			 * caller should hold a suitable relation lock to ensure
-			 * this). Therefore, no items can escape being scanned because
-			 * of this temporary lock release.
-			 */
-			if (blkno != lockedBlock)
+			opaque = (BTPageOpaque) PageGetSpecialPointer(page);
+			minoff = P_FIRSTDATAKEY(opaque);
+			maxoff = PageGetMaxOffsetNumber(page);
+			/* We probably cannot see deleted pages, but skip 'em if so */
+			if (minoff <= maxoff && !P_ISDELETED(opaque))
 			{
+				/*
+				 * Trade in the initial read lock for a super-exclusive
+				 * write lock on this page.
+				 */
 				LockBuffer(buf, BUFFER_LOCK_UNLOCK);
 				LockBufferForCleanup(buf);
-				lockedBlock = blkno;
 				/*
-				 * If the page was formerly rightmost but was split while we
-				 * didn't hold the lock, and ip_posid is pointing to item
-				 * 1, then ip_posid now points at the high key not a valid
-				 * data item. In this case we need to step forward.
+				 * Recompute minoff/maxoff, both of which could have changed
+				 * while we weren't holding the lock.
 				 */
-				opaque = (BTPageOpaque) PageGetSpecialPointer(page);
-				if (current->ip_posid < P_FIRSTDATAKEY(opaque))
-					current->ip_posid = P_FIRSTDATAKEY(opaque);
+				minoff = P_FIRSTDATAKEY(opaque);
+				maxoff = PageGetMaxOffsetNumber(page);
+				/*
+				 * Scan over all items to see which ones need deleted
+				 * according to the callback function.
+				 */
+				for (offnum = minoff;
+					 offnum <= maxoff;
+					 offnum = OffsetNumberNext(offnum))
+				{
+					BTItem		btitem;
+					ItemPointer htup;
+
+					btitem = (BTItem) PageGetItem(page,
+												  PageGetItemId(page, offnum));
+					htup = &(btitem->bti_itup.t_tid);
+					if (callback(htup, callback_state))
+					{
+						deletable[ndeletable++] = offnum;
+						tuples_removed += 1;
+					}
+					else
+						num_index_tuples += 1;
+				}
 			}
-
-			offnum = ItemPointerGetOffsetNumber(current);
-			btitem = (BTItem) PageGetItem(page, PageGetItemId(page, offnum));
-			itup = &btitem->bti_itup;
-			htup = &(itup->t_tid);
-
-			if (callback(htup, callback_state))
+			/*
+			 * If we need to delete anything, do it and write the buffer;
+			 * else just release the buffer.
+			 */
+			nextpage = opaque->btpo_next;
+			if (ndeletable > 0)
 			{
-				/* Okay to delete the item from the page */
-				_bt_itemdel(rel, buf, current);
-
-				/* Mark buffer dirty, but keep the lock and pin */
-				WriteNoReleaseBuffer(buf);
-
-				tuples_removed += 1;
-
-				/*
-				 * We now need to back up the scan one item, so that the next
-				 * cycle will re-examine the same offnum on this page (which
-				 * now holds the next item).
-				 */
-				current->ip_posid--;
+				_bt_delitems(rel, buf, deletable, ndeletable);
+				_bt_wrtbuf(rel, buf);
 			}
 			else
-				num_index_tuples += 1;
-		} while (_bt_step(scan, &buf, ForwardScanDirection));
+			{
+				_bt_relbuf(rel, buf);
+			}
+			/* And advance to next page, if any */
+			if (nextpage == P_NONE)
+				break;
+			buf = _bt_getbuf(rel, nextpage, BT_READ);
+		}
 	}
-
-	index_endscan(scan);
 
 	/* return statistics */
 	num_pages = RelationGetNumberOfBlocks(rel);
@@ -765,7 +754,7 @@ btvacuumcleanup(PG_FUNCTION_ARGS)
 			}
 		}
 		else if ((opaque->btpo_flags & BTP_HALF_DEAD) ||
-				 P_FIRSTDATAKEY(opaque)	> PageGetMaxOffsetNumber(page))
+				 P_FIRSTDATAKEY(opaque) > PageGetMaxOffsetNumber(page))
 		{
 			/* Empty, try to delete */
 			int		ndel;
