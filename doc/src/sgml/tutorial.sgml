@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/Attic/tutorial.sgml,v 1.12 2001/01/13 23:58:55 petere Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/Attic/tutorial.sgml,v 1.13 2001/01/24 19:42:46 momjian Exp $
 -->
 
 <book id="tutorial">
@@ -18,8 +18,8 @@ $Header: /cvsroot/pgsql/doc/src/sgml/Attic/tutorial.sgml,v 1.12 2001/01/13 23:58
 
   <legalnotice>
    <para>
-    <productname>PostgreSQL</productname> is Copyright &copy; 1996-2000
-    by PostgreSQL Inc.
+    <productname>PostgreSQL</productname> is Copyright &copy; 1996-2001
+    by PostgreSQL Global Development Group
    </para>
   </legalnotice>
 

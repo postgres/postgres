@@ -4,12 +4,12 @@
  *		Routines for handling of 'SET var TO',
  *		'SHOW var' and 'RESET var' statements.
  *
- * Portions Copyright (c) 1996-2000, PostgreSQL, Inc
+ * Portions Copyright (c) 1996-2001, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/commands/variable.c,v 1.44 2000/12/03 20:45:33 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/commands/variable.c,v 1.45 2001/01/24 19:42:53 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */

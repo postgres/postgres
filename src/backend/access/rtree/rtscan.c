@@ -3,12 +3,12 @@
  * rtscan.c
  *	  routines to manage scans on index relations
  *
- * Portions Copyright (c) 1996-2000, PostgreSQL, Inc
+ * Portions Copyright (c) 1996-2001, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/access/rtree/Attic/rtscan.c,v 1.34 2000/06/14 05:24:43 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/access/rtree/Attic/rtscan.c,v 1.35 2001/01/24 19:42:50 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */

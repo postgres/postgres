@@ -3,12 +3,12 @@
  * temprel.c
  *	  POSTGRES temporary relation handling
  *
- * Portions Copyright (c) 1996-2000, PostgreSQL, Inc
+ * Portions Copyright (c) 1996-2001, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/cache/Attic/temprel.c,v 1.33 2001/01/12 21:54:00 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/cache/Attic/temprel.c,v 1.34 2001/01/24 19:43:15 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */

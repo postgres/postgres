@@ -3,12 +3,12 @@
  * be-fsstubs.c
  *	  support for filesystem operations on large objects
  *
- * Portions Copyright (c) 1996-2000, PostgreSQL, Inc
+ * Portions Copyright (c) 1996-2001, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/libpq/be-fsstubs.c,v 1.56 2000/10/24 03:14:08 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/libpq/be-fsstubs.c,v 1.57 2001/01/24 19:42:56 momjian Exp $
  *
  * NOTES
  *	  This should be moved to a more appropriate place.  It is here

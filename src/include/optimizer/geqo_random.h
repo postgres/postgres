@@ -3,10 +3,10 @@
  * geqo_random.h
  *	  random number generator
  *
- * Portions Copyright (c) 1996-2000, PostgreSQL, Inc
+ * Portions Copyright (c) 1996-2001, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Id: geqo_random.h,v 1.7 2000/08/07 00:51:42 tgl Exp $
+ * $Id: geqo_random.h,v 1.8 2001/01/24 19:43:26 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */

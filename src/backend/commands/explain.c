@@ -2,10 +2,10 @@
  * explain.c
  *	  Explain the query execution plan
  *
- * Portions Copyright (c) 1996-2000, PostgreSQL, Inc
+ * Portions Copyright (c) 1996-2001, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994-5, Regents of the University of California
  *
- * $Header: /cvsroot/pgsql/src/backend/commands/explain.c,v 1.62 2000/11/12 00:36:56 tgl Exp $
+ * $Header: /cvsroot/pgsql/src/backend/commands/explain.c,v 1.63 2001/01/24 19:42:52 momjian Exp $
  *
  */
 

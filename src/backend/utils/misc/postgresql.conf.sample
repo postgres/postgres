@@ -35,13 +35,13 @@
 #hostname_lookup = false
 #show_source_port = false
 
-#unix_socket_directory = ""
-#unix_socket_group = ""
+#unix_socket_directory = ''
+#unix_socket_group = ''
 #unix_socket_permissions = 0777
 
-#virtual_host = ""
+#virtual_host = ''
 
-#krb_server_keyfile = ""
+#krb_server_keyfile = ''
 
 
 #
@@ -139,8 +139,8 @@
 #
 #ifdef ENABLE_SYSLOG
 #syslog = 0 # range 0-2
-#syslog_facility = "LOCAL0"
-#syslog_ident = "postgres"
+#syslog_facility = 'LOCAL0'
+#syslog_ident = 'postgres'
 #endif
 
 

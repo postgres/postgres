@@ -1,9 +1,7 @@
 /* -------------------------------------------------------------------------
  * pg_dumplo
  *
- *	Portions Copyright (c) 1999-2000, PostgreSQL, Inc
- *
- * $Header: /cvsroot/pgsql/contrib/pg_dumplo/Attic/lo_import.c,v 1.2 2000/11/22 00:00:55 tgl Exp $
+ * $Header: /cvsroot/pgsql/contrib/pg_dumplo/Attic/lo_import.c,v 1.3 2001/01/24 19:42:45 momjian Exp $
  *
  *					Karel Zak 1999-2000
  * -------------------------------------------------------------------------

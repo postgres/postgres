@@ -3,12 +3,12 @@
  * ipc.c
  *	  POSTGRES inter-process communication definitions.
  *
- * Portions Copyright (c) 1996-2000, PostgreSQL, Inc
+ * Portions Copyright (c) 1996-2001, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/storage/ipc/ipc.c,v 1.61 2001/01/19 22:08:46 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/storage/ipc/ipc.c,v 1.62 2001/01/24 19:43:07 momjian Exp $
  *
  * NOTES
  *

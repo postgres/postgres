@@ -3,12 +3,12 @@
  * s_lock.c
  *	  Spinlock support routines
  *
- * Portions Copyright (c) 1996-2000, PostgreSQL, Inc
+ * Portions Copyright (c) 1996-2001, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/storage/buffer/Attic/s_lock.c,v 1.31 2001/01/19 21:09:57 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/storage/buffer/Attic/s_lock.c,v 1.32 2001/01/24 19:43:06 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */

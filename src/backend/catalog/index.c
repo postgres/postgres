@@ -3,12 +3,12 @@
  * index.c
  *	  code to create and destroy POSTGRES index relations
  *
- * Portions Copyright (c) 1996-2000, PostgreSQL, Inc
+ * Portions Copyright (c) 1996-2001, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/catalog/index.c,v 1.138 2001/01/24 00:36:17 inoue Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/catalog/index.c,v 1.139 2001/01/24 19:42:51 momjian Exp $
  *
  *
  * INTERFACE ROUTINES

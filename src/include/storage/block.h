@@ -4,10 +4,10 @@
  *	  POSTGRES disk block definitions.
  *
  *
- * Portions Copyright (c) 1996-2000, PostgreSQL, Inc
+ * Portions Copyright (c) 1996-2001, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Id: block.h,v 1.11 2000/03/17 02:36:41 tgl Exp $
+ * $Id: block.h,v 1.12 2001/01/24 19:43:27 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */

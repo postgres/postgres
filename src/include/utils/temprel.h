@@ -4,10 +4,10 @@
  *	  Temporary relation functions
  *
  *
- * Portions Copyright (c) 1996-2000, PostgreSQL, Inc
+ * Portions Copyright (c) 1996-2001, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Id: temprel.h,v 1.13 2000/12/22 23:12:07 tgl Exp $
+ * $Id: temprel.h,v 1.14 2001/01/24 19:43:29 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */

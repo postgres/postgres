@@ -4,12 +4,12 @@
  *	  support code for nodes (now that we get rid of the home-brew
  *	  inheritance system, our support code for nodes get much simpler)
  *
- * Portions Copyright (c) 1996-2000, PostgreSQL, Inc
+ * Portions Copyright (c) 1996-2001, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/nodes/nodes.c,v 1.13 2000/04/12 17:15:16 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/nodes/nodes.c,v 1.14 2001/01/24 19:42:57 momjian Exp $
  *
  * HISTORY
  *	  Andrew Yu			Oct 20, 1994	file creation

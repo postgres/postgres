@@ -6,12 +6,12 @@
  *	  All file system operations in POSTGRES dispatch through these
  *	  routines.
  *
- * Portions Copyright (c) 1996-2000, PostgreSQL, Inc
+ * Portions Copyright (c) 1996-2001, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/storage/smgr/smgr.c,v 1.46 2000/11/30 08:46:24 vadim Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/storage/smgr/smgr.c,v 1.47 2001/01/24 19:43:08 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */

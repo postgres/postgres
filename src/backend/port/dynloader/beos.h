@@ -4,10 +4,10 @@
  *	  port-specific prototypes for BeOS
  *
  *
- * Portions Copyright (c) 1996-2000, PostgreSQL, Inc
+ * Portions Copyright (c) 1996-2001, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Id: beos.h,v 1.3 2000/10/07 14:39:11 momjian Exp $
+ * $Id: beos.h,v 1.4 2001/01/24 19:43:04 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */

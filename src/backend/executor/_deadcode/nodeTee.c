@@ -3,7 +3,7 @@
  * nodeTee.c
  *
  *
- * Portions Copyright (c) 1996-2000, PostgreSQL, Inc
+ * Portions Copyright (c) 1996-2001, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  *	 DESCRIPTION
@@ -15,7 +15,7 @@
  *		ExecInitTee
  *		ExecEndTee
  *
- *	$Id: nodeTee.c,v 1.8 2000/01/26 05:56:25 momjian Exp $
+ *	$Id: nodeTee.c,v 1.9 2001/01/24 19:42:55 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */

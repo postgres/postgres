@@ -3,12 +3,12 @@
  * stats.c
  *	  heap access method debugging statistic collection routines
  *
- * Portions Copyright (c) 1996-2000, PostgreSQL, Inc
+ * Portions Copyright (c) 1996-2001, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/access/heap/Attic/stats.c,v 1.22 2000/01/26 05:55:56 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/access/heap/Attic/stats.c,v 1.23 2001/01/24 19:42:48 momjian Exp $
  *
  * NOTES
  *	  initam should be moved someplace else.

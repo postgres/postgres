@@ -3,12 +3,12 @@
  * var.c
  *	  Var node manipulation routines
  *
- * Portions Copyright (c) 1996-2000, PostgreSQL, Inc
+ * Portions Copyright (c) 1996-2001, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/optimizer/util/var.c,v 1.28 2000/10/05 19:11:32 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/optimizer/util/var.c,v 1.29 2001/01/24 19:43:00 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */

@@ -7,10 +7,10 @@
  *	  of the API of the memory management subsystem.
  *
  *
- * Portions Copyright (c) 1996-2000, PostgreSQL, Inc
+ * Portions Copyright (c) 1996-2001, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Id: memutils.h,v 1.40 2001/01/22 00:18:13 tgl Exp $
+ * $Id: memutils.h,v 1.41 2001/01/24 19:43:28 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */

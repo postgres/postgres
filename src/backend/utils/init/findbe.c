@@ -2,12 +2,12 @@
  *
  * findbe.c
  *
- * Portions Copyright (c) 1996-2000, PostgreSQL, Inc
+ * Portions Copyright (c) 1996-2001, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/init/Attic/findbe.c,v 1.19 2000/07/09 13:14:08 petere Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/init/Attic/findbe.c,v 1.20 2001/01/24 19:43:15 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */

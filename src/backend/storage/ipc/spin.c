@@ -9,12 +9,12 @@
  * instructions if possible, else via semaphores.  The semaphore method
  * is too slow to be useful :-(
  *
- * Portions Copyright (c) 1996-2000, PostgreSQL, Inc
+ * Portions Copyright (c) 1996-2001, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/storage/ipc/Attic/spin.c,v 1.30 2001/01/19 22:08:47 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/storage/ipc/Attic/spin.c,v 1.31 2001/01/24 19:43:07 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */

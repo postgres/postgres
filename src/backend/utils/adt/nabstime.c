@@ -4,12 +4,12 @@
  *	  Functions for the built-in type "RelativeTime".
  *	  Functions for the built-in type "TimeInterval".
  *
- * Portions Copyright (c) 1996-2000, PostgreSQL, Inc
+ * Portions Copyright (c) 1996-2001, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/nabstime.c,v 1.79 2001/01/18 07:22:36 thomas Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/nabstime.c,v 1.80 2001/01/24 19:43:14 momjian Exp $
  *
  * NOTES
  *

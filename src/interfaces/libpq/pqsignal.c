@@ -4,12 +4,12 @@
  *	  reliable BSD-style signal(2) routine stolen from RWW who stole it
  *	  from Stevens...
  *
- * Portions Copyright (c) 1996-2000, PostgreSQL, Inc
+ * Portions Copyright (c) 1996-2001, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/interfaces/libpq/pqsignal.c,v 1.12 2000/06/11 11:40:07 petere Exp $
+ *	  $Header: /cvsroot/pgsql/src/interfaces/libpq/pqsignal.c,v 1.13 2001/01/24 19:43:31 momjian Exp $
  *
  * NOTES
  *		This shouldn't be in libpq, but the monitor and some other

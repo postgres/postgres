@@ -3,12 +3,12 @@
  * vacuum.c
  *	  the postgres vacuum cleaner
  *
- * Portions Copyright (c) 1996-2000, PostgreSQL, Inc
+ * Portions Copyright (c) 1996-2001, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/commands/vacuum.c,v 1.185 2001/01/23 23:32:45 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/commands/vacuum.c,v 1.186 2001/01/24 19:42:53 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */

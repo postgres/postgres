@@ -3,12 +3,12 @@
  * command.c
  *	  random postgres portal and utility support code
  *
- * Portions Copyright (c) 1996-2000, PostgreSQL, Inc
+ * Portions Copyright (c) 1996-2001, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/commands/Attic/command.c,v 1.118 2001/01/23 04:32:22 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/commands/Attic/command.c,v 1.119 2001/01/24 19:42:52 momjian Exp $
  *
  * NOTES
  *	  The PerformAddAttribute() code, like most of the relation

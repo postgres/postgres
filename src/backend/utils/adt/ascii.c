@@ -1,9 +1,9 @@
 /* -----------------------------------------------------------------------
  * ascii.c
  *
- * $Header: /cvsroot/pgsql/src/backend/utils/adt/ascii.c,v 1.5 2000/10/25 19:36:03 tgl Exp $
+ * $Header: /cvsroot/pgsql/src/backend/utils/adt/ascii.c,v 1.6 2001/01/24 19:43:13 momjian Exp $
  *
- *	 Portions Copyright (c) 1999-2000, PostgreSQL, Inc
+ *	 Portions Copyright (c) 1999-2000, PostgreSQL Global Development Group
  *
  *
  *	 TO_ASCII()

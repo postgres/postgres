@@ -4,10 +4,10 @@
  *	  port-specific prototypes for HP-UX
  *
  *
- * Portions Copyright (c) 1996-2000, PostgreSQL, Inc
+ * Portions Copyright (c) 1996-2001, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Id: port-protos.h,v 1.9 2000/01/26 05:56:46 momjian Exp $
+ * $Id: port-protos.h,v 1.10 2001/01/24 19:43:04 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */

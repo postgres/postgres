@@ -4,9 +4,9 @@
  *	 The PostgreSQL locale utils.
  *
  *
- * $Header: /cvsroot/pgsql/src/backend/utils/adt/pg_locale.c,v 1.7 2000/11/25 22:43:08 tgl Exp $
+ * $Header: /cvsroot/pgsql/src/backend/utils/adt/pg_locale.c,v 1.8 2001/01/24 19:43:14 momjian Exp $
  *
- *	 Portions Copyright (c) 1999-2000, PostgreSQL, Inc
+ *	 Portions Copyright (c) 1999-2000, PostgreSQL Global Development Group
  *
  *	Karel Zak - Zakkr
  *

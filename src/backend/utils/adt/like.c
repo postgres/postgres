@@ -7,11 +7,11 @@
  *		A big hack of the regexp.c code!! Contributed by
  *		Keith Parks <emkxp01@mtcc.demon.co.uk> (7/95).
  *
- * Portions Copyright (c) 1996-2000, PostgreSQL, Inc
+ * Portions Copyright (c) 1996-2001, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	$Header: /cvsroot/pgsql/src/backend/utils/adt/like.c,v 1.43 2000/12/11 05:00:18 ishii Exp $
+ *	$Header: /cvsroot/pgsql/src/backend/utils/adt/like.c,v 1.44 2001/01/24 19:43:14 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */

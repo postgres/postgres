@@ -3,10 +3,10 @@
  * pgtclCmds.h
  *	  declarations for the C functions which implement pg_* tcl commands
  *
- * Portions Copyright (c) 1996-2000, PostgreSQL, Inc
+ * Portions Copyright (c) 1996-2001, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Id: pgtclCmds.h,v 1.19 2000/11/27 13:29:32 wieck Exp $
+ * $Id: pgtclCmds.h,v 1.20 2001/01/24 19:43:29 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */

@@ -4,10 +4,10 @@
  *	  POSTGRES buffer manager definitions.
  *
  *
- * Portions Copyright (c) 1996-2000, PostgreSQL, Inc
+ * Portions Copyright (c) 1996-2001, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Id: bufmgr.h,v 1.48 2000/12/28 13:00:29 vadim Exp $
+ * $Id: bufmgr.h,v 1.49 2001/01/24 19:43:27 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */

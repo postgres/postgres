@@ -17,12 +17,12 @@
  *
  * the output script is SQL that is understood by PostgreSQL
  *
- * Portions Copyright (c) 1996-2000, PostgreSQL, Inc
+ * Portions Copyright (c) 1996-2001, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/bin/pg_dump/pg_dump.c,v 1.187 2001/01/12 15:41:29 pjw Exp $
+ *	  $Header: /cvsroot/pgsql/src/bin/pg_dump/pg_dump.c,v 1.188 2001/01/24 19:43:18 momjian Exp $
  *
  * Modifications - 6/10/96 - dave@bensoft.com - version 1.13.dhb
  *
@@ -264,7 +264,7 @@ static void
 version(void)
 {
 	puts("pg_dump (PostgreSQL) " PG_VERSION);
-	puts("Portions Copyright (c) 1996-2000, PostgreSQL, Inc");
+	puts("Portions Copyright (c) 1996-2001, PostgreSQL Global Development Group");
 	puts("Portions Copyright (c) 1996 Regents of the University of California");
 	puts("Read the file COPYRIGHT to see the usage and distribution terms.");
 }

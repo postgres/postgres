@@ -5,12 +5,12 @@
  *	  These routines execute some of the CREATE statements.  In an earlier
  *	  version of Postgres, these were "define" statements.
  *
- * Portions Copyright (c) 1996-2000, PostgreSQL, Inc
+ * Portions Copyright (c) 1996-2001, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/commands/define.c,v 1.50 2000/12/03 20:45:33 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/commands/define.c,v 1.51 2001/01/24 19:42:52 momjian Exp $
  *
  * DESCRIPTION
  *	  The "DefineFoo" routines take the parse tree and pick out the

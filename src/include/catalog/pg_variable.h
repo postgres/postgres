@@ -7,10 +7,10 @@
  *	  relcache code happy.
  *
  *
- * Portions Copyright (c) 1996-2000, PostgreSQL, Inc
+ * Portions Copyright (c) 1996-2001, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Id: pg_variable.h,v 1.7 2000/01/26 05:57:59 momjian Exp $
+ * $Id: pg_variable.h,v 1.8 2001/01/24 19:43:23 momjian Exp $
  *
  * NOTES
  *	  The structures and macros used by the transam/ code

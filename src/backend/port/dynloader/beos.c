@@ -3,12 +3,12 @@
  * dynloader.c
  *	  Dynamic Loader for Postgres for BeOS
  *
- * Portions Copyright (c) 1996-2000, PostgreSQL, Inc
+ * Portions Copyright (c) 1996-2001, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/port/dynloader/Attic/beos.c,v 1.4 2000/12/18 18:45:04 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/port/dynloader/Attic/beos.c,v 1.5 2001/01/24 19:43:03 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */

@@ -5,10 +5,10 @@
  *
  *	  Should be moved/renamed...	- vadim 07/28/98
  *
- * Portions Copyright (c) 1996-2000, PostgreSQL, Inc
+ * Portions Copyright (c) 1996-2001, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Id: tqual.h,v 1.29 2000/04/12 17:16:56 momjian Exp $
+ * $Id: tqual.h,v 1.30 2001/01/24 19:43:29 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */

@@ -3,12 +3,12 @@
  * initsplan.c
  *	  Target list, qualification, joininfo initialization routines
  *
- * Portions Copyright (c) 1996-2000, PostgreSQL, Inc
+ * Portions Copyright (c) 1996-2001, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/optimizer/plan/initsplan.c,v 1.55 2000/12/14 22:30:43 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/optimizer/plan/initsplan.c,v 1.56 2001/01/24 19:42:58 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */

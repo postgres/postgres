@@ -4,10 +4,10 @@
  *	  POSTGRES inter-process communication definitions.
  *
  *
- * Portions Copyright (c) 1996-2000, PostgreSQL, Inc
+ * Portions Copyright (c) 1996-2001, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Id: ipc.h,v 1.45 2001/01/14 05:08:16 tgl Exp $
+ * $Id: ipc.h,v 1.46 2001/01/24 19:43:27 momjian Exp $
  *
  * Some files that would normally need to include only sys/ipc.h must
  * instead include this file because on Ultrix, sys/ipc.h is not designed

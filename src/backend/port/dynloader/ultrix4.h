@@ -4,10 +4,10 @@
  *
  *
  *
- * Portions Copyright (c) 1996-2000, PostgreSQL, Inc
+ * Portions Copyright (c) 1996-2001, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Id: ultrix4.h,v 1.6 2000/01/26 05:56:44 momjian Exp $
+ * $Id: ultrix4.h,v 1.7 2001/01/24 19:43:04 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */

@@ -4,12 +4,12 @@
  *	  routines for manipulating the buffer pool's replacement strategy
  *	  freelist.
  *
- * Portions Copyright (c) 1996-2000, PostgreSQL, Inc
+ * Portions Copyright (c) 1996-2001, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/storage/buffer/freelist.c,v 1.22 2000/11/30 01:39:07 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/storage/buffer/freelist.c,v 1.23 2001/01/24 19:43:06 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */

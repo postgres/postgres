@@ -2,10 +2,10 @@
  *
  * geqo_copy.c
  *
- * Portions Copyright (c) 1996-2000, PostgreSQL, Inc
+ * Portions Copyright (c) 1996-2001, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Id: geqo_copy.c,v 1.9 2000/01/26 05:56:32 momjian Exp $
+ * $Id: geqo_copy.c,v 1.10 2001/01/24 19:42:57 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */

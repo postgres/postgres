@@ -3,10 +3,10 @@
  * util.c
  *	  general routines for backend libpq modules
  *
- * Portions Copyright (c) 1996-2000, PostgreSQL, Inc
+ * Portions Copyright (c) 1996-2001, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- *	$Header: /cvsroot/pgsql/src/backend/libpq/Attic/util.c,v 1.16 2000/07/08 03:04:41 tgl Exp $
+ *	$Header: /cvsroot/pgsql/src/backend/libpq/Attic/util.c,v 1.17 2001/01/24 19:42:56 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */

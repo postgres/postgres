@@ -6,10 +6,10 @@
  * It can be used to buffer either ordinary C strings (null-terminated text)
  * or arbitrary binary data.  All storage is allocated with palloc().
  *
- * Portions Copyright (c) 1996-2000, PostgreSQL, Inc
+ * Portions Copyright (c) 1996-2001, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- *	  $Id: stringinfo.c,v 1.26 2000/06/28 03:31:34 tgl Exp $
+ *	  $Id: stringinfo.c,v 1.27 2001/01/24 19:42:55 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */

@@ -4,7 +4,7 @@
  *		a skeletal Tcl_AppInit that provides pgtcl initialization
  *	  to create a tclsh that can talk to pglite backends
  *
- * Portions Copyright (c) 1996-2000, PostgreSQL, Inc
+ * Portions Copyright (c) 1996-2001, PostgreSQL Global Development Group
  * Portions Copyright (c) 1993 The Regents of the University of California.
  * Copyright (c) 1994 Sun Microsystems, Inc.
  *

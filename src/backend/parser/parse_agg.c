@@ -3,12 +3,12 @@
  * parse_agg.c
  *	  handle aggregates in parser
  *
- * Portions Copyright (c) 1996-2000, PostgreSQL, Inc
+ * Portions Copyright (c) 1996-2001, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/parser/parse_agg.c,v 1.43 2000/11/16 22:30:27 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/parser/parse_agg.c,v 1.44 2001/01/24 19:43:01 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */

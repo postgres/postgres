@@ -4,10 +4,10 @@
  *
  *
  *
- * Portions Copyright (c) 1996-2000, PostgreSQL, Inc
+ * Portions Copyright (c) 1996-2001, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Id: nodeHashjoin.h,v 1.18 2000/06/15 03:32:36 momjian Exp $
+ * $Id: nodeHashjoin.h,v 1.19 2001/01/24 19:43:23 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */

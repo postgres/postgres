@@ -4,10 +4,10 @@
  *	  definitions for query plan nodes
  *
  *
- * Portions Copyright (c) 1996-2000, PostgreSQL, Inc
+ * Portions Copyright (c) 1996-2001, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Id: plannodes.h,v 1.46 2000/11/12 00:37:01 tgl Exp $
+ * $Id: plannodes.h,v 1.47 2001/01/24 19:43:26 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */

@@ -2,7 +2,7 @@ From owner-pgsql-hackers@hub.org Sun Jan 23 13:31:03 2000
 Received: from renoir.op.net (root@renoir.op.net [207.29.195.4])
 	by candle.pha.pa.us (8.9.0/8.9.0) with ESMTP id NAA28482
 	for <pgman@candle.pha.pa.us>; Sun, 23 Jan 2000 13:31:01 -0500 (EST)
-Received: from hub.org (hub.org [216.126.84.1]) by renoir.op.net (o1/$Revision: 1.1 $) with ESMTP id NAA08409 for <pgman@candle.pha.pa.us>; Sun, 23 Jan 2000 13:04:34 -0500 (EST)
+Received: from hub.org (hub.org [216.126.84.1]) by renoir.op.net (o1/$Revision: 1.2 $) with ESMTP id NAA08409 for <pgman@candle.pha.pa.us>; Sun, 23 Jan 2000 13:04:34 -0500 (EST)
 Received: from localhost (majordom@localhost)
 	by hub.org (8.9.3/8.9.3) with SMTP id MAA65651;
 	Sun, 23 Jan 2000 12:57:33 -0500 (EST)
@@ -186,4 +186,68 @@ as part of Postgres unless these issues get addressed.
 			regards, tom lane
 
 ************
+
+From pgsql-hackers-owner+M3768@postgresql.org Wed Jan 24 14:20:02 2001
+Received: from mail.postgresql.org (webmail.postgresql.org [216.126.85.28])
+	by candle.pha.pa.us (8.9.0/8.9.0) with ESMTP id OAA25380
+	for <pgman@candle.pha.pa.us>; Wed, 24 Jan 2001 14:20:02 -0500 (EST)
+Received: from mail.postgresql.org (webmail.postgresql.org [216.126.85.28])
+	by mail.postgresql.org (8.11.1/8.11.1) with SMTP id f0OJHTq57982;
+	Wed, 24 Jan 2001 14:17:29 -0500 (EST)
+	(envelope-from pgsql-hackers-owner+M3768@postgresql.org)
+Received: from fw.wintelcom.net (ns1.wintelcom.net [209.1.153.20])
+	by mail.postgresql.org (8.11.1/8.11.1) with ESMTP id f0OIXnq49509
+	for <pgsql-hackers@postgresql.org>; Wed, 24 Jan 2001 13:33:49 -0500 (EST)
+	(envelope-from bright@fw.wintelcom.net)
+Received: (from bright@localhost)
+	by fw.wintelcom.net (8.10.0/8.10.0) id f0OIXgi14650;
+	Wed, 24 Jan 2001 10:33:42 -0800 (PST)
+Date: Wed, 24 Jan 2001 10:33:42 -0800
+From: Alfred Perlstein <bright@wintelcom.net>
+To: Tom Lane <tgl@sss.pgh.pa.us>
+Cc: Bruce Momjian <pgman@candle.pha.pa.us>, pgsql-hackers@postgresql.org
+Subject: Re: [HACKERS] Libpq async issues
+Message-ID: <20010124103342.B26076@fw.wintelcom.net>
+References: <6208.948650136@sss.pgh.pa.us> <200101241339.IAA11747@candle.pha.pa.us> <20010124084720.T26076@fw.wintelcom.net> <13021.980355551@sss.pgh.pa.us>
+Mime-Version: 1.0
+Content-Type: text/plain; charset=us-ascii
+Content-Disposition: inline
+User-Agent: Mutt/1.2.5i
+In-Reply-To: <13021.980355551@sss.pgh.pa.us>; from tgl@sss.pgh.pa.us on Wed, Jan 24, 2001 at 11:59:11AM -0500
+Precedence: bulk
+Sender: pgsql-hackers-owner@postgresql.org
+Status: OR
+
+* Tom Lane <tgl@sss.pgh.pa.us> [010124 10:27] wrote:
+> Alfred Perlstein <bright@wintelcom.net> writes:
+> > * Bruce Momjian <pgman@candle.pha.pa.us> [010124 07:58] wrote:
+> >> I have added this email to TODO.detail and a mention in the TODO list.
+> 
+> > The bug mentioned here is long gone,
+> 
+> Au contraire, the misdesign is still there.  The nonblock-mode code
+> will *never* be reliable under stress until something is done about
+> that, and that means fairly extensive code and API changes.
+
+The "bug" is the one mentioned in the first paragraph of the email
+where I broke _blocking_ connections for a short period.
+
+I still need to fix async connections for myself (and of course
+contribute it back), but I just haven't had the time.  If anyone
+else wants it fixed earlier they can wait for me to do it, do it
+themself, contract me to do it or hope someone else comes along
+to fix it.
+
+I'm thinking that I'll do what you said and have seperate paths
+for writing/reading to the socket and API's to do so that give
+the user the option of a boundry, basically:
+
+ buffer this, but don't allow me to write until it's flushed
+
+which would allow for larger than 8k COPY rows to go into the
+backend.
+
+-- 
+-Alfred Perlstein - [bright@wintelcom.net|alfred@freebsd.org]
+"I have the heart of a child; I keep it in a jar on my desk."
 

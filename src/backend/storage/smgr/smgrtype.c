@@ -3,12 +3,12 @@
  * smgrtype.c
  *	  storage manager type
  *
- * Portions Copyright (c) 1996-2000, PostgreSQL, Inc
+ * Portions Copyright (c) 1996-2001, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/storage/smgr/smgrtype.c,v 1.17 2000/06/05 07:28:47 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/storage/smgr/smgrtype.c,v 1.18 2001/01/24 19:43:08 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */

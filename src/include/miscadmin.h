@@ -9,10 +9,10 @@
  *		pmod.h							processing modes
  *
  *
- * Portions Copyright (c) 1996-2000, PostgreSQL, Inc
+ * Portions Copyright (c) 1996-2001, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Id: miscadmin.h,v 1.78 2001/01/19 22:08:47 tgl Exp $
+ * $Id: miscadmin.h,v 1.79 2001/01/24 19:43:19 momjian Exp $
  *
  * NOTES
  *	  some of the information in this file should be moved to

@@ -3,12 +3,12 @@
  * functions.c
  *	  Routines to handle functions called from the executor
  *
- * Portions Copyright (c) 1996-2000, PostgreSQL, Inc
+ * Portions Copyright (c) 1996-2001, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/executor/functions.c,v 1.41 2000/11/16 22:30:20 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/executor/functions.c,v 1.42 2001/01/24 19:42:54 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */

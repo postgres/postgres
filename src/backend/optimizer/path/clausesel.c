@@ -3,12 +3,12 @@
  * clausesel.c
  *	  Routines to compute clause selectivities
  *
- * Portions Copyright (c) 1996-2000, PostgreSQL, Inc
+ * Portions Copyright (c) 1996-2001, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/optimizer/path/clausesel.c,v 1.40 2000/10/25 21:48:12 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/optimizer/path/clausesel.c,v 1.41 2001/01/24 19:42:57 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */

@@ -4,12 +4,12 @@
  *	  routines to convert a string (legal ascii representation of node) back
  *	  to nodes
  *
- * Portions Copyright (c) 1996-2000, PostgreSQL, Inc
+ * Portions Copyright (c) 1996-2001, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/nodes/read.c,v 1.27 2001/01/07 01:08:47 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/nodes/read.c,v 1.28 2001/01/24 19:42:57 momjian Exp $
  *
  * HISTORY
  *	  AUTHOR			DATE			MAJOR EVENT

@@ -4,10 +4,10 @@
  *	  Internal definitions for buffer manager.
  *
  *
- * Portions Copyright (c) 1996-2000, PostgreSQL, Inc
+ * Portions Copyright (c) 1996-2001, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Id: buf_internals.h,v 1.46 2000/11/30 08:46:26 vadim Exp $
+ * $Id: buf_internals.h,v 1.47 2001/01/24 19:43:27 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */

@@ -3,12 +3,12 @@
  * heapam.c
  *	  heap access method code
  *
- * Portions Copyright (c) 1996-2000, PostgreSQL, Inc
+ * Portions Copyright (c) 1996-2001, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/access/heap/heapam.c,v 1.109 2001/01/23 04:32:20 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/access/heap/heapam.c,v 1.110 2001/01/24 19:42:47 momjian Exp $
  *
  *
  * INTERFACE ROUTINES

@@ -12,10 +12,10 @@
  * isn't even created at present.
  *
  *
- * Portions Copyright (c) 1996-2000, PostgreSQL, Inc
+ * Portions Copyright (c) 1996-2001, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Id: pg_version.h,v 1.11 2000/04/12 17:16:30 momjian Exp $
+ * $Id: pg_version.h,v 1.12 2001/01/24 19:43:23 momjian Exp $
  *
  * NOTES
  *	  the genbki.sh script reads this file and generates .bki

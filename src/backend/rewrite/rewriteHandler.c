@@ -2,12 +2,12 @@
  *
  * rewriteHandler.c
  *
- * Portions Copyright (c) 1996-2000, PostgreSQL, Inc
+ * Portions Copyright (c) 1996-2001, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/rewrite/rewriteHandler.c,v 1.87 2001/01/03 22:01:05 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/rewrite/rewriteHandler.c,v 1.88 2001/01/24 19:43:05 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */

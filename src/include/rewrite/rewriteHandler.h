@@ -4,10 +4,10 @@
  *
  *
  *
- * Portions Copyright (c) 1996-2000, PostgreSQL, Inc
+ * Portions Copyright (c) 1996-2001, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Id: rewriteHandler.h,v 1.13 2000/09/12 21:07:15 tgl Exp $
+ * $Id: rewriteHandler.h,v 1.14 2001/01/24 19:43:27 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */

@@ -3,12 +3,12 @@
  * execQual.c
  *	  Routines to evaluate qualification and targetlist expressions
  *
- * Portions Copyright (c) 1996-2000, PostgreSQL, Inc
+ * Portions Copyright (c) 1996-2001, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/executor/execQual.c,v 1.81 2000/11/12 00:36:57 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/executor/execQual.c,v 1.82 2001/01/24 19:42:54 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */

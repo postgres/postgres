@@ -4,9 +4,9 @@
  *	 The PostgreSQL locale utils.
  *
  *
- * $Id: pg_locale.h,v 1.5 2000/11/25 22:43:07 tgl Exp $
+ * $Id: pg_locale.h,v 1.6 2001/01/24 19:43:28 momjian Exp $
  *
- *	 Portions Copyright (c) 1999-2000, PostgreSQL, Inc
+ *	 Portions Copyright (c) 1999-2000, PostgreSQL Global Development Group
  *
  *	Karel Zak - Zakkr
  *

@@ -3,12 +3,12 @@
  * buf_table.c
  *	  routines for finding buffers in the buffer pool.
  *
- * Portions Copyright (c) 1996-2000, PostgreSQL, Inc
+ * Portions Copyright (c) 1996-2001, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/storage/buffer/buf_table.c,v 1.19 2000/11/30 01:39:07 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/storage/buffer/buf_table.c,v 1.20 2001/01/24 19:43:05 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */

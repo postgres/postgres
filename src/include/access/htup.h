@@ -4,10 +4,10 @@
  *	  POSTGRES heap tuple definitions.
  *
  *
- * Portions Copyright (c) 1996-2000, PostgreSQL, Inc
+ * Portions Copyright (c) 1996-2001, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Id: htup.h,v 1.44 2000/12/30 15:19:56 vadim Exp $
+ * $Id: htup.h,v 1.45 2001/01/24 19:43:19 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */

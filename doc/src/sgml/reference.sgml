@@ -1,5 +1,5 @@
 <!-- reference.sgml
-$Header: /cvsroot/pgsql/doc/src/sgml/reference.sgml,v 1.12 2001/01/13 03:11:12 petere Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/reference.sgml,v 1.13 2001/01/24 19:42:46 momjian Exp $
 
 PostgreSQL Reference Manual
 -->
@@ -13,7 +13,7 @@ PostgreSQL Reference Manual
   <legalnotice>
    <para>
     <productname>PostgreSQL</productname> is &copy; 1998-2000
-    by PostgreSQL Inc.
+    by PostgreSQL Global Development Group
    </para>
   </legalnotice>
  </bookinfo>

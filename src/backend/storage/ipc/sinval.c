@@ -3,12 +3,12 @@
  * sinval.c
  *	  POSTGRES shared cache invalidation communication code.
  *
- * Portions Copyright (c) 1996-2000, PostgreSQL, Inc
+ * Portions Copyright (c) 1996-2001, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/storage/ipc/sinval.c,v 1.24 2000/11/28 23:27:56 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/storage/ipc/sinval.c,v 1.25 2001/01/24 19:43:07 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */

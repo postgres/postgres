@@ -516,3 +516,131 @@ http://yi.org/peter-e/            Sweden
 
 ************
 
+From pgsql-general-owner+M2136@hub.org Sat Jun  3 23:31:02 2000
+Received: from renoir.op.net (root@renoir.op.net [207.29.195.4])
+	by candle.pha.pa.us (8.9.0/8.9.0) with ESMTP id WAA28683
+	for <pgman@candle.pha.pa.us>; Sat, 3 Jun 2000 22:31:01 -0400 (EDT)
+Received: from news.tht.net (news.hub.org [216.126.91.242]) by renoir.op.net (o1/$Revision: 1.14 $) with ESMTP id WAA20977 for <pgman@candle.pha.pa.us>; Sat, 3 Jun 2000 22:05:07 -0400 (EDT)
+Received: from hub.org (majordom@hub.org [216.126.84.1])
+	by news.tht.net (8.9.3/8.9.3) with ESMTP id VAD35811;
+	Sat, 3 Jun 2000 21:54:36 -0400 (EDT)
+	(envelope-from pgsql-general-owner+M2136@hub.org)
+Received: from merganser.its.uu.se (merganser.its.uu.se [130.238.6.236])
+	by hub.org (8.9.3/8.9.3) with ESMTP id VAA12118
+	for <pgsql-general@postgresql.org>; Sat, 3 Jun 2000 21:41:27 -0400 (EDT)
+	(envelope-from peter@localhost.its.uu.se)
+Received: from regulus.student.UU.SE ([130.238.5.2]:61160 "EHLO
+        regulus.its.uu.se") by merganser.its.uu.se with ESMTP
+	id <S168006AbQFDBlC>; Sun, 4 Jun 2000 03:41:02 +0200
+Received: from peter (helo=localhost)
+	by regulus.its.uu.se with local-esmtp (Exim 3.02 #2)
+	id 12yPV7-0002Tp-00; Sun, 04 Jun 2000 03:46:53 +0200
+Date:   Sun, 4 Jun 2000 03:46:53 +0200 (CEST)
+From: Peter Eisentraut <peter_e@gmx.net>
+To: ldm@apartia.com
+cc: pgsql-general@postgresql.org
+Subject: Re: [GENERAL] child table doesn't inherit PRIMARY KEY?
+In-Reply-To: <20000603172256.A3435@styx>
+Message-ID: <Pine.LNX.4.21.0006040341030.348-100000@localhost.localdomain>
+MIME-Version: 1.0
+Content-Type: TEXT/PLAIN; charset=ISO-8859-1
+Content-Transfer-Encoding: 8BIT
+X-Mailing-List: pgsql-general@postgresql.org
+Precedence: bulk
+Sender: pgsql-general-owner@hub.org
+Status: ORr
+
+Louis-David Mitterrand writes:
+
+> When creating a child (through CREATE TABLE ... INHERIT (parent)) it
+> seems the child gets all of the parent's contraints _except_ its PRIMARY
+> KEY. Is this normal?
+
+It's kind of a bug.
+
+
+-- 
+Peter Eisentraut                  Sernanders väg 10:115
+peter_e@gmx.net                   75262 Uppsala
+http://yi.org/peter-e/            Sweden
+
+
+From sszabo@megazone23.bigpanda.com Fri Jan 19 12:37:34 2001
+Received: from megazone23.bigpanda.com (rfx-64-6-210-138.users.reflexcom.com [64.6.210.138])
+	by candle.pha.pa.us (8.9.0/8.9.0) with ESMTP id MAA28247
+	for <pgman@candle.pha.pa.us>; Fri, 19 Jan 2001 12:37:33 -0500 (EST)
+Received: from localhost (sszabo@localhost)
+	by megazone23.bigpanda.com (8.11.1/8.11.1) with ESMTP id f0JHb2H05566;
+	Fri, 19 Jan 2001 09:37:03 -0800 (PST)
+Date: Fri, 19 Jan 2001 09:37:02 -0800 (PST)
+From: Stephan Szabo <sszabo@megazone23.bigpanda.com>
+To: Bruce Momjian <pgman@candle.pha.pa.us>
+cc: pgsql-general@postgresql.org
+Subject: Re: [GENERAL] child table doesn't inherit PRIMARY KEY?
+In-Reply-To: <200101190457.XAA13895@candle.pha.pa.us>
+Message-ID: <Pine.BSF.4.21.0101190932480.5520-100000@megazone23.bigpanda.com>
+MIME-Version: 1.0
+Content-Type: TEXT/PLAIN; charset=US-ASCII
+Status: OR
+
+
+Probably, since I see it in near recent sources (and it affects
+UNIQUE as well.  As I remember it, the last discussion on this couldn't
+determine what the correct behavior for unique/primary key constraints
+was in the inheritance case (is it a single unique hierarchy through
+all the tables [would be needed for fk to inheritance trees] or
+separate unique constraints for each table [which would be similar
+to how many people seem to currently use postgres inheritance as a 
+shortcut]). 
+
+On Thu, 18 Jan 2001, Bruce Momjian wrote:
+
+> Does this bug still exist?
+> 
+> [ Charset ISO-8859-1 unsupported, converting... ]
+> > Louis-David Mitterrand writes:
+> > 
+> > > When creating a child (through CREATE TABLE ... INHERIT (parent)) it
+> > > seems the child gets all of the parent's contraints _except_ its PRIMARY
+> > > KEY. Is this normal?
+
+
+From sszabo@megazone23.bigpanda.com Wed Jan 24 14:26:12 2001
+Received: from megazone23.bigpanda.com (rfx-64-6-210-138.users.reflexcom.com [64.6.210.138])
+	by candle.pha.pa.us (8.9.0/8.9.0) with ESMTP id OAA26091
+	for <pgman@candle.pha.pa.us>; Wed, 24 Jan 2001 14:26:10 -0500 (EST)
+Received: from localhost (sszabo@localhost)
+	by megazone23.bigpanda.com (8.11.1/8.11.1) with ESMTP id f0OJPZ858086;
+	Wed, 24 Jan 2001 11:25:35 -0800 (PST)
+Date: Wed, 24 Jan 2001 11:25:35 -0800 (PST)
+From: Stephan Szabo <sszabo@megazone23.bigpanda.com>
+To: Bruce Momjian <pgman@candle.pha.pa.us>
+cc: PostgreSQL-development <pgsql-hackers@postgreSQL.org>
+Subject: Re: [GENERAL] child table doesn't inherit PRIMARY KEY?
+In-Reply-To: <200101241344.IAA12094@candle.pha.pa.us>
+Message-ID: <Pine.BSF.4.21.0101241120310.57849-100000@megazone23.bigpanda.com>
+MIME-Version: 1.0
+Content-Type: TEXT/PLAIN; charset=US-ASCII
+Status: ORr
+
+On Wed, 24 Jan 2001, Bruce Momjian wrote:
+
+> 
+> OK, what do people want to do with this item?  Add to TODO list?
+> 
+> Seems making a separat unique constraint would be easy to do and be of
+> value to most users.
+
+The problem is that doing that will pretty much guarantee that we won't
+be doing foreign keys to inheritance trees without changing that behavior
+and we've seen people asking about adding that too.  I think that this
+falls into the general category of "Make inheritance make sense" (Now 
+there's a todo item :) )  Seriously, I think the work on how inheritance
+is going to work will decide this, maybe we end up with a real inheritance
+tree system and something that works like the current stuff in which case
+I'd say it's probably one unique for the former and one per for the
+latter.
+
+
+
+

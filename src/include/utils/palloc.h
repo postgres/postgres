@@ -18,10 +18,10 @@
  * everything that should be freed.  See utils/mmgr/README for more info.
  *
  *
- * Portions Copyright (c) 1996-2000, PostgreSQL, Inc
+ * Portions Copyright (c) 1996-2001, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Id: palloc.h,v 1.13 2000/06/28 03:33:33 tgl Exp $
+ * $Id: palloc.h,v 1.14 2001/01/24 19:43:28 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */

@@ -3,12 +3,12 @@
  * rtget.c
  *	  fetch tuples from an rtree scan.
  *
- * Portions Copyright (c) 1996-2000, PostgreSQL, Inc
+ * Portions Copyright (c) 1996-2001, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/access/rtree/Attic/rtget.c,v 1.23 2000/06/15 04:09:41 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/access/rtree/Attic/rtget.c,v 1.24 2001/01/24 19:42:49 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */

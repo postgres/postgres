@@ -3,12 +3,12 @@
  *	  creator functions for primitive nodes. The functions here are for
  *	  the most frequently created nodes.
  *
- * Portions Copyright (c) 1996-2000, PostgreSQL, Inc
+ * Portions Copyright (c) 1996-2001, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/nodes/makefuncs.c,v 1.24 2001/01/17 17:26:44 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/nodes/makefuncs.c,v 1.25 2001/01/24 19:42:56 momjian Exp $
  *
  * NOTES
  *	  Creator functions in POSTGRES 4.2 are generated automatically. Most of

@@ -74,11 +74,11 @@
  * saves one cycle of writing all the data out to disk and reading it in.
  *
  *
- * Portions Copyright (c) 1996-2000, PostgreSQL, Inc
+ * Portions Copyright (c) 1996-2001, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/sort/tuplesort.c,v 1.11 2000/11/16 22:30:42 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/sort/tuplesort.c,v 1.12 2001/01/24 19:43:18 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */

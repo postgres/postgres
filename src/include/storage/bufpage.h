@@ -4,10 +4,10 @@
  *	  Standard POSTGRES buffer page definitions.
  *
  *
- * Portions Copyright (c) 1996-2000, PostgreSQL, Inc
+ * Portions Copyright (c) 1996-2001, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Id: bufpage.h,v 1.38 2000/12/30 15:19:57 vadim Exp $
+ * $Id: bufpage.h,v 1.39 2001/01/24 19:43:27 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */

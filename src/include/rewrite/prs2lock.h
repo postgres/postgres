@@ -3,10 +3,10 @@
  * prs2lock.h
  *	  data structures for POSTGRES Rule System II (rewrite rules only)
  *
- * Portions Copyright (c) 1996-2000, PostgreSQL, Inc
+ * Portions Copyright (c) 1996-2001, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Id: prs2lock.h,v 1.11 2000/01/26 05:58:30 momjian Exp $
+ * $Id: prs2lock.h,v 1.12 2001/01/24 19:43:27 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */

@@ -4,10 +4,10 @@
  *
  *
  *
- * Portions Copyright (c) 1996-2000, PostgreSQL, Inc
+ * Portions Copyright (c) 1996-2001, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Id: execdefs.h,v 1.7 2000/09/12 21:07:09 tgl Exp $
+ * $Id: execdefs.h,v 1.8 2001/01/24 19:43:23 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */

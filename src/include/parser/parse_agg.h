@@ -4,10 +4,10 @@
  *
  *
  *
- * Portions Copyright (c) 1996-2000, PostgreSQL, Inc
+ * Portions Copyright (c) 1996-2001, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Id: parse_agg.h,v 1.16 2000/09/29 18:21:40 tgl Exp $
+ * $Id: parse_agg.h,v 1.17 2001/01/24 19:43:27 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */

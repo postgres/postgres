@@ -36,10 +36,10 @@
  * in-line in BeginCommand and EndCommand probably should be moved out
  * to routines associated with each destination receiver type.
  *
- * Portions Copyright (c) 1996-2000, PostgreSQL, Inc
+ * Portions Copyright (c) 1996-2001, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Id: dest.h,v 1.24 2000/07/08 03:04:33 tgl Exp $
+ * $Id: dest.h,v 1.25 2001/01/24 19:43:28 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */

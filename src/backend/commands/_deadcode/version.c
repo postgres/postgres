@@ -3,14 +3,14 @@
  * version.c
  *	  This file contains all the rules that govern all version semantics.
  *
- * Portions Copyright (c) 1996-2000, PostgreSQL, Inc
+ * Portions Copyright (c) 1996-2001, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  *	The version stuff has not been tested under postgres95 and probably
  *	doesn't work! - jolly 8/19/95
  *
  *
- *	$Id: version.c,v 1.24 2000/01/26 05:56:19 momjian Exp $
+ *	$Id: version.c,v 1.25 2001/01/24 19:42:53 momjian Exp $
  *
  * NOTES
  *	At the point the version is defined, 2 physical relations are created

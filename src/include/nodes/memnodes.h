@@ -4,10 +4,10 @@
  *	  POSTGRES memory context node definitions.
  *
  *
- * Portions Copyright (c) 1996-2000, PostgreSQL, Inc
+ * Portions Copyright (c) 1996-2001, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Id: memnodes.h,v 1.19 2000/12/01 18:14:29 tgl Exp $
+ * $Id: memnodes.h,v 1.20 2001/01/24 19:43:25 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */

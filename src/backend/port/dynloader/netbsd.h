@@ -4,10 +4,10 @@
  *	  port-specific prototypes for NetBSD 1.0
  *
  *
- * Portions Copyright (c) 1996-2000, PostgreSQL, Inc
+ * Portions Copyright (c) 1996-2001, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Id: netbsd.h,v 1.1 2000/03/08 01:58:17 momjian Exp $
+ * $Id: netbsd.h,v 1.2 2001/01/24 19:43:04 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */

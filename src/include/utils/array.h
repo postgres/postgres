@@ -7,10 +7,10 @@
  *				utils/adt/arrayutils.c
  *
  *
- * Portions Copyright (c) 1996-2000, PostgreSQL, Inc
+ * Portions Copyright (c) 1996-2001, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Id: array.h,v 1.27 2000/07/22 03:34:35 tgl Exp $
+ * $Id: array.h,v 1.28 2001/01/24 19:43:28 momjian Exp $
  *
  * NOTES
  *	  XXX the data array should be MAXALIGN'd -- currently we only INTALIGN

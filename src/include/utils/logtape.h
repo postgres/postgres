@@ -5,10 +5,10 @@
  *
  * See logtape.c for explanations.
  *
- * Portions Copyright (c) 1996-2000, PostgreSQL, Inc
+ * Portions Copyright (c) 1996-2001, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Id: logtape.h,v 1.3 2000/04/12 17:16:55 momjian Exp $
+ * $Id: logtape.h,v 1.4 2001/01/24 19:43:28 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */

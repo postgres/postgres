@@ -8,10 +8,10 @@
  * of the Datum.  (We do it this way because in most situations the caller
  * can look up the info just once and use it for many per-datum operations.)
  *
- * Portions Copyright (c) 1996-2000, PostgreSQL, Inc
+ * Portions Copyright (c) 1996-2001, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Id: datum.h,v 1.11 2000/07/12 02:37:35 tgl Exp $
+ * $Id: datum.h,v 1.12 2001/01/24 19:43:28 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */

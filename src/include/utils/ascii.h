@@ -2,9 +2,9 @@
 /* -----------------------------------------------------------------------
  * ascii.h
  *
- * $Id: ascii.h,v 1.3 2000/08/05 14:59:29 momjian Exp $
+ * $Id: ascii.h,v 1.4 2001/01/24 19:43:28 momjian Exp $
  *
- *	 Portions Copyright (c) 1999-2000, PostgreSQL, Inc
+ *	 Portions Copyright (c) 1999-2000, PostgreSQL Global Development Group
  *
  * -----------------------------------------------------------------------
  */

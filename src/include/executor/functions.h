@@ -4,10 +4,10 @@
  *		Declarations for execution of SQL-language functions.
  *
  *
- * Portions Copyright (c) 1996-2000, PostgreSQL, Inc
+ * Portions Copyright (c) 1996-2001, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Id: functions.h,v 1.14 2000/08/24 03:29:10 tgl Exp $
+ * $Id: functions.h,v 1.15 2001/01/24 19:43:23 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */

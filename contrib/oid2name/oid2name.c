@@ -4,10 +4,6 @@
 
   b. palmer, bpalmer@crimelabs.net 1-17-2001
 
-
- * Portions Copyright (c) 1996-2000, PostgreSQL, Inc
- * Portions Copyright (c) 1994, Regents of the University of California
-
  */
 
 #include <stdlib.h>
