@@ -13,7 +13,7 @@
 !MESSAGE Building the PostgreSQL ODBC 3.0 Driver for Win32...
 !MESSAGE
 !IF "$(CFG)" == ""
-CFG=ODBC30
+CFG=MultibyteODBC30
 !MESSAGE No configuration specified. Defaulting to ODBC30.
 !MESSAGE
 !ENDIF 
@@ -100,9 +100,9 @@ CLEAN :
 
 CPP=cl.exe
 !IF "$(CFG)" == "MultibyteODBC30"
-CPP_PROJ=/nologo /MT /W3 /GX /O2 /D "WIN32" /D "NDEBUG" /D "_WINDOWS" /D "_MBCS" /D "_USRDLL" /D "PSQLODBC_EXPORTS" /D "ODBCVER=0x0300" /D "MULTIBYTE" /D "DRIVER_CURSOR_IMPLEMENT" /Fp"$(INTDIR)\psqlodbc.pch" /YX /Fo"$(INTDIR)\\" /Fd"$(INTDIR)\\" /FD /c 
+CPP_PROJ=/nologo /MT /W3 /GX /O2 /D "WIN32" /D "NDEBUG" /D "_WINDOWS" /D "_MBCS" /D "_USRDLL" /D "PSQLODBC_EXPORTS" /D "ODBCVER=0x0300" /D "MULTIBYTE" /D "DRIVER_CURSOR_IMPLEMENT" $(ADD_DEFINES) /Fp"$(INTDIR)\psqlodbc.pch" /YX /Fo"$(INTDIR)\\" /Fd"$(INTDIR)\\" /FD /c 
 !ELSE
-CPP_PROJ=/nologo /MT /W3 /GX /O2 /D "WIN32" /D "NDEBUG" /D "_WINDOWS" /D "_MBCS" /D "_USRDLL" /D "PSQLODBC_EXPORTS" /D "ODBCVER=0x0300" /D "DRIVER_CURSOR_IMPLEMENT" /Fp"$(INTDIR)\psqlodbc.pch" /YX /Fo"$(INTDIR)\\" /Fd"$(INTDIR)\\" /FD /c 
+CPP_PROJ=/nologo /MT /W3 /GX /O2 /D "WIN32" /D "NDEBUG" /D "_WINDOWS" /D "_MBCS" /D "_USRDLL" /D "PSQLODBC_EXPORTS" /D "ODBCVER=0x0300" /D "DRIVER_CURSOR_IMPLEMENT" $(ADD_DEFINES) /Fp"$(INTDIR)\psqlodbc.pch" /YX /Fo"$(INTDIR)\\" /Fd"$(INTDIR)\\" /FD /c 
 !ENDIF
 
 .c{$(INTDIR)}.obj::
@@ -245,9 +245,9 @@ CLEAN :
 
 CPP=cl.exe
 !IF "$(CFG)" == "MultibyteDebug30" 
-CPP_PROJ=/nologo /MTd /W3 /Gm /GX /ZI /Od /D "WIN32" /D "_DEBUG" /D "_WINDOWS" /D "_MBCS" /D "_USRDLL" /D "PSQLODBC_EXPORTS" /D "ODBCVER=0x0300" /D "MULTIBYTE" /D "DRIVER_CURSOR_IMPLEMENT" /Fp"$(INTDIR)\psqlodbc.pch" /YX /Fo"$(INTDIR)\\" /Fd"$(INTDIR)\\" /FD /GZ /c 
+CPP_PROJ=/nologo /MTd /W3 /Gm /GX /ZI /Od /D "WIN32" /D "_DEBUG" /D "_WINDOWS" /D "_MBCS" /D "_USRDLL" /D "PSQLODBC_EXPORTS" /D "ODBCVER=0x0300" /D "MULTIBYTE" /D "DRIVER_CURSOR_IMPLEMENT" $(ADD_DEFINES) /Fp"$(INTDIR)\psqlodbc.pch" /YX /Fo"$(INTDIR)\\" /Fd"$(INTDIR)\\" /FD /GZ /c 
 !ELSE
-CPP_PROJ=/nologo /MTd /W3 /Gm /GX /ZI /Od /D "WIN32" /D "_DEBUG" /D "_WINDOWS" /D "_MBCS" /D "_USRDLL" /D "PSQLODBC_EXPORTS" /D "ODBCVER=0x0300" /D "DRIVER_CURSOR_IMPLEMENT" /Fp"$(INTDIR)\psqlodbc.pch" /YX /Fo"$(INTDIR)\\" /Fd"$(INTDIR)\\" /FD /GZ /c 
+CPP_PROJ=/nologo /MTd /W3 /Gm /GX /ZI /Od /D "WIN32" /D "_DEBUG" /D "_WINDOWS" /D "_MBCS" /D "_USRDLL" /D "PSQLODBC_EXPORTS" /D "ODBCVER=0x0300" /D "DRIVER_CURSOR_IMPLEMENT" $(ADD_DEFINES) /Fp"$(INTDIR)\psqlodbc.pch" /YX /Fo"$(INTDIR)\\" /Fd"$(INTDIR)\\" /FD /GZ /c 
 !ENDIF
 
 .c{$(INTDIR)}.obj::

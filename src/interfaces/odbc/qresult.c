@@ -356,7 +356,7 @@ QR_fetch_tuples(QResultClass *self, ConnectionClass *conn, char *cursor)
 		self->inTuples = TRUE;
 
 		/* Force a read to occur in next_tuple */
-		self->num_total_rows = tuple_size + 1;
+		self->num_total_rows = 0;
 		self->num_backend_rows = tuple_size + 1;
 		self->fetch_count = tuple_size + 1;
 		self->base = 0;
@@ -499,6 +499,9 @@ QR_next_tuple(QResultClass *self)
 
 			if (self->base == num_backend_rows)
 			{
+				int	row, lf;
+				TupleField *tuple = self->backend_tuples;
+
 				/* not a correction */
 				/* Determine the optimum cache size.  */
 				if (ci->drivers.fetch_max % self->rowset_size == 0)
@@ -509,6 +512,20 @@ QR_next_tuple(QResultClass *self)
 					fetch_size = self->rowset_size;
 
 				self->cache_size = fetch_size;
+				/* clear obsolete tuples */
+inolog("clear obsolete %d tuples\n", num_backend_rows);
+				for (row = 0; row < num_backend_rows; row++)
+				{
+					for (lf = 0; lf < self->num_fields; lf++)
+					{
+						if (tuple[lf].value != NULL)
+						{
+							free(tuple[lf].value);
+							tuple[lf].value = NULL;
+						}
+					}
+					tuple += self->num_fields;
+				}
 				self->fetch_count = 1;
 			}
 			else
@@ -579,7 +596,6 @@ QR_next_tuple(QResultClass *self)
 	if (!corrected)
 	{
 		self->base = 0;
-		self->num_total_rows = 0; /* right ? */
 		self->num_backend_rows = 0;
 	}
 
