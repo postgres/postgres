@@ -8,7 +8,7 @@
 #
 #
 # IDENTIFICATION
-#    $Header: /cvsroot/pgsql/src/bin/initlocation/Attic/initlocation.sh,v 1.5 2000/01/19 20:08:25 petere Exp $
+#    $Header: /cvsroot/pgsql/src/bin/initlocation/Attic/initlocation.sh,v 1.6 2000/03/25 19:01:48 tgl Exp $
 #
 #-------------------------------------------------------------------------
 
@@ -91,13 +91,15 @@ fi
 # You can call initlocation $ENVAR, which will of course be resolved
 # by the shell, or initlocation some/path (containing at least one slash).
 # Then you just take that path.
-# This should apease users who are confused by the above behaviour.
+# This should appease users who are confused by the above behaviour.
 #
 
-if ! echo "$Location" | grep -s '/' >/dev/null 2>&1 && [ ! -d "$Location" ]; then
+echo "$Location" | grep '/' >/dev/null 2>&1
+
+if [ "$?" -ne 0 -a ! -d "$Location" ]; then
     PGALTDATA=`printenv $Location 2> /dev/null`
     if [ -z "$PGALTDATA" ]; then
-        echo "$CMDNAME: environment variable $PGALTDATA not set"
+        echo "$CMDNAME: environment variable $Location not set"
         exit 1
     fi
     haveenv=t
