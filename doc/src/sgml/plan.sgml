@@ -1,0 +1,263 @@
+ <chapter>
+  <title>Understanding Performance</title>
+
+  <para>
+   Query performance can be affected by many things. Some of these can 
+   be manipulated by the user, while others are fundamental to the underlying
+   design of the system.
+  </para>
+
+  <para>
+   Some performance issues, such as index creation and bulk data
+   loading, are covered elsewhere. This chapter will discuss the
+   <command>EXPLAIN</command> command, and will show how the details
+   of a query can affect the query plan, and hence overall
+   performance.
+  </para>
+
+  <sect1>
+   <title>Using <command>EXPLAIN</command></title>
+
+   <note>
+    <title>Author</title>
+    <para>
+     Written by Tom Lane, from e-mail dated 2000-03-27.
+    </para>
+   </note>
+
+   <para>
+    Plan-reading is an art that deserves a tutorial, and I haven't
+    had time to write one.  Here is some quick & dirty explanation.
+   </para>
+
+   <para>
+    The numbers that are currently quoted by EXPLAIN are:
+
+    <itemizedlist>
+     <listitem>
+      <para>
+       Estimated startup cost (time expended before output scan can start,
+       eg, time to do the sorting in a SORT node).
+      </para>
+     </listitem>
+
+     <listitem>
+      <para>
+       Estimated total cost (if all tuples are retrieved, which they may not
+       be --- LIMIT will stop short of paying the total cost, for
+       example).
+      </para>
+     </listitem>
+
+     <listitem>
+      <para>
+       Estimated number of rows output by this plan node.
+      </para>
+     </listitem>
+
+     <listitem>
+      <para>
+       Estimated average width (in bytes) of rows output by this plan
+       node.
+      </para>
+     </listitem>
+    </itemizedlist>
+   </para>
+
+   <para>
+    The costs are measured in units of disk page fetches.  (There are some
+    fairly bogus fudge-factors for converting CPU effort estimates into
+    disk-fetch units; see the SET ref page if you want to play with these.)
+    It's important to note that the cost of an upper-level node includes
+    the cost of all its child nodes.  It's also important to realize that
+    the cost only reflects things that the planner/optimizer cares about.
+    In particular, the cost does not consider the time spent transmitting
+    result tuples to the frontend --- which could be a pretty dominant
+    factor in the true elapsed time, but the planner ignores it because
+    it cannot change it by altering the plan.  (Every correct plan will
+    output the same tuple set, we trust.)
+   </para>
+
+   <para>
+    Rows output is a little tricky because it is *not* the number of rows
+    processed/scanned by the query --- it is usually less, reflecting the
+    estimated selectivity of any WHERE-clause constraints that are being
+    applied at this node.
+   </para>
+
+   <para>
+    Average width is pretty bogus because the thing really doesn't have
+    any idea of the average length of variable-length columns.  I'm thinking
+    about improving that in the future, but it may not be worth the trouble,
+    because the width isn't used for very much.
+   </para>
+
+   <para>
+    Here are some examples (using the regress test database after a
+    vacuum analyze, and current sources):
+
+    <programlisting>
+regression=# explain select * from tenk1;
+NOTICE:  QUERY PLAN:
+
+Seq Scan on tenk1  (cost=0.00..333.00 rows=10000 width=148)
+    </programlisting>
+   </para>
+
+   <para>
+    About as straightforward as it gets.  If you do
+
+    <programlisting>
+select * from pg_class where relname = 'tenk1';
+    </programlisting>
+
+    you'll find out that tenk1 has 233 disk
+    pages and 10000 tuples.  So the cost is estimated at 233 block
+    reads, defined as 1.0 apiece, plus 10000 * cpu_tuple_cost which is
+    currently 0.01 (try <command>show cpu_tuple_cost</command>).
+   </para>
+
+   <para>
+    Now let's modify the query to add a qualification clause:
+
+    <programlisting>
+regression=# explain select * from tenk1 where unique1 &lt; 1000;
+NOTICE:  QUERY PLAN:
+
+Seq Scan on tenk1  (cost=0.00..358.00 rows=1000 width=148)
+    </programlisting>
+
+    Estimated output rows has gone down because of the WHERE clause.
+    (The uncannily accurate estimate is just because tenk1 is a particularly
+    simple case --- the unique1 column has 10000 distinct values ranging
+    from 0 to 9999, so the estimator's linear interpolation between min and
+    max column values is dead-on.)  However, the scan will still have to
+    visit all 10000 rows, so the cost hasn't decreased; in fact it has gone
+    up a bit to reflect the extra CPU time spent checking the WHERE
+    condition.
+   </para>
+
+   <para>
+    Modify the query to restrict the qualification even more:
+
+    <programlisting>
+regression=# explain select * from tenk1 where unique1 &lt; 100;
+NOTICE:  QUERY PLAN:
+
+Index Scan using tenk1_unique1 on tenk1  (cost=0.00..89.35 rows=100 width=148)
+    </programlisting>
+
+    and you will see that if we make the WHERE condition selective
+    enough, the planner will
+    eventually decide that an indexscan is cheaper than a sequential scan.
+    This plan will only have to visit 100 tuples because of the index,
+    so it wins despite the fact that each individual fetch is expensive.
+   </para>
+
+   <para>
+    Add another condition to the qualification:
+
+    <programlisting>
+regression=# explain select * from tenk1 where unique1 &lt; 100 and
+regression-# stringu1 = 'xxx';
+NOTICE:  QUERY PLAN:
+
+Index Scan using tenk1_unique1 on tenk1  (cost=0.00..89.60 rows=1 width=148)
+    </programlisting>
+
+    The added clause "stringu1 = 'xxx'" reduces the output-rows estimate,
+    but not the cost because we still have to visit the same set of tuples.
+   </para>
+
+   <para>
+    Let's try joining two tables, using the fields we have been discussing:
+
+    <programlisting>
+regression=# explain select * from tenk1 t1, tenk2 t2 where t1.unique1 &lt; 100
+regression-# and t1.unique2 = t2.unique2;
+NOTICE:  QUERY PLAN:
+
+Nested Loop  (cost=0.00..144.07 rows=100 width=296)
+  -&gt;  Index Scan using tenk1_unique1 on tenk1 t1
+             (cost=0.00..89.35 rows=100 width=148)
+  -&gt;  Index Scan using tenk2_unique2 on tenk2 t2
+             (cost=0.00..0.53 rows=1 width=148)
+    </programlisting>
+   </para>
+
+   <para>
+    In this nested-loop join, the outer scan is the same indexscan we had
+    in the example before last, and the cost and row count are the same
+    because we are applying the "unique1 &lt; 100" WHERE clause at this node.
+    The "t1.unique2 = t2.unique2" clause isn't relevant yet, so it doesn't
+    affect the row count.  For the inner scan, we assume that the current
+    outer-scan tuple's unique2 value is plugged into the inner indexscan
+    to produce an indexqual like
+    "t2.unique2 = <replaceable>constant</replaceable>".  So we get the
+     same inner-scan plan and costs that we'd get from, say, "explain select
+     * from tenk2 where unique2 = 42".  The loop node's costs are then set
+     on the basis of the outer scan's cost, plus one repetition of the
+     inner scan for each outer tuple (100 * 0.53, here), plus a little CPU
+     time for join processing.
+   </para>
+
+   <para>
+    In this example the loop's output row count is the same as the product
+    of the two scans' row counts, but that's not true in general, because
+    in general you can have WHERE clauses that mention both relations and
+    so can only be applied at the join point, not to either input scan.
+    For example, if we added "WHERE ... AND t1.hundred &lt; t2.hundred",
+    that'd decrease the output row count of the join node, but not change
+    either input scan.
+   </para>
+
+   <para>
+    We can look at variant plans by forcing the planner to disregard
+    whatever strategy it thought was the winner (a pretty crude tool,
+    but it's what we've got at the moment):
+
+    <programlisting>
+regression=# set enable_nestloop = 'off';
+SET VARIABLE
+regression=# explain select * from tenk1 t1, tenk2 t2 where t1.unique1 < 100
+regression-# and t1.unique2 = t2.unique2;
+NOTICE:  QUERY PLAN:
+
+Hash Join  (cost=89.60..574.10 rows=100 width=296)
+  -&gt;  Seq Scan on tenk2 t2
+               (cost=0.00..333.00 rows=10000 width=148)
+  -&gt;  Hash  (cost=89.35..89.35 rows=100 width=148)
+        -&gt;  Index Scan using tenk1_unique1 on tenk1 t1
+               (cost=0.00..89.35 rows=100 width=148)
+    </programlisting>
+
+    This plan proposes to extract the 100 interesting rows of tenk1
+    using ye same olde indexscan, stash them into an in-memory hash table,
+    and then do a sequential scan of tenk2, probing into the hash table
+    for possible matches of "t1.unique2 = t2.unique2" at each tenk2 tuple.
+    The cost to read tenk1 and set up the hash table is entirely startup
+    cost for the hash join, since we won't get any tuples out until we can
+    start reading tenk2.  The total time estimate for the join also
+    includes a pretty hefty charge for CPU time to probe the hash table
+    10000 times.  Note, however, that we are NOT charging 10000 times 89.35;
+    the hash table setup is only done once in this plan type.
+   </para>
+  </sect1>
+ </chapter>
+
+<!-- Keep this comment at the end of the file
+Local variables:
+mode:sgml
+sgml-omittag:nil
+sgml-shorttag:t
+sgml-minimize-attributes:nil
+sgml-always-quote-attributes:t
+sgml-indent-step:1
+sgml-indent-data:t
+sgml-parent-document:nil
+sgml-default-dtd-file:"./reference.ced"
+sgml-exposed-tags:nil
+sgml-local-catalogs:("/usr/lib/sgml/CATALOG")
+sgml-local-ecat-files:nil
+End:
+-->

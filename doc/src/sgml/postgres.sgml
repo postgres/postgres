@@ -1,98 +1,104 @@
 <!doctype book PUBLIC "-//OASIS//DTD DocBook V3.1//EN" [
 
-<!entity about    SYSTEM "about.sgml">
-<!entity bug-reporting SYSTEM "bug-reporting.sgml">
-<!entity history  SYSTEM "history.sgml">
-<!entity info     SYSTEM "info.sgml">
-<!entity legal    SYSTEM "legal.sgml">
-<!entity notation SYSTEM "notation.sgml">
-<!entity y2k      SYSTEM "y2k.sgml">
+<!entity about      SYSTEM "about.sgml">
+<!entity history    SYSTEM "history.sgml">
+<!entity info       SYSTEM "info.sgml">
+<!entity legal      SYSTEM "legal.sgml">
+<!entity notation   SYSTEM "notation.sgml">
+<!entity problems   SYSTEM "problems.sgml">
+<!entity y2k        SYSTEM "y2k.sgml">
 
 <!-- tutorial -->
-<!entity arch     SYSTEM "arch.sgml">
-<!entity intro    SYSTEM "intro.sgml">
-<!entity query    SYSTEM "query.sgml">
-<!entity sql      SYSTEM "sql.sgml">
-<!entity start    SYSTEM "start.sgml">
+<!entity arch       SYSTEM "arch.sgml">
+<!entity intro      SYSTEM "intro.sgml">
+<!entity query      SYSTEM "query.sgml">
+<!entity sql        SYSTEM "sql.sgml">
+<!entity start      SYSTEM "start.sgml">
 
 <!-- user's guide -->
-<!entity advanced SYSTEM "advanced.sgml">
-<!entity array    SYSTEM "array.sgml">
-<!entity datatype SYSTEM "datatype.sgml">
-<!entity datetime SYSTEM "datetime.sgml">
-<!entity environ  SYSTEM "environ.sgml">
-<!entity func     SYSTEM "func.sgml">
-<!entity indices  SYSTEM "indices.sgml">
-<!entity inherit  SYSTEM "inherit.sgml">
-<!entity manage   SYSTEM "manage.sgml">
-<!entity mvcc     SYSTEM "mvcc.sgml">
-<!entity oper     SYSTEM "oper.sgml">
-<!entity pgaccess SYSTEM "pgaccess.sgml">
-<!entity psql     SYSTEM "psql.sgml">
-<!entity query-ug SYSTEM "query-ug.sgml">
-<!entity storage  SYSTEM "storage.sgml">
-<!entity syntax   SYSTEM "syntax.sgml">
-<!entity typeconv SYSTEM "typeconv.sgml">
+<!entity advanced   SYSTEM "advanced.sgml">
+<!entity array      SYSTEM "array.sgml">
+<!entity datatype   SYSTEM "datatype.sgml">
+<!entity datetime   SYSTEM "datetime.sgml">
+<!entity environ    SYSTEM "environ.sgml">
+<!entity func       SYSTEM "func.sgml">
+<!entity indices    SYSTEM "indices.sgml">
+<!entity inherit    SYSTEM "inherit.sgml">
+<!entity manage     SYSTEM "manage.sgml">
+<!entity mvcc       SYSTEM "mvcc.sgml">
+<!entity oper       SYSTEM "oper.sgml">
+<!entity plan       SYSTEM "plan.sgml">
+<!entity plperl     SYSTEM "plperl.sgml">
+<!entity plsql      SYSTEM "plsql.sgml">
+<!entity pltcl      SYSTEM "pltcl.sgml">
+<!entity populate   SYSTEM "populate.sgml">
+<!entity psql       SYSTEM "psql.sgml">
+<!entity query-ug   SYSTEM "query-ug.sgml">
+<!entity storage    SYSTEM "storage.sgml">
+<!entity syntax     SYSTEM "syntax.sgml">
+<!entity typeconv   SYSTEM "typeconv.sgml">
 
 <!-- reference pages -->
-<!entity % allfiles SYSTEM "ref/allfiles.sgml">
+<!entity % allfiles   SYSTEM "ref/allfiles.sgml">
 %allfiles;
 
 <!-- administrator's guide -->
-<!entity config    SYSTEM "config.sgml">
-<!entity intro-ag  SYSTEM "intro-ag.sgml">
-<!entity install   SYSTEM "install.sgml">
-<!entity installw  SYSTEM "install-win32.sgml">
-<!entity layout    SYSTEM "layout.sgml">
-<!entity manage-ag SYSTEM "manage-ag.sgml">
-<!entity ports     SYSTEM "ports.sgml">
-<!entity recovery  SYSTEM "recovery.sgml">
-<!entity regress   SYSTEM "regress.sgml">
-<!entity release   SYSTEM "release.sgml">
-<!entity runtime   SYSTEM "runtime.sgml">
-<!entity security  SYSTEM "security.sgml">
-<!entity start-ag  SYSTEM "start-ag.sgml">
-<!entity trouble   SYSTEM "trouble.sgml">
+<!entity config      SYSTEM "config.sgml">
+<!entity intro-ag    SYSTEM "intro-ag.sgml">
+<!entity install     SYSTEM "install.sgml">
+<!entity installw    SYSTEM "install-win32.sgml">
+<!entity layout      SYSTEM "layout.sgml">
+<!entity manage-ag   SYSTEM "manage-ag.sgml">
+<!entity ports       SYSTEM "ports.sgml">
+<!entity recovery    SYSTEM "recovery.sgml">
+<!entity regress     SYSTEM "regress.sgml">
+<!entity release     SYSTEM "release.sgml">
+<!entity runtime     SYSTEM "runtime.sgml">
+<!entity security    SYSTEM "security.sgml">
+<!entity start-ag    SYSTEM "start-ag.sgml">
+<!entity trouble     SYSTEM "trouble.sgml">
 
 <!-- programmer's guide -->
-<!entity arch-pg  SYSTEM "arch-pg.sgml">
-<!entity dfunc    SYSTEM "dfunc.sgml">
-<!entity ecpg     SYSTEM "ecpg.sgml">
-<!entity extend   SYSTEM "extend.sgml">
-<!entity func-ref SYSTEM "func-ref.sgml">
-<!entity gist     SYSTEM "gist.sgml">
-<!entity intro-pg SYSTEM "intro-pg.sgml">
-<!entity jdbc     SYSTEM "jdbc.sgml">
-<!entity libpq    SYSTEM "libpq.sgml">
-<!entity libpqpp  SYSTEM "libpq++.sgml">
-<!entity libpgtcl SYSTEM "libpgtcl.sgml">
-<!entity lisp     SYSTEM "lisp.sgml">
-<!entity lobj     SYSTEM "lobj.sgml">
-<!entity odbc     SYSTEM "odbc.sgml">
-<!entity rules    SYSTEM "rules.sgml">
-<!entity spi      SYSTEM "spi.sgml">
-<!entity trigger  SYSTEM "trigger.sgml">
-<!entity xaggr    SYSTEM "xaggr.sgml">
-<!entity xfunc    SYSTEM "xfunc.sgml">
-<!entity xindex   SYSTEM "xindex.sgml">
-<!entity xplang   SYSTEM "xplang.sgml">
-<!entity xoper    SYSTEM "xoper.sgml">
-<!entity xtypes   SYSTEM "xtypes.sgml">
+<!entity arch-pg    SYSTEM "arch-pg.sgml">
+<!entity dfunc      SYSTEM "dfunc.sgml">
+<!entity ecpg       SYSTEM "ecpg.sgml">
+<!entity extend     SYSTEM "extend.sgml">
+<!entity func-ref   SYSTEM "func-ref.sgml">
+<!entity gist       SYSTEM "gist.sgml">
+<!entity intro-pg   SYSTEM "intro-pg.sgml">
+<!entity indexcost  SYSTEM "indexcost.sgml">
+<!entity jdbc       SYSTEM "jdbc.sgml">
+<!entity libpq      SYSTEM "libpq.sgml">
+<!entity libpqpp    SYSTEM "libpq++.sgml">
+<!entity libpgtcl   SYSTEM "libpgtcl.sgml">
+<!entity lisp       SYSTEM "lisp.sgml">
+<!entity lobj       SYSTEM "lobj.sgml">
+<!entity odbc       SYSTEM "odbc.sgml">
+<!entity rules      SYSTEM "rules.sgml">
+<!entity spi        SYSTEM "spi.sgml">
+<!entity trigger    SYSTEM "trigger.sgml">
+<!entity xaggr      SYSTEM "xaggr.sgml">
+<!entity xfunc      SYSTEM "xfunc.sgml">
+<!entity xindex     SYSTEM "xindex.sgml">
+<!entity xplang     SYSTEM "xplang.sgml">
+<!entity xoper      SYSTEM "xoper.sgml">
+<!entity xtypes     SYSTEM "xtypes.sgml">
 
 <!-- developer's guide -->
-<!entity arch-dev SYSTEM "arch-dev.sgml">
-<!entity biblio   SYSTEM "biblio.sgml">
-<!entity bki      SYSTEM "bki.sgml">
-<!entity compiler SYSTEM "compiler.sgml">
-<!entity contacts SYSTEM "contacts.sgml">
-<!entity cvs      SYSTEM "cvs.sgml">
-<!entity docguide SYSTEM "docguide.sgml">
-<!entity geqo     SYSTEM "geqo.sgml">
-<!entity options  SYSTEM "pg_options.sgml">
-<!entity page     SYSTEM "page.sgml">
-<!entity protocol SYSTEM "protocol.sgml">
-<!entity signals  SYSTEM "signals.sgml">
-<!entity sources  SYSTEM "sources.sgml">
+<!entity arch-dev   SYSTEM "arch-dev.sgml">
+<!entity biblio     SYSTEM "biblio.sgml">
+<!entity bki        SYSTEM "bki.sgml">
+<!entity compiler   SYSTEM "compiler.sgml">
+<!entity contacts   SYSTEM "contacts.sgml">
+<!entity cvs        SYSTEM "cvs.sgml">
+<!entity docguide   SYSTEM "docguide.sgml">
+<!entity geqo       SYSTEM "geqo.sgml">
+<!entity index      SYSTEM "index.sgml">
+<!entity options    SYSTEM "pg_options.sgml">
+<!entity page       SYSTEM "page.sgml">
+<!entity protocol   SYSTEM "protocol.sgml">
+<!entity signals    SYSTEM "signals.sgml">
+<!entity sources    SYSTEM "sources.sgml">
 ]>
 <!-- entity manpages SYSTEM "man/manpages.sgml" subdoc -->
 <Book Id="postgres">
@@ -181,10 +187,15 @@ Your name here...
   &indices;
   &array;
   &inherit;
+  &plsql;
+  &pltcl;
+  &plperl;
   &mvcc;
   &environ;
   &manage;
   &storage;
+  &plan;
+  &populate;
   &commands;
  </Part>
 
@@ -237,6 +248,7 @@ Your name here...
    &xaggr;
    &rules;
    &xindex;
+   &indexcost;
    &gist;
    &dfunc;
    &trigger;

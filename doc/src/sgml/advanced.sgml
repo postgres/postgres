@@ -3,7 +3,7 @@
 
   <para>
    Having covered the basics  of  using
-   <productname>e>Postgr</productname>e>  <acronym>SQL</acronym>  to
+   <productname>Postgres</productname> <acronym>SQL</acronym>  to
    access your data, we will now discuss those features of
    <productname>Postgres</productname> that distinguish  it  from  conventional  data
    managers.   These  features  include  inheritance, time
@@ -103,7 +103,7 @@ SELECT c.name, c.altitude
     be  run over cities and all classes below cities in the
     inheritance hierarchy.  Many of the  commands  that  we
     have  already discussed (<command>select</command>,
-    <command>and>up</command>and> and <command>delete</command>)
+    <command>update</command> and <command>delete</command>)
     support this <quote>*</quote> notation, as do others, like
     <command>alter</command>.
    </para>

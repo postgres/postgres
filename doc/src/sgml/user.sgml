@@ -1,29 +1,34 @@
 <!doctype book PUBLIC "-//OASIS//DTD DocBook V3.1//EN" [
 
-<!entity about    SYSTEM "about.sgml">
-<!entity bug-reporting SYSTEM "bug-reporting.sgml">
-<!entity history  SYSTEM "history.sgml">
-<!entity info     SYSTEM "info.sgml">
-<!entity legal    SYSTEM "legal.sgml">
-<!entity notation SYSTEM "notation.sgml">
-<!entity y2k      SYSTEM "y2k.sgml">
+<!entity about      SYSTEM "about.sgml">
+<!entity history    SYSTEM "history.sgml">
+<!entity info       SYSTEM "info.sgml">
+<!entity legal      SYSTEM "legal.sgml">
+<!entity notation   SYSTEM "notation.sgml">
+<!entity problems   SYSTEM "problems.sgml">
+<!entity y2k        SYSTEM "y2k.sgml">
 
-<!entity advanced SYSTEM "advanced.sgml">
-<!entity array    SYSTEM "array.sgml">
-<!entity biblio   SYSTEM "biblio.sgml">
-<!entity datatype SYSTEM "datatype.sgml">
-<!entity datetime SYSTEM "datetime.sgml">
-<!entity environ  SYSTEM "environ.sgml">
-<!entity func     SYSTEM "func.sgml">
-<!entity indices  SYSTEM "indices.sgml">
-<!entity inherit  SYSTEM "inherit.sgml">
-<!entity intro    SYSTEM "intro.sgml">
-<!entity manage   SYSTEM "manage.sgml">
-<!entity mvcc     SYSTEM "mvcc.sgml">
-<!entity oper     SYSTEM "oper.sgml">
-<!entity storage  SYSTEM "storage.sgml">
-<!entity syntax   SYSTEM "syntax.sgml">
-<!entity typeconv SYSTEM "typeconv.sgml">
+<!entity advanced   SYSTEM "advanced.sgml">
+<!entity array      SYSTEM "array.sgml">
+<!entity biblio     SYSTEM "biblio.sgml">
+<!entity datatype   SYSTEM "datatype.sgml">
+<!entity datetime   SYSTEM "datetime.sgml">
+<!entity environ    SYSTEM "environ.sgml">
+<!entity func       SYSTEM "func.sgml">
+<!entity indices    SYSTEM "indices.sgml">
+<!entity inherit    SYSTEM "inherit.sgml">
+<!entity intro      SYSTEM "intro.sgml">
+<!entity manage     SYSTEM "manage.sgml">
+<!entity mvcc       SYSTEM "mvcc.sgml">
+<!entity oper       SYSTEM "oper.sgml">
+<!entity plan       SYSTEM "plan.sgml">
+<!entity plperl     SYSTEM "plperl.sgml">
+<!entity plsql      SYSTEM "plsql.sgml">
+<!entity pltcl      SYSTEM "pltcl.sgml">
+<!entity populate   SYSTEM "populate.sgml">
+<!entity storage    SYSTEM "storage.sgml">
+<!entity syntax     SYSTEM "syntax.sgml">
+<!entity typeconv   SYSTEM "typeconv.sgml">
 
 <!-- reference pages -->
 <!entity % allfiles SYSTEM "allfiles.sgml">
@@ -108,10 +113,15 @@ Your name here...
  &indices;
  &array;
  &inherit;
+ &plsql;
+ &pltcl;
+ &plperl;
  &mvcc;
  &environ;
  &manage;
  &storage;
+ &plan;
+ &populate
  &commands;
 
  <!-- appendices -->

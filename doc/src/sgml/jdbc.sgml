@@ -233,13 +233,13 @@ Class.forName("postgresql.Driver");
 
      <listitem>
       <para>
-       jdbc:postgresql://<replaceable class="parameter">>hos</replaceable>>/<replaceable class="parameter">database</replaceable>
+       jdbc:postgresql://<replaceable class="parameter">host</replaceable>/<replaceable class="parameter">database</replaceable>
       </para>
      </listitem>
 
      <listitem>
       <para>
-       jdbc:postgresql://<replaceable class="parameter">>hos</replaceable>><replaceable class="parameter">">po</replaceable>e>/<replaceable class="parameter">database</replaceable>
+       jdbc:postgresql://<replaceable class="parameter">host</replaceable><replaceable class="parameter">port</replaceable>/<replaceable class="parameter">database</replaceable>
       </para>
      </listitem>
     </itemizedlist>

@@ -1,11 +1,18 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/Attic/admin.sgml,v 1.19 2000/03/28 14:16:06 thomas Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/Attic/admin.sgml,v 1.20 2000/03/30 22:22:40 thomas Exp $
 
 Postgres Administrator's Guide.
 Derived from postgres.sgml.
 - thomas 1998-10-27
 
 $Log: admin.sgml,v $
+Revision 1.20  2000/03/30 22:22:40  thomas
+Accumulated fixups.
+Add some chapters on new topics.
+Change to referencing OASIS/Docbook v3.1 rather than Davenport/Docbook v3.0
+Grepped for and fixed apparent tag mangling from emacs
+ "Normalize" operation. Should be the last of those.
+
 Revision 1.19  2000/03/28 14:16:06  thomas
 Update SGML catalog references to DocBook 3.1 on FreeBSD.
 Matches postgresql.org/hub.org environment.
@@ -34,6 +41,7 @@ Clean out duplicate stuff in odbc.sgml resulting from a faulty patch.
 <!entity info      SYSTEM "info.sgml">
 <!entity legal     SYSTEM "legal.sgml">
 <!entity notation  SYSTEM "notation.sgml">
+<!entity problems  SYSTEM "problems.sgml">
 <!entity y2k       SYSTEM "y2k.sgml">
 
 <!entity config    SYSTEM "config.sgml">

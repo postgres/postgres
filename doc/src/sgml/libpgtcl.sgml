@@ -671,6 +671,16 @@ the number of attributes in each tuple.
 </VARLISTENTRY>
 <VARLISTENTRY>
 <TERM>
+-list VarName
+</TERM>
+<LISTITEM>
+<PARA>
+assign the results to a list of lists.
+</PARA>
+</LISTITEM>
+</VARLISTENTRY>
+<VARLISTENTRY>
+<TERM>
 -assign arrayName
 </TERM>
 <LISTITEM>
