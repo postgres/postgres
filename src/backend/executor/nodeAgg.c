@@ -111,7 +111,6 @@ ExecAgg(Agg *node)
 				isNull2 = FALSE;
 
 
-	/***S*H***/
 	do { 
 
 
@@ -486,7 +485,6 @@ ExecAgg(Agg *node)
 	 * ----------------
 	 */
 
-        /***S*H***/
 	}
 	while((ExecQual(fix_opids(node->plan.qual),econtext)!=true) && 
 	      (node->plan.qual!=NULL));
