@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/access/heap/heapam.c,v 1.65 2000/01/26 05:55:56 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/access/heap/heapam.c,v 1.66 2000/02/09 03:49:47 inoue Exp $
  *
  *
  * INTERFACE ROUTINES
@@ -848,11 +848,6 @@ heap_getnext(HeapScanDesc scandesc, int backw)
 		if (scan->rs_ptup.t_data == scan->rs_ctup.t_data &&
 			BufferIsInvalid(scan->rs_pbuf))
 		{
-			if (BufferIsValid(scan->rs_nbuf))
-				ReleaseBuffer(scan->rs_nbuf);
-			scan->rs_ntup.t_datamcxt = NULL;
-			scan->rs_ntup.t_data = NULL;
-			scan->rs_nbuf = UnknownBuffer;
 			return NULL;
 		}
 
@@ -910,11 +905,6 @@ heap_getnext(HeapScanDesc scandesc, int backw)
 			scan->rs_ptup.t_datamcxt = NULL;
 			scan->rs_ptup.t_data = NULL;
 			scan->rs_pbuf = InvalidBuffer;
-			if (BufferIsValid(scan->rs_nbuf))
-				ReleaseBuffer(scan->rs_nbuf);
-			scan->rs_ntup.t_datamcxt = NULL;
-			scan->rs_ntup.t_data = NULL;
-			scan->rs_nbuf = InvalidBuffer;
 			return NULL;
 		}
 
@@ -934,11 +924,6 @@ heap_getnext(HeapScanDesc scandesc, int backw)
 		if (scan->rs_ctup.t_data == scan->rs_ntup.t_data &&
 			BufferIsInvalid(scan->rs_nbuf))
 		{
-			if (BufferIsValid(scan->rs_pbuf))
-				ReleaseBuffer(scan->rs_pbuf);
-			scan->rs_ptup.t_datamcxt = NULL;
-			scan->rs_ptup.t_data = NULL;
-			scan->rs_pbuf = UnknownBuffer;
 			HEAPDEBUG_3;		/* heap_getnext returns NULL at end */
 			return NULL;
 		}
@@ -998,11 +983,6 @@ heap_getnext(HeapScanDesc scandesc, int backw)
 			scan->rs_ntup.t_datamcxt = NULL;
 			scan->rs_ntup.t_data = NULL;
 			scan->rs_nbuf = InvalidBuffer;
-			if (BufferIsValid(scan->rs_pbuf))
-				ReleaseBuffer(scan->rs_pbuf);
-			scan->rs_ptup.t_datamcxt = NULL;
-			scan->rs_ptup.t_data = NULL;
-			scan->rs_pbuf = InvalidBuffer;
 			HEAPDEBUG_6;		/* heap_getnext returning EOS */
 			return NULL;
 		}
