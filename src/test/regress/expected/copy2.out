@@ -40,6 +40,5 @@ COPY x TO stdout;
 4	4	stuff	test_4	after trigger fired
 5	5	stuff	test_5	after trigger fired
 DROP TABLE x;
-DROP SEQUENCE x_a_seq;
 DROP FUNCTION fn_x_before();
 DROP FUNCTION fn_x_after();
