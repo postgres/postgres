@@ -1,4 +1,4 @@
-<!-- $Header: /cvsroot/pgsql/doc/src/sgml/client-auth.sgml,v 1.2 2000/07/04 16:31:51 petere Exp $ -->
+<!-- $Header: /cvsroot/pgsql/doc/src/sgml/client-auth.sgml,v 1.3 2000/07/15 21:35:47 petere Exp $ -->
 
 <chapter id="client-authentication">
  <title>Client Authentication</title>
@@ -295,7 +295,8 @@ host    all     192.168.2.0     255.255.255.0           ident othermap
     file after the <literal>password</> or <literal>crypt</> keyword,
     respectively, in <filename>pg_hba.conf</>. If you do not use this
     feature, then any user that is known to the database system can
-    connect (as long as he passes password authentication, of course).
+    connect to any database (as long as he passes password
+    authentication, of course).
    </para>
 
    <para>
@@ -316,7 +317,7 @@ host    all     192.168.2.0     255.255.255.0           ident othermap
 
    <para>
     Lines with and without passwords can be mixed in secondary
-    password files. Lines without password indicate use the main
+    password files. Lines without password indicate use of the main
     password in <literal>pg_shadow</> that is managed by
     <command>CREATE USER</> and <command>ALTER USER</>. Lines with
     passwords will cause that password to be used. A password entry of
@@ -348,14 +349,20 @@ host    all     192.168.2.0     255.255.255.0           ident othermap
     authentication system suitable for distributed computing over a
     public network. A description of the
     <productname>Kerberos</productname> system is far beyond the scope
-    of this document; in all generality it can be quite complex. The
-    <ulink url="http://www.nrl.navy.mil/CCS/people/kenh/kerberos-faq.html">Kerberos <acronym>FAQ</></ulink>
-    can be a good starting point for exploration.
+    of this document; in all generality it can be quite complex (yet
+    powerful). The <ulink
+    url="http://www.nrl.navy.mil/CCS/people/kenh/kerberos-faq.html">Kerberos
+    <acronym>FAQ</></ulink> or <ulink
+    url="ftp://athena-dist.mit.edu">MIT Project Athena</ulink> can be
+    a good starting point for exploration. Several sources for
+    <productname>Kerberos</> distributions exist.
    </para>
 
    <para>
     In order to use <productname>Kerberos</>, support for it must be
-    enable at build time. Both Kerberos 4 and 5 are supported.
+    enable at build time. Both Kerberos 4 and 5 are supported
+    (<literal>./configure --with-krb4</> or <literal>./configure
+    --with-krb5</> respectively).
    </para>
 
    <para>
@@ -365,14 +372,74 @@ host    all     192.168.2.0     255.255.255.0           ident othermap
     build. Make sure that your server keytab file is readable (and
     preferrably only readable) by the Postgres server account (see
     <xref linkend="postgres-user">). The location of the keytab file
-    is specified at build time. By default it is
+    is specified at build time; by default it is
     <filename>/etc/srvtab</filename> in Kerberos 4 and
-    <filename>FILE:/usr/local/postgres/krb5.keytab</filename> in
+    <filename>FILE:/usr/local/pgsql/etc/krb5.keytab</filename> in
     Kerberos 5.
    </para>
-<!-- Note from Peter E.: Some of the Kerberos usage information is
-still in config.sgml and some in doc/README.kerberos. It should be
-integrated here. -->
+
+   <para>
+    To generate the keytab file, use for example (with version 5)
+<screen>
+kadmin% <userinput>ank -randkey postgres/server.my.domain.org</>
+kadmin% <userinput>ktadd -k krb5.keytab postgres/server.my.domain.org</>
+</screen>
+    Read the <productname>Kerberos</> documentation for defails.
+   </para>
+
+   <para>
+    In the <productname>Kerberos</> 5 hooks, the following assumptions
+    are made about user and service naming:
+
+    <itemizedlist>
+     <listitem>
+      <para>
+       User principal names (anames) are assumed to contain the actual
+       Unix/<productname>Postgres</> user name in the first component.
+      </para>
+     </listitem>
+     <listitem>
+      <para>
+       The <productname>Postgres</> service is assumed to be have two
+       components, the service name and a hostname, canonicalized as
+       in Version 4 (i.e., with all domain suffixes removed).
+      </para>
+     </listitem>
+    </itemizedlist>
+
+    <informaltable>
+     <tgroup cols="2">
+      <thead>
+       <row>
+        <entry>Parameter</>
+	<entry>Example</>
+       </row>
+      </thead>
+      <tbody>
+       <row>
+	<entry>user</>
+	<entry>frew@S2K.ORG</>
+       </row>
+       <row>
+	<entry>user</>
+	<entry>aoki/HOST=miyu.S2K.Berkeley.EDU@S2K.ORG</>
+       </row>	   
+       <row>
+	<entry>host</>
+	<entry>postgres_dbms/ucbvax@S2K.ORG</>
+       </row>
+      </tbody>
+     </tgroup>
+    </informaltable>
+   </para>
+
+   <para>
+    If you use mod_auth_krb and mod_perl on your Apache web server,
+    you can use AuthType KerberosV5SaveCredentials with a mod_perl
+    script. This gives secure database access over the web, no extra
+    passwords required.
+   </para>
+
   </sect2>
 
   <sect2>
