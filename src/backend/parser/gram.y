@@ -10,7 +10,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/parser/gram.y,v 2.83 1999/05/22 05:06:43 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/parser/gram.y,v 2.84 1999/06/07 14:28:25 tgl Exp $
  *
  * HISTORY
  *	  AUTHOR			DATE			MAJOR EVENT
@@ -5357,6 +5357,7 @@ static Node *makeIndexable(char *opname, Node *lexpr, Node *rexpr)
 			int pos, match_pos=0;
 			bool found_special = false;
 
+			/* Cannot optimize if unquoted | { } is present in pattern */
 			for (pos = 1; n->val.val.str[pos]; pos++)
 			{
 				if (n->val.val.str[pos] == '|' ||
@@ -5367,12 +5368,16 @@ static Node *makeIndexable(char *opname, Node *lexpr, Node *rexpr)
 					break;
 				}
 		     	if (n->val.val.str[pos] == '\\')
+				{
 					pos++;
+					if (n->val.val.str[pos] == '\0')
+						break;
+				}
 			}
 
-			/* skip leading ^ */
 			if (!found_special)
 			{
+				/* note start at pos 1 to skip leading ^ */
 				for (pos = 1; n->val.val.str[pos]; pos++)
 				{
 					if (n->val.val.str[pos] == '.' ||
@@ -5383,9 +5388,11 @@ static Node *makeIndexable(char *opname, Node *lexpr, Node *rexpr)
 						(strcmp(opname,"~*") == 0 && isalpha(n->val.val.str[pos])))
 			     		break;
 			     	if (n->val.val.str[pos] == '\\')
+					{
 						pos++;
-					if (n->val.val.str[pos] == '\0')
-						break;
+						if (n->val.val.str[pos] == '\0')
+							break;
+					}
 					match_least[match_pos] = n->val.val.str[pos];
 					match_most[match_pos++] = n->val.val.str[pos];
 				}
@@ -5430,16 +5437,22 @@ static Node *makeIndexable(char *opname, Node *lexpr, Node *rexpr)
 	
 			for (pos = 0; n->val.val.str[pos]; pos++)
 			{
-				if (n->val.val.str[pos] == '%' &&
-					 n->val.val.str[pos+1] != '%')
+				/* % and _ are wildcard characters in LIKE */
+				if (n->val.val.str[pos] == '%' ||
+					n->val.val.str[pos] == '_')
 					break;
-				if(n->val.val.str[pos] == '_')
-					break;
-		     	if (n->val.val.str[pos] == '\\' ||
-			     	n->val.val.str[pos+1] == '%')
+				/* Backslash quotes the next character */
+				if (n->val.val.str[pos] == '\\')
+				{
 					pos++;
-				if (n->val.val.str[pos] == '\0')
-					break;
+					if (n->val.val.str[pos] == '\0')
+						break;
+				}
+				/*
+				 * NOTE: this code used to think that %% meant a literal %,
+				 * but textlike() itself does not think that, and the SQL92
+				 * spec doesn't say any such thing either.
+				 */
 				match_least[match_pos] = n->val.val.str[pos];
 				match_most[match_pos++] = n->val.val.str[pos];
 			}

@@ -111,7 +111,7 @@ textnlike(struct varlena * s, struct varlena * p)
 }
 
 
-/*	$Revision: 1.24 $
+/*	$Revision: 1.25 $
 **	"like.c" A first attempt at a LIKE operator for Postgres95.
 **
 **	Originally written by Rich $alz, mirror!rs, Wed Nov 26 19:03:17 EST 1986.
@@ -191,7 +191,9 @@ DoMatch(pg_wchar * text, pg_wchar * p)
 	else
 	{
 		/* End of input string.  Do we have matching string remaining? */
-		if (p[0] == '\0' || (p[0] == '%' && p[1] == '\0'))
+		while (*p == '%')		/* allow multiple %'s at end of pattern */
+			p++;
+		if (*p == '\0')
 			return LIKE_TRUE;
 		else
 			return LIKE_ABORT;
