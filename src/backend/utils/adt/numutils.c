@@ -10,7 +10,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/numutils.c,v 1.18 1997/12/19 02:08:01 scrappy Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/numutils.c,v 1.19 1997/12/20 00:10:29 scrappy Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -26,10 +26,6 @@
 #include <regex/utils.h>
 #else
 #include <string.h>
-#endif
-
-#ifndef HAVE_FCVT
-#  include <port-protos.h>		/* ecvt(), fcvt() */
 #endif
 
 #ifndef INT_MAX

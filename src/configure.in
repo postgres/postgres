@@ -12,21 +12,9 @@ case "$host_os" in
    sunos*) PORTNAME='sunos4' ;;
    linux*) PORTNAME='linux' ;;
     bsdi*) PORTNAME='bsdi' ;;
- freebsd*|netbsd*) 
-			AC_LINK_FILES(backend/port/dynloader/bsd.c, 
-						  backend/port/dynloader/dynloader.c)
-			AC_LINK_FILES(backend/port/dynloader/bsd.h, include/dynloader.h)
-			AC_LINK_FILES(include/port/bsd.h, include/os.h)
-			AC_LINK_FILES(makefiles/Makefile.bsd, Makefile.port)
-			;;
+ freebsd*|netbsd*) os=bsd ;;
     dgux*) PORTNAME='dgux';;
-     aix*) 
-			AC_LINK_FILES(backend/port/dynloader/aix.c, 
-						  backend/port/dynloader/dynloader.c)
-			AC_LINK_FILES(backend/port/dynloader/aix.h, include/dynloader.h)
-			AC_LINK_FILES(include/port/aix.h, include/os.h)
-			AC_LINK_FILES(makefiles/Makefile.aix, Makefile.port)
-			;;
+     aix*) os=aix ;;
 nextstep*) PORTNAME='nextstep';;
   ultrix*) PORTNAME='ultrix4';;
     irix*) PORTNAME='irix5';;
@@ -51,6 +39,11 @@ nextstep*) PORTNAME='nextstep';;
    echo ""
    exit;;
 esac
+
+AC_LINK_FILES(backend/port/dynloader/${os}.c, backend/port/dynloader.c)
+AC_LINK_FILES(backend/port/dynloader/${os}.h, include/dynloader.h)
+AC_LINK_FILES(include/port/${os}.h, include/os.h)
+AC_LINK_FILES(makefiles/Makefile.${os}, Makefile.port) 
 
 AC_SUBST(PORTNAME)
 

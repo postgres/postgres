@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/fmgr/dfmgr.c,v 1.13 1997/09/18 20:22:27 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/fmgr/dfmgr.c,v 1.14 1997/12/20 00:10:42 scrappy Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -26,7 +26,8 @@
 #include "access/heapam.h"
 #include "nodes/pg_list.h"
 
-#include "port-protos.h"		/* system specific function prototypes */
+#include "dynloader.h"
+
 #ifdef __ultrix
 #include <dl.h>
 #endif

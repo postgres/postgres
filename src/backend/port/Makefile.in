@@ -19,33 +19,32 @@
 # be converted to Method 2.  
 #
 # IDENTIFICATION
-#    $Header: /cvsroot/pgsql/src/backend/port/Attic/Makefile.in,v 1.7 1997/12/19 02:56:16 scrappy Exp $
+#    $Header: /cvsroot/pgsql/src/backend/port/Attic/Makefile.in,v 1.8 1997/12/20 00:10:14 scrappy Exp $
 #
 #-------------------------------------------------------------------------
 
 SRCDIR=../..
 include ../../Makefile.global
 
-OBJS = @PORTNAME@/SUBSYS.o @INET_ATON@ @STRERROR@ @RANDOM@ @SRANDOM@
+INCLUDE_OPT = -I..
+
+CFLAGS+= INCLUDE_OPT
+
+OBJS = dynloader.o @INET_ATON@ @STRERROR@ @RANDOM@ @SRANDOM@
 OBJS+= @GETHOSTNAME@ @GETRUSAGE@ @STRCASECMP@ @STRDUP@
 
-all: submake SUBSYS.o
+all: SUBSYS.o
 
 SUBSYS.o: $(OBJS)
 	$(LD) -r -o SUBSYS.o $(OBJS)
 
-.PHONY: submake clean dep
-
-submake:
-	$(MAKE) -C @PORTNAME@ SUBSYS.o
+.PHONY: clean dep
 
 clean:
 	rm -f SUBSYS.o $(OBJS)
-	$(MAKE) -C @PORTNAME@ clean
 
 depend dep:
 	$(CC) -MM $(INCLUDE_OPT) *.c >depend
-	$(MAKE) -C @PORTNAME@ $@
 
 ifeq (depend,$(wildcard depend))
 include depend
