@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/storage/buffer/bufmgr.c,v 1.55 1999/06/11 09:00:02 vadim Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/storage/buffer/bufmgr.c,v 1.56 1999/06/29 04:54:47 vadim Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -77,6 +77,15 @@ extern long int BufferHitCount;
 extern long int LocalBufferHitCount;
 extern long int BufferFlushCount;
 extern long int LocalBufferFlushCount;
+
+/*
+ * It's used to avoid disk writes for read-only transactions
+ * (i.e. when no one shared buffer was changed by transaction).
+ * We set it to true in WriteBuffer/WriteNoReleaseBuffer when
+ * marking shared buffer as dirty. We set it to false in xact.c
+ * after transaction is committed/aborted.
+ */
+bool			SharedBufferChanged = false;
 
 static int	WriteMode = BUFFER_LATE_WRITE;		/* Delayed write is
 												 * default */
@@ -699,6 +708,8 @@ WriteBuffer(Buffer buffer)
 
 		bufHdr = &BufferDescriptors[buffer - 1];
 
+		SharedBufferChanged = true;
+
 		SpinAcquire(BufMgrLock);
 		Assert(bufHdr->refcount > 0);
 		bufHdr->flags |= (BM_DIRTY | BM_JUST_DIRTIED);
@@ -810,6 +821,8 @@ FlushBuffer(Buffer buffer, bool release)
 	bufrel = RelationIdCacheGetRelation(bufHdr->tag.relId.relId);
 	Assert(bufrel != (Relation) NULL);
 
+	SharedBufferChanged = true;
+
 	/* To check if block content changed while flushing. - vadim 01/17/97 */
 	SpinAcquire(BufMgrLock);
 	bufHdr->flags &= ~BM_JUST_DIRTIED;
@@ -874,6 +887,8 @@ WriteNoReleaseBuffer(Buffer buffer)
 			return STATUS_ERROR;
 
 		bufHdr = &BufferDescriptors[buffer - 1];
+
+		SharedBufferChanged = true;
 
 		SpinAcquire(BufMgrLock);
 		bufHdr->flags |= (BM_DIRTY | BM_JUST_DIRTIED);
