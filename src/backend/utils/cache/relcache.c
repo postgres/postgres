@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/cache/relcache.c,v 1.122 2001/01/02 04:33:19 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/cache/relcache.c,v 1.123 2001/01/04 02:24:22 inoue Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -1599,9 +1599,6 @@ RelationReloadClassinfo(Relation relation)
 	relation->rd_node.relNode = relp->relfilenode;
 	RelationCacheInsert(relation);
 	heap_freetuple(pg_class_tuple);
-fprintf(stderr, "RelationClearRelation nailed %s hasindex=%d relfilenode=%d,%d\n",
-RelationGetRelationName(relation), relation->rd_rel->relhasindex,
-relation->rd_rel->relfilenode, relation->rd_node.relNode);
 
 	return;
 }
