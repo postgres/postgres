@@ -21,7 +21,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/bin/pg_dump/pg_dump.c,v 1.124 1999/11/22 17:56:36 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/bin/pg_dump/pg_dump.c,v 1.125 1999/12/11 00:31:05 momjian Exp $
  *
  * Modifications - 6/10/96 - dave@bensoft.com - version 1.13.dhb
  *
@@ -299,14 +299,13 @@ dumpClasses_nodumpData(FILE *fout, const char *classname, const bool oids)
 
 
 static void
-dumpClasses_dumpData(FILE *fout, const char *classname,
-					 const TableInfo tblinfo, bool oids)
+dumpClasses_dumpData(FILE *fout, const char *classname)
 {
 	PGresult   *res;
 	char		q[MAX_QUERY_SIZE];
 	int			tuple;
 	int			field;
-	char	   *expsrc;
+	const char *expsrc;
 
 	sprintf(q, "SELECT * FROM %s", fmtId(classname, force_quotes));
 	res = PQexec(g_conn, q);
@@ -456,7 +455,7 @@ dumpClasses(const TableInfo *tblinfo, const int numTables, FILE *fout,
 			if (!dumpData)
 				dumpClasses_nodumpData(fout, classname, oids);
 			else
-				dumpClasses_dumpData(fout, classname, tblinfo[i], oids);
+				dumpClasses_dumpData(fout, classname);
 		}
 	}
 }
@@ -1082,7 +1081,8 @@ clearTableInfo(TableInfo *tblinfo, int numTables)
 			free(tblinfo[i].typnames);
 		if (tblinfo[i].notnull)
 			free(tblinfo[i].notnull);
-
+        if (tblinfo[i].primary_key)
+            free(tblinfo[i].primary_key);
 	}
 	free(tblinfo);
 }
@@ -1408,6 +1408,7 @@ getTables(int *numTables, FuncInfo *finfo, int numFuncs)
 	int			i_usename;
 	int			i_relchecks;
 	int			i_reltriggers;
+    int         i_relhasindex;
 
 	/*
 	 * find all the user-defined tables (no indices and no catalogs),
@@ -1421,7 +1422,7 @@ getTables(int *numTables, FuncInfo *finfo, int numFuncs)
 
 	sprintf(query,
 			"SELECT pg_class.oid, relname, relkind, relacl, usename, "
-			"relchecks, reltriggers "
+			"relchecks, reltriggers, relhasindex "
 			"from pg_class, pg_user "
 			"where relowner = usesysid and "
 			"(relkind = 'r' or relkind = 'S') and relname !~ '^pg_' "
@@ -1448,6 +1449,7 @@ getTables(int *numTables, FuncInfo *finfo, int numFuncs)
 	i_usename = PQfnumber(res, "usename");
 	i_relchecks = PQfnumber(res, "relchecks");
 	i_reltriggers = PQfnumber(res, "reltriggers");
+    i_relhasindex = PQfnumber(res, "relhasindex");
 
 	for (i = 0; i < ntups; i++)
 	{
@@ -1547,8 +1549,8 @@ getTables(int *numTables, FuncInfo *finfo, int numFuncs)
 			tblinfo[i].check_expr = (char **) malloc(ntups2 * sizeof(char *));
 			for (i2 = 0; i2 < ntups2; i2++)
 			{
-				char	   *name = PQgetvalue(res2, i2, i_rcname);
-				char	   *expr = PQgetvalue(res2, i2, i_rcsrc);
+				const char *name = PQgetvalue(res2, i2, i_rcname);
+				const char *expr = PQgetvalue(res2, i2, i_rcsrc);
 
 				query[0] = '\0';
 				if (name[0] != '$')
@@ -1560,6 +1562,48 @@ getTables(int *numTables, FuncInfo *finfo, int numFuncs)
 		}
 		else
 			tblinfo[i].check_expr = NULL;
+
+        /* Get primary key */
+        if (strcmp(PQgetvalue(res, i, i_relhasindex), "t")==0)
+        {
+            PGresult * res2;
+            char str[INDEX_MAX_KEYS * NAMEDATALEN + 3] = "";
+            int j;
+
+            sprintf(query,
+                    "SELECT a.attname "
+                    "FROM pg_index i, pg_class c, pg_attribute a "
+                    "WHERE i.indisprimary AND i.indrelid = %s "
+                    "  AND i.indexrelid = c.oid AND a.attnum > 0 AND a.attrelid = c.oid "
+                    "ORDER BY a.attnum ",
+                    tblinfo[i].oid);
+            res2 = PQexec(g_conn, query);
+			if (!res2 || PQresultStatus(res2) != PGRES_TUPLES_OK)
+			{
+				fprintf(stderr, "getTables(): SELECT (for PRIMARY KEY) failed.  Explanation from backend: %s",
+                        PQerrorMessage(g_conn));
+				exit_nicely(g_conn);
+			}
+            
+            for (j = 0; j < PQntuples(res2); j++)
+            {
+                if (strlen(str)>0)
+                    strcat(str, ", ");
+                strcat(str, fmtId(PQgetvalue(res2, j, 0), force_quotes));
+            }
+
+            if (strlen(str)>0) {
+                tblinfo[i].primary_key = strdup(str);
+                if (tblinfo[i].primary_key == NULL) {
+                    perror("strdup");
+                    exit(1);
+                }
+            }
+            else
+                tblinfo[i].primary_key = NULL;
+        }
+        else
+            tblinfo[i].primary_key = NULL;
 
 		/* Get Triggers */
 		if (tblinfo[i].ntrig > 0)
@@ -1605,11 +1649,11 @@ getTables(int *numTables, FuncInfo *finfo, int numFuncs)
 			tblinfo[i].triggers = (char **) malloc(ntups2 * sizeof(char *));
 			for (i2 = 0, query[0] = 0; i2 < ntups2; i2++)
 			{
-				char	   *tgfunc = PQgetvalue(res2, i2, i_tgfoid);
+				const char *tgfunc = PQgetvalue(res2, i2, i_tgfoid);
 				int2		tgtype = atoi(PQgetvalue(res2, i2, i_tgtype));
 				int			tgnargs = atoi(PQgetvalue(res2, i2, i_tgnargs));
-				char	   *tgargs = PQgetvalue(res2, i2, i_tgargs);
-				char	   *p;
+				const char *tgargs = PQgetvalue(res2, i2, i_tgargs);
+				const char *p;
 				char		farg[MAX_QUERY_SIZE];
 				int			findx;
 
@@ -1670,8 +1714,8 @@ getTables(int *numTables, FuncInfo *finfo, int numFuncs)
 				 query, fmtId(tblinfo[i].relname, force_quotes), tgfunc);
 				for (findx = 0; findx < tgnargs; findx++)
 				{
-					char	   *s,
-							   *d;
+					const char	   *s;
+                    char           *d;
 
 					for (p = tgargs;;)
 					{
@@ -1921,13 +1965,13 @@ getIndices(int *numIndices)
 	 */
 
 	sprintf(query,
-		  "SELECT t1.relname as indexrelname, t2.relname as indrelname, "
+            "SELECT t1.relname as indexrelname, t2.relname as indrelname, "
 			"i.indproc, i.indkey, i.indclass, "
 			"a.amname as indamname, i.indisunique "
 			"from pg_index i, pg_class t1, pg_class t2, pg_am a "
-			"where t1.oid = i.indexrelid and t2.oid = i.indrelid "
+			"WHERE t1.oid = i.indexrelid and t2.oid = i.indrelid "
 			"and t1.relam = a.oid and i.indexrelid > '%u'::oid "
-			"and t2.relname !~ '^pg_' and t2.relkind != 'l'",
+			"and t2.relname !~ '^pg_' and t2.relkind != 'l' and not i.indisprimary",
 			g_last_builtin_oid);
 
 	res = PQexec(g_conn, query);
@@ -2066,7 +2110,7 @@ dumpProcLangs(FILE *fout, FuncInfo *finfo, int numFuncs,
 	int			i_lancompiler;
 	char	   *lanname;
 	char	   *lancompiler;
-	char	   *lanplcallfoid;
+	const char *lanplcallfoid;
 	int			i,
 				fidx;
 
@@ -2747,7 +2791,14 @@ dumpTables(FILE *fout, TableInfo *tblinfo, int numTables,
 						tblinfo[i].check_expr[k]);
 			}
 
-			strcat(q, ")");
+            /* PRIMARY KEY */
+            if (tblinfo[i].primary_key) {
+                if (actual_atts + tblinfo[i].ncheck > 0)
+                    strcat(q, ",\n\t");
+                sprintf(q + strlen(q), "PRIMARY KEY (%s)", tblinfo[i].primary_key);
+            }
+
+            strcat(q, "\n)");
 
 			if (numParents > 0)
 			{
@@ -3134,8 +3185,8 @@ dumpSequence(FILE *fout, TableInfo tbinfo)
 				minv,
 				cache;
 	char		cycled,
-				called,
-			   *t;
+				called;
+    const char *t;
 	char		query[MAX_QUERY_SIZE];
 
 	sprintf(query,

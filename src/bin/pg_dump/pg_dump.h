@@ -5,7 +5,7 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: pg_dump.h,v 1.41 1999/11/22 17:56:36 momjian Exp $
+ * $Id: pg_dump.h,v 1.42 1999/12/11 00:31:05 momjian Exp $
  *
  * Modifications - 6/12/96 - dave@bensoft.com - version 1.13.dhb.2
  *
@@ -101,6 +101,7 @@ typedef struct _tableInfo
 	char	  **check_expr;		/* [CONSTRAINT name] CHECK expressions */
 	int			ntrig;			/* # of triggers */
 	char	  **triggers;		/* CREATE TRIGGER ... */
+    char       *primary_key;    /* PRIMARY KEY of the table, if any */
 } TableInfo;
 
 typedef struct _inhInfo
