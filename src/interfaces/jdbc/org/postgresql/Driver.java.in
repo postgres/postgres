@@ -6,7 +6,7 @@
  * Copyright (c) 2003, PostgreSQL Global Development Group
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/interfaces/jdbc/org/postgresql/Attic/Driver.java.in,v 1.35 2003/09/08 17:30:22 barry Exp $
+ *	  $Header: /cvsroot/pgsql/src/interfaces/jdbc/org/postgresql/Attic/Driver.java.in,v 1.36 2003/09/13 04:02:12 barry Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -142,7 +142,7 @@ public class Driver implements java.sql.Driver
 		{
 			if (Driver.logDebug)
 				Driver.debug("error", ex);
-			throw new PSQLException("postgresql.jvm.version", ex);
+			throw new PSQLException("postgresql.jvm.version", PSQLState.SYSTEM_ERROR, ex);
 		}
 		catch (PSQLException ex1)
 		{
@@ -155,7 +155,7 @@ public class Driver implements java.sql.Driver
 			if (Driver.logDebug) {
 				Driver.debug("error", ex2);
 			}
-			throw new PSQLException("postgresql.unusual", ex2);
+			throw new PSQLException("postgresql.unusual", PSQLState.UNEXPECTED_ERROR, ex2);
 		}
 	}
 
@@ -504,6 +504,6 @@ public class Driver implements java.sql.Driver
 
 
 	//The build number should be incremented for every new build
-	private static int m_buildNumber = 208;
+	private static int m_buildNumber = 209;
 
 }

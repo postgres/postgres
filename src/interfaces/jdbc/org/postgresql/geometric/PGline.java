@@ -6,17 +6,19 @@
  * Copyright (c) 2003, PostgreSQL Global Development Group
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/interfaces/jdbc/org/postgresql/geometric/Attic/PGline.java,v 1.4 2003/03/07 18:39:42 barry Exp $
+ *	  $Header: /cvsroot/pgsql/src/interfaces/jdbc/org/postgresql/geometric/Attic/PGline.java,v 1.5 2003/09/13 04:02:15 barry Exp $
  *
  *-------------------------------------------------------------------------
  */
 package org.postgresql.geometric;
 
-import java.io.Serializable;
-import java.sql.SQLException;
 import org.postgresql.util.PGobject;
 import org.postgresql.util.PGtokenizer;
 import org.postgresql.util.PSQLException;
+import org.postgresql.util.PSQLState;
+
+import java.io.Serializable;
+import java.sql.SQLException;
 
 /*
  * Currently line is not yet implemented in the backend, but this class
@@ -77,7 +79,7 @@ public class PGline extends PGobject implements Serializable, Cloneable
 	{
 		PGtokenizer t = new PGtokenizer(PGtokenizer.removeBox(s), ',');
 		if (t.getSize() != 2)
-			throw new PSQLException("postgresql.geo.line", s);
+			throw new PSQLException("postgresql.geo.line", PSQLState.DATA_TYPE_MISMATCH, s);
 
 		point[0] = new PGpoint(t.getToken(0));
 		point[1] = new PGpoint(t.getToken(1));

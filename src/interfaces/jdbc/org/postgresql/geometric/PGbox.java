@@ -6,17 +6,19 @@
  * Copyright (c) 2003, PostgreSQL Global Development Group
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/interfaces/jdbc/org/postgresql/geometric/Attic/PGbox.java,v 1.4 2003/03/07 18:39:42 barry Exp $
+ *	  $Header: /cvsroot/pgsql/src/interfaces/jdbc/org/postgresql/geometric/Attic/PGbox.java,v 1.5 2003/09/13 04:02:14 barry Exp $
  *
  *-------------------------------------------------------------------------
  */
 package org.postgresql.geometric;
 
-import java.sql.SQLException;
-import java.io.Serializable;
 import org.postgresql.util.PGobject;
 import org.postgresql.util.PGtokenizer;
 import org.postgresql.util.PSQLException;
+import org.postgresql.util.PSQLState;
+
+import java.io.Serializable;
+import java.sql.SQLException;
 
 public class PGbox extends PGobject implements Serializable, Cloneable
 {
@@ -78,7 +80,7 @@ public class PGbox extends PGobject implements Serializable, Cloneable
 	{
 		PGtokenizer t = new PGtokenizer(value, ',');
 		if (t.getSize() != 2)
-			throw new PSQLException("postgresql.geo.box", value);
+			throw new PSQLException("postgresql.geo.box", PSQLState.DATA_TYPE_MISMATCH, value);
 
 		point[0] = new PGpoint(t.getToken(0));
 		point[1] = new PGpoint(t.getToken(1));

@@ -6,7 +6,7 @@
  * Copyright (c) 2003, PostgreSQL Global Development Group
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/interfaces/jdbc/org/postgresql/util/Attic/PGmoney.java,v 1.5 2003/03/07 18:39:46 barry Exp $
+ *	  $Header: /cvsroot/pgsql/src/interfaces/jdbc/org/postgresql/util/Attic/PGmoney.java,v 1.6 2003/09/13 04:02:16 barry Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -72,7 +72,7 @@ public class PGmoney extends PGobject implements Serializable, Cloneable
 		}
 		catch (NumberFormatException e)
 		{
-			throw new PSQLException("postgresql.money", e);
+			throw new PSQLException("postgresql.money", PSQLState.NUMERIC_CONSTANT_OUT_OF_RANGE, e);
 		}
 	}
 

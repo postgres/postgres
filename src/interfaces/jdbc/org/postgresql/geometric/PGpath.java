@@ -6,17 +6,19 @@
  * Copyright (c) 2003, PostgreSQL Global Development Group
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/interfaces/jdbc/org/postgresql/geometric/Attic/PGpath.java,v 1.5 2003/03/07 18:39:42 barry Exp $
+ *	  $Header: /cvsroot/pgsql/src/interfaces/jdbc/org/postgresql/geometric/Attic/PGpath.java,v 1.6 2003/09/13 04:02:15 barry Exp $
  *
  *-------------------------------------------------------------------------
  */
 package org.postgresql.geometric;
 
-import java.io.Serializable;
-import java.sql.SQLException;
 import org.postgresql.util.PGobject;
 import org.postgresql.util.PGtokenizer;
 import org.postgresql.util.PSQLException;
+import org.postgresql.util.PSQLState;
+
+import java.io.Serializable;
+import java.sql.SQLException;
 
 public class PGpath extends PGobject implements Serializable, Cloneable
 {
@@ -77,7 +79,7 @@ public class PGpath extends PGobject implements Serializable, Cloneable
 			s = PGtokenizer.removePara(s);
 		}
 		else
-			throw new PSQLException("postgresql.geo.path");
+			throw new PSQLException("postgresql.geo.path", PSQLState.DATA_TYPE_MISMATCH);
 
 		PGtokenizer t = new PGtokenizer(s, ',');
 		int npoints = t.getSize();

@@ -9,7 +9,7 @@
  * Copyright (c) 2003, PostgreSQL Global Development Group
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/interfaces/jdbc/org/postgresql/jdbc2/Attic/AbstractJdbc2ResultSet.java,v 1.22 2003/09/08 17:30:22 barry Exp $
+ *	  $Header: /cvsroot/pgsql/src/interfaces/jdbc/org/postgresql/jdbc2/Attic/AbstractJdbc2ResultSet.java,v 1.23 2003/09/13 04:02:15 barry Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -261,7 +261,7 @@ public abstract class AbstractJdbc2ResultSet extends org.postgresql.jdbc1.Abstra
 			return null;
 
 		if (i < 1 || i > fields.length)
-			throw new PSQLException("postgresql.res.colrange");
+			throw new PSQLException("postgresql.res.colrange", PSQLState.INVALID_PARAMETER_VALUE);
 		return (java.sql.Array) new org.postgresql.jdbc2.Array( connection, i, fields[i - 1], this );
 	}
 

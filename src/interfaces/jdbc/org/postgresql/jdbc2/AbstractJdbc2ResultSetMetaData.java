@@ -3,6 +3,7 @@ package org.postgresql.jdbc2;
 
 import org.postgresql.core.Field;
 import org.postgresql.util.PSQLException;
+import org.postgresql.util.PSQLState;
 import java.sql.SQLException;
 import java.sql.Types;
 import java.util.Vector;
@@ -450,7 +451,7 @@ public abstract class AbstractJdbc2ResultSetMetaData extends org.postgresql.jdbc
 	private Field getField(int columnIndex) throws SQLException
 	{
 		if (columnIndex < 1 || columnIndex > fields.length)
-			throw new PSQLException("postgresql.res.colrange");
+			throw new PSQLException("postgresql.res.colrange", PSQLState.INVALID_PARAMETER_VALUE);
 		return fields[columnIndex - 1];
 	}
 

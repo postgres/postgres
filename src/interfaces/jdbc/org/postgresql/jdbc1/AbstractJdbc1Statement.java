@@ -26,7 +26,7 @@ import java.sql.Timestamp;
 import java.sql.Types;
 import java.util.Vector;
 
-/* $Header: /cvsroot/pgsql/src/interfaces/jdbc/org/postgresql/jdbc1/Attic/AbstractJdbc1Statement.java,v 1.35 2003/09/09 10:49:16 barry Exp $
+/* $Header: /cvsroot/pgsql/src/interfaces/jdbc/org/postgresql/jdbc1/Attic/AbstractJdbc1Statement.java,v 1.36 2003/09/13 04:02:15 barry Exp $
  * This class defines methods of the jdbc1 specification.  This class is
  * extended by org.postgresql.jdbc2.AbstractJdbc2Statement which adds the jdbc2
  * methods.  The real Statement class (for jdbc1) is org.postgresql.jdbc1.Jdbc1Statement
@@ -292,7 +292,7 @@ public abstract class AbstractJdbc1Statement implements BaseStatement
 	public boolean execute() throws SQLException
 	{
 		if (isFunction && !returnTypeSet)
-			throw new PSQLException("postgresql.call.noreturntype");
+			throw new PSQLException("postgresql.call.noreturntype", PSQLState.STATEMENT_NOT_ALLOWED_IN_FUNCTION_CALL);
 		if (isFunction)
 		{ // set entry 1 to dummy entry..
 			m_binds[0] = ""; // dummy entry which ensured that no one overrode
@@ -1641,9 +1641,9 @@ public abstract class AbstractJdbc1Statement implements BaseStatement
 	public void registerOutParameter(int parameterIndex, int sqlType) throws SQLException
 	{
 		if (parameterIndex != 1)
-			throw new PSQLException ("postgresql.call.noinout");
+			throw new PSQLException ("postgresql.call.noinout", PSQLState.STATEMENT_NOT_ALLOWED_IN_FUNCTION_CALL);
 		if (!isFunction)
-			throw new PSQLException ("postgresql.call.procasfunc", originalSql);
+			throw new PSQLException ("postgresql.call.procasfunc", PSQLState.STATEMENT_NOT_ALLOWED_IN_FUNCTION_CALL,originalSql);
 
 		// functionReturnType contains the user supplied value to check
 		// testReturn contains a modified version to make it easier to
@@ -1955,7 +1955,7 @@ public abstract class AbstractJdbc1Statement implements BaseStatement
 	private void bind(int paramIndex, Object s, String type) throws SQLException
 	{
 		if (paramIndex < 1 || paramIndex > m_binds.length)
-			throw new PSQLException("postgresql.prep.range", PSQLState.PARAMETER_ERROR);
+			throw new PSQLException("postgresql.prep.range", PSQLState.INVALID_PARAMETER_VALUE);
 		if (paramIndex == 1 && isFunction) // need to registerOut instead
 			throw new PSQLException ("postgresql.call.funcover");
 		m_binds[paramIndex - 1] = s;
@@ -1997,7 +1997,7 @@ public abstract class AbstractJdbc1Statement implements BaseStatement
 			isValid = false;
 		index = l_sql.indexOf ("call");
 		if (index == -1 || !isValid)
-			throw new PSQLException ("postgresql.call.malformed",
+			throw new PSQLException ("postgresql.call.malformed",PSQLState.STATEMENT_NOT_ALLOWED_IN_FUNCTION_CALL,
 									 new Object[]{l_sql, JDBC_SYNTAX});
 		l_sql = l_sql.replace ('{', ' '); // replace these characters
 		l_sql = l_sql.replace ('}', ' ');
@@ -2027,7 +2027,7 @@ public abstract class AbstractJdbc1Statement implements BaseStatement
 	{
 		checkIndex (parameterIndex);		
 		if (type1 != this.testReturn && type2 != this.testReturn)
-			throw new PSQLException("postgresql.call.wrongget",
+			throw new PSQLException("postgresql.call.wrongget", PSQLState.MOST_SPECIFIC_TYPE_DOES_NOT_MATCH,
 						new Object[]{"java.sql.Types=" + testReturn,
 							     getName,
 							     "java.sql.Types=" + type1});
@@ -2040,7 +2040,7 @@ public abstract class AbstractJdbc1Statement implements BaseStatement
 	{
 		checkIndex (parameterIndex);
 		if (type != this.testReturn)
-			throw new PSQLException("postgresql.call.wrongget",
+			throw new PSQLException("postgresql.call.wrongget", PSQLState.MOST_SPECIFIC_TYPE_DOES_NOT_MATCH,
 						new Object[]{"java.sql.Types=" + testReturn,
 							     getName,
 							     "java.sql.Types=" + type});
@@ -2053,9 +2053,9 @@ public abstract class AbstractJdbc1Statement implements BaseStatement
 	private void checkIndex (int parameterIndex) throws SQLException
 	{
 		if (!isFunction)
-			throw new PSQLException("postgresql.call.noreturntype");
+			throw new PSQLException("postgresql.call.noreturntype", PSQLState.STATEMENT_NOT_ALLOWED_IN_FUNCTION_CALL);
 		if (parameterIndex != 1)
-			throw new PSQLException("postgresql.call.noinout");
+			throw new PSQLException("postgresql.call.noinout", PSQLState.STATEMENT_NOT_ALLOWED_IN_FUNCTION_CALL);
 	}
 
 

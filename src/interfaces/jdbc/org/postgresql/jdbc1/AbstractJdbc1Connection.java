@@ -9,7 +9,7 @@
  * Copyright (c) 2003, PostgreSQL Global Development Group
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/interfaces/jdbc/org/postgresql/jdbc1/Attic/AbstractJdbc1Connection.java,v 1.25 2003/09/09 10:49:16 barry Exp $
+ *	  $Header: /cvsroot/pgsql/src/interfaces/jdbc/org/postgresql/jdbc1/Attic/AbstractJdbc1Connection.java,v 1.26 2003/09/13 04:02:15 barry Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -373,7 +373,7 @@ public abstract class AbstractJdbc1Connection implements BaseConnection
 							case AUTH_REQ_SCM:
 								if (Driver.logDebug)
 									Driver.debug("postgresql: SCM");
-								throw new PSQLException("postgresql.con.scm");
+								throw new PSQLException("postgresql.con.scm", PSQLState.CONNECTION_REJECTED);
 
 
 							case AUTH_REQ_PASSWORD:

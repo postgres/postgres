@@ -9,7 +9,7 @@
  * Copyright (c) 2003, PostgreSQL Global Development Group
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/interfaces/jdbc/org/postgresql/jdbc1/Attic/AbstractJdbc1ResultSet.java,v 1.17 2003/09/09 10:49:16 barry Exp $
+ *	  $Header: /cvsroot/pgsql/src/interfaces/jdbc/org/postgresql/jdbc1/Attic/AbstractJdbc1ResultSet.java,v 1.18 2003/09/13 04:02:15 barry Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -211,7 +211,7 @@ public abstract class AbstractJdbc1ResultSet implements BaseResultSet
 			}
 			catch (NumberFormatException e)
 			{
-				throw new PSQLException("postgresql.res.badbyte", s);
+				throw new PSQLException("postgresql.res.badbyte", PSQLState.NUMERIC_VALUE_OUT_OF_RANGE, s);
 			}
 		}
 		return 0; // SQL NULL
@@ -565,7 +565,7 @@ public abstract class AbstractJdbc1ResultSet implements BaseResultSet
 		Field field;
 
 		if (columnIndex < 1 || columnIndex > fields.length)
-			throw new PSQLException("postgresql.res.colrange");
+			throw new PSQLException("postgresql.res.colrange", PSQLState.INVALID_PARAMETER_VALUE);
 		field = fields[columnIndex - 1];
 
 		// some fields can be null, mainly from those returned by MetaData methods
@@ -788,7 +788,7 @@ public abstract class AbstractJdbc1ResultSet implements BaseResultSet
 		if ( this_row == null )
 			throw new PSQLException("postgresql.res.nextrequired");
 		if ( column < 1 || column > fields.length )
-			throw new PSQLException("postgresql.res.colrange" );
+			throw new PSQLException("postgresql.res.colrange", PSQLState.INVALID_PARAMETER_VALUE );
 	}
 
 	//----------------- Formatting Methods -------------------

@@ -5,6 +5,8 @@ import org.postgresql.core.BaseResultSet;
 import org.postgresql.core.BaseStatement;
 import org.postgresql.core.Field;
 import org.postgresql.util.PSQLException;
+import org.postgresql.util.PSQLState;
+
 import java.math.BigDecimal;
 import java.sql.ResultSet;
 import java.sql.SQLException;
@@ -77,7 +79,7 @@ public class Array implements java.sql.Array
 			throw org.postgresql.Driver.notImplemented();
 
 		if (index < 1)
-			throw new PSQLException("postgresql.arr.range");
+			throw new PSQLException("postgresql.arr.range", PSQLState.DATA_ERROR);
 		Object retVal = null;
 
 		ArrayList array = new ArrayList();
@@ -127,7 +129,7 @@ public class Array implements java.sql.Array
 			count = arrayContents.length;
 		index--;
 		if ( index + count > arrayContents.length )
-			throw new PSQLException("postgresql.arr.range");
+			throw new PSQLException("postgresql.arr.range", PSQLState.DATA_ERROR);
 
 		int i = 0;
 		switch ( getBaseType() )

@@ -323,7 +323,7 @@ public abstract class AbstractJdbc3DatabaseMetaData extends org.postgresql.jdbc2
 	 */
 	public int getSQLStateType() throws SQLException
 	{
-		throw org.postgresql.Driver.notImplemented();
+		return DatabaseMetaData.sqlStateSQL99;
 	}
 
 	/**
