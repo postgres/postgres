@@ -4,7 +4,7 @@
 #    Makefile for commands
 #
 # IDENTIFICATION
-#    $Header: /cvsroot/pgsql/src/backend/commands/Makefile,v 1.19 1999/10/26 03:12:34 momjian Exp $
+#    $Header: /cvsroot/pgsql/src/backend/commands/Makefile,v 1.20 1999/10/26 16:32:46 momjian Exp $
 #
 #-------------------------------------------------------------------------
 
@@ -32,6 +32,9 @@ SUBSYS.o: $(OBJS)
 # the parser. 
 
 comment.o: ../parse.h
+
+../parse.h:
+	$(MAKE) -C .. parse.h
 
 depend dep:
 	$(CC) -MM $(CFLAGS) *.c >depend

@@ -10,7 +10,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/parser/gram.y,v 2.110 1999/10/26 03:12:34 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/parser/gram.y,v 2.111 1999/10/26 16:32:46 momjian Exp $
  *
  * HISTORY
  *	  AUTHOR			DATE			MAJOR EVENT
@@ -242,7 +242,7 @@ Oid	param_type(int t); /* used in parse_expr.c */
 %type <boolean>	opt_varying, opt_timezone
 
 %type <ival>	Iconst
-%type <str>		Sconst
+%type <str>		Sconst, comment_text
 %type <str>		UserId, var_value, zone_value
 %type <str>		ColId, ColLabel
 %type <str>		TypeId
@@ -1554,7 +1554,7 @@ TruncateStmt:  TRUNCATE TABLE relation_name
  *
  *****************************************************************************/
  
-CommentStmt:	COMMENT ON comment_type name IS Sconst
+CommentStmt:	COMMENT ON comment_type name IS comment_text
 			{
 				CommentStmt *n = makeNode(CommentStmt);
 				n->objtype = $3;
@@ -1564,7 +1564,7 @@ CommentStmt:	COMMENT ON comment_type name IS Sconst
 				n->comment = $6;
 				$$ = (Node *) n;
 			}
-		| COMMENT ON comment_cl relation_name '.' attr_name IS Sconst
+		| COMMENT ON comment_cl relation_name '.' attr_name IS comment_text
 			{
 				CommentStmt *n = makeNode(CommentStmt);
 				n->objtype = $3;
@@ -1574,7 +1574,7 @@ CommentStmt:	COMMENT ON comment_type name IS Sconst
 				n->comment = $8;
 				$$ = (Node *) n;
 			}
-		| COMMENT ON comment_ag name aggr_argtype IS Sconst
+		| COMMENT ON comment_ag name aggr_argtype IS comment_text
 			{
 				CommentStmt *n = makeNode(CommentStmt);
 				n->objtype = $3;
@@ -1584,7 +1584,7 @@ CommentStmt:	COMMENT ON comment_type name IS Sconst
 				n->comment = $7;
 				$$ = (Node *) n;
 			}
-		| COMMENT ON comment_fn func_name func_args IS Sconst
+		| COMMENT ON comment_fn func_name func_args IS comment_text
 			{
 				CommentStmt *n = makeNode(CommentStmt);
 				n->objtype = $3;
@@ -1594,7 +1594,7 @@ CommentStmt:	COMMENT ON comment_type name IS Sconst
 				n->comment = $7;
 				$$ = (Node *) n;
 			}
-		| COMMENT ON comment_op all_Op '(' oper_argtypes ')' IS Sconst
+		| COMMENT ON comment_op all_Op '(' oper_argtypes ')' IS comment_text
 			{
 				CommentStmt *n = makeNode(CommentStmt);
 				n->objtype = $3;
@@ -1604,7 +1604,7 @@ CommentStmt:	COMMENT ON comment_type name IS Sconst
 				n->comment = $9;
 				$$ = (Node *) n;
 			}
-		| COMMENT ON comment_tg name ON relation_name IS Sconst
+		| COMMENT ON comment_tg name ON relation_name IS comment_text
 			{
 				CommentStmt *n = makeNode(CommentStmt);
 				n->objtype = $3;
@@ -1638,8 +1638,12 @@ comment_op:	OPERATOR { $$ = OPERATOR; }
 		;
 
 comment_tg:	TRIGGER { $$ = TRIGGER; }
-		;
+		; 
 
+comment_text:	Sconst { $$ = $1; }
+		| NULL_P { $$ = 0; }
+		;
+		
 /*****************************************************************************
  *
  *		QUERY:
