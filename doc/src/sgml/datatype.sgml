@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/datatype.sgml,v 1.60 2001/08/31 01:55:25 ishii Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/datatype.sgml,v 1.61 2001/09/04 03:17:54 momjian Exp $
 -->
 
  <chapter id="datatype">
@@ -81,6 +81,12 @@ $Header: /cvsroot/pgsql/doc/src/sgml/datatype.sgml,v 1.60 2001/08/31 01:55:25 is
        <entry><type>box</type></entry>
        <entry></entry>
        <entry>rectangular box in 2D plane</entry>
+      </row>
+
+      <row>
+       <entry><type>bytea</type></entry>
+       <entry></entry>
+       <entry>binary data</entry>
       </row>
 
       <row>
@@ -782,7 +788,11 @@ CREATE TABLE <replaceable class="parameter">tablename</replaceable> (<replaceabl
 	<entry>text</entry>
 	<entry>Variable unlimited length</entry>
        </row>
-      </tbody>
+        <row>
+	<entry>bytea</entry>
+	<entry>binary data</entry>
+       </row>
+     </tbody>
      </tgroup>
     </table>
 
@@ -827,6 +837,19 @@ CREATE TABLE <replaceable class="parameter">tablename</replaceable> (<replaceabl
     does not require an explicit declared upper limit on the size of
     the string.  Although the type <type>text</type> is not in the SQL
     standard, many other RDBMS packages have it as well.
+   </para>
+
+   <para>
+    The <type>bytea</type> data type allows storage of binary data,
+    specifically allowing storage of NULLs which are entered as
+    <literal>'\\000'</>. The first backslash is interpreted by the
+    single quotes, and the second is recognized by <type>bytea</> and
+    preceeds a three digit octal value. For a similar reason, a
+    backslash must be entered into a field as <literal>'\\\\'</> or
+    <literal>'\\134'</>. You may also have to escape line feeds and
+    carriage return if your interface automatically translates these. It
+    can store values of any length. <type>Bytea</> is a non-standard
+    data type.
    </para>
 
    <para>
