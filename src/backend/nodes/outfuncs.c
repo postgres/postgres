@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/nodes/outfuncs.c,v 1.12 1997/12/18 12:53:51 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/nodes/outfuncs.c,v 1.13 1997/12/23 19:50:54 thomas Exp $
  *
  * NOTES
  *	  Every (plan) node in POSTGRES has an associated "out" routine which
@@ -1548,6 +1548,18 @@ _outStream(StringInfo str, Stream *node)
 }
 
 static void
+_outAExpr(StringInfo str, A_Expr *node)
+{
+	char		buf[500];
+
+	sprintf(buf, "EXPR %s", node->opname);
+	appendStringInfo(str, buf);
+	_outNode(str, node->lexpr);
+	_outNode(str, node->rexpr);
+	return;
+}
+
+static void
 _outValue(StringInfo str, Value *value)
 {
 	char		buf[500];
@@ -1569,6 +1581,27 @@ _outValue(StringInfo str, Value *value)
 		default:
 			break;
 	}
+	return;
+}
+
+static void
+_outIdent(StringInfo str, Ident *node)
+{
+	char		buf[500];
+
+	sprintf(buf, "IDENT %s", node->name);
+	appendStringInfo(str, buf);
+	return;
+}
+
+static void
+_outAConst(StringInfo str, A_Const *node)
+{
+	char		buf[500];
+
+	sprintf(buf, "CONST ");
+	appendStringInfo(str, buf);
+	_outValue(str, &(node->val));
 	return;
 }
 
@@ -1762,6 +1795,15 @@ _outNode(StringInfo str, void *obj)
 			case T_String:
 			case T_Float:
 				_outValue(str, obj);
+				break;
+			case T_A_Expr:
+				_outAExpr(str, obj);
+				break;
+			case T_Ident:
+				_outIdent(str, obj);
+				break;
+			case T_A_Const:
+				_outAConst(str, obj);
 				break;
 			default:
 				elog(NOTICE, "_outNode: don't know how to print type %d",
