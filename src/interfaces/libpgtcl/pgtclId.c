@@ -12,7 +12,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/interfaces/libpgtcl/Attic/pgtclId.c,v 1.12 1998/08/17 03:50:26 scrappy Exp $
+ *	  $Header: /cvsroot/pgsql/src/interfaces/libpgtcl/Attic/pgtclId.c,v 1.13 1998/08/22 04:34:22 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -475,6 +475,7 @@ static void Pg_Notify_SetupProc (ClientData clientData, int flags)
 {
     Pg_ConnectionId *connid = (Pg_ConnectionId *) clientData;
     Tcl_File handle;
+    int pqsock;
 
     /* We classify SQL notifies as Tcl file events. */
     if (!(flags & TCL_FILE_EVENTS)) {
@@ -482,7 +483,11 @@ static void Pg_Notify_SetupProc (ClientData clientData, int flags)
     }
 
     /* Set up to watch for asynchronous data arrival on backend channel */
-    handle = Tcl_GetFile((ClientData) PQsocket(connid->conn), TCL_UNIX_FD);
+    pqsock = PQsocket(connid->conn);
+    if (pqsock < 0)
+      return;
+
+    handle = Tcl_GetFile((ClientData) pqsock, TCL_UNIX_FD);
     Tcl_WatchFile(handle, TCL_READABLE);
 }
 
@@ -492,6 +497,7 @@ static void Pg_Notify_CheckProc (ClientData clientData, int flags)
 {
     Pg_ConnectionId *connid = (Pg_ConnectionId *) clientData;
     Tcl_File handle;
+    int pqsock;
 
     /* We classify SQL notifies as Tcl file events. */
     if (!(flags & TCL_FILE_EVENTS)) {
@@ -503,7 +509,11 @@ static void Pg_Notify_CheckProc (ClientData clientData, int flags)
      * We use Tcl_FileReady to avoid a useless kernel call
      * when no data is available.
      */
-    handle = Tcl_GetFile((ClientData) PQsocket(connid->conn), TCL_UNIX_FD);
+    pqsock = PQsocket(connid->conn);
+    if (pqsock < 0)
+      return;
+
+    handle = Tcl_GetFile((ClientData) pqsock, TCL_UNIX_FD);
     if (Tcl_FileReady(handle, TCL_READABLE) != 0) {
 	PQconsumeInput(connid->conn);
     }
