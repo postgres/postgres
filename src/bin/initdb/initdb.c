@@ -43,7 +43,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  * Portions taken from FreeBSD.
  *
- * $Header: /cvsroot/pgsql/src/bin/initdb/initdb.c,v 1.11 2003/11/17 20:35:28 momjian Exp $
+ * $Header: /cvsroot/pgsql/src/bin/initdb/initdb.c,v 1.12 2003/11/23 21:41:30 petere Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -65,6 +65,8 @@
 int			optreset;
 #endif
 
+
+#define _(x) gettext((x))
 
 /* version string we expect back from postgres */
 #define PG_VERSIONSTR "postgres (PostgreSQL) " PG_VERSION "\n"
@@ -195,11 +197,12 @@ static void set_info_version(void);
 static void setup_schema(void);
 static void vacuum_db(void);
 static void make_template0(void);
-static void usage(void);
+static void usage(const char *);
 static void trapsig(int);
 static void check_ok(void);
 static char *xstrdup(const char *);
 static void *xmalloc(size_t);
+static void init_nls(void);
 
 /*
  * macros for running pipes to postgres
@@ -247,7 +250,7 @@ xmalloc(size_t size)
 	result = malloc(size);
 	if (!result)
 	{
-		fputs("malloc failure - bailing out\n", stderr);
+		fputs(_("malloc failure - bailing out\n"), stderr);
 		exit(1);
 	}
 	return result;
@@ -261,7 +264,7 @@ xstrdup(const char *s)
 	result = strdup(s);
 	if (!result)
 	{
-		fputs("strdup failure - bailing out\n", stderr);
+		fputs(_("strdup failure - bailing out\n"), stderr);
 		exit(1);
 	}
 	return result;
@@ -392,7 +395,7 @@ readfile(char *path)
 
 	if ((infile = fopen(path, "r")) == NULL)
 	{
-		fprintf(stderr, "could not read %s\n", path);
+		fprintf(stderr, _("could not read %s\n"), path);
 		exit_nicely();
 	}
 
@@ -450,7 +453,7 @@ writefile(char *path, char **lines)
 	;
 	if ((out_file = fopen(path, PG_BINARY_W)) == NULL)
 	{
-		fprintf(stderr, "could not write %s\n", path);
+		fprintf(stderr, _("could not write %s\n"), path);
 		exit_nicely();
 	}
 	for (line = lines; *line != NULL; line++)
@@ -481,17 +484,17 @@ pclose_check(FILE *stream)
 	}
 	else if (WIFEXITED(exitstatus))
 	{
-		fprintf(stderr, "child process exited with exit code %d\n",
+		fprintf(stderr, _("child process exited with exit code %d\n"),
 				WEXITSTATUS(exitstatus));
 	}
 	else if (WIFSIGNALED(exitstatus))
 	{
-		fprintf(stderr, "child process was terminated by signal %d\n",
+		fprintf(stderr, _("child process was terminated by signal %d\n"),
 				WTERMSIG(exitstatus));
 	}
 	else
 	{
-		fprintf(stderr, "child process exited with unexpected status %d\n",
+		fprintf(stderr, _("child process exited with unexpected status %d\n"),
 				exitstatus);
 	}
 
@@ -612,24 +615,24 @@ mkdir_p(char *path, mode_t omode)
 static void
 exit_nicely(void)
 {
-	fprintf(stderr, "%s: failed\n", progname);
+	fprintf(stderr, _("%s: failed\n"), progname);
 
 	if (!noclean)
 	{
 		if (made_new_pgdata)
 		{
-			fprintf(stderr, "%s: removing data directory \"%s\"\n",
+			fprintf(stderr, _("%s: removing data directory \"%s\"\n"),
 					progname, pg_data);
 			if (!rmtree(pg_data, true))
-				fprintf(stderr, "%s: failed\n", progname);
+				fprintf(stderr, _("%s: failed\n"), progname);
 		}
 		else if (found_existing_pgdata)
 		{
 			fprintf(stderr,
-					"%s: removing contents of data directory \"%s\"\n",
+					_("%s: removing contents of data directory \"%s\"\n"),
 					progname, pg_data);
 			if (!rmtree(pg_data, false))
-				fprintf(stderr, "%s: failed\n", progname);
+				fprintf(stderr, _("%s: failed\n"), progname);
 		}
 		/* otherwise died during startup, do nothing! */
 	}
@@ -637,7 +640,7 @@ exit_nicely(void)
 	{
 		if (made_new_pgdata || found_existing_pgdata)
 			fprintf(stderr,
-					"%s: data directory \"%s\" not removed at user's request\n",
+					_("%s: data directory \"%s\" not removed at user's request\n"),
 					progname, pg_data);
 	}
 
@@ -663,10 +666,10 @@ get_id(void)
 	if (!geteuid())				/* 0 is root's uid */
 	{
 		fprintf(stderr,
-				"%s: cannot be run as root\n"
+				_("%s: cannot be run as root\n"
 				"Please log in (using, e.g., \"su\") as the "
 				"(unprivileged) user that will\n"
-				"own the server process.\n",
+				"own the server process.\n"),
 				progname);
 		exit(1);
 	}
@@ -707,7 +710,7 @@ get_encoding_id(char *encoding_name)
 			return xstrdup(result);
 		}
 	}
-	fprintf(stderr, "%s: \"%s\" is not a valid server encoding name\n",
+	fprintf(stderr, _("%s: \"%s\" is not a valid server encoding name\n"),
 			progname, encoding_name ? encoding_name : "(null)");
 	exit(1);
 }
@@ -838,9 +841,9 @@ check_input(char *path)
 	if (stat(path, &statbuf) != 0 || !S_ISREG(statbuf.st_mode))
 	{
 		fprintf(stderr,
-				"%s: file \"%s\" not found\n"
+				_("%s: file \"%s\" not found\n"
 		   "This means you have a corrupted installation or identified\n"
-				"the wrong directory with the invocation option -L.\n",
+				"the wrong directory with the invocation option -L.\n"),
 				progname, path);
 		exit(1);
 	}
@@ -1086,7 +1089,7 @@ test_connections(void)
 	int			i,
 				status;
 
-	printf("selecting default max_connections ... ");
+	printf(_("selecting default max_connections ... "));
 	fflush(stdout);
 
 	for (i = 0; i < len; i++)
@@ -1122,7 +1125,7 @@ test_buffers(void)
 	int			i,
 				status;
 
-	printf("selecting default shared_buffers ... ");
+	printf(_("selecting default shared_buffers ... "));
 	fflush(stdout);
 
 	for (i = 0; i < len; i++)
@@ -1155,7 +1158,7 @@ setup_config(void)
 	char		repltok[100];
 	char		path[MAXPGPATH];
 
-	fputs("creating configuration files ... ", stdout);
+	fputs(_("creating configuration files ... "), stdout);
 	fflush(stdout);
 
 	/* postgresql.conf */
@@ -1233,7 +1236,7 @@ bootstrap_template1(char *short_version)
 
 	PG_CMD_DECL;
 
-	printf("creating template1 database in %s/base/1 ... ", pg_data);
+	printf(_("creating template1 database in %s/base/1 ... "), pg_data);
 	fflush(stdout);
 
 	if (debug)
@@ -1249,9 +1252,9 @@ bootstrap_template1(char *short_version)
 	if (strcmp(headerline, *bki_lines) != 0)
 	{
 		fprintf(stderr,
-				"%s: input file \"%s\" does not belong to PostgreSQL %s\n"
+				_("%s: input file \"%s\" does not belong to PostgreSQL %s\n"
 				"Check your installation or specify the correct path "
-				"using the option -L.\n",
+				"using the option -L.\n"),
 				progname, bki_file, PG_VERSION);
 		exit_nicely();
 
@@ -1322,7 +1325,7 @@ setup_shadow(void)
 
 	PG_CMD_DECL;
 
-	fputs("initializing pg_shadow ... ", stdout);
+	fputs(_("initializing pg_shadow ... "), stdout);
 	fflush(stdout);
 
 	snprintf(cmd, sizeof(cmd),
@@ -1357,12 +1360,12 @@ get_set_pwd(void)
 	pwd2 = simple_prompt("Enter it again: ", 100, false);
 	if (strcmp(pwd1, pwd2) != 0)
 	{
-		fprintf(stderr, "Passwords didn't match.\n");
+		fprintf(stderr, _("Passwords didn't match.\n"));
 		exit_nicely();
 	}
 	free(pwd2);
 
-	printf("setting password ... ");
+	printf(_("setting password ... "));
 	fflush(stdout);
 
 	snprintf(cmd, sizeof(cmd),
@@ -1386,8 +1389,8 @@ get_set_pwd(void)
 	if (stat(pwdpath, &statbuf) != 0 || !S_ISREG(statbuf.st_mode))
 	{
 		fprintf(stderr,
-				"%s: The password file was not generated. "
-				"Please report this problem.\n",
+				_("%s: The password file was not generated. "
+				"Please report this problem.\n"),
 				progname);
 		exit_nicely();
 	}
@@ -1416,7 +1419,7 @@ unlimit_systables(void)
 
 	PG_CMD_DECL;
 
-	fputs("enabling unlimited row size for system tables ... ", stdout);
+	fputs(_("enabling unlimited row size for system tables ... "), stdout);
 	fflush(stdout);
 
 	snprintf(cmd, sizeof(cmd),
@@ -1489,7 +1492,7 @@ setup_depend(void)
 
 	PG_CMD_DECL;
 
-	fputs("initializing pg_depend ... ", stdout);
+	fputs(_("initializing pg_depend ... "), stdout);
 	fflush(stdout);
 
 	snprintf(cmd, sizeof(cmd),
@@ -1517,7 +1520,7 @@ setup_sysviews(void)
 
 	char	  **sysviews_setup;
 
-	fputs("creating system views ... ", stdout);
+	fputs(_("creating system views ... "), stdout);
 	fflush(stdout);
 
 	sysviews_setup = readfile(system_views_file);
@@ -1554,7 +1557,7 @@ setup_description(void)
 	PG_CMD_DECL_NOLINE;
 	int			fres;
 
-	fputs("loading pg_description ... ", stdout);
+	fputs(_("loading pg_description ... "), stdout);
 	fflush(stdout);
 
 	snprintf(cmd, sizeof(cmd),
@@ -1602,7 +1605,7 @@ setup_conversion(void)
 
 	char	  **conv_lines;
 
-	fputs("creating conversions ... ", stdout);
+	fputs(_("creating conversions ... "), stdout);
 	fflush(stdout);
 
 	snprintf(cmd, sizeof(cmd),
@@ -1658,7 +1661,7 @@ setup_privileges(void)
 
 	char	  **priv_lines;
 
-	fputs("setting privileges on built-in objects ... ", stdout);
+	fputs(_("setting privileges on built-in objects ... "), stdout);
 	fflush(stdout);
 
 	snprintf(cmd, sizeof(cmd),
@@ -1716,7 +1719,7 @@ setup_schema(void)
 	char	  **lines;
 	int			fres;
 
-	fputs("creating information schema ... ", stdout);
+	fputs(_("creating information schema ... "), stdout);
 	fflush(stdout);
 
 	lines = readfile(info_schema_file);
@@ -1778,7 +1781,7 @@ vacuum_db(void)
 {
 	PG_CMD_DECL_NOLINE;
 
-	fputs("vacuuming database template1 ... ", stdout);
+	fputs(_("vacuuming database template1 ... "), stdout);
 	fflush(stdout);
 
 	snprintf(cmd, sizeof(cmd),
@@ -1834,7 +1837,7 @@ make_template0(void)
 
 	PG_CMD_DECL;
 
-	fputs("copying template1 to template0 ... ", stdout);
+	fputs(_("copying template1 to template0 ... "), stdout);
 	fflush(stdout);
 
 	snprintf(cmd, sizeof(cmd),
@@ -1891,18 +1894,18 @@ check_ok()
 {
 	if (caught_signal)
 	{
-		printf("caught signal\n");
+		printf(_("caught signal\n"));
 		exit_nicely();
 	}
 	else if (output_failed)
 	{
-		printf("failed to write to child process\n");
+		printf(_("failed to write to child process\n"));
 		exit_nicely();
 	}
 	else
 	{
 		/* all seems well */
-		printf("ok\n");
+		printf(_("ok\n"));
 	}
 }
 
@@ -1932,7 +1935,7 @@ chklocale(const char *locale)
 
 	/* should we exit here? */
 	if (!ret)
-		fprintf(stderr, "%s: invalid locale name \"%s\"\n", progname, locale);
+		fprintf(stderr, _("%s: invalid locale name \"%s\"\n"), progname, locale);
 
 	return ret;
 }
@@ -1994,58 +1997,49 @@ setlocales(void)
 }
 
 /*
- * help text data
- *
- * Note: $CMDNAME is replaced by the right thing in usage()
- */
-char	   *usage_text[] = {
-	"$CMDNAME initializes a PostgreSQL database cluster.\n",
-	"\n",
-	"Usage:\n",
-	"  $CMDNAME [OPTION]... [DATADIR]\n",
-	"\n",
-	"Options:\n",
-	" [-D, --pgdata=]DATADIR     location for this database cluster\n",
-	"  -E, --encoding=ENCODING   set default encoding for new databases\n",
-	"  --locale=LOCALE           initialize database cluster with given locale\n",
-	"  --lc-collate, --lc-ctype, --lc-messages=LOCALE\n",
-	"  --lc-monetary, --lc-numeric, --lc-time=LOCALE\n",
-	"                            initialize database cluster with given locale\n",
-	"                            in the respective category (default taken from\n",
-	"                            environment)\n",
-	"  --no-locale               equivalent to --locale=C\n",
-	"  -U, --username=NAME       database superuser name\n",
-	"  -W, --pwprompt            prompt for a password for the new superuser\n",
-	"  -?, --help                show this help, then exit\n",
-	"  -V, --version             output version information, then exit\n",
-	"\n",
-	"Less commonly used options: \n",
-	"  -d, --debug               generate lots of debugging output\n",
-	"  -s, --show                show internal settings\n",
-	"  -L DIRECTORY              where to find the input files\n",
-	"  -n, --noclean             do not clean up after errors\n",
-	"\n",
-	"If the data directory is not specified, the environment variable PGDATA\n",
-	"is used.\n",
-	"\n",
-	"Report bugs to <pgsql-bugs@postgresql.org>.\n",
-	NULL
-};
-
-
-/*
  * print help text
  */
 static void
-usage(void)
+usage(const char *progname)
 {
-	int			i;
-	char	  **newtext;
+	printf(_("%s initializes a PostgreSQL database cluster.\n\n"), progname);
+	printf(_("Usage:\n"));
+	printf(_("  %s [OPTION]... [DATADIR]\n"), progname);
+	printf(_("\nOptions:\n"));
+	printf(_(" [-D, --pgdata=]DATADIR     location for this database cluster\n"));
+	printf(_("  -E, --encoding=ENCODING   set default encoding for new databases\n"));
+	printf(_("  --locale=LOCALE           initialize database cluster with given locale\n"));
+	printf(_("  --lc-collate, --lc-ctype, --lc-messages=LOCALE\n"));
+	printf(_("  --lc-monetary, --lc-numeric, --lc-time=LOCALE\n"));
+	printf(_("                            initialize database cluster with given locale\n"));
+	printf(_("                            in the respective category (default taken from\n"));
+	printf(_("                            environment)\n"));
+	printf(_("  --no-locale               equivalent to --locale=C\n"));
+	printf(_("  -U, --username=NAME       database superuser name\n"));
+	printf(_("  -W, --pwprompt            prompt for a password for the new superuser\n"));
+	printf(_("  -?, --help                show this help, then exit\n"));
+	printf(_("  -V, --version             output version information, then exit\n"));
+	printf(_("\nLess commonly used options: \n"));
+	printf(_("  -d, --debug               generate lots of debugging output\n"));
+	printf(_("  -s, --show                show internal settings\n"));
+	printf(_("  -L DIRECTORY              where to find the input files\n"));
+	printf(_("  -n, --noclean             do not clean up after errors\n"));
+	printf(_("\nIf the data directory is not specified, the environment variable PGDATA\n"));
+	printf(_("is used.\n"));
+	printf(_("\nReport bugs to <pgsql-bugs@postgresql.org>.\n"));
+}
 
-	newtext = replace_token(usage_text, "$CMDNAME", progname);
-
-	for (i = 0; newtext[i]; i++)
-		fputs(newtext[i], stdout);		/* faster than printf */
+/*
+ * Initialized NLS if enabled.
+ */
+void
+init_nls(void)
+{
+#ifdef ENABLE_NLS
+        setlocale(LC_ALL, "");
+        bindtextdomain("initdb", LOCALEDIR);
+        textdomain("initdb");
+#endif
 }
 
 
@@ -2091,7 +2085,7 @@ main(int argc, char *argv[])
 	char	   *exe;			/* location of exe suffix in progname */
 #endif
 
-	setlocale(LC_ALL, "");
+	init_nls();
 
 	/* parse argv[0] - detect explicit path if there was one */
 	carg0 = xstrdup(argv[0]);
@@ -2151,11 +2145,11 @@ main(int argc, char *argv[])
 				break;
 			case 'd':
 				debug = true;
-                printf("Running in debug mode.\n");
+                printf(_("Running in debug mode.\n"));
 				break;
 			case 'n':
 				noclean = true;
-				printf("Running in noclean mode.  Mistakes will not be cleaned up.\n");
+				printf(_("Running in noclean mode.  Mistakes will not be cleaned up.\n"));
 				break;
 			case 'L':
 				datadir = xstrdup(optarg);
@@ -2195,7 +2189,7 @@ main(int argc, char *argv[])
 				break;
 			default:
 				show_help = true;
-				printf("Unrecognized option: %c\n", c);
+				printf(_("Unrecognized option: %c\n"), c);
 		}
 
 	}
@@ -2219,7 +2213,7 @@ main(int argc, char *argv[])
 
 	if (show_help)
 	{
-		usage();
+		usage(progname);
 		exit(0);
 	}
 
@@ -2234,12 +2228,12 @@ main(int argc, char *argv[])
 		else
 		{
 			fprintf(stderr,
-					"%s: no data directory specified\n"
+					_("%s: no data directory specified\n"
 					"You must identify the directory where the data "
 					"for this database system\n"
 					"will reside.  Do this with either the invocation "
 					"option -D or the\n"
-					"environment variable PGDATA.\n",
+					"environment variable PGDATA.\n"),
 					progname);
 			exit(1);
 		}
@@ -2260,16 +2254,16 @@ main(int argc, char *argv[])
 	if (set_paths() != 0)
 	{
 		fprintf(stderr,
-				"The program \"postgres\" is needed by %s "
+				_("The program \"postgres\" is needed by %s "
 				"but was not found in \n"
-				"the directory \"%s\". Check your installation.\n",
+				"the directory \"%s\". Check your installation.\n"),
 				progname, bindir);
 		exit(1);
 	}
 
 	if ((short_version = get_short_version()) == NULL)
 	{
-		fprintf(stderr, "%s: could not get valid short version\n", progname);
+		fprintf(stderr, _("%s: could not get valid short version\n"), progname);
 		exit(1);
 	}
 
@@ -2321,9 +2315,9 @@ main(int argc, char *argv[])
 	check_input(features_file);
 	check_input(system_views_file);
 
-	printf("The files belonging to this database system will be owned "
+	printf(_("The files belonging to this database system will be owned "
 		   "by user \"%s\".\n"
-		   "This user must also own the server process.\n\n",
+		   "This user must also own the server process.\n\n"),
 		   effective_user);
 
 	setlocales();
@@ -2334,18 +2328,18 @@ main(int argc, char *argv[])
 		strcmp(lc_ctype, lc_monetary) == 0 &&
 		strcmp(lc_ctype, lc_messages) == 0)
 	{
-		printf("The database cluster will be initialized with locale %s.\n\n",
+		printf(_("The database cluster will be initialized with locale %s.\n\n"),
 			   lc_ctype);
 	}
 	else
 	{
-		printf("The database cluster will be initialized with locales\n"
+		printf(_("The database cluster will be initialized with locales\n"
 			   "  COLLATE:  %s\n"
 			   "  CTYPE:    %s\n"
 			   "  MESSAGES: %s\n"
 			   "  MONETARY: %s\n"
 			   "  NUMERIC:  %s\n"
-			   "  TIME:     %s\n\n",
+			   "  TIME:     %s\n\n"),
 			   lc_collate,
 			   lc_ctype,
 			   lc_messages,
@@ -2384,7 +2378,7 @@ main(int argc, char *argv[])
 	{
 		case 0:
 			/* PGDATA not there, must create it */
-			printf("creating directory %s ... ",
+			printf(_("creating directory %s ... "),
 				   pg_data);
 			fflush(stdout);
 
@@ -2398,7 +2392,7 @@ main(int argc, char *argv[])
 
 		case 1:
 			/* Present but empty, fix permissions and use it */
-			printf("fixing permissions on existing directory %s ... ",
+			printf(_("fixing permissions on existing directory %s ... "),
 				   pg_data);
 			fflush(stdout);
 
@@ -2416,10 +2410,10 @@ main(int argc, char *argv[])
 		case 2:
 			/* Present and not empty */
 			fprintf(stderr,
-					"%s: directory \"%s\" exists but is not empty\n"
+					_("%s: directory \"%s\" exists but is not empty\n"
 					"If you want to create a new database system, either remove or empty\n"
 					"the directory \"%s\" or run %s\n"
-					"with an argument other than \"%s\".\n",
+					"with an argument other than \"%s\".\n"),
 					progname, pg_data, pg_data, progname, pg_data);
 			exit(1);			/* no further message needed */
 
@@ -2433,7 +2427,7 @@ main(int argc, char *argv[])
 
 	for (i = 0; i < (sizeof(subdirs) / sizeof(char *)); i++)
 	{
-		printf("creating directory %s/%s ... ", pg_data, subdirs[i]);
+		printf(_("creating directory %s/%s ... "), pg_data, subdirs[i]);
 		fflush(stdout);
 
 		if (!mkdatadir(subdirs[i]))
@@ -2491,10 +2485,10 @@ main(int argc, char *argv[])
 
 	make_template0();
 
-	printf("\nSuccess. You can now start the database server using:\n\n"
+	printf(_("\nSuccess. You can now start the database server using:\n\n"
 		   "    %s%s%s/postmaster -D %s%s%s\n"
 		   "or\n"
-		   "    %s%s%s/pg_ctl -D %s%s%s -l logfile start\n\n",
+		   "    %s%s%s/pg_ctl -D %s%s%s -l logfile start\n\n"),
 		 QUOTE_PATH, pgpath, QUOTE_PATH, QUOTE_PATH, pg_data, QUOTE_PATH,
 		QUOTE_PATH, pgpath, QUOTE_PATH, QUOTE_PATH, pg_data, QUOTE_PATH);
 
