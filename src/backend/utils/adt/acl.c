@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/acl.c,v 1.34 1999/03/21 06:31:59 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/acl.c,v 1.35 1999/05/12 12:47:24 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -108,7 +108,7 @@ aclparse(char *s, AclItem *aip, unsigned *modechg)
 
 #ifdef ACLDEBUG_TRACE
 	printf("aclparse: input = '%s'\n", s);
-#endif ACLDEBUG_TRACE
+#endif
 	aip->ai_idtype = ACL_IDTYPE_UID;
 	s = getid(s, name);
 	if (*s != ACL_MODECHG_ADD_CHR &&
