@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *    $Header: /cvsroot/pgsql/src/bin/psql/Attic/psql.c,v 1.32 1996/11/22 06:45:14 momjian Exp $
+ *    $Header: /cvsroot/pgsql/src/bin/psql/Attic/psql.c,v 1.33 1996/11/24 04:44:24 bryanh Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -739,7 +739,7 @@ do_copy(const char *args, PsqlSettings * settings)
 	} else {
 	    copystream = fopen(file, "w");
 	}
-	if (copystream < 0)
+	if (copystream == NULL)
 	    fprintf(stderr,
 		    "Unable to open file %s which to copy, errno = %s (%d).",
 		    from ? "from" : "to", strerror(errno), errno);

@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *    $Header: /cvsroot/pgsql/src/backend/utils/mmgr/Attic/palloc.c,v 1.1.1.1 1996/07/09 06:22:09 scrappy Exp $
+ *    $Header: /cvsroot/pgsql/src/backend/utils/mmgr/Attic/palloc.c,v 1.2 1996/11/24 04:44:17 bryanh Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -109,9 +109,8 @@ pstrdup(char* string)
 {
     char *nstr;
 
-    nstr = strcpy((char *)palloc(strlen(string)+1), string);
+    nstr = (char *)palloc(strlen(string)+1);
+    strcpy(nstr, string);
+
     return nstr;
 }
-
-
-

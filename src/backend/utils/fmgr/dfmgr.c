@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *    $Header: /cvsroot/pgsql/src/backend/utils/fmgr/dfmgr.c,v 1.2 1996/11/10 02:26:15 bryanh Exp $
+ *    $Header: /cvsroot/pgsql/src/backend/utils/fmgr/dfmgr.c,v 1.3 1996/11/24 04:44:14 bryanh Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -204,7 +204,7 @@ handle_load(char *filename, char *funcname)
 	    return((func_ptr) NULL);
     }
     
-    retval = pg_dlsym(file_scanner->handle, funcname);
+    retval = (func_ptr) pg_dlsym(file_scanner->handle, funcname);
     
     if (retval == (func_ptr) NULL) {
 	elog(WARN, "Can't find function %s in file %s", funcname, filename);

@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *    $Header: /cvsroot/pgsql/src/backend/storage/page/bufpage.c,v 1.4 1996/11/13 20:49:29 scrappy Exp $
+ *    $Header: /cvsroot/pgsql/src/backend/storage/page/bufpage.c,v 1.5 1996/11/24 04:41:29 bryanh Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -304,11 +304,13 @@ struct itemIdSortData {
 };
 
 static int
-itemidcompare(struct itemIdSortData *itemidp1, struct itemIdSortData *itemidp2)
+itemidcompare(void *itemidp1, void *itemidp2)
 {
-    if (itemidp1->itemiddata.lp_off == itemidp2->itemiddata.lp_off)
+    if (((struct itemIdSortData *)itemidp1)->itemiddata.lp_off ==
+        ((struct itemIdSortData *)itemidp2)->itemiddata.lp_off)
 	return(0);
-    else if (itemidp1->itemiddata.lp_off < itemidp2->itemiddata.lp_off)
+    else if (((struct itemIdSortData *)itemidp1)->itemiddata.lp_off <
+             ((struct itemIdSortData *)itemidp2)->itemiddata.lp_off)
 	return(1);
     else
 	return(-1);
@@ -325,7 +327,6 @@ PageRepairFragmentation(Page page)
     struct itemIdSortData 	*itemidbase, *itemidptr;
     ItemId 		lp;
     int 		nline, nused;
-    int 		itemidcompare();
     Offset 		upper;
     Size 		alignedSize;
     
@@ -364,7 +365,7 @@ PageRepairFragmentation(Page page)
 	
 	/* sort itemIdSortData array...*/
 	pg_qsort((char *) itemidbase, nused, sizeof(struct itemIdSortData),
-		 (void*) itemidcompare);
+		 itemidcompare);
 	
 	/* compactify page */
 	((PageHeader)page)->pd_upper = ((PageHeader)page)->pd_special;
