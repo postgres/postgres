@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/cache/relcache.c,v 1.53 1999/01/17 06:18:51 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/cache/relcache.c,v 1.54 1999/01/22 16:49:25 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -1876,7 +1876,7 @@ init_irels(void)
 	for (relno = 0; relno < Num_indices_bootstrap; relno++)
 	{
 		/* first read the relation descriptor length */
-		if ((nread = FileRead(fd, (char *) &len, sizeof(int))) != sizeof(int))
+		if ((nread = FileRead(fd, (char *) &len, sizeof(len))) != sizeof(len))
 		{
 			write_irels();
 			return;
@@ -1899,7 +1899,7 @@ init_irels(void)
 		ird->lockInfo = (char *) NULL;
 
 		/* next, read the access method tuple form */
-		if ((nread = FileRead(fd, (char *) &len, sizeof(int))) != sizeof(int))
+		if ((nread = FileRead(fd, (char *) &len, sizeof(len))) != sizeof(len))
 		{
 			write_irels();
 			return;
@@ -1915,7 +1915,7 @@ init_irels(void)
 		ird->rd_am = am;
 
 		/* next read the relation tuple form */
-		if ((nread = FileRead(fd, (char *) &len, sizeof(int))) != sizeof(int))
+		if ((nread = FileRead(fd, (char *) &len, sizeof(len))) != sizeof(len))
 		{
 			write_irels();
 			return;
@@ -1937,7 +1937,7 @@ init_irels(void)
 		len = ATTRIBUTE_TUPLE_SIZE;
 		for (i = 0; i < relform->relnatts; i++)
 		{
-			if ((nread = FileRead(fd, (char *) &len, sizeof(int))) != sizeof(int))
+			if ((nread = FileRead(fd, (char *) &len, sizeof(len))) != sizeof(len))
 			{
 				write_irels();
 				return;
@@ -1953,7 +1953,7 @@ init_irels(void)
 		}
 
 		/* next, read the index strategy map */
-		if ((nread = FileRead(fd, (char *) &len, sizeof(int))) != sizeof(int))
+		if ((nread = FileRead(fd, (char *) &len, sizeof(len))) != sizeof(len))
 		{
 			write_irels();
 			return;
@@ -1985,7 +1985,7 @@ init_irels(void)
 		ird->rd_istrat = strat;
 
 		/* finally, read the vector of support procedures */
-		if ((nread = FileRead(fd, (char *) &len, sizeof(int))) != sizeof(int))
+		if ((nread = FileRead(fd, (char *) &len, sizeof(len))) != sizeof(len))
 		{
 			write_irels();
 			return;
@@ -2082,8 +2082,8 @@ write_irels(void)
 		len = sizeof(RelationData);
 
 		/* first, write the relation descriptor length */
-		if ((nwritten = FileWrite(fd, (char *) &len, sizeof(int)))
-			!= sizeof(int))
+		if ((nwritten = FileWrite(fd, (char *) &len, sizeof(len)))
+			!= sizeof(len))
 			elog(FATAL, "cannot write init file -- descriptor length");
 
 		/* next, write out the Relation structure */
@@ -2092,8 +2092,8 @@ write_irels(void)
 
 		/* next, write the access method tuple form */
 		len = sizeof(FormData_pg_am);
-		if ((nwritten = FileWrite(fd, (char *) &len, sizeof(int)))
-			!= sizeof(int))
+		if ((nwritten = FileWrite(fd, (char *) &len, sizeof(len)))
+			!= sizeof(len))
 			elog(FATAL, "cannot write init file -- am tuple form length");
 
 		if ((nwritten = FileWrite(fd, (char *) am, len)) != len)
@@ -2101,8 +2101,8 @@ write_irels(void)
 
 		/* next write the relation tuple form */
 		len = sizeof(FormData_pg_class);
-		if ((nwritten = FileWrite(fd, (char *) &len, sizeof(int)))
-			!= sizeof(int))
+		if ((nwritten = FileWrite(fd, (char *) &len, sizeof(len)))
+			!= sizeof(len))
 			elog(FATAL, "cannot write init file -- relation tuple form length");
 
 		if ((nwritten = FileWrite(fd, (char *) relform, len)) != len)
@@ -2112,8 +2112,8 @@ write_irels(void)
 		len = ATTRIBUTE_TUPLE_SIZE;
 		for (i = 0; i < relform->relnatts; i++)
 		{
-			if ((nwritten = FileWrite(fd, (char *) &len, sizeof(int)))
-				!= sizeof(int))
+			if ((nwritten = FileWrite(fd, (char *) &len, sizeof(len)))
+				!= sizeof(len))
 				elog(FATAL, "cannot write init file -- length of attdesc %d", i);
 			if ((nwritten = FileWrite(fd, (char *) ird->rd_att->attrs[i], len))
 				!= len)
@@ -2123,8 +2123,8 @@ write_irels(void)
 		/* next, write the index strategy map */
 		len = AttributeNumberGetIndexStrategySize(relform->relnatts,
 												  am->amstrategies);
-		if ((nwritten = FileWrite(fd, (char *) &len, sizeof(int)))
-			!= sizeof(int))
+		if ((nwritten = FileWrite(fd, (char *) &len, sizeof(len)))
+			!= sizeof(len))
 			elog(FATAL, "cannot write init file -- strategy map length");
 
 		if ((nwritten = FileWrite(fd, (char *) strat, len)) != len)
@@ -2132,8 +2132,8 @@ write_irels(void)
 
 		/* finally, write the vector of support procedures */
 		len = relform->relnatts * (am->amsupport * sizeof(RegProcedure));
-		if ((nwritten = FileWrite(fd, (char *) &len, sizeof(int)))
-			!= sizeof(int))
+		if ((nwritten = FileWrite(fd, (char *) &len, sizeof(len)))
+			!= sizeof(len))
 			elog(FATAL, "cannot write init file -- support vector length");
 
 		if ((nwritten = FileWrite(fd, (char *) support, len)) != len)
