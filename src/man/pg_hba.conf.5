@@ -1,5 +1,5 @@
 .\" This is -*-nroff-*-
-.\" $Header: /cvsroot/pgsql/src/man/Attic/pg_hba.conf.5,v 1.4 1998/01/27 03:25:14 scrappy Exp $
+.\" $Header: /cvsroot/pgsql/src/man/Attic/pg_hba.conf.5,v 1.5 1998/03/06 18:03:38 momjian Exp $
 .TH pg_hba.conf 5 1/26/98 PostgreSQL PostgreSQL
 .SH NAME
 $PGDATA/pg_hba.conf
@@ -61,16 +61,16 @@ domain sockets.
 .PP
 .IR crypt
 - the client is asked for a password for the user.  This is sent encrypted
-(using crypt(3)) and compared against the password held in the pg_user table.
+(using crypt(3)) and compared against the password held in the pg_shadow table.
 If the passwords match, the connection is allowed.
 .PP
 .IR password
 - the client is asked for a password for the user.  This is sent in clear
-and compared against the password held in the pg_user table.
+and compared against the password held in the pg_shadow table.
 If the passwords match, the connection is allowed.  An optional password file
 may be specified after the
 .IR password
-keyword which is used to match the supplied password rather than the pg_user
+keyword which is used to match the supplied password rather than the pg_shadow
 table.  See pg_passwd(1).  
 .PP
 The following authentication methods are supported for TCP/IP

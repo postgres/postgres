@@ -89,7 +89,7 @@ void
 DefineUser(CreateUserStmt *stmt)
 {
 
-	char	   *pg_user;
+	char	   *pg_shadow;
 	Relation	pg_shadow_rel;
 	TupleDesc	pg_shadow_dsc;
 	HeapScanDesc scan;
@@ -112,12 +112,12 @@ DefineUser(CreateUserStmt *stmt)
 	 * Make sure the user attempting to create a user can insert into the
 	 * pg_shadow relation.
 	 */
-	pg_user = GetPgUserName();
-	if (pg_aclcheck(ShadowRelationName, pg_user, ACL_RD | ACL_WR | ACL_AP) != ACLCHECK_OK)
+	pg_shadow = GetPgUserName();
+	if (pg_aclcheck(ShadowRelationName, pg_shadow, ACL_RD | ACL_WR | ACL_AP) != ACLCHECK_OK)
 	{
 		UserAbortTransactionBlock();
 		elog(ERROR, "defineUser: user \"%s\" does not have SELECT and INSERT privilege for \"%s\"",
-			 pg_user, ShadowRelationName);
+			 pg_shadow, ShadowRelationName);
 		return;
 	}
 
@@ -220,7 +220,7 @@ extern void
 AlterUser(AlterUserStmt *stmt)
 {
 
-	char	   *pg_user;
+	char	   *pg_shadow;
 	Relation	pg_shadow_rel;
 	TupleDesc	pg_shadow_dsc;
 	HeapScanDesc scan;
@@ -242,12 +242,12 @@ AlterUser(AlterUserStmt *stmt)
 	 * Make sure the user attempting to create a user can insert into the
 	 * pg_shadow relation.
 	 */
-	pg_user = GetPgUserName();
-	if (pg_aclcheck(ShadowRelationName, pg_user, ACL_RD | ACL_WR) != ACLCHECK_OK)
+	pg_shadow = GetPgUserName();
+	if (pg_aclcheck(ShadowRelationName, pg_shadow, ACL_RD | ACL_WR) != ACLCHECK_OK)
 	{
 		UserAbortTransactionBlock();
 		elog(ERROR, "alterUser: user \"%s\" does not have SELECT and UPDATE privilege for \"%s\"",
-			 pg_user, ShadowRelationName);
+			 pg_shadow, ShadowRelationName);
 		return;
 	}
 
@@ -347,7 +347,7 @@ extern void
 RemoveUser(char *user)
 {
 
-	char	   *pg_user;
+	char	   *pg_shadow;
 	Relation	pg_shadow_rel,
 				pg_rel;
 	TupleDesc	pg_dsc;
@@ -369,12 +369,12 @@ RemoveUser(char *user)
 	 * Make sure the user attempting to create a user can delete from the
 	 * pg_shadow relation.
 	 */
-	pg_user = GetPgUserName();
-	if (pg_aclcheck(ShadowRelationName, pg_user, ACL_RD | ACL_WR) != ACLCHECK_OK)
+	pg_shadow = GetPgUserName();
+	if (pg_aclcheck(ShadowRelationName, pg_shadow, ACL_RD | ACL_WR) != ACLCHECK_OK)
 	{
 		UserAbortTransactionBlock();
 		elog(ERROR, "removeUser: user \"%s\" does not have SELECT and DELETE privilege for \"%s\"",
-			 pg_user, ShadowRelationName);
+			 pg_shadow, ShadowRelationName);
 		return;
 	}
 
@@ -463,7 +463,7 @@ RemoveUser(char *user)
 	 * tables, views, etc owned by the user.
 	 *
 	 * The second option would be to create a means of deleting tables, view,
-	 * etc. owned by the user from other databases.  Pg_user is global and
+	 * etc. owned by the user from other databases.  pg_shadow is global and
 	 * so this must be done at some point.
 	 *
 	 * Let us not forget that the user should be removed from the pg_groups

@@ -68,10 +68,11 @@
 #	       by the host.  If AUTH_ARGUMENT is specified then the password is
 #	       compared with the user's entry in that file (in the $PGDATA
 #	       directory).  See pg_passwd(1).  If it is omitted then the
-#	       password is compared with the user's entry in the pg_user table.
+#	       password is compared with the user's entry in the pg_shadow
+#	       table.
 #
 #   crypt:  Authentication is done by matching an encrypted password supplied
-#	    by the host with that held for the user in the pg_user table.
+#	    by the host with that held for the user in the pg_shadow table.
 #
 #   krb4:   Kerberos V4 authentication is used.
 #

@@ -1,6 +1,6 @@
 .\" This is -*-nroff-*-
 .\" XXX standard disclaimer belongs here....
-.\" $Header: /cvsroot/pgsql/src/man/Attic/create_user.l,v 1.1 1998/01/25 07:42:01 scrappy Exp $
+.\" $Header: /cvsroot/pgsql/src/man/Attic/create_user.l,v 1.2 1998/03/06 18:03:21 momjian Exp $
 .TH "CREATE USER" SQL 01/26/98 PostgreSQL PostgreSQL
 .SH NAME
 create user -- create a new user within a PostgreSQL instance
@@ -16,7 +16,7 @@ create user -- create a new user within a PostgreSQL instance
 .SH DESCRIPTION
 .BR "create user"
 will add a new user to an instance of PostgreSQL.  The new user will be
-given a usesysid of 'SELECT max(usesysid) + 1 FROM pg_user'.  This means
+given a usesysid of 'SELECT max(usesysid) + 1 FROM pg_shadow'.  This means
 that a PostgreSQL user's usesysid will not correspond to their operating
 system(OS) user id.  The exception to this rule is the 'postgres' user,
 whose OS user id is used as the usesysid during the initdb process.  If
@@ -24,15 +24,15 @@ you still want the OS user id and the usesysid to match for any given
 user, then use the createuser(1) script provided with the PostgreSQL
 distribution. 
 
-The 'with password' clause sets the user's password within the pg_user
-relation.  For this reason, pg_user is no longer accessible to the
+The 'with password' clause sets the user's password within the pg_shadow
+relation.  For this reason, pg_shadow is no longer accessible to the
 'public' group.  Please note that when initdb(1) is executed for an
 instance of PostgreSQL that the postgres user's password is initially set
-to NULL.  When a user's password in the pg_user relation is NULL, then
+to NULL.  When a user's password in the pg_shadow relation is NULL, then
 user authentication proceeds as it historically has (HBA, PG_PASSWORD,
 etc).  However, if a password is set for a user, then a new authentication
 system supplants any other configured for the PostgreSQL instance, and the
-password stored in the pg_user relation is used for authentication.  For
+password stored in the pg_shadow relation is used for authentication.  For
 more details on how this authentication system functions see pg_crypt(3). 
 If the 'with password' clause is omitted, then the user's password is set
 to the empty string with equates to a NULL value in the authentication
@@ -54,9 +54,9 @@ defined in the pg_group relation).
 
 Finally, the 'valid until' clause sets an absolute time after which the
 user's PostgreSQL login is no longer valid.  Please note that if a user
-does not have a password defined in the pg_user relation, then the valid
+does not have a password defined in the pg_shadow relation, then the valid
 until date will not be checked during user authentication.  If this clause
-is omitted, then a NULL value is stored in pg_user for this attribute, and
+is omitted, then a NULL value is stored in pg_shadow for this attribute, and
 the login will be valid for all time. 
 
 .SH EXAMPLES

@@ -1,6 +1,6 @@
 .\" This is -*-nroff-*-
 .\" XXX standard disclaimer belongs here....
-.\" $Header: /cvsroot/pgsql/src/man/Attic/createuser.1,v 1.6 1998/01/26 01:42:44 scrappy Exp $
+.\" $Header: /cvsroot/pgsql/src/man/Attic/createuser.1,v 1.7 1998/03/06 18:03:31 momjian Exp $
 .TH CREATEUSER UNIX 11/05/95 PostgreSQL PostgreSQL
 .SH NAME
 createuser - create a Postgres user
@@ -19,7 +19,7 @@ port]
 .SH DESCRIPTION
 .IR Createuser
 creates a new Postgres user.  Only users with \*(lqusesuper\*(rq set in
-the \*(lqpg_user\*(rq class can create new Postgres users.  As shipped,
+the \*(lqpg_shadow\*(rq class can create new Postgres users.  As shipped,
 the user \*(lqpostgres\*(rq can create users.
 .PP
 .IR Createuser
@@ -96,8 +96,8 @@ is running on the proper host and that you have specified the proper
 port.  If your site uses an authentication system, ensure that you
 have obtained the required authentication credentials.
 .TP
-.BI "user \*(lq" "username" "\*(rq is not in \*(lqpg_user\*(rq"
-You do not have a valid entry in the relation \*(lqpg_user\*(rq and
+.BI "user \*(lq" "username" "\*(rq is not in \*(lqpg_shadow\*(rq"
+You do not have a valid entry in the relation \*(lqpg_shadow\*(rq and
 cannot do anything with Postgres at all; contact your Postgres site
 administrator.
 .TP
@@ -106,7 +106,7 @@ You do not have permission to create new users; contact your Postgres
 site administrator.
 .TP
 .BI "user \*(lq" "username" "\*(rq already exists"
-The user to be added already has an entry in the \*(lqpg_user\*(rq
+The user to be added already has an entry in the \*(lqpg_shadow\*(rq
 class.
 .TP
 .BR "database access failed"

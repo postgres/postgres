@@ -1,6 +1,6 @@
 .\" This is -*-nroff-*-
 .\" XXX standard disclaimer belongs here....
-.\" $Header: /cvsroot/pgsql/src/man/Attic/pg_dumpall.1,v 1.3 1998/01/11 22:17:47 momjian Exp $
+.\" $Header: /cvsroot/pgsql/src/man/Attic/pg_dumpall.1,v 1.4 1998/03/06 18:03:37 momjian Exp $
 .TH pg_dumpall UNIX 1/20/96 PostgreSQL PostgreSQL
 .SH NAME
 pg_dumpall - dumps out all Postgres databases into a script file
@@ -10,7 +10,7 @@ pg_dumpall - dumps out all Postgres databases into a script file
 .SH DESCRIPTION
 .IR "pg_dumpall"
 is a utility for dumping out all Postgres databases into one file.
-It also dumps the pg_user table, which is global to all databases.
+It also dumps the pg_shadow table, which is global to all databases.
 pg_dumpall creates each dumped database before loading.
 pg_dumpall takes all pg_dump options, but \fB-f\fR and \fBdbname\fR
 should not be used.
