@@ -14,7 +14,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/optimizer/plan/planmain.c,v 1.53 2000/03/21 05:11:58 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/optimizer/plan/planmain.c,v 1.54 2000/03/24 21:40:43 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -174,7 +174,6 @@ subplanner(Query *root,
 {
 	RelOptInfo *final_rel;
 	Path	   *cheapestpath;
-	Path		sort_path;		/* dummy for result of cost_sort */
 	Path	   *presortedpath;
 
 	/*
@@ -288,21 +287,22 @@ subplanner(Query *root,
 	 * cheaper than doing an explicit sort on the cheapest-total-cost path.
 	 */
 	cheapestpath = final_rel->cheapest_total_path;
-	cost_sort(&sort_path, root->query_pathkeys,
-			  final_rel->rows, final_rel->width);
-	sort_path.startup_cost += cheapestpath->total_cost;
-	sort_path.total_cost += cheapestpath->total_cost;
-
 	presortedpath =
 		get_cheapest_fractional_path_for_pathkeys(final_rel->pathlist,
 												  root->query_pathkeys,
 												  tuple_fraction);
 	if (presortedpath)
 	{
+		Path		sort_path;	/* dummy for result of cost_sort */
+
+		cost_sort(&sort_path, root->query_pathkeys,
+				  final_rel->rows, final_rel->width);
+		sort_path.startup_cost += cheapestpath->total_cost;
+		sort_path.total_cost += cheapestpath->total_cost;
 		if (compare_fractional_path_costs(presortedpath, &sort_path,
 										  tuple_fraction) <= 0)
 		{
-			/* Found a better presorted path, use it */
+			/* Presorted path is cheaper, use it */
 			root->query_pathkeys = presortedpath->pathkeys;
 			return create_plan(root, presortedpath);
 		}
