@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/executor/nodeSort.c,v 1.27 2000/06/15 04:09:52 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/executor/nodeSort.c,v 1.28 2000/07/09 04:17:53 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -71,9 +71,9 @@ FormSortKeys(Sort *sortnode)
 		if (reskey > 0)			/* ignore TLEs that are not sort keys */
 		{
 			ScanKeyEntryInitialize(&sortkeys[reskey - 1],
-								   0,
+								   0x0,
 								   resno,
-								   (RegProcedure) DatumGetInt32(reskeyop),
+								   (RegProcedure) reskeyop,
 								   (Datum) 0);
 		}
 	}
