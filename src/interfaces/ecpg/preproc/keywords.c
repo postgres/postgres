@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/interfaces/ecpg/preproc/keywords.c,v 1.1 1998/04/21 13:23:06 scrappy Exp $
+ *	  $Header: /cvsroot/pgsql/src/interfaces/ecpg/preproc/keywords.c,v 1.2 1998/05/18 16:05:00 scrappy Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -189,6 +189,8 @@ static ScanKeyword ScanKeywords[] = {
 	{"substring", SUBSTRING},
 	{"table", TABLE},
 	{"time", TIME},
+	{"timezone_hour", TIMEZONE_HOUR},
+	{"timezone_minute", TIMEZONE_MINUTE},
 	{"to", TO},
 	{"trailing", TRAILING},
 	{"transaction", TRANSACTION},

@@ -26,7 +26,13 @@
 
 extern int no_auto_trans;
 
-static PGconn *simple_connection = NULL;
+static struct connection
+{
+	char *name;
+	PGconn *connection;
+	struct connection *next;
+} *all_connections = NULL, *actual_connection = NULL;
+
 static int	simple_debug = 0;
 static FILE *debugstream = NULL;
 static int	committed = true;
@@ -54,6 +60,9 @@ quote_postgres(char *arg)
 	int			i,
 				ri;
 
+	if (!res)
+		return(res);
+		
 	for (i = 0, ri = 0; arg[i]; i++, ri++)
 	{
 		switch (arg[i])
@@ -72,6 +81,40 @@ quote_postgres(char *arg)
 	return res;
 }
 
+
+static void
+ECPGfinish(struct connection *act)
+{
+	if (act != NULL)
+	{
+		ECPGlog("ECPGfinish: finishing %s.\n", act->name);
+		PQfinish(act->connection);
+		/* remove act from the list */
+		if (act == all_connections)
+		{
+			all_connections = act->next;
+			free(act->name);
+			free(act);
+		}
+		else
+		{
+			struct connection *con;
+			
+			for (con = all_connections; con->next && con->next !=  act; con = con->next);
+			if (con->next)
+			{
+				con->next = act->next;
+				free(act->name);
+				free(act);
+			}
+		}
+		
+		if (actual_connection == act)
+			actual_connection = all_connections;
+	}
+	else
+		ECPGlog("ECPGfinish: called an extra time.\n");
+}
 
 bool
 ECPGdo(int lineno, char *query,...)
@@ -195,14 +238,40 @@ ECPGdo(int lineno, char *query,...)
 				{
 					/* set slen to string length if type is char * */
 					int			slen = (varcharsize == 0) ? strlen((char *) value) : varcharsize;
+					char * tmp;
 
 					newcopy = (char *) malloc(slen + 1);
+					if (!newcopy)
+					{
+						ECPGfinish(actual_connection);
+						ECPGlog("out of memory\n");
+				                register_error(ECPG_OUT_OF_MEMORY, "out of memory in line %d", lineno);
+						return false;
+					}
+						
 					strncpy(newcopy, (char *) value, slen);
 					newcopy[slen] = '\0';
 
 					mallocedval = (char *) malloc(2 * strlen(newcopy) + 3);
+					if (!mallocedval)
+					{
+						ECPGfinish(actual_connection);
+						ECPGlog("out of memory\n");
+				                register_error(ECPG_OUT_OF_MEMORY, "out of memory in line %d", lineno);
+						return false;
+					}
+						
 					strcpy(mallocedval, "'");
-					strcat(mallocedval, quote_postgres(newcopy));
+					tmp = quote_postgres(newcopy);
+					if (!tmp)
+					{
+						ECPGfinish(actual_connection);
+						ECPGlog("out of memory\n");
+				                register_error(ECPG_OUT_OF_MEMORY, "out of memory in line %d", lineno);
+						return false;
+					}
+						
+					strcat(mallocedval, tmp);
 					strcat(mallocedval, "'");
 
 					free(newcopy);
@@ -215,14 +284,40 @@ ECPGdo(int lineno, char *query,...)
 				{
 					struct ECPGgeneric_varchar *var =
 					(struct ECPGgeneric_varchar *) value;
+					char *tmp;
 
 					newcopy = (char *) malloc(var->len + 1);
+					if (!newcopy)
+					{
+						ECPGfinish(actual_connection);
+						ECPGlog("out of memory\n");
+				                register_error(ECPG_OUT_OF_MEMORY, "out of memory in line %d", lineno);
+						return false;
+					}
+						
 					strncpy(newcopy, var->arr, var->len);
 					newcopy[var->len] = '\0';
 
 					mallocedval = (char *) malloc(2 * strlen(newcopy) + 3);
+					if (!mallocedval)
+					{
+						ECPGfinish(actual_connection);
+						ECPGlog("out of memory\n");
+				                register_error(ECPG_OUT_OF_MEMORY, "out of memory in line %d", lineno);
+						return false;
+					}
+					
 					strcpy(mallocedval, "'");
-					strcat(mallocedval, quote_postgres(newcopy));
+					tmp = quote_postgres(newcopy);
+					if (!tmp)
+					{
+						ECPGfinish(actual_connection);
+						ECPGlog("out of memory\n");
+				                register_error(ECPG_OUT_OF_MEMORY, "out of memory in line %d", lineno);
+						return false;
+					}
+					                                                
+					strcat(mallocedval, tmp);
 					strcat(mallocedval, "'");
 
 					free(newcopy);
@@ -249,6 +344,14 @@ ECPGdo(int lineno, char *query,...)
 		newcopy = (char *) malloc(strlen(copiedquery)
 								  + strlen(tobeinserted)
 								  + 1);
+		if (!newcopy)
+		{
+			ECPGfinish(actual_connection);
+			ECPGlog("out of memory\n");
+	                register_error(ECPG_OUT_OF_MEMORY, "out of memory in line %d", lineno);
+			return false;
+		}
+		 	
 		strcpy(newcopy, copiedquery);
 		if ((p = strstr(newcopy, ";;")) == NULL)
 		{
@@ -301,7 +404,7 @@ ECPGdo(int lineno, char *query,...)
 
 	if (committed && !no_auto_trans)
 	{
-		if ((results = PQexec(simple_connection, "begin transaction")) == NULL)
+		if ((results = PQexec(actual_connection->connection, "begin transaction")) == NULL)
 		{
 			register_error(ECPG_TRANS, "Error starting transaction line %d.", lineno);
 			return false;
@@ -311,15 +414,15 @@ ECPGdo(int lineno, char *query,...)
 	}
 
 	ECPGlog("ECPGdo line %d: QUERY: %s\n", lineno, copiedquery);
-	results = PQexec(simple_connection, copiedquery);
+	results = PQexec(actual_connection->connection, copiedquery);
 	free(copiedquery);
 
 	if (results == NULL)
 	{
 		ECPGlog("ECPGdo line %d: error: %s", lineno,
-				PQerrorMessage(simple_connection));
+				PQerrorMessage(actual_connection->connection));
 		register_error(ECPG_PGSQL, "Postgres error: %s line %d.",
-					   PQerrorMessage(simple_connection), lineno);
+					   PQerrorMessage(actual_connection->connection), lineno);
 	}
 	else
 	{
@@ -644,9 +747,9 @@ ECPGdo(int lineno, char *query,...)
 			case PGRES_FATAL_ERROR:
 			case PGRES_BAD_RESPONSE:
 				ECPGlog("ECPGdo line %d: Error: %s",
-						lineno, PQerrorMessage(simple_connection));
+						lineno, PQerrorMessage(actual_connection->connection));
 				register_error(ECPG_PGSQL, "Error: %s line %d.",
-							   PQerrorMessage(simple_connection), lineno);
+							   PQerrorMessage(actual_connection->connection), lineno);
 				status = false;
 				break;
 			case PGRES_COPY_OUT:
@@ -667,7 +770,7 @@ ECPGdo(int lineno, char *query,...)
 	}
 
 	/* check for asynchronous returns */
-	notify = PQnotifies(simple_connection);
+	notify = PQnotifies(actual_connection->connection);
 	if (notify)
 	{
 		ECPGlog("ECPGdo line %d: ASYNC NOTIFY of '%s' from backend pid '%d' received\n",
@@ -686,7 +789,7 @@ ECPGtrans(int lineno, const char * transaction)
 	PGresult   *res;
 
 	ECPGlog("ECPGtrans line %d action = %s\n", lineno, transaction);
-	if ((res = PQexec(simple_connection, transaction)) == NULL)
+	if ((res = PQexec(actual_connection->connection, transaction)) == NULL)
 	{
 		register_error(ECPG_TRANS, "Error in transaction processing line %d.", lineno);
 		return (FALSE);
@@ -698,59 +801,101 @@ ECPGtrans(int lineno, const char * transaction)
 }
 
 bool
-ECPGsetdb(PGconn *newcon)
+ECPGsetconn(int lineno, const char *connection_name)
 {
-	ECPGfinish();
-	simple_connection = newcon;
-	return true;
+	struct connection *con = all_connections;
+	
+	for (; con && strcmp(connection_name, con->name) == 0; con=con->next);
+	if (con)
+	{
+		actual_connection = con;
+		return true;
+	}
+	else
+	{
+		register_error(ECPG_NO_CONN, "No such connection %s in line %d", connection_name, lineno);
+		return false;
+	}
 }
 
 bool
-ECPGconnect(const char *dbname)
+ECPGconnect(int lineno, const char *dbname, const char *user, const char *passwd, const char * connection_name)
 {
-	char	   *name = strdup(dbname);
+	struct connection *this = malloc(sizeof(struct connection));
 
-	ECPGlog("ECPGconnect: opening database %s\n", name);
+	if (!this)
+	{
+		ECPGlog("out of memory\n");
+                register_error(ECPG_OUT_OF_MEMORY, "out of memory in line %d", lineno);
+		return false;
+	}
+				
+	if (dbname == NULL && connection_name == NULL)
+		connection_name = "DEFAULT";
+	
+	/* add connection to our list */
+	if (connection_name != NULL)
+		this->name = strdup(connection_name);
+	else
+		this->name = strdup(dbname);
+	
+	if (all_connections == NULL)
+		this->next = NULL;
+	else
+		this->next = all_connections;
+
+	actual_connection = all_connections = this;
+		
+	ECPGlog("ECPGconnect: opening database %s %s%s\n", dbname ? dbname : "NULL", user ? "for user ": "", user ? user : "");
 
 	sqlca.sqlcode = 0;
 
-	ECPGsetdb(PQsetdb(NULL, NULL, NULL, NULL, name));
-
-	free(name);
-	name = NULL;
-
-	if (PQstatus(simple_connection) == CONNECTION_BAD)
+	this->connection = PQsetdbLogin(NULL, NULL, NULL, NULL, dbname, user, passwd);
+        
+	if (PQstatus(this->connection) == CONNECTION_BAD)
 	{
-		ECPGfinish();
-		ECPGlog("connect: could not open database %s\n", dbname);
-		register_error(ECPG_CONNECT, "connect: could not open database %s.", dbname);
+		ECPGfinish(this);
+                ECPGlog("connect: could not open database %s %s%s in line %d\n", dbname ? dbname : "NULL", user ? "for user ": "", user ? user : "", lineno);
+                
+		register_error(ECPG_CONNECT, "connect: could not open database %s.", dbname ? dbname : "NULL");
 		return false;
 	}
+	
 	return true;
 }
 
 bool
-ECPGdisconnect(const char *dbname)
+ECPGdisconnect(int lineno, const char *connection_name)
 {
-	if (strlen(dbname) > 0 && strcmp(PQdb(simple_connection), dbname) != 0)
+	struct connection *con;
+	
+	if (strcmp(connection_name, "CURRENT") == 0)
+		ECPGfinish(actual_connection);
+	else if (strcmp(connection_name, "ALL") == 0)
 	{
-		ECPGlog("disconnect: not connected to database %s\n", dbname);
-		register_error(ECPG_DISCONNECT, "disconnect: not connected to database %s.", dbname);
-		return false;
+		for (con = all_connections; con;)
+		{
+			struct connection *f = con;
+			
+			con = con->next;
+			ECPGfinish(f);
+		}
 	}
-	return ECPGfinish();
-}
-
-bool
-ECPGfinish(void)
-{
-	if (simple_connection != NULL)
+	else 
 	{
-		ECPGlog("ECPGfinish: finishing.\n");
-		PQfinish(simple_connection);
+		for (con = all_connections; con && strcmp(con->name, connection_name);con = con->next);
+		if (con == NULL)
+		{		
+			ECPGlog("disconnect: not connected to connection %s\n", connection_name);
+			register_error(ECPG_NO_CONN, "No such connection %s in line %d", connection_name, lineno);
+			return false;
+		}
+		else
+		{
+			ECPGfinish(con);
+		}
 	}
-	else
-		ECPGlog("ECPGfinish: called an extra time.\n");
+	
 	return true;
 }
 
@@ -771,6 +916,9 @@ ECPGlog(const char *format,...)
 	{
 		char	   *f = (char *) malloc(strlen(format) + 100);
 
+		if (!f)
+			return;
+						
 		sprintf(f, "[%d]: %s", getpid(), format);
 
 		va_start(ap, format);

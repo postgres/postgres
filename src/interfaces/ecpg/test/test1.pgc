@@ -19,7 +19,7 @@ exec sql end declare section;
                 ECPGdebug(1, dbgs);
 
 	strcpy(msg, "connect");
-	exec sql connect mm;
+	exec sql connect to mm;
 
 	strcpy(msg, "create");
 	exec sql create table test(name char(8), amount int);

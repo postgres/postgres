@@ -11,9 +11,9 @@ exec sql begin declare section;
 								short age;
 					} birth;
 				} personal;
-	struct personal_indicator {	short name;
-					struct birth_indicator {	short born;
-									int age;
+	struct personal_indicator {	short ind_name;
+					struct birth_indicator {	short ind_born;
+									int ind_age;
 					} ind_birth;
 				  } ind_personal;
 	long ind_married;
@@ -26,7 +26,7 @@ exec sql end declare section;
                 ECPGdebug(1, dbgs);
 
 	strcpy(msg, "connect");
-	exec sql connect mm;
+	exec sql connect to mm;
 
 	strcpy(msg, "create");
 	exec sql create table meskes(name char(8), born integer, age smallint, married char(8));

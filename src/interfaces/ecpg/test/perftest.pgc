@@ -28,7 +28,7 @@ exec sql begin declare section;
 exec sql end declare section;
 	struct timeval tvs, tve;
 
-	exec sql connect mm;
+	exec sql connect to mm;
 
 	exec sql create table perftest1(number int4, ascii char(16));
 

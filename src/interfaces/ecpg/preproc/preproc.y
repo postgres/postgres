@@ -70,11 +70,13 @@ whenever_action(int mode)
 {
 	if (mode == 1 && when_nf.code != W_NOTHING)
 	{
+		output_line_number();
 		fprintf(yyout, "\nif (sqlca.sqlcode == ECPG_NOT_FOUND) ");
 		print_action(&when_nf);
 	}
 	if (when_error.code != W_NOTHING)
         {
+		output_line_number();
                 fprintf(yyout, "\nif (sqlca.sqlcode < 0) ");
 		print_action(&when_error);
         }
@@ -112,7 +114,7 @@ static struct variable * find_variable(char * name);
 static struct variable *
 find_struct_member(char *name, char *str, struct ECPGstruct_member *members)
 {
-    char *next = strpbrk(++str, ".-"), c = '\0';
+    char *next = strchr(++str, '.'), c = '\0';
 
     if (next != NULL)
     {
@@ -129,6 +131,8 @@ find_struct_member(char *name, char *str, struct ECPGstruct_member *members)
 			/* found the end */
 			switch (members->typ->typ)
 			{
+			   case ECPGt_array:
+				return(new_variable(name, ECPGmake_array_type(members->typ->u.element, members->typ->size)));
 			   case ECPGt_struct:
 				return(new_variable(name, ECPGmake_struct_type(members->typ->u.members)));
 			   default:
@@ -138,8 +142,12 @@ find_struct_member(char *name, char *str, struct ECPGstruct_member *members)
 		else
 		{
 			*next = c;
-			if (c == '-') next++;
-			return(find_struct_member(name, next, members->typ->u.members));
+			if (c == '-')
+			{
+				next++;
+				return(find_struct_member(name, next, members->typ->u.element->u.members));
+			}
+			else return(find_struct_member(name, next, members->typ->u.members));
 		}
 	}
     }
@@ -159,9 +167,12 @@ find_struct(char * name, char *next)
 
     /* restore the name, we will need it later on */
     *next = c;
-    if (*next == '-') next++;
-
-    return (find_struct_member(name, next, p->type->u.members));
+    if (c == '-')
+    {
+	next++;
+	return (find_struct_member(name, next, p->type->u.element->u.members));
+    }
+    else return (find_struct_member(name, next, p->type->u.members));
 }
 
 static struct variable *
@@ -178,12 +189,20 @@ find_simple(char * name)
     return(NULL);
 }
 
+/* Note that this function will end the program in case of an unknown */
+/* variable */
 static struct variable *
 find_variable(char * name)
 {
     char * next;
-    struct variable * p =
-    	((next = strpbrk(name, ".-")) != NULL) ? find_struct(name, next) : find_simple(name);
+    struct variable * p;
+
+    if ((next = strchr(name, '.')) != NULL)
+	p = find_struct(name, next);
+    else if ((next = strstr(name, "->")) != NULL)
+	p = find_struct(name, next);
+    else
+	p = find_simple(name);
 
     if (p == NULL)
     {
@@ -230,7 +249,6 @@ struct arguments {
     struct variable * indicator;
     struct arguments * next;
 };
-
 
 static struct arguments * argsinsert = NULL;
 static struct arguments * argsresult = NULL;
@@ -495,8 +513,9 @@ output_statement(char * stmt, int mode)
 }
 
 /* special embedded SQL token */
-%token		SQL_BREAK SQL_CALL SQL_CONNECT SQL_CONTINUE SQL_DISCONNECT SQL_FOUND SQL_GO SQL_GOTO
-%token		SQL_IMMEDIATE SQL_INDICATOR SQL_OPEN SQL_RELEASE
+%token		SQL_BREAK SQL_CALL SQL_CONNECT SQL_CONNECTION SQL_CONTINUE
+%token		SQL_DISCONNECT SQL_FOUND SQL_GO SQL_GOTO
+%token		SQL_IDENTIFIED SQL_IMMEDIATE SQL_INDICATOR SQL_OPEN SQL_RELEASE
 %token		SQL_SECTION SQL_SEMI SQL_SQLERROR SQL_SQLPRINT SQL_START
 %token		SQL_STOP SQL_WHENEVER
 
@@ -527,8 +546,9 @@ output_statement(char * stmt, int mode)
                 PARTIAL, POSITION, PRECISION, PRIMARY, PRIVILEGES, PROCEDURE, PUBLIC,
                 REFERENCES, REVOKE, RIGHT, ROLLBACK,
                 SECOND_P, SELECT, SET, SUBSTRING,
-                TABLE, TIME, TIMESTAMP, TO, TRAILING, TRANSACTION, TRIM,
-                UNION, UNIQUE, UPDATE, USING,
+                TABLE, TIME, TIMESTAMP, TIMEZONE_HOUR, TIMEZONE_MINUTE,
+		TO, TRAILING, TRANSACTION, TRIM,
+                UNION, UNIQUE, UPDATE, USER, USING,
                 VALUES, VARCHAR, VARYING, VIEW,
                 WHERE, WITH, WORK, YEAR_P, ZONE
 
@@ -559,7 +579,7 @@ output_statement(char * stmt, int mode)
  *
  *                                    Todd A. Brandys
  */
-%token  USER, PASSWORD, CREATEDB, NOCREATEDB, CREATEUSER, NOCREATEUSER, VALID, UNTIL
+%token  PASSWORD, CREATEDB, NOCREATEDB, CREATEUSER, NOCREATEUSER, VALID, UNTIL
 
 /* Special keywords, not in the query language - see the "lex" file */
 %token <str>    IDENT SCONST Op CSTRING CVARIABLE
@@ -620,7 +640,7 @@ output_statement(char * stmt, int mode)
 %type  <str>	sortby OptUseOp opt_inh_star relation_name_list name_list
 %type  <str>	group_clause groupby_list groupby having_clause from_clause
 %type  <str>	from_list from_val join_expr join_outer join_spec join_list
-%type  <str> 	join_using where_clause relation_expr
+%type  <str> 	join_using where_clause relation_expr row_op sub_type
 %type  <str>	opt_column_list insert_rest InsertStmt
 %type  <str>    columnList DeleteStmt LockStmt UpdateStmt CursorStmt
 %type  <str>    NotifyStmt columnElem copy_dirn OptimizableStmt
@@ -650,12 +670,16 @@ output_statement(char * stmt, int mode)
 %type  <str>    DestroydbStmt ClusterStmt grantee RevokeStmt
 %type  <str>	GrantStmt privileges operation_commalist operation
 
-%type  <str>	ECPGWhenever ECPGConnect db_name ECPGOpen open_opts
+%type  <str>	ECPGWhenever ECPGConnect connection_target ECPGOpen open_opts
 %type  <str>	indicator ECPGExecute c_expr variable_list dotext
 %type  <str>    storage_clause opt_initializer vartext c_anything blockstart
 %type  <str>    blockend variable_list variable var_anything sql_anything
 %type  <str>	opt_pointer ecpg_ident cvariable ECPGDisconnect dis_name
-%type  <str>	stmt symbol opt_symbol ECPGRelease execstring
+%type  <str>	stmt symbol opt_symbol ECPGRelease execstring server_name
+%type  <str>	connection_object opt_server opt_port
+%type  <str>    user_name opt_user char_variable ora_user ident
+%type  <str>    db_prefix server opt_options opt_connection_name
+%type  <str>	ECPGSetConnection
 
 %type  <type_enum> simple_type type struct_type
 
@@ -721,12 +745,12 @@ stmt:  AddAttrStmt			{ output_statement($1, 0); }
 		| VariableShowStmt	{ output_statement($1, 0); }
 		| VariableResetStmt	{ output_statement($1, 0); }
 		| ECPGConnect		{
-						fprintf(yyout, "ECPGconnect(\"%s\");", $1); 
+						fprintf(yyout, "ECPGconnect(__LINE__, %s);", $1);
 						whenever_action(0);
 						free($1);
 					} 
 		| ECPGDisconnect	{
-						fprintf(yyout, "ECPGdisconnect(\"%s\");", $1); 
+						fprintf(yyout, "ECPGdisconnect(__LINE__, \"%s\");", $1); 
 						whenever_action(0);
 						free($1);
 					} 
@@ -737,6 +761,11 @@ stmt:  AddAttrStmt			{ output_statement($1, 0); }
 					}
 		| ECPGOpen		{ output_statement($1, 0); }
 		| ECPGRelease		{ /* output already done */ }
+		| ECPGSetConnection     {
+						fprintf(yyout, "ECPGsetcon(__LINE__, %s);", $1);
+						whenever_action(0);
+                                       		free($1);
+					}
 		| ECPGWhenever		{
 						fputs($1, yyout);
 						output_line_number();
@@ -828,7 +857,7 @@ user_group_clause:  IN GROUP user_group_list	{ $$ = cat2_str(make1_str("in group
 			| /*EMPTY*/		{ $$ = make1_str(""); }
 		;
 
-user_valid_clause:  VALID UNTIL SCONST			{ $$ = cat2_str(make1_str("valid until"), $3);; }
+user_valid_clause:  VALID UNTIL Sconst			{ $$ = cat2_str(make1_str("valid until"), $3);; }
 			| /*EMPTY*/			{ $$ = make1_str(""); }
 		;
 
@@ -853,6 +882,7 @@ VariableSetStmt:  SET ColId TO var_value
 				{
 					$$ = cat2_str(make1_str("set time zone"), $4);
 				}
+
 		;
 
 var_value:  Sconst			{ $$ = $1; }
@@ -1136,7 +1166,9 @@ default_expr:  AexprConst
 					$$ = "current_timestamp";
 				}
 			| CURRENT_USER
-				{	$$ = make1_str("current user"); }
+				{	$$ = make1_str("current_user"); }
+			| USER
+				{       $$ = make1_str("user"); }
 		;
 
 /* ConstraintElem specifies constraint syntax which is not embedded into
@@ -1459,7 +1491,7 @@ TriggerFuncArg:  Iconst
 					$$ = make_name();
 				}
 			| Sconst	{  $$ = $1; }
-			| ecpg_ident		{  $$ = $1; }
+			| ident		{  $$ = $1; }
 		;
 
 DropTrigStmt:  DROP TRIGGER name ON relation_name
@@ -2434,8 +2466,10 @@ groupby:  ColId
 
 having_clause:  HAVING a_expr
 				{
+#if FALSE
 					yyerror("HAVING clause not yet implemented");
-/*					$$ = cat2_str(make1_str("having"), $2); use this line instead to enable HAVING */
+#endif
+					$$ = cat2_str(make1_str("having"), $2);
 				}
 		| /*EMPTY*/		{ $$ = make1_str(""); }
 		;
@@ -2610,7 +2644,7 @@ Generic:  generic
 				}
 		;
 
-generic:  ecpg_ident					{ $$ = $1; }
+generic:  ident					{ $$ = $1; }
 		| TYPE_P			{ $$ = make1_str("type"); }
 		;
 
@@ -2724,7 +2758,7 @@ opt_decimal:  '(' Iconst ',' Iconst ')'
 Character:  character '(' Iconst ')'
 				{
 					if (strncasecmp($1, "char", strlen("char")) && strncasecmp($1, "varchar", strlen("varchar")))
-						yyerror("parse error");
+						yyerror("internal parsing error; unrecognized character type");
 					if (atol($3) < 1) {
 						sprintf(errortext, "length for '%s' type must be at least 1",$1);
 						yyerror(errortext);
@@ -2749,10 +2783,9 @@ Character:  character '(' Iconst ')'
 
 character:  CHARACTER opt_varying opt_charset opt_collate
 				{
-					if (strlen($4) > 0) {
-						sprintf(errortext, "COLLATE %s not yet implemented",$4);
-						yyerror(errortext);
-					}
+					if (strlen($4) > 0) 
+						fprintf(stderr, "COLLATE %s not yet implemented",$4);
+
 					$$ = cat4_str(make1_str("character"), $2, $3, $4);
 				}
 		| CHAR opt_varying	{ $$ = cat2_str(make1_str("char"), $2); }
@@ -2809,6 +2842,7 @@ opt_interval:  datetime					{ $$ = $1; }
 		| DAY_P TO MINUTE_P			{ $$ = make1_str("day to minute"); }
 		| DAY_P TO SECOND_P			{ $$ = make1_str("day to second"); }
 		| HOUR_P TO MINUTE_P			{ $$ = make1_str("hour to minute"); }
+		| MINUTE_P TO SECOND_P			{ $$ = make1_str("minute to second"); }
 		| HOUR_P TO SECOND_P			{ $$ = make1_str("hour to second"); }
 		| /*EMPTY*/					{ $$ = make1_str(""); }
 		;
@@ -2831,6 +2865,11 @@ a_expr_or_null:  a_expr
 /* Expressions using row descriptors
  * Define row_descriptor to allow yacc to break the reduce/reduce conflict
  *  with singleton expressions.
+ * Eliminated lots of code by defining row_op and sub_type clauses.
+ * However, can not consolidate EXPR_LINK case with others subselects
+ *  due to shift/reduce conflict with the non-subselect clause (the parser
+ *  would have to look ahead more than one token to resolve the conflict).
+ * - thomas 1998-05-09
  */
 row_expr: '(' row_descriptor ')' IN '(' SubSelect ')'
 				{
@@ -2840,133 +2879,17 @@ row_expr: '(' row_descriptor ')' IN '(' SubSelect ')'
 				{
 					$$ = make5_str(make1_str("("), $2, make1_str(") not in ("), $7, make1_str(")"));
 				}
-		| '(' row_descriptor ')' Op '(' SubSelect ')'
+		| '(' row_descriptor ')' row_op sub_type  '(' SubSelect ')'
+				{
+					$$ = make4_str(make5_str(make1_str("("), $2, make1_str(")"), $4, $5), make1_str("("), $7, make1_str(")"));
+				}
+		| '(' row_descriptor ')' row_op '(' SubSelect ')'
 				{
 					$$ = make3_str(make5_str(make1_str("("), $2, make1_str(")"), $4, make1_str("(")), $6, make1_str(")"));
 				}
-		| '(' row_descriptor ')' '+' '(' SubSelect ')'
-				{
-					$$ = make5_str(make1_str("("), $2, make1_str(")+("), $6, make1_str(")"));
-				}
-		| '(' row_descriptor ')' '-' '(' SubSelect ')'
-				{
-					$$ = make5_str(make1_str("("), $2, make1_str(")-("), $6, make1_str(")"));
-				}
-		| '(' row_descriptor ')' '/' '(' SubSelect ')'
-				{
-					$$ = make5_str(make1_str("("), $2, make1_str(")/("), $6, make1_str(")"));
-				}
-		| '(' row_descriptor ')' '*' '(' SubSelect ')'
-				{
-					$$ = make5_str(make1_str("("), $2, make1_str(")*("), $6, make1_str(")"));
-				}
-		| '(' row_descriptor ')' '<' '(' SubSelect ')'
-				{
-					$$ = make5_str(make1_str("("), $2, make1_str(")<("), $6, make1_str(")"));
-				}
-		| '(' row_descriptor ')' '>' '(' SubSelect ')'
-				{
-					$$ = make5_str(make1_str("("), $2, make1_str(")>("), $6, make1_str(")"));
-				}
-		| '(' row_descriptor ')' '=' '(' SubSelect ')'
-				{
-					$$ = make5_str(make1_str("("), $2, make1_str(")=("), $6, make1_str(")"));
-				}
-		| '(' row_descriptor ')' Op ANY '(' SubSelect ')'
-				{
-					$$ = cat3_str(make3_str(make1_str("("), $2, make1_str(")")), $4, make3_str(make1_str("any("), $7, make1_str(")")));
-				}
-		| '(' row_descriptor ')' '+' ANY '(' SubSelect ')'
-				{
-					$$ = make5_str(make1_str("("), $2, make1_str(")+any("), $7, make1_str(")"));
-				}
-		| '(' row_descriptor ')' '-' ANY '(' SubSelect ')'
-				{
-					$$ = make5_str(make1_str("("), $2, make1_str(")-any("), $7, make1_str(")"));
-				}
-		| '(' row_descriptor ')' '/' ANY '(' SubSelect ')'
-				{
-					$$ = make5_str(make1_str("("), $2, make1_str(")/any("), $7, make1_str(")"));
-				}
-		| '(' row_descriptor ')' '*' ANY '(' SubSelect ')'
-				{
-					$$ = make5_str(make1_str("("), $2, make1_str(")*any("), $7, make1_str(")"));
-				}
-		| '(' row_descriptor ')' '<' ANY '(' SubSelect ')'
-				{
-					$$ = make5_str(make1_str("("), $2, make1_str(")<any("), $7, make1_str(")"));
-				}
-		| '(' row_descriptor ')' '>' ANY '(' SubSelect ')'
-				{
-					$$ = make5_str(make1_str("("), $2, make1_str(")>any("), $7, make1_str(")"));
-				}
-		| '(' row_descriptor ')' '=' ANY '(' SubSelect ')'
-				{
-					$$ = make5_str(make1_str("("), $2, make1_str(")=any("), $7, make1_str(")"));
-				}
-		| '(' row_descriptor ')' Op ALL '(' SubSelect ')'
-				{
-					$$ = cat3_str(make3_str(make1_str("("), $2, make1_str(")")), $4, make3_str(make1_str("all("), $7, make1_str(")")));
-				}
-		| '(' row_descriptor ')' '+' ALL '(' SubSelect ')'
-				{
-					$$ = make5_str(make1_str("("), $2, make1_str(")+all("), $7, make1_str(")"));
-				}
-		| '(' row_descriptor ')' '-' ALL '(' SubSelect ')'
-				{
-					$$ = make5_str(make1_str("("), $2, make1_str(")-all("), $7, make1_str(")"));
-				}
-		| '(' row_descriptor ')' '/' ALL '(' SubSelect ')'
-				{
-					$$ = make5_str(make1_str("("), $2, make1_str(")/all("), $7, make1_str(")"));
-				}
-		| '(' row_descriptor ')' '*' ALL '(' SubSelect ')'
-				{
-					$$ = make5_str(make1_str("("), $2, make1_str(")*all("), $7, make1_str(")"));
-				}
-		| '(' row_descriptor ')' '<' ALL '(' SubSelect ')'
-				{
-					$$ = make5_str(make1_str("("), $2, make1_str(")<all("), $7, make1_str(")"));
-				}
-		| '(' row_descriptor ')' '>' ALL '(' SubSelect ')'
-				{
-					$$ = make5_str(make1_str("("), $2, make1_str(")>all("), $7, make1_str(")"));
-				}
-		| '(' row_descriptor ')' '=' ALL '(' SubSelect ')'
-				{
-					$$ = make5_str(make1_str("("), $2, make1_str(")=all("), $7, make1_str(")"));
-				}
-		| '(' row_descriptor ')' Op '(' row_descriptor ')'
+		| '(' row_descriptor ')' row_op '(' row_descriptor ')'
 				{
 					$$ = cat3_str(make3_str(make1_str("("), $2, make1_str(")")), $4, make3_str(make1_str("("), $6, make1_str(")")));
-				}
-		| '(' row_descriptor ')' '+' '(' row_descriptor ')'
-				{
-					$$ = make5_str(make1_str("("), $2, make1_str(")+("), $6, make1_str(")"));
-				}
-		| '(' row_descriptor ')' '-' '(' row_descriptor ')'
-				{
-					$$ = make5_str(make1_str("("), $2, make1_str(")-("), $6, make1_str(")"));
-				}
-		| '(' row_descriptor ')' '/' '(' row_descriptor ')'
-				{
-					$$ = make5_str(make1_str("("), $2, make1_str(")/("), $6, make1_str(")"));
-				}
-		| '(' row_descriptor ')' '*' '(' row_descriptor ')'
-				{
-					$$ = make5_str(make1_str("("), $2, make1_str(")*("), $6, make1_str(")"));
-				}
-		| '(' row_descriptor ')' '<' '(' row_descriptor ')'
-				{
-					$$ = make5_str(make1_str("("), $2, make1_str(")<("), $6, make1_str(")"));
-				}
-		| '(' row_descriptor ')' '>' '(' row_descriptor ')'
-				{
-					$$ = make5_str(make1_str("("), $2, make1_str(")>("), $6, make1_str(")"));
-				}
-		| '(' row_descriptor ')' '=' '(' row_descriptor ')'
-				{
-					$$ = make5_str(make1_str("("), $2, make1_str(")=("), $6, make1_str(")"));
 				}
 		;
 
@@ -2975,6 +2898,21 @@ row_descriptor:  row_list ',' a_expr
 					$$ = cat3_str($1, make1_str(","), $3);
 				}
 		;
+
+row_op:  Op			{ $$ = $1; }
+	| '<'                   { $$ = "<"; }
+        | '='                   { $$ = "="; }
+        | '>'                   { $$ = ">"; }
+        | '+'                   { $$ = "+"; }
+        | '-'                   { $$ = "-"; }
+        | '*'                   { $$ = "*"; }
+        | '/'                   { $$ = "/"; }
+              ;
+
+sub_type:  ANY                  { $$ = make1_str("ANY"); }
+         | ALL                  { $$ = make1_str("ALL"); }
+              ;
+
 
 row_list:  row_list ',' a_expr
 				{
@@ -3089,6 +3027,11 @@ a_expr:  attr opt_indirection
 				{
 					$$ = make1_str("current_user");
 				}
+		| USER
+				{
+  		     		        $$ = make1_str("user");
+			     	}
+
 		| EXISTS '(' SubSelect ')'
 				{
 					$$ = make3_str(make1_str("exists("), $3, make1_str(")"));
@@ -3358,6 +3301,10 @@ b_expr:  attr opt_indirection
 				{
 					$$ = make1_str("current_user");
 				}
+		| USER
+				{
+					$$ = make1_str("user");
+				}
 		| POSITION '(' position_list ')'
 				{
 					$$ = make3_str(make1_str("position ("), $3, make1_str(")"));
@@ -3417,12 +3364,9 @@ extract_list:  extract_arg FROM a_expr
 			        { $$ = make1_str(";;"); }
 		;
 
-/* Add in TIMEZONE_HOUR and TIMEZONE_MINUTE for SQL92 compliance
- *  for next release. Just set up extract_arg for now...
- * - thomas 1998-04-08
- */
-extract_arg:  datetime
-				{	$$ = $1; }
+extract_arg:  datetime		{ $$ = $1; }
+	| TIMEZONE_HOUR 	{ $$ = make1_str("timezone_hour"); }	
+	| TIMEZONE_MINUTE 	{ $$ = make1_str("timezone_minute"); }	
 		;
 
 position_list:  position_expr IN position_expr
@@ -3660,9 +3604,9 @@ relation_name:	SpecialRuleRelation
 		;
 
 database_name:			ColId			{ $$ = $1; };
-access_method:			ecpg_ident			{ $$ = $1; };
+access_method:			ident			{ $$ = $1; };
 attr_name:				ColId			{ $$ = $1; };
-class:					ecpg_ident			{ $$ = $1; };
+class:					ident			{ $$ = $1; };
 index_name:				ColId			{ $$ = $1; };
 
 /* Functions
@@ -3673,7 +3617,7 @@ name:					ColId			{ $$ = $1; };
 func_name:				ColId			{ $$ = $1; };
 
 file_name:				Sconst			{ $$ = $1; };
-recipe_name:			ecpg_ident			{ $$ = $1; };
+recipe_name:			ident			{ $$ = $1; };
 
 /* Constants
  * Include TRUE/FALSE for SQL3 support. - thomas 1997-10-24
@@ -3723,8 +3667,9 @@ Sconst:  SCONST                                 {
 				     		        strcpy($$+1, $1);
 							$$[strlen($1)+2]='\0';
 							$$[strlen($1)+1]='\'';
+							free($1);
 						}
-UserId:  ecpg_ident                                  { $$ = $1;};
+UserId:  ident                                  { $$ = $1;};
 
 /* Column and type identifier
  * Does not include explicit datetime types
@@ -3746,7 +3691,7 @@ TypeId:  ColId
  *  list due to shift/reduce conflicts in yacc. If so, move
  *  down to the ColLabel entity. - thomas 1997-11-06
  */
-ColId:  ecpg_ident							{ $$ = $1; }
+ColId:  ident							{ $$ = $1; }
 		| datetime						{ $$ = $1; }
 		| ACTION						{ $$ = make1_str("action"); }
 		| CACHE							{ $$ = make1_str("cache"); }
@@ -3773,9 +3718,10 @@ ColId:  ecpg_ident							{ $$ = $1; }
 		| START							{ $$ = make1_str("start"); }
 		| STATEMENT						{ $$ = make1_str("statement"); }
 		| TIME							{ $$ = make1_str("time"); }
+		| TIMEZONE_HOUR                                 { $$ = make1_str("timezone_hour"); }
+                | TIMEZONE_MINUTE                               { $$ = make1_str("timezone_minute"); }
 		| TRIGGER						{ $$ = make1_str("trigger"); }
 		| TYPE_P						{ $$ = make1_str("type"); }
-		| USER							{ $$ = make1_str("user"); }
 		| VALID							{ $$ = make1_str("valid"); }
 		| VERSION						{ $$ = make1_str("version"); }
 		| ZONE							{ $$ = make1_str("zone"); }
@@ -4011,8 +3957,8 @@ variable: opt_pointer symbol opt_array_bounds opt_initializer
 			if (struct_level == 0)
 				new_variable($2, type);
 			else
-			        ECPGmake_struct_member($2, type, &(struct_member_list[struct_level-1]));
-			
+				ECPGmake_struct_member($2, type, &(struct_member_list[struct_level - 1]))->typ;
+
 			free($1);
 			free($2);
 			free($3.str);
@@ -4028,10 +3974,114 @@ opt_pointer: /* empty */	{ $$ = make1_str(""); }
 /*
  * the exec sql connect statement: connect to the given database 
  */
-ECPGConnect: SQL_CONNECT db_name { $$ = $2; }
+ECPGConnect: SQL_CONNECT TO connection_target opt_connection_name opt_user
+		{
+			$$ = make5_str($3, make1_str(","), $5, make1_str(","), $4);
+                }
+	| SQL_CONNECT TO DEFAULT
+        	{
+                	$$ = make1_str("NULL,NULL,NULL,\"DEFAULT\"");
+                }
+      /* also allow ORACLE syntax */
+        | SQL_CONNECT ora_user
+                {
+		       $$ = make3_str(make1_str("NULL,"), $2, make1_str(",NULL"));
+		}
 
-db_name: database_name { $$ = $1; }
-	| cvariable { /* check if we have a char variable */
+connection_target: database_name opt_server opt_port
+                {
+		  /* old style: dbname[@server][:port] */
+		  if (strlen($2) > 0 && *($2) != '@')
+		  {
+		    sprintf(errortext, "parse error at or near '%s'", $2);
+		    yyerror(errortext);
+		  }
+
+		  $$ = make5_str(make1_str("\""), $1, $2, $3, make1_str("\""));
+		}
+        |  db_prefix server opt_port '/' database_name opt_options
+                {
+		  /* new style: esql:postgresql://server[:port][/dbname] */
+                  if (strncmp($2, "://", 3) != 0)
+		  {
+		    sprintf(errortext, "parse error at or near '%s'", $2);
+		    yyerror(errortext);
+		  }
+	
+		  $$ = make4_str(make5_str(make1_str("\""), $1, $2, $3, make1_str("/")), $5, $6, make1_str("\""));
+		}
+	| char_variable
+                {
+		  $$ = $1;
+		}
+
+db_prefix: ident cvariable
+                {
+		  if (strcmp($2, "postgresql") != 0 && strcmp($2, "postgres") != 0)
+		  {
+		    sprintf(errortext, "parse error at or near '%s'", $2);
+		    yyerror(errortext);	
+		  }
+
+		  if (strcmp($1, "esql") != 0 && strcmp($1, "ecpg") != 0 && strcmp($1, "sql") != 0 && strcmp($1, "isql") != 0 && strcmp($1, "proc") != 0)
+		  {
+		    sprintf(errortext, "Illegal connection type %s", $1);
+		    yyerror(errortext);
+		  }
+
+		  $$ = make3_str($1, make1_str(":"), $2);
+		}
+        
+server: Op server_name
+                {
+		  if (strcmp($1, "@") != 0 && strcmp($1, "://") != 0)
+		  {
+		    sprintf(errortext, "parse error at or near '%s'", $1);
+		    yyerror(errortext);
+		  }
+
+		  $$ = make2_str($1, $2);
+	        }
+
+opt_server: server { $$ = $1; }
+        | /* empty */ { $$ = make1_str(""); }
+
+server_name: ColId   { $$ = $1; }
+        | ColId '.' server_name { $$ = make3_str($1, make1_str("."), $3); }
+
+opt_port: ':' Iconst { $$ = make2_str(make1_str(":"), $2); }
+        | /* empty */ { $$ = make1_str(""); }
+
+opt_connection_name: AS connection_target { $$ = $2; }
+        | /* empty */ { $$ = make1_str("NULL"); }
+
+opt_user: USER ora_user { $$ = $2; }
+          | /* empty */ { $$ = make1_str("NULL,NULL"); }
+
+ora_user: user_name
+		{
+                        $$ = make2_str($1, make1_str(",NULL"));
+	        }
+	| user_name '/' ColId
+		{
+        		$$ = make3_str($1, make1_str(","), $3);
+                }
+        | user_name SQL_IDENTIFIED BY user_name
+                {
+        		$$ = make3_str($1, make1_str(","), $4);
+                }
+        | user_name USING user_name
+                {
+        		$$ = make3_str($1, make1_str(","), $3);
+                }
+
+user_name: UserId       { $$ = make3_str(make1_str("\""), $1, make1_str("\"")); }
+        | char_variable { $$ = $1; }
+        | CSTRING       { $$ = make3_str(make1_str("\""), $1, make1_str("\"")); }
+        | SCONST        { $$ = make3_str(make1_str("\""), $1, make1_str("\"")); }
+
+char_variable: cvariable
+		{ /* check if we have a char variable */
 			struct variable *p = find_variable($1);
 			enum ECPGttype typ = p->type->typ;
 
@@ -4039,33 +4089,48 @@ db_name: database_name { $$ = $1; }
 			if (typ == ECPGt_array)
 				typ = p->type->u.element->typ;
 
-			if (typ != ECPGt_char && typ != ECPGt_unsigned_char)
-				yyerror("invalid datatype");
-			$$ = $1;
-	}
+                        switch (typ)
+                        {
+                            case ECPGt_char:
+                            case ECPGt_unsigned_char:
+                                $$ = $1;
+                                break;
+                            case ECPGt_varchar:
+                                $$ = make2_str($1, make1_str(".arr"));
+                                break;
+                            default:
+                                yyerror("invalid datatype");
+                                break;
+                        }
+		}
+
+opt_options: Op ColId
+		{
+			if (strlen($1) == 0)
+				yyerror("parse error");
+				
+			if (strcmp($1, "?") != 0)
+			{
+				sprintf(errortext, "parse error at or near %s", $1);
+				yyerror(errortext);
+			}
+			
+			$$ = make2_str(make1_str("?"), $2);
+		}
+	| /* empty */ { $$ = make1_str(""); }
 
 /*
  * the exec sql disconnect statement: disconnect from the given database 
  */
 ECPGDisconnect: SQL_DISCONNECT dis_name { $$ = $2; }
 
-dis_name: database_name	{ $$ = $1; }
-	| cvariable	{ /* check if we have a char variable */
-				struct variable *p = find_variable($1);
-				enum ECPGttype typ = p->type->typ;
+dis_name: connection_object	{ $$ = $1; }
+	| CURRENT	{ $$ = make1_str("CURRENT"); }
+	| ALL		{ $$ = make1_str("ALL"); }
+	| /* empty */	{ $$ = make1_str("CURRENT"); }
 
-				/* if array see what's inside */
-				if (typ == ECPGt_array)
-					typ = p->type->u.element->typ;
-
-				if (typ != ECPGt_char && typ != ECPGt_unsigned_char)
-					yyerror("invalid datatype");
-				$$ = $1;
-			}
-	| CURRENT	{ $$ = make1_str(""); }
-	| DEFAULT	{ $$ = make1_str(""); }
-	| ALL		{ $$ = make1_str(""); }
-	| /* empty */	{ $$ = make1_str(""); }
+connection_object: connection_target { $$ = $1; }
+	| DEFAULT	{ $$ = make1_str("DEFAULT"); }
 
 /*
  * execute a given string as sql command
@@ -4118,6 +4183,14 @@ ECPGRelease: TransactionStmt SQL_RELEASE
 		free($1);
 	}
 
+/* 
+ * set the actual connection, this needs a differnet handling as the other
+ * set commands
+ */
+ECPGSetConnection:  SET SQL_CONNECTION connection_object
+           		{
+				$$ = $3;
+                        }
 /*
  * whenever statement: decide what to do in case of error/no data found
  * according to SQL standards we miss: SQLSTATE, CONSTRAINT, SQLEXCEPTION
@@ -4163,7 +4236,7 @@ action : SQL_CONTINUE {
        | DO name '(' dotext ')' {
 	$<action>$.code = W_DO;
 	$<action>$.command = make4_str($2, make1_str("("), $4, make1_str(")"));
-	$<action>$.str = cat2_str(make1_str("do"), $<action>$.command);
+	$<action>$.str = cat2_str(make1_str("do"), strdup($<action>$.command));
 }
        | DO SQL_BREAK {
         $<action>$.code = W_BREAK;
@@ -4173,7 +4246,7 @@ action : SQL_CONTINUE {
        | SQL_CALL name '(' dotext ')' {
 	$<action>$.code = W_DO;
 	$<action>$.command = make4_str($2, make1_str("("), $4, make1_str(")"));
-	$<action>$.str = cat2_str(make1_str("call"), $<action>$.command);
+	$<action>$.str = cat2_str(make1_str("call"), strdup($<action>$.command));
 }
 
 /* some other stuff for ecpg */
@@ -4478,14 +4551,16 @@ civariableonly : cvariable name {
 		add_variable(&argsinsert, find_variable($1), &no_indicator); 
 }
 
-cvariable: CVARIABLE			{ $$ = $1; }
+cvariable: CVARIABLE			{ $$ = make1_str($1); }
 
 indicator: /* empty */			{ $$ = NULL; }
 	| cvariable		 	{ check_indicator((find_variable($1))->type); $$ = $1; }
 	| SQL_INDICATOR cvariable 	{ check_indicator((find_variable($2))->type); $$ = $2; }
 	| SQL_INDICATOR name		{ check_indicator((find_variable($2))->type); $$ = $2; }
 
-ecpg_ident: IDENT	{ $$ = $1; }
+ident: IDENT	{ $$ = make1_str($1); }
+
+ecpg_ident: ident	{ $$ = $1; }
 	| CSTRING	{ $$ = make3_str(make1_str("\""), $1, make1_str("\"")); }
 /*
  * C stuff

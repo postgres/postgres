@@ -139,12 +139,13 @@ self			[,()\[\].$\:\+\-\*\/\<\>\=\|]
 op_and_self		[\~\!\@\#\%\^\&\|\`\?\$\:\+\-\*\/\<\>\=]
 operator		{op_and_self}+
 
-xminteger              {integer}/-
-xmreal                 {real}/{space}*-{digit}
 xmstop			-
 
-integer			-?{digit}+
-real			-?{digit}+\.{digit}+([Ee][-+]?{digit}+)?
+integer			[\-]?{digit}+
+/*
+real			[\-]?{digit}+\.{digit}+([Ee][-+]?{digit}+)?
+*/
+real			[\-]?(((({digit}*\.{digit}+)|({digit}+\.{digit}*))([Ee][-+]?{digit}+)?)|({digit}+[Ee][-+]?{digit}+))
 
 param			\${integer}
 
@@ -309,7 +310,8 @@ before_comment);
 
 <SQL>{typecast}			{ 	return TYPECAST; }
 
-<SQL>{self}/-[\.0-9]		{
+<SQL>{self}/{space}*-[\.0-9]	{
+					BEGIN(xm);
 					return (yytext[0]);
 				}
 <SQL>{self}				{ 	return (yytext[0]); }

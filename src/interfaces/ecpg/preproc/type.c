@@ -20,21 +20,6 @@ mm_alloc(size_t size)
 	return (ptr);
 }
 
-/* realloc + error check */
-void *
-mm_realloc(void *ptr, size_t size)
-{
-	ptr = realloc(ptr, size);
-
-	if (ptr == NULL)
-	{
-		fprintf(stderr, "Out of memory\n");
-		exit(OUT_OF_MEMORY);
-	}
-
-	return (ptr);
-}
-
 /* duplicate memberlist */
 static struct ECPGstruct_member *
 struct_member_dup(struct ECPGstruct_member * rm)
@@ -43,7 +28,22 @@ struct_member_dup(struct ECPGstruct_member * rm)
 
   while (rm)
     {
-      ECPGmake_struct_member(rm->name, rm->typ, &new);
+      struct ECPGtype *type;
+      
+      switch(rm->typ->typ)
+      {
+      	case ECPGt_struct:
+      		type = ECPGmake_struct_type(rm->typ->u.members);
+      		break;
+      	case ECPGt_array:
+      		type = ECPGmake_array_type(ECPGmake_simple_type(rm->typ->u.element->typ, rm->typ->u.element->size), rm->typ->size);
+		break;      	
+      	default:
+      		type = ECPGmake_simple_type(rm->typ->typ, rm->typ->size);
+      		break;
+      }
+      
+      ECPGmake_struct_member(rm->name, type, &new);
    
       rm = rm->next;
     }
@@ -165,11 +165,11 @@ static const char *get_type(enum ECPGttype typ)
    size is the maxsize in case it is a varchar. Otherwise it is the size of
    the variable (required to do array fetches of structs).
  */
-void
+static void
 ECPGdump_a_simple(FILE *o, const char *name, enum ECPGttype typ,
 				  long varcharsize,
 				  long arrsiz, const char *siz, const char *prefix);
-void
+static void
 ECPGdump_a_struct(FILE *o, const char *name, const char *ind_name, long arrsiz,
 		  struct ECPGtype * typ, struct ECPGtype * ind_typ, const char *offset, const char *prefix, const char * ind_prefix);
 
@@ -223,7 +223,7 @@ ECPGdump_a_type(FILE *o, const char *name, struct ECPGtype * typ, const char *in
 
 /* If siz is NULL, then the offset is 0, if not use siz as a
    string, it represents the offset needed if we are in an array of structs. */
-void
+static void
 ECPGdump_a_simple(FILE *o, const char *name, enum ECPGttype typ,
 				  long varcharsize,
 				  long arrsize,
@@ -272,7 +272,7 @@ ECPGdump_a_simple(FILE *o, const char *name, enum ECPGttype typ,
 
 
 /* Penetrate a struct and dump the contents. */
-void
+static void
 ECPGdump_a_struct(FILE *o, const char *name, const char * ind_name, long arrsiz, struct ECPGtype * typ, struct ECPGtype * ind_typ, const char *offsetarg, const char *prefix, const char *ind_prefix)
 {
 
@@ -319,6 +319,7 @@ ECPGfree_struct_member(struct ECPGstruct_member * rm)
       
       rm = rm->next;
       free(p->name);
+      free(p->typ);
       free(p);
     }
 }
@@ -337,7 +338,7 @@ ECPGfree_type(struct ECPGtype * typ)
 			else if (typ->u.element->typ == ECPGt_struct)
 			{
 				/* Array of structs. */
-			        ECPGfree_struct_member(typ->u.members);
+			        ECPGfree_struct_member(typ->u.element->u.members);
 				free(typ->u.members);
 			}
 			else

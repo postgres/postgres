@@ -189,3 +189,42 @@ Wed May  6 11:42:48 CEST 1998
           an example)
 	- Set version to 2.3.0
 	- Set library version to 2.1
+
+Wed May  6 16:09:45 CEST 1998
+
+	- Some more cleanups in the library.
+
+Thu May  7 12:34:28 CEST 1998
+
+	- Made CONNECT and DISCONNECT statement more SQL3 compliant.
+	- Changed the API for the ECPGconnect function to be able to handle
+	  hostnames and ports
+
+Fri May  8 13:54:45 CEST 1998
+	- More changes to the parser. The connect statement now allows
+	  ORACLE style logins.
+	- db-name is accepted in two ways:
+		- <dbname>[@<server>][:<port>]
+		- esql:postgresql://<server>[:<port>][/<dbname>]
+
+Mon May 11 10:28:37 CEST 1998
+
+	- Added '? options' to connect call.
+	- Also allow USING as keyword for the password
+
+Thu May 14 15:09:58 CEST 1998
+
+	- Changed preproc.y and pgc.l according to the parser changes in the
+	  backend.
+
+Fri May 15 09:55:21 CEST 1998
+
+	- Added connection_name handling
+
+
+Mon May 18 10:33:58 CEST 1998
+
+	- Fixed some more bugs
+	- Set version to 2.3.1
+	- Set library version to 2.2
+

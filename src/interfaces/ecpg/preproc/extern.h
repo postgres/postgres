@@ -1,4 +1,5 @@
 #include "parser/keywords.h"
+#include <errno.h>
 
 /* variables */
 
@@ -47,7 +48,8 @@ extern void yyerror(char *);
 /* return codes */
 
 #define OK		0
-#define NO_INCLUDE_FILE	1
-#define PARSE_ERROR	2
-#define OUT_OF_MEMORY	3
-#define ILLEGAL_OPTION	4
+#define PARSE_ERROR	-1
+#define ILLEGAL_OPTION	-2
+
+#define NO_INCLUDE_FILE	ENOENT
+#define OUT_OF_MEMORY	ENOMEM
