@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2001, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Id: bufmgr.h,v 1.53 2001/06/29 21:08:25 tgl Exp $
+ * $Id: bufmgr.h,v 1.54 2001/07/06 21:04:26 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -167,7 +167,7 @@ extern void InitBufferPoolAccess(void);
 extern void PrintBufferUsage(FILE *statfp);
 extern void ResetBufferUsage(void);
 extern void ResetBufferPool(bool isCommit);
-extern int	BufferPoolCheckLeak(void);
+extern bool BufferPoolCheckLeak(void);
 extern void FlushBufferPool(void);
 extern BlockNumber BufferGetBlockNumber(Buffer buffer);
 extern BlockNumber RelationGetNumberOfBlocks(Relation relation);
@@ -183,10 +183,9 @@ extern void SetBufferCommitInfoNeedsSave(Buffer buffer);
 
 extern void UnlockBuffers(void);
 extern void LockBuffer(Buffer buffer, int mode);
-extern void AbortBufferIO(void);
+extern void LockBufferForCleanup(Buffer buffer);
 
-extern bool BufferIsUpdatable(Buffer buffer);
-extern void MarkBufferForCleanup(Buffer buffer, void (*CleanupFunc) (Buffer));
+extern void AbortBufferIO(void);
 
 extern void BufmgrCommit(void);
 extern void BufferSync(void);

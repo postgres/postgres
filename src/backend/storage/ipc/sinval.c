@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/storage/ipc/sinval.c,v 1.34 2001/06/19 19:42:15 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/storage/ipc/sinval.c,v 1.35 2001/07/06 21:04:26 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -16,7 +16,6 @@
 
 #include <sys/types.h>
 
-#include "storage/backendid.h"
 #include "storage/proc.h"
 #include "storage/sinval.h"
 #include "storage/sinvaladt.h"
@@ -410,4 +409,32 @@ GetUndoRecPtr(void)
 	SpinRelease(SInvalLock);
 
 	return (urec);
+}
+
+/*
+ * BackendIdGetProc - given a BackendId, find its PROC structure
+ *
+ * This is a trivial lookup in the ProcState array.  We assume that the caller
+ * knows that the backend isn't going to go away, so we do not bother with
+ * locking.
+ */
+struct proc *
+BackendIdGetProc(BackendId procId)
+{
+	SISeg	   *segP = shmInvalBuffer;
+
+	if (procId > 0 && procId <= segP->lastBackend)
+	{
+		ProcState  *stateP = &segP->procState[procId - 1];
+		SHMEM_OFFSET pOffset = stateP->procStruct;
+
+		if (pOffset != INVALID_OFFSET)
+		{
+			PROC	   *proc = (PROC *) MAKE_PTR(pOffset);
+
+			return proc;
+		}
+	}
+
+	return NULL;
 }

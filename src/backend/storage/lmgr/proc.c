@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/storage/lmgr/proc.c,v 1.103 2001/06/16 22:58:16 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/storage/lmgr/proc.c,v 1.104 2001/07/06 21:04:26 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -74,6 +74,7 @@
 
 #include "access/xact.h"
 #include "storage/proc.h"
+#include "storage/sinval.h"
 
 
 int			DeadlockTimeout = 1000;
@@ -92,6 +93,7 @@ static PROC_HDR *ProcGlobal = NULL;
 PROC	   *MyProc = NULL;
 
 static bool waitingForLock = false;
+static bool waitingForSignal = false;
 
 static void ProcKill(void);
 static void ProcGetNewSemIdAndNum(IpcSemaphoreId *semId, int *semNum);
@@ -893,6 +895,49 @@ ProcReleaseSpins(PROC *proc)
 	}
 	AbortBufferIO();
 }
+
+/*
+ * ProcWaitForSignal - wait for a signal from another backend.
+ *
+ * This can share the semaphore normally used for waiting for locks,
+ * since a backend could never be waiting for a lock and a signal at
+ * the same time.  As with locks, it's OK if the signal arrives just
+ * before we actually reach the waiting state.
+ */
+void
+ProcWaitForSignal(void)
+{
+	waitingForSignal = true;
+	IpcSemaphoreLock(MyProc->sem.semId, MyProc->sem.semNum, true);
+	waitingForSignal = false;
+}
+
+/*
+ * ProcCancelWaitForSignal - clean up an aborted wait for signal
+ *
+ * We need this in case the signal arrived after we aborted waiting,
+ * or if it arrived but we never reached ProcWaitForSignal() at all.
+ * Caller should call this after resetting the signal request status.
+ */
+void
+ProcCancelWaitForSignal(void)
+{
+	ZeroProcSemaphore(MyProc);
+	waitingForSignal = false;
+}
+
+/*
+ * ProcSendSignal - send a signal to a backend identified by BackendId
+ */
+void
+ProcSendSignal(BackendId procId)
+{
+	PROC   *proc = BackendIdGetProc(procId);
+
+	if (proc != NULL)
+		IpcSemaphoreUnlock(proc->sem.semId, proc->sem.semNum);
+}
+
 
 /*****************************************************************************
  *

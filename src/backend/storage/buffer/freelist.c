@@ -9,7 +9,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/storage/buffer/freelist.c,v 1.23 2001/01/24 19:43:06 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/storage/buffer/freelist.c,v 1.24 2001/07/06 21:04:26 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -29,14 +29,14 @@
 
 #include "storage/buf_internals.h"
 #include "storage/bufmgr.h"
+#include "storage/proc.h"
 
 
 static BufferDesc *SharedFreeList;
 
-/* only actually used in debugging.  The lock
- * should be acquired before calling the freelist manager.
+/*
+ * State-checking macros
  */
-extern SPINLOCK BufMgrLock;
 
 #define IsInQueue(bf) \
 ( \
@@ -45,7 +45,7 @@ extern SPINLOCK BufMgrLock;
 	AssertMacro((bf->flags & BM_FREE)) \
 )
 
-#define NotInQueue(bf) \
+#define IsNotInQueue(bf) \
 ( \
 	AssertMacro((bf->freeNext == INVALID_DESCRIPTOR)), \
 	AssertMacro((bf->freePrev == INVALID_DESCRIPTOR)), \
@@ -61,14 +61,14 @@ extern SPINLOCK BufMgrLock;
  * the manner in which buffers are added to the freelist queue.
  * Currently, they are added on an LRU basis.
  */
-void
+static void
 AddBufferToFreelist(BufferDesc *bf)
 {
 #ifdef BMTRACE
 	_bm_trace(bf->tag.relId.dbId, bf->tag.relId.relId, bf->tag.blockNum,
 			  BufferDescriptorGetBuffer(bf), BMT_DEALLOC);
 #endif	 /* BMTRACE */
-	NotInQueue(bf);
+	IsNotInQueue(bf);
 
 	/* change bf so it points to inFrontOfNew and its successor */
 	bf->freePrev = SharedFreeList->freePrev;
@@ -83,13 +83,14 @@ AddBufferToFreelist(BufferDesc *bf)
 
 /*
  * PinBuffer -- make buffer unavailable for replacement.
+ *
+ * This should be applied only to shared buffers, never local ones.
+ * Bufmgr lock must be held by caller.
  */
 void
 PinBuffer(BufferDesc *buf)
 {
-	long		b;
-
-	/* Assert (buf->refcount < 25); */
+	int		b = BufferDescriptorGetBuffer(buf) - 1;
 
 	if (buf->refcount == 0)
 	{
@@ -104,13 +105,12 @@ PinBuffer(BufferDesc *buf)
 		buf->flags &= ~BM_FREE;
 	}
 	else
-		NotInQueue(buf);
+		IsNotInQueue(buf);
 
-	b = BufferDescriptorGetBuffer(buf) - 1;
-	Assert(PrivateRefCount[b] >= 0);
 	if (PrivateRefCount[b] == 0)
 		buf->refcount++;
 	PrivateRefCount[b]++;
+	Assert(PrivateRefCount[b] > 0);
 }
 
 #ifdef NOT_USED
@@ -135,23 +135,34 @@ refcount = %ld, file: %s, line: %d\n",
 
 /*
  * UnpinBuffer -- make buffer available for replacement.
+ *
+ * This should be applied only to shared buffers, never local ones.
+ * Bufmgr lock must be held by caller.
  */
 void
 UnpinBuffer(BufferDesc *buf)
 {
-	long		b = BufferDescriptorGetBuffer(buf) - 1;
+	int		b = BufferDescriptorGetBuffer(buf) - 1;
 
+	IsNotInQueue(buf);
 	Assert(buf->refcount > 0);
 	Assert(PrivateRefCount[b] > 0);
 	PrivateRefCount[b]--;
 	if (PrivateRefCount[b] == 0)
 		buf->refcount--;
-	NotInQueue(buf);
 
 	if (buf->refcount == 0)
 	{
+		/* buffer is now unpinned */
 		AddBufferToFreelist(buf);
 		buf->flags |= BM_FREE;
+	}
+	else if ((buf->flags & BM_PIN_COUNT_WAITER) != 0 &&
+			 buf->refcount == 1)
+	{
+		/* we just released the last pin other than the waiter's */
+		buf->flags &= ~BM_PIN_COUNT_WAITER;
+		ProcSendSignal(buf->wait_backend_id);
 	}
 	else
 	{
@@ -179,18 +190,16 @@ refcount = %ld, file: %s, line: %d\n",
 
 /*
  * GetFreeBuffer() -- get the 'next' buffer from the freelist.
- *
  */
 BufferDesc *
-GetFreeBuffer()
+GetFreeBuffer(void)
 {
 	BufferDesc *buf;
 
 	if (Free_List_Descriptor == SharedFreeList->freeNext)
 	{
-
 		/* queue is empty. All buffers in the buffer pool are pinned. */
-		elog(ERROR, "out of free buffers: time to abort !\n");
+		elog(ERROR, "out of free buffers: time to abort!");
 		return NULL;
 	}
 	buf = &(BufferDescriptors[SharedFreeList->freeNext]);
@@ -220,7 +229,7 @@ InitFreeList(bool init)
 
 	if (init)
 	{
-		/* we only do this once, normally the postmaster */
+		/* we only do this once, normally in the postmaster */
 		SharedFreeList->data = INVALID_OFFSET;
 		SharedFreeList->flags = 0;
 		SharedFreeList->flags &= ~(BM_VALID | BM_DELETED | BM_FREE);
@@ -249,37 +258,23 @@ DBG_FreeListCheck(int nfree)
 	buf = &(BufferDescriptors[SharedFreeList->freeNext]);
 	for (i = 0; i < nfree; i++, buf = &(BufferDescriptors[buf->freeNext]))
 	{
-
 		if (!(buf->flags & (BM_FREE)))
 		{
 			if (buf != SharedFreeList)
-			{
 				printf("\tfree list corrupted: %d flags %x\n",
 					   buf->buf_id, buf->flags);
-			}
 			else
-			{
 				printf("\tfree list corrupted: too short -- %d not %d\n",
 					   i, nfree);
-
-			}
-
-
 		}
 		if ((BufferDescriptors[buf->freeNext].freePrev != buf->buf_id) ||
 			(BufferDescriptors[buf->freePrev].freeNext != buf->buf_id))
-		{
 			printf("\tfree list links corrupted: %d %ld %ld\n",
 				   buf->buf_id, buf->freePrev, buf->freeNext);
-		}
-
 	}
 	if (buf != SharedFreeList)
-	{
 		printf("\tfree list corrupted: %d-th buffer is %d\n",
 			   nfree, buf->buf_id);
-
-	}
 }
 
 #endif

@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/storage/buffer/bufmgr.c,v 1.115 2001/07/02 18:47:18 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/storage/buffer/bufmgr.c,v 1.116 2001/07/06 21:04:25 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -46,14 +46,12 @@
 #include <math.h>
 #include <signal.h>
 
-#include "executor/execdebug.h"
 #include "miscadmin.h"
 #include "storage/buf_internals.h"
 #include "storage/bufmgr.h"
-#include "storage/s_lock.h"
+#include "storage/proc.h"
 #include "storage/smgr.h"
 #include "utils/relcache.h"
-#include "catalog/pg_database.h"
 
 #include "pgstat.h"
 
@@ -254,7 +252,7 @@ ReadBufferInternal(Relation reln, BlockNumber blockNum,
 		if (!BufTableDelete(bufHdr))
 		{
 			SpinRelease(BufMgrLock);
-			elog(FATAL, "BufRead: buffer table broken after IO error\n");
+			elog(FATAL, "BufRead: buffer table broken after IO error");
 		}
 		/* remember that BufferAlloc() pinned the buffer */
 		UnpinBuffer(bufHdr);
@@ -426,33 +424,27 @@ BufferAlloc(Relation reln,
 
 			if (smok == FALSE)
 			{
-				elog(NOTICE, "BufferAlloc: cannot write block %u for %s/%s",
-				buf->tag.blockNum, buf->blind.dbname, buf->blind.relname);
+				elog(NOTICE, "BufferAlloc: cannot write block %u for %u/%u",
+					 buf->tag.blockNum,
+					 buf->tag.rnode.tblNode, buf->tag.rnode.relNode);
 				inProgress = FALSE;
 				buf->flags |= BM_IO_ERROR;
 				buf->flags &= ~BM_IO_IN_PROGRESS;
 				TerminateBufferIO(buf);
-				PrivateRefCount[BufferDescriptorGetBuffer(buf) - 1] = 0;
-				Assert(buf->refcount > 0);
-				buf->refcount--;
-				if (buf->refcount == 0)
-				{
-					AddBufferToFreelist(buf);
-					buf->flags |= BM_FREE;
-				}
+				UnpinBuffer(buf);
 				buf = (BufferDesc *) NULL;
 			}
 			else
 			{
-
 				/*
 				 * BM_JUST_DIRTIED cleared by BufferReplace and shouldn't
 				 * be setted by anyone.		- vadim 01/17/97
 				 */
 				if (buf->flags & BM_JUST_DIRTIED)
 				{
-					elog(STOP, "BufferAlloc: content of block %u (%s) changed while flushing",
-						 buf->tag.blockNum, buf->blind.relname);
+					elog(STOP, "BufferAlloc: content of block %u (%u/%u) changed while flushing",
+						 buf->tag.blockNum,
+						 buf->tag.rnode.tblNode, buf->tag.rnode.relNode);
 				}
 				else
 					buf->flags &= ~BM_DIRTY;
@@ -475,8 +467,7 @@ BufferAlloc(Relation reln,
 				inProgress = FALSE;
 				buf->flags &= ~BM_IO_IN_PROGRESS;
 				TerminateBufferIO(buf);
-				PrivateRefCount[BufferDescriptorGetBuffer(buf) - 1] = 0;
-				buf->refcount--;
+				UnpinBuffer(buf);
 				buf = (BufferDesc *) NULL;
 			}
 
@@ -501,15 +492,8 @@ BufferAlloc(Relation reln,
 				{
 					buf->flags &= ~BM_IO_IN_PROGRESS;
 					TerminateBufferIO(buf);
-					/* give up the buffer since we don't need it any more */
-					PrivateRefCount[BufferDescriptorGetBuffer(buf) - 1] = 0;
-					Assert(buf->refcount > 0);
-					buf->refcount--;
-					if (buf->refcount == 0)
-					{
-						AddBufferToFreelist(buf);
-						buf->flags |= BM_FREE;
-					}
+					/* give up old buffer since we don't need it any more */
+					UnpinBuffer(buf);
 				}
 
 				PinBuffer(buf2);
@@ -551,18 +535,15 @@ BufferAlloc(Relation reln,
 	if (!BufTableDelete(buf))
 	{
 		SpinRelease(BufMgrLock);
-		elog(FATAL, "buffer wasn't in the buffer table\n");
+		elog(FATAL, "buffer wasn't in the buffer table");
 	}
 
-	/* record the database name and relation name for this buffer */
-	strcpy(buf->blind.dbname, (DatabaseName) ? DatabaseName : "Recovery");
-	strcpy(buf->blind.relname, RelationGetPhysicalRelationName(reln));
-
 	INIT_BUFFERTAG(&(buf->tag), reln, blockNum);
+
 	if (!BufTableInsert(buf))
 	{
 		SpinRelease(BufMgrLock);
-		elog(FATAL, "Buffer in lookup table twice \n");
+		elog(FATAL, "Buffer in lookup table twice");
 	}
 
 	/*
@@ -704,14 +685,7 @@ ReleaseAndReadBuffer(Buffer buffer,
 			else
 			{
 				SpinAcquire(BufMgrLock);
-				PrivateRefCount[buffer - 1] = 0;
-				Assert(bufHdr->refcount > 0);
-				bufHdr->refcount--;
-				if (bufHdr->refcount == 0)
-				{
-					AddBufferToFreelist(bufHdr);
-					bufHdr->flags |= BM_FREE;
-				}
+				UnpinBuffer(bufHdr);
 				return ReadBufferInternal(relation, blockNum, true);
 			}
 		}
@@ -831,8 +805,9 @@ BufferSync()
 		}
 
 		if (status == SM_FAIL)	/* disk failure ?! */
-			elog(STOP, "BufferSync: cannot write %u for %s",
-				 bufHdr->tag.blockNum, bufHdr->blind.relname);
+			elog(STOP, "BufferSync: cannot write %u for %u/%u",
+				 bufHdr->tag.blockNum,
+				 bufHdr->tag.rnode.tblNode, bufHdr->tag.rnode.relNode);
 
 		/*
 		 * Note that it's safe to change cntxDirty here because of we
@@ -956,16 +931,11 @@ ResetBufferPool(bool isCommit)
 		{
 			BufferDesc *buf = &BufferDescriptors[i];
 
+			PrivateRefCount[i] = 1;	/* make sure we release shared pin */
 			SpinAcquire(BufMgrLock);
-			PrivateRefCount[i] = 0;
-			Assert(buf->refcount > 0);
-			buf->refcount--;
-			if (buf->refcount == 0)
-			{
-				AddBufferToFreelist(buf);
-				buf->flags |= BM_FREE;
-			}
+			UnpinBuffer(buf);
 			SpinRelease(BufMgrLock);
+			Assert(PrivateRefCount[i] == 0);
 		}
 	}
 
@@ -975,32 +945,31 @@ ResetBufferPool(bool isCommit)
 		smgrabort();
 }
 
-/* -----------------------------------------------
- *		BufferPoolCheckLeak
+/*
+ * BufferPoolCheckLeak
  *
  *		check if there is buffer leak
- *
- * -----------------------------------------------
  */
-int
-BufferPoolCheckLeak()
+bool
+BufferPoolCheckLeak(void)
 {
 	int			i;
-	int			result = 0;
+	bool		result = false;
 
-	for (i = 1; i <= NBuffers; i++)
+	for (i = 0; i < NBuffers; i++)
 	{
-		if (PrivateRefCount[i - 1] != 0)
+		if (PrivateRefCount[i] != 0)
 		{
-			BufferDesc *buf = &(BufferDescriptors[i - 1]);
+			BufferDesc *buf = &(BufferDescriptors[i]);
 
 			elog(NOTICE,
 				 "Buffer Leak: [%03d] (freeNext=%d, freePrev=%d, \
-relname=%s, blockNum=%d, flags=0x%x, refcount=%d %ld)",
-				 i - 1, buf->freeNext, buf->freePrev,
-				 buf->blind.relname, buf->tag.blockNum, buf->flags,
-				 buf->refcount, PrivateRefCount[i - 1]);
-			result = 1;
+rel=%u/%u, blockNum=%u, flags=0x%x, refcount=%d %ld)",
+				 i, buf->freeNext, buf->freePrev,
+				 buf->tag.rnode.tblNode, buf->tag.rnode.relNode,
+				 buf->tag.blockNum, buf->flags,
+				 buf->refcount, PrivateRefCount[i]);
+			result = true;
 		}
 	}
 	return result;
@@ -1389,10 +1358,11 @@ PrintBufferDescs()
 		SpinAcquire(BufMgrLock);
 		for (i = 0; i < NBuffers; ++i, ++buf)
 		{
-			elog(DEBUG, "[%02d] (freeNext=%d, freePrev=%d, relname=%s, \
-blockNum=%d, flags=0x%x, refcount=%d %ld)",
+			elog(DEBUG, "[%02d] (freeNext=%d, freePrev=%d, rel=%u/%u, \
+blockNum=%u, flags=0x%x, refcount=%d %ld)",
 				 i, buf->freeNext, buf->freePrev,
-				 buf->blind.relname, buf->tag.blockNum, buf->flags,
+				 buf->tag.rnode.tblNode, buf->tag.rnode.relNode,
+				 buf->tag.blockNum, buf->flags,
 				 buf->refcount, PrivateRefCount[i]);
 		}
 		SpinRelease(BufMgrLock);
@@ -1402,8 +1372,9 @@ blockNum=%d, flags=0x%x, refcount=%d %ld)",
 		/* interactive backend */
 		for (i = 0; i < NBuffers; ++i, ++buf)
 		{
-			printf("[%-2d] (%s, %d) flags=0x%x, refcnt=%d %ld)\n",
-				   i, buf->blind.relname, buf->tag.blockNum,
+			printf("[%-2d] (%u/%u, %u) flags=0x%x, refcnt=%d %ld)\n",
+				   i, buf->tag.rnode.tblNode, buf->tag.rnode.relNode,
+				   buf->tag.blockNum,
 				   buf->flags, buf->refcount, PrivateRefCount[i]);
 		}
 	}
@@ -1419,9 +1390,10 @@ PrintPinnedBufs()
 	for (i = 0; i < NBuffers; ++i, ++buf)
 	{
 		if (PrivateRefCount[i] > 0)
-			elog(NOTICE, "[%02d] (freeNext=%d, freePrev=%d, relname=%s, \
-blockNum=%d, flags=0x%x, refcount=%d %ld)\n",
-				 i, buf->freeNext, buf->freePrev, buf->blind.relname,
+			elog(NOTICE, "[%02d] (freeNext=%d, freePrev=%d, rel=%u/%u, \
+blockNum=%u, flags=0x%x, refcount=%d %ld)",
+				 i, buf->freeNext, buf->freePrev,
+				 buf->tag.rnode.tblNode, buf->tag.rnode.relNode,
 				 buf->tag.blockNum, buf->flags,
 				 buf->refcount, PrivateRefCount[i]);
 	}
@@ -1581,8 +1553,10 @@ FlushRelationBuffers(Relation rel, BlockNumber firstDelBlock)
 									   (char *) MAKE_PTR(bufHdr->data));
 
 					if (status == SM_FAIL)		/* disk failure ?! */
-						elog(STOP, "FlushRelationBuffers: cannot write %u for %s",
-							 bufHdr->tag.blockNum, bufHdr->blind.relname);
+						elog(STOP, "FlushRelationBuffers: cannot write %u for %u/%u",
+							 bufHdr->tag.blockNum,
+							 bufHdr->tag.rnode.tblNode,
+							 bufHdr->tag.rnode.relNode);
 
 					BufferFlushCount++;
 
@@ -1624,7 +1598,6 @@ FlushRelationBuffers(Relation rel, BlockNumber firstDelBlock)
 /*
  * ReleaseBuffer -- remove the pin on a buffer without
  *		marking it dirty.
- *
  */
 int
 ReleaseBuffer(Buffer buffer)
@@ -1649,14 +1622,7 @@ ReleaseBuffer(Buffer buffer)
 	else
 	{
 		SpinAcquire(BufMgrLock);
-		PrivateRefCount[buffer - 1] = 0;
-		Assert(bufHdr->refcount > 0);
-		bufHdr->refcount--;
-		if (bufHdr->refcount == 0)
-		{
-			AddBufferToFreelist(bufHdr);
-			bufHdr->flags |= BM_FREE;
-		}
+		UnpinBuffer(bufHdr);
 		SpinRelease(BufMgrLock);
 	}
 
@@ -1665,7 +1631,7 @@ ReleaseBuffer(Buffer buffer)
 
 /*
  * ReleaseBufferWithBufferLock
- *		Same as ReleaseBuffer except we hold the lock
+ *		Same as ReleaseBuffer except we hold the bufmgr lock
  */
 static int
 ReleaseBufferWithBufferLock(Buffer buffer)
@@ -1688,16 +1654,7 @@ ReleaseBufferWithBufferLock(Buffer buffer)
 	if (PrivateRefCount[buffer - 1] > 1)
 		PrivateRefCount[buffer - 1]--;
 	else
-	{
-		PrivateRefCount[buffer - 1] = 0;
-		Assert(bufHdr->refcount > 0);
-		bufHdr->refcount--;
-		if (bufHdr->refcount == 0)
-		{
-			AddBufferToFreelist(bufHdr);
-			bufHdr->flags |= BM_FREE;
-		}
-	}
+		UnpinBuffer(bufHdr);
 
 	return STATUS_OK;
 }
@@ -1712,9 +1669,11 @@ IncrBufferRefCount_Debug(char *file, int line, Buffer buffer)
 	{
 		BufferDesc *buf = &BufferDescriptors[buffer - 1];
 
-		fprintf(stderr, "PIN(Incr) %d relname = %s, blockNum = %d, \
+		fprintf(stderr, "PIN(Incr) %d rel = %u/%u, blockNum = %u, \
 refcount = %ld, file: %s, line: %d\n",
-				buffer, buf->blind.relname, buf->tag.blockNum,
+				buffer,
+				buf->tag.rnode.tblNode, buf->tag.rnode.relNode,
+				buf->tag.blockNum,
 				PrivateRefCount[buffer - 1], file, line);
 	}
 }
@@ -1730,9 +1689,11 @@ ReleaseBuffer_Debug(char *file, int line, Buffer buffer)
 	{
 		BufferDesc *buf = &BufferDescriptors[buffer - 1];
 
-		fprintf(stderr, "UNPIN(Rel) %d relname = %s, blockNum = %d, \
+		fprintf(stderr, "UNPIN(Rel) %d rel = %u/%u, blockNum = %u, \
 refcount = %ld, file: %s, line: %d\n",
-				buffer, buf->blind.relname, buf->tag.blockNum,
+				buffer,
+				buf->tag.rnode.tblNode, buf->tag.rnode.relNode,
+				buf->tag.blockNum,
 				PrivateRefCount[buffer - 1], file, line);
 	}
 }
@@ -1757,18 +1718,22 @@ ReleaseAndReadBuffer_Debug(char *file,
 	{
 		BufferDesc *buf = &BufferDescriptors[buffer - 1];
 
-		fprintf(stderr, "UNPIN(Rel&Rd) %d relname = %s, blockNum = %d, \
+		fprintf(stderr, "UNPIN(Rel&Rd) %d rel = %u/%u, blockNum = %u, \
 refcount = %ld, file: %s, line: %d\n",
-				buffer, buf->blind.relname, buf->tag.blockNum,
+				buffer,
+				buf->tag.rnode.tblNode, buf->tag.rnode.relNode,
+				buf->tag.blockNum,
 				PrivateRefCount[buffer - 1], file, line);
 	}
 	if (ShowPinTrace && BufferIsLocal(buffer) && is_userbuffer(buffer))
 	{
 		BufferDesc *buf = &BufferDescriptors[b - 1];
 
-		fprintf(stderr, "PIN(Rel&Rd) %d relname = %s, blockNum = %d, \
+		fprintf(stderr, "PIN(Rel&Rd) %d rel = %u/%u, blockNum = %u, \
 refcount = %ld, file: %s, line: %d\n",
-				b, buf->blind.relname, buf->tag.blockNum,
+				b,
+				buf->tag.rnode.tblNode, buf->tag.rnode.relNode,
+				buf->tag.blockNum,
 				PrivateRefCount[b - 1], file, line);
 	}
 	return b;
@@ -1784,6 +1749,7 @@ refcount = %ld, file: %s, line: %d\n",
  *	and die if there's anything fishy.
  */
 
+void
 _bm_trace(Oid dbId, Oid relId, int blkNo, int bufNo, int allocType)
 {
 	long		start,
@@ -1835,6 +1801,7 @@ okay:
 	*CurTraceBuf = (start + 1) % BMT_LIMIT;
 }
 
+void
 _bm_die(Oid dbId, Oid relId, int blkNo, int bufNo,
 		int allocType, long start, long cur)
 {
@@ -1860,7 +1827,7 @@ _bm_die(Oid dbId, Oid relId, int blkNo, int bufNo,
 		tb = &TraceBuf[i];
 		if (tb->bmt_op != BMT_NOTUSED)
 		{
-			fprintf(fp, "     [%3d]%spid %d buf %2d for <%d,%u,%d> ",
+			fprintf(fp, "     [%3d]%spid %d buf %2d for <%u,%u,%u> ",
 					i, (i == cur ? " ---> " : "\t"),
 					tb->bmt_pid, tb->bmt_buf,
 					tb->bmt_dbid, tb->bmt_relid, tb->bmt_blkno);
@@ -1967,7 +1934,9 @@ UnlockBuffers(void)
 
 	for (i = 0; i < NBuffers; i++)
 	{
-		if (BufferLocks[i] == 0)
+		bits8	buflocks = BufferLocks[i];
+
+		if (buflocks == 0)
 			continue;
 
 		Assert(BufferIsValid(i + 1));
@@ -1977,14 +1946,13 @@ UnlockBuffers(void)
 
 		S_LOCK(&(buf->cntx_lock));
 
-		if (BufferLocks[i] & BL_R_LOCK)
+		if (buflocks & BL_R_LOCK)
 		{
 			Assert(buf->r_locks > 0);
 			(buf->r_locks)--;
 		}
-		if (BufferLocks[i] & BL_RI_LOCK)
+		if (buflocks & BL_RI_LOCK)
 		{
-
 			/*
 			 * Someone else could remove our RI lock when acquiring W
 			 * lock. This is possible if we came here from elog(ERROR)
@@ -1993,13 +1961,27 @@ UnlockBuffers(void)
 			 */
 			buf->ri_lock = false;
 		}
-		if (BufferLocks[i] & BL_W_LOCK)
+		if (buflocks & BL_W_LOCK)
 		{
 			Assert(buf->w_lock);
 			buf->w_lock = false;
 		}
 
 		S_UNLOCK(&(buf->cntx_lock));
+
+		if (buflocks & BL_PIN_COUNT_LOCK)
+		{
+			SpinAcquire(BufMgrLock);
+			/*
+			 * Don't complain if flag bit not set; it could have been reset
+			 * but we got a cancel/die interrupt before getting the signal.
+			 */
+			if ((buf->flags & BM_PIN_COUNT_WAITER) != 0 &&
+				buf->wait_backend_id == MyBackendId)
+				buf->flags &= ~BM_PIN_COUNT_WAITER;
+			SpinRelease(BufMgrLock);
+			ProcCancelWaitForSignal();
+		}
 
 		BufferLocks[i] = 0;
 
@@ -2127,6 +2109,77 @@ LockBuffer(Buffer buffer, int mode)
 }
 
 /*
+ * LockBufferForCleanup - lock a buffer in preparation for deleting items
+ *
+ * Items may be deleted from a disk page only when the caller (a) holds an
+ * exclusive lock on the buffer and (b) has observed that no other backend
+ * holds a pin on the buffer.  If there is a pin, then the other backend
+ * might have a pointer into the buffer (for example, a heapscan reference
+ * to an item --- see README for more details).  It's OK if a pin is added
+ * after the cleanup starts, however; the newly-arrived backend will be
+ * unable to look at the page until we release the exclusive lock.
+ *
+ * To implement this protocol, a would-be deleter must pin the buffer and
+ * then call LockBufferForCleanup().  LockBufferForCleanup() is similar to
+ * LockBuffer(buffer, BUFFER_LOCK_EXCLUSIVE), except that it loops until
+ * it has successfully observed pin count = 1.
+ */
+void
+LockBufferForCleanup(Buffer buffer)
+{
+	BufferDesc *bufHdr;
+	bits8	   *buflock;
+
+	Assert(BufferIsValid(buffer));
+
+	if (BufferIsLocal(buffer))
+	{
+		/* There should be exactly one pin */
+		if (LocalRefCount[-buffer - 1] != 1)
+			elog(ERROR, "LockBufferForCleanup: wrong local pin count");
+		/* Nobody else to wait for */
+		return;
+	}
+
+	/* There should be exactly one local pin */
+	if (PrivateRefCount[buffer - 1] != 1)
+		elog(ERROR, "LockBufferForCleanup: wrong local pin count");
+
+	bufHdr = &BufferDescriptors[buffer - 1];
+	buflock = &(BufferLocks[buffer - 1]);
+
+	for (;;)
+	{
+		/* Try to acquire lock */
+		LockBuffer(buffer, BUFFER_LOCK_EXCLUSIVE);
+		SpinAcquire(BufMgrLock);
+		Assert(bufHdr->refcount > 0);
+		if (bufHdr->refcount == 1)
+		{
+			/* Successfully acquired exclusive lock with pincount 1 */
+			SpinRelease(BufMgrLock);
+			return;
+		}
+		/* Failed, so mark myself as waiting for pincount 1 */
+		if (bufHdr->flags & BM_PIN_COUNT_WAITER)
+		{
+			SpinRelease(BufMgrLock);
+			LockBuffer(buffer, BUFFER_LOCK_UNLOCK);
+			elog(ERROR, "Multiple backends attempting to wait for pincount 1");
+		}
+		bufHdr->wait_backend_id = MyBackendId;
+		bufHdr->flags |= BM_PIN_COUNT_WAITER;
+		*buflock |= BL_PIN_COUNT_LOCK;
+		SpinRelease(BufMgrLock);
+		LockBuffer(buffer, BUFFER_LOCK_UNLOCK);
+		/* Wait to be signaled by UnpinBuffer() */
+		ProcWaitForSignal();
+		*buflock &= ~BL_PIN_COUNT_LOCK;
+		/* Loop back and try again */
+	}
+}
+
+/*
  *	Functions for IO error handling
  *
  *	Note : We assume that nested buffer IO never occur.
@@ -2240,8 +2293,9 @@ AbortBufferIO(void)
 			/* Issue notice if this is not the first failure... */
 			if (buf->flags & BM_IO_ERROR)
 			{
-				elog(NOTICE, "write error may be permanent: cannot write block %u for %s/%s",
-				buf->tag.blockNum, buf->blind.dbname, buf->blind.relname);
+				elog(NOTICE, "write error may be permanent: cannot write block %u for %u/%u",
+					 buf->tag.blockNum,
+					 buf->tag.rnode.tblNode, buf->tag.rnode.relNode);
 			}
 			buf->flags |= BM_DIRTY;
 		}
@@ -2250,59 +2304,6 @@ AbortBufferIO(void)
 		TerminateBufferIO(buf);
 		SpinRelease(BufMgrLock);
 	}
-}
-
-/*
- * Cleanup buffer or mark it for cleanup. Buffer may be cleaned
- * up if it's pinned only once.
- *
- * NOTE: buffer must be excl locked.
- */
-void
-MarkBufferForCleanup(Buffer buffer, void (*CleanupFunc) (Buffer))
-{
-	BufferDesc *bufHdr = &BufferDescriptors[buffer - 1];
-
-	Assert(PrivateRefCount[buffer - 1] > 0);
-
-	if (PrivateRefCount[buffer - 1] > 1)
-	{
-		LockBuffer(buffer, BUFFER_LOCK_UNLOCK);
-		PrivateRefCount[buffer - 1]--;
-		SpinAcquire(BufMgrLock);
-		Assert(bufHdr->refcount > 0);
-		bufHdr->flags |= (BM_DIRTY | BM_JUST_DIRTIED);
-		bufHdr->CleanupFunc = CleanupFunc;
-		SpinRelease(BufMgrLock);
-		return;
-	}
-
-	SpinAcquire(BufMgrLock);
-	Assert(bufHdr->refcount > 0);
-	if (bufHdr->refcount == 1)
-	{
-		SpinRelease(BufMgrLock);
-		CleanupFunc(buffer);
-		CleanupFunc = NULL;
-	}
-	else
-		SpinRelease(BufMgrLock);
-
-	LockBuffer(buffer, BUFFER_LOCK_UNLOCK);
-
-	SpinAcquire(BufMgrLock);
-	PrivateRefCount[buffer - 1] = 0;
-	Assert(bufHdr->refcount > 0);
-	bufHdr->flags |= (BM_DIRTY | BM_JUST_DIRTIED);
-	bufHdr->CleanupFunc = CleanupFunc;
-	bufHdr->refcount--;
-	if (bufHdr->refcount == 0)
-	{
-		AddBufferToFreelist(bufHdr);
-		bufHdr->flags |= BM_FREE;
-	}
-	SpinRelease(BufMgrLock);
-	return;
 }
 
 RelFileNode

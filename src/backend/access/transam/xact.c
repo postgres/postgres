@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/access/transam/xact.c,v 1.104 2001/06/22 19:16:21 wieck Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/access/transam/xact.c,v 1.105 2001/07/06 21:04:25 tgl Exp $
  *
  * NOTES
  *		Transaction aborts can now occur two ways:
@@ -653,7 +653,7 @@ void
 RecordTransactionCommit()
 {
 	TransactionId xid;
-	int			leak;
+	bool		leak;
 
 	xid = GetCurrentTransactionId();
 

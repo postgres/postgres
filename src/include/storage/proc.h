@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2001, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Id: proc.h,v 1.44 2001/06/16 22:58:17 tgl Exp $
+ * $Id: proc.h,v 1.45 2001/07/06 21:04:26 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -15,6 +15,7 @@
 #define _PROC_H_
 
 #include "access/xlog.h"
+#include "storage/backendid.h"
 #include "storage/lock.h"
 
 /* configurable option */
@@ -138,5 +139,9 @@ extern void ProcLockWakeup(LOCKMETHODTABLE *lockMethodTable, LOCK *lock);
 extern void ProcReleaseSpins(PROC *proc);
 extern bool LockWaitCancel(void);
 extern void HandleDeadLock(SIGNAL_ARGS);
+
+extern void ProcWaitForSignal(void);
+extern void ProcCancelWaitForSignal(void);
+extern void ProcSendSignal(BackendId procId);
 
 #endif	 /* PROC_H */

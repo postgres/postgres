@@ -7,16 +7,18 @@
  * Portions Copyright (c) 1996-2001, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Id: buf_internals.h,v 1.48 2001/03/22 04:01:05 momjian Exp $
+ * $Id: buf_internals.h,v 1.49 2001/07/06 21:04:26 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
 #ifndef BUFMGR_INTERNALS_H
 #define BUFMGR_INTERNALS_H
 
+#include "storage/backendid.h"
 #include "storage/buf.h"
 #include "storage/lmgr.h"
 #include "storage/s_lock.h"
+
 
 /* Buf Mgr constants */
 /* in bufmgr.c */
@@ -38,9 +40,19 @@ extern int	ShowPinTrace;
 #define BM_IO_IN_PROGRESS		(1 << 5)
 #define BM_IO_ERROR				(1 << 6)
 #define BM_JUST_DIRTIED			(1 << 7)
+#define BM_PIN_COUNT_WAITER		(1 << 8)
 
 typedef bits16 BufFlags;
 
+/*
+ * Buffer tag identifies which disk block the buffer contains.
+ *
+ * Note: the BufferTag data must be sufficient to determine where to write the
+ * block, even during a "blind write" with no relcache entry.  It's possible
+ * that the backend flushing the buffer doesn't even believe the relation is
+ * visible yet (its xact may have started before the xact that created the
+ * rel).  The storage manager must be able to cope anyway.
+ */
 typedef struct buftag
 {
 	RelFileNode rnode;
@@ -61,27 +73,8 @@ typedef struct buftag
 )
 
 /*
- * We don't need this data any more but it allows more user
- * friendly error messages. Feel free to get rid of it
- * (and change a lot of places -:))
- */
-typedef struct bufblindid
-{
-	char		dbname[NAMEDATALEN];	/* name of db in which buf belongs */
-	char		relname[NAMEDATALEN];	/* name of reln */
-} BufferBlindId;
-
-/*
  *	BufferDesc -- shared buffer cache metadata for a single
  *				  shared buffer descriptor.
- *
- *		We keep the name of the database and relation in which this
- *		buffer appears in order to avoid a catalog lookup on cache
- *		flush if we don't have the reldesc in the cache.  It is also
- *		possible that the relation to which this buffer belongs is
- *		not visible to all backends at the time that it gets flushed.
- *		Dbname, relname, dbid, and relid are enough to determine where
- *		to put the buffer, for all storage managers.
  */
 typedef struct sbufdesc
 {
@@ -89,14 +82,14 @@ typedef struct sbufdesc
 	Buffer		freePrev;
 	SHMEM_OFFSET data;			/* pointer to data in buf pool */
 
-	/* tag and id must be together for table lookup to work */
+	/* tag and id must be together for table lookup (still true?) */
 	BufferTag	tag;			/* file/block identifier */
-	int			buf_id;			/* maps global desc to local desc */
+	int			buf_id;			/* buffer's index number (from 0) */
 
 	BufFlags	flags;			/* see bit definitions above */
-	unsigned	refcount;		/* # of times buffer is pinned */
+	unsigned	refcount;		/* # of backends holding pins on buffer */
 
-	slock_t		io_in_progress_lock;	/* to block for I/O to complete */
+	slock_t		io_in_progress_lock;	/* to wait for I/O to complete */
 	slock_t		cntx_lock;		/* to lock access to page context */
 
 	unsigned	r_locks;		/* # of shared locks */
@@ -105,15 +98,14 @@ typedef struct sbufdesc
 
 	bool		cntxDirty;		/* new way to mark block as dirty */
 
-	BufferBlindId blind;		/* was used to support blind write */
-
 	/*
-	 * When we can't delete item from page (someone else has buffer
-	 * pinned) we mark buffer for cleanup by specifying appropriate for
-	 * buffer content cleanup function. Buffer will be cleaned up from
-	 * release buffer functions.
+	 * We can't physically remove items from a disk page if another backend
+	 * has the buffer pinned.  Hence, a backend may need to wait for all
+	 * other pins to go away.  This is signaled by setting its own backend ID
+	 * into wait_backend_id and setting flag bit BM_PIN_COUNT_WAITER.
+	 * At present, there can be only one such waiter per buffer.
 	 */
-	void		(*CleanupFunc) (Buffer);
+	BackendId	wait_backend_id; /* backend ID of pin-count waiter */
 } BufferDesc;
 
 #define BufferDescriptorGetBuffer(bdesc) ((bdesc)->buf_id + 1)
@@ -128,21 +120,23 @@ typedef struct sbufdesc
 #define BL_R_LOCK			(1 << 1)
 #define BL_RI_LOCK			(1 << 2)
 #define BL_W_LOCK			(1 << 3)
+#define BL_PIN_COUNT_LOCK	(1 << 4)
 
 /*
  *	mao tracing buffer allocation
  */
 
 /*#define BMTRACE*/
+
 #ifdef BMTRACE
 
 typedef struct _bmtrace
 {
 	int			bmt_pid;
-	long		bmt_buf;
-	long		bmt_dbid;
-	long		bmt_relid;
-	int			bmt_blkno;
+	int			bmt_buf;
+	Oid			bmt_dbid;
+	Oid			bmt_relid;
+	BlockNumber	bmt_blkno;
 	int			bmt_op;
 
 #define BMT_NOTUSED		0
@@ -162,9 +156,7 @@ typedef struct _bmtrace
 /* Internal routines: only called by buf.c */
 
 /*freelist.c*/
-extern void AddBufferToFreelist(BufferDesc *bf);
 extern void PinBuffer(BufferDesc *buf);
-extern void PinBuffer_Debug(char *file, int line, BufferDesc *buf);
 extern void UnpinBuffer(BufferDesc *buf);
 extern BufferDesc *GetFreeBuffer(void);
 extern void InitFreeList(bool init);
@@ -179,7 +171,6 @@ extern bool BufTableInsert(BufferDesc *buf);
 extern BufferDesc *BufferDescriptors;
 extern bits8 *BufferLocks;
 extern BufferTag *BufferTagLastDirtied;
-extern BufferBlindId *BufferBlindLastDirtied;
 extern LockRelId *BufferRelidLastDirtied;
 extern bool *BufferDirtiedByMe;
 extern SPINLOCK BufMgrLock;

@@ -7,13 +7,14 @@
  * Portions Copyright (c) 1996-2001, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Id: sinval.h,v 1.19 2001/06/19 19:42:16 tgl Exp $
+ * $Id: sinval.h,v 1.20 2001/07/06 21:04:26 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
 #ifndef SINVAL_H
 #define SINVAL_H
 
+#include "storage/backendid.h"
 #include "storage/itemptr.h"
 #include "storage/spin.h"
 
@@ -77,5 +78,7 @@ extern bool DatabaseHasActiveBackends(Oid databaseId, bool ignoreMyself);
 extern bool TransactionIdIsInProgress(TransactionId xid);
 extern void GetXmaxRecent(TransactionId *XmaxRecent);
 extern int	CountActiveBackends(void);
+/* Use "struct proc", not PROC, to avoid including proc.h here */
+extern struct proc *BackendIdGetProc(BackendId procId);
 
 #endif	 /* SINVAL_H */
