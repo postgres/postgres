@@ -70,8 +70,7 @@ directory 2 levels deep in one step.
 17. cd /usr/src/pgsql/src/test/regress
 18. make all runtest
 
-All test should be run, allthought the latest snapshot I tested (18-4)
-appears to have some problems with locking.
+All test should be run.
 
 NOTE:
 By default, PostgreSQL clients like psql communicate using unix domain
@@ -81,3 +80,6 @@ environment variable to 'localhost' or supply the hostname on the
 command line.
 
 Joost
+
+PS: If you still have problems you can mail to Dan Horak <dan.horak@email.cz>
+    who is the maintainer for the win32 port
