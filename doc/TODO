@@ -1,6 +1,6 @@
 TODO list for PostgreSQL
 ========================
-Last updated:		Tue Jun 24 22:43:52 EDT 2003
+Last updated:		Wed Jun 25 00:19:29 EDT 2003
 
 Current maintainer:	Bruce Momjian (pgman@candle.pha.pa.us)
 
@@ -176,7 +176,7 @@ Commands
 * Add schema option to createlang
 * Allow savepoints / nested transactions [transactions] (Bruce)
 * Allow UPDATE tab SET ROW (col, ...) = (...) for updating multiple columns
-* Allow UPDATE to use SET col = DEFAULT
+* -Allow UPDATE to use SET col = DEFAULT
 * -Add config variable to prevent auto-adding missing FROM-clause tables
 * Allow SET CONSTRAINTS to be qualified by schema/table
 * Have SELECT '13 minutes'::interval display zero seconds in ISO datestyle
@@ -461,7 +461,7 @@ Source Code
 * Acquire lock on a relation before building a relcache entry for it
 * Research interaction of setitimer() and sleep() used by statement_timeout
 * Add checks for fclose() failure
-* Change CVS $Id: TODO,v 1.1071 2003/06/25 02:43:54 momjian Exp $ to $PostgreSQL: pgsql/doc/TODO,v 1.1071 2003/06/25 02:43:54 momjian Exp $
+* Change CVS $Id: TODO,v 1.1072 2003/06/25 04:19:35 momjian Exp $ to $PostgreSQL: pgsql/doc/TODO,v 1.1072 2003/06/25 04:19:35 momjian Exp $
 * Exit postmaster if postgresql.conf can not be opened
 * Rename /scripts directory because they are all C programs now
 * Allow the regression tests to start postmaster with -i so the tests
