@@ -4,7 +4,7 @@
 #    Makefile for tutorial
 #
 # IDENTIFICATION
-#    $Header: /cvsroot/pgsql/src/tutorial/Makefile,v 1.14 2001/10/26 20:45:33 tgl Exp $
+#    $Header: /cvsroot/pgsql/src/tutorial/Makefile,v 1.15 2002/07/30 17:47:58 tgl Exp $
 #
 #-------------------------------------------------------------------------
 
@@ -30,5 +30,5 @@ all: $(DLOBJS) $(QUERIES)
 	C=`pwd`; \
 	sed -e "s:_OBJWD_:$$C:g" < $< > $@
 
-clean:
+clean distclean maintainer-clean:
 	rm -f $(DLOBJS) $(QUERIES)
