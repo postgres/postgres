@@ -6,7 +6,7 @@
  * WIN1250 client encoding support contributed by Pavel Behal
  * SJIS UDC (NEC selection IBM kanji) support contributed by Eiji Tokuya
  *
- * $Id: conv.c,v 1.18 2000/10/12 06:06:50 ishii Exp $
+ * $Id: conv.c,v 1.19 2000/10/27 02:23:51 ishii Exp $
  *
  *
  */
@@ -15,6 +15,18 @@
 #include <string.h>
 
 #include "mb/pg_wchar.h"
+
+/*
+ * XXX dummy elog() function for frontend only. Note that elog would
+ * never be called from frontend, but to avoid the linking errors we
+ * have to do it anyway. In the future, we should consider reorganizing
+ * sources in this directory to avoid this kind of ugliness...
+*/
+
+#ifdef FRONTEND
+static void
+elog(int lev, const char *fmt, ...) {}
+#endif
 
 /*
  * for Unicode (UTF-8) support

@@ -1,4 +1,4 @@
-/* $Id: pg_wchar.h,v 1.20 2000/10/25 19:44:43 tgl Exp $ */
+/* $Id: pg_wchar.h,v 1.21 2000/10/27 02:21:15 ishii Exp $ */
 
 #ifndef PG_WCHAR_H
 #define PG_WCHAR_H
@@ -7,9 +7,9 @@
 #include <sys/types.h>
 
 #ifdef FRONTEND
-#define elog(X...)
 #undef palloc
 #define palloc malloc
+# undef pfree
 #define pfree free
 #endif
 
