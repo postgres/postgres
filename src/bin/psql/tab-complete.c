@@ -3,7 +3,7 @@
  *
  * Copyright (c) 2000-2003, PostgreSQL Global Development Group
  *
- * $Header: /cvsroot/pgsql/src/bin/psql/tab-complete.c,v 1.89 2003/10/17 11:52:06 petere Exp $
+ * $Header: /cvsroot/pgsql/src/bin/psql/tab-complete.c,v 1.90 2003/10/28 23:35:52 tgl Exp $
  */
 
 /*----------------------------------------------------------------------
@@ -142,7 +142,7 @@ initialize_readline(void)
 "        UNION" \
 " SELECT pg_catalog.quote_ident(nspname) || '.'" \
 "   FROM pg_catalog.pg_namespace" \
-"  WHERE substring(pg_catalog.quote_ident(nspname) || '.',1,%d)='%s'" \
+"  WHERE substring(pg_catalog.quote_ident(nspname),1,%d)='%s'" \
 "        UNION" \
 " SELECT pg_catalog.quote_ident(nspname) || '.' || pg_catalog.quote_ident(proname)" \
 "   FROM pg_catalog.pg_proc p, pg_catalog.pg_namespace n" \
@@ -180,7 +180,7 @@ initialize_readline(void)
 "        UNION "\
 " SELECT pg_catalog.quote_ident(nspname) || '.'"\
 "   FROM pg_catalog.pg_namespace "\
-"  WHERE substring(pg_catalog.quote_ident(nspname) || '.',1,%d)='%s' "\
+"  WHERE substring(pg_catalog.quote_ident(nspname),1,%d)='%s' "\
 "        UNION "\
 " SELECT pg_catalog.quote_ident(nspname) || '.' || pg_catalog.format_type(t.oid, NULL)"\
 "   FROM pg_catalog.pg_type t, pg_catalog.pg_namespace n "\
@@ -204,7 +204,7 @@ initialize_readline(void)
 "        UNION" \
 " SELECT pg_catalog.quote_ident(nspname) || '.'"\
 "   FROM pg_catalog.pg_namespace "\
-"  WHERE substring(pg_catalog.quote_ident(nspname) || '.',1,%d)='%s' "\
+"  WHERE substring(pg_catalog.quote_ident(nspname),1,%d)='%s' "\
 "        UNION "\
 " SELECT pg_catalog.quote_ident(nspname) || '.' || pg_catalog.quote_ident(typname)"\
 "   FROM pg_catalog.pg_type t, pg_catalog.pg_namespace n "\
@@ -230,7 +230,7 @@ initialize_readline(void)
 "        UNION "\
 " SELECT pg_catalog.quote_ident(nspname) || '.' "\
 "   FROM pg_catalog.pg_namespace "\
-"  WHERE substring(pg_catalog.quote_ident(nspname) || '.',1,%d)='%s' "\
+"  WHERE substring(pg_catalog.quote_ident(nspname),1,%d)='%s' "\
 "        UNION "\
 " SELECT pg_catalog.quote_ident(nspname) || '.' || pg_catalog.quote_ident(proname) "\
 "   FROM pg_catalog.pg_proc p, pg_catalog.pg_namespace n "\
@@ -253,7 +253,7 @@ initialize_readline(void)
 "        UNION "\
 " SELECT pg_catalog.quote_ident(nspname) || '.' "\
 "   FROM pg_catalog.pg_namespace "\
-"  WHERE substring(pg_catalog.quote_ident(nspname) || '.',1,%d)='%s' "\
+"  WHERE substring(pg_catalog.quote_ident(nspname),1,%d)='%s' "\
 "        UNION "\
 " SELECT pg_catalog.quote_ident(nspname) || '.' || pg_catalog.quote_ident(relname) "\
 "   FROM pg_catalog.pg_class c, pg_catalog.pg_namespace n "\
@@ -288,7 +288,7 @@ initialize_readline(void)
 "        UNION "\
 " SELECT pg_catalog.quote_ident(nspname) || '.' "\
 "   FROM pg_catalog.pg_namespace "\
-"  WHERE substring(pg_catalog.quote_ident(nspname) || '.',1,%d)='%s' "\
+"  WHERE substring(pg_catalog.quote_ident(nspname),1,%d)='%s' "\
 "        UNION "\
 " SELECT pg_catalog.quote_ident(nspname) || '.' || pg_catalog.quote_ident(relname) "\
 "   FROM pg_catalog.pg_class c, pg_catalog.pg_namespace n "\
@@ -321,7 +321,7 @@ initialize_readline(void)
 "        UNION "\
 " SELECT pg_catalog.quote_ident(nspname) || '.' "\
 "   FROM pg_catalog.pg_namespace "\
-"  WHERE substring(pg_catalog.quote_ident(nspname) || '.',1,%d)='%s' "\
+"  WHERE substring(pg_catalog.quote_ident(nspname),1,%d)='%s' "\
 "        UNION "\
 " SELECT pg_catalog.quote_ident(nspname) || '.' || pg_catalog.quote_ident(relname) "\
 "   FROM pg_catalog.pg_class c, pg_catalog.pg_namespace n "\
@@ -345,7 +345,7 @@ initialize_readline(void)
 "        UNION "\
 " SELECT pg_catalog.quote_ident(nspname) || '.' "\
 "   FROM pg_catalog.pg_namespace "\
-"  WHERE substring(pg_catalog.quote_ident(nspname) || '.',1,%d)='%s' "\
+"  WHERE substring(pg_catalog.quote_ident(nspname),1,%d)='%s' "\
 "        UNION "\
 " SELECT pg_catalog.quote_ident(nspname) || '.' || pg_catalog.quote_ident(relname) "\
 "   FROM pg_catalog.pg_class c, pg_catalog.pg_namespace n "\
@@ -369,7 +369,7 @@ initialize_readline(void)
 "        UNION "\
 " SELECT pg_catalog.quote_ident(nspname) || '.' "\
 "   FROM pg_catalog.pg_namespace "\
-"  WHERE substring(pg_catalog.quote_ident(nspname) || '.',1,%d)='%s' "\
+"  WHERE substring(pg_catalog.quote_ident(nspname),1,%d)='%s' "\
 "        UNION "\
 " SELECT pg_catalog.quote_ident(nspname) || '.' || pg_catalog.quote_ident(relname) "\
 "   FROM pg_catalog.pg_class c, pg_catalog.pg_namespace n "\
@@ -393,7 +393,7 @@ initialize_readline(void)
 "        UNION "\
 " SELECT pg_catalog.quote_ident(nspname) || '.' "\
 "   FROM pg_catalog.pg_namespace "\
-"  WHERE substring(pg_catalog.quote_ident(nspname) || '.',1,%d)='%s' "\
+"  WHERE substring(pg_catalog.quote_ident(nspname),1,%d)='%s' "\
 "        UNION "\
 " SELECT pg_catalog.quote_ident(nspname) || '.' || pg_catalog.quote_ident(relname) "\
 "   FROM pg_catalog.pg_class c, pg_catalog.pg_namespace n "\
@@ -991,20 +991,11 @@ psql_completion(char *text, int start, int end)
 	else if ((strcasecmp(prev3_wd, "GRANT") == 0 ||
 			  strcasecmp(prev3_wd, "REVOKE") == 0) &&
 			 strcasecmp(prev_wd, "ON") == 0)
-		COMPLETE_WITH_QUERY("SELECT pg_catalog.quote_ident(relname) FROM pg_catalog.pg_class c, pg_catalog.pg_namespace n "
-							" WHERE relkind in ('r','S','v')  "
-							"   AND substring(pg_catalog.quote_ident(relname),1,%d)='%s' "
-						  "   AND pg_catalog.pg_table_is_visible(c.oid) "
-							"   AND relnamespace = n.oid "
-					"   AND n.nspname NOT IN ('pg_catalog', 'pg_toast') "
-							" UNION "
-							"SELECT 'DATABASE' "
-							" UNION "
-							"SELECT 'FUNCTION' "
-							" UNION "
-							"SELECT 'LANGUAGE' "
-							" UNION "
-							"SELECT 'SCHEMA' ");
+		COMPLETE_WITH_SCHEMA_QUERY(Query_for_list_of_tsv
+								   " UNION SELECT 'DATABASE'"
+								   " UNION SELECT 'FUNCTION'"
+								   " UNION SELECT 'LANGUAGE'"
+								   " UNION SELECT 'SCHEMA'");
 
 	/* Complete "GRANT/REVOKE * ON * " with "TO" */
 	else if ((strcasecmp(prev4_wd, "GRANT") == 0 ||
@@ -1251,7 +1242,10 @@ psql_completion(char *text, int start, int end)
 
 /* VACUUM */
 	else if (strcasecmp(prev_wd, "VACUUM") == 0)
-		COMPLETE_WITH_QUERY("SELECT pg_catalog.quote_ident(relname) FROM pg_catalog.pg_class WHERE relkind='r' and substring(pg_catalog.quote_ident(relname),1,%d)='%s' and pg_catalog.pg_table_is_visible(oid) UNION SELECT 'FULL' UNION SELECT 'ANALYZE' UNION SELECT 'VERBOSE'");
+		COMPLETE_WITH_SCHEMA_QUERY(Query_for_list_of_tables
+								   " UNION SELECT 'FULL'"
+								   " UNION SELECT 'ANALYZE'"
+								   " UNION SELECT 'VERBOSE'");
 	else if (strcasecmp(prev2_wd, "VACUUM") == 0 &&
 			 (strcasecmp(prev_wd, "FULL") == 0 ||
 			  strcasecmp(prev_wd, "ANALYZE") == 0 ||
