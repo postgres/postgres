@@ -849,3 +849,218 @@ p4  |        15
 p6  |    11.176
 (5 rows)
 
+QUERY: CREATE TABLE shoe_data (
+	shoename   char(10),      
+	sh_avail   integer,       
+	slcolor    char(10),      
+	slminlen   float,         
+	slmaxlen   float,         
+	slunit     char(8)        
+);
+QUERY: CREATE TABLE shoelace_data (
+	sl_name    char(10),      
+	sl_avail   integer,       
+	sl_color   char(10),      
+	sl_len     float,         
+	sl_unit    char(8)        
+);
+QUERY: CREATE TABLE unit (
+	un_name    char(8),       
+	un_fact    float          
+);
+QUERY: CREATE VIEW shoe AS
+	SELECT sh.shoename,
+		   sh.sh_avail,
+		   sh.slcolor,
+		   sh.slminlen,
+		   sh.slminlen * un.un_fact AS slminlen_cm,
+		   sh.slmaxlen,
+		   sh.slmaxlen * un.un_fact AS slmaxlen_cm,
+		   sh.slunit
+	  FROM shoe_data sh, unit un
+	 WHERE sh.slunit = un.un_name;
+QUERY: CREATE VIEW shoelace AS
+	SELECT s.sl_name,
+		   s.sl_avail,
+		   s.sl_color,
+		   s.sl_len,
+		   s.sl_unit,
+		   s.sl_len * u.un_fact AS sl_len_cm
+	  FROM shoelace_data s, unit u
+	 WHERE s.sl_unit = u.un_name;
+QUERY: CREATE VIEW shoe_ready AS
+	SELECT rsh.shoename,
+		   rsh.sh_avail,
+		   rsl.sl_name,
+		   rsl.sl_avail,
+		   int4smaller(rsh.sh_avail, rsl.sl_avail) AS total_avail
+	  FROM shoe rsh, shoelace rsl
+	 WHERE rsl.sl_color = rsh.slcolor
+	   AND rsl.sl_len_cm >= rsh.slminlen_cm
+	   AND rsl.sl_len_cm <= rsh.slmaxlen_cm;
+QUERY: INSERT INTO unit VALUES ('cm', 1.0);
+QUERY: INSERT INTO unit VALUES ('m', 100.0);
+QUERY: INSERT INTO unit VALUES ('inch', 2.54);
+QUERY: INSERT INTO shoe_data VALUES ('sh1', 2, 'black', 70.0, 90.0, 'cm');
+QUERY: INSERT INTO shoe_data VALUES ('sh2', 0, 'black', 30.0, 40.0, 'inch');
+QUERY: INSERT INTO shoe_data VALUES ('sh3', 4, 'brown', 50.0, 65.0, 'cm');
+QUERY: INSERT INTO shoe_data VALUES ('sh4', 3, 'brown', 40.0, 50.0, 'inch');
+QUERY: INSERT INTO shoelace_data VALUES ('sl1', 5, 'black', 80.0, 'cm');
+QUERY: INSERT INTO shoelace_data VALUES ('sl2', 6, 'black', 100.0, 'cm');
+QUERY: INSERT INTO shoelace_data VALUES ('sl3', 0, 'black', 35.0 , 'inch');
+QUERY: INSERT INTO shoelace_data VALUES ('sl4', 8, 'black', 40.0 , 'inch');
+QUERY: INSERT INTO shoelace_data VALUES ('sl5', 4, 'brown', 1.0 , 'm');
+QUERY: INSERT INTO shoelace_data VALUES ('sl6', 0, 'brown', 0.9 , 'm');
+QUERY: INSERT INTO shoelace_data VALUES ('sl7', 7, 'brown', 60 , 'cm');
+QUERY: INSERT INTO shoelace_data VALUES ('sl8', 1, 'brown', 40 , 'inch');
+QUERY: SELECT * FROM shoelace;
+sl_name   |sl_avail|sl_color  |sl_len|sl_unit |sl_len_cm
+----------+--------+----------+------+--------+---------
+sl1       |       5|black     |    80|cm      |       80
+sl2       |       6|black     |   100|cm      |      100
+sl7       |       7|brown     |    60|cm      |       60
+sl3       |       0|black     |    35|inch    |     88.9
+sl4       |       8|black     |    40|inch    |    101.6
+sl8       |       1|brown     |    40|inch    |    101.6
+sl5       |       4|brown     |     1|m       |      100
+sl6       |       0|brown     |   0.9|m       |       90
+(8 rows)
+
+QUERY: SELECT * FROM shoe_ready WHERE total_avail >= 2;
+shoename  |sh_avail|sl_name   |sl_avail|total_avail
+----------+--------+----------+--------+-----------
+sh1       |       2|sl1       |       5|          2
+sh3       |       4|sl7       |       7|          4
+(2 rows)
+
+QUERY:     CREATE TABLE shoelace_log (
+        sl_name    char(10),      
+        sl_avail   integer,       
+        log_who    name,          
+        log_when   datetime       
+    );
+QUERY:     CREATE RULE log_shoelace AS ON UPDATE TO shoelace_data
+        WHERE NEW.sl_avail != OLD.sl_avail
+        DO INSERT INTO shoelace_log VALUES (
+                                        NEW.sl_name,
+                                        NEW.sl_avail,
+                                        getpgusername(),
+                                        'epoch'::text
+                                    );
+QUERY: UPDATE shoelace_data SET sl_avail = 6 WHERE  sl_name = 'sl7';
+QUERY: SELECT * FROM shoelace_log;
+sl_name   |sl_avail|log_who|log_when
+----------+--------+-------+--------
+sl7       |       6|pgsql  |epoch   
+(1 row)
+
+QUERY:     CREATE RULE shoelace_ins AS ON INSERT TO shoelace
+        DO INSTEAD
+        INSERT INTO shoelace_data VALUES (
+               NEW.sl_name,
+               NEW.sl_avail,
+               NEW.sl_color,
+               NEW.sl_len,
+               NEW.sl_unit);
+QUERY:     CREATE RULE shoelace_upd AS ON UPDATE TO shoelace
+        DO INSTEAD
+        UPDATE shoelace_data SET
+               sl_name = NEW.sl_name,
+               sl_avail = NEW.sl_avail,
+               sl_color = NEW.sl_color,
+               sl_len = NEW.sl_len,
+               sl_unit = NEW.sl_unit
+         WHERE sl_name = OLD.sl_name;
+QUERY:     CREATE RULE shoelace_del AS ON DELETE TO shoelace
+        DO INSTEAD
+        DELETE FROM shoelace_data
+         WHERE sl_name = OLD.sl_name;
+QUERY:     CREATE TABLE shoelace_arrive (
+        arr_name    char(10),
+        arr_quant   integer
+    );
+QUERY:     CREATE TABLE shoelace_ok (
+        ok_name     char(10),
+        ok_quant    integer
+    );
+QUERY:     CREATE RULE shoelace_ok_ins AS ON INSERT TO shoelace_ok
+        DO INSTEAD
+        UPDATE shoelace SET
+               sl_avail = sl_avail + NEW.ok_quant
+         WHERE sl_name = NEW.ok_name;
+QUERY: INSERT INTO shoelace_arrive VALUES ('sl3', 10);
+QUERY: INSERT INTO shoelace_arrive VALUES ('sl6', 20);
+QUERY: INSERT INTO shoelace_arrive VALUES ('sl8', 20);
+QUERY: SELECT * FROM shoelace;
+sl_name   |sl_avail|sl_color  |sl_len|sl_unit |sl_len_cm
+----------+--------+----------+------+--------+---------
+sl1       |       5|black     |    80|cm      |       80
+sl2       |       6|black     |   100|cm      |      100
+sl7       |       6|brown     |    60|cm      |       60
+sl3       |       0|black     |    35|inch    |     88.9
+sl4       |       8|black     |    40|inch    |    101.6
+sl8       |       1|brown     |    40|inch    |    101.6
+sl5       |       4|brown     |     1|m       |      100
+sl6       |       0|brown     |   0.9|m       |       90
+(8 rows)
+
+QUERY: insert into shoelace_ok select * from shoelace_arrive;
+QUERY: SELECT * FROM shoelace;
+sl_name   |sl_avail|sl_color  |sl_len|sl_unit |sl_len_cm
+----------+--------+----------+------+--------+---------
+sl1       |       5|black     |    80|cm      |       80
+sl2       |       6|black     |   100|cm      |      100
+sl7       |       6|brown     |    60|cm      |       60
+sl4       |       8|black     |    40|inch    |    101.6
+sl3       |      10|black     |    35|inch    |     88.9
+sl8       |      21|brown     |    40|inch    |    101.6
+sl5       |       4|brown     |     1|m       |      100
+sl6       |      20|brown     |   0.9|m       |       90
+(8 rows)
+
+QUERY: SELECT * FROM shoelace_log;
+sl_name   |sl_avail|log_who|log_when
+----------+--------+-------+--------
+sl7       |       6|pgsql  |epoch   
+sl3       |      10|pgsql  |epoch   
+sl6       |      20|pgsql  |epoch   
+sl8       |      21|pgsql  |epoch   
+(4 rows)
+
+QUERY:     CREATE VIEW shoelace_obsolete AS
+	SELECT * FROM shoelace WHERE NOT EXISTS
+	    (SELECT shoename FROM shoe WHERE slcolor = sl_color);
+QUERY:     CREATE VIEW shoelace_candelete AS
+	SELECT * FROM shoelace_obsolete WHERE sl_avail = 0;
+QUERY: insert into shoelace values ('sl9', 0, 'pink', 35.0, 'inch', 0.0);
+QUERY: insert into shoelace values ('sl10', 1000, 'magenta', 40.0, 'inch', 0.0);
+QUERY: SELECT * FROM shoelace_obsolete;
+sl_name   |sl_avail|sl_color  |sl_len|sl_unit |sl_len_cm
+----------+--------+----------+------+--------+---------
+sl9       |       0|pink      |    35|inch    |     88.9
+sl10      |    1000|magenta   |    40|inch    |    101.6
+(2 rows)
+
+QUERY: SELECT * FROM shoelace_candelete;
+sl_name   |sl_avail|sl_color  |sl_len|sl_unit |sl_len_cm
+----------+--------+----------+------+--------+---------
+sl9       |       0|pink      |    35|inch    |     88.9
+(1 row)
+
+QUERY: DELETE FROM shoelace WHERE EXISTS
+    (SELECT * FROM shoelace_candelete
+             WHERE sl_name = shoelace.sl_name);
+QUERY: SELECT * FROM shoelace;
+sl_name   |sl_avail|sl_color  |sl_len|sl_unit |sl_len_cm
+----------+--------+----------+------+--------+---------
+sl1       |       5|black     |    80|cm      |       80
+sl2       |       6|black     |   100|cm      |      100
+sl7       |       6|brown     |    60|cm      |       60
+sl4       |       8|black     |    40|inch    |    101.6
+sl3       |      10|black     |    35|inch    |     88.9
+sl8       |      21|brown     |    40|inch    |    101.6
+sl10      |    1000|magenta   |    40|inch    |    101.6
+sl5       |       4|brown     |     1|m       |      100
+sl6       |      20|brown     |   0.9|m       |       90
+(9 rows)
+

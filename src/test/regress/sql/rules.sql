@@ -505,3 +505,175 @@ insert into rtest_comp values ('p6', 'inch', 4.4);
 select * from rtest_vcomp order by part;
 
 select * from rtest_vcomp where size_in_cm > 10.0 order by size_in_cm using >;
+
+--
+-- In addition run the (slightly modified) queries from the
+-- programmers manual section on the rule system.
+--
+CREATE TABLE shoe_data (
+	shoename   char(10),      -- primary key
+	sh_avail   integer,       -- available # of pairs
+	slcolor    char(10),      -- preferred shoelace color
+	slminlen   float,         -- miminum shoelace length
+	slmaxlen   float,         -- maximum shoelace length
+	slunit     char(8)        -- length unit
+);
+
+CREATE TABLE shoelace_data (
+	sl_name    char(10),      -- primary key
+	sl_avail   integer,       -- available # of pairs
+	sl_color   char(10),      -- shoelace color
+	sl_len     float,         -- shoelace length
+	sl_unit    char(8)        -- length unit
+);
+
+CREATE TABLE unit (
+	un_name    char(8),       -- the primary key
+	un_fact    float          -- factor to transform to cm
+);
+
+CREATE VIEW shoe AS
+	SELECT sh.shoename,
+		   sh.sh_avail,
+		   sh.slcolor,
+		   sh.slminlen,
+		   sh.slminlen * un.un_fact AS slminlen_cm,
+		   sh.slmaxlen,
+		   sh.slmaxlen * un.un_fact AS slmaxlen_cm,
+		   sh.slunit
+	  FROM shoe_data sh, unit un
+	 WHERE sh.slunit = un.un_name;
+
+CREATE VIEW shoelace AS
+	SELECT s.sl_name,
+		   s.sl_avail,
+		   s.sl_color,
+		   s.sl_len,
+		   s.sl_unit,
+		   s.sl_len * u.un_fact AS sl_len_cm
+	  FROM shoelace_data s, unit u
+	 WHERE s.sl_unit = u.un_name;
+
+CREATE VIEW shoe_ready AS
+	SELECT rsh.shoename,
+		   rsh.sh_avail,
+		   rsl.sl_name,
+		   rsl.sl_avail,
+		   int4smaller(rsh.sh_avail, rsl.sl_avail) AS total_avail
+	  FROM shoe rsh, shoelace rsl
+	 WHERE rsl.sl_color = rsh.slcolor
+	   AND rsl.sl_len_cm >= rsh.slminlen_cm
+	   AND rsl.sl_len_cm <= rsh.slmaxlen_cm;
+
+INSERT INTO unit VALUES ('cm', 1.0);
+INSERT INTO unit VALUES ('m', 100.0);
+INSERT INTO unit VALUES ('inch', 2.54);
+
+INSERT INTO shoe_data VALUES ('sh1', 2, 'black', 70.0, 90.0, 'cm');
+INSERT INTO shoe_data VALUES ('sh2', 0, 'black', 30.0, 40.0, 'inch');
+INSERT INTO shoe_data VALUES ('sh3', 4, 'brown', 50.0, 65.0, 'cm');
+INSERT INTO shoe_data VALUES ('sh4', 3, 'brown', 40.0, 50.0, 'inch');
+
+INSERT INTO shoelace_data VALUES ('sl1', 5, 'black', 80.0, 'cm');
+INSERT INTO shoelace_data VALUES ('sl2', 6, 'black', 100.0, 'cm');
+INSERT INTO shoelace_data VALUES ('sl3', 0, 'black', 35.0 , 'inch');
+INSERT INTO shoelace_data VALUES ('sl4', 8, 'black', 40.0 , 'inch');
+INSERT INTO shoelace_data VALUES ('sl5', 4, 'brown', 1.0 , 'm');
+INSERT INTO shoelace_data VALUES ('sl6', 0, 'brown', 0.9 , 'm');
+INSERT INTO shoelace_data VALUES ('sl7', 7, 'brown', 60 , 'cm');
+INSERT INTO shoelace_data VALUES ('sl8', 1, 'brown', 40 , 'inch');
+
+-- SELECTs in doc
+SELECT * FROM shoelace;
+SELECT * FROM shoe_ready WHERE total_avail >= 2;
+
+    CREATE TABLE shoelace_log (
+        sl_name    char(10),      -- shoelace changed
+        sl_avail   integer,       -- new available value
+        log_who    name,          -- who did it
+        log_when   datetime       -- when
+    );
+
+    CREATE RULE log_shoelace AS ON UPDATE TO shoelace_data
+        WHERE NEW.sl_avail != OLD.sl_avail
+        DO INSERT INTO shoelace_log VALUES (
+                                        NEW.sl_name,
+                                        NEW.sl_avail,
+                                        getpgusername(),
+                                        'epoch'::text
+                                    );
+
+UPDATE shoelace_data SET sl_avail = 6 WHERE  sl_name = 'sl7';
+
+SELECT * FROM shoelace_log;
+
+    CREATE RULE shoelace_ins AS ON INSERT TO shoelace
+        DO INSTEAD
+        INSERT INTO shoelace_data VALUES (
+               NEW.sl_name,
+               NEW.sl_avail,
+               NEW.sl_color,
+               NEW.sl_len,
+               NEW.sl_unit);
+
+    CREATE RULE shoelace_upd AS ON UPDATE TO shoelace
+        DO INSTEAD
+        UPDATE shoelace_data SET
+               sl_name = NEW.sl_name,
+               sl_avail = NEW.sl_avail,
+               sl_color = NEW.sl_color,
+               sl_len = NEW.sl_len,
+               sl_unit = NEW.sl_unit
+         WHERE sl_name = OLD.sl_name;
+
+    CREATE RULE shoelace_del AS ON DELETE TO shoelace
+        DO INSTEAD
+        DELETE FROM shoelace_data
+         WHERE sl_name = OLD.sl_name;
+
+    CREATE TABLE shoelace_arrive (
+        arr_name    char(10),
+        arr_quant   integer
+    );
+
+    CREATE TABLE shoelace_ok (
+        ok_name     char(10),
+        ok_quant    integer
+    );
+
+    CREATE RULE shoelace_ok_ins AS ON INSERT TO shoelace_ok
+        DO INSTEAD
+        UPDATE shoelace SET
+               sl_avail = sl_avail + NEW.ok_quant
+         WHERE sl_name = NEW.ok_name;
+
+INSERT INTO shoelace_arrive VALUES ('sl3', 10);
+INSERT INTO shoelace_arrive VALUES ('sl6', 20);
+INSERT INTO shoelace_arrive VALUES ('sl8', 20);
+
+SELECT * FROM shoelace;
+
+insert into shoelace_ok select * from shoelace_arrive;
+
+SELECT * FROM shoelace;
+
+SELECT * FROM shoelace_log;
+
+    CREATE VIEW shoelace_obsolete AS
+	SELECT * FROM shoelace WHERE NOT EXISTS
+	    (SELECT shoename FROM shoe WHERE slcolor = sl_color);
+
+    CREATE VIEW shoelace_candelete AS
+	SELECT * FROM shoelace_obsolete WHERE sl_avail = 0;
+
+insert into shoelace values ('sl9', 0, 'pink', 35.0, 'inch', 0.0);
+insert into shoelace values ('sl10', 1000, 'magenta', 40.0, 'inch', 0.0);
+
+SELECT * FROM shoelace_obsolete;
+SELECT * FROM shoelace_candelete;
+
+DELETE FROM shoelace WHERE EXISTS
+    (SELECT * FROM shoelace_candelete
+             WHERE sl_name = shoelace.sl_name);
+
+SELECT * FROM shoelace;

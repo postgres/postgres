@@ -6,7 +6,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/rewrite/rewriteManip.c,v 1.27 1999/02/03 21:17:07 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/rewrite/rewriteManip.c,v 1.28 1999/02/08 01:39:45 wieck Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -496,8 +496,9 @@ AddQual(Query *parsetree, Node *qual)
 		return;
 
 	/***S*I***/
-	/* copy = copyObject(qual); */
-	copy = qual;
+	/* INTERSECT want's the original, but we need to copy - Jan */
+	/* copy = qual; */
+	copy = copyObject(qual);
 
 	old = parsetree->qual;
 	if (old == NULL)
@@ -518,8 +519,9 @@ AddHavingQual(Query *parsetree, Node *havingQual)
 		return;
 
 	/***S*I***/
-	copy = havingQual;
-	/* copy = copyObject(havingQual); */
+	/* INTERSECT want's the original, but we need to copy - Jan */
+	/* copy = havingQual; */
+	copy = copyObject(havingQual);
 
 	old = parsetree->havingQual;
 	if (old == NULL)
@@ -537,8 +539,9 @@ AddNotHavingQual(Query *parsetree, Node *havingQual)
 		return;
 
 	/***S*I***/
-	/* copy = (Node *)make_notclause( (Expr *)copyObject(havingQual)); */
-	copy = (Node *) make_notclause((Expr *)havingQual);
+	/* INTERSECT want's the original, but we need to copy - Jan */
+	/* copy = (Node *) make_notclause((Expr *)havingQual); */
+	copy = (Node *)make_notclause( (Expr *)copyObject(havingQual));
 
 	AddHavingQual(parsetree, copy);
 }
@@ -552,8 +555,9 @@ AddNotQual(Query *parsetree, Node *qual)
 		return;
 
 	/***S*I***/
-	/* copy = (Node *) make_notclause((Expr *)copyObject(qual)); */
-	copy = (Node *) make_notclause((Expr *)qual);
+	/* INTERSECT want's the original, but we need to copy - Jan */
+	/* copy = (Node *) make_notclause((Expr *)qual); */
+	copy = (Node *) make_notclause((Expr *)copyObject(qual));
 
 	AddQual(parsetree, copy);
 }
@@ -1052,9 +1056,14 @@ nodeHandleViewRule(Node **nodePtr,
 				 * will run into troubles using aggregates (aggno will not
 				 * be set correctly
 				 */
-				/* pfree(lfirst(((Expr *) lfirst(sublink->oper))->args)); */
+				pfree(lfirst(((Expr *) lfirst(sublink->oper))->args));
+				lfirst(((Expr *) lfirst(sublink->oper))->args) =
+							lfirst(sublink->lefthand);
+
 
 				/***S*I***/
+				/* INTERSECT want's this - Jan */
+				/*
  				tmp_lefthand = sublink->lefthand;				
  				foreach(tmp_oper, sublink->oper)
  				  {				    
@@ -1062,6 +1071,7 @@ nodeHandleViewRule(Node **nodePtr,
  				      lfirst(tmp_lefthand);
  				    tmp_lefthand = lnext(tmp_lefthand);
  				  }								
+				*/
   			}
 			break;
 		default:
