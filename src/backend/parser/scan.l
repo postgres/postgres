@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/parser/scan.l,v 1.26 1997/10/30 15:28:25 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/parser/scan.l,v 1.27 1997/10/30 16:36:39 thomas Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -57,7 +57,6 @@ void unput(char);
 extern YYSTYPE yylval;
 
 int llen;
-char *ScanString;
 char literal[MAX_PARSE_BUFFER];
 
 %}
@@ -74,6 +73,7 @@ char literal[MAX_PARSE_BUFFER];
 	 *  <xc> extended C-style comments - tgl 1997-07-12
 	 *  <xq> quoted strings - tgl 1997-07-30
 	 *  <xm> numeric strings with embedded minus sign - tgl 1997-09-05
+	 *  <xd> delimited identifiers (double-quoted identifiers) - tgl 1997-10-27
 	 *
 	 * The "extended comment" syntax closely resembles allowable operator syntax.
 	 * So, when in condition <xc>, only strings which would terminate the
@@ -83,10 +83,10 @@ char literal[MAX_PARSE_BUFFER];
 	 */
 
 %x xc
+%x xd
 %x xq
 %x xm
 
-	/* We used to allow double-quoted strings, but SQL doesn't so we won't either */
 quote			'
 xqstart			{quote}
 xqstop			{quote}
@@ -95,6 +95,11 @@ xqinside		[^\\']*
 xqembedded		"\\'"
 xqliteral		[\\](.|\n)
 xqcat			{quote}{space}*\n{space}*{quote}
+
+dquote			\"
+xdstart			{dquote}
+xdstop			{dquote}
+xdinside		[^"]*
 
 xcline			[\/][\*].*[\*][\/]{space}*\n*
 xcstart			[\/][\*]{op_and_self}*
@@ -190,11 +195,31 @@ other			.
 <xq>{xqcat}		{
 				}
 
+
+{xdstart}		{
+					BEGIN(xd);
+					llen = 0;
+					*literal = '\0';
+				}
+<xd>{xdstop}	{
+					BEGIN(INITIAL);
+					yylval.str = pstrdup(literal);
+					return (IDENT);
+				}
+<xd>{xdinside}	{
+					if ((llen+yyleng) > (MAX_PARSE_BUFFER - 1))
+						elog(WARN,"quoted string parse buffer of %d chars exceeded",MAX_PARSE_BUFFER);
+					memcpy(literal+llen, yytext, yyleng+1);
+					llen += yyleng;
+				}
+
+
 <xm>{space}*	{ /* ignore */ }
 <xm>{xmstop}	{
 					BEGIN(INITIAL);
 					return (yytext[0]);
 				}
+
 
 {sysfunc}		{
 						yylval.str = pstrdup(SystemFunctionHandler((char *)yytext));
@@ -225,7 +250,6 @@ other			.
 
 {integer}/{space}*-{number}	{
 					BEGIN(xm);
-					ScanString = pstrdup((char*)yytext);
 					yylval.ival = atoi((char*)yytext);
 					return (ICONST);
 				}
@@ -233,10 +257,9 @@ other			.
 					char* endptr;
 					BEGIN(xm);
 					errno = 0;
-					ScanString = pstrdup((char*)yytext);
 					yylval.dval = strtod(((char *)yytext),&endptr);
 					if (*endptr != '\0' || errno == ERANGE)
-					elog(WARN,"\tBad float8 input format\n");
+					elog(WARN,"Bad float8 input '%s'",yytext);
 					CheckFloat8Val(yylval.dval);
 					return (FCONST);
 				}
@@ -244,20 +267,18 @@ other			.
 					char* endptr;
 
 					errno = 0;
-					ScanString = pstrdup((char*)yytext);
 					yylval.ival = strtol((char *)yytext,&endptr,10);
 					if (*endptr != '\0' || errno == ERANGE)
-						elog(WARN,"\tBad integer input format\n");
+						elog(WARN,"Bad integer input '%s'",yytext);
 					return (ICONST);
 				}
 {real}			{
 					char* endptr;
 
 					errno = 0;
-					ScanString = pstrdup((char*)yytext);
 					yylval.dval = strtod((char *)yytext,&endptr);
 					if (*endptr != '\0' || errno == ERANGE)
-						elog(WARN,"\tBad float input format\n");
+						elog(WARN,"Bad float input '%s'",yytext);
 					CheckFloat8Val(yylval.dval);
 					return (FCONST);
 				}
