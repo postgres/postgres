@@ -21,7 +21,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/bin/pg_dump/pg_dump.c,v 1.87 1998/10/01 01:49:12 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/bin/pg_dump/pg_dump.c,v 1.88 1998/10/02 16:43:40 thomas Exp $
  *
  * Modifications - 6/10/96 - dave@bensoft.com - version 1.13.dhb
  *
@@ -100,6 +100,7 @@ extern int	optind,
 			opterr;
 
 /* global decls */
+bool		g_force_quotes;		/* User wants to suppress double-quotes */
 bool		g_verbose;			/* User wants verbose narration of our
 								 * activities. */
 int			g_last_builtin_oid; /* value of the last builtin oid */
@@ -128,11 +129,14 @@ usage(const char *progname)
 	fprintf(stderr,
 			"\t -d          \t\t dump data as proper insert strings\n");
 	fprintf(stderr,
-	  "\t -D          \t\t dump data as inserts with attribute names\n");
+			"\t -D          \t\t dump data as inserts"
+							" with attribute names\n");
 	fprintf(stderr,
 			"\t -f filename \t\t script output filename\n");
 	fprintf(stderr,
 			"\t -h hostname \t\t server host name\n");
+	fprintf(stderr,
+			"\t -n          \t\t suppress most quotes around identifiers\n");
 	fprintf(stderr,
 			"\t -o          \t\t dump object id's (oids)\n");
 	fprintf(stderr,
@@ -552,7 +556,7 @@ main(int argc, char **argv)
 
 	progname = *argv;
 
-	while ((c = getopt(argc, argv, "adDf:h:op:st:vzu")) != EOF)
+	while ((c = getopt(argc, argv, "adDf:h:nop:st:vzu")) != EOF)
 	{
 		switch (c)
 		{
@@ -572,6 +576,9 @@ main(int argc, char **argv)
 				break;
 			case 'h':			/* server host */
 				pghost = optarg;
+				break;
+			case 'n':			/* Do not force double-quotes on identifiers */
+				g_force_quotes = false;
 				break;
 			case 'o':			/* Dump oids */
 				oids = 1;

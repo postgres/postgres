@@ -5,7 +5,7 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: pg_dump.h,v 1.32 1998/09/01 04:33:47 momjian Exp $
+ * $Id: pg_dump.h,v 1.33 1998/10/02 16:43:41 thomas Exp $
  *
  * Modifications - 6/12/96 - dave@bensoft.com - version 1.13.dhb.2
  *
@@ -164,6 +164,7 @@ typedef struct _AclType
 
 
 /* global decls */
+extern bool g_force_quotes;		/* double-quotes for identifiers flag */
 extern bool g_verbose;			/* verbose flag */
 extern int	g_last_builtin_oid; /* value of the last builtin oid */
 extern FILE *g_fout;			/* the script file */
