@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/executor/nodeIndexscan.c,v 1.82 2003/08/04 02:39:59 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/executor/nodeIndexscan.c,v 1.83 2003/08/22 20:26:43 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -28,19 +28,51 @@
 #include "access/heapam.h"
 #include "executor/execdebug.h"
 #include "executor/nodeIndexscan.h"
+#include "miscadmin.h"
 #include "nodes/nodeFuncs.h"
 #include "optimizer/clauses.h"
 #include "parser/parsetree.h"
 
-/* ----------------
- *		Misc stuff to move to executor.h soon -cim 6/5/90
- * ----------------
- */
+
 #define NO_OP			0
 #define LEFT_OP			1
 #define RIGHT_OP		2
 
+/*
+ * In a multiple-index plan, we must take care to return any given tuple
+ * only once, even if it matches conditions of several index scans.  Our
+ * preferred way to do this is to record already-returned tuples in a hash
+ * table (using the TID as unique identifier).  However, in a very large
+ * scan this could conceivably run out of memory.  We limit the hash table
+ * to no more than SortMem KB; if it grows past that, we fall back to the
+ * pre-7.4 technique: evaluate the prior-scan index quals again for each
+ * tuple (which is space-efficient, but slow).
+ *
+ * When scanning backwards, we use scannum to determine when to emit the
+ * tuple --- we have to re-emit a tuple in the same scan as it was first
+ * encountered.
+ *
+ * Note: this code would break if the planner were ever to create a multiple
+ * index plan with overall backwards direction, because the hashtable code
+ * will emit a tuple the first time it is encountered (which would be the
+ * highest scan in which it matches the index), but the evaluate-the-quals
+ * code will emit a tuple in the lowest-numbered scan in which it's valid.
+ * This could be fixed at need by making the evaluate-the-quals case more
+ * complex.  Currently the planner will never create such a plan (since it
+ * considers multi-index plans unordered anyway), so there's no need for
+ * more complexity.
+ */
+typedef struct
+{
+	/* tid is the hash key and so must be first! */
+	ItemPointerData tid;		/* TID of a tuple we've returned */
+	int			scannum;		/* number of scan we returned it in */
+} DupHashTabEntry;
+
+
 static TupleTableSlot *IndexNext(IndexScanState *node);
+static void create_duphash(IndexScanState *node);
+
 
 /* ----------------------------------------------------------------
  *		IndexNext
@@ -163,7 +195,7 @@ IndexNext(IndexScanState *node)
 		while ((tuple = index_getnext(scandesc, direction)) != NULL)
 		{
 			/*
-			 * store the scanned tuple in the scan tuple slot of the scan
+			 * Store the scanned tuple in the scan tuple slot of the scan
 			 * state.  Note: we pass 'false' because tuples returned by
 			 * amgetnext are pointers onto disk pages and must not be
 			 * pfree()'d.
@@ -174,36 +206,80 @@ IndexNext(IndexScanState *node)
 						   false);		/* don't pfree */
 
 			/*
-			 * We must check to see if the current tuple was already
-			 * matched by an earlier index, so we don't double-report it.
-			 * We do this by passing the tuple through ExecQual and
-			 * checking for failure with all previous qualifications.
+			 * If it's a multiple-index scan, make sure not to double-report
+			 * a tuple matched by more than one index.  (See notes above.)
 			 */
-			if (node->iss_IndexPtr > 0)
+			if (numIndices > 1)
 			{
-				bool		prev_matches = false;
-				int			prev_index;
-				List	   *qual;
+				/* First try the hash table */
+				if (node->iss_DupHash)
+				{
+					DupHashTabEntry *entry;
+					bool	found;
 
-				econtext->ecxt_scantuple = slot;
-				ResetExprContext(econtext);
-				qual = node->indxqualorig;
-				for (prev_index = 0;
-					 prev_index < node->iss_IndexPtr;
-					 prev_index++)
-				{
-					if (ExecQual((List *) lfirst(qual), econtext, false))
+					entry = (DupHashTabEntry *)
+						hash_search(node->iss_DupHash,
+									&tuple->t_data->t_ctid,
+									HASH_ENTER,
+									&found);
+					if (entry == NULL ||
+						node->iss_DupHash->hctl->nentries > node->iss_MaxHash)
 					{
-						prev_matches = true;
-						break;
+						/* out of memory (either hard or soft limit) */
+						/* release hash table and fall thru to old code */
+						hash_destroy(node->iss_DupHash);
+						node->iss_DupHash = NULL;
 					}
-					qual = lnext(qual);
+					else if (found)
+					{
+						/* pre-existing entry */
+
+						/*
+						 * It's duplicate if first emitted in a different
+						 * scan.  If same scan, we must be backing up, so
+						 * okay to emit again.
+						 */
+						if (entry->scannum != node->iss_IndexPtr)
+						{
+							/* Dup, so drop it and loop back for another */
+							ExecClearTuple(slot);
+							continue;
+						}
+					}
+					else
+					{
+						/* new entry, finish filling it in */
+						entry->scannum = node->iss_IndexPtr;
+					}
 				}
-				if (prev_matches)
+				/* If hash table has overflowed, do it the hard way */
+				if (node->iss_DupHash == NULL &&
+					node->iss_IndexPtr > 0)
 				{
-					/* Duplicate, so drop it and loop back for another */
-					ExecClearTuple(slot);
-					continue;
+					bool		prev_matches = false;
+					int			prev_index;
+					List	   *qual;
+
+					econtext->ecxt_scantuple = slot;
+					ResetExprContext(econtext);
+					qual = node->indxqualorig;
+					for (prev_index = 0;
+						 prev_index < node->iss_IndexPtr;
+						 prev_index++)
+					{
+						if (ExecQual((List *) lfirst(qual), econtext, false))
+						{
+							prev_matches = true;
+							break;
+						}
+						qual = lnext(qual);
+					}
+					if (prev_matches)
+					{
+						/* Dup, so drop it and loop back for another */
+						ExecClearTuple(slot);
+						continue;
+					}
 				}
 			}
 
@@ -383,6 +459,14 @@ ExecIndexReScan(IndexScanState *node, ExprContext *exprCtxt)
 		return;
 	}
 
+	/* reset hash table */
+	if (numIndices > 1)
+	{
+		if (node->iss_DupHash)
+			hash_destroy(node->iss_DupHash);
+		create_duphash(node);
+	}
+
 	/* reset index scans */
 	if (ScanDirectionIsBackward(((IndexScan *) node->ss.ps.plan)->indxorderdir))
 		node->iss_IndexPtr = numIndices;
@@ -431,6 +515,10 @@ ExecEndIndexScan(IndexScanState *node)
 	 */
 	ExecClearTuple(node->ss.ps.ps_ResultTupleSlot);
 	ExecClearTuple(node->ss.ss_ScanTupleSlot);
+
+	/* drop hash table */
+	if (node->iss_DupHash)
+		hash_destroy(node->iss_DupHash);
 
 	/*
 	 * close the index relations
@@ -507,7 +595,7 @@ ExecIndexRestrPos(IndexScanState *node)
 
 /* ----------------------------------------------------------------
  *		ExecInitIndexScan
-  *
+ *
  *		Initializes the index scan's state information, creates
  *		scan keys, and opens the base and index relations.
  *
@@ -920,9 +1008,39 @@ ExecInitIndexScan(IndexScan *node, EState *estate)
 	ExecAssignScanProjectionInfo(&indexstate->ss);
 
 	/*
+	 * Initialize hash table if needed.
+	 */
+	if (numIndices > 1)
+		create_duphash(indexstate);
+	else
+		indexstate->iss_DupHash = NULL;
+
+	/*
 	 * all done.
 	 */
 	return indexstate;
+}
+
+static void
+create_duphash(IndexScanState *node)
+{
+	HASHCTL		hash_ctl;
+
+	MemSet(&hash_ctl, 0, sizeof(hash_ctl));
+	hash_ctl.keysize = SizeOfIptrData;
+	hash_ctl.entrysize = sizeof(DupHashTabEntry);
+	hash_ctl.hash = tag_hash;
+	hash_ctl.hcxt = CurrentMemoryContext;
+	node->iss_DupHash = hash_create("DupHashTable",
+									(long) ceil(node->ss.ps.plan->plan_rows),
+									&hash_ctl,
+									HASH_ELEM | HASH_FUNCTION | HASH_CONTEXT);
+	if (node->iss_DupHash == NULL)
+		ereport(ERROR,
+				(errcode(ERRCODE_OUT_OF_MEMORY),
+				 errmsg("out of memory")));
+	node->iss_MaxHash = (SortMem * 1024L) /
+		(MAXALIGN(sizeof(HASHELEMENT)) + MAXALIGN(sizeof(DupHashTabEntry)));
 }
 
 int

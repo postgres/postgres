@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2003, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Id: execnodes.h,v 1.104 2003/08/19 01:13:41 tgl Exp $
+ * $Id: execnodes.h,v 1.105 2003/08/22 20:26:43 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -768,6 +768,8 @@ typedef ScanState SeqScanState;
  *		RuntimeKeysReady   true if runtime Skeys have been computed
  *		RelationDescs	   ptr to array of relation descriptors
  *		ScanDescs		   ptr to array of scan descriptors
+ *		DupHash			   hashtable for recognizing dups in multiple scan
+ *		MaxHash			   max # entries we will allow in hashtable
  * ----------------
  */
 typedef struct IndexScanState
@@ -785,6 +787,8 @@ typedef struct IndexScanState
 	bool		iss_RuntimeKeysReady;
 	RelationPtr iss_RelationDescs;
 	IndexScanDescPtr iss_ScanDescs;
+	HTAB	   *iss_DupHash;
+	long		iss_MaxHash;
 } IndexScanState;
 
 /* ----------------
