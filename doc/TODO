@@ -28,6 +28,7 @@ PARSER
 * Do not allow bpchar column creation without length
 * Select a[1] FROM test fails, it needs test.a[1]
 * -Array index references without table name cause problems
+	(see TODO.detail/array)
 * Update table SET table.value = 3 fails
 * Creating index of TIMESTAMP & RELTIME fails, or rename to DATETIME(Thomas)
 * SELECT foo UNION SELECT foo is incorrectly simplified to SELECT foo
@@ -62,11 +63,11 @@ ENHANCEMENTS
 
 URGENT
 
-* Add referential integrity(Jan?)
-* Add OUTER joins, left and right(Thomas, Bruce)
+* Add referential integrity(Jan?)(see TODO.detail/primary)
+* Add OUTER joins, left and right(see TODO.detail/outer)(Thomas, Bruce)
 * Allow long tuples by chaining or auto-storing outside db (chaining,large objs)
 * Eliminate limits on query length
-* Fix memory leak for expressions?, aggregates?(Tom?)
+* Fix memory leak for expressions?, aggregates?(see TODO.detail/memory)(Tom?)
 
 ADMIN
 
@@ -76,7 +77,8 @@ ADMIN
 * Allow elog() to return error codes, not just messages
 * Allow international error message support and add error codes
 * Generate postmaster pid file and remove flock/fcntl lock code
-* Add ability to specifiy location of lock/socket files
+	(see TODO.detail/flock)
+* Add ability to specifiy location of lock/socket files (see TODO.detail/flock)
 
 TYPES
 
@@ -148,7 +150,7 @@ CLIENTS
 * Update reltuples from COPY command
 * Allow psql \copy to allow delimiters
 * Add a function to return the last inserted oid, for use in psql scripts
-* Allow psql to print nulls as distinct from ""(?)
+* Allow psql to print nulls as distinct from ""(see TODO.detail/nulls)
 * PQrequestCancel() be able to terminate backend waiting for lock
 
 EXOTIC FEATURES
@@ -165,23 +167,25 @@ MISC
 * Create a background process for each database that runs while
   database is idle, finding superceeded rows, gathering stats and vacuuming
 * Add UNIQUE capability to non-btree indexes
-* Certain indexes will not shrink, i.e. oid indexes with many inserts
+* -Certain indexes will not shrink, i.e. oid indexes with many inserts
 * Restore unused oid's on backend exit if no one else has gotten oids
 * Have UPDATE/DELETE clean out indexes
 * Allow WHERE restriction on ctid
 * Allow cursors to be DECLAREd/OPENed/CLOSEed outside transactions
 * Allow PQrequestCancel() to terminate when in waiting-for-lock state
-* Transaction log, so re-do log can be on a separate disk by
-  with after-row images(Vadim)
+* -Transaction log, so re-do log can be on a separate disk by
+  with after-row images(Vadim) (see TODO.detail/logging)
 * Populate backend status area and write program to dump status data
 * Make oid use unsigned int more reliably, pg_atoi()
 * Allow subqueries in target list
-* Put sort files, large objects in their on directory
-* Do autocommit so always in a transaction block
-* Show location of syntax error in query
+* Put sort files, large objects in their own directory
+* Do autocommit so always in a transaction block(?)
+* Show location of syntax error in query (see TODO.detail/yacc)
 * Redesign the function call interface to handle NULLs better(Jan)
 * Document/trigger/rule so changes to pg_shadow recreate pg_pwd
+	(see TODO.detail/pg_shadow)
 * Missing optimizer selectivities for date, r-tree, etc.
+	(see TODO.detail/optimizer)
 * Overhaul mdmgr/smgr to fix double unlinking and double opens, cleanup
 * Overhaul bufmgr/lockmgr/transaction manager
 * Add PL/Perl(Mark Hollomon)
@@ -196,8 +200,9 @@ PERFORMANCE
 
 FSYNC
 
-* Allow transaction commits with rollback with no-fsync performance
-* Prevent fsync in SELECT-only queries
+* -Allow transaction commits with rollback with no-fsync performance
+	(see TODO.detail/fsync)
+* -Prevent fsync in SELECT-only queries
 
 INDEXES
 
@@ -207,9 +212,11 @@ INDEXES
   non-consecutive keys or OR clauses, so fewer heap accesses
 * Convert function(constant) into a constant for index use
 * Allow LIMIT ability on single-table queries that have no ORDER BY to use
-  a matching index
+  a matching index(see TODO.detail/limit)
 * Improve LIMIT processing by using index to limit rows processed
+	(see TODO.detail/limit) 
 * Have optimizer take LIMIT into account when considering index scans
+	(see TODO.detail/limit)
 * Make index creation use psort code, because it is now faster(Vadim)
 * Allow creation of sort temp tables > 1 Gig
 * Create more system table indexes for faster cache lookups
@@ -220,7 +227,7 @@ INDEXES
 
 CACHE
 
-* Cache most recent query plan(s?)
+* Cache most recent query plan(s)(see TODO.detail/prepare)
 * Shared catalog cache, reduce lseek()'s by caching table size in shared area
 * elog() flushes cache, try invalidating just entries from current xact,
   perhaps using invalidation cache
@@ -232,7 +239,7 @@ MISC
 * Update pg_statistic table to remove operator column
 * Allow char() not to use variable-sized header to reduce disk size
 * Do async I/O to do better read-ahead of data
-* -Fix memory exhaustion when using many OR's
+* -Fix memory exhaustion when using many OR's(see TODO.detail/cnfify)
 * Get faster regex() code from Henry Spencer <henry@zoo.utoronto.ca>
   when it is available
 * Use mmap() rather than SYSV shared memory(?)
@@ -243,21 +250,24 @@ MISC
 * use fmgr_info()/fmgr_faddr() instead of fmgr() calls in high-traffic
   places, like GROUP BY, UNIQUE, index processing, etc.
 * improve dynamic memory allocation by introducing tuple-context memory
-  allocation
+  allocation(see TODO.detail/memory)
 * fix memory leak in cache code when non-existant table is referenced
 * In WHERE tab1.x=3 AND tab1.x=tab2.y, add tab2.y=3
 * pass atttypmod through parser in more cases(Bruce)
 * remove duplicate type in/out functions for disk and net
 * change VACUUM ANALYZE to use btree comparison functions, not <,=,> calls
+* Allow persistent backends(see TODO.detail/persistent)
+* Misc(see TODO.detail/performance)
 
 SOURCE CODE
 -----------
 * Add use of 'const' for varibles in source tree
 * Fix C optimizer problem where fmgr_ptr calls return different types
-* Add needed includes and removed unneede include files(Bruce)
+	(see TODO.detail/alpha)
+* -Add needed includes and removed unneeded include files(Bruce)
 * Make configure --enable-debug add -g on compile line
 * Does Mariposa source contain any other bug fixes?
-* Remove SET KSQO option of OR processing is improved
+* Remove SET KSQO option if OR processing is improved
 
 ---------------------------------------------------------------------------
 
