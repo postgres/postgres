@@ -106,7 +106,7 @@ Start-up is divided into an authentication phase and a backend start-up phase.
 
 <Para>
 Initially, the frontend sends a StartupPacket.  The postmaster uses this info
-and the contents of the pg_hba.conf(5) file to determine what authentication
+and the contents of the pg_hba.conf file to determine what authentication
 method the frontend must use.  The postmaster then responds with one of the
 following messages:
 </para>

@@ -264,6 +264,7 @@ SOURCE CODE
 * Remove SET KSQO option now that OR processing is improved(Tom)
 * -Use macros to define NT open() file parameters, remove NT-specific defines
 * -Change CURRENT to OLD internally for rules (Bruce)
+* replace the use of fprint(stderr, ...) with elog() in backend code
 
 ---------------------------------------------------------------------------
 
