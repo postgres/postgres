@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/optimizer/prep/prepunion.c,v 1.41 2000/01/26 05:56:39 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/optimizer/prep/prepunion.c,v 1.42 2000/01/27 18:11:32 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -21,6 +21,7 @@
 #include "optimizer/planmain.h"
 #include "optimizer/planner.h"
 #include "optimizer/prep.h"
+#include "optimizer/tlist.h"
 #include "parser/parse_clause.h"
 #include "parser/parsetree.h"
 #include "utils/lsyscache.h"
@@ -131,7 +132,7 @@ plan_union_queries(Query *parse)
 			!last_union_all_flag)
 		{
 			parse->sortClause = NIL;
-			parse->uniqueFlag = NULL;
+			parse->distinctClause = NIL;
 		}
 
 		parse->unionClause = NIL;		/* prevent recursion */
@@ -183,17 +184,28 @@ plan_union_queries(Query *parse)
 	if (!last_union_all_flag)
 	{
 		/* Need SELECT DISTINCT behavior to implement UNION.
-		 * Set uniqueFlag properly, put back the held sortClause,
-		 * and add any missing columns to the sort clause.
+		 * Put back the held sortClause, add any missing columns to the
+		 * sort clause, and set distinctClause properly.
 		 */
-		parse->uniqueFlag = "*";
+		List	   *slitem;
+
 		parse->sortClause = addAllTargetsToSortList(hold_sortClause,
 													parse->targetList);
+		parse->distinctClause = NIL;
+		foreach(slitem, parse->sortClause)
+		{
+			SortClause *scl = (SortClause *) lfirst(slitem);
+			TargetEntry *tle = get_sortgroupclause_tle(scl, parse->targetList);
+
+			if (! tle->resdom->resjunk)
+				parse->distinctClause = lappend(parse->distinctClause,
+												copyObject(scl));
+		}
 	}
 	else
 	{
-		/* needed so we don't take the flag from the first query */
-		parse->uniqueFlag = NULL;
+		/* needed so we don't take SELECT DISTINCT from the first query */
+		parse->distinctClause = NIL;
 	}
 
 	/* Make sure we don't try to apply the first query's grouping stuff
@@ -314,9 +326,9 @@ plan_inherit_query(Relids relids,
 		 * Clear the sorting and grouping qualifications in the subquery,
 		 * so that sorting will only be done once after append
 		 */
-		new_root->uniqueFlag = NULL;
-		new_root->sortClause = NULL;
-		new_root->groupClause = NULL;
+		new_root->distinctClause = NIL;
+		new_root->sortClause = NIL;
+		new_root->groupClause = NIL;
 		new_root->havingQual = NULL;
 		new_root->hasAggs = false; /* shouldn't be any left ... */
 

@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/nodes/readfuncs.c,v 1.80 2000/01/26 05:56:32 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/nodes/readfuncs.c,v 1.81 2000/01/27 18:11:28 tgl Exp $
  *
  * NOTES
  *	  Most of the read functions for plan nodes are tested. (In fact, they
@@ -111,12 +111,8 @@ _readQuery()
 	token = lsptok(NULL, &length);		/* get unionall */
 	local_node->unionall = (token[0] == 't') ? true : false;
 
-	token = lsptok(NULL, &length);		/* skip :uniqueFlag */
-	token = lsptok(NULL, &length);		/* get uniqueFlag */
-	if (length == 0)
-		local_node->uniqueFlag = NULL;
-	else
-		local_node->uniqueFlag = debackslash(token, length);
+	token = lsptok(NULL, &length);		/* skip :distinctClause */
+	local_node->distinctClause = nodeRead(true);
 
 	token = lsptok(NULL, &length);		/* skip :sortClause */
 	local_node->sortClause = nodeRead(true);
@@ -620,33 +616,6 @@ _readAgg()
 
 	local_node = makeNode(Agg);
 	_getPlan((Plan *) local_node);
-
-	return local_node;
-}
-
-/* ----------------
- *		_readUnique
- *
- * For some reason, unique is a subclass of Noname.
- */
-static Unique *
-_readUnique()
-{
-	Unique	   *local_node;
-	char	   *token;
-	int			length;
-
-	local_node = makeNode(Unique);
-
-	_getPlan((Plan *) local_node);
-
-	token = lsptok(NULL, &length);		/* eat :nonameid */
-	token = lsptok(NULL, &length);		/* get :nonameid */
-	local_node->nonameid = atol(token);
-
-	token = lsptok(NULL, &length);		/* eat :keycount */
-	token = lsptok(NULL, &length);		/* get :keycount */
-	local_node->keycount = atoi(token);
 
 	return local_node;
 }
@@ -1847,8 +1816,6 @@ parsePlanString(void)
 		return_value = _readSubLink();
 	else if (length == 3 && strncmp(token, "AGG", length) == 0)
 		return_value = _readAgg();
-	else if (length == 6 && strncmp(token, "UNIQUE", length) == 0)
-		return_value = _readUnique();
 	else if (length == 4 && strncmp(token, "HASH", length) == 0)
 		return_value = _readHash();
 	else if (length == 6 && strncmp(token, "RESDOM", length) == 0)

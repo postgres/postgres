@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2000, PostgreSQL, Inc
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Id: parse_clause.h,v 1.14 2000/01/26 05:58:26 momjian Exp $
+ * $Id: parse_clause.h,v 1.15 2000/01/27 18:11:47 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -23,7 +23,9 @@ extern Node *transformWhereClause(ParseState *pstate, Node *where,
 extern List *transformGroupClause(ParseState *pstate, List *grouplist,
 								  List *targetlist);
 extern List *transformSortClause(ParseState *pstate, List *orderlist,
-								 List *targetlist, char *uniqueFlag);
+								 List *targetlist);
+extern List *transformDistinctClause(ParseState *pstate, List *distinctlist,
+									 List *targetlist, List **sortClause);
 
 extern List *addAllTargetsToSortList(List *sortlist, List *targetlist);
 extern Index assignSortGroupRef(TargetEntry *tle, List *tlist);

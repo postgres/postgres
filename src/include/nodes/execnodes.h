@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2000, PostgreSQL, Inc
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Id: execnodes.h,v 1.39 2000/01/26 05:58:15 momjian Exp $
+ * $Id: execnodes.h,v 1.40 2000/01/27 18:11:44 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -621,6 +621,7 @@ typedef struct AggState
 typedef struct GroupState
 {
 	CommonScanState csstate;	/* its first field is NodeTag */
+	FmgrInfo   *eqfunctions;	/* per-field lookup data for equality fns */
 	bool		grp_useFirstTuple;		/* first tuple not processed yet */
 	bool		grp_done;
 	HeapTuple	grp_firstTuple;
@@ -663,9 +664,9 @@ typedef struct SortState
  *		Unique nodes are used "on top of" sort nodes to discard
  *		duplicate tuples returned from the sort phase.	Basically
  *		all it does is compare the current tuple from the subplan
- *		with the previously fetched tuple stored in OuterTuple and
- *		if the two are identical, then we just fetch another tuple
- *		from the sort and try again.
+ *		with the previously fetched tuple stored in priorTuple.
+ *		If the two are identical in all interesting fields, then
+ *		we just fetch another tuple from the sort and try again.
  *
  *	 CommonState information
  *
@@ -677,7 +678,12 @@ typedef struct SortState
  *		ScanAttributes	   attribute numbers of interest in this tuple
  * ----------------
  */
-typedef CommonState UniqueState;
+typedef struct UniqueState
+{
+	CommonState cstate;			/* its first field is NodeTag */
+	FmgrInfo   *eqfunctions;	/* per-field lookup data for equality fns */
+	HeapTuple	priorTuple;		/* most recently returned tuple, or NULL */
+} UniqueState;
 
 
 /* ----------------

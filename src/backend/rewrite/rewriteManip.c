@@ -7,13 +7,14 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/rewrite/rewriteManip.c,v 1.43 2000/01/26 05:56:49 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/rewrite/rewriteManip.c,v 1.44 2000/01/27 18:11:37 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
 #include "postgres.h"
 
 #include "optimizer/clauses.h"
+#include "optimizer/tlist.h"
 #include "parser/parsetree.h"
 #include "parser/parse_clause.h"
 #include "rewrite/rewriteManip.h"
@@ -286,22 +287,10 @@ AddGroupClause(Query *parsetree, List *group_by, List *tlist)
 	foreach(l, group_by)
 	{
 		GroupClause *groupclause = (GroupClause *) copyObject(lfirst(l));
-		Index		refnumber = groupclause->tleSortGroupRef;
-		TargetEntry *tle = NULL;
-		List	   *tl;
+		TargetEntry *tle = get_sortgroupclause_tle(groupclause, tlist);
 
-		/* Find and copy the groupclause's TLE in the old tlist */
-		foreach(tl, tlist)
-		{
-			if (((TargetEntry *) lfirst(tl))->resdom->ressortgroupref ==
-				refnumber)
-			{
-				tle = (TargetEntry *) copyObject(lfirst(tl));
-				break;
-			}
-		}
-		if (tle == NULL)
-			elog(ERROR, "AddGroupClause(): GROUP BY entry not found in rules targetlist");
+		/* copy the groupclause's TLE from the old tlist */
+		tle = (TargetEntry *) copyObject(tle);
 
 		/* The ressortgroupref number in the old tlist might be already
 		 * taken in the new tlist, so force assignment of a new number.

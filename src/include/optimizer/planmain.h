@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2000, PostgreSQL, Inc
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Id: planmain.h,v 1.36 2000/01/26 05:58:20 momjian Exp $
+ * $Id: planmain.h,v 1.37 2000/01/27 18:11:45 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -33,7 +33,7 @@ extern Agg *make_agg(List *tlist, Plan *lefttree);
 extern Group *make_group(List *tlist, bool tuplePerGroup, int ngrp,
 		   AttrNumber *grpColIdx, Plan *lefttree);
 extern Noname *make_noname(List *tlist, List *pathkeys, Plan *subplan);
-extern Unique *make_unique(List *tlist, Plan *lefttree, char *uniqueAttr);
+extern Unique *make_unique(List *tlist, Plan *lefttree, List *distinctList);
 extern Result *make_result(List *tlist, Node *resconstantqual, Plan *subplan);
 
 /*

@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/parser/parse_clause.c,v 1.50 2000/01/26 05:56:42 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/parser/parse_clause.c,v 1.51 2000/01/27 18:11:35 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -28,12 +28,12 @@
 
 #define ORDER_CLAUSE 0
 #define GROUP_CLAUSE 1
+#define DISTINCT_ON_CLAUSE 2
 
-static char *clauseText[] = {"ORDER", "GROUP"};
+static char *clauseText[] = {"ORDER BY", "GROUP BY", "DISTINCT ON"};
 
 static TargetEntry *findTargetlistEntry(ParseState *pstate, Node *node,
-										List *tlist, int clause,
-										char *uniqFlag);
+										List *tlist, int clause);
 static void parseFromClause(ParseState *pstate, List *frmList, Node **qual);
 static char	*transformTableEntry(ParseState *pstate, RangeVar *r);
 static List *addTargetToSortList(TargetEntry *tle, List *sortlist,
@@ -359,14 +359,13 @@ parseFromClause(ParseState *pstate, List *frmList, Node **qual)
  *	  If no matching entry exists, one is created and appended to the target
  *	  list as a "resjunk" node.
  *
- * node		the ORDER BY or GROUP BY expression to be matched
+ * node		the ORDER BY, GROUP BY, or DISTINCT ON expression to be matched
  * tlist	the existing target list (NB: this cannot be NIL, which is a
  *			good thing since we'd be unable to append to it...)
  * clause	identifies clause type for error messages.
  */
 static TargetEntry *
-findTargetlistEntry(ParseState *pstate, Node *node, List *tlist, int clause,
-					char *uniqueFlag)
+findTargetlistEntry(ParseState *pstate, Node *node, List *tlist, int clause)
 {
 	TargetEntry *target_result = NULL;
 	List	   *tl;
@@ -407,7 +406,7 @@ findTargetlistEntry(ParseState *pstate, Node *node, List *tlist, int clause,
 				if (target_result != NULL)
 				{
 					if (! equal(target_result->expr, tle->expr))
-						elog(ERROR, "%s BY '%s' is ambiguous",
+						elog(ERROR, "%s '%s' is ambiguous",
 							 clauseText[clause], name);
 				}
 				else
@@ -424,8 +423,8 @@ findTargetlistEntry(ParseState *pstate, Node *node, List *tlist, int clause,
 		int			targetlist_pos = 0;
 		int			target_pos;
 
-		if (nodeTag(val) != T_Integer)
-			elog(ERROR, "Non-integer constant in %s BY", clauseText[clause]);
+		if (! IsA(val, Integer))
+			elog(ERROR, "Non-integer constant in %s", clauseText[clause]);
 		target_pos = intVal(val);
 		foreach(tl, tlist)
 		{
@@ -438,7 +437,7 @@ findTargetlistEntry(ParseState *pstate, Node *node, List *tlist, int clause,
 					return tle;	/* return the unique match */
 			}
 		}
-		elog(ERROR, "%s BY position %d is not in target list",
+		elog(ERROR, "%s position %d is not in target list",
 			 clauseText[clause], target_pos);
 	}
 
@@ -462,13 +461,9 @@ findTargetlistEntry(ParseState *pstate, Node *node, List *tlist, int clause,
 
 	/*
 	 * If no matches, construct a new target entry which is appended to
-	 * the end of the target list.	 This target is set to be  resjunk =
-	 * TRUE so that it will not be projected into the final tuple.
+	 * the end of the target list.  This target is given resjunk = TRUE
+	 * so that it will not be projected into the final tuple.
 	 */
-	if(clause == ORDER_CLAUSE && uniqueFlag) {
-		elog(ERROR, "ORDER BY columns must appear in SELECT DISTINCT target list");
-	}
-
 	target_result = transformTargetEntry(pstate, node, expr, NULL, true);
 	lappend(tlist, target_result);
 
@@ -492,7 +487,7 @@ transformGroupClause(ParseState *pstate, List *grouplist, List *targetlist)
 		TargetEntry *tle;
 
 		tle = findTargetlistEntry(pstate, lfirst(gl),
-								  targetlist, GROUP_CLAUSE, NULL);
+								  targetlist, GROUP_CLAUSE);
 
 		/* avoid making duplicate grouplist entries */
 		if (! exprIsInSortList(tle->expr, glist, targetlist))
@@ -514,19 +509,15 @@ transformGroupClause(ParseState *pstate, List *grouplist, List *targetlist)
 
 /*
  * transformSortClause -
- *	  transform an Order By clause
- *
+ *	  transform an ORDER BY clause
  */
 List *
 transformSortClause(ParseState *pstate,
 					List *orderlist,
-					List *targetlist,
-					char *uniqueFlag)
+					List *targetlist)
 {
 	List	   *sortlist = NIL;
 	List	   *olitem;
-
-	/* Transform all the explicit ORDER BY clauses */
 
 	foreach(olitem, orderlist)
 	{
@@ -534,54 +525,133 @@ transformSortClause(ParseState *pstate,
 		TargetEntry	   *tle;
 
 		tle = findTargetlistEntry(pstate, sortby->node,
-								  targetlist, ORDER_CLAUSE, uniqueFlag);
+								  targetlist, ORDER_CLAUSE);
 
 		sortlist = addTargetToSortList(tle, sortlist, targetlist,
 									   sortby->useOp);
-	}
-
-	/* If we have a DISTINCT clause, add any necessary entries to
-	 * the sortlist to ensure that all the DISTINCT columns will be
-	 * sorted.  A subsequent UNIQUE pass will then do the right thing.
-	 */
-
-	if (uniqueFlag)
-	{
-		if (uniqueFlag[0] == '*')
-		{
-			/*
-			 * concatenate all elements from target list that are not
-			 * already in the sortby list
-			 */
-			sortlist = addAllTargetsToSortList(sortlist, targetlist);
-		}
-		else
-		{
-			TargetEntry *tle = NULL;
-			char	   *uniqueAttrName = uniqueFlag;
-			List	   *i;
-
-			/* only create sort clause with the specified unique attribute */
-			foreach(i, targetlist)
-			{
-				tle = (TargetEntry *) lfirst(i);
-				if (strcmp(tle->resdom->resname, uniqueAttrName) == 0)
-					break;
-			}
-			if (i == NIL)
-				elog(ERROR, "All fields in the UNIQUE ON clause must appear in the target list");
-
-			sortlist = addTargetToSortList(tle, sortlist, targetlist, NULL);
-		}
 	}
 
 	return sortlist;
 }
 
 /*
+ * transformDistinctClause -
+ *	  transform a DISTINCT or DISTINCT ON clause
+ *
+ * Since we may need to add items to the query's sortClause list, that list
+ * is passed by reference.  We might also need to add items to the query's
+ * targetlist, but we assume that cannot be empty initially, so we can
+ * lappend to it even though the pointer is passed by value.
+ */
+List *
+transformDistinctClause(ParseState *pstate, List *distinctlist,
+						List *targetlist, List **sortClause)
+{
+	List	   *result = NIL;
+	List	   *slitem;
+	List	   *dlitem;
+
+	/* No work if there was no DISTINCT clause */
+	if (distinctlist == NIL)
+		return NIL;
+
+	if (lfirst(distinctlist) == NIL)
+	{
+		/* We had SELECT DISTINCT */
+
+		/*
+		 * All non-resjunk elements from target list that are not already
+		 * in the sort list should be added to it.  (We don't really care
+		 * what order the DISTINCT fields are checked in, so we can leave
+		 * the user's ORDER BY spec alone, and just add additional sort keys
+		 * to it to ensure that all targetlist items get sorted.)
+		 */
+		*sortClause = addAllTargetsToSortList(*sortClause, targetlist);
+
+		/*
+		 * Now, DISTINCT list consists of all non-resjunk sortlist items.
+		 * Actually, all the sortlist items had better be non-resjunk!
+		 * Otherwise, user wrote SELECT DISTINCT with an ORDER BY item
+		 * that does not appear anywhere in the SELECT targetlist, and
+		 * we can't implement that with only one sorting pass...
+		 */
+		foreach(slitem, *sortClause)
+		{
+			SortClause *scl = (SortClause *) lfirst(slitem);
+			TargetEntry *tle = get_sortgroupclause_tle(scl, targetlist);
+
+			if (tle->resdom->resjunk)
+				elog(ERROR, "For SELECT DISTINCT, ORDER BY expressions must appear in target list");
+			else
+				result = lappend(result, copyObject(scl));
+		}
+	}
+	else
+	{
+		/* We had SELECT DISTINCT ON (expr, ...) */
+
+		/*
+		 * If the user writes both DISTINCT ON and ORDER BY, then the two
+		 * expression lists must match (until one or the other runs out).
+		 * Otherwise the ORDER BY requires a different sort order than the
+		 * DISTINCT does, and we can't implement that with only one sort pass
+		 * (and if we do two passes, the results will be rather unpredictable).
+		 * However, it's OK to have more DISTINCT ON expressions than ORDER BY
+		 * expressions; we can just add the extra DISTINCT values to the sort
+		 * list, much as we did above for ordinary DISTINCT fields.
+		 *
+		 * Actually, it'd be OK for the common prefixes of the two lists to
+		 * match in any order, but implementing that check seems like more
+		 * trouble than it's worth.
+		 */
+		List	   *nextsortlist = *sortClause;
+
+		foreach(dlitem, distinctlist)
+		{
+			TargetEntry *tle;
+
+			tle = findTargetlistEntry(pstate, lfirst(dlitem),
+									  targetlist, DISTINCT_ON_CLAUSE);
+
+			if (nextsortlist != NIL)
+			{
+				SortClause *scl = (SortClause *) lfirst(nextsortlist);
+
+				if (tle->resdom->ressortgroupref != scl->tleSortGroupRef)
+					elog(ERROR, "SELECT DISTINCT ON expressions must match initial ORDER BY expressions");
+				result = lappend(result, copyObject(scl));
+				nextsortlist = lnext(nextsortlist);
+			}
+			else
+			{
+				*sortClause = addTargetToSortList(tle, *sortClause,
+												  targetlist, NULL);
+				/* Probably, the tle should always have been added at the
+				 * end of the sort list ... but search to be safe.
+				 */
+				foreach(slitem, *sortClause)
+				{
+					SortClause *scl = (SortClause *) lfirst(slitem);
+
+					if (tle->resdom->ressortgroupref == scl->tleSortGroupRef)
+					{
+						result = lappend(result, copyObject(scl));
+						break;
+					}
+				}
+				if (slitem == NIL)
+					elog(ERROR, "transformDistinctClause: failed to add DISTINCT ON clause to target list");
+			}
+		}
+	}
+
+	return result;
+}
+
+/*
  * addAllTargetsToSortList
- *		Make sure all targets in the targetlist are in the ORDER BY list,
- *		adding the not-yet-sorted ones to the end of the list.
+ *		Make sure all non-resjunk targets in the targetlist are in the
+ *		ORDER BY list, adding the not-yet-sorted ones to the end of the list.
  *		This is typically used to help implement SELECT DISTINCT.
  *
  * Returns the updated ORDER BY list.
@@ -595,7 +665,8 @@ addAllTargetsToSortList(List *sortlist, List *targetlist)
 	{
 		TargetEntry *tle = (TargetEntry *) lfirst(i);
 
-		sortlist = addTargetToSortList(tle, sortlist, targetlist, NULL);
+		if (! tle->resdom->resjunk)
+			sortlist = addTargetToSortList(tle, sortlist, targetlist, NULL);
 	}
 	return sortlist;
 }

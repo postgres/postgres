@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2000, PostgreSQL, Inc
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Id: parsenodes.h,v 1.96 2000/01/26 05:58:16 momjian Exp $
+ * $Id: parsenodes.h,v 1.97 2000/01/27 18:11:44 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -54,7 +54,8 @@ typedef struct Query
 	Node	   *qual;			/* qualifications applied to tuples */
 	List	   *rowMark;		/* list of RowMark entries */
 
-	char	   *uniqueFlag;		/* NULL, '*', or Unique attribute name */
+	List	   *distinctClause;	/* a list of SortClause's */
+
 	List	   *sortClause;		/* a list of SortClause's */
 
 	List	   *groupClause;	/* a list of GroupClause's */
@@ -733,7 +734,8 @@ typedef struct InsertStmt
 {
 	NodeTag		type;
 	char	   *relname;		/* relation to insert into */
-	char	   *unique;			/* NULL, '*', or unique attribute name */
+	List	   *distinctClause;	/* NULL, list of DISTINCT ON exprs, or
+								 * lcons(NIL,NIL) for all (SELECT DISTINCT) */
 	List	   *cols;			/* names of the columns */
 	List	   *targetList;		/* the target list (of ResTarget) */
 	List	   *fromClause;		/* the from clause */
@@ -777,7 +779,8 @@ typedef struct UpdateStmt
 typedef struct SelectStmt
 {
 	NodeTag		type;
-	char	   *unique;			/* NULL, '*', or unique attribute name */
+	List	   *distinctClause;	/* NULL, list of DISTINCT ON exprs, or
+								 * lcons(NIL,NIL) for all (SELECT DISTINCT) */
 	char	   *into;			/* name of table (for select into table) */
 	List	   *targetList;		/* the target list (of ResTarget) */
 	List	   *fromClause;		/* the from clause */
@@ -1135,6 +1138,13 @@ typedef struct RangeTblEntry
  * tleSortGroupRef must match ressortgroupref of exactly one Resdom of the
  * associated targetlist; that is the expression to be sorted (or grouped) by.
  * sortop is the OID of the ordering operator.
+ *
+ * SortClauses are also used to identify Resdoms that we will do a "Unique"
+ * filter step on (for SELECT DISTINCT and SELECT DISTINCT ON).  The
+ * distinctClause list is simply a copy of the relevant members of the
+ * sortClause list.  Note that distinctClause can be a subset of sortClause,
+ * but cannot have members not present in sortClause; and the members that
+ * do appear must be in the same order as in sortClause.
  */
 typedef struct SortClause
 {
@@ -1148,7 +1158,7 @@ typedef struct SortClause
  *	   representation of GROUP BY clauses
  *
  * GroupClause is exactly like SortClause except for the nodetag value
- * (and it's probably not even really necessary to have two different
+ * (it's probably not even really necessary to have two different
  * nodetags...).  We have routines that operate interchangeably on both.
  */
 typedef SortClause GroupClause;

@@ -6,7 +6,7 @@
  * Portions Copyright (c) 1996-2000, PostgreSQL, Inc
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- *	$Id: analyze.c,v 1.133 2000/01/26 05:56:41 momjian Exp $
+ *	$Id: analyze.c,v 1.134 2000/01/27 18:11:35 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -247,7 +247,7 @@ transformDeleteStmt(ParseState *pstate, DeleteStmt *stmt)
 	makeRangeTable(pstate, NULL, NULL);
 	setTargetTable(pstate, stmt->relname);
 
-	qry->uniqueFlag = NULL;
+	qry->distinctClause = NIL;
 
 	/* fix where clause */
 	qry->qual = transformWhereClause(pstate, stmt->whereClause, NULL);
@@ -296,8 +296,6 @@ transformInsertStmt(ParseState *pstate, InsertStmt *stmt)
 	/* set up a range table --- note INSERT target is not in it yet */
 	makeRangeTable(pstate, stmt->fromClause, &fromQual);
 
-	qry->uniqueFlag = stmt->unique;
-
 	qry->targetList = transformTargetList(pstate, stmt->targetList);
 
 	qry->qual = transformWhereClause(pstate, stmt->whereClause, fromQual);
@@ -311,13 +309,13 @@ transformInsertStmt(ParseState *pstate, InsertStmt *stmt)
 											stmt->groupClause,
 											qry->targetList);
 
-	/* An InsertStmt has no sortClause, but we still call
-	 * transformSortClause because it also handles uniqueFlag.
-	 */
-	qry->sortClause = transformSortClause(pstate,
-										  NIL,
-										  qry->targetList,
-										  qry->uniqueFlag);
+	/* An InsertStmt has no sortClause */
+	qry->sortClause = NIL;
+
+	qry->distinctClause = transformDistinctClause(pstate,
+												  stmt->distinctClause,
+												  qry->targetList,
+												  & qry->sortClause);
 
 	qry->hasSubLinks = pstate->p_hasSubLinks;
 	qry->hasAggs = pstate->p_hasAggs;
@@ -1312,8 +1310,6 @@ transformSelectStmt(ParseState *pstate, SelectStmt *stmt)
 	/* set up a range table */
 	makeRangeTable(pstate, stmt->fromClause, &fromQual);
 
-	qry->uniqueFlag = stmt->unique;
-
 	qry->into = stmt->into;
 	qry->isTemp = stmt->istemp;
 	qry->isPortal = FALSE;
@@ -1333,8 +1329,12 @@ transformSelectStmt(ParseState *pstate, SelectStmt *stmt)
 
 	qry->sortClause = transformSortClause(pstate,
 										  stmt->sortClause,
-										  qry->targetList,
-										  qry->uniqueFlag);
+										  qry->targetList);
+
+	qry->distinctClause = transformDistinctClause(pstate,
+												  stmt->distinctClause,
+												  qry->targetList,
+												  & qry->sortClause);
 
 	qry->hasSubLinks = pstate->p_hasSubLinks;
 	qry->hasAggs = pstate->p_hasAggs;
@@ -1558,9 +1558,9 @@ CheckSelectForUpdate(Query *qry)
 {
 	if (qry->unionClause != NULL)
 		elog(ERROR, "SELECT FOR UPDATE is not allowed with UNION/INTERSECT/EXCEPT clause");
-	if (qry->uniqueFlag != NULL)
+	if (qry->distinctClause != NIL)
 		elog(ERROR, "SELECT FOR UPDATE is not allowed with DISTINCT clause");
-	if (qry->groupClause != NULL)
+	if (qry->groupClause != NIL)
 		elog(ERROR, "SELECT FOR UPDATE is not allowed with GROUP BY clause");
 	if (qry->hasAggs)
 		elog(ERROR, "SELECT FOR UPDATE is not allowed with AGGREGATE");

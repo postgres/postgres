@@ -29,12 +29,12 @@ ERROR:  attribute 'nonesuch' not found
 -- bad attribute name on rhs of operator
 select * from pg_database where pg_database.datname = nonesuch;
 ERROR:  attribute 'nonesuch' not found
--- bad select distinct on  syntax,  distinct attribute missing
-select distinct on foobar from pg_database;
+-- bad select distinct on syntax, distinct attribute missing
+select distinct on (foobar) from pg_database;
 ERROR:  parser: parse error at or near "from"
 -- bad select distinct on syntax, distinct attribute not in target list
-select distinct on foobar * from pg_database;
-ERROR:  All fields in the UNIQUE ON clause must appear in the target list
+select distinct on (foobar) * from pg_database;
+ERROR:  attribute 'foobar' not found
 --
 -- DELETE
  

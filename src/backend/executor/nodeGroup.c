@@ -9,12 +9,13 @@
  *
  * DESCRIPTION
  *	  The Group node is designed for handling queries with a GROUP BY clause.
- *	  It's outer plan must be a sort node. It assumes that the tuples it gets
- *	  back from the outer plan is sorted in the order specified by the group
- *	  columns. (ie. tuples from the same group are consecutive)
+ *	  Its outer plan must deliver tuples that are sorted in the order
+ *	  specified by the grouping columns (ie. tuples from the same group are
+ *	  consecutive).  That way, we just have to compare adjacent tuples to
+ *	  locate group boundaries.
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/executor/nodeGroup.c,v 1.32 2000/01/26 05:56:22 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/executor/nodeGroup.c,v 1.33 2000/01/27 18:11:27 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -23,13 +24,14 @@
 
 #include "access/heapam.h"
 #include "access/printtup.h"
+#include "catalog/pg_operator.h"
 #include "executor/executor.h"
 #include "executor/nodeGroup.h"
+#include "parser/parse_oper.h"
+#include "parser/parse_type.h"
 
 static TupleTableSlot *ExecGroupEveryTuple(Group *node);
 static TupleTableSlot *ExecGroupOneTuple(Group *node);
-static bool sameGroup(HeapTuple oldslot, HeapTuple newslot,
-		  int numCols, AttrNumber *grpColIdx, TupleDesc tupdesc);
 
 /* ---------------------------------------
  *	 ExecGroup -
@@ -38,11 +40,11 @@ static bool sameGroup(HeapTuple oldslot, HeapTuple newslot,
  *		tuplePerGroup is TRUE, every tuple from the same group will be
  *		returned, followed by a NULL at the end of each group. This is
  *		useful for Agg node which needs to aggregate over tuples of the same
- *		group. (eg. SELECT salary, count{*} FROM emp GROUP BY salary)
+ *		group. (eg. SELECT salary, count(*) FROM emp GROUP BY salary)
  *
  *		If tuplePerGroup is FALSE, only one tuple per group is returned. The
  *		tuple returned contains only the group columns. NULL is returned only
- *		at the end when no more groups is present. This is useful when
+ *		at the end when no more groups are present. This is useful when
  *		the query does not involve aggregates. (eg. SELECT salary FROM emp
  *		GROUP BY salary)
  * ------------------------------------------
@@ -66,6 +68,7 @@ ExecGroupEveryTuple(Group *node)
 	GroupState *grpstate;
 	EState	   *estate;
 	ExprContext *econtext;
+	TupleDesc	tupdesc;
 
 	HeapTuple	outerTuple = NULL;
 	HeapTuple	firsttuple;
@@ -86,6 +89,8 @@ ExecGroupEveryTuple(Group *node)
 	estate = node->plan.state;
 
 	econtext = grpstate->csstate.cstate.cs_ExprContext;
+
+	tupdesc = ExecGetScanType(&grpstate->csstate);
 
 	/* if we haven't returned first tuple of new group yet ... */
 	if (grpstate->grp_useFirstTuple)
@@ -110,20 +115,25 @@ ExecGroupEveryTuple(Group *node)
 		outerTuple = outerslot->val;
 
 		firsttuple = grpstate->grp_firstTuple;
-		/* this should occur on the first call only */
 		if (firsttuple == NULL)
+		{
+			/* this should occur on the first call only */
 			grpstate->grp_firstTuple = heap_copytuple(outerTuple);
+		}
 		else
 		{
-
 			/*
 			 * Compare with first tuple and see if this tuple is of the
 			 * same group.
 			 */
-			if (!sameGroup(firsttuple, outerTuple,
-						   node->numCols, node->grpColIdx,
-						   ExecGetScanType(&grpstate->csstate)))
+			if (! execTuplesMatch(firsttuple, outerTuple,
+								  tupdesc,
+								  node->numCols, node->grpColIdx,
+								  grpstate->eqfunctions))
 			{
+				/*
+				 * No; save the tuple to return it next time, and return NULL
+				 */
 				grpstate->grp_useFirstTuple = TRUE;
 				heap_freetuple(firsttuple);
 				grpstate->grp_firstTuple = heap_copytuple(outerTuple);
@@ -164,6 +174,7 @@ ExecGroupOneTuple(Group *node)
 	GroupState *grpstate;
 	EState	   *estate;
 	ExprContext *econtext;
+	TupleDesc	tupdesc;
 
 	HeapTuple	outerTuple = NULL;
 	HeapTuple	firsttuple;
@@ -185,10 +196,12 @@ ExecGroupOneTuple(Group *node)
 
 	econtext = node->grpstate->csstate.cstate.cs_ExprContext;
 
+	tupdesc = ExecGetScanType(&grpstate->csstate);
+
 	firsttuple = grpstate->grp_firstTuple;
-	/* this should occur on the first call only */
 	if (firsttuple == NULL)
 	{
+		/* this should occur on the first call only */
 		outerslot = ExecProcNode(outerPlan(node), (Plan *) node);
 		if (TupIsNull(outerslot))
 		{
@@ -213,14 +226,14 @@ ExecGroupOneTuple(Group *node)
 		}
 		outerTuple = outerslot->val;
 
-		/* ----------------
-		 *	Compare with first tuple and see if this tuple is of
-		 *	the same group.
-		 * ----------------
+		/*
+		 * Compare with first tuple and see if this tuple is of the
+		 * same group.
 		 */
-		if ((!sameGroup(firsttuple, outerTuple,
-						node->numCols, node->grpColIdx,
-						ExecGetScanType(&grpstate->csstate))))
+		if (! execTuplesMatch(firsttuple, outerTuple,
+							  tupdesc,
+							  node->numCols, node->grpColIdx,
+							  grpstate->eqfunctions))
 			break;
 	}
 
@@ -311,6 +324,14 @@ ExecInitGroup(Group *node, EState *estate, Plan *parent)
 	ExecAssignResultTypeFromTL((Plan *) node, &grpstate->csstate.cstate);
 	ExecAssignProjectionInfo((Plan *) node, &grpstate->csstate.cstate);
 
+	/*
+	 * Precompute fmgr lookup data for inner loop
+	 */
+	grpstate->eqfunctions =
+		execTuplesMatchPrepare(ExecGetScanType(&grpstate->csstate),
+							   node->numCols,
+							   node->grpColIdx);
+
 	return TRUE;
 }
 
@@ -347,80 +368,6 @@ ExecEndGroup(Group *node)
 	}
 }
 
-/*****************************************************************************
- *
- *****************************************************************************/
-
-/*
- * code swiped from nodeUnique.c
- */
-static bool
-sameGroup(HeapTuple oldtuple,
-		  HeapTuple newtuple,
-		  int numCols,
-		  AttrNumber *grpColIdx,
-		  TupleDesc tupdesc)
-{
-	bool		isNull1,
-				isNull2;
-	Datum		attr1,
-				attr2;
-	char	   *val1,
-			   *val2;
-	int			i;
-	AttrNumber	att;
-	Oid			typoutput,
-				typelem;
-
-	for (i = 0; i < numCols; i++)
-	{
-		att = grpColIdx[i];
-		getTypeOutAndElem((Oid) tupdesc->attrs[att - 1]->atttypid,
-						  &typoutput, &typelem);
-
-		attr1 = heap_getattr(oldtuple,
-							 att,
-							 tupdesc,
-							 &isNull1);
-
-		attr2 = heap_getattr(newtuple,
-							 att,
-							 tupdesc,
-							 &isNull2);
-
-		if (isNull1 == isNull2)
-		{
-			if (isNull1)		/* both are null, they are equal */
-				continue;
-
-			val1 = fmgr(typoutput, attr1, typelem,
-						tupdesc->attrs[att - 1]->atttypmod);
-			val2 = fmgr(typoutput, attr2, typelem,
-						tupdesc->attrs[att - 1]->atttypmod);
-
-			/*
-			 * now, val1 and val2 are ascii representations so we can use
-			 * strcmp for comparison
-			 */
-			if (strcmp(val1, val2) != 0)
-			{
-				pfree(val1);
-				pfree(val2);
-				return FALSE;
-			}
-			pfree(val1);
-			pfree(val2);
-		}
-		else
-		{
-			/* one is null and the other isn't, they aren't equal */
-			return FALSE;
-		}
-	}
-
-	return TRUE;
-}
-
 void
 ExecReScanGroup(Group *node, ExprContext *exprCtxt, Plan *parent)
 {
@@ -437,4 +384,105 @@ ExecReScanGroup(Group *node, ExprContext *exprCtxt, Plan *parent)
 	if (((Plan *) node)->lefttree &&
 		((Plan *) node)->lefttree->chgParam == NULL)
 		ExecReScan(((Plan *) node)->lefttree, exprCtxt, (Plan *) node);
+}
+
+/*****************************************************************************
+ *		Code shared with nodeUnique.c
+ *****************************************************************************/
+
+/*
+ * execTuplesMatch
+ *		Return true if two tuples match in all the indicated fields.
+ *		This is used to detect group boundaries in nodeGroup, and to
+ *		decide whether two tuples are distinct or not in nodeUnique.
+ *
+ * tuple1, tuple2: the tuples to compare
+ * tupdesc: tuple descriptor applying to both tuples
+ * numCols: the number of attributes to be examined
+ * matchColIdx: array of attribute column numbers
+ * eqFunctions: array of fmgr lookup info for the equality functions to use
+ */
+bool
+execTuplesMatch(HeapTuple tuple1,
+				HeapTuple tuple2,
+				TupleDesc tupdesc,
+				int numCols,
+				AttrNumber *matchColIdx,
+				FmgrInfo *eqfunctions)
+{
+	int			i;
+
+	/*
+	 * We cannot report a match without checking all the fields, but we
+	 * can report a non-match as soon as we find unequal fields.  So,
+	 * start comparing at the last field (least significant sort key).
+	 * That's the most likely to be different...
+	 */
+	for (i = numCols; --i >= 0; )
+	{
+		AttrNumber	att = matchColIdx[i];
+		Datum		attr1,
+					attr2;
+		bool		isNull1,
+					isNull2;
+		Datum		equal;
+
+		attr1 = heap_getattr(tuple1,
+							 att,
+							 tupdesc,
+							 &isNull1);
+
+		attr2 = heap_getattr(tuple2,
+							 att,
+							 tupdesc,
+							 &isNull2);
+
+		if (isNull1 != isNull2)
+			return FALSE;		/* one null and one not; they aren't equal */
+
+		if (isNull1)
+			continue;			/* both are null, treat as equal */
+
+		/* Apply the type-specific equality function */
+
+		equal = (Datum) (*fmgr_faddr(& eqfunctions[i])) (attr1, attr2);
+
+		if (DatumGetInt32(equal) == 0)
+			return FALSE;
+	}
+
+	return TRUE;
+}
+
+/*
+ * execTuplesMatchPrepare
+ *		Look up the equality functions needed for execTuplesMatch.
+ *		The result is a palloc'd array.
+ */
+FmgrInfo *
+execTuplesMatchPrepare(TupleDesc tupdesc,
+					   int numCols,
+					   AttrNumber *matchColIdx)
+{
+	FmgrInfo   *eqfunctions = (FmgrInfo *) palloc(numCols * sizeof(FmgrInfo));
+	int			i;
+
+	for (i = 0; i < numCols; i++)
+	{
+		AttrNumber	att = matchColIdx[i];
+		Oid			typid = tupdesc->attrs[att - 1]->atttypid;
+		Operator	eq_operator;
+		Form_pg_operator pgopform;
+
+		eq_operator = oper("=", typid, typid, true);
+		if (!HeapTupleIsValid(eq_operator))
+		{
+			elog(ERROR, "Unable to identify an equality operator for type '%s'",
+				 typeidTypeName(typid));
+		}
+		pgopform = (Form_pg_operator) GETSTRUCT(eq_operator);
+		fmgr_info(pgopform->oprcode, & eqfunctions[i]);
+	}
+
+	return eqfunctions;
 }

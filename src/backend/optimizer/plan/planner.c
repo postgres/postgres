@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/optimizer/plan/planner.c,v 1.73 2000/01/26 05:56:37 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/optimizer/plan/planner.c,v 1.74 2000/01/27 18:11:31 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -381,12 +381,12 @@ union_planner(Query *parse)
 	}
 
 	/*
-	 * Finally, if there is a UNIQUE clause, add the UNIQUE node.
+	 * Finally, if there is a DISTINCT clause, add the UNIQUE node.
 	 */
-	if (parse->uniqueFlag)
+	if (parse->distinctClause)
 	{
 		result_plan = (Plan *) make_unique(tlist, result_plan,
-										   parse->uniqueFlag);
+										   parse->distinctClause);
 	}
 
 	return result_plan;
@@ -583,20 +583,8 @@ make_sortplan(List *tlist, List *sortcls, Plan *plannode)
 	foreach(i, sortcls)
 	{
 		SortClause *sortcl = (SortClause *) lfirst(i);
-		Index		refnumber = sortcl->tleSortGroupRef;
-		TargetEntry *tle = NULL;
-		Resdom	   *resdom;
-		List	   *l;
-
-		foreach(l, temp_tlist)
-		{
-			tle = (TargetEntry *) lfirst(l);
-			if (tle->resdom->ressortgroupref == refnumber)
-				break;
-		}
-		if (l == NIL)
-			elog(ERROR, "make_sortplan: ORDER BY expression not found in targetlist");
-		resdom = tle->resdom;
+		TargetEntry *tle = get_sortgroupclause_tle(sortcl, temp_tlist);
+		Resdom	   *resdom = tle->resdom;
 
 		/*
 		 * Check for the possibility of duplicate order-by clauses --- the

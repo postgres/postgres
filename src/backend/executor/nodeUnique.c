@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/executor/nodeUnique.c,v 1.26 2000/01/26 05:56:24 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/executor/nodeUnique.c,v 1.27 2000/01/27 18:11:27 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -29,79 +29,14 @@
 #include "access/heapam.h"
 #include "access/printtup.h"
 #include "executor/executor.h"
+#include "executor/nodeGroup.h"
 #include "executor/nodeUnique.h"
-
-/* ----------------------------------------------------------------
- *		ExecIdenticalTuples
- *
- *		This is a hack function used by ExecUnique to see if
- *		two tuples are identical.  This should be provided
- *		by the heap tuple code but isn't.  The real problem
- *		is that we assume we can byte compare tuples to determine
- *		if they are "equal".  In fact, if we have user defined
- *		types there may be problems because it's possible that
- *		an ADT may have multiple representations with the
- *		same ADT value. -cim
- * ----------------------------------------------------------------
- */
-static bool						/* true if tuples are identical, false
-								 * otherwise */
-ExecIdenticalTuples(TupleTableSlot *t1, TupleTableSlot *t2)
-{
-	HeapTuple	h1;
-	HeapTuple	h2;
-	char	   *d1;
-	char	   *d2;
-	int			len;
-
-	h1 = t1->val;
-	h2 = t2->val;
-
-	/* ----------------
-	 *	if tuples aren't the same length then they are
-	 *	obviously different (one may have null attributes).
-	 * ----------------
-	 */
-	if (h1->t_len != h2->t_len)
-		return false;
-
-	/* ----------------
-	 *	if the tuples have different header offsets then
-	 *	they are different.  This will prevent us from returning
-	 *	true when comparing tuples of one attribute where one of
-	 *	two we're looking at is null (t_len - t_hoff == 0).
-	 *	THE t_len FIELDS CAN BE THE SAME IN THIS CASE!!
-	 * ----------------
-	 */
-	if (h1->t_data->t_hoff != h2->t_data->t_hoff)
-		return false;
-
-	/* ----------------
-	 *	ok, now get the pointers to the data and the
-	 *	size of the attribute portion of the tuple.
-	 * ----------------
-	 */
-	d1 = (char *) GETSTRUCT(h1);
-	d2 = (char *) GETSTRUCT(h2);
-	len = (int) h1->t_len - (int) h1->t_data->t_hoff;
-
-	/* ----------------
-	 *	byte compare the data areas and return the result.
-	 * ----------------
-	 */
-	if (memcmp(d1, d2, len) != 0)
-		return false;
-
-	return true;
-}
 
 /* ----------------------------------------------------------------
  *		ExecUnique
  *
  *		This is a very simple node which filters out duplicate
  *		tuples from a stream of sorted tuples from a subplan.
- *
- *		XXX see comments below regarding freeing tuples.
  * ----------------------------------------------------------------
  */
 TupleTableSlot *				/* return: a tuple or NULL */
@@ -111,11 +46,7 @@ ExecUnique(Unique *node)
 	TupleTableSlot *resultTupleSlot;
 	TupleTableSlot *slot;
 	Plan	   *outerPlan;
-	char	   *uniqueAttr;
-	AttrNumber	uniqueAttrNum;
 	TupleDesc	tupDesc;
-	Oid			typoutput,
-				typelem;
 
 	/* ----------------
 	 *	get information from the node
@@ -123,22 +54,8 @@ ExecUnique(Unique *node)
 	 */
 	uniquestate = node->uniquestate;
 	outerPlan = outerPlan((Plan *) node);
-	resultTupleSlot = uniquestate->cs_ResultTupleSlot;
-	uniqueAttr = node->uniqueAttr;
-	uniqueAttrNum = node->uniqueAttrNum;
-
-	if (uniqueAttr)
-	{
-		tupDesc = ExecGetResultType(uniquestate);
-		getTypeOutAndElem((Oid) tupDesc->attrs[uniqueAttrNum - 1]->atttypid,
-						  &typoutput, &typelem);
-	}
-	else
-	{							/* keep compiler quiet */
-		tupDesc = NULL;
-		typoutput = InvalidOid;
-		typelem = InvalidOid;
-	}
+	resultTupleSlot = uniquestate->cstate.cs_ResultTupleSlot;
+	tupDesc = ExecGetResultType(& uniquestate->cstate);
 
 	/* ----------------
 	 *	now loop, returning only non-duplicate tuples.
@@ -157,83 +74,38 @@ ExecUnique(Unique *node)
 			return NULL;
 
 		/* ----------------
-		 *	 we use the result tuple slot to hold our saved tuples.
-		 *	 if we haven't a saved tuple to compare our new tuple with,
-		 *	 then we exit the loop. This new tuple as the saved tuple
-		 *	 the next time we get here.
+		 *	 Always return the first tuple from the subplan.
 		 * ----------------
 		 */
-		if (TupIsNull(resultTupleSlot))
+		if (uniquestate->priorTuple == NULL)
 			break;
 
 		/* ----------------
-		 *	 now test if the new tuple and the previous
+		 *	 Else test if the new tuple and the previously returned
 		 *	 tuple match.  If so then we loop back and fetch
 		 *	 another new tuple from the subplan.
 		 * ----------------
 		 */
-
-		if (uniqueAttr)
-		{
-
-			/*
-			 * to check equality, we check to see if the typoutput of the
-			 * attributes are equal
-			 */
-			bool		isNull1,
-						isNull2;
-			Datum		attr1,
-						attr2;
-			char	   *val1,
-					   *val2;
-
-			attr1 = heap_getattr(slot->val,
-								 uniqueAttrNum, tupDesc, &isNull1);
-			attr2 = heap_getattr(resultTupleSlot->val,
-								 uniqueAttrNum, tupDesc, &isNull2);
-
-			if (isNull1 == isNull2)
-			{
-				if (isNull1)	/* both are null, they are equal */
-					continue;
-				val1 = fmgr(typoutput, attr1, typelem,
-							tupDesc->attrs[uniqueAttrNum - 1]->atttypmod);
-				val2 = fmgr(typoutput, attr2, typelem,
-							tupDesc->attrs[uniqueAttrNum - 1]->atttypmod);
-
-				/*
-				 * now, val1 and val2 are ascii representations so we can
-				 * use strcmp for comparison
-				 */
-				if (strcmp(val1, val2) == 0)	/* they are equal */
-				{
-					pfree(val1);
-					pfree(val2);
-					continue;
-				}
-				pfree(val1);
-				pfree(val2);
-				break;
-			}
-			else
-/* one is null and the other isn't, they aren't equal */
-				break;
-
-		}
-		else
-		{
-			if (!ExecIdenticalTuples(slot, resultTupleSlot))
-				break;
-		}
-
+		if (! execTuplesMatch(slot->val, uniquestate->priorTuple,
+							  tupDesc,
+							  node->numCols, node->uniqColIdx,
+							  uniquestate->eqfunctions))
+			break;
 	}
 
 	/* ----------------
-	 *	we have a new tuple different from the previous saved tuple
-	 *	so we save it in the saved tuple slot.	We copy the tuple
-	 *	so we don't increment the buffer ref count.
+	 *	We have a new tuple different from the previous saved tuple (if any).
+	 *	Save it and return it.  Note that we make two copies of the tuple:
+	 *	one to keep for our own future comparisons, and one to return to the
+	 *	caller.  We need to copy the tuple returned by the subplan to avoid
+	 *	holding buffer refcounts, and we need our own copy because the caller
+	 *	may alter the resultTupleSlot (eg via ExecRemoveJunk).
 	 * ----------------
 	 */
+	if (uniquestate->priorTuple != NULL)
+		heap_freetuple(uniquestate->priorTuple);
+	uniquestate->priorTuple = heap_copytuple(slot->val);
+
 	ExecStoreTuple(heap_copytuple(slot->val),
 				   resultTupleSlot,
 				   InvalidBuffer,
@@ -254,7 +126,6 @@ ExecInitUnique(Unique *node, EState *estate, Plan *parent)
 {
 	UniqueState *uniquestate;
 	Plan	   *outerPlan;
-	char	   *uniqueAttr;
 
 	/* ----------------
 	 *	assign execution state to node
@@ -268,10 +139,10 @@ ExecInitUnique(Unique *node, EState *estate, Plan *parent)
 	 */
 	uniquestate = makeNode(UniqueState);
 	node->uniquestate = uniquestate;
-	uniqueAttr = node->uniqueAttr;
+	uniquestate->priorTuple = NULL;
 
 	/* ----------------
-	 *	Miscellanious initialization
+	 *	Miscellaneous initialization
 	 *
 	 *		 +	assign node's base_id
 	 *		 +	assign debugging hooks and
@@ -280,14 +151,14 @@ ExecInitUnique(Unique *node, EState *estate, Plan *parent)
 	 *	they never call ExecQual or ExecTargetList.
 	 * ----------------
 	 */
-	ExecAssignNodeBaseInfo(estate, uniquestate, parent);
+	ExecAssignNodeBaseInfo(estate, & uniquestate->cstate, parent);
 
 #define UNIQUE_NSLOTS 1
 	/* ------------
 	 * Tuple table initialization
 	 * ------------
 	 */
-	ExecInitResultTupleSlot(estate, uniquestate);
+	ExecInitResultTupleSlot(estate, & uniquestate->cstate);
 
 	/* ----------------
 	 *	then initialize outer plan
@@ -301,31 +172,17 @@ ExecInitUnique(Unique *node, EState *estate, Plan *parent)
 	 *	projection info for this node appropriately
 	 * ----------------
 	 */
-	ExecAssignResultTypeFromOuterPlan((Plan *) node, uniquestate);
-	uniquestate->cs_ProjInfo = NULL;
+	ExecAssignResultTypeFromOuterPlan((Plan *) node, & uniquestate->cstate);
+	uniquestate->cstate.cs_ProjInfo = NULL;
 
-	if (uniqueAttr)
-	{
-		TupleDesc	tupDesc;
-		int			i = 0;
-
-		tupDesc = ExecGetResultType(uniquestate);
-
-		/*
-		 * the parser should have ensured that uniqueAttr is a legal
-		 * attribute name
-		 */
-		while (strcmp(NameStr(tupDesc->attrs[i]->attname), uniqueAttr) != 0)
-			i++;
-		node->uniqueAttrNum = i + 1;	/* attribute numbers start from 1 */
-	}
-	else
-		node->uniqueAttrNum = InvalidAttrNumber;
-
-	/* ----------------
-	 *	all done.
-	 * ----------------
+	/*
+	 * Precompute fmgr lookup data for inner loop
 	 */
+	uniquestate->eqfunctions =
+		execTuplesMatchPrepare(ExecGetResultType(& uniquestate->cstate),
+							   node->numCols,
+							   node->uniqColIdx);
+
 	return TRUE;
 }
 
@@ -347,11 +204,17 @@ ExecCountSlotsUnique(Unique *node)
 void
 ExecEndUnique(Unique *node)
 {
-	UniqueState *uniquestate;
+	UniqueState *uniquestate = node->uniquestate;
 
-	uniquestate = node->uniquestate;
 	ExecEndNode(outerPlan((Plan *) node), (Plan *) node);
-	ExecClearTuple(uniquestate->cs_ResultTupleSlot);
+
+	/* clean up tuple table */
+	ExecClearTuple(uniquestate->cstate.cs_ResultTupleSlot);
+	if (uniquestate->priorTuple != NULL)
+	{
+		heap_freetuple(uniquestate->priorTuple);
+		uniquestate->priorTuple = NULL;
+	}
 }
 
 
@@ -360,7 +223,12 @@ ExecReScanUnique(Unique *node, ExprContext *exprCtxt, Plan *parent)
 {
 	UniqueState *uniquestate = node->uniquestate;
 
-	ExecClearTuple(uniquestate->cs_ResultTupleSlot);
+	ExecClearTuple(uniquestate->cstate.cs_ResultTupleSlot);
+	if (uniquestate->priorTuple != NULL)
+	{
+		heap_freetuple(uniquestate->priorTuple);
+		uniquestate->priorTuple = NULL;
+	}
 
 	/*
 	 * if chgParam of subnode is not null then plan will be re-scanned by

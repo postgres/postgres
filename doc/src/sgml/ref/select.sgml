@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/ref/select.sgml,v 1.23 1999/12/13 17:39:38 tgl Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/ref/select.sgml,v 1.24 2000/01/27 18:11:25 tgl Exp $
 Postgres documentation
 -->
 
@@ -22,7 +22,7 @@ Postgres documentation
    <date>1999-07-20</date>
   </refsynopsisdivinfo>
   <synopsis>
-SELECT [ ALL | DISTINCT [ ON <replaceable class="PARAMETER">column</replaceable> ] ]
+SELECT [ ALL | DISTINCT [ ON ( <replaceable class="PARAMETER">expression</replaceable> [, ...] ) ] ]
     <replaceable class="PARAMETER">expression</replaceable> [ AS <replaceable class="PARAMETER">name</replaceable> ] [, ...]
     [ INTO [ TEMPORARY | TEMP ] [ TABLE ] <replaceable class="PARAMETER">new_table</replaceable> ]
     [ FROM <replaceable class="PARAMETER">table</replaceable> [ <replaceable class="PARAMETER">alias</replaceable> ] [, ...] ]
@@ -201,14 +201,27 @@ SELECT [ ALL | DISTINCT [ ON <replaceable class="PARAMETER">column</replaceable>
   </para>
 
   <para>
-   <command>DISTINCT</command> will eliminate all duplicate rows from the
+   <command>DISTINCT</command> will eliminate duplicate rows from the
    result.
-   <command>DISTINCT ON <replaceable class="PARAMETER">column</replaceable></command>
-   will eliminate all duplicates in the specified column; this is
-   similar to using
-   <command>GROUP BY <replaceable class="PARAMETER">column</replaceable></command>.
-   <command>ALL</command> will return all candidate rows,
+   <command>ALL</command> (the default) will return all candidate rows,
    including duplicates.
+  </para>
+
+  <para>
+   <command>DISTINCT ON</command> eliminates rows that match on all the
+   specified expressions, keeping only the first row of each set of
+   duplicates.  Note that "the first row" of each set is unpredictable
+   unless <command>ORDER BY</command> is used to ensure that the desired
+   row appears first.  For example,
+   <programlisting>
+        SELECT DISTINCT ON (location) location, time, report
+        FROM weatherReports
+        ORDER BY location, time DESC;
+   </programlisting>
+   retrieves the most recent weather report for each location.  But if
+   we had not used ORDER BY to force descending order of time values
+   for each location, we'd have gotten a report of unpredictable age
+   for each location.
   </para>
 
   <para>

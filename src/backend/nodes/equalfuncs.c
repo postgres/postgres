@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/nodes/equalfuncs.c,v 1.56 2000/01/26 05:56:31 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/nodes/equalfuncs.c,v 1.57 2000/01/27 18:11:28 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -593,16 +593,8 @@ _equalQuery(Query *a, Query *b)
 		return false;
 	if (!equal(a->rowMark, b->rowMark))
 		return false;
-	if (a->uniqueFlag && b->uniqueFlag)
-	{
-		if (strcmp(a->uniqueFlag, b->uniqueFlag) != 0)
-			return false;
-	}
-	else
-	{
-		if (a->uniqueFlag != b->uniqueFlag)
-			return false;
-	}
+	if (!equal(a->distinctClause, b->distinctClause))
+		return false;
 	if (!equal(a->sortClause, b->sortClause))
 		return false;
 	if (!equal(a->groupClause, b->groupClause))

@@ -34,12 +34,12 @@ select * from pg_database where nonesuch = pg_database.datname;
 select * from pg_database where pg_database.datname = nonesuch;
 
 
--- bad select distinct on  syntax,  distinct attribute missing
-select distinct on foobar from pg_database;
+-- bad select distinct on syntax, distinct attribute missing
+select distinct on (foobar) from pg_database;
 
 
 -- bad select distinct on syntax, distinct attribute not in target list
-select distinct on foobar * from pg_database;
+select distinct on (foobar) * from pg_database;
 
 
 --

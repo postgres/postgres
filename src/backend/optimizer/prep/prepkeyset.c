@@ -104,9 +104,7 @@ transformKeySetQuery(Query *origNode)
 		unionNode->isPortal = origNode->isPortal;
 		unionNode->isBinary = origNode->isBinary;
 
-		if (origNode->uniqueFlag)
-			unionNode->uniqueFlag = pstrdup(origNode->uniqueFlag);
-
+		Node_Copy(origNode, unionNode, distinctClause);
 		Node_Copy(origNode, unionNode, sortClause);
 		Node_Copy(origNode, unionNode, rtable);
 		Node_Copy(origNode, unionNode, targetList);

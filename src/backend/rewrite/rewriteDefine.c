@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/rewrite/rewriteDefine.c,v 1.41 2000/01/26 05:56:49 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/rewrite/rewriteDefine.c,v 1.42 2000/01/27 18:11:36 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -312,7 +312,7 @@ DefineQueryRewrite(RuleStmt *stmt)
 		/*
 		 * DISTINCT on view is not supported
 		 */
-		if (query->uniqueFlag != NULL)
+		if (query->distinctClause != NIL)
 			elog(ERROR, "DISTINCT not supported in views");
 
 		/*

@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/rewrite/rewriteHandler.c,v 1.66 2000/01/26 05:56:49 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/rewrite/rewriteHandler.c,v 1.67 2000/01/27 18:11:37 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -536,8 +536,8 @@ modifyAggrefMakeSublink(Aggref *aggref, Query *parsetree)
 	subquery->isBinary = FALSE;
 	subquery->isTemp = FALSE;
 	subquery->unionall = FALSE;
-	subquery->uniqueFlag = NULL;
-	subquery->sortClause = NULL;
+	subquery->distinctClause = NIL;
+	subquery->sortClause = NIL;
 	subquery->rtable = lcons(copyObject(rte), NIL);
 	subquery->targetList = lcons(tle, NIL);
 	subquery->qual = modifyAggrefDropQual((Node *) parsetree->qual,
@@ -1725,7 +1725,7 @@ check_targetlists_are_compatible(List *prev_target, List *current_target)
  * The operator tree is attached to 'intersectClause' (see rule
  * 'SelectStmt' in gram.y) of the 'parsetree' given as an
  * argument. First we remember some clauses (the sortClause, the
- * unique flag etc.)  Then we translate the operator tree to DNF
+ * distinctClause etc.)  Then we translate the operator tree to DNF
  * (disjunctive normal form) by 'cnfify'. (Note that 'cnfify' produces
  * CNF but as we exchanged ANDs with ORs in function A_Expr_to_Expr()
  * earlier we get DNF after exchanging ANDs and ORs again in the
@@ -1736,8 +1736,8 @@ check_targetlists_are_compatible(List *prev_target, List *current_target)
  * union list is handed back but before that the remembered clauses
  * (sortClause etc) are attached to the new top Node (Note that the
  * new top Node can differ from the parsetree given as argument because of
- * the translation to DNF. That's why we have to remember the sortClause or
- * unique flag!) */
+ * the translation to DNF. That's why we have to remember the sortClause
+ * and so on!) */
 static Query *
 Except_Intersect_Rewrite(Query *parsetree)
 {
@@ -1750,12 +1750,12 @@ Except_Intersect_Rewrite(Query *parsetree)
 			   *intersect,
 			   *intersectClause;
 	List	   *union_list = NIL,
-			   *sortClause;
+			   *sortClause,
+			   *distinctClause;
 	List	   *left_expr,
 			   *right_expr,
 			   *resnames = NIL;
 	char	   *op,
-			   *uniqueFlag,
 			   *into;
 	bool		isBinary,
 				isPortal,
@@ -1806,7 +1806,7 @@ Except_Intersect_Rewrite(Query *parsetree)
 	 * node at the end of the function
 	 */
 	sortClause = parsetree->sortClause;
-	uniqueFlag = parsetree->uniqueFlag;
+	distinctClause = parsetree->distinctClause;
 	into = parsetree->into;
 	isBinary = parsetree->isBinary;
 	isPortal = parsetree->isPortal;
@@ -2009,7 +2009,7 @@ Except_Intersect_Rewrite(Query *parsetree)
 	result->unionClause = lnext(union_list);
 	/* Attach all the items remembered in the beginning of the function */
 	result->sortClause = sortClause;
-	result->uniqueFlag = uniqueFlag;
+	result->distinctClause = distinctClause;
 	result->into = into;
 	result->isPortal = isPortal;
 	result->isBinary = isBinary;

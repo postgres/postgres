@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/nodes/copyfuncs.c,v 1.102 2000/01/26 05:56:31 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/nodes/copyfuncs.c,v 1.103 2000/01/27 18:11:27 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -532,11 +532,9 @@ _copyUnique(Unique *from)
 	 *	copy remainder of node
 	 * ----------------
 	 */
-	if (from->uniqueAttr)
-		newnode->uniqueAttr = pstrdup(from->uniqueAttr);
-	else
-		newnode->uniqueAttr = NULL;
-	newnode->uniqueAttrNum = from->uniqueAttrNum;
+	newnode->numCols = from->numCols;
+	newnode->uniqColIdx = palloc(from->numCols * sizeof(AttrNumber));
+	memcpy(newnode->uniqColIdx, from->uniqColIdx, from->numCols * sizeof(AttrNumber));
 
 	return newnode;
 }
@@ -1427,8 +1425,7 @@ _copyQuery(Query *from)
 	Node_Copy(from, newnode, qual);
 	Node_Copy(from, newnode, rowMark);
 
-	if (from->uniqueFlag)
-		newnode->uniqueFlag = pstrdup(from->uniqueFlag);
+	Node_Copy(from, newnode, distinctClause);
 	Node_Copy(from, newnode, sortClause);
 	Node_Copy(from, newnode, groupClause);
 	Node_Copy(from, newnode, havingQual);

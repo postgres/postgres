@@ -11,7 +11,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/parser/gram.y,v 2.135 2000/01/26 05:56:41 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/parser/gram.y,v 2.136 2000/01/27 18:11:35 tgl Exp $
  *
  * HISTORY
  *	  AUTHOR			DATE			MAJOR EVENT
@@ -159,7 +159,7 @@ static Node *doNegate(Node *n);
 		class, index_name, name, func_name, file_name, aggr_argtype
 
 %type <str>		opt_id,
-		all_Op, MathOp, opt_name, opt_unique,
+		all_Op, MathOp, opt_name,
 		OptUseOp, opt_class, SpecialRuleRelation
 
 %type <str>		opt_level, opt_encoding
@@ -168,7 +168,7 @@ static Node *doNegate(Node *n);
 
 %type <list>	stmtblock, stmtmulti,
 		result, relation_name_list, OptTableElementList,
-		OptInherit, definition,
+		OptInherit, definition, opt_distinct,
 		opt_with, func_args, func_args_list, func_as,
 		oper_argtypes, RuleActionList, RuleActionMulti,
 		opt_column_list, columnList, opt_va_list, va_list,
@@ -2843,7 +2843,7 @@ insert_rest:  VALUES '(' target_list ')'
 				{
 					$$ = makeNode(InsertStmt);
 					$$->cols = NULL;
-					$$->unique = NULL;
+					$$->distinctClause = NIL;
 					$$->targetList = $3;
 					$$->fromClause = NIL;
 					$$->whereClause = NULL;
@@ -2854,7 +2854,7 @@ insert_rest:  VALUES '(' target_list ')'
 		| DEFAULT VALUES
 				{
 					$$ = makeNode(InsertStmt);
-					$$->unique = NULL;
+					$$->distinctClause = NIL;
 					$$->targetList = NIL;
 					$$->fromClause = NIL;
 					$$->whereClause = NULL;
@@ -2873,7 +2873,7 @@ insert_rest:  VALUES '(' target_list ')'
 						elog(ERROR, "INSERT ... SELECT can't have ORDER BY");
 					$$ = makeNode(InsertStmt);
 					$$->cols = NIL;
-					$$->unique = n->unique;
+					$$->distinctClause = n->distinctClause;
 					$$->targetList = n->targetList;
 					$$->fromClause = n->fromClause;
 					$$->whereClause = n->whereClause;
@@ -2888,7 +2888,7 @@ insert_rest:  VALUES '(' target_list ')'
 				{
 					$$ = makeNode(InsertStmt);
 					$$->cols = $2;
-					$$->unique = NULL;
+					$$->distinctClause = NIL;
 					$$->targetList = $6;
 					$$->fromClause = NIL;
 					$$->whereClause = NULL;
@@ -2904,7 +2904,7 @@ insert_rest:  VALUES '(' target_list ')'
 						elog(ERROR, "INSERT ... SELECT can't have ORDER BY");
 					$$ = makeNode(InsertStmt);
 					$$->cols = $2;
-					$$->unique = n->unique;
+					$$->distinctClause = n->distinctClause;
 					$$->targetList = n->targetList;
 					$$->fromClause = n->fromClause;
 					$$->whereClause = n->whereClause;
@@ -3189,12 +3189,12 @@ select_clause: '(' select_clause ')'
 			}
 		; 
 
-SubSelect:	SELECT opt_unique target_list
+SubSelect:	SELECT opt_distinct target_list
 			 result from_clause where_clause
 			 group_clause having_clause
 				{
 					SelectStmt *n = makeNode(SelectStmt);
-					n->unique = $2;
+					n->distinctClause = $2;
 					n->unionall = FALSE;
 					n->targetList = $3;
 					/* This is new: Subselects support the INTO clause
@@ -3230,10 +3230,13 @@ opt_all:  ALL									{ $$ = TRUE; }
 		| /*EMPTY*/								{ $$ = FALSE; }
 		;
 
-opt_unique:  DISTINCT							{ $$ = "*"; }
-		| DISTINCT ON ColId						{ $$ = $3; }
-		| ALL									{ $$ = NULL; }
-		| /*EMPTY*/								{ $$ = NULL; }
+/* We use (NIL) as a placeholder to indicate that all target expressions
+ * should be placed in the DISTINCT list during parsetree analysis.
+ */
+opt_distinct:  DISTINCT							{ $$ = lcons(NIL,NIL); }
+		| DISTINCT ON '(' expr_list ')'			{ $$ = $4; }
+		| ALL									{ $$ = NIL; }
+		| /*EMPTY*/								{ $$ = NIL; }
 		;
 
 sort_clause:  ORDER BY sortby_list				{ $$ = $3; }

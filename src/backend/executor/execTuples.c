@@ -15,7 +15,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/executor/execTuples.c,v 1.35 2000/01/26 05:56:22 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/executor/execTuples.c,v 1.36 2000/01/27 18:11:27 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -753,7 +753,7 @@ NodeGetResultTupleSlot(Plan *node)
 			{
 				UniqueState *uniquestate = ((Unique *) node)->uniquestate;
 
-				slot = uniquestate->cs_ResultTupleSlot;
+				slot = uniquestate->cstate.cs_ResultTupleSlot;
 			}
 			break;
 
