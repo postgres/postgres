@@ -1,0 +1,3 @@
+Add the included headers endian.h into Cygwin's include/, tcp.h into
+include/netinet, and un.h into include/sys.
+
