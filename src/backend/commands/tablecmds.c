@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/commands/tablecmds.c,v 1.136 2004/10/21 21:33:59 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/commands/tablecmds.c,v 1.137 2004/10/22 17:20:04 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -4738,13 +4738,20 @@ ATExecAlterColumnType(AlteredTableInfo *tab, Relation rel,
 	 * changing the column type, because build_column_default itself will
 	 * try to coerce, and will not issue the error message we want if it
 	 * fails.)
+	 *
+	 * We remove any implicit coercion steps at the top level of the old
+	 * default expression; this has been agreed to satisfy the principle
+	 * of least surprise.  (The conversion to the new column type should
+	 * act like it started from what the user sees as the stored expression,
+	 * and the implicit coercions aren't going to be shown.)
 	 */
 	if (attTup->atthasdef)
 	{
 		defaultexpr = build_column_default(rel, attnum);
 		Assert(defaultexpr);
+		defaultexpr = strip_implicit_coercions(defaultexpr);
 		defaultexpr = coerce_to_target_type(NULL,		/* no UNKNOWN params */
-									  defaultexpr, exprType(defaultexpr),
+											defaultexpr, exprType(defaultexpr),
 											targettype, typename->typmod,
 											COERCION_ASSIGNMENT,
 											COERCE_IMPLICIT_CAST);

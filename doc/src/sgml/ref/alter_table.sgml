@@ -1,5 +1,5 @@
 <!--
-$PostgreSQL: pgsql/doc/src/sgml/ref/alter_table.sgml,v 1.73 2004/07/11 23:13:51 tgl Exp $
+$PostgreSQL: pgsql/doc/src/sgml/ref/alter_table.sgml,v 1.74 2004/10/22 17:20:04 tgl Exp $
 PostgreSQL documentation
 -->
 
@@ -457,6 +457,22 @@ ALTER TABLE table ALTER COLUMN anycol TYPE anytype;
     This results in no semantically-visible change in the table,
     but the command forces rewriting, which gets rid of no-longer-useful
     data.
+   </para>
+
+   <para>
+    The <literal>USING</literal> option of <literal>ALTER TYPE</> can actually
+    specify any expression involving the old values of the row; that is, it
+    can refer to other columns as well as the one being converted.  This allows
+    very general conversions to be done with the <literal>ALTER TYPE</>
+    syntax.  Because of this flexibility, the <literal>USING</literal>
+    expression is not applied to the column's default value (if any); the
+    result might not be a constant expression as required for a default.
+    This means that when there is no implicit or assignment cast from old to
+    new type, <literal>ALTER TYPE</> may fail to convert the default even
+    though a <literal>USING</literal> clause is supplied.  In such cases,
+    drop the default with <literal>DROP DEFAULT</>, perform the <literal>ALTER
+    TYPE</>, and then use <literal>SET DEFAULT</> to add a suitable new
+    default.
    </para>
 
    <para>

@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2004, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/include/optimizer/clauses.h,v 1.75 2004/08/29 04:13:07 momjian Exp $
+ * $PostgreSQL: pgsql/src/include/optimizer/clauses.h,v 1.76 2004/10/22 17:20:05 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -62,6 +62,8 @@ extern bool has_distinct_on_clause(Query *query);
 
 extern int	NumRelids(Node *clause);
 extern void CommuteClause(OpExpr *clause);
+
+extern Node *strip_implicit_coercions(Node *node);
 
 extern void set_coercionform_dontcare(Node *node);
 

@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/optimizer/util/clauses.c,v 1.182 2004/10/07 18:38:49 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/optimizer/util/clauses.c,v 1.183 2004/10/22 17:20:05 tgl Exp $
  *
  * HISTORY
  *	  AUTHOR			DATE			MAJOR EVENT
@@ -1019,6 +1019,41 @@ CommuteClause(OpExpr *clause)
 	temp = linitial(clause->args);
 	linitial(clause->args) = lsecond(clause->args);
 	lsecond(clause->args) = temp;
+}
+
+/*
+ * strip_implicit_coercions: remove implicit coercions at top level of tree
+ *
+ * Note: there isn't any useful thing we can do with a RowExpr here, so
+ * just return it unchanged, even if it's marked as an implicit coercion.
+ */
+Node *
+strip_implicit_coercions(Node *node)
+{
+	if (node == NULL)
+		return NULL;
+	if (IsA(node, FuncExpr))
+	{
+		FuncExpr   *f = (FuncExpr *) node;
+
+		if (f->funcformat == COERCE_IMPLICIT_CAST)
+			return strip_implicit_coercions(linitial(f->args));
+	}
+	else if (IsA(node, RelabelType))
+	{
+		RelabelType *r = (RelabelType *) node;
+
+		if (r->relabelformat == COERCE_IMPLICIT_CAST)
+			return strip_implicit_coercions((Node *) r->arg);
+	}
+	else if (IsA(node, CoerceToDomain))
+	{
+		CoerceToDomain *c = (CoerceToDomain *) node;
+
+		if (c->coercionformat == COERCE_IMPLICIT_CAST)
+			return strip_implicit_coercions((Node *) c->arg);
+	}
+	return node;
 }
 
 /*
