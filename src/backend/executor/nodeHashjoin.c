@@ -7,15 +7,12 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/executor/nodeHashjoin.c,v 1.19 1999/05/09 00:53:21 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/executor/nodeHashjoin.c,v 1.20 1999/05/18 21:33:06 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
 #include <sys/types.h>
 #include <string.h>
-#include <sys/file.h>
-#include <sys/stat.h>
-#include <fcntl.h>
 
 #include "postgres.h"
 
@@ -25,17 +22,13 @@
 #include "executor/nodeHashjoin.h"
 #include "optimizer/clauses.h"	/* for get_leftop */
 
-static TupleTableSlot *
-			ExecHashJoinOuterGetTuple(Plan *node, Plan *parent, HashJoinState *hjstate);
-
-static TupleTableSlot *ExecHashJoinGetSavedTuple(HashJoinState *hjstate, char *buffer,
-	  File file, TupleTableSlot *tupleSlot, int *block, char **position);
-
-static int ExecHashJoinGetBatch(int bucketno, HashJoinTable hashtable,
-					 int nbatch);
-
+static TupleTableSlot *ExecHashJoinOuterGetTuple(Plan *node, Plan *parent,
+												 HashJoinState *hjstate);
+static TupleTableSlot *ExecHashJoinGetSavedTuple(HashJoinState *hjstate,
+												 BufFile *file,
+												 TupleTableSlot *tupleSlot);
+static int	ExecHashJoinGetBatch(int bucketno, HashJoinTable hashtable);
 static int	ExecHashJoinNewBatch(HashJoinState *hjstate);
-
 
 
 /* ----------------------------------------------------------------
@@ -61,27 +54,14 @@ ExecHashJoin(HashJoin *node)
 	TupleTableSlot *inntuple;
 	Var		   *outerVar;
 	ExprContext *econtext;
-
 	HashJoinTable hashtable;
-	int			bucketno;
-	HashBucket	bucket;
 	HeapTuple	curtuple;
-
 	bool		qualResult;
-
 	TupleTableSlot *outerTupleSlot;
 	TupleTableSlot *innerTupleSlot;
-	int			nbatch;
-	int			curbatch;
-	File	   *outerbatches;
-	RelativeAddr *outerbatchPos;
 	Var		   *innerhashkey;
-	int			batch;
-	int			batchno;
-	char	   *buffer;
 	int			i;
 	bool		hashPhaseDone;
-	char	   *pos;
 
 	/* ----------------
 	 *	get information from HashJoin node
@@ -103,8 +83,6 @@ ExecHashJoin(HashJoin *node)
 	 * -----------------
 	 */
 	hashtable = hjstate->hj_HashTable;
-	bucket = hjstate->hj_CurBucket;
-	curtuple = hjstate->hj_CurTuple;
 
 	/* --------------------
 	 * initialize expression context
@@ -121,13 +99,13 @@ ExecHashJoin(HashJoin *node)
 		if (!isDone)
 			return result;
 	}
+
 	/* ----------------
 	 *	if this is the first call, build the hash table for inner relation
 	 * ----------------
 	 */
 	if (!hashPhaseDone)
 	{							/* if the hash phase not completed */
-		hashtable = node->hashjointable;
 		if (hashtable == NULL)
 		{						/* if the hash table has not been created */
 			/* ----------------
@@ -143,44 +121,24 @@ ExecHashJoin(HashJoin *node)
 			 * execute the Hash node, to build the hash table
 			 * ----------------
 			 */
-			hashNode->hashtable = hashtable;
+			hashNode->hashstate->hashtable = hashtable;
 			innerTupleSlot = ExecProcNode((Plan *) hashNode, (Plan *) node);
 		}
-		bucket = NULL;
-		curtuple = NULL;
-		curbatch = 0;
 		node->hashdone = true;
+		/* ----------------
+		 * Open temp files for outer batches, if needed.
+		 * Note that file buffers are palloc'd in regular executor context.
+		 * ----------------
+		 */
+		for (i = 0; i < hashtable->nbatch; i++)
+		{
+			File tfile = OpenTemporaryFile();
+			Assert(tfile >= 0);
+			hashtable->outerBatchFile[i] = BufFileCreate(tfile);
+		}
 	}
 	else if (hashtable == NULL)
 		return NULL;
-
-	nbatch = hashtable->nbatch;
-	outerbatches = hjstate->hj_OuterBatches;
-	if (nbatch > 0 && outerbatches == NULL)
-	{							/* if needs hash partition */
-		/* -----------------
-		 *	allocate space for file descriptors of outer batch files
-		 *	then open the batch files in the current process
-		 * -----------------
-		 */
-		innerhashkey = hashNode->hashkey;
-		hjstate->hj_InnerHashKey = innerhashkey;
-		outerbatches = (File *) palloc(nbatch * sizeof(File));
-		for (i = 0; i < nbatch; i++)
-		{
-			outerbatches[i] = OpenTemporaryFile();
-		}
-		hjstate->hj_OuterBatches = outerbatches;
-
-		/* ------------------
-		 *	get the inner batch file descriptors from the
-		 *	hash node
-		 * ------------------
-		 */
-		hjstate->hj_InnerBatches = hashNode->hashstate->hashBatches;
-	}
-	outerbatchPos = (RelativeAddr *) ABSADDR(hashtable->outerbatchPos);
-	curbatch = hashtable->curbatch;
 
 	/* ----------------
 	 *	Now get an outer tuple and probe into the hash table for matches
@@ -189,185 +147,106 @@ ExecHashJoin(HashJoin *node)
 	outerTupleSlot = hjstate->jstate.cs_OuterTupleSlot;
 	outerVar = get_leftop(clause);
 
-	bucketno = -1;				/* if bucketno remains -1, means use old
-								 * outer tuple */
-	if (TupIsNull(outerTupleSlot))
+	for (;;)
 	{
-
 		/*
 		 * if the current outer tuple is nil, get a new one
 		 */
-		outerTupleSlot = (TupleTableSlot *)
-			ExecHashJoinOuterGetTuple(outerNode, (Plan *) node, hjstate);
-
-		while (curbatch <= nbatch && TupIsNull(outerTupleSlot))
+		if (TupIsNull(outerTupleSlot))
 		{
-
-			/*
-			 * if the current batch runs out, switch to new batch
-			 */
-			curbatch = ExecHashJoinNewBatch(hjstate);
-			if (curbatch > nbatch)
+			outerTupleSlot = ExecHashJoinOuterGetTuple(outerNode,
+													   (Plan *) node,
+													   hjstate);
+			if (TupIsNull(outerTupleSlot))
 			{
-
 				/*
-				 * when the last batch runs out, clean up
+				 * when the last batch runs out, clean up and exit
 				 */
 				ExecHashTableDestroy(hashtable);
 				hjstate->hj_HashTable = NULL;
 				return NULL;
 			}
-			else
-				outerTupleSlot = (TupleTableSlot *)
-					ExecHashJoinOuterGetTuple(outerNode, (Plan *) node, hjstate);
+
+			/*
+			 * now we have an outer tuple, find the corresponding bucket for
+			 * this tuple from the hash table
+			 */
+			econtext->ecxt_outertuple = outerTupleSlot;
+			hjstate->hj_CurBucketNo = ExecHashGetBucket(hashtable, econtext,
+														outerVar);
+			hjstate->hj_CurTuple = NULL;
+
+			/* ----------------
+			 *	Now we've got an outer tuple and the corresponding hash bucket,
+			 *	but this tuple may not belong to the current batch.
+			 *	This need only be checked in the first pass.
+			 * ----------------
+			 */
+			if (hashtable->curbatch == 0)
+			{
+				int batch = ExecHashJoinGetBatch(hjstate->hj_CurBucketNo,
+												 hashtable);
+				if (batch > 0)
+				{
+					/*
+					 * Need to postpone this outer tuple to a later batch.
+					 * Save it in the corresponding outer-batch file.
+					 */
+					int batchno = batch - 1;
+					hashtable->outerBatchSize[batchno]++;
+					ExecHashJoinSaveTuple(outerTupleSlot->val,
+										  hashtable->outerBatchFile[batchno]);
+					ExecClearTuple(outerTupleSlot);
+					continue;		/* loop around for a new outer tuple */
+				}
+			}
 		}
 
 		/*
-		 * now we get an outer tuple, find the corresponding bucket for
-		 * this tuple from the hash table
+		 * OK, scan the selected hash bucket for matches
 		 */
-		econtext->ecxt_outertuple = outerTupleSlot;
-
-#ifdef HJDEBUG
-		printf("Probing ");
-#endif
-		bucketno = ExecHashGetBucket(hashtable, econtext, outerVar);
-		bucket = (HashBucket) (ABSADDR(hashtable->top)
-							   + bucketno * hashtable->bucketsize);
-	}
-
-	for (;;)
-	{
-		/* ----------------
-		 *		Now we've got an outer tuple and the corresponding hash bucket,
-		 *	but this tuple may not belong to the current batch.
-		 * ----------------
-		 */
-		if (curbatch == 0 && bucketno != -1)	/* if this is the first
-												 * pass */
-			batch = ExecHashJoinGetBatch(bucketno, hashtable, nbatch);
-		else
-			batch = 0;
-		if (batch > 0)
+		for (;;)
 		{
-
+			curtuple = ExecScanHashBucket(hjstate,
+										  hjclauses,
+										  econtext);
+			if (curtuple == NULL)
+				break;			/* out of matches */
 			/*
-			 * if the current outer tuple does not belong to the current
-			 * batch, save to the tmp file for the corresponding batch.
+			 * we've got a match, but still need to test qpqual
 			 */
-			buffer = ABSADDR(hashtable->batch) + (batch - 1) * BLCKSZ;
-			batchno = batch - 1;
-			pos = ExecHashJoinSaveTuple(outerTupleSlot->val,
-										buffer,
-										outerbatches[batchno],
-										ABSADDR(outerbatchPos[batchno]));
-
-			outerbatchPos[batchno] = RELADDR(pos);
-		}
-		else if (bucket != NULL)
-		{
-			do
+			inntuple = ExecStoreTuple(curtuple,
+									  hjstate->hj_HashTupleSlot,
+									  InvalidBuffer,
+									  false);	/* don't pfree this tuple */
+			econtext->ecxt_innertuple = inntuple;
+			qualResult = ExecQual(qual, econtext);
+			/* ----------------
+			 * if we pass the qual, then save state for next call and
+			 * have ExecProject form the projection, store it
+			 * in the tuple table, and return the slot.
+			 * ----------------
+			 */
+			if (qualResult)
 			{
+				ProjectionInfo *projInfo;
+				TupleTableSlot *result;
+				bool		isDone;
 
-				/*
-				 * scan the hash bucket for matches
-				 */
-				curtuple = ExecScanHashBucket(hjstate,
-											  bucket,
-											  curtuple,
-											  hjclauses,
-											  econtext);
-
-				if (curtuple != NULL)
-				{
-
-					/*
-					 * we've got a match, but still need to test qpqual
-					 */
-					inntuple = ExecStoreTuple(curtuple,
-											  hjstate->hj_HashTupleSlot,
-											  InvalidBuffer,
-											  false);	/* don't pfree this
-														 * tuple */
-
-					econtext->ecxt_innertuple = inntuple;
-
-					/* ----------------
-					 * test to see if we pass the qualification
-					 * ----------------
-					 */
-					qualResult = ExecQual((List *) qual, econtext);
-
-					/* ----------------
-					 * if we pass the qual, then save state for next call and
-					 * have ExecProject form the projection, store it
-					 * in the tuple table, and return the slot.
-					 * ----------------
-					 */
-					if (qualResult)
-					{
-						ProjectionInfo *projInfo;
-						TupleTableSlot *result;
-						bool		isDone;
-
-						hjstate->hj_CurBucket = bucket;
-						hjstate->hj_CurTuple = curtuple;
-						hashtable->curbatch = curbatch;
-						hjstate->jstate.cs_OuterTupleSlot = outerTupleSlot;
-
-						projInfo = hjstate->jstate.cs_ProjInfo;
-						result = ExecProject(projInfo, &isDone);
-						hjstate->jstate.cs_TupFromTlist = !isDone;
-						return result;
-					}
-				}
+				hjstate->jstate.cs_OuterTupleSlot = outerTupleSlot;
+				projInfo = hjstate->jstate.cs_ProjInfo;
+				result = ExecProject(projInfo, &isDone);
+				hjstate->jstate.cs_TupFromTlist = !isDone;
+				return result;
 			}
-			while (curtuple != NULL);
 		}
 
 		/* ----------------
 		 *	 Now the current outer tuple has run out of matches,
-		 *	 so we free it and get a new outer tuple.
+		 *	 so we free it and loop around to get a new outer tuple.
 		 * ----------------
 		 */
-		outerTupleSlot = (TupleTableSlot *)
-			ExecHashJoinOuterGetTuple(outerNode, (Plan *) node, hjstate);
-
-		while (curbatch <= nbatch && TupIsNull(outerTupleSlot))
-		{
-
-			/*
-			 * if the current batch runs out, switch to new batch
-			 */
-			curbatch = ExecHashJoinNewBatch(hjstate);
-			if (curbatch > nbatch)
-			{
-
-				/*
-				 * when the last batch runs out, clean up
-				 */
-				ExecHashTableDestroy(hashtable);
-				hjstate->hj_HashTable = NULL;
-				return NULL;
-			}
-			else
-				outerTupleSlot = (TupleTableSlot *)
-					ExecHashJoinOuterGetTuple(outerNode, (Plan *) node, hjstate);
-		}
-
-		/* ----------------
-		 *	 Now get the corresponding hash bucket for the new
-		 *	 outer tuple.
-		 * ----------------
-		 */
-		econtext->ecxt_outertuple = outerTupleSlot;
-#ifdef HJDEBUG
-		printf("Probing ");
-#endif
-		bucketno = ExecHashGetBucket(hashtable, econtext, outerVar);
-		bucket = (HashBucket) (ABSADDR(hashtable->top)
-							   + bucketno * hashtable->bucketsize);
-		curtuple = NULL;
+		ExecClearTuple(outerTupleSlot);
 	}
 }
 
@@ -399,7 +278,7 @@ ExecInitHashJoin(HashJoin *node, EState *estate, Plan *parent)
 	node->hashjoinstate = hjstate;
 
 	/* ----------------
-	 *	Miscellanious initialization
+	 *	Miscellaneous initialization
 	 *
 	 *		 +	assign node's base_id
 	 *		 +	assign debugging hooks and
@@ -456,22 +335,16 @@ ExecInitHashJoin(HashJoin *node, EState *estate, Plan *parent)
 	ExecAssignProjectionInfo((Plan *) node, &hjstate->jstate);
 
 	/* ----------------
-	 *	XXX comment me
+	 *	initialize hash-specific info
 	 * ----------------
 	 */
 
 	node->hashdone = false;
 
 	hjstate->hj_HashTable = (HashJoinTable) NULL;
-	hjstate->hj_HashTableShmId = (IpcMemoryId) 0;
-	hjstate->hj_CurBucket = (HashBucket) NULL;
-	hjstate->hj_CurTuple = (HeapTuple) NULL;
-	hjstate->hj_CurOTuple = (OverflowTuple) NULL;
+	hjstate->hj_CurBucketNo = 0;
+	hjstate->hj_CurTuple = (HashJoinTuple) NULL;
 	hjstate->hj_InnerHashKey = (Var *) NULL;
-	hjstate->hj_OuterBatches = (File *) NULL;
-	hjstate->hj_InnerBatches = (File *) NULL;
-	hjstate->hj_OuterReadPos = (char *) NULL;
-	hjstate->hj_OuterReadBlk = (int) 0;
 
 	hjstate->jstate.cs_OuterTupleSlot = (TupleTableSlot *) NULL;
 	hjstate->jstate.cs_TupFromTlist = (bool) false;
@@ -554,93 +427,69 @@ ExecEndHashJoin(HashJoin *node)
 static TupleTableSlot *
 ExecHashJoinOuterGetTuple(Plan *node, Plan *parent, HashJoinState *hjstate)
 {
+	HashJoinTable	hashtable = hjstate->hj_HashTable;
+	int				curbatch = hashtable->curbatch;
 	TupleTableSlot *slot;
-	HashJoinTable hashtable;
-	int			curbatch;
-	File	   *outerbatches;
-	char	   *outerreadPos;
-	int			batchno;
-	char	   *outerreadBuf;
-	int			outerreadBlk;
-
-	hashtable = hjstate->hj_HashTable;
-	curbatch = hashtable->curbatch;
 
 	if (curbatch == 0)
 	{							/* if it is the first pass */
 		slot = ExecProcNode(node, parent);
-		return slot;
+		if (! TupIsNull(slot))
+			return slot;
+		/*
+		 * We have just reached the end of the first pass.
+		 * Try to switch to a saved batch.
+		 */
+		curbatch = ExecHashJoinNewBatch(hjstate);
 	}
 
 	/*
-	 * otherwise, read from the tmp files
+	 * Try to read from a temp file.
+	 * Loop allows us to advance to new batch as needed.
 	 */
-	outerbatches = hjstate->hj_OuterBatches;
-	outerreadPos = hjstate->hj_OuterReadPos;
-	outerreadBlk = hjstate->hj_OuterReadBlk;
-	outerreadBuf = ABSADDR(hashtable->readbuf);
-	batchno = curbatch - 1;
+	while (curbatch <= hashtable->nbatch)
+	{
+		slot = ExecHashJoinGetSavedTuple(hjstate,
+										 hashtable->outerBatchFile[curbatch-1],
+										 hjstate->hj_OuterTupleSlot);
+		if (! TupIsNull(slot))
+			return slot;
+		curbatch = ExecHashJoinNewBatch(hjstate);
+	}
 
-	slot = ExecHashJoinGetSavedTuple(hjstate,
-									 outerreadBuf,
-									 outerbatches[batchno],
-									 hjstate->hj_OuterTupleSlot,
-									 &outerreadBlk,
-									 &outerreadPos);
-
-	hjstate->hj_OuterReadPos = outerreadPos;
-	hjstate->hj_OuterReadBlk = outerreadBlk;
-
-	return slot;
+	/* Out of batches... */
+	return NULL;
 }
 
 /* ----------------------------------------------------------------
  *		ExecHashJoinGetSavedTuple
  *
- *		read the next tuple from a tmp file using a certain buffer
+ *		read the next tuple from a tmp file
  * ----------------------------------------------------------------
  */
 
 static TupleTableSlot *
 ExecHashJoinGetSavedTuple(HashJoinState *hjstate,
-						  char *buffer,
-						  File file,
-						  TupleTableSlot *tupleSlot,
-						  int *block,	/* return parameter */
-						  char **position)		/* return parameter */
+						  BufFile *file,
+						  TupleTableSlot *tupleSlot)
 {
-	char	   *bufstart;
-	char	   *bufend;
-	int			cc;
-	HeapTuple	heapTuple;
-	HashJoinTable hashtable;
+	HeapTupleData	htup;
+	size_t			nread;
+	HeapTuple		heapTuple;
 
-	hashtable = hjstate->hj_HashTable;
-	bufend = buffer + *(long *) buffer;
-	bufstart = (char *) (buffer + sizeof(long));
-	if ((*position == NULL) || (*position >= bufend))
-	{
-		if (*position == NULL)
-			(*block) = 0;
-		else
-			(*block)++;
-		FileSeek(file, *block * BLCKSZ, SEEK_SET);
-		cc = FileRead(file, buffer, BLCKSZ);
-		NDirectFileRead++;
-		if (cc < 0)
-			perror("FileRead");
-		if (cc == 0)			/* end of file */
-			return NULL;
-		else
-			(*position) = bufstart;
-	}
-	heapTuple = (HeapTuple) (*position);
+	nread = BufFileRead(file, (void *) &htup, sizeof(HeapTupleData));
+	if (nread == 0)
+		return NULL;			/* end of file */
+	if (nread != sizeof(HeapTupleData))
+		elog(ERROR, "Read from hashjoin temp file failed");
+	heapTuple = palloc(HEAPTUPLESIZE + htup.t_len);
+	memcpy((char *) heapTuple, (char *) &htup, sizeof(HeapTupleData));
 	heapTuple->t_data = (HeapTupleHeader) 
 						((char *) heapTuple + HEAPTUPLESIZE);
-	(*position) = (char *) MAXALIGN(*position + 
-									heapTuple->t_len + HEAPTUPLESIZE);
-
-	return ExecStoreTuple(heapTuple, tupleSlot, InvalidBuffer, false);
+	nread = BufFileRead(file, (void *) heapTuple->t_data, htup.t_len);
+	if (nread != (size_t) htup.t_len)
+		elog(ERROR, "Read from hashjoin temp file failed");
+	return ExecStoreTuple(heapTuple, tupleSlot, InvalidBuffer, true);
 }
 
 /* ----------------------------------------------------------------
@@ -652,116 +501,80 @@ ExecHashJoinGetSavedTuple(HashJoinState *hjstate,
 static int
 ExecHashJoinNewBatch(HashJoinState *hjstate)
 {
-	File	   *innerBatches;
-	File	   *outerBatches;
-	int		   *innerBatchSizes;
-	Var		   *innerhashkey;
-	HashJoinTable hashtable;
-	int			nbatch;
-	char	   *readPos;
-	int			readBlk;
-	char	   *readBuf;
+	HashJoinTable hashtable = hjstate->hj_HashTable;
+	int			nbatch = hashtable->nbatch;
+	int			newbatch = hashtable->curbatch + 1;
+	long	   *innerBatchSize = hashtable->innerBatchSize;
+	long	   *outerBatchSize = hashtable->outerBatchSize;
+	BufFile	   *innerFile;
 	TupleTableSlot *slot;
 	ExprContext *econtext;
-	int			i;
-	int			cc;
-	int			newbatch;
+	Var		   *innerhashkey;
 
-	hashtable = hjstate->hj_HashTable;
-	outerBatches = hjstate->hj_OuterBatches;
-	innerBatches = hjstate->hj_InnerBatches;
-	nbatch = hashtable->nbatch;
-	newbatch = hashtable->curbatch + 1;
-
-	/* ------------------
-	 *	this is the last process, so it will do the cleanup and
-	 *	batch-switching.
-	 * ------------------
-	 */
-	if (newbatch == 1)
-	{
-
-		/*
-		 * if it is end of the first pass, flush all the last pages for
-		 * the batches.
-		 */
-		outerBatches = hjstate->hj_OuterBatches;
-		for (i = 0; i < nbatch; i++)
-		{
-			cc = FileSeek(outerBatches[i], 0L, SEEK_END);
-			if (cc < 0)
-				perror("FileSeek");
-			cc = FileWrite(outerBatches[i],
-						 ABSADDR(hashtable->batch) + i * BLCKSZ, BLCKSZ);
-			NDirectFileWrite++;
-			if (cc < 0)
-				perror("FileWrite");
-		}
-	}
 	if (newbatch > 1)
 	{
-
 		/*
-		 * remove the previous outer batch
+		 * We no longer need the previous outer batch file;
+		 * close it right away to free disk space.
 		 */
-		FileUnlink(outerBatches[newbatch - 2]);
+		BufFileClose(hashtable->outerBatchFile[newbatch - 2]);
+		hashtable->outerBatchFile[newbatch - 2] = NULL;
 	}
 
-	/*
-	 * rebuild the hash table for the new inner batch
-	 */
-	innerBatchSizes = (int *) ABSADDR(hashtable->innerbatchSizes);
 	/* --------------
-	 *	skip over empty inner batches
+	 *	We can skip over any batches that are empty on either side.
+	 *	Release associated temp files right away.
 	 * --------------
 	 */
-	while (newbatch <= nbatch && innerBatchSizes[newbatch - 1] == 0)
+	while (newbatch <= nbatch &&
+		   (innerBatchSize[newbatch - 1] == 0L ||
+			outerBatchSize[newbatch - 1] == 0L))
 	{
-		FileUnlink(outerBatches[newbatch - 1]);
-		FileUnlink(innerBatches[newbatch - 1]);
+		BufFileClose(hashtable->innerBatchFile[newbatch - 1]);
+		hashtable->innerBatchFile[newbatch - 1] = NULL;
+		BufFileClose(hashtable->outerBatchFile[newbatch - 1]);
+		hashtable->outerBatchFile[newbatch - 1] = NULL;
 		newbatch++;
 	}
+
 	if (newbatch > nbatch)
-	{
-		hashtable->pcount = hashtable->nprocess;
+		return newbatch;		/* no more batches */
 
-		return newbatch;
-	}
-	ExecHashTableReset(hashtable, innerBatchSizes[newbatch - 1]);
+	/*
+	 * Rewind inner and outer batch files for this batch,
+	 * so that we can start reading them.
+	 */
+	if (BufFileSeek(hashtable->outerBatchFile[newbatch - 1], 0L,
+					SEEK_SET) != 0L)
+		elog(ERROR, "Failed to rewind hash temp file");
 
+	innerFile = hashtable->innerBatchFile[newbatch - 1];
+
+	if (BufFileSeek(innerFile, 0L, SEEK_SET) != 0L)
+		elog(ERROR, "Failed to rewind hash temp file");
+
+	/*
+	 * Reload the hash table with the new inner batch
+	 */
+	ExecHashTableReset(hashtable, innerBatchSize[newbatch - 1]);
 
 	econtext = hjstate->jstate.cs_ExprContext;
 	innerhashkey = hjstate->hj_InnerHashKey;
-	readPos = NULL;
-	readBlk = 0;
-	readBuf = ABSADDR(hashtable->readbuf);
 
 	while ((slot = ExecHashJoinGetSavedTuple(hjstate,
-											 readBuf,
-											 innerBatches[newbatch - 1],
-											 hjstate->hj_HashTupleSlot,
-											 &readBlk,
-											 &readPos))
+											 innerFile,
+											 hjstate->hj_HashTupleSlot))
 		   && !TupIsNull(slot))
 	{
 		econtext->ecxt_innertuple = slot;
-		ExecHashTableInsert(hashtable, econtext, innerhashkey, NULL);
-		/* possible bug - glass */
+		ExecHashTableInsert(hashtable, econtext, innerhashkey);
 	}
 
-
-	/* -----------------
-	 *	only the last process comes to this branch
-	 *	now all the processes have finished the build phase
-	 * ----------------
-	 */
-
 	/*
-	 * after we build the hash table, the inner batch is no longer needed
+	 * after we build the hash table, the inner batch file is no longer needed
 	 */
-	FileUnlink(innerBatches[newbatch - 1]);
-	hjstate->hj_OuterReadPos = NULL;
-	hashtable->pcount = hashtable->nprocess;
+	BufFileClose(innerFile);
+	hashtable->innerBatchFile[newbatch - 1] = NULL;
 
 	hashtable->curbatch = newbatch;
 	return newbatch;
@@ -777,63 +590,41 @@ ExecHashJoinNewBatch(HashJoinState *hjstate)
  * ----------------------------------------------------------------
  */
 static int
-ExecHashJoinGetBatch(int bucketno, HashJoinTable hashtable, int nbatch)
+ExecHashJoinGetBatch(int bucketno, HashJoinTable hashtable)
 {
 	int			b;
 
-	if (bucketno < hashtable->nbuckets || nbatch == 0)
+	if (bucketno < hashtable->nbuckets || hashtable->nbatch == 0)
 		return 0;
 
-	b = (float) (bucketno - hashtable->nbuckets) /
-		(float) (hashtable->totalbuckets - hashtable->nbuckets) *
-		nbatch;
+	b = (hashtable->nbatch * (bucketno - hashtable->nbuckets)) /
+		(hashtable->totalbuckets - hashtable->nbuckets);
 	return b + 1;
 }
 
 /* ----------------------------------------------------------------
  *		ExecHashJoinSaveTuple
  *
- *		save a tuple to a tmp file using a buffer.
- *		the first few bytes in a page is an offset to the end
- *		of the page.
+ *		save a tuple to a tmp file.
+ *
+ * The data recorded in the file for each tuple is an image of its
+ * HeapTupleData (with meaningless t_data pointer) followed by the
+ * HeapTupleHeader and tuple data.
  * ----------------------------------------------------------------
  */
 
-char *
+void
 ExecHashJoinSaveTuple(HeapTuple heapTuple,
-					  char *buffer,
-					  File file,
-					  char *position)
+					  BufFile *file)
 {
-	long	   *pageend;
-	char	   *pagestart;
-	char	   *pagebound;
-	int			cc;
+	size_t	written;
 
-	pageend = (long *) buffer;
-	pagestart = (char *) (buffer + sizeof(long));
-	pagebound = buffer + BLCKSZ;
-	if (position == NULL)
-		position = pagestart;
-
-	if (position + heapTuple->t_len + HEAPTUPLESIZE >= pagebound)
-	{
-		cc = FileSeek(file, 0L, SEEK_END);
-		if (cc < 0)
-			perror("FileSeek");
-		cc = FileWrite(file, buffer, BLCKSZ);
-		NDirectFileWrite++;
-		if (cc < 0)
-			perror("FileWrite");
-		position = pagestart;
-		*pageend = 0;
-	}
-	memmove(position, heapTuple, HEAPTUPLESIZE);
-	memmove(position + HEAPTUPLESIZE, heapTuple->t_data, heapTuple->t_len);
-	position = (char *) MAXALIGN(position + heapTuple->t_len + HEAPTUPLESIZE);
-	*pageend = position - buffer;
-
-	return position;
+	written = BufFileWrite(file, (void *) heapTuple, sizeof(HeapTupleData));
+	if (written != sizeof(HeapTupleData))
+		elog(ERROR, "Write to hashjoin temp file failed");
+	written = BufFileWrite(file, (void *) heapTuple->t_data, heapTuple->t_len);
+	if (written != (size_t) heapTuple->t_len)
+		elog(ERROR, "Write to hashjoin temp file failed");
 }
 
 void
@@ -855,14 +646,10 @@ ExecReScanHashJoin(HashJoin *node, ExprContext *exprCtxt, Plan *parent)
 		ExecHashTableDestroy(hjstate->hj_HashTable);
 		hjstate->hj_HashTable = NULL;
 	}
-	hjstate->hj_CurBucket = (HashBucket) NULL;
-	hjstate->hj_CurTuple = (HeapTuple) NULL;
-	hjstate->hj_CurOTuple = (OverflowTuple) NULL;
+
+	hjstate->hj_CurBucketNo = 0;
+	hjstate->hj_CurTuple = (HashJoinTuple) NULL;
 	hjstate->hj_InnerHashKey = (Var *) NULL;
-	hjstate->hj_OuterBatches = (File *) NULL;
-	hjstate->hj_InnerBatches = (File *) NULL;
-	hjstate->hj_OuterReadPos = (char *) NULL;
-	hjstate->hj_OuterReadBlk = (int) 0;
 
 	hjstate->jstate.cs_OuterTupleSlot = (TupleTableSlot *) NULL;
 	hjstate->jstate.cs_TupFromTlist = (bool) false;
@@ -875,5 +662,4 @@ ExecReScanHashJoin(HashJoin *node, ExprContext *exprCtxt, Plan *parent)
 		ExecReScan(((Plan *) node)->lefttree, exprCtxt, (Plan *) node);
 	if (((Plan *) node)->righttree->chgParam == NULL)
 		ExecReScan(((Plan *) node)->righttree, exprCtxt, (Plan *) node);
-
 }
