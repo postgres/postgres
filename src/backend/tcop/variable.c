@@ -2,7 +2,7 @@
  * Routines for handling of 'SET var TO', 'SHOW var' and 'RESET var'
  * statements.
  *
- * $Id: variable.c,v 1.5 1997/04/23 06:09:36 vadim Exp $
+ * $Id: variable.c,v 1.6 1997/04/24 15:41:37 vadim Exp $
  *
  */
 
@@ -11,6 +11,11 @@
 #include "postgres.h"
 #include "miscadmin.h"
 #include "tcop/variable.h"
+#include "utils/builtins.h"
+#include "optimizer/internal.h"
+
+extern Cost _cpu_page_wight_;
+extern Cost _cpu_index_page_wight_;
 
 /*-----------------------------------------------------------------------*/
 #if USE_EURODATES
@@ -64,6 +69,50 @@ static bool reset_null(const char *value)
 	return TRUE;
 	}
 	
+static bool parse_cost_heap (const char *value)
+{
+    float32 res = float4in ((char*)value);
+    
+    _cpu_page_wight_ = *res;
+    
+    return TRUE;
+}
+
+static bool show_cost_heap ()
+{
+
+    elog (NOTICE, "COST_HEAP is %f", _cpu_page_wight_);
+    return TRUE;
+}
+
+static bool reset_cost_heap ()
+{
+    _cpu_page_wight_ = _CPU_PAGE_WEIGHT_;
+    return TRUE;
+}
+
+static bool parse_cost_index (const char *value)
+{
+    float32 res = float4in ((char*)value);
+    
+    _cpu_index_page_wight_ = *res;
+    
+    return TRUE;
+}
+
+static bool show_cost_index ()
+{
+
+    elog (NOTICE, "COST_INDEX is %f", _cpu_index_page_wight_);
+    return TRUE;
+}
+
+static bool reset_cost_index ()
+{
+    _cpu_index_page_wight_ = _CPU_INDEX_PAGE_WEIGHT_;
+    return TRUE;
+}
+
 static bool parse_date(const char *value)
 	{
 	char tok[32];
@@ -149,6 +198,10 @@ struct VariableParsers
 	{
 		{ "datestyle",	parse_date,	show_date,	reset_date },
 		{ "timezone", 	parse_null,	show_null,	reset_null },
+		{ "cost_heap", 	parse_cost_heap,
+				show_cost_heap,	reset_cost_heap },
+		{ "cost_index",	parse_cost_index,
+				show_cost_index,	reset_cost_index },
 		{ NULL, NULL, NULL }
 	};
 
