@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/parser/parse_clause.c,v 1.7 1998/01/05 03:32:26 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/parser/parse_clause.c,v 1.8 1998/01/06 23:58:05 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -263,7 +263,6 @@ transformSortClause(ParseState *pstate,
 		TargetEntry *restarget;
 		Resdom	   *resdom;
 
-		sortlist = NIL;	/* we create it on the fly here */
 		
 		restarget = find_targetlist_entry(pstate, sortby, targetlist);
 		if (restarget == NULL)
@@ -274,9 +273,7 @@ transformSortClause(ParseState *pstate,
 								   resdom->restype,
 								   resdom->restype, false));
 		if (sortlist == NIL)
-		{
 			s = sortlist = lcons(sortcl, NIL);
-		}
 		else
 		{
 			List	   *i;
