@@ -165,54 +165,54 @@ pg_config_paths.h: win32.mak
 
 
 "$(INTDIR)\getaddrinfo.obj" : ..\..\port\getaddrinfo.c
-    $(CPP) @<<
-    $(CPP_PROJ) ..\..\port\getaddrinfo.c
+	$(CPP) @<<
+	$(CPP_PROJ) ..\..\port\getaddrinfo.c
 <<
 
 "$(INTDIR)\pgstrcasecmp.obj" : ..\..\port\pgstrcasecmp.c
-    $(CPP) @<<
-    $(CPP_PROJ) ..\..\port\pgstrcasecmp.c
+	$(CPP) @<<
+	$(CPP_PROJ) ..\..\port\pgstrcasecmp.c
 <<
 
 "$(INTDIR)\thread.obj" : ..\..\port\thread.c
-    $(CPP) @<<
-    $(CPP_PROJ) ..\..\port\thread.c
+	$(CPP) @<<
+	$(CPP_PROJ) ..\..\port\thread.c
 <<
 
 "$(INTDIR)\inet_aton.obj" : ..\..\port\inet_aton.c
-    $(CPP) @<<
-    $(CPP_PROJ) ..\..\port\inet_aton.c
+	$(CPP) @<<
+	$(CPP_PROJ) ..\..\port\inet_aton.c
 <<
 
 "$(INTDIR)\crypt.obj" : ..\..\port\crypt.c
-    $(CPP) @<<
-    $(CPP_PROJ) ..\..\port\crypt.c
+	$(CPP) @<<
+	$(CPP_PROJ) ..\..\port\crypt.c
 <<
 
 "$(INTDIR)\noblock.obj" : ..\..\port\noblock.c
-    $(CPP) @<<
-    $(CPP_PROJ) ..\..\port\noblock.c
+	$(CPP) @<<
+	$(CPP_PROJ) ..\..\port\noblock.c
 <<
 
 "$(INTDIR)\md5.obj" : ..\..\backend\libpq\md5.c
-    $(CPP) @<<
-    $(CPP_PROJ) ..\..\backend\libpq\md5.c
+	$(CPP) @<<
+	$(CPP_PROJ) ..\..\backend\libpq\md5.c
 <<
 
 "$(INTDIR)\ip.obj" : ..\..\backend\libpq\ip.c
-    $(CPP) @<<
-    $(CPP_PROJ) ..\..\backend\libpq\ip.c
+	$(CPP) @<<
+	$(CPP_PROJ) ..\..\backend\libpq\ip.c
 <<
 
 "$(INTDIR)\wchar.obj" : ..\..\backend\utils\mb\wchar.c
-    $(CPP) @<<
-    $(CPP_PROJ) /I "." ..\..\backend\utils\mb\wchar.c
+	$(CPP) @<<
+	$(CPP_PROJ) /I "." ..\..\backend\utils\mb\wchar.c
 <<
 
 
 "$(INTDIR)\encnames.obj" : ..\..\backend\utils\mb\encnames.c
-    $(CPP) @<<
-    $(CPP_PROJ) /I "." ..\..\backend\utils\mb\encnames.c
+	$(CPP) @<<
+	$(CPP_PROJ) /I "." ..\..\backend\utils\mb\encnames.c
 <<
 
 .c.obj:

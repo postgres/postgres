@@ -149,97 +149,97 @@ LINK32_OBJS= \
 
 
 "$(OUTDIR)\$(OUTFILENAME).lib" : "$(OUTDIR)" $(DEF_FILE) $(LIB32_OBJS)
-    $(LIB32) @<<
-  $(LIB32_FLAGS) $(DEF_FLAGS) $(LIB32_OBJS)
+	$(LIB32) @<<
+	$(LIB32_FLAGS) $(DEF_FLAGS) $(LIB32_OBJS)
 <<
 
 "$(INTDIR)\libpq.res" : "$(INTDIR)" libpq.rc
-    $(RSC) $(RSC_PROJ) libpq.rc
+	$(RSC) $(RSC_PROJ) libpq.rc
 
 
 "$(OUTDIR)\$(OUTFILENAME).dll" : "$(OUTDIR)" "$(OUTDIR)\libpqdll.obj" "$(INTDIR)\libpqdll.obj" "$(INTDIR)\libpq.res"
-    $(LINK32) @<<
-  $(LINK32_FLAGS) $(LINK32_OBJS)
+	$(LINK32) @<<
+	$(LINK32_FLAGS) $(LINK32_OBJS)
 <<
 
 "$(INTDIR)\getaddrinfo.obj" : ..\..\port\getaddrinfo.c
-    $(CPP) @<<
-    $(CPP_PROJ) ..\..\port\getaddrinfo.c
+	$(CPP) @<<
+	$(CPP_PROJ) ..\..\port\getaddrinfo.c
 <<
 
 "$(INTDIR)\pgstrcasecmp.obj" : ..\..\port\pgstrcasecmp.c
-    $(CPP) @<<
-    $(CPP_PROJ) ..\..\port\pgstrcasecmp.c
+	$(CPP) @<<
+	$(CPP_PROJ) ..\..\port\pgstrcasecmp.c
 <<
 
 "$(INTDIR)\thread.obj" : ..\..\port\thread.c
-    $(CPP) @<<
-    $(CPP_PROJ) ..\..\port\thread.c
+	$(CPP) @<<
+	$(CPP_PROJ) ..\..\port\thread.c
 <<
 
 "$(INTDIR)\inet_aton.obj" : ..\..\port\inet_aton.c
-    $(CPP) @<<
-    $(CPP_PROJ) ..\..\port\inet_aton.c
+	$(CPP) @<<
+	$(CPP_PROJ) ..\..\port\inet_aton.c
 <<
 
 "$(INTDIR)\crypt.obj" : ..\..\port\crypt.c
-    $(CPP) @<<
-    $(CPP_PROJ) ..\..\port\crypt.c
+	$(CPP) @<<
+	$(CPP_PROJ) ..\..\port\crypt.c
 <<
 
 "$(INTDIR)\noblock.obj" : ..\..\port\noblock.c
-    $(CPP) @<<
-    $(CPP_PROJ) ..\..\port\noblock.c
+	$(CPP) @<<
+	$(CPP_PROJ) ..\..\port\noblock.c
 <<
 
 "$(INTDIR)\md5.obj" : ..\..\backend\libpq\md5.c
-    $(CPP) @<<
-    $(CPP_PROJ) ..\..\backend\libpq\md5.c
+	$(CPP) @<<
+	$(CPP_PROJ) ..\..\backend\libpq\md5.c
 <<
 
 "$(INTDIR)\ip.obj" : ..\..\backend\libpq\ip.c
-    $(CPP) @<<
-    $(CPP_PROJ) ..\..\backend\libpq\ip.c
+	$(CPP) @<<
+	$(CPP_PROJ) ..\..\backend\libpq\ip.c
 <<
 
 "$(INTDIR)\wchar.obj" : ..\..\backend\utils\mb\wchar.c
-    $(CPP) @<<
-    $(CPP_PROJ) /I "." ..\..\backend\utils\mb\wchar.c
+	$(CPP) @<<
+	$(CPP_PROJ) /I "." ..\..\backend\utils\mb\wchar.c
 <<
 
 
 "$(INTDIR)\encnames.obj" : ..\..\backend\utils\mb\encnames.c
-    $(CPP) @<<
-    $(CPP_PROJ) /I "." ..\..\backend\utils\mb\encnames.c
+	$(CPP) @<<
+	$(CPP_PROJ) /I "." ..\..\backend\utils\mb\encnames.c
 <<
 
 
 .c{$(CPP_OBJS)}.obj::
-   $(CPP) @<<
-   $(CPP_PROJ) $<
+	$(CPP) @<<
+	$(CPP_PROJ) $<
 <<
 
 .cpp{$(CPP_OBJS)}.obj::
-   $(CPP) @<<
-   $(CPP_PROJ) $< 
+	$(CPP) @<<
+	$(CPP_PROJ) $< 
 <<
 
 .cxx{$(CPP_OBJS)}.obj::
-   $(CPP) @<<
-   $(CPP_PROJ) $< 
+	$(CPP) @<<
+	$(CPP_PROJ) $< 
 <<
 
 .c{$(CPP_SBRS)}.sbr::
-   $(CPP) @<<
-   $(CPP_PROJ) $< 
+	$(CPP) @<<
+	$(CPP_PROJ) $< 
 <<
 
 .cpp{$(CPP_SBRS)}.sbr::
-   $(CPP) @<<
-   $(CPP_PROJ) $< 
+	$(CPP) @<<
+	$(CPP_PROJ) $< 
 <<
 
 .cxx{$(CPP_SBRS)}.sbr::
-   $(CPP) @<<
-   $(CPP_PROJ) $< 
+	$(CPP) @<<
+	$(CPP_PROJ) $< 
 <<
