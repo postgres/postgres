@@ -1422,6 +1422,16 @@ Fri May 16 11:45:50 CEST 2003
 Fri May 16 13:32:10 CEST 2003
 
 	- Made double variables work again.
+	
+Mon May 19 09:22:40 CEST 2003
+
+	- Fixed exec sql ifdef command.
+
+Tue May 20 11:47:00 CEST 2003
+
+	- Reversed my fix for ifdef. It was the example, not ecpg which was
+	  incorrect.
+	- Changed DBPATH variable to PG_DBPATH.
 	- Set ecpg version to 2.12.0.
 	- Set ecpg library to 3.4.2.
 	- Set pgtypes library to 1.0.0
