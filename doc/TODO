@@ -1,57 +1,118 @@
-From scrappy@ki.net Tue Aug  6 19:57:11 1996
-Status: RO
-X-Status: 
-Received: from candle.pha.pa.us (maillist@s1-03.ppp.op.net [206.84.209.132]) by quagmire.ki.net (8.7.5/8.7.5) with ESMTP id TAA01576 for <scrappy@ki.net>; Tue, 6 Aug 1996 19:57:08 -0400 (EDT)
-Received: (from maillist@localhost) by candle.pha.pa.us (8.7.4/8.7.3) id TAA11618 for scrappy@ki.net; Tue, 6 Aug 1996 19:57:37 -0400 (EDT)
-From: Bruce Momjian <maillist@candle.pha.pa.us>
-Message-Id: <199608062357.TAA11618@candle.pha.pa.us>
-Subject: add TODO to distribution
-To: scrappy@ki.net (Marc G. Fournier)
-Date: Tue, 6 Aug 1996 19:57:36 -0400 (EDT)
-X-Mailer: ELM [version 2.4 PL25]
-MIME-Version: 1.0
-Content-Type: text/plain; charset=US-ASCII
-Content-Transfer-Encoding: 7bit
-
-Here is the current TODO list.  Let's add it to the next distribution. 
-This was not ready at the time of the 1.02 release.
-
----------------------------------------------------------------------------
-
-
-=================================================
+====================================================
 TODO list (FAQ) for Postgres95
-==================================================
-last updated:		Mon Aug  5 21:00:12 EDT 1996
+====================================================
+last updated:		Thu Oct  3 17:59:06 EDT 1996
 
 current maintainer:	Bruce Momjian (maillist@candle.pha.pa.us)
-original author:	Jolly Chen (jolly@cs.berkeley.edu)
 
+The most recent version of this document can be viewed at
+the postgres95 WWW site, http://www.ki.net/postgres95.
+
+Dashed items(-) are being worked on or are ready for the 2.0 release.
 
 RELIABILITY
 -----------
-Overhaul mdmgr/smgr to fix double unlinking and double opens, cleanup
-Memory leaks (hunt and destroy with tools like Purify)
-	fix unitialized reads of memory
-	fix array over-runs of memory writes
-Re-visit and fix vacuum
-	can't vacuum large objects
-        can't shrink tables, pg_time and pg_log
+-Overhaul mdmgr/smgr to fix double unlinking and double opens, cleanup
+-Overhaul bufmgr/lockmgr/transaction manager
+-	remove -S (stable memory) option or fix memory manager
+-Memory leaks (hunt and destroy with tools like Purify)
+-	fix unitialized reads of memory
+-	fix array over-runs of memory writes
+-Fix CLUSTER
+-Prevent improper index creation
+-Change default decimal constant representation from float4 to float8
+-Allow libpq to distinguish between text value '' and null
+-	using null bitmask returned from backend?
 Fix all NULL features
-DROP AGGREGATE should take in basetype as an arg
+	allow psql to print nulls meaningfully
+-Starting quote in insert string errors
+ALTER TABLE bug - running postgress process needs to re-read table definition
+Allow non-postgres users with createdb privs to destroydb's
+Prevent SELECT NULL from crashing server
+	(error on first attempt, crash after another query)
+-Fix elusive btree range/non-range bug
+-Remove duplicate system catalog info or report mismatches
+Fix compile and security of Kerberos V code
+-Remove duplicate OIDS in system tables
+Dropping a table twice causes corruption, drop/create not rollback-able
+Change index creation to process deleted and current rows
+
+ENHANCEMENTS
+------------
+Add full ANSI SQL capabilities ( a vendor has offered to help)
+	add subselects, possibility using temporary SQL functions
+	Implement HAVING clause
+	Implement IN qualifier
+	Implement EXISTS qualifier
+	Implement BETWEEN qualifier
+	add synonym of != for <>
+	column constraints (using rules), esp. primary keys
+	add DEFAULT, RESTRAINT, and CHECK capabilities
+	-add UNIQUE index capability
+	report "Not implemented" if valid syntax is supplied
+	add OUTER joins, left and right
+	make VIEWs updateable where possible
+	add UNIONS, INTERSECTS, SUBTRACTS
+	add temporary tables
+	add assertions
+	add domains
+	add sql3 recursive unions
+	add the concept of dataspaces
+	allow conversion type casts on select target fields
+Allow compression of large fields or a compressed field type
+Fix the rules system
+	robust
+	making INSTEAD rules work
+Full set of text operations and functions
+	word searches, concat, upper/lower(), max() on text, char
+-Replace table-level locking with row or page-level locking
+Large objects
+	overwriting blocks has problems
+	there are other problems, too.
+	Fix large object mapping scheme
+	not to stuff everything as files in a single directory
+Better interface for adding to pg_group
+Make multi-field indexes easier to create
+	allow optimizer to effectively use parameters without accessing table
+Add int8 type
+Add table comments
+Add support for tables >2G
+Incorporate the PERL PG95 interface library into source tree
+Threaded version of the server or libpq
+Allow libpq to cancel query requests
+Add REGEX internationalization
 Add other language types for built-in functions
 	expand to allow tcl, perl, java,
 	generalize the function manager switch to pass 
 		function sources to interpreter engines.
-Fix large object mapping scheme
-	not to stuff everything as files in a single directory
-Fix CLUSTER
-Prevent improper index creation
-Starting quote in insert string errors
-Change default decimal constant representation from float4 to float8
-ALTER TABLE bug - running postgress process needs to re-read table definition
-Allow libpq to distinguish between text value '' and null
-Allow non-postgres users with createdb privs to destroydb's
+-Re-visit and fix vacuum
+-	can't vacuum large objects
+-       can't shrink tables, pg_time and pg_log
+-	allow actual compression, not just reuse on the same page
+-	allow vacuum to be run on one table or entire database
+	split apart row removal function from statistics function
+	allow time-travel to be turned off so superceeded/deleted row are reused
+-Reverse meaning of HBA masks
+Add hostname/user level access control rather than just hostname and user
+Allow BY,ORDER BY to specify columns by number, or by non-alias table.column
+Allow GROUP BY to use alias column name
+Remove restriction that ORDER BY field must be in SELECT list?
+Allow queries about owner of datbases, tables like:
+        SELECT u.usesysid FROM postgres.pg_user u;
+DROP AGGREGATE should take in basetype as an arg
+Add word index for text fields, maybe with trigrams, i.e.:
+    ' (cat | dog) & ! fox ' meaning text has cat or dog, but not fox
+Add common-sense constant type promotions
+-Allow uppercase agregates by lowercasing function names on input
+Allow readline-type or editor command editing of multi-line SQL commands
+Allow pg_dump to dump all databases at a site in one command
+-Allow restriction on who can create C functions
+Allow restriction on who can create copy tables
+-Allow installation-configuration option to auto-add all local users
+Allow function result to be used in GROUP BY
+-Fontend COPY
+-Secure Authentication of local users
+-Idend authentication of local users
 
 PERFORMANCE
 -----------
@@ -61,53 +122,15 @@ Is fsync use optimized?
 Multi-representational types, a la Illustra. For example, have a
        text type that is stored in-tuple when less than 8K and in large
        objects, when greater than 8K.
-
-ENHANCEMENTS
-------------
-Add full ANSI SQL capabilities ( a vendor has offered to help)
-	add subselects
-	column constraints (using rules), esp. primary keys
-	add DEFAULT, UNIQUE, RESTRAINT, and CHECK capabilities
-	report "Not implemented" if valid syntax is supplied
-	add OUTER joins
-	make VIEWs updateable where possible
-	add UNIONS, INTERSECTS, SUBTRACTS
-	add temporary tables
-	add assertions
-	add domains
-	add sql3 recursive unions
-	add the concept of dataspaces
-	Implement HAVING clause
-	Implement IN qualifier
-Add a way to preserve oid's when doing dump and load
-	if not, make oid's accessable in insert rules
-Add word index for text fields, maybe with trigrams, i.e.:
-    ' (cat | dog) & ! fox ' meaning text has cat or dog, but not fox
-Allow compression of large fields or a compressed field type
-Fix the rules system
-	robust
-	making INSTEAD rules work
-Full set of text operations and functions
-	word searches, concat, upper/lower(), max() on text, char
-Replace table-level locking with row or page-level locking
-Large objects
-	overwriting blocks has problems
-	there are other problems, too.
-Better interface for adding to pg_group
-Make multi-field indexes easier to create
-	allow optimizer to effectively use parameters without accessing table
-Improve debugging output
-Add int8 type
-Add table comments
-Add support for tables >2G
-Incorporate the PERL PG95 interface library into source tree
-Threaded version of the server or libpq
-Add REGEX internationalization
+Use indexes in ORDER BY
+Profile engine in INSERT's and other operations
+Speed up hash creation by using btree's fast sort/insert routines
+Cache most recent query plan(s?)
+Allow compression of log and meta data
+Allow LIKE/wildcard matches to use indexes if the wildcard character is not first
 
 DOCUMENTATION
 -------------
-Better documentation. Write a real book on postgres, perhaps?
-Document OPENLINK fsync patch
 Update usermanual source
 Reduce size of regression diffs
 
@@ -115,7 +138,8 @@ PORTABILITY
 -----------
 Windows NT port
 	Mariposa project at Berkeley has a person who's working on this
+Win95 port, use GNU port or remove it?
 Binary distributions for linux
 Merge bsdi_2_1 to bsdi
 Merge i386_solaris and sparc_solaris into solaris
-
+Switch from PORTNAME to individual feature defines (use configure/autoconf?)
