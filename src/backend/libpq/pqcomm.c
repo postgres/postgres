@@ -29,7 +29,7 @@
  * Portions Copyright (c) 1996-2001, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- *	$Id: pqcomm.c,v 1.131 2002/04/20 23:35:43 petere Exp $
+ *	$Id: pqcomm.c,v 1.132 2002/04/21 01:03:33 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -585,14 +585,16 @@ pq_getstring(StringInfo s)
 		}
 
 		for (i = PqRecvPointer; i < PqRecvLength; i++)
+		{
 			if (PqRecvBuffer[i] == '\0')
 			{
 				/* does not copy the \0 */
 				appendBinaryStringInfo(s, PqRecvBuffer + PqRecvPointer,
 									   i - PqRecvPointer);
-				PqRecvPointer += i + 1;
+				PqRecvPointer = i + 1; /* advance past \0 */
 				return 0;
 			}
+		}
 
 		/* If we're here we haven't got the \0 in the buffer yet. */
 
