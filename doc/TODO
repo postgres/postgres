@@ -215,7 +215,7 @@ INDEXES
 
 CACHE
 
-* Cache most recent query plan(s) [prepare]
+* Cache most recent query plan(s) (Karel) [prepare]
 * Shared catalog cache, reduce lseek()'s by caching table size in shared area
 
 MISC
@@ -243,6 +243,7 @@ MISC
 * Gather more accurate statistics using indexes
 * Improve statistics storage in pg_class [performance]
 * Improve VACUUM speed with indexes [vacuum]
+* BSD/OS does not support locale because there is no LC_MESSAGES
 
 SOURCE CODE
 -----------
