@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/bin/psql/Attic/psql.c,v 1.156 1998/08/27 13:25:18 scrappy Exp $
+ *	  $Header: /cvsroot/pgsql/src/bin/psql/Attic/psql.c,v 1.157 1998/08/29 04:05:39 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -89,7 +89,8 @@ char *__progname = "psql";
 #define PROMPT_READY	'='
 #define PROMPT_CONTINUE '-'
 #define PROMPT_COMMENT	'*'
-#define PROMPT_QUOTE	'\''
+#define PROMPT_SINGLEQUOTE	'\''
+#define PROMPT_DOUBLEQUOTE	'"'
 
 /* Backslash command handling:
  *	0 - send currently constructed query to backend (i.e. we got a \g)
@@ -2310,7 +2311,7 @@ MainLoop(PsqlSettings *pset, char *query, FILE *source)
 
 	/* We've reached the end of our command input. */
 	bool		success;
-	bool		in_quote;
+	char		in_quote;	/* == 0 for no in_quote */
 	bool		was_bslash;		/* backslash */
 	int			paren_level;
 	char	   *query_start;
@@ -2380,8 +2381,10 @@ MainLoop(PsqlSettings *pset, char *query, FILE *source)
 		{
 			if (interactive && !pset->quiet)
 			{
-				if (in_quote)
-					pset->prompt[strlen(pset->prompt) - 3] = PROMPT_QUOTE;
+				if (in_quote && in_quote == PROMPT_SINGLEQUOTE)
+					pset->prompt[strlen(pset->prompt) - 3] = PROMPT_SINGLEQUOTE;
+				else if (in_quote && in_quote == PROMPT_DOUBLEQUOTE)
+					pset->prompt[strlen(pset->prompt) - 3] = PROMPT_DOUBLEQUOTE;
 				else if (xcomment != NULL)
 					pset->prompt[strlen(pset->prompt) - 3] = PROMPT_COMMENT;
 				else if (query[0] != '\0' && !querySent)
@@ -2500,7 +2503,7 @@ MainLoop(PsqlSettings *pset, char *query, FILE *source)
 					was_bslash = true;
 
 				/* inside a quote? */
-				if (in_quote && (line[i] != '\'' || was_bslash))
+				if (in_quote && (line[i] != in_quote || was_bslash))
 					 /* do nothing */ ;
 				else if (xcomment != NULL)		/* inside an extended
 												 * comment? */
@@ -2548,8 +2551,10 @@ MainLoop(PsqlSettings *pset, char *query, FILE *source)
 					line[i] = '\0';		/* remove comment */
 					break;
 				}
-				else if (line[i] == '\'')
-					in_quote ^= 1;
+				else if (in_quote && line[i] == in_quote)
+					in_quote = false;
+				else if (!in_quote && (line[i] == '\'' || line[i] == '"'))
+					in_quote = line[i];
 				/* semi-colon? then send query now */
 				else if (!paren_level && line[i] == ';')
 				{

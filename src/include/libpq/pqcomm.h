@@ -6,7 +6,7 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: pqcomm.h,v 1.27 1998/08/22 04:24:18 momjian Exp $
+ * $Id: pqcomm.h,v 1.28 1998/08/29 04:05:43 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -15,12 +15,15 @@
 
 #include <stdio.h>
 #include <sys/types.h>
+#ifdef WIN32
+#include <winsock.h>
+#else
 #include <sys/socket.h>
 #include <sys/un.h>
 #include <netinet/in.h>
+#endif
 
 #include "c.h"
-
 
 /* Define a generic socket address type. */
 
@@ -28,7 +31,9 @@ typedef union SockAddr
 {
 	struct sockaddr sa;
 	struct sockaddr_in in;
+#ifndef WIN32
 	struct sockaddr_un un;
+#endif
 } SockAddr;
 
 

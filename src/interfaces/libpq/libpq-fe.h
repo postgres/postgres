@@ -6,7 +6,7 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: libpq-fe.h,v 1.38 1998/08/17 03:50:40 scrappy Exp $
+ * $Id: libpq-fe.h,v 1.39 1998/08/29 04:05:45 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -21,9 +21,13 @@ extern		"C"
 
 #include <stdio.h>
 /* these wouldn't need to be included if PGSockAddr weren't exported: */
+#ifdef WIN32
+#include <winsock.h>
+#else
 #include <sys/socket.h>
 #include <sys/un.h>
 #include <netinet/in.h>
+#endif
 /* ----------------
  *		include stuff common to fe and be
  * ----------------
@@ -141,7 +145,9 @@ extern		"C"
 	{
 		struct sockaddr sa;
 		struct sockaddr_in in;
+#ifndef WIN32
 		struct sockaddr_un un;
+#endif
 	} PGSockAddr;
 
 /* large-object-access data ... allocated only if large-object code is used.

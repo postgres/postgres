@@ -11,6 +11,7 @@ NULL=nul
 !ENDIF 
 
 CPP=cl.exe
+RSC=rc.exe
 
 OUTDIR=.\Release
 INTDIR=.\Release
@@ -28,10 +29,14 @@ CLEAN :
 	-@erase "$(INTDIR)\fe-lobj.obj"
 	-@erase "$(INTDIR)\fe-misc.obj"
 	-@erase "$(INTDIR)\fe-print.obj"
-        -@erase "$(OUTDIR)\libpqdll.obj"
-	-@erase "$(INTDIR)\vc50.idb"
+	-@erase "$(OUTDIR)\libpqdll.obj"
 	-@erase "$(OUTDIR)\libpq.lib"
-        -@erase "$(OUTDIR)\libpq.dll"
+	-@erase "$(OUTDIR)\libpq.dll"
+	-@erase "$(OUTDIR)\libpq.res"
+	-@erase "vc50.pch"
+	-@erase "$(OUTDIR)\libpq.pch"
+	-@erase "$(OUTDIR)\libpqdll.exp"
+	-@erase "$(OUTDIR)\libpqdll.lib"
 
 "$(OUTDIR)" :
     if not exist "$(OUTDIR)/$(NULL)" mkdir "$(OUTDIR)"
@@ -53,6 +58,8 @@ LIB32_OBJS= \
 	"$(INTDIR)\fe-misc.obj" \
 	"$(INTDIR)\fe-print.obj"
 
+RSC_PROJ=/l 0x409 /fo"$(INTDIR)\libpq.res"
+
 LINK32=link.exe
 LINK32_FLAGS=kernel32.lib user32.lib gdi32.lib winspool.lib comdlg32.lib\
  advapi32.lib shell32.lib ole32.lib oleaut32.lib uuid.lib odbc32.lib wsock32.lib\
@@ -61,7 +68,8 @@ LINK32_FLAGS=kernel32.lib user32.lib gdi32.lib winspool.lib comdlg32.lib\
  /implib:"$(OUTDIR)\libpqdll.lib"  /def:libpqdll.def
 LINK32_OBJS= \
 	"$(INTDIR)\libpqdll.obj" \
-	"$(OUTDIR)\libpq.lib"
+	"$(OUTDIR)\libpq.lib" \
+	"$(OUTDIR)\libpq.res"
 
 
 "$(OUTDIR)\libpq.lib" : "$(OUTDIR)" $(DEF_FILE) $(LIB32_OBJS)
@@ -69,7 +77,11 @@ LINK32_OBJS= \
   $(LIB32_FLAGS) $(DEF_FLAGS) $(LIB32_OBJS)
 <<
 
-"$(OUTDIR)\libpq.dll" : "$(OUTDIR)" "$(OUTDIR)\libpqdll.obj" "$(INTDIR)\libpqdll.obj"
+"$(INTDIR)\libpq.res" : "$(INTDIR)" libpq.rc
+    $(RSC) $(RSC_PROJ) libpq.rc
+
+
+"$(OUTDIR)\libpq.dll" : "$(OUTDIR)" "$(OUTDIR)\libpqdll.obj" "$(INTDIR)\libpqdll.obj" "$(INTDIR)\libpq.res"
     $(LINK32) @<<
   $(LINK32_FLAGS) $(LINK32_OBJS)
 <<

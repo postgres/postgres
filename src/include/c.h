@@ -7,7 +7,7 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: c.h,v 1.43 1998/08/25 21:04:41 scrappy Exp $
+ * $Id: c.h,v 1.44 1998/08/29 04:05:41 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -133,7 +133,9 @@ typedef char *Pointer;
  * Example:
  *		extern const Version	RomVersion;
  */
+#ifndef WIN32
 #define const					/* const */
+#endif
 
 /*
  * signed --
