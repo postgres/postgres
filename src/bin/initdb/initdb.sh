@@ -26,7 +26,7 @@
 #
 #
 # IDENTIFICATION
-#    $Header: /cvsroot/pgsql/src/bin/initdb/Attic/initdb.sh,v 1.83 2000/01/29 16:58:42 petere Exp $
+#    $Header: /cvsroot/pgsql/src/bin/initdb/Attic/initdb.sh,v 1.84 2000/02/08 15:58:54 momjian Exp $
 #
 #-------------------------------------------------------------------------
 
@@ -127,7 +127,7 @@ MULTIBYTE=__MULTIBYTE__
 debug=0
 noclean=0
 template_only=0
-
+show_setting=0
 
 # Note: There is a single compelling reason that the name of the database
 #       superuser be the same as the Unix user owning the server process:
@@ -148,6 +148,9 @@ do
                 debug=1
                 echo "Running with debug mode on."
                 ;;
+        --show|-s)
+        	show_setting=1
+        	;;        
         --noclean|-n)
                 noclean=1
                 echo "Running with noclean mode on. Mistakes will not be cleaned up."
@@ -227,15 +230,16 @@ if [ "$usage" ]; then
         echo "  -W, --pwprompt              Prompt for a password for the new superuser's"
  	if [ -n "$MULTIBYTE" ]
 	then 
- 		echo "  -E, --encoding <encoding>         Set the default multibyte encoding for new databases"
+ 		echo "  -E, --encoding <encoding>   Set the default multibyte encoding for new databases"
 	fi
         echo "  -i, --sysid <sysid>         Database sysid for the superuser"
         echo "Less commonly used options: "
         echo "  -L, --pglib <libdir>        Where to find the input files"
         echo "  -t, --template              Re-initialize template database only"
         echo "  -d, --debug                 Generate lots of debugging output"
+        echo "  -s, --show                  Do not action, show the initdb setting only" 
         echo "  -n, --noclean               Do not clean up after errors"
- 	echo	 
+ 	echo
         echo "Report bugs to <pgsql-bugs@postgresql.org>."
  	exit 0
 fi
@@ -319,6 +323,30 @@ TEMPLATE_DESCR="$PGLIB"/local1_template1.description
 GLOBAL_DESCR="$PGLIB"/global1.description
 PG_GEQO_SAMPLE="$PGLIB"/pg_geqo.sample
 PG_POSTMASTER_OPTS_DEFAULT_SAMPLE="$PGLIB"/postmaster.opts.default.sample
+
+if [ "$show_setting" ]
+then
+	echo
+	echo "The initdb setting:"
+ 	echo
+ 	echo "  DATADIR:        $PGDATA"
+ 	echo "  PGLIB:          $PGLIB"
+ 	echo "  PGPATH:         $PGPATH"
+ 	echo "  TEMPFILE:       $TEMPFILE"
+ 	echo "  MULTIBYTE:      $MULTIBYTE"
+ 	echo "  MULTIBYTEID:    $MULTIBYTEID"
+ 	echo "  SUPERUSERNAME:  $POSTGRES_SUPERUSERNAME"
+ 	echo "  SUPERUSERID:    $POSTGRES_SUPERUSERID"
+ 	echo "  TEMPLATE:       $TEMPLATE"	 
+	echo "  GLOBAL:         $GLOBAL"
+	echo "  PG_HBA_SAMPLE:  $PG_HBA_SAMPLE"
+	echo "  TEMPLATE_DESCR: $TEMPLATE_DESCR"
+	echo "  GLOBAL_DESCR:   $GLOBAL_DESCR"
+	echo "  PG_GEQO_SAMPLE: $PG_GEQO_SAMPLE"
+	echo "  PG_POSTMASTER_OPTS_DEFAULT_SAMPLE: $PG_POSTMASTER_OPTS_DEFAULT_SAMPLE"
+	echo 
+	exit 0
+fi
 
 for PREREQ_FILE in "$TEMPLATE" "$GLOBAL" "$PG_HBA_SAMPLE"
 do
