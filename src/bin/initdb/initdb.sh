@@ -26,7 +26,7 @@
 #
 #
 # IDENTIFICATION
-#    $Header: /cvsroot/pgsql/src/bin/initdb/Attic/initdb.sh,v 1.23 1997/01/14 03:07:15 momjian Exp $
+#    $Header: /cvsroot/pgsql/src/bin/initdb/Attic/initdb.sh,v 1.24 1997/02/19 13:11:58 scrappy Exp $
 #
 #-------------------------------------------------------------------------
 
@@ -153,6 +153,7 @@ fi
 TEMPLATE=$PGLIB/local1_template1.bki.source
 GLOBAL=$PGLIB/global1.bki.source
 PG_HBA_SAMPLE=$PGLIB/pg_hba.conf.sample
+PG_GEQO_SAMPLE=$PGLIB/pg_geqo.sample
 
 
 #-------------------------------------------------------------------------
@@ -315,6 +316,7 @@ if [ $template_only -eq 0 ]; then
     pg_version $PGDATA
 
     cp $PG_HBA_SAMPLE $PGDATA/pg_hba.conf
+    cp $PG_GEQO_SAMPLE $PGDATA/pg_geqo.sample
 
     echo "Adding template1 database to pg_database..."
 
