@@ -6,7 +6,7 @@ TODO list for PostgreSQL
 Bracketed items "[]" have more detail.
 
 Current maintainer:	Bruce Momjian (pgman@candle.pha.pa.us)
-Last updated:		Sun Nov 28 22:17:27 EST 2004
+Last updated:		Mon Nov 29 22:27:03 EST 2004
 
 The most recent version of this document can be viewed at the PostgreSQL web
 site, http://www.PostgreSQL.org.
@@ -861,6 +861,8 @@ Source Code
 * Remove Win32 rename/unlink looping if unnecessary
 * Remove kerberos4 from source tree?
 * Allow cross-compiling by generating the zic database on the target system
+* Improve NLS maintenace of libpgport messages linked onto applications
+
 
 * Win32
 	o Remove per-backend parameter file and move into shared memory
