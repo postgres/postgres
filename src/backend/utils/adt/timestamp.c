@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/timestamp.c,v 1.36 2000/10/29 13:17:34 petere Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/timestamp.c,v 1.37 2000/11/06 15:57:00 thomas Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -1000,6 +1000,39 @@ timestamp_pl_span(PG_FUNCTION_ARGS)
 				if (tm->tm_mday > day_tab[isleap(tm->tm_year)][tm->tm_mon - 1])
 					tm->tm_mday = (day_tab[isleap(tm->tm_year)][tm->tm_mon - 1]);
 
+				if (IS_VALID_UTIME(tm->tm_year, tm->tm_mon, tm->tm_mday))
+				{
+#if defined(HAVE_TM_ZONE) || defined(HAVE_INT_TIMEZONE)
+					tm->tm_isdst = -1;
+					tm->tm_year -= 1900;
+					tm->tm_mon -= 1;
+					tm->tm_isdst = -1;
+					mktime(tm);
+					tm->tm_year += 1900;
+					tm->tm_mon += 1;
+
+# if defined(HAVE_TM_ZONE)
+					tz = -(tm->tm_gmtoff);	/* tm_gmtoff is Sun/DEC-ism */
+# elif defined(HAVE_INT_TIMEZONE)
+
+#  ifdef __CYGWIN__
+					tz = (tm->tm_isdst ? (_timezone - 3600) : _timezone);
+#  else
+					tz = (tm->tm_isdst ? (timezone - 3600) : timezone);
+#  endif
+
+# endif
+
+#else /* not (HAVE_TM_ZONE || HAVE_INT_TIMEZONE) */
+					tz = CTimeZone;
+#endif
+				}
+				else
+				{
+					tm->tm_isdst = 0;
+					tz = 0;
+				}
+
 				if (tm2timestamp(tm, fsec, &tz, &dt) != 0)
 					elog(ERROR, "Unable to add timestamp and interval");
 
@@ -1571,12 +1604,7 @@ timestamp_trunc(PG_FUNCTION_ARGS)
 
 	if (TIMESTAMP_NOT_FINITE(timestamp))
 	{
-#if NOT_USED
-/* should return null but Postgres doesn't like that currently. - tgl 97/06/12 */
-		elog(ERROR, "Timestamp is not finite");
-#endif
-		result = 0;
-
+		PG_RETURN_NULL();
 	}
 	else
 	{
@@ -1902,10 +1930,6 @@ timestamp_part(PG_FUNCTION_ARGS)
 
 	if (TIMESTAMP_NOT_FINITE(timestamp))
 	{
-#if NOT_USED
-/* should return null but Postgres doesn't like that currently. - tgl 97/06/12 */
-		elog(ERROR, "Timestamp is not finite", NULL);
-#endif
 		PG_RETURN_NULL();
 	}
 	else
@@ -2197,15 +2221,7 @@ timestamp_zone(PG_FUNCTION_ARGS)
 
 	if (TIMESTAMP_NOT_FINITE(timestamp))
 	{
-
-		/*
-		 * could return null but Postgres doesn't like that currently. -
-		 * tgl 97/06/12
-		 *
-		 * Could do it now if you wanted ... the other tgl 2000/06/08
-		 */
-		elog(ERROR, "Timestamp is not finite");
-		result = NULL;
+		PG_RETURN_NULL();
 	}
 	else if ((type == TZ) || (type == DTZ))
 	{
@@ -2241,4 +2257,48 @@ timestamp_zone(PG_FUNCTION_ARGS)
 	}
 
 	PG_RETURN_TEXT_P(result);
-}
+} /* timestamp_zone() */
+
+/* timestamp_izone()
+ * Encode timestamp type with specified time interval as time zone.
+ * Require ISO-formatted result, since character-string time zone is not available.
+ */
+Datum
+timestamp_izone(PG_FUNCTION_ARGS)
+{
+	Interval   *zone = PG_GETARG_INTERVAL_P(0);
+	Timestamp	timestamp = PG_GETARG_TIMESTAMP(1);
+	text	   *result;
+	Timestamp	dt;
+	int			tz;
+	char	   *tzn = "";
+	double		fsec;
+	struct tm	tt,
+			   *tm = &tt;
+	char		buf[MAXDATELEN + 1];
+	int			len;
+
+	if (TIMESTAMP_NOT_FINITE(timestamp))
+		PG_RETURN_NULL();
+
+	if (zone->month != 0)
+		elog(ERROR, "INTERVAL time zone not legal (month specified)");
+
+	tm->tm_isdst = -1;
+	tz = -(zone->time);
+
+	dt = (TIMESTAMP_IS_RELATIVE(timestamp) ? SetTimestamp(timestamp) : timestamp);
+	dt = dt2local(dt, tz);
+
+	if (timestamp2tm(dt, NULL, tm, &fsec, NULL) != 0)
+		elog(ERROR, "Timestamp not legal");
+
+	EncodeDateTime(tm, fsec, &tz, &tzn, USE_ISO_DATES, buf);
+	len = (strlen(buf) + VARHDRSZ);
+
+	result = palloc(len);
+	VARATT_SIZEP(result) = len;
+	memmove(VARDATA(result), buf, (len - VARHDRSZ));
+
+	PG_RETURN_TEXT_P(result);
+} /* timestamp_izone() */

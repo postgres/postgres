@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/datetime.c,v 1.54 2000/10/29 13:17:33 petere Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/datetime.c,v 1.55 2000/11/06 15:57:00 thomas Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -199,7 +199,11 @@ static datetkn datetktbl[] = {
 	{"pst", TZ, NEG(48)},		/* Pacific Standard Time */
 	{"sadt", DTZ, 63},			/* S. Australian Dayl. Time */
 	{"sast", TZ, 57},			/* South Australian Std Time */
+#if USE_AUSTRALIAN_RULES
+	{"sat", TZ, 57},
+#else
 	{"sat", DOW, 6},
+#endif
 	{"saturday", DOW, 6},
 	{"sep", MONTH, 9},
 	{"sept", MONTH, 9},
@@ -218,8 +222,7 @@ static datetkn datetktbl[] = {
 	{"tue", DOW, 2},
 	{"tues", DOW, 2},
 	{"tuesday", DOW, 2},
-	{"undefined", RESERV, DTK_INVALID}, /* "undefined" pre-v6.1 invalid
-										 * time */
+	{"undefined", RESERV, DTK_INVALID}, /* pre-v6.1 invalid time */
 	{"ut", TZ, 0},
 	{"utc", TZ, 0},
 	{"wadt", DTZ, 48},			/* West Australian DST */
@@ -235,10 +238,10 @@ static datetkn datetktbl[] = {
 	{"ydt", DTZ, NEG(48)},		/* Yukon Daylight Time */
 	{YESTERDAY, RESERV, DTK_YESTERDAY}, /* yesterday midnight */
 	{"yst", TZ, NEG(54)},		/* Yukon Standard Time */
+	{"z", RESERV, DTK_ZULU},	/* 00:00:00 */
 	{"zp4", TZ, NEG(24)},		/* GMT +4  hours. */
 	{"zp5", TZ, NEG(30)},		/* GMT +5  hours. */
 	{"zp6", TZ, NEG(36)},		/* GMT +6  hours. */
-	{"z", RESERV, DTK_ZULU},	/* 00:00:00 */
 	{ZULU, RESERV, DTK_ZULU},	/* 00:00:00 */
 };
 
@@ -466,25 +469,6 @@ ParseDateTime(char *timestr, char *lowstr,
 			 */
 			if ((*cp == '-') || (*cp == '/') || (*cp == '.'))
 			{
-#if 0
-
-				/*
-				 * special case of Posix timezone "GMT-0800" Note that
-				 * other sign (e.g. "GMT+0800" is recognized as two
-				 * separate fields and handled later. XXX There is no room
-				 * for a delimiter between the "GMT" and the "-0800", so
-				 * we are going to just swallow the "GMT". But this leads
-				 * to other troubles with the definition of signs, so we
-				 * have to flip - thomas 2000-02-06
-				 */
-				if ((*cp == '-') && isdigit(*(cp + 1))
-					&& (strncmp(field[nf], "gmt", 3) == 0))
-				{
-					*cp = '+';
-					continue;
-				}
-#endif
-
 				ftype[nf] = DTK_DATE;
 				while (isdigit((int) *cp) || (*cp == '-') || (*cp == '/') || (*cp == '.'))
 					*lp++ = tolower(*cp++);
@@ -1667,8 +1651,7 @@ DecodeDateDelta(char **field, int *ftype, int nf, int *dtype, struct tm * tm, do
 				tmask,
 				type;
 	int			i;
-	int			flen,
-				val;
+	int			val;
 	double		fval;
 	double		sec;
 
@@ -1695,14 +1678,40 @@ DecodeDateDelta(char **field, int *ftype, int nf, int *dtype, struct tm * tm, do
 				break;
 
 			case DTK_TZ:
-
 				/*
 				 * Timezone is a token with a leading sign character and
-				 * otherwise the same as a non-signed numeric field
+				 * otherwise the same as a non-signed time field
 				 */
+				Assert((*field[i] == '-') || (*field[i] == '+'));
+				/* A single signed number ends up here, but will be rejected by DecodeTime().
+				 * So, work this out to drop through to DTK_NUMBER, which *can* tolerate this.
+				 */
+				cp = field[i]+1;
+				while ((*cp != '\0') && (*cp != ':'))
+					cp++;
+				if ((*cp == ':')
+					&& (DecodeTime((field[i]+1), fmask, &tmask, tm, fsec) == 0)) {
+					if (*field[i] == '-') {
+						/* flip the sign on all fields */
+						tm->tm_hour = -tm->tm_hour;
+						tm->tm_min = -tm->tm_min;
+						tm->tm_sec = -tm->tm_sec;
+						*fsec = -(*fsec);
+					}
+
+					/* Set the next type to be a day, if units are not specified.
+					 * This handles the case of '1 +02:03' since we are reading right to left.
+					 */
+					type = DTK_DAY;
+					tmask = DTK_M(TZ);
+					break;
+				}
+				/* DROP THROUGH */
+
 			case DTK_DATE:
 			case DTK_NUMBER:
 				val = strtol(field[i], &cp, 10);
+
 				if (*cp == '.')
 				{
 					fval = strtod(cp, &cp);
@@ -1717,7 +1726,6 @@ DecodeDateDelta(char **field, int *ftype, int nf, int *dtype, struct tm * tm, do
 				else
 					return -1;
 
-				flen = strlen(field[i]);
 				tmask = 0;		/* DTK_M(type); */
 
 				switch (type)
@@ -2193,98 +2201,126 @@ EncodeTimeSpan(struct tm * tm, double fsec, int style, char *str)
 	int			is_nonzero = FALSE;
 	char	   *cp = str;
 
+	/* The sign of year and month are guaranteed to match,
+	 * since they are stored internally as "month".
+	 * But we'll need to check for is_before and is_nonzero
+	 * when determining the signs of hour/minute/seconds fields.
+	 */
 	switch (style)
 	{
 			/* compatible with ISO date formats */
 		case USE_ISO_DATES:
-			break;
+			if (tm->tm_year != 0)
+			{
+				sprintf(cp, "%d year%s",
+						tm->tm_year, ((tm->tm_year != 1) ? "s" : ""));
+				cp += strlen(cp);
+				is_nonzero = TRUE;
+			}
 
-		default:
-			strcpy(cp, "@ ");
-			cp += strlen(cp);
-			break;
-	}
+			if (tm->tm_mon != 0)
+			{
+				sprintf(cp, "%s%d mon%s", (is_nonzero ? " " : ""),
+						tm->tm_mon, ((tm->tm_mon != 1) ? "s" : ""));
+				cp += strlen(cp);
+				is_nonzero = TRUE;
+			}
 
-	if (tm->tm_year != 0)
-	{
-		is_before |= (tm->tm_year < 0);
-		sprintf(cp, "%d year%s",
-				abs(tm->tm_year), ((abs(tm->tm_year) != 1) ? "s" : ""));
-		cp += strlen(cp);
-		is_nonzero = TRUE;
-	}
-
-	if (tm->tm_mon != 0)
-	{
-		is_before |= (tm->tm_mon < 0);
-		sprintf(cp, "%s%d mon%s", (is_nonzero ? " " : ""),
-				abs(tm->tm_mon), ((abs(tm->tm_mon) != 1) ? "s" : ""));
-		cp += strlen(cp);
-		is_nonzero = TRUE;
-	}
-
-	switch (style)
-	{
-			/* compatible with ISO date formats */
-		case USE_ISO_DATES:
 			if (tm->tm_mday != 0)
 			{
-				is_before |= (tm->tm_mday < 0);
-				sprintf(cp, "%s%d", (is_nonzero ? " " : ""), abs(tm->tm_mday));
+				sprintf(cp, "%s%d", (is_nonzero ? " " : ""), tm->tm_mday);
 				cp += strlen(cp);
 				is_nonzero = TRUE;
 			}
-			is_before |= ((tm->tm_hour < 0) || (tm->tm_min < 0));
-			sprintf(cp, "%s%02d:%02d", (is_nonzero ? " " : ""),
-					abs(tm->tm_hour), abs(tm->tm_min));
-			cp += strlen(cp);
-			/* Mark as "non-zero" since the fields are now filled in */
-			is_nonzero = TRUE;
-
-			/* fractional seconds? */
-			if (fsec != 0)
 			{
-				fsec += tm->tm_sec;
-				is_before |= (fsec < 0);
-				sprintf(cp, ":%05.2f", fabs(fsec));
+				int minus = ((tm->tm_hour < 0) || (tm->tm_min < 0)
+							 || (tm->tm_sec < 0) || (fsec < 0));
+
+				sprintf(cp, "%s%s%02d:%02d", (is_nonzero ? " " : ""),
+						(minus ? "-" : "+"),
+						abs(tm->tm_hour), abs(tm->tm_min));
 				cp += strlen(cp);
+				/* Mark as "non-zero" since the fields are now filled in */
 				is_nonzero = TRUE;
 
-				/* otherwise, integer seconds only? */
-			}
-			else if (tm->tm_sec != 0)
-			{
-				is_before |= (tm->tm_sec < 0);
-				sprintf(cp, ":%02d", abs(tm->tm_sec));
-				cp += strlen(cp);
-				is_nonzero = TRUE;
+				/* fractional seconds? */
+				if (fsec != 0)
+				{
+					fsec += tm->tm_sec;
+					sprintf(cp, ":%05.2f", fabs(fsec));
+					cp += strlen(cp);
+					is_nonzero = TRUE;
+
+					/* otherwise, integer seconds only? */
+				}
+				else if (tm->tm_sec != 0)
+				{
+					sprintf(cp, ":%02d", abs(tm->tm_sec));
+					cp += strlen(cp);
+					is_nonzero = TRUE;
+				}
 			}
 			break;
 
 		case USE_POSTGRES_DATES:
 		default:
+			strcpy(cp, "@ ");
+			cp += strlen(cp);
+
+			if (tm->tm_year != 0)
+			{
+				is_before = (tm->tm_year < 0);
+				if (is_before)
+					tm->tm_year = -tm->tm_year;
+				sprintf(cp, "%d year%s",
+						tm->tm_year, ((tm->tm_year != 1) ? "s" : ""));
+				cp += strlen(cp);
+				is_nonzero = TRUE;
+			}
+
+			if (tm->tm_mon != 0)
+			{
+				if (! is_nonzero)
+					is_before = (tm->tm_mon < 0);
+				if (is_before)
+					tm->tm_mon = -tm->tm_mon;
+				sprintf(cp, "%s%d mon%s", (is_nonzero ? " " : ""),
+						tm->tm_mon, ((tm->tm_mon != 1) ? "s" : ""));
+				cp += strlen(cp);
+				is_nonzero = TRUE;
+			}
+
 			if (tm->tm_mday != 0)
 			{
-				is_before |= (tm->tm_mday < 0);
+				if (! is_nonzero)
+					is_before = (tm->tm_mday < 0);
+				if (is_before)
+					tm->tm_mday = -tm->tm_mday;
 				sprintf(cp, "%s%d day%s", (is_nonzero ? " " : ""),
-				 abs(tm->tm_mday), ((abs(tm->tm_mday) != 1) ? "s" : ""));
+				 tm->tm_mday, ((tm->tm_mday != 1) ? "s" : ""));
 				cp += strlen(cp);
 				is_nonzero = TRUE;
 			}
 			if (tm->tm_hour != 0)
 			{
-				is_before |= (tm->tm_hour < 0);
+				if (! is_nonzero)
+					is_before = (tm->tm_hour < 0);
+				if (is_before)
+					tm->tm_hour = -tm->tm_hour;
 				sprintf(cp, "%s%d hour%s", (is_nonzero ? " " : ""),
-				 abs(tm->tm_hour), ((abs(tm->tm_hour) != 1) ? "s" : ""));
+				 tm->tm_hour, ((tm->tm_hour != 1) ? "s" : ""));
 				cp += strlen(cp);
 				is_nonzero = TRUE;
 			}
 
 			if (tm->tm_min != 0)
 			{
-				is_before |= (tm->tm_min < 0);
+				if (! is_nonzero)
+					is_before = (tm->tm_min < 0);
+				if (is_before)
+					tm->tm_min = -tm->tm_min;
 				sprintf(cp, "%s%d min%s", (is_nonzero ? " " : ""),
-				   abs(tm->tm_min), ((abs(tm->tm_min) != 1) ? "s" : ""));
+				   tm->tm_min, ((tm->tm_min != 1) ? "s" : ""));
 				cp += strlen(cp);
 				is_nonzero = TRUE;
 			}
@@ -2293,8 +2329,11 @@ EncodeTimeSpan(struct tm * tm, double fsec, int style, char *str)
 			if (fsec != 0)
 			{
 				fsec += tm->tm_sec;
-				is_before |= (fsec < 0);
-				sprintf(cp, "%s%.2f secs", (is_nonzero ? " " : ""), fabs(fsec));
+				if (! is_nonzero)
+					is_before = (fsec < 0);
+				if (is_before)
+					fsec = -fsec;
+				sprintf(cp, "%s%.2f secs", (is_nonzero ? " " : ""), fsec);
 				cp += strlen(cp);
 				is_nonzero = TRUE;
 
@@ -2302,9 +2341,12 @@ EncodeTimeSpan(struct tm * tm, double fsec, int style, char *str)
 			}
 			else if (tm->tm_sec != 0)
 			{
-				is_before |= (tm->tm_sec < 0);
+				if (! is_nonzero)
+					is_before = (tm->tm_sec < 0);
+				if (is_before)
+					tm->tm_sec = -tm->tm_sec;
 				sprintf(cp, "%s%d sec%s", (is_nonzero ? " " : ""),
-				   abs(tm->tm_sec), ((abs(tm->tm_sec) != 1) ? "s" : ""));
+				   tm->tm_sec, ((tm->tm_sec != 1) ? "s" : ""));
 				cp += strlen(cp);
 				is_nonzero = TRUE;
 			}
@@ -2312,7 +2354,7 @@ EncodeTimeSpan(struct tm * tm, double fsec, int style, char *str)
 	}
 
 	/* identically zero? then put in a unitless zero... */
-	if (!is_nonzero)
+	if (! is_nonzero)
 	{
 		strcat(cp, "0");
 		cp += strlen(cp);
