@@ -11,7 +11,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/parser/gram.y,v 2.476 2004/09/29 23:39:20 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/parser/gram.y,v 2.477 2004/09/30 00:24:20 tgl Exp $
  *
  * HISTORY
  *	  AUTHOR			DATE			MAJOR EVENT
@@ -5368,24 +5368,7 @@ relation_expr:
 		;
 
 
-func_table: func_name '(' ')'
-				{
-					FuncCall *n = makeNode(FuncCall);
-					n->funcname = $1;
-					n->args = NIL;
-					n->agg_star = FALSE;
-					n->agg_distinct = FALSE;
-					$$ = (Node *)n;
-				}
-			| func_name '(' expr_list ')'
-				{
-					FuncCall *n = makeNode(FuncCall);
-					n->funcname = $1;
-					n->args = $3;
-					n->agg_star = FALSE;
-					n->agg_distinct = FALSE;
-					$$ = (Node *)n;
-				}
+func_table: func_expr								{ $$ = $1; }
 		;
 
 
@@ -6978,6 +6961,16 @@ func_expr:	func_name '(' ')'
 					n->agg_distinct = FALSE;
 					$$ = (Node *)n;
 				}
+			| NULLIF '(' a_expr ',' a_expr ')'
+				{
+					$$ = (Node *) makeSimpleA_Expr(AEXPR_NULLIF, "=", $3, $5);
+				}
+			| COALESCE '(' expr_list ')'
+				{
+					CoalesceExpr *c = makeNode(CoalesceExpr);
+					c->args = $3;
+					$$ = (Node *)c;
+				}
 		;
 
 /*
@@ -7206,24 +7199,12 @@ in_expr:	select_with_parens
 			| '(' expr_list ')'						{ $$ = (Node *)$2; }
 		;
 
-/* Case clause
+/*
  * Define SQL92-style case clause.
- * Allow all four forms described in the standard:
  * - Full specification
  *	CASE WHEN a = b THEN c ... ELSE d END
  * - Implicit argument
  *	CASE a WHEN b THEN c ... ELSE d END
- * - Conditional NULL
- *	NULLIF(x,y)
- *	same as CASE WHEN x = y THEN NULL ELSE x END
- * - Conditional substitution from list, use first non-null argument
- *	COALESCE(a,b,...)
- * same as CASE WHEN a IS NOT NULL THEN a WHEN b IS NOT NULL THEN b ... END
- * - thomas 1998-11-09
- *
- * NULLIF and COALESCE have become first class nodes to
- * prevent double evaluation of arguments.
- * - Kris Jurka 2003-02-11
  */
 case_expr:	CASE case_arg when_clause_list case_default END_P
 				{
@@ -7232,16 +7213,6 @@ case_expr:	CASE case_arg when_clause_list case_default END_P
 					c->arg = (Expr *) $2;
 					c->args = $3;
 					c->defresult = (Expr *) $4;
-					$$ = (Node *)c;
-				}
-			| NULLIF '(' a_expr ',' a_expr ')'
-				{
-					$$ = (Node *) makeSimpleA_Expr(AEXPR_NULLIF, "=", $3, $5);
-				}
-			| COALESCE '(' expr_list ')'
-				{
-					CoalesceExpr *c = makeNode(CoalesceExpr);
-					c->args = $3;
 					$$ = (Node *)c;
 				}
 		;
