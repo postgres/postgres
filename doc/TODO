@@ -1,6 +1,6 @@
 TODO list for PostgreSQL
 ========================
-Last updated:		Sun Mar 25 16:41:44 EST 2001
+Last updated:		Wed Mar 28 16:20:32 EST 2001
 
 Current maintainer:	Bruce Momjian (pgman@candle.pha.pa.us)
 
@@ -367,7 +367,6 @@ SOURCE CODE
 Developers who have claimed items are:
 --------------------------------------
 	* Billy is Billy G. Allie <Bill.Allie@mug.org>
-	* Brook is Brook Milligan <brook@trillium.NMSU.Edu>
 	* Bruce is Bruce Momjian<pgman@candle.pha.pa.us>
 	* D'Arcy is D'Arcy J.M. Cain <darcy@druid.net>
 	* Edmund is Edmund Mergl <E.Mergl@bawue.de>
