@@ -1,5 +1,5 @@
 <!-- reference.sgml
-$Header: /cvsroot/pgsql/doc/src/sgml/reference.sgml,v 1.23 2002/03/07 16:35:32 momjian Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/reference.sgml,v 1.24 2002/03/19 02:18:11 momjian Exp $
 
 PostgreSQL Reference Manual
 -->
@@ -61,6 +61,7 @@ PostgreSQL Reference Manual
    &createAggregate;
    &createConstraint;
    &createDatabase;
+   &createDomain;
    &createFunction;
    &createGroup;
    &createIndex;
@@ -78,6 +79,7 @@ PostgreSQL Reference Manual
    &delete;
    &dropAggregate;
    &dropDatabase;
+   &dropDomain;
    &dropFunction;
    &dropGroup;
    &dropIndex;
@@ -115,7 +117,7 @@ PostgreSQL Reference Manual
    &unlisten;
    &update;
    &vacuum;
-  
+
  </reference>
 
 <!--

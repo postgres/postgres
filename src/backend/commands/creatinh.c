@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/commands/Attic/creatinh.c,v 1.85 2002/03/07 16:35:34 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/commands/Attic/creatinh.c,v 1.86 2002/03/19 02:18:15 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -39,7 +39,7 @@ static bool change_varattnos_of_a_node(Node *node, const AttrNumber *newattno);
 static void StoreCatalogInheritance(Oid relationId, List *supers);
 static int	findAttrByName(const char *attributeName, List *schema);
 static void setRelhassubclassInRelation(Oid relationId, bool relhassubclass);
-
+static List *MergeDomainAttributes(List *schema);
 
 /* ----------------------------------------------------------------
  *		DefineRelation
@@ -68,6 +68,13 @@ DefineRelation(CreateStmt *stmt, char relkind)
 	 * as parser should have done this already).
 	 */
 	StrNCpy(relname, stmt->relname, NAMEDATALEN);
+
+	/*
+	 * Inherit domain attributes into the known columns before table inheritance
+	 * applies it's changes otherwise we risk adding double constraints
+	 * to a domain thats inherited.
+	 */
+	schema = MergeDomainAttributes(schema);
 
 	/*
 	 * Look up inheritance ancestors and generate relation schema,
@@ -235,6 +242,66 @@ TruncateRelation(char *name)
 {
 	AssertArg(name);
 	heap_truncate(name);
+}
+
+
+/*
+ * MergeDomainAttributes
+ *      Returns a new table schema with the constraints, types, and other
+ *      attributes of the domain resolved for fields using the domain as
+ *		their type.
+ *
+ * Defaults are pulled out by the table attribute as required, similar to
+ * how all types defaults are processed.
+ */
+static List *
+MergeDomainAttributes(List *schema)
+{
+	List	   *entry;
+
+	/*
+	 * Loop through the table elements supplied. These should
+	 * never include inherited domains else they'll be
+	 * double (or more) processed.
+	 */
+	foreach(entry, schema)
+	{
+		ColumnDef  *coldef = lfirst(entry);
+		HeapTuple  tuple;
+		Form_pg_type typeTup;
+
+
+		tuple = SearchSysCache(TYPENAME,
+							   CStringGetDatum(coldef->typename->name),
+							   0,0,0);
+
+		if (!HeapTupleIsValid(tuple))
+			elog(ERROR, "MergeDomainAttributes: Type %s does not exist",
+				 coldef->typename->name);
+
+		typeTup = (Form_pg_type) GETSTRUCT(tuple);
+		if (typeTup->typtype == 'd') {
+			/*
+			 * This is a domain, lets force the properties of the domain on to
+			 * the new column.
+			 */
+
+			/* Enforce the typmod value */
+			coldef->typename->typmod = typeTup->typmod;
+
+			/* Enforce type NOT NULL || column definition NOT NULL -> NOT NULL */
+			coldef->is_not_null |= typeTup->typnotnull;
+
+			/* Enforce the element type in the event the domain is an array
+			 *
+			 * BUG: How do we fill out arrayBounds and attrname from typelem and typNDimms?
+			 */
+
+		}
+		ReleaseSysCache(tuple);
+	}
+
+	return schema;
 }
 
 /*----------

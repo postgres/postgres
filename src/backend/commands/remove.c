@@ -1,14 +1,14 @@
 /*-------------------------------------------------------------------------
  *
  * remove.c
- *	  POSTGRES remove (function | type | operator ) utilty code.
+ *	  POSTGRES remove (domain | function | type | operator ) utilty code.
  *
  * Portions Copyright (c) 1996-2001, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/commands/Attic/remove.c,v 1.68 2002/03/07 16:35:34 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/commands/Attic/remove.c,v 1.69 2002/03/19 02:18:16 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -22,6 +22,7 @@
 #include "commands/comment.h"
 #include "commands/defrem.h"
 #include "miscadmin.h"
+#include "parser/parse.h"
 #include "parser/parse_agg.h"
 #include "parser/parse_expr.h"
 #include "parser/parse_func.h"
@@ -267,6 +268,60 @@ RemoveType(char *typeName)		/* type name to be removed */
 						 0, 0, 0);
 	if (!HeapTupleIsValid(tup))
 		elog(ERROR, "RemoveType: type '%s' does not exist", shadow_type);
+
+	simple_heap_delete(relation, &tup->t_self);
+
+	ReleaseSysCache(tup);
+
+	heap_close(relation, RowExclusiveLock);
+}
+
+/*
+ *	RemoveDomain
+ *		Removes the domain 'typeName' and all attributes and relations that
+ *		use it.
+ */
+void
+RemoveDomain(char *domainName, int behavior)		/* domain name to be removed */
+{
+	Relation	relation;
+	HeapTuple	tup;
+	TupleDesc	description;
+	char		typtype;
+	bool		isnull;
+
+
+	/* Domains are stored as types.  Check for permissions on the type */
+	if (!pg_ownercheck(GetUserId(), domainName, TYPENAME))
+		elog(ERROR, "RemoveDomain: type '%s': permission denied",
+			 domainName);
+
+
+	relation = heap_openr(TypeRelationName, RowExclusiveLock);
+	description = RelationGetDescr(relation);
+
+	tup = SearchSysCache(TYPENAME,
+						 PointerGetDatum(domainName),
+						 0, 0, 0);
+	if (!HeapTupleIsValid(tup))
+		elog(ERROR, "RemoveType: type '%s' does not exist", domainName);
+
+
+	/* Check that this is actually a domain */
+	typtype = DatumGetChar(heap_getattr(tup, Anum_pg_type_typtype, description, &isnull));
+	Assert(!isnull);
+
+	if (typtype != 'd') {
+		elog(ERROR, "%s is not a domain", domainName);
+	}
+
+	/* CASCADE unsupported */
+	if (behavior == CASCADE) {
+		elog(ERROR, "DROP DOMAIN does not support the CASCADE keyword");
+	}
+
+	/* Delete any comments associated with this type */
+	DeleteComments(tup->t_data->t_oid, RelationGetRelid(relation));
 
 	simple_heap_delete(relation, &tup->t_self);
 

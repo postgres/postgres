@@ -11,7 +11,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/parser/gram.y,v 2.291 2002/03/10 06:02:23 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/parser/gram.y,v 2.292 2002/03/19 02:18:18 momjian Exp $
  *
  * HISTORY
  *	  AUTHOR			DATE			MAJOR EVENT
@@ -98,7 +98,6 @@ static void doNegateFloat(Value *v);
 
 %}
 
-
 %union
 {
 	int					ival;
@@ -134,9 +133,10 @@ static void doNegateFloat(Value *v);
 		AlterDatabaseSetStmt, AlterGroupStmt, AlterSchemaStmt, AlterTableStmt,
 		AlterUserStmt, AlterUserSetStmt, AnalyzeStmt,
 		ClosePortalStmt, ClusterStmt, CommentStmt, ConstraintsSetStmt,
-		CopyStmt, CreateAsStmt, CreateGroupStmt, CreatePLangStmt,
+		CopyStmt, CreateAsStmt, CreateDomainStmt, CreateGroupStmt, CreatePLangStmt,
 		CreateSchemaStmt, CreateSeqStmt, CreateStmt, CreateTrigStmt,
-		CreateUserStmt, CreatedbStmt, CursorStmt, DefineStmt, DeleteStmt,
+		CreateUserStmt, CreatedbStmt, CursorStmt,
+		DefineStmt, DeleteStmt,
 		DropGroupStmt, DropPLangStmt, DropSchemaStmt, DropStmt, DropTrigStmt,
 		DropUserStmt, DropdbStmt, ExplainStmt, FetchStmt,
 		GrantStmt, IndexStmt, InsertStmt, ListenStmt, LoadStmt, LockStmt,
@@ -289,6 +289,8 @@ static void doNegateFloat(Value *v);
 %type <list>	constraints_set_list
 %type <boolean>	constraints_set_mode
 
+%type <boolean> opt_as
+
 /*
  * If you make any token changes, remember to:
  *		- use "yacc -d" and update parse.h
@@ -343,7 +345,7 @@ static void doNegateFloat(Value *v);
 		WITHOUT
 
 /* Keywords (in SQL92 non-reserved words) */
-%token	COMMITTED, SERIALIZABLE, TYPE_P
+%token	COMMITTED, SERIALIZABLE, TYPE_P, DOMAIN_P
 
 /* Keywords for Postgres support (not in SQL92 reserved words)
  *
@@ -446,6 +448,7 @@ stmt : AlterDatabaseSetStmt
 		| CopyStmt
 		| CreateStmt
 		| CreateAsStmt
+		| CreateDomainStmt
 		| CreateSchemaStmt
 		| CreateGroupStmt
 		| CreateSeqStmt
@@ -776,7 +779,10 @@ DropSchemaStmt:  DROP SCHEMA UserId
 					n->dbname = $3;
 					$$ = (Node *)n;
 				}
+		;
 
+
+ 
 
 /*****************************************************************************
  *
@@ -1439,7 +1445,10 @@ ColConstraintElem:
 					n->name = NULL;
 					if (exprIsNullConstant($2))
 					{
-						/* DEFAULT NULL should be reported as empty expr */
+						/*
+						 * DEFAULT NULL should be reported as empty expr
+						 * Required for NOT NULL Domain overrides
+						 */
 						n->raw_expr = NULL;
 					}
 					else
@@ -2021,13 +2030,22 @@ def_list:  def_elem							{ $$ = makeList1($1); }
 		| def_list ',' def_elem				{ $$ = lappend($1, $3); }
 		;
 
-def_elem:  ColLabel '=' def_arg
+def_elem:  DEFAULT '=' b_expr
+				{
+					$$ = makeNode(DefElem);
+					$$->defname = "default";
+					if (exprIsNullConstant($3))
+						$$->arg = (Node *)NULL;
+					else
+						$$->arg = $3;
+				}
+		| ColId '=' def_arg
 				{
 					$$ = makeNode(DefElem);
 					$$->defname = $1;
 					$$->arg = (Node *)$3;
 				}
-		| ColLabel
+		| ColId
 				{
 					$$ = makeNode(DefElem);
 					$$->defname = $1;
@@ -2056,6 +2074,15 @@ DropStmt:  DROP drop_type name_list
 					DropStmt *n = makeNode(DropStmt);
 					n->removeType = $2;
 					n->names = $3;
+					n->behavior = RESTRICT;		/* Restricted by default */
+					$$ = (Node *)n;
+				}
+		| DROP DOMAIN_P name_list drop_behavior
+				{	
+					DropStmt *n = makeNode(DropStmt);
+					n->removeType = DROP_DOMAIN_P;
+					n->names = $3;
+					n->behavior = $4;
 					$$ = (Node *)n;
 				}
 		;
@@ -2088,7 +2115,7 @@ TruncateStmt:  TRUNCATE opt_table relation_name
  *  The COMMENT ON statement can take different forms based upon the type of
  *  the object associated with the comment. The form of the statement is:
  *
- *  COMMENT ON [ [ DATABASE | INDEX | RULE | SEQUENCE | TABLE | TYPE | VIEW ] 
+ *  COMMENT ON [ [ DATABASE | DOMAIN | INDEX | RULE | SEQUENCE | TABLE | TYPE | VIEW ] 
  *               <objname> | AGGREGATE <aggname> (<aggtype>) | FUNCTION 
  *		 <funcname> (arg1, arg2, ...) | OPERATOR <op> 
  *		 (leftoperand_typ rightoperand_typ) | TRIGGER <triggername> ON
@@ -2174,6 +2201,7 @@ comment_type:	DATABASE { $$ = DATABASE; }
 		| RULE { $$ = RULE; }
 		| SEQUENCE { $$ = SEQUENCE; }
 		| TABLE { $$ = TABLE; }
+		| DOMAIN_P { $$ = TYPE_P; }
 		| TYPE_P { $$ = TYPE_P; }
 		| VIEW { $$ = VIEW; }
 		;		
@@ -3156,6 +3184,22 @@ createdb_opt_item:  LOCATION opt_equal Sconst
 				{
 					$$ = lconsi(3, makeListi1(-1));
 				}
+		;
+
+
+/*****************************************************************************
+ *
+ *		DROP DATABASE
+ *
+ *
+ *****************************************************************************/
+
+DropdbStmt:	DROP DATABASE database_name
+				{
+					DropdbStmt *n = makeNode(DropdbStmt);
+					n->dbname = $3;
+					$$ = (Node *)n;
+				}
 		| OWNER opt_equal name 
 				{
 					$$ = lconsi(4, makeList1($3));
@@ -3200,22 +3244,30 @@ AlterDatabaseSetStmt: ALTER DATABASE database_name VariableSetStmt
 				}
 		;
 
-
 /*****************************************************************************
  *
- *		DROP DATABASE
+ * Manipulate a domain
  *
  *
  *****************************************************************************/
 
-DropdbStmt:	DROP DATABASE database_name
+CreateDomainStmt:  CREATE DOMAIN_P name opt_as Typename ColQualList opt_collate
 				{
-					DropdbStmt *n = makeNode(DropdbStmt);
-					n->dbname = $3;
+					CreateDomainStmt *n = makeNode(CreateDomainStmt);
+					n->domainname = $3;
+					n->typename = $5;
+					n->constraints = $6;
+					
+					if ($7 != NULL)
+						elog(NOTICE,"CREATE DOMAIN / COLLATE %s not yet "
+							"implemented; clause ignored", $7);
 					$$ = (Node *)n;
 				}
 		;
 
+opt_as:	AS	{$$ = TRUE; }
+	| /* EMPTY */	{$$ = FALSE; }
+	;
 
 /*****************************************************************************
  *
@@ -5857,6 +5909,7 @@ unreserved_keyword:
 		| DEFERRED						{ $$ = "deferred"; }
 		| DELETE						{ $$ = "delete"; }
 		| DELIMITERS					{ $$ = "delimiters"; }
+		| DOMAIN_P						{ $$ = "domain"; }
 		| DOUBLE						{ $$ = "double"; }
 		| DROP							{ $$ = "drop"; }
 		| EACH							{ $$ = "each"; }

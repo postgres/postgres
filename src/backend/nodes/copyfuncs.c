@@ -15,7 +15,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/nodes/copyfuncs.c,v 1.169 2002/03/12 00:51:37 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/nodes/copyfuncs.c,v 1.170 2002/03/19 02:18:16 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -2231,6 +2231,20 @@ _copyLoadStmt(LoadStmt *from)
 	return newnode;
 }
 
+static CreateDomainStmt *
+_copyCreateDomainStmt(CreateDomainStmt *from)
+{
+	CreateDomainStmt *newnode = makeNode(CreateDomainStmt);
+
+	if (from->domainname)
+		newnode->domainname = pstrdup(from->domainname);
+
+	Node_Copy(from, newnode, typename);
+	Node_Copy(from, newnode, constraints);
+
+	return newnode;
+}
+
 static CreatedbStmt *
 _copyCreatedbStmt(CreatedbStmt *from)
 {
@@ -3030,6 +3044,9 @@ copyObject(void *from)
 			break;
 		case T_FuncWithArgs:
 			retval = _copyFuncWithArgs(from);
+			break;
+		case T_CreateDomainStmt:
+			retval = _copyCreateDomainStmt(from);
 			break;
 
 		default:

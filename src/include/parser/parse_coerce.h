@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2001, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Id: parse_coerce.h,v 1.39 2002/03/07 16:35:40 momjian Exp $
+ * $Id: parse_coerce.h,v 1.40 2002/03/19 02:18:24 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -81,5 +81,6 @@ extern Oid	select_common_type(List *typeids, const char *context);
 extern Node *coerce_to_common_type(ParseState *pstate, Node *node,
 					  Oid targetTypeId,
 					  const char *context);
+extern Oid getBaseType(Oid inType);
 
 #endif   /* PARSE_COERCE_H */

@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/ref/comment.sgml,v 1.14 2002/03/07 16:35:33 momjian Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/ref/comment.sgml,v 1.15 2002/03/19 02:18:12 momjian Exp $
 PostgreSQL documentation
 -->
 
@@ -25,7 +25,7 @@ PostgreSQL documentation
   <synopsis>
 COMMENT ON
 [
-  [ DATABASE | INDEX | RULE | SEQUENCE | TABLE | TYPE | VIEW ] <replaceable class="PARAMETER">object_name</replaceable> |
+  [ DATABASE | DOMAIN | INDEX | RULE | SEQUENCE | TABLE | TYPE | VIEW ] <replaceable class="PARAMETER">object_name</replaceable> |
   COLUMN <replaceable class="PARAMETER">table_name</replaceable>.<replaceable class="PARAMETER">column_name</replaceable> |
   AGGREGATE <replaceable class="PARAMETER">agg_name</replaceable> (<replaceable class="PARAMETER">agg_type</replaceable>) |
   FUNCTION <replaceable class="PARAMETER">func_name</replaceable> (<replaceable class="PARAMETER">arg1</replaceable>, <replaceable class="PARAMETER">arg2</replaceable>, ...) |
@@ -33,7 +33,7 @@ COMMENT ON
   TRIGGER <replaceable class="PARAMETER">trigger_name</replaceable> ON <replaceable class="PARAMETER">table_name</replaceable>
 ] IS <replaceable class="PARAMETER">'text'</replaceable>
   </synopsis>
-  
+
   <refsect2 id="R2-SQL-COMMENT-1">
    <refsect2info>
     <date>1999-10-25</date>
@@ -64,7 +64,7 @@ COMMENT ON
     </variablelist>
    </para>
   </refsect2>
-  
+
   <refsect2 id="R2-SQL-COMMENT-2">
    <refsect2info>
     <date>1998-09-08</date>
@@ -99,7 +99,7 @@ COMMENT
   </title>
   <para>
    <command>COMMENT</command> stores a comment about a database object.
-    Comments can be 
+    Comments can be
     easily retrieved with <command>psql</command>'s
     <command>\dd</command>, <command>\d+</command>, or <command>\l+</command>
     commands.  Other user interfaces to retrieve comments can be built atop
@@ -141,6 +141,7 @@ COMMENT ON mytable IS 'This is my table.';
 
    <programlisting>
 COMMENT ON DATABASE my_database IS 'Development Database';
+COMMENT ON DOMAIN my_domain IS 'Email Address Domain';
 COMMENT ON INDEX my_index IS 'Enforces uniqueness on employee id';
 COMMENT ON RULE my_rule IS 'Logs UPDATES of employee records';
 COMMENT ON SEQUENCE my_sequence IS 'Used to generate primary keys';
@@ -155,12 +156,12 @@ COMMENT ON TRIGGER my_trigger ON my_table IS 'Used for R.I.';
    </programlisting>
   </para>
  </refsect1>
- 
+
  <refsect1 id="R1-SQL-COMMENT-3">
   <title>
    Compatibility
   </title>
-  
+
   <refsect2 id="R2-SQL-COMMENT-4">
    <refsect2info>
     <date>1998-09-08</date>

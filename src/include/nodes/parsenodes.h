@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2001, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Id: parsenodes.h,v 1.160 2002/03/12 00:52:01 tgl Exp $
+ * $Id: parsenodes.h,v 1.161 2002/03/19 02:18:24 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -405,6 +405,23 @@ typedef struct DefElem
 	char	   *defname;
 	Node	   *arg;			/* a (Value *) or a (TypeName *) */
 } DefElem;
+
+
+/****************************************************************************
+ *	Nodes for a Domain Creation tree
+ ****************************************************************************/
+/* ----------------------
+ *		CreateDomain Statement
+ * ----------------------
+ * Down here as it required TypeName to be defined first.
+ */
+typedef struct CreateDomainStmt
+{
+	NodeTag		type;
+	char	   *domainname;			/* name of domain to create */
+	TypeName   *typename;			/* the typecast */
+	List	   *constraints;		/* constraints (list of Constraint nodes) */
+} CreateDomainStmt;
 
 
 /****************************************************************************
@@ -1055,12 +1072,14 @@ typedef struct DefineStmt
 #define DROP_INDEX	  4
 #define DROP_RULE	  5
 #define DROP_TYPE_P   6
+#define DROP_DOMAIN_P 7
 
 typedef struct DropStmt
 {
 	NodeTag		type;
 	List	   *names;
 	int			removeType;
+	int	   		behavior;		/* CASCADE or RESTRICT drop behavior */
 } DropStmt;
 
 /* ----------------------
@@ -1268,6 +1287,7 @@ typedef struct LoadStmt
 	NodeTag		type;
 	char	   *filename;		/* file to load */
 } LoadStmt;
+
 
 /* ----------------------
  *		Createdb Statement
