@@ -18,7 +18,7 @@
    <DATE>1998-09-24</DATE>
   </REFSYNOPSISDIVINFO>
   <SYNOPSIS>
-   LOCK [ TABLE ] <REPLACEABLE CLASS="PARAMETER">table</REPLACEABLE>
+   LOCK [ TABLE ] [[IN] [ROW|ACCESS] [SHARE|EXCLUSIVE] MODE] <REPLACEABLE CLASS="PARAMETER">table</REPLACEABLE>
   </SYNOPSIS>
 
   <REFSECT2 ID="R2-SQL-LOCK-1">
@@ -55,20 +55,6 @@
    <PARA>
     
     <VARIABLELIST>
-     <VARLISTENTRY>
-      <TERM>
-       DELETE 0
-      </TERM>
-      <LISTITEM>
-       <PARA>
-	Message returned on a successful lock.
-	<command>LOCK</command> is implemented as a 
-	<command>DELETE FROM <REPLACEABLE CLASS="PARAMETER">table</REPLACEABLE></command>
-	which is guaranteed to not delete any rows.
-       </para>
-      </listitem>
-     </varlistentry>
-     <VARLISTENTRY>
       <TERM>
        ERROR <REPLACEABLE CLASS="PARAMETER">table</REPLACEABLE>: Table does not exist.
       </TERM>
@@ -92,8 +78,9 @@
    Description
   </TITLE>
   <PARA>
-   <command>LOCK</command> locks in exclusive mode a table inside
-   a transaction. The classic use for this is
+   By default, <command>LOCK</command> locks in exclusive mode a table inside
+   a transaction. Various options allow shared access, or row-level locking
+   control.  The classic use for this is
    the case where you want to select some data, then
    update it inside a transaction.
    If you don't explicit lock a table using LOCK statement, it will be
@@ -183,7 +170,7 @@
    <PARA>
     There is no <command>LOCK TABLE</command> in <acronym>SQL92</acronym>,
     which instead uses <command>SET TRANSACTION</command> to specify
-    concurrency level on transactions.
+    concurrency level on transactions.  We support that too.
    </para>
   </refsect2>
  </refsect1>

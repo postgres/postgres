@@ -1,16 +1,20 @@
 .\" This is -*-nroff-*-
 .\" XXX standard disclaimer belongs here....
-.\" $Header: /cvsroot/pgsql/src/man/Attic/lock.l,v 1.5 1998/03/23 15:09:34 momjian Exp $
+.\" $Header: /cvsroot/pgsql/src/man/Attic/lock.l,v 1.6 1999/06/03 19:18:00 momjian Exp $
 .TH FETCH SQL 01/23/93 PostgreSQL PostgreSQL
 .SH NAME
 lock - exclusive lock a table
 .SH SYNOPSIS
 .nf
-\fBlock\fR [\fBtable\fR] classname
+\fBlock\fR [\fBtable\fR] classname [[IN] [ROW|ACCESS] [SHARE|EXCLUSIVE] MODE]
 .fi
 .SH DESCRIPTION
+By default,
 .BR lock
-exclusive locks a table inside a transaction. The classic use for this
+exclusive locks an entire table inside a transaction.
+Various options allow shared access, or row-level locking control.
+.PP
+The classic use for this
 is the case where you want to \fBselect\fP some data, then update it
 inside a transaction.  If you don't exclusive lock the table before the
 \fBselect\fP, some other user may also read the selected data, and try
