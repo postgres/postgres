@@ -24,7 +24,7 @@ fi
 
 for FILE
 do
-	cat $FILE |
+	cat "$FILE" |
 # convert // comments to /* */
 	sed 's;^\([ 	]*\)//\(.*\)$;\1/* \2 */;g' |
 # mark some comments for special treatment later
@@ -1319,7 +1319,7 @@ int	pgindent_func_no_var_fix;\
 # add space after comments that start on tab stops
 	sed 's,;\(/\*.*\*/\)$,;	\1,' |
 # work around #else indenting next line if #ifdef defines variables at top
-# work around case misindenting function has no variables defined
+# work around misindenting of function with no variables defined
 	awk '
 	{
 		if ($0 ~ "^[ 	]*int[ 	]*pgindent_func_no_var_fix;")
@@ -1329,6 +1329,7 @@ int	pgindent_func_no_var_fix;\
 		}
 		else 	print $0;
 	}' |
+# remove tabs and retab with four spaces
 	detab -t8 -qc |
 	entab -t4 -qc |
 # move trailing * in function return type
@@ -1459,7 +1460,7 @@ int	pgindent_func_no_var_fix;\
 		}
 		else	print $0;
 	}' |
-	cat >/tmp/$$ && cat /tmp/$$ >$FILE
+	cat >/tmp/$$ && cat /tmp/$$ >"$FILE"
 done
 
 # The 'for' loop makes these backup files useless so delete them
