@@ -29,7 +29,7 @@
  * MAINTENANCE, SUPPORT, UPDATES, ENHANCEMENTS, OR MODIFICATIONS.
  *
  * IDENTIFICATION
- *	$PostgreSQL: pgsql/src/pl/plpython/plpython.c,v 1.57 2004/09/19 23:38:21 tgl Exp $
+ *	$PostgreSQL: pgsql/src/pl/plpython/plpython.c,v 1.58 2004/12/17 02:14:48 tgl Exp $
  *
  *********************************************************************
  */
@@ -1531,13 +1531,8 @@ static PyObject *PLy_plan_status(PyObject *, PyObject *);
 static PyObject *PLy_result_new(void);
 static void PLy_result_dealloc(PyObject *);
 static PyObject *PLy_result_getattr(PyObject *, char *);
-
-#ifdef NOT_USED
-/* Appear to be unused */
-static PyObject *PLy_result_fetch(PyObject *, PyObject *);
 static PyObject *PLy_result_nrows(PyObject *, PyObject *);
 static PyObject *PLy_result_status(PyObject *, PyObject *);
-#endif
 static int	PLy_result_length(PyObject *);
 static PyObject *PLy_result_item(PyObject *, int);
 static PyObject *PLy_result_slice(PyObject *, int, int);
@@ -1582,7 +1577,7 @@ static PyTypeObject PLy_PlanType = {
 };
 
 static PyMethodDef PLy_plan_methods[] = {
-	{"status", (PyCFunction) PLy_plan_status, METH_VARARGS, NULL},
+	{"status", PLy_plan_status, METH_VARARGS, NULL},
 	{NULL, NULL, 0, NULL}
 };
 
@@ -1626,15 +1621,11 @@ static PyTypeObject PLy_ResultType = {
 	PLy_result_doc,				/* tp_doc */
 };
 
-#ifdef NOT_USED
-/* Appear to be unused */
 static PyMethodDef PLy_result_methods[] = {
-	{"fetch", (PyCFunction) PLy_result_fetch, METH_VARARGS, NULL,},
-	{"nrows", (PyCFunction) PLy_result_nrows, METH_VARARGS, NULL},
-	{"status", (PyCFunction) PLy_result_status, METH_VARARGS, NULL},
+	{"nrows", PLy_result_nrows, METH_VARARGS, NULL},
+	{"status", PLy_result_status, METH_VARARGS, NULL},
 	{NULL, NULL, 0, NULL}
 };
-#endif
 
 static PyMethodDef PLy_methods[] = {
 	/*
@@ -1758,17 +1749,9 @@ PLy_result_dealloc(PyObject * arg)
 }
 
 static PyObject *
-PLy_result_getattr(PyObject * self, char *attr)
+PLy_result_getattr(PyObject * self, char *name)
 {
-	return NULL;
-}
-
-#ifdef NOT_USED
-/* Appear to be unused */
-static PyObject *
-PLy_result_fetch(PyObject * self, PyObject * args)
-{
-	return NULL;
+	return Py_FindMethod(PLy_result_methods, self, name);
 }
 
 static PyObject *
@@ -1788,7 +1771,6 @@ PLy_result_status(PyObject * self, PyObject * args)
 	Py_INCREF(ob->status);
 	return ob->status;
 }
-#endif
 
 static int
 PLy_result_length(PyObject * arg)

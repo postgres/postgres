@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/plpython.sgml,v 1.24 2004/09/13 20:05:18 tgl Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/plpython.sgml,v 1.25 2004/12/17 02:14:44 tgl Exp $ -->
 
 <chapter id="plpython">
  <title>PL/Python - Python Procedural Language</title>
@@ -46,7 +46,8 @@
   <title>PL/Python Functions</title>
 
   <para>
-   The Python code you write gets transformed into a Python function.  E.g.,
+   The Python code you write gets transformed into a Python function.
+   For example,
 <programlisting>
 CREATE FUNCTION myfunc(text) RETURNS text
     AS 'return args[0]'
@@ -60,13 +61,14 @@ def __plpython_procedure_myfunc_23456():
         return args[0]
 </programlisting>
 
-   assuming that 23456 is the OID of the function.
+   assuming that 23456 is the OID assigned to the function by
+   <productname>PostgreSQL</productname>.
   </para>
 
   <para>
    If you do not provide a return value, Python returns the default
-   <symbol>None</symbol>. The language module translates Python's
-   <symbol>None</symbol> into the SQL null
+   <symbol>None</symbol>. <application>PL/Python</application> translates
+   Python's <symbol>None</symbol> into the SQL null
    value.<indexterm><primary>null value</><secondary
    sortas="PL/Python">in PL/Python</></indexterm>
   </para>
@@ -108,7 +110,7 @@ def __plpython_procedure_myfunc_23456():
   </indexterm>
 
   <para>
-   When a function is used in a trigger, the dictionary
+   When a function is used as a trigger, the dictionary
    <literal>TD</literal> contains trigger-related values.  The trigger
    rows are in <literal>TD["new"]</> and/or <literal>TD["old"]</>
    depending on the trigger event.  <literal>TD["event"]</> contains
@@ -120,9 +122,9 @@ def __plpython_procedure_myfunc_23456():
    <literal>STATEMENT</>, and <literal>UNKNOWN</>.
    <literal>TD["name"]</> contains the trigger name, and
    <literal>TD["relid"]</> contains the OID of the table on
-   which the trigger occurred.  If the trigger was called with
-   arguments they are available in <literal>TD["args"][0]</> to
-   <literal>TD["args"][(n-1)]</>.
+   which the trigger occurred.  If the <command>CREATE TRIGGER</> command
+   included arguments, they are available in <literal>TD["args"][0]</> to
+   <literal>TD["args"][(<replaceable>n</>-1)]</>.
   </para>
 
   <para>
@@ -143,23 +145,23 @@ def __plpython_procedure_myfunc_23456():
    this module are available to you in the Python code as
    <literal>plpy.<replaceable>foo</replaceable></literal>.  At present
    <literal>plpy</literal> implements the functions
-   <literal>plpy.debug("msg")</literal>,
-   <literal>plpy.log("msg")</literal>,
-   <literal>plpy.info("msg")</literal>,
-   <literal>plpy.notice("msg")</literal>,
-   <literal>plpy.warning("msg")</literal>,
-   <literal>plpy.error("msg")</literal>, and
-   <literal>plpy.fatal("msg")</literal>.  They are mostly equivalent
-   to calling <literal>elog(<replaceable>LEVEL</>, "msg")</literal>
+   <literal>plpy.debug(<replaceable>msg</>)</literal>,
+   <literal>plpy.log(<replaceable>msg</>)</literal>,
+   <literal>plpy.info(<replaceable>msg</>)</literal>,
+   <literal>plpy.notice(<replaceable>msg</>)</literal>,
+   <literal>plpy.warning(<replaceable>msg</>)</literal>,
+   <literal>plpy.error(<replaceable>msg</>)</literal>, and
+   <literal>plpy.fatal(<replaceable>msg</>)</literal>.
+   These are mostly equivalent to calling
+   <literal>elog(<replaceable>level</>, <replaceable>msg</>)</literal>
    from C code.<indexterm><primary>elog</><secondary>in
    PL/Python</></indexterm>  <function>plpy.error</function> and
    <function>plpy.fatal</function> actually raise a Python exception
    which, if uncaught, causes the PL/Python module to call
    <literal>elog(ERROR, msg)</literal> when the function handler
-   returns from the Python interpreter.  Long-jumping out of the
-   Python interpreter is probably not good.  <literal>raise
-   plpy.ERROR("msg")</literal> and <literal>raise
-   plpy.FATAL("msg")</literal> are equivalent to calling
+   returns from the Python interpreter.  <literal>raise
+   plpy.ERROR(<replaceable>msg</>)</literal> and <literal>raise
+   plpy.FATAL(<replaceable>msg</>)</literal> are equivalent to calling
    <function>plpy.error</function> and
    <function>plpy.fatal</function>, respectively.
   </para>
@@ -208,17 +210,6 @@ plan = plpy.prepare("SELECT last_name FROM my_users WHERE first_name = $1", [ "t
 rv = plpy.execute(plan, [ "name" ], 5)
 </programlisting>
    The third argument is the limit and is optional.
-  </para>
-
-  <para>
-   In the current version, any database error encountered while
-   running a <application>PL/Python</application> function will result
-   in the immediate termination of that function by the server; it is
-   not possible to trap error conditions using Python <literal>try
-   ... catch</literal> constructs.  For example, a syntax error in an
-   SQL statement passed to the <literal>plpy.execute</literal> call
-   will terminate the function.  This behavior may be changed in a
-   future release.
   </para>
 
   <para>
