@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/storage/file/fd.c,v 1.102.2.1 2004/02/23 20:46:16 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/storage/file/fd.c,v 1.102.2.2 2004/02/23 23:03:43 tgl Exp $
  *
  * NOTES:
  *
@@ -43,8 +43,6 @@
 #include <sys/file.h>
 #include <sys/param.h>
 #include <sys/stat.h>
-#include <dirent.h>
-#include <errno.h>
 #include <unistd.h>
 #include <fcntl.h>
 
@@ -92,11 +90,11 @@ int			max_files_per_process = 1000;
 
 /*
  * Maximum number of file descriptors to open for either VFD entries or
- * AllocateFile files.  This is initialized to a conservative value, and
- * remains that way indefinitely in bootstrap or standalone-backend cases.
- * In normal postmaster operation, the postmaster calls set_max_safe_fds()
- * late in initialization to update the value, and that value is then
- * inherited by forked subprocesses.
+ * AllocateFile/AllocateDir operations.  This is initialized to a conservative
+ * value, and remains that way indefinitely in bootstrap or standalone-backend
+ * cases.  In normal postmaster operation, the postmaster calls
+ * set_max_safe_fds() late in initialization to update the value, and that
+ * value is then inherited by forked subprocesses.
  *
  * Note: the value of max_files_per_process is taken into account while
  * setting this variable, and so need not be tested separately.
@@ -163,6 +161,17 @@ static int	nfile = 0;
 
 static int	numAllocatedFiles = 0;
 static FILE *allocatedFiles[MAX_ALLOCATED_FILES];
+
+/*
+ * List of <dirent.h> DIRs opened with AllocateDir.
+ *
+ * Since we don't have heavy use of AllocateDir, it seems OK to put a pretty
+ * small maximum limit on the number of simultaneously allocated dirs.
+ */
+#define MAX_ALLOCATED_DIRS  10
+
+static int	numAllocatedDirs = 0;
+static DIR *allocatedDirs[MAX_ALLOCATED_DIRS];
 
 /*
  * Number of temporary files opened during the current session;
@@ -494,7 +503,7 @@ LruInsert(File file)
 
 	if (FileIsNotOpen(file))
 	{
-		while (nfile + numAllocatedFiles >= max_safe_fds)
+		while (nfile + numAllocatedFiles + numAllocatedDirs >= max_safe_fds)
 		{
 			if (!ReleaseLruFile())
 				break;
@@ -753,7 +762,7 @@ fileNameOpenFile(FileName fileName,
 	file = AllocateVfd();
 	vfdP = &VfdCache[file];
 
-	while (nfile + numAllocatedFiles >= max_safe_fds)
+	while (nfile + numAllocatedFiles + numAllocatedDirs >= max_safe_fds)
 	{
 		if (!ReleaseLruFile())
 			break;
@@ -1104,8 +1113,8 @@ AllocateFile(char *name, char *mode)
 	 * looping.
 	 */
 	if (numAllocatedFiles >= MAX_ALLOCATED_FILES ||
-		numAllocatedFiles >= max_safe_fds - 1)
-		elog(ERROR, "too many private FDs demanded");
+		numAllocatedFiles + numAllocatedDirs >= max_safe_fds - 1)
+		elog(ERROR, "too many private files demanded");
 
 TryAgain:
 	if ((file = fopen(name, mode)) != NULL)
@@ -1153,6 +1162,86 @@ FreeFile(FILE *file)
 
 	fclose(file);
 }
+
+
+/*
+ * Routines that want to use <dirent.h> (ie, DIR*) should use AllocateDir
+ * rather than plain opendir().  This lets fd.c deal with freeing FDs if
+ * necessary to open the directory, and with closing it after an elog.
+ * When done, call FreeDir rather than closedir.
+ *
+ * Ideally this should be the *only* direct call of opendir() in the backend.
+ */
+DIR *
+AllocateDir(const char *dirname)
+{
+	DIR	   *dir;
+
+	DO_DB(elog(LOG, "AllocateDir: Allocated %d", numAllocatedDirs));
+
+	/*
+	 * The test against MAX_ALLOCATED_DIRS prevents us from overflowing
+	 * allocatedDirs[]; the test against max_safe_fds prevents AllocateDir
+	 * from hogging every one of the available FDs, which'd lead to infinite
+	 * looping.
+	 */
+	if (numAllocatedDirs >= MAX_ALLOCATED_DIRS ||
+		numAllocatedDirs + numAllocatedFiles >= max_safe_fds - 1)
+		elog(ERROR, "too many private dirs demanded");
+
+TryAgain:
+	if ((dir = opendir(dirname)) != NULL)
+	{
+		allocatedDirs[numAllocatedDirs] = dir;
+		numAllocatedDirs++;
+		return dir;
+	}
+
+	if (errno == EMFILE || errno == ENFILE)
+	{
+		int			save_errno = errno;
+
+		ereport(LOG,
+				(errcode(ERRCODE_INSUFFICIENT_RESOURCES),
+			  errmsg("out of file descriptors: %m; release and retry")));
+		errno = 0;
+		if (ReleaseLruFile())
+			goto TryAgain;
+		errno = save_errno;
+	}
+
+	return NULL;
+}
+
+/*
+ * Close a directory opened with AllocateDir.
+ *
+ * Note we do not check closedir's return value --- it is up to the caller
+ * to handle close errors.
+ */
+int
+FreeDir(DIR *dir)
+{
+	int			i;
+
+	DO_DB(elog(LOG, "FreeDir: Allocated %d", numAllocatedDirs));
+
+	/* Remove dir from list of allocated dirs, if it's present */
+	for (i = numAllocatedDirs; --i >= 0;)
+	{
+		if (allocatedDirs[i] == dir)
+		{
+			numAllocatedDirs--;
+			allocatedDirs[i] = allocatedDirs[numAllocatedDirs];
+			break;
+		}
+	}
+	if (i < 0)
+		elog(WARNING, "dir passed to FreeDir was not obtained from AllocateDir");
+
+	return closedir(dir);
+}
+
 
 /*
  * closeAllVfds
@@ -1210,7 +1299,7 @@ AtProcExit_Files(void)
  * exiting. If that's the case, we should remove all temporary files; if
  * that's not the case, we are being called for transaction commit/abort
  * and should only remove transaction-local temp files.  In either case,
- * also clean up "allocated" stdio files.
+ * also clean up "allocated" stdio files and dirs.
  */
 static void
 CleanupTempFiles(bool isProcExit)
@@ -1239,6 +1328,9 @@ CleanupTempFiles(bool isProcExit)
 
 	while (numAllocatedFiles > 0)
 		FreeFile(allocatedFiles[0]);
+
+	while (numAllocatedDirs > 0)
+		FreeDir(allocatedDirs[0]);
 }
 
 
@@ -1270,7 +1362,7 @@ RemovePgTempFiles(void)
 	 * files.
 	 */
 	snprintf(db_path, sizeof(db_path), "%s/base", DataDir);
-	if ((db_dir = opendir(db_path)) != NULL)
+	if ((db_dir = AllocateDir(db_path)) != NULL)
 	{
 		while ((db_de = readdir(db_dir)) != NULL)
 		{
@@ -1282,7 +1374,7 @@ RemovePgTempFiles(void)
 					 "%s/%s/%s",
 					 db_path, db_de->d_name,
 					 PG_TEMP_FILES_DIR);
-			if ((temp_dir = opendir(temp_path)) != NULL)
+			if ((temp_dir = AllocateDir(temp_path)) != NULL)
 			{
 				while ((temp_de = readdir(temp_dir)) != NULL)
 				{
@@ -1305,9 +1397,9 @@ RemovePgTempFiles(void)
 							 "unexpected file found in temporary-files directory: \"%s\"",
 							 rm_path);
 				}
-				closedir(temp_dir);
+				FreeDir(temp_dir);
 			}
 		}
-		closedir(db_dir);
+		FreeDir(db_dir);
 	}
 }

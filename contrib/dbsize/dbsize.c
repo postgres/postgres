@@ -1,16 +1,15 @@
 #include "postgres.h"
 
 #include <sys/types.h>
-#include <dirent.h>
 #include <sys/stat.h>
 #include <unistd.h>
-#include <errno.h>
 
 #include "access/heapam.h"
 #include "catalog/catalog.h"
 #include "catalog/namespace.h"
 #include "commands/dbcommands.h"
 #include "fmgr.h"
+#include "storage/fd.h"
 #include "utils/builtins.h"
 
 
@@ -58,7 +57,7 @@ database_size(PG_FUNCTION_ARGS)
 
 	dbpath = GetDatabasePath(dbid);
 
-	dirdesc = opendir(dbpath);
+	dirdesc = AllocateDir(dbpath);
 	if (!dirdesc)
 		ereport(ERROR,
 				(errcode_for_file_access(),
@@ -93,7 +92,7 @@ database_size(PG_FUNCTION_ARGS)
 		pfree(fullname);
 	}
 
-	closedir(dirdesc);
+	FreeDir(dirdesc);
 
 	PG_RETURN_INT64(totalsize);
 }

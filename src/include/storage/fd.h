@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2003, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Id: fd.h,v 1.39.4.1 2004/02/23 20:46:16 tgl Exp $
+ * $Id: fd.h,v 1.39.4.2 2004/02/23 23:03:43 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -31,9 +31,15 @@
  * use FreeFile, not fclose, to close it.  AVOID using stdio for files
  * that you intend to hold open for any length of time, since there is
  * no way for them to share kernel file descriptors with other files.
+ *
+ * Likewise, use AllocateDir/FreeDir, not opendir/closedir, to allocate
+ * open directories (DIR*).
  */
 #ifndef FD_H
 #define FD_H
+
+#include <dirent.h>
+
 
 /*
  * FileSeek uses the standard UNIX lseek(2) flags.
@@ -65,7 +71,11 @@ extern int	FileTruncate(File file, long offset);
 
 /* Operations that allow use of regular stdio --- USE WITH CAUTION */
 extern FILE *AllocateFile(char *name, char *mode);
-extern void FreeFile(FILE *);
+extern void FreeFile(FILE *file);
+
+/* Operations to allow use of the <dirent.h> library routines */
+extern DIR *AllocateDir(const char *dirname);
+extern int	FreeDir(DIR *dir);
 
 /* If you've really really gotta have a plain kernel FD, use this */
 extern int	BasicOpenFile(FileName fileName, int fileFlags, int fileMode);
