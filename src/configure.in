@@ -222,8 +222,13 @@ AC_MSG_CHECKING(setting USE_TCL)
 AC_ARG_WITH(
    tcl,
    [  --with-tcl		  use tcl ],
-   USE_TCL=true; AC_MSG_RESULT(enabled),
-   USE_TCL=false; AC_MSG_RESULT(disabled)
+   [
+	case "$withval" in
+	y | ye | yes)		USE_TCL=true; AC_MSG_RESULT(enabled) ;;
+	*)			USE_TCL=false; AC_MSG_RESULT(disabled) ;;
+	esac
+   ],
+   [ USE_TCL=false; AC_MSG_RESULT(disabled) ]
 )
 
 dnl Add tcl/tk candidate directories to CPPFLAGS
@@ -254,8 +259,13 @@ AC_MSG_CHECKING(setting USE_PERL)
 AC_ARG_WITH(
    perl,
    [  --with-perl		  use perl ],
-   USE_PERL=true; AC_MSG_RESULT(enabled),
-   USE_PERL=false; AC_MSG_RESULT(disabled)
+   [
+	case "$withval" in
+	y | ye | yes)		USE_PERL=true; AC_MSG_RESULT(enabled) ;;
+	*)			USE_PERL=false; AC_MSG_RESULT(disabled) ;;
+	esac
+   ],
+   [ USE_PERL=false; AC_MSG_RESULT(disabled) ]
 )
 
 #dnl Verify that postgres is already installed
