@@ -6,12 +6,15 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: dbcommands.h,v 1.8 1999/03/16 03:24:18 momjian Exp $
+ * $Id: dbcommands.h,v 1.8.2.1 1999/07/30 18:52:55 scrappy Exp $
  *
  *-------------------------------------------------------------------------
  */
 #ifndef DBCOMMANDS_H
 #define DBCOMMANDS_H
+
+#include <signal.h>
+#include "tcop/dest.h"
 
 /*
  * Originally from tmp/daemon.h. The functions declared in daemon.h does not

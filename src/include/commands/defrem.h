@@ -6,15 +6,15 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: defrem.h,v 1.15 1999/02/13 23:21:18 momjian Exp $
+ * $Id: defrem.h,v 1.15.2.1 1999/07/30 18:52:56 scrappy Exp $
  *
  *-------------------------------------------------------------------------
  */
 #ifndef DEFREM_H
 #define DEFREM_H
 
-#include <tcop/dest.h>
-#include <nodes/parsenodes.h>
+#include "nodes/parsenodes.h"
+#include "tcop/dest.h"
 
 /*
  * prototypes in defind.c

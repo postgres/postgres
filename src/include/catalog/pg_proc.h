@@ -6,7 +6,7 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: pg_proc.h,v 1.99 1999/05/25 16:13:47 momjian Exp $
+ * $Id: pg_proc.h,v 1.99.2.1 1999/07/30 18:52:53 scrappy Exp $
  *
  * NOTES
  *	  The script catalog/genbki.sh reads this file and generates .bki
@@ -22,7 +22,7 @@
 #ifndef PG_PROC_H
 #define PG_PROC_H
 
-#include <tcop/dest.h>
+#include "tcop/dest.h"
 
 /* ----------------
  *		postgres.h contains the system type definintions and the
