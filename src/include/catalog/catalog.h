@@ -7,22 +7,29 @@
  * Portions Copyright (c) 1996-2001, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Id: catalog.h,v 1.22 2002/03/22 21:34:44 tgl Exp $
+ * $Id: catalog.h,v 1.23 2002/04/12 20:38:30 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
 #ifndef CATALOG_H
 #define CATALOG_H
 
-#include "access/tupdesc.h"
+#include "utils/rel.h"
 
-#include "storage/relfilenode.h"
 
 extern char *relpath(RelFileNode rnode);
 extern char *GetDatabasePath(Oid tblNode);
 
-extern bool IsSystemRelationName(const char *relname);
-extern bool IsToastRelationName(const char *relname);
+extern bool IsSystemRelation(Relation relation);
+extern bool IsToastRelation(Relation relation);
+
+extern bool IsSystemClass(Form_pg_class reltuple);
+extern bool IsToastClass(Form_pg_class reltuple);
+
+extern bool IsSystemNamespace(Oid namespaceId);
+extern bool IsToastNamespace(Oid namespaceId);
+
+extern bool IsReservedName(const char *name);
 extern bool IsSharedSystemRelationName(const char *relname);
 
 extern Oid	newoid(void);

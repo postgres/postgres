@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/commands/Attic/rename.c,v 1.69 2002/04/05 11:58:24 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/commands/Attic/rename.c,v 1.70 2002/04/12 20:38:24 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -92,7 +92,7 @@ renameatt(Oid relid,
 	 * normally, only the owner of a class can change its schema.
 	 */
 	if (!allowSystemTableMods 
-		&& IsSystemRelationName(RelationGetRelationName(targetrelation)))
+		&& IsSystemRelation(targetrelation))
 		elog(ERROR, "renameatt: class \"%s\" is a system catalog",
 			 RelationGetRelationName(targetrelation));
 	if (!pg_class_ownercheck(relid, GetUserId()))
@@ -276,13 +276,9 @@ renamerel(Oid relid, const char *newrelname)
 
 	/* Validity checks */
 	if (!allowSystemTableMods &&
-		IsSystemRelationName(RelationGetRelationName(targetrelation)))
+		IsSystemRelation(targetrelation))
 		elog(ERROR, "renamerel: system relation \"%s\" may not be renamed",
 			 RelationGetRelationName(targetrelation));
-
-	if (!allowSystemTableMods && IsSystemRelationName(newrelname))
-		elog(ERROR, "renamerel: Illegal class name: \"%s\" -- pg_ is reserved for system catalogs",
-			 newrelname);
 
 	relkind = targetrelation->rd_rel->relkind;
 	relhastriggers = (targetrelation->rd_rel->reltriggers > 0);

@@ -9,7 +9,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/optimizer/util/plancat.c,v 1.70 2002/02/19 20:11:14 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/optimizer/util/plancat.c,v 1.71 2002/04/12 20:38:26 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -58,8 +58,7 @@ get_relation_info(Oid relationObjectId,
 			 relationObjectId);
 	relation = (Form_pg_class) GETSTRUCT(relationTuple);
 
-	if (IsIgnoringSystemIndexes() &&
-		IsSystemRelationName(NameStr(relation->relname)))
+	if (IsIgnoringSystemIndexes() && IsSystemClass(relation))
 		*hasindex = false;
 	else
 		*hasindex = relation->relhasindex;

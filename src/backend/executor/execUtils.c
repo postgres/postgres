@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/executor/execUtils.c,v 1.79 2002/02/19 20:11:13 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/executor/execUtils.c,v 1.80 2002/04/12 20:38:26 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -467,7 +467,7 @@ ExecOpenIndices(ResultRelInfo *resultRelInfo)
 	if (!RelationGetForm(resultRelation)->relhasindex)
 		return;
 	if (IsIgnoringSystemIndexes() &&
-		IsSystemRelationName(RelationGetRelationName(resultRelation)))
+		IsSystemRelation(resultRelation))
 		return;
 
 	/*

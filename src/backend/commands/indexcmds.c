@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/commands/indexcmds.c,v 1.69 2002/04/11 19:59:58 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/commands/indexcmds.c,v 1.70 2002/04/12 20:38:22 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -104,12 +104,12 @@ DefineIndex(RangeVar *heapRelation,
 
 	relationId = RelationGetRelid(rel);
 
-	heap_close(rel, NoLock);
-
 	if (!IsBootstrapProcessingMode() &&
-		IsSystemRelationName(heapRelation->relname) &&
+		IsSystemRelation(rel) &&
 		!IndexesAreActive(relationId, false))
 		elog(ERROR, "Existing indexes are inactive. REINDEX first");
+
+	heap_close(rel, NoLock);
 
 	/*
 	 * look up the access method, verify it can handle the requested
@@ -560,6 +560,16 @@ ReindexIndex(RangeVar *indexRelation, bool force /* currently unused */ )
 			 indexRelation->relname,
 			 ((Form_pg_class) GETSTRUCT(tuple))->relkind);
 
+	if (IsSystemClass((Form_pg_class) GETSTRUCT(tuple)))
+	{
+		if (!allowSystemTableMods)
+			elog(ERROR, "\"%s\" is a system index. call REINDEX under standalone postgres with -O -P options",
+				 indexRelation->relname);
+		if (!IsIgnoringSystemIndexes())
+			elog(ERROR, "\"%s\" is a system index. call REINDEX under standalone postgres with -P -O options",
+				 indexRelation->relname);
+	}
+
 	ReleaseSysCache(tuple);
 
 	if (IsIgnoringSystemIndexes())
@@ -611,10 +621,6 @@ ReindexTable(RangeVar *relation, bool force)
 /*
  * ReindexDatabase
  *		Recreate indexes of a database.
- *
- * Exceptions:
- *		"ERROR" if table nonexistent.
- *		...
  */
 void
 ReindexDatabase(const char *dbname, bool force, bool all)
@@ -637,6 +643,11 @@ ReindexDatabase(const char *dbname, bool force, bool all)
 
 	if (!(superuser() || is_dbadmin(MyDatabaseId)))
 		elog(ERROR, "REINDEX DATABASE: Permission denied.");
+
+	if (!allowSystemTableMods)
+		elog(ERROR, "must be called under standalone postgres with -O -P options");
+	if (!IsIgnoringSystemIndexes())
+		elog(ERROR, "must be called under standalone postgres with -P -O options");
 
 	/*
 	 * We cannot run inside a user transaction block; if we were inside a
@@ -668,7 +679,7 @@ ReindexDatabase(const char *dbname, bool force, bool all)
 	{
 		if (!all)
 		{
-			if (!IsSystemRelationName(NameStr(((Form_pg_class) GETSTRUCT(tuple))->relname)))
+			if (!IsSystemClass((Form_pg_class) GETSTRUCT(tuple)))
 				continue;
 		}
 		if (((Form_pg_class) GETSTRUCT(tuple))->relkind == RELKIND_RELATION)

@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/commands/trigger.c,v 1.112 2002/04/09 20:35:48 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/commands/trigger.c,v 1.113 2002/04/12 20:38:24 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -80,7 +80,7 @@ CreateTrigger(CreateTrigStmt *stmt)
 		elog(ERROR, "CreateTrigger: relation \"%s\" is not a table",
 			 stmt->relation->relname);
 
-	if (!allowSystemTableMods && IsSystemRelationName(stmt->relation->relname))
+	if (!allowSystemTableMods && IsSystemRelation(rel))
 		elog(ERROR, "CreateTrigger: can't create trigger for system relation %s",
 			stmt->relation->relname);
 
@@ -326,7 +326,7 @@ DropTrigger(Oid relid, const char *trigname)
 		elog(ERROR, "DropTrigger: relation \"%s\" is not a table",
 			 RelationGetRelationName(rel));
 
-	if (!allowSystemTableMods && IsSystemRelationName(RelationGetRelationName(rel)))
+	if (!allowSystemTableMods && IsSystemRelation(rel))
 		elog(ERROR, "DropTrigger: can't drop trigger for system relation %s",
 			 RelationGetRelationName(rel));
 

@@ -1,6 +1,7 @@
 /*-------------------------------------------------------------------------
  *
  * catalog.c
+ *		routines concerned with catalog naming conventions
  *
  *
  * Portions Copyright (c) 1996-2001, PostgreSQL Global Development Group
@@ -8,7 +9,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/catalog/catalog.c,v 1.44 2001/11/16 23:30:35 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/catalog/catalog.c,v 1.45 2002/04/12 20:38:18 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -18,9 +19,9 @@
 #include "access/transam.h"
 #include "catalog/catalog.h"
 #include "catalog/catname.h"
-#include "catalog/pg_type.h"
+#include "catalog/pg_namespace.h"
 #include "miscadmin.h"
-#include "utils/lsyscache.h"
+
 
 /*
  * relpath			- construct path to a relation's file
@@ -74,53 +75,120 @@ GetDatabasePath(Oid tblNode)
 
 
 /*
- * IsSystemRelationName
- *		True iff name is the name of a system catalog relation.
+ * IsSystemRelation
+ *		True iff the relation is a system catalog relation.
  *
- *		NB: TOAST relations are considered system relations by this test.
+ *		NB: TOAST relations are considered system relations by this test
+ *		for compatibility with the old IsSystemRelationName function.
  *		This is appropriate in many places but not all.  Where it's not,
- *		also check IsToastRelationName.
+ *		also check IsToastRelation.
  *
- *		We now make a new requirement where system catalog relns must begin
- *		with pg_ while user relns are forbidden to do so.  Make the test
- *		trivial and instantaneous.
- *
- *		XXX this is way bogus. -- pma
+ *		We now just test if the relation is in the system catalog namespace;
+ *		so it's no longer necessary to forbid user relations from having
+ *		names starting with pg_.  Now only schema names have the pg_
+ *		distinction/requirement.
  */
 bool
-IsSystemRelationName(const char *relname)
+IsSystemRelation(Relation relation)
 {
-	/* ugly coding for speed */
-	return (relname[0] == 'p' &&
-			relname[1] == 'g' &&
-			relname[2] == '_');
+	return	IsSystemNamespace(RelationGetNamespace(relation)) ||
+			IsToastNamespace(RelationGetNamespace(relation));
 }
 
 /*
- * IsToastRelationName
- *		True iff name is the name of a TOAST support relation (or index).
+ * IsSystemClass
+ *		Like the above, but takes a Form_pg_class as argument.
+ *		Used when we do not want to open the relation and have to
+ *		search pg_class directly.
  */
 bool
-IsToastRelationName(const char *relname)
+IsSystemClass(Form_pg_class reltuple)
 {
-	return strncmp(relname, "pg_toast_", 9) == 0;
+	Oid		relnamespace = reltuple->relnamespace;
+
+	return	IsSystemNamespace(relnamespace) ||
+			IsToastNamespace(relnamespace);
+}
+
+/*
+ * IsToastRelation
+ *		True iff relation is a TOAST support relation (or index).
+ */
+bool
+IsToastRelation(Relation relation)
+{
+	return IsToastNamespace(RelationGetNamespace(relation));
+}
+
+/*
+ * IsToastClass
+ *		Like the above, but takes a Form_pg_class as argument.
+ *		Used when we do not want to open the relation and have to
+ *		search pg_class directly.
+ */
+bool
+IsToastClass(Form_pg_class reltuple)
+{
+	Oid		relnamespace = reltuple->relnamespace;
+
+	return	IsToastNamespace(relnamespace);
+}
+
+/*
+ * IsSystemNamespace
+ *		True iff namespace is pg_catalog.
+ *
+ * NOTE: the reason this isn't a macro is to avoid having to include
+ * catalog/pg_namespace.h in a lot of places.
+ */
+bool
+IsSystemNamespace(Oid namespaceId)
+{
+	return namespaceId == PG_CATALOG_NAMESPACE;
+}
+
+/*
+ * IsToastNamespace
+ *		True iff namespace is pg_toast.
+ *
+ * NOTE: the reason this isn't a macro is to avoid having to include
+ * catalog/pg_namespace.h in a lot of places.
+ */
+bool
+IsToastNamespace(Oid namespaceId)
+{
+	return namespaceId == PG_TOAST_NAMESPACE;
+}
+
+
+/*
+ * IsReservedName
+ *		True iff name starts with the pg_ prefix.
+ *
+ *		For some classes of objects, the prefix pg_ is reserved
+ *		for system objects only.
+ */
+bool
+IsReservedName(const char *name)
+{
+	/* ugly coding for speed */
+	return (name[0] == 'p' &&
+			name[1] == 'g' &&
+			name[2] == '_');
 }
 
 /*
  * IsSharedSystemRelationName
  *		True iff name is the name of a shared system catalog relation.
+ *
+ *		Note: This function assumes that this is a system relation
+ *		in the first place.  If that is not known, check the namespace
+ *		(with IsSystemNamespace) before calling this function.
  */
 bool
 IsSharedSystemRelationName(const char *relname)
 {
 	int			i;
-
-	/*
-	 * Quick out: if it's not a system relation, it can't be a shared
-	 * system relation.
-	 */
-	if (!IsSystemRelationName(relname))
-		return FALSE;
 
 	i = 0;
 	while (SharedSystemRelationNames[i] != NULL)
@@ -131,6 +199,7 @@ IsSharedSystemRelationName(const char *relname)
 	}
 	return FALSE;
 }
+
 
 /*
  *		newoid			- returns a unique identifier across all catalogs.

@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/catalog/index.c,v 1.175 2002/03/31 06:26:29 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/catalog/index.c,v 1.176 2002/04/12 20:38:19 tgl Exp $
  *
  *
  * INTERFACE ROUTINES
@@ -33,7 +33,6 @@
 #include "catalog/index.h"
 #include "catalog/indexing.h"
 #include "catalog/pg_index.h"
-#include "catalog/pg_namespace.h"
 #include "catalog/pg_opclass.h"
 #include "catalog/pg_proc.h"
 #include "catalog/pg_type.h"
@@ -320,7 +319,7 @@ ConstructIndexReldesc(Relation indexRelation, Oid amoid)
 	indexRelation->rd_rel->relowner = GetUserId();
 	indexRelation->rd_rel->relam = amoid;
 	indexRelation->rd_rel->relisshared =
-		(RelationGetNamespace(indexRelation) == PG_CATALOG_NAMESPACE) &&
+		IsSystemNamespace(RelationGetNamespace(indexRelation)) &&
 		IsSharedSystemRelationName(RelationGetRelationName(indexRelation));
 	indexRelation->rd_rel->relkind = RELKIND_INDEX;
 	indexRelation->rd_rel->relhasoids = false;
@@ -582,7 +581,7 @@ index_create(Oid heapRelationId,
 		elog(ERROR, "must index at least one column");
 
 	if (!allow_system_table_mods &&
-		IsSystemRelationName(RelationGetRelationName(heapRelation)) &&
+		IsSystemRelation(heapRelation) &&
 		IsNormalProcessingMode())
 		elog(ERROR, "User-defined indexes on system catalogs are not supported");
 
@@ -1221,7 +1220,7 @@ setNewRelfilenode(Relation relation)
 	Buffer		buffer;
 	RelationData workrel;
 
-	Assert(!IsSystemRelationName(NameStr(relation->rd_rel->relname)) || relation->rd_rel->relkind == RELKIND_INDEX);
+	Assert(!IsSystemRelation(relation) || relation->rd_rel->relkind == RELKIND_INDEX);
 
 	pg_class = heap_openr(RelationRelationName, RowExclusiveLock);
 	/* Fetch and lock the classTuple associated with this relation */
@@ -1912,7 +1911,7 @@ reindex_relation(Oid relid, bool force)
 	 * ignore the indexes of the target system relation while processing
 	 * reindex.
 	 */
-	if (!IsIgnoringSystemIndexes() && IsSystemRelationName(NameStr(rel->rd_rel->relname)))
+	if (!IsIgnoringSystemIndexes() && IsSystemRelation(rel))
 		deactivate_needed = true;
 #ifndef ENABLE_REINDEX_NAILED_RELATIONS
 

@@ -13,7 +13,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/catalog/namespace.c,v 1.7 2002/04/09 20:35:47 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/catalog/namespace.c,v 1.8 2002/04/12 20:38:19 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -21,6 +21,7 @@
 
 #include "access/heapam.h"
 #include "access/xact.h"
+#include "catalog/catalog.h"
 #include "catalog/catname.h"
 #include "catalog/heap.h"
 #include "catalog/namespace.h"
@@ -391,7 +392,7 @@ FuncnameGetCandidates(List *names, int nargs)
 		{
 			/* Consider only procs that are in the search path */
 			if (pathContainsSystemNamespace ||
-				procform->pronamespace != PG_CATALOG_NAMESPACE)
+				!IsSystemNamespace(procform->pronamespace))
 			{
 				List	   *nsp;
 

@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/commands/Attic/command.c,v 1.173 2002/04/11 23:20:04 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/commands/Attic/command.c,v 1.174 2002/04/12 20:38:20 tgl Exp $
  *
  * NOTES
  *	  The PerformAddAttribute() code, like most of the relation
@@ -346,7 +346,7 @@ AlterTableAddColumn(Oid myrelid,
 	 * normally, only the owner of a class can change its schema.
 	 */
 	if (!allowSystemTableMods
-		&& IsSystemRelationName(RelationGetRelationName(rel)))
+		&& IsSystemRelation(rel))
 		elog(ERROR, "ALTER TABLE: relation \"%s\" is a system catalog",
 			 RelationGetRelationName(rel));
 	if (!pg_class_ownercheck(myrelid, GetUserId()))
@@ -548,7 +548,7 @@ AlterTableAlterColumnDropNotNull(Oid myrelid,
 			 RelationGetRelationName(rel));
 
 	if (!allowSystemTableMods
-		&& IsSystemRelationName(RelationGetRelationName(rel)))
+		&& IsSystemRelation(rel))
 		elog(ERROR, "ALTER TABLE: relation \"%s\" is a system catalog",
 			 RelationGetRelationName(rel));
 
@@ -699,7 +699,7 @@ AlterTableAlterColumnSetNotNull(Oid myrelid,
 			 RelationGetRelationName(rel));
 
 	if (!allowSystemTableMods
-		&& IsSystemRelationName(RelationGetRelationName(rel)))
+		&& IsSystemRelation(rel))
 		elog(ERROR, "ALTER TABLE: relation \"%s\" is a system catalog",
 			 RelationGetRelationName(rel));
 
@@ -829,7 +829,7 @@ AlterTableAlterColumnDefault(Oid myrelid,
 			 RelationGetRelationName(rel));
 
 	if (!allowSystemTableMods
-		&& IsSystemRelationName(RelationGetRelationName(rel)))
+		&& IsSystemRelation(rel))
 		elog(ERROR, "ALTER TABLE: relation \"%s\" is a system catalog",
 			 RelationGetRelationName(rel));
 
@@ -970,8 +970,8 @@ drop_default(Oid relid, int16 attnum)
  */
 void
 AlterTableAlterColumnFlags(Oid myrelid,
-								bool inh, const char *colName,
-								Node *flagValue, const char *flagType)
+						   bool inh, const char *colName,
+						   Node *flagValue, const char *flagType)
 {
 	Relation	rel;
 	int			newtarget = 1;
@@ -989,9 +989,7 @@ AlterTableAlterColumnFlags(Oid myrelid,
 	/*
 	 * we allow statistics case for system tables
 	 */
-	if (*flagType != 'S' &&
-		!allowSystemTableMods
-		&& IsSystemRelationName(RelationGetRelationName(rel)))
+	if (*flagType != 'S' && !allowSystemTableMods && IsSystemRelation(rel))
 		elog(ERROR, "ALTER TABLE: relation \"%s\" is a system catalog",
 			 RelationGetRelationName(rel));
 
@@ -1150,7 +1148,7 @@ AlterTableAddConstraint(Oid myrelid,
 			 RelationGetRelationName(rel));
 
 	if (!allowSystemTableMods
-		&& IsSystemRelationName(RelationGetRelationName(rel)))
+		&& IsSystemRelation(rel))
 		elog(ERROR, "ALTER TABLE: relation \"%s\" is a system catalog",
 			 RelationGetRelationName(rel));
 
@@ -1476,7 +1474,7 @@ AlterTableDropConstraint(Oid myrelid,
 			 RelationGetRelationName(rel));
 
 	if (!allowSystemTableMods
-		&& IsSystemRelationName(RelationGetRelationName(rel)))
+		&& IsSystemRelation(rel))
 		elog(ERROR, "ALTER TABLE: relation \"%s\" is a system catalog",
 			 RelationGetRelationName(rel));
 
@@ -1951,6 +1949,10 @@ CreateSchemaCommand(CreateSchemaStmt *stmt)
 				 "\n\t\"%s\" is not a superuser, so cannot create a schema for \"%s\"",
 				 owner_name, authId);
 	}
+
+	if (!allowSystemTableMods && IsReservedName(schemaName))
+		elog(ERROR, "CREATE SCHEMA: Illegal schema name: \"%s\" -- pg_ is reserved for system schemas",
+			 schemaName);
 
 	/* Create the schema's namespace */
 	NamespaceCreate(schemaName, owner_userid);

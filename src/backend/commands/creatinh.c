@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/commands/Attic/creatinh.c,v 1.95 2002/03/31 06:26:30 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/commands/Attic/creatinh.c,v 1.96 2002/04/12 20:38:22 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -22,7 +22,6 @@
 #include "catalog/indexing.h"
 #include "catalog/namespace.h"
 #include "catalog/pg_inherits.h"
-#include "catalog/pg_namespace.h"
 #include "catalog/pg_type.h"
 #include "commands/creatinh.h"
 #include "miscadmin.h"
@@ -275,7 +274,7 @@ TruncateRelation(const RangeVar *relation)
 		elog(ERROR, "TRUNCATE cannot be used on views. '%s' is a view",
 			 RelationGetRelationName(rel));
 
-	if (!allowSystemTableMods && IsSystemRelationName(RelationGetRelationName(rel)))
+	if (!allowSystemTableMods && IsSystemRelation(rel))
 		elog(ERROR, "TRUNCATE cannot be used on system tables. '%s' is a system table",
 			 RelationGetRelationName(rel));
 

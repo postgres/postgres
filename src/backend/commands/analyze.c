@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/commands/analyze.c,v 1.30 2002/04/02 01:03:05 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/commands/analyze.c,v 1.31 2002/04/12 20:38:20 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -18,9 +18,9 @@
 
 #include "access/heapam.h"
 #include "access/tuptoaster.h"
+#include "catalog/catalog.h"
 #include "catalog/catname.h"
 #include "catalog/indexing.h"
-#include "catalog/pg_namespace.h"
 #include "catalog/pg_operator.h"
 #include "catalog/pg_statistic.h"
 #include "catalog/pg_type.h"
@@ -218,7 +218,7 @@ analyze_rel(Oid relid, VacuumStmt *vacstmt)
 	/*
 	 * We can ANALYZE any table except pg_statistic. See update_attstats
 	 */
-	if (RelationGetNamespace(onerel) == PG_CATALOG_NAMESPACE &&
+	if (IsSystemNamespace(RelationGetNamespace(onerel)) &&
 		strcmp(RelationGetRelationName(onerel), StatisticRelationName) == 0)
 	{
 		relation_close(onerel, AccessShareLock);

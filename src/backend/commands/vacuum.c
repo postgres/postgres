@@ -13,7 +13,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/commands/vacuum.c,v 1.222 2002/04/02 05:11:55 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/commands/vacuum.c,v 1.223 2002/04/12 20:38:25 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -806,7 +806,7 @@ full_vacuum_rel(Relation onerel, VacuumStmt *vacstmt)
 	bool		reindex = false;
 
 	if (IsIgnoringSystemIndexes() &&
-		IsSystemRelationName(RelationGetRelationName(onerel)))
+		IsSystemRelation(onerel))
 		reindex = true;
 
 	vacuum_set_xid_limits(vacstmt, onerel->rd_rel->relisshared,

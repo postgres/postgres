@@ -77,9 +77,6 @@ alter table nonesuch rename to newnonesuch;
 -- no such relation 
 alter table nonesuch rename to stud_emp;
 
--- system relation 
-alter table stud_emp rename to pg_stud_emp;
-
 -- conflict 
 alter table stud_emp rename to aggtest;
 

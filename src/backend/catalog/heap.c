@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/catalog/heap.c,v 1.195 2002/04/11 19:59:56 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/catalog/heap.c,v 1.196 2002/04/12 20:38:18 tgl Exp $
  *
  *
  * INTERFACE ROUTINES
@@ -38,7 +38,6 @@
 #include "catalog/indexing.h"
 #include "catalog/pg_attrdef.h"
 #include "catalog/pg_inherits.h"
-#include "catalog/pg_namespace.h"
 #include "catalog/pg_relcheck.h"
 #include "catalog/pg_statistic.h"
 #include "catalog/pg_type.h"
@@ -224,10 +223,10 @@ heap_create(const char *relname,
 	 * sanity checks
 	 */
 	if (!allow_system_table_mods &&
-		IsSystemRelationName(relname) &&
+		(IsSystemNamespace(relnamespace) || IsToastNamespace(relnamespace)) &&
 		IsNormalProcessingMode())
-		elog(ERROR, "invalid relation name \"%s\"; "
-			 "the 'pg_' name prefix is reserved for system catalogs",
+		elog(ERROR, "invalid relation \"%s\"; "
+			 "system catalog modifications are currently disallowed",
 			 relname);
 
 	/*
@@ -237,7 +236,7 @@ heap_create(const char *relname,
 	 * have to take special care for those rels that should be nailed
 	 * in cache and/or are shared across databases.
 	 */
-	if (relnamespace == PG_CATALOG_NAMESPACE)
+	if (IsSystemNamespace(relnamespace))
 	{
 		if (strcmp(TypeRelationName, relname) == 0)
 		{
@@ -1193,7 +1192,7 @@ heap_drop_with_catalog(Oid rid,
 	 * prevent deletion of system relations
 	 */
 	if (!allow_system_table_mods &&
-		IsSystemRelationName(RelationGetRelationName(rel)))
+		IsSystemRelation(rel))
 		elog(ERROR, "System relation \"%s\" may not be dropped",
 			 RelationGetRelationName(rel));
 

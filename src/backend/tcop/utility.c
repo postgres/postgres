@@ -10,7 +10,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/tcop/utility.c,v 1.147 2002/04/12 09:17:10 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/tcop/utility.c,v 1.148 2002/04/12 20:38:27 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -127,7 +127,7 @@ CheckDropPermissions(RangeVar *rel, char rightkind)
 		elog(ERROR, "you do not own %s \"%s\"",
 			 rentry->name, rel->relname);
 
-	if (!allowSystemTableMods && IsSystemRelationName(rel->relname))
+	if (!allowSystemTableMods && IsSystemClass(classform))
 		elog(ERROR, "%s \"%s\" is a system %s",
 			 rentry->name, rel->relname, rentry->name);
 
@@ -153,7 +153,8 @@ CheckOwnership(RangeVar *rel, bool noCatalogs)
 
 	if (noCatalogs)
 	{
-		if (!allowSystemTableMods && IsSystemRelationName(rel->relname))
+		if (!allowSystemTableMods &&
+			IsSystemClass((Form_pg_class) GETSTRUCT(tuple)))
 			elog(ERROR, "relation \"%s\" is a system catalog",
 				 rel->relname);
 	}
@@ -791,15 +792,6 @@ ProcessUtility(Node *parsetree,
 				{
 					case INDEX:
 						relname = (char *) stmt->relation->relname;
-						if (IsSystemRelationName(relname))
-						{
-							if (!allowSystemTableMods)
-								elog(ERROR, "\"%s\" is a system index. call REINDEX under standalone postgres with -O -P options",
-									 relname);
-							if (!IsIgnoringSystemIndexes())
-								elog(ERROR, "\"%s\" is a system index. call REINDEX under standalone postgres with -P -O options",
-									 relname);
-						}
 						CheckOwnership(stmt->relation, false);
 						ReindexIndex(stmt->relation, stmt->force);
 						break;
@@ -809,10 +801,6 @@ ProcessUtility(Node *parsetree,
 						break;
 					case DATABASE:
 						relname = (char *) stmt->name;
-						if (!allowSystemTableMods)
-							elog(ERROR, "must be called under standalone postgres with -O -P options");
-						if (!IsIgnoringSystemIndexes())
-							elog(ERROR, "must be called under standalone postgres with -P -O options");
 						ReindexDatabase(relname, stmt->force, false);
 						break;
 				}
