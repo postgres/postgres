@@ -28,7 +28,7 @@
 #    define ntoh_l(n) (u_long)(((u_char *)&n)[0] << 24 | \
 							((u_char *)&n)[1] << 16 | \
       	             	   ((u_char *)&n)[2] << 8 | ((u_char *)&n)[3])
-#    define hton_s(n) (ntoh_s(n))
+#    define hton_s(n) (u_short)(((u_char *) &n)[2] << 8 | ((u_char *) &n)[3])
 #    define hton_l(n) (ntoh_l(n))
 #  else	/* BYTE_ORDER != BIG_ENDIAN */
 #    if BYTE_ORDER == PDP_ENDIAN
