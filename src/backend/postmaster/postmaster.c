@@ -28,7 +28,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/postmaster/postmaster.c,v 1.211 2001/03/22 03:59:43 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/postmaster/postmaster.c,v 1.212 2001/04/19 19:09:23 petere Exp $
  *
  * NOTES
  *
@@ -211,6 +211,9 @@ static unsigned int random_seed = 0;
 extern char *optarg;
 extern int	optind,
 			opterr;
+#ifdef HAVE_INT_OPTRESET
+extern int	optreset;
+#endif
 
 /*
  * postmaster.c - function prototypes
