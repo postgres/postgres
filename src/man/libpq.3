@@ -1,6 +1,6 @@
 .\" This is -*-nroff-*-
 .\" XXX standard disclaimer belongs here....
-.\" $Header: /cvsroot/pgsql/src/man/Attic/libpq.3,v 1.9 1997/11/01 05:21:57 momjian Exp $
+.\" $Header: /cvsroot/pgsql/src/man/Attic/libpq.3,v 1.10 1997/11/14 15:41:30 thomas Exp $
 .TH LIBPQ INTRO 03/12/94 PostgreSQL PostgreSQL
 .SH DESCRIPTION
 Libpq is the programmer's interface to Postgres.  Libpq is a set of
@@ -62,6 +62,44 @@ for this realm and use separate ticket files to avoid conflicts with
 local ticket files.  This environment variable is only used if 
 .I Kerberos
 authentication is enabled.
+
+.PP
+The following environment variables can be used to specify user-level default behavior
+for every Postgres session:
+.sp
+\(bu
+.B PGDATESTYLE
+sets the default style of date/time representation.
+.sp
+\(bu
+.B PGTZ
+sets the default time zone.
+
+.PP
+The following environment variables can be used to specify default internal
+behavior for every Postgres session:
+.sp
+\(bu
+.B PGGEQO
+sets the default mode for the genetic optimizer.
+.sp
+\(bu
+.B PGRPLANS
+sets the default mode to allow or disable right-sided plans in the optimizer.
+.sp
+\(bu
+.B PGCOSTHEAP
+sets the default cost for heap searches for the optimizer.
+.sp
+\(bu
+.B PGCOSTINDEX
+sets the default cost for indexed searches for the optimizer.
+
+.PP
+See the
+set(l)
+man page for information on the arguments for these environment variables.
+
 .SH "Database Connection Functions"
 .PP
 The following routines deal with making a connection to a backend
