@@ -1,5 +1,5 @@
 # Macros to detect C compiler features
-# $PostgreSQL: pgsql/config/c-compiler.m4,v 1.12 2004/02/02 04:07:18 tgl Exp $
+# $PostgreSQL: pgsql/config/c-compiler.m4,v 1.13 2004/10/20 02:12:07 neilc Exp $
 
 
 # PGAC_C_SIGNED
@@ -121,35 +121,19 @@ AC_DEFINE(HAVE_FUNCNAME__FUNCTION, 1,
 fi
 fi])# PGAC_C_FUNCNAME_SUPPORT
 
-
-# PGAC_PROG_CC_NO_STRICT_ALIASING
-# -------------------------------
-# Find out how to turn off strict aliasing in the C compiler.
-AC_DEFUN([PGAC_PROG_CC_NO_STRICT_ALIASING],
-[AC_CACHE_CHECK([how to turn off strict aliasing in $CC],
-                pgac_cv_prog_cc_no_strict_aliasing,
-[pgac_save_CFLAGS=$CFLAGS
-if test "$GCC" = yes; then
-  pgac_try="-fno-strict-aliasing"
-else
-  # Maybe fill in later...
-  pgac_try=
-fi
-
-for pgac_flag in $pgac_try; do
-  CFLAGS="$pgac_save_CFLAGS $pgac_flag"
-  _AC_COMPILE_IFELSE([AC_LANG_PROGRAM()],
-                     [pgac_cv_prog_cc_no_strict_aliasing=$pgac_try
-break])
-done
-
-CFLAGS=$pgac_save_CFLAGS
-])
-
-if test x"$pgac_cv_prog_cc_no_strict_aliasing" != x""; then
-  CFLAGS="$CFLAGS $pgac_cv_prog_cc_no_strict_aliasing"
-fi])# PGAC_PROG_CC_NO_STRICT_ALIASING
-
+# PGAC_PROG_CC_CFLAGS_OPT
+# -----------------------
+# Given a string, check if the compiler supports the string as a
+# command-line option. If it does, add the string to CFLAGS.
+AC_DEFUN([PGAC_PROG_CC_CFLAGS_OPT],
+[AC_MSG_CHECKING([if $CC supports $1])
+pgac_save_CFLAGS=$CFLAGS
+CFLAGS="$pgac_save_CFLAGS $1"
+_AC_COMPILE_IFELSE([AC_LANG_PROGRAM()],
+                   AC_MSG_RESULT(yes),
+                   [CFLAGS="$pgac_save_CFLAGS"
+                    AC_MSG_RESULT(no)])
+])# PGAC_PROG_CC_CFLAGS_OPT
 
 # The below backpatches the following Autoconf change:
 #

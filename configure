@@ -2432,23 +2432,16 @@ else
   fi
 fi
 
-# Need to specify -fno-strict-aliasing too in case it's gcc 3.3 or later.
-echo "$as_me:$LINENO: checking how to turn off strict aliasing in $CC" >&5
-echo $ECHO_N "checking how to turn off strict aliasing in $CC... $ECHO_C" >&6
-if test "${pgac_cv_prog_cc_no_strict_aliasing+set}" = set; then
-  echo $ECHO_N "(cached) $ECHO_C" >&6
-else
-  pgac_save_CFLAGS=$CFLAGS
 if test "$GCC" = yes; then
-  pgac_try="-fno-strict-aliasing"
-else
-  # Maybe fill in later...
-  pgac_try=
-fi
+  CFLAGS="$CFLAGS -Wall -Wmissing-prototypes -Wpointer-arith"
 
-for pgac_flag in $pgac_try; do
-  CFLAGS="$pgac_save_CFLAGS $pgac_flag"
-  cat >conftest.$ac_ext <<_ACEOF
+  # Some versions of GCC support some additional useful warning flags.
+  # Check whether they are supported, and add them to CFLAGS if so.
+  echo "$as_me:$LINENO: checking if $CC supports -Wdeclaration-after-statement" >&5
+echo $ECHO_N "checking if $CC supports -Wdeclaration-after-statement... $ECHO_C" >&6
+pgac_save_CFLAGS=$CFLAGS
+CFLAGS="$pgac_save_CFLAGS -Wdeclaration-after-statement"
+cat >conftest.$ac_ext <<_ACEOF
 #line $LINENO "configure"
 #include "confdefs.h"
 
@@ -2478,23 +2471,154 @@ if { (eval echo "$as_me:$LINENO: \"$ac_compile\"") >&5
   ac_status=$?
   echo "$as_me:$LINENO: \$? = $ac_status" >&5
   (exit $ac_status); }; }; then
-  pgac_cv_prog_cc_no_strict_aliasing=$pgac_try
-break
+  echo "$as_me:$LINENO: result: yes" >&5
+echo "${ECHO_T}yes" >&6
 else
   echo "$as_me: failed program was:" >&5
 cat conftest.$ac_ext >&5
+CFLAGS="$pgac_save_CFLAGS"
+                    echo "$as_me:$LINENO: result: no" >&5
+echo "${ECHO_T}no" >&6
 fi
 rm -f conftest.$ac_objext conftest.$ac_ext
-done
 
-CFLAGS=$pgac_save_CFLAGS
+  echo "$as_me:$LINENO: checking if $CC supports -Wold-style-definition" >&5
+echo $ECHO_N "checking if $CC supports -Wold-style-definition... $ECHO_C" >&6
+pgac_save_CFLAGS=$CFLAGS
+CFLAGS="$pgac_save_CFLAGS -Wold-style-definition"
+cat >conftest.$ac_ext <<_ACEOF
+#line $LINENO "configure"
+#include "confdefs.h"
 
+#ifdef F77_DUMMY_MAIN
+#  ifdef __cplusplus
+     extern "C"
+#  endif
+   int F77_DUMMY_MAIN() { return 1; }
+#endif
+int
+main ()
+{
+
+  ;
+  return 0;
+}
+_ACEOF
+rm -f conftest.$ac_objext
+if { (eval echo "$as_me:$LINENO: \"$ac_compile\"") >&5
+  (eval $ac_compile) 2>&5
+  ac_status=$?
+  echo "$as_me:$LINENO: \$? = $ac_status" >&5
+  (exit $ac_status); } &&
+         { ac_try='test -s conftest.$ac_objext'
+  { (eval echo "$as_me:$LINENO: \"$ac_try\"") >&5
+  (eval $ac_try) 2>&5
+  ac_status=$?
+  echo "$as_me:$LINENO: \$? = $ac_status" >&5
+  (exit $ac_status); }; }; then
+  echo "$as_me:$LINENO: result: yes" >&5
+echo "${ECHO_T}yes" >&6
+else
+  echo "$as_me: failed program was:" >&5
+cat conftest.$ac_ext >&5
+CFLAGS="$pgac_save_CFLAGS"
+                    echo "$as_me:$LINENO: result: no" >&5
+echo "${ECHO_T}no" >&6
 fi
-echo "$as_me:$LINENO: result: $pgac_cv_prog_cc_no_strict_aliasing" >&5
-echo "${ECHO_T}$pgac_cv_prog_cc_no_strict_aliasing" >&6
+rm -f conftest.$ac_objext conftest.$ac_ext
 
-if test x"$pgac_cv_prog_cc_no_strict_aliasing" != x""; then
-  CFLAGS="$CFLAGS $pgac_cv_prog_cc_no_strict_aliasing"
+  echo "$as_me:$LINENO: checking if $CC supports -Wendif-labels" >&5
+echo $ECHO_N "checking if $CC supports -Wendif-labels... $ECHO_C" >&6
+pgac_save_CFLAGS=$CFLAGS
+CFLAGS="$pgac_save_CFLAGS -Wendif-labels"
+cat >conftest.$ac_ext <<_ACEOF
+#line $LINENO "configure"
+#include "confdefs.h"
+
+#ifdef F77_DUMMY_MAIN
+#  ifdef __cplusplus
+     extern "C"
+#  endif
+   int F77_DUMMY_MAIN() { return 1; }
+#endif
+int
+main ()
+{
+
+  ;
+  return 0;
+}
+_ACEOF
+rm -f conftest.$ac_objext
+if { (eval echo "$as_me:$LINENO: \"$ac_compile\"") >&5
+  (eval $ac_compile) 2>&5
+  ac_status=$?
+  echo "$as_me:$LINENO: \$? = $ac_status" >&5
+  (exit $ac_status); } &&
+         { ac_try='test -s conftest.$ac_objext'
+  { (eval echo "$as_me:$LINENO: \"$ac_try\"") >&5
+  (eval $ac_try) 2>&5
+  ac_status=$?
+  echo "$as_me:$LINENO: \$? = $ac_status" >&5
+  (exit $ac_status); }; }; then
+  echo "$as_me:$LINENO: result: yes" >&5
+echo "${ECHO_T}yes" >&6
+else
+  echo "$as_me: failed program was:" >&5
+cat conftest.$ac_ext >&5
+CFLAGS="$pgac_save_CFLAGS"
+                    echo "$as_me:$LINENO: result: no" >&5
+echo "${ECHO_T}no" >&6
+fi
+rm -f conftest.$ac_objext conftest.$ac_ext
+
+
+  # Disable strict-aliasing rules; needed for gcc 3.3+
+  echo "$as_me:$LINENO: checking if $CC supports -fno-strict-aliasing" >&5
+echo $ECHO_N "checking if $CC supports -fno-strict-aliasing... $ECHO_C" >&6
+pgac_save_CFLAGS=$CFLAGS
+CFLAGS="$pgac_save_CFLAGS -fno-strict-aliasing"
+cat >conftest.$ac_ext <<_ACEOF
+#line $LINENO "configure"
+#include "confdefs.h"
+
+#ifdef F77_DUMMY_MAIN
+#  ifdef __cplusplus
+     extern "C"
+#  endif
+   int F77_DUMMY_MAIN() { return 1; }
+#endif
+int
+main ()
+{
+
+  ;
+  return 0;
+}
+_ACEOF
+rm -f conftest.$ac_objext
+if { (eval echo "$as_me:$LINENO: \"$ac_compile\"") >&5
+  (eval $ac_compile) 2>&5
+  ac_status=$?
+  echo "$as_me:$LINENO: \$? = $ac_status" >&5
+  (exit $ac_status); } &&
+         { ac_try='test -s conftest.$ac_objext'
+  { (eval echo "$as_me:$LINENO: \"$ac_try\"") >&5
+  (eval $ac_try) 2>&5
+  ac_status=$?
+  echo "$as_me:$LINENO: \$? = $ac_status" >&5
+  (exit $ac_status); }; }; then
+  echo "$as_me:$LINENO: result: yes" >&5
+echo "${ECHO_T}yes" >&6
+else
+  echo "$as_me: failed program was:" >&5
+cat conftest.$ac_ext >&5
+CFLAGS="$pgac_save_CFLAGS"
+                    echo "$as_me:$LINENO: result: no" >&5
+echo "${ECHO_T}no" >&6
+fi
+rm -f conftest.$ac_objext conftest.$ac_ext
+
 fi
 
 # supply -g if --enable-debug

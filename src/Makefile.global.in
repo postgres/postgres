@@ -1,5 +1,5 @@
 # -*-makefile-*-
-# $PostgreSQL: pgsql/src/Makefile.global.in,v 1.203 2004/10/15 17:10:58 momjian Exp $
+# $PostgreSQL: pgsql/src/Makefile.global.in,v 1.204 2004/10/20 02:12:07 neilc Exp $
 
 #------------------------------------------------------------------------------
 # All PostgreSQL makefiles include this file and use the variables it sets,
@@ -184,9 +184,6 @@ endif # not PGXS
 CC = @CC@
 GCC = @GCC@
 CFLAGS = @CFLAGS@
-ifeq ($(GCC), yes)
-  CFLAGS += -Wall -Wmissing-prototypes -Wmissing-declarations
-endif
 
 # Kind-of compilers
 
