@@ -10,16 +10,30 @@
 #
 #    Written by Steven Singer (ssinger@navtechinc.com)
 #    (c) 2001-2002 Navtech Systems Support Inc.
-#    Released under the GNU Public License version 2. See COPYING.
+# ALL RIGHTS RESERVED;
+#
+# Permission to use, copy, modify, and distribute this software and its
+# documentation for any purpose, without fee, and without a written agreement
+# is hereby granted, provided that the above copyright notice and this
+# paragraph and the following two paragraphs appear in all copies.
+#
+# IN NO EVENT SHALL THE AUTHOR OR DISTRIBUTORS BE LIABLE TO ANY PARTY FOR
+# DIRECT, INDIRECT, SPECIAL, INCIDENTAL, OR CONSEQUENTIAL DAMAGES, INCLUDING
+# LOST PROFITS, ARISING OUT OF THE USE OF THIS SOFTWARE AND ITS
+# DOCUMENTATION, EVEN IF THE AUTHOR OR DISTRIBUTORS HAVE BEEN ADVISED OF THE
+# POSSIBILITY OF SUCH DAMAGE.
+#
+# THE AUTHOR AND DISTRIBUTORS SPECIFICALLY DISCLAIMS ANY WARRANTIES,
+# INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY
+# AND FITNESS FOR A PARTICULAR PURPOSE.  THE SOFTWARE PROVIDED HEREUNDER IS
+# ON AN "AS IS" BASIS, AND THE AUTHOR AND DISTRIBUTORS HAS NO OBLIGATIONS TO
+# PROVIDE MAINTENANCE, SUPPORT, UPDATES, ENHANCEMENTS, OR MODIFICATIONS.
 #
 #
-#    This program is distributed in the hope that it will be useful,
-#    but WITHOUT ANY WARRANTY; without even the implied warranty of
-#    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-#    GNU General Public License for more details.
+# 
 #
 ##############################################################################
-# $Id: DBMirror.pl,v 1.3 2002/10/19 02:16:40 momjian Exp $ 
+# $Id: DBMirror.pl,v 1.4 2002/11/06 17:50:53 momjian Exp $ 
 #
 ##############################################################################
 
