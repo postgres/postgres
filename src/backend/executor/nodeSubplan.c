@@ -29,10 +29,11 @@ ExecSubPlan(SubPlan *node, List *pvar, ExprContext *econtext)
 {
 	Plan	   *plan = node->plan;
 	SubLink    *sublink = node->sublink;
+	SubLinkType subLinkType = sublink->subLinkType;
 	TupleTableSlot *slot;
 	List	   *lst;
-	bool		result = false;
-	bool		found = false;
+	Datum		result = (Datum) false;
+	bool		found = false;	/* TRUE if got at least one subplan tuple */
 
 	if (node->setParam != NULL)
 		elog(ERROR, "ExecSubPlan: can't set parent params from subquery");
@@ -56,6 +57,18 @@ ExecSubPlan(SubPlan *node, List *pvar, ExprContext *econtext)
 
 	ExecReScan(plan, (ExprContext *) NULL, plan);
 
+	/*
+	 * For all sublink types except EXPR_SUBLINK, the result type is boolean,
+	 * and we have a fairly clear idea of how to combine multiple subitems
+	 * and deal with NULL values or an empty subplan result.
+	 *
+	 * For EXPR_SUBLINK, the result type is whatever the combining operator
+	 * returns.  We have no way to deal with more than one column in the
+	 * subplan result --- hopefully the parser forbids that.  More seriously,
+	 * it's unclear what to do with NULL values or an empty subplan result.
+	 * For now, we error out, but should something else happen?
+	 */
+
 	for (slot = ExecProcNode(plan, plan);
 		 !TupIsNull(slot);
 		 slot = ExecProcNode(plan, plan))
@@ -64,13 +77,13 @@ ExecSubPlan(SubPlan *node, List *pvar, ExprContext *econtext)
 		TupleDesc	tdesc = slot->ttc_tupleDescriptor;
 		int			i = 1;
 
-		if (sublink->subLinkType == EXPR_SUBLINK && found)
+		if (subLinkType == EXPR_SUBLINK && found)
 		{
 			elog(ERROR, "ExecSubPlan: more than one tuple returned by expression subselect");
 			return (Datum) false;
 		}
 
-		if (sublink->subLinkType == EXISTS_SUBLINK)
+		if (subLinkType == EXISTS_SUBLINK)
 			return (Datum) true;
 
 		found = true;
@@ -82,23 +95,39 @@ ExecSubPlan(SubPlan *node, List *pvar, ExprContext *econtext)
 			bool		isnull;
 
 			con->constvalue = heap_getattr(tup, i, tdesc, &(con->constisnull));
-			result = (bool) ExecEvalExpr((Node *) expr, econtext, &isnull, (bool *) NULL);
+			result = ExecEvalExpr((Node *) expr, econtext, &isnull, (bool *) NULL);
 			if (isnull)
-				result = false;
-			if ((!result && !(sublink->useor)) || (result && sublink->useor))
-				break;
+			{
+				if (subLinkType == EXPR_SUBLINK)
+					elog(ERROR, "ExecSubPlan: null value returned by expression subselect");
+				else
+					result = (Datum) false;
+			}
+			if (subLinkType != EXPR_SUBLINK)
+			{
+				if ((! (bool) result && !(sublink->useor)) ||
+					((bool) result && sublink->useor))
+					break;
+			}
 			i++;
 		}
 
-		if ((!result && sublink->subLinkType == ALL_SUBLINK) ||
-			(result && sublink->subLinkType == ANY_SUBLINK))
+		if (subLinkType == ALL_SUBLINK && ! (bool) result)
+			break;
+		if (subLinkType == ANY_SUBLINK && (bool) result)
 			break;
 	}
 
-	if (!found && sublink->subLinkType == ALL_SUBLINK)
-		return (Datum) true;
+	if (!found)
+	{
+		/* deal with empty subplan result.  Note default result is 'false' */
+		if (subLinkType == ALL_SUBLINK)
+			result = (Datum) true;
+		else if (subLinkType == EXPR_SUBLINK)
+			elog(ERROR, "ExecSubPlan: no tuples returned by expression subselect");
+	}
 
-	return (Datum) result;
+	return result;
 }
 
 /* ----------------------------------------------------------------

@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/parser/parse_expr.c,v 1.41 1999/04/18 17:35:51 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/parser/parse_expr.c,v 1.42 1999/04/19 04:17:11 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -312,14 +312,6 @@ transformExpr(ParseState *pstate, Node *expr, int precedence)
 
 						op_expr = make_op(op, lexpr, tent->expr);
 
-						/*
-						 * HACK! Second IF is more valid but currently we
-						 * don't support EXPR subqueries inside
-						 * expressions generally, only in WHERE clauses.
-						 * After fixing this, first IF must be removed.
-						 */
-						if (op_expr->typeOid != BOOLOID)
-							elog(ERROR, "parser: '%s' must return 'bool' to be used with subquery", op);
 						if (op_expr->typeOid != BOOLOID &&
 							sublink->subLinkType != EXPR_SUBLINK)
 							elog(ERROR, "parser: '%s' must return 'bool' to be used with quantified predicate subquery", op);
@@ -598,7 +590,20 @@ exprType(Node *expr)
 			type = ((Param *) expr)->paramtype;
 			break;
 		case T_SubLink:
-			type = BOOLOID;
+			{
+				SubLink *sublink = (SubLink *) expr;
+				if (sublink->subLinkType == EXPR_SUBLINK)
+				{
+					/* return the result type of the combining operator */
+					Expr *op_expr = (Expr *) lfirst(sublink->oper);
+					type = op_expr->typeOid;
+				}
+				else
+				{
+					/* for all other sublink types, result is boolean */
+					type = BOOLOID;
+				}
+			}
 			break;
 		case T_CaseExpr:
 			type = ((CaseExpr *) expr)->casetype;
