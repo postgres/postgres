@@ -197,7 +197,7 @@ s
         } NameData;
         typedef NameData *Name;
 
-   Table, column, type, function, and view names that come in to the
+   Table, column, type, function, and view names that come into the
    backend via user queries are stored as variable-length,
    null-terminated character strings.
    
@@ -249,7 +249,7 @@ s
    should take the HeapTuple pointer, and use the GETSTRUCT() macro to
    access the table-specific start of the tuple. You then cast the
    pointer as a Form_pg_proc pointer if you are accessing the pg_proc
-   table, or TypeTupleForm if you are accessing pg_type. You can then
+   table, or Form_pg_type if you are accessing pg_type. You can then
    access the columns by using a structure pointer:
 
         ((Form_pg_class) GETSTRUCT(tuple))->relnatts
