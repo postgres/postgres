@@ -855,7 +855,7 @@ Optional Packages:
   --with-libraries=DIRS   look for additional libraries in DIRS
   --with-libs=DIRS        alternative spelling of --with-libraries
   --with-pgport=PORTNUM   change default port number 5432
-  --with-threads          allow libpq to be thread-safe
+  --with-threads          allow libpq and ecpg to be thread-safe
   --with-tcl              build Tcl and Tk interfaces
   --without-tk            do not build Tk interfaces if Tcl is enabled
   --with-tclconfig=DIR    tclConfig.sh and tkConfig.sh are in DIR

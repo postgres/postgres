@@ -588,7 +588,7 @@
 /* Define to select SysV-style shared memory. */
 #undef USE_SYSV_SHARED_MEMORY
 
-/* Define to 1 to build libpq with threads. (--with-threads) */
+/* Define to 1 to build libpq and ecpg to be thread-safe. (--with-threads) */
 #undef USE_THREADS
 
 /* Define to select unnamed POSIX semaphores. */
