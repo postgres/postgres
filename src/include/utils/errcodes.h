@@ -11,7 +11,7 @@
  *
  * Copyright (c) 2003, PostgreSQL Global Development Group
  *
- * $Id: errcodes.h,v 1.4 2003/08/04 00:43:32 momjian Exp $
+ * $Id: errcodes.h,v 1.5 2003/08/26 21:15:27 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -294,6 +294,8 @@
 /* Class 58 - System Error (class borrowed from DB2) */
 /* (we define this as errors external to PostgreSQL itself) */
 #define ERRCODE_IO_ERROR					MAKE_SQLSTATE('5','8', '0','3','0')
+#define ERRCODE_UNDEFINED_FILE				MAKE_SQLSTATE('5','8', 'P','0','1')
+#define ERRCODE_DUPLICATE_FILE				MAKE_SQLSTATE('5','8', 'P','0','2')
 
 /* Class F0 - Configuration File Error (PostgreSQL-specific error class) */
 #define ERRCODE_CONFIG_FILE_ERROR			MAKE_SQLSTATE('F','0', '0','0','0')
