@@ -3,11 +3,11 @@ select
 select * from nonesuch;
 WARN:parser: parse error at or near "select"
 QUERY: select nonesuch from pg_database;
-WARN:attribute "nonesuch" not found
+WARN:attribute 'nonesuch' not found
 QUERY: select * from pg_database where nonesuch = pg_database.datname;
-WARN:attribute "nonesuch" not found
+WARN:attribute 'nonesuch' not found
 QUERY: select * from pg_database where pg_database.datname = nonesuch;
-WARN:attribute "nonesuch" not found
+WARN:attribute 'nonesuch' not found
 QUERY: select distinct on foobar from pg_database;
 WARN:parser: parse error at or near "from"
 QUERY: select distinct on foobar * from pg_database;
