@@ -1,6 +1,6 @@
 TODO list for PostgreSQL
 ========================
-Last updated:		Thu Sep  6 16:11:01 EDT 2001
+Last updated:		Thu Sep  6 16:37:09 EDT 2001
 
 Current maintainer:	Bruce Momjian (pgman@candle.pha.pa.us)
 
@@ -65,20 +65,23 @@ TYPES
 * Remove Money type, add money formatting for decimal type
 * SELECT cash_out(2) crashes because of opaque
 * Declare typein/out functions in pg_proc with a special "C string" data type
-* -Add non-large-object binary field (already exists -- bytea)
-* -Make binary interface for TOAST columns (base64)
-* Make file in/out interface for TOAST columns, similar to large object
-  interface (force out-of-line storage and no compression)
 * Functions returning sets do not totally work
 * SELECT col FROM tab WHERE numeric_col = 10.1 fails, requires quotes
 * Missing optimizer selectivities for date, r-tree, etc. [optimizer]
 * -Add SQL standard function bit_length() (Peter E)
 * -Make oid use unsigned int more reliably (Tom)
-* Add security checking for large objects
 * ARRAYS
 	o Allow nulls in arrays
 	o Allow arrays to be ORDER'ed
 	o fix array handling in ECPG
+BINARY DATA
+	o -Add non-large-object binary field (already exists -- bytea)
+	o -Make binary interface for TOAST columns (base64)
+	o Improve vacuum of large objects (/contrib/vacuumlo)
+	o Add security checking for large objects
+	o Make file in/out interface for TOAST columns, similar to large object
+	  interface (force out-of-line storage and no compression)
+	o Auto-delete large objects when referencing row is deleted
 
 MULTILANGUAGE SUPPORT
 
@@ -291,7 +294,6 @@ VACUUM
 * -Make ANALYZE a separate command (Tom)
 * -Allow ANALYZE to ESTIMATE based on certain random precentage of rows (Tom)
 * Add LAZY VACUUM (Vadim)
-* Improve vacuum of large objects (/contrib/vacuumlo)
 
 MISCELLANEOUS
 
