@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/plpgsql.sgml,v 1.12 2002/11/23 03:59:05 momjian Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/plpgsql.sgml,v 1.13 2003/01/15 16:40:24 momjian Exp $
 -->
 
 <chapter id="plpgsql"> 
@@ -68,6 +68,7 @@ $Header: /cvsroot/pgsql/doc/src/sgml/plpgsql.sgml,v 1.12 2002/11/23 03:59:05 mom
     <acronym>SQL</acronym> expressions and <acronym>SQL</acronym> queries
     used in the function are not translated immediately.
    </para>
+
    <para>
     As each expression and <acronym>SQL</acronym> query is first used
 	in the function, the <application>PL/pgSQL</> interpreter creates
@@ -84,12 +85,13 @@ $Header: /cvsroot/pgsql/doc/src/sgml/plpgsql.sgml,v 1.12 2002/11/23 03:59:05 mom
 	that errors in a specific expression or query may not be detected
 	until that part of the function is reached in execution.
    </para>
-  <para>
-   Once <application>PL/pgSQL</> has made a query plan for a particular
-   query in a function, it will re-use that plan for the life of the
-   database connection.  This is usually a win for performance, but it
-   can cause some problems if you dynamically
-   alter your database schema. For example:
+
+   <para>
+    Once <application>PL/pgSQL</> has made a query plan for a particular
+    query in a function, it will re-use that plan for the life of the
+    database connection.  This is usually a win for performance, but it
+    can cause some problems if you dynamically
+    alter your database schema. For example:
 
 <programlisting>
 CREATE FUNCTION populate() RETURNS INTEGER AS '
@@ -100,6 +102,7 @@ BEGIN
 END;
 ' LANGUAGE 'plpgsql';
 </programlisting>
+
     If you execute the above function, it will reference the OID for
     <function>my_function()</function> in the query plan produced for
     the <command>PERFORM</command> statement. Later, if you
@@ -107,7 +110,11 @@ END;
     <function>populate()</function> will not be able to find
     <function>my_function()</function> anymore. You would then have to
     re-create <function>populate()</function>, or at least start a new
-    database session so that it will be compiled afresh.
+    database session so that it will be compiled afresh. Another way
+    to avoid this problem is to use <command>CREATE OR REPLACE
+    FUNCTION</command> when updating the definition of
+    <function>my_function</function> (when a function is
+    <quote>replaced</quote>, its OID is not changed).
    </para>
 
    <para>
@@ -221,35 +228,17 @@ END;
    <title>Developing in <application>PL/pgSQL</application></title>
 
    <para>
-    Developing in <application>PL/pgSQL</application> is pretty straight forward, especially
-    if you have developed in other database procedural languages,
-    such as Oracle's <application>PL/SQL</application>. Two good ways of developing in
-    <application>PL/pgSQL</application> are:
-
-    <itemizedlist>
-     <listitem>
-      <para>
-       Using a text editor and reloading the file with <command>psql</command>
-      </para>
-     </listitem>
-
-     <listitem>
-      <para>
-       Using <productname>PostgreSQL</>'s GUI Tool: <application>PgAccess</>
-      </para>
-     </listitem>
-    </itemizedlist>
-   </para>
-
-   <para>
-	 One good way to develop in <application>PL/pgSQL</> is to simply
-	 use the text editor of your choice to create your functions, and
-	 in another window, use <command>psql</command>
-	 (<productname>PostgreSQL</>'s interactive monitor) to load those
-	 functions. If you are doing it this way, it is a good idea to
-	 write the function using <command>CREATE OR REPLACE
-	 FUNCTION</>. That way you can reload the file to update the
-	 function definition.  For example:
+    Developing in <application>PL/pgSQL</application> is pretty
+    straight forward, especially if you have developed in other
+    database procedural languages, such as Oracle's
+    <application>PL/SQL</application>.  One good way to develop in
+    <application>PL/pgSQL</> is to simply use the text editor of your
+    choice to create your functions, and in another window, use
+    <command>psql</command> (<productname>PostgreSQL</>'s interactive
+    monitor) to load those functions. If you are doing it this way, it
+    is a good idea to write the function using <command>CREATE OR
+    REPLACE FUNCTION</>. That way you can reload the file to update
+    the function definition.  For example:
 <programlisting>
 CREATE OR REPLACE FUNCTION testfunc(INTEGER) RETURNS INTEGER AS '
 	  ....
@@ -268,10 +257,12 @@ end;
    </para>
 
    <para>
-    Another good way to develop in <application>PL/pgSQL</> is using
-    <productname>PostgreSQL</>'s GUI tool: <application>PgAccess</>. It does some
-    nice things for you, like escaping single-quotes, and making
-    it easy to recreate and debug functions.
+    Another good way to develop in <application>PL/pgSQL</> is using a
+    GUI database access tool that facilitates development in a
+    procedural language. One example of such as a tool is
+    <application>PgAccess</>, although others exist. These tools often
+    provide convenient features such as escaping single-quotes, and
+    making it easier to recreate and debug functions.
    </para>
   </sect2>
  </sect1>
