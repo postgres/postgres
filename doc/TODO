@@ -1,6 +1,6 @@
 TODO list for PostgreSQL
 ========================
-Last updated:		Wed Apr  7 13:04:30 EDT 2004
+Last updated:		Wed Apr  7 14:34:42 EDT 2004
 
 Current maintainer:	Bruce Momjian (pgman@candle.pha.pa.us)
 
@@ -108,6 +108,7 @@ Multi-Language Support
 * Prevent mismatch of frontend/backend encodings from converting bytea
   data from being interpreted as encoded strings
 * Fix upper()/lower() to work for multibyte encodings
+* Allow locale to be set at database creation
 
 
 Views / Rules
