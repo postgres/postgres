@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/bin/psql/Attic/psql.c,v 1.168 1999/02/03 21:17:44 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/bin/psql/Attic/psql.c,v 1.169 1999/02/07 02:56:53 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -1753,10 +1753,10 @@ do_shell(const char *command)
 /*
  * HandleSlashCmds:
  *
- * Handles all the different commands that start with \ db_ptr is a pointer to
- * the TgDb* structure line is the current input line prompt_ptr is a pointer
- * to the prompt string, a pointer is used because the prompt can be used
- * with a connection to a new database.
+ * Handles all the different commands that start with \
+ * db_ptr is a pointer to the TgDb* structure line is the current input
+ * line prompt_ptr is a pointer to the prompt string, a pointer is used
+ * because the prompt can be used with a connection to a new database.
  * Returns a status:
  *	0 - send currently constructed query to backend (i.e. we got a \g)
  *	1 - skip processing of this line, continue building up query
@@ -2690,22 +2690,45 @@ MainLoop(PsqlSettings *pset, char *query, FILE *source)
 
 		if (!in_quote && query_start[0] == '\\')
 		{
-			slashCmdStatus = HandleSlashCmds(pset,
-											 query_start,
-											 query);
-			if (slashCmdStatus == CMD_SKIP_LINE)
+			/* handle \p\g and other backslash combinations */
+			while (query_start[0] != '\0')
 			{
-				if (query[0] == '\0')
-					paren_level = 0;
-				free(line);
-				continue;
-			}
-			if (slashCmdStatus == CMD_TERMINATE)
-			{
-				free(line);
-				break;
+				char	hold_char;
+
+#ifndef WIN32
+				/* I believe \w \dos\system\x would cause a problem */
+				/* do we have '\p\g' or '\p  \g' ? */
+				if (strlen(query_start) > 2 &&
+					query_start[2 + strspn(query_start + 2, " \t")] == '\\')
+				{
+					hold_char = query_start[2 + strspn(query_start + 2, " \t")];
+					query_start[2 + strspn(query_start + 2, " \t")] = '\0';
+				}
+				else /* spread over #endif */
+#endif
+					hold_char = '\0';
+
+				slashCmdStatus = HandleSlashCmds(pset,
+												 query_start,
+												 query);
+
+				if (slashCmdStatus == CMD_SKIP_LINE && !hold_char)
+				{
+					if (query[0] == '\0')
+						paren_level = 0;
+					break;
+				}
+				if (slashCmdStatus == CMD_TERMINATE)
+					break;
+
+				query_start += strlen(query_start);
+				if (hold_char)
+					query_start[0] = hold_char;
 			}
 			free(line);
+			/* They did \q, leave the loop */
+			if (slashCmdStatus == CMD_TERMINATE)
+				break;
 		}
 		else if (strlen(query) + strlen(query_start) > MAX_QUERY_BUFFER)
 		{
