@@ -7,12 +7,13 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/storage/buffer/Attic/s_lock.c,v 1.7 1998/05/04 23:49:09 scrappy Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/storage/buffer/Attic/s_lock.c,v 1.8 1998/06/16 07:18:15 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
 
 #include <stdio.h>
+#include <sys/time.h>
 
 #include "config.h"
 #include "c.h"
@@ -22,50 +23,24 @@
 /*
  * Each time we busy spin we select the next element of this array as the
  * number of microseconds to wait. This accomplishes pseudo random back-off.
- * Values are not critical and are weighted to the low end of the range. They
- * were chosen to work even with different select() timer resolutions on
- * different platforms.
- * note: total time to cycle through all 16 entries might be about .1 second.
+ * Values are not critical but 10 milliseconds is a common platform
+ * granularity.
+ * note: total time to cycle through all 16 entries might be about .07 sec.
  */
-int			s_spincycle[S_NSPINCYCLE] =
-{0, 0, 0, 1000, 5000, 0, 10000, 3000,
- 0, 10000, 0, 15000, 9000, 21000, 6000, 30000
+#define S_NSPINCYCLE    20
+#define S_MAX_BUSY      500 * S_NSPINCYCLE
+
+int	s_spincycle[S_NSPINCYCLE] =
+{     0,     0,     0,     0, 10000,     0,     0,     0, 10000,     0,
+      0, 10000,     0,     0, 10000,     0, 10000,     0, 10000, 10000
 };
 
 
-#if defined(S_LOCK_DEBUG)
 /*
- * s_lock(lock) - take a spinlock
- * add intrumentation code to this and define S_LOCK_DEBUG
- * instead of hacking up the macro in s_lock.h
+ * s_lock_stuck(lock) - complain about a stuck spinlock
  */
-void
-s_lock(slock_t *lock, char *file, int line)
-{
-	int			spins = 0;
-
-	while (TAS(lock))
-	{
-		struct timeval delay;
-
-		delay.tv_sec = 0;
-		delay.tv_usec = s_spincycle[spins++ % S_NSPINCYCLE];
-		(void) select(0, NULL, NULL, NULL, &delay);
-		if (spins > S_MAX_BUSY)
-		{
-			/* It's been well over a minute...  */
-			s_lock_stuck(lock, file, line);
-		}
-	}
-}
-#endif /* S_LOCK_DEBUG */
-
-
-/*
- * s_lock_stuck(lock) - deal with stuck spinlock
- */
-void
-s_lock_stuck(slock_t *lock, char *file, int line)
+static void
+s_lock_stuck(volatile slock_t *lock, const char *file, const int line)
 {
 	fprintf(stderr,
 			"\nFATAL: s_lock(%08x) at %s:%d, stuck spinlock. Aborting.\n",
@@ -79,84 +54,51 @@ s_lock_stuck(slock_t *lock, char *file, int line)
 
 
 /*
- * Various TAS implementations moved from s_lock.h to avoid redundant
- * definitions of the same routine.
- * RESOLVE: move this to tas.c. Alternatively get rid of tas.[cso] and fold
- * all that into this file.
+ * s_lock(lock) - take a spinlock with backoff
+ */
+void
+s_lock(volatile slock_t *lock, const char *file, const int line)
+{
+	int			spins = 0;
+
+	while (TAS(lock))
+	{
+		struct timeval delay;
+
+		delay.tv_sec = 0;
+		delay.tv_usec = s_spincycle[spins % S_NSPINCYCLE];
+		(void) select(0, NULL, NULL, NULL, &delay);
+		if (++spins > S_MAX_BUSY)
+		{
+			/* It's been over a minute...  */
+			s_lock_stuck(lock, file, line);
+		}
+	}
+}
+
+
+
+
+/*
+ * Various TAS implementations that cannot live in s_lock.h as no inline
+ * definition exists (yet).
+ * In the future, get rid of tas.[cso] and fold it into this file.
  */
 
 
-#if defined(linux)
+#if defined(__GNUC__)
 /*************************************************************************
- * All the Linux flavors
+ * All the gcc flavors that are not inlined
  */
-
-
-#if defined(__alpha)
-int
-tas(slock_t *lock)
-{
-	slock_t		_res;
-
-  __asm__("      ldq   $0, %0              \n\
-                 bne   $0, already_set     \n\
-                 ldq_l $0, %0	           \n\
-                 bne   $0, already_set     \n\
-                 or    $31, 1, $0          \n\
-                 stq_c $0, %0	           \n\
-                 beq   $0, stqc_fail       \n\
-        success: bis   $31, $31, %1        \n\
-                 mb		                   \n\
-                 jmp   $31, end	           \n\
-      stqc_fail: or    $31, 1, $0	       \n\
-    already_set: bis   $0, $0, %1	       \n\
-            end: nop      ": "=m"(*lock), "=r"(_res): :"0");
-
-	return (_res != 0);
-}
-#endif /* __alpha */
-
-
-
-#if defined(i386)
-int
-tas(slock_t *lock)
-{
-	slock_t		_res = 1;
-
-  __asm__("lock; xchgb %0,%1": "=q"(_res), "=m"(*lock):"0"(0x1));
-	return (_res != 0);
-}
-#endif /* i386 */
-
-
-
-#if defined(sparc)
-
-int
-tas(slock_t *lock)
-{
-	slock_t		_res;
-	slock_t    *tmplock = lock;
-
-  __asm__("ldstub [%1], %0" \
-  :			"=&r"(_res), "=r"(tmplock) \
-  :			"1"(tmplock));
-	return (_res != 0);
-}
-
-#endif /* sparc */
 
 
 
 #if defined(PPC)
-
-static int
-tas_dummy()
+/* Note: need a nice gcc constrained asm version so it can be inlined */
+int
+tas(volatile slock_t *lock)
 {
-	__asm__("				\n\
-tas:						\n\
-			lwarx	5,0,3	\n\
+	__asm__("lwarx	5,0,3	\n\
 			cmpwi	5,0		\n\
 			bne		fail	\n\
 			addi	5,5,1	\n\
@@ -169,21 +111,20 @@ success:					\n\
         	blr				\n\
 	");
 }
-
 #endif /* PPC */
 
 
 
-#else /* defined(linux) */
+#else /* defined(__GNUC__) */
 /***************************************************************************
- * All Non-Linux
+ * All non gcc
  */
 
 
 
 #if defined(sun3)
 static void
-tas_dummy()						/* really means: extern int tas(slock_t *lock); */
+tas_dummy()				/* really means: extern int tas(slock_t *lock); */
 {
 	asm("LLA0:");
 	asm("   .data");
@@ -208,26 +149,18 @@ tas_dummy()						/* really means: extern int tas(slock_t *lock); */
 
 #if defined(NEED_SPARC_TAS_ASM)
 /*
- * bsd and bsdi sparc machines
+ * sparc machines not using gcc
  */
-
-/* if we're using -ansi w/ gcc, use __asm__ instead of asm */
-#if defined(__STRICT_ANSI__)
-#define asm(x)	__asm__(x)
-#endif /* __STRICT_ANSI__ */
-
 static void
-tas_dummy()						/* really means: extern int tas(slock_t *lock); */
+tas_dummy()				/* really means: extern int tas(slock_t *lock); */
 {
 	asm(".seg \"data\"");
 	asm(".seg \"text\"");
 	asm("_tas:");
-
 	/*
 	 * Sparc atomic test and set (sparc calls it "atomic load-store")
 	 */
 	asm("ldstub [%r8], %r8");
-
 	asm("retl");
 	asm("nop");
 }
@@ -237,76 +170,25 @@ tas_dummy()						/* really means: extern int tas(slock_t *lock); */
 
 
 
-#if defined(NEED_VAX_TAS_ASM)
-/*
- * VAXen -- even multiprocessor ones
- * (thanks to Tom Ivar Helbekkmo)
- */
-typedef unsigned char slock_t;
-
-int
-tas(slock_t *lock)
-{
-	register	ret;
-
-	asm("	movl $1, r0
-		bbssi $0, (%1), 1f
-		clrl r0
-  1:	movl r0, %0 "
-  :		"=r"(ret)				/* return value, in register */
-  :		"r"(lock)				/* argument, 'lock pointer', in register */
-  :		"r0");					/* inline code uses this register */
-
-	return ret;
-}
-
-#endif /* NEED_VAX_TAS_ASM */
-
-
-
 #if defined(NEED_I386_TAS_ASM)
-/*
- * i386 based things
- */
-
-#if defined(USE_UNIVEL_CC)
-asm int
-tas(slock_t *s_lock)
-{
-	%lab locked;
-/* Upon entry, %eax will contain the pointer to the lock byte */
-	pushl % ebx
-	xchgl % eax, %ebx
-	xor % eax, %eax
-	movb $255, %al
-	lock
-	xchgb % al, (%ebx)
-	popl % ebx
-}
-
-
-#else /* USE_UNIVEL_CC */
-
-int
-tas(slock_t *lock)
-{
-	slock_t		_res = 1;
-
-  __asm__("lock; xchgb %0,%1": "=q"(_res), "=m"(*lock):"0"(0x1));
-	return (_res != 0);
-}
-
-#endif /* USE_UNIVEL_CC */
-
+/* non gcc i386 based things */
 #endif /* NEED_I386_TAS_ASM */
 
 
-#endif /* linux */
+
+#endif /* not __GNUC__ */
 
 
+
+
+/*****************************************************************************/
 #if defined(S_LOCK_TEST)
 
-slock_t		test_lock;
+/*
+ * test program for verifying a port.
+ */
+
+volatile slock_t	test_lock;
 
 void
 main()
@@ -330,7 +212,7 @@ main()
 	printf("S_LOCK_TEST: this will hang for a few minutes and then abort\n");
 	printf("             with a 'stuck spinlock' message if S_LOCK()\n");
 	printf("             and TAS() are working.\n");
-	S_LOCK(&test_lock);
+	s_lock(&test_lock, __FILE__, __LINE__);
 
 	printf("S_LOCK_TEST: failed, lock not locked~\n");
 	exit(3);
@@ -338,3 +220,4 @@ main()
 }
 
 #endif /* S_LOCK_TEST */
+

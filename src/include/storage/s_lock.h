@@ -7,13 +7,14 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/include/storage/s_lock.h,v 1.35 1998/06/15 18:40:04 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/include/storage/s_lock.h,v 1.36 1998/06/16 07:18:16 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
+
 /*
  *	 DESCRIPTION
- *		The public functions that must be provided are:
+ *		The public macros that must be provided are:
  *
  *		void S_INIT_LOCK(slock_t *lock)
  *
@@ -45,21 +46,21 @@
  *		#define TAS(lock) tas(lock)
  *		int tas(slock_t *lock)		// True if lock already set
  *
+ *		There are default implementations for all these macros at the bottom
+ *		of this file. Check if your platform can use these or needs to
+ *		override them.
+ *
+ *	NOTES
  *		If none of this can be done, POSTGRES will default to using
  *		System V semaphores (and take a large performance hit -- around 40%
  *		of its time on a DS5000/240 is spent in semop(3)...).
  *
- *	NOTES
  *		AIX has a test-and-set but the recommended interface is the cs(3)
  *		system call.  This provides an 8-instruction (plus system call
  *		overhead) uninterruptible compare-and-set operation.  True
  *		spinlocks might be faster but using cs(3) still speeds up the
  *		regression test suite by about 25%.  I don't have an assembler
  *		manual for POWER in any case.
- *
- *		There are default implementations for all these macros at the bottom
- *		of this file. Check if your platform can use these or needs to
- *		override them.
  *
  */
 #if !defined(S_LOCK_H)
@@ -69,23 +70,104 @@
 
 #if defined(HAS_TEST_AND_SET)
 
-#if defined(linux)
-/***************************************************************************
- * All Linux
+
+#if defined(__GNUC__)
+/*************************************************************************
+ * All the gcc inlines
  */
 
 #if defined(__alpha)
-
+#define TAS(lock) tas(lock)
 #define S_UNLOCK(lock) { __asm__("mb"); *(lock) = 0; }
 
+static __inline__ int
+tas(volatile slock_t *lock)
+{
+	register slock_t	_res;
+
+    __asm__("    ldq   $0, %0              \n\
+                 bne   $0, already_set     \n\
+                 ldq_l $0, %0	           \n\
+                 bne   $0, already_set     \n\
+                 or    $31, 1, $0          \n\
+                 stq_c $0, %0	           \n\
+                 beq   $0, stqc_fail       \n\
+        success: bis   $31, $31, %1        \n\
+                 mb		                   \n\
+                 jmp   $31, end	           \n\
+      stqc_fail: or    $31, 1, $0	       \n\
+    already_set: bis   $0, $0, %1	       \n\
+            end: nop      " : "=m"(*lock), "=r"(_res) : : "0");
+
+	return (int) _res;
+}
 #endif /* __alpha */
 
 
 
+#if defined(i386)
+#define TAS(lock) tas(lock)
 
-#else /* linux */
+static __inline__ int
+tas(volatile slock_t *lock)
+{
+	register slock_t	_res = 1;
+
+    __asm__("lock; xchgb %0,%1" : "=q"(_res), "=m"(*lock) : "0"(_res) );
+	return (int) _res;
+}
+#endif /* i386 */
+
+
+
+#if defined(sparc)
+#define TAS(lock) tas(lock)
+
+static __inline__ int
+tas(volatile slock_t *lock)
+{
+	register slock_t	_res = 1;
+
+    __asm__("ldstub [%1], %0" \
+            : "=r"(_res), "=m"(*lock) \
+            : "1"(lock));
+	return (int) _res;
+}
+#endif /* sparc */
+
+
+
+#if defined(NEED_VAX_TAS_ASM)
+/*
+ * VAXen -- even multiprocessor ones
+ * (thanks to Tom Ivar Helbekkmo)
+ */
+#define TAS(lock) tas(lock)
+
+typedef unsigned char slock_t;
+
+static __inline__ int
+tas(volatile slock_t *lock)
+{
+	register	_res;
+
+	__asm__("	movl $1, r0
+		bbssi $0, (%1), 1f
+		clrl r0
+  1:	movl r0, %0 "
+  :		"=r"(_res)				/* return value, in register */
+  :		"r"(lock)				/* argument, 'lock pointer', in register */
+  :		"r0");					/* inline code uses this register */
+	return (int) _res;
+}
+#endif /* NEED_VAX_TAS_ASM */
+
+
+
+
+#else /* __GNUC__ */
 /***************************************************************************
- * All non Linux
+ * All non gcc
  */
 
 #if defined (nextstep)
@@ -95,14 +177,10 @@
  */
 
 #define S_LOCK(lock)	mutex_lock(lock)
-
 #define S_UNLOCK(lock)	mutex_unlock(lock)
-
 #define S_INIT_LOCK(lock)	mutex_init(lock)
-
 /* For Mach, we have to delve inside the entrails of `struct mutex'.  Ick! */
 #define S_LOCK_FREE(alock)	((alock)->lock == 0)
-
 #endif /* nextstep */
 
 
@@ -118,13 +196,9 @@
  * for the R3000 chips out there.
  */
 #define TAS(lock)	(!acquire_lock(lock))
-
 #define S_UNLOCK(lock)	release_lock(lock)
-
 #define S_INIT_LOCK(lock)	init_lock(lock)
-
 #define S_LOCK_FREE(lock)	(stat_lock(lock) == UNLOCKED)
-
 #endif /* __sgi */
 
 
@@ -137,13 +211,9 @@
  * (see storage/ipc.h).
  */
 #define TAS(lock)	(msem_lock((lock), MSEM_IF_NOWAIT) < 0)
-
 #define S_UNLOCK(lock)	msem_unlock((lock), 0)
-
 #define S_INIT_LOCK(lock)	msem_init((lock), MSEM_UNLOCKED)
-
 #define S_LOCK_FREE(lock)	(!(lock)->msem_state)
-
 #endif /* __alpha */
 
 
@@ -156,7 +226,6 @@
  * (see storage/ipc.h).
  */
 #define TAS(lock)	cs((int *) (lock), 0, 1)
-
 #endif /* _AIX */
 
 
@@ -175,14 +244,38 @@ static slock_t clear_lock =
 {-1, -1, -1, -1};
 
 #define S_UNLOCK(lock)	(*(lock) = clear_lock)	/* struct assignment */
-
 #define S_LOCK_FREE(lock)	( *(int *) (((long) (lock) + 15) & ~15) != 0)
-
 #endif /* __hpux */
 
 
 
-#endif /* else defined(linux) */
+#if defined(NEED_I386_TAS_ASM)
+/* non gcc i386 based things */
+
+
+#if defined(USE_UNIVEL_CC)
+#define TAS(lock)	tas(lock)
+
+asm int
+tas(slock_t *s_lock)
+{
+	%lab locked;
+	/* Upon entry, %eax will contain the pointer to the lock byte */
+	pushl % ebx
+	xchgl % eax, %ebx
+	xor % eax, %eax
+	movb $255, %al
+	lock
+	xchgb % al, (%ebx)
+	popl % ebx
+}
+#endif /* USE_UNIVEL_CC */
+
+
+#endif /* NEED_I386_TAS_ASM */
+
+
+#endif /* else defined(__GNUC__) */
 
 
 
@@ -192,47 +285,15 @@ static slock_t clear_lock =
  */
 
 #if !defined(S_LOCK)
-
-#include <sys/time.h>
-
-#define S_NSPINCYCLE	16
-#define S_MAX_BUSY		1000 * S_NSPINCYCLE
-
-extern int	s_spincycle[];
-extern void s_lock_stuck(slock_t *lock, char *file, int line);
-
-#if defined(S_LOCK_DEBUG)
-
-extern void s_lock(slock_t *lock);
-
-#define S_LOCK(lock) s_lock(lock, __FILE__, __LINE__)
-
-#else /* S_LOCK_DEBUG */
-
+extern void s_lock(volatile slock_t *lock, const char *file, const int line);
 #define S_LOCK(lock) \
-do { \
-	int spins = 0; \
-	while (TAS(lock)) \
-	{ \
-		struct timeval	delay; \
-		delay.tv_sec = 0; \
-		delay.tv_usec = s_spincycle[spins++ % S_NSPINCYCLE]; \
-		(void) select(0, NULL, NULL, NULL, &delay); \
-		if (spins > S_MAX_BUSY) \
-		{ \
-			/* It's been well over a minute...  */ \
-			s_lock_stuck(lock, __FILE__, __LINE__); \
-		} \
-	} \
-} while(0)
-
-#endif /* S_LOCK_DEBUG */
+    if (TAS((volatile slock_t *) lock)) {\
+        s_lock((volatile slock_t *) lock, __FILE__, __LINE__); \
+    } else
 #endif /* S_LOCK */
 
-
-
 #if !defined(S_LOCK_FREE)
-#define S_LOCK_FREE(lock)	((*lock) == 0)
+#define S_LOCK_FREE(lock)	(*(lock) == 0)
 #endif /* S_LOCK_FREE */
 
 #if !defined(S_UNLOCK)
@@ -244,12 +305,11 @@ do { \
 #endif /* S_INIT_LOCK */
 
 #if !defined(TAS)
-int			tas(slock_t *lock); /* port/.../tas.s, or s_lock.c */
-
-#define TAS(lock)		tas(lock)
+int	tas(volatile slock_t *lock); /* port/.../tas.s, or s_lock.c */
+#define TAS(lock)		tas((volatile slock_t *) lock)
 #endif /* TAS */
 
 
 #endif /* HAS_TEST_AND_SET */
-
 #endif /* S_LOCK_H */
+
