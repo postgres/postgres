@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/tcop/postgres.c,v 1.377 2003/11/29 19:51:57 pgsql Exp $
+ *	  $PostgreSQL: pgsql/src/backend/tcop/postgres.c,v 1.378 2003/11/29 21:40:43 tgl Exp $
  *
  * NOTES
  *	  this is the "main" module of the postgres backend and
@@ -2656,11 +2656,9 @@ PostgresMain(int argc, char *argv[], const char *username)
 		/* Need not flush since ReadyForQuery will do it. */
 	}
 
+	/* Welcome banner for non-frontend case */
 	if (!IsUnderPostmaster)
-	{
-		puts("\nPOSTGRES backend interactive interface ");
-		puts("$Revision: 1.377 $ $Date: 2003/11/29 19:51:57 $\n");
-	}
+		printf("\nPostgreSQL stand-alone backend %s\n", PG_VERSION);
 
 	/*
 	 * Create the memory context we will use in the main loop.
