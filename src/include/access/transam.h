@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2001, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Id: transam.h,v 1.44 2001/11/05 17:46:31 momjian Exp $
+ * $Id: transam.h,v 1.45 2002/05/25 20:00:12 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -92,6 +92,13 @@ typedef VariableCacheData *VariableCache;
  * ----------------
  */
 
+/* in transam/transam.c */
+extern bool AMI_OVERRIDE;
+
+/* in transam/varsup.c */
+extern VariableCache ShmemVariableCache;
+
+
 /*
  * prototypes for functions in transam/transam.c
  */
@@ -110,16 +117,5 @@ extern TransactionId GetNewTransactionId(void);
 extern TransactionId ReadNewTransactionId(void);
 extern Oid	GetNewObjectId(void);
 extern void CheckMaxObjectId(Oid assigned_oid);
-
-/* ----------------
- *		global variable extern declarations
- * ----------------
- */
-
-/* in xact.c */
-extern bool AMI_OVERRIDE;
-
-/* in varsup.c */
-extern VariableCache ShmemVariableCache;
 
 #endif   /* TRAMSAM_H */

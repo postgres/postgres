@@ -16,7 +16,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/time/tqual.c,v 1.53 2002/05/24 18:57:56 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/time/tqual.c,v 1.54 2002/05/25 20:00:12 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -202,9 +202,6 @@ HeapTupleSatisfiesItself(HeapTupleHeader tuple)
 bool
 HeapTupleSatisfiesNow(HeapTupleHeader tuple)
 {
-	if (AMI_OVERRIDE)
-		return true;
-
 	if (!(tuple->t_infomask & HEAP_XMIN_COMMITTED))
 	{
 		if (tuple->t_infomask & HEAP_XMIN_INVALID)
@@ -375,9 +372,6 @@ HeapTupleSatisfiesUpdate(HeapTuple htuple, CommandId curcid)
 {
 	HeapTupleHeader tuple = htuple->t_data;
 
-	if (AMI_OVERRIDE)
-		return HeapTupleMayBeUpdated;
-
 	if (!(tuple->t_infomask & HEAP_XMIN_COMMITTED))
 	{
 		if (tuple->t_infomask & HEAP_XMIN_INVALID)
@@ -509,9 +503,6 @@ HeapTupleSatisfiesDirty(HeapTupleHeader tuple)
 	SnapshotDirty->xmin = SnapshotDirty->xmax = InvalidTransactionId;
 	ItemPointerSetInvalid(&(SnapshotDirty->tid));
 
-	if (AMI_OVERRIDE)
-		return true;
-
 	if (!(tuple->t_infomask & HEAP_XMIN_COMMITTED))
 	{
 		if (tuple->t_infomask & HEAP_XMIN_INVALID)
@@ -639,9 +630,6 @@ HeapTupleSatisfiesDirty(HeapTupleHeader tuple)
 bool
 HeapTupleSatisfiesSnapshot(HeapTupleHeader tuple, Snapshot snapshot)
 {
-	if (AMI_OVERRIDE)
-		return true;
-
 	/* XXX this is horribly ugly: */
 	if (ReferentialIntegritySnapshotOverride)
 		return HeapTupleSatisfiesNow(tuple);

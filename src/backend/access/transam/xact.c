@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/access/transam/xact.c,v 1.124 2002/05/22 21:40:55 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/access/transam/xact.c,v 1.125 2002/05/25 20:00:12 tgl Exp $
  *
  * NOTES
  *		Transaction aborts can now occur two ways:
@@ -229,13 +229,6 @@ int			CommitSiblings = 5; /* number of concurrent xacts needed to
 static void (*_RollbackFunc) (void *) = NULL;
 static void *_RollbackData = NULL;
 
-/* ----------------
- *		catalog creation transaction bootstrapping flag.
- *		This should be eliminated and added to the transaction
- *		state stuff.  -cim 3/19/90
- * ----------------
- */
-bool		AMI_OVERRIDE = false;
 
 /* ----------------------------------------------------------------
  *					 transaction state accessors
@@ -380,6 +373,11 @@ GetCurrentTransactionStartTimeUsec(int *msec)
 
 /* --------------------------------
  *		TransactionIdIsCurrentTransactionId
+ *
+ * During bootstrap, we cheat and say "it's not my transaction ID" even though
+ * it is.  Along with transam.c's cheat to say that the bootstrap XID is
+ * already committed, this causes the tqual.c routines to see previously
+ * inserted tuples as committed, which is what we need during bootstrap.
  * --------------------------------
  */
 bool
@@ -388,7 +386,10 @@ TransactionIdIsCurrentTransactionId(TransactionId xid)
 	TransactionState s = CurrentTransactionState;
 
 	if (AMI_OVERRIDE)
+	{
+		Assert(xid == BootstrapTransactionId);
 		return false;
+	}
 
 	return TransactionIdEquals(xid, s->transactionIdData);
 }
@@ -402,9 +403,6 @@ bool
 CommandIdIsCurrentCommandId(CommandId cid)
 {
 	TransactionState s = CurrentTransactionState;
-
-	if (AMI_OVERRIDE)
-		return false;
 
 	return (cid == s->commandId) ? true : false;
 }

@@ -6,7 +6,7 @@
  * Copyright (c) 2000, PostgreSQL Global Development Group
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/access/transam/varsup.c,v 1.48 2001/10/28 06:25:42 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/access/transam/varsup.c,v 1.49 2002/05/25 20:00:11 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -92,13 +92,6 @@ TransactionId
 ReadNewTransactionId(void)
 {
 	TransactionId xid;
-
-	/*
-	 * During bootstrap initialization, we return the special bootstrap
-	 * transaction id.
-	 */
-	if (AMI_OVERRIDE)
-		return BootstrapTransactionId;
 
 	LWLockAcquire(XidGenLock, LW_SHARED);
 	xid = ShmemVariableCache->nextXid;
