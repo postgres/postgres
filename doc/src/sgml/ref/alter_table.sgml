@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/ref/alter_table.sgml,v 1.32 2001/11/18 20:35:02 petere Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/ref/alter_table.sgml,v 1.33 2001/11/22 03:42:32 momjian Exp $
 Postgres documentation
 -->
 
@@ -169,11 +169,10 @@ ALTER TABLE <replaceable class="PARAMETER">table</replaceable>
    The <literal>ALTER COLUMN SET STATISTICS</literal> form allows you to
    set the statistics-gathering target for subsequent
    <xref linkend="sql-analyze" endterm="sql-analyze-title"> operations.
-   The <literal>RENAME</literal> clause causes the name of a table or column
-   to change without changing any of the data contained in
-   the affected table. Thus, the table or column will
-   remain of the same type and size after this command is
-   executed.
+   The <literal>RENAME</literal> clause causes the name of a table,
+   column, index, or sequence to change without changing any of the
+   data. The data will remain of the same type and size after the
+   command is executed.
    The ADD <replaceable class="PARAMETER">table constraint definition</replaceable> clause 
    adds a new constraint to the table using the same syntax as <xref
    linkend="SQL-CREATETABLE" endterm="SQL-CREATETABLE-TITLE">. 
@@ -345,8 +344,8 @@ DROP TABLE temp;
    </para>
 
    <para>
-    The clauses to rename columns and tables are <productname>Postgres</productname>
-    extensions from SQL92.
+    The clauses to rename tables, columns, indexes, and sequences are
+    <productname>Postgres</productname> extensions from SQL92.
    </para>
  
   </refsect2>
