@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2000, PostgreSQL, Inc
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Id: date.h,v 1.6 2000/11/11 19:55:39 thomas Exp $
+ * $Id: date.h,v 1.7 2000/12/03 14:51:11 thomas Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -87,8 +87,12 @@ extern Datum time_larger(PG_FUNCTION_ARGS);
 extern Datum time_smaller(PG_FUNCTION_ARGS);
 extern Datum timestamp_time(PG_FUNCTION_ARGS);
 extern Datum time_interval(PG_FUNCTION_ARGS);
+extern Datum interval_time(PG_FUNCTION_ARGS);
 extern Datum text_time(PG_FUNCTION_ARGS);
 extern Datum time_text(PG_FUNCTION_ARGS);
+extern Datum time_pl_interval(PG_FUNCTION_ARGS);
+extern Datum time_mi_interval(PG_FUNCTION_ARGS);
+extern Datum interval_pl_time(PG_FUNCTION_ARGS);
 
 extern Datum timetz_in(PG_FUNCTION_ARGS);
 extern Datum timetz_out(PG_FUNCTION_ARGS);
@@ -107,5 +111,7 @@ extern Datum timestamp_timetz(PG_FUNCTION_ARGS);
 extern Datum datetimetz_timestamp(PG_FUNCTION_ARGS);
 extern Datum text_timetz(PG_FUNCTION_ARGS);
 extern Datum timetz_text(PG_FUNCTION_ARGS);
+extern Datum timetz_pl_interval(PG_FUNCTION_ARGS);
+extern Datum timetz_mi_interval(PG_FUNCTION_ARGS);
 
 #endif	 /* DATE_H */

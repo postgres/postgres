@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/date.c,v 1.52 2000/11/11 19:55:19 thomas Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/date.c,v 1.53 2000/12/03 14:51:01 thomas Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -594,7 +594,6 @@ timestamp_time(PG_FUNCTION_ARGS)
 	PG_RETURN_TIMEADT(result);
 }
 
-
 /* datetime_timestamp()
  * Convert date and time to timestamp data type.
  */
@@ -612,7 +611,6 @@ datetime_timestamp(PG_FUNCTION_ARGS)
 	PG_RETURN_TIMESTAMP(result);
 }
 
-
 /* time_interval()
  * Convert time to interval data type.
  */
@@ -628,6 +626,72 @@ time_interval(PG_FUNCTION_ARGS)
 	result->month = 0;
 
 	PG_RETURN_INTERVAL_P(result);
+}
+
+/* interval_time()
+ * Convert interval to time data type.
+ */
+Datum
+interval_time(PG_FUNCTION_ARGS)
+{
+	Interval   *span = PG_GETARG_INTERVAL_P(0);
+	TimeADT		result;
+	Interval	span1;
+
+	result = span->time;
+	TMODULO(result, span1.time, 86400e0);
+
+	PG_RETURN_TIMEADT(result);
+}
+
+/* time_pl_interval()
+ * Add interval to time.
+ */
+Datum
+time_pl_interval(PG_FUNCTION_ARGS)
+{
+	TimeADT		time = PG_GETARG_TIMEADT(0);
+	Interval   *span = PG_GETARG_INTERVAL_P(1);
+	TimeADT		result;
+	TimeADT		time1;
+
+	result = (time + span->time);
+	TMODULO(result, time1, 86400e0);
+	if (result < 0)
+		result += 86400;
+
+	PG_RETURN_TIMEADT(result);
+}
+
+/* time_mi_interval()
+ * Subtract interval from time.
+ */
+Datum
+time_mi_interval(PG_FUNCTION_ARGS)
+{
+	TimeADT		time = PG_GETARG_TIMEADT(0);
+	Interval   *span = PG_GETARG_INTERVAL_P(1);
+	TimeADT		result;
+	TimeADT		time1;
+
+	result = (time - span->time);
+	TMODULO(result, time1, 86400e0);
+	if (result < 0)
+		result += 86400;
+
+	PG_RETURN_TIMEADT(result);
+}
+
+/* interval_pl_time()
+ * Add time to interval.
+ */
+Datum
+interval_pl_time(PG_FUNCTION_ARGS)
+{
+	Datum		span = PG_GETARG_DATUM(0);
+	Datum		time = PG_GETARG_DATUM(1);
+
+	return DirectFunctionCall2(time_pl_interval, time, span);
 }
 
 
@@ -854,6 +918,50 @@ timetz_smaller(PG_FUNCTION_ARGS)
 										 TimeTzADTPGetDatum(time2))))
 		PG_RETURN_TIMETZADT_P(time1);
 	PG_RETURN_TIMETZADT_P(time2);
+}
+
+/* timetz_pl_interval()
+ * Add interval to timetz.
+ */
+Datum
+timetz_pl_interval(PG_FUNCTION_ARGS)
+{
+	TimeTzADT  *time = PG_GETARG_TIMETZADT_P(0);
+	Interval   *span = PG_GETARG_INTERVAL_P(1);
+	TimeTzADT  *result;
+	TimeTzADT	time1;
+
+	result = (TimeTzADT *) palloc(sizeof(TimeTzADT));
+
+	result->time = (time->time + span->time);
+	TMODULO(result->time, time1.time, 86400e0);
+	if (result->time < 0)
+		result->time += 86400;
+	result->zone = time->zone;
+
+	PG_RETURN_TIMETZADT_P(result);
+}
+
+/* timetz_mi_interval()
+ * Subtract interval from timetz.
+ */
+Datum
+timetz_mi_interval(PG_FUNCTION_ARGS)
+{
+	TimeTzADT  *time = PG_GETARG_TIMETZADT_P(0);
+	Interval   *span = PG_GETARG_INTERVAL_P(1);
+	TimeTzADT  *result;
+	TimeTzADT	time1;
+
+	result = (TimeTzADT *) palloc(sizeof(TimeTzADT));
+
+	result->time = (time->time - span->time);
+	TMODULO(result->time, time1.time, 86400e0);
+	if (result->time < 0)
+		result->time += 86400;
+	result->zone = time->zone;
+
+	PG_RETURN_TIMETZADT_P(result);
 }
 
 /* overlaps_timetz()

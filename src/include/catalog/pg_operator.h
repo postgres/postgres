@@ -8,7 +8,7 @@
  * Portions Copyright (c) 1996-2000, PostgreSQL, Inc
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Id: pg_operator.h,v 1.84 2000/11/21 03:23:19 tgl Exp $
+ * $Id: pg_operator.h,v 1.85 2000/12/03 14:51:09 thomas Exp $
  *
  * NOTES
  *	  the genbki.sh script reads this file and generates .bki
@@ -745,12 +745,19 @@ DATA(insert OID = 1795 (  "<<"	  PGUID 0 b t f 1560   23 1560	  0    0	0	 0 bits
 DATA(insert OID = 1796 (  ">>"	  PGUID 0 b t f 1560   23 1560	  0    0	0	 0 bitshiftright - - ));
 DATA(insert OID = 1797 (  "||"	  PGUID 0 b t f 1560 1560 1560	  0    0	0	 0 bitcat - - ));
 
+DATA(insert OID = 1800 (  "+"	   PGUID 0 b t f 1083 1186 1083    0	0 0 0 time_pl_interval - - ));
+DATA(insert OID = 1801 (  "-"	   PGUID 0 b t f 1083 1186 1083    0	0 0 0 time_mi_interval - - ));
+DATA(insert OID = 1802 (  "+"	   PGUID 0 b t f 1266 1186 1266    0	0 0 0 timetz_pl_interval - - ));
+DATA(insert OID = 1803 (  "-"	   PGUID 0 b t f 1266 1186 1266    0	0 0 0 timetz_mi_interval - - ));
+
 DATA(insert OID = 1804 (  "="	  PGUID 0 b t f 1562 1562	16 1804 1805 1806 1806 varbiteq eqsel eqjoinsel ));
 DATA(insert OID = 1805 (  "<>"	  PGUID 0 b t f 1562 1562	16 1805 1804	0	 0 varbitne neqsel neqjoinsel ));
 DATA(insert OID = 1806 (  "<"	  PGUID 0 b t f 1562 1562	16 1807 1809	0	 0 varbitlt scalarltsel scalarltjoinsel ));
 DATA(insert OID = 1807 (  ">"	  PGUID 0 b t f 1562 1562	16 1806 1808	0	 0 varbitgt scalargtsel scalargtjoinsel ));
 DATA(insert OID = 1808 (  "<="	  PGUID 0 b t f 1562 1562	16 1809 1807	0	 0 varbitle scalarltsel scalarltjoinsel ));
 DATA(insert OID = 1809 (  ">="	  PGUID 0 b t f 1562 1562	16 1808 1806	0	 0 varbitge scalargtsel scalargtjoinsel ));
+
+DATA(insert OID = 1849 (  "+"	   PGUID 0 b t f 1186 1083 1083    0	0 0 0 interval_pl_time - - ));
 
 DATA(insert OID = 1862 ( "="	   PGUID 0 b t f  21  20  16 1868  1863  95 412 int28eq eqsel eqjoinsel ));
 DATA(insert OID = 1863 ( "<>"	   PGUID 0 b t f  21  20  16 1869  1862   0   0 int28ne neqsel neqjoinsel ));

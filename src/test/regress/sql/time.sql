@@ -26,43 +26,12 @@ SELECT f1 AS "Eight" FROM TIME_TBL WHERE f1 >= '00:00';
 --
 -- TIME simple math
 --
+-- We now make a distinction between time and intervals,
+-- and adding two times together makes no sense at all.
+-- Leave in one query to show that it is rejected,
+-- and do the rest of the testing in horology.sql
+-- where we do mixed-type arithmetic. - thomas 2000-12-02
 
-SELECT f1 + time '00:01' AS "Eight" FROM TIME_TBL;
+SELECT f1 + time '00:01' AS "Illegal" FROM TIME_TBL;
 
-SELECT f1 + time '01:00' AS "Eight" FROM TIME_TBL;
-
-SELECT f1 + time '00:00:01.11' AS "Eight" FROM TIME_TBL;
-
-SELECT f1 + time '00:00:59.99' AS "Eight" FROM TIME_TBL;
-
-SELECT f1 - '00:01' AS "Eight" FROM TIME_TBL;
-
-SELECT f1 - '01:00' AS "Eight" FROM TIME_TBL;
-
-SELECT f1 - '00:00:01.11' AS "Eight" FROM TIME_TBL;
-
-SELECT f1 - '00:00:59.99' AS "Eight" FROM TIME_TBL;
-
---
--- TIME WITH TIME ZONE simple math
---
-
-/*
--- Not yet implemented
--- Thomas 2000-09-09
-SELECT f2 + time '00:01' AS "" FROM TIME_TBL;
-
-SELECT f2 + time '01:00' AS "" FROM TIME_TBL;
-
-SELECT f2 + time '00:00:01.11' AS "" FROM TIME_TBL;
-
-SELECT f2 + '00:00:59.99' AS "" FROM TIME_TBL;
-
-SELECT f2 - '00:01' AS "" FROM TIME_TBL;
-
-SELECT f2 - '01:00' AS "" FROM TIME_TBL;
-
-SELECT f2 - '00:00:01.11' AS "" FROM TIME_TBL;
-
-SELECT f2 - '00:00:59.99' AS "" FROM TIME_TBL;
-*/
+SELECT f2 + time with time zone '00:01' AS "Illegal" FROM TIME_TBL;

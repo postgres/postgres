@@ -33,4 +33,9 @@ typedef unsigned int slock_t;
 
 #define HAS_TEST_AND_SET
 
+#elif defined(__s390__)
+typedef unsigned int slock_t;
+
+#define HAS_TEST_AND_SET
+
 #endif

@@ -25,9 +25,93 @@ SELECT date '1991-02-03' - time with time zone '04:05:06 UTC' AS "Subtract Time 
 --
 
 SELECT timestamp '1996-03-01' - interval '1 second' AS "Feb 29";
+
 SELECT timestamp '1999-03-01' - interval '1 second' AS "Feb 28";
+
 SELECT timestamp '2000-03-01' - interval '1 second' AS "Feb 29";
+
 SELECT timestamp '1999-12-01' + interval '1 month - 1 second' AS "Dec 31";
+
+--
+-- time, interval arithmetic
+--
+
+SELECT CAST(time '01:02' AS interval) AS "+01:02";
+
+SELECT CAST(interval '02:03' AS time) AS "02:03:00";
+
+SELECT time '01:30' + interval '02:01' AS "03:31:00";
+
+SELECT time '01:30' - interval '02:01' AS "23:29:00";
+
+SELECT time '02:30' + interval '36:01' AS "14:31:00";
+
+SELECT time '03:30' + interval '1 month 04:01' AS "07:31:00";
+
+SELECT interval '04:30' - time '01:02' AS "+03:28";
+
+SELECT CAST(time with time zone '01:02-08' AS interval) AS "+00:01";
+
+SELECT CAST(interval '02:03' AS time with time zone) AS "02:03:00-08";
+
+SELECT time with time zone '01:30' + interval '02:01' AS "03:31:00-08";
+
+SELECT time with time zone '01:30-08' - interval '02:01' AS "23:29:00-08";
+
+SELECT time with time zone '02:30-08' + interval '36:01' AS "14:31:00-08";
+
+SELECT time with time zone '03:30' + interval '1 month 04:01' AS "07:31:00-08";
+
+SELECT interval '04:30' - time with time zone '01:02' AS "+03:28";
+
+-- We get 100 rows when run in GMT...
+SELECT t.d1 + i.f1 AS "102" FROM TIMESTAMP_TBL t, INTERVAL_TBL i
+  WHERE t.d1 BETWEEN '1990-01-01' AND '2001-01-01'
+    AND i.f1 BETWEEN '00:00' AND '23:00';
+
+SELECT t.d1 - i.f1 AS "102" FROM TIMESTAMP_TBL t, INTERVAL_TBL i
+  WHERE t.d1 BETWEEN '1990-01-01' AND '2001-01-01'
+    AND i.f1 BETWEEN '00:00' AND '23:00';
+
+SELECT t.f1 + i.f1 AS "80" FROM TIME_TBL t, INTERVAL_TBL i;
+
+SELECT t.f1 - i.f1 AS "80" FROM TIME_TBL t, INTERVAL_TBL i;
+
+SELECT t.f2 + i.f1 AS "80" FROM TIME_TBL t, INTERVAL_TBL i;
+
+SELECT t.f2 - i.f1 AS "80" FROM TIME_TBL t, INTERVAL_TBL i;
+
+-- SQL9x OVERLAPS operator
+
+SELECT (timestamp '2000-11-27', timestamp '2000-11-28')
+  OVERLAPS (timestamp '2000-11-27 12:00', timestamp '2000-11-30') AS "True";
+
+SELECT (timestamp '2000-11-26', timestamp '2000-11-27')
+  OVERLAPS (timestamp '2000-11-27 12:00', timestamp '2000-11-30') AS "False";
+
+SELECT (timestamp '2000-11-27', timestamp '2000-11-28')
+  OVERLAPS (timestamp '2000-11-27 12:00', interval '1 day') AS "True";
+
+SELECT (timestamp '2000-11-27', interval '12 hours')
+  OVERLAPS (timestamp '2000-11-27 12:00', timestamp '2000-11-30') AS "False";
+
+SELECT (timestamp '2000-11-27', interval '12 hours')
+  OVERLAPS (timestamp '2000-11-27', interval '12 hours') AS "True";
+
+SELECT (timestamp '2000-11-27', interval '12 hours')
+  OVERLAPS (timestamp '2000-11-27 12:00', interval '12 hours') AS "False";
+
+SELECT (time '00:00', time '01:00')
+  OVERLAPS (time '00:30', time '01:30') AS "True";
+
+SELECT (time '00:00', interval '1 hour')
+  OVERLAPS (time '00:30', interval '1 hour') AS "True";
+
+SELECT (time '00:00', interval '1 hour')
+  OVERLAPS (time '01:30', interval '1 hour') AS "False";
+
+SELECT (time '00:00', interval '1 hour')
+  OVERLAPS (time '01:30', interval '1 day') AS "True";
 
 CREATE TABLE TEMP_TIMESTAMP (f1 timestamp);
 

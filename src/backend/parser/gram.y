@@ -11,7 +11,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/parser/gram.y,v 2.210 2000/11/24 20:16:39 petere Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/parser/gram.y,v 2.211 2000/12/03 14:50:54 thomas Exp $
  *
  * HISTORY
  *	  AUTHOR			DATE			MAJOR EVENT
@@ -198,8 +198,9 @@ static void doNegateFloat(Value *v);
 %type <jtype>	join_type
 
 %type <list>	extract_list, position_list
-%type <list>	substr_list, substr_from, substr_for, trim_list
+%type <list>	substr_list, trim_list
 %type <list>	opt_interval
+%type <node>	substr_from, substr_for
 
 %type <boolean> opt_inh_star, opt_binary, opt_using, opt_instead, opt_only
 				opt_with_copy, index_opt_unique, opt_verbose, opt_analyze
@@ -330,7 +331,7 @@ static void doNegateFloat(Value *v);
  * when some sort of pg_privileges relation is introduced.
  * - Todd A. Brandys 1998-01-01?
  */
-%token	ABORT_TRANS, ACCESS, AFTER, AGGREGATE, ANALYZE, ANALYSE,
+%token	ABORT_TRANS, ACCESS, AFTER, AGGREGATE, ANALYSE, ANALYZE,
 		BACKWARD, BEFORE, BINARY, BIT,
 		CACHE, CHECKPOINT, CLUSTER, COMMENT, COPY, CREATEDB, CREATEUSER, CYCLE,
 		DATABASE, DELIMITERS, DO,
@@ -4873,7 +4874,8 @@ c_expr:  attr
 		| SUBSTRING '(' substr_list ')'
 				{
 					/* substring(A from B for C) is converted to
-					 * substring(A, B, C) */
+					 * substring(A, B, C) - thomas 2000-11-28
+					 */
 					FuncCall *n = makeNode(FuncCall);
 					n->funcname = "substring";
 					n->args = $3;
@@ -4881,9 +4883,11 @@ c_expr:  attr
 					n->agg_distinct = FALSE;
 					$$ = (Node *)n;
 				}
-		/* various trim expressions are defined in SQL92 - thomas 1997-07-19 */
 		| TRIM '(' BOTH trim_list ')'
 				{
+					/* various trim expressions are defined in SQL92
+					 * - thomas 1997-07-19
+					 */
 					FuncCall *n = makeNode(FuncCall);
 					n->funcname = "btrim";
 					n->args = $4;
@@ -4994,29 +4998,49 @@ position_list:  b_expr IN b_expr
 				{	$$ = NIL; }
 		;
 
-substr_list:  expr_list substr_from substr_for
+/* SUBSTRING() arguments
+ * SQL9x defines a specific syntax for arguments to SUBSTRING():
+ * o substring(text from int for int)
+ * o substring(text from int) get entire string from starting point "int"
+ * o substring(text for int) get first "int" characters of string
+ * We also want to implement generic substring functions which accept
+ * the usual generic list of arguments. So we will accept both styles
+ * here, and convert the SQL9x style to the generic list for further
+ * processing. - thomas 2000-11-28
+ */
+substr_list:  a_expr substr_from substr_for
 				{
-					$$ = nconc(nconc($1,$2),$3);
+					$$ = makeList3($1, $2, $3);
 				}
-		| /*EMPTY*/
-				{	$$ = NIL; }
-		;
-
-substr_from:  FROM expr_list
-				{	$$ = $2; }
-		| /*EMPTY*/
+		| a_expr substr_for substr_from
+				{
+					$$ = makeList3($1, $3, $2);
+				}
+		| a_expr substr_from
+				{
+					$$ = makeList2($1, $2);
+				}
+		| a_expr substr_for
 				{
 					A_Const *n = makeNode(A_Const);
 					n->val.type = T_Integer;
 					n->val.val.ival = 1;
-					$$ = makeList1((Node *)n);
+					$$ = makeList3($1, (Node *)n, $2);
 				}
-		;
-
-substr_for:  FOR expr_list
-				{	$$ = $2; }
+		| expr_list
+				{
+					$$ = $1;
+				}
 		| /*EMPTY*/
 				{	$$ = NIL; }
+		;
+
+substr_from:  FROM a_expr
+				{	$$ = $2; }
+		;
+
+substr_for:  FOR a_expr
+				{	$$ = $2; }
 		;
 
 trim_list:  a_expr FROM expr_list
@@ -5241,6 +5265,7 @@ relation_name:	SpecialRuleRelation
 				}
 		;
 
+name:					ColId			{ $$ = $1; };
 database_name:			ColId			{ $$ = $1; };
 access_method:			ColId			{ $$ = $1; };
 attr_name:				ColId			{ $$ = $1; };
@@ -5250,9 +5275,27 @@ index_name:				ColId			{ $$ = $1; };
 /* Functions
  * Include date/time keywords as SQL92 extension.
  * Include TYPE as a SQL92 unreserved keyword. - thomas 1997-10-05
+ * Any tokens which show up as operators will screw up the parsing if
+ * allowed as identifiers, but are acceptable as ColLabels:
+ *  BETWEEN, IN, IS, ISNULL, NOTNULL, OVERLAPS
+ * Thanks to Tom Lane for pointing this out. - thomas 2000-03-29
+ * We need OVERLAPS allowed as a function name to enable the implementation
+ *  of argument type variations on the underlying implementation. These
+ *  variations are done as SQL-language entries in the pg_proc catalog.
+ * Do not include SUBSTRING here since it has explicit productions
+ *  in a_expr to support the goofy SQL9x argument syntax.
+ *  - thomas 2000-11-28
  */
-name:					ColId			{ $$ = $1; };
-func_name:				ColId			{ $$ = xlateSqlFunc($1); };
+func_name:  ColId						{ $$ = xlateSqlFunc($1); }
+		| BETWEEN						{ $$ = xlateSqlFunc("between"); }
+		| ILIKE							{ $$ = xlateSqlFunc("ilike"); }
+		| IN							{ $$ = xlateSqlFunc("in"); }
+		| IS							{ $$ = xlateSqlFunc("is"); }
+		| ISNULL						{ $$ = xlateSqlFunc("isnull"); }
+		| LIKE							{ $$ = xlateSqlFunc("like"); }
+		| NOTNULL						{ $$ = xlateSqlFunc("notnull"); }
+		| OVERLAPS						{ $$ = xlateSqlFunc("overlaps"); }
+		;
 
 file_name:				Sconst			{ $$ = $1; };
 
@@ -5358,14 +5401,6 @@ UserId:  ColId							{ $$ = $1; };
  *  some of these keywords will have to be removed from this
  *  list due to shift/reduce conflicts in yacc. If so, move
  *  down to the ColLabel entity. - thomas 1997-11-06
- * Any tokens which show up as operators will screw up the parsing if
- * allowed as identifiers, but are acceptable as ColLabels:
- *  BETWEEN, IN, IS, ISNULL, NOTNULL, OVERLAPS
- * Thanks to Tom Lane for pointing this out. - thomas 2000-03-29
- * Allow LIKE and ILIKE as TokenId (and ColId) to make sure that they
- *  are allowed in the func_name production. Otherwise, we can't define
- *  more like() and ilike() functions for new data types.
- * - thomas 2000-08-07
  */
 ColId:  generic							{ $$ = $1; }
 		| datetime						{ $$ = $1; }
@@ -5428,7 +5463,6 @@ TokenId:  ABSOLUTE						{ $$ = "absolute"; }
 		| FUNCTION						{ $$ = "function"; }
 		| GRANT							{ $$ = "grant"; }
 		| HANDLER						{ $$ = "handler"; }
-		| ILIKE							{ $$ = "ilike"; }
 		| IMMEDIATE						{ $$ = "immediate"; }
 		| INCREMENT						{ $$ = "increment"; }
 		| INDEX							{ $$ = "index"; }
@@ -5441,7 +5475,6 @@ TokenId:  ABSOLUTE						{ $$ = "absolute"; }
 		| LANGUAGE						{ $$ = "language"; }
 		| LANCOMPILER					{ $$ = "lancompiler"; }
 		| LEVEL							{ $$ = "level"; }
-		| LIKE							{ $$ = "like"; }
 		| LOCATION						{ $$ = "location"; }
 		| MATCH							{ $$ = "match"; }
 		| MAXVALUE						{ $$ = "maxvalue"; }
@@ -5571,6 +5604,7 @@ ColLabel:  ColId						{ $$ = $1; }
 		| GLOBAL						{ $$ = "global"; }
 		| GROUP							{ $$ = "group"; }
 		| HAVING						{ $$ = "having"; }
+		| ILIKE							{ $$ = "ilike"; }
 		| INITIALLY						{ $$ = "initially"; }
 		| IN							{ $$ = "in"; }
 		| INNER_P						{ $$ = "inner"; }
@@ -5582,6 +5616,8 @@ ColLabel:  ColId						{ $$ = $1; }
 		| JOIN							{ $$ = "join"; }
 		| LEADING						{ $$ = "leading"; }
 		| LEFT							{ $$ = "left"; }
+		| LIKE							{ $$ = "like"; }
+		| LIMIT							{ $$ = "limit"; }
 		| LISTEN						{ $$ = "listen"; }
 		| LOAD							{ $$ = "load"; }
 		| LOCAL							{ $$ = "local"; }

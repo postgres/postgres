@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2000, PostgreSQL, Inc
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Id: pg_proc.h,v 1.175 2000/11/21 03:23:19 tgl Exp $
+ * $Id: pg_proc.h,v 1.176 2000/12/03 14:51:09 thomas Exp $
  *
  * NOTES
  *	  The script catalog/genbki.sh reads this file and generates .bki
@@ -1571,20 +1571,20 @@ DESCR("join selectivity for containment comparison operators");
 
 DATA(insert OID = 1304 ( overlaps			 PGUID 12 f t t t 4 f 16 "1184 1184 1184 1184" 100 0 0 100	overlaps_timestamp - ));
 DESCR("SQL92 interval comparison");
-DATA(insert OID = 1305 ( overlaps			 PGUID 14 f t t t 4 f 16 "1184 1186 1184 1186" 100 0 0 100	"select overlaps($1, ($1 + $2), $3, ($3 + $4))" - ));
+DATA(insert OID = 1305 ( overlaps			 PGUID 14 f t t t 4 f 16 "1184 1186 1184 1186" 100 0 0 100	"select ($1, ($1 + $2)) overlaps ($3, ($3 + $4))" - ));
 DESCR("SQL92 interval comparison");
-DATA(insert OID = 1306 ( overlaps			 PGUID 14 f t t t 4 f 16 "1184 1184 1184 1186" 100 0 0 100	"select overlaps($1, $2, $3, ($3 + $4))" - ));
+DATA(insert OID = 1306 ( overlaps			 PGUID 14 f t t t 4 f 16 "1184 1184 1184 1186" 100 0 0 100	"select ($1, $2) overlaps ($3, ($3 + $4))" - ));
 DESCR("SQL92 interval comparison");
-DATA(insert OID = 1307 ( overlaps			 PGUID 14 f t t t 4 f 16 "1184 1186 1184 1184" 100 0 0 100	"select overlaps($1, ($1 + $2), $3, $4)" - ));
+DATA(insert OID = 1307 ( overlaps			 PGUID 14 f t t t 4 f 16 "1184 1186 1184 1184" 100 0 0 100	"select ($1, ($1 + $2)) overlaps ($3, $4)" - ));
 DESCR("SQL92 interval comparison");
 
 DATA(insert OID = 1308 ( overlaps			 PGUID 12 f t t t 4 f 16 "1083 1083 1083 1083" 100 0 0 100	overlaps_time - ));
 DESCR("SQL92 interval comparison");
-DATA(insert OID = 1309 ( overlaps			 PGUID 14 f t t t 4 f 16 "1083 1186 1083 1186" 100 0 0 100	"select overlaps($1, ($1 + $2), $3, ($3 + $4))" - ));
+DATA(insert OID = 1309 ( overlaps			 PGUID 14 f t t t 4 f 16 "1083 1186 1083 1186" 100 0 0 100	"select ($1, ($1 + $2)) overlaps ($3, ($3 + $4))" - ));
 DESCR("SQL92 interval comparison");
-DATA(insert OID = 1310 ( overlaps			 PGUID 14 f t t t 4 f 16 "1083 1083 1083 1186" 100 0 0 100	"select overlaps($1, $2, $3, ($3 + $4))" - ));
+DATA(insert OID = 1310 ( overlaps			 PGUID 14 f t t t 4 f 16 "1083 1083 1083 1186" 100 0 0 100	"select ($1, $2) overlaps ($3, ($3 + $4))" - ));
 DESCR("SQL92 interval comparison");
-DATA(insert OID = 1311 ( overlaps			 PGUID 14 f t t t 4 f 16 "1083 1186 1083 1083" 100 0 0 100	"select overlaps($1, ($1 + $2), $3, $4)" - ));
+DATA(insert OID = 1311 ( overlaps			 PGUID 14 f t t t 4 f 16 "1083 1186 1083 1083" 100 0 0 100	"select ($1, ($1 + $2)) overlaps ($3, $4)" - ));
 DESCR("SQL92 interval comparison");
 
 DATA(insert OID = 1314 (  timestamp_cmp		 PGUID 12 f t f t 2 f   23 "1184 1184" 100 0 0 100  timestamp_cmp - ));
@@ -1772,6 +1772,9 @@ DATA(insert OID = 1417 (  isnottrue			PGUID 12 f t t f 1 f 16 "16" 100 0 0 100  
 DESCR("bool is not true (ie, false or unknown)");
 DATA(insert OID = 1418 (  isnotfalse		PGUID 12 f t t f 1 f 16 "16" 100 0 0 100  isnotfalse - ));
 DESCR("bool is not false (ie, true or unknown)");
+
+DATA(insert OID = 1419 (  time				PGUID 12 f t f t 1 f 1083 "1186" 100 0 0 100  interval_time - ));
+DESCR("convert interval to time");
 
 DATA(insert OID = 1421 (  box				PGUID 12 f t t t 2 f 603 "600 600" 100 0 0 100  points_box - ));
 DESCR("convert points to box");
@@ -2115,7 +2118,7 @@ DESCR("trim both ends of string");
 
 DATA(insert OID =  936 (  substring	   PGUID 12 f t t t 3 f 25 "25 23 23" 100 0 0 100  text_substr - ));
 DESCR("return portion of string");
-DATA(insert OID =  937 (  substring	   PGUID 14 f t t t 2 f 25 "25 23" 100 0 0 100  "select \042substring\042($1, $2, -1)" - ));
+DATA(insert OID =  937 (  substring	   PGUID 14 f t t t 2 f 25 "25 23" 100 0 0 100  "select substring($1, $2, -1)" - ));
 DESCR("return portion of string");
 
 /* for multi-byte support */
@@ -2220,7 +2223,7 @@ DESCR("adjust varbit()[] to typmod length");
 
 DATA(insert OID = 1698 (  position		   PGUID 12 f t t t 2 f 23 "1560 1560" 100 0 0 100 bitposition - ));
 DESCR("return position of sub-bitstring");
-DATA(insert OID = 1699 (  substring			PGUID 14 f t t t 2 f 1560 "1560 23" 100 0 0 100  "select \042substring\042($1, $2, -1)" - ));
+DATA(insert OID = 1699 (  substring			PGUID 14 f t t t 2 f 1560 "1560 23" 100 0 0 100  "select substring($1, $2, -1)" - ));
 DESCR("return portion of bitstring");
 
 
@@ -2398,6 +2401,16 @@ DATA(insert OID = 1745 ( float4					PGUID 12 f t t t 1 f 700 "1700" 100 0 0 100 
 DESCR("(internal)");
 DATA(insert OID = 1746 ( float8					PGUID 12 f t t t 1 f 701 "1700" 100 0 0 100  numeric_float8 - ));
 DESCR("(internal)");
+
+DATA(insert OID = 1747 ( time_pl_interval		PGUID 12 f t t t 2 f 1083 "1083 1186" 100 0 0 100  time_pl_interval - ));
+DESCR("plus");
+DATA(insert OID = 1748 ( time_mi_interval		PGUID 12 f t t t 2 f 1083 "1083 1186" 100 0 0 100  time_mi_interval - ));
+DESCR("minus");
+DATA(insert OID = 1749 ( timetz_pl_interval		PGUID 12 f t t t 2 f 1266 "1266 1186" 100 0 0 100  timetz_pl_interval - ));
+DESCR("plus");
+DATA(insert OID = 1750 ( timetz_mi_interval		PGUID 12 f t t t 2 f 1266 "1266 1186" 100 0 0 100  timetz_mi_interval - ));
+DESCR("minus");
+
 DATA(insert OID = 1764 ( numeric_inc			PGUID 12 f t t t 1 f 1700 "1700" 100 0 0 100	numeric_inc - ));
 DESCR("increment by one");
 DATA(insert OID = 1766 ( numeric_smaller		PGUID 12 f t t t 2 f 1700 "1700 1700" 100 0 0 100  numeric_smaller - ));
@@ -2520,6 +2533,9 @@ DATA(insert OID = 1846 ( to_ascii	PGUID 12 f t t t 2 f	25 "25 23" 100 0 0 100  t
 DESCR("encode text from encoding to ASCII text");
 DATA(insert OID = 1847 ( to_ascii	PGUID 12 f t t t 2 f	25 "25 19" 100 0 0 100  to_ascii_encname - ));
 DESCR("encode text from encoding to ASCII text");
+
+DATA(insert OID = 1848 ( interval_pl_time		PGUID 12 f t t t 2 f 1083 "1186 1083" 100 0 0 100  interval_pl_time - ));
+DESCR("plus");
 
 DATA(insert OID = 1850 (  int28eq		   PGUID 12 f t t t 2 f 16 "21 20" 100 0 0 100  int28eq - ));
 DESCR("equal");
