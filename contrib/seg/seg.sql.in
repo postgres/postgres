@@ -28,25 +28,25 @@ COMMENT ON TYPE seg IS
 -- Left/Right methods
 
 CREATE FUNCTION seg_over_left(seg, seg) RETURNS bool
-	AS 'MODULE_PATHNAME' LANGUAGE 'c';
+	AS 'MODULE_PATHNAME' LANGUAGE 'c' with (isstrict);
 
 COMMENT ON FUNCTION seg_over_left(seg, seg) IS
 'is over and left of';
 
 CREATE FUNCTION seg_over_right(seg, seg) RETURNS bool
-	AS 'MODULE_PATHNAME' LANGUAGE 'c';
+	AS 'MODULE_PATHNAME' LANGUAGE 'c' with (isstrict);
 
 COMMENT ON FUNCTION seg_over_right(seg, seg) IS
 'is over and right of';
 
 CREATE FUNCTION seg_left(seg, seg) RETURNS bool
-	AS 'MODULE_PATHNAME' LANGUAGE 'c';
+	AS 'MODULE_PATHNAME' LANGUAGE 'c' with (isstrict);
 
 COMMENT ON FUNCTION seg_left(seg, seg) IS
 'is left of';
 
 CREATE FUNCTION seg_right(seg, seg) RETURNS bool
-	AS 'MODULE_PATHNAME' LANGUAGE 'c';
+	AS 'MODULE_PATHNAME' LANGUAGE 'c' with (isstrict);
 
 COMMENT ON FUNCTION seg_right(seg, seg) IS
 'is right of';
@@ -55,55 +55,55 @@ COMMENT ON FUNCTION seg_right(seg, seg) IS
 -- Comparison methods
 
 CREATE FUNCTION seg_lt(seg, seg) RETURNS bool
-	AS 'MODULE_PATHNAME' LANGUAGE 'c';
+	AS 'MODULE_PATHNAME' LANGUAGE 'c' with (isstrict);
 
 COMMENT ON FUNCTION seg_lt(seg, seg) IS
 'less than';
 
 CREATE FUNCTION seg_le(seg, seg) RETURNS bool
-	AS 'MODULE_PATHNAME' LANGUAGE 'c';
+	AS 'MODULE_PATHNAME' LANGUAGE 'c' with (isstrict);
 
 COMMENT ON FUNCTION seg_le(seg, seg) IS
 'less than or equal';
 
 CREATE FUNCTION seg_gt(seg, seg) RETURNS bool
-	AS 'MODULE_PATHNAME' LANGUAGE 'c';
+	AS 'MODULE_PATHNAME' LANGUAGE 'c' with (isstrict);
 
 COMMENT ON FUNCTION seg_gt(seg, seg) IS
 'greater than';
 
 CREATE FUNCTION seg_ge(seg, seg) RETURNS bool
-	AS 'MODULE_PATHNAME' LANGUAGE 'c';
+	AS 'MODULE_PATHNAME' LANGUAGE 'c' with (isstrict);
 
 COMMENT ON FUNCTION seg_ge(seg, seg) IS
 'greater than or equal';
 
 CREATE FUNCTION seg_contains(seg, seg) RETURNS bool
-	AS 'MODULE_PATHNAME' LANGUAGE 'c';
+	AS 'MODULE_PATHNAME' LANGUAGE 'c' with (isstrict);
 
 COMMENT ON FUNCTION seg_contains(seg, seg) IS
 'contains';
 
 CREATE FUNCTION seg_contained(seg, seg) RETURNS bool
-	AS 'MODULE_PATHNAME' LANGUAGE 'c';
+	AS 'MODULE_PATHNAME' LANGUAGE 'c' with (isstrict);
 
 COMMENT ON FUNCTION seg_contained(seg, seg) IS
 'contained in';
 
 CREATE FUNCTION seg_overlap(seg, seg) RETURNS bool
-	AS 'MODULE_PATHNAME' LANGUAGE 'c';
+	AS 'MODULE_PATHNAME' LANGUAGE 'c' with (isstrict);
 
 COMMENT ON FUNCTION seg_overlap(seg, seg) IS
 'overlaps';
 
 CREATE FUNCTION seg_same(seg, seg) RETURNS bool
-	AS 'MODULE_PATHNAME' LANGUAGE 'c';
+	AS 'MODULE_PATHNAME' LANGUAGE 'c' with (isstrict);
 
 COMMENT ON FUNCTION seg_same(seg, seg) IS
 'same as';
 
 CREATE FUNCTION seg_different(seg, seg) RETURNS bool
-	AS 'MODULE_PATHNAME' LANGUAGE 'c';
+	AS 'MODULE_PATHNAME' LANGUAGE 'c' with (isstrict);
 
 COMMENT ON FUNCTION seg_different(seg, seg) IS
 'different';
@@ -111,21 +111,21 @@ COMMENT ON FUNCTION seg_different(seg, seg) IS
 -- support routines for indexing
 
 CREATE FUNCTION seg_union(seg, seg) RETURNS seg
-	AS 'MODULE_PATHNAME' LANGUAGE 'c';
+	AS 'MODULE_PATHNAME' LANGUAGE 'c' with (isstrict);
 
 CREATE FUNCTION seg_inter(seg, seg) RETURNS seg
-	AS 'MODULE_PATHNAME' LANGUAGE 'c';
+	AS 'MODULE_PATHNAME' LANGUAGE 'c' with (isstrict);
 
 CREATE FUNCTION seg_size(seg) RETURNS float4
-	AS 'MODULE_PATHNAME' LANGUAGE 'c';
+	AS 'MODULE_PATHNAME' LANGUAGE 'c' with (isstrict);
 
 -- miscellaneous
 
 CREATE FUNCTION seg_upper(seg) RETURNS float4
-	AS 'MODULE_PATHNAME' LANGUAGE 'c';
+	AS 'MODULE_PATHNAME' LANGUAGE 'c' with (isstrict);
 
 CREATE FUNCTION seg_lower(seg) RETURNS float4
-	AS 'MODULE_PATHNAME' LANGUAGE 'c';
+	AS 'MODULE_PATHNAME' LANGUAGE 'c' with (isstrict);
 
 
 --
@@ -223,7 +223,7 @@ CREATE FUNCTION gseg_decompress(opaque) RETURNS opaque
 	AS 'MODULE_PATHNAME' LANGUAGE 'c';
 
 CREATE FUNCTION gseg_penalty(opaque,opaque,opaque) RETURNS opaque
-	AS 'MODULE_PATHNAME' LANGUAGE 'c';
+	AS 'MODULE_PATHNAME' LANGUAGE 'c' with (isstrict);
 
 CREATE FUNCTION gseg_picksplit(opaque, opaque) RETURNS opaque
 	AS 'MODULE_PATHNAME' LANGUAGE 'c';

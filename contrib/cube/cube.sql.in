@@ -28,25 +28,25 @@ COMMENT ON TYPE cube IS
 -- Left/Right methods
 
 CREATE FUNCTION cube_over_left(cube, cube) RETURNS bool
-	AS 'MODULE_PATHNAME' LANGUAGE 'c';
+	AS 'MODULE_PATHNAME' LANGUAGE 'c' with (isstrict);
 
 COMMENT ON FUNCTION cube_over_left(cube, cube) IS
 'is over and left of (NOT IMPLEMENTED)';
 
 CREATE FUNCTION cube_over_right(cube, cube) RETURNS bool
-	AS 'MODULE_PATHNAME' LANGUAGE 'c';
+	AS 'MODULE_PATHNAME' LANGUAGE 'c' with (isstrict);
 
 COMMENT ON FUNCTION cube_over_right(cube, cube) IS
 'is over and right of (NOT IMPLEMENTED)';
 
 CREATE FUNCTION cube_left(cube, cube) RETURNS bool
-	AS 'MODULE_PATHNAME' LANGUAGE 'c';
+	AS 'MODULE_PATHNAME' LANGUAGE 'c' with (isstrict);
 
 COMMENT ON FUNCTION cube_left(cube, cube) IS
 'is left of (NOT IMPLEMENTED)';
 
 CREATE FUNCTION cube_right(cube, cube) RETURNS bool
-	AS 'MODULE_PATHNAME' LANGUAGE 'c';
+	AS 'MODULE_PATHNAME' LANGUAGE 'c' with (isstrict);
 
 COMMENT ON FUNCTION cube_right(cube, cube) IS
 'is right of (NOT IMPLEMENTED)';
@@ -55,43 +55,43 @@ COMMENT ON FUNCTION cube_right(cube, cube) IS
 -- Comparison methods
 
 CREATE FUNCTION cube_lt(cube, cube) RETURNS bool
-	AS 'MODULE_PATHNAME' LANGUAGE 'c';
+	AS 'MODULE_PATHNAME' LANGUAGE 'c' with (isstrict);
 
 COMMENT ON FUNCTION cube_lt(cube, cube) IS
 'lower than';
 
 CREATE FUNCTION cube_gt(cube, cube) RETURNS bool
-	AS 'MODULE_PATHNAME' LANGUAGE 'c';
+	AS 'MODULE_PATHNAME' LANGUAGE 'c' with (isstrict);
 
 COMMENT ON FUNCTION cube_gt(cube, cube) IS
 'greater than';
 
 CREATE FUNCTION cube_contains(cube, cube) RETURNS bool
-	AS 'MODULE_PATHNAME' LANGUAGE 'c';
+	AS 'MODULE_PATHNAME' LANGUAGE 'c' with (isstrict);
 
 COMMENT ON FUNCTION cube_contains(cube, cube) IS
 'contains';
 
 CREATE FUNCTION cube_contained(cube, cube) RETURNS bool
-	AS 'MODULE_PATHNAME' LANGUAGE 'c';
+	AS 'MODULE_PATHNAME' LANGUAGE 'c' with (isstrict);
 
 COMMENT ON FUNCTION cube_contained(cube, cube) IS
 'contained in';
 
 CREATE FUNCTION cube_overlap(cube, cube) RETURNS bool
-	AS 'MODULE_PATHNAME' LANGUAGE 'c';
+	AS 'MODULE_PATHNAME' LANGUAGE 'c' with (isstrict);
 
 COMMENT ON FUNCTION cube_overlap(cube, cube) IS
 'overlaps';
 
 CREATE FUNCTION cube_same(cube, cube) RETURNS bool
-	AS 'MODULE_PATHNAME' LANGUAGE 'c';
+	AS 'MODULE_PATHNAME' LANGUAGE 'c' with (isstrict);
 
 COMMENT ON FUNCTION cube_same(cube, cube) IS
 'same as';
 
 CREATE FUNCTION cube_different(cube, cube) RETURNS bool
-	AS 'MODULE_PATHNAME' LANGUAGE 'c';
+	AS 'MODULE_PATHNAME' LANGUAGE 'c' with (isstrict);
 
 COMMENT ON FUNCTION cube_different(cube, cube) IS
 'different';
@@ -99,13 +99,13 @@ COMMENT ON FUNCTION cube_different(cube, cube) IS
 -- support routines for indexing
 
 CREATE FUNCTION cube_union(cube, cube) RETURNS cube
-	AS 'MODULE_PATHNAME' LANGUAGE 'c';
+	AS 'MODULE_PATHNAME' LANGUAGE 'c' with (isstrict);
 
 CREATE FUNCTION cube_inter(cube, cube) RETURNS cube
-	AS 'MODULE_PATHNAME' LANGUAGE 'c';
+	AS 'MODULE_PATHNAME' LANGUAGE 'c' with (isstrict);
 
 CREATE FUNCTION cube_size(cube) RETURNS float4
-	AS 'MODULE_PATHNAME' LANGUAGE 'c';
+	AS 'MODULE_PATHNAME' LANGUAGE 'c' with (isstrict);
 
 
 -- Misc N-dimensional functions
@@ -113,7 +113,7 @@ CREATE FUNCTION cube_size(cube) RETURNS float4
 -- proximity routines
 
 CREATE FUNCTION cube_distance(cube, cube) RETURNS float4
-	AS 'MODULE_PATHNAME' LANGUAGE 'c';
+	AS 'MODULE_PATHNAME' LANGUAGE 'c' with (isstrict);
 
 
 --
@@ -199,7 +199,7 @@ CREATE FUNCTION g_cube_decompress(opaque) RETURNS opaque
 	AS 'MODULE_PATHNAME' LANGUAGE 'c';
 
 CREATE FUNCTION g_cube_penalty(opaque,opaque,opaque) RETURNS opaque
-	AS 'MODULE_PATHNAME' LANGUAGE 'c';
+	AS 'MODULE_PATHNAME' LANGUAGE 'c' with (isstrict);
 
 CREATE FUNCTION g_cube_picksplit(opaque, opaque) RETURNS opaque
 	AS 'MODULE_PATHNAME' LANGUAGE 'c';

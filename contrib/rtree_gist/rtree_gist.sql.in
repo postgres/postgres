@@ -13,7 +13,7 @@ create function gbox_compress(opaque) returns opaque as 'MODULE_PATHNAME' langua
 
 create function rtree_decompress(opaque) returns opaque as 'MODULE_PATHNAME' language 'C';
 
-create function gbox_penalty(opaque,opaque,opaque) returns opaque as 'MODULE_PATHNAME' language 'C';
+create function gbox_penalty(opaque,opaque,opaque) returns opaque as 'MODULE_PATHNAME' language 'C' with (isstrict);
 
 create function gbox_picksplit(opaque, opaque) returns opaque as 'MODULE_PATHNAME' language 'C';
 
