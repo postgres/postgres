@@ -12,7 +12,7 @@
  * Portions Copyright (c) 1996-2002, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Id: c.h,v 1.128 2002/10/08 23:12:22 momjian Exp $
+ * $Id: c.h,v 1.129 2002/10/23 23:37:47 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -637,6 +637,11 @@ typedef NameData *Name;
 
 #if defined(sun) && defined(__sparc__) && !defined(__SVR4)
 #include <unistd.h>
+#endif
+
+#if defined(bsdi)
+int fseeko(FILE *stream, off_t offset, int whence);
+off_t ftello(FILE *stream);
 #endif
 
 /* These are for things that are one way on Unix and another on NT */
