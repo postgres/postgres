@@ -1,4 +1,4 @@
- dnl Process this file with autoconf to produce a configure script.
+dnl Process this file with autoconf to produce a configure script.
 AC_INIT(backend/access/common/heaptuple.c)
 AC_PREFIX_DEFAULT(/usr/local/pgsql)
 
@@ -279,7 +279,7 @@ dnl We need some explanatory text here.
 AC_MSG_CHECKING(setting ASSERT CHECKING)
 AC_ARG_ENABLE(
    cassert,
-   [  --enable-cassert	      enable assertion checks (debugging) ],
+   [  --enable-cassert	  enable assertion checks (debugging) ],
    AC_DEFINE(USE_ASSERT_CHECKING) AC_MSG_RESULT(enabled),
    AC_MSG_RESULT(disabled)
 )
