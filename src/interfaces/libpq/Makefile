@@ -7,15 +7,15 @@
 #
 #
 # IDENTIFICATION
-#    $Header: /cvsroot/pgsql/src/interfaces/libpq/Makefile,v 1.36 1997/07/29 14:08:34 momjian Exp $
+#    $Header: /cvsroot/pgsql/src/interfaces/libpq/Makefile,v 1.37 1997/08/17 00:33:28 scrappy Exp $
 #
 #-------------------------------------------------------------------------
 
-SRCDIR= ..
-include ../Makefile.global
+SRCDIR= ../..
+include $(SRCDIR)/Makefile.global
 
 # We need the backend directory here for its fmgr.h
-INCLUDE_OPT= -I../include -I../backend
+INCLUDE_OPT= -I$(SRCDIR)/include -I$(SRCDIR)/backend
 
 CFLAGS+= $(INCLUDE_OPT) 
 
@@ -60,32 +60,32 @@ else
 endif
 	$(RANLIB) libpq.a
 
-fe-lobj.o: ../backend/fmgr.h
+fe-lobj.o: $(SRCDIR)/backend/fmgr.h
 
 # We need to compile this with special options for shared libs,
-# so we can't use the object in ../backend
-dllist.c:	../backend/lib/dllist.c
-	-ln -s ../backend/lib/dllist.c .
+# so we can't use the object in $(SRCDIR)/backend
+dllist.c:	$(SRCDIR)/backend/lib/dllist.c
+	-ln -s $(SRCDIR)/backend/lib/dllist.c .
 
-pqcomprim.c:	    ../backend/libpq/pqcomprim.c
-	-ln -s ../backend/libpq/pqcomprim.c .
+pqcomprim.c:	    $(SRCDIR)/backend/libpq/pqcomprim.c
+	-ln -s $(SRCDIR)/backend/libpq/pqcomprim.c .
 
 # The following rules cause dependencies in the backend directory to 
 # get made if they don't exist, but don't cause them to get remade if they
 # are out of date.
-../backend/fmgr.h:
-	$(MAKE) -C ../backend fmgr.h
+$(SRCDIR)/backend/fmgr.h:
+	$(MAKE) -C $(SRCDIR)/backend fmgr.h
 
 $(shlib): $(OBJS)
 	$(LD) $(LDFLAGS_SL) -o $@ $(OBJS) 
 	ln -sf $@ libpq.so
 
 
-c.h: ../include/c.h
+c.h: $(SRCDIR)/include/c.h
 	rm -f c.h
 	echo "#undef PORTNAME" >  c.h
 	echo "#define PORTNAME $(PORTNAME)" >> c.h
-	cat ../include/c.h >> c.h
+	cat $(SRCDIR)/include/c.h >> c.h
 
 .PHONY: beforeinstall-headers install-headers
 .PHONY: install install-libpq install-shlib-dep 
@@ -96,35 +96,35 @@ install: install-headers install-libpq $(install-shlib-dep)
 # so should be installed by someone else.
 #
 install-headers: beforeinstall-headers c.h \
-                 ../include/postgres.h ../include/postgres_ext.h \
-                 ../include/config.h ../include/libpq/pqcomm.h \
-                 ../include/libpq/libpq-fs.h ../include/lib/dllist.h \
-                 ../include/utils/geo_decls.h libpq-fe.h
-	$(INSTALL) $(INSTLOPTS) ../include/os.h \
+                 $(SRCDIR)/include/postgres.h $(SRCDIR)/include/postgres_ext.h \
+                 $(SRCDIR)/include/config.h $(SRCDIR)/include/libpq/pqcomm.h \
+                 $(SRCDIR)/include/libpq/libpq-fs.h $(SRCDIR)/include/lib/dllist.h \
+                 $(SRCDIR)/include/utils/geo_decls.h libpq-fe.h
+	$(INSTALL) $(INSTLOPTS) $(SRCDIR)/include/os.h \
           $(HEADERDIR)/os.h
-	$(INSTALL) $(INSTLOPTS) ../include/config.h \
+	$(INSTALL) $(INSTLOPTS) $(SRCDIR)/include/config.h \
           $(HEADERDIR)/config.h
-	$(INSTALL) $(INSTLOPTS) ../include/postgres.h \
+	$(INSTALL) $(INSTLOPTS) $(SRCDIR)/include/postgres.h \
           $(HEADERDIR)/postgres.h
-	$(INSTALL) $(INSTLOPTS) ../include/postgres_ext.h \
+	$(INSTALL) $(INSTLOPTS) $(SRCDIR)/include/postgres_ext.h \
           $(HEADERDIR)/postgres_ext.h
-	$(INSTALL) $(INSTLOPTS) ../include/libpq/pqcomm.h \
+	$(INSTALL) $(INSTLOPTS) $(SRCDIR)/include/libpq/pqcomm.h \
           $(HEADERDIR)/libpq/pqcomm.h
-	$(INSTALL) $(INSTLOPTS) ../include/libpq/libpq-fs.h \
+	$(INSTALL) $(INSTLOPTS) $(SRCDIR)/include/libpq/libpq-fs.h \
           $(HEADERDIR)/libpq/libpq-fs.h
-	$(INSTALL) $(INSTLOPTS) ../include/lib/dllist.h \
+	$(INSTALL) $(INSTLOPTS) $(SRCDIR)/include/lib/dllist.h \
           $(HEADERDIR)/lib/dllist.h
-	$(INSTALL) $(INSTLOPTS) ../include/utils/geo_decls.h \
+	$(INSTALL) $(INSTLOPTS) $(SRCDIR)/include/utils/geo_decls.h \
           $(HEADERDIR)/utils/geo_decls.h
-	$(INSTALL) $(INSTLOPTS) ../include/utils/elog.h \
+	$(INSTALL) $(INSTLOPTS) $(SRCDIR)/include/utils/elog.h \
           $(HEADERDIR)/utils/elog.h
-	$(INSTALL) $(INSTLOPTS) ../include/utils/palloc.h \
+	$(INSTALL) $(INSTLOPTS) $(SRCDIR)/include/utils/palloc.h \
           $(HEADERDIR)/utils/palloc.h
-	$(INSTALL) $(INSTLOPTS) ../include/access/attnum.h \
+	$(INSTALL) $(INSTLOPTS) $(SRCDIR)/include/access/attnum.h \
           $(HEADERDIR)/access/attnum.h
 	$(INSTALL) $(INSTLOPTS) libpq-fe.h $(HEADERDIR)/libpq-fe.h
 ifeq ($(PORTNAME), hpux)
-	$(INSTALL) $(INSTLOPTS) ../backend/port/hpux/fixade.h \
+	$(INSTALL) $(INSTLOPTS) $(SRCDIR)/backend/port/hpux/fixade.h \
           $(HEADERDIR)/port/hpux/fixade.h
 endif
 	$(INSTALL) $(INSTLOPTS) c.h $(HEADERDIR)/c.h
