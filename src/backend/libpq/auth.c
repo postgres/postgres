@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/libpq/auth.c,v 1.24 1998/01/29 03:23:05 scrappy Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/libpq/auth.c,v 1.25 1998/01/31 20:12:06 scrappy Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -47,6 +47,7 @@ static void handle_krb5_auth(Port *port);
 static void handle_password_auth(Port *port);
 static void readPasswordPacket(char *arg, PacketLen len, char *pkt);
 static void pg_passwordv0_recvauth(char *arg, PacketLen len, char *pkt);
+static int checkPassword(Port *port, char *user, char *password);
 static int old_be_recvauth(Port *port);
 static int map_old_to_new(Port *port, UserAuth old, int status);
 
@@ -346,19 +347,19 @@ static void pg_passwordv0_recvauth(char *arg, PacketLen len, char *pkt)
 
 	cp = start = pp->data;
 
-	while (len > 0)
-	if (*cp++ == '\0')
-	{
-		if (user == NULL)
-			user = start;
-		else
+	while (len-- > 0)
+		if (*cp++ == '\0')
 		{
-			password = start;
-			break;
-		}
+			if (user == NULL)
+				user = start;
+			else
+			{
+				password = start;
+				break;
+			}
 
-		start = cp;
-	}
+			start = cp;
+		}
 
 	if (user == NULL || password == NULL)
 	{
@@ -369,9 +370,25 @@ static void pg_passwordv0_recvauth(char *arg, PacketLen len, char *pkt)
 
 		auth_failed(port);
 	}
-	else if (map_old_to_new(port, uaPassword,
-				verify_password(port->auth_arg, user, password)) != STATUS_OK)
-		auth_failed(port);
+	else
+	{
+		int status;
+		UserAuth saved;
+
+		/* Check the password. */
+
+		saved = port->auth_method;
+		port->auth_method = uaPassword;
+
+		status = checkPassword(port, user, password);
+
+		port->auth_method = saved;
+
+		/* Adjust the result if necessary. */
+
+		if (map_old_to_new(port, uaPassword, status) != STATUS_OK)
+			auth_failed(port);
+	}
 }
 
 
@@ -579,21 +596,25 @@ static void readPasswordPacket(char *arg, PacketLen len, char *pkt)
 		
 	StrNCpy(password, ((PasswordPacket *)pkt)->passwd, len);
 
-	/*
-	 * Use the local flat password file if clear passwords are used and the
-	 * file is specified.  Otherwise use the password in the pg_user table,
-	 * encrypted or not.
-	 */
-
-	if (port->auth_method == uaPassword && port->auth_arg[0] != '\0')
-	{
-		if (verify_password(port->auth_arg, port->user, password) != STATUS_OK)
-			auth_failed(port);
-	}
-	else if (crypt_verify(port, port->user, password) != STATUS_OK)
+	if (checkPassword(port, port->user, password) != STATUS_OK)
 		auth_failed(port);
 	else
 		sendAuthRequest(port, AUTH_REQ_OK, handle_done_auth);
+}
+
+
+/*
+ * Use the local flat password file if clear passwords are used and the file is
+ * specified.  Otherwise use the password in the pg_user table, encrypted or
+ * not.
+ */
+
+static int checkPassword(Port *port, char *user, char *password)
+{
+	if (port->auth_method == uaPassword && port->auth_arg[0] != '\0')
+		return verify_password(port->auth_arg, user, password);
+
+	return crypt_verify(port, user, password);
 }
 
 

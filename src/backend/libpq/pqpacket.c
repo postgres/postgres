@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/libpq/Attic/pqpacket.c,v 1.13 1998/01/26 01:41:12 scrappy Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/libpq/Attic/pqpacket.c,v 1.14 1998/01/31 20:12:09 scrappy Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -40,6 +40,10 @@ void PacketReceiveSetup(Packet *pkt, void (*iodone)(), char *arg)
 	pkt->iodone = iodone;
 	pkt->arg = arg;
 	pkt->state = ReadingPacketLength;
+
+	/* Clear the destination. */
+
+	MemSet(&pkt->pkt, 0, sizeof (pkt->pkt));
 }
 
 

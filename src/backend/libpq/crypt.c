@@ -271,7 +271,7 @@ int crypt_verify(Port* port, const char* user, const char* pgpass) {
   if (!strcmp(pgpass, crypt_pwd)) {
     /* check here to be sure we are not past valuntil
      */
-    if (!valuntil)
+    if (!valuntil || strcmp(valuntil, "\\N") == 0)
       vuntil = INVALID_ABSTIME;
     else
       vuntil = nabstimein(valuntil);
