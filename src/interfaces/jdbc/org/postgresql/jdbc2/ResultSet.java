@@ -134,7 +134,6 @@ public class ResultSet extends org.postgresql.ResultSet implements java.sql.Resu
   {
     //release resources held (memory for tuples)
     if(rows!=null) {
-      rows.setSize(0);
       rows=null;
     }
   }
@@ -710,7 +709,8 @@ public class ResultSet extends org.postgresql.ResultSet implements java.sql.Resu
   {
     int i;
 
-    for (i = 0 ; i < fields.length; ++i)
+    final int flen = fields.length;
+    for (i = 0 ; i < flen; ++i)
       if (fields[i].getName().equalsIgnoreCase(columnName))
 	return (i+1);
     throw new PSQLException ("postgresql.res.colname",columnName);
@@ -726,11 +726,13 @@ public class ResultSet extends org.postgresql.ResultSet implements java.sql.Resu
 	if (index==0)
 	    throw new SQLException("Cannot move to index of 0");
 
+	final int rows_size = rows.size();
+
 	//if index<0, count from the end of the result set, but check
 	//to be sure that it is not beyond the first index
 	if (index<0)
-	    if (index>=-rows.size())
-		internalIndex=rows.size()+index;
+	    if (index > -rows_size)
+		internalIndex = rows_size+index;
 	    else {
 		beforeFirst();
 		return false;
@@ -739,7 +741,7 @@ public class ResultSet extends org.postgresql.ResultSet implements java.sql.Resu
 	//must be the case that index>0,
 	//find the correct place, assuming that
 	//the index is not too large
-	if (index<=rows.size())
+	if (index <= rows_size)
 	    internalIndex = index-1;
 	else {
 	    afterLast();
@@ -753,8 +755,9 @@ public class ResultSet extends org.postgresql.ResultSet implements java.sql.Resu
 
     public void afterLast() throws SQLException
     {
-	if (rows.size() > 0)
-		current_row = rows.size();
+	final int rows_size = rows.size();
+	if (rows_size > 0)
+		current_row = rows_size;
     }
 
     public void beforeFirst() throws SQLException
@@ -967,7 +970,8 @@ public class ResultSet extends org.postgresql.ResultSet implements java.sql.Resu
 
     public boolean isAfterLast() throws SQLException
     {
-	return (current_row >= rows.size()  && rows.size() > 0);
+	final int rows_size = rows.size();
+	return (current_row >= rows_size && rows_size > 0);
     }
 
     public boolean isBeforeFirst() throws SQLException
@@ -982,16 +986,18 @@ public class ResultSet extends org.postgresql.ResultSet implements java.sql.Resu
 
     public boolean isLast() throws SQLException
     {
-	return (current_row == rows.size() -1  && rows.size() > 0);
+	final int rows_size = rows.size();
+	return (current_row == rows_size -1  && rows_size > 0);
     }
 
     public boolean last() throws SQLException
     {
-	if (rows.size() <= 0)
-	    return false;
-	current_row = rows.size() - 1;
-	this_row = (byte [][])rows.elementAt(current_row);
-	return true;
+	final int rows_size = rows.size();
+	if (rows_size <= 0)
+ 	    return false;
+	current_row = rows_size - 1;
+ 	this_row = (byte [][])rows.elementAt(current_row);
+ 	return true;
     }
 
     public void moveToCurrentRow() throws SQLException
@@ -1480,4 +1486,3 @@ public class ResultSet extends org.postgresql.ResultSet implements java.sql.Resu
 		}
 	}
 }
-
