@@ -10,7 +10,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/utils/adt/numutils.c,v 1.67 2004/12/31 22:01:22 pgsql Exp $
+ *	  $PostgreSQL: pgsql/src/backend/utils/adt/numutils.c,v 1.68 2005/01/09 21:03:19 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -46,12 +46,12 @@
 /*
  * pg_atoi: convert string to integer
  *
- * 'size' is the sizeof() the desired integral result (1, 2, or 4 bytes).
- *
  * allows any number of leading or trailing whitespace characters.
  *
- * 'c' is the character that terminates the input string (after any
- * number of whitespace characters).
+ * 'size' is the sizeof() the desired integral result (1, 2, or 4 bytes).
+ *
+ * c, if not 0, is a terminator character that may appear after the
+ * integer (plus whitespace).  If 0, the string must end after the integer.
  *
  * Unlike plain atoi(), this will throw ereport() upon bad input format or
  * overflow.
@@ -88,10 +88,10 @@ pg_atoi(char *s, int size, int c)
 	 * Skip any trailing whitespace; if anything but whitespace remains
 	 * before the terminating character, bail out
 	 */
-	while (*badp != c && isspace((unsigned char) *badp))
+	while (*badp && *badp != c && isspace((unsigned char) *badp))
 		badp++;
 
-	if (*badp != c)
+	if (*badp && *badp != c)
 		ereport(ERROR,
 				(errcode(ERRCODE_INVALID_TEXT_REPRESENTATION),
 				 errmsg("invalid input syntax for integer: \"%s\"",
