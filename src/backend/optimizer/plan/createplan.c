@@ -10,7 +10,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/optimizer/plan/createplan.c,v 1.85 2000/02/15 20:49:18 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/optimizer/plan/createplan.c,v 1.86 2000/02/18 23:47:21 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -626,13 +626,14 @@ create_mergejoin_node(MergePath *best_path,
 			   *mergeclauses;
 	MergeJoin  *join_node;
 
+	mergeclauses = get_actual_clauses(best_path->path_mergeclauses);
+
 	/*
 	 * Remove the mergeclauses from the list of join qual clauses,
 	 * leaving the list of quals that must be checked as qpquals.
 	 * Set those clauses to contain INNER/OUTER var references.
 	 */
-	qpqual = join_references(set_difference(clauses,
-											best_path->path_mergeclauses),
+	qpqual = join_references(set_difference(clauses, mergeclauses),
 							 outer_tlist,
 							 inner_tlist,
 							 (Index) 0);
@@ -641,7 +642,7 @@ create_mergejoin_node(MergePath *best_path,
 	 * Now set the references in the mergeclauses and rearrange them so
 	 * that the outer variable is always on the left.
 	 */
-	mergeclauses = switch_outer(join_references(best_path->path_mergeclauses,
+	mergeclauses = switch_outer(join_references(mergeclauses,
 												outer_tlist,
 												inner_tlist,
 												(Index) 0));
@@ -692,14 +693,14 @@ create_hashjoin_node(HashPath *best_path,
 	 * We represent it as a list anyway, for convenience with routines
 	 * that want to work on lists of clauses.
 	 */
+	hashclauses = get_actual_clauses(best_path->path_hashclauses);
 
 	/*
 	 * Remove the hashclauses from the list of join qual clauses,
 	 * leaving the list of quals that must be checked as qpquals.
 	 * Set those clauses to contain INNER/OUTER var references.
 	 */
-	qpqual = join_references(set_difference(clauses,
-											best_path->path_hashclauses),
+	qpqual = join_references(set_difference(clauses, hashclauses),
 							 outer_tlist,
 							 inner_tlist,
 							 (Index) 0);
@@ -708,7 +709,7 @@ create_hashjoin_node(HashPath *best_path,
 	 * Now set the references in the hashclauses and rearrange them so
 	 * that the outer variable is always on the left.
 	 */
-	hashclauses = switch_outer(join_references(best_path->path_hashclauses,
+	hashclauses = switch_outer(join_references(hashclauses,
 											   outer_tlist,
 											   inner_tlist,
 											   (Index) 0));

@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/optimizer/util/pathnode.c,v 1.60 2000/02/15 20:49:20 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/optimizer/util/pathnode.c,v 1.61 2000/02/18 23:47:30 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -416,7 +416,8 @@ create_nestloop_path(RelOptInfo *joinrel,
  * 'inner_path' is the inner path
  * 'restrict_clauses' are the RestrictInfo nodes to apply at the join
  * 'pathkeys' are the path keys of the new join path
- * 'mergeclauses' are the applicable join/restriction clauses
+ * 'mergeclauses' are the RestrictInfo nodes to use as merge clauses
+ *		(this should be a subset of the restrict_clauses list)
  * 'outersortkeys' are the sort varkeys for the outer relation
  * 'innersortkeys' are the sort varkeys for the inner relation
  *
@@ -473,6 +474,7 @@ create_mergejoin_path(RelOptInfo *joinrel,
  * 'inner_path' is the cheapest inner path
  * 'restrict_clauses' are the RestrictInfo nodes to apply at the join
  * 'hashclauses' is a list of the hash join clause (always a 1-element list)
+ *		(this should be a subset of the restrict_clauses list)
  * 'innerdisbursion' is an estimate of the disbursion of the inner hash key
  *
  */

@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2000, PostgreSQL, Inc
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Id: relation.h,v 1.44 2000/02/15 20:49:25 tgl Exp $
+ * $Id: relation.h,v 1.45 2000/02/18 23:47:17 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -237,6 +237,8 @@ typedef struct Path
  * are usable as indexquals (as determined by indxpath.c) may appear here.
  * NOTE that the semantics of the top-level list in 'indexqual' is OR
  * combination, while the sublists are implicitly AND combinations!
+ * Also note that indexquals lists do not contain RestrictInfo nodes,
+ * just bare clause expressions.
  *
  * 'indexscandir' is one of:
  *		ForwardScanDirection: forward scan of an ordered index
@@ -293,32 +295,39 @@ typedef JoinPath NestPath;
 /*
  * A mergejoin path has these fields.
  *
+ * path_mergeclauses lists the clauses (in the form of RestrictInfos)
+ * that will be used in the merge.  (Before 7.0, this was a list of
+ * bare clause expressions, but we can save on list memory by leaving
+ * it in the form of a RestrictInfo list.)
+ *
  * Note that the mergeclauses are a subset of the parent relation's
  * restriction-clause list.  Any join clauses that are not mergejoinable
  * appear only in the parent's restrict list, and must be checked by a
  * qpqual at execution time.
+ *
+ * outersortkeys (resp. innersortkeys) is NIL if the outer path
+ * (resp. inner path) is already ordered appropriately for the
+ * mergejoin.  If it is not NIL then it is a PathKeys list describing
+ * the ordering that must be created by an explicit sort step.
  */
 
 typedef struct MergePath
 {
 	JoinPath	jpath;
-	List	   *path_mergeclauses; /* join clauses used for merge */
-	/*
-	 * outersortkeys (resp. innersortkeys) is NIL if the outer path
-	 * (resp. inner path) is already ordered appropriately for the
-	 * mergejoin.  If it is not NIL then it is a PathKeys list describing
-	 * the ordering that must be created by an explicit sort step.
-	 */
-	List	   *outersortkeys;
-	List	   *innersortkeys;
+	List	   *path_mergeclauses; /* join clauses to be used for merge */
+	List	   *outersortkeys;	/* keys for explicit sort, if any */
+	List	   *innersortkeys;	/* keys for explicit sort, if any */
 } MergePath;
 
 /*
  * A hashjoin path has these fields.
  *
  * The remarks above for mergeclauses apply for hashclauses as well.
- * However, hashjoin does not care what order its inputs appear in,
- * so we have no need for sortkeys.
+ * (But note that path_hashclauses will always be a one-element list,
+ * since we only hash on one hashable clause.)
+ *
+ * Hashjoin does not care what order its inputs appear in, so we have
+ * no need for sortkeys.
  */
 
 typedef struct HashPath

@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/optimizer/path/joinpath.c,v 1.52 2000/02/15 20:49:17 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/optimizer/path/joinpath.c,v 1.53 2000/02/18 23:47:19 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -171,9 +171,13 @@ sort_inner_and_outer(Query *root,
 		List		   *merge_pathkeys;
 
 		/* Make a mergeclause list with this guy first. */
-		curclause_list = lcons(restrictinfo,
-							   lremove(restrictinfo,
-									   listCopy(mergeclause_list)));
+		if (i != mergeclause_list)
+			curclause_list = lcons(restrictinfo,
+								   lremove(restrictinfo,
+										   listCopy(mergeclause_list)));
+		else
+			curclause_list = mergeclause_list; /* no work at first one... */
+
 		/* Build sort pathkeys for both sides.
 		 *
 		 * Note: it's possible that the cheapest paths will already be
@@ -203,7 +207,7 @@ sort_inner_and_outer(Query *root,
 									   innerrel->cheapest_total_path,
 									   restrictlist,
 									   merge_pathkeys,
-									   get_actual_clauses(curclause_list),
+									   curclause_list,
 									   outerkeys,
 									   innerkeys));
 	}
@@ -265,6 +269,7 @@ match_unsorted_outer(Query *root,
 		List	   *trialsortkeys;
 		Path	   *cheapest_startup_inner;
 		Path	   *cheapest_total_inner;
+		int			num_mergeclauses;
 		int			clausecnt;
 
 		/*
@@ -325,7 +330,7 @@ match_unsorted_outer(Query *root,
 									   innerrel->cheapest_total_path,
 									   restrictlist,
 									   merge_pathkeys,
-									   get_actual_clauses(mergeclauses),
+									   mergeclauses,
 									   NIL,
 									   innersortkeys));
 
@@ -337,10 +342,12 @@ match_unsorted_outer(Query *root,
 		trialsortkeys = listCopy(innersortkeys); /* modifiable copy */
 		cheapest_startup_inner = NULL;
 		cheapest_total_inner = NULL;
+		num_mergeclauses = length(mergeclauses);
 
-		for (clausecnt = length(mergeclauses); clausecnt > 0; clausecnt--)
+		for (clausecnt = num_mergeclauses; clausecnt > 0; clausecnt--)
 		{
 			Path	   *innerpath;
+			List	   *newclauses = NIL;
 
 			/* Look for an inner path ordered well enough to merge with
 			 * the first 'clausecnt' mergeclauses.  NB: trialsortkeys list
@@ -356,10 +363,11 @@ match_unsorted_outer(Query *root,
 									TOTAL_COST) < 0))
 			{
 				/* Found a cheap (or even-cheaper) sorted path */
-				List   *newclauses;
-
-				newclauses = ltruncate(clausecnt,
-									   get_actual_clauses(mergeclauses));
+				if (clausecnt < num_mergeclauses)
+					newclauses = ltruncate(clausecnt,
+										   listCopy(mergeclauses));
+				else
+					newclauses = mergeclauses;
 				add_path(joinrel, (Path *)
 						 create_mergejoin_path(joinrel,
 											   outerpath,
@@ -383,10 +391,17 @@ match_unsorted_outer(Query *root,
 				/* Found a cheap (or even-cheaper) sorted path */
 				if (innerpath != cheapest_total_inner)
 				{
-					List   *newclauses;
-
-					newclauses = ltruncate(clausecnt,
-										   get_actual_clauses(mergeclauses));
+					/* Avoid rebuilding clause list if we already made one;
+					 * saves memory in big join trees...
+					 */
+					if (newclauses == NIL)
+					{
+						if (clausecnt < num_mergeclauses)
+							newclauses = ltruncate(clausecnt,
+												   listCopy(mergeclauses));
+						else
+							newclauses = mergeclauses;
+					}
 					add_path(joinrel, (Path *)
 							 create_mergejoin_path(joinrel,
 												   outerpath,
@@ -461,7 +476,7 @@ match_unsorted_inner(Query *root,
 									   innerpath,
 									   restrictlist,
 									   merge_pathkeys,
-									   get_actual_clauses(mergeclauses),
+									   mergeclauses,
 									   outersortkeys,
 									   NIL));
 		/*
@@ -487,7 +502,7 @@ match_unsorted_inner(Query *root,
 									   innerpath,
 									   restrictlist,
 									   merge_pathkeys,
-									   get_actual_clauses(mergeclauses),
+									   mergeclauses,
 									   NIL,
 									   NIL));
 
@@ -505,7 +520,7 @@ match_unsorted_inner(Query *root,
 										   innerpath,
 										   restrictlist,
 										   merge_pathkeys,
-										   get_actual_clauses(mergeclauses),
+										   mergeclauses,
 										   NIL,
 										   NIL));
 		}
@@ -552,6 +567,7 @@ hash_inner_and_outer(Query *root,
 		Var		   *left,
 				   *right,
 				   *inner;
+		List	   *hashclauses;
 		Selectivity	innerdisbursion;
 
 		if (restrictinfo->hashjoinoperator == InvalidOid)
@@ -572,6 +588,9 @@ hash_inner_and_outer(Query *root,
 		else
 			continue;			/* no good for these input relations */
 
+		/* always a one-element list of hash clauses */
+		hashclauses = lcons(restrictinfo, NIL);
+
 		/* estimate disbursion of inner var for costing purposes */
 		innerdisbursion = estimate_disbursion(root, inner);
 
@@ -585,7 +604,7 @@ hash_inner_and_outer(Query *root,
 									  outerrel->cheapest_total_path,
 									  innerrel->cheapest_total_path,
 									  restrictlist,
-									  lcons(clause, NIL),
+									  hashclauses,
 									  innerdisbursion));
 		if (outerrel->cheapest_startup_path != outerrel->cheapest_total_path)
 			add_path(joinrel, (Path *)
@@ -593,7 +612,7 @@ hash_inner_and_outer(Query *root,
 										  outerrel->cheapest_startup_path,
 										  innerrel->cheapest_total_path,
 										  restrictlist,
-										  lcons(clause, NIL),
+										  hashclauses,
 										  innerdisbursion));
 	}
 }

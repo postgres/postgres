@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/optimizer/path/pathkeys.c,v 1.19 2000/02/15 20:49:17 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/optimizer/path/pathkeys.c,v 1.20 2000/02/18 23:47:19 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -778,6 +778,7 @@ make_pathkeys_for_mergeclauses(Query *root,
 		Node	   *key;
 		Oid			sortop;
 		PathKeyItem *item;
+		List	   *pathkey;
 
 		Assert(restrictinfo->mergejoinoperator != InvalidOid);
 
@@ -791,10 +792,21 @@ make_pathkeys_for_mergeclauses(Query *root,
 		key = (Node *) get_leftop(restrictinfo->clause);
 		sortop = restrictinfo->left_sortop;
 		/*
-		 * Add a pathkey sublist for this sort item
+		 * Find pathkey sublist for this sort item.  We expect to find
+		 * the canonical set including the mergeclause's left and right
+		 * sides; if we get back just the one item, something is rotten.
 		 */
 		item = makePathKeyItem(key, sortop);
-		pathkeys = lappend(pathkeys, make_canonical_pathkey(root, item));
+		pathkey = make_canonical_pathkey(root, item);
+		Assert(length(pathkey) > 1);
+		/*
+		 * Since the item we just made is not in the returned canonical set,
+		 * we can free it --- this saves a useful amount of storage in a
+		 * big join tree.
+		 */
+		pfree(item);
+
+		pathkeys = lappend(pathkeys, pathkey);
 	}
 
 	return pathkeys;

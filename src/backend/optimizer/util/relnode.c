@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/optimizer/util/relnode.c,v 1.24 2000/02/15 20:49:21 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/optimizer/util/relnode.c,v 1.25 2000/02/18 23:47:31 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -345,11 +345,8 @@ subbuild_joinrel_restrictlist(RelOptInfo *joinrel,
 	foreach(xjoininfo, joininfo_list)
 	{
 		JoinInfo   *joininfo = (JoinInfo *) lfirst(xjoininfo);
-		Relids		new_unjoined_relids;
 
-		new_unjoined_relids = set_differencei(joininfo->unjoined_relids,
-											  joinrel->relids);
-		if (new_unjoined_relids == NIL)
+		if (is_subseti(joininfo->unjoined_relids, joinrel->relids))
 		{
 			/*
 			 * Clauses in this JoinInfo list become restriction clauses
