@@ -1,118 +1,179 @@
-This package contains some simple routines for manipulating XML
-documents stored in PostgreSQL. This is a work-in-progress and
-somewhat basic at the moment (see the file TODO for some outline of
-what remains to be done).
+XML-handling functions for PostgreSQL
+=====================================
 
-At present, two modules (based on different XML handling libraries)
-are provided.
+Development of this module was sponsored by Torchbox Ltd. (www.torchbox.com)
 
-Prerequisite:
+This version of the XML functions provides both XPath querying and
+XSLT functionality. There is also a new table function which allows
+the straightforward return of multiple XML results. Note that the current code
+doesn't take any particular care over character sets - this is
+something that should be fixed at some point!
 
-pgxml.c:
-expat parser 1.95.0 or newer (http://expat.sourceforge.net)
+Installation
+------------
 
-or
+The current build process will only work if the files are in
+contrib/xml in a PostgreSQL 7.3 or 7.4 source tree which has been
+configured and built (If you alter the subdir value in the Makefile
+you can place it in a different directory in a PostgreSQL tree).
 
-pgxml_dom.c:
-libxml2 (http://xmlsoft.org)
+Before you begin, just check the Makefile, and then just 'make' and
+'make install'.
 
-The libxml2 version provides more complete XPath functionality, and
-seems like a good way to go. I've left the old versions in there for
-comparison.
+This code requires libxml to be previously installed.
 
-Compiling and loading:
-----------------------
+Description of functions
+------------------------
 
-The Makefile only builds the libxml2 version.
+The first set of functions are straightforward XML parsing and XPath queries:
 
-To compile, just type make.
+pgxml_parse(document) RETURNS bool
 
-Then you can use psql to load the two function definitions: 
-\i pgxml_dom.sql
+This parses the document text in its parameter and returns true if the
+document is well-formed XML.
 
+xpath_string(document,query) RETURNS text
+xpath_number(document,query) RETURNS float4
+xpath_bool(document,query) RETURNS bool
 
-Function documentation and usage:
----------------------------------
-
-pgxml_parse(text) returns bool
-  parses the provided text and returns true or false if it is 
-well-formed or not. It returns NULL if the parser couldn't be
-created for any reason.
-
-pgxml_xpath (XQuery functions) - differs between the versions:
-
-pgxml.c (expat version) has:
-
-pgxml_xpath(text doc, text xpath, int n) returns text
-  parses doc and returns the cdata of the nth occurence of
-the "simple path" entry. 
-
-However, the remainder of this document will cover the pgxml_dom.c version.
-
-pgxml_xpath(text doc, text xpath, text toptag, text septag) returns text
-  evaluates xpath on doc, and returns the result wrapped in
-<toptag>...</toptag> and each result node wrapped in
-<septag></septag>. toptag and septag may be empty strings, in which
-case the respective tag will be omitted.
-
-Example:
-
-Given a  table docstore:
-
- Attribute |  Type   | Modifier 
------------+---------+----------
- docid     | integer | 
- document  | text    | 
-
-containing documents such as (these are archaeological site
-descriptions, in case anyone is wondering):
-
-<?XML version="1.0"?>
-<site provider="Foundations" sitecode="ak97" version="1">
-   <name>Church Farm, Ashton Keynes</name>
-   <invtype>watching brief</invtype>
-   <location scheme="osgb">SU04209424</location>
-</site>
-
-one can type:
-
-select docid, 
-pgxml_xpath(document,'//site/name/text()','','') as sitename,
-pgxml_xpath(document,'//site/location/text()','','') as location
- from docstore;
- 
-and get as output:
-
- docid |               sitename               |  location  
--------+--------------------------------------+------------
-     1 | Church Farm, Ashton Keynes           | SU04209424
-     2 | Glebe Farm, Long Itchington          | SP41506500
-     3 | The Bungalow, Thames Lane, Cricklade | SU10229362
-(3 rows)
-
-or, to illustrate the use of the extra tags:
-
-select docid as id,
-pgxml_xpath(document,'//find/type/text()','set','findtype') 
-from docstore;
-
- id |                               pgxml_xpath                               
-----+-------------------------------------------------------------------------
-  1 | <set></set>
-  2 | <set><findtype>Urn</findtype></set>
-  3 | <set><findtype>Pottery</findtype><findtype>Animal bone</findtype></set>
-(3 rows)
-
-Which produces a new, well-formed document. Note that document 1 had
-no matching instances, so the set returned contains no
-elements. document 2 has 1 matching element and document 3 has 2.
-
-This is just scratching the surface because XPath allows all sorts of
-operations.
-
-Note: I've only implemented the return of nodeset and string values so
-far. This covers (I think) many types of queries, however.
-
-John Gray <jgray@azuli.co.uk>  16 August 2001
+These functions evaluate the XPath query on the supplied document, and
+cast the result to the specified type.
 
 
+xpath_nodeset(document,query,toptag,itemtag) RETURNS text
+
+This evaluates query on document and wraps the result in XML tags. If
+the result is multivalued, the output will look like:
+
+<toptag>
+<itemtag>Value 1 which could be an XML fragment</itemtag>
+<itemtag>Value 2....</itemtag>
+</toptag>
+
+If either toptag or itemtag is an empty string, the relevant tag is omitted.
+There are also wrapper functions for this operation:
+
+xpath_nodeset(document,query) RETURNS text omits both tags.
+xpath_nodeset(document,query,itemtag) RETURNS text omits toptag.
+
+
+xpath_list(document,query,seperator) RETURNS text
+
+This function returns multiple values seperated by the specified
+seperator, e.g. Value 1,Value 2,Value 3 if seperator=','.
+
+xpath_list(document,query) RETURNS text
+
+This is a wrapper for the above function that uses ',' as the seperator.
+
+
+xpath_table
+-----------
+
+This is a table function which evaluates a set of XPath queries on
+each of a set of documents and returns the results as a table. The
+primary key field from the original document table is returned as the
+first column of the result so that the resultset from xpath_table can
+be readily used in joins.
+
+The function itself takes 5 arguments, all text.
+
+xpath_table(key,document,relation,xpaths,criteria)
+
+key - the name of the "key" field - this is just a field to be used as
+the first column of the output table i.e. it identifies the record from
+which each output row came.
+
+document - the name of the field containing the XML document
+
+relation - the name of the table or view containing the documents
+
+xpaths - multiple xpath expressions separated by |
+
+criteria - The contents of the where clause. This needs to be specified,
+so use "true" or "1=1" here if you want to process all the rows in the
+relation.
+
+NB These parameters (except the XPath strings) are just substituted
+into a plain SQL SELECT statement, so you have some flexibility - the
+statement is
+
+SELECT <key>,<document> FROM <relation> WHERE <criteria>
+
+so those parameters can be *anything* valid in those particular
+locations. The result from this SELECT needs to return exactly two
+columns (which it will unless you try to list multiple fields for key
+or document). Beware that this simplistic approach requires that you
+validate any user-supplied values to avoid SQL injection attacks.
+
+Using the function
+
+The function has to be used in a FROM expression. This gives the following
+form:
+
+SELECT * FROM
+xpath_table('article_id', 
+	'article_xml',
+	'articles', 
+	'/article/author|/article/pages|/article/title',
+	'date_entered > ''2003-01-01'' ') 
+AS t(article_id integer, author text, page_count integer, title text);
+
+The AS clause defines the names and types of the columns in the
+virtual table. If there are more XPath queries than result columns,
+the extra queries will be ignored. If there are more result columns
+than XPath queries, the extra columns will be NULL.
+
+Note that I've said in this example that pages is an integer.  The
+function deals internally with string representations, so when you say
+you want an integer in the output, it will take the string
+representation of the XPath result and use PostgreSQL input functions
+to transform it into an integer (or whatever type the AS clause
+requests). An error will result if it can't do this - for example if
+the result is empty - so you may wish to just stick to 'text' as the
+column type if you think your data has any problems.
+
+The select statement doesn't need to use * alone - it can reference the
+columns by name or join them to other tables. The function produces a
+virtual table with which you can perform any operation you wish (e.g.
+aggregation, joining, sorting etc). So we could also have:
+
+SELECT t.title, p.fullname, p.email 
+FROM xpath_table('article_id','article_xml','articles',
+            '/article/title|/article/author/@id',
+            'xpath_string(article_xml,''/article/@date'') > ''2003-03-20'' ')
+            AS t(article_id integer, title text, author_id integer), 
+     tblPeopleInfo AS p 
+WHERE t.author_id = p.person_id;
+
+as a more complicated example. Of course, you could wrap all
+of this in a view for convenience.
+
+XSLT functions
+--------------
+
+The following functions are available if libxslt is installed (this is
+not currently detected automatically, so you will have to amend the
+Makefile)
+
+xslt_process(document,stylesheet,paramlist) RETURNS text
+
+This function appplies the XSL stylesheet to the document and returns
+the transformed result. The paramlist is a list of parameter
+assignments to be used in the transformation, specified in the form
+'a=1,b=2'. Note that this is also proof-of-concept code and the
+parameter parsing is very simple-minded (e.g. parameter values cannot
+contain commas!)
+
+Also note that if either the document or stylesheet values do not
+begin with a < then they will be treated as URLs and libxslt will
+fetch them. It thus follows that you can use xslt_process as a means
+to fetch the contents of URLs - you should be aware of the security
+implications of this.
+
+There is also a two-parameter version of xslt_process which does not
+pass any parameters to the transformation.
+
+If you have any comments or suggestions, please do contact me at
+jgray@azuli.co.uk. Unfortunately, this isn't my main job, so I can't
+guarantee a rapid response to your query!

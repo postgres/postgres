@@ -1,13 +1,18 @@
-# $PostgreSQL: pgsql/contrib/xml/Makefile,v 1.4 2003/11/29 19:51:36 pgsql Exp $
-
+# This makefile will build the new XML and XSLT routines.
 subdir = contrib/xml
-top_builddir = ../..
+top_builddir = ../../
 include $(top_builddir)/src/Makefile.global
 
-MODULE_big = pgxml_dom
-OBJS = pgxml_dom.o
-SHLIB_LINK = -lxml2
-DATA_built = pgxml_dom.sql
+MODULE_big = pgxml
+
+# Remove xslt_proc.o from the following line if you don't have libxslt
+OBJS = xpath.o xslt_proc.o
+
+# Remove -lxslt from the following line if you don't have libxslt.
+SHLIB_LINK = -lxml2 -lxslt
+
+DATA_built = pgxml.sql
 DOCS = README.pgxml
 
-include $(top_srcdir)/contrib/contrib-global.mk
+include $(top_builddir)contrib/contrib-global.mk
+
