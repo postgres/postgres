@@ -13,7 +13,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/commands/vacuum.c,v 1.263 2003/10/02 23:19:44 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/commands/vacuum.c,v 1.263.2.1 2004/12/23 22:42:32 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -2041,6 +2041,7 @@ repair_frag(VRelStats *vacrelstats, Relation onerel,
 						ExecStoreTuple(&newtup, slot, InvalidBuffer, false);
 						ExecInsertIndexTuples(slot, &(newtup.t_self),
 											  estate, true);
+						ResetPerTupleExprContext(estate);
 					}
 
 					WriteBuffer(cur_buffer);
@@ -2174,6 +2175,7 @@ repair_frag(VRelStats *vacrelstats, Relation onerel,
 			{
 				ExecStoreTuple(&newtup, slot, InvalidBuffer, false);
 				ExecInsertIndexTuples(slot, &(newtup.t_self), estate, true);
+				ResetPerTupleExprContext(estate);
 			}
 		}						/* walk along page */
 
