@@ -5,82 +5,88 @@
   The calling format for these functions is defined by the CREATE FUNCTION
   SQL statement that binds them to the backend.
 
-  NOTE: this file shows examples of "old style" function call conventions.
-  See funcs_new.c for examples of "new style".
+  NOTE: this file shows examples of "new style" function call conventions.
+  See funcs.c for examples of "old style".
 *****************************************************************************/
 
 #include <string.h>
 
 #include "postgres.h"			/* general Postgres declarations */
 
+#include "fmgr.h"               /* for argument/result macros */
 #include "executor/executor.h"	/* for GetAttributeByName() */
 #include "utils/geo_decls.h"	/* for point type */
 
 
 /* These prototypes just prevent possible warnings from gcc. */
 
-int			add_one(int arg);
-float8     *add_one_float8(float8 *arg);
-Point	   *makepoint(Point *pointx, Point *pointy);
-text	   *copytext(text *t);
-text       *concat_text(text *arg1, text *arg2);
-bool c_overpaid(TupleTableSlot *t,	/* the current instance of EMP */
-		   int32 limit);
+Datum	add_one(PG_FUNCTION_ARGS);
+Datum	add_one_float8(PG_FUNCTION_ARGS);
+Datum	makepoint(PG_FUNCTION_ARGS);
+Datum	copytext(PG_FUNCTION_ARGS);
+Datum	concat_text(PG_FUNCTION_ARGS);
+Datum   c_overpaid(PG_FUNCTION_ARGS);
 
 
 /* By Value */
          
-int
-add_one(int arg)
+Datum
+add_one(PG_FUNCTION_ARGS)
 {
-    return arg + 1;
+    int32   arg = PG_GETARG_INT32(0);
+
+    PG_RETURN_INT32(arg + 1);
 }
 
 /* By Reference, Fixed Length */
 
-float8 *
-add_one_float8(float8 *arg)
+Datum
+add_one_float8(PG_FUNCTION_ARGS)
 {
-    float8    *result = (float8 *) palloc(sizeof(float8));
+    /* The macros for FLOAT8 hide its pass-by-reference nature */
+    float8   arg = PG_GETARG_FLOAT8(0);
 
-    *result = *arg + 1.0;
-       
-    return result;
+    PG_RETURN_FLOAT8(arg + 1.0);
 }
 
-Point *
-makepoint(Point *pointx, Point *pointy)
+Datum
+makepoint(PG_FUNCTION_ARGS)
 {
+    Point     *pointx = PG_GETARG_POINT_P(0);
+    Point     *pointy = PG_GETARG_POINT_P(1);
     Point     *new_point = (Point *) palloc(sizeof(Point));
 
     new_point->x = pointx->x;
     new_point->y = pointy->y;
        
-    return new_point;
+    PG_RETURN_POINT_P(new_point);
 }
 
 /* By Reference, Variable Length */
 
-text *
-copytext(text *t)
+Datum
+copytext(PG_FUNCTION_ARGS)
 {
+    text     *t = PG_GETARG_TEXT_P(0);
     /*
      * VARSIZE is the total size of the struct in bytes.
      */
-    text *new_t = (text *) palloc(VARSIZE(t));
+    text     *new_t = (text *) palloc(VARSIZE(t));
     VARATT_SIZEP(new_t) = VARSIZE(t);
     /*
      * VARDATA is a pointer to the data region of the struct.
      */
     memcpy((void *) VARDATA(new_t), /* destination */
            (void *) VARDATA(t),     /* source */
-           VARSIZE(t)-VARHDRSZ);    /* how many bytes */
-    return new_t;
+           VARSIZE(t)-VARHDRSZ);        /* how many bytes */
+    PG_RETURN_TEXT_P(new_t);
 }
 
-text *
-concat_text(text *arg1, text *arg2)
+Datum
+concat_text(PG_FUNCTION_ARGS)
 {
+    text  *arg1 = PG_GETARG_TEXT_P(0);
+    text  *arg2 = PG_GETARG_TEXT_P(1);
     int32 new_text_size = VARSIZE(arg1) + VARSIZE(arg2) - VARHDRSZ;
     text *new_text = (text *) palloc(new_text_size);
 
@@ -88,20 +94,23 @@ concat_text(text *arg1, text *arg2)
     VARATT_SIZEP(new_text) = new_text_size;
     strncpy(VARDATA(new_text), VARDATA(arg1), VARSIZE(arg1)-VARHDRSZ);
     strncat(VARDATA(new_text), VARDATA(arg2), VARSIZE(arg2)-VARHDRSZ);
-    return new_text;
+    PG_RETURN_TEXT_P(new_text);
 }
 
 /* Composite types */
 
-bool
-c_overpaid(TupleTableSlot *t,	/* the current instance of EMP */
-		   int32 limit)
+Datum
+c_overpaid(PG_FUNCTION_ARGS)
 {
+    TupleTableSlot  *t = (TupleTableSlot *) PG_GETARG_POINTER(0);
+    int32            limit = PG_GETARG_INT32(1);
     bool isnull;
     int32 salary;
 
     salary = DatumGetInt32(GetAttributeByName(t, "salary", &isnull));
     if (isnull)
-        return (false);
-    return salary > limit;
+        PG_RETURN_BOOL(false);
+    /* Alternatively, we might prefer to do PG_RETURN_NULL() for null salary */
+
+    PG_RETURN_BOOL(salary > limit);
 }
