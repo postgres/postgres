@@ -8,13 +8,13 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/parser/parse_coerce.c,v 2.36 2000/03/16 06:35:07 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/parser/parse_coerce.c,v 2.37 2000/03/19 00:15:39 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
 #include "postgres.h"
 
-
+#include "catalog/pg_proc.h"
 #include "optimizer/clauses.h"
 #include "parser/parse_coerce.h"
 #include "parser/parse_expr.h"
@@ -126,6 +126,12 @@ coerce_type(ParseState *pstate, Node *node, Oid inputTypeId,
 
 		result = transformExpr(pstate, (Node *) n, EXPR_COLUMN_FIRST);
 
+		/* safety check that we got the right thing */
+		if (exprType(result) != targetTypeId)
+			elog(ERROR, "coerce_type: conversion function %s produced %s",
+				 typeTypeName(targetType), 
+				 typeidTypeName(exprType(result)));
+
 		/*
 		 * If the input is a constant, apply the type conversion function
 		 * now instead of delaying to runtime.  (We could, of course,
@@ -163,6 +169,7 @@ can_coerce_type(int nargs, Oid *input_typeids, Oid *func_typeids)
 {
 	int			i;
 	HeapTuple	ftup;
+	Form_pg_proc pform;
 	Oid			oid_array[FUNC_MAX_ARGS];
 
 	/* run through argument list... */
@@ -221,9 +228,10 @@ can_coerce_type(int nargs, Oid *input_typeids, Oid *func_typeids)
 								   0);
 		if (!HeapTupleIsValid(ftup))
 			return false;
-		/*
-		 * should also check the function return type just to be safe...
-		 */
+		/* Make sure the function's result type is as expected, too */
+		pform = (Form_pg_proc) GETSTRUCT(ftup);
+		if (pform->prorettype != targetTypeId)
+			return false;
 	}
 
 	return true;
