@@ -15,7 +15,7 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: memutils.h,v 1.12 1998/01/11 21:03:10 momjian Exp $
+ * $Id: memutils.h,v 1.13 1998/01/24 22:50:51 momjian Exp $
  *
  * NOTES
  *	  some of the information in this file will be moved to
@@ -233,8 +233,7 @@ extern void AllocSetReset(AllocSet set);
 extern bool AllocSetContains(AllocSet set, AllocPointer pointer);
 extern AllocPointer AllocSetAlloc(AllocSet set, Size size);
 extern void AllocSetFree(AllocSet set, AllocPointer pointer);
-extern AllocPointer
-AllocSetRealloc(AllocSet set, AllocPointer pointer,
+extern AllocPointer AllocSetRealloc(AllocSet set, AllocPointer pointer,
 				Size size);
 
 extern void AllocSetDump(AllocSet set);

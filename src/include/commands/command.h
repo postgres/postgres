@@ -6,7 +6,7 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: command.h,v 1.7 1997/09/08 21:51:34 momjian Exp $
+ * $Id: command.h,v 1.8 1998/01/24 22:48:44 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -26,8 +26,7 @@ extern MemoryContext PortalExecutorHeapMemory;
  *		BadArg if forward invalid.
  *		"WARN" if portal not found.
  */
-extern void
-PerformPortalFetch(char *name, bool forward, int count,
+extern void PerformPortalFetch(char *name, bool forward, int count,
 				   char *tag, CommandDest dest);
 
 /*
@@ -42,8 +41,7 @@ extern void PortalCleanup(Portal portal);
  * PerformAddAttribute --
  *		Performs the POSTQUEL function ADD.
  */
-extern void
-PerformAddAttribute(char *relationName, char *userName,
+extern void PerformAddAttribute(char *relationName, char *userName,
 					bool inh, ColumnDef *colDef);
 
 #endif							/* COMMAND_H */

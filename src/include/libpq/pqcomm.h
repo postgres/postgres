@@ -6,7 +6,7 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: pqcomm.h,v 1.17 1997/12/04 00:27:56 scrappy Exp $
+ * $Id: pqcomm.h,v 1.18 1998/01/24 22:49:23 momjian Exp $
  *
  * NOTES
  *	  Some of this should move to libpq.h
@@ -164,8 +164,7 @@ int			pqPutByte(int, FILE *);
  * prototypes for functions in pqpacket.c
  */
 extern int	PacketReceive(Port *port, PacketBuf *buf, char nonBlocking);
-extern int
-PacketSend(Port *port, PacketBuf *buf,
+extern int PacketSend(Port *port, PacketBuf *buf,
 		   PacketLen len, char nonBlocking);
 
 /* extern PacketBuf* StartupInfo2PacketBuf(StartupInfo*); */

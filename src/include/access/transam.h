@@ -6,7 +6,7 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: transam.h,v 1.12 1997/11/02 15:26:44 vadim Exp $
+ * $Id: transam.h,v 1.13 1998/01/24 22:48:11 momjian Exp $
  *
  *	 NOTES
  *		Transaction System Version 101 now support proper oid
@@ -130,14 +130,11 @@ extern void TransactionIdAbort(TransactionId transactionId);
 
 /* in transam/transsup.c */
 extern void AmiTransactionOverride(bool flag);
-extern void
-TransComputeBlockNumber(Relation relation,
+extern void TransComputeBlockNumber(Relation relation,
 			  TransactionId transactionId, BlockNumber *blockNumberOutP);
-extern XidStatus
-TransBlockNumberGetXidStatus(Relation relation,
+extern XidStatus TransBlockNumberGetXidStatus(Relation relation,
 				BlockNumber blockNumber, TransactionId xid, bool *failP);
-extern void
-TransBlockNumberSetXidStatus(Relation relation,
+extern void TransBlockNumberSetXidStatus(Relation relation,
 		   BlockNumber blockNumber, TransactionId xid, XidStatus xstatus,
 							 bool *failP);
 

@@ -6,7 +6,7 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: iqual.h,v 1.7 1997/09/08 21:50:48 momjian Exp $
+ * $Id: iqual.h,v 1.8 1998/01/24 22:48:05 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -24,8 +24,7 @@
 
 extern int	NIndexTupleProcessed;
 
-extern bool
-index_keytest(IndexTuple tuple, TupleDesc tupdesc,
+extern bool index_keytest(IndexTuple tuple, TupleDesc tupdesc,
 			  int scanKeySize, ScanKey key);
 
 #endif							/* IQUAL_H */

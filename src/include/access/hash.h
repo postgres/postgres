@@ -6,7 +6,7 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: hash.h,v 1.11 1997/09/08 21:50:44 momjian Exp $
+ * $Id: hash.h,v 1.12 1998/01/24 22:47:55 momjian Exp $
  *
  * NOTES
  *		modeled after Margo Seltzer's hash implementation for unix.
@@ -248,16 +248,13 @@ typedef HashItemData *HashItem;
 
 /* public routines */
 
-extern void
-hashbuild(Relation heap, Relation index, int natts,
+extern void hashbuild(Relation heap, Relation index, int natts,
 		  AttrNumber *attnum, IndexStrategy istrat, uint16 pcount,
 		  Datum *params, FuncIndexInfo *finfo, PredInfo *predInfo);
-extern InsertIndexResult
-hashinsert(Relation rel, Datum *datum, char *nulls,
+extern InsertIndexResult hashinsert(Relation rel, Datum *datum, char *nulls,
 		   ItemPointer ht_ctid, Relation heapRel);
 extern char *hashgettuple(IndexScanDesc scan, ScanDirection dir);
-extern char *
-hashbeginscan(Relation rel, bool fromEnd, uint16 keysz,
+extern char * hashbeginscan(Relation rel, bool fromEnd, uint16 keysz,
 			  ScanKey scankey);
 extern void hashrescan(IndexScanDesc scan, bool fromEnd, ScanKey scankey);
 extern void hashendscan(IndexScanDesc scan);
@@ -288,11 +285,9 @@ extern InsertIndexResult _hash_doinsert(Relation rel, HashItem hitem);
 /* hashovfl.c */
 extern Buffer _hash_addovflpage(Relation rel, Buffer *metabufp, Buffer buf);
 extern Buffer _hash_freeovflpage(Relation rel, Buffer ovflbuf);
-extern int32
-_hash_initbitmap(Relation rel, HashMetaPage metap, int32 pnum,
+extern int32 _hash_initbitmap(Relation rel, HashMetaPage metap, int32 pnum,
 				 int32 nbits, int32 ndx);
-extern void
-_hash_squeezebucket(Relation rel, HashMetaPage metap,
+extern void _hash_squeezebucket(Relation rel, HashMetaPage metap,
 					Bucket bucket);
 
 
@@ -302,8 +297,7 @@ extern Buffer _hash_getbuf(Relation rel, BlockNumber blkno, int access);
 extern void _hash_relbuf(Relation rel, Buffer buf, int access);
 extern void _hash_wrtbuf(Relation rel, Buffer buf);
 extern void _hash_wrtnorelbuf(Relation rel, Buffer buf);
-extern Page
-_hash_chgbufaccess(Relation rel, Buffer *bufp, int from_access,
+extern Page _hash_chgbufaccess(Relation rel, Buffer *bufp, int from_access,
 				   int to_access);
 extern void _hash_pageinit(Page page, Size size);
 extern void _hash_pagedel(Relation rel, ItemPointer tid);
@@ -317,19 +311,16 @@ extern void _hash_adjscans(Relation rel, ItemPointer tid);
 
 
 /* hashsearch.c */
-extern void
-_hash_search(Relation rel, int keysz, ScanKey scankey,
+extern void _hash_search(Relation rel, int keysz, ScanKey scankey,
 			 Buffer *bufP, HashMetaPage metap);
 extern RetrieveIndexResult _hash_next(IndexScanDesc scan, ScanDirection dir);
 extern RetrieveIndexResult _hash_first(IndexScanDesc scan, ScanDirection dir);
-extern bool
-_hash_step(IndexScanDesc scan, Buffer *bufP, ScanDirection dir,
+extern bool _hash_step(IndexScanDesc scan, Buffer *bufP, ScanDirection dir,
 		   Buffer metabuf);
 
 
 /* hashutil.c */
-extern ScanKey
-_hash_mkscankey(Relation rel, IndexTuple itup,
+extern ScanKey _hash_mkscankey(Relation rel, IndexTuple itup,
 				HashMetaPage metap);
 extern void _hash_freeskey(ScanKey skey);
 extern bool _hash_checkqual(IndexScanDesc scan, IndexTuple itup);

@@ -188,21 +188,18 @@ typedef struct intrange
 	int			flag;
 } INTRANGE;
 
-extern void
-gistbuild(Relation heap,
+extern void gistbuild(Relation heap,
 		  Relation index, int natts,
 		  AttrNumber *attnum, IndexStrategy istrat,
 		  uint16 pint, Datum *params,
 		  FuncIndexInfo *finfo,
 		  PredInfo *predInfo);
-extern InsertIndexResult
-gistinsert(Relation r, Datum *datum,
+extern InsertIndexResult gistinsert(Relation r, Datum *datum,
 		   char *nulls, ItemPointer ht_ctid, Relation heapRel);
 extern void _gistdump(Relation r);
 extern void gistfreestack(GISTSTACK *s);
 extern void initGISTstate(GISTSTATE *giststate, Relation index);
-extern void
-gistdentryinit(GISTSTATE *giststate, GISTENTRY *e, char *pr,
+extern void gistdentryinit(GISTSTATE *giststate, GISTENTRY *e, char *pr,
 			   Relation r, Page pg, OffsetNumber o, int b, bool l);
 extern StrategyNumber RelationGetGISTStrategy(Relation, AttrNumber, RegProcedure);
 

@@ -6,7 +6,7 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: nodeHashjoin.h,v 1.6 1997/11/26 01:12:50 momjian Exp $
+ * $Id: nodeHashjoin.h,v 1.7 1998/01/24 22:49:04 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -21,8 +21,7 @@ extern TupleTableSlot *ExecHashJoin(HashJoin *node);
 extern bool ExecInitHashJoin(HashJoin *node, EState *estate, Plan *parent);
 extern int	ExecCountSlotsHashJoin(HashJoin *node);
 extern void ExecEndHashJoin(HashJoin *node);
-extern char *
-ExecHashJoinSaveTuple(HeapTuple heapTuple, char *buffer,
+extern char * ExecHashJoinSaveTuple(HeapTuple heapTuple, char *buffer,
 					  File file, char *position);
 
 

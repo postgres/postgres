@@ -7,7 +7,7 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: pg_type.h,v 1.27 1998/01/19 02:37:47 momjian Exp $
+ * $Id: pg_type.h,v 1.28 1998/01/24 22:48:42 momjian Exp $
  *
  * NOTES
  *	  the genbki.sh script reads this file and generates .bki
@@ -372,8 +372,7 @@ DESCR("limited-range ISO-format date and time");
  */
 extern Oid	TypeGet(char *typeName, bool *defined);
 extern Oid	TypeShellMake(char *typeName);
-extern Oid
-TypeCreate(char *typeName,
+extern Oid TypeCreate(char *typeName,
 		   Oid relationOid,
 		   int16 internalSize,
 		   int16 externalSize,

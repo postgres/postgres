@@ -7,7 +7,7 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: indexing.h,v 1.13 1998/01/11 21:03:01 momjian Exp $
+ * $Id: indexing.h,v 1.14 1998/01/24 22:48:27 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -66,25 +66,21 @@ extern char *IndexedCatalogNames[];
  */
 extern void CatalogOpenIndices(int nIndices, char *names[], Relation idescs[]);
 extern void CatalogCloseIndices(int nIndices, Relation *idescs);
-extern void
-CatalogIndexInsert(Relation *idescs,
+extern void CatalogIndexInsert(Relation *idescs,
 				   int nIndices,
 				   Relation heapRelation,
 				   HeapTuple heapTuple);
 extern bool CatalogHasIndex(char *catName, Oid catId);
 
-extern HeapTuple
-AttributeNameIndexScan(Relation heapRelation,
+extern HeapTuple AttributeNameIndexScan(Relation heapRelation,
 					   Oid relid,
 					   char *attname);
 
-extern HeapTuple
-AttributeNumIndexScan(Relation heapRelation,
+extern HeapTuple AttributeNumIndexScan(Relation heapRelation,
 					  Oid relid,
 					  AttrNumber attnum);
 extern HeapTuple ProcedureOidIndexScan(Relation heapRelation, Oid procId);
-extern HeapTuple
-ProcedureNameIndexScan(Relation heapRelation,
+extern HeapTuple ProcedureNameIndexScan(Relation heapRelation,
 					   char *procName, int nargs, Oid *argTypes);
 extern HeapTuple ProcedureSrcIndexScan(Relation heapRelation, text *procSrc);
 extern HeapTuple TypeOidIndexScan(Relation heapRelation, Oid typeId);

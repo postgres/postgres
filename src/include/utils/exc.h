@@ -6,7 +6,7 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: exc.h,v 1.10 1997/09/08 21:54:56 momjian Exp $
+ * $Id: exc.h,v 1.11 1998/01/24 22:50:41 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -78,8 +78,7 @@ typedef void ExcProc (Exception *, ExcDetail, ExcData, ExcMessage);
  * prototypes for functions in exc.c
  */
 extern void EnableExceptionHandling(bool on);
-extern void
-ExcRaise(Exception *excP,
+extern void ExcRaise(Exception *excP,
 		 ExcDetail detail,
 		 ExcData data,
 		 ExcMessage message);
@@ -88,8 +87,7 @@ ExcRaise(Exception *excP,
 /*
  * prototypes for functions in excabort.c
  */
-extern void
-ExcAbort(const Exception *excP, ExcDetail detail, ExcData data,
+extern void ExcAbort(const Exception *excP, ExcDetail detail, ExcData data,
 		 ExcMessage message);
 
 #endif							/* EXC_H */

@@ -6,7 +6,7 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: pg_proc.h,v 1.42 1998/01/01 05:47:11 thomas Exp $
+ * $Id: pg_proc.h,v 1.43 1998/01/24 22:48:41 momjian Exp $
  *
  * NOTES
  *	  The script catalog/genbki.sh reads this file and generates .bki
@@ -2054,8 +2054,7 @@ DESCR("sequence current value");
 /*
  * prototypes for functions pg_proc.c
  */
-extern Oid
-ProcedureCreate(char *procedureName,
+extern Oid ProcedureCreate(char *procedureName,
 				bool returnsSet,
 				char *returnTypeName,
 				char *languageName,

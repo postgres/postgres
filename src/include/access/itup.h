@@ -6,7 +6,7 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: itup.h,v 1.8 1997/09/08 21:50:53 momjian Exp $
+ * $Id: itup.h,v 1.9 1998/01/24 22:48:06 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -89,14 +89,11 @@ typedef struct PredInfo
 
 
 /* indextuple.h */
-extern IndexTuple
-index_formtuple(TupleDesc tupleDescriptor,
+extern IndexTuple index_formtuple(TupleDesc tupleDescriptor,
 				Datum value[], char null[]);
-extern Datum
-index_getattr(IndexTuple tuple, AttrNumber attNum,
+extern Datum index_getattr(IndexTuple tuple, AttrNumber attNum,
 			  TupleDesc tupDesc, bool *isNullOutP);
-extern RetrieveIndexResult
-FormRetrieveIndexResult(ItemPointer indexItemPointer,
+extern RetrieveIndexResult FormRetrieveIndexResult(ItemPointer indexItemPointer,
 						ItemPointer heapItemPointer);
 extern void CopyIndexTuple(IndexTuple source, IndexTuple *target);
 

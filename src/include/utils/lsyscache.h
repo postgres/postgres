@@ -6,7 +6,7 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: lsyscache.h,v 1.7 1998/01/20 05:05:08 momjian Exp $
+ * $Id: lsyscache.h,v 1.8 1998/01/24 22:50:48 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -24,8 +24,7 @@ extern bool get_attisset(Oid relid, char *attname);
 extern int get_atttypmod(Oid relid, AttrNumber attnum);
 extern RegProcedure get_opcode(Oid opid);
 extern char *get_opname(Oid opid);
-extern bool
-op_mergesortable(Oid opid, Oid ltype, Oid rtype,
+extern bool op_mergesortable(Oid opid, Oid ltype, Oid rtype,
 				 Oid *leftOp, Oid *rightOp);
 extern Oid	op_hashjoinable(Oid opid, Oid ltype, Oid rtype);
 extern Oid	get_commutator(Oid opid);

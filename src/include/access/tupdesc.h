@@ -6,7 +6,7 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: tupdesc.h,v 1.12 1997/09/08 21:51:04 momjian Exp $
+ * $Id: tupdesc.h,v 1.13 1998/01/24 22:48:12 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -65,8 +65,7 @@ extern TupleDesc CreateTupleDescCopyConstr(TupleDesc tupdesc);
 
 extern void FreeTupleDesc(TupleDesc tupdesc);
 
-extern bool
-TupleDescInitEntry(TupleDesc desc,
+extern bool TupleDescInitEntry(TupleDesc desc,
 				   AttrNumber attributeNumber,
 				   char *attributeName,
 				   char *typeName,

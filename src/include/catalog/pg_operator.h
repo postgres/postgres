@@ -7,7 +7,7 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: pg_operator.h,v 1.22 1997/11/30 22:49:22 thomas Exp $
+ * $Id: pg_operator.h,v 1.23 1998/01/24 22:48:36 momjian Exp $
  *
  * NOTES
  *	  the genbki.sh script reads this file and generates .bki
@@ -652,8 +652,7 @@ DATA(insert OID = 1585 (  "/"	  PGUID 0 b t f 1186 1186 1186	  0  0 0 0 timespan
 /*
  * function prototypes
  */
-extern void
-OperatorCreate(char *operatorName,
+extern void OperatorCreate(char *operatorName,
 			   char *leftTypeName,
 			   char *rightTypeName,
 			   char *procedureName,

@@ -6,7 +6,7 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: syscache.h,v 1.8 1997/10/28 15:11:45 vadim Exp $
+ * $Id: syscache.h,v 1.9 1998/01/24 22:50:57 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -79,14 +79,11 @@ struct cachedesc
 
 extern void zerocaches(void);
 extern void InitCatalogCache(void);
-extern HeapTuple
-SearchSysCacheTuple(int cacheId, Datum key1, Datum key2,
+extern HeapTuple SearchSysCacheTuple(int cacheId, Datum key1, Datum key2,
 					Datum key3, Datum key4);
-extern int32
-SearchSysCacheStruct(int cacheId, char *returnStruct,
+extern int32 SearchSysCacheStruct(int cacheId, char *returnStruct,
 					 Datum key1, Datum key2, Datum key3, Datum key4);
-extern void *
-SearchSysCacheGetAttribute(int cacheId,
+extern void * SearchSysCacheGetAttribute(int cacheId,
 						   AttrNumber attributeNumber,
 						   Datum key1,
 						   Datum key2,

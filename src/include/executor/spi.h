@@ -78,8 +78,7 @@ extern void *SPI_prepare(char *src, int nargs, Oid * argtypes);
 extern void *SPI_saveplan(void *plan);
 
 extern HeapTuple SPI_copytuple(HeapTuple tuple);
-extern HeapTuple
-SPI_modifytuple(Relation rel, HeapTuple tuple, int natts,
+extern HeapTuple SPI_modifytuple(Relation rel, HeapTuple tuple, int natts,
 				int *attnum, Datum * Values, char *Nulls);
 extern int	SPI_fnumber(TupleDesc tupdesc, char *fname);
 extern char *SPI_fname(TupleDesc tupdesc, int fnumber);

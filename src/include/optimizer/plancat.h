@@ -6,7 +6,7 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: plancat.h,v 1.6 1997/09/08 21:53:27 momjian Exp $
+ * $Id: plancat.h,v 1.7 1998/01/24 22:49:50 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -34,31 +34,26 @@ typedef struct IdxInfoRetval
 } IdxInfoRetval;
 
 
-extern void
-relation_info(Query *root,
+extern void relation_info(Query *root,
 			  Oid relid,
 			  bool *hashindex, int *pages,
 			  int *tuples);
 
-extern bool
-index_info(Query *root,
+extern bool index_info(Query *root,
 		   bool first, int relid, IdxInfoRetval *info);
 
-extern Cost
-restriction_selectivity(Oid functionObjectId,
+extern Cost restriction_selectivity(Oid functionObjectId,
 						Oid operatorObjectId,
 						Oid relationObjectId,
 						AttrNumber attributeNumber,
 						char *constValue,
 						int32 constFlag);
 
-extern void
-index_selectivity(Oid indid, Oid *classes, List *opnos,
+extern void index_selectivity(Oid indid, Oid *classes, List *opnos,
 				  Oid relid, List *attnos, List *values, List *flags,
 				  int32 nkeys, float *idxPages, float *idxSelec);
 
-extern Cost
-join_selectivity(Oid functionObjectId, Oid operatorObjectId,
+extern Cost join_selectivity(Oid functionObjectId, Oid operatorObjectId,
 				 Oid relationObjectId1, AttrNumber attributeNumber1,
 				 Oid relationObjectId2, AttrNumber attributeNumber2);
 

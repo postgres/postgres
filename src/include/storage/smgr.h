@@ -6,7 +6,7 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: smgr.h,v 1.9 1997/09/08 02:39:13 momjian Exp $
+ * $Id: smgr.h,v 1.10 1998/01/24 22:50:18 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -28,17 +28,13 @@ extern int	smgrunlink(int16 which, Relation reln);
 extern int	smgrextend(int16 which, Relation reln, char *buffer);
 extern int	smgropen(int16 which, Relation reln);
 extern int	smgrclose(int16 which, Relation reln);
-extern int
-smgrread(int16 which, Relation reln, BlockNumber blocknum,
+extern int smgrread(int16 which, Relation reln, BlockNumber blocknum,
 		 char *buffer);
-extern int
-smgrwrite(int16 which, Relation reln, BlockNumber blocknum,
+extern int smgrwrite(int16 which, Relation reln, BlockNumber blocknum,
 		  char *buffer);
-extern int
-smgrflush(int16 which, Relation reln, BlockNumber blocknum,
+extern int smgrflush(int16 which, Relation reln, BlockNumber blocknum,
 		  char *buffer);
-extern int
-smgrblindwrt(int16 which, char *dbname, char *relname, Oid dbid,
+extern int smgrblindwrt(int16 which, char *dbname, char *relname, Oid dbid,
 			 Oid relid, BlockNumber blkno, char *buffer);
 extern int	smgrnblocks(int16 which, Relation reln);
 extern int	smgrtruncate(int16 which, Relation reln, int nblocks);
@@ -59,8 +55,7 @@ extern int	mdclose(Relation reln);
 extern int	mdread(Relation reln, BlockNumber blocknum, char *buffer);
 extern int	mdwrite(Relation reln, BlockNumber blocknum, char *buffer);
 extern int	mdflush(Relation reln, BlockNumber blocknum, char *buffer);
-extern int
-mdblindwrt(char *dbstr, char *relstr, Oid dbid, Oid relid,
+extern int mdblindwrt(char *dbstr, char *relstr, Oid dbid, Oid relid,
 		   BlockNumber blkno, char *buffer);
 extern int	mdnblocks(Relation reln);
 extern int	mdtruncate(Relation reln, int nblocks);
@@ -80,8 +75,7 @@ extern int	mmclose(Relation reln);
 extern int	mmread(Relation reln, BlockNumber blocknum, char *buffer);
 extern int	mmwrite(Relation reln, BlockNumber blocknum, char *buffer);
 extern int	mmflush(Relation reln, BlockNumber blocknum, char *buffer);
-extern int
-mmblindwrt(char *dbstr, char *relstr, Oid dbid, Oid relid,
+extern int mmblindwrt(char *dbstr, char *relstr, Oid dbid, Oid relid,
 		   BlockNumber blkno, char *buffer);
 extern int	mmnblocks(Relation reln);
 extern int	mmcommit(void);

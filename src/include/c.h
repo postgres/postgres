@@ -7,7 +7,7 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: c.h,v 1.27 1997/11/10 05:10:34 momjian Exp $
+ * $Id: c.h,v 1.28 1998/01/24 22:47:43 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -732,8 +732,7 @@ extern Exception BadArg;
 extern Exception BadState;
 
 /* in utils/error/assert.c */
-extern int
-ExceptionalCondition(char *conditionName,
+extern int ExceptionalCondition(char *conditionName,
 					 Exception *exceptionP, char *details,
 					 char *fileName, int lineNumber);
 
