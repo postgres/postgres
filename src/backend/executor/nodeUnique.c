@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *    $Header: /cvsroot/pgsql/src/backend/executor/nodeUnique.c,v 1.1.1.1 1996/07/09 06:21:27 scrappy Exp $
+ *    $Header: /cvsroot/pgsql/src/backend/executor/nodeUnique.c,v 1.2 1996/07/19 06:27:59 scrappy Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -124,7 +124,7 @@ ExecUnique(Unique *node)
 
     if (uniqueAttr) {
       tupDesc = ExecGetResultType(uniquestate);
-      typoutput = typtoout((Oid)tupDesc->attrs[uniqueAttrNum]->atttypid);
+      typoutput = typtoout((Oid)tupDesc->attrs[uniqueAttrNum-1]->atttypid);
     }
       
     /* ----------------
@@ -174,8 +174,8 @@ ExecUnique(Unique *node)
 	  if (isNull1 == isNull2) {
 	    if (isNull1) /* both are null, they are equal */
 	      continue;
-	    val1 = fmgr(typoutput, attr1, gettypelem(tupDesc->attrs[uniqueAttrNum]->atttypid));
-	    val2 = fmgr(typoutput, attr2, gettypelem(tupDesc->attrs[uniqueAttrNum]->atttypid));
+	    val1 = fmgr(typoutput, attr1, gettypelem(tupDesc->attrs[uniqueAttrNum-1]->atttypid));
+	    val2 = fmgr(typoutput, attr2, gettypelem(tupDesc->attrs[uniqueAttrNum-1]->atttypid));
 	    /* now, val1 and val2 are ascii representations so we can
 	       use strcmp for comparison */
 	    if (strcmp(val1,val2) == 0) /* they are equal */
