@@ -1,4 +1,4 @@
-<!-- $Header: /cvsroot/pgsql/doc/src/sgml/wal.sgml,v 1.15 2002/02/11 23:25:14 momjian Exp $ -->
+<!-- $Header: /cvsroot/pgsql/doc/src/sgml/wal.sgml,v 1.16 2002/07/05 19:06:11 momjian Exp $ -->
 
 <chapter id="wal">
  <title>Write-Ahead Logging (<acronym>WAL</acronym>)</title>
@@ -80,8 +80,7 @@
    <title>Future Benefits</title>
 
    <para>
-    In this first release of <acronym>WAL</acronym>, UNDO operation is
-    not implemented, because of lack of time. This means that changes
+    UNDO operation is not implemented. This means that changes
     made by aborted transactions will still occupy disk space and that
     we still need a permanent <filename>pg_clog</filename> file to hold
     the status of transactions, since we are not able to re-use
