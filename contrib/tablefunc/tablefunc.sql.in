@@ -52,6 +52,11 @@ RETURNS setof record
 AS 'MODULE_PATHNAME','crosstab'
 LANGUAGE 'C' STABLE STRICT;
 
+CREATE OR REPLACE FUNCTION crosstab(text,text)
+RETURNS setof record
+AS 'MODULE_PATHNAME','crosstab_hash'
+LANGUAGE 'C' STABLE STRICT;
+
 CREATE OR REPLACE FUNCTION connectby(text,text,text,text,int,text)
 RETURNS setof record
 AS 'MODULE_PATHNAME','connectby_text'

@@ -123,6 +123,79 @@ SELECT * FROM crosstab('SELECT rowid, attribute, val FROM ct where rowclass = ''
  test2 | val5 | val6 | val7 | val8
 (2 rows)
 
+--
+-- hash based crosstab
+--
+create table cth(id serial, rowid text, rowdt timestamp, attribute text, val text);
+NOTICE:  CREATE TABLE will create implicit sequence 'cth_id_seq' for SERIAL column 'cth.id'
+insert into cth values(DEFAULT,'test1','01 March 2003','temperature','42');
+insert into cth values(DEFAULT,'test1','01 March 2003','test_result','PASS');
+-- the next line is intentionally left commented and is therefore a "missing" attribute
+-- insert into cth values(DEFAULT,'test1','01 March 2003','test_startdate','28 February 2003');
+insert into cth values(DEFAULT,'test1','01 March 2003','volts','2.6987');
+insert into cth values(DEFAULT,'test2','02 March 2003','temperature','53');
+insert into cth values(DEFAULT,'test2','02 March 2003','test_result','FAIL');
+insert into cth values(DEFAULT,'test2','02 March 2003','test_startdate','01 March 2003');
+insert into cth values(DEFAULT,'test2','02 March 2003','volts','3.1234');
+-- return attributes as plain text
+SELECT * FROM crosstab(
+  'SELECT rowid, rowdt, attribute, val FROM cth ORDER BY 1',
+  'SELECT DISTINCT attribute FROM cth ORDER BY 1')
+AS c(rowid text, rowdt timestamp, temperature text, test_result text, test_startdate text, volts text);
+ rowid |          rowdt           | temperature | test_result | test_startdate | volts  
+-------+--------------------------+-------------+-------------+----------------+--------
+ test1 | Sat Mar 01 00:00:00 2003 | 42          | PASS        |                | 2.6987
+ test2 | Sun Mar 02 00:00:00 2003 | 53          | FAIL        | 01 March 2003  | 3.1234
+(2 rows)
+
+-- this time without rowdt
+SELECT * FROM crosstab(
+  'SELECT rowid, attribute, val FROM cth ORDER BY 1',
+  'SELECT DISTINCT attribute FROM cth ORDER BY 1')
+AS c(rowid text, temperature text, test_result text, test_startdate text, volts text);
+ rowid | temperature | test_result | test_startdate | volts  
+-------+-------------+-------------+----------------+--------
+ test1 | 42          | PASS        |                | 2.6987
+ test2 | 53          | FAIL        | 01 March 2003  | 3.1234
+(2 rows)
+
+-- convert attributes to specific datatypes
+SELECT * FROM crosstab(
+  'SELECT rowid, rowdt, attribute, val FROM cth ORDER BY 1',
+  'SELECT DISTINCT attribute FROM cth ORDER BY 1')
+AS c(rowid text, rowdt timestamp, temperature int4, test_result text, test_startdate timestamp, volts float8);
+ rowid |          rowdt           | temperature | test_result |      test_startdate      | volts  
+-------+--------------------------+-------------+-------------+--------------------------+--------
+ test1 | Sat Mar 01 00:00:00 2003 |          42 | PASS        |                          | 2.6987
+ test2 | Sun Mar 02 00:00:00 2003 |          53 | FAIL        | Sat Mar 01 00:00:00 2003 | 3.1234
+(2 rows)
+
+-- source query and category query out of sync
+SELECT * FROM crosstab(
+  'SELECT rowid, rowdt, attribute, val FROM cth ORDER BY 1',
+  'SELECT DISTINCT attribute FROM cth WHERE attribute IN (''temperature'',''test_result'',''test_startdate'') ORDER BY 1')
+AS c(rowid text, rowdt timestamp, temperature int4, test_result text, test_startdate timestamp);
+ rowid |          rowdt           | temperature | test_result |      test_startdate      
+-------+--------------------------+-------------+-------------+--------------------------
+ test1 | Sat Mar 01 00:00:00 2003 |          42 | PASS        | 
+ test2 | Sun Mar 02 00:00:00 2003 |          53 | FAIL        | Sat Mar 01 00:00:00 2003
+(2 rows)
+
+-- if category query generates no rows, get expected error
+SELECT * FROM crosstab(
+  'SELECT rowid, rowdt, attribute, val FROM cth ORDER BY 1',
+  'SELECT DISTINCT attribute FROM cth WHERE attribute = ''a'' ORDER BY 1')
+AS c(rowid text, rowdt timestamp, temperature int4, test_result text, test_startdate timestamp, volts float8);
+ERROR:  load_categories_hash: provided categories SQL must return 1 column of at least one row
+-- if category query generates more than one column, get expected error
+SELECT * FROM crosstab(
+  'SELECT rowid, rowdt, attribute, val FROM cth ORDER BY 1',
+  'SELECT DISTINCT rowdt, attribute FROM cth ORDER BY 2')
+AS c(rowid text, rowdt timestamp, temperature int4, test_result text, test_startdate timestamp, volts float8);
+ERROR:  load_categories_hash: provided categories SQL must return 1 column of at least one row
+--
+-- connectby
+--
 -- test connectby with text based hierarchy
 CREATE TABLE connectby_text(keyid text, parent_keyid text);
 \copy connectby_text from 'data/connectby_text.data'

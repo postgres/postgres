@@ -333,6 +333,125 @@ AS ct(row_name text, category_1 text, category_2 text, category_3 text);
 ==================================================================
 Name
 
+crosstab(text, text) - returns a set of row_name, extra, and
+                      category value columns
+
+Synopsis
+
+crosstab(text source_sql, text category_sql)
+
+Inputs
+
+  source_sql
+
+    A SQL statement which produces the source set of data. The SQL statement
+    must return one row_name column, one category column, and one value
+    column. It may also have one or more "extra" columns.
+
+    The row_name column must be first. The category and value columns
+    must be the last two columns, in that order. "extra" columns must be
+    columns 2 through (N - 2), where N is the total number of columns.
+
+    The "extra" columns are assumed to be the same for all rows with the
+    same row_name. The values returned are copied from the first row
+    with a given row_name and subsequent values of these columns are ignored
+    until row_name changes.
+
+    e.g. source_sql must produce a set something like:
+         SELECT row_name, extra_col, cat, value FROM foo;
+
+             row_name    extra_col   cat    value
+            ----------+------------+-----+---------
+              row1         extra1    cat1    val1
+              row1         extra1    cat2    val2
+              row1         extra1    cat4    val4
+              row2         extra2    cat1    val5
+              row2         extra2    cat2    val6
+              row2         extra2    cat3    val7
+              row2         extra2    cat4    val8
+
+  category_sql
+
+    A SQL statement which produces the distinct set of categories. The SQL
+    statement must return one category column only. category_sql must produce
+    at least one result row or an error will be generated. category_sql
+    must not produce duplicate categories or an error will be generated.
+
+    e.g. SELECT DISTINCT cat FROM foo;
+
+              cat
+            -------
+              cat1
+              cat2
+              cat3
+              cat4
+
+Outputs
+
+  Returns setof record, which must be defined with a column definition
+  in the FROM clause of the SELECT statement, e.g.:
+
+    SELECT * FROM crosstab(source_sql, cat_sql)
+    AS ct(row_name text, extra text, cat1 text, cat2 text, cat3 text, cat4 text);
+
+    the example crosstab function produces a set something like:
+                      <== values  columns ==>
+           row_name   extra   cat1   cat2   cat3   cat4
+           ---------+-------+------+------+------+------
+             row1     extra1  val1   val2          val4
+             row2     extra2  val5   val6   val7   val8
+
+Notes
+
+  1. source_sql must be ordered by row_name (column 1).
+
+  2. The number of values columns is determined at run-time. The 
+     column definition provided in the FROM clause must provide for
+     the correct number of columns of the proper data types.
+
+  3. Missing values (i.e. not enough adjacent rows of same row_name to
+     fill the number of result values columns) are filled in with nulls.
+
+  4. Extra values (i.e. source rows with category not found in category_sql
+     result) are skipped.
+
+  5. Rows with a null row_name column are skipped.
+
+
+Example usage
+
+create table cth(id serial, rowid text, rowdt timestamp, attribute text, val text);
+insert into cth values(DEFAULT,'test1','01 March 2003','temperature','42');
+insert into cth values(DEFAULT,'test1','01 March 2003','test_result','PASS');
+insert into cth values(DEFAULT,'test1','01 March 2003','volts','2.6987');
+insert into cth values(DEFAULT,'test2','02 March 2003','temperature','53');
+insert into cth values(DEFAULT,'test2','02 March 2003','test_result','FAIL');
+insert into cth values(DEFAULT,'test2','02 March 2003','test_startdate','01 March 2003');
+insert into cth values(DEFAULT,'test2','02 March 2003','volts','3.1234');
+
+SELECT * FROM crosstab
+(
+  'SELECT rowid, rowdt, attribute, val FROM cth ORDER BY 1',
+  'SELECT DISTINCT attribute FROM cth ORDER BY 1'
+)
+AS
+(
+       rowid text,
+       rowdt timestamp,
+       temperature int4,
+       test_result text,
+       test_startdate timestamp,
+       volts float8
+);
+ rowid |          rowdt           | temperature | test_result |      test_startdate      | volts  
+-------+--------------------------+-------------+-------------+--------------------------+--------
+ test1 | Sat Mar 01 00:00:00 2003 |          42 | PASS        |                          | 2.6987
+ test2 | Sun Mar 02 00:00:00 2003 |          53 | FAIL        | Sat Mar 01 00:00:00 2003 | 3.1234
+(2 rows)
+
+==================================================================
+Name
+
 connectby(text, text, text, text, int[, text]) - returns a set
     representing a hierarchy (tree structure)
 

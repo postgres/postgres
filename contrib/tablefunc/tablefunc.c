@@ -39,6 +39,11 @@
 
 #include "tablefunc.h"
 
+static int load_categories_hash(char *cats_sql, MemoryContext per_query_ctx);
+static Tuplestorestate *get_crosstab_tuplestore(char *sql,
+												int num_categories,
+												TupleDesc tupdesc,
+												MemoryContext per_query_ctx);
 static void validateConnectbyTupleDesc(TupleDesc tupdesc, bool show_branch);
 static bool compatCrosstabTupleDescs(TupleDesc tupdesc1, TupleDesc tupdesc2);
 static bool compatConnectbyTupleDescs(TupleDesc tupdesc1, TupleDesc tupdesc2);
@@ -94,6 +99,67 @@ typedef struct
 
 /* sign, 10 digits, '\0' */
 #define INT32_STRLEN	12
+
+/* hash table support */
+static HTAB *crosstab_HashTable;
+
+/* The information we cache about loaded procedures */
+typedef struct crosstab_cat_desc
+{
+	char	   *catname;
+	int			attidx;	/* zero based */
+}	crosstab_cat_desc;
+
+#define MAX_CATNAME_LEN			NAMEDATALEN
+#define INIT_CATS				64
+
+#define crosstab_HashTableLookup(CATNAME, CATDESC) \
+do { \
+	crosstab_HashEnt *hentry; char key[MAX_CATNAME_LEN]; \
+	\
+	MemSet(key, 0, MAX_CATNAME_LEN); \
+	snprintf(key, MAX_CATNAME_LEN - 1, "%s", CATNAME); \
+	hentry = (crosstab_HashEnt*) hash_search(crosstab_HashTable, \
+										 key, HASH_FIND, NULL); \
+	if (hentry) \
+		CATDESC = hentry->catdesc; \
+	else \
+		CATDESC = NULL; \
+} while(0)
+
+#define crosstab_HashTableInsert(CATDESC) \
+do { \
+	crosstab_HashEnt *hentry; bool found; char key[MAX_CATNAME_LEN]; \
+	\
+	MemSet(key, 0, MAX_CATNAME_LEN); \
+	snprintf(key, MAX_CATNAME_LEN - 1, "%s", CATDESC->catname); \
+	hentry = (crosstab_HashEnt*) hash_search(crosstab_HashTable, \
+										 key, HASH_ENTER, &found); \
+	if (hentry == NULL) \
+		elog(ERROR, "out of memory in crosstab_HashTable"); \
+	if (found) \
+		elog(ERROR, "trying to use a category name more than once"); \
+	hentry->catdesc = CATDESC; \
+} while(0)
+
+#define crosstab_HashTableDelete(CATNAME) \
+do { \
+	crosstab_HashEnt *hentry; char key[MAX_CATNAME_LEN]; \
+	\
+	MemSet(key, 0, MAX_CATNAME_LEN); \
+	snprintf(key, MAX_CATNAME_LEN - 1, "%s", CATNAME); \
+	hentry = (crosstab_HashEnt*) hash_search(crosstab_HashTable, \
+										 key, HASH_REMOVE, NULL); \
+	if (hentry == NULL) \
+		elog(WARNING, "trying to delete function name that does not exist."); \
+} while(0)
+
+/* hash table */
+typedef struct crosstab_hashent
+{
+	char				internal_catname[MAX_CATNAME_LEN];
+	crosstab_cat_desc  *catdesc;
+} crosstab_HashEnt;
 
 /*
  * normal_rand - return requested number of random values
@@ -593,6 +659,341 @@ crosstab(PG_FUNCTION_ARGS)
 }
 
 /*
+ * crosstab_hash - reimplement crosstab as materialized function and 
+ * properly deal with missing values (i.e. don't pack remaining
+ * values to the left)
+ * 
+ * crosstab - create a crosstab of rowids and values columns from a
+ * SQL statement returning one rowid column, one category column,
+ * and one value column.
+ *
+ * e.g. given sql which produces:
+ *
+ *			rowid	cat		value
+ *			------+-------+-------
+ *			row1	cat1	val1
+ *			row1	cat2	val2
+ *			row1	cat4	val4
+ *			row2	cat1	val5
+ *			row2	cat2	val6
+ *			row2	cat3	val7
+ *			row2	cat4	val8
+ *
+ * crosstab returns:
+ *					<===== values columns =====>
+ *			rowid	cat1	cat2	cat3	cat4
+ *			------+-------+-------+-------+-------
+ *			row1	val1	val2	null	val4
+ *			row2	val5	val6	val7	val8
+ *
+ * NOTES:
+ * 1. SQL result must be ordered by 1.
+ * 2. The number of values columns depends on the tuple description
+ *	  of the function's declared return type.
+ * 2. Missing values (i.e. missing category) are filled in with nulls.
+ * 3. Extra values (i.e. not in category results) are skipped.
+ */
+PG_FUNCTION_INFO_V1(crosstab_hash);
+Datum
+crosstab_hash(PG_FUNCTION_ARGS)
+{
+	char			   *sql = GET_STR(PG_GETARG_TEXT_P(0));
+	char			   *cats_sql = GET_STR(PG_GETARG_TEXT_P(1));
+	ReturnSetInfo	   *rsinfo = (ReturnSetInfo *) fcinfo->resultinfo;
+	TupleDesc			tupdesc;
+	MemoryContext		per_query_ctx;
+	MemoryContext		oldcontext;
+	int					num_categories;
+
+	/* check to see if caller supports us returning a tuplestore */
+	if (!rsinfo || !(rsinfo->allowedModes & SFRM_Materialize))
+		elog(ERROR, "crosstab: materialize mode required, but it is not "
+			 "allowed in this context");
+
+	per_query_ctx = rsinfo->econtext->ecxt_per_query_memory;
+	oldcontext = MemoryContextSwitchTo(per_query_ctx);
+
+	/* get the requested return tuple description */
+	tupdesc = CreateTupleDescCopy(rsinfo->expectedDesc);
+
+	/*
+	 * Check to make sure we have a reasonable tuple descriptor
+	 *
+	 * Note we will attempt to coerce the values into whatever
+	 * the return attribute type is and depend on the "in"
+	 * function to complain if needed.
+	 */
+	if (tupdesc->natts < 2)
+		elog(ERROR, "crosstab: query-specified return tuple and " \
+					"crosstab function are not compatible");
+
+	/* load up the categories hash table */
+	num_categories = load_categories_hash(cats_sql, per_query_ctx);
+
+	/* let the caller know we're sending back a tuplestore */
+	rsinfo->returnMode = SFRM_Materialize;
+
+	/* now go build it */
+	rsinfo->setResult = get_crosstab_tuplestore(sql,
+												num_categories,
+												tupdesc,
+												per_query_ctx);
+
+	/*
+	 * SFRM_Materialize mode expects us to return a NULL Datum. The actual
+	 * tuples are in our tuplestore and passed back through
+	 * rsinfo->setResult. rsinfo->setDesc is set to the tuple description
+	 * that we actually used to build our tuples with, so the caller can
+	 * verify we did what it was expecting.
+	 */
+	rsinfo->setDesc = tupdesc;
+	MemoryContextSwitchTo(oldcontext);
+
+	return (Datum) 0;
+}
+
+/*
+ * load up the categories hash table
+ */
+static int
+load_categories_hash(char *cats_sql, MemoryContext per_query_ctx)
+{
+	HASHCTL			ctl;
+	int				ret;
+	int				proc;
+	MemoryContext	SPIcontext;
+	int				num_categories = 0;
+
+	/* initialize the category hash table */
+	ctl.keysize = MAX_CATNAME_LEN;
+	ctl.entrysize = sizeof(crosstab_HashEnt);
+
+	/*
+	 * use INIT_CATS, defined above as a guess of how
+	 * many hash table entries to create, initially
+	 */
+	crosstab_HashTable = hash_create("crosstab hash", INIT_CATS, &ctl, HASH_ELEM);
+
+	/* Connect to SPI manager */
+	if ((ret = SPI_connect()) < 0)
+		elog(ERROR, "load_categories_hash: SPI_connect returned %d", ret);
+
+	/* Retrieve the category name rows */
+	ret = SPI_exec(cats_sql, 0);
+	num_categories = proc = SPI_processed;
+
+	/* Check for qualifying tuples */
+	if ((ret == SPI_OK_SELECT) && (proc > 0))
+	{
+		SPITupleTable  *spi_tuptable = SPI_tuptable;
+		TupleDesc		spi_tupdesc = spi_tuptable->tupdesc;
+		int				i;
+
+		/*
+		 * The provided categories SQL query must always return one column:
+		 * category - the label or identifier for each column
+		 */
+		if (spi_tupdesc->natts != 1)
+			elog(ERROR, "load_categories_hash: provided categories SQL must " \
+						"return 1 column of at least one row");
+
+		for (i = 0; i < proc; i++)
+		{
+			crosstab_cat_desc  *catdesc;
+			char			   *catname;
+			HeapTuple			spi_tuple;
+
+			/* get the next sql result tuple */
+			spi_tuple = spi_tuptable->vals[i];
+
+			/* get the category from the current sql result tuple */
+			catname = SPI_getvalue(spi_tuple, spi_tupdesc, 1);
+
+			SPIcontext = MemoryContextSwitchTo(per_query_ctx);
+
+			catdesc = (crosstab_cat_desc *) palloc(sizeof(crosstab_cat_desc));
+			catdesc->catname = catname;
+			catdesc->attidx = i;
+
+			/* Add the proc description block to the hashtable */
+			crosstab_HashTableInsert(catdesc);
+
+			MemoryContextSwitchTo(SPIcontext);
+		}
+	}
+	else
+	{
+		/* no qualifying tuples */
+		SPI_finish();
+		elog(ERROR, "load_categories_hash: provided categories SQL must " \
+					"return 1 column of at least one row");
+	}
+
+	if (SPI_finish() != SPI_OK_FINISH)
+		elog(ERROR, "load_categories_hash: SPI_finish() failed");
+
+	return num_categories;
+}
+
+/*
+ * create and populate the crosstab tuplestore using the provided source query
+ */
+static Tuplestorestate *
+get_crosstab_tuplestore(char *sql,
+						int num_categories,
+						TupleDesc tupdesc,
+						MemoryContext per_query_ctx)
+{
+	Tuplestorestate	   *tupstore;
+	AttInMetadata	   *attinmeta = TupleDescGetAttInMetadata(tupdesc);
+	char			  **values;
+	HeapTuple			tuple;
+	int					ret;
+	int					proc;
+	MemoryContext		SPIcontext;
+
+	/* initialize our tuplestore */
+	tupstore = tuplestore_begin_heap(true, SortMem);
+
+	/* Connect to SPI manager */
+	if ((ret = SPI_connect()) < 0)
+		elog(ERROR, "get_crosstab_tuplestore: SPI_connect returned %d", ret);
+
+	/* Now retrieve the crosstab source rows */
+	ret = SPI_exec(sql, 0);
+	proc = SPI_processed;
+
+	/* Check for qualifying tuples */
+	if ((ret == SPI_OK_SELECT) && (proc > 0))
+	{
+		SPITupleTable  *spi_tuptable = SPI_tuptable;
+		TupleDesc		spi_tupdesc = spi_tuptable->tupdesc;
+		int				ncols = spi_tupdesc->natts;
+		char		   *rowid;
+		char		   *lastrowid = NULL;
+		int				i, j;
+		int				result_ncols;
+
+		/*
+		 * The provided SQL query must always return at least three columns:
+		 *
+		 * 1. rowname	the label for each row - column 1 in the final result
+		 * 2. category  the label for each value-column in the final result
+		 * 3. value		the values used to populate the value-columns
+		 * 
+		 * If there are more than three columns, the last two are taken as
+		 * "category" and "values". The first column is taken as "rowname".
+		 * Additional columns (2 thru N-2) are assumed the same for the same
+		 * "rowname", and are copied into the result tuple from the first
+		 * time we encounter a particular rowname.
+		 */
+		if (ncols < 3)
+			elog(ERROR, "get_crosstab_tuplestore: provided source SQL must " \
+						"return at least 3 columns; a rowid, a category, " \
+						"and a values column");
+
+		result_ncols = (ncols - 2) + num_categories;
+
+		/* Recheck to make sure we tuple descriptor still looks reasonable */
+		if (tupdesc->natts != result_ncols)
+			elog(ERROR, "get_crosstab_tuplestore: query-specified return " \
+						"tuple has %d columns but crosstab returns %d",
+						 tupdesc->natts, result_ncols);
+
+		/* allocate space */
+		values = (char **) palloc(result_ncols * sizeof(char *));
+
+		/* and make sure it's clear */
+		memset(values, '\0', result_ncols * sizeof(char *));
+
+		for (i = 0; i < proc; i++)
+		{
+			HeapTuple			spi_tuple;
+			crosstab_cat_desc  *catdesc;
+			char			   *catname;
+
+			/* get the next sql result tuple */
+			spi_tuple = spi_tuptable->vals[i];
+
+			/* get the rowid from the current sql result tuple */
+			rowid = SPI_getvalue(spi_tuple, spi_tupdesc, 1);
+
+			/* if rowid is null, skip this tuple entirely */
+			if (rowid == NULL)
+				continue;
+
+			/*
+			 * if we're on a new output row, grab the column values up to
+			 * column N-2 now
+			 */
+			if ((lastrowid == NULL) || (strcmp(rowid, lastrowid) != 0))
+			{
+				/*
+				 * a new row means we need to flush the old one first,
+				 * unless we're on the very first row
+				 */
+				if (lastrowid != NULL)
+				{
+					/* switch to appropriate context while storing the tuple */
+					SPIcontext = MemoryContextSwitchTo(per_query_ctx);
+
+					/* rowid changed, flush the previous output row */
+					tuple = BuildTupleFromCStrings(attinmeta, values);
+					tuplestore_puttuple(tupstore, tuple);
+					for (j = 0; j < result_ncols; j++)
+						xpfree(values[j]);
+
+					/* now reset the context */
+					MemoryContextSwitchTo(SPIcontext);
+				}
+
+				values[0] = rowid;
+				for (j = 1; j < ncols - 2; j++)
+					values[j] = SPI_getvalue(spi_tuple, spi_tupdesc, j + 1);
+			}
+
+			/* look up the category and fill in the appropriate column */
+			catname = SPI_getvalue(spi_tuple, spi_tupdesc, ncols - 1);
+
+			if (catname != NULL)
+			{
+				crosstab_HashTableLookup(catname, catdesc);
+
+				if (catdesc)
+					values[catdesc->attidx + ncols - 2] = 
+						SPI_getvalue(spi_tuple, spi_tupdesc, ncols);
+			}
+
+			xpfree(lastrowid);
+			lastrowid = pstrdup(rowid);
+		}
+
+		/* switch to appropriate context while storing the tuple */
+		SPIcontext = MemoryContextSwitchTo(per_query_ctx);
+
+		/* flush the last output row */
+		tuple = BuildTupleFromCStrings(attinmeta, values);
+		tuplestore_puttuple(tupstore, tuple);
+
+		/* now reset the context */
+		MemoryContextSwitchTo(SPIcontext);
+
+	}
+	else
+	{
+		/* no qualifying tuples */
+		SPI_finish();
+	}
+
+	if (SPI_finish() != SPI_OK_FINISH)
+		elog(ERROR, "get_crosstab_tuplestore: SPI_finish() failed");
+
+	tuplestore_donestoring(tupstore);
+
+	return tupstore;
+}
+
+/*
  * connectby_text - produce a result set from a hierarchical (parent/child)
  * table.
  *
@@ -668,7 +1069,7 @@ connectby_text(PG_FUNCTION_ARGS)
 	attinmeta = TupleDescGetAttInMetadata(tupdesc);
 
 	/* check to see if caller supports us returning a tuplestore */
-	if (!rsinfo->allowedModes & SFRM_Materialize)
+	if (!rsinfo || !(rsinfo->allowedModes & SFRM_Materialize))
 		elog(ERROR, "connectby requires Materialize mode, but it is not "
 			 "allowed in this context");
 
