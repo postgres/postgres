@@ -1,6 +1,6 @@
 .\" This is -*-nroff-*-
 .\" XXX standard disclaimer belongs here....
-.\" $Header: /cvsroot/pgsql/src/man/Attic/libpq.3,v 1.8 1997/10/22 02:08:38 momjian Exp $
+.\" $Header: /cvsroot/pgsql/src/man/Attic/libpq.3,v 1.9 1997/11/01 05:21:57 momjian Exp $
 .TH LIBPQ INTRO 03/12/94 PostgreSQL PostgreSQL
 .SH DESCRIPTION
 Libpq is the programmer's interface to Postgres.  Libpq is a set of
@@ -144,22 +144,6 @@ the IPC socket connection to the backend and attempt to reestablish a
 new connection to the same backend.
 .nf
 void PQreset(PGconn *conn)
-.fi
-.PP
-.B PQtrace
-.IP
-Enables tracing of messages passed between the frontend and the backend.
-The messages are echoed to the debug_port file stream.
-.nf
-void PQtrace(PGconn *conn, 
-             FILE* debug_port);
-.fi
-.PP
-.B PQuntrace
-.IP
-Disables tracing of messages passed between the frontend and the backend.
-.nf
-void PQuntrace(PGconn *conn);
 .fi
 .PP
 .SH "Query Execution Functions"
