@@ -11,6 +11,9 @@
 #if defined(__i386__)
 typedef unsigned char slock_t;
 
+#elif defined(__sparc__)
+typedef unsigned char slock_t;
+
 #elif defined(__powerpc__)
 typedef unsigned int slock_t;
 
