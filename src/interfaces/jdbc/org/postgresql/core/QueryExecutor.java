@@ -13,7 +13,7 @@ import org.postgresql.util.PSQLException;
  * <p>The lifetime of a QueryExecutor object is from sending the query
  * until the response has been received from the backend.
  *
- * $Id: QueryExecutor.java,v 1.8 2002/03/05 20:11:57 davec Exp $
+ * $Id: QueryExecutor.java,v 1.9 2002/03/16 02:15:23 davec Exp $
  */
 
 public class QueryExecutor
@@ -58,6 +58,8 @@ public class QueryExecutor
 		int fqp = 0;
 		boolean hfr = false;
 
+		StringBuffer errorMessage = null;
+
 		synchronized (pg_stream)
 		{
 
@@ -91,7 +93,19 @@ public class QueryExecutor
 						receiveTuple(false);
 						break;
 					case 'E':	// Error Message
-						throw new SQLException(pg_stream.ReceiveString(connection.getEncoding()));
+
+						// it's possible to get more than one error message for a query
+						// see libpq comments wrt backend closing a connection 
+						// so, append messages to a string buffer and keep processing
+						// check at the bottom to see if we need to throw an exception
+						
+						if ( errorMessage == null )
+							errorMessage = new StringBuffer();
+
+						errorMessage.append(pg_stream.ReceiveString(connection.getEncoding()));
+						// keep processing
+						break;
+
 					case 'I':	// Empty Query
 						int t = pg_stream.ReceiveChar();
 						if (t != 0)
@@ -117,6 +131,10 @@ public class QueryExecutor
 						throw new PSQLException("postgresql.con.type",
 												new Character((char) c));
 				}
+
+				// did we get an error during this query?
+				if ( errorMessage != null )
+					throw new SQLException( errorMessage.toString() );
 			}
 			return connection.getResultSet(connection, statement, fields, tuples, status, update_count, insert_oid, binaryCursor);
 		}

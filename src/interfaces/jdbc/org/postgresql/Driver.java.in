@@ -27,11 +27,13 @@ import org.postgresql.util.PSQLException;
 public class Driver implements java.sql.Driver
 {
 
-	protected static final int DEBUG = 0;
-	protected static final int INFO = 1;
-	protected static final int WARN = 2;
-	protected static final int ERROR = 3;
-	protected static final int FATAL = 4;
+	// make these public so they can be used in setLogLevel below
+
+	public static final int DEBUG = 0;
+	public static final int INFO = 1;
+	public static final int WARN = 2;
+	public static final int ERROR = 3;
+	public static final int FATAL = 4;
 
 	private static int logLevel = FATAL;
 
@@ -438,6 +440,18 @@ public class Driver implements java.sql.Driver
 	public static SQLException notImplemented()
 	{
 		return new PSQLException("postgresql.unimplemented");
+	}
+
+	/**
+	*	used to turn logging on to a certain level, can be called 
+	*	by specifying fully qualified class ie org.postgresql.Driver.setLogLevel()
+	*	@param int logLevel sets the level which logging will respond to
+	* 	FATAL being almost no messages
+	*	DEBUG most verbose
+	*/
+	public static void setLogLevel(int logLevel)
+	{
+		Driver.logLevel = logLevel;
 	}
 	/*
 	 * logging message at the debug level
