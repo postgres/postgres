@@ -13,7 +13,7 @@
     <P>Last updated: Sat Jan 29 23:25:05 EST 2005</P>
 
     <P>Current maintainer: Bruce Momjian (<A href=
-    "mailto:pgman@candle.pha.pa.us">pgman@candle.pha.pa.us</A>)<BR>
+    "mailto:pgman@candle.pha.pa.us">pgman@candle.pha.pa.us</A>)
     </P>
 
     <P>The most recent version of this document can be viewed at <A href=
@@ -620,16 +620,17 @@
 
     <P>If <I>postmaster</I> is running, start <I>psql</I> in one
     window, then find the <SMALL>PID</SMALL> of the <I>postgres</I>
-    process used by <I>psql</I> using <pre>SELECT pg_backend_pid()</pre>.
+    process used by <I>psql</I> using <CODE>SELECT pg_backend_pid()</CODE>.
     Use a debugger to attach to the <I>postgres</I> <SMALL>PID</SMALL>.
     You can set breakpoints in the debugger and issue queries from
+
     <I>psql</I>. If you are debugging <I>postgres</I> startup, you can
     set PGOPTIONS="-W n", then start <I>psql</I>. This will cause startup
     to delay for <I>n</I> seconds so you can attach to the process with
     the debugger, set any breakpoints, and continue through the startup
     sequence.</P>
 
-    <P>There are several <pre>log_*</pre> server configuration variables
+    <P>There are several <CODE>log_*</CODE> server configuration variables
     that enable printing of process statistics which can be very useful
     for debugging and performance measurements.</P>
 
@@ -897,8 +898,8 @@
     <LI>The default <I>C</I> locale must be used during
     <i>initdb</i> because it is not possible to know the next-greater
     character in a non-C locale.  You can create a special
-    <PRE>text_pattern_ops</PRE> index for such cases that work only
-    for <PRE>LIKE</PRE> indexing.
+    <CODE>text_pattern_ops</CODE> index for such cases that work only
+    for <SMALL>LIKE</SMALL> indexing.
     </LI>
     </UL>
 
@@ -1064,8 +1065,8 @@ BYTEA           bytea           variable-length byte array (null-byte safe)
     internal system tables together.</P>
 
     <P>To uniquely number columns in user tables, it is best to use
-    <SMALL>SERIAL</> rather than O<SMALL>ID</SMALL>s because
-    <SMALL>SERIAL<SMALL> sequences are unique only within a single
+    <SMALL>SERIAL</SMALL> rather than O<SMALL>ID</SMALL>s because
+    <SMALL>SERIAL</SMALL> sequences are unique only within a single
     table. and are therefore less likely to overflow.
     <SMALL>SERIAL8</SMALL> is available for storing eight-byte sequence
     values.</P>
@@ -1149,8 +1150,7 @@ BYTEA           bytea           variable-length byte array (null-byte safe)
 
     <P>Use <I>CURRENT_TIMESTAMP</I>:</P>
 <PRE>
-<CODE>CREATE TABLE test (x int, modtime timestamp DEFAULT CURRENT_TIMESTAMP );
-</CODE>
+    CREATE TABLE test (x int, modtime timestamp DEFAULT CURRENT_TIMESTAMP );
 </PRE>
 
     <H4><A name="4.18">4.18</A>) How do I perform an outer join?</H4>
