@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/parser/parse_func.c,v 1.38 1999/02/13 23:17:08 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/parser/parse_func.c,v 1.39 1999/02/23 07:51:53 thomas Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -828,65 +828,66 @@ func_select_candidate(int nargs,
 		}
 	}
 
+	if (ncandidates == 1)
+		return candidates->args;
+
 /*
  * Still too many candidates?
  * Try assigning types for the unknown columns.
  */
-	if (ncandidates > 1)
+	for (i = 0; i < nargs; i++)
 	{
-		for (i = 0; i < nargs; i++)
+		if (input_typeids[i] == UNKNOWNOID)
 		{
-			if (input_typeids[i] == UNKNOWNOID)
+			slot_category = INVALID_TYPE;
+			slot_type = InvalidOid;
+			for (current_candidate = candidates;
+				 current_candidate != NULL;
+				 current_candidate = current_candidate->next)
 			{
-				slot_category = INVALID_TYPE;
-				slot_type = InvalidOid;
-				for (current_candidate = candidates;
-					 current_candidate != NULL;
-					 current_candidate = current_candidate->next)
-				{
-					current_typeids = current_candidate->args;
-					current_type = current_typeids[i];
-					current_category = TypeCategory(current_typeids[i]);
+				current_typeids = current_candidate->args;
+				current_type = current_typeids[i];
+				current_category = TypeCategory(current_typeids[i]);
 
-					if (slot_category == InvalidOid)
-					{
-						slot_category = current_category;
-						slot_type = current_type;
-					}
-					else if ((current_category != slot_category)
-							 && IS_BUILTIN_TYPE(current_type))
-					{
-						return NULL;
-					}
-					else if (current_type != slot_type)
-					{
-						if (IsPreferredType(slot_category, current_type))
-						{
-							slot_type = current_type;
-							candidates = current_candidate;
-						}
-						else
-						{
-						}
-					}
+				if (slot_category == InvalidOid)
+				{
+					slot_category = current_category;
+					slot_type = current_type;
 				}
-
-				if (slot_type != InvalidOid)
+				else if ((current_category != slot_category)
+						 && IS_BUILTIN_TYPE(current_type))
 				{
-					input_typeids[i] = slot_type;
+					return NULL;
+				}
+				else if (current_type != slot_type)
+				{
+					if (IsPreferredType(slot_category, current_type))
+					{
+						slot_type = current_type;
+						candidates = current_candidate;
+					}
+					else if (IsPreferredType(slot_category, slot_type))
+					{
+						 candidates->next = current_candidate->next;
+					}
 				}
 			}
-			else
+
+			if (slot_type != InvalidOid)
 			{
+				input_typeids[i] = slot_type;
 			}
 		}
-
-		ncandidates = 0;
-		for (current_candidate = candidates;
-			 current_candidate != NULL;
-			 current_candidate = current_candidate->next)
-			ncandidates++;
+		else
+		{
+		}
 	}
+
+	ncandidates = 0;
+	for (current_candidate = candidates;
+		 current_candidate != NULL;
+		 current_candidate = current_candidate->next)
+		ncandidates++;
 
 	if (ncandidates == 1)
 		return candidates->args;
@@ -964,7 +965,7 @@ func_get_detail(char *funcname,
 					ftup = SearchSysCacheTuple(PRONAME,
 											   PointerGetDatum(funcname),
 											   Int32GetDatum(nargs),
-										  PointerGetDatum(*true_typeids),
+											   PointerGetDatum(*true_typeids),
 											   0);
 					Assert(HeapTupleIsValid(ftup));
 				}
@@ -976,8 +977,8 @@ func_get_detail(char *funcname,
 				else if (ncandidates > 1)
 				{
 					*true_typeids = func_select_candidate(nargs,
-												   current_input_typeids,
-											   current_function_typeids);
+														  current_input_typeids,
+														  current_function_typeids);
 
 					/* couldn't decide, so quit */
 					if (*true_typeids == NULL)
@@ -991,9 +992,9 @@ func_get_detail(char *funcname,
 					else
 					{
 						ftup = SearchSysCacheTuple(PRONAME,
-											   PointerGetDatum(funcname),
+												   PointerGetDatum(funcname),
 												   Int32GetDatum(nargs),
-										  PointerGetDatum(*true_typeids),
+												   PointerGetDatum(*true_typeids),
 												   0);
 						Assert(HeapTupleIsValid(ftup));
 					}
@@ -1012,7 +1013,7 @@ func_get_detail(char *funcname,
 		{
 			tp = typeidType(oid_array[0]);
 			if (typeTypeFlag(tp) == 'c')
-				elog(ERROR, "func_get_detail: No such attribute or function '%s'", funcname);
+				elog(ERROR, "No such attribute or function '%s'", funcname);
 		}
 	}
 	else
