@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/interfaces/libpq/fe-auth.c,v 1.24 1998/09/01 04:40:01 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/interfaces/libpq/fe-auth.c,v 1.25 1999/01/22 13:28:50 scrappy Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -92,7 +92,7 @@ static struct authsvc authsvcs[] = {
 	{"password", STARTUP_PASSWORD_MSG, 0}
 };
 
-static n_authsvcs = sizeof(authsvcs) / sizeof(struct authsvc);
+static int n_authsvcs = sizeof(authsvcs) / sizeof(struct authsvc);
 
 #ifdef KRB4
 /*----------------------------------------------------------------
@@ -550,7 +550,7 @@ fe_sendauth(AuthRequest areq, PGconn *conn, const char *hostname,
  * Set/return the authentication service currently selected for use by the
  * frontend. (You can only use one in the frontend, obviously.)
  */
-static pg_authsvc = -1;
+static int pg_authsvc = -1;
 
 void
 fe_setauthsvc(const char *name, char *PQerrormsg)
