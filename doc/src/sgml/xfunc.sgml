@@ -1,5 +1,5 @@
 <!--
-$PostgreSQL: pgsql/doc/src/sgml/xfunc.sgml,v 1.96 2005/01/14 21:46:09 jurka Exp $
+$PostgreSQL: pgsql/doc/src/sgml/xfunc.sgml,v 1.97 2005/01/22 22:06:27 momjian Exp $
 -->
 
  <sect1 id="xfunc">
@@ -1482,8 +1482,8 @@ makepoint(Point *pointx, Point *pointy)
 {
     Point     *new_point = (Point *) palloc(sizeof(Point));
 
-    new_point->x = pointx->x;
-    new_point->y = pointy->y;
+    new_point-&gt;x = pointx-&gt;x;
+    new_point-&gt;y = pointy-&gt;y;
        
     return new_point;
 }
@@ -1665,8 +1665,8 @@ makepoint(PG_FUNCTION_ARGS)
     Point     *pointy = PG_GETARG_POINT_P(1);
     Point     *new_point = (Point *) palloc(sizeof(Point));
 
-    new_point->x = pointx->x;
-    new_point->y = pointy->y;
+    new_point-&gt;x = pointx-&gt;x;
+    new_point-&gt;y = pointy-&gt;y;
        
     PG_RETURN_POINT_P(new_point);
 }
@@ -2447,7 +2447,7 @@ my_set_returning_function(PG_FUNCTION_ARGS)
     if (SRF_IS_FIRSTCALL())
     {
         funcctx = SRF_FIRSTCALL_INIT();
-        oldcontext = MemoryContextSwitchTo(funcctx->multi_call_memory_ctx);
+        oldcontext = MemoryContextSwitchTo(funcctx-&gt;multi_call_memory_ctx);
         /* One-time setup code appears here: */
         <replaceable>user code</replaceable>
         <replaceable>if returning composite</replaceable>
@@ -2503,7 +2503,7 @@ testpassbyval(PG_FUNCTION_ARGS)
         funcctx = SRF_FIRSTCALL_INIT();
 
         /* switch to memory context appropriate for multiple function calls */
-        oldcontext = MemoryContextSwitchTo(funcctx->multi_call_memory_ctx);
+        oldcontext = MemoryContextSwitchTo(funcctx-&gt;multi_call_memory_ctx);
 
         /* total number of tuples to be returned */
         funcctx-&gt;max_calls = PG_GETARG_UINT32(0);

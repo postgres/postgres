@@ -1,5 +1,5 @@
 <!--
-$PostgreSQL: pgsql/doc/src/sgml/trigger.sgml,v 1.39 2004/12/30 03:13:56 tgl Exp $
+$PostgreSQL: pgsql/doc/src/sgml/trigger.sgml,v 1.40 2005/01/22 22:06:27 momjian Exp $
 -->
 
  <chapter id="triggers">
@@ -271,10 +271,10 @@ CALLED_AS_TRIGGER(fcinfo)
 </programlisting>
     which expands to
 <programlisting>
-((fcinfo)->context != NULL && IsA((fcinfo)->context, TriggerData))
+((fcinfo)-&gt;context != NULL && IsA((fcinfo)-&gt;context, TriggerData))
 </programlisting>
     If this returns true, then it is safe to cast
-    <literal>fcinfo->context</> to type <literal>TriggerData
+    <literal>fcinfo-&gt;context</> to type <literal>TriggerData
     *</literal> and make use of the pointed-to
     <structname>TriggerData</> structure.  The function must
     <emphasis>not</emphasis> alter the <structname>TriggerData</>
@@ -393,8 +393,8 @@ typedef struct TriggerData
         A pointer to a structure describing the relation that the trigger fired for.
         Look at <filename>utils/rel.h</> for details about
         this structure.  The most interesting things are
-        <literal>tg_relation->rd_att</> (descriptor of the relation
-        tuples) and <literal>tg_relation->rd_rel->relname</>
+        <literal>tg_relation-&gt;rd_att</> (descriptor of the relation
+        tuples) and <literal>tg_relation-&gt;rd_rel-&gt;relname</>
         (relation name; the type is not <type>char*</> but
         <type>NameData</>; use
         <literal>SPI_getrelname(tg_relation)</> to get a <type>char*</> if you
@@ -541,7 +541,7 @@ PG_FUNCTION_INFO_V1(trigf);
 Datum
 trigf(PG_FUNCTION_ARGS)
 {
-    TriggerData *trigdata = (TriggerData *) fcinfo->context;
+    TriggerData *trigdata = (TriggerData *) fcinfo-&gt;context;
     TupleDesc   tupdesc;
     HeapTuple   rettuple;
     char       *when;
@@ -554,22 +554,22 @@ trigf(PG_FUNCTION_ARGS)
         elog(ERROR, "trigf: not called by trigger manager");
 
     /* tuple to return to executor */
-    if (TRIGGER_FIRED_BY_UPDATE(trigdata->tg_event))
-        rettuple = trigdata->tg_newtuple;
+    if (TRIGGER_FIRED_BY_UPDATE(trigdata-&gt;tg_event))
+        rettuple = trigdata-&gt;tg_newtuple;
     else
-        rettuple = trigdata->tg_trigtuple;
+        rettuple = trigdata-&gt;tg_trigtuple;
 
     /* check for null values */
-    if (!TRIGGER_FIRED_BY_DELETE(trigdata->tg_event)
-        && TRIGGER_FIRED_BEFORE(trigdata->tg_event))
+    if (!TRIGGER_FIRED_BY_DELETE(trigdata-&gt;tg_event)
+        && TRIGGER_FIRED_BEFORE(trigdata-&gt;tg_event))
         checknull = true;
 
-    if (TRIGGER_FIRED_BEFORE(trigdata->tg_event))
+    if (TRIGGER_FIRED_BEFORE(trigdata-&gt;tg_event))
         when = "before";
     else
         when = "after ";
 
-    tupdesc = trigdata->tg_relation->rd_att;
+    tupdesc = trigdata-&gt;tg_relation-&gt;rd_att;
 
     /* connect to SPI manager */
     if ((ret = SPI_connect()) < 0)
@@ -582,8 +582,8 @@ trigf(PG_FUNCTION_ARGS)
         elog(NOTICE, "trigf (fired %s): SPI_exec returned %d", when, ret);
 
     /* count(*) returns int8, so be careful to convert */
-    i = DatumGetInt64(SPI_getbinval(SPI_tuptable->vals[0],
-                                    SPI_tuptable->tupdesc,
+    i = DatumGetInt64(SPI_getbinval(SPI_tuptable-&gt;vals[0],
+                                    SPI_tuptable-&gt;tupdesc,
                                     1,
                                     &amp;isnull));
 

@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/rules.sgml,v 1.37 2004/12/30 03:13:56 tgl Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/rules.sgml,v 1.38 2005/01/22 22:06:27 momjian Exp $ -->
 
 <Chapter Id="rules">
 <Title>The Rule System</Title>
@@ -1565,26 +1565,26 @@ UPDATE shoelace_data
 
 <literallayout class="monospaced">
 Nested Loop
-  ->  Merge Join
-        ->  Seq Scan
-              ->  Sort
-                    ->  Seq Scan on s
-        ->  Seq Scan
-              ->  Sort
-                    ->  Seq Scan on shoelace_arrive
-  ->  Seq Scan on shoelace_data
+  -&gt;  Merge Join
+        -&gt;  Seq Scan
+              -&gt;  Sort
+                    -&gt;  Seq Scan on s
+        -&gt;  Seq Scan
+              -&gt;  Sort
+                    -&gt;  Seq Scan on shoelace_arrive
+  -&gt;  Seq Scan on shoelace_data
 </literallayout>
 
     while omitting the extra range table entry would result in a
 
 <literallayout class="monospaced">
 Merge Join
-  ->  Seq Scan
-        ->  Sort
-              ->  Seq Scan on s
-  ->  Seq Scan
-        ->  Sort
-              ->  Seq Scan on shoelace_arrive
+  -&gt;  Seq Scan
+        -&gt;  Sort
+              -&gt;  Seq Scan on s
+  -&gt;  Seq Scan
+        -&gt;  Sort
+              -&gt;  Seq Scan on shoelace_arrive
 </literallayout>
 
     which produces exactly the same entries in the log table.  Thus,
@@ -1943,8 +1943,8 @@ DELETE FROM software WHERE computer.hostname = 'mypc.local.net'
 
 <literallayout class="monospaced">
 Nestloop
-  ->  Index Scan using comp_hostidx on computer
-  ->  Index Scan using soft_hostidx on software
+  -&gt;  Index Scan using comp_hostidx on computer
+  -&gt;  Index Scan using soft_hostidx on software
 </literallayout>
 
     So there would be not that much difference in speed between
@@ -1973,9 +1973,9 @@ DELETE FROM software WHERE computer.hostname >= 'old' AND computer.hostname < 'o
 
 <literallayout class="monospaced">
 Hash Join
-  ->  Seq Scan on software
-  ->  Hash
-    ->  Index Scan using comp_hostidx on computer
+  -&gt;  Seq Scan on software
+  -&gt;  Hash
+    -&gt;  Index Scan using comp_hostidx on computer
 </literallayout>
 
     The other possible command is
@@ -1989,8 +1989,8 @@ DELETE FROM computer WHERE hostname ~ '^old';
 
 <literallayout class="monospaced">
 Nestloop
-  ->  Index Scan using comp_hostidx on computer
-  ->  Index Scan using soft_hostidx on software
+  -&gt;  Index Scan using comp_hostidx on computer
+  -&gt;  Index Scan using soft_hostidx on software
 </literallayout>
 
     This shows, that the planner does not realize that the
@@ -2030,8 +2030,8 @@ DELETE FROM software WHERE computer.manufacurer = 'bim'
 
 <ProgramListing>
 Nestloop
-  ->  Index Scan using comp_manufidx on computer
-  ->  Index Scan using soft_hostidx on software
+  -&gt;  Index Scan using comp_manufidx on computer
+  -&gt;  Index Scan using soft_hostidx on software
 </ProgramListing>
 
     In any of these cases, the extra commands from the rule system

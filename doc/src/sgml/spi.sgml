@@ -1,5 +1,5 @@
 <!--
-$PostgreSQL: pgsql/doc/src/sgml/spi.sgml,v 1.37 2004/12/30 21:45:37 tgl Exp $
+$PostgreSQL: pgsql/doc/src/sgml/spi.sgml,v 1.38 2005/01/22 22:06:27 momjian Exp $
 -->
 
 <chapter id="spi">
@@ -2931,19 +2931,19 @@ execq(text *sql, int cnt)
      */
     if (ret == SPI_OK_SELECT && SPI_processed > 0)
     {
-        TupleDesc tupdesc = SPI_tuptable->tupdesc;
+        TupleDesc tupdesc = SPI_tuptable-&gt;tupdesc;
         SPITupleTable *tuptable = SPI_tuptable;
         char buf[8192];
         int i, j;
         
         for (j = 0; j < proc; j++)
         {
-            HeapTuple tuple = tuptable->vals[j];
+            HeapTuple tuple = tuptable-&gt;vals[j];
             
-            for (i = 1, buf[0] = 0; i <= tupdesc->natts; i++)
+            for (i = 1, buf[0] = 0; i <= tupdesc-&gt;natts; i++)
                 snprintf(buf + strlen (buf), sizeof(buf) - strlen(buf), " %s%s",
                         SPI_getvalue(tuple, tupdesc, i),
-                        (i == tupdesc->natts) ? " " : " |");
+                        (i == tupdesc-&gt;natts) ? " " : " |");
             elog (INFO, "EXECQ: %s", buf);
         }
     }

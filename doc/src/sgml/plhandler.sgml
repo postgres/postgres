@@ -1,5 +1,5 @@
 <!--
-$PostgreSQL: pgsql/doc/src/sgml/plhandler.sgml,v 1.4 2005/01/05 23:42:03 tgl Exp $
+$PostgreSQL: pgsql/doc/src/sgml/plhandler.sgml,v 1.5 2005/01/22 22:06:17 momjian Exp $
 -->
 
  <chapter id="plhandler">
@@ -121,7 +121,7 @@ plsample_call_handler(PG_FUNCTION_ARGS)
         /*
          * Called as a trigger procedure
          */
-        TriggerData    *trigdata = (TriggerData *) fcinfo->context;
+        TriggerData    *trigdata = (TriggerData *) fcinfo-&gt;context;
 
         retval = ...
     }

@@ -1,5 +1,5 @@
 <!--
-$PostgreSQL: pgsql/doc/src/sgml/release.sgml,v 1.321 2005/01/15 21:11:46 tgl Exp $
+$PostgreSQL: pgsql/doc/src/sgml/release.sgml,v 1.322 2005/01/22 22:06:17 momjian Exp $
 -->
 
 <appendix id="release">
@@ -7138,7 +7138,7 @@ Added documentation to tarball.
      <programlisting>
 Fix many CLUSTER failures (Tom)
 Allow ALTER TABLE RENAME works on indexes (Tom)
-Fix plpgsql to handle datetime->timestamp and timespan->interval (Bruce)
+Fix plpgsql to handle datetime-&gt;timestamp and timespan-&gt;interval (Bruce)
 New configure --with-setproctitle switch to use setproctitle() (Marc, Bruce)
 Fix the off by one errors in ResultSet from 6.5.3, and more.
 jdbc ResultSet fixes (Joseph Shraibman)
@@ -8017,7 +8017,7 @@ Add Win1250 (Czech) support (Pavel Behal)
      <programlisting>
 Bug Fixes
 ---------
-Fix text<->float8 and text<->float4 conversion functions(Thomas)
+Fix text&lt;-&gt;float8 and text&lt;-&gt;float4 conversion functions(Thomas)
 Fix for creating tables with mixed-case constraints(Billy)
 Change exp()/pow() behavior to generate error on underflow/overflow(Jan)
 Fix bug in pg_dump -z
@@ -9225,7 +9225,7 @@ Check explicitly for points and polygons contained within polygons
         using an axis-crossing algorithm(Thomas)
 Add routine to convert circle-box(Thomas)
 Merge conflicting operators for different geometric data types(Thomas)
-Replace distance operator "<===>" with "<->"(Thomas)
+Replace distance operator "<===>" with "&lt;-&gt;"(Thomas)
 Replace "above" operator "!^" with "&gt;^" and "below" operator "!|" with "&lt;^"(Thomas)
 Add routines for text trimming on both ends, substring, and string position(Thomas)
 Added conversion routines circle(box) and poly(circle)(Thomas)
@@ -10093,9 +10093,9 @@ more compliant to the SQL-92 standard):
    char(N), varchar(N), date and time.
 
    The following are aliases to existing postgres types:
-                smallint -> int2
-                integer, int -> int4
-                float, real  -> float4
+                smallint -&gt; int2
+                integer, int -&gt; int4
+                float, real  -&gt; float4
    char(N) and varchar(N) are implemented as truncated text types. In
    addition, char(N) does blank-padding. 
  * single-quote (') is used for quoting string literals; '' (in addition to

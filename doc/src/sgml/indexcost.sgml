@@ -1,5 +1,5 @@
 <!--
-$PostgreSQL: pgsql/doc/src/sgml/indexcost.sgml,v 2.18 2003/11/29 19:51:37 pgsql Exp $
+$PostgreSQL: pgsql/doc/src/sgml/indexcost.sgml,v 2.19 2005/01/22 22:06:17 momjian Exp $
 -->
 
  <chapter id="indexcost">
@@ -205,7 +205,7 @@ amcostestimate (Query *root,
 
      <programlisting>
 *indexSelectivity = clauselist_selectivity(root, indexQuals,
-                                           rel->relid, JOIN_INNER);
+                                           rel-&gt;relid, JOIN_INNER);
      </programlisting>
     </para>
    </step>
