@@ -3,7 +3,7 @@
  *
  * Copyright 2000 by PostgreSQL Global Development Group
  *
- * $Header: /cvsroot/pgsql/src/bin/psql/help.c,v 1.19 2000/02/16 13:15:26 momjian Exp $
+ * $Header: /cvsroot/pgsql/src/bin/psql/help.c,v 1.20 2000/02/19 05:01:16 ishii Exp $
  */
 #include "postgres.h"
 #include "help.h"
@@ -200,6 +200,10 @@ slashUsage(void)
 	fprintf(fout, " \\dT            list data types\n");
 	fprintf(fout, " \\e [fname]     edit the current query buffer or <fname> with external editor\n");
 	fprintf(fout, " \\echo <text>   write text to stdout\n");
+#ifdef MULTIBYTE
+	fprintf(fout, " \\eset <encoding> set client encoding\n");
+	fprintf(fout, " \\eshow         show client encoding\n");
+#endif
 	fprintf(fout, " \\g [fname]     send query to backend (and results in <fname> or |pipe)\n");
 	fprintf(fout, " \\h [cmd]       help on syntax of sql commands, * for all commands\n");
 	fprintf(fout, " \\i <fname>     read and execute queries from filename\n");
