@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/pltcl.sgml,v 2.4 2000/05/18 14:24:32 momjian Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/pltcl.sgml,v 2.5 2000/08/25 15:17:36 thomas Exp $
 -->
 
  <chapter>
@@ -280,7 +280,7 @@ CREATE FUNCTION trigfunc_modcount() RETURNS OPAQUE AS '
     return [array get NEW]
 ' LANGUAGE 'pltcl';
 
-CREATE TABLE mytab (num int4, modcnt int4, desc text);
+CREATE TABLE mytab (num int4, modcnt int4, description text);
 
 CREATE TRIGGER trig_mytab_modcount BEFORE INSERT OR UPDATE ON mytab
     FOR EACH ROW EXECUTE PROCEDURE trigfunc_modcount('modcnt');
@@ -383,7 +383,7 @@ spi_exec -array C "SELECT * FROM pg_class" {
 
 	will print a DEBUG log message for every row of pg_class. The return value
 	of <function>spi_exec</function> is the number of rows
-	affected by query as found in
+	affected by the query as found in
 	the global variable SPI_processed.
        </para>
       </listitem>
@@ -407,7 +407,7 @@ spi_exec -array C "SELECT * FROM pg_class" {
      </varlistentry>
 
      <varlistentry>
-      <term>spi_exec ?-count <replaceable>n</replaceable>? ?-array<replaceable>name</replaceable>? ?-nulls<replaceable>string</replaceable>? <replaceable>query</replaceable> ?<replaceable>value-list</replaceable>? ?<replaceable>loop-body</replaceable>?</term>
+      <term>spi_exec ?-count <replaceable>n</replaceable>? ?-array<replaceable>name</replaceable>? ?-nulls<replaceable>string</replaceable>? <replaceable>queryid</replaceable> ?<replaceable>value-list</replaceable>? ?<replaceable>loop-body</replaceable>?</term>
       <listitem>
        <para>
 	Execute a prepared plan from spi_prepare with variable substitution.

@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/ref/insert.sgml,v 1.8 2000/08/23 05:59:11 thomas Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/ref/insert.sgml,v 1.9 2000/08/25 15:17:50 thomas Exp $
 Postgres documentation
 -->
 
@@ -28,8 +28,6 @@ INSERT INTO <replaceable class="PARAMETER">table</replaceable> [ ( <replaceable 
   </synopsis>
   
   <refsect2 id="R2-SQL-INSERT-1">
-   <refsect2info>
-   </refsect2info>
    <title>
     Inputs
    </title>
@@ -89,8 +87,6 @@ INSERT INTO <replaceable class="PARAMETER">table</replaceable> [ ( <replaceable 
   </refsect2>
   
   <refsect2 id="R2-SQL-INSERT-2">
-   <refsect2info>
-   </refsect2info>
    <title>
     Outputs
    </title>
@@ -127,8 +123,6 @@ INSERT 0 <replaceable>#</replaceable>
  </refsynopsisdiv>
 
  <refsect1 id="R1-SQL-INSERT-1">
-  <refsect1info>
-  </refsect1info>
   <title>
    Description
   </title>
@@ -225,8 +219,6 @@ INSERT INTO tictactoe (game, board)
   </title>
 	
   <refsect2 id="R2-SQL-INSERT-4">
-   <refsect2info>
-   </refsect2info>
    <title>
     SQL92
    </title>

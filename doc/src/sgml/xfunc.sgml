@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/xfunc.sgml,v 1.19 2000/08/24 23:36:28 tgl Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/xfunc.sgml,v 1.20 2000/08/25 15:17:37 thomas Exp $
 -->
 
  <chapter id="xfunc">
@@ -87,11 +87,11 @@ $Header: /cvsroot/pgsql/doc/src/sgml/xfunc.sgml,v 1.19 2000/08/24 23:36:28 tgl E
 
      <programlisting>
 CREATE FUNCTION tp1 (int4, float8) 
-RETURNS int4
-AS '	UPDATE bank 
-	SET balance = bank.balance - $2
-       	WHERE bank.acctountno = $1;
-       	SELECT 1;'
+    RETURNS int4
+    AS 'UPDATE bank 
+        SET balance = bank.balance - $2
+        WHERE bank.acctountno = $1;
+        SELECT 1;'
 LANGUAGE 'sql';
      </programlisting>
 
@@ -99,7 +99,7 @@ LANGUAGE 'sql';
      follows:
 
      <programlisting>
-select TP1( 17,100.0);
+SELECT tp1( 17,100.0);
      </programlisting>
     </para>
 
@@ -108,10 +108,10 @@ select TP1( 17,100.0);
      EMP, and retrieves multiple results:
 
      <programlisting>
-create function hobbies (EMP) returns setof HOBBIES
-    as 'select HOBBIES.* from HOBBIES
-        where $1.name = HOBBIES.person'
-    language 'sql';
+CREATE FUNCTION hobbies (EMP) RETURNS SET OF hobbies
+    AS 'SELECT hobbies.* FROM hobbies
+        WHERE $1.name = hobbies.person'
+    LANGUAGE 'sql';
      </programlisting>
     </para>
    </sect2>
@@ -125,17 +125,17 @@ create function hobbies (EMP) returns setof HOBBIES
      
      <programlisting>
 CREATE FUNCTION one() 
-RETURNS int4
-AS 'SELECT 1 as RESULT;' 
-LANGUAGE 'sql';
+    RETURNS int4
+    AS 'SELECT 1 as RESULT;' 
+    LANGUAGE 'sql';
 
 SELECT one() AS answer;
 
-     +-------+
-     |answer |
-     +-------+
-     |1      |
-     +-------+
++-------+
+|answer |
++-------+
+|1      |
++-------+
      </programlisting>
     </para>
     <para>
@@ -152,17 +152,17 @@ SELECT one() AS answer;
 
      <programlisting>
 CREATE FUNCTION add_em(int4, int4) 
-RETURNS int4
-AS 'SELECT $1 + $2;' 
-LANGUAGE 'sql';
+    RETURNS int4
+    AS 'SELECT $1 + $2;' 
+    LANGUAGE 'sql';
 
 SELECT add_em(1, 2) AS answer;
 
-     +-------+
-     |answer |
-     +-------+
-     |3      |
-     +-------+
++-------+
+|answer |
++-------+
+|3      |
++-------+
      </programlisting>
     </para>
    </sect2>
@@ -180,20 +180,20 @@ SELECT add_em(1, 2) AS answer;
 
      <programlisting>
 CREATE FUNCTION double_salary(EMP) 
-RETURNS int4
-AS 'SELECT $1.salary * 2 AS salary;' 
-LANGUAGE 'sql';
+    RETURNS int4
+    AS 'SELECT $1.salary * 2 AS salary;' 
+    LANGUAGE 'sql';
 
 SELECT name, double_salary(EMP) AS dream
-FROM EMP
-WHERE EMP.cubicle ~= '(2,1)'::point;
- 
+    FROM EMP
+    WHERE EMP.cubicle ~= '(2,1)'::point;
 
-     +-----+-------+
-     |name | dream |
-     +-----+-------+
-     |Sam  | 2400  |
-     +-----+-------+
+
++-----+-------+
+|name | dream |
++-----+-------+
+|Sam  | 2400  |
++-----+-------+
      </programlisting>
     </para>
     <para>
@@ -213,11 +213,11 @@ SELECT name(EMP) AS youngster
     FROM EMP
     WHERE age(EMP) &lt; 30;
 
-     +----------+
-     |youngster |
-     +----------+
-     |Sam       |
-     +----------+
++----------+
+|youngster |
++----------+
+|Sam       |
++----------+
      </programlisting>
     </para>
     <para>
@@ -230,12 +230,12 @@ SELECT name(EMP) AS youngster
 
      <programlisting>
 CREATE FUNCTION new_emp() 
-RETURNS EMP
-AS '	SELECT \'None\'::text AS name,
-        	1000 AS salary,
-	        25 AS age,
-	        \'(2,2)\'::point AS cubicle'
-LANGUAGE 'sql';
+    RETURNS EMP
+    AS 'SELECT \'None\'::text AS name,
+        1000 AS salary,
+        25 AS age,
+        \'(2,2)\'::point AS cubicle'
+    LANGUAGE 'sql';
      </programlisting>
     </para>
     <para>
@@ -274,11 +274,11 @@ ERROR:  function declared to return emp returns varchar instead of text at colum
 	<programlisting>
 SELECT name(new_emp()) AS nobody;
 
-        +-------+
-        |nobody |
-        +-------+
-        |None   |
-        +-------+
++-------+
+|nobody |
++-------+
+|None   |
++-------+
 	</programlisting>
        </para>
       </listitem>
@@ -310,19 +310,19 @@ NOTICE:parser: syntax error at or near "."
 
      <programlisting>
 CREATE FUNCTION clean_EMP () 
-RETURNS int4
-AS '	DELETE FROM EMP 
-	WHERE EMP.salary &lt;= 0;
-	SELECT 1 AS ignore_this;'
-LANGUAGE 'sql';
+    RETURNS int4
+    AS 'DELETE FROM EMP 
+        WHERE EMP.salary &lt;= 0;
+        SELECT 1 AS ignore_this;'
+    LANGUAGE 'sql';
 
 SELECT clean_EMP();
 
-     +--+
-     |x |
-     +--+
-     |1 |
-     +--+
++--+
+|x |
++--+
+|1 |
++--+
      </programlisting>
     </para>
    </sect2>

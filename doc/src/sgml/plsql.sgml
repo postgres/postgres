@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/Attic/plsql.sgml,v 2.8 2000/05/17 00:15:48 momjian Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/Attic/plsql.sgml,v 2.9 2000/08/25 15:17:36 thomas Exp $
 -->
 
  <chapter>
@@ -157,7 +157,7 @@ END;
      <varlistentry>
       <term>
 <replaceable>name</replaceable> [ CONSTANT ]
-<replaceable>type</replaceable>> [ NOT NULL ] [ DEFAULT | :=
+<replaceable>type</replaceable> [ NOT NULL ] [ DEFAULT | :=
 	<replaceable>value</replaceable> ];
       </term>
       <listitem>

@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/ref/create_function.sgml,v 1.16 2000/08/24 23:36:29 tgl Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/ref/create_function.sgml,v 1.17 2000/08/25 15:17:50 thomas Exp $
 Postgres documentation
 -->
 
@@ -71,9 +71,9 @@ CREATE FUNCTION <replaceable class="parameter">name</replaceable> ( [ <replaceab
        <para>
 	The return data type.
 	The output type may be specified as a base type, complex type, 
-	<literal>setof <replaceable class="parameter">type</replaceable></literal>,
-	or <literal>opaque</literal>.
-	The <literal>setof</literal>
+	<option>setof <replaceable class="parameter">type</replaceable></option>,
+	or <option>opaque</option>.
+	The <option>setof</option>
 	modifier indicates that the function will return a set of items,
 	rather than a single item.
        </para>
@@ -186,28 +186,28 @@ CREATE
 
     <variablelist>
      <varlistentry>
-      <literal>iscachable</literal>
+      <term>iscachable</term>
       <listitem>
        <para>
-	<literal>iscachable</literal> indicates that the function always
+	<option>iscachable</option> indicates that the function always
 	returns the same result when given the same argument values (i.e.,
 	it does not do database lookups or otherwise use information not
 	directly present in its parameter list).  The optimizer uses
-	<literal>iscachable</literal> to know whether it is safe to
+	<option>iscachable</option> to know whether it is safe to
 	pre-evaluate a call of the function.
        </para>
       </listitem>
      </varlistentry>
 
      <varlistentry>
-      <literal>isstrict</literal>
+      <term>isstrict</term>
       <listitem>
        <para>
-	<literal>isstrict</literal> indicates that the function always
+	<option>isstrict</option> indicates that the function always
 	returns NULL whenever any of its arguments are NULL.  If this
 	attribute is specified, the function is not executed when there
 	are NULL arguments; instead a NULL result is assumed automatically.
-	When <literal>isstrict</literal> is not specified, the function will
+	When <option>isstrict</option> is not specified, the function will
 	be called for NULL inputs.  It is then the function author's
 	responsibility to check for NULLs if necessary and respond
 	appropriately.
