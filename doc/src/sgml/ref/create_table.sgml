@@ -1,5 +1,5 @@
 <!--
-$PostgreSQL: pgsql/doc/src/sgml/ref/create_table.sgml,v 1.80 2004/03/22 16:18:50 tgl Exp $
+$PostgreSQL: pgsql/doc/src/sgml/ref/create_table.sgml,v 1.81 2004/05/19 23:10:43 momjian Exp $
 PostgreSQL documentation
 -->
 
@@ -383,10 +383,13 @@ and <replaceable class="PARAMETER">table_constraint</replaceable> is:
      <para>
       The <literal>CHECK</> clause specifies an expression producing a
       Boolean result which new or updated rows must satisfy for an
-      insert or update operation to succeed.  A check constraint
-      specified as a column constraint should reference that column's
-      value only, while an expression appearing in a table constraint
-      may reference multiple columns.
+      insert or update operation to succeed.  Expressions evaluating
+      to TRUE or UNKNOWN succeed.  Should any row of an insert or
+      update operation produce a FALSE result an error exception is
+      raised and the insert or update does not alter the database.  A
+      check constraint specified as a column constraint should
+      reference that column's value only, while an expression
+      appearing in a table constraint may reference multiple columns.
      </para>
 
      <para>
