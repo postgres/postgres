@@ -29,7 +29,7 @@
  * MAINTENANCE, SUPPORT, UPDATES, ENHANCEMENTS, OR MODIFICATIONS.
  *
  * IDENTIFICATION
- *	$Header: /cvsroot/pgsql/src/pl/plpython/plpython.c,v 1.28 2003/01/31 22:25:13 tgl Exp $
+ *	$Header: /cvsroot/pgsql/src/pl/plpython/plpython.c,v 1.29 2003/01/31 22:35:24 tgl Exp $
  *
  *********************************************************************
  */
@@ -2181,6 +2181,7 @@ PLy_spi_execute_plan(PyObject * ob, PyObject * list, int limit)
 	int			i,
 				rv;
 	PLyPlanObject *plan;
+	char *nulls;
 
 	enter();
 
@@ -2242,6 +2243,8 @@ PLy_spi_execute_plan(PyObject * ob, PyObject * list, int limit)
 
 	if (nargs)
 	{
+		nulls = palloc((nargs + 1) * sizeof(char));
+
 		for (i = 0; i < nargs; i++)
 		{
 			PyObject   *elem,
@@ -2249,23 +2252,39 @@ PLy_spi_execute_plan(PyObject * ob, PyObject * list, int limit)
 			char	   *sv;
 
 			elem = PySequence_GetItem(list, i);
-			so = PyObject_Str(elem);
-			sv = PyString_AsString(so);
+			if (elem != Py_None)
+			{
+					so = PyObject_Str(elem);
+					sv = PyString_AsString(so);
 
-			/*
-			 * FIXME -- if this can elog, we have leak
-			 */
-			plan->values[i] = FunctionCall3(&(plan->args[i].out.d.typfunc),
-											CStringGetDatum(sv),
-						   ObjectIdGetDatum(plan->args[i].out.d.typelem),
-											Int32GetDatum(-1));
+					/*
+					 * FIXME -- if this can elog, we have leak
+					 */
+					plan->values[i] = FunctionCall3(&(plan->args[i].out.d.typfunc),
+													CStringGetDatum(sv),
+													ObjectIdGetDatum(plan->args[i].out.d.typelem),
+													Int32GetDatum(-1));
+					
+					Py_DECREF(so);
+					Py_DECREF(elem);
 
-			Py_DECREF(so);
-			Py_DECREF(elem);
+					nulls[i] = ' ';
+			}
+			else
+			{
+				Py_DECREF(elem);
+				plan->values[i] = (Datum) 0;
+				nulls[i] = 'n';
+			}
 		}
+		nulls[i] = '\0';
+	}
+	else
+	{
+		nulls = NULL;
 	}
 
-	rv = SPI_execp(plan->plan, plan->values, NULL, limit);
+	rv = SPI_execp(plan->plan, plan->values, nulls, limit);
 	RESTORE_EXC();
 
 	for (i = 0; i < nargs; i++)
