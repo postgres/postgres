@@ -1,4 +1,5 @@
 #!/bin/sh
+#set -x
 #-------------------------------------------------------------------------
 #
 # initdb.sh--
@@ -26,16 +27,17 @@
 #
 #
 # IDENTIFICATION
-#    $Header: /cvsroot/pgsql/src/bin/initdb/Attic/initdb.sh,v 1.70 1999/12/17 18:05:30 momjian Exp $
+#    $Header: /cvsroot/pgsql/src/bin/initdb/Attic/initdb.sh,v 1.71 1999/12/18 02:48:53 momjian Exp $
 #
 #-------------------------------------------------------------------------
 
-function exit_nicely () {
+exit_nicely(){
     echo
     echo "$CMDNAME failed."
-    if [ $noclean -eq 0 ]; then
+    if [ "$noclean" -eq 0 ]
+	then
         echo "Removing $PGDATA."
-        rm -rf $PGDATA || echo "Failed."
+        rm -rf "$PGDATA" || echo "Failed."
     else
         echo "Data directory $PGDATA will not be removed at user's request."
     fi
@@ -44,7 +46,8 @@ function exit_nicely () {
 
 
 CMDNAME=`basename $0`
-if [ $EUID -eq 0 ]; then
+if [ "$USER" = 'root' -o "$LOGNAME" = 'root' ]
+then
     echo "You cannot run $CMDNAME as root. Please log in (using, e.g., 'su')"
     echo "as the (unprivileged) user that will own the server process."
     exit 1
@@ -56,15 +59,17 @@ TEMPFILE="/tmp/initdb.$$"
 #
 # Find out where we're located
 #
-if echo "$0" | grep -s '/' >& /dev/null ; then
+if echo "$0" | grep '/' > /dev/null 2>&1 
+then
         # explicit dir name given
         PGPATH=`echo $0 | sed 's,/[^/]*$,,'`       # (dirname command is not portable)
 else
         # look for it in PATH ('which' command is not portable)
-        for dir in `echo $PATH | sed 's/:/ /g'` ; do
+        for dir in `echo "$PATH" | sed 's/:/ /g'` ; do
                 # empty entry in path means current dir
                 [ -z "$dir" ] && dir='.'
-                if [ -f "$dir/$CMDNAME" ]; then
+                if [ -f "$dir/$CMDNAME" ]
+				then
                         PGPATH="$dir"
                         break
                 fi
@@ -73,7 +78,8 @@ fi
 
 # Check if needed programs actually exist in path
 for prog in postgres pg_version ; do
-        if [ ! -x "$PGPATH/$prog" ]; then
+        if [ ! -x "$PGPATH/$prog" ]
+		then
                 echo "The program $prog needed by $CMDNAME could not be found. It was"
                 echo "expected at:"
                 echo "    $PGPATH/$prog"
@@ -103,16 +109,16 @@ template_only=0
 #       now the --username option is only a fallback if both id and whoami
 #       fail, and in that case the argument _must_ be the name of the effective
 #       user.
-POSTGRES_SUPERUSERNAME=$EffectiveUser
+POSTGRES_SUPERUSERNAME="$EffectiveUser"
 
 # Note: The sysid can be freely selected. This will probably confuse matters,
 #       but if your Unix user postgres is uid 48327 you might chose to start
 #       at 0 (or 1) in the database.
-POSTGRES_SUPERUSERID=$EUID
+POSTGRES_SUPERUSERID="$EUID"
 
 Password='_null_'
 
-while [ $# -gt 0 ]
+while [ "$#" -gt 0 ]
 do
     case "$1" in
         --help|-\?)
@@ -202,7 +208,8 @@ do
     shift
 done
 
-if [ "$usage" ]; then
+if [ "$usage" ]
+then
  	echo ""
  	echo "Usage: $CMDNAME [options]"
  	echo ""
@@ -215,9 +222,10 @@ if [ "$usage" ]; then
         echo "    -D DATADIR,   --pgdata=DATADIR     "
         echo "    -L LIBDIR,    --pglib=LIBDIR       "
  	
- 	if [ -n "$MULTIBYTE" ]; then 
+ 	if [ -n "$MULTIBYTE" ]
+	then 
  		echo "    -e ENCODING,  --pgencoding=ENCODING"
-        fi
+    fi
  	echo "    -?,           --help               "           	
  	echo ""	 
  	exit 0
@@ -227,15 +235,18 @@ fi
 # Resolve the multibyte encoding name
 #-------------------------------------------------------------------------
 
-if [ "$MULTIBYTE" ]; then
-	MULTIBYTEID=`$PGPATH/pg_encoding $MULTIBYTE`
-        if [ $? -ne 0 ]; then
+if [ "$MULTIBYTE" ]
+then
+		MULTIBYTEID=`$PGPATH/pg_encoding $MULTIBYTE`
+        if [ "$?" -ne 0 ]
+		then
                 echo "The program pg_encoding failed. Perhaps you did not configure"
                 echo "PostgreSQL for multibyte support or the program was not success-"
                 echo "fully installed."
                 exit 1
         fi
-	if [ -z "$MULTIBYTEID" ]; then
+	if [ -z "$MULTIBYTEID" ]
+	then
 		echo "$CMDNAME: $MULTIBYTE is not a valid encoding name."
 		exit 1
 	fi
@@ -246,7 +257,8 @@ fi
 # Make sure he told us where to build the database system
 #-------------------------------------------------------------------------
 
-if [ -z "$PGDATA" ]; then
+if [ -z "$PGDATA" ]
+then
     echo "$CMDNAME: You must identify where the the data for this database"
     echo "system will reside.  Do this with either a --pgdata invocation"
     echo "option or a PGDATA environment variable."
@@ -257,7 +269,8 @@ fi
 # The data path must be absolute, because the backend doesn't like
 # '.' and '..' stuff. (Should perhaps be fixed there.)
 
-if ! echo $PGDATA | grep -s '^/' >& /dev/null ; then
+if ! echo "$PGDATA" | grep '^/' > /dev/null 2>&1
+then
     echo "$CMDNAME: The data path must be specified as an absolute path."
     exit 1
 fi
@@ -267,7 +280,8 @@ fi
 #---------------------------------------------------------------------------
 
 # This means they have neither 'id' nor 'whoami'!
-if [ -z "$POSTGRES_SUPERUSERNAME" ]; then 
+if [ -z "$POSTGRES_SUPERUSERNAME" ]
+then 
     echo "$CMDNAME: Could not determine what the name of the database"
     echo "superuser should be. Please use the --username option."
     exit 1
@@ -282,16 +296,19 @@ echo
 # Find the input files
 #-------------------------------------------------------------------------
 
-if [ -z "$PGLIB" ]; then
+if [ -z "$PGLIB" ]
+then
         for dir in "$PGPATH/../lib" "$PGPATH/../lib/pgsql"; do
-                if [ -f "$dir/global1.bki.source" ]; then
-                        PGLIB=$dir
+                if [ -f "$dir/global1.bki.source" ]
+				then
+                        PGLIB="$dir"
                         break
                 fi
         done
 fi
 
-if [ -z "$PGLIB" ]; then
+if [ -z "$PGLIB" ]
+then
         echo "$CMDNAME: Could not find the \"lib\" directory, that contains"
         echo "the files needed by initdb. Please specify it with the"
         echo "--pglib option."
@@ -299,16 +316,17 @@ if [ -z "$PGLIB" ]; then
 fi
 
 
-TEMPLATE=$PGLIB/local1_template1.bki.source
-GLOBAL=$PGLIB/global1.bki.source
-PG_HBA_SAMPLE=$PGLIB/pg_hba.conf.sample
+TEMPLATE="$PGLIB"/local1_template1.bki.source
+GLOBAL="$PGLIB"/global1.bki.source
+PG_HBA_SAMPLE="$PGLIB"/pg_hba.conf.sample
 
-TEMPLATE_DESCR=$PGLIB/local1_template1.description
-GLOBAL_DESCR=$PGLIB/global1.description
-PG_GEQO_SAMPLE=$PGLIB/pg_geqo.sample
+TEMPLATE_DESCR="$PGLIB"/local1_template1.description
+GLOBAL_DESCR="$PGLIB"/global1.description
+PG_GEQO_SAMPLE="$PGLIB"/pg_geqo.sample
 
-for PREREQ_FILE in $TEMPLATE $GLOBAL $PG_HBA_SAMPLE; do
-    if [ ! -f $PREREQ_FILE ]; then 
+for PREREQ_FILE in "$TEMPLATE" "$GLOBAL" "$PG_HBA_SAMPLE"; do
+    if [ ! -f "$PREREQ_FILE" ]
+	then 
         echo "$CMDNAME does not find the file '$PREREQ_FILE'."
         echo "This means you have a corrupted installation or identified the"
         echo "wrong directory with the --pglib invocation option."
@@ -318,7 +336,8 @@ done
 
 [ "$debug" -ne 0 ] && echo "$CMDNAME: Using $TEMPLATE as input to create the template database."
 
-if [ $template_only -eq 0 ]; then
+if [ "$template_only" -eq 0 ]
+then
     [ "$debug" -ne 0 ] && echo "$CMDNAME: Using $GLOBAL as input to create the global classes."
     [ "$debug" -ne 0 ] && echo "$CMDNAME: Using $PG_HBA_SAMPLE as default authentication control file."
 fi  
@@ -333,8 +352,10 @@ trap 'echo "Caught signal." ; exit_nicely' SIGINT SIGTERM
 # umask must disallow access to group, other for files and dirs
 umask 077
 
-if [ -f "$PGDATA/PG_VERSION" ]; then
-    if [ $template_only -eq 0 ]; then
+if [ -f "$PGDATA"/PG_VERSION ]
+then
+    if [ "$template_only" -eq 0 ]
+	then
         echo "$CMDNAME: The file $PGDATA/PG_VERSION already exists."
         echo "This probably means initdb has already been run and the"
         echo "database system already exists."
@@ -345,21 +366,24 @@ if [ -f "$PGDATA/PG_VERSION" ]; then
         exit 1
     fi
 else
-    if [ ! -d $PGDATA ]; then
+    if [ ! -d "$PGDATA" ]
+	then
         echo "Creating database system directory $PGDATA"
-        mkdir $PGDATA || exit_nicely
+        mkdir "$PGDATA" || exit_nicely
     else
         echo "Fixing permissions on pre-existing data directory $PGDATA"
-	chmod go-rwx $PGDATA || exit_nicely
+	chmod go-rwx "$PGDATA" || exit_nicely
     fi
 
-    if [ ! -d $PGDATA/base ]; then
+    if [ ! -d "$PGDATA"/base ]
+	then
         echo "Creating database system directory $PGDATA/base"
-        mkdir $PGDATA/base || exit_nicely
+        mkdir "$PGDATA"/base || exit_nicely
     fi
-    if [ ! -d $PGDATA/pg_xlog ]; then
+    if [ ! -d "$PGDATA"/pg_xlog ]
+	then
         echo "Creating database XLOG directory $PGDATA/pg_xlog"
-        mkdir $PGDATA/pg_xlog || exit_nicely
+        mkdir "$PGDATA"/pg_xlog || exit_nicely
     fi
 fi
 
@@ -367,10 +391,11 @@ fi
 # Create the template1 database
 #----------------------------------------------------------------------------
 
-rm -rf $PGDATA/base/template1 || exit_nicely
-mkdir $PGDATA/base/template1 || exit_nicely
+rm -rf "$PGDATA"/base/template1 || exit_nicely
+mkdir "$PGDATA"/base/template1 || exit_nicely
 
-if [ "$debug" -eq 1 ]; then
+if [ "$debug" -eq 1 ]
+then
     BACKEND_TALK_ARG="-d"
 else
     BACKEND_TALK_ARG="-Q"
@@ -382,49 +407,51 @@ FIRSTRUN="-boot -x -C -F -D$PGDATA $BACKEND_TALK_ARG"
 echo "Creating template database in $PGDATA/base/template1"
 [ "$debug" -ne 0 ] && echo "Running: $PGPATH/postgres $FIRSTRUN template1"
 
-cat $TEMPLATE \
+cat "$TEMPLATE" \
 | sed -e "s/PGUID/$POSTGRES_SUPERUSERID/g" \
-| $PGPATH/postgres $FIRSTRUN template1 \
+| "$PGPATH"/postgres $FIRSTRUN template1 \
 || exit_nicely
 
-$PGPATH/pg_version $PGDATA/base/template1 || exit_nicely
+"$PGPATH"/pg_version "$PGDATA"/base/template1 || exit_nicely
 
 #----------------------------------------------------------------------------
 # Create the global classes, if requested.
 #----------------------------------------------------------------------------
 
-if [ $template_only -eq 0 ]; then
+if [ "$template_only" -eq 0 ]
+then
     echo "Creating global relations in $PGDATA/base"
     [ "$debug" -ne 0 ] && echo "Running: $PGPATH/postgres $BACKENDARGS template1"
 
-    cat $GLOBAL \
+    cat "$GLOBAL" \
     | sed -e "s/POSTGRES/$POSTGRES_SUPERUSERNAME/g" \
           -e "s/PGUID/$POSTGRES_SUPERUSERID/g" \
           -e "s/PASSWORD/$Password/g" \
-    | $PGPATH/postgres $BACKENDARGS template1 \
+    | "$PGPATH"/postgres $BACKENDARGS template1 \
     || exit_nicely
 
-    $PGPATH/pg_version $PGDATA || exit_nicely
+    "$PGPATH"/pg_version "$PGDATA" || exit_nicely
 
-    cp $PG_HBA_SAMPLE $PGDATA/pg_hba.conf     || exit_nicely
-    cp $PG_GEQO_SAMPLE $PGDATA/pg_geqo.sample || exit_nicely
+    cp "$PG_HBA_SAMPLE" "$PGDATA"/pg_hba.conf     || exit_nicely
+    cp "$PG_GEQO_SAMPLE" "$PGDATA"/pg_geqo.sample || exit_nicely
 
     echo "Adding template1 database to pg_database"
 
-    echo "open pg_database" > $TEMPFILE
+    echo "open pg_database" > "$TEMPFILE"
     echo "insert (template1 $POSTGRES_SUPERUSERID $MULTIBYTEID template1)" >> $TEMPFILE
-    #echo "show" >> $TEMPFILE
-    echo "close pg_database" >> $TEMPFILE
+    #echo "show" >> "$TEMPFILE"
+    echo "close pg_database" >> "$TEMPFILE"
 
     [ "$debug" -ne 0 ] && echo "Running: $PGPATH/postgres $BACKENDARGS template1 < $TEMPFILE"
 
-    $PGPATH/postgres $BACKENDARGS template1 < $TEMPFILE
+    "$PGPATH"/postgres $BACKENDARGS template1 < "$TEMPFILE"
     # Gotta remove that temp file before exiting on error.
-    retval=$?
-    if [ $noclean -eq 0 ]; then
-            rm -f $TEMPFILE || exit_nicely
+    retval="$?"
+    if [ "$noclean" -eq 0 ]
+	then
+            rm -f "$TEMPFILE" || exit_nicely
     fi
-    [ $retval -ne 0 ] && exit_nicely
+    [ "$retval" -ne 0 ] && exit_nicely
 fi
 
 echo
@@ -435,19 +462,19 @@ PGSQL_OPT="-o /dev/null -O -F -Q -D$PGDATA"
 # to the flat password file pg_pwd
 echo "CREATE TRIGGER pg_sync_pg_pwd AFTER INSERT OR UPDATE OR DELETE ON pg_shadow" \
      "FOR EACH ROW EXECUTE PROCEDURE update_pg_pwd()" \
-     | $PGPATH/postgres $PGSQL_OPT template1 > /dev/null || exit_nicely
+     | "$PGPATH"/postgres $PGSQL_OPT template1 > /dev/null || exit_nicely
 
 # Create the initial pg_pwd (flat-file copy of pg_shadow)
 echo "Writing password file."
 echo "COPY pg_shadow TO '$PGDATA/pg_pwd' USING DELIMITERS '\\t'" \
-	| $PGPATH/postgres $PGSQL_OPT template1 > /dev/null || exit_nicely
+	| "$PGPATH"/postgres $PGSQL_OPT template1 > /dev/null || exit_nicely
 
 # An ordinary COPY will leave the file too loosely protected.
 # Note: If you lied above and specified a --username different from the one
 # you really are, this will manifest itself in this command failing because
 # of a missing file, since the COPY command above failed. It would perhaps
 # be better if postgres returned an error code.
-chmod go-rw $PGDATA/pg_pwd || exit_nicely
+chmod go-rw "$PGDATA"/pg_pwd || exit_nicely
 
 echo "Creating view pg_user."
 echo "CREATE VIEW pg_user AS \
@@ -461,10 +488,10 @@ echo "CREATE VIEW pg_user AS \
             '********'::text as passwd, \
             valuntil \
         FROM pg_shadow" \
-        | $PGPATH/postgres $PGSQL_OPT template1 > /dev/null || exit_nicely
+        | "$PGPATH"/postgres $PGSQL_OPT template1 > /dev/null || exit_nicely
 
 echo "REVOKE ALL on pg_shadow FROM public" \
-	| $PGPATH/postgres $PGSQL_OPT template1 > /dev/null || exit_nicely
+	| "$PGPATH"/postgres $PGSQL_OPT template1 > /dev/null || exit_nicely
 
 echo "Creating view pg_rules."
 echo "CREATE VIEW pg_rules AS \
@@ -475,7 +502,7 @@ echo "CREATE VIEW pg_rules AS \
 	FROM pg_rewrite R, pg_class C \
 	WHERE R.rulename !~ '^_RET' \
             AND C.oid = R.ev_class;" \
-	| $PGPATH/postgres $PGSQL_OPT template1 > /dev/null || exit_nicely
+	| "$PGPATH"/postgres $PGSQL_OPT template1 > /dev/null || exit_nicely
 
 echo "Creating view pg_views."
 echo "CREATE VIEW pg_views AS \
@@ -489,7 +516,7 @@ echo "CREATE VIEW pg_views AS \
                 SELECT rulename FROM pg_rewrite R \
                     WHERE ev_class = C.oid AND ev_type = '1' \
             )" \
-	| $PGPATH/postgres $PGSQL_OPT template1 > /dev/null || exit_nicely
+	| "$PGPATH"/postgres $PGSQL_OPT template1 > /dev/null || exit_nicely
 
 echo "Creating view pg_tables."
 echo "CREATE VIEW pg_tables AS \
@@ -505,7 +532,7 @@ echo "CREATE VIEW pg_tables AS \
                 SELECT rulename FROM pg_rewrite \
                     WHERE ev_class = C.oid AND ev_type = '1' \
             )" \
-	| $PGPATH/postgres $PGSQL_OPT template1 > /dev/null || exit_nicely
+	| "$PGPATH"/postgres $PGSQL_OPT template1 > /dev/null || exit_nicely
 
 echo "Creating view pg_indexes."
 echo "CREATE VIEW pg_indexes AS \
@@ -516,16 +543,16 @@ echo "CREATE VIEW pg_indexes AS \
         FROM pg_index X, pg_class C, pg_class I \
 	WHERE C.oid = X.indrelid \
             AND I.oid = X.indexrelid" \
-        | $PGPATH/postgres $PGSQL_OPT template1 > /dev/null || exit_nicely
+        | "$PGPATH"/postgres $PGSQL_OPT template1 > /dev/null || exit_nicely
 
 echo "Loading pg_description."
 echo "COPY pg_description FROM '$TEMPLATE_DESCR'" \
-	| $PGPATH/postgres $PGSQL_OPT template1 > /dev/null || exit_nicely
+	| "$PGPATH"/postgres $PGSQL_OPT template1 > /dev/null || exit_nicely
 echo "COPY pg_description FROM '$GLOBAL_DESCR'" \
-	| $PGPATH/postgres $PGSQL_OPT template1 > /dev/null || exit_nicely
+	| "$PGPATH"/postgres $PGSQL_OPT template1 > /dev/null || exit_nicely
 echo "Vacuuming database."
 echo "VACUUM ANALYZE" \
-	| $PGPATH/postgres $PGSQL_OPT template1 > /dev/null || exit_nicely
+	| "$PGPATH"/postgres $PGSQL_OPT template1 > /dev/null || exit_nicely
 
 echo
 echo "$CMDNAME completed successfully. You can now start the database server."
