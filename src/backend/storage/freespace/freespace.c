@@ -8,7 +8,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/storage/freespace/freespace.c,v 1.3 2001/07/02 20:50:46 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/storage/freespace/freespace.c,v 1.4 2001/07/19 21:25:37 tgl Exp $
  *
  *
  * NOTES:
@@ -419,9 +419,23 @@ MultiRecordFreeSpace(RelFileNode *rel,
 		 *
 		 * XXX we could probably be smarter about this than doing it
 		 * completely separately for each one.  FIXME later.
+		 *
+		 * One thing we can do is short-circuit the process entirely if
+		 * a page (a) has too little free space to be recorded, and (b)
+		 * is within the minPage..maxPage range --- then we deleted any
+		 * old entry above, and we aren't going to make a new one.
+		 * This is particularly useful since in most cases, all the passed
+		 * pages will in fact be in the minPage..maxPage range.
 		 */
 		for (i = 0; i < nPages; i++)
-			fsm_record_free_space(fsmrel, pages[i], spaceAvail[i]);
+		{
+			BlockNumber	page = pages[i];
+			Size		avail = spaceAvail[i];
+
+			if (avail >= fsmrel->threshold ||
+				page < minPage || page > maxPage)
+				fsm_record_free_space(fsmrel, page, avail);
+		}
 	}
 	SpinRelease(FreeSpaceLock);
 }
