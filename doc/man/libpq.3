@@ -1,6 +1,6 @@
 .\" This is -*-nroff-*-
 .\" XXX standard disclaimer belongs here....
-.\" $Header: /cvsroot/pgsql/doc/man/Attic/libpq.3,v 1.1.1.1 1996/08/18 22:14:25 scrappy Exp $
+.\" $Header: /cvsroot/pgsql/doc/man/Attic/libpq.3,v 1.2 1996/10/03 15:50:10 momjian Exp $
 .TH LIBPQ INTRO 03/12/94 Postgres95 Postgres95
 .SH DESCRIPTION
 Libpq is the programmer's interface to Postgres.  Libpq is a set of
@@ -665,7 +665,7 @@ main()
   PQclear(res); 
 
   /* fetch instances from the pg_database, the system catalog of databases*/
-  res = PQexec(conn,"DECLARE myportal CURSOR FOR select * from pg_database");
+  res = PQexec(conn,"DECLARE mycursor CURSOR FOR select * from pg_database");
   if (PQresultStatus(res) != PGRES_COMMAND_OK) {
     fprintf(stderr,"DECLARE CURSOR command failed\n");
     PQclear(res);
@@ -673,7 +673,7 @@ main()
   }
   PQclear(res);
 
-  res = PQexec(conn,"FETCH ALL in myportal");
+  res = PQexec(conn,"FETCH ALL in mycursor");
   if (PQresultStatus(res) != PGRES_TUPLES_OK) {
     fprintf(stderr,"FETCH ALL command didn't return tuples properly\n");
     PQclear(res);
@@ -697,8 +697,8 @@ main()
 
   PQclear(res);
   
-  /* close the portal */
-  res = PQexec(conn, "CLOSE myportal");
+  /* close the cursor */
+  res = PQexec(conn, "CLOSE mycursor");
   PQclear(res);
 
   /* end the transaction */
@@ -947,7 +947,7 @@ main()
 
   PQclear(res);
   
-  /* close the portal */
+  /* close the cursor */
   res = PQexec(conn, "CLOSE mycursor");
   PQclear(res);
 
