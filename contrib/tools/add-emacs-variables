@@ -1,0 +1,28 @@
+#!/bin/bash
+#
+# Add local variables to C sources files to set emacs C style to 4-space tabs.
+#
+# Usage:  cd $PG_HOME && add-emacs-variables `find . -name \*.[chy] -print`
+
+for f in $*; do
+    if [ -L $f ] || grep -q '^ \* Local Variables:' $f; then
+	continue
+    fi
+    echo $f
+    touch -r $f /tmp/.add-local-variables.$$
+    cat <<- '    EOF' >> $f 
+	
+	/*
+	 * Local Variables:
+	 *  tab-width: 4
+	 *  c-indent-level: 4
+	 *  c-basic-offset: 4
+	 * End:
+	 */
+    EOF
+    touch -r /tmp/.add-local-variables.$$ $f
+done
+
+rm -f /tmp/.add-local-variables.$$
+
+# end of file

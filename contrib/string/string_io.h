@@ -14,15 +14,14 @@ char	   *c_varcharout(char *s);
 #if 0
 struct varlena *c_textin(char *str);
 char	   *c_char16in(char *str);
-
 #endif
 
 #endif
 
 /*
- * Local variables:
- *	tab-width: 4
- *	c-indent-level: 4
- *	c-basic-offset: 4
+ * Local Variables:
+ *  tab-width: 4
+ *  c-indent-level: 4
+ *  c-basic-offset: 4
  * End:
  */

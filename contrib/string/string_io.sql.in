@@ -40,7 +40,7 @@ create function c_mode() returns text
       update pg_type set typoutput=''c_textout''    where typname=''text'';
       update pg_type set typoutput=''c_textout''    where typname=''unknown'';
       update pg_type set typoutput=''c_varcharout'' where typname=''varchar'';
-      select ''c_mode''::text'
+      select ''c_mode''::text;'
   language 'sql';
 
 -- Define a function which restores the standard routines for char types.
@@ -55,7 +55,7 @@ create function pg_mode() returns text
       update pg_type set typoutput=''textout''    where typname=''text'';
       update pg_type set typoutput=''textout''    where typname=''unknown'';
       update pg_type set typoutput=''varcharout'' where typname=''varchar'';
-      select ''pg_mode''::text'
+      select ''pg_mode''::text;'
   language 'sql';
 
 -- Use these to do the changes manually.

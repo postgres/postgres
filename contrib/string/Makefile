@@ -1,6 +1,7 @@
 #-------------------------------------------------------------------------
 #
 # Makefile --
+#
 #    Makefile for string I/O module.
 #
 #-------------------------------------------------------------------------
@@ -19,6 +20,8 @@ CFLAGS += $(INCLUDE_OPT) $(CFLAGS_SL)
 
 MODNAME =	string_io
 
+SQLDEFS =	$(MODNAME).sql
+
 MODULE =	$(MODNAME)$(DLSUFFIX)
 
 MODDIR =	$(LIBDIR)/modules
@@ -29,12 +32,12 @@ all:		module sql
 
 module:		$(MODULE)
 
-sql:		$(MODNAME).sql
+sql:		$(SQLDEFS)
 
-install:	$(MODULE) $(MODDIR) $(SQLDIR)
+install:	$(MODULE) $(SQLDEFS) $(MODDIR) $(SQLDIR)
 		cp -p $(MODULE) $(MODDIR)/
 		strip $(MODDIR)/$(MODULE)
-		cp -p $(MODNAME).sql $(SQLDIR)/
+		cp -p $(SQLDEFS) $(SQLDIR)/
 
 $(MODDIR):
 		mkdir -p $@

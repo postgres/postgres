@@ -141,7 +141,7 @@ array_texteq(ArrayType *array, char *value)
 {
 	return array_iterator((Oid) 25,		/* text */
 						  (Oid) 67,		/* texteq */
-						  0,	/* logical or */
+						  0,			/* logical or */
 						  array, (Datum) value);
 }
 
@@ -150,7 +150,7 @@ array_all_texteq(ArrayType *array, char *value)
 {
 	return array_iterator((Oid) 25,		/* text */
 						  (Oid) 67,		/* texteq */
-						  1,	/* logical and */
+						  1,			/* logical and */
 						  array, (Datum) value);
 }
 
@@ -159,7 +159,7 @@ array_textregexeq(ArrayType *array, char *value)
 {
 	return array_iterator((Oid) 25,		/* text */
 						  (Oid) 1254,	/* textregexeq */
-						  0,	/* logical or */
+						  0,			/* logical or */
 						  array, (Datum) value);
 }
 
@@ -168,48 +168,89 @@ array_all_textregexeq(ArrayType *array, char *value)
 {
 	return array_iterator((Oid) 25,		/* text */
 						  (Oid) 1254,	/* textregexeq */
-						  1,	/* logical and */
+						  1,			/* logical and */
 						  array, (Datum) value);
 }
 
 /*
- * Iterator functions for type _char16. Note that the regexp
+ * Iterator functions for type _varchar. Note that the regexp
  * operators take the second argument of type text.
  */
 
 int32
-array_char16eq(ArrayType *array, char *value)
+array_varchareq(ArrayType *array, char *value)
 {
-	return array_iterator((Oid) 20,		/* char16 */
-						  (Oid) 1275,	/* char16eq */
-						  0,	/* logical or */
+	return array_iterator((Oid) 20,		/* varchar */
+						  (Oid) 1070,	/* varchareq */
+						  0,			/* logical or */
 						  array, (Datum) value);
 }
 
 int32
-array_all_char16eq(ArrayType *array, char *value)
+array_all_varchareq(ArrayType *array, char *value)
 {
-	return array_iterator((Oid) 20,		/* char16 */
-						  (Oid) 1275,	/* char16eq */
-						  1,	/* logical and */
+	return array_iterator((Oid) 20,		/* varchar */
+						  (Oid) 1070,	/* varchareq */
+						  1,			/* logical and */
 						  array, (Datum) value);
 }
 
 int32
-array_char16regexeq(ArrayType *array, char *value)
+array_varcharregexeq(ArrayType *array, char *value)
 {
-	return array_iterator((Oid) 20,		/* char16 */
-						  (Oid) 1288,	/* char16regexeq */
-						  0,	/* logical or */
+	return array_iterator((Oid) 20,		/* varchar */
+						  (Oid) 1254,	/* textregexeq */
+						  0,			/* logical or */
 						  array, (Datum) value);
 }
 
 int32
-array_all_char16regexeq(ArrayType *array, char *value)
+array_all_varcharregexeq(ArrayType *array, char *value)
 {
-	return array_iterator((Oid) 20,		/* char16 */
-						  (Oid) 1288,	/* char16regexeq */
-						  1,	/* logical and */
+	return array_iterator((Oid) 20,		/* varchar */
+						  (Oid) 1254,	/* textregexeq */
+						  1,			/* logical and */
+						  array, (Datum) value);
+}
+
+/*
+ * Iterator functions for type _bpchar. Note that the regexp
+ * operators take the second argument of type text.
+ */
+
+int32
+array_bpchareq(ArrayType *array, char *value)
+{
+	return array_iterator((Oid) 20,		/* bpchar */
+						  (Oid) 1048,	/* bpchareq */
+						  0,			/* logical or */
+						  array, (Datum) value);
+}
+
+int32
+array_all_bpchareq(ArrayType *array, char *value)
+{
+	return array_iterator((Oid) 20,		/* bpchar */
+						  (Oid) 1048,	/* bpchareq */
+						  1,			/* logical and */
+						  array, (Datum) value);
+}
+
+int32
+array_bpcharregexeq(ArrayType *array, char *value)
+{
+	return array_iterator((Oid) 20,		/* bpchar */
+						  (Oid) 1254,	/* textregexeq */
+						  0,			/* logical or */
+						  array, (Datum) value);
+}
+
+int32
+array_all_bpcharregexeq(ArrayType *array, char *value)
+{
+	return array_iterator((Oid) 20,		/* bpchar */
+						  (Oid) 1254,	/* textregexeq */
+						  1,			/* logical and */
 						  array, (Datum) value);
 }
 
@@ -222,7 +263,7 @@ array_int4eq(ArrayType *array, int4 value)
 {
 	return array_iterator((Oid) 23,		/* int4 */
 						  (Oid) 65,		/* int4eq */
-						  0,	/* logical or */
+						  0,			/* logical or */
 						  array, (Datum) value);
 }
 
@@ -231,7 +272,7 @@ array_all_int4eq(ArrayType *array, int4 value)
 {
 	return array_iterator((Oid) 23,		/* int4 */
 						  (Oid) 65,		/* int4eq */
-						  1,	/* logical and */
+						  1,			/* logical and */
 						  array, (Datum) value);
 }
 
@@ -240,7 +281,7 @@ array_int4ne(ArrayType *array, int4 value)
 {
 	return array_iterator((Oid) 23,		/* int4 */
 						  (Oid) 144,	/* int4ne */
-						  0,	/* logical or */
+						  0,			/* logical or */
 						  array, (Datum) value);
 }
 
@@ -249,7 +290,7 @@ array_all_int4ne(ArrayType *array, int4 value)
 {
 	return array_iterator((Oid) 23,		/* int4 */
 						  (Oid) 144,	/* int4ne */
-						  1,	/* logical and */
+						  1,			/* logical and */
 						  array, (Datum) value);
 }
 
@@ -258,7 +299,7 @@ array_int4gt(ArrayType *array, int4 value)
 {
 	return array_iterator((Oid) 23,		/* int4 */
 						  (Oid) 147,	/* int4gt */
-						  0,	/* logical or */
+						  0,			/* logical or */
 						  array, (Datum) value);
 }
 
@@ -267,7 +308,7 @@ array_all_int4gt(ArrayType *array, int4 value)
 {
 	return array_iterator((Oid) 23,		/* int4 */
 						  (Oid) 147,	/* int4gt */
-						  1,	/* logical and */
+						  1,			/* logical and */
 						  array, (Datum) value);
 }
 
@@ -276,7 +317,7 @@ array_int4ge(ArrayType *array, int4 value)
 {
 	return array_iterator((Oid) 23,		/* int4 */
 						  (Oid) 150,	/* int4ge */
-						  0,	/* logical or */
+						  0,			/* logical or */
 						  array, (Datum) value);
 }
 
@@ -285,7 +326,7 @@ array_all_int4ge(ArrayType *array, int4 value)
 {
 	return array_iterator((Oid) 23,		/* int4 */
 						  (Oid) 150,	/* int4ge */
-						  1,	/* logical and */
+						  1,			/* logical and */
 						  array, (Datum) value);
 }
 
@@ -294,7 +335,7 @@ array_int4lt(ArrayType *array, int4 value)
 {
 	return array_iterator((Oid) 23,		/* int4 */
 						  (Oid) 66,		/* int4lt */
-						  0,	/* logical or */
+						  0,			/* logical or */
 						  array, (Datum) value);
 }
 
@@ -303,7 +344,7 @@ array_all_int4lt(ArrayType *array, int4 value)
 {
 	return array_iterator((Oid) 23,		/* int4 */
 						  (Oid) 66,		/* int4lt */
-						  1,	/* logical and */
+						  1,			/* logical and */
 						  array, (Datum) value);
 }
 
@@ -312,7 +353,7 @@ array_int4le(ArrayType *array, int4 value)
 {
 	return array_iterator((Oid) 23,		/* int4 */
 						  (Oid) 149,	/* int4le */
-						  0,	/* logical or */
+						  0,			/* logical or */
 						  array, (Datum) value);
 }
 
@@ -321,19 +362,18 @@ array_all_int4le(ArrayType *array, int4 value)
 {
 	return array_iterator((Oid) 23,		/* int4 */
 						  (Oid) 149,	/* int4le */
-						  1,	/* logical and */
+						  1,			/* logical and */
 						  array, (Datum) value);
 }
 
 /* new tobias gabele 1999 */
-
 
 int32
 array_oideq(ArrayType *array, Oid value)
 {
 	return array_iterator((Oid) 26,		/* oid */
 						  (Oid) 184,	/* oideq */
-						  0,	/* logical or */
+						  0,			/* logical or */
 						  array, (Datum) value);
 }
 
@@ -342,14 +382,16 @@ array_all_oidne(ArrayType *array, Oid value)
 {
 	return array_iterator((Oid) 26,		/* int4 */
 						  (Oid) 185,	/* oidne */
-						  1,	/* logical and */
+						  1,			/* logical and */
 						  array, (Datum) value);
 }
 
-
-
-
-
-
-
 /* end of file */
+
+/*
+ * Local Variables:
+ *  tab-width: 4
+ *  c-indent-level: 4
+ *  c-basic-offset: 4
+ * End:
+ */

@@ -29,9 +29,60 @@
 #define JDATE_2000	2451545
 
 /*
+ * decode_24h_time()
+ *
+ * Decode time string 00:00:00 through 24:00:00.
+ */
+static int
+decode_24h_time(char *str, struct tm *tm, double *fsec)
+{
+	char	   *cp;
+
+	tm->tm_hour = strtol(str, &cp, 10);
+	if (*cp != ':')
+		return -1;
+	str = cp + 1;
+	tm->tm_min = strtol(str, &cp, 10);
+	if (*cp == '\0')
+	{
+		tm->tm_sec = 0;
+		*fsec = 0;
+	}
+	else if (*cp != ':')
+	{
+		return -1;
+	}
+	else
+	{
+		str = cp + 1;
+		tm->tm_sec = strtol(str, &cp, 10);
+		if (*cp == '\0')
+			*fsec = 0;
+		else if (*cp == '.')
+		{
+			str = cp;
+			*fsec = strtod(str, &cp);
+			if (cp == str)
+				return -1;
+		}
+		else
+			return -1;
+	}
+
+	/* do a sanity check */
+	if (   (tm->tm_hour < 0) || (tm->tm_hour > 24)
+		|| (tm->tm_min  < 0) || (tm->tm_min  > 59)
+		|| (tm->tm_sec  < 0) || (tm->tm_sec  > 59)
+		|| (fsec        < 0) )
+		return -1;
+
+	return 0;
+}
+
+/*
  * A modified version of time_in which allows the value 24:00:00 for
  * time and converts it to TimeADT data type forcing seconds to 0.
- * This can be Useful if you need to handle TimeADT values limited
+ * This can be useful if you need to handle TimeADT values limited
  * to hh:mm like in timetables.
  */
 
@@ -44,35 +95,23 @@ hhmm_in(char *str)
 	struct tm	tt,
 			   *tm = &tt;
 
-	int			nf;
-	char		lowstr[MAXDATELEN + 1];
-	char	   *field[MAXDATEFIELDS];
-	int			dtype;
-	int			ftype[MAXDATEFIELDS];
-
 	if (!PointerIsValid(str))
 		elog(ERROR, "Bad (null) time external representation", NULL);
 
-	if ((ParseDateTime(str, lowstr, field, ftype, MAXDATEFIELDS, &nf) != 0)
-		|| (DecodeTimeOnly(field, ftype, nf, &dtype, tm, &fsec) != 0))
+	if (decode_24h_time(str, tm, &fsec) != 0)
 		elog(ERROR, "Bad time external representation '%s'", str);
 
-	if (tm->tm_hour < 0 || tm->tm_hour > 24 ||
-		(tm->tm_hour == 24 && (tm->tm_min != 0 || tm->tm_sec != 0 || fsec != 0)))
+	if ((tm->tm_hour < 0) || (tm->tm_hour > 24)
+		|| ((tm->tm_hour == 24)
+			&& ((tm->tm_min != 0) || (tm->tm_sec != 0) || (fsec != 0.0))))
 	{
 		elog(ERROR,
-			 "time_in: hour must be limited to values 0 through 24:00 "
+			 "Time must be limited to values 00:00:00 through 24:00:00 "
 			 "in \"%s\"",
 			 str);
 	}
-	if ((tm->tm_min < 0) || (tm->tm_min > 59))
-		elog(ERROR, "Minute must be limited to values 0 through 59 in '%s'", str);
-	if ((tm->tm_sec < 0) || ((tm->tm_sec + fsec) >= 60))
-		elog(ERROR, "Second must be limited to values 0 through < 60 in '%s'",
-			 str);
 
 	time = palloc(sizeof(TimeADT));
-
 	*time = ((((tm->tm_hour * 60) + tm->tm_min) * 60));
 
 	return (time);
@@ -224,9 +263,9 @@ currentdate()
 /* end of file */
 
 /*
- * Local variables:
- *	tab-width: 4
- *	c-indent-level: 4
- *	c-basic-offset: 4
+ * Local Variables:
+ *  tab-width: 4
+ *  c-indent-level: 4
+ *  c-basic-offset: 4
  * End:
  */

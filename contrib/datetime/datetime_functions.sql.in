@@ -79,14 +79,14 @@ create operator - (
 --
 create function hhmm_mode() returns text
   as 'update pg_type set typinput =''hhmm_in''  where typname=''time'';
-      update pg_type set typoutput=''hhmm_out'' where typname=''time''
-      select ''hhmm_mode''::text'
+      update pg_type set typoutput=''hhmm_out'' where typname=''time'';
+      select ''hhmm_mode''::text;'
   language 'sql';
 
 create function time_mode() returns text
   as 'update pg_type set typinput =''time_in''  where typname=''time'';
-      update pg_type set typoutput=''time_out'' where typname=''time''
-      select ''time_mode''::text'
+      update pg_type set typoutput=''time_out'' where typname=''time'';
+      select ''time_mode''::text;'
   language 'sql';
 
 -- Use these to do the updates manually

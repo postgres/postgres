@@ -1,0 +1,9 @@
+#!/bin/bash
+#
+# Makes an emacs tagfile for all .[chS] and .el files in the current
+# directory tree.
+
+etags    $(find . -name \*.h)  2>/dev/null || true
+etags -a $(find . -name \*.c)  2>/dev/null || true
+etags -a $(find . -name \*.S)  2>/dev/null || true
+etags -a $(find . -name \*.el) 2>/dev/null || true

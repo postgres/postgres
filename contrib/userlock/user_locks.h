@@ -12,9 +12,9 @@ int			user_unlock_all(void);
 #endif
 
 /*
- * Local variables:
- *	tab-width: 4
- *	c-indent-level: 4
- *	c-basic-offset: 4
+ * Local Variables:
+ *  tab-width: 4
+ *  c-indent-level: 4
+ *  c-basic-offset: 4
  * End:
  */

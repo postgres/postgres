@@ -33,8 +33,8 @@ a long period because other transactions would block completely.
 
 The generic user locks use two values, group and id, to identify a lock,
 which correspond to ip_posid and ip_blkid of an ItemPointerData.
-Group is a 16 bit value while id is a 32 bit integer which can also
-contain an oid. The oid user lock function, which take an oid as argument,
+Group is a 16 bit value while id is a 32 bit integer which could also be
+an oid. The oid user lock functions, which take only an oid as argument,
 use a group equal to 0.
 
 The meaning of group and id is defined by the application. The user

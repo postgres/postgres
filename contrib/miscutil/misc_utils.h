@@ -10,15 +10,15 @@ int			assert_enable(int val);
 
 #ifdef ASSERT_CHECKING_TEST
 int			assert_test(int val);
-
 #endif
 
+int			active_listeners(text *relname);
 #endif
 
 /*
- * Local variables:
- *	tab-width: 4
- *	c-indent-level: 4
- *	c-basic-offset: 4
+ * Local Variables:
+ *  tab-width: 4
+ *  c-indent-level: 4
+ *  c-basic-offset: 4
  * End:
  */

@@ -1,0 +1,50 @@
+#!/bin/echo Usage: source
+#
+# Set the shell variables files, cfiles, hfiles, yfiles and sfiles with
+# the names of all .c, .h, .y, and .S files in current directory tree.
+# Define also some shell functions to grep the files. Typical usage is:
+#
+#   $ cd src/
+#   $ source ../contrib/tools/find-sources
+#   $ gh BLCKSZ			# grep BLCKSZ in .h files
+#   $ gcl MAXTUPLEN		# list all .c files containing MAXTUPLEN
+#
+# THIS SCRIPT MUST BE SOURCED FROM BASH.
+#
+# Copyright (C) 1999  Massimo Dal Zotto <dz@cs.unitn.it>
+#
+# This program is free software; you can redistribute it and/or modify
+# it under the terms of the GNU General Public License as published by
+# the Free Software Foundation; either version 2 of the License, or
+# (at your option) any later version.
+#
+# This program is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details.
+#
+# You should have received a copy of the GNU General Public License
+# along with this program; if not, write to the Free Software
+# Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307, USA.
+
+# Build the file lists
+dir=${1-`pwd`}/
+cfiles=`find $dir -name \*.c | sort`
+hfiles=`find $dir -name \*.h | sort`
+yfiles=`find $dir -name \*.y | sort`
+sfiles=`find $dir -name \*.S | sort`
+files="$hfiles $cfiles $yfiles $sfiles"
+
+# Define some functions to grep the files in the lists
+function g()   { grep    -- "$*" $files  /dev/null; }
+function gc()  { grep    -- "$*" $cfiles /dev/null; }
+function gh()  { grep    -- "$*" $hfiles /dev/null; }
+function gy()  { grep    -- "$*" $yfiles /dev/null; }
+function gS()  { grep    -- "$*" $sfiles /dev/null; }
+function gl()  { grep -l -- "$*" $files  /dev/null; }
+function gcl() { grep -l -- "$*" $cfiles /dev/null; }
+function ghl() { grep -l -- "$*" $hfiles /dev/null; }
+function gyl() { grep -l -- "$*" $yfiles /dev/null; }
+function gSl() { grep -l -- "$*" $sfiles /dev/null; }
+
+# end of file

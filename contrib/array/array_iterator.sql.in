@@ -39,43 +39,84 @@ create operator **~ (
   procedure=array_all_textregexeq);
 
 
--- define the array operators *=, **=, *~ and **~ for type _char16
+-- define the array operators *=, **=, *~ and **~ for type _varchar
 --
-create function array_char16eq(_char16, char16) returns bool
+-- NOTE: "varchar" is also a reserved word and must be quoted.
+--
+create function array_varchareq(_varchar, varchar) returns bool
   as 'MODULE_PATHNAME' 
   language 'c';
 
-create function array_all_char16eq(_char16, char16) returns bool
+create function array_all_varchareq(_varchar, varchar) returns bool
   as 'MODULE_PATHNAME' 
   language 'c';
 
-create function array_char16regexeq(_char16, text) returns bool
+create function array_varcharregexeq(_varchar, varchar) returns bool
   as 'MODULE_PATHNAME' 
   language 'c';
 
-create function array_all_char16regexeq(_char16, text) returns bool
+create function array_all_varcharregexeq(_varchar, varchar) returns bool
   as 'MODULE_PATHNAME' 
   language 'c';
 
 create operator *= (
-  leftarg=_char16,
-  rightarg=char16,
-  procedure=array_char16eq);
+  leftarg=_varchar, 
+  rightarg="varchar", 
+  procedure=array_varchareq);
 
 create operator **= (
-  leftarg=_char16,
-  rightarg=char16,
-  procedure=array_all_char16eq);
+  leftarg=_varchar,
+  rightarg="varchar",
+  procedure=array_all_varchareq);
 
 create operator *~ (
-  leftarg=_char16,
-  rightarg=text,
-  procedure=array_char16regexeq);
+  leftarg=_varchar,
+  rightarg="varchar",
+  procedure=array_varcharregexeq);
 
 create operator **~ (
-  leftarg=_char16,
-  rightarg=text,
-  procedure=array_all_char16regexeq);
+  leftarg=_varchar,
+  rightarg="varchar",
+  procedure=array_all_varcharregexeq);
+
+
+-- define the array operators *=, **=, *~ and **~ for type _bpchar
+--
+create function array_bpchareq(_bpchar, bpchar) returns bool
+  as 'MODULE_PATHNAME' 
+  language 'c';
+
+create function array_all_bpchareq(_bpchar, bpchar) returns bool
+  as 'MODULE_PATHNAME' 
+  language 'c';
+
+create function array_bpcharregexeq(_bpchar, bpchar) returns bool
+  as 'MODULE_PATHNAME' 
+  language 'c';
+
+create function array_all_bpcharregexeq(_bpchar, bpchar) returns bool
+  as 'MODULE_PATHNAME' 
+  language 'c';
+
+create operator *= (
+  leftarg=_bpchar, 
+  rightarg=bpchar, 
+  procedure=array_bpchareq);
+
+create operator **= (
+  leftarg=_bpchar,
+  rightarg=bpchar,
+  procedure=array_all_bpchareq);
+
+create operator *~ (
+  leftarg=_bpchar,
+  rightarg=bpchar,
+  procedure=array_bpcharregexeq);
+
+create operator **~ (
+  leftarg=_bpchar,
+  rightarg=bpchar,
+  procedure=array_all_bpcharregexeq);
 
 
 -- define the array operators *=, **=, *> and **> for type _int4
@@ -207,7 +248,6 @@ create operator **<> (
   leftarg=_oid,
   rightarg=oid,
   procedure=array_all_oidne);
-
 
 
 -- end of file
