@@ -3,7 +3,7 @@
  *			  procedural language
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/pl/plpgsql/src/pl_exec.c,v 1.121 2004/11/16 18:10:14 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/pl/plpgsql/src/pl_exec.c,v 1.122 2004/11/21 22:27:34 tgl Exp $
  *
  *	  This software is copyrighted by Jan Wieck - Hamburg.
  *
@@ -898,7 +898,6 @@ exec_stmt_block(PLpgSQL_execstate *estate, PLpgSQL_stmt_block *block)
 		 */
 		MemoryContext oldcontext = CurrentMemoryContext;
 		ResourceOwner oldowner = CurrentResourceOwner;
-		volatile bool caught = false;
 
 		BeginInternalSubTransaction(NULL);
 		/* Want to run statements inside function's memory context */
@@ -907,6 +906,17 @@ exec_stmt_block(PLpgSQL_execstate *estate, PLpgSQL_stmt_block *block)
 		PG_TRY();
 		{
 			rc = exec_stmts(estate, block->body);
+
+			/* Commit the inner transaction, return to outer xact context */
+			ReleaseCurrentSubTransaction();
+			MemoryContextSwitchTo(oldcontext);
+			CurrentResourceOwner = oldowner;
+
+			/*
+			 * AtEOSubXact_SPI() should not have popped any SPI context,
+			 * but just in case it did, make sure we remain connected.
+			 */
+			SPI_restore_connection();
 		}
 		PG_CATCH();
 		{
@@ -949,22 +959,8 @@ exec_stmt_block(PLpgSQL_execstate *estate, PLpgSQL_stmt_block *block)
 				ReThrowError(edata);
 			else
 				FreeErrorData(edata);
-			caught = true;
 		}
 		PG_END_TRY();
-
-		/* Commit the inner transaction, return to outer xact context */
-		if (!caught)
-		{
-			ReleaseCurrentSubTransaction();
-			MemoryContextSwitchTo(oldcontext);
-			CurrentResourceOwner = oldowner;
-			/*
-			 * AtEOSubXact_SPI() should not have popped any SPI context,
-			 * but just in case it did, make sure we remain connected.
-			 */
-			SPI_restore_connection();
-		}
 	}
 	else
 	{
