@@ -3,7 +3,7 @@
  * spi.c
  *				Server Programming Interface
  *
- * $Id: spi.c,v 1.54 2001/05/21 14:22:17 wieck Exp $
+ * $Header: /cvsroot/pgsql/src/backend/executor/spi.c,v 1.55 2001/06/01 19:43:55 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -48,8 +48,9 @@ extern void ShowUsage(void);
 /* =================== interface functions =================== */
 
 int
-SPI_connect()
+SPI_connect(void)
 {
+	_SPI_connection *new_SPI_stack;
 
 	/*
 	 * When procedure called by Executor _SPI_curid expected to be equal
@@ -62,19 +63,23 @@ SPI_connect()
 	{
 		if (_SPI_connected != -1)
 			elog(FATAL, "SPI_connect: no connection(s) expected");
-		_SPI_stack = (_SPI_connection *) malloc(sizeof(_SPI_connection));
+		new_SPI_stack = (_SPI_connection *) malloc(sizeof(_SPI_connection));
 	}
 	else
 	{
 		if (_SPI_connected <= -1)
 			elog(FATAL, "SPI_connect: some connection(s) expected");
-		_SPI_stack = (_SPI_connection *) realloc(_SPI_stack,
+		new_SPI_stack = (_SPI_connection *) realloc(_SPI_stack,
 						 (_SPI_connected + 2) * sizeof(_SPI_connection));
 	}
+
+	if (new_SPI_stack == NULL)
+		elog(ERROR, "Memory exhausted in SPI_connect");
 
 	/*
 	 * We' returning to procedure where _SPI_curid == _SPI_connected - 1
 	 */
+	_SPI_stack = new_SPI_stack;
 	_SPI_connected++;
 
 	_SPI_current = &(_SPI_stack[_SPI_connected]);
@@ -104,7 +109,7 @@ SPI_connect()
 }
 
 int
-SPI_finish()
+SPI_finish(void)
 {
 	int			res;
 
@@ -136,8 +141,14 @@ SPI_finish()
 	}
 	else
 	{
-		_SPI_stack = (_SPI_connection *) realloc(_SPI_stack,
+		_SPI_connection *new_SPI_stack;
+
+		new_SPI_stack = (_SPI_connection *) realloc(_SPI_stack,
 						 (_SPI_connected + 1) * sizeof(_SPI_connection));
+		/* This could only fail with a pretty stupid malloc package ... */
+		if (new_SPI_stack == NULL)
+			elog(ERROR, "Memory exhausted in SPI_finish");
+		_SPI_stack = new_SPI_stack;
 		_SPI_current = &(_SPI_stack[_SPI_connected]);
 	}
 
@@ -151,7 +162,6 @@ SPI_finish()
 void
 AtEOXact_SPI(void)
 {
-
 	/*
 	 * Note that memory contexts belonging to SPI stack entries will be
 	 * freed automatically, so we can ignore them here.  We just need to
