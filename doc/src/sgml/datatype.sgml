@@ -1,5 +1,5 @@
 <!--
-$PostgreSQL: pgsql/doc/src/sgml/datatype.sgml,v 1.152 2004/12/23 05:37:39 tgl Exp $
+$PostgreSQL: pgsql/doc/src/sgml/datatype.sgml,v 1.153 2005/01/08 05:19:18 tgl Exp $
 -->
 
  <chapter id="datatype">
@@ -446,9 +446,9 @@ $PostgreSQL: pgsql/doc/src/sgml/datatype.sgml,v 1.152 2004/12/23 05:37:39 tgl Ex
      The type <type>numeric</type> can store numbers with up to 1000
      digits of precision and perform calculations exactly. It is
      especially recommended for storing monetary amounts and other
-     quantities where exactness is required. However, the
-     <type>numeric</type> type is very slow compared to the
-     floating-point types described in the next section.
+     quantities where exactness is required. However, arithmetic on
+     <type>numeric</type> values is very slow compared to the integer
+     types, or to the floating-point types described in the next section.
     </para>
 
     <para>
@@ -464,7 +464,8 @@ $PostgreSQL: pgsql/doc/src/sgml/datatype.sgml,v 1.152 2004/12/23 05:37:39 tgl Ex
     </para>
 
     <para>
-     Both the precision and the scale of the numeric type can be
+     Both the maximum precision and the maximum scale of a
+     <type>numeric</type> column can be
      configured.  To declare a column of type <type>numeric</type> use
      the syntax
 <programlisting>
@@ -492,10 +493,19 @@ NUMERIC
     </para>
 
     <para>
-     If the precision or scale of a value is greater than the declared
-     precision or scale of a column, the system will attempt to round
-     the value.  If the value cannot be rounded so as to satisfy the
-     declared limits, an error is raised.
+     If the scale of a value to be stored is greater than the declared
+     scale of the column, the system will round the value to the specified
+     number of fractional digits.  Then, if the number of digits to the
+     left of the decimal point exceeds the declared precision minus the
+     declared scale, an error is raised.
+    </para>
+
+    <para>
+     Numeric values are physically stored without any extra leading or
+     trailing zeroes.  Thus, the declared precision and scale of a column
+     are maximums, not fixed allocations.  (In this sense the <type>numeric</>
+     type is more akin to <type>varchar(<replaceable>n</>)</type>
+     than to <type>char(<replaceable>n</>)</type>.)
     </para>
 
     <para>
@@ -1089,13 +1099,18 @@ SELECT b, char_length(b) FROM test2;
 
    <para>
     A binary string is a sequence of octets (or bytes).  Binary
-    strings are distinguished from characters strings by two
+    strings are distinguished from character strings by two
     characteristics: First, binary strings specifically allow storing
     octets of value zero and other <quote>non-printable</quote>
-    octets (defined as octets outside the range 32 to 126).
+    octets (usually, octets outside the range 32 to 126).
+    Character strings disallow zero octets, and also disallow any
+    other octet values and sequences of octet values that are invalid
+    according to the database's selected character set encoding.
     Second, operations on binary strings process the actual bytes,
-    whereas the encoding and processing of character strings depends
-    on locale settings.
+    whereas the processing of character strings depends on locale settings.
+    In short, binary strings are appropriate for storing data that the
+    programmer thinks of as <quote>raw bytes</>, whereas character
+    strings are appropriate for storing text.
    </para>
 
    <para>
@@ -1254,7 +1269,7 @@ SELECT b, char_length(b) FROM test2;
    <para>
         The <acronym>SQL</acronym> standard defines a different binary
         string type, called <type>BLOB</type> or <type>BINARY LARGE
-         OBJECT</type>.  The input format is different compared to
+        OBJECT</type>.  The input format is different from
         <type>bytea</type>, but the provided functions and operators are
         mostly the same.
    </para>
@@ -1295,7 +1310,9 @@ SELECT b, char_length(b) FROM test2;
    <para>
     <productname>PostgreSQL</productname> supports the full set of
     <acronym>SQL</acronym> date and time types, shown in <xref
-    linkend="datatype-datetime-table">.
+    linkend="datatype-datetime-table">.  The operations available
+    on these data types are described in
+    <xref linkend="functions-datetime">.
    </para>
 
     <table id="datatype-datetime-table">
@@ -1842,8 +1859,10 @@ January 8 04:05:06 1999 PST
       are specially represented inside the system and will be displayed
       the same way; but the others are simply notational shorthands
       that will be converted to ordinary date/time values when read.
-      All of these values are treated as normal constants and need to be
-      written in single quotes.
+      (In particular, <literal>now</> and related strings are converted
+      to a specific time value as soon as they are read.)
+      All of these values need to be written in single quotes when used
+      as constants in SQL commands.
      </para>
 
       <table id="datatype-datetime-special-table">
@@ -1908,7 +1927,7 @@ January 8 04:05:06 1999 PST
       <literal>CURRENT_DATE</literal>, <literal>CURRENT_TIME</literal>, 
       <literal>CURRENT_TIMESTAMP</literal>, <literal>LOCALTIME</literal>, 
       <literal>LOCALTIMESTAMP</literal>.  The latter four accept an 
-      optional precision specification.  (See also <xref 
+      optional precision specification.  (See <xref 
       linkend="functions-datetime-current">.)  Note however that these are
       SQL functions and are <emphasis>not</> recognized as data input strings.
      </para>
@@ -2265,7 +2284,7 @@ SELECT * FROM test1 WHERE a;
      not work).  This can be accomplished using the
      <literal>CASE</literal> expression: <literal>CASE WHEN
      <replaceable>boolval</replaceable> THEN 'value if true' ELSE
-     'value if false' END</literal>.  See also <xref
+     'value if false' END</literal>.  See <xref
      linkend="functions-conditional">.
     </para>
    </tip>
@@ -2454,9 +2473,9 @@ SELECT * FROM test1 WHERE a;
     <para>
      Paths are represented by lists of connected points. Paths can be
      <firstterm>open</firstterm>, where
-     the first and last points in the list are not connected, or
+     the first and last points in the list are not considered connected, or
      <firstterm>closed</firstterm>,
-     where the first and last points are connected.
+     where the first and last points are considered connected.
     </para>
 
     <para>
@@ -2558,7 +2577,7 @@ SELECT * FROM test1 WHERE a;
     is preferable to use these types instead of plain text types to store
     network addresses, because
     these types offer input error checking and several specialized
-    operators and functions.
+    operators and functions (see <xref linkend="functions-net">).
    </para>
 
     <table tocentry="1" id="datatype-net-types-table">
@@ -3006,12 +3025,25 @@ SELECT * FROM test;
     for specialized input and output routines.  These routines are able
     to accept and display symbolic names for system objects, rather than
     the raw numeric value that type <type>oid</> would use.  The alias
-    types allow simplified lookup of OID values for objects: for example,
-    one may write <literal>'mytable'::regclass</> to get the OID of table
-    <literal>mytable</>, rather than <literal>SELECT oid FROM pg_class WHERE
-    relname = 'mytable'</>.  (In reality, a much more complicated <command>SELECT</> would
-    be needed to deal with selecting the right OID when there are multiple
-    tables named <literal>mytable</> in different schemas.)
+    types allow simplified lookup of OID values for objects.  For example,
+    to examine the <structname>pg_attribute</> rows related to a table
+    <literal>mytable</>, one could write
+<programlisting>
+SELECT * FROM pg_attribute WHERE attrelid = 'mytable'::regclass;
+</programlisting>
+    rather than
+<programlisting>
+SELECT * FROM pg_attribute
+  WHERE attrelid = (SELECT oid FROM pg_class WHERE relname = 'mytable');
+</programlisting>
+    While that doesn't look all that bad by itself, it's still oversimplified.
+    A far more complicated sub-select would be needed to
+    select the right OID if there are multiple tables named
+    <literal>mytable</> in different schemas.
+    The <type>regclass</> input converter handles the table lookup according
+    to the schema path setting, and so it does the <quote>right thing</>
+    automatically.  Similarly, casting a table's OID to
+    <type>regclass</> is handy for symbolic display of a numeric OID.
    </para>
 
     <table id="datatype-oid-table">
