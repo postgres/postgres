@@ -10,5 +10,13 @@
  *-------------------------------------------------------------------------
  */
 #ifndef GISTSTRAT_H
+#define GISTSTRAT_H
+
+StrategyNumber
+RelationGetGISTStrategy(Relation r, AttrNumber attnum, RegProcedure proc);
+
+bool
+RelationInvokeGISTStrategy(Relation r, AttrNumber attnum, StrategyNumber s,
+                           Datum left, Datum right);
 
 #endif /* GISTSTRAT_H */
