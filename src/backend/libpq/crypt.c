@@ -9,7 +9,7 @@
  * Dec 17, 1997 - Todd A. Brandys
  *	Orignal Version Completed.
  *
- * $Id: crypt.c,v 1.31 2001/03/22 03:59:30 momjian Exp $
+ * $Id: crypt.c,v 1.32 2001/06/23 23:26:17 petere Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -78,11 +78,10 @@ crypt_openpwdfile(void)
 	FILE	   *pwdfile;
 
 	filename = crypt_getpwdfilename();
-	pwdfile = AllocateFile(filename, PG_BINARY_R);
+	pwdfile = AllocateFile(filename, "r");
 
-	if (pwdfile == NULL)
-		fprintf(stderr, "Couldn't read %s: %s\n",
-				filename, strerror(errno));
+	if (pwdfile == NULL && errno != ENOENT)
+		elog(DEBUG, "could not open %s: %s", filename, strerror(errno));
 
 	pfree(filename);
 
