@@ -14,7 +14,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  *
- *  $Id: pgtransdb.h,v 1.7 2001/05/09 17:29:10 momjian Exp $
+ *  $Id: pgtransdb.h,v 1.8 2001/07/11 22:12:43 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -34,7 +34,7 @@
 // This is the database access class that keeps an open
 // transaction block during its lifetime.  The block is ENDed when
 // the object is destroyed.
-class PgTransaction : public PgDatabase {
+class DLLIMPORT PgTransaction : public PgDatabase {
 public:
   explicit PgTransaction(const char* conninfo);	// use reasonable & environment defaults
   // connect to the database with given environment and database name

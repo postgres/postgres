@@ -11,7 +11,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  *
- *  $Id: pglobject.h,v 1.7 2001/05/09 17:29:10 momjian Exp $
+ *  $Id: pglobject.h,v 1.8 2001/07/11 22:12:43 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -35,7 +35,7 @@
 // PgLargeObject - a class for accessing Large Object in a database
 //
 // ****************************************************************
-class PgLargeObject : public PgConnection {
+class DLLIMPORT PgLargeObject : public PgConnection {
 private:
   int pgFd;
   Oid pgObject;

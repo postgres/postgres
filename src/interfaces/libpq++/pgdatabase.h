@@ -14,7 +14,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  *
- *  $Id: pgdatabase.h,v 1.11 2001/05/09 17:46:11 momjian Exp $
+ *  $Id: pgdatabase.h,v 1.12 2001/07/11 22:12:43 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -34,7 +34,7 @@
 // This is the basic database access class.  Its interface should 
 // be used only after a query has been sent to the backend and
 // results are being received.
-class PgDatabase : public PgConnection {
+class DLLIMPORT PgDatabase : public PgConnection {
 public:
   // connect to the database with conninfo
   explicit PgDatabase(const char* conninfo) : PgConnection(conninfo) {}

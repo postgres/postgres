@@ -12,7 +12,7 @@
  * Portions Copyright (c) 1996-2001, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Id: c.h,v 1.96 2001/07/03 20:21:50 petere Exp $
+ * $Id: c.h,v 1.97 2001/07/11 22:12:43 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -615,7 +615,13 @@ typedef NameData *Name;
 #else							/* not BUILDING_DLL */
 #define DLLIMPORT __declspec (dllimport)
 #endif
-#else							/* not CYGWIN */
+#elif defined(WIN32) && defined(_MSC_VER)	/* not CYGWIN */
+#if defined(_DLL)
+#define DLLIMPORT __declspec (dllexport)
+#else							/* not _DLL */
+#define DLLIMPORT __declspec (dllimport)
+#endif
+#else							/* not CYGWIN, not MSVC */
 #define DLLIMPORT
 #endif
 

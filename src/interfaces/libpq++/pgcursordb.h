@@ -14,7 +14,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  *
- *  $Id: pgcursordb.h,v 1.7 2001/05/09 17:29:10 momjian Exp $
+ *  $Id: pgcursordb.h,v 1.8 2001/07/11 22:12:43 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -42,7 +42,7 @@
 // manipulates data through it.  The interface will introduce some
 // ease of use through the methods that will allow cursor specific
 // operations, like fetch, forward, etc.
-class PgCursor : public PgTransaction {
+class DLLIMPORT PgCursor : public PgTransaction {
 public:
   PgCursor(const char* conninfo, const char* cursor);	// use reasonable & environment defaults
   // connect to the database with given environment and database name

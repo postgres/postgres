@@ -20,3 +20,6 @@
 
 #define HAVE_ATEXIT
 #define HAVE_MEMMOVE
+
+#define HAVE_CXX_STRING_HEADER
+#define HAVE_NAMESPACE_STD

@@ -20,6 +20,8 @@ ALL:
    cd ..
    cd interfaces\libpq
    nmake /f win32.mak $(MAKEMACRO)
+   cd ..\libpq++
+   nmake /f win32.mak $(MAKEMACRO)
    cd ..\..\bin\psql
    nmake /f win32.mak $(MAKEMACRO)
    cd ..\..
