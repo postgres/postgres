@@ -9,7 +9,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/commands/functioncmds.c,v 1.14 2002/07/29 20:45:44 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/commands/functioncmds.c,v 1.15 2002/07/29 23:44:44 tgl Exp $
  *
  * DESCRIPTION
  *	  These routines take the parse tree and pick out the
@@ -47,6 +47,7 @@
 #include "parser/parse_func.h"
 #include "parser/parse_type.h"
 #include "utils/acl.h"
+#include "utils/builtins.h"
 #include "utils/fmgroids.h"
 #include "utils/lsyscache.h"
 #include "utils/syscache.h"
@@ -633,10 +634,14 @@ CreateCast(CreateCastStmt *stmt)
 
 	if (stmt->func != NULL)
 	{
-		funcid = LookupFuncNameTypeNames(stmt->func->funcname, stmt->func->funcargs, false, "CreateCast");
+		funcid = LookupFuncNameTypeNames(stmt->func->funcname,
+										 stmt->func->funcargs,
+										 false,
+										 "CreateCast");
 
-		if(!pg_proc_ownercheck(funcid, GetUserId()))
-			elog(ERROR, "permission denied");
+		if (!pg_proc_ownercheck(funcid, GetUserId()))
+			aclcheck_error(ACLCHECK_NOT_OWNER,
+						   NameListToString(stmt->func->funcname));
 
 		tuple = SearchSysCache(PROCOID, ObjectIdGetDatum(funcid), 0, 0, 0);
 		if (!HeapTupleIsValid(tuple))
@@ -661,10 +666,13 @@ CreateCast(CreateCastStmt *stmt)
 	else
 	{
 		/* indicates binary compatibility */
-		if (!pg_type_ownercheck(sourcetypeid, GetUserId())
-			|| !pg_type_ownercheck(targettypeid, GetUserId()))
-			elog(ERROR, "permission denied");
-		funcid = 0;
+		if (!pg_type_ownercheck(sourcetypeid, GetUserId()))
+			aclcheck_error(ACLCHECK_NOT_OWNER,
+						   TypeNameToString(stmt->sourcetype));
+		if (!pg_type_ownercheck(targettypeid, GetUserId()))
+			aclcheck_error(ACLCHECK_NOT_OWNER,
+						   TypeNameToString(stmt->targettype));
+		funcid = InvalidOid;
 	}
 
 	/* ready to go */
@@ -754,14 +762,18 @@ DropCast(DropCastStmt *stmt)
 	caststruct = (Form_pg_cast) GETSTRUCT(tuple);
 	if (caststruct->castfunc != InvalidOid)
 	{
-		if(!pg_proc_ownercheck(caststruct->castfunc, GetUserId()))
-			elog(ERROR, "permission denied");
+		if (!pg_proc_ownercheck(caststruct->castfunc, GetUserId()))
+			aclcheck_error(ACLCHECK_NOT_OWNER,
+						   get_func_name(caststruct->castfunc));
 	}
 	else
 	{
-		if (!pg_type_ownercheck(sourcetypeid, GetUserId())
-			|| !pg_type_ownercheck(targettypeid, GetUserId()))
-			elog(ERROR, "permission denied");
+		if (!pg_type_ownercheck(sourcetypeid, GetUserId()))
+			aclcheck_error(ACLCHECK_NOT_OWNER,
+						   format_type_be(sourcetypeid));
+		if (!pg_type_ownercheck(targettypeid, GetUserId()))
+			aclcheck_error(ACLCHECK_NOT_OWNER,
+						   format_type_be(targettypeid));
 	}
 
 	/*
