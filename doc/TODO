@@ -97,7 +97,7 @@ TYPES
 * SELECT col FROM tab WHERE numeric_col = 10.1 fails
 * Allow arrays to hold NULL elements
 * Get BIT type working
-* Allow better handling of numeric constants
+* Allow better handling of numeric constants, type conversion [typeconv]
 * Support multiple simultaneous character sets, per SQL92
 
 VIEWS

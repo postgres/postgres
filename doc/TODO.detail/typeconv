@@ -1,0 +1,454 @@
+From pgsql-hackers-owner+M1833@hub.org Sat May 13 22:49:26 2000
+Received: from news.tht.net (news.hub.org [216.126.91.242])
+	by candle.pha.pa.us (8.9.0/8.9.0) with ESMTP id WAA07394
+	for <pgman@candle.pha.pa.us>; Sat, 13 May 2000 22:49:24 -0400 (EDT)
+Received: from hub.org (majordom@hub.org [216.126.84.1])
+	by news.tht.net (8.9.3/8.9.3) with ESMTP id WAB99859;
+	Sat, 13 May 2000 22:44:15 -0400 (EDT)
+	(envelope-from pgsql-hackers-owner+M1833@hub.org)
+Received: from sss2.sss.pgh.pa.us (sss.pgh.pa.us [209.114.166.2])
+	by hub.org (8.9.3/8.9.3) with ESMTP id WAA51058
+	for <pgsql-hackers@postgreSQL.org>; Sat, 13 May 2000 22:41:16 -0400 (EDT)
+	(envelope-from tgl@sss.pgh.pa.us)
+Received: from sss2.sss.pgh.pa.us (tgl@localhost [127.0.0.1])
+	by sss2.sss.pgh.pa.us (8.9.3/8.9.3) with ESMTP id WAA18343
+	for <pgsql-hackers@postgreSQL.org>; Sat, 13 May 2000 22:40:38 -0400 (EDT)
+To: pgsql-hackers@postgresql.org
+Subject: [HACKERS] Proposal for fixing numeric type-resolution issues
+Date: Sat, 13 May 2000 22:40:38 -0400
+Message-ID: <18340.958272038@sss.pgh.pa.us>
+From: Tom Lane <tgl@sss.pgh.pa.us>
+X-Mailing-List: pgsql-hackers@postgresql.org
+Precedence: bulk
+Sender: pgsql-hackers-owner@hub.org
+Status: ORr
+
+We've got a collection of problems that are related to the parser's
+inability to make good type-resolution choices for numeric constants.
+In some cases you get a hard error; for example "NumericVar + 4.4"
+yields
+ERROR:  Unable to identify an operator '+' for types 'numeric' and 'float8'
+        You will have to retype this query using an explicit cast
+because "4.4" is initially typed as float8 and the system can't figure
+out whether to use numeric or float8 addition.  A more subtle problem
+is that a query like "... WHERE Int2Var < 42" is unable to make use of
+an index on the int2 column: 42 is resolved as int4, so the operator
+is int24lt, which works but is not in the opclass of an int2 index.
+
+Here is a proposal for fixing these problems.  I think we could get this
+done for 7.1 if people like it.
+
+The basic problem is that there's not enough smarts in the type resolver
+about the interrelationships of the numeric datatypes.  All it has is
+a concept of a most-preferred type within the category of numeric types.
+(We are abusing the most-preferred-type mechanism, BTW, because both
+FLOAT8 and NUMERIC claim to be the most-preferred type in the numeric
+category!  This is in fact why the resolver can't make a choice for
+"numeric+float8".)  We need more intelligence than that.
+
+I propose that we set up a strictly-ordered hierarchy of numeric
+datatypes, running from least preferred to most preferred:
+	int2, int4, int8, numeric, float4, float8.
+Rather than simply considering coercions to the most-preferred type,
+the type resolver should use the following rules:
+
+1. No value will be down-converted (eg int4 to int2) except by an
+explicit conversion.
+
+2. If there is not an exact matching operator, numeric values will be
+up-converted to the highest numeric datatype present among the operator
+or function's arguments.  For example, given "int2 + int8" we'd up-
+convert the int2 to int8 and apply int8 addition.
+
+The final piece of the puzzle is that the type initially assigned to
+an undecorated numeric constant should be NUMERIC if it contains a
+decimal point or exponent, and otherwise the smallest of int2, int4,
+int8, NUMERIC that will represent it.  This is a considerable change
+from the current lexer behavior, where you get either int4 or float8.
+
+For example, given "NumericVar + 4.4", the constant 4.4 will initially
+be assigned type NUMERIC, we will resolve the operator as numeric plus,
+and everything's fine.  Given "Float8Var + 4.4", the constant is still
+initially numeric, but will be up-converted to float8 so that float8
+addition can be used.  The end result is the same as in traditional
+Postgres: you get float8 addition.  Given "Int2Var < 42", the constant
+is initially typed as int2, since it fits, and we end up selecting
+int2lt, thereby allowing use of an int2 index.  (On the other hand,
+given "Int2Var < 100000", we'd end up using int4lt, which is correct
+to avoid overflow.)
+
+A couple of crucial subtleties here:
+
+1. We are assuming that the parser or optimizer will constant-fold
+any conversion functions that are introduced.  Thus, in the
+"Float8Var + 4.4" case, the 4.4 is represented as a float8 4.4 by the
+time execution begins, so there's no performance loss.
+
+2. We cannot lose precision by initially representing a constant as
+numeric and later converting it to float.  Nor can we exceed NUMERIC's
+range (the default 1000-digit limit is more than the range of IEEE
+float8 data).  It would not work as well to start out by representing
+a constant as float and then converting it to numeric.
+
+Presently, the pg_proc and pg_operator tables contain a pretty fair
+collection of cross-datatype numeric operators, such as int24lt,
+float48pl, etc.  We could perhaps leave these in, but I believe that
+it is better to remove them.  For example, if int42lt is left in place,
+then it would capture cases like "Int4Var < 42", whereas we need that
+to be translated to int4lt so that an int4 index can be used.  Removing
+these operators will eliminate some code bloat and system-catalog bloat
+to boot.
+
+As far as I can tell, this proposal is almost compatible with the rules
+given in SQL92: in particular, SQL92 specifies that an operator having
+both "approximate numeric" (float) and "exact numeric" (int or numeric)
+inputs should deliver an approximate-numeric result.  I propose
+deviating from SQL92 in a single respect: SQL92 specifies that a
+constant containing an exponent (eg 1.2E34) is approximate numeric,
+which implies that the result of an operator using it is approximate
+even if the other operand is exact.  I believe it's better to treat
+such a constant as exact (ie, type NUMERIC) and only convert it to
+float if the other operand is float.  Without doing that, an assignment
+like
+	UPDATE tab SET NumericVar = 1.234567890123456789012345E34;
+will not work as desired because the constant will be prematurely
+coerced to float, causing precision loss.
+
+Comments?
+
+			regards, tom lane
+
+From tgl@sss.pgh.pa.us Sun May 14 17:30:56 2000
+Received: from renoir.op.net (root@renoir.op.net [207.29.195.4])
+	by candle.pha.pa.us (8.9.0/8.9.0) with ESMTP id RAA05808
+	for <pgman@candle.pha.pa.us>; Sun, 14 May 2000 17:30:52 -0400 (EDT)
+Received: from sss2.sss.pgh.pa.us (sss.pgh.pa.us [209.114.166.2]) by renoir.op.net (o1/$Revision: 1.1 $) with ESMTP id RAA16657 for <pgman@candle.pha.pa.us>; Sun, 14 May 2000 17:29:52 -0400 (EDT)
+Received: from sss2.sss.pgh.pa.us (tgl@localhost [127.0.0.1])
+	by sss2.sss.pgh.pa.us (8.9.3/8.9.3) with ESMTP id RAA20914;
+	Sun, 14 May 2000 17:29:30 -0400 (EDT)
+To: Bruce Momjian <pgman@candle.pha.pa.us>
+cc: PostgreSQL-development <pgsql-hackers@postgreSQL.org>
+Subject: Re: [HACKERS] type conversion discussion 
+In-reply-to: <200005141950.PAA04636@candle.pha.pa.us> 
+References: <200005141950.PAA04636@candle.pha.pa.us>
+Comments: In-reply-to Bruce Momjian <pgman@candle.pha.pa.us>
+	message dated "Sun, 14 May 2000 15:50:20 -0400"
+Date: Sun, 14 May 2000 17:29:30 -0400
+Message-ID: <20911.958339770@sss.pgh.pa.us>
+From: Tom Lane <tgl@sss.pgh.pa.us>
+Status: OR
+
+Bruce Momjian <pgman@candle.pha.pa.us> writes:
+> As some point, it seems we need to get all the PostgreSQL minds together
+> to discuss type conversion issues.  These problems continue to come up
+> from release to release.  We are getting better, but it seems a full
+> discussion could help solidify our strategy.
+
+OK, here are a few things that bug me about the current type-resolution
+code:
+
+1. Poor choice of type to attribute to numeric literals.  (A possible
+   solution is sketched in my earlier message, but do we need similar
+   mechanisms for other type categories?)
+
+2. Tensions between treating string literals as "unknown" type and
+   as "text" type, per this thread so far.
+
+3. IS_BINARY_COMPATIBLE seems like a bogus concept.  Do we really want a
+   fully symmetrical ring of types in each group?  I'd prefer to see a
+   one-way equivalence, which allows eg. OID to be silently converted
+   to INT4, but *not* vice versa (except perhaps by specific user cast).
+   This'd be more like a traditional "is-a" or inheritance relationship
+   between datatypes, which has well-understood semantics.
+
+4. I'm also concerned that the behavior of IS_BINARY_COMPATIBLE isn't
+   very predictable because it will happily go either way.  For example,
+   if I do 
+	select * from pg_class where oid = 1234;
+   it's unclear whether I will get an oideq or an int4eq operator ---
+   and that's a rather critical point since only one of them can exploit
+   an index on the oid column.  Currently, there is some klugery in the
+   planner that works around this by overriding the parser's choice of
+   operator to substitute one that is compatible with an available index.
+   That's a pretty ugly solution ... I'm not sure I know a better one,
+   but as long as we're discussing type resolution issues ...
+
+5. Lack of extensibility.  There's way too much knowledge hard-wired
+   into the parser about type categories, preferred types, binary
+   compatibility, etc.  All of it falls down when faced with
+   user-defined datatypes.  If we do something like I suggested with
+   a hardwired hierarchy of numeric datatypes, it'll get even worse.
+   All this stuff ought to be driven off fields in pg_type rather than
+   be hardwired into the code, so that the same concepts can be extended
+   to user-defined types.
+
+I don't have worked-out proposals for any of these but the first,
+but they've all been bothering me for a while.
+
+			regards, tom lane
+
+From tgl@sss.pgh.pa.us Sun May 14 21:02:31 2000
+Received: from sss2.sss.pgh.pa.us (sss.pgh.pa.us [209.114.166.2])
+	by candle.pha.pa.us (8.9.0/8.9.0) with ESMTP id VAA07700
+	for <pgman@candle.pha.pa.us>; Sun, 14 May 2000 21:02:28 -0400 (EDT)
+Received: from sss2.sss.pgh.pa.us (tgl@localhost [127.0.0.1])
+	by sss2.sss.pgh.pa.us (8.9.3/8.9.3) with ESMTP id VAA21261;
+	Sun, 14 May 2000 21:03:17 -0400 (EDT)
+To: Bruce Momjian <pgman@candle.pha.pa.us>
+cc: PostgreSQL-development <pgsql-hackers@postgreSQL.org>
+Subject: Re: [HACKERS] type conversion discussion 
+In-reply-to: <20911.958339770@sss.pgh.pa.us> 
+References: <200005141950.PAA04636@candle.pha.pa.us> <20911.958339770@sss.pgh.pa.us>
+Comments: In-reply-to Tom Lane <tgl@sss.pgh.pa.us>
+	message dated "Sun, 14 May 2000 17:29:30 -0400"
+Date: Sun, 14 May 2000 21:03:17 -0400
+Message-ID: <21258.958352597@sss.pgh.pa.us>
+From: Tom Lane <tgl@sss.pgh.pa.us>
+Status: OR
+
+Here are the results of some further thoughts about type-conversion
+issues.  This is not a complete proposal yet, but a sketch of an
+approach that might solve several of the gripes in my previous proposal.
+
+While thinking about this, I realized that my numeric-types proposal
+of yesterday would break at least a few cases that work nicely now.
+For example, I frequently do things like
+	select * from pg_class where oid = 1234;
+whilst poking around in system tables and querytree dumps.  If that
+constant is initially resolved as int2, as I suggested yesterday,
+then we have "oid = int2" for which there is no operator.  To succeed
+we must decide to promote the constant to int4 --- but with no int4
+visible among the operands of the "=", it will not work to just "promote
+numerics to the highest type seen in the operands" as I suggested
+yesterday.  So there has to be some more interaction in there.
+
+Anyway, I was complaining about the looseness of the concept of
+binary-compatible types and the fact that the parser's type conversion
+knowledge is mostly hardwired.  These might be resolved by generalizing
+the numeric type hierarchy idea into a "type promotion lattice", which
+would work like this:
+
+* Add a "typpromote" column to pg_type, which contains either zero or
+  the OID of another type that the parser is allowed to promote this
+  type to when searching for usable functions/operators.  For example,
+  my numeric-types hierarchy of yesterday would be expressed by making
+  int2 promote to int4, int4 to int8, int8 to numeric, numeric to
+  float4, and float4 to float8.  The promotion idea also replaces the
+  current concept of binary-compatible types: for example, OID would
+  link to int4 and varchar would link to text (but not vice versa!).
+
+* Also add a "typpromotebin" boolean column to pg_type, which contains
+  't' if the type conversion indicated by typpromote is "free", ie,
+  no conversion function need be executed before regarding a value as
+  belonging to the promoted type.  This distinguishes binary-compatible
+  from non-binary-compatible cases.  If "typpromotebin" is 'f' and the
+  parser decides it needs to apply the conversion, then it has to look
+  up the appropriate conversion function in pg_proc.  (More about this
+  below.)
+
+Now, if the parser fails to find an exact match for a given function
+or operator name and the exact set of input data types, it proceeds by
+chasing up the promotion chains for the input data types and trying to
+locate a set of types for which there is a matching function/operator.
+If there are multiple possibilities, we choose the one which is the
+"least promoted" by some yet-to-be-determined metric.  (This metric
+would probably favor "free" conversions over non-free ones, but other
+than that I'm not quite sure how it should work.  The metric would
+replace a whole bunch of ad-hoc heuristics that are currently applied
+in the type resolver, so even if it seems rather ad-hoc it'd still be
+cleaner than what we have ;-).)
+
+In a situation like the "oid = int2" example above, this mechanism would
+presumably settle on "int4 = int4" as being the least-promoted
+equivalent operator.  (It could not find "oid = oid" since there is
+no promotion path from int2 to oid.)  That looks bad since it isn't
+compatible with an oidops index --- but I have a solution for that!
+I don't think we need the oid opclass at all; why shouldn't indexes
+on oid be expressed as int4 indexes to begin with?  In general, if
+two types are considered binary-equivalent under the old scheme, then
+the one that is considered the subtype probably shouldn't have separate
+index operators under this new scheme.  Instead it should just rely on
+the index operators of the promoted type.
+
+The point of the proposed typpromotebin field is to save a pg_proc
+lookup when trying to determine whether a particular promotion is "free"
+or not.  We could save even more lookups if we didn't store the boolean
+but instead the actual OID of the conversion function, or zero if the
+promotion is "free".  The trouble with that is that it creates a
+circularity problem when trying to define a new user type --- you can't
+define the conversion function if its input type doesn't exist yet.
+In any case, we want the parser to do a function lookup if we've
+advanced more than one step in the promotion hierarchy: if we've decided
+to promote int4 to float8 (which will be a four-step chain through int8,
+numeric, float4) we sure want the thing to use a direct int4tofloat8
+conversion function if available, not a chain of four conversion
+functions.  So on balance I think we want to look in pg_proc once we've
+decided which conversion to perform.  The only reason for having
+typpromotebin is that the promotion metric will want to know which
+conversions are free, and we don't want to have to do a lookup in
+pg_proc for each alternative we consider, only the ones that are finally
+selected to be used.
+
+I can think of at least one special case that still isn't cleanly
+handled under this scheme, and that is bpchar vs. varchar comparison.
+Currently, we have
+
+regression=# select 'a'::bpchar = 'a '::bpchar;
+ ?column?
+----------
+ t
+(1 row)
+
+This is correct since trailing blanks are insignificant in bpchar land,
+so the two values should be considered equal.  If we try
+
+regression=# select 'a'::bpchar = 'a '::varchar;
+ERROR:  Unable to identify an operator '=' for types 'bpchar' and 'varchar'
+        You will have to retype this query using an explicit cast
+
+which is pretty bogus but at least it saves the system from making some
+random choice about whether bpchar or varchar comparison rules apply.
+On the other hand,
+
+regression=# select 'a'::bpchar = 'a '::text;
+ ?column?
+----------
+ f
+(1 row)
+
+Here the bpchar value has been promoted to text and then text comparison
+(where trailing blanks *are* significant) is applied.  I'm not sure that
+we can really justify doing this in this case when we reject the bpchar
+vs varchar case, but maybe someone wants to argue that that's correct.
+
+The natural setup in my type-promotion scheme would be that both bpchar
+and varchar link to 'text' as their promoted type.  If we do nothing
+special then text-style comparison would be used in a bpchar vs varchar
+comparison, which is arguably wrong.
+
+One way to deal with this without introducing kluges into the type
+resolver is to provide a full set of bpchar vs text and text vs bpchar
+operators, and make sure that the promotion metric is such that these
+will be used in place of text vs text operators if they apply (which
+should hold, I think, for any reasonable metric).  This is probably
+the only way to get the "right" behavior in any case --- I think that
+the "right" behavior for such comparisons is to strip trailing blanks
+from the bpchar side but not the text/varchar side.  (I haven't checked
+to see if SQL92 agrees, though.)
+
+Another issue is how to fit resolution of "unknown" literals into this
+scheme.  We could probably continue to handle them more or less as we
+do now, but they might complicate the promotion metric.
+
+I am not clear yet on whether we'd still need the concept of "type
+categories" as they presently exist in the resolver.  It's possible
+that we wouldn't, which would be a nice simplification.  (If we do
+still need them, we should have a column in pg_type that defines the
+category of a type, instead of hard-wiring category assignments.)
+
+			regards, tom lane
+
+From e99re41@DoCS.UU.SE Mon May 15 07:39:03 2000
+Received: from meryl.it.uu.se (root@meryl.it.uu.se [130.238.12.42])
+	by candle.pha.pa.us (8.9.0/8.9.0) with ESMTP id HAA10251
+	for <pgman@candle.pha.pa.us>; Mon, 15 May 2000 07:39:01 -0400 (EDT)
+Received: from Zebra.DoCS.UU.SE (e99re41@Zebra.DoCS.UU.SE [130.238.9.158])
+	by meryl.it.uu.se (8.8.5/8.8.5) with ESMTP id NAA10849;
+	Mon, 15 May 2000 13:39:45 +0200 (MET DST)
+Received: from localhost (e99re41@localhost) by Zebra.DoCS.UU.SE (8.6.12/8.6.12) with ESMTP id NAA26523; Mon, 15 May 2000 13:39:44 +0200
+X-Authentication-Warning: Zebra.DoCS.UU.SE: e99re41 owned process doing -bs
+Date: Mon, 15 May 2000 13:39:44 +0200 (MET DST)
+From: Peter Eisentraut <e99re41@DoCS.UU.SE>
+Reply-To: Peter Eisentraut <peter_e@gmx.net>
+To: Tom Lane <tgl@sss.pgh.pa.us>
+cc: Bruce Momjian <pgman@candle.pha.pa.us>,
+        PostgreSQL-development <pgsql-hackers@postgresql.org>
+Subject: Re: [HACKERS] type conversion discussion 
+In-Reply-To: <20911.958339770@sss.pgh.pa.us>
+Message-ID: <Pine.GSO.4.02A.10005151309020.26399-100000@Zebra.DoCS.UU.SE>
+MIME-Version: 1.0
+Content-Type: TEXT/PLAIN; charset=iso-8859-1
+Content-Transfer-Encoding: 8bit
+X-MIME-Autoconverted: from QUOTED-PRINTABLE to 8bit by candle.pha.pa.us id HAA10251
+Status: OR
+
+On Sun, 14 May 2000, Tom Lane wrote:
+
+> 1. Poor choice of type to attribute to numeric literals.  (A possible
+>    solution is sketched in my earlier message, but do we need similar
+>    mechanisms for other type categories?)
+
+I think your plan looks good for the numerical land. (I'll ponder the oid
+issues in a second.) For other type categories, perhaps not. Should a line
+be promoted to a polygon so you can check if it contains a point? Or a
+polygon to a box? Higher dimensions? :-)
+
+
+> 2. Tensions between treating string literals as "unknown" type and
+>    as "text" type, per this thread so far.
+
+Yes, while we're at it, let's look at this in detail. I claim that
+something of the form 'xxx' should always be text (or char or whatever),
+period. Let's consider the cases were this could potentially clash with
+the current behaviour:
+
+a) The target type is unambiguously clear, e.g., UPDATE ... SET. Then you
+cast text to the target type. The effect is identical.
+
+b) The target type is completely unspecified, e.g. CREATE TABLE AS SELECT
+'xxx'; This will currently create an "unknown" column. It should arguably
+create a "text" column.
+
+Function argument resolution:
+
+c) There is only one function and it has a "text" argument. No-brainer.
+
+d) There is only one function and it has an argument other than text. Try
+to cast text to that type. (This is what's done in general, isn't it?)
+
+e) The function is overloaded for many types, amongst which is text. Then
+call the text version. I believe this would currently fail, which I'd
+consider a deficiency.
+
+f) The function is overloaded for many types, none of which is text. In
+that case you have to cast anyway, so you don't lose anything.
+
+On thing to also keep in mind regarding required casting for (b) and (f)
+is that SQL never allowed literals of "fancy" types (e.g., DATE) to have
+undecorated 'yyyy-mm-dd' constants, you always have to say DATE
+'yyyy-mm-dd'. What Postgres allows is a convencience where DATE would be
+obvious or implied. In the end it's a win-win situation: you tell the
+system what you want, and your code is clearer.
+
+ 
+> 3. IS_BINARY_COMPATIBLE seems like a bogus concept.
+
+At least it's bogus when used for types which are not actually binary
+compatible, e.g. int4 and oid. The result of the current implementation is
+that you can perfectly happily insert and retrieve negative numbers from
+oid fields.
+
+I'm not so sure about the value of this particular equivalency anyway.
+AFAICS the only functions that make sense for oids are comparisons (incl.
+min, max), adding integers to them, subtracting one oid from another.
+Silent mangling with int4 means that you can multiply them, square them,
+add floating point numbers to them (doesn't really work in practice
+though), all things that have no business with oids.
+
+I'd say define the operators that are useful for oids explicitly for oids
+and require casts for all others, so the users know what they're doing.
+The fact that an oid is also a number should be an implementation detail.
+
+In my mind oids are like pointers in C. Indiscriminate mangling of
+pointers and integers in C has long been dismissed as questionable coding.
+
+
+Of course I'd be very willing to consider counterexamples to these
+theories ...
+
+-- 
+Peter Eisentraut                  Sernanders väg 10:115
+peter_e@gmx.net                   75262 Uppsala
+http://yi.org/peter-e/            Sweden
+
+
