@@ -1,12 +1,12 @@
 # simplified Chinese translation file for pg_dump and friends
 # Weiping He <laser@zhengmai.com.cn>, 2001.
-# $Header: /cvsroot/pgsql/src/bin/pg_dump/Attic/zh_CN.po,v 1.4 2001/12/03 18:43:21 momjian Exp $
+# $Header: /cvsroot/pgsql/src/bin/pg_dump/Attic/zh_CN.po,v 1.5 2001/12/10 18:45:57 petere Exp $
 #
 msgid ""
 msgstr ""
 "Project-Id-Version: PostgreSQL 7.2\n"
 "POT-Creation-Date: 2001-11-30 22:18+0800\n"
-"PO-Revision-Date: 2001-11-30 22:26:59+0800\n"
+"PO-Revision-Date: 2001-12-07 20:38:59+0800\n"
 "Last-Translator: Weiping He <laser@zhengmai.com.cn>\n"
 "Language-Team: Weiping He <laser@zhengmai.com.cn>\n"
 "MIME-Version: 1.0\n"
@@ -358,7 +358,7 @@ msgstr "缺少用于 \"%s\" 的 pg_database 记录\n"
 #, c-format
 msgid ""
 "query returned more than one (%d) pg_database entry for database \"%s\"\n"
-msgstr "查询为数据库 \"%2$s\" 返回了超过一条 (%d) pg_database 记录\n"
+msgstr "查询为数据库 \"%2$s\" 返回了超过一条 (%1$d) pg_database 记录\n"
 
 #: pg_dump.c:1220
 msgid "saving large objects\n"
@@ -1703,8 +1703,8 @@ msgstr ""
 "\n"
 "选项:\n"
 
-#: pg_restore.c:389
 #
+#: pg_restore.c:389
 msgid ""
 "  -a, --data-only          restore only the data, no schema\n"
 "  -c, --clean              clean (drop) schema prior to create\n"
@@ -1769,8 +1769,8 @@ msgstr ""
 "                           尽可能用 SET SESSION AUTHORIZATION 命令而不是\n"
 "                           重新联接\n"
 
-#: pg_restore.c:425
 #
+#: pg_restore.c:425
 msgid ""
 "  -a                       restore only the data, no schema\n"
 "  -c                       clean (drop) schema prior to create\n"
