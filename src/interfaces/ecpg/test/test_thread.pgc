@@ -44,7 +44,7 @@ EXEC SQL END DECLARE SECTION;
 	/* DROP might fail */
 	EXEC SQL AT test0 DROP TABLE test_thread;
 	EXEC SQL AT test0 COMMIT WORK;
-	EXEC SQL AT test0 CREATE TABLE test_thread(message character(40));
+	EXEC SQL AT test0 CREATE TABLE test_thread(message TEXT);
 	EXEC SQL AT test0 COMMIT WORK;
 	EXEC SQL DISCONNECT test0;
 
@@ -52,15 +52,16 @@ EXEC SQL END DECLARE SECTION;
 	pthread_create(&thread2, NULL, (void *) ins2, NULL);
 	pthread_join(thread1, NULL);
 	pthread_join(thread2, NULL);
+
 	EXEC SQL CONNECT TO:dbname AS test3;
 	EXEC SQL AT test3 SELECT COUNT(*) INTO :rows FROM test_thread;
 	EXEC SQL AT test3 COMMIT WORK;
 	EXEC SQL DISCONNECT test3;
 
 	if (rows == iterations)
-		printf("Success.\n");
+		printf("\nSuccess.\n");
 	else
-		printf("Failure.\n");
+		printf("\nFailure.\n");
 	return 0;
 }
 
