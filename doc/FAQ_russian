@@ -1,7 +1,7 @@
 
                Otvety na chasto zadavaemye voprosy po PostgreSQL
                                        
-   Data poslednego obnovleniya: Vtornik 18 Fevralya 12:23:04 EDT 2002
+   Data poslednego obnovleniya: Ponedel'nik 17 Marta 11:32:59 EDT 2003
    
    Anglijskij variant soprovozhdaet: Bryus Mom'yan (Bruce Momjian)
    (pgman@candle.pha.pa.us)
@@ -30,7 +30,7 @@
    1.10) Kak nauchit'sya SQL?
    1.11) Reshena li v PostgreSQL problema 2000-go goda (Y2K)?
    1.12) Kak prisoedinitsya k komande razrabotchikov?
-   1.13) Kak otravit' soobschenie ob oshibke?
+   1.13) Kak otpravit' soobschenie ob oshibke?
    1.14) Kak sravnivat' PostgreSQL s drugimi SUBD?
    1.15) Kak okazat' finansovuyu pomosch' PostgreSQL?
    
@@ -305,7 +305,7 @@
     
    PostgreSQL podderzhivaet rasshirennyj podklass SQL-92. Smotrite nash
    spisok TODO na predmet izvestnyh oshibok, otsutstvuyuschih
-   osobennostyah i buduschih planov.
+   vozmozhnostej i buduschih planov.
    
     1.10) Kak mne nauchit'sya SQL?
     
@@ -326,7 +326,7 @@
    
     1.11) Reshena li v PostgreSQL problema 2000-go goda (Y2K)?
     
-   Da, my legko manipuliruem datami posle 2000 goda i pered 2000 godom.
+   Da, my legko rabotaem s datami posle 2000 goda i pered 2000 godom.
    
     1.12) Kak prisoedinitsya k komande razrabotchikov?
     
@@ -343,7 +343,7 @@
    previlegii vnosit' izmeneniya, i my uvereny, chto te ispravleniya,
    kotorye oni vnesut budut vysokogo kachestva.
    
-    1.13) Kak otravit' soobschenie ob oshibke??
+    1.13) Kak otpravit' soobschenie ob oshibke??
     
    Pozhalujsta posetite stranichku PostgreSQL BugTool na
    http://www.PostgreSQL.org/bugs/bugs.php, na kotoroj predostavleny
@@ -741,7 +741,7 @@ dalit'
     
    Suschestvuyut sleduyuschie ogranicheniya:
     Maksimal'nyj razmer bazy?              neogranichen (suschestvuyut bazy na
-1 TB)
+4 TB)
     Maksimal'nyj razmer tablicy?           16 TB
     Maksimal'nyj razmer zapisi?            1.6 TB
     Maksimal'nyj razmer polya?              1 GB
