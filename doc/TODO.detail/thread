@@ -277,3 +277,56 @@ mkscott@sacadia.com
 
 
 
+From bright@fw.wintelcom.net Tue Jan  2 03:02:28 2001
+Received: from fw.wintelcom.net (bright@ns1.wintelcom.net [209.1.153.20])
+	by candle.pha.pa.us (8.9.0/8.9.0) with ESMTP id DAA16169
+	for <pgman@candle.pha.pa.us>; Tue, 2 Jan 2001 03:02:27 -0500 (EST)
+Received: (from bright@localhost)
+	by fw.wintelcom.net (8.10.0/8.10.0) id f0282Vm10623;
+	Tue, 2 Jan 2001 00:02:31 -0800 (PST)
+Date: Tue, 2 Jan 2001 00:02:31 -0800
+From: Alfred Perlstein <bright@wintelcom.net>
+To: Bruce Momjian <pgman@candle.pha.pa.us>
+Cc: Tom Lane <tgl@sss.pgh.pa.us>, pgsql-hackers@postgresql.org
+Subject: Re: [HACKERS] Assuming that TAS() will succeed the first time is verboten
+Message-ID: <20010102000230.C19572@fw.wintelcom.net>
+References: <9850.978067943@sss.pgh.pa.us> <200101020759.CAA15836@candle.pha.pa.us>
+Mime-Version: 1.0
+Content-Type: text/plain; charset=us-ascii
+Content-Disposition: inline
+User-Agent: Mutt/1.2.5i
+In-Reply-To: <200101020759.CAA15836@candle.pha.pa.us>; from pgman@candle.pha.pa.us on Tue, Jan 02, 2001 at 02:59:20AM -0500
+Status: OR
+
+* Bruce Momjian <pgman@candle.pha.pa.us> [010101 23:59] wrote:
+> > Alfred Perlstein <bright@wintelcom.net> writes:
+> > > One trick that may help is calling sched_yield(2) on a lock miss,
+> > > it's a POSIX call and quite new so you'd need a 'configure' test
+> > > for it.
+> > 
+> > The author of the current s_lock code seems to have thought that
+> > select() with a zero delay would do the equivalent of sched_yield().
+> > I'm not sure if that's true on very many kernels, if indeed any...
+> > 
+> > I doubt we could buy much by depending on sched_yield(); if you want
+> > to assume POSIX facilities, ISTM you might as well go for user-space
+> > semaphores and forget the whole TAS mechanism.
+> 
+> 
+> Another issue is that sched_yield brings in the pthreads library/hooks
+> on some OS's, which we certainly want to avoid.
+
+I know it's a major undertaking, but since the work is sort of done,
+have you guys considered the port to solaris threads and seeing about
+making a pthreads port of that?
+
+I know it would probably get you considerable gains under Windows
+at the expense of dropping some really really legacy system.
+
+Or you could do what apache (is rumored) does and have it do either
+threads or processes or both...
+
+-- 
+-Alfred Perlstein - [bright@wintelcom.net|alfred@freebsd.org]
+"I have the heart of a child; I keep it in a jar on my desk."
+
