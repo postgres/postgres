@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/init/postinit.c,v 1.61 2000/07/02 15:20:56 petere Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/init/postinit.c,v 1.62 2000/07/03 03:27:31 tgl Exp $
  *
  *
  *-------------------------------------------------------------------------
@@ -257,7 +257,6 @@ InitPostgres(const char *dbname)
 	}
 	else
 	{
-		char	   *reason;
 		char	   *fullpath,
 					datpath[MAXPGPATH];
 
