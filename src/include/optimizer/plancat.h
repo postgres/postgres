@@ -6,13 +6,14 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: plancat.h,v 1.2 1996/10/31 09:49:26 scrappy Exp $
+ * $Id: plancat.h,v 1.3 1996/11/06 09:24:57 scrappy Exp $
  *
  *-------------------------------------------------------------------------
  */
 #ifndef PLANCAT_H
 #define PLANCAT_H
 
+#include <nodes/parsenodes.h>
 
 /*
  * transient data structure to hold return value of index_info. Note that
