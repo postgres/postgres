@@ -28,6 +28,13 @@ typedef unsigned char unsigned8;
 typedef unsigned int  unsigned32;
 typedef unsigned long unsigned64;
 
+#ifdef FRONTEND
+#undef palloc
+#define palloc malloc
+#undef pfree
+#define pfree free
+#endif
+
 /*
  *	The returned array is allocated using malloc.  the caller should free it
  * 	when it is no longer needed.
