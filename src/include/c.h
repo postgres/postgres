@@ -7,7 +7,7 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: c.h,v 1.46 1998/10/04 15:38:55 momjian Exp $
+ * $Id: c.h,v 1.47 1998/12/13 03:44:38 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -277,7 +277,7 @@ typedef uint32 word32;			/* >= 32 bits */
  * Size --
  *		Size of any memory resident object, as returned by sizeof.
  */
-typedef unsigned int Size;
+typedef size_t Size;
 
 /*
  * Index --
