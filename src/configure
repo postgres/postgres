@@ -1515,9 +1515,9 @@ TRSTRINGS=`echo ABCdef | $TR 'a-z' 'A-Z' 2>/dev/null | grep ABCDEF`
 TRCLASS=`echo ABCdef | $TR ':lower:' ':upper:' 2>/dev/null | grep ABCDEF`
 
 if test "$TRSTRINGS" = "ABCDEF"; then
-  TRARGS="'[a-z]' '[A-Z]'"
+  TRARGS="'a-z' 'A-Z'"
 elif test "$TRCLASS" = "ABCDEF"; then
-  TRARGS="\"[:lower:]\" \"[:upper:]\""
+  TRARGS="\":lower:\" \":upper:\""
 else
   { echo "configure: error: "Can\'t find method to covert from upper to lower case with tr"" 1>&2; exit 1; }
 fi
