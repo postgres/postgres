@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *    $Header: /cvsroot/pgsql/src/backend/utils/adt/acl.c,v 1.7 1996/11/17 04:26:59 momjian Exp $
+ *    $Header: /cvsroot/pgsql/src/backend/utils/adt/acl.c,v 1.8 1996/11/20 22:53:10 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -417,6 +417,8 @@ aclinsert3(Acl *old_acl, AclItem *mod_aip, unsigned modechg)
 		new_aip[i-1].ai_mode = new_aip[i].ai_mode;
 	    }
 	    ARR_DIMS(new_acl)[0] = num -1 ;
+	    /* Adjust also the array size because it is used for memmove */
+	    ARR_SIZE(new_acl) -= sizeof(AclItem);
 	    break;
 	}
     }
