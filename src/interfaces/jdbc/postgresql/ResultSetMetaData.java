@@ -190,9 +190,11 @@ public class ResultSetMetaData implements java.sql.ResultSetMetaData
     for (i = 0 ; i < rows.size(); ++i)
       {
 	byte[][] x = (byte[][])(rows.elementAt(i));
-	int xl = x[column - 1].length;
-	if (xl > max)
-	  max = xl;
+	if(x[column-1]!=null) {
+	  int xl = x[column - 1].length;
+	  if (xl > max)
+	    max = xl;
+	}
       }
     return max;
   }

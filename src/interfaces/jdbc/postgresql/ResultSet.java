@@ -374,27 +374,12 @@ public class ResultSet implements java.sql.ResultSet
   public java.sql.Date getDate(int columnIndex) throws SQLException
   {
     String s = getString(columnIndex);
-    
-    if (s != null)
-      {
-	try {
-	  if (s.length() != 10)
-	    throw new NumberFormatException("Wrong Length!");
-	  int mon = Integer.parseInt(s.substring(0,2));
-	  int day = Integer.parseInt(s.substring(3,5));
-	  int yr = Integer.parseInt(s.substring(6));
-	  if(connection.europeanDates) {
-	    // We europeans prefer dd mm yyyy
-	    int t = mon;
-	    mon = day;
-	    day = t;
-	  }
-	  return new java.sql.Date(yr - 1900, mon -1, day);
-	} catch (NumberFormatException e) {
-	  throw new SQLException("Bad Date Form: " + s);
-	}
-      }
-    return null;		// SQL NULL
+    SimpleDateFormat df = new SimpleDateFormat(connection.europeanDates?"dd-MM-yyyy":"MM-dd-yyyy");
+    try {
+      return new java.sql.Date(df.parse(s).getTime());
+    } catch (ParseException e) {
+      throw new SQLException("Bad Date Format: at " + e.getErrorOffset() + " in " + s);
+    }
   }
   
   /**

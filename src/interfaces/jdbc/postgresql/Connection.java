@@ -36,15 +36,20 @@ public class Connection implements java.sql.Connection
   private String PG_PASSWORD;
   private String PG_DATABASE;
   private boolean PG_STATUS;
-  private boolean PG_AUTH;	// true, then password auth used
   
   public boolean CONNECTION_OK = true;
   public boolean CONNECTION_BAD = false;
   
+  private static final int STARTUP_LEN  = 288;	// Length of a startup packet
+  
+  // These are defined in src/include/libpq/pqcomm.h
   private int STARTUP_CODE = STARTUP_USER;
   private static final int STARTUP_USER = 7;	// User auth
+  private static final int STARTUP_KRB4 = 10;	// Kerberos 4 (unused)
+  private static final int STARTUP_KRB5 = 11;	// Kerberos 5 (unused)
+  private static final int STARTUP_HBA  = 12;	// Host Based
+  private static final int STARTUP_NONE = 13;	// Unauthenticated (unused)
   private static final int STARTUP_PASS = 14;	// Password auth
-  private static final int STARTUP_LEN  = 288;	// Length of a startup packet
   
   private boolean autoCommit = true;
   private boolean readOnly = false;
@@ -84,10 +89,22 @@ public class Connection implements java.sql.Connection
     PG_HOST = new String(host);
     PG_STATUS = CONNECTION_BAD;
     
-    if(info.getProperty("auth") != null) {
-      PG_AUTH=true;
+    // This handles the auth property. Any value begining with p enables
+    // password authentication, while anything begining with i enables
+    // ident (RFC 1413) authentication. Any other values default to trust.
+    //
+    // Also, the postgresql.auth system property can be used to change the
+    // local default, if the auth property is not present.
+    //
+    String auth = info.getProperty("auth",System.getProperty("postgresql.auth","trust")).toLowerCase();
+    if(auth.startsWith("p")) {
+      // Password authentication
       STARTUP_CODE=STARTUP_PASS;
+    } else if(auth.startsWith("i")) {
+      // Ident (RFC 1413) authentication
+      STARTUP_CODE=STARTUP_HBA;
     } else {
+      // Anything else defaults to trust authentication
       STARTUP_CODE=STARTUP_USER;
     }
     
@@ -107,7 +124,7 @@ public class Connection implements java.sql.Connection
 	  pg_stream.Send(PG_USER.getBytes(), len);
 	  
 	  // Send the password packet if required
-	  if(PG_AUTH) {
+	  if(STARTUP_CODE == STARTUP_PASS) {
 	    len=STARTUP_LEN;
 	    pg_stream.SendInteger(len, 4);			len -= 4;
 	    pg_stream.SendInteger(STARTUP_PASS, 4);		len -= 4;

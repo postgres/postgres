@@ -27,7 +27,7 @@ public class Driver implements java.sql.Driver
   // These should be in sync with the backend that the driver was
   // distributed with
   static final int MAJORVERSION = 6;
-  static final int MINORVERSION = 2;
+  static final int MINORVERSION = 3;
   
   static 
   {
@@ -125,8 +125,22 @@ public class Driver implements java.sql.Driver
    */
   public DriverPropertyInfo[] getPropertyInfo(String url, Properties info) throws SQLException
   {
-    return null;		// We don't need anything except
-    // the username, which is a default
+    Properties p = parseURL(url,info);
+    
+    // naughty, but its best for speed. If anyone adds a property here, then
+    // this _MUST_ be increased to accomodate them.
+    DriverPropertyInfo d,dpi[] = new DriverPropertyInfo[1];
+    int i=0;
+    
+    dpi[i++] = d = new DriverPropertyInfo("auth",p.getProperty("auth","default"));
+    d.description = "determines if password authentication is used";
+    d.choices = new String[4];
+    d.choices[0]="default";	// Get value from postgresql.auth property, defaults to trust
+    d.choices[1]="trust";	// No password authentication
+    d.choices[2]="password";	// Password authentication
+    d.choices[3]="ident";	// Ident (RFC 1413) protocol
+    
+    return dpi;
   }
   
   /**
@@ -168,6 +182,10 @@ public class Driver implements java.sql.Driver
   /**
    * Constructs a new DriverURL, splitting the specified URL into its
    * component parts
+   * @param url JDBC URL to parse
+   * @param defaults Default properties
+   * @return Properties with elements added from the url
+   * @throws SQLException
    */
   Properties parseURL(String url,Properties defaults) throws SQLException
   {

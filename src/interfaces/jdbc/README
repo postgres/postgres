@@ -121,7 +121,8 @@ or if passing the user & password directly via DriverManager.getConnection():
 
 	jdbc:postgresql:database?auth=y
 
-PS: 'y' could be anything, aslong as there is something after the '='
+PS: Password authentication is enabled if the value of auth starts with 'y'.
+    It is case insensitive.
 
 ---------------------------------------------------------------------------
 

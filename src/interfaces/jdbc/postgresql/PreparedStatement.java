@@ -7,8 +7,8 @@ import java.text.*;
 import java.util.*;
 
 /**
- * @version 1.0 15-APR-1997
- * @author <A HREF="mailto:adrian@hottub.org">Adrian Hall</A>
+ * @version 6.3 15-APR-1997
+ * @author <A HREF="mailto:adrian@hottub.org">Adrian Hall</A><A HREF="mailto:petermount@earthling.net">Peter Mount</A>
  *
  * A SQL Statement is pre-compiled and stored in a PreparedStatement object.
  * This object can then be used to efficiently execute this statement multiple
@@ -294,9 +294,9 @@ public class PreparedStatement extends Statement implements java.sql.PreparedSta
 	 */
 	public void setDate(int parameterIndex, java.sql.Date x) throws SQLException
 	{
-		DateFormat df = DateFormat.getDateInstance();
-
-		set(parameterIndex, "'" + df.format(x) + "'");
+	  SimpleDateFormat df = new SimpleDateFormat(connection.europeanDates?"''dd-MM-yyyy''":"''MM-dd-yyyy''");
+	  
+	  set(parameterIndex, df.format(x));
 	}
 
 	/**
