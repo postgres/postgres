@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/query.sgml,v 1.27 2002/10/24 17:48:54 petere Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/query.sgml,v 1.27.2.1 2002/11/06 23:30:39 petere Exp $
 -->
 
  <chapter id="tutorial-sql">
@@ -13,7 +13,7 @@ $Header: /cvsroot/pgsql/doc/src/sgml/query.sgml,v 1.27 2002/10/24 17:48:54 peter
     <acronym>SQL</acronym> to perform simple operations.  This
     tutorial is only intended to give you an introduction and is in no
     way a complete tutorial on <acronym>SQL</acronym>.  Numerous books
-    have been written on <acronym>SQL92</acronym>, including <xref
+    have been written on <acronym>SQL</acronym>, including <xref
     linkend="MELT93"> and <xref linkend="DATE97">.
     You should be aware that some <productname>PostgreSQL</productname>
     language features are extensions to the standard.
@@ -44,7 +44,7 @@ $Header: /cvsroot/pgsql/doc/src/sgml/query.sgml,v 1.27 2002/10/24 17:48:54 peter
 
     The <literal>\i</literal> command reads in commands from the
     specified file. The <literal>-s</literal> option puts you in
-    single step mode which pauses before sending each query to the
+    single step mode which pauses before sending each statement to the
     server.  The commands used in this section are in the file
     <filename>basics.sql</filename>.
    </para>
@@ -502,7 +502,7 @@ SELECT *
     join operator will have each of its rows in the output at least
     once, whereas the table on the right will only have those rows
     output that match some row of the left table.  When outputting a
-    left-table row for which there is no right-table match, empty (NULL)
+    left-table row for which there is no right-table match, empty (null)
     values are substituted for the right-table columns.
    </para>
 
@@ -601,7 +601,7 @@ SELECT max(temp_lo) FROM weather;
    <para>
     <indexterm><primary>subquery</primary></indexterm>
 
-    If we want to know what city (or cities) that reading occurred in,
+    If we wanted to know what city (or cities) that reading occurred in,
     we might try
 
 <programlisting>
@@ -615,7 +615,7 @@ SELECT city FROM weather WHERE temp_lo = max(temp_lo);     <lineannotation>WRONG
     go into the aggregation stage; so it has to be evaluated before
     aggregate functions are computed.)
     However, as is often the case
-    the query can be restated to accomplish the intended result; here
+    the query can be restated to accomplish the intended result, here
     by using a <firstterm>subquery</firstterm>:
 
 <programlisting>
@@ -630,9 +630,9 @@ SELECT city FROM weather
 (1 row)
 </screen>
 
-    This is OK because the sub-select is an independent computation
+    This is OK because the subquery is an independent computation
     that computes its own aggregate separately from what is happening
-    in the outer select.
+    in the outer query.
    </para>
 
    <para>
@@ -684,10 +684,18 @@ SELECT city, max(temp_lo)
 <programlisting>
 SELECT city, max(temp_lo)
     FROM weather
-    WHERE city LIKE 'S%'
+    WHERE city LIKE 'S%'<co id="co.tutorial-agg-like">
     GROUP BY city
     HAVING max(temp_lo) < 40;
 </programlisting>
+   <calloutlist>
+    <callout arearefs="co.tutorial-agg-like">
+     <para>
+      The <literal>LIKE</literal> operator does pattern matching and
+      is explained in the &cite-user;.
+     </para>
+    </callout>
+   </calloutlist>
    </para>
 
    <para>
@@ -729,7 +737,7 @@ SELECT city, max(temp_lo)
     You can update existing rows using the
     <command>UPDATE</command> command. 
     Suppose you discover the temperature readings are
-    all  off  by 2 degrees as of November 28, you may update the
+    all  off  by 2 degrees as of November 28.  You may update the
     data as follows:
 
 <programlisting>
@@ -762,8 +770,8 @@ SELECT * FROM weather;
    </indexterm>
 
    <para>
-    Suppose you are no longer interested in the weather of Hayward,
-    then you can do the following to delete those rows from the table.
+    Suppose you are no longer interested in the weather of Hayward.
+    Then you can do the following to delete those rows from the table.
     Deletions are performed using the <command>DELETE</command>
     command:
 <programlisting>
@@ -786,7 +794,7 @@ SELECT * FROM weather;
    </para>
 
    <para>
-    One should be wary of queries of the form
+    One should be wary of statements of the form
 <synopsis>
 DELETE FROM <replaceable>tablename</replaceable>;
 </synopsis>

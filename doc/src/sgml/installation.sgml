@@ -1,4 +1,4 @@
-<!-- $Header: /cvsroot/pgsql/doc/src/sgml/installation.sgml,v 1.103.2.5 2002/11/05 19:01:43 momjian Exp $ -->
+<!-- $Header: /cvsroot/pgsql/doc/src/sgml/installation.sgml,v 1.103.2.6 2002/11/06 23:30:39 petere Exp $ -->
 
 <chapter id="installation">
  <title><![%standalone-include[<productname>PostgreSQL</>]]>
@@ -7,6 +7,13 @@
  <indexterm zone="installation">
   <primary>installation</primary>
  </indexterm>
+
+ <para>
+  This <![%standalone-include;[document.]]>
+  <![%standalone-ignore;[chapter.]]> describes the installation of
+  <productname>PostgreSQL</productname> from the source code
+  distribution.
+ </para>
 
  <sect1 id="install-short">
   <title>Short Version</title>
@@ -131,27 +138,30 @@ su - postgres
      <para>
       To build the server programming language PL/Perl you need a full
       Perl installation, including the <filename>libperl</filename>
-      library and the header files.  Since PL/Perl is a shared
+      library and the header files.  Since PL/Perl will be a shared
       library, the <indexterm><primary>libperl</primary></indexterm>
       <filename>libperl</filename> library must be a shared library
-      also on most platforms.  At the time of this writing, this is
-      almost never the case in prebuilt Perl packages.
+      also on most platforms.  This appears to be the default in
+      recent Perl versions, but it was not in earlier versions, and in
+      general it is the choice of whomever installed Perl at your
+      site.
      </para>
 
      <para>
-      If this difficulty arises in your situation, a message like this
-      will appear during the build to point out this fact:
+      If you don't have the shared library but you need one, a message
+      like this will appear during the build to point out this fact:
 <screen>
 *** Cannot build PL/Perl because libperl is not a shared library.
 *** You might have to rebuild your Perl installation.  Refer to
 *** the documentation for details.
 </screen>
       (If you don't follow the on-screen output you will merely notice
-      the the PL/Perl library object will not be installed.)  If you
-      see this, you will have to re-build and install
-      <productname>Perl</productname> manually to be able to build
-      PL/Perl.  During the configuration process for
-      <productname>Perl</productname>, request a shared library.
+      that the PL/Perl library object, <filename>plperl.so</filename>
+      or similar, will not be installed.)  If you see this, you will
+      have to rebuild and install <productname>Perl</productname>
+      manually to be able to build PL/Perl.  During the configuration
+      process for <productname>Perl</productname>, request a shared
+      library.
      </para>
     </listitem>
 
@@ -160,17 +170,18 @@ su - postgres
       To build the Python interface module or the PL/Python server
       programming language, you need a Python installation, including
       the header files.
-     </para>
-
-     <para>
-      Since PL/Python is a shared library, the
+      Since PL/Python will be a shared library, the
       <indexterm><primary>libpython</primary></indexterm>
       <filename>libpython</filename> library must be a shared library
       also on most platforms.  This is not the case in a default
-      Python installation.  If after building and installing you have
-      a file called <filename>plpython.so</filename> (possibly a
-      different extension), then everything went well.  Otherwise you
-      should have seen a notice like this flying by:
+      Python installation.
+     </para>
+
+     <para>
+      If after building and installing you have a file called
+      <filename>plpython.so</filename> (possibly a different
+      extension), then everything went well.  Otherwise you should
+      have seen a notice like this flying by:
 <screen>
 *** Cannot build PL/Python because libpython is not a shared library.
 *** You might have to rebuild your Python installation.  Refer to
@@ -282,7 +293,7 @@ JAVACMD=$JAVA_HOME/bin/java
        <primary>yacc</primary>
       </indexterm>
 
-      <acronym>GNU</> <application>Flex</> and <application>Bison</>
+      <application>Flex</> and <application>Bison</>
       are needed to build a CVS checkout or if you changed the actual
       scanner and parser definition files. If you need them, be sure
       to get <application>Flex</> 2.5.4 or later and
@@ -373,7 +384,7 @@ JAVACMD=$JAVA_HOME/bin/java
       <primary>pg_dumpall</primary>
      </indexterm>
 
-     To dump your database installation, type:
+     To back up your database installation, type:
 <screen>
 <userinput>pg_dumpall &gt; <replaceable>outputfile</></userinput>
 </screen>
@@ -391,9 +402,16 @@ JAVACMD=$JAVA_HOME/bin/java
     </para>
 
     <para>
-     Make sure that you use the <command>pg_dumpall</> command
-     from the version you are currently running. &version;'s
-     <command>pg_dumpall</> should not be used on older databases.
+     To make the backup, you can use the <command>pg_dumpall</command>
+     command from the version you are currently running.  For best
+     results, however, try to use the <command>pg_dumpall</command>
+     command from PostgreSQL &version;, since this version contains
+     bug fixes and improvements over older versions.  While this
+     advice might seem idiosyncratic since you haven't installed the
+     new version yet, it is advisable to follow it if you plan to
+     install the new version in parallel with the old version.  In
+     that case you can complete the installation normally and transfer
+     the data later.  This will also decrease the downtime.
     </para>
    </step>
 
@@ -453,12 +471,10 @@ JAVACMD=$JAVA_HOME/bin/java
   </para>
 
   <para>
-   You can also install the new version in parallel with the old one
-   to decrease the downtime. These topics are discussed at length in
-   <![%standalone-include[the <citetitle>Administrator's Guide</>,]]>
-   <![%standalone-ignore[<xref linkend="migration">,]]>
-   which you are encouraged
-   to read in any case.
+   These topics are discussed at length in <![%standalone-include[the
+   <citetitle>Administrator's Guide</>,]]> <![%standalone-ignore[<xref
+   linkend="migration">,]]> which you are encouraged to read in any
+   case.
   </para>
  </sect1>
 
@@ -751,10 +767,6 @@ JAVACMD=$JAVA_HOME/bin/java
          server-side language. You need to have root access to be able
          to install the Python module at its default place
          (<filename>/usr/lib/python<replaceable>x</>.<replaceable>y</></>).
-         To be able to use this option, you must have Python installed
-         and your system needs to support shared libraries. If you
-         instead want to build a new complete interpreter binary, you
-         will have to do it manually.
         </para>
        </listitem>
       </varlistentry>
@@ -763,7 +775,7 @@ JAVACMD=$JAVA_HOME/bin/java
        <term><option>--with-tcl</option></term>
        <listitem>
         <para>
-         Builds components that require Tcl/Tk, which are
+         Build components that require Tcl/Tk, which are
          <application>libpgtcl</>, <application>pgtclsh</>,
          <application>pgtksh</application>,
          and <application>PL/Tcl</>.  But see below about
@@ -1106,7 +1118,7 @@ All of PostgreSQL is successfully made. Ready to install.
   </procedure>
 
   <formalpara>
-   <title>Uninstall:</title>
+   <title>Uninstallation:</title>
    <para>
     To undo the installation use the command <command>gmake
     uninstall</>. However, this will not remove any created directories.
@@ -1192,7 +1204,7 @@ setenv LD_LIBRARY_PATH /usr/local/pgsql/lib
 
    <para>
     On <systemitem class="osname">Cygwin</systemitem>, put the library
-    directory on the <envar>PATH</envar> or move the
+    directory in the <envar>PATH</envar> or move the
     <filename>.dll</filename> files into the <filename>bin/</filename>
     directory.
    </para>

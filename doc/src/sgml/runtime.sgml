@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/runtime.sgml,v 1.147.2.1 2002/11/05 23:17:45 momjian Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/runtime.sgml,v 1.147.2.2 2002/11/06 23:30:39 petere Exp $
 -->
 
 <Chapter Id="runtime">
@@ -11,7 +11,7 @@ $Header: /cvsroot/pgsql/doc/src/sgml/runtime.sgml,v 1.147.2.1 2002/11/05 23:17:4
  </para>
 
  <sect1 id="postgres-user">
-  <title>The <productname>PostgreSQL</productname> user account</title>
+  <title>The <productname>PostgreSQL</productname> User Account</title>
 
   <indexterm>
    <primary>postgres user</primary>
@@ -37,7 +37,7 @@ $Header: /cvsroot/pgsql/doc/src/sgml/runtime.sgml,v 1.147.2.1 2002/11/05 23:17:4
  </sect1>
 
  <sect1 id="creating-cluster">
-  <title>Creating a database cluster</title>
+  <title>Creating a Database Cluster</title>
 
   <indexterm>
    <primary>database cluster</primary>
@@ -152,7 +152,7 @@ set to "C".  For more information see the Administrator's Guide.
 </screen>
    This is intended to warn you that the currently selected locale
    will cause indexes to be sorted in an order that prevents them from
-   being used for LIKE and regular-expression searches. If you need
+   being used for <literal>LIKE</> and regular-expression searches. If you need
    good performance in such searches, you should set your current
    locale to <literal>C</> and re-run <command>initdb</command>, e.g.,
    by running <literal>initdb --lc-collate=C</literal>. The sort
@@ -165,7 +165,7 @@ set to "C".  For more information see the Administrator's Guide.
  </sect1>
 
  <sect1 id="postmaster-start">
-  <title>Starting the database server</title>
+  <title>Starting the Database Server</title>
 
   <para>
    <indexterm>
@@ -229,7 +229,7 @@ pg_ctl start -l logfile
 
   <para>
    Normally, you will want to start the database server when the
-   computer boots. Auto-start scripts are operating-system specific.
+   computer boots. Autostart scripts are operating system-specific.
    There are a few distributed with
    <productname>PostgreSQL</productname> in the
    <filename>/contrib/start-scripts</> directory. This may require root
@@ -384,13 +384,13 @@ IpcSemaphoreCreate: semget(key=5440026, num=16, 01600) failed: No space left on 
      means your kernel's limit on the number of System V semaphores is
      smaller than the number <productname>PostgreSQL</productname> wants
      to create. As above, you may be able to work around the problem by
-     starting the postmaster with a reduced number of backend processes
+     starting the postmaster with a reduced number of allowed connections
      (<option>-N</option> switch), but you'll eventually want to
      increase the kernel limit.
     </para>
 
     <para>
-     If you get an <quote>illegal system call</> error, it is likely
+     If you get an <quote>illegal system call</> error, it is likely that
      shared memory or semaphores are not supported in your kernel at
      all. In that case your only option is to reconfigure the kernel to
      enable these features.
@@ -456,7 +456,7 @@ psql: could not connect to server: Connection refused
   </sect1>
 
   <sect1 id="runtime-config">
-   <Title>Run-time configuration</Title>
+   <Title>Run-time Configuration</Title>
 
    <indexterm>
     <primary>configuration</primary>
@@ -558,7 +558,7 @@ env PGOPTIONS='-c geqo=off' psql
     <title>pg_settings</title>
   
     <para>
-     <structname>pg_settings</structname> virtual table allows display and update
+     The <structname>pg_settings</structname> virtual table allows display and update
      of current session run-time parameters. There is one entry for each of the 
      available parameters provided by <command>SHOW ALL</command>. But it is
      in a form that allows it to be joined with other relations and have a
@@ -579,28 +579,25 @@ env PGOPTIONS='-c geqo=off' psql
     <table>
     <title>pg_settings Columns</title>
   
-    <tgroup cols=4>
+    <tgroup cols=3>
      <thead>
       <row>
        <entry>Name</entry>
        <entry>Type</entry>
-       <entry>References</entry>
        <entry>Description</entry>
       </row>
      </thead>
  
      <tbody>
       <row>
-       <entry>name</entry>
+       <entry><literal>name</literal></entry>
        <entry><type>text</type></entry>
-       <entry></entry>
        <entry>The name of a current session run-time parameter</entry>
       </row>
  
       <row>
-       <entry>setting</entry>
+       <entry><literal>setting</literal></entry>
        <entry><type>text</type></entry>
-       <entry></entry>
        <entry>The value of a current session run-time parameter</entry>
       </row>
      </tbody>
@@ -630,7 +627,7 @@ env PGOPTIONS='-c geqo=off' psql
       <listitem>
        <para>
         Sets the optimizer's estimate of the cost of processing each
-	operator in a WHERE clause. This is measured as a fraction of
+	operator in a <literal>WHERE</> clause. This is measured as a fraction of
 	the cost of a sequential page fetch.
        </para>
       </listitem>
@@ -860,85 +857,93 @@ env PGOPTIONS='-c geqo=off' psql
       <term><varname>SERVER_MIN_MESSAGES</varname> (<type>string</type>)</term>
       <listitem>
        <para>
-        This controls how much detail is written to the server logs. The
-        default is <literal>NOTICE</>. Valid values are <literal>DEBUG5</>,
+        This controls how much message detail is written to the server
+        logs.  Valid values are <literal>DEBUG5</>,
         <literal>DEBUG4</>, <literal>DEBUG3</>, <literal>DEBUG2</>,
         <literal>DEBUG1</>, <literal>INFO</>, <literal>NOTICE</>,
-        <literal>WARNING</>, <literal>ERROR</>, <literal>LOG</>, 
-	<literal>FATAL</>, and <literal>PANIC</>. Later values send less 
-	detail to the logs. <literal>LOG</> has a different precedence 
-	here than in <literal>CLIENT_MIN_MESSAGES</>.
+        <literal>WARNING</>, <literal>ERROR</>, <literal>LOG</>,
+        <literal>FATAL</>, and <literal>PANIC</>. Later values send
+        less detail to the logs.  The default is <literal>NOTICE</>.
+        Note that <literal>LOG</> has a different precedence here than
+        in <literal>CLIENT_MIN_MESSAGES</>.
        </para>
+
        <para>
         Here is a summary of the various message types:
         <variablelist>
          <varlistentry>
-          <term><varname>DEBUG[1-5]</varname></term>
+          <term><literal>DEBUG[1-5]</literal></term>
           <listitem>
            <para>
-            This provides information for use by developers.
-	   </para>
-          </listitem>
-         </varlistentry>
-         <varlistentry>
-          <term><varname>INFO</varname></term>
-          <listitem>
-           <para>
-            This provides information requested by the user, e.g. 
-	    <command>SET</>.
-	   </para>
-          </listitem>
-         </varlistentry>
-         <varlistentry>
-          <term><varname>NOTICE</varname></term>
-          <listitem>
-           <para>
-            This provides information that may be helpful to users, e.g.
-	    truncation of long identifiers, sequence creation as part of
-	    <command>SERIAL</>.
-	   </para>
-          </listitem>
-         </varlistentry>
-         <varlistentry>
-          <term><varname>WARNING</varname></term>
-          <listitem>
-           <para>
-            This provides warnings to the user, e.g. <command>COMMIT</>
-            outside a transaction.
-	   </para>
-          </listitem>
-         </varlistentry>
-         <varlistentry>
-          <term><varname>ERROR</varname></term>
-          <listitem>
-           <para>
-            Reports the error that caused the transaction to abort.
+            Provides information for use by developers.
 	   </para>
           </listitem>
          </varlistentry>
 
          <varlistentry>
-          <term><varname>LOG</varname></term>
+          <term><literal>INFO</literal></term>
           <listitem>
            <para>
-            This reports information of interest to administrators, e.g. 
+            Provides information implicitly requested by the user,
+            e.g., during <command>VACUUM VERBOSE</>.
+	   </para>
+          </listitem>
+         </varlistentry>
+
+         <varlistentry>
+          <term><literal>NOTICE</literal></term>
+          <listitem>
+           <para>
+            Provides information that may be helpful to users, e.g.,
+            truncation of long identifiers and index creation as part
+            of primary keys.
+	   </para>
+          </listitem>
+         </varlistentry>
+
+         <varlistentry>
+          <term><literal>WARNING</literal></term>
+          <listitem>
+           <para>
+            Provides warnings to the user, e.g., <command>COMMIT</>
+            outside a transaction.
+	   </para>
+          </listitem>
+         </varlistentry>
+
+         <varlistentry>
+          <term><literal>ERROR</literal></term>
+          <listitem>
+           <para>
+            Reports the error that caused a transaction to abort.
+	   </para>
+          </listitem>
+         </varlistentry>
+
+         <varlistentry>
+          <term><literal>LOG</literal></term>
+          <listitem>
+           <para>
+            Reports information of interest to administrators, e.g.,
 	    checkpoint activity.
 	   </para>
           </listitem>
          </varlistentry>
+
          <varlistentry>
-          <term><varname>FATAL</varname></term>
+          <term><literal>FATAL</literal></term>
           <listitem>
            <para>
-            This reports why the backend session terminated.
+            Reports why a backend session terminated.
 	   </para>
           </listitem>
          </varlistentry>
+
          <varlistentry>
-          <term><varname>PANIC</varname></term>
+          <term><literal>PANIC</literal></term>
           <listitem>
            <para>
-            This reports why all backends restarted.
+            Reports why all backend sessions restarted.
 	   </para>
           </listitem>
          </varlistentry>
@@ -951,15 +956,15 @@ env PGOPTIONS='-c geqo=off' psql
       <term><varname>CLIENT_MIN_MESSAGES</varname> (<type>string</type>)</term>
       <listitem>
        <para>
-        This controls how much detail is written to the client. The
-        default is <literal>NOTICE</>. Valid values are
-        <literal>DEBUG5</>, <literal>DEBUG4</>, <literal>DEBUG3</>,
-        <literal>DEBUG2</>, <literal>DEBUG1</>, <literal>LOG</>,
-        <literal>NOTICE</>, <literal>WARNING</>, and <literal>ERROR</>.
-        Later values send less information to the user. <literal>LOG</>
-        has a different precedence here than in
-        <literal>SERVER_MIN_MESSAGES</>. Also see that section for an
-        explanation of the various values.
+        This controls how much message detail is written to the
+        client.  Valid values are <literal>DEBUG5</>,
+        <literal>DEBUG4</>, <literal>DEBUG3</>, <literal>DEBUG2</>,
+        <literal>DEBUG1</>, <literal>LOG</>, <literal>NOTICE</>,
+        <literal>WARNING</>, and <literal>ERROR</>.  Later values send
+        less information to the client.  The default is
+        <literal>NOTICE</>.  Note that <literal>LOG</> has a different
+        precedence here than in <literal>SERVER_MIN_MESSAGES</>. Also
+        see that section for an explanation of the various values.
        </para>
       </listitem>
      </varlistentry>
@@ -973,7 +978,7 @@ env PGOPTIONS='-c geqo=off' psql
         to turn this on, as it might expose programming mistakes. To use
         this option, the macro <literal>USE_ASSERT_CHECKING</literal>
         must be defined when <productname>PostgreSQL</productname> is
-        built (accomplished by the configure option
+        built (accomplished by the <command>configure</command> option
         <option>--enable-cassert</option>). Note that
         <literal>DEBUG_ASSERTIONS</literal> defaults to on if
         <productname>PostgreSQL</productname> has been built with
@@ -990,7 +995,7 @@ env PGOPTIONS='-c geqo=off' psql
       <listitem>
        <para>
         These flags enable various debugging output to be sent to the
-	server log.  For each executed query, prints either the query text,
+	server log.  For each executed query, print either the query text,
 	the resulting parse tree, the query rewriter output, or the execution
 	plan. <option>DEBUG_PRETTY_PRINT</option> indents these displays
 	to produce a more readable but much longer output format.
@@ -1033,21 +1038,38 @@ env PGOPTIONS='-c geqo=off' psql
      </varlistentry>
 
      <varlistentry>
+      <term><varname>LOG_DURATION</varname> (<type>boolean</type>)</term>
+      <listitem>
+       <para>
+        Causes the duration of every completed statement to be logged.
+        To use this option, enable <varname>LOG_STATEMENT</> and
+        <varname>LOG_PID</> so you can link the statement to the
+        duration using the process ID.
+       </para>
+      </listitem>
+     </varlistentry>
+
+     <varlistentry>
       <term><varname>LOG_MIN_ERROR_STATEMENT</varname> (<type>string</type>)</term>
       <listitem>
        <para>
-        This controls which message types output the original query to
-        the server logs. All queries matching the setting or higher are
-        logged. The default is <literal>PANIC</literal> (effectively
-        "off"). Valid values are <literal>DEBUG5</literal>,
-        <literal>DEBUG4</literal>, <literal>DEBUG3</literal>,
-        <literal>DEBUG2</literal>, <literal>DEBUG1</literal>,
-        <literal>INFO</literal>, <literal>NOTICE</literal>,
-        <literal>WARNING</literal>, <literal>ERROR</literal>,
-        <literal>FATAL</literal>, and <literal>PANIC</literal>.
+        This controls for which message levels the SQL statement
+        causing that message is to be recorded in the server log. All
+        statements causing a message of the level of the setting or
+        higher are logged. The default is <literal>PANIC</literal>
+        (effectively turning this feature off). Valid values are
+        <literal>DEBUG5</literal>, <literal>DEBUG4</literal>,
+        <literal>DEBUG3</literal>, <literal>DEBUG2</literal>,
+        <literal>DEBUG1</literal>, <literal>INFO</literal>,
+        <literal>NOTICE</literal>, <literal>WARNING</literal>,
+        <literal>ERROR</literal>, <literal>FATAL</literal>, and
+        <literal>PANIC</literal>.  For example, if you set this to
+        <literal>ERROR</literal> then all SQL statements causing
+        errors, fatal errors, or panics will be logged.
        </para>
+
        <para>
-        It is recommended you enable <literal>LOG_PID</literal> as well
+        It is recommended you enable <varname>LOG_PID</varname> as well
         so you can more easily match the error statement with the error
         message.
        </para>
@@ -1071,18 +1093,7 @@ env PGOPTIONS='-c geqo=off' psql
       <term><varname>LOG_STATEMENT</varname> (<type>boolean</type>)</term>
       <listitem>
        <para>
-        Prints each query received.
-       </para>
-      </listitem>
-     </varlistentry>
-
-     <varlistentry>
-      <term><varname>LOG_DURATION</varname> (<type>boolean</type>)</term>
-      <listitem>
-       <para>
-        Prints the duration of every completed query.  To use this option, 
-        enable <literal>LOG_STATEMENT</> and <literal>LOG_PID</> so you 
-        can link the original query to the duration using the process id.
+        Causes each SQL statement to be logged.
        </para>
       </listitem>
      </varlistentry>
@@ -1186,9 +1197,12 @@ env PGOPTIONS='-c geqo=off' psql
           This option determines the <application>syslog</application>
           <quote>facility</quote> to be used when
           <application>syslog</application> is enabled. You may choose
-          from LOCAL0, LOCAL1, LOCAL2, LOCAL3, LOCAL4, LOCAL5, LOCAL6,
-          LOCAL7; the default is LOCAL0. See also the documentation of
-          your system's <application>syslog</application>.
+          from <literal>LOCAL0</>, <literal>LOCAL1</>,
+          <literal>LOCAL2</>, <literal>LOCAL3</>, <literal>LOCAL4</>,
+          <literal>LOCAL5</>, <literal>LOCAL6</>, <literal>LOCAL7</>;
+          the default is <literal>LOCAL0</>. See also the
+          documentation of your system's
+          <application>syslog</application>.
         </para>
        </listitem>
      </varlistentry>
@@ -1221,12 +1235,12 @@ env PGOPTIONS='-c geqo=off' psql
    </sect2>
 
    <sect2 id="runtime-config-general">
-    <title>General operation</title>
+    <title>General Operation</title>
 
    <para>
     <variablelist>
      <varlistentry>
-      <term><varname>AUTOCOMMIT</varname> (<type>bool</type>)</term>
+      <term><varname>AUTOCOMMIT</varname> (<type>boolean</type>)</term>
       <indexterm><primary>autocommit</></>
       <listitem>
        <para>
@@ -1254,7 +1268,7 @@ env PGOPTIONS='-c geqo=off' psql
 	 Once another command is issued, a transaction block
 	 begins and any <command>SET</>, <command>SHOW</>, or
 	 <command>RESET</> commands are considered to be part of the
-	 transaction, i.e. they are committed or rolled back depending
+	 transaction, i.e., they are committed or rolled back depending
 	 on the completion status of the transaction. To execute a
 	 <command>SET</>, <command>SHOW</>, or <command>RESET</>
 	 command at the start of a transaction block, use <command>BEGIN</>
@@ -1276,7 +1290,7 @@ env PGOPTIONS='-c geqo=off' psql
      </varlistentry>
 
      <varlistentry>
-      <term><varname>AUSTRALIAN_TIMEZONES</varname> (<type>bool</type>)</term>
+      <term><varname>AUSTRALIAN_TIMEZONES</varname> (<type>boolean</type>)</term>
       <indexterm><primary>Australian time zones</></>
       <listitem>
        <para>
@@ -1330,19 +1344,33 @@ env PGOPTIONS='-c geqo=off' psql
       <term><varname>DB_USER_NAMESPACE</varname> (<type>boolean</type>)</term>
       <listitem>
        <para>
-        This allows per-database user names.  You can create users as <literal>
-        username@dbname</>.  When <literal>username</> is passed by the client,
-        <literal>@</> and the database name is appended to the user name and
-        that database-specific user name is looked up by the server. 
-        When creating user names containing <literal>@</>, you will need
-        to quote the user name.
+        This allows per-database user names.  It is off by default.
        </para>
+
        <para>
-        With this option enabled, you can still create ordinary global 
-        users.  Simply append <literal>@</> when specifying the user name
-        in the client.  The <literal>@</> will be stripped off and looked up
-        by the server. 
+        If this is on, create users as <literal> username@dbname</>.
+        When <literal>username</> is passed by a connecting client,
+        <literal>@</> and the database name is appended to the user
+        name and that database-specific user name is looked up by the
+        server. Note that when you create users with names containing
+        <literal>@</> within the SQL environment, you will need to
+        quote the user name.
        </para>
+
+       <para>
+        With this option enabled, you can still create ordinary global
+        users.  Simply append <literal>@</> when specifying the user
+        name in the client.  The <literal>@</> will be stripped off
+        before the user name is looked up by the server.
+       </para>
+
+       <note>
+        <para>
+         This feature is intended as a temporary measure until a
+         complete solution is found.  At that time, this option will
+         be removed.
+        </para>
+       </note>
       </listitem>
      </varlistentry>
 
@@ -1393,7 +1421,7 @@ env PGOPTIONS='-c geqo=off' psql
        </para>
 
        <para>
-        Consult the <citetitle>PostgreSQL User's Guide</citetitle> and
+        Consult the &cite-user; and
         the command <command>SET TRANSACTION</command> for more
         information.
        </para>
@@ -1424,11 +1452,9 @@ env PGOPTIONS='-c geqo=off' psql
         distribution are installed. (Use <literal>pg_config
         --pkglibdir</literal> to print the name of this directory.) For
         example:
-        <informalexample>
 <programlisting>
 dynamic_library_path = '/usr/local/lib/postgresql:/home/my_project/lib:$libdir'
 </programlisting>
-        </informalexample>
        </para>
 
        <para>
@@ -1666,8 +1692,8 @@ dynamic_library_path = '/usr/local/lib/postgresql:/home/my_project/lib:$libdir'
       <listitem>
        <para>
         When a password is specified in <command>CREATE USER</> or
-        <command>ALTER USER</> without writing either ENCRYPTED or
-        UNENCRYPTED, this flag determines whether the password is to be
+        <command>ALTER USER</> without writing either <literal>ENCRYPTED</> or
+        <literal>UNENCRYPTED</>, this flag determines whether the password is to be
         encrypted. The default is on (encrypt the password).
        </para>
       </listitem>
@@ -1690,37 +1716,37 @@ dynamic_library_path = '/usr/local/lib/postgresql:/home/my_project/lib:$libdir'
       <indexterm><primary>namespaces</></>
       <listitem>
        <para>
-        This variable specifies the order in which namespaces are searched
-	when an object (table, data type, function, etc) is referenced by a
+        This variable specifies the order in which schemas are searched
+	when an object (table, data type, function, etc.) is referenced by a
 	simple name with no schema component.  When there are objects of
-	identical names in different namespaces, the one found first
+	identical names in different schemas, the one found first
 	in the search path is used.  An object that is not in any of the
-	namespaces in the search path can only be referenced by specifying
-	its containing namespace with a qualified (dotted) name.
+	schemas in the search path can only be referenced by specifying
+	its containing schema with a qualified (dotted) name.
        </para>
 
        <para>
-        The value for search_path has to be a comma-separated
-        list of namespace (schema) names.  If one of the list items is
-        the special value <literal>$user</literal>, then the namespace
-	having the same name as the SESSION_USER is substituted, if there
-	is such a namespace.  (If not, <literal>$user</literal> is ignored.)
+        The value for <varname>search_path</varname> has to be a comma-separated
+        list of schema names.  If one of the list items is
+        the special value <literal>$user</literal>, then the schema
+	having the same name as the <function>SESSION_USER</> is substituted, if there
+	is such a schema.  (If not, <literal>$user</literal> is ignored.)
        </para>
 
        <para>
-        The system catalog namespace, <literal>pg_catalog</>, is always
+        The system catalog schema, <literal>pg_catalog</>, is always
 	searched, whether it is mentioned in the path or not.  If it is
 	mentioned in the path then it will be searched in the specified
 	order.  If <literal>pg_catalog</> is not in the path then it will
 	be searched <emphasis>before</> searching any of the path items.
-	It should also be noted that the temporary-table namespace,
-	<literal>pg_temp_nnn</>, is implicitly searched before any of
+	It should also be noted that the temporary-table schema,
+	<literal>pg_temp_<replaceable>nnn</></>, is implicitly searched before any of
 	these.
        </para>
 
        <para>
         When objects are created without specifying a particular target
-	namespace, they will be placed in the first namespace listed
+	schema, they will be placed in the first schema listed
 	in the search path.  An error is reported if the search path is
 	empty.
        </para>
@@ -1728,19 +1754,12 @@ dynamic_library_path = '/usr/local/lib/postgresql:/home/my_project/lib:$libdir'
        <para>
         The default value for this parameter is
         <literal>'$user, public'</literal> (where the second part will be
-	ignored if there is no namespace named <literal>public</>).
+	ignored if there is no schema named <literal>public</>).
 	This supports shared use of a database (where no users
-	have private namespaces, and all share use of <literal>public</>),
-	private per-user namespaces, and combinations of these.  Other
+	have private schemas, and all share use of <literal>public</>),
+	private per-user schemas, and combinations of these.  Other
 	effects can be obtained by altering the default search path
 	setting, either globally or per-user.
-       </para>
-
-       <para>
-        By default, a newly created database will contain a world-writable
-	namespace named <literal>public</>, but no private namespaces.
-	The administrator may choose to restrict permissions on
-	<literal>public</> or even remove it, if that suits his purposes.
        </para>
 
        <para>
@@ -1754,6 +1773,10 @@ dynamic_library_path = '/usr/local/lib/postgresql:/home/my_project/lib:$libdir'
 	<varname>search_path</varname>, since <function>current_schemas()</>
 	shows how the requests appearing in <varname>search_path</varname>
 	were resolved.
+       </para>
+
+       <para>
+        For more information on schema handling, see the &cite-user;.
        </para>
       </listitem>
      </varlistentry>
@@ -1783,10 +1806,10 @@ dynamic_library_path = '/usr/local/lib/postgresql:/home/my_project/lib:$libdir'
       <term><varname>SILENT_MODE</varname> (<type>bool</type>)</term>
       <listitem>
        <para>
-        Runs postmaster silently. If this option is set, the postmaster
+        Runs the server silently. If this option is set, the server
         will automatically run in background and any controlling ttys
         are disassociated, thus no messages are written to standard
-        output or standard error (same effect as postmaster's -S
+        output or standard error (same effect as <command>postmaster</>'s <option>-S</option>
         option). Unless some logging system such as
         <application>syslog</> is enabled, using this option is
         discouraged since it makes it impossible to see error messages.
@@ -1800,14 +1823,14 @@ dynamic_library_path = '/usr/local/lib/postgresql:/home/my_project/lib:$libdir'
        <para>
 	Specifies the amount of memory to be used by internal sorts and
 	hashes before switching to temporary disk files. The value is
-	specified in kilobytes, and defaults to 1024 kilobytes (1MB).
+	specified in kilobytes, and defaults to 1024 kilobytes (1 MB).
 	Note that for a complex query, several sorts might be running in
 	parallel, and each one will be allowed to use as much memory as
 	this value specifies before it starts to put data into temporary
 	files. Also, each running backend could be doing one or more
 	sorts simultaneously, so the total memory used could be many
 	times the value of <varname>SORT_MEM</varname>. Sorts are used
-	by ORDER BY, merge joins, and CREATE INDEX.
+	by <literal>ORDER BY</>, merge joins, and <command>CREATE INDEX</>.
        </para>
       </listitem>
      </varlistentry>
@@ -1823,8 +1846,7 @@ dynamic_library_path = '/usr/local/lib/postgresql:/home/my_project/lib:$libdir'
         behavior you can set this variable to off, but in the long run
         you are encouraged to change your applications to use the
         <literal>ONLY</literal> keyword to exclude subtables. See the
-        SQL language reference and the <citetitle>User's
-        Guide</citetitle> for more information about inheritance.
+        SQL language reference and the &cite-user; for more information about inheritance.
        </para>
       </listitem>
      </varlistentry>
@@ -1863,7 +1885,7 @@ dynamic_library_path = '/usr/local/lib/postgresql:/home/my_project/lib:$libdir'
        <para>
         Sets the time zone for displaying and interpreting timestamps.
 	The default is to use whatever the system environment
-	specifies as the timezone.
+	specifies as the time zone.
        </para>
       </listitem>
      </varlistentry>
@@ -1877,10 +1899,10 @@ dynamic_library_path = '/usr/local/lib/postgresql:/home/my_project/lib:$libdir'
         <literal><replaceable>expr</> = NULL</literal> (or <literal>NULL
         = <replaceable>expr</></literal>) are treated as
         <literal><replaceable>expr</> IS NULL</literal>, that is, they
-        return true if <replaceable>expr</> evaluates to the NULL value,
+        return true if <replaceable>expr</> evaluates to the null value,
         and false otherwise. The correct behavior of
         <literal><replaceable>expr</> = NULL</literal> is to always
-        return NULL (unknown). Therefore this option defaults to off.
+        return null (unknown). Therefore this option defaults to off.
        </para>
 
        <para>
@@ -1890,11 +1912,11 @@ dynamic_library_path = '/usr/local/lib/postgresql:/home/my_project/lib:$libdir'
         null values, so if you use that interface to access the database you
         might want to turn this option on.  Since expressions of the
         form <literal><replaceable>expr</> = NULL</literal> always
-        return NULL (using the correct interpretation) they are not
+        return the null value (using the correct interpretation) they are not
         very useful and do not appear often in normal applications, so
         this option does little harm in practice.  But new users are
         frequently confused about the semantics of expressions
-        involving NULL, so this option is not on by default.
+        involving null values, so this option is not on by default.
        </para>
 
        <para>
@@ -1906,8 +1928,7 @@ dynamic_library_path = '/usr/local/lib/postgresql:/home/my_project/lib:$libdir'
        </para>
 
        <para>
-        Refer to the <citetitle>User's Guide</citetitle> for related
-        information.
+        Refer to the &cite-user; for related information.
        </para>
       </listitem>
      </varlistentry>
@@ -1917,7 +1938,7 @@ dynamic_library_path = '/usr/local/lib/postgresql:/home/my_project/lib:$libdir'
       <listitem>
        <para>
 	Specifies the directory of the Unix-domain socket on which the
-	<application>postmaster</application> is to listen for
+	server is to listen for
 	connections from client applications.  The default is normally
 	<filename>/tmp</filename>, but can be changed at build time.
        </para>
@@ -1930,7 +1951,7 @@ dynamic_library_path = '/usr/local/lib/postgresql:/home/my_project/lib:$libdir'
        <para>
         Sets the group owner of the Unix domain socket.  (The owning
         user of the socket is always the user that starts the
-        postmaster.)  In combination with the option
+        server.)  In combination with the option
         <option>UNIX_SOCKET_PERMISSIONS</option> this can be used as
         an additional access control mechanism for this socket type.
         By default this is the empty string, which uses the default
@@ -1958,7 +1979,7 @@ dynamic_library_path = '/usr/local/lib/postgresql:/home/my_project/lib:$libdir'
         anyone can connect. Reasonable alternatives are
         <literal>0770</literal> (only user and group, see also under
         <option>UNIX_SOCKET_GROUP</option>) and <literal>0700</literal>
-        (only user). (Note that actually for a Unix socket, only write
+        (only user). (Note that actually for a Unix domain socket, only write
         permission matters and there is no point in setting or revoking
         read or execute permissions.)
        </para>
@@ -2046,8 +2067,8 @@ dynamic_library_path = '/usr/local/lib/postgresql:/home/my_project/lib:$libdir'
         enough additional transactions may become ready to commit within
         the given interval. But the delay is just wasted if no other
         transactions become ready to commit. Therefore, the delay is
-        only performed if at least COMMIT_SIBLINGS other transactions
-        are active at the instant that a backend has written its commit
+        only performed if at least <varname>COMMIT_SIBLINGS</varname> other transactions
+        are active at the instant that a backend process has written its commit
         record.
        </para>
       </listitem>
@@ -2079,7 +2100,7 @@ dynamic_library_path = '/usr/local/lib/postgresql:/home/my_project/lib:$libdir'
       <term><varname>WAL_DEBUG</varname> (<type>integer</type>)</term>
       <listitem>
        <para>
-        If non-zero, turn on WAL-related debugging output on standard
+        If nonzero, turn on WAL-related debugging output on standard
         error.
        </para>
       </listitem>
@@ -2106,107 +2127,111 @@ dynamic_library_path = '/usr/local/lib/postgresql:/home/my_project/lib:$libdir'
    </sect2>
 
 
-   <sect2 id="runtime-config-short">
-    <title>Short options</title>
+  <sect2 id="runtime-config-short">
+   <title>Short Options</title>
+
    <para>
     For convenience there are also single letter option switches
-    available for many parameters. They are described in the following
-    table.
+    available for many parameters. They are described in <xref
+    linkend="runtime-config-short-table">.
+   </para>
 
-    <table>
+    <table id="runtime-config-short-table">
      <title>Short option key</title>
-     <tgroup cols="3">
-      <colspec colnum="3" align="center">
+     <tgroup cols="2">
       <thead>
        <row>
         <entry>Short option</entry>
         <entry>Equivalent</entry>
-        <entry>Remark</entry>
        </row>
       </thead>
+
       <tbody>
        <row>
         <entry><option>-B <replaceable>x</replaceable></option></entry>
         <entry><literal>shared_buffers = <replaceable>x</replaceable></></entry>
-        <entry></entry>
        </row>
        <row>
         <entry><option>-d <replaceable>x</replaceable></option></entry>
-        <entry><literal>server_min_messages = <replaceable>DEBUGx</replaceable></></entry>
-        <entry></entry>
+        <entry><literal>server_min_messages = DEBUG<replaceable>x</replaceable></></entry>
        </row>
        <row>
         <entry><option>-F</option></entry>
         <entry><literal>fsync = off</></entry>
-        <entry></entry>
        </row>
        <row>
         <entry><option>-h <replaceable>x</replaceable></option></entry>
         <entry><literal>virtual_host = <replaceable>x</replaceable></></entry>
-        <entry></entry>
        </row>
        <row>
         <entry><option>-i</option></entry>
         <entry><literal>tcpip_socket = on</></entry>
-        <entry></entry>
        </row>
        <row>
         <entry><option>-k <replaceable>x</replaceable></option></entry>
         <entry><literal>unix_socket_directory = <replaceable>x</replaceable></></entry>
-        <entry></entry>
        </row>
        <row>
         <entry><option>-l</option></entry>
         <entry><literal>ssl = on</></entry>
-        <entry></entry>
        </row>
        <row>
         <entry><option>-N <replaceable>x</replaceable></option></entry>
         <entry><literal>max_connections = <replaceable>x</replaceable></></entry>
-        <entry></entry>
        </row>
        <row>
         <entry><option>-p <replaceable>x</replaceable></option></entry>
         <entry><literal>port = <replaceable>x</replaceable></></entry>
-        <entry></entry>
        </row>
 
        <row>
-        <entry><option>-fi</option>, <option>-fh</option>, <option>-fm</option>, <option>-fn</option>, <option>-fs</option>, <option>-ft</option></entry>
-        <entry><literal>enable_indexscan=off</>, <literal>enable_hashjoin=off</>,
-        <literal>enable_mergejoin=off</>, <literal>enable_nestloop=off</>, <literal>enable_seqscan=off</>,
-        <literal>enable_tidscan=off</></entry>
-        <entry>*</entry>
+        <entry>
+          <option>-fi</option>, <option>-fh</option>,
+          <option>-fm</option>, <option>-fn</option>,
+          <option>-fs</option>, <option>-ft</option><footnote
+          id="fn.runtime-config-short">
+           <para>
+            For historical reasons, these options must be passed to
+            the individual backend process via the <option>-o</option>
+            postmaster option, for example,
+<screen>
+$ <userinput>postmaster -o '-S 1024 -s'</userinput>
+</screen>
+            or via <envar>PGOPTIONS</envar> from the client side, as
+            explained above.
+           </para>
+          </footnote>
+         </entry>
+         <entry>
+          <literal>enable_indexscan=off</>,
+          <literal>enable_hashjoin=off</>,
+          <literal>enable_mergejoin=off</>,
+          <literal>enable_nestloop=off</>,
+          <literal>enable_seqscan=off</>,
+          <literal>enable_tidscan=off</>
+         </entry>
        </row>
+
        <row>
-        <entry><option>-S <replaceable>x</replaceable></option></entry>
-        <entry><literal>sort_mem = <replaceable>x</replaceable></></entry>
-        <entry>*</entry>
-       </row>
-       <row>
-        <entry><option>-s</option></entry>
+        <entry><option>-s</option><footnoteref linkend="fn.runtime-config-short"></entry>
         <entry><literal>show_statement_stats = on</></entry>
-        <entry>*</entry>
        </row>
+
        <row>
-        <entry><option>-tpa</option>, <option>-tpl</option>, <option>-te</option></entry>
+        <entry><option>-S <replaceable>x</replaceable></option><footnoteref linkend="fn.runtime-config-short">
+        </entry>
+        <entry><literal>sort_mem = <replaceable>x</replaceable></></entry>
+       </row>
+
+       <row>
+        <entry><option>-tpa</option>, <option>-tpl</option>, <option>-te</option><footnoteref linkend="fn.runtime-config-short"></entry>
         <entry><literal>show_parser_stats=on</>, <literal>show_planner_stats=on</>, <literal>show_executor_stats=on</></entry>
-        <entry>*</entry>
        </row>
       </tbody>
      </tgroup>
     </table>
-    For historical reasons, options marked <quote>*</quote> must be
-    passed to the individual backend process via the
-    <option>-o</option> postmaster option, for example,
-<screen>
-$ <userinput>postmaster -o '-S 1024 -s'</userinput>
-</screen>
-    or via <envar>PGOPTIONS</envar> from the client side, as explained
-    above.
-   </para>
 
-   </sect2>
+  </sect2>
  </sect1>
 
 
@@ -2281,7 +2306,7 @@ $ <userinput>postmaster -o '-S 1024 -s'</userinput>
       <row>
        <entry><varname>SHMMAX</></>
        <entry>Maximum size of shared memory segment (bytes)</>
-       <entry>250kB + 8.2kB * <varname>shared_buffers</> + 14.2kB * <varname>max_connections</> or infinity</entry>
+       <entry>250kB + 8.2 kB * <varname>shared_buffers</> + 14.2 kB * <varname>max_connections</> or infinity</entry>
       </row>
 
       <row>
@@ -2429,7 +2454,7 @@ $ <userinput>postmaster -o '-S 1024 -s'</userinput>
          mind that shared memory is not pageable; it is locked in RAM.
          To increase the number of shared buffers supported by the
          postmaster, add the following to your kernel configuration
-         file. A <varname>SHMALL</> value of 1024 represents 4MB of
+         file. A <varname>SHMALL</> value of 1024 represents 4 MB of
          shared memory. The following increases the maximum shared
          memory area to 32 MB:
 <programlisting>
@@ -2442,7 +2467,7 @@ options "SHMMAX=\(SHMALL*PAGE_SIZE\)"
        <para>
         For those running 4.1 or later, just make the above changes,
         recompile the kernel, and reboot. For those running earlier
-        releases, use <application>bpatch</> to find the
+        releases, use <command>bpatch</> to find the
         <varname>sysptsize</> value in the current kernel. This is
         computed dynamically at boot time.
 <screen>
@@ -2788,7 +2813,7 @@ default:\
 
 
  <sect1 id="postmaster-shutdown">
-  <title>Shutting down the server</title>
+  <title>Shutting Down the Server</title>
 
   <para>
    There are several ways to shut down the database server. You control
@@ -2879,14 +2904,16 @@ $ <userinput>kill -INT `head -1 /usr/local/pgsql/data/postmaster.pid`</userinput
 
   <para>
    With SSL support compiled in, the <productname>PostgreSQL</> server
-   can be started with the argument <option>-l</> (ell) to enable
-   SSL connections. When starting in SSL mode, the server will look
-   for the files <filename>server.key</> and <filename>server.crt</> in
-   the data directory.  These files should contain the server private key
-   and certificate respectively. These files must be set up correctly
-   before an SSL-enabled server can start. If the private key is protected
-   with a passphrase, the server will prompt for the passphrase and will
-   not start until it has been entered.
+   can be started with SSL support by setting the parameter
+   <varname>ssl</varname> to on in
+   <filename>postgresql.conf</filename>. When starting in SSL mode,
+   the server will look for the files <filename>server.key</> and
+   <filename>server.crt</> in the data directory.  These files should
+   contain the server private key and certificate respectively. These
+   files must be set up correctly before an SSL-enabled server can
+   start. If the private key is protected with a passphrase, the
+   server will prompt for the passphrase and will not start until it
+   has been entered.
   </para>
 
   <para>
@@ -2900,19 +2927,18 @@ $ <userinput>kill -INT `head -1 /usr/local/pgsql/data/postmaster.pid`</userinput
    For details on how to create your server private key and certificate,
    refer to the <productname>OpenSSL</> documentation. A simple
    self-signed certificate can be used to get started for testing, but a
-   certificate signed by a <acronym>CA</> (either one of the global
+   certificate signed by a certificate authority (<acronym>CA</>) (either one of the global
    <acronym>CAs</> or a local one) should be used in production so the
    client can verify the server's identity. To create a quick
    self-signed certificate, use the following
    <productname>OpenSSL</productname> command:
 <programlisting>
-cd <replaceable>$PGDATA</replaceable>
 openssl req -new -text -out server.req
 </programlisting>
    Fill out the information that <command>openssl</> asks for. Make sure
    that you enter the local host name as Common Name; the challenge
    password can be left blank. The script will generate a key that is
-   passphrase protected; it will not accept a pass phrase that is less
+   passphrase protected; it will not accept a passphrase that is less
    than four characters long. To remove the passphrase (as you must if
    you want automatic start-up of the server), run the commands
 <programlisting>
@@ -2930,7 +2956,7 @@ chmod og-rwx server.key
  </sect1>
 
  <sect1 id="ssh-tunnels">
-  <title>Secure TCP/IP Connections with <application>SSH</application> tunnels</title>
+  <title>Secure TCP/IP Connections with <application>SSH</application> Tunnels</title>
 
   <indexterm zone="ssh-tunnels">
    <primary>ssh</primary>
@@ -2946,20 +2972,20 @@ chmod og-rwx server.key
   </note>
 
   <para>
-   One can use <productname>ssh</productname> to encrypt the network
+   One can use <application>SSH</application> to encrypt the network
    connection between clients and a
    <productname>PostgreSQL</productname> server. Done properly, this
-   should lead to an adequately secure network connection.
+   provides an adequately secure network connection.
   </para>
 
   <para>
-   First make sure that an <application>ssh</application> server is
+   First make sure that an <application>SSH</application> server is
    running properly on the same machine as
    <productname>PostgreSQL</productname> and that you can log in using
    <command>ssh</command> as some user. Then you can establish a secure
    tunnel with a command like this from the client machine:
 <programlisting>
-$ <userinput>ssh -L 3333:foo.com:5432 joe@foo.com</userinput>
+ssh -L 3333:foo.com:5432 joe@foo.com
 </programlisting>
    The first number in the <option>-L</option> argument, 3333, is the
    port number of your end of the tunnel; it can be chosen freely. The
@@ -2982,7 +3008,7 @@ psql -h localhost -p 3333 template1
 
   <tip>
    <para>
-    Several other products exist that can provide secure tunnels using
+    Several other applications exist that can provide secure tunnels using
     a procedure similar in concept to the one just described.
    </para>
   </tip>

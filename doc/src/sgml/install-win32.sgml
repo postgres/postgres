@@ -6,14 +6,6 @@
   <secondary>on Windows</secondary>
  </indexterm>
 
- <abstract>
-  <para>
-   Build, installation, and use instructions for
-   <productname>PostgreSQL</productname> client libraries on
-   <productname>Windows</productname>
-  </para>
- </abstract>
-
  <para>
   Although <productname>PostgreSQL</productname> is written for
   Unix-like operating systems, the C client library

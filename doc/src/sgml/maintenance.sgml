@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/maintenance.sgml,v 1.19 2002/09/21 18:32:53 petere Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/maintenance.sgml,v 1.19.2.1 2002/11/06 23:30:39 petere Exp $
 -->
 
 <chapter id="maintenance">
@@ -13,7 +13,7 @@ $Header: /cvsroot/pgsql/doc/src/sgml/maintenance.sgml,v 1.19 2002/09/21 18:32:53
    a regular basis to keep a <productname>PostgreSQL</productname>
    installation running smoothly.  The tasks discussed here are repetitive
    in nature and can easily be automated using standard Unix tools such
-   as <filename>cron</filename> scripts.  But it is the database
+   as <application>cron</application> scripts.  But it is the database
    administrator's responsibility to set up appropriate scripts, and to
    check that they execute successfully.
   </para>
@@ -104,7 +104,7 @@ $Header: /cvsroot/pgsql/doc/src/sgml/maintenance.sgml,v 1.19 2002/09/21 18:32:53
     <command>UPDATE</> or <command>DELETE</> of a row does not
     immediately remove the old <firstterm>tuple</> (version of the row).
     This approach is necessary to gain the benefits of multiversion
-    concurrency control (see the <citetitle>User's Guide</>): the tuple
+    concurrency control (see the &cite-user;): the tuple
     must not be deleted while it is still potentially visible to other
     transactions. But eventually, an outdated or deleted tuple is no
     longer of interest to any transaction. The space it occupies must be
@@ -206,7 +206,7 @@ $Header: /cvsroot/pgsql/doc/src/sgml/maintenance.sgml,v 1.19 2002/09/21 18:32:53
      Although per-column tweaking of <command>ANALYZE</> frequency may not be
      very productive, you may well find it worthwhile to do per-column
      adjustment of the level of detail of the statistics collected by
-     <command>ANALYZE</>.  Columns that are heavily used in WHERE clauses
+     <command>ANALYZE</>.  Columns that are heavily used in <literal>WHERE</> clauses
      and have highly irregular data distributions may require a finer-grain
      data histogram than other columns.  See <command>ALTER TABLE SET
      STATISTICS</>.
@@ -299,7 +299,7 @@ $Header: /cvsroot/pgsql/doc/src/sgml/maintenance.sgml,v 1.19 2002/09/21 18:32:53
     is exactly one billion transactions: if you wait longer, it's possible
     that a tuple that was not quite old enough to be reassigned last time
     is now more than two billion transactions old and has wrapped around
-    into the future --- ie, is lost to you.  (Of course, it'll reappear
+    into the future --- i.e., is lost to you.  (Of course, it'll reappear
     after another two billion transactions, but that's no help.)
    </para>
 
@@ -311,17 +311,17 @@ $Header: /cvsroot/pgsql/doc/src/sgml/maintenance.sgml,v 1.19 2002/09/21 18:32:53
     statistics in the system table <filename>pg_database</>.  In particular,
     the <filename>datfrozenxid</> field of a database's
     <filename>pg_database</> row is updated at the completion of any
-    database-wide vacuum operation (ie, <command>VACUUM</> that does not
+    database-wide vacuum operation (i.e., <command>VACUUM</> that does not
     name a specific table).  The value stored in this field is the freeze
     cutoff XID that was used by that <command>VACUUM</> command.  All normal
     XIDs older than this cutoff XID are guaranteed to have been replaced by
     <literal>FrozenXID</> within that database.  A convenient way to
     examine this information is to execute the query
-    <informalexample>
+
 <programlisting>
 SELECT datname, age(datfrozenxid) FROM pg_database;
 </programlisting>
-    </informalexample>
+
     The <literal>age</> column measures the number of transactions from the
     cutoff XID to the current transaction's XID.
    </para>
@@ -336,7 +336,7 @@ SELECT datname, age(datfrozenxid) FROM pg_database;
     each database-wide <command>VACUUM</> automatically delivers a warning
     if there are any <filename>pg_database</> entries showing an
     <literal>age</> of more than 1.5 billion transactions, for example:
-    <informalexample>
+
 <programlisting>
 play=# vacuum;
 WARNING:  Some databases have not been vacuumed in 1613770184 transactions.
@@ -344,7 +344,6 @@ WARNING:  Some databases have not been vacuumed in 1613770184 transactions.
         or you may have a wraparound failure.
 VACUUM
 </programlisting>
-    </informalexample>
    </para>
 
    <para>

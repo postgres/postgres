@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/diskusage.sgml,v 1.6 2002/10/16 22:06:33 petere Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/diskusage.sgml,v 1.6.2.1 2002/11/06 23:30:39 petere Exp $
 -->
 
 <chapter id="diskusage">
@@ -32,7 +32,7 @@ $Header: /cvsroot/pgsql/doc/src/sgml/diskusage.sgml,v 1.6 2002/10/16 22:06:33 pe
   <para>
    You can monitor disk space from three places: from
    <application>psql</> using <command>VACUUM</> information, from
-   <application>psql</> using <application>contrib/dbsize</>, and from
+   <application>psql</> using <filename>contrib/dbsize</>, and from
    the command line using <application>contrib/oid2name</>. Using
    <application>psql</> on a recently vacuumed (or analyzed) database,
    you can issue queries to see the disk usage of any table:
@@ -94,13 +94,14 @@ play-# ORDER BY relpages DESC;
   </para>
 
   <para>
-   <application>dbsize</> loads functions into your database that allow
+   <filename>contrib/dbsize</> loads functions into your database that allow
    you to find the size of a table or database from inside
    <application>psql</> without the need for <command>VACUUM/ANALYZE.</>
   </para>
+
   <para>
-   You can also use <application>oid2name</> to show disk usage. See
-   <filename>README.oid2name</> for examples. It includes a script
+   You can also use <filename>contrib/oid2name</> to show disk usage. See
+   <filename>README.oid2name</> for examples. It includes a script that
    shows disk usage for each database.
   </para>
  </sect1>

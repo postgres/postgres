@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/start.sgml,v 1.26 2002/10/24 17:48:54 petere Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/start.sgml,v 1.26.2.1 2002/11/06 23:30:39 petere Exp $
 -->
 
  <chapter id="tutorial-start">
@@ -281,10 +281,10 @@ createdb: database creation failed
      <listitem>
       <para>
        Using an existing graphical frontend tool like
-       <application>PgAccess</application> or
-       <application>ApplixWare</application> (via
-       <acronym>ODBC</acronym>) to create and manipulate a database.
-       These possibilities are not covered in this tutorial.
+       <application>PgAccess</application> or an office suite with
+       <acronym>ODBC</acronym> support to create and manipulate a
+       database.  These possibilities are not covered in this
+       tutorial.
       </para>
      </listitem>
 

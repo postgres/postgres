@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/manage-ag.sgml,v 2.22 2002/10/24 17:48:54 petere Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/manage-ag.sgml,v 2.22.2.1 2002/11/06 23:30:39 petere Exp $
 -->
 
 <chapter id="managing-databases">
@@ -27,7 +27,7 @@ $Header: /cvsroot/pgsql/doc/src/sgml/manage-ag.sgml,v 2.22 2002/10/24 17:48:54 p
    database within the installation.)  More accurately, a database is
    a collection of schemas and the schemas contain the tables,
    functions, etc.  So the full hierarchy is:
-   server-database-schema-table (or something else instead of a
+   server, database, schema, table (or something else instead of a
    table).
   </para>
 

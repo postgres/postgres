@@ -1,12 +1,12 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/monitoring.sgml,v 1.14 2002/09/21 18:32:53 petere Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/monitoring.sgml,v 1.14.2.1 2002/11/06 23:30:39 petere Exp $
 -->
 
 <chapter id="monitoring">
  <title>Monitoring Database Activity</title>
 
  <para>
-  A database administrator frequently wonders <quote>what is the system
+  A database administrator frequently wonders, <quote>What is the system
   doing right now?</quote>
   This chapter discusses how to find that out.
  </para>
@@ -19,7 +19,7 @@ $Header: /cvsroot/pgsql/doc/src/sgml/monitoring.sgml,v 1.14 2002/09/21 18:32:53 
    <command>ps</> and <command>top</>.  Also, once one has identified a
    poorly-performing query, further investigation may be needed using
    <productname>PostgreSQL</productname>'s <command>EXPLAIN</> command.
-   The <citetitle>User's Guide</citetitle> discusses <command>EXPLAIN</>
+   The &cite-user; discusses <command>EXPLAIN</>
    and other methods for understanding the behavior of an individual
    query.
   </para>
@@ -64,8 +64,8 @@ postgres: <replaceable>user</> <replaceable>database</> <replaceable>host</> <re
 
   The user, database, and connection source host items remain the same for
   the life of the client connection, but the activity indicator changes.
-  The activity may be <literal>idle</> (ie, waiting for a client command),
-  <literal>idle in transaction</> (waiting for client inside a BEGIN block),
+  The activity may be <literal>idle</> (i.e., waiting for a client command),
+  <literal>idle in transaction</> (waiting for client inside a <command>BEGIN</> block),
   or a command type name such as <literal>SELECT</>.  Also,
   <literal>waiting</> is attached if the server is presently waiting
   on a lock held by another server process.  In the above example we can infer
@@ -149,7 +149,7 @@ postgres: <replaceable>user</> <replaceable>database</> <replaceable>host</> <re
      <varname>STATS_BLOCK_LEVEL</varname>,
      and <varname>STATS_ROW_LEVEL</varname>
      default to <literal>false</>, no statistics are actually collected
-     in the default configuration!  You must turn one or more of them on
+     in the default configuration.  You must turn one or more of them on
      before you will get useful results from the statistical display
      functions.
     </para>
@@ -162,8 +162,9 @@ postgres: <replaceable>user</> <replaceable>database</> <replaceable>host</> <re
 
   <para>
    Several predefined views are available to show the results of
-   statistics collection.  Alternatively, one can build custom views
-   using the underlying statistics functions.
+   statistics collection, listed in <xref
+   linkend="monitoring-stats-views-table">.  Alternatively, one can
+   build custom views using the underlying statistics functions.
   </para>
 
   <para>
@@ -172,8 +173,8 @@ postgres: <replaceable>user</> <replaceable>database</> <replaceable>host</> <re
    Each individual server process transmits new access counts to the collector
    just before waiting for another client command; so a query still in
    progress does not affect the displayed totals.  Also, the collector itself
-   emits new totals at most once per <varname>pgstat_stat_interval</varname> (500 milliseconds
-   by default).  So the displayed totals lag behind actual activity.
+   emits new totals at most once per <varname>pgstat_stat_interval</varname> milliseconds
+   (500 by default).  So the displayed totals lag behind actual activity.
   </para>
 
   <para>
@@ -190,7 +191,7 @@ postgres: <replaceable>user</> <replaceable>database</> <replaceable>host</> <re
    block.
   </para>
 
-  <table>
+  <table id="monitoring-stats-views-table">
    <title>Standard Statistics Views</title>
 
    <tgroup cols="2">
@@ -204,9 +205,9 @@ postgres: <replaceable>user</> <replaceable>database</> <replaceable>host</> <re
     <tbody>
      <row>
       <entry><structname>pg_stat_activity</></entry>
-      <entry>One row per server process, showing process <acronym>PID</>, database,
+      <entry>One row per server process, showing process <acronym>ID</>, database,
       user, and current query.  The current query column is only available
-      to superusers; for others it reads as NULL.  (Note that because of
+      to superusers; for others it reads as null.  (Note that because of
       the collector's reporting delay, current query will only be up-to-date
       for long-running queries.)</entry>
      </row>
@@ -215,7 +216,7 @@ postgres: <replaceable>user</> <replaceable>database</> <replaceable>host</> <re
       <entry><structname>pg_stat_database</></entry>
       <entry>One row per database, showing number of active backends,
       total transactions committed and total rolled back in that database,
-      total disk blocks read, and total number of buffer hits (ie, block
+      total disk blocks read, and total number of buffer hits (i.e., block
       read requests avoided by finding the block already in buffer cache).
      </entry>
      </row>
@@ -230,13 +231,13 @@ postgres: <replaceable>user</> <replaceable>database</> <replaceable>host</> <re
 
      <row>
       <entry><structname>pg_stat_sys_tables</></entry>
-      <entry>Same as pg_stat_all_tables, except that only system tables
+      <entry>Same as <structname>pg_stat_all_tables</>, except that only system tables
       are shown.</entry>
      </row>
 
      <row>
       <entry><structname>pg_stat_user_tables</></entry>
-      <entry>Same as pg_stat_all_tables, except that only user tables
+      <entry>Same as <structname>pg_stat_all_tables</>, except that only user tables
       are shown.</entry>
      </row>
 
@@ -244,20 +245,20 @@ postgres: <replaceable>user</> <replaceable>database</> <replaceable>host</> <re
       <entry><structname>pg_stat_all_indexes</></entry>
       <entry>For each index in the current database, the total number
       of index scans that have used that index, the number of index tuples
-      read, and the number of successfully fetched heap tuples (this may
-      be less when there are index entries pointing to expired heap tuples).
+      read, and the number of successfully fetched heap tuples. (This may
+      be less when there are index entries pointing to expired heap tuples.)
       </entry>
      </row>
 
      <row>
       <entry><structname>pg_stat_sys_indexes</></entry>
-      <entry>Same as pg_stat_all_indexes, except that only indexes on
+      <entry>Same as <structname>pg_stat_all_indexes</>, except that only indexes on
       system tables are shown.</entry>
      </row>
 
      <row>
       <entry><structname>pg_stat_user_indexes</></entry>
-      <entry>Same as pg_stat_all_indexes, except that only indexes on
+      <entry>Same as <structname>pg_stat_all_indexes</>, except that only indexes on
       user tables are shown.</entry>
      </row>
 
@@ -339,18 +340,19 @@ postgres: <replaceable>user</> <replaceable>database</> <replaceable>host</> <re
   </para>
 
   <para>
-   Other ways of looking at the statistics can be set up by writing queries
-   that use the same underlying statistics access functions as these standard
-   views do.  The per-database access functions accept a database OID to
-   identify which database to report on.  The per-table and per-index
-   functions accept a table or index OID (note that only tables and indexes
-   in the current
+   Other ways of looking at the statistics can be set up by writing
+   queries that use the same underlying statistics access functions as
+   these standard views do.  These functions are listed in <xref
+   linkend="monitoring-stats-funcs-table">.  The per-database access
+   functions accept a database OID to identify which database to
+   report on.  The per-table and per-index functions accept a table or
+   index OID (note that only tables and indexes in the current
    database can be seen with these functions).  The per-backend access
-   functions accept a backend ID number, which ranges from one to the number
-   of currently active backends.
+   functions accept a backend ID number, which ranges from one to the
+   number of currently active backends.
   </para>
 
-  <table>
+  <table id="monitoring-stats-funcs-table">
    <title>Statistics Access Functions</title>
 
    <tgroup cols="3">
@@ -531,11 +533,14 @@ postgres: <replaceable>user</> <replaceable>database</> <replaceable>host</> <re
    </tgroup>
   </table>
 
-  <para>
-  Note: blocks_fetched minus blocks_hit gives the number of kernel read()
-  calls issued for the table, index, or database; but the actual number of
-  physical reads is usually lower due to kernel-level buffering.
-  </para>
+   <note>
+    <para>
+     Blocks_fetched minus blocks_hit gives the number of kernel
+     <function>read()</> calls issued for the table, index, or
+     database; but the actual number of physical reads is usually
+     lower due to kernel-level buffering.
+    </para>
+   </note>
 
   <para>
    The function <function>pg_stat_get_backend_idset</function> provides
@@ -552,157 +557,168 @@ FROM (SELECT pg_stat_get_backend_idset() AS backendid) AS S;
  </sect2>
  </sect1>
 
-  <sect1 id="monitoring-locks">
-   <title>Viewing Locks</title>
+ <sect1 id="monitoring-locks">
+  <title>Viewing Locks</title>
 
+  <para>
+   Another useful tool for monitoring database activity is the
+   <literal>pg_locks</literal> system catalog. This allows the
+   database administrator to view information about the outstanding
+   locks in the lock manager. For example, this capability can be used
+   to:
+	
+   <itemizedlist>
+    <listitem>
+     <para>
+      View all the locks currently outstanding, all the locks on
+      relations in a particular database, all the locks on a
+      particular relation, or all the locks held by a particular
+      <productname>PostgreSQL</productname> session.
+     </para>
+    </listitem>
+
+    <listitem>
+     <para>
+      View the relation in the current database with the most
+      ungranted locks (which might be a source of contention among
+      database clients).
+     </para>
+    </listitem>
+
+    <listitem>
+     <para>
+      Determine the effect of lock contention on overall database
+      performance, as well as the extent to which contention varies
+      with overall database traffic.
+     </para>
+    </listitem>
+   </itemizedlist>
+
+   For more information on locking and managing concurrency with
+   <productname>PostgreSQL</productname>, refer to the &cite-user;.
+  </para>
+
+  <note>
    <para>
-	Another useful tool for monitoring database activity is the
-	<literal>pg_locks</literal> system catalog. This allows the
-	database administrator to view information about the outstanding
-	locks in the lock manager. For example, this capability can be
-	used to:
-	<itemizedlist>
-	 <listitem>
-	  <para>
-	   View all the locks currently outstanding, all the locks on
-	   relations in a particular database, all the locks on a
-	   particular relation, or all the locks held by a particular
-	   <productname>PostgreSQL</productname> backend.
-	  </para>
-	 </listitem>
-	 <listitem>
-	  <para>
-	   View the relation in the current database with the most
-	   un-granted locks (which might be a source of contention among
-	   database clients).
-	  </para>
-	 </listitem>
-	 <listitem>
-	  <para>
-	   Determine the effect of lock contention on overall database
-	   performance, as well as the extent to which contention varies
-	   with overall database traffic.
-	  </para>
-	 </listitem>
-	</itemizedlist>
-
-	For more information on locking and managing concurrency with
-	<productname>PostgreSQL</productname>, refer to the
-	<citetitle>Administrator's Guide</citetitle>.
+    When the <literal>pg_locks</literal> view is accessed, the
+    internal lock manager data structures are momentarily locked, and
+    a copy is made for the view to display.  This ensures that the
+    view produces a consistent set of results, while not blocking
+    normal lock manager operations longer than necessary.  Nonetheless
+    there could be some impact on database performance if this view is
+    examined often.
    </para>
+  </note>
 
-   <note>
-	<para>
-	 When the <literal>pg_locks</literal> view is accessed, the
-	 internal lock manager data structures are momentarily locked,
-	 and a copy is made for the view to display.  This ensures that
-	 the view produces a consistent set of results, while not blocking
-	 normal lock manager operations longer than necessary.  Nonetheless
-	 there could be some impact on database performance if this view is
-	 examined often.
-	</para>
-   </note>
+  <para>
+   <xref linkend="monitoring-locks-table"> shows the definition of the
+   <literal>pg_locks</literal> columns.  The
+   <literal>pg_locks</literal> view contains one row per lockable
+   object and requested lock mode.  Thus, the same lockable object may
+   appear many times, if multiple transactions are holding or waiting
+   for locks on it.  A lockable object is either a relation or a
+   transaction ID.  (Note that this view includes only table-level
+   locks, not row-level ones.  If a transaction is waiting for a
+   row-level lock, it will appear in the view as waiting for the
+   transaction ID of the current holder of that row lock.)
+  </para>
 
-   <para>
-	The <literal>pg_locks</literal> view contains one row per lockable
-	object and requested lock mode.  Thus, the same lockable object
-	may appear many times, if multiple transactions are holding or
-	waiting for locks on it.  A lockable object is either a relation
-	or a transaction ID.  (Note that this view includes only table-level
-	locks, not row-level ones.  If a transaction is waiting for a
-	row-level lock, it will appear in the view as waiting for the
-	transaction ID of the current holder of that row lock.)
-   </para>
+  <table id="monitoring-locks-table">
+   <title>Lock Status System View</title>
 
-   <table>
-	<title>Lock Status System View</title>
+   <tgroup cols="3">
+    <thead>
+     <row>
+      <entry>Column Name</entry>
+      <entry>Type</entry>
+      <entry>Description</entry>
+     </row>
+    </thead>
 
-	<tgroup cols="3">
-	 <thead>
-	  <row>
-	   <entry>Column Name</entry>
-	   <entry>Type</entry>
-	   <entry>Description</entry>
-	  </row>
-	 </thead>
+    <tbody>
+     <row>
+      <entry><structfield>relation</structfield></entry>
+      <entry><type>oid</type></entry>
+      <entry>
+       The OID of the locked relation, or null if the lockable object
+       is a transaction ID. This column can be joined with the
+       <literal>pg_class</literal> system catalog to get more
+       information on the locked relation.  Note however that this
+       will only work for relations in the current database (those for
+       which the <structfield>database</structfield> column is either
+       the current database's OID or zero).
+      </entry>
+     </row>
 
-	 <tbody>
-	  <row>
-	   <entry><structfield>relation</structfield></entry>
-	   <entry><type>oid</type></entry>
-	   <entry>The OID of the locked relation, or NULL if the lockable
-	   object is a transaction ID. This column can be joined
-	   with the <literal>pg_class</literal> system catalog to get more
-	   information on the locked relation.  Note however that this will
-	   only work for relations in the current database (those for which
-	   the <structfield>database</structfield> column is either the
-	   current database's OID or zero).
-	   </entry>
-	  </row>
+     <row>
+      <entry><structfield>database</structfield></entry>
+      <entry><type>oid</type></entry>
+      <entry>
+       The OID of the database in which the locked relation exists, or
+       null if the lockable object is a transaction ID.  If the lock
+       is on a globally-shared table, this field will be zero. This
+       column can be joined with the <literal>pg_database</literal>
+       system catalog to get more information on the locked object's
+       database.
+      </entry>
+     </row>
 
-	  <row>
-	   <entry><structfield>database</structfield></entry>
-	   <entry><type>oid</type></entry>
-	   <entry>The OID of the database in which the locked relation
-	    exists, or NULL if the lockable object is a transaction ID.
-	    If the lock is on a globally-shared table, this field will be
-	    zero. This
-	    column can be joined with the <literal>pg_database</literal>
-	    system catalog to get more information on the locked object's
-	    database.
-	   </entry>
-	  </row>
+     <row>
+      <entry><structfield>transaction</structfield></entry>
+      <entry><type>xid</type></entry>
+      <entry>
+       The ID of a transaction, or null if the lockable object is a
+       relation.  Every transaction holds an exclusive lock on its
+       transaction ID for its entire duration.  If one transaction
+       finds it necessary to wait specifically for another
+       transaction, it does so by attempting to acquire share lock on
+       the other transaction ID.  That will succeed only when the
+       other transaction terminates and releases its locks.
+      </entry>
+     </row>
 
-	  <row>
-	   <entry><structfield>transaction</structfield></entry>
-	   <entry><type>xid</type></entry>
-	   <entry>The ID of a transaction, or NULL if the lockable object
-	   is a relation.  Every transaction holds an exclusive lock on its
-	   transaction ID for its entire duration.  If one transaction finds
-	   it necessary to wait specifically for another transaction, it
-	   does so by attempting to acquire share lock on the other transaction
-	   ID.  That will succeed only when the other transaction terminates
-	   and releases its locks.
-	   </entry>
-	  </row>
+     <row>
+      <entry><structfield>pid</structfield></entry>
+      <entry><type>integer</type></entry>
+      <entry>
+       The process ID of the <productname>PostgreSQL</productname>
+       backend belonging to the session that has acquired or is
+       attempting to acquire the lock. If you have enabled the
+       statistics collector, this column can be joined with the
+       <literal>pg_stat_activity</literal> view to get more
+       information on the backend holding or waiting to hold the
+       lock.
+      </entry>
+     </row>
 
-	  <row>
-	   <entry><structfield>pid</structfield></entry>
-	   <entry><type>int4</type></entry>
-	   <entry>The process ID of the
-		<productname>PostgreSQL</productname> backend that has
-		acquired or is attempting to acquire the lock. If you have
-		enabled the statistics collector, this column can be joined
-		with the <literal>pg_stat_activity</literal> view to get
-		more information on the backend holding or waiting to hold the
-		lock.</entry>
-	  </row>
+     <row>
+      <entry><structfield>mode</structfield></entry>
+      <entry><type>text</type></entry>
+      <entry>
+       The mode of the requested or held lock on the lockable
+       object. For more information on the different lock modes
+       available in <productname>PostgreSQL</productname>, refer to
+       the &cite-user;.
+      </entry>
+     </row>
 
-	  <row>
-	   <entry><structfield>mode</structfield></entry>
-	   <entry><type>text</type></entry>
-	   <entry>The mode of the requested or held lock on the lockable
-	   object. For more information on the
-	   different lock modes available in
-	   <productname>PostgreSQL</productname>, refer to the
-	   <citetitle>User's Guide</citetitle>.</entry>
-	  </row>
-
-	  <row>
-	   <entry><structfield>isgranted</structfield></entry>
-	   <entry><type>bool</type></entry>
-	   <entry>True if this lock has been granted (is held by this
-	   backend).  False indicates that this backend is currently
-	   waiting to acquire this lock, which implies that some other
-	   backend is holding a conflicting lock mode on the same lockable
-	   object.  This backend will sleep until the other lock is released
-	   (or a deadlock situation is detected). A single backend can be
-	   waiting to acquire at most one lock at a time.</entry>
-	  </row>
-	 </tbody>
-	</tgroup>
-   </table>
-  </sect1>
+     <row>
+      <entry><structfield>isgranted</structfield></entry>
+      <entry><type>boolean</type></entry>
+      <entry>
+       True if this lock has been granted (is held by this session).
+       False indicates that this session is currently waiting to
+       acquire this lock, which implies that some other session is
+       holding a conflicting lock mode on the same lockable object.
+       This backend will sleep until the other lock is released (or a
+       deadlock situation is detected). A single backend can be
+       waiting to acquire at most one lock at a time.
+      </entry>
+     </row>
+    </tbody>
+   </tgroup>
+  </table>
+ </sect1>
 </chapter>
 
 <!-- Keep this comment at the end of the file

@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/libpq.sgml,v 1.98 2002/11/03 01:30:46 momjian Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/libpq.sgml,v 1.98.2.1 2002/11/06 23:30:39 petere Exp $
 -->
 
  <chapter id="libpq">
@@ -2139,22 +2139,23 @@ for information on correct values for these environment variables.
  <primary>password</primary>
  <secondary>.pgpass</secondary>
 </indexterm>
-<filename>$HOME/.pgpass</filename> is a file that can contain passwords
-to be used if the connection requires a password. This file should have the
-format:
-<screen>
+The file <filename>.pgpass</filename> in the home directory is a file
+that can contain passwords to be used if the connection requires a
+password. This file should have the format:
+<synopsis>
 <replaceable>hostname</replaceable>:<replaceable>port</replaceable>:<replaceable>database</replaceable>:<replaceable>username</replaceable>:<replaceable>password</replaceable>
-</screen>
+</synopsis>
 Any of these may be a literal name, or <literal>*</literal>, which matches
 anything.  The first match will be used so put more specific entries first.
 Entries with <literal>:</literal> or <literal>\</literal> should be escaped
 with <literal>\</literal>.
 </para>
 <para>
-The permissions on <filename>$HOME/.pgpass</filename> must disallow any
+The permissions on <filename>.pgpass</filename> must disallow any
 access to world or group; achieve this by the command
-<command>chmod 0600 $HOME/.pgaccess</command>.
+<command>chmod 0600 .pgaccess</command>.
 If the permissions are less strict than this, the file will be ignored.
+</para>
 </sect1>
 
 <sect1 id="libpq-threading">

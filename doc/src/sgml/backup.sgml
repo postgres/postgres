@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/backup.sgml,v 2.23 2002/10/21 02:11:37 tgl Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/backup.sgml,v 2.23.2.1 2002/11/06 23:30:39 petere Exp $
 -->
 <chapter id="backup">
  <title>Backup and Restore</title>
@@ -64,7 +64,7 @@ pg_dump <replaceable class="parameter">dbname</replaceable> &gt; <replaceable cl
   <para>
    As any other <productname>PostgreSQL</> client application,
    <application>pg_dump</> will by default connect with the database
-   user name that is equal to the current Unix user name. To override
+   user name that is equal to the current operating system user name. To override
    this, either specify the <option>-U</option> option or set the
    environment variable <envar>PGUSER</envar>. Remember that
    <application>pg_dump</> connections are subject to the normal
@@ -104,9 +104,9 @@ psql <replaceable class="parameter">dbname</replaceable> &lt; <replaceable class
 </synopsis>
     where <replaceable class="parameter">infile</replaceable> is what
     you used as <replaceable class="parameter">outfile</replaceable>
-    for the pg_dump command. The database <replaceable
+    for the <command>pg_dump</> command. The database <replaceable
     class="parameter">dbname</replaceable> will not be created by this
-    command, you must create it yourself from template0 before executing
+    command, you must create it yourself from <literal>template0</> before executing
     <application>psql</> (e.g., with <literal>createdb -T template0
     <replaceable class="parameter">dbname</></literal>).
     <application>psql</> supports similar options to <application>pg_dump</> 
@@ -129,23 +129,22 @@ psql <replaceable class="parameter">dbname</replaceable> &lt; <replaceable class
     The ability of <application>pg_dump</> and <application>psql</> to
     write to or read from pipes makes it possible to dump a database
     directly from one server to another, for example
-    <informalexample>
 <programlisting>
 pg_dump -h <replaceable>host1</> <replaceable>dbname</> | psql -h <replaceable>host2</> <replaceable>dbname</>
 </programlisting>
-    </informalexample>
    </para>
 
-
-  <important>
-   <para>
-	The dumps produced by pg_dump are relative to template0. This means 
-    that any languages, procedures, etc. added to template1 will also be
-    dumped by <application>pg_dump</>. As a result, when restoring, if 
-    you are using a customized template1, you must create the empty
-    database from template0, as in the example above.
-   </para>
-  </important>
+   <important>
+    <para>
+     The dumps produced by <application>pg_dump</> are relative to
+     <literal>template0</>. This means that any languages, procedures,
+     etc. added to <literal>template1</> will also be dumped by
+     <application>pg_dump</>. As a result, when restoring, if you are
+     using a customized <literal>template1</>, you must create the
+     empty database from <literal>template0</>, as in the example
+     above.
+    </para>
+   </important>
 
   </sect2>
 
@@ -222,20 +221,16 @@ cat <replaceable class="parameter">filename</replaceable>.gz | gunzip | psql <re
      acceptable in size to the underlying file system. For example, to
      make chunks of 1 megabyte:
 
-     <informalexample>
 <programlisting>
 pg_dump <replaceable class="parameter">dbname</replaceable> | split -b 1m - <replaceable class="parameter">filename</replaceable>
 </programlisting>
-     </informalexample>
 
      Reload with
 
-     <informalexample>
 <programlisting>
 createdb <replaceable class="parameter">dbname</replaceable>
 cat <replaceable class="parameter">filename</replaceable>* | psql <replaceable class="parameter">dbname</replaceable>
 </programlisting>
-     </informalexample>
     </para>
    </formalpara>
 
@@ -249,14 +244,11 @@ cat <replaceable class="parameter">filename</replaceable>* | psql <replaceable c
      restored selectively. The following command dumps a database using the
      custom dump format:
 
-     <informalexample>
 <programlisting>
 pg_dump -Fc <replaceable class="parameter">dbname</replaceable> > <replaceable class="parameter">filename</replaceable>
 </programlisting>
-     </informalexample>
 
      See the <application>pg_dump</> and <application>pg_restore</> reference pages for details.
-
     </para>
    </formalpara>
 
@@ -284,7 +276,7 @@ pg_dump -Fc <replaceable class="parameter">dbname</replaceable> > <replaceable c
    <para>
     For reasons of backward compatibility, <application>pg_dump</> does
     not dump large objects by default. To dump large objects you must use 
-    either the custom or the TAR output format, and use the -b option in 
+    either the custom or the TAR output format, and use the <option>-b</> option in 
     <application>pg_dump</>. See the reference pages for details.
     The directory <filename>contrib/pg_dumplo</> of the
     <productname>PostgreSQL</> source tree also contains a program that can
@@ -308,11 +300,10 @@ pg_dump -Fc <replaceable class="parameter">dbname</replaceable> > <replaceable c
    are located, but you have probably found them already if you are
    interested in this method. You can use whatever method you prefer
    for doing usual file system backups, for example
-   <informalexample>
+
 <programlisting>
 tar -cf backup.tar /usr/local/pgsql/data
 </programlisting>
-   </informalexample>
   </para>
 
   <para>
@@ -390,11 +381,11 @@ tar -cf backup.tar /usr/local/pgsql/data
    The least downtime can be achieved by installing the new server in
    a different directory and running both the old and the new servers
    in parallel, on different ports. Then you can use something like
-<informalexample>
+
 <programlisting>
 pg_dumpall -p 5432 | psql -d template1 -p 6543
 </programlisting>
-</informalexample>
+
    to transfer your data, or use an intermediate file if you want.
    Then you can shut down the old server and start the new server at
    the port the old one was running at. You should make sure that the
@@ -410,7 +401,7 @@ pg_dumpall -p 5432 | psql -d template1 -p 6543
    do the back up step before installing the new version, bring down
    the server, move the old version out of the way, install the new
    version, start the new server, restore the data. For example:
-<informalexample>
+
 <programlisting>
 pg_dumpall > backup
 pg_ctl stop
@@ -421,7 +412,7 @@ initdb -D /usr/local/pgsql/data
 postmaster -D /usr/local/pgsql/data
 psql template1 < backup
 </programlisting>
-</informalexample>
+
    See <xref linkend="runtime"> about ways to start and stop the
    server and other details. The installation instructions will advise
    you of strategic places to perform these steps.
