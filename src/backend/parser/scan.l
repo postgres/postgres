@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/parser/scan.l,v 1.59 1999/10/09 01:32:38 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/parser/scan.l,v 1.60 1999/10/18 02:42:31 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -20,6 +20,7 @@
 #include <errno.h>
 
 #include "postgres.h"
+
 #include "miscadmin.h"
 #include "nodes/parsenodes.h"
 #include "nodes/pg_list.h"
@@ -29,16 +30,6 @@
 #include "parser/scansup.h"
 #include "utils/builtins.h"
 
-#ifdef  YY_READ_BUF_SIZE
-#undef  YY_READ_BUF_SIZE
-#endif
-#define YY_READ_BUF_SIZE	MAX_PARSE_BUFFER
-
-#ifdef  YY_READ_BUF_SIZE
-#undef  YY_READ_BUF_SIZE
-#endif
-#define YY_READ_BUF_SIZE	MAX_PARSE_BUFFER
-
 extern char *parseString;
 static char *parseCh;
 
@@ -47,9 +38,8 @@ static char *parseCh;
 #undef yywrap
 #endif /* yywrap */
 
+/* set up my input handler --- need one flavor for flex, one for lex */
 #if defined(FLEX_SCANNER)
-/* MAX_PARSE_BUFFER is defined in miscadmin.h */
-#define YYLMAX MAX_PARSE_BUFFER
 #define YY_NO_UNPUT
 static int myinput(char* buf, int max);
 #undef YY_INPUT
@@ -63,8 +53,18 @@ void unput(char);
 
 extern YYSTYPE yylval;
 
-int llen;
-char literal[MAX_PARSE_BUFFER];
+/*
+ * literalbuf is used to accumulate literal values when multiple rules
+ * are needed to parse a single literal.  Call startlit to reset buffer
+ * to empty, addlit to add text.  Note that the buffer is palloc'd and
+ * starts life afresh on every parse cycle.
+ */
+static char	   *literalbuf;		/* expandable buffer */
+static int		literallen;		/* actual current length */
+static int		literalalloc;	/* current allocated buffer size */
+
+#define startlit()  (literalbuf[0] = '\0', literallen = 0)
+static void addlit(char *ytext, int yleng);
 
 %}
 /* OK, here is a short description of lex/flex rules behavior.
@@ -153,17 +153,14 @@ self			[,()\[\].;$\:\+\-\*\/\%\^\<\>\=\|]
 op_and_self		[\~\!\@\#\^\&\|\`\?\$\:\+\-\*\/\%\<\>\=]
 operator		{op_and_self}+
 
-/* we do not allow unary minus in numbers. 
- * instead we pass it verbatim to parser. there it gets
+/* we no longer allow unary minus in numbers. 
+ * instead we pass it separately to parser. there it gets
  * coerced via doNegate() -- Leon aug 20 1999 
  */
 
 integer			{digit}+
 decimal			(({digit}*\.{digit}+)|({digit}+\.{digit}*))
 real				((({digit}*\.{digit}+)|({digit}+\.{digit}*)|({digit}+))([Ee][-+]?{digit}+))
-/*
-real				(((({digit}*\.{digit}+)|({digit}+\.{digit}*))([Ee][-+]?{digit}+)?)|({digit}+[Ee][-+]?{digit}+))
-*/
 
 param			\${integer}
 
@@ -199,25 +196,22 @@ other			.
 
 {xbstart}		{
 					BEGIN(xb);
-					llen = 0;
-					*literal = '\0';
+					startlit();
 				}
 <xb>{xbstop}	{
 					char* endptr;
 
 					BEGIN(INITIAL);
 					errno = 0;
-					yylval.ival = strtol((char *)literal,&endptr,2);
+					yylval.ival = strtol(literalbuf, &endptr, 2);
 					if (*endptr != '\0' || errno == ERANGE)
-						elog(ERROR,"Bad binary integer input '%s'",literal);
+						elog(ERROR, "Bad binary integer input '%s'",
+							 literalbuf);
 					return ICONST;
 				}
 <xh>{xhinside}	|
 <xb>{xbinside}	{
-					if ((llen+yyleng) > (MAX_PARSE_BUFFER - 1))
-						elog(ERROR,"quoted string parse buffer of %d chars exceeded",MAX_PARSE_BUFFER);
-					memcpy(literal+llen, yytext, yyleng+1);
-					llen += yyleng;
+					addlit(yytext, yyleng);
 				}
 <xh>{xhcat}		|
 <xb>{xbcat}		{
@@ -225,37 +219,33 @@ other			.
 
 {xhstart}		{
 					BEGIN(xh);
-					llen = 0;
-					*literal = '\0';
+					startlit();
 				}
 <xh>{xhstop}	{
 					char* endptr;
 
 					BEGIN(INITIAL);
 					errno = 0;
-					yylval.ival = strtol((char *)literal,&endptr,16);
+					yylval.ival = strtol(literalbuf, &endptr, 16);
 					if (*endptr != '\0' || errno == ERANGE)
-						elog(ERROR,"Bad hexadecimal integer input '%s'",literal);
+						elog(ERROR, "Bad hexadecimal integer input '%s'",
+							 literalbuf);
 					return ICONST;
 				}
 
 {xqstart}		{
 					BEGIN(xq);
-					llen = 0;
-					*literal = '\0';
+					startlit();
 				}
 <xq>{xqstop}	{
 					BEGIN(INITIAL);
-					yylval.str = scanstr(literal);
+					yylval.str = scanstr(literalbuf);
 					return SCONST;
 				}
 <xq>{xqdouble}	|
 <xq>{xqinside}	|
 <xq>{xqliteral} {
-					if ((llen+yyleng) > (MAX_PARSE_BUFFER - 1))
-						elog(ERROR,"quoted string parse buffer of %d chars exceeded",MAX_PARSE_BUFFER);
-					memcpy(literal+llen, yytext, yyleng+1);
-					llen += yyleng;
+					addlit(yytext, yyleng);
 				}
 <xq>{xqcat}		{
 				}
@@ -263,24 +253,20 @@ other			.
 
 {xdstart}		{
 					BEGIN(xd);
-					llen = 0;
-					*literal = '\0';
+					startlit();
 				}
 <xd>{xdstop}	{
 					BEGIN(INITIAL);
-					yylval.str = pstrdup(literal);
+					yylval.str = pstrdup(literalbuf);
 					return IDENT;
 				}
 <xd>{xdinside}	{
-					if ((llen+yyleng) > (MAX_PARSE_BUFFER - 1))
-						elog(ERROR,"quoted string parse buffer of %d chars exceeded",MAX_PARSE_BUFFER);
-					memcpy(literal+llen, yytext, yyleng+1);
-					llen += yyleng;
+					addlit(yytext, yyleng);
 				}
 
 {typecast}		{ return TYPECAST; }
 
-{self}			{ 	return yytext[0]; }
+{self}			{ return yytext[0]; }
 
 {operator}		{
 					if (strcmp((char*)yytext,"!=") == 0)
@@ -391,6 +377,12 @@ init_io()
 	   because input()/myinput() checks the non-nullness of parseCh
 	   to know when to pass the string to lex/flex */
 	parseCh = NULL;
+
+	/* initialize literal buffer to a reasonable but expansible size */
+	literalalloc = 128;
+	literalbuf = (char *) palloc(literalalloc);
+	startlit();
+
 #if defined(FLEX_SCANNER)
 	if (YY_CURRENT_BUFFER)
 		yy_flush_buffer(YY_CURRENT_BUFFER);
@@ -398,7 +390,24 @@ init_io()
 	BEGIN INITIAL;
 }
 
+static void
+addlit(char *ytext, int yleng)
+{
+	/* enlarge buffer if needed */
+	if ((literallen+yleng) >= literalalloc)
+	{
+		do {
+			literalalloc *= 2;
+		} while ((literallen+yleng) >= literalalloc);
+		literalbuf = (char *) repalloc(literalbuf, literalalloc);
+	}
+	/* append data --- note we assume ytext is null-terminated */
+	memcpy(literalbuf+literallen, ytext, yleng+1);
+	literallen += yleng;
+}
+
 #if !defined(FLEX_SCANNER)
+
 /* get lex input from a string instead of from stdin */
 int
 input()
@@ -420,27 +429,31 @@ unput(char c)
 	else if (c != 0)
 		*--parseCh = c;
 }
+
 #endif /* !defined(FLEX_SCANNER) */
 
 #ifdef FLEX_SCANNER
+
 /* input routine for flex to read input from a string instead of a file */
 static int
 myinput(char* buf, int max)
 {
-	int len, copylen;
+	int len;
 
 	if (parseCh == NULL)
 		parseCh = parseString;
 	len = strlen(parseCh);		/* remaining data available */
-	if (len >= max)
-		copylen = max - 1;
-	else
-		copylen = len;
-	if (copylen > 0)
-		memcpy(buf, parseCh, copylen);
-	buf[copylen] = '\0';
-	parseCh += copylen;
-	return copylen;
+	/* Note: this code used to think that flex wants a null-terminated
+	 * string.  It does NOT, and returning 1 less character than it asks
+	 * for will cause failure under the right boundary conditions.  So
+	 * shut up and fill the buffer to the limit, you hear?
+	 */
+	if (len > max)
+		len = max;
+	if (len > 0)
+		memcpy(buf, parseCh, len);
+	parseCh += len;
+	return len;
 }
-#endif /* FLEX_SCANNER */
 
+#endif /* FLEX_SCANNER */
