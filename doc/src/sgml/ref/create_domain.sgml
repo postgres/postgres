@@ -1,5 +1,5 @@
 <!--
-$PostgreSQL: pgsql/doc/src/sgml/ref/create_domain.sgml,v 1.17 2003/11/29 19:51:38 pgsql Exp $
+$PostgreSQL: pgsql/doc/src/sgml/ref/create_domain.sgml,v 1.18 2004/08/08 01:49:30 momjian Exp $
 PostgreSQL documentation
 -->
 
@@ -160,11 +160,25 @@ where <replaceable class="PARAMETER">constraint</replaceable> is:
   <title>Examples</title>
 
   <para>
-   This example creates the <type>country_code</type> data type and then uses the
-   type in a table definition:
+   This example creates the <type>us_postal_code</type> data type and
+    then uses the type in a table definition:
+
 <programlisting>
-CREATE DOMAIN country_code char(2) NOT NULL;
-CREATE TABLE countrylist (id integer, country country_code);
+CREATE DOMAIN us_postal_code AS TEXT
+NOT NULL
+CHECK(
+   VALUE ~ $pc$^\d{5}$$pc$
+OR VALUE ~ $pc$^\d{5}-\d{4}$$pc$
+);
+
+CREATE TABLE us_snail_addy (
+  address_id SERIAL NOT NULL PRIMARY KEY
+, street1 TEXT NOT NULL
+, street2 TEXT
+, street3 TEXT
+, city TEXT NOT NULL
+, postal us_postal_code
+);
 </programlisting>
   </para>
  </refsect1>
