@@ -56,7 +56,10 @@ Oid
 findSNMap(SNMap * map, char *key)
 {
 	SNMapEntry *ptr;
-	SNMapEntry	ks = {key, 0};
+	SNMapEntry	ks;
+
+	ks.key = key;
+	ks.value = 0;
 
 	if (map->len == 0 || !map->list)
 		return 0;

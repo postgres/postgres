@@ -34,15 +34,20 @@ static Oid	current_cfg_id = 0;
 void
 init_cfg(Oid id, TSCfgInfo * cfg)
 {
-	Oid			arg[2] = {OIDOID, OIDOID};
+	Oid			arg[2];
 	bool		isnull;
-	Datum		pars[2] = {ObjectIdGetDatum(id), ObjectIdGetDatum(id)};
+	Datum		pars[2];
 	int			stat,
 				i,
 				j;
 	text	   *ptr;
 	text	   *prsname = NULL;
 	MemoryContext oldcontext;
+
+	arg[0] = OIDOID;
+	arg[1] = OIDOID;
+	pars[0] = ObjectIdGetDatum(id);
+	pars[1] = ObjectIdGetDatum(id);
 
 	memset(cfg, 0, sizeof(TSCfgInfo));
 	SPI_connect();
@@ -225,11 +230,14 @@ findcfg(Oid id)
 Oid
 name2id_cfg(text *name)
 {
-	Oid			arg[1] = {TEXTOID};
+	Oid			arg[1];
 	bool		isnull;
-	Datum		pars[1] = {PointerGetDatum(name)};
+	Datum		pars[1];
 	int			stat;
 	Oid			id = findSNMap_t(&(CList.name2id_map), name);
+
+	arg[0] = TEXTOID;
+	pars[0] = PointerGetDatum(name);
 
 	if (id)
 		return id;

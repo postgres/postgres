@@ -433,8 +433,10 @@ Cover(DocRepresentation * doc, int len, QUERYTYPE * query, int *pos, int *p, int
 
 	if (*p <= *q)
 	{
-		ChkDocR		ch = {f, (doc + lastpos) - f + 1};
+		ChkDocR		ch;
 
+		ch.doc = f;
+		ch.len = (doc + lastpos) - f + 1;
 		*pos = f - doc + 1;
 		if (TS_execute(GETQUERY(query), &ch, false, checkcondition_DR))
 		{

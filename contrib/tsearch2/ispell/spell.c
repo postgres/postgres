@@ -796,8 +796,9 @@ SplitToVariants( IspellDict * Conf, SPNode *snode, SplitVar * orig, char *word, 
 	int level=(snode) ? minpos : startpos; /* recursive minpos==level*/
 	int lenaff;
 	CMPDAffix *caff;
-	char	notprobed[wordlen];
+	char	*notprobed;
 
+	notprobed = (char *) palloc(wordlen);
 	memset(notprobed,1,wordlen);
 	var = CopyVar(orig,1);
 
@@ -869,6 +870,7 @@ SplitToVariants( IspellDict * Conf, SPNode *snode, SplitVar * orig, char *word, 
 					/* well, it was last word */
 					var->stem[ var->nstem ] = strnduplicate(word + startpos, wordlen - startpos);
 					var->nstem++;
+					pfree(notprobed);
 					return var;
 				} else {
 					/* then we will search more big word at the same point */
@@ -892,6 +894,7 @@ SplitToVariants( IspellDict * Conf, SPNode *snode, SplitVar * orig, char *word, 
 
 	var->stem[ var->nstem ] = strnduplicate(word + startpos, wordlen - startpos);
 	var->nstem++;
+	pfree(notprobed);
 	return var;
 } 
 

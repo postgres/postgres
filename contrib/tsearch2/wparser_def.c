@@ -156,8 +156,10 @@ hlCover(HLPRSTEXT * prs, QUERYTYPE * query, int *p, int *q)
 
 	if (*p <= *q)
 	{
-		hlCheck		ch = {&(prs->words[*p]), *q - *p + 1};
+		hlCheck		ch;
 
+		ch.words = &(prs->words[*p]);
+		ch.len = *q - *p + 1;
 		if (TS_execute(GETQUERY(query), &ch, false, checkcondition_HL))
 			return true;
 		else

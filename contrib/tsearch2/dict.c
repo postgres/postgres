@@ -24,10 +24,13 @@ static void *plan_getdict = NULL;
 void
 init_dict(Oid id, DictInfo * dict)
 {
-	Oid			arg[1] = {OIDOID};
+	Oid			arg[1];
 	bool		isnull;
-	Datum		pars[1] = {ObjectIdGetDatum(id)};
+	Datum		pars[1];
 	int			stat;
+
+	arg[0] = OIDOID;
+	pars[0] = ObjectIdGetDatum(id);
 
 	memset(dict, 0, sizeof(DictInfo));
 	SPI_connect();
@@ -135,11 +138,14 @@ static void *plan_name2id = NULL;
 Oid
 name2id_dict(text *name)
 {
-	Oid			arg[1] = {TEXTOID};
+	Oid			arg[1];
 	bool		isnull;
-	Datum		pars[1] = {PointerGetDatum(name)};
+	Datum		pars[1];
 	int			stat;
 	Oid			id = findSNMap_t(&(DList.name2id_map), name);
+
+	arg[0] = TEXTOID;
+	pars[0] = PointerGetDatum(name);
 
 	if (id)
 		return id;
