@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/optimizer/path/joinrels.c,v 1.44 2000/04/12 17:15:20 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/optimizer/path/joinrels.c,v 1.45 2000/04/27 18:35:04 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -39,6 +39,7 @@ static RelOptInfo *make_join_rel(Query *root, RelOptInfo *rel1,
 void
 make_rels_by_joins(Query *root, int level)
 {
+	List	   *first_old_rel = root->join_rel_list;
 	List	   *r;
 
 	/*
@@ -85,7 +86,9 @@ make_rels_by_joins(Query *root, int level)
 			 * Note that if all available join clauses for this rel
 			 * require more than one other rel, we will fail to make any
 			 * joins against it here.  That's OK; it'll be considered by
-			 * "bushy plan" join code in a higher-level pass.
+			 * "bushy plan" join code in a higher-level pass where we
+			 * have those other rels collected into a join rel.  See also
+			 * the last-ditch case below.
 			 */
 			make_rels_by_clause_joins(root,
 									  old_rel,
@@ -160,6 +163,52 @@ make_rels_by_joins(Query *root, int level)
 				}
 			}
 		}
+	}
+
+	/*
+	 * Last-ditch effort: if we failed to find any usable joins so far,
+	 * force a set of cartesian-product joins to be generated.  This
+	 * handles the special case where all the available rels have join
+	 * clauses but we cannot use any of the joins yet.  An example is
+	 *
+	 * SELECT * FROM a,b,c WHERE (a.f1 + b.f2 + c.f3) = 0;
+	 *
+	 * The join clause will be usable at level 3, but at level 2 we have
+	 * no choice but to make cartesian joins.  We consider only left-sided
+	 * and right-sided cartesian joins in this case (no bushy).
+	 */
+	if (root->join_rel_list == first_old_rel)
+	{
+		/* This loop is just like the first one, except we always call
+		 * make_rels_by_clauseless_joins().
+		 */
+		if (level == 2)
+			r = root->base_rel_list; /* level-1 is base rels */
+		else
+			r = root->join_rel_list;
+		for (; r != NIL; r = lnext(r))
+		{
+			RelOptInfo *old_rel = (RelOptInfo *) lfirst(r);
+			int			old_level = length(old_rel->relids);
+			List	   *other_rels;
+
+			if (old_level != level - 1)
+				break;
+
+			if (level == 2)
+				other_rels = lnext(r); /* only consider remaining base
+										* rels */
+			else
+				other_rels = root->base_rel_list; /* consider all base rels */
+
+			make_rels_by_clauseless_joins(root,
+										  old_rel,
+										  other_rels);
+		}
+
+		if (root->join_rel_list == first_old_rel)
+			elog(ERROR, "make_rels_by_joins: failed to build any %d-way joins",
+				 level);
 	}
 }
 
