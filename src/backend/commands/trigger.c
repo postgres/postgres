@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/commands/trigger.c,v 1.100 2002/01/03 23:21:23 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/commands/trigger.c,v 1.101 2002/01/15 16:52:47 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -805,7 +805,7 @@ equalTriggerDescs(TriggerDesc *trigdesc1, TriggerDesc *trigdesc2)
 			 */
 			for (j = 0; j < trigdesc2->numtriggers; j++)
 			{
-				trig2 = trigdesc2->triggers + i;
+				trig2 = trigdesc2->triggers + j;
 				if (trig1->tgoid == trig2->tgoid)
 					break;
 			}
