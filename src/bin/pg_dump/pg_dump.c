@@ -12,7 +12,7 @@
  *	by PostgreSQL
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/bin/pg_dump/pg_dump.c,v 1.379 2004/07/13 03:00:17 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/bin/pg_dump/pg_dump.c,v 1.380 2004/07/19 21:39:48 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -1492,7 +1492,7 @@ getNamespaces(int *numNamespaces)
 		nsinfo[0].dobj.catId.tableoid = 0;
 		nsinfo[0].dobj.catId.oid = 0;
 		AssignDumpId(&nsinfo[0].dobj);
-		nsinfo[0].dobj.name = strdup("");
+		nsinfo[0].dobj.name = strdup("public");
 		nsinfo[0].usename = strdup("");
 		nsinfo[0].nspacl = strdup("");
 		nsinfo[0].nsptablespace = strdup("");
@@ -4381,11 +4381,6 @@ dumpNamespace(Archive *fout, NamespaceInfo *nspinfo)
 	qnspname = strdup(fmtId(nspinfo->dobj.name));
 
 	/*
-	 * If it's the PUBLIC namespace, suppress the CREATE SCHEMA record
-	 * for it, since we expect PUBLIC to exist already in the
-	 * destination database.  But do emit ACL in case it's not standard,
-	 * likewise comment.
-	 *
 	 * Note that ownership is shown in the AUTHORIZATION clause,
 	 * while the archive entry is listed with empty owner (causing
 	 * it to be emitted with SET SESSION AUTHORIZATION DEFAULT).
@@ -4393,27 +4388,24 @@ dumpNamespace(Archive *fout, NamespaceInfo *nspinfo)
 	 * users without CREATE SCHEMA privilege.  Further hacking has
 	 * to be applied for --no-owner mode, though!
 	 */
-	if (strcmp(nspinfo->dobj.name, "public") != 0)
-	{
-		appendPQExpBuffer(delq, "DROP SCHEMA %s;\n", qnspname);
+	appendPQExpBuffer(delq, "DROP SCHEMA %s;\n", qnspname);
 
-		appendPQExpBuffer(q, "CREATE SCHEMA %s AUTHORIZATION %s",
-						  qnspname, fmtId(nspinfo->usename));
+	appendPQExpBuffer(q, "CREATE SCHEMA %s AUTHORIZATION %s",
+					  qnspname, fmtId(nspinfo->usename));
 
-		/* Add tablespace qualifier, if not default */
-		if (strlen(nspinfo->nsptablespace) != 0)
-			appendPQExpBuffer(q, " TABLESPACE %s",
-							  fmtId(nspinfo->nsptablespace));
+	/* Add tablespace qualifier, if not default */
+	if (strlen(nspinfo->nsptablespace) != 0)
+		appendPQExpBuffer(q, " TABLESPACE %s",
+						  fmtId(nspinfo->nsptablespace));
 
-		appendPQExpBuffer(q, ";\n");
+	appendPQExpBuffer(q, ";\n");
 
-		ArchiveEntry(fout, nspinfo->dobj.catId, nspinfo->dobj.dumpId,
-					 nspinfo->dobj.name,
-					 NULL, "",
-					 false, "SCHEMA", q->data, delq->data, NULL,
-					 nspinfo->dobj.dependencies, nspinfo->dobj.nDeps,
-					 NULL, NULL);
-	}
+	ArchiveEntry(fout, nspinfo->dobj.catId, nspinfo->dobj.dumpId,
+				 nspinfo->dobj.name,
+				 NULL, strcmp(nspinfo->dobj.name, "public") == 0 ? nspinfo->usename : "",
+				 false, "SCHEMA", q->data, delq->data, NULL,
+				 nspinfo->dobj.dependencies, nspinfo->dobj.nDeps,
+				 NULL, NULL);
 
 	/* Dump Schema Comments */
 	resetPQExpBuffer(q);

@@ -6,7 +6,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  *
- * $PostgreSQL: pgsql/src/bin/pg_dump/pg_dumpall.c,v 1.44 2004/07/12 14:35:45 momjian Exp $
+ * $PostgreSQL: pgsql/src/bin/pg_dump/pg_dumpall.c,v 1.45 2004/07/19 21:39:48 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -44,7 +44,7 @@ static const char *progname;
 
 static void help(void);
 
-static void dumpUsers(PGconn *conn);
+static void dumpUsers(PGconn *conn, bool initdbonly);
 static void dumpGroups(PGconn *conn);
 static void dumpTablespaces(PGconn *conn);
 static void dumpCreateDB(PGconn *conn);
@@ -257,7 +257,7 @@ main(int argc, char *argv[])
 	if (disable_triggers)
 		appendPQExpBuffer(pgdumpopts, " -X disable-triggers");
 	if (use_setsessauth)
-		/* no-op, still allowed for compatibility */ ;
+		appendPQExpBuffer(pgdumpopts, " -X use-set-session-authorization");
 		
 	if (optind < argc)
 	{
@@ -279,18 +279,19 @@ main(int argc, char *argv[])
 
 	if (!data_only)
 	{
-		dumpUsers(conn);
+		/* Dump all users excluding the initdb user */
+		dumpUsers(conn, false);
 		dumpGroups(conn);
 		if (server_version >= 70500)
 			dumpTablespaces(conn);
+		if (!globals_only)
+			dumpCreateDB(conn);
+		/* Dump alter command for initdb user */
+		dumpUsers(conn, true);
 	}
 
 	if (!globals_only)
-	{
-		if (!data_only)
-			dumpCreateDB(conn);
 		dumpDatabases(conn);
-	}
 
 	PQfinish(conn);
 
@@ -310,26 +311,29 @@ help(void)
 	printf(_("Usage:\n"));
 	printf(_("  %s [OPTION]...\n"), progname);
 
-	printf(_("\nOptions:\n"));
+	printf(_("\nGeneral options:\n"));
+	printf(_("  -i, --ignore-version     proceed even when server version mismatches\n"
+			 "                           pg_dumpall version\n"));
+	printf(_("  --help                   show this help, then exit\n"));
+	printf(_("  --version                output version information, then exit\n"));
+	printf(_("\nOptions controlling the output content:\n"));
 	printf(_("  -a, --data-only          dump only the data, not the schema\n"));
 	printf(_("  -c, --clean              clean (drop) databases prior to create\n"));
 	printf(_("  -d, --inserts            dump data as INSERT, rather than COPY, commands\n"));
 	printf(_("  -D, --column-inserts     dump data as INSERT commands with column names\n"));
 	printf(_("  -g, --globals-only       dump only global objects, no databases\n"));
-	printf(_("  -i, --ignore-version     proceed even when server version mismatches\n"
-			 "                           pg_dumpall version\n"));
-	printf(_("  -s, --schema-only        dump only the schema, no data\n"));
-	printf(_("  -S, --superuser=NAME     specify the superuser user name to use in the dump\n"));
 	printf(_("  -o, --oids               include OIDs in dump\n"));
 	printf(_("  -O, --no-owner           do not output commands to set object ownership\n"));
-	printf(_("  -v, --verbose            verbose mode\n"));
+	printf(_("  -s, --schema-only        dump only the schema, no data\n"));
+	printf(_("  -S, --superuser=NAME     specify the superuser user name to use in the dump\n"));
 	printf(_("  -x, --no-privileges      do not dump privileges (grant/revoke)\n"));
 	printf(_("  -X disable-dollar-quoting, --disable-dollar-quoting\n"
 			 "                           disable dollar quoting, use SQL standard quoting\n"));
 	printf(_("  -X disable-triggers, --disable-triggers\n"
-			 "                           disable triggers during data-only restore\n"));
-	printf(_("  --help                   show this help, then exit\n"));
-	printf(_("  --version                output version information, then exit\n"));
+	         "                           disable triggers during data-only restore\n"));
+	printf(_("  -X use-set-session-authorization, --use-set-session-authorization\n"
+			 "                           use SESSION AUTHORIZATION commands instead of\n"
+			 "                           OWNER TO commands\n"));
 
 	printf(_("\nConnection options:\n"));
 	printf(_("  -h, --host=HOSTNAME      database server host or socket directory\n"));
@@ -344,39 +348,52 @@ help(void)
 
 
 /*
- * Dump users (but not the user created by initdb).
+ * Dump users
+ * Is able to dump all non initdb users or just the initdb user.
  */
 static void
-dumpUsers(PGconn *conn)
+dumpUsers(PGconn *conn, bool initdbonly)
 {
 	PGresult   *res;
 	int			i;
 
-	printf("--\n-- Users\n--\n\n");
-	printf("DELETE FROM pg_shadow WHERE usesysid <> (SELECT datdba FROM pg_database WHERE datname = 'template0');\n\n");
-
 	if (server_version >= 70100)
 		res = executeQuery(conn,
 						"SELECT usename, usesysid, passwd, usecreatedb, "
-						   "usesuper, valuntil "
-						   "FROM pg_shadow "
-						   "WHERE usesysid <> (SELECT datdba FROM pg_database WHERE datname = 'template0')");
+						   "usesuper, valuntil, "
+						   "(usesysid = (SELECT datdba FROM pg_database WHERE datname = 'template0')) AS clusterowner "
+						   "FROM pg_shadow");
 	else
 		res = executeQuery(conn,
 						"SELECT usename, usesysid, passwd, usecreatedb, "
-						   "usesuper, valuntil "
-						   "FROM pg_shadow "
-						   "WHERE usesysid <> (SELECT datdba FROM pg_database WHERE datname = 'template1')");
+						   "usesuper, valuntil, "
+						   "(usesysid = (SELECT datdba FROM pg_database WHERE datname = 'template1')) AS clusterowner "
+						   "FROM pg_shadow");
+
+	if (PQntuples(res) > 0 || (!initdbonly && output_clean))
+		printf("--\n-- Users\n--\n\n");
+	if (!initdbonly && output_clean)
+		printf("DELETE FROM pg_shadow WHERE usesysid <> (SELECT datdba FROM pg_database WHERE datname = 'template0');\n\n");
 
 	for (i = 0; i < PQntuples(res); i++)
 	{
-		PQExpBuffer buf = createPQExpBuffer();
 		const char *username;
-
+		bool clusterowner;
+		PQExpBuffer buf = createPQExpBuffer();
 		username = PQgetvalue(res, i, 0);
-		appendPQExpBuffer(buf, "CREATE USER %s WITH SYSID %s",
-						  fmtId(username),
-						  PQgetvalue(res, i, 1));
+		clusterowner = (strcmp(PQgetvalue(res, i, 6), "t") == 0);
+
+		/* Check which pass we're on */
+		if ((initdbonly && !clusterowner) || (!initdbonly && clusterowner)) continue;
+
+		/* Dump ALTER USER for the cluster owner and CREATE USER for all other users */
+		if (!clusterowner)
+			appendPQExpBuffer(buf, "CREATE USER %s WITH SYSID %s",
+							  fmtId(username),
+							  PQgetvalue(res, i, 1));
+		else
+			appendPQExpBuffer(buf, "ALTER USER %s WITH",
+							  fmtId(username));
 
 		if (!PQgetisnull(res, i, 2))
 		{
@@ -422,10 +439,12 @@ dumpGroups(PGconn *conn)
 	PGresult   *res;
 	int			i;
 
-	printf("--\n-- Groups\n--\n\n");
-	printf("DELETE FROM pg_group;\n\n");
-
 	res = executeQuery(conn, "SELECT groname, grosysid, grolist FROM pg_group");
+
+	if (PQntuples(res) > 0 || output_clean)
+		printf("--\n-- Groups\n--\n\n");
+	if (output_clean)
+		printf("DELETE FROM pg_group;\n\n");
 
 	for (i = 0; i < PQntuples(res); i++)
 	{
@@ -478,8 +497,6 @@ dumpTablespaces(PGconn *conn)
 	PGresult   *res;
 	int			i;
 
-	printf("--\n-- Tablespaces\n--\n\n");
-
 	/*
 	 * Get all tablespaces except built-in ones (which we assume are named
 	 * pg_xxx)
@@ -489,6 +506,9 @@ dumpTablespaces(PGconn *conn)
 					   "spclocation, spcacl "
 					   "FROM pg_catalog.pg_tablespace "
 					   "WHERE spcname NOT LIKE 'pg\\_%'");
+	
+	if (PQntuples(res) > 0)
+		printf("--\n-- Tablespaces\n--\n\n");
 
 	for (i = 0; i < PQntuples(res); i++)
 	{
@@ -758,7 +778,12 @@ makeAlterConfigCommand(const char *arrayitem, const char *type, const char *name
 	*pos = 0;
 	appendPQExpBuffer(buf, "ALTER %s %s ", type, fmtId(name));
 	appendPQExpBuffer(buf, "SET %s TO ", fmtId(mine));
-	appendStringLiteral(buf, pos + 1, false);
+	/* Some GUC variable names are 'LIST' type and hence must not be quoted. */
+	if (strcasecmp(mine, "DateStyle") == 0
+			|| strcasecmp(mine, "search_path") == 0)
+		appendPQExpBuffer(buf, "%s", pos + 1);
+	else 
+		appendStringLiteral(buf, pos + 1, false);
 	appendPQExpBuffer(buf, ";\n");
 
 	printf("%s", buf->data);

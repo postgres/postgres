@@ -15,7 +15,7 @@
  *
  *
  * IDENTIFICATION
- *		$PostgreSQL: pgsql/src/bin/pg_dump/pg_backup_archiver.c,v 1.89 2004/07/19 21:02:17 tgl Exp $
+ *		$PostgreSQL: pgsql/src/bin/pg_dump/pg_backup_archiver.c,v 1.90 2004/07/19 21:39:47 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -2356,7 +2356,8 @@ _printTocEntry(ArchiveHandle *AH, TocEntry *te, RestoreOptions *ropt, bool isDat
 							strcmp(te->desc, "TABLE") == 0 ||
 							strcmp(te->desc, "TYPE") == 0 ||
 							strcmp(te->desc, "VIEW") == 0 ||
-							strcmp(te->desc, "SEQUENCE") == 0
+							strcmp(te->desc, "SEQUENCE") == 0 ||
+							(strcmp(te->desc, "SCHEMA") == 0 && strcmp(te->tag, "public") == 0) /* Only public schema */
 							))
 	{
 		char *temp = _getObjectFromDropStmt(te->dropStmt, te->desc);
@@ -2376,15 +2377,18 @@ _printTocEntry(ArchiveHandle *AH, TocEntry *te, RestoreOptions *ropt, bool isDat
 		/*
 		 * Really crude hack for suppressing AUTHORIZATION clause of CREATE SCHEMA
 		 * when --no-owner mode is selected.  This is ugly, but I see no other
-		 * good way ...
+		 * good way ...  Also, avoid dumping the public schema as it will already be
+		 * created.
 		 */
-		if (AH->ropt && AH->ropt->noOwner && strcmp(te->desc, "SCHEMA") == 0)
-		{
-			ahprintf(AH, "CREATE SCHEMA %s;\n\n\n", te->tag);
-		}
-		else
-		{
-			ahprintf(AH, "%s\n\n", te->defn);
+		if (strcmp(te->tag, "public") != 0) {
+			if (AH->ropt && AH->ropt->noOwner && strcmp(te->desc, "SCHEMA") == 0)
+			{
+				ahprintf(AH, "CREATE SCHEMA %s;\n\n\n", te->tag);
+			}
+			else
+			{
+				ahprintf(AH, "%s\n\n", te->defn);
+			}
 		}
 	}
 	else if (isData) {

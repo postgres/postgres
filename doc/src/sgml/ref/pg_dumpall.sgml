@@ -1,5 +1,5 @@
 <!--
-$PostgreSQL: pgsql/doc/src/sgml/ref/pg_dumpall.sgml,v 1.45 2004/07/12 14:35:43 momjian Exp $
+$PostgreSQL: pgsql/doc/src/sgml/ref/pg_dumpall.sgml,v 1.46 2004/07/19 21:39:46 momjian Exp $
 PostgreSQL documentation
 -->
 
@@ -280,11 +280,14 @@ PostgreSQL documentation
       <term><option>--use-set-session-authorization</></term>
       <listitem>
        <para>
-        This option is obsolete but still accepted for backwards
-        compatibility with <application>pg_dump</application>.
+	Output SQL standard SET SESSION AUTHORIZATION commands instead
+	of OWNER TO commands.  This makes the dump more standards compatible,
+	but depending on the history of the objects in the dump, may not
+	restore properly.
        </para>
       </listitem>
      </varlistentry>
+
     </variablelist>
    </para>
 
