@@ -191,6 +191,16 @@ echo " "
 bool "Do you wish the psql program to use the GNU readline library?" "n"
 if [ "$ans" = "y" ] ; then
    echo >>Makefile.custom "USE_READLINE= true"
+   echo >>Makefile.custom "READLINE_INC+= -DHAVE_LIBREADLINE"
+   echo >>Makefile.custom "# Remove the following line if you don't have <readline.h>"
+   echo >>Makefile.custom "READLINE_INC+= -DHAVE_READLINE_H"
+   echo >>Makefile.custom "# Remove the following line if you don't have <history.h>"
+   echo >>Makefile.custom "READLINE_INC+= -DHAVE_HISTORY"
+   echo " "
+   echo "NOTE! Makefile.custom assumes you have <readline.h> and either"
+   echo "<history.h> or <readline/history.h>. If you do not have these,"
+   echo "please edit Makefile.custom and remove the appropriate line(s)"
+   echo "(they are indicated in the file)."
 
    echo " "
    echo "If the include files for any of the following libraries are"
@@ -202,7 +212,7 @@ if [ "$ans" = "y" ] ; then
 ### Readline library ###
    def=$incdir
    readln "Readline include directory [$def]" "$def"
-   echo >>Makefile.custom "READLINE_INC= -I$ans"
+   echo >>Makefile.custom "READLINE_INC+= -I$ans"
 
    rldirdef=$libdir
    readln "Readline library directory [$rldirdef]" "$rldirdef"
@@ -212,7 +222,7 @@ if [ "$ans" = "y" ] ; then
    readln "Name of the readline library [$rllibdef]" "$rllibdef"
    rllib=$ans
 
-   echo >>Makefile.custom "READLINE_LIB= -L$rldir -l$rllib"
+   echo >>Makefile.custom "READLINE_LIB+= -L$rldir -l$rllib"
 
 ### Curses library ###
    crdirdef=$libdir
@@ -230,7 +240,8 @@ if [ "$ans" = "y" ] ; then
    if [ "$ans" != "n" ] ; then
       def="$incdir -I$incdir/readline"
       readln "History include directory [$def]" "$def"
-      echo >>Makefile.custom "HISTORY_INC= -I$ans"
+      echo >>Makefile.custom "READLINE_INC+= -DHAVE_LIBHISTORY"
+      echo >>Makefile.custom "READLINE_INC+= -I$ans"
 
       histdirdef="$libdir"
       readln "History library directory [$histdirdef]" "$histdirdef"
@@ -240,7 +251,7 @@ if [ "$ans" = "y" ] ; then
       readln "Name of the history library [$histlibdef]" "$histlibdef"
       histlib=$ans
 
-      echo >>Makefile.custom "HISTORY_LIB= -L$histdir -l$histlib"
+      echo >>Makefile.custom "READLINE_LIB+= -L$histdir -l$histlib"
    fi
 fi
 
@@ -256,7 +267,7 @@ if [ "$ans" != "DEFAULT" ] ; then
 fi
 
 echo " "
-echo "You may choose to switch of assert checking. This will speed the"
+echo "You may choose to switch off assert checking. This will speed the"
 echo "program up, but may miss some potentially fatal bugs!"
 bool "Switch off assert checking" "n"
 if [ "$ans" = "y" ] ; then
