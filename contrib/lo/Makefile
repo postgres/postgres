@@ -1,5 +1,5 @@
 #
-# $Header: /cvsroot/pgsql/contrib/lo/Makefile,v 1.3 2000/06/15 18:54:56 momjian Exp $
+# $Header: /cvsroot/pgsql/contrib/lo/Makefile,v 1.4 2000/06/16 18:58:49 momjian Exp $
 #
 
 TOPDIR=../..
@@ -10,7 +10,7 @@ NAME	= lo
 
 PROGRAM	= 
 OBJS	= $(NAME).o
-DOCS	= $(NAME).doc
+DOCS	= README
 SQLS	= $(NAME).sql
 BINS	=
 EXAMPLES=
@@ -35,7 +35,7 @@ install: install_doc install_sql install_mod
 
 install_doc:
 	for inst_file in $(DOCS); do \
-		$(INSTALL) $(INSTL_LIB_OPTS) $$inst_file $(CONTRIB_DOCDIR); \
+		$(INSTALL) $(INSTL_LIB_OPTS) $$inst_file $(CONTRIB_DOCDIR)/$(DOCS).$(NAME); \
 	done
 
 install_sql:

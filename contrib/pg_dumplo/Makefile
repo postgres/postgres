@@ -1,5 +1,5 @@
 #
-# $Header: /cvsroot/pgsql/contrib/pg_dumplo/Attic/Makefile,v 1.2 2000/06/15 18:55:10 momjian Exp $
+# $Header: /cvsroot/pgsql/contrib/pg_dumplo/Attic/Makefile,v 1.3 2000/06/16 18:59:02 momjian Exp $
 #
 
 TOPDIR=../..
@@ -10,7 +10,7 @@ NAME	= pg_dumplo
 
 PROGRAM	= $(NAME)
 OBJS	= main.o lo_export.o lo_import.o utils.o
-DOCS	= $(NAME).doc
+DOCS	= README
 SQLS	= 
 BINS	= $(PROGRAM)
 EXAMPLES=
@@ -29,7 +29,7 @@ install: install_doc install_bin
 
 install_doc:
 	for inst_file in $(DOCS); do \
-		$(INSTALL) $(INSTL_LIB_OPTS) $$inst_file $(CONTRIB_DOCDIR); \
+		$(INSTALL) $(INSTL_LIB_OPTS) $$inst_file $(CONTRIB_DOCDIR)/$(DOCS).$(NAME); \
 	done
 
 install_bin:

@@ -1,16 +1,16 @@
 #
-# $Header: /cvsroot/pgsql/contrib/spi/Makefile,v 1.13 2000/06/15 18:55:17 momjian Exp $
+# $Header: /cvsroot/pgsql/contrib/spi/Makefile,v 1.14 2000/06/16 18:59:17 momjian Exp $
 #
 
 TOPDIR=../..
 
 include ../Makefile.global
 
-NAME	= 
+NAME	= spi
 
 PROGRAM	= 
 OBJS	= autoinc.o insert_username.o moddatetime.o refint.o timetravel.o
-DOCS	= spi.doc
+DOCS	= README
 SQLS	= $(OBJS:.o=.sql)
 BINS	=
 EXAMPLES= $(OBJS:.o=.example)
@@ -33,7 +33,7 @@ install: install_doc install_sql install_mod install_example
 
 install_doc:
 	for inst_file in $(DOCS); do \
-		$(INSTALL) $(INSTL_LIB_OPTS) $$inst_file $(CONTRIB_DOCDIR); \
+		$(INSTALL) $(INSTL_LIB_OPTS) $$inst_file $(CONTRIB_DOCDIR)/$(DOCS).$(NAME); \
 	done
 
 install_sql:

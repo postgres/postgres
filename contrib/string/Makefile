@@ -1,5 +1,5 @@
  #
-# $Header: /cvsroot/pgsql/contrib/string/Attic/Makefile,v 1.8 2000/06/15 18:55:21 momjian Exp $
+# $Header: /cvsroot/pgsql/contrib/string/Attic/Makefile,v 1.9 2000/06/16 18:59:21 momjian Exp $
 #
 
 TOPDIR=../..
@@ -10,7 +10,7 @@ NAME	= string_io
 
 PROGRAM	= 
 OBJS	= $(NAME).o
-DOCS	= $(NAME).doc
+DOCS	= README
 SQLS	= $(NAME).sql
 BINS	=
 EXAMPLES=
@@ -30,7 +30,7 @@ install: install_doc install_sql install_mod
 
 install_doc:
 	for inst_file in $(DOCS); do \
-		$(INSTALL) $(INSTL_LIB_OPTS) $$inst_file $(CONTRIB_DOCDIR); \
+		$(INSTALL) $(INSTL_LIB_OPTS) $$inst_file $(CONTRIB_DOCDIR)/$(DOCS).$(NAME); \
 	done
 
 install_sql:
