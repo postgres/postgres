@@ -1,7 +1,7 @@
 
                 Frequently Asked Questions (FAQ) for PostgreSQL
                                        
-   Last updated: Sat Nov 29 23:34:05 EST 2003
+   Last updated: Sat Nov 29 23:35:39 EST 2003
    
    Current maintainer: Bruce Momjian (pgman@candle.pha.pa.us)
    
@@ -430,11 +430,10 @@
     
    Yes, there are several graphical interfaces to PostgreSQL available.
    These include PgAccess http://www.pgaccess.org), PgAdmin III
-   (http://www.pgadmin.org, Win32-only), RHDB Admin
-   (http://sources.redhat.com/rhdb/ ) and Rekall (
-   http://www.thekompany.com/products/rekall/, proprietary). There is
-   also PHPPgAdmin ( http://phppgadmin.sourceforge.net/ ), a web-based
-   interface to PostgreSQL.
+   (http://www.pgadmin.org, RHDB Admin (http://sources.redhat.com/rhdb/ )
+   and Rekall ( http://www.thekompany.com/products/rekall/, proprietary).
+   There is also PHPPgAdmin ( http://phppgadmin.sourceforge.net/ ), a
+   web-based interface to PostgreSQL.
    
    See http://techdocs.postgresql.org/guides/GUITools for a more detailed
    list.
