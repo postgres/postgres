@@ -14,7 +14,7 @@
  *
  *
  * IDENTIFICATION
- *    $Header: /cvsroot/pgsql/src/backend/commands/cluster.c,v 1.1.1.1 1996/07/09 06:21:19 scrappy Exp $
+ *    $Header: /cvsroot/pgsql/src/backend/commands/cluster.c,v 1.2 1996/08/15 07:39:24 scrappy Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -105,9 +105,18 @@ cluster(char oldrelname[], char oldindexname[])
     Relation OldHeap, OldIndex;
     Relation NewHeap;
     
-    char *NewIndexName;
-    char *szNewHeapName;
-    
+    char NewIndexName[NAMEDATALEN+1];
+    char NewHeapName[NAMEDATALEN+1];
+    char saveoldrelname[NAMEDATALEN+1];
+    char saveoldindexname[NAMEDATALEN+1];
+
+
+    /* Save the old names because they will get lost when the old relations
+     * are destroyed.
+     */
+    strcpy(saveoldrelname, oldrelname);
+    strcpy(saveoldindexname, oldindexname);
+   
     /*
      *
      * I'm going to force all checking back into the commands.c function.
@@ -153,55 +162,42 @@ cluster(char oldrelname[], char oldindexname[])
      */
     NewHeap    = copy_heap(OIDOldHeap);
     OIDNewHeap = NewHeap->rd_id;
-    szNewHeapName = pstrdup(NewHeap->rd_rel->relname.data);
+    strcpy(NewHeapName,NewHeap->rd_rel->relname.data);
 
-     /* Need to do this to make the new heap visible. */
+
+    /* To make the new heap visible (which is until now empty). */
     CommandCounterIncrement();
     
     rebuildheap(OIDNewHeap, OIDOldHeap, OIDOldIndex);
     
-    /* Need to do this to make the new heap visible. */
+    /* To flush the filled new heap (and the statistics about it). */
     CommandCounterIncrement();
 
-    /* can't be found in the SysCache. */
-    copy_index(OIDOldIndex, OIDNewHeap); /* No contention with the old */
+    /* Create new index over the tuples of the new heap. */
+    copy_index(OIDOldIndex, OIDNewHeap);
+    sprintf(NewIndexName, "temp_%x", OIDOldIndex);
     
     /* 
      * make this really happen. Flush all the buffers.
+     * (Believe me, it is necessary ... ended up in a mess without it.)
      */
     CommitTransactionCommand();
     StartTransactionCommand();
-    
-    /*
-     * Questionable bit here. Because the renamerel destroys all trace of the
-     * pre-existing relation, I'm going to Destroy old, and then rename new
-     * to old. If this fails, it fails, and you lose your old. Tough - say
-     * I. Have good backups!
-     */
 
-    /*
-       Here lies the bogosity. The RelationNameGetRelation returns a bad
-       list of TupleDescriptors. Damn. Can't work out why this is.
-       */
+
+    /* Destroy old heap (along with its index) and rename new. */
+    heap_destroy(oldrelname);    
     
-    heap_destroy(oldrelname); /* AAAAAAAAGH!! */
-    
-    CommandCounterIncrement();
-    
-    /*
-     * The Commit flushes all palloced memory, so I have to grab the 
-     * New stuff again. This is annoying, but oh heck!
+    renamerel(NewHeapName, saveoldrelname);
+    TypeRename(NewHeapName, saveoldrelname);
+
+    renamerel(NewIndexName, saveoldindexname);
+
+    /* 
+     * Again flush all the buffers.
      */
-/*
-    renamerel(szNewHeapName.data, oldrelname);
-    TypeRename(&szNewHeapName, &szOldRelName);
-    
-    sprintf(NewIndexName.data, "temp_%x", OIDOldIndex);
-    renamerel(NewIndexName.data, szOldIndexName.data);
-*/
-    NewIndexName = palloc(NAMEDATALEN+1); /* XXX */
-    sprintf(NewIndexName, "temp_%x", OIDOldIndex);
-    renamerel(NewIndexName, oldindexname);
+    CommitTransactionCommand();
+    StartTransactionCommand();
 }
 
 Relation
@@ -362,6 +358,7 @@ rebuildheap(Oid OIDNewHeap, Oid OIDOldHeap, Oid OIDOldIndex)
 	pfree(ScanResult);
 	ReleaseBuffer(LocalBuffer);
     }
+    index_endscan(ScanDesc);
 
     index_close(LocalOldIndex);
     heap_close(LocalOldHeap);
