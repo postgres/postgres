@@ -12,8 +12,7 @@ if you have readline or libz there:
 libpq++ does not work because xlC does not have the string and bool classes.
 compiling the few files, that fail, with g++ does work.
 
-Compiling PostgreSQL with gcc (2.95.2) on AIX does work if you use the
-configure option: --with-template=aix_gcc 
+Compiling PostgreSQL with gcc (2.95.2) on AIX also works.
 
-There will probably be warnings about int8 - int64 redefines and 0.0/0.0
-devision warnings, which you can safely ignore.
+There will probably be warnings about int8 - int64 redefines, 0.0/0.0
+division and duplicate symbol warnings which you can safely ignore.

@@ -1,15 +1,9 @@
 if test "$GCC" = yes ; then
-  CFLAGS=-pipe
+  CFLAGS='-O2 -pipe'
 else # not GCC
+  CFLAGS='-O2 -qmaxmem=16384 -qsrcmsg -qlonglong'
   case $host_os in
-    aix3.2.5)
-      CFLAGS='-qchars=signed -qmaxmem=8192 -qhalt=w -qsrcmsg'
-      ;;
-    aix4.1)
-      CFLAGS='-qchars=signed -qmaxmem=8192 -qhalt=w -qsrcmsg -qcheck=divzero'
-      ;;
-    aix4.2 | aix4.3)
-      CFLAGS='-qmaxmem=16384 -qhalt=w -qsrcmsg -qlanglvl=extended -qlonglong'
-      ;;
+    aix3.2.5 | aix4.1*)
+      CFLAGS='-qmaxmem=16384 -qsrcmsg' ;;
   esac
 fi # not GCC
