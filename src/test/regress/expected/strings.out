@@ -92,52 +92,376 @@ SELECT CAST(name 'namefield' AS varchar) AS "varchar(name)";
 --
 -- test SQL92 string functions
 --
-SELECT TRIM(BOTH FROM '  bunch o blanks  ') AS "bunch o blanks";
+SELECT TRIM(BOTH FROM '  bunch o blanks  ') = 'bunch o blanks' AS "bunch o blanks";
  bunch o blanks 
 ----------------
- bunch o blanks
+ t
 (1 row)
 
-SELECT TRIM(LEADING FROM '  bunch o blanks  ') AS "bunch o blanks  ";
+SELECT TRIM(LEADING FROM '  bunch o blanks  ') = 'bunch o blanks  ' AS "bunch o blanks  ";
  bunch o blanks   
 ------------------
- bunch o blanks  
+ t
 (1 row)
 
-SELECT TRIM(TRAILING FROM '  bunch o blanks  ') AS "  bunch o blanks";
+SELECT TRIM(TRAILING FROM '  bunch o blanks  ') = '  bunch o blanks' AS "  bunch o blanks";
    bunch o blanks 
 ------------------
-   bunch o blanks
+ t
 (1 row)
 
-SELECT TRIM(BOTH 'x' FROM 'xxxxxsome Xsxxxxx') AS "some Xs";
+SELECT TRIM(BOTH 'x' FROM 'xxxxxsome Xsxxxxx') = 'some Xs' AS "some Xs";
  some Xs 
 ---------
- some Xs
+ t
 (1 row)
 
-SELECT SUBSTRING('1234567890' FROM 3) AS "34567890";
+SELECT SUBSTRING('1234567890' FROM 3) = '34567890' AS "34567890";
  34567890 
 ----------
- 34567890
+ t
 (1 row)
 
-SELECT SUBSTRING('1234567890' FROM 4 FOR 3) AS "456";
+SELECT SUBSTRING('1234567890' FROM 4 FOR 3) = '456' AS "456";
  456 
 -----
- 456
+ t
 (1 row)
 
-SELECT POSITION('4' IN '1234567890') AS "4";
+SELECT POSITION('4' IN '1234567890') = '4' AS "4";
  4 
 ---
- 4
+ t
 (1 row)
 
-SELECT POSITION(5 IN '1234567890') AS "5";
+SELECT POSITION(5 IN '1234567890') = '5' AS "5";
  5 
 ---
- 5
+ t
+(1 row)
+
+--
+-- test LIKE
+-- Be sure to form every test as a LIKE/NOT LIKE pair.
+--
+-- simplest examples
+SELECT 'hawkeye' LIKE 'h%' AS "true";
+ true 
+------
+ t
+(1 row)
+
+SELECT 'hawkeye' NOT LIKE 'h%' AS "false";
+ false 
+-------
+ f
+(1 row)
+
+SELECT 'hawkeye' LIKE 'H%' AS "false";
+ false 
+-------
+ f
+(1 row)
+
+SELECT 'hawkeye' NOT LIKE 'H%' AS "true";
+ true 
+------
+ t
+(1 row)
+
+SELECT 'hawkeye' LIKE 'indio%' AS "false";
+ false 
+-------
+ f
+(1 row)
+
+SELECT 'hawkeye' NOT LIKE 'indio%' AS "true";
+ true 
+------
+ t
+(1 row)
+
+SELECT 'hawkeye' LIKE 'h%eye' AS "true";
+ true 
+------
+ t
+(1 row)
+
+SELECT 'hawkeye' NOT LIKE 'h%eye' AS "false";
+ false 
+-------
+ f
+(1 row)
+
+SELECT 'indio' LIKE '_ndio' AS "true";
+ true 
+------
+ t
+(1 row)
+
+SELECT 'indio' NOT LIKE '_ndio' AS "false";
+ false 
+-------
+ f
+(1 row)
+
+SELECT 'indio' LIKE 'in__o' AS "true";
+ true 
+------
+ t
+(1 row)
+
+SELECT 'indio' NOT LIKE 'in__o' AS "false";
+ false 
+-------
+ f
+(1 row)
+
+SELECT 'indio' LIKE 'in_o' AS "false";
+ false 
+-------
+ f
+(1 row)
+
+SELECT 'indio' NOT LIKE 'in_o' AS "true";
+ true 
+------
+ t
+(1 row)
+
+-- unused escape character
+SELECT 'hawkeye' LIKE 'h%' ESCAPE '#' AS "true";
+ true 
+------
+ t
+(1 row)
+
+SELECT 'hawkeye' NOT LIKE 'h%' ESCAPE '#' AS "false";
+ false 
+-------
+ f
+(1 row)
+
+SELECT 'indio' LIKE 'ind_o' ESCAPE '$' AS "true";
+ true 
+------
+ t
+(1 row)
+
+SELECT 'indio' NOT LIKE 'ind_o' ESCAPE '$' AS "false";
+ false 
+-------
+ f
+(1 row)
+
+-- escape character
+SELECT 'h%' LIKE 'h#%' ESCAPE '#' AS "true";
+ true 
+------
+ t
+(1 row)
+
+SELECT 'h%' NOT LIKE 'h#%' ESCAPE '#' AS "false";
+ false 
+-------
+ f
+(1 row)
+
+SELECT 'h%wkeye' LIKE 'h#%' ESCAPE '#' AS "false";
+ false 
+-------
+ f
+(1 row)
+
+SELECT 'h%wkeye' NOT LIKE 'h#%' ESCAPE '#' AS "true";
+ true 
+------
+ t
+(1 row)
+
+SELECT 'h%wkeye' LIKE 'h#%%' ESCAPE '#' AS "true";
+ true 
+------
+ t
+(1 row)
+
+SELECT 'h%wkeye' NOT LIKE 'h#%%' ESCAPE '#' AS "false";
+ false 
+-------
+ f
+(1 row)
+
+SELECT 'h%awkeye' LIKE 'h#%a%k%e' ESCAPE '#' AS "true";
+ true 
+------
+ t
+(1 row)
+
+SELECT 'h%awkeye' NOT LIKE 'h#%a%k%e' ESCAPE '#' AS "false";
+ false 
+-------
+ f
+(1 row)
+
+SELECT 'indio' LIKE '_ndio' ESCAPE '$' AS "true";
+ true 
+------
+ t
+(1 row)
+
+SELECT 'indio' NOT LIKE '_ndio' ESCAPE '$' AS "false";
+ false 
+-------
+ f
+(1 row)
+
+SELECT 'i_dio' LIKE 'i$_d_o' ESCAPE '$' AS "true";
+ true 
+------
+ t
+(1 row)
+
+SELECT 'i_dio' NOT LIKE 'i$_d_o' ESCAPE '$' AS "false";
+ false 
+-------
+ f
+(1 row)
+
+SELECT 'i_dio' LIKE 'i$_nd_o' ESCAPE '$' AS "false";
+ false 
+-------
+ f
+(1 row)
+
+SELECT 'i_dio' NOT LIKE 'i$_nd_o' ESCAPE '$' AS "true";
+ true 
+------
+ t
+(1 row)
+
+SELECT 'i_dio' LIKE 'i$_d%o' ESCAPE '$' AS "true";
+ true 
+------
+ t
+(1 row)
+
+SELECT 'i_dio' NOT LIKE 'i$_d%o' ESCAPE '$' AS "false";
+ false 
+-------
+ f
+(1 row)
+
+-- escape character same as pattern character
+SELECT 'maca' LIKE 'm%aca' ESCAPE '%' AS "true";
+ true 
+------
+ t
+(1 row)
+
+SELECT 'maca' NOT LIKE 'm%aca' ESCAPE '%' AS "false";
+ false 
+-------
+ f
+(1 row)
+
+SELECT 'ma%a' LIKE 'm%a%%a' ESCAPE '%' AS "true";
+ true 
+------
+ t
+(1 row)
+
+SELECT 'ma%a' NOT LIKE 'm%a%%a' ESCAPE '%' AS "false";
+ false 
+-------
+ f
+(1 row)
+
+SELECT 'bear' LIKE 'b_ear' ESCAPE '_' AS "true";
+ true 
+------
+ t
+(1 row)
+
+SELECT 'bear' NOT LIKE 'b_ear' ESCAPE '_' AS "false";
+ false 
+-------
+ f
+(1 row)
+
+SELECT 'be_r' LIKE 'b_e__r' ESCAPE '_' AS "true";
+ true 
+------
+ t
+(1 row)
+
+SELECT 'be_r' NOT LIKE 'b_e__r' ESCAPE '_' AS "false";
+ false 
+-------
+ f
+(1 row)
+
+SELECT 'be_r' LIKE '__e__r' ESCAPE '_' AS "false";
+ false 
+-------
+ f
+(1 row)
+
+SELECT 'be_r' NOT LIKE '__e__r' ESCAPE '_' AS "true";
+ true 
+------
+ t
+(1 row)
+
+--
+-- test ILIKE (case-insensitive LIKE)
+-- Be sure to form every test as an ILIKE/NOT ILIKE pair.
+--
+SELECT 'hawkeye' ILIKE 'h%' AS "true";
+ true 
+------
+ t
+(1 row)
+
+SELECT 'hawkeye' NOT ILIKE 'h%' AS "false";
+ false 
+-------
+ f
+(1 row)
+
+SELECT 'hawkeye' ILIKE 'H%' AS "true";
+ true 
+------
+ t
+(1 row)
+
+SELECT 'hawkeye' NOT ILIKE 'H%' AS "false";
+ false 
+-------
+ f
+(1 row)
+
+SELECT 'hawkeye' ILIKE 'H%Eye' AS "true";
+ true 
+------
+ f
+(1 row)
+
+SELECT 'hawkeye' NOT ILIKE 'H%Eye' AS "false";
+ false 
+-------
+ t
+(1 row)
+
+SELECT 'Hawkeye' ILIKE 'h%' AS "true";
+ true 
+------
+ t
+(1 row)
+
+SELECT 'Hawkeye' NOT ILIKE 'h%' AS "false";
+ false 
+-------
+ f
 (1 row)
 
 --
