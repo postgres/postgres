@@ -5,7 +5,7 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: pg_dump.h,v 1.23 1997/09/08 21:49:59 momjian Exp $
+ * $Id: pg_dump.h,v 1.24 1997/09/24 15:36:36 momjian Exp $
  *
  * Modifications - 6/12/96 - dave@bensoft.com - version 1.13.dhb.2
  *
@@ -49,7 +49,7 @@ typedef struct _funcInfo
 	char	   *oid;
 	char	   *proname;
 	char	   *proowner;
-	int			lang;			/* 1 if C, else SQL */
+	int			lang;
 	int			nargs;
 	char	   *argtypes[8];	/* should be derived from obj/fmgr.h
 								 * instead of hardwired */
@@ -232,6 +232,3 @@ dumpIndices(FILE *fout, IndInfo *indinfo, int numIndices,
 
 /* largest query string size */
 #define MAXQUERYLEN  5000
-
-/* these voodoo constants are from the backend */
-#define C_PROLANG_OID		13
