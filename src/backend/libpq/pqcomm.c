@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/libpq/pqcomm.c,v 1.45 1998/06/16 07:29:23 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/libpq/pqcomm.c,v 1.46 1998/06/21 16:39:10 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -52,7 +52,6 @@
 #include <sys/types.h>
 #include <sys/stat.h>
 #include <sys/socket.h>
-#include <sys/un.h>
 #include <netdb.h>
 #include <netinet/in.h>
 #include <netinet/tcp.h>

@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/interfaces/libpq/fe-connect.c,v 1.68 1998/06/16 07:29:47 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/interfaces/libpq/fe-connect.c,v 1.69 1998/06/21 16:39:11 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -21,7 +21,6 @@
 #include <ctype.h>
 #include <string.h>
 #include <netdb.h>
-#include <sys/un.h>
 #include <netinet/in.h>
 #include <netinet/tcp.h>
 #include <errno.h>
