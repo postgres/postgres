@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/perform.sgml,v 1.1 2000/12/16 02:29:36 tgl Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/perform.sgml,v 1.2 2001/02/19 00:24:30 tgl Exp $
 -->
 
  <chapter id="performance-tips">
@@ -350,10 +350,11 @@ SELECT * FROM a CROSS JOIN b, c, d, e WHERE ...;
    might not want to constrain the planner's search for a good ordering
    of inner joins inside an outer join.  You can't do that directly in the
    JOIN syntax, but you can get around the syntactic limitation by using
-   views.  For example,
+   subselects.  For example,
     <programlisting>
-CREATE VIEW v1 AS SELECT ... FROM a, b, c WHERE ...;
-SELECT * FROM d LEFT JOIN v1 ON (...);
+SELECT * FROM d LEFT JOIN
+        (SELECT * FROM a, b, c WHERE ...) AS ss
+        ON (...);
     </programlisting>
    Here, joining D must be the last step in the query plan, but the
    planner is free to consider various join orders for A,B,C.
@@ -397,7 +398,7 @@ SELECT * FROM d LEFT JOIN v1 ON (...);
     command, instead
     of a series of INSERT commands.  This reduces parsing, planning, etc
     overhead a great deal. If you do this then it's not necessary to fool
-    around with autocommit.
+    around with autocommit, since it's only one command anyway.
    </para>
   </sect2>
 
