@@ -4,7 +4,7 @@
 #    Makefile for the timezone library
 
 # IDENTIFICATION
-#    $PostgreSQL: pgsql/src/timezone/Makefile,v 1.12 2004/05/28 03:53:33 tgl Exp $
+#    $PostgreSQL: pgsql/src/timezone/Makefile,v 1.13 2004/08/08 03:57:35 momjian Exp $
 #
 #-------------------------------------------------------------------------
 
@@ -13,7 +13,7 @@ top_builddir = ../..
 include $(top_builddir)/src/Makefile.global
 
 # files to build into backend
-OBJS= localtime.o strftime.o pgtz.o
+OBJS= localtime.o strftime.o pgtz.o dirmod.o
 
 # files needed to build zic utility program
 ZICOBJS= zic.o ialloc.o scheck.o localtime.o
@@ -31,6 +31,9 @@ SUBSYS.o: $(OBJS)
 zic: $(ZICOBJS)
 	$(CC) $(CFLAGS) $(ZICOBJS) $(LDFLAGS) $(LIBS) -o $@$(X)
 
+dirmod.c: % : $(top_srcdir)/src/port/%
+	rm -f $@ && $(LN_S) $< .
+
 install: all installdirs
 	./zic -d $(DESTDIR)$(datadir)/timezone $(TZDATAFILES)
 
@@ -38,4 +41,4 @@ installdirs:
 	$(mkinstalldirs) $(DESTDIR)$(datadir)
 
 clean distclean maintainer-clean:
-	rm -f SUBSYS.o zic $(OBJS) $(ZICOBJS)
+	rm -f SUBSYS.o zic $(OBJS) $(ZICOBJS) dirmod.c
