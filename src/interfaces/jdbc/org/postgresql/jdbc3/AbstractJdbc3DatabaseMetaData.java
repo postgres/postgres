@@ -336,7 +336,13 @@ public abstract class AbstractJdbc3DatabaseMetaData extends org.postgresql.jdbc2
 	 */
 	public boolean locatorsUpdateCopy() throws SQLException
 	{
-		throw org.postgresql.Driver.notImplemented();
+		/*
+		 * Currently LOB's aren't updateable at all, so it doesn't
+		 * matter what we return.  We don't throw the notImplemented
+		 * Exception because the 1.5 JDK's CachedRowSet calls this
+		 * method regardless of wether large objects are used.
+		 */
+		return true;
 	}
 
 	/**
