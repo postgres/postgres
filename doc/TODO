@@ -1,6 +1,6 @@
 TODO list for PostgreSQL
 ========================
-Last updated:		Tue Aug 27 12:19:45 EDT 2002
+Last updated:		Tue Aug 27 17:16:09 EDT 2002
 
 Current maintainer:	Bruce Momjian (pgman@candle.pha.pa.us)
 
@@ -252,6 +252,7 @@ Commands
 	o Add SHOW command to see locale
 	o -Allow SHOW to output as a query result, like EXPLAIN
 	o -Abort all SET changes made in an aborted transaction
+	o Add SET SCHEMA
 
 * SERVER-SIDE LANGUAGES
 	o Allow PL/PgSQL's RAISE function to take expressions
