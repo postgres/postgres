@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/include/storage/s_lock.h,v 1.22 1998/02/03 02:08:58 scrappy Exp $
+ *	  $Header: /cvsroot/pgsql/src/include/storage/s_lock.h,v 1.23 1998/02/03 12:42:52 scrappy Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -162,7 +162,7 @@ static int	tas(slock_t *lock);
  * (see storage/ipc.h).
  */
 
-#if defined(hpux)
+#if defined(__hpux)
 
 /*
 * a "set" slock_t has a single word cleared.  a "clear" slock_t has
@@ -184,7 +184,7 @@ static int	tas(slock_t *lock);
 
 #define	S_LOCK_FREE(lock)	( *(int *) (((long) (lock) + 15) & ~15) != 0)
 
-#endif							/* hpux */
+#endif							/* __hpux */
 
 /*
  * sun3
