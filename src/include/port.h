@@ -6,7 +6,7 @@
  * Portions Copyright (c) 1996-2003, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/include/port.h,v 1.23 2004/03/24 03:54:16 momjian Exp $
+ * $PostgreSQL: pgsql/src/include/port.h,v 1.24 2004/04/05 03:16:21 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -38,13 +38,26 @@ extern int	fseeko(FILE *stream, off_t offset, int whence);
 extern off_t ftello(FILE *stream);
 #endif
 
-#if defined(WIN32) || defined(__CYGWIN__)
+/*
+ *	WIN32 doesn't allow descriptors returned by pipe() to be used in select(),
+ *	so for that platform we use socket() instead of pipe().
+ */
+#ifndef WIN32
+#define pgpipe(a)			pipe(a)
+#define piperead(a,b,c)		read(a,b,c)
+#define pipewrite(a,b,c)	write(a,b,c)
+#else
+extern int pgpipe(int handles[2]);
+#define piperead(a,b,c)		recv(a,b,c,0)
+#define pipewrite(a,b,c)	send(a,b,c,0)
+#endif
+
+#if defined(__MINGW32__) || defined(__CYGWIN__)
 /*
  * Win32 doesn't have reliable rename/unlink during concurrent access
  */
 extern int	pgrename(const char *from, const char *to);
 extern int	pgunlink(const char *path);
-
 #define rename(from, to)	pgrename(from, to)
 #define unlink(path)		pgunlink(path)
 #endif
@@ -52,8 +65,10 @@ extern int	pgunlink(const char *path);
 #ifdef WIN32
 
 /* open() replacement to allow delete of held files */
+#ifndef _MSC_VER
 extern int	win32_open(const char*,int,...);
 #define 	open(a,b,...)	win32_open(a,b,##__VA_ARGS__)
+#endif
 
 extern int	copydir(char *fromdir, char *todir);
 

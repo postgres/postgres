@@ -48,6 +48,7 @@ CLEAN :
 	-@erase "$(INTDIR)\thread.obj"
 	-@erase "$(INTDIR)\inet_aton.obj"
 	-@erase "$(INTDIR)\crypt.obj"
+	-@erase "$(INTDIR)\noblock.obj"
 	-@erase "$(INTDIR)\path.obj"
 	-@erase "$(INTDIR)\dllist.obj"
 	-@erase "$(INTDIR)\md5.obj"
@@ -96,6 +97,7 @@ LIB32_OBJS= \
 	"$(INTDIR)\thread.obj" \
 	"$(INTDIR)\inet_aton.obj" \
         "$(INTDIR)\crypt.obj" \
+	"$(INTDIR)\noblock.obj" \
 	"$(INTDIR)\path.obj" \
 	"$(INTDIR)\dllist.obj" \
 	"$(INTDIR)\md5.obj" \
@@ -159,6 +161,11 @@ LINK32_OBJS= \
 "$(INTDIR)\crypt.obj" : ..\..\port\crypt.c
     $(CPP) @<<
     $(CPP_PROJ) ..\..\port\crypt.c
+<<
+
+"$(INTDIR)\noblock.obj" : ..\..\port\noblock.c
+    $(CPP) @<<
+    $(CPP_PROJ) ..\..\port\noblock.c
 <<
 
 "$(INTDIR)\path.obj" : ..\..\port\path.c

@@ -113,3 +113,4 @@ EXPORTS
     PQfformat               @ 109
     PQexecPrepared          @ 110
     PQsendQueryPrepared     @ 111
+    PQdsplen                @ 112

@@ -32,6 +32,7 @@ CLEAN :
 	-@erase "$(INTDIR)\large_obj.obj"
 	-@erase "$(INTDIR)\print.obj"
 	-@erase "$(INTDIR)\describe.obj"
+	-@erase "$(INTDIR)\psqlscan.obj"
 	-@erase "$(INTDIR)\tab-complete.obj"
 	-@erase "$(INTDIR)\sprompt.obj"
 	-@erase "$(INTDIR)\getopt.obj"
@@ -70,6 +71,7 @@ LINK32_OBJS= \
 	"$(INTDIR)\large_obj.obj" \
 	"$(INTDIR)\print.obj" \
 	"$(INTDIR)\describe.obj" \
+	"$(INTDIR)\psqlscan.obj" \
 	"$(INTDIR)\tab-complete.obj" \
 	"$(INTDIR)\sprompt.obj" \
 	"$(INTDIR)\getopt.obj" \
@@ -115,4 +117,3 @@ LINK32_OBJS= \
 
 sql_help.h: create_help.pl
         $(PERL) create_help.pl $(REFDOCDIR) $@
-

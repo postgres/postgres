@@ -11,14 +11,16 @@
  * Portions Copyright (c) 1996-2003, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/include/libpq/libpq-be.h,v 1.43 2004/03/19 02:23:59 tgl Exp $
+ * $PostgreSQL: pgsql/src/include/libpq/libpq-be.h,v 1.44 2004/04/05 03:16:21 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
 #ifndef LIBPQ_BE_H
 #define LIBPQ_BE_H
 
+#ifndef _MSC_VER
 #include <sys/time.h>
+#endif
 #ifdef USE_SSL
 #include <openssl/ssl.h>
 #include <openssl/err.h>
