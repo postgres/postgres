@@ -15,7 +15,7 @@ import org.postgresql.util.PSQLException;
 /*
  * This class provides information about the database as a whole.
  *
- * $Id: DatabaseMetaData.java,v 1.49 2002/02/22 02:17:13 davec Exp $
+ * $Id: DatabaseMetaData.java,v 1.50 2002/03/05 02:14:08 davec Exp $
  *
  * <p>Many of the methods here return lists of information in ResultSets.  You
  * can use the normal ResultSet methods such as getString and getInt to
@@ -2046,17 +2046,17 @@ public class DatabaseMetaData implements java.sql.DatabaseMetaData
 
 		if ((tableNamePattern != null) && ! tableNamePattern.equals("%"))
 		{
-			sql.append("                and c.relname like \'" + tableNamePattern + "\'");
+			sql.append(" and c.relname like \'" + tableNamePattern + "\'");
 		}
 
 		if ((columnNamePattern != null) && ! columnNamePattern.equals("%"))
 		{
-			sql.append("                and a.attname like \'" + columnNamePattern + "\'");
+			sql.append(" and a.attname like \'" + columnNamePattern + "\'");
 		}
 
 		sql.append(
-			"                and a.attnum > 0" +
-			"            )" +
+			" and a.attnum > 0" +
+			"    )" +
 			"        ) inner join pg_type t on" +
 			"            (" +
 			"                t.oid = a.atttypid" +
@@ -2112,18 +2112,22 @@ public class DatabaseMetaData implements java.sql.DatabaseMetaData
 
 			tuple[7] = null;						// Buffer length
 			// Decimal digits = scale
-			// From the source (see e.g. backend/utils/adt/numeric.c,
+			// From the source (see e.g. backend/utils/adt/format_type.c,
 			// function numeric()) the scale and precision can be calculated
 			// from the typmod value.
 			if (typname.equals("numeric") || typname.equals("decimal"))
 			{
-				int attypmod = r.getInt(8);
+				int attypmod = r.getInt(8) - VARHDRSZ;
 				tuple[8] =
-					Integer.toString((attypmod - VARHDRSZ) & 0xffff).getBytes();
+				  Integer.toString( attypmod & 0xffff ).getBytes();
+	      			tuple[9] =
+					Integer.toString( ( attypmod >> 16 ) & 0xffff ).getBytes();
 			}
 			else
+			{
 				tuple[8] = "0".getBytes();
-			tuple[9] = "10".getBytes();				// Num Prec Radix - assume decimal
+				tuple[9] = "10".getBytes();				// Num Prec Radix - assume decimal
+			}
 			tuple[10] = Integer.toString(nullFlag.equals("f") ?
 										 java.sql.DatabaseMetaData.columnNullable :
 										 java.sql.DatabaseMetaData.columnNoNulls).getBytes();	// Nullable
@@ -2135,7 +2139,6 @@ public class DatabaseMetaData implements java.sql.DatabaseMetaData
 			tuple[16] = r.getBytes(5);				// ordinal position
 			tuple[17] = (nullFlag.equals("f") ? "YES" : "NO").getBytes();	// Is nullable
 
-			v.addElement(tuple);
 		}
 		r.close();
 
