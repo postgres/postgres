@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/ecpg.sgml,v 1.28 2001/11/01 04:48:00 tgl Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/ecpg.sgml,v 1.29 2001/11/08 23:37:50 petere Exp $
 -->
 
  <chapter id="ecpg">
@@ -527,8 +527,7 @@ struct sqlca
 
    <para>
     The following list shows all the known incompatibilities. If you
-    find one not listed please notify <ulink
-    url="meskes@debian.org">Michael Meskes</ulink>. Note, however, that
+    find one not listed please notify the developers. Note, however, that
     we list only incompatibilities from a precompiler of another RDBMS
     to <application>ecpg</application> and not
     <application>ecpg</application> features that these RDBMS do not

@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/info.sgml,v 1.12 2001/09/02 23:27:49 petere Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/info.sgml,v 1.13 2001/11/08 23:37:50 petere Exp $
 -->
 
 <sect1 id="resources">
@@ -61,10 +61,10 @@ $Header: /cvsroot/pgsql/doc/src/sgml/info.sgml,v 1.12 2001/09/02 23:27:49 petere
     <term>Developer's Guide</term>
     <listitem>
      <para>
-      Information for <productname>Postgres</productname> developers.
+      Information for <productname>PostgreSQL</productname> developers.
       This is intended for those who are contributing to the
-      <productname>Postgres</productname> project;
-      application development information should appear in the 
+      <productname>PostgreSQL</productname> project;
+      application development information appears in the 
       <citetitle>Programmer's Guide</citetitle>.
      </para>
     </listitem>
@@ -74,7 +74,7 @@ $Header: /cvsroot/pgsql/doc/src/sgml/info.sgml,v 1.12 2001/09/02 23:27:49 petere
 
  <para>
   In addition to this manual set, there are other resources to help you with
-  <productname>Postgres</productname> installation and use:
+  <productname>PostgreSQL</productname> installation and use:
 
   <variablelist>
    <varlistentry>
@@ -123,10 +123,9 @@ $Header: /cvsroot/pgsql/doc/src/sgml/info.sgml,v 1.12 2001/09/02 23:27:49 petere
     <term>Mailing Lists</term>
     <listitem>
      <para>
-      The <email>pgsql-general@postgresql.org</email> (<ulink
-      url="http://www.postgresql.org/mhonarc/pgsql-general/">archive</ulink>)
-      mailing list is a good place to have user questions answered.
-      Other mailing lists are available; consult the <ulink
+      The mailing lists are a good place to have your questions
+      answered, to share experiences with other users, and to contact
+      the developers.  Consult the <ulink
       url="http://www.postgresql.org/users-lounge/">User's
       Lounge</ulink> section of the PostgreSQL web site for details.
      </para>
@@ -150,9 +149,8 @@ $Header: /cvsroot/pgsql/doc/src/sgml/info.sgml,v 1.12 2001/09/02 23:27:49 petere
      <para>
       Even those without a lot of experience can provide corrections
       and minor changes in the documentation, and that is a good way
-      to start.  The <email>pgsql-docs@postgresql.org</email> (<ulink
-      url="http://www.postgresql.org/mhonarc/pgsql-docs/">archive</ulink>)
-      mailing list is the place to get going.
+      to start.  The <email>pgsql-docs@postgresql.org</email> mailing
+      list is the place to get going.
      </para>
     </listitem>
    </varlistentry>
