@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/access/heap/heapam.c,v 1.113 2001/03/25 23:23:58 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/access/heap/heapam.c,v 1.113.2.1 2001/05/17 00:48:45 tgl Exp $
  *
  *
  * INTERFACE ROUTINES
@@ -1578,6 +1578,8 @@ heap_update(Relation relation, ItemPointer otid, HeapTuple newtup,
 				newbuf;
 	bool		need_toast,
 				already_marked;
+	Size		newtupsize,
+				pagefree;
 	int			result;
 
 	/* increment access statistics */
@@ -1685,8 +1687,10 @@ l2:
 				  HeapTupleHasExtended(newtup) ||
 				  (MAXALIGN(newtup->t_len) > TOAST_TUPLE_THRESHOLD));
 
-	if (need_toast ||
-		(unsigned) MAXALIGN(newtup->t_len) > PageGetFreeSpace((Page) dp))
+	newtupsize = MAXALIGN(newtup->t_len);
+	pagefree = PageGetFreeSpace((Page) dp);
+
+	if (need_toast || newtupsize > pagefree)
 	{
 		_locked_tuple_.node = relation->rd_node;
 		_locked_tuple_.tid = oldtup.t_self;
@@ -1704,17 +1708,59 @@ l2:
 
 		/* Let the toaster do its thing */
 		if (need_toast)
+		{
 			heap_tuple_toast_attrs(relation, newtup, &oldtup);
+			newtupsize = MAXALIGN(newtup->t_len);
+		}
 
-		/* Now, do we need a new page for the tuple, or not? */
-		if ((unsigned) MAXALIGN(newtup->t_len) <= PageGetFreeSpace((Page) dp))
-			newbuf = buffer;
-		else
+		/*
+		 * Now, do we need a new page for the tuple, or not?  This is a bit
+		 * tricky since someone else could have added tuples to the page
+		 * while we weren't looking.  We have to recheck the available space
+		 * after reacquiring the buffer lock.  But don't bother to do that
+		 * if the former amount of free space is still not enough; it's
+		 * unlikely there's more free now than before.
+		 *
+		 * What's more, if we need to get a new page, we will need to acquire
+		 * buffer locks on both old and new pages.  To avoid deadlock against
+		 * some other backend trying to get the same two locks in the other
+		 * order, we must be consistent about the order we get the locks in.
+		 * We use the rule "lock the higher-numbered page of the relation
+		 * first".  To implement this, we must do RelationGetBufferForTuple
+		 * while not holding the lock on the old page.  In 7.1, that routine
+		 * always returns the last page of the relation, so the rule holds.
+		 * (7.2 will use a different approach, but the same ordering rule.)
+		 */
+		if (newtupsize > pagefree)
+		{
+			/* Assume there's no chance to put newtup on same page. */
 			newbuf = RelationGetBufferForTuple(relation, newtup->t_len);
-
-		/* Re-acquire the lock on the old tuple's page. */
-		/* this seems to be deadlock free... */
-		LockBuffer(buffer, BUFFER_LOCK_EXCLUSIVE);
+			/* Now reacquire lock on old tuple's page. */
+			LockBuffer(buffer, BUFFER_LOCK_EXCLUSIVE);
+		}
+		else
+		{
+			/* Re-acquire the lock on the old tuple's page. */
+			LockBuffer(buffer, BUFFER_LOCK_EXCLUSIVE);
+			/* Re-check using the up-to-date free space */
+			pagefree = PageGetFreeSpace((Page) dp);
+			if (newtupsize > pagefree)
+			{
+				/*
+				 * Rats, it doesn't fit anymore.  We must now unlock and
+				 * relock to avoid deadlock.  Fortunately, this path should
+				 * seldom be taken.
+				 */
+				LockBuffer(buffer, BUFFER_LOCK_UNLOCK);
+				newbuf = RelationGetBufferForTuple(relation, newtup->t_len);
+				LockBuffer(buffer, BUFFER_LOCK_EXCLUSIVE);
+			}
+			else
+			{
+				/* OK, it fits here, so we're done. */
+				newbuf = buffer;
+			}
+		}
 	}
 	else
 	{
