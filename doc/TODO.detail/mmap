@@ -482,3 +482,96 @@ TIP 6: Have you searched our list archives?
 
 http://archives.postgresql.org
 
+From pgsql-hackers-owner+M23388@postgresql.org Mon Jun  3 17:54:43 2002
+Return-path: <pgsql-hackers-owner+M23388@postgresql.org>
+Received: from postgresql.org (postgresql.org [64.49.215.8])
+	by candle.pha.pa.us (8.11.6/8.10.1) with ESMTP id g53LsgB05125
+	for <pgman@candle.pha.pa.us>; Mon, 3 Jun 2002 17:54:42 -0400 (EDT)
+Received: from localhost.localdomain (postgresql.org [64.49.215.8])
+	by localhost (Postfix) with ESMTP
+	id 15421475884; Mon,  3 Jun 2002 17:54:14 -0400 (EDT)
+Received: from postgresql.org (postgresql.org [64.49.215.8])
+	by postgresql.org (Postfix) with SMTP
+	id 8B89B4761F0; Mon,  3 Jun 2002 17:53:49 -0400 (EDT)
+Received: from localhost.localdomain (postgresql.org [64.49.215.8])
+	by localhost (Postfix) with ESMTP id D0F90475ECD
+	for <pgsql-hackers@postgresql.org>; Mon,  3 Jun 2002 17:53:38 -0400 (EDT)
+Received: from motgate3.mot.com (motgate3.mot.com [144.189.100.103])
+	by postgresql.org (Postfix) with ESMTP id 5CE5147593B
+	for <pgsql-hackers@postgresql.org>; Mon,  3 Jun 2002 17:53:13 -0400 (EDT)
+Received: [from pobox.mot.com (pobox.mot.com [129.188.137.100]) by motgate3.mot.com (motgate3 2.1) with ESMTP id OAA22235; Mon, 3 Jun 2002 14:52:44 -0700 (MST)]
+Received: [from pronto1.comm.mot.com (pronto1.comm.mot.com [173.6.1.22]) by pobox.mot.com (MOT-pobox 2.0) with ESMTP id OAA19166; Mon, 3 Jun 2002 14:52:59 -0700 (MST)]
+Received: from kovalenkoigor (idennt19534 [145.1.195.34])
+	by pronto1.comm.mot.com (8.9.3/8.9.3) with SMTP id QAA20419;
+	Mon, 3 Jun 2002 16:52:57 -0500 (CDT)
+Message-ID: <0e0a01c20b49$26e90a00$22c30191@comm.mot.com>
+From: "Igor Kovalenko" <Igor.Kovalenko@motorola.com>
+To: "Bruce Momjian" <pgman@candle.pha.pa.us>
+cc: "Tom Lane" <tgl@sss.pgh.pa.us>, "mlw" <markw@mohawksoft.com>,
+   "Marc G. Fournier" <scrappy@hub.org>, <pgsql-hackers@postgresql.org>
+References: <200206030047.g530lZi21901@candle.pha.pa.us>
+Subject: Re: [HACKERS] HEADS UP: Win32/OS2/BeOS native ports
+Date: Mon, 3 Jun 2002 16:53:51 -0500
+MIME-Version: 1.0
+Content-Type: text/plain;
+	charset="iso-8859-1"
+Content-Transfer-Encoding: 7bit
+X-Priority: 3
+X-MSMail-Priority: Normal
+X-Mailer: Microsoft Outlook Express 5.00.2919.6600
+X-MimeOLE: Produced By Microsoft MimeOLE V5.00.2919.6600
+Precedence: bulk
+Sender: pgsql-hackers-owner@postgresql.org
+Status: OR
+
+That's what Apache does. Note, on most platforms MAP_ANON is equivalent to
+mmmap-ing /dev/zero. Solaris for example does not provide MAP_ANON but using
+
+fd=open(/dev/zero)
+mmap(fd, ...)
+close(fd)
+
+works just fine.
+
+----- Original Message -----
+From: "Bruce Momjian" <pgman@candle.pha.pa.us>
+To: "Igor Kovalenko" <Igor.Kovalenko@motorola.com>
+Cc: "Tom Lane" <tgl@sss.pgh.pa.us>; "mlw" <markw@mohawksoft.com>; "Marc G.
+Fournier" <scrappy@hub.org>; <pgsql-hackers@postgresql.org>
+Sent: Sunday, June 02, 2002 7:47 PM
+Subject: Re: [HACKERS] HEADS UP: Win32/OS2/BeOS native ports
+
+
+> Igor Kovalenko wrote:
+> > It does not have to be anonymous. POSIX also defines shm_open(same
+arguments
+> > as open) API which will create named object in whatever location
+corresponds
+> > to shared memory storage on that platform (object is then grown to
+needed
+> > size by ftruncate() and the fd is then passed to mmap). The object will
+> > exist in name space and can be detected by subsequent calls to
+shm_open()
+> > with same name. It is not really different from doing open(), but more
+> > portable (mmap() on regular files may not be supported).
+>
+> Actually, I think the best shared memory implemention would be
+> MAP_ANON | MAP_SHARED mmap(), which could be called from the postmaster
+> and passed to child processes.
+>
+> While all our platforms have mmap(), many don't have MAP_ANON, but those
+> that do could use it.  You need MAP_ANON to prevent the shared memory
+> from being written to a disk file.
+>
+> --
+>   Bruce Momjian                        |  http://candle.pha.pa.us
+>   pgman@candle.pha.pa.us               |  (610) 853-3000
+>   +  If your life is a hard drive,     |  830 Blythe Avenue
+>   +  Christ can be your backup.        |  Drexel Hill, Pennsylvania 19026
+>
+
+
+---------------------------(end of broadcast)---------------------------
+TIP 2: you can get off all lists at once with the unregister command
+    (send "unregister YourEmailAddressHere" to majordomo@postgresql.org)
+
