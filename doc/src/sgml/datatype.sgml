@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/datatype.sgml,v 1.124 2003/09/12 22:17:22 tgl Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/datatype.sgml,v 1.125 2003/10/09 19:13:48 momjian Exp $
 -->
 
  <chapter id="datatype">
@@ -1759,11 +1759,12 @@ January 8 04:05:06 1999 PST
 
      <para>
       The following <acronym>SQL</acronym>-compatible functions can be
-      used as date or time
-      values for the corresponding data type: <literal>CURRENT_DATE</literal>,
-      <literal>CURRENT_TIME</literal>,
-      <literal>CURRENT_TIMESTAMP</literal>. The latter two accept an
-      optional precision specification.  (See also <xref linkend="functions-datetime-current">.)
+      used as date or time values for the corresponding data type: 
+      <literal>CURRENT_DATE</literal>, <literal>CURRENT_TIME</literal>, 
+      <literal>CURRENT_TIMESTAMP</literal>, <literal>LOCALTIME</literal>, 
+      <literal>LOCALTIMESTAMP</literal>.  The latter four accept an 
+      optional precision specification.  (See also <xref 
+      linkend="functions-datetime-current">.)
      </para>
 
      <para>
