@@ -32,17 +32,16 @@
  * SUCH DAMAGE.
  */
 
-/* might be in either frontend or backend */
+#ifndef FRONTEND
+#include "postgres.h"
+#else
 #include "postgres_fe.h"
+#endif
 
 #ifndef WIN32
 #include <sys/ioctl.h>
 #endif
 #include <sys/param.h>
-
-#ifndef NL_ARGMAX
-#define NL_ARGMAX 4096
-#endif
 
 /*
 **	SNPRINTF, VSNPRINT -- counted versions of printf
@@ -66,7 +65,7 @@
  * causing nasty effects.
  **************************************************************/
 
-/*static char _id[] = "$PostgreSQL: pgsql/src/port/snprintf.c,v 1.11 2005/03/02 03:21:52 momjian Exp $";*/
+/*static char _id[] = "$PostgreSQL: pgsql/src/port/snprintf.c,v 1.12 2005/03/02 05:22:22 momjian Exp $";*/
 
 int			snprintf(char *str, size_t count, const char *fmt,...);
 int			vsnprintf(char *str, size_t count, const char *fmt, va_list args);
@@ -157,11 +156,9 @@ dopr(char *buffer, const char *format, va_list args, char *end)
 	int			realpos = 0;
 	int			position;
 	char		*output;
-	/* In thread mode this structure is too large.  */
-#ifndef ENABLE_THREAD_SAFETY
-	static
-#endif
-	struct{
+	int			percents = 1;
+	const char *p;
+	struct fmtpar {
 		const char*	fmtbegin;
 		const char*	fmtend;
 		void*	value;
@@ -179,10 +176,30 @@ dopr(char *buffer, const char *format, va_list args, char *end)
 		int	pointflag;
 		char	func;
 		int	realpos;
-	} fmtpar[NL_ARGMAX+1], *fmtparptr[NL_ARGMAX+1];
+	} *fmtpar, **fmtparptr;
 
-
+	/* Create enough structures to hold all arguments */
+	for (p = format; *p != '\0'; p++)
+		if (*p == '%')	/* counts %% as two, so overcounts */
+			percents++;
+#ifndef FRONTEND
+	fmtpar = pgport_palloc(sizeof(struct fmtpar) * percents);
+	fmtparptr = pgport_palloc(sizeof(struct fmtpar *) * percents);
+#else
+	if ((fmtpar = malloc(sizeof(struct fmtpar) * percents)) == NULL)
+	{
+		fprintf(stderr, _("out of memory\n"));
+		exit(1);
+	}
+	if ((fmtparptr = malloc(sizeof(struct fmtpar *) * percents)) == NULL)
+	{
+		fprintf(stderr, _("out of memory\n"));
+		exit(1);
+	}
+#endif
+			
 	format_save = format;
+
 	output = buffer;
 	while ((ch = *format++))
 	{
@@ -418,9 +435,7 @@ dopr(char *buffer, const char *format, va_list args, char *end)
 performpr:
 	/* shuffle pointers */
 	for(i = 1; i < fmtpos; i++)
-	{
 		fmtparptr[i] = &fmtpar[fmtpar[i].realpos];
-	}
 	output = buffer;
 	format = format_save;
 	while ((ch = *format++))
@@ -465,6 +480,14 @@ nochar:
 	; /* semicolon required because a goto has to be attached to a statement */
 	}
 	*output = '\0';
+
+#ifndef FRONTEND
+	pgport_pfree(fmtpar);
+	pgport_pfree(fmtparptr);
+#else
+	free(fmtpar);
+	free(fmtparptr);
+#endif
 }
 
 static void
