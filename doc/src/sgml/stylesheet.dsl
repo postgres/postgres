@@ -1,4 +1,4 @@
-<!-- $Header: /cvsroot/pgsql/doc/src/sgml/stylesheet.dsl,v 1.19 2002/01/30 21:53:40 petere Exp $ -->
+<!-- $Header: /cvsroot/pgsql/doc/src/sgml/stylesheet.dsl,v 1.20 2002/06/01 20:56:00 petere Exp $ -->
 <!DOCTYPE style-sheet PUBLIC "-//James Clark//DTD DSSSL Style Sheet//EN" [
 
 <!-- must turn on one of these with -i on the jade command line -->
@@ -57,6 +57,11 @@
 (element structname ($mono-seq$))
 (element symbol ($mono-seq$))
 (element type ($mono-seq$))
+
+;; Indentation of verbatim environments
+(define %indent-programlisting-lines% "    ")
+(define %indent-screen-lines% "    ")
+(define %indent-synopsis-lines% "    ")
 
 
 ;; Bibliography things
