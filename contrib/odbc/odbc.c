@@ -1,3 +1,5 @@
+#include "postgres.h"
+
 #include <stdlib.h>
 #include <ctype.h>
 #include <errno.h>
@@ -6,17 +8,15 @@
 
 #include <math.h>
 
-#include "postgres.h"
-#ifdef HAVE_LIMITS_H
 #include <limits.h>
 #ifndef MAXINT
 #define MAXINT		  INT_MAX
 #endif
-#else
+
 #ifdef HAVE_VALUES_H
 #include <values.h>
 #endif
-#endif
+
 #include "fmgr.h"
 #include "utils/timestamp.h"
 #include "utils/builtins.h"

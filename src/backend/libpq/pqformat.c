@@ -16,7 +16,7 @@
  * Portions Copyright (c) 1996-2000, PostgreSQL, Inc
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- *	$Id: pqformat.c,v 1.14 2000/07/08 05:30:33 tgl Exp $
+ *	$Id: pqformat.c,v 1.15 2000/07/12 22:58:59 petere Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -48,9 +48,7 @@
 #include "postgres.h"
 
 #include <errno.h>
-#ifdef HAVE_SYS_PARAM_H
 #include <sys/param.h>
-#endif
 
 #include "libpq/libpq.h"
 #include "libpq/pqformat.h"
@@ -58,7 +56,7 @@
 #include "mb/pg_wchar.h"
 #endif
 #ifdef HAVE_ENDIAN_H
-#include "endian.h"
+#include <endian.h>
 #endif
 
 #ifndef BYTE_ORDER

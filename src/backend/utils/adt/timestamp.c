@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/timestamp.c,v 1.32 2000/07/05 23:11:35 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/timestamp.c,v 1.33 2000/07/12 22:59:09 petere Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -19,12 +19,9 @@
 #include <math.h>
 #include <errno.h>
 #include <sys/types.h>
-#ifdef HAVE_FLOAT_H
 #include <float.h>
-#endif
-#ifdef HAVE_LIMITS_H
 #include <limits.h>
-#endif
+
 #ifndef USE_POSIX_TIME
 #include <sys/timeb.h>
 #endif

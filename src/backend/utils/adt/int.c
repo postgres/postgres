@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/int.c,v 1.39 2000/07/03 23:09:52 wieck Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/int.c,v 1.40 2000/07/12 22:59:08 petere Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -27,13 +27,10 @@
  *		 intmod, int4fac
  */
 
-#include <ctype.h>
-
 #include "postgres.h"
 
-#ifdef HAVE_LIMITS_H
+#include <ctype.h>
 #include <limits.h>
-#endif
 
 #include "utils/builtins.h"
 

@@ -8,7 +8,7 @@
  * Portions Copyright (c) 1996-2000, PostgreSQL, Inc
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Id: c.h,v 1.77 2000/07/12 17:38:53 petere Exp $
+ * $Id: c.h,v 1.78 2000/07/12 22:59:12 petere Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -46,15 +46,12 @@
 
 #include "config.h"
 
-
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
 #include <sys/fcntl.h>
-#ifdef STDC_HEADERS
 #include <stddef.h>
 #include <stdarg.h>
-#endif
 
 #ifdef __CYGWIN32__
 #include <errno.h>

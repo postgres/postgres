@@ -11,17 +11,16 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/numutils.c,v 1.40 2000/04/12 17:15:51 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/numutils.c,v 1.41 2000/07/12 22:59:09 petere Exp $
  *
  *-------------------------------------------------------------------------
  */
+#include "postgres.h"
+
 #include <errno.h>
 #include <math.h>
-
-#include "postgres.h"
-#ifdef HAVE_LIMITS_H
 #include <limits.h>
-#endif
+
 #include "utils/builtins.h"
 
 #ifndef INT_MAX

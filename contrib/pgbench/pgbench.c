@@ -1,5 +1,5 @@
 /*
- * $Header: /cvsroot/pgsql/contrib/pgbench/pgbench.c,v 1.4 2000/05/29 05:44:29 tgl Exp $
+ * $Header: /cvsroot/pgsql/contrib/pgbench/pgbench.c,v 1.5 2000/07/12 22:58:57 petere Exp $
  *
  * pgbench: a simple TPC-B like benchmark program for PostgreSQL
  * written by Tatsuo Ishii
@@ -30,9 +30,7 @@
 #include "win32.h"
 #else
 #include <sys/time.h>
-#if HAVE_UNISTD_H
 #include <unistd.h>
-#endif
 
 #ifdef HAVE_GETOPT_H
 #include <getopt.h>

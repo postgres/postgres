@@ -9,7 +9,7 @@
  * Dec 17, 1997 - Todd A. Brandys
  *	Orignal Version Completed.
  *
- * $Id: crypt.c,v 1.27 2000/07/04 16:31:53 petere Exp $
+ * $Id: crypt.c,v 1.28 2000/07/12 22:58:59 petere Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -23,7 +23,7 @@
 #include "utils/nabstime.h"
 
 #ifdef HAVE_CRYPT_H
-#include "crypt.h"
+#include <crypt.h>
 #endif
 
 char	  **pwd_cache = NULL;

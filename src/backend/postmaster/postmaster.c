@@ -11,7 +11,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/postmaster/postmaster.c,v 1.155 2000/07/12 17:38:42 petere Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/postmaster/postmaster.c,v 1.156 2000/07/12 22:59:04 petere Exp $
  *
  * NOTES
  *
@@ -49,16 +49,11 @@
 #include <sys/param.h>
 
  /* moved here to prevent double define */
-#ifdef HAVE_NETDB_H
 #include <netdb.h>
-#endif
 
-#ifdef HAVE_LIMITS_H
 #include <limits.h>
-#else
 #ifdef HAVE_VALUES_H
 #include <values.h>
-#endif
 #endif
 
 #ifdef HAVE_SYS_SELECT_H
@@ -86,10 +81,6 @@
 #include "utils/exc.h"
 #include "utils/guc.h"
 
-
-#if !defined(MAXINT)
-#define MAXINT		   INT_MAX
-#endif
 
 #define INVALID_SOCK	(-1)
 #define ARGV_SIZE	64
@@ -166,7 +157,7 @@ int	MaxBackends = DEF_MAXBACKENDS;
   * semaphores, even if you never actually use that many backends.
   */
 
-static int	NextBackendTag = MAXINT;	/* XXX why count down not up? */
+static int	NextBackendTag = INT_MAX;	/* XXX why count down not up? */
 static char *progname = (char *) NULL;
 static char **real_argv;
 static int	real_argc;

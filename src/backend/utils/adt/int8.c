@@ -7,20 +7,17 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/int8.c,v 1.22 2000/07/03 23:09:52 wieck Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/int8.c,v 1.23 2000/07/12 22:59:09 petere Exp $
  *
  *-------------------------------------------------------------------------
  */
+#include "postgres.h"
+
 #include <ctype.h>
 #include <time.h>
 #include <math.h>
 #include <float.h>
-
-#include "postgres.h"
-
-#ifdef HAVE_LIMITS_H
 #include <limits.h>
-#endif
 
 #include "utils/int8.h"
 

@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/date.c,v 1.48 2000/06/19 03:54:27 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/date.c,v 1.49 2000/07/12 22:59:08 petere Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -17,9 +17,7 @@
 
 #include <limits.h>
 #include <time.h>
-#ifdef HAVE_FLOAT_H
 #include <float.h>
-#endif
 
 #include "access/hash.h"
 #include "miscadmin.h"

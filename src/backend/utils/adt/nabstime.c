@@ -9,31 +9,23 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/nabstime.c,v 1.71 2000/07/03 23:09:52 wieck Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/nabstime.c,v 1.72 2000/07/12 22:59:09 petere Exp $
  *
  * NOTES
  *
  *-------------------------------------------------------------------------
  */
+#include "postgres.h"
+
 #include <ctype.h>
 #include <time.h>
 #include <sys/time.h>
 #include <sys/types.h>
-
-#include "postgres.h"
-#ifdef HAVE_FLOAT_H
 #include <float.h>
-#endif
-
-#ifdef HAVE_LIMITS_H
 #include <limits.h>
-#ifndef MAXINT
-#define MAXINT INT_MAX
-#endif
-#else
+
 #ifdef HAVE_VALUES_H
 #include <values.h>
-#endif
 #endif
 
 #ifndef USE_POSIX_TIME

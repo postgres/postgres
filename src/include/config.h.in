@@ -8,7 +8,7 @@
  * or in config.h afterwards.  Of course, if you edit config.h, then your
  * changes will be overwritten the next time you run configure.
  *
- * $Id: config.h.in,v 1.125 2000/07/11 14:30:30 momjian Exp $
+ * $Id: config.h.in,v 1.126 2000/07/12 22:59:12 petere Exp $
  */
 
 #ifndef CONFIG_H
@@ -291,9 +291,6 @@
 /* Define if your cpp understands the ANSI stringizing operators in macros */
 #undef HAVE_STRINGIZE
 
-/* Set to 1 if you have <arpa/inet.h> */
-#undef HAVE_ARPA_INET_H
-
 /* Set to 1 if you have <crypt.h> */
 #undef HAVE_CRYPT_H
 
@@ -302,9 +299,6 @@
 
 /* Set to 1 if you have <endian.h> */
 #undef HAVE_ENDIAN_H
-
-/* Set to 1 if you have <float.h> */
-#undef HAVE_FLOAT_H
 
 /* Set to 1 if you have <fp_class.h> */
 #undef HAVE_FP_CLASS_H
@@ -317,15 +311,6 @@
 
 /* Set to 1 if you have <ieeefp.h> */
 #undef HAVE_IEEEFP_H
-
-/* Set to 1 if you have <limits.h> */
-#undef HAVE_LIMITS_H
-
-/* Set to 1 if you have <netdb.h> */
-#undef HAVE_NETDB_H
-
-/* Set to 1 if you have <netinet/in.h> */
-#undef HAVE_NETINET_IN_H
 
 /* Set to 1 if you have <readline.h> */
 #undef HAVE_READLINE_H
@@ -345,17 +330,8 @@
 /* Set to 1 if  you have <values.h> */
 #undef HAVE_VALUES_H
 
-/* Set to 1 if you have <sys/exec.h> */
-#undef HAVE_SYS_EXEC_H
-
 /* Set to 1 if you have <sys/pstat.h> */
 #undef HAVE_SYS_PSTAT_H
-
-/* Set to 1 if you have <machine/vmparam.h> */
-#undef HAVE_MACHINE_VMPARAM_H
-
-/* Define if you have the ANSI C header files.  */
-#undef STDC_HEADERS
 
 /* Define if you have the setproctitle function.  */
 #undef HAVE_SETPROCTITLE
@@ -374,9 +350,6 @@
 
 /* Set to 1 if you have <pwd.h> */
 #undef HAVE_PWD_H
-
-/* Define if you have the <sys/param.h> header file.  */
-#undef HAVE_SYS_PARAM_H
 
 /* Set to 1 if you gettimeofday(a,b) vs gettimeofday(a) */
 #undef GETTIMEOFDAY_1ARG

@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/float.c,v 1.63 2000/07/06 05:48:11 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/float.c,v 1.64 2000/07/12 22:59:08 petere Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -53,15 +53,9 @@
 
 #include "postgres.h"
 
-#ifdef HAVE_LIMITS_H
 #include <limits.h>
-#ifndef MAXINT
-#define MAXINT		  INT_MAX
-#endif
-#else
 #ifdef HAVE_VALUES_H
 #include <values.h>
-#endif
 #endif
 
 /* for finite() on Solaris */

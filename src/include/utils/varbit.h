@@ -1,19 +1,14 @@
 #ifndef VARBIT_H
 #define VARBIT_H
 
-#include <math.h>
-
 #include "postgres.h"
-#ifdef HAVE_LIMITS_H
+
+#include <math.h>
 #include <limits.h>
-#ifndef MAXINT
-#define MAXINT INT_MAX
-#endif
-#else
 #ifdef HAVE_VALUES_H
 #include <values.h>
 #endif
-#endif
+
 #include "utils/builtins.h"
 
 
@@ -26,6 +21,7 @@ struct varbita
 	bits8		vl_dat[1];
 };
 
+#undef BITSPERBYTE				/* sometimes declared in <values.h> */
 #define BITSPERBYTE		8
 #define VARBITHDRSZ		sizeof(int32)
 /* Number of bits in this bit string */

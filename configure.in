@@ -224,107 +224,124 @@ if test "$LIBRARY_DIRS" -o "$SRCH_LIB"; then
 	done
 fi
 
+##
+## Command line options
+##
 
-AC_MSG_CHECKING(whether to support locale)
-AC_ARG_ENABLE(
-   locale,
-   [  --enable-locale         enable locale support ],
-   [AC_DEFINE(USE_LOCALE) AC_MSG_RESULT(enabled)],
-   AC_MSG_RESULT(disabled)
-)
 
-dnl We exclude cyrillic recode support unless we override it with
-dnl	--enable-recode to explicitly enable it
-dnl It defaults to disabled
-AC_MSG_CHECKING(whether to support cyrillic recode)
-AC_ARG_ENABLE(
-   recode,
-   [  --enable-recode         enable cyrillic recode support ],
-   [AC_DEFINE(CYR_RECODE) AC_MSG_RESULT(enabled)],
-   AC_MSG_RESULT(disabled)
-)
+#
+# Locale (--enable-locale)
+#
+AC_MSG_CHECKING([whether to build with locale support])
+AC_ARG_ENABLE(locale, [  --enable-locale         enable locale support],
+[if test x"$enable_locale" != x"no" ; then
+  enable_locale=yes
+  AC_DEFINE(USE_LOCALE, [], [Set to 1 if you want LOCALE support (--enable-locale)])
+fi],
+[enable_locale=no])
+AC_MSG_RESULT([$enable_locale])
 
-dnl Multibyte support
 
-AC_MSG_CHECKING(whether to support multibyte)
-AC_ARG_ENABLE(multibyte,
-    [  --enable-multibyte      enable multibyte character support ], 
-    [
-        MULTIBYTE=SQL_ASCII
-        if test "$enableval" != "yes"; then
-                case "$enableval" in
-                        SQL_ASCII|EUC_JP|EUC_CN|EUC_KR|EUC_TW|UNICODE|MULE_INTERNAL|LATIN1|LATIN2|LATIN3|LATIN4|LATIN5|KOI8|WIN|ALT)
-                        # ok
-                        ;;
-                *)
-                        AC_MSG_ERROR(
-[Argument to --enable-multibyte must be one of:
+#
+# Cyrillic recode (--enable-recode)
+#
+AC_MSG_CHECKING([whether to build with Cyrillic recode support])
+AC_ARG_ENABLE(recode, [  --enable-recode         enable cyrillic recode support],
+[if test x"$enable_recode" != x"no" ; then
+  enable_recode=yes
+  AC_DEFINE(CYR_RECODE, [], [Set to 1 if you want cyrillic recode support (--enable-recode)])
+fi],
+[enable_recode=no])
+AC_MSG_RESULT([$enable_recode])
+
+
+#
+# Multibyte support
+#
+MULTIBYTE=
+AC_MSG_CHECKING([whether to build with multibyte character support])
+AC_ARG_ENABLE(multibyte, [  --enable-multibyte      enable multibyte character support],
+[
+  case $enableval in
+    no)         enable_multibyte=no;;
+    yes)        enable_multibyte=yes; MULTIBYTE=SQL_ASCII;;
+    SQL_ASCII|EUC_JP|EUC_CN|EUC_KR|EUC_TW|UNICODE|MULE_INTERNAL|LATIN1|LATIN2|LATIN3|LATIN4|LATIN5|KOI8|WIN|ALT)
+                enable_multibyte=yes; MULTIBYTE=$enableval;;
+    *)          AC_MSG_ERROR(
+[argument to --enable-multibyte must be one of:
   SQL_ASCII, EUC_JP, EUC_CN, EUC_KR, EUC_TW,
   UNICODE, MULE_INTERNAL,
   LATIN1, LATIN2, LATIN3, LATIN4, LATIN5,
   KOI8, WIN, ALT
-Or do not specify an argument to the option to use the default.])
-                esac
-                MULTIBYTE=$enableval
-        fi
-        AC_DEFINE(MULTIBYTE)
-        AC_MSG_RESULT(enabled)
-    ],
-    AC_MSG_RESULT("disabled")
-)
+Or do not specify an argument to the option to use the default.]) ;;
+  esac
+],
+[enable_multibyte=no])
 
-dnl Old option variant
-if test "${with_mb}"; then
-  AC_MSG_ERROR([--with-mb is not supported anymore. Use --enable-multibyte instead.])
+AC_SUBST(MULTIBYTE)
+
+if test "$enable_multibyte" = yes ; then
+  AC_DEFINE(MULTIBYTE, [], [Set to 1 if you want to use multibyte characters (--enable-multibyte)])
+  AC_MSG_RESULT([yes, default $MULTIBYTE])
+else
+  AC_MSG_RESULT(no)
 fi
 
 
-dnl We use the default value of 5432 for the DEF_PGPORT value.	If
-dnl we over-ride it with --with-pgport=port then we bypass this piece
-AC_MSG_CHECKING(setting DEF_PGPORT)
-AC_ARG_WITH(
-   pgport,
-   [  --with-pgport=PORTNUM   change default postmaster port ],
-   [default_port="$withval"],
-   [default_port=5432]
-)
-dnl Need both of these because backend wants an integer and frontend a string
+#
+# Default port number (--with-pgport), default 5432
+#
+AC_MSG_CHECKING([for default port number])
+AC_ARG_WITH(pgport, [  --with-pgport=PORTNUM   change default port number [5432]],
+[case $withval in
+  yes|no)       AC_MSG_ERROR([You must supply an argument to the --with-pgport option]);;
+  *)            default_port=$withval;;
+esac
+],
+[default_port=5432])
+# Need both of these because backend wants an integer and frontend a string
 AC_DEFINE_UNQUOTED(DEF_PGPORT, ${default_port})
 AC_DEFINE_UNQUOTED(DEF_PGPORT_STR, "${default_port}")
-AC_MSG_RESULT(${default_port})
+AC_MSG_RESULT([$default_port])
 
 
-dnl DEF_MAXBACKENDS can be set by --with-maxbackends.  Default value is 32.
-AC_MSG_CHECKING(setting DEF_MAXBACKENDS)
-AC_ARG_WITH(
-   maxbackends,
-   [  --with-maxbackends=N    set default maximum number of server processes ],
-   AC_DEFINE_UNQUOTED(DEF_MAXBACKENDS, ${withval}) AC_MSG_RESULT($with_maxbackends),
-   AC_DEFINE_UNQUOTED(DEF_MAXBACKENDS, 32) AC_MSG_RESULT(32)
-)
+#
+# Maximum number of allowed connections (--with-maxbackends), default 32
+#
+AC_MSG_CHECKING([for default soft limit on number of connections])
+AC_ARG_WITH(maxbackends, [  --with-maxbackends=N    set default maximum number of connections [32]],
+[case $withval in
+  yes|no)       AC_MSG_ERROR([You must supply an argument to the --with-maxbackends option]);;
+esac],
+[with_maxbackends=32])
+AC_MSG_RESULT([$with_maxbackends])
+AC_DEFINE_UNQUOTED(DEF_MAXBACKENDS, [$with_maxbackends], [The default soft limit on the number of concurrent connections, i.e., the default for the postmaster -N switch (--with-maxbackends)])
 
 
-dnl Check for C support (allow override if needed)
-dnl Note: actually, setting CC environment variable works just as well.
-AC_ARG_WITH(CC,
-    [  --with-CC=compiler      use specific C compiler],
-    [
-	case "$withval" in
-	"" | y | ye | yes | n | no)
-	    AC_MSG_ERROR([*** You must supply an argument to the --with-CC option.])
-	  ;;
-	esac
-	CC="$withval"
-    ])
+#
+# For historical reasons you can also use --with-CC to specify the C compiler
+# to use, although the standard way to do this is to set the CC environment
+# variable.
+#
+if test "${with_CC+set}" = set; then
+  case $with_CC in
+    yes | no)   AC_MSG_ERROR([You must supply an argument to the --with-CC option.]);;
+    *)          CC=$with_CC;;
+  esac
+fi
 
-dnl Find a compiler if CC is not already set.
+
+#
+# C compiler
+#
 AC_PROG_CC
-dnl Find CPP, then check traditional.
-dnl Caution: these macros must be called in this order...
 AC_PROG_CPP
 AC_PROG_GCC_TRADITIONAL
 AC_SUBST(GCC)
 
+#
+# Create compiler version string
+#
 if test x"$GCC" = x"yes" ; then
   cc_string="GCC `${CC} --version`"
 else
@@ -671,7 +688,6 @@ AC_SUBST(DL_LIB)
 AC_SUBST(USE_TCL)
 AC_SUBST(USE_TK)
 AC_SUBST(WISH)
-AC_SUBST(MULTIBYTE)
 
 
 dnl
@@ -748,6 +764,10 @@ AC_PROG_YACC
 AC_SUBST(YFLAGS)
 
 
+##
+## Libraries
+##
+
 AC_CHECK_LIB(sfio,     main)
 AC_CHECK_LIB(ncurses,  main, [], [AC_CHECK_LIB(curses, main)])
 AC_CHECK_LIB(termcap,  main)
@@ -795,31 +815,14 @@ if test "$with_openssl" = yes ; then
 fi
 
 
-dnl
-dnl Checks for header files.
-dnl
-AC_HEADER_STDC
-AC_HEADER_SYS_WAIT
-AC_CHECK_HEADERS(arpa/inet.h)
-AC_CHECK_HEADERS(crypt.h)
-AC_CHECK_HEADERS(dld.h)
-AC_CHECK_HEADERS(endian.h)
-AC_CHECK_HEADERS(float.h)
-AC_CHECK_HEADERS(fp_class.h)
-AC_CHECK_HEADERS(getopt.h)
-AC_CHECK_HEADERS(ieeefp.h)
-AC_CHECK_HEADERS(limits.h)
-AC_CHECK_HEADERS(netdb.h)
-AC_CHECK_HEADERS(netinet/in.h)
+##
+## Header files
+##
+dnl sys/socket.h and sys/types.h are required by AC_FUNC_ACCEPT_ARGTYPES
+AC_CHECK_HEADERS([crypt.h dld.h endian.h fp_class.h getopt.h ieeefp.h pwd.h sys/pstat.h sys/select.h sys/socket.h sys/types.h termios.h values.h])
+
 AC_CHECK_HEADERS([readline/readline.h readline.h], [break])
 AC_CHECK_HEADERS([readline/history.h history.h], [break])
-AC_CHECK_HEADERS(sys/select.h)
-AC_CHECK_HEADERS(termios.h)
-AC_CHECK_HEADERS(unistd.h)
-AC_CHECK_HEADERS(values.h)
-AC_CHECK_HEADERS(sys/pstat.h)
-AC_CHECK_HEADERS(sys/types.h sys/socket.h)
-AC_CHECK_HEADERS(sys/param.h pwd.h)
 
 if test "$with_krb4" = yes ; then
   AC_CHECK_HEADER(krb.h, [], [AC_MSG_ERROR([header file <krb.h> is required for Kerberos 4])])
@@ -836,26 +839,24 @@ if test "$with_openssl" = yes ; then
 fi
 
 
-dnl
-dnl Checks for typedefs, structures, and compiler characteristics.
-dnl
+##
+## Types, structures, compiler characteristics
+##
 AC_C_CONST
 AC_C_INLINE
 AC_C_STRINGIZE
-AC_TYPE_UID_T
-AC_TYPE_MODE_T
-AC_TYPE_OFF_T
-AC_TYPE_SIZE_T
-AC_STRUCT_TIMEZONE
 PGAC_C_SIGNED
 PGAC_C_VOLATILE
-AC_FUNC_ACCEPT_ARGTYPES
-
-
-PGAC_VAR_INT_TIMEZONE
-PGAC_FUNC_GETTIMEOFDAY_1ARG
+AC_STRUCT_TIMEZONE
 PGAC_UNION_SEMUN
 
+
+##
+## Functions, global variables
+##
+PGAC_VAR_INT_TIMEZONE
+AC_FUNC_ACCEPT_ARGTYPES
+PGAC_FUNC_GETTIMEOFDAY_1ARG
 
 AC_MSG_CHECKING(for fcntl(F_SETLK))
 if test "$os" != linux ; then
@@ -871,13 +872,7 @@ else
   AC_MSG_RESULT([broken on Linux])
 fi
 
-dnl Checks for library functions.
-AC_FUNC_MEMCMP
-AC_TYPE_SIGNAL
-AC_FUNC_VPRINTF
-AC_CHECK_FUNCS(memmove sysconf)
-AC_CHECK_FUNCS(sigprocmask waitpid setsid fcvt)
-AC_CHECK_FUNCS(setproctitle pstat)
+AC_CHECK_FUNCS([fcvt getopt_long memmove pstat setproctitle setsid sigprocmask sysconf waitpid])
 
 AC_CACHE_CHECK([for PS_STRINGS], [pgac_cv_var_PS_STRINGS],
 [AC_TRY_LINK(
@@ -892,7 +887,6 @@ if test "$pgac_cv_var_PS_STRINGS" = yes ; then
   AC_DEFINE([HAVE_PS_STRINGS], [], [Define if the PS_STRINGS thing exists.])
 fi
 
-AC_CHECK_FUNCS(fpclass fp_class fp_class_d class)
 dnl We use our snprintf.c emulation if either snprintf() or vsnprintf()
 dnl is missing.  Yes, there are machines that have only one.
 dnl We may also decide to use snprintf.c if snprintf() is present but does
@@ -914,24 +908,26 @@ dnl declares vsnprintf() but not snprintf().  Hopefully there are no
 dnl systems that are *that* brain-damaged...
 AC_EGREP_HEADER(snprintf, stdio.h, AC_DEFINE(HAVE_SNPRINTF_DECL))
 AC_EGREP_HEADER(vsnprintf, stdio.h, AC_DEFINE(HAVE_VSNPRINTF_DECL))
-dnl
-dnl do this one the hard way in case isinf() is a macro
-AC_MSG_CHECKING(for isinf)
-AC_CACHE_VAL(ac_cv_func_or_macro_isinf,
+
+# do this one the hard way in case isinf() is a macro
+AC_CACHE_CHECK([for isinf], ac_cv_func_isinf,
 [AC_TRY_LINK(
-[#include <math.h>],
+[#include <math.h>
+],
 [double x = 0.0; int res = isinf(x);],
-[ac_cv_func_or_macro_isinf=yes],
-[ac_cv_func_or_macro_isinf=no])])
-if [[ $ac_cv_func_or_macro_isinf = yes ]]; then
-  AC_MSG_RESULT(yes)
+[ac_cv_func_isinf=yes],
+[ac_cv_func_isinf=no])])
+
+if test $ac_cv_func_isinf = yes ; then
   AC_DEFINE(HAVE_ISINF)
-  ISINF=''
+  ISINF=
 else
-  AC_MSG_RESULT(no)
   ISINF='isinf.o'
+  # Look for a way to implement a substitute for isinf()
+  AC_CHECK_FUNCS([fpclass fp_class fp_class_d class], [break])
 fi
 AC_SUBST(ISINF)
+
 AC_CHECK_FUNC(getrusage,
 	      AC_DEFINE(HAVE_GETRUSAGE),
 	      GETRUSAGE='getrusage.o')
@@ -1011,8 +1007,6 @@ AC_CHECK_FUNCS(filename_completion_function,
 AC_SUBST(HAVE_FILENAME_COMPLETION_FUNCTION)
 AC_SUBST(HAVE_FILENAME_COMPLETION_FUNCTION_DECL)
 
-dnl Check for GNU style long options support (getopt_long)
-AC_CHECK_FUNCS(getopt_long)
 
 dnl Cannot use AC_CHECK_FUNC because finite may be a macro
 AC_MSG_CHECKING(for finite)
