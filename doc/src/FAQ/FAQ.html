@@ -14,7 +14,7 @@
   alink="#0000ff">
     <H1>Frequently Asked Questions (FAQ) for PostgreSQL</H1>
 
-    <P>Last updated: Sun Oct 13 23:15:09 EDT 2002</P>
+    <P>Last updated: Thu Oct 17 19:33:40 EDT 2002</P>
 
     <P>Current maintainer: Bruce Momjian (<A href=
     "mailto:pgman@candle.pha.pa.us">pgman@candle.pha.pa.us</A>)<BR>
@@ -1408,8 +1408,11 @@ BYTEA           bytea           variable-length byte array (null-byte safe)
     <H4><A name="5.3">5.3</A>) How do I write a C function to return a
     tuple?</H4>
 
-    <P>This requires wizardry so extreme that the authors have never
-    tried it, though in principle it can be done.</P>
+    <P>In versions of PostgreSQL beginning with 7.3, table-returning
+    functions are fully supported in C, PL/PgSQL, and SQL. See the
+    Programmer's Guide for more information. An example of a
+    table-returning function defined in C can be found in
+    contrib/tablefunc.</P>
 
     <H4><A name="5.4">5.4</A>) I have changed a source file. Why does
     the recompile not see the change?</H4>

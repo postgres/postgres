@@ -1,7 +1,7 @@
 
                 Frequently Asked Questions (FAQ) for PostgreSQL
                                        
-   Last updated: Sun Oct 13 23:15:09 EDT 2002
+   Last updated: Thu Oct 17 19:33:40 EDT 2002
    
    Current maintainer: Bruce Momjian (pgman@candle.pha.pa.us)
    
@@ -1113,8 +1113,11 @@ CREATE TABLE test (x int, modtime timestamp DEFAULT CURRENT_TIMESTAMP );
    
     5.3) How do I write a C function to return a tuple?
     
-   This requires wizardry so extreme that the authors have never tried
-   it, though in principle it can be done.
+   In versions of PostgreSQL beginning with 7.3, table-returning
+   functions are fully supported in C, PL/PgSQL, and SQL. See the
+   Programmer's Guide for more information. An example of a
+   table-returning function defined in C can be found in
+   contrib/tablefunc.
    
     5.4) I have changed a source file. Why does the recompile not see the
     change?
