@@ -74,7 +74,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/cache/inval.c,v 1.50 2002/04/12 20:38:28 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/cache/inval.c,v 1.51 2002/04/29 22:14:34 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -109,8 +109,7 @@ typedef struct InvalidationListHeader
 	InvalidationChunk *rclist;	/* list of chunks holding relcache msgs */
 } InvalidationListHeader;
 
-/*
- * ----------------
+/*----------------
  *	Invalidation info is divided into two lists:
  *	1) events so far in current command, not yet reflected to caches.
  *	2) events in previous commands of current transaction; these have
@@ -121,7 +120,7 @@ typedef struct InvalidationListHeader
  * The relcache-file-invalidated flag can just be a simple boolean,
  * since we only act on it at transaction commit; we don't care which
  * command of the transaction set it.
- * ----------------
+ *----------------
  */
 
 /* head of current-command event list */
@@ -131,6 +130,22 @@ static InvalidationListHeader CurrentCmdInvalidMsgs;
 static InvalidationListHeader PriorCmdInvalidMsgs;
 
 static bool RelcacheInitFileInval; /* init file must be invalidated? */
+
+/*
+ * Dynamically-registered callback functions.  Current implementation
+ * assumes there won't be very many of these at once; could improve if needed.
+ */
+
+#define MAX_CACHE_CALLBACKS 20
+
+static struct CACHECALLBACK
+{
+	int16		id;				/* cache number or SHAREDINVALRELCACHE_ID */
+	CacheCallbackFunction function;
+	Datum		arg;
+}	cache_callback_list[MAX_CACHE_CALLBACKS];
+
+static int	cache_callback_count = 0;
 
 
 /* ----------------------------------------------------------------
@@ -398,17 +413,39 @@ RegisterRelcacheInvalidation(Oid dbId, Oid relId)
 static void
 LocalExecuteInvalidationMessage(SharedInvalidationMessage *msg)
 {
+	int			i;
+
 	if (msg->id >= 0)
 	{
 		if (msg->cc.dbId == MyDatabaseId || msg->cc.dbId == 0)
+		{
 			CatalogCacheIdInvalidate(msg->cc.id,
 									 msg->cc.hashValue,
 									 &msg->cc.tuplePtr);
+
+			for (i = 0; i < cache_callback_count; i++)
+			{
+				struct CACHECALLBACK *ccitem = cache_callback_list + i;
+
+				if (ccitem->id == msg->cc.id)
+					(*ccitem->function) (ccitem->arg, InvalidOid);
+			}
+		}
 	}
 	else if (msg->id == SHAREDINVALRELCACHE_ID)
 	{
 		if (msg->rc.dbId == MyDatabaseId || msg->rc.dbId == 0)
+		{
 			RelationIdInvalidateRelationCacheByRelationId(msg->rc.relId);
+
+			for (i = 0; i < cache_callback_count; i++)
+			{
+				struct CACHECALLBACK *ccitem = cache_callback_list + i;
+
+				if (ccitem->id == SHAREDINVALRELCACHE_ID)
+					(*ccitem->function) (ccitem->arg, msg->rc.relId);
+			}
+		}
 	}
 	else
 	{
@@ -431,8 +468,17 @@ LocalExecuteInvalidationMessage(SharedInvalidationMessage *msg)
 static void
 InvalidateSystemCaches(void)
 {
+	int			i;
+
 	ResetCatalogCaches();
 	RelationCacheInvalidate();
+
+	for (i = 0; i < cache_callback_count; i++)
+	{
+		struct CACHECALLBACK *ccitem = cache_callback_list + i;
+
+		(*ccitem->function) (ccitem->arg, InvalidOid);
+	}
 }
 
 /*
@@ -639,4 +685,52 @@ CacheInvalidateRelcache(Oid relationId)
 {
 	/* See KLUGE ALERT in PrepareForTupleInvalidation */
 	RegisterRelcacheInvalidation(MyDatabaseId, relationId);
+}
+
+/*
+ * CacheRegisterSyscacheCallback
+ *		Register the specified function to be called for all future
+ *		invalidation events in the specified cache.
+ *
+ * NOTE: currently, the OID argument to the callback routine is not
+ * provided for syscache callbacks; the routine doesn't really get any
+ * useful info as to exactly what changed.  It should treat every call
+ * as a "cache flush" request.
+ */
+void
+CacheRegisterSyscacheCallback(int cacheid,
+							  CacheCallbackFunction func,
+							  Datum arg)
+{
+	if (cache_callback_count >= MAX_CACHE_CALLBACKS)
+		elog(FATAL, "Out of cache_callback_list slots");
+
+	cache_callback_list[cache_callback_count].id = cacheid;
+	cache_callback_list[cache_callback_count].function = func;
+	cache_callback_list[cache_callback_count].arg = arg;
+
+	++cache_callback_count;
+}
+
+/*
+ * CacheRegisterRelcacheCallback
+ *		Register the specified function to be called for all future
+ *		relcache invalidation events.  The OID of the relation being
+ *		invalidated will be passed to the function.
+ *
+ * NOTE: InvalidOid will be passed if a cache reset request is received.
+ * In this case the called routines should flush all cached state.
+ */
+void
+CacheRegisterRelcacheCallback(CacheCallbackFunction func,
+							  Datum arg)
+{
+	if (cache_callback_count >= MAX_CACHE_CALLBACKS)
+		elog(FATAL, "Out of cache_callback_list slots");
+
+	cache_callback_list[cache_callback_count].id = SHAREDINVALRELCACHE_ID;
+	cache_callback_list[cache_callback_count].function = func;
+	cache_callback_list[cache_callback_count].arg = arg;
+
+	++cache_callback_count;
 }
