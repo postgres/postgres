@@ -9,7 +9,7 @@
  *
  *
  * IDENTIFICATION
- *    $Header: /cvsroot/pgsql/src/backend/utils/adt/date.c,v 1.6 1997/03/14 23:19:57 scrappy Exp $
+ *    $Header: /cvsroot/pgsql/src/backend/utils/adt/date.c,v 1.7 1997/04/02 18:33:09 scrappy Exp $
  *
  * NOTES
  *   This code is actually (almost) unused.
@@ -32,14 +32,13 @@
 
 #include "postgres.h"
 #include "miscadmin.h"
+#ifdef HAVE_LIMITS_H
+# include <limits.h>
+#endif
 #include "access/xact.h"
 #include "utils/builtins.h"	/* where function declarations go */
 #include "utils/palloc.h"
 #include "utils/dt.h"
-
-#ifndef USE_NEW_TIME_CODE
-#define USE_NEW_TIME_CODE 1
-#endif
 
 #define	INVALID_RELTIME_STR	"Undefined RelTime"
 #define	INVALID_RELTIME_STR_LEN (sizeof(INVALID_RELTIME_STR)-1)
@@ -234,6 +233,55 @@ char *tintervalout(TimeInterval interval)
 /***************************************************************************** 
  *   PUBLIC ROUTINES                                                         *
  *****************************************************************************/
+
+RelativeTime
+timespan_reltime(TimeSpan *timespan)
+{
+    RelativeTime time;
+    double span;
+
+    if (!PointerIsValid(timespan))
+	time = INVALID_RELTIME;
+
+    if (TIMESPAN_IS_INVALID(*timespan)) {
+	time = INVALID_RELTIME;
+
+    } else {
+	span = ((((double) 30*86400)*timespan->month) + timespan->time);
+
+#ifdef DATEDEBUG
+printf( "timespan_reltime- convert m%d s%f to %f [%d %d]\n",
+ timespan->month, timespan->time, span, INT_MIN, INT_MAX);
+#endif
+
+	time = (((span > INT_MIN) && (span < INT_MAX))? span: INVALID_RELTIME);
+    };
+
+    return(time);
+} /* timespan_reltime() */
+
+
+TimeSpan *
+reltime_timespan(RelativeTime reltime)
+{
+    TimeSpan *result;
+
+    if (!PointerIsValid(result = PALLOCTYPE(TimeSpan)))
+        elog(WARN,"Memory allocation failed, can't convert reltime to timespan",NULL);
+
+    switch(reltime) {
+    case INVALID_RELTIME:
+	TIMESPAN_INVALID(*result);
+	break;
+
+    default:
+	result->time = reltime;
+	result->month = 0;
+    };
+
+    return(result);
+} /* reltime_timespan() */
+
 
 /*
  *	mktinterval	- creates a time interval with endpoints t1 and t2

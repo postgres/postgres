@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *    $Header: /cvsroot/pgsql/src/backend/utils/adt/nabstime.c,v 1.21 1997/03/28 07:12:53 scrappy Exp $
+ *    $Header: /cvsroot/pgsql/src/backend/utils/adt/nabstime.c,v 1.22 1997/04/02 18:33:50 scrappy Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -27,6 +27,7 @@
 #ifndef USE_POSIX_TIME
 #include <sys/timeb.h>
 #endif
+#include "utils/builtins.h"
 #include "access/xact.h"
 
 
@@ -90,11 +91,19 @@ printf( "GetCurrentAbsoluteTime- timezone is %s -> %d seconds from UTC\n",
 void
 GetCurrentTime(struct tm *tm)
 {
-    time_t now;
+    abstime2tm( GetCurrentTransactionStartTime(), &CTimeZone, tm);
+
+    return;
+} /* GetCurrentTime() */
+
+
+void
+abstime2tm(AbsoluteTime time, int *tzp, struct tm *tm)
+{
     struct tm *tt;
 
-    now = GetCurrentTransactionStartTime()-CTimeZone;
-    tt = gmtime( &now);
+    if (tzp != NULL) time -= *tzp;
+    tt = gmtime((time_t *) &time);
 
     tm->tm_year = tt->tm_year+1900;
     tm->tm_mon = tt->tm_mon+1;
@@ -105,11 +114,13 @@ GetCurrentTime(struct tm *tm)
     tm->tm_isdst = tt->tm_isdst;
 
     return;
-} /* GetCurrentTime() */
+} /* abstime2tm() */
 
 
-AbsoluteTime tm2abstime( struct tm *tm, int tz);
-
+/* tm2abstime()
+ * Convert a tm structure to abstime.
+ * Note that tm has full year (not 1900-based) and 1-based month.
+ */
 AbsoluteTime
 tm2abstime( struct tm *tm, int tz)
 {
@@ -122,13 +133,13 @@ tm2abstime( struct tm *tm, int tz)
       || tm->tm_hour < 0 || tm->tm_hour >= 24
       || tm->tm_min < 0 || tm->tm_min > 59
       || tm->tm_sec < 0 || tm->tm_sec > 59)
-	return INVALID_ABSTIME;
+	return(INVALID_ABSTIME);
 
     day = (date2j( tm->tm_year, tm->tm_mon, tm->tm_mday) - date2j( 1970, 1, 1));
 
     /* check for time out of range */
     if ((day < MIN_DAYNUM) || (day > MAX_DAYNUM))
-	return INVALID_ABSTIME;
+	return(INVALID_ABSTIME);
 
     /* convert to seconds */
     sec = tm->tm_sec + tz + (tm->tm_min +(day*24 + tm->tm_hour)*60)*60;
@@ -136,7 +147,7 @@ tm2abstime( struct tm *tm, int tz)
     /* check for overflow */
     if ((day == MAX_DAYNUM && sec < 0) ||
       (day == MIN_DAYNUM && sec > 0))
-	return INVALID_ABSTIME;
+	return(INVALID_ABSTIME);
 
     /* daylight correction */
     if (tm->tm_isdst < 0) {		/* unknown; find out */
@@ -147,7 +158,7 @@ tm2abstime( struct tm *tm, int tz)
 
     /* check for reserved values (e.g. "current" on edge of usual range */
     if (!AbsoluteTimeIsReal(sec))
-	return INVALID_ABSTIME;
+	return(INVALID_ABSTIME);
 
     return sec;
 } /* tm2abstime() */
@@ -369,6 +380,16 @@ AbsoluteTimeIsAfter(AbsoluteTime time1, AbsoluteTime time2)
 }
 
 
+/* abstime_finite()
+ */
+bool
+abstime_finite(AbsoluteTime abstime)
+{
+    return((abstime != INVALID_ABSTIME)
+      && (abstime != NOSTART_ABSTIME) && (abstime != NOEND_ABSTIME));
+} /* abstime_datetime() */
+
+
 /*
  *	abstimeeq	- returns 1, iff arguments are equal
  *	abstimene	- returns 1, iff arguments are not equal
@@ -381,7 +402,7 @@ bool
 abstimeeq(AbsoluteTime t1, AbsoluteTime t2)
 {
     if (t1 == INVALID_ABSTIME || t2 == INVALID_ABSTIME)
-	return 0;
+	return(FALSE);
     if (t1 == CURRENT_ABSTIME)
 	t1 = GetCurrentTransactionStartTime();
     if (t2 == CURRENT_ABSTIME)
@@ -394,7 +415,7 @@ bool
 abstimene(AbsoluteTime t1, AbsoluteTime t2)
 { 
     if (t1 == INVALID_ABSTIME || t2 == INVALID_ABSTIME)
-	return 0;
+	return(FALSE);
     if (t1 == CURRENT_ABSTIME)
 	t1 = GetCurrentTransactionStartTime();
     if (t2 == CURRENT_ABSTIME)
@@ -407,7 +428,7 @@ bool
 abstimelt(AbsoluteTime t1, AbsoluteTime t2)
 { 
     if (t1 == INVALID_ABSTIME || t2 == INVALID_ABSTIME)
-	return 0;
+	return(FALSE);
     if (t1 == CURRENT_ABSTIME)
 	t1 = GetCurrentTransactionStartTime();
     if (t2 == CURRENT_ABSTIME)
@@ -420,7 +441,7 @@ bool
 abstimegt(AbsoluteTime t1, AbsoluteTime t2)
 { 
     if (t1 == INVALID_ABSTIME || t2 == INVALID_ABSTIME)
-	return 0;
+	return(FALSE);
     if (t1 == CURRENT_ABSTIME)
 	t1 = GetCurrentTransactionStartTime();
     if (t2 == CURRENT_ABSTIME)
@@ -433,7 +454,7 @@ bool
 abstimele(AbsoluteTime t1, AbsoluteTime t2)
 { 
     if (t1 == INVALID_ABSTIME || t2 == INVALID_ABSTIME)
-	return 0;
+	return(FALSE);
     if (t1 == CURRENT_ABSTIME)
 	t1 = GetCurrentTransactionStartTime();
     if (t2 == CURRENT_ABSTIME)
@@ -446,7 +467,7 @@ bool
 abstimege(AbsoluteTime t1, AbsoluteTime t2)
 { 
     if (t1 == INVALID_ABSTIME || t2 == INVALID_ABSTIME)
-	return 0;
+	return(FALSE);
     if (t1 == CURRENT_ABSTIME)
 	t1 = GetCurrentTransactionStartTime();
     if (t2 == CURRENT_ABSTIME)
@@ -454,6 +475,7 @@ abstimege(AbsoluteTime t1, AbsoluteTime t2)
 
     return(t1 >= t2);
 }
+
 
 /* datetime_abstime()
  * Convert datetime to abstime.
@@ -480,10 +502,10 @@ datetime_abstime(DateTime *datetime)
 
     } else {
 	if (DATETIME_IS_RELATIVE(*datetime)) {
-	    datetime2tm( SetDateTime(*datetime), tm, &fsec);
+	    datetime2tm( SetDateTime(*datetime), &CTimeZone, tm, &fsec);
 	    result = tm2abstime( tm, 0);
 
-	} else if (datetime2tm( *datetime, tm, &fsec) == 0) {
+	} else if (datetime2tm( *datetime, &CTimeZone, tm, &fsec) == 0) {
 	    result = tm2abstime( tm, 0);
 
 	} else {
@@ -493,3 +515,42 @@ datetime_abstime(DateTime *datetime)
 
     return(result);
 } /* datetime_abstime() */
+
+/* abstime_datetime()
+ * Convert datetime to abstime.
+ */
+DateTime *
+abstime_datetime(AbsoluteTime abstime)
+{
+    DateTime *result;
+
+    if (!PointerIsValid(result = PALLOCTYPE(DateTime)))
+	elog(WARN,"Unable to allocate space to convert abstime to datetime",NULL);
+
+    switch (abstime) {
+    case INVALID_ABSTIME:
+        DATETIME_INVALID(*result);
+	break;
+
+    case NOSTART_ABSTIME:
+        DATETIME_NOBEGIN(*result);
+	break;
+
+    case NOEND_ABSTIME:
+        DATETIME_NOEND(*result);
+	break;
+
+    case EPOCH_ABSTIME:
+        DATETIME_EPOCH(*result);
+	break;
+
+    case CURRENT_ABSTIME:
+        DATETIME_CURRENT(*result);
+	break;
+
+    default:
+        *result = abstime + ((date2j( 1970, 1, 1) - date2j( 2000, 1, 1))*86400);
+    };
+
+    return(result);
+} /* abstime_datetime() */

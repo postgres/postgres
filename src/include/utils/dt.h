@@ -8,7 +8,7 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: dt.h,v 1.4 1997/03/28 07:13:21 scrappy Exp $
+ * $Id: dt.h,v 1.5 1997/04/02 18:32:20 scrappy Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -36,9 +36,15 @@ typedef struct {
 } TimeSpan;
 
 
-#define USE_NEW_TIME_CODE	1
+/*
+ * USE_NEW_DATE enables a more efficient Julian day-based date type.
+ * USE_NEW_TIME enables a more efficient double-based time type.
+ * These have been tested in v6.1beta, but only by myself.
+ * These should be enabled for Postgres v7.0 - tgl 97/04/02
+ */
 #define USE_NEW_DATE		0
 #define USE_NEW_TIME		0
+
 
 /* ----------------------------------------------------------------
  *		time types + support macros
@@ -225,12 +231,13 @@ typedef struct {
 				|| DATETIME_IS_NOBEGIN(j) || DATETIME_IS_NOEND(j))
 #define DATETIME_IS_RESERVED(j) (DATETIME_IS_RELATIVE(j) || DATETIME_NOT_FINITE(j))
 
-#define TIMESPAN_INVALID(j)	{j->time = DT_INVALID;}
+#define TIMESPAN_INVALID(j)	{(j).time = DT_INVALID;}
 #ifdef NAN
 #define TIMESPAN_IS_INVALID(j)	(isnan((j).time))
 #else
 #define TIMESPAN_IS_INVALID(j)	((j).time == DT_INVALID)
 #endif
+#define TIMESPAN_NOT_FINITE(j)	TIMESPAN_IS_INVALID(j)
 
 #define TIME_PREC 1e-6
 #define JROUND(j) (rint(((double) j)/TIME_PREC)*TIME_PREC)
@@ -247,6 +254,7 @@ extern bool datetime_lt(DateTime *dt1, DateTime *dt2);
 extern bool datetime_le(DateTime *dt1, DateTime *dt2);
 extern bool datetime_ge(DateTime *dt1, DateTime *dt2);
 extern bool datetime_gt(DateTime *dt1, DateTime *dt2);
+extern bool datetime_finite(DateTime *datetime);
 
 extern TimeSpan *timespan_in(char *str);
 extern char *timespan_out(TimeSpan *span);
@@ -256,9 +264,14 @@ extern bool timespan_lt(TimeSpan *span1, TimeSpan *span2);
 extern bool timespan_le(TimeSpan *span1, TimeSpan *span2);
 extern bool timespan_ge(TimeSpan *span1, TimeSpan *span2);
 extern bool timespan_gt(TimeSpan *span1, TimeSpan *span2);
+extern bool timespan_finite(TimeSpan *span);
 
-float64 datetime_part(text *units, DateTime *datetime);
-float64 timespan_part(text *units, TimeSpan *timespan);
+extern text *datetime_text(DateTime *datetime);
+extern DateTime *text_datetime(text *str);
+extern text *timespan_text(TimeSpan *timespan);
+extern TimeSpan *text_timespan(text *str);
+extern float64 datetime_part(text *units, DateTime *datetime);
+extern float64 timespan_part(text *units, TimeSpan *timespan);
 
 extern TimeSpan *timespan_um(TimeSpan *span);
 extern TimeSpan *timespan_add(TimeSpan *span1, TimeSpan *span2);
@@ -269,12 +282,12 @@ extern DateTime *datetime_add_span(DateTime *dt, TimeSpan *span);
 extern DateTime *datetime_sub_span(DateTime *dt, TimeSpan *span);
 
 extern void GetCurrentTime(struct tm *tm);
-DateTime SetDateTime(DateTime datetime);
-DateTime tm2datetime(struct tm *tm, double fsec, int tzp);
-int datetime2tm( DateTime dt, struct tm *tm, double *fsec);
+extern DateTime SetDateTime(DateTime datetime);
+extern DateTime tm2datetime(struct tm *tm, double fsec, int *tzp);
+extern int datetime2tm( DateTime dt, int *tzp, struct tm *tm, double *fsec);
 
-int timespan2tm(TimeSpan span, struct tm *tm, float8 *fsec);
-int tm2timespan(struct tm *tm, double fsec, TimeSpan *span);
+extern int timespan2tm(TimeSpan span, struct tm *tm, float8 *fsec);
+extern int tm2timespan(struct tm *tm, double fsec, TimeSpan *span);
 
 extern DateTime dt2local( DateTime dt, int timezone);
 

@@ -6,7 +6,7 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: builtins.h,v 1.13 1997/03/25 09:25:33 scrappy Exp $
+ * $Id: builtins.h,v 1.14 1997/04/02 18:31:52 scrappy Exp $
  *
  * NOTES
  *    This should normally only be included by fmgr.h.
@@ -224,6 +224,8 @@ extern int32 reltimein(char *timestring);
 extern char *reltimeout(int32 timevalue);
 extern TimeInterval tintervalin(char *intervalstr);
 extern char *tintervalout(TimeInterval interval);
+extern RelativeTime timespan_reltime(TimeSpan *timespan);
+extern TimeSpan *reltime_timespan(RelativeTime reltime);
 extern TimeInterval mktinterval(AbsoluteTime t1, AbsoluteTime t2);
 extern AbsoluteTime timepl(AbsoluteTime t1, RelativeTime t2);
 extern AbsoluteTime timemi(AbsoluteTime t1, RelativeTime t2);
@@ -416,6 +418,7 @@ bool timestamplt(time_t t1, time_t t2);
 bool timestampgt(time_t t1, time_t t2);
 bool timestample(time_t t1, time_t t2);
 bool timestampge(time_t t1, time_t t2);
+DateTime *timestamp_datetime(time_t timestamp);
 
 /* varchar.c */
 extern char *bpcharin(char *s, int dummy, int typlen);
@@ -476,6 +479,10 @@ extern DateADT date_smaller(DateADT dateVal1, DateADT dateVal2);
 extern int32 date_mi(DateADT dateVal1, DateADT dateVal2);
 extern DateADT date_pli(DateADT dateVal, int32 days);
 extern DateADT date_mii(DateADT dateVal, int32 days);
+extern DateTime *date_datetime(DateADT date);
+extern DateADT datetime_date(DateTime *datetime);
+extern DateTime *datetime_datetime(DateADT date, TimeADT *time);
+extern DateADT abstime_date(AbsoluteTime abstime);
 
 #else
 
@@ -493,6 +500,10 @@ extern int4 date_smaller(int4 dateVal1, int4 dateVal2);
 extern int32 date_mi(int4 dateVal1, int4 dateVal2);
 extern int4 date_pli(int4 dateVal, int32 days);
 extern int4 date_mii(int4 dateVal, int32 days);
+extern DateTime *date_datetime(int4 date);
+extern int4 datetime_date(DateTime *datetime);
+extern DateTime *datetime_datetime(int4 date, TimeADT *time);
+extern int4 abstime_date(AbsoluteTime abstime);
 
 #endif
 

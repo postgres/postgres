@@ -7,18 +7,19 @@
  *
  *
  * IDENTIFICATION
- *    $Header: /cvsroot/pgsql/src/backend/utils/adt/datetime.c,v 1.1 1997/03/14 23:20:01 scrappy Exp $
+ *    $Header: /cvsroot/pgsql/src/backend/utils/adt/datetime.c,v 1.2 1997/04/02 18:33:22 scrappy Exp $
  *
  *-------------------------------------------------------------------------
  */
 #include <stdio.h>		/* for sprintf() */
 #include <string.h>
 
-#include <postgres.h>
-#include <miscadmin.h>
-#include <utils/builtins.h>
-#include <utils/nabstime.h>
-#include <utils/datetime.h>
+#include "postgres.h"
+#include "miscadmin.h"
+#include "utils/builtins.h"
+#include "utils/nabstime.h"
+#include "utils/datetime.h"
+#include "access/xact.h"
 
 static int	day_tab[2][12] = {
 	{31,28,31,30,31,30,31,31,30,31,30,31},
@@ -72,35 +73,22 @@ printf( "date_in- input string is %s\n", str);
 	elog(WARN,"Bad date external representation %s",str);
 
     switch (dtype) {
-#if FALSE
     case DTK_DATE:
-	date = date2j(tm->tm_year,tm->tm_mon,tm->tm_mday);
-	time = time2j(tm->tm_hour,tm->tm_min,(double)tm->tm_sec);
-	if (tzp != 0) {
-            j2local(&date, &time, -(tzp*60));
-	} else {
-            j2local(&date, &time, -timezone);
-	};
 	break;
-#endif
+
+    case DTK_CURRENT:
+	GetCurrentTime(tm);
+	break;
 
     case DTK_EPOCH:
 	tm->tm_year = 1970;
 	tm->tm_mon = 1;
 	tm->tm_mday = 1;
-    case DTK_DATE:
 	break;
 
     default:
 	elog(WARN,"Unrecognized date external representation %s",str);
     };
-
-#if FALSE
-    if (tm->tm_year < 70)
-	tm->tm_year += 2000;
-    else if (tm->tm_year < 100)
-	tm->tm_year += 1900;
-#endif
 
     if (tm->tm_year < 0 || tm->tm_year > 32767)
 	elog(WARN, "date_in: year must be limited to values 0 through 32767 in '%s'", str);
@@ -256,6 +244,82 @@ date_mii(DateADT dateVal, int4 days)
   return(date_pli(dateVal, -days));
 } /* date_mii() */
 
+
+/* date_datetime()
+ * Convert date to datetime data type.
+ */
+DateTime *
+date_datetime(int4 dateVal)
+{
+    DateTime *result;
+
+    if (!PointerIsValid(result = PALLOCTYPE(DateTime)))
+	elog(WARN,"Memory allocation failed, can't convert date to datetime",NULL);
+
+    *result = (dateVal - date2j( 2000, 1, 1));
+    *result *= 86400;
+
+    return(result);
+} /* date_datetime() */
+
+
+/* datetime_date()
+ * Convert datetime to date data type.
+ */
+DateADT
+datetime_date(DateTime *datetime)
+{
+    DateADT result;
+
+    if (!PointerIsValid(datetime))
+	elog(WARN,"Unable to convert null datetime to date",NULL);
+
+    result = (*datetime / 86400);
+
+    return(result);
+} /* datetime_date() */
+
+
+/* abstime_date()
+ * Convert abstime to date data type.
+ */
+DateADT
+abstime_date(AbsoluteTime abstime)
+{
+    DateADT result;
+    struct tt, *tm = &tt;
+
+    switch (abstime) {
+    case INVALID_ABSTIME:
+    case NOSTART_ABSTIME:
+    case NOEND_ABSTIME:
+	elog(WARN,"Unable to convert reserved abstime value to date",NULL);
+	break;
+
+    case EPOCH_ABSTIME:
+	result = date2j(1970,1,1) - date2j(2000,1,1);
+	break;
+
+    case CURRENT_ABSTIME:
+	GetCurrentTime(tm);
+	result = date2j(tm->tm_year,tm->tm_mon,tm->tm_mday) - date2j(2000,1,1);
+	break;
+
+    default:
+#if FALSE
+	tm = localtime((time_t *) &abstime);
+	tm->tm_year += 1900;
+	tm->tm_mon += 1;
+	/* XXX must shift to local time before converting - tgl 97/04/01 */
+#endif
+	abstime2tm(abstime, &CTimeZone, tm);
+	result = date2j(tm->tm_year,tm->tm_mon,tm->tm_mday) - date2j(2000,1,1);
+	break;
+    };
+
+    return(result);
+} /* abstime_date() */
+
 #else
 
 bool
@@ -392,68 +456,14 @@ date_smaller(int4 dateVal1, int4 dateVal2)
 int32
 date_mi(int4 dateVal1, int4 dateVal2)
 {
-#if USE_NEW_TIME_CODE
-
     DateADT *date1, *date2;
     int days;
+
     date1 = (DateADT *) &dateVal1;
     date2 = (DateADT *) &dateVal2;
 
     days = (date2j(date1->year, date1->month, date1->day)
           - date2j(date2->year, date2->month, date2->day));
-
-#else
-
-  DateADT dv1, dv2;
-  DateADT *date1, *date2;
-  int32 days = 0;
-  int i;
-
-  /* This circumlocution allows us to assume that date1 is always
-     before date2.  */
-  dv1 = date_smaller (dateVal1, dateVal2);
-  dv2 = date_larger (dateVal1, dateVal2);
-  date1 = (DateADT *) &dv1;
-  date2 = (DateADT *) &dv2;
-
-  /* Sum number of days in each full year between date1 and date2.  */
-  for (i = date1->year + 1; i < date2->year; ++i)
-    days += isleap(i) ? 366 : 365;
-
-  if (days)
-    {
-      /* We need to wrap around the year.  Add in number of days in each
-	 full month from date1 to end of year.  */
-      for (i = date1->month + 1; i <= 12; ++i)
-	days += day_tab[isleap(date1->year)][i - 1];
-
-      /* Add in number of days in each full month from start of year to
-	 date2.  */
-      for (i = 1; i < date2->month; ++i)
-	days += day_tab[isleap(date2->year)][i - 1];
-    }
-  else
-    {
-      /* Add in number of days in each full month from date1 to date2.  */
-      for (i = date1->month + 1; i < date2->month; ++i)
-	days += day_tab[isleap(date1->year)][i - 1];
-    }
-
-  if (days || date1->month != date2->month)
-    {
-      /* Add in number of days left in month for date1.  */
-      days += day_tab[isleap(date1->year)][date1->month - 1] - date1->day;
-
-      /* Add in day of month of date2.  */
-      days += date2->day;
-    }
-  else
-    {
-      /* Everything's in the same month, so just subtract the days!  */
-      days = date2->day - date1->day;
-    }
-
-#endif
 
   return (days);
 }
@@ -463,8 +473,6 @@ date_mi(int4 dateVal1, int4 dateVal2)
 int4
 date_pli(int4 dateVal, int32 days)
 {
-#if USE_NEW_TIME_CODE
-
     DateADT *date1 = (DateADT *) &dateVal;
     int date, year, month, day;
 
@@ -473,41 +481,6 @@ date_pli(int4 dateVal, int32 days)
     date1->year = year;
     date1->month = month;
     date1->day = day;
-
-#else
-
-    DateADT *date1 = (DateADT *) &dateVal;
-    /* Use separate day variable because date1->day is a narrow type.  */
-    int32 day = date1->day + days;
-
-    if (days > 0) {
-	/* Loop as long as day has wrapped around end of month.  */
-	while (day > day_tab[isleap(date1->year)][date1->month - 1]) {
-	    day -= day_tab[isleap(date1->year)][date1->month - 1];
-	    if (++date1->month > 12) {
-	      /* Month wrapped around. */
-	      date1->month = 1;
-	      ++date1->year;
-	    }
-	}
-
-    } else {
-	/* Loop as long as day has wrapped around beginning of month.  */
-	while (day < 1) {
-	    /* Decrement month first, because a negative day number
-	       should be held as relative to the previous month's end.  */
-	    if (--date1->month < 1) {
-		/* Month wrapped around. */
-		date1->month = 12;
-		--date1->year;
-	    }
-
-	    day += day_tab[isleap(date1->year)][date1->month - 1];
-	}
-    }
-    date1->day = day;
-
-#endif
 
     return (dateVal);
 } /* date_pli() */
@@ -519,7 +492,92 @@ date_mii(int4 dateVal, int32 days)
     return (date_pli(dateVal, -days));
 }
 
+DateTime *
+date_datetime(int4 dateVal)
+{
+    DateTime *result;
+    DateADT *date = (DateADT *) &dateVal;
+
+    if (!PointerIsValid(result = PALLOCTYPE(DateTime)))
+	elog(WARN,"Memory allocation failed, can't convert date to datetime",NULL);
+
+    *result = (date2j(date->year, date->month, date->day) - date2j( 2000, 1, 1));
+    *result *= 86400;
+
+#ifdef DATEDEBUG
+printf( "date_datetime- convert %04d-%02d-%02d to %f\n",
+ date->year, date->month, date->day, *result);
 #endif
+
+    return(result);
+} /* date_datetime() */
+
+int4
+datetime_date(DateTime *datetime)
+{
+    int4 result;
+    int year, month, day;
+    DateADT *date = (DateADT *) &result;
+
+    if (!PointerIsValid(datetime))
+	elog(WARN,"Unable to convert null datetime to date",NULL);
+
+    j2date( ((*datetime / 86400) + date2j( 2000, 1, 1)), &year, &month, &day);
+    date->year = year;
+    date->month = month;
+    date->day = day;
+
+    return(result);
+} /* datetime_date() */
+
+int4
+abstime_date(AbsoluteTime abstime)
+{
+    int4 result;
+    DateADT *date = (DateADT *) &result;
+    struct tm tt, *tm = &tt;
+
+    switch (abstime) {
+    case INVALID_ABSTIME:
+    case NOSTART_ABSTIME:
+    case NOEND_ABSTIME:
+	elog(WARN,"Unable to convert reserved abstime value to date",NULL);
+	break;
+
+    case EPOCH_ABSTIME:
+	date->year = 1970;
+	date->month = 1;
+	date->day = 1;
+	break;
+
+    case CURRENT_ABSTIME:
+#if FALSE
+	GetCurrentTime(tm);
+#endif
+	abstime = GetCurrentTransactionStartTime() + CTimeZone;
+	date->year = tm->tm_year;
+	date->month = tm->tm_mon;
+	date->day = tm->tm_mday;
+	break;
+
+    default:
+#if FALSE
+	tm = localtime((time_t *) &abstime);
+	tm->tm_year += 1900;
+	tm->tm_mon += 1;
+#endif
+	abstime2tm(abstime, &CTimeZone, tm);
+	date->year = tm->tm_year;
+	date->month = tm->tm_mon;
+	date->day = tm->tm_mday;
+	break;
+    };
+
+    return(result);
+} /* abstime_date() */
+
+#endif
+
 
 /*****************************************************************************
  *   Time ADT
@@ -583,15 +641,14 @@ time_out(TimeADT *time)
 	return NULL;
 
     if (time->sec == 0.0) {
-	sprintf(buf, "%02d:%02d",
-		(int)time->hr, (int)time->min);
+	sprintf(buf, "%02d:%02d", (int)time->hr, (int)time->min);
     } else {
 	if (((int) time->sec) == time->sec) {
 	    sprintf(buf, "%02d:%02d:%02d",
-		    (int)time->hr, (int)time->min, (int)time->sec);
+	      (int)time->hr, (int)time->min, (int)time->sec);
 	} else {
 	    sprintf(buf, "%02d:%02d:%09.6f",
-		    (int)time->hr, (int)time->min, time->sec);
+	      (int)time->hr, (int)time->min, time->sec);
 	};
     };
 
@@ -666,6 +723,29 @@ time_cmp(TimeADT *time1, TimeADT *time2)
     return((*time1 < *time2)? -1: (((*time1 < *time2)? 1: 0)));
 } /* time_cmp() */
 
+
+/* datetime_datetime()
+ * Convert date and time to datetime data type.
+ */
+DateTime *
+datetime_datetime(DateADT date, TimeADT *time)
+{
+    DateTime *result;
+
+    if (!PointerIsValid(time)) {
+	if (!PointerIsValid(result = PALLOCTYPE(DateTime)))
+	    elog(WARN,"Memory allocation failed, can't convert to datetime",NULL);
+
+	DATETIME_INVALID(*result);
+
+    } else {
+	result = date_datetime(date);
+	*result += *time;
+    };
+
+    return(result);
+} /* datetime_datetime() */
+
 #else
 
 bool
@@ -733,6 +813,34 @@ time_cmp(TimeADT *time1, TimeADT *time2)
 	return ((time1->sec<time2->sec) ? -1 : 1);
     return 0;
 }
+
+DateTime *
+datetime_datetime(int4 dateVal, TimeADT *time)
+{
+    DateTime *result;
+#ifdef DATEDEBUG
+    DateADT *date = (DateADT *) &dateVal;
+#endif
+
+    if (!PointerIsValid(time)) {
+	if (!PointerIsValid(result = PALLOCTYPE(DateTime)))
+	    elog(WARN,"Memory allocation failed, can't convert to datetime",NULL);
+
+	DATETIME_INVALID(*result);
+
+    } else {
+
+#ifdef DATEDEBUG
+printf( "datetime_datetime- convert %04d-%02d-%02d %02d:%02d:%05.2f\n",
+ date->year, date->month, date->day, time->hr, time->min, time->sec);
+#endif
+
+	result = date_datetime(dateVal);
+	*result += (((time->hr*60)+time->min)*60+time->sec);
+    };
+
+    return(result);
+} /* datetime_datetime() */
 
 #endif
 

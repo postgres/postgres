@@ -88,3 +88,23 @@ timestampge(time_t t1, time_t t2)
 {
     return difftime(t1, t2) <= 0;
 }
+
+DateTime *
+timestamp_datetime(time_t timestamp)
+{
+    DateTime *result;
+
+    double fsec = 0;
+    struct tm *tm;
+
+    if (!PointerIsValid(result = PALLOCTYPE(DateTime)))
+	elog(WARN,"Memory allocation failed, can't convert timestamp to datetime",NULL);
+
+    tm = localtime((time_t *) &timestamp);
+    tm->tm_year += 1900;
+    tm->tm_mon += 1;
+
+    *result = tm2datetime(tm, fsec, NULL);
+
+    return(result);
+} /* timestamp_datetime() */

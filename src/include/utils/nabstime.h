@@ -6,7 +6,7 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: nabstime.h,v 1.6 1997/03/25 08:11:24 scrappy Exp $
+ * $Id: nabstime.h,v 1.7 1997/04/02 18:32:39 scrappy Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -84,16 +84,7 @@ typedef TimeIntervalData *TimeInterval;
 #define RelativeTimeIsValid(time) \
     ((bool) (((RelativeTime) time) != INVALID_RELTIME))
 
-#if USE_NEW_TIME_CODE
-
 extern AbsoluteTime GetCurrentAbsoluteTime(void);
-
-#else
-
-#define GetCurrentAbsoluteTime() \
-    ((AbsoluteTime) getSystemTime())
-
-#endif
 
 /*
  * getSystemTime --
@@ -121,11 +112,17 @@ extern bool abstimelt(AbsoluteTime t1, AbsoluteTime t2);
 extern bool abstimegt(AbsoluteTime t1, AbsoluteTime t2);
 extern bool abstimele(AbsoluteTime t1, AbsoluteTime t2);
 extern bool abstimege(AbsoluteTime t1, AbsoluteTime t2);
+extern bool abstime_finite(AbsoluteTime time);
 
 extern AbsoluteTime datetime_abstime(DateTime *datetime);
+extern DateTime *abstime_datetime(AbsoluteTime abstime);
 
 extern bool AbsoluteTimeIsBefore(AbsoluteTime time1, AbsoluteTime time2);
 extern bool AbsoluteTimeIsAfter(AbsoluteTime time1, AbsoluteTime time2);
+
+extern AbsoluteTime tm2abstime(struct tm *tm, int tz);
+extern void abstime2tm(AbsoluteTime time, int *tzp, struct tm *tm);
+
 extern AbsoluteTime dateconv(struct tm *tm, int zone);
 extern time_t qmktime(struct tm *tp);
 

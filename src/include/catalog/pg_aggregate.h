@@ -7,7 +7,7 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: pg_aggregate.h,v 1.3 1996/11/14 21:39:07 scrappy Exp $
+ * $Id: pg_aggregate.h,v 1.4 1997/04/02 18:36:09 scrappy Exp $
  *
  * NOTES
  *    the genbki.sh script reads this file and generates .bki
@@ -87,29 +87,33 @@ typedef FormData_pg_aggregate	*Form_pg_aggregate;
  * ---------------
  */
 
-DATA(insert OID = 0 ( avg   PGUID int4pl  int4inc  int4div  23  23  23  23 0  0 ));
-DATA(insert OID = 0 ( avg   PGUID int2pl  int2inc  int2div  21  21  21  21  0  0 ));
-DATA(insert OID = 0 ( avg PGUID float4pl float4inc float4div  700  700  700  700 0.0 0.0 ));
-DATA(insert OID = 0 ( avg PGUID float8pl float8inc float8div  701  701  701  701 0.0 0.0 ));
+DATA(insert OID = 0 ( avg   PGUID int4pl   int4inc   int4div  23  23  23  23 0  0 ));
+DATA(insert OID = 0 ( avg   PGUID int2pl   int2inc   int2div  21  21  21  21  0  0 ));
+DATA(insert OID = 0 ( avg   PGUID float4pl float4inc float4div  700  700  700  700 0.0 0.0 ));
+DATA(insert OID = 0 ( avg   PGUID float8pl float8inc float8div  701  701  701  701 0.0 0.0 ));
 
-DATA(insert OID = 0 ( sum   PGUID int4pl   - -  23  23  0  23  0   _null_ ));
-DATA(insert OID = 0 ( sum   PGUID int2pl   - -  21  21  0  21  0   _null_ ));
-DATA(insert OID = 0 ( sum PGUID float4pl - - 700  700 0  700  0.0 _null_ ));
-DATA(insert OID = 0 ( sum PGUID float8pl - - 701  701 0  701  0.0 _null_ ));
+DATA(insert OID = 0 ( sum   PGUID int4pl   - -   23  23  0  23  0   _null_ ));
+DATA(insert OID = 0 ( sum   PGUID int2pl   - -   21  21  0  21  0   _null_ ));
+DATA(insert OID = 0 ( sum   PGUID float4pl - -  700  700 0  700 0.0 _null_ ));
+DATA(insert OID = 0 ( sum   PGUID float8pl - -  701  701 0  701 0.0 _null_ ));
 
-DATA(insert OID = 0 ( max   PGUID int4larger   - -  23  23  0  23  _null_ _null_ ));
-DATA(insert OID = 0 ( max   PGUID int2larger   - -  21  21  0  21  _null_ _null_ ));
-DATA(insert OID = 0 ( max PGUID float4larger - - 700  700 0  700  _null_ _null_ ));
-DATA(insert OID = 0 ( max PGUID float8larger - - 701  701 0  701  _null_ _null_ ));
-DATA(insert OID = 0 ( max PGUID date_larger  - - 1082 1082 0 1082 _null_ _null_ ));
+DATA(insert OID = 0 ( max   PGUID int4larger    - -   23   23 0   23 _null_ _null_ ));
+DATA(insert OID = 0 ( max   PGUID int2larger    - -   21   21 0   21 _null_ _null_ ));
+DATA(insert OID = 0 ( max   PGUID float4larger  - -  700  700 0  700 _null_ _null_ ));
+DATA(insert OID = 0 ( max   PGUID float8larger  - -  701  701 0  701 _null_ _null_ ));
+DATA(insert OID = 0 ( max   PGUID int4larger    - -  702  702 0  702 _null_ _null_ ));
+DATA(insert OID = 0 ( max   PGUID date_larger   - - 1082 1082 0 1082 _null_ _null_ ));
+DATA(insert OID = 0 ( max   PGUID float8larger  - - 1084 1084 0 1084 _null_ _null_ ));
 
-DATA(insert OID = 0 ( min   PGUID int4smaller   - -  23  23  0  23  _null_ _null_ ));
-DATA(insert OID = 0 ( min   PGUID int2smaller   - -  21  21  0  21    _null_ _null_ ));
-DATA(insert OID = 0 ( min PGUID float4smaller - - 700  700 0  700   _null_ _null_ ));
-DATA(insert OID = 0 ( min PGUID float8smaller - - 701  701 0  701  _null_ _null_ ));
-DATA(insert OID = 0 ( min PGUID date_smaller  - - 1082 1082 0 1082 _null_ _null_ ));
+DATA(insert OID = 0 ( min   PGUID int4smaller   - -   23   23 0   23 _null_ _null_ ));
+DATA(insert OID = 0 ( min   PGUID int2smaller   - -   21   21 0   21 _null_ _null_ ));
+DATA(insert OID = 0 ( min   PGUID float4smaller - -  700  700 0  700 _null_ _null_ ));
+DATA(insert OID = 0 ( min   PGUID float8smaller - -  701  701 0  701 _null_ _null_ ));
+DATA(insert OID = 0 ( min   PGUID int4smaller   - -  702  702 0  702 _null_ _null_ ));
+DATA(insert OID = 0 ( min   PGUID date_smaller  - - 1082 1082 0 1082 _null_ _null_ ));
+DATA(insert OID = 0 ( min   PGUID float8smaller - - 1084 1084 0 1084 _null_ _null_ ));
 
-DATA(insert OID = 0 ( count     PGUID - int4inc - 0 0 23 23  _null_ 0 ));
+DATA(insert OID = 0 ( count PGUID - int4inc - 0 0 23 23  _null_ 0 ));
 
 /*
  * prototypes for fucnctions in pg_aggregate.c

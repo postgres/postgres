@@ -7,7 +7,7 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: pg_operator.h,v 1.6 1997/03/25 08:10:37 scrappy Exp $
+ * $Id: pg_operator.h,v 1.7 1997/04/02 18:36:12 scrappy Exp $
  *
  * NOTES
  *    the genbki.sh script reads this file and generates .bki
@@ -413,6 +413,7 @@ DATA(insert OID = 1325 (  ">="     PGUID 0 b t f 1184 1184   16 1322 1322 0 0 da
 
 DATA(insert OID = 1327 (  "+"      PGUID 0 b t f 1184 1186 1184 1327    0 0 0 datetime_add_span - - ));
 DATA(insert OID = 1328 (  "-"      PGUID 0 b t f 1184 1184 1186    0    0 0 0 datetime_sub - - ));
+DATA(insert OID = 1329 (  "-"      PGUID 0 b t f 1184 1186 1184    0    0 0 0 datetime_sub_span - - ));
 
 /* timespan operators */
 DATA(insert OID = 1330 (  "="      PGUID 0 b t f 1186 1186   16 1330 1331 1332 1332 timespan_eq eqsel eqjoinsel ));
@@ -422,7 +423,7 @@ DATA(insert OID = 1333 (  "<="     PGUID 0 b t f 1186 1186   16 1334 1334 0 0 ti
 DATA(insert OID = 1334 (  ">"      PGUID 0 b t f 1186 1186   16 1333 1333 0 0 timespan_gt intltsel intltjoinsel ));
 DATA(insert OID = 1335 (  ">="     PGUID 0 b t f 1186 1186   16 1332 1332 0 0 timespan_ge intltsel intltjoinsel ));
 
-DATA(insert OID = 1336 (  "-"      PGUID 0 b t f    0 1186 1186    0    0 0 0 timespan_um 0 0 ));
+DATA(insert OID = 1336 (  "-"      PGUID 0 l t f    0 1186 1186    0    0 0 0 timespan_um 0 0 ));
 DATA(insert OID = 1337 (  "+"      PGUID 0 b t f 1186 1186 1186 1337    0 0 0 timespan_add - - ));
 DATA(insert OID = 1338 (  "-"      PGUID 0 b t f 1186 1186 1186    0    0 0 0 timespan_sub - - ));
 
