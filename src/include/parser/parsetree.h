@@ -8,7 +8,7 @@
  * Portions Copyright (c) 1996-2003, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/include/parser/parsetree.h,v 1.24 2004/05/26 04:41:46 neilc Exp $
+ * $PostgreSQL: pgsql/src/include/parser/parsetree.h,v 1.25 2004/08/17 18:47:09 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -54,6 +54,13 @@ extern char *get_rte_attribute_name(RangeTblEntry *rte, AttrNumber attnum);
  */
 extern void get_rte_attribute_type(RangeTblEntry *rte, AttrNumber attnum,
 					   Oid *vartype, int32 *vartypmod);
+
+/*
+ * Check whether an attribute of an RTE has been dropped (note that
+ * get_rte_attribute_type will fail on such an attr)
+ */
+extern bool get_rte_attribute_is_dropped(RangeTblEntry *rte,
+										 AttrNumber attnum);
 
 
 /* ----------------

@@ -7,12 +7,13 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/rewrite/rewriteManip.c,v 1.84 2004/05/30 23:40:35 neilc Exp $
+ *	  $PostgreSQL: pgsql/src/backend/rewrite/rewriteManip.c,v 1.85 2004/08/17 18:47:09 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
 #include "postgres.h"
 
+#include "catalog/pg_type.h"
 #include "nodes/makefuncs.h"
 #include "optimizer/clauses.h"
 #include "optimizer/tlist.h"
@@ -938,18 +939,30 @@ ResolveNew_mutator(Node *node, ResolveNew_context *context)
 
 				for (nf = 1; nf <= nfields; nf++)
 				{
-					Oid		vartype;
-					int32	vartypmod;
-					Var	   *newvar;
+					if (get_rte_attribute_is_dropped(rte, nf))
+					{
+						/*
+						 * can't determine att type here, but it doesn't
+						 * really matter what type the Const claims to be.
+						 */
+						fields = lappend(fields,
+										 makeNullConst(INT4OID));
+					}
+					else
+					{
+						Oid		vartype;
+						int32	vartypmod;
+						Var	   *newvar;
 
-					get_rte_attribute_type(rte, nf, &vartype, &vartypmod);
-					newvar = makeVar(this_varno,
-									 nf,
-									 vartype,
-									 vartypmod,
-									 this_varlevelsup);
-					fields = lappend(fields,
-									 resolve_one_var(newvar, context));
+						get_rte_attribute_type(rte, nf, &vartype, &vartypmod);
+						newvar = makeVar(this_varno,
+										 nf,
+										 vartype,
+										 vartypmod,
+										 this_varlevelsup);
+						fields = lappend(fields,
+										 resolve_one_var(newvar, context));
+					}
 				}
 
 				rowexpr = makeNode(RowExpr);

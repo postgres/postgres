@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/parser/parse_relation.c,v 1.96 2004/05/30 23:40:35 neilc Exp $
+ *	  $PostgreSQL: pgsql/src/backend/parser/parse_relation.c,v 1.97 2004/08/17 18:47:08 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -42,8 +42,6 @@ static Node *scanNameSpaceForRelid(ParseState *pstate, Node *nsnode,
 static void scanNameSpaceForConflict(ParseState *pstate, Node *nsnode,
 						 RangeTblEntry *rte1, const char *aliasname1);
 static bool isForUpdate(ParseState *pstate, char *refname);
-static bool get_rte_attribute_is_dropped(RangeTblEntry *rte,
-							 AttrNumber attnum);
 static int	specialAttNum(const char *attname);
 static void warnAutoRange(ParseState *pstate, RangeVar *relation);
 
@@ -1699,7 +1697,7 @@ get_rte_attribute_type(RangeTblEntry *rte, AttrNumber attnum,
  * get_rte_attribute_is_dropped
  *		Check whether attempted attribute ref is to a dropped column
  */
-static bool
+bool
 get_rte_attribute_is_dropped(RangeTblEntry *rte, AttrNumber attnum)
 {
 	bool		result;

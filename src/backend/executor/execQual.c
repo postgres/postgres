@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/executor/execQual.c,v 1.165 2004/08/02 01:30:41 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/executor/execQual.c,v 1.166 2004/08/17 18:47:08 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -44,6 +44,7 @@
 #include "executor/nodeSubplan.h"
 #include "funcapi.h"
 #include "miscadmin.h"
+#include "nodes/makefuncs.h"
 #include "optimizer/planmain.h"
 #include "parser/parse_expr.h"
 #include "utils/acl.h"
@@ -2096,7 +2097,7 @@ ExecEvalRow(RowExprState *rstate,
 	HeapTuple	tuple;
 	Datum	   *values;
 	char	   *nulls;
-	int			nargs;
+	int			natts;
 	ListCell   *arg;
 	int			i;
 
@@ -2106,9 +2107,12 @@ ExecEvalRow(RowExprState *rstate,
 		*isDone = ExprSingleResult;
 
 	/* Allocate workspace */
-	nargs = list_length(rstate->args);
-	values = (Datum *) palloc(nargs * sizeof(Datum));
-	nulls = (char *) palloc(nargs * sizeof(char));
+	natts = rstate->tupdesc->natts;
+	values = (Datum *) palloc0(natts * sizeof(Datum));
+	nulls = (char *) palloc(natts * sizeof(char));
+
+	/* preset to nulls in case rowtype has some later-added columns */
+	memset(nulls, 'n', natts * sizeof(char));
 
 	/* Evaluate field values */
 	i = 0;
@@ -2979,19 +2983,12 @@ ExecInitExpr(Expr *node, PlanState *parent)
 			{
 				RowExpr	   *rowexpr = (RowExpr *) node;
 				RowExprState *rstate = makeNode(RowExprState);
+				Form_pg_attribute *attrs;
 				List	   *outlist = NIL;
 				ListCell   *l;
+				int			i;
 
 				rstate->xprstate.evalfunc = (ExprStateEvalFunc) ExecEvalRow;
-				foreach(l, rowexpr->args)
-				{
-					Expr	   *e = (Expr *) lfirst(l);
-					ExprState  *estate;
-
-					estate = ExecInitExpr(e, parent);
-					outlist = lappend(outlist, estate);
-				}
-				rstate->args = outlist;
 				/* Build tupdesc to describe result tuples */
 				if (rowexpr->row_typeid == RECORDOID)
 				{
@@ -3003,7 +3000,46 @@ ExecInitExpr(Expr *node, PlanState *parent)
 				{
 					/* it's been cast to a named type, use that */
 					rstate->tupdesc = lookup_rowtype_tupdesc(rowexpr->row_typeid, -1);
+					rstate->tupdesc = CreateTupleDescCopy(rstate->tupdesc);
 				}
+				/* Set up evaluation, skipping any deleted columns */
+				Assert(list_length(rowexpr->args) <= rstate->tupdesc->natts);
+				attrs = rstate->tupdesc->attrs;
+				i = 0;
+				foreach(l, rowexpr->args)
+				{
+					Expr	   *e = (Expr *) lfirst(l);
+					ExprState  *estate;
+
+					if (!attrs[i]->attisdropped)
+					{
+						/*
+						 * Guard against ALTER COLUMN TYPE on rowtype
+						 * since the RowExpr was created.  XXX should we
+						 * check typmod too?  Not sure we can be sure it'll
+						 * be the same.
+						 */
+						if (exprType((Node *) e) != attrs[i]->atttypid)
+							ereport(ERROR,
+									(errcode(ERRCODE_DATATYPE_MISMATCH),
+									 errmsg("ROW() column has type %s instead of type %s",
+											format_type_be(exprType((Node *) e)),
+											format_type_be(attrs[i]->atttypid))));
+					}
+					else
+					{
+						/*
+						 * Ignore original expression and insert a NULL.
+						 * We don't really care what type of NULL it is,
+						 * so always make an int4 NULL.
+						 */
+						e = (Expr *) makeNullConst(INT4OID);
+					}
+					estate = ExecInitExpr(e, parent);
+					outlist = lappend(outlist, estate);
+					i++;
+				}
+				rstate->args = outlist;
 				state = (ExprState *) rstate;
 			}
 			break;

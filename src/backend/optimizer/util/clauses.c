@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/optimizer/util/clauses.c,v 1.177 2004/08/02 01:30:43 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/optimizer/util/clauses.c,v 1.178 2004/08/17 18:47:08 tgl Exp $
  *
  * HISTORY
  *	  AUTHOR			DATE			MAJOR EVENT
@@ -40,6 +40,7 @@
 #include "utils/lsyscache.h"
 #include "utils/memutils.h"
 #include "utils/syscache.h"
+#include "utils/typcache.h"
 
 
 typedef struct
@@ -1054,6 +1055,33 @@ set_coercionform_dontcare_walker(Node *node, void *context)
 								  context);
 }
 
+/*
+ * Helper for eval_const_expressions: check that datatype of an attribute
+ * is still what it was when the expression was parsed.  This is needed to
+ * guard against improper simplification after ALTER COLUMN TYPE.  (XXX we
+ * may well need to make similar checks elsewhere?)
+ */
+static bool
+rowtype_field_matches(Oid rowtypeid, int fieldnum,
+					  Oid expectedtype, int32 expectedtypmod)
+{
+	TupleDesc	tupdesc;
+	Form_pg_attribute attr;
+
+	/* No issue for RECORD, since there is no way to ALTER such a type */
+	if (rowtypeid == RECORDOID)
+		return true;
+	tupdesc = lookup_rowtype_tupdesc(rowtypeid, -1);
+	if (fieldnum <= 0 || fieldnum > tupdesc->natts)
+		return false;
+	attr = tupdesc->attrs[fieldnum - 1];
+	if (attr->attisdropped ||
+		attr->atttypid != expectedtype ||
+		attr->atttypmod != expectedtypmod)
+		return false;
+	return true;
+}
+
 
 /*--------------------
  * eval_const_expressions
@@ -1630,6 +1658,10 @@ eval_const_expressions_mutator(Node *node,
 		 * parser, because ParseComplexProjection short-circuits it. But
 		 * it can arise while simplifying functions.)  Also, we can
 		 * optimize field selection from a RowExpr construct.
+		 *
+		 * We must however check that the declared type of the field is
+		 * still the same as when the FieldSelect was created --- this
+		 * can change if someone did ALTER COLUMN TYPE on the rowtype.
 		 */
 		FieldSelect *fselect = (FieldSelect *) node;
 		FieldSelect *newfselect;
@@ -1640,11 +1672,15 @@ eval_const_expressions_mutator(Node *node,
 		if (arg && IsA(arg, Var) &&
 			((Var *) arg)->varattno == InvalidAttrNumber)
 		{
-			return (Node *) makeVar(((Var *) arg)->varno,
-									fselect->fieldnum,
-									fselect->resulttype,
-									fselect->resulttypmod,
-									((Var *) arg)->varlevelsup);
+			if (rowtype_field_matches(((Var *) arg)->vartype,
+									  fselect->fieldnum,
+									  fselect->resulttype,
+									  fselect->resulttypmod))
+				return (Node *) makeVar(((Var *) arg)->varno,
+										fselect->fieldnum,
+										fselect->resulttype,
+										fselect->resulttypmod,
+										((Var *) arg)->varlevelsup);
 		}
 		if (arg && IsA(arg, RowExpr))
 		{
@@ -1652,7 +1688,18 @@ eval_const_expressions_mutator(Node *node,
 
 			if (fselect->fieldnum > 0 &&
 				fselect->fieldnum <= list_length(rowexpr->args))
-				return (Node *) list_nth(rowexpr->args, fselect->fieldnum - 1);
+			{
+				Node *fld = (Node *) list_nth(rowexpr->args,
+											  fselect->fieldnum - 1);
+
+				if (rowtype_field_matches(rowexpr->row_typeid,
+										  fselect->fieldnum,
+										  fselect->resulttype,
+										  fselect->resulttypmod) &&
+					fselect->resulttype == exprType(fld) &&
+					fselect->resulttypmod == exprTypmod(fld))
+					return fld;
+			}
 		}
 		newfselect = makeNode(FieldSelect);
 		newfselect->arg = (Expr *) arg;

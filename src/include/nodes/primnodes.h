@@ -10,7 +10,7 @@
  * Portions Copyright (c) 1996-2003, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/include/nodes/primnodes.h,v 1.100 2004/06/09 19:08:18 tgl Exp $
+ * $PostgreSQL: pgsql/src/include/nodes/primnodes.h,v 1.101 2004/08/17 18:47:09 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -97,13 +97,16 @@ typedef struct Resdom
  * Alias -
  *	  specifies an alias for a range variable; the alias might also
  *	  specify renaming of columns within the table.
+ *
+ * Note: colnames is a list of Value nodes (always strings).  In an RTE's
+ * eref Alias, the colnames list includes dropped columns, so that the
+ * colname list position matches the physical attribute number.
  */
 typedef struct Alias
 {
 	NodeTag		type;
 	char	   *aliasname;		/* aliased rel name (never qualified) */
 	List	   *colnames;		/* optional list of column aliases */
-	/* Note: colnames is a list of Value nodes (always strings) */
 } Alias;
 
 typedef enum InhOption
@@ -663,6 +666,16 @@ typedef struct ArrayExpr
 
 /*
  * RowExpr - a ROW() expression
+ *
+ * Note: the list of fields must have a one-for-one correspondence with
+ * physical fields of the associated rowtype, although it is okay for it
+ * to be shorter than the rowtype.  That is, the N'th list element must
+ * match up with the N'th physical field.  When the N'th physical field
+ * is a dropped column (attisdropped) then the N'th list element can just
+ * be a NULL constant.  (This case can only occur for named composite types,
+ * not RECORD types, since those are built from the RowExpr itself rather
+ * than vice versa.)  It is important not to assume that length(args) is
+ * the same as the number of columns logically present in the rowtype.
  */
 typedef struct RowExpr
 {

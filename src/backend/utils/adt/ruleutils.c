@@ -3,7 +3,7 @@
  *				back to source text
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/utils/adt/ruleutils.c,v 1.176 2004/08/02 04:27:15 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/utils/adt/ruleutils.c,v 1.177 2004/08/17 18:47:09 tgl Exp $
  *
  *	  This software is copyrighted by Jan Wieck - Hamburg.
  *
@@ -3283,22 +3283,54 @@ get_rule_expr(Node *node, deparse_context *context,
 		case T_RowExpr:
 			{
 				RowExpr	   *rowexpr = (RowExpr *) node;
+				TupleDesc	tupdesc = NULL;
 				ListCell   *arg;
+				int			i;
 				char	   *sep;
 
 				/*
-				 * SQL99 allows "ROW" to be omitted when list_length(args) > 1,
-				 * but for simplicity we always print it.
+				 * If it's a named type and not RECORD, we may have to skip
+				 * dropped columns and/or claim there are NULLs for added
+				 * columns.
+				 */
+				if (rowexpr->row_typeid != RECORDOID)
+				{
+					tupdesc = lookup_rowtype_tupdesc(rowexpr->row_typeid, -1);
+					Assert(list_length(rowexpr->args) <= tupdesc->natts);
+				}
+
+				/*
+				 * SQL99 allows "ROW" to be omitted when there is more than
+				 * one column, but for simplicity we always print it.
 				 */
 				appendStringInfo(buf, "ROW(");
 				sep = "";
+				i = 0;
 				foreach(arg, rowexpr->args)
 				{
 					Node	   *e = (Node *) lfirst(arg);
 
-					appendStringInfo(buf, sep);
-					get_rule_expr(e, context, true);
-					sep = ", ";
+					if (tupdesc == NULL ||
+						!tupdesc->attrs[i]->attisdropped)
+					{
+						appendStringInfo(buf, sep);
+						get_rule_expr(e, context, true);
+						sep = ", ";
+					}
+					i++;
+				}
+				if (tupdesc != NULL)
+				{
+					while (i < tupdesc->natts)
+					{
+						if (!tupdesc->attrs[i]->attisdropped)
+						{
+							appendStringInfo(buf, sep);
+							appendStringInfo(buf, "NULL");
+							sep = ", ";
+						}
+						i++;
+					}
 				}
 				appendStringInfo(buf, ")");
 				if (rowexpr->row_format == COERCE_EXPLICIT_CAST)

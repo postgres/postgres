@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/parser/parse_coerce.c,v 2.119 2004/06/16 01:26:44 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/parser/parse_coerce.c,v 2.120 2004/08/17 18:47:08 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -648,10 +648,15 @@ coerce_record_to_complex(ParseState *pstate, Node *node,
 	List	   *args = NIL;
 	List	   *newargs;
 	int			i;
+	int			ucolno;
 	ListCell   *arg;
 
 	if (node && IsA(node, RowExpr))
 	{
+		/*
+		 * Since the RowExpr must be of type RECORD, we needn't worry
+		 * about it containing any dropped columns.
+		 */
 		args = ((RowExpr *) node)->args;
 	}
 	else if (node && IsA(node, Var) &&
@@ -670,6 +675,8 @@ coerce_record_to_complex(ParseState *pstate, Node *node,
 			Oid		vartype;
 			int32	vartypmod;
 
+			if (get_rte_attribute_is_dropped(rte, nf))
+				continue;
 			get_rte_attribute_type(rte, nf, &vartype, &vartypmod);
 			args = lappend(args,
 						   makeVar(((Var *) node)->varno,
@@ -687,19 +694,34 @@ coerce_record_to_complex(ParseState *pstate, Node *node,
 						format_type_be(targetTypeId))));
 
 	tupdesc = lookup_rowtype_tupdesc(targetTypeId, -1);
-	if (list_length(args) != tupdesc->natts)
-		ereport(ERROR,
-				(errcode(ERRCODE_CANNOT_COERCE),
-				 errmsg("cannot cast type %s to %s",
-						format_type_be(RECORDOID),
-						format_type_be(targetTypeId)),
-				 errdetail("Input has wrong number of columns.")));
 	newargs = NIL;
-	i = 0;
-	foreach(arg, args)
+	ucolno = 1;
+	arg = list_head(args);
+	for (i = 0; i < tupdesc->natts; i++)
 	{
-		Node   *expr = (Node *) lfirst(arg);
-		Oid		exprtype = exprType(expr);
+		Node   *expr;
+		Oid		exprtype;
+
+		/* Fill in NULLs for dropped columns in rowtype */
+		if (tupdesc->attrs[i]->attisdropped)
+		{
+			/*
+			 * can't use atttypid here, but it doesn't really matter
+			 * what type the Const claims to be.
+			 */
+			newargs = lappend(newargs, makeNullConst(INT4OID));
+			continue;
+		}
+
+		if (arg == NULL)
+			ereport(ERROR,
+					(errcode(ERRCODE_CANNOT_COERCE),
+					 errmsg("cannot cast type %s to %s",
+							format_type_be(RECORDOID),
+							format_type_be(targetTypeId)),
+					 errdetail("Input has too few columns.")));
+		expr = (Node *) lfirst(arg);
+		exprtype = exprType(expr);
 
 		expr = coerce_to_target_type(pstate,
 									 expr, exprtype,
@@ -716,10 +738,18 @@ coerce_record_to_complex(ParseState *pstate, Node *node,
 					 errdetail("Cannot cast type %s to %s in column %d.",
 							   format_type_be(exprtype),
 							   format_type_be(tupdesc->attrs[i]->atttypid),
-							   i + 1)));
+							   ucolno)));
 		newargs = lappend(newargs, expr);
-		i++;
+		ucolno++;
+		arg = lnext(arg);
 	}
+	if (arg != NULL)
+		ereport(ERROR,
+				(errcode(ERRCODE_CANNOT_COERCE),
+				 errmsg("cannot cast type %s to %s",
+						format_type_be(RECORDOID),
+						format_type_be(targetTypeId)),
+				 errdetail("Input has too many columns.")));
 
 	rowexpr = makeNode(RowExpr);
 	rowexpr->args = newargs;
