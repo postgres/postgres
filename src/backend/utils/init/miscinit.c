@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/init/miscinit.c,v 1.9 1998/01/25 04:07:00 scrappy Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/init/miscinit.c,v 1.10 1998/02/24 15:20:16 scrappy Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -50,6 +50,11 @@ extern char *getenv(const char *name);	/* XXX STDLIB */
 extern char *DatabaseName;
 extern char *UserName;
 extern char *DatabasePath;
+
+#ifdef CYR_RECODE
+unsigned char RecodeForwTable[128];
+unsigned char RecodeBackTable[128];
+#endif
 
 
 /*
@@ -257,6 +262,145 @@ SetDatabaseName(char *name)
 	DatabaseName = malloc(strlen(name) + 1);
 	strcpy(DatabaseName, name);
 }
+
+#ifdef CYR_RECODE
+#define MAX_TOKEN   80
+
+/* Some standard C libraries, including GNU, have an isblank() function.
+   Others, including Solaris, do not.  So we have our own.
+*/
+static bool
+isblank(const char c)
+{
+	return (c == ' ' || c == 9 /* tab */ );
+}
+
+static void
+next_token(FILE *fp, char *buf, const int bufsz)
+{
+/*--------------------------------------------------------------------------
+  Grab one token out of fp.  Tokens are strings of non-blank
+  characters bounded by blank characters, beginning of line, and end
+  of line.	Blank means space or tab.  Return the token as *buf.
+  Leave file positioned to character immediately after the token or
+  EOF, whichever comes first.  If no more tokens on line, return null
+  string as *buf and position file to beginning of next line or EOF,
+  whichever comes first.
+--------------------------------------------------------------------------*/
+	int			c;
+	char	   *eb = buf + (bufsz - 1);
+
+	/* Move over inital token-delimiting blanks */
+	while (isblank(c = getc(fp)));
+
+	if (c != '\n')
+	{
+
+		/*
+		 * build a token in buf of next characters up to EOF, eol, or
+		 * blank.
+		 */
+		while (c != EOF && c != '\n' && !isblank(c))
+		{
+			if (buf < eb)
+				*buf++ = c;
+			c = getc(fp);
+
+			/*
+			 * Put back the char right after the token (putting back EOF
+			 * is ok)
+			 */
+		}
+		ungetc(c, fp);
+	}
+	*buf = '\0';
+}
+
+static void
+read_through_eol(FILE *file)
+{
+	int			c;
+
+	do
+		c = getc(file);
+	while (c != '\n' && c != EOF);
+}
+
+void SetCharSet()
+{
+  FILE *file;
+  char *p,c,eof=false;
+  char *map_file;
+  char buf[MAX_TOKEN];
+  int i;
+  unsigned char FromChar,ToChar;
+
+  for(i=0; i<128; i++)
+  {
+    RecodeForwTable[i] = i+128;
+    RecodeBackTable[i] = i+128;
+  }
+
+  p = getenv("PG_RECODETABLE");
+  if (p && *p != '\0')
+  {
+    map_file = (char *) malloc((strlen(DataDir) +
+                                strlen(p)+2)*sizeof(char));
+    sprintf(map_file, "%s/%s", DataDir, p);
+    file = fopen(map_file, "r");
+    if (file == NULL)
+      return;
+    eof=false;
+    while (!eof)
+    {
+      c = getc(file);
+      ungetc(c, file);
+      if (c == EOF)
+        eof = true;
+      else
+      {
+        if (c == '#')
+          read_through_eol(file);
+        else
+        {
+          /* Read the FromChar */
+          next_token(file, buf, sizeof(buf));
+          if (buf[0] != '\0')
+          {
+            FromChar = strtoul(buf,0,0);
+            /* Read the ToChar */
+            next_token(file, buf, sizeof(buf));
+            if (buf[0] != '\0')
+            {
+              ToChar = strtoul(buf,0,0);
+              RecodeForwTable[FromChar-128] = ToChar;
+              RecodeBackTable[ToChar-128] = FromChar;
+            }
+            read_through_eol(file);
+          }
+        }
+      }
+    }
+    fclose(file);
+    free(map_file);
+  }
+}
+
+char* convertstr(unsigned char *buff,int len,int dest)
+{
+  int i;
+  char *ch=buff;
+  for (i = 0; i < len; i++,buff++)
+  {
+    if (*buff >127)
+    if (dest)
+      *buff = RecodeForwTable[*buff-128];
+    else
+      *buff = RecodeBackTable[*buff-128];
+  }
+  return ch;
+}
+#endif
 
 /* ----------------
  *		GetPgUserName and SetPgUserName

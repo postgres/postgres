@@ -6,7 +6,7 @@
  *
  * Copyright (c) 1995, Regents of the University of California
  *
- * $Id: postgres.h,v 1.11 1997/11/13 03:22:46 momjian Exp $
+ * $Id: postgres.h,v 1.12 1998/02/24 15:27:04 scrappy Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -213,5 +213,13 @@ typedef uint32 CommandId;
 #define STATUS_NOT_DONE			(-6)
 #define STATUS_BAD_PACKET		(-7)
 #define STATUS_FOUND			(1)
+
+/* ---------------
+ * Cyrillic on the fly charsets recode
+ * ---------------
+ */
+#ifdef CYR_RECODE
+void SetCharSet();
+#endif /* CYR_RECODE */
 
 #endif							/* POSTGRES_H */

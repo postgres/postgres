@@ -211,6 +211,19 @@ else
 fi
 export USE_LOCALE
 
+dnl We exclude cyrillic recode support unless we override it with
+dnl --enable-recode
+dnl	--disable-recode	to explicitly disable it 
+dnl	--enable-recode		to explicitly enable it 
+dnl It defaults to disabled
+if test "$enable_recode" = "yes" -o "$enable_recode" = "no"
+then
+	CYR_RECODE=$enable_recode
+else
+	CYR_RECODE=no
+fi
+export CYR_RECODE
+
 dnl We use the default value of 5432 for the DEF_PGPORT value.  If
 dnl we over-ride it with --with-pgport=port then we bypass this piece
 if test "X$with_pgport" != "X"
@@ -515,6 +528,14 @@ if test "$USE_LOCALE" = "yes"
 then
 	AC_MSG_RESULT(enabled)
 	AC_DEFINE(USE_LOCALE)
+else
+	AC_MSG_RESULT(disabled)
+fi
+AC_MSG_CHECKING(setting CYR_RECODE)
+if test "$CYR_RECODE" = "yes"
+then
+	AC_MSG_RESULT(enabled)
+	AC_DEFINE(CYR_RECODE)
 else
 	AC_MSG_RESULT(disabled)
 fi

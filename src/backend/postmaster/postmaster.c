@@ -10,7 +10,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/postmaster/postmaster.c,v 1.73 1998/01/31 20:14:15 scrappy Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/postmaster/postmaster.c,v 1.74 1998/02/24 15:19:00 scrappy Exp $
  *
  * NOTES
  *
@@ -202,6 +202,10 @@ static int	BackendStartup(Port *port);
 static void readStartupPacket(char *arg, PacketLen len, char *pkt);
 static int initMasks(fd_set *rmask, fd_set *wmask);
 static void RandomSalt(char* salt);
+
+#ifdef CYR_RECODE
+void GetCharSetByHost(char *,int,char *);
+#endif
 
 extern char *optarg;
 extern int	optind,
@@ -974,7 +978,14 @@ BackendStartup(Port *port)
 	Backend    *bn;				/* for backend cleanup */
 	int			pid,
 				i;
+
+#ifdef CYR_RECODE
+#define NR_ENVIRONMENT_VBL 6
+char ChTable[80];
+#else
 #define NR_ENVIRONMENT_VBL 5
+#endif
+
     static char envEntry[NR_ENVIRONMENT_VBL][2 * ARGV_SIZE];
 
     for (i = 0; i < NR_ENVIRONMENT_VBL; ++i) 
@@ -999,6 +1010,15 @@ BackendStartup(Port *port)
 	}
 	sprintf(envEntry[4], "IPC_KEY=%d", ipc_key);
 	putenv(envEntry[4]);
+
+#ifdef CYR_RECODE
+	GetCharSetByHost(ChTable,port->raddr.in.sin_addr.s_addr,DataDir);
+	if(*ChTable != '\0')
+	{
+	  sprintf(envEntry[5], "PG_RECODETABLE=%s", ChTable);
+	  putenv(envEntry[5]);
+	}
+#endif
 
 	if (DebugLvl > 2)
 	{

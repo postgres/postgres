@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/tcop/postgres.c,v 1.65 1998/02/02 00:05:03 scrappy Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/tcop/postgres.c,v 1.66 1998/02/24 15:19:23 scrappy Exp $
  *
  * NOTES
  *	  this is the "main" module of the postgres backend and
@@ -1168,6 +1168,10 @@ PostgresMain(int argc, char *argv[])
 	SetPgUserName();
 	userName = GetPgUserName();
 
+#ifdef CYR_RECODE
+	SetCharSet();           
+#endif
+
 	if (FindBackend(pg_pathname, argv[0]) < 0)
 		elog(FATAL, "%s: could not locate executable, bailing out...",
 			 argv[0]);
@@ -1293,7 +1297,7 @@ PostgresMain(int argc, char *argv[])
 	if (IsUnderPostmaster == false)
 	{
 		puts("\nPOSTGRES backend interactive interface");
-		puts("$Revision: 1.65 $ $Date: 1998/02/02 00:05:03 $");
+		puts("$Revision: 1.66 $ $Date: 1998/02/24 15:19:23 $");
 	}
 
 	/* ----------------

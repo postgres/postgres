@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/libpq/hba.c,v 1.27 1998/01/27 03:24:56 scrappy Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/libpq/hba.c,v 1.28 1998/02/24 15:18:41 scrappy Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -846,6 +846,192 @@ authident(struct sockaddr_in *raddr, struct sockaddr_in *laddr,
 }
 
 
+#ifdef CYR_RECODE
+#define CHARSET_FILE "charset.conf"
+#define MAX_CHARSETS   10
+#define KEY_HOST       1
+#define KEY_BASE       2
+#define KEY_TABLE      3
+
+struct CharsetItem
+{
+  char Orig[MAX_TOKEN];
+  char Dest[MAX_TOKEN];
+  char Table[MAX_TOKEN];
+};
+
+int InRange(char *buf,int host)
+{
+  int valid,i,FromAddr,ToAddr,tmp;
+  struct in_addr file_ip_addr;
+  char *p;
+  unsigned int one=0x80000000,NetMask=0;
+  unsigned char mask;
+  p = strchr(buf,'/');
+  if(p)
+  {
+    *p++ = '\0';
+    valid = inet_aton(buf, &file_ip_addr);
+    if(valid)
+    {
+      mask = strtoul(p,0,0);
+      FromAddr = ntohl(file_ip_addr.s_addr);
+      ToAddr = ntohl(file_ip_addr.s_addr);
+      for(i=0;i<mask;i++)
+      {
+        NetMask |= one;
+        one >>= 1;
+      }
+      FromAddr &= NetMask;
+      ToAddr = ToAddr | ~NetMask;
+      tmp = ntohl(host);
+      return ((unsigned)tmp>=(unsigned)FromAddr &&
+              (unsigned)tmp<=(unsigned)ToAddr);
+    }
+  }
+  else
+  {
+    p = strchr(buf,'-');
+    if(p)
+    {
+      *p++ = '\0';
+      valid = inet_aton(buf, &file_ip_addr);
+      if(valid)
+      {
+        FromAddr = ntohl(file_ip_addr.s_addr);
+        valid = inet_aton(p, &file_ip_addr);
+        if(valid)
+        {
+          ToAddr = ntohl(file_ip_addr.s_addr);
+          tmp = ntohl(host);
+          return ((unsigned)tmp>=(unsigned)FromAddr &&
+                  (unsigned)tmp<=(unsigned)ToAddr);
+        }
+      }
+    }
+    else
+    {
+      valid = inet_aton(buf, &file_ip_addr);
+      if(valid)
+      {
+        FromAddr = file_ip_addr.s_addr;
+        return ((unsigned)FromAddr == (unsigned)host);
+      }
+    }
+  }
+  return false;
+}
+
+void GetCharSetByHost(char TableName[],int host, const char DataDir[])
+{
+  FILE *file;
+  char buf[MAX_TOKEN],BaseCharset[MAX_TOKEN],
+    OrigCharset[MAX_TOKEN],DestCharset[MAX_TOKEN],HostCharset[MAX_TOKEN];
+  char c,eof=false;
+  char *map_file;
+  int key=0,i;
+  struct CharsetItem* ChArray[MAX_CHARSETS];
+  int ChIndex=0;
+
+  *TableName = '\0';
+  map_file = (char *) malloc((strlen(DataDir) +
+                              strlen(CHARSET_FILE)+2)*sizeof(char));
+  sprintf(map_file, "%s/%s", DataDir, CHARSET_FILE);
+  file = fopen(map_file, "r");
+  if (file == NULL)
+    return;
+  while (!eof)
+  {
+    c = getc(file);
+    ungetc(c, file);
+    if (c == EOF)
+      eof = true;
+    else
+    {
+      if (c == '#')
+        read_through_eol(file);
+      else
+      {
+        /* Read the key */
+        next_token(file, buf, sizeof(buf));
+        if (buf[0] != '\0')
+        {
+          if (strcasecmp(buf, "HostCharset") == 0)
+            key = KEY_HOST;
+          if (strcasecmp(buf, "BaseCharset") == 0)
+            key = KEY_BASE;
+          if (strcasecmp(buf, "RecodeTable") == 0)
+            key = KEY_TABLE;
+          switch(key)
+          {
+            case KEY_HOST:
+              /* Read the host */
+              next_token(file, buf, sizeof(buf));
+              if (buf[0] != '\0')
+              {
+                if (InRange(buf,host))
+                {
+                  /* Read the charset */
+                  next_token(file, buf, sizeof(buf));
+                  if (buf[0] != '\0')
+                  {
+                    strcpy(HostCharset,buf);
+                  }
+                }
+              }
+              break;
+            case KEY_BASE:
+              /* Read the base charset */
+              next_token(file, buf, sizeof(buf));
+              if (buf[0] != '\0')
+              {
+                strcpy(BaseCharset,buf);
+              }
+              break;
+            case KEY_TABLE:
+              /* Read the original charset */
+              next_token(file, buf, sizeof(buf));
+              if (buf[0] != '\0')
+              {
+                strcpy(OrigCharset,buf);
+                /* Read the destination charset */
+                next_token(file, buf, sizeof(buf));
+                if (buf[0] != '\0')
+                {
+                  strcpy(DestCharset,buf);
+                  /* Read the table filename */
+                  next_token(file, buf, sizeof(buf));
+                  if (buf[0] != '\0')
+                  {
+                    ChArray[ChIndex] = (struct CharsetItem *) malloc(sizeof(struct CharsetItem));
+                    strcpy(ChArray[ChIndex]->Orig,OrigCharset);
+                    strcpy(ChArray[ChIndex]->Dest,DestCharset);
+                    strcpy(ChArray[ChIndex]->Table,buf);
+                    ChIndex++;
+                  }
+                }
+              }
+              break;
+          }
+          read_through_eol(file);
+        }
+      }
+    }
+  }
+  fclose(file);
+  free(map_file);
+  
+  for(i=0; i<ChIndex; i++)
+  {
+    if(!strcasecmp(BaseCharset,ChArray[i]->Orig) &&
+       !strcasecmp(HostCharset,ChArray[i]->Dest))
+    {
+      strncpy(TableName,ChArray[i]->Table,79);
+    }
+    free((struct CharsetItem *) ChArray[i]);
+  }
+}
+#endif
 
 extern int
 hba_getauthmethod(SockAddr *raddr, char *database, char *auth_arg,

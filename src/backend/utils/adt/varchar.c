@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/varchar.c,v 1.27 1998/02/10 16:03:46 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/varchar.c,v 1.28 1998/02/24 15:19:44 scrappy Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -15,6 +15,10 @@
 #include <string.h>
 #include "postgres.h"
 #include "utils/builtins.h"
+
+#ifdef CYR_RECODE
+char *convertstr(char *,int,int);
+#endif
 
 /*
  * CHAR() and VARCHAR() types are part of the ANSI SQL standard. CHAR()
@@ -84,6 +88,11 @@ bpcharin(char *s, int dummy, int16 atttypmod)
 		if (*r == '\0')
 			break;
 	}
+
+#ifdef CYR_RECODE
+	convertstr(result + VARHDRSZ,len,0);
+#endif
+
 	/* blank pad the string if necessary */
 	for (; i < len; i++)
 	{
@@ -110,6 +119,11 @@ bpcharout(char *s)
 		result = (char *) palloc(len + 1);
 		StrNCpy(result, VARDATA(s), len+1);	/* these are blank-padded */
 	}
+
+#ifdef CYR_RECODE
+	convertstr(result,len,1);
+#endif
+
 	return (result);
 }
 
@@ -143,6 +157,10 @@ varcharin(char *s, int dummy, int16 atttypmod)
 	VARSIZE(result) = len;
 	strncpy(VARDATA(result), s, len - VARHDRSZ);
 
+#ifdef CYR_RECODE
+	convertstr(result + VARHDRSZ,len,0);
+#endif
+
 	return (result);
 }
 
@@ -164,6 +182,11 @@ varcharout(char *s)
 		result = (char *) palloc(len + 1);
 		StrNCpy(result, VARDATA(s), len+1);
 	}
+
+#ifdef CYR_RECODE
+	convertstr(result,len,1);
+#endif
+
 	return (result);
 }
 

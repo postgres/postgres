@@ -195,6 +195,9 @@ extern void srandom(int seed);
 /* Set to 1 if you want to USE_LOCALE */
 #undef USE_LOCALE
 
+/* Set to 1 if you want CYR_RECODE (cyrillic recode) */
+#undef CYR_RECODE
+
 /* Set to 1 if you want to Disable ASSERT CHECKING */
 #undef NO_ASSERT_CHECKING
 
