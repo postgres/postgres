@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/interfaces/libpq/fe-exec.c,v 1.75 1999/03/14 16:42:15 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/interfaces/libpq/fe-exec.c,v 1.76 1999/03/14 16:46:21 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -538,10 +538,11 @@ parseInput(PGconn *conn)
 						return;
                                         if (pendingT) {
                                             /* Check the returned message */
-                                            /* if it's a SELECT in a pendingT case, */
+                                            /* if it's a SELECT or FETCH in a pendingT case, */
                                             /* then it probably means no rows returned. */
                                             /* We clear pendingT in that case. */
-                                            if (strncmp(conn->result->cmdStatus, "SELECT", 6) == 0)
+                                            if ((strncmp(conn->result->cmdStatus, "SELECT", 6) == 0) ||
+                                                (strncmp(conn->result->cmdStatus, "FETCH",  5) == 0))
                                                 pendingT = 0;
                                         }
 					if (!pendingT) conn->asyncStatus = PGASYNC_READY;
