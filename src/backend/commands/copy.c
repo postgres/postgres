@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/commands/copy.c,v 1.99 2000/01/26 05:56:13 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/commands/copy.c,v 1.100 2000/02/09 00:10:11 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -1138,7 +1138,7 @@ CopyReadNewline(FILE *fp, int *newline)
 static char *
 CopyReadAttribute(FILE *fp, bool *isnull, char *delim, int *newline, char *null_print)
 {
-	char		c;
+	int			c;
 #ifdef MULTIBYTE
 	int			mblen;
 	unsigned char s[2];
