@@ -9,7 +9,7 @@ import org.postgresql.Driver;
 import org.postgresql.largeobject.*;
 import org.postgresql.util.PSQLException;
 
-/* $Header: /cvsroot/pgsql/src/interfaces/jdbc/org/postgresql/jdbc2/Attic/AbstractJdbc2Statement.java,v 1.13 2003/03/14 01:21:47 barry Exp $
+/* $Header: /cvsroot/pgsql/src/interfaces/jdbc/org/postgresql/jdbc2/Attic/AbstractJdbc2Statement.java,v 1.14 2003/05/29 04:52:44 barry Exp $
  * This class defines methods of the jdbc2 specification.  This class extends
  * org.postgresql.jdbc1.AbstractJdbc1Statement which provides the jdbc1
  * methods.  The real Statement class (for jdbc2) is org.postgresql.jdbc2.Jdbc2Statement
@@ -175,7 +175,7 @@ public abstract class AbstractJdbc2Statement extends org.postgresql.jdbc1.Abstra
 			l_newSqlFragments = new String[m_sqlFragments.length];
 			System.arraycopy(m_sqlFragments,0,l_newSqlFragments,0,m_sqlFragments.length);
 		}
-		Object[] l_newBinds = new String[m_binds.length];
+		Object[] l_newBinds = new Object[m_binds.length];
         System.arraycopy(m_binds,0,l_newBinds,0,m_binds.length);
 		String[] l_newBindTypes = new String[m_bindTypes.length];
         System.arraycopy(m_bindTypes,0,l_newBindTypes,0,m_bindTypes.length);

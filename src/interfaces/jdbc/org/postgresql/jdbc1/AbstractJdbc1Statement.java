@@ -25,7 +25,7 @@ import java.sql.Timestamp;
 import java.sql.Types;
 import java.util.Vector;
 
-/* $Header: /cvsroot/pgsql/src/interfaces/jdbc/org/postgresql/jdbc1/Attic/AbstractJdbc1Statement.java,v 1.23 2003/05/29 04:48:33 barry Exp $
+/* $Header: /cvsroot/pgsql/src/interfaces/jdbc/org/postgresql/jdbc1/Attic/AbstractJdbc1Statement.java,v 1.24 2003/05/29 04:52:44 barry Exp $
  * This class defines methods of the jdbc1 specification.  This class is
  * extended by org.postgresql.jdbc2.AbstractJdbc2Statement which adds the jdbc2
  * methods.  The real Statement class (for jdbc1) is org.postgresql.jdbc1.Jdbc1Statement
@@ -144,7 +144,7 @@ public abstract class AbstractJdbc1Statement implements BaseStatement
 		v.addElement(l_sql.substring (lastParmEnd, l_sql.length()));
 
 		m_sqlFragments = new String[v.size()];
-		m_binds = new String[v.size() - 1];
+		m_binds = new Object[v.size() - 1];
 		m_bindTypes = new String[v.size() - 1];
 
 		for (i = 0 ; i < m_sqlFragments.length; ++i)
