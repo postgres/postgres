@@ -1,33 +1,8 @@
-/*-------------------------------------------------------------------------
- *
- * port.c--
- *	  Intel x86/Intel SVR4-specific routines
- *
- * Copyright (c) 1994, Regents of the University of California
- *
- *
- * IDENTIFICATION
- *	  /usr/local/devel/pglite/cvs/src/backend/port/svr4/port.c,v 1.2 1995/03/17 06:40:19 andrew Exp
- *
- *-------------------------------------------------------------------------
- */
-#include <math.h>				/* for pow() prototype */
+#include <math.h>               /* for pow() prototype */
 
 #include <errno.h>
 #include "rusagestub.h"
 #include "port-protos.h"
-
-long
-random()
-{
-	return (lrand48());
-}
-
-void
-srandom(int seed)
-{
-	srand48((long int) seed);
-}
 
 int
 getrusage(int who, struct rusage * rusage)
@@ -70,23 +45,3 @@ getrusage(int who, struct rusage * rusage)
 	return (0);
 }
 
-#include <sys/types.h>
-#include <string.h>
-
-#include <sys/utsname.h>
-
-int
-gethostname(char *name, int namelen)
-{
-	static struct utsname mname;
-	static int	called = 0;
-
-	if (!called)
-	{
-		called++;
-		uname(&mname);
-	}
-	strncpy(name, mname.nodename, (SYS_NMLN < namelen ? SYS_NMLN : namelen));
-
-	return (0);
-}
