@@ -1,45 +1,49 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/ref/alter_user.sgml,v 1.18 2001/12/08 03:24:33 thomas Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/ref/alter_user.sgml,v 1.19 2002/02/27 21:14:53 petere Exp $
 PostgreSQL documentation
 -->
 
 <refentry id="SQL-ALTERUSER">
  <refmeta>
-  <refentrytitle id="sql-alteruser-title">
-   ALTER USER
-  </refentrytitle>
+  <refentrytitle id="sql-alteruser-title">ALTER USER</refentrytitle>
   <refmiscinfo>SQL - Language Statements</refmiscinfo>
  </refmeta>
+
  <refnamediv>
-  <refname>
-   ALTER USER
-  </refname>
-  <refpurpose>
-   change a database user account
-  </refpurpose>
+  <refname>ALTER USER</refname>
+  <refpurpose>change a database user account</refpurpose>
  </refnamediv>
+
  <refsynopsisdiv>
-  <refsynopsisdivinfo>
-   <date>2001-07-10</date>
-  </refsynopsisdivinfo>
-  <synopsis>
+<synopsis>
 ALTER USER <replaceable class="PARAMETER">username</replaceable> [ [ WITH ] <replaceable class="PARAMETER">option</replaceable> [ ... ] ]
 
 where <replaceable class="PARAMETER">option</replaceable> can be:
 
-	  [ ENCRYPTED | UNENCRYPTED ] PASSWORD '<replaceable class="PARAMETER">password</replaceable>' 
-        | CREATEDB | NOCREATEDB
-        | CREATEUSER | NOCREATEUSER 
-        | VALID UNTIL '<replaceable class="PARAMETER">abstime</replaceable>'
-  </synopsis>
+      [ ENCRYPTED | UNENCRYPTED ] PASSWORD '<replaceable class="PARAMETER">password</replaceable>' 
+    | CREATEDB | NOCREATEDB
+    | CREATEUSER | NOCREATEUSER 
+    | VALID UNTIL '<replaceable class="PARAMETER">abstime</replaceable>'
+</synopsis>
+ </refsynopsisdiv>
 
-  <refsect2 id="R2-SQL-ALTERUSER-1">
-   <refsect2info>
-    <date>1998-09-08</date>
-   </refsect2info>
-   <title>
-    Inputs
-   </title>
+ <refsect1>
+  <title>Description</title>
+
+  <para>
+   <command>ALTER USER</command> is used to change the attributes of a
+   <productname>PostgreSQL</productname> user account.  Attributes not
+   mentioned in the command retain their previous settings.
+  </para>
+
+  <para>
+   Only a database superuser can change privileges and password
+   expiration with this command. Ordinary users can only change their
+   own password.
+  </para>
+
+  <refsect2>
+   <title>Parameters</title>
 
    <para>
     <variablelist>
@@ -47,7 +51,7 @@ where <replaceable class="PARAMETER">option</replaceable> can be:
       <term><replaceable class="PARAMETER">username</replaceable></term>
       <listitem>
        <para>
-	The name of the user whose details are to be altered.
+	The name of the user whose attributes are to be altered.
        </para>
       </listitem>
      </varlistentry>
@@ -62,12 +66,12 @@ where <replaceable class="PARAMETER">option</replaceable> can be:
      </varlistentry>
 
      <varlistentry>
-      <term>ENCRYPTED</term>
-      <term>UNENCRYPTED</term>
+      <term><literal>ENCRYPTED</literal></term>
+      <term><literal>UNENCRYPTED</literal></term>
       <listitem>
-       <para> 
-	These keywords control whether the
-	password is stored encrypted in <literal>pg_shadow</>.  (See
+       <para>
+	These key words control whether the password is stored
+	encrypted in <literal>pg_shadow</>.  (See
 	<xref linkend="SQL-CREATEUSER" endterm="SQL-CREATEUSER-title">
 	for more information about this choice.)
        </para>
@@ -75,26 +79,27 @@ where <replaceable class="PARAMETER">option</replaceable> can be:
      </varlistentry>
 
      <varlistentry>
-      <term>CREATEDB</term>
-      <term>NOCREATEDB</term>
+      <term><literal>CREATEDB</literal></term>
+      <term><literal>NOCREATEDB</literal></term>
       <listitem>
-       <para> 
-	These clauses define a user's ability to create databases.
-	If CREATEDB is specified, the user being defined will
-	be allowed to create his own databases. Using NOCREATEDB
-	will deny a user the ability to create databases.
+       <para>
+	These clauses define a user's ability to create databases.  If
+	<literal>CREATEDB</literal> is specified, the user being
+	defined will be allowed to create his own databases. Using
+	<literal>NOCREATEDB</literal> will deny a user the ability to
+	create databases.
        </para>
       </listitem>
      </varlistentry>
 
      <varlistentry>
-      <term>CREATEUSER</term>
-      <term>NOCREATEUSER</term>
+      <term><literal>CREATEUSER</literal></term>
+      <term><literal>NOCREATEUSER</literal></term>
       <listitem>
        <para>
 	These clauses determine whether a user will be permitted to
 	create new users himself. This option will also make the user
-        a superuser who can override all access restrictions.
+	a superuser who can override all access restrictions.
        </para>
       </listitem>
      </varlistentry>
@@ -111,122 +116,105 @@ where <replaceable class="PARAMETER">option</replaceable> can be:
     </variablelist>
    </para>
   </refsect2>
-    
-  <refsect2 id="R2-SQL-ALTERUSER-2">
-   <refsect2info>
-    <date>1998-09-08</date>
-   </refsect2info>
-   <title>
-    Outputs
-   </title>
-   <para>
-    <variablelist>
-     <varlistentry>
-      <term><computeroutput>ALTER USER</computeroutput></term>
-      <listitem>
-       <para>
-	Message returned if the alteration was successful.
-       </para>
-      </listitem>
-     </varlistentry>
-     
-     <varlistentry>
-      <term><computeroutput>
-ERROR:  ALTER USER: user "username" does not exist
-       </computeroutput></term>
-      <listitem>
-       <para>
-	Error message returned if the specified user is not known to
-	the database.
-       </para>
-      </listitem>
-     </varlistentry>
-    </variablelist>
-   </para>
-  </refsect2>
- </refsynopsisdiv>
+ </refsect1>
 
- <refsect1 id="R1-SQL-ALTERUSER-1">
-  <refsect1info>
-   <date>1998-09-08</date>
-  </refsect1info>
-  <title>
-   Description
-  </title>
+ <refsect1>
+  <title>Diagnostics</title>
+
   <para>
-   <command>ALTER USER</command> is used to change the attributes of a user's
-   <productname>PostgreSQL</productname> account.  Attributes not mentioned
-   in the command retain their previous settings.
+   <variablelist>
+    <varlistentry>
+     <term><computeroutput>ALTER USER</computeroutput></term>
+     <listitem>
+      <para>
+       Message returned if the alteration was successful.
+      </para>
+     </listitem>
+    </varlistentry>
+     
+    <varlistentry>
+     <term><computeroutput>ERROR:  ALTER USER: user "username" does not exist</computeroutput></term>
+     <listitem>
+      <para>
+       Error message returned if the specified user is not known to
+       the database.
+      </para>
+     </listitem>
+    </varlistentry>
+   </variablelist>
   </para>
+ </refsect1>
+
+ <refsect1>
+  <title>Notes</title>
+
   <para>
-   Only a database superuser
-   can change privileges and password expiration with this command. Ordinary
-   users can only change their own password.
+   Use <xref linkend="SQL-CREATEUSER" endterm="SQL-CREATEUSER-title">
+   to add new users, and <xref linkend="SQL-DROPUSER"
+   endterm="SQL-DROPUSER-title"> to remoe a user.
   </para>
+
   <para>
    <command>ALTER USER</command> cannot change a user's group memberships.
    Use <xref linkend="SQL-ALTERGROUP" endterm="SQL-ALTERGROUP-title">
    to do that.
   </para>
-  <para>
-   Use <xref linkend="SQL-CREATEUSER" endterm="SQL-CREATEUSER-title">
-   to create a new user and <xref linkend="SQL-DROPUSER"
-   endterm="SQL-DROPUSER-title"> to remove a user.
-  </para>
  </refsect1>
 
- <refsect1 id="R1-SQL-ALTERUSER-2">
-  <title>
-   Usage
-  </title>
+ <refsect1>
+  <title>Examples</title>
+
   <para>
    Change a user password:
 
 <programlisting>
 ALTER USER davide WITH PASSWORD 'hu8jmn3';
 </programlisting>
+  </para>
 
+  <para>
    Change a user's valid until date:
 
 <programlisting>
 ALTER USER manuel VALID UNTIL 'Jan 31 2030';
 </programlisting>
+  </para>
 
+  <para>
    Change a user's valid until date, specifying that his
    authorization should expire at midday on 4th May 1998 using
    the time zone which is one hour ahead of UTC:
 <programlisting>
 ALTER USER chris VALID UNTIL 'May 4 12:00:00 1998 +1';
 </programlisting>
+  </para>
 
+  <para>
    Give a user the ability to create other users and new databases:
 
 <programlisting>
 ALTER USER miriam CREATEUSER CREATEDB;
 </programlisting>
-
   </para>
  </refsect1>
 
- <refsect1 id="R1-SQL-ALTERUSER-3">
-  <title>
-   Compatibility
-  </title>
+ <refsect1>
+  <title>Compatibility</title>
     
-  <refsect2 id="R2-SQL-ALTERUSER-4">
-   <refsect2info>
-    <date>1998-09-08</date>
-   </refsect2info>
-   <title>
-    SQL92
-   </title>
-   <para>
-    There is no <command>ALTER USER</command> statement in
-    <acronym>SQL92</acronym>.
-    The standard leaves
-    the definition of users to the implementation.
-   </para>
-  </refsect2>
+  <para>
+   The <command>ALTER USER</command> statement is a
+   <productname>PostgreSQL</productname> extension.  The SQL standard
+   leaves the definition of users to the implementation.
+  </para>
+ </refsect1>
+
+ <refsect1>
+  <title>See Also</title>
+
+  <simplelist type="inline">
+   <member><xref linkend="sql-createuser" endterm="sql-createuser-title"></member>
+   <member><xref linkend="sql-dropuser" endterm="sql-dropuser-title"></member>
+  </simplelist>
  </refsect1>
 </refentry>
 

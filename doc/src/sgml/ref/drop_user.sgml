@@ -1,40 +1,37 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/ref/drop_user.sgml,v 1.14 2002/01/20 22:19:56 petere Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/ref/drop_user.sgml,v 1.15 2002/02/27 21:14:54 petere Exp $
 PostgreSQL documentation
 -->
 
 <refentry id="SQL-DROPUSER">
  <refmeta>
-  <refentrytitle id="SQL-DROPUSER-TITLE">
-   DROP USER
-  </refentrytitle>
+  <refentrytitle id="SQL-DROPUSER-TITLE">DROP USER</refentrytitle>
   <refmiscinfo>SQL - Language Statements</refmiscinfo>
  </refmeta>
  <refnamediv>
-  <refname>
-   DROP USER
-  </refname>
-  <refpurpose>
-   remove a database user account
-  </refpurpose>
+  <refname>DROP USER</refname>
+  <refpurpose>remove a database user account</refpurpose>
  </refnamediv>
- <refsynopsisdiv>
-  <refsynopsisdivinfo>
-   <date>1999-07-20</date>
-  </refsynopsisdivinfo>
-  <synopsis>
-DROP USER <replaceable class="PARAMETER">name</replaceable>
-  </synopsis>
-  
-  <refsect2 id="R2-SQL-DROPUSER-1">
-   <refsect2info>
-    <date>1998-09-22</date>
-   </refsect2info>
-   <title>
-    Inputs
-   </title>
-   <para>
 
+ <refsynopsisdiv>
+<synopsis>
+DROP USER <replaceable class="PARAMETER">name</replaceable>
+</synopsis>
+ </refsynopsisdiv>
+
+ <refsect1>
+  <title>Description</title>
+
+  <para>
+   <command>DROP USER</command> removes the specified user from the database.
+   It does not remove tables, views, or other objects owned by the user. If the
+   user owns any database, an error is raised.
+  </para>
+
+  <refsect2>
+   <title>Parameters</title>
+
+   <para>
     <variablelist>
      <varlistentry>
       <term><replaceable class="PARAMETER">name</replaceable></term>
@@ -47,80 +44,62 @@ DROP USER <replaceable class="PARAMETER">name</replaceable>
     </variablelist>
    </para>
   </refsect2>
-  
-  <refsect2 id="R2-SQL-DROPUSER-2">
-   <refsect2info>
-    <date>1998-09-22</date>
-   </refsect2info>
-   <title>
-    Outputs
-   </title>
-   <para>
-    <variablelist>
-     <varlistentry>
-      <term><computeroutput>DROP USER</computeroutput></term>
-      <listitem>
-       <para>
-	The message returned if the user is successfully deleted.
-       </para>
-      </listitem>
-     </varlistentry>
 
-     <varlistentry>
-      <term><computeroutput>
-ERROR:  DROP USER: user "<replaceable class="parameter">name</replaceable>" does not exist
-       </computeroutput></term>
-      <listitem>
-       <para>
-	This message occurs if the user name is not found.
-       </para>
-      </listitem>
-     </varlistentry>
+ </refsect1>
 
-     <varlistentry>
-      <term><computeroutput>
-DROP USER: user "<replaceable class="parameter">name</replaceable>" owns database "<replaceable class="parameter">name</replaceable>", cannot be removed
-       </computeroutput></term>
-      <listitem>
-       <para>
-        You must drop the database first or change its ownership.
-       </para>
-      </listitem>
-     </varlistentry>
+ <refsect1>
+  <title>Diagnostics</title>
 
-    </variablelist>
-   </para>
-  </refsect2>
- </refsynopsisdiv>
-
- <refsect1 id="R1-SQL-DROPUSER-1">
-  <refsect1info>
-   <date>1998-09-22</date>
-  </refsect1info>
-  <title>
-   Description
-  </title>
   <para>
-   <command>DROP USER</command> removes the specified user from the database.
-   It does not remove tables, views, or other objects owned by the user. If the
-   user owns any database you get an error.
+   <variablelist>
+    <varlistentry>
+     <term><computeroutput>DROP USER</computeroutput></term>
+     <listitem>
+      <para>
+       The message returned if the user is successfully deleted.
+      </para>
+     </listitem>
+    </varlistentry>
+
+    <varlistentry>
+     <term><computeroutput>ERROR:  DROP USER: user "<replaceable class="parameter">name</replaceable>" does not exist</computeroutput></term>
+     <listitem>
+      <para>
+       This message occurs if the user name is not found.
+      </para>
+     </listitem>
+    </varlistentry>
+
+    <varlistentry>
+     <term><computeroutput>DROP USER: user "<replaceable class="parameter">name</replaceable>" owns database "<replaceable class="parameter">name</replaceable>", cannot be removed</computeroutput></term>
+     <listitem>
+      <para>
+       You must drop the database first or change its ownership.
+      </para>
+     </listitem>
+    </varlistentry>
+
+   </variablelist>
   </para>
+ </refsect1>
+
+ <refsect1>
+  <title>Notes</title>
+
   <para>
    Use <xref linkend="SQL-CREATEUSER" endterm="SQL-CREATEUSER-title">
    to add new users, and <xref linkend="SQL-ALTERUSER"
-   endterm="SQL-ALTERUSER-title"> to change a user's properties.
-   <productname>PostgreSQL</productname>
-   comes with a script <xref linkend="APP-DROPUSER"
-   endterm="APP-DROPUSER-title">
-   which has the same functionality as this command (in fact, it calls this command)
+   endterm="SQL-ALTERUSER-title"> to change a user's attributes.
+   <productname>PostgreSQL</productname> includes a program <xref
+   linkend="APP-DROPUSER" endterm="APP-DROPUSER-title"> that has the
+   same functionality as this command (in fact, it calls this command)
    but can be run from the command shell.
-  </para>  
+  </para>
  </refsect1>
 
- <refsect1 id="R1-SQL-DROPUSER-2">
-  <title>
-   Usage
-  </title>
+ <refsect1>
+  <title>Examples</title>
+
   <para>
    To drop a user account:
 <programlisting>
@@ -129,23 +108,26 @@ DROP USER jonathan;
   </para>
  </refsect1>
  
- <refsect1 id="R1-SQL-DROPUSER-3">
-  <title>
-   Compatibility
-  </title>
+ <refsect1>
+  <title>Compatibility</title>
   
-  <refsect2 id="R2-SQL-DROPUSER-4">
-   <refsect2info>
-    <date>1998-09-22</date>
-   </refsect2info>
-   <title>
-    SQL92
-   </title>
-   <para>
-    There is no <command>DROP USER</command> in <acronym>SQL92</acronym>.
-   </para>
-  </refsect2>
+  <para>
+   The <command>DROP USER</command> statement is a
+   <productname>PostgreSQL</productname> extension.  The SQL standard
+   leaves the definition of users to the implementation.
+  </para>
  </refsect1>
+
+ <refsect1>
+  <title>See Also</title>
+
+  <simplelist type="inline">
+   <member><xref linkend="sql-createuser" endterm="sql-createuser-title"></member>
+   <member><xref linkend="sql-alteruser" endterm="sql-alteruser-title"></member>
+   <member><xref linkend="app-dropuser"></member>
+  </simplelist>
+ </refsect1>
+
 </refentry>
 
 <!-- Keep this comment at the end of the file
