@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/optimizer/path/indxpath.c,v 1.22 1998/08/02 07:10:38 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/optimizer/path/indxpath.c,v 1.23 1998/08/03 05:49:19 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -307,17 +307,23 @@ match_index_orclause(RelOptInfo *rel,
 					 List *other_matching_indices)
 {
 	Node	   *clause = NULL;
-	List	   *matched_indices;
+	List	   *matching_indices = other_matching_indices;
 	List	   *index_list = NIL;
 	List	   *clist;
 
+	/* first time through, we create index list */
+	if (!other_matching_indices)
+	{
+		foreach(clist, or_clauses)
+			matching_indices = lcons(NIL, matching_indices);
+	}
+	else	matching_indices = other_matching_indices;
+
+	index_list = matching_indices;
+	
 	foreach(clist, or_clauses)
 	{
 		clause = lfirst(clist);
-		if (other_matching_indices)
-			matched_indices = lfirst(other_matching_indices);
-		else
-			matched_indices = NIL;
 			
 		if (is_opclause(clause) &&
 			op_class(((Oper *) ((Expr *) clause)->oper)->opno,
@@ -333,14 +339,10 @@ match_index_orclause(RelOptInfo *rel,
 								   index) &&
 			 IsA(get_rightop((Expr *) clause), Const))))
 		{
-			matched_indices = lcons(index, matched_indices);
+			lfirst(matching_indices) = lcons(index, lfirst(matching_indices));
 		}
 
-		/* for the first index, we are creating the indexids list */
-		index_list = lappend(index_list, matched_indices);
-
-		if (other_matching_indices)
-			other_matching_indices = lnext(other_matching_indices);
+		matching_indices = lnext(matching_indices);
 	}
 	return (index_list);
 
