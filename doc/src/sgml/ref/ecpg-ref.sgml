@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/ref/ecpg-ref.sgml,v 1.7 2001/03/19 16:20:52 petere Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/ref/ecpg-ref.sgml,v 1.8 2001/07/11 03:43:52 momjian Exp $
 Postgres documentation
 -->
 
@@ -387,10 +387,6 @@ EXEC SQL COMMIT;
 
  <refsect1 id="R1-APP-ECPG-notes">
   <title>Notes</title>
-  <para>
-   There is no <command>EXEC SQL PREPARE</command> statement.
-  </para>
-
   <para>
    The complete structure definition MUST be listed
    inside the declare section.
