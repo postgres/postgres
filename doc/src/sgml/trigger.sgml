@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/trigger.sgml,v 1.31 2003/10/22 22:28:10 tgl Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/trigger.sgml,v 1.32 2003/11/15 19:46:31 tgl Exp $
 -->
 
  <chapter id="triggers">
@@ -71,7 +71,9 @@ $Header: /cvsroot/pgsql/doc/src/sgml/trigger.sgml,v 1.31 2003/10/22 22:28:10 tgl
 
     A before trigger that does not intend to cause either of these
     behaviors must be careful to return as its result the same row that was
-    passed in.
+    passed in (that is, the NEW row for <command>INSERT</command> and
+    <command>UPDATE</command> triggers, the OLD row for
+    <command>DELETE</command> triggers).
    </para>
 
    <para>
