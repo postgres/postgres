@@ -10,7 +10,7 @@
  * Portions Copyright (c) 1996-2003, PostgreSQL Global Development Group
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/utils/misc/help_config.c,v 1.11 2004/06/02 18:09:32 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/utils/misc/help_config.c,v 1.12 2004/06/24 21:03:22 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -122,7 +122,7 @@ printMixedStruct(mixedStruct *structToPrint)
 			break;
 
 		default:
-			fprintf(stderr, "internal error: unrecognized run-time parameter type\n");
+			write_stderr("internal error: unrecognized run-time parameter type\n");
 			break;
 	}
 

@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2003, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/include/utils/elog.h,v 1.68 2004/04/05 03:02:10 momjian Exp $
+ * $PostgreSQL: pgsql/src/include/utils/elog.h,v 1.69 2004/06/24 21:03:42 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -185,5 +185,15 @@ extern unsigned int Log_destination;
 
 /* Other exported functions */
 extern void DebugFileOpen(void);
+
+/*
+ * Write errors to stderr (or by equal means when stderr is
+ * not available). Used before ereport/elog can be used
+ * safely (memory context, GUC load etc)
+ */
+extern void write_stderr(const char *fmt,...)
+/* This extension allows gcc to check the format string for consistency with
+   the supplied arguments. */
+__attribute__((format(printf, 1, 2)));
 
 #endif   /* ELOG_H */

@@ -13,7 +13,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/main/main.c,v 1.86 2004/06/03 00:07:36 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/main/main.c,v 1.87 2004/06/24 21:02:33 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -91,8 +91,8 @@ main(int argc, char *argv[])
 #if defined(__alpha)			/* no __alpha__ ? */
 	if (setsysinfo(SSI_NVPAIRS, buffer, 1, (caddr_t) NULL,
 				   (unsigned long) NULL) < 0)
-		fprintf(stderr, gettext("%s: setsysinfo failed: %s\n"),
-				argv[0], strerror(errno));
+		write_stderr("%s: setsysinfo failed: %s\n",
+					 argv[0], strerror(errno));
 #endif
 #endif   /* NOFIXADE || NOPRINTADE */
 
@@ -109,7 +109,7 @@ main(int argc, char *argv[])
 		err = WSAStartup(MAKEWORD(2, 2), &wsaData);
 		if (err != 0)
 		{
-			fprintf(stderr, "%s: WSAStartup failed: %d\n",
+			write_stderr("%s: WSAStartup failed: %d\n",
 					argv[0], err);
 			exit(1);
 		}
@@ -212,12 +212,10 @@ main(int argc, char *argv[])
 		 */
 		if (geteuid() == 0)
 		{
-			fprintf(stderr,
-					gettext("\"root\" execution of the PostgreSQL server is not permitted.\n"
-							"The server must be started under an unprivileged user ID to prevent\n"
-							"possible system security compromise.  See the documentation for\n"
-				"more information on how to properly start the server.\n"
-							));
+			write_stderr("\"root\" execution of the PostgreSQL server is not permitted.\n"
+						 "The server must be started under an unprivileged user ID to prevent\n"
+						 "possible system security compromise.  See the documentation for\n"
+						 "more information on how to properly start the server.\n");
 			exit(1);
 		}
 #endif   /* !__BEOS__ */
@@ -233,9 +231,17 @@ main(int argc, char *argv[])
 		 */
 		if (getuid() != geteuid())
 		{
-			fprintf(stderr,
-				 gettext("%s: real and effective user IDs must match\n"),
-					argv[0]);
+			write_stderr("%s: real and effective user IDs must match\n",
+						 argv[0]);
+			exit(1);
+		}
+#else /* WIN32 */
+		if (pgwin32_is_admin())
+		{
+			write_stderr("execution of PostgreSQL by a user with administrative permissions is not permitted.\n"
+						 "The server must be started under an unprivileged user ID to prevent\n"
+						 "possible system security compromise.  See the documentation for\n"
+						 "more information on how to properly start the server.\n");
 			exit(1);
 		}
 #endif   /* !WIN32 */
@@ -292,8 +298,8 @@ main(int argc, char *argv[])
 	pw = getpwuid(geteuid());
 	if (pw == NULL)
 	{
-		fprintf(stderr, gettext("%s: invalid effective UID: %d\n"),
-				argv[0], (int) geteuid());
+		write_stderr("%s: invalid effective UID: %d\n",
+					 argv[0], (int) geteuid());
 		exit(1);
 	}
 	/* Allocate new memory because later getpwuid() calls can overwrite it */
@@ -305,7 +311,7 @@ main(int argc, char *argv[])
 		pw_name_persist = malloc(namesize);
 		if (!GetUserName(pw_name_persist, &namesize))
 		{
-			fprintf(stderr, gettext("%s: could not determine user name (GetUserName failed)\n"),
+			write_stderr("%s: could not determine user name (GetUserName failed)\n",
 					argv[0]);
 			exit(1);
 		}

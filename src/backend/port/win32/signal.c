@@ -6,7 +6,7 @@
  * Portions Copyright (c) 1996-2003, PostgreSQL Global Development Group
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/port/win32/signal.c,v 1.3 2004/05/27 14:39:29 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/port/win32/signal.c,v 1.4 2004/06/24 21:02:42 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -63,18 +63,18 @@ pgwin32_signal_initialize(void)
 	pgwin32_signal_event = CreateEvent(NULL, TRUE, FALSE, NULL);
 	if (pgwin32_signal_event == NULL) 
 		ereport(FATAL,
-				(errmsg_internal("Failed to create signal event: %i!",(int)GetLastError())));
+				(errmsg_internal("failed to create signal event: %d", (int)GetLastError())));
 
 	/* Create thread for handling signals */
 	signal_thread_handle = CreateThread(NULL, 0, pg_signal_thread, NULL, 0, NULL);
 	if (signal_thread_handle == NULL)
 		ereport(FATAL,
-				(errmsg_internal("Failed to create signal handler thread!")));
+				(errmsg_internal("failed to create signal handler thread")));
 
 	/* Create console control handle to pick up Ctrl-C etc */
 	if (!SetConsoleCtrlHandler(pg_console_handler, TRUE)) 
 		ereport(FATAL,
-				(errmsg_internal("Failed to set console control handler!")));
+				(errmsg_internal("failed to set console control handler")));
 }
 
 
@@ -209,7 +209,7 @@ pg_signal_thread(LPVOID param)
 	char		pipename[128];
 	HANDLE		pipe = INVALID_HANDLE_VALUE;
 
-	wsprintf(pipename, "\\\\.\\pipe\\pgsignal_%i", GetCurrentProcessId());
+	wsprintf(pipename, "\\\\.\\pipe\\pgsignal_%d", GetCurrentProcessId());
 
 	for (;;)
 	{
@@ -221,7 +221,7 @@ pg_signal_thread(LPVOID param)
 						   PIPE_UNLIMITED_INSTANCES, 16, 16, 1000, NULL);
 		if (pipe == INVALID_HANDLE_VALUE)
 		{
-			fprintf(stderr, gettext("Failed to create signal listener pipe: %i. Retrying.\n"), (int) GetLastError());
+			write_stderr("failed to create signal listener pipe: %d. Retrying.\n", (int) GetLastError());
 			SleepEx(500, FALSE);
 			continue;
 		}
@@ -233,7 +233,8 @@ pg_signal_thread(LPVOID param)
 					  (LPTHREAD_START_ROUTINE) pg_signal_dispatch_thread,
 								   (LPVOID) pipe, 0, NULL);
 			if (hThread == INVALID_HANDLE_VALUE)
-				fprintf(stderr, gettext("Failed to create signal dispatch thread: %i\n"), (int) GetLastError());
+				write_stderr("failed to create signal dispatch thread: %d\n",
+							 (int) GetLastError());
 			else
 				CloseHandle(hThread);
 		}

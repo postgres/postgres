@@ -1,4 +1,4 @@
-/* $PostgreSQL: pgsql/src/include/port/win32.h,v 1.25 2004/05/27 14:39:33 momjian Exp $ */
+/* $PostgreSQL: pgsql/src/include/port/win32.h,v 1.26 2004/06/24 21:03:33 tgl Exp $ */
 
 /* undefine and redefine after #include */
 #undef mkdir
@@ -138,6 +138,10 @@ int pgwin32_recv(SOCKET s, char* buf, int len, int flags);
 int pgwin32_send(SOCKET s, char* buf, int len, int flags);
 
 const char *pgwin32_socket_strerror(int err);
+
+/* in backend/port/win32/security.c */
+extern int pgwin32_is_admin(void);
+extern int pgwin32_is_service(void);
 #endif
 
 

@@ -37,7 +37,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/utils/error/elog.c,v 1.141 2004/06/21 14:12:38 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/utils/error/elog.c,v 1.142 2004/06/24 21:03:13 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -1764,4 +1764,38 @@ append_with_tabs(StringInfo buf, const char *str)
 		if (ch == '\n')
 			appendStringInfoCharMacro(buf, '\t');
 	}
+}
+
+
+/* 
+ * Write errors to stderr (or by equal means when stderr is
+ * not available). Used before ereport/elog can be used
+ * safely (memory context, GUC load etc) 
+ */
+void
+write_stderr(const char *fmt,...)
+{
+	va_list ap;
+
+	fmt = gettext(fmt);
+
+	va_start(ap, fmt);
+#ifndef WIN32
+	/* On Unix, we just fprintf to stderr */
+	vfprintf(stderr, fmt, ap);
+#else
+	/* On Win32, we print to stderr if running on a console, or write to 
+	 * eventlog if running as a service */
+	if (pgwin32_is_service()) /* Running as a service */
+	{
+		char errbuf[2048]; /* Arbitrary size? */
+
+		vsnprintf(errbuf, sizeof(errbuf), fmt, ap);
+		
+		write_eventlog(EVENTLOG_ERROR_TYPE, errbuf);
+	}
+	else /* Not running as service, write to stderr */
+		vfprintf(stderr, fmt, ap);
+#endif
+	va_end(ap);
 }

@@ -37,7 +37,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/postmaster/postmaster.c,v 1.404 2004/06/14 18:08:19 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/postmaster/postmaster.c,v 1.405 2004/06/24 21:02:55 tgl Exp $
  *
  * NOTES
  *
@@ -54,6 +54,12 @@
  * Garbage Collection:
  *		The Postmaster cleans up after backends if they have an emergency
  *		exit and/or core dump.
+ *
+ * Error Reporting:
+ *		Use write_stderr() only for reporting "interactive" errors
+ *		(essentially, bogus arguments on the command line).  Once the
+ *		postmaster is launched, use ereport().  In particular, don't use
+ *		write_stderr() for anything that occurs after pmdaemonize.
  *
  *-------------------------------------------------------------------------
  */
@@ -260,10 +266,6 @@ static void SignalChildren(int signal);
 static int	CountChildren(void);
 static bool CreateOptsFile(int argc, char *argv[], char *fullprogname);
 static pid_t StartChildProcess(int xlop);
-static void
-postmaster_error(const char *fmt,...)
-/* This lets gcc check the format string for consistency. */
-__attribute__((format(printf, 1, 2)));
 
 #ifdef EXEC_BACKEND
 
@@ -380,7 +382,7 @@ PostmasterMain(int argc, char *argv[])
 #ifdef USE_ASSERT_CHECKING
 				SetConfigOption("debug_assertions", optarg, PGC_POSTMASTER, PGC_S_ARGV);
 #else
-				postmaster_error("assert checking is not compiled in");
+				write_stderr("%s: assert checking is not compiled in\n", progname);
 #endif
 				break;
 			case 'a':
@@ -503,9 +505,8 @@ PostmasterMain(int argc, char *argv[])
 				}
 
 			default:
-				fprintf(stderr,
-					gettext("Try \"%s --help\" for more information.\n"),
-						progname);
+				write_stderr("Try \"%s --help\" for more information.\n",
+							 progname);
 				ExitPostmaster(1);
 		}
 	}
@@ -515,10 +516,10 @@ PostmasterMain(int argc, char *argv[])
 	 */
 	if (optind < argc)
 	{
-		postmaster_error("invalid argument: \"%s\"", argv[optind]);
-		fprintf(stderr,
-				gettext("Try \"%s --help\" for more information.\n"),
-				progname);
+		write_stderr("%s: invalid argument: \"%s\"\n",
+					 progname, argv[optind]);
+		write_stderr("Try \"%s --help\" for more information.\n",
+					 progname);
 		ExitPostmaster(1);
 	}
 
@@ -547,13 +548,13 @@ PostmasterMain(int argc, char *argv[])
 		 * for lack of buffers.  The specific choices here are somewhat
 		 * arbitrary.
 		 */
-		postmaster_error("the number of buffers (-B) must be at least twice the number of allowed connections (-N) and at least 16");
+		write_stderr("%s: the number of buffers (-B) must be at least twice the number of allowed connections (-N) and at least 16\n", progname);
 		ExitPostmaster(1);
 	}
 
 	if (ReservedBackends >= MaxBackends)
 	{
-		postmaster_error("superuser_reserved_connections must be less than max_connections");
+		write_stderr("%s: superuser_reserved_connections must be less than max_connections\n", progname);
 		ExitPostmaster(1);
 	}
 
@@ -562,7 +563,7 @@ PostmasterMain(int argc, char *argv[])
 	 */
 	if (!CheckDateTokenTables())
 	{
-		postmaster_error("invalid datetoken tables, please fix");
+		write_stderr("%s: invalid datetoken tables, please fix\n", progname);
 		ExitPostmaster(1);
 	}
 
@@ -858,12 +859,11 @@ checkDataDir(const char *checkdir)
 
 	if (checkdir == NULL)
 	{
-		fprintf(stderr,
-				gettext("%s does not know where to find the database system data.\n"
-						"You must specify the directory that contains the database system\n"
-						"either by specifying the -D invocation option or by setting the\n"
-						"PGDATA environment variable.\n"),
-				progname);
+		write_stderr("%s does not know where to find the database system data.\n"
+					 "You must specify the directory that contains the database system\n"
+					 "either by specifying the -D invocation option or by setting the\n"
+					 "PGDATA environment variable.\n",
+					 progname);
 		ExitPostmaster(2);
 	}
 
@@ -905,11 +905,10 @@ checkDataDir(const char *checkdir)
 	fp = AllocateFile(path, PG_BINARY_R);
 	if (fp == NULL)
 	{
-		fprintf(stderr,
-				gettext("%s: could not find the database system\n"
-						"Expected to find it in the directory \"%s\",\n"
-						"but could not open file \"%s\": %s\n"),
-				progname, checkdir, path, strerror(errno));
+		write_stderr("%s: could not find the database system\n"
+					 "Expected to find it in the directory \"%s\",\n"
+					 "but could not open file \"%s\": %s\n",
+					 progname, checkdir, path, strerror(errno));
 		ExitPostmaster(2);
 	}
 	FreeFile(fp);
@@ -952,8 +951,8 @@ pmdaemonize(void)
 	pid = fork();
 	if (pid == (pid_t) -1)
 	{
-		postmaster_error("could not fork background process: %s",
-						 strerror(errno));
+		write_stderr("%s: could not fork background process: %s\n",
+					 progname, strerror(errno));
 		ExitPostmaster(1);
 	}
 	else if (pid)
@@ -974,8 +973,8 @@ pmdaemonize(void)
 #ifdef HAVE_SETSID
 	if (setsid() < 0)
 	{
-		postmaster_error("could not dissociate from controlling TTY: %s",
-						 strerror(errno));
+		write_stderr("%s: could not dissociate from controlling TTY: %s\n",
+					 progname, strerror(errno));
 		ExitPostmaster(1);
 	}
 #endif
@@ -3152,24 +3151,6 @@ CreateOptsFile(int argc, char *argv[], char *fullprogname)
 	return true;
 }
 
-/*
- * This should be used only for reporting "interactive" errors (essentially,
- * bogus arguments on the command line).  Once the postmaster is launched,
- * use ereport.  In particular, don't use this for anything that occurs
- * after pmdaemonize.
- */
-static void
-postmaster_error(const char *fmt,...)
-{
-	va_list		ap;
-
-	fprintf(stderr, "%s: ", progname);
-	va_start(ap, fmt);
-	vfprintf(stderr, gettext(fmt), ap);
-	va_end(ap);
-	fprintf(stderr, "\n");
-}
-
 
 #ifdef EXEC_BACKEND
 
@@ -3609,7 +3590,7 @@ win32_sigchld_waiter(LPVOID param)
 	if (r == WAIT_OBJECT_0)
 		pg_queue_signal(SIGCHLD);
 	else
-		fprintf(stderr, "ERROR: failed to wait on child process handle: %d\n",
+		write_stderr("ERROR: failed to wait on child process handle: %d\n",
 				(int) GetLastError());
 	CloseHandle(procHandle);
 	return 0;
