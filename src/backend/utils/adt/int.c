@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/int.c,v 1.9 1997/10/25 05:19:22 thomas Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/int.c,v 1.10 1997/11/17 16:24:17 thomas Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -30,10 +30,20 @@
  */
 #include <stdio.h>
 #include <string.h>
+#ifdef HAVE_LIMITS
+#include <limits.h>
+#endif
 
 #include "postgres.h"
 #include "fmgr.h"
 #include "utils/builtins.h"		/* where the declarations go */
+
+#ifndef SHRT_MAX
+#define SHRT_MAX (0x7FFF)
+#endif
+#ifndef SHRT_MIN
+#define SHRT_MIN (-0x8000)
+#endif
 
 /*****************************************************************************
  *	 USER I/O ROUTINES														 *
@@ -221,10 +231,10 @@ i2toi4(int16 arg1)
 int16
 i4toi2(int32 arg1)
 {
-	if (arg1 < -0x8000)
-		elog(NOTICE, "i4toi2: \"%d\" causes int2 underflow", arg1);
-	if (arg1 > 0x7FFF)
-		elog(NOTICE, "i4toi2: \"%d\" causes int2 overflow", arg1);
+	if (arg1 < SHRT_MIN)
+		elog(WARN, "i4toi2: '%d' causes int2 underflow", arg1);
+	if (arg1 > SHRT_MAX)
+		elog(WARN, "i4toi2: '%d' causes int2 overflow", arg1);
 
 	return ((int16) arg1);
 }
