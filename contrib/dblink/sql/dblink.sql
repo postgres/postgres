@@ -81,7 +81,19 @@ SELECT *
 FROM dblink('SELECT * FROM foo') AS t(a int, b text, c text[])
 WHERE t.a > 7;
 
+-- open a cursor with bad SQL and fail_on_error set to false
+SELECT dblink_open('rmt_foo_cursor','SELECT * FROM foobar',false);
+
+-- reset remote transaction state
+SELECT dblink_exec('ABORT');
+
 -- open a cursor
+SELECT dblink_open('rmt_foo_cursor','SELECT * FROM foo');
+
+-- close the cursor
+SELECT dblink_close('rmt_foo_cursor',false);
+
+-- open the cursor again
 SELECT dblink_open('rmt_foo_cursor','SELECT * FROM foo');
 
 -- fetch some data
@@ -95,12 +107,26 @@ FROM dblink_fetch('rmt_foo_cursor',4) AS t(a int, b text, c text[]);
 SELECT *
 FROM dblink_fetch('rmt_foo_cursor',4) AS t(a int, b text, c text[]);
 
--- close the cursor
-SELECT dblink_close('rmt_foo_cursor');
+-- intentionally botch a fetch
+SELECT *
+FROM dblink_fetch('rmt_foobar_cursor',4,false) AS t(a int, b text, c text[]);
+
+-- reset remote transaction state
+SELECT dblink_exec('ABORT');
+
+-- close the wrong cursor
+SELECT dblink_close('rmt_foobar_cursor',false);
+
+-- reset remote transaction state
+SELECT dblink_exec('ABORT');
 
 -- should generate 'cursor "rmt_foo_cursor" not found' error
 SELECT *
 FROM dblink_fetch('rmt_foo_cursor',4) AS t(a int, b text, c text[]);
+
+-- this time, 'cursor "rmt_foo_cursor" not found' as a notice
+SELECT *
+FROM dblink_fetch('rmt_foo_cursor',4,false) AS t(a int, b text, c text[]);
 
 -- close the persistent connection
 SELECT dblink_disconnect();
@@ -125,6 +151,13 @@ SELECT substr(dblink_exec('INSERT INTO foo VALUES(11,''l'',''{"a11","b11","c11"}
 SELECT *
 FROM dblink('SELECT * FROM foo') AS t(a int, b text, c text[]);
 
+-- bad remote select
+SELECT *
+FROM dblink('SELECT * FROM foobar',false) AS t(a int, b text, c text[]);
+
+-- reset remote transaction state
+SELECT dblink_exec('ABORT');
+
 -- change some data
 SELECT dblink_exec('UPDATE foo SET f3[2] = ''b99'' WHERE f1 = 11');
 
@@ -132,6 +165,12 @@ SELECT dblink_exec('UPDATE foo SET f3[2] = ''b99'' WHERE f1 = 11');
 SELECT *
 FROM dblink('SELECT * FROM foo') AS t(a int, b text, c text[])
 WHERE a = 11;
+
+-- botch a change to some other data
+SELECT dblink_exec('UPDATE foobar SET f3[2] = ''b99'' WHERE f1 = 11',false);
+
+-- reset remote transaction state
+SELECT dblink_exec('ABORT');
 
 -- delete some data
 SELECT dblink_exec('DELETE FROM foo WHERE f1 = 11');
@@ -161,6 +200,14 @@ SELECT *
 FROM dblink('myconn','SELECT * FROM foo') AS t(a int, b text, c text[])
 WHERE t.a > 7;
 
+-- use the named persistent connection, but get it wrong
+SELECT *
+FROM dblink('myconn','SELECT * FROM foobar',false) AS t(a int, b text, c text[])
+WHERE t.a > 7;
+
+-- reset remote transaction state
+SELECT dblink_exec('myconn','ABORT');
+
 -- create a second named persistent connection
 -- should error with "duplicate connection name"
 SELECT dblink_connect('myconn','dbname=regression');
@@ -176,6 +223,12 @@ WHERE t.a > 7;
 -- close the second named persistent connection
 SELECT dblink_disconnect('myconn2');
 
+-- open a cursor incorrectly
+SELECT dblink_open('myconn','rmt_foo_cursor','SELECT * FROM foobar',false);
+
+-- reset remote transaction state
+SELECT dblink_exec('myconn','ABORT');
+
 -- open a cursor
 SELECT dblink_open('myconn','rmt_foo_cursor','SELECT * FROM foo');
 
@@ -190,8 +243,12 @@ FROM dblink_fetch('myconn','rmt_foo_cursor',4) AS t(a int, b text, c text[]);
 SELECT *
 FROM dblink_fetch('myconn','rmt_foo_cursor',4) AS t(a int, b text, c text[]);
 
--- close the cursor
-SELECT dblink_close('myconn','rmt_foo_cursor');
+-- fetch some data incorrectly
+SELECT *
+FROM dblink_fetch('myconn','rmt_foobar_cursor',4,false) AS t(a int, b text, c text[]);
+
+-- reset remote transaction state
+SELECT dblink_exec('myconn','ABORT');
 
 -- should generate 'cursor "rmt_foo_cursor" not found' error
 SELECT *

@@ -30,13 +30,11 @@
  *
  */
 
-Version 0.6 (14 June, 2003):
-  Completely removed previously deprecated functions. Added ability
-  to create "named" persistent connections in addition to the single global
-  "unnamed" persistent connection.
-  Tested under Linux (Red Hat 9) and PostgreSQL 7.4devel.
-
 Release Notes:
+  Version 0.7 (as of 25 Feb, 2004)
+    - Added new version of dblink, dblink_exec, dblink_open, dblink_close,
+      and, dblink_fetch -- allows ERROR on remote side of connection to
+      throw NOTICE locally instead of ERROR
   Version 0.6
     - functions deprecated in 0.5 have been removed
     - added ability to create "named" persistent connections
@@ -85,7 +83,7 @@ Installation:
 
   You can use dblink.sql to create the functions in your database of choice, e.g.
 
-    psql -U postgres template1 < dblink.sql
+    psql template1 < dblink.sql
 
   installs following functions into database template1:
 
@@ -104,40 +102,40 @@ Installation:
 
      cursor
      ------------
-     dblink_open(text,text) RETURNS text
+     dblink_open(text,text [, bool fail_on_error]) RETURNS text
        - opens a cursor using unnamed connection already opened with
          dblink_connect() that will persist for duration of current backend
          or until it is closed
-     dblink_open(text,text,text) RETURNS text
+     dblink_open(text,text,text [, bool fail_on_error]) RETURNS text
        - opens a cursor using a named connection already opened with
          dblink_connect() that will persist for duration of current backend
          or until it is closed
-     dblink_fetch(text, int) RETURNS setof record
+     dblink_fetch(text, int [, bool fail_on_error]) RETURNS setof record
        - fetches data from an already opened cursor on the unnamed connection
-     dblink_fetch(text, text, int) RETURNS setof record
+     dblink_fetch(text, text, int [, bool fail_on_error]) RETURNS setof record
        - fetches data from an already opened cursor on a named connection
-     dblink_close(text) RETURNS text
+     dblink_close(text [, bool fail_on_error]) RETURNS text
        - closes a cursor on the unnamed connection
-     dblink_close(text,text) RETURNS text
+     dblink_close(text,text [, bool fail_on_error]) RETURNS text
        - closes a cursor on a named connection
 
      query
      ------------
-     dblink(text,text) RETURNS setof record
+     dblink(text,text [, bool fail_on_error]) RETURNS setof record
        - returns a set of results from remote SELECT query; the first argument
          is either a connection string, or the name of an already opened
          persistant connection
-     dblink(text) RETURNS setof record
+     dblink(text [, bool fail_on_error]) RETURNS setof record
        - returns a set of results from remote SELECT query, using the unnamed
          connection already opened with dblink_connect()
 
      execute
      ------------
-     dblink_exec(text, text) RETURNS text
+     dblink_exec(text, text [, bool fail_on_error]) RETURNS text
        - executes an INSERT/UPDATE/DELETE query remotely; the first argument
          is either a connection string, or the name of an already opened
          persistant connection
-     dblink_exec(text) RETURNS text
+     dblink_exec(text [, bool fail_on_error]) RETURNS text
        - executes an INSERT/UPDATE/DELETE query remotely, using connection
          already opened with dblink_connect()
 
@@ -169,7 +167,6 @@ Documentation:
      doc/query
      doc/execute
      doc/misc
-     doc/deprecated
 
 ==================================================================
 -- Joe Conway

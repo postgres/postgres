@@ -128,7 +128,38 @@ WHERE t.a > 7;
  9 | j | {a9,b9,c9}
 (2 rows)
 
+-- open a cursor with bad SQL and fail_on_error set to false
+SELECT dblink_open('rmt_foo_cursor','SELECT * FROM foobar',false);
+NOTICE:  sql error
+DETAIL:  ERROR:  relation "foobar" does not exist
+
+ dblink_open 
+-------------
+ ERROR
+(1 row)
+
+-- reset remote transaction state
+SELECT dblink_exec('ABORT');
+ dblink_exec 
+-------------
+ ROLLBACK
+(1 row)
+
 -- open a cursor
+SELECT dblink_open('rmt_foo_cursor','SELECT * FROM foo');
+ dblink_open 
+-------------
+ OK
+(1 row)
+
+-- close the cursor
+SELECT dblink_close('rmt_foo_cursor',false);
+ dblink_close 
+--------------
+ OK
+(1 row)
+
+-- open the cursor again
 SELECT dblink_open('rmt_foo_cursor','SELECT * FROM foo');
  dblink_open 
 -------------
@@ -165,11 +196,38 @@ FROM dblink_fetch('rmt_foo_cursor',4) AS t(a int, b text, c text[]);
  9 | j | {a9,b9,c9}
 (2 rows)
 
--- close the cursor
-SELECT dblink_close('rmt_foo_cursor');
+-- intentionally botch a fetch
+SELECT *
+FROM dblink_fetch('rmt_foobar_cursor',4,false) AS t(a int, b text, c text[]);
+NOTICE:  sql error
+DETAIL:  ERROR:  cursor "rmt_foobar_cursor" does not exist
+
+ a | b | c 
+---+---+---
+(0 rows)
+
+-- reset remote transaction state
+SELECT dblink_exec('ABORT');
+ dblink_exec 
+-------------
+ ROLLBACK
+(1 row)
+
+-- close the wrong cursor
+SELECT dblink_close('rmt_foobar_cursor',false);
+NOTICE:  sql error
+DETAIL:  ERROR:  cursor "rmt_foobar_cursor" does not exist
+
  dblink_close 
 --------------
- OK
+ ERROR
+(1 row)
+
+-- reset remote transaction state
+SELECT dblink_exec('ABORT');
+ dblink_exec 
+-------------
+ ROLLBACK
 (1 row)
 
 -- should generate 'cursor "rmt_foo_cursor" not found' error
@@ -177,6 +235,16 @@ SELECT *
 FROM dblink_fetch('rmt_foo_cursor',4) AS t(a int, b text, c text[]);
 ERROR:  sql error
 DETAIL:  ERROR:  cursor "rmt_foo_cursor" does not exist
+
+-- this time, 'cursor "rmt_foo_cursor" not found' as a notice
+SELECT *
+FROM dblink_fetch('rmt_foo_cursor',4,false) AS t(a int, b text, c text[]);
+NOTICE:  sql error
+DETAIL:  ERROR:  cursor "rmt_foo_cursor" does not exist
+
+ a | b | c 
+---+---+---
+(0 rows)
 
 -- close the persistent connection
 SELECT dblink_disconnect();
@@ -232,6 +300,23 @@ FROM dblink('SELECT * FROM foo') AS t(a int, b text, c text[]);
  11 | l | {a11,b11,c11}
 (12 rows)
 
+-- bad remote select
+SELECT *
+FROM dblink('SELECT * FROM foobar',false) AS t(a int, b text, c text[]);
+NOTICE:  sql error
+DETAIL:  ERROR:  relation "foobar" does not exist
+
+ a | b | c 
+---+---+---
+(0 rows)
+
+-- reset remote transaction state
+SELECT dblink_exec('ABORT');
+ dblink_exec 
+-------------
+ ROLLBACK
+(1 row)
+
 -- change some data
 SELECT dblink_exec('UPDATE foo SET f3[2] = ''b99'' WHERE f1 = 11');
  dblink_exec 
@@ -246,6 +331,23 @@ WHERE a = 11;
  a  | b |       c       
 ----+---+---------------
  11 | l | {a11,b99,c11}
+(1 row)
+
+-- botch a change to some other data
+SELECT dblink_exec('UPDATE foobar SET f3[2] = ''b99'' WHERE f1 = 11',false);
+NOTICE:  sql error
+DETAIL:  ERROR:  relation "foobar" does not exist
+
+ dblink_exec 
+-------------
+ ERROR
+(1 row)
+
+-- reset remote transaction state
+SELECT dblink_exec('ABORT');
+ dblink_exec 
+-------------
+ ROLLBACK
 (1 row)
 
 -- delete some data
@@ -298,6 +400,24 @@ WHERE t.a > 7;
  10 | k | {a10,b10,c10}
 (3 rows)
 
+-- use the named persistent connection, but get it wrong
+SELECT *
+FROM dblink('myconn','SELECT * FROM foobar',false) AS t(a int, b text, c text[])
+WHERE t.a > 7;
+NOTICE:  sql error
+DETAIL:  ERROR:  relation "foobar" does not exist
+
+ a | b | c 
+---+---+---
+(0 rows)
+
+-- reset remote transaction state
+SELECT dblink_exec('myconn','ABORT');
+ dblink_exec 
+-------------
+ ROLLBACK
+(1 row)
+
 -- create a second named persistent connection
 -- should error with "duplicate connection name"
 SELECT dblink_connect('myconn','dbname=regression');
@@ -325,6 +445,23 @@ SELECT dblink_disconnect('myconn2');
  dblink_disconnect 
 -------------------
  OK
+(1 row)
+
+-- open a cursor incorrectly
+SELECT dblink_open('myconn','rmt_foo_cursor','SELECT * FROM foobar',false);
+NOTICE:  sql error
+DETAIL:  ERROR:  relation "foobar" does not exist
+
+ dblink_open 
+-------------
+ ERROR
+(1 row)
+
+-- reset remote transaction state
+SELECT dblink_exec('myconn','ABORT');
+ dblink_exec 
+-------------
+ ROLLBACK
 (1 row)
 
 -- open a cursor
@@ -365,11 +502,21 @@ FROM dblink_fetch('myconn','rmt_foo_cursor',4) AS t(a int, b text, c text[]);
  10 | k | {a10,b10,c10}
 (3 rows)
 
--- close the cursor
-SELECT dblink_close('myconn','rmt_foo_cursor');
- dblink_close 
---------------
- OK
+-- fetch some data incorrectly
+SELECT *
+FROM dblink_fetch('myconn','rmt_foobar_cursor',4,false) AS t(a int, b text, c text[]);
+NOTICE:  sql error
+DETAIL:  ERROR:  cursor "rmt_foobar_cursor" does not exist
+
+ a | b | c 
+---+---+---
+(0 rows)
+
+-- reset remote transaction state
+SELECT dblink_exec('myconn','ABORT');
+ dblink_exec 
+-------------
+ ROLLBACK
 (1 row)
 
 -- should generate 'cursor "rmt_foo_cursor" not found' error

@@ -5,8 +5,8 @@ dblink_open -- Opens a cursor on a remote database
 
 Synopsis
 
-dblink_open(text cursorname, text sql)
-dblink_open(text connname, text cursorname, text sql)
+dblink_open(text cursorname, text sql [, bool fail_on_error])
+dblink_open(text connname, text cursorname, text sql [, bool fail_on_error])
 
 Inputs
 
@@ -22,6 +22,13 @@ Inputs
 
     sql statement that you wish to execute on the remote host
     e.g. "select * from pg_class"
+
+  fail_on_error
+
+    If true (default when not present) then an ERROR thrown on the remote side
+    of the connection causes an ERROR to also be thrown locally. If false, the
+    remote ERROR is locally treated as a NOTICE, and the return value is set
+    to 'ERROR'.
 
 Outputs
 
@@ -56,8 +63,8 @@ dblink_fetch -- Returns a set from an open cursor on a remote database
 
 Synopsis
 
-dblink_fetch(text cursorname, int32 howmany)
-dblink_fetch(text connname, text cursorname, int32 howmany)
+dblink_fetch(text cursorname, int32 howmany [, bool fail_on_error])
+dblink_fetch(text connname, text cursorname, int32 howmany [, bool fail_on_error])
 
 Inputs
 
@@ -74,6 +81,12 @@ Inputs
     Maximum number of rows to retrieve. The next howmany rows are fetched,
     starting at the current cursor position, moving forward. Once the cursor
     has positioned to the end, no more rows are produced.
+
+  fail_on_error
+
+    If true (default when not present) then an ERROR thrown on the remote side
+    of the connection causes an ERROR to also be thrown locally. If false, the
+    remote ERROR is locally treated as a NOTICE, and no rows are returned.
 
 Outputs
 
@@ -132,8 +145,8 @@ dblink_close -- Closes a cursor on a remote database
 
 Synopsis
 
-dblink_close(text cursorname)
-dblink_close(text connname, text cursorname)
+dblink_close(text cursorname [, bool fail_on_error])
+dblink_close(text connname, text cursorname [, bool fail_on_error])
 
 Inputs
 
@@ -144,6 +157,13 @@ Inputs
   cursorname
 
     a reference name for the cursor
+
+  fail_on_error
+
+    If true (default when not present) then an ERROR thrown on the remote side
+    of the connection causes an ERROR to also be thrown locally. If false, the
+    remote ERROR is locally treated as a NOTICE, and the return value is set
+    to 'ERROR'.
 
 Outputs
 

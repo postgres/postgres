@@ -134,6 +134,16 @@ typedef struct remoteConnHashEnt
 					 errmsg("%s", p2), \
 					 errdetail("%s", msg))); \
 	} while (0)
+#define DBLINK_RES_ERROR_AS_NOTICE(p2) \
+	do { \
+			msg = pstrdup(PQerrorMessage(conn)); \
+			if (res) \
+				PQclear(res); \
+			ereport(NOTICE, \
+					(errcode(ERRCODE_SYNTAX_ERROR), \
+					 errmsg("%s", p2), \
+					 errdetail("%s", msg))); \
+	} while (0)
 #define DBLINK_CONN_NOT_AVAIL \
 	do { \
 		if(conname) \
@@ -152,7 +162,6 @@ typedef struct remoteConnHashEnt
 			if(rcon) \
 			{ \
 				conn = rcon->con; \
-				freeconn = false; \
 			} \
 			else \
 			{ \
@@ -167,6 +176,7 @@ typedef struct remoteConnHashEnt
 							 errmsg("could not establish connection"), \
 							 errdetail("%s", msg))); \
 				} \
+				freeconn = true; \
 			} \
 	} while (0)
 
@@ -276,18 +286,42 @@ dblink_open(PG_FUNCTION_ARGS)
 	char	   *conname = NULL;
 	StringInfo	str = makeStringInfo();
 	remoteConn *rcon = NULL;
+	bool		fail = true;	/* default to backward compatible behavior */
 
 	if (PG_NARGS() == 2)
 	{
+		/* text,text */
 		curname = GET_STR(PG_GETARG_TEXT_P(0));
 		sql = GET_STR(PG_GETARG_TEXT_P(1));
 		conn = persistent_conn;
 	}
 	else if (PG_NARGS() == 3)
 	{
+		/* might be text,text,text or text,text,bool */
+		if (get_fn_expr_argtype(fcinfo->flinfo, 2) == BOOLOID)
+		{
+			curname = GET_STR(PG_GETARG_TEXT_P(0));
+			sql = GET_STR(PG_GETARG_TEXT_P(1));
+			fail = PG_GETARG_BOOL(2);
+			conn = persistent_conn;
+		}
+		else
+		{
+			conname = GET_STR(PG_GETARG_TEXT_P(0));
+			curname = GET_STR(PG_GETARG_TEXT_P(1));
+			sql = GET_STR(PG_GETARG_TEXT_P(2));
+		}
+		rcon = getConnectionByName(conname);
+		if (rcon)
+			conn = rcon->con;
+	}
+	else if (PG_NARGS() == 4)
+	{
+		/* text,text,text,bool */
 		conname = GET_STR(PG_GETARG_TEXT_P(0));
 		curname = GET_STR(PG_GETARG_TEXT_P(1));
 		sql = GET_STR(PG_GETARG_TEXT_P(2));
+		fail = PG_GETARG_BOOL(3);
 		rcon = getConnectionByName(conname);
 		if (rcon)
 			conn = rcon->con;
@@ -304,13 +338,19 @@ dblink_open(PG_FUNCTION_ARGS)
 
 	appendStringInfo(str, "DECLARE %s CURSOR FOR %s", curname, sql);
 	res = PQexec(conn, str->data);
-	if (!res ||
-		(PQresultStatus(res) != PGRES_COMMAND_OK &&
-		 PQresultStatus(res) != PGRES_TUPLES_OK))
-		DBLINK_RES_ERROR("sql error");
+	if (!res || PQresultStatus(res) != PGRES_COMMAND_OK)
+	{
+		if (fail)
+			DBLINK_RES_ERROR("sql error");
+		else
+		{
+			DBLINK_RES_ERROR_AS_NOTICE("sql error");
+			PQclear(res);
+			PG_RETURN_TEXT_P(GET_TEXT("ERROR"));
+		}
+	}
 
 	PQclear(res);
-
 	PG_RETURN_TEXT_P(GET_TEXT("OK"));
 }
 
@@ -328,16 +368,38 @@ dblink_close(PG_FUNCTION_ARGS)
 	StringInfo	str = makeStringInfo();
 	char	   *msg;
 	remoteConn *rcon = NULL;
+	bool		fail = true;	/* default to backward compatible behavior */
 
 	if (PG_NARGS() == 1)
 	{
+		/* text */
 		curname = GET_STR(PG_GETARG_TEXT_P(0));
 		conn = persistent_conn;
 	}
 	else if (PG_NARGS() == 2)
 	{
+		/* might be text,text or text,bool */
+		if (get_fn_expr_argtype(fcinfo->flinfo, 1) == BOOLOID)
+		{
+			curname = GET_STR(PG_GETARG_TEXT_P(0));
+			fail = PG_GETARG_BOOL(1);
+			conn = persistent_conn;
+		}
+		else
+		{
+			conname = GET_STR(PG_GETARG_TEXT_P(0));
+			curname = GET_STR(PG_GETARG_TEXT_P(1));
+			rcon = getConnectionByName(conname);
+			if (rcon)
+				conn = rcon->con;
+		}
+	}
+	if (PG_NARGS() == 3)
+	{
+		/* text,text,bool */
 		conname = GET_STR(PG_GETARG_TEXT_P(0));
 		curname = GET_STR(PG_GETARG_TEXT_P(1));
+		fail = PG_GETARG_BOOL(2);
 		rcon = getConnectionByName(conname);
 		if (rcon)
 			conn = rcon->con;
@@ -351,7 +413,16 @@ dblink_close(PG_FUNCTION_ARGS)
 	/* close the cursor */
 	res = PQexec(conn, str->data);
 	if (!res || PQresultStatus(res) != PGRES_COMMAND_OK)
-		DBLINK_RES_ERROR("sql error");
+	{
+		if (fail)
+			DBLINK_RES_ERROR("sql error");
+		else
+		{
+			DBLINK_RES_ERROR_AS_NOTICE("sql error");
+			PQclear(res);
+			PG_RETURN_TEXT_P(GET_TEXT("ERROR"));
+		}
+	}
 
 	PQclear(res);
 
@@ -395,19 +466,44 @@ dblink_fetch(PG_FUNCTION_ARGS)
 		char	   *curname = NULL;
 		int			howmany = 0;
 		ReturnSetInfo *rsinfo = (ReturnSetInfo *) fcinfo->resultinfo;
+		bool		fail = true;	/* default to backward compatible */
 
-		if (PG_NARGS() == 3)
+		if (PG_NARGS() == 4)
 		{
+			/* text,text,int,bool */
 			conname = GET_STR(PG_GETARG_TEXT_P(0));
 			curname = GET_STR(PG_GETARG_TEXT_P(1));
 			howmany = PG_GETARG_INT32(2);
+			fail = PG_GETARG_BOOL(3);
 
 			rcon = getConnectionByName(conname);
 			if (rcon)
 				conn = rcon->con;
 		}
+		else if (PG_NARGS() == 3)
+		{
+			/* text,text,int or text,int,bool */
+			if (get_fn_expr_argtype(fcinfo->flinfo, 2) == BOOLOID)
+			{
+				curname = GET_STR(PG_GETARG_TEXT_P(0));
+				howmany = PG_GETARG_INT32(1);
+				fail = PG_GETARG_BOOL(2);
+				conn = persistent_conn;
+			}
+			else
+			{
+				conname = GET_STR(PG_GETARG_TEXT_P(0));
+				curname = GET_STR(PG_GETARG_TEXT_P(1));
+				howmany = PG_GETARG_INT32(2);
+
+				rcon = getConnectionByName(conname);
+				if (rcon)
+					conn = rcon->con;
+			}
+		}
 		else if (PG_NARGS() == 2)
 		{
+			/* text,int */
 			curname = GET_STR(PG_GETARG_TEXT_P(0));
 			howmany = PG_GETARG_INT32(1);
 			conn = persistent_conn;
@@ -431,7 +527,17 @@ dblink_fetch(PG_FUNCTION_ARGS)
 		if (!res ||
 			(PQresultStatus(res) != PGRES_COMMAND_OK &&
 			 PQresultStatus(res) != PGRES_TUPLES_OK))
-			DBLINK_RES_ERROR("sql error");
+		{
+			if (fail)
+				DBLINK_RES_ERROR("sql error");
+			else
+			{
+				if (res)
+					PQclear(res);
+				DBLINK_RES_ERROR_AS_NOTICE("sql error");
+				SRF_RETURN_DONE(funcctx);
+			}
+		}
 		else if (PQresultStatus(res) == PGRES_COMMAND_OK)
 		{
 			/* cursor does not exist - closed already or bad name */
@@ -448,7 +554,11 @@ dblink_fetch(PG_FUNCTION_ARGS)
 
 		/* fast track when no results */
 		if (funcctx->max_calls < 1)
+		{
+			if (res)
+				PQclear(res);
 			SRF_RETURN_DONE(funcctx);
+		}
 
 		/* check typtype to see if we have a predetermined return type */
 		functypeid = get_func_rettype(funcid);
@@ -546,7 +656,7 @@ dblink_record(PG_FUNCTION_ARGS)
 	bool		is_sql_cmd = false;
 	char	   *sql_cmd_status = NULL;
 	MemoryContext oldcontext;
-	bool		freeconn = true;
+	bool		freeconn = false;
 
 	/* stuff done only on the first call of the function */
 	if (SRF_IS_FIRSTCALL())
@@ -560,6 +670,7 @@ dblink_record(PG_FUNCTION_ARGS)
 		char	   *conname = NULL;
 		remoteConn *rcon = NULL;
 		ReturnSetInfo *rsinfo = (ReturnSetInfo *) fcinfo->resultinfo;
+		bool		fail = true;	/* default to backward compatible */
 
 		/* create a function context for cross-call persistence */
 		funcctx = SRF_FIRSTCALL_INIT();
@@ -570,13 +681,31 @@ dblink_record(PG_FUNCTION_ARGS)
 		 */
 		oldcontext = MemoryContextSwitchTo(funcctx->multi_call_memory_ctx);
 
-		if (PG_NARGS() == 2)
+		if (PG_NARGS() == 3)
 		{
+			/* text,text,bool */
 			DBLINK_GET_CONN;
 			sql = GET_STR(PG_GETARG_TEXT_P(1));
+			fail = PG_GETARG_BOOL(2);
+		}
+		else if (PG_NARGS() == 2)
+		{
+			/* text,text or text,bool */
+			if (get_fn_expr_argtype(fcinfo->flinfo, 1) == BOOLOID)
+			{
+				conn = persistent_conn;
+				sql = GET_STR(PG_GETARG_TEXT_P(0));
+				fail = PG_GETARG_BOOL(1);
+			}
+			else
+			{
+				DBLINK_GET_CONN;
+				sql = GET_STR(PG_GETARG_TEXT_P(1));
+			}
 		}
 		else if (PG_NARGS() == 1)
 		{
+			/* text */
 			conn = persistent_conn;
 			sql = GET_STR(PG_GETARG_TEXT_P(0));
 		}
@@ -588,8 +717,22 @@ dblink_record(PG_FUNCTION_ARGS)
 			DBLINK_CONN_NOT_AVAIL;
 
 		res = PQexec(conn, sql);
-		if (!res || (PQresultStatus(res) != PGRES_COMMAND_OK && PQresultStatus(res) != PGRES_TUPLES_OK))
-			DBLINK_RES_ERROR("sql error");
+		if (!res ||
+			(PQresultStatus(res) != PGRES_COMMAND_OK &&
+			 PQresultStatus(res) != PGRES_TUPLES_OK))
+		{
+			if (fail)
+				DBLINK_RES_ERROR("sql error");
+			else
+			{
+				if (res)
+					PQclear(res);
+				if (freeconn)
+					PQfinish(conn);
+				DBLINK_RES_ERROR_AS_NOTICE("sql error");
+				SRF_RETURN_DONE(funcctx);
+			}
+		}
 
 		if (PQresultStatus(res) == PGRES_COMMAND_OK)
 		{
@@ -614,12 +757,16 @@ dblink_record(PG_FUNCTION_ARGS)
 		funcctx->user_fctx = res;
 
 		/* if needed, close the connection to the database and cleanup */
-		if (freeconn && PG_NARGS() == 2)
+		if (freeconn)
 			PQfinish(conn);
 
 		/* fast track when no results */
 		if (funcctx->max_calls < 1)
+		{
+			if (res)
+				PQclear(res);
 			SRF_RETURN_DONE(funcctx);
+		}
 
 		/* check typtype to see if we have a predetermined return type */
 		functypeid = get_func_rettype(funcid);
@@ -727,15 +874,34 @@ dblink_exec(PG_FUNCTION_ARGS)
 	char	   *sql = NULL;
 	char	   *conname = NULL;
 	remoteConn *rcon = NULL;
-	bool		freeconn = true;
+	bool		freeconn = false;
+	bool		fail = true;	/* default to backward compatible behavior */
 
-	if (PG_NARGS() == 2)
+	if (PG_NARGS() == 3)
 	{
+		/* must be text,text,bool */
 		DBLINK_GET_CONN;
 		sql = GET_STR(PG_GETARG_TEXT_P(1));
+		fail = PG_GETARG_BOOL(2);
+	}
+	else if (PG_NARGS() == 2)
+	{
+		/* might be text,text or text,bool */
+		if (get_fn_expr_argtype(fcinfo->flinfo, 1) == BOOLOID)
+		{
+			conn = persistent_conn;
+			sql = GET_STR(PG_GETARG_TEXT_P(0));
+			fail = PG_GETARG_BOOL(1);
+		}
+		else
+		{
+			DBLINK_GET_CONN;
+			sql = GET_STR(PG_GETARG_TEXT_P(1));
+		}
 	}
 	else if (PG_NARGS() == 1)
 	{
+		/* must be single text argument */
 		conn = persistent_conn;
 		sql = GET_STR(PG_GETARG_TEXT_P(0));
 	}
@@ -750,9 +916,25 @@ dblink_exec(PG_FUNCTION_ARGS)
 	if (!res ||
 		(PQresultStatus(res) != PGRES_COMMAND_OK &&
 		 PQresultStatus(res) != PGRES_TUPLES_OK))
-		DBLINK_RES_ERROR("sql error");
+	{
+		if (fail)
+			DBLINK_RES_ERROR("sql error");
+		else
+			DBLINK_RES_ERROR_AS_NOTICE("sql error");
 
-	if (PQresultStatus(res) == PGRES_COMMAND_OK)
+		/* need a tuple descriptor representing one TEXT column */
+		tupdesc = CreateTemplateTupleDesc(1, false);
+		TupleDescInitEntry(tupdesc, (AttrNumber) 1, "status",
+						   TEXTOID, -1, 0, false);
+
+		/*
+		 * and save a copy of the command status string to return as our
+		 * result tuple
+		 */
+		sql_cmd_status = GET_TEXT("ERROR");
+
+	}
+	else if (PQresultStatus(res) == PGRES_COMMAND_OK)
 	{
 		/* need a tuple descriptor representing one TEXT column */
 		tupdesc = CreateTemplateTupleDesc(1, false);
@@ -773,7 +955,7 @@ dblink_exec(PG_FUNCTION_ARGS)
 	PQclear(res);
 
 	/* if needed, close the connection to the database and cleanup */
-	if (freeconn && fcinfo->nargs == 2)
+	if (freeconn)
 		PQfinish(conn);
 
 	PG_RETURN_TEXT_P(sql_cmd_status);

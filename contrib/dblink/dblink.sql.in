@@ -1,94 +1,144 @@
 CREATE OR REPLACE FUNCTION dblink_connect (text)
 RETURNS text
 AS 'MODULE_PATHNAME','dblink_connect'
-LANGUAGE 'C' WITH (isstrict);
+LANGUAGE 'C' STRICT;
 
 CREATE OR REPLACE FUNCTION dblink_connect (text, text)
 RETURNS text
 AS 'MODULE_PATHNAME','dblink_connect'
-LANGUAGE 'C' WITH (isstrict);
+LANGUAGE 'C' STRICT;
 
 CREATE OR REPLACE FUNCTION dblink_disconnect ()
 RETURNS text
 AS 'MODULE_PATHNAME','dblink_disconnect'
-LANGUAGE 'C' WITH (isstrict);
+LANGUAGE 'C' STRICT;
 
 CREATE OR REPLACE FUNCTION dblink_disconnect (text)
 RETURNS text
 AS 'MODULE_PATHNAME','dblink_disconnect'
-LANGUAGE 'C' WITH (isstrict);
+LANGUAGE 'C' STRICT;
 
 CREATE OR REPLACE FUNCTION dblink_open (text,text)
 RETURNS text
 AS 'MODULE_PATHNAME','dblink_open'
-LANGUAGE 'C' WITH (isstrict);
+LANGUAGE 'C' STRICT;
+
+CREATE OR REPLACE FUNCTION dblink_open (text,text,bool)
+RETURNS text
+AS 'MODULE_PATHNAME','dblink_open'
+LANGUAGE 'C' STRICT;
 
 CREATE OR REPLACE FUNCTION dblink_open (text,text,text)
 RETURNS text
 AS 'MODULE_PATHNAME','dblink_open'
-LANGUAGE 'C' WITH (isstrict);
+LANGUAGE 'C' STRICT;
+
+CREATE OR REPLACE FUNCTION dblink_open (text,text,text,bool)
+RETURNS text
+AS 'MODULE_PATHNAME','dblink_open'
+LANGUAGE 'C' STRICT;
 
 CREATE OR REPLACE FUNCTION dblink_fetch (text,int)
 RETURNS setof record
 AS 'MODULE_PATHNAME','dblink_fetch'
-LANGUAGE 'C' WITH (isstrict);
+LANGUAGE 'C' STRICT;
+
+CREATE OR REPLACE FUNCTION dblink_fetch (text,int,bool)
+RETURNS setof record
+AS 'MODULE_PATHNAME','dblink_fetch'
+LANGUAGE 'C' STRICT;
 
 CREATE OR REPLACE FUNCTION dblink_fetch (text,text,int)
 RETURNS setof record
 AS 'MODULE_PATHNAME','dblink_fetch'
-LANGUAGE 'C' WITH (isstrict);
+LANGUAGE 'C' STRICT;
+
+CREATE OR REPLACE FUNCTION dblink_fetch (text,text,int,bool)
+RETURNS setof record
+AS 'MODULE_PATHNAME','dblink_fetch'
+LANGUAGE 'C' STRICT;
 
 CREATE OR REPLACE FUNCTION dblink_close (text)
 RETURNS text
 AS 'MODULE_PATHNAME','dblink_close'
-LANGUAGE 'C' WITH (isstrict);
+LANGUAGE 'C' STRICT;
+
+CREATE OR REPLACE FUNCTION dblink_close (text,bool)
+RETURNS text
+AS 'MODULE_PATHNAME','dblink_close'
+LANGUAGE 'C' STRICT;
 
 CREATE OR REPLACE FUNCTION dblink_close (text,text)
 RETURNS text
 AS 'MODULE_PATHNAME','dblink_close'
-LANGUAGE 'C' WITH (isstrict);
+LANGUAGE 'C' STRICT;
+
+CREATE OR REPLACE FUNCTION dblink_close (text,text,bool)
+RETURNS text
+AS 'MODULE_PATHNAME','dblink_close'
+LANGUAGE 'C' STRICT;
 
 CREATE OR REPLACE FUNCTION dblink (text,text)
 RETURNS setof record
 AS 'MODULE_PATHNAME','dblink_record'
-LANGUAGE 'C' WITH (isstrict);
+LANGUAGE 'C' STRICT;
+
+CREATE OR REPLACE FUNCTION dblink (text,text,bool)
+RETURNS setof record
+AS 'MODULE_PATHNAME','dblink_record'
+LANGUAGE 'C' STRICT;
 
 CREATE OR REPLACE FUNCTION dblink (text)
 RETURNS setof record
 AS 'MODULE_PATHNAME','dblink_record'
-LANGUAGE 'C' WITH (isstrict);
+LANGUAGE 'C' STRICT;
+
+CREATE OR REPLACE FUNCTION dblink (text,bool)
+RETURNS setof record
+AS 'MODULE_PATHNAME','dblink_record'
+LANGUAGE 'C' STRICT;
 
 CREATE OR REPLACE FUNCTION dblink_exec (text,text)
 RETURNS text
 AS 'MODULE_PATHNAME','dblink_exec'
-LANGUAGE 'C' WITH (isstrict);
+LANGUAGE 'C' STRICT;
+
+CREATE OR REPLACE FUNCTION dblink_exec (text,text,bool)
+RETURNS text
+AS 'MODULE_PATHNAME','dblink_exec'
+LANGUAGE 'C' STRICT;
 
 CREATE OR REPLACE FUNCTION dblink_exec (text)
 RETURNS text
 AS 'MODULE_PATHNAME','dblink_exec'
-LANGUAGE 'c' WITH (isstrict);
+LANGUAGE 'c' STRICT;
+
+CREATE OR REPLACE FUNCTION dblink_exec (text,bool)
+RETURNS text
+AS 'MODULE_PATHNAME','dblink_exec'
+LANGUAGE 'c' STRICT;
 
 CREATE TYPE dblink_pkey_results AS (position int4, colname text);
 
 CREATE OR REPLACE FUNCTION dblink_get_pkey (text)
 RETURNS setof dblink_pkey_results
 AS 'MODULE_PATHNAME','dblink_get_pkey'
-LANGUAGE 'c' WITH (isstrict);
+LANGUAGE 'c' STRICT;
 
 CREATE OR REPLACE FUNCTION dblink_build_sql_insert (text, int2vector, int4, _text, _text)
 RETURNS text
 AS 'MODULE_PATHNAME','dblink_build_sql_insert'
-LANGUAGE 'C' WITH (isstrict);
+LANGUAGE 'C' STRICT;
 
 CREATE OR REPLACE FUNCTION dblink_build_sql_delete (text, int2vector, int4, _text)
 RETURNS text
 AS 'MODULE_PATHNAME','dblink_build_sql_delete'
-LANGUAGE 'C' WITH (isstrict);
+LANGUAGE 'C' STRICT;
 
 CREATE OR REPLACE FUNCTION dblink_build_sql_update (text, int2vector, int4, _text, _text)
 RETURNS text
 AS 'MODULE_PATHNAME','dblink_build_sql_update'
-LANGUAGE 'C' WITH (isstrict);
+LANGUAGE 'C' STRICT;
 
 CREATE OR REPLACE FUNCTION dblink_current_query ()
 RETURNS text

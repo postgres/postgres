@@ -5,9 +5,9 @@ dblink -- Returns a set from a remote database
 
 Synopsis
 
-dblink(text connstr, text sql)
-dblink(text connname, text sql)
-dblink(text sql)
+dblink(text connstr, text sql [, bool fail_on_error])
+dblink(text connname, text sql [, bool fail_on_error])
+dblink(text sql [, bool fail_on_error])
 
 Inputs
 
@@ -24,6 +24,12 @@ Inputs
 
     sql statement that you wish to execute on the remote host
     e.g. "select * from pg_class"
+
+  fail_on_error
+
+    If true (default when not present) then an ERROR thrown on the remote side
+    of the connection causes an ERROR to also be thrown locally. If false, the
+    remote ERROR is locally treated as a NOTICE, and no rows are returned.
 
 Outputs
 
