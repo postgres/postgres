@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/access/nbtree/nbtinsert.c,v 1.117 2004/10/15 22:39:49 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/access/nbtree/nbtinsert.c,v 1.118 2004/10/26 16:05:02 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -269,8 +269,8 @@ _bt_check_unique(Relation rel, BTItem btitem, Relation heapRel,
 						SetBufferCommitInfoNeedsSave(buf);
 					}
 					LockBuffer(hbuffer, BUFFER_LOCK_UNLOCK);
-					ReleaseBuffer(hbuffer);
 				}
+				ReleaseBuffer(hbuffer);
 			}
 		}
 
