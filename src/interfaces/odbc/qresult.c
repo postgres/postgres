@@ -123,6 +123,7 @@ QR_Constructor()
 		rv->rowset_size = 1;
 		rv->haskeyset = 0;
 		rv->keyset = NULL;
+		rv->rb_alloc = 0;
 		rv->rb_count = 0;
 		rv->rollback = NULL;
 	}
@@ -233,6 +234,7 @@ QR_free_memory(QResultClass *self)
 	if (self->rollback)
 	{
 		free(self->rollback);
+		self->rb_alloc = 0;
 		self->rb_count = 0;
 		self->rollback = NULL;
 	}

@@ -40,8 +40,8 @@ struct ParameterInfoClass_
 	Int2		paramType;
 	Int2		CType;
 	Int2		SQLType;
-	UInt4		precision;
-	Int2		scale;
+	UInt4		column_size;
+	Int2		decimal_digits;
 	Oid			lobj_oid;
 	Int4	   *EXEC_used;		/* amount of data OR the oid of the large
 								 * object */

@@ -5,7 +5,7 @@
  *
  * Comments:		See "notice.txt" for copyright and license information.
  *
- * $Id: descriptor.h,v 1.1 2002/03/28 08:08:02 inoue Exp $
+ * $Id: descriptor.h,v 1.2 2002/04/01 03:01:14 inoue Exp $
  *
  */
 
@@ -92,5 +92,8 @@ void	IRDFields_free(IRDFields *self);
 void	IPDFields_free(IPDFields *self);
 void	ARD_unbind_cols(ARDFields *self, BOOL freeall);
 void	APD_free_params(APDFields *self, char option);
+#if (ODBCVER >= 0x0300)
+void	Desc_set_error(SQLHDESC hdesc, int errornumber, const char * errormsg);
+#endif /* ODBCVER */
 
 #endif

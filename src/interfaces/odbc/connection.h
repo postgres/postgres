@@ -272,6 +272,7 @@ struct ConnectionClass_
 	Int2		pg_version_minor;
 	char		ms_jet;
 	char		unicode;
+	char		result_uncommitted;
 #ifdef	MULTIBYTE
 	char	   *client_encoding;
 	char	   *server_encoding;
@@ -318,8 +319,9 @@ void		CC_lookup_pg_version(ConnectionClass *conn);
 void		CC_initialize_pg_version(ConnectionClass *conn);
 void		CC_log_error(const char *func, const char *desc, const ConnectionClass *self);
 int			CC_get_max_query_len(const ConnectionClass *self);
-void		CC_on_commit(ConnectionClass *conn, BOOL set_no_trans);
+void		CC_on_commit(ConnectionClass *conn);
 void		CC_on_abort(ConnectionClass *conn, BOOL set_no_trans);
+void		ProcessRollback(ConnectionClass *conn, BOOL undo);
 
 /* CC_send_query_options */
 #define	CLEAR_RESULT_ON_ABORT	1L

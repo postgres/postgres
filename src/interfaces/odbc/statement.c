@@ -503,8 +503,8 @@ SC_recycle_statement(StatementClass *self)
 		int	i;
 
 		for (i = 0; i < self->ntab; i++)
-			if (self->ti)
-				free(self->ti);
+			if (self->ti[i])
+				free(self->ti[i]);
 		self->ti = NULL;
 		self->ntab = 0;
 	}

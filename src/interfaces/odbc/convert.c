@@ -265,6 +265,16 @@ stime2timestamp(const SIMPLE_TIME *st, char *str, BOOL bZone, BOOL precision)
 	int			i;
 
 	precstr[0] = '\0';
+	if (st->infinity > 0)
+	{
+		strcpy(str, "Infinity");
+		return TRUE;
+	}
+	else if (st->infinity < 0)
+	{
+		strcpy(str, "-Infinity");
+		return TRUE;
+	}
 	if (precision && st->fr)
 	{
 		sprintf(precstr, ".%09d", st->fr);
@@ -447,6 +457,27 @@ copy_and_convert_field(StatementClass *stmt, Int4 field_type, void *value, Int2 
 		case PG_TYPE_DATETIME:
 		case PG_TYPE_TIMESTAMP:
 			st.fr = 0;
+			st.infinity = 0;
+			if (strnicmp(value, "infinity", 8) == 0)
+			{
+				st.infinity = 1;
+				st.m = 12;
+				st.d = 31;
+				st.y = 9999;
+				st.hh = 24;
+				st.mm = 0;
+				st.ss = 0;
+			}
+			if (strnicmp(value, "-infinity", 9) == 0)
+			{
+				st.infinity = -1;
+				st.m = 0;
+				st.d = 0;
+				st.y = 0;
+				st.hh = 0;
+				st.mm = 0;
+				st.ss = 0;
+			}
 			if (strnicmp(value, "invalid", 7) != 0)
 			{
 				BOOL		bZone = (field_type != PG_TYPE_TIMESTAMP_NO_TMZONE && PG_VERSION_GE(SC_get_conn(stmt), 7.2));
@@ -2495,7 +2526,7 @@ convert_money(const char *s, char *sout, size_t soutmax)
  *	It does not zero out SIMPLE_TIME in case it is desired to initialize it with a value
  */
 char
-parse_datetime(char *buf, SIMPLE_TIME *st)
+parse_datetime(const char *buf, SIMPLE_TIME *st)
 {
 	int			y,
 				m,

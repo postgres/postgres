@@ -288,6 +288,7 @@ CC_Constructor()
 		rv->pg_version_minor = 0;
 		rv->ms_jet = 0;
 		rv->unicode = 0;
+		rv->result_uncommitted = 0;
 #ifdef	MULTIBYTE
 		rv->client_encoding = NULL;
 		rv->server_encoding = NULL;
@@ -1110,21 +1111,30 @@ CC_get_error(ConnectionClass *self, int *number, char **message)
 }
 
 
-void	CC_on_commit(ConnectionClass *conn, BOOL set_no_trans)
+void	CC_on_commit(ConnectionClass *conn)
 {
 	if (CC_is_in_trans(conn))
 	{
-		if (set_no_trans)
-			CC_set_no_trans(conn);
+#ifdef	DRIVER_CURSOR_IMPLEMENT
+		if (conn->result_uncommitted)
+			ProcessRollback(conn, FALSE);
+#endif /* DRIVER_CURSOR_IMPLEMENT */
+		CC_set_no_trans(conn);
 	}
+	conn->result_uncommitted = 0;
 }
 void	CC_on_abort(ConnectionClass *conn, BOOL set_no_trans)
 {
 	if (CC_is_in_trans(conn))
 	{
+#ifdef	DRIVER_CURSOR_IMPLEMENT
+		if (conn->result_uncommitted)
+			ProcessRollback(conn, TRUE);
+#endif /* DRIVER_CURSOR_IMPLEMENT */
 		if (set_no_trans)
 			CC_set_no_trans(conn);
 	}
+	conn->result_uncommitted = 0;
 }
 
 /*
@@ -1293,11 +1303,11 @@ CC_send_query(ConnectionClass *self, char *query, QueryInfo *qi, UDWORD flag)
 						}
 					}
 					else if (strnicmp(cmdbuffer, "COMMIT", 6) == 0)
-						CC_on_commit(self, TRUE);
+						CC_on_commit(self);
 					else if (strnicmp(cmdbuffer, "ROLLBACK", 8) == 0)
 						CC_on_abort(self, TRUE);
 					else if (strnicmp(cmdbuffer, "END", 3) == 0)
-						CC_on_commit(self, TRUE);
+						CC_on_commit(self);
 					else if (strnicmp(cmdbuffer, "ABORT", 5) == 0)
 						CC_on_abort(self, TRUE);
 

@@ -265,6 +265,10 @@ RETCODE SQL_API PGAPI_GetDiagRec(SQLSMALLINT HandleType, SQLHANDLE Handle,
 		SQLSMALLINT RecNumber, SQLCHAR *Sqlstate,
 		SQLINTEGER *NativeError, SQLCHAR *MessageText,
 		SQLSMALLINT BufferLength, SQLSMALLINT *TextLength);
+RETCODE SQL_API PGAPI_GetDiagField(SQLSMALLINT HandleType, SQLHANDLE Handle,
+		SQLSMALLINT RecNumber, SQLSMALLINT DiagIdentifier,
+		PTR DiagInfoPtr, SQLSMALLINT BufferLength,
+		SQLSMALLINT *StringLengthPtr);
 RETCODE SQL_API PGAPI_GetConnectAttr(HDBC ConnectionHandle,
 			SQLINTEGER Attribute, PTR Value,
 			SQLINTEGER BufferLength, SQLINTEGER *StringLength);

@@ -74,7 +74,8 @@ struct QResultClass_
 	char		aborted;		/* was aborted? */
 	char		haskeyset;		/* this result contains keyset ? */
 	KeySet		*keyset;
-	UInt4		rb_count;	/* count of rollback info */	
+	UInt2		rb_alloc;	/* count of allocated rollback info */	
+	UInt2		rb_count;	/* count of rollback info */	
 	Rollback	*rollback;	
 };
 

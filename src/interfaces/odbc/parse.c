@@ -304,7 +304,8 @@ parse_statement(StatementClass *stmt)
 				in_on = FALSE,
 				in_from = FALSE,
 				in_where = FALSE,
-				in_table = FALSE;
+				in_table = FALSE,
+				out_table = TRUE;
 	char		in_field = FALSE,
 				in_expr = FALSE,
 				in_func = FALSE,
@@ -610,12 +611,21 @@ parse_statement(StatementClass *stmt)
 
 		if (in_from)
 		{
-			if (!in_table)
+			if (token[0] == ';')
 			{
-				if (!token[0])
+				in_from = FALSE;
+				break;
+			}
+			switch (token[0])
+			{
+				case '\0':
 					continue;
-				if (token[0] == ';')
-					break;
+				case ',':
+					out_table = TRUE; 
+					continue;
+			}
+			if (out_table && !in_table) /* new table */
+			{
 
 				if (!(stmt->ntab % TAB_INCR))
 				{
@@ -660,22 +670,47 @@ parse_statement(StatementClass *stmt)
 				mylog("got table = '%s'\n", ti[stmt->ntab]->name);
 
 				if (delim == ',')
+				{
+					out_table = TRUE;
 					mylog("more than 1 tables\n");
+				}
 				else
+				{
+					out_table = FALSE;
 					in_table = TRUE;
+				}
 				stmt->ntab++;
 				continue;
 			}
 
-			if (token[0] == ';')
-				break;
-			if (stricmp(token, "as"))
+			if (!dquote && stricmp(token, "JOIN") == 0)
 			{
+				in_table = FALSE;
+				out_table = TRUE;
+				continue;
+			}
+			if (in_table && stricmp(token, "as"))
+			{
+				if (!dquote)
+				{
+					if (stricmp(token, "LEFT") == 0 ||
+					    stricmp(token, "RIGHT") == 0 ||
+					    stricmp(token, "OUTER") == 0 ||
+					    stricmp(token, "FULL") == 0 ||
+					    stricmp(token, "ON") == 0)
+					{
+						in_table = FALSE;
+						continue;
+					}
+				}
 				strcpy(ti[stmt->ntab - 1]->alias, token);
 				mylog("alias for table '%s' is '%s'\n", ti[stmt->ntab - 1]->name, ti[stmt->ntab - 1]->alias);
 				in_table = FALSE;
 				if (delim == ',')
+				{
+					out_table = TRUE;
 					mylog("more than 1 tables\n");
+				}
 			}
 		} /* in_from */
 	}

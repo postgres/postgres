@@ -67,8 +67,8 @@ PGAPI_BindParameter(
 	opts->parameters[ipar].paramType = fParamType;
 	opts->parameters[ipar].CType = fCType;
 	opts->parameters[ipar].SQLType = fSqlType;
-	opts->parameters[ipar].precision = cbColDef;
-	opts->parameters[ipar].scale = ibScale;
+	opts->parameters[ipar].column_size = cbColDef;
+	opts->parameters[ipar].decimal_digits = ibScale;
 
 	/*
 	 * If rebinding a parameter that had data-at-exec stuff in it, then
@@ -276,10 +276,10 @@ PGAPI_DescribeParam(
 		*pfSqlType = opts->parameters[ipar].SQLType;
 
 	if (pcbColDef)
-		*pcbColDef = opts->parameters[ipar].precision;
+		*pcbColDef = opts->parameters[ipar].column_size;
 
 	if (pibScale)
-		*pibScale = opts->parameters[ipar].scale;
+		*pibScale = opts->parameters[ipar].decimal_digits;
 
 	if (pfNullable)
 		*pfNullable = pgtype_nullable(stmt, opts->parameters[ipar].paramType);
@@ -458,8 +458,8 @@ reset_a_parameter_binding(APDFields *self, int ipar)
 		self->parameters[ipar].EXEC_buffer = NULL;
 	}
 	self->parameters[ipar].SQLType = 0;
-	self->parameters[ipar].precision = 0;
-	self->parameters[ipar].scale = 0;
+	self->parameters[ipar].column_size = 0;
+	self->parameters[ipar].decimal_digits = 0;
 	self->parameters[ipar].data_at_exec = FALSE;
 	self->parameters[ipar].lobj_oid = 0;
 }

@@ -235,7 +235,8 @@ SQLGetDiagField(SQLSMALLINT HandleType, SQLHANDLE Handle,
 				SQLSMALLINT *StringLength)
 {
 	mylog("[[SQLGetDiagField]] Handle=(%u,%x) Rec=%d Id=%d\n", HandleType, Handle, RecNumber, DiagIdentifier);
-	return SQL_ERROR;
+	return PGAPI_GetDiagField(HandleType, Handle, RecNumber, DiagIdentifier,
+				DiagInfo, BufferLength, StringLength);
 }
 
 /*	SQLError -> SQLDiagRec */

@@ -491,7 +491,7 @@ PGAPI_ColAttributes(
 			return SQL_SUCCESS;
 		}
 
-		if (stmt->parse_status != STMT_PARSE_FATAL && irdflds->fi && irdflds->fi[col_idx])
+		if (stmt->parse_status != STMT_PARSE_FATAL && irdflds->fi)
 		{
 			if (col_idx >= cols)
 			{
@@ -500,9 +500,12 @@ PGAPI_ColAttributes(
 				SC_log_error(func, "", stmt);
 				return SQL_ERROR;
 			}
-			field_type = irdflds->fi[col_idx]->type;
-			if (field_type > 0)
-				parse_ok = TRUE;
+			if (irdflds->fi[col_idx])
+			{
+				field_type = irdflds->fi[col_idx]->type;
+				if (field_type > 0)
+					parse_ok = TRUE;
+			}
 		}
 	}
 
@@ -756,14 +759,6 @@ inolog("COLUMN_TYPE=%d\n", value);
 
 		if (rgbDesc)
 		{
-#ifdef	UNICODE_SUPPORT
-			if (conn->unicode)
-			{
-				len = utf8_to_ucs2(p, len, (SQLWCHAR *) rgbDesc, cbDescMax / 2);
-				len *= 2;
-			}
-			else
-#endif /* UNICODE_SUPPORT */
 			strncpy_null((char *) rgbDesc, p, (size_t) cbDescMax);
 
 			if (len >= cbDescMax)
@@ -1343,8 +1338,6 @@ PGAPI_ExtendedFetch(
 #endif   /* DRIVER_CURSOR_IMPLEMENT */
 			else
 				*(rgfRowStatus + i) = SQL_ROW_SUCCESS;
-if (rgfRowStatus[i] != SQL_ROW_SUCCESS)
-inolog("rgfRowStatus[%d]=%d\n", i, rgfRowStatus[i]);
 		}
 	}
 
@@ -1424,6 +1417,121 @@ static void KeySetSet(const TupleField *tuple, int num_fields, KeySet *keyset)
 	sscanf(tuple[num_fields - 2].value, "(%u,%hu)",
 			&keyset->blocknum, &keyset->offset);
 	sscanf(tuple[num_fields - 1].value, "%u", &keyset->oid);
+}
+
+static void AddRollback(ConnectionClass *conn, QResultClass *res, int index, const KeySet *keyset)
+{
+	Rollback *rollback;
+
+	if (!res->rollback)
+	{
+		res->rb_count = 0;
+		res->rb_alloc = 10;
+		rollback = res->rollback = malloc(sizeof(Rollback) * res->rb_alloc);
+	}
+	else
+	{
+		if (res->rb_count >= res->rb_alloc)
+		{
+			res->rb_alloc *= 2; 
+			if (rollback = realloc(res->rollback, sizeof(Rollback) * res->rb_alloc), !rollback)
+			{
+				res->rb_alloc = res->rb_count = 0;
+				return;
+			}
+			res->rollback = rollback; 
+		}
+		rollback = res->rollback + res->rb_count;
+	}
+	rollback->index = index;
+	if (keyset)
+	{
+		rollback->blocknum = keyset[index].blocknum;
+		rollback->offset = keyset[index].offset;
+	}
+	else
+	{
+		rollback->offset = 0;
+		rollback->blocknum = 0;
+	}
+
+	conn->result_uncommitted = 1;
+	res->rb_count++;	
+}
+
+static void DiscardRollback(QResultClass *res)
+{
+	int	i, index;
+	UWORD	status;
+	Rollback *rollback;
+	KeySet	*keyset;
+
+	if (0 == res->rb_count || NULL == res->rollback)
+		return;
+	rollback = res->rollback;
+	keyset = res->keyset;
+	for (i = 0; i < res->rb_count; i++)
+	{
+		index = rollback[i].index;
+		status = keyset[index].status;
+		keyset[index].status &= ~(CURS_SELF_DELETING | CURS_SELF_UPDATING | CURS_SELF_ADDING);
+		keyset[index].status |= ((status & (CURS_SELF_DELETING | CURS_SELF_UPDATING | CURS_SELF_ADDING)) << 3);
+	}
+	free(rollback);
+	res->rollback = NULL;
+	res->rb_count = res->rb_alloc = 0;
+}
+
+static void UndoRollback(QResultClass *res)
+{
+	int	i, index;
+	UWORD	status;
+	Rollback *rollback;
+	KeySet	*keyset;
+
+	if (0 == res->rb_count || NULL == res->rollback)
+		return;
+	rollback = res->rollback;
+	keyset = res->keyset;
+	for (i = res->rb_count - 1; i >= 0; i--)
+	{
+		index = rollback[i].index;
+		status = keyset[index].status;
+		if ((status & CURS_SELF_ADDING) != 0)
+		{
+			if (index < res->fcount)
+				res->fcount = index;
+		}
+		else
+		{
+			keyset[index].status &= ~(CURS_SELF_DELETING | CURS_SELF_UPDATING | CURS_SELF_ADDING | KEYSET_INFO_PUBLIC);
+			keyset[index].blocknum = rollback[i].blocknum;
+			keyset[index].offset = rollback[i].offset;
+		}
+	}
+	free(rollback);
+	res->rollback = NULL;
+	res->rb_count = res->rb_alloc = 0;
+}
+
+void	ProcessRollback(ConnectionClass *conn, BOOL undo) 
+{
+	int	i;
+	StatementClass	*stmt;
+	QResultClass	*res;
+
+	for (i = 0; i < conn->num_stmts; i++)
+	{
+		if (stmt = conn->stmts[i], !stmt)
+			continue;
+		for (res = SC_get_Result(stmt); res; res = res->next)
+		{
+			if (undo)
+				UndoRollback(res);
+			else
+				DiscardRollback(res);
+		}
+	}
 }
 
 #define	LATEST_TUPLE_LOAD	1L
@@ -1534,7 +1642,8 @@ SC_pos_reload(StatementClass *stmt, UWORD irow, UDWORD global_ridx, UWORD *count
 			ret = SQL_SUCCESS_WITH_INFO;
 			if (stmt->options.cursor_type == SQL_CURSOR_KEYSET_DRIVEN)
 			{
-				res->keyset[global_ridx].oid = 0;
+				res->keyset[global_ridx].blocknum = 0;
+				res->keyset[global_ridx].offset = 0;
 				res->keyset[global_ridx].status |= SQL_ROW_DELETED;
 			}
 		}
@@ -1670,6 +1779,7 @@ SC_pos_update(StatementClass *stmt,
 				num_cols,
 				upd_cols;
 	QResultClass *res;
+	ConnectionClass	*conn = SC_get_conn(stmt);
 	ARDFields	*opts = SC_get_ARD(stmt);
 	IRDFields	*irdflds = SC_get_IRD(stmt);
 	BindInfoClass *bindings = opts->bindings;
@@ -1735,7 +1845,7 @@ SC_pos_update(StatementClass *stmt,
 		sprintf(updstr, "%s where ctid = '(%u, %u)' and oid = %u", updstr,
 				blocknum, pgoffset, oid);
 		mylog("updstr=%s\n", updstr);
-		if (PGAPI_AllocStmt(SC_get_conn(stmt), &hstmt) != SQL_SUCCESS)
+		if (PGAPI_AllocStmt(conn, &hstmt) != SQL_SUCCESS)
 			return SQL_ERROR;
 		qstmt = (StatementClass *) hstmt;
 		apdopts = SC_get_APD(qstmt);
@@ -1788,8 +1898,11 @@ SC_pos_update(StatementClass *stmt,
 	}
 	if (SQL_SUCCESS == ret && res->keyset)
 	{
-		if (CC_is_in_trans(SC_get_conn(stmt)))
+		if (CC_is_in_trans(conn))
+		{
+			AddRollback(conn, res, global_ridx, res->keyset);
 			res->keyset[global_ridx].status |= (SQL_ROW_UPDATED  | CURS_SELF_UPDATING);
+		}
 		else
 			res->keyset[global_ridx].status |= (SQL_ROW_UPDATED  | CURS_SELF_UPDATED);
 	}
@@ -1815,12 +1928,12 @@ SC_pos_delete(StatementClass *stmt,
 {
 	UWORD		offset;
 	QResultClass *res, *qres;
+	ConnectionClass	*conn = SC_get_conn(stmt);
 	ARDFields	*opts = SC_get_ARD(stmt);
 	IRDFields	*irdflds = SC_get_IRD(stmt);
 	BindInfoClass *bindings = opts->bindings;
 	char		dltstr[4096];
 	RETCODE		ret;
-	/*const char	   *oidval;*/
 	UInt4		oid, blocknum;
 
 	mylog("POS DELETE ti=%x\n", stmt->ti);
@@ -1844,7 +1957,7 @@ SC_pos_delete(StatementClass *stmt,
 			stmt->ti[0]->name, blocknum, offset, oid);
 
 	mylog("dltstr=%s\n", dltstr);
-	qres = CC_send_query(SC_get_conn(stmt), dltstr, NULL, CLEAR_RESULT_ON_ABORT);
+	qres = CC_send_query(conn, dltstr, NULL, CLEAR_RESULT_ON_ABORT);
 	ret = SQL_SUCCESS;
 	if (qres && QR_command_successful(qres))
 	{
@@ -1881,8 +1994,11 @@ SC_pos_delete(StatementClass *stmt,
 		QR_Destructor(qres);
 	if (SQL_SUCCESS == ret && res->keyset)
 	{
-		if (CC_is_in_trans(SC_get_conn(stmt)))
+		if (CC_is_in_trans(conn))
+		{
+			AddRollback(conn, res, global_ridx, res->keyset);
 			res->keyset[global_ridx].status |= (SQL_ROW_DELETED | CURS_SELF_DELETING);
+		}
 		else
 			res->keyset[global_ridx].status |= (SQL_ROW_DELETED | CURS_SELF_DELETED);
 	}
@@ -1988,7 +2104,7 @@ SC_pos_add(StatementClass *stmt,
 	num_cols = irdflds->nfields;
 	conn = SC_get_conn(stmt);
 	sprintf(addstr, "insert into \"%s\" (", stmt->ti[0]->name);
-	if (PGAPI_AllocStmt(SC_get_conn(stmt), &hstmt) != SQL_SUCCESS)
+	if (PGAPI_AllocStmt(conn, &hstmt) != SQL_SUCCESS)
 		return SQL_ERROR;
 	if (opts->row_offset_ptr)
 		offset = *opts->row_offset_ptr;
@@ -2068,10 +2184,15 @@ SC_pos_add(StatementClass *stmt,
 	PGAPI_FreeStmt(hstmt, SQL_DROP);
 	if (SQL_SUCCESS == ret && res->keyset)
 	{
+		int	global_ridx = res->fcount - 1;
 		if (CC_is_in_trans(conn))
-			res->keyset[res->fcount - 1].status |= (SQL_ROW_ADDED | CURS_SELF_ADDING);
+		{
+
+			AddRollback(conn, res, global_ridx, NULL);
+			res->keyset[global_ridx].status |= (SQL_ROW_ADDED | CURS_SELF_ADDING);
+		}
 		else
-			res->keyset[res->fcount - 1].status |= (SQL_ROW_ADDED | CURS_SELF_ADDED);
+			res->keyset[global_ridx].status |= (SQL_ROW_ADDED | CURS_SELF_ADDED);
 	}
 #if (ODBCVER >= 0x0300)
 	if (irdflds->rowStatusArray)

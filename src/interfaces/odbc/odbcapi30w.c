@@ -89,10 +89,25 @@ SQLSetDescFieldW(SQLHDESC DescriptorHandle, SQLSMALLINT RecNumber,
 	mylog("[SQLSetDescFieldW]");
 	if (BufferLength > 0)
 	{
-		uval = ucs2_to_utf8(Value, BufferLength / 2, &vallen);
-		val_alloced = TRUE;
+		switch (FieldIdentifier)
+		{
+			case SQL_DESC_BASE_COLUMN_NAME:
+			case SQL_DESC_BASE_TABLE_NAME:
+			case SQL_DESC_CATALOG_NAME:
+			case SQL_DESC_LABEL:
+			case SQL_DESC_LITERAL_PREFIX:
+			case SQL_DESC_LITERAL_SUFFIX:
+			case SQL_DESC_LOCAL_TYPE_NAME:
+			case SQL_DESC_NAME:
+			case SQL_DESC_SCHEMA_NAME:
+			case SQL_DESC_TABLE_NAME:
+			case SQL_DESC_TYPE_NAME:
+				uval = ucs2_to_utf8(Value, BufferLength / 2, &vallen);
+				val_alloced = TRUE;
+			break;
+		}
 	}
-	else
+	if (!val_alloced)
 	{
 		uval = Value;
 		vallen = BufferLength;
@@ -109,11 +124,49 @@ SQLGetDescFieldW(SQLHDESC hdesc, SQLSMALLINT iRecord, SQLSMALLINT iField,
     				SQLINTEGER *pcbValue)
 {
 	RETCODE	ret;
-        char    *qstr = NULL, *mtxt = NULL;
+	BOOL	alloced = FALSE;
+	SQLINTEGER	blen, bMax, *pcbV;
+        char    *rgbV = NULL;
 
 	mylog("[SQLGetDescFieldW]");
-	ret = PGAPI_GetDescField(hdesc, iRecord, iField, rgbValue,
-				cbValueMax, pcbValue);
+	switch (iField)
+	{
+		case SQL_DESC_BASE_COLUMN_NAME:
+		case SQL_DESC_BASE_TABLE_NAME:
+		case SQL_DESC_CATALOG_NAME:
+		case SQL_DESC_LABEL:
+		case SQL_DESC_LITERAL_PREFIX:
+		case SQL_DESC_LITERAL_SUFFIX:
+		case SQL_DESC_LOCAL_TYPE_NAME:
+		case SQL_DESC_NAME:
+		case SQL_DESC_SCHEMA_NAME:
+		case SQL_DESC_TABLE_NAME:
+		case SQL_DESC_TYPE_NAME:
+			alloced = TRUE;
+			bMax = cbValueMax * 3 / 2;
+			rgbV = malloc(bMax + 1);
+			pcbV = &blen;
+                	break;
+		default:
+			rgbV = rgbValue;
+			bMax = cbValueMax;
+			pcbV = pcbValue;
+			break;
+	}
+	ret = PGAPI_GetDescField(hdesc, iRecord, iField, rgbV, bMax, pcbV);
+	if (alloced)
+	{
+		blen = utf8_to_ucs2(rgbV, blen, (SQLWCHAR *) rgbValue, cbValueMax / 2);
+		if (SQL_SUCCESS == ret && blen * 2 > cbValueMax)
+		{
+			ret = SQL_SUCCESS_WITH_INFO;
+			Desc_set_error(hdesc, STMT_TRUNCATED, "The buffer was too small for the rgbDesc.");
+		}
+		if (pcbValue)
+			*pcbValue = blen * 2;
+		free(rgbV);
+	}
+
 	return ret;
 }
 
@@ -171,6 +224,9 @@ RETCODE SQL_API SQLColAttributeW(
     SQLINTEGER 		  *pfDesc)
 {
 	RETCODE	ret;
+	BOOL	alloced = FALSE;
+	SQLSMALLINT	*rgbL, blen, bMax;
+        char    *rgbD = NULL;
 
 	mylog("[SQLColAttributeW]");
 	switch (fDescType)
@@ -187,11 +243,35 @@ RETCODE SQL_API SQLColAttributeW(
 		case SQL_DESC_TABLE_NAME:
 		case SQL_DESC_TYPE_NAME:
 		case SQL_COLUMN_NAME:
+			alloced = TRUE;
+			bMax = cbDescMax * 3 / 2;
+			rgbD = malloc(bMax + 1);
+			rgbL = &blen;
                 	break;
+		default:
+			rgbD = rgbDesc;
+			bMax = cbDescMax;
+			rgbL = pcbDesc;
+			break;
 	}
 
-	ret = PGAPI_ColAttributes(hstmt, icol, fDescType, rgbDesc,
-		cbDescMax, pcbDesc, pfDesc);
+	ret = PGAPI_ColAttributes(hstmt, icol, fDescType, rgbD,
+		bMax, rgbL, pfDesc);
+	if (alloced)
+	{
+		blen = utf8_to_ucs2(rgbD, blen, (SQLWCHAR *) rgbDesc, cbDescMax / 2);
+		if (SQL_SUCCESS == ret && blen * 2 > cbDescMax)
+		{
+			StatementClass	*stmt = (StatementClass *) hstmt;
+
+			ret = SQL_SUCCESS_WITH_INFO;
+			stmt->errornumber = STMT_TRUNCATED;
+			stmt->errormsg = "The buffer was too small for the rgbDesc.";
+		}
+		if (pcbDesc)
+			*pcbDesc = blen * 2;
+		free(rgbD);
+	}
 
 	return ret;
 }

@@ -5,7 +5,7 @@
  *
  * Comments:		See "notice.txt" for copyright and license information.
  *
- * $Id: psqlodbc.h,v 1.61 2002/03/28 08:08:06 inoue Exp $
+ * $Id: psqlodbc.h,v 1.62 2002/04/01 03:01:15 inoue Exp $
  *
  */
 

@@ -27,7 +27,7 @@
 #include "descriptor.h"
 #include "pgapifunc.h"
 
-static HSTMT statementHandleFromDescHandle(HSTMT, SQLINTEGER *descType); 
+static HSTMT statementHandleFromDescHandle(SQLHDESC, SQLINTEGER *descType); 
 /*	SQLError -> SQLDiagRec */
 RETCODE		SQL_API
 PGAPI_GetDiagRec(SQLSMALLINT HandleType, SQLHANDLE Handle,
@@ -75,7 +75,7 @@ PGAPI_GetDiagField(SQLSMALLINT HandleType, SQLHANDLE Handle,
 		PTR DiagInfoPtr, SQLSMALLINT BufferLength,
 		SQLSMALLINT *StringLengthPtr)
 {
-	RETCODE		ret = SQL_SUCCESS;
+	RETCODE		ret = SQL_ERROR;
 	static const char *func = "PGAPI_GetDiagField";
 
 	mylog("%s entering rec=%d", func, RecNumber);
@@ -122,6 +122,7 @@ PGAPI_GetDiagField(SQLSMALLINT HandleType, SQLHANDLE Handle,
 				case SQL_DIAG_NUMBER:
 				case SQL_DIAG_RETURNCODE:
 				case SQL_DIAG_SERVER_NAME:
+					break;
 				case SQL_DIAG_SQLSTATE:
 					break;
 			}
@@ -154,7 +155,12 @@ PGAPI_GetConnectAttr(HDBC ConnectionHandle,
 			*((SQLUINTEGER *) Value) = SQL_FALSE;
 			break;
 		case SQL_ATTR_CONNECTION_DEAD:
-			*((SQLUINTEGER *) Value) = SQL_CD_FALSE;
+			if (CC_is_in_trans(conn))
+				*((SQLUINTEGER *) Value) = SQL_CD_FALSE;
+			else if (conn->num_stmts > 0)
+				*((SQLUINTEGER *) Value) = SQL_CD_FALSE;
+			else
+				*((SQLUINTEGER *) Value) = SQL_CD_FALSE;
 			break;
 		case SQL_ATTR_CONNECTION_TIMEOUT:
 			*((SQLUINTEGER *) Value) = 0;
@@ -172,7 +178,7 @@ PGAPI_GetConnectAttr(HDBC ConnectionHandle,
 	return ret;
 }
 
-static HSTMT
+static SQLHDESC
 descHandleFromStatementHandle(HSTMT StatementHandle, SQLINTEGER descType) 
 {
 	switch (descType)
@@ -189,7 +195,7 @@ descHandleFromStatementHandle(HSTMT StatementHandle, SQLINTEGER descType)
 	return (HSTMT) 0;
 }
 static HSTMT
-statementHandleFromDescHandle(HSTMT DescHandle, SQLINTEGER *descType) 
+statementHandleFromDescHandle(SQLHDESC DescHandle, SQLINTEGER *descType) 
 {
 	SQLUINTEGER res = (SQLUINTEGER) DescHandle % 4;
 	if (descType)
@@ -207,6 +213,19 @@ statementHandleFromDescHandle(HSTMT DescHandle, SQLINTEGER *descType)
 		}
 	}
 	return (HSTMT) ((SQLUINTEGER) DescHandle - res);
+}
+
+void	Desc_set_error(SQLHDESC hdesc, int errornumber, const char *errormsg)
+{
+	SQLINTEGER	descType;
+	HSTMT	hstmt = statementHandleFromDescHandle(hdesc, &descType);
+	StatementClass	*stmt;
+
+	if (!hstmt)
+		return;
+	stmt = (StatementClass *) hstmt;
+	stmt->errornumber = errornumber;
+	stmt->errormsg = errormsg; /* should be static */
 }
 
 static  void column_bindings_set(ARDFields *opts, int cols, BOOL maxset)
@@ -568,7 +587,7 @@ IPDSetField(StatementClass *stmt, SQLSMALLINT RecNumber,
 			apdopts->parameters[RecNumber - 1].paramType = (Int2) Value;
 			break;
 		case SQL_DESC_SCALE:
-			apdopts->parameters[RecNumber - 1].scale = (Int2) Value;
+			apdopts->parameters[RecNumber - 1].decimal_digits = (Int2) Value;
 			break;
 		case SQL_DESC_ALLOC_TYPE: /* read-only */ 
 		case SQL_DESC_CASE_SENSITIVE: /* read-only */
@@ -599,7 +618,7 @@ ARDGetField(StatementClass *stmt, SQLSMALLINT RecNumber,
 		SQLINTEGER *StringLength)
 {
 	RETCODE		ret = SQL_SUCCESS;
-	SQLINTEGER	len, ival;
+	SQLINTEGER	len, ival, rettype = 0;
 	PTR		ptr = NULL;
 	const ARDFields	*opts = SC_get_ARD(stmt);
 
@@ -610,9 +629,11 @@ ARDGetField(StatementClass *stmt, SQLSMALLINT RecNumber,
 			ival = opts->rowset_size;
 			break; 
 		case SQL_DESC_ARRAY_STATUS_PTR:
+			rettype = SQL_IS_POINTER;
 			ptr = opts->row_operation_ptr;
 			break;
 		case SQL_DESC_BIND_OFFSET_PTR:
+			rettype = SQL_IS_POINTER;
 			ptr = opts->row_offset_ptr;
 			break;
 		case SQL_DESC_BIND_TYPE:
@@ -651,6 +672,7 @@ ARDGetField(StatementClass *stmt, SQLSMALLINT RecNumber,
 			ival = opts->bindings[RecNumber - 1].returntype;
 			break;
 		case SQL_DESC_DATA_PTR:
+			rettype = SQL_IS_POINTER;
 			if (!RecNumber)
 				ptr = opts->bookmark->buffer;
 			else
@@ -659,6 +681,7 @@ ARDGetField(StatementClass *stmt, SQLSMALLINT RecNumber,
 			}
 			break;
 		case SQL_DESC_INDICATOR_PTR:
+			rettype = SQL_IS_POINTER;
 			if (!RecNumber)
 				ptr = opts->bookmark->used;
 			else
@@ -667,6 +690,7 @@ ARDGetField(StatementClass *stmt, SQLSMALLINT RecNumber,
 			}
 			break;
 		case SQL_DESC_OCTET_LENGTH_PTR:
+			rettype = SQL_IS_POINTER;
 			if (!RecNumber)
 				ptr = opts->bookmark->used;
 			else
@@ -694,24 +718,12 @@ ARDGetField(StatementClass *stmt, SQLSMALLINT RecNumber,
 		default:ret = SQL_ERROR;
 			stmt->errornumber = STMT_INVALID_DESCRIPTOR_IDENTIFIER; 
 	}
-	switch (BufferLength)
+	switch (rettype)
 	{
 		case 0:
 		case SQL_IS_INTEGER:
 			len = 4;
 			*((SQLINTEGER *) Value) = ival;
-			break;
-		case SQL_IS_UINTEGER:
-			len = 4;
-			*((UInt4 *) Value) = ival;
-			break;
-		case SQL_IS_SMALLINT:
-			len = 2;
-			*((SQLSMALLINT *) Value) = (SQLSMALLINT) ival;
-			break;
-		case SQL_IS_USMALLINT:
-			len = 2;
-			*((SQLUSMALLINT *) Value) = (SQLUSMALLINT) ival;
 			break;
 		case SQL_IS_POINTER:
 			len = 4;
@@ -730,7 +742,7 @@ APDGetField(StatementClass *stmt, SQLSMALLINT RecNumber,
 		SQLINTEGER *StringLength)
 {
 	RETCODE		ret = SQL_SUCCESS;
-	SQLINTEGER	ival = 0, len;
+	SQLINTEGER	ival = 0, len, rettype = 0;
 	PTR		ptr = NULL;
 	const APDFields	*opts = SC_get_APD(stmt);
 
@@ -738,12 +750,15 @@ APDGetField(StatementClass *stmt, SQLSMALLINT RecNumber,
 	switch (FieldIdentifier)
 	{
 		case SQL_DESC_ARRAY_SIZE:
+			rettype = SQL_IS_POINTER;
 			ival = opts->paramset_size;
 			break; 
 		case SQL_DESC_ARRAY_STATUS_PTR:
+			rettype = SQL_IS_POINTER;
 			ptr = opts->param_operation_ptr;
 			break;
 		case SQL_DESC_BIND_OFFSET_PTR:
+			rettype = SQL_IS_POINTER;
 			ptr = opts->param_offset_ptr;
 			break;
 		case SQL_DESC_BIND_TYPE:
@@ -783,15 +798,18 @@ APDGetField(StatementClass *stmt, SQLSMALLINT RecNumber,
 			ival = opts->parameters[RecNumber - 1].CType;
 			break;
 		case SQL_DESC_DATA_PTR:
+			rettype = SQL_IS_POINTER;
 			ptr = opts->parameters[RecNumber - 1].buffer;
 			break;
 		case SQL_DESC_INDICATOR_PTR:
+			rettype = SQL_IS_POINTER;
 			ptr = opts->parameters[RecNumber - 1].used;
 			break;
 		case SQL_DESC_OCTET_LENGTH:
 			ival = opts->parameters[RecNumber - 1].buflen;
 			break;
 		case SQL_DESC_OCTET_LENGTH_PTR:
+			rettype = SQL_IS_POINTER;
 			ptr = opts->parameters[RecNumber - 1].used;
 			break;
 		case SQL_DESC_COUNT:
@@ -800,32 +818,20 @@ APDGetField(StatementClass *stmt, SQLSMALLINT RecNumber,
 		case SQL_DESC_ALLOC_TYPE: /* read-only */
 			ival = SQL_DESC_ALLOC_AUTO;
 			break;
+		case SQL_DESC_PRECISION:
+		case SQL_DESC_SCALE:
 		case SQL_DESC_DATETIME_INTERVAL_PRECISION:
 		case SQL_DESC_LENGTH:
 		case SQL_DESC_NUM_PREC_RADIX:
-		case SQL_DESC_PRECISION:
-		case SQL_DESC_SCALE:
 		default:ret = SQL_ERROR;
 			stmt->errornumber = STMT_INVALID_DESCRIPTOR_IDENTIFIER; 
 	}
-	switch (BufferLength)
+	switch (rettype)
 	{
 		case 0:
 		case SQL_IS_INTEGER:
 			len = 4;
 			*((Int4 *) Value) = ival;
-			break;
-		case SQL_IS_UINTEGER:
-			len = 4;
-			*((UInt4 *) Value) = ival;
-			break;
-		case SQL_IS_SMALLINT:
-			len = 2;
-			*((SQLSMALLINT *) Value) = (SQLSMALLINT) ival;
-			break;
-		case SQL_IS_USMALLINT:
-			len = 2;
-			*((SQLUSMALLINT *) Value) = (SQLUSMALLINT) ival;
 			break;
 		case SQL_IS_POINTER:
 			len = 4;
@@ -844,36 +850,33 @@ IRDGetField(StatementClass *stmt, SQLSMALLINT RecNumber,
 		SQLINTEGER *StringLength)
 {
 	RETCODE		ret = SQL_SUCCESS;
-	SQLINTEGER	ival = 0, len;
+	SQLINTEGER	ival = 0, len, rettype = 0;
 	PTR		ptr = NULL;
+	BOOL		bCallColAtt = FALSE;
 	const IRDFields	*opts = SC_get_IRD(stmt);
 
 	switch (FieldIdentifier)
 	{
 		case SQL_DESC_ARRAY_STATUS_PTR:
+			rettype = SQL_IS_POINTER;
 			ptr = opts->rowStatusArray;
 			break;
 		case SQL_DESC_ROWS_PROCESSED_PTR:
+			rettype = SQL_IS_POINTER;
 			ptr = opts->rowsFetched;
 			break;
 		case SQL_DESC_ALLOC_TYPE: /* read-only */
+			ival = SQL_DESC_ALLOC_AUTO;
+			break;
 		case SQL_DESC_COUNT: /* read-only */
 		case SQL_DESC_AUTO_UNIQUE_VALUE: /* read-only */
-		case SQL_DESC_BASE_COLUMN_NAME: /* read-only */
-		case SQL_DESC_BASE_TABLE_NAME: /* read-only */
 		case SQL_DESC_CASE_SENSITIVE: /* read-only */
-		case SQL_DESC_CATALOG_NAME: /* read-only */
 		case SQL_DESC_CONCISE_TYPE: /* read-only */
 		case SQL_DESC_DATETIME_INTERVAL_CODE: /* read-only */
 		case SQL_DESC_DATETIME_INTERVAL_PRECISION: /* read-only */
 		case SQL_DESC_DISPLAY_SIZE: /* read-only */
 		case SQL_DESC_FIXED_PREC_SCALE: /* read-only */
-		case SQL_DESC_LABEL: /* read-only */
 		case SQL_DESC_LENGTH: /* read-only */
-		case SQL_DESC_LITERAL_PREFIX: /* read-only */
-		case SQL_DESC_LITERAL_SUFFIX: /* read-only */
-		case SQL_DESC_LOCAL_TYPE_NAME: /* read-only */
-		case SQL_DESC_NAME: /* read-only */
 		case SQL_DESC_NULLABLE: /* read-only */
 		case SQL_DESC_NUM_PREC_RADIX: /* read-only */
 		case SQL_DESC_OCTET_LENGTH: /* read-only */
@@ -882,18 +885,40 @@ IRDGetField(StatementClass *stmt, SQLSMALLINT RecNumber,
 		case SQL_DESC_ROWVER: /* read-only */
 #endif /* ODBCVER */
 		case SQL_DESC_SCALE: /* read-only */
-		case SQL_DESC_SCHEMA_NAME: /* read-only */
 		case SQL_DESC_SEARCHABLE: /* read-only */
-		case SQL_DESC_TABLE_NAME: /* read-only */
 		case SQL_DESC_TYPE: /* read-only */
-		case SQL_DESC_TYPE_NAME: /* read-only */
 		case SQL_DESC_UNNAMED: /* read-only */
 		case SQL_DESC_UNSIGNED: /* read-only */
 		case SQL_DESC_UPDATABLE: /* read-only */
+			bCallColAtt = TRUE;
+			break;
+		case SQL_DESC_BASE_COLUMN_NAME: /* read-only */
+		case SQL_DESC_BASE_TABLE_NAME: /* read-only */
+		case SQL_DESC_CATALOG_NAME: /* read-only */
+		case SQL_DESC_LABEL: /* read-only */
+		case SQL_DESC_LITERAL_PREFIX: /* read-only */
+		case SQL_DESC_LITERAL_SUFFIX: /* read-only */
+		case SQL_DESC_LOCAL_TYPE_NAME: /* read-only */
+		case SQL_DESC_NAME: /* read-only */
+		case SQL_DESC_SCHEMA_NAME: /* read-only */
+		case SQL_DESC_TABLE_NAME: /* read-only */
+		case SQL_DESC_TYPE_NAME: /* read-only */
+			rettype = SQL_NTS;
+			bCallColAtt = TRUE;
+			break; 
 		default:ret = SQL_ERROR;
 			stmt->errornumber = STMT_INVALID_DESCRIPTOR_IDENTIFIER; 
 	}
-	switch (BufferLength)
+	if (bCallColAtt)
+	{
+		SQLSMALLINT	pcbL;
+
+		ret = PGAPI_ColAttributes(stmt, RecNumber,
+			FieldIdentifier, Value, (SQLSMALLINT) BufferLength,
+				&pcbL, &ival);
+		len = pcbL;
+	} 
+	switch (rettype)
 	{
 		case 0:
 		case SQL_IS_INTEGER:
@@ -903,14 +928,6 @@ IRDGetField(StatementClass *stmt, SQLSMALLINT RecNumber,
 		case SQL_IS_UINTEGER:
 			len = 4;
 			*((UInt4 *) Value) = ival;
-			break;
-		case SQL_IS_SMALLINT:
-			len = 2;
-			*((SQLSMALLINT *) Value) = (SQLSMALLINT) ival;
-			break;
-		case SQL_IS_USMALLINT:
-			len = 2;
-			*((SQLUSMALLINT *) Value) = (SQLUSMALLINT) ival;
 			break;
 		case SQL_IS_POINTER:
 			len = 4;
@@ -929,7 +946,7 @@ IPDGetField(StatementClass *stmt, SQLSMALLINT RecNumber,
 		SQLINTEGER *StringLength)
 {
 	RETCODE		ret = SQL_SUCCESS;
-	SQLINTEGER	ival = 0, len;
+	SQLINTEGER	ival = 0, len, rettype = 0;
 	PTR		ptr = NULL;
 	const IPDFields	*ipdopts = SC_get_IPD(stmt);
 	const APDFields	*apdopts = SC_get_APD(stmt);
@@ -937,9 +954,11 @@ IPDGetField(StatementClass *stmt, SQLSMALLINT RecNumber,
 	switch (FieldIdentifier)
 	{
 		case SQL_DESC_ARRAY_STATUS_PTR:
+			rettype = SQL_IS_POINTER;
 			ptr = ipdopts->param_status_ptr;
 			break;
 		case SQL_DESC_ROWS_PROCESSED_PTR:
+			rettype = SQL_IS_POINTER;
 			ptr = ipdopts->param_processed_ptr;
 			break;
 		case SQL_DESC_UNNAMED: /* only SQL_UNNAMED is allowed */
@@ -981,8 +1000,24 @@ IPDGetField(StatementClass *stmt, SQLSMALLINT RecNumber,
 		case SQL_DESC_PARAMETER_TYPE:
 			ival = apdopts->parameters[RecNumber - 1].paramType;
 			break;
+		case SQL_DESC_PRECISION:
+			switch (apdopts->parameters[RecNumber - 1].CType)
+			{
+				case SQL_C_TYPE_DATE:
+				case SQL_C_TYPE_TIME:
+				case SQL_C_TYPE_TIMESTAMP:
+				case SQL_DATETIME:
+					ival = apdopts->parameters[RecNumber - 1].decimal_digits;
+					break;
+			}
+			break;
 		case SQL_DESC_SCALE:
-			ival = apdopts->parameters[RecNumber - 1].scale ;
+			switch (apdopts->parameters[RecNumber - 1].CType)
+			{
+				case SQL_C_NUMERIC:
+					ival = apdopts->parameters[RecNumber - 1].decimal_digits;
+					break;
+			}
 			break;
 		case SQL_DESC_ALLOC_TYPE: /* read-only */
 			ival = SQL_DESC_ALLOC_AUTO;
@@ -996,7 +1031,6 @@ IPDGetField(StatementClass *stmt, SQLSMALLINT RecNumber,
 		case SQL_DESC_NULLABLE: /* read-only */
 		case SQL_DESC_NUM_PREC_RADIX:
 		case SQL_DESC_OCTET_LENGTH:
-		case SQL_DESC_PRECISION:
 #if (ODBCVER >= 0x0350)
 		case SQL_DESC_ROWVER: /* read-only */
 #endif /* ODBCVER */
@@ -1005,24 +1039,12 @@ IPDGetField(StatementClass *stmt, SQLSMALLINT RecNumber,
 		default:ret = SQL_ERROR;
 			stmt->errornumber = STMT_INVALID_DESCRIPTOR_IDENTIFIER; 
 	}
-	switch (BufferLength)
+	switch (rettype)
 	{
 		case 0:
 		case SQL_IS_INTEGER:
 			len = 4;
 			*((Int4 *) Value) = ival;
-			break;
-		case SQL_IS_UINTEGER:
-			len = 4;
-			*((UInt4 *) Value) = ival;
-			break;
-		case SQL_IS_SMALLINT:
-			len = 2;
-			*((SQLSMALLINT *) Value) = (SQLSMALLINT) ival;
-			break;
-		case SQL_IS_USMALLINT:
-			len = 2;
-			*((SQLUSMALLINT *) Value) = (SQLUSMALLINT) ival;
 			break;
 		case SQL_IS_POINTER:
 			len = 4;
