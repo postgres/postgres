@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/ref/create_rule.sgml,v 1.12 2000/04/07 17:35:08 momjian Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/ref/create_rule.sgml,v 1.13 2000/04/07 17:37:24 momjian Exp $
 Postgres documentation
 -->
 
@@ -70,7 +70,7 @@ CREATE RULE <replaceable class="parameter">name</replaceable> AS ON <replaceable
       <term><replaceable class="parameter">condition</replaceable></term>
       <listitem>
        <para>
-	Any SQL WHERE clause. <literal>new</literal> or
+	Any SQL WHERE clause, <literal>new</literal> or
 	<literal>current</literal> can appear instead of an instance
 	variable whenever an instance variable is permissible in SQL.
        </para>
@@ -80,7 +80,7 @@ CREATE RULE <replaceable class="parameter">name</replaceable> AS ON <replaceable
       <term><replaceable class="parameter">action</replaceable></term>
       <listitem>
        <para>
-	Any SQL statement. <literal>new</literal> or
+	Any SQL statement, <literal>new</literal> or
 	<literal>current</literal> can appear instead of an instance
 	variable whenever an instance variable is permissible in SQL.
        </para>
