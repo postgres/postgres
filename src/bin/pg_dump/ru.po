@@ -1,11 +1,11 @@
 # PG_DUMP Translated Messages in Russian Language (KOI8-R)
-# Serguei A. Mokhov <stgunya@yahoo.com>, September 2001.
+# Serguei A. Mokhov <stgunya@yahoo.com>, September-October 2001.
 #
 msgid ""
 msgstr ""
 "Project-Id-Version: PostgreSQL 7.2\n"
 "POT-Creation-Date: 2001-09-06 13:50+0200\n"
-"PO-Revision-Date: 2001-09-15 20:38-0500\n"
+"PO-Revision-Date: 2001-10-07 14:03-0500\n"
 "Last-Translator: Serguei A. Mokhov <stgunya@yahoo.com>\n"
 "Language-Team: Serguei A. Mokhov <stgunya@yahoo.com>\n"
 "MIME-Version: 1.0\n"
@@ -76,18 +76,18 @@ msgstr ""
 "  -a, --data-only          выгрузить только данные, без схемы\n"
 "  -b, --blobs              включить также BLOB-данные в выгрузку\n"
 "  -c, --clean              очистить (сбросить) схему перед созданием\n"
-"  -C, --create             include commands to create database in dump\n"
+"  -C, --create             включить в выгрузку команды создания базы данных\n"
 "  -d, --inserts            выгрузить данные как набор INSERT команд вместо COPY\n"
-"  -D, --column-inserts     выгрузить данные как набор INSERT команд with с именами полей\n"
+"  -D, --column-inserts     выгрузить данные как набор INSERT команд с именами полей\n"
 "  -f, --file=FILENAME      имя выходного файла\n"
-"  -F, --format {c|t|p}     формат выходного файла (custom, tar, plain text)\n"
-"  -h, --host=HOSTNAME      имя хоста сервера баз данных \n"
+"  -F, --format {c|t|p}     формат выходного файла (пользовательский, tar, plain text)\n"
+"  -h, --host=HOSTNAME      имя хоста сервера баз данных\n"
 "  -i, --ignore-version     продолжить даже если версия сервера не совпадает с\n"
 "                           версией pg_dump\n"
 "  -n, --no-quotes          подавить использование большинства кавычек вокруг идентификаторов\n"
 "  -N, --quotes             включить использование большинства кавычек вокруг идентификаторов\n"
 "  -o, --oids               включить OIDs в выгрузку\n"
-"  -O, --no-owner           не выводить \\connect команды в формате \n"
+"  -O, --no-owner           не выводить \\connect команды в формате\n"
 "                           plain text\n"
 "  -p, --port=PORT          номер порта сервера баз данных\n"
 "  -R, --no-reconnect       отключить ВСЕ подсоединения к базе данных\n"
@@ -98,7 +98,7 @@ msgstr ""
 "  -t, --table=TABLE        выгрузить только указанную таблицу (* для всех таблиц)\n"
 "  -U, --username=NAME      подсоединиться как указанный пользователь\n"
 "  -v, --verbose            режим вывода всех сообщений\n"
-"  -W, --password           принуждённый запрос пароля (должен происхдить "
+"  -W, --password           принуждённый запрос пароля (должен происходить "
 "автоматически)\n"
 "  -x, --no-privileges      не выгружать привилегии (grant/revoke)\n"
 "  -X use-set-session-authorization, --use-set-session-authorization\n"
@@ -141,6 +141,38 @@ msgid ""
 "                           than \\connect commands\n"
 "  -Z {0-9}                 compression level for compressed formats\n"
 msgstr ""
+"  -a                       выгрузить только данные без схемы\n"
+"  -b                       включить BLOB-данные в выгрузку\n"
+"  -c                       очистить (сбросить) схему перед созданием\n"
+"  -C                       включить в выгрузку команды создания базы данных\n"
+"  -d                       выгрузить данные как набор INSERT команд вместо COPY\n"
+"  -D                       выгрузить данные как набор INSERT команд с именами полей\n"
+"  -f FILENAME              имя выходного файла\n"
+"  -F {c|t|p}               формат выходного файла (пользовательский, tar, plain text)\n"
+"  -h HOSTNAME              имя хоста сервера баз данных\n"
+"  -i                       продолжить даже если версия сервера не совпадает с\n"
+"                           версией pg_dump\n"
+"  -n                       подавить использование большинства кавычек вокруг идентификаторов\n"
+"  -N                       включить использование большинства кавычек вокруг идентификаторов\n"
+"  -o                       включить OIDs в выгрузку\n"
+"  -O                       не выводить \\connect команды в формате\n"
+"                           plain text\n"
+"  -p                       PORT номер порта сервера баз данных\n"
+"  -R                       отключить ВСЕ подсоединения к базе данных\n"
+"                           в формате plain text\n"
+"  -s                       выгрузить только схему без данных\n"
+"  -S NAME                  указать имя пользователя для superuser при использовании\n"
+"                           формата plain text\n"
+"  -t TABLE                 выгрузить только указанную таблицу (* для всех таблиц)\n"
+"  -U NAME                  подсоединиться как указанный пользователь\n"
+"  -v                       режим вывода всех сообщений\n"
+"  -W                       принуждённый запрос пароля (должен происходить "
+"автоматически)\n"
+"  -x                       не выгружать привилегии (grant/revoke)\n"
+"  -X use-set-session-authorization\n"
+"                           вывести SET SESSION AUTHORIZATION команды\n"
+"                           вместо \\connect команд\n"
+"  -Z {0-9}                 уровень сжатия для компрессированных форматов\n"
 
 #: pg_dump.c:210
 msgid ""
@@ -149,41 +181,45 @@ msgid ""
 "\n"
 "Report bugs to <pgsql-bugs@postgresql.org>."
 msgstr ""
+"Если имя базы данных не указано, тогда значение переменной\n"
+"окружения PGDATABASE будет использоваться.\n"
+"\n"
+"Сообщать об ошибках: <pgsql-bugs@postgresql.org>."
 
 #: pg_backup_archiver.c:1269 pg_dump.c:221
 msgid "*** aborted because of error\n"
-msgstr ""
+msgstr "*** аварийное завершение из-за ошибки\n"
 
 #: pg_dump.c:249
 #, c-format
 msgid "dumping out the contents of table %s\n"
-msgstr ""
+msgstr "выгружается содержание таблици %s\n"
 
 #: pg_dump.c:282
 #, c-format
 msgid "SQL command to dump the contents of table \"%s\" failed\n"
-msgstr ""
+msgstr "SQL-команда по выгрузке содержимого таблицы \"%s\" не удалась\n"
 
 #: pg_dump.c:284 pg_dump.c:380 pg_dump.c:413 pg_dump.c:426 pg_dump.c:496
 #: pg_dump.c:1158
 #, c-format
 msgid "Error message from server: %s"
-msgstr ""
+msgstr "Сообщение об ошибке с сервера: %s"
 
 #: pg_dump.c:285 pg_dump.c:296 pg_dump.c:381 pg_dump.c:414 pg_dump.c:1159
 #, c-format
 msgid "The command was: %s\n"
-msgstr ""
+msgstr "Команда была: %s\n"
 
 #: pg_dump.c:292
 #, c-format
 msgid "SQL command to dump the contents of table \"%s\" executed abnormally.\n"
-msgstr ""
+msgstr "SQL-команда по выгрузке содержимого таблицы \"%s\" выполнилась ненормально.\n"
 
 #: pg_dump.c:294
 #, c-format
 msgid "The server returned status %d when %d was expected.\n"
-msgstr ""
+msgstr "Сервер вернул статус %d в то время как ожидалось %d.\n"
 
 #: pg_dump.c:379
 #, c-format
@@ -191,51 +227,53 @@ msgid ""
 "SQL command to dump the contents of table \"%s\" failed: PQendcopy() "
 "failed.\n"
 msgstr ""
+"SQL-команда по выгрузке содержимого таблицы \"%s\" не удалась: PQendcopy() "
+"выполнилась ненормально.\n"
 
 #: pg_dump.c:412 pg_dump.c:425 pg_dump.c:495
 msgid "dumpClasses(): SQL command failed\n"
-msgstr ""
+msgstr "dumpClasses():SQL-команда не удалась\n"
 
 #: pg_dump.c:427
 msgid "The command was: FETCH 100 FROM _pg_dump_cursor\n"
-msgstr ""
+msgstr "Команда была: FETCH 100 FROM _pg_dump_cursor\n"
 
 #: pg_dump.c:497
 msgid "The command was: CLOSE _pg_dump_cursor\n"
-msgstr ""
+msgstr "Команда была: CLOSE _pg_dump_cursor\n"
 
 #: pg_dump.c:564
 #, c-format
 msgid "preparing to dump the contents of all %d tables/sequences\n"
-msgstr ""
+msgstr "идёт подготовка к выгрузке содержимого всех %d таблиц/последовательностей\n"
 
 #: pg_dump.c:566
 msgid "preparing to dump the contents of only one table/sequence\n"
-msgstr ""
+msgstr "идёт подготовка к выгрузке содержимого только одной таблицы/последовательности\n"
 
 #: pg_dump.c:583
 #, c-format
 msgid "preparing to dump the contents of table %s\n"
-msgstr ""
+msgstr "идёт подготовка к выгрузке содержимого таблицы %s\n"
 
 #: pg_backup_db.c:131 pg_dump.c:630
 #, c-format
 msgid "unable to parse version string \"%s\"\n"
-msgstr ""
+msgstr "не в состоянии анализировать строку с номером версии \"%s\"\n"
 
 #: pg_dump.c:874 pg_restore.c:258
 msgid "User name: "
-msgstr ""
+msgstr "Имя пользователя: "
 
 #: pg_dump.c:907 pg_restore.c:283
 #, c-format
 msgid "%s: invalid -X option -- %s\n"
-msgstr ""
+msgstr "%s: неверная опция -X -- %s\n"
 
 #: pg_dump.c:909 pg_dump.c:931 pg_restore.c:285 pg_restore.c:297
 #, c-format
 msgid "Try '%s --help' for more information.\n"
-msgstr ""
+msgstr "Наберите '%s --help' для более подробной информации.\n"
 
 #: pg_dump.c:920
 #, c-format
@@ -243,6 +281,8 @@ msgid ""
 "%s was compiled without support for long options.\n"
 "Use --help for help on invocation options.\n"
 msgstr ""
+"%s был скомпилирован без поддержки длинны опций.\n"
+"Используйте --help для подсказки по вызову различных опций.\n"
 
 #: pg_dump.c:939
 #, c-format
@@ -250,60 +290,64 @@ msgid ""
 "%s: too many command line options (first is '%s')\n"
 "Try '%s --help' for more information.\n"
 msgstr ""
+"%s: слишком много опций командной строки (первая: '%s')\n"
+"Наберите '%s --help' для более подробной информации.\n"
 
 #: pg_backup_db.c:372 pg_dump.c:952
 msgid "no database name specified\n"
-msgstr ""
+msgstr "имя базы данных не указано\n"
 
 #: pg_dump.c:958
 msgid ""
 "The options \"schema only\" (-s) and \"data only\" (-a) cannot be used "
 "together.\n"
 msgstr ""
+"Опции \"только схема\" (-s) и \"только данные\" (-a) не могут "
+"использоваться вместе.\n"
 
 #: pg_dump.c:964
 msgid "BLOB output is not supported for a single table.\n"
-msgstr ""
+msgstr "Вывод BLOB не поддерживается для одной таблицы.\n"
 
 #: pg_dump.c:965
 msgid "Use all tables or a full dump instead.\n"
-msgstr ""
+msgstr "Вместо этого используйте выгрузку всех таблиц или полную выгрузку.\n"
 
 #: pg_dump.c:971
 msgid "INSERT (-d, -D) and OID (-o) options cannot be used together.\n"
-msgstr ""
+msgstr "Опции INSERT (-d, -D) и OID (-o) не могут использоваться вместе.\n"
 
 #: pg_dump.c:972
 msgid "(The INSERT command cannot set oids.)\n"
-msgstr ""
+msgstr "(Команда INSERT не может задавать OID.)\n"
 
 #: pg_dump.c:978
 msgid "BLOB output is not supported for plain text dump files.\n"
-msgstr ""
+msgstr "Вывод BLOB не поддерживается для текстовых файлов выгрузки.\n"
 
 #: pg_dump.c:979
 msgid "(Use a different output format.)\n"
-msgstr ""
+msgstr "(Используйте другой формат выгрузки.)\n"
 
 #: pg_dump.c:1009
 #, c-format
 msgid "invalid output format '%s' specified\n"
-msgstr ""
+msgstr "неверный формат вывода указан: '%s'\n"
 
 #: pg_dump.c:1015
 #, c-format
 msgid "could not open output file %s for writing\n"
-msgstr ""
+msgstr "не получилось открыть файл вывода %s для записи\n"
 
 #: pg_dump.c:1038
 #, c-format
 msgid "BEGIN command failed: %s"
-msgstr ""
+msgstr "Команда BEGIN не удалась: %s"
 
 #: pg_dump.c:1044
 #, c-format
 msgid "could not set transaction isolation level to serializable: %s"
-msgstr ""
+msgstr "не получилось установить уровень изоляции транзакций в сериализуемый: %s"
 
 #: pg_dump.c:1063
 #, c-format
