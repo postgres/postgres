@@ -67,9 +67,13 @@ static Datum aggGetAttr(TupleTableSlot *tuple, Aggref *aggref, bool *isNull);
  *		 value1[i] = initcond1
  *		 value2[i] = initcond2
  *		 forall tuples do
- *			value1[i] = sfunc1(aggregate_attribute, value1[i])
+ *			value1[i] = sfunc1(value1[i], aggregated_value)
  *			value2[i] = sfunc2(value2[i])
  *		 value1[i] = finalfunc(value1[i], value2[i])
+ *
+ *	  If initcond1 is NULL then the first non-NULL aggregated_value is
+ *	  assigned directly to value1[i].  sfunc1 isn't applied until value1[i]
+ *	  is non-NULL.
  *
  *	  If the outer subplan is a Group node, ExecAgg returns as many tuples
  *	  as there are groups.
@@ -272,7 +276,6 @@ ExecAgg(Agg *node)
 			{
 				Aggref	   *aggref = lfirst(alist);
 				AttrNumber	attnum;
-				int2		attlen = 0;
 				Datum		newVal = (Datum) NULL;
 				AggFuncInfo *aggfns = &aggFuncInfo[++aggno];
 				Datum		args[2];
@@ -309,6 +312,7 @@ ExecAgg(Agg *node)
 				{
 					if (noInitValue[aggno])
 					{
+						int			attlen = 0;
 						int			byVal = 0;
 
 						/*
@@ -352,16 +356,16 @@ ExecAgg(Agg *node)
 							default:
 								elog(ERROR, "ExecAgg: Bad Agg->Target for Agg %d", aggno);
 						}
-						if (attlen == -1)
-						{
-							/* variable length */
-							attlen = VARSIZE((struct varlena *) newVal);
-						}
-						value1[aggno] = (Datum) palloc(attlen);
 						if (byVal)
 							value1[aggno] = newVal;
 						else
-							memmove((char *) (value1[aggno]), (char *) newVal, attlen);
+						{
+							if (attlen == -1) /* variable length */
+								attlen = VARSIZE((struct varlena *) newVal);
+							value1[aggno] = (Datum) palloc(attlen);
+							memcpy((char *) (value1[aggno]), (char *) newVal,
+								   attlen);
+						}
 						noInitValue[aggno] = 0;
 						nulls[aggno] = 0;
 					}
@@ -380,10 +384,9 @@ ExecAgg(Agg *node)
 
 				if (aggfns->xfn2.fn_addr != NULL)
 				{
-					Datum		xfn2_val = value2[aggno];
-
+					args[0] = value2[aggno];
 					value2[aggno] =	(Datum) fmgr_c(&aggfns->xfn2,
-									 (FmgrValues *) &xfn2_val, &isNull2);
+									 (FmgrValues *) args, &isNull2);
 					Assert(!isNull2);
 				}
 			}
