@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/Attic/plsql.sgml,v 2.46 2001/11/08 23:41:12 petere Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/Attic/plsql.sgml,v 2.47 2001/11/15 06:25:22 tgl Exp $
 -->
 
 <chapter id="plpgsql"> 
@@ -62,27 +62,32 @@ $Header: /cvsroot/pgsql/doc/src/sgml/Attic/plsql.sgml,v 2.46 2001/11/08 23:41:12
    <para>
     The <application>PL/pgSQL</> call handler parses the function's source text and
     produces an internal binary instruction tree the first time the
-    function is called. The produced bytecode is identified
-    in the call handler by the object ID of the function. This ensures
-    that changing a function by a DROP/CREATE sequence will take effect
-    without establishing a new database connection. 
+    function is called.  The instruction tree fully translates the
+    <application>PL/pgSQL</> statement structure, but individual
+    <acronym>SQL</acronym> expressions and <acronym>SQL</acronym> queries
+    used in the function are not translated immediately.
    </para>
    <para>
-    For all expressions and <acronym>SQL</acronym> statements used in
-    the function, the <application>PL/pgSQL</> bytecode interpreter creates a
-    prepared execution plan using the <acronym>SPI</acronym> manager's 
-    <function>SPI_prepare()</function> and
-    <function>SPI_saveplan()</function> functions. This is done the 
-    first time the individual
-    statement is processed in the <application>PL/pgSQL</> function. Thus, a function with
-    conditional code that contains many statements for which execution
-    plans would be required, will only prepare and save those plans
+    As each expression and <acronym>SQL</acronym> query is first used
+    in the function, the <application>PL/pgSQL</> interpreter creates a
+    prepared execution plan (using the <acronym>SPI</acronym> manager's 
+    <function>SPI_prepare</function> and
+    <function>SPI_saveplan</function> functions).  Subsequent visits
+    to that expression or query re-use the prepared plan.  Thus, a function
+    with conditional code that contains many statements for which execution
+    plans might be required, will only prepare and save those plans
     that are really used during the lifetime of the database
-    connection.
+    connection.  This can provide a considerable savings of parsing
+    activity.  A disadvantage is that errors in a specific expression
+    or query may not be detected until that part of the function is
+    reached in execution.
    </para>
   <para>
-  This means that you have to be careful about your user-defined
-  functions. For example:
+   Once <application>PL/pgSQL</> has made a query plan for a particular
+   query in a function, it will re-use that plan for the life of the
+   database connection.  This is usually a win for performance, but it
+   can cause some problems if you dynamically
+   alter your database schema. For example:
 
 <programlisting>
 CREATE FUNCTION populate() RETURNS INTEGER AS '
@@ -93,12 +98,14 @@ BEGIN
 END;
 ' LANGUAGE 'plpgsql';
 </programlisting>
-    If you create the above function, it will reference the OID for
-    <function>my_function()</function> in its bytecode. Later, if you
+    If you execute the above function, it will reference the OID for
+    <function>my_function()</function> in the query plan produced for
+    the PERFORM statement. Later, if you
     drop and re-create <function>my_function()</function>, then
     <function>populate()</function> will not be able to find
     <function>my_function()</function> anymore. You would then have to
-    re-create <function>populate()</function>.
+    re-create <function>populate()</function>, or at least start a new
+    database session so that it will be compiled afresh.
    </para>
 
    <para>
@@ -155,8 +162,8 @@ END;
      That means that your client application must send each
      query to the database server, wait for it to process it,
      receive the results, do some computation, then send
-     other queries to the server. All this incurs inter
-     process communication and may also incur network
+     other queries to the server. All this incurs inter-process communication
+     and may also incur network
      overhead if your client is on a different machine than
      the database server.
     </para>
@@ -167,8 +174,8 @@ END;
      database server, thus having the power of a procedural
      language and the ease of use of SQL, but saving lots of
      time because you don't have the whole client/server
-     communication overhead. Your application will enjoy a
-     considerable performance increase by using <application>PL/pgSQL</application>. 
+     communication overhead. This can make for a
+     considerable performance increase.
     </para>
    </sect3>
 
@@ -222,14 +229,12 @@ END;
     One good way to develop in <application>PL/pgSQL</> is to simply use the text
     editor of your choice to create your functions, and in another
     console, use <command>psql</command> (PostgreSQL's interactive monitor) to load
-    those functions. If you are doing it this way (and if you are
-    a <application>PL/pgSQL</> novice or in debugging stage), it is a good idea to 
-    always <command>DROP</command> your function before creating it. That way
-    when you reload the file, it'll drop your functions and then
-    re-create them. For example:
+    those functions. If you are doing it this way, it is a good
+    idea to write the function using <command>CREATE OR REPLACE
+    FUNCTION</command>. That way you can reload the file to update
+    the function definition.  For example:
 <programlisting>
-DROP FUNCTION testfunc(integer);
-CREATE FUNCTION testfunc(INTEGER) RETURNS INTEGER AS '
+CREATE OR REPLACE FUNCTION testfunc(INTEGER) RETURNS INTEGER AS '
     ....
 end;
 ' LANGUAGE 'plpgsql';
@@ -237,13 +242,12 @@ end;
    </para>
 
    <para>
-    When you load the file for the first time,
-    <productname>PostgreSQL</> will raise a warning saying this
-    function doesn't exist and go on to create it. To load an SQL
-    file (e.g., <filename>filename.sql</filename>) into a database named <literal>dbname</literal>, use the command:
+    While running <command>psql</command>, you can load or reload such a
+    function definition file with
 <programlisting>
-psql -f filename.sql dbname
+    \i filename.sql
 </programlisting>
+    and then immediately issue SQL commands to test the function.
    </para>
 
    <para>
@@ -255,25 +259,18 @@ psql -f filename.sql dbname
   </sect2>
  </sect1>
 
-  <!-- **** PL/pgSQL Description **** -->
-
-  <sect1 id="plpgsql-description">
-   <title>Description</title>
-
-   <!-- **** PL/pgSQL structure **** -->
-
-   <sect2>
-    <title>Structure of <application>PL/pgSQL</application></title>
+ <sect1 id="plpgsql-structure">
+  <title>Structure of <application>PL/pgSQL</application></title>
 
     <para>
-     <application>PL/pgSQL</application> is a <emphasis>block structured</emphasis> language. All
-     keywords and identifiers can be used in mixed upper and
-     lower-case. A block is defined as:
+     <application>PL/pgSQL</application> is a <emphasis>block
+     structured</emphasis> language.  The complete text of a function
+     definition must be a <firstterm>block</>. A block is defined as:
 
 <synopsis>
-<optional>&lt;&lt;label&gt;&gt;</optional>
-<optional>DECLARE
-    <replaceable>declarations</replaceable></optional>
+<optional> &lt;&lt;label&gt;&gt; </optional>
+<optional> DECLARE
+    <replaceable>declarations</replaceable> </optional>
 BEGIN
     <replaceable>statements</replaceable>
 END;
@@ -281,9 +278,10 @@ END;
     </para>
 
     <para>
-     There can be any number of sub-blocks in the statement section
-     of a block. Sub-blocks can be used to hide variables from outside a
-     block of statements.
+     Any <firstterm>statement</> in the statement section of a block
+     can be a <firstterm>sub-block</>.  Sub-blocks can be used for
+     logical grouping or to localize variables to a small group
+     of statements.
     </para>
 
     <para>
@@ -323,10 +321,14 @@ END;
      --- they cannot start or commit transactions, since
      <productname>Postgres</productname> does not have nested transactions.
     </para>
-   </sect2>
 
    <sect2>
-    <title>Comments</title>
+    <title>Lexical Details</title>
+
+    <para>
+     All keywords and identifiers can be used in mixed upper and
+     lower-case.
+    </para>
 
     <para>
      There are two types of comments in <application>PL/pgSQL</>. A double dash <literal>--</literal>
@@ -337,23 +339,23 @@ END;
      the block comment delimiters <literal>/*</literal> and <literal>*/</literal>.
     </para>
    </sect2>
+  </sect1>
 
-   <!-- **** PL/pgSQL Variables and Constants **** -->
-   <sect2>
-    <title>Variables and Constants</title>
+  <sect1 id="plpgsql-declarations">
+    <title>Declarations</title>
 
     <para>
-     All variables, rows and records used in a block or its
-     sub-blocks must be declared in the declarations section of a block.
-     The exception being the loop variable of a FOR loop iterating over a range
-     of integer values. 
+     All variables, rows and records used in a block must be declared in the
+     declarations section of the block. 
+     (The only exception is that the loop variable of a FOR loop iterating
+     over a range of integer values is automatically declared as an integer
+     variable.)
     </para>
 
     <para>
      <application>PL/pgSQL</> variables can have any SQL data type, such as
      <type>INTEGER</type>, <type>VARCHAR</type> and
-     <type>CHAR</type>. All variables have as default value the
-     <acronym>SQL</acronym> NULL value. 
+     <type>CHAR</type>.
     </para>
 
     <para>
@@ -365,44 +367,48 @@ url VARCHAR;
 </programlisting>
     </para>
 
-    <sect3 id="plpgsql-description-default-vars">
-     <title>Constants and Variables With Default Values</title>
-
-     <para>
-      The declarations have the following syntax:
+    <para>
+     The general syntax of a variable declaration is:
 <synopsis>
-<replaceable>name</replaceable> <optional> CONSTANT </optional> <replaceable>type</replaceable> <optional> NOT NULL </optional> <optional> { DEFAULT | := } <replaceable>value</replaceable> </optional>;
+<replaceable>name</replaceable> <optional> CONSTANT </optional> <replaceable>type</replaceable> <optional> NOT NULL </optional> <optional> { DEFAULT | := } <replaceable>expression</replaceable> </optional>;
 </synopsis>
      </para>
 
      <para>
-      The value of variables declared as CONSTANT cannot be changed. If NOT NULL
-      is specified, an assignment of a NULL value results in a runtime
-      error. Since the default value of all variables is the
-      <acronym>SQL</acronym> NULL value, all variables declared as NOT NULL
-      must also have a default value specified.
+      The DEFAULT clause, if given, specifies the initial value assigned
+      to the variable when the block is entered.  If the DEFAULT clause
+      is not given then the variable is initialized to the
+     <acronym>SQL</acronym> NULL value. 
      </para>
 
      <para>
-      The default value is evaluated every time the function is called. So
-      assigning '<literal>now</literal>' to a variable of type
+      The CONSTANT option prevents the variable from being assigned to,
+      so that its value remains constant for the duration of the block.
+      If NOT NULL
+      is specified, an assignment of a NULL value results in a runtime
+      error. All variables declared as NOT NULL
+      must have a non-NULL default value specified.
+     </para>
+
+     <para>
+      The default value is evaluated every time the function is called. So,
+      for example, assigning '<literal>now</literal>' to a variable of type
       <type>timestamp</type> causes the variable to have the
-      time of the actual function call, not when the function was
-      precompiled into its bytecode.
+      time of the current function call, not when the function was
+      precompiled.
      </para>
 
      <para>
       Examples:
 <programlisting>
-quantity INTEGER := 32;
+quantity INTEGER DEFAULT 32;
 url varchar := ''http://mysite.com'';
 user_id CONSTANT INTEGER := 10;
 </programlisting>
      </para>
-    </sect3>
 
-    <sect3 id="plpgsql-description-passed-vars">
-     <title>Parameters Passed to Functions</title>
+    <sect2 id="plpgsql-declaration-aliases">
+     <title>Aliases for Parameters Passed to Functions</title>
 
      <para>
       Parameters passed to functions are named with the identifiers
@@ -429,9 +435,64 @@ END;
 ' LANGUAGE 'plpgsql';
 </programlisting>
      </para>
-    </sect3>
+    </sect2>
 
-    <sect3 id="plpgsql-description-attributes">
+    <sect2 id="plpgsql-declaration-rowtypes">
+     <title>Rowtypes</title>
+
+    <para>
+<synopsis>
+<replaceable>name</replaceable> <replaceable>table-datatype</replaceable>;
+</synopsis>
+    </para>
+
+   <para>
+    A variable declared with a composite type (referenced by the name of
+    the table that defines that type) is called a <firstterm>row</>
+    variable.  Such a variable can hold a whole row of a SELECT or FOR
+    query result, so long as that query's column set matches the declared
+    rowtype of the variable.  The individual fields of the row value are
+    accessed using the usual dot notation, for example
+    <literal>rowvar.field</literal>.
+   </para>
+
+   <para>
+    Parameters to a function can be
+    composite types (complete table rows). In that case, the
+    corresponding identifier $n will be a row variable, and fields can
+    be selected from it, for example <literal>$1.user_id</literal>.
+   </para>
+
+   <para>
+    Only the user-defined attributes of a table row are accessible in a
+    rowtype variable, not OID or other system attributes (because the
+    row could be from a view).  The fields of the rowtype inherit the
+    table's field size or precision for data types such as
+    <type>char(n)</type>.
+   </para>
+  </sect2>
+
+    <sect2 id="plpgsql-declaration-records">
+     <title>Records</title>
+
+    <para>
+<synopsis>
+<replaceable>name</replaceable> RECORD;
+</synopsis>
+    </para>
+
+   <para>
+    Record variables are similar to rowtype variables, but they have no
+    predefined structure.  They take on the actual row structure of the
+    row they are assigned during a SELECT or FOR command.  The substructure
+    of a record variable can change each time it is assigned to.
+    A consequence of this is that until a record variable is first assigned
+    to, <emphasis>it has no</> substructure, and any attempt to access a
+    field in it will draw a runtime error.
+   </para>
+  </sect2>
+
+    <sect2 id="plpgsql-declaration-attributes">
      <title>Attributes</title>
 
      <para>
@@ -465,8 +526,8 @@ user_id   users.user_id%TYPE;
          the data type of the structure you are referencing,
          and most important, if the data type of the
          referenced item changes in the future (e.g: you
-         change your table definition of user_id to become a
-         REAL), you won't need to change your function
+         change your table definition of user_id from INTEGER to
+         REAL), you may not need to change your function
          definition.
         </para>
        </listitem>
@@ -481,20 +542,11 @@ user_id   users.user_id%TYPE;
 	 <type>%ROWTYPE</type> provides the composite data type corresponding
 	 to a whole row of the specified table.
 	 <replaceable>table</replaceable> must be an existing
-	 table or view name of the database. The fields of the row are
-	 accessed in the dot notation. Parameters to a function can be
-	 composite types (complete table rows). In that case, the
-	 corresponding identifier $n will be a rowtype, and fields can
-	 be selected from it, for example <literal>$1.user_id</literal>.
+	 table or view name of the database.  A row variable declared
+	 in this way acts the same as a row variable explicitly declared using
+	 the same composite (row) datatype.
         </para>
 
-        <para>
-         Only the user-defined attributes of a table row are accessible in a
-	 rowtype variable, not OID or other system attributes (because the
-	 row could be from a view).  The fields of the rowtype inherit the
-	 table's field sizes or precision for <type>char()</type>
-	 etc. data types.
-        </para>
 <programlisting>
 DECLARE
     users_rec users%ROWTYPE;
@@ -529,17 +581,17 @@ end;
        </listitem>
       </varlistentry>
      </variablelist>
-    </sect3>
+    </sect2>
 
-    <sect3 id="plpgsql-description-remaning-vars">
+    <sect2 id="plpgsql-declaration-renaming-vars">
      <title>
       RENAME
      </title>
 
      <para>
-      Using RENAME you can change the name of a variable, record
-      or row. This is useful if NEW or OLD should be referenced
-      by another name inside a trigger procedure.
+      Using the RENAME declaration you can change the name of a variable,
+      record or row. This is useful if NEW or OLD should be referenced
+      by another name inside a trigger procedure.  See also ALIAS.
      </para>
 
      <para>
@@ -551,17 +603,16 @@ RENAME id TO user_id;
 RENAME this_var TO that_var;
 </programlisting>
      </para>
-    </sect3>
-   </sect2>
+    </sect2>
+  </sect1>
 
-   <!-- **** PL/pgSQL expressions **** -->
-
-   <sect2>
-    <title>Expressions</title>
+  <sect1 id="plpgsql-expressions">
+  <title>Expressions</title>
 
     <para>
-     All expressions used in <application>PL/pgSQL</application> statements are processed using
-     the executor of the server. Expressions that appear to contain
+     All expressions used in <application>PL/pgSQL</application> statements
+     are processed using the server's regular SQL executor. Expressions that
+     appear to contain 
      constants may in fact require run-time evaluation
      (e.g. <literal>'now'</literal>  for the 
      <type>timestamp</type> type) so
@@ -571,17 +622,18 @@ RENAME this_var TO that_var;
 <synopsis>
 SELECT <replaceable>expression</replaceable>
 </synopsis>
-     using the <acronym>SPI</acronym> manager. In the expression, occurrences of variable
-     identifiers are substituted by parameters and the actual values from
-     the variables are passed to the executor in the parameter array. All
-     expressions used in a <application>PL/pgSQL</application> function are only prepared and
-     saved once.  The only exception to this rule is an EXECUTE statement.
+     using the <acronym>SPI</acronym> manager. In the expression, occurrences
+     of <application>PL/pgSQL</application> variable 
+     identifiers are replaced by parameters and the actual values from
+     the variables are passed to the executor in the parameter array.
+     This allows the query plan for the SELECT to be prepared just once
+     and then re-used for subsequent evaluations.
     </para>
 
     <para>
-     The type checking done by the <productname>Postgres</productname>
+     The evaluation done by the <productname>Postgres</productname>
      main parser has some side
-     effects to the interpretation of constant values. In detail there
+     effects on the interpretation of constant values. In detail there
      is a difference between what these two functions do:
 
 <programlisting>
@@ -626,87 +678,191 @@ CREATE FUNCTION logfunc2 (TEXT) RETURNS TIMESTAMP AS '
      In the case of <function>logfunc2()</function>, the 
      <productname>Postgres</productname> main parser does not know
      what type <literal>'now'</literal> should become and therefore 
-     it returns a data type of <type>text</type> containing the string 
-     <literal>'now'</literal>. During the assignment
-     to the local variable <varname>curtime</varname>, the <application>PL/pgSQL</application> interpreter casts this
+     it returns a data value of type <type>text</type> containing the string 
+     <literal>'now'</literal>. During the ensuing assignment
+     to the local variable <varname>curtime</varname>, the
+     <application>PL/pgSQL</application> interpreter casts this
      string to the <type>timestamp</type> type by calling the
      <function>text_out()</function> and <function>timestamp_in()</function>
-     functions for the conversion.
+     functions for the conversion.  So, the computed timestamp is updated
+     on each execution as the programmer expects.
     </para>
 
     <para>
-     This type checking done by the <productname>Postgres</productname> main
-     parser got implemented after <application>PL/pgSQL</application> was nearly done.
-     It is a difference between 6.3 and 6.4 and affects all functions
-     using the prepared plan feature of the <acronym>SPI</acronym> manager.
-     Using a local
-     variable in the above manner is currently the only way in <application>PL/pgSQL</application> to get
-     those values interpreted correctly.
-    </para>
-
-    <para>
-     If record fields are used in expressions or statements, the data types of
-     fields should not change between calls of one and the same expression.
+     The mutable nature of record variables presents a problem in this
+     connection.  When fields of a record variable are used in expressions or
+     statements, the data types of the
+     fields must not change between calls of one and the same expression,
+     since the expression will be planned using the datatype that is present
+     when the expression is first reached.
      Keep this in mind when writing trigger procedures that handle events
-     for more than one table.
+     for more than one table.  (EXECUTE can be used to get around this
+     problem when necessary.)
     </para>
-   </sect2>
+  </sect1>
 
-   <!-- **** PL/pgSQL statements **** -->
-
-  <sect2>
-   <title>Statements</title>
+  <sect1 id="plpgsql-statements">
+  <title>Statements</title>
 
    <para>
-    Anything not understood by the <application>PL/pgSQL</application> parser as specified below
-    will be put into a query and sent down to the database engine
-    to execute. The resulting query should not return any data.
+    This section describes all the statement types that are explicitly
+    understood by <application>PL/pgSQL</application>.  Anything not
+    recognized as one of these statement types is presumed to be an SQL
+    query, and is sent to the main database engine to execute (after
+    substitution for any <application>PL/pgSQL</application> variables
+    used in the statement).  Thus,
+    for example, SQL <command>INSERT</>, <command>UPDATE</>, and
+    <command>DELETE</> commands may be considered to be statements of
+    <application>PL/pgSQL</application>.
    </para>
    
-   <sect3 id="plpgsql-statements-assignment">
+   <sect2 id="plpgsql-statements-assignment">
     <title>Assignment</title>
+
     <para>
      An assignment of a value to a variable or row/record field is
      written as:
 <synopsis>
 <replaceable>identifier</replaceable> := <replaceable>expression</replaceable>;
 </synopsis>
-
-     If the expressions result data type doesn't match the variables
-     data type, or the variable has a size/precision that is known
-     (as for <type>char(20)</type>), the result value will be implicitly cast by
-     the <application>PL/pgSQL</application> bytecode interpreter using the result types output- and
-     the variables type input-functions. Note that this could potentially
-     result in runtime errors generated by the types input functions.
+     As explained above, the expression in such a statement is evaluated
+     by means of an SQL <command>SELECT</> command sent to the main
+     database engine.  The expression must yield a single value.
     </para>
 
+    <para>
+     If the expression's result data type doesn't match the variable's
+     data type, or the variable has a specific size/precision
+     (as for <type>char(20)</type>), the result value will be implicitly
+     converted by the <application>PL/pgSQL</application> interpreter using
+     the result type's output-function and 
+     the variable type's input-function. Note that this could potentially
+     result in runtime errors generated by the input function, if the
+     string form of the result value is not acceptable to the input function.
+    </para>
+
+    <para>
+     Examples:
 <programlisting>
 user_id := 20;
 tax := subtotal * 0.06;
 </programlisting>
-   </sect3>
+    </para>
+   </sect2>
 
-   <sect3 id="plpgsql-statements-calling-other-funcs">
-    <title>Calling another function</title>
+   <sect2 id="plpgsql-query-assignment">
+    <title>Query Assignments</title>
 
     <para>
-     All functions defined in a <productname>Postgres</productname>
-     database return a value. Thus, the normal way to call a function
-     is to execute a SELECT query or doing an assignment (resulting
-     in a <application>PL/pgSQL</application> internal SELECT). 
+     The result of a SELECT command yielding multiple columns (but
+     only one row) can be assigned to a record variable, rowtype
+     variable, or list of scalar variables.  This is done by:
+
+<synopsis>
+SELECT INTO <replaceable>target</replaceable> <replaceable>expressions</replaceable> FROM ...;
+</synopsis>
+
+     where <replaceable>target</replaceable> can be a record variable, a row
+     variable, or a comma-separated list of simple variables and
+     record/row fields. Note that this is quite different from
+     Postgres' normal interpretation of SELECT INTO, which is that the
+     INTO target is a newly created table.  (If you want to create a
+     table from a SELECT result inside a <application>PL/pgSQL</application> function, use the
+     equivalent syntax <command>CREATE TABLE AS SELECT</command>.)
     </para>
 
     <para>
-     But there are cases where someone is not interested in the 
-     function's result. In these cases, use the PERFORM
-     statement.
+     If a row or a variable list is used as target, the selected values
+     must exactly match the structure of the target(s), or a runtime error
+     occurs.  When a record variable is the target, it automatically
+     configures itself to the rowtype of the query result columns.
+    </para>
+
+    <para>
+     Except for the INTO clause, the SELECT command is the same as a normal
+     SQL SELECT query and can use the full power of SELECT.
+    </para>
+
+    <para>
+     If the SELECT query returns zero rows, NULLs are assigned to the
+     target(s).  If the SELECT query returns multiple rows, the first
+     row is assigned to the target(s) and the rest are discarded.
+     (Note that <quote>the first row</> is not well-defined unless you've
+     used ORDER BY.)
+    </para>
+
+    <para>
+     At present, the INTO clause can appear almost anywhere in the SELECT
+     query, but it is recommended to place it immediately after the SELECT
+     keyword as depicted above.  Future versions of
+     <application>PL/pgSQL</application> may be less forgiving about
+     placement of the INTO clause.
+    </para>
+
+    <para>
+     There is a special variable named FOUND of type
+     <type>boolean</type> that can be used immediately after a SELECT
+     INTO to check if an assignment had success (that is, at least one
+     row was returned by the SELECT).  For example,
+  
+<programlisting>
+SELECT INTO myrec * FROM EMP WHERE empname = myname;
+IF NOT FOUND THEN
+    RAISE EXCEPTION ''employee % not found'', myname;
+END IF;
+</programlisting>
+
+     Alternatively, you can use the IS NULL (or ISNULL) conditional to
+     test for NULLity of a RECORD/ROW result.  Note that there is no
+     way to tell whether any additional rows might have been discarded.
+    </para>
+
+    <para>
+<programlisting>
+DECLARE
+    users_rec RECORD;
+    full_name varchar;
+BEGIN
+    SELECT INTO users_rec * FROM users WHERE user_id=3;
+
+    IF users_rec.homepage IS NULL THEN
+        -- user entered no homepage, return "http://"
+
+        RETURN ''http://'';
+    END IF;
+END;
+</programlisting>
+    </para>
+   </sect2>
+
+   <sect2 id="plpgsql-statements-perform">
+    <title>Executing an expression or query with no result</title>
+
+    <para>
+     Sometimes one wishes to evaluate an expression or query but discard
+     the result (typically because one is calling a function that has
+     useful side-effects but no useful result value).  To do this in
+     <application>PL/pgSQL</application>, use the PERFORM statement:
+
 <synopsis>
 PERFORM <replaceable>query</replaceable>
 </synopsis>
-     This executes a <literal>SELECT <replaceable>query</replaceable></literal> over the
-     <acronym>SPI manager</acronym> and discards the result. Identifiers like local
-     variables are still substituted into parameters.
+
+     This executes a <literal>SELECT</literal>
+     <replaceable>query</replaceable> and discards the
+     result. <application>PL/pgSQL</application> variables are substituted
+     into the query as usual.
     </para>
+
+    <note>
+    <para>
+     One might expect that SELECT with no INTO clause would accomplish
+     this result, but at present the only accepted way to do it is PERFORM.
+    </para>
+    </note>
+
+    <para>
+     An example:
 <programlisting>
 PERFORM create_mv(''cs_session_page_requests_mv'',''
      SELECT   session_id, page_id, count(*) AS n_hits,
@@ -714,31 +870,41 @@ PERFORM create_mv(''cs_session_page_requests_mv'',''
      FROM     cs_fact_table
      GROUP BY session_id, page_id '');
 </programlisting>
-   </sect3>
+    </para>
+   </sect2>
    
-   <sect3 id="plpgsql-statements-executing-dyn-queries">
+   <sect2 id="plpgsql-statements-executing-dyn-queries">
     <title>Executing dynamic queries</title>
     
     <para>
-     Often times you will want to generate dynamic queries inside
-     your <application>PL/pgSQL</application> functions. Or you have functions that will
-     generate other functions. <application>PL/pgSQL</application> provides the EXECUTE
-     statement for these occasions.
-    </para>
+     Oftentimes you will want to generate dynamic queries inside
+     your <application>PL/pgSQL</application> functions, that is,
+     queries that will involve different tables or different datatypes
+     each time they are executed.  <application>PL/pgSQL</application>'s
+     normal attempts to cache plans for queries will not work in such
+     scenarios.  To handle this sort of problem, the EXECUTE statement
+     is provided:
 
-    <para>
 <synopsis>
 EXECUTE <replaceable class="command">query-string</replaceable>
 </synopsis>
-     where <replaceable>query-string</replaceable> is a string of type
-     <type>text</type> containing the <replaceable>query</replaceable>
-     to be executed.
+
+     where <replaceable>query-string</replaceable> is an expression
+     yielding a string (of type
+     <type>text</type>) containing the <replaceable>query</replaceable>
+     to be executed.  This string is fed literally to the SQL engine.
+    </para>
+
+    <para>
+     Note in particular that no substitution of <application>PL/pgSQL</>
+     variables is done on the query string.  The values of variables must
+     be inserted into the query string as it is constructed.
     </para>
 
     <para>
     When working with dynamic queries you will have to face
     escaping of single quotes in <application>PL/pgSQL</>. Please refer to the
-    table available at the <xref linkend="plpgsql-porting">
+    table in <xref linkend="plpgsql-porting">
     for a detailed explanation that will save you some effort.
     </para>
      
@@ -757,7 +923,7 @@ EXECUTE <replaceable class="command">query-string</replaceable>
      The results from SELECT queries are discarded by EXECUTE, and
      SELECT INTO is not currently supported within EXECUTE.  So, the
      only way to extract a result from a dynamically-created SELECT is
-     to use the FOR ... EXECUTE form described later.
+     to use the FOR-IN-EXECUTE form described later.
     </para>
 
     <para>
@@ -781,7 +947,8 @@ EXECUTE ''UPDATE tbl SET ''
      string should be passed to
      <function>quote_literal()</function>.  Both take the
      appropriate steps to return the input text enclosed in single
-     or double quotes and with any embedded special characters.
+     or double quotes and with any embedded special characters
+     properly escaped.
     </para>
 
     <para>
@@ -797,7 +964,8 @@ BEGIN
                      DECLARE 
                          v_host ALIAS FOR $1; 
                          v_domain ALIAS FOR $2; 
-                         v_url ALIAS FOR $3; ''; 
+                         v_url ALIAS FOR $3;
+                     BEGIN ''; 
 
     -- 
     -- Notice how we scan through the results of a query in a FOR loop
@@ -820,10 +988,10 @@ END;
 ' LANGUAGE 'plpgsql';
 </programlisting>
     </para>
-   </sect3>
+   </sect2>
 
-   <sect3 id="plpgsql-statements-diagnostics">
-    <title>Obtaining other results status</title>
+   <sect2 id="plpgsql-statements-diagnostics">
+    <title>Obtaining result status</title>
 
     <para>
 <synopsis>
@@ -841,7 +1009,20 @@ GET DIAGNOSTICS <replaceable>variable</replaceable> = <replaceable>item</replace
      <acronym>SQL</acronym> query.  Note that <varname>RESULT_OID</>
      is only useful after an INSERT query.
     </para>
-   </sect3>
+   </sect2>
+
+   <!-- **** PL/pgSQL Control Structures **** -->
+
+  <sect2 id="plpgsql-control-structures">
+
+   <title>Control Structures</title>
+   <para>
+    Control structures are probably the most useful (and
+    important) part of <application>PL/pgSQL</>. With
+    <application>PL/pgSQL</>'s control structures,
+    you can manipulate <productname>PostgreSQL</> data in a very
+    flexible and powerful way. 
+   </para>
    
    <sect3 id="plpgsql-statements-returning">
     <title>Returning from a function</title>
@@ -852,40 +1033,27 @@ RETURN <replaceable>expression</replaceable>
 </synopsis>
      The function terminates and the value of
      <replaceable>expression</replaceable> will be returned to the
-     upper executor. The return value of a function cannot be
-     undefined. If control reaches the end of the top-level block of
-     the function without hitting a RETURN statement, a runtime error
-     will occur.
+     upper executor.
+     The expression's result will be automatically casted into the
+     function's return type as described for assignments.
     </para>
 
     <para>
-     The expressions result will be automatically casted into the
-     function's return type as described for assignments.
+     The return value of a function cannot be left undefined. If control
+     reaches the end of the top-level block of 
+     the function without hitting a RETURN statement, a runtime error
+     will occur.
     </para>
    </sect3>
-  </sect2>
-
-   <!-- **** PL/pgSQL Control Structures **** -->
-
-  <sect2 id="plpgsql-description-control-structures">
-
-   <title>Control Structures</title>
-   <para>
-    Control structures are probably the most useful (and
-    important) part of PL/SQL. With <application>PL/pgSQL</>'s control structures,
-    you can manipulate <productname>PostgreSQL</> data in a very
-    flexible and powerful way. 
-   </para>
     
-   <sect3 id="plpgsql-description-conditionals">
+   <sect3 id="plpgsql-conditionals">
     <title>Conditional Control: IF statements</title>
 
     <para>
 	<function>IF</function> statements let you execute commands based on
-      certain conditions. PL/PgSQL has four forms of IF: IF-THEN, IF-THEN-ELSE,
-      IF-THEN-ELSE IF, IF-THEN-ELSIF-THEN-ELSE. NOTE: All PL/PgSQL IF statements need
-	a corresponding <function>END IF</function> clause. With ELSE-IF statements,
-      you need two: one for the first IF and one for the second (ELSE IF).
+      certain conditions.
+      <application>PL/pgSQL</> has four forms of IF: IF-THEN, IF-THEN-ELSE,
+      IF-THEN-ELSE IF, IF-THEN-ELSIF-THEN-ELSE.
     </para>
 
     <variablelist>
@@ -896,10 +1064,10 @@ RETURN <replaceable>expression</replaceable>
 
       <listitem>
        <para>
-        IF-THEN statements is the simplest form of an IF. The
+        IF-THEN statements are the simplest form of IF. The
         statements between THEN and END IF will be executed if
-        the condition is true. Otherwise, the statements
-        following END IF will be executed.
+        the condition is true. Otherwise, they are skipped.
+
 <programlisting>
 IF v_user_id &lt;&gt; 0 THEN
     UPDATE users SET email = v_email WHERE user_id = v_user_id;
@@ -916,9 +1084,10 @@ END IF;
 
       <listitem>
        <para>
-        IF-THEN-ELSE statements adds to IF-THEN by letting you
-        specify the statements that should be executed if the
+        IF-THEN-ELSE statements add to IF-THEN by letting you
+        specify a group of statements that should be executed if the
         condition evaluates to FALSE.
+
 <programlisting>
 IF parentid IS NULL or parentid = ''''
 THEN 
@@ -936,20 +1105,6 @@ ELSE
 END IF;
 </programlisting>
        </para>
-
-       <para>
-        IF statements can be nested and in the following
-        example:
-<programlisting>
-IF demo_row.sex = ''m'' THEN
-  pretty_sex := ''man'';
-ELSE
-  IF demo_row.sex = ''f'' THEN
-    pretty_sex := ''woman'';
-  END IF;
-END IF;
-</programlisting>
-       </para>
       </listitem>
      </varlistentry>
 
@@ -960,22 +1115,25 @@ END IF;
 
       <listitem>
        <para>
-        When you use the <literal>ELSE IF</> statement, you are actually
-        nesting an IF statement inside the ELSE
-        statement. Thus you need one END IF statement for each
-        nested IF and one for the parent IF-ELSE.
+        IF statements can be nested, as in the following example:
+<programlisting>
+IF demo_row.sex = ''m'' THEN
+  pretty_sex := ''man'';
+ELSE
+  IF demo_row.sex = ''f'' THEN
+    pretty_sex := ''woman'';
+  END IF;
+END IF;
+</programlisting>
        </para>
 
        <para>
-        For example:
-<programlisting>
-IF demo_row.sex = ''m'' THEN
-   pretty_sex := ''man'';
-ELSE IF demo_row.sex = ''f'' THEN
-        pretty_sex := ''woman'';
-     END IF;
-END IF;
-</programlisting>
+        When you use this form, you are actually
+        nesting an IF statement inside the ELSE part of an outer IF
+        statement. Thus you need one END IF statement for each
+        nested IF and one for the parent IF-ELSE.
+        This is workable but grows tedious when there are many
+	alternatives to be checked.
        </para>
       </listitem>
      </varlistentry>
@@ -987,10 +1145,10 @@ END IF;
 
       <listitem>
        <para>
-        IF-THEN-ELSIF-ELSE allows you test multiple conditions
-        in one statement. Internally it is handled as nested 
-        IF-THEN-ELSE-IF-THEN commands. The optional ELSE
-        branch is executed when none of the conditions are met.
+        IF-THEN-ELSIF-ELSE provides a more convenient method of checking
+	many alternatives in one statement.  Formally it is equivalent
+	to nested IF-THEN-ELSE-IF-THEN commands, but only one END IF
+	is needed.
        </para>
 
        <para>
@@ -1009,6 +1167,10 @@ ELSE
 END IF;
 </programlisting>
        </para>
+
+       <para>
+        The final ELSE section is optional.
+       </para>
       </listitem>
      </varlistentry>
 
@@ -1016,13 +1178,13 @@ END IF;
     </variablelist>
    </sect3>
 
-   <sect3 id="plpgsql-description-control-structures-loops">
+   <sect3 id="plpgsql-control-structures-loops">
     <title>Iterative Control: LOOP, WHILE, FOR and EXIT</title>
 
     <para>
-     With the LOOP, WHILE, FOR and EXIT statements, you can
-     control the flow of execution of your <application>PL/pgSQL</application> program
-     iteractively.
+     With the LOOP, WHILE, FOR and EXIT statements, you can arrange
+     for your <application>PL/pgSQL</application> function to repeat
+     a series of commands.
     </para>
 
     <variablelist>
@@ -1061,10 +1223,15 @@ EXIT <optional> <replaceable>label</replaceable> </optional> <optional> WHEN <re
         the innermost loop is terminated and the
         statement following END LOOP is executed next.
         If <replaceable>label</replaceable> is given, it
-        must be the label of the current or an upper level of nested loop
+        must be the label of the current or an outer level of nested loop
         blocks. Then the named loop or block is terminated and control
-        continues with the statement after the loops/blocks corresponding
+        continues with the statement after the loop's/block's corresponding
         END.
+       </para>
+
+       <para>
+        If WHEN is present, loop exit occurs only if the specified condition
+	is true.
        </para>
 
        <para>
@@ -1100,9 +1267,10 @@ END;
 
       <listitem>
        <para>
-        With the WHILE statement, you can loop through a
-        sequence of statements as long as the evaluation of
-        the condition expression is true.
+        With the WHILE statement, you can repeat a
+        sequence of statements so long as the condition expression
+	evaluates to true.  The condition is checked just before
+	each entry to the loop body.
 <synopsis>
 <optional>&lt;&lt;label&gt;&gt;</optional>
 WHILE <replaceable>expression</replaceable> LOOP
@@ -1130,6 +1298,7 @@ END LOOP;
 
       <listitem>
        <para>
+
 <synopsis>
 <optional>&lt;&lt;label&gt;&gt;</optional>
 FOR <replaceable>name</replaceable> IN <optional> REVERSE </optional> <replaceable>expression</replaceable> .. <replaceable>expression</replaceable> LOOP
@@ -1139,14 +1308,13 @@ END LOOP;
         A loop that iterates over a range of integer values. The variable
         <replaceable>name</replaceable> is automatically created as type
         integer and exists only inside the loop. The two expressions giving
-        the lower and upper bound of the range are evaluated only when entering
-        the loop. The iteration step is always 1.
+        the lower and upper bound of the range are evaluated once when entering
+        the loop. The iteration step is normally 1, but is -1 when REVERSE is
+	specified.
        </para>
 
        <para>
-        Some examples of FOR loops (see <xref
-        linkend="plpgsql-description-records"> for iterating over
-        records in FOR loops):
+        Some examples of integer FOR loops:
 <programlisting>
 FOR i IN 1..10 LOOP
   -- some expressions here
@@ -1162,129 +1330,24 @@ END LOOP;
       </listitem>
      </varlistentry>
     </variablelist>
-      </sect3>
-   </sect2>
-
-   <!-- **** PL/pgSQL records **** -->
-
-  <sect2 id="plpgsql-description-records">
-   <title>Working with RECORDs</title>
-
-   <para>
-    Records are similar to rowtypes, but they have no predefined structure.
-    They are used in selections and FOR loops to hold one actual
-    database row from a SELECT operation.
-   </para>
-
-   <sect3 id="plpgsql-description-records-declaration">
-    <title>Declaration</title>
-
-    <para>
-     One variables of type RECORD can be used for different
-     selections. Accessing a record or an attempt to assign
-     a value to a record field when there is no actual row in it results
-     in a runtime error. They can be declared like this:
-    </para>
-
-    <para>
-<synopsis>
-<replaceable>name</replaceable> RECORD;
-</synopsis>
-    </para>
    </sect3>
 
-   <sect3 id="plpgsql-description-records-assignment">
-    <title>Assignments</title>
-
-    <para>
-     An assignment of a complete selection into a record or row can
-     be done by:
-<synopsis>
-SELECT  INTO <replaceable>target</replaceable> <replaceable>expressions</replaceable> FROM ...;
-</synopsis>
-     <replaceable>target</replaceable> can be a record, a row variable
-     or a comma separated list of variables and
-     record-/row-fields. Note that this is quite different from
-     Postgres' normal interpretation of SELECT INTO, which is that the
-     INTO target is a newly created table.  (If you want to create a
-     table from a SELECT result inside a <application>PL/pgSQL</application> function, use the
-     equivalent syntax <command>CREATE TABLE AS SELECT</command>.)
-    </para>
-
-    <para>
-     If a row or a variable list is used as target, the selected values
-     must exactly match the structure of the target(s) or a runtime error
-     occurs. The FROM keyword can be followed by any valid qualification,
-     grouping, sorting etc. that can be given for a SELECT statement.
-    </para>
-
-    <para>
-     Once a record or row has been assigned to a RECORD variable,
-     you can use the <literal>.</> (dot) notation to access fields in that
-     record:
-<programlisting>
-DECLARE
-    users_rec RECORD;
-    full_name varchar;
-BEGIN
-    SELECT INTO users_rec * FROM users WHERE user_id=3;
-
-  full_name := users_rec.first_name || '' '' || users_rec.last_name;
-</programlisting>
-    </para>
-
-    <para>
-     There is a special variable named FOUND of type
-     <type>boolean</type> that can be used immediately after a SELECT
-     INTO to check if an assignment had success.
-  
-<programlisting>
-SELECT INTO myrec * FROM EMP WHERE empname = myname;
-IF NOT FOUND THEN
-    RAISE EXCEPTION ''employee % not found'', myname;
-END IF;
-</programlisting>
-
-     You can also use the IS NULL (or ISNULL) conditionals to
-     test for NULLity of a RECORD/ROW. If the selection returns
-     multiple rows, only the first is moved into the target
-     fields. All others are silently discarded.
-    </para>
-
-    <para>
-<programlisting>
-DECLARE
-    users_rec RECORD;
-    full_name varchar;
-BEGIN
-    SELECT INTO users_rec * FROM users WHERE user_id=3;
-
-    IF users_rec.homepage IS NULL THEN
-        -- user entered no homepage, return "http://"
-
-        RETURN ''http://'';
-    END IF;
-END;
-</programlisting>
-    </para>
-   </sect3>
-
-   <sect3 id="plpgsql-description-records-iterating">
+   <sect3 id="plpgsql-records-iterating">
     <title>Iterating Through Records</title>
 
     <para>
-     Using a special type of FOR loop, you can iterate through
+     Using a different type of FOR loop, you can iterate through
      the results of a query and manipulate that data
-     accordingly. The syntax is as follow:
+     accordingly. The syntax is as follows:
 <synopsis>
 <optional>&lt;&lt;label&gt;&gt;</optional>
-FOR <replaceable>record | row</replaceable> IN <replaceable>select_clause</replaceable> LOOP
+FOR <replaceable>record | row</replaceable> IN <replaceable>select_query</replaceable> LOOP
     <replaceable>statements</replaceable>
 END LOOP;
 </synopsis>
-     The record or row is assigned all the rows 
-     resulting from the SELECT clause and the loop body executed 
-     for each. Here is an example:
+     The record or row variable is successively assigned all the rows 
+     resulting from the SELECT query and the loop body is executed 
+     for each row. Here is an example:
     </para>
 
     <para>
@@ -1292,11 +1355,6 @@ END LOOP;
 CREATE FUNCTION cs_refresh_mviews () RETURNS INTEGER AS '
 DECLARE
      mviews RECORD;
-
-     -- Instead, if you did:
-     -- mviews  cs_materialized_views%ROWTYPE;
-     -- this record would ONLY be usable for the cs_materialized_views table
-
 BEGIN
      PERFORM cs_log(''Refreshing materialized views...'');
 
@@ -1315,12 +1373,12 @@ end;
 ' LANGUAGE 'plpgsql';
 </programlisting>
 
-     If the loop is terminated with an EXIT statement, the last
-     assigned row is still accessible after the loop.
+     If the loop is terminated by an EXIT statement, the last
+     assigned row value is still accessible after the loop.
     </para>
 
     <para>
-     The FOR-IN EXECUTE statement is another way to iterate over
+     The FOR-IN-EXECUTE statement is another way to iterate over
      records:
 <synopsis>
 <optional>&lt;&lt;label&gt;&gt;</optional>
@@ -1335,15 +1393,27 @@ END LOOP;
      flexibility of a dynamic query, just as with a plain EXECUTE
      statement.
     </para>
+
+    <note>
+    <para>
+     The <application>PL/pgSQL</> parser presently distinguishes the
+     two kinds of FOR loops (integer or record-returning) by checking
+     whether the target variable mentioned just after FOR has been
+     declared as a record/row variable.  If not, it's presumed to be
+     an integer FOR loop.  This can cause rather unintuitive error
+     messages when the true problem is, say, that one has
+     misspelled the FOR variable.
+    </para>
+    </note>
    </sect3>
   </sect2>
+  </sect1>
 
-  <sect2 id="plpgsql-description-aborting-and-messages">
-   <title>Aborting and Messages</title>
+  <sect1 id="plpgsql-errors-and-messages">
+   <title>Errors and Messages</title>
 
    <para>
-    Use the RAISE statement to throw messages into the 
-    <productname>Postgres</productname> <function>elog</function> mechanism.
+    Use the RAISE statement to report messages and raise errors.
 
 <synopsis>
 RAISE <replaceable class="parameter">level</replaceable> '<replaceable class="parameter">format</replaceable>' <optional>, <replaceable class="parameter">variable</replaceable> <optional>...</optional></optional>;
@@ -1353,6 +1423,9 @@ RAISE <replaceable class="parameter">level</replaceable> '<replaceable class="pa
     NOTICE (write the message into the postmaster log and forward it to
     the client application) and EXCEPTION (raise an error,
     aborting the transaction).
+   </para>
+
+   <para>
     Inside the format string, <literal>%</literal> is replaced by the next
     optional argument's external representation.
     Write <literal>%%</literal> to emit a literal <literal>%</literal>.
@@ -1368,6 +1441,7 @@ RAISE <replaceable class="parameter">level</replaceable> '<replaceable class="pa
     -->
 
    <para>
+    Examples:
 <programlisting>
 RAISE NOTICE ''Calling cs_create_job(%)'',v_job_id;
 </programlisting>
@@ -1381,12 +1455,9 @@ RAISE EXCEPTION ''Inexistent ID --> %'',user_id;
 </programlisting>
     This will abort the transaction with the given error message.
    </para>
-  </sect2>   
 
-   <!-- **** PL/pgSQL exceptions **** -->
-
-   <sect2>
-    <title>Exceptions</title>
+  <sect2 id="plpgsql-exceptions">
+   <title>Exceptions</title>
 
     <para>
      <productname>Postgres</productname> does not have a very smart
@@ -1410,39 +1481,37 @@ RAISE EXCEPTION ''Inexistent ID --> %'',user_id;
      an abort during execution of a function or trigger
      procedure is to write some additional NOTICE level log messages
      telling in which function and where (line number and type of
-     statement) this happened.
+     statement) this happened.  The error always stops execution of
+     the function.
     </para>
-   </sect2>
+  </sect2>
  </sect1>
-
-
-   <!-- **** PL/pgSQL trigger procedures **** -->
 
  <sect1 id="plpgsql-trigger">
   <title>Trigger Procedures</title>
 
   <para>
-   <application>PL/pgSQL</application> can be used to define trigger procedures. They are created
-   with the usual <command>CREATE FUNCTION</command> command as a function with no
-   arguments and a return type of <type>OPAQUE</type>.
+   <application>PL/pgSQL</application> can be used to define trigger
+   procedures. A trigger procedure is created with the <command>CREATE
+   FUNCTION</command> command as a function with no arguments and a return
+   type of <type>OPAQUE</type>.  Note that the function must be declared
+   with no arguments even if it expects to receive arguments specified
+   in <command>CREATE TRIGGER</> --- trigger arguments are passed via
+   <varname>TG_ARGV</>, as described below.
   </para>
 
   <para>
-   There are some <productname>Postgres</productname> specific details
-   in functions used as trigger procedures.
-  </para>
-
-  <para>
-   First they have some special variables created automatically in the 
-   top-level blocks declaration section. They are
+   When a <application>PL/pgSQL</application> function is called as a
+   trigger, several special variables are created automatically in the 
+   top-level block. They are:
    
    <variablelist>
     <varlistentry>
      <term><varname>NEW</varname></term>
      <listitem>
       <para>
-       Data type <type>RECORD</type>; variable holding the new database row on INSERT/UPDATE
-       operations on ROW level triggers.
+       Data type <type>RECORD</type>; variable holding the new database row for INSERT/UPDATE
+       operations in ROW level triggers.
       </para>
      </listitem>
     </varlistentry>
@@ -1451,8 +1520,8 @@ RAISE EXCEPTION ''Inexistent ID --> %'',user_id;
      <term><varname>OLD</varname></term>
      <listitem>
       <para>
-       Data type <type>RECORD</type>; variable holding the old database row on UPDATE/DELETE
-       operations on ROW level triggers.
+       Data type <type>RECORD</type>; variable holding the old database row for UPDATE/DELETE
+       operations in ROW level triggers.
       </para>
      </listitem>
     </varlistentry>
@@ -1473,7 +1542,7 @@ RAISE EXCEPTION ''Inexistent ID --> %'',user_id;
       <para>
        Data type <type>text</type>; a string of either 
               <literal>BEFORE</literal> or <literal>AFTER</literal> 
-              depending on the triggers definition.
+              depending on the trigger's definition.
       </para>
      </listitem>
     </varlistentry>
@@ -1484,7 +1553,7 @@ RAISE EXCEPTION ''Inexistent ID --> %'',user_id;
       <para>
        Data type <type>text</type>; a string of either 
               <literal>ROW</literal> or <literal>STATEMENT</literal> depending on the
-       triggers definition.
+       trigger's definition.
       </para>
      </listitem>
     </varlistentry>
@@ -1496,7 +1565,7 @@ RAISE EXCEPTION ''Inexistent ID --> %'',user_id;
        Data type <type>text</type>; a string of 
               <literal>INSERT</literal>, <literal>UPDATE</literal> 
               or <literal>DELETE</literal> telling
-       for which operation the trigger is actually fired.
+       for which operation the trigger is fired.
       </para>
      </listitem>
     </varlistentry>
@@ -1546,24 +1615,32 @@ RAISE EXCEPTION ''Inexistent ID --> %'',user_id;
   </para>
 
    <para>
-    Second they must return either NULL or a record/row containing
-    exactly the structure of the table the trigger was fired for.
-    Triggers fired AFTER might always return a NULL value with no
-    effect. Triggers fired BEFORE signal the trigger manager
-    to skip the operation for this actual row when returning NULL.
-    Otherwise, the returned record/row replaces the inserted/updated
-    row in the operation. It is possible to replace single values directly
-    in NEW and return that or to build a complete new record/row to
+    A trigger function must return either NULL or a record/row value
+    having exactly the structure of the table the trigger was fired for.
+    Triggers fired BEFORE may return NULL to signal the trigger manager
+    to skip the rest of the operation for this row (ie, subsequent triggers
+    are not fired, and the INSERT/UPDATE/DELETE does not occur for this
+    row).  If a non-NULL value is returned then the operation proceeds with
+    that row value.  Note that returning a row value different from the
+    original value of NEW alters the row that will be inserted or updated.
+    It is possible to replace single values directly
+    in NEW and return that, or to build a complete new record/row to
     return.
+   </para>
+
+   <para>
+    The return value of a trigger fired AFTER is ignored; it may as well
+    always return a NULL value.  But an AFTER trigger can still abort the
+    operation by raising an error.
    </para>
 
    <example>
     <title>A <application>PL/pgSQL</application> Trigger Procedure Example</title>
 
     <para>
-     This trigger ensures, that any time a row is inserted or updated
+     This example trigger ensures that any time a row is inserted or updated
      in the table, the current user name and time are stamped into the
-     row. And it ensures that an employees name is given and that the
+     row. And it ensures that an employee's name is given and that the
      salary is a positive value.
 
 <programlisting>
@@ -1617,7 +1694,7 @@ CREATE TRIGGER emp_stamp BEFORE INSERT OR UPDATE ON emp
 
    <para>
     One painful detail in writing functions in <application>PL/pgSQL</application> is the handling
-    of single quotes. The function's source text on <command>CREATE FUNCTION</command> must
+    of single quotes. The function's source text in <command>CREATE FUNCTION</command> must
     be a literal string. Single quotes inside of literal strings must be
     either doubled or quoted with a backslash. We are still looking for
     an elegant alternative. In the meantime, doubling the single quotes
@@ -1943,14 +2020,6 @@ SHOW ERRORS;
      <itemizedlist>
       <listitem>
        <para>
-        The <literal>OR REPLACE</literal> clause is not allowed. You
-        will have to explicitly drop the function before creating it
-        to achieve similar results.
-       </para>
-      </listitem>
-
-      <listitem>
-       <para>
         <productname>PostgreSQL</productname> does not have named
         parameters. You have to explicitly alias them inside your
         function.
@@ -1995,12 +2064,11 @@ SHOW ERRORS;
     </para>
 
     <para>
-     So let's see how this function would be look like ported to
+     So let's see how this function would look when ported to
      PostgreSQL:
 
 <programlisting>
-DROP FUNCTION cs_fmt_browser_version(VARCHAR, VARCHAR);
-CREATE FUNCTION cs_fmt_browser_version(VARCHAR, VARCHAR)
+CREATE OR REPLACE FUNCTION cs_fmt_browser_version(VARCHAR, VARCHAR)
 RETURNS VARCHAR AS '
 DECLARE
     v_name ALIAS FOR $1;
@@ -2068,7 +2136,8 @@ BEGIN
                      DECLARE 
                          v_host ALIAS FOR $1; 
                          v_domain ALIAS FOR $2; 
-                         v_url ALIAS FOR $3; ''; 
+                         v_url ALIAS FOR $3;
+                     BEGIN ''; 
 
     -- 
     -- Notice how we scan through the results of a query in a FOR loop
@@ -2152,8 +2221,7 @@ show errors;
      Here is how this procedure could be translated for PostgreSQL:
 
 <programlisting>
-DROP FUNCTION cs_parse_url_host(VARCHAR); 
-CREATE FUNCTION cs_parse_url_host(VARCHAR) RETURNS VARCHAR AS ' 
+CREATE OR REPLACE FUNCTION cs_parse_url_host(VARCHAR) RETURNS VARCHAR AS ' 
 DECLARE 
     v_url ALIAS FOR $1; 
     v_host VARCHAR; 
@@ -2282,8 +2350,8 @@ show errors
     So let's see one of the ways we could port this procedure to <application>PL/pgSQL</>:
 
 <programlisting>
-DROP FUNCTION cs_create_job(INTEGER);
-CREATE FUNCTION cs_create_job(INTEGER) RETURNS INTEGER AS ' DECLARE
+CREATE OR REPLACE FUNCTION cs_create_job(INTEGER) RETURNS INTEGER AS '
+DECLARE
     v_job_id ALIAS FOR $1;
     a_running_job_count INTEGER;
     a_num INTEGER;
@@ -2479,7 +2547,6 @@ WITH (isstrict, iscachable);
 -- Licensed under the GPL v2 or later.
 --
 
-DROP FUNCTION instr(varchar,varchar);
 CREATE FUNCTION instr(VARCHAR,VARCHAR) RETURNS INTEGER AS '
 DECLARE
     pos integer;
@@ -2490,7 +2557,6 @@ END;
 ' LANGUAGE 'plpgsql';
 
 
-DROP FUNCTION instr(VARCHAR,VARCHAR,INTEGER);
 CREATE FUNCTION instr(VARCHAR,VARCHAR,INTEGER) RETURNS INTEGER AS '
 DECLARE
     string ALIAS FOR $1;
@@ -2536,7 +2602,6 @@ END;
 -- Written by Robert Gaszewski (graszew@poland.com)
 -- Licensed under the GPL v2 or later.
 --
-DROP FUNCTION instr(VARCHAR,VARCHAR,INTEGER,INTEGER);
 CREATE FUNCTION instr(VARCHAR,VARCHAR,INTEGER,INTEGER) RETURNS INTEGER AS '
 DECLARE
     string ALIAS FOR $1;
