@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *    $Header: /cvsroot/pgsql/src/bin/monitor/Attic/monitor.c,v 1.3 1996/07/22 05:59:53 scrappy Exp $
+ *    $Header: /cvsroot/pgsql/src/bin/monitor/Attic/monitor.c,v 1.4 1996/07/23 02:26:41 scrappy Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -642,6 +642,7 @@ handle_execution(char *query)
 {
     PGresult *result;
     int retval = 0;
+    PQprintOpt opt;
     
     result = PQexec(conn, query);
 
@@ -657,11 +658,18 @@ handle_execution(char *query)
 	break;
     case PGRES_TUPLES_OK:
 /*	PQprintTuples(result,stdout,PrintAttNames,TerseOutput,COLWIDTH); */
- 	if (TerseOutput)
+/* 	if (TerseOutput)
  	    PQdisplayTuples(result,stdout,1,"",PrintAttNames,TerseOutput);
  	else
- 	    PQdisplayTuples(result,stdout,1,"|",PrintAttNames,TerseOutput);
-	break;
+ 	    PQdisplayTuples(result,stdout,1,"|",PrintAttNames,TerseOutput); */
+        memset(&opt, 0, sizeof opt);
+        opt.header = opt.align = opt.standard = 1;
+	if (TerseOutput)
+	    opt.fieldSep = "";
+	else
+	    opt.fieldSep = "|";
+        PQprint(stdout, result, &opt);
+        break;
     case PGRES_COPY_OUT:
 	handle_copy_out(result);
 	break;
