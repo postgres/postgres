@@ -22,7 +22,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/bin/pg_dump/pg_dump.c,v 1.201 2001/04/05 02:50:01 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/bin/pg_dump/pg_dump.c,v 1.202 2001/04/14 13:11:03 pjw Exp $
  *
  * Modifications - 6/10/96 - dave@bensoft.com - version 1.13.dhb
  *
@@ -2035,9 +2035,14 @@ getTables(int *numTables, FuncInfo *finfo, int numFuncs)
 			PGresult   *res2;
 
 			resetPQExpBuffer(query);
-			appendPQExpBuffer(query, "SELECT pg_get_viewdef(");
+			appendPQExpBuffer(query, "SELECT definition as viewdef, ");
+			/* XXX 7.2 - replace with att from pg_views or some other generic source */
+			appendPQExpBuffer(query, "(select oid from pg_rewrite where rulename='_RET'"
+										" || viewname) as view_oid from pg_views"
+										" where viewname = ");
 			formatStringLiteral(query, tblinfo[i].relname, CONV_ALL);
-			appendPQExpBuffer(query, ") as viewdef");
+			appendPQExpBuffer(query, ";");
+
 			res2 = PQexec(g_conn, query->data);
 			if (!res2 || PQresultStatus(res2) != PGRES_TUPLES_OK)
 			{
@@ -2051,18 +2056,26 @@ getTables(int *numTables, FuncInfo *finfo, int numFuncs)
 			{
 				if (PQntuples(res2) < 1)
 				{
-					fprintf(stderr, "getTables(): SELECT (for VIEW %s) returned no definitions",
+					fprintf(stderr, "getTables(): SELECT (for VIEW %s) returned no definitions\n",
 							tblinfo[i].relname);
 				}
 				else
 				{
-					fprintf(stderr, "getTables(): SELECT (for VIEW %s) returned more than 1 definition",
+					fprintf(stderr, "getTables(): SELECT (for VIEW %s) returned more than 1 definition\n",
 							tblinfo[i].relname);
 				}
 				exit_nicely(g_conn);
 			}
 
+			if (PQgetisnull(res2, 0, 1))
+			{
+				fprintf(stderr, "getTables(): SELECT (for VIEW %s) returned NULL oid\n", tblinfo[i].relname);
+				fprintf(stderr, "SELECT was: %s\n", query->data);
+				exit_nicely(g_conn);
+			}
+
 			tblinfo[i].viewdef = strdup(PQgetvalue(res2, 0, 0));
+			tblinfo[i].viewoid = strdup(PQgetvalue(res2, 0, 1));
 
 			if (strlen(tblinfo[i].viewdef) == 0)
 			{
@@ -3739,6 +3752,7 @@ dumpTables(Archive *fout, TableInfo *tblinfo, int numTables,
 	int			numParents;
 	int			actual_atts;	/* number of attrs in this CREATE statment */
 	char	   *reltypename;
+	char	   *objoid;
 
 	/* First - dump SEQUENCEs */
 	if (tablename && strlen(tablename) > 0)
@@ -3778,15 +3792,15 @@ dumpTables(Archive *fout, TableInfo *tblinfo, int numTables,
 			if (tblinfo[i].viewdef != NULL)
 			{
 				reltypename = "VIEW";
-
+				objoid = tblinfo[i].viewoid;
 				appendPQExpBuffer(delq, "DROP VIEW %s;\n", fmtId(tblinfo[i].relname, force_quotes));
-				appendPQExpBuffer(q, "CREATE VIEW %s as %s", fmtId(tblinfo[i].relname, force_quotes), tblinfo[i].viewdef);
+				appendPQExpBuffer(q, "CREATE VIEW %s as %s\n", fmtId(tblinfo[i].relname, force_quotes), tblinfo[i].viewdef);
 
 			}
 			else
 			{
 				reltypename = "TABLE";
-
+				objoid = tblinfo[i].oid;
 				parentRels = tblinfo[i].parentRels;
 				numParents = tblinfo[i].numParents;
 
@@ -3883,7 +3897,7 @@ dumpTables(Archive *fout, TableInfo *tblinfo, int numTables,
 			if (!dataOnly)
 			{
 
-				ArchiveEntry(fout, tblinfo[i].oid, tblinfo[i].relname,
+				ArchiveEntry(fout, objoid, tblinfo[i].relname,
 							 reltypename, NULL, q->data, delq->data, "", tblinfo[i].usename,
 							 NULL, NULL);
 
@@ -4323,7 +4337,7 @@ findLastBuiltinOid(const char *dbname)
 	if (res == NULL ||
 		PQresultStatus(res) != PGRES_TUPLES_OK)
 	{
-		fprintf(stderr, "pg_dump: error in finding the last system OID");
+		fprintf(stderr, "pg_dump: error in finding the last system OID. ");
 		fprintf(stderr, "Explanation from backend: '%s'.\n", PQerrorMessage(g_conn));
 		exit_nicely(g_conn);
 	}

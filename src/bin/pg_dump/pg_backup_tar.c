@@ -16,7 +16,7 @@
  *
  *
  * IDENTIFICATION
- *		$Header: /cvsroot/pgsql/src/bin/pg_dump/pg_backup_tar.c,v 1.13 2001/04/01 05:42:51 pjw Exp $
+ *		$Header: /cvsroot/pgsql/src/bin/pg_dump/pg_backup_tar.c,v 1.14 2001/04/14 13:11:03 pjw Exp $
  *
  * Modifications - 28-Jun-2000 - pjw@rhyme.com.au
  *
@@ -246,7 +246,7 @@ _ArchiveEntry(ArchiveHandle *AH, TocEntry *te)
 	char		fn[K_STD_BUF_SIZE];
 
 	ctx = (lclTocEntry *) malloc(sizeof(lclTocEntry));
-	if (te->dataDumper)
+	if (te->dataDumper != NULL)
 	{
 #ifdef HAVE_LIBZ
 		if (AH->compression == 0)
@@ -302,7 +302,8 @@ _PrintExtraToc(ArchiveHandle *AH, TocEntry *te)
 {
 	lclTocEntry *ctx = (lclTocEntry *) te->formatData;
 
-	ahprintf(AH, "-- File: %s\n", ctx->filename);
+	if (ctx->filename != NULL)
+		ahprintf(AH, "-- File: %s\n", ctx->filename);
 }
 
 static void

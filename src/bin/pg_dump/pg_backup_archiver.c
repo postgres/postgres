@@ -15,7 +15,7 @@
  *
  *
  * IDENTIFICATION
- *		$Header: /cvsroot/pgsql/src/bin/pg_dump/pg_backup_archiver.c,v 1.23 2001/04/01 05:42:50 pjw Exp $
+ *		$Header: /cvsroot/pgsql/src/bin/pg_dump/pg_backup_archiver.c,v 1.24 2001/04/14 13:11:03 pjw Exp $
  *
  * Modifications - 28-Jun-2000 - pjw@rhyme.com.au
  *
@@ -73,7 +73,7 @@ static int	_tocSortCompareByOIDNum(const void *p1, const void *p2);
 static int	_tocSortCompareByIDNum(const void *p1, const void *p2);
 static ArchiveHandle *_allocAH(const char *FileSpec, const ArchiveFormat fmt,
 		 const int compression, ArchiveMode mode);
-static int	_printTocEntry(ArchiveHandle *AH, TocEntry *te, RestoreOptions *ropt);
+static int	_printTocEntry(ArchiveHandle *AH, TocEntry *te, RestoreOptions *ropt, bool isData);
 
 static void _reconnectAsOwner(ArchiveHandle *AH, const char *dbname, TocEntry *te);
 static void _reconnectAsUser(ArchiveHandle *AH, const char *dbname, char *user);
@@ -266,7 +266,7 @@ RestoreArchive(Archive *AHX, RestoreOptions *ropt)
 			_reconnectAsOwner(AH, "-", te);
 
 			ahlog(AH, 1, "Creating %s %s\n", te->desc, te->name);
-			_printTocEntry(AH, te, ropt);
+			_printTocEntry(AH, te, ropt, false);
 
 			/* If we created a DB, connect to it... */
 			if (strcmp(te->desc, "DATABASE") == 0)
@@ -286,8 +286,7 @@ RestoreArchive(Archive *AHX, RestoreOptions *ropt)
 				die_horribly(AH, "%s: Unable to restore data from a compressed archive\n", progname);
 #endif
 
-			ahprintf(AH, "--\n-- Data for TOC Entry ID %d (OID %s) %s %s\n--\n\n",
-					 te->id, te->oid, te->desc, te->name);
+			_printTocEntry(AH, te, ropt, true);
 
 			/*
 			 * Maybe we can't do BLOBS, so check if this node is for BLOBS
@@ -1869,10 +1868,19 @@ _reconnectAsOwner(ArchiveHandle *AH, const char *dbname, TocEntry *te)
 }
 
 static int
-_printTocEntry(ArchiveHandle *AH, TocEntry *te, RestoreOptions *ropt)
+_printTocEntry(ArchiveHandle *AH, TocEntry *te, RestoreOptions *ropt, bool isData)
 {
-	ahprintf(AH, "--\n-- TOC Entry ID %d (OID %s)\n--\n-- Name: %s Type: %s Owner: %s\n",
-			 te->id, te->oid, te->name, te->desc, te->owner);
+	char	*pfx;
+
+	if (isData)
+	{
+		pfx = "Data for ";
+	} else {
+		pfx = "";
+	}
+
+	ahprintf(AH, "--\n-- %sTOC Entry ID %d (OID %s)\n--\n-- Name: %s Type: %s Owner: %s\n",
+			 pfx, te->id, te->oid, te->name, te->desc, te->owner);
 	if (AH->PrintExtraTocPtr !=NULL)
 		(*AH->PrintExtraTocPtr) (AH, te);
 	ahprintf(AH, "--\n\n");
