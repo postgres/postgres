@@ -99,7 +99,7 @@ starts 'checking host system type...'
 **************************************************************
 EOT
 	TEMPLATE=generic
-	GUESS=`grep "$host" template/.similar 2>/dev/null`
+	GUESS=`grep "^$host_no_ver=" template/.similar 2>/dev/null`
 	if test ! "$GUESS"
 	then	host_no_ver=`echo "$host" | sed 's/[[0-9.]]*$//'`
 		GUESS=`grep "$host_no_ver" template/.similar 2>/dev/null`

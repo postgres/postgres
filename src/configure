@@ -663,7 +663,7 @@ starts 'checking host system type...'
 **************************************************************
 EOT
 	TEMPLATE=generic
-	GUESS=`grep "$host" template/.similar 2>/dev/null`
+	GUESS=`grep "^$host_no_ver=" template/.similar 2>/dev/null`
 	if test ! "$GUESS"
 	then	host_no_ver=`echo "$host" | sed 's/[0-9.]*$//'`
 		GUESS=`grep "$host_no_ver" template/.similar 2>/dev/null`
@@ -3227,7 +3227,7 @@ else
 fi
 rm -f conftest*
 
-if test $ac_cv_prog_gcc = yes; then
+if test x$ac_cv_prog_gcc = xyes; then
     echo $ac_n "checking whether ${CC-cc} needs -traditional""... $ac_c" 1>&6
 echo "configure:3233: checking whether ${CC-cc} needs -traditional" >&5
 if eval "test \"`echo '$''{'ac_cv_prog_gcc_traditional'+set}'`\" = set"; then
