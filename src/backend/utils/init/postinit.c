@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/utils/init/postinit.c,v 1.132 2004/05/27 17:12:54 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/utils/init/postinit.c,v 1.133 2004/05/29 22:48:21 tgl Exp $
  *
  *
  *-------------------------------------------------------------------------
@@ -29,6 +29,7 @@
 #include "commands/trigger.h"
 #include "mb/pg_wchar.h"
 #include "miscadmin.h"
+#include "postmaster/postmaster.h"
 #include "storage/backendid.h"
 #include "storage/ipc.h"
 #include "storage/proc.h"

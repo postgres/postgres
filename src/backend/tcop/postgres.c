@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/tcop/postgres.c,v 1.416 2004/05/28 05:13:12 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/tcop/postgres.c,v 1.417 2004/05/29 22:48:20 tgl Exp $
  *
  * NOTES
  *	  this is the "main" module of the postgres backend and
@@ -110,7 +110,7 @@ static char *stack_base_ptr = NULL;
  * will reread the configuration file. (Better than doing the
  * reading in the signal handler, ey?)
  */
-static volatile bool got_SIGHUP = false;
+static volatile sig_atomic_t got_SIGHUP = false;
 
 /*
  * Flag to keep track of whether we have started a transaction.

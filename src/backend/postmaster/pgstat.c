@@ -13,7 +13,7 @@
  *
  *	Copyright (c) 2001-2003, PostgreSQL Global Development Group
  *
- *	$PostgreSQL: pgsql/src/backend/postmaster/pgstat.c,v 1.72 2004/05/28 05:12:58 tgl Exp $
+ *	$PostgreSQL: pgsql/src/backend/postmaster/pgstat.c,v 1.73 2004/05/29 22:48:19 tgl Exp $
  * ----------
  */
 #include "postgres.h"
@@ -32,23 +32,25 @@
 
 #include "pgstat.h"
 
-#include "access/xact.h"
 #include "access/heapam.h"
+#include "access/xact.h"
 #include "catalog/catname.h"
-#include "catalog/pg_shadow.h"
 #include "catalog/pg_database.h"
-#include "libpq/pqsignal.h"
+#include "catalog/pg_shadow.h"
 #include "libpq/libpq.h"
+#include "libpq/pqsignal.h"
 #include "mb/pg_wchar.h"
 #include "miscadmin.h"
-#include "utils/memutils.h"
+#include "postmaster/postmaster.h"
 #include "storage/backendid.h"
 #include "storage/ipc.h"
 #include "storage/pg_shmem.h"
+#include "storage/pmsignal.h"
 #include "tcop/tcopprot.h"
-#include "utils/rel.h"
 #include "utils/hsearch.h"
+#include "utils/memutils.h"
 #include "utils/ps_status.h"
+#include "utils/rel.h"
 #include "utils/syscache.h"
 
 
@@ -75,8 +77,6 @@ bool		pgstat_is_running = false;
 NON_EXEC_STATIC int	pgStatSock = -1;
 static int	pgStatPipe[2];
 static struct sockaddr_storage pgStatAddr;
-static int	pgStatPmPipe[2] = {-1, -1};
-static int  pgStatCollectorPmPipe[2] = {-1, -1};
 
 static int	pgStatPid;
 static time_t last_pgstat_start_time;
@@ -397,17 +397,6 @@ pgstat_init(void)
 		goto startup_failed;
 	}
 
-	/*
-	 * Create the pipe that controls the statistics collector shutdown
-	 */
-	if (pgpipe(pgStatPmPipe) < 0 || pgpipe(pgStatCollectorPmPipe) < 0)
-	{
-		ereport(LOG,
-				(errcode_for_socket_access(),
-		  errmsg("could not create pipe for statistics collector: %m")));
-		goto startup_failed;
-	}
-
 	freeaddrinfo_all(hints.ai_family, addrs);
 
 	return;
@@ -439,9 +428,9 @@ startup_failed:
 static pid_t
 pgstat_forkexec(STATS_PROCESS_TYPE procType)
 {
-	char *av[12];
+	char *av[10];
 	int ac = 0, bufc = 0, i;
-	char pgstatBuf[7][32];
+	char pgstatBuf[2][32];
 
 	av[ac++] = "postgres";
 
@@ -464,11 +453,7 @@ pgstat_forkexec(STATS_PROCESS_TYPE procType)
 	/* postgres_exec_path is not passed by write_backend_variables */
 	av[ac++] = postgres_exec_path;
 
-	/* Sockets + pipes (those not passed by write_backend_variables) */
-	snprintf(pgstatBuf[bufc++],32,"%d",pgStatPmPipe[0]);
-	snprintf(pgstatBuf[bufc++],32,"%d",pgStatPmPipe[1]);
-	snprintf(pgstatBuf[bufc++],32,"%d",pgStatCollectorPmPipe[0]);
-	snprintf(pgstatBuf[bufc++],32,"%d",pgStatCollectorPmPipe[1]);
+	/* Pipe file ids (those not passed by write_backend_variables) */
 	snprintf(pgstatBuf[bufc++],32,"%d",pgStatPipe[0]);
 	snprintf(pgstatBuf[bufc++],32,"%d",pgStatPipe[1]);
 
@@ -493,14 +478,10 @@ pgstat_forkexec(STATS_PROCESS_TYPE procType)
 static void
 pgstat_parseArgs(int argc, char *argv[])
 {
-	Assert(argc == 10);
+	Assert(argc == 6);
 
 	argc = 3;
 	StrNCpy(postgres_exec_path,	argv[argc++], MAXPGPATH);
-	pgStatPmPipe[0]	= atoi(argv[argc++]);
-	pgStatPmPipe[1]	= atoi(argv[argc++]);
-	pgStatCollectorPmPipe[0] = atoi(argv[argc++]);
-	pgStatCollectorPmPipe[1] = atoi(argv[argc++]);
 	pgStatPipe[0]	= atoi(argv[argc++]);
 	pgStatPipe[1]	= atoi(argv[argc++]);
 }
@@ -592,8 +573,8 @@ pgstat_start(void)
 			/* Specific beos actions after backend startup */
 			beos_backend_startup();
 #endif
-			/* Close the postmaster's sockets, except for pgstat link */
-			ClosePostmasterPorts(false);
+			/* Close the postmaster's sockets */
+			ClosePostmasterPorts();
 
 			/* Drop our connection to postmaster's shared memory, as well */
 			PGSharedMemoryDetach();
@@ -629,31 +610,6 @@ pgstat_ispgstat(int pid)
 	pgstat_is_running = false;
 
 	return true;
-}
-
-
-/* ----------
- * pgstat_close_sockets() -
- *
- *	Called when postmaster forks a non-pgstat child process, to close off
- *	file descriptors that should not be held open in child processes.
- * ----------
- */
-void
-pgstat_close_sockets(void)
-{
-	if (pgStatPmPipe[0] >= 0)
-		closesocket(pgStatPmPipe[0]);
-	pgStatPmPipe[0] = -1;
-	if (pgStatPmPipe[1] >= 0)
-		closesocket(pgStatPmPipe[1]);
-	pgStatPmPipe[1] = -1;
-	if (pgStatCollectorPmPipe[0] >= 0)
-		closesocket(pgStatCollectorPmPipe[0]);
-	pgStatCollectorPmPipe[0] = -1;
-	if (pgStatCollectorPmPipe[1] >= 0)
-		closesocket(pgStatCollectorPmPipe[1]);
-	pgStatCollectorPmPipe[1] = -1;
 }
 
 
@@ -1446,15 +1402,6 @@ PgstatBufferMain(int argc, char *argv[])
 #endif
 
 	/*
-	 * Close the writing end of the postmaster pipe, so we'll see it
-	 * closing when the postmaster terminates and can terminate as well.
-	 */
-	closesocket(pgStatPmPipe[1]);
-	pgStatPmPipe[1] = -1;
-	closesocket(pgStatCollectorPmPipe[1]);
-	pgStatCollectorPmPipe[1] = -1;
-
-	/*
 	 * Start a buffering process to read from the socket, so we have a
 	 * little more time to process incoming messages.
 	 *
@@ -1517,7 +1464,6 @@ PgstatCollectorMain(int argc, char *argv[])
 	PgStat_Msg	msg;
 	fd_set		rfds;
 	int			readPipe;
-	int			pmPipe;
 	int			nready;
 	int			len = 0;
 	struct timeval timeout;
@@ -1555,7 +1501,6 @@ PgstatCollectorMain(int argc, char *argv[])
 	/* Close unwanted files */
 	closesocket(pgStatPipe[1]);
 	closesocket(pgStatSock);
-	pmPipe = pgStatCollectorPmPipe[0];
 
 	/*
 	 * Identify myself via ps
@@ -1823,17 +1768,9 @@ PgstatCollectorMain(int argc, char *argv[])
 	 * shutdown, we want to save the final stats to reuse at next startup.
 	 * But if the buffer process failed, it seems best not to (there may
 	 * even now be a new collector firing up, and we don't want it to read
-	 * a partially- rewritten stats file).	We can tell whether the
-	 * postmaster is still alive by checking to see if the postmaster pipe
-	 * is still open.  If it is read-ready (ie, EOF), the postmaster must
-	 * have quit.
+	 * a partially-rewritten stats file).
 	 */
-	FD_ZERO(&rfds);
-	FD_SET(pmPipe, &rfds);
-	timeout.tv_sec = 0;
-	timeout.tv_usec = 0;
-	nready = select(pmPipe+1,&rfds,NULL,NULL,&timeout);
-	if (nready > 0 && FD_ISSET(pmPipe, &rfds)) 
+	if (!PostmasterIsAlive(false))
 		pgstat_write_statsfile();
 }
 
@@ -1852,8 +1789,8 @@ pgstat_recvbuffer(void)
 {
 	fd_set		rfds;
 	fd_set		wfds;
+	struct timeval timeout;
 	int			writePipe = pgStatPipe[1];
-	int			pmPipe = pgStatPmPipe[0];
 	int			maxfd;
 	int			nready;
 	int			len;
@@ -1937,8 +1874,7 @@ pgstat_recvbuffer(void)
 
 		/*
 		 * If we have messages to write out, we add the pipe to the write
-		 * descriptor set. Otherwise, we check if the postmaster might
-		 * have terminated.
+		 * descriptor set.
 		 */
 		if (msg_have > 0)
 		{
@@ -1946,17 +1882,16 @@ pgstat_recvbuffer(void)
 			if (writePipe > maxfd)
 				maxfd = writePipe;
 		}
-		else
-		{
-			FD_SET(pmPipe, &rfds);
-			if (pmPipe > maxfd)
-				maxfd = pmPipe;
-		}
 
 		/*
-		 * Wait for some work to do.
+		 * Wait for some work to do; but not for more than 10 seconds
+		 * (this determines how quickly we will shut down after postmaster
+		 * termination).
 		 */
-		nready = select(maxfd + 1, &rfds, &wfds, NULL, NULL);
+		timeout.tv_sec = 10;
+		timeout.tv_usec = 0;
+
+		nready = select(maxfd + 1, &rfds, &wfds, NULL, &timeout);
 		if (nready < 0)
 		{
 			if (errno == EINTR)
@@ -2062,11 +1997,9 @@ pgstat_recvbuffer(void)
 			continue;
 
 		/*
-		 * If the pipe from the postmaster is ready for reading, the
-		 * kernel must have closed it on exit() (the postmaster never
-		 * really writes to it). So we've done our job.
+		 * If the postmaster has terminated, we've done our job.
 		 */
-		if (FD_ISSET(pmPipe, &rfds))
+		if (!PostmasterIsAlive(true))
 			exit(0);
 	}
 }

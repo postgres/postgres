@@ -10,7 +10,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/tcop/utility.c,v 1.217 2004/05/26 13:56:54 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/tcop/utility.c,v 1.218 2004/05/29 22:48:20 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -45,6 +45,7 @@
 #include "nodes/makefuncs.h"
 #include "parser/parse_expr.h"
 #include "parser/parse_type.h"
+#include "postmaster/bgwriter.h"
 #include "rewrite/rewriteDefine.h"
 #include "rewrite/rewriteRemove.h"
 #include "storage/fd.h"
@@ -54,7 +55,7 @@
 #include "utils/guc.h"
 #include "utils/lsyscache.h"
 #include "utils/syscache.h"
-#include "access/xlog.h"
+
 
 /*
  * Error-checking support for DROP commands
@@ -892,7 +893,7 @@ ProcessUtility(Node *parsetree,
 				ereport(ERROR,
 						(errcode(ERRCODE_INSUFFICIENT_PRIVILEGE),
 						 errmsg("must be superuser to do CHECKPOINT")));
-			CreateCheckPoint(false, false);
+			RequestCheckpoint(true);
 			break;
 
 		case T_ReindexStmt:

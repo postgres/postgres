@@ -10,7 +10,7 @@
  * Written by Peter Eisentraut <peter_e@gmx.net>.
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/utils/misc/guc.c,v 1.208 2004/05/26 15:07:39 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/utils/misc/guc.c,v 1.209 2004/05/29 22:48:21 tgl Exp $
  *
  *--------------------------------------------------------------------
  */
@@ -44,6 +44,8 @@
 #include "optimizer/prep.h"
 #include "parser/parse_expr.h"
 #include "parser/parse_relation.h"
+#include "postmaster/bgwriter.h"
+#include "postmaster/postmaster.h"
 #include "storage/bufmgr.h"
 #include "storage/fd.h"
 #include "storage/freespace.h"
@@ -65,15 +67,10 @@
 #endif
 
 /* XXX these should appear in other modules' header files */
-extern bool Log_connections;
 extern bool Log_disconnections;
 extern DLLIMPORT bool check_function_bodies;
-extern int	PreAuthDelay;
-extern int	AuthenticationTimeout;
-extern int	CheckPointTimeout;
 extern int	CommitDelay;
 extern int	CommitSiblings;
-extern char *preload_libraries_string;
 extern int	DebugSharedBuffers;
 
 static const char *assign_log_destination(const char *value,
@@ -1262,7 +1259,7 @@ static struct config_int ConfigureNamesInt[] =
 			NULL
 		},
 		&BgWriterPercent,
-		1, 0, 100, NULL, NULL
+		1, 1, 100, NULL, NULL
 	},
 
 	{
@@ -1270,7 +1267,7 @@ static struct config_int ConfigureNamesInt[] =
 			gettext_noop("Background writer maximum number of pages to flush per round"),
 			NULL
 		},
-		&BgWriterMaxpages,
+		&BgWriterMaxPages,
 		100, 1, 1000, NULL, NULL
 	},
 

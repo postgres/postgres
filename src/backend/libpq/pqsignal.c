@@ -9,7 +9,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/libpq/pqsignal.c,v 1.33 2004/04/12 16:19:18 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/libpq/pqsignal.c,v 1.34 2004/05/29 22:48:19 tgl Exp $
  *
  * NOTES
  *		This shouldn't be in libpq, but the monitor and some other
@@ -44,6 +44,17 @@
 #include <signal.h>
 
 #include "libpq/pqsignal.h"
+
+
+#ifdef HAVE_SIGPROCMASK
+sigset_t	UnBlockSig,
+			BlockSig,
+			AuthBlockSig;
+#else
+int			UnBlockSig,
+			BlockSig,
+			AuthBlockSig;
+#endif
 
 
 /*
@@ -153,4 +164,5 @@ pqsignal(int signo, pqsigfunc func)
 	return oact.sa_handler;
 #endif   /* !HAVE_POSIX_SIGNALS */
 }
+
 #endif /* WIN32 */

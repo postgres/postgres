@@ -13,7 +13,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/main/main.c,v 1.84 2004/05/28 05:12:50 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/main/main.c,v 1.85 2004/05/29 22:48:19 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -34,12 +34,13 @@
 #include <sys/param.h>
 #endif
 
-#include "miscadmin.h"
 #include "bootstrap/bootstrap.h"
+#include "miscadmin.h"
+#include "pgstat.h"
+#include "postmaster/postmaster.h"
 #include "tcop/tcopprot.h"
 #include "utils/help_config.h"
 #include "utils/ps_status.h"
-#include "pgstat.h"
 #ifdef WIN32
 #include "libpq/pqsignal.h"
 #endif

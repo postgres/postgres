@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2003, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/include/storage/bufmgr.h,v 1.79 2004/05/08 19:09:25 tgl Exp $
+ * $PostgreSQL: pgsql/src/include/storage/bufmgr.h,v 1.80 2004/05/29 22:48:23 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -27,11 +27,6 @@ extern DLLIMPORT int NBuffers;
 
 /* in bufmgr.c */
 extern bool zero_damaged_pages;
-
-extern int	BgWriterDelay;
-extern int	BgWriterPercent;
-extern int	BgWriterMaxpages;
-
 
 /* in buf_init.c */
 extern DLLIMPORT Block *BufferBlockPointers;
@@ -179,9 +174,6 @@ extern void AbortBufferIO(void);
 
 extern void BufmgrCommit(void);
 extern int	BufferSync(int percent, int maxpages);
-extern void BufferBackgroundWriter(void);
-extern const char *BgWriterAssignSyncMethod(const char *method,
-			bool doid, bool interactive);
 
 extern void InitLocalBuffer(void);
 

@@ -13,16 +13,18 @@
  * Portions Copyright (c) 1996-2003, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/include/miscadmin.h,v 1.161 2004/05/28 05:13:24 tgl Exp $
+ * $PostgreSQL: pgsql/src/include/miscadmin.h,v 1.162 2004/05/29 22:48:22 tgl Exp $
  *
  * NOTES
- *	  some of the information in this file should be moved to
- *	  other files.
+ *	  some of the information in this file should be moved to other files.
  *
  *-------------------------------------------------------------------------
  */
 #ifndef MISCADMIN_H
 #define MISCADMIN_H
+
+
+#define PG_VERSIONSTR "postgres (PostgreSQL) " PG_VERSION "\n"
 
 
 /*****************************************************************************
@@ -75,12 +77,15 @@ extern volatile uint32 CritSectionCount;
 extern void ProcessInterrupts(void);
 
 #ifndef WIN32
+
 #define CHECK_FOR_INTERRUPTS() \
 do { \
 	if (InterruptPending) \
 		ProcessInterrupts(); \
 } while(0)
-#else
+
+#else  /* WIN32 */
+
 #define CHECK_FOR_INTERRUPTS() \
 do { \
 	if (WaitForSingleObject(pgwin32_signal_event,0) == WAIT_OBJECT_0) \
@@ -88,7 +93,8 @@ do { \
 	if (InterruptPending) \
 		ProcessInterrupts(); \
 } while(0)
-#endif
+
+#endif /* WIN32 */
 
 
 #define HOLD_INTERRUPTS()  (InterruptHoldoffCount++)
@@ -113,20 +119,6 @@ do { \
  *****************************************************************************/
 
 /*
- * from postmaster/postmaster.c
- */
-extern bool ClientAuthInProgress;
-
-extern int	PostmasterMain(int argc, char *argv[]);
-extern void ClosePostmasterPorts(bool pgstat_too);
-#ifdef EXEC_BACKEND
-extern pid_t postmaster_forkexec(int argc, char *argv[]);
-extern int	SubPostmasterMain(int argc, char *argv[]);
-#endif
-
-#define PG_VERSIONSTR "postgres (PostgreSQL) " PG_VERSION "\n"
-
-/*
  * from utils/init/globals.c
  */
 extern pid_t PostmasterPid;
@@ -136,6 +128,9 @@ extern bool IsUnderPostmaster;
 extern bool ExitOnAnyError;
 
 extern char *DataDir;
+
+extern DLLIMPORT int NBuffers;
+extern int	MaxBackends;
 
 extern DLLIMPORT int MyProcPid;
 extern struct Port *MyProcPort;
@@ -215,21 +210,6 @@ extern int	VacuumCostNaptime;
 
 extern int	VacuumCostBalance;
 extern bool	VacuumCostActive;
-
-/*
- *	A few postmaster startup options are exported here so the
- *	configuration file processor can access them.
- */
-extern bool EnableSSL;
-extern bool SilentMode;
-extern int	MaxBackends;
-extern int	ReservedBackends;
-extern DLLIMPORT int NBuffers;
-extern int	PostPortNumber;
-extern int	Unix_socket_permissions;
-extern char *Unix_socket_group;
-extern char *UnixSocketDir;
-extern char *ListenAddresses;
 
 
 /* in tcop/postgres.c */

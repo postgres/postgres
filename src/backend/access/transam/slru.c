@@ -6,7 +6,7 @@
  * Portions Copyright (c) 1996-2003, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/backend/access/transam/slru.c,v 1.14 2004/05/28 05:12:42 tgl Exp $
+ * $PostgreSQL: pgsql/src/backend/access/transam/slru.c,v 1.15 2004/05/29 22:48:18 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -17,6 +17,7 @@
 #include <unistd.h>
 
 #include "access/slru.h"
+#include "postmaster/bgwriter.h"
 #include "storage/fd.h"
 #include "storage/lwlock.h"
 #include "miscadmin.h"
@@ -795,8 +796,8 @@ SimpleLruTruncate(SlruCtl ctl, int cutoffPage)
 	if (!SlruScanDirectory(ctl, cutoffPage, false))
 		return;					/* nothing to remove */
 
-	/* Perform a forced CHECKPOINT */
-	CreateCheckPoint(false, true);
+	/* Perform a CHECKPOINT */
+	RequestCheckpoint(true);
 
 	/*
 	 * Scan shared memory and remove any pages preceding the cutoff page,

@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/storage/buffer/bufmgr.c,v 1.165 2004/05/08 19:09:25 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/storage/buffer/bufmgr.c,v 1.166 2004/05/29 22:48:19 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -59,10 +59,6 @@ bool		zero_damaged_pages = false;
 #ifdef NOT_USED
 bool			ShowPinTrace = false;
 #endif
-
-int			BgWriterDelay = 200;
-int			BgWriterPercent = 1;
-int			BgWriterMaxpages = 100;
 
 long		NDirectFileRead;	/* some I/O's are direct file access.
 								 * bypass bufmgr */
@@ -861,72 +857,6 @@ FlushBufferPool(void)
 	smgrsync();
 }
 
-
-/*
- * BufferBackgroundWriter
- *
- * Periodically flushes dirty blocks from the buffer pool to keep
- * the LRU list clean, preventing regular backends from writing.
- */
-void
-BufferBackgroundWriter(void)
-{
-	if (BgWriterPercent == 0)
-		return;
-
-	/*
-	 * Loop forever 
-	 */
-	for (;;)
-	{
-		int			n;
-		long		udelay;
-
-		/*
-		 * Call BufferSync() with instructions to keep just the
-		 * LRU heads clean.
-		 */
-		n = BufferSync(BgWriterPercent, BgWriterMaxpages);
-
-		/*
-		 * Whatever signal is sent to us, let's just die gallantly. If
-		 * it wasn't meant that way, the postmaster will reincarnate us.
-		 */
-		if (InterruptPending)
-			return;
-
-		/*
-		 * Whenever we have nothing to do, close all smgr files.  This
-		 * is so we won't hang onto smgr references to deleted files
-		 * indefinitely.  XXX this is a bogus, temporary solution.  'Twould
-		 * be much better to do this once per checkpoint, but the bgwriter
-		 * doesn't yet know anything about checkpoints.
-		 */
-		if (n == 0)
-			smgrcloseall();
-
-		/*
-		 * Nap for the configured time or sleep for 10 seconds if
-		 * there was nothing to do at all.
-		 *
-		 * On some platforms, signals won't interrupt the sleep.  To ensure
-		 * we respond reasonably promptly when the postmaster signals us,
-		 * break down the sleep into 1-second increments, and check for
-		 * interrupts after each nap.
-		 */
-		udelay = ((n > 0) ? BgWriterDelay : 10000) * 1000L;
-		while (udelay > 1000000L)
-		{
-			pg_usleep(1000000L);
-			udelay -= 1000000L;
-			if (InterruptPending)
-				return;
-		}
-		pg_usleep(udelay);
-		if (InterruptPending)
-			return;
-	}
-}
 
 /*
  * Do whatever is needed to prepare for commit at the bufmgr and smgr levels

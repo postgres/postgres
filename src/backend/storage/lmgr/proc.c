@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/storage/lmgr/proc.c,v 1.147 2004/02/18 16:25:12 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/storage/lmgr/proc.c,v 1.148 2004/05/29 22:48:20 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -68,10 +68,9 @@ PGPROC	   *MyProc = NULL;
  */
 NON_EXEC_STATIC slock_t *ProcStructLock = NULL;
 
+/* Pointers to shared-memory structures */
 static PROC_HDR *ProcGlobal = NULL;
-
-static PGPROC *DummyProc = NULL;
-static int	dummy_proc_type = -1;
+static PGPROC *DummyProcs = NULL;
 
 static bool waitingForLock = false;
 static bool waitingForSignal = false;
@@ -130,17 +129,16 @@ InitProcGlobal(int maxBackends)
 
 	/*
 	 * Create or attach to the PGPROC structures for dummy (checkpoint)
-	 * processes, too.	This does not get linked into the freeProcs
-	 * list.
+	 * processes, too.	These do not get linked into the freeProcs list.
 	 */
-	DummyProc = (PGPROC *)
-		ShmemInitStruct("DummyProc",sizeof(PGPROC) * NUM_DUMMY_PROCS, &foundDummy);
+	DummyProcs = (PGPROC *)
+		ShmemInitStruct("DummyProcs", sizeof(PGPROC) * NUM_DUMMY_PROCS,
+						&foundDummy);
 
 	if (foundProcGlobal || foundDummy)
 	{
 		/* both should be present or neither */
 		Assert(foundProcGlobal && foundDummy);
-		return;
 	}
 	else
 	{
@@ -170,11 +168,11 @@ InitProcGlobal(int maxBackends)
 			ProcGlobal->freeProcs = MAKE_OFFSET(proc);
 		}
 
-		MemSet(DummyProc, 0, sizeof(PGPROC) * NUM_DUMMY_PROCS);
+		MemSet(DummyProcs, 0, sizeof(PGPROC) * NUM_DUMMY_PROCS);
 		for (i = 0; i < NUM_DUMMY_PROCS; i++)
 		{
-			DummyProc[i].pid = 0;		/* marks DummyProc as not in use */
-			PGSemaphoreCreate(&(DummyProc[i].sem));
+			DummyProcs[i].pid = 0;		/* marks dummy proc as not in use */
+			PGSemaphoreCreate(&(DummyProcs[i].sem));
 		}
 
 		/* Create ProcStructLock spinlock, too */
@@ -249,7 +247,6 @@ InitProcess(void)
 	MyProc->waitHolder = NULL;
 	SHMQueueInit(&(MyProc->procHolders));
 
-
 	/*
 	 * Arrange to clean up at backend exit.
 	 */
@@ -274,6 +271,9 @@ InitProcess(void)
  * This is called by checkpoint processes so that they will have a MyProc
  * value that's real enough to let them wait for LWLocks.  The PGPROC and
  * sema that are assigned are the extra ones created during InitProcGlobal.
+ *
+ * Dummy processes are presently not expected to wait for real (lockmgr)
+ * locks, nor to participate in sinval messaging.
  */
 void
 InitDummyProcess(int proctype)
@@ -284,29 +284,29 @@ InitDummyProcess(int proctype)
 	 * ProcGlobal should be set by a previous call to InitProcGlobal (we
 	 * inherit this by fork() from the postmaster).
 	 */
-	if (ProcGlobal == NULL || DummyProc == NULL)
+	if (ProcGlobal == NULL || DummyProcs == NULL)
 		elog(PANIC, "proc header uninitialized");
 
 	if (MyProc != NULL)
 		elog(ERROR, "you already exist");
 
-	Assert(dummy_proc_type < 0);
-	dummy_proc_type = proctype;
-	dummyproc = &DummyProc[proctype];
+	Assert(proctype >= 0 && proctype < NUM_DUMMY_PROCS);
+
+	dummyproc = &DummyProcs[proctype];
 
 	/*
 	 * dummyproc should not presently be in use by anyone else
 	 */
 	if (dummyproc->pid != 0)
 		elog(FATAL, "DummyProc[%d] is in use by PID %d",
-				proctype, dummyproc->pid);
+			 proctype, dummyproc->pid);
 	MyProc = dummyproc;
 
 	/*
 	 * Initialize all fields of MyProc, except MyProc->sem which was set
 	 * up by InitProcGlobal.
 	 */
-	MyProc->pid = MyProcPid;	/* marks DummyProc as in use by me */
+	MyProc->pid = MyProcPid;	/* marks dummy proc as in use by me */
 	SHMQueueElemInit(&(MyProc->links));
 	MyProc->errType = STATUS_OK;
 	MyProc->xid = InvalidTransactionId;
@@ -323,7 +323,7 @@ InitDummyProcess(int proctype)
 	/*
 	 * Arrange to clean up at process exit.
 	 */
-	on_shmem_exit(DummyProcKill, proctype);
+	on_shmem_exit(DummyProcKill, Int32GetDatum(proctype));
 
 	/*
 	 * We might be reusing a semaphore that belonged to a failed process.
@@ -459,13 +459,14 @@ ProcKill(int code, Datum arg)
 static void
 DummyProcKill(int code, Datum arg)
 {
+	int		proctype = DatumGetInt32(arg);
 	PGPROC	*dummyproc;
 
-	Assert(dummy_proc_type >= 0 && dummy_proc_type < NUM_DUMMY_PROCS);
+	Assert(proctype >= 0 && proctype < NUM_DUMMY_PROCS);
 
-	dummyproc = &DummyProc[dummy_proc_type];
+	dummyproc = &DummyProcs[proctype];
 
-	Assert(MyProc != NULL && MyProc == dummyproc);
+	Assert(MyProc == dummyproc);
 
 	/* Release any LW locks I am holding */
 	LWLockReleaseAll();
@@ -477,13 +478,11 @@ DummyProcKill(int code, Datum arg)
 
 	/* I can't be on regular lock queues, so needn't check */
 
-	/* Mark DummyProc no longer in use */
+	/* Mark dummy proc no longer in use */
 	MyProc->pid = 0;
 
 	/* PGPROC struct isn't mine anymore */
 	MyProc = NULL;
-
-	dummy_proc_type = -1;
 }
 
 

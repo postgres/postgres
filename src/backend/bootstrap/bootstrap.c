@@ -8,7 +8,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/bootstrap/bootstrap.c,v 1.181 2004/05/28 05:12:45 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/bootstrap/bootstrap.c,v 1.182 2004/05/29 22:48:18 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -33,6 +33,7 @@
 #include "executor/executor.h"
 #include "libpq/pqsignal.h"
 #include "miscadmin.h"
+#include "postmaster/bgwriter.h"
 #include "pgtime.h"
 #include "storage/freespace.h"
 #include "storage/ipc.h"
@@ -50,6 +51,8 @@
 #define ALLOC(t, c)		((t *) calloc((unsigned)(c), sizeof(t)))
 
 extern int	Int_yyparse(void);
+static void usage(void);
+static void bootstrap_signals(void);
 static hashnode *AddStr(char *str, int strlength, int mderef);
 static Form_pg_attribute AllocateAttribute(void);
 static bool BootstrapAlreadySeen(Oid id);
@@ -192,44 +195,8 @@ typedef struct _IndexList
 static IndexList *ILHead = NULL;
 
 
-/* ----------------------------------------------------------------
- *						misc functions
- * ----------------------------------------------------------------
- */
-
-/* ----------------
- *		error handling / abort routines
- * ----------------
- */
-void
-err_out(void)
-{
-	Warnings++;
-	cleanup();
-}
-
-/* usage:
- *		usage help for the bootstrap backend
- */
-static void
-usage(void)
-{
-	fprintf(stderr,
-			gettext("Usage:\n"
-					"  postgres -boot [OPTION]... DBNAME\n"
-					"  -c NAME=VALUE    set run-time parameter\n"
-					"  -d 1-5           debug level\n"
-					"  -D datadir       data directory\n"
-					"  -F               turn off fsync\n"
-					"  -o file          send debug output to file\n"
-					"  -x num           internal use\n"));
-
-	proc_exit(1);
-}
-
-
 /*
- *	 The main loop for running the backend in bootstrap mode
+ *	 The main entry point for running the backend in bootstrap mode
  *
  *	 The bootstrap mode is used to initialize the template database.
  *	 The bootstrap backend doesn't speak SQL, but instead expects
@@ -387,19 +354,13 @@ BootstrapMain(int argc, char *argv[])
 		switch (xlogop)
 		{
 			case BS_XLOG_STARTUP:
-				statmsg = "startup subprocess";
-				break;
-			case BS_XLOG_CHECKPOINT:
-				statmsg = "checkpoint subprocess";
+				statmsg = "startup process";
 				break;
 			case BS_XLOG_BGWRITER:
-				statmsg = "bgwriter subprocess";
-				break;
-			case BS_XLOG_SHUTDOWN:
-				statmsg = "shutdown subprocess";
+				statmsg = "writer process";
 				break;
 			default:
-				statmsg = "??? subprocess";
+				statmsg = "??? process";
 				break;
 		}
 		init_ps_display(statmsg, "", "");
@@ -415,48 +376,9 @@ BootstrapMain(int argc, char *argv[])
 		pg_timezone_initialize();
 	}
 
-	if (IsUnderPostmaster)
-	{
-		/*
-		 * Properly accept or ignore signals the postmaster might send us
-		 */
-		pqsignal(SIGHUP, SIG_IGN);
-		pqsignal(SIGINT, SIG_IGN);		/* ignore query-cancel */
-		pqsignal(SIGTERM, die);
-		pqsignal(SIGQUIT, quickdie);
-		pqsignal(SIGALRM, SIG_IGN);
-		pqsignal(SIGPIPE, SIG_IGN);
-		pqsignal(SIGUSR1, SIG_IGN);
-		pqsignal(SIGUSR2, SIG_IGN);
-
-		/*
-		 * Reset some signals that are accepted by postmaster but not here
-		 */
-		pqsignal(SIGCHLD, SIG_DFL);
-		pqsignal(SIGTTIN, SIG_DFL);
-		pqsignal(SIGTTOU, SIG_DFL);
-		pqsignal(SIGCONT, SIG_DFL);
-		pqsignal(SIGWINCH, SIG_DFL);
-
-		/*
-		 * Unblock signals (they were blocked when the postmaster forked
-		 * us)
-		 */
-		PG_SETMASK(&UnBlockSig);
-	}
-	else
-	{
-		/* Set up appropriately for interactive use */
-		pqsignal(SIGHUP, die);
-		pqsignal(SIGINT, die);
-		pqsignal(SIGTERM, die);
-		pqsignal(SIGQUIT, die);
-
-		/*
-		 * Create lockfile for data directory.
-		 */
+	/* If standalone, create lockfile for data directory */
+	if (!IsUnderPostmaster)
 		CreateDataDirLockFile(DataDir, false);
-	}
 
 	SetProcessingMode(BootstrapProcessing);
 	IgnoreSystemIndexes(true);
@@ -488,37 +410,30 @@ BootstrapMain(int argc, char *argv[])
 	switch (xlogop)
 	{
 		case BS_XLOG_NOP:
+			bootstrap_signals();
 			break;
 
 		case BS_XLOG_BOOTSTRAP:
+			bootstrap_signals();
 			BootStrapXLOG();
 			StartupXLOG();
 			break;
 
-		case BS_XLOG_CHECKPOINT:
-			InitXLOGAccess();
-			CreateCheckPoint(false, false);
-			proc_exit(0);		/* done */
-
-		case BS_XLOG_BGWRITER:
-			InitXLOGAccess();
-			BufferBackgroundWriter();
-			proc_exit(0);		/* done */
-
 		case BS_XLOG_STARTUP:
+			bootstrap_signals();
 			StartupXLOG();
 			LoadFreeSpaceMap();
-			proc_exit(0);		/* done */
+			proc_exit(0);		/* startup done */
 
-		case BS_XLOG_SHUTDOWN:
+		case BS_XLOG_BGWRITER:
+			/* don't set signals, bgwriter has its own agenda */
 			InitXLOGAccess();
-			ShutdownXLOG(0, 0);
-			DumpFreeSpaceMap(0, 0);
-			proc_exit(0);		/* done */
+			BackgroundWriterMain();
+			proc_exit(1);		/* should never return */
 
 		default:
 			elog(PANIC, "unrecognized XLOG op: %d", xlogop);
-			proc_exit(0);
+			proc_exit(1);
 	}
 
 	SetProcessingMode(BootstrapProcessing);
@@ -575,8 +490,89 @@ BootstrapMain(int argc, char *argv[])
 
 	/* not reached, here to make compiler happy */
 	return 0;
-
 }
+
+
+/* ----------------------------------------------------------------
+ *						misc functions
+ * ----------------------------------------------------------------
+ */
+
+/* usage:
+ *		usage help for the bootstrap backend
+ */
+static void
+usage(void)
+{
+	fprintf(stderr,
+			gettext("Usage:\n"
+					"  postgres -boot [OPTION]... DBNAME\n"
+					"  -c NAME=VALUE    set run-time parameter\n"
+					"  -d 1-5           debug level\n"
+					"  -D datadir       data directory\n"
+					"  -F               turn off fsync\n"
+					"  -o file          send debug output to file\n"
+					"  -x num           internal use\n"));
+
+	proc_exit(1);
+}
+
+/*
+ * Set up signal handling for a bootstrap process
+ */
+static void
+bootstrap_signals(void)
+{
+	if (IsUnderPostmaster)
+	{
+		/*
+		 * Properly accept or ignore signals the postmaster might send us
+		 */
+		pqsignal(SIGHUP, SIG_IGN);
+		pqsignal(SIGINT, SIG_IGN);		/* ignore query-cancel */
+		pqsignal(SIGTERM, die);
+		pqsignal(SIGQUIT, quickdie);
+		pqsignal(SIGALRM, SIG_IGN);
+		pqsignal(SIGPIPE, SIG_IGN);
+		pqsignal(SIGUSR1, SIG_IGN);
+		pqsignal(SIGUSR2, SIG_IGN);
+
+		/*
+		 * Reset some signals that are accepted by postmaster but not here
+		 */
+		pqsignal(SIGCHLD, SIG_DFL);
+		pqsignal(SIGTTIN, SIG_DFL);
+		pqsignal(SIGTTOU, SIG_DFL);
+		pqsignal(SIGCONT, SIG_DFL);
+		pqsignal(SIGWINCH, SIG_DFL);
+
+		/*
+		 * Unblock signals (they were blocked when the postmaster forked
+		 * us)
+		 */
+		PG_SETMASK(&UnBlockSig);
+	}
+	else
+	{
+		/* Set up appropriately for interactive use */
+		pqsignal(SIGHUP, die);
+		pqsignal(SIGINT, die);
+		pqsignal(SIGTERM, die);
+		pqsignal(SIGQUIT, die);
+	}
+}
+
+/* ----------------
+ *		error handling / abort routines
+ * ----------------
+ */
+void
+err_out(void)
+{
+	Warnings++;
+	cleanup();
+}
+
 
 /* ----------------------------------------------------------------
  *				MANUAL BACKEND INTERACTIVE INTERFACE COMMANDS
