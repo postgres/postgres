@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/catalog/heap.c,v 1.76 1999/03/17 22:52:48 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/catalog/heap.c,v 1.77 1999/04/15 04:08:07 tgl Exp $
  *
  *
  * INTERFACE ROUTINES
@@ -661,7 +661,29 @@ AddNewRelationTuple(Relation pg_class_desc,
 	new_rel_reltup = new_rel_desc->rd_rel;
 
 	/* CHECK should get new_rel_oid first via an insert then use XXX */
-	/* new_rel_reltup->reltuples = 1; *//* XXX */
+
+	/* ----------------
+	 * Here we insert bogus estimates of the size of the new relation.
+	 * In reality, of course, the new relation has 0 tuples and pages,
+	 * and if we were tracking these statistics accurately then we'd
+	 * set the fields that way.  But at present the stats will be updated
+	 * only by VACUUM or CREATE INDEX, and the user might insert a lot of
+	 * tuples before he gets around to doing either of those.  So, instead
+	 * of saying the relation is empty, we insert guesstimates.  The point
+	 * is to keep the optimizer from making really stupid choices on
+	 * never-yet-vacuumed tables; so the estimates need only be large
+	 * enough to discourage the optimizer from using nested-loop plans.
+	 * With this hack, nested-loop plans will be preferred only after
+	 * the table has been proven to be small by VACUUM or CREATE INDEX.
+	 * (NOTE: if user does CREATE TABLE, then CREATE INDEX, then loads
+	 * the table, he still loses until he vacuums, because CREATE INDEX
+	 * will set reltuples to zero.  Can't win 'em all.  Maintaining the
+	 * stats on-the-fly would solve the problem, but the overhead of that
+	 * would likely cost more than it'd save.)
+	 * ----------------
+	 */
+	new_rel_reltup->relpages = 10; /* bogus estimates */
+	new_rel_reltup->reltuples = 1000;
 
 	new_rel_reltup->relowner = GetUserId();
 	new_rel_reltup->relkind = relkind;
