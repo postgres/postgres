@@ -3,10 +3,9 @@
  *
  * Copyright 2000 by PostgreSQL Global Development Group
  *
- * $Header: /cvsroot/pgsql/src/bin/psql/common.c,v 1.50 2002/10/24 01:33:50 momjian Exp $
+ * $Header: /cvsroot/pgsql/src/bin/psql/common.c,v 1.51 2002/10/29 19:35:33 momjian Exp $
  */
 #include "postgres_fe.h"
-
 #include "common.h"
 
 #include <errno.h>
@@ -27,9 +26,6 @@
 
 #ifndef WIN32
 #include <sys/ioctl.h>			/* for ioctl() */
-#else
-#define popen(x,y) _popen(x,y)
-#define pclose(x) _pclose(x)
 #endif
 
 #ifdef HAVE_TERMIOS_H

@@ -3,7 +3,7 @@
  *
  * Copyright 2000 by PostgreSQL Global Development Group
  *
- * $Header: /cvsroot/pgsql/src/bin/psql/common.h,v 1.20 2002/10/23 19:23:56 momjian Exp $
+ * $Header: /cvsroot/pgsql/src/bin/psql/common.h,v 1.21 2002/10/29 19:35:33 momjian Exp $
  */
 #ifndef COMMON_H
 #define COMMON_H
@@ -41,5 +41,11 @@ extern FILE *PageOutput(int lines, bool pager);
 
 /* sprompt.h */
 extern char *simple_prompt(const char *prompt, int maxlen, bool echo);
+
+/* Used for all Win32 popen/pclose calls */
+#ifdef WIN32
+#define popen(x,y) _popen(x,y)
+#define pclose(x) _pclose(x)
+#endif
 
 #endif   /* COMMON_H */
