@@ -1,6 +1,6 @@
 TODO list for PostgreSQL
 ========================
-Last updated:		Wed Oct  6 09:35:16 EDT 1999
+Last updated:		Sun Oct 10 16:40:40 EDT 1999
 
 Current maintainer:	Bruce Momjian (maillist@candle.pha.pa.us)
 
@@ -186,7 +186,7 @@ MISC
 * -Certain indexes will not shrink, i.e. oid indexes with many inserts(Vadim)
 * Restore unused oid's on backend exit if no one else has gotten oids
 * Have UPDATE/DELETE clean out indexes
-* Allow WHERE restriction on ctid
+* -Allow WHERE restriction on ctid(Hiroshi)
 * Allow cursors to be DECLAREd/OPENed/CLOSEed outside transactions
 * Allow PQrequestCancel() to terminate when in waiting-for-lock state
 * -Transaction log, so re-do log can be on a separate disk by
@@ -278,7 +278,7 @@ SOURCE CODE
 * Make configure --enable-debug add -g on compile line
 * Does Mariposa source contain any other bug fixes?
 * Remove SET KSQO option if OR processing is improved(Tom)
-
+* rename 'createuser' to 'pg_createuser', and add 'pg_' to other commands
 ---------------------------------------------------------------------------
 
 
