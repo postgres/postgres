@@ -1,0 +1,771 @@
+From pgsql-hackers-owner+M16329=candle.pha.pa.us=pgman@postgresql.org Thu Dec  6 13:31:28 2001
+Return-path: <pgsql-hackers-owner+M16329=candle.pha.pa.us=pgman@postgresql.org>
+Received: from west.navpoint.com (west.navpoint.com [207.106.42.13])
+	by candle.pha.pa.us (8.11.6/8.10.1) with ESMTP id fB6IVRZ13376
+	for <pgman@candle.pha.pa.us>; Thu, 6 Dec 2001 13:31:27 -0500 (EST)
+Received: from rs.postgresql.org (server1.pgsql.org [64.39.15.238] (may be forged))
+	by west.navpoint.com (8.11.6/8.10.1) with ESMTP id fB6IVQa26949
+	for <pgman@candle.pha.pa.us>; Thu, 6 Dec 2001 13:31:26 -0500 (EST)
+Received: from postgresql.org (postgresql.org [64.49.215.8])
+	by rs.postgresql.org (8.11.6/8.11.6) with ESMTP id fB6IRvR61959
+	for <pgman@candle.pha.pa.us>; Thu, 6 Dec 2001 12:29:06 -0600 (CST)
+	(envelope-from pgsql-hackers-owner+M16329=candle.pha.pa.us=pgman@postgresql.org)
+Received: from gromit.dotclick.com (ipn9-f8366.net-resource.net [216.204.83.66])
+	by postgresql.org (8.11.3/8.11.4) with ESMTP id fB6IQ2m78192
+	for <pgsql-hackers@postgresql.org>; Thu, 6 Dec 2001 13:26:05 -0500 (EST)
+	(envelope-from markw@mohawksoft.com)
+Received: from mohawksoft.com (IDENT:markw@localhost.localdomain [127.0.0.1])
+	by gromit.dotclick.com (8.9.3/8.9.3) with ESMTP id NAA10076
+	for <pgsql-hackers@postgresql.org>; Thu, 6 Dec 2001 13:28:04 -0500
+Message-ID: <3C0FB8B4.382C7736@mohawksoft.com>
+Date: Thu, 06 Dec 2001 13:28:04 -0500
+From: mlw <markw@mohawksoft.com>
+X-Mailer: Mozilla 4.75 [en] (X11; U; Linux 2.4.16 i686)
+X-Accept-Language: en
+MIME-Version: 1.0
+To: "pgsql-hackers@postgresql.org" <pgsql-hackers@postgresql.org>
+Subject: [HACKERS] Remote connections?
+Content-Type: text/plain; charset=us-ascii
+Content-Transfer-Encoding: 7bit
+Precedence: bulk
+Sender: pgsql-hackers-owner@postgresql.org
+Status: OR
+
+I just found out something about Oracle which that looks like something
+that could be doable in PostgreSQL. 
+
+What do you all think:
+
+Oracle's version is something like this:
+
+create [public] database link using [...]
+
+select * from sometable@remotelink
+
+
+I was thinking how this could be done with postgreSQL. How hard would it
+be to make something that is similar to a view, but executes a query
+remotely? I envision something like this:
+
+create [public] link name query using [...]
+
+The table link will be similar to a view. It could be used like this:
+
+CREATE LINK test as select * from test WITH 'user=postgres host=remote
+db=data';
+
+SELECT * from test;
+
+or 
+
+SELECT * from fubar join test on (fubar.id = test.id) ;
+
+So, what do you think? Impossible, possible, too hard? too easy?
+
+---------------------------(end of broadcast)---------------------------
+TIP 1: subscribe and unsubscribe commands go to majordomo@postgresql.org
+
+From pgsql-hackers-owner+M16331=candle.pha.pa.us=pgman@postgresql.org Thu Dec  6 15:12:28 2001
+Return-path: <pgsql-hackers-owner+M16331=candle.pha.pa.us=pgman@postgresql.org>
+Received: from west.navpoint.com (west.navpoint.com [207.106.42.13])
+	by candle.pha.pa.us (8.11.6/8.10.1) with ESMTP id fB6KCQZ19987
+	for <pgman@candle.pha.pa.us>; Thu, 6 Dec 2001 15:12:27 -0500 (EST)
+Received: from rs.postgresql.org (server1.pgsql.org [64.39.15.238] (may be forged))
+	by west.navpoint.com (8.11.6/8.10.1) with ESMTP id fB6KCQa13967
+	for <pgman@candle.pha.pa.us>; Thu, 6 Dec 2001 15:12:26 -0500 (EST)
+Received: from postgresql.org (postgresql.org [64.49.215.8])
+	by rs.postgresql.org (8.11.6/8.11.6) with ESMTP id fB6K6nR65020
+	for <pgman@candle.pha.pa.us>; Thu, 6 Dec 2001 14:07:54 -0600 (CST)
+	(envelope-from pgsql-hackers-owner+M16331=candle.pha.pa.us=pgman@postgresql.org)
+Received: from ece.rice.edu (ece.rice.edu [128.42.4.34])
+	by postgresql.org (8.11.3/8.11.4) with ESMTP id fB6K6Im96910
+	for <pgsql-hackers@postgresql.org>; Thu, 6 Dec 2001 15:06:18 -0500 (EST)
+	(envelope-from reedstrm@rice.edu)
+Received: from localhost (localhost [127.0.0.1])
+	by ece.rice.edu (Postfix) with ESMTP
+	id A9E4E68A1D; Thu,  6 Dec 2001 14:06:17 -0600 (CST)
+Received: from wallace.ece.rice.edu (wallace.ece.rice.edu [128.42.12.154])
+	by ece.rice.edu (Postfix) with ESMTP
+	id EA06668A17; Thu,  6 Dec 2001 14:06:16 -0600 (CST)
+Received: from reedstrm by wallace.ece.rice.edu with local (Exim 3.22 #1 (Debian))
+	id 16C4me-0002uX-00; Thu, 06 Dec 2001 14:06:16 -0600
+Date: Thu, 6 Dec 2001 14:06:16 -0600
+From: "Ross J. Reedstrom" <reedstrm@rice.edu>
+To: mlw <markw@mohawksoft.com>
+cc: "pgsql-hackers@postgresql.org" <pgsql-hackers@postgresql.org>
+Subject: Re: [HACKERS] Remote connections?
+Message-ID: <20011206140616.C10995@rice.edu>
+Mail-Followup-To: "Ross J. Reedstrom" <reedstrm@ece.rice.edu>,
+	mlw <markw@mohawksoft.com>,
+	"pgsql-hackers@postgresql.org" <pgsql-hackers@postgresql.org>
+References: <3C0FB8B4.382C7736@mohawksoft.com>
+MIME-Version: 1.0
+Content-Type: text/plain; charset=us-ascii
+Content-Disposition: inline
+In-Reply-To: <3C0FB8B4.382C7736@mohawksoft.com>
+User-Agent: Mutt/1.3.18i
+X-Virus-Scanned: by AMaViS snapshot-20010714
+Precedence: bulk
+Sender: pgsql-hackers-owner@postgresql.org
+Status: OR
+
+On Thu, Dec 06, 2001 at 01:28:04PM -0500, mlw wrote:
+> I just found out something about Oracle which that looks like something
+> that could be doable in PostgreSQL. 
+> 
+> What do you all think:
+> 
+> Oracle's version is something like this:
+> 
+> create [public] database link using [...]
+> 
+> select * from sometable@remotelink
+> 
+> 
+> I was thinking how this could be done with postgreSQL. How hard would it
+> be to make something that is similar to a view, but executes a query
+> remotely? I envision something like this:
+> 
+> create [public] link name query using [...]
+> 
+> The table link will be similar to a view. It could be used like this:
+> 
+> CREATE LINK test as select * from test WITH 'user=postgres host=remote
+> db=data';
+> 
+> SELECT * from test;
+> 
+> or 
+> 
+> SELECT * from fubar join test on (fubar.id = test.id) ;
+> 
+> So, what do you think? Impossible, possible, too hard? too easy?
+
+Here we come, full circle. This is just about where I came on board.
+Many moons ago, I started looking at Mariposa, in the hopes of forward
+patching it into PostgreSQL, and generalizing the 'remote' part to allow
+exactly the sort of access you described above.
+
+The biggest problem with this is transactional semantics: you need
+two-stage commits to get this right, and we don't hav'em. (Has there
+been an indepth discussion concerning what how hard it would be to do
+that with postgresql?) 
+
+The _actual_ biggest problem was my lack of knowledge of the PostgreSQL
+codebase ;-)
+
+Ross
+-- 
+Ross Reedstrom, Ph.D.                                 reedstrm@rice.edu
+Executive Director                                  phone: 713-348-6166
+Gulf Coast Consortium for Bioinformatics              fax: 713-348-6182
+Rice University MS-39
+Houston, TX 77005
+
+---------------------------(end of broadcast)---------------------------
+TIP 4: Don't 'kill -9' the postmaster
+
+From pgsql-hackers-owner+M16332=candle.pha.pa.us=pgman@postgresql.org Thu Dec  6 15:31:27 2001
+Return-path: <pgsql-hackers-owner+M16332=candle.pha.pa.us=pgman@postgresql.org>
+Received: from west.navpoint.com (west.navpoint.com [207.106.42.13])
+	by candle.pha.pa.us (8.11.6/8.10.1) with ESMTP id fB6KVQZ21158
+	for <pgman@candle.pha.pa.us>; Thu, 6 Dec 2001 15:31:26 -0500 (EST)
+Received: from rs.postgresql.org (server1.pgsql.org [64.39.15.238] (may be forged))
+	by west.navpoint.com (8.11.6/8.10.1) with ESMTP id fB6KVQa22900
+	for <pgman@candle.pha.pa.us>; Thu, 6 Dec 2001 15:31:26 -0500 (EST)
+Received: from postgresql.org (postgresql.org [64.49.215.8])
+	by rs.postgresql.org (8.11.6/8.11.6) with ESMTP id fB6KRrR65596
+	for <pgman@candle.pha.pa.us>; Thu, 6 Dec 2001 14:28:55 -0600 (CST)
+	(envelope-from pgsql-hackers-owner+M16332=candle.pha.pa.us=pgman@postgresql.org)
+Received: from gromit.dotclick.com (ipn9-f8366.net-resource.net [216.204.83.66])
+	by postgresql.org (8.11.3/8.11.4) with ESMTP id fB6KJXm97564
+	for <pgsql-hackers@postgresql.org>; Thu, 6 Dec 2001 15:19:33 -0500 (EST)
+	(envelope-from markw@mohawksoft.com)
+Received: from mohawksoft.com (IDENT:markw@localhost.localdomain [127.0.0.1])
+	by gromit.dotclick.com (8.9.3/8.9.3) with ESMTP id PAA10771;
+	Thu, 6 Dec 2001 15:21:13 -0500
+Message-ID: <3C0FD339.6F663329@mohawksoft.com>
+Date: Thu, 06 Dec 2001 15:21:13 -0500
+From: mlw <markw@mohawksoft.com>
+X-Mailer: Mozilla 4.75 [en] (X11; U; Linux 2.4.16 i686)
+X-Accept-Language: en
+MIME-Version: 1.0
+To: "Ross J. Reedstrom" <reedstrm@rice.edu>
+cc: "pgsql-hackers@postgresql.org" <pgsql-hackers@postgresql.org>
+Subject: Re: [HACKERS] Remote connections?
+References: <3C0FB8B4.382C7736@mohawksoft.com> <20011206140616.C10995@rice.edu>
+Content-Type: text/plain; charset=us-ascii
+Content-Transfer-Encoding: 7bit
+Precedence: bulk
+Sender: pgsql-hackers-owner@postgresql.org
+Status: OR
+
+"Ross J. Reedstrom" wrote:
+> 
+> On Thu, Dec 06, 2001 at 01:28:04PM -0500, mlw wrote:
+> > I just found out something about Oracle which that looks like something
+> > that could be doable in PostgreSQL.
+> >
+> > What do you all think:
+> >
+> > Oracle's version is something like this:
+> >
+> > create [public] database link using [...]
+> >
+> > select * from sometable@remotelink
+> >
+> >
+> > I was thinking how this could be done with postgreSQL. How hard would it
+> > be to make something that is similar to a view, but executes a query
+> > remotely? I envision something like this:
+> >
+> > create [public] link name query using [...]
+> >
+> > The table link will be similar to a view. It could be used like this:
+> >
+> > CREATE LINK test as select * from test WITH 'user=postgres host=remote
+> > db=data';
+> >
+> > SELECT * from test;
+> >
+> > or
+> >
+> > SELECT * from fubar join test on (fubar.id = test.id) ;
+> >
+> > So, what do you think? Impossible, possible, too hard? too easy?
+> 
+> Here we come, full circle. This is just about where I came on board.
+> Many moons ago, I started looking at Mariposa, in the hopes of forward
+> patching it into PostgreSQL, and generalizing the 'remote' part to allow
+> exactly the sort of access you described above.
+> 
+> The biggest problem with this is transactional semantics: you need
+> two-stage commits to get this right, and we don't hav'em. (Has there
+> been an indepth discussion concerning what how hard it would be to do
+> that with postgresql?)
+> 
+> The _actual_ biggest problem was my lack of knowledge of the PostgreSQL
+> codebase ;-)
+
+I think we can we can dispense worrying about two stage commits, if we
+assume that remote connections are treated as views with no rules. As
+long as remote tables are "read only" then the implementation is much
+easier.
+
+I too find the internals of PostgreSQL virtually incomprehensible at the
+internal level. If there were a document somewhere which published how a
+function could return multiple tuples, remote views would be a trivial
+undertaking. It could look like:
+
+select * from remote('select *from table', 'user=postgres host=outland
+db=remote');
+
+---------------------------(end of broadcast)---------------------------
+TIP 4: Don't 'kill -9' the postmaster
+
+From pgsql-hackers-owner+M16335=candle.pha.pa.us=pgman@postgresql.org Thu Dec  6 17:11:29 2001
+Return-path: <pgsql-hackers-owner+M16335=candle.pha.pa.us=pgman@postgresql.org>
+Received: from west.navpoint.com (west.navpoint.com [207.106.42.13])
+	by candle.pha.pa.us (8.11.6/8.10.1) with ESMTP id fB6MBSZ06676
+	for <pgman@candle.pha.pa.us>; Thu, 6 Dec 2001 17:11:28 -0500 (EST)
+Received: from rs.postgresql.org (server1.pgsql.org [64.39.15.238] (may be forged))
+	by west.navpoint.com (8.11.6/8.10.1) with ESMTP id fB6MBSq07059
+	for <pgman@candle.pha.pa.us>; Thu, 6 Dec 2001 17:11:28 -0500 (EST)
+Received: from postgresql.org (postgresql.org [64.49.215.8])
+	by rs.postgresql.org (8.11.6/8.11.6) with ESMTP id fB6M6sR68489
+	for <pgman@candle.pha.pa.us>; Thu, 6 Dec 2001 16:08:16 -0600 (CST)
+	(envelope-from pgsql-hackers-owner+M16335=candle.pha.pa.us=pgman@postgresql.org)
+Received: from mx1.relaypoint.net (ns2.generalbroadband.com [64.32.62.5])
+	by postgresql.org (8.11.3/8.11.4) with ESMTP id fB6M3Im04451
+	for <pgsql-hackers@postgresql.org>; Thu, 6 Dec 2001 17:03:18 -0500 (EST)
+	(envelope-from joseph.conway@home.com)
+Received: from [206.19.64.3] (account jconway@wwc.com HELO home.com)
+  by mx1.relaypoint.net (CommuniGate Pro SMTP 3.4.8)
+  with ESMTP id 1707032; Thu, 06 Dec 2001 14:03:14 -0800
+Message-ID: <3C0FEB2C.70000@home.com>
+Date: Thu, 06 Dec 2001 14:03:24 -0800
+From: Joe Conway <joseph.conway@home.com>
+User-Agent: Mozilla/5.0 (Windows; U; Windows NT 5.0; en-US; rv:0.9.6+) Gecko/20011126
+X-Accept-Language: en-us
+MIME-Version: 1.0
+To: mlw <markw@mohawksoft.com>
+cc: "Ross J. Reedstrom" <reedstrm@rice.edu>,
+   "pgsql-hackers@postgresql.org" <pgsql-hackers@postgresql.org>
+Subject: Re: [HACKERS] Remote connections?
+References: <3C0FB8B4.382C7736@mohawksoft.com> <20011206140616.C10995@rice.edu> <3C0FD339.6F663329@mohawksoft.com>
+Content-Type: text/plain; charset=us-ascii; format=flowed
+Content-Transfer-Encoding: 7bit
+Precedence: bulk
+Sender: pgsql-hackers-owner@postgresql.org
+Status: OR
+
+mlw wrote:
+
+> I too find the internals of PostgreSQL virtually incomprehensible at the
+> internal level. If there were a document somewhere which published how a
+> function could return multiple tuples, remote views would be a trivial
+> undertaking. It could look like:
+> 
+> select * from remote('select *from table', 'user=postgres host=outland
+> db=remote');
+> 
+
+See contrib/dblink in the 7.2 beta. It was my attempt inspired by 
+Oracle's dblink and some code that you (mlw) posted a while back. Based 
+on the limitations wrt returning muliple tuples, I wound up with 
+something like:
+
+lt_lcat=# select dblink_tok(t1.dblink_p,0) as f1 from (select 
+dblink('hostaddr=127.0.0.1 dbname=template1 user=postgres 
+password=postgres','select proname from pg_proc') as dblink_p) as t1;
+
+Which, as has been pointed out more than once, is pretty ugly, but at 
+least it's a start ;-)
+
+
+Joe
+
+
+---------------------------(end of broadcast)---------------------------
+TIP 4: Don't 'kill -9' the postmaster
+
+From pgsql-hackers-owner+M16336=candle.pha.pa.us=pgman@postgresql.org Thu Dec  6 18:41:31 2001
+Return-path: <pgsql-hackers-owner+M16336=candle.pha.pa.us=pgman@postgresql.org>
+Received: from west.navpoint.com (west.navpoint.com [207.106.42.13])
+	by candle.pha.pa.us (8.11.6/8.10.1) with ESMTP id fB6NfPZ12249
+	for <pgman@candle.pha.pa.us>; Thu, 6 Dec 2001 18:41:25 -0500 (EST)
+Received: from rs.postgresql.org (server1.pgsql.org [64.39.15.238] (may be forged))
+	by west.navpoint.com (8.11.6/8.10.1) with ESMTP id fB6NfQq03244
+	for <pgman@candle.pha.pa.us>; Thu, 6 Dec 2001 18:41:26 -0500 (EST)
+Received: from postgresql.org (postgresql.org [64.49.215.8])
+	by rs.postgresql.org (8.11.6/8.11.6) with ESMTP id fB6NbOR70960
+	for <pgman@candle.pha.pa.us>; Thu, 6 Dec 2001 17:38:19 -0600 (CST)
+	(envelope-from pgsql-hackers-owner+M16336=candle.pha.pa.us=pgman@postgresql.org)
+Received: from spider.pilosoft.com (p55-222.acedsl.com [160.79.55.222])
+	by postgresql.org (8.11.3/8.11.4) with ESMTP id fB6NIgm07232
+	for <pgsql-hackers@postgresql.org>; Thu, 6 Dec 2001 18:18:43 -0500 (EST)
+	(envelope-from alex@pilosoft.com)
+Received: from localhost (alexmail@localhost)
+	by spider.pilosoft.com (8.9.3/8.9.3) with ESMTP id SAA23999;
+	Thu, 6 Dec 2001 18:23:22 -0500 (EST)
+Date: Thu, 6 Dec 2001 18:23:22 -0500 (EST)
+From: Alex Pilosov <alex@pilosoft.com>
+To: mlw <markw@mohawksoft.com>
+cc: "pgsql-hackers@postgresql.org" <pgsql-hackers@postgresql.org>
+Subject: Re: [HACKERS] Remote connections?
+In-Reply-To: <3C0FD339.6F663329@mohawksoft.com>
+Message-ID: <Pine.BSO.4.10.10112061822080.22618-100000@spider.pilosoft.com>
+MIME-Version: 1.0
+Content-Type: TEXT/PLAIN; charset=US-ASCII
+Precedence: bulk
+Sender: pgsql-hackers-owner@postgresql.org
+Status: OR
+
+On Thu, 6 Dec 2001, mlw wrote:
+
+> I too find the internals of PostgreSQL virtually incomprehensible at the
+> internal level. If there were a document somewhere which published how a
+> function could return multiple tuples, remote views would be a trivial
+> undertaking. It could look like:
+> 
+> select * from remote('select *from table', 'user=postgres host=outland
+> db=remote');
+This isn't possible yet. I was working on implementation of this, about
+80% done, but never finished. Now I'm out of time to work more on this for
+a while. :(
+
+Let me know if you want my code.
+
+-alex
+
+
+---------------------------(end of broadcast)---------------------------
+TIP 6: Have you searched our list archives?
+
+http://archives.postgresql.org
+
+From pgsql-hackers-owner+M16340=candle.pha.pa.us=pgman@postgresql.org Fri Dec  7 00:32:59 2001
+Return-path: <pgsql-hackers-owner+M16340=candle.pha.pa.us=pgman@postgresql.org>
+Received: from west.navpoint.com (west.navpoint.com [207.106.42.13])
+	by candle.pha.pa.us (8.11.6/8.10.1) with ESMTP id fB75WsZ06911
+	for <pgman@candle.pha.pa.us>; Fri, 7 Dec 2001 00:32:54 -0500 (EST)
+Received: from rs.postgresql.org (server1.pgsql.org [64.39.15.238] (may be forged))
+	by west.navpoint.com (8.11.6/8.10.1) with ESMTP id fB75Wtq16801
+	for <pgman@candle.pha.pa.us>; Fri, 7 Dec 2001 00:32:55 -0500 (EST)
+Received: from postgresql.org (postgresql.org [64.49.215.8])
+	by rs.postgresql.org (8.11.6/8.11.6) with ESMTP id fB75SCR80525
+	for <pgman@candle.pha.pa.us>; Thu, 6 Dec 2001 23:29:17 -0600 (CST)
+	(envelope-from pgsql-hackers-owner+M16340=candle.pha.pa.us=pgman@postgresql.org)
+Received: from snoopy.mohawksoft.com (h0050bf7a618d.ne.mediaone.net [24.218.67.153])
+	by postgresql.org (8.11.3/8.11.4) with ESMTP id fB7593m27913
+	for <pgsql-hackers@postgresql.org>; Fri, 7 Dec 2001 00:09:03 -0500 (EST)
+	(envelope-from markw@mohawksoft.com)
+Received: from mohawksoft.com (localhost [127.0.0.1])
+	by snoopy.mohawksoft.com (8.11.6/8.11.6) with ESMTP id fB7561030613;
+	Fri, 7 Dec 2001 00:06:01 -0500
+Message-ID: <3C104E38.DA19C867@mohawksoft.com>
+Date: Fri, 07 Dec 2001 00:06:01 -0500
+From: mlw <markw@mohawksoft.com>
+X-Mailer: Mozilla 4.78 [en] (X11; U; Linux 2.4.14ext3 i686)
+X-Accept-Language: en
+MIME-Version: 1.0
+To: Joe Conway <joseph.conway@home.com>
+cc: "Ross J. Reedstrom" <reedstrm@rice.edu>,
+   "pgsql-hackers@postgresql.org" <pgsql-hackers@postgresql.org>
+Subject: Re: [HACKERS] Remote connections?
+References: <3C0FB8B4.382C7736@mohawksoft.com> <20011206140616.C10995@rice.edu> <3C0FD339.6F663329@mohawksoft.com> <3C0FEB2C.70000@home.com>
+Content-Type: text/plain; charset=us-ascii
+Content-Transfer-Encoding: 7bit
+Precedence: bulk
+Sender: pgsql-hackers-owner@postgresql.org
+Status: OR
+
+Hey this looks really cool. It looks like something I was thinking about doing.
+I have a couple suggestions that could make it a little better, I hope you will
+not be offended. (If you want my help, I'll chip in!)
+
+Why not use a binary cursor? That way native types can slip through without the
+overhead of conversion.
+
+Right now you get all rows up front, you may be able to increase overall
+performance by fetching only a few rows at a time, rather than get everything
+all at once. (Think on the order of 4 million rows from your remote query!)
+Execute the commit at the end of processing. There are even some asynchronous
+functions you may be able to utilize to reduce the I/O bottleneck. Use the
+synchronous function first, then before you return initiate an asynchronous
+read. Every successive pass through the function, read the newly arrived tuple,
+and initiate the next asynchronous read. (The two machine could be processing
+the query simultaneously, and this could even IMPROVE performance over a single
+system for heavy duty queries.)
+
+Setup a hash table for field names, rather than requiring field numbers. (Keep
+field number for efficiency, of course.)
+
+You could eliminate having to pass the result pointer around by keeping a
+static array in your extension. Use something like Oracle's "contains" notation
+of result number. Where each instantiation of "contains()" and "score()"
+require an id. i.e. 1,2,3,40 etc. Then hash those numbers into an array. I have
+some code that does this for a PostgreSQL extension (it implements contains) on
+my website (pgcontains, under download). It is ugly but works for the most
+part.
+
+Seriously, your stuff looks great. I think it could be the beginning of a
+fairly usable system for my company. Any help you need/want, just let me know.
+
+
+Joe Conway wrote:
+> 
+> mlw wrote:
+> 
+> > I too find the internals of PostgreSQL virtually incomprehensible at the
+> > internal level. If there were a document somewhere which published how a
+> > function could return multiple tuples, remote views would be a trivial
+> > undertaking. It could look like:
+> >
+> > select * from remote('select *from table', 'user=postgres host=outland
+> > db=remote');
+> >
+> 
+> See contrib/dblink in the 7.2 beta. It was my attempt inspired by
+> Oracle's dblink and some code that you (mlw) posted a while back. Based
+> on the limitations wrt returning muliple tuples, I wound up with
+> something like:
+> 
+> lt_lcat=# select dblink_tok(t1.dblink_p,0) as f1 from (select
+> dblink('hostaddr=127.0.0.1 dbname=template1 user=postgres
+> password=postgres','select proname from pg_proc') as dblink_p) as t1;
+> 
+> Which, as has been pointed out more than once, is pretty ugly, but at
+> least it's a start ;-)
+> 
+> Joe
+> 
+> ---------------------------(end of broadcast)---------------------------
+> TIP 4: Don't 'kill -9' the postmaster
+
+---------------------------(end of broadcast)---------------------------
+TIP 3: if posting/reading through Usenet, please send an appropriate
+subscribe-nomail command to majordomo@postgresql.org so that your
+message can get through to the mailing list cleanly
+
+From pgsql-hackers-owner+M16344=candle.pha.pa.us=pgman@postgresql.org Fri Dec  7 02:51:51 2001
+Return-path: <pgsql-hackers-owner+M16344=candle.pha.pa.us=pgman@postgresql.org>
+Received: from west.navpoint.com (west.navpoint.com [207.106.42.13])
+	by candle.pha.pa.us (8.11.6/8.10.1) with ESMTP id fB77poZ14221
+	for <pgman@candle.pha.pa.us>; Fri, 7 Dec 2001 02:51:50 -0500 (EST)
+Received: from rs.postgresql.org (server1.pgsql.org [64.39.15.238] (may be forged))
+	by west.navpoint.com (8.11.6/8.10.1) with ESMTP id fB77pqq08152
+	for <pgman@candle.pha.pa.us>; Fri, 7 Dec 2001 02:51:52 -0500 (EST)
+Received: from postgresql.org (postgresql.org [64.49.215.8])
+	by rs.postgresql.org (8.11.6/8.11.6) with ESMTP id fB77lwR84105
+	for <pgman@candle.pha.pa.us>; Fri, 7 Dec 2001 01:49:04 -0600 (CST)
+	(envelope-from pgsql-hackers-owner+M16344=candle.pha.pa.us=pgman@postgresql.org)
+Received: from ra.sai.msu.su (ra.sai.msu.su [158.250.29.2])
+	by postgresql.org (8.11.3/8.11.4) with ESMTP id fB77bmm32783
+	for <pgsql-hackers@postgresql.org>; Fri, 7 Dec 2001 02:37:49 -0500 (EST)
+	(envelope-from oleg@sai.msu.su)
+Received: from ra (ra [158.250.29.2])
+	by ra.sai.msu.su (8.9.3/8.9.3) with ESMTP id KAA04160;
+	Fri, 7 Dec 2001 10:37:04 +0300 (GMT)
+Date: Fri, 7 Dec 2001 10:37:04 +0300 (GMT)
+From: Oleg Bartunov <oleg@sai.msu.su>
+X-X-Sender: <megera@ra.sai.msu.su>
+To: mlw <markw@mohawksoft.com>
+cc: Joe Conway <joseph.conway@home.com>,
+   "Ross J. Reedstrom" <reedstrm@rice.edu>,
+   "pgsql-hackers@postgresql.org" <pgsql-hackers@postgresql.org>
+Subject: Re: [HACKERS] Remote connections?
+In-Reply-To: <3C104E38.DA19C867@mohawksoft.com>
+Message-ID: <Pine.GSO.4.33.0112071035180.20511-100000@ra.sai.msu.su>
+MIME-Version: 1.0
+Content-Type: TEXT/PLAIN; charset=US-ASCII
+Precedence: bulk
+Sender: pgsql-hackers-owner@postgresql.org
+Status: OR
+
+On Fri, 7 Dec 2001, mlw wrote:
+
+>
+> You could eliminate having to pass the result pointer around by keeping a
+> static array in your extension. Use something like Oracle's "contains" notation
+> of result number. Where each instantiation of "contains()" and "score()"
+> require an id. i.e. 1,2,3,40 etc. Then hash those numbers into an array. I have
+> some code that does this for a PostgreSQL extension (it implements contains) on
+> my website (pgcontains, under download). It is ugly but works for the most
+> part.
+
+contrib/intarray does this job very well
+
+>
+> Seriously, your stuff looks great. I think it could be the beginning of a
+> fairly usable system for my company. Any help you need/want, just let me know.
+>
+>
+> Joe Conway wrote:
+> >
+> > mlw wrote:
+> >
+> > > I too find the internals of PostgreSQL virtually incomprehensible at the
+> > > internal level. If there were a document somewhere which published how a
+> > > function could return multiple tuples, remote views would be a trivial
+> > > undertaking. It could look like:
+> > >
+> > > select * from remote('select *from table', 'user=postgres host=outland
+> > > db=remote');
+> > >
+> >
+> > See contrib/dblink in the 7.2 beta. It was my attempt inspired by
+> > Oracle's dblink and some code that you (mlw) posted a while back. Based
+> > on the limitations wrt returning muliple tuples, I wound up with
+> > something like:
+> >
+> > lt_lcat=# select dblink_tok(t1.dblink_p,0) as f1 from (select
+> > dblink('hostaddr=127.0.0.1 dbname=template1 user=postgres
+> > password=postgres','select proname from pg_proc') as dblink_p) as t1;
+> >
+> > Which, as has been pointed out more than once, is pretty ugly, but at
+> > least it's a start ;-)
+> >
+> > Joe
+> >
+> > ---------------------------(end of broadcast)---------------------------
+> > TIP 4: Don't 'kill -9' the postmaster
+>
+> ---------------------------(end of broadcast)---------------------------
+> TIP 3: if posting/reading through Usenet, please send an appropriate
+> subscribe-nomail command to majordomo@postgresql.org so that your
+> message can get through to the mailing list cleanly
+>
+
+	Regards,
+		Oleg
+_____________________________________________________________
+Oleg Bartunov, sci.researcher, hostmaster of AstroNet,
+Sternberg Astronomical Institute, Moscow University (Russia)
+Internet: oleg@sai.msu.su, http://www.sai.msu.su/~megera/
+phone: +007(095)939-16-83, +007(095)939-23-83
+
+
+---------------------------(end of broadcast)---------------------------
+TIP 3: if posting/reading through Usenet, please send an appropriate
+subscribe-nomail command to majordomo@postgresql.org so that your
+message can get through to the mailing list cleanly
+
+From pgsql-hackers-owner+M16412=candle.pha.pa.us=pgman@postgresql.org Mon Dec 10 12:35:01 2001
+Return-path: <pgsql-hackers-owner+M16412=candle.pha.pa.us=pgman@postgresql.org>
+Received: from west.navpoint.com (west.navpoint.com [207.106.42.13])
+	by candle.pha.pa.us (8.11.6/8.10.1) with ESMTP id fBAHZ0Z09772
+	for <pgman@candle.pha.pa.us>; Mon, 10 Dec 2001 12:35:00 -0500 (EST)
+Received: from rs.postgresql.org (server1.pgsql.org [64.39.15.238] (may be forged))
+	by west.navpoint.com (8.11.6/8.10.1) with ESMTP id fBAHZ0a11739
+	for <pgman@candle.pha.pa.us>; Mon, 10 Dec 2001 12:35:00 -0500 (EST)
+Received: from postgresql.org (postgresql.org [64.49.215.8])
+	by rs.postgresql.org (8.11.6/8.11.6) with ESMTP id fBAHRAR20284
+	for <pgman@candle.pha.pa.us>; Mon, 10 Dec 2001 11:32:00 -0600 (CST)
+	(envelope-from pgsql-hackers-owner+M16412=candle.pha.pa.us=pgman@postgresql.org)
+Received: from snoopy.mohawksoft.com (h0050bf7a618d.ne.mediaone.net [24.218.67.153])
+	by postgresql.org (8.11.3/8.11.4) with ESMTP id fB7DhOm75114
+	for <pgsql-hackers@postgresql.org>; Fri, 7 Dec 2001 08:43:24 -0500 (EST)
+	(envelope-from markw@mohawksoft.com)
+Received: from mohawksoft.com (localhost [127.0.0.1])
+	by snoopy.mohawksoft.com (8.11.6/8.11.6) with ESMTP id fB7De0000437;
+	Fri, 7 Dec 2001 08:40:01 -0500
+Message-ID: <3C10C6B0.865669C1@mohawksoft.com>
+Date: Fri, 07 Dec 2001 08:40:00 -0500
+From: mlw <markw@mohawksoft.com>
+X-Mailer: Mozilla 4.78 [en] (X11; U; Linux 2.4.14ext3 i686)
+X-Accept-Language: en
+MIME-Version: 1.0
+To: Oleg Bartunov <oleg@sai.msu.su>
+cc: Joe Conway <joseph.conway@home.com>,
+   "Ross J. Reedstrom" <reedstrm@rice.edu>,
+   "pgsql-hackers@postgresql.org" <pgsql-hackers@postgresql.org>
+Subject: Re: [HACKERS] Remote connections?
+References: <Pine.GSO.4.33.0112071035180.20511-100000@ra.sai.msu.su>
+Content-Type: text/plain; charset=us-ascii
+Content-Transfer-Encoding: 7bit
+Precedence: bulk
+Sender: pgsql-hackers-owner@postgresql.org
+Status: OR
+
+The dblink code is a very cool idea.
+
+It got me thinking, what if, just thinking out load here, it was redesigned as
+something a little more grandeous.
+
+Imagine this:
+
+
+select dblink('select * from table', 'table_name', 'db=oracle.test user=chris
+passwd=knight', 1) as t1, dblink('table2_name', 1) as t2
+
+
+Just something to think about. 
+
+The first instance of dblink would take 4 parameters: query, table which it
+returns, connect string, and link token.
+
+The second instance of dblink would just take the name of the table which it
+returns and a link token.
+
+The cool bit is the notion that the query string could specify different
+databases or even .DBF libraries. 
+
+Just something to think about.
+
+It would REALLY be great if functions could return multiple tuples!
+
+---------------------------(end of broadcast)---------------------------
+TIP 5: Have you checked our extensive FAQ?
+
+http://www.postgresql.org/users-lounge/docs/faq.html
+
+From pgsql-hackers-owner+M16365=candle.pha.pa.us=pgman@postgresql.org Fri Dec  7 12:32:26 2001
+Return-path: <pgsql-hackers-owner+M16365=candle.pha.pa.us=pgman@postgresql.org>
+Received: from west.navpoint.com (west.navpoint.com [207.106.42.13])
+	by candle.pha.pa.us (8.11.6/8.10.1) with ESMTP id fB7HWMZ26245
+	for <pgman@candle.pha.pa.us>; Fri, 7 Dec 2001 12:32:22 -0500 (EST)
+Received: from rs.postgresql.org (server1.pgsql.org [64.39.15.238] (may be forged))
+	by west.navpoint.com (8.11.6/8.10.1) with ESMTP id fB7HWLB14472
+	for <pgman@candle.pha.pa.us>; Fri, 7 Dec 2001 12:32:21 -0500 (EST)
+Received: from postgresql.org (postgresql.org [64.49.215.8])
+	by rs.postgresql.org (8.11.6/8.11.6) with ESMTP id fB7HSHR01506
+	for <pgman@candle.pha.pa.us>; Fri, 7 Dec 2001 11:29:07 -0600 (CST)
+	(envelope-from pgsql-hackers-owner+M16365=candle.pha.pa.us=pgman@postgresql.org)
+Received: from mx1.relaypoint.net (ns2.generalbroadband.com [64.32.62.5])
+	by postgresql.org (8.11.3/8.11.4) with ESMTP id fB7HQfm90424
+	for <pgsql-hackers@postgresql.org>; Fri, 7 Dec 2001 12:26:42 -0500 (EST)
+	(envelope-from joseph.conway@home.com)
+Received: from [206.19.64.3] (account jconway@wwc.com HELO home.com)
+  by mx1.relaypoint.net (CommuniGate Pro SMTP 3.4.8)
+  with ESMTP id 1722339; Fri, 07 Dec 2001 09:26:46 -0800
+Message-ID: <3C10FBD7.4070602@home.com>
+Date: Fri, 07 Dec 2001 09:26:47 -0800
+From: Joe Conway <joseph.conway@home.com>
+User-Agent: Mozilla/5.0 (Windows; U; Windows NT 5.0; en-US; rv:0.9.6+) Gecko/20011126
+X-Accept-Language: en-us
+MIME-Version: 1.0
+To: mlw <markw@mohawksoft.com>
+cc: "Ross J. Reedstrom" <reedstrm@rice.edu>,
+   "pgsql-hackers@postgresql.org" <pgsql-hackers@postgresql.org>
+Subject: Re: [HACKERS] Remote connections?
+References: <3C0FB8B4.382C7736@mohawksoft.com> <20011206140616.C10995@rice.edu> <3C0FD339.6F663329@mohawksoft.com> <3C0FEB2C.70000@home.com> <3C104E38.DA19C867@mohawksoft.com>
+Content-Type: text/plain; charset=us-ascii; format=flowed
+Content-Transfer-Encoding: 7bit
+Precedence: bulk
+Sender: pgsql-hackers-owner@postgresql.org
+Status: OR
+
+mlw wrote:
+
+> Hey this looks really cool. It looks like something I was thinking about doing.
+> I have a couple suggestions that could make it a little better, I hope you will
+> not be offended. (If you want my help, I'll chip in!)
+> 
+
+
+Thanks! Suggestions welcomed.
+
+> Why not use a binary cursor? That way native types can slip through without the
+> overhead of conversion.
+>
+
+
+I wasn't sure that would work. Would you create dblink_tok as returning 
+opaque then?
+
+ 
+> Right now you get all rows up front, you may be able to increase overall
+> performance by fetching only a few rows at a time, rather than get everything
+> all at once. (Think on the order of 4 million rows from your remote query!)
+> Execute the commit at the end of processing. There are even some asynchronous
+> functions you may be able to utilize to reduce the I/O bottleneck. Use the
+> synchronous function first, then before you return initiate an asynchronous
+> read. Every successive pass through the function, read the newly arrived tuple,
+> and initiate the next asynchronous read. (The two machine could be processing
+> the query simultaneously, and this could even IMPROVE performance over a single
+> system for heavy duty queries.)
+
+
+Interesting . . . but aren't there some issues with the asynch functions?
+
+> 
+> Setup a hash table for field names, rather than requiring field numbers. (Keep
+> field number for efficiency, of course.)
+> 
+> You could eliminate having to pass the result pointer around by keeping a
+> static array in your extension. Use something like Oracle's "contains" notation
+> of result number. Where each instantiation of "contains()" and "score()"
+> require an id. i.e. 1,2,3,40 etc. Then hash those numbers into an array. I have
+> some code that does this for a PostgreSQL extension (it implements contains) on
+> my website (pgcontains, under download). It is ugly but works for the most
+> part.
+> 
+
+
+I thought about the static array, but I'm not familiar with Oracle 
+contains() and score() -- I'm only fluent enough with Oracle to be 
+dangerous. Guess I'll have to dig out the books . . .
+
+
+> Seriously, your stuff looks great. I think it could be the beginning of a
+> fairly usable system for my company. Any help you need/want, just let me know.
+> 
+
+I am planning to improve dblink during the next release cycle, so I'll 
+keep all this in mind (and might take you up on the help offer too!). I 
+was hoping we'd have functions returning tuples by now, which would 
+improve this extension dramatically. Unfortunately, it sounds like Alex 
+won't have time to finish that even for 7.3 :(
+
+Alex, can we get a look at your latest code? Is it any different the 
+your last submission to PATCHES?
+
+Joe
+
+
+---------------------------(end of broadcast)---------------------------
+TIP 3: if posting/reading through Usenet, please send an appropriate
+subscribe-nomail command to majordomo@postgresql.org so that your
+message can get through to the mailing list cleanly
+
