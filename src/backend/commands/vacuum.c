@@ -13,7 +13,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/commands/vacuum.c,v 1.213.2.1 2002/04/02 05:12:00 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/commands/vacuum.c,v 1.213.2.2 2002/09/30 19:45:57 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -119,14 +119,14 @@ static TransactionId initialFreezeLimit;
 
 /* non-export function prototypes */
 static void vacuum_init(VacuumStmt *vacstmt);
-static void vacuum_shutdown(VacuumStmt *vacstmt);
+static void vacuum_shutdown(VacuumStmt *vacstmt, bool all_rels);
 static VRelList getrels(Name VacRelP, const char *stmttype);
 static void vac_update_dbstats(Oid dbid,
 				   TransactionId vacuumXID,
 				   TransactionId frozenXID);
 static void vac_truncate_clog(TransactionId vacuumXID,
 				  TransactionId frozenXID);
-static void vacuum_rel(Oid relid, VacuumStmt *vacstmt);
+static bool vacuum_rel(Oid relid, VacuumStmt *vacstmt);
 static void full_vacuum_rel(Relation onerel, VacuumStmt *vacstmt);
 static void scan_heap(VRelStats *vacrelstats, Relation onerel,
 		  VacPageList vacuum_pages, VacPageList fraged_pages);
@@ -171,6 +171,7 @@ vacuum(VacuumStmt *vacstmt)
 	const char *stmttype = vacstmt->vacuum ? "VACUUM" : "ANALYZE";
 	NameData	VacRel;
 	Name		VacRelName;
+	bool		all_rels;
 	VRelList	vrl,
 				cur;
 
@@ -218,6 +219,9 @@ vacuum(VacuumStmt *vacstmt)
 	else
 		VacRelName = NULL;
 
+	/* Assume we are processing everything unless one table is mentioned */
+	all_rels = (VacRelName == NULL);
+
 	/* Build list of relations to process (note this lives in vac_context) */
 	vrl = getrels(VacRelName, stmttype);
 
@@ -236,13 +240,16 @@ vacuum(VacuumStmt *vacstmt)
 	for (cur = vrl; cur != (VRelList) NULL; cur = cur->vrl_next)
 	{
 		if (vacstmt->vacuum)
-			vacuum_rel(cur->vrl_relid, vacstmt);
+		{
+			if (! vacuum_rel(cur->vrl_relid, vacstmt))
+				all_rels = false; /* forget about updating dbstats */
+		}
 		if (vacstmt->analyze)
 			analyze_rel(cur->vrl_relid, vacstmt);
 	}
 
 	/* clean up */
-	vacuum_shutdown(vacstmt);
+	vacuum_shutdown(vacstmt, all_rels);
 }
 
 /*
@@ -296,7 +303,7 @@ vacuum_init(VacuumStmt *vacstmt)
 }
 
 static void
-vacuum_shutdown(VacuumStmt *vacstmt)
+vacuum_shutdown(VacuumStmt *vacstmt, bool all_rels)
 {
 	/* on entry, we are not in a transaction */
 
@@ -304,11 +311,11 @@ vacuum_shutdown(VacuumStmt *vacstmt)
 	StartTransactionCommand();
 
 	/*
-	 * If we did a database-wide VACUUM, update the database's pg_database
-	 * row with info about the transaction IDs used, and try to truncate
-	 * pg_clog.
+	 * If we completed a database-wide VACUUM without skipping any
+	 * relations, update the database's pg_database row with info
+	 * about the transaction IDs used, and try to truncate pg_clog.
 	 */
-	if (vacstmt->vacuum && vacstmt->vacrel == NULL)
+	if (vacstmt->vacuum && all_rels)
 	{
 		vac_update_dbstats(MyDatabaseId,
 						   initialOldestXmin, initialFreezeLimit);
@@ -702,6 +709,11 @@ vac_truncate_clog(TransactionId vacuumXID, TransactionId frozenXID)
 /*
  *	vacuum_rel() -- vacuum one heap relation
  *
+ *		Returns TRUE if we actually processed the relation (or can ignore it
+ *		for some reason), FALSE if we failed to process it due to permissions
+ *		or other reasons.  (A FALSE result really means that some data
+ *		may have been left unvacuumed, so we can't update XID stats.)
+ *
  *		Doing one heap at a time incurs extra overhead, since we need to
  *		check that the heap exists again just before we vacuum it.	The
  *		reason that we do this is so that vacuuming can be spread across
@@ -710,13 +722,14 @@ vac_truncate_clog(TransactionId vacuumXID, TransactionId frozenXID)
  *
  *		At entry and exit, we are not inside a transaction.
  */
-static void
+static bool
 vacuum_rel(Oid relid, VacuumStmt *vacstmt)
 {
 	LOCKMODE	lmode;
 	Relation	onerel;
 	LockRelId	onerelid;
 	Oid			toast_relid;
+	bool		result;
 
 	/* Begin a transaction for vacuuming this relation */
 	StartTransactionCommand();
@@ -736,7 +749,7 @@ vacuum_rel(Oid relid, VacuumStmt *vacstmt)
 							  0, 0, 0))
 	{
 		CommitTransactionCommand();
-		return;
+		return true;			/* okay 'cause no data there */
 	}
 
 	/*
@@ -768,7 +781,7 @@ vacuum_rel(Oid relid, VacuumStmt *vacstmt)
 			 RelationGetRelationName(onerel));
 		heap_close(onerel, lmode);
 		CommitTransactionCommand();
-		return;
+		return false;
 	}
 
 	/*
@@ -797,6 +810,8 @@ vacuum_rel(Oid relid, VacuumStmt *vacstmt)
 	else
 		lazy_vacuum_rel(onerel, vacstmt);
 
+	result = true;				/* did the vacuum */
+
 	/* all done with this class, but hold lock until commit */
 	heap_close(onerel, NoLock);
 
@@ -813,12 +828,17 @@ vacuum_rel(Oid relid, VacuumStmt *vacstmt)
 	 * statistics are totally unimportant for toast relations.
 	 */
 	if (toast_relid != InvalidOid)
-		vacuum_rel(toast_relid, vacstmt);
+	{
+		if (! vacuum_rel(toast_relid, vacstmt))
+			result = false;		/* failed to vacuum the TOAST table? */
+	}
 
 	/*
 	 * Now release the session-level lock on the master table.
 	 */
 	UnlockRelationForSession(&onerelid, lmode);
+
+	return result;
 }
 
 
