@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/runtime.sgml,v 1.127 2002/08/22 04:52:17 momjian Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/runtime.sgml,v 1.128 2002/08/29 19:53:58 momjian Exp $
 -->
 
 <Chapter Id="runtime">
@@ -1627,7 +1627,7 @@ dynamic_library_path = '/usr/local/lib/postgresql:/home/my_project/lib:$libdir'
       <listitem>
        <para>
         Aborts any statement that takes over the specified number of
-        microseconds.  A value of zero turns off the timer.
+        milliseconds.  A value of zero turns off the timer.
        </para>
       </listitem>
      </varlistentry>
