@@ -3,7 +3,7 @@
  *				back to source text
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/ruleutils.c,v 1.101 2002/05/02 18:44:11 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/ruleutils.c,v 1.102 2002/05/03 20:15:02 tgl Exp $
  *
  *	  This software is copyrighted by Jan Wieck - Hamburg.
  *
@@ -54,6 +54,8 @@
 #include "optimizer/tlist.h"
 #include "parser/keywords.h"
 #include "parser/parse_expr.h"
+#include "parser/parse_func.h"
+#include "parser/parse_oper.h"
 #include "parser/parsetree.h"
 #include "rewrite/rewriteManip.h"
 #include "rewrite/rewriteSupport.h"
@@ -124,12 +126,13 @@ static void get_utility_query_def(Query *query, deparse_context *context);
 static void get_basic_select_query(Query *query, deparse_context *context);
 static void get_setop_query(Node *setOp, Query *query,
 							deparse_context *context);
-static void get_rule_sortgroupclause(SortClause *srt, List *tlist,
+static Node *get_rule_sortgroupclause(SortClause *srt, List *tlist,
 						 bool force_colno,
 						 deparse_context *context);
 static void get_names_for_var(Var *var, deparse_context *context,
 				  char **refname, char **attname);
 static void get_rule_expr(Node *node, deparse_context *context);
+static void get_oper_expr(Expr *expr, deparse_context *context);
 static void get_func_expr(Expr *expr, deparse_context *context);
 static void get_agg_expr(Aggref *aggref, deparse_context *context);
 static Node *strip_type_coercion(Node *expr, Oid resultType);
@@ -142,6 +145,9 @@ static void get_from_clause_item(Node *jtnode, Query *query,
 static void get_opclass_name(Oid opclass, Oid actual_datatype,
 				 StringInfo buf);
 static bool tleIsArrayAssign(TargetEntry *tle);
+static char *generate_relation_name(Oid relid);
+static char *generate_function_name(Oid funcid, int nargs, Oid *argtypes);
+static char *generate_operator_name(Oid operid, Oid arg1, Oid arg2);
 static char *get_relid_attribute_name(Oid relid, AttrNumber attnum);
 
 #define only_marker(rte)  ((rte)->inh ? "" : "ONLY ")
@@ -281,7 +287,6 @@ pg_do_getviewdef(Oid viewoid)
 	TupleDesc	rulettc;
 	StringInfoData buf;
 	int			len;
-	char	   *viewname;
 
 	/*
 	 * Connect to SPI manager
@@ -310,14 +315,13 @@ pg_do_getviewdef(Oid viewoid)
 	/*
 	 * Get the pg_rewrite tuple for the view's SELECT rule
 	 */
-	viewname = get_rel_name(viewoid);
 	args[0] = ObjectIdGetDatum(viewoid);
 	args[1] = PointerGetDatum(ViewSelectRuleName);
 	nulls[0] = ' ';
 	nulls[1] = ' ';
 	spirc = SPI_execp(plan_getviewrule, args, nulls, 2);
 	if (spirc != SPI_OK_SELECT)
-		elog(ERROR, "failed to get pg_rewrite tuple for view %s", viewname);
+		elog(ERROR, "failed to get pg_rewrite tuple for view %u", viewoid);
 	initStringInfo(&buf);
 	if (SPI_processed != 1)
 		appendStringInfo(&buf, "Not a view");
@@ -357,14 +361,14 @@ pg_get_indexdef(PG_FUNCTION_ARGS)
 	text	   *indexdef;
 	HeapTuple	ht_idx;
 	HeapTuple	ht_idxrel;
-	HeapTuple	ht_indrel;
 	HeapTuple	ht_am;
 	Form_pg_index idxrec;
 	Form_pg_class idxrelrec;
-	Form_pg_class indrelrec;
 	Form_pg_am	amrec;
+	Oid			indrelid;
 	int			len;
 	int			keyno;
+	Oid			keycoltypes[INDEX_MAX_KEYS];
 	StringInfoData buf;
 	StringInfoData keybuf;
 	char	   *sep;
@@ -379,25 +383,18 @@ pg_get_indexdef(PG_FUNCTION_ARGS)
 		elog(ERROR, "syscache lookup for index %u failed", indexrelid);
 	idxrec = (Form_pg_index) GETSTRUCT(ht_idx);
 
+	indrelid = idxrec->indrelid;
+	Assert(indexrelid == idxrec->indexrelid);
+
 	/*
 	 * Fetch the pg_class tuple of the index relation
 	 */
 	ht_idxrel = SearchSysCache(RELOID,
-							   ObjectIdGetDatum(idxrec->indexrelid),
+							   ObjectIdGetDatum(indexrelid),
 							   0, 0, 0);
 	if (!HeapTupleIsValid(ht_idxrel))
-		elog(ERROR, "syscache lookup for relid %u failed", idxrec->indexrelid);
+		elog(ERROR, "syscache lookup for relid %u failed", indexrelid);
 	idxrelrec = (Form_pg_class) GETSTRUCT(ht_idxrel);
-
-	/*
-	 * Fetch the pg_class tuple of the indexed relation
-	 */
-	ht_indrel = SearchSysCache(RELOID,
-							   ObjectIdGetDatum(idxrec->indrelid),
-							   0, 0, 0);
-	if (!HeapTupleIsValid(ht_indrel))
-		elog(ERROR, "syscache lookup for relid %u failed", idxrec->indrelid);
-	indrelrec = (Form_pg_class) GETSTRUCT(ht_indrel);
 
 	/*
 	 * Fetch the pg_am tuple of the index' access method
@@ -410,13 +407,14 @@ pg_get_indexdef(PG_FUNCTION_ARGS)
 	amrec = (Form_pg_am) GETSTRUCT(ht_am);
 
 	/*
-	 * Start the index definition
+	 * Start the index definition.  Note that the index's name should never
+	 * be schema-qualified, but the indexed rel's name may be.
 	 */
 	initStringInfo(&buf);
 	appendStringInfo(&buf, "CREATE %sINDEX %s ON %s USING %s (",
 					 idxrec->indisunique ? "UNIQUE " : "",
 					 quote_identifier(NameStr(idxrelrec->relname)),
-					 quote_identifier(NameStr(indrelrec->relname)),
+					 generate_relation_name(indrelid),
 					 quote_identifier(NameStr(amrec->amname)));
 
 	/*
@@ -427,9 +425,13 @@ pg_get_indexdef(PG_FUNCTION_ARGS)
 	for (keyno = 0; keyno < INDEX_MAX_KEYS; keyno++)
 	{
 		AttrNumber	attnum = idxrec->indkey[keyno];
+		char	   *attname;
 
 		if (attnum == InvalidAttrNumber)
 			break;
+
+		attname = get_relid_attribute_name(indrelid, attnum);
+		keycoltypes[keyno] = get_atttype(indrelid, attnum);
 
 		appendStringInfo(&keybuf, sep);
 		sep = ", ";
@@ -437,16 +439,14 @@ pg_get_indexdef(PG_FUNCTION_ARGS)
 		/*
 		 * Add the indexed field name
 		 */
-		appendStringInfo(&keybuf, "%s",
-			  quote_identifier(get_relid_attribute_name(idxrec->indrelid,
-														attnum)));
+		appendStringInfo(&keybuf, "%s", quote_identifier(attname));
 
 		/*
 		 * If not a functional index, add the operator class name
 		 */
 		if (idxrec->indproc == InvalidOid)
 			get_opclass_name(idxrec->indclass[keyno],
-							 get_atttype(idxrec->indrelid, attnum),
+							 keycoltypes[keyno],
 							 &keybuf);
 	}
 
@@ -455,22 +455,13 @@ pg_get_indexdef(PG_FUNCTION_ARGS)
 		/*
 		 * For functional index say 'func (attrs) opclass'
 		 */
-		HeapTuple	proctup;
-		Form_pg_proc procStruct;
-
-		proctup = SearchSysCache(PROCOID,
-								 ObjectIdGetDatum(idxrec->indproc),
-								 0, 0, 0);
-		if (!HeapTupleIsValid(proctup))
-			elog(ERROR, "cache lookup for proc %u failed", idxrec->indproc);
-		procStruct = (Form_pg_proc) GETSTRUCT(proctup);
-
 		appendStringInfo(&buf, "%s(%s)",
-						 quote_identifier(NameStr(procStruct->proname)),
+						 generate_function_name(idxrec->indproc,
+												keyno, keycoltypes),
 						 keybuf.data);
-		get_opclass_name(idxrec->indclass[0], procStruct->prorettype, &buf);
-
-		ReleaseSysCache(proctup);
+		get_opclass_name(idxrec->indclass[0],
+						 get_func_rettype(idxrec->indproc),
+						 &buf);
 	}
 	else
 	{
@@ -480,7 +471,7 @@ pg_get_indexdef(PG_FUNCTION_ARGS)
 		appendStringInfo(&buf, "%s", keybuf.data);
 	}
 
-	appendStringInfo(&buf, ")");
+	appendStringInfoChar(&buf, ')');
 
 	/*
 	 * If it's a partial index, decompile and append the predicate
@@ -506,8 +497,7 @@ pg_get_indexdef(PG_FUNCTION_ARGS)
 		if (node && IsA(node, List))
 			node = (Node *) make_ands_explicit((List *) node);
 		/* Deparse */
-		context = deparse_context_for(NameStr(indrelrec->relname),
-									  idxrec->indrelid);
+		context = deparse_context_for(get_rel_name(indrelid), indrelid);
 		str = deparse_expression(node, context, false);
 		appendStringInfo(&buf, " WHERE %s", str);
 	}
@@ -525,7 +515,6 @@ pg_get_indexdef(PG_FUNCTION_ARGS)
 
 	ReleaseSysCache(ht_idx);
 	ReleaseSysCache(ht_idxrel);
-	ReleaseSysCache(ht_indrel);
 	ReleaseSysCache(ht_am);
 
 	PG_RETURN_TEXT_P(indexdef);
@@ -856,7 +845,6 @@ make_ruledef(StringInfo buf, HeapTuple ruletup, TupleDesc rulettc)
 	if (ev_action != NULL)
 		actions = (List *) stringToNode(ev_action);
 
-
 	/*
 	 * Build the rules definition text
 	 */
@@ -889,8 +877,7 @@ make_ruledef(StringInfo buf, HeapTuple ruletup, TupleDesc rulettc)
 	}
 
 	/* The relation the rule is fired on */
-	appendStringInfo(buf, " TO %s",
-					 quote_identifier(get_rel_name(ev_class)));
+	appendStringInfo(buf, " TO %s", generate_relation_name(ev_class));
 	if (ev_attr > 0)
 		appendStringInfo(buf, ".%s",
 					  quote_identifier(get_relid_attribute_name(ev_class,
@@ -1126,12 +1113,16 @@ get_select_query_def(Query *query, deparse_context *context)
 		foreach(l, query->sortClause)
 		{
 			SortClause *srt = (SortClause *) lfirst(l);
+			Node	   *sortexpr;
+			Oid			sortcoltype;
 			char	   *opname;
 
 			appendStringInfo(buf, sep);
-			get_rule_sortgroupclause(srt, query->targetList,
-									 force_colno, context);
-			opname = get_opname(srt->sortop);
+			sortexpr = get_rule_sortgroupclause(srt, query->targetList,
+												force_colno, context);
+			sortcoltype = exprType(sortexpr);
+			opname = generate_operator_name(srt->sortop,
+											sortcoltype, sortcoltype);
 			if (strcmp(opname, "<") != 0)
 			{
 				if (strcmp(opname, ">") == 0)
@@ -1315,8 +1306,10 @@ get_setop_query(Node *setOp, Query *query, deparse_context *context)
 
 /*
  * Display a sort/group clause.
+ *
+ * Also returns the expression tree, so caller need not find it again.
  */
-static void
+static Node *
 get_rule_sortgroupclause(SortClause *srt, List *tlist, bool force_colno,
 						 deparse_context *context)
 {
@@ -1339,6 +1332,8 @@ get_rule_sortgroupclause(SortClause *srt, List *tlist, bool force_colno,
 	}
 	else
 		get_rule_expr(expr, context);
+
+	return expr;
 }
 
 /* ----------
@@ -1361,7 +1356,7 @@ get_insert_query_def(Query *query, deparse_context *context)
 	foreach(l, query->rtable)
 	{
 		rte = (RangeTblEntry *) lfirst(l);
-		if (rte->subquery == NULL)
+		if (rte->rtekind != RTE_SUBQUERY)
 			continue;
 		if (select_rte)
 			elog(ERROR, "get_insert_query_def: too many RTEs in INSERT!");
@@ -1372,8 +1367,9 @@ get_insert_query_def(Query *query, deparse_context *context)
 	 * Start the query with INSERT INTO relname
 	 */
 	rte = rt_fetch(query->resultRelation, query->rtable);
+	Assert(rte->rtekind == RTE_RELATION);
 	appendStringInfo(buf, "INSERT INTO %s",
-					 quote_identifier(rte->eref->aliasname));
+					 generate_relation_name(rte->relid));
 
 	/* Add the insert-column-names list */
 	sep = " (";
@@ -1429,9 +1425,10 @@ get_update_query_def(Query *query, deparse_context *context)
 	 * Start the query with UPDATE relname SET
 	 */
 	rte = rt_fetch(query->resultRelation, query->rtable);
+	Assert(rte->rtekind == RTE_RELATION);
 	appendStringInfo(buf, "UPDATE %s%s SET ",
 					 only_marker(rte),
-					 quote_identifier(rte->eref->aliasname));
+					 generate_relation_name(rte->relid));
 
 	/* Add the comma separated list of 'attname = value' */
 	sep = "";
@@ -1482,9 +1479,10 @@ get_delete_query_def(Query *query, deparse_context *context)
 	 * Start the query with DELETE FROM relname
 	 */
 	rte = rt_fetch(query->resultRelation, query->rtable);
+	Assert(rte->rtekind == RTE_RELATION);
 	appendStringInfo(buf, "DELETE FROM %s%s",
 					 only_marker(rte),
-					 quote_identifier(rte->eref->aliasname));
+					 generate_relation_name(rte->relid));
 
 	/* Add a WHERE clause if given */
 	if (query->jointree->quals != NULL)
@@ -1509,7 +1507,8 @@ get_utility_query_def(Query *query, deparse_context *context)
 		NotifyStmt *stmt = (NotifyStmt *) query->utilityStmt;
 
 		appendStringInfo(buf, "NOTIFY %s",
-						 quote_identifier(stmt->relation->relname));
+						 quote_qualified_identifier(stmt->relation->schemaname,
+													stmt->relation->relname));
 	}
 	else
 		elog(ERROR, "get_utility_query_def: unexpected statement type");
@@ -1628,52 +1627,11 @@ get_rule_expr(Node *node, deparse_context *context)
 				switch (expr->opType)
 				{
 					case OP_EXPR:
-						appendStringInfoChar(buf, '(');
-						if (length(args) == 2)
-						{
-							/* binary operator */
-							get_rule_expr((Node *) lfirst(args), context);
-							appendStringInfo(buf, " %s ",
-								get_opname(((Oper *) expr->oper)->opno));
-							get_rule_expr((Node *) lsecond(args), context);
-						}
-						else
-						{
-							/* unary operator --- but which side? */
-							Oid			opno = ((Oper *) expr->oper)->opno;
-							HeapTuple	tp;
-							Form_pg_operator optup;
-
-							tp = SearchSysCache(OPEROID,
-												ObjectIdGetDatum(opno),
-												0, 0, 0);
-							if (!HeapTupleIsValid(tp))
-								elog(ERROR, "cache lookup for operator %u failed", opno);
-							optup = (Form_pg_operator) GETSTRUCT(tp);
-							switch (optup->oprkind)
-							{
-								case 'l':
-									appendStringInfo(buf, "%s ",
-													 get_opname(opno));
-									get_rule_expr((Node *) lfirst(args),
-												  context);
-									break;
-								case 'r':
-									get_rule_expr((Node *) lfirst(args),
-												  context);
-									appendStringInfo(buf, " %s",
-													 get_opname(opno));
-									break;
-								default:
-									elog(ERROR, "get_rule_expr: bogus oprkind");
-							}
-							ReleaseSysCache(tp);
-						}
-						appendStringInfoChar(buf, ')');
+						get_oper_expr(expr, context);
 						break;
 
 					case FUNC_EXPR:
-						get_func_expr((Expr *) node, context);
+						get_func_expr(expr, context);
 						break;
 
 					case OR_EXPR:
@@ -1922,9 +1880,69 @@ get_rule_expr(Node *node, deparse_context *context)
 }
 
 
-/* ----------
+/*
+ * get_oper_expr			- Parse back an Oper node
+ */
+static void
+get_oper_expr(Expr *expr, deparse_context *context)
+{
+	StringInfo	buf = context->buf;
+	Oid			opno = ((Oper *) expr->oper)->opno;
+	List	   *args = expr->args;
+
+	appendStringInfoChar(buf, '(');
+	if (length(args) == 2)
+	{
+		/* binary operator */
+		Node   *arg1 = (Node *) lfirst(args);
+		Node   *arg2 = (Node *) lsecond(args);
+
+		get_rule_expr(arg1, context);
+		appendStringInfo(buf, " %s ",
+						 generate_operator_name(opno,
+												exprType(arg1),
+												exprType(arg2)));
+		get_rule_expr(arg2, context);
+	}
+	else
+	{
+		/* unary operator --- but which side? */
+		Node	   *arg = (Node *) lfirst(args);
+		HeapTuple	tp;
+		Form_pg_operator optup;
+
+		tp = SearchSysCache(OPEROID,
+							ObjectIdGetDatum(opno),
+							0, 0, 0);
+		if (!HeapTupleIsValid(tp))
+			elog(ERROR, "cache lookup for operator %u failed", opno);
+		optup = (Form_pg_operator) GETSTRUCT(tp);
+		switch (optup->oprkind)
+		{
+			case 'l':
+				appendStringInfo(buf, "%s ",
+								 generate_operator_name(opno,
+														InvalidOid,
+														exprType(arg)));
+				get_rule_expr(arg, context);
+				break;
+			case 'r':
+				get_rule_expr(arg, context);
+				appendStringInfo(buf, " %s",
+								 generate_operator_name(opno,
+														exprType(arg),
+														InvalidOid));
+				break;
+			default:
+				elog(ERROR, "get_rule_expr: bogus oprkind");
+		}
+		ReleaseSysCache(tp);
+	}
+	appendStringInfoChar(buf, ')');
+}
+
+/*
  * get_func_expr			- Parse back a Func node
- * ----------
  */
 static void
 get_func_expr(Expr *expr, deparse_context *context)
@@ -1932,24 +1950,11 @@ get_func_expr(Expr *expr, deparse_context *context)
 	StringInfo	buf = context->buf;
 	Func	   *func = (Func *) (expr->oper);
 	Oid			funcoid = func->funcid;
-	HeapTuple	proctup;
-	Form_pg_proc procStruct;
-	char	   *proname;
 	int32		coercedTypmod;
+	Oid			argtypes[FUNC_MAX_ARGS];
+	int			nargs;
 	List	   *l;
 	char	   *sep;
-
-	/*
-	 * Get the functions pg_proc tuple
-	 */
-	proctup = SearchSysCache(PROCOID,
-							 ObjectIdGetDatum(funcoid),
-							 0, 0, 0);
-	if (!HeapTupleIsValid(proctup))
-		elog(ERROR, "cache lookup for proc %u failed", funcoid);
-
-	procStruct = (Form_pg_proc) GETSTRUCT(proctup);
-	proname = NameStr(procStruct->proname);
 
 	/*
 	 * Check to see if function is a length-coercion function for some
@@ -1958,6 +1963,7 @@ get_func_expr(Expr *expr, deparse_context *context)
 	if (exprIsLengthCoercion((Node *) expr, &coercedTypmod))
 	{
 		Node	   *arg = lfirst(expr->args);
+		Oid			rettype = get_func_rettype(funcoid);
 		char	   *typdesc;
 
 		/*
@@ -1966,7 +1972,7 @@ get_func_expr(Expr *expr, deparse_context *context)
 		 *
 		 * XXX Are there any cases where this is a bad idea?
 		 */
-		arg = strip_type_coercion(arg, procStruct->prorettype);
+		arg = strip_type_coercion(arg, rettype);
 
 		appendStringInfoChar(buf, '(');
 		get_rule_expr(arg, context);
@@ -1978,19 +1984,28 @@ get_func_expr(Expr *expr, deparse_context *context)
 		 * to quote the result of format_type_with_typemod: it takes
 		 * care of double-quoting any identifier that needs it.
 		 */
-		typdesc = format_type_with_typemod(procStruct->prorettype,
-										   coercedTypmod);
+		typdesc = format_type_with_typemod(rettype, coercedTypmod);
 		appendStringInfo(buf, ")::%s", typdesc);
 		pfree(typdesc);
 
-		ReleaseSysCache(proctup);
 		return;
 	}
 
 	/*
-	 * Normal function: display as proname(args)
+	 * Normal function: display as proname(args).  First we need to extract
+	 * the argument datatypes.
 	 */
-	appendStringInfo(buf, "%s(", quote_identifier(proname));
+	nargs = 0;
+	foreach(l, expr->args)
+	{
+		Assert(nargs < FUNC_MAX_ARGS);
+		argtypes[nargs] = exprType((Node *) lfirst(l));
+		nargs++;
+	}
+	
+	appendStringInfo(buf, "%s(",
+					 generate_function_name(funcoid, nargs, argtypes));
+
 	sep = "";
 	foreach(l, expr->args)
 	{
@@ -1999,47 +2014,25 @@ get_func_expr(Expr *expr, deparse_context *context)
 		get_rule_expr((Node *) lfirst(l), context);
 	}
 	appendStringInfoChar(buf, ')');
-
-	ReleaseSysCache(proctup);
 }
 
-/* ----------
+/*
  * get_agg_expr			- Parse back an Aggref node
- * ----------
  */
 static void
 get_agg_expr(Aggref *aggref, deparse_context *context)
 {
 	StringInfo	buf = context->buf;
-	HeapTuple	proctup;
-	Form_pg_proc procStruct;
-	char	   *proname;
+	Oid			argtype = exprType(aggref->target);
 
-	/*
-	 * Get the aggregate's pg_proc tuple
-	 */
-	proctup = SearchSysCache(PROCOID,
-							 ObjectIdGetDatum(aggref->aggfnoid),
-							 0, 0, 0);
-	if (!HeapTupleIsValid(proctup))
-		elog(ERROR, "cache lookup for proc %u failed", aggref->aggfnoid);
-
-	procStruct = (Form_pg_proc) GETSTRUCT(proctup);
-	proname = NameStr(procStruct->proname);
-
-	/*
-	 * Display it
-	 */
 	appendStringInfo(buf, "%s(%s",
-					 quote_identifier(proname),
+					 generate_function_name(aggref->aggfnoid, 1, &argtype),
 					 aggref->aggdistinct ? "DISTINCT " : "");
 	if (aggref->aggstar)
 		appendStringInfo(buf, "*");
 	else
 		get_rule_expr(aggref->target, context);
 	appendStringInfoChar(buf, ')');
-
-	ReleaseSysCache(proctup);
 }
 
 
@@ -2064,7 +2057,8 @@ strip_type_coercion(Node *expr, Oid resultType)
 	if (IsA(expr, RelabelType))
 		return strip_type_coercion(((RelabelType *) expr)->arg, resultType);
 
-	if (IsA(expr, Expr) &&((Expr *) expr)->opType == FUNC_EXPR)
+	if (IsA(expr, Expr) &&
+		((Expr *) expr)->opType == FUNC_EXPR)
 	{
 		Func	   *func;
 		HeapTuple	procTuple;
@@ -2173,9 +2167,8 @@ get_const_expr(Const *constval, deparse_context *context)
 	if (constval->constisnull)
 	{
 		/*
-		 * Always label the type of a NULL constant.  This not only
-		 * prevents misdecisions about the type, but it ensures that our
-		 * output is a valid b_expr.
+		 * Always label the type of a NULL constant to prevent misdecisions
+		 * about type when reparsing.
 		 */
 		appendStringInfo(buf, "NULL::%s",
 						 format_type_with_typemod(constval->consttype, -1));
@@ -2201,7 +2194,7 @@ get_const_expr(Const *constval, deparse_context *context)
 		case INT4OID:
 		case OIDOID:			/* int types */
 		case FLOAT4OID:
-		case FLOAT8OID: /* float types */
+		case FLOAT8OID:			/* float types */
 			/* These types are printed without quotes */
 			appendStringInfo(buf, extval);
 			break;
@@ -2289,6 +2282,12 @@ get_sublink_expr(Node *node, deparse_context *context)
 
 	need_paren = true;
 
+	/*
+	 * XXX we assume here that we can get away without qualifying the
+	 * operator name.  Since the name may imply multiple physical operators
+	 * it's rather difficult to do otherwise --- in fact, if the operators
+	 * are in different namespaces any attempt to qualify would surely fail.
+	 */
 	switch (sublink->subLinkType)
 	{
 		case EXISTS_SUBLINK:
@@ -2391,7 +2390,7 @@ get_from_clause_item(Node *jtnode, Query *query, deparse_context *context)
 				/* Normal relation RTE */
 				appendStringInfo(buf, "%s%s",
 								 only_marker(rte),
-								 quote_identifier(get_rel_name(rte->relid)));
+								 generate_relation_name(rte->relid));
 				break;
 			case RTE_SUBQUERY:
 				/* Subquery RTE */
@@ -2506,7 +2505,7 @@ get_from_clause_item(Node *jtnode, Query *query, deparse_context *context)
 			 nodeTag(jtnode));
 }
 
-/* ----------
+/*
  * get_opclass_name			- fetch name of an index operator class
  *
  * The opclass name is appended (after a space) to buf.
@@ -2514,7 +2513,6 @@ get_from_clause_item(Node *jtnode, Query *query, deparse_context *context)
  * Output is suppressed if the opclass is the default for the given
  * actual_datatype.  (If you don't want this behavior, just pass
  * InvalidOid for actual_datatype.)
- * ----------
  */
 static void
 get_opclass_name(Oid opclass, Oid actual_datatype,
@@ -2522,6 +2520,8 @@ get_opclass_name(Oid opclass, Oid actual_datatype,
 {
 	HeapTuple	ht_opc;
 	Form_pg_opclass opcrec;
+	char	   *opcname;
+	char	   *nspname;
 
 	ht_opc = SearchSysCache(CLAOID,
 							ObjectIdGetDatum(opclass),
@@ -2530,14 +2530,24 @@ get_opclass_name(Oid opclass, Oid actual_datatype,
 		elog(ERROR, "cache lookup failed for opclass %u", opclass);
 	opcrec = (Form_pg_opclass) GETSTRUCT(ht_opc);
 	if (actual_datatype != opcrec->opcintype || !opcrec->opcdefault)
-		appendStringInfo(buf, " %s",
-						 quote_identifier(NameStr(opcrec->opcname)));
+	{
+		/* Okay, we need the opclass name.  Do we need to qualify it? */
+		opcname = NameStr(opcrec->opcname);
+		if (OpclassIsVisible(opclass))
+			appendStringInfo(buf, " %s", quote_identifier(opcname));
+		else
+		{
+			nspname = get_namespace_name(opcrec->opcnamespace);
+			appendStringInfo(buf, " %s.%s",
+							 quote_identifier(nspname),
+							 quote_identifier(opcname));
+		}
+	}
 	ReleaseSysCache(ht_opc);
 }
 
-/* ----------
+/*
  * tleIsArrayAssign			- check for array assignment
- * ----------
  */
 static bool
 tleIsArrayAssign(TargetEntry *tle)
@@ -2561,12 +2571,11 @@ tleIsArrayAssign(TargetEntry *tle)
 	return true;
 }
 
-/* ----------
+/*
  * quote_identifier			- Quote an identifier only if needed
  *
  * When quotes are needed, we palloc the required space; slightly
  * space-wasteful but well worth it for notational simplicity.
- * ----------
  */
 const char *
 quote_identifier(const char *ident)
@@ -2623,12 +2632,11 @@ quote_identifier(const char *ident)
 	return result;
 }
 
-/* ----------
+/*
  * quote_qualified_identifier	- Quote a possibly-qualified identifier
  *
  * Return a name of the form namespace.ident, or just ident if namespace
  * is NULL, quoting each component if necessary.  The result is palloc'd.
- * ----------
  */
 char *
 quote_qualified_identifier(const char *namespace,
@@ -2643,13 +2651,173 @@ quote_qualified_identifier(const char *namespace,
 	return buf.data;
 }
 
-/* ----------
+/*
+ * generate_relation_name
+ *		Compute the name to display for a relation specified by OID
+ *
+ * The result includes all necessary quoting and schema-prefixing.
+ */
+static char *
+generate_relation_name(Oid relid)
+{
+	HeapTuple	tp;
+	Form_pg_class reltup;
+	char	   *nspname;
+	char	   *result;
+
+	tp = SearchSysCache(RELOID,
+						ObjectIdGetDatum(relid),
+						0, 0, 0);
+	if (!HeapTupleIsValid(tp))
+		elog(ERROR, "cache lookup of relation %u failed", relid);
+	reltup = (Form_pg_class) GETSTRUCT(tp);
+
+	/* Qualify the name if not visible in search path */
+	if (RelationIsVisible(relid))
+		nspname = NULL;
+	else
+		nspname = get_namespace_name(reltup->relnamespace);
+
+	result = quote_qualified_identifier(nspname, NameStr(reltup->relname));
+
+	ReleaseSysCache(tp);
+
+	return result;
+}
+
+/*
+ * generate_function_name
+ *		Compute the name to display for a function specified by OID,
+ *		given that it is being called with the specified actual arg types.
+ *		(Arg types matter because of ambiguous-function resolution rules.)
+ *
+ * The result includes all necessary quoting and schema-prefixing.
+ */
+static char *
+generate_function_name(Oid funcid, int nargs, Oid *argtypes)
+{
+	HeapTuple	proctup;
+	Form_pg_proc procform;
+	char	   *proname;
+	char	   *nspname;
+	char	   *result;
+	FuncDetailCode p_result;
+	Oid			p_funcid;
+	Oid			p_rettype;
+	bool		p_retset;
+	Oid		   *p_true_typeids;
+
+	proctup = SearchSysCache(PROCOID,
+							 ObjectIdGetDatum(funcid),
+							 0, 0, 0);
+	if (!HeapTupleIsValid(proctup))
+		elog(ERROR, "cache lookup of function %u failed", funcid);
+	procform = (Form_pg_proc) GETSTRUCT(proctup);
+	proname = NameStr(procform->proname);
+	Assert(nargs == procform->pronargs);
+
+	/*
+	 * The idea here is to schema-qualify only if the parser would fail to
+	 * resolve the correct function given the unqualified func name
+	 * with the specified argtypes.
+	 */
+	p_result = func_get_detail(makeList1(makeString(proname)),
+							   NIL, nargs, argtypes,
+							   &p_funcid, &p_rettype,
+							   &p_retset, &p_true_typeids);
+	if (p_result != FUNCDETAIL_NOTFOUND && p_funcid == funcid)
+		nspname = NULL;
+	else
+		nspname = get_namespace_name(procform->pronamespace);
+
+	result = quote_qualified_identifier(nspname, proname);
+
+	ReleaseSysCache(proctup);
+
+	return result;
+}
+
+/*
+ * generate_operator_name
+ *		Compute the name to display for an operator specified by OID,
+ *		given that it is being called with the specified actual arg types.
+ *		(Arg types matter because of ambiguous-operator resolution rules.
+ *		Pass InvalidOid for unused arg of a unary operator.)
+ *
+ * The result includes all necessary quoting and schema-prefixing,
+ * plus the OPERATOR() decoration needed to use a qualified operator name
+ * in an expression.
+ */
+static char *
+generate_operator_name(Oid operid, Oid arg1, Oid arg2)
+{
+	StringInfoData buf;
+	HeapTuple	opertup;
+	Form_pg_operator operform;
+	char	   *oprname;
+	char	   *nspname;
+	Operator	p_result;
+
+	initStringInfo(&buf);
+
+	opertup = SearchSysCache(OPEROID,
+							 ObjectIdGetDatum(operid),
+							 0, 0, 0);
+	if (!HeapTupleIsValid(opertup))
+		elog(ERROR, "cache lookup of operator %u failed", operid);
+	operform = (Form_pg_operator) GETSTRUCT(opertup);
+	oprname = NameStr(operform->oprname);
+
+	/*
+	 * The idea here is to schema-qualify only if the parser would fail to
+	 * resolve the correct operator given the unqualified op name
+	 * with the specified argtypes.
+	 */
+	switch (operform->oprkind)
+	{
+		case 'b':
+			p_result = oper(makeList1(makeString(oprname)), arg1, arg2, true);
+			break;
+		case 'l':
+			p_result = left_oper(makeList1(makeString(oprname)), arg2, true);
+			break;
+		case 'r':
+			p_result = right_oper(makeList1(makeString(oprname)), arg1, true);
+			break;
+		default:
+			elog(ERROR, "unexpected oprkind %c for operator %u",
+				 operform->oprkind, operid);
+			p_result = NULL;	/* keep compiler quiet */
+			break;
+	}
+
+	if (p_result != NULL && oprid(p_result) == operid)
+		nspname = NULL;
+	else
+	{
+		nspname = get_namespace_name(operform->oprnamespace);
+		appendStringInfo(&buf, "OPERATOR(%s.", quote_identifier(nspname));
+	}
+
+	appendStringInfo(&buf, "%s", oprname);
+
+	if (nspname)
+		appendStringInfoChar(&buf, ')');
+
+	if (p_result != NULL)
+		ReleaseSysCache(p_result);
+
+	ReleaseSysCache(opertup);
+
+	return buf.data;
+}
+
+/*
  * get_relid_attribute_name
  *		Get an attribute name by its relations Oid and its attnum
  *
  * Same as underlying syscache routine get_attname(), except that error
  * is handled by elog() instead of returning NULL.
- * ----------
  */
 static char *
 get_relid_attribute_name(Oid relid, AttrNumber attnum)

@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/parser/parse_func.c,v 1.126 2002/04/11 20:00:01 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/parser/parse_func.c,v 1.127 2002/05/03 20:15:02 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -686,6 +686,11 @@ func_select_candidate(int nargs,
  *	 b) if the answer is one, we have our function
  *	 c) if the answer is more than one, attempt to resolve the conflict
  *	 d) if the answer is zero, try the next array from vector #1
+ *
+ * Note: we rely primarily on nargs/argtypes as the argument description.
+ * The actual expression node list is passed in fargs so that we can check
+ * for type coercion of a constant.  Some callers pass fargs == NIL
+ * indicating they don't want that check made.
  */
 FuncDetailCode
 func_get_detail(List *funcname,
@@ -740,7 +745,7 @@ func_get_detail(List *funcname,
 		 * that result for something coerce_type can't handle, we'll cause
 		 * infinite recursion between this module and coerce_type!
 		 */
-		if (nargs == 1)
+		if (nargs == 1 && fargs != NIL)
 		{
 			Oid			targetType;
 			TypeName   *tn = makeNode(TypeName);
