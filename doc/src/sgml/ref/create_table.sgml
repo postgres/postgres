@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/ref/create_table.sgml,v 1.24 2000/04/14 22:13:24 momjian Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/ref/create_table.sgml,v 1.25 2000/04/14 22:16:01 momjian Exp $
 Postgres documentation
 -->
 
@@ -962,8 +962,8 @@ ERROR: Cannot insert a duplicate key into a unique index.
          allow one column of a multi-column foreign key to be NULL
          unless all foreign key columns are NULL. The default MATCH type
          allows a single foreign key column to be NULL while other parts
-         of the foreign key are not NULL. MATCH PARTIAL is not currently
-         supported.
+         of the foreign key are not NULL. MATCH PARTIAL is currently not
+	 supported.
         </para>
        </listitem>
       </varlistentry>
@@ -1510,8 +1510,8 @@ FOREIGN KEY ( <replaceable class="parameter">column</replaceable> [, ...] ) REFE
          allow one column of a multi-column foreign key to be NULL
          unless all foreign key columns are NULL. The default MATCH type
          allows a single foreign key column to be NULL while other parts
-         of the foreign key are not NULL. MATCH PARTIAL is not currently
-         supported.
+         of the foreign key are not NULL. MATCH PARTIAL is currently not
+	 supported.
         </para>
        </listitem>
       </varlistentry>
