@@ -8,14 +8,14 @@
  * Portions Copyright (c) 1996-2000, PostgreSQL, Inc
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Id: c.h,v 1.64 2000/01/26 05:57:46 momjian Exp $
+ * $Id: c.h,v 1.65 2000/03/19 22:08:51 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
 /*
  *	 TABLE OF CONTENTS
  *
- *		When adding stuff to this file, please try and put stuff
+ *		When adding stuff to this file, please try to put stuff
  *		into the relevant section, or add new sections as appropriate.
  *
  *	  section	description
@@ -33,10 +33,6 @@
  *		9)		externs
  *		10)		Berkeley-specific defs
  *		11)		system-specific hacks
- *
- *	 NOTES
- *
- *		This file is MACHINE AND COMPILER dependent!!!	(For now.)
  *
  * ----------------------------------------------------------------
  */
@@ -279,8 +275,6 @@ typedef signed int Offset;
  *
  *	If your machine meets these requirements, Datums should also be checked
  *	to see if the positioning is correct.
- *
- *		This file is MACHINE AND COMPILER dependent!!!
  */
 
 typedef unsigned long Datum;	/* XXX sizeof(long) >= sizeof(void *) */
@@ -403,28 +397,28 @@ typedef Datum *DatumPtr;
  *		Returns pointer value of a datum.
  */
 
-#define DatumGetPointer(X) ((Pointer) X)
+#define DatumGetPointer(X) ((Pointer) (X))
 
 /*
  * PointerGetDatum
  *		Returns datum representation for a pointer.
  */
 
-#define PointerGetDatum(X) ((Datum) X)
+#define PointerGetDatum(X) ((Datum) (X))
 
 /*
  * DatumGetName
  *		Returns name value of a datum.
  */
 
-#define DatumGetName(X) ((Name) DatumGetPointer((Datum) X))
+#define DatumGetName(X) ((Name) DatumGetPointer((Datum) (X)))
 
 /*
  * NameGetDatum
  *		Returns datum representation for a name.
  */
 
-#define NameGetDatum(X) PointerGetDatum((Pointer) X)
+#define NameGetDatum(X) PointerGetDatum((Pointer) (X))
 
 
 /*
@@ -433,7 +427,7 @@ typedef Datum *DatumPtr;
  *		This is really a pointer, of course.
  */
 
-#define DatumGetFloat32(X) ((float32) DatumGetPointer((Datum) X))
+#define DatumGetFloat32(X) ((float32) DatumGetPointer(X))
 
 /*
  * Float32GetDatum
@@ -441,7 +435,7 @@ typedef Datum *DatumPtr;
  *		This is really a pointer, of course.
  */
 
-#define Float32GetDatum(X) PointerGetDatum((Pointer) X)
+#define Float32GetDatum(X) PointerGetDatum((Pointer) (X))
 
 /*
  * DatumGetFloat64
@@ -457,7 +451,7 @@ typedef Datum *DatumPtr;
  *		This is really a pointer, of course.
  */
 
-#define Float64GetDatum(X) PointerGetDatum((Pointer) X)
+#define Float64GetDatum(X) PointerGetDatum((Pointer) (X))
 
 /* ----------------------------------------------------------------
  *				Section 5:	IsValid macros for system types
@@ -473,18 +467,7 @@ typedef Datum *DatumPtr;
  * PointerIsValid
  *		True iff pointer is valid.
  */
-#define PointerIsValid(pointer) (bool)((void*)(pointer) != NULL)
-
-/*
- * PointerIsInBounds
- *		True iff pointer is within given bounds.
- *
- * Note:
- *		Assumes the bounded interval to be [min,max),
- *		i.e. closed on the left and open on the right.
- */
-#define PointerIsInBounds(pointer, min, max) \
-		((min) <= (pointer) && (pointer) < (max))
+#define PointerIsValid(pointer) ((void*)(pointer) != NULL)
 
 /*
  * PointerIsAligned
@@ -560,14 +543,14 @@ typedef struct Exception
  *	Isn't CPP fun?
  */
 #define TrapMacro(condition, exception) \
-	((bool) ((! assert_enabled) || (! condition) || \
+	((bool) ((! assert_enabled) || ! (condition) || \
 			 (ExceptionalCondition(CppAsString(condition), \
 								  &(exception), \
 								  (char*) NULL, __FILE__, __LINE__))))
 
 #ifndef USE_ASSERT_CHECKING
 #define Assert(condition)
-#define AssertMacro(condition)	(void)true
+#define AssertMacro(condition)	((void)true)
 #define AssertArg(condition)
 #define AssertState(condition)
 #define assert_enabled 0
@@ -576,7 +559,7 @@ typedef struct Exception
 		Trap(!(condition), FailedAssertion)
 
 #define AssertMacro(condition) \
-		(void)TrapMacro(!(condition), FailedAssertion)
+		((void) TrapMacro(!(condition), FailedAssertion))
 
 #define AssertArg(condition) \
 		Trap(!(condition), BadArg)
@@ -604,7 +587,7 @@ extern int	assert_enabled;
  *		#define foo(x) (LogAssertMacro(x != 0, "yow!") && bar(x))
  */
 #define LogTrapMacro(condition, exception, printArgs) \
-	((bool) ((! assert_enabled) || (! condition) || \
+	((bool) ((! assert_enabled) || ! (condition) || \
 			 (ExceptionalCondition(CppAsString(condition), \
 								   &(exception), \
 								   vararg_format printArgs, __FILE__, __LINE__))))
@@ -659,46 +642,62 @@ extern int	assertTest(int val);
 
 /*
  * StrNCpy
- *		Does string copy, and forces terminating NULL
+ *		Like standard library function strncpy(), except that result string
+ *		is guaranteed to be null-terminated --- that is, at most N-1 bytes
+ *		of the source string will be kept.
+ *		Also, the macro returns no result (too hard to do that without
+ *		evaluating the arguments multiple times, which seems worse).
  */
-/* we do this so if the macro is used in an if action, it will work */
-#define StrNCpy(dst,src,len)	\
-( \
-	((len) > 0) ? \
-	( \
-		strncpy((dst),(src),(len)-1), \
-		*((dst)+(len)-1)='\0' \
-	) \
-	: \
-		(dummyret)NULL,(void)(dst) \
-)
+#define StrNCpy(dst,src,len) \
+	do \
+	{ \
+		char * _dst = (dst); \
+		Size _len = (len); \
+\
+		if (_len > 0) \
+		{ \
+			strncpy(_dst, (src), _len); \
+			_dst[_len-1] = '\0'; \
+		} \
+	} while (0)
+
 
 /* Get a bit mask of the bits set in non-int32 aligned addresses */
 #define INT_ALIGN_MASK (sizeof(int32) - 1)
 
 /*
- *	This function gets call too often, so we inline it if we can.
- *	Are we aligned for int32?
- *	We have to cast the pointer to int so we can do the AND
+ * MemSet
+ *	Exactly the same as standard library function memset(), but considerably
+ *	faster for zeroing small word-aligned structures (such as parsetree nodes).
+ *	This has to be a macro because the main point is to avoid function-call
+ *	overhead.
+ *
  *	We got the 64 number by testing this against the stock memset() on
- *	BSD/OS 3.0. Larger values were slower.
+ *	BSD/OS 3.0. Larger values were slower.  (I think the crossover point
+ *	could be a good deal higher for most platforms, actually --- tgl)
  */
-#define MemSet(start, val, len) do \
-								{ \
-									if (((long)(start) & INT_ALIGN_MASK) == 0 && \
-										((len) & INT_ALIGN_MASK) == 0 && \
-										(val) == 0 && \
-										(len) <= 64) \
-									{ \
-										int32 *_i = (int32 *)(start); \
-										int32 *_stop = (int32 *)((char *)(start) + (len)); \
-										\
-										while (_i < _stop) \
-											*_i++ = 0; \
-									} \
-									else \
-										memset((start), (val), (len)); \
-								} while (0)
+#define MemSet(start, val, len) \
+	do \
+	{ \
+		int32 * _start = (int32 *) (start); \
+		int		_val = (val); \
+		Size	_len = (len); \
+\
+		if ((((long) _start) & INT_ALIGN_MASK) == 0 && \
+			(_len & INT_ALIGN_MASK) == 0 && \
+			_val == 0 && \
+			_len <= MEMSET_LOOP_LIMIT) \
+		{ \
+			int32 * _stop = (int32 *) ((char *) _start + _len); \
+			while (_start < _stop) \
+				*_start++ = 0; \
+		} \
+		else \
+			memset((char *) _start, _val, _len); \
+	} while (0)
+
+#define MEMSET_LOOP_LIMIT  64
+
 
 /* ----------------------------------------------------------------
  *				Section 9: externs
