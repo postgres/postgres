@@ -53,7 +53,6 @@ public class threadsafe
 		System.out.println("Now closing the connection");
 		st.close();
 		db.close();
-
 	}
 
 	/*
@@ -108,7 +107,6 @@ public class threadsafe
 			System.out.println("Waiting for threads to run");
 			while (thread1.isAlive() || thread2.isAlive() || thread3.isAlive())
 				thread0.yield();
-
 		}
 		finally
 		{

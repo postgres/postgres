@@ -218,7 +218,6 @@ public class metadata
 	{
 		if (line.startsWith("\\d"))
 		{
-
 			if (line.startsWith("\\d "))
 			{
 				// Display details about a table

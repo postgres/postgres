@@ -16,7 +16,7 @@ fi
 
 for FILE
 do
-	astyle --style=java -b -p -j < "$FILE" >/tmp/$$ 2>/tmp/$$a
+	astyle --style=java -b -p -j -S < "$FILE" >/tmp/$$ 2>/tmp/$$a
 	if [ "$?" -ne 0 -o -s /tmp/$$a ]
 	then	echo "$FILE"
 		cat /tmp/$$a

@@ -78,17 +78,17 @@ public class ResultSetMetaData implements java.sql.ResultSetMetaData
 
 		switch (sql_type)
 		{
-		case Types.SMALLINT:
-		case Types.INTEGER:
-		case Types.FLOAT:
-		case Types.REAL:
-		case Types.DOUBLE:
-		case Types.DATE:
-		case Types.TIME:
-		case Types.TIMESTAMP:
-			return false;
-		default:
-			return true;
+			case Types.SMALLINT:
+			case Types.INTEGER:
+			case Types.FLOAT:
+			case Types.REAL:
+			case Types.DOUBLE:
+			case Types.DATE:
+			case Types.TIME:
+			case Types.TIMESTAMP:
+				return false;
+			default:
+				return true;
 		}
 	}
 
@@ -112,10 +112,10 @@ public class ResultSetMetaData implements java.sql.ResultSetMetaData
 		// for further expansion.
 		switch (sql_type)
 		{
-		case Types.OTHER:
-			return true;
-		default:
-			return true;
+			case Types.OTHER:
+				return true;
+			default:
+				return true;
 		}
 	}
 
@@ -167,18 +167,18 @@ public class ResultSetMetaData implements java.sql.ResultSetMetaData
 
 		switch (sql_type)
 		{
-		case Types.SMALLINT:
-		case Types.INTEGER:
-		case Types.FLOAT:
-		case Types.REAL:
-		case Types.DOUBLE:
-			return true;
-		case Types.DATE:
-		case Types.TIME:
-		case Types.TIMESTAMP:
-			return false;	// I don't know about these?
-		default:
-			return false;
+			case Types.SMALLINT:
+			case Types.INTEGER:
+			case Types.FLOAT:
+			case Types.REAL:
+			case Types.DOUBLE:
+				return true;
+			case Types.DATE:
+			case Types.TIME:
+			case Types.TIMESTAMP:
+				return false;	// I don't know about these?
+			default:
+				return false;
 		}
 	}
 
@@ -294,26 +294,26 @@ public class ResultSetMetaData implements java.sql.ResultSetMetaData
 
 		switch (sql_type)
 		{
-		case Types.SMALLINT:
-			return 5;
-		case Types.INTEGER:
-			return 10;
-		case Types.REAL:
-			return 8;
-		case Types.FLOAT:
-			return 16;
-		case Types.DOUBLE:
-			return 16;
-		case Types.VARCHAR:
-			return 0;
-		case Types.NUMERIC:
-			Field f = getField(column);
-			if (f != null)
-				return ((0xFFFF0000)&f.getMod()) >> 16;
-			else
+			case Types.SMALLINT:
+				return 5;
+			case Types.INTEGER:
+				return 10;
+			case Types.REAL:
+				return 8;
+			case Types.FLOAT:
+				return 16;
+			case Types.DOUBLE:
+				return 16;
+			case Types.VARCHAR:
 				return 0;
-		default:
-			return 0;
+			case Types.NUMERIC:
+				Field f = getField(column);
+				if (f != null)
+					return ((0xFFFF0000)&f.getMod()) >> 16;
+				else
+					return 0;
+			default:
+				return 0;
 		}
 	}
 
@@ -331,26 +331,26 @@ public class ResultSetMetaData implements java.sql.ResultSetMetaData
 
 		switch (sql_type)
 		{
-		case Types.SMALLINT:
-			return 0;
-		case Types.INTEGER:
-			return 0;
-		case Types.REAL:
-			return 8;
-		case Types.FLOAT:
-			return 16;
-		case Types.DOUBLE:
-			return 16;
-		case Types.VARCHAR:
-			return 0;
-		case Types.NUMERIC:
-			Field f = getField(column);
-			if (f != null)
-				return (((0x0000FFFF)&f.getMod()) - 4);
-			else
+			case Types.SMALLINT:
 				return 0;
-		default:
-			return 0;
+			case Types.INTEGER:
+				return 0;
+			case Types.REAL:
+				return 8;
+			case Types.FLOAT:
+				return 16;
+			case Types.DOUBLE:
+				return 16;
+			case Types.VARCHAR:
+				return 0;
+			case Types.NUMERIC:
+				Field f = getField(column);
+				if (f != null)
+					return (((0x0000FFFF)&f.getMod()) - 4);
+				else
+					return 0;
+			default:
+				return 0;
 		}
 	}
 

@@ -20,22 +20,22 @@ public class BytePoolDim2
 		// For now until the bug can be removed
 		return new byte[size][0];
 		/*
-		if (size > maxsize){
-		return new byte[size][0];
-	}
-		ObjectPool not_usel = notusemap[size];
-		ObjectPool in_usel =  inusemap[size];
+				if (size > maxsize){
+				return new byte[size][0];
+			}
+				ObjectPool not_usel = notusemap[size];
+				ObjectPool in_usel =  inusemap[size];
 
-		byte b[][] = null;
+				byte b[][] = null;
 
-		if (!not_usel.isEmpty()) {
-		Object o = not_usel.remove();
-		b = (byte[][]) o;
-	} else
-		b = new byte[size][0];
-		in_usel.add(b);
-		return b;
-		  */
+				if (!not_usel.isEmpty()) {
+				Object o = not_usel.remove();
+				b = (byte[][]) o;
+			} else
+				b = new byte[size][0];
+				in_usel.add(b);
+				return b;
+		*/
 	}
 
 	public void release(byte[][] b)

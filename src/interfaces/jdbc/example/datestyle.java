@@ -9,7 +9,6 @@ import java.text.*;
  *
  * To use this example, you need a database to be in existence. This example
  * will create a table called datestyle.
- *
  */
 
 public class datestyle
@@ -105,7 +104,6 @@ public class datestyle
 		ps.setDate(1, standard);
 		ps.executeUpdate();
 		ps.close();
-
 	}
 
 	/*

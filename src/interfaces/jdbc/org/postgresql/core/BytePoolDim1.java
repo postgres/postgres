@@ -6,7 +6,6 @@ package org.postgresql.core;
  */
 public class BytePoolDim1
 {
-
 	/*
 	 * The maximum size of the array we manage.
 	 */
@@ -47,26 +46,26 @@ public class BytePoolDim1
 		// for now until the bug can be removed
 		return new byte[size];
 		/*
-		  // Don't pool if >maxsize
-		if (size > maxsize){
-		return new byte[size];
-	}
+				  // Don't pool if >maxsize
+				if (size > maxsize){
+				return new byte[size];
+			}
 
-		ObjectPool not_usel = notusemap[size];
-		ObjectPool in_usel = inusemap[size];
-		byte b[] = null;
+				ObjectPool not_usel = notusemap[size];
+				ObjectPool in_usel = inusemap[size];
+				byte b[] = null;
 
-		  // Fetch from the unused pool if available otherwise allocate a new
-		  // now array
-		if (!not_usel.isEmpty()) {
-		Object o = not_usel.remove();
-		b = (byte[]) o;
-	} else
-		b = new byte[size];
-		in_usel.add(b);
+				  // Fetch from the unused pool if available otherwise allocate a new
+				  // now array
+				if (!not_usel.isEmpty()) {
+				Object o = not_usel.remove();
+				b = (byte[]) o;
+			} else
+				b = new byte[size];
+				in_usel.add(b);
 
-		return b;
-		  */
+				return b;
+		*/
 	}
 
 	/*

@@ -13,7 +13,7 @@ import org.postgresql.util.PSQLException;
  * <p>The lifetime of a QueryExecutor object is from sending the query
  * until the response has been received from the backend.
  *
- * $Id: QueryExecutor.java,v 1.4 2001/11/19 22:33:37 momjian Exp $
+ * $Id: QueryExecutor.java,v 1.5 2001/11/19 23:16:45 momjian Exp $
  */
 
 public class QueryExecutor
@@ -69,53 +69,53 @@ public class QueryExecutor
 
 				switch (c)
 				{
-				case 'A':	// Asynchronous Notify
-					int pid = pg_stream.ReceiveInteger(4);
-					String msg = pg_stream.ReceiveString(connection.getEncoding());
-					break;
-				case 'B':	// Binary Data Transfer
-					receiveTuple(true);
-					break;
-				case 'C':	// Command Status
-					receiveCommandStatus();
+					case 'A':	// Asynchronous Notify
+						int pid = pg_stream.ReceiveInteger(4);
+						String msg = pg_stream.ReceiveString(connection.getEncoding());
+						break;
+					case 'B':	// Binary Data Transfer
+						receiveTuple(true);
+						break;
+					case 'C':	// Command Status
+						receiveCommandStatus();
 
-					if (fields != null)
-						hfr = true;
-					else
-					{
-						sendQuery(" ");
-						fqp++;
-					}
-					break;
-				case 'D':	// Text Data Transfer
-					receiveTuple(false);
-					break;
-				case 'E':	// Error Message
-					throw new SQLException(pg_stream.ReceiveString(connection.getEncoding()));
-				case 'I':	// Empty Query
-					int t = pg_stream.ReceiveChar();
-					if (t != 0)
-						throw new PSQLException("postgresql.con.garbled");
+						if (fields != null)
+							hfr = true;
+						else
+						{
+							sendQuery(" ");
+							fqp++;
+						}
+						break;
+					case 'D':	// Text Data Transfer
+						receiveTuple(false);
+						break;
+					case 'E':	// Error Message
+						throw new SQLException(pg_stream.ReceiveString(connection.getEncoding()));
+					case 'I':	// Empty Query
+						int t = pg_stream.ReceiveChar();
+						if (t != 0)
+							throw new PSQLException("postgresql.con.garbled");
 
-					if (fqp > 0)
-						fqp--;
-					if (fqp == 0)
-						hfr = true;
-					break;
-				case 'N':	// Error Notification
-					connection.addWarning(pg_stream.ReceiveString(connection.getEncoding()));
-					break;
-				case 'P':	// Portal Name
-					String pname = pg_stream.ReceiveString(connection.getEncoding());
-					break;
-				case 'T':	// MetaData Field Description
-					receiveFields();
-					break;
-				case 'Z':		 // backend ready for query, ignore for now :-)
-					break;
-				default:
-					throw new PSQLException("postgresql.con.type",
-											new Character((char) c));
+						if (fqp > 0)
+							fqp--;
+						if (fqp == 0)
+							hfr = true;
+						break;
+					case 'N':	// Error Notification
+						connection.addWarning(pg_stream.ReceiveString(connection.getEncoding()));
+						break;
+					case 'P':	// Portal Name
+						String pname = pg_stream.ReceiveString(connection.getEncoding());
+						break;
+					case 'T':	// MetaData Field Description
+						receiveFields();
+						break;
+					case 'Z':		 // backend ready for query, ignore for now :-)
+						break;
+					default:
+						throw new PSQLException("postgresql.con.type",
+												new Character((char) c));
 				}
 			}
 			return connection.getResultSet(connection, statement, fields, tuples, status, update_count, insert_oid, binaryCursor);
@@ -162,7 +162,6 @@ public class QueryExecutor
 	 */
 	private void receiveCommandStatus() throws SQLException
 	{
-
 		status = pg_stream.ReceiveString(connection.getEncoding());
 
 		try

@@ -214,21 +214,21 @@ public class Unicode
 		{
 			switch (mode)
 			{
-			case CREATE:
-				log("Exception creating database", sqle);
-				break;
-			case INSERT:
-				log("Exception inserting block " + blockNum, sqle);
-				break;
-			case SELECT:
-				log("Exception selecting block " + blockNum, sqle);
-				break;
-			case LIKE:
-				log("Exception doing LIKE on block " + blockNum, sqle);
-				break;
-			default:
-				log("Exception", sqle);
-				break;
+				case CREATE:
+					log("Exception creating database", sqle);
+					break;
+				case INSERT:
+					log("Exception inserting block " + blockNum, sqle);
+					break;
+				case SELECT:
+					log("Exception selecting block " + blockNum, sqle);
+					break;
+				case LIKE:
+					log("Exception doing LIKE on block " + blockNum, sqle);
+					break;
+				default:
+					log("Exception", sqle);
+					break;
 			}
 		}
 		catch (ClassNotFoundException cnfe)

@@ -21,7 +21,7 @@ public class ResultSetTest extends TestCase
 	{
 		con = JDBC2Tests.openDB();
 		Statement stmt = con.createStatement();
-		
+
 		JDBC2Tests.createTable(con, "testrs", "id integer");
 
 		stmt.executeUpdate("INSERT INTO testrs VALUES (1)");
@@ -44,23 +44,23 @@ public class ResultSetTest extends TestCase
 	{
 		Statement stmt = con.createStatement();
 		ResultSet rs = stmt.executeQuery("SELECT * FROM testrs");
-		
-		assertTrue(rs.absolute(-1));
+
+		assertTrue(rs.absolute( -1));
 		assertEquals(6, rs.getRow());
 
 		assertTrue(rs.absolute(1));
 		assertEquals(1, rs.getRow());
 
-		assertTrue(!rs.absolute(-10));
+		assertTrue(!rs.absolute( -10));
 		assertEquals(0, rs.getRow());
- 		assertTrue(rs.next());
- 		assertEquals(1, rs.getRow());
+		assertTrue(rs.next());
+		assertEquals(1, rs.getRow());
 
 		assertTrue(!rs.absolute(10));
 		assertEquals(0, rs.getRow());
 		assertTrue(rs.previous());
 		assertEquals(6, rs.getRow());
-		
+
 		stmt.close();
 	}
 }

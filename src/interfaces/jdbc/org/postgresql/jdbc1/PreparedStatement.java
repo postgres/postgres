@@ -617,53 +617,53 @@ public class PreparedStatement extends Statement implements java.sql.PreparedSta
 		}
 		switch (targetSqlType)
 		{
-		case Types.TINYINT:
-		case Types.SMALLINT:
-		case Types.INTEGER:
-		case Types.BIGINT:
-		case Types.REAL:
-		case Types.FLOAT:
-		case Types.DOUBLE:
-		case Types.DECIMAL:
-		case Types.NUMERIC:
-			if (x instanceof Boolean)
-				set(parameterIndex, ((Boolean)x).booleanValue() ? "1" : "0");
-			else
-				set(parameterIndex, x.toString());
-			break;
-		case Types.CHAR:
-		case Types.VARCHAR:
-		case Types.LONGVARCHAR:
-			setString(parameterIndex, x.toString());
-			break;
-		case Types.DATE:
-			setDate(parameterIndex, (java.sql.Date)x);
-			break;
-		case Types.TIME:
-			setTime(parameterIndex, (Time)x);
-			break;
-		case Types.TIMESTAMP:
-			setTimestamp(parameterIndex, (Timestamp)x);
-			break;
-		case Types.BIT:
-			if (x instanceof Boolean)
-			{
-				set(parameterIndex, ((Boolean)x).booleanValue() ? "TRUE" : "FALSE");
-			}
-			else
-			{
+			case Types.TINYINT:
+			case Types.SMALLINT:
+			case Types.INTEGER:
+			case Types.BIGINT:
+			case Types.REAL:
+			case Types.FLOAT:
+			case Types.DOUBLE:
+			case Types.DECIMAL:
+			case Types.NUMERIC:
+				if (x instanceof Boolean)
+					set(parameterIndex, ((Boolean)x).booleanValue() ? "1" : "0");
+				else
+					set(parameterIndex, x.toString());
+				break;
+			case Types.CHAR:
+			case Types.VARCHAR:
+			case Types.LONGVARCHAR:
+				setString(parameterIndex, x.toString());
+				break;
+			case Types.DATE:
+				setDate(parameterIndex, (java.sql.Date)x);
+				break;
+			case Types.TIME:
+				setTime(parameterIndex, (Time)x);
+				break;
+			case Types.TIMESTAMP:
+				setTimestamp(parameterIndex, (Timestamp)x);
+				break;
+			case Types.BIT:
+				if (x instanceof Boolean)
+				{
+					set(parameterIndex, ((Boolean)x).booleanValue() ? "TRUE" : "FALSE");
+				}
+				else
+				{
+					throw new PSQLException("postgresql.prep.type");
+				}
+				break;
+			case Types.BINARY:
+			case Types.VARBINARY:
+				setObject(parameterIndex, x);
+				break;
+			case Types.OTHER:
+				setString(parameterIndex, ((PGobject)x).getValue());
+				break;
+			default:
 				throw new PSQLException("postgresql.prep.type");
-			}
-			break;
-		case Types.BINARY:
-		case Types.VARBINARY:
-			setObject(parameterIndex, x);
-			break;
-		case Types.OTHER:
-			setString(parameterIndex, ((PGobject)x).getValue());
-			break;
-		default:
-			throw new PSQLException("postgresql.prep.type");
 		}
 	}
 

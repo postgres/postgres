@@ -40,7 +40,7 @@
 *
 * Copyright 1999 (C) Exoffice Technologies Inc. All Rights Reserved.
 *
-* $Id: XADataSourceImpl.java,v 1.3 2001/11/19 22:33:39 momjian Exp $
+* $Id: XADataSourceImpl.java,v 1.4 2001/11/19 23:16:46 momjian Exp $
 */
 
 
@@ -378,6 +378,7 @@ public abstract class XADataSourceImpl
 
 			// Look for all connections inside a transaction that
 			// should have timed out by now.
+
 
 			timeout = System.currentTimeMillis();
 			enum = _txConnections.elements();

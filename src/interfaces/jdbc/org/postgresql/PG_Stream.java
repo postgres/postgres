@@ -10,7 +10,7 @@ import org.postgresql.core.*;
 import org.postgresql.util.*;
 
 /*
- * $Id: PG_Stream.java,v 1.15 2001/11/19 22:33:37 momjian Exp $
+ * $Id: PG_Stream.java,v 1.16 2001/11/19 23:16:45 momjian Exp $
  *
  * This class is used by Connection & PGlobj for communicating with the
  * backend.
@@ -371,5 +371,4 @@ public class PG_Stream
 		pg_input.close();
 		connection.close();
 	}
-
 }

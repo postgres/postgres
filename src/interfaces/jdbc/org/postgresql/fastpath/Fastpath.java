@@ -61,7 +61,6 @@ public class Fastpath
 		// added Oct 7 1998 to give us thread safety
 		synchronized (stream)
 		{
-
 			// send the function call
 			try
 			{
@@ -105,52 +104,52 @@ public class Fastpath
 				//DriverManager.println("ReceiveChar() = "+in+" '"+((char)in)+"'");
 				switch (in)
 				{
-				case 'V':
-					break;
+					case 'V':
+						break;
 
-					//------------------------------
-					// Function returned properly
-					//
-				case 'G':
-					int sz = stream.ReceiveIntegerR(4);
-					//DriverManager.println("G: size="+sz);  //debug
+						//------------------------------
+						// Function returned properly
+						//
+					case 'G':
+						int sz = stream.ReceiveIntegerR(4);
+						//DriverManager.println("G: size="+sz);  //debug
 
-					// Return an Integer if
-					if (resulttype)
-						result = new Integer(stream.ReceiveIntegerR(sz));
-					else
-					{
-						byte buf[] = new byte[sz];
-						stream.Receive(buf, 0, sz);
-						result = buf;
-					}
-					break;
+						// Return an Integer if
+						if (resulttype)
+							result = new Integer(stream.ReceiveIntegerR(sz));
+						else
+						{
+							byte buf[] = new byte[sz];
+							stream.Receive(buf, 0, sz);
+							result = buf;
+						}
+						break;
 
-					//------------------------------
-					// Error message returned
-				case 'E':
-					throw new PSQLException("postgresql.fp.error", stream.ReceiveString(conn.getEncoding()));
+						//------------------------------
+						// Error message returned
+					case 'E':
+						throw new PSQLException("postgresql.fp.error", stream.ReceiveString(conn.getEncoding()));
 
-					//------------------------------
-					// Notice from backend
-				case 'N':
-					conn.addWarning(stream.ReceiveString(conn.getEncoding()));
-					break;
+						//------------------------------
+						// Notice from backend
+					case 'N':
+						conn.addWarning(stream.ReceiveString(conn.getEncoding()));
+						break;
 
-					//------------------------------
-					// End of results
-					//
-					// Here we simply return res, which would contain the result
-					// processed earlier. If no result, this already contains null
-				case '0':
-					//DriverManager.println("returning "+result);
-					return result;
+						//------------------------------
+						// End of results
+						//
+						// Here we simply return res, which would contain the result
+						// processed earlier. If no result, this already contains null
+					case '0':
+						//DriverManager.println("returning "+result);
+						return result;
 
-				case 'Z':
-					break;
+					case 'Z':
+						break;
 
-				default:
-					throw new PSQLException("postgresql.fp.protocol", new Character((char)in));
+					default:
+						throw new PSQLException("postgresql.fp.protocol", new Character((char)in));
 				}
 			}
 		}

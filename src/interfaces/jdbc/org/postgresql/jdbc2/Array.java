@@ -115,64 +115,64 @@ public class Array implements java.sql.Array
 		int i = 0;
 		switch ( getBaseType() )
 		{
-		case Types.BIT:
-			retVal = new boolean[ count ];
-			for ( ; count > 0; count-- )
-				((boolean[])retVal)[i++] = ResultSet.toBoolean( arrayContents[(int)index++] );
-			break;
-		case Types.SMALLINT:
-		case Types.INTEGER:
-			retVal = new int[ count ];
-			for ( ; count > 0; count-- )
-				((int[])retVal)[i++] = ResultSet.toInt( arrayContents[(int)index++] );
-			break;
-		case Types.BIGINT:
-			retVal = new long[ count ];
-			for ( ; count > 0; count-- )
-				((long[])retVal)[i++] = ResultSet.toLong( arrayContents[(int)index++] );
-			break;
-		case Types.NUMERIC:
-			retVal = new BigDecimal[ count ];
-			for ( ; count > 0; count-- )
-				((BigDecimal[])retVal)[i] = ResultSet.toBigDecimal( arrayContents[(int)index++], 0 );
-			break;
-		case Types.REAL:
-			retVal = new float[ count ];
-			for ( ; count > 0; count-- )
-				((float[])retVal)[i++] = ResultSet.toFloat( arrayContents[(int)index++] );
-			break;
-		case Types.DOUBLE:
-			retVal = new double[ count ];
-			for ( ; count > 0; count-- )
-				((double[])retVal)[i++] = ResultSet.toDouble( arrayContents[(int)index++] );
-			break;
-		case Types.CHAR:
-		case Types.VARCHAR:
-			retVal = new String[ count ];
-			for ( ; count > 0; count-- )
-				((String[])retVal)[i++] = arrayContents[(int)index++];
-			break;
-		case Types.DATE:
-			retVal = new java.sql.Date[ count ];
-			for ( ; count > 0; count-- )
-				((java.sql.Date[])retVal)[i++] = ResultSet.toDate( arrayContents[(int)index++] );
-			break;
-		case Types.TIME:
-			retVal = new java.sql.Time[ count ];
-			for ( ; count > 0; count-- )
-				((java.sql.Time[])retVal)[i++] = ResultSet.toTime( arrayContents[(int)index++] );
-			break;
-		case Types.TIMESTAMP:
-			retVal = new Timestamp[ count ];
-			StringBuffer sbuf = null;
-			for ( ; count > 0; count-- )
-				((java.sql.Timestamp[])retVal)[i++] = ResultSet.toTimestamp( arrayContents[(int)index], rs );
-			break;
+			case Types.BIT:
+				retVal = new boolean[ count ];
+				for ( ; count > 0; count-- )
+					((boolean[])retVal)[i++] = ResultSet.toBoolean( arrayContents[(int)index++] );
+				break;
+			case Types.SMALLINT:
+			case Types.INTEGER:
+				retVal = new int[ count ];
+				for ( ; count > 0; count-- )
+					((int[])retVal)[i++] = ResultSet.toInt( arrayContents[(int)index++] );
+				break;
+			case Types.BIGINT:
+				retVal = new long[ count ];
+				for ( ; count > 0; count-- )
+					((long[])retVal)[i++] = ResultSet.toLong( arrayContents[(int)index++] );
+				break;
+			case Types.NUMERIC:
+				retVal = new BigDecimal[ count ];
+				for ( ; count > 0; count-- )
+					((BigDecimal[])retVal)[i] = ResultSet.toBigDecimal( arrayContents[(int)index++], 0 );
+				break;
+			case Types.REAL:
+				retVal = new float[ count ];
+				for ( ; count > 0; count-- )
+					((float[])retVal)[i++] = ResultSet.toFloat( arrayContents[(int)index++] );
+				break;
+			case Types.DOUBLE:
+				retVal = new double[ count ];
+				for ( ; count > 0; count-- )
+					((double[])retVal)[i++] = ResultSet.toDouble( arrayContents[(int)index++] );
+				break;
+			case Types.CHAR:
+			case Types.VARCHAR:
+				retVal = new String[ count ];
+				for ( ; count > 0; count-- )
+					((String[])retVal)[i++] = arrayContents[(int)index++];
+				break;
+			case Types.DATE:
+				retVal = new java.sql.Date[ count ];
+				for ( ; count > 0; count-- )
+					((java.sql.Date[])retVal)[i++] = ResultSet.toDate( arrayContents[(int)index++] );
+				break;
+			case Types.TIME:
+				retVal = new java.sql.Time[ count ];
+				for ( ; count > 0; count-- )
+					((java.sql.Time[])retVal)[i++] = ResultSet.toTime( arrayContents[(int)index++] );
+				break;
+			case Types.TIMESTAMP:
+				retVal = new Timestamp[ count ];
+				StringBuffer sbuf = null;
+				for ( ; count > 0; count-- )
+					((java.sql.Timestamp[])retVal)[i++] = ResultSet.toTimestamp( arrayContents[(int)index], rs );
+				break;
 
-			// Other datatypes not currently supported.  If you are really using other types ask
-			// yourself if an array of non-trivial data types is really good database design.
-		default:
-			throw org.postgresql.Driver.notImplemented();
+				// Other datatypes not currently supported.  If you are really using other types ask
+				// yourself if an array of non-trivial data types is really good database design.
+			default:
+				throw org.postgresql.Driver.notImplemented();
 		}
 		return retVal;
 	}
@@ -213,126 +213,126 @@ public class Array implements java.sql.Array
 		fields[0] = new Field(conn, "INDEX", conn.getOID("int2"), 2);
 		switch ( getBaseType() )
 		{
-		case Types.BIT:
-			boolean[] booleanArray = (boolean[]) array;
-			fields[1] = new Field(conn, "VALUE", conn.getOID("bool"), 1);
-			for ( int i = 0; i < booleanArray.length; i++ )
-			{
-				byte[][] tuple = new byte[2][0];
-				tuple[0] = conn.getEncoding().encode( Integer.toString((int)index + i) ); // Index
-				tuple[1] = conn.getEncoding().encode( (booleanArray[i] ? "YES" : "NO") ); // Value
-				rows.addElement(tuple);
-			}
-		case Types.SMALLINT:
-			fields[1] = new Field(conn, "VALUE", conn.getOID("int2"), 2);
-		case Types.INTEGER:
-			int[] intArray = (int[]) array;
-			if ( fields[1] == null )
-				fields[1] = new Field(conn, "VALUE", conn.getOID("int4"), 4);
-			for ( int i = 0; i < intArray.length; i++ )
-			{
-				byte[][] tuple = new byte[2][0];
-				tuple[0] = conn.getEncoding().encode( Integer.toString((int)index + i) ); // Index
-				tuple[1] = conn.getEncoding().encode( Integer.toString(intArray[i]) ); // Value
-				rows.addElement(tuple);
-			}
-			break;
-		case Types.BIGINT:
-			long[] longArray = (long[]) array;
-			fields[1] = new Field(conn, "VALUE", conn.getOID("int8"), 8);
-			for ( int i = 0; i < longArray.length; i++ )
-			{
-				byte[][] tuple = new byte[2][0];
-				tuple[0] = conn.getEncoding().encode( Integer.toString((int)index + i) ); // Index
-				tuple[1] = conn.getEncoding().encode( Long.toString(longArray[i]) ); // Value
-				rows.addElement(tuple);
-			}
-			break;
-		case Types.NUMERIC:
-			BigDecimal[] bdArray = (BigDecimal[]) array;
-			fields[1] = new Field(conn, "VALUE", conn.getOID("numeric"), -1);
-			for ( int i = 0; i < bdArray.length; i++ )
-			{
-				byte[][] tuple = new byte[2][0];
-				tuple[0] = conn.getEncoding().encode( Integer.toString((int)index + i) ); // Index
-				tuple[1] = conn.getEncoding().encode( bdArray[i].toString() ); // Value
-				rows.addElement(tuple);
-			}
-			break;
-		case Types.REAL:
-			float[] floatArray = (float[]) array;
-			fields[1] = new Field(conn, "VALUE", conn.getOID("float4"), 4);
-			for ( int i = 0; i < floatArray.length; i++ )
-			{
-				byte[][] tuple = new byte[2][0];
-				tuple[0] = conn.getEncoding().encode( Integer.toString((int)index + i) ); // Index
-				tuple[1] = conn.getEncoding().encode( Float.toString(floatArray[i]) ); // Value
-				rows.addElement(tuple);
-			}
-			break;
-		case Types.DOUBLE:
-			double[] doubleArray = (double[]) array;
-			fields[1] = new Field(conn, "VALUE", conn.getOID("float8"), 8);
-			for ( int i = 0; i < doubleArray.length; i++ )
-			{
-				byte[][] tuple = new byte[2][0];
-				tuple[0] = conn.getEncoding().encode( Integer.toString((int)index + i) ); // Index
-				tuple[1] = conn.getEncoding().encode( Double.toString(doubleArray[i]) ); // Value
-				rows.addElement(tuple);
-			}
-			break;
-		case Types.CHAR:
-			fields[1] = new Field(conn, "VALUE", conn.getOID("char"), 1);
-		case Types.VARCHAR:
-			String[] strArray = (String[]) array;
-			if ( fields[1] == null )
-				fields[1] = new Field(conn, "VALUE", conn.getOID("varchar"), -1);
-			for ( int i = 0; i < strArray.length; i++ )
-			{
-				byte[][] tuple = new byte[2][0];
-				tuple[0] = conn.getEncoding().encode( Integer.toString((int)index + i) ); // Index
-				tuple[1] = conn.getEncoding().encode( strArray[i] ); // Value
-				rows.addElement(tuple);
-			}
-			break;
-		case Types.DATE:
-			java.sql.Date[] dateArray = (java.sql.Date[]) array;
-			fields[1] = new Field(conn, "VALUE", conn.getOID("date"), 4);
-			for ( int i = 0; i < dateArray.length; i++ )
-			{
-				byte[][] tuple = new byte[2][0];
-				tuple[0] = conn.getEncoding().encode( Integer.toString((int)index + i) ); // Index
-				tuple[1] = conn.getEncoding().encode( dateArray[i].toString() ); // Value
-				rows.addElement(tuple);
-			}
-			break;
-		case Types.TIME:
-			java.sql.Time[] timeArray = (java.sql.Time[]) array;
-			fields[1] = new Field(conn, "VALUE", conn.getOID("time"), 8);
-			for ( int i = 0; i < timeArray.length; i++ )
-			{
-				byte[][] tuple = new byte[2][0];
-				tuple[0] = conn.getEncoding().encode( Integer.toString((int)index + i) ); // Index
-				tuple[1] = conn.getEncoding().encode( timeArray[i].toString() ); // Value
-				rows.addElement(tuple);
-			}
-			break;
-		case Types.TIMESTAMP:
-			java.sql.Timestamp[] timestampArray = (java.sql.Timestamp[]) array;
-			fields[1] = new Field(conn, "VALUE", conn.getOID("timestamp"), 8);
-			for ( int i = 0; i < timestampArray.length; i++ )
-			{
-				byte[][] tuple = new byte[2][0];
-				tuple[0] = conn.getEncoding().encode( Integer.toString((int)index + i) ); // Index
-				tuple[1] = conn.getEncoding().encode( timestampArray[i].toString() ); // Value
-				rows.addElement(tuple);
-			}
-			break;
+			case Types.BIT:
+				boolean[] booleanArray = (boolean[]) array;
+				fields[1] = new Field(conn, "VALUE", conn.getOID("bool"), 1);
+				for ( int i = 0; i < booleanArray.length; i++ )
+				{
+					byte[][] tuple = new byte[2][0];
+					tuple[0] = conn.getEncoding().encode( Integer.toString((int)index + i) ); // Index
+					tuple[1] = conn.getEncoding().encode( (booleanArray[i] ? "YES" : "NO") ); // Value
+					rows.addElement(tuple);
+				}
+			case Types.SMALLINT:
+				fields[1] = new Field(conn, "VALUE", conn.getOID("int2"), 2);
+			case Types.INTEGER:
+				int[] intArray = (int[]) array;
+				if ( fields[1] == null )
+					fields[1] = new Field(conn, "VALUE", conn.getOID("int4"), 4);
+				for ( int i = 0; i < intArray.length; i++ )
+				{
+					byte[][] tuple = new byte[2][0];
+					tuple[0] = conn.getEncoding().encode( Integer.toString((int)index + i) ); // Index
+					tuple[1] = conn.getEncoding().encode( Integer.toString(intArray[i]) ); // Value
+					rows.addElement(tuple);
+				}
+				break;
+			case Types.BIGINT:
+				long[] longArray = (long[]) array;
+				fields[1] = new Field(conn, "VALUE", conn.getOID("int8"), 8);
+				for ( int i = 0; i < longArray.length; i++ )
+				{
+					byte[][] tuple = new byte[2][0];
+					tuple[0] = conn.getEncoding().encode( Integer.toString((int)index + i) ); // Index
+					tuple[1] = conn.getEncoding().encode( Long.toString(longArray[i]) ); // Value
+					rows.addElement(tuple);
+				}
+				break;
+			case Types.NUMERIC:
+				BigDecimal[] bdArray = (BigDecimal[]) array;
+				fields[1] = new Field(conn, "VALUE", conn.getOID("numeric"), -1);
+				for ( int i = 0; i < bdArray.length; i++ )
+				{
+					byte[][] tuple = new byte[2][0];
+					tuple[0] = conn.getEncoding().encode( Integer.toString((int)index + i) ); // Index
+					tuple[1] = conn.getEncoding().encode( bdArray[i].toString() ); // Value
+					rows.addElement(tuple);
+				}
+				break;
+			case Types.REAL:
+				float[] floatArray = (float[]) array;
+				fields[1] = new Field(conn, "VALUE", conn.getOID("float4"), 4);
+				for ( int i = 0; i < floatArray.length; i++ )
+				{
+					byte[][] tuple = new byte[2][0];
+					tuple[0] = conn.getEncoding().encode( Integer.toString((int)index + i) ); // Index
+					tuple[1] = conn.getEncoding().encode( Float.toString(floatArray[i]) ); // Value
+					rows.addElement(tuple);
+				}
+				break;
+			case Types.DOUBLE:
+				double[] doubleArray = (double[]) array;
+				fields[1] = new Field(conn, "VALUE", conn.getOID("float8"), 8);
+				for ( int i = 0; i < doubleArray.length; i++ )
+				{
+					byte[][] tuple = new byte[2][0];
+					tuple[0] = conn.getEncoding().encode( Integer.toString((int)index + i) ); // Index
+					tuple[1] = conn.getEncoding().encode( Double.toString(doubleArray[i]) ); // Value
+					rows.addElement(tuple);
+				}
+				break;
+			case Types.CHAR:
+				fields[1] = new Field(conn, "VALUE", conn.getOID("char"), 1);
+			case Types.VARCHAR:
+				String[] strArray = (String[]) array;
+				if ( fields[1] == null )
+					fields[1] = new Field(conn, "VALUE", conn.getOID("varchar"), -1);
+				for ( int i = 0; i < strArray.length; i++ )
+				{
+					byte[][] tuple = new byte[2][0];
+					tuple[0] = conn.getEncoding().encode( Integer.toString((int)index + i) ); // Index
+					tuple[1] = conn.getEncoding().encode( strArray[i] ); // Value
+					rows.addElement(tuple);
+				}
+				break;
+			case Types.DATE:
+				java.sql.Date[] dateArray = (java.sql.Date[]) array;
+				fields[1] = new Field(conn, "VALUE", conn.getOID("date"), 4);
+				for ( int i = 0; i < dateArray.length; i++ )
+				{
+					byte[][] tuple = new byte[2][0];
+					tuple[0] = conn.getEncoding().encode( Integer.toString((int)index + i) ); // Index
+					tuple[1] = conn.getEncoding().encode( dateArray[i].toString() ); // Value
+					rows.addElement(tuple);
+				}
+				break;
+			case Types.TIME:
+				java.sql.Time[] timeArray = (java.sql.Time[]) array;
+				fields[1] = new Field(conn, "VALUE", conn.getOID("time"), 8);
+				for ( int i = 0; i < timeArray.length; i++ )
+				{
+					byte[][] tuple = new byte[2][0];
+					tuple[0] = conn.getEncoding().encode( Integer.toString((int)index + i) ); // Index
+					tuple[1] = conn.getEncoding().encode( timeArray[i].toString() ); // Value
+					rows.addElement(tuple);
+				}
+				break;
+			case Types.TIMESTAMP:
+				java.sql.Timestamp[] timestampArray = (java.sql.Timestamp[]) array;
+				fields[1] = new Field(conn, "VALUE", conn.getOID("timestamp"), 8);
+				for ( int i = 0; i < timestampArray.length; i++ )
+				{
+					byte[][] tuple = new byte[2][0];
+					tuple[0] = conn.getEncoding().encode( Integer.toString((int)index + i) ); // Index
+					tuple[1] = conn.getEncoding().encode( timestampArray[i].toString() ); // Value
+					rows.addElement(tuple);
+				}
+				break;
 
-			// Other datatypes not currently supported.  If you are really using other types ask
-			// yourself if an array of non-trivial data types is really good database design.
-		default:
-			throw org.postgresql.Driver.notImplemented();
+				// Other datatypes not currently supported.  If you are really using other types ask
+				// yourself if an array of non-trivial data types is really good database design.
+			default:
+				throw org.postgresql.Driver.notImplemented();
 		}
 		return new ResultSet((org.postgresql.jdbc2.Connection)conn, fields, rows, "OK", 1 );
 	}

@@ -61,7 +61,6 @@ public class blobtest
 		System.out.println("Now closing the connection");
 		s.close();
 		db.close();
-
 	}
 
 	/*
@@ -171,7 +170,6 @@ public class blobtest
 		lobj.unlink(oid);
 	}
 
-	//=======================================================================
 	// This tests the Blob interface of the JDBC 2.0 specification
 	public void jdbc2api(int oid) throws SQLException, IOException
 	{
@@ -217,8 +215,6 @@ public class blobtest
 		}
 		db.setAutoCommit(false);
 	}
-
-	//=======================================================================
 
 	public static void instructions()
 	{

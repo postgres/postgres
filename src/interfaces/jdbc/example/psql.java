@@ -50,7 +50,7 @@ public class psql
 		// Now the main loop.
 		int tt = 0, lineno = 1;
 		while (tt != StreamTokenizer.TT_EOF && ! done)
-		{ // done added by CWJ to permit \q command
+		{
 			System.out.print("[" + lineno + "] ");
 			System.out.flush();
 
@@ -72,7 +72,6 @@ public class psql
 		System.out.println("Now closing the connection");
 		st.close();
 		db.close();
-
 	}
 
 	/*

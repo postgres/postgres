@@ -291,7 +291,6 @@ public class ImageViewer implements ItemListener
 
 		public void run()
 		{
-
 			// Now the real import stuff
 			if (name != null && dir != null)
 			{

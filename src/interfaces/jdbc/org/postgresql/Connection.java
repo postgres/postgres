@@ -11,7 +11,7 @@ import org.postgresql.util.*;
 import org.postgresql.core.*;
 
 /*
- * $Id: Connection.java,v 1.36 2001/11/19 22:33:37 momjian Exp $
+ * $Id: Connection.java,v 1.37 2001/11/19 23:16:45 momjian Exp $
  *
  * This abstract class is used by org.postgresql.Driver to open either the JDBC1 or
  * JDBC2 versions of the Connection class.
@@ -115,7 +115,7 @@ public abstract class Connection
 		this_url = url;
 		PG_DATABASE = database;
 		PG_USER = info.getProperty("user");
-		PG_PASSWORD = info.getProperty("password","");
+		PG_PASSWORD = info.getProperty("password", "");
 		PG_PORT = port;
 		PG_HOST = host;
 		PG_STATUS = CONNECTION_BAD;
@@ -168,88 +168,88 @@ public abstract class Connection
 				int beresp = pg_stream.ReceiveChar();
 				switch (beresp)
 				{
-				case 'E':
-					// An error occured, so pass the error message to the
-					// user.
-					//
-					// The most common one to be thrown here is:
-					// "User authentication failed"
-					//
-					throw new SQLException(pg_stream.ReceiveString(encoding));
+					case 'E':
+						// An error occured, so pass the error message to the
+						// user.
+						//
+						// The most common one to be thrown here is:
+						// "User authentication failed"
+						//
+						throw new SQLException(pg_stream.ReceiveString(encoding));
 
-				case 'R':
-					// Get the type of request
-					areq = pg_stream.ReceiveIntegerR(4);
+					case 'R':
+						// Get the type of request
+						areq = pg_stream.ReceiveIntegerR(4);
 
-					// Get the crypt password salt if there is one
-					if (areq == AUTH_REQ_CRYPT)
-					{
-						byte[] rst = new byte[2];
-						rst[0] = (byte)pg_stream.ReceiveChar();
-						rst[1] = (byte)pg_stream.ReceiveChar();
-						salt = new String(rst, 0, 2);
-						DriverManager.println("Crypt salt=" + salt);
-					}
+						// Get the crypt password salt if there is one
+						if (areq == AUTH_REQ_CRYPT)
+						{
+							byte[] rst = new byte[2];
+							rst[0] = (byte)pg_stream.ReceiveChar();
+							rst[1] = (byte)pg_stream.ReceiveChar();
+							salt = new String(rst, 0, 2);
+							DriverManager.println("Crypt salt=" + salt);
+						}
 
-					// Or get the md5 password salt if there is one
-					if (areq == AUTH_REQ_MD5)
-					{
-						byte[] rst = new byte[4];
-						rst[0] = (byte)pg_stream.ReceiveChar();
-						rst[1] = (byte)pg_stream.ReceiveChar();
-						rst[2] = (byte)pg_stream.ReceiveChar();
-						rst[3] = (byte)pg_stream.ReceiveChar();
-						salt = new String(rst, 0, 4);
-						DriverManager.println("MD5 salt=" + salt);
-					}
+						// Or get the md5 password salt if there is one
+						if (areq == AUTH_REQ_MD5)
+						{
+							byte[] rst = new byte[4];
+							rst[0] = (byte)pg_stream.ReceiveChar();
+							rst[1] = (byte)pg_stream.ReceiveChar();
+							rst[2] = (byte)pg_stream.ReceiveChar();
+							rst[3] = (byte)pg_stream.ReceiveChar();
+							salt = new String(rst, 0, 4);
+							DriverManager.println("MD5 salt=" + salt);
+						}
 
-					// now send the auth packet
-					switch (areq)
-					{
-					case AUTH_REQ_OK:
-					    break;
-						
-					case AUTH_REQ_KRB4:
-						DriverManager.println("postgresql: KRB4");
-						throw new PSQLException("postgresql.con.kerb4");
+						// now send the auth packet
+						switch (areq)
+						{
+							case AUTH_REQ_OK:
+								break;
 
-					case AUTH_REQ_KRB5:
-						DriverManager.println("postgresql: KRB5");
-						throw new PSQLException("postgresql.con.kerb5");
+							case AUTH_REQ_KRB4:
+								DriverManager.println("postgresql: KRB4");
+								throw new PSQLException("postgresql.con.kerb4");
 
-					case AUTH_REQ_PASSWORD:
-						DriverManager.println("postgresql: PASSWORD");
-						pg_stream.SendInteger(5 + PG_PASSWORD.length(), 4);
-						pg_stream.Send(PG_PASSWORD.getBytes());
-						pg_stream.SendInteger(0, 1);
-						pg_stream.flush();
-						break;
+							case AUTH_REQ_KRB5:
+								DriverManager.println("postgresql: KRB5");
+								throw new PSQLException("postgresql.con.kerb5");
 
-					case AUTH_REQ_CRYPT:
-						DriverManager.println("postgresql: CRYPT");
-						String crypted = UnixCrypt.crypt(salt, PG_PASSWORD);
-						pg_stream.SendInteger(5 + crypted.length(), 4);
-						pg_stream.Send(crypted.getBytes());
-						pg_stream.SendInteger(0, 1);
-						pg_stream.flush();
-						break;
+							case AUTH_REQ_PASSWORD:
+								DriverManager.println("postgresql: PASSWORD");
+								pg_stream.SendInteger(5 + PG_PASSWORD.length(), 4);
+								pg_stream.Send(PG_PASSWORD.getBytes());
+								pg_stream.SendInteger(0, 1);
+								pg_stream.flush();
+								break;
 
-					case AUTH_REQ_MD5:
-					        DriverManager.println("postgresql: MD5");
-						byte[] digest = MD5Digest.encode(PG_USER, PG_PASSWORD, salt);
-						pg_stream.SendInteger(5 + digest.length, 4);
-						pg_stream.Send(digest);
-						pg_stream.SendInteger(0, 1);
-						pg_stream.flush();
+							case AUTH_REQ_CRYPT:
+								DriverManager.println("postgresql: CRYPT");
+								String crypted = UnixCrypt.crypt(salt, PG_PASSWORD);
+								pg_stream.SendInteger(5 + crypted.length(), 4);
+								pg_stream.Send(crypted.getBytes());
+								pg_stream.SendInteger(0, 1);
+								pg_stream.flush();
+								break;
+
+							case AUTH_REQ_MD5:
+								DriverManager.println("postgresql: MD5");
+								byte[] digest = MD5Digest.encode(PG_USER, PG_PASSWORD, salt);
+								pg_stream.SendInteger(5 + digest.length, 4);
+								pg_stream.Send(digest);
+								pg_stream.SendInteger(0, 1);
+								pg_stream.flush();
+								break;
+
+							default:
+								throw new PSQLException("postgresql.con.auth", new Integer(areq));
+						}
 						break;
 
 					default:
-						throw new PSQLException("postgresql.con.auth", new Integer(areq));
-					}
-					break;
-
-				default:
-					throw new PSQLException("postgresql.con.authfail");
+						throw new PSQLException("postgresql.con.authfail");
 				}
 			}
 			while (areq != AUTH_REQ_OK);
@@ -265,28 +265,28 @@ public abstract class Connection
 		int beresp = pg_stream.ReceiveChar();
 		switch (beresp)
 		{
-		case 'K':
-			pid = pg_stream.ReceiveInteger(4);
-			ckey = pg_stream.ReceiveInteger(4);
-			break;
-		case 'E':
-		case 'N':
-			throw new SQLException(pg_stream.ReceiveString(encoding));
-		default:
-			throw new PSQLException("postgresql.con.setup");
+			case 'K':
+				pid = pg_stream.ReceiveInteger(4);
+				ckey = pg_stream.ReceiveInteger(4);
+				break;
+			case 'E':
+			case 'N':
+				throw new SQLException(pg_stream.ReceiveString(encoding));
+			default:
+				throw new PSQLException("postgresql.con.setup");
 		}
 
 		// Expect ReadyForQuery packet
 		beresp = pg_stream.ReceiveChar();
 		switch (beresp)
 		{
-		case 'Z':
-			break;
-		case 'E':
-		case 'N':
-			throw new SQLException(pg_stream.ReceiveString(encoding));
-		default:
-			throw new PSQLException("postgresql.con.setup");
+			case 'Z':
+				break;
+			case 'E':
+			case 'N':
+				throw new SQLException(pg_stream.ReceiveString(encoding));
+			default:
+				throw new PSQLException("postgresql.con.setup");
 		}
 
 		firstWarning = null;
@@ -958,15 +958,15 @@ public abstract class Connection
 			isolationLevelSQL = "SET SESSION CHARACTERISTICS AS TRANSACTION ISOLATION LEVEL ";
 			switch (isolationLevel)
 			{
-			case java.sql.Connection.TRANSACTION_READ_COMMITTED:
-				isolationLevelSQL += "READ COMMITTED";
-				break;
-			case java.sql.Connection.TRANSACTION_SERIALIZABLE:
-				isolationLevelSQL += "SERIALIZABLE";
-				break;
-			default:
-				throw new PSQLException("postgresql.con.isolevel",
-										new Integer(isolationLevel));
+				case java.sql.Connection.TRANSACTION_READ_COMMITTED:
+					isolationLevelSQL += "READ COMMITTED";
+					break;
+				case java.sql.Connection.TRANSACTION_SERIALIZABLE:
+					isolationLevelSQL += "SERIALIZABLE";
+					break;
+				default:
+					throw new PSQLException("postgresql.con.isolevel",
+											new Integer(isolationLevel));
 			}
 		}
 		ExecSQL(isolationLevelSQL);
@@ -993,16 +993,16 @@ public abstract class Connection
 
 		switch (isolationLevel)
 		{
-		case java.sql.Connection.TRANSACTION_READ_COMMITTED:
-			sb.append(" READ COMMITTED");
-			break;
+			case java.sql.Connection.TRANSACTION_READ_COMMITTED:
+				sb.append(" READ COMMITTED");
+				break;
 
-		case java.sql.Connection.TRANSACTION_SERIALIZABLE:
-			sb.append(" SERIALIZABLE");
-			break;
+			case java.sql.Connection.TRANSACTION_SERIALIZABLE:
+				sb.append(" SERIALIZABLE");
+				break;
 
-		default:
-			throw new PSQLException("postgresql.con.isolevel", new Integer(isolationLevel));
+			default:
+				throw new PSQLException("postgresql.con.isolevel", new Integer(isolationLevel));
 		}
 		return sb.toString();
 	}
@@ -1166,6 +1166,5 @@ public abstract class Connection
 		}
 		return pgType;
 	}
-
 }
 

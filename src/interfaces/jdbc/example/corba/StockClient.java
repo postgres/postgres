@@ -9,7 +9,7 @@ import org.omg.CosNaming.*;
  *
  * It has no GUI, just a text frontend to keep it simple.
  *
- * $Id: StockClient.java,v 1.3 2001/11/19 22:43:13 momjian Exp $
+ * $Id: StockClient.java,v 1.4 2001/11/19 23:16:45 momjian Exp $
  */
 public class StockClient
 {
@@ -116,29 +116,29 @@ public class StockClient
 			int i = getMenu("Main", 5);
 			switch (i)
 			{
-			case 0:
-				run = false;
-				break;
+				case 0:
+					run = false;
+					break;
 
-			case 1:
-				displayItem();
-				break;
+				case 1:
+					displayItem();
+					break;
 
-			case 2:
-				bookOut();
-				break;
+				case 2:
+					bookOut();
+					break;
 
-			case 3:
-				bookIn();
-				break;
+				case 3:
+					bookIn();
+					break;
 
-			case 4:
-				order(0);
-				break;
+				case 4:
+					order(0);
+					break;
 
-			case 5:
-				displayAll();
-				break;
+				case 5:
+					displayAll();
+					break;
 			}
 		}
 	}

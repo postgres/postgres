@@ -394,40 +394,40 @@ public class ResultSet extends org.postgresql.ResultSet implements java.sql.Resu
 		wasNullFlag = (this_row[columnIndex - 1] == null);
 		if (!wasNullFlag)
 		{
-		    if (binaryCursor)
-		    {
-			//If the data is already binary then just return it
-			return this_row[columnIndex - 1];
-		    }
-		    else if (connection.haveMinimumCompatibleVersion("7.2"))
-		    {
-			//Version 7.2 supports the bytea datatype for byte arrays
-			if (fields[columnIndex - 1].getPGType().equals("bytea"))
+			if (binaryCursor)
 			{
-			    return PGbytea.toBytes(getString(columnIndex));
+				//If the data is already binary then just return it
+				return this_row[columnIndex - 1];
+			}
+			else if (connection.haveMinimumCompatibleVersion("7.2"))
+			{
+				//Version 7.2 supports the bytea datatype for byte arrays
+				if (fields[columnIndex - 1].getPGType().equals("bytea"))
+				{
+					return PGbytea.toBytes(getString(columnIndex));
+				}
+				else
+				{
+					return this_row[columnIndex - 1];
+				}
 			}
 			else
 			{
-			    return this_row[columnIndex - 1];
+				//Version 7.1 and earlier supports LargeObjects for byte arrays
+				// Handle OID's as BLOBS
+				if ( fields[columnIndex - 1].getOID() == 26)
+				{
+					LargeObjectManager lom = connection.getLargeObjectAPI();
+					LargeObject lob = lom.open(getInt(columnIndex));
+					byte buf[] = lob.read(lob.size());
+					lob.close();
+					return buf;
+				}
+				else
+				{
+					return this_row[columnIndex - 1];
+				}
 			}
-		    }
-		    else
-		    {
-			//Version 7.1 and earlier supports LargeObjects for byte arrays
-			// Handle OID's as BLOBS
-			if ( fields[columnIndex - 1].getOID() == 26)
-			{
-			    LargeObjectManager lom = connection.getLargeObjectAPI();
-			    LargeObject lob = lom.open(getInt(columnIndex));
-			    byte buf[] = lob.read(lob.size());
-			    lob.close();
-			    return buf;
-			}
-			else
-			{
-			    return this_row[columnIndex - 1];
-			}
-		    }
 		}
 		return null;
 	}
@@ -447,10 +447,13 @@ public class ResultSet extends org.postgresql.ResultSet implements java.sql.Resu
 			return null;
 		// length == 10: SQL Date
 		// length >  10: SQL Timestamp, assumes PGDATESTYLE=ISO
-		try {
-		        return java.sql.Date.valueOf((s.length() == 10) ? s : s.substring(0,10));
-		} catch (NumberFormatException e) {
-		        throw new PSQLException("postgresql.res.baddate", s);
+		try
+		{
+			return java.sql.Date.valueOf((s.length() == 10) ? s : s.substring(0, 10));
+		}
+		catch (NumberFormatException e)
+		{
+			throw new PSQLException("postgresql.res.baddate", s);
 		}
 	}
 
@@ -926,43 +929,43 @@ public class ResultSet extends org.postgresql.ResultSet implements java.sql.Resu
 
 		switch (field.getSQLType())
 		{
-		case Types.BIT:
-			return new Boolean(getBoolean(columnIndex));
-		case Types.SMALLINT:
-			return new Integer(getInt(columnIndex));
-		case Types.INTEGER:
-			return new Integer(getInt(columnIndex));
-		case Types.BIGINT:
-			return new Long(getLong(columnIndex));
-		case Types.NUMERIC:
-			return getBigDecimal(columnIndex, ((field.getMod() - 4) & 0xffff));
-		case Types.REAL:
-			return new Float(getFloat(columnIndex));
-		case Types.DOUBLE:
-			return new Double(getDouble(columnIndex));
-		case Types.CHAR:
-		case Types.VARCHAR:
-			return getString(columnIndex);
-		case Types.DATE:
-			return getDate(columnIndex);
-		case Types.TIME:
-			return getTime(columnIndex);
-		case Types.TIMESTAMP:
-			return getTimestamp(columnIndex);
-		case Types.BINARY:
-		case Types.VARBINARY:
-			return getBytes(columnIndex);
-		default:
-			String type = field.getPGType();
-			// if the backend doesn't know the type then coerce to String
-			if (type.equals("unknown"))
-			{
+			case Types.BIT:
+				return new Boolean(getBoolean(columnIndex));
+			case Types.SMALLINT:
+				return new Integer(getInt(columnIndex));
+			case Types.INTEGER:
+				return new Integer(getInt(columnIndex));
+			case Types.BIGINT:
+				return new Long(getLong(columnIndex));
+			case Types.NUMERIC:
+				return getBigDecimal(columnIndex, ((field.getMod() - 4) & 0xffff));
+			case Types.REAL:
+				return new Float(getFloat(columnIndex));
+			case Types.DOUBLE:
+				return new Double(getDouble(columnIndex));
+			case Types.CHAR:
+			case Types.VARCHAR:
 				return getString(columnIndex);
-			}
-			else
-			{
-				return connection.getObject(field.getPGType(), getString(columnIndex));
-			}
+			case Types.DATE:
+				return getDate(columnIndex);
+			case Types.TIME:
+				return getTime(columnIndex);
+			case Types.TIMESTAMP:
+				return getTimestamp(columnIndex);
+			case Types.BINARY:
+			case Types.VARBINARY:
+				return getBytes(columnIndex);
+			default:
+				String type = field.getPGType();
+				// if the backend doesn't know the type then coerce to String
+				if (type.equals("unknown"))
+				{
+					return getString(columnIndex);
+				}
+				else
+				{
+					return connection.getObject(field.getPGType(), getString(columnIndex));
+				}
 		}
 	}
 

@@ -148,5 +148,4 @@ public class PGpath extends PGobject implements Serializable, Cloneable
 	{
 		open = true;
 	}
-
 }

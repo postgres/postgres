@@ -269,50 +269,50 @@ public abstract class Statement
 			char c = sql.charAt(i);
 			switch (state)
 			{
-			case IN_SQLCODE:
-				if (c == '\'')				  // start of a string?
-					state = IN_STRING;
-				else if (c == '{')			  // start of an escape code?
-					if (i + 1 < len)
-					{
-						char next = sql.charAt(i + 1);
-						if (next == 'd')
+				case IN_SQLCODE:
+					if (c == '\'')				  // start of a string?
+						state = IN_STRING;
+					else if (c == '{')			  // start of an escape code?
+						if (i + 1 < len)
 						{
-							state = ESC_TIMEDATE;
-							i++;
-							break;
+							char next = sql.charAt(i + 1);
+							if (next == 'd')
+							{
+								state = ESC_TIMEDATE;
+								i++;
+								break;
+							}
+							else if (next == 't')
+							{
+								state = ESC_TIMEDATE;
+								i += (i + 2 < len && sql.charAt(i + 2) == 's') ? 2 : 1;
+								break;
+							}
 						}
-						else if (next == 't')
-						{
-							state = ESC_TIMEDATE;
-							i += (i + 2 < len && sql.charAt(i + 2) == 's') ? 2 : 1;
-							break;
-						}
-					}
-				newsql.append(c);
-				break;
-
-			case IN_STRING:
-				if (c == '\'')				   // end of string?
-					state = IN_SQLCODE;
-				else if (c == '\\')			   // a backslash?
-					state = BACKSLASH;
-
-				newsql.append(c);
-				break;
-
-			case BACKSLASH:
-				state = IN_STRING;
-
-				newsql.append(c);
-				break;
-
-			case ESC_TIMEDATE:
-				if (c == '}')
-					state = IN_SQLCODE;		  // end of escape code.
-				else
 					newsql.append(c);
-				break;
+					break;
+
+				case IN_STRING:
+					if (c == '\'')				   // end of string?
+						state = IN_SQLCODE;
+					else if (c == '\\')			   // a backslash?
+						state = BACKSLASH;
+
+					newsql.append(c);
+					break;
+
+				case BACKSLASH:
+					state = IN_STRING;
+
+					newsql.append(c);
+					break;
+
+				case ESC_TIMEDATE:
+					if (c == '}')
+						state = IN_SQLCODE;		  // end of escape code.
+					else
+						newsql.append(c);
+					break;
 			} // end switch
 		}
 

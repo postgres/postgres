@@ -40,7 +40,7 @@
 *
 * Copyright 1999 (C) Exoffice Technologies Inc. All Rights Reserved.
 *
-* $Id: PostgresqlDataSource.java,v 1.4 2001/11/19 22:33:37 momjian Exp $
+* $Id: PostgresqlDataSource.java,v 1.5 2001/11/19 23:16:45 momjian Exp $
 */
 
 
@@ -133,37 +133,31 @@ public class PostgresqlDataSource
 	 */
 	private int _loginTimeout;
 
-
 	/*
 	 * Holds the user's account name.
 	 */
 	private String _user;
-
 
 	/*
 	 * Holds the database password.
 	 */
 	private String _password;
 
-
 	/*
 	 * Holds the name of the particular database on the server.
 	 */
 	private String _databaseName;
-
 
 	/*
 	 * Description of this datasource.
 	 */
 	private String _description = "PostgreSQL DataSource";
 
-
 	/*
 	 * Holds the database server name. If null, this is
 	 * assumed to be the localhost.
 	 */
 	private String _serverName;
-
 
 	/*
 	 * Holds the port number where a server is listening.
@@ -172,14 +166,12 @@ public class PostgresqlDataSource
 	 */
 	private int _portNumber = DEFAULT_PORT;
 
-
 	/*
 	 * The default port number. Since we open the connection
 	 * without specifying the port if it's the default one,
 	 * this value can be meaningless.
 	 */
 	private static final int DEFAULT_PORT = 0;
-
 
 	/*
 	 * Holds the log writer to which all messages should be
@@ -189,7 +181,6 @@ public class PostgresqlDataSource
 	 */
 	private transient PrintWriter _logWriter;
 
-
 	/*
 	 * Each datasource maintains it's own driver, in case of
 	 * driver-specific setup (e.g. pools, log writer).
@@ -197,9 +188,6 @@ public class PostgresqlDataSource
 	// FIXME
 	//	  private transient postgresql.Driver _driver;
 	private transient org.postgresql.Driver _driver;
-	//---------
-
-
 
 	public PostgresqlDataSource()
 	{
@@ -233,12 +221,10 @@ public class PostgresqlDataSource
 				// FIXME
 				//		_driver = new postgresql.Driver();
 				_driver = new org.postgresql.Driver();
-				//-----------
 
 				//FIXME
 				//		_driver.setLogWriter( _logWriter );
 				// Method seems to be unavailable. Just commented it out.
-				//----------
 			}
 			catch ( SQLException except )
 			{
@@ -282,7 +268,6 @@ public class PostgresqlDataSource
 			//		if ( ! ( conn instanceof postgresql.jdbc2.Connection ) ) {
 			if ( ! ( conn instanceof org.postgresql.jdbc2.Connection ) )
 			{
-				//--------
 				if ( _logWriter != null )
 					_logWriter.println( "DataSource: JDBC 1 connections not supported" );
 				throw new PSQLException( "postgresql.ds.onlyjdbc2" );
@@ -317,7 +302,6 @@ public class PostgresqlDataSource
 				// FIXME
 				//		_driver.setLogWriter( writer );
 				// Method seems to be unavailable. Commented it out.
-				//----------
 				_logWriter = writer;
 		}
 	}
@@ -617,7 +601,5 @@ public class PostgresqlDataSource
 		else
 			return null;
 	}
-
-
 }
 
