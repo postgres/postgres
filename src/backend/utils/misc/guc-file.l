@@ -4,7 +4,7 @@
  *
  * Copyright 2000 by PostgreSQL Global Development Group
  *
- * $Header: /cvsroot/pgsql/src/backend/utils/misc/guc-file.l,v 1.1 2000/05/31 00:28:34 petere Exp $
+ * $Header: /cvsroot/pgsql/src/backend/utils/misc/guc-file.l,v 1.2 2000/06/01 16:46:50 momjian Exp $
  */
 
 %{
@@ -124,7 +124,7 @@ free_name_value_list(struct name_value_pair * list)
  * values will be changed.
  */
 void
-ProcessConfigFile(unsigned int context)
+ProcessConfigFile(GucContext context)
 {
 	int token, parse_state;
 	char *opt_name, *opt_value;
