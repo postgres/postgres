@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/xfunc.sgml,v 1.48 2002/03/05 05:33:00 momjian Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/xfunc.sgml,v 1.49 2002/03/11 05:03:52 petere Exp $
 -->
 
  <chapter id="xfunc">
@@ -1319,10 +1319,11 @@ concat_text(PG_FUNCTION_ARGS)
     value be returned. These routines provide more efficient access to
     parts of large values in the case where they have storage type
     "external". (The storage type of a column can be specified using
-    <command>ALTER TABLE <repaceable>tablename</replaceable> ALTER
+    <literal>ALTER TABLE <replaceable>tablename</replaceable> ALTER
     COLUMN <replaceable>colname</replaceable> SET STORAGE
-    <replaceable>storagetype</replaceable>. Storage type is one of
-    plain, external, extended or main.)
+    <replaceable>storagetype</replaceable></literal>. Storage type is one of
+    <literal>plain</>, <literal>external</>, <literal>extended</literal>,
+     or <literal>main</>.)
     </para>
 
     <para>

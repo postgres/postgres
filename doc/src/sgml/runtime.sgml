@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/runtime.sgml,v 1.107 2002/03/09 05:11:37 momjian Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/runtime.sgml,v 1.108 2002/03/11 05:03:51 petere Exp $
 -->
 
 <Chapter Id="runtime">
@@ -1120,7 +1120,7 @@ env PGOPTIONS='-c geqo=off' psql
         Each SQL transaction has an isolation level, which can be either
         <quote>read committed</quote> or <quote>serializable</quote>.
         This parameter controls the default isolation level of each new
-        transaction. The default is <quote>read committed/quote>.
+        transaction. The default is <quote>read committed</quote>.
        </para>
 
        <para>
@@ -2094,6 +2094,7 @@ options         SEMMAP=256
         You may also want to use the <application>sysctl</> setting to
         lock shared memory into RAM and prevent it from being paged out
         to swap.
+       </para>
       </listitem>
      </varlistentry>
 

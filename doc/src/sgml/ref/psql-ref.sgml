@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/ref/psql-ref.sgml,v 1.62 2002/03/05 00:00:58 momjian Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/ref/psql-ref.sgml,v 1.63 2002/03/11 05:03:52 petere Exp $
 PostgreSQL documentation
 -->
 
@@ -1120,12 +1120,12 @@ lo_import 152801
 
 
       <varlistentry>
-        <term><literal>\timing</literal>
+       <term><literal>\timing</literal></term>
         <listitem>
         <para>
-        Toggles a display of how long each query takes in seconds.
+         Toggles a display of how long each query takes in seconds.
         </para>
-        </listitem>
+       </listitem>
       </varlistentry>
 
 

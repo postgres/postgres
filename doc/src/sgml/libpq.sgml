@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/libpq.sgml,v 1.88 2002/03/04 23:59:11 momjian Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/libpq.sgml,v 1.89 2002/03/11 05:03:51 petere Exp $
 -->
 
  <chapter id="libpq">
@@ -964,7 +964,7 @@ strings overlap.
     unsigned char *PQunescapeBytea(unsigned char *from, size_t *to_length);
    </synopsis>
 
-   The <paramater>from</parameter> parameter points to an escaped string
+   The <parameter>from</parameter> parameter points to an escaped string
    such as might be returned by <function>PQgetvalue</function> of a
    <type>BYTEA</type> column. <function>PQunescapeBytea</function> converts
    this NUL terminated string representation into binary, filling a buffer.
