@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2005, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/include/utils/date.h,v 1.29 2004/12/31 22:03:45 pgsql Exp $
+ * $PostgreSQL: pgsql/src/include/utils/date.h,v 1.30 2005/02/25 16:13:29 teodor Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -38,18 +38,28 @@ typedef struct
 	int32		zone;			/* numeric time zone, in seconds */
 } TimeTzADT;
 
-#ifdef HAVE_INT64_TIMESTAMP
-#define MAX_TIME_PRECISION 6
-#else
-#define MAX_TIME_PRECISION 10
-#endif
-
 /*
  * Macros for fmgr-callable functions.
  *
- * For TimeADT, we make use of the same support routines as for float8.
- * Therefore TimeADT is pass-by-reference if and only if float8 is!
+ * For TimeADT, we make use of the same support routines as for float8 or int64.
+ * Therefore TimeADT is pass-by-reference if and only if float8 or int64 is!
  */
+#ifdef HAVE_INT64_TIMESTAMP
+
+#define MAX_TIME_PRECISION 6
+
+#define DatumGetDateADT(X)	  ((DateADT) DatumGetInt32(X))
+#define DatumGetTimeADT(X)	  ((TimeADT) DatumGetInt64(X))
+#define DatumGetTimeTzADTP(X) ((TimeTzADT *) DatumGetPointer(X))
+
+#define DateADTGetDatum(X)	  Int32GetDatum(X)
+#define TimeADTGetDatum(X)	  Int64GetDatum(X)
+#define TimeTzADTPGetDatum(X) PointerGetDatum(X)
+
+#else
+
+#define MAX_TIME_PRECISION 10
+
 #define DatumGetDateADT(X)	  ((DateADT) DatumGetInt32(X))
 #define DatumGetTimeADT(X)	  ((TimeADT) DatumGetFloat8(X))
 #define DatumGetTimeTzADTP(X) ((TimeTzADT *) DatumGetPointer(X))
@@ -57,6 +67,8 @@ typedef struct
 #define DateADTGetDatum(X)	  Int32GetDatum(X)
 #define TimeADTGetDatum(X)	  Float8GetDatum(X)
 #define TimeTzADTPGetDatum(X) PointerGetDatum(X)
+
+#endif /* HAVE_INT64_TIMESTAMP */
 
 #define PG_GETARG_DATEADT(n)	 DatumGetDateADT(PG_GETARG_DATUM(n))
 #define PG_GETARG_TIMEADT(n)	 DatumGetTimeADT(PG_GETARG_DATUM(n))
