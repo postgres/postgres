@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/misc/Attic/database.c,v 1.38 2000/06/02 15:57:34 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/misc/Attic/database.c,v 1.39 2000/07/03 20:48:42 petere Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -143,8 +143,8 @@ GetRawDatabaseInfo(const char *name, Oid *db_id, char *path)
 	char	   *dbfname;
 	Form_pg_database tup_db;
 
-	dbfname = (char *) palloc(strlen(DataDir) + strlen(DatabaseRelationName) + 2);
-	sprintf(dbfname, "%s%c%s", DataDir, SEP_CHAR, DatabaseRelationName);
+	dbfname = (char *) palloc(strlen(DataDir) + 8 + strlen(DatabaseRelationName) + 2);
+	sprintf(dbfname, "%s/global/%s", DataDir, DatabaseRelationName);
 
 	if ((dbfd = open(dbfname, O_RDONLY | PG_BINARY, 0)) < 0)
 		elog(FATAL, "cannot open %s: %s", dbfname, strerror(errno));

@@ -9,7 +9,7 @@
  * Dec 17, 1997 - Todd A. Brandys
  *	Orignal Version Completed.
  *
- * $Id: crypt.c,v 1.25 2000/06/09 01:11:06 tgl Exp $
+ * $Id: crypt.c,v 1.26 2000/07/03 20:48:30 petere Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -38,9 +38,9 @@ crypt_getpwdfilename()
 	static char *pfnam = NULL;
 	int			bufsize;
 
-	bufsize = strlen(DataDir) + strlen(CRYPT_PWD_FILE) + 2;
+	bufsize = strlen(DataDir) + 8 + strlen(CRYPT_PWD_FILE) + 1;
 	pfnam = (char *) palloc(bufsize);
-	snprintf(pfnam, bufsize, "%s/%s", DataDir, CRYPT_PWD_FILE);
+	snprintf(pfnam, bufsize, "%s/global/%s", DataDir, CRYPT_PWD_FILE);
 
 	return pfnam;
 }

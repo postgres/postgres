@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/tcop/postgres.c,v 1.164 2000/07/03 20:46:00 petere Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/tcop/postgres.c,v 1.165 2000/07/03 20:48:37 petere Exp $
  *
  * NOTES
  *	  this is the "main" module of the postgres backend and
@@ -1294,10 +1294,8 @@ PostgresMain(int argc, char *argv[], int real_argc, char *real_argv[])
 		on_proc_exit(UnlinkPidFile, NULL);
 
 		BaseInit();
-		snprintf(XLogDir, MAXPGPATH, "%s%cpg_xlog",
-				 DataDir, SEP_CHAR);
-		snprintf(ControlFilePath, MAXPGPATH, "%s%cpg_control",
-				 DataDir, SEP_CHAR);
+		snprintf(XLogDir, MAXPGPATH, "%s/pg_xlog", DataDir);
+		snprintf(ControlFilePath, MAXPGPATH, "%s/global/pg_control", DataDir);
 		StartupXLOG();
 	}
 
@@ -1406,7 +1404,7 @@ PostgresMain(int argc, char *argv[], int real_argc, char *real_argv[])
 	if (!IsUnderPostmaster)
 	{
 		puts("\nPOSTGRES backend interactive interface ");
-		puts("$Revision: 1.164 $ $Date: 2000/07/03 20:46:00 $\n");
+		puts("$Revision: 1.165 $ $Date: 2000/07/03 20:48:37 $\n");
 	}
 
 	/*

@@ -8,7 +8,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/bootstrap/bootstrap.c,v 1.88 2000/06/28 03:31:09 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/bootstrap/bootstrap.c,v 1.89 2000/07/03 20:48:27 petere Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -347,10 +347,8 @@ BootstrapMain(int argc, char *argv[])
 	 */
 	if (IsUnderPostmaster || xloginit)
 	{
-		snprintf(XLogDir, MAXPGPATH, "%s%cpg_xlog",
-				 DataDir, SEP_CHAR);
-		snprintf(ControlFilePath, MAXPGPATH, "%s%cpg_control",
-				 DataDir, SEP_CHAR);
+		snprintf(XLogDir, MAXPGPATH, "%s/pg_xlog", DataDir);
+		snprintf(ControlFilePath, MAXPGPATH, "%s/global/pg_control", DataDir);
 	}
 
 	if (IsUnderPostmaster && xloginit)

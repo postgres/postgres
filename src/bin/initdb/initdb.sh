@@ -26,7 +26,7 @@
 #
 #
 # IDENTIFICATION
-#    $Header: /cvsroot/pgsql/src/bin/initdb/Attic/initdb.sh,v 1.98 2000/07/02 15:21:00 petere Exp $
+#    $Header: /cvsroot/pgsql/src/bin/initdb/Attic/initdb.sh,v 1.99 2000/07/03 20:48:46 petere Exp $
 #
 #-------------------------------------------------------------------------
 
@@ -406,21 +406,26 @@ then
 else
     if [ ! -d "$PGDATA" ]
 	then
-        echo "Creating database system directory $PGDATA"
+        echo "Creating directory $PGDATA"
         mkdir "$PGDATA" || exit_nicely
     else
-        echo "Fixing permissions on pre-existing data directory $PGDATA"
+        echo "Fixing permissions on existing directory $PGDATA"
 	chmod go-rwx "$PGDATA" || exit_nicely
     fi
 
     if [ ! -d "$PGDATA"/base ]
 	then
-        echo "Creating database system directory $PGDATA/base"
+        echo "Creating directory $PGDATA/base"
         mkdir "$PGDATA"/base || exit_nicely
+    fi
+    if [ ! -d "$PGDATA"/global ]
+    then
+        echo "Creating directory $PGDATA/global"
+        mkdir "$PGDATA"/global || exit_nicely
     fi
     if [ ! -d "$PGDATA"/pg_xlog ]
     then
-        echo "Creating database XLOG directory $PGDATA/pg_xlog"
+        echo "Creating directory $PGDATA/pg_xlog"
         mkdir "$PGDATA"/pg_xlog || exit_nicely
     fi
 fi
@@ -458,7 +463,7 @@ echo $short_version > "$PGDATA"/base/template1/PG_VERSION || exit_nicely
 
 if [ "$template_only" -eq 0 ]
 then
-    echo "Creating global relations in $PGDATA/base"
+    echo "Creating global relations in $PGDATA/global"
     [ "$debug" -ne 0 ] && echo "Running: $PGPATH/postgres $BACKENDARGS template1"
 
     cat "$GLOBAL" \
