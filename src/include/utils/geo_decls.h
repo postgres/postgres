@@ -5,7 +5,7 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: geo_decls.h,v 1.19 1998/02/26 04:44:00 momjian Exp $
+ * $Id: geo_decls.h,v 1.20 1998/05/09 22:44:38 thomas Exp $
  *
  * NOTE
  *	  These routines do *not* use the float types from adt/.
@@ -175,6 +175,7 @@ extern bool lseg_lt(LSEG *l1, LSEG *l2);
 extern bool lseg_le(LSEG *l1, LSEG *l2);
 extern bool lseg_gt(LSEG *l1, LSEG *l2);
 extern bool lseg_ge(LSEG *l1, LSEG *l2);
+extern LSEG *lseg_construct(Point *pt1, Point *pt2);
 extern double *lseg_length(LSEG *lseg);
 extern double *lseg_distance(LSEG *l1, LSEG *l2);
 extern Point *lseg_center(LSEG *lseg);
@@ -204,8 +205,22 @@ extern bool inter_sl(LSEG *lseg, LINE *line);
 extern bool inter_sb(LSEG *lseg, BOX *box);
 extern bool inter_lb(LINE *line, BOX *box);
 
-/* private routines */
-extern LSEG *lseg_construct(Point *pt1, Point *pt2);
+/* private lseg routines */
+
+/* public line routines */
+extern LINE *line_in(char *str);
+extern char *line_out(LINE *line);
+extern Point *line_interpt(LINE *l1, LINE *l2);
+extern double *line_distance(LINE *l1, LINE *l2);
+extern LINE *line_construct_pp(Point *pt1, Point *pt2);
+extern bool line_intersect(LINE *l1, LINE *l2);
+extern bool line_parallel(LINE *l1, LINE *l2);
+extern bool line_perp(LINE *l1, LINE *l2);
+extern bool line_vertical(LINE *line);
+extern bool line_horizontal(LINE *line);
+extern bool line_eq(LINE *l1, LINE *l2);
+
+/* private line routines */
 
 /* public box routines */
 extern BOX *box_in(char *str);
@@ -243,9 +258,6 @@ extern BOX *box_add(BOX *box, Point *p);
 extern BOX *box_sub(BOX *box, Point *p);
 extern BOX *box_mul(BOX *box, Point *p);
 extern BOX *box_div(BOX *box, Point *p);
-
-/* private line routines */
-extern double *line_distance(LINE *l1, LINE *l2);
 
 /* public path routines */
 extern PATH *path_in(char *str);
