@@ -8,7 +8,7 @@ PostgreSQL code for many years.
 
 Major changes in this release:
 
-	Write-ahead Log(WAL) - To maintain database consistency in case
+	Write-ahead Log (WAL) - To maintain database consistency in case
 of an operating system crash, previous releases of PostgreSQL have
 forced all data modifications to disk before each transaction commit. 
 With WAL, only one log file must be flushed to disk, greatly improving

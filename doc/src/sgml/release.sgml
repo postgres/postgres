@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/release.sgml,v 1.68 2000/12/20 03:02:52 momjian Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/release.sgml,v 1.69 2000/12/20 15:44:00 momjian Exp $
 -->
 
  <chapter id="release">
@@ -31,7 +31,7 @@ $Header: /cvsroot/pgsql/doc/src/sgml/release.sgml,v 1.68 2000/12/20 03:02:52 mom
     <variablelist>
      <varlistentry>
       <term>
-	Write-ahead Log(WAL)
+	Write-ahead Log (WAL)
       </term>
       <listitem>
        <para>
