@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/acl.c,v 1.53 2000/11/16 22:30:31 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/acl.c,v 1.54 2000/11/28 23:42:31 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -276,7 +276,14 @@ aclitemout(PG_FUNCTION_ARGS)
 			htup = SearchSysCache(SHADOWSYSID,
 								  ObjectIdGetDatum(aip->ai_id),
 								  0, 0, 0);
-			if (!HeapTupleIsValid(htup))
+			if (HeapTupleIsValid(htup))
+			{
+				strncat(p,
+						NameStr(((Form_pg_shadow) GETSTRUCT(htup))->usename),
+						NAMEDATALEN);
+				ReleaseSysCache(htup);
+			}
+			else
 			{
 				/* Generate numeric UID if we don't find an entry */
 				char	   *tmp;
@@ -286,18 +293,22 @@ aclitemout(PG_FUNCTION_ARGS)
 				strcat(p, tmp);
 				pfree(tmp);
 			}
-			else
-			{
-				strncat(p, (char *) &((Form_pg_shadow)
-									  GETSTRUCT(htup))->usename,
-						sizeof(NameData));
-				ReleaseSysCache(htup);
-			}
 			break;
 		case ACL_IDTYPE_GID:
 			strcat(p, "group ");
 			tmpname = get_groname(aip->ai_id);
-			strncat(p, tmpname, NAMEDATALEN);
+			if (tmpname != NULL)
+				strncat(p, tmpname, NAMEDATALEN);
+			else
+			{
+				/* Generate numeric GID if we don't find an entry */
+				char	   *tmp;
+
+				tmp = DatumGetCString(DirectFunctionCall1(int4out,
+									  Int32GetDatum((int32) aip->ai_id)));
+				strcat(p, tmp);
+				pfree(tmp);
+			}
 			break;
 		case ACL_IDTYPE_WORLD:
 			break;

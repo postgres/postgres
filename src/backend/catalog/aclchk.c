@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/catalog/aclchk.c,v 1.43 2000/11/16 22:30:17 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/catalog/aclchk.c,v 1.44 2000/11/28 23:42:31 tgl Exp $
  *
  * NOTES
  *	  See acl.h.
@@ -172,6 +172,9 @@ get_grosysid(char *groname)
 	return id;
 }
 
+/*
+ * Convert group ID to name, or return NULL if group can't be found
+ */
 char *
 get_groname(AclId grosysid)
 {
@@ -186,8 +189,6 @@ get_groname(AclId grosysid)
 		name = pstrdup(NameStr(((Form_pg_group) GETSTRUCT(tuple))->groname));
 		ReleaseSysCache(tuple);
 	}
-	else
-		elog(NOTICE, "get_groname: group %u not found", grosysid);
 	return name;
 }
 
