@@ -3,7 +3,7 @@
  *			  procedural language
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/pl/plpgsql/src/pl_comp.c,v 1.66 2003/08/08 19:19:32 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/pl/plpgsql/src/pl_comp.c,v 1.67 2003/08/18 19:16:02 tgl Exp $
  *
  *	  This software is copyrighted by Jan Wieck - Hamburg.
  *
@@ -100,16 +100,16 @@ typedef struct plpgsql_hashent
  */
 static PLpgSQL_function *do_compile(FunctionCallInfo fcinfo,
 		   HeapTuple procTup,
-		   PLpgSQL_func_hashkey * hashkey);
+		   PLpgSQL_func_hashkey *hashkey);
 static void plpgsql_compile_error_callback(void *arg);
 static PLpgSQL_type *build_datatype(HeapTuple typeTup, int32 typmod);
-static void compute_function_hashkey(FmgrInfo *flinfo,
+static void compute_function_hashkey(FunctionCallInfo fcinfo,
 						 Form_pg_proc procStruct,
-						 PLpgSQL_func_hashkey * hashkey);
-static PLpgSQL_function *plpgsql_HashTableLookup(PLpgSQL_func_hashkey * func_key);
-static void plpgsql_HashTableInsert(PLpgSQL_function * function,
-						PLpgSQL_func_hashkey * func_key);
-static void plpgsql_HashTableDelete(PLpgSQL_function * function);
+						 PLpgSQL_func_hashkey *hashkey);
+static PLpgSQL_function *plpgsql_HashTableLookup(PLpgSQL_func_hashkey *func_key);
+static void plpgsql_HashTableInsert(PLpgSQL_function *function,
+						PLpgSQL_func_hashkey *func_key);
+static void plpgsql_HashTableDelete(PLpgSQL_function *function);
 
 /*
  * This routine is a crock, and so is everyplace that calls it.  The problem
@@ -169,7 +169,7 @@ plpgsql_compile(FunctionCallInfo fcinfo)
 			plpgsql_HashTableInit();
 
 		/* Compute hashkey using function signature and actual arg types */
-		compute_function_hashkey(fcinfo->flinfo, procStruct, &hashkey);
+		compute_function_hashkey(fcinfo, procStruct, &hashkey);
 		hashkey_valid = true;
 
 		/* And do the lookup */
@@ -203,7 +203,7 @@ plpgsql_compile(FunctionCallInfo fcinfo)
 		 * the completed function.
 		 */
 		if (!hashkey_valid)
-			compute_function_hashkey(fcinfo->flinfo, procStruct, &hashkey);
+			compute_function_hashkey(fcinfo, procStruct, &hashkey);
 
 		/*
 		 * Do the hard part.
@@ -230,7 +230,7 @@ plpgsql_compile(FunctionCallInfo fcinfo)
 static PLpgSQL_function *
 do_compile(FunctionCallInfo fcinfo,
 		   HeapTuple procTup,
-		   PLpgSQL_func_hashkey * hashkey)
+		   PLpgSQL_func_hashkey *hashkey)
 {
 	Form_pg_proc procStruct = (Form_pg_proc) GETSTRUCT(procTup);
 	int			functype = CALLED_AS_TRIGGER(fcinfo) ? T_TRIGGER : T_FUNCTION;
@@ -1711,16 +1711,25 @@ plpgsql_yyerror(const char *s)
  * The hashkey is returned into the caller-provided storage at *hashkey.
  */
 static void
-compute_function_hashkey(FmgrInfo *flinfo,
+compute_function_hashkey(FunctionCallInfo fcinfo,
 						 Form_pg_proc procStruct,
-						 PLpgSQL_func_hashkey * hashkey)
+						 PLpgSQL_func_hashkey *hashkey)
 {
 	int			i;
 
 	/* Make sure any unused bytes of the struct are zero */
 	MemSet(hashkey, 0, sizeof(PLpgSQL_func_hashkey));
 
-	hashkey->funcOid = flinfo->fn_oid;
+	/* get function OID */
+	hashkey->funcOid = fcinfo->flinfo->fn_oid;
+
+	/* if trigger, get relation OID */
+	if (CALLED_AS_TRIGGER(fcinfo))
+	{
+		TriggerData *trigdata = (TriggerData *) fcinfo->context;
+
+		hashkey->trigrelOid = RelationGetRelid(trigdata->tg_relation);
+	}
 
 	/* get the argument types */
 	for (i = 0; i < procStruct->pronargs; i++)
@@ -1737,7 +1746,7 @@ compute_function_hashkey(FmgrInfo *flinfo,
 		if (argtypeid == ANYARRAYOID || argtypeid == ANYELEMENTOID ||
 			argtypeid == ANYOID)
 		{
-			argtypeid = get_fn_expr_argtype(flinfo, i);
+			argtypeid = get_fn_expr_argtype(fcinfo->flinfo, i);
 			if (!OidIsValid(argtypeid))
 				ereport(ERROR,
 						(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
@@ -1767,7 +1776,7 @@ plpgsql_HashTableInit(void)
 }
 
 static PLpgSQL_function *
-plpgsql_HashTableLookup(PLpgSQL_func_hashkey * func_key)
+plpgsql_HashTableLookup(PLpgSQL_func_hashkey *func_key)
 {
 	plpgsql_HashEnt *hentry;
 
@@ -1782,8 +1791,8 @@ plpgsql_HashTableLookup(PLpgSQL_func_hashkey * func_key)
 }
 
 static void
-plpgsql_HashTableInsert(PLpgSQL_function * function,
-						PLpgSQL_func_hashkey * func_key)
+plpgsql_HashTableInsert(PLpgSQL_function *function,
+						PLpgSQL_func_hashkey *func_key)
 {
 	plpgsql_HashEnt *hentry;
 	bool		found;
@@ -1805,7 +1814,7 @@ plpgsql_HashTableInsert(PLpgSQL_function * function,
 }
 
 static void
-plpgsql_HashTableDelete(PLpgSQL_function * function)
+plpgsql_HashTableDelete(PLpgSQL_function *function)
 {
 	plpgsql_HashEnt *hentry;
 
