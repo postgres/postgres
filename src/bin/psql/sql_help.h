@@ -14,6 +14,10 @@ struct _helpStruct
 
 
 static struct _helpStruct QL_HELP[] = {
+    { "TRUNCATE",
+      "Empty a table",
+      "TRUNCATE [ TABLE ] name" },
+
     { "ABORT",
       "Aborts the current transaction",
       "ABORT [ WORK | TRANSACTION ]" },
@@ -44,7 +48,7 @@ static struct _helpStruct QL_HELP[] = {
 
     { "COPY",
       "Copies data between files and tables",
-      "COPY [ BINARY ] table [ WITH OIDS ]\n    FROM { 'filename' | stdin }\n    [ USING DELIMITERS 'delimiter' ]\nCOPY [ BINARY ] table [ WITH OIDS ]\n    TO { 'filename' | stdout }\n    [ USING DELIMITERS 'delimiter' ]" },
+      "COPY [ BINARY ] table [ WITH OIDS ]\n    FROM { 'filename' | stdin }\n    [ [USING] DELIMITERS 'delimiter' ]\nCOPY [ BINARY ] table [ WITH OIDS ]\n    TO { 'filename' | stdout }\n    [ [USING] DELIMITERS 'delimiter' ]" },
 
     { "CREATE AGGREGATE",
       "Defines a new aggregate function",
@@ -56,7 +60,7 @@ static struct _helpStruct QL_HELP[] = {
 
     { "CREATE FUNCTION",
       "Defines a new function",
-      "CREATE FUNCTION name ( [ ftype [, ...] ] )\n    RETURNS rtype\n    AS definition\n    LANGUAGE 'langname'" },
+      "CREATE FUNCTION name ( [ ftype [, ...] ] )\n    RETURNS rtype\n    [ WITH ( attribute [, ...] ) ]\n    AS definition   \n    LANGUAGE 'langname'\n\n\nCREATE FUNCTION name ( [ ftype [, ...] ] )\n    RETURNS rtype\n    [ WITH ( attribute [, ...] ) ]\n    AS obj_file , link_symbol  \n    LANGUAGE 'C'" },
 
     { "CREATE INDEX",
       "Constructs a secondary index",
@@ -107,20 +111,20 @@ static struct _helpStruct QL_HELP[] = {
       "DECLARE cursor [ BINARY ] [ INSENSITIVE ] [ SCROLL ]\n    CURSOR FOR query\n    [ FOR { READ ONLY | UPDATE [ OF column [, ...] ] ]" },
 
     { "DELETE",
-      "Deletes rows from a table",
+      "Removes rows from a table",
       "DELETE FROM table [ WHERE condition ]" },
 
     { "DROP AGGREGATE",
       "Removes the definition of an aggregate function",
       "DROP AGGREGATE name type" },
 
+    { "FETCH",
+      "Gets rows using a cursor",
+      "FETCH [ selector ] [ count ] { IN | FROM } cursor\nFETCH [ RELATIVE ] [ { [ # | ALL | NEXT | PRIOR ] } ] FROM ] cursor" },
+
     { "DROP DATABASE",
       "Destroys an existing database",
       "DROP DATABASE name" },
-
-    { "END",
-      "Commits the current transaction",
-      "END [ WORK | TRANSACTION ]" },
 
     { "DROP FUNCTION",
       "Removes a user-defined C function",
@@ -170,10 +174,6 @@ static struct _helpStruct QL_HELP[] = {
       "Shows statement execution details",
       "EXPLAIN [ VERBOSE ] query" },
 
-    { "FETCH",
-      "Gets rows using a cursor",
-      "FETCH [ selector ] [ count ] { IN | FROM } cursor\nFETCH [ RELATIVE ] [ { [ # | ALL | NEXT | PRIOR ] } ] FROM ] cursor" },
-
     { "GRANT",
       "Grants access privilege to a user, a group or all users",
       "GRANT privilege [, ...] ON object [, ...]\n    TO { PUBLIC | GROUP group | username }" },
@@ -191,8 +191,8 @@ static struct _helpStruct QL_HELP[] = {
       "LOAD 'filename'" },
 
     { "LOCK",
-      "Explicit lock of a table inside a transaction",
-      "LOCK [ TABLE ] table\nLOCK [ TABLE ] table IN [ ROW | ACCESS ] { SHARE | EXCLUSIVE } MODE\nLOCK [ TABLE ] table IN SHARE ROW EXCLUSIVE MODE" },
+      "Explicitly lock a table inside a transaction",
+      "LOCK [ TABLE ] name\nLOCK [ TABLE ] name IN [ ROW | ACCESS ] { SHARE | EXCLUSIVE } MODE\nLOCK [ TABLE ] name IN SHARE ROW EXCLUSIVE MODE" },
 
     { "MOVE",
       "Moves cursor position",
@@ -230,21 +230,25 @@ static struct _helpStruct QL_HELP[] = {
       "Shows run-time parameters for session",
       "SHOW keyword" },
 
-    { "TRUNCATE",
-      "Close a cursor",
-      "TRUNCATE TABLE table" },
+    { "UNLISTEN",
+      "Stop listening for notification",
+      "UNLISTEN { notifyname | * }" },
 
     { "UPDATE",
       "Replaces values of columns in a table",
       "UPDATE table SET R\">colle> = expression [, ...]\n    [ FROM fromlist ]\n    [ WHERE condition ]" },
 
-    { "UNLISTEN",
-      "Stop listening for notification",
-      "UNLISTEN { notifyname | * }" },
-
     { "VACUUM",
       "Clean and analyze a Postgres database",
       "VACUUM [ VERBOSE ] [ ANALYZE ] [ table ]\nVACUUM [ VERBOSE ] ANALYZE [ ER\">tBLE> [ (column [, ...] ) ] ]" },
+
+    { "END",
+      "Commits the current transaction",
+      "END [ WORK | TRANSACTION ]" },
+
+    { "COMMENT",
+      "Add comment to an object",
+      "COMMENT ON\n[\n  [ DATABASE | INDEX | RULE | SEQUENCE | TABLE | TYPE | VIEW ]\n  object_name |\n  COLUMN table_name.column_name|\n  AGGREGATE agg_name agg_type|\n  FUNCTION func_name (arg1, arg2, ...)|\n  OPERATOR op (leftoperand_type rightoperand_type) |\n  TRIGGER trigger_name ON table_name\n] IS 'text'" },
 
 
     { NULL, NULL, NULL }    /* End of list marker */
