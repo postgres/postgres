@@ -7,7 +7,7 @@
  * Copyright (c) 1996-2001, PostgreSQL Global Development Group
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/commands/comment.c,v 1.50 2002/07/12 18:43:15 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/commands/comment.c,v 1.51 2002/07/14 23:38:13 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -19,6 +19,7 @@
 #include "catalog/catname.h"
 #include "catalog/indexing.h"
 #include "catalog/namespace.h"
+#include "catalog/pg_constraint.h"
 #include "catalog/pg_database.h"
 #include "catalog/pg_description.h"
 #include "catalog/pg_namespace.h"
@@ -30,7 +31,6 @@
 #include "parser/parse_func.h"
 #include "parser/parse_oper.h"
 #include "parser/parse_type.h"
-#include "parser/parse.h"
 #include "utils/acl.h"
 #include "utils/builtins.h"
 #include "utils/fmgroids.h"
@@ -57,6 +57,7 @@ static void CommentAggregate(List *aggregate, List *arguments, char *comment);
 static void CommentProc(List *function, List *arguments, char *comment);
 static void CommentOperator(List *opername, List *arguments, char *comment);
 static void CommentTrigger(List *qualname, char *comment);
+static void CommentConstraint(List *qualname, char *comment);
 
 
 /*
@@ -70,38 +71,41 @@ CommentObject(CommentStmt *stmt)
 {
 	switch (stmt->objtype)
 	{
-		case INDEX:
-		case SEQUENCE:
-		case TABLE:
-		case VIEW:
+		case COMMENT_ON_INDEX:
+		case COMMENT_ON_SEQUENCE:
+		case COMMENT_ON_TABLE:
+		case COMMENT_ON_VIEW:
 			CommentRelation(stmt->objtype, stmt->objname, stmt->comment);
 			break;
-		case COLUMN:
+		case COMMENT_ON_COLUMN:
 			CommentAttribute(stmt->objname, stmt->comment);
 			break;
-		case DATABASE:
+		case COMMENT_ON_DATABASE:
 			CommentDatabase(stmt->objname, stmt->comment);
 			break;
-		case RULE:
+		case COMMENT_ON_RULE:
 			CommentRule(stmt->objname, stmt->comment);
 			break;
-		case TYPE_P:
+		case COMMENT_ON_TYPE:
 			CommentType(stmt->objname, stmt->comment);
 			break;
-		case AGGREGATE:
+		case COMMENT_ON_AGGREGATE:
 			CommentAggregate(stmt->objname, stmt->objargs, stmt->comment);
 			break;
-		case FUNCTION:
+		case COMMENT_ON_FUNCTION:
 			CommentProc(stmt->objname, stmt->objargs, stmt->comment);
 			break;
-		case OPERATOR:
+		case COMMENT_ON_OPERATOR:
 			CommentOperator(stmt->objname, stmt->objargs, stmt->comment);
 			break;
-		case TRIGGER:
+		case COMMENT_ON_TRIGGER:
 			CommentTrigger(stmt->objname, stmt->comment);
 			break;
-		case SCHEMA:
+		case COMMENT_ON_SCHEMA:
 			CommentNamespace(stmt->objname, stmt->comment);
+			break;
+		case COMMENT_ON_CONSTRAINT:
+			CommentConstraint(stmt->objname, stmt->comment);
 			break;
 		default:
 			elog(ERROR, "An attempt was made to comment on a unknown type: %d",
@@ -309,24 +313,24 @@ CommentRelation(int objtype, List *relname, char *comment)
 
 	switch (objtype)
 	{
-		case INDEX:
+		case COMMENT_ON_INDEX:
 			if (relation->rd_rel->relkind != RELKIND_INDEX)
 				elog(ERROR, "relation \"%s\" is not an index",
 					 RelationGetRelationName(relation));
 			break;
-		case TABLE:
+		case COMMENT_ON_SEQUENCE:
+			if (relation->rd_rel->relkind != RELKIND_SEQUENCE)
+				elog(ERROR, "relation \"%s\" is not a sequence",
+					 RelationGetRelationName(relation));
+			break;
+		case COMMENT_ON_TABLE:
 			if (relation->rd_rel->relkind != RELKIND_RELATION)
 				elog(ERROR, "relation \"%s\" is not a table",
 					 RelationGetRelationName(relation));
 			break;
-		case VIEW:
+		case COMMENT_ON_VIEW:
 			if (relation->rd_rel->relkind != RELKIND_VIEW)
 				elog(ERROR, "relation \"%s\" is not a view",
-					 RelationGetRelationName(relation));
-			break;
-		case SEQUENCE:
-			if (relation->rd_rel->relkind != RELKIND_SEQUENCE)
-				elog(ERROR, "relation \"%s\" is not a sequence",
 					 RelationGetRelationName(relation));
 			break;
 	}
@@ -439,7 +443,7 @@ CommentDatabase(List *qualname, char *comment)
 		elog(ERROR, "you are not permitted to comment on database \"%s\"",
 			 database);
 
-	/* Create the comments with the pg_database oid */
+	/* Create the comment with the pg_database oid */
 
 	CreateComments(oid, RelOid_pg_database, 0, comment);
 
@@ -805,12 +809,92 @@ CommentTrigger(List *qualname, char *comment)
 
 	systable_endscan(scan);
 
-	/* Create the comments with the pg_trigger oid */
+	/* Create the comment with the pg_trigger oid */
 
 	CreateComments(oid, RelationGetRelid(pg_trigger), 0, comment);
 
 	/* Done, but hold lock on relation */
 
 	heap_close(pg_trigger, AccessShareLock);
+	heap_close(relation, NoLock);
+}
+
+
+/*
+ * CommentConstraint --
+ *
+ * Enable commenting on constraints held within the pg_constraint
+ * table.  A qualified name is required as constraint names are
+ * unique per relation.
+ */
+static void
+CommentConstraint(List *qualname, char *comment)
+{
+	int			nnames;
+	List	   *relName;
+	char	   *conName;
+	RangeVar   *rel;
+	Relation	pg_constraint,
+				relation;
+	HeapTuple	tuple;
+	SysScanDesc	scan;
+	ScanKeyData skey[1];
+	Oid			conOid = InvalidOid;
+
+	/* Separate relname and constraint name */
+	nnames = length(qualname);
+	if (nnames < 2)
+		elog(ERROR, "CommentConstraint: must specify relation and constraint");
+	relName = ltruncate(nnames-1, listCopy(qualname));
+	conName = strVal(nth(nnames-1, qualname));
+
+	/* Open the owning relation to ensure it won't go away meanwhile */
+	rel = makeRangeVarFromNameList(relName);
+	relation = heap_openrv(rel, AccessShareLock);
+
+	/* Check object security */
+
+	if (!pg_class_ownercheck(RelationGetRelid(relation), GetUserId()))
+		aclcheck_error(ACLCHECK_NOT_OWNER, RelationGetRelationName(relation));
+
+	/*
+	 * Fetch the constraint tuple from pg_constraint.  There may be more than
+	 * one match, because constraints are not required to have unique names;
+	 * if so, error out.
+	 */
+	pg_constraint = heap_openr(ConstraintRelationName, AccessShareLock);
+
+	ScanKeyEntryInitialize(&skey[0], 0x0,
+						   Anum_pg_constraint_conrelid, F_OIDEQ,
+						   ObjectIdGetDatum(RelationGetRelid(relation)));
+
+	scan = systable_beginscan(pg_constraint, ConstraintRelidIndex, true,
+							  SnapshotNow, 1, skey);
+
+	while (HeapTupleIsValid(tuple = systable_getnext(scan)))
+	{
+		Form_pg_constraint	con = (Form_pg_constraint) GETSTRUCT(tuple);
+
+		if (strcmp(NameStr(con->conname), conName) == 0)
+		{
+			if (OidIsValid(conOid))
+				elog(ERROR, "Relation \"%s\" has multiple constraints named \"%s\"",
+					 RelationGetRelationName(relation), conName);
+			conOid = tuple->t_data->t_oid;
+		}
+	}
+
+	systable_endscan(scan);
+
+	/* If no constraint exists for the relation specified, notify user */
+	if (!OidIsValid(conOid))
+		elog(ERROR, "constraint \"%s\" for relation \"%s\" does not exist",
+			 conName, RelationGetRelationName(relation));
+
+	/* Create the comment with the pg_constraint oid */
+	CreateComments(conOid, RelationGetRelid(pg_constraint), 0, comment);
+
+	/* Done, but hold lock on relation */
+	heap_close(pg_constraint, AccessShareLock);
 	heap_close(relation, NoLock);
 }

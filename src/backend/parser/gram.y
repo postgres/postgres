@@ -11,7 +11,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/parser/gram.y,v 2.339 2002/07/12 18:43:17 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/parser/gram.y,v 2.340 2002/07/14 23:38:13 tgl Exp $
  *
  * HISTORY
  *	  AUTHOR			DATE			MAJOR EVENT
@@ -2364,7 +2364,7 @@ CommentStmt:
 			IS comment_text
 				{
 					CommentStmt *n = makeNode(CommentStmt);
-					n->objtype = AGGREGATE;
+					n->objtype = COMMENT_ON_AGGREGATE;
 					n->objname = $4;
 					n->objargs = makeList1($6);
 					n->comment = $9;
@@ -2373,7 +2373,7 @@ CommentStmt:
 			| COMMENT ON FUNCTION func_name func_args IS comment_text
 				{
 					CommentStmt *n = makeNode(CommentStmt);
-					n->objtype = FUNCTION;
+					n->objtype = COMMENT_ON_FUNCTION;
 					n->objname = $4;
 					n->objargs = $5;
 					n->comment = $7;
@@ -2383,16 +2383,16 @@ CommentStmt:
 			IS comment_text
 				{
 					CommentStmt *n = makeNode(CommentStmt);
-					n->objtype = OPERATOR;
+					n->objtype = COMMENT_ON_OPERATOR;
 					n->objname = $4;
 					n->objargs = $6;
 					n->comment = $9;
 					$$ = (Node *) n;
 				}
-			| COMMENT ON TRIGGER name ON any_name IS comment_text
+			| COMMENT ON CONSTRAINT name ON any_name IS comment_text
 				{
 					CommentStmt *n = makeNode(CommentStmt);
-					n->objtype = TRIGGER;
+					n->objtype = COMMENT_ON_CONSTRAINT;
 					n->objname = lappend($6, makeString($4));
 					n->objargs = NIL;
 					n->comment = $8;
@@ -2401,7 +2401,7 @@ CommentStmt:
 			| COMMENT ON RULE name ON any_name IS comment_text
 				{
 					CommentStmt *n = makeNode(CommentStmt);
-					n->objtype = RULE;
+					n->objtype = COMMENT_ON_RULE;
 					n->objname = lappend($6, makeString($4));
 					n->objargs = NIL;
 					n->comment = $8;
@@ -2411,29 +2411,38 @@ CommentStmt:
 				{
 					/* Obsolete syntax supported for awhile for compatibility */
 					CommentStmt *n = makeNode(CommentStmt);
-					n->objtype = RULE;
+					n->objtype = COMMENT_ON_RULE;
 					n->objname = makeList1(makeString($4));
 					n->objargs = NIL;
 					n->comment = $6;
 					$$ = (Node *) n;
 				}
+			| COMMENT ON TRIGGER name ON any_name IS comment_text
+				{
+					CommentStmt *n = makeNode(CommentStmt);
+					n->objtype = COMMENT_ON_TRIGGER;
+					n->objname = lappend($6, makeString($4));
+					n->objargs = NIL;
+					n->comment = $8;
+					$$ = (Node *) n;
+				}
 		;
 
 comment_type:
-			COLUMN									{ $$ = COLUMN; }
-			| DATABASE								{ $$ = DATABASE; }
-			| SCHEMA								{ $$ = SCHEMA; }
-			| INDEX									{ $$ = INDEX; }
-			| SEQUENCE								{ $$ = SEQUENCE; }
-			| TABLE									{ $$ = TABLE; }
-			| DOMAIN_P								{ $$ = TYPE_P; }
-			| TYPE_P								{ $$ = TYPE_P; }
-			| VIEW									{ $$ = VIEW; }
+			COLUMN								{ $$ = COMMENT_ON_COLUMN; }
+			| DATABASE							{ $$ = COMMENT_ON_DATABASE; }
+			| SCHEMA							{ $$ = COMMENT_ON_SCHEMA; }
+			| INDEX								{ $$ = COMMENT_ON_INDEX; }
+			| SEQUENCE							{ $$ = COMMENT_ON_SEQUENCE; }
+			| TABLE								{ $$ = COMMENT_ON_TABLE; }
+			| DOMAIN_P							{ $$ = COMMENT_ON_TYPE; }
+			| TYPE_P							{ $$ = COMMENT_ON_TYPE; }
+			| VIEW								{ $$ = COMMENT_ON_VIEW; }
 		;
 
 comment_text:
-			Sconst									{ $$ = $1; }
-			| NULL_P								{ $$ = NULL; }
+			Sconst								{ $$ = $1; }
+			| NULL_P							{ $$ = NULL; }
 		;
 
 /*****************************************************************************

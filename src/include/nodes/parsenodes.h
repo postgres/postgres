@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2002, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Id: parsenodes.h,v 1.185 2002/07/12 18:43:19 tgl Exp $
+ * $Id: parsenodes.h,v 1.186 2002/07/14 23:38:13 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -1165,10 +1165,25 @@ typedef struct TruncateStmt
  *				Comment On Statement
  * ----------------------
  */
+#define COMMENT_ON_AGGREGATE	100
+#define COMMENT_ON_COLUMN		101
+#define COMMENT_ON_CONSTRAINT	102
+#define COMMENT_ON_DATABASE		103
+#define COMMENT_ON_FUNCTION		104
+#define COMMENT_ON_INDEX		105
+#define COMMENT_ON_OPERATOR		106
+#define COMMENT_ON_RULE			107
+#define COMMENT_ON_SCHEMA		108
+#define COMMENT_ON_SEQUENCE		109
+#define COMMENT_ON_TABLE		110
+#define COMMENT_ON_TRIGGER		111
+#define COMMENT_ON_TYPE			112
+#define COMMENT_ON_VIEW			113
+
 typedef struct CommentStmt
 {
 	NodeTag		type;
-	int			objtype;		/* Object's type */
+	int			objtype;		/* Object's type, see codes above */
 	List	   *objname;		/* Qualified name of the object */
 	List	   *objargs;		/* Arguments if needed (eg, for functions) */
 	char	   *comment;		/* Comment to insert, or NULL to remove */
