@@ -147,7 +147,8 @@ make_name(void)
 
 /* special embedded SQL token */
 %token		SQL_ALLOCATE SQL_AUTOCOMMIT SQL_BOOL SQL_BREAK 
-%token		SQL_CALL SQL_CONNECT SQL_CONNECTION SQL_CONTINUE SQL_COUNT
+%token		SQL_CALL SQL_CARDINALITY SQL_CONNECT SQL_CONNECTION 
+%token		SQL_CONTINUE SQL_COUNT
 %token		SQL_DATA SQL_DATETIME_INTERVAL_CODE SQL_DATETIME_INTERVAL_PRECISION
 %token		SQL_DEALLOCATE SQL_DESCRIPTOR SQL_DISCONNECT SQL_ENUM 
 %token		SQL_FOUND SQL_FREE SQL_GET SQL_GO SQL_GOTO
@@ -180,7 +181,7 @@ make_name(void)
                 CONSTRAINT, CONSTRAINTS, CREATE, CROSS, CURRENT, CURRENT_DATE,
                 CURRENT_TIME, CURRENT_TIMESTAMP, CURRENT_USER, CURSOR,
                 DAY_P, DEC, DECIMAL, DECLARE, DEFAULT, DELETE, DESC, DISTINCT, DOUBLE, DROP,
-                ELSE, END_TRANS, EXCEPT, EXECUTE, EXISTS, EXTRACT,
+                ELSE, ENCRYPTED, END_TRANS, EXCEPT, EXECUTE, EXISTS, EXTRACT,
                 FALSE_P, FETCH, FLOAT, FOR, FOREIGN, FROM, FULL,
                 GLOBAL, GRANT, GROUP, HAVING, HOUR_P,
                 IN, INNER_P, INOUT, INSENSITIVE, INSERT, INTERSECT, INTERVAL, INTO, IS,
@@ -193,7 +194,7 @@ make_name(void)
                 SCHEMA, SCROLL, SECOND_P, SELECT, SESSION, SESSION_USER, SET, SOME, SUBSTRING,
                 TABLE, TEMPORARY, THEN, TIME, TIMESTAMP, TIMEZONE_HOUR,
 		TIMEZONE_MINUTE, TO, TRAILING, TRANSACTION, TRIM, TRUE_P,
-                UNION, UNIQUE, UNKNOWN, UPDATE, USER, USING,
+                UNENCRYPTED, UNION, UNIQUE, UNKNOWN, UPDATE, USER, USING,
                 VALUES, VARCHAR, VARYING, VIEW,
                 WHEN, WHERE, WITH, WITHOUT, WORK, YEAR_P, ZONE
 
@@ -216,7 +217,7 @@ make_name(void)
 %token  ABORT_TRANS, ACCESS, AFTER, AGGREGATE, ANALYSE, ANALYZE,
 		BACKWARD, BEFORE, BINARY, BIT, CACHE, CHECKPOINT, CLUSTER,
 		COMMENT, COPY, CREATEDB, CREATEUSER, CYCLE, DATABASE,
-		DELIMITERS, DO, EACH, ENCODING, EXCLUSIVE, EXPLAIN,
+		DELIMITERS, DO, EACH, ENCODING, EXCLUSIVE, EXPLAIN, EXTEND,
 		FORCE, FORWARD, FUNCTION, HANDLER, INCREMENT,
 		INDEX, INHERITS, INSTEAD, ISNULL, LANCOMPILER, LIMIT,
 		LISTEN, UNLISTEN, LOAD, LOCATION, LOCK_P, MAXVALUE,
@@ -310,17 +311,17 @@ make_name(void)
 %type  <str>    def_elem def_list definition DefineStmt select_with_parens
 %type  <str>    opt_instead event event_object RuleActionList opt_using
 %type  <str>	RuleActionStmtOrEmpty RuleActionMulti func_as reindex_type
-%type  <str>    RuleStmt opt_column opt_name oper_argtypes
+%type  <str>    RuleStmt opt_column opt_name oper_argtypes NumConst
 %type  <str>    MathOp RemoveFuncStmt aggr_argtype for_update_clause
 %type  <str>    RemoveAggrStmt opt_procedural select_no_parens
-%type  <str>    RemoveOperStmt RenameStmt all_Op
+%type  <str>    RemoveOperStmt RenameStmt all_Op opt_Trusted opt_lancompiler 
 %type  <str>    VariableSetStmt var_value zone_value VariableShowStmt
 %type  <str>    VariableResetStmt AlterTableStmt DropUserStmt from_list
 %type  <str>    opt_trans user_list OptUserList OptUserElem
 %type  <str>    CreateUserStmt AlterUserStmt CreateSeqStmt OptSeqList
 %type  <str>    OptSeqElem TriggerForSpec TriggerForOpt TriggerForType
 %type  <str>	DropTrigStmt TriggerOneEvent TriggerEvents RuleActionStmt
-%type  <str>    TriggerActionTime CreateTrigStmt DropPLangStmt PLangTrusted
+%type  <str>    TriggerActionTime CreateTrigStmt DropPLangStmt 
 %type  <str>    CreatePLangStmt TriggerFuncArgs TriggerFuncArg simple_select
 %type  <str>    ViewStmt LoadStmt CreatedbStmt createdb_opt_item
 %type  <str>	createdb_opt_list opt_encoding OptInherit Geometric
@@ -348,6 +349,7 @@ make_name(void)
 %type  <str>	stmt ECPGRelease execstring server_name
 %type  <str>	connection_object opt_server opt_port c_stuff opt_reference
 %type  <str>    user_name opt_user char_variable ora_user ident
+%type  <str>	quoted_ident_stringvar
 %type  <str>    db_prefix server opt_options opt_connection_name c_list
 %type  <str>	ECPGSetConnection cpp_line ECPGTypedef c_args ECPGKeywords
 %type  <str>	enum_type civar civarind ECPGCursorStmt ECPGDeallocate
@@ -452,7 +454,7 @@ stmt:  AlterSchemaStmt 			{ output_statement($1, 0, NULL, connection); }
 		| VariableResetStmt	{ output_statement($1, 0, NULL, connection); }
 		| ConstraintsSetStmt	{ output_statement($1, 0, NULL, connection); }
 		| CheckPointStmt	{ output_statement($1, 0, NULL, connection); }
-		| ECPGAllocateDescr	{	fprintf(yyout,"ECPGallocate_desc(__LINE__, \"%s\");",$1);
+		| ECPGAllocateDescr	{	fprintf(yyout,"ECPGallocate_desc(__LINE__, %s);",$1);
 								whenever_action(0);
 								free($1);
 							}
@@ -479,7 +481,7 @@ stmt:  AlterSchemaStmt 			{ output_statement($1, 0, NULL, connection); }
 						whenever_action(2);
 						free($1);
 					}
-		| ECPGDeallocateDescr	{	fprintf(yyout,"ECPGdeallocate_desc(__LINE__, \"%s\");",$1);
+		| ECPGDeallocateDescr	{	fprintf(yyout,"ECPGdeallocate_desc(__LINE__, %s);",$1);
 									whenever_action(0);
 									free($1);
 								}
@@ -1299,7 +1301,7 @@ OptSeqList:  OptSeqList OptSeqElem
 			|	{ $$ = EMPTY; }
 		;
 
-OptSeqElem:  CACHE IntConst
+OptSeqElem:  CACHE NumConst
 				{
 					$$ = cat2_str(make_str("cache"), $2);
 				}
@@ -1307,19 +1309,19 @@ OptSeqElem:  CACHE IntConst
 				{
 					$$ = make_str("cycle");
 				}
-			| INCREMENT IntConst
+			| INCREMENT NumConst
 				{
 					$$ = cat2_str(make_str("increment"), $2);
 				}
-			| MAXVALUE IntConst
+			| MAXVALUE NumConst
 				{
 					$$ = cat2_str(make_str("maxvalue"), $2);
 				}
-			| MINVALUE IntConst
+			| MINVALUE NumConst
 				{
 					$$ = cat2_str(make_str("minvalue"), $2);
 				}
-			| START IntConst
+			| START NumConst
 				{
 					$$ = cat2_str(make_str("start"), $2);
 				}
@@ -1333,15 +1335,19 @@ OptSeqElem:  CACHE IntConst
  *
  *****************************************************************************/
 
-CreatePLangStmt:  CREATE PLangTrusted opt_procedural LANGUAGE StringConst 
-			HANDLER func_name LANCOMPILER StringConst
+CreatePLangStmt:  CREATE opt_Trusted opt_procedural LANGUAGE ColId_or_Sconst
+			HANDLER func_name opt_lancompiler
 			{
-				$$ = cat_str(9, make_str("create"), $2, $3, make_str("language"), $5, make_str("handler"), $7, make_str("langcompiler"), $9);
+				$$ = cat_str(8, make_str("create"), $2, $3, make_str("language"), $5, make_str("handler"), $7, $8);
 			}
 		;
 
-PLangTrusted:		TRUSTED { $$ = make_str("trusted"); }
+opt_Trusted:		TRUSTED { $$ = make_str("trusted"); }
 			|	{ $$ = EMPTY; }
+			;
+
+opt_lancompiler: LANCOMPILER StringConst 	{ $$ = cat2_str(make_str("lancompiler"), $2); }
+                        | /*EMPTY*/              { $$ = ""; }
 			;
 
 DropPLangStmt:  DROP opt_procedural LANGUAGE StringConst
@@ -1892,7 +1898,7 @@ RecipeStmt:  EXECUTE RECIPE recipe_name
  *****************************************************************************/
 
 ProcedureStmt:	CREATE FUNCTION func_name func_args
-			 RETURNS func_return AS func_as LANGUAGE StringConst opt_with
+			 RETURNS func_return AS func_as LANGUAGE ColId_or_Sconst opt_with
 				{
 					$$ = cat_str(10, make_str("create function"), $3, $4, make_str("returns"), $6, make_str("as"), $8, make_str("language"), $10, $11);
 				}
@@ -3808,12 +3814,16 @@ PosIntStringConst:	Iconst		{ $$ = $1; }
 			| Sconst          { $$ = $1; }  
 			| civar		{ $$ = make_str("?"); }
 			;
-AllConst:	Sconst		{ $$ = $1; }
-		| Fconst	{ $$ = $1; }
-		| Iconst        { $$ = $1; }
-		| '-' Fconst	{ $$ = cat2_str(make_str("-"), $2); }
-		| '-' Iconst    { $$ = cat2_str(make_str("-"), $2); }
+
+NumConst:	Fconst        { $$ = $1; }
+                | Iconst        { $$ = $1; }
+                | '-' Fconst    { $$ = cat2_str(make_str("-"), $2); }
+                | '-' Iconst    { $$ = cat2_str(make_str("-"), $2); }
 		| civar		{ $$ = make_str("?"); }
+		;
+
+AllConst:	Sconst		{ $$ = $1; }
+		| NumConst	{ $$ = $1; }
 		;
 
 PosAllConst:	Sconst  	{ $$ = $1; }
@@ -4532,7 +4542,7 @@ ECPGPrepare: SQL_PREPARE ident FROM execstring
 /*
  * deallocate a descriptor
  */
-ECPGDeallocateDescr:	SQL_DEALLOCATE SQL_DESCRIPTOR ident	
+ECPGDeallocateDescr:	SQL_DEALLOCATE SQL_DESCRIPTOR quoted_ident_stringvar
 		{
 			drop_descriptor($3,connection);
 			$$ = $3;
@@ -4541,7 +4551,7 @@ ECPGDeallocateDescr:	SQL_DEALLOCATE SQL_DESCRIPTOR ident
 /*
  * allocate a descriptor
  */
-ECPGAllocateDescr:	SQL_ALLOCATE SQL_DESCRIPTOR ident	
+ECPGAllocateDescr:	SQL_ALLOCATE SQL_DESCRIPTOR quoted_ident_stringvar
 		{
 			add_descriptor($3,connection);
 			$$ = $3;
@@ -4557,7 +4567,8 @@ desc_header_item:	SQL_COUNT		{ $$ = ECPGd_count; };
 
 ECPGGetDescItem: cvariable '=' descriptor_item  { push_assignment($1, $3); };
 
-descriptor_item:	SQL_DATA			{ $$ = ECPGd_data; }
+descriptor_item:	SQL_CARDINALITY	{ $$ = ECPGd_cardinality; }
+		|	SQL_DATA			{ $$ = ECPGd_data; }
 		|	SQL_DATETIME_INTERVAL_CODE	{ $$ = ECPGd_di_code; }
 		| 	SQL_DATETIME_INTERVAL_PRECISION	{ $$ = ECPGd_di_precision; }
 		|	SQL_INDICATOR			{ $$ = ECPGd_indicator; }
@@ -4581,12 +4592,12 @@ ECPGGetDescItems: ECPGGetDescItem
 	| ECPGGetDescItems ',' ECPGGetDescItem
 	;
  
-ECPGGetDescriptorHeader:	SQL_GET SQL_DESCRIPTOR ident ECPGGetDescHeaderItems
+ECPGGetDescriptorHeader:	SQL_GET SQL_DESCRIPTOR quoted_ident_stringvar ECPGGetDescHeaderItems
 		{  $$ = $3; };
 
-ECPGGetDescriptor:	SQL_GET SQL_DESCRIPTOR ident SQL_VALUE cvariable ECPGGetDescItems
+ECPGGetDescriptor:	SQL_GET SQL_DESCRIPTOR quoted_ident_stringvar SQL_VALUE cvariable ECPGGetDescItems
 		{  $$.str = $5; $$.name = $3; }
-	|	SQL_GET SQL_DESCRIPTOR ident SQL_VALUE Iconst ECPGGetDescItems
+	|	SQL_GET SQL_DESCRIPTOR quoted_ident_stringvar SQL_VALUE Iconst ECPGGetDescItems
 		{  $$.str = $5; $$.name = $3; }
 	;
 
@@ -4602,27 +4613,27 @@ ECPGGetDescriptor:	SQL_GET SQL_DESCRIPTOR ident SQL_VALUE cvariable ECPGGetDescI
  *
  *****************************************************************************/
 
-ECPGFetchDescStmt:	FETCH direction fetch_how_many from_in name INTO SQL_SQL SQL_DESCRIPTOR ident
+ECPGFetchDescStmt:	FETCH direction fetch_how_many from_in name INTO SQL_SQL SQL_DESCRIPTOR quoted_ident_stringvar
 				{
 					$$.str = cat_str(5, make_str("fetch"), $2, $3, $4, $5);
 					$$.name=$9;
 				}
-		|	FETCH fetch_how_many from_in name INTO SQL_SQL SQL_DESCRIPTOR ident
+		|	FETCH fetch_how_many from_in name INTO SQL_SQL SQL_DESCRIPTOR quoted_ident_stringvar
   				{
 					$$.str = cat_str(4, make_str("fetch"), $2, $3, $4);
 					$$.name=$8;
 				}
-		|	FETCH direction from_in name INTO SQL_SQL SQL_DESCRIPTOR ident
+		|	FETCH direction from_in name INTO SQL_SQL SQL_DESCRIPTOR quoted_ident_stringvar
   				{
 					$$.str = cat_str(4, make_str("fetch"), $2, $3, $4);
 					$$.name=$8;
 				}
-		|	FETCH from_in name INTO SQL_SQL SQL_DESCRIPTOR ident
+		|	FETCH from_in name INTO SQL_SQL SQL_DESCRIPTOR quoted_ident_stringvar
   				{
 					$$.str = cat_str(3, make_str("fetch"), $2, $3);
 					$$.name=$7;
 				}
-		|	FETCH name INTO SQL_SQL SQL_DESCRIPTOR ident
+		|	FETCH name INTO SQL_SQL SQL_DESCRIPTOR quoted_ident_stringvar
   				{
 					$$.str = cat2_str(make_str("fetch"), $2);
 					$$.name=$6;
@@ -4902,6 +4913,7 @@ action : SQL_CONTINUE
 /* additional ColId entries */
 ECPGKeywords: 	  SQL_BREAK			{ $$ = make_str("break"); }
 		| SQL_CALL			{ $$ = make_str("call"); }
+		| SQL_CARDINALITY	{ $$ = make_str("cardinality"); }
 		| SQL_CONNECT			{ $$ = make_str("connect"); }
 		| SQL_CONTINUE			{ $$ = make_str("continue"); }
 		| SQL_COUNT			{ $$ = make_str("count"); }
@@ -5136,6 +5148,7 @@ ECPGColLabel:  ECPGColId	{ $$ = $1; }
 		| DISTINCT	{ $$ = make_str("distinct"); }
 		| DO		{ $$ = make_str("do"); }
 		| ELSE          { $$ = make_str("else"); }
+		| ENCRYPTED     { $$ = make_str("encrypted"); }
 		| END_TRANS     { $$ = make_str("end"); }
 		| EXCEPT	{ $$ = make_str("except"); }
 		| EXISTS	{ $$ = make_str("exists"); }
@@ -5203,6 +5216,7 @@ ECPGColLabel:  ECPGColId	{ $$ = $1; }
 		| TRANSACTION	{ $$ = make_str("transaction"); }
 		| TRIM		{ $$ = make_str("trim"); }
 		| TRUE_P	{ $$ = make_str("true"); }
+		| UNENCRYPTED	{ $$ = make_str("unencrypted"); }
 		| UNIQUE	{ $$ = make_str("unique"); }
 		| UNKNOWN	{ $$ = make_str("unknown"); }
 		| USER		{ $$ = make_str("user"); }
@@ -5257,6 +5271,13 @@ ident: IDENT		{ $$ = $1; }
 	| CSTRING	{ $$ = make3_str(make_str("\""), $1, make_str("\"")); }
 	;
 
+quoted_ident_stringvar: IDENT	{ $$ = make3_str(make_str("\""), $1, make_str("\"")); }
+	| CSTRING	{ $$ = make3_str(make_str("\""), $1, make_str("\"")); }
+	| char_variable	
+		{	$$ = make3_str(make_str("("), $1, make_str(")"));
+		}
+	;
+
 /*
  * C stuff
  */
@@ -5271,6 +5292,10 @@ c_stuff: c_anything 	{ $$ = $1; }
 	| c_stuff '(' c_stuff ')'
 			{
 				$$ = cat_str(4, $1, make_str("("), $3, make_str(")"));
+			}
+	| c_stuff '(' ')'
+			{
+				$$ = cat_str(3, $1, make_str("("), make_str(")"));
 			}
 	;
 

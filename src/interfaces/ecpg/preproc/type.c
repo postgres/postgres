@@ -480,6 +480,8 @@ get_dtype(enum ECPGdtype typ)
 		case ECPGd_type:
 			return ("ECPGd_type");
 			break;
+		case ECPGd_cardinality:
+			return ("ECPGd_cardinality");
 		default:
 			sprintf(errortext, "illegal descriptor item %d\n", typ);
 			yyerror(errortext);

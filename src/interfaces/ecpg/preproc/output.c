@@ -111,7 +111,7 @@ output_statement(char *stmt, int mode, char *descriptor, char *con)
 	if (descriptor == NULL)
 		fprintf(yyout, "{ ECPGdo(__LINE__, %s, \"", con ? con : "NULL");
 	else
-		fprintf(yyout, "{ ECPGdo_descriptor(__LINE__, %s, \"%s\", \"",
+		fprintf(yyout, "{ ECPGdo_descriptor(__LINE__, %s, %s, \"",
 				con ? con : "NULL", descriptor);
 
 	/* do this char by char as we have to filter '\"' */

@@ -812,6 +812,9 @@ ECPGexecute(struct statement * stmt)
 		ECPGraise(stmt->lineno, ECPG_PGSQL, PQerrorMessage(stmt->connection->connection));
 	}
 	else
+	/* note: since some of the following code is duplicated in descriptor.c 
+	 * 		 it should go into a separate function
+	 */
 	{
 		var = stmt->outlist;
 		switch (PQresultStatus(results))
@@ -1032,7 +1035,7 @@ ECPGdo(int lineno, const char *connection_name, char *query,...)
  *
  * Copyright (c) 2000, Christof Petig <christof.petig@wtal.de>
  *
- * $Header: /cvsroot/pgsql/src/interfaces/ecpg/lib/Attic/execute.c,v 1.20 2001/08/10 22:50:10 tgl Exp $
+ * $Header: /cvsroot/pgsql/src/interfaces/ecpg/lib/Attic/execute.c,v 1.21 2001/08/19 09:21:44 meskes Exp $
  */
 
 PGconn	   *ECPG_internal_get_connection(char *name);

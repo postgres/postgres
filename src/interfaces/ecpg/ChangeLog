@@ -1086,3 +1086,8 @@ Wed Jun 13 14:39:12 CEST 2001
 	- Applied bug fix by John Summerfield.
 	- Set ecpg version to 2.9.0.
 	- Set library version to 3.3.0.
+
+Son Aug 19 11:04:39 CEST 2001
+
+	- Synced preproc.y with gram.y. 
+	- Include some patches by Christof Petig <christof.petig@wtal.de>.

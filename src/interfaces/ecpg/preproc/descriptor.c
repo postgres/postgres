@@ -1,5 +1,8 @@
 /*
  * functions needed for descriptor handling
+ *
+ * since descriptor might be either a string constant or a string var
+ * we need to check for a constant if we expect a constant
  */
 
 #include "postgres_fe.h"
@@ -71,7 +74,11 @@ static struct descriptor *descriptors;
 void
 add_descriptor(char *name, char *connection)
 {
-	struct descriptor *new = (struct descriptor *) mm_alloc(sizeof(struct descriptor));
+	struct descriptor *new;
+	
+	if (name[0]!='"') return;
+	
+	new = (struct descriptor *) mm_alloc(sizeof(struct descriptor));
 
 	new->next = descriptors;
 	new->name = mm_alloc(strlen(name) + 1);
@@ -91,6 +98,8 @@ drop_descriptor(char *name, char *connection)
 {
 	struct descriptor *i;
 	struct descriptor **lastptr = &descriptors;
+
+	if (name[0]!='"') return;
 
 	for (i = descriptors; i; lastptr = &i->next, i = i->next)
 	{
@@ -119,6 +128,8 @@ lookup_descriptor(char *name, char *connection)
 {
 	struct descriptor *i;
 
+	if (name[0]!='"') return NULL;
+
 	for (i = descriptors; i; i = i->next)
 	{
 		if (!strcmp(name, i->name))
@@ -139,7 +150,7 @@ output_get_descr_header(char *desc_name)
 {
 	struct assignment *results;
 
-	fprintf(yyout, "{ ECPGget_desc_header(%d, \"%s\", &(", yylineno, desc_name);
+	fprintf(yyout, "{ ECPGget_desc_header(%d, %s, &(", yylineno, desc_name);
 	for (results = assignments; results != NULL; results = results->next)
 	{
 		if (results->value == ECPGd_count)
@@ -161,7 +172,7 @@ output_get_descr(char *desc_name, char *index)
 {
 	struct assignment *results;
 
-	fprintf(yyout, "{ ECPGget_desc(%d,\"%s\",%s,", yylineno, desc_name, index);
+	fprintf(yyout, "{ ECPGget_desc(%d, %s, %s,", yylineno, desc_name, index);
 	for (results = assignments; results != NULL; results = results->next)
 	{
 		const struct variable *v = find_variable(results->variable);

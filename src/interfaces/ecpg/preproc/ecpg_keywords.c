@@ -4,7 +4,7 @@
  *	  lexical token lookup for reserved words in postgres embedded SQL
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/interfaces/ecpg/preproc/ecpg_keywords.c,v 1.23 2001/03/22 04:01:20 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/interfaces/ecpg/preproc/ecpg_keywords.c,v 1.24 2001/08/19 09:21:44 meskes Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -29,6 +29,7 @@ static ScanKeyword ScanKeywords[] = {
 	{"bool", SQL_BOOL},
 	{"break", SQL_BREAK},
 	{"call", SQL_CALL},
+	{"cardinality", SQL_CARDINALITY},
 	{"connect", SQL_CONNECT},
 	{"connection", SQL_CONNECTION},
 	{"continue", SQL_CONTINUE},
