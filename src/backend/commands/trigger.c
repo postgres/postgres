@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/commands/trigger.c,v 1.104 2002/03/06 06:09:36 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/commands/trigger.c,v 1.105 2002/03/08 04:37:14 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -1781,6 +1781,7 @@ DeferredTriggerSetState(ConstraintsSetStmt *stmt)
 
 	foreach(l, stmt->constraints)
 	{
+		char	   *cname = strVal(lfirst(l));
 		ScanKeyData skey;
 		SysScanDesc	tgscan;
 		HeapTuple	htup;
@@ -1788,7 +1789,7 @@ DeferredTriggerSetState(ConstraintsSetStmt *stmt)
 		/*
 		 * Check that only named constraints are set explicitly
 		 */
-		if (strcmp((char *) lfirst(l), "") == 0)
+		if (strlen(cname) == 0)
 			elog(ERROR, "unnamed constraints cannot be set explicitly");
 
 		/*
@@ -1798,7 +1799,7 @@ DeferredTriggerSetState(ConstraintsSetStmt *stmt)
 							   (bits16) 0x0,
 							   (AttrNumber) Anum_pg_trigger_tgconstrname,
 							   (RegProcedure) F_NAMEEQ,
-							   PointerGetDatum((char *) lfirst(l)));
+							   PointerGetDatum(cname));
 
 		tgscan = systable_beginscan(tgrel, TriggerConstrNameIndex, true,
 									SnapshotNow, 1, &skey);
@@ -1822,7 +1823,7 @@ DeferredTriggerSetState(ConstraintsSetStmt *stmt)
 				pg_trigger->tgfoid != F_RI_FKEY_RESTRICT_UPD &&
 				pg_trigger->tgfoid != F_RI_FKEY_RESTRICT_DEL)
 				elog(ERROR, "Constraint '%s' is not deferrable",
-					 (char *) lfirst(l));
+					 cname);
 
 			constr_oid = htup->t_data->t_oid;
 			loid = lappendi(loid, constr_oid);
@@ -1835,7 +1836,7 @@ DeferredTriggerSetState(ConstraintsSetStmt *stmt)
 		 * Not found ?
 		 */
 		if (!found)
-			elog(ERROR, "Constraint '%s' does not exist", (char *) lfirst(l));
+			elog(ERROR, "Constraint '%s' does not exist", cname);
 	}
 	heap_close(tgrel, AccessShareLock);
 

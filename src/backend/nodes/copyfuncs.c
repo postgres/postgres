@@ -15,7 +15,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/nodes/copyfuncs.c,v 1.167 2002/03/07 16:35:34 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/nodes/copyfuncs.c,v 1.168 2002/03/08 04:37:16 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -1898,7 +1898,7 @@ _copyGrantStmt(GrantStmt *from)
 	newnode->is_grant = from->is_grant;
 	newnode->objtype = from->objtype;
 	Node_Copy(from, newnode, objects);
-	Node_Copy(from, newnode, privileges);
+	newnode->privileges = listCopy(from->privileges);
 	Node_Copy(from, newnode, grantees);
 
 	return newnode;
@@ -1924,8 +1924,6 @@ _copyFuncWithArgs(FuncWithArgs *from)
 
 	if (from->funcname)
 		newnode->funcname = pstrdup(from->funcname);
-	else
-		newnode->funcname = NULL;
 	Node_Copy(from, newnode, funcargs);
 
 	return newnode;

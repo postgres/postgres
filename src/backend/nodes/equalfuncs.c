@@ -20,7 +20,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/nodes/equalfuncs.c,v 1.115 2002/03/07 16:35:34 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/nodes/equalfuncs.c,v 1.116 2002/03/08 04:37:16 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -763,7 +763,7 @@ _equalGrantStmt(GrantStmt *a, GrantStmt *b)
 		return false;
 	if (!equal(a->objects, b->objects))
 		return false;
-	if (!equal(a->privileges, b->privileges))
+	if (!equali(a->privileges, b->privileges))
 		return false;
 	if (!equal(a->grantees, b->grantees))
 		return false;

@@ -11,7 +11,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/parser/gram.y,v 2.287 2002/03/07 16:35:35 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/parser/gram.y,v 2.288 2002/03/08 04:37:17 tgl Exp $
  *
  * HISTORY
  *	  AUTHOR			DATE			MAJOR EVENT
@@ -286,7 +286,6 @@ static void doNegateFloat(Value *v);
 				ConstraintTimeSpec
 
 %type <list>	constraints_set_list
-%type <list>	constraints_set_namelist
 %type <boolean>	constraints_set_mode
 
 /*
@@ -1034,37 +1033,12 @@ ConstraintsSetStmt:	SET CONSTRAINTS constraints_set_list constraints_set_mode
 				}
 		;
 
-
-constraints_set_list:	ALL
-				{
-					$$ = NIL;
-				}
-		| constraints_set_namelist
-				{
-					$$ = $1;
-				}
+constraints_set_list:	ALL					{ $$ = NIL; }
+		| name_list							{ $$ = $1; }
 		;
 
-
-constraints_set_namelist:	ColId
-				{
-					$$ = makeList1($1);
-				}
-		| constraints_set_namelist ',' ColId
-				{
-					$$ = lappend($1, $3);
-				}
-		;
-
-
-constraints_set_mode:	DEFERRED
-				{
-					$$ = TRUE;
-				}
-		| IMMEDIATE
-				{
-					$$ = FALSE;
-				}
+constraints_set_mode:	DEFERRED			{ $$ = TRUE; }
+		| IMMEDIATE							{ $$ = FALSE; }
 		;
 
 
