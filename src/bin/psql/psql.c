@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/bin/psql/Attic/psql.c,v 1.120 1997/12/06 22:57:36 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/bin/psql/Attic/psql.c,v 1.121 1997/12/22 20:03:53 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -994,9 +994,7 @@ SendQuery(bool *success_p, PsqlSettings *pset, const char *query,
 			case PGRES_COPY_OUT:
 				*success_p = true;
 				if (copy_out)
-				{
 					handleCopyOut(results, pset->quiet, copystream);
-				}
 				else
 				{
 					if (!pset->quiet)
@@ -2372,7 +2370,7 @@ main(int argc, char **argv)
 	settings.opt.fieldSep = strdup(DEFAULT_FIELD_SEP);
 	settings.opt.pager = 1;
 	if (!isatty(0) || !isatty(1))
-		settings.quiet = settings.notty = 1;
+		settings.notty = 1;
 #ifdef HAVE_LIBREADLINE
 	else
 		settings.useReadline = 1;
@@ -2494,7 +2492,7 @@ main(int argc, char **argv)
 	{
 		exit(listAllDbs(&settings));
 	}
-	if (!settings.quiet && !singleQuery && !qfilename)
+	if (!settings.quiet && !settings.notty && !singleQuery && !qfilename)
 	{
 		printf("Welcome to the POSTGRESQL interactive sql monitor:\n");
 		printf("  Please read the file COPYRIGHT for copyright terms "
