@@ -6,7 +6,7 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: memnodes.h,v 1.1 1996/08/28 01:57:34 scrappy Exp $
+ * $Id: memnodes.h,v 1.2 1996/10/19 06:27:27 scrappy Exp $
  *
  * XXX the typedefs in this file are different from the other ???nodes.h;
  *    they are pointers to structures instead of the structures themselves.
@@ -18,12 +18,9 @@
 #ifndef	MEMNODES_H
 #define MEMNODES_H
 
-#include "c.h"
-
 #include "utils/memutils.h"
 #include "lib/fstack.h"
 
-#include "nodes/nodes.h"
 
 /*
  * MemoryContext --

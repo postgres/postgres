@@ -6,14 +6,13 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: hashjoin.h,v 1.1 1996/08/28 07:22:13 scrappy Exp $
+ * $Id: hashjoin.h,v 1.2 1996/10/19 06:27:33 scrappy Exp $
  *
  *-------------------------------------------------------------------------
  */
 #ifndef	HASHJOIN_H
 #define HASHJOIN_H
 
-#include "access/htup.h"
 #include "storage/ipc.h"
 
 /* -----------------

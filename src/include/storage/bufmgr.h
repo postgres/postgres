@@ -6,19 +6,14 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: bufmgr.h,v 1.1 1996/08/28 01:58:01 scrappy Exp $
+ * $Id: bufmgr.h,v 1.2 1996/10/19 06:27:14 scrappy Exp $
  *
  *-------------------------------------------------------------------------
  */
 #ifndef	BUFMGR_H
 #define BUFMGR_H
 
-#include "c.h"
-
-#include "machine.h"		/* for BLCKSZ */
-#include "utils/rel.h"
-
-#include "storage/buf_internals.h"	/* UGLY! -- ay */
+#include <stdio.h>
 
 /*
  * the maximum size of a disk block for any possible installation.

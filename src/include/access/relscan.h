@@ -6,22 +6,17 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: relscan.h,v 1.1 1996/08/27 21:50:20 scrappy Exp $
+ * $Id: relscan.h,v 1.2 1996/10/19 06:27:08 scrappy Exp $
  *
  *-------------------------------------------------------------------------
  */
 #ifndef	RELSCAN_H
 #define RELSCAN_H
 
-#include "c.h"
-
-#include "access/skey.h"
-#include "storage/buf.h"
-#include "access/htup.h"
-#include "storage/itemptr.h"
-
 #include "utils/tqual.h"
-#include "utils/rel.h"
+#include "storage/buf.h"
+
+
 
 
 typedef ItemPointerData	MarkData;

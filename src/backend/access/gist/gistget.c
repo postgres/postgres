@@ -10,22 +10,16 @@
  *
  *-------------------------------------------------------------------------
  */
+
 #include "postgres.h"
 
-#include "storage/bufmgr.h"
-#include "storage/bufpage.h"
-
-#include "utils/elog.h"
-#include "utils/palloc.h"
 #include "utils/rel.h"
-
-#include "access/heapam.h"
-#include "access/genam.h"
-#include "access/iqual.h"
-#include "access/gist.h"
+#include "access/htup.h"
+#include "access/relscan.h"
+#include "storage/bufpage.h"
 #include "access/sdir.h"
-
-#include "executor/execdebug.h"
+#include "access/itup.h"
+#include "access/gist.h"
 
 static OffsetNumber gistfindnext(IndexScanDesc s, Page p, OffsetNumber n, 
 				 ScanDirection dir);

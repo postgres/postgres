@@ -9,19 +9,13 @@
  *
  *-------------------------------------------------------------------------
  */
+
 #include "postgres.h"
 
-#include "storage/bufmgr.h"
-#include "storage/bufpage.h"
-
-#include "utils/elog.h"
-#include "utils/palloc.h"
 #include "utils/rel.h"
-
-#include "access/heapam.h"
-#include "access/genam.h"
+#include "access/htup.h"
+#include "access/relscan.h"
 #include "access/gist.h"
-#include "access/giststrat.h"
 
 /* routines defined and used here */
 static void gistregscan(IndexScanDesc s);

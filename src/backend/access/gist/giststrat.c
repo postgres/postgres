@@ -11,14 +11,11 @@
  *
  *-------------------------------------------------------------------------
  */
-#include "c.h"
 
+#include "postgres.h"
 #include "utils/rel.h"
-
-#include "storage/bufmgr.h"
-#include "storage/bufpage.h"
-
-#include "access/istrat.h"
+#include "storage/off.h"
+#include "storage/block.h"
 #include "access/gist.h"
 
 /*

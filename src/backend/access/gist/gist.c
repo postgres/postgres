@@ -10,30 +10,21 @@
  *
  *-------------------------------------------------------------------------
  */
+
 #include "postgres.h"
 
-#include "storage/bufmgr.h"
-#include "storage/bufpage.h"
-
-#include "utils/elog.h"
-#include "utils/palloc.h"
 #include "utils/rel.h"
-#include "utils/excid.h"
-
-#include "access/heapam.h"
-#include "access/genam.h"
+#include "access/itup.h"
 #include "access/gist.h"
-#include "access/gistscan.h"
 #include "access/funcindex.h"
-#include "access/tupdesc.h"
-
-#include "nodes/execnodes.h"
-#include "nodes/plannodes.h"
-
-#include "executor/executor.h"
+#include "access/htup.h"
 #include "executor/tuptable.h"
+#include "access/relscan.h"
+#include "nodes/execnodes.h"
+#include "storage/bufmgr.h"
+#include "catalog/pg_index.h"
+#include "utils/syscache.h"
 
-#include "catalog/index.h"
 
 /* non-export function prototypes */
 static InsertIndexResult gistdoinsert(Relation r, IndexTuple itup,
