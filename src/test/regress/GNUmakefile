@@ -7,7 +7,7 @@
 #
 #
 # IDENTIFICATION
-#    $Header: /cvsroot/pgsql/src/test/regress/GNUmakefile,v 1.18 1999/06/10 17:49:29 wieck Exp $
+#    $Header: /cvsroot/pgsql/src/test/regress/GNUmakefile,v 1.19 1999/06/28 18:40:34 momjian Exp $
 #
 #-------------------------------------------------------------------------
 
@@ -74,7 +74,8 @@ else
 endif
 	@echo "ACTUAL RESULTS OF REGRESSION TEST ARE NOW IN FILE regress.out"
 	@echo ""
-	@echo "To run the optional huge test(s) too type 'make bigtest'"
+	@echo "To run the optional big test(s) too, type 'make bigtest'"
+	@echo "These big tests can take over an hour to complete"
 	@echo "These actually are: $(EXTRA_TESTS)"
 
 #
