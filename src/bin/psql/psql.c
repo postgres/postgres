@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *    $Header: /cvsroot/pgsql/src/bin/psql/Attic/psql.c,v 1.77 1997/07/14 22:08:56 momjian Exp $
+ *    $Header: /cvsroot/pgsql/src/bin/psql/Attic/psql.c,v 1.78 1997/07/24 20:01:33 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -153,40 +153,52 @@ on(bool f)
 static void
 slashUsage(PsqlSettings * ps)
 {
-    int ch;
-    
-    fprintf(stderr, " \\?           -- help\n");
-    fprintf(stderr, " \\a           -- toggle field-alignment (currenty %s)\n", on(ps->opt.align));
-    fprintf(stderr, " \\C [<captn>] -- set html3 caption (currently '%s')\n", ps->opt.caption ? ps->opt.caption : "");
-    fprintf(stderr, " \\connect <dbname|-> <user> -- connect to new database (currently '%s')\n", PQdb(ps->db));
-    fprintf(stderr, " \\copy table {from | to} <fname>\n");
-    fprintf(stderr, " \\d [<table>] -- list tables and indicies in database or columns in <table>, * for all\n");
-    fprintf(stderr, " \\di          -- list only indicies in database\n");
-    fprintf(stderr, " \\ds          -- list only sequences in database\n");
-    fprintf(stderr, " \\dt          -- list only tables in database\n");
-    fprintf(stderr, " \\e [<fname>] -- edit the current query buffer or <fname>, \\E execute too\n");
-    fprintf(stderr, " \\f [<sep>]   -- change field separater (currently '%s')\n", ps->opt.fieldSep);
-    fprintf(stderr, " \\g [<fname>] [|<cmd>] -- send query to backend [and results in <fname> or pipe]\n");
-    fprintf(stderr, " \\h [<cmd>]   -- help on syntax of sql commands, * for all commands\n");
-    fprintf(stderr, " \\H           -- toggle html3 output (currently %s)\n", on(ps->opt.html3));
-    fprintf(stderr, " \\i <fname>   -- read and execute queries from filename\n");
-    fprintf(stderr, " \\l           -- list all databases\n");
-    fprintf(stderr, " \\m           -- toggle monitor-like table display (currently %s)\n", on(ps->opt.standard));
-    fprintf(stderr, " \\o [<fname>] [|<cmd>] -- send all query results to stdout, <fname>, or pipe\n");
-    fprintf(stderr, " \\p           -- print the current query buffer\n");
+    int usePipe = 0;
+    char *pagerenv;
+    FILE *fout;
 
-    fprintf(stderr, "Press ENTER to continue");
-    /* eat up any extra characters typed before ENTER */
-    while ((ch = fgetc(stdin)) != '\r' && ch != '\n')
-    	;
-    fprintf(stderr, " \\q           -- quit\n");
-    fprintf(stderr, " \\r           -- reset(clear) the query buffer\n");
-    fprintf(stderr, " \\s [<fname>] -- print history or save it in <fname>\n");
-    fprintf(stderr, " \\t           -- toggle table headings and row count (currently %s)\n", on(ps->opt.header));
-    fprintf(stderr, " \\T [<html>]  -- set html3.0 <table ...> options (currently '%s')\n", ps->opt.tableOpt ? ps->opt.tableOpt : "");
-    fprintf(stderr, " \\x           -- toggle expanded output (currently %s)\n", on(ps->opt.expanded));
-    fprintf(stderr, " \\z           -- list current grant/revoke permissions\n");
-    fprintf(stderr, " \\! [<cmd>]   -- shell escape or command\n");
+    if ((pagerenv = getenv("PAGER")) && (pagerenv[0] != '\0') && \
+	(fout = popen(pagerenv, "w")))
+    {
+	usePipe = 1;
+	pqsignal(SIGPIPE, SIG_IGN);
+    }
+    else
+	fout = stderr;
+
+    fprintf(fout, " \\?           -- help\n");
+    fprintf(fout, " \\a           -- toggle field-alignment (currenty %s)\n", on(ps->opt.align));
+    fprintf(fout, " \\C [<captn>] -- set html3 caption (currently '%s')\n", ps->opt.caption ? ps->opt.caption : "");
+    fprintf(fout, " \\connect <dbname|-> <user> -- connect to new database (currently '%s')\n", PQdb(ps->db));
+    fprintf(fout, " \\copy table {from | to} <fname>\n");
+    fprintf(fout, " \\d [<table>] -- list tables and indices in database or columns in <table>, * for all\n");
+    fprintf(fout, " \\di          -- list only indices in database\n");
+    fprintf(fout, " \\ds          -- list only sequences in database\n");
+    fprintf(fout, " \\dt          -- list only tables in database\n");
+    fprintf(fout, " \\e [<fname>] -- edit the current query buffer or <fname>, \\E execute too\n");
+    fprintf(fout, " \\f [<sep>]   -- change field separater (currently '%s')\n", ps->opt.fieldSep);
+    fprintf(fout, " \\g [<fname>] [|<cmd>] -- send query to backend [and results in <fname> or pipe]\n");
+    fprintf(fout, " \\h [<cmd>]   -- help on syntax of sql commands, * for all commands\n");
+    fprintf(fout, " \\H           -- toggle html3 output (currently %s)\n", on(ps->opt.html3));
+    fprintf(fout, " \\i <fname>   -- read and execute queries from filename\n");
+    fprintf(fout, " \\l           -- list all databases\n");
+    fprintf(fout, " \\m           -- toggle monitor-like table display (currently %s)\n", on(ps->opt.standard));
+    fprintf(fout, " \\o [<fname>] [|<cmd>] -- send all query results to stdout, <fname>, or pipe\n");
+    fprintf(fout, " \\p           -- print the current query buffer\n");
+    fprintf(fout, " \\q           -- quit\n");
+    fprintf(fout, " \\r           -- reset(clear) the query buffer\n");
+    fprintf(fout, " \\s [<fname>] -- print history or save it in <fname>\n");
+    fprintf(fout, " \\t           -- toggle table headings and row count (currently %s)\n", on(ps->opt.header));
+    fprintf(fout, " \\T [<html>]  -- set html3.0 <table ...> options (currently '%s')\n", ps->opt.tableOpt ? ps->opt.tableOpt : "");
+    fprintf(fout, " \\x           -- toggle expanded output (currently %s)\n", on(ps->opt.expanded));
+    fprintf(fout, " \\z           -- list current grant/revoke permissions\n");
+    fprintf(fout, " \\! [<cmd>]   -- shell escape or command\n");
+
+    if (usePipe)
+    {
+	pclose(fout);
+	pqsignal(SIGPIPE, SIG_DFL);
+    }
 }
 
 static PGresult *
@@ -326,12 +338,12 @@ tableList(PsqlSettings * ps, bool deep_tablelist, char info_type)
  	switch (info_type) {
  		case 't':	fprintf(stderr, "Couldn't find any tables!\n");
  		 		break;
- 		case 'i':	fprintf(stderr, "Couldn't find any indicies!\n");
+ 		case 'i':	fprintf(stderr, "Couldn't find any indices!\n");
  		  		break;
 		case 'S':	fprintf(stderr, "Couldn't find any sequences!\n");
 				break;
  		case 'b':
- 		default:	fprintf(stderr, "Couldn't find any tables, sequences or indicies!\n");
+ 		default:	fprintf(stderr, "Couldn't find any tables, sequences or indices!\n");
  		 		break;
  	}
 	return (-1);
@@ -1030,18 +1042,38 @@ do_help(const char *topic)
 	int             i;	/* Index into QL_HELP[] */
 	bool            help_found;	/* We found the help he asked for */
 
+	int usePipe = 0;
+	char *pagerenv;
+	FILE *fout;
+
+	if ((pagerenv = getenv("PAGER")) && (pagerenv[0] != '\0') && \
+	    (fout = popen(pagerenv, "w")))
+	{
+	    usePipe = 1;
+	    pqsignal(SIGPIPE, SIG_IGN);
+	}
+	else
+	    fout = stderr;
+
 	help_found = false;	/* Haven't found it yet */
 	for (i = 0; QL_HELP[i].cmd; i++) {
 	    if (strcmp(QL_HELP[i].cmd, topic) == 0 ||
 		strcmp(topic, "*") == 0) {
 		help_found = true;
-		printf("Command: %s\n", QL_HELP[i].cmd);
-		printf("Description: %s\n", QL_HELP[i].help);
-		printf("Syntax:\n");
-		printf("%s\n", QL_HELP[i].syntax);
-		printf("\n");
+		fprintf(fout, "Command: %s\n", QL_HELP[i].cmd);
+		fprintf(fout, "Description: %s\n", QL_HELP[i].help);
+		fprintf(fout, "Syntax:\n");
+		fprintf(fout, "%s\n", QL_HELP[i].syntax);
+		fprintf(fout, "\n");
 	    }
 	}
+
+	if (usePipe)
+	{
+	    pclose(fout);
+	    pqsignal(SIGPIPE, SIG_DFL);
+	}
+
 	if (!help_found)
 	    printf("command not found, "
 		   "try \\h with no arguments to see available help\n");
@@ -1145,14 +1177,11 @@ HandleSlashCmds(PsqlSettings * settings,
 	break;
     case 'C':			/* define new caption */
 	if (settings->opt.caption)
-	    free(settings->opt.caption);
-	if (!optarg)
 	{
-	    if (settings->opt.caption)
-	    	free(settings->opt.caption);
+	    free(settings->opt.caption);
 	    settings->opt.caption = NULL;
 	}
-	else if (!(settings->opt.caption = strdup(optarg))) {
+	if (optarg && !(settings->opt.caption = strdup(optarg))) {
 	    perror("malloc");
 	    exit(1);
 	}
@@ -1198,11 +1227,11 @@ HandleSlashCmds(PsqlSettings * settings,
     case 'd':			/* \d describe tables or columns in a table */
  	if (strncmp(cmd, "dt", 2) == 0) {		/* only tables */
  		tableList(settings, 0, 't');
- 	} else if (strncmp(cmd, "di", 2) == 0) {	/* only indicies */
+ 	} else if (strncmp(cmd, "di", 2) == 0) {	/* only indices */
  		tableList(settings, 0, 'i');
 	} else if (strncmp(cmd, "ds", 2) == 0) {	/* only sequences */
 		tableList(settings, 0, 'S');
- 	} else if (!optarg) {				/* show tables, sequences and indicies */
+ 	} else if (!optarg) {				/* show tables, sequences and indices */
  	    tableList(settings, 0, 'b');
  	} else if (strcmp(optarg, "*") == 0) {		/* show everything */
  	    tableList(settings, 0, 'b');
