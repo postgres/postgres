@@ -197,7 +197,7 @@
 #
 #autocommit = true
 #dynamic_library_path = '$libdir'
-#search_path = '$user,public'
+#search_path = '$user,public'	# schema names
 #datestyle = 'iso, us'
 #timezone = unknown		# actually, defaults to TZ environment setting
 #australian_timezones = false
