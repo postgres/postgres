@@ -7,7 +7,7 @@
 #
 #
 # IDENTIFICATION
-#    $Header: /cvsroot/pgsql/src/Makefile.global.in,v 1.20 1997/04/12 10:32:03 scrappy Exp $
+#    $Header: /cvsroot/pgsql/src/Makefile.global.in,v 1.21 1997/04/15 18:35:41 scrappy Exp $
 #
 # NOTES
 #    Essentially all Postgres make files include this file and use the 
@@ -137,7 +137,7 @@ OIDNAMELEN= 36
 
 # Commenting out CASSERT will make things go a LOT faster, but you will
 # also loose a lot of useful error-checking.
-CASSERT= true
+CASSERT= @CASSERT@
 
 # Comment out ENFORCE_ALIGNMENT if you do NOT want unaligned access to
 # multi-byte types to generate a bus error.
@@ -302,10 +302,6 @@ endif
 
 ifdef COPT
    CFLAGS+= $(COPT)
-endif
-
-ifndef CASSERT
-   CFLAGS+= -DNO_ASSERT_CHECKING
 endif
 
 ifdef PROFILE

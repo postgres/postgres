@@ -234,6 +234,38 @@ else
 fi
 export NOHBA
 
+dnl Unless we specify the command line options
+dnl     --disable cassert       to explicitly disable it
+dnl     --enable cassert        to explicitly enable it
+dnl If you do not explicitly do it, it asks you here.
+dnl We need some explanatory text here.
+echo ""
+if test "$enable_cassert" = "no"
+then
+	echo "ASSERT CHECKING disabled"
+        AC_DEFINE(NO_ASSERT_CHECKING)
+elif test "$enable_cassert" = "yes"
+then
+	echo "ASSERT CHECKING enabled"
+else
+	echo "Disabling ASSERT CHECKING will make things go a LOT faster, but" 
+	echo "you will also loose a lot of useful error-checking"
+	echo ""
+	echo "Developers should *always* have this enabled"
+        $ECHO_N "Enable CASSERT { no }: $ECHO_C"
+        read a
+        if test "$a" = "yes"
+        then
+		echo "ASSERT CHECKING enabled"
+        else
+		echo "ASSERT CHECKING disabled"
+                AC_DEFINE(NO_ASSERT_CHECKING)
+        fi
+        echo "**************************************************************"
+fi
+echo ""
+
+
 AC_CONFIG_HEADER(include/config.h)
 
 dnl Checks for programs.

@@ -107,6 +107,9 @@
 /* Set to 1 if you want to USE_LOCALE */
 #undef USE_LOCALE
 
+/* Set to 1 if you want to Disable ASSERT CHECKING */
+#undef NO_ASSERT_CHECKING
+
 /*
  * Code below this point should not require changes
  */
