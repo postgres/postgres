@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/runtime.sgml,v 1.196 2003/07/27 04:35:53 momjian Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/runtime.sgml,v 1.197 2003/07/29 00:03:17 tgl Exp $
 -->
 
 <Chapter Id="runtime">
@@ -2101,9 +2101,17 @@ SET ENABLE_SEQSCAN TO OFF;
       <listitem>
        <para>
         Sets the display format for date and time values, as well as
-        the rules for interpreting ambiguous date input values.  See
-        <xref linkend="datatype-datetime"> for more information.  The
-        default is <literal>ISO, US</>.
+        the rules for interpreting ambiguous date input values.
+	For historical reasons, this variable contains two independent
+	components: the output format specification (<literal>ISO</>,
+	<literal>Postgres</>, <literal>SQL</>, or <literal>German</>) and
+	the date field order specification (<literal>DMY</>, <literal>MDY</>,
+	or <literal>YMD</>).  These can be set separately or together.
+	The keywords <literal>Euro</> and <literal>European</> are synonyms
+	for <literal>DMY</>; the keywords <literal>US</>, <literal>NonEuro</>,
+	and <literal>NonEuropean</> are synonyms for <literal>MDY</>.
+	See <xref linkend="datatype-datetime"> for more information.  The
+        default is <literal>ISO, MDY</>.
        </para>
       </listitem>
      </varlistentry>

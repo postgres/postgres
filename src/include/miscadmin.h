@@ -12,7 +12,7 @@
  * Portions Copyright (c) 1996-2002, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Id: miscadmin.h,v 1.128 2003/07/27 21:49:54 tgl Exp $
+ * $Id: miscadmin.h,v 1.129 2003/07/29 00:03:18 tgl Exp $
  *
  * NOTES
  *	  some of the information in this file should be moved to
@@ -135,34 +135,52 @@ extern char pg_pathname[];
  */
 extern DLLIMPORT Oid MyDatabaseId;
 
-/* Date/Time Configuration
+/*
+ * Date/Time Configuration
  *
- * Constants to pass info from runtime environment:
- *	USE_POSTGRES_DATES specifies traditional postgres format for output.
- *	USE_ISO_DATES specifies ISO-compliant format for output.
- *	USE_SQL_DATES specified Oracle/Ingres-compliant format for output.
- *	USE_GERMAN_DATES specifies German-style dd.mm/yyyy date format.
+ * DateStyle defines the output formatting choice for date/time types:
+ *	USE_POSTGRES_DATES specifies traditional Postgres format
+ *	USE_ISO_DATES specifies ISO-compliant format
+ *	USE_SQL_DATES specifies Oracle/Ingres-compliant format
+ *	USE_GERMAN_DATES specifies German-style dd.mm/yyyy
  *
- * DateStyle specifies preference for date formatting for output.
- * EuroDates if client prefers dates interpreted and written w/European conventions.
+ * DateOrder defines the field order to be assumed when reading an
+ * ambiguous date (anything not in YYYY-MM-DD format, with a four-digit
+ * year field first, is taken to be ambiguous):
+ *	DATEORDER_YMD specifies field order yy-mm-dd
+ *	DATEORDER_DMY specifies field order dd-mm-yy ("European" convention)
+ *	DATEORDER_MDY specifies field order mm-dd-yy ("US" convention)
  *
- * HasCTZSet is true if user has set timezone as a numeric offset from UTC.
- * If so, CTimeZone is the timezone offset in seconds (using the Unix-ish
- * sign convention, ie, positive offset is west of UTC, rather than the
- * SQL-ish convention that positive is east of UTC).
+ * In the Postgres and SQL DateStyles, DateOrder also selects output field
+ * order: day comes before month in DMY style, else month comes before day.
+ *
+ * The user-visible "DateStyle" run-time parameter subsumes both of these.
  */
 
-#define MAXTZLEN		10		/* max TZ name len, not counting tr. null */
-
+/* valid DateStyle values */
 #define USE_POSTGRES_DATES		0
 #define USE_ISO_DATES			1
 #define USE_SQL_DATES			2
 #define USE_GERMAN_DATES		3
 
+/* valid DateOrder values */
+#define DATEORDER_YMD			0
+#define DATEORDER_DMY			1
+#define DATEORDER_MDY			2
+
 extern int	DateStyle;
-extern bool EuroDates;
+extern int	DateOrder;
+
+/*
+ * HasCTZSet is true if user has set timezone as a numeric offset from UTC.
+ * If so, CTimeZone is the timezone offset in seconds (using the Unix-ish
+ * sign convention, ie, positive offset is west of UTC, rather than the
+ * SQL-ish convention that positive is east of UTC).
+ */
 extern bool HasCTZSet;
 extern int	CTimeZone;
+
+#define MAXTZLEN		10		/* max TZ name len, not counting tr. null */
 
 extern bool enableFsync;
 extern bool allowSystemTableMods;

@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/datetime.sgml,v 2.31 2003/04/07 01:29:25 petere Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/datetime.sgml,v 2.32 2003/07/29 00:03:17 tgl Exp $
 -->
 
  <appendix id="datetime-appendix">
@@ -27,7 +27,7 @@ $Header: /cvsroot/pgsql/doc/src/sgml/datetime.sgml,v 2.31 2003/04/07 01:29:25 pe
    <title>Date/Time Input Interpretation</title>
 
    <para>
-    The date/time type inputs are all decoded using the following routine.
+    The date/time type inputs are all decoded using the following procedure.
    </para>
 
    <procedure>
@@ -103,7 +103,7 @@ $Header: /cvsroot/pgsql/doc/src/sgml/datetime.sgml,v 2.31 2003/04/07 01:29:25 pe
 
       <step>
        <para>
-	If not found, throw an error.
+	If still not found, throw an error.
        </para>
       </step>
      </substeps>
@@ -111,70 +111,47 @@ $Header: /cvsroot/pgsql/doc/src/sgml/datetime.sgml,v 2.31 2003/04/07 01:29:25 pe
     
     <step>
      <para>
-      The token is a number or number field.
+      When the token is a number or number field:
      </para>
 
      <substeps>
       <step>
        <para>
-	If there are more than 4 digits, 
+	If there are eight or six digits,
 	and if no other date fields have been previously read, then interpret 
-	as a <quote>concatenated date</quote> (e.g., <literal>19990118</literal>). 8
-	and 6 digits are interpreted as year, month, and day, while 7
-	and 5 digits are interpreted as year, day of year, respectively.
+	as a <quote>concatenated date</quote> (e.g.,
+	<literal>19990118</literal> or <literal>990118</literal>).
+	The interpretation is <literal>YYYYMMDD</> or <literal>YYMMDD</>.
        </para>
       </step>
 
       <step>
        <para>
 	If the token is three digits
-	and a year has already been decoded, then interpret as day of year.
+	and a year has already been read, then interpret as day of year.
        </para>
       </step>
       
       <step>
        <para>
 	If four or six digits and a year has already been read, then
-	interpret as a time.
+	interpret as a time (<literal>HHMM</> or <literal>HHMMSS</>).
        </para>
       </step>
 
       <step>
        <para>
-	If four or more digits, then interpret as a year.
+	If three or more digits and no date fields have yet been found,
+	interpret as a year (this forces yy-mm-dd ordering of the remaining
+	date fields).
        </para>
       </step>
 
       <step>
        <para>
-	If in European date mode, and if the day field has not yet been read,
-	and if the value is less than or equal to 31, then interpret as a day.
-       </para>
-      </step>
-
-      <step>
-       <para>
-	If the month field has not yet been read,
-	and if the value is less than or equal to 12, then interpret as a month.
-       </para>
-      </step>
-
-      <step>
-       <para>
-	If the day field has not yet been read,
-	and if the value is less than or equal to 31, then interpret as a day.
-       </para>
-      </step>
-
-      <step>
-       <para>
-	If two digits or four or more digits, then interpret as a year.
-       </para>
-      </step>
-
-      <step>
-       <para>
-	Otherwise, throw an error.
+        Otherwise the date field ordering is assumed to follow the
+	<varname>DateStyle</> setting: mm-dd-yy, dd-mm-yy, or yy-mm-dd.
+	Throw an error if a month or day field is found to be out of range.
        </para>
       </step>
      </substeps>

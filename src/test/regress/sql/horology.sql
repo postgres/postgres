@@ -3,7 +3,7 @@
 --
 -- needed so tests pass even in Australia
 SET australian_timezones = 'off';
-SET DateStyle = 'Postgres,US';
+SET DateStyle = 'Postgres, MDY';
 
 --
 -- Test various input formats
@@ -20,7 +20,11 @@ SELECT timestamp with time zone '2001-12-27 04:05:06.789-08';
 SELECT timestamp with time zone '2001.12.27 04:05:06.789-08';
 SELECT timestamp with time zone '2001/12/27 04:05:06.789-08';
 SELECT timestamp with time zone '12/27/2001 04:05:06.789-08';
+-- should fail in mdy mode:
 SELECT timestamp with time zone '27/12/2001 04:05:06.789-08';
+set datestyle to dmy;
+SELECT timestamp with time zone '27/12/2001 04:05:06.789-08';
+reset datestyle;
 SELECT timestamp with time zone 'Y2001M12D27H04M05S06.789+08';
 SELECT timestamp with time zone 'Y2001M12D27H04M05S06.789-08';
 SELECT timestamp with time zone 'Y2001M12D27H04MM05S06.789+08';
@@ -36,8 +40,8 @@ SELECT timestamp with time zone 'J2452271T040506-08';
 SELECT timestamp with time zone 'J2452271T040506.789+08';
 SELECT timestamp with time zone 'J2452271T040506.789-08';
 -- German/European-style dates with periods as delimiters
-SELECT timestamp with time zone '27.12.2001 04:05:06.789+08';
-SELECT timestamp with time zone '27.12.2001 04:05:06.789-08';
+SELECT timestamp with time zone '12.27.2001 04:05:06.789+08';
+SELECT timestamp with time zone '12.27.2001 04:05:06.789-08';
 SET DateStyle = 'German';
 SELECT timestamp with time zone '27.12.2001 04:05:06.789+08';
 SELECT timestamp with time zone '27.12.2001 04:05:06.789-08';
@@ -53,7 +57,7 @@ SELECT time with time zone 'T040506.789+08';
 SELECT time with time zone 'T040506.789-08';
 SELECT time with time zone 'T040506.789 +08';
 SELECT time with time zone 'T040506.789 -08';
-SET DateStyle = 'Postgres,US';
+SET DateStyle = 'Postgres, MDY';
 
 --
 -- date, time arithmetic

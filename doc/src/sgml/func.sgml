@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/func.sgml,v 1.160 2003/07/17 00:55:36 tgl Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/func.sgml,v 1.161 2003/07/29 00:03:17 tgl Exp $
 PostgreSQL documentation
 -->
 
@@ -6503,7 +6503,7 @@ SELECT current_setting('datestyle');
 
  current_setting
 -----------------
- ISO, US
+ ISO, MDY
 (1 row)
 </programlisting>
    </para>

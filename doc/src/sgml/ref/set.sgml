@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/ref/set.sgml,v 1.79 2003/07/17 00:55:36 tgl Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/ref/set.sgml,v 1.80 2003/07/29 00:03:17 tgl Exp $
 PostgreSQL documentation
 -->
 
@@ -283,9 +283,10 @@ SET search_path TO my_schema, public;
 
   <para>
    Set the style of date to traditional
-   <productname>POSTGRES</productname> with European conventions:
+   <productname>POSTGRES</productname> with <quote>day before month</>
+   input convention:
 <screen>
-SET datestyle TO postgres,european;
+SET datestyle TO postgres, dmy;
 </screen>
   </para>
 

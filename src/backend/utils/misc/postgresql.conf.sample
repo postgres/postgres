@@ -212,7 +212,7 @@
 
 # - Locale and Formatting -
 
-#datestyle = 'iso, us'
+#datestyle = 'iso, mdy'
 #timezone = unknown		# actually, defaults to TZ environment setting
 #australian_timezones = false
 #extra_float_digits = 0		# min -15, max 2

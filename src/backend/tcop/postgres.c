@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/tcop/postgres.c,v 1.352 2003/07/27 21:49:54 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/tcop/postgres.c,v 1.353 2003/07/29 00:03:18 tgl Exp $
  *
  * NOTES
  *	  this is the "main" module of the postgres backend and
@@ -1958,7 +1958,7 @@ usage(char *progname)
 	printf("  -c NAME=VALUE   set run-time parameter\n");
 	printf("  -d 0-5          debugging level (0 is off)\n");
 	printf("  -D DATADIR      database directory\n");
-	printf("  -e              use European date format\n");
+	printf("  -e              use European date input format (DMY)\n");
 	printf("  -E              echo query before execution\n");
 	printf("  -F              turn fsync off\n");
 	printf("  -N              do not use newline as interactive query delimiter\n");
@@ -2155,7 +2155,7 @@ PostgresMain(int argc, char *argv[], const char *username)
 			case 'e':
 
 				/*
-				 * Use european date formats.
+				 * Use European date input format (DMY)
 				 */
 				SetConfigOption("datestyle", "euro", ctx, gucsource);
 				break;
@@ -2626,7 +2626,7 @@ PostgresMain(int argc, char *argv[], const char *username)
 	if (!IsUnderPostmaster)
 	{
 		puts("\nPOSTGRES backend interactive interface ");
-		puts("$Revision: 1.352 $ $Date: 2003/07/27 21:49:54 $\n");
+		puts("$Revision: 1.353 $ $Date: 2003/07/29 00:03:18 $\n");
 	}
 
 	/*

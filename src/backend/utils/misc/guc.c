@@ -10,7 +10,7 @@
  * Written by Peter Eisentraut <peter_e@gmx.net>.
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/misc/guc.c,v 1.143 2003/07/28 19:31:32 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/misc/guc.c,v 1.144 2003/07/29 00:03:18 tgl Exp $
  *
  *--------------------------------------------------------------------
  */
@@ -1338,13 +1338,13 @@ static struct config_string ConfigureNamesString[] =
 
 	{
 		{"DateStyle", PGC_USERSET, CLIENT_CONN_LOCALE,
-			gettext_noop("The display format for date and time values"),
-			gettext_noop("As well as the rules for interpreting ambiguous date "
-						 "input values"),
+			gettext_noop("The display format for date and time values, "),
+			gettext_noop("as well as the rules for interpreting ambiguous "
+						 "date input values"),
 			GUC_LIST_INPUT | GUC_REPORT
 		},
 		&datestyle_string,
-		"ISO, US", assign_datestyle, NULL
+		"ISO, MDY", assign_datestyle, NULL
 	},
 
 	{

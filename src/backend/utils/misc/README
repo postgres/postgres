@@ -1,4 +1,4 @@
-$Header: /cvsroot/pgsql/src/backend/utils/misc/README,v 1.1 2002/05/17 01:19:18 tgl Exp $
+$Header: /cvsroot/pgsql/src/backend/utils/misc/README,v 1.2 2003/07/29 00:03:18 tgl Exp $
 
 
 GUC IMPLEMENTATION NOTES
@@ -49,8 +49,8 @@ variables, but the return value is handled differently:
 	malloc'd (not palloc'd!!!) string --- assign that value instead
 The third choice is allowed in case the assign_hook wants to return a
 "canonical" version of the new value.  For example, the assign_hook for
-datestyle always returns a string that includes both basic datestyle and
-us/euro option, although the input might have specified only one.
+datestyle always returns a string that includes both output and input
+datestyle options, although the input might have specified only one.
 
 If a show_hook is provided, it points to a function of the signature
 	const char *show_hook(void)

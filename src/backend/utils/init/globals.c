@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/init/globals.c,v 1.72 2003/06/27 14:45:30 petere Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/init/globals.c,v 1.73 2003/07/29 00:03:18 tgl Exp $
  *
  * NOTES
  *	  Globals used all over the place should be declared here and not
@@ -62,7 +62,7 @@ bool		IsUnderPostmaster = false;
 bool		ExitOnAnyError = false;
 
 int			DateStyle = USE_ISO_DATES;
-bool		EuroDates = false;
+int			DateOrder = DATEORDER_MDY;
 bool		HasCTZSet = false;
 int			CTimeZone = 0;
 

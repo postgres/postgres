@@ -3,7 +3,7 @@
  *
  * Copyright 2000-2002 by PostgreSQL Global Development Group
  *
- * $Header: /cvsroot/pgsql/src/bin/psql/tab-complete.c,v 1.81 2003/06/30 16:47:01 tgl Exp $
+ * $Header: /cvsroot/pgsql/src/bin/psql/tab-complete.c,v 1.82 2003/07/29 00:03:18 tgl Exp $
  */
 
 /*----------------------------------------------------------------------
@@ -1187,8 +1187,10 @@ psql_completion(char *text, int start, int end)
 	{
 		if (strcasecmp(prev2_wd, "DateStyle") == 0)
 		{
-			char	   *my_list[] = {"'ISO'", "'SQL'", "'Postgres'",
-			"'European'", "'NonEuropean'", "'German'", "DEFAULT", NULL};
+			char	   *my_list[] = {"ISO", "SQL", "Postgres", "German",
+									 "YMD", "DMY", "MDY",
+									 "US", "European", "NonEuropean",
+									 "DEFAULT", NULL};
 
 			COMPLETE_WITH_LIST(my_list);
 		}

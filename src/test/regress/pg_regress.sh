@@ -1,5 +1,5 @@
 #! /bin/sh
-# $Header: /cvsroot/pgsql/src/test/regress/Attic/pg_regress.sh,v 1.31 2003/05/14 03:26:03 tgl Exp $
+# $Header: /cvsroot/pgsql/src/test/regress/Attic/pg_regress.sh,v 1.32 2003/07/29 00:03:19 tgl Exp $
 
 me=`basename $0`
 : ${TMPDIR=/tmp}
@@ -191,7 +191,7 @@ esac
 # ----------
 
 PGTZ='PST8PDT'; export PGTZ
-PGDATESTYLE='ISO,US'; export PGDATESTYLE
+PGDATESTYLE='ISO, MDY'; export PGDATESTYLE
 
 
 # ----------
@@ -432,7 +432,7 @@ PSQL="$bindir/psql -q -X $psql_options"
 # ----------
 
 PGTZ='PST8PDT'; export PGTZ
-PGDATESTYLE='Postgres,US'; export PGDATESTYLE
+PGDATESTYLE='Postgres, MDY'; export PGDATESTYLE
 
 
 # ----------

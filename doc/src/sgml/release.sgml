@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/release.sgml,v 1.202 2003/07/25 09:00:17 petere Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/release.sgml,v 1.203 2003/07/29 00:03:17 tgl Exp $
 -->
 
 <appendix id="release">
@@ -26,6 +26,8 @@ worries about funny characters.
 <literallayout><![CDATA[
 EXTRACT(TIMEZONE) and SET/SHOW TIMEZONE now follow SQL sign convention
   (positive = east of UTC)
+DATESTYLE can now be set to DMY, YMD, or MDY to specify input field order
+Input date order must now be YYYY-MM-DD (with 4-digit year) or match DATESTYLE
 Output of SHOW DATESTYLE is now in the same format accepted by SET DATESTYLE
 PL/Python is now an untrusted language, and is renamed to 'plpythonu'
 Dollar sign ($) is no longer allowed in operator names

@@ -3,7 +3,7 @@
 --
 -- needed so tests pass even in Australia
 SET australian_timezones = 'off';
-SET DateStyle = 'Postgres,US';
+SET DateStyle = 'Postgres, MDY';
 --
 -- Test various input formats
 --
@@ -79,12 +79,17 @@ SELECT timestamp with time zone '12/27/2001 04:05:06.789-08';
  Thu Dec 27 04:05:06.789 2001 PST
 (1 row)
 
+-- should fail in mdy mode:
+SELECT timestamp with time zone '27/12/2001 04:05:06.789-08';
+ERROR:  invalid input syntax for timestamp with time zone: "27/12/2001 04:05:06.789-08"
+set datestyle to dmy;
 SELECT timestamp with time zone '27/12/2001 04:05:06.789-08';
            timestamptz            
 ----------------------------------
- Thu Dec 27 04:05:06.789 2001 PST
+ Thu 27 Dec 04:05:06.789 2001 PST
 (1 row)
 
+reset datestyle;
 SELECT timestamp with time zone 'Y2001M12D27H04M05S06.789+08';
            timestamptz            
 ----------------------------------
@@ -170,13 +175,13 @@ SELECT timestamp with time zone 'J2452271T040506.789-08';
 (1 row)
 
 -- German/European-style dates with periods as delimiters
-SELECT timestamp with time zone '27.12.2001 04:05:06.789+08';
+SELECT timestamp with time zone '12.27.2001 04:05:06.789+08';
            timestamptz            
 ----------------------------------
  Wed Dec 26 12:05:06.789 2001 PST
 (1 row)
 
-SELECT timestamp with time zone '27.12.2001 04:05:06.789-08';
+SELECT timestamp with time zone '12.27.2001 04:05:06.789-08';
            timestamptz            
 ----------------------------------
  Thu Dec 27 04:05:06.789 2001 PST
@@ -257,7 +262,7 @@ SELECT time with time zone 'T040506.789 -08';
  04:05:06.7890-08
 (1 row)
 
-SET DateStyle = 'Postgres,US';
+SET DateStyle = 'Postgres, MDY';
 --
 -- date, time arithmetic
 --
@@ -2385,9 +2390,9 @@ DROP TABLE TEMP_TIMESTAMP;
 --
 SET DateStyle TO 'US,Postgres';
 SHOW DateStyle;
-  DateStyle   
---------------
- Postgres, US
+   DateStyle   
+---------------
+ Postgres, MDY
 (1 row)
 
 SELECT '' AS "64", d1 AS us_postgres FROM TIMESTAMP_TBL;
@@ -2557,7 +2562,7 @@ SET DateStyle TO 'US,SQL';
 SHOW DateStyle;
  DateStyle 
 -----------
- SQL, US
+ SQL, MDY
 (1 row)
 
 SELECT '' AS "64", d1 AS us_sql FROM TIMESTAMP_TBL;
@@ -2643,9 +2648,9 @@ SELECT '' AS seven, f1 AS us_sql FROM ABSTIME_TBL;
 
 SET DateStyle TO 'European,Postgres';
 SHOW DateStyle;
-     DateStyle      
---------------------
- Postgres, European
+   DateStyle   
+---------------
+ Postgres, DMY
 (1 row)
 
 INSERT INTO TIMESTAMP_TBL VALUES('13/06/1957');
@@ -2739,9 +2744,9 @@ SELECT '' AS seven, f1 AS european_postgres FROM ABSTIME_TBL;
 
 SET DateStyle TO 'European,ISO';
 SHOW DateStyle;
-   DateStyle   
----------------
- ISO, European
+ DateStyle 
+-----------
+ ISO, DMY
 (1 row)
 
 SELECT '' AS "65", d1 AS european_iso FROM TIMESTAMP_TBL;
@@ -2828,9 +2833,9 @@ SELECT '' AS seven, f1 AS european_iso FROM ABSTIME_TBL;
 
 SET DateStyle TO 'European,SQL';
 SHOW DateStyle;
-   DateStyle   
----------------
- SQL, European
+ DateStyle 
+-----------
+ SQL, DMY
 (1 row)
 
 SELECT '' AS "65", d1 AS european_sql FROM TIMESTAMP_TBL;

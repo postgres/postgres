@@ -9,7 +9,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/commands/variable.c,v 1.84 2003/07/28 00:09:14 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/commands/variable.c,v 1.85 2003/07/29 00:03:18 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -51,10 +51,10 @@ const char *
 assign_datestyle(const char *value, bool doit, bool interactive)
 {
 	int			newDateStyle = DateStyle;
-	bool		newEuroDates = EuroDates;
+	int			newDateOrder = DateOrder;
 	bool		ok = true;
-	int			dcnt = 0,
-				ecnt = 0;
+	int			scnt = 0,
+				ocnt = 0;
 	char	   *rawstring;
 	char	   *result;
 	List	   *elemlist;
@@ -85,38 +85,43 @@ assign_datestyle(const char *value, bool doit, bool interactive)
 		if (strcasecmp(tok, "ISO") == 0)
 		{
 			newDateStyle = USE_ISO_DATES;
-			dcnt++;
+			scnt++;
 		}
 		else if (strcasecmp(tok, "SQL") == 0)
 		{
 			newDateStyle = USE_SQL_DATES;
-			dcnt++;
+			scnt++;
 		}
 		else if (strncasecmp(tok, "POSTGRES", 8) == 0)
 		{
 			newDateStyle = USE_POSTGRES_DATES;
-			dcnt++;
+			scnt++;
 		}
 		else if (strcasecmp(tok, "GERMAN") == 0)
 		{
 			newDateStyle = USE_GERMAN_DATES;
-			dcnt++;
-			if ((ecnt > 0) && (!newEuroDates))
-				ok = false;
-			newEuroDates = TRUE;
+			scnt++;
+			/* GERMAN also sets DMY, unless explicitly overridden */
+			if (ocnt == 0)
+				newDateOrder = DATEORDER_DMY;
 		}
-		else if (strncasecmp(tok, "EURO", 4) == 0)
+		else if (strcasecmp(tok, "YMD") == 0)
 		{
-			newEuroDates = TRUE;
-			ecnt++;
+			newDateOrder = DATEORDER_YMD;
+			ocnt++;
 		}
-		else if (strcasecmp(tok, "US") == 0
-				 || strncasecmp(tok, "NONEURO", 7) == 0)
+		else if (strcasecmp(tok, "DMY") == 0 ||
+				 strncasecmp(tok, "EURO", 4) == 0)
 		{
-			newEuroDates = FALSE;
-			ecnt++;
-			if ((dcnt > 0) && (newDateStyle == USE_GERMAN_DATES))
-				ok = false;
+			newDateOrder = DATEORDER_DMY;
+			ocnt++;
+		}
+		else if (strcasecmp(tok, "MDY") == 0 ||
+				 strcasecmp(tok, "US") == 0 ||
+				 strncasecmp(tok, "NONEURO", 7) == 0)
+		{
+			newDateOrder = DATEORDER_MDY;
+			ocnt++;
 		}
 		else if (strcasecmp(tok, "DEFAULT") == 0)
 		{
@@ -128,15 +133,17 @@ assign_datestyle(const char *value, bool doit, bool interactive)
 			 * to handle constructs like "DEFAULT, ISO".
 			 */
 			int			saveDateStyle = DateStyle;
-			bool		saveEuroDates = EuroDates;
+			int			saveDateOrder = DateOrder;
 			const char *subval;
 
 			subval = assign_datestyle(GetConfigOptionResetString("datestyle"),
 									  true, interactive);
-			newDateStyle = DateStyle;
-			newEuroDates = EuroDates;
+			if (scnt == 0)
+				newDateStyle = DateStyle;
+			if (ocnt == 0)
+				newDateOrder = DateOrder;
 			DateStyle = saveDateStyle;
-			EuroDates = saveEuroDates;
+			DateOrder = saveDateOrder;
 			if (!subval)
 			{
 				ok = false;
@@ -145,8 +152,6 @@ assign_datestyle(const char *value, bool doit, bool interactive)
 			/* Here we know that our own return value is always malloc'd */
 			/* when doit is true */
 			free((char *) subval);
-			dcnt++;
-			ecnt++;
 		}
 		else
 		{
@@ -160,7 +165,7 @@ assign_datestyle(const char *value, bool doit, bool interactive)
 		}
 	}
 
-	if (dcnt > 1 || ecnt > 1)
+	if (scnt > 1 || ocnt > 1)
 		ok = false;
 
 	pfree(rawstring);
@@ -203,14 +208,25 @@ assign_datestyle(const char *value, bool doit, bool interactive)
 			strcpy(result, "Postgres");
 			break;
 	}
-	strcat(result, newEuroDates ? ", European" : ", US");
+	switch (newDateOrder)
+	{
+		case DATEORDER_YMD:
+			strcat(result, ", YMD");
+			break;
+		case DATEORDER_DMY:
+			strcat(result, ", DMY");
+			break;
+		default:
+			strcat(result, ", MDY");
+			break;
+	}
 
 	/*
 	 * Finally, it's safe to assign to the global variables; the
 	 * assignment cannot fail now.
 	 */
 	DateStyle = newDateStyle;
-	EuroDates = newEuroDates;
+	DateOrder = newDateOrder;
 
 	return result;
 }

@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/datatype.sgml,v 1.120 2003/07/18 03:45:06 momjian Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/datatype.sgml,v 1.121 2003/07/29 00:03:17 tgl Exp $
 -->
 
  <chapter id="datatype">
@@ -1346,15 +1346,12 @@ SELECT b, char_length(b) FROM test2;
      Date and time input is accepted in almost any reasonable format, including
      ISO 8601, <acronym>SQL</acronym>-compatible, 
      traditional <productname>POSTGRES</productname>, and others.
-     For some formats, ordering of month and day in date input can be
+     For some formats, ordering of month, day, and year in date input is
      ambiguous and there is support for specifying the expected
-     ordering of these fields.
-     The command
-     <literal>SET datestyle TO 'US'</literal> 
-     or <literal>SET datestyle TO 'NonEuropean'</literal>
-     specifies the variant <quote>month before day</quote>, the command
-     <literal>SET datestyle TO 'European'</literal> sets the variant
-     <quote>day before month</quote>.
+     ordering of these fields.  Set the <varname>datestyle</> parameter
+     to <literal>MDY</> to select month-day-year interpretation,
+     <literal>DMY</> to select day-month-year interpretation, or
+     <literal>YMD</> to select year-month-day interpretation.
     </para>
 
     <para>
@@ -1410,34 +1407,40 @@ SELECT b, char_length(b) FROM test2;
        <tbody>
 	<row>
 	 <entry>January 8, 1999</entry>
-	 <entry>unambiguous</entry>
+	 <entry>unambiguous in any datestyle input mode</entry>
 	</row>
 	<row>
 	 <entry>1999-01-08</entry>
-	 <entry>ISO-8601 format, preferred</entry>
+	 <entry>ISO-8601, January 8 in any mode
+	 (recommended format)</entry>
 	</row>
 	<row>
 	 <entry>1/8/1999</entry>
-	 <entry>ambiguous (January 8 in U.S. mode; August 1 in European mode)</entry>
+	 <entry>January 8 in <literal>MDY</> mode;
+	  August 1 in <literal>DMY</> mode</entry>
 	</row>
 	<row>
 	 <entry>1/18/1999</entry>
-	 <entry>U.S. notation; January 18 in any mode</entry>
+	 <entry>January 18 in <literal>MDY</> mode;
+	  rejected in other modes</entry>
+	</row>
+	<row>
+	 <entry>01/02/03</entry>
+	 <entry>January 2, 2003 in <literal>MDY</> mode;
+	  February 1, 2003 in <literal>DMY</> mode;
+	  February 3, 2001 in <literal>YMD</> mode
+	 </entry>
 	</row>
 	<row>
 	 <entry>19990108</entry>
-	 <entry>ISO-8601; year, month, day</entry>
+	 <entry>ISO-8601; January 8, 1999 in any mode</entry>
 	</row>
 	<row>
 	 <entry>990108</entry>
-	 <entry>ISO-8601; year, month, day</entry>
+	 <entry>ISO-8601; January 8, 1999 in any mode</entry>
 	</row>
 	<row>
 	 <entry>1999.008</entry>
-	 <entry>year and day of year</entry>
-	</row>
-	<row>
-	 <entry>99008</entry>
 	 <entry>year and day of year</entry>
 	</row>
 	<row>
@@ -1480,7 +1483,8 @@ SELECT b, char_length(b) FROM test2;
      <para>
       Valid input for these types consists of a time of day followed
       by an optional time zone. (See <xref
-      linkend="datatype-datetime-time-table">.)  If a time zone is
+      linkend="datatype-datetime-time-table"> 
+      and <xref linkend="datatype-timezone-table">.)  If a time zone is
       specified in the input for <type>time without time zone</type>,
       it is silently ignored.
      </para>
@@ -1539,14 +1543,43 @@ SELECT b, char_length(b) FROM test2;
 	 <entry>040506-08</entry>
 	 <entry>ISO 8601</entry>
 	</row>
+	<row>
+	 <entry>04:05:06 PST</entry>
+	 <entry>timezone specified by name</entry>
+	</row>
        </tbody>
       </tgroup>
      </table>
 
-     <para>
-      Refer to <xref linkend="datatype-timezone-table"> for
-      more examples of time zones.
-     </para>
+      <table tocentry="1" id="datatype-timezone-table">
+       <title>Time Zone Input</title>
+       <tgroup cols="2">
+	<thead>
+	 <row>
+	  <entry>Example</entry>
+	  <entry>Description</entry>
+	 </row>
+	</thead>
+	<tbody>
+	 <row>
+	  <entry>PST</entry>
+	  <entry>Pacific Standard Time</entry>
+	 </row>
+	 <row>
+	  <entry>-8:00</entry>
+	  <entry>ISO-8601 offset for PST</entry>
+	 </row>
+	 <row>
+	  <entry>-800</entry>
+	  <entry>ISO-8601 offset for PST</entry>
+	 </row>
+	 <row>
+	  <entry>-8</entry>
+	  <entry>ISO-8601 offset for PST</entry>
+	 </row>
+	</tbody>
+       </tgroup>
+      </table>
     </sect3>
 
     <sect3>
@@ -1571,8 +1604,7 @@ SELECT b, char_length(b) FROM test2;
       Valid input for the time stamp types consists of a concatenation
       of a date and a time, followed by an optional
       <literal>AD</literal> or <literal>BC</literal>, followed by an
-      optional time zone. (See <xref
-      linkend="datatype-timezone-table">.)  Thus
+      optional time zone. Thus
 
 <programlisting>
 1999-01-08 04:05:06
@@ -1626,36 +1658,6 @@ January 8 04:05:06 1999 PST
       as <varname>timezone</> local time.  A different zone reference can
       be specified for the conversion using <literal>AT TIME ZONE</>.
      </para>
-
-      <table tocentry="1" id="datatype-timezone-table">
-       <title>Time Zone Input</title>
-       <tgroup cols="2">
-	<thead>
-	 <row>
-	  <entry>Example</entry>
-	  <entry>Description</entry>
-	 </row>
-	</thead>
-	<tbody>
-	 <row>
-	  <entry>PST</entry>
-	  <entry>Pacific Standard Time</entry>
-	 </row>
-	 <row>
-	  <entry>-8:00</entry>
-	  <entry>ISO-8601 offset for PST</entry>
-	 </row>
-	 <row>
-	  <entry>-800</entry>
-	  <entry>ISO-8601 offset for PST</entry>
-	 </row>
-	 <row>
-	  <entry>-8</entry>
-	  <entry>ISO-8601 offset for PST</entry>
-	 </row>
-	</tbody>
-       </tgroup>
-      </table>
     </sect3>
 
     <sect3>
@@ -1760,7 +1762,7 @@ January 8 04:05:06 1999 PST
 	 <row>
 	  <entry><literal>now</literal></entry>
           <entry><type>date</type>, <type>time</type>, <type>timestamp</type></entry>
-	  <entry>current transaction time</entry>
+	  <entry>current transaction's start time</entry>
 	 </row>
 	 <row>
 	  <entry><literal>today</literal></entry>
@@ -1805,9 +1807,10 @@ January 8 04:05:06 1999 PST
     </indexterm>
 
     <para>
-     The output format of the date/time types can be set to one of the four styles ISO 8601,
+     The output format of the date/time types can be set to one of the four
+     styles ISO 8601,
      <acronym>SQL</acronym> (Ingres), traditional POSTGRES, and
-     German, using the <literal>SET datestyle</literal>.  The default
+     German, using the command <literal>SET datestyle</literal>.  The default
      is the <acronym>ISO</acronym> format.  (The
      <acronym>SQL</acronym> standard requires the use of the ISO 8601
      format.  The name of the <quote>SQL</quote> output format is a
@@ -1854,9 +1857,10 @@ January 8 04:05:06 1999 PST
      </table>
 
     <para>
-     The <acronym>SQL</acronym> style has European and non-European
-     (U.S.) variants, which determines whether month follows day or
-     vice versa. (See <xref linkend="datatype-datetime-input">
+     In the <acronym>SQL</acronym> and POSTGRES styles, day appears before
+     month if DMY field ordering has been specified, otherwise month appears
+     before day.
+     (See <xref linkend="datatype-datetime-input">
      for how this setting also affects interpretation of input values.)
      <xref linkend="datatype-datetime-output2-table"> shows an
      example.
@@ -1867,21 +1871,26 @@ January 8 04:05:06 1999 PST
       <tgroup cols="3">
        <thead>
 	<row>
-	 <entry>Style Specification</entry>
-	 <entry>Description</entry>
-	 <entry>Example</entry>
+	 <entry>DateStyle setting</entry>
+	 <entry>Input Ordering</entry>
+	 <entry>Example Output</entry>
 	</row>
        </thead>
        <tbody>
 	<row>
-	 <entry>European</entry>
+	 <entry><literal>SQL, DMY</></entry>
 	 <entry><replaceable>day</replaceable>/<replaceable>month</replaceable>/<replaceable>year</replaceable></entry>
 	 <entry>17/12/1997 15:37:16.00 CET</entry>
 	</row>
 	<row>
-	 <entry>US</entry>
+	 <entry><literal>SQL, MDY</></entry>
 	 <entry><replaceable>month</replaceable>/<replaceable>day</replaceable>/<replaceable>year</replaceable></entry>
 	 <entry>12/17/1997 07:37:16.00 PST</entry>
+	</row>
+	<row>
+	 <entry><literal>Postgres, DMY</></entry>
+	 <entry><replaceable>day</replaceable>/<replaceable>month</replaceable>/<replaceable>year</replaceable></entry>
+	 <entry>Wed 17 Dec 07:37:16 1997 PST</entry>
 	</row>
        </tbody>
       </tgroup>
@@ -1903,7 +1912,7 @@ January 8 04:05:06 1999 PST
      The date/time styles can be selected by the user using the
      <command>SET datestyle</command> command, the
      <varname>datestyle</varname> parameter in the
-     <filename>postgresql.conf</filename> configuration file, and the
+     <filename>postgresql.conf</filename> configuration file, or the
      <envar>PGDATESTYLE</envar> environment variable on the server or
      client.  The formatting function <function>to_char</function>
      (see <xref linkend="functions-formatting">) is also available as

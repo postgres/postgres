@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/datetime.c,v 1.107 2003/07/27 04:53:04 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/datetime.c,v 1.108 2003/07/29 00:03:18 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -1425,23 +1425,47 @@ DecodeDateTime(char **field, int *ftype, int nf,
 		fmask |= tmask;
 	}
 
-	/* there is no year zero in AD/BC notation; i.e. "1 BC" == year 0 */
-	if (bc)
+	if (fmask & DTK_M(YEAR))
 	{
-		if (tm->tm_year > 0)
-			tm->tm_year = -(tm->tm_year - 1);
-		else
-			ereport(ERROR,
-					(errcode(ERRCODE_INVALID_DATETIME_FORMAT),
-					 errmsg("inconsistent use of year %04d and \"BC\"",
-							tm->tm_year)));
+		/* there is no year zero in AD/BC notation; i.e. "1 BC" == year 0 */
+		if (bc)
+		{
+			if (tm->tm_year > 0)
+				tm->tm_year = -(tm->tm_year - 1);
+			else
+				ereport(ERROR,
+						(errcode(ERRCODE_INVALID_DATETIME_FORMAT),
+						 errmsg("inconsistent use of year %04d and \"BC\"",
+								tm->tm_year)));
+		}
+		else if (is2digits)
+		{
+			if (tm->tm_year < 70)
+				tm->tm_year += 2000;
+			else if (tm->tm_year < 100)
+				tm->tm_year += 1900;
+		}
 	}
-	else if (is2digits)
+
+	/* now that we have correct year, decode DOY */
+	if (fmask & DTK_M(DOY))
 	{
-		if (tm->tm_year < 70)
-			tm->tm_year += 2000;
-		else if (tm->tm_year < 100)
-			tm->tm_year += 1900;
+		j2date(date2j(tm->tm_year, 1, 1) + tm->tm_yday - 1,
+			   &tm->tm_year, &tm->tm_mon, &tm->tm_mday);
+	}
+
+	/* check for valid month */
+	if (fmask & DTK_M(MONTH))
+	{
+		if (tm->tm_mon < 1 || tm->tm_mon > 12)
+			return -1;
+	}
+
+	/* minimal check for valid day */
+	if (fmask & DTK_M(DAY))
+	{
+		if (tm->tm_mday < 1 || tm->tm_mday > 31)
+			return -1;
 	}
 
 	if ((mer != HR24) && (tm->tm_hour > 12))
@@ -1461,13 +1485,11 @@ DecodeDateTime(char **field, int *ftype, int nf,
 		 * check for valid day of month, now that we know for sure the
 		 * month and year...
 		 */
-		if ((tm->tm_mday < 1)
-		 || (tm->tm_mday > day_tab[isleap(tm->tm_year)][tm->tm_mon - 1]))
+		if (tm->tm_mday > day_tab[isleap(tm->tm_year)][tm->tm_mon - 1])
 			return -1;
 
 		/* timezone not specified? then find local timezone if possible */
-		if (((fmask & DTK_DATE_M) == DTK_DATE_M)
-			&& (tzp != NULL) && (!(fmask & DTK_M(TZ))))
+		if ((tzp != NULL) && (!(fmask & DTK_M(TZ))))
 		{
 			/*
 			 * daylight savings time modifier but no standard timezone?
@@ -2259,6 +2281,22 @@ DecodeDate(char *str, int fmask, int *tmask, struct tm * tm)
 			tm->tm_year += 1900;
 	}
 
+	/* now that we have correct year, decode DOY */
+	if (fmask & DTK_M(DOY))
+	{
+		j2date(date2j(tm->tm_year, 1, 1) + tm->tm_yday - 1,
+			   &tm->tm_year, &tm->tm_mon, &tm->tm_mday);
+	}
+
+	/* check for valid month */
+	if (tm->tm_mon < 1 || tm->tm_mon > 12)
+		return -1;
+
+	/* check for valid day */
+	if (tm->tm_mday < 1 ||
+		tm->tm_mday > day_tab[isleap(tm->tm_year)][tm->tm_mon - 1])
+		return -1;
+
 	return 0;
 }	/* DecodeDate() */
 
@@ -2356,8 +2394,8 @@ DecodeNumber(int flen, char *str, int fmask,
 	if (*cp == '.')
 	{
 		/*
-		 * More than two digits? Then could be a date or a run-together
-		 * time: 2001.360 20011225 040506.789
+		 * More than two digits before decimal point? Then could be a date
+		 * or a run-together time: 2001.360 20011225 040506.789
 		 */
 		if ((cp - str) > 2)
 			return DecodeNumberField(flen, str, (fmask | DTK_DATE_M),
@@ -2370,85 +2408,91 @@ DecodeNumber(int flen, char *str, int fmask,
 	else if (*cp != '\0')
 		return -1;
 
-	/* Special case day of year? */
-	if ((flen == 3) && (fmask & DTK_M(YEAR))
-		&& ((val >= 1) && (val <= 366)))
+	/* Special case for day of year */
+	if ((flen == 3) &&
+		((fmask & DTK_DATE_M) == DTK_M(YEAR)) &&
+		((val >= 1) && (val <= 366)))
 	{
 		*tmask = (DTK_M(DOY) | DTK_M(MONTH) | DTK_M(DAY));
 		tm->tm_yday = val;
-		j2date(date2j(tm->tm_year, 1, 1) + tm->tm_yday - 1,
-			   &tm->tm_year, &tm->tm_mon, &tm->tm_mday);
+		/* tm_mon and tm_mday can't actually be set yet ... */
+		return 0;
 	}
 
-	/***
-	 * Enough digits to be unequivocal year? Used to test for 4 digits or
-	 * more, but we now test first for a three-digit doy so anything
-	 * bigger than two digits had better be an explicit year.
-	 * - thomas 1999-01-09
-	 * Back to requiring a 4 digit year. We accept a two digit
-	 * year farther down. - thomas 2000-03-28
-	 ***/
-	else if (flen >= 4)
+	/* Switch based on what we have so far */
+	switch (fmask & DTK_DATE_M)
 	{
-		*tmask = DTK_M(YEAR);
+		case 0:
+			/*
+			 * Nothing so far; make a decision about what we think the
+			 * input is.  There used to be lots of heuristics here, but
+			 * the consensus now is to be paranoid.  It *must* be either
+			 * YYYY-MM-DD (with a more-than-two-digit year field), or the
+			 * field order defined by DateOrder.
+			 */
+			if (flen >= 3 || DateOrder == DATEORDER_YMD)
+			{
+				*tmask = DTK_M(YEAR);
+				tm->tm_year = val;
+			}
+			else if (DateOrder == DATEORDER_DMY)
+			{
+				*tmask = DTK_M(DAY);
+				tm->tm_mday = val;
+			}
+			else
+			{
+				*tmask = DTK_M(MONTH);
+				tm->tm_mon = val;
+			}
+			break;
 
-		/* already have a year? then see if we can substitute... */
-		if ((fmask & DTK_M(YEAR)) && (!(fmask & DTK_M(DAY)))
-			&& ((tm->tm_year >= 1) && (tm->tm_year <= 31)))
-		{
-			tm->tm_mday = tm->tm_year;
+		case (DTK_M(YEAR)):
+			/* Must be at second field of YY-MM-DD */
+			*tmask = DTK_M(MONTH);
+			tm->tm_mon = val;
+			break;
+
+		case (DTK_M(YEAR) | DTK_M(MONTH)):
+			/* Must be at third field of YY-MM-DD */
 			*tmask = DTK_M(DAY);
-		}
+			tm->tm_mday = val;
+			break;
 
-		tm->tm_year = val;
-	}
+		case (DTK_M(DAY)):
+			/* Must be at second field of DD-MM-YY */
+			*tmask = DTK_M(MONTH);
+			tm->tm_mon = val;
+			break;
 
-	/* already have year? then could be month */
-	else if ((fmask & DTK_M(YEAR)) && (!(fmask & DTK_M(MONTH)))
-			 && ((val >= 1) && (val <= 12)))
-	{
-		*tmask = DTK_M(MONTH);
-		tm->tm_mon = val;
-	}
-	/* no year and EuroDates enabled? then could be day */
-	else if ((EuroDates || (fmask & DTK_M(MONTH)))
-			 && (!(fmask & DTK_M(YEAR)) && !(fmask & DTK_M(DAY)))
-			 && ((val >= 1) && (val <= 31)))
-	{
-		*tmask = DTK_M(DAY);
-		tm->tm_mday = val;
-	}
-	else if ((!(fmask & DTK_M(MONTH)))
-			 && ((val >= 1) && (val <= 12)))
-	{
-		*tmask = DTK_M(MONTH);
-		tm->tm_mon = val;
-	}
-	else if ((!(fmask & DTK_M(DAY)))
-			 && ((val >= 1) && (val <= 31)))
-	{
-		*tmask = DTK_M(DAY);
-		tm->tm_mday = val;
+		case (DTK_M(MONTH) | DTK_M(DAY)):
+			/* Must be at third field of DD-MM-YY or MM-DD-YY */
+			*tmask = DTK_M(YEAR);
+			tm->tm_year = val;
+			break;
+
+		case (DTK_M(MONTH)):
+			/* Must be at second field of MM-DD-YY */
+			*tmask = DTK_M(DAY);
+			tm->tm_mday = val;
+			break;
+
+		default:
+			/* Anything else is bogus input */
+			return -1;
 	}
 
 	/*
-	 * Check for 2 or 4 or more digits, but currently we reach here only
-	 * if two digits. - thomas 2000-03-28
+	 * When processing a year field, mark it for adjustment if it's
+	 * exactly two digits.
 	 */
-	else if (!(fmask & DTK_M(YEAR))
-			 && ((flen >= 4) || (flen == 2)))
+	if (*tmask == DTK_M(YEAR))
 	{
-		*tmask = DTK_M(YEAR);
-		tm->tm_year = val;
-
-		/* adjust ONLY if exactly two digits... */
 		*is2digits = (flen == 2);
 	}
-	else
-		return -1;
 
 	return 0;
-}	/* DecodeNumber() */
+}
 
 
 /* DecodeNumberField()
@@ -2509,18 +2553,6 @@ DecodeNumberField(int len, char *str, int fmask,
 			*(str + 4) = '\0';
 			tm->tm_mon = atoi(str + 2);
 			*(str + 2) = '\0';
-			tm->tm_year = atoi(str + 0);
-			*is2digits = TRUE;
-
-			return DTK_DATE;
-		}
-		/* yyddd? */
-		else if (len == 5)
-		{
-			*tmask = DTK_DATE_M;
-			tm->tm_mday = atoi(str + 2);
-			*(str + 2) = '\0';
-			tm->tm_mon = 1;
 			tm->tm_year = atoi(str + 0);
 			*is2digits = TRUE;
 
@@ -3152,7 +3184,7 @@ EncodeDateOnly(struct tm * tm, int style, char *str)
 
 		case USE_SQL_DATES:
 			/* compatible with Oracle/Ingres date formats */
-			if (EuroDates)
+			if (DateOrder == DATEORDER_DMY)
 				sprintf(str, "%02d/%02d", tm->tm_mday, tm->tm_mon);
 			else
 				sprintf(str, "%02d/%02d", tm->tm_mon, tm->tm_mday);
@@ -3174,7 +3206,7 @@ EncodeDateOnly(struct tm * tm, int style, char *str)
 		case USE_POSTGRES_DATES:
 		default:
 			/* traditional date-only style for Postgres */
-			if (EuroDates)
+			if (DateOrder == DATEORDER_DMY)
 				sprintf(str, "%02d-%02d", tm->tm_mday, tm->tm_mon);
 			else
 				sprintf(str, "%02d-%02d", tm->tm_mon, tm->tm_mday);
@@ -3308,7 +3340,7 @@ EncodeDateTime(struct tm * tm, fsec_t fsec, int *tzp, char **tzn, int style, cha
 		case USE_SQL_DATES:
 			/* Compatible with Oracle/Ingres date formats */
 
-			if (EuroDates)
+			if (DateOrder == DATEORDER_DMY)
 				sprintf(str, "%02d/%02d", tm->tm_mday, tm->tm_mon);
 			else
 				sprintf(str, "%02d/%02d", tm->tm_mon, tm->tm_mday);
@@ -3410,7 +3442,7 @@ EncodeDateTime(struct tm * tm, fsec_t fsec, int *tzp, char **tzn, int style, cha
 			strncpy(str, days[tm->tm_wday], 3);
 			strcpy((str + 3), " ");
 
-			if (EuroDates)
+			if (DateOrder == DATEORDER_DMY)
 				sprintf((str + 4), "%02d %3s", tm->tm_mday, months[tm->tm_mon - 1]);
 			else
 				sprintf((str + 4), "%3s %02d", months[tm->tm_mon - 1], tm->tm_mday);
