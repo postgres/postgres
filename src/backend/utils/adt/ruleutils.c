@@ -3,7 +3,7 @@
  *				back to source text
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/ruleutils.c,v 1.89 2001/11/26 21:15:14 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/ruleutils.c,v 1.89.2.1 2002/06/15 18:38:10 tgl Exp $
  *
  *	  This software is copyrighted by Jan Wieck - Hamburg.
  *
@@ -116,7 +116,7 @@ static void get_delete_query_def(Query *query, deparse_context *context);
 static void get_utility_query_def(Query *query, deparse_context *context);
 static void get_basic_select_query(Query *query, deparse_context *context);
 static void get_setop_query(Node *setOp, Query *query,
-				deparse_context *context, bool toplevel);
+				deparse_context *context);
 static void get_rule_sortgroupclause(SortClause *srt, List *tlist,
 						 bool force_colno,
 						 deparse_context *context);
@@ -966,7 +966,7 @@ get_select_query_def(Query *query, deparse_context *context)
 	 */
 	if (query->setOperations)
 	{
-		get_setop_query(query->setOperations, query, context, true);
+		get_setop_query(query->setOperations, query, context);
 		/* ORDER BY clauses must be simple in this case */
 		force_colno = true;
 	}
@@ -1123,8 +1123,7 @@ get_basic_select_query(Query *query, deparse_context *context)
 }
 
 static void
-get_setop_query(Node *setOp, Query *query, deparse_context *context,
-				bool toplevel)
+get_setop_query(Node *setOp, Query *query, deparse_context *context)
 {
 	StringInfo	buf = context->buf;
 
@@ -1141,33 +1140,29 @@ get_setop_query(Node *setOp, Query *query, deparse_context *context,
 	{
 		SetOperationStmt *op = (SetOperationStmt *) setOp;
 
-		/*
-		 * Must suppress parens at top level of a setop tree because of
-		 * grammar limitations...
-		 */
-		if (!toplevel)
-			appendStringInfo(buf, "(");
-		get_setop_query(op->larg, query, context, false);
+		appendStringInfo(buf, "((");
+		get_setop_query(op->larg, query, context);
 		switch (op->op)
 		{
 			case SETOP_UNION:
-				appendStringInfo(buf, " UNION ");
+				appendStringInfo(buf, ") UNION ");
 				break;
 			case SETOP_INTERSECT:
-				appendStringInfo(buf, " INTERSECT ");
+				appendStringInfo(buf, ") INTERSECT ");
 				break;
 			case SETOP_EXCEPT:
-				appendStringInfo(buf, " EXCEPT ");
+				appendStringInfo(buf, ") EXCEPT ");
 				break;
 			default:
 				elog(ERROR, "get_setop_query: unexpected set op %d",
 					 (int) op->op);
 		}
 		if (op->all)
-			appendStringInfo(buf, "ALL ");
-		get_setop_query(op->rarg, query, context, false);
-		if (!toplevel)
-			appendStringInfo(buf, ")");
+			appendStringInfo(buf, "ALL (");
+		else
+			appendStringInfo(buf, "(");
+		get_setop_query(op->rarg, query, context);
+		appendStringInfo(buf, "))");
 	}
 	else
 	{
