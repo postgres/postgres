@@ -1,6 +1,6 @@
 TODO list for PostgreSQL
 ========================
-Last updated:		Thu Oct 23 23:24:19 EDT 2003
+Last updated:		Sat Oct 25 22:57:43 EDT 2003
 
 Current maintainer:	Bruce Momjian (pgman@candle.pha.pa.us)
 
@@ -204,6 +204,7 @@ Commands
 * COMMENT ON [ CAST | CONVERSION | OPERATOR CLASS | LARGE OBJECT | LANGUAGE ] 
   (Christopher) 
 * Add optional textual message to NOTIFY
+* Allow more ISOLATION LEVELS to be accepted, but issue a warning for them
 
 
 * ALTER
@@ -514,7 +515,7 @@ Source Code
 * Acquire lock on a relation before building a relcache entry for it
 * Research interaction of setitimer() and sleep() used by statement_timeout
 * Add checks for fclose() failure
-* Change CVS $Id: TODO,v 1.1158 2003/10/24 03:24:32 momjian Exp $ to $PostgreSQL: pgsql/doc/TODO,v 1.1158 2003/10/24 03:24:32 momjian Exp $
+* Change CVS $Id: TODO,v 1.1159 2003/10/26 02:57:39 momjian Exp $ to $PostgreSQL: pgsql/doc/TODO,v 1.1159 2003/10/26 02:57:39 momjian Exp $
 * Exit postmaster if postgresql.conf can not be opened
 * Rename /scripts directory because they are all C programs now
 * Allow the regression tests to start postmaster with -i so the tests
