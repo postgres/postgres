@@ -1,6 +1,6 @@
 TODO list for PostgreSQL
 ========================
-Last updated:		Fri Oct 22 07:49:36 EDT 1999
+Last updated:		Tue Oct 26 00:11:29 EDT 1999
 
 Current maintainer:	Bruce Momjian (maillist@candle.pha.pa.us)
 
@@ -124,6 +124,7 @@ TYPES
 * -Add index on NUMERIC/DECIMAL type(Jan)
 * Make Absolutetime/Relativetime int4 because time_t can be int8 on some ports
 * Functions returning sets don't really work right[function]
+* Add max() for oid type
 
 VIEWS
 
