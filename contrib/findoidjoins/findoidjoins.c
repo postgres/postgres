@@ -4,6 +4,7 @@
  */
 
 #include <stdio.h>
+#include <string.h>
 #include "halt.h"
 #include <libpq-fe.h>
 #include "pginterface.h"
@@ -17,6 +18,7 @@ main(int argc, char **argv)
 	char		relname[256];
 	char		relname2[256];
 	char		attname[256];
+	char		typname[256];
 	int			count;
 
 	if (argc != 2)
@@ -29,14 +31,15 @@ main(int argc, char **argv)
 	doquery("BEGIN WORK");
 	doquery("\
 		DECLARE c_attributes BINARY CURSOR FOR \
-		SELECT relname, a.attname \
+		SELECT typname, relname, a.attname \
 		FROM pg_class c, pg_attribute a, pg_type t \
 		WHERE a.attnum > 0 AND \
 			  relkind = 'r' AND \
-			  typname = 'oid' AND \
+			  (typname = 'oid' OR \
+			   typname = 'regproc') AND \
 			  a.attrelid = c.oid AND \
 			  a.atttypid = t.oid \
-		ORDER BY 1; \
+		ORDER BY 2, 3; \
 		");
 	doquery("FETCH ALL IN c_attributes");
 	attres = get_result();
@@ -53,18 +56,25 @@ main(int argc, char **argv)
 	relres = get_result();
 	
 	set_result(attres);
-	while (fetch(relname, attname) != END_OF_TUPLES)
+	while (fetch(typname, relname, attname) != END_OF_TUPLES)
 	{
 		set_result(relres);
 		reset_fetch();
 		while (fetch(relname2) != END_OF_TUPLES)
 		{
 			unset_result(relres);
-			sprintf(query,"\
-				DECLARE c_matches BINARY CURSOR FOR \
-				SELECT	count(*)
-				FROM	%s t1, %s t2 \
-				WHERE	t1.%s = t2.oid", relname, relname2, attname);
+			if (strcmp(typname, "oid") == 0)
+				sprintf(query,"\
+					DECLARE c_matches BINARY CURSOR FOR \
+					SELECT	count(*)
+					FROM	%s t1, %s t2 \
+					WHERE	t1.%s = t2.oid", relname, relname2, attname);
+			else
+				sprintf(query,"\
+					DECLARE c_matches BINARY CURSOR FOR \
+					SELECT	count(*)
+					FROM	%s t1, %s t2 \
+					WHERE	RegprocToOid(t1.%s) = t2.oid", relname, relname2, attname);
 
 			doquery(query);
 			doquery("FETCH ALL IN c_matches");

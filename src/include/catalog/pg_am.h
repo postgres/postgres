@@ -7,7 +7,7 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: pg_am.h,v 1.5 1997/11/13 03:22:57 momjian Exp $
+ * $Id: pg_am.h,v 1.6 1998/08/11 05:32:43 momjian Exp $
  *
  * NOTES
  *		the genbki.sh script reads this file and generates .bki
@@ -108,14 +108,5 @@ DESCR("");
 #define BTREE_AM_OID 403
 DATA(insert OID = 783 (  gist PGUID "o" 100 7 gistgettuple gistinsert gistdelete - - - - gistbeginscan gistrescan gistendscan gistmarkpos gistrestrpos - - gistbuild - - ));
 DESCR("");
-
-BKI_BEGIN
-#ifdef NOBTREE
-BKI_END
-DATA(insert OID = 404 (  nobtree PGUID "o" 5 1 nobtgettuple nobtinsert nobtdelete - - - - nobtbeginscan nobtrescan nobtendscan nobtmarkpos nobtrestrpos - - nobtbuild - - ));
-DESCR("");
-BKI_BEGIN
-#endif							/* NOBTREE */
-BKI_END
 
 #endif							/* PG_AM_H */
