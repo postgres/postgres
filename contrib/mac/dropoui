@@ -1,0 +1,25 @@
+#! /bin/sh
+# Utility to remove manufacturer's oui table
+
+args=
+
+while [ $# -gt 0 ]
+do
+    case "$1" in
+    --help)
+        echo "Usage: $0 dbname"
+        exit
+        ;;
+    *)
+        args="$args $1"
+        ;;
+    esac
+    shift
+done
+
+psql $args <<EOF
+drop function manuf(macaddr);
+drop table macoui;
+EOF
+
+exit

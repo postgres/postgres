@@ -1,0 +1,52 @@
+#! /bin/sh
+# Utility to create manufacturer's oui table
+# OUI is "Organizationally Unique Identifier" assigned by IEEE.
+# There are currently three duplicate listings, so we can not enforce
+# uniqueness in the OUI field.
+# - thomas 2000-08-21
+
+args=
+update=0
+
+while [ $# -gt 0 ]
+do
+    case "$1" in
+    --update)
+        update=1
+        ;;
+    --noupdate)
+        update=0
+        ;;
+    --help)
+        echo "Usage: $0 --[no]update dbname"
+        exit
+        ;;
+    *)
+        args="$args $1"
+        ;;
+    esac
+    shift
+done
+
+psql -e $args <<EOF
+-- Table containing OUI portions of MAC address and manufacturer's name
+create table macoui (
+  addr macaddr not null,
+  name text not null
+);
+
+-- Create an index to help lookups
+create index macoui_idx on macoui (addr);
+
+-- Function to return manufacturer's name given MAC address
+create function manuf (macaddr)
+	returns text as '
+		select name from macoui m where trunc(\$1) = m.addr;
+' language 'SQL';
+EOF
+
+if [ $update -gt 0 ]; then
+    updateoui $args
+fi
+
+exit

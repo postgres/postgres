@@ -1,0 +1,34 @@
+#! /bin/sh
+# Utility to create manufacturer's OUI table
+
+args=
+refresh=0
+
+while [ $# -gt 0 ]
+do
+    case "$1" in
+    --refresh|--fetch|-r)
+        refresh=1
+        ;;
+    --norefresh|--nofetch)
+        refresh=0
+        ;;
+    --help)
+        echo "Usage: $0 --[no]refresh dbname"
+        exit
+        ;;
+    *)
+        args="$args $1"
+        ;;
+    esac
+    shift
+done
+
+if [ $refresh -gt 0 ]; then
+    [ -e oui.txt ] && rm -rf oui.txt
+    wget -nd 'http://standards.ieee.org/regauth/oui/oui.txt'
+fi
+
+awk -f ouiparse.awk < oui.txt | psql -e $args
+
+exit
