@@ -7,9 +7,6 @@ typedef unsigned char slock_t;
 
 #define AF_UNIX     10 /* no domain sockets on BeOS */
 
-/* Beos doesn't have sysnerr but strerror should works on every error */
-extern int sys_nerr;
-
 /* Beos doesn't have all the required getrusage fields */
 #undef HAVE_GETRUSAGE
 

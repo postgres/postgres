@@ -1,5 +1,5 @@
 # Macros that test various C library quirks
-# $Header: /cvsroot/pgsql/config/c-library.m4,v 1.5 2000/11/03 18:43:51 petere Exp $
+# $Header: /cvsroot/pgsql/config/c-library.m4,v 1.6 2001/01/09 18:40:13 petere Exp $
 
 
 # PGAC_VAR_INT_TIMEZONE
@@ -123,3 +123,18 @@ if test x"$pgac_cv_header_strings_both" = x"yes"; then
   AC_DEFINE([STRING_H_WITH_STRINGS_H], 1,
             [Define if string.h and strings.h may both be included])
 fi])
+
+
+# PGAC_VAR_SYS_NERR
+# -----------------
+# Check if the global variable 'sys_nerr' exists.  If so, define
+# HAVE_SYS_NERR.
+AC_DEFUN([PGAC_VAR_SYS_NERR],
+[AC_CACHE_CHECK([for sys_nerr], pgac_cv_var_sys_nerr,
+[AC_TRY_LINK([extern int sys_nerr;],
+  [int x = sys_nerr;],
+  [pgac_cv_var_sys_nerr=yes],
+  [pgac_cv_var_sys_nerr=no])])
+if test x"$pgac_cv_var_sys_nerr" = xyes ; then
+  AC_DEFINE(HAVE_SYS_NERR,, [Set to 1 if you have the global variable sys_nerr])
+fi])# PGAC_VAR_SYS_NERR

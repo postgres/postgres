@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/error/elog.c,v 1.74 2000/12/18 00:44:47 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/error/elog.c,v 1.75 2001/01/09 18:40:14 petere Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -43,11 +43,6 @@
 #endif
 
 extern int	errno;
-
-#ifdef __CYGWIN__
-# define sys_nerr _sys_nerr
-#endif
-extern int	sys_nerr;
 
 extern CommandDest whereToSendOutput;
 
@@ -140,8 +135,7 @@ elog(int lev, const char *fmt, ...)
 	if (lev <= DEBUG && Debugfile < 0)
 		return;					/* ignore debug msgs if noplace to send */
 
-/* BeOS doesn't have sys_nerr and should be able to use strerror()... */
-#ifndef __BEOS__
+#ifdef HAVE_SYS_NERR
 	/* save errno string for %m */
 	if (errno < sys_nerr && errno >= 0)
 		errorstr = strerror(errno);
@@ -152,7 +146,7 @@ elog(int lev, const char *fmt, ...)
 	}
 #else
     errorstr = strerror(errno);
-#endif /* __BEOS__ */
+#endif
 
 	if (lev == ERROR || lev == FATAL)
 	{

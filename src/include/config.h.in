@@ -8,7 +8,7 @@
  * or in config.h afterwards.  Of course, if you edit config.h, then your
  * changes will be overwritten the next time you run configure.
  *
- * $Id: config.h.in,v 1.154 2000/12/27 23:59:14 tgl Exp $
+ * $Id: config.h.in,v 1.155 2001/01/09 18:40:15 petere Exp $
  */
 
 #ifndef CONFIG_H
@@ -616,6 +616,9 @@ extern void srandom(unsigned int seed);
 
 /* Define if you have the optreset variable */
 #undef HAVE_INT_OPTRESET
+
+/* Define if you have the sys_nerr global variable */
+#undef HAVE_SYS_NERR
 
 /* Define if you have strtoll() */
 #undef HAVE_STRTOLL

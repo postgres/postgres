@@ -945,6 +945,7 @@ if test x"$pgac_cv_var_int_optreset" = x"yes"; then
   AC_DEFINE(HAVE_INT_OPTRESET, 1)
 fi
 
+PGAC_VAR_SYS_NERR
 
 dnl Check to see if we have a working 64-bit integer type.
 dnl This breaks down into two steps:

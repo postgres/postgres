@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/error/Attic/exc.c,v 1.32 2000/10/28 23:53:00 petere Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/error/Attic/exc.c,v 1.33 2001/01/09 18:40:14 petere Exp $
  *
  * NOTE
  *	  XXX this code needs improvement--check for state violations and
@@ -96,10 +96,6 @@ EnableExceptionHandling(bool on)
 
 
 extern int	errno;
-#ifdef __CYGWIN__
-# define sys_nerr _sys_nerr
-#endif
-extern int	sys_nerr;
 
 static void
 ExcPrint(Exception *excP,
@@ -131,7 +127,7 @@ ExcPrint(Exception *excP,
 
 	fprintf(stderr, " (%ld)", detail);
 
-#ifndef __BEOS__
+#ifdef HAVE_SYS_NERR
 	if (errno > 0 && errno < sys_nerr)
 #else
     if (errno > 0)

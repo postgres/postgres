@@ -9,6 +9,3 @@ typedef unsigned char slock_t;
 #define HAVE_INT_TIMEZONE		/* has int _timezone */
 
 #include <cygwin/version.h>
-#if (CYGWIN_VERSION_API_MAJOR >= 0) && (CYGWIN_VERSION_API_MINOR >= 8)
-#define sys_nerr _sys_nerr
-#endif
