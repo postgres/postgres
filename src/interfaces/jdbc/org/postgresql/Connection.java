@@ -10,7 +10,7 @@ import org.postgresql.largeobject.*;
 import org.postgresql.util.*;
 
 /**
- * $Id: Connection.java,v 1.5 2000/09/12 04:58:47 momjian Exp $
+ * $Id: Connection.java,v 1.6 2000/09/12 05:09:54 momjian Exp $
  *
  * This abstract class is used by org.postgresql.Driver to open either the JDBC1 or
  * JDBC2 versions of the Connection class.
@@ -112,12 +112,12 @@ public abstract class Connection
       throw new PSQLException("postgresql.con.pass");
     
     this_driver = d;
-    this_url = new String(url);
-    PG_DATABASE = new String(database);
-    PG_PASSWORD = new String(info.getProperty("password"));
-    PG_USER = new String(info.getProperty("user"));
+    this_url = url;
+    PG_DATABASE = database;
+    PG_PASSWORD = info.getProperty("password");
+    PG_USER = info.getProperty("user");
     PG_PORT = port;
-    PG_HOST = new String(host);
+    PG_HOST = host;
     PG_STATUS = CONNECTION_BAD;
 
     encoding = info.getProperty("charSet");  // could be null

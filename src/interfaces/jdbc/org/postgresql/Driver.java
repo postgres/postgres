@@ -242,8 +242,8 @@ public class Driver implements java.sql.Driver
   {
     int state = -1;
     Properties urlProps = new Properties(defaults);
-    String key = new String();
-    String value = new String();
+    String key = "";
+    String value = "";
     
     StringTokenizer st = new StringTokenizer(url, ":/;=&?", true);
     for (int count = 0; (st.hasMoreTokens()); count++) {

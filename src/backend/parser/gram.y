@@ -11,7 +11,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/parser/gram.y,v 2.187 2000/08/26 21:53:43 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/parser/gram.y,v 2.188 2000/09/12 05:09:44 momjian Exp $
  *
  * HISTORY
  *	  AUTHOR			DATE			MAJOR EVENT
@@ -350,7 +350,7 @@ static void doNegateFloat(Value *v);
 		LANCOMPILER, LIMIT, LISTEN, LOAD, LOCATION, LOCK_P,
 		MAXVALUE, MINVALUE, MODE, MOVE,
 		NEW, NOCREATEDB, NOCREATEUSER, NONE, NOTHING, NOTIFY, NOTNULL,
-		OFFSET, OIDS, OPERATOR, PASSWORD, PROCEDURAL,
+		OFFSET, OIDS, OPERATOR, OWNER, PASSWORD, PROCEDURAL,
 		REINDEX, RENAME, RESET, RETURNS, ROW, RULE,
 		SEQUENCE, SERIAL, SETOF, SHARE, SHOW, START, STATEMENT, STDIN, STDOUT, SYSID,
 		TEMP, TOAST, TRUNCATE, TRUSTED, 
@@ -1029,6 +1029,16 @@ AlterTableStmt:
 					AlterTableStmt *n = makeNode(AlterTableStmt);
 					n->subtype = 'E';
 					n->relname = $3;
+					$$ = (Node *)n;
+				}
+
+/* ALTER TABLE <name> OWNER TO UserId */
+		| ALTER TABLE relation_name OWNER TO UserId
+				{
+					AlterTableStmt *n = makeNode(AlterTableStmt);
+					n->subtype = 'U';
+					n->relname = $3;
+					n->name = $6;
 					$$ = (Node *)n;
 				}
 		;
@@ -5641,6 +5651,7 @@ TokenId:  ABSOLUTE						{ $$ = "absolute"; }
 		| OIDS							{ $$ = "oids"; }
 		| OPERATOR						{ $$ = "operator"; }
 		| OPTION						{ $$ = "option"; }
+		| OWNER							{ $$ = "owner"; }
 		| PARTIAL						{ $$ = "partial"; }
 		| PASSWORD						{ $$ = "password"; }
 		| PENDANT						{ $$ = "pendant"; }

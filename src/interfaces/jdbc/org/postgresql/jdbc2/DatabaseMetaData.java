@@ -161,7 +161,7 @@ public class DatabaseMetaData implements java.sql.DatabaseMetaData
    */
   public String getDatabaseProductName() throws SQLException
   {
-    return new String("PostgreSQL");
+    return "PostgreSQL";
   }
   
   /**
@@ -191,7 +191,7 @@ public class DatabaseMetaData implements java.sql.DatabaseMetaData
    */
   public String getDriverName() throws SQLException
   {
-    return new String("PostgreSQL Native Driver");
+    return "PostgreSQL Native Driver";
   }
   
   /**
@@ -203,7 +203,7 @@ public class DatabaseMetaData implements java.sql.DatabaseMetaData
    */
   public String getDriverVersion() throws SQLException
   {
-    return new String(Integer.toString(connection.this_driver.getMajorVersion())+"."+Integer.toString(connection.this_driver.getMinorVersion()));
+    return Integer.toString(connection.this_driver.getMajorVersion())+"."+Integer.toString(connection.this_driver.getMinorVersion());
   }
   
   /**
@@ -384,7 +384,7 @@ public class DatabaseMetaData implements java.sql.DatabaseMetaData
    */
   public String getSQLKeywords() throws SQLException
   {
-    return new String("abort,acl,add,aggregate,append,archive,arch_store,backward,binary,change,cluster,copy,database,delimiters,do,extend,explain,forward,heavy,index,inherits,isnull,light,listen,load,merge,nothing,notify,notnull,oids,purge,rename,replace,retrieve,returns,rule,recipe,setof,stdin,stdout,store,vacuum,verbose,version");
+    return "abort,acl,add,aggregate,append,archive,arch_store,backward,binary,change,cluster,copy,database,delimiters,do,extend,explain,forward,heavy,index,inherits,isnull,light,listen,load,merge,nothing,notify,notnull,oids,purge,rename,replace,retrieve,returns,rule,recipe,setof,stdin,stdout,store,vacuum,verbose,version";
   }
   
   public String getNumericFunctions() throws SQLException
@@ -420,7 +420,7 @@ public class DatabaseMetaData implements java.sql.DatabaseMetaData
    */
   public String getSearchStringEscape() throws SQLException
   {
-    return new String("\\");
+    return "\\";
   }
   
   /**
@@ -436,7 +436,7 @@ public class DatabaseMetaData implements java.sql.DatabaseMetaData
    */
   public String getExtraNameCharacters() throws SQLException
   {
-    return new String("");
+    return "";
   }
   
   /**
@@ -773,7 +773,7 @@ public class DatabaseMetaData implements java.sql.DatabaseMetaData
    */
   public String getSchemaTerm() throws SQLException
   {
-    return new String("Schema");
+    return "Schema";
   }
   
   /**
@@ -785,7 +785,7 @@ public class DatabaseMetaData implements java.sql.DatabaseMetaData
    */
   public String getProcedureTerm() throws SQLException
   {
-    return new String("Procedure");
+    return "Procedure";
   }
   
   /**
@@ -797,7 +797,7 @@ public class DatabaseMetaData implements java.sql.DatabaseMetaData
    */
   public String getCatalogTerm() throws SQLException
   {
-    return new String("Catalog");
+    return "Catalog";
   }
   
   /**
@@ -823,7 +823,7 @@ public class DatabaseMetaData implements java.sql.DatabaseMetaData
   public String getCatalogSeparator() throws SQLException
   {
     // PM Sep 29 97 - changed from "." as we don't support catalogs.
-    return new String("");
+    return "";
   }
   
   /**
@@ -1578,19 +1578,19 @@ public class DatabaseMetaData implements java.sql.DatabaseMetaData
     ResultSet r;	// ResultSet for the SQL query that we need to do
     Vector v = new Vector();		// The new ResultSet tuple stuff
     
-    f[0] = new Field(connection, new String("PROCEDURE_CAT"), iVarcharOid, 32);
-    f[1] = new Field(connection, new String("PROCEDURE_SCHEM"), iVarcharOid, 32);
-    f[2] = new Field(connection, new String("PROCEDURE_NAME"), iVarcharOid, 32);
-    f[3] = new Field(connection, new String("COLUMN_NAME"), iVarcharOid, 32);
-    f[4] = new Field(connection, new String("COLUMN_TYPE"), iInt2Oid, 2);
-    f[5] = new Field(connection, new String("DATA_TYPE"), iInt2Oid, 2);
-    f[6] = new Field(connection, new String("TYPE_NAME"), iVarcharOid, 32);
-    f[7] = new Field(connection, new String("PRECISION"), iInt4Oid, 4);
-    f[8] = new Field(connection, new String("LENGTH"), iInt4Oid, 4);
-    f[9] = new Field(connection, new String("SCALE"), iInt2Oid, 2);
-    f[10] = new Field(connection, new String("RADIX"), iInt2Oid, 2);
-    f[11] = new Field(connection, new String("NULLABLE"), iInt2Oid, 2);
-    f[12] = new Field(connection, new String("REMARKS"), iVarcharOid, 32);
+    f[0] = new Field(connection, "PROCEDURE_CAT", iVarcharOid, 32);
+    f[1] = new Field(connection, "PROCEDURE_SCHEM", iVarcharOid, 32);
+    f[2] = new Field(connection, "PROCEDURE_NAME", iVarcharOid, 32);
+    f[3] = new Field(connection, "COLUMN_NAME", iVarcharOid, 32);
+    f[4] = new Field(connection, "COLUMN_TYPE", iInt2Oid, 2);
+    f[5] = new Field(connection, "DATA_TYPE", iInt2Oid, 2);
+    f[6] = new Field(connection, "TYPE_NAME", iVarcharOid, 32);
+    f[7] = new Field(connection, "PRECISION", iInt4Oid, 4);
+    f[8] = new Field(connection, "LENGTH", iInt4Oid, 4);
+    f[9] = new Field(connection, "SCALE", iInt2Oid, 2);
+    f[10] = new Field(connection, "RADIX", iInt2Oid, 2);
+    f[11] = new Field(connection, "NULLABLE", iInt2Oid, 2);
+    f[12] = new Field(connection, "REMARKS", iVarcharOid, 32);
     
     // add query loop here
     
@@ -1644,11 +1644,11 @@ public class DatabaseMetaData implements java.sql.DatabaseMetaData
     java.sql.ResultSet r;	// ResultSet for the SQL query that we need to do
     Vector v = new Vector();		// The new ResultSet tuple stuff
     
-    f[0] = new Field(connection, new String("TABLE_CAT"), iVarcharOid, 32);
-    f[1] = new Field(connection, new String("TABLE_SCHEM"), iVarcharOid, 32);
-    f[2] = new Field(connection, new String("TABLE_NAME"), iVarcharOid, 32);
-    f[3] = new Field(connection, new String("TABLE_TYPE"), iVarcharOid, 32);
-    f[4] = new Field(connection, new String("REMARKS"), iVarcharOid, 32);
+    f[0] = new Field(connection, "TABLE_CAT", iVarcharOid, 32);
+    f[1] = new Field(connection, "TABLE_SCHEM", iVarcharOid, 32);
+    f[2] = new Field(connection, "TABLE_NAME", iVarcharOid, 32);
+    f[3] = new Field(connection, "TABLE_TYPE", iVarcharOid, 32);
+    f[4] = new Field(connection, "REMARKS", iVarcharOid, 32);
     
     // Now form the query
     StringBuffer sql = new StringBuffer("select relname,oid,relkind from pg_class where (");
@@ -1755,7 +1755,7 @@ public class DatabaseMetaData implements java.sql.DatabaseMetaData
     Field f[] = new Field[1];
     Vector v = new Vector();
     byte[][] tuple = new byte[1][0];
-    f[0] = new Field(connection,new String("TABLE_SCHEM"),iVarcharOid,32);
+    f[0] = new Field(connection,"TABLE_SCHEM",iVarcharOid,32);
     tuple[0] = "".getBytes();
     v.addElement(tuple);
     return new ResultSet(connection,f,v,"OK",1);
@@ -1779,7 +1779,7 @@ public class DatabaseMetaData implements java.sql.DatabaseMetaData
     Field f[] = new Field[1];
     Vector v = new Vector();
     byte[][] tuple = new byte[1][0];
-    f[0] = new Field(connection,new String("TABLE_CAT"),iVarcharOid,32);
+    f[0] = new Field(connection,"TABLE_CAT",iVarcharOid,32);
     tuple[0] = "".getBytes();
     v.addElement(tuple);
     return new ResultSet(connection,f,v,"OK",1);
@@ -1867,24 +1867,24 @@ public class DatabaseMetaData implements java.sql.DatabaseMetaData
     java.sql.ResultSet r;	// ResultSet for the SQL query that we need to do
     Vector v = new Vector();		// The new ResultSet tuple stuff
     
-    f[0] = new Field(connection, new String("TABLE_CAT"), iVarcharOid, 32);
-    f[1] = new Field(connection, new String("TABLE_SCHEM"), iVarcharOid, 32);
-    f[2] = new Field(connection, new String("TABLE_NAME"), iVarcharOid, 32);
-    f[3] = new Field(connection, new String("COLUMN_NAME"), iVarcharOid, 32);
-    f[4] = new Field(connection, new String("DATA_TYPE"), iInt2Oid, 2);
-    f[5] = new Field(connection, new String("TYPE_NAME"), iVarcharOid, 32);
-    f[6] = new Field(connection, new String("COLUMN_SIZE"), iInt4Oid, 4);
-    f[7] = new Field(connection, new String("BUFFER_LENGTH"), iVarcharOid, 32);
-    f[8] = new Field(connection, new String("DECIMAL_DIGITS"), iInt4Oid, 4);
-    f[9] = new Field(connection, new String("NUM_PREC_RADIX"), iInt4Oid, 4);
-    f[10] = new Field(connection, new String("NULLABLE"), iInt4Oid, 4);
-    f[11] = new Field(connection, new String("REMARKS"), iVarcharOid, 32);
-    f[12] = new Field(connection, new String("COLUMN_DEF"), iVarcharOid, 32);
-    f[13] = new Field(connection, new String("SQL_DATA_TYPE"), iInt4Oid, 4);
-    f[14] = new Field(connection, new String("SQL_DATETIME_SUB"), iInt4Oid, 4);
-    f[15] = new Field(connection, new String("CHAR_OCTET_LENGTH"), iVarcharOid, 32);
-    f[16] = new Field(connection, new String("ORDINAL_POSITION"), iInt4Oid,4);
-    f[17] = new Field(connection, new String("IS_NULLABLE"), iVarcharOid, 32);
+    f[0] = new Field(connection, "TABLE_CAT", iVarcharOid, 32);
+    f[1] = new Field(connection, "TABLE_SCHEM", iVarcharOid, 32);
+    f[2] = new Field(connection, "TABLE_NAME", iVarcharOid, 32);
+    f[3] = new Field(connection, "COLUMN_NAME", iVarcharOid, 32);
+    f[4] = new Field(connection, "DATA_TYPE", iInt2Oid, 2);
+    f[5] = new Field(connection, "TYPE_NAME", iVarcharOid, 32);
+    f[6] = new Field(connection, "COLUMN_SIZE", iInt4Oid, 4);
+    f[7] = new Field(connection, "BUFFER_LENGTH", iVarcharOid, 32);
+    f[8] = new Field(connection, "DECIMAL_DIGITS", iInt4Oid, 4);
+    f[9] = new Field(connection, "NUM_PREC_RADIX", iInt4Oid, 4);
+    f[10] = new Field(connection, "NULLABLE", iInt4Oid, 4);
+    f[11] = new Field(connection, "REMARKS", iVarcharOid, 32);
+    f[12] = new Field(connection, "COLUMN_DEF", iVarcharOid, 32);
+    f[13] = new Field(connection, "SQL_DATA_TYPE", iInt4Oid, 4);
+    f[14] = new Field(connection, "SQL_DATETIME_SUB", iInt4Oid, 4);
+    f[15] = new Field(connection, "CHAR_OCTET_LENGTH", iVarcharOid, 32);
+    f[16] = new Field(connection, "ORDINAL_POSITION", iInt4Oid,4);
+    f[17] = new Field(connection, "IS_NULLABLE", iVarcharOid, 32);
     
     // Added by Stefan Andreasen <stefan@linux.kapow.dk>
     // If the pattern are  null then set them to %
@@ -1999,14 +1999,14 @@ public class DatabaseMetaData implements java.sql.DatabaseMetaData
     else
       columnNamePattern=columnNamePattern.toLowerCase();
     
-    f[0] = new Field(connection,new String("TABLE_CAT"),iVarcharOid,32);
-    f[1] = new Field(connection,new String("TABLE_SCHEM"),iVarcharOid,32);
-    f[2] = new Field(connection,new String("TABLE_NAME"),iVarcharOid,32);
-    f[3] = new Field(connection,new String("COLUMN_NAME"),iVarcharOid,32);
-    f[4] = new Field(connection,new String("GRANTOR"),iVarcharOid,32);
-    f[5] = new Field(connection,new String("GRANTEE"),iVarcharOid,32);
-    f[6] = new Field(connection,new String("PRIVILEGE"),iVarcharOid,32);
-    f[7] = new Field(connection,new String("IS_GRANTABLE"),iVarcharOid,32);
+    f[0] = new Field(connection,"TABLE_CAT",iVarcharOid,32);
+    f[1] = new Field(connection,"TABLE_SCHEM",iVarcharOid,32);
+    f[2] = new Field(connection,"TABLE_NAME",iVarcharOid,32);
+    f[3] = new Field(connection,"COLUMN_NAME",iVarcharOid,32);
+    f[4] = new Field(connection,"GRANTOR",iVarcharOid,32);
+    f[5] = new Field(connection,"GRANTEE",iVarcharOid,32);
+    f[6] = new Field(connection,"PRIVILEGE",iVarcharOid,32);
+    f[7] = new Field(connection,"IS_GRANTABLE",iVarcharOid,32);
     
     // This is taken direct from the psql source
     java.sql.ResultSet r = connection.ExecSQL("SELECT relname, relacl FROM pg_class, pg_user WHERE ( relkind = 'r' OR relkind = 'i') and relname !~ '^pg_' and relname !~ '^xin[vx][0-9]+' and usesysid = relowner and relname like '"+table.toLowerCase()+"' ORDER BY relname");
@@ -2099,14 +2099,14 @@ public class DatabaseMetaData implements java.sql.DatabaseMetaData
     ResultSet r;	// ResultSet for the SQL query that we need to do
     Vector v = new Vector();		// The new ResultSet tuple stuff
     
-    f[0] = new Field(connection, new String("SCOPE"), iInt2Oid, 2);
-    f[1] = new Field(connection, new String("COLUMN_NAME"), iVarcharOid, 32);
-    f[2] = new Field(connection, new String("DATA_TYPE"), iInt2Oid, 2);
-    f[3] = new Field(connection, new String("TYPE_NAME"), iVarcharOid, 32);
-    f[4] = new Field(connection, new String("COLUMN_SIZE"), iInt4Oid, 4);
-    f[5] = new Field(connection, new String("BUFFER_LENGTH"), iInt4Oid, 4);
-    f[6] = new Field(connection, new String("DECIMAL_DIGITS"), iInt2Oid, 2);
-    f[7] = new Field(connection, new String("PSEUDO_COLUMN"), iInt2Oid, 2);
+    f[0] = new Field(connection, "SCOPE", iInt2Oid, 2);
+    f[1] = new Field(connection, "COLUMN_NAME", iVarcharOid, 32);
+    f[2] = new Field(connection, "DATA_TYPE", iInt2Oid, 2);
+    f[3] = new Field(connection, "TYPE_NAME", iVarcharOid, 32);
+    f[4] = new Field(connection, "COLUMN_SIZE", iInt4Oid, 4);
+    f[5] = new Field(connection, "BUFFER_LENGTH", iInt4Oid, 4);
+    f[6] = new Field(connection, "DECIMAL_DIGITS", iInt2Oid, 2);
+    f[7] = new Field(connection, "PSEUDO_COLUMN", iInt2Oid, 2);
     
     return new ResultSet(connection, f, v, "OK", 1);
   }
@@ -2412,24 +2412,24 @@ public class DatabaseMetaData implements java.sql.DatabaseMetaData
       ResultSet r;	// ResultSet for the SQL query that we need to do
       Vector v = new Vector();		// The new ResultSet tuple stuff
       
-      f[0] = new Field(connection, new String("TYPE_NAME"), iVarcharOid, 32);
-      f[1] = new Field(connection, new String("DATA_TYPE"), iInt2Oid, 2);
-      f[2] = new Field(connection, new String("PRECISION"), iInt4Oid, 4);
-      f[3] = new Field(connection, new String("LITERAL_PREFIX"), iVarcharOid, 32);
-      f[4] = new Field(connection, new String("LITERAL_SUFFIX"), iVarcharOid, 32);
-      f[5] = new Field(connection, new String("CREATE_PARAMS"), iVarcharOid, 32);
-      f[6] = new Field(connection, new String("NULLABLE"), iInt2Oid, 2);
-      f[7] = new Field(connection, new String("CASE_SENSITIVE"), iBoolOid, 1);
-      f[8] = new Field(connection, new String("SEARCHABLE"), iInt2Oid, 2);
-      f[9] = new Field(connection, new String("UNSIGNED_ATTRIBUTE"), iBoolOid, 1);
-      f[10] = new Field(connection, new String("FIXED_PREC_SCALE"), iBoolOid, 1);
-      f[11] = new Field(connection, new String("AUTO_INCREMENT"), iBoolOid, 1);
-      f[12] = new Field(connection, new String("LOCAL_TYPE_NAME"), iVarcharOid, 32);
-      f[13] = new Field(connection, new String("MINIMUM_SCALE"), iInt2Oid, 2);
-      f[14] = new Field(connection, new String("MAXIMUM_SCALE"), iInt2Oid, 2);
-      f[15] = new Field(connection, new String("SQL_DATA_TYPE"), iInt4Oid, 4);
-      f[16] = new Field(connection, new String("SQL_DATETIME_SUB"), iInt4Oid, 4);
-      f[17] = new Field(connection, new String("NUM_PREC_RADIX"), iInt4Oid, 4);
+      f[0] = new Field(connection, "TYPE_NAME", iVarcharOid, 32);
+      f[1] = new Field(connection, "DATA_TYPE", iInt2Oid, 2);
+      f[2] = new Field(connection, "PRECISION", iInt4Oid, 4);
+      f[3] = new Field(connection, "LITERAL_PREFIX", iVarcharOid, 32);
+      f[4] = new Field(connection, "LITERAL_SUFFIX", iVarcharOid, 32);
+      f[5] = new Field(connection, "CREATE_PARAMS", iVarcharOid, 32);
+      f[6] = new Field(connection, "NULLABLE", iInt2Oid, 2);
+      f[7] = new Field(connection, "CASE_SENSITIVE", iBoolOid, 1);
+      f[8] = new Field(connection, "SEARCHABLE", iInt2Oid, 2);
+      f[9] = new Field(connection, "UNSIGNED_ATTRIBUTE", iBoolOid, 1);
+      f[10] = new Field(connection, "FIXED_PREC_SCALE", iBoolOid, 1);
+      f[11] = new Field(connection, "AUTO_INCREMENT", iBoolOid, 1);
+      f[12] = new Field(connection, "LOCAL_TYPE_NAME", iVarcharOid, 32);
+      f[13] = new Field(connection, "MINIMUM_SCALE", iInt2Oid, 2);
+      f[14] = new Field(connection, "MAXIMUM_SCALE", iInt2Oid, 2);
+      f[15] = new Field(connection, "SQL_DATA_TYPE", iInt4Oid, 4);
+      f[16] = new Field(connection, "SQL_DATETIME_SUB", iInt4Oid, 4);
+      f[17] = new Field(connection, "NUM_PREC_RADIX", iInt4Oid, 4);
       
       // cache some results, this will keep memory useage down, and speed
       // things up a little.
@@ -2522,19 +2522,19 @@ public class DatabaseMetaData implements java.sql.DatabaseMetaData
     ResultSet r;	// ResultSet for the SQL query that we need to do
     Vector v = new Vector();		// The new ResultSet tuple stuff
     
-    f[0] = new Field(connection, new String("TABLE_CAT"), iVarcharOid, 32);
-    f[1] = new Field(connection, new String("TABLE_SCHEM"), iVarcharOid, 32);
-    f[2] = new Field(connection, new String("TABLE_NAME"), iVarcharOid, 32);
-    f[3] = new Field(connection, new String("NON_UNIQUE"), iBoolOid, 1);
-    f[4] = new Field(connection, new String("INDEX_QUALIFIER"), iVarcharOid, 32);
-    f[5] = new Field(connection, new String("INDEX_NAME"), iVarcharOid, 32);
-    f[6] = new Field(connection, new String("TYPE"), iInt2Oid, 2);
-    f[7] = new Field(connection, new String("ORDINAL_POSITION"), iInt2Oid, 2);
-    f[8] = new Field(connection, new String("COLUMN_NAME"), iVarcharOid, 32);
-    f[9] = new Field(connection, new String("ASC_OR_DESC"), iVarcharOid, 32);
-    f[10] = new Field(connection, new String("CARDINALITY"), iInt4Oid, 4);
-    f[11] = new Field(connection, new String("PAGES"), iInt4Oid, 4);
-    f[12] = new Field(connection, new String("FILTER_CONDITION"), iVarcharOid, 32);
+    f[0] = new Field(connection, "TABLE_CAT", iVarcharOid, 32);
+    f[1] = new Field(connection, "TABLE_SCHEM", iVarcharOid, 32);
+    f[2] = new Field(connection, "TABLE_NAME", iVarcharOid, 32);
+    f[3] = new Field(connection, "NON_UNIQUE", iBoolOid, 1);
+    f[4] = new Field(connection, "INDEX_QUALIFIER", iVarcharOid, 32);
+    f[5] = new Field(connection, "INDEX_NAME", iVarcharOid, 32);
+    f[6] = new Field(connection, "TYPE", iInt2Oid, 2);
+    f[7] = new Field(connection, "ORDINAL_POSITION", iInt2Oid, 2);
+    f[8] = new Field(connection, "COLUMN_NAME", iVarcharOid, 32);
+    f[9] = new Field(connection, "ASC_OR_DESC", iVarcharOid, 32);
+    f[10] = new Field(connection, "CARDINALITY", iInt4Oid, 4);
+    f[11] = new Field(connection, "PAGES", iInt4Oid, 4);
+    f[12] = new Field(connection, "FILTER_CONDITION", iVarcharOid, 32);
     
     return new ResultSet(connection, f, v, "OK", 1);
   }

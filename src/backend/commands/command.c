@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/commands/Attic/command.c,v 1.101 2000/09/12 04:49:06 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/commands/Attic/command.c,v 1.102 2000/09/12 05:09:43 momjian Exp $
  *
  * NOTES
  *	  The PerformAddAttribute() code, like most of the relation
@@ -47,6 +47,7 @@
 #include "utils/temprel.h"
 #include "executor/spi_priv.h"
 #include "catalog/pg_index.h"
+#include "catalog/pg_shadow.h"
 #include "utils/relcache.h"
 
 #ifdef	_DROP_COLUMN_HACK__
@@ -1448,6 +1449,70 @@ AlterTableDropConstraint(const char *relationName,
 }
 
 
+
+/*
+ * ALTER TABLE OWNER
+ */
+void
+AlterTableOwner(const char *relationName, const char *newOwnerName)
+{
+	Relation 	class_rel;
+	HeapTuple 	tuple;
+	int4 		newOwnerSysid;
+	Relation	idescs[Num_pg_class_indices];
+
+	/*
+	 * first check that we are a superuser
+	 */
+	if (! superuser() )
+		elog(ERROR, "ALTER TABLE: permission denied");
+
+	/*
+	 * look up the new owner in pg_shadow and get the sysid
+	 */
+	tuple = SearchSysCacheTuple(SHADOWNAME, PointerGetDatum(newOwnerName),
+							   0, 0, 0);
+	if (!HeapTupleIsValid(tuple))
+		elog(ERROR, "ALTER TABLE: user \"%s\" not found", newOwnerName);
+
+	newOwnerSysid = ((Form_pg_shadow) GETSTRUCT(tuple))->usesysid;
+	heap_freetuple(tuple);
+
+	/*
+	 * find the table's entry in pg_class and lock it for writing
+	 */
+	class_rel = heap_openr(RelationRelationName, RowExclusiveLock);
+
+	tuple = SearchSysCacheTuple(RELNAME, PointerGetDatum(relationName),
+								 0, 0, 0);
+	if (!HeapTupleIsValid(tuple))
+		elog(ERROR, "ALTER TABLE: relation \"%s\" not found",
+			 relationName);
+
+	if (((Form_pg_class) GETSTRUCT(tuple))->relkind != RELKIND_RELATION)
+		elog(ERROR, "ALTER TABLE: relation \"%s\" is not a table",
+				relationName);
+
+	/*
+	 * modify the table's entry and write to the heap
+	 */
+	((Form_pg_class) GETSTRUCT(tuple))->relowner = newOwnerSysid;
+
+	heap_update(class_rel, &tuple->t_self, tuple, NULL);
+
+	/* Keep the catalog indices up to date */
+	CatalogOpenIndices(Num_pg_class_indices, Name_pg_class_indices, idescs);
+	CatalogIndexInsert(idescs, Num_pg_class_indices, class_rel, tuple);
+	CatalogCloseIndices(Num_pg_class_indices, idescs);
+
+	/*
+	 * unlock everything and return
+	 */
+	heap_freetuple(tuple);
+	heap_close(class_rel, RowExclusiveLock);
+
+	return;
+}
 
 /*
  * ALTER TABLE CREATE TOAST TABLE

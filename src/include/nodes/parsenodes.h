@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2000, PostgreSQL, Inc
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Id: parsenodes.h,v 1.111 2000/08/11 23:46:54 tgl Exp $
+ * $Id: parsenodes.h,v 1.112 2000/09/12 05:09:50 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -95,11 +95,13 @@ typedef struct Query
 typedef struct AlterTableStmt
 {
 	NodeTag		type;
-	char		subtype;		/* A = add, T = alter, D = drop, C = add
-								 * constr, X = drop constr */
+	char		subtype;		/* A = add column, T = alter column, D = drop column,
+								 * C = add constraint, X = drop constraint,
+								 * E = add toast table,
+								 * U = change owner */
 	char	   *relname;		/* table to work on */
 	bool		inh;			/* recursively on children? */
-	char	   *name;			/* column or constraint name to act on */
+	char	   *name;			/* column or constraint name to act on, or new owner */
 	Node	   *def;			/* definition of new column or constraint */
 	int			behavior;		/* CASCADE or RESTRICT drop behavior */
 } AlterTableStmt;

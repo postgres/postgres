@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/parser/keywords.c,v 1.80 2000/08/06 18:05:22 thomas Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/parser/keywords.c,v 1.81 2000/09/12 05:09:44 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -196,6 +196,7 @@ static ScanKeyword ScanKeywords[] = {
 	{"out", OUT},
 	{"outer", OUTER_P},
 	{"overlaps", OVERLAPS},
+	{"owner", OWNER},
 	{"partial", PARTIAL},
 	{"password", PASSWORD},
 	{"path", PATH_P},
