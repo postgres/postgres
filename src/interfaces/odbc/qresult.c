@@ -77,7 +77,7 @@ QR_inc_base(QResultClass *self, int base_inc)
 /************************************/
 
 QResultClass *
-QR_Constructor()
+QR_Constructor(void)
 {
 QResultClass *rv;
 

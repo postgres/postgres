@@ -202,7 +202,8 @@ char SC_recycle_statement(StatementClass *self);
 void SC_clear_error(StatementClass *self);
 char SC_get_error(StatementClass *self, int *number, char **message);
 char *SC_create_errormsg(StatementClass *self);
-RETCODE SC_execute(StatementClass *stmt);
+RETCODE SC_execute(StatementClass *self);
+RETCODE SC_fetch(StatementClass *self);
 void SC_free_params(StatementClass *self, char option);
 void SC_log_error(char *func, char *desc, StatementClass *self);
 

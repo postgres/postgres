@@ -36,6 +36,12 @@
 
 extern GLOBAL_VALUES globals;
 
+RETCODE set_statement_option(ConnectionClass *conn, 
+							 StatementClass *stmt, 
+							 UWORD   fOption,
+							 UDWORD  vParam);
+
+
 
 RETCODE set_statement_option(ConnectionClass *conn, 
 							 StatementClass *stmt, 

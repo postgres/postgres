@@ -566,6 +566,142 @@ char rv;
 	return rv;
 }
 
+
+RETCODE
+SC_fetch(StatementClass *self)
+{
+static char *func = "SC_fetch";
+QResultClass *res = self->result;
+int retval, result;
+Int2 num_cols, lf;
+Oid type;
+char *value;
+ColumnInfoClass *ci;
+// TupleField *tupleField;
+
+	self->last_fetch_count = 0;
+	ci = QR_get_fields(res);		/* the column info */
+
+	mylog("manual_result = %d, use_declarefetch = %d\n", self->manual_result, globals.use_declarefetch);
+ 
+	if ( self->manual_result || ! globals.use_declarefetch) {
+
+		if (self->currTuple >= QR_get_num_tuples(res) -1 || 
+			(self->options.maxRows > 0 && self->currTuple == self->options.maxRows - 1)) {
+
+			/*	if at the end of the tuples, return "no data found" 
+				and set the cursor past the end of the result set 
+			*/
+			self->currTuple = QR_get_num_tuples(res);	
+			return SQL_NO_DATA_FOUND;
+		}
+ 
+		mylog("**** SQLFetch: manual_result\n");
+		(self->currTuple)++;
+	}
+	else {
+
+		// read from the cache or the physical next tuple
+		retval = QR_next_tuple(res);
+		if (retval < 0) {
+			mylog("**** SQLFetch: end_tuples\n");
+			return SQL_NO_DATA_FOUND;
+		}
+		else if (retval > 0)
+			(self->currTuple)++;		// all is well
+
+		else {
+			mylog("SQLFetch: error\n");
+			self->errornumber = STMT_EXEC_ERROR;
+			self->errormsg = "Error fetching next row";
+			SC_log_error(func, "", self);
+			return SQL_ERROR;
+		}
+	}
+
+	num_cols = QR_NumResultCols(res);
+
+	result = SQL_SUCCESS;
+	self->last_fetch_count = 1;
+
+	for (lf=0; lf < num_cols; lf++) {
+
+		mylog("fetch: cols=%d, lf=%d, self = %u, self->bindings = %u, buffer[] = %u\n", num_cols, lf, self, self->bindings, self->bindings[lf].buffer);
+
+		/*	reset for SQLGetData */
+		self->bindings[lf].data_left = -1;
+
+		if (self->bindings[lf].buffer != NULL) {
+            // this column has a binding
+
+            // type = QR_get_field_type(res, lf);
+			type = CI_get_oid(ci, lf);		/* speed things up */
+
+			mylog("type = %d\n", type);
+
+			if (self->manual_result) {
+				value = QR_get_value_manual(res, self->currTuple, lf);
+				mylog("manual_result\n");
+			}
+			else if (globals.use_declarefetch)
+				value = QR_get_value_backend(res, lf);
+			else {
+				value = QR_get_value_backend_row(res, self->currTuple, lf);
+			}
+
+			mylog("value = '%s'\n",  (value==NULL)?"<NULL>":value);
+
+			retval = copy_and_convert_field_bindinfo(self, type, value, lf);
+
+			mylog("copy_and_convert: retval = %d\n", retval);
+
+			switch(retval) {
+			case COPY_OK:
+				break;	/*	OK, do next bound column */
+
+			case COPY_UNSUPPORTED_TYPE:
+				self->errormsg = "Received an unsupported type from Postgres.";
+				self->errornumber = STMT_RESTRICTED_DATA_TYPE_ERROR;
+				SC_log_error(func, "", self);
+				result = SQL_ERROR;
+				break;
+
+			case COPY_UNSUPPORTED_CONVERSION:
+				self->errormsg = "Couldn't handle the necessary data type conversion.";
+				self->errornumber = STMT_RESTRICTED_DATA_TYPE_ERROR;
+				SC_log_error(func, "", self);
+				result = SQL_ERROR;
+				break;
+
+			case COPY_RESULT_TRUNCATED:
+				self->errornumber = STMT_TRUNCATED;
+				self->errormsg = "The buffer was too small for the result.";
+				result = SQL_SUCCESS_WITH_INFO;
+				break;
+
+			case COPY_GENERAL_ERROR:	/* error msg already filled in */
+				SC_log_error(func, "", self);
+				result = SQL_ERROR;
+				break;
+
+			/*  This would not be meaningful in SQLFetch. */
+			case COPY_NO_DATA_FOUND:
+				break;
+
+			default:
+				self->errormsg = "Unrecognized return value from copy_and_convert_field.";
+				self->errornumber = STMT_INTERNAL_ERROR;
+				SC_log_error(func, "", self);
+				result = SQL_ERROR;
+				break;
+			}
+		}
+	}
+
+	return result;
+}
+
+
 RETCODE SC_execute(StatementClass *self)
 {
 static char *func="SC_execute";

@@ -26,7 +26,7 @@
 	portion of the registry.  You may have to manually add this key.
 	This logfile is intended for development use, not for an end user!
 */
-// #define MY_LOG
+#define MY_LOG
 
 
 /*	Uncomment Q_LOG to compile in the qlog() statements (Communications log, i.e. CommLog).

@@ -98,7 +98,7 @@ struct QResultClass_ {
 #define QR_get_status(self)				(self->status)
 
 //	Core Functions
-QResultClass *QR_Constructor();
+QResultClass *QR_Constructor(void);
 void QR_Destructor(QResultClass *self);
 char QR_read_tuple(QResultClass *self, char binary);
 int QR_next_tuple(QResultClass *self);

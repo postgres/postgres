@@ -372,8 +372,10 @@ RETCODE SQL_API SQLCancel(
 static char *func="SQLCancel";
 StatementClass *stmt = (StatementClass *) hstmt;
 RETCODE result;
+#ifdef WIN32
 HMODULE hmodule;
 FARPROC addr;
+#endif
 
 	mylog( "%s: entering...\n", func);
 
