@@ -5,7 +5,7 @@ import junit.framework.TestCase;
 import java.sql.*;
 
 /*
- * $Id: MiscTest.java,v 1.8 2002/09/06 21:23:06 momjian Exp $
+ * $Id: MiscTest.java,v 1.9 2003/05/29 03:21:32 barry Exp $
  *
  * Some simple tests based on problems reported by users. Hopefully these will
  * help prevent previous problems from re-occuring ;-)
@@ -79,7 +79,6 @@ public class MiscTest extends TestCase
 	public void xtestLocking()
 	{
 
-		System.out.println("testing lock");
 		try
 		{
 			Connection con = TestUtil.openDB();

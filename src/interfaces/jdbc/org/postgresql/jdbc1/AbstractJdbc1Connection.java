@@ -9,7 +9,7 @@
  * Copyright (c) 2003, PostgreSQL Global Development Group
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/interfaces/jdbc/org/postgresql/jdbc1/Attic/AbstractJdbc1Connection.java,v 1.18 2003/03/19 04:06:20 barry Exp $
+ *	  $Header: /cvsroot/pgsql/src/interfaces/jdbc/org/postgresql/jdbc1/Attic/AbstractJdbc1Connection.java,v 1.19 2003/05/29 03:21:32 barry Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -76,11 +76,10 @@ public abstract class AbstractJdbc1Connection implements BaseConnection
 	private String this_url;
 	private String cursor = null;	// The positioned update cursor name
 
-	// These are new for v6.3, they determine the current protocol versions
-	// supported by this version of the driver. They are defined in
-	// src/include/libpq/pqcomm.h
-	protected static final int PG_PROTOCOL_LATEST_MAJOR = 2;
-	protected static final int PG_PROTOCOL_LATEST_MINOR = 0;
+	private int PGProtocolVersionMajor = 2;
+	private int PGProtocolVersionMinor = 0;
+	public int getPGProtocolVersionMajor() { return PGProtocolVersionMajor; }
+	public int getPGProtocolVersionMinor() { return PGProtocolVersionMinor; }
 
 	private static final int AUTH_REQ_OK = 0;
 	private static final int AUTH_REQ_KRB4 = 1;
@@ -88,6 +87,7 @@ public abstract class AbstractJdbc1Connection implements BaseConnection
 	private static final int AUTH_REQ_PASSWORD = 3;
 	private static final int AUTH_REQ_CRYPT = 4;
 	private static final int AUTH_REQ_MD5 = 5;
+	private static final int AUTH_REQ_SCM = 6;
 
 
 	// These are used to cache oids, PGTypes and SQLTypes
@@ -140,7 +140,7 @@ public abstract class AbstractJdbc1Connection implements BaseConnection
 		PG_HOST = host;
 		PG_STATUS = CONNECTION_BAD;
 
-		if (info.getProperty("ssl") != null && this_driver.sslEnabled())
+		if (info.getProperty("ssl") != null && Driver.sslEnabled())
 		{
 			useSSL = true;
 		}
@@ -207,6 +207,20 @@ public abstract class AbstractJdbc1Connection implements BaseConnection
 			throw new PSQLException ("postgresql.con.failed", e);
 		}
 
+	    //Now do the protocol work
+		if (haveMinimumCompatibleVersion("7.4")) {
+			openConnectionV3(host,port,info,database,url,d,password);
+		} else {
+			openConnectionV2(host,port,info,database,url,d,password);
+		}
+	  }
+
+	private void openConnectionV3(String p_host, int p_port, Properties p_info, String p_database, String p_url, Driver p_d, String p_password) throws SQLException
+	  {
+		PGProtocolVersionMajor = 3;
+		if (Driver.logDebug)
+			Driver.debug("Using Protocol Version3");
+
 		// Now we need to construct and send an ssl startup packet
 		try
 		{
@@ -260,8 +274,315 @@ public abstract class AbstractJdbc1Connection implements BaseConnection
 		// Now we need to construct and send a startup packet
 		try
 		{
-			new StartupPacket(PG_PROTOCOL_LATEST_MAJOR,
-							  PG_PROTOCOL_LATEST_MINOR,
+			new StartupPacket(PGProtocolVersionMajor,
+							  PGProtocolVersionMinor,
+							  PG_USER,
+							  p_database).writeTo(pgStream);
+
+			// now flush the startup packets to the backend
+			pgStream.flush();
+
+			// Now get the response from the backend, either an error message
+			// or an authentication request
+			int areq = -1; // must have a value here
+			do
+			{
+				int beresp = pgStream.ReceiveChar();
+				String salt = null;
+				byte [] md5Salt = new byte[4];
+				switch (beresp)
+				{
+					case 'E':
+						// An error occured, so pass the error message to the
+						// user.
+						//
+						// The most common one to be thrown here is:
+						// "User authentication failed"
+						//
+						int l_elen = pgStream.ReceiveIntegerR(4);
+						if (l_elen > 30000) {
+							//if the error length is > than 30000 we assume this is really a v2 protocol 
+							//server so try again with a v2 connection
+							//need to create a new connection and try again
+							try
+							{
+								pgStream = new PGStream(p_host, p_port);
+							}
+							catch (ConnectException cex)
+							{
+								// Added by Peter Mount <peter@retep.org.uk>
+								// ConnectException is thrown when the connection cannot be made.
+								// we trap this an return a more meaningful message for the end user
+								throw new PSQLException ("postgresql.con.refused");
+							}
+							catch (IOException e)
+							{
+								throw new PSQLException ("postgresql.con.failed", e);
+							}
+							openConnectionV2(p_host, p_port, p_info, p_database, p_url, p_d, p_password);
+							return;
+						}
+						throw new PSQLException("postgresql.con.misc",encoding.decode(pgStream.Receive(l_elen-4)));
+
+					case 'R':
+						// Get the message length
+						int l_msgLen = pgStream.ReceiveIntegerR(4);
+						// Get the type of request
+						areq = pgStream.ReceiveIntegerR(4);
+						// Get the crypt password salt if there is one
+						if (areq == AUTH_REQ_CRYPT)
+						{
+							byte[] rst = new byte[2];
+							rst[0] = (byte)pgStream.ReceiveChar();
+							rst[1] = (byte)pgStream.ReceiveChar();
+							salt = new String(rst, 0, 2);
+							if (Driver.logDebug)
+								Driver.debug("Crypt salt=" + salt);
+						}
+
+						// Or get the md5 password salt if there is one
+						if (areq == AUTH_REQ_MD5)
+						{
+
+							md5Salt[0] = (byte)pgStream.ReceiveChar();
+							md5Salt[1] = (byte)pgStream.ReceiveChar();
+							md5Salt[2] = (byte)pgStream.ReceiveChar();
+							md5Salt[3] = (byte)pgStream.ReceiveChar();
+							salt = new String(md5Salt, 0, 4);
+							if (Driver.logDebug)
+								Driver.debug("MD5 salt=" + salt);
+						}
+
+						// now send the auth packet
+						switch (areq)
+						{
+							case AUTH_REQ_OK:
+								break;
+
+							case AUTH_REQ_KRB4:
+								if (Driver.logDebug)
+									Driver.debug("postgresql: KRB4");
+								throw new PSQLException("postgresql.con.kerb4");
+
+							case AUTH_REQ_KRB5:
+								if (Driver.logDebug)
+									Driver.debug("postgresql: KRB5");
+								throw new PSQLException("postgresql.con.kerb5");
+
+							case AUTH_REQ_SCM:
+								if (Driver.logDebug)
+									Driver.debug("postgresql: SCM");
+								throw new PSQLException("postgresql.con.scm");
+
+
+							case AUTH_REQ_PASSWORD:
+								if (Driver.logDebug)
+									Driver.debug("postgresql: PASSWORD");
+								pgStream.SendChar('p');
+								pgStream.SendInteger(5 + p_password.length(), 4);
+								pgStream.Send(p_password.getBytes());
+								pgStream.SendChar(0);
+								pgStream.flush();
+								break;
+
+							case AUTH_REQ_CRYPT:
+								if (Driver.logDebug)
+									Driver.debug("postgresql: CRYPT");
+								String crypted = UnixCrypt.crypt(salt, p_password);
+								pgStream.SendChar('p');
+								pgStream.SendInteger(5 + crypted.length(), 4);
+								pgStream.Send(crypted.getBytes());
+								pgStream.SendChar(0);
+								pgStream.flush();
+								break;
+
+							case AUTH_REQ_MD5:
+								if (Driver.logDebug)
+									Driver.debug("postgresql: MD5");
+								byte[] digest = MD5Digest.encode(PG_USER, p_password, md5Salt);
+								pgStream.SendChar('p');
+								pgStream.SendInteger(5 + digest.length, 4);
+								pgStream.Send(digest);
+								pgStream.SendChar(0);
+								pgStream.flush();
+								break;
+
+							default:
+								throw new PSQLException("postgresql.con.auth", new Integer(areq));
+						}
+						break;
+
+					default:
+						throw new PSQLException("postgresql.con.authfail");
+				}
+			}
+			while (areq != AUTH_REQ_OK);
+
+		}
+		catch (IOException e)
+		{
+			throw new PSQLException("postgresql.con.failed", e);
+		}
+
+		int beresp;
+		do
+		{
+			beresp = pgStream.ReceiveChar();
+			switch (beresp)
+			{
+			    case 'Z':
+					//ready for query
+					break;
+				case 'K':
+					int l_msgLen = pgStream.ReceiveIntegerR(4);
+					if (l_msgLen != 12) throw new PSQLException("postgresql.con.setup");
+					pid = pgStream.ReceiveIntegerR(4);
+					ckey = pgStream.ReceiveIntegerR(4);
+					break;
+				case 'E':
+					int l_elen = pgStream.ReceiveIntegerR(4);
+					throw new PSQLException("postgresql.con.backend",encoding.decode(pgStream.Receive(l_elen-4)));
+				case 'N':
+					int l_nlen = pgStream.ReceiveIntegerR(4);
+					addWarning(encoding.decode(pgStream.Receive(l_nlen-4)));
+					break;
+			    case 'S':
+					//TODO: handle parameter status messages
+					int l_len = pgStream.ReceiveIntegerR(4);
+					String l_pStatus = encoding.decode(pgStream.Receive(l_len-4));
+					if (Driver.logDebug)
+						Driver.debug("ParameterStatus="+ l_pStatus);
+					break;
+				default:
+					if (Driver.logDebug)
+						Driver.debug("invalid state="+ (char)beresp);
+					throw new PSQLException("postgresql.con.setup");
+			}
+		}
+		while (beresp != 'Z');
+		// read ReadyForQuery
+		if (pgStream.ReceiveIntegerR(4) != 5) throw new PSQLException("postgresql.con.setup"); 
+		//TODO: handle transaction status
+		char l_tStatus = (char)pgStream.ReceiveChar();
+
+		// "pg_encoding_to_char(1)" will return 'EUC_JP' for a backend compiled with multibyte,
+		// otherwise it's hardcoded to 'SQL_ASCII'.
+		// If the backend doesn't know about multibyte we can't assume anything about the encoding
+		// used, so we denote this with 'UNKNOWN'.
+		//Note: begining with 7.2 we should be using pg_client_encoding() which
+		//is new in 7.2.  However it isn't easy to conditionally call this new
+		//function, since we don't yet have the information as to what server
+		//version we are talking to.  Thus we will continue to call
+		//getdatabaseencoding() until we drop support for 7.1 and older versions
+		//or until someone comes up with a conditional way to run one or
+		//the other function depending on server version that doesn't require
+		//two round trips to the server per connection
+
+		final String encodingQuery =
+			"case when pg_encoding_to_char(1) = 'SQL_ASCII' then 'UNKNOWN' else getdatabaseencoding() end";
+
+		// Set datestyle and fetch db encoding in a single call, to avoid making
+		// more than one round trip to the backend during connection startup.
+
+
+		BaseResultSet resultSet
+			= execSQL("set datestyle to 'ISO'; select version(), " + encodingQuery + ";");
+		
+		if (! resultSet.next())
+		{
+			throw new PSQLException("postgresql.con.failed", "failed getting backend encoding");
+		}
+		String version = resultSet.getString(1);
+		dbVersionNumber = extractVersionNumber(version);
+
+		String dbEncoding = resultSet.getString(2);
+		encoding = Encoding.getEncoding(dbEncoding, p_info.getProperty("charSet"));
+		//In 7.3 we are forced to do a second roundtrip to handle the case 
+		//where a database may not be running in autocommit mode
+		//jdbc by default assumes autocommit is on until setAutoCommit(false)
+		//is called.  Therefore we need to ensure a new connection is 
+		//initialized to autocommit on.
+		//We also set the client encoding so that the driver only needs 
+		//to deal with utf8.  We can only do this in 7.3 because multibyte 
+		//support is now always included
+		if (haveMinimumServerVersion("7.3")) 
+		{
+			BaseResultSet acRset =
+			//TODO: if protocol V3 we can set the client encoding in startup
+			execSQL("set client_encoding = 'UNICODE'");
+			//set encoding to be unicode
+			encoding = Encoding.getEncoding("UNICODE", null);
+
+		}
+
+		// Initialise object handling
+		initObjectTypes();
+
+		// Mark the connection as ok, and cleanup
+		PG_STATUS = CONNECTION_OK;
+	}
+
+	private void openConnectionV2(String host, int port, Properties info, String database, String url, Driver d, String password) throws SQLException
+	  {
+		PGProtocolVersionMajor = 2;
+		if (Driver.logDebug)
+			Driver.debug("Using Protocol Version2");
+
+		// Now we need to construct and send an ssl startup packet
+		try
+		{
+			if (useSSL) {
+				if (Driver.logDebug)
+					Driver.debug("Asking server if it supports ssl");
+				pgStream.SendInteger(8,4);
+				pgStream.SendInteger(80877103,4);
+
+				// now flush the ssl packets to the backend
+				pgStream.flush();
+
+				// Now get the response from the backend, either an error message
+				// or an authentication request
+				int beresp = pgStream.ReceiveChar();
+				if (Driver.logDebug)
+					Driver.debug("Server response was (S=Yes,N=No): "+(char)beresp);
+				switch (beresp)
+					{
+					case 'E':
+						// An error occured, so pass the error message to the
+						// user.
+						//
+						// The most common one to be thrown here is:
+						// "User authentication failed"
+						//
+						throw new PSQLException("postgresql.con.misc", pgStream.ReceiveString(encoding));
+						
+					case 'N':
+						// Server does not support ssl
+						throw new PSQLException("postgresql.con.sslnotsupported");
+						
+					case 'S':
+						// Server supports ssl
+						if (Driver.logDebug)
+							Driver.debug("server does support ssl");
+						Driver.makeSSL(pgStream);
+						break;
+
+					default:
+						throw new PSQLException("postgresql.con.sslfail");
+					}
+			}
+		}
+		catch (IOException e)
+		{
+			throw new PSQLException("postgresql.con.failed", e);
+		}
+
+
+		// Now we need to construct and send a startup packet
+		try
+		{
+			new StartupPacket(PGProtocolVersionMajor,
+							  PGProtocolVersionMinor,
 							  PG_USER,
 							  database).writeTo(pgStream);
 
@@ -485,7 +806,6 @@ public abstract class AbstractJdbc1Connection implements BaseConnection
 		// Mark the connection as ok, and cleanup
 		PG_STATUS = CONNECTION_OK;
 	}
-
 
 	/*
 	 * Return the instance of org.postgresql.Driver
@@ -776,6 +1096,35 @@ public abstract class AbstractJdbc1Connection implements BaseConnection
 	 */
 	public void close() throws SQLException
 	{
+		if (haveMinimumCompatibleVersion("7.4")) {
+			closeV3();
+		} else {
+			closeV2();
+		}
+	}
+
+	public void closeV3() throws SQLException
+	{
+		if (pgStream != null)
+		{
+			try
+			{
+				pgStream.SendChar('X');
+				pgStream.SendInteger(0,4);
+				pgStream.flush();
+				pgStream.close();
+			}
+			catch (IOException e)
+			{}
+			finally
+			{
+				pgStream = null;
+			}
+		}
+	}
+
+	public void closeV2() throws SQLException
+	{
 		if (pgStream != null)
 		{
 			try
@@ -887,29 +1236,11 @@ public abstract class AbstractJdbc1Connection implements BaseConnection
 			return ;
 		if (autoCommit)
 		{
-			if (haveMinimumServerVersion("7.3"))
-			{
-                //We do the select to ensure a transaction is in process
-				//before we do the commit to avoid warning messages
-				//from issuing a commit without a transaction in process
-				//NOTE this is done in two network roundtrips to work around
-				//a server bug in 7.3 where the select wouldn't actually start
-				//a new transaction if in the same command as the commit
-				execSQL("select 1;");
-				execSQL("commit; set autocommit = on;");
-			}
-			else
-			{
 				execSQL("end");				
-			}
 		}
 		else
 		{
-			if (haveMinimumServerVersion("7.3"))
-			{
-				execSQL("set autocommit = off; " + getIsolationLevelSQL());
-			}
-			else if (haveMinimumServerVersion("7.1"))
+			if (haveMinimumServerVersion("7.1"))
 			{
 				execSQL("begin;" + getIsolationLevelSQL());
 			}
@@ -948,11 +1279,8 @@ public abstract class AbstractJdbc1Connection implements BaseConnection
 	{
 		if (autoCommit)
 			return ;
-		if (haveMinimumServerVersion("7.3"))
-		{
-			execSQL("commit; " + getIsolationLevelSQL());
-		}
-		else if (haveMinimumServerVersion("7.1"))
+		//TODO: delay starting new transaction until first command
+		if (haveMinimumServerVersion("7.1"))
 		{
 			execSQL("commit;begin;" + getIsolationLevelSQL());
 		}
@@ -976,14 +1304,8 @@ public abstract class AbstractJdbc1Connection implements BaseConnection
 	{
 		if (autoCommit)
 			return ;
-		if (haveMinimumServerVersion("7.3"))
-		{
-			//we don't automatically start a transaction 
-			//but let the server functionality automatically start
-			//one when the first statement is executed
-			execSQL("rollback; " + getIsolationLevelSQL());
-		}
-		else if (haveMinimumServerVersion("7.1"))
+		//TODO: delay starting transaction until first command
+		if (haveMinimumServerVersion("7.1"))
 		{
 			execSQL("rollback; begin;" + getIsolationLevelSQL());
 		}

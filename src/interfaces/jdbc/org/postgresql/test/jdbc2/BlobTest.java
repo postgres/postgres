@@ -8,7 +8,7 @@ import java.sql.*;
 import org.postgresql.largeobject.*;
 
 /*
- * $Id: BlobTest.java,v 1.7 2002/08/14 20:35:40 barry Exp $
+ * $Id: BlobTest.java,v 1.8 2003/05/29 03:21:32 barry Exp $
  *
  * Some simple tests based on problems reported by users. Hopefully these will
  * help prevent previous problems from re-occuring ;-)
@@ -188,7 +188,7 @@ public class BlobTest extends TestCase
 			result = result && f == -1 && b == -1;
 
 			if (!result)
-				System.out.println("\nBlob compare failed at " + c + " of " + blob.size());
+				assertTrue("Blob compare failed at " + c + " of " + blob.size(), false);
 
 			blob.close();
 			fis.close();

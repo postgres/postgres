@@ -6,14 +6,13 @@
  * Copyright (c) 2003, PostgreSQL Global Development Group
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/interfaces/jdbc/org/postgresql/core/Attic/BaseConnection.java,v 1.2 2003/04/13 04:10:07 barry Exp $
+ *	  $Header: /cvsroot/pgsql/src/interfaces/jdbc/org/postgresql/core/Attic/BaseConnection.java,v 1.3 2003/05/29 03:21:32 barry Exp $
  *
  *-------------------------------------------------------------------------
  */
 package org.postgresql.core;
 
 import java.sql.DatabaseMetaData;
-import java.sql.ResultSet;
 import java.sql.Statement;
 import java.sql.SQLException;
 import org.postgresql.PGConnection;
@@ -32,6 +31,8 @@ public interface BaseConnection extends PGConnection
 	public Encoding getEncoding() throws SQLException;
 	public DatabaseMetaData getMetaData() throws SQLException;
 	public Object getObject(String type, String value) throws SQLException;
+	public int getPGProtocolVersionMajor();
+	public int getPGProtocolVersionMinor();
 	public PGStream getPGStream();
 	public String getPGType(int oid) throws SQLException;
 	public int getPGType(String pgTypeName) throws SQLException;

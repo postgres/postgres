@@ -9,15 +9,13 @@
  * Copyright (c) 2003, PostgreSQL Global Development Group
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/interfaces/jdbc/org/postgresql/Attic/PGConnection.java,v 1.5 2003/04/14 10:39:51 davec Exp $
+ *	  $Header: /cvsroot/pgsql/src/interfaces/jdbc/org/postgresql/Attic/PGConnection.java,v 1.6 2003/05/29 03:21:32 barry Exp $
  *
  *-------------------------------------------------------------------------
  */
 package org.postgresql;
 
 import java.sql.*;
-import java.util.Properties;
-import java.util.Vector;
 import org.postgresql.core.Encoding;
 import org.postgresql.fastpath.Fastpath;
 import org.postgresql.largeobject.LargeObjectManager;

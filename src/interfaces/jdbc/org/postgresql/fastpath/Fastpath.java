@@ -6,7 +6,7 @@
  * Copyright (c) 2003, PostgreSQL Global Development Group
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/interfaces/jdbc/org/postgresql/fastpath/Attic/Fastpath.java,v 1.12 2003/03/07 18:39:42 barry Exp $
+ *	  $Header: /cvsroot/pgsql/src/interfaces/jdbc/org/postgresql/fastpath/Attic/Fastpath.java,v 1.13 2003/05/29 03:21:32 barry Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -61,6 +61,129 @@ public class Fastpath
 	 * @exception SQLException if a database-access error occurs.
 	 */
 	public Object fastpath(int fnid, boolean resulttype, FastpathArg[] args) throws SQLException
+	{
+		if (conn.haveMinimumServerVersion("7.4")) {
+			return fastpathV3(fnid, resulttype, args);
+		} else {
+			return fastpathV2(fnid, resulttype, args);
+		}
+	}
+
+	private Object fastpathV3(int fnid, boolean resulttype, FastpathArg[] args) throws SQLException
+	{
+		// added Oct 7 1998 to give us thread safety
+		synchronized (stream)
+		{
+			// send the function call
+			try
+			{
+				int l_msgLen = 0;
+				l_msgLen += 16;
+				for (int i=0;i < args.length;i++)
+					l_msgLen += args[i].sendSize();
+					
+				stream.SendChar('F');
+				stream.SendInteger(l_msgLen,4);
+				stream.SendInteger(fnid, 4);
+				stream.SendInteger(1,2);
+				stream.SendInteger(1,2);
+				stream.SendInteger(args.length,2);
+
+				for (int i = 0;i < args.length;i++)
+					args[i].send(stream);
+				
+				stream.SendInteger(1,2);
+	
+				// This is needed, otherwise data can be lost
+				stream.flush();
+
+			}
+			catch (IOException ioe)
+			{
+				throw new PSQLException("postgresql.fp.send", new Integer(fnid), ioe);
+			}
+
+			// Now handle the result
+
+			// Now loop, reading the results
+			Object result = null; // our result
+			StringBuffer errorMessage = null;
+			int c;
+			boolean l_endQuery = false;
+			while (!l_endQuery)
+			{
+				c = stream.ReceiveChar();
+
+				switch (c)
+				{
+					case 'A':	// Asynchronous Notify
+						int pid = stream.ReceiveInteger(4);
+						String msg = stream.ReceiveString(conn.getEncoding());
+						conn.addNotification(new org.postgresql.core.Notification(msg, pid));
+						break;
+						//------------------------------
+						// Error message returned
+					case 'E':
+						if ( errorMessage == null )
+							errorMessage = new StringBuffer();
+
+						int l_elen = stream.ReceiveIntegerR(4);
+						errorMessage.append(conn.getEncoding().decode(stream.Receive(l_elen-4)));
+						break;
+						//------------------------------
+						// Notice from backend
+					case 'N':
+						int l_nlen = stream.ReceiveIntegerR(4);
+						conn.addWarning(conn.getEncoding().decode(stream.Receive(l_nlen-4)));
+						break;
+
+					case 'V':
+						int l_msgLen = stream.ReceiveIntegerR(4);
+						int l_valueLen = stream.ReceiveIntegerR(4);
+						
+						if (l_valueLen == -1) 
+						{
+							//null value
+						}
+						else if (l_valueLen == 0)
+						{
+							result = new byte[0];
+						}
+						else 
+						{
+							// Return an Integer if
+							if (resulttype)
+								result = new Integer(stream.ReceiveIntegerR(l_valueLen));
+							else
+							{
+								byte buf[] = new byte[l_valueLen];
+								stream.Receive(buf, 0, l_valueLen);
+								result = buf;
+							}
+						}
+						break;
+
+					case 'Z':
+						//TODO: use size better
+						if (stream.ReceiveIntegerR(4) != 5) throw new PSQLException("postgresql.con.setup"); 
+						//TODO: handle transaction status
+						char l_tStatus = (char)stream.ReceiveChar();
+						l_endQuery = true;
+						break;
+
+					default:
+						throw new PSQLException("postgresql.fp.protocol", new Character((char)c));
+				}
+			}
+
+			if ( errorMessage != null )
+				throw new PSQLException("postgresql.fp.error", errorMessage.toString());
+
+			return result;
+		}
+	}
+
+	private Object fastpathV2(int fnid, boolean resulttype, FastpathArg[] args) throws SQLException
 	{
 		// added Oct 7 1998 to give us thread safety
 		synchronized (stream)

@@ -6,7 +6,7 @@
  * Copyright (c) 2003, PostgreSQL Global Development Group
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/interfaces/jdbc/org/postgresql/core/Attic/Encoding.java,v 1.10 2003/03/07 18:39:41 barry Exp $
+ *	  $Header: /cvsroot/pgsql/src/interfaces/jdbc/org/postgresql/core/Attic/Encoding.java,v 1.11 2003/05/29 03:21:32 barry Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -140,15 +140,22 @@ public class Encoding
 	 */
 	public byte[] encode(String s) throws SQLException
 	{
+		byte[] l_return;
 		try
 		{
 			if (encoding == null)
 			{
-				return s.getBytes();
+				l_return = s.getBytes();
 			}
 			else
 			{
-				return s.getBytes(encoding);
+				l_return = s.getBytes(encoding);
+			}
+			//Don't return null, return an empty byte[] instead
+			if (l_return == null) {
+				return new byte[0];
+			} else {
+				return l_return;
 			}
 		}
 		catch (UnsupportedEncodingException e)

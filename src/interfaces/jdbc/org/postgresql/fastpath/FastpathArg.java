@@ -7,7 +7,7 @@
  * Copyright (c) 2003, PostgreSQL Global Development Group
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/interfaces/jdbc/org/postgresql/fastpath/Attic/FastpathArg.java,v 1.4 2003/03/07 18:39:42 barry Exp $
+ *	  $Header: /cvsroot/pgsql/src/interfaces/jdbc/org/postgresql/fastpath/Attic/FastpathArg.java,v 1.5 2003/05/29 03:21:32 barry Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -98,6 +98,18 @@ public class FastpathArg
 			// argument is a byte array
 			s.SendInteger(bytes.length, 4); // size of array
 			s.Send(bytes);
+		}
+	}
+
+	protected int sendSize()
+	{
+		if (type)
+		{
+			return 8;
+		}
+		else
+		{
+			return 4+bytes.length;
 		}
 	}
 }

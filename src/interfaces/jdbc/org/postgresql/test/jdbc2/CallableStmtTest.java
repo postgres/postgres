@@ -56,7 +56,6 @@ public class CallableStmtTest extends TestCase
 
 	public void testGetDouble () throws Throwable
 	{
-		// System.out.println ("Testing CallableStmt Types.DOUBLE");
 		CallableStatement call = con.prepareCall (func + pkgName + "getDouble (?) }");
 		call.setDouble (2, (double)3.04);
 		call.registerOutParameter (1, Types.DOUBLE);
@@ -67,7 +66,6 @@ public class CallableStmtTest extends TestCase
 
 	public void testGetInt () throws Throwable
 	{
-		// System.out.println ("Testing CallableStmt Types.INTEGER");
 		CallableStatement call = con.prepareCall (func + pkgName + "getInt (?) }");
 		call.setInt (2, 4);
 		call.registerOutParameter (1, Types.INTEGER);
@@ -78,7 +76,6 @@ public class CallableStmtTest extends TestCase
 
 	public void testGetNumeric () throws Throwable
 	{
-		// System.out.println ("Testing CallableStmt Types.NUMERIC");
 		CallableStatement call = con.prepareCall (func + pkgName + "getNumeric (?) }");
 		call.setBigDecimal (2, new java.math.BigDecimal(4));
 		call.registerOutParameter (1, Types.NUMERIC);
@@ -90,7 +87,6 @@ public class CallableStmtTest extends TestCase
 
 	public void testGetString () throws Throwable
 	{
-		// System.out.println ("Testing CallableStmt Types.VARCHAR");
 		CallableStatement call = con.prepareCall (func + pkgName + "getString (?) }");
 		call.setString (2, "foo");
 		call.registerOutParameter (1, Types.VARCHAR);

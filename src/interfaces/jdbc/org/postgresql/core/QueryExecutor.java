@@ -6,7 +6,7 @@
  * Copyright (c) 2003, PostgreSQL Global Development Group
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/interfaces/jdbc/org/postgresql/core/Attic/QueryExecutor.java,v 1.21 2003/05/07 03:03:30 barry Exp $
+ *	  $Header: /cvsroot/pgsql/src/interfaces/jdbc/org/postgresql/core/Attic/QueryExecutor.java,v 1.22 2003/05/29 03:21:32 barry Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -15,10 +15,8 @@ package org.postgresql.core;
 import java.util.Vector;
 import java.io.IOException;
 import java.sql.*;
+import org.postgresql.Driver;
 import org.postgresql.util.PSQLException;
-import org.postgresql.jdbc1.AbstractJdbc1Connection;
-import org.postgresql.jdbc1.AbstractJdbc1ResultSet;
-import org.postgresql.jdbc1.AbstractJdbc1Statement;
 
 public class QueryExecutor
 {
@@ -96,6 +94,19 @@ public class QueryExecutor
 	 */
 	private BaseResultSet execute() throws SQLException
 	{
+		if (connection.getPGProtocolVersionMajor() == 3) {
+			if (Driver.logDebug)
+				Driver.debug("Using Protocol Version3 to send query");
+			return executeV3();
+		} else {
+			if (Driver.logDebug)
+				Driver.debug("Using Protocol Version2 to send query");
+			return executeV2();
+		}
+	}
+
+	private BaseResultSet executeV3() throws SQLException
+	{
 
 		StringBuffer errorMessage = null;
 
@@ -107,7 +118,111 @@ public class QueryExecutor
 		synchronized (pgStream)
 		{
 
-			sendQuery();
+			sendQueryV3();
+
+			int c;
+			boolean l_endQuery = false;
+			while (!l_endQuery)
+			{
+				c = pgStream.ReceiveChar();
+				switch (c)
+				{
+					case 'A':	// Asynchronous Notify
+						int pid = pgStream.ReceiveInteger(4);
+						String msg = pgStream.ReceiveString(connection.getEncoding());
+						connection.addNotification(new org.postgresql.core.Notification(msg, pid));
+						break;
+					case 'B':	// Binary Data Transfer
+						receiveTupleV3(true);
+						break;
+					case 'C':	// Command Status
+						receiveCommandStatusV3();
+						break;
+					case 'D':	// Text Data Transfer
+						receiveTupleV3(false);
+						break;
+					case 'E':	// Error Message
+
+						// it's possible to get more than one error message for a query
+						// see libpq comments wrt backend closing a connection
+						// so, append messages to a string buffer and keep processing
+						// check at the bottom to see if we need to throw an exception
+
+						if ( errorMessage == null )
+							errorMessage = new StringBuffer();
+
+							int l_elen = pgStream.ReceiveIntegerR(4);
+							errorMessage.append(connection.getEncoding().decode(pgStream.Receive(l_elen-4)));
+						// keep processing
+						break;
+					case 'I':	// Empty Query
+						int t = pgStream.ReceiveChar();
+						break;
+					case 'N':	// Error Notification
+						int l_nlen = pgStream.ReceiveIntegerR(4);
+						statement.addWarning(connection.getEncoding().decode(pgStream.Receive(l_nlen-4)));
+						break;
+					case 'P':	// Portal Name
+						String pname = pgStream.ReceiveString(connection.getEncoding());
+						break;
+			        case 'S':
+						//TODO: handle parameter status messages
+						int l_len = pgStream.ReceiveIntegerR(4);
+						String l_pStatus = connection.getEncoding().decode(pgStream.Receive(l_len-4));
+						if (Driver.logDebug)
+							Driver.debug("ParameterStatus="+ l_pStatus);
+						break;
+					case 'T':	// MetaData Field Description
+						receiveFieldsV3();
+						break;
+					case 'Z':
+						// read ReadyForQuery
+						//TODO: use size better
+						if (pgStream.ReceiveIntegerR(4) != 5) throw new PSQLException("postgresql.con.setup"); 
+						//TODO: handle transaction status
+						char l_tStatus = (char)pgStream.ReceiveChar();
+						l_endQuery = true;
+						break;
+					default:
+						throw new PSQLException("postgresql.con.type",
+												new Character((char) c));
+				}
+
+			}
+
+			// did we get an error during this query?
+			if ( errorMessage != null )
+				throw new SQLException( errorMessage.toString() );
+
+
+			//if an existing result set was passed in reuse it, else
+			//create a new one
+			if (rs != null) 
+			{
+				rs.reInit(fields, tuples, status, update_count, insert_oid, binaryCursor);
+			}
+			else 
+			{
+				rs = statement.createResultSet(fields, tuples, status, update_count, insert_oid, binaryCursor);
+			}
+			return rs;
+		}
+	}
+
+	private BaseResultSet executeV2() throws SQLException
+	{
+
+		StringBuffer errorMessage = null;
+
+		if (pgStream == null) 
+		{
+			throw new PSQLException("postgresql.con.closed");
+		}
+
+		synchronized (pgStream)
+		{
+
+			sendQueryV2();
 
 			int c;
 			boolean l_endQuery = false;
@@ -123,13 +238,13 @@ public class QueryExecutor
 						connection.addNotification(new org.postgresql.core.Notification(msg, pid));
 						break;
 					case 'B':	// Binary Data Transfer
-						receiveTuple(true);
+						receiveTupleV2(true);
 						break;
 					case 'C':	// Command Status
-						receiveCommandStatus();
+						receiveCommandStatusV2();
 						break;
 					case 'D':	// Text Data Transfer
-						receiveTuple(false);
+						receiveTupleV2(false);
 						break;
 					case 'E':	// Error Message
 
@@ -154,7 +269,7 @@ public class QueryExecutor
 						String pname = pgStream.ReceiveString(connection.getEncoding());
 						break;
 					case 'T':	// MetaData Field Description
-						receiveFields();
+						receiveFieldsV2();
 						break;
 					case 'Z':
 						l_endQuery = true;
@@ -188,7 +303,48 @@ public class QueryExecutor
 	/*
 	 * Send a query to the backend.
 	 */
-	private void sendQuery() throws SQLException
+	private void sendQueryV3() throws SQLException
+	{
+		for ( int i = 0; i < m_binds.length ; i++ )
+		{
+			if ( m_binds[i] == null )
+				throw new PSQLException("postgresql.prep.param", new Integer(i + 1));
+		}
+		try
+		{
+			byte[][] l_parts = new byte[(m_binds.length*2)+1][];
+			int j = 0;
+			int l_msgSize = 4;
+			Encoding l_encoding = connection.getEncoding();
+			pgStream.SendChar('Q');
+			for (int i = 0 ; i < m_binds.length ; ++i)
+			{
+				l_parts[j] = l_encoding.encode(m_sqlFrags[i]);
+				l_msgSize += l_parts[j].length;
+				j++;
+				l_parts[j] = l_encoding.encode(m_binds[i].toString());
+				l_msgSize += l_parts[j].length;
+				j++;
+			}
+			l_parts[j] = l_encoding.encode(m_sqlFrags[m_binds.length]);
+			l_msgSize += l_parts[j].length;
+			pgStream.SendInteger(l_msgSize+1,4);
+			for (int k = 0; k < l_parts.length; k++) {
+				pgStream.Send(l_parts[k]);
+			}
+			pgStream.SendChar(0);
+			pgStream.flush();
+		}
+		catch (IOException e)
+		{
+			throw new PSQLException("postgresql.con.ioerror", e);
+		}
+	}
+
+	/*
+	 * Send a query to the backend.
+	 */
+	private void sendQueryV2() throws SQLException
 	{
 		for ( int i = 0; i < m_binds.length ; i++ )
 		{
@@ -220,11 +376,27 @@ public class QueryExecutor
 	 *
 	 * @param isBinary set if the tuple should be treated as binary data
 	 */
-	private void receiveTuple(boolean isBinary) throws SQLException
+	private void receiveTupleV3(boolean isBinary) throws SQLException
 	{
 		if (fields == null)
 			throw new PSQLException("postgresql.con.tuple");
-		Object tuple = pgStream.ReceiveTuple(fields.length, isBinary);
+		Object tuple = pgStream.ReceiveTupleV3(fields.length, isBinary);
+		if (isBinary)
+			binaryCursor = true;
+		if (maxRows == 0 || tuples.size() < maxRows)
+			tuples.addElement(tuple);
+	}
+
+	/*
+	 * Receive a tuple from the backend.
+	 *
+	 * @param isBinary set if the tuple should be treated as binary data
+	 */
+	private void receiveTupleV2(boolean isBinary) throws SQLException
+	{
+		if (fields == null)
+			throw new PSQLException("postgresql.con.tuple");
+		Object tuple = pgStream.ReceiveTupleV2(fields.length, isBinary);
 		if (isBinary)
 			binaryCursor = true;
 		if (maxRows == 0 || tuples.size() < maxRows)
@@ -234,7 +406,36 @@ public class QueryExecutor
 	/*
 	 * Receive command status from the backend.
 	 */
-	private void receiveCommandStatus() throws SQLException
+	private void receiveCommandStatusV3() throws SQLException
+	{
+		//TODO: better handle the msg len
+		int l_len = pgStream.ReceiveIntegerR(4);
+		//read l_len -5 bytes (-4 for l_len and -1 for trailing \0)
+		status = connection.getEncoding().decode(pgStream.Receive(l_len-5)); 
+		//now read and discard the trailing \0
+		pgStream.Receive(1);
+		try
+		{
+			// Now handle the update count correctly.
+			if (status.startsWith("INSERT") || status.startsWith("UPDATE") || status.startsWith("DELETE") || status.startsWith("MOVE"))
+			{
+				update_count = Integer.parseInt(status.substring(1 + status.lastIndexOf(' ')));
+			}
+			if (status.startsWith("INSERT"))
+			{
+				insert_oid = Long.parseLong(status.substring(1 + status.indexOf(' '),
+											status.lastIndexOf(' ')));
+			}
+		}
+		catch (NumberFormatException nfe)
+		{
+			throw new PSQLException("postgresql.con.fathom", status);
+		}
+	}
+	/*
+	 * Receive command status from the backend.
+	 */
+	private void receiveCommandStatusV2() throws SQLException
 	{
 
 		status = pgStream.ReceiveString(connection.getEncoding());
@@ -261,7 +462,33 @@ public class QueryExecutor
 	/*
 	 * Receive the field descriptions from the back end.
 	 */
-	private void receiveFields() throws SQLException
+	private void receiveFieldsV3() throws SQLException
+	{
+		//TODO: use the msgSize
+		//TODO: use the tableOid, and tablePosition
+		if (fields != null)
+			throw new PSQLException("postgresql.con.multres");
+		int l_msgSize = pgStream.ReceiveIntegerR(4);
+		int size = pgStream.ReceiveIntegerR(2);
+		fields = new Field[size];
+
+		for (int i = 0; i < fields.length; i++)
+		{
+			String typeName = pgStream.ReceiveString(connection.getEncoding());
+			int tableOid = pgStream.ReceiveIntegerR(4);
+			int tablePosition = pgStream.ReceiveIntegerR(2);
+			int typeOid = pgStream.ReceiveIntegerR(4);
+			int typeLength = pgStream.ReceiveIntegerR(2);
+			int typeModifier = pgStream.ReceiveIntegerR(4);
+			int formatType = pgStream.ReceiveIntegerR(2);
+			//TODO: use the extra values coming back
+			fields[i] = new Field(connection, typeName, typeOid, typeLength, typeModifier);
+		}
+	}
+	/*
+	 * Receive the field descriptions from the back end.
+	 */
+	private void receiveFieldsV2() throws SQLException
 	{
 		if (fields != null)
 			throw new PSQLException("postgresql.con.multres");

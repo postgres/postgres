@@ -6,17 +6,14 @@
  * Copyright (c) 2003, PostgreSQL Global Development Group
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/interfaces/jdbc/org/postgresql/core/Attic/Field.java,v 1.1 2003/03/07 18:39:41 barry Exp $
+ *	  $Header: /cvsroot/pgsql/src/interfaces/jdbc/org/postgresql/core/Attic/Field.java,v 1.2 2003/05/29 03:21:32 barry Exp $
  *
  *-------------------------------------------------------------------------
  */
 package org.postgresql.core;
 
-import java.lang.*;
 import java.sql.*;
-import java.util.*;
 import org.postgresql.core.BaseConnection;
-import org.postgresql.util.PSQLException;
 
 /*
  */
