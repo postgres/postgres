@@ -1,6 +1,6 @@
 .\" This is -*-nroff-*-
 .\" XXX standard disclaimer belongs here....
-.\" $Header: /cvsroot/pgsql/src/man/Attic/create_index.l,v 1.4 1997/01/13 17:22:25 momjian Exp $
+.\" $Header: /cvsroot/pgsql/src/man/Attic/create_index.l,v 1.5 1997/05/13 04:41:51 momjian Exp $
 .TH "CREATE INDEX" SQL 11/05/95 PostgreSQL PostgreSQL
 .SH NAME
 create index \(em construct a secondary index
@@ -8,7 +8,7 @@ create index \(em construct a secondary index
 .nf
 \fBcreate\fR [\fBunique\fR] \fBindex\fR index-name
 	\fBon\fR classname [\fBusing\fR am-name]
-	\fB(\fR attname [type_class\fB] )\fR
+	\fB(\fR attname, ... [type_class\fB] )\fR
 
 \fBcreate\fR [\fBunique\fR] \fBindex\fR index-name
 	\fBon\fR classname [\fBusing\fR am-name]
@@ -22,12 +22,12 @@ This command constructs an index called
 is the name of the access method which is used for the index.
 The default access method is btree.
 .PP
-In the first syntax shown above, the key field for the index is
-specified as an attribute name and an associated
+In the first syntax shown above, the key fields for the index are
+specified as attribute names.  It may also have an associated
 .IR "operator class" .
 An operator class is used to specify the operators to be used for a
-particular index.  For example, a btree index on four-byte integers
-would use the
+particular index.
+For example, a btree index on four-byte integers would use the
 .IR int4_ops
 class; this operator class includes comparison functions for four-byte
 integers.
@@ -40,7 +40,7 @@ result of a user-defined function
 applied to one or more attributes of a single class.  These
 .IR "functional indices"
 are primarily useful in two situations.  First, functional indices can
-be used to simulate multikey indices.  That is, the user can define a
+be used to simulate multi-key indices.  That is, the user can define a
 new base type (a simple combination of, say, \*(lqoid\*(rq and
 \*(lqint2\*(rq) and the associated functions and operators on this new
 type such that the access method can use it.  Once this has been done,
@@ -260,6 +260,7 @@ and
 represent the use of 
 .IR "functional indices"
 to simulate multi-key indices.
+These are no longer needed now that multi-key indexes are supported.
 .PP
 The Postgres query optimizer will consider using btree indices in a scan
 whenever an indexed attribute is involved in a comparison using one of:
