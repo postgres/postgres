@@ -64,12 +64,12 @@ with PostgreSQL?<BR>
 
 <A HREF="#3.1">3.1</A>) Why does <I>initdb</I> fail?<BR>
 <A HREF="#3.2">3.2</A>) How do I install PostgreSQL somewhere other than
-/usr/local/pgsql?<BR>
-<A HREF="#3.3">3.3</A>) When I start the postmaster, I get a
+<I>/usr/local/pgsql?</I><BR>
+<A HREF="#3.3">3.3</A>) When I start the <i>postmaster</i>, I get a
 <I>Bad System Call</I> or core dumped message.  Why?<BR>
-<A HREF="#3.4">3.4</A>) When I try to start the postmaster, I get
+<A HREF="#3.4">3.4</A>) When I try to start the <i>postmaster</i>, I get
 <I>IpcMemoryCreate</I> errors.  Why?<BR>
-<A HREF="#3.5">3.5</A>) When I try to start the postmaster, I get
+<A HREF="#3.5">3.5</A>) When I try to start the <i>postmaster</i>, I get
 <I>IpcSemaphoreCreate</I> errors.  Why?<BR>
 <A HREF="#3.6">3.6</A>) How do I prevent other hosts from accessing my
 PostgreSQL database?<BR>
@@ -121,38 +121,40 @@ is NULL?<BR>
 <A HREF="#4.15">4.15</A>) What is the difference between the
 various character types?<BR>
 <A HREF="#4.16.1">4.16.1</A>) How do I create a serial/auto-incrementing field?<BR>
-<A HREF="#4.16.2">4.16.2</A>) How do I get the value of a serial insert?<BR>
-<A HREF="#4.16.3">4.16.3</A>) Don't currval() and nextval() lead to a
-race condition with other concurrent backend processes?<BR>
+<A HREF="#4.16.2">4.16.2</A>) How do I get the value of a
+<small>SERIAL</small> insert?<BR>
+<A HREF="#4.16.3">4.16.3</A>) Don't <I>currval()</I> and <I>nextval()</I> lead to a
+race condition with other users?<BR>
 
-<A HREF="#4.17">4.17</A>) What is an oid?  What is a tid?<BR>
+<A HREF="#4.17">4.17</A>) What is an <small>OID</small>? What is a
+<small>TID</small>?<BR>
 <A HREF="#4.18">4.18</A>) What is the meaning of some of the terms
 used in PostgreSQL?<BR>
 
-<A HREF="#4.19">4.19</A>) Why do I get the error "FATAL:  palloc
-failure: memory exhausted?"<BR>
+<A HREF="#4.19">4.19</A>) Why do I get the error <I>"FATAL:  palloc
+failure: memory exhausted?"</I><BR>
 <A HREF="#4.20">4.20</A>) How do I tell what PostgreSQL version I
 am running? <BR>
 <A HREF="#4.21">4.21</A>) My large-object operations get <I>invalid
 large obj descriptor.</I>  Why?<BR>
 <A HREF="#4.22">4.22</A>) 	How do I create a column that will default to the
 current time?<BR>
-<A HREF="#4.23">4.23</A>) Why are my subqueries using <CODE>IN</CODE> so
-slow?<BR>
+<A HREF="#4.23">4.23</A>) Why are my subqueries using
+<CODE><small>IN</small></CODE> so slow?<BR>
 <A HREF="#4.24">4.24</A>) How do I do an <i>outer</i> join?<BR>
 
 <H2><CENTER>Extending PostgreSQL</CENTER></H2>
 
 <A HREF="#5.1">5.1</A>) I wrote a user-defined function.  When I run
 it in <I>psql,</I> why does it dump core?<BR>
-<A HREF="#5.2">5.2</A>) What does the message:
-<I>NOTICE:PortalHeapMemoryFree: 0x402251d0 not in alloc set!</I> mean?<BR>
+<A HREF="#5.2">5.2</A>) What does the message
+<I>"NOTICE:PortalHeapMemoryFree: 0x402251d0 not in alloc set!"</I> mean?<BR>
 <A HREF="#5.3">5.3</A>) How can I contribute some nifty new types and functions
 to PostgreSQL?<BR>
 <A HREF="#5.4">5.4</A>) How do I write a C function to return a
 tuple?<BR>
 <A HREF="#5.5">5.5</A>) I have changed a source file.  Why does the
-recompile does not see the change?<BR>
+recompile not see the change?<BR>
 
 
 <HR>
@@ -276,7 +278,7 @@ California, Berkeley.  It is maintained through volunteer effort.<P>
 The main mailing list is: <A
 HREF="mailto:pgsql-general@PostgreSQL.org">pgsql-general@PostgreSQL.org</A>.
 It is available for discussion of matters pertaining to PostgreSQL.
-To subscribe, send a mail with the lines in the body (not
+To subscribe, send mail with the following lines in the body (not
 the subject line)
 
 <PRE>
@@ -326,7 +328,7 @@ via the PostgreSQL WWW home page at:
 <A HREF="http://www.PostgreSQL.org">http://www.PostgreSQL.org</A>
 </BLOCKQUOTE><P>
 
-There is also an IRC channel on EFNet, channel #PostgreSQL.
+There is also an IRC channel on EFNet, channel <I>#PostgreSQL.</I>
 I use the unix command <CODE>irc -c '#PostgreSQL' "$USER"
 irc.phoenix.net.</CODE><P>
 
@@ -344,7 +346,7 @@ We plan to have major releases every four months.<P>
 <H4><A NAME="1.8">1.8</A>) What documentation is available?</H4><P>
 
 Several manuals, manual pages, and some small test examples are 
-included in the distribution. See the /doc directory.  You can also
+included in the distribution. See the <I>/doc</I> directory.  You can also
 browse the manual on-line at <A
 HREF="http://www.PostgreSQL.org/docs/postgres">
 http://www.PostgreSQL.org/docs/postgres</A>.
@@ -364,7 +366,7 @@ Our web site contains even more documentation.<P>
 
 PostgreSQL supports an extended subset of SQL-92.  See our
 <A HREF="http://www.PostgreSQL.org/docs/todo.html">
-TODO</A> for a list of known bugs, missing features, and future plans.<P>
+TODO</A> list for known bugs, missing features, and future plans.<P>
 
 <H4><A NAME="1.10">1.10</A>) How can I learn SQL?</H4><P>
 
@@ -394,16 +396,16 @@ Yes, we easily handle dates past the year 2000AD, and before 2000BC.<P>
 
 <H4><A NAME="1.12">1.12</A>) How do I join the development team?</H4><P>
 
-First, download the latest sources and read the PostgreSQL Developers
+First, download the latest source and read the PostgreSQL Developers
 documentation on our web site, or in the distribution.
-Second, subscribe to the pgsql-hackers and pgsql-patches mailing lists.
+Second, subscribe to the <I>pgsql-hackers</I> and <I>pgsql-patches</I> mailing lists.
 Third, submit high-quality patches to pgsql-patches.<P>
 
 There are about a dozen people who have commit privileges to
 the PostgreSQL CVS archive. They each have submitted so many
-high-quality patches that it was a pain for the existing
+high-quality patches that it was impossible for the existing
 committers to keep up, and we had confidence that patches they
-committed were likely to be of high quality.
+committed were of high quality.
 
 <H4><A NAME="1.13">1.13</A>) How do I submit a bug report?</H4><P>
 
@@ -430,7 +432,7 @@ transactions, subselects, triggers, views, foreign key referential
 integrity, and sophisticated locking.  We have some features they don't
 have, like user-defined types, inheritance, rules, and multi-version
 concurrency control to reduce lock contention.  We don't have outer
-joins, but are working on them for our next release.<BR><BR>
+joins, but are working on them.<BR><BR>
 
 <DT> <B>Performance</B>
 <DD>
@@ -560,7 +562,7 @@ We have:
 <LI>Python(PyGreSQL)
 <LI>TCL(libpgtcl)
 <LI>C Easy API(libpgeasy)
-<LI>Embedded HTML(<A HREF="http://www.php.net">PHP from http://www.php.net</A>)
+<LI>Embedded HTML (<A HREF="http://www.php.net">PHP from http://www.php.net</A>)
 </UL><P>
 
 <HR>
@@ -580,14 +582,14 @@ your path
 
 
 <H4><A NAME="3.2">3.2</A>) How do I install PostgreSQL somewhere
-other than /usr/local/pgsql?</H4><P>
+other than <I>/usr/local/pgsql?</I></H4><P>
 
-The simplest way is to specify the --prefix option when running configure.
-If you forgot to do that, you can edit Makefile.global and change POSTGRESDIR
-accordingly, or create a Makefile.custom and define POSTGRESDIR there.<P>
+The simplest way is to specify the --prefix option when running <I>configure.</I>
+If you forgot to do that, you can edit <I>Makefile.global</I> and change POSTGRESDIR
+accordingly, or create a <I>Makefile.custom</I> and define POSTGRESDIR there.<P>
 
 
-<H4><A NAME="3.3">3.3</A>) When I start the postmaster, I get a <I>Bad
+<H4><A NAME="3.3">3.3</A>) When I start the <i>postmaster</i>, I get a <I>Bad
 System Call</I> or core dumped message.  Why?</H4><P>
 
 It could be a variety of problems, but first check to see that you
@@ -595,23 +597,23 @@ have System V extensions installed in your kernel. PostgreSQL requires
 kernel support for shared memory and semaphores.<P>
 
 
-<H4><A NAME="3.4">3.4</A>) When I try to start the postmaster, I
+<H4><A NAME="3.4">3.4</A>) When I try to start the <i>postmaster,</i> I
 get <I>IpcMemoryCreate</I> errors.  Why?</H4><P>
 
 You either do not have shared memory configured properly in your kernel or
 you need to enlarge the shared memory available in the kernel.  The
 exact amount you need depends on your architecture  and how many buffers
-and backend processes you configure postmaster to run with.
+and backend processes you configure for the <i>postmaster.</i>
 For most systems, with default numbers of buffers and processes, you
 need a minimum of ~1MB.<P>
 
-<H4><A NAME="3.5">3.5</A>) When I try to start the postmaster, I
+<H4><A NAME="3.5">3.5</A>) When I try to start the <i>postmaster,</i> I
 get <I>IpcSemaphoreCreate</I> errors.  Why?</H4><P>
 
 If the error message is <I>IpcSemaphoreCreate: semget failed (No space
 left on device)</I> then your kernel is not configured with enough
 semaphores. Postgres needs one semaphore per potential backend process.
-A temporary solution is to start the postmaster with a smaller limit on
+A temporary solution is to start the <i>postmaster</i> with a smaller limit on
 the number of backend processes.  Use <I>-N</I> with a parameter less
 than the default of 32.  A more permanent solution is to increase your
 kernel's <SMALL>SEMMNS</SMALL> and <SMALL>SEMMNI</SMALL> parameters.<P>
@@ -635,7 +637,7 @@ another machine?</H4><P>
 
 The default configuration allows only unix domain socket connections
 from the local machine.  To enable TCP/IP connections, make sure the
-postmaster has been started with the <I>-i</I> option, and add an
+<i>postmaster</i> has been started with the <I>-i</I> option, and add an
 appropriate host entry to the file
 <I>pgsql/data/pg_hba.conf</I>.
 
@@ -643,8 +645,8 @@ appropriate host entry to the file
 user?</H4><P>
 
 You should not create database users with user id 0 (root). They will  be
-unable to access the database.  This is a security precaution  because
-of the ability of any user to dynamically link object modules  into the
+unable to access the database.  This is a security precaution because
+of the ability of users to dynamically link object modules  into the
 database engine.<P>
 
 
@@ -671,22 +673,23 @@ transaction block.  This reduces the transaction overhead.  Also
 consider dropping and recreating indices when making large data
 changes.<P>
 
-There are several tuning things that can be done.  You can disable
-<I>fsync()</I> by starting the postmaster with a  <I>-o -F</I> option.  This will
-prevent <I>fsync()'s</I> from flushing to disk after every transaction.<P>
+There are several tuning options. You can disable
+<I>fsync()</I> by starting the <I>postmaster</I> with a <I>-o -F</I>
+option. This will prevent <I>fsync()'s</I> from flushing to disk after
+every transaction.<P>
 
-You can also use the postmaster -B option to increase the number of
+You can also use the <I>postmaster</I> <I>-B</I> option to increase the number of
 shared memory buffers used by the backend processes.  If you make this
-parameter too high, the postmaster may not start because you've exceeded
+parameter too high, the <I>postmaster</I> may not start because you've exceeded
 your kernel's limit on shared memory space.
 Each buffer is 8K and the default is 64 buffers.<P>
 
-You can also use the backend -S option to increase the maximum amount
-of memory used by the backend process for temporary sorts.  The -S value
+You can also use the backend <I>-S</I> option to increase the maximum amount
+of memory used by the backend process for temporary sorts.  The <I>-S</I> value
 is measured in kilobytes, and the default is 512 (ie, 512K).<P>
 
 You can also use the <SMALL>CLUSTER</SMALL> command to group data in tables to
-match an index.  See the cluster(l) manual page for more details.<P>
+match an index.  See the <small>CLUSTER</small> manual page for more details.<P>
 
 
 <H4><A NAME="3.11">3.11</A>) What debugging features are available?</H4><P>
@@ -694,7 +697,7 @@ match an index.  See the cluster(l) manual page for more details.<P>
 PostgreSQL has several features that report status information that can
 be valuable for debugging purposes.<P>
 
-First, by running configure with the --enable-cassert option, many
+First, by running <I>configure</I> with the --enable-cassert option, many
 <I>assert()'s</I> monitor the progress of the backend and halt the program when
 something unexpected occurs.<P>
 
@@ -708,7 +711,7 @@ standard output and error to a log file, like:
 
 This will put a server.log file in the top-level PostgreSQL directory.
 This file contains useful information about problems or errors
-encountered by the server.  <I>Postmaster</I> has a -d option that allows even
+encountered by the server.  <I>Postmaster</I> has a <I>-d</I> option that allows even
 more detailed information to be reported.  The <I>-d</I> option takes a number
 that specifies the debug level.  Be warned that high debug level values
 generate large log files.<P>
@@ -743,19 +746,19 @@ in the client's current directory.<P>
 <H4><A NAME="3.12">3.12</A>) I get 'Sorry, too many clients' when trying
 to connect.  Why?</H4><P>
 
-You need to increase the postmaster's limit on how many concurrent backend
+You need to increase the <i>postmaster's</i> limit on how many concurrent backend
 processes it can start.<P>
 
 In PostgreSQL 6.5 and up, the default limit is 32 processes. You can
-increase it by restarting the postmaster with a suitable <I>-N</I>
+increase it by restarting the <i>postmaster</i> with a suitable <I>-N</I>
 value. With the default configuration you can set <I>-N</I> as large as
 1024.  If you need more, increase <SMALL>MAXBACKENDS</SMALL> in
 <I>include/config.h</I> and rebuild. You can set the default value of
-<I>-N</I> at configuration time, if you like, using configure's
+<I>-N</I> at configuration time, if you like, using <I>configure's</I>
 <I>--with-maxbackends</I> switch.<P>
 
 Note that if you make <I>-N</I> larger than 32, you must also increase
-<I>-B</I> beyond its default of 64; -B must be at least twice -N, and
+<I>-B</I> beyond its default of 64; <I>-B</I> must be at least twice <I>-N,</I> and
 probably should be more than that for best performance. For large
 numbers of backend processes, you are also likely to find that you need
 to increase various Unix kernel configuration parameters. Things to
@@ -778,7 +781,7 @@ database directory?</H4><P>
 They are temporary files generated by the query executor. For
 example, if a sort needs to be done to satisfy an <SMALL>ORDER BY,</SMALL> and
 the sort requires more space than the backend's <I>-S</I> parameter allows,
-then temp files are created to hold the extra data.<P>
+then temporary files are created to hold the extra data.<P>
 
 The temp files should be deleted automatically, but might not if a backend
 crashes during a sort.  If you have no backends running at the time,
@@ -793,7 +796,7 @@ it is safe to delete the pg_tempNNN.NN files.<P>
 commas, decimal points, and date formats.</H4><P>
 
 Check your locale configuration. PostgreSQL uses the locale setting of
-the user that ran the postmaster process.  There are postgres and psql
+the user that ran the <i>postmaster</i> process.  There are postgres and psql
 SET commands to control the date format.  Set those accordingly for
 your operating environment.<P>
 
@@ -862,7 +865,7 @@ To change the maximum row size, edit <I>include/config.h</I> and change
 <SMALL>BLCKSZ.</SMALL> To use attributes larger than 8K, you can also
 use the large object interface.<P>
 
-Row length limit will be removed in 7.1.<P>
+The row length limit will be removed in 7.1.<P>
 
 
 <H4><A NAME="4.7">4.7</A>)How much database disk space is required to
@@ -1037,13 +1040,14 @@ is automatically translated into this:
 </PRE>
 See the <I>create_sequence</I> manual page for more information about sequences.
 
-You can also use each row's <I>oid</I> field as a unique value.  However, if
+You can also use each row's <I>OID</I> field as a unique value.  However, if
 you need to dump and reload the database, you need to use <I>pg_dump's -o</I>
-option or <SMALL>COPY WITH OIDS</SMALL> option to preserve the oids.<P>
+option or <SMALL>COPY WITH OIDS</SMALL> option to preserve the <small>OID</small>s.<P>
 
 <A HREF="http://www.PostgreSQL.org/docs/aw_pgsql_book">Numbering Rows.</A>
 
-<H4><A NAME="4.16.2">4.16.2</A>) How do I get the back the generated SERIAL value after an insert?</H4><P>
+<H4><A NAME="4.16.2">4.16.2</A>) How do I get the value of a
+<small>SERIAL</small> insert?</H4><P>
 One approach is to to retrieve the next SERIAL value from the sequence object with the <I>nextval()</I> function <I>before</I> inserting and then insert it explicitly.  Using the example table in <A HREF="#4.16.1">4.16.1</A>, that might look like this:
 <PRE>
 	$newSerialID = nextval('person_id_seq');
@@ -1056,35 +1060,37 @@ Alternatively, you could retrieve the just-assigned SERIAL value with the <I>cur
 	INSERT INTO person (name) VALUES ('Blaise Pascal');
 	$newID = currval('person_id_seq');
 </PRE>
-Finally, you could use the <A HREF="#4.17">oid</A> returned from the
+Finally, you could use the <A HREF="#4.17"><small>OID</small></A> returned from the
 INSERT statement to lookup the default value, though this is probably
 the least portable approach. In perl, using DBI with Edmund Mergl's
 DBD::Pg module, the oid value is made available via
 <I>$sth-&gt;{pg_oid_status} after $sth-&gt;execute().</I>
 
-<H4><A NAME="4.16.3">4.16.3</A>) Don't currval() and nextval() lead to a race condition with other
-concurrent backend processes?</H4><P>
+<H4><A NAME="4.16.3">4.16.3</A>) Don't <I>currval()</I> and <I>nextval()</I> lead to 
+a race condition with other users?</H4><P>
 
 No.  This is handled by the backends.
 
 
-<H4><A NAME="4.17">4.17</A>) What is an oid?  What is a tid?</H4><P>
+<H4><A NAME="4.17">4.17</A>) What is an <small>OID</small>? What is a
+<small>TID</small>?</H4><P>
 
 <small>OID</small>s are PostgreSQL's answer to unique row ids.  Every row that is
-created in PostgreSQL gets a unique <small>oid</small>.  All <small>oid</small>s generated during
+created in PostgreSQL gets a unique <small>OID</small>.  All <small>OID</small>s generated during
 <I>initdb</I> are less than 16384 (from <I>backend/access/transam.h</I>).  All
-user-created <small>oid</small>s are equal or greater that this.  By default, all these
-<small>oid</small>s are unique not only within a table, or database, but unique within
+user-created <small>OID</small>s are equal or greater that this.  By default, all these
+<small>OID</small>s are unique not only within a table, or database, but unique within
 the entire PostgreSQL installation.<P>
 
-PostgreSQL uses <small>oid</small>s in its internal system tables to link rows between
-tables.  These <small>oid</small>s can be used to identify specific user rows and used
-in joins.  It is recommended you use column type <small>oid</small> to store <small>oid</small>
-values.  You can create an index on the <small>oid</small> field for faster access.<P>
+PostgreSQL uses <small>OID</small>s in its internal system tables to link rows between
+tables.  These <small>OID</small>s can be used to identify specific user rows and used
+in joins. It is recommended you use column type <small>OID</small> to
+store <small>OID</small>
+values.  You can create an index on the <small>OID</small> field for faster access.<P>
 
-<small>Oid</small>s are assigned to all new rows from a central area that is used by
-all databases.  If you want to change the <small>oid</small> to something else, or if
-you want to make a copy of the table, with the original <small>oid</small>'s, there is
+O<small>id</small>s are assigned to all new rows from a central area that is used by
+all databases.  If you want to change the <small>OID</small> to something else, or if
+you want to make a copy of the table, with the original <small>OID</small>'s, there is
 no reason you can't do it:
 
 <PRE>
@@ -1099,7 +1105,7 @@ no reason you can't do it:
 -->
 </PRE><P>
 
-Tids are used to identify specific physical rows with block and offset
+T<small>ID</small>s are used to identify specific physical rows with block and offset
 values.  Tids change after rows are modified or reloaded.  They are used
 by index entries to point to physical rows.<P>
 
@@ -1117,17 +1123,17 @@ common usage.  Here are some:
 <LI> retrieve, select
 <LI> replace, update
 <LI> append, insert
-<LI> oid, serial value
+<LI> <small>OID</small>, serial value
 <LI> portal, cursor
 <LI> range variable, table name, table alias
 </UL><P>
 
-<H4><A NAME="4.19">4.19</A>) Why do I get the error "FATAL:  palloc
-failure: memory exhausted?"<BR></H4><P>
+<H4><A NAME="4.19">4.19</A>) Why do I get the error <I>"FATAL:  palloc
+failure: memory exhausted?"</I><BR></H4><P>
 
 It is possible you have run out of virtual memory on your system, or
 your kernel has a low limit for certain resources.  Try this before
-starting the postmaster:
+starting the <i>postmaster:</i>
 
 <PRE>
 	ulimit -d 65536
@@ -1169,12 +1175,11 @@ Use <i>now()</i>:
 	CREATE TABLE test (x int, modtime timestamp default now() );
 </PRE></CODE>
 <P>
-<H4><A NAME="4.23">4.23</A>) Why are my subqueries using <CODE>IN</CODE> so 
-slow?<BR></H4><P>
+<H4><A NAME="4.23">4.23</A>) Why are my subqueries using
+<CODE><small>IN</small></CODE> so slow?<BR></H4><P>
 Currently, we join subqueries to outer queries by sequential scanning
 the result of the subquery for each row of the outer query. A workaround
-is to replace <CODE>IN</CODE> with <CODE>EXISTS</CODE>. For example,
-change:
+is to replace <CODE>IN</CODE> with <CODE>EXISTS</CODE>:
 <CODE><PRE>
 	SELECT *
 	FROM tab
@@ -1215,8 +1220,8 @@ I run it in <I>psql,</I> why does it dump core?</H4><P>
 The problem could be a number of things.  Try testing your user-defined
 function in a stand alone test program first.
 
-<H4><A NAME="5.2">5.2</A>) What does the message:
-<I>NOTICE:PortalHeapMemoryFree: 0x402251d0 not in alloc set!</I> mean?</H4><P>
+<H4><A NAME="5.2">5.2</A>) What does the message
+<I>"NOTICE:PortalHeapMemoryFree: 0x402251d0 not in alloc set!"</I> mean?</H4><P>
 
 You are <I>pfree'ing</I> something that was not <I>palloc'ed.</I>
 Beware of mixing <I>malloc/free</I> and <I>palloc/pfree.</I>
@@ -1237,12 +1242,10 @@ This requires wizardry so extreme that the authors have never
 tried it, though in principle it can be done.<P>
 
 <H4><A NAME="5.5">5.5</A>) I have changed a source file.  Why does the
-recompile does not see the change?</H4><P>
+recompile not see the change?</H4><P>
 
-The Makefiles do not have the proper dependencies for include files. You
-have to do a <I>make clean</I> and then another <I>make</I>.
- You
-have to do a <I>make clean</I> and then another <I>make.</I><P>
+The <I>Makefiles</I> do not have the proper dependencies for include files. You
+have to do a <I>make clean</I> and then another <I>make</I>.<P>
 
 
 </BODY>

@@ -90,10 +90,10 @@
    4.14) In a query, how do I detect if a field is NULL?
    4.15) What is the difference between the various character types?
    4.16.1) How do I create a serial/auto-incrementing field?
-   4.16.2) How do I get the value of a serial insert?
+   4.16.2) How do I get the value of a SERIAL insert?
    4.16.3) Don't currval() and nextval() lead to a race condition with
-   other concurrent backend processes?
-   4.17) What is an oid? What is a tid?
+   other users?
+   4.17) What is an OID? What is a TID?
    4.18) What is the meaning of some of the terms used in PostgreSQL?
    4.19) Why do I get the error "FATAL: palloc failure: memory
    exhausted?"
@@ -108,13 +108,13 @@
                                       
    5.1) I wrote a user-defined function. When I run it in psql, why does
    it dump core?
-   5.2) What does the message: NOTICE:PortalHeapMemoryFree: 0x402251d0
-   not in alloc set! mean?
+   5.2) What does the message "NOTICE:PortalHeapMemoryFree: 0x402251d0
+   not in alloc set!" mean?
    5.3) How can I contribute some nifty new types and functions to
    PostgreSQL?
    5.4) How do I write a C function to return a tuple?
-   5.5) I have changed a source file. Why does the recompile does not see
-   the change?
+   5.5) I have changed a source file. Why does the recompile not see the
+   change?
      _________________________________________________________________
    
                              General Questions
@@ -219,8 +219,8 @@
    
    The main mailing list is: pgsql-general@PostgreSQL.org. It is
    available for discussion of matters pertaining to PostgreSQL. To
-   subscribe, send a mail with the lines in the body (not the subject
-   line)
+   subscribe, send mail with the following lines in the body (not the
+   subject line)
         subscribe
         end
 
@@ -280,8 +280,8 @@
    
     1.9) How do I find out about known bugs or missing features?
     
-   PostgreSQL supports an extended subset of SQL-92. See our TODO for a
-   list of known bugs, missing features, and future plans.
+   PostgreSQL supports an extended subset of SQL-92. See our TODO list
+   for known bugs, missing features, and future plans.
    
     1.10) How can I learn SQL?
     
@@ -303,16 +303,16 @@
    
     1.12) How do I join the development team?
     
-   First, download the latest sources and read the PostgreSQL Developers
+   First, download the latest source and read the PostgreSQL Developers
    documentation on our web site, or in the distribution. Second,
    subscribe to the pgsql-hackers and pgsql-patches mailing lists. Third,
    submit high-quality patches to pgsql-patches.
    
    There are about a dozen people who have commit privileges to the
    PostgreSQL CVS archive. They each have submitted so many high-quality
-   patches that it was a pain for the existing committers to keep up, and
-   we had confidence that patches they committed were likely to be of
-   high quality.
+   patches that it was impossible for the existing committers to keep up,
+   and we had confidence that patches they committed were of high
+   quality.
    
     1.13) How do I submit a bug report?
     
@@ -333,7 +333,7 @@
           some features they don't have, like user-defined types,
           inheritance, rules, and multi-version concurrency control to
           reduce lock contention. We don't have outer joins, but are
-          working on them for our next release.
+          working on them.
           
    Performance
           PostgreSQL runs in two modes. Normal fsync mode flushes every
@@ -442,7 +442,7 @@
      * Python(PyGreSQL)
      * TCL(libpgtcl)
      * C Easy API(libpgeasy)
-     * Embedded HTML(PHP from http://www.php.net)
+     * Embedded HTML (PHP from http://www.php.net)
      _________________________________________________________________
    
                           Administrative Questions
@@ -474,9 +474,9 @@
    You either do not have shared memory configured properly in your
    kernel or you need to enlarge the shared memory available in the
    kernel. The exact amount you need depends on your architecture and how
-   many buffers and backend processes you configure postmaster to run
-   with. For most systems, with default numbers of buffers and processes,
-   you need a minimum of ~1MB.
+   many buffers and backend processes you configure for the postmaster.
+   For most systems, with default numbers of buffers and processes, you
+   need a minimum of ~1MB.
    
     3.5) When I try to start the postmaster, I get IpcSemaphoreCreate errors.
     Why?
@@ -511,7 +511,7 @@
     
    You should not create database users with user id 0 (root). They will
    be unable to access the database. This is a security precaution
-   because of the ability of any user to dynamically link object modules
+   because of the ability of users to dynamically link object modules
    into the database engine.
    
     3.9) All my servers crash under concurrent table access. Why?
@@ -533,9 +533,9 @@
    reduces the transaction overhead. Also consider dropping and
    recreating indices when making large data changes.
    
-   There are several tuning things that can be done. You can disable
-   fsync() by starting the postmaster with a -o -F option. This will
-   prevent fsync()'s from flushing to disk after every transaction.
+   There are several tuning options. You can disable fsync() by starting
+   the postmaster with a -o -F option. This will prevent fsync()'s from
+   flushing to disk after every transaction.
    
    You can also use the postmaster -B option to increase the number of
    shared memory buffers used by the backend processes. If you make this
@@ -548,7 +548,7 @@
    value is measured in kilobytes, and the default is 512 (ie, 512K).
    
    You can also use the CLUSTER command to group data in tables to match
-   an index. See the cluster(l) manual page for more details.
+   an index. See the CLUSTER manual page for more details.
    
     3.11) What debugging features are available?
     
@@ -629,8 +629,8 @@
     
    They are temporary files generated by the query executor. For example,
    if a sort needs to be done to satisfy an ORDER BY, and the sort
-   requires more space than the backend's -S parameter allows, then temp
-   files are created to hold the extra data.
+   requires more space than the backend's -S parameter allows, then
+   temporary files are created to hold the extra data.
    
    The temp files should be deleted automatically, but might not if a
    backend crashes during a sort. If you have no backends running at the
@@ -695,7 +695,7 @@ Maximum number of indexes on a table?    unlimited
    BLCKSZ. To use attributes larger than 8K, you can also use the large
    object interface.
    
-   Row length limit will be removed in 7.1.
+   The row length limit will be removed in 7.1.
    
     4.7)How much database disk space is required to store data from a typical
     text file?
@@ -847,13 +847,13 @@ BYTEA           bytea           variable-length array of bytes
         CREATE UNIQUE INDEX person_id_key ON person ( id );
 
    See the create_sequence manual page for more information about
-   sequences. You can also use each row's oid field as a unique value.
+   sequences. You can also use each row's OID field as a unique value.
    However, if you need to dump and reload the database, you need to use
-   pg_dump's -o option or COPY WITH OIDS option to preserve the oids.
+   pg_dump's -o option or COPY WITH OIDS option to preserve the OIDs.
    
    Numbering Rows.
    
-    4.16.2) How do I get the back the generated SERIAL value after an insert?
+    4.16.2) How do I get the value of a SERIAL insert?
     
    One approach is to to retrieve the next SERIAL value from the sequence
    object with the nextval() function before inserting and then insert it
@@ -873,35 +873,35 @@ BYTEA           bytea           variable-length array of bytes
         INSERT INTO person (name) VALUES ('Blaise Pascal');
         $newID = currval('person_id_seq');
 
-   Finally, you could use the oid returned from the INSERT statement to
+   Finally, you could use the OID returned from the INSERT statement to
    lookup the default value, though this is probably the least portable
    approach. In perl, using DBI with Edmund Mergl's DBD::Pg module, the
    oid value is made available via $sth->{pg_oid_status} after
    $sth->execute().
    
     4.16.3) Don't currval() and nextval() lead to a race condition with other
-    concurrent backend processes?
+    users?
     
    No. This is handled by the backends.
    
-    4.17) What is an oid? What is a tid?
+    4.17) What is an OID? What is a TID?
     
    OIDs are PostgreSQL's answer to unique row ids. Every row that is
-   created in PostgreSQL gets a unique oid. All oids generated during
+   created in PostgreSQL gets a unique OID. All OIDs generated during
    initdb are less than 16384 (from backend/access/transam.h). All
-   user-created oids are equal or greater that this. By default, all
-   these oids are unique not only within a table, or database, but unique
+   user-created OIDs are equal or greater that this. By default, all
+   these OIDs are unique not only within a table, or database, but unique
    within the entire PostgreSQL installation.
    
-   PostgreSQL uses oids in its internal system tables to link rows
-   between tables. These oids can be used to identify specific user rows
-   and used in joins. It is recommended you use column type oid to store
-   oid values. You can create an index on the oid field for faster
+   PostgreSQL uses OIDs in its internal system tables to link rows
+   between tables. These OIDs can be used to identify specific user rows
+   and used in joins. It is recommended you use column type OID to store
+   OID values. You can create an index on the OID field for faster
    access.
    
    Oids are assigned to all new rows from a central area that is used by
-   all databases. If you want to change the oid to something else, or if
-   you want to make a copy of the table, with the original oid's, there
+   all databases. If you want to change the OID to something else, or if
+   you want to make a copy of the table, with the original OID's, there
    is no reason you can't do it:
         CREATE TABLE new_table(old_oid oid, mycol int);
         SELECT old_oid, mycol INTO new FROM old;
@@ -909,7 +909,7 @@ BYTEA           bytea           variable-length array of bytes
         DELETE FROM new;
         COPY new WITH OIDS FROM '/tmp/pgtable';
 
-   Tids are used to identify specific physical rows with block and offset
+   TIDs are used to identify specific physical rows with block and offset
    values. Tids change after rows are modified or reloaded. They are used
    by index entries to point to physical rows.
    
@@ -923,7 +923,7 @@ BYTEA           bytea           variable-length array of bytes
      * retrieve, select
      * replace, update
      * append, insert
-     * oid, serial value
+     * OID, serial value
      * portal, cursor
      * range variable, table name, table alias
        
@@ -969,7 +969,7 @@ BYTEA           bytea           variable-length array of bytes
     
    Currently, we join subqueries to outer queries by sequential scanning
    the result of the subquery for each row of the outer query. A
-   workaround is to replace IN with EXISTS. For example, change:
+   workaround is to replace IN with EXISTS:
         SELECT *
         FROM tab
         WHERE col1 IN (SELECT col2 FROM TAB2)
@@ -1005,8 +1005,8 @@ BYTEA           bytea           variable-length array of bytes
    The problem could be a number of things. Try testing your user-defined
    function in a stand alone test program first.
    
-    5.2) What does the message: NOTICE:PortalHeapMemoryFree: 0x402251d0 not in
-    alloc set! mean?
+    5.2) What does the message "NOTICE:PortalHeapMemoryFree: 0x402251d0 not in
+    alloc set!" mean?
     
    You are pfree'ing something that was not palloc'ed. Beware of mixing
    malloc/free and palloc/pfree.
@@ -1021,9 +1021,8 @@ BYTEA           bytea           variable-length array of bytes
    This requires wizardry so extreme that the authors have never tried
    it, though in principle it can be done.
    
-    5.5) I have changed a source file. Why does the recompile does not see the
+    5.5) I have changed a source file. Why does the recompile not see the
     change?
     
    The Makefiles do not have the proper dependencies for include files.
-   You have to do a make clean and then another make. You have to do a
-   make clean and then another make.
+   You have to do a make clean and then another make.
