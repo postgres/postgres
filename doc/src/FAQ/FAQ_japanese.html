@@ -7,7 +7,7 @@
 <H1>
 PostgreSQL(ポストグレス・キュー・エル)についてよくある質問とその解答(FAQ)</H1>
 <P>
-原文最終更新日:		Fri Apr 26 23:03:46 EDT 2002
+原文最終更新日:		Thu Aug 22 19:20:40 EDT 2002
 <P>
 現在の維持管理者:	Bruce Momjian (<A
 HREF="mailto:pgman@candle.pha.pa.us">pgman@candle.pha.pa.us</A>)<BR>
@@ -35,10 +35,13 @@ http://www.PostgreSQL.org/docs/faq-english.html</A>
 	日本語版のこの文書は 本家 "User's Lounge" の "Collection of FAQs" の
 	"Japanese" という見出しのところにあります。また、以下のサイトにも
 	あります。
+		<A HREF="http://www.postgresql.jp/subcommittee/jpugdoc/">http://www.postgresql.jp/subcommittee/jpugdoc/</A>
 		<A HREF="http://www.rccm.co.jp/~juk/pgsql/">http://www.rccm.co.jp/~juk/pgsql/</A>
 		<A HREF="http://www.linux.or.jp/JF/">http://www.linux.or.jp/JF/</A>
 
 	この和訳についてお気づきの点は(<A HREF="mailto:juk@postgresql.jp">juk@postgresql.jp</A>)までメールでお寄せ下さい。
+
+						2002年08月25日    桑村 潤
 ]
 </PRE></small>
 
@@ -88,6 +91,7 @@ http://www.PostgreSQL.org/docs/faq-english.html</A>
 <A HREF="#3.7">3.7</A>)	どのようなデバグ機能が使えますか？<BR>
 <A HREF="#3.8">3.8</A>)	接続しようとするときに <I>'Sorry, too many clients'</I> が出るのはなぜですか？<BR>
 <A HREF="#3.9">3.9</A>)	自分のデータベース・ディレクトリにある <I>pg_sorttemp.XXX</I> ファイルは何ですか？<BR>
+<A href="#3.10">3.10</A>) PostgreSQLのメジャーリリースをアップデートするのにダンプとリストアをしなくてはならないのはなぜですか？<br>
 
 
 
@@ -121,6 +125,7 @@ http://www.PostgreSQL.org/docs/faq-english.html</A>
 <A HREF="#4.23">4.23</A>) <i>外部</i>結合(<i>outer</i> join)はどのように実現しますか?<BR>
 <A HREF="#4.24">4.24</A>) 複数のデータベースを使う問い合わせはどのようにすればできますか？<br>
 <A HREF="#4.25">4.25</A>) 関数で複数のロウまたはカラムを返すにはどうしますか？<br>
+<A HREF="#4.26">4.26</A>) なぜ、PL/PgSQL 関数の中から一時テーブルを確実に create/drop することができないのでしょうか？<br>
 
 <H2><CENTER>PostgreSQLの拡張についての質問</CENTER></H2>
 
@@ -361,7 +366,7 @@ UNIX コマンドで<tt>irc -c '#PostgreSQL' "$USER" <A HREF="http://irc.phoenix.net"
 
 <H4><A NAME="1.7">1.7</A>)	最新版はどれですか</H4>
 
-<P> PostgreSQL の最新版はバージョン 7.2.1 です。
+<P> PostgreSQL の最新版はバージョン 7.2.2 です。
 <P>
 我々は、4カ月毎にメジャーリリースを行なうことを計画しています。
 <P>
@@ -523,22 +528,10 @@ DBMS</small>が持つ機能をほとんど持っています。さらに PostgreSQLは、ユーザ
 <DT> <B>性能(Performance)</B>
 <DD>
 
-PostgreSQLは二つのモードで走ります。普通の<I>fsync</I>モードは、OSがク
-ラッシュしたり、数秒後に電源が落ちたりしたときのために、トランザクショ
-ンが完了する毎にディスクに書き込み、すべてのデータをディスクに保存しま
-す。このモードでは、ほとんどの商用データベースよりも遅くなりますが、そ
-の部分的な理由として、商用のデータベースの中にはこのように保守的なディ
-スク書き込みをデフォルトとしているものが少ないということもあります。
-<I>no-fsync</I>モードで、普通、PostgreSQLは商用データベースよりも速く
-なりますが、しかしながら、OSのクラッシュでデータが破壊されるかもしれま
-せん。我々は、その中間モードを開発中で、それがうまくゆくと、完全fsync
-モードほど性能を犠牲にすることなく、OSがクラッシュする30秒前までのデー
-タ整合性を保てるようになります。
-<BR><BR>
-
+PostgreSQLは他の商用あるいはオープンソースのデータベースと互角の性能も持ちます。ある面ではより早かったり、ほかの面ではより遅かったりします。
 MySQLなどの特化型データベース・システムにくらべて、PostgreSQLの挿入／
-更新が遅いのは、トランザクションによるオーバーヘッドがあるからです。も
-ちろん、MySQLには上記の<I>Features</I>の節に示すような機能はまったくあ
+更新が遅いのは、トランザクションによるオーバーヘッドがあるからです。
+もちろん、MySQLには上記の<I>Features</I>の節に示すような機能はまったくあ
 りません。我々は、PostgreSQLに柔軟性と機能性を組み込みながらも、絶えず、
 プロファイラーに掛けたりソースコードを解析したりして、性能の改善を続け
 ています。PostgreSQL と MySQL とを比較している面白い Web ページが
@@ -599,8 +592,9 @@ PostgreSQLの利用は、商用でも非商用でも、すべて無料です。上記に示してあ
     <P>もちろん、この基盤は安いものではありません。維持し続けるためには
 毎月あるいは一時の経費がかかります。もし、あなたやあなたの会社に、こうし
 た努力のための資金を助けるために施すことができるようでしたら、<A
-href=
-"http://www.pgsql.com/pg_goodies">http://www.pgsql.com/pg_goodies</A>
+	href=
+	"https://store.pgsql.com/shopping/index.php?id=1">
+	https://store.pgsql.com/shopping/index.php?id=1</A>
 から寄付をお願いします。
 
     <P>また、Webページには PostgreSQL,Inc とありますが、そこの"義援
@@ -608,9 +602,8 @@ href=
 のためで、決して特定の会社のための資金のためではありません。もし、手形
 (check)の方が都合がよければ連絡先の住所へお送り下さい。</P>
 
-
+<P>
 <HR>
-
 <H2><CENTER>ユーザー・クライアントの質問</CENTER></H2>
 <P>
 
@@ -627,6 +620,8 @@ href=
     [訳注:
 	PsqlODBC の 日本語パッチを片岡裕生さん(kataoka@interwiz.koganei.tokyo.jp)が作られました:
 	●<A HREF="http://www.interwiz.koganei.tokyo.jp/software/PsqlODBC/index.html">http://www.interwiz.koganei.tokyo.jp/software/PsqlODBC/index.html</A>
+	現在、最新版は井上博司さんのサイトにあります。
+	●<A HREF="http://w2422.nsk.ne.jp/~inoue/indexj.html">http://w2422.nsk.ne.jp/~inoue/indexj.html</A>
     ]
 </PRE></small>
 
@@ -699,7 +694,7 @@ Programmer's Guide</A>
 <P>以下のものがあります:
 
 <UL>
-<LI>C (libpq)
+<LI>C (libpq, libpgeasy)
 <LI>C++ (libpq++)
 <LI>埋め込みC (ecpg)
 <LI>Java (jdbc)
@@ -710,7 +705,11 @@ Programmer's Guide</A>
 <LI>C Easy API (libpgeasy)
 <LI>埋め込み<small>HTML</small> (<A HREF="http://www.php.net">PHP from http://www.php.net</A>)
 </UL>
-<P>
+    <P>その他の利用可能なインターフェースは <a 
+    href="http://www.postgresql.org/interfaces.html">
+    http://www.postgresql.org/interfaces.html</A>
+    にあります。
+    </P>
 
 <small><PRE>
     [訳注：
@@ -722,10 +721,11 @@ Programmer's Guide</A>
 	Bashコマンドラインでpostgres に問い合わせできます。
 	Perl のモジュールは古くからある Pg と DBI ドライバの DBD::Pg とがあり、
 	いずれも Edmund Mergl 氏によるもので <A HREF="http://www.cpan.org/">CPAN サイト</A>にあります。
+	永安悟史さんは Palm 版の libpq を開発されました。
+		<a href="http://www.snaga.org/libpq/">http://www.snaga.org/libpq/</a>
     ]
 </PRE></small>
 
-<P>
 <P>
 <HR>
 <H2><CENTER>管理上の質問</CENTER></H2>
@@ -858,9 +858,13 @@ PostgreSQLに許されるバックエンドのプロセス数が制限されているのは、
 	pg_options は postgresql.conf になっています。)
     ]
 </PRE></small>
-
-
 <P>
+<H4><A name="3.10">3.10</A>)  PostgreSQLのメジャーリリースをアップデートするのにダンプとリストアをしなくてはならないのはなぜですか？</H4>
+<P>
+PostgreSQLチームはマイナーリリースでは小さな変更しか行ないませんので、7.2 から 7.2.1 へのアップグレードにはダンプとリストアの必要はありません。しかし、メジャーリリースでは、システムテーブルやデータファイルの内部フォーマットの変更をしばしば行ないます。これらの変更はたいてい複雑で、そのため我々はデータファイルのための後方互換性を維持することができません。ダンプは汎用フォーマットでデータを出力し、それを新しい内部フォーマットを使って読み込むことができます。
+<P>
+同一リリースではディスク上でのフォーマットに変更はないので、アップグレードにはダンプ／リストアではなく、<i>pg_upgrade</i> スクリプトを使うことができます。リリースノートには、<i>pg_upgrade</i> が利用可能なリリースかどうか記されています。
+
 <P>
 <HR>
 <H2><CENTER>操作上の質問</CENTER></H2>
@@ -917,8 +921,8 @@ PostgreSQLに許されるバックエンドのプロセス数が制限されているのは、
 <PRE>
 データベースの最大サイズ? 	制限無し (500GB のデータベースも存在します)
 テーブルの最大サイズ?           16TB
-ロウの最大サイズ?                 7.1以降で制限無し
-フィールドの最大サイズ?         7.1以降で1GB
+ロウの最大サイズ?               1.6TB
+フィールドの最大サイズ?         1GB
 テーブル内での最大ロウ数?       制限無し
 テーブル内での最大カラム数?     カラムの型により250-1600
 テーブル内での最大インデクス数? 制限無し
@@ -964,6 +968,8 @@ PostgreSQLに許されるバックエンドのプロセス数が制限されているのは、
 
 <P>
 インデックスは、これほどのオーバヘッドは要求しませんが、インデックス付けされるデータを含む以上、それなりに大きくなります。
+<P><SMALL>NULL</SMALL>はビットマップに保存されていて、それらがわずかにスペースを使います。
+
 
 <P>
 <H4><A NAME="4.7">4.7</A>)	定義されたテーブル、インデックス、データベース、および、ユーザをどのようにして見つけ出しますか？
@@ -980,7 +986,7 @@ PostgreSQLに許されるバックエンドのプロセス数が制限されているのは、
 ブルが最小サイズより大きく、問い合わせでそのわずかなパーセンテージのロウを
 選択する時だけ、インデックスは使われます。これはインデックススキャンによ
 り起こされるランダムなディスクアクセスは、テーブルをストレートに読む順次
-走査よりも遅くなることがときどきあるからです。
+走査よりも遅くなることがあるからです。
 
     <P>インデックスを使うかを決定するために、PostgreSQL はテーブルについ
 ての統計情報を持たなければなりません。この統計情報は、<SMALL>VACUUM
@@ -995,15 +1001,32 @@ ANALYZE</SMALL>または、単に <SMALL>ANALYZE</SMALL> を使って収集すること
 のインデックススキャンよりも普通は高速です。</P>
     しかし、<SMALL>ORDER BY</SMALL>と組み合わされた<SMALL>LIMIT</SMALL> 
 は、テーブルの小さな部分を返すためにたびたびインデックスを使うでしょう。
+実際、MAX() や MIN() がインデックスを使わないとしても、このような値を
+ORDER BY と LIMIT を使ってインデックスを使って取り出すことが可能です:
+
+<PRE>
+    SELECT col
+    FROM tab
+    ORDER BY col [ DESC ]
+    LIMIT 1
+</PRE>
 
     <P> <SMALL>LIKE</SMALL> あるいは <I>~</I> のようなワイルドカード演算
-子を使うとき、検索の開始が文字列の始めの部分に固定されているときにのみ、
-インデックスが使われます。そういうわけで、インデックスを使うためには、
-<SMALL>LIKE</SMALL> パターンは<I>%</I>で始めないようにして、また、
-<I>~</I>(正規表現)パターンは<I>^</I> で始めなくてはなりません。
+子は特別な環境でしか使えません：
+    <UL>
+    <LI>検索文字列が文字列の最初にききます。たとえば：</LI>
+    <UL>
+    <LI><SMALL>LIKE</SMALL> パターンが<I>%.</I>で始まらない</LI>
+    <LI><I>~</I> (正規表現) パターンは<I>^.</I>で始まらなければならない</LI>
+    </UL>
+    <LI>検索文字列を文字クラスから始めることはできません。たとえば、[a-e]。</LI>
+    <LI><SMALL>ILIKE</SMALL> や <I>~*</I> のように大文字小文字を区別しない検索は使えません。そのかわり、このFAQで後述する関数のインデックスが使えます。</LI>
+    <LI>initdb においては、デフォルトで<I>C</I>ロケールが使われなくてはなりません。</i></LI>
+    </UL>
+    <P>
 
 [訳注：
-	強制的にインデックスを使うには SET enable_seqscan = off を実行します
+	強制的にインデックスを使うには SET enable_seqscan = off を実行します。
 ]
 
 
@@ -1059,7 +1082,7 @@ Proceedings of the 1984 ACM SIGMOD Int'l Conf on Mgmt of Data, 45-57.
 </H4>
 
 <P>
-<I>~</I>演算子は正規表現照合を行ない、<I>~*</I> は大文字と小文字を区別しない(case-insensitive)正規表現照合を行います。 PostgreSQL 7.1 以降では、大文字と小文字を区別しない <small>LIKE</small> 演算子を <small>ILIKE</small> といいます。
+<I>~</I>演算子は正規表現照合を行ない、<I>~*</I> は大文字と小文字を区別しない(case-insensitive)正規表現照合を行います。 大文字と小文字を区別しない <small>LIKE</small> 演算子を <small>ILIKE</small> といいます。
 
 
 <P>大文字と小文字を区別しない等値比較次のように表現できる：
@@ -1101,8 +1124,8 @@ Type            Internal Name   Notes
 --------------------------------------------------
 "char"          char            1 character
 CHAR(#)         bpchar          指定された固定長となるように空白が詰められる
-VARCHAR(#)      varchar         長さの上限の無いテキスト
-TEXT            text            長さの制限は最大ロウ長による
+VARCHAR(#)      varchar         最大長のサイズを指定する、詰め物無し
+TEXT            text            長さに上限の無いテキスト
 BYTEA           bytea           可変長のバイト配列(null-byte safe)
 </PRE>
 
@@ -1241,8 +1264,7 @@ http://www.comptechnews.com/~reaster/dbdesign.html</a>
 <H4><A NAME="4.18">4.18</A>) エラーメッセージ <I>"ERROR: Memory exhausted in AllocSetAlloc()"</I>が出るのはなぜですか？
 </H4>
 <P>
-もし、7.1 よりも古いバージョンをお使いの場合は、アップデートによってこの問題を
-解決できるでしょう。それと、システムの仮想メモリーを全て使い果たしてしまっている可能性があるか、カーネルがあるリソースについてもつ制限値が低すぎる可能性があります。
+おそらく、システムの仮想メモリーを全て使い果たしてしまっている可能性があるか、カーネルがあるリソースについてもつ制限値が低すぎる可能性があります。
 <I>postmaster</I> を始動する前にこれを試してみて下さい：
 
 <PRE>
@@ -1302,7 +1324,7 @@ http://www.comptechnews.com/~reaster/dbdesign.html</a>
 
 <H4><A NAME="4.23">4.23</A>) <i>外部</i>結合(<i>outer</i> join)はどのように実現しますか?<BR></H4>
 <P>
-PostgreSQL 7.1 以降では<small>SQL</small>標準構文を使う外部結合(アウタージョイン)をサポートします。ここに、例題が2つあります。
+PostgreSQL は SQL 標準構文を使う外部結合(アウタージョイン)をサポートします。ここに 2つの例題があります。
 
 <pre>
 <STRONG>SELECT *</STRONG>
@@ -1346,6 +1368,12 @@ http://developer.postgresql.org/docs/postgres/plpgsql-cursors.html</a> の
 
 
 <P>
+<H4><A name="4.26">4.26</A>)なぜ、PL/PgSQL 関数の中から一時テーブルを確実に create/drop することができないのでしょうか？</H4>
+
+PL/PgSQL は関数の内容をキャッシュし、その不幸な副作用のため、もし PL/PgSQL 関数が一時テーブルにアクセスすると、そのテーブルはあとでドロップされ再作成されますが、関数が再び呼び出されると、キャッシュされているその関数の内容はまだ古い一時テーブルを依然として指しているからです。解決策は、 PL/PgSQL の中で <SMALL>EXECUTE</SMALL> を一時テーブルアクセスのために使うことです。これで、毎回クエリーのパースし直しを起こすでしょう。
+
+
+<P>
 <HR>
 <H2><CENTER>PostgreSQLの拡張についての質問</CENTER></H2>
 <P>
@@ -1380,34 +1408,36 @@ http://developer.postgresql.org/docs/postgres/plpgsql-cursors.html</a> の
 [訳注：
   日本語版の製作については以下の通りです。
 
-  最終更新日:	2002年05月08日
+  最終更新日:	2002年08月25日
   翻訳者:	桑村 潤 (<A HREF="mailto:juk@postgresql.jp">Jun Kuwamura &lt;juk@postgresql.jp&gt;</A>)
 
   このFAQの和訳の作成にあたり協力をしてくださった方々(敬称は略させていただきます):
 
-		田仲 稔(<A HREF="mailto:Tanaka.Minoru@keiken.co.jp">Minoru Tanaka &lt;Tanaka.Minoru@keiken.co.jp&gt;</A>)
-		石井 達夫(<A HREF="mailto:t-ishii@sra.co.jp">Tatsuo Ishii &lt;t-ishii@sra.co.jp&gt;</A>)
-		齊藤 知人(<A HREF="mailto:tomos@elelab.nsc.co.jp">Tomohito Saitoh &lt;tomos@elelab.nsc.co.jp&gt;</A>)
-		馬場  肇(<A HREF="mailto:baba@kusastro.kyoto-u.ac.jp">Hajime Baba &lt;baba@kusastro.kyoto-u.ac.jp&gt;</A>)
-		岡本 一幸(<A HREF="mailto:kokamoto@itg.hitachi.co.jp">Kazuyuki Okamoto &lt;kokamoto@itg.hitachi.co.jp&gt;</A>)
-		小菅 昭一(<A HREF="mailto:s-kosuge@str.hitachi.co.jp">Shoichi Kosuge &lt;s-kosuge@str.hitachi.co.jp&gt;</A>)
-		山下 義之(<A HREF="mailto:dica@eurus.dti.ne.jp">Yoshiyuki Yamashita &lt;dica@eurus.dti.ne.jp&gt;</A>)
-		境 真太郎(<A HREF="mailto:s_sakai@mxn.mesh.ne.jp">Sintaro Sakai &lt;s_sakai@mxn.mesh.ne.jp&gt;</A>)
-		生越 昌己(<A HREF="mailto:ogochan@zetabits.com">Masami Ogoshi &lt;ogochan@zetabits.com&gt;</A>)
-		石川 俊行(<A HREF="mailto:tosiyuki@gol.com">Toshiyuki Ishikawa &lt;tosiyuki@gol.com&gt;</A>)
-		本田 茂広(<A HREF="mailto:fwif0083@mb.infoweb.ne.jp">Shigehiro Honda &lt;fwif0083@mb.infoweb.ne.jp&gt;</A>)
-		せせ じゅん(<A HREF="mailto:sesejun@linet.gr.jp">Jun Sese &lt;sesejun@linet.gr.jp&gt;</A>)
-		神谷 英孝(<A HREF="mailto:hkamiya@catvmics.ne.jp">Hidetaka Kamiya &lt;hkamiya@catvmics.ne.jp&gt;</A>)
+		田仲 稔(<A HREF="mailto:Tanaka.Minoru at keiken.co.jp">Minoru TANAKA &lt;Tanaka.Minoru at keiken.co.jp&gt;</A>)
+		石井 達夫(<A HREF="mailto:t-ishii at sra.co.jp">Tatsuo ISHII &lt;t-ishii at sra.co.jp&gt;</A>)
+		齊藤 知人(<A HREF="mailto:tomos at elelab.nsc.co.jp">Tomohito SAITOH &lt;tomos at elelab.nsc.co.jp&gt;</A>)
+		馬場  肇(<A HREF="mailto:baba at kusastro.kyoto-u.ac.jp">Hajime BABA &lt;baba at kusastro.kyoto-u.ac.jp&gt;</A>)
+		岡本 一幸(<A HREF="mailto:kokamoto at itg.hitachi.co.jp">Kazuyuki OKAMOTO &lt;kokamoto at itg.hitachi.co.jp&gt;</A>)
+		小菅 昭一(<A HREF="mailto:s-kosuge at str.hitachi.co.jp">Shoichi Kosuge &lt;s-kosuge at str.hitachi.co.jp&gt;</A>)
+		山下 義之(<A HREF="mailto:dica at eurus.dti.ne.jp">Yoshiyuki YAMASHITA &lt;dica at eurus.dti.ne.jp&gt;</A>)
+		境 真太郎(<A HREF="mailto:s_sakai at mxn.mesh.ne.jp">Sintaro SAKAI &lt;s_sakai at mxn.mesh.ne.jp&gt;</A>)
+		生越 昌己(<A HREF="mailto:ogochan at zetabits.com">Masami OGOSHI &lt;ogochan at zetabits.com&gt;</A>)
+		石川 俊行(<A HREF="mailto:tosiyuki at gol.com">Toshiyuki ISHIKAWA &lt;tosiyuki at gol.com&gt;</A>)
+		本田 茂広(<A HREF="mailto:fwif0083 at mb.infoweb.ne.jp">Shigehiro HONDA &lt;fwif0083 at mb.infoweb.ne.jp&gt;</A>)
+		せせ じゅん(<A HREF="mailto:sesejun at linet.gr.jp">Jun SESE &lt;sesejun at linet.gr.jp&gt;</A>)
+		神谷 英孝(<A HREF="mailto:hkamiya at catvmics.ne.jp">Hidetaka KAMIYA &lt;hkamiya at catvmics.ne.jp&gt;</A>)
+		菅原 敦(<A HREF="mailto:asugawar at f3.dion.ne.jp">
+Atsushi SUGAWARA &lt;asugawar at f3.dion.ne.jp&gt;</A>)
 
   をはじめ、ポストグレスに関する話題豊富な<A HREF="http://www.sra.co.jp/people/t-ishii/PostgreSQL/ML/info.html">日本語ポストグレス・メーリングリスト</A>、
   和訳のきっかけを作ってくれた <A HREF="http://jf.linux.or.jp/">JF(Linux Japanese FAQ Mailing List)プロジェクト</A>、その他、
   直接あるいは間接的にかかわっているすべてのオープンソースコミュニティーの
   皆さんに感謝します。
 
-
   日本語版のこの文書は、以下からもたどれます。
 	<A HREF="http://www.rccm.co.jp/~juk/pgsql/">http://www.rccm.co.jp/~juk/pgsql/</A>(FAQ和訳 PostgreSQL についてよくある質問)
-	<A HREF="http://www.linux.or.jp/JF/">http://www.linux.or.jp/JF/</A>(PostgreSQL-FAQ.j)
+	<A HREF="http://www.postgresql.jp/subcommittee/jpugdoc/">http://www.postgresql.jp/subcommittee/jpugdoc/</A>JPUG文書・書籍関連分科会
+	<A HREF="http://www.linux.or.jp/JF/">http://www.linux.or.jp/JF/</A>Linux JFプロジェクト
 	<A HREF="http://www.sra.co.jp/people/t-ishii/PostgreSQL/doc-jp/">http://www.sra.co.jp/people/t-ishii/PostgreSQL/doc-jp/</A>
 
   なお、この和訳に関するご意見は(<A HREF="mailto:juk@postgresql.jp">juk@postgresql.jp</A>)までお寄せ下さい。
