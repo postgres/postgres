@@ -6,7 +6,7 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: nbtree.h,v 1.1.1.1 1996/07/09 06:21:08 scrappy Exp $
+ * $Id: nbtree.h,v 1.2 1996/07/30 07:55:10 scrappy Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -60,11 +60,17 @@ typedef BTPageOpaqueData	*BTPageOpaque;
  *  and recorded in the opaque entry of the scan in order to avoid
  *  doing a ReadBuffer() for every tuple in the index.  This avoids
  *  semop() calls, which are expensive.
+ *
+ *  And it's used to remember actual scankey info (we need in it
+ *  if some scankeys evaled at runtime.
  */
 
 typedef struct BTScanOpaqueData {
     Buffer	btso_curbuf;
     Buffer	btso_mrkbuf;
+    uint16	qual_ok;		/* 0 for quals like key == 1 && key > 2 */
+    uint16	numberOfKeys;		/* number of key attributes */
+    ScanKey	keyData;		/* key descriptor */
 } BTScanOpaqueData;
 
 typedef BTScanOpaqueData	*BTScanOpaque;
@@ -248,7 +254,7 @@ extern ScanKey  _bt_mkscankey(Relation rel, IndexTuple itup);
 extern void _bt_freeskey(ScanKey skey);
 extern void _bt_freestack(BTStack stack);
 extern void _bt_orderkeys(Relation relation, uint16 *numberOfKeys,
-			  ScanKey key);
+			  ScanKey key, uint16 *qual_ok);
 extern bool _bt_checkqual(IndexScanDesc scan, IndexTuple itup);
 extern BTItem _bt_formitem(IndexTuple itup);
 

@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *    $Header: /cvsroot/pgsql/src/backend/access/nbtree/nbtree.c,v 1.1.1.1 1996/07/09 06:21:12 scrappy Exp $
+ *    $Header: /cvsroot/pgsql/src/backend/access/nbtree/nbtree.c,v 1.2 1996/07/30 07:56:00 scrappy Exp $
  *
  * NOTES
  *    This file contains only the public interface routines.
@@ -330,32 +330,9 @@ char *
 btbeginscan(Relation rel, bool fromEnd, uint16 keysz, ScanKey scankey)
 {
     IndexScanDesc scan;
-    StrategyNumber strat;
-    BTScanOpaque so;
     
-    /* first order the keys in the qualification */
-    if (keysz > 1)
-	_bt_orderkeys(rel, &keysz, scankey);
-    
-    /* now get the scan */
+    /* get the scan */
     scan = RelationGetIndexScan(rel, fromEnd, keysz, scankey);
-    so = (BTScanOpaque) palloc(sizeof(BTScanOpaqueData));
-    so->btso_curbuf = so->btso_mrkbuf = InvalidBuffer;
-    scan->opaque = so;
-    
-    /* finally, be sure that the scan exploits the tree order */
-    scan->scanFromEnd = false;
-    scan->flags = 0x0;
-    if (keysz > 0) {
-	strat = _bt_getstrat(scan->relation, 1 /* XXX */,
-			     scankey[0].sk_procedure);
-	
-	if (strat == BTLessStrategyNumber
-	    || strat == BTLessEqualStrategyNumber)
-	    scan->scanFromEnd = true;
-    } else {
-	scan->scanFromEnd = true;
-    }
     
     /* register scan in case we change pages it's using */
     _bt_regscan(scan);
@@ -371,6 +348,7 @@ btrescan(IndexScanDesc scan, bool fromEnd, ScanKey scankey)
 {
     ItemPointer iptr;
     BTScanOpaque so;
+    StrategyNumber strat;
     
     so = (BTScanOpaque) scan->opaque;
     
@@ -388,12 +366,45 @@ btrescan(IndexScanDesc scan, bool fromEnd, ScanKey scankey)
 	ItemPointerSetInvalid(iptr);
     }
     
+    if ( so == NULL )		/* if called from btbeginscan */
+    {
+	so = (BTScanOpaque) palloc(sizeof(BTScanOpaqueData));
+	so->btso_curbuf = so->btso_mrkbuf = InvalidBuffer;
+	so->keyData = (ScanKey) NULL;
+	if ( scan->numberOfKeys > 0)
+		so->keyData = (ScanKey) palloc (scan->numberOfKeys * sizeof(ScanKeyData));
+	scan->opaque = so;
+	scan->flags = 0x0;
+    }
+    
     /* reset the scan key */
+    so->numberOfKeys = scan->numberOfKeys;
+    so->qual_ok = 1;			/* may be changed by _bt_orderkeys */
     if (scan->numberOfKeys > 0) {
 	memmove(scan->keyData,
 		scankey,
 		scan->numberOfKeys * sizeof(ScanKeyData));
+	memmove(so->keyData,
+		scankey,
+		so->numberOfKeys * sizeof(ScanKeyData));
+	/* order the keys in the qualification */
+	if (so->numberOfKeys > 1)
+		_bt_orderkeys(scan->relation, &so->numberOfKeys, so->keyData, &so->qual_ok);
     }
+    
+    /* finally, be sure that the scan exploits the tree order */
+    scan->scanFromEnd = false;
+    if ( so->numberOfKeys > 0 ) {
+	strat = _bt_getstrat(scan->relation, 1 /* XXX */,
+			     so->keyData[0].sk_procedure);
+	
+	if (strat == BTLessStrategyNumber
+	    || strat == BTLessEqualStrategyNumber)
+	    scan->scanFromEnd = true;
+    } else {
+	scan->scanFromEnd = true;
+    }
+
 }
 
 void
@@ -411,7 +422,8 @@ btmovescan(IndexScanDesc scan, Datum v)
 	ItemPointerSetInvalid(iptr);
     }
     
-    scan->keyData[0].sk_argument = v;
+/*    scan->keyData[0].sk_argument = v;	*/
+    so->keyData[0].sk_argument = v;
 }
 
 /*
@@ -445,6 +457,8 @@ btendscan(IndexScanDesc scan)
     
     /* be tidy */
 #ifdef PERFECT_MMGR
+    if ( so->keyData != (ScanKey) NULL )
+    	pfree (so->keyData);
     pfree (scan->opaque);
 #endif /* PERFECT_MMGR */
 }

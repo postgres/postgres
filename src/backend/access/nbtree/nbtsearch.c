@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *    $Header: /cvsroot/pgsql/src/backend/access/nbtree/nbtsearch.c,v 1.1.1.1 1996/07/09 06:21:12 scrappy Exp $
+ *    $Header: /cvsroot/pgsql/src/backend/access/nbtree/nbtsearch.c,v 1.2 1996/07/30 07:56:02 scrappy Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -604,6 +604,10 @@ _bt_first(IndexScanDesc scan, ScanDirection dir)
     BTScanOpaque so;
     ScanKeyData skdata;
     
+    so = (BTScanOpaque) scan->opaque;
+    if ( so->qual_ok == 0 )		/* may be set by _bt_orderkeys */
+    	return ((RetrieveIndexResult) NULL);
+    
     /* if we just need to walk down one edge of the tree, do that */
     if (scan->scanFromEnd)
 	return (_bt_endpoint(scan, dir));
@@ -611,7 +615,6 @@ _bt_first(IndexScanDesc scan, ScanDirection dir)
     rel = scan->relation;
     itupdesc = RelationGetTupleDescriptor(scan->relation);
     current = &(scan->currentItemData);
-    so = (BTScanOpaque) scan->opaque;
     
     /*
      *  Okay, we want something more complicated.  What we'll do is use
@@ -628,7 +631,7 @@ _bt_first(IndexScanDesc scan, ScanDirection dir)
      */
     proc = index_getprocid(rel, 1, BTORDER_PROC);
     ScanKeyEntryInitialize(&skdata, 0x0, 1, proc,
-			   scan->keyData[0].sk_argument);
+			   so->keyData[0].sk_argument);
     
     stack = _bt_search(rel, 1, &skdata, &buf);
     _bt_freestack(stack);
@@ -666,7 +669,7 @@ _bt_first(IndexScanDesc scan, ScanDirection dir)
      */
     
     result = _bt_compare(rel, itupdesc, page, 1, &skdata, offnum);
-    strat = _bt_getstrat(rel, 1, scan->keyData[0].sk_procedure);
+    strat = _bt_getstrat(rel, 1, so->keyData[0].sk_procedure);
     
     switch (strat) {
     case BTLessStrategyNumber:

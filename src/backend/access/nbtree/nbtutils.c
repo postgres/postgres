@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *    $Header: /cvsroot/pgsql/src/backend/access/nbtree/nbtutils.c,v 1.1.1.1 1996/07/09 06:21:12 scrappy Exp $
+ *    $Header: /cvsroot/pgsql/src/backend/access/nbtree/nbtutils.c,v 1.2 1996/07/30 07:56:04 scrappy Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -82,7 +82,7 @@ _bt_freestack(BTStack stack)
  *	more than one qual clauses using this index.
  */
 void
-_bt_orderkeys(Relation relation, uint16 *numberOfKeys, ScanKey key)
+_bt_orderkeys(Relation relation, uint16 *numberOfKeys, ScanKey key, uint16 *qual_ok)
 {
     ScanKey xform;
     ScanKeyData *cur;
@@ -133,6 +133,8 @@ _bt_orderkeys(Relation relation, uint16 *numberOfKeys, ScanKey key)
 				 cur->sk_argument, xform[j].sk_argument);
 	    if (test)
 		xform[j].sk_argument = cur->sk_argument;
+	    else if ( j == (BTEqualStrategyNumber - 1) )
+	    	*qual_ok = 0;		/* key == a && key == b, but a != b */
 	} else {
 	    /* nope, use this value */
 	    memmove(&xform[j], cur, sizeof(*cur));
@@ -142,7 +144,30 @@ _bt_orderkeys(Relation relation, uint16 *numberOfKeys, ScanKey key)
     }
     
     /* if = has been specified, no other key will be used */
+    /*
+     * XXX
+     * But in case of key < 2 && key == 1 and so on 
+     * we have to set qual_ok to 0
+     */
     if (init[BTEqualStrategyNumber - 1]) {
+
+	ScanKeyData *eq, *chk;
+
+	eq = &xform[BTEqualStrategyNumber - 1];
+
+	for (j = BTMaxStrategyNumber; --j >= 0; )
+	{
+		if ( j == (BTEqualStrategyNumber - 1) || init[j] == 0 )
+			continue;
+
+		chk = &xform[j];
+
+		test = (long) fmgr(chk->sk_procedure, eq->sk_argument, chk->sk_argument);
+	
+		if (!test)
+			*qual_ok = 0;
+	}
+
 	init[BTLessStrategyNumber - 1] = 0;
 	init[BTLessEqualStrategyNumber - 1] = 0;
 	init[BTGreaterEqualStrategyNumber - 1] = 0;
@@ -166,7 +191,7 @@ _bt_orderkeys(Relation relation, uint16 *numberOfKeys, ScanKey key)
 	 *  in the correct way.
 	 */
 	
-	test = (long) fmgr(le->sk_procedure, le->sk_argument, lt->sk_argument);
+	test = (long) fmgr(le->sk_procedure, lt->sk_argument, le->sk_argument);
 	
 	if (test)
 	    init[BTLessEqualStrategyNumber - 1] = 0;
@@ -184,12 +209,12 @@ _bt_orderkeys(Relation relation, uint16 *numberOfKeys, ScanKey key)
 	ge = &xform[BTGreaterEqualStrategyNumber - 1];
 	
 	/* see note above on function cache */
-	test = (long) fmgr(ge->sk_procedure, gt->sk_argument, gt->sk_argument);
+	test = (long) fmgr(ge->sk_procedure, gt->sk_argument, ge->sk_argument);
 	
 	if (test)
-	    init[BTGreaterStrategyNumber - 1] = 0;
-	else
 	    init[BTGreaterEqualStrategyNumber - 1] = 0;
+	else
+	    init[BTGreaterStrategyNumber - 1] = 0;
     }
     
     /* okay, reorder and count */
