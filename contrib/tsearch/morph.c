@@ -6,11 +6,9 @@
  */
 #include "postgres.h"
 
-#include "utils/elog.h"
-#include "utils/palloc.h"
+#include <locale.h>
+
 #include "utils/builtins.h"
-#include "catalog/pg_control.h"
-#include "utils/pg_locale.h"
 
 #include "morph.h"
 #include "deflex.h"
@@ -25,7 +23,7 @@
  */
 typedef struct
 {
-	char		localename[LOCALE_NAME_BUFLEN];
+	char		localename[NAMEDATALEN];
 	/* init dictionary */
 	void	   *(*init) (void);
 	/* close dictionary */
@@ -52,9 +50,8 @@ DICT		dicts[] = {
 
 #undef DICT_TABLE
 
-/* array for storing dictinary's objects (if needed) */
-void	   *dictobjs[
-					 lengthof(dicts)];
+/* array for storing dictionary's objects (if needed) */
+void	   *dictobjs[lengthof(dicts)];
 
 #define STOPLEXEM	-2
 #define BYLOCALE	-1
@@ -104,8 +101,7 @@ initmorph(void)
 				k;
 	MAPDICT    *md;
 	bool		needinit[lengthof(dicts)];
-	PG_LocaleCategories lc;
-
+	const char *curlocale;
 	int			bylocaledict = NODICT;
 
 	if (inited)
@@ -113,15 +109,16 @@ initmorph(void)
 	for (i = 1; i < lengthof(dicts); i++)
 		needinit[i] = false;
 
-	PGLC_current(&lc);
-	if (lc.lc_ctype)
+	curlocale = setlocale(LC_CTYPE, NULL);
+	if (curlocale)
+	{
 		for (i = 1; i < lengthof(dicts); i++)
-			if (strcmp(dicts[i].localename, lc.lc_ctype) == 0)
+			if (strcmp(dicts[i].localename, curlocale) == 0)
 			{
 				bylocaledict = i;
 				break;
 			}
-	PGLC_free_categories(&lc);
+	}
 
 	for (i = 1; i < lengthof(mapdict); i++)
 	{
