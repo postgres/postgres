@@ -3,7 +3,7 @@
  *				back to source text
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/ruleutils.c,v 1.78 2001/06/19 22:39:12 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/ruleutils.c,v 1.79 2001/07/10 00:02:02 tgl Exp $
  *
  *	  This software is copyrighted by Jan Wieck - Hamburg.
  *
@@ -1951,15 +1951,15 @@ get_rule_expr(Node *node, deparse_context *context)
 			{
 				NullTest		*ntest = (NullTest *) node;
 
-				appendStringInfo(buf, "((");
+				appendStringInfo(buf, "(");
 				get_rule_expr(ntest->arg, context);
 			    switch (ntest->nulltesttype)
 			    {
 			        case IS_NULL:
-						appendStringInfo(buf, ") IS NULL)");
+						appendStringInfo(buf, " IS NULL)");
 						break;
 			        case IS_NOT_NULL:
-						appendStringInfo(buf, ") IS NOT NULL)");
+						appendStringInfo(buf, " IS NOT NULL)");
 						break;
 			        default:
 			            elog(ERROR, "get_rule_expr: unexpected nulltesttype %d",
@@ -1972,27 +1972,27 @@ get_rule_expr(Node *node, deparse_context *context)
 			{
 				BooleanTest		*btest = (BooleanTest *) node;
 
-				appendStringInfo(buf, "((");
+				appendStringInfo(buf, "(");
 				get_rule_expr(btest->arg, context);
 			    switch (btest->booltesttype)
 			    {
 			        case IS_TRUE:
-						appendStringInfo(buf, ") IS TRUE)");
+						appendStringInfo(buf, " IS TRUE)");
 						break;
 			        case IS_NOT_TRUE:
-						appendStringInfo(buf, ") IS NOT TRUE)");
+						appendStringInfo(buf, " IS NOT TRUE)");
 						break;
 			        case IS_FALSE:
-						appendStringInfo(buf, ") IS FALSE)");
+						appendStringInfo(buf, " IS FALSE)");
 						break;
 			        case IS_NOT_FALSE:
-						appendStringInfo(buf, ") IS NOT FALSE)");
+						appendStringInfo(buf, " IS NOT FALSE)");
 						break;
 			        case IS_UNKNOWN:
-						appendStringInfo(buf, ") IS UNKNOWN)");
+						appendStringInfo(buf, " IS UNKNOWN)");
 						break;
 			        case IS_NOT_UNKNOWN:
-						appendStringInfo(buf, ") IS NOT UNKNOWN)");
+						appendStringInfo(buf, " IS NOT UNKNOWN)");
 						break;
 			        default:
 			            elog(ERROR, "get_rule_expr: unexpected booltesttype %d",
