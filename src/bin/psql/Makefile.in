@@ -7,14 +7,16 @@
 #
 #
 # IDENTIFICATION
-#    $Header: /cvsroot/pgsql/src/bin/psql/Attic/Makefile.in,v 1.22 2000/04/14 23:43:44 petere Exp $
+#    $Header: /cvsroot/pgsql/src/bin/psql/Attic/Makefile.in,v 1.23 2000/04/16 18:07:22 tgl Exp $
 #
 #-------------------------------------------------------------------------
 
 SRCDIR= ../..
-include ../../Makefile.global
+include $(SRCDIR)/Makefile.global
 
-CFLAGS:= -I$(LIBPQDIR) $(CFLAGS)
+DOCDIR= $(SRCDIR)/../doc/src/sgml/ref
+
+CFLAGS+= -I$(LIBPQDIR)
 
 #
 # And where libpq goes, so goes the authentication stuff...
@@ -61,8 +63,8 @@ psql: $(OBJS) $(LIBPQDIR)/libpq.a
 help.o: sql_help.h
 
 ifneq ($(strip $(PERL)),) 
-sql_help.h: $(wildcard $(SRCDIR)/../doc/src/sgml/ref/*.sgml) create_help.pl
-	$(PERL) create_help.pl sql_help.h 
+sql_help.h: $(wildcard $(DOCDIR)/*.sgml) create_help.pl
+	$(PERL) create_help.pl $(DOCDIR) sql_help.h 
 else
 sql_help.h:
 	@echo "*** Perl is needed to build psql help."
