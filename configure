@@ -3020,6 +3020,11 @@ if test "${with_java+set}" = set; then
     yes)
       echo "$as_me:$LINENO: result: yes" >&5
 echo "${ECHO_T}yes" >&6
+if test ! "$JAVA_HOME" -o ! -d "$JAVA_HOME" ; then
+  { { echo "$as_me:$LINENO: error: Set the JAVA_HOME environment variable to build Java components" >&5
+echo "$as_me: error: Set the JAVA_HOME environment variable to build Java components" >&2;}
+   { (exit 1); exit 1; }; }
+fi
 
   for ac_prog in jakarta-ant ant ant.sh ant.bat
 do
