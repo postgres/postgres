@@ -1142,5 +1142,9 @@ Fri Oct 19 16:32:06 CEST 2001
 Sun Oct 21 14:19:42 CEST 2001
 
 	- Synced preproc.y with gram.y.
+
+Fri Nov  2 16:16:25 CET 2001
+
+	- Synced preproc.y with gram.y.
 	- Set ecpg version to 2.9.0.
         - Set library version to 3.3.0.

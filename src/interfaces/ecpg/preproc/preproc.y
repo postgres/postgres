@@ -2679,17 +2679,20 @@ OptUseOp:  USING all_Op				{ $$ = cat2_str(make_str("using"), $2); }
 		| /*EMPTY*/			{ $$ = EMPTY; }
 		;
 
-select_limit:      LIMIT select_offset_value ',' select_limit_value
-                       { $$ = cat_str(4, make_str("limit"), $2, make_str(","), $4); }
-               | LIMIT select_limit_value OFFSET select_offset_value
+select_limit:      LIMIT select_limit_value OFFSET select_offset_value
                        { $$ = cat_str(4, make_str("limit"), $2, make_str("offset"), $4); }
-               | LIMIT select_limit_value
-                       { $$ = cat2_str(make_str("limit"), $2); }
-               | OFFSET select_offset_value LIMIT select_limit_value
+		| OFFSET select_offset_value LIMIT select_limit_value
                        { $$ = cat_str(4, make_str("offset"), $2, make_str("limit"), $4); }
-               | OFFSET select_offset_value
+                | LIMIT select_limit_value
+                       { $$ = cat2_str(make_str("limit"), $2); }
+                | OFFSET select_offset_value
                        { $$ = cat2_str(make_str("offset"), $2); }
-               ;
+		| LIMIT select_limit_value ',' select_offset_value
+                       { $$ = cat_str(4, make_str("limit"), $2, make_str(","), $4); }
+                       /* enable this in 7.3, bjm 2001-10-22
+		       { mmerror(ET_NOTICE, "No longer supported LIMIT #,# syntax passed to backend."); }
+                       */
+                ;
 
 opt_select_limit:	select_limit	{ $$ = $1; }  
 			| /*EMPTY*/     { $$ = EMPTY; } 
