@@ -15,16 +15,22 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/storage/lmgr/spin.c,v 1.3 2001/10/01 17:52:34 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/storage/lmgr/spin.c,v 1.4 2001/10/01 18:16:35 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
 #include "postgres.h"
 
 #include <errno.h>
+
+#include "storage/ipc.h"
+/* In Ultrix, sem.h and shm.h must be included AFTER ipc.h */
 #ifdef HAVE_SYS_SEM_H
-#include <sys/types.h>
 #include <sys/sem.h>
+#endif
+
+#if defined(__darwin__)
+#include "port/darwin/sem.h"
 #endif
 
 #include "storage/lwlock.h"
