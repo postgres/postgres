@@ -1,6 +1,6 @@
 TODO list for PostgreSQL
 ========================
-Last updated:		Sat Jun  2 15:11:24 EDT 2001
+Last updated:		Mon Jun  4 16:12:00 EDT 2001
 
 Current maintainer:	Bruce Momjian (pgman@candle.pha.pa.us)
 
@@ -51,7 +51,7 @@ ADMIN
 
 TYPES
 
-* Add domain capability
+* Add domain capability [domain]
 * Add IPv6 capability to INET/CIDR types
 * Add conversion function from text to inet
 * Store binary-compatible type information in the system
