@@ -3,7 +3,7 @@
  *
  * Copyright (c) 2000-2004, PostgreSQL Global Development Group
  *
- * $PostgreSQL: pgsql/src/bin/psql/input.c,v 1.39 2004/10/06 18:39:16 momjian Exp $
+ * $PostgreSQL: pgsql/src/bin/psql/input.c,v 1.40 2004/10/06 19:04:10 momjian Exp $
  */
 #include "postgres_fe.h"
 #include "input.h"
@@ -210,7 +210,7 @@ saveHistory(char *fname)
 		psql_error("could not save history to file \"%s\": %s\n", fname, strerror(errno));
 	}
 #else
-		psql_error("history is not supported on this platform\n");
+		psql_error("history is not supported\n");
 #endif
 
 	return false;
