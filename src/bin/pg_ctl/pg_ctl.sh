@@ -8,7 +8,7 @@
 #
 #
 # IDENTIFICATION
-#    $Header: /cvsroot/pgsql/src/bin/pg_ctl/Attic/pg_ctl.sh,v 1.20 2001/04/21 11:23:58 petere Exp $
+#    $Header: /cvsroot/pgsql/src/bin/pg_ctl/Attic/pg_ctl.sh,v 1.21 2001/07/11 04:57:34 momjian Exp $
 #
 #-------------------------------------------------------------------------
 
@@ -316,7 +316,8 @@ if [ $op = "start" -o $op = "restart" ];then
         eval set X "$POSTOPTS"; shift
     fi
 
-    set X -D "$PGDATA" ${1+"$@"}; shift
+    # pass environment into new postmaster
+    export PGDATA
 
     if [ -n "$logfile" ]; then
         "$po_path" "$@" </dev/null >>$logfile 2>&1 &
