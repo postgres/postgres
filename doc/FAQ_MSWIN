@@ -1,20 +1,27 @@
-How to install PostgreSQL on Windows NT or Windows 2000
-=======================================================
-$Date: 2001/10/25 16:20:51 $
+How to install PostgreSQL on Windows
+====================================
+$Date: 2001/12/05 18:23:40 $
 
-1.  Install the Cygwin package.
-
+1.  Install the latest Cygwin package, available at http://cygwin.com/.
     The Cygwin package provides a UNIX-like API on top of the Win32
-    API.  It is available at http://sources.redhat.com/cygwin/.  At
-    the time of this writing, it is recommended to use either version
-    1.1.7, a snapshot built after 2001/02/05 12:36:41, or the 1.3.x series
-    (when available).  Version 1.1.8 contains a bug that will prevent the
-    server to work.  Using older versions such as 1.0 or B20 might require
-    extra efforts.
+    API.  Using older versions such as 1.0 or B20 might require extra
+    efforts.
 
-2.  Install the cygipc package, available at
+    A pre-built PostgreSQL is part of the standard Cygwin distribution
+    and is installed by Cygwin's setup.exe.  You are encouraged to use
+    this version unless it does not meet your needs.  Please read the
+    README file, /usr/doc/Cygwin/postgresql-${version}.README, where
+    "${version}" is the version (e.g., 7.1.3).
+
+2.  Install the latest cygipc package, available at
     http://www.neuro.gatech.edu/users/cwilson/cygutils/V1.1/cygipc/.
     Do not use versions prior to 1.04, they will not work.
+
+    Use the following command to install the cygipc package:
+
+        $ tar -C / -xjf cygipc-${version}.tar.bz2
+
+    where "${version}" is the version (e.g., 1.11-1).
 
 3.  The Cygwin bin directory has to be placed in the path before the
     Windows program directories, because the sort.exe has to be taken
@@ -23,9 +30,20 @@ $Date: 2001/10/25 16:20:51 $
 4.  Start ipc-daemon from the cygipc package.  Use "net start ipc-daemon",
     if ipc-daemon is installed as a service; otherwise, use "ipc-daemon &".
     This program needs to be running anytime you start the PostgreSQL
-    server (postmaster).
+    server (postmaster) or initialize a database (initdb).
 
-5.  Proceed according to the INSTALL file.  (./configure; make; etc.)
+5.  Proceed according to the INSTALL file (i.e., ./configure; make; etc.)
+    noting the following Cygwin specific differences:
+
+        o The GNU make command is called "make" not "gmake".
+        o The adduser command is not supported -- use the appropriate
+          user management application on Windows NT, 2000, or XP.
+          Otherwise, skip this step.
+        o The su command is not supported -- use ssh to simulate su
+          on Windows NT, 2000, or XP. Otherwise, skip this step.
+
+    Alternatively, proceed according to the README file supplied with
+    the Cygwin PostgreSQL package.
 
 NOTE:  The following are known issues with PostgreSQL on Windows:
 
