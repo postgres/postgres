@@ -6,7 +6,7 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: lsyscache.h,v 1.10 1998/02/26 04:44:07 momjian Exp $
+ * $Id: lsyscache.h,v 1.11 1998/07/12 21:29:40 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -21,7 +21,7 @@ extern char *get_attname(Oid relid, AttrNumber attnum);
 extern AttrNumber get_attnum(Oid relid, char *attname);
 extern Oid	get_atttype(Oid relid, AttrNumber attnum);
 extern bool get_attisset(Oid relid, char *attname);
-extern int16 get_atttypmod(Oid relid, AttrNumber attnum);
+extern int32 get_atttypmod(Oid relid, AttrNumber attnum);
 extern RegProcedure get_opcode(Oid opid);
 extern char *get_opname(Oid opid);
 extern bool

@@ -7,7 +7,7 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: pg_attribute.h,v 1.32 1998/03/07 04:49:57 momjian Exp $
+ * $Id: pg_attribute.h,v 1.33 1998/07/12 21:29:28 momjian Exp $
  *
  * NOTES
  *	  the genbki.sh script reads this file and generates .bki
@@ -86,7 +86,7 @@ CATALOG(pg_attribute) BOOTSTRAP
 	 * This speeds up the attribute walking process.
 	 */
 
-	int2		atttypmod;
+	int4		atttypmod;
 
 	/*
 	 * atttypmod records type-specific modifications supplied at table
@@ -323,7 +323,7 @@ DATA(insert OID = 0 ( 1261 cmax				29 0  4  -6 0 -1 -1 t f i f f));
 { 1249, {"attnum"},		  21, 0,	2,	6, 0, -1, -1, '\001', '\0', 's', '\0', '\0' }, \
 { 1249, {"attnelems"},	  23, 0,	4,	7, 0, -1, -1, '\001', '\0', 'i', '\0', '\0' }, \
 { 1249, {"attcacheoff"},  23, 0,	4,	8, 0, -1, -1, '\001', '\0', 'i', '\0', '\0' }, \
-{ 1249, {"atttypmod"},	  21, 0,	2,	9, 0, -1, -1, '\001', '\0', 's', '\0', '\0' }, \
+{ 1249, {"atttypmod"},	  21, 0,	4,	9, 0, -1, -1, '\001', '\0', 's', '\0', '\0' }, \
 { 1249, {"attbyval"},	  16, 0,	1, 10, 0, -1, -1, '\001', '\0', 'c', '\0', '\0' }, \
 { 1249, {"attisset"},	  16, 0,	1, 11, 0, -1, -1, '\001', '\0', 'c', '\0', '\0' }, \
 { 1249, {"attalign"},	  18, 0,	1, 12, 0, -1, -1, '\001', '\0', 'c', '\0', '\0' }, \
@@ -338,7 +338,7 @@ DATA(insert OID = 0 ( 1249 attlen			21 0  2   5 0 -1 -1 t f s f f));
 DATA(insert OID = 0 ( 1249 attnum			21 0  2   6 0 -1 -1 t f s f f));
 DATA(insert OID = 0 ( 1249 attnelems		23 0  4   7 0 -1 -1 t f i f f));
 DATA(insert OID = 0 ( 1249 attcacheoff		23 0  4   8 0 -1 -1 t f i f f));
-DATA(insert OID = 0 ( 1249 atttypmod		21 0  2   9 0 -1 -1 t f s f f));
+DATA(insert OID = 0 ( 1249 atttypmod		21 0  4   9 0 -1 -1 t f s f f));
 DATA(insert OID = 0 ( 1249 attbyval			16 0  1  10 0 -1 -1 t f c f f));
 DATA(insert OID = 0 ( 1249 attisset			16 0  1  11 0 -1 -1 t f c f f));
 DATA(insert OID = 0 ( 1249 attalign			18 0  1  12 0 -1 -1 t f c f f));

@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/access/common/tupdesc.c,v 1.40 1998/06/15 19:27:45 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/access/common/tupdesc.c,v 1.41 1998/07/12 21:29:13 momjian Exp $
  *
  * NOTES
  *	  some of the executor utility code such as "ExecTypeFromTL" should be
@@ -255,7 +255,7 @@ TupleDescInitEntry(TupleDesc desc,
 				   AttrNumber attributeNumber,
 				   char *attributeName,
 				   Oid typeid,
-				   int16 typmod,
+				   int32 typmod,
 				   int attdim,
 				   bool attisset)
 {
@@ -448,7 +448,7 @@ BuildDescForRelation(List *schema, char *relname)
 	TupleConstr *constr = (TupleConstr *) palloc(sizeof(TupleConstr));
 	char	   *attname;
 	char	   *typename;
-	int16		atttypmod;
+	int32		atttypmod;
 	int			attdim;
 	int			ndef = 0;
 	bool		attisset;

@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/arrayfuncs.c,v 1.30 1998/06/15 19:29:32 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/arrayfuncs.c,v 1.31 1998/07/12 21:29:22 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -45,7 +45,7 @@
 static int	_ArrayCount(char *str, int dim[], int typdelim);
 static char *
 _ReadArrayStr(char *arrayStr, int nitems, int ndim, int dim[],
-			  FmgrInfo *inputproc, Oid typelem, int16 typmod,
+			  FmgrInfo *inputproc, Oid typelem, int32 typmod,
 			  char typdelim, int typlen, bool typbyval,
 			  char typalign, int *nbytes);
 
@@ -94,7 +94,7 @@ static char *array_seek(char *ptr, int eltsize, int nitems);
 char *
 array_in(char *string,			/* input array in external form */
 		 Oid element_type,		/* type OID of an array element */
-		 int16 typmod)
+		 int32 typmod)
 {
 	int			typlen;
 	bool		typbyval,
@@ -360,7 +360,7 @@ _ReadArrayStr(char *arrayStr,
 			  FmgrInfo *inputproc,		/* function used for the
 										 * conversion */
 			  Oid typelem,
-			  int16 typmod,
+			  int32 typmod,
 			  char typdelim,
 			  int typlen,
 			  bool typbyval,

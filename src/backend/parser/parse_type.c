@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/parser/parse_type.c,v 1.11 1998/06/15 19:28:56 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/parser/parse_type.c,v 1.12 1998/07/12 21:29:21 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -138,7 +138,7 @@ typeTypeFlag(Type t)
 /* Given a type structure and a string, returns the internal form of
    that string */
 char *
-stringTypeString(Type tp, char *string, int16 atttypmod)
+stringTypeString(Type tp, char *string, int32 atttypmod)
 {
 	Oid			op;
 	Oid			typelem;

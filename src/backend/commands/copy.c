@@ -6,7 +6,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/commands/copy.c,v 1.47 1998/06/19 11:40:46 scrappy Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/commands/copy.c,v 1.48 1998/07/12 21:29:14 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -205,7 +205,7 @@ CopyTo(Relation rel, bool binary, bool oids, FILE *fp, char *delim)
 	FmgrInfo   *out_functions;
 	Oid			out_func_oid;
 	Oid		   *elements;
-	int16	   *typmod;
+	int32	   *typmod;
 	Datum		value;
 	bool		isnull;			/* The attribute we are copying is null */
 	char	   *nulls;
@@ -231,7 +231,7 @@ CopyTo(Relation rel, bool binary, bool oids, FILE *fp, char *delim)
 	{
 		out_functions = (FmgrInfo *) palloc(attr_count * sizeof(FmgrInfo));
 		elements = (Oid *) palloc(attr_count * sizeof(Oid));
-		typmod = (int16 *) palloc(attr_count * sizeof(int16));
+		typmod = (int32 *) palloc(attr_count * sizeof(int16));
 		for (i = 0; i < attr_count; i++)
 		{
 			out_func_oid = (Oid) GetOutputFunction(attr[i]->atttypid);
@@ -378,7 +378,7 @@ CopyFrom(Relation rel, bool binary, bool oids, FILE *fp, char *delim)
 				tuples_read = 0;
 	bool		reading_to_eof = true;
 	Oid		   *elements;
-	int16	   *typmod;
+	int32	   *typmod;
 	FuncIndexInfo *finfo,
 			  **finfoP = NULL;
 	TupleDesc  *itupdescArr;
@@ -499,7 +499,7 @@ CopyFrom(Relation rel, bool binary, bool oids, FILE *fp, char *delim)
 	{
 		in_functions = (FmgrInfo *) palloc(attr_count * sizeof(FmgrInfo));
 		elements = (Oid *) palloc(attr_count * sizeof(Oid));
-		typmod = (int16 *) palloc(attr_count * sizeof(int16));
+		typmod = (int32 *) palloc(attr_count * sizeof(int16));
 		for (i = 0; i < attr_count; i++)
 		{
 			in_func_oid = (Oid) GetInputFunction(attr[i]->atttypid);

@@ -6,7 +6,7 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: tupdesc.h,v 1.16 1998/02/26 04:40:31 momjian Exp $
+ * $Id: tupdesc.h,v 1.17 1998/07/12 21:29:26 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -70,7 +70,7 @@ TupleDescInitEntry(TupleDesc desc,
 				   AttrNumber attributeNumber,
 				   char *attributeName,
 				   Oid typeid,
-				   int16 typmod,
+				   int32 typmod,
 				   int attdim,
 				   bool attisset);
 

@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/cache/lsyscache.c,v 1.14 1998/06/15 19:29:40 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/cache/lsyscache.c,v 1.15 1998/07/12 21:29:24 momjian Exp $
  *
  * NOTES
  *	  Eventually, the index information should go through here, too.
@@ -161,7 +161,7 @@ get_attisset(Oid relid, char *attname)
  *		return the "atttypmod" field from the attribute relation.
  *
  */
-int16
+int32
 get_atttypmod(Oid relid, AttrNumber attnum)
 {
 	FormData_pg_attribute att_tup;
@@ -169,7 +169,7 @@ get_atttypmod(Oid relid, AttrNumber attnum)
 	if (SearchSysCacheStruct(ATTNUM,
 							 (char *) &att_tup,
 							 ObjectIdGetDatum(relid),
-							 UInt16GetDatum(attnum),
+							 Int32GetDatum(attnum),
 							 0, 0))
 		return att_tup.atttypmod;
 	else

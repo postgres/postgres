@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/optimizer/prep/preptlist.c,v 1.11 1998/06/15 19:28:46 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/optimizer/prep/preptlist.c,v 1.12 1998/07/12 21:29:17 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -319,7 +319,7 @@ new_relation_targetlist(Oid relid, Index rt_index, NodeTag node_type)
 
 					temp_list = MakeTLE(makeResdom(attno,
 												   atttype,
-											 get_atttypmod(relid, attno),
+												   get_atttypmod(relid, attno),
 												   attname,
 												   0,
 												   (Oid) 0,

@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/parser/parse_node.c,v 1.16 1998/05/29 14:00:21 thomas Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/parser/parse_node.c,v 1.17 1998/07/12 21:29:20 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -222,7 +222,7 @@ make_var(ParseState *pstate, Oid relid, char *refname,
 	int			vnum,
 				attid;
 	Oid			vartypeid;
-	int16		type_mod;
+	int32		type_mod;
 	int			sublevels_up;
 
 	vnum = refnameRangeTablePosn(pstate, refname, &sublevels_up);

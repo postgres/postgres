@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/varchar.c,v 1.34 1998/06/16 06:41:50 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/varchar.c,v 1.35 1998/07/12 21:29:23 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -57,7 +57,7 @@ char	   *convertstr(char *, int, int);
  *	  because we pass typelem as the second argument for array_in.)
  */
 char *
-bpcharin(char *s, int dummy, int16 atttypmod)
+bpcharin(char *s, int dummy, int32 atttypmod)
 {
 	char	   *result,
 			   *r;
@@ -291,7 +291,7 @@ printf("bpchar- convert string length %d (%d) ->%d\n",
  *	  because we pass typelem as the second argument for array_in.)
  */
 char *
-varcharin(char *s, int dummy, int16 atttypmod)
+varcharin(char *s, int dummy, int32 atttypmod)
 {
 	char	   *result;
 	int			len;

@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/catalog/index.c,v 1.43 1998/06/15 19:28:09 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/catalog/index.c,v 1.44 1998/07/12 21:29:13 momjian Exp $
  *
  *
  * INTERFACE ROUTINES
@@ -107,7 +107,7 @@ DefaultBuild(Relation heapRelation, Relation indexRelation,
  *		AttrNumber		attnum;
  *		uint32			attnelems;
  *		int32			attcacheoff;
- *		int16			atttypmod;
+ *		int32			atttypmod;
  *		bool			attbyval;
  *		bool			attisset;
  *		char			attalign;

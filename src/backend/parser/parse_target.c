@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/parser/parse_target.c,v 1.17 1998/07/08 14:04:11 thomas Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/parser/parse_target.c,v 1.18 1998/07/12 21:29:20 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -41,7 +41,7 @@ Node *
 SizeTargetExpr(ParseState *pstate,
 			   Node *expr,
 			   Oid attrtype,
-			   int16 attrtypmod);
+			   int32 attrtypmod);
 
 
 /* transformTargetIdent()
@@ -92,7 +92,7 @@ transformTargetIdent(ParseState *pstate,
 					resdomno_target;
 		RangeTblEntry *rte;
 		char	   *target_colname;
-		int16		attrtypmod,
+		int32		attrtypmod,
 					attrtypmod_target;
 
 		target_colname = *resname;
@@ -154,7 +154,7 @@ printf("transformTargetIdent- transform type %d to %d\n",
 	if (expr == NULL)
 	{
 		char   *name;
-		int16	type_mod;
+		int32	type_mod;
 
 		name = ((*resname != NULL)? *resname: colname);
 
@@ -333,7 +333,7 @@ printf("transformTargetList: decode T_Expr\n");
 			case T_Attr:
 				{
 					Oid			type_id;
-					int16		type_mod;
+					int32		type_mod;
 					Attr	   *att = (Attr *) res->val;
 					Node	   *result;
 					char	   *attrname;
@@ -507,7 +507,7 @@ Node *
 SizeTargetExpr(ParseState *pstate,
 			   Node *expr,
 			   Oid attrtype,
-			   int16 attrtypmod)
+			   int32 attrtypmod)
 {
 	int			i;
 	HeapTuple	ftup;
@@ -579,7 +579,7 @@ MakeTargetlistExpr(ParseState *pstate,
 {
 	Oid			type_id,
 				attrtype;
-	int16		type_mod,
+	int32		type_mod,
 				attrtypmod;
 	int			resdomno;
 	Relation	rd;
