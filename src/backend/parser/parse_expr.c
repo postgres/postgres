@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/parser/parse_expr.c,v 1.70 2000/02/21 18:47:02 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/parser/parse_expr.c,v 1.71 2000/02/26 21:11:10 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -16,6 +16,7 @@
 #include "postgres.h"
 
 #include "catalog/pg_operator.h"
+#include "catalog/pg_proc.h"
 #include "nodes/makefuncs.h"
 #include "nodes/params.h"
 #include "nodes/relation.h"
@@ -29,6 +30,7 @@
 #include "parser/parse_relation.h"
 #include "parser/parse_target.h"
 #include "utils/builtins.h"
+#include "utils/syscache.h"
 
 static Node *parser_typecast_constant(Value *expr, TypeName *typename);
 static Node *parser_typecast_expression(ParseState *pstate,
@@ -701,6 +703,15 @@ exprTypmod(Node *expr)
 				}
 			}
 			break;
+		case T_Expr:
+			{
+				int32	coercedTypmod;
+
+				/* Be smart about length-coercion functions... */
+				if (exprIsLengthCoercion(expr, &coercedTypmod))
+					return coercedTypmod;
+			}
+			break;
 		case T_RelabelType:
 			return ((RelabelType *) expr)->resulttypmod;
 			break;
@@ -708,6 +719,97 @@ exprTypmod(Node *expr)
 			break;
 	}
 	return -1;
+}
+
+/*
+ * exprIsLengthCoercion
+ *		Detect whether an expression tree is an application of a datatype's
+ *		typmod-coercion function.  Optionally extract the result's typmod.
+ *
+ * If coercedTypmod is not NULL, the typmod is stored there if the expression
+ * is a length-coercion function, else -1 is stored there.
+ *
+ * We assume that a two-argument function named for a datatype, whose
+ * output and first argument types are that datatype, and whose second
+ * input is an int32 constant, represents a forced length coercion.
+ * XXX It'd be better if the parsetree retained some explicit indication
+ * of the coercion, so we didn't need these heuristics.
+ */
+bool
+exprIsLengthCoercion(Node *expr, int32 *coercedTypmod)
+{
+	Func	   *func;
+	Const	   *second_arg;
+	HeapTuple	tup;
+	Form_pg_proc procStruct;
+	Form_pg_type typeStruct;
+
+	if (coercedTypmod != NULL)
+		*coercedTypmod = -1;	/* default result on failure */
+
+	/* Is it a function-call at all? */
+	if (expr == NULL ||
+		! IsA(expr, Expr) ||
+		((Expr *) expr)->opType != FUNC_EXPR)
+		return false;
+	func = (Func *) (((Expr *) expr)->oper);
+	Assert(IsA(func, Func));
+
+	/*
+	 * If it's not a two-argument function with the second argument being
+	 * an int4 constant, it can't have been created from a length coercion.
+	 */
+	if (length(((Expr *) expr)->args) != 2)
+		return false;
+	second_arg = (Const *) lsecond(((Expr *) expr)->args);
+	if (! IsA(second_arg, Const) ||
+		second_arg->consttype != INT4OID ||
+		second_arg->constisnull)
+		return false;
+
+	/*
+	 * Lookup the function in pg_proc
+	 */
+	tup = SearchSysCacheTuple(PROCOID,
+							  ObjectIdGetDatum(func->funcid),
+							  0, 0, 0);
+	if (!HeapTupleIsValid(tup))
+		elog(ERROR, "cache lookup for proc %u failed", func->funcid);
+	procStruct = (Form_pg_proc) GETSTRUCT(tup);
+
+	/*
+	 * It must be a function with two arguments where the first is of
+	 * the same type as the return value and the second is an int4.
+	 * Also, just to be sure, check return type agrees with expr node.
+	 */
+	if (procStruct->pronargs != 2 ||
+		procStruct->prorettype != procStruct->proargtypes[0] ||
+		procStruct->proargtypes[1] != INT4OID ||
+		procStruct->prorettype != ((Expr *) expr)->typeOid)
+		return false;
+
+	/*
+	 * Furthermore, the name of the function must be the same
+	 * as the argument/result type's name.
+	 */
+	tup = SearchSysCacheTuple(TYPEOID,
+							  ObjectIdGetDatum(procStruct->prorettype),
+							  0, 0, 0);
+	if (!HeapTupleIsValid(tup))
+		elog(ERROR, "cache lookup for type %u failed",
+			 procStruct->prorettype);
+	typeStruct = (Form_pg_type) GETSTRUCT(tup);
+	if (strncmp(NameStr(procStruct->proname),
+				NameStr(typeStruct->typname),
+				NAMEDATALEN) != 0)
+		return false;
+
+	/*
+	 * OK, it is indeed a length-coercion function.
+	 */
+	if (coercedTypmod != NULL)
+		*coercedTypmod = DatumGetInt32(second_arg->constvalue);
+	return true;
 }
 
 /*

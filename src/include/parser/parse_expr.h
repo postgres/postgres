@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2000, PostgreSQL, Inc
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Id: parse_expr.h,v 1.16 2000/01/26 05:58:27 momjian Exp $
+ * $Id: parse_expr.h,v 1.17 2000/02/26 21:11:09 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -23,5 +23,6 @@
 extern Node *transformExpr(ParseState *pstate, Node *expr, int precedence);
 extern Oid	exprType(Node *expr);
 extern int32 exprTypmod(Node *expr);
+extern bool exprIsLengthCoercion(Node *expr, int32 *coercedTypmod);
 
 #endif	 /* PARSE_EXPR_H */
