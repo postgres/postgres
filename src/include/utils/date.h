@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2003, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/include/utils/date.h,v 1.25 2003/11/29 22:41:15 pgsql Exp $
+ * $PostgreSQL: pgsql/src/include/utils/date.h,v 1.26 2004/02/14 20:16:18 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -84,6 +84,36 @@ extern Datum date_smaller(PG_FUNCTION_ARGS);
 extern Datum date_mi(PG_FUNCTION_ARGS);
 extern Datum date_pli(PG_FUNCTION_ARGS);
 extern Datum date_mii(PG_FUNCTION_ARGS);
+extern Datum date_eq_timestamp(PG_FUNCTION_ARGS);
+extern Datum date_ne_timestamp(PG_FUNCTION_ARGS);
+extern Datum date_lt_timestamp(PG_FUNCTION_ARGS);
+extern Datum date_le_timestamp(PG_FUNCTION_ARGS);
+extern Datum date_gt_timestamp(PG_FUNCTION_ARGS);
+extern Datum date_ge_timestamp(PG_FUNCTION_ARGS);
+extern Datum date_cmp_timestamp(PG_FUNCTION_ARGS);
+extern Datum date_eq_timestamptz(PG_FUNCTION_ARGS);
+extern Datum date_ne_timestamptz(PG_FUNCTION_ARGS);
+extern Datum date_lt_timestamptz(PG_FUNCTION_ARGS);
+extern Datum date_le_timestamptz(PG_FUNCTION_ARGS);
+extern Datum date_gt_timestamptz(PG_FUNCTION_ARGS);
+extern Datum date_ge_timestamptz(PG_FUNCTION_ARGS);
+extern Datum date_cmp_timestamptz(PG_FUNCTION_ARGS);
+extern Datum timestamp_eq_date(PG_FUNCTION_ARGS);
+extern Datum timestamp_ne_date(PG_FUNCTION_ARGS);
+extern Datum timestamp_lt_date(PG_FUNCTION_ARGS);
+extern Datum timestamp_le_date(PG_FUNCTION_ARGS);
+extern Datum timestamp_gt_date(PG_FUNCTION_ARGS);
+extern Datum timestamp_ge_date(PG_FUNCTION_ARGS);
+extern Datum timestamp_cmp_date(PG_FUNCTION_ARGS);
+extern Datum timestamptz_eq_date(PG_FUNCTION_ARGS);
+extern Datum timestamptz_ne_date(PG_FUNCTION_ARGS);
+extern Datum timestamptz_lt_date(PG_FUNCTION_ARGS);
+extern Datum timestamptz_le_date(PG_FUNCTION_ARGS);
+extern Datum timestamptz_gt_date(PG_FUNCTION_ARGS);
+extern Datum timestamptz_ge_date(PG_FUNCTION_ARGS);
+extern Datum timestamptz_cmp_date(PG_FUNCTION_ARGS);
+extern Datum date_pl_interval(PG_FUNCTION_ARGS);
+extern Datum date_mi_interval(PG_FUNCTION_ARGS);
 extern Datum date_timestamp(PG_FUNCTION_ARGS);
 extern Datum timestamp_date(PG_FUNCTION_ARGS);
 extern Datum date_timestamptz(PG_FUNCTION_ARGS);

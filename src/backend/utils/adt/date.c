@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/utils/adt/date.c,v 1.94 2003/11/29 19:51:58 pgsql Exp $
+ *	  $PostgreSQL: pgsql/src/backend/utils/adt/date.c,v 1.95 2004/02/14 20:16:17 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -150,6 +150,10 @@ date_send(PG_FUNCTION_ARGS)
 }
 
 
+/*
+ * Comparison functions for dates
+ */
+
 Datum
 date_eq(PG_FUNCTION_ARGS)
 {
@@ -269,61 +273,441 @@ date_mii(PG_FUNCTION_ARGS)
 	PG_RETURN_DATEADT(dateVal - days);
 }
 
-#if NOT_USED
-/* date_pl_interval() and date_mi_interval() are probably
- * better implmented by converting the input date
- * to timestamp without time zone. So that is what we do
- * in pg_proc.h - thomas 2002-03-11
+/*
+ * Internal routines for promoting date to timestamp and timestamp with
+ * time zone
  */
+
+#ifdef HAVE_INT64_TIMESTAMP
+/* date is days since 2000, timestamp is microseconds since same... */
+#define date2timestamp(dateVal) \
+	((Timestamp) ((dateVal) * INT64CONST(86400000000)))
+#else
+/* date is days since 2000, timestamp is seconds since same... */
+#define date2timestamp(dateVal) \
+	((Timestamp) ((dateVal) * 86400.0))
+#endif
+
+static TimestampTz
+date2timestamptz(DateADT dateVal)
+{
+	TimestampTz result;
+	struct tm	tt,
+			   *tm = &tt;
+
+	j2date(dateVal + POSTGRES_EPOCH_JDATE,
+		   &(tm->tm_year), &(tm->tm_mon), &(tm->tm_mday));
+
+	if (IS_VALID_UTIME(tm->tm_year, tm->tm_mon, tm->tm_mday))
+	{
+		int			tz;
+
+		tm->tm_hour = 0;
+		tm->tm_min = 0;
+		tm->tm_sec = 0;
+		tz = DetermineLocalTimeZone(tm);
+
+#ifdef HAVE_INT64_TIMESTAMP
+		result = (dateVal * INT64CONST(86400000000))
+			+ (tz * INT64CONST(1000000));
+#else
+		result = dateVal * 86400.0 + tz;
+#endif
+	}
+	else
+	{
+		/* Outside of range for timezone support, so assume UTC */
+#ifdef HAVE_INT64_TIMESTAMP
+		result = (dateVal * INT64CONST(86400000000));
+#else
+		result = dateVal * 86400.0;
+#endif
+	}
+
+	return result;
+}
+
+
+/*
+ * Crosstype comparison functions for dates
+ */
+
+Datum
+date_eq_timestamp(PG_FUNCTION_ARGS)
+{
+	DateADT		dateVal = PG_GETARG_DATEADT(0);
+	Timestamp	dt2 = PG_GETARG_TIMESTAMP(1);
+	Timestamp	dt1;
+
+	dt1 = date2timestamp(dateVal);
+
+	PG_RETURN_BOOL(timestamp_cmp_internal(dt1, dt2) == 0);
+}
+
+Datum
+date_ne_timestamp(PG_FUNCTION_ARGS)
+{
+	DateADT		dateVal = PG_GETARG_DATEADT(0);
+	Timestamp	dt2 = PG_GETARG_TIMESTAMP(1);
+	Timestamp	dt1;
+
+	dt1 = date2timestamp(dateVal);
+
+	PG_RETURN_BOOL(timestamp_cmp_internal(dt1, dt2) != 0);
+}
+
+Datum
+date_lt_timestamp(PG_FUNCTION_ARGS)
+{
+	DateADT		dateVal = PG_GETARG_DATEADT(0);
+	Timestamp	dt2 = PG_GETARG_TIMESTAMP(1);
+	Timestamp	dt1;
+
+	dt1 = date2timestamp(dateVal);
+
+	PG_RETURN_BOOL(timestamp_cmp_internal(dt1, dt2) < 0);
+}
+
+Datum
+date_gt_timestamp(PG_FUNCTION_ARGS)
+{
+	DateADT		dateVal = PG_GETARG_DATEADT(0);
+	Timestamp	dt2 = PG_GETARG_TIMESTAMP(1);
+	Timestamp	dt1;
+
+	dt1 = date2timestamp(dateVal);
+
+	PG_RETURN_BOOL(timestamp_cmp_internal(dt1, dt2) > 0);
+}
+
+Datum
+date_le_timestamp(PG_FUNCTION_ARGS)
+{
+	DateADT		dateVal = PG_GETARG_DATEADT(0);
+	Timestamp	dt2 = PG_GETARG_TIMESTAMP(1);
+	Timestamp	dt1;
+
+	dt1 = date2timestamp(dateVal);
+
+	PG_RETURN_BOOL(timestamp_cmp_internal(dt1, dt2) <= 0);
+}
+
+Datum
+date_ge_timestamp(PG_FUNCTION_ARGS)
+{
+	DateADT		dateVal = PG_GETARG_DATEADT(0);
+	Timestamp	dt2 = PG_GETARG_TIMESTAMP(1);
+	Timestamp	dt1;
+
+	dt1 = date2timestamp(dateVal);
+
+	PG_RETURN_BOOL(timestamp_cmp_internal(dt1, dt2) >= 0);
+}
+
+Datum
+date_cmp_timestamp(PG_FUNCTION_ARGS)
+{
+	DateADT		dateVal = PG_GETARG_DATEADT(0);
+	Timestamp	dt2 = PG_GETARG_TIMESTAMP(1);
+	Timestamp	dt1;
+
+	dt1 = date2timestamp(dateVal);
+
+	PG_RETURN_INT32(timestamp_cmp_internal(dt1, dt2));
+}
+
+Datum
+date_eq_timestamptz(PG_FUNCTION_ARGS)
+{
+	DateADT		dateVal = PG_GETARG_DATEADT(0);
+	TimestampTz	dt2 = PG_GETARG_TIMESTAMPTZ(1);
+	TimestampTz	dt1;
+
+	dt1 = date2timestamptz(dateVal);
+
+	PG_RETURN_BOOL(timestamptz_cmp_internal(dt1, dt2) == 0);
+}
+
+Datum
+date_ne_timestamptz(PG_FUNCTION_ARGS)
+{
+	DateADT		dateVal = PG_GETARG_DATEADT(0);
+	TimestampTz	dt2 = PG_GETARG_TIMESTAMPTZ(1);
+	TimestampTz	dt1;
+
+	dt1 = date2timestamptz(dateVal);
+
+	PG_RETURN_BOOL(timestamptz_cmp_internal(dt1, dt2) != 0);
+}
+
+Datum
+date_lt_timestamptz(PG_FUNCTION_ARGS)
+{
+	DateADT		dateVal = PG_GETARG_DATEADT(0);
+	TimestampTz	dt2 = PG_GETARG_TIMESTAMPTZ(1);
+	TimestampTz	dt1;
+
+	dt1 = date2timestamptz(dateVal);
+
+	PG_RETURN_BOOL(timestamptz_cmp_internal(dt1, dt2) < 0);
+}
+
+Datum
+date_gt_timestamptz(PG_FUNCTION_ARGS)
+{
+	DateADT		dateVal = PG_GETARG_DATEADT(0);
+	TimestampTz	dt2 = PG_GETARG_TIMESTAMPTZ(1);
+	TimestampTz	dt1;
+
+	dt1 = date2timestamptz(dateVal);
+
+	PG_RETURN_BOOL(timestamptz_cmp_internal(dt1, dt2) > 0);
+}
+
+Datum
+date_le_timestamptz(PG_FUNCTION_ARGS)
+{
+	DateADT		dateVal = PG_GETARG_DATEADT(0);
+	TimestampTz	dt2 = PG_GETARG_TIMESTAMPTZ(1);
+	TimestampTz	dt1;
+
+	dt1 = date2timestamptz(dateVal);
+
+	PG_RETURN_BOOL(timestamptz_cmp_internal(dt1, dt2) <= 0);
+}
+
+Datum
+date_ge_timestamptz(PG_FUNCTION_ARGS)
+{
+	DateADT		dateVal = PG_GETARG_DATEADT(0);
+	TimestampTz	dt2 = PG_GETARG_TIMESTAMPTZ(1);
+	TimestampTz	dt1;
+
+	dt1 = date2timestamptz(dateVal);
+
+	PG_RETURN_BOOL(timestamptz_cmp_internal(dt1, dt2) >= 0);
+}
+
+Datum
+date_cmp_timestamptz(PG_FUNCTION_ARGS)
+{
+	DateADT		dateVal = PG_GETARG_DATEADT(0);
+	TimestampTz	dt2 = PG_GETARG_TIMESTAMPTZ(1);
+	TimestampTz	dt1;
+
+	dt1 = date2timestamptz(dateVal);
+
+	PG_RETURN_INT32(timestamptz_cmp_internal(dt1, dt2));
+}
+
+Datum
+timestamp_eq_date(PG_FUNCTION_ARGS)
+{
+	Timestamp	dt1 = PG_GETARG_TIMESTAMP(0);
+	DateADT		dateVal = PG_GETARG_DATEADT(1);
+	Timestamp	dt2;
+
+	dt2 = date2timestamp(dateVal);
+
+	PG_RETURN_BOOL(timestamp_cmp_internal(dt1, dt2) == 0);
+}
+
+Datum
+timestamp_ne_date(PG_FUNCTION_ARGS)
+{
+	Timestamp	dt1 = PG_GETARG_TIMESTAMP(0);
+	DateADT		dateVal = PG_GETARG_DATEADT(1);
+	Timestamp	dt2;
+
+	dt2 = date2timestamp(dateVal);
+
+	PG_RETURN_BOOL(timestamp_cmp_internal(dt1, dt2) != 0);
+}
+
+Datum
+timestamp_lt_date(PG_FUNCTION_ARGS)
+{
+	Timestamp	dt1 = PG_GETARG_TIMESTAMP(0);
+	DateADT		dateVal = PG_GETARG_DATEADT(1);
+	Timestamp	dt2;
+
+	dt2 = date2timestamp(dateVal);
+
+	PG_RETURN_BOOL(timestamp_cmp_internal(dt1, dt2) < 0);
+}
+
+Datum
+timestamp_gt_date(PG_FUNCTION_ARGS)
+{
+	Timestamp	dt1 = PG_GETARG_TIMESTAMP(0);
+	DateADT		dateVal = PG_GETARG_DATEADT(1);
+	Timestamp	dt2;
+
+	dt2 = date2timestamp(dateVal);
+
+	PG_RETURN_BOOL(timestamp_cmp_internal(dt1, dt2) > 0);
+}
+
+Datum
+timestamp_le_date(PG_FUNCTION_ARGS)
+{
+	Timestamp	dt1 = PG_GETARG_TIMESTAMP(0);
+	DateADT		dateVal = PG_GETARG_DATEADT(1);
+	Timestamp	dt2;
+
+	dt2 = date2timestamp(dateVal);
+
+	PG_RETURN_BOOL(timestamp_cmp_internal(dt1, dt2) <= 0);
+}
+
+Datum
+timestamp_ge_date(PG_FUNCTION_ARGS)
+{
+	Timestamp	dt1 = PG_GETARG_TIMESTAMP(0);
+	DateADT		dateVal = PG_GETARG_DATEADT(1);
+	Timestamp	dt2;
+
+	dt2 = date2timestamp(dateVal);
+
+	PG_RETURN_BOOL(timestamp_cmp_internal(dt1, dt2) >= 0);
+}
+
+Datum
+timestamp_cmp_date(PG_FUNCTION_ARGS)
+{
+	Timestamp	dt1 = PG_GETARG_TIMESTAMP(0);
+	DateADT		dateVal = PG_GETARG_DATEADT(1);
+	Timestamp	dt2;
+
+	dt2 = date2timestamp(dateVal);
+
+	PG_RETURN_INT32(timestamp_cmp_internal(dt1, dt2));
+}
+
+Datum
+timestamptz_eq_date(PG_FUNCTION_ARGS)
+{
+	TimestampTz	dt1 = PG_GETARG_TIMESTAMPTZ(0);
+	DateADT		dateVal = PG_GETARG_DATEADT(1);
+	TimestampTz	dt2;
+
+	dt2 = date2timestamptz(dateVal);
+
+	PG_RETURN_BOOL(timestamptz_cmp_internal(dt1, dt2) == 0);
+}
+
+Datum
+timestamptz_ne_date(PG_FUNCTION_ARGS)
+{
+	TimestampTz	dt1 = PG_GETARG_TIMESTAMPTZ(0);
+	DateADT		dateVal = PG_GETARG_DATEADT(1);
+	TimestampTz	dt2;
+
+	dt2 = date2timestamptz(dateVal);
+
+	PG_RETURN_BOOL(timestamptz_cmp_internal(dt1, dt2) != 0);
+}
+
+Datum
+timestamptz_lt_date(PG_FUNCTION_ARGS)
+{
+	TimestampTz	dt1 = PG_GETARG_TIMESTAMPTZ(0);
+	DateADT		dateVal = PG_GETARG_DATEADT(1);
+	TimestampTz	dt2;
+
+	dt2 = date2timestamptz(dateVal);
+
+	PG_RETURN_BOOL(timestamptz_cmp_internal(dt1, dt2) < 0);
+}
+
+Datum
+timestamptz_gt_date(PG_FUNCTION_ARGS)
+{
+	TimestampTz	dt1 = PG_GETARG_TIMESTAMPTZ(0);
+	DateADT		dateVal = PG_GETARG_DATEADT(1);
+	TimestampTz	dt2;
+
+	dt2 = date2timestamptz(dateVal);
+
+	PG_RETURN_BOOL(timestamptz_cmp_internal(dt1, dt2) > 0);
+}
+
+Datum
+timestamptz_le_date(PG_FUNCTION_ARGS)
+{
+	TimestampTz	dt1 = PG_GETARG_TIMESTAMPTZ(0);
+	DateADT		dateVal = PG_GETARG_DATEADT(1);
+	TimestampTz	dt2;
+
+	dt2 = date2timestamptz(dateVal);
+
+	PG_RETURN_BOOL(timestamptz_cmp_internal(dt1, dt2) <= 0);
+}
+
+Datum
+timestamptz_ge_date(PG_FUNCTION_ARGS)
+{
+	TimestampTz	dt1 = PG_GETARG_TIMESTAMPTZ(0);
+	DateADT		dateVal = PG_GETARG_DATEADT(1);
+	TimestampTz	dt2;
+
+	dt2 = date2timestamptz(dateVal);
+
+	PG_RETURN_BOOL(timestamptz_cmp_internal(dt1, dt2) >= 0);
+}
+
+Datum
+timestamptz_cmp_date(PG_FUNCTION_ARGS)
+{
+	TimestampTz	dt1 = PG_GETARG_TIMESTAMPTZ(0);
+	DateADT		dateVal = PG_GETARG_DATEADT(1);
+	TimestampTz	dt2;
+
+	dt2 = date2timestamptz(dateVal);
+
+	PG_RETURN_INT32(timestamptz_cmp_internal(dt1, dt2));
+}
+
 
 /* Add an interval to a date, giving a new date.
  * Must handle both positive and negative intervals.
+ *
+ * We implement this by promoting the date to timestamp (without time zone)
+ * and then using the timestamp plus interval function.
  */
 Datum
 date_pl_interval(PG_FUNCTION_ARGS)
 {
 	DateADT		dateVal = PG_GETARG_DATEADT(0);
 	Interval   *span = PG_GETARG_INTERVAL_P(1);
-	struct tm	tt,
-			   *tm = &tt;
+	Timestamp	dateStamp;
 
-	if (span->month != 0)
-	{
-		j2date(dateVal + POSTGRES_EPOCH_JDATE,
-			   &(tm->tm_year), &(tm->tm_mon), &(tm->tm_mday));
-		tm->tm_mon += span->month;
-		dateVal = date2j(tm->tm_year, tm->tm_mon, tm->tm_mday) - POSTGRES_EPOCH_JDATE;
-	}
-	if (span->time != 0)
-		dateVal += (span->time / 86400e0);
+	dateStamp = date2timestamp(dateVal);
 
-	PG_RETURN_DATEADT(dateVal);
+	return DirectFunctionCall2(timestamp_pl_interval,
+							   TimestampGetDatum(dateStamp),
+							   PointerGetDatum(span));
 }
 
 /* Subtract an interval from a date, giving a new date.
  * Must handle both positive and negative intervals.
+ *
+ * We implement this by promoting the date to timestamp (without time zone)
+ * and then using the timestamp minus interval function.
  */
 Datum
 date_mi_interval(PG_FUNCTION_ARGS)
 {
 	DateADT		dateVal = PG_GETARG_DATEADT(0);
 	Interval   *span = PG_GETARG_INTERVAL_P(1);
-	struct tm	tt,
-			   *tm = &tt;
+	Timestamp	dateStamp;
 
-	if (span->month != 0)
-	{
-		j2date(dateVal + POSTGRES_EPOCH_JDATE,
-			   &(tm->tm_year), &(tm->tm_mon), &(tm->tm_mday));
-		tm->tm_mon -= span->month;
-		dateVal = date2j(tm->tm_year, tm->tm_mon, tm->tm_mday) - POSTGRES_EPOCH_JDATE;
-	}
-	if (span->time != 0)
-		dateVal -= (span->time / 86400e0);
+	dateStamp = date2timestamp(dateVal);
 
-	PG_RETURN_DATEADT(dateVal);
+	return DirectFunctionCall2(timestamp_mi_interval,
+							   TimestampGetDatum(dateStamp),
+							   PointerGetDatum(span));
 }
-#endif
 
 /* date_timestamp()
  * Convert date to timestamp data type.
@@ -334,13 +718,7 @@ date_timestamp(PG_FUNCTION_ARGS)
 	DateADT		dateVal = PG_GETARG_DATEADT(0);
 	Timestamp	result;
 
-#ifdef HAVE_INT64_TIMESTAMP
-	/* date is days since 2000, timestamp is microseconds since same... */
-	result = dateVal * INT64CONST(86400000000);
-#else
-	/* date is days since 2000, timestamp is seconds since same... */
-	result = dateVal * 86400.0;
-#endif
+	result = date2timestamp(dateVal);
 
 	PG_RETURN_TIMESTAMP(result);
 }
@@ -380,37 +758,8 @@ date_timestamptz(PG_FUNCTION_ARGS)
 {
 	DateADT		dateVal = PG_GETARG_DATEADT(0);
 	TimestampTz result;
-	struct tm	tt,
-			   *tm = &tt;
 
-	j2date(dateVal + POSTGRES_EPOCH_JDATE,
-		   &(tm->tm_year), &(tm->tm_mon), &(tm->tm_mday));
-
-	if (IS_VALID_UTIME(tm->tm_year, tm->tm_mon, tm->tm_mday))
-	{
-		int			tz;
-
-		tm->tm_hour = 0;
-		tm->tm_min = 0;
-		tm->tm_sec = 0;
-		tz = DetermineLocalTimeZone(tm);
-
-#ifdef HAVE_INT64_TIMESTAMP
-		result = (dateVal * INT64CONST(86400000000))
-			+ (tz * INT64CONST(1000000));
-#else
-		result = dateVal * 86400.0 + tz;
-#endif
-	}
-	else
-	{
-		/* Outside of range for timezone support, so assume UTC */
-#ifdef HAVE_INT64_TIMESTAMP
-		result = (dateVal * INT64CONST(86400000000));
-#else
-		result = dateVal * 86400.0;
-#endif
-	}
+	result = date2timestamptz(dateVal);
 
 	PG_RETURN_TIMESTAMP(result);
 }

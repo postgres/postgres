@@ -23,7 +23,7 @@
  * Portions Copyright (c) 1996-2003, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/include/catalog/pg_amop.h,v 1.57 2003/11/29 22:40:58 pgsql Exp $
+ * $PostgreSQL: pgsql/src/include/catalog/pg_amop.h,v 1.58 2004/02/14 20:16:17 tgl Exp $
  *
  * NOTES
  *	 the genbki.sh script reads this file and generates .bki
@@ -301,6 +301,18 @@ DATA(insert (	 434    0 2 f 1096 ));
 DATA(insert (	 434    0 3 f 1093 ));
 DATA(insert (	 434    0 4 f 1098 ));
 DATA(insert (	 434    0 5 f 1097 ));
+/* crosstype operators vs timestamp */
+DATA(insert (	 434 1114 1 f 2345 ));
+DATA(insert (	 434 1114 2 f 2346 ));
+DATA(insert (	 434 1114 3 f 2347 ));
+DATA(insert (	 434 1114 4 f 2348 ));
+DATA(insert (	 434 1114 5 f 2349 ));
+/* crosstype operators vs timestamptz */
+DATA(insert (	 434 1184 1 f 2358 ));
+DATA(insert (	 434 1184 2 f 2359 ));
+DATA(insert (	 434 1184 3 f 2360 ));
+DATA(insert (	 434 1184 4 f 2361 ));
+DATA(insert (	 434 1184 5 f 2362 ));
 
 /*
  *	btree time_ops
@@ -331,6 +343,12 @@ DATA(insert (	2039    0 2 f 2063 ));
 DATA(insert (	2039    0 3 f 2060 ));
 DATA(insert (	2039    0 4 f 2065 ));
 DATA(insert (	2039    0 5 f 2064 ));
+/* crosstype operators vs date */
+DATA(insert (	2039 1082 1 f 2371 ));
+DATA(insert (	2039 1082 2 f 2372 ));
+DATA(insert (	2039 1082 3 f 2373 ));
+DATA(insert (	2039 1082 4 f 2374 ));
+DATA(insert (	2039 1082 5 f 2375 ));
 
 /*
  *	btree timestamptz_ops
@@ -341,6 +359,12 @@ DATA(insert (	1998    0 2 f 1323 ));
 DATA(insert (	1998    0 3 f 1320 ));
 DATA(insert (	1998    0 4 f 1325 ));
 DATA(insert (	1998    0 5 f 1324 ));
+/* crosstype operators vs date */
+DATA(insert (	1998 1082 1 f 2384 ));
+DATA(insert (	1998 1082 2 f 2385 ));
+DATA(insert (	1998 1082 3 f 2386 ));
+DATA(insert (	1998 1082 4 f 2387 ));
+DATA(insert (	1998 1082 5 f 2388 ));
 
 /*
  *	btree interval_ops

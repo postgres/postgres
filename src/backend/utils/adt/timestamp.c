@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/utils/adt/timestamp.c,v 1.98 2003/12/25 03:36:23 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/utils/adt/timestamp.c,v 1.99 2004/02/14 20:16:17 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -1296,7 +1296,7 @@ SetEpochTimestamp(void)
  *
  *		collate invalid timestamp at the end
  */
-static int
+int
 timestamp_cmp_internal(Timestamp dt1, Timestamp dt2)
 {
 #ifdef HAVE_INT64_TIMESTAMP
@@ -1703,7 +1703,7 @@ timestamp_mi(PG_FUNCTION_ARGS)
 }
 
 
-/* timestamp_pl_span()
+/* timestamp_pl_interval()
  * Add a interval to a timestamp data type.
  * Note that interval has provisions for qualitative year/month
  *	units, so try to do the right thing with them.
@@ -1713,7 +1713,7 @@ timestamp_mi(PG_FUNCTION_ARGS)
  * Lastly, add in the "quantitative time".
  */
 Datum
-timestamp_pl_span(PG_FUNCTION_ARGS)
+timestamp_pl_interval(PG_FUNCTION_ARGS)
 {
 	Timestamp	timestamp = PG_GETARG_TIMESTAMP(0);
 	Interval   *span = PG_GETARG_INTERVAL_P(1);
@@ -1764,7 +1764,7 @@ timestamp_pl_span(PG_FUNCTION_ARGS)
 }
 
 Datum
-timestamp_mi_span(PG_FUNCTION_ARGS)
+timestamp_mi_interval(PG_FUNCTION_ARGS)
 {
 	Timestamp	timestamp = PG_GETARG_TIMESTAMP(0);
 	Interval   *span = PG_GETARG_INTERVAL_P(1);
@@ -1773,13 +1773,13 @@ timestamp_mi_span(PG_FUNCTION_ARGS)
 	tspan.month = -span->month;
 	tspan.time = -span->time;
 
-	return DirectFunctionCall2(timestamp_pl_span,
+	return DirectFunctionCall2(timestamp_pl_interval,
 							   TimestampGetDatum(timestamp),
 							   PointerGetDatum(&tspan));
 }
 
 
-/* timestamptz_pl_span()
+/* timestamptz_pl_interval()
  * Add a interval to a timestamp with time zone data type.
  * Note that interval has provisions for qualitative year/month
  *	units, so try to do the right thing with them.
@@ -1789,7 +1789,7 @@ timestamp_mi_span(PG_FUNCTION_ARGS)
  * Lastly, add in the "quantitative time".
  */
 Datum
-timestamptz_pl_span(PG_FUNCTION_ARGS)
+timestamptz_pl_interval(PG_FUNCTION_ARGS)
 {
 	TimestampTz timestamp = PG_GETARG_TIMESTAMPTZ(0);
 	Interval   *span = PG_GETARG_INTERVAL_P(1);
@@ -1844,7 +1844,7 @@ timestamptz_pl_span(PG_FUNCTION_ARGS)
 }
 
 Datum
-timestamptz_mi_span(PG_FUNCTION_ARGS)
+timestamptz_mi_interval(PG_FUNCTION_ARGS)
 {
 	TimestampTz timestamp = PG_GETARG_TIMESTAMPTZ(0);
 	Interval   *span = PG_GETARG_INTERVAL_P(1);
@@ -1853,7 +1853,7 @@ timestamptz_mi_span(PG_FUNCTION_ARGS)
 	tspan.month = -span->month;
 	tspan.time = -span->time;
 
-	return DirectFunctionCall2(timestamptz_pl_span,
+	return DirectFunctionCall2(timestamptz_pl_interval,
 							   TimestampGetDatum(timestamp),
 							   PointerGetDatum(&tspan));
 }

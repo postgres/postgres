@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2003, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/include/catalog/pg_proc.h,v 1.319 2004/02/03 08:29:56 joe Exp $
+ * $PostgreSQL: pgsql/src/include/catalog/pg_proc.h,v 1.320 2004/02/14 20:16:17 tgl Exp $
  *
  * NOTES
  *	  The script catalog/genbki.sh reads this file and generates .bki
@@ -1485,9 +1485,9 @@ DESCR("age of a transaction ID, in transactions before current transaction");
 
 DATA(insert OID = 1188 (  timestamptz_mi   PGNSP PGUID 12 f f t f i 2 1186 "1184 1184" _null_	timestamp_mi - _null_ ));
 DESCR("subtract");
-DATA(insert OID = 1189 (  timestamptz_pl_span PGNSP PGUID 12 f f t f i 2 1184 "1184 1186" _null_  timestamptz_pl_span - _null_ ));
+DATA(insert OID = 1189 (  timestamptz_pl_interval PGNSP PGUID 12 f f t f i 2 1184 "1184 1186" _null_  timestamptz_pl_interval - _null_ ));
 DESCR("plus");
-DATA(insert OID = 1190 (  timestamptz_mi_span PGNSP PGUID 12 f f t f i 2 1184 "1184 1186" _null_  timestamptz_mi_span - _null_ ));
+DATA(insert OID = 1190 (  timestamptz_mi_interval PGNSP PGUID 12 f f t f i 2 1184 "1184 1186" _null_  timestamptz_mi_interval - _null_ ));
 DESCR("minus");
 DATA(insert OID = 1191 (  timestamptz		PGNSP PGUID 12 f f t f s 1 1184 "25" _null_	text_timestamptz - _null_ ));
 DESCR("convert text to timestamp with time zone");
@@ -2875,9 +2875,9 @@ DATA(insert OID = 2030 (  abstime			PGNSP PGUID 12 f f t f s 1	702 "1114" _null_
 DESCR("convert timestamp to abstime");
 DATA(insert OID = 2031 (  timestamp_mi		PGNSP PGUID 12 f f t f i 2 1186 "1114 1114" _null_  timestamp_mi - _null_ ));
 DESCR("subtract");
-DATA(insert OID = 2032 (  timestamp_pl_span PGNSP PGUID 12 f f t f i 2 1114 "1114 1186" _null_  timestamp_pl_span - _null_ ));
+DATA(insert OID = 2032 (  timestamp_pl_interval PGNSP PGUID 12 f f t f i 2 1114 "1114 1186" _null_  timestamp_pl_interval - _null_ ));
 DESCR("plus");
-DATA(insert OID = 2033 (  timestamp_mi_span PGNSP PGUID 12 f f t f i 2 1114 "1114 1186" _null_  timestamp_mi_span - _null_ ));
+DATA(insert OID = 2033 (  timestamp_mi_interval PGNSP PGUID 12 f f t f i 2 1114 "1114 1186" _null_  timestamp_mi_interval - _null_ ));
 DESCR("minus");
 DATA(insert OID = 2034 (  text				PGNSP PGUID 12 f f t f s 1	 25 "1114" _null_	timestamp_text - _null_ ));
 DESCR("convert timestamp to text");
@@ -2932,9 +2932,9 @@ DATA(insert OID = 2069 (  timezone			PGNSP PGUID 12 f f t f s 2 1184 "25 1114" _
 DESCR("adjust timestamp to new time zone");
 DATA(insert OID = 2070 (  timezone			PGNSP PGUID 12 f f t f s 2 1184 "1186 1114" _null_  timestamp_izone - _null_ ));
 DESCR("adjust timestamp to new time zone");
-DATA(insert OID = 2071 (  date_pl_interval	PGNSP PGUID 14 f f t f i 2 1114 "1082 1186" _null_  "select cast($1 as timestamp without time zone) + $2;" - _null_ ));
+DATA(insert OID = 2071 (  date_pl_interval	PGNSP PGUID 12 f f t f i 2 1114 "1082 1186" _null_  date_pl_interval - _null_ ));
 DESCR("add");
-DATA(insert OID = 2072 (  date_mi_interval	PGNSP PGUID 14 f f t f i 2 1114 "1082 1186" _null_  "select cast($1 as timestamp without time zone) - $2;" - _null_ ));
+DATA(insert OID = 2072 (  date_mi_interval	PGNSP PGUID 12 f f t f i 2 1114 "1082 1186" _null_  date_mi_interval - _null_ ));
 DESCR("subtract");
 
 DATA(insert OID = 2073 (  substring			PGNSP PGUID 12 f f t f i 2 25 "25 25" _null_	textregexsubstr - _null_ ));
@@ -3200,7 +3200,68 @@ DESCR("I/O");
 DATA(insert OID =  2311 (  md5	   PGNSP PGUID 12 f f t f i 1 25 "25" _null_  md5_text - _null_ ));
 DESCR("calculates md5 hash");
 
+/* crosstype operations for date vs. timestamp and timestamptz */
+DATA(insert OID = 2338 (  date_lt_timestamp		   PGNSP PGUID 12 f f t f i 2 16 "1082 1114" _null_	date_lt_timestamp - _null_ ));
+DESCR("less-than");
+DATA(insert OID = 2339 (  date_le_timestamp		   PGNSP PGUID 12 f f t f i 2 16 "1082 1114" _null_	date_le_timestamp - _null_ ));
+DESCR("less-than-or-equal");
+DATA(insert OID = 2340 (  date_eq_timestamp		   PGNSP PGUID 12 f f t f i 2 16 "1082 1114" _null_	date_eq_timestamp - _null_ ));
+DESCR("equal");
+DATA(insert OID = 2341 (  date_gt_timestamp		   PGNSP PGUID 12 f f t f i 2 16 "1082 1114" _null_	date_gt_timestamp - _null_ ));
+DESCR("greater-than");
+DATA(insert OID = 2342 (  date_ge_timestamp		   PGNSP PGUID 12 f f t f i 2 16 "1082 1114" _null_	date_ge_timestamp - _null_ ));
+DESCR("greater-than-or-equal");
+DATA(insert OID = 2343 (  date_ne_timestamp		   PGNSP PGUID 12 f f t f i 2 16 "1082 1114" _null_	date_ne_timestamp - _null_ ));
+DESCR("not equal");
+DATA(insert OID = 2344 (  date_cmp_timestamp	   PGNSP PGUID 12 f f t f i 2 23 "1082 1114" _null_	date_cmp_timestamp - _null_ ));
+DESCR("less-equal-greater");
 
+DATA(insert OID = 2351 (  date_lt_timestamptz	   PGNSP PGUID 12 f f t f s 2 16 "1082 1184" _null_	date_lt_timestamptz - _null_ ));
+DESCR("less-than");
+DATA(insert OID = 2352 (  date_le_timestamptz	   PGNSP PGUID 12 f f t f s 2 16 "1082 1184" _null_	date_le_timestamptz - _null_ ));
+DESCR("less-than-or-equal");
+DATA(insert OID = 2353 (  date_eq_timestamptz	   PGNSP PGUID 12 f f t f s 2 16 "1082 1184" _null_	date_eq_timestamptz - _null_ ));
+DESCR("equal");
+DATA(insert OID = 2354 (  date_gt_timestamptz	   PGNSP PGUID 12 f f t f s 2 16 "1082 1184" _null_	date_gt_timestamptz - _null_ ));
+DESCR("greater-than");
+DATA(insert OID = 2355 (  date_ge_timestamptz	   PGNSP PGUID 12 f f t f s 2 16 "1082 1184" _null_	date_ge_timestamptz - _null_ ));
+DESCR("greater-than-or-equal");
+DATA(insert OID = 2356 (  date_ne_timestamptz	   PGNSP PGUID 12 f f t f s 2 16 "1082 1184" _null_	date_ne_timestamptz - _null_ ));
+DESCR("not equal");
+DATA(insert OID = 2357 (  date_cmp_timestamptz	   PGNSP PGUID 12 f f t f s 2 23 "1082 1184" _null_	date_cmp_timestamptz - _null_ ));
+DESCR("less-equal-greater");
+
+DATA(insert OID = 2364 (  timestamp_lt_date		   PGNSP PGUID 12 f f t f i 2 16 "1114 1082" _null_	timestamp_lt_date - _null_ ));
+DESCR("less-than");
+DATA(insert OID = 2365 (  timestamp_le_date		   PGNSP PGUID 12 f f t f i 2 16 "1114 1082" _null_	timestamp_le_date - _null_ ));
+DESCR("less-than-or-equal");
+DATA(insert OID = 2366 (  timestamp_eq_date		   PGNSP PGUID 12 f f t f i 2 16 "1114 1082" _null_	timestamp_eq_date - _null_ ));
+DESCR("equal");
+DATA(insert OID = 2367 (  timestamp_gt_date		   PGNSP PGUID 12 f f t f i 2 16 "1114 1082" _null_	timestamp_gt_date - _null_ ));
+DESCR("greater-than");
+DATA(insert OID = 2368 (  timestamp_ge_date		   PGNSP PGUID 12 f f t f i 2 16 "1114 1082" _null_	timestamp_ge_date - _null_ ));
+DESCR("greater-than-or-equal");
+DATA(insert OID = 2369 (  timestamp_ne_date		   PGNSP PGUID 12 f f t f i 2 16 "1114 1082" _null_	timestamp_ne_date - _null_ ));
+DESCR("not equal");
+DATA(insert OID = 2370 (  timestamp_cmp_date	   PGNSP PGUID 12 f f t f i 2 23 "1114 1082" _null_	timestamp_cmp_date - _null_ ));
+DESCR("less-equal-greater");
+
+DATA(insert OID = 2377 (  timestamptz_lt_date	   PGNSP PGUID 12 f f t f s 2 16 "1184 1082" _null_	timestamptz_lt_date - _null_ ));
+DESCR("less-than");
+DATA(insert OID = 2378 (  timestamptz_le_date	   PGNSP PGUID 12 f f t f s 2 16 "1184 1082" _null_	timestamptz_le_date - _null_ ));
+DESCR("less-than-or-equal");
+DATA(insert OID = 2379 (  timestamptz_eq_date	   PGNSP PGUID 12 f f t f s 2 16 "1184 1082" _null_	timestamptz_eq_date - _null_ ));
+DESCR("equal");
+DATA(insert OID = 2380 (  timestamptz_gt_date	   PGNSP PGUID 12 f f t f s 2 16 "1184 1082" _null_	timestamptz_gt_date - _null_ ));
+DESCR("greater-than");
+DATA(insert OID = 2381 (  timestamptz_ge_date	   PGNSP PGUID 12 f f t f s 2 16 "1184 1082" _null_	timestamptz_ge_date - _null_ ));
+DESCR("greater-than-or-equal");
+DATA(insert OID = 2382 (  timestamptz_ne_date	   PGNSP PGUID 12 f f t f s 2 16 "1184 1082" _null_	timestamptz_ne_date - _null_ ));
+DESCR("not equal");
+DATA(insert OID = 2383 (  timestamptz_cmp_date	   PGNSP PGUID 12 f f t f s 2 23 "1184 1082" _null_	timestamptz_cmp_date - _null_ ));
+DESCR("less-equal-greater");
+
+/* send/receive functions */
 DATA(insert OID = 2400 (  array_recv		   PGNSP PGUID 12 f f t f s 2 2277 "2281 26" _null_  array_recv - _null_ ));
 DESCR("I/O");
 DATA(insert OID = 2401 (  array_send		   PGNSP PGUID 12 f f t f s 2 17 "2277 26" _null_	array_send - _null_ ));
