@@ -21,7 +21,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/bin/pg_dump/pg_dump.c,v 1.120 1999/09/23 19:11:09 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/bin/pg_dump/pg_dump.c,v 1.121 1999/10/10 14:42:44 momjian Exp $
  *
  * Modifications - 6/10/96 - dave@bensoft.com - version 1.13.dhb
  *
@@ -3070,14 +3070,16 @@ findLastBuiltinOid(void)
 	if (res == NULL ||
 		PQresultStatus(res) != PGRES_TUPLES_OK)
 	{
-		fprintf(stderr, "pg_dump error in finding the template1 database.  Explanation from backend: '%s'.\n", PQerrorMessage(g_conn));
+		fprintf(stderr,"pg_dump error in finding the template1 database.");
+		fprintf(stderr,"Explanation from backend: '%s'.\n", PQerrorMessage(g_conn));
 		exit_nicely(g_conn);
 	}
 	ntups = PQntuples(res);
 	if (ntups != 1)
 	{
-		fprintf(stderr, "pg_dump: couldn't find the template1 database.  "
-				"You are really hosed.\nGiving up.\n");
+		fprintf(stderr,"pg_dump: couldn't find the template1 database.\n");
+		fprintf(stderr,"Check the table pg_database for a problem.\n");
+		fprintf(stderr,"There should be exactly one 'template1' entry\n");
 		exit_nicely(g_conn);
 	}
 	last_oid = atoi(PQgetvalue(res, 0, PQfnumber(res, "oid")));
