@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/interfaces/libpgtcl/Attic/pgtclCmds.c,v 1.65 2002/09/02 06:11:43 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/interfaces/libpgtcl/Attic/pgtclCmds.c,v 1.66 2002/09/02 21:51:47 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -1876,6 +1876,7 @@ Pg_listen(ClientData cData, Tcl_Interp *interp, int argc, char *argv[])
 		notifies = (Pg_TclNotifies *) ckalloc(sizeof(Pg_TclNotifies));
 		notifies->interp = interp;
 		Tcl_InitHashTable(&notifies->notify_hash, TCL_STRING_KEYS);
+		notifies->conn_loss_cmd = NULL;
 		notifies->next = connid->notify_list;
 		connid->notify_list = notifies;
 		Tcl_CallWhenDeleted(interp, PgNotifyInterpDelete,
@@ -1968,5 +1969,86 @@ Pg_listen(ClientData cData, Tcl_Interp *interp, int argc, char *argv[])
 	}
 
 	ckfree(caserelname);
+	return TCL_OK;
+}
+
+/***********************************
+Pg_on_connection_loss
+	create or remove a callback request for unexpected connection loss
+
+ syntax:
+   pg_on_connection_loss conn ?callbackcommand?
+
+   With a third arg, creates or changes the callback command for
+   connection loss; without, cancels the callback request.
+
+   Callbacks can occur whenever Tcl is executing its event loop.
+   This is the normal idle loop in Tk; in plain tclsh applications,
+   vwait or update can be used to enter the Tcl event loop.
+***********************************/
+int
+Pg_on_connection_loss(ClientData cData, Tcl_Interp *interp, int argc, char *argv[])
+{
+	char	   *callback = NULL;
+	Pg_TclNotifies *notifies;
+	Pg_ConnectionId *connid;
+	PGconn	   *conn;
+
+	if (argc < 2 || argc > 3)
+	{
+		Tcl_AppendResult(interp, "wrong # args, should be \"",
+						 argv[0], " connection ?callback?\"", 0);
+		return TCL_ERROR;
+	}
+
+	/*
+	 * Get the command arguments.
+	 */
+	conn = PgGetConnectionId(interp, argv[1], &connid);
+	if (conn == (PGconn *) NULL)
+		return TCL_ERROR;
+
+	if ((argc > 2) && *argv[2])
+	{
+		callback = (char *) ckalloc((unsigned) (strlen(argv[2]) + 1));
+		strcpy(callback, argv[2]);
+	}
+
+	/* Find or make a Pg_TclNotifies struct for this interp and connection */
+
+	for (notifies = connid->notify_list; notifies; notifies = notifies->next)
+	{
+		if (notifies->interp == interp)
+			break;
+	}
+	if (notifies == NULL)
+	{
+		notifies = (Pg_TclNotifies *) ckalloc(sizeof(Pg_TclNotifies));
+		notifies->interp = interp;
+		Tcl_InitHashTable(&notifies->notify_hash, TCL_STRING_KEYS);
+		notifies->conn_loss_cmd = NULL;
+		notifies->next = connid->notify_list;
+		connid->notify_list = notifies;
+		Tcl_CallWhenDeleted(interp, PgNotifyInterpDelete,
+							(ClientData) notifies);
+	}
+
+	/* Store new callback setting */
+
+	if (notifies->conn_loss_cmd)
+		ckfree((void *) notifies->conn_loss_cmd);
+	notifies->conn_loss_cmd = callback;
+
+	if (callback)
+	{
+		/*
+		 * Start the notify event source if it isn't already running.
+		 * The notify source will cause Tcl to watch read-ready on the
+		 * connection socket, so that we find out quickly if the connection
+		 * drops.
+		 */
+		PgStartNotifyEventSource(connid);
+	}
+
 	return TCL_OK;
 }

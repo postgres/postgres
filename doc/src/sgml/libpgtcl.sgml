@@ -72,6 +72,10 @@
     <ENTRY><function>pg_listen</function></ENTRY>
     <ENTRY>establish a callback for NOTIFY messages</ENTRY>
   </ROW>
+  <ROW>
+    <ENTRY><function>pg_on_connection_loss</function></ENTRY>
+    <ENTRY>establish a callback for unexpected connection loss</ENTRY>
+  </ROW>
 
   <ROW>
     <ENTRY><function>pg_lo_creat</function></ENTRY>
@@ -1245,7 +1249,7 @@ pg_listen <REPLACEABLE CLASS="PARAMETER">dbHandle</REPLACEABLE> <REPLACEABLE CLA
   <REPLACEABLE CLASS="PARAMETER">callbackCommand</REPLACEABLE>
 </TERM>
 <LISTITEM>
-<PARA>If present and not empty, provides the command string to execute
+<PARA>If present, provides the command string to execute
 when a matching notification arrives.
 </PARA>
 </LISTITEM>
@@ -1306,6 +1310,105 @@ using <FUNCTION>pg_listen</FUNCTION>.  <application>Pgtcl</application> takes ca
 statements for you.  But if you want to send a NOTIFY message yourself,
 invoke the SQL NOTIFY statement using <FUNCTION>pg_exec</FUNCTION>.
 </PARA>
+</REFSECT1>
+
+</REFENTRY>
+
+<!-- ********************************************************** -->
+
+<REFENTRY ID="PGTCL-PGON_CONNECTION_LOSS">
+<REFMETA>
+<REFENTRYTITLE>pg_on_connection_loss</REFENTRYTITLE>
+<REFMISCINFO>PGTCL - Asynchronous Notify</REFMISCINFO>
+</REFMETA>
+<REFNAMEDIV>
+<REFNAME>pg_on_connection_loss
+</REFNAME>
+<REFPURPOSE>set or change a callback for unexpected connection loss
+</REFPURPOSE>
+<INDEXTERM
+ID="IX-PGTCL-PGON_CONNECTION_LOSS-1"><PRIMARY>pgtcl</PRIMARY><SECONDARY>connection loss</SECONDARY></INDEXTERM>
+<INDEXTERM ID="IX-PGTCL-PGON_CONNECTION_LOSS-2"><PRIMARY>connection loss</PRIMARY></INDEXTERM>
+</REFNAMEDIV>
+<REFSYNOPSISDIV>
+<REFSYNOPSISDIVINFO>
+<DATE>2002-09-02</DATE>
+</REFSYNOPSISDIVINFO>
+<SYNOPSIS>
+pg_on_connection_loss <REPLACEABLE CLASS="PARAMETER">dbHandle</REPLACEABLE> <REPLACEABLE CLASS="PARAMETER">callbackCommand</REPLACEABLE>
+</SYNOPSIS>
+
+<REFSECT2 ID="R2-PGTCL-PGON_CONNECTION_LOSS-1">
+<REFSECT2INFO>
+<DATE>2002-09-02</DATE>
+</REFSECT2INFO>
+<TITLE>Inputs
+</TITLE>
+<VARIABLELIST>
+<VARLISTENTRY>
+<TERM>
+  <REPLACEABLE CLASS="PARAMETER">dbHandle</REPLACEABLE>
+</TERM>
+<LISTITEM>
+<PARA>Specifies a valid database handle.
+</PARA>
+</LISTITEM>
+</VARLISTENTRY>
+<VARLISTENTRY>
+<TERM>
+  <REPLACEABLE CLASS="PARAMETER">callbackCommand</REPLACEABLE>
+</TERM>
+<LISTITEM>
+<PARA>If present, provides the command string to execute
+when connection loss is detected.
+</PARA>
+</LISTITEM>
+</VARLISTENTRY>
+</VARIABLELIST>
+</REFSECT2>
+
+<REFSECT2 ID="R2-PGTCL-PGON_CONNECTION_LOSS-2">
+<REFSECT2INFO>
+<DATE>2002-09-02</DATE>
+</REFSECT2INFO>
+<TITLE>Outputs
+</TITLE>
+<VARIABLELIST>
+<VARLISTENTRY>
+<TERM>
+  None
+</TERM>
+<LISTITEM>
+<PARA>
+</PARA>
+</LISTITEM>
+</VARLISTENTRY>
+</VARIABLELIST>
+</REFSECT2>
+</REFSYNOPSISDIV>
+
+<REFSECT1 ID="R1-PGTCL-PGON_CONNECTION_LOSS-1">
+<REFSECT1INFO>
+<DATE>2002-09-02</DATE>
+</REFSECT1INFO>
+<TITLE>Description
+</TITLE>
+<PARA><FUNCTION>pg_on_connection_loss</FUNCTION> creates, changes, or cancels
+a request to execute a callback command if an unexpected loss of connection
+to the database occurs.
+With a <parameter>callbackCommand</>
+parameter, the request is established, or the command string of an already
+existing request is replaced.  With no <parameter>callbackCommand</>
+parameter, a prior request is canceled.
+</PARA>
+
+<para>
+The callback command string is executed from the Tcl idle loop.  That is the
+normal idle state of an application written with Tk.  In non-Tk Tcl shells,
+you can
+execute <FUNCTION>update</FUNCTION> or <FUNCTION>vwait</FUNCTION> to cause
+the idle loop to be entered.
+</Para>
 </REFSECT1>
 
 </REFENTRY>

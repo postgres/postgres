@@ -13,7 +13,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/interfaces/libpgtcl/Attic/pgtclId.c,v 1.32 2002/08/18 01:39:43 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/interfaces/libpgtcl/Attic/pgtclId.c,v 1.33 2002/09/02 21:51:47 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -268,6 +268,8 @@ PgDelConnectionId(DRIVER_DEL_PROTO)
 			 entry = Tcl_NextHashEntry(&hsearch))
 			ckfree((char *) Tcl_GetHashValue(entry));
 		Tcl_DeleteHashTable(&notifies->notify_hash);
+		if (notifies->conn_loss_cmd)
+			ckfree((void *) notifies->conn_loss_cmd);
 		Tcl_DontCallWhenDeleted(notifies->interp, PgNotifyInterpDelete,
 								(ClientData) notifies);
 		ckfree((void *) notifies);
@@ -275,9 +277,9 @@ PgDelConnectionId(DRIVER_DEL_PROTO)
 
 	/*
 	 * Turn off the Tcl event source for this connection, and delete any
-	 * pending notify events.
+	 * pending notify and connection-loss events.
 	 */
-	PgStopNotifyEventSource(connid);
+	PgStopNotifyEventSource(connid, true);
 
 	/* Close the libpq connection too */
 	PQfinish(connid->conn);
@@ -495,7 +497,8 @@ error_out:
 typedef struct
 {
 	Tcl_Event	header;			/* Standard Tcl event info */
-	PGnotify	info;			/* Notify name from SQL server */
+	PGnotify   *notify;			/* Notify event from libpq, or NULL */
+	/* We use a NULL notify pointer to denote a connection-loss event */
 	Pg_ConnectionId *connid;	/* Connection for server */
 }	NotifyEvent;
 
@@ -506,7 +509,6 @@ Pg_Notify_EventProc(Tcl_Event *evPtr, int flags)
 {
 	NotifyEvent *event = (NotifyEvent *) evPtr;
 	Pg_TclNotifies *notifies;
-	Tcl_HashEntry *entry;
 	char	   *callback;
 	char	   *svcallback;
 
@@ -516,7 +518,11 @@ Pg_Notify_EventProc(Tcl_Event *evPtr, int flags)
 
 	/* If connection's been closed, just forget the whole thing. */
 	if (event->connid == NULL)
+	{
+		if (event->notify)
+			PQfreeNotify(event->notify);
 		return 1;
+	}
 
 	/*
 	 * Preserve/Release to ensure the connection struct doesn't disappear
@@ -541,17 +547,29 @@ Pg_Notify_EventProc(Tcl_Event *evPtr, int flags)
 		/*
 		 * Find the callback to be executed for this interpreter, if any.
 		 */
-		entry = Tcl_FindHashEntry(&notifies->notify_hash,
-								  event->info.relname);
-		if (entry == NULL)
-			continue;			/* no pg_listen in this interpreter */
-		callback = (char *) Tcl_GetHashValue(entry);
+		if (event->notify)
+		{
+			/* Ordinary NOTIFY event */
+			Tcl_HashEntry *entry;
+
+			entry = Tcl_FindHashEntry(&notifies->notify_hash,
+									  event->notify->relname);
+			if (entry == NULL)
+				continue;		/* no pg_listen in this interpreter */
+			callback = (char *) Tcl_GetHashValue(entry);
+		}
+		else
+		{
+			/* Connection-loss event */
+			callback = notifies->conn_loss_cmd;
+		}
+
 		if (callback == NULL)
-			continue;			/* safety check -- shouldn't happen */
+			continue;			/* nothing to do for this interpreter */
 
 		/*
 		 * We have to copy the callback string in case the user executes a
-		 * new pg_listen during the callback.
+		 * new pg_listen or pg_on_connection_loss during the callback.
 		 */
 		svcallback = (char *) ckalloc((unsigned) (strlen(callback) + 1));
 		strcpy(svcallback, callback);
@@ -562,7 +580,10 @@ Pg_Notify_EventProc(Tcl_Event *evPtr, int flags)
 		Tcl_Preserve((ClientData) interp);
 		if (Tcl_GlobalEval(interp, svcallback) != TCL_OK)
 		{
-			Tcl_AddErrorInfo(interp, "\n    (\"pg_listen\" script)");
+			if (event->notify)
+				Tcl_AddErrorInfo(interp, "\n    (\"pg_listen\" script)");
+			else
+				Tcl_AddErrorInfo(interp, "\n    (\"pg_on_connection_loss\" script)");
 			Tcl_BackgroundError(interp);
 		}
 		Tcl_Release((ClientData) interp);
@@ -577,6 +598,9 @@ Pg_Notify_EventProc(Tcl_Event *evPtr, int flags)
 	}
 
 	Tcl_Release((ClientData) event->connid);
+
+	if (event->notify)
+		PQfreeNotify(event->notify);
 
 	return 1;
 }
@@ -598,20 +622,45 @@ PgNotifyTransferEvents(Pg_ConnectionId * connid)
 		NotifyEvent *event = (NotifyEvent *) ckalloc(sizeof(NotifyEvent));
 
 		event->header.proc = Pg_Notify_EventProc;
-		event->info = *notify;
+		event->notify = notify;
 		event->connid = connid;
 		Tcl_QueueEvent((Tcl_Event *) event, TCL_QUEUE_TAIL);
-		PQfreeNotify(notify);
 	}
 
 	/*
 	 * This is also a good place to check for unexpected closure of the
 	 * connection (ie, backend crash), in which case we must shut down the
 	 * notify event source to keep Tcl from trying to select() on the now-
-	 * closed socket descriptor.
+	 * closed socket descriptor.  But don't kill on-connection-loss events;
+	 * in fact, register one.
 	 */
 	if (PQsocket(connid->conn) < 0)
-		PgStopNotifyEventSource(connid);
+		PgConnLossTransferEvents(connid);
+}
+
+/*
+ * Handle a connection-loss event
+ */
+void
+PgConnLossTransferEvents(Pg_ConnectionId * connid)
+{
+	if (connid->notifier_running)
+	{
+		/* Put the on-connection-loss event in the Tcl queue */
+		NotifyEvent *event = (NotifyEvent *) ckalloc(sizeof(NotifyEvent));
+
+		event->header.proc = Pg_Notify_EventProc;
+		event->notify = NULL;
+		event->connid = connid;
+		Tcl_QueueEvent((Tcl_Event *) event, TCL_QUEUE_TAIL);
+	}
+
+	/*
+	 * Shut down the notify event source to keep Tcl from trying to select()
+	 * on the now-closed socket descriptor.  And zap any unprocessed notify
+	 * events ... but not, of course, the connection-loss event.
+	 */
+	PgStopNotifyEventSource(connid, false);
 }
 
 /*
@@ -633,7 +682,7 @@ PgNotifyInterpDelete(ClientData clientData, Tcl_Interp *interp)
 }
 
 /*
- * Comparison routine for detecting events to be removed by Tcl_DeleteEvents.
+ * Comparison routines for detecting events to be removed by Tcl_DeleteEvents.
  * NB: In (at least) Tcl versions 7.6 through 8.0.3, there is a serious
  * bug in Tcl_DeleteEvents: if there are multiple events on the queue and
  * you tell it to delete the last one, the event list pointers get corrupted,
@@ -646,6 +695,22 @@ PgNotifyInterpDelete(ClientData clientData, Tcl_Interp *interp)
  */
 static int
 NotifyEventDeleteProc(Tcl_Event *evPtr, ClientData clientData)
+{
+	Pg_ConnectionId *connid = (Pg_ConnectionId *) clientData;
+
+	if (evPtr->proc == Pg_Notify_EventProc)
+	{
+		NotifyEvent *event = (NotifyEvent *) evPtr;
+
+		if (event->connid == connid && event->notify != NULL)
+			event->connid = NULL;
+	}
+	return 0;
+}
+
+/* This version deletes on-connection-loss events too */
+static int
+AllNotifyEventDeleteProc(Tcl_Event *evPtr, ClientData clientData)
 {
 	Pg_ConnectionId *connid = (Pg_ConnectionId *) clientData;
 
@@ -675,10 +740,19 @@ Pg_Notify_FileHandler(ClientData clientData, int mask)
 	 * it internally to libpq; but it will clear the read-ready
 	 * condition).
 	 */
-	PQconsumeInput(connid->conn);
-
-	/* Transfer notify events from libpq to Tcl event queue. */
-	PgNotifyTransferEvents(connid);
+	if (PQconsumeInput(connid->conn))
+	{
+		/* Transfer notify events from libpq to Tcl event queue. */
+		PgNotifyTransferEvents(connid);
+	}
+	else
+	{
+		/*
+		 * If there is no input but we have read-ready,
+		 * assume this means we lost the connection.
+		 */
+		PgConnLossTransferEvents(connid);
+	}
 }
 
 
@@ -686,8 +760,8 @@ Pg_Notify_FileHandler(ClientData clientData, int mask)
  * Start and stop the notify event source for a connection.
  *
  * We do not bother to run the notifier unless at least one pg_listen
- * has been executed on the connection.  Currently, once started the
- * notifier is run until the connection is closed.
+ * or pg_on_connection_loss has been executed on the connection.  Currently,
+ * once started the notifier is run until the connection is closed.
  *
  * FIXME: if PQreset is executed on the underlying PGconn, the active
  * socket number could change.	How and when should we test for this
@@ -724,7 +798,7 @@ PgStartNotifyEventSource(Pg_ConnectionId * connid)
 }
 
 void
-PgStopNotifyEventSource(Pg_ConnectionId * connid)
+PgStopNotifyEventSource(Pg_ConnectionId * connid, bool allevents)
 {
 	/* Remove the event source */
 	if (connid->notifier_running)
@@ -742,6 +816,9 @@ PgStopNotifyEventSource(Pg_ConnectionId * connid)
 		connid->notifier_running = 0;
 	}
 
-	/* Kill any queued Tcl events that reference this channel */
-	Tcl_DeleteEvents(NotifyEventDeleteProc, (ClientData) connid);
+	/* Kill queued Tcl events that reference this channel */
+	if (allevents)
+		Tcl_DeleteEvents(AllNotifyEventDeleteProc, (ClientData) connid);
+	else
+		Tcl_DeleteEvents(NotifyEventDeleteProc, (ClientData) connid);
 }

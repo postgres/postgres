@@ -6,7 +6,7 @@
  * Portions Copyright (c) 1996-2002, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Id: pgtclCmds.h,v 1.26 2002/06/20 20:29:53 momjian Exp $
+ * $Id: pgtclCmds.h,v 1.27 2002/09/02 21:51:47 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -21,7 +21,7 @@
 #define RES_START 16
 
 /*
- * From Tcl verion 8.0 on we can make large object access binary.
+ * From Tcl version 8.0 on we can make large object access binary.
  */
 #ifdef TCL_MAJOR_VERSION
 #if (TCL_MAJOR_VERSION >= 8)
@@ -36,6 +36,9 @@
  * deleted while the connection remains open.  A free side benefit is that
  * multiple interpreters can be registered to listen for the same notify
  * name.  (All their callbacks will be called, but in an unspecified order.)
+ *
+ * We use the same approach for pg_on_connection_loss callbacks, but they
+ * are not kept in a hashtable since there's no name associated.
  */
 
 typedef struct Pg_TclNotifies_s
@@ -48,6 +51,8 @@ typedef struct Pg_TclNotifies_s
 	 * got round to deleting the Pg_TclNotifies structure.
 	 */
 	Tcl_HashTable notify_hash;	/* Active pg_listen requests */
+
+	char	   *conn_loss_cmd;	/* pg_on_connection_loss cmd, or NULL */
 }	Pg_TclNotifies;
 
 typedef struct Pg_ConnectionId_s
@@ -128,5 +133,7 @@ extern int Pg_lo_export(
 		   ClientData cData, Tcl_Interp *interp, int argc, char *argv[]);
 extern int Pg_listen(
 		  ClientData cData, Tcl_Interp *interp, int argc, char *argv[]);
+extern int Pg_on_connection_loss(
+			ClientData cData, Tcl_Interp *interp, int argc, char *argv[]);
 
 #endif   /* PGTCLCMDS_H */
