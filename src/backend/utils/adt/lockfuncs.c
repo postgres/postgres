@@ -6,7 +6,7 @@
  * Copyright (c) 2002-2003, PostgreSQL Global Development Group
  *
  * IDENTIFICATION
- *		$PostgreSQL: pgsql/src/backend/utils/adt/lockfuncs.c,v 1.12 2003/11/29 19:51:58 pgsql Exp $
+ *		$PostgreSQL: pgsql/src/backend/utils/adt/lockfuncs.c,v 1.13 2004/04/01 21:28:45 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -52,22 +52,22 @@ pg_lock_status(PG_FUNCTION_ARGS)
 		oldcontext = MemoryContextSwitchTo(funcctx->multi_call_memory_ctx);
 
 		/* build tupdesc for result tuples */
-		/* this had better match pg_locks view in initdb.sh */
+		/* this had better match pg_locks view in system_views.sql */
 		tupdesc = CreateTemplateTupleDesc(6, false);
 		TupleDescInitEntry(tupdesc, (AttrNumber) 1, "relation",
-						   OIDOID, -1, 0, false);
+						   OIDOID, -1, 0);
 		TupleDescInitEntry(tupdesc, (AttrNumber) 2, "database",
-						   OIDOID, -1, 0, false);
+						   OIDOID, -1, 0);
 		TupleDescInitEntry(tupdesc, (AttrNumber) 3, "transaction",
-						   XIDOID, -1, 0, false);
+						   XIDOID, -1, 0);
 		TupleDescInitEntry(tupdesc, (AttrNumber) 4, "pid",
-						   INT4OID, -1, 0, false);
+						   INT4OID, -1, 0);
 		TupleDescInitEntry(tupdesc, (AttrNumber) 5, "mode",
-						   TEXTOID, -1, 0, false);
+						   TEXTOID, -1, 0);
 		TupleDescInitEntry(tupdesc, (AttrNumber) 6, "granted",
-						   BOOLOID, -1, 0, false);
+						   BOOLOID, -1, 0);
 
-		funcctx->slot = TupleDescGetSlot(tupdesc);
+		funcctx->tuple_desc = BlessTupleDesc(tupdesc);
 
 		/*
 		 * Collect all the locking information that we will format and
@@ -173,9 +173,8 @@ pg_lock_status(PG_FUNCTION_ARGS)
 								 CStringGetDatum(GetLockmodeName(mode)));
 		values[5] = BoolGetDatum(granted);
 
-		tuple = heap_formtuple(funcctx->slot->ttc_tupleDescriptor,
-							   values, nulls);
-		result = TupleGetDatum(funcctx->slot, tuple);
+		tuple = heap_formtuple(funcctx->tuple_desc, values, nulls);
+		result = HeapTupleGetDatum(tuple);
 		SRF_RETURN_NEXT(funcctx, result);
 	}
 

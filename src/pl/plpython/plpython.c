@@ -29,26 +29,19 @@
  * MAINTENANCE, SUPPORT, UPDATES, ENHANCEMENTS, OR MODIFICATIONS.
  *
  * IDENTIFICATION
- *	$PostgreSQL: pgsql/src/pl/plpython/plpython.c,v 1.45 2004/01/07 18:56:30 neilc Exp $
+ *	$PostgreSQL: pgsql/src/pl/plpython/plpython.c,v 1.46 2004/04/01 21:28:46 tgl Exp $
  *
  *********************************************************************
  */
 
 #include "postgres.h"
 
-/* system stuff
- */
-#include <dlfcn.h>
-#include <stdio.h>
-#include <stdlib.h>
-#include <stdarg.h>
+/* system stuff */
 #include <unistd.h>
 #include <fcntl.h>
-#include <string.h>
 #include <setjmp.h>
 
-/* postgreSQL stuff
- */
+/* postgreSQL stuff */
 #include "access/heapam.h"
 #include "catalog/pg_proc.h"
 #include "catalog/pg_type.h"
@@ -59,6 +52,7 @@
 #include "parser/parse_type.h"
 #include "tcop/tcopprot.h"
 #include "utils/syscache.h"
+#include "utils/typcache.h"
 
 #include <Python.h>
 #include <compile.h>
@@ -121,7 +115,14 @@ typedef struct PLyTypeInfo
 {
 	PLyTypeInput in;
 	PLyTypeOutput out;
-	int			is_rel;
+	int			is_rowtype;
+	/*
+	 * is_rowtype can be:
+	 *		-1	not known yet (initial state)
+	 *		 0	scalar datatype
+	 *		 1	rowtype
+	 *		 2	rowtype, but I/O functions not set up yet
+	 */
 }	PLyTypeInfo;
 
 
@@ -916,16 +917,40 @@ PLy_function_build_args(FunctionCallInfo fcinfo, PLyProcedure * proc)
 	args = PyList_New(proc->nargs);
 	for (i = 0; i < proc->nargs; i++)
 	{
-		if (proc->args[i].is_rel == 1)
+		if (proc->args[i].is_rowtype > 0)
 		{
-			TupleTableSlot *slot = (TupleTableSlot *) fcinfo->arg[i];
+			if (fcinfo->argnull[i])
+				arg = NULL;
+			else
+			{
+				HeapTupleHeader td;
+				Oid			tupType;
+				int32		tupTypmod;
+				TupleDesc	tupdesc;
+				HeapTupleData tmptup;
 
-			arg = PLyDict_FromTuple(&(proc->args[i]), slot->val,
-									slot->ttc_tupleDescriptor);
+				td = DatumGetHeapTupleHeader(fcinfo->arg[i]);
+				/* Extract rowtype info and find a tupdesc */
+				tupType = HeapTupleHeaderGetTypeId(td);
+				tupTypmod = HeapTupleHeaderGetTypMod(td);
+				tupdesc = lookup_rowtype_tupdesc(tupType, tupTypmod);
+
+				/* Set up I/O funcs if not done yet */
+				if (proc->args[i].is_rowtype != 1)
+					PLy_input_tuple_funcs(&(proc->args[i]), tupdesc);
+
+				/* Build a temporary HeapTuple control structure */
+				tmptup.t_len = HeapTupleHeaderGetDatumLength(td);
+				tmptup.t_data = td;
+
+				arg = PLyDict_FromTuple(&(proc->args[i]), &tmptup, tupdesc);
+			}
 		}
 		else
 		{
-			if (!fcinfo->argnull[i])
+			if (fcinfo->argnull[i])
+				arg = NULL;
+			else
 			{
 				char	   *ct;
 				Datum		dt;
@@ -938,8 +963,6 @@ PLy_function_build_args(FunctionCallInfo fcinfo, PLyProcedure * proc)
 				arg = (proc->args[i].in.d.func) (ct);
 				pfree(ct);
 			}
-			else
-				arg = NULL;
 		}
 
 		if (arg == NULL)
@@ -1096,7 +1119,7 @@ PLy_procedure_create(FunctionCallInfo fcinfo, Oid tgreloid,
 				 procStruct->prorettype);
 
 		rvTypeStruct = (Form_pg_type) GETSTRUCT(rvTypeTup);
-		if (rvTypeStruct->typrelid == InvalidOid)
+		if (rvTypeStruct->typtype != 'c')
 			PLy_output_datum_func(&proc->result, rvTypeStruct);
 		else
 			ereport(ERROR,
@@ -1135,17 +1158,12 @@ PLy_procedure_create(FunctionCallInfo fcinfo, Oid tgreloid,
 				 procStruct->proargtypes[i]);
 		argTypeStruct = (Form_pg_type) GETSTRUCT(argTypeTup);
 
-		if (argTypeStruct->typrelid == InvalidOid)
+		if (argTypeStruct->typtype != 'c')
 			PLy_input_datum_func(&(proc->args[i]),
 								 procStruct->proargtypes[i],
 								 argTypeStruct);
 		else
-		{
-			TupleTableSlot *slot = (TupleTableSlot *) fcinfo->arg[i];
-
-			PLy_input_tuple_funcs(&(proc->args[i]),
-								  slot->ttc_tupleDescriptor);
-		}
+			proc->args[i].is_rowtype = 2; /* still need to set I/O funcs */
 
 		ReleaseSysCache(argTypeTup);
 	}
@@ -1279,7 +1297,7 @@ PLy_procedure_delete(PLyProcedure * proc)
 	if (proc->pyname)
 		PLy_free(proc->pyname);
 	for (i = 0; i < proc->nargs; i++)
-		if (proc->args[i].is_rel == 1)
+		if (proc->args[i].is_rowtype == 1)
 		{
 			if (proc->args[i].in.r.atts)
 				PLy_free(proc->args[i].in.r.atts);
@@ -1300,10 +1318,10 @@ PLy_input_tuple_funcs(PLyTypeInfo * arg, TupleDesc desc)
 
 	enter();
 
-	if (arg->is_rel == 0)
+	if (arg->is_rowtype == 0)
 		elog(ERROR, "PLyTypeInfo struct is initialized for a Datum");
 
-	arg->is_rel = 1;
+	arg->is_rowtype = 1;
 	arg->in.r.natts = desc->natts;
 	arg->in.r.atts = malloc(desc->natts * sizeof(PLyDatumToOb));
 
@@ -1338,10 +1356,10 @@ PLy_output_tuple_funcs(PLyTypeInfo * arg, TupleDesc desc)
 
 	enter();
 
-	if (arg->is_rel == 0)
+	if (arg->is_rowtype == 0)
 		elog(ERROR, "PLyTypeInfo struct is initialized for a Datum");
 
-	arg->is_rel = 1;
+	arg->is_rowtype = 1;
 	arg->out.r.natts = desc->natts;
 	arg->out.r.atts = malloc(desc->natts * sizeof(PLyDatumToOb));
 
@@ -1372,9 +1390,9 @@ PLy_output_datum_func(PLyTypeInfo * arg, Form_pg_type typeStruct)
 {
 	enter();
 
-	if (arg->is_rel == 1)
+	if (arg->is_rowtype > 0)
 		elog(ERROR, "PLyTypeInfo struct is initialized for a Tuple");
-	arg->is_rel = 0;
+	arg->is_rowtype = 0;
 	PLy_output_datum_func2(&(arg->out.d), typeStruct);
 }
 
@@ -1393,9 +1411,9 @@ PLy_input_datum_func(PLyTypeInfo * arg, Oid typeOid, Form_pg_type typeStruct)
 {
 	enter();
 
-	if (arg->is_rel == 1)
+	if (arg->is_rowtype > 0)
 		elog(ERROR, "PLyTypeInfo struct is initialized for Tuple");
-	arg->is_rel = 0;
+	arg->is_rowtype = 0;
 	PLy_input_datum_func2(&(arg->in.d), typeOid, typeStruct);
 }
 
@@ -1434,7 +1452,7 @@ PLy_input_datum_func2(PLyDatumToOb * arg, Oid typeOid, Form_pg_type typeStruct)
 void
 PLy_typeinfo_init(PLyTypeInfo * arg)
 {
-	arg->is_rel = -1;
+	arg->is_rowtype = -1;
 	arg->in.r.natts = arg->out.r.natts = 0;
 	arg->in.r.atts = NULL;
 	arg->out.r.atts = NULL;
@@ -1443,7 +1461,7 @@ PLy_typeinfo_init(PLyTypeInfo * arg)
 void
 PLy_typeinfo_dealloc(PLyTypeInfo * arg)
 {
-	if (arg->is_rel == 1)
+	if (arg->is_rowtype == 1)
 	{
 		if (arg->in.r.atts)
 			PLy_free(arg->in.r.atts);
@@ -1515,7 +1533,7 @@ PLyDict_FromTuple(PLyTypeInfo * info, HeapTuple tuple, TupleDesc desc)
 
 	enter();
 
-	if (info->is_rel != 1)
+	if (info->is_rowtype != 1)
 		elog(ERROR, "PLyTypeInfo structure describes a datum");
 
 	dict = PyDict_New();
@@ -2009,7 +2027,7 @@ PLy_spi_prepare(PyObject * self, PyObject * args)
 
 				plan->types[i] = HeapTupleGetOid(typeTup);
 				typeStruct = (Form_pg_type) GETSTRUCT(typeTup);
-				if (typeStruct->typrelid == InvalidOid)
+				if (typeStruct->typtype != 'c')
 					PLy_output_datum_func(&plan->args[i], typeStruct);
 				else
 				{

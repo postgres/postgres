@@ -1,5 +1,5 @@
 <!--
-$PostgreSQL: pgsql/doc/src/sgml/xfunc.sgml,v 1.80 2004/03/09 16:57:47 neilc Exp $
+$PostgreSQL: pgsql/doc/src/sgml/xfunc.sgml,v 1.81 2004/04/01 21:28:43 tgl Exp $
 -->
 
  <sect1 id="xfunc">
@@ -1623,7 +1623,7 @@ SELECT name, c_overpaid(emp, 1500) AS overpaid
 #include "executor/executor.h"  /* for GetAttributeByName() */
 
 bool
-c_overpaid(TupleTableSlot *t, /* the current row of emp */
+c_overpaid(HeapTupleHeader t, /* the current row of emp */
            int32 limit)
 {
     bool isnull;
@@ -1647,7 +1647,7 @@ PG_FUNCTION_INFO_V1(c_overpaid);
 Datum
 c_overpaid(PG_FUNCTION_ARGS)
 {
-    TupleTableSlot  *t = (TupleTableSlot *) PG_GETARG_POINTER(0);
+    HeapTupleHeader  t = PG_GETARG_HEAPTUPLEHEADER(0);
     int32            limit = PG_GETARG_INT32(1);
     bool isnull;
     int32 salary;
@@ -1666,12 +1666,18 @@ c_overpaid(PG_FUNCTION_ARGS)
      <function>GetAttributeByName</function> is the 
      <productname>PostgreSQL</productname> system function that
      returns attributes out of the specified row.  It has
-     three arguments: the argument of type <type>TupleTableSlot*</type> passed into
+     three arguments: the argument of type <type>HeapTupleHeader</type> passed
+     into 
      the  function, the name of the desired attribute, and a
      return parameter that tells whether  the  attribute
      is  null.   <function>GetAttributeByName</function> returns a <type>Datum</type>
      value that you can convert to the proper data type by using the
      appropriate <function>DatumGet<replaceable>XXX</replaceable>()</function> macro.
+    </para>
+
+    <para>
+     There is also <function>GetAttributeByNum</function>, which selects
+     the target attribute by column number instead of name.
     </para>
 
     <para>
@@ -1681,8 +1687,11 @@ c_overpaid(PG_FUNCTION_ARGS)
 <programlisting>
 CREATE FUNCTION c_overpaid(emp, integer) RETURNS boolean
     AS '<replaceable>DIRECTORY</replaceable>/funcs', 'c_overpaid'
-    LANGUAGE C;
+    LANGUAGE C STRICT;
 </programlisting>
+
+     Notice we have used <literal>STRICT</> so that we did not have to
+     check whether the input arguments were NULL.
     </para>
    </sect2>
 
@@ -1700,38 +1709,25 @@ CREATE FUNCTION c_overpaid(emp, integer) RETURNS boolean
     </para>
 
     <para>
-     The support for returning composite data types (or rows) starts
-     with the <structname>AttInMetadata</> structure. This structure
-     holds arrays of individual attribute information needed to create
-     a row from raw C strings. The information contained in the
-     structure is derived from a <structname>TupleDesc</> structure,
-     but it is stored to avoid redundant computations on each call to
-     a set-returning function (see next section).  In the case of a
-     function returning a set, the <structname>AttInMetadata</>
-     structure should be computed once during the first call and saved
-     for reuse in later calls.  <structname>AttInMetadata</> also
-     saves a pointer to the original <structname>TupleDesc</>.
-<programlisting>
-typedef struct AttInMetadata
-{
-    /* full TupleDesc */
-    TupleDesc       tupdesc;
-
-    /* array of attribute type input function finfo */
-    FmgrInfo       *attinfuncs;
-
-    /* array of attribute type typelem */
-    Oid            *attelems;
-
-    /* array of attribute typmod */
-    int32    	   *atttypmods;
-}	AttInMetadata;
-</programlisting>
+     There are two ways you can build a composite data value (henceforth
+     a <quote>tuple</>): you can build it from an array of Datum values,
+     or from an array of C strings that can be passed to the input
+     conversion functions of the tuple's column datatypes.  In either
+     case, you first need to obtain or construct a <structname>TupleDesc</>
+     descriptor for the tuple structure.  When working with Datums, you
+     pass the <structname>TupleDesc</> to <function>BlessTupleDesc</>,
+     and then call <function>heap_formtuple</> for each row.  When working
+     with C strings, you pass the <structname>TupleDesc</> to
+     <function>TupleDescGetAttInMetadata</>, and then call
+     <function>BuildTupleFromCStrings</> for each row.  In the case of a
+     function returning a set of tuples, the setup steps can all be done
+     once during the first call of the function.
     </para>
 
     <para>
-     To assist you in populating this structure, several functions and a macro
-     are available. Use
+     Several helper functions are available for setting up the initial
+     <structname>TupleDesc</>.  If you want to use a named composite type,
+     you can fetch the information from the system catalogs.  Use
 <programlisting>
 TupleDesc RelationNameGetTupleDesc(const char *relname)
 </programlisting>
@@ -1741,36 +1737,43 @@ TupleDesc TypeGetTupleDesc(Oid typeoid, List *colaliases)
 </programlisting>
      to get a <structname>TupleDesc</> based on a type OID. This can
      be used to get a <structname>TupleDesc</> for a base or
-     composite type. Then
+     composite type.  When writing a function that returns
+     <structname>record</>, the expected <structname>TupleDesc</> 
+     must be passed in by the caller.
+    </para>
+
+    <para>
+     Once you have a <structname>TupleDesc</>, call
+<programlisting>
+TupleDesc BlessTupleDesc(TupleDesc tupdesc)
+</programlisting>
+     if you plan to work with Datums, or
 <programlisting>
 AttInMetadata *TupleDescGetAttInMetadata(TupleDesc tupdesc)
 </programlisting>
-     will return a pointer to an <structname>AttInMetadata</>,
-     initialized based on the given
-     <structname>TupleDesc</>. <structname>AttInMetadata</> can be
-     used in conjunction with C strings to produce a properly formed
-     row value (internally called tuple).
+     if you plan to work with C strings.  If you are writing a function
+     returning set, you can save the results of these functions in the
+     <structname>FuncCallContext</> structure --- use the
+     <structfield>tuple_desc</> or <structfield>attinmeta</> field
+     respectively.
     </para>
 
     <para>
-     To return a tuple you must create a tuple slot based on the
-     <structname>TupleDesc</>. You can use
+     When working with Datums, use
 <programlisting>
-TupleTableSlot *TupleDescGetSlot(TupleDesc tupdesc)
+HeapTuple heap_formtuple(TupleDesc tupdesc, Datum *values, char *nulls)
 </programlisting>
-     to initialize this tuple slot, or obtain one through other (user provided)
-     means. The tuple slot is needed to create a <type>Datum</> for return by the
-     function.  The same slot can (and should) be reused on each call.
+     to build a <structname>HeapTuple</> given user data in Datum form.
     </para>
 
     <para>
-     After constructing an <structname>AttInMetadata</> structure,
+     When working with C strings, use
 <programlisting>
 HeapTuple BuildTupleFromCStrings(AttInMetadata *attinmeta, char **values)
 </programlisting>
-     can be used to build a <structname>HeapTuple</> given user data
-     in C string form.  <literal>values</literal> is an array of C strings, one for
-     each attribute of the return row. Each C string should be in
+     to build a <structname>HeapTuple</> given user data
+     in C string form.  <literal>values</literal> is an array of C strings,
+     one for each attribute of the return row. Each C string should be in
      the form expected by the input function of the attribute data
      type. In order to return a null value for one of the attributes,
      the corresponding pointer in the <parameter>values</> array
@@ -1779,24 +1782,12 @@ HeapTuple BuildTupleFromCStrings(AttInMetadata *attinmeta, char **values)
     </para>
 
     <para>
-     Building a tuple via <function>TupleDescGetAttInMetadata</> and
-     <function>BuildTupleFromCStrings</> is only convenient if your
-     function naturally computes the values to be returned as text
-     strings.  If your code naturally computes the values as a set of
-     <type>Datum</> values, you should instead use the underlying
-     function <function>heap_formtuple</> to convert the
-     <type>Datum</type> values directly into a tuple.  You will still need
-     the <structname>TupleDesc</> and a <structname>TupleTableSlot</>,
-     but not <structname>AttInMetadata</>.
-    </para>
-
-    <para>
      Once you have built a tuple to return from your function, it
      must be converted into a <type>Datum</>. Use
 <programlisting>
-TupleGetDatum(TupleTableSlot *slot, HeapTuple tuple)
+HeapTupleGetDatum(HeapTuple tuple)
 </programlisting>
-     to get a <type>Datum</> given a tuple and a slot.  This
+     to convert a <structname>HeapTuple</> into a valid Datum.  This
      <type>Datum</> can be returned directly if you intend to return
      just a single row, or it can be used as the current return value
      in a set-returning function.
@@ -1851,8 +1842,8 @@ typedef struct
     /*
      * OPTIONAL pointer to result slot
      * 
-     * slot is for use when returning tuples (i.e., composite data types)
-     * and is not needed when returning base data types.
+     * This is obsolete and only present for backwards compatibility, viz,
+     * user-defined SRFs that use the deprecated TupleDescGetSlot().
      */
     TupleTableSlot *slot;
 
@@ -1868,9 +1859,9 @@ typedef struct
      * OPTIONAL pointer to struct containing attribute type input metadata
      * 
      * attinmeta is for use when returning tuples (i.e., composite data types)
-     * and is not needed when returning base data types. It
-     * is only needed if you intend to use BuildTupleFromCStrings() to create
-     * the return tuple.
+     * and is not used when returning base data types. It is only needed
+     * if you intend to use BuildTupleFromCStrings() to create the return
+     * tuple.
      */
     AttInMetadata *attinmeta;
 
@@ -1883,6 +1874,18 @@ typedef struct
      * of the SRF.
      */
     MemoryContext multi_call_memory_ctx;
+
+    /*
+     * OPTIONAL pointer to struct containing tuple description
+     *
+     * tuple_desc is for use when returning tuples (i.e. composite data types)
+     * and is only needed if you are going to build the tuples with
+     * heap_formtuple() rather than with BuildTupleFromCStrings().  Note that
+     * the TupleDesc pointer stored here should usually have been run through
+     * BlessTupleDesc() first.
+     */
+    TupleDesc tuple_desc;
+
 } FuncCallContext;
 </programlisting>
     </para>
@@ -1956,8 +1959,6 @@ my_set_returning_function(PG_FUNCTION_ARGS)
         <replaceable>user code</replaceable>
         <replaceable>if returning composite</replaceable>
             <replaceable>build TupleDesc, and perhaps AttInMetadata</replaceable>
-            <replaceable>obtain slot</replaceable>
-            funcctx-&gt;slot = slot;
         <replaceable>endif returning composite</replaceable>
         <replaceable>user code</replaceable>
         MemoryContextSwitchTo(oldcontext);
@@ -1998,7 +1999,6 @@ testpassbyval(PG_FUNCTION_ARGS)
     int                  call_cntr;
     int                  max_calls;
     TupleDesc            tupdesc;
-    TupleTableSlot      *slot;
     AttInMetadata       *attinmeta;
 
      /* stuff done only on the first call of the function */
@@ -2018,12 +2018,6 @@ testpassbyval(PG_FUNCTION_ARGS)
         /* Build a tuple description for a __testpassbyval tuple */
         tupdesc = RelationNameGetTupleDesc("__testpassbyval");
 
-        /* allocate a slot for a tuple with this tupdesc */
-        slot = TupleDescGetSlot(tupdesc);
-
-        /* assign slot to function context */
-        funcctx-&gt;slot = slot;
-
         /*
          * generate attribute metadata needed later to produce tuples from raw
          * C strings
@@ -2039,7 +2033,6 @@ testpassbyval(PG_FUNCTION_ARGS)
 
     call_cntr = funcctx-&gt;call_cntr;
     max_calls = funcctx-&gt;max_calls;
-    slot = funcctx-&gt;slot;
     attinmeta = funcctx-&gt;attinmeta;
  
     if (call_cntr &lt; max_calls)    /* do when there is more left to send */
@@ -2049,7 +2042,7 @@ testpassbyval(PG_FUNCTION_ARGS)
         Datum        result;
 
         /*
-         * Prepare a values array for storage in our slot.
+         * Prepare a values array for building the returned tuple.
          * This should be an array of C strings which will
          * be processed later by the type input functions.
          */
@@ -2066,7 +2059,7 @@ testpassbyval(PG_FUNCTION_ARGS)
         tuple = BuildTupleFromCStrings(attinmeta, values);
 
         /* make the tuple into a datum */
-        result = TupleGetDatum(slot, tuple);
+        result = HeapTupleGetDatum(tuple);
 
         /* clean up (this is not really necessary) */
         pfree(values[0]);

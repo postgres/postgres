@@ -9,7 +9,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/access/common/heaptuple.c,v 1.89 2004/01/16 20:51:30 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/access/common/heaptuple.c,v 1.90 2004/04/01 21:28:43 tgl Exp $
  *
  * NOTES
  *	  The old interface functions have been converted to macros
@@ -31,6 +31,8 @@
 
 /* ----------------
  *		ComputeDataSize
+ *
+ * Determine size of the data area of a tuple to be constructed
  * ----------------
  */
 Size
@@ -417,7 +419,7 @@ nocachegetattr(HeapTuple tuple,
  * ----------------
  */
 Datum
-heap_getsysattr(HeapTuple tup, int attnum, bool *isnull)
+heap_getsysattr(HeapTuple tup, int attnum, TupleDesc tupleDesc, bool *isnull)
 {
 	Datum		result;
 
@@ -451,6 +453,31 @@ heap_getsysattr(HeapTuple tup, int attnum, bool *isnull)
 		case TableOidAttributeNumber:
 			result = ObjectIdGetDatum(tup->t_tableOid);
 			break;
+
+			/*
+			 * If the attribute number is 0, then we are supposed to return
+			 * the entire tuple as a row-type Datum.  (Using zero for this
+			 * purpose is unclean since it risks confusion with "invalid attr"
+			 * result codes, but it's not worth changing now.)
+			 *
+			 * We have to make a copy of the tuple so we can safely insert the
+			 * Datum overhead fields, which are not set in on-disk tuples.
+			 */
+		case InvalidAttrNumber:
+			{
+				HeapTupleHeader	dtup;
+
+				dtup = (HeapTupleHeader) palloc(tup->t_len);
+				memcpy((char *) dtup, (char *) tup->t_data, tup->t_len);
+
+				HeapTupleHeaderSetDatumLength(dtup, tup->t_len);
+				HeapTupleHeaderSetTypeId(dtup, tupleDesc->tdtypeid);
+				HeapTupleHeaderSetTypMod(dtup, tupleDesc->tdtypmod);
+
+				result = PointerGetDatum(dtup);
+			}
+			break;
+
 		default:
 			elog(ERROR, "invalid attnum: %d", attnum);
 			result = 0;			/* keep compiler quiet */
@@ -547,19 +574,10 @@ heap_deformtuple(HeapTuple tuple,
 /* ----------------
  *		heap_formtuple
  *
- *		constructs a tuple from the given *value and *null arrays
- *
- * old comments
- *		Handles alignment by aligning 2 byte attributes on short boundries
- *		and 3 or 4 byte attributes on long word boundries on a vax; and
- *		aligning non-byte attributes on short boundries on a sun.  Does
- *		not properly align fixed length arrays of 1 or 2 byte types (yet).
+ *		constructs a tuple from the given *value and *nulls arrays
  *
  *		Null attributes are indicated by a 'n' in the appropriate byte
- *		of the *null.	Non-null attributes are indicated by a ' ' (space).
- *
- *		Fix me.  (Figure that must keep context if debug--allow give oid.)
- *		Assumes in order.
+ *		of *nulls.	Non-null attributes are indicated by a ' ' (space).
  * ----------------
  */
 HeapTuple
@@ -581,6 +599,9 @@ heap_formtuple(TupleDesc tupleDescriptor,
 				 errmsg("number of columns (%d) exceeds limit (%d)",
 						numberOfAttributes, MaxTupleAttributeNumber)));
 
+	/*
+	 * Determine total space needed
+	 */
 	for (i = 0; i < numberOfAttributes; i++)
 	{
 		if (nulls[i] != ' ')
@@ -602,15 +623,26 @@ heap_formtuple(TupleDesc tupleDescriptor,
 
 	len += ComputeDataSize(tupleDescriptor, value, nulls);
 
-	tuple = (HeapTuple) palloc(HEAPTUPLESIZE + len);
+	/*
+	 * Allocate and zero the space needed.  Note that the tuple body and
+	 * HeapTupleData management structure are allocated in one chunk.
+	 */
+	tuple = (HeapTuple) palloc0(HEAPTUPLESIZE + len);
 	tuple->t_datamcxt = CurrentMemoryContext;
-	td = tuple->t_data = (HeapTupleHeader) ((char *) tuple + HEAPTUPLESIZE);
+	tuple->t_data = td = (HeapTupleHeader) ((char *) tuple + HEAPTUPLESIZE);
 
-	MemSet((char *) td, 0, len);
-
+	/*
+	 * And fill in the information.  Note we fill the Datum fields even
+	 * though this tuple may never become a Datum.
+	 */
 	tuple->t_len = len;
 	ItemPointerSetInvalid(&(tuple->t_self));
 	tuple->t_tableOid = InvalidOid;
+
+	HeapTupleHeaderSetDatumLength(td, len);
+	HeapTupleHeaderSetTypeId(td, tupleDescriptor->tdtypeid);
+	HeapTupleHeaderSetTypMod(td, tupleDescriptor->tdtypmod);
+
 	td->t_natts = numberOfAttributes;
 	td->t_hoff = hoff;
 
@@ -759,15 +791,15 @@ heap_addheader(int natts,		/* max domain index */
 	hoff = MAXALIGN(hoff);
 	len = hoff + structlen;
 
-	tuple = (HeapTuple) palloc(HEAPTUPLESIZE + len);
+	tuple = (HeapTuple) palloc0(HEAPTUPLESIZE + len);
+	tuple->t_datamcxt = CurrentMemoryContext;
+	tuple->t_data = td = (HeapTupleHeader) ((char *) tuple + HEAPTUPLESIZE);
 
 	tuple->t_len = len;
 	ItemPointerSetInvalid(&(tuple->t_self));
 	tuple->t_tableOid = InvalidOid;
-	tuple->t_datamcxt = CurrentMemoryContext;
-	tuple->t_data = td = (HeapTupleHeader) ((char *) tuple + HEAPTUPLESIZE);
 
-	MemSet((char *) td, 0, hoff);
+	/* we don't bother to fill the Datum fields */
 
 	td->t_natts = natts;
 	td->t_hoff = hoff;

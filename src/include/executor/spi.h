@@ -2,7 +2,7 @@
  *
  * spi.h
  *
- * $PostgreSQL: pgsql/src/include/executor/spi.h,v 1.43 2004/03/17 01:05:10 momjian Exp $
+ * $PostgreSQL: pgsql/src/include/executor/spi.h,v 1.44 2004/04/01 21:28:46 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -95,9 +95,7 @@ extern int SPI_getargcount(void *plan);
 extern bool SPI_is_cursor_plan(void *plan);
 
 extern HeapTuple SPI_copytuple(HeapTuple tuple);
-extern TupleDesc SPI_copytupledesc(TupleDesc tupdesc);
-extern TupleTableSlot *SPI_copytupleintoslot(HeapTuple tuple,
-					  TupleDesc tupdesc);
+extern HeapTupleHeader SPI_returntuple(HeapTuple tuple, TupleDesc tupdesc);
 extern HeapTuple SPI_modifytuple(Relation rel, HeapTuple tuple, int natts,
 				int *attnum, Datum *Values, const char *Nulls);
 extern int	SPI_fnumber(TupleDesc tupdesc, const char *fname);

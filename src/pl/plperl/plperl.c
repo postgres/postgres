@@ -33,7 +33,7 @@
  *	  ENHANCEMENTS, OR MODIFICATIONS.
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/pl/plperl/plperl.c,v 1.42 2004/01/06 23:55:19 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/pl/plperl/plperl.c,v 1.43 2004/04/01 21:28:46 tgl Exp $
  *
  **********************************************************************/
 
@@ -45,15 +45,16 @@
 #include <setjmp.h>
 
 /* postgreSQL stuff */
-#include "executor/spi.h"
-#include "commands/trigger.h"
-#include "fmgr.h"
 #include "access/heapam.h"
-#include "tcop/tcopprot.h"
-#include "utils/syscache.h"
 #include "catalog/pg_language.h"
 #include "catalog/pg_proc.h"
 #include "catalog/pg_type.h"
+#include "commands/trigger.h"
+#include "executor/spi.h"
+#include "fmgr.h"
+#include "tcop/tcopprot.h"
+#include "utils/syscache.h"
+#include "utils/typcache.h"
 
 /* perl stuff */
 #include "EXTERN.h"
@@ -82,7 +83,7 @@ typedef struct plperl_proc_desc
 	int			nargs;
 	FmgrInfo	arg_out_func[FUNC_MAX_ARGS];
 	Oid			arg_out_elem[FUNC_MAX_ARGS];
-	int			arg_is_rel[FUNC_MAX_ARGS];
+	bool		arg_is_rowtype[FUNC_MAX_ARGS];
 	SV		   *reference;
 }	plperl_proc_desc;
 
@@ -388,19 +389,34 @@ plperl_call_perl_func(plperl_proc_desc * desc, FunctionCallInfo fcinfo)
 	PUSHMARK(SP);
 	for (i = 0; i < desc->nargs; i++)
 	{
-		if (desc->arg_is_rel[i])
+		if (desc->arg_is_rowtype[i])
 		{
-			TupleTableSlot *slot = (TupleTableSlot *) fcinfo->arg[i];
-			SV		   *hashref;
+			if (fcinfo->argnull[i])
+				XPUSHs(&PL_sv_undef);
+			else
+			{
+				HeapTupleHeader td;
+				Oid			tupType;
+				int32		tupTypmod;
+				TupleDesc	tupdesc;
+				HeapTupleData tmptup;
+				SV		   *hashref;
 
-			Assert(slot != NULL && !fcinfo->argnull[i]);
+				td = DatumGetHeapTupleHeader(fcinfo->arg[i]);
+				/* Extract rowtype info and find a tupdesc */
+				tupType = HeapTupleHeaderGetTypeId(td);
+				tupTypmod = HeapTupleHeaderGetTypMod(td);
+				tupdesc = lookup_rowtype_tupdesc(tupType, tupTypmod);
+				/* Build a temporary HeapTuple control structure */
+				tmptup.t_len = HeapTupleHeaderGetDatumLength(td);
+				tmptup.t_data = td;
 
-			/*
-			 * plperl_build_tuple_argument better return a mortal SV.
-			 */
-			hashref = plperl_build_tuple_argument(slot->val,
-											  slot->ttc_tupleDescriptor);
-			XPUSHs(hashref);
+				/*
+				 * plperl_build_tuple_argument better return a mortal SV.
+				 */
+				hashref = plperl_build_tuple_argument(&tmptup, tupdesc);
+				XPUSHs(hashref);
+			}
 		}
 		else
 		{
@@ -645,7 +661,7 @@ compile_plperl_function(Oid fn_oid, bool is_trigger)
 				}
 			}
 
-			if (typeStruct->typrelid != InvalidOid)
+			if (typeStruct->typtype == 'c')
 			{
 				free(prodesc->proname);
 				free(prodesc);
@@ -692,13 +708,16 @@ compile_plperl_function(Oid fn_oid, bool is_trigger)
 						   format_type_be(procStruct->proargtypes[i]))));
 				}
 
-				if (typeStruct->typrelid != InvalidOid)
-					prodesc->arg_is_rel[i] = 1;
+				if (typeStruct->typtype == 'c')
+					prodesc->arg_is_rowtype[i] = true;
 				else
-					prodesc->arg_is_rel[i] = 0;
+				{
+					prodesc->arg_is_rowtype[i] = false;
+					perm_fmgr_info(typeStruct->typoutput,
+								   &(prodesc->arg_out_func[i]));
+					prodesc->arg_out_elem[i] = typeStruct->typelem;
+				}
 
-				perm_fmgr_info(typeStruct->typoutput, &(prodesc->arg_out_func[i]));
-				prodesc->arg_out_elem[i] = typeStruct->typelem;
 				ReleaseSysCache(typeTup);
 			}
 		}

@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2003, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/include/nodes/nodes.h,v 1.151 2004/03/17 20:48:43 tgl Exp $
+ * $PostgreSQL: pgsql/src/include/nodes/nodes.h,v 1.152 2004/04/01 21:28:46 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -141,6 +141,7 @@ typedef enum NodeTag
 	T_ScalarArrayOpExprState,
 	T_BoolExprState,
 	T_SubPlanState,
+	T_FieldSelectState,
 	T_CaseExprState,
 	T_CaseWhenState,
 	T_ArrayExprState,

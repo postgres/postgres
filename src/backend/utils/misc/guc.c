@@ -10,7 +10,7 @@
  * Written by Peter Eisentraut <peter_e@gmx.net>.
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/utils/misc/guc.c,v 1.194 2004/04/01 14:25:47 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/utils/misc/guc.c,v 1.195 2004/04/01 21:28:45 tgl Exp $
  *
  *--------------------------------------------------------------------
  */
@@ -3453,9 +3453,9 @@ GetPGVariableResultDesc(const char *name)
 		/* need a tuple descriptor representing two TEXT columns */
 		tupdesc = CreateTemplateTupleDesc(2, false);
 		TupleDescInitEntry(tupdesc, (AttrNumber) 1, "name",
-						   TEXTOID, -1, 0, false);
+						   TEXTOID, -1, 0);
 		TupleDescInitEntry(tupdesc, (AttrNumber) 2, "setting",
-						   TEXTOID, -1, 0, false);
+						   TEXTOID, -1, 0);
 	}
 	else
 	{
@@ -3467,7 +3467,7 @@ GetPGVariableResultDesc(const char *name)
 		/* need a tuple descriptor representing a single TEXT column */
 		tupdesc = CreateTemplateTupleDesc(1, false);
 		TupleDescInitEntry(tupdesc, (AttrNumber) 1, varname,
-						   TEXTOID, -1, 0, false);
+						   TEXTOID, -1, 0);
 	}
 	return tupdesc;
 }
@@ -3507,7 +3507,7 @@ ShowGUCConfigOption(const char *name, DestReceiver *dest)
 	/* need a tuple descriptor representing a single TEXT column */
 	tupdesc = CreateTemplateTupleDesc(1, false);
 	TupleDescInitEntry(tupdesc, (AttrNumber) 1, varname,
-					   TEXTOID, -1, 0, false);
+					   TEXTOID, -1, 0);
 
 	/* prepare for projection of tuples */
 	tstate = begin_tup_output_tupdesc(dest, tupdesc);
@@ -3532,9 +3532,9 @@ ShowAllGUCConfig(DestReceiver *dest)
 	/* need a tuple descriptor representing two TEXT columns */
 	tupdesc = CreateTemplateTupleDesc(2, false);
 	TupleDescInitEntry(tupdesc, (AttrNumber) 1, "name",
-					   TEXTOID, -1, 0, false);
+					   TEXTOID, -1, 0);
 	TupleDescInitEntry(tupdesc, (AttrNumber) 2, "setting",
-					   TEXTOID, -1, 0, false);
+					   TEXTOID, -1, 0);
 
 	/* prepare for projection of tuples */
 	tstate = begin_tup_output_tupdesc(dest, tupdesc);
@@ -3740,7 +3740,6 @@ show_all_settings(PG_FUNCTION_ARGS)
 	TupleDesc	tupdesc;
 	int			call_cntr;
 	int			max_calls;
-	TupleTableSlot *slot;
 	AttInMetadata *attinmeta;
 	MemoryContext oldcontext;
 
@@ -3762,31 +3761,25 @@ show_all_settings(PG_FUNCTION_ARGS)
 		 */
 		tupdesc = CreateTemplateTupleDesc(NUM_PG_SETTINGS_ATTS, false);
 		TupleDescInitEntry(tupdesc, (AttrNumber) 1, "name",
-						   TEXTOID, -1, 0, false);
+						   TEXTOID, -1, 0);
 		TupleDescInitEntry(tupdesc, (AttrNumber) 2, "setting",
-						   TEXTOID, -1, 0, false);
+						   TEXTOID, -1, 0);
 		TupleDescInitEntry(tupdesc, (AttrNumber) 3, "category",
-						   TEXTOID, -1, 0, false);
+						   TEXTOID, -1, 0);
 		TupleDescInitEntry(tupdesc, (AttrNumber) 4, "short_desc",
-						   TEXTOID, -1, 0, false);
+						   TEXTOID, -1, 0);
 		TupleDescInitEntry(tupdesc, (AttrNumber) 5, "extra_desc",
-						   TEXTOID, -1, 0, false);
+						   TEXTOID, -1, 0);
 		TupleDescInitEntry(tupdesc, (AttrNumber) 6, "context",
-						   TEXTOID, -1, 0, false);
+						   TEXTOID, -1, 0);
 		TupleDescInitEntry(tupdesc, (AttrNumber) 7, "vartype",
-						   TEXTOID, -1, 0, false);
+						   TEXTOID, -1, 0);
 		TupleDescInitEntry(tupdesc, (AttrNumber) 8, "source",
-						   TEXTOID, -1, 0, false);
+						   TEXTOID, -1, 0);
 		TupleDescInitEntry(tupdesc, (AttrNumber) 9, "min_val",
-						   TEXTOID, -1, 0, false);
+						   TEXTOID, -1, 0);
 		TupleDescInitEntry(tupdesc, (AttrNumber) 10, "max_val",
-						   TEXTOID, -1, 0, false);
-
-		/* allocate a slot for a tuple with this tupdesc */
-		slot = TupleDescGetSlot(tupdesc);
-
-		/* assign slot to function context */
-		funcctx->slot = slot;
+						   TEXTOID, -1, 0);
 
 		/*
 		 * Generate attribute metadata needed later to produce tuples from
@@ -3806,7 +3799,6 @@ show_all_settings(PG_FUNCTION_ARGS)
 
 	call_cntr = funcctx->call_cntr;
 	max_calls = funcctx->max_calls;
-	slot = funcctx->slot;
 	attinmeta = funcctx->attinmeta;
 
 	if (call_cntr < max_calls)	/* do when there is more left to send */
@@ -3837,7 +3829,7 @@ show_all_settings(PG_FUNCTION_ARGS)
 		tuple = BuildTupleFromCStrings(attinmeta, values);
 
 		/* make the tuple into a datum */
-		result = TupleGetDatum(slot, tuple);
+		result = HeapTupleGetDatum(tuple);
 
 		SRF_RETURN_NEXT(funcctx, result);
 	}

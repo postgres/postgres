@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/commands/tablecmds.c,v 1.101 2004/03/23 19:35:16 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/commands/tablecmds.c,v 1.102 2004/04/01 21:28:44 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -1796,7 +1796,6 @@ AlterTableAddColumn(Oid myrelid,
 	attribute->attnum = i;
 	attribute->attbyval = tform->typbyval;
 	attribute->attndims = attndims;
-	attribute->attisset = (bool) (tform->typtype == 'c');
 	attribute->attstorage = tform->typstorage;
 	attribute->attalign = tform->typalign;
 	attribute->attnotnull = colDef->is_not_null;
@@ -4084,15 +4083,15 @@ AlterTableCreateToastTable(Oid relOid, bool silent)
 	TupleDescInitEntry(tupdesc, (AttrNumber) 1,
 					   "chunk_id",
 					   OIDOID,
-					   -1, 0, false);
+					   -1, 0);
 	TupleDescInitEntry(tupdesc, (AttrNumber) 2,
 					   "chunk_seq",
 					   INT4OID,
-					   -1, 0, false);
+					   -1, 0);
 	TupleDescInitEntry(tupdesc, (AttrNumber) 3,
 					   "chunk_data",
 					   BYTEAOID,
-					   -1, 0, false);
+					   -1, 0);
 
 	/*
 	 * Ensure that the toast table doesn't itself get toasted, or we'll be

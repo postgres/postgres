@@ -351,7 +351,6 @@ crosstab(PG_FUNCTION_ARGS)
 	TupleDesc	ret_tupdesc;
 	int			call_cntr;
 	int			max_calls;
-	TupleTableSlot *slot;
 	AttInMetadata *attinmeta;
 	SPITupleTable *spi_tuptable = NULL;
 	TupleDesc	spi_tupdesc;
@@ -429,10 +428,10 @@ crosstab(PG_FUNCTION_ARGS)
 
 		if (functyptype == 'c')
 		{
-			/* Build a tuple description for a functypeid tuple */
+			/* Build a tuple description for a named composite type */
 			tupdesc = TypeGetTupleDesc(functypeid, NIL);
 		}
-		else if (functyptype == 'p' && functypeid == RECORDOID)
+		else if (functypeid == RECORDOID)
 		{
 			if (fcinfo->nargs != 2)
 				ereport(ERROR,
@@ -460,12 +459,6 @@ crosstab(PG_FUNCTION_ARGS)
 					(errcode(ERRCODE_SYNTAX_ERROR),
 					 errmsg("return and sql tuple descriptions are " \
 							"incompatible")));
-
-		/* allocate a slot for a tuple with this tupdesc */
-		slot = TupleDescGetSlot(tupdesc);
-
-		/* assign slot to function context */
-		funcctx->slot = slot;
 
 		/*
 		 * Generate attribute metadata needed later to produce tuples from
@@ -498,9 +491,6 @@ crosstab(PG_FUNCTION_ARGS)
 	 */
 	call_cntr = funcctx->call_cntr;
 	max_calls = funcctx->max_calls;
-
-	/* return slot for our tuple */
-	slot = funcctx->slot;
 
 	/* user context info */
 	fctx = (crosstab_fctx *) funcctx->user_fctx;
@@ -621,7 +611,7 @@ crosstab(PG_FUNCTION_ARGS)
 				tuple = BuildTupleFromCStrings(attinmeta, values);
 
 				/* make the tuple into a datum */
-				result = TupleGetDatum(slot, tuple);
+				result = HeapTupleGetDatum(tuple);
 
 				/* Clean up */
 				for (i = 0; i < num_categories + 1; i++)
@@ -1675,7 +1665,7 @@ make_crosstab_tupledesc(TupleDesc spi_tupdesc, int num_categories)
 	strcpy(attname, "rowname");
 
 	TupleDescInitEntry(tupdesc, attnum, attname, sql_atttypid,
-					   -1, 0, false);
+					   -1, 0);
 
 	/* now the category values columns */
 	sql_attr = spi_tupdesc->attrs[2];
@@ -1687,7 +1677,7 @@ make_crosstab_tupledesc(TupleDesc spi_tupdesc, int num_categories)
 
 		sprintf(attname, "category_%d", i + 1);
 		TupleDescInitEntry(tupdesc, attnum, attname, sql_atttypid,
-						   -1, 0, false);
+						   -1, 0);
 	}
 
 	return tupdesc;

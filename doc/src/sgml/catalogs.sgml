@@ -1,6 +1,6 @@
 <!--
  Documentation of the system catalogs, directed toward PostgreSQL developers
- $PostgreSQL: pgsql/doc/src/sgml/catalogs.sgml,v 2.84 2004/02/15 21:01:38 tgl Exp $
+ $PostgreSQL: pgsql/doc/src/sgml/catalogs.sgml,v 2.85 2004/04/01 21:28:43 tgl Exp $
  -->
 
 <chapter id="catalogs">
@@ -806,24 +806,6 @@
        Normally a copy of <literal>pg_type.typstorage</> of this
        column's type.  For TOAST-able data types, this can be altered
        after column creation to control storage policy.
-      </entry>
-     </row>
-
-     <row>
-      <entry><structfield>attisset</structfield></entry>
-      <entry><type>bool</type></entry>
-      <entry></entry>
-      <entry>
-       If true, this attribute is a set.  In that case, what is really
-       stored in the attribute is the OID of a row in the
-       <structname>pg_proc</structname> catalog.  The
-       <structname>pg_proc</structname> row contains the query
-       string that defines this set, i.e., the query to run to get
-       the set.  So the <structfield>atttypid</structfield> (see
-       above) refers to the type returned by this query, but the
-       actual length of this attribute is the length (size) of an
-       <type>oid</type>.  --- At least this is the theory.  All this
-       is probably quite broken these days.
       </entry>
      </row>
 

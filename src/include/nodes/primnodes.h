@@ -10,7 +10,7 @@
  * Portions Copyright (c) 1996-2003, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/include/nodes/primnodes.h,v 1.96 2004/03/17 20:48:43 tgl Exp $
+ * $PostgreSQL: pgsql/src/include/nodes/primnodes.h,v 1.97 2004/04/01 21:28:46 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -525,9 +525,8 @@ typedef struct SubPlan
  * FieldSelect
  *
  * FieldSelect represents the operation of extracting one field from a tuple
- * value.  At runtime, the input expression is expected to yield a Datum
- * that contains a pointer-to-TupleTableSlot.  The specified field number
- * is extracted and returned as a Datum.
+ * value.  At runtime, the input expression is expected to yield a rowtype
+ * Datum.  The specified field number is extracted and returned as a Datum.
  * ----------------
  */
 

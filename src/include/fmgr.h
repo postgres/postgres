@@ -11,7 +11,7 @@
  * Portions Copyright (c) 1996-2003, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/include/fmgr.h,v 1.33 2004/01/19 02:06:42 tgl Exp $
+ * $PostgreSQL: pgsql/src/include/fmgr.h,v 1.34 2004/04/01 21:28:46 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -192,11 +192,13 @@ extern struct varlena *pg_detoast_datum_slice(struct varlena * datum,
 #define DatumGetTextP(X)			((text *) PG_DETOAST_DATUM(X))
 #define DatumGetBpCharP(X)			((BpChar *) PG_DETOAST_DATUM(X))
 #define DatumGetVarCharP(X)			((VarChar *) PG_DETOAST_DATUM(X))
+#define DatumGetHeapTupleHeader(X)	((HeapTupleHeader) PG_DETOAST_DATUM(X))
 /* And we also offer variants that return an OK-to-write copy */
 #define DatumGetByteaPCopy(X)		((bytea *) PG_DETOAST_DATUM_COPY(X))
 #define DatumGetTextPCopy(X)		((text *) PG_DETOAST_DATUM_COPY(X))
 #define DatumGetBpCharPCopy(X)		((BpChar *) PG_DETOAST_DATUM_COPY(X))
 #define DatumGetVarCharPCopy(X)		((VarChar *) PG_DETOAST_DATUM_COPY(X))
+#define DatumGetHeapTupleHeaderCopy(X)	((HeapTupleHeader) PG_DETOAST_DATUM_COPY(X))
 /* Variants which return n bytes starting at pos. m */
 #define DatumGetByteaPSlice(X,m,n)	((bytea *) PG_DETOAST_DATUM_SLICE(X,m,n))
 #define DatumGetTextPSlice(X,m,n)	((text *) PG_DETOAST_DATUM_SLICE(X,m,n))
@@ -207,11 +209,13 @@ extern struct varlena *pg_detoast_datum_slice(struct varlena * datum,
 #define PG_GETARG_TEXT_P(n)			DatumGetTextP(PG_GETARG_DATUM(n))
 #define PG_GETARG_BPCHAR_P(n)		DatumGetBpCharP(PG_GETARG_DATUM(n))
 #define PG_GETARG_VARCHAR_P(n)		DatumGetVarCharP(PG_GETARG_DATUM(n))
+#define PG_GETARG_HEAPTUPLEHEADER(n)	DatumGetHeapTupleHeader(PG_GETARG_DATUM(n))
 /* And we also offer variants that return an OK-to-write copy */
 #define PG_GETARG_BYTEA_P_COPY(n)	DatumGetByteaPCopy(PG_GETARG_DATUM(n))
 #define PG_GETARG_TEXT_P_COPY(n)	DatumGetTextPCopy(PG_GETARG_DATUM(n))
 #define PG_GETARG_BPCHAR_P_COPY(n)	DatumGetBpCharPCopy(PG_GETARG_DATUM(n))
 #define PG_GETARG_VARCHAR_P_COPY(n) DatumGetVarCharPCopy(PG_GETARG_DATUM(n))
+#define PG_GETARG_HEAPTUPLEHEADER_COPY(n)	DatumGetHeapTupleHeaderCopy(PG_GETARG_DATUM(n))
 /* And a b-byte slice from position a -also OK to write */
 #define PG_GETARG_BYTEA_P_SLICE(n,a,b) DatumGetByteaPSlice(PG_GETARG_DATUM(n),a,b)
 #define PG_GETARG_TEXT_P_SLICE(n,a,b)  DatumGetTextPSlice(PG_GETARG_DATUM(n),a,b)
@@ -246,6 +250,7 @@ extern struct varlena *pg_detoast_datum_slice(struct varlena * datum,
 #define PG_RETURN_TEXT_P(x)    PG_RETURN_POINTER(x)
 #define PG_RETURN_BPCHAR_P(x)  PG_RETURN_POINTER(x)
 #define PG_RETURN_VARCHAR_P(x) PG_RETURN_POINTER(x)
+#define PG_RETURN_HEAPTUPLEHEADER(x)  PG_RETURN_POINTER(x)
 
 
 /*-------------------------------------------------------------------------

@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2003, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/include/access/heapam.h,v 1.87 2004/03/11 01:47:41 ishii Exp $
+ * $PostgreSQL: pgsql/src/include/access/heapam.h,v 1.88 2004/04/01 21:28:45 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -111,11 +111,12 @@ extern Datum fastgetattr(HeapTuple tup, int attnum, TupleDesc tupleDesc,
 				fastgetattr((tup), (attnum), (tupleDesc), (isnull)) \
 		) \
 		: \
-			heap_getsysattr((tup), (attnum), (isnull)) \
+			heap_getsysattr((tup), (attnum), (tupleDesc), (isnull)) \
 	) \
 )
 
-extern Datum heap_getsysattr(HeapTuple tup, int attnum, bool *isnull);
+extern Datum heap_getsysattr(HeapTuple tup, int attnum, TupleDesc tupleDesc,
+							 bool *isnull);
 
 
 /* ----------------

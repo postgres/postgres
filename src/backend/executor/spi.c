@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/executor/spi.c,v 1.112 2004/03/21 22:29:11 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/executor/spi.c,v 1.113 2004/04/01 21:28:44 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -19,6 +19,7 @@
 #include "executor/spi_priv.h"
 #include "tcop/tcopprot.h"
 #include "utils/lsyscache.h"
+#include "utils/typcache.h"
 
 
 uint32		SPI_processed = 0;
@@ -380,40 +381,11 @@ SPI_copytuple(HeapTuple tuple)
 	return ctuple;
 }
 
-TupleDesc
-SPI_copytupledesc(TupleDesc tupdesc)
+HeapTupleHeader
+SPI_returntuple(HeapTuple tuple, TupleDesc tupdesc)
 {
 	MemoryContext oldcxt = NULL;
-	TupleDesc	ctupdesc;
-
-	if (tupdesc == NULL)
-	{
-		SPI_result = SPI_ERROR_ARGUMENT;
-		return NULL;
-	}
-
-	if (_SPI_curid + 1 == _SPI_connected)		/* connected */
-	{
-		if (_SPI_current != &(_SPI_stack[_SPI_curid + 1]))
-			elog(ERROR, "SPI stack corrupted");
-		oldcxt = MemoryContextSwitchTo(_SPI_current->savedcxt);
-	}
-
-	ctupdesc = CreateTupleDescCopy(tupdesc);
-
-	if (oldcxt)
-		MemoryContextSwitchTo(oldcxt);
-
-	return ctupdesc;
-}
-
-TupleTableSlot *
-SPI_copytupleintoslot(HeapTuple tuple, TupleDesc tupdesc)
-{
-	MemoryContext oldcxt = NULL;
-	TupleTableSlot *cslot;
-	HeapTuple	ctuple;
-	TupleDesc	ctupdesc;
+	HeapTupleHeader	dtup;
 
 	if (tuple == NULL || tupdesc == NULL)
 	{
@@ -421,6 +393,11 @@ SPI_copytupleintoslot(HeapTuple tuple, TupleDesc tupdesc)
 		return NULL;
 	}
 
+	/* For RECORD results, make sure a typmod has been assigned */
+	if (tupdesc->tdtypeid == RECORDOID &&
+		tupdesc->tdtypmod < 0)
+		assign_record_type_typmod(tupdesc);
+
 	if (_SPI_curid + 1 == _SPI_connected)		/* connected */
 	{
 		if (_SPI_current != &(_SPI_stack[_SPI_curid + 1]))
@@ -428,17 +405,17 @@ SPI_copytupleintoslot(HeapTuple tuple, TupleDesc tupdesc)
 		oldcxt = MemoryContextSwitchTo(_SPI_current->savedcxt);
 	}
 
-	ctuple = heap_copytuple(tuple);
-	ctupdesc = CreateTupleDescCopy(tupdesc);
+	dtup = (HeapTupleHeader) palloc(tuple->t_len);
+	memcpy((char *) dtup, (char *) tuple->t_data, tuple->t_len);
 
-	cslot = MakeTupleTableSlot();
-	ExecSetSlotDescriptor(cslot, ctupdesc, true);
-	cslot = ExecStoreTuple(ctuple, cslot, InvalidBuffer, true);
+	HeapTupleHeaderSetDatumLength(dtup, tuple->t_len);
+	HeapTupleHeaderSetTypeId(dtup, tupdesc->tdtypeid);
+	HeapTupleHeaderSetTypMod(dtup, tupdesc->tdtypmod);
 
 	if (oldcxt)
 		MemoryContextSwitchTo(oldcxt);
 
-	return cslot;
+	return dtup;
 }
 
 HeapTuple

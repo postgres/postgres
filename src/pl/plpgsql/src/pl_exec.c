@@ -3,7 +3,7 @@
  *			  procedural language
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/pl/plpgsql/src/pl_exec.c,v 1.98 2004/03/17 20:48:43 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/pl/plpgsql/src/pl_exec.c,v 1.99 2004/04/01 21:28:46 tgl Exp $
  *
  *	  This software is copyrighted by Jan Wieck - Hamburg.
  *
@@ -52,6 +52,7 @@
 #include "utils/array.h"
 #include "utils/builtins.h"
 #include "utils/lsyscache.h"
+#include "utils/typcache.h"
 
 
 static const char *const raise_skip_msg = "RAISE";
@@ -258,16 +259,26 @@ plpgsql_exec_function(PLpgSQL_function * func, FunctionCallInfo fcinfo)
 			case PLPGSQL_DTYPE_ROW:
 				{
 					PLpgSQL_row *row = (PLpgSQL_row *) estate.datums[n];
-					TupleTableSlot *slot = (TupleTableSlot *) fcinfo->arg[i];
-					HeapTuple	tup;
-					TupleDesc	tupdesc;
 
 					if (!fcinfo->argnull[i])
 					{
-						Assert(slot != NULL);
-						tup = slot->val;
-						tupdesc = slot->ttc_tupleDescriptor;
-						exec_move_row(&estate, NULL, row, tup, tupdesc);
+						HeapTupleHeader td;
+						Oid			tupType;
+						int32		tupTypmod;
+						TupleDesc	tupdesc;
+						HeapTupleData tmptup;
+
+						td = DatumGetHeapTupleHeader(fcinfo->arg[i]);
+						/* Extract rowtype info and find a tupdesc */
+						tupType = HeapTupleHeaderGetTypeId(td);
+						tupTypmod = HeapTupleHeaderGetTypMod(td);
+						tupdesc = lookup_rowtype_tupdesc(tupType, tupTypmod);
+						/* Build a temporary HeapTuple control structure */
+						tmptup.t_len = HeapTupleHeaderGetDatumLength(td);
+						ItemPointerSetInvalid(&(tmptup.t_self));
+						tmptup.t_tableOid = InvalidOid;
+						tmptup.t_data = td;
+						exec_move_row(&estate, NULL, row, &tmptup, tupdesc);
 					}
 					else
 					{
@@ -371,11 +382,10 @@ plpgsql_exec_function(PLpgSQL_function * func, FunctionCallInfo fcinfo)
 	{
 		if (estate.retistuple)
 		{
-			/* Copy tuple to upper executor memory */
-			/* Here we need to return a TupleTableSlot not just a tuple */
-			estate.retval = (Datum)
-				SPI_copytupleintoslot((HeapTuple) (estate.retval),
-									  estate.rettupdesc);
+			/* Copy tuple to upper executor memory, as a tuple Datum */
+			estate.retval =
+				PointerGetDatum(SPI_returntuple((HeapTuple) (estate.retval),
+												estate.rettupdesc));
 		}
 		else
 		{

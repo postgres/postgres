@@ -9,13 +9,14 @@
  * Portions Copyright (c) 1996-2003, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/include/utils/typcache.h,v 1.2 2003/11/29 22:41:16 pgsql Exp $
+ * $PostgreSQL: pgsql/src/include/utils/typcache.h,v 1.3 2004/04/01 21:28:46 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
 #ifndef TYPCACHE_H
 #define TYPCACHE_H
 
+#include "access/tupdesc.h"
 #include "fmgr.h"
 
 
@@ -28,6 +29,8 @@ typedef struct TypeCacheEntry
 	int16		typlen;
 	bool		typbyval;
 	char		typalign;
+	char		typtype;
+	Oid			typrelid;
 
 	/*
 	 * Information obtained from opclass entries
@@ -51,6 +54,13 @@ typedef struct TypeCacheEntry
 	 */
 	FmgrInfo	eq_opr_finfo;
 	FmgrInfo	cmp_proc_finfo;
+
+	/*
+	 * Tuple descriptor if it's a composite type (row type).  NULL if not
+	 * composite or information hasn't yet been requested.  (NOTE: this
+	 * is actually just a link to information maintained by relcache.c.)
+	 */
+	TupleDesc	tupDesc;
 } TypeCacheEntry;
 
 /* Bit flags to indicate which fields a given caller needs to have set */
@@ -60,7 +70,14 @@ typedef struct TypeCacheEntry
 #define TYPECACHE_CMP_PROC			0x0008
 #define TYPECACHE_EQ_OPR_FINFO		0x0010
 #define TYPECACHE_CMP_PROC_FINFO	0x0020
+#define TYPECACHE_TUPDESC			0x0040
 
 extern TypeCacheEntry *lookup_type_cache(Oid type_id, int flags);
+
+extern TupleDesc lookup_rowtype_tupdesc(Oid type_id, int32 typmod);
+
+extern void assign_record_type_typmod(TupleDesc tupDesc);
+
+extern void flush_rowtype_cache(Oid type_id);
 
 #endif   /* TYPCACHE_H */

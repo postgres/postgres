@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/executor/functions.c,v 1.78 2004/03/21 22:29:11 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/executor/functions.c,v 1.79 2004/04/01 21:28:44 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -24,8 +24,10 @@
 #include "tcop/tcopprot.h"
 #include "tcop/utility.h"
 #include "utils/builtins.h"
+#include "utils/datum.h"
 #include "utils/lsyscache.h"
 #include "utils/syscache.h"
+#include "utils/typcache.h"
 
 
 /*
@@ -60,10 +62,6 @@ typedef struct
 	bool		typbyval;		/* true if return type is pass by value */
 	bool		returnsTuple;	/* true if return type is a tuple */
 	bool		shutdown_reg;	/* true if registered shutdown callback */
-
-	TupleTableSlot *funcSlot;	/* if one result we need to copy it before
-								 * we end execution of the function and
-								 * free stuff */
 
 	ParamListInfo paramLI;		/* Param list representing current args */
 
@@ -196,34 +194,9 @@ init_sql_fcache(FmgrInfo *finfo)
 	 * get the type length and by-value flag from the type tuple
 	 */
 	fcache->typlen = typeStruct->typlen;
-
-	if (typeStruct->typtype != 'c' && rettype != RECORDOID)
-	{
-		/* The return type is not a composite type, so just use byval */
-		fcache->typbyval = typeStruct->typbyval;
-		fcache->returnsTuple = false;
-	}
-	else
-	{
-		/*
-		 * This is a hack.	We assume here that any function returning a
-		 * tuple returns it by reference.  This needs to be fixed, since
-		 * actually the mechanism isn't quite like return-by-reference.
-		 */
-		fcache->typbyval = false;
-		fcache->returnsTuple = true;
-	}
-
-	/*
-	 * If we are returning exactly one result then we have to copy tuples
-	 * and by reference results because we have to end the execution
-	 * before we return the results.  When you do this everything
-	 * allocated by the executor (i.e. slots and tuples) is freed.
-	 */
-	if (!finfo->fn_retset && !fcache->typbyval)
-		fcache->funcSlot = MakeTupleTableSlot();
-	else
-		fcache->funcSlot = NULL;
+	fcache->typbyval = typeStruct->typbyval;
+	fcache->returnsTuple = (typeStruct->typtype == 'c' ||
+							rettype == RECORDOID);
 
 	/*
 	 * Parse and plan the queries.	We need the argument type info to pass
@@ -366,39 +339,6 @@ postquel_sub_params(SQLFunctionCachePtr fcache,
 	fcache->paramLI = paramLI;
 }
 
-static TupleTableSlot *
-copy_function_result(SQLFunctionCachePtr fcache,
-					 TupleTableSlot *resultSlot)
-{
-	TupleTableSlot *funcSlot;
-	TupleDesc	resultTd;
-	HeapTuple	resultTuple;
-	HeapTuple	newTuple;
-
-	Assert(!TupIsNull(resultSlot));
-	resultTuple = resultSlot->val;
-
-	funcSlot = fcache->funcSlot;
-
-	if (funcSlot == NULL)
-		return resultSlot;		/* no need to copy result */
-
-	/*
-	 * If first time through, we have to initialize the funcSlot's tuple
-	 * descriptor.
-	 */
-	if (funcSlot->ttc_tupleDescriptor == NULL)
-	{
-		resultTd = CreateTupleDescCopy(resultSlot->ttc_tupleDescriptor);
-		ExecSetSlotDescriptor(funcSlot, resultTd, true);
-		ExecSetSlotDescriptorIsNew(funcSlot, true);
-	}
-
-	newTuple = heap_copytuple(resultTuple);
-
-	return ExecStoreTuple(newTuple, funcSlot, InvalidBuffer, true);
-}
-
 static Datum
 postquel_execute(execution_state *es,
 				 FunctionCallInfo fcinfo,
@@ -429,43 +369,51 @@ postquel_execute(execution_state *es,
 
 	if (LAST_POSTQUEL_COMMAND(es))
 	{
-		TupleTableSlot *resSlot;
-
 		/*
-		 * Copy the result.  copy_function_result is smart enough to do
-		 * nothing when no action is called for.  This helps reduce the
-		 * logic and code redundancy here.
+		 * Set up to return the function value.
 		 */
-		resSlot = copy_function_result(fcache, slot);
+		HeapTuple	tup = slot->val;
+		TupleDesc	tupDesc = slot->ttc_tupleDescriptor;
 
-		/*
-		 * If we are supposed to return a tuple, we return the tuple slot
-		 * pointer converted to Datum.	If we are supposed to return a
-		 * simple value, then project out the first attribute of the
-		 * result tuple (ie, take the first result column of the final
-		 * SELECT).
-		 */
 		if (fcache->returnsTuple)
 		{
 			/*
+			 * We are returning the whole tuple, so copy it into current
+			 * execution context and make sure it is a valid Datum.
+			 *
 			 * XXX do we need to remove junk attrs from the result tuple?
 			 * Probably OK to leave them, as long as they are at the end.
 			 */
-			value = PointerGetDatum(resSlot);
+			HeapTupleHeader	dtup;
+
+			dtup = (HeapTupleHeader) palloc(tup->t_len);
+			memcpy((char *) dtup, (char *) tup->t_data, tup->t_len);
+
+			/*
+			 * For RECORD results, make sure a typmod has been assigned.
+			 */
+			if (tupDesc->tdtypeid == RECORDOID &&
+				tupDesc->tdtypmod < 0)
+				assign_record_type_typmod(tupDesc);
+
+			HeapTupleHeaderSetDatumLength(dtup, tup->t_len);
+			HeapTupleHeaderSetTypeId(dtup, tupDesc->tdtypeid);
+			HeapTupleHeaderSetTypMod(dtup, tupDesc->tdtypmod);
+
+			value = PointerGetDatum(dtup);
 			fcinfo->isnull = false;
 		}
 		else
 		{
-			value = heap_getattr(resSlot->val,
-								 1,
-								 resSlot->ttc_tupleDescriptor,
-								 &(fcinfo->isnull));
-
 			/*
-			 * Note: if result type is pass-by-reference then we are
-			 * returning a pointer into the tuple copied by
-			 * copy_function_result.  This is OK.
+			 * Returning a scalar, which we have to extract from the
+			 * first column of the SELECT result, and then copy into current
+			 * execution context if needed.
 			 */
+			value = heap_getattr(tup, 1, tupDesc, &(fcinfo->isnull));
+
+			if (!fcinfo->isnull)
+				value = datumCopy(value, fcache->typbyval, fcache->typlen);
 		}
 
 		/*

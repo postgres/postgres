@@ -8,7 +8,7 @@
  * Portions Copyright (c) 1996-2003, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/include/catalog/pg_type.h,v 1.151 2004/03/19 18:58:07 tgl Exp $
+ * $PostgreSQL: pgsql/src/include/catalog/pg_type.h,v 1.152 2004/04/01 21:28:45 tgl Exp $
  *
  * NOTES
  *	  the genbki.sh script reads this file and generates .bki
@@ -268,7 +268,7 @@ DATA(insert OID = 21 (	int2	   PGNSP PGUID	2 t b t \054 0	 0 int2in int2out int2
 DESCR("-32 thousand to 32 thousand, 2-byte storage");
 #define INT2OID			21
 
-DATA(insert OID = 22 (	int2vector PGNSP PGUID INDEX_MAX_KEYS*2 f b t \054 0  21 int2vectorin int2vectorout int2vectorrecv int2vectorsend - i p f 0 -1 0 _null_ _null_ ));
+DATA(insert OID = 22 (	int2vector PGNSP PGUID INDEX_MAX_KEYS*2 f b t \054 0  21 int2vectorin int2vectorout int2vectorrecv int2vectorsend - s p f 0 -1 0 _null_ _null_ ));
 DESCR("array of INDEX_MAX_KEYS int2 integers, used in system tables");
 #define INT2VECTOROID	22
 
@@ -288,7 +288,7 @@ DATA(insert OID = 26 (	oid		   PGNSP PGUID	4 t b t \054 0	 0 oidin oidout oidrec
 DESCR("object identifier(oid), maximum 4 billion");
 #define OIDOID			26
 
-DATA(insert OID = 27 (	tid		   PGNSP PGUID	6 f b t \054 0	 0 tidin tidout tidrecv tidsend - i p f 0 -1 0 _null_ _null_ ));
+DATA(insert OID = 27 (	tid		   PGNSP PGUID	6 f b t \054 0	 0 tidin tidout tidrecv tidsend - s p f 0 -1 0 _null_ _null_ ));
 DESCR("(Block, offset), physical location of tuple");
 #define TIDOID		27
 
@@ -307,13 +307,13 @@ DESCR("array of INDEX_MAX_KEYS oids, used in system tables");
 DATA(insert OID = 32 (	SET		   PGNSP PGUID -1 f b t \054 0	 0 unknownin unknownout - - - i p f 0 -1 0 _null_ _null_ ));
 DESCR("set of tuples");
 
-DATA(insert OID = 71 (	pg_type		 PGNSP PGUID 4 t c t \054 1247 0 record_in record_out record_recv record_send - i p f 0 -1 0 _null_ _null_ ));
-DATA(insert OID = 75 (	pg_attribute PGNSP PGUID 4 t c t \054 1249 0 record_in record_out record_recv record_send - i p f 0 -1 0 _null_ _null_ ));
-DATA(insert OID = 81 (	pg_proc		 PGNSP PGUID 4 t c t \054 1255 0 record_in record_out record_recv record_send - i p f 0 -1 0 _null_ _null_ ));
-DATA(insert OID = 83 (	pg_class	 PGNSP PGUID 4 t c t \054 1259 0 record_in record_out record_recv record_send - i p f 0 -1 0 _null_ _null_ ));
-DATA(insert OID = 86 (	pg_shadow	 PGNSP PGUID 4 t c t \054 1260 0 record_in record_out record_recv record_send - i p f 0 -1 0 _null_ _null_ ));
-DATA(insert OID = 87 (	pg_group	 PGNSP PGUID 4 t c t \054 1261 0 record_in record_out record_recv record_send - i p f 0 -1 0 _null_ _null_ ));
-DATA(insert OID = 88 (	pg_database  PGNSP PGUID 4 t c t \054 1262 0 record_in record_out record_recv record_send - i p f 0 -1 0 _null_ _null_ ));
+DATA(insert OID = 71 (	pg_type		 PGNSP PGUID -1 f c t \054 1247 0 record_in record_out record_recv record_send - d x f 0 -1 0 _null_ _null_ ));
+DATA(insert OID = 75 (	pg_attribute PGNSP PGUID -1 f c t \054 1249 0 record_in record_out record_recv record_send - d x f 0 -1 0 _null_ _null_ ));
+DATA(insert OID = 81 (	pg_proc		 PGNSP PGUID -1 f c t \054 1255 0 record_in record_out record_recv record_send - d x f 0 -1 0 _null_ _null_ ));
+DATA(insert OID = 83 (	pg_class	 PGNSP PGUID -1 f c t \054 1259 0 record_in record_out record_recv record_send - d x f 0 -1 0 _null_ _null_ ));
+DATA(insert OID = 86 (	pg_shadow	 PGNSP PGUID -1 f c t \054 1260 0 record_in record_out record_recv record_send - d x f 0 -1 0 _null_ _null_ ));
+DATA(insert OID = 87 (	pg_group	 PGNSP PGUID -1 f c t \054 1261 0 record_in record_out record_recv record_send - d x f 0 -1 0 _null_ _null_ ));
+DATA(insert OID = 88 (	pg_database  PGNSP PGUID -1 f c t \054 1262 0 record_in record_out record_recv record_send - d x f 0 -1 0 _null_ _null_ ));
 
 /* OIDS 100 - 199 */
 
@@ -526,7 +526,7 @@ DATA(insert OID = 2211 ( _regtype	   PGNSP PGUID -1 f b t \054 0 2206 array_in a
  * argument and result types (if supported by the function's implementation
  * language).
  */
-DATA(insert OID = 2249 ( record			PGNSP PGUID  4 t p t \054 0 0 record_in record_out record_recv record_send - i p f 0 -1 0 _null_ _null_ ));
+DATA(insert OID = 2249 ( record			PGNSP PGUID -1 f p t \054 0 0 record_in record_out record_recv record_send - d x f 0 -1 0 _null_ _null_ ));
 #define RECORDOID		2249
 DATA(insert OID = 2275 ( cstring		PGNSP PGUID -2 f p t \054 0 0 cstring_in cstring_out cstring_recv cstring_send - c p f 0 -1 0 _null_ _null_ ));
 #define CSTRINGOID		2275

@@ -187,7 +187,6 @@ setup_firstcall(FuncCallContext *funcctx, Oid prsid)
 		);
 	funcctx->user_fctx = (void *) st;
 	tupdesc = RelationNameGetTupleDesc("tokentype");
-	funcctx->slot = TupleDescGetSlot(tupdesc);
 	funcctx->attinmeta = TupleDescGetAttInMetadata(tupdesc);
 	MemoryContextSwitchTo(oldcontext);
 }
@@ -211,7 +210,7 @@ process_call(FuncCallContext *funcctx)
 		values[2] = st->list[st->cur].descr;
 
 		tuple = BuildTupleFromCStrings(funcctx->attinmeta, values);
-		result = TupleGetDatum(funcctx->slot, tuple);
+		result = HeapTupleGetDatum(tuple);
 
 		pfree(values[1]);
 		pfree(values[2]);
@@ -391,7 +390,6 @@ prs_setup_firstcall(FuncCallContext *funcctx, int prsid, text *txt)
 
 	funcctx->user_fctx = (void *) st;
 	tupdesc = RelationNameGetTupleDesc("tokenout");
-	funcctx->slot = TupleDescGetSlot(tupdesc);
 	funcctx->attinmeta = TupleDescGetAttInMetadata(tupdesc);
 	MemoryContextSwitchTo(oldcontext);
 }
@@ -413,7 +411,7 @@ prs_process_call(FuncCallContext *funcctx)
 		sprintf(tid, "%d", st->list[st->cur].type);
 		values[1] = st->list[st->cur].lexem;
 		tuple = BuildTupleFromCStrings(funcctx->attinmeta, values);
-		result = TupleGetDatum(funcctx->slot, tuple);
+		result = HeapTupleGetDatum(tuple);
 
 		pfree(values[1]);
 		st->cur++;

@@ -1,5 +1,5 @@
 /*
- * $PostgreSQL: pgsql/contrib/pgstattuple/pgstattuple.c,v 1.13 2003/11/29 19:51:35 pgsql Exp $
+ * $PostgreSQL: pgsql/contrib/pgstattuple/pgstattuple.c,v 1.14 2004/04/01 21:28:43 tgl Exp $
  *
  * Copyright (c) 2001,2002	Tatsuo Ishii
  *
@@ -111,7 +111,6 @@ pgstattuple_real(Relation rel)
 	uint64		free_space = 0; /* free/reusable space in bytes */
 	double		free_percent;	/* free/reusable space in % */
 	TupleDesc	tupdesc;
-	TupleTableSlot *slot;
 	AttInMetadata *attinmeta;
 	char	  **values;
 	int			i;
@@ -121,9 +120,6 @@ pgstattuple_real(Relation rel)
 	 * Build a tuple description for a pgstattupe_type tuple
 	 */
 	tupdesc = RelationNameGetTupleDesc(DUMMY_TUPLE);
-
-	/* allocate a slot for a tuple with this tupdesc */
-	slot = TupleDescGetSlot(tupdesc);
 
 	/*
 	 * Generate attribute metadata needed later to produce tuples from raw
@@ -192,7 +188,7 @@ pgstattuple_real(Relation rel)
 	}
 
 	/*
-	 * Prepare a values array for storage in our slot. This should be an
+	 * Prepare a values array for constructing the tuple. This should be an
 	 * array of C strings which will be processed later by the appropriate
 	 * "in" functions.
 	 */
@@ -214,7 +210,7 @@ pgstattuple_real(Relation rel)
 	tuple = BuildTupleFromCStrings(attinmeta, values);
 
 	/* make the tuple into a datum */
-	result = TupleGetDatum(slot, tuple);
+	result = HeapTupleGetDatum(tuple);
 
 	/* Clean up */
 	for (i = 0; i < NCOLUMNS; i++)

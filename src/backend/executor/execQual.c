@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/executor/execQual.c,v 1.157 2004/03/24 22:40:28 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/executor/execQual.c,v 1.158 2004/04/01 21:28:44 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -49,6 +49,7 @@
 #include "utils/array.h"
 #include "utils/builtins.h"
 #include "utils/lsyscache.h"
+#include "utils/typcache.h"
 
 
 /* static function decls */
@@ -110,7 +111,7 @@ static Datum ExecEvalCoerceToDomain(CoerceToDomainState *cstate,
 static Datum ExecEvalCoerceToDomainValue(ExprState *exprstate,
 										 ExprContext *econtext,
 										 bool *isNull, ExprDoneCond *isDone);
-static Datum ExecEvalFieldSelect(GenericExprState *fstate,
+static Datum ExecEvalFieldSelect(FieldSelectState *fstate,
 					ExprContext *econtext,
 					bool *isNull, ExprDoneCond *isDone);
 static Datum ExecEvalRelabelType(GenericExprState *exprstate,
@@ -420,16 +421,25 @@ ExecEvalVar(ExprState *exprstate, ExprContext *econtext,
 		*isDone = ExprSingleResult;
 
 	/*
-	 * get the slot we want
+	 * Get the slot and attribute number we want
+	 *
+	 * The asserts check that references to system attributes only appear
+	 * at the level of a relation scan; at higher levels, system attributes
+	 * must be treated as ordinary variables (since we no longer have access
+	 * to the original tuple).
 	 */
+	attnum = variable->varattno;
+
 	switch (variable->varno)
 	{
 		case INNER:				/* get the tuple from the inner node */
 			slot = econtext->ecxt_innertuple;
+			Assert(attnum > 0);
 			break;
 
 		case OUTER:				/* get the tuple from the outer node */
 			slot = econtext->ecxt_outertuple;
+			Assert(attnum > 0);
 			break;
 
 		default:				/* get the tuple from the relation being
@@ -443,8 +453,6 @@ ExecEvalVar(ExprState *exprstate, ExprContext *econtext,
 	 */
 	heapTuple = slot->val;
 	tuple_type = slot->ttc_tupleDescriptor;
-
-	attnum = variable->varattno;
 
 	/*
 	 * Some checks that are only applied for user attribute numbers
@@ -479,38 +487,6 @@ ExecEvalVar(ExprState *exprstate, ExprContext *econtext,
 		 * has been zeroed.
 		 */
 		Assert(variable->vartype == tuple_type->attrs[attnum - 1]->atttypid);
-	}
-
-	/*
-	 * If the attribute number is invalid, then we are supposed to return
-	 * the entire tuple; we give back a whole slot so that callers know
-	 * what the tuple looks like.
-	 *
-	 * XXX this is a horrid crock: since the pointer to the slot might live
-	 * longer than the current evaluation context, we are forced to copy
-	 * the tuple and slot into a long-lived context --- we use the
-	 * econtext's per-query memory which should be safe enough.  This
-	 * represents a serious memory leak if many such tuples are processed
-	 * in one command, however.  We ought to redesign the representation
-	 * of whole-tuple datums so that this is not necessary.
-	 *
-	 * We assume it's OK to point to the existing tupleDescriptor, rather
-	 * than copy that too.
-	 */
-	if (attnum == InvalidAttrNumber)
-	{
-		MemoryContext oldContext;
-		TupleTableSlot *tempSlot;
-		HeapTuple	tup;
-
-		oldContext = MemoryContextSwitchTo(econtext->ecxt_per_query_memory);
-		tempSlot = MakeTupleTableSlot();
-		tup = heap_copytuple(heapTuple);
-		ExecStoreTuple(tup, tempSlot, InvalidBuffer, true);
-		ExecSetSlotDescriptor(tempSlot, tuple_type, false);
-		MemoryContextSwitchTo(oldContext);
-		*isNull = false;
-		return PointerGetDatum(tempSlot);
 	}
 
 	result = heap_getattr(heapTuple,	/* tuple containing attribute */
@@ -656,17 +632,23 @@ ExecEvalParam(ExprState *exprstate, ExprContext *econtext,
  *		GetAttributeByName
  *		GetAttributeByNum
  *
- *		These are functions which return the value of the
- *		named attribute out of the tuple from the arg slot.  User defined
+ *		These functions return the value of the requested attribute
+ *		out of the given tuple Datum.
  *		C functions which take a tuple as an argument are expected
- *		to use this.  Ex: overpaid(EMP) might call GetAttributeByNum().
+ *		to use these.  Ex: overpaid(EMP) might call GetAttributeByNum().
+ *		Note: these are actually rather slow because they do a typcache
+ *		lookup on each call.
  */
 Datum
-GetAttributeByNum(TupleTableSlot *slot,
+GetAttributeByNum(HeapTupleHeader tuple,
 				  AttrNumber attrno,
 				  bool *isNull)
 {
-	Datum		retval;
+	Datum		result;
+	Oid			tupType;
+	int32		tupTypmod;
+	TupleDesc	tupDesc;
+	HeapTupleData tmptup;
 
 	if (!AttributeNumberIsValid(attrno))
 		elog(ERROR, "invalid attribute number %d", attrno);
@@ -674,29 +656,43 @@ GetAttributeByNum(TupleTableSlot *slot,
 	if (isNull == NULL)
 		elog(ERROR, "a NULL isNull pointer was passed");
 
-	if (TupIsNull(slot))
+	if (tuple == NULL)
 	{
+		/* Kinda bogus but compatible with old behavior... */
 		*isNull = true;
 		return (Datum) 0;
 	}
 
-	retval = heap_getattr(slot->val,
-						  attrno,
-						  slot->ttc_tupleDescriptor,
-						  isNull);
-	if (*isNull)
-		return (Datum) 0;
+	tupType = HeapTupleHeaderGetTypeId(tuple);
+	tupTypmod = HeapTupleHeaderGetTypMod(tuple);
+	tupDesc = lookup_rowtype_tupdesc(tupType, tupTypmod);
 
-	return retval;
+	/*
+	 * heap_getattr needs a HeapTuple not a bare HeapTupleHeader.  We set
+	 * all the fields in the struct just in case user tries to inspect
+	 * system columns.
+	 */
+	tmptup.t_len = HeapTupleHeaderGetDatumLength(tuple);
+	ItemPointerSetInvalid(&(tmptup.t_self));
+	tmptup.t_tableOid = InvalidOid;
+	tmptup.t_data = tuple;
+
+	result = heap_getattr(&tmptup,
+						  attrno,
+						  tupDesc,
+						  isNull);
+	return result;
 }
 
 Datum
-GetAttributeByName(TupleTableSlot *slot, char *attname, bool *isNull)
+GetAttributeByName(HeapTupleHeader tuple, const char *attname, bool *isNull)
 {
 	AttrNumber	attrno;
-	TupleDesc	tupdesc;
-	Datum		retval;
-	int			natts;
+	Datum		result;
+	Oid			tupType;
+	int32		tupTypmod;
+	TupleDesc	tupDesc;
+	HeapTupleData tmptup;
 	int			i;
 
 	if (attname == NULL)
@@ -705,21 +701,23 @@ GetAttributeByName(TupleTableSlot *slot, char *attname, bool *isNull)
 	if (isNull == NULL)
 		elog(ERROR, "a NULL isNull pointer was passed");
 
-	if (TupIsNull(slot))
+	if (tuple == NULL)
 	{
+		/* Kinda bogus but compatible with old behavior... */
 		*isNull = true;
 		return (Datum) 0;
 	}
 
-	tupdesc = slot->ttc_tupleDescriptor;
-	natts = slot->val->t_data->t_natts;
+	tupType = HeapTupleHeaderGetTypeId(tuple);
+	tupTypmod = HeapTupleHeaderGetTypMod(tuple);
+	tupDesc = lookup_rowtype_tupdesc(tupType, tupTypmod);
 
 	attrno = InvalidAttrNumber;
-	for (i = 0; i < tupdesc->natts; i++)
+	for (i = 0; i < tupDesc->natts; i++)
 	{
-		if (namestrcmp(&(tupdesc->attrs[i]->attname), attname) == 0)
+		if (namestrcmp(&(tupDesc->attrs[i]->attname), attname) == 0)
 		{
-			attrno = tupdesc->attrs[i]->attnum;
+			attrno = tupDesc->attrs[i]->attnum;
 			break;
 		}
 	}
@@ -727,14 +725,21 @@ GetAttributeByName(TupleTableSlot *slot, char *attname, bool *isNull)
 	if (attrno == InvalidAttrNumber)
 		elog(ERROR, "attribute \"%s\" does not exist", attname);
 
-	retval = heap_getattr(slot->val,
-						  attrno,
-						  tupdesc,
-						  isNull);
-	if (*isNull)
-		return (Datum) 0;
+	/*
+	 * heap_getattr needs a HeapTuple not a bare HeapTupleHeader.  We set
+	 * all the fields in the struct just in case user tries to inspect
+	 * system columns.
+	 */
+	tmptup.t_len = HeapTupleHeaderGetDatumLength(tuple);
+	ItemPointerSetInvalid(&(tmptup.t_self));
+	tmptup.t_tableOid = InvalidOid;
+	tmptup.t_data = tuple;
 
-	return retval;
+	result = heap_getattr(&tmptup,
+						  attrno,
+						  tupDesc,
+						  isNull);
+	return result;
 }
 
 /*
@@ -1133,14 +1138,14 @@ ExecMakeTableFunctionResult(ExprState *funcexpr,
 	Tuplestorestate *tupstore = NULL;
 	TupleDesc	tupdesc = NULL;
 	Oid			funcrettype;
+	bool		returnsTuple;
 	FunctionCallInfoData fcinfo;
 	ReturnSetInfo rsinfo;
+	HeapTupleData tmptup;
 	MemoryContext callerContext;
 	MemoryContext oldcontext;
-	TupleTableSlot *slot;
 	bool		direct_function_call;
 	bool		first_time = true;
-	bool		returnsTuple = false;
 
 	/*
 	 * Normally the passed expression tree will be a FuncExprState, since
@@ -1216,6 +1221,9 @@ ExecMakeTableFunctionResult(ExprState *funcexpr,
 
 	funcrettype = exprType((Node *) funcexpr->expr);
 
+	returnsTuple = (funcrettype == RECORDOID ||
+					get_typtype(funcrettype) == 'c');
+
 	/*
 	 * Prepare a resultinfo node for communication.  We always do this
 	 * even if not expecting a set result, so that we can pass
@@ -1282,31 +1290,34 @@ ExecMakeTableFunctionResult(ExprState *funcexpr,
 				break;
 
 			/*
+			 * Can't do anything useful with NULL rowtype values.  Currently
+			 * we raise an error, but another alternative is to just ignore
+			 * the result and "continue" to get another row.
+			 */
+			if (returnsTuple && fcinfo.isnull)
+				ereport(ERROR,
+						(errcode(ERRCODE_NULL_VALUE_NOT_ALLOWED),
+						 errmsg("function returning row cannot return null value")));
+
+			/*
 			 * If first time through, build tupdesc and tuplestore for
 			 * result
 			 */
 			if (first_time)
 			{
 				oldcontext = MemoryContextSwitchTo(econtext->ecxt_per_query_memory);
-				if (funcrettype == RECORDOID ||
-					get_typtype(funcrettype) == 'c')
+				if (returnsTuple)
 				{
 					/*
-					 * Composite type, so function should have returned a
-					 * TupleTableSlot; use its descriptor
+					 * Use the type info embedded in the rowtype Datum to
+					 * look up the needed tupdesc.  Make a copy for the query.
 					 */
-					slot = (TupleTableSlot *) DatumGetPointer(result);
-					if (fcinfo.isnull || !slot)
-						ereport(ERROR,
-								(errcode(ERRCODE_NULL_VALUE_NOT_ALLOWED),
-								 errmsg("function returning row cannot return null value")));
-					if (!IsA(slot, TupleTableSlot) ||
-						!slot->ttc_tupleDescriptor)
-						ereport(ERROR,
-								(errcode(ERRCODE_DATATYPE_MISMATCH),
-								 errmsg("function returning row did not return a valid tuple slot")));
-					tupdesc = CreateTupleDescCopy(slot->ttc_tupleDescriptor);
-					returnsTuple = true;
+					HeapTupleHeader	td;
+
+					td = DatumGetHeapTupleHeader(result);
+					tupdesc = lookup_rowtype_tupdesc(HeapTupleHeaderGetTypeId(td),
+													 HeapTupleHeaderGetTypMod(td));
+					tupdesc = CreateTupleDescCopy(tupdesc);
 				}
 				else
 				{
@@ -1319,8 +1330,7 @@ ExecMakeTableFunctionResult(ExprState *funcexpr,
 									   "column",
 									   funcrettype,
 									   -1,
-									   0,
-									   false);
+									   0);
 				}
 				tupstore = tuplestore_begin_heap(true, false, work_mem);
 				MemoryContextSwitchTo(oldcontext);
@@ -1333,15 +1343,17 @@ ExecMakeTableFunctionResult(ExprState *funcexpr,
 			 */
 			if (returnsTuple)
 			{
-				slot = (TupleTableSlot *) DatumGetPointer(result);
-				if (fcinfo.isnull ||
-					!slot ||
-					!IsA(slot, TupleTableSlot) ||
-					TupIsNull(slot))
-					ereport(ERROR,
-							(errcode(ERRCODE_NULL_VALUE_NOT_ALLOWED),
-							 errmsg("function returning row cannot return null value")));
-				tuple = slot->val;
+				HeapTupleHeader	td;
+
+				td = DatumGetHeapTupleHeader(result);
+
+				/*
+				 * tuplestore_puttuple needs a HeapTuple not a bare
+				 * HeapTupleHeader, but it doesn't need all the fields.
+				 */
+				tmptup.t_len = HeapTupleHeaderGetDatumLength(td);
+				tmptup.t_data = td;
+				tuple = &tmptup;
 			}
 			else
 			{
@@ -2415,26 +2427,62 @@ ExecEvalCoerceToDomainValue(ExprState *exprstate,
  * ----------------------------------------------------------------
  */
 static Datum
-ExecEvalFieldSelect(GenericExprState *fstate,
+ExecEvalFieldSelect(FieldSelectState *fstate,
 					ExprContext *econtext,
 					bool *isNull,
 					ExprDoneCond *isDone)
 {
 	FieldSelect *fselect = (FieldSelect *) fstate->xprstate.expr;
 	Datum		result;
-	TupleTableSlot *resSlot;
+	Datum		tupDatum;
+	HeapTupleHeader tuple;
+	Oid			tupType;
+	int32		tupTypmod;
+	TupleDesc	tupDesc;
+	HeapTupleData tmptup;
 
-	result = ExecEvalExpr(fstate->arg, econtext, isNull, isDone);
+	tupDatum = ExecEvalExpr(fstate->arg, econtext, isNull, isDone);
 
 	/* this test covers the isDone exception too: */
 	if (*isNull)
-		return result;
+		return tupDatum;
 
-	resSlot = (TupleTableSlot *) DatumGetPointer(result);
-	Assert(resSlot != NULL && IsA(resSlot, TupleTableSlot));
-	result = heap_getattr(resSlot->val,
+	tuple = DatumGetHeapTupleHeader(tupDatum);
+
+	tupType = HeapTupleHeaderGetTypeId(tuple);
+	tupTypmod = HeapTupleHeaderGetTypMod(tuple);
+
+	/* Lookup tupdesc if first time through or if type changes */
+	tupDesc = fstate->argdesc;
+	if (tupDesc == NULL ||
+		tupType != tupDesc->tdtypeid ||
+		tupTypmod != tupDesc->tdtypmod)
+	{
+		MemoryContext oldcontext;
+
+		tupDesc = lookup_rowtype_tupdesc(tupType, tupTypmod);
+		/* Copy the tupdesc into query storage for safety */
+		oldcontext = MemoryContextSwitchTo(econtext->ecxt_per_query_memory);
+		tupDesc = CreateTupleDescCopy(tupDesc);
+		if (fstate->argdesc)
+			FreeTupleDesc(fstate->argdesc);
+		fstate->argdesc = tupDesc;
+		MemoryContextSwitchTo(oldcontext);
+	}
+
+	/*
+	 * heap_getattr needs a HeapTuple not a bare HeapTupleHeader.  We set
+	 * all the fields in the struct just in case user tries to inspect
+	 * system columns.
+	 */
+	tmptup.t_len = HeapTupleHeaderGetDatumLength(tuple);
+	ItemPointerSetInvalid(&(tmptup.t_self));
+	tmptup.t_tableOid = InvalidOid;
+	tmptup.t_data = tuple;
+
+	result = heap_getattr(&tmptup,
 						  fselect->fieldnum,
-						  resSlot->ttc_tupleDescriptor,
+						  tupDesc,
 						  isNull);
 	return result;
 }
@@ -2703,11 +2751,12 @@ ExecInitExpr(Expr *node, PlanState *parent)
 		case T_FieldSelect:
 			{
 				FieldSelect *fselect = (FieldSelect *) node;
-				GenericExprState *gstate = makeNode(GenericExprState);
+				FieldSelectState *fstate = makeNode(FieldSelectState);
 
-				gstate->xprstate.evalfunc = (ExprStateEvalFunc) ExecEvalFieldSelect;
-				gstate->arg = ExecInitExpr(fselect->arg, parent);
-				state = (ExprState *) gstate;
+				fstate->xprstate.evalfunc = (ExprStateEvalFunc) ExecEvalFieldSelect;
+				fstate->arg = ExecInitExpr(fselect->arg, parent);
+				fstate->argdesc = NULL;
+				state = (ExprState *) fstate;
 			}
 			break;
 		case T_RelabelType:
@@ -3088,8 +3137,6 @@ ExecTargetList(List *targetlist,
 	List	   *tl;
 	bool		isNull;
 	bool		haveDoneSets;
-	static struct tupleDesc NullTupleDesc;		/* we assume this inits to
-												 * zeroes */
 
 	/*
 	 * debugging stuff
@@ -3106,13 +3153,8 @@ ExecTargetList(List *targetlist,
 	/*
 	 * There used to be some klugy and demonstrably broken code here that
 	 * special-cased the situation where targetlist == NIL.  Now we just
-	 * fall through and return an empty-but-valid tuple.  We do, however,
-	 * have to cope with the possibility that targettype is NULL ---
-	 * heap_formtuple won't like that, so pass a dummy descriptor with
-	 * natts = 0 to deal with it.
+	 * fall through and return an empty-but-valid tuple.
 	 */
-	if (targettype == NULL)
-		targettype = &NullTupleDesc;
 
 	/*
 	 * evaluate all the expressions in the target list
@@ -3285,8 +3327,8 @@ ExecProject(ProjectionInfo *projInfo, ExprDoneCond *isDone)
 	/*
 	 * store the tuple in the projection slot and return the slot.
 	 */
-	return ExecStoreTuple(newTuple,		/* tuple to store */
-						  slot, /* slot to store in */
-						  InvalidBuffer,		/* tuple has no buffer */
+	return ExecStoreTuple(newTuple,			/* tuple to store */
+						  slot,				/* slot to store in */
+						  InvalidBuffer,	/* tuple has no buffer */
 						  true);
 }

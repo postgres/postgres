@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/executor/nodeFunctionscan.c,v 1.23 2003/11/29 19:51:48 pgsql Exp $
+ *	  $PostgreSQL: pgsql/src/backend/executor/nodeFunctionscan.c,v 1.24 2004/04/01 21:28:44 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -32,6 +32,7 @@
 #include "parser/parse_expr.h"
 #include "parser/parse_type.h"
 #include "utils/lsyscache.h"
+#include "utils/typcache.h"
 
 
 static TupleTableSlot *FunctionNext(FunctionScanState *node);
@@ -194,25 +195,12 @@ ExecInitFunctionScan(FunctionScan *node, EState *estate)
 
 	if (functyptype == 'c')
 	{
-		/*
-		 * Composite data type, i.e. a table's row type
-		 */
-		Oid			funcrelid;
-		Relation	rel;
-
-		funcrelid = typeidTypeRelid(funcrettype);
-		if (!OidIsValid(funcrelid))
-			elog(ERROR, "invalid typrelid for complex type %u",
-				 funcrettype);
-		rel = relation_open(funcrelid, AccessShareLock);
-		tupdesc = CreateTupleDescCopy(RelationGetDescr(rel));
-		relation_close(rel, AccessShareLock);
+		/* Composite data type, e.g. a table's row type */
+		tupdesc = CreateTupleDescCopy(lookup_rowtype_tupdesc(funcrettype, -1));
 	}
 	else if (functyptype == 'b' || functyptype == 'd')
 	{
-		/*
-		 * Must be a base data type, i.e. scalar
-		 */
+		/* Must be a base data type, i.e. scalar */
 		char	   *attname = strVal(lfirst(rte->eref->colnames));
 
 		tupdesc = CreateTemplateTupleDesc(1, false);
@@ -221,14 +209,11 @@ ExecInitFunctionScan(FunctionScan *node, EState *estate)
 						   attname,
 						   funcrettype,
 						   -1,
-						   0,
-						   false);
+						   0);
 	}
-	else if (functyptype == 'p' && funcrettype == RECORDOID)
+	else if (funcrettype == RECORDOID)
 	{
-		/*
-		 * Must be a pseudo type, i.e. record
-		 */
+		/* Must be a pseudo type, i.e. record */
 		tupdesc = BuildDescForRelation(rte->coldeflist);
 	}
 	else
@@ -236,6 +221,14 @@ ExecInitFunctionScan(FunctionScan *node, EState *estate)
 		/* crummy error message, but parser should have caught this */
 		elog(ERROR, "function in FROM has unsupported return type");
 	}
+
+	/*
+	 * For RECORD results, make sure a typmod has been assigned.  (The
+	 * function should do this for itself, but let's cover things in case
+	 * it doesn't.)
+	 */
+	if (tupdesc->tdtypeid == RECORDOID && tupdesc->tdtypmod < 0)
+		assign_record_type_typmod(tupdesc);
 
 	scanstate->tupdesc = tupdesc;
 	ExecSetSlotDescriptor(scanstate->ss.ss_ScanTupleSlot,

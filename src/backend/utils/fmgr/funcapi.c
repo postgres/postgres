@@ -7,7 +7,7 @@
  * Copyright (c) 2002-2003, PostgreSQL Global Development Group
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/utils/fmgr/funcapi.c,v 1.13 2003/12/19 00:02:11 joe Exp $
+ *	  $PostgreSQL: pgsql/src/backend/utils/fmgr/funcapi.c,v 1.14 2004/04/01 21:28:45 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -49,9 +49,8 @@ init_MultiFuncCall(PG_FUNCTION_ARGS)
 		 * Allocate suitably long-lived space and zero it
 		 */
 		retval = (FuncCallContext *)
-			MemoryContextAlloc(fcinfo->flinfo->fn_mcxt,
-							   sizeof(FuncCallContext));
-		MemSet(retval, 0, sizeof(FuncCallContext));
+			MemoryContextAllocZero(fcinfo->flinfo->fn_mcxt,
+								   sizeof(FuncCallContext));
 
 		/*
 		 * initialize the elements
@@ -61,6 +60,7 @@ init_MultiFuncCall(PG_FUNCTION_ARGS)
 		retval->slot = NULL;
 		retval->user_fctx = NULL;
 		retval->attinmeta = NULL;
+		retval->tuple_desc = NULL;
 		retval->multi_call_memory_ctx = fcinfo->flinfo->fn_mcxt;
 
 		/*
@@ -104,8 +104,11 @@ per_MultiFuncCall(PG_FUNCTION_ARGS)
 	 * FuncCallContext is pointing to it), but in most usage patterns the
 	 * tuples stored in it will be in the function's per-tuple context. So
 	 * at the beginning of each call, the Slot will hold a dangling
-	 * pointer to an already-recycled tuple.  We clear it out here.  (See
-	 * also the definition of TupleGetDatum() in funcapi.h!)
+	 * pointer to an already-recycled tuple.  We clear it out here.
+	 *
+	 * Note: use of retval->slot is obsolete as of 7.5, and we expect that
+	 * it will always be NULL.  This is just here for backwards compatibility
+	 * in case someone creates a slot anyway.
 	 */
 	if (retval->slot != NULL)
 		ExecClearTuple(retval->slot);

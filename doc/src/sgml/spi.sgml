@@ -1,5 +1,5 @@
 <!--
-$PostgreSQL: pgsql/doc/src/sgml/spi.sgml,v 1.33 2004/03/17 01:05:10 momjian Exp $
+$PostgreSQL: pgsql/doc/src/sgml/spi.sgml,v 1.34 2004/04/01 21:28:43 tgl Exp $
 -->
 
 <chapter id="spi">
@@ -1953,8 +1953,7 @@ char * SPI_getrelname(Relation <parameter>rel</parameter>)
    allocations made by <function>palloc</function>,
    <function>repalloc</function>, or SPI utility functions (except for
    <function>SPI_copytuple</function>,
-   <function>SPI_copytupledesc</function>,
-   <function>SPI_copytupleintoslot</function>,
+   <function>SPI_returntuple</function>,
    <function>SPI_modifytuple</function>, and
    <function>SPI_palloc</function>) are made in this context.  When a
    procedure disconnects from the SPI manager (via
@@ -2169,7 +2168,9 @@ HeapTuple SPI_copytuple(HeapTuple <parameter>row</parameter>)
 
   <para>
    <function>SPI_copytuple</function> makes a copy of a row in the
-   upper executor context.
+   upper executor context.  This is normally used to return a modified
+   row from a trigger.  In a function declared to return a composite
+   type, use <function>SPI_returntuple</function> instead.
   </para>
  </refsect1>
 
@@ -2200,21 +2201,21 @@ HeapTuple SPI_copytuple(HeapTuple <parameter>row</parameter>)
 
 <!-- *********************************************** -->
 
-<refentry id="spi-spi-copytupledesc">
+<refentry id="spi-spi-returntuple">
  <refmeta>
-  <refentrytitle>SPI_copytupledesc</refentrytitle>
+  <refentrytitle>SPI_returntuple</refentrytitle>
  </refmeta>
 
  <refnamediv>
-  <refname>SPI_copytupledesc</refname>
-  <refpurpose>make a copy of a row descriptor in the upper executor context</refpurpose>
+  <refname>SPI_returntuple</refname>
+  <refpurpose>prepare to return a tuple as a Datum</refpurpose>
  </refnamediv>
 
- <indexterm><primary>SPI_copytupledesc</primary></indexterm>
+ <indexterm><primary>SPI_returntuple</primary></indexterm>
 
  <refsynopsisdiv>
 <synopsis>
-TupleDesc SPI_copytupledesc(TupleDesc <parameter>tupdesc</parameter>)
+HeapTupleHeader SPI_returntuple(HeapTuple <parameter>row</parameter>, TupleDesc <parameter>rowdesc</parameter>)
 </synopsis>
  </refsynopsisdiv>
 
@@ -2222,63 +2223,16 @@ TupleDesc SPI_copytupledesc(TupleDesc <parameter>tupdesc</parameter>)
   <title>Description</title>
 
   <para>
-   <function>SPI_copytupledesc</function> makes a copy of a row
-   descriptor in the upper executor context.
+   <function>SPI_returntuple</function> makes a copy of a row in
+   the upper executor context, returning it in the form of a rowtype Datum.
+   The returned pointer need only be converted to Datum via PointerGetDatum
+   before returning.
   </para>
- </refsect1>
-
- <refsect1>
-  <title>Arguments</title>
-
-  <variablelist>
-   <varlistentry>
-    <term><literal>TupleDesc <parameter>tupdesc</parameter></literal></term>
-    <listitem>
-     <para>
-      row descriptor to be copied
-     </para>
-    </listitem>
-   </varlistentry>
-  </variablelist>
- </refsect1>
-
- <refsect1>
-  <title>Return Value</title>
 
   <para>
-   the copied row descriptor; <symbol>NULL</symbol> only if
-   <parameter>tupdesc</parameter> is <symbol>NULL</symbol>
-  </para>
- </refsect1>
-</refentry>
-
-<!-- *********************************************** -->
-
-<refentry id="spi-spi-copytupleintoslot">
- <refmeta>
-  <refentrytitle>SPI_copytupleintoslot</refentrytitle>
- </refmeta>
-
- <refnamediv>
-  <refname>SPI_copytupleintoslot</refname>
-  <refpurpose>make a copy of a row and descriptor in the upper executor context</refpurpose>
- </refnamediv>
-
- <indexterm><primary>SPI_copytupleintoslot</primary></indexterm>
-
- <refsynopsisdiv>
-<synopsis>
-TupleTableSlot * SPI_copytupleintoslot(HeapTuple <parameter>row</parameter>, TupleDesc <parameter>rowdesc</parameter>)
-</synopsis>
- </refsynopsisdiv>
-
- <refsect1>
-  <title>Description</title>
-
-  <para>
-   <function>SPI_copytupleintoslot</function> makes a copy of a row in
-   the upper executor context, returning it in the form of a filled-in
-   <type>TupleTableSlot</type> structure.
+   Note that this should be used for functions that are declared to return
+   composite types.  It is not used for triggers; use
+   <function>SPI_copytuple</> for returning a modified row in a trigger.
   </para>
  </refsect1>
 
@@ -2299,7 +2253,8 @@ TupleTableSlot * SPI_copytupleintoslot(HeapTuple <parameter>row</parameter>, Tup
     <term><literal>TupleDesc <parameter>rowdesc</parameter></literal></term>
     <listitem>
      <para>
-      row descriptor to be copied
+      descriptor for row (pass the same descriptor each time for most
+      effective caching)
      </para>
     </listitem>
    </varlistentry>
@@ -2310,9 +2265,9 @@ TupleTableSlot * SPI_copytupleintoslot(HeapTuple <parameter>row</parameter>, Tup
   <title>Return Value</title>
 
   <para>
-   <type>TupleTableSlot</type> containing the copied row and
-   descriptor; <symbol>NULL</symbol> only if
-   <parameter>row</parameter> or <parameter>rowdesc</parameter> are
+   <type>HeapTupleHeader</type> pointing to copied row;
+   <symbol>NULL</symbol> only if
+   <parameter>row</parameter> or <parameter>rowdesc</parameter> is
    <symbol>NULL</symbol>
   </para>
  </refsect1>

@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2003, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/include/catalog/pg_proc.h,v 1.322 2004/03/22 01:38:18 tgl Exp $
+ * $PostgreSQL: pgsql/src/include/catalog/pg_proc.h,v 1.323 2004/04/01 21:28:45 tgl Exp $
  *
  * NOTES
  *	  The script catalog/genbki.sh reads this file and generates .bki
@@ -1334,8 +1334,6 @@ DATA(insert OID = 1062 (  aclitemeq		   PGNSP PGUID 12 f f t f i 2 16 "1033 1033
 DESCR("equality operator for ACL items");
 DATA(insert OID = 1365 (  makeaclitem	   PGNSP PGUID 12 f f t f i 5 1033 "23 23 23 25 16" _null_ makeaclitem - _null_ ));
 DESCR("make ACL item");
-DATA(insert OID = 1038 (  seteval		   PGNSP PGUID 12 f f t t v 1 23 "26" _null_  seteval - _null_ ));
-DESCR("internal function supporting PostQuel-style sets");
 DATA(insert OID = 1044 (  bpcharin		   PGNSP PGUID 12 f f t f i 3 1042 "2275 26 23" _null_ bpcharin - _null_ ));
 DESCR("I/O");
 DATA(insert OID = 1045 (  bpcharout		   PGNSP PGUID 12 f f t f i 1 2275 "1042" _null_	bpcharout - _null_ ));
@@ -3155,9 +3153,9 @@ DATA(insert OID = 2273 (  has_schema_privilege		   PGNSP PGUID 12 f f t f s 2 16
 DESCR("current user privilege on schema by schema oid");
 
 
-DATA(insert OID = 2290 (  record_in			PGNSP PGUID 12 f f t f i 1 2249 "2275" _null_	record_in - _null_ ));
+DATA(insert OID = 2290 (  record_in			PGNSP PGUID 12 f f t f v 1 2249 "2275" _null_	record_in - _null_ ));
 DESCR("I/O");
-DATA(insert OID = 2291 (  record_out		PGNSP PGUID 12 f f t f i 1 2275 "2249" _null_	record_out - _null_ ));
+DATA(insert OID = 2291 (  record_out		PGNSP PGUID 12 f f t f v 1 2275 "2249" _null_	record_out - _null_ ));
 DESCR("I/O");
 DATA(insert OID = 2292 (  cstring_in		PGNSP PGUID 12 f f t f i 1 2275 "2275" _null_	cstring_in - _null_ ));
 DESCR("I/O");
@@ -3298,9 +3296,9 @@ DATA(insert OID = 2400 (  array_recv		   PGNSP PGUID 12 f f t f s 2 2277 "2281 2
 DESCR("I/O");
 DATA(insert OID = 2401 (  array_send		   PGNSP PGUID 12 f f t f s 2 17 "2277 26" _null_	array_send - _null_ ));
 DESCR("I/O");
-DATA(insert OID = 2402 (  record_recv		   PGNSP PGUID 12 f f t f i 1 2249 "2281" _null_  record_recv - _null_ ));
+DATA(insert OID = 2402 (  record_recv		   PGNSP PGUID 12 f f t f v 1 2249 "2281" _null_  record_recv - _null_ ));
 DESCR("I/O");
-DATA(insert OID = 2403 (  record_send		   PGNSP PGUID 12 f f t f i 1 17 "2249" _null_  record_send - _null_ ));
+DATA(insert OID = 2403 (  record_send		   PGNSP PGUID 12 f f t f v 1 17 "2249" _null_  record_send - _null_ ));
 DESCR("I/O");
 DATA(insert OID = 2404 (  int2recv			   PGNSP PGUID 12 f f t f i 1 21 "2281" _null_  int2recv - _null_ ));
 DESCR("I/O");

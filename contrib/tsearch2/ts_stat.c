@@ -303,7 +303,6 @@ ts_setup_firstcall(FuncCallContext *funcctx, tsstat * stat)
 	memcpy(st->stat, stat, stat->len);
 	funcctx->user_fctx = (void *) st;
 	tupdesc = RelationNameGetTupleDesc("statinfo");
-	funcctx->slot = TupleDescGetSlot(tupdesc);
 	funcctx->attinmeta = TupleDescGetAttInMetadata(tupdesc);
 	MemoryContextSwitchTo(oldcontext);
 }
@@ -334,7 +333,7 @@ ts_process_call(FuncCallContext *funcctx)
 		(values[0])[entry->len] = '\0';
 
 		tuple = BuildTupleFromCStrings(funcctx->attinmeta, values);
-		result = TupleGetDatum(funcctx->slot, tuple);
+		result = HeapTupleGetDatum(tuple);
 
 		pfree(values[0]);
 		st->cur++;

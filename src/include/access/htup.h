@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2003, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/include/access/htup.h,v 1.64 2004/01/16 20:51:30 tgl Exp $
+ * $PostgreSQL: pgsql/src/include/access/htup.h,v 1.65 2004/04/01 21:28:45 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -47,10 +47,19 @@
 #define MaxHeapAttributeNumber	1600	/* 8 * 200 */
 
 /*----------
- * On-disk heap tuple header.  Currently this is also used as the header
- * format for tuples formed in memory, although in principle they could
- * be different.  To avoid wasting space, the fields should be layed out
- * in such a way to avoid structure padding.
+ * Heap tuple header.  To avoid wasting space, the fields should be
+ * layed out in such a way to avoid structure padding.
+ *
+ * Datums of composite types (row types) share the same general structure
+ * as on-disk tuples, so that the same routines can be used to build and
+ * examine them.  However the requirements are slightly different: a Datum
+ * does not need any transaction visibility information, and it does need
+ * a length word and some embedded type information.  We can achieve this
+ * by overlaying the xmin/cmin/xmax/cmax/xvac fields of a heap tuple
+ * with the fields needed in the Datum case.  Typically, all tuples built
+ * in-memory will be initialized with the Datum fields; but when a tuple is
+ * about to be inserted in a table, the transaction fields will be filled,
+ * overwriting the datum fields.
  *
  * The overall structure of a heap tuple looks like:
  *			fixed fields (HeapTupleHeaderData struct)
@@ -96,7 +105,8 @@
  * MAXALIGN.
  *----------
  */
-typedef struct HeapTupleHeaderData
+
+typedef struct HeapTupleFields
 {
 	TransactionId t_xmin;		/* inserting xact ID */
 
@@ -111,6 +121,28 @@ typedef struct HeapTupleHeaderData
 		CommandId	t_cmax;		/* deleting command ID */
 		TransactionId t_xvac;	/* VACUUM FULL xact ID */
 	}			t_field3;
+} HeapTupleFields;
+
+typedef struct DatumTupleFields
+{
+	int32		datum_len;		/* required to be a varlena type */
+
+	int32		datum_typmod;	/* -1, or identifier of a record type */
+
+	Oid			datum_typeid;	/* composite type OID, or RECORDOID */
+	/*
+	 * Note: field ordering is chosen with thought that Oid might someday
+	 * widen to 64 bits.
+	 */
+} DatumTupleFields;
+
+typedef struct HeapTupleHeaderData
+{
+	union
+	{
+		HeapTupleFields		t_heap;
+		DatumTupleFields	t_datum;
+	}			t_choice;
 
 	ItemPointerData t_ctid;		/* current TID of this or newer tuple */
 
@@ -169,31 +201,31 @@ typedef HeapTupleHeaderData *HeapTupleHeader;
 
 #define HeapTupleHeaderGetXmin(tup) \
 ( \
-	(tup)->t_xmin \
+	(tup)->t_choice.t_heap.t_xmin \
 )
 
 #define HeapTupleHeaderSetXmin(tup, xid) \
 ( \
-	TransactionIdStore((xid), &(tup)->t_xmin) \
+	TransactionIdStore((xid), &(tup)->t_choice.t_heap.t_xmin) \
 )
 
 #define HeapTupleHeaderGetXmax(tup) \
 ( \
 	((tup)->t_infomask & HEAP_XMAX_IS_XMIN) ? \
-		(tup)->t_xmin \
+		(tup)->t_choice.t_heap.t_xmin \
 	: \
-		(tup)->t_field2.t_xmax \
+		(tup)->t_choice.t_heap.t_field2.t_xmax \
 )
 
 #define HeapTupleHeaderSetXmax(tup, xid) \
 do { \
 	TransactionId	_newxid = (xid); \
-	if (TransactionIdEquals((tup)->t_xmin, _newxid)) \
+	if (TransactionIdEquals((tup)->t_choice.t_heap.t_xmin, _newxid)) \
 		(tup)->t_infomask |= HEAP_XMAX_IS_XMIN; \
 	else \
 	{ \
 		(tup)->t_infomask &= ~HEAP_XMAX_IS_XMIN; \
-		TransactionIdStore(_newxid, &(tup)->t_field2.t_xmax); \
+		TransactionIdStore(_newxid, &(tup)->t_choice.t_heap.t_field2.t_xmax); \
 	} \
 } while (0)
 
@@ -207,13 +239,13 @@ do { \
  */
 #define HeapTupleHeaderGetCmin(tup) \
 ( \
-	(tup)->t_field2.t_cmin \
+	(tup)->t_choice.t_heap.t_field2.t_cmin \
 )
 
 #define HeapTupleHeaderSetCmin(tup, cid) \
 do { \
 	Assert((tup)->t_infomask & HEAP_XMAX_INVALID); \
-	(tup)->t_field2.t_cmin = (cid); \
+	(tup)->t_choice.t_heap.t_field2.t_cmin = (cid); \
 } while (0)
 
 /*
@@ -222,19 +254,19 @@ do { \
  */
 #define HeapTupleHeaderGetCmax(tup) \
 ( \
-	(tup)->t_field3.t_cmax \
+	(tup)->t_choice.t_heap.t_field3.t_cmax \
 )
 
 #define HeapTupleHeaderSetCmax(tup, cid) \
 do { \
 	Assert(!((tup)->t_infomask & HEAP_MOVED)); \
-	(tup)->t_field3.t_cmax = (cid); \
+	(tup)->t_choice.t_heap.t_field3.t_cmax = (cid); \
 } while (0)
 
 #define HeapTupleHeaderGetXvac(tup) \
 ( \
 	((tup)->t_infomask & HEAP_MOVED) ? \
-		(tup)->t_field3.t_xvac \
+		(tup)->t_choice.t_heap.t_field3.t_xvac \
 	: \
 		InvalidTransactionId \
 )
@@ -242,8 +274,38 @@ do { \
 #define HeapTupleHeaderSetXvac(tup, xid) \
 do { \
 	Assert((tup)->t_infomask & HEAP_MOVED); \
-	TransactionIdStore((xid), &(tup)->t_field3.t_xvac); \
+	TransactionIdStore((xid), &(tup)->t_choice.t_heap.t_field3.t_xvac); \
 } while (0)
+
+#define HeapTupleHeaderGetDatumLength(tup) \
+( \
+	(tup)->t_choice.t_datum.datum_len \
+)
+
+#define HeapTupleHeaderSetDatumLength(tup, len) \
+( \
+	(tup)->t_choice.t_datum.datum_len = (len) \
+)
+
+#define HeapTupleHeaderGetTypeId(tup) \
+( \
+	(tup)->t_choice.t_datum.datum_typeid \
+)
+
+#define HeapTupleHeaderSetTypeId(tup, typeid) \
+( \
+	(tup)->t_choice.t_datum.datum_typeid = (typeid) \
+)
+
+#define HeapTupleHeaderGetTypMod(tup) \
+( \
+	(tup)->t_choice.t_datum.datum_typmod \
+)
+
+#define HeapTupleHeaderSetTypMod(tup, typmod) \
+( \
+	(tup)->t_choice.t_datum.datum_typmod = (typmod) \
+)
 
 #define HeapTupleHeaderGetOid(tup) \
 ( \
@@ -258,6 +320,117 @@ do { \
 	Assert((tup)->t_infomask & HEAP_HASOID); \
 	*((Oid *) ((char *)(tup) + (tup)->t_hoff - sizeof(Oid))) = (oid); \
 } while (0)
+
+
+/*
+ * BITMAPLEN(NATTS) -
+ *		Computes size of null bitmap given number of data columns.
+ */
+#define BITMAPLEN(NATTS)	(((int)(NATTS) + 7) / 8)
+
+/*
+ * MaxTupleSize is the maximum allowed size of a tuple, including header and
+ * MAXALIGN alignment padding.	Basically it's BLCKSZ minus the other stuff
+ * that has to be on a disk page.  The "other stuff" includes access-method-
+ * dependent "special space", which we assume will be no more than
+ * MaxSpecialSpace bytes (currently, on heap pages it's actually zero).
+ *
+ * NOTE: we do not need to count an ItemId for the tuple because
+ * sizeof(PageHeaderData) includes the first ItemId on the page.
+ */
+#define MaxSpecialSpace  32
+
+#define MaxTupleSize	\
+	(BLCKSZ - MAXALIGN(sizeof(PageHeaderData) + MaxSpecialSpace))
+
+/*
+ * MaxAttrSize is a somewhat arbitrary upper limit on the declared size of
+ * data fields of char(n) and similar types.  It need not have anything
+ * directly to do with the *actual* upper limit of varlena values, which
+ * is currently 1Gb (see struct varattrib in postgres.h).  I've set it
+ * at 10Mb which seems like a reasonable number --- tgl 8/6/00.
+ */
+#define MaxAttrSize		(10 * 1024 * 1024)
+
+
+/*
+ * Attribute numbers for the system-defined attributes
+ */
+#define SelfItemPointerAttributeNumber			(-1)
+#define ObjectIdAttributeNumber					(-2)
+#define MinTransactionIdAttributeNumber			(-3)
+#define MinCommandIdAttributeNumber				(-4)
+#define MaxTransactionIdAttributeNumber			(-5)
+#define MaxCommandIdAttributeNumber				(-6)
+#define TableOidAttributeNumber					(-7)
+#define FirstLowInvalidHeapAttributeNumber		(-8)
+
+
+/*
+ * HeapTupleData is an in-memory data structure that points to a tuple.
+ *
+ * This new HeapTuple for version >= 6.5 and this is why it was changed:
+ *
+ * 1. t_len moved off on-disk tuple data - ItemIdData is used to get len;
+ * 2. t_ctid above is not self tuple TID now - it may point to
+ *	  updated version of tuple (required by MVCC);
+ * 3. someday someone let tuple to cross block boundaries -
+ *	  he have to add something below...
+ *
+ * Change for 7.0:
+ *	  Up to now t_data could be NULL, the memory location directly following
+ *	  HeapTupleData, or pointing into a buffer. Now, it could also point to
+ *	  a separate allocation that was done in the t_datamcxt memory context.
+ */
+typedef struct HeapTupleData
+{
+	uint32		t_len;			/* length of *t_data */
+	ItemPointerData t_self;		/* SelfItemPointer */
+	Oid			t_tableOid;		/* table the tuple came from */
+	MemoryContext t_datamcxt;	/* memory context of allocation */
+	HeapTupleHeader t_data;		/* -> tuple header and data */
+} HeapTupleData;
+
+typedef HeapTupleData *HeapTuple;
+
+#define HEAPTUPLESIZE	MAXALIGN(sizeof(HeapTupleData))
+
+/*
+ * GETSTRUCT - given a HeapTuple pointer, return address of the user data
+ */
+#define GETSTRUCT(TUP) ((char *) ((TUP)->t_data) + (TUP)->t_data->t_hoff)
+
+/*
+ * Accessor macros to be used with HeapTuple pointers.
+ */
+#define HeapTupleIsValid(tuple) PointerIsValid(tuple)
+
+#define HeapTupleHasNulls(tuple) \
+		(((tuple)->t_data->t_infomask & HEAP_HASNULL) != 0)
+
+#define HeapTupleNoNulls(tuple) \
+		(!((tuple)->t_data->t_infomask & HEAP_HASNULL))
+
+#define HeapTupleHasVarWidth(tuple) \
+		(((tuple)->t_data->t_infomask & HEAP_HASVARWIDTH) != 0)
+
+#define HeapTupleAllFixed(tuple) \
+		(!((tuple)->t_data->t_infomask & HEAP_HASVARWIDTH))
+
+#define HeapTupleHasExternal(tuple) \
+		(((tuple)->t_data->t_infomask & HEAP_HASEXTERNAL) != 0)
+
+#define HeapTupleHasCompressed(tuple) \
+		(((tuple)->t_data->t_infomask & HEAP_HASCOMPRESSED) != 0)
+
+#define HeapTupleHasExtended(tuple) \
+		(((tuple)->t_data->t_infomask & HEAP_HASEXTENDED) != 0)
+
+#define HeapTupleGetOid(tuple) \
+		HeapTupleHeaderGetOid((tuple)->t_data)
+
+#define HeapTupleSetOid(tuple, oid) \
+		HeapTupleHeaderSetOid((tuple)->t_data, (oid))
 
 
 /*
@@ -348,119 +521,5 @@ typedef struct xl_heap_clean
 } xl_heap_clean;
 
 #define SizeOfHeapClean (offsetof(xl_heap_clean, block) + sizeof(BlockNumber))
-
-
-
-/*
- * MaxTupleSize is the maximum allowed size of a tuple, including header and
- * MAXALIGN alignment padding.	Basically it's BLCKSZ minus the other stuff
- * that has to be on a disk page.  The "other stuff" includes access-method-
- * dependent "special space", which we assume will be no more than
- * MaxSpecialSpace bytes (currently, on heap pages it's actually zero).
- *
- * NOTE: we do not need to count an ItemId for the tuple because
- * sizeof(PageHeaderData) includes the first ItemId on the page.
- */
-#define MaxSpecialSpace  32
-
-#define MaxTupleSize	\
-	(BLCKSZ - MAXALIGN(sizeof(PageHeaderData) + MaxSpecialSpace))
-
-/*
- * MaxAttrSize is a somewhat arbitrary upper limit on the declared size of
- * data fields of char(n) and similar types.  It need not have anything
- * directly to do with the *actual* upper limit of varlena values, which
- * is currently 1Gb (see struct varattrib in postgres.h).  I've set it
- * at 10Mb which seems like a reasonable number --- tgl 8/6/00.
- */
-#define MaxAttrSize		(10 * 1024 * 1024)
-
-
-/*
- * Attribute numbers for the system-defined attributes
- */
-#define SelfItemPointerAttributeNumber			(-1)
-#define ObjectIdAttributeNumber					(-2)
-#define MinTransactionIdAttributeNumber			(-3)
-#define MinCommandIdAttributeNumber				(-4)
-#define MaxTransactionIdAttributeNumber			(-5)
-#define MaxCommandIdAttributeNumber				(-6)
-#define TableOidAttributeNumber					(-7)
-#define FirstLowInvalidHeapAttributeNumber		(-8)
-
-/*
- * HeapTupleData is an in-memory data structure that points to a tuple.
- *
- * This new HeapTuple for version >= 6.5 and this is why it was changed:
- *
- * 1. t_len moved off on-disk tuple data - ItemIdData is used to get len;
- * 2. t_ctid above is not self tuple TID now - it may point to
- *	  updated version of tuple (required by MVCC);
- * 3. someday someone let tuple to cross block boundaries -
- *	  he have to add something below...
- *
- * Change for 7.0:
- *	  Up to now t_data could be NULL, the memory location directly following
- *	  HeapTupleData, or pointing into a buffer. Now, it could also point to
- *	  a separate allocation that was done in the t_datamcxt memory context.
- */
-typedef struct HeapTupleData
-{
-	uint32		t_len;			/* length of *t_data */
-	ItemPointerData t_self;		/* SelfItemPointer */
-	Oid			t_tableOid;		/* table the tuple came from */
-	MemoryContext t_datamcxt;	/* memory context of allocation */
-	HeapTupleHeader t_data;		/* -> tuple header and data */
-} HeapTupleData;
-
-typedef HeapTupleData *HeapTuple;
-
-#define HEAPTUPLESIZE	MAXALIGN(sizeof(HeapTupleData))
-
-
-/*
- * GETSTRUCT - given a HeapTuple pointer, return address of the user data
- */
-#define GETSTRUCT(TUP) ((char *) ((TUP)->t_data) + (TUP)->t_data->t_hoff)
-
-
-/*
- * BITMAPLEN(NATTS) -
- *		Computes size of null bitmap given number of data columns.
- */
-#define BITMAPLEN(NATTS)	(((int)(NATTS) + 7) / 8)
-
-/*
- * HeapTupleIsValid
- *		True iff the heap tuple is valid.
- */
-#define HeapTupleIsValid(tuple) PointerIsValid(tuple)
-
-#define HeapTupleHasNulls(tuple) \
-		(((tuple)->t_data->t_infomask & HEAP_HASNULL) != 0)
-
-#define HeapTupleNoNulls(tuple) \
-		(!((tuple)->t_data->t_infomask & HEAP_HASNULL))
-
-#define HeapTupleHasVarWidth(tuple) \
-		(((tuple)->t_data->t_infomask & HEAP_HASVARWIDTH) != 0)
-
-#define HeapTupleAllFixed(tuple) \
-		(!((tuple)->t_data->t_infomask & HEAP_HASVARWIDTH))
-
-#define HeapTupleHasExternal(tuple) \
-		(((tuple)->t_data->t_infomask & HEAP_HASEXTERNAL) != 0)
-
-#define HeapTupleHasCompressed(tuple) \
-		(((tuple)->t_data->t_infomask & HEAP_HASCOMPRESSED) != 0)
-
-#define HeapTupleHasExtended(tuple) \
-		(((tuple)->t_data->t_infomask & HEAP_HASEXTENDED) != 0)
-
-#define HeapTupleGetOid(tuple) \
-		HeapTupleHeaderGetOid((tuple)->t_data)
-
-#define HeapTupleSetOid(tuple, oid) \
-		HeapTupleHeaderSetOid((tuple)->t_data, (oid))
 
 #endif   /* HTUP_H */

@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/catalog/heap.c,v 1.261 2004/03/23 19:35:16 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/catalog/heap.c,v 1.262 2004/04/01 21:28:43 tgl Exp $
  *
  *
  * INTERFACE ROUTINES
@@ -97,37 +97,37 @@ static void SetRelationNumChecks(Relation rel, int numchecks);
 static FormData_pg_attribute a1 = {
 	0, {"ctid"}, TIDOID, 0, sizeof(ItemPointerData),
 	SelfItemPointerAttributeNumber, 0, -1, -1,
-	false, 'p', false, 'i', true, false, false, true, 0
+	false, 'p', 's', true, false, false, true, 0
 };
 
 static FormData_pg_attribute a2 = {
 	0, {"oid"}, OIDOID, 0, sizeof(Oid),
 	ObjectIdAttributeNumber, 0, -1, -1,
-	true, 'p', false, 'i', true, false, false, true, 0
+	true, 'p', 'i', true, false, false, true, 0
 };
 
 static FormData_pg_attribute a3 = {
 	0, {"xmin"}, XIDOID, 0, sizeof(TransactionId),
 	MinTransactionIdAttributeNumber, 0, -1, -1,
-	true, 'p', false, 'i', true, false, false, true, 0
+	true, 'p', 'i', true, false, false, true, 0
 };
 
 static FormData_pg_attribute a4 = {
 	0, {"cmin"}, CIDOID, 0, sizeof(CommandId),
 	MinCommandIdAttributeNumber, 0, -1, -1,
-	true, 'p', false, 'i', true, false, false, true, 0
+	true, 'p', 'i', true, false, false, true, 0
 };
 
 static FormData_pg_attribute a5 = {
 	0, {"xmax"}, XIDOID, 0, sizeof(TransactionId),
 	MaxTransactionIdAttributeNumber, 0, -1, -1,
-	true, 'p', false, 'i', true, false, false, true, 0
+	true, 'p', 'i', true, false, false, true, 0
 };
 
 static FormData_pg_attribute a6 = {
 	0, {"cmax"}, CIDOID, 0, sizeof(CommandId),
 	MaxCommandIdAttributeNumber, 0, -1, -1,
-	true, 'p', false, 'i', true, false, false, true, 0
+	true, 'p', 'i', true, false, false, true, 0
 };
 
 /*
@@ -139,7 +139,7 @@ static FormData_pg_attribute a6 = {
 static FormData_pg_attribute a7 = {
 	0, {"tableoid"}, OIDOID, 0, sizeof(Oid),
 	TableOidAttributeNumber, 0, -1, -1,
-	true, 'p', false, 'i', true, false, false, true, 0
+	true, 'p', 'i', true, false, false, true, 0
 };
 
 static Form_pg_attribute SysAtt[] = {&a1, &a2, &a3, &a4, &a5, &a6, &a7};
@@ -633,6 +633,8 @@ AddNewRelationTuple(Relation pg_class_desc,
 	new_rel_reltup->reltype = new_type_oid;
 	new_rel_reltup->relkind = relkind;
 
+	new_rel_desc->rd_att->tdtypeid = new_type_oid;
+
 	/* ----------------
 	 *	now form a tuple to add to pg_class
 	 *	XXX Natts_pg_class_fixed is a hack - see pg_class.h
@@ -660,7 +662,7 @@ AddNewRelationTuple(Relation pg_class_desc,
 /* --------------------------------
  *		AddNewRelationType -
  *
- *		define a complex type corresponding to the new relation
+ *		define a composite type corresponding to the new relation
  * --------------------------------
  */
 static void
@@ -670,27 +672,12 @@ AddNewRelationType(const char *typeName,
 				   char new_rel_kind,
 				   Oid new_type_oid)
 {
-	/*
-	 * We set the I/O procedures of a complex type to record_in and
-	 * record_out, so that a user will get an error message not a weird
-	 * number if he tries to SELECT a complex type.
-	 *
-	 * OLD and probably obsolete comments:
-	 *
-	 * The sizes are set to oid size because it makes implementing sets MUCH
-	 * easier, and no one (we hope) uses these fields to figure out how
-	 * much space to allocate for the type. An oid is the type used for a
-	 * set definition.	When a user requests a set, what they actually get
-	 * is the oid of a tuple in the pg_proc catalog, so the size of the
-	 * "set" is the size of an oid. Similarly, byval being true makes sets
-	 * much easier, and it isn't used by anything else.
-	 */
 	TypeCreate(typeName,		/* type name */
 			   typeNamespace,	/* type namespace */
 			   new_type_oid,	/* preassigned oid for type */
 			   new_rel_oid,		/* relation oid */
 			   new_rel_kind,	/* relation kind */
-			   sizeof(Oid),		/* internal size */
+			   -1,				/* internal size (varlena) */
 			   'c',				/* type-type (complex) */
 			   ',',				/* default array delimiter */
 			   F_RECORD_IN,		/* input procedure */
@@ -702,9 +689,9 @@ AddNewRelationType(const char *typeName,
 			   InvalidOid,		/* domain base type - irrelevant */
 			   NULL,			/* default type value - none */
 			   NULL,			/* default type binary representation */
-			   true,			/* passed by value */
-			   'i',				/* default alignment - same as for OID */
-			   'p',				/* Not TOASTable */
+			   false,			/* passed by reference */
+			   'd',				/* alignment - must be the largest! */
+			   'x',				/* fully TOASTable */
 			   -1,				/* typmod */
 			   0,				/* array dimensions for typBaseType */
 			   false);			/* Type NOT NULL */

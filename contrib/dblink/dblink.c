@@ -447,7 +447,6 @@ dblink_fetch(PG_FUNCTION_ARGS)
 	TupleDesc	tupdesc = NULL;
 	int			call_cntr;
 	int			max_calls;
-	TupleTableSlot *slot;
 	AttInMetadata *attinmeta;
 	char	   *msg;
 	PGresult   *res = NULL;
@@ -566,9 +565,10 @@ dblink_fetch(PG_FUNCTION_ARGS)
 
 		if (functyptype == 'c')
 			tupdesc = TypeGetTupleDesc(functypeid, NIL);
-		else if (functyptype == 'p' && functypeid == RECORDOID)
+		else if (functypeid == RECORDOID)
 		{
-			if (!rsinfo || !IsA(rsinfo, ReturnSetInfo))
+			if (!rsinfo || !IsA(rsinfo, ReturnSetInfo) ||
+				rsinfo->expectedDesc == NULL)
 				ereport(ERROR,
 						(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
 						 errmsg("function returning record called in context "
@@ -582,8 +582,6 @@ dblink_fetch(PG_FUNCTION_ARGS)
 			elog(ERROR, "return type must be a row type");
 
 		/* store needed metadata for subsequent calls */
-		slot = TupleDescGetSlot(tupdesc);
-		funcctx->slot = slot;
 		attinmeta = TupleDescGetAttInMetadata(tupdesc);
 		funcctx->attinmeta = attinmeta;
 
@@ -598,8 +596,6 @@ dblink_fetch(PG_FUNCTION_ARGS)
 	 */
 	call_cntr = funcctx->call_cntr;
 	max_calls = funcctx->max_calls;
-
-	slot = funcctx->slot;
 
 	res = (PGresult *) funcctx->user_fctx;
 	attinmeta = funcctx->attinmeta;
@@ -626,7 +622,7 @@ dblink_fetch(PG_FUNCTION_ARGS)
 		tuple = BuildTupleFromCStrings(attinmeta, values);
 
 		/* make the tuple into a datum */
-		result = TupleGetDatum(slot, tuple);
+		result = HeapTupleGetDatum(tuple);
 
 		SRF_RETURN_NEXT(funcctx, result);
 	}
@@ -649,7 +645,6 @@ dblink_record(PG_FUNCTION_ARGS)
 	TupleDesc	tupdesc = NULL;
 	int			call_cntr;
 	int			max_calls;
-	TupleTableSlot *slot;
 	AttInMetadata *attinmeta;
 	char	   *msg;
 	PGresult   *res = NULL;
@@ -741,7 +736,7 @@ dblink_record(PG_FUNCTION_ARGS)
 			/* need a tuple descriptor representing one TEXT column */
 			tupdesc = CreateTemplateTupleDesc(1, false);
 			TupleDescInitEntry(tupdesc, (AttrNumber) 1, "status",
-							   TEXTOID, -1, 0, false);
+							   TEXTOID, -1, 0);
 
 			/*
 			 * and save a copy of the command status string to return as
@@ -776,9 +771,10 @@ dblink_record(PG_FUNCTION_ARGS)
 		{
 			if (functyptype == 'c')
 				tupdesc = TypeGetTupleDesc(functypeid, NIL);
-			else if (functyptype == 'p' && functypeid == RECORDOID)
+			else if (functypeid == RECORDOID)
 			{
-				if (!rsinfo || !IsA(rsinfo, ReturnSetInfo))
+				if (!rsinfo || !IsA(rsinfo, ReturnSetInfo) ||
+					rsinfo->expectedDesc == NULL)
 					ereport(ERROR,
 							(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
 							 errmsg("function returning record called in context "
@@ -793,8 +789,6 @@ dblink_record(PG_FUNCTION_ARGS)
 		}
 
 		/* store needed metadata for subsequent calls */
-		slot = TupleDescGetSlot(tupdesc);
-		funcctx->slot = slot;
 		attinmeta = TupleDescGetAttInMetadata(tupdesc);
 		funcctx->attinmeta = attinmeta;
 
@@ -809,8 +803,6 @@ dblink_record(PG_FUNCTION_ARGS)
 	 */
 	call_cntr = funcctx->call_cntr;
 	max_calls = funcctx->max_calls;
-
-	slot = funcctx->slot;
 
 	res = (PGresult *) funcctx->user_fctx;
 	attinmeta = funcctx->attinmeta;
@@ -846,7 +838,7 @@ dblink_record(PG_FUNCTION_ARGS)
 		tuple = BuildTupleFromCStrings(attinmeta, values);
 
 		/* make the tuple into a datum */
-		result = TupleGetDatum(slot, tuple);
+		result = HeapTupleGetDatum(tuple);
 
 		SRF_RETURN_NEXT(funcctx, result);
 	}
@@ -925,7 +917,7 @@ dblink_exec(PG_FUNCTION_ARGS)
 		/* need a tuple descriptor representing one TEXT column */
 		tupdesc = CreateTemplateTupleDesc(1, false);
 		TupleDescInitEntry(tupdesc, (AttrNumber) 1, "status",
-						   TEXTOID, -1, 0, false);
+						   TEXTOID, -1, 0);
 
 		/*
 		 * and save a copy of the command status string to return as our
@@ -939,7 +931,7 @@ dblink_exec(PG_FUNCTION_ARGS)
 		/* need a tuple descriptor representing one TEXT column */
 		tupdesc = CreateTemplateTupleDesc(1, false);
 		TupleDescInitEntry(tupdesc, (AttrNumber) 1, "status",
-						   TEXTOID, -1, 0, false);
+						   TEXTOID, -1, 0);
 
 		/*
 		 * and save a copy of the command status string to return as our
@@ -978,7 +970,6 @@ dblink_get_pkey(PG_FUNCTION_ARGS)
 	FuncCallContext *funcctx;
 	int32		call_cntr;
 	int32		max_calls;
-	TupleTableSlot *slot;
 	AttInMetadata *attinmeta;
 	MemoryContext oldcontext;
 
@@ -1010,15 +1001,9 @@ dblink_get_pkey(PG_FUNCTION_ARGS)
 		 */
 		tupdesc = CreateTemplateTupleDesc(2, false);
 		TupleDescInitEntry(tupdesc, (AttrNumber) 1, "position",
-						   INT4OID, -1, 0, false);
+						   INT4OID, -1, 0);
 		TupleDescInitEntry(tupdesc, (AttrNumber) 2, "colname",
-						   TEXTOID, -1, 0, false);
-
-		/* allocate a slot for a tuple with this tupdesc */
-		slot = TupleDescGetSlot(tupdesc);
-
-		/* assign slot to function context */
-		funcctx->slot = slot;
+						   TEXTOID, -1, 0);
 
 		/*
 		 * Generate attribute metadata needed later to produce tuples from
@@ -1053,8 +1038,6 @@ dblink_get_pkey(PG_FUNCTION_ARGS)
 	call_cntr = funcctx->call_cntr;
 	max_calls = funcctx->max_calls;
 
-	slot = funcctx->slot;
-
 	results = (char **) funcctx->user_fctx;
 	attinmeta = funcctx->attinmeta;
 
@@ -1075,7 +1058,7 @@ dblink_get_pkey(PG_FUNCTION_ARGS)
 		tuple = BuildTupleFromCStrings(attinmeta, values);
 
 		/* make the tuple into a datum */
-		result = TupleGetDatum(slot, tuple);
+		result = HeapTupleGetDatum(tuple);
 
 		SRF_RETURN_NEXT(funcctx, result);
 	}

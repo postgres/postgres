@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2003, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/include/access/tupdesc.h,v 1.42 2003/11/29 22:40:55 pgsql Exp $
+ * $PostgreSQL: pgsql/src/include/access/tupdesc.h,v 1.43 2004/04/01 21:28:45 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -44,6 +44,15 @@ typedef struct tupleConstr
 /*
  * This structure contains all information (i.e. from Classes
  * pg_attribute, pg_attrdef, pg_constraint) for the structure of a tuple.
+ *
+ * Note that only user attributes, not system attributes, are mentioned in
+ * TupleDesc; with the exception that tdhasoid indicates if OID is present.
+ *
+ * If the tuple is known to correspond to a named rowtype (such as a table's
+ * rowtype) then tdtypeid identifies that type and tdtypmod is -1.  Otherwise
+ * tdtypeid is RECORDOID, and tdtypmod can be either -1 for a fully anonymous
+ * row type, or a value >= 0 to allow the rowtype to be looked up in the
+ * typcache.c type cache.
  */
 typedef struct tupleDesc
 {
@@ -51,6 +60,8 @@ typedef struct tupleDesc
 	Form_pg_attribute *attrs;
 	/* attrs[N] is a pointer to the description of Attribute Number N+1.  */
 	TupleConstr *constr;
+	Oid			tdtypeid;		/* composite type ID for tuple type */
+	int32		tdtypmod;		/* typmod for tuple type */
 	bool		tdhasoid;		/* Tuple has oid attribute in its header */
 }	*TupleDesc;
 
@@ -73,8 +84,7 @@ extern void TupleDescInitEntry(TupleDesc desc,
 				   const char *attributeName,
 				   Oid oidtypeid,
 				   int32 typmod,
-				   int attdim,
-				   bool attisset);
+				   int attdim);
 
 extern TupleDesc BuildDescForRelation(List *schema);
 

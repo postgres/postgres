@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/access/common/tupdesc.c,v 1.101 2003/11/29 19:51:39 pgsql Exp $
+ *	  $PostgreSQL: pgsql/src/backend/access/common/tupdesc.c,v 1.102 2004/04/01 21:28:43 tgl Exp $
  *
  * NOTES
  *	  some of the executor utility code such as "ExecTypeFromTL" should be
@@ -28,12 +28,16 @@
 #include "utils/builtins.h"
 #include "utils/lsyscache.h"
 #include "utils/syscache.h"
+#include "utils/typcache.h"
 
 
 /* ----------------------------------------------------------------
  *		CreateTemplateTupleDesc
  *
  *		This function allocates and zeros a tuple descriptor structure.
+ *
+ * Tuple type ID information is initially set for an anonymous record type;
+ * caller can overwrite this if needed.
  * ----------------------------------------------------------------
  */
 TupleDesc
@@ -47,24 +51,26 @@ CreateTemplateTupleDesc(int natts, bool hasoid)
 	AssertArg(natts >= 0);
 
 	/*
-	 * allocate enough memory for the tuple descriptor and zero it as
-	 * TupleDescInitEntry assumes that the descriptor is filled with NULL
-	 * pointers.
+	 * Allocate enough memory for the tuple descriptor, and zero the
+	 * attrs[] array since TupleDescInitEntry assumes that the array
+	 * is filled with NULL pointers.
 	 */
 	desc = (TupleDesc) palloc(sizeof(struct tupleDesc));
 
-	desc->natts = natts;
-	desc->tdhasoid = hasoid;
-
 	if (natts > 0)
-	{
-		uint32		size = natts * sizeof(Form_pg_attribute);
-
-		desc->attrs = (Form_pg_attribute *) palloc0(size);
-	}
+		desc->attrs = (Form_pg_attribute *)
+			palloc0(natts * sizeof(Form_pg_attribute));
 	else
 		desc->attrs = NULL;
+
+	/*
+	 * Initialize other fields of the tupdesc.
+	 */
+	desc->natts = natts;
 	desc->constr = NULL;
+	desc->tdtypeid = RECORDOID;
+	desc->tdtypmod = -1;
+	desc->tdhasoid = hasoid;
 
 	return desc;
 }
@@ -74,6 +80,9 @@ CreateTemplateTupleDesc(int natts, bool hasoid)
  *
  *		This function allocates a new TupleDesc pointing to a given
  *		Form_pg_attribute array
+ *
+ * Tuple type ID information is initially set for an anonymous record type;
+ * caller can overwrite this if needed.
  * ----------------------------------------------------------------
  */
 TupleDesc
@@ -90,6 +99,8 @@ CreateTupleDesc(int natts, bool hasoid, Form_pg_attribute *attrs)
 	desc->attrs = attrs;
 	desc->natts = natts;
 	desc->constr = NULL;
+	desc->tdtypeid = RECORDOID;
+	desc->tdtypmod = -1;
 	desc->tdhasoid = hasoid;
 
 	return desc;
@@ -101,22 +112,21 @@ CreateTupleDesc(int natts, bool hasoid, Form_pg_attribute *attrs)
  *		This function creates a new TupleDesc by copying from an existing
  *		TupleDesc
  *
- *		!!! Constraints are not copied !!!
+ *		!!! Constraints and defaults are not copied !!!
  * ----------------------------------------------------------------
  */
 TupleDesc
 CreateTupleDescCopy(TupleDesc tupdesc)
 {
 	TupleDesc	desc;
-	int			i,
-				size;
+	int			i;
 
 	desc = (TupleDesc) palloc(sizeof(struct tupleDesc));
 	desc->natts = tupdesc->natts;
 	if (desc->natts > 0)
 	{
-		size = desc->natts * sizeof(Form_pg_attribute);
-		desc->attrs = (Form_pg_attribute *) palloc(size);
+		desc->attrs = (Form_pg_attribute *)
+			palloc(desc->natts * sizeof(Form_pg_attribute));
 		for (i = 0; i < desc->natts; i++)
 		{
 			desc->attrs[i] = (Form_pg_attribute) palloc(ATTRIBUTE_TUPLE_SIZE);
@@ -127,7 +137,11 @@ CreateTupleDescCopy(TupleDesc tupdesc)
 	}
 	else
 		desc->attrs = NULL;
+
 	desc->constr = NULL;
+
+	desc->tdtypeid = tupdesc->tdtypeid;
+	desc->tdtypmod = tupdesc->tdtypmod;
 	desc->tdhasoid = tupdesc->tdhasoid;
 
 	return desc;
@@ -137,7 +151,7 @@ CreateTupleDescCopy(TupleDesc tupdesc)
  *		CreateTupleDescCopyConstr
  *
  *		This function creates a new TupleDesc by copying from an existing
- *		TupleDesc (with Constraints)
+ *		TupleDesc (including its constraints and defaults)
  * ----------------------------------------------------------------
  */
 TupleDesc
@@ -145,15 +159,14 @@ CreateTupleDescCopyConstr(TupleDesc tupdesc)
 {
 	TupleDesc	desc;
 	TupleConstr *constr = tupdesc->constr;
-	int			i,
-				size;
+	int			i;
 
 	desc = (TupleDesc) palloc(sizeof(struct tupleDesc));
 	desc->natts = tupdesc->natts;
 	if (desc->natts > 0)
 	{
-		size = desc->natts * sizeof(Form_pg_attribute);
-		desc->attrs = (Form_pg_attribute *) palloc(size);
+		desc->attrs = (Form_pg_attribute *)
+			palloc(desc->natts * sizeof(Form_pg_attribute));
 		for (i = 0; i < desc->natts; i++)
 		{
 			desc->attrs[i] = (Form_pg_attribute) palloc(ATTRIBUTE_TUPLE_SIZE);
@@ -162,9 +175,10 @@ CreateTupleDescCopyConstr(TupleDesc tupdesc)
 	}
 	else
 		desc->attrs = NULL;
+
 	if (constr)
 	{
-		TupleConstr *cpy = (TupleConstr *) palloc(sizeof(TupleConstr));
+		TupleConstr *cpy = (TupleConstr *) palloc0(sizeof(TupleConstr));
 
 		cpy->has_not_null = constr->has_not_null;
 
@@ -197,10 +211,16 @@ CreateTupleDescCopyConstr(TupleDesc tupdesc)
 	else
 		desc->constr = NULL;
 
+	desc->tdtypeid = tupdesc->tdtypeid;
+	desc->tdtypmod = tupdesc->tdtypmod;
 	desc->tdhasoid = tupdesc->tdhasoid;
+
 	return desc;
 }
 
+/*
+ * Free a TupleDesc including all substructure
+ */
 void
 FreeTupleDesc(TupleDesc tupdesc)
 {
@@ -244,6 +264,10 @@ FreeTupleDesc(TupleDesc tupdesc)
 
 /*
  * Compare two TupleDesc structures for logical equality
+ *
+ * Note: we deliberately do not check the attrelid and tdtypmod fields.
+ * This allows typcache.c to use this routine to see if a cached record type
+ * matches a requested type, and is harmless for relcache.c's uses.
  */
 bool
 equalTupleDescs(TupleDesc tupdesc1, TupleDesc tupdesc2)
@@ -254,8 +278,11 @@ equalTupleDescs(TupleDesc tupdesc1, TupleDesc tupdesc2)
 
 	if (tupdesc1->natts != tupdesc2->natts)
 		return false;
+	if (tupdesc1->tdtypeid != tupdesc2->tdtypeid)
+		return false;
 	if (tupdesc1->tdhasoid != tupdesc2->tdhasoid)
 		return false;
+
 	for (i = 0; i < tupdesc1->natts; i++)
 	{
 		Form_pg_attribute attr1 = tupdesc1->attrs[i];
@@ -265,12 +292,16 @@ equalTupleDescs(TupleDesc tupdesc1, TupleDesc tupdesc2)
 		 * We do not need to check every single field here: we can
 		 * disregard attrelid, attnum (it was used to place the row in the
 		 * attrs array) and everything derived from the column datatype.
+		 * Also, attcacheoff must NOT be checked since it's possibly not
+		 * set in both copies.
 		 */
 		if (strcmp(NameStr(attr1->attname), NameStr(attr2->attname)) != 0)
 			return false;
 		if (attr1->atttypid != attr2->atttypid)
 			return false;
 		if (attr1->attstattarget != attr2->attstattarget)
+			return false;
+		if (attr1->attndims != attr2->attndims)
 			return false;
 		if (attr1->atttypmod != attr2->atttypmod)
 			return false;
@@ -287,6 +318,7 @@ equalTupleDescs(TupleDesc tupdesc1, TupleDesc tupdesc2)
 		if (attr1->attinhcount != attr2->attinhcount)
 			return false;
 	}
+
 	if (tupdesc1->constr != NULL)
 	{
 		TupleConstr *constr1 = tupdesc1->constr;
@@ -360,8 +392,7 @@ TupleDescInitEntry(TupleDesc desc,
 				   const char *attributeName,
 				   Oid oidtypeid,
 				   int32 typmod,
-				   int attdim,
-				   bool attisset)
+				   int attdim)
 {
 	HeapTuple	tuple;
 	Form_pg_type typeForm;
@@ -403,7 +434,6 @@ TupleDescInitEntry(TupleDesc desc,
 
 	att->attnum = attributeNumber;
 	att->attndims = attdim;
-	att->attisset = attisset;
 
 	att->attnotnull = false;
 	att->atthasdef = false;
@@ -416,70 +446,13 @@ TupleDescInitEntry(TupleDesc desc,
 						   0, 0, 0);
 	if (!HeapTupleIsValid(tuple))
 		elog(ERROR, "cache lookup failed for type %u", oidtypeid);
-
-	/*
-	 * type info exists so we initialize our attribute information from
-	 * the type tuple we found..
-	 */
 	typeForm = (Form_pg_type) GETSTRUCT(tuple);
 
-	att->atttypid = HeapTupleGetOid(tuple);
-
-	/*
-	 * There are a couple of cases where we must override the information
-	 * stored in pg_type.
-	 *
-	 * First: if this attribute is a set, what is really stored in the
-	 * attribute is the OID of a tuple in the pg_proc catalog. The pg_proc
-	 * tuple contains the query string which defines this set - i.e., the
-	 * query to run to get the set. So the atttypid (just assigned above)
-	 * refers to the type returned by this query, but the actual length of
-	 * this attribute is the length (size) of an OID.
-	 *
-	 * (Why not just make the atttypid point to the OID type, instead of the
-	 * type the query returns?	Because the executor uses the atttypid to
-	 * tell the front end what type will be returned, and in the end the
-	 * type returned will be the result of the query, not an OID.)
-	 *
-	 * (Why not wait until the return type of the set is known (i.e., the
-	 * recursive call to the executor to execute the set has returned)
-	 * before telling the front end what the return type will be?  Because
-	 * the executor is a delicate thing, and making sure that the correct
-	 * order of front-end commands is maintained is messy, especially
-	 * considering that target lists may change as inherited attributes
-	 * are considered, etc.  Ugh.)
-	 *
-	 * Second: if we are dealing with a complex type (a tuple type), then
-	 * pg_type will say that the representation is the same as Oid.  But
-	 * if typmod is sizeof(Pointer) then the internal representation is
-	 * actually a pointer to a TupleTableSlot, and we have to substitute
-	 * that information.
-	 *
-	 * A set of complex type is first and foremost a set, so its
-	 * representation is Oid not pointer.  So, test that case first.
-	 */
-	if (attisset)
-	{
-		att->attlen = sizeof(Oid);
-		att->attbyval = true;
-		att->attalign = 'i';
-		att->attstorage = 'p';
-	}
-	else if (typeForm->typtype == 'c' && typmod == sizeof(Pointer))
-	{
-		att->attlen = sizeof(Pointer);
-		att->attbyval = true;
-		att->attalign = 'd';	/* kluge to work with 8-byte pointers */
-		/* XXX ought to have a separate attalign value for pointers ... */
-		att->attstorage = 'p';
-	}
-	else
-	{
-		att->attlen = typeForm->typlen;
-		att->attbyval = typeForm->typbyval;
-		att->attalign = typeForm->typalign;
-		att->attstorage = typeForm->typstorage;
-	}
+	att->atttypid = oidtypeid;
+	att->attlen = typeForm->typlen;
+	att->attbyval = typeForm->typbyval;
+	att->attalign = typeForm->typalign;
+	att->attstorage = typeForm->typstorage;
 
 	ReleaseSysCache(tuple);
 }
@@ -491,7 +464,8 @@ TupleDescInitEntry(TupleDesc desc,
  * Given a relation schema (list of ColumnDef nodes), build a TupleDesc.
  *
  * Note: the default assumption is no OIDs; caller may modify the returned
- * TupleDesc if it wants OIDs.
+ * TupleDesc if it wants OIDs.  Also, tdtypeid will need to be filled in
+ * later on.
  */
 TupleDesc
 BuildDescForRelation(List *schema)
@@ -501,12 +475,11 @@ BuildDescForRelation(List *schema)
 	List	   *p;
 	TupleDesc	desc;
 	AttrDefault *attrdef = NULL;
-	TupleConstr *constr = (TupleConstr *) palloc(sizeof(TupleConstr));
+	TupleConstr *constr = (TupleConstr *) palloc0(sizeof(TupleConstr));
 	char	   *attname;
 	int32		atttypmod;
 	int			attdim;
 	int			ndef = 0;
-	bool		attisset;
 
 	/*
 	 * allocate a new tuple descriptor
@@ -529,13 +502,18 @@ BuildDescForRelation(List *schema)
 		attnum++;
 
 		attname = entry->colname;
-		attisset = entry->typename->setof;
 		atttypmod = entry->typename->typmod;
 		attdim = length(entry->typename->arrayBounds);
 
+		if (entry->typename->setof)
+			ereport(ERROR,
+					(errcode(ERRCODE_INVALID_TABLE_DEFINITION),
+					 errmsg("column \"%s\" cannot be declared SETOF",
+							attname)));
+
 		TupleDescInitEntry(desc, attnum, attname,
 						   typenameTypeId(entry->typename),
-						   atttypmod, attdim, attisset);
+						   atttypmod, attdim);
 
 		/* Fill in additional stuff not handled by TupleDescInitEntry */
 		if (entry->is_not_null)
@@ -586,6 +564,7 @@ BuildDescForRelation(List *schema)
 		pfree(constr);
 		desc->constr = NULL;
 	}
+
 	return desc;
 }
 
@@ -603,7 +582,7 @@ RelationNameGetTupleDesc(const char *relname)
 	TupleDesc	tupdesc;
 	List	   *relname_list;
 
-	/* Open relation and get the tuple description */
+	/* Open relation and copy the tuple description */
 	relname_list = stringToQualifiedNameList(relname, "RelationNameGetTupleDesc");
 	relvar = makeRangeVarFromNameList(relname_list);
 	rel = relation_openrv(relvar, AccessShareLock);
@@ -620,7 +599,8 @@ RelationNameGetTupleDesc(const char *relname)
  *
  * If the type is composite, *and* a colaliases List is provided, *and*
  * the List is of natts length, use the aliases instead of the relation
- * attnames.
+ * attnames.  (NB: this usage is deprecated since it may result in
+ * creation of unnecessary transient record types.)
  *
  * If the type is a base type, a single item alias List is required.
  */
@@ -635,22 +615,12 @@ TypeGetTupleDesc(Oid typeoid, List *colaliases)
 	 */
 	if (functyptype == 'c')
 	{
-		/* Composite data type, i.e. a table's row type */
-		Oid			relid = typeidTypeRelid(typeoid);
-		Relation	rel;
-		int			natts;
-
-		if (!OidIsValid(relid))
-			elog(ERROR, "invalid typrelid for complex type %u", typeoid);
-
-		rel = relation_open(relid, AccessShareLock);
-		tupdesc = CreateTupleDescCopy(RelationGetDescr(rel));
-		natts = tupdesc->natts;
-		relation_close(rel, AccessShareLock);
-		/* XXX should we hold the lock to ensure table doesn't change? */
+		/* Composite data type, e.g. a table's row type */
+		tupdesc = CreateTupleDescCopy(lookup_rowtype_tupdesc(typeoid, -1));
 
 		if (colaliases != NIL)
 		{
+			int			natts = tupdesc->natts;
 			int			varattno;
 
 			/* does the list length match the number of attributes? */
@@ -667,6 +637,10 @@ TypeGetTupleDesc(Oid typeoid, List *colaliases)
 				if (label != NULL)
 					namestrcpy(&(tupdesc->attrs[varattno]->attname), label);
 			}
+
+			/* The tuple type is now an anonymous record type */
+			tupdesc->tdtypeid = RECORDOID;
+			tupdesc->tdtypmod = -1;
 		}
 	}
 	else if (functyptype == 'b' || functyptype == 'd')
@@ -695,13 +669,15 @@ TypeGetTupleDesc(Oid typeoid, List *colaliases)
 						   attname,
 						   typeoid,
 						   -1,
-						   0,
-						   false);
+						   0);
 	}
-	else if (functyptype == 'p' && typeoid == RECORDOID)
+	else if (typeoid == RECORDOID)
+	{
+		/* XXX can't support this because typmod wasn't passed in ... */
 		ereport(ERROR,
 				(errcode(ERRCODE_DATATYPE_MISMATCH),
 				 errmsg("could not determine row description for function returning record")));
+	}
 	else
 	{
 		/* crummy error message, but parser should have caught this */

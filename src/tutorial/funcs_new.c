@@ -115,7 +115,7 @@ PG_FUNCTION_INFO_V1(c_overpaid);
 Datum
 c_overpaid(PG_FUNCTION_ARGS)
 {
-	TupleTableSlot *t = (TupleTableSlot *) PG_GETARG_POINTER(0);
+	HeapTupleHeader t = PG_GETARG_HEAPTUPLEHEADER(0);
 	int32		limit = PG_GETARG_INT32(1);
 	bool		isnull;
 	int32		salary;

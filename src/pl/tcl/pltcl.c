@@ -31,7 +31,7 @@
  *	  ENHANCEMENTS, OR MODIFICATIONS.
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/pl/tcl/pltcl.c,v 1.82 2004/01/24 23:06:29 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/pl/tcl/pltcl.c,v 1.83 2004/04/01 21:28:46 tgl Exp $
  *
  **********************************************************************/
 
@@ -60,6 +60,8 @@
 #include "tcop/tcopprot.h"
 #include "utils/builtins.h"
 #include "utils/syscache.h"
+#include "utils/typcache.h"
+
 
 #if defined(UNICODE_CONVERSION) && TCL_MAJOR_VERSION == 8 \
 	&& TCL_MINOR_VERSION > 0
@@ -107,7 +109,7 @@ typedef struct pltcl_proc_desc
 	int			nargs;
 	FmgrInfo	arg_out_func[FUNC_MAX_ARGS];
 	Oid			arg_out_elem[FUNC_MAX_ARGS];
-	int			arg_is_rel[FUNC_MAX_ARGS];
+	bool		arg_is_rowtype[FUNC_MAX_ARGS];
 }	pltcl_proc_desc;
 
 
@@ -497,21 +499,35 @@ pltcl_func_handler(PG_FUNCTION_ARGS)
 	 ************************************************************/
 	for (i = 0; i < prodesc->nargs; i++)
 	{
-		if (prodesc->arg_is_rel[i])
+		if (prodesc->arg_is_rowtype[i])
 		{
 			/**************************************************
 			 * For tuple values, add a list for 'array set ...'
 			 **************************************************/
-			TupleTableSlot *slot = (TupleTableSlot *) fcinfo->arg[i];
+			if (fcinfo->argnull[i])
+				Tcl_DStringAppendElement(&tcl_cmd, "");
+			else
+			{
+				HeapTupleHeader td;
+				Oid			tupType;
+				int32		tupTypmod;
+				TupleDesc	tupdesc;
+				HeapTupleData tmptup;
 
-			Assert(slot != NULL && !fcinfo->argnull[i]);
-			Tcl_DStringInit(&list_tmp);
-			pltcl_build_tuple_argument(slot->val,
-									   slot->ttc_tupleDescriptor,
-									   &list_tmp);
-			Tcl_DStringAppendElement(&tcl_cmd, Tcl_DStringValue(&list_tmp));
-			Tcl_DStringFree(&list_tmp);
-			Tcl_DStringInit(&list_tmp);
+				td = DatumGetHeapTupleHeader(fcinfo->arg[i]);
+				/* Extract rowtype info and find a tupdesc */
+				tupType = HeapTupleHeaderGetTypeId(td);
+				tupTypmod = HeapTupleHeaderGetTypMod(td);
+				tupdesc = lookup_rowtype_tupdesc(tupType, tupTypmod);
+				/* Build a temporary HeapTuple control structure */
+				tmptup.t_len = HeapTupleHeaderGetDatumLength(td);
+				tmptup.t_data = td;
+
+				Tcl_DStringSetLength(&list_tmp, 0);
+				pltcl_build_tuple_argument(&tmptup, tupdesc, &list_tmp);
+				Tcl_DStringAppendElement(&tcl_cmd,
+										 Tcl_DStringValue(&list_tmp));
+			}
 		}
 		else
 		{
@@ -1041,11 +1057,11 @@ compile_pltcl_function(Oid fn_oid, Oid tgreloid)
 		Form_pg_type typeStruct;
 		Tcl_DString proc_internal_def;
 		Tcl_DString proc_internal_body;
-		char		proc_internal_args[4096];
+		char		proc_internal_args[33 * FUNC_MAX_ARGS];
 		Datum		prosrcdatum;
 		bool		isnull;
 		char	   *proc_source;
-		char		buf[512];
+		char		buf[32];
 
 		/************************************************************
 		 * Allocate a new procedure description block
@@ -1124,7 +1140,7 @@ compile_pltcl_function(Oid fn_oid, Oid tgreloid)
 				}
 			}
 
-			if (typeStruct->typrelid != InvalidOid)
+			if (typeStruct->typtype == 'c')
 			{
 				free(prodesc->proname);
 				free(prodesc);
@@ -1172,25 +1188,22 @@ compile_pltcl_function(Oid fn_oid, Oid tgreloid)
 						   format_type_be(procStruct->proargtypes[i]))));
 				}
 
-				if (typeStruct->typrelid != InvalidOid)
+				if (typeStruct->typtype == 'c')
 				{
-					prodesc->arg_is_rel[i] = 1;
-					if (i > 0)
-						strcat(proc_internal_args, " ");
+					prodesc->arg_is_rowtype[i] = true;
 					snprintf(buf, sizeof(buf), "__PLTcl_Tup_%d", i + 1);
-					strcat(proc_internal_args, buf);
-					ReleaseSysCache(typeTup);
-					continue;
 				}
 				else
-					prodesc->arg_is_rel[i] = 0;
-
-				perm_fmgr_info(typeStruct->typoutput, &(prodesc->arg_out_func[i]));
-				prodesc->arg_out_elem[i] = typeStruct->typelem;
+				{
+					prodesc->arg_is_rowtype[i] = false;
+					perm_fmgr_info(typeStruct->typoutput,
+								   &(prodesc->arg_out_func[i]));
+					prodesc->arg_out_elem[i] = typeStruct->typelem;
+					snprintf(buf, sizeof(buf), "%d", i + 1);
+				}
 
 				if (i > 0)
 					strcat(proc_internal_args, " ");
-				snprintf(buf, sizeof(buf), "%d", i + 1);
 				strcat(proc_internal_args, buf);
 
 				ReleaseSysCache(typeTup);
@@ -1225,11 +1238,13 @@ compile_pltcl_function(Oid fn_oid, Oid tgreloid)
 		{
 			for (i = 0; i < prodesc->nargs; i++)
 			{
-				if (!prodesc->arg_is_rel[i])
-					continue;
-				snprintf(buf, sizeof(buf), "array set %d $__PLTcl_Tup_%d\n",
-						 i + 1, i + 1);
-				Tcl_DStringAppend(&proc_internal_body, buf, -1);
+				if (prodesc->arg_is_rowtype[i])
+				{
+					snprintf(buf, sizeof(buf),
+							 "array set %d $__PLTcl_Tup_%d\n",
+							 i + 1, i + 1);
+					Tcl_DStringAppend(&proc_internal_body, buf, -1);
+				}
 			}
 		}
 		else

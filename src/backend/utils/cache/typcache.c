@@ -28,12 +28,15 @@
  * doesn't cope with opclasses changing under it, either, so this seems
  * a low-priority problem.
  *
+ * We do support clearing the tuple descriptor part of a rowtype's cache
+ * entry, since that may need to change as a consequence of ALTER TABLE.
+ *
  *
  * Portions Copyright (c) 1996-2003, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/utils/cache/typcache.c,v 1.4 2003/11/29 19:52:00 pgsql Exp $
+ *	  $PostgreSQL: pgsql/src/backend/utils/cache/typcache.c,v 1.5 2004/04/01 21:28:45 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -53,10 +56,41 @@
 #include "utils/fmgroids.h"
 #include "utils/hsearch.h"
 #include "utils/lsyscache.h"
+#include "utils/syscache.h"
 #include "utils/typcache.h"
 
 
+/* The main type cache hashtable searched by lookup_type_cache */
 static HTAB *TypeCacheHash = NULL;
+
+/*
+ * We use a separate table for storing the definitions of non-anonymous
+ * record types.  Once defined, a record type will be remembered for the
+ * life of the backend.  Subsequent uses of the "same" record type (where
+ * sameness means equalTupleDescs) will refer to the existing table entry.
+ *
+ * Stored record types are remembered in a linear array of TupleDescs,
+ * which can be indexed quickly with the assigned typmod.  There is also
+ * a hash table to speed searches for matching TupleDescs.  The hash key
+ * uses just the first N columns' type OIDs, and so we may have multiple
+ * entries with the same hash key.
+ */
+#define REC_HASH_KEYS	16		/* use this many columns in hash key */
+
+typedef struct RecordCacheEntry
+{
+	/* the hash lookup key MUST BE FIRST */
+	Oid			hashkey[REC_HASH_KEYS];	/* column type IDs, zero-filled */
+
+	/* list of TupleDescs for record types with this hashkey */
+	List	   *tupdescs;
+} RecordCacheEntry;
+
+static HTAB *RecordCacheHash = NULL;
+
+static TupleDesc *RecordCacheArray = NULL;
+static int32 RecordCacheArrayLen = 0;	/* allocated length of array */
+static int32 NextRecordTypmod = 0;		/* number of entries used */
 
 
 static Oid lookup_default_opclass(Oid type_id, Oid am_id);
@@ -102,16 +136,26 @@ lookup_type_cache(Oid type_id, int flags)
 	if (typentry == NULL)
 	{
 		/*
-		 * If we didn't find one, we want to make one.  But first get the
-		 * required info from the pg_type row, just to make sure we don't
-		 * make a cache entry for an invalid type OID.
+		 * If we didn't find one, we want to make one.  But first look up
+		 * the pg_type row, just to make sure we don't make a cache entry
+		 * for an invalid type OID.
 		 */
-		int16	typlen;
-		bool	typbyval;
-		char	typalign;
+		HeapTuple	tp;
+		Form_pg_type typtup;
 
-		get_typlenbyvalalign(type_id, &typlen, &typbyval, &typalign);
+		tp = SearchSysCache(TYPEOID,
+							ObjectIdGetDatum(type_id),
+							0, 0, 0);
+		if (!HeapTupleIsValid(tp))
+			elog(ERROR, "cache lookup failed for type %u", type_id);
+		typtup = (Form_pg_type) GETSTRUCT(tp);
+		if (!typtup->typisdefined)
+			ereport(ERROR,
+					(errcode(ERRCODE_UNDEFINED_OBJECT),
+					 errmsg("type \"%s\" is only a shell",
+							NameStr(typtup->typname))));
 
+		/* Now make the typcache entry */
 		typentry = (TypeCacheEntry *) hash_search(TypeCacheHash,
 												  (void *) &type_id,
 												  HASH_ENTER, &found);
@@ -123,13 +167,20 @@ lookup_type_cache(Oid type_id, int flags)
 
 		MemSet(typentry, 0, sizeof(TypeCacheEntry));
 		typentry->type_id = type_id;
-		typentry->typlen = typlen;
-		typentry->typbyval = typbyval;
-		typentry->typalign = typalign;
+		typentry->typlen = typtup->typlen;
+		typentry->typbyval = typtup->typbyval;
+		typentry->typalign = typtup->typalign;
+		typentry->typtype = typtup->typtype;
+		typentry->typrelid = typtup->typrelid;
+
+		ReleaseSysCache(tp);
 	}
 
 	/* If we haven't already found the opclass, try to do so */
-	if (flags != 0 && typentry->btree_opc == InvalidOid)
+	if ((flags & (TYPECACHE_EQ_OPR | TYPECACHE_LT_OPR | TYPECACHE_GT_OPR |
+				  TYPECACHE_CMP_PROC |
+				  TYPECACHE_EQ_OPR_FINFO | TYPECACHE_CMP_PROC_FINFO)) &&
+		typentry->btree_opc == InvalidOid)
 	{
 		typentry->btree_opc = lookup_default_opclass(type_id,
 													 BTREE_AM_OID);
@@ -215,6 +266,30 @@ lookup_type_cache(Oid type_id, int flags)
 					  CacheMemoryContext);
 	}
 
+	/*
+	 * If it's a composite type (row type), get tupdesc if requested
+	 */
+	if ((flags & TYPECACHE_TUPDESC) &&
+		typentry->tupDesc == NULL &&
+		typentry->typtype == 'c')
+	{
+		Relation	rel;
+
+		if (!OidIsValid(typentry->typrelid)) /* should not happen */
+			elog(ERROR, "invalid typrelid for composite type %u",
+				 typentry->type_id);
+		rel = relation_open(typentry->typrelid, AccessShareLock);
+		Assert(rel->rd_rel->reltype == typentry->type_id);
+		/*
+		 * Notice that we simply store a link to the relcache's tupdesc.
+		 * Since we are relying on relcache to detect cache flush events,
+		 * there's not a lot of point to maintaining an independent copy.
+		 */
+		typentry->tupDesc = RelationGetDescr(rel);
+
+		relation_close(rel, AccessShareLock);
+	}
+
 	return typentry;
 }
 
@@ -295,4 +370,173 @@ lookup_default_opclass(Oid type_id, Oid am_id)
 		return compatibleOid;
 
 	return InvalidOid;
+}
+
+
+/*
+ * lookup_rowtype_tupdesc
+ *
+ * Given a typeid/typmod that should describe a known composite type,
+ * return the tuple descriptor for the type.  Will ereport on failure.
+ *
+ * Note: returned TupleDesc points to cached copy; caller must copy it
+ * if intending to scribble on it or keep a reference for a long time.
+ */
+TupleDesc
+lookup_rowtype_tupdesc(Oid type_id, int32 typmod)
+{
+	if (type_id != RECORDOID)
+	{
+		/*
+		 * It's a named composite type, so use the regular typcache.
+		 */
+		TypeCacheEntry *typentry;
+
+		typentry = lookup_type_cache(type_id, TYPECACHE_TUPDESC);
+		/* this should not happen unless caller messed up: */
+		if (typentry->tupDesc == NULL)
+			ereport(ERROR,
+					(errcode(ERRCODE_WRONG_OBJECT_TYPE),
+					 errmsg("type %u is not composite",
+							type_id)));
+		return typentry->tupDesc;
+	}
+	else
+	{
+		/*
+		 * It's a transient record type, so look in our record-type table.
+		 */
+		if (typmod < 0 || typmod >= NextRecordTypmod)
+		{
+			ereport(ERROR,
+					(errcode(ERRCODE_WRONG_OBJECT_TYPE),
+					 errmsg("record type has not been registered")));
+		}
+		return RecordCacheArray[typmod];
+	}
+}
+
+
+/*
+ * assign_record_type_typmod
+ *
+ * Given a tuple descriptor for a RECORD type, find or create a cache entry
+ * for the type, and set the tupdesc's tdtypmod field to a value that will
+ * identify this cache entry to lookup_rowtype_tupdesc.
+ */
+void
+assign_record_type_typmod(TupleDesc tupDesc)
+{
+	RecordCacheEntry *recentry;
+	TupleDesc	entDesc;
+	Oid			hashkey[REC_HASH_KEYS];
+	bool		found;
+	int			i;
+	List	   *l;
+	int32		newtypmod;
+	MemoryContext oldcxt;
+
+	Assert(tupDesc->tdtypeid == RECORDOID);
+
+	if (RecordCacheHash == NULL)
+	{
+		/* First time through: initialize the hash table */
+		HASHCTL		ctl;
+
+		if (!CacheMemoryContext)
+			CreateCacheMemoryContext();
+
+		MemSet(&ctl, 0, sizeof(ctl));
+		ctl.keysize = REC_HASH_KEYS * sizeof(Oid);
+		ctl.entrysize = sizeof(RecordCacheEntry);
+		ctl.hash = tag_hash;
+		RecordCacheHash = hash_create("Record information cache", 64,
+									  &ctl, HASH_ELEM | HASH_FUNCTION);
+	}
+
+	/* Find or create a hashtable entry for this hash class */
+	MemSet(hashkey, 0, sizeof(hashkey));
+	for (i = 0; i < tupDesc->natts; i++)
+	{
+		if (i >= REC_HASH_KEYS)
+			break;
+		hashkey[i] = tupDesc->attrs[i]->atttypid;
+	}
+	recentry = (RecordCacheEntry *) hash_search(RecordCacheHash,
+												(void *) hashkey,
+												HASH_ENTER, &found);
+	if (recentry == NULL)
+		ereport(ERROR,
+				(errcode(ERRCODE_OUT_OF_MEMORY),
+				 errmsg("out of memory")));
+	if (!found)
+	{
+		/* New entry ... hash_search initialized only the hash key */
+		recentry->tupdescs = NIL;
+	}
+
+	/* Look for existing record cache entry */
+	foreach(l, recentry->tupdescs)
+	{
+		entDesc = (TupleDesc) lfirst(l);
+		if (equalTupleDescs(tupDesc, entDesc))
+		{
+			tupDesc->tdtypmod = entDesc->tdtypmod;
+			return;
+		}
+	}
+
+	/* Not present, so need to manufacture an entry */
+	oldcxt = MemoryContextSwitchTo(CacheMemoryContext);
+
+	if (RecordCacheArray == NULL)
+	{
+		RecordCacheArray = (TupleDesc *) palloc(64 * sizeof(TupleDesc));
+		RecordCacheArrayLen = 64;
+	}
+	else if (NextRecordTypmod >= RecordCacheArrayLen)
+	{
+		int32 newlen = RecordCacheArrayLen * 2;
+
+		RecordCacheArray = (TupleDesc *) repalloc(RecordCacheArray,
+												  newlen * sizeof(TupleDesc));
+		RecordCacheArrayLen = newlen;
+	}
+
+	/* if fail in subrs, no damage except possibly some wasted memory... */
+	entDesc = CreateTupleDescCopy(tupDesc);
+	recentry->tupdescs = lcons(entDesc, recentry->tupdescs);
+	/* now it's safe to advance NextRecordTypmod */
+	newtypmod = NextRecordTypmod++;
+	entDesc->tdtypmod = newtypmod;
+	RecordCacheArray[newtypmod] = entDesc;
+
+	/* report to caller as well */
+	tupDesc->tdtypmod = newtypmod;
+
+	MemoryContextSwitchTo(oldcxt);
+}
+
+/*
+ * flush_rowtype_cache
+ *
+ * If a typcache entry exists for a rowtype, delete the entry's cached
+ * tuple descriptor link.  This is called from relcache.c when a cached
+ * relation tupdesc is about to be dropped.
+ */
+void
+flush_rowtype_cache(Oid type_id)
+{
+	TypeCacheEntry *typentry;
+
+	if (TypeCacheHash == NULL)
+		return;					/* no table, so certainly no entry */
+
+	typentry = (TypeCacheEntry *) hash_search(TypeCacheHash,
+											  (void *) &type_id,
+											  HASH_FIND, NULL);
+	if (typentry == NULL)
+		return;					/* no matching entry */
+
+	typentry->tupDesc = NULL;
 }

@@ -15,7 +15,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/executor/execTuples.c,v 1.75 2004/01/07 18:56:26 neilc Exp $
+ *	  $PostgreSQL: pgsql/src/backend/executor/execTuples.c,v 1.76 2004/04/01 21:28:44 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -109,8 +109,11 @@
 
 #include "funcapi.h"
 #include "access/heapam.h"
+#include "catalog/pg_type.h"
 #include "executor/executor.h"
 #include "utils/lsyscache.h"
+#include "utils/typcache.h"
+
 
 static TupleDesc ExecTypeFromTLInternal(List *targetList,
 										bool hasoid, bool skipjunk);
@@ -144,16 +147,11 @@ ExecCreateTupleTable(int initialSize)	/* initial number of slots in
 
 	/*
 	 * Now allocate our new table along with space for the pointers to the
-	 * tuples.
+	 * tuples.  Zero out the slots.
 	 */
 
 	newtable = (TupleTable) palloc(sizeof(TupleTableData));
-	array = (TupleTableSlot *) palloc(initialSize * sizeof(TupleTableSlot));
-
-	/*
-	 * clean out the slots we just allocated
-	 */
-	MemSet(array, 0, initialSize * sizeof(TupleTableSlot));
+	array = (TupleTableSlot *) palloc0(initialSize * sizeof(TupleTableSlot));
 
 	/*
 	 * initialize the new table and return it to the caller.
@@ -514,6 +512,10 @@ TupleTableSlot *
 ExecInitNullTupleSlot(EState *estate, TupleDesc tupType)
 {
 	TupleTableSlot *slot = ExecInitExtraTupleSlot(estate);
+	struct tupleDesc nullTupleDesc;
+	HeapTuple	nullTuple;
+	Datum		values[1];
+	char		nulls[1];
 
 	/*
 	 * Since heap_getattr() will treat attributes beyond a tuple's t_natts
@@ -521,15 +523,12 @@ ExecInitNullTupleSlot(EState *estate, TupleDesc tupType)
 	 * of zero length.	However, the slot descriptor must match the real
 	 * tupType.
 	 */
-	HeapTuple	nullTuple;
-	Datum		values[1];
-	char		nulls[1];
-	static struct tupleDesc NullTupleDesc;		/* we assume this inits to
-												 * zeroes */
+	nullTupleDesc = *tupType;
+	nullTupleDesc.natts = 0;
+
+	nullTuple = heap_formtuple(&nullTupleDesc, values, nulls);
 
 	ExecSetSlotDescriptor(slot, tupType, false);
-
-	nullTuple = heap_formtuple(&NullTupleDesc, values, nulls);
 
 	return ExecStoreTuple(nullTuple, slot, InvalidBuffer, true);
 }
@@ -590,20 +589,44 @@ ExecTypeFromTLInternal(List *targetList, bool hasoid, bool skipjunk)
 						   resdom->resname,
 						   resdom->restype,
 						   resdom->restypmod,
-						   0,
-						   false);
+						   0);
 	}
 
 	return typeInfo;
 }
 
 /*
+ * BlessTupleDesc - make a completed tuple descriptor useful for SRFs
+ *
+ * Rowtype Datums returned by a function must contain valid type information.
+ * This happens "for free" if the tupdesc came from a relcache entry, but
+ * not if we have manufactured a tupdesc for a transient RECORD datatype.
+ * In that case we have to notify typcache.c of the existence of the type.
+ */
+TupleDesc
+BlessTupleDesc(TupleDesc tupdesc)
+{
+	if (tupdesc->tdtypeid == RECORDOID &&
+		tupdesc->tdtypmod < 0)
+		assign_record_type_typmod(tupdesc);
+
+	return tupdesc;				/* just for notational convenience */
+}
+
+/*
  * TupleDescGetSlot - Initialize a slot based on the supplied tupledesc
+ *
+ * Note: this is obsolete; it is sufficient to call BlessTupleDesc on
+ * the tupdesc.  We keep it around just for backwards compatibility with
+ * existing user-written SRFs.
  */
 TupleTableSlot *
 TupleDescGetSlot(TupleDesc tupdesc)
 {
 	TupleTableSlot *slot;
+
+	/* The useful work is here */
+	BlessTupleDesc(tupdesc);
 
 	/* Make a standalone slot */
 	slot = MakeTupleTableSlot();
@@ -634,6 +657,9 @@ TupleDescGetAttInMetadata(TupleDesc tupdesc)
 
 	attinmeta = (AttInMetadata *) palloc(sizeof(AttInMetadata));
 
+	/* "Bless" the tupledesc so that we can make rowtype datums with it */
+	attinmeta->tupdesc = BlessTupleDesc(tupdesc);
+
 	/*
 	 * Gather info needed later to call the "in" function for each
 	 * attribute
@@ -653,7 +679,6 @@ TupleDescGetAttInMetadata(TupleDesc tupdesc)
 			atttypmods[i] = tupdesc->attrs[i]->atttypmod;
 		}
 	}
-	attinmeta->tupdesc = tupdesc;
 	attinmeta->attinfuncs = attinfuncinfo;
 	attinmeta->attelems = attelems;
 	attinmeta->atttypmods = atttypmods;

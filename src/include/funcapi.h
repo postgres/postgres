@@ -9,7 +9,7 @@
  *
  * Copyright (c) 2002-2003, PostgreSQL Global Development Group
  *
- * $PostgreSQL: pgsql/src/include/funcapi.h,v 1.10 2003/11/29 22:40:53 pgsql Exp $
+ * $PostgreSQL: pgsql/src/include/funcapi.h,v 1.11 2004/04/01 21:28:46 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -57,7 +57,7 @@ typedef struct AttInMetadata
 typedef struct FuncCallContext
 {
 	/*
-	 * Number of times we've been called before.
+	 * Number of times we've been called before
 	 *
 	 * call_cntr is initialized to 0 for you by SRF_FIRSTCALL_INIT(), and
 	 * incremented for you every time SRF_RETURN_NEXT() is called.
@@ -67,7 +67,7 @@ typedef struct FuncCallContext
 	/*
 	 * OPTIONAL maximum number of calls
 	 *
-	 * max_calls is here for convenience ONLY and setting it is OPTIONAL. If
+	 * max_calls is here for convenience only and setting it is optional. If
 	 * not set, you must provide alternative means to know when the
 	 * function is done.
 	 */
@@ -76,40 +76,49 @@ typedef struct FuncCallContext
 	/*
 	 * OPTIONAL pointer to result slot
 	 *
-	 * slot is for use when returning tuples (i.e. composite data types) and
-	 * is not needed when returning base (i.e. scalar) data types.
+	 * This is obsolete and only present for backwards compatibility, viz,
+	 * user-defined SRFs that use the deprecated TupleDescGetSlot().
 	 */
 	TupleTableSlot *slot;
 
 	/*
-	 * OPTIONAL pointer to misc user provided context info
+	 * OPTIONAL pointer to miscellaneous user-provided context information
 	 *
 	 * user_fctx is for use as a pointer to your own struct to retain
-	 * arbitrary context information between calls for your function.
+	 * arbitrary context information between calls of your function.
 	 */
 	void	   *user_fctx;
 
 	/*
-	 * OPTIONAL pointer to struct containing arrays of attribute type
-	 * input metainfo
+	 * OPTIONAL pointer to struct containing attribute type input metadata
 	 *
 	 * attinmeta is for use when returning tuples (i.e. composite data types)
-	 * and is not needed when returning base (i.e. scalar) data types. It
-	 * is ONLY needed if you intend to use BuildTupleFromCStrings() to
-	 * create the return tuple.
+	 * and is not used when returning base data types. It is only needed
+	 * if you intend to use BuildTupleFromCStrings() to create the return
+	 * tuple.
 	 */
 	AttInMetadata *attinmeta;
 
 	/*
-	 * memory context used for structures which must live for multiple
-	 * calls
+	 * memory context used for structures that must live for multiple calls
 	 *
 	 * multi_call_memory_ctx is set by SRF_FIRSTCALL_INIT() for you, and used
 	 * by SRF_RETURN_DONE() for cleanup. It is the most appropriate memory
-	 * context for any memory that is to be re-used across multiple calls
+	 * context for any memory that is to be reused across multiple calls
 	 * of the SRF.
 	 */
 	MemoryContext multi_call_memory_ctx;
+
+	/*
+	 * OPTIONAL pointer to struct containing tuple description
+	 *
+	 * tuple_desc is for use when returning tuples (i.e. composite data types)
+	 * and is only needed if you are going to build the tuples with
+	 * heap_formtuple() rather than with BuildTupleFromCStrings().  Note that
+	 * the TupleDesc pointer stored here should usually have been run through
+	 * BlessTupleDesc() first.
+	 */
+	TupleDesc tuple_desc;
 
 } FuncCallContext;
 
@@ -122,38 +131,43 @@ typedef struct FuncCallContext
  * TupleDesc TypeGetTupleDesc(Oid typeoid, List *colaliases) - Use to get a
  *		TupleDesc based on a type OID. This can be used to get
  *		a TupleDesc for a base (scalar) or composite (relation) type.
- * TupleTableSlot *TupleDescGetSlot(TupleDesc tupdesc) - Initialize a slot
- *		given a TupleDesc.
+ * TupleDesc BlessTupleDesc(TupleDesc tupdesc) - "Bless" a completed tuple
+ *		descriptor so that it can be used to return properly labeled tuples.
+ *		You need to call this if you are going to use heap_formtuple directly.
+ *		TupleDescGetAttInMetadata does it for you, however, so no need to call
+ *		it if you call TupleDescGetAttInMetadata.
  * AttInMetadata *TupleDescGetAttInMetadata(TupleDesc tupdesc) - Build an
  *		AttInMetadata struct based on the given TupleDesc. AttInMetadata can
  *		be used in conjunction with C strings to produce a properly formed
- *		tuple. Store the metadata here for use across calls to avoid redundant
- *		work.
+ *		tuple.
  * HeapTuple BuildTupleFromCStrings(AttInMetadata *attinmeta, char **values) -
  *		build a HeapTuple given user data in C string form. values is an array
  *		of C strings, one for each attribute of the return tuple.
  *
  * Macro declarations:
+ * HeapTupleGetDatum(HeapTuple tuple) - convert a HeapTuple to a Datum.
+ *
+ * Obsolete routines and macros:
+ * TupleTableSlot *TupleDescGetSlot(TupleDesc tupdesc) - Builds a
+ *		TupleTableSlot, which is not needed anymore.
  * TupleGetDatum(TupleTableSlot *slot, HeapTuple tuple) - get a Datum
  *		given a tuple and a slot.
  *----------
  */
+
+#define HeapTupleGetDatum(_tuple)		PointerGetDatum((_tuple)->t_data)
+/* obsolete version of above */
+#define TupleGetDatum(_slot, _tuple)	PointerGetDatum((_tuple)->t_data)
 
 /* from tupdesc.c */
 extern TupleDesc RelationNameGetTupleDesc(const char *relname);
 extern TupleDesc TypeGetTupleDesc(Oid typeoid, List *colaliases);
 
 /* from execTuples.c */
-extern TupleTableSlot *TupleDescGetSlot(TupleDesc tupdesc);
+extern TupleDesc BlessTupleDesc(TupleDesc tupdesc);
 extern AttInMetadata *TupleDescGetAttInMetadata(TupleDesc tupdesc);
 extern HeapTuple BuildTupleFromCStrings(AttInMetadata *attinmeta, char **values);
-
-/*
- * Note we pass shouldFree = false; this is needed because the tuple will
- * typically be in a shorter-lived memory context than the TupleTableSlot.
- */
-#define TupleGetDatum(_slot, _tuple) \
-	PointerGetDatum(ExecStoreTuple(_tuple, _slot, InvalidBuffer, false))
+extern TupleTableSlot *TupleDescGetSlot(TupleDesc tupdesc);
 
 
 /*----------
@@ -176,8 +190,7 @@ extern HeapTuple BuildTupleFromCStrings(AttInMetadata *attinmeta, char **values)
  *		oldcontext = MemoryContextSwitchTo(funcctx->multi_call_memory_ctx);
  *		<user defined code>
  *		<if returning composite>
- *			<obtain slot>
- *			funcctx->slot = slot;
+ *			<build TupleDesc, and perhaps AttInMetaData>
  *		<endif returning composite>
  *		<user defined code>
  *		// return to original context when allocating transient memory

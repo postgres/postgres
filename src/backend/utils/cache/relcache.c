@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/utils/cache/relcache.c,v 1.200 2004/03/16 05:05:58 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/utils/cache/relcache.c,v 1.201 2004/04/01 21:28:45 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -63,6 +63,7 @@
 #include "utils/lsyscache.h"
 #include "utils/relcache.h"
 #include "utils/syscache.h"
+#include "utils/typcache.h"
 
 
 /*
@@ -432,7 +433,10 @@ RelationBuildTupleDesc(RelationBuildDescInfo buildinfo,
 	AttrDefault *attrdef = NULL;
 	int			ndef = 0;
 
-	relation->rd_att->tdhasoid = RelationGetForm(relation)->relhasoids;
+	/* copy some fields from pg_class row to rd_att */
+	relation->rd_att->tdtypeid = relation->rd_rel->reltype;
+	relation->rd_att->tdtypmod = -1;	/* unnecessary, but... */
+	relation->rd_att->tdhasoid = relation->rd_rel->relhasoids;
 
 	constr = (TupleConstr *) MemoryContextAlloc(CacheMemoryContext,
 												sizeof(TupleConstr));
@@ -1312,9 +1316,12 @@ formrdesc(const char *relationName,
 	 * Unlike the case with the relation tuple, this data had better be right
 	 * because it will never be replaced.  The input values must be
 	 * correctly defined by macros in src/include/catalog/ headers.
+	 *
+	 * Note however that rd_att's tdtypeid, tdtypmod, tdhasoid fields are
+	 * not right at this point.  They will be fixed later when the real
+	 * pg_class row is loaded.
 	 */
-	relation->rd_att = CreateTemplateTupleDesc(natts,
-										   relation->rd_rel->relhasoids);
+	relation->rd_att = CreateTemplateTupleDesc(natts, false);
 
 	/*
 	 * initialize tuple desc info
@@ -1595,6 +1602,7 @@ RelationReloadClassinfo(Relation relation)
 static void
 RelationClearRelation(Relation relation, bool rebuild)
 {
+	Oid			old_reltype = relation->rd_rel->reltype;
 	MemoryContext oldcxt;
 
 	/*
@@ -1679,6 +1687,7 @@ RelationClearRelation(Relation relation, bool rebuild)
 	if (!rebuild)
 	{
 		/* ok to zap remaining substructure */
+		flush_rowtype_cache(old_reltype);
 		FreeTupleDesc(relation->rd_att);
 		if (relation->rd_rulescxt)
 			MemoryContextDelete(relation->rd_rulescxt);
@@ -1704,6 +1713,7 @@ RelationClearRelation(Relation relation, bool rebuild)
 		if (RelationBuildDesc(buildinfo, relation) != relation)
 		{
 			/* Should only get here if relation was deleted */
+			flush_rowtype_cache(old_reltype);
 			FreeTupleDesc(old_att);
 			if (old_rulescxt)
 				MemoryContextDelete(old_rulescxt);
@@ -1715,11 +1725,15 @@ RelationClearRelation(Relation relation, bool rebuild)
 		relation->rd_isnew = old_isnew;
 		if (equalTupleDescs(old_att, relation->rd_att))
 		{
+			/* needn't flush typcache here */
 			FreeTupleDesc(relation->rd_att);
 			relation->rd_att = old_att;
 		}
 		else
+		{
+			flush_rowtype_cache(old_reltype);
 			FreeTupleDesc(old_att);
+		}
 		if (equalRuleLocks(old_rules, relation->rd_rules))
 		{
 			if (relation->rd_rulescxt)
@@ -2329,6 +2343,12 @@ RelationCacheInitializePhase2(void)
 			 */
 			Assert(relation->rd_rel != NULL);
 			memcpy((char *) relation->rd_rel, (char *) relp, CLASS_TUPLE_SIZE);
+
+			/*
+			 * Also update the derived fields in rd_att.
+			 */
+			relation->rd_att->tdtypeid = relp->reltype;
+			relation->rd_att->tdtypmod = -1;	/* unnecessary, but... */
 			relation->rd_att->tdhasoid = relp->relhasoids;
 
 			ReleaseSysCache(htup);
@@ -2918,6 +2938,8 @@ load_relcache_init_file(void)
 		/* initialize attribute tuple forms */
 		rel->rd_att = CreateTemplateTupleDesc(relform->relnatts,
 											  relform->relhasoids);
+		rel->rd_att->tdtypeid = relform->reltype;
+		rel->rd_att->tdtypmod = -1;			/* unnecessary, but... */
 
 		/* next read all the attribute tuple form data entries */
 		has_not_null = false;

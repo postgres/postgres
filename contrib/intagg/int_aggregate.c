@@ -25,7 +25,6 @@
 #include "catalog/pg_proc.h"
 #include "catalog/pg_type.h"
 #include "executor/executor.h"
-#include "utils/sets.h"
 #include "utils/syscache.h"
 #include "access/tupmacs.h"
 #include "access/xact.h"

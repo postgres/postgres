@@ -8,7 +8,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/bootstrap/bootstrap.c,v 1.177 2004/02/25 19:41:22 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/bootstrap/bootstrap.c,v 1.178 2004/04/01 21:28:43 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -107,34 +107,55 @@ struct typinfo
 	Oid			oid;
 	Oid			elem;
 	int16		len;
+	bool		byval;
+	char		align;
+	char		storage;
 	Oid			inproc;
 	Oid			outproc;
 };
 
-static struct typinfo Procid[] = {
-	{"bool", BOOLOID, 0, 1, F_BOOLIN, F_BOOLOUT},
-	{"bytea", BYTEAOID, 0, -1, F_BYTEAIN, F_BYTEAOUT},
-	{"char", CHAROID, 0, 1, F_CHARIN, F_CHAROUT},
-	{"name", NAMEOID, 0, NAMEDATALEN, F_NAMEIN, F_NAMEOUT},
-	{"int2", INT2OID, 0, 2, F_INT2IN, F_INT2OUT},
-	{"int2vector", INT2VECTOROID, 0, INDEX_MAX_KEYS * 2, F_INT2VECTORIN, F_INT2VECTOROUT},
-	{"int4", INT4OID, 0, 4, F_INT4IN, F_INT4OUT},
-	{"regproc", REGPROCOID, 0, 4, F_REGPROCIN, F_REGPROCOUT},
-	{"regclass", REGCLASSOID, 0, 4, F_REGCLASSIN, F_REGCLASSOUT},
-	{"regtype", REGTYPEOID, 0, 4, F_REGTYPEIN, F_REGTYPEOUT},
-	{"text", TEXTOID, 0, -1, F_TEXTIN, F_TEXTOUT},
-	{"oid", OIDOID, 0, 4, F_OIDIN, F_OIDOUT},
-	{"tid", TIDOID, 0, 6, F_TIDIN, F_TIDOUT},
-	{"xid", XIDOID, 0, 4, F_XIDIN, F_XIDOUT},
-	{"cid", CIDOID, 0, 4, F_CIDIN, F_CIDOUT},
-	{"oidvector", OIDVECTOROID, 0, INDEX_MAX_KEYS * 4, F_OIDVECTORIN, F_OIDVECTOROUT},
-	{"smgr", 210, 0, 2, F_SMGRIN, F_SMGROUT},
-	{"_int4", 1007, INT4OID, -1, F_ARRAY_IN, F_ARRAY_OUT},
-	{"_text", 1009, TEXTOID, -1, F_ARRAY_IN, F_ARRAY_OUT},
-	{"_aclitem", 1034, 1033, -1, F_ARRAY_IN, F_ARRAY_OUT}
+static const struct typinfo TypInfo[] = {
+	{"bool", BOOLOID, 0, 1, true, 'c', 'p',
+	 F_BOOLIN, F_BOOLOUT},
+	{"bytea", BYTEAOID, 0, -1, false, 'i', 'x',
+	 F_BYTEAIN, F_BYTEAOUT},
+	{"char", CHAROID, 0, 1, true, 'c', 'p',
+	 F_CHARIN, F_CHAROUT},
+	{"name", NAMEOID, CHAROID, NAMEDATALEN, false, 'i', 'p',
+	 F_NAMEIN, F_NAMEOUT},
+	{"int2", INT2OID, 0, 2, true, 's', 'p',
+	 F_INT2IN, F_INT2OUT},
+	{"int4", INT4OID, 0, 4, true, 'i', 'p',
+	 F_INT4IN, F_INT4OUT},
+	{"regproc", REGPROCOID, 0, 4, true, 'i', 'p',
+	 F_REGPROCIN, F_REGPROCOUT},
+	{"regclass", REGCLASSOID, 0, 4, true, 'i', 'p',
+	 F_REGCLASSIN, F_REGCLASSOUT},
+	{"regtype", REGTYPEOID, 0, 4, true, 'i', 'p',
+	 F_REGTYPEIN, F_REGTYPEOUT},
+	{"text", TEXTOID, 0, -1, false, 'i', 'x',
+	 F_TEXTIN, F_TEXTOUT},
+	{"oid", OIDOID, 0, 4, true, 'i', 'p',
+	 F_OIDIN, F_OIDOUT},
+	{"tid", TIDOID, 0, 6, false, 's', 'p',
+	 F_TIDIN, F_TIDOUT},
+	{"xid", XIDOID, 0, 4, true, 'i', 'p',
+	 F_XIDIN, F_XIDOUT},
+	{"cid", CIDOID, 0, 4, true, 'i', 'p',
+	 F_CIDIN, F_CIDOUT},
+	{"int2vector", INT2VECTOROID, INT2OID, INDEX_MAX_KEYS * 2, false, 's', 'p',
+	 F_INT2VECTORIN, F_INT2VECTOROUT},
+	{"oidvector", OIDVECTOROID, OIDOID, INDEX_MAX_KEYS * 4, false, 'i', 'p',
+	 F_OIDVECTORIN, F_OIDVECTOROUT},
+	{"_int4", INT4ARRAYOID, INT4OID, -1, false, 'i', 'x',
+	 F_ARRAY_IN, F_ARRAY_OUT},
+	{"_text", 1009, TEXTOID, -1, false, 'i', 'x',
+	 F_ARRAY_IN, F_ARRAY_OUT},
+	{"_aclitem", 1034, ACLITEMOID, -1, false, 'i', 'x',
+	 F_ARRAY_IN, F_ARRAY_OUT}
 };
 
-static int	n_types = sizeof(Procid) / sizeof(struct typinfo);
+static const int	n_types = sizeof(TypInfo) / sizeof(struct typinfo);
 
 struct typmap
 {								/* a hack */
@@ -697,44 +718,13 @@ DefineAttr(char *name, char *type, int attnum)
 	}
 	else
 	{
-		attrtypes[attnum]->atttypid = Procid[typeoid].oid;
-		attlen = attrtypes[attnum]->attlen = Procid[typeoid].len;
-
-		/*
-		 * Cheat like mad to fill in these items from the length only.
-		 * This only has to work for types that appear in Procid[].
-		 */
-		switch (attlen)
-		{
-			case 1:
-				attrtypes[attnum]->attbyval = true;
-				attrtypes[attnum]->attstorage = 'p';
-				attrtypes[attnum]->attalign = 'c';
-				break;
-			case 2:
-				attrtypes[attnum]->attbyval = true;
-				attrtypes[attnum]->attstorage = 'p';
-				attrtypes[attnum]->attalign = 's';
-				break;
-			case 4:
-				attrtypes[attnum]->attbyval = true;
-				attrtypes[attnum]->attstorage = 'p';
-				attrtypes[attnum]->attalign = 'i';
-				break;
-			case -1:
-				attrtypes[attnum]->attbyval = false;
-				attrtypes[attnum]->attstorage = 'x';
-				attrtypes[attnum]->attalign = 'i';
-				break;
-			default:
-				/* TID and fixed-length arrays, such as oidvector */
-				attrtypes[attnum]->attbyval = false;
-				attrtypes[attnum]->attstorage = 'p';
-				attrtypes[attnum]->attalign = 'i';
-				break;
-		}
+		attrtypes[attnum]->atttypid = TypInfo[typeoid].oid;
+		attlen = attrtypes[attnum]->attlen = TypInfo[typeoid].len;
+		attrtypes[attnum]->attbyval = TypInfo[typeoid].byval;
+		attrtypes[attnum]->attstorage = TypInfo[typeoid].storage;
+		attrtypes[attnum]->attalign = TypInfo[typeoid].align;
 		/* if an array type, assume 1-dimensional attribute */
-		if (Procid[typeoid].elem != InvalidOid && attlen < 0)
+		if (TypInfo[typeoid].elem != InvalidOid && attlen < 0)
 			attrtypes[attnum]->attndims = 1;
 		else
 			attrtypes[attnum]->attndims = 0;
@@ -844,19 +834,19 @@ InsertOneValue(char *value, int i)
 	{
 		for (typeindex = 0; typeindex < n_types; typeindex++)
 		{
-			if (Procid[typeindex].oid == attrtypes[i]->atttypid)
+			if (TypInfo[typeindex].oid == attrtypes[i]->atttypid)
 				break;
 		}
 		if (typeindex >= n_types)
 			elog(ERROR, "type oid %u not found", attrtypes[i]->atttypid);
 		elog(DEBUG4, "Typ == NULL, typeindex = %u", typeindex);
-		values[i] = OidFunctionCall3(Procid[typeindex].inproc,
+		values[i] = OidFunctionCall3(TypInfo[typeindex].inproc,
 									 CStringGetDatum(value),
-								ObjectIdGetDatum(Procid[typeindex].elem),
+								ObjectIdGetDatum(TypInfo[typeindex].elem),
 									 Int32GetDatum(-1));
-		prt = DatumGetCString(OidFunctionCall3(Procid[typeindex].outproc,
+		prt = DatumGetCString(OidFunctionCall3(TypInfo[typeindex].outproc,
 											   values[i],
-								ObjectIdGetDatum(Procid[typeindex].elem),
+								ObjectIdGetDatum(TypInfo[typeindex].elem),
 											   Int32GetDatum(-1)));
 		elog(DEBUG4, " -> %s", prt);
 		pfree(prt);
@@ -930,9 +920,9 @@ cleanup(void)
 /* ----------------
  *		gettype
  *
- * NB: this is really ugly; it will return an integer index into Procid[],
+ * NB: this is really ugly; it will return an integer index into TypInfo[],
  * and not an OID at all, until the first reference to a type not known in
- * Procid[].  At that point it will read and cache pg_type in the Typ array,
+ * TypInfo[].  At that point it will read and cache pg_type in the Typ array,
  * and subsequently return a real OID (and set the global pointer Ap to
  * point at the found row in Typ).	So caller must check whether Typ is
  * still NULL to determine what the return value is!
@@ -962,7 +952,7 @@ gettype(char *type)
 	{
 		for (i = 0; i < n_types; i++)
 		{
-			if (strncmp(type, Procid[i].name, NAMEDATALEN) == 0)
+			if (strncmp(type, TypInfo[i].name, NAMEDATALEN) == 0)
 				return i;
 		}
 		elog(DEBUG4, "external type: %s", type);
