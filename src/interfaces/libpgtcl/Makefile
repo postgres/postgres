@@ -7,16 +7,16 @@
 #
 #
 # IDENTIFICATION
-#    $Header: /cvsroot/pgsql/src/interfaces/libpgtcl/Attic/Makefile,v 1.12 1997/04/02 18:13:47 scrappy Exp $
+#    $Header: /cvsroot/pgsql/src/interfaces/libpgtcl/Attic/Makefile,v 1.13 1997/09/14 23:34:13 momjian Exp $
 #
 #-------------------------------------------------------------------------
 
-SRCDIR= ..
-include ../Makefile.global
+SRCDIR= ../..
+include ../../Makefile.global
 
 INCLUDE_OPT= \
-             -I../backend \
-             -I../include \
+             -I../../backend \
+             -I../../include \
              -I$(LIBPQDIR) \
              -I$(TCL_INCDIR)
 
@@ -35,7 +35,7 @@ ifeq ($(PORTNAME), linux)
     endif
     shlib             := libpgtcl.so.1
     install-shlib-dep := install-shlib
-    LDFLAGS           += -L ../libpq -lpq
+    LDFLAGS           += -L ../../libpq -lpq
   endif
 endif
 
