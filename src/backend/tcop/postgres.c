@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/tcop/postgres.c,v 1.55 1997/11/25 22:06:14 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/tcop/postgres.c,v 1.56 1997/12/11 17:36:42 momjian Exp $
  *
  * NOTES
  *	  this is the "main" module of the postgres backend and
@@ -395,7 +395,7 @@ ReadCommand(char *inBuf, bool multiplexedBackend)
 }
 
 List	   *
-pg_plan(char *query_string,		/* string to execute */
+pg_parse_and_plan(char *query_string,		/* string to execute */
 		Oid *typev,				/* argument types */
 		int nargs,				/* number of arguments */
 		QueryTreeList **queryListP,		/* pointer to the parse trees */
@@ -537,7 +537,10 @@ pg_plan(char *query_string,		/* string to execute */
 
 			if (ShowPlannerStats)
 				ResetUsage();
+
+			/* call that optimizer */
 			plan = planner(querytree);
+
 			if (ShowPlannerStats)
 			{
 				fprintf(stderr, "! Planner Stats:\n");
@@ -580,7 +583,7 @@ pg_plan(char *query_string,		/* string to execute */
 }
 
 /* ----------------------------------------------------------------
- *		pg_eval()
+ *		pg_exec_query()
  *
  *		Takes a querystring, runs the parser/utilities or
  *		parser/planner/executor over it as necessary
@@ -597,13 +600,13 @@ pg_plan(char *query_string,		/* string to execute */
  */
 
 void
-pg_eval(char *query_string, char **argv, Oid *typev, int nargs)
+pg_exec_query(char *query_string, char **argv, Oid *typev, int nargs)
 {
-	pg_eval_dest(query_string, argv, typev, nargs, whereToSendOutput);
+	pg_exec_query_dest(query_string, argv, typev, nargs, whereToSendOutput);
 }
 
 void
-pg_eval_dest(char *query_string,/* string to execute */
+pg_exec_query_dest(char *query_string,/* string to execute */
 			 char **argv,		/* arguments */
 			 Oid *typev,		/* argument types */
 			 int nargs,			/* number of arguments */
@@ -617,9 +620,9 @@ pg_eval_dest(char *query_string,/* string to execute */
 	QueryTreeList *querytree_list;
 
 	/* plan the queries */
-	plan_list = pg_plan(query_string, typev, nargs, &querytree_list, dest);
+	plan_list = pg_parse_and_plan(query_string, typev, nargs, &querytree_list, dest);
 
-	/* pg_plan could have failed */
+	/* pg_parse_and_plan could have failed */
 	if (querytree_list == NULL)
 		return;
 
@@ -668,7 +671,7 @@ pg_eval_dest(char *query_string,/* string to execute */
 #ifdef INDEXSCAN_PATCH
 
 			/*
-			 * Print moved in pg_plan.	DZ - 27-8-1996
+			 * Print moved in pg_parse_and_plan.	DZ - 27-8-1996
 			 */
 #else
 			/* ----------------
@@ -1340,7 +1343,7 @@ PostgresMain(int argc, char *argv[])
 	if (IsUnderPostmaster == false)
 	{
 		puts("\nPOSTGRES backend interactive interface");
-		puts("$Revision: 1.55 $ $Date: 1997/11/25 22:06:14 $");
+		puts("$Revision: 1.56 $ $Date: 1997/12/11 17:36:42 $");
 	}
 
 	/* ----------------
@@ -1510,7 +1513,7 @@ PostgresMain(int argc, char *argv[])
 					}
 					StartTransactionCommand();
 
-					pg_eval(parser_input, (char **) NULL, (Oid *) NULL, 0);
+					pg_exec_query(parser_input, (char **) NULL, (Oid *) NULL, 0);
 
 					if (ShowStats)
 						ShowUsage();
@@ -1540,7 +1543,7 @@ PostgresMain(int argc, char *argv[])
 		 *	 (3) commit the current transaction
 		 *
 		 *	 Note: if we had an empty input buffer, then we didn't
-		 *	 call pg_eval, so we don't bother to commit this transaction.
+		 *	 call pg_exec_query, so we don't bother to commit this transaction.
 		 * ----------------
 		 */
 		if (!IsEmptyQuery)

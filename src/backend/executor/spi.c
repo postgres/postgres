@@ -640,7 +640,7 @@ _SPI_execute(char *src, int tcount, _SPI_plan * plan)
 		argtypes = plan->argtypes;
 	}
 	ptlist = planTree_list = (List *)
-		pg_plan(src, argtypes, nargs, &queryTree_list, None);
+		pg_parse_and_plan(src, argtypes, nargs, &queryTree_list, None);
 
 	_SPI_current->qtlist = queryTree_list;
 

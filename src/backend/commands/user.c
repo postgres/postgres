@@ -1,7 +1,7 @@
 /*-------------------------------------------------------------------------
  *
  * user.c--
- *	  use pg_eval to create a new user in the catalog
+ *	  use pg_exec_query to create a new user in the catalog
  *
  * Copyright (c) 1994, Regents of the University of California
  *
@@ -43,7 +43,7 @@ void UpdatePgPwdFile(char* sql) {
 
   filename = crypt_getpwdfilename();
   sprintf(sql, "copy %s to '%s' using delimiters '#'", UserRelationName, filename);
-  pg_eval(sql, (char**)NULL, (Oid*)NULL, 0);
+  pg_exec_query(sql, (char**)NULL, (Oid*)NULL, 0);
 }
 
 /*---------------------------------------------------------------------
@@ -147,7 +147,7 @@ void DefineUser(CreateUserStmt *stmt) {
   }
   strcat(sql_end, ")");
 
-  pg_eval(sql, (char**)NULL, (Oid*)NULL, 0);
+  pg_exec_query(sql, (char**)NULL, (Oid*)NULL, 0);
 
   /* Add the stuff here for groups.
    */
@@ -250,7 +250,7 @@ extern void AlterUser(AlterUserStmt *stmt) {
   if (sql_end != sql) {
     sql_end += strlen(sql_end);
     sprintf(sql_end, " where usename = '%s'", stmt->user);
-    pg_eval(sql, (char**)NULL, (Oid*)NULL, 0);
+    pg_exec_query(sql, (char**)NULL, (Oid*)NULL, 0);
   }
 
   /* do the pg_group stuff here */
@@ -346,7 +346,7 @@ extern void RemoveUser(char* user) {
     elog(NOTICE, "Dropping database %s", dbase[ndbase]);
     sprintf(sql, "drop database %s", dbase[ndbase]);
     pfree((void*)dbase[ndbase]);
-    pg_eval(sql, (char**)NULL, (Oid*)NULL, 0);
+    pg_exec_query(sql, (char**)NULL, (Oid*)NULL, 0);
   }
   if (dbase)
     pfree((void*)dbase);
@@ -369,7 +369,7 @@ extern void RemoveUser(char* user) {
   /* Remove the user from the pg_user table
    */
   sprintf(sql, "delete from %s where usename = '%s'", UserRelationName, user);
-  pg_eval(sql, (char**)NULL, (Oid*)NULL, 0);
+  pg_exec_query(sql, (char**)NULL, (Oid*)NULL, 0);
 
   UpdatePgPwdFile(sql);
 

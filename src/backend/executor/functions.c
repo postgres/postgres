@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/executor/functions.c,v 1.13 1997/11/25 21:59:19 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/executor/functions.c,v 1.14 1997/12/11 17:36:16 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -113,7 +113,7 @@ init_execution_state(FunctionCachePtr fcache,
 
 
 	planTree_list = (List *)
-		pg_plan(fcache->src, fcache->argOidVect, nargs, &queryTree_list, None);
+		pg_parse_and_plan(fcache->src, fcache->argOidVect, nargs, &queryTree_list, None);
 
 	for (i = 0; i < queryTree_list->len; i++)
 	{

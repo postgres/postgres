@@ -6,7 +6,7 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: tcopprot.h,v 1.8 1997/11/25 22:07:10 momjian Exp $
+ * $Id: tcopprot.h,v 1.9 1997/12/11 17:36:58 momjian Exp $
  *
  * OLD COMMENTS
  *	  This file was created so that other c files could get the two
@@ -23,11 +23,11 @@
 
 #ifndef BOOTSTRAP_INCLUDE
 extern List *
-pg_plan(char *query_string, Oid *typev, int nargs,
+pg_parse_and_plan(char *query_string, Oid *typev, int nargs,
 		QueryTreeList **queryListP, CommandDest dest);
-extern void pg_eval(char *query_string, char **argv, Oid *typev, int nargs);
+extern void pg_exec_query(char *query_string, char **argv, Oid *typev, int nargs);
 extern void
-pg_eval_dest(char *query_string, char **argv, Oid *typev,
+pg_exec_query_dest(char *query_string, char **argv, Oid *typev,
 			 int nargs, CommandDest dest);
 
 #endif							/* BOOTSTRAP_HEADER */

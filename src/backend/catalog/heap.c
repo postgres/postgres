@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/catalog/heap.c,v 1.40 1997/12/01 21:00:35 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/catalog/heap.c,v 1.41 1997/12/11 17:35:59 momjian Exp $
  *
  * INTERFACE ROUTINES
  *		heap_create()			- Create an uncataloged heap relation
@@ -1510,7 +1510,7 @@ start:;
 	sprintf(str, "select %s%s from %.*s", attrdef->adsrc, cast,
 			NAMEDATALEN, rel->rd_rel->relname.data);
 	setheapoverride(true);
-	planTree_list = (List *) pg_plan(str, NULL, 0, &queryTree_list, None);
+	planTree_list = (List *) pg_parse_and_plan(str, NULL, 0, &queryTree_list, None);
 	setheapoverride(false);
 	query = (Query *) (queryTree_list->qtrees[0]);
 
@@ -1580,7 +1580,7 @@ StoreRelCheck(Relation rel, ConstrCheck *check)
 	sprintf(str, "select 1 from %.*s where %s",
 			NAMEDATALEN, rel->rd_rel->relname.data, check->ccsrc);
 	setheapoverride(true);
-	planTree_list = (List *) pg_plan(str, NULL, 0, &queryTree_list, None);
+	planTree_list = (List *) pg_parse_and_plan(str, NULL, 0, &queryTree_list, None);
 	setheapoverride(false);
 	query = (Query *) (queryTree_list->qtrees[0]);
 

@@ -9,7 +9,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/optimizer/path/Attic/xfunc.c,v 1.7 1997/11/25 21:59:50 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/optimizer/path/Attic/xfunc.c,v 1.8 1997/12/11 17:36:29 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -534,7 +534,7 @@ xfunc_func_expense(LispValue node, LispValue args)
 			nargs = proc->pronargs;
 			if (nargs > 0)
 				argOidVect = proc->proargtypes;
-			planlist = (List) pg_plan(pq_src, argOidVect, nargs,
+			planlist = (List) pg_parse_and_plan(pq_src, argOidVect, nargs,
 									  &parseTree_list, None);
 			if (IsA(node, Func))
 				set_func_planlist((Func) node, planlist);

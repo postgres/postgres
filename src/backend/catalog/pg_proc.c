@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/catalog/pg_proc.c,v 1.10 1997/11/25 21:58:48 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/catalog/pg_proc.c,v 1.11 1997/12/11 17:36:01 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -215,7 +215,7 @@ ProcedureCreate(char *procedureName,
 
 	if (strcmp(languageName, "sql") == 0)
 	{
-		plan_list = pg_plan(prosrc, typev, parameterCount,
+		plan_list = pg_parse_and_plan(prosrc, typev, parameterCount,
 							&querytree_list, dest);
 
 		/* typecheck return value */
