@@ -1,6 +1,6 @@
 TODO list for PostgreSQL
 ========================
-Last updated:		Thu Dec 12 16:02:12 EST 2002
+Last updated:		Tue Dec 24 17:06:43 EST 2002
 
 Current maintainer:	Bruce Momjian (pgman@candle.pha.pa.us)
 
@@ -452,32 +452,30 @@ Developers who have claimed items are:
 --------------------------------------
 * Barry is Barry Lind <barry@xythos.com>
 * Billy is Billy G. Allie <Bill.Allie@mug.org>
-* Bruce is Bruce Momjian <pgman@candle.pha.pa.us>
-* Christopher is Christopher Kings-Lynne <chriskl@familyhealth.com.au>
-* D'Arcy is D'Arcy J.M. Cain <darcy@druid.net>
+* Bruce is Bruce Momjian <pgman@candle.pha.pa.us> of Software Research Assoc.
+* Christopher is Christopher Kings-Lynne <chriskl@familyhealth.com.au> of
+    Family Health Network
+* D'Arcy is D'Arcy J.M. Cain <darcy@druid.net> of The Cain Gang Ltd.
 * Dave is Dave Cramer <dave@fastcrypt.com>
 * Edmund is Edmund Mergl <E.Mergl@bawue.de>
-* Fernando Nasser <fnasser@redhat.com>
-* Gavin Sherry <swm@linuxworld.com.au>
+* Fernando Nasser <fnasser@redhat.com> of Red Hat
+* Gavin Sherry <swm@linuxworld.com.au> of Alcove Systems Engineering
 * Hiroshi is Hiroshi Inoue <Inoue@tpf.co.jp>
 * Karel is Karel Zak <zakkr@zf.jcu.cz>
-* Jan is Jan Wieck <wieck@sapserv.debis.de>
-* Liam is Liam Stewart <liams@redhat.com>
-* Marc is Marc Fournier <scrappy@hub.org>
+* Jan is Jan Wieck <JanWieck@Yahoo.com> of PeerDirect Corp.
+* Liam is Liam Stewart <liams@redhat.com> of Red Hat
+* Marc is Marc Fournier <scrappy@hub.org> of PostgreSQL, Inc.
 * Mark is Mark Hollomon <mhh@mindspring.com>
-* Marko is Marko Kreen <marko@l-t.ee>
-* Michael is Michael Meskes <meskes@postgresql.org>
+* Michael is Michael Meskes <meskes@postgresql.org> of Credativ
 * Neil is Neil Conway <neilc@samurai.com>
 * Oleg is Oleg Bartunov <oleg@sai.msu.su>
-* Peter M is Peter T Mount <peter@retep.org.uk>
+* Peter M is Peter T Mount <peter@retep.org.uk> of Retep Software
 * Peter E is Peter Eisentraut <peter_e@gmx.net>
-* Philip is Philip Warner <pjw@rhyme.com.au>
+* Philip is Philip Warner <pjw@rhyme.com.au> of Albatross Consulting Pty. Ltd.
 * Rod is Rod Taylor <rbt@zort.ca>
 * Ross is Ross J. Reedstrom <reedstrm@wallace.ece.rice.edu>
-* Ryan is Ryan Bradetich <rbrad@hpb50023.boi.hp.com>
 * Stephan is Stephan Szabo <sszabo@megazone23.bigpanda.com>
-* Tatsuo is Tatsuo Ishii <t-ishii@sra.co.jp>
-* Thomas is Thomas Lockhart <lockhart@fourpalms.org>
-* Tom is Tom Lane <tgl@sss.pgh.pa.us>
-* TomH is Tom I Helbekkmo <tih@Hamartun.Priv.no>
-* Vadim is Vadim B. Mikheev <vadim4o@email.com>
+* Tatsuo is Tatsuo Ishii <t-ishii@sra.co.jp> of Software Research Assoc.
+* Thomas is Thomas Lockhart <lockhart@fourpalms.org> of Jet Propulsion Labratory
+* Tom is Tom Lane <tgl@sss.pgh.pa.us> of Red Hat
+* Vadim is Vadim B. Mikheev <vadim4o@email.com> of Sector Data
