@@ -317,7 +317,7 @@ PGAPI_ConnectError(	HDBC hdbc,
 	SWORD		msglen;
 
 	mylog("**** PGAPI_ConnectError: hdbc=%u <%d>\n", hdbc, cbErrorMsgMax);
-	if (RecNumber != 1)
+	if (RecNumber != 1 && RecNumber != -1)
 		return SQL_NO_DATA_FOUND;
 	if (cbErrorMsgMax < 0)
 		return SQL_ERROR;
@@ -443,7 +443,7 @@ PGAPI_EnvError(		HENV henv,
 	int		status;
 
 	mylog("**** PGAPI_EnvError: henv=%u <%d>\n", henv, cbErrorMsgMax);
-	if (RecNumber != 1)
+	if (RecNumber != 1 && RecNumber != -1)
 		return SQL_NO_DATA_FOUND;
 	if (cbErrorMsgMax < 0)
 		return SQL_ERROR;
