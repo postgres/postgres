@@ -11,7 +11,7 @@
 #
 #
 # IDENTIFICATION
-#    $Header: /cvsroot/pgsql/src/bin/scripts/Attic/createdb,v 1.4 1999/12/16 20:10:02 momjian Exp $
+#    $Header: /cvsroot/pgsql/src/bin/scripts/Attic/createdb,v 1.5 2000/01/12 13:08:55 ishii Exp $
 #
 #-------------------------------------------------------------------------
 
@@ -121,8 +121,10 @@ if [ "$usage" ]; then
 fi
 
 
-if [ "$MB" ]
-then	if [ -z "`pg_encoding '$MB'`" ]
+if [ -n "$MB" ]
+then
+        mbcode=`pg_encoding "$MB"`
+        if [ -z "$mbcode" ]
 	then
 		echo "$CMDNAME: \"$MB\" is not a valid encoding name."
 		exit 1
