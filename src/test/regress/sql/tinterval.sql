@@ -4,7 +4,7 @@ INSERT INTO TINTERVAL_TBL (f1)
    VALUES ('["-infinity" "infinity"]');
 
 INSERT INTO TINTERVAL_TBL (f1)
-   VALUES ('["May 10, 1943 23:59:12" "Jan 14, 1973 03:14:21"]');
+   VALUES ('["May 10, 1947 23:59:12" "Jan 14, 1973 03:14:21"]');
 
 INSERT INTO TINTERVAL_TBL (f1)
    VALUES ('["Sep 4, 1983 23:59:12" "Oct 4, 1983 23:59:12"]');

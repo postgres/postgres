@@ -21,7 +21,7 @@ INSERT INTO ABSTIME_TBL (f1) VALUES ('infinity'::abstime);
 
 INSERT INTO ABSTIME_TBL (f1) VALUES ('-infinity'::abstime);
 
-INSERT INTO ABSTIME_TBL (f1) VALUES ('May 10, 1943 23:59:12');
+INSERT INTO ABSTIME_TBL (f1) VALUES ('May 10, 1947 23:59:12');
 
 
 -- what happens if we specify slightly misformatted abstime? 
@@ -46,7 +46,7 @@ SELECT '' AS six, ABSTIME_TBL.*
    WHERE ABSTIME_TBL.f1 > '-infinity'::abstime;
 
 SELECT '' AS six, ABSTIME_TBL.*
-   WHERE 'May 10, 1943 23:59:12'::abstime <> ABSTIME_TBL.f1;
+   WHERE 'May 10, 1947 23:59:12'::abstime <> ABSTIME_TBL.f1;
 
 SELECT '' AS one, ABSTIME_TBL.*
    WHERE 'current'::abstime = ABSTIME_TBL.f1;
@@ -59,7 +59,7 @@ SELECT '' AS four, ABSTIME_TBL.*
 
 SELECT '' AS four, ABSTIME_TBL.*
   WHERE ABSTIME_TBL.f1 <?>
-	'["Apr 1 1945 00:00:00" "Dec 30 1999 23:00:00"]'::tinterval;
+	'["Apr 1 1950 00:00:00" "Dec 30 1999 23:00:00"]'::tinterval;
 
 -- these four queries should return the same answer
 -- the "infinity" and "-infinity" tuples in ABSTIME_TBL cannot be added and

@@ -144,9 +144,9 @@ hundred|datetime                       |timespan                     |minus
        |Sat Jan 01 17:32:01.00 2000 PST|@ 34 years                   |Sat Jan 01 17:32:01.00 1966 PST
        |Sun Dec 31 17:32:01.00 2000 PST|@ 34 years                   |Sat Dec 31 17:32:01.00 1966 PST
        |Mon Jan 01 17:32:01.00 2001 PST|@ 34 years                   |Sun Jan 01 17:32:01.00 1967 PST
-       |epoch                          |@ 5 mons 12 hours            |Thu Jul 31 04:00:00.00 1969 PST
-       |epoch                          |@ 5 mons                     |Thu Jul 31 16:00:00.00 1969 PST
-       |epoch                          |@ 3 mons                     |Tue Sep 30 16:00:00.00 1969 PST
+       |epoch                          |@ 5 mons 12 hours            |Thu Jul 31 05:00:00.00 1969 PDT
+       |epoch                          |@ 5 mons                     |Thu Jul 31 17:00:00.00 1969 PDT
+       |epoch                          |@ 3 mons                     |Tue Sep 30 17:00:00.00 1969 PDT
        |epoch                          |@ 10 days                    |Sun Dec 21 16:00:00.00 1969 PST
        |epoch                          |@ 1 day 2 hours 3 mins 4 secs|Tue Dec 30 13:56:56.00 1969 PST
        |epoch                          |@ 5 hours                    |Wed Dec 31 11:00:00.00 1969 PST
@@ -430,7 +430,7 @@ QUERY: SELECT '' AS four, f1 AS abstime,
   ORDER BY abstime;
 four|abstime                     |year|month|day|hour|minute|second
 ----+----------------------------+----+-----+---+----+------+------
-    |Mon May 10 23:59:12 1943 PST|1943|    5| 10|  23|    59|    12
+    |Sat May 10 23:59:12 1947 PST|1947|    5| 10|  23|    59|    12
     |epoch                       |1969|   12| 31|  16|     0|     0
     |Sun Jan 14 03:14:21 1973 PST|1973|    1| 14|   3|    14|    21
     |Mon May 01 00:30:30 1995 PDT|1995|    5|  1|   0|    30|    30
@@ -477,7 +477,7 @@ QUERY: SELECT '' AS five, f1 AS abstime, date( f1) AS date
   ORDER BY date;
 five|abstime                     |      date
 ----+----------------------------+----------
-    |Mon May 10 23:59:12 1943 PST|05-10-1943
+    |Sat May 10 23:59:12 1947 PST|05-10-1947
     |epoch                       |01-01-1970
     |Sun Jan 14 03:14:21 1973 PST|01-14-1973
     |Mon May 01 00:30:30 1995 PDT|05-01-1995
