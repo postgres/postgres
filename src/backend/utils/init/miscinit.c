@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/init/miscinit.c,v 1.87 2002/04/27 21:24:34 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/init/miscinit.c,v 1.88 2002/05/03 20:43:30 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -25,6 +25,8 @@
 #include <pwd.h>
 #include <stdlib.h>
 #include <errno.h>
+#include <netinet/in.h>
+#include <arpa/inet.h>
 
 #include "catalog/catname.h"
 #include "catalog/pg_shadow.h"
@@ -36,16 +38,18 @@
 #include "utils/syscache.h"
 
 
-#ifdef CYR_RECODE
-unsigned char RecodeForwTable[128];
-unsigned char RecodeBackTable[128];
-#endif
-
 ProcessingMode Mode = InitProcessing;
 
 /* Note: we rely on these to initialize as zeroes */
 static char directoryLockFile[MAXPGPATH];
 static char socketLockFile[MAXPGPATH];
+
+#ifdef CYR_RECODE
+static unsigned char RecodeForwTable[128];
+static unsigned char RecodeBackTable[128];
+
+static void GetCharSetByHost(char *TableName, int host, const char *DataDir);
+#endif
 
 
 /* ----------------------------------------------------------------
@@ -236,14 +240,14 @@ pg_convert2(PG_FUNCTION_ARGS)
 
 #ifdef CYR_RECODE
 
+void
 SetCharSet(void)
 {
 	FILE	   *file;
 	char	   *filename;
 	char	   *map_file;
 	char		buf[MAX_TOKEN];
-	int			i,
-				c;
+	int			i;
 	unsigned char FromChar,
 				ToChar;
 	char		ChTable[MAX_TOKEN];
@@ -289,8 +293,8 @@ SetCharSet(void)
 					while (!feof(file) && buf[0])
 					{
 						next_token(file, buf, sizeof(buf));
-						elog(LOG, "SetCharSet: unknown tag %s in file %s"
-							buf, filename);
+						elog(LOG, "SetCharSet: unknown tag %s in file %s",
+							 buf, filename);
 					}
 				}
 			}
@@ -415,7 +419,6 @@ GetCharSetByHost(char *TableName, int host, const char *DataDir)
 			   *map_file;
 	int			key,
 				ChIndex = 0,
-				c,
 				i,
 				bufsize;
 	struct CharsetItem *ChArray[MAX_CHARSETS];
@@ -445,8 +448,8 @@ GetCharSetByHost(char *TableName, int host, const char *DataDir)
 			else if (strcasecmp(buf, "RecodeTable") == 0)
 				key = KEY_TABLE;
 			else
-				elog(LOG, "GetCharSetByHost: unknown tag %s in file %s"
-					buf, CHARSET_FILE);
+				elog(LOG, "GetCharSetByHost: unknown tag %s in file %s",
+					 buf, CHARSET_FILE);
 
 			switch (key)
 			{
@@ -501,8 +504,8 @@ GetCharSetByHost(char *TableName, int host, const char *DataDir)
 			while (!feof(file) && buf[0])
 			{
 				next_token(file, buf, sizeof(buf));
-				elog(LOG, "GetCharSetByHost: unknown tag %s in file %s"
-					buf, CHARSET_FILE);
+				elog(LOG, "GetCharSetByHost: unknown tag %s in file %s",
+					 buf, CHARSET_FILE);
 			}
 		}
 	}
