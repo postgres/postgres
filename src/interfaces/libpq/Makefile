@@ -7,7 +7,7 @@
 #
 #
 # IDENTIFICATION
-#    $Header: /cvsroot/pgsql/src/interfaces/libpq/Makefile,v 1.33 1997/03/25 09:20:12 scrappy Exp $
+#    $Header: /cvsroot/pgsql/src/interfaces/libpq/Makefile,v 1.34 1997/04/04 02:53:14 scrappy Exp $
 #
 #-------------------------------------------------------------------------
 
@@ -99,6 +99,8 @@ install-headers: beforeinstall-headers c.h \
                  ../include/config.h ../include/libpq/pqcomm.h \
                  ../include/libpq/libpq-fs.h ../include/lib/dllist.h \
                  ../include/utils/geo_decls.h libpq-fe.h
+	$(INSTALL) $(INSTLOPTS) ../include/os.h \
+          $(HEADERDIR)/os.h
 	$(INSTALL) $(INSTLOPTS) ../include/config.h \
           $(HEADERDIR)/config.h
 	$(INSTALL) $(INSTLOPTS) ../include/postgres.h \
