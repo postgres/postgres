@@ -1,5 +1,5 @@
 <!--
-$PostgreSQL: pgsql/doc/src/sgml/query.sgml,v 1.38 2004/08/30 21:25:27 tgl Exp $
+$PostgreSQL: pgsql/doc/src/sgml/query.sgml,v 1.39 2004/08/30 21:29:12 tgl Exp $
 -->
 
  <chapter id="tutorial-sql">
@@ -329,7 +329,7 @@ SELECT city, (temp_hi+temp_lo)/2 AS temp_avg, date FROM weather;
 (3 rows)
 </screen>
     Notice how the <literal>AS</literal> clause is used to relabel the
-    output column.  (It is optional.)
+    output column.  (The <literal>AS</literal> clause is optional.)
    </para>
 
    <para>
