@@ -10,7 +10,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/parser/gram.y,v 2.93 1999/07/17 20:17:21 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/parser/gram.y,v 2.94 1999/07/20 00:18:01 tgl Exp $
  *
  * HISTORY
  *	  AUTHOR			DATE			MAJOR EVENT
@@ -2468,14 +2468,15 @@ OptimizableStmt:  SelectStmt
  *****************************************************************************/
 
 /* This rule used 'opt_column_list' between 'relation_name' and 'insert_rest'
- * originally. When the second rule of 'insert_rest' was changed to use
- * the new 'SelectStmt' rule (for INTERSECT and EXCEPT) it produced a shift/reduce
- * conflict. So I just changed the rules 'InsertStmt' and 'insert_rest' to accept
- * the same statements without any shift/reduce conflicts */
-InsertStmt:  INSERT INTO relation_name  insert_rest
+ * originally. When the second rule of 'insert_rest' was changed to use the
+ * new 'SelectStmt' rule (for INTERSECT and EXCEPT) it produced a shift/reduce
+ * conflict. So I just changed the rules 'InsertStmt' and 'insert_rest' to
+ * accept the same statements without any shift/reduce conflicts
+ */
+InsertStmt:  INSERT INTO relation_name insert_rest
 				{
  					$4->relname = $3;
-					$$ = (Node *)$4;
+					$$ = (Node *) $4;
 				}
 		;
 
@@ -2503,15 +2504,16 @@ insert_rest:  VALUES '(' target_list ')'
 					$$->unionClause = NIL;
 				 	$$->intersectClause = NIL;
 				}
-		/* We want the full power of SelectStatements including INTERSECT and EXCEPT
-                 * for insertion */
+/* We want the full power of SelectStatements including INTERSECT and EXCEPT
+ * for insertion.  However, we can't support sort or limit clauses.
+ */
 		| SelectStmt
 				{
-					SelectStmt *n;
-
-					n = (SelectStmt *)$1;
+					SelectStmt *n = (SelectStmt *) $1;
+					if (n->sortClause)
+						elog(ERROR, "INSERT ... SELECT can't have ORDER BY");
 					$$ = makeNode(InsertStmt);
-					$$->cols = NULL;
+					$$->cols = NIL;
 					$$->unique = n->unique;
 					$$->targetList = n->targetList;
 					$$->fromClause = n->fromClause;
@@ -2520,6 +2522,7 @@ insert_rest:  VALUES '(' target_list ')'
 					$$->havingClause = n->havingClause;
 					$$->unionClause = n->unionClause;
 					$$->intersectClause = n->intersectClause;
+					$$->unionall = n->unionall;
 					$$->forUpdate = n->forUpdate;
 				}
 		| '(' columnList ')' VALUES '(' target_list ')'
@@ -2537,9 +2540,9 @@ insert_rest:  VALUES '(' target_list ')'
 				}
 		| '(' columnList ')' SelectStmt
 				{
-					SelectStmt *n;
-
-					n = (SelectStmt *)$4;
+					SelectStmt *n = (SelectStmt *) $4;
+					if (n->sortClause)
+						elog(ERROR, "INSERT ... SELECT can't have ORDER BY");
 					$$ = makeNode(InsertStmt);
 					$$->cols = $2;
 					$$->unique = n->unique;
@@ -2550,6 +2553,8 @@ insert_rest:  VALUES '(' target_list ')'
 					$$->havingClause = n->havingClause;
 					$$->unionClause = n->unionClause;
 					$$->intersectClause = n->intersectClause;
+					$$->unionall = n->unionall;
+					$$->forUpdate = n->forUpdate;
 				}
 		;
 
@@ -2682,8 +2687,9 @@ opt_cursor:  BINARY						{ $$ = TRUE; }
  *				SELECT STATEMENTS
  *
  *****************************************************************************/
-/* The new 'SelectStmt' rule adapted for the optional use of INTERSECT EXCEPT and UNION
- * accepts the use of '(' and ')' to select an order of set operations.
+
+/* A complete SELECT statement looks like this.  Note sort, for_update,
+ * and limit clauses can only appear once, not in each subselect.
  * 
  * The rule returns a SelectStmt Node having the set operations attached to 
  * unionClause and intersectClause (NIL if no set operations were present)
@@ -2691,94 +2697,105 @@ opt_cursor:  BINARY						{ $$ = TRUE; }
 
 SelectStmt:	  select_clause sort_clause for_update_clause opt_select_limit
 			{
-				/* There were no set operations, so just attach the sortClause */
 				if IsA($1, SelectStmt)
 				{
-				  SelectStmt *n = (SelectStmt *)$1;
-  				  n->sortClause = $2;
-				  n->forUpdate = $3;
-				  n->limitOffset = nth(0, $4);
-				  n->limitCount = nth(1, $4);
-				  $$ = (Node *)n;
+					/* There were no set operations, so just attach the
+					 * one-time clauses.
+					 */
+					SelectStmt *n = (SelectStmt *) $1;
+					n->sortClause = $2;
+					n->forUpdate = $3;
+					n->limitOffset = nth(0, $4);
+					n->limitCount = nth(1, $4);
+					$$ = (Node *) n;
                 }
-				/* There were set operations: The root of the operator tree
-				 * is delivered by $1 but we cannot hand back an A_Expr Node.
-				 * So we search for the leftmost 'SelectStmt' in the operator
-				 * tree $1 (which is the first Select Statement in the query 
-				 * typed in by the user or where ever it came from). 
-				 * 
-				 * Then we attach the whole operator tree to 'intersectClause', 
-				 * and a list of all 'SelectStmt' Nodes to 'unionClause' and 
-				 * hand back the leftmost 'SelectStmt' Node. (We do it this way
-				 * because the following functions (e.g. parse_analyze etc.)
-				 * excpect a SelectStmt node and not an operator tree! The whole
-				 * tree attached to 'intersectClause' won't be touched by 
-				 * parse_analyze() etc. until the function 
-				 * Except_Intersect_Rewrite() (in rewriteHandler.c) which performs
-				 * the necessary steps to be able create a plan!) */
 				else
 				{
-				  List *select_list = NIL;
-				  SelectStmt *first_select;
-				  Node *op = (Node *) $1;
-				  bool intersect_present = FALSE, unionall_present = FALSE;
+					/* There were set operations.  The root of the operator
+					 * tree is delivered by $1, but we must hand back a
+					 * SelectStmt node not an A_Expr Node.
+					 * So we find the leftmost 'SelectStmt' in the operator
+					 * tree $1 (which is the first Select Statement in the
+					 * query), which will be the returned node.
+					 * Then we attach the whole operator tree to that node's
+					 * 'intersectClause', and a list of all 'SelectStmt' Nodes
+					 * in the tree to its 'unionClause'. (NOTE that this means
+					 * the top node has indirect recursive pointers to itself!
+					 * This would cause trouble if we tried copyObject!!)
+					 * The intersectClause and unionClause subtrees will be
+					 * left untouched by the main parser, and will only be
+					 * processed when control gets to the function
+					 * Except_Intersect_Rewrite() (in rewriteHandler.c).
+					 */
+					Node *op = (Node *) $1;
+					List *select_list = NIL;
+					SelectStmt *first_select;
+					bool	intersect_present = false,
+							unionall_present = false;
 
-				  /* Take the operator tree as an argument and 
-				   * create a list of all SelectStmt Nodes found in the tree.
-				   *
-				   * If one of the SelectStmt Nodes has the 'unionall' flag
-				   * set to true the 'unionall_present' flag is also set to
-				   * true */
-				  create_select_list((Node *)op, &select_list, &unionall_present);
+					/* Take the operator tree as an argument and create a
+					 * list of all SelectStmt Nodes found in the tree.
+					 *
+					 * If one of the SelectStmt Nodes has the 'unionall' flag
+					 * set to true the 'unionall_present' flag is also set to
+					 * true.
+					 */
+					create_select_list(op, &select_list, &unionall_present);
 
-				  /* Replace all the A_Expr Nodes in the operator tree by
-				   * Expr Nodes.
-				   *
-				   * If an INTERSECT or an EXCEPT is present, the 
-				   * 'intersect_present' flag is set to true */
-				  op = A_Expr_to_Expr(op, &intersect_present);
+					/* Replace all the A_Expr Nodes in the operator tree by
+					 * Expr Nodes.
+					 *
+					 * If an INTERSECT or an EXCEPT is present, the 
+					 * 'intersect_present' flag is set to true
+					 */
+					op = A_Expr_to_Expr(op, &intersect_present);
 
-				  /* If both flags are set to true we have a UNION ALL
-				   * statement mixed up with INTERSECT or EXCEPT 
-				   * which can not be handled at the moment */
-				  if (intersect_present && unionall_present)
-				  {
-				  	elog(ERROR,"UNION ALL not allowed in mixed set operations!");
-				  }
+					/* If both flags are set to true we have a UNION ALL
+					 * statement mixed up with INTERSECT or EXCEPT 
+					 * which can not be handled at the moment.
+					 */
+					if (intersect_present && unionall_present)
+						elog(ERROR, "UNION ALL not allowed in mixed set operations");
 
-				  /* Get the leftmost SeletStmt Node (which automatically
-				   * represents the first Select Statement of the query!) */
-				  first_select = (SelectStmt *)lfirst(select_list);
+					/* Get the leftmost SeletStmt Node (which automatically
+					 * represents the first Select Statement of the query!)
+					 */
+					first_select = (SelectStmt *) lfirst(select_list);
 
-				  /* Attach the list of all SeletStmt Nodes to unionClause */
-				  first_select->unionClause = select_list;
+					/* Attach the list of all SeletStmt Nodes to unionClause */
+					first_select->unionClause = select_list;
 
-				  /* Attach the whole operator tree to intersectClause */
-				  first_select->intersectClause = (List *) op;
+					/* Attach the whole operator tree to intersectClause */
+					first_select->intersectClause = (List *) op;
 
-				  /* finally attach the sort clause */
-				  first_select->sortClause = $2;
-				  first_select->forUpdate = $3;
-				  $$ = (Node *)first_select;
+					/* finally attach the sort clause &etc */
+					first_select->sortClause = $2;
+					first_select->forUpdate = $3;
+					first_select->limitOffset = nth(0, $4);
+					first_select->limitCount = nth(1, $4);
+					$$ = (Node *) first_select;
 				}		
 				if (((SelectStmt *)$$)->forUpdate != NULL && QueryIsRule)
 					elog(ERROR, "SELECT FOR UPDATE is not allowed in RULES");
 			}
 		;
 
-/* This rule parses Select statements including UNION INTERSECT and EXCEPT.
- * '(' and ')' can be used to specify the order of the operations 
- * (UNION EXCEPT INTERSECT). Without the use of '(' and ')' we want the
+/* This rule parses Select statements that can appear within set operations,
+ * including UNION, INTERSECT and EXCEPT.  '(' and ')' can be used to specify
+ * the ordering of the set operations.  Without '(' and ')' we want the
  * operations to be left associative.
  *
- *  The sort_clause is not handled here!
+ * Note that sort clauses cannot be included at this level --- a sort clause
+ * can only appear at the end of the complete Select, and it will be handled
+ * by the topmost SelectStmt rule.  Likewise FOR UPDATE and LIMIT.
  * 
  * The rule builds up an operator tree using A_Expr Nodes. AND Nodes represent
- * INTERSECTs OR Nodes represent UNIONs and AND NOT nodes represent EXCEPTs. 
+ * INTERSECTs, OR Nodes represent UNIONs, and AND NOT nodes represent EXCEPTs. 
  * The SelectStatements to be connected are the left and right arguments to
  * the A_Expr Nodes.
- * If no set operations show up in the query the tree consists only of one
- * SelectStmt Node */
+ * If no set operations appear in the query, the tree consists only of one
+ * SelectStmt Node.
+ */
 select_clause: '(' select_clause ')'
 			{
 				$$ = $2; 
@@ -2798,6 +2815,12 @@ select_clause: '(' select_clause ')'
 				  {
 				     SelectStmt *n = (SelectStmt *)$4;
 				     n->unionall = $3;
+					 /* NOTE: if UNION ALL appears with a parenthesized set
+					  * operation to its right, the ALL is silently discarded.
+					  * Should we generate an error instead?  I think it may
+					  * be OK since ALL with UNION to its right is ignored
+					  * anyway...
+					  */
 				  }
 				$$ = (Node *)makeA_Expr(OR,NULL,$1,$4);
 			}
@@ -2822,7 +2845,8 @@ SubSelect:	SELECT opt_unique target_list
 					 * want to create a new rule 'SubSelect1' including the
 					 * feature. If it makes troubles we will have to add 
 					 * a new rule and change this to prevent INTOs in 
-					 * Subselects again */
+					 * Subselects again.
+					 */
 					n->istemp = (bool) ((Value *) lfirst($4))->val.ival;
 					n->into = (char *) lnext($4);
 
