@@ -346,7 +346,7 @@ is_stopword(char *text)
 	char	  **StopLow;		/* for list of stop-words */
 	char	  **StopHigh;
 	char	  **StopMiddle;
-	unsigned int difference;
+	int			difference;
 
 	StopLow = &StopWords[0];	/* initialize stuff for binary search */
 	StopHigh = endof(StopWords);
