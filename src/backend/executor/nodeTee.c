@@ -14,7 +14,7 @@
  *		ExecInitTee
  *		ExecEndTee
  *
- *  $Id: nodeTee.c,v 1.27 1998/12/14 06:50:22 scrappy Exp $
+ *  $Id: nodeTee.c,v 1.28 1999/02/01 13:33:27 vadim Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -80,6 +80,7 @@ ExecInitTee(Tee *node, EState *currentEstate, Plan *parent)
 	estate->es_tupleTable = currentEstate->es_tupleTable;
 	estate->es_refcount = currentEstate->es_refcount;
 	estate->es_junkFilter = currentEstate->es_junkFilter;
+	estate->es_snapshot = currentEstate->es_snapshot;
 
 	/*
 	 * use the range table for Tee subplan since the range tables for the

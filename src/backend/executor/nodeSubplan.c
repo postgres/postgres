@@ -121,6 +121,7 @@ ExecInitSubPlan(SubPlan *node, EState *estate, Plan *parent)
 		ExecCreateTupleTable(ExecCountSlotsNode(node->plan) + 10);
 	pfree(sp_estate->es_refcount);
 	sp_estate->es_refcount = estate->es_refcount;
+	sp_estate->es_snapshot = estate->es_snapshot;
 
 	if (!ExecInitNode(node->plan, sp_estate, NULL))
 		return false;
