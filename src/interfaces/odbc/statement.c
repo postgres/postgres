@@ -780,8 +780,12 @@ SC_fetch(StatementClass *self)
 			updret = SQL_ROW_DELETED;
 		num_cols -= 2;
 	}
-	if (!self->options.retrieve_data) /* data isn't required */
+#endif /* DRIVER_CURSOR_IMPLEMENT */
+	if (self->options.retrieve_data == SQL_RD_OFF) /* data isn't required */
+#ifdef	DRIVER_CURSOR_IMPLEMENT
 		return updret ? updret + 10 : SQL_SUCCESS;
+#else
+		return	SQL_SUCCESS;
 #endif /* DRIVER_CURSOR_IMPLEMENT */
 	for (lf = 0; lf < num_cols; lf++)
 	{
