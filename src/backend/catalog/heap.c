@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/catalog/heap.c,v 1.152 2000/11/16 22:30:17 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/catalog/heap.c,v 1.153 2000/12/22 19:21:37 tgl Exp $
  *
  *
  * INTERFACE ROUTINES
@@ -61,6 +61,7 @@
 #include "utils/builtins.h"
 #include "utils/catcache.h"
 #include "utils/fmgroids.h"
+#include "utils/lsyscache.h"
 #include "utils/relcache.h"
 #include "utils/syscache.h"
 #include "utils/temprel.h"
@@ -970,12 +971,16 @@ RelationRemoveInheritance(Relation relation)
 	if (HeapTupleIsValid(tuple))
 	{
 		Oid			subclass = ((Form_pg_inherits) GETSTRUCT(tuple))->inhrelid;
+		char	   *subclassname;
 
-		heap_endscan(scan);
-		heap_close(catalogRelation, RowExclusiveLock);
-
-		elog(ERROR, "Relation '%u' inherits '%s'",
-			 subclass, RelationGetRelationName(relation));
+		subclassname = get_rel_name(subclass);
+		/* Just in case get_rel_name fails... */
+		if (subclassname)
+			elog(ERROR, "Relation \"%s\" inherits from \"%s\"",
+				 subclassname, RelationGetRelationName(relation));
+		else
+			elog(ERROR, "Relation %u inherits from \"%s\"",
+				 subclass, RelationGetRelationName(relation));
 	}
 	heap_endscan(scan);
 
