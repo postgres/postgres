@@ -11,6 +11,10 @@
  */
 #include <stdio.h>				/* for sprintf() */
 #include <string.h>
+#include <sys/types.h>
+#include <sys/stat.h>
+#include <fcntl.h>
+#include <unistd.h>
 
 #include <postgres.h>
 
@@ -25,7 +29,6 @@
 #include <storage/lmgr.h>
 #include <tcop/tcopprot.h>
 #include <utils/acl.h>
-#include <utils/palloc.h>
 #include <utils/rel.h>
 #include <commands/user.h>
 
@@ -40,10 +43,31 @@ static
 void UpdatePgPwdFile(char* sql) {
 
   char*     filename;
+  char*     tempname;
 
+  /* Create a temporary filename to be renamed later.  This prevents the
+   * backend from clobbering the pg_pwd file while the postmaster might be
+   * reading from it.
+   */
   filename = crypt_getpwdfilename();
-  sprintf(sql, "copy %s to '%s' using delimiters '#'", UserRelationName, filename);
+  tempname = (char*)malloc(strlen(filename) + 12);
+  sprintf(tempname, "%s.%d", filename, getpid());
+
+  /* Copy the contents of pg_user to the pg_pwd ASCII file using a the SEPCHAR
+   * character as the delimiter between fields.  Then rename the file to its
+   * final name.
+   */
+  sprintf(sql, "copy %s to '%s' using delimiters %s", UserRelationName, tempname, CRYPT_PWD_FILE_SEPCHAR);
   pg_exec_query(sql, (char**)NULL, (Oid*)NULL, 0);
+  rename(tempname, filename);
+  free((void*)tempname);
+
+  /* Create a flag file the postmaster will detect the next time it tries to
+   * authenticate a user.  The postmaster will know to reload the pg_pwd file
+   * contents.
+   */
+  filename = crypt_getpwdreloadfilename();
+  creat(filename, S_IRUSR | S_IWUSR);
 }
 
 /*---------------------------------------------------------------------
@@ -283,7 +307,7 @@ extern void RemoveUser(char* user) {
   HeapTuple        tuple;
   Datum            datum;
   Buffer           buffer;
-  char             sql[256];
+  char             sql[512];
   bool             n,
                    inblock;
   int              usesysid = -1,
@@ -348,8 +372,8 @@ extern void RemoveUser(char* user) {
     if ((int)datum == usesysid) {
       datum = heap_getattr(tuple, buffer, Anum_pg_database_datname, pg_dsc, &n);
       if (memcmp((void*)datum, "template1", 9)) {
-        dbase = (char**)repalloc((void*)dbase, sizeof(char*) * (ndbase + 1));
-        dbase[ndbase] = (char*)palloc(NAMEDATALEN + 1);
+        dbase = (char**)realloc((void*)dbase, sizeof(char*) * (ndbase + 1));
+        dbase[ndbase] = (char*)malloc(NAMEDATALEN + 1);
         memcpy((void*)dbase[ndbase], (void*)datum, NAMEDATALEN);
         dbase[ndbase++][NAMEDATALEN] = '\0';
       }
@@ -362,11 +386,11 @@ extern void RemoveUser(char* user) {
   while (ndbase--) {
     elog(NOTICE, "Dropping database %s", dbase[ndbase]);
     sprintf(sql, "drop database %s", dbase[ndbase]);
-    pfree((void*)dbase[ndbase]);
+    free((void*)dbase[ndbase]);
     pg_exec_query(sql, (char**)NULL, (Oid*)NULL, 0);
   }
   if (dbase)
-    pfree((void*)dbase);
+    free((void*)dbase);
 
   /* Since pg_user is global over all databases, one of two things must be done
    * to insure complete consistency.  First, pg_user could be made non-global.

@@ -26,7 +26,7 @@
 #
 #
 # IDENTIFICATION
-#    $Header: /cvsroot/pgsql/src/bin/initdb/Attic/initdb.sh,v 1.30 1997/12/04 00:27:31 scrappy Exp $
+#    $Header: /cvsroot/pgsql/src/bin/initdb/Attic/initdb.sh,v 1.31 1997/12/30 02:26:43 scrappy Exp $
 #
 #-------------------------------------------------------------------------
 
@@ -355,7 +355,7 @@ echo "Altering pg_user acl"
 echo "REVOKE ALL ON pg_user FROM public" | postgres -F -Q -D$PGDATA template1 2>&1 > /dev/null |\
          grep -v "'DEBUG:"
 
-echo "COPY pg_user TO '$PGDATA/pg_pwd' USING DELIMITERS '#'" | postgres -F -Q -D$PGDATA template1 2>&1 > /dev/null |\
+echo "COPY pg_user TO '$PGDATA/pg_pwd' USING DELIMITERS '\\t'" | postgres -F -Q -D$PGDATA template1 2>&1 > /dev/null |\
          grep -v "'DEBUG:"
 
 echo "loading pg_description"
