@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/storage/file/fd.c,v 1.75 2001/04/03 02:31:52 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/storage/file/fd.c,v 1.76 2001/04/03 04:07:02 tgl Exp $
  *
  * NOTES:
  *
@@ -484,7 +484,8 @@ AllocateVfd(void)
 	{
 		/* initialize header entry first time through */
 		VfdCache = (Vfd *) malloc(sizeof(Vfd));
-		Assert(VfdCache != NULL);
+		if (VfdCache == NULL)
+			elog(FATAL, "AllocateVfd: no room for VFD array");
 		MemSet((char *) &(VfdCache[0]), 0, sizeof(Vfd));
 		VfdCache->fd = VFD_CLOSED;
 
@@ -506,17 +507,23 @@ AllocateVfd(void)
 		 * However, there's not much point in starting *real* small.
 		 */
 		Size		newCacheSize = SizeVfdCache * 2;
+		Vfd		   *newVfdCache;
 
 		if (newCacheSize < 32)
 			newCacheSize = 32;
 
-		VfdCache = (Vfd *) realloc(VfdCache, sizeof(Vfd) * newCacheSize);
-		Assert(VfdCache != NULL);
+		/*
+		 * Be careful not to clobber VfdCache ptr if realloc fails;
+		 * we will need it during proc_exit cleanup!
+		 */
+		newVfdCache = (Vfd *) realloc(VfdCache, sizeof(Vfd) * newCacheSize);
+		if (newVfdCache == NULL)
+			elog(FATAL, "AllocateVfd: no room to enlarge VFD array");
+		VfdCache = newVfdCache;
 
 		/*
 		 * Initialize the new entries and link them into the free list.
 		 */
-
 		for (i = SizeVfdCache; i < newCacheSize; i++)
 		{
 			MemSet((char *) &(VfdCache[i]), 0, sizeof(Vfd));
@@ -529,7 +536,6 @@ AllocateVfd(void)
 		/*
 		 * Record the new size
 		 */
-
 		SizeVfdCache = newCacheSize;
 	}
 
@@ -553,6 +559,7 @@ FreeVfd(File file)
 		free(vfdP->fileName);
 		vfdP->fileName = NULL;
 	}
+	vfdP->fdstate = 0x0;
 
 	vfdP->nextFree = VfdCache[0].nextFree;
 	VfdCache[0].nextFree = file;
@@ -678,7 +685,9 @@ fileNameOpenFile(FileName fileName,
 
 	Insert(file);
 
-	vfdP->fileName = malloc(strlen(fileName) + 1);
+	vfdP->fileName = (char *) malloc(strlen(fileName) + 1);
+	if (vfdP->fileName == NULL)
+		elog(FATAL, "fileNameOpenFile: no room to save VFD filename");
 	strcpy(vfdP->fileName, fileName);
 
 	/* Saved flags are adjusted to be OK for re-opening file */
