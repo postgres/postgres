@@ -1,9 +1,9 @@
 /*
  * psql - the PostgreSQL interactive terminal
  *
- * Copyright (c) 2000-2004, PostgreSQL Global Development Group
+ * Copyright (c) 2000-2005, PostgreSQL Global Development Group
  *
- * $PostgreSQL: pgsql/src/bin/psql/psqlscan.h,v 1.4 2004/12/19 19:39:47 tgl Exp $
+ * $PostgreSQL: pgsql/src/bin/psql/psqlscan.h,v 1.5 2005/01/01 05:43:08 momjian Exp $
  */
 #ifndef PSQLSCAN_H
 #define PSQLSCAN_H

@@ -5,7 +5,7 @@
  *
  * Joe Conway <mail@joeconway.com>
  *
- * Copyright (c) 2001-2004, PostgreSQL Global Development Group
+ * Copyright (c) 2001-2005, PostgreSQL Global Development Group
  * ALL RIGHTS RESERVED;
  *
  * levenshtein()

@@ -2,10 +2,10 @@
  * dbsize.c
  * object size functions
  *
- * Copyright (c) 2002-2004, PostgreSQL Global Development Group
+ * Copyright (c) 2002-2005, PostgreSQL Global Development Group
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/contrib/dbsize/dbsize.c,v 1.15 2004/09/28 19:35:43 tgl Exp $
+ *	  $PostgreSQL: pgsql/contrib/dbsize/dbsize.c,v 1.16 2005/01/01 05:43:05 momjian Exp $
  *
  */
 
