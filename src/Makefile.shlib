@@ -6,7 +6,7 @@
 # Copyright (c) 1998, Regents of the University of California
 #
 # IDENTIFICATION
-#    $PostgreSQL: pgsql/src/Makefile.shlib,v 1.82 2004/10/12 22:20:17 momjian Exp $
+#    $PostgreSQL: pgsql/src/Makefile.shlib,v 1.83 2004/10/13 09:51:47 momjian Exp $
 #
 #-------------------------------------------------------------------------
 
@@ -249,9 +249,6 @@ all-static-lib: $(PTHREAD_H_WIN32) $(top_builddir)/src/port/pg_config_paths.h li
 
 all-shared-lib: $(PTHREAD_H_WIN32) $(top_builddir)/src/port/pg_config_paths.h $(shlib)
 
-ifneq ($(PORTNAME), cygwin)
-ifneq ($(PORTNAME), win32)
-
 ifndef LORDER
 MK_NO_LORDER := true
 endif
@@ -263,9 +260,6 @@ else
 	$(LINK.static) $@ `$(LORDER) $^ | tsort`
 endif
 	$(RANLIB) $@
-
-endif # not win32
-endif # not cygwin
 
 ifeq ($(enable_shared), yes)
 
