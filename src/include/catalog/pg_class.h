@@ -7,7 +7,7 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: pg_class.h,v 1.14 1997/11/15 20:57:41 momjian Exp $
+ * $Id: pg_class.h,v 1.15 1997/11/16 04:36:38 momjian Exp $
  *
  * NOTES
  *	  ``pg_relation'' is being replaced by ``pg_class''.  currently
@@ -132,8 +132,6 @@ DATA(insert OID = 1247 (  pg_type 71		  PGUID 0 0 0 0 0 f f r n 16 0 0 0 f _null
 DESCR("");
 DATA(insert OID = 1249 (  pg_attribute 75	  PGUID 0 0 0 0 0 f f r n 16 0 0 0 f _null_ ));
 DESCR("");
-DATA(insert OID = 1251 (  pg_description 76	  PGUID 0 0 0 0 0 f t r n 2 0 0 0 f _null_ ));
-DESCR("");
 DATA(insert OID = 1255 (  pg_proc 81		  PGUID 0 0 0 0 0 f f r n 16 0 0 0 f _null_ ));
 DESCR("");
 DATA(insert OID = 1259 (  pg_class 83		  PGUID 0 0 0 0 0 f f r n 18 0 0 0 f _null_ ));
@@ -156,7 +154,6 @@ DATA(insert OID = 1219 (  pg_trigger 111	  PGUID 0 0 0 0 0 t t r n 7 0 0 0 f _nu
 DESCR("");
 
 #define RelOid_pg_type			1247
-#define RelOid_pg_description	1251
 #define RelOid_pg_attribute		1249
 #define RelOid_pg_proc			1255
 #define RelOid_pg_class			1259

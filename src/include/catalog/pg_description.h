@@ -6,7 +6,7 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: pg_description.h,v 1.3 1997/11/15 20:57:48 momjian Exp $
+ * $Id: pg_description.h,v 1.4 1997/11/16 04:36:41 momjian Exp $
  *
  * NOTES
  *		the genbki.sh script reads this file and generates .bki
@@ -32,7 +32,7 @@
  *		typedef struct FormData_pg_description
  * ----------------
  */
-CATALOG(pg_description) BOOTSTRAP
+CATALOG(pg_description)
 {
 	Oid			objoid;
 	text		description;

@@ -7,7 +7,7 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: pg_attribute.h,v 1.18 1997/11/15 20:57:40 momjian Exp $
+ * $Id: pg_attribute.h,v 1.19 1997/11/16 04:36:32 momjian Exp $
  *
  * NOTES
  *	  the genbki.sh script reads this file and generates .bki
@@ -225,19 +225,6 @@ DATA(insert OID = 0 ( 1262 xmin				28 0  4  -3 0 -1 f f i f f));
 DATA(insert OID = 0 ( 1262 cmin				29 0  4  -4 0 -1 t f i f f));
 DATA(insert OID = 0 ( 1262 xmax				28 0  4  -5 0 -1 f f i f f));
 DATA(insert OID = 0 ( 1262 cmax				29 0  4  -6 0 -1 t f i f f));
-
-/* ----------------
- *		pg_description
- * ----------------
- */
-DATA(insert OID = 0 ( 1251 objoid			26 0  4   1 0 -1 t f i f f));
-DATA(insert OID = 0 ( 1251 description		25 0 -1   2 0 -1 f f i f f));
-DATA(insert OID = 0 ( 1251 ctid				27 0  6  -1 0 -1 f f i f f));
-DATA(insert OID = 0 ( 1251 oid				26 0  4  -2 0 -1 t f i f f));
-DATA(insert OID = 0 ( 1251 xmin				28 0  4  -3 0 -1 f f i f f));
-DATA(insert OID = 0 ( 1251 cmin				29 0  4  -4 0 -1 t f i f f));
-DATA(insert OID = 0 ( 1251 xmax				28 0  4  -5 0 -1 f f i f f));
-DATA(insert OID = 0 ( 1251 cmax				29 0  4  -6 0 -1 t f i f f));
 
 /* ----------------
  *		pg_proc

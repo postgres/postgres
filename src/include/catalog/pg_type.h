@@ -7,7 +7,7 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: pg_type.h,v 1.22 1997/11/15 20:58:05 momjian Exp $
+ * $Id: pg_type.h,v 1.23 1997/11/16 04:36:43 momjian Exp $
  *
  * NOTES
  *	  the genbki.sh script reads this file and generates .bki
@@ -209,8 +209,6 @@ DESCR("");
 DATA(insert OID = 71 (	pg_type		 PGUID 1 1 t b t \054 1247 0 foo bar foo bar c _null_));
 DESCR("");
 DATA(insert OID = 75 (	pg_attribute PGUID 1 1 t b t \054 1249 0 foo bar foo bar c _null_));
-DESCR("");
-DATA(insert OID = 76 (	pg_description	 PGUID 1 1 t b t \054 1251 0 foo bar foo bar c _null_));
 DESCR("");
 DATA(insert OID = 81 (	pg_proc		 PGUID 1 1 t b t \054 1255 0 foo bar foo bar c _null_));
 DESCR("");

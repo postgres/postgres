@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/bin/psql/Attic/psql.c,v 1.106 1997/11/15 16:32:03 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/bin/psql/Attic/psql.c,v 1.107 1997/11/16 04:36:20 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -114,7 +114,8 @@ static void handleCopyOut(PGresult *res, bool quiet, FILE *copystream);
 static void
 handleCopyIn(PGresult *res, const bool mustprompt,
 			 FILE *copystream);
-static int	tableList(PsqlSettings *pset, bool deep_tablelist, char info_type);
+static int	tableList(PsqlSettings *pset, bool deep_tablelist,
+				char info_type, bool system_tables);
 static int	tableDesc(PsqlSettings *pset, char *table, FILE *fout);
 static int	objectDescription(PsqlSettings *pset, char *object, FILE *fout);
 static int	rightsList(PsqlSettings *pset);
@@ -223,6 +224,7 @@ slashUsage(PsqlSettings *pset)
 	fprintf(fout, " \\di          -- list only indices\n");
 	fprintf(fout, " \\do          -- list operators\n");
 	fprintf(fout, " \\ds          -- list only sequences\n");
+	fprintf(fout, " \\dS          -- list system tables and indexes\n");
 	fprintf(fout, " \\dt          -- list only tables\n");
 	fprintf(fout, " \\dT          -- list types\n");
 	fprintf(fout, " \\e [<fname>] -- edit the current query buffer or <fname>\n");
@@ -303,7 +305,8 @@ listAllDbs(PsqlSettings *pset)
  *
  */
 int
-tableList(PsqlSettings *pset, bool deep_tablelist, char info_type)
+tableList(PsqlSettings *pset, bool deep_tablelist, char info_type,
+	bool system_tables)
 {
 	char		listbuf[256];
 	int			nColumns;
@@ -347,7 +350,10 @@ tableList(PsqlSettings *pset, bool deep_tablelist, char info_type)
 			strcat(listbuf, "WHERE ( relkind = 'r' OR relkind = 'i' OR relkind = 'S') ");
 			break;
 	}
-	strcat(listbuf, "  and relname !~ '^pg_'");
+	if (!system_tables)
+		strcat(listbuf, "  and relname !~ '^pg_'");
+	else
+		strcat(listbuf, "  and relname ~ '^pg_'");
 	strcat(listbuf, "  and relname !~ '^xin[vx][0-9]+'");
 
 	/*
@@ -1708,7 +1714,7 @@ HandleSlashCmds(PsqlSettings *pset,
 					false, false, 0);
 			else if (strncmp(cmd, "di", 2) == 0)
 								/* only indices */
-				tableList(pset, false, 'i');
+				tableList(pset, false, 'i', false);
 			else if (strncmp(cmd, "do", 2) == 0)
 			{
 								/* operators */
@@ -1754,10 +1760,13 @@ HandleSlashCmds(PsqlSettings *pset,
 			}
 			else if (strncmp(cmd, "ds", 2) == 0)
 								/* only sequences */
-				tableList(pset, false, 'S');
+				tableList(pset, false, 'S', false);
+			else if (strncmp(cmd, "dS", 2) == 0)
+								/* system tables */
+				tableList(pset, false, 'b', true);
 			else if (strncmp(cmd, "dt", 2) == 0)
 								/* only tables */
-				tableList(pset, false, 't');
+				tableList(pset, false, 't', false);
 			else if (strncmp(cmd, "dT", 2) == 0)
 								/* types */
 				SendQuery(&success, pset,"\
@@ -1770,11 +1779,11 @@ HandleSlashCmds(PsqlSettings *pset,
 					false, false, 0);
 			else if (!optarg)
 								/* show tables, sequences and indices */
-				tableList(pset, false, 'b');
+				tableList(pset, false, 'b', false);
 			else if (strcmp(optarg, "*") == 0)
 			{					/* show everything */
-				if (tableList(pset, false, 'b') == 0)
-					tableList(pset, true, 'b');
+				if (tableList(pset, false, 'b', false) == 0)
+					tableList(pset, true, 'b', false);
 			}
 			else if (strncmp(cmd, "d ", 2) == 0)
 								/* describe the specified table */
