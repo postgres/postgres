@@ -116,6 +116,9 @@ extern int  inet_aton(const char *cp, struct in_addr * addr);
 extern int  strcasecmp(char *s1, char *s2);
 #endif
 
+/* Set to 1 if you have strtol() */
+#undef HAVE_STRTOL
+
 /* Set to 1 if you have strdup() */
 #undef HAVE_STRDUP
 #ifndef HAVE_STRDUP
