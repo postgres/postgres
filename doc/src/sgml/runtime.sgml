@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/runtime.sgml,v 1.70 2001/06/27 23:31:37 tgl Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/runtime.sgml,v 1.71 2001/06/30 21:15:57 darcy Exp $
 -->
 
 <Chapter Id="runtime">
@@ -1845,6 +1845,7 @@ options "SEMMNU=120"
 
      <varlistentry>
       <term>FreeBSD</term>
+      <term>NetBSD</term>
       <term>OpenBSD</term>
       <listitem>
        <para>
