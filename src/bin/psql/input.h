@@ -3,7 +3,7 @@
  *
  * Copyright 2000 by PostgreSQL Global Development Group
  *
- * $Header: /cvsroot/pgsql/src/bin/psql/input.h,v 1.10 2000/04/12 17:16:22 momjian Exp $
+ * $Header: /cvsroot/pgsql/src/bin/psql/input.h,v 1.11 2000/10/03 19:50:20 petere Exp $
  */
 #ifndef INPUT_H
 #define INPUT_H
@@ -24,7 +24,7 @@
 #endif
 #endif
 
-#if defined(HAVE_LIBHISTORY) || (defined(HAVE_LIBREADLINE) && defined(HAVE_HISTORY_IN_READLINE))
+#if defined(HAVE_HISTORY_FUNCTIONS)
 #if defined(HAVE_READLINE_HISTORY_H)
 #include <readline/history.h>
 #define USE_HISTORY 1

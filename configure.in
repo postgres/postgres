@@ -612,9 +612,8 @@ fi
 AC_CHECK_LIB(sfio,     main)
 AC_CHECK_LIB(ncurses,  main, [], [AC_CHECK_LIB(curses, main)])
 AC_CHECK_LIB(termcap,  main)
-AC_CHECK_LIB(readline, main)
-AC_CHECK_LIB(readline, using_history, AC_DEFINE(HAVE_HISTORY_IN_READLINE),
-    AC_CHECK_LIB(history,  main) )
+AC_CHECK_LIB(readline, readline)
+AC_SEARCH_LIBS(using_history, history, [AC_DEFINE(HAVE_HISTORY_FUNCTIONS)])
 
 if test "$PORTNAME" != "aix" -a "$PORTNAME" != "alpha"
 then
@@ -832,24 +831,39 @@ AC_CHECK_FUNC(rint,
 	      AC_DEFINE(HAVE_RINT),
 	      AC_CHECK_LIB(m, rint, AC_DEFINE(HAVE_RINT), , $HPUXMATHLIB))
 
-dnl Some old versions of libreadline don't have rl_completion_append_character
-AC_EGREP_HEADER(rl_completion_append_character, readline.h,
-	AC_DEFINE(HAVE_RL_COMPLETION_APPEND_CHARACTER),
-	[AC_EGREP_HEADER(rl_completion_append_character, readline/readline.h,
-		AC_DEFINE(HAVE_RL_COMPLETION_APPEND_CHARACTER))])
-AC_SUBST(HAVE_RL_COMPLETION_APPEND_CHARACTER)
 
-dnl Check for readline's filename_completion_function.
-dnl Some versions have it but it's not in the headers, so we have to take
-dnl care of that, too.
-AC_CHECK_FUNCS(filename_completion_function,
-    AC_EGREP_HEADER(filename_completion_function, readline.h,
-        AC_DEFINE(HAVE_FILENAME_COMPLETION_FUNCTION_DECL),
-        [AC_EGREP_HEADER(filename_completion_function, readline/readline.h,
-            AC_DEFINE(HAVE_FILENAME_COMPLETION_FUNCTION_DECL))])
-)
-AC_SUBST(HAVE_FILENAME_COMPLETION_FUNCTION)
-AC_SUBST(HAVE_FILENAME_COMPLETION_FUNCTION_DECL)
+# Readline versions < 2.1 don't have rl_completion_append_character
+AC_MSG_CHECKING([for rl_completion_append_character])
+AC_TRY_LINK([#include <stdio.h>
+#ifdef HAVE_READLINE_H
+# include <readline.h>
+#endif
+#ifdef HAVE_READLINE_READLINE_H
+# include <readline/readline.h>
+#endif],
+[rl_completion_append_character = 'x';],
+[AC_MSG_RESULT(yes)
+AC_DEFINE(HAVE_RL_COMPLETION_APPEND_CHARACTER)],
+[AC_MSG_RESULT(no)])
+
+
+# Check whether readline's filename_completion_function is declared.
+# Some prehistoric versions of readline, in particular those shipped
+# with earlier Cygwins don't have this declared, although it's in the
+# library.
+AC_MSG_CHECKING([whether filename_completion_function is declared])
+if test "$ac_cv_header_readline_h" = yes; then
+    _readline_header='readline.h'
+elif test "$ac_cv_header_readline_readline_h" = yes; then
+    _readline_header='readline/readline.h'
+else
+    _readline_header='xxx'
+fi
+AC_EGREP_HEADER([filename_completion_function], [$_readline_header],
+[AC_DEFINE(HAVE_FILENAME_COMPLETION_FUNCTION_DECL)
+AC_MSG_RESULT(yes)],
+[AC_MSG_RESULT(no)])
+
 
 
 dnl Cannot use AC_CHECK_FUNC because finite may be a macro
