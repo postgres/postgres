@@ -1,6 +1,6 @@
 TODO list for PostgreSQL
 ========================
-Last updated:		Fri Sep 17 21:33:48 EDT 1999
+Last updated:		Sat Sep 18 16:37:37 EDT 1999
 
 Current maintainer:	Bruce Momjian (maillist@candle.pha.pa.us)
 
@@ -180,7 +180,7 @@ MISC
 * Do autocommit so always in a transaction block
 * Show location of syntax error in query
 * Redesign the function call interface to handle NULLs better(Jan)
-* Document/trigger/rule so changes to pg_shadow create pg_pwd
+* Document/trigger/rule so changes to pg_shadow recreate pg_pwd
 * Missing optimizer selectivities for date, r-tree, etc.
 * Overhaul mdmgr/smgr to fix double unlinking and double opens, cleanup
 * Overhaul bufmgr/lockmgr/transaction manager
