@@ -1,6 +1,6 @@
 /*-------------------------------------------------------
  *
- * $Id: Pg.xs,v 1.11 1999/02/11 23:25:16 tgl Exp $
+ * $Id: Pg.xs,v 1.12 1999/02/19 23:27:17 tgl Exp $
  *
  * Copyright (c) 1997, 1998  Edmund Mergl
  *
@@ -752,7 +752,8 @@ setdbLogin(pghost, pgport, pgoptions, pgtty, dbname, login, pwd)
 	char *	login
 	char *	pwd
 	CODE:
-		RETVAL = PQsetdb(pghost, pgport, pgoptions, pgtty, dbname);
+		RETVAL = PQsetdbLogin(pghost, pgport, pgoptions, pgtty, dbname,
+							  login, pwd);
 	OUTPUT:
 		RETVAL
 
