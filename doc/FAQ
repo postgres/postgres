@@ -1,7 +1,7 @@
 
                 Frequently Asked Questions (FAQ) for PostgreSQL
                                        
-   Last updated: Thu Apr 26 20:55:41 EDT 2001
+   Last updated: Thu May 10 21:32:49 EDT 2001
    
    Current maintainer: Bruce Momjian (pgman@candle.pha.pa.us)
    
@@ -74,7 +74,8 @@
    4.11) What is an R-tree index?
    4.12) What is the Genetic Query Optimizer?
    4.13) How do I perform regular expression searches and
-   case-insensitive regular expression searches?
+   case-insensitive regular expression searches? How do I use an index
+   for case-insensitive searches?
    4.14) In a query, how do I detect if a field is NULL?
    4.15) What is the difference between the various character types?
    4.16.1) How do I create a serial/auto-incrementing field?
@@ -233,7 +234,7 @@
    
     1.7) What is the latest release?
     
-   The latest release of PostgreSQL is version 7.1.
+   The latest release of PostgreSQL is version 7.1.1.
    
    We plan to have major releases every four months.
    
@@ -751,12 +752,24 @@ Maximum number of indexes on a table?    unlimited
    join queries through nonexhaustive search.
    
     4.13) How do I perform regular expression searches and case-insensitive
-    regular expression searches?
+    regular expression searches? How do I use an index for case-insensitive
+    searches?
     
    The ~ operator does regular expression matching, and ~* does
    case-insensitive regular expression matching. The case-insensitive
    variant of LIKE is called ILIKE in PostgreSQL 7.1 and later.
    
+   Case-insensitive equality comparisons are normally expressed as:
+    SELECT *
+    FROM tab
+    WHERE lower(col) = 'abc'
+
+
+   This will not use an standard index. However, if you create a
+   functional index, it will be used:
+    CREATE INDEX tabindex on tab (lower(col));
+
+
     4.14) In a query, how do I detect if a field is NULL?
     
    You test the column with IS NULLIS NOT NULL.
