@@ -16,7 +16,7 @@
  *
  *
  * IDENTIFICATION
- *		$Header: /cvsroot/pgsql/src/bin/pg_dump/pg_backup_tar.c,v 1.14 2001/04/14 13:11:03 pjw Exp $
+ *		$Header: /cvsroot/pgsql/src/bin/pg_dump/pg_backup_tar.c,v 1.15 2001/04/25 07:03:19 pjw Exp $
  *
  * Modifications - 28-Jun-2000 - pjw@rhyme.com.au
  *
@@ -834,6 +834,7 @@ _CloseArchive(ArchiveHandle *AH)
 		ropt->dropSchema = 1;
 		ropt->compression = 0;
 		ropt->superuser = PQuser(AH->connection);
+		ropt->suppressDumpWarnings = true;
 
 		savVerbose = AH->public.verbose;
 		AH->public.verbose = 0;

@@ -15,7 +15,7 @@
  *
  *
  * IDENTIFICATION
- *		$Header: /cvsroot/pgsql/src/bin/pg_dump/pg_backup_archiver.c,v 1.24 2001/04/14 13:11:03 pjw Exp $
+ *		$Header: /cvsroot/pgsql/src/bin/pg_dump/pg_backup_archiver.c,v 1.25 2001/04/25 07:03:19 pjw Exp $
  *
  * Modifications - 28-Jun-2000 - pjw@rhyme.com.au
  *
@@ -169,6 +169,10 @@ RestoreArchive(Archive *AHX, RestoreOptions *ropt)
 		if (AH->version < K_VERS_1_3)
 			die_horribly(AH, "Direct database connections are not supported in pre-1.3 archives");
 
+		/* XXX Should get this from the archive */
+		AHX->minRemoteVersion = 070100;
+		AHX->maxRemoteVersion = 999999;
+
 		ConnectDatabase(AHX, ropt->dbname, ropt->pghost, ropt->pgport,
 						ropt->requirePassword, ropt->ignoreVersion);
 
@@ -259,6 +263,18 @@ RestoreArchive(Archive *AHX, RestoreOptions *ropt)
 
 		/* Work out what, if anything, we want from this entry */
 		reqs = _tocEntryRequired(te, ropt);
+
+		/* Dump any relevant dump warnings to stderr */
+		if (!ropt->suppressDumpWarnings && strcmp(te->desc, "WARNING") == 0)
+		{
+			if (!ropt->dataOnly && te->defn != NULL && strlen(te->defn) != 0) 
+			{
+				fprintf(stderr, "%s: Warning from original dump file:\n%s\n", progname, te->defn);
+			} else if (te->copyStmt != NULL && strlen(te->copyStmt) != 0)
+			{
+				fprintf(stderr, "%s: Warning from original dump file:\n%s\n", progname, te->copyStmt);
+			}
+	 	}
 
 		if ((reqs & 1) != 0)	/* We want the schema */
 		{
@@ -405,6 +421,7 @@ NewRestoreOptions(void)
 	opts = (RestoreOptions *) calloc(1, sizeof(RestoreOptions));
 
 	opts->format = archUnknown;
+	opts->suppressDumpWarnings = false;
 
 	return opts;
 }
@@ -1419,7 +1436,8 @@ _discoverArchiveFormat(ArchiveHandle *AH)
 	cnt = fread(sig, 1, 5, fh);
 
 	if (cnt != 5)
-		die_horribly(AH, "%s: input file is too short, or is unreadable\n", progname);
+		die_horribly(AH, "%s: input file is too short, or is unreadable (read %d, expected 5)\n", 
+							progname, cnt);
 
 	/* Save it, just in case we need it later */
 	strncpy(&AH->lookahead[0], sig, 5);

@@ -15,7 +15,7 @@
  *
  *
  * IDENTIFICATION
- *		$Header: /cvsroot/pgsql/src/bin/pg_dump/pg_backup.h,v 1.10 2001/04/01 05:42:50 pjw Exp $
+ *		$Header: /cvsroot/pgsql/src/bin/pg_dump/pg_backup.h,v 1.11 2001/04/25 07:03:19 pjw Exp $
  *
  * Modifications - 28-Jun-2000 - pjw@rhyme.com.au
  *
@@ -50,6 +50,9 @@
 #define atooid(x)  ((Oid) strtoul((x), NULL, 10))
 #define oidcmp(x,y) ( ((x) < (y) ? -1 : ((x) > (y)) ?  1 : 0) )
 #define oideq(x,y) ( (x) == (y) )
+#define oidle(x,y) ( (x) <= (y) )
+#define oidge(x,y) ( (x) >= (y) )
+#define oidzero(x) ( (x) == 0 )
 
 typedef enum _archiveFormat
 {
@@ -66,7 +69,10 @@ typedef enum _archiveFormat
  */
 typedef struct _Archive
 {
-	int			verbose;
+	int				verbose;
+	int				remoteVersion;
+	int				minRemoteVersion;
+	int				maxRemoteVersion;
 	/* The rest is private */
 } Archive;
 
@@ -115,6 +121,7 @@ typedef struct _restoreOptions
 	int			limitToList;
 	int			compression;
 
+	int			suppressDumpWarnings;		/* Suppress output of WARNING entries to stderr */
 } RestoreOptions;
 
 /*

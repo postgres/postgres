@@ -5,7 +5,7 @@
  *	Implements the basic DB functions used by the archiver.
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/bin/pg_dump/pg_backup_db.c,v 1.17 2001/03/23 04:49:55 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/bin/pg_dump/pg_backup_db.c,v 1.18 2001/04/25 07:03:19 pjw Exp $
  *
  * NOTES
  *
@@ -114,17 +114,36 @@ _prompt_for_password(char *username, char *password)
 	fprintf(stderr, "\n\n");
 }
 
+static int
+_parse_version(ArchiveHandle *AH, const char* versionString)
+{
+	int			cnt;
+	int			vmaj, vmin, vrev;
+
+	cnt = sscanf(versionString, "%d.%d.%d", &vmaj, &vmin, &vrev);
+
+	if (cnt < 2)
+	{
+		die_horribly(AH, "Unable to parse version string: %s\n", versionString);
+	}
+
+	if (cnt == 2)
+		vrev = 0;
+
+	return (100 * vmaj + vmin) * 100 + vrev;
+}
 
 static void
 _check_database_version(ArchiveHandle *AH, bool ignoreVersion)
 {
 	PGresult   *res;
-	double		myversion;
+	int			myversion;
 	const char *remoteversion_str;
-	double		remoteversion;
+	int			remoteversion;
 	PGconn	   *conn = AH->connection;
 
-	myversion = strtod(PG_VERSION, NULL);
+	myversion = _parse_version(AH, PG_VERSION);
+
 	res = PQexec(conn, "SELECT version()");
 	if (!res ||
 		PQresultStatus(res) != PGRES_TUPLES_OK ||
@@ -134,8 +153,14 @@ _check_database_version(ArchiveHandle *AH, bool ignoreVersion)
 			  "Explanation from backend: '%s'.\n", PQerrorMessage(conn));
 
 	remoteversion_str = PQgetvalue(res, 0, 0);
-	remoteversion = strtod(remoteversion_str + 11, NULL);
-	if (myversion != remoteversion)
+	remoteversion = _parse_version(AH, remoteversion_str + 11);
+
+	PQclear(res);
+
+	AH->public.remoteVersion = remoteversion;
+
+	if (myversion != remoteversion 
+		&& (remoteversion < AH->public.minRemoteVersion || remoteversion > AH->public.maxRemoteVersion) )
 	{
 		fprintf(stderr, "Database version: %s\n%s version: %s\n",
 				remoteversion_str, progname, PG_VERSION);
@@ -145,7 +170,6 @@ _check_database_version(ArchiveHandle *AH, bool ignoreVersion)
 			die_horribly(AH, "Aborting because of version mismatch.\n"
 						 "Use --ignore-version if you think it's safe to proceed anyway.\n");
 	}
-	PQclear(res);
 }
 
 /*

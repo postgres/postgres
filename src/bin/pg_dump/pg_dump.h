@@ -6,7 +6,7 @@
  * Portions Copyright (c) 1996-2001, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Id: pg_dump.h,v 1.62 2001/04/14 13:11:03 pjw Exp $
+ * $Id: pg_dump.h,v 1.63 2001/04/25 07:03:20 pjw Exp $
  *
  * Modifications - 6/12/96 - dave@bensoft.com - version 1.13.dhb.2
  *
@@ -159,6 +159,7 @@ typedef struct _aggInfo
 	char	   *aggbasetype;
 	char	   *agginitval;
 	char	   *usename;
+	int		   convertok;		/* Flag to indicate of version convertsion is OK */
 } AggInfo;
 
 typedef struct _oprInfo

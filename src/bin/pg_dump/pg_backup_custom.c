@@ -19,7 +19,7 @@
  *
  *
  * IDENTIFICATION
- *		$Header: /cvsroot/pgsql/src/bin/pg_dump/pg_backup_custom.c,v 1.10 2001/04/01 05:42:51 pjw Exp $
+ *		$Header: /cvsroot/pgsql/src/bin/pg_dump/pg_backup_custom.c,v 1.11 2001/04/25 07:03:19 pjw Exp $
  *
  * Modifications - 28-Jun-2000 - pjw@rhyme.com.au
  *
@@ -786,6 +786,7 @@ _ReadBuf(ArchiveHandle *AH, void *buf, int len)
 
 	res = fread(buf, 1, len, AH->FH);
 	ctx->filePos += res;
+
 	return res;
 }
 
@@ -854,7 +855,10 @@ _getFilePos(ArchiveHandle *AH, lclContext *ctx)
 	{
 		pos = ftell(AH->FH);
 		if (pos != ctx->filePos)
-			fprintf(stderr, "Warning: ftell mismatch with filePos\n");
+		{
+			fprintf(stderr, "Warning: ftell mismatch with filePos - filePos used\n");
+			pos = ctx->filePos;
+		}
 	}
 	else
 		pos = ctx->filePos;
