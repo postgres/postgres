@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/storage/lmgr/lmgr.c,v 1.55 2003/02/19 04:02:53 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/storage/lmgr/lmgr.c,v 1.56 2003/02/19 23:41:15 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -126,10 +126,9 @@ LockRelation(Relation relation, LOCKMODE lockmode)
 	LOCKTAG		tag;
 
 	MemSet(&tag, 0, sizeof(tag));
-	tag.objId = relation->rd_lockInfo.lockRelId.relId;
-	tag.classId = RelOid_pg_class;
+	tag.relId = relation->rd_lockInfo.lockRelId.relId;
 	tag.dbId = relation->rd_lockInfo.lockRelId.dbId;
-	tag.objsubId.blkno = InvalidBlockNumber;
+	tag.objId.blkno = InvalidBlockNumber;
 
 	if (!LockAcquire(LockTableId, &tag, GetCurrentTransactionId(),
 					 lockmode, false))
@@ -161,10 +160,9 @@ ConditionalLockRelation(Relation relation, LOCKMODE lockmode)
 	LOCKTAG		tag;
 
 	MemSet(&tag, 0, sizeof(tag));
-	tag.objId = relation->rd_lockInfo.lockRelId.relId;
-	tag.classId = RelOid_pg_class;
+	tag.relId = relation->rd_lockInfo.lockRelId.relId;
 	tag.dbId = relation->rd_lockInfo.lockRelId.dbId;
-	tag.objsubId.blkno = InvalidBlockNumber;
+	tag.objId.blkno = InvalidBlockNumber;
 
 	if (!LockAcquire(LockTableId, &tag, GetCurrentTransactionId(),
 					 lockmode, true))
@@ -192,10 +190,9 @@ UnlockRelation(Relation relation, LOCKMODE lockmode)
 	LOCKTAG		tag;
 
 	MemSet(&tag, 0, sizeof(tag));
-	tag.objId = relation->rd_lockInfo.lockRelId.relId;
-	tag.classId = RelOid_pg_class;
+	tag.relId = relation->rd_lockInfo.lockRelId.relId;
 	tag.dbId = relation->rd_lockInfo.lockRelId.dbId;
-	tag.objsubId.blkno = InvalidBlockNumber;
+	tag.objId.blkno = InvalidBlockNumber;
 
 	LockRelease(LockTableId, &tag, GetCurrentTransactionId(), lockmode);
 }
@@ -218,10 +215,9 @@ LockRelationForSession(LockRelId *relid, LOCKMODE lockmode)
 	LOCKTAG		tag;
 
 	MemSet(&tag, 0, sizeof(tag));
-	tag.objId = relid->relId;
-	tag.classId = RelOid_pg_class;
+	tag.relId = relid->relId;
 	tag.dbId = relid->dbId;
-	tag.objsubId.blkno = InvalidBlockNumber;
+	tag.objId.blkno = InvalidBlockNumber;
 
 	if (!LockAcquire(LockTableId, &tag, InvalidTransactionId,
 					 lockmode, false))
@@ -237,10 +233,9 @@ UnlockRelationForSession(LockRelId *relid, LOCKMODE lockmode)
 	LOCKTAG		tag;
 
 	MemSet(&tag, 0, sizeof(tag));
-	tag.objId = relid->relId;
-	tag.classId = RelOid_pg_class;
+	tag.relId = relid->relId;
 	tag.dbId = relid->dbId;
-	tag.objsubId.blkno = InvalidBlockNumber;
+	tag.objId.blkno = InvalidBlockNumber;
 
 	LockRelease(LockTableId, &tag, InvalidTransactionId, lockmode);
 }
@@ -258,10 +253,9 @@ LockPage(Relation relation, BlockNumber blkno, LOCKMODE lockmode)
 	LOCKTAG		tag;
 
 	MemSet(&tag, 0, sizeof(tag));
-	tag.objId = relation->rd_lockInfo.lockRelId.relId;
-	tag.classId = RelOid_pg_class;
+	tag.relId = relation->rd_lockInfo.lockRelId.relId;
 	tag.dbId = relation->rd_lockInfo.lockRelId.dbId;
-	tag.objsubId.blkno = blkno;
+	tag.objId.blkno = blkno;
 
 	if (!LockAcquire(LockTableId, &tag, GetCurrentTransactionId(),
 					 lockmode, false))
@@ -277,10 +271,9 @@ UnlockPage(Relation relation, BlockNumber blkno, LOCKMODE lockmode)
 	LOCKTAG		tag;
 
 	MemSet(&tag, 0, sizeof(tag));
-	tag.objId = relation->rd_lockInfo.lockRelId.relId;
-	tag.classId = RelOid_pg_class;
+	tag.relId = relation->rd_lockInfo.lockRelId.relId;
 	tag.dbId = relation->rd_lockInfo.lockRelId.dbId;
-	tag.objsubId.blkno = blkno;
+	tag.objId.blkno = blkno;
 
 	LockRelease(LockTableId, &tag, GetCurrentTransactionId(), lockmode);
 }
@@ -301,10 +294,9 @@ XactLockTableInsert(TransactionId xid)
 	LOCKTAG		tag;
 
 	MemSet(&tag, 0, sizeof(tag));
-	tag.objId = InvalidOid;
-	tag.classId = XactLockTableId;
+	tag.relId = XactLockTableId;
 	tag.dbId = InvalidOid;		/* xids are globally unique */
-	tag.objsubId.xid = xid;
+	tag.objId.xid = xid;
 
 	if (!LockAcquire(LockTableId, &tag, xid,
 					 ExclusiveLock, false))
@@ -325,10 +317,9 @@ XactLockTableWait(TransactionId xid)
 	Assert(!TransactionIdEquals(xid, myxid));
 
 	MemSet(&tag, 0, sizeof(tag));
-	tag.objId = InvalidOid;
-	tag.classId = XactLockTableId;
+	tag.relId = XactLockTableId;
 	tag.dbId = InvalidOid;
-	tag.objsubId.xid = xid;
+	tag.objId.xid = xid;
 
 	if (!LockAcquire(LockTableId, &tag, myxid,
 					 ShareLock, false))
@@ -343,59 +334,3 @@ XactLockTableWait(TransactionId xid)
 	if (!TransactionIdDidCommit(xid) && !TransactionIdDidAbort(xid))
 		TransactionIdAbort(xid);
 }
-
-/*
- * LockObject
- *
- * Lock an arbitrary database object.  A standard relation lock would lock the
- * classId of RelOid_pg_class and objId of the relations OID within the pg_class
- * table.  LockObject allows classId to be specified by the caller, thus allowing
- * locks on any row in any system table.
- *
- * If classId is NOT a system table (protected from removal), an additional lock
- * should be held on the relation to prevent it from being dropped.
- */
-void
-LockObject(Oid objId, Oid classId, LOCKMODE lockmode)
-{
-	LOCKTAG		tag;
-
-	MemSet(&tag, 0, sizeof(tag));
-	tag.objId = objId;
-	tag.classId = classId;
-	tag.dbId = MyDatabaseId;
-	tag.objsubId.blkno = InvalidBlockNumber;
-
-	/* Only two reasonable lock types */
-	Assert(lockmode == AccessShareLock || lockmode == AccessExclusiveLock);
-
-	if (!LockAcquire(LockTableId, &tag, GetCurrentTransactionId(),
-					 lockmode, false))
-		elog(ERROR, "LockObject: LockAcquire failed");
-}
-
-/*
- * UnlockObject
- */
-void
-UnlockObject(Oid objId, Oid classId, LOCKMODE lockmode)
-{
-	LOCKTAG		tag;
-
-	/* NoLock is a no-op */
-	if (lockmode == NoLock)
-		return;
-
-	MemSet(&tag, 0, sizeof(tag));
-	tag.objId = objId;
-	tag.classId = classId;
-	tag.dbId = MyDatabaseId;
-	tag.objsubId.blkno = InvalidBlockNumber;
-
-	/* Only two reasonable lock types */
-	Assert(lockmode == AccessShareLock
-		  || lockmode == AccessExclusiveLock);
-
-	LockRelease(LockTableId, &tag, GetCurrentTransactionId(), lockmode);
-}
-

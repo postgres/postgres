@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/commands/typecmds.c,v 1.31 2003/02/19 04:02:53 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/commands/typecmds.c,v 1.32 2003/02/19 23:41:15 momjian Exp $
  *
  * DESCRIPTION
  *	  The "DefineFoo" routines take the parse tree and pick out the
@@ -353,12 +353,6 @@ RemoveType(List *names, DropBehavior behavior)
 		elog(ERROR, "Type \"%s\" does not exist",
 			 TypeNameToString(typename));
 
-	/*
-	 * Grab an exclusive lock on the type id, the SearchSysCache confirms
-	 * the type still exists after locking
-	 */
-	LockObject(typeoid, RelOid_pg_type, AccessExclusiveLock);
-
 	tup = SearchSysCache(TYPEOID,
 						 ObjectIdGetDatum(typeoid),
 						 0, 0, 0);
@@ -382,9 +376,6 @@ RemoveType(List *names, DropBehavior behavior)
 	object.objectSubId = 0;
 
 	performDeletion(&object, behavior);
-
-	/* Hold the lock until the end of the transaction */
-	UnlockObject(typeoid, RelOid_pg_type, NoLock);
 }
 
 
@@ -689,7 +680,7 @@ void
 RemoveDomain(List *names, DropBehavior behavior)
 {
 	TypeName   *typename;
-	Oid			domainoid;
+	Oid			typeoid;
 	HeapTuple	tup;
 	char		typtype;
 	ObjectAddress object;
@@ -701,26 +692,20 @@ RemoveDomain(List *names, DropBehavior behavior)
 	typename->arrayBounds = NIL;
 
 	/* Use LookupTypeName here so that shell types can be removed. */
-	domainoid = LookupTypeName(typename);
-	if (!OidIsValid(domainoid))
+	typeoid = LookupTypeName(typename);
+	if (!OidIsValid(typeoid))
 		elog(ERROR, "Type \"%s\" does not exist",
 			 TypeNameToString(typename));
 
-	/*
-	 * Lock the domain.  The SearchSysCache confirms the domain still exists
-	 * after locking
-	 */
-	LockObject(domainoid, RelOid_pg_type, AccessExclusiveLock);
-
 	tup = SearchSysCache(TYPEOID,
-						 ObjectIdGetDatum(domainoid),
+						 ObjectIdGetDatum(typeoid),
 						 0, 0, 0);
 	if (!HeapTupleIsValid(tup))
 		elog(ERROR, "RemoveDomain: type \"%s\" does not exist",
 			 TypeNameToString(typename));
 
 	/* Permission check: must own type or its namespace */
-	if (!pg_type_ownercheck(domainoid, GetUserId()) &&
+	if (!pg_type_ownercheck(typeoid, GetUserId()) &&
 		!pg_namespace_ownercheck(((Form_pg_type) GETSTRUCT(tup))->typnamespace,
 								 GetUserId()))
 		aclcheck_error(ACLCHECK_NOT_OWNER, TypeNameToString(typename));
@@ -738,13 +723,10 @@ RemoveDomain(List *names, DropBehavior behavior)
 	 * Do the deletion
 	 */
 	object.classId = RelOid_pg_type;
-	object.objectId = domainoid;
+	object.objectId = typeoid;
 	object.objectSubId = 0;
 
 	performDeletion(&object, behavior);
-
-	/* Hold the lock until the end of the transaction */
-	UnlockObject(domainoid, RelOid_pg_type, NoLock);
 }
 
 
@@ -959,12 +941,6 @@ AlterDomainDefault(List *names, Node *defaultRaw)
 		elog(ERROR, "Type \"%s\" does not exist",
 			 TypeNameToString(typename));
 
-	/*
-	 * Lock the domain.  The SearchSysCacheCopy confirms the type
-	 * still exists after locking
-	 */
-	LockObject(domainoid, RelOid_pg_type, AccessExclusiveLock);
-
 	tup = SearchSysCacheCopy(TYPEOID,
 							 ObjectIdGetDatum(domainoid),
 							 0, 0, 0);
@@ -1049,7 +1025,6 @@ AlterDomainDefault(List *names, Node *defaultRaw)
 	/* Clean up */
 	heap_close(rel, NoLock);
 	heap_freetuple(newtuple);
-	UnlockObject(domainoid, RelOid_pg_type, NoLock);
 };
 
 /*
@@ -1080,12 +1055,6 @@ AlterDomainNotNull(List *names, bool notNull)
 	if (!OidIsValid(domainoid))
 		elog(ERROR, "Type \"%s\" does not exist",
 			 TypeNameToString(typename));
-
-	/*
-	 * Lock the domain.  The SearchSysCacheCopy confirms the domain
-	 * still exists after locking
-	 */
-	LockObject(domainoid, RelOid_pg_type, AccessExclusiveLock);
 
 	tup = SearchSysCacheCopy(TYPEOID,
 							 ObjectIdGetDatum(domainoid),
@@ -1168,7 +1137,6 @@ AlterDomainNotNull(List *names, bool notNull)
 	/* Clean up */
 	heap_freetuple(tup);
 	heap_close(typrel, RowExclusiveLock);
-	UnlockObject(domainoid, RelOid_pg_type, NoLock);
 }
 
 /*
@@ -1203,12 +1171,6 @@ AlterDomainDropConstraint(List *names, const char *constrName, DropBehavior beha
 	if (!OidIsValid(domainoid))
 		elog(ERROR, "Type \"%s\" does not exist",
 			 TypeNameToString(typename));
-
-	/*
-	 * Lock the domain.  The SearchSysCacheCopy confirms the type still
-	 * exists after locking.
-	 */
-	LockObject(domainoid, RelOid_pg_type, AccessExclusiveLock);
 
 	tup = SearchSysCacheCopy(TYPEOID,
 							 ObjectIdGetDatum(domainoid),
@@ -1257,7 +1219,6 @@ AlterDomainDropConstraint(List *names, const char *constrName, DropBehavior beha
 	heap_close(conrel, RowExclusiveLock);
 
 	heap_close(rel, NoLock);
-	UnlockObject(domainoid, RelOid_pg_type, NoLock);
 };
 
 /*
@@ -1297,12 +1258,6 @@ AlterDomainAddConstraint(List *names, Node *newConstraint)
 	if (!OidIsValid(domainoid))
 		elog(ERROR, "Type \"%s\" does not exist",
 			 TypeNameToString(typename));
-
-	/*
-	 * Lock the domain.  The SearchSysCacheCopy confirms the domain
-	 * still exists after locking.
-	 */
-	LockObject(domainoid, RelOid_pg_type, AccessExclusiveLock);
 
 	tup = SearchSysCacheCopy(TYPEOID,
 							 ObjectIdGetDatum(domainoid),
@@ -1438,7 +1393,6 @@ AlterDomainAddConstraint(List *names, Node *newConstraint)
 
 	/* Clean up */
 	heap_close(typrel, RowExclusiveLock);
-	UnlockObject(domainoid, RelOid_pg_type, NoLock);
 }
 
 /*
@@ -1742,10 +1696,7 @@ GetDomainConstraints(Oid typeOid)
 		Form_pg_type typTup;
 		ScanKeyData key[1];
 		SysScanDesc scan;
-
-		/* Lock the domain */
-		LockObject(typeOid, RelOid_pg_type, AccessShareLock);
-
+		
 		tup = SearchSysCache(TYPEOID,
 							 ObjectIdGetDatum(typeOid),
 							 0, 0, 0);
@@ -1873,12 +1824,6 @@ AlterTypeOwner(List *names, AclId newOwnerSysId)
 		elog(ERROR, "Type \"%s\" does not exist",
 			 TypeNameToString(typename));
 
-	/*
-	 * Lock the type.  The SearchSysCacheCopy serves to confirm the
-	 * domain still exists after locking
-	 */
-	LockObject(typeOid, RelOid_pg_type, AccessExclusiveLock);
-
 	tup = SearchSysCacheCopy(TYPEOID,
 							 ObjectIdGetDatum(typeOid),
 							 0, 0, 0);
@@ -1901,5 +1846,4 @@ AlterTypeOwner(List *names, AclId newOwnerSysId)
 
 	/* Clean up */
 	heap_close(rel, RowExclusiveLock);
-	UnlockObject(typeOid, RelOid_pg_type, NoLock);
 }

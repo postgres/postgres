@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/parser/parse_type.c,v 1.52 2003/02/19 04:02:53 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/parser/parse_type.c,v 1.53 2003/02/19 23:41:15 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -23,7 +23,6 @@
 #include "parser/parser.h"
 #include "parser/parse_expr.h"
 #include "parser/parse_type.h"
-#include "storage/lmgr.h"
 #include "utils/builtins.h"
 #include "utils/lsyscache.h"
 #include "utils/syscache.h"
@@ -127,15 +126,6 @@ LookupTypeName(const TypeName *typename)
 			restype = TypenameGetTypid(typname);
 		}
 	}
-
-	/*
-	 * Lock the type as having been read for remainder of the transaction
-	 *
-	 * XXX: There is a small time between the above and now when the type
-	 *		could dissapear.  We *should* recheck to confirm the type still
-	 *		exists, but won't for speed.
-	 */
-	LockObject(restype, RelOid_pg_type, AccessShareLock);
 
 	return restype;
 }

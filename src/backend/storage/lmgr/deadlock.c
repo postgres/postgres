@@ -12,7 +12,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/storage/lmgr/deadlock.c,v 1.18 2003/02/19 04:02:53 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/storage/lmgr/deadlock.c,v 1.19 2003/02/19 23:41:15 momjian Exp $
  *
  *	Interface:
  *
@@ -855,25 +855,22 @@ DeadLockReport(void)
 		else
 			nextpid = deadlockDetails[0].pid;
 
-		if (info->locktag.objId == InvalidOid
-			&& info->locktag.classId == XactLockTableId
-			&& info->locktag.dbId == InvalidOid)
+		if (info->locktag.relId == XactLockTableId && info->locktag.dbId == 0)
 		{
 			/* Lock is for transaction ID */
 			elog(NOTICE, "Proc %d waits for %s on transaction %u; blocked by %d",
 				 info->pid,
 				 GetLockmodeName(info->lockmode),
-				 info->locktag.objsubId.xid,
+				 info->locktag.objId.xid,
 				 nextpid);
 		}
 		else
 		{
 			/* Lock is for a relation */
-			elog(NOTICE, "Proc %d waits for %s on object %u class %u database %u; blocked by %d",
+			elog(NOTICE, "Proc %d waits for %s on relation %u database %u; blocked by %d",
 				 info->pid,
 				 GetLockmodeName(info->lockmode),
-				 info->locktag.objId,
-				 info->locktag.classId,
+				 info->locktag.relId,
 				 info->locktag.dbId,
 				 nextpid);
 		}

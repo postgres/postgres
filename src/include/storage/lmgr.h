@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2002, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Id: lmgr.h,v 1.37 2003/02/19 04:02:54 momjian Exp $
+ * $Id: lmgr.h,v 1.38 2003/02/19 23:41:15 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -61,9 +61,5 @@ extern void UnlockPage(Relation relation, BlockNumber blkno, LOCKMODE lockmode);
 /* Lock an XID (used to wait for a transaction to finish) */
 extern void XactLockTableInsert(TransactionId xid);
 extern void XactLockTableWait(TransactionId xid);
-
-/* Lock an arbitrary database object in the current database */
-extern void LockObject(Oid objId, Oid classId, LOCKMODE lockmode);
-extern void UnlockObject(Oid objId, Oid classId, LOCKMODE lockmode);
 
 #endif   /* LMGR_H */

@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/storage/lmgr/lock.c,v 1.121 2003/02/19 04:02:53 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/storage/lmgr/lock.c,v 1.122 2003/02/19 23:41:15 momjian Exp $
  *
  * NOTES
  *	  Outside modules can create a lock table and acquire/release
@@ -97,8 +97,8 @@ LOCK_DEBUG_ENABLED(const LOCK *lock)
 	return
 		(((LOCK_LOCKMETHOD(*lock) == DEFAULT_LOCKMETHOD && Trace_locks)
 	   || (LOCK_LOCKMETHOD(*lock) == USER_LOCKMETHOD && Trace_userlocks))
-		 && (lock->tag.objId >= (Oid) Trace_lock_oidmin))
-		|| (Trace_lock_table && (lock->tag.objId == Trace_lock_table));
+		 && (lock->tag.relId >= (Oid) Trace_lock_oidmin))
+		|| (Trace_lock_table && (lock->tag.relId == Trace_lock_table));
 }
 
 
@@ -107,12 +107,12 @@ LOCK_PRINT(const char *where, const LOCK *lock, LOCKMODE type)
 {
 	if (LOCK_DEBUG_ENABLED(lock))
 		elog(LOG,
-			 "%s: lock(%lx) tbl(%d) obj(%u) class(%u) db(%u) objsub(%u) grantMask(%x) "
+			 "%s: lock(%lx) tbl(%d) rel(%u) db(%u) obj(%u) grantMask(%x) "
 			 "req(%d,%d,%d,%d,%d,%d,%d)=%d "
 			 "grant(%d,%d,%d,%d,%d,%d,%d)=%d wait(%d) type(%s)",
 			 where, MAKE_OFFSET(lock),
-			 lock->tag.lockmethod, lock->tag.objId, lock->tag.classId, lock->tag.dbId,
-			 lock->tag.objsubId.blkno, lock->grantMask,
+			 lock->tag.lockmethod, lock->tag.relId, lock->tag.dbId,
+			 lock->tag.objId.blkno, lock->grantMask,
 			 lock->requested[1], lock->requested[2], lock->requested[3],
 			 lock->requested[4], lock->requested[5], lock->requested[6],
 			 lock->requested[7], lock->nRequested,
@@ -129,16 +129,16 @@ PROCLOCK_PRINT(const char *where, const PROCLOCK *proclockP)
 	if (
 	(((PROCLOCK_LOCKMETHOD(*proclockP) == DEFAULT_LOCKMETHOD && Trace_locks)
 	  || (PROCLOCK_LOCKMETHOD(*proclockP) == USER_LOCKMETHOD && Trace_userlocks))
-	 && (((LOCK *) MAKE_PTR(proclockP->tag.lock))->tag.objId >= (Oid) Trace_lock_oidmin))
-		|| (Trace_lock_table && (((LOCK *) MAKE_PTR(proclockP->tag.lock))->tag.objId == Trace_lock_table))
+	 && (((LOCK *) MAKE_PTR(proclockP->tag.lock))->tag.relId >= (Oid) Trace_lock_oidmin))
+		|| (Trace_lock_table && (((LOCK *) MAKE_PTR(proclockP->tag.lock))->tag.relId == Trace_lock_table))
 		)
 		elog(LOG,
 			 "%s: proclock(%lx) lock(%lx) tbl(%d) proc(%lx) xid(%u) hold(%d,%d,%d,%d,%d,%d,%d)=%d",
 			 where, MAKE_OFFSET(proclockP), proclockP->tag.lock,
 			 PROCLOCK_LOCKMETHOD(*(proclockP)),
 			 proclockP->tag.proc, proclockP->tag.xid,
-			 proclockP->holding[1], proclockP->holding[2], proclockP->holding[3],
-			 proclockP->holding[4], proclockP->holding[5], proclockP->holding[6],
+		   proclockP->holding[1], proclockP->holding[2], proclockP->holding[3],
+		   proclockP->holding[4], proclockP->holding[5], proclockP->holding[6],
 			 proclockP->holding[7], proclockP->nHolding);
 }
 
@@ -417,9 +417,8 @@ LockMethodTableRename(LOCKMETHOD lockmethod)
  *
  *		lockmethod						1				2
  *		tag.dbId						database oid	database oid
- *		tag.classId						class oid		0
- *		tag.objId						rel oid or 0	0
- *		tag.objsubId					block id		lock id2
+ *		tag.relId						rel oid or 0	0
+ *		tag.objId						block id		lock id2
  *										or xact id
  *		tag.offnum						0				lock id1
  *		proclock.xid					xid or 0		0
@@ -450,7 +449,7 @@ LockAcquire(LOCKMETHOD lockmethod, LOCKTAG *locktag,
 #ifdef LOCK_DEBUG
 	if (lockmethod == USER_LOCKMETHOD && Trace_userlocks)
 		elog(LOG, "LockAcquire: user lock [%u] %s",
-			 locktag->objsubId.blkno, lock_mode_names[lockmode]);
+			 locktag->objId.blkno, lock_mode_names[lockmode]);
 #endif
 
 	/* ???????? This must be changed when short term locks will be used */
@@ -573,7 +572,7 @@ LockAcquire(LOCKMETHOD lockmethod, LOCKTAG *locktag,
 				elog(LOG, "Deadlock risk: raising lock level"
 					 " from %s to %s on object %u/%u/%u",
 					 lock_mode_names[i], lock_mode_names[lockmode],
-				 lock->tag.objId, lock->tag.dbId, lock->tag.objsubId.blkno);
+				 lock->tag.relId, lock->tag.dbId, lock->tag.objId.blkno);
 				break;
 			}
 		}
@@ -994,7 +993,7 @@ LockRelease(LOCKMETHOD lockmethod, LOCKTAG *locktag,
 
 #ifdef LOCK_DEBUG
 	if (lockmethod == USER_LOCKMETHOD && Trace_userlocks)
-		elog(LOG, "LockRelease: user lock tag [%u] %d", locktag->objsubId.blkno, lockmode);
+		elog(LOG, "LockRelease: user lock tag [%u] %d", locktag->objId.blkno, lockmode);
 #endif
 
 	/* ???????? This must be changed when short term locks will be used */
