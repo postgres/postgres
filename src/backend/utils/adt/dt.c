@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *    $Header: /cvsroot/pgsql/src/backend/utils/adt/Attic/dt.c,v 1.12 1997/03/28 07:12:46 scrappy Exp $
+ *    $Header: /cvsroot/pgsql/src/backend/utils/adt/Attic/dt.c,v 1.13 1997/03/28 07:16:59 scrappy Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -2466,6 +2466,9 @@ int EncodeDateTime(struct tm *tm, double fsec, int style, char *str)
     char mabbrev[4], dabbrev[4];
     int day, hour, min;
     double sec;
+#ifdef DATEDEBUG
+    char buf[MAXDATELEN];
+#endif
 
     sec = (tm->tm_sec + fsec);
 

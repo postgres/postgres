@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *    $Header: /cvsroot/pgsql/src/backend/utils/init/globals.c,v 1.8 1997/03/25 08:09:43 scrappy Exp $
+ *    $Header: /cvsroot/pgsql/src/backend/utils/init/globals.c,v 1.9 1997/03/28 07:18:06 scrappy Exp $
  *
  * NOTES
  *    Globals used all over the place should be declared here and not
@@ -65,7 +65,7 @@ bool		IsPostmaster = false;
 
 short		DebugLvl = 0;
 
-int		DateStyle = USE_ISO_DATES;
+int		DateStyle = USE_POSTGRES_DATES;
 bool		EuroDates = false;
 bool		HasCTZSet = false;
 bool		CDayLight = false;
