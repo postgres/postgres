@@ -9,7 +9,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/optimizer/util/plancat.c,v 1.96 2004/08/29 05:06:44 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/optimizer/util/plancat.c,v 1.97 2004/10/01 17:11:50 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -90,7 +90,14 @@ get_relation_info(Oid relationObjectId, RelOptInfo *rel)
 			int			i;
 			int16		amorderstrategy;
 
-			/* Extract info from the relation descriptor for the index */
+			/*
+			 * Extract info from the relation descriptor for the index.
+			 *
+			 * Note that we take no lock on the index; we assume our lock on
+			 * the parent table will protect the index's schema information.
+			 * When and if the executor actually uses the index, it will take
+			 * a lock as needed to protect the access to the index contents.
+			 */
 			indexRelation = index_open(indexoid);
 			index = indexRelation->rd_index;
 

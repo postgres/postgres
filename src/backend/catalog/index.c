@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/catalog/index.c,v 1.239 2004/08/31 17:10:36 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/catalog/index.c,v 1.240 2004/10/01 17:11:49 tgl Exp $
  *
  *
  * INTERFACE ROUTINES
@@ -777,7 +777,7 @@ index_drop(Oid indexId)
 	 * backend might be in the midst of devising a query plan that will
 	 * use the index.  The parser and planner take care to hold an
 	 * appropriate lock on the parent table while working, but having them
-	 * hold locks on all the indexes too seems overly complex.	We do grab
+	 * hold locks on all the indexes too seems overly expensive.  We do grab
 	 * exclusive lock on the index too, just to be safe. Both locks must
 	 * be held till end of transaction, else other backends will still see
 	 * this index in pg_index.
@@ -1655,25 +1655,18 @@ reindex_index(Oid indexId)
 	bool		inplace;
 
 	/*
-	 * Open our index relation and get an exclusive lock on it.
-	 *
-	 * Note: for REINDEX INDEX, doing this before opening the parent heap
-	 * relation means there's a possibility for deadlock failure against
-	 * another xact that is doing normal accesses to the heap and index.
-	 * However, it's not real clear why you'd be wanting to do REINDEX
-	 * INDEX on a table that's in active use, so I'd rather have the
-	 * protection of making sure the index is locked down.	In the REINDEX
-	 * TABLE and REINDEX DATABASE cases, there is no problem because
-	 * caller already holds exclusive lock on the parent table.
+	 * Open and lock the parent heap relation.  ShareLock is sufficient
+	 * since we only need to be sure no schema or data changes are going on.
+	 */
+	heapId = IndexGetRelation(indexId);
+	heapRelation = heap_open(heapId, ShareLock);
+
+	/*
+	 * Open the target index relation and get an exclusive lock on it,
+	 * to ensure that no one else is touching this particular index.
 	 */
 	iRel = index_open(indexId);
 	LockRelation(iRel, AccessExclusiveLock);
-
-	/* Get OID of index's parent table */
-	heapId = iRel->rd_index->indrelid;
-
-	/* Open and lock the parent heap relation */
-	heapRelation = heap_open(heapId, AccessExclusiveLock);
 
 	/*
 	 * If it's a shared index, we must do inplace processing (because we
@@ -1759,11 +1752,10 @@ reindex_relation(Oid relid, bool toast_too)
 	ListCell   *indexId;
 
 	/*
-	 * Ensure to hold an exclusive lock throughout the transaction. The
-	 * lock could perhaps be less intensive (in the non-overwrite case)
-	 * but for now it's AccessExclusiveLock for simplicity.
+	 * Open and lock the relation.  ShareLock is sufficient since we only
+	 * need to prevent schema and data changes in it.
 	 */
-	rel = heap_open(relid, AccessExclusiveLock);
+	rel = heap_open(relid, ShareLock);
 
 	toast_relid = rel->rd_rel->reltoastrelid;
 
