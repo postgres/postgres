@@ -1,6 +1,6 @@
 TODO list for PostgreSQL
 ========================
-Last updated:		Thu Sep  6 16:37:09 EDT 2001
+Last updated:		Thu Sep  6 16:40:00 EDT 2001
 
 Current maintainer:	Bruce Momjian (pgman@candle.pha.pa.us)
 
@@ -245,7 +245,7 @@ TRANSACTIONS
 
 * Allow autocommit so always in a transaction block
 * Overhaul bufmgr/lockmgr/transaction manager
-* Allow nested transactions / savepoints (Vadim)
+* Allow nested transactions / savepoints [transactions]
 * Handle transaction rollover (Tom) [transactions]
 
 EXOTIC FEATURES
