@@ -4,7 +4,7 @@
 #
 # Copyright (c) 1994, Regents of the University of California
 #
-# $PostgreSQL: pgsql/src/interfaces/libpq/Makefile,v 1.115 2004/10/06 16:42:01 momjian Exp $
+# $PostgreSQL: pgsql/src/interfaces/libpq/Makefile,v 1.116 2004/10/12 01:04:11 momjian Exp $
 #
 #-------------------------------------------------------------------------
 
@@ -31,13 +31,13 @@ OBJS=	fe-auth.o fe-connect.o fe-exec.o fe-misc.o fe-print.o fe-lobj.o \
 	$(filter crypt.o getaddrinfo.o inet_aton.o open.o snprintf.o strerror.o, $(LIBOBJS))
 
 ifeq ($(PORTNAME), win32)
-OBJS+=win32.o libpqrc.o
-libpqrc.o: libpq.rc
+OBJS += win32.o libpqrc.o
+libpqrc.o : libpq.rc
 	windres -i libpq.rc -o libpqrc.o
 ifeq ($(enable_thread_safety), yes)
 # This doesn't work yet because configure test fails.  2004-06-19
-OBJS+=pthread-win32.o
-PTHREAD_H_WIN32=yes
+OBJS += pthread-win32.o
+PTHREAD_H_WIN32 = yes
 endif
 endif
 
@@ -51,7 +51,7 @@ SHLIB_LINK += -lwsock32 -lws2_32 $(filter -leay32 -lssleay32, $(LIBS))
 endif
 
 
-all: $(PTHREAD_H_WIN32) all-lib
+all: $(PTHREAD_H_WIN32) $(top_srcdir)/src/port/pg_config_paths.h all-lib
 
 # Shared library stuff
 include $(top_srcdir)/src/Makefile.shlib
@@ -82,6 +82,9 @@ ifneq ($(PTHREAD_H_WIN32), "")
 pthread.h : % : $(top_srcdir)/src/interfaces/libpq/pthread.h.win
 	rm -f $@ && $(LN_S) $< .
 endif
+
+$(top_srcdir)/src/port/pg_config_paths.h:
+	$(MAKE) -C $(top_srcdir)/src/port pg_config_paths.h
 
 install: all installdirs install-lib
 	$(INSTALL_DATA) $(srcdir)/libpq-fe.h $(DESTDIR)$(includedir)

@@ -4,7 +4,7 @@
 #
 # Copyright (c) 1994, Regents of the University of California
 #
-# $PostgreSQL: pgsql/src/interfaces/ecpg/ecpglib/Makefile,v 1.26 2004/10/04 20:36:11 momjian Exp $
+# $PostgreSQL: pgsql/src/interfaces/ecpg/ecpglib/Makefile,v 1.27 2004/10/12 01:04:10 momjian Exp $
 #
 #-------------------------------------------------------------------------
 
@@ -30,7 +30,7 @@ OBJS= execute.o typename.o descriptor.o data.o error.o prepare.o memory.o \
 SHLIB_LINK = -L../pgtypeslib -lpgtypes $(libpq) \
 	$(filter -lintl -lssl -lcrypto -lkrb5 -lcrypt -lm, $(LIBS)) $(PTHREAD_LIBS)
 
-all: all-lib
+all: $(top_srcdir)/src/port/pg_config_paths.h all-lib
 
 # Shared library stuff
 include $(top_srcdir)/src/Makefile.shlib
@@ -45,6 +45,9 @@ path.c: % : $(top_srcdir)/src/port/%
 
 exec.c: % : $(top_srcdir)/src/port/%
 	rm -f $@ && $(LN_S) $< .
+
+$(top_srcdir)/src/port/pg_config_paths.h:
+	$(MAKE) -C $(top_srcdir)/src/port pg_config_paths.h
 
 install: all installdirs install-lib
 
