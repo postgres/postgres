@@ -6,7 +6,7 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: int8.h,v 1.10 1999/02/13 23:22:23 momjian Exp $
+ * $Id: int8.h,v 1.11 1999/03/08 04:17:33 scrappy Exp $
  *
  * NOTES
  * These data types are supported on all 64-bit architectures, and may
@@ -33,7 +33,11 @@ typedef long int int64;
 /* We have working support for "long long int", use that */
 typedef long long int int64;
 
-#define INT64_FORMAT "%lld"
+#ifdef HAVE_INT64_AS_LLD
+# define INT64_FORMAT "%lld"
+#elif HAVE_INT64_AS_QD
+# define INT64_FORMAT "%qd"
+#endif
 #else
 /* Won't actually work, but fall back to long int so that int8.c compiles */
 typedef long int int64;
