@@ -12,7 +12,7 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: miscadmin.h,v 1.1.1.1 1996/07/09 06:21:28 scrappy Exp $
+ * $Id: miscadmin.h,v 1.2 1996/09/16 06:11:44 scrappy Exp $
  *
  * NOTES
  *    some of the information in this file will be moved to
@@ -85,8 +85,8 @@ extern Oid	    LastOidProcessed;	/* for query rewrite */
  *	magic.h		- definitions of the indexes of the magic numbers    *
  *****************************************************************************/
 
-#define	PG_RELEASE	5
-#define PG_VERSION	1
+#define	PG_RELEASE	6
+#define PG_VERSION	0
 #define	PG_VERFILE	"PG_VERSION"
 
 /*****************************************************************************
