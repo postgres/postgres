@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2000, PostgreSQL, Inc
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Id: pg_proc.h,v 1.171 2000/10/31 10:22:12 petere Exp $
+ * $Id: pg_proc.h,v 1.172 2000/11/06 15:58:46 thomas Exp $
  *
  * NOTES
  *	  The script catalog/genbki.sh reads this file and generates .bki
@@ -1257,6 +1257,9 @@ DATA(insert OID = 999 (  lseg_eq		   PGUID 12 f t t t 2 f 16 "601 601" 100 0 0 1
 DESCR("equal");
 
 /* OIDS 1000 - 1999 */
+
+DATA(insert OID = 1026 (  timezone		   PGUID 12 f t f t 2 f	25 "1186 1184" 100 0 0 100  timestamp_izone - ));
+DESCR("time zone");
 
 DATA(insert OID = 1029 (  nullvalue		   PGUID 12 f t t f 1 f 16 "0" 100 0 0 100  nullvalue - ));
 DESCR("(internal)");
