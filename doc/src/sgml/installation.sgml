@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/installation.sgml,v 1.223 2005/01/07 10:21:02 petere Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/installation.sgml,v 1.224 2005/01/08 09:54:47 petere Exp $ -->
 
 <chapter id="installation">
  <title><![%standalone-include[<productname>PostgreSQL</>]]>
@@ -1759,10 +1759,9 @@ kill `cat /usr/local/pgsql/data/postmaster.pid`
        <row>
         <entry><systemitem class="osname">Tru64 UNIX</></entry>
         <entry><systemitem>Alpha</></entry>
-        <entry>7.4</entry>
-        <entry>Peter Eisentraut (<email>peter_e@gmx.net</email>), 2003-10-25 (5.1b);
-         Alessio Bragadini (<email>alessio@albourne.com</email>), 2003-10-29 (4.0g)</entry>
-        <entry></entry>
+        <entry>8.0.0</entry>
+        <entry>Honda Shigehiro (<email>fwif0083@mb.infoweb.ne.jp</email>), 2005-01-07</entry>
+        <entry>5.0</entry>
        </row>
        <row>
         <entry><systemitem class="osname">UnixWare</></entry>
