@@ -47,10 +47,9 @@ SELECT '' AS six, ABSTIME_TBL.*
      | Sun Jan 14 03:14:21 1973 PST
      | Mon May 01 00:30:30 1995 PDT
      | epoch
-     | current
      | -infinity
      | Sat May 10 23:59:12 1947 PDT
-(6 rows)
+(5 rows)
 
 SELECT '' AS six, ABSTIME_TBL.*
    WHERE ABSTIME_TBL.f1 > abstime '-infinity';
