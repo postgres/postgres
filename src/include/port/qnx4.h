@@ -26,8 +26,6 @@ typedef unsigned char slock_t;
 
 extern int	isnan(double dsrc);
 
-extern double rint(double x);
-
 extern char *crypt(const char *, const char *);
 
 extern long random(void);
