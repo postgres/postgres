@@ -11,7 +11,7 @@
   alink="#0000FF">
     <H1>Frequently Asked Questions (FAQ) for PostgreSQL</H1>
 
-    <P>Last updated: Wed Dec  5 00:41:12 EST 2001</P>
+    <P>Last updated: Fri Jan  4 00:44:42 EST 2002</P>
 
     <P>Current maintainer: Bruce Momjian (<A href=
     "mailto:pgman@candle.pha.pa.us">pgman@candle.pha.pa.us</A>)<BR>
@@ -89,57 +89,55 @@
     <CENTER>
       <H2>Operational Questions</H2>
     </CENTER>
-    <A href="#4.1">4.1</A>) Why is the system confused about commas,
-    decimal points, and date formats.<BR>
-     <A href="#4.2">4.2</A>) What is the exact difference between
+     <A href="#4.1">4.1</A>) What is the difference between
     binary cursors and normal cursors?<BR>
-     <A href="#4.3">4.3</A>) How do I <SMALL>SELECT</SMALL> only the
+     <A href="#4.2">4.2</A>) How do I <SMALL>SELECT</SMALL> only the
     first few rows of a query?<BR>
-     <A href="#4.4">4.4</A>) How do I get a list of tables or other
+     <A href="#4.3">4.3</A>) How do I get a list of tables or other
     things I can see in <I>psql?</I><BR>
-     <A href="#4.5">4.5</A>) How do you remove a column from a
+     <A href="#4.4">4.4</A>) How do you remove a column from a
     table?<BR>
-     <A href="#4.6">4.6</A>) What is the maximum size for a row, table,
+     <A href="#4.5">4.5</A>) What is the maximum size for a row, table,
     database?<BR>
-     <A href="#4.7">4.7</A>) How much database disk space is required
+     <A href="#4.6">4.6</A>) How much database disk space is required
     to store data from a typical text file?<BR>
-     <A href="#4.8">4.8</A>) How do I find out what tables or indexes
+     <A href="#4.7">4.7</A>) How do I find out what tables or indexes
     are defined in the database?<BR>
-     <A href="#4.9">4.9</A>) My queries are slow or don't make use of
+     <A href="#4.8">4.8</A>) My queries are slow or don't make use of
     the indexes. Why?<BR>
-     <A href="#4.10">4.10</A>) How do I see how the query optimizer is
+     <A href="#4.9">4.9</A>) How do I see how the query optimizer is
     evaluating my query?<BR>
-     <A href="#4.11">4.11</A>) What is an R-tree index?<BR>
-     <A href="#4.12">4.12</A>) What is the Genetic Query Optimizer?<BR>
-     <A href="#4.13">4.13</A>) How do I perform regular expression
+     <A href="#4.10">4.10</A>) What is an R-tree index?<BR>
+     <A href="#4.11">4.11</A>) What is the Genetic Query Optimizer?<BR>
+     <A href="#4.12">4.12</A>) How do I perform regular expression
     searches and case-insensitive regular expression searches? How do I
     use an index for case-insensitive searches?<BR>
-     <A href="#4.14">4.14</A>) In a query, how do I detect if a field
+     <A href="#4.13">4.13</A>) In a query, how do I detect if a field
     is <SMALL>NULL</SMALL>?<BR>
-     <A href="#4.15">4.15</A>) What is the difference between the
+     <A href="#4.14">4.14</A>) What is the difference between the
     various character types?<BR>
-     <A href="#4.16.1">4.16.1</A>) How do I create a
+     <A href="#4.15.1">4.15.1</A>) How do I create a
     serial/auto-incrementing field?<BR>
-     <A href="#4.16.2">4.16.2</A>) How do I get the value of a
+     <A href="#4.15.2">4.15.2</A>) How do I get the value of a
     <SMALL>SERIAL</SMALL> insert?<BR>
-     <A href="#4.16.3">4.16.3</A>) Don't <I>currval()</I> and
+     <A href="#4.15.3">4.15.3</A>) Don't <I>currval()</I> and
     <I>nextval()</I> lead to a race condition with other users?<BR>
-     <A href="#4.17">4.17</A>) What is an <SMALL>OID</SMALL>? What is a
+     <A href="#4.16">4.16</A>) What is an <SMALL>OID</SMALL>? What is a
     <SMALL>TID</SMALL>?<BR>
-     <A href="#4.18">4.18</A>) What is the meaning of some of the terms
+     <A href="#4.17">4.17</A>) What is the meaning of some of the terms
     used in PostgreSQL?<BR>
-     <A href="#4.19">4.19</A>) Why do I get the error <I>"ERROR: 
+     <A href="#4.18">4.18</A>) Why do I get the error <I>"ERROR: 
      Memory exhausted in AllocSetAlloc()?"</I><BR>
-     <A href="#4.20">4.20</A>) How do I tell what PostgreSQL version I
+     <A href="#4.19">4.19</A>) How do I tell what PostgreSQL version I
     am running? <BR>
-     <A href="#4.21">4.21</A>) My large-object operations get
+     <A href="#4.20">4.20</A>) My large-object operations get
     <I>invalid large obj descriptor.</I> Why?<BR>
-     <A href="#4.22">4.22</A>) How do I create a column that will
+     <A href="#4.21">4.21</A>) How do I create a column that will
     default to the current time?<BR>
-     <A href="#4.23">4.23</A>) Why are my subqueries using
+     <A href="#4.22">4.22</A>) Why are my subqueries using
     <CODE><SMALL>IN</SMALL></CODE> so slow?<BR>
-     <A href="#4.24">4.24</A>) How do I perform an outer join?<BR>
-     <A href="#4.25">4.25</A>) How do I perform queries using multiple databases?<BR>
+     <A href="#4.23">4.23</A>) How do I perform an outer join?<BR>
+     <A href="#4.24">4.24</A>) How do I perform queries using multiple databases?<BR>
      
 
     <CENTER>
@@ -788,22 +786,13 @@
       <H2>Operational Questions</H2>
     </CENTER>
 
-    <H4><A name="4.1">4.1</A>) Why is system confused about commas,
-    decimal points, and date formats.</H4>
-
-    <P>Check your locale configuration. PostgreSQL uses the locale
-    setting of the user that ran the <I>postmaster</I> process. There
-    are postgres and psql <SMALL>SET</SMALL> commands to control the
-    date format. Set those accordingly for your operating
-    environment.</P>
-
-    <H4><A name="4.2">4.2</A>) What is the exact difference between
+    <H4><A name="4.1">4.1</A>) What is the difference between
     binary cursors and normal cursors?</H4>
 
     <P>See the <SMALL>DECLARE</SMALL> manual page for a
     description.</P>
 
-    <H4><A name="4.3">4.3</A>) How do I <SMALL>SELECT</SMALL> only the
+    <H4><A name="4.2">4.2</A>) How do I <SMALL>SELECT</SMALL> only the
     first few rows of a query?</H4>
 
     <P>See the <SMALL>FETCH</SMALL> manual page, or use
@@ -816,7 +805,7 @@
     records requested, or the entire query may have to be evaluated
     until the desired rows have been generated.</P>
 
-    <H4><A name="4.4">4.4</A>) How do I get a list of tables or other
+    <H4><A name="4.3">4.3</A>) How do I get a list of tables or other
     things I can see in <I>psql?</I><BR>
     </H4>
 
@@ -827,7 +816,7 @@
     <I>-E</I> option so it will print out the queries it uses to
     execute the commands you give.</P>
 
-    <H4><A name="4.5">4.5</A>) How do you remove a column from a
+    <H4><A name="4.4">4.4</A>) How do you remove a column from a
     table?</H4>
 
     <P>We do not support <SMALL>ALTER TABLE DROP COLUMN,</SMALL> but do
@@ -840,7 +829,7 @@
     ALTER TABLE new_table RENAME TO old_table;
 </PRE>
 
-    <H4><A name="4.6">4.6</A>) What is the maximum size for a row,
+    <H4><A name="4.5">4.5</A>) What is the maximum size for a row,
     table, database?</H4>
 
     <P>These are the limits:</P>
@@ -864,7 +853,7 @@
     <P>The maximum table size and maximum number of columns can be
     increased if the default block size is increased to 32k.</P>
 
-    <H4><A name="4.7">4.7</A>) How much database disk space is required
+    <H4><A name="4.6">4.6</A>) How much database disk space is required
     to store data from a typical text file?<BR>
     </H4>
 
@@ -897,7 +886,7 @@
     <P>Indexes do not require as much overhead, but do contain the data
     that is being indexed, so they can be large also.</P>
 
-    <H4><A name="4.8">4.8</A>) How do I find out what tables or indexes
+    <H4><A name="4.7">4.7</A>) How do I find out what tables or indexes
     are defined in the database?</H4>
 
     <P><I>psql</I> has a variety of backslash commands to show such
@@ -907,7 +896,7 @@
     illustrates many of the <SMALL>SELECT</SMALL>s needed to get
     information from the database system tables.</P>
 
-    <H4><A name="4.9">4.9</A>) My queries are slow or don't make use of
+    <H4><A name="4.8">4.8</A>) My queries are slow or don't make use of
     the indexes. Why?</H4>
 
     <P>PostgreSQL does not automatically maintain statistics.
@@ -937,12 +926,12 @@
     <I>~</I>(regular expression searches) should start with
     <I>^.</I></P>
 
-    <H4><A name="4.10">4.10</A>) How do I see how the query optimizer
+    <H4><A name="4.9">4.9</A>) How do I see how the query optimizer
     is evaluating my query?</H4>
 
     <P>See the <SMALL>EXPLAIN</SMALL> manual page.</P>
 
-    <H4><A name="4.11">4.11</A>) What is an R-tree index?</H4>
+    <H4><A name="4.10">4.10</A>) What is an R-tree index?</H4>
 
     <P>An R-tree index is used for indexing spatial data. A hash index
     can't handle range searches. A B-tree index only handles range
@@ -967,7 +956,7 @@
     practice, extending R-trees requires a bit of work and we don't
     currently have any documentation on how to do it.</P>
 
-    <H4><A name="4.12">4.12</A>) What is the Genetic Query
+    <H4><A name="4.11">4.11</A>) What is the Genetic Query
     Optimizer?</H4>
 
     <P>The <SMALL>GEQO</SMALL> module speeds query optimization when
@@ -975,7 +964,7 @@
     the handling of large join queries through nonexhaustive
     search.</P>
 
-    <H4><A name="4.13">4.13</A>) How do I perform regular expression
+    <H4><A name="4.12">4.12</A>) How do I perform regular expression
     searches and case-insensitive regular expression searches?  How do I
     use an index for case-insensitive searches?</H4>
 
@@ -999,12 +988,12 @@
     CREATE INDEX tabindex on tab (lower(col));
     </PRE>
 
-    <H4><A name="4.14">4.14</A>) In a query, how do I detect if a field
+    <H4><A name="4.13">4.13</A>) In a query, how do I detect if a field
     is <SMALL>NULL</SMALL>?</H4>
 
     <P>You test the column with <SMALL>IS NULL</SMALL>IS NOT NULL.</P>
 
-    <H4><A name="4.15">4.15</A>) What is the difference between the
+    <H4><A name="4.14">4.14</A>) What is the difference between the
     various character types?</H4>
 <PRE>
 Type            Internal Name   Notes
@@ -1034,7 +1023,7 @@ BYTEA           bytea           variable-length byte array (null-safe)
     binary data, particularly values that include <SMALL>NULL</SMALL>
     bytes.</P>
     
-    <H4><A name="4.16.1">4.16.1</A>) How do I create a
+    <H4><A name="4.15.1">4.15.1</A>) How do I create a
     serial/auto-incrementing field?</H4>
 
     <P>PostgreSQL supports a <SMALL>SERIAL</SMALL> data type. It
@@ -1064,13 +1053,13 @@ BYTEA           bytea           variable-length byte array (null-safe)
     <P><A href="http://www.PostgreSQL.org/docs/aw_pgsql_book">Numbering
     Rows.</A></P>
 
-    <H4><A name="4.16.2">4.16.2</A>) How do I get the value of a
+    <H4><A name="4.15.2">4.15.2</A>) How do I get the value of a
     <SMALL>SERIAL</SMALL> insert?</H4>
 
     <P>One approach is to to retrieve the next <SMALL>SERIAL</SMALL>
     value from the sequence object with the <I>nextval()</I> function
     <I>before</I> inserting and then insert it explicitly. Using the
-    example table in <A href="#4.16.1">4.16.1</A>, that might look like
+    example table in <A href="#4.15.1">4.15.1</A>, that might look like
     this in Perl:</P>
 <PRE>
     new_id = output of "SELECT nextval('person_id_seq')"
@@ -1091,20 +1080,20 @@ BYTEA           bytea           variable-length byte array (null-safe)
     INSERT INTO person (name) VALUES ('Blaise Pascal');
     new_id = output of "SELECT currval('person_id_seq')";
 </PRE>
-    Finally, you could use the <A href="#4.17"><SMALL>OID</SMALL></A>
+    Finally, you could use the <A href="#4.16"><SMALL>OID</SMALL></A>
     returned from the <SMALL>INSERT</SMALL> statement to look up the
     default value, though this is probably the least portable approach.
     In Perl, using DBI with Edmund Mergl's DBD::Pg module, the oid
     value is made available via <I>$sth-&gt;{pg_oid_status} after
     $sth-&gt;execute().</I> 
 
-    <H4><A name="4.16.3">4.16.3</A>) Don't <I>currval()</I> and
+    <H4><A name="4.15.3">4.15.3</A>) Don't <I>currval()</I> and
     <I>nextval()</I> lead to a race condition with other users?</H4>
 
     <P>No. Currval() returns the current value assigned by your
     backend, not by all users.</P>
 
-    <H4><A name="4.17">4.17</A>) What is an <SMALL>OID</SMALL>? What is
+    <H4><A name="4.16">4.16</A>) What is an <SMALL>OID</SMALL>? What is
     a <SMALL>TID</SMALL>?</H4>
 
     <P><SMALL>OID</SMALL>s are PostgreSQL's answer to unique row ids.
@@ -1149,7 +1138,7 @@ BYTEA           bytea           variable-length byte array (null-safe)
     or reloaded. They are used by index entries to point to physical
     rows.</P>
 
-    <H4><A name="4.18">4.18</A>) What is the meaning of some of the
+    <H4><A name="4.17">4.17</A>) What is the meaning of some of the
     terms used in PostgreSQL?</H4>
 
     <P>Some of the source code and older documentation use terms that
@@ -1178,7 +1167,7 @@ BYTEA           bytea           variable-length byte array (null-safe)
     <P>A list of general database terms can be found at: <A href=
     "http://www.comptechnews.com/~reaster/dbdesign.html">http://www.comptechnews.com/~reaster/dbdesign.html</A></P>
 
-    <H4><A name="4.19">4.19</A>) Why do I get the error <I>"ERROR: 
+    <H4><A name="4.18">4.18</A>) Why do I get the error <I>"ERROR: 
      Memory exhausted in AllocSetAlloc()?"</I><BR>
     </H4>
 
@@ -1198,13 +1187,13 @@ BYTEA           bytea           variable-length byte array (null-safe)
     backend is returning too much data, try it before starting the
     client. 
 
-    <H4><A name="4.20">4.20</A>) How do I tell what PostgreSQL version
+    <H4><A name="4.19">4.19</A>) How do I tell what PostgreSQL version
     I am running?<BR>
     </H4>
 
     <P>From <I>psql,</I> type <CODE>select version();</CODE></P>
 
-    <H4><A name="4.21">4.21</A>) My large-object operations get
+    <H4><A name="4.20">4.20</A>) My large-object operations get
     <I>invalid large obj descriptor.</I> Why?<BR>
     </H4>
 
@@ -1221,7 +1210,7 @@ BYTEA           bytea           variable-length byte array (null-safe)
     <P>If you are using a client interface like <SMALL>ODBC</SMALL> you
     may need to set <CODE>auto-commit off.</CODE></P>
 
-    <H4><A name="4.22">4.22</A>) How do I create a column that will
+    <H4><A name="4.21">4.21</A>) How do I create a column that will
     default to the current time?<BR>
     </H4>
 
@@ -1231,7 +1220,7 @@ BYTEA           bytea           variable-length byte array (null-safe)
 </CODE>
 </PRE>
 
-    <H4><A name="4.23">4.23</A>) Why are my subqueries using
+    <H4><A name="4.22">4.22</A>) Why are my subqueries using
     <CODE><SMALL>IN</SMALL></CODE> so slow?<BR>
     </H4>
 
@@ -1254,7 +1243,7 @@ BYTEA           bytea           variable-length byte array (null-safe)
 </PRE>
     We hope to fix this limitation in a future release. 
 
-    <H4><A name="4.24">4.24</A>) How do I perform an outer join?<BR>
+    <H4><A name="4.23">4.23</A>) How do I perform an outer join?<BR>
     </H4>
 
     <P>PostgreSQL 7.1 and later supports outer joins using the SQL
@@ -1295,7 +1284,7 @@ BYTEA           bytea           variable-length byte array (null-safe)
     ORDER BY col1
 </PRE>
 
-    <H4><A href="#4.25">4.25</A>) How do I perform queries
+    <H4><A href="#4.24">4.24</A>) How do I perform queries
     using multiple databases?</H4>
 
     <P>There is no way to query any database except the current one.
