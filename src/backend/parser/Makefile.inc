@@ -7,7 +7,7 @@
 #
 #
 # IDENTIFICATION
-#    $Header: /cvsroot/pgsql/src/backend/parser/Attic/Makefile.inc,v 1.2.2.1 1996/09/21 06:06:49 scrappy Exp $
+#    $Header: /cvsroot/pgsql/src/backend/parser/Attic/Makefile.inc,v 1.2.2.2 1996/09/21 07:47:48 scrappy Exp $
 #
 #-------------------------------------------------------------------------
 
@@ -19,8 +19,8 @@ PARSEYACCS= gram.c
 $(PARSEYACCS): gram.y
 	cd $(objdir) 
 	$(YACC) $(YFLAGS) $<
-	mv y.tab.c gram.c
-	mv y.tab.h parse.h
+	mv y.tab.c $(objdir)/gram.c
+	mv y.tab.h $(objdir)/parse.h
 
 $(objdir)/gram.o: gram.c
 	$(cc_inobjdir)
