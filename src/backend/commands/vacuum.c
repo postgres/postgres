@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *    $Header: /cvsroot/pgsql/src/backend/commands/vacuum.c,v 1.19 1997/02/07 16:22:34 momjian Exp $
+ *    $Header: /cvsroot/pgsql/src/backend/commands/vacuum.c,v 1.20 1997/02/18 04:13:57 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -526,9 +526,7 @@ vc_vacone (Oid relid)
     vc_updstats(vacrelstats->relid, vacrelstats->npages, vacrelstats->ntups,
 			 vacrelstats->hasindex, vacrelstats->vacattrstats);
 
-    /* next command frees everything anyway */
-    if (vacrelstats->vacattrstats != NULL)
-	pfree(vacrelstats);
+    /* next command frees attribute stats */
 
     CommitTransactionCommand();
 }
