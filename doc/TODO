@@ -1,6 +1,6 @@
 TODO list for PostgreSQL
 ========================
-Last updated:		Fri Feb 23 14:38:26 EST 2001
+Last updated:		Wed Feb 28 13:03:43 EST 2001
 
 Current maintainer:	Bruce Momjian (pgman@candle.pha.pa.us)
 
@@ -125,6 +125,8 @@ TYPES
 * Make binary/file in/out interface for TOAST columns
 * SELECT cash_out(2) crashes because of opaque
 * Add SQL standard function bit_length()
+* Make oid use unsigned int more reliably, pg_atoi()
+* Missing optimizer selectivities for date, r-tree, etc. [optimizer]
 
 VIEWS
 
@@ -145,6 +147,10 @@ INDEXES
 * Add FILLFACTOR to index creation
 * Re-enable partial indexes
 * Allow inherited tables to inherit index
+* Prevent pg_attribute from having duplicate oids for indexes (Tom)
+* Add UNIQUE capability to non-btree indexes
+* Certain indexes will not shrink, i.e. oid indexes with many inserts (Vadim)
+* Have UPDATE/DELETE clean out indexes
 
 COMMANDS
 
@@ -183,6 +189,9 @@ COMMANDS
 * Add SHOW command to display locks
 * Bring INSERT ... VALUES up to full SQL92 spec, disallow missing
   columns, allow DEFAULT
+* Allow cursors to be DECLAREd/OPENed/CLOSEed outside transactions
+* Allow DELETE WHERE CURRENT OF cursor
+* -redesign UNION structures to have separarate target lists
 
 CLIENTS
 
@@ -239,22 +248,14 @@ MISCELLANEOUS
 * Increase identifier length(NAMEDATALEN) if small performance hit
 * Create a background process for each database that runs while
   database is idle, finding superceeded rows, gathering stats and vacuuming
-* Add UNIQUE capability to non-btree indexes
-* Certain indexes will not shrink, i.e. oid indexes with many inserts (Vadim)
-* Have UPDATE/DELETE clean out indexes
-* Allow cursors to be DECLAREd/OPENed/CLOSEed outside transactions
-* Allow DELETE WHERE CURRENT OF cursor
-* -Transaction log, so re-do log can be on a separate disk by
-  with after-row images (Vadim)
+* Transaction log, so re-do log can be on a separate disk with after-row
+  images (Vadim)
 * Populate backend status area and write program to dump status data
-* Make oid use unsigned int more reliably, pg_atoi()
 * Put sort files in their own directory
 * Allow autocommit so always in a transaction block
 * Show location of syntax error in query [yacc]
 * -Redesign the function call interface to handle NULLs better (Tom)
-* Missing optimizer selectivities for date, r-tree, etc. [optimizer]
 * Overhaul bufmgr/lockmgr/transaction manager
-* -redesign UNION structures to have separarate target lists
 * -Use IPC_EXCL when creating shared memory and semaphores (Tom)
 * Encrpyt passwords in pg_shadow table using MD5 (Vince)
 * -Use flock() to prevent multiple postmasters on the same port (Tom)
@@ -268,6 +269,7 @@ PERFORMANCE
 
 * -Allow transaction commits with rollback with no-fsync performance
   (Vadim)
+* Delay fsync() when other backends are about to commit too [fsync]
 
 INDEXES
 
@@ -280,13 +282,27 @@ INDEXES
   btree (Tom)
 * Use indexes with CIDR '<<' (contains) operator
 * Allow LIKE indexing optimization for non-ASCII locales
+* Be smarter about insertion of already-ordered data into btree index
+* Gather more accurate dispersion statistics using indexes
+* Add deleted bit to index tuples to reduce heap access
+* Prevent index uniqueness checks when UPDATE does not modify column
 
 CACHE
 
 * Cache most recent query plan(s) (Karel) [prepare]
 * Shared catalog cache, reduce lseek()'s by caching table size in shared area
 
-MISC
+VACUUM
+
+* Improve speed with indexes (perhaps recreate index instead) [vacuum]
+* Reduce lock time by moving tuples with read lock, then write
+  lock and truncate table [vacuum]
+* -Redesign ANALYZE in VACUUM so it can be run separately without locks
+* Make ANALYZE a separate command
+* Allow ANALYZE to ESTIMATE based on certain random precentage of rows
+* Add LAZY VACUUM (Vadim)
+
+MISCELLANEOUS
 
 * Allow compression of log and meta data
 * Do async I/O to do better read-ahead of data
@@ -303,28 +319,15 @@ MISC
 * -In WHERE tab1.x=3 AND tab1.x=tab2.y, add tab2.y=3
 * allow configuration of maximum number of open files
 * Remove pg_listener index
-* Gather more accurate dispersion statistics using indexes
 * Improve statistics storage in pg_class [performance]
-* VACUUM
-	* Improve speed with indexes (perhaps recreate index instead) [vacuum]
-	* Reduce lock time by moving tuples with read lock, then write
-	  lock and truncate table [vacuum]
-	* -Redesign ANALYZE in VACUUM so it can be run separately without locks
-	* Make ANALYZE a separate command
-	* Allow ANALYZE to ESTIMATE based on certain random precentage of rows
 * Add connection pooling [pool]
 * Allow persistent backends [persistent]
 * Create a transaction processor to aid in persistent connections and
   connection pooling
 * Add SET PERFORMANCE_TIPS option to suggest INDEX, VACUUM, VACUUM
   ANALYZE, and CLUSTER
-* Delay fsync() when other backends are about to commit too [fsync]
-* Prevent pg_attribute from having duplicate oids for indexes (Tom)
 * Force transactions that commit at near the same time use a single fsync()
 * Make blind writes go through the file descriptor cache
-* Add LAZY VACUUM (Vadim)
-* Add deleted bit to index tuples to reduce heap access
-* Prevent index uniqueness checks when UPDATE does not modify column
 
 SOURCE CODE
 -----------
