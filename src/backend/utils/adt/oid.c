@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/utils/adt/oid.c,v 1.60 2004/12/31 22:01:22 pgsql Exp $
+ *	  $PostgreSQL: pgsql/src/backend/utils/adt/oid.c,v 1.61 2005/02/11 04:08:58 neilc Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -33,18 +33,11 @@ oidin_subr(const char *funcname, const char *s, char **endloc)
 	char	   *endptr;
 	Oid			result;
 
-	/*
-	 * In releases prior to 8.0, we accepted an empty string as valid
-	 * input (yielding an OID of 0). In 8.0, we accept empty strings, but
-	 * emit a warning noting that the feature is deprecated. In 8.1+, the
-	 * warning should be replaced by an error.
-	 */
 	if (*s == '\0')
-		ereport(WARNING,
-				(errcode(ERRCODE_WARNING_DEPRECATED_FEATURE),
-				 errmsg("deprecated input syntax for type oid: \"\""),
-				 errdetail("This input will be rejected in "
-						   "a future release of PostgreSQL.")));
+		ereport(ERROR,
+				(errcode(ERRCODE_INVALID_TEXT_REPRESENTATION),
+				 errmsg("invalid input syntax for type oid: \"%s\"",
+						s)));
 
 	errno = 0;
 	cvt = strtoul(s, &endptr, 10);

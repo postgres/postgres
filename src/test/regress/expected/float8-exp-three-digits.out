@@ -17,6 +17,8 @@ ERROR:  "10e-400" is out of range for type double precision
 SELECT '-10e-400'::float8;
 ERROR:  "-10e-400" is out of range for type double precision
 -- bad input
+INSERT INTO FLOAT8_TBL(f1) VALUES ('');
+ERROR:  invalid input syntax for type double precision: ""
 INSERT INTO FLOAT8_TBL(f1) VALUES ('     ');
 ERROR:  invalid input syntax for type double precision: "     "
 INSERT INTO FLOAT8_TBL(f1) VALUES ('xyz');

@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/utils/adt/float.c,v 1.112 2004/12/31 22:01:21 pgsql Exp $
+ *	  $PostgreSQL: pgsql/src/backend/utils/adt/float.c,v 1.113 2005/02/11 04:08:58 neilc Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -267,21 +267,12 @@ float4in(PG_FUNCTION_ARGS)
 	/*
 	 * Check for an empty-string input to begin with, to avoid the
 	 * vagaries of strtod() on different platforms.
-	 *
-	 * In releases prior to 8.0, we accepted an empty string as valid input
-	 * (yielding a float4 of 0). In 8.0, we accept empty strings, but emit
-	 * a warning noting that the feature is deprecated. In 8.1+, the
-	 * warning should be replaced by an error.
 	 */
 	if (*num == '\0')
-	{
-		ereport(WARNING,
-				(errcode(ERRCODE_WARNING_DEPRECATED_FEATURE),
-				 errmsg("deprecated input syntax for type real: \"\""),
-				 errdetail("This input will be rejected in "
-						   "a future release of PostgreSQL.")));
-		PG_RETURN_FLOAT4((float4) 0.0);
-	}
+		ereport(ERROR,
+				(errcode(ERRCODE_INVALID_TEXT_REPRESENTATION),
+				 errmsg("invalid input syntax for type real: \"%s\"",
+						orig_num)));
 
 	/* skip leading whitespace */
 	while (*num != '\0' && isspace((unsigned char) *num))
@@ -444,21 +435,12 @@ float8in(PG_FUNCTION_ARGS)
 	/*
 	 * Check for an empty-string input to begin with, to avoid the
 	 * vagaries of strtod() on different platforms.
-	 *
-	 * In releases prior to 8.0, we accepted an empty string as valid input
-	 * (yielding a float8 of 0). In 8.0, we accept empty strings, but emit
-	 * a warning noting that the feature is deprecated. In 8.1+, the
-	 * warning should be replaced by an error.
 	 */
 	if (*num == '\0')
-	{
-		ereport(WARNING,
-				(errcode(ERRCODE_WARNING_DEPRECATED_FEATURE),
-		errmsg("deprecated input syntax for type double precision: \"\""),
-				 errdetail("This input will be rejected in "
-						   "a future release of PostgreSQL.")));
-		PG_RETURN_FLOAT8(0.0);
-	}
+		ereport(ERROR,
+				(errcode(ERRCODE_INVALID_TEXT_REPRESENTATION),
+				 errmsg("invalid input syntax for type double precision: \"%s\"",
+						orig_num)));
 
 	/* skip leading whitespace */
 	while (*num != '\0' && isspace((unsigned char) *num))

@@ -17,6 +17,8 @@ ERROR:  type "real" value out of range: underflow
 INSERT INTO FLOAT4_TBL(f1) VALUES ('-10e-40');
 ERROR:  type "real" value out of range: underflow
 -- bad input
+INSERT INTO FLOAT4_TBL(f1) VALUES ('');
+ERROR:  invalid input syntax for type real: ""
 INSERT INTO FLOAT4_TBL(f1) VALUES ('       ');
 ERROR:  invalid input syntax for type real: "       "
 INSERT INTO FLOAT4_TBL(f1) VALUES ('xyz');

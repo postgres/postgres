@@ -12,6 +12,10 @@ INSERT INTO OID_TBL(f1) VALUES ('   10  ');
 -- leading/trailing hard tab is also allowed
 INSERT INTO OID_TBL(f1) VALUES ('	  15 	  ');
 -- bad inputs 
+INSERT INTO OID_TBL(f1) VALUES ('');
+ERROR:  invalid input syntax for type oid: ""
+INSERT INTO OID_TBL(f1) VALUES ('    ');
+ERROR:  invalid input syntax for type oid: "    "
 INSERT INTO OID_TBL(f1) VALUES ('asdfasd');
 ERROR:  invalid input syntax for type oid: "asdfasd"
 INSERT INTO OID_TBL(f1) VALUES ('99asdfasd');
@@ -22,8 +26,6 @@ INSERT INTO OID_TBL(f1) VALUES ('    5d');
 ERROR:  invalid input syntax for type oid: "    5d"
 INSERT INTO OID_TBL(f1) VALUES ('5    5');
 ERROR:  invalid input syntax for type oid: "5    5"
-INSERT INTO OID_TBL(f1) VALUES ('    ');
-ERROR:  invalid input syntax for type oid: "    "
 INSERT INTO OID_TBL(f1) VALUES (' - 500');
 ERROR:  invalid input syntax for type oid: " - 500"
 INSERT INTO OID_TBL(f1) VALUES ('32958209582039852935');
