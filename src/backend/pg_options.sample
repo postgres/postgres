@@ -1,0 +1,249 @@
+# pg_options file
+
+# Documented for Debian release 7.0-0.beta4-1
+# Copyright (c) Oliver Elphick <olly@lfix.co.uk>
+# Licence: May be used without any payment or restriction, except that
+# the copyright and licence must be preserved.
+
+# pg_options controls certain options and tracing features of the
+# PostgreSQL backend.  It is read by postmaster and postgres before
+# command line arguments are examined, so command line arguments
+# will override any settings here.
+
+# This file should be located at $PGDATA/pg_options.  In Debian, this is
+# a symbolic link to /etc/postgresql/pg_options.
+
+# The capitalised words refer to the internal #defines in the source code
+# which use these options.  Options can be turned on and off while the
+# postmaster is running by editing this file and sending a SIGHUP to
+# the postmaster.
+
+
+#+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++#
+#                            File format                              #
+#+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++#
+# option = integer               :   set option to the specified value
+# option +                       :   set option to 1
+# option -                       :   set option to 0
+#
+# Comments begin with #, whitespace is ignored completely.
+# Options are separated by newlines (or by commas -- but why make it
+# needlessly difficult to read the file?)
+
+
+#+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++#
+#                          Tracing options                            #
+#+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++#
+# all [TRACE_ALL]
+# This governs what tracing occurs.  If it is 0, tracing is
+# controlled by the more specific options listed below.  Set this to 1
+# to trace everything, regardless of the settings below; set to -1 to
+# turn off all tracing.
+#
+# Any of these tracing options can be turned on with the command line
+# option `-T "option[,...]"'
+
+all                = 0
+
+
+# verbose [TRACE_VERBOSE]  -- command line option `-d n' with n >= 1
+# Turns on verbose tracing of various events
+
+verbose            = 0
+
+
+# query [TRACE_QUERY]      -- command line option `-d n' with n >= 2
+# Traces the query string before and after rewriting
+
+query              = 0
+
+
+# plan [TRACE_PLAN]        -- command line option `-d n' with n >= 4
+# Traces plan trees in raw output format (see also pretty_plan)
+
+plan               = 0
+
+
+# parse [TRACE_PARSE]      -- command line option `-d n' with n >= 3
+# Traces the parser output in raw form (see also pretty_parse)
+
+parse              = 0
+
+
+# rewritten [TRACE_REWRITTEN]
+# Traces the query after rewriting, in raw form (see also pretty_rewritten)
+
+rewritten          = 0
+
+
+# pretty_plan [TRACE_PRETTY_PLAN]
+# shows indented multiline versions of plan trees (see also plan)
+
+pretty_plan        = 0
+
+
+# pretty_parse [TRACE_PRETTY_PARSE]
+# Traces the parser output in a readable form (see also parse)
+
+pretty_parse       = 0
+
+
+# pretty_rewritten [TRACE_PRETTY_REWRITTEN]
+#    -- command line option `-d n' with n >= 5
+# Traces the query after rewriting, in a readable form (see also rewritten)
+
+pretty_rewritten   = 0
+
+
+#+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++#
+#                                Locks                                #
+#+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++#
+
+# TRACE_SHORTLOCKS
+# This value is currently unused but needed as an index placeholder.
+# It must be left set to 0, or mayhem may result, including segmentation
+# violations, perhaps.
+
+shortlocks         = 0        
+
+
+# TRACE_LOCKS
+# Enable or disable tracing of ordinary locks
+
+locks              = 0
+
+
+# TRACE_USERLOCKS
+# Enable or disable tracing of user (advisory) locks
+
+userlocks          = 0
+
+
+# TRACE_SPINLOCKS
+# Enables or disables tracing of spinlocks, but only if LOCKDEBUG was
+# defined when PostgreSQL was compiled.  (In the Debian release,
+# LOCKDEBUG is not defined, so this option is inoperative.)
+
+spinlocks          = 0
+
+
+# TRACE_LOCKOIDMIN
+# This option is is used to avoid tracing locks on system relations, which
+# would produce a lot of output.  You should specify a value greater than
+# the maximum oid of system relations, which can be found with the
+# following query:
+#
+#  select max(int4in(int4out(oid))) from pg_class where relname ~ '^pg_';
+#
+# To get a useful lock trace you can set the following pg_options:
+#
+#  verbose+, query+, locks+, userlocks+, lock_debug_oidmin=17500
+
+lock_debug_oidmin  = 0
+
+
+# TRACE_LOCKRELATION
+# This option can be used to trace unconditionally a single relation,
+# for example pg_listener, if you suspect there are locking problems.
+
+lock_debug_relid   = 0
+
+
+# TRACE_NOTIFY
+# Turn on tracing of asynchronous notifications from the backend.
+
+notify             = 0
+
+
+#+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++#
+#                         Memory Allocation                           #
+#+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++#
+# These do not appear to be used at 7.0beta4
+
+# TRACE_MALLOC
+
+malloc             = 0
+
+# TRACE_PALLOC
+
+palloc             = 0
+
+
+#+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++#
+#                             Statistics                              #
+#+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++#
+# The statistics options are not controlled by either TRACE_ALL, or
+# by USE_SYSLOG.  These options cannot be used togther with the
+# command line option `-s'.
+
+# TRACE_PARSERSTATS
+# Prints parser statistics to standard error    -- command line `-tpa[rser]'
+
+parserstats        = 0
+
+
+# TRACE_PLANNERSTATS
+# Prints planner statistics to standard error   -- command line `-tpl[anner]'
+
+plannerstats       = 0
+
+
+# TRACE_EXECUTORSTATS
+# Prints executor statistics to standard error  -- command line `-te[xecutor]'
+
+executorstats      = 0
+
+
+#+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++#
+#              options controlling run-time behaviour                 #
+#+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++#
+
+# OPT_LOCKREADPRIORITY
+# lock priority, see lock.c  -- Does not appear to be used
+
+lock_read_priority = 0  
+
+
+# OPT_DEADLOCKTIMEOUT
+# deadlock timeout; set this to a non-zero integer, which is the number
+# of seconds that the backend should wait before deciding that it is in
+# a deadlock and timing out.  The system default is 1 second.
+
+deadlock_timeout   = 0
+
+
+# nofsync [OPT_NOFSYNC]        -- command line option `-F'
+# If this is non-zero, fsync will be turned off; this means that saving
+# to disk will be left to the normal operating system sync.  If this
+# option is zero, every transaction will trigger a sync to disk; this
+# gives increased safety at the expense of performance.
+
+nofsync            = 0
+
+
+# OPT_SYSLOG
+# This controls the destination of [many] messages and traces:
+# 0 : write to stdout or stderr
+# 1 : write to stdout or stderr, and also through syslogd
+# 2 : log only through syslogd
+# [Not all messages have been converted to use routines controlled by
+# this parameter; unconverted ones will print to stdout or stderr
+# unconditionally and never to syslogd.]
+
+syslog             = 0
+
+
+# OPT_HOSTLOOKUP
+# enable hostname lookup in ps_status.  If this is set, a reverse
+# lookup will be done on the connecting IP address (for TCP/IP
+# connections) for inclusion in the ps_status display.
+
+hostlookup         = 0
+
+
+# OPT_SHOWPORTNUMBER
+# show port number in ps_status.  If this is set, the TCP port number
+# will be included in the ps_status display (for TCP/IP connections).
+
+showportnumber     = 0
+

@@ -34,7 +34,7 @@
 #
 #
 # IDENTIFICATION
-#    $Header: /cvsroot/pgsql/src/backend/Makefile,v 1.45 2000/03/08 22:00:19 tgl Exp $
+#    $Header: /cvsroot/pgsql/src/backend/Makefile,v 1.46 2000/04/08 19:38:00 momjian Exp $
 #
 #-------------------------------------------------------------------------
 
@@ -188,7 +188,8 @@ endif
 install-templates: $(TEMPLATEDIR) \
          global1.bki.source local1_template1.bki.source \
          global1.description local1_template1.description \
-         libpq/pg_hba.conf.sample optimizer/geqo/pg_geqo.sample
+         libpq/pg_hba.conf.sample optimizer/geqo/pg_geqo.sample \
+         pg_options.sample
 	$(INSTALL) $(INSTLOPTS) global1.bki.source \
 	  $(TEMPLATEDIR)/global1.bki.source
 	$(INSTALL) $(INSTLOPTS) global1.description \
@@ -201,6 +202,8 @@ install-templates: $(TEMPLATEDIR) \
 	  $(TEMPLATEDIR)/pg_hba.conf.sample
 	$(INSTALL) $(INSTLOPTS) optimizer/geqo/pg_geqo.sample \
 	  $(TEMPLATEDIR)/pg_geqo.sample
+	$(INSTALL) $(INSTLOPTS) pg_options.sample \
+	  $(TEMPLATEDIR)/pg_options.sample
 
 install-headers: fmgr.h $(SRCDIR)/include/config.h
 	-@if [ ! -d $(HEADERDIR) ]; then mkdir $(HEADERDIR); fi
