@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/geo_ops.c,v 1.31 1998/02/26 04:37:08 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/geo_ops.c,v 1.32 1998/05/09 22:39:55 thomas Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -42,11 +42,6 @@ static double box_wd(BOX *box);
 static double circle_ar(CIRCLE *circle);
 static CIRCLE *circle_copy(CIRCLE *circle);
 static LINE *line_construct_pm(Point *pt, double m);
-static bool line_horizontal(LINE *line);
-static Point *line_interpt(LINE *l1, LINE *l2);
-static bool line_intersect(LINE *l1, LINE *l2);
-static bool line_parallel(LINE *l1, LINE *l2);
-static bool line_vertical(LINE *line);
 static double lseg_dt(LSEG *l1, LSEG *l2);
 static void make_bound_box(POLYGON *poly);
 static PATH *path_copy(PATH *path);
@@ -63,7 +58,6 @@ static char *path_encode(bool closed, int npts, Point *pt);
 static void statlseg_construct(LSEG *lseg, Point *pt1, Point *pt2);
 static double box_ar(BOX *box);
 static Point *interpt_sl(LSEG *lseg, LINE *line);
-static LINE *line_construct_pp(Point *pt1, Point *pt2);
 
 
 /*
@@ -776,12 +770,105 @@ box_diagonal(BOX *box)
  **
  ***********************************************************************/
 
+LINE *
+line_in(char *str)
+{
+	LINE	   *line;
+
+#if LINEDEBUG
+	LSEG		lseg;
+	int			isopen;
+	char	   *s;
+#endif
+
+	if (!PointerIsValid(str))
+		elog(ERROR, " Bad (null) line external representation", NULL);
+
+#if LINEDEBUG
+	if ((!path_decode(TRUE, 2, str, &isopen, &s, &(lseg.p[0])))
+		|| (*s != '\0'))
+		elog(ERROR, "Bad line external representation '%s'", str);
+
+	line = line_construct_pp(&(lseg.p[0]), &(lseg.p[1]));
+#else
+	elog(ERROR, "line not yet implemented");
+	line = NULL;
+#endif
+
+	return (line);
+}	/* line_in() */
+
+
+char *
+line_out(LINE *line)
+{
+	char *result;
+
+	if (!PointerIsValid(line))
+		return (NULL);
+
+#if LINEDEBUG
+	if (FPzero(line->B))
+	{							/* vertical */
+		/* use "x = C" */
+		result->A = -1;
+		result->B = 0;
+		result->C = pt1->x;
+#ifdef GEODEBUG
+		printf("line_construct_pp- line is vertical\n");
+#endif
+#if FALSE
+		result->m = DBL_MAX;
+#endif
+
+	}
+	else if (FPzero(line->A))
+	{							/* horizontal */
+		/* use "x = C" */
+		result->A = 0;
+		result->B = -1;
+		result->C = pt1->y;
+#ifdef GEODEBUG
+		printf("line_construct_pp- line is horizontal\n");
+#endif
+#if FALSE
+		result->m = 0.0;
+#endif
+
+	}
+	else
+	{
+	}
+
+	if (line_horizontal(line))
+	{
+	}
+	else if (line_vertical(line))
+	{
+	}
+	else
+	{
+	}
+
+	return (path_encode(TRUE, 2, (Point *) &(ls->p[0])));
+#else
+	elog(ERROR, "line not yet implemented");
+	result = NULL;
+#endif
+
+	return (result);
+}	/* line_out() */
+
+
 /*----------------------------------------------------------
  *	Conversion routines from one line formula to internal.
  *		Internal form:	Ax+By+C=0
  *---------------------------------------------------------*/
 
-static LINE *					/* point-slope */
+/* line_construct_pm()
+ * point-slope
+ */
+LINE *
 line_construct_pm(Point *pt, double m)
 {
 	LINE	   *result = palloc(sizeof(LINE));
@@ -799,7 +886,10 @@ line_construct_pm(Point *pt, double m)
 }	/* line_construct_pm() */
 
 
-static LINE *					/* two points */
+/* line_construct_pp()
+ * two points
+ */
+LINE *
 line_construct_pp(Point *pt1, Point *pt2)
 {
 	LINE	   *result = palloc(sizeof(LINE));
@@ -857,13 +947,13 @@ line_construct_pp(Point *pt1, Point *pt2)
  *	Relative position routines.
  *---------------------------------------------------------*/
 
-static bool
+bool
 line_intersect(LINE *l1, LINE *l2)
 {
 	return (!line_parallel(l1, l2));
 }
 
-static bool
+bool
 line_parallel(LINE *l1, LINE *l2)
 {
 #if FALSE
@@ -877,7 +967,6 @@ line_parallel(LINE *l1, LINE *l2)
 	return (FPeq(l2->A, l1->A * (l2->B / l1->B)));
 }	/* line_parallel() */
 
-#ifdef NOT_USED
 bool
 line_perp(LINE *l1, LINE *l2)
 {
@@ -899,9 +988,7 @@ line_perp(LINE *l1, LINE *l2)
 	return (FPeq(((l1->A * l2->B) / (l1->B * l2->A)), -1.0));
 }	/* line_perp() */
 
-#endif
-
-static bool
+bool
 line_vertical(LINE *line)
 {
 #if FALSE
@@ -910,7 +997,7 @@ line_vertical(LINE *line)
 	return (FPzero(line->B));
 }	/* line_vertical() */
 
-static bool
+bool
 line_horizontal(LINE *line)
 {
 #if FALSE
@@ -919,7 +1006,6 @@ line_horizontal(LINE *line)
 	return (FPzero(line->A));
 }	/* line_horizontal() */
 
-#ifdef NOT_USED
 bool
 line_eq(LINE *l1, LINE *l2)
 {
@@ -939,13 +1025,15 @@ line_eq(LINE *l1, LINE *l2)
 			FPeq(l1->C, k * l2->C));
 }
 
-#endif
 
 /*----------------------------------------------------------
  *	Line arithmetic routines.
  *---------------------------------------------------------*/
 
-double	   *					/* distance between l1, l2 */
+/* line_distance()
+ * Distance between two lines.
+ */
+double *
 line_distance(LINE *l1, LINE *l2)
 {
 	double	   *result = palloc(sizeof(double));
@@ -970,7 +1058,7 @@ line_distance(LINE *l1, LINE *l2)
 /* line_interpt()
  * Point where two lines l1, l2 intersect (if any)
  */
-static Point *
+Point *
 line_interpt(LINE *l1, LINE *l2)
 {
 	Point	   *result;
@@ -2266,6 +2354,7 @@ close_pl(Point *pt, LINE *line)
  *
  * Some tricky code here, relying on boolean expressions
  *	evaluating to only zero or one to use as an array index.
+ *      bug fixes by gthaker@atl.lmco.com; May 1, 98 
  */
 Point *
 close_ps(Point *pt, LSEG *lseg)
@@ -2276,19 +2365,14 @@ close_ps(Point *pt, LSEG *lseg)
 	int			xh,
 				yh;
 
+
+/* 	fprintf(stderr,"close_sp:pt->x %f pt->y %f\nlseg(0).x %f lseg(0).y %f  lseg(1).x %f lseg(1).y %f\n", */
+/* 		pt->x, pt->y, lseg->p[0].x, lseg->p[0].y, lseg->p[1].x, lseg->p[1].y); */
+
 	result = NULL;
 	xh = lseg->p[0].x < lseg->p[1].x;
 	yh = lseg->p[0].y < lseg->p[1].y;
-	if (pt->x < lseg->p[!xh].x)
-		result = point_copy(&lseg->p[!xh]);
-	else if (pt->x > lseg->p[xh].x)
-		result = point_copy(&lseg->p[xh]);
-	else if (pt->y < lseg->p[!yh].y)
-		result = point_copy(&lseg->p[!yh]);
-	else if (pt->y > lseg->p[yh].y)
-		result = point_copy(&lseg->p[yh]);
-	if (result != NULL)
-		return (result);
+	/* !xh (or !yh) is the index of lower x( or y) end point of lseg */
 
 	/* vertical segment? */
 	if (lseg_vertical(lseg))
@@ -2296,6 +2380,16 @@ close_ps(Point *pt, LSEG *lseg)
 #ifdef GEODEBUG
 		printf("close_ps- segment is vertical\n");
 #endif
+		/* first check if point is below or above the entire lseg. */
+		if (pt->y < lseg->p[!yh].y)
+		  result = point_copy(&lseg->p[!yh]); /* below the lseg */
+		else if (pt->y > lseg->p[yh].y)
+		  result = point_copy(&lseg->p[yh]); /* above the lseg */
+		if (result != NULL)
+		  return (result);
+
+		/* point lines along (to left or right) of the vertical lseg. */
+		
 		result = palloc(sizeof(*result));
 		result->x = lseg->p[0].x;
 		result->y = pt->y;
@@ -2306,15 +2400,47 @@ close_ps(Point *pt, LSEG *lseg)
 #ifdef GEODEBUG
 		printf("close_ps- segment is horizontal\n");
 #endif
+		/* first check if point is left or right of the entire lseg. */
+		if (pt->x < lseg->p[!xh].x)
+		  result = point_copy(&lseg->p[!xh]); /* left of the lseg */
+		else if (pt->x > lseg->p[xh].x)
+		  result = point_copy(&lseg->p[xh]); /* right of the lseg */
+		if (result != NULL)
+		  return (result);
+
+		/* point lines along (at top or below) the horiz. lseg. */
 		result = palloc(sizeof(*result));
 		result->x = pt->x;
 		result->y = lseg->p[0].y;
 		return (result);
 	}
 
+	/* vert. and horiz. cases are down, now check if the closest
+         * point is one of the end points or someplace on the lseg. */
+
+	/* TODO: Ask if "tmp" should be freed to prevent memory leak */
+
 	invm = -1.0 / point_sl(&(lseg->p[0]), &(lseg->p[1]));
+	tmp = line_construct_pm(&lseg->p[!yh], invm); /* lower edge of the "band" */
+	if (pt->y < (tmp->A*pt->x + tmp->C)) { /* we are below the lower edge */
+	  result = point_copy(&lseg->p[!yh]); /* below the lseg, take lower end pt */
+/* 	  fprintf(stderr,"below: tmp A %f  B %f   C %f    m %f\n",tmp->A,tmp->B,tmp->C, tmp->m); */
+
+	  return result;
+	}
+	tmp = line_construct_pm(&lseg->p[yh], invm); /* upper edge of the "band" */
+	if (pt->y > (tmp->A*pt->x + tmp->C)) { /* we are below the lower edge */
+ 	  result = point_copy(&lseg->p[yh]); /* above the lseg, take higher end pt */
+/* 	  fprintf(stderr,"above: tmp A %f  B %f   C %f    m %f\n",tmp->A,tmp->B,tmp->C, tmp->m); */
+	  return result;
+	}
+
+	/* at this point the "normal" from point will hit lseg. The closet point
+	 * will be somewhere on the lseg */
 	tmp = line_construct_pm(pt, invm);
+/* 	fprintf(stderr,"tmp A %f  B %f   C %f    m %f\n",tmp->A,tmp->B,tmp->C, tmp->m); */
 	result = interpt_sl(lseg, tmp);
+/* 	fprintf(stderr,"result.x %f  result.y %f\n", result->x, result->y); */
 	return (result);
 }	/* close_ps() */
 
@@ -3307,16 +3433,6 @@ box_div(BOX *box, Point *p)
 
 	return (result);
 }	/* box_div() */
-
-
-/***********************************************************************
- **
- **		Routines for 2D lines.
- **				Lines are not intended to be used as ADTs per se,
- **				but their ops are useful tools for other ADT ops.  Thus,
- **				there are few relops.
- **
- ***********************************************************************/
 
 
 /***********************************************************************
@@ -4330,7 +4446,7 @@ box_circle(BOX *box)
 }	/* box_circle() */
 
 
-POLYGON    *
+POLYGON *
 circle_poly(int npts, CIRCLE *circle)
 {
 	POLYGON    *poly;
