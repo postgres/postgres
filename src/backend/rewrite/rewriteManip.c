@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/rewrite/rewriteManip.c,v 1.54 2001/01/24 19:43:05 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/rewrite/rewriteManip.c,v 1.55 2001/01/27 01:44:20 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -589,6 +589,20 @@ AddQual(Query *parsetree, Node *qual)
 	if (qual == NULL)
 		return;
 
+	if (parsetree->commandType == CMD_UTILITY)
+	{
+		/*
+		 * Noplace to put the qual on a utility statement.
+		 *
+		 * For now, we expect utility stmt to be a NOTIFY, so give a
+		 * specific error message for that case.
+		 */
+		if (parsetree->utilityStmt && IsA(parsetree->utilityStmt, NotifyStmt))
+			elog(ERROR, "Conditional NOTIFY is not implemented");
+		else
+			elog(ERROR, "Conditional utility statements are not implemented");
+	}
+
 	/* INTERSECT want's the original, but we need to copy - Jan */
 	copy = copyObject(qual);
 
@@ -615,6 +629,20 @@ AddHavingQual(Query *parsetree, Node *havingQual)
 
 	if (havingQual == NULL)
 		return;
+
+	if (parsetree->commandType == CMD_UTILITY)
+	{
+		/*
+		 * Noplace to put the qual on a utility statement.
+		 *
+		 * For now, we expect utility stmt to be a NOTIFY, so give a
+		 * specific error message for that case.
+		 */
+		if (parsetree->utilityStmt && IsA(parsetree->utilityStmt, NotifyStmt))
+			elog(ERROR, "Conditional NOTIFY is not implemented");
+		else
+			elog(ERROR, "Conditional utility statements are not implemented");
+	}
 
 	/* INTERSECT want's the original, but we need to copy - Jan */
 	copy = copyObject(havingQual);
