@@ -6,7 +6,7 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: parsenodes.h,v 1.7 1996/11/13 20:56:15 scrappy Exp $
+ * $Id: parsenodes.h,v 1.8 1996/12/17 01:53:43 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -463,7 +463,7 @@ typedef struct CursorStmt {
     List		*fromClause;	/* the from clause */
     Node		*whereClause;	/* qualifications */
     List              *groupClause;   /* group by clause */
-    List		*orderClause;	/* sort clause (a list of SortBy's) */
+    List		*sortClause;	/* sort clause (a list of SortGroupBy's) */
 } CursorStmt;    
 
 /* ----------------------
@@ -480,7 +480,7 @@ typedef struct RetrieveStmt {
     Node		*whereClause;	/* qualifications */
     List		*groupClause;	/* group by clause */
     Node		*havingClause;	/* having conditional-expression */
-    List		*orderClause;	/* sort clause (a list of SortBy's) */
+    List		*sortClause;	/* sort clause (a list of SortGroupBy's) */
 } RetrieveStmt;    
 
 
@@ -627,14 +627,15 @@ typedef struct RelExpr {
 } RelExpr;
 
 /*
- * Sortby - for order by clause
+ * SortGroupBy - for order by clause
  */
-typedef struct SortBy {
+typedef struct SortGroupBy {
     NodeTag		type;
+    int			resno;		/* target number */
     char                *range;
     char		*name;		/* name of column to sort on */
     char		*useOp;		/* operator to use */
-} SortBy;
+} SortGroupBy;
 
 /*
  * RangeVar - range variable, used in from clauses

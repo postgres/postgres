@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *    $Header: /cvsroot/pgsql/src/backend/parser/analyze.c,v 1.18 1996/11/30 18:06:20 momjian Exp $
+ *    $Header: /cvsroot/pgsql/src/backend/parser/analyze.c,v 1.19 1996/12/17 01:53:26 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -63,7 +63,8 @@ static TargetEntry *make_targetlist_expr(ParseState *pstate,
 					 char *colname, Node *expr,
 					 List *arrayRef);
 static Node *transformWhereClause(ParseState *pstate, Node *a_expr);
-static List *transformGroupClause(ParseState *pstate, List *grouplist);
+static List *transformGroupClause(ParseState *pstate, List *grouplist,
+							List *targetlist);
 static List *transformSortClause(ParseState *pstate,
 				 List *orderlist, List *targetlist,
 				 char* uniqueFlag);
@@ -422,13 +423,14 @@ transformSelectStmt(ParseState *pstate, RetrieveStmt *stmt)
 
     /* fix order clause */
     qry->sortClause = transformSortClause(pstate,
-					  stmt->orderClause,
+					  stmt->sortClause,
 					  qry->targetList,
 					  qry->uniqueFlag);
 
     /* fix group by clause */
     qry->groupClause = transformGroupClause(pstate,
-					    stmt->groupClause);
+					  stmt->groupClause,
+					  qry->targetList);
     qry->rtable = pstate->p_rtable;
 
     if (pstate->p_numAgg > 0)
@@ -505,12 +507,13 @@ transformCursorStmt(ParseState *pstate, CursorStmt *stmt)
 
     /* fix order clause */
     qry->sortClause = transformSortClause(pstate,
-					  stmt->orderClause,
+					  stmt->sortClause,
 					  qry->targetList,
 					  qry->uniqueFlag);
     /* fix group by clause */
     qry->groupClause = transformGroupClause(pstate,
-                                          stmt->groupClause);
+                                          stmt->groupClause,
+					  qry->targetList);
 
     qry->rtable = pstate->p_rtable;
 
@@ -1426,19 +1429,21 @@ transformWhereClause(ParseState *pstate, Node *a_expr)
  *****************************************************************************/
 
 /*
- *  find_tl_elt -
+ *  find_targetlist_entry -
  *    returns the Resdom in the target list matching the specified varname
  *    and range
  *
  */
-static Resdom *
-find_tl_elt(ParseState *pstate, char *refname, char *colname, List *tlist)
+static TargetEntry *
+find_targetlist_entry(ParseState *pstate, SortGroupBy *sortgroupby, List *tlist)
 {
     List *i;
-    int real_rtable_pos = 0;
-
-    if(refname)
-	real_rtable_pos = refnameRangeTablePosn(pstate->p_rtable, refname);
+    int real_rtable_pos = 0, target_pos = 0;
+    TargetEntry *target_result = NULL;
+    
+    if(sortgroupby->range)
+	real_rtable_pos = refnameRangeTablePosn(pstate->p_rtable,
+							sortgroupby->range);
 
     foreach(i, tlist) {
 	TargetEntry *target = (TargetEntry *)lfirst(i);
@@ -1447,17 +1452,30 @@ find_tl_elt(ParseState *pstate, char *refname, char *colname, List *tlist)
 	char *resname = resnode->resname;
 	int test_rtable_pos = var->varno;
 
-	if (!strcmp(resname, colname)) {
-	    if(refname) {
-		if(real_rtable_pos == test_rtable_pos) {
-		    return (resnode);
-		}
-	    } else {
-		return (resnode);
+	if (!sortgroupby->name) {
+	    if (sortgroupby->resno == ++target_pos) {
+	    	target_result = target;
+	    	break;
+	    }
+	}
+	else {
+	    if (!strcmp(resname, sortgroupby->name)) {
+	        if(sortgroupby->range) {
+	    	    if(real_rtable_pos == test_rtable_pos) {
+		        if (target_result != NULL)
+		  	    elog(WARN, "Order/Group By %s is ambiguous", sortgroupby->name);
+			else    target_result = target;
+		    }
+		}			
+	    	else {
+		    if (target_result != NULL)
+		    	elog(WARN, "Order/Group By %s is ambiguous", sortgroupby->name);
+ 	            else	target_result = target;
+	    	}
 	    }
 	}
     }
-    return ((Resdom *)NULL);
+    return target_result;
 }
 
 static Oid
@@ -1478,22 +1496,27 @@ any_ordering_op(int restype)
  *
  */
 static List *
-transformGroupClause(ParseState *pstate, List *grouplist)
+transformGroupClause(ParseState *pstate, List *grouplist, List *targetlist)
 {
     List *glist = NIL, *gl = NIL;
 
     while (grouplist != NIL) {
 	GroupClause *grpcl = makeNode(GroupClause);
-	Var *groupAttr = (Var*)transformExpr(pstate, (Node*)lfirst(grouplist));
+	TargetEntry *restarget;
 
-	if (nodeTag(groupAttr) != T_Var) {
-	    elog(WARN, "parser: can only specify attribute in group by");
-	}
-	grpcl->grpAttr = groupAttr;
-	grpcl->grpOpoid = any_ordering_op(groupAttr->vartype);
-	if (glist == NIL) {
+	restarget = find_targetlist_entry(pstate, lfirst(grouplist), targetlist);
+
+	if (restarget == NULL)
+	    elog(WARN,"The field being grouped by must appear in the target list");
+        if (nodeTag(restarget->expr) != T_Var) {
+            elog(WARN, "parser: can only specify attribute in group by");
+        }
+
+	grpcl->grpAttr = (Var *)restarget->expr;
+ 	grpcl->grpOpoid = any_ordering_op(grpcl->grpAttr->vartype);
+	if (glist == NIL)
 	    gl = glist = lcons(grpcl, NIL);
-	} else {
+	else {
 	    lnext(gl) = lcons(grpcl, NIL);
 	    gl = lnext(gl);
 	}
@@ -1517,15 +1540,16 @@ transformSortClause(ParseState *pstate,
     List *s = NIL, *i;
 
     while(orderlist != NIL) {
-	SortBy *sortby = lfirst(orderlist);
+	SortGroupBy *sortby = lfirst(orderlist);
 	SortClause *sortcl = makeNode(SortClause);
+	TargetEntry *restarget;
 	Resdom *resdom;
-	
-	resdom = find_tl_elt(pstate, sortby->range, sortby->name, targetlist);
-	if (resdom == NULL)
-	    elog(WARN,"The field being sorted by must appear in the target list");
-	
-	sortcl->resdom = resdom;
+
+	restarget = find_targetlist_entry(pstate, sortby, targetlist);
+	if (restarget == NULL)
+	    elog(WARN,"The field being ordered by must appear in the target list");
+
+	sortcl->resdom = resdom = restarget->resdom;
 	sortcl->opoid = oprid(oper(sortby->useOp,
 				   resdom->restype,
 				   resdom->restype));
