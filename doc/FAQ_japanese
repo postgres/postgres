@@ -1,14 +1,19 @@
 PostgreSQL(ポストグレス・キュー・エル)についてよくある質問とその解答(FAQ)
 
-原文最終更新日: Sat Nov 20 17:28:23 EST 2004
+原文最終更新日: Sun Jan 9 14:44:04 EST 2005
 
 現在の維持管理者: Bruce Momjian (pgman@candle.pha.pa.us)
 Maintainer of Japanese Translation: Jun Kuwamura (juk at PostgreSQL.jp)
 
-この文書の最新版は http://www.PostgreSQL.org/docs/faqs/FAQ.html で見ることがで
-きます。
+この文書の最新版は "http://www.postgresql.org/files/documentation/faqs/
+FAQ.html"> http://www.postgresql.org/files/documentation/faqs/FAQ.html
 
-プラットホームに特有の質問については: http://www.PostgreSQL.org/docs/index.html
+で見ることができます。
+
+プラットホームに特有の質問については: "http://www.postgresql.org/docs/faq/">
+http://www.postgresql.org/docs/faq/
+
+
 に回答があります。
 
 (以下、訳者による注釈を [訳注： と ] とで囲んで記します。)
@@ -24,7 +29,7 @@ Maintainer of Japanese Translation: Jun Kuwamura (juk at PostgreSQL.jp)
 
         この和訳についてお気づきの点は(juk at PostgreSQL.jp)までメールでお寄せ下さい。
 
-                                                2004年11月24日    桑村 潤
+                                                2005年01月12日    桑村 潤
 ]
 
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ 
@@ -98,8 +103,7 @@ Maintainer of Japanese Translation: Jun Kuwamura (juk at PostgreSQL.jp)
 4.14) 色々な文字型のそれぞれの違いは何ですか？
 4.15.1) 通番(serial)／自動増分フィールドはどのようにつくりますか？
 4.15.2) SERIALデータ型に挿入される値は、どうすれば得られますか？
-4.15.3) 他のユーザとの競合状態を避けるためには、currval() と nextval() は使わな
-いほうがよいのでしょうか？
+4.15.3) currval() は他のユーザとの競合状態に陥ることはないですか？
 4.15.4) トランザクションが中断したときにもういちどシーケンス番号が使われないの
 はなぜですか？シーケンス／SERIALカラムに空きがあるのはなぜですか？
 4.16) OID とは何ですか？ TID とは何ですか？
@@ -134,9 +138,7 @@ Maintainer of Japanese Translation: Jun Kuwamura (juk at PostgreSQL.jp)
                                                                                
 1.1) PostgreSQL とは何ですか？何と読みますか？
 
-Post-Gres-Q-L(ポスト - グレス - キュー - エル) と発音します。この発音を聞きたい
-人のために、オーディオファイルを http://www.postgresql.org/postgresql.mp3 に用
-意してあります。
+PostgreSQLはPost-Gres-Q-L(ポスト - グレス - キュー - エル) と発音します。
 
 PostgreSQL は次世代 DBMS 研究用のプロトタイプであった POSTGRES データベース管理
 システムの改良版です（このため、今でもときどき "Postgres" と呼ばれることがあり
@@ -148,8 +150,9 @@ PostgreSQL の開発は、PostgreSQL 開発メーリングリストに参加している開発者達のチ
 ームですべて行なわれています。現在の座長は Marc G. Fournier (
 scrappy@PostgreSQL.org )です。(下記の1.6節に参加の仕方があります。)現在、このチ
 ームが PostgreSQL 開発のすべての面倒をみています。このチームはコミュニティプロ
-ジェクトであり、いかなる企業によっても制御を受けません。参加したければ、http://
-www.PostgreSQL.org/docs/faqs/FAQ_DEV.html にある開発者向けのFAQを見てください。
+ジェクトであり、いかなる企業によっても制御を受けません。参加したければ、 http:/
+/www.postgresql.org/files/documentation/faqs/FAQ_DEV.html にある開発者向けのFAQ
+を見てください。
 
 Postgres95-1.01 の中心的な開発者は Andrew Yu と Jolly Chen でしたが、その他大勢
 の人々がこのコードの移植、テスト、デバグ、および、改良に参加しました。
@@ -193,7 +196,7 @@ SUPPORT, UPDATES, ENHANCEMENTS, OR MODIFICATIONS.
 
         POSTGRESQL データベース管理システム
 
-        部分的著作権 (c) 1996-2005, PostgreSQL国際開発チーム
+        部分的著作権 (c) 1996-2004, PostgreSQL国際開発チーム
         部分的著作権 (c) 1994-6 カリフォルニア大学本校
 
 
@@ -233,14 +236,17 @@ SUPPORT, UPDATES, ENHANCEMENTS, OR MODIFICATIONS.
 バージョン8.0になり、PostgreSQL は、Win2000, WinXP, Win2003などの Microsoft
 Windows NTベースのオペレーティングシステムでネイティブに走るようになりました。
 パッケージになったインストーラが、http://pgfoundry.org/projects/pginstallerから
-入手できます。
+入手できます。 Windows (Win95, Win98, WinMe)など、MSDOSベースのバージョンでは、
+Cygwin を使ってPostgreSQLを走らせることができます。
 
     [訳注
         pgInstaller の入手はFTPミラーサイトの win32 ディレクトリからも可能です。
             http://www.postgresql.org/mirrors-ftp.html
     ]
 
-次のサイトに Novell Netware 6 への移植もあります。 http://forge.novell.com
+次のサイトに Novell Netware 6 への移植もあります。 http://forge.novell.com また
+、OS/2 (eComStation) バージョンは、 http://hobbes.nmsu.edu/cgi-bin/h-search?sh=
+1&button=Search&key=postgreSQL&stype=all&sort=type&dir=%2Fにあります。
 
 
 1.5) PostgreSQL はどこから入手できますか？
@@ -305,9 +311,11 @@ pgsql-general-request@PostgreSQL.org へ送って下さい。
 
 http://www.PostgreSQL.org
 
-Freenode および EFNetに #PostgreSQL という IRC チャンネルもあります。 UNIX コマ
-ンドで irc -c '#PostgreSQL' "$USER" irc.phoenix.net. あるいは、 irc -c '#
-PostgreSQL' "$USER" irc.freenode.net. を使って参加できます。
+メジャーなIRC チャンネルは、Freenode (irc.freenode.net)の #PostgreSQL というチ
+ャンネルです。 UNIX コマンドで、 irc -c '#PostgreSQL' "$USER" irc.freenode.net.
+を使って参加できます。同じネットワークに、スペイン語のチャンネル(#
+postgresql-es)もあり、フランス語のチャンネル(#postgresqlfr)もあります。 EFNetに
+もPostgreSQLチャンネルがあります。
 
     [訳注:
           1999年7月23日、日本ポストグレスユーザー会、略称JPUGが設立されました。
@@ -325,7 +333,7 @@ PostgreSQL' "$USER" irc.freenode.net. を使って参加できます。
 
 1.7) 最新版はどれですか
 
-PostgreSQL の最新版はバージョン 7.4.5 です。
+PostgreSQL の最新版はバージョン 7.4.6 です。
 
 我々は、6〜8カ月毎にメジャーリリースを行なうことを計画しています。
 
@@ -357,8 +365,9 @@ http://techdocs.PostgreSQL.org/techdocs/bookreviews.php にあります。 PostgreSQL
 [訳注: 和訳文書は、日本ポストグレスユーザー会のhttp://www.postgresql.jp/
 document/ をごらん下さい。 ]
 
-psql も、型、演算子、関数、集約、その他の情報をお見せする、いくつかの素晴らしい
-\d コマンドを持ちます。
+コマンドラインのクライアントプログラムpsql も、型、演算子、関数、集約、その他の
+情報をお見せする、いくつかの素晴らしい \d コマンドを持ちます。 - \? を使うと利
+用可能なコマンドが表示されます。
 
 我々の Web サイトには、もっと沢山の文書があります。
 
@@ -395,7 +404,7 @@ McGraw-Hill のようなのもあります。
         があります。
          近藤直文氏の「初心者向のＤＢ設計入門・ＳＱＬ入門参考書紹介」のコーナー
                 http://www.shonan.ne.jp/~nkon/ipsql/books_SQL.html
-        があります。
+        があります(やや古い2000年版)。
          堀田倫英氏の「PostgreSQL日本語マニュアル」
                 http://www.net-newbie.com/
         ではオンラインマニュアルの検索ができます。
@@ -423,8 +432,8 @@ pgsql-patches メーリング・リストを購読(subscribe)します。３番目に、高品質のパッ
 
 1.13) バグレポートはどのように発信しますか？
 
-http://www.PostgreSQL.org/bugs/bugs.phpPostgreSQL BugTool (バグツール)のページ
-を訪れてみて下さい。バグレポートを提出する仕方についての手引と指針があります。
+http://www.postgresql.org/support/submitbug のPostgreSQL バグフォームを訪れて下
+さい。バグレポートを提出する仕方についての手引と指針があります。
 
 それと同時に ftp サイト ftp://ftp.PostgreSQL.org/pub/で、もっと新しいバージョン
 の PostgreSQL あるいはパッチをさがしてみて下さい。
@@ -447,11 +456,7 @@ http://www.PostgreSQL.org/bugs/bugs.phpPostgreSQL BugTool (バグツール)のページ
     い合わせ、また、 read/write 問い合わせのロードがより高速です。MySQLは少ない
     ユーザでの単純な SELECT 問い合わせでは高速です。もちろん、MySQLには上記の
     Featuresの節に示すような機能はほとんどありません。我々は、PostgreSQLに柔軟
-    性と機能性を組み込みながらも、絶えず性能の改善を続けています。PostgreSQL と
-    MySQL とを比較している面白い Web ページがhttp://openacs.org/philosophy/
-    why-not-mysql.htmlにあります。また、MySQLは、製品をオープンソースを通じて配
-    布して、クローズソースソフトウェアとしての商用ライセンスを要求する企業でも
-    あり、PostgreSQLのようなオープンソース開発コミュニティではありません。
+    性と機能性を組み込みながらも、絶えず性能の改善を続けています。
 信頼性(Reliability)
     我々は、DBMSの信頼性が高くなくてはその価値が無いことを理解してます。十分テ
     ストして、安定したコードをバグを最小にしてからリリースするように努めてます
@@ -491,10 +496,10 @@ PostgreSQLは、我々が始めた 1996年以来、最高クラスの情報基盤を持っています。これ
 ための資金ではありません。もし、小切手(check)の方が都合よければ連絡先の住所へお
 送り下さい。
 
-━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ 
+さらに、PostgreSQLを使った成功事例をお持ちであれば、ぜひ、われわれの事例紹介リ
+スト pgsql-advocacy@postgresql.org へお送りください。
 
-さらに、PostgreSQLを使った成功事例をお持ちであれば、ぜひ、われわれの事例紹介サ
-イト http://advocacy.postgresql.orgへお送りください。
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ 
 
                          ユーザー・クライアントの質問                          
                                                                                
@@ -504,11 +509,6 @@ PsqlODBC と OpenLink ODBC の二つの ODBC ドライバーが利用可能です。
 
 PsqlODBC は次の場所からダウンロードできます。 http://gborg.postgresql.org/
 project/psqlodbc/projdisplay.php
-
-    [訳注:
-        最新版は井上博司さんのサイトにあります。
-        ●http://w2422.nsk.ne.jp/~inoue/indexj.html
-    ]
 
 OpenLink ODBC は http://www.openlinksw.com/から入手できます。標準的な ODBC クラ
 イアント・ソフトウェアで使えますので、支援しているすべてのプラットホーム(Win,
@@ -553,10 +553,11 @@ www.php.net/にあります。
 
 もちろん、PostgreSQL へのグラフィカルインターフェイスがいくつかあります。その中
 にPgAccess http://www.pgaccess.org も含まれます。 PgAdmin III (http://
-www.pgadmin.org)もあります。 RHDB Admin (http://sources.redhat.com/rhdb/ )と
-Rekall ( http://www.thekompany.com/products/rekall/, proprietary)もあります。
-PhpPgAdmin ( http://phppgadmin.sourceforge.net/ ) はPostgreSQLへのWebベースのイ
-ンターフェイスを提供します。
+www.pgadmin.org)もあります。 RHDB Admin (http://sources.redhat.com/rhdb/ )、
+TORA (http://www.globecom.net/tora/ (部分的に商用)) および、 Rekall ( http://
+www.thekompany.com/products/rekall/, proprietary)もあります。 PhpPgAdmin (
+http://phppgadmin.sourceforge.net/ ) はPostgreSQLへのWebベースのインターフェイ
+スを提供します。
 
 より詳細なリストについては、http://techdocs.postgresql.org/guides/GUITools をご
 覧ください。
@@ -605,8 +606,9 @@ Interfacesのセクションにあります。
 して使える共有メモリーの大きさを大きく設定する必要があります。具体的な大きさは
 、使っているアーキテクチャとpostmaster を走らせるときに設定するバッファの数とバ
 ックエンドプロセスに依存します。ほとんどのシステムでは、既定値のバッファサイズ
-のままで、少なくとも約1MBが必要です。 PostgreSQL Administrator's Guide に共有メ
-モリーとセマフォについての情報の詳細がありますのでご覧ください。
+のままで、少なくとも約1MBが必要です。 PostgreSQL Administrator's Guide/Server
+Run-time Environment/Managing Kernel Resources に共有メモリーとセマフォについて
+の情報の詳細がありますのでご覧ください。
 
 3.4) postmasterを走らせようとすると、IpcSemaphoreCreate エラーが出ます。なぜで
 すか？
@@ -647,19 +649,20 @@ PostgreSQL がどのようにあなたの問い合わせを翻訳しているかを見ることができ、そし
 ンのオーバーヘッドが減ります。また、大きなデータの変更を行なう際はインデックス
 を一度外して、作り直すことを考えてみて下さい。
 
-チューニングのオプションがいくつかあります。postmaster を -o -F オプションで起
-動することによって、fsync() を無効にすることができます。これによって、各トラン
-ザクション毎に fsync() でディスクを更新するのを止めさせます。
+Administration Guide/Server Run-time Environment/Run-time Configurationには、チ
+ューニングのオプションがいくつかあります。fsyncオプションでfsync() を無効にする
+ことができます。これによって、各トランザクション毎に fsync() でディスクを更新す
+るのを止めさせます。
 
-postmaster -B オプションを使ってバックエンド・プロセスにより使われる共有メモリ
+shared_buffersオプションを使ってバックエンド・プロセスにより使われる共有メモリ
 ー・バッファを大きくすることもできます。もし、このパラメータを高くしすぎると、
 カーネルの共有メモリー空間の制限値を越えてしまうために postmaster が走らなくな
-るでしょう。既定値では、それぞれのバッファの大きさは 8K で、バッファ数は 64 で
-す。
+るでしょう。既定値では、それぞれのバッファの大きさは 8K で、バッファ数は 1000
+です。
 
-バックエンドを -S オプションを使って、それぞれのバックエンド・プロセスが一時的
-な並べ替えによって使うメモリーの最大サイズを増やすこともできます。その -S の値
-はキロバイト単位で、既定値は 512 (すなわち、512K)です。
+sort_mem (PostgreSQL 8.0からは: work_mem)オプションを使って、それぞれのバックエ
+ンド・プロセスが一時的な並べ替えによって使うメモリーの最大サイズを増やすことも
+できます。既定値は 1024 (すなわち、1MB)です。
 
 また、CLUSTER コマンドを使って、テーブルのデータをインデックスに合わせるために
 グループ化することもできます。詳しくは、オンラインマニュアルで CLUSTER を見て下
@@ -695,16 +698,23 @@ Postmaster は更に詳細な情報を報告するための -d オプションを持ちます。その -d オ
 したわけではないので、独立な環境で走っているのではなくロック／バックエンドとの
 対話の問題が重複することはありません。
 
-もし、postmasterが走っていれば、あるウィンドウで psqlを開始すると、psql で使わ
-れる postgres プロセスのPIDが見つかります。デバッガを使って postgresのPIDにアタ
-ッチ(attach)します。デバッガの中からブレーク・ポイントをセットし、psql から問い
-合わせを発行します。デバグのためにpostgresを始動する場合は、PGOPTIONS="-W n" を
-設定でき、それから、psql を開始します。これにより、n 秒開始を遅らせるはずなので
-、デバッガでプロセスにアタッチして、ブレークポイントを設定し、開始から順を追っ
-て見てゆくことができます。
+もし、postmasterが走っていれば、あるウィンドウでpsqlを開始すると、
 
-PostgreSQL プログラムには、デバグと性能測定にとても役に立つ -sや -Aや -t 等のオ
-プションがあります。
+SELECT pg_backend_pid()
+
+を使って、psql で使われる postgres プロセスのPIDが見つかります。デバッガを使っ
+てpostgresのPIDにアタッチ(attach)します。デバッガの中からブレーク・ポイントをセ
+ットし、psql から問い合わせを発行します。デバグのためにpostgresを始動する場合は
+、PGOPTIONS="-W n" を設定でき、それから、psql を開始します。これにより、n 秒開
+始を遅らせるはずなので、デバッガでプロセスにアタッチして、ブレークポイントを設
+定し、開始から順を追って見てゆくことができます。
+
+いくつかの
+
+log_*
+
+サーバ構成変数は、デバッグと性能測定にとても役に立つプロセスの統計の印刷を可能
+にします。
 
 何という関数がどのくらい実行時間を食っているかを見るために、プロファイリング（
 プロフィール付き）でコンパイルすることも可能です。そのバックエンドのプロフィー
@@ -950,7 +960,17 @@ LIKE あるいは ~ のようなワイルドカード演算子は特別な環境でしか使えません：
  ・ 検索文字列を文字クラスから始めることはできません。たとえば、[a-e]。
  ・ ILIKE や ~* のような大文字と小文字を区別しない検索は使えません。そのかわり
     、このFAQの4.12節で説明する関数のインデックスが使えます。
- ・ initdb においては、デフォルトでCロケールが使われなくてはなりません。
+ ・ initdb においては、デフォルトでCロケールが使われなくてはなりません。その理
+    由は、Cロケール以外では次に大きな文字を知ることができないからです。このよう
+    な場合、
+   
+    LIKE
+    
+    インデクシングにだけ働くような、特別な
+   
+    text_pattern_ops
+    
+    インデックスを作成することもできます。
 
 8.0より前のリリースでは、インデックスは、データ型がちょうどインデックスのカラム
 の型と一致しなければ、使えないことがしばしばありました。おそらく、int2, int8,
@@ -1107,12 +1127,10 @@ currval() 関数を使って取り出すこともできます。たとえば、
 
 最後に、INSERT文から返るOIDを使って、既定値をみつけることもできますが、しかし、
 oidの値は40億に達するともとに戻ってしまい、最も移植性の低いやり方となるでしょう
-。PerlのDBIで Edmund Mergl の作った DBD::Pg モジュールを使えば、$sth->execute()
-の後に $sth->{pg_oid_status} を経由してその OID 値を使えるようにすることはでき
-ます。
+。Perl DBI の DBD::Pg モジュールを使えば、$sth->execute() の後に $sth->
+{pg_oid_status} を経由してその OID 値を使えるようにすることはできます。
 
-4.15.3) 他のユーザとの競合状態を避けるためには、currval() と nextval() は使わな
-いほうがよいのでしょうか？
+4.15.3) currval() は他のユーザとの競合状態に陥ることはないですか？
 
 それはありません。currval() は、すべてのユーザではありませんが、あなたのバック
 エンドに与えられた現在の値を返します。
@@ -1353,12 +1371,13 @@ PL/PgSQL は関数の内容をキャッシュし、その不幸な副作用のため、もし PL/PgSQL 関数
 せん。make clean をしてからもう一度 make を行なわなくてはなりません。もし、GCC
 をお使いであれば configure の --enable-depend オプションを使って、コンパイラに
 依存関係を自動的に調べさせることもできます。
+
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ 
 
 [訳注：
   日本語版の製作については以下の通りです。
 
-  最終更新日:   2004年11月24日
+  最終更新日:   2005年01月12日
   翻訳者:       桑村 潤 (Jun Kuwamura <juk at PostgreSQL.jp>)
 
   このFAQの和訳の作成にあたり協力をしてくださった方々(敬称は略させていただきます):
