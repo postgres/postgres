@@ -129,7 +129,7 @@
 
 #log_min_error_statement = error # Values in order of increasing severity:
 				 #   debug5, debug4, debug3, debug2, debug1,
-				 #   info, notice, warning, error
+				 #   info, notice, warning, error, panic(off)
 
 #debug_print_parse = false
 #debug_print_rewritten = false
