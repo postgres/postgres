@@ -42,7 +42,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/optimizer/path/costsize.c,v 1.91 2002/11/21 00:42:19 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/optimizer/path/costsize.c,v 1.92 2002/11/30 00:08:16 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -819,7 +819,7 @@ cost_mergejoin(Path *path, Query *root,
  * 'outer_path' is the path for the outer relation
  * 'inner_path' is the path for the inner relation
  * 'restrictlist' are the RestrictInfo nodes to be applied at the join
- * 'hashclauses' is a list of the hash join clause (always a 1-element list)
+ * 'hashclauses' are the RestrictInfo nodes to use as hash clauses
  *		(this should be a subset of the restrictlist)
  */
 void
@@ -838,10 +838,8 @@ cost_hashjoin(Path *path, Query *root,
 	double		innerbytes = relation_byte_size(inner_path->parent->rows,
 											  inner_path->parent->width);
 	long		hashtablebytes = SortMem * 1024L;
-	RestrictInfo *restrictinfo;
-	Var		   *left,
-			   *right;
 	Selectivity innerbucketsize;
+	List	   *hcl;
 
 	if (!enable_hashjoin)
 		startup_cost += disable_cost;
@@ -856,43 +854,57 @@ cost_hashjoin(Path *path, Query *root,
 	run_cost += cpu_operator_cost * outer_path->parent->rows;
 
 	/*
-	 * Determine bucketsize fraction for inner relation.  First we have to
-	 * figure out which side of the hashjoin clause is the inner side.
+	 * Determine bucketsize fraction for inner relation.  We use the
+	 * smallest bucketsize estimated for any individual hashclause;
+	 * this is undoubtedly conservative.
 	 */
-	Assert(length(hashclauses) == 1);
-	Assert(IsA(lfirst(hashclauses), RestrictInfo));
-	restrictinfo = (RestrictInfo *) lfirst(hashclauses);
-	/* these must be OK, since check_hashjoinable accepted the clause */
-	left = get_leftop(restrictinfo->clause);
-	right = get_rightop(restrictinfo->clause);
+	innerbucketsize = 1.0;
+	foreach(hcl, hashclauses)
+	{
+		RestrictInfo *restrictinfo = (RestrictInfo *) lfirst(hcl);
+		Var		   *left,
+				   *right;
+		Selectivity thisbucketsize;
 
-	/*
-	 * Since we tend to visit the same clauses over and over when planning
-	 * a large query, we cache the bucketsize estimate in the RestrictInfo
-	 * node to avoid repeated lookups of statistics.
-	 */
-	if (VARISRELMEMBER(right->varno, inner_path->parent))
-	{
-		/* righthand side is inner */
-		innerbucketsize = restrictinfo->right_bucketsize;
-		if (innerbucketsize < 0)
+		Assert(IsA(restrictinfo, RestrictInfo));
+		/* these must be OK, since check_hashjoinable accepted the clause */
+		left = get_leftop(restrictinfo->clause);
+		right = get_rightop(restrictinfo->clause);
+
+		/*
+		 * First we have to figure out which side of the hashjoin clause is the
+		 * inner side.
+		 *
+		 * Since we tend to visit the same clauses over and over when planning
+		 * a large query, we cache the bucketsize estimate in the RestrictInfo
+		 * node to avoid repeated lookups of statistics.
+		 */
+		if (VARISRELMEMBER(right->varno, inner_path->parent))
 		{
-			/* not cached yet */
-			innerbucketsize = estimate_hash_bucketsize(root, right);
-			restrictinfo->right_bucketsize = innerbucketsize;
+			/* righthand side is inner */
+			thisbucketsize = restrictinfo->right_bucketsize;
+			if (thisbucketsize < 0)
+			{
+				/* not cached yet */
+				thisbucketsize = estimate_hash_bucketsize(root, right);
+				restrictinfo->right_bucketsize = thisbucketsize;
+			}
 		}
-	}
-	else
-	{
-		Assert(VARISRELMEMBER(left->varno, inner_path->parent));
-		/* lefthand side is inner */
-		innerbucketsize = restrictinfo->left_bucketsize;
-		if (innerbucketsize < 0)
+		else
 		{
-			/* not cached yet */
-			innerbucketsize = estimate_hash_bucketsize(root, left);
-			restrictinfo->left_bucketsize = innerbucketsize;
+			Assert(VARISRELMEMBER(left->varno, inner_path->parent));
+			/* lefthand side is inner */
+			thisbucketsize = restrictinfo->left_bucketsize;
+			if (thisbucketsize < 0)
+			{
+				/* not cached yet */
+				thisbucketsize = estimate_hash_bucketsize(root, left);
+				restrictinfo->left_bucketsize = thisbucketsize;
+			}
 		}
+
+		if (innerbucketsize > thisbucketsize)
+			innerbucketsize = thisbucketsize;
 	}
 
 	/*

@@ -10,7 +10,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/optimizer/plan/createplan.c,v 1.124 2002/11/21 00:42:19 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/optimizer/plan/createplan.c,v 1.125 2002/11/30 00:08:17 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -91,7 +91,7 @@ static HashJoin *make_hashjoin(List *tlist,
 			  List *hashclauses,
 			  Plan *lefttree, Plan *righttree,
 			  JoinType jointype);
-static Hash *make_hash(List *tlist, Node *hashkey, Plan *lefttree);
+static Hash *make_hash(List *tlist, List *hashkeys, Plan *lefttree);
 static MergeJoin *make_mergejoin(List *tlist,
 			   List *joinclauses, List *otherclauses,
 			   List *mergeclauses,
@@ -910,14 +910,9 @@ create_hashjoin_plan(Query *root,
 	List	   *hashclauses;
 	HashJoin   *join_plan;
 	Hash	   *hash_plan;
-	Node	   *innerhashkey;
+	List	   *innerhashkeys;
+	List	   *hcl;
 
-	/*
-	 * NOTE: there will always be exactly one hashclause in the list
-	 * best_path->path_hashclauses (cf. hash_inner_and_outer()). We
-	 * represent it as a list anyway, for convenience with routines that
-	 * want to work on lists of clauses.
-	 */
 	hashclauses = get_actual_clauses(best_path->path_hashclauses);
 
 	/*
@@ -950,13 +945,20 @@ create_hashjoin_plan(Query *root,
 											   inner_tlist,
 											   (Index) 0));
 
-	/* Now the righthand op of the sole hashclause is the inner hash key. */
-	innerhashkey = (Node *) get_rightop(lfirst(hashclauses));
+	/*
+	 * Extract the inner hash keys (right-hand operands of the hashclauses)
+	 * to put in the Hash node.
+	 */
+	innerhashkeys = NIL;
+	foreach(hcl, hashclauses)
+	{
+		innerhashkeys = lappend(innerhashkeys, get_rightop(lfirst(hcl)));
+	}
 
 	/*
 	 * Build the hash node and hash join node.
 	 */
-	hash_plan = make_hash(inner_tlist, innerhashkey, inner_plan);
+	hash_plan = make_hash(inner_tlist, innerhashkeys, inner_plan);
 	join_plan = make_hashjoin(tlist,
 							  joinclauses,
 							  otherclauses,
@@ -1511,7 +1513,7 @@ make_hashjoin(List *tlist,
 }
 
 static Hash *
-make_hash(List *tlist, Node *hashkey, Plan *lefttree)
+make_hash(List *tlist, List *hashkeys, Plan *lefttree)
 {
 	Hash	   *node = makeNode(Hash);
 	Plan	   *plan = &node->plan;
@@ -1528,7 +1530,7 @@ make_hash(List *tlist, Node *hashkey, Plan *lefttree)
 	plan->qual = NULL;
 	plan->lefttree = lefttree;
 	plan->righttree = NULL;
-	node->hashkey = hashkey;
+	node->hashkeys = hashkeys;
 
 	return node;
 }

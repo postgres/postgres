@@ -15,7 +15,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/nodes/copyfuncs.c,v 1.223 2002/11/25 21:29:36 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/nodes/copyfuncs.c,v 1.224 2002/11/30 00:08:16 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -429,7 +429,6 @@ _copyHashJoin(HashJoin *from)
 	 * copy remainder of node
 	 */
 	COPY_NODE_FIELD(hashclauses);
-	COPY_SCALAR_FIELD(hashjoinop);
 
 	/* subPlan list must point to subplans in the new subtree, not the old */
 	FIX_SUBPLAN_LINKS(join.plan.subPlan, hashclauses);
@@ -593,9 +592,9 @@ _copyHash(Hash *from)
 	/*
 	 * copy remainder of node
 	 */
-	COPY_NODE_FIELD(hashkey);
+	COPY_NODE_FIELD(hashkeys);
 
-	/* XXX could the hashkey contain subplans?  Not at present... */
+	/* XXX could the hashkeys contain subplans?  Not at present... */
 
 	return newnode;
 }

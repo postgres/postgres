@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2002, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Id: plannodes.h,v 1.60 2002/11/06 22:31:24 tgl Exp $
+ * $Id: plannodes.h,v 1.61 2002/11/30 00:08:22 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -318,7 +318,6 @@ typedef struct HashJoin
 {
 	Join		join;
 	List	   *hashclauses;
-	Oid			hashjoinop;
 	HashJoinState *hashjoinstate;
 } HashJoin;
 
@@ -443,7 +442,7 @@ typedef struct Limit
 typedef struct Hash
 {
 	Plan		plan;
-	Node	   *hashkey;
+	List	   *hashkeys;
 	HashState  *hashstate;
 } Hash;
 

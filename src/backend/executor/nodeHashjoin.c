@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/executor/nodeHashjoin.c,v 1.41 2002/09/02 02:47:02 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/executor/nodeHashjoin.c,v 1.42 2002/11/30 00:08:15 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -48,12 +48,11 @@ ExecHashJoin(HashJoin *node)
 	Plan	   *outerNode;
 	Hash	   *hashNode;
 	List	   *hjclauses;
-	Expr	   *clause;
+	List	   *outerkeys;
 	List	   *joinqual;
 	List	   *otherqual;
 	ScanDirection dir;
 	TupleTableSlot *inntuple;
-	Node	   *outerVar;
 	ExprContext *econtext;
 	ExprDoneCond isDone;
 	HashJoinTable hashtable;
@@ -68,7 +67,6 @@ ExecHashJoin(HashJoin *node)
 	 */
 	hjstate = node->hashjoinstate;
 	hjclauses = node->hashclauses;
-	clause = lfirst(hjclauses);
 	estate = node->join.plan.state;
 	joinqual = node->join.joinqual;
 	otherqual = node->join.plan.qual;
@@ -81,6 +79,7 @@ ExecHashJoin(HashJoin *node)
 	 * get information from HashJoin state
 	 */
 	hashtable = hjstate->hj_HashTable;
+	outerkeys = hjstate->hj_OuterHashKeys;
 	econtext = hjstate->jstate.cs_ExprContext;
 
 	/*
@@ -119,7 +118,6 @@ ExecHashJoin(HashJoin *node)
 			 */
 			hashtable = ExecHashTableCreate(hashNode);
 			hjstate->hj_HashTable = hashtable;
-			hjstate->hj_InnerHashKey = hashNode->hashkey;
 
 			/*
 			 * execute the Hash node, to build the hash table
@@ -143,7 +141,6 @@ ExecHashJoin(HashJoin *node)
 	 * Now get an outer tuple and probe into the hash table for matches
 	 */
 	outerTupleSlot = hjstate->jstate.cs_OuterTupleSlot;
-	outerVar = (Node *) get_leftop(clause);
 
 	for (;;)
 	{
@@ -175,7 +172,7 @@ ExecHashJoin(HashJoin *node)
 			 * for this tuple from the hash table
 			 */
 			hjstate->hj_CurBucketNo = ExecHashGetBucket(hashtable, econtext,
-														outerVar);
+														outerkeys);
 			hjstate->hj_CurTuple = NULL;
 
 			/*
@@ -308,6 +305,7 @@ ExecInitHashJoin(HashJoin *node, EState *estate, Plan *parent)
 	HashJoinState *hjstate;
 	Plan	   *outerNode;
 	Hash	   *hashNode;
+	List	   *hcl;
 
 	/*
 	 * assign the node's execution state
@@ -391,7 +389,18 @@ ExecInitHashJoin(HashJoin *node, EState *estate, Plan *parent)
 	hjstate->hj_HashTable = (HashJoinTable) NULL;
 	hjstate->hj_CurBucketNo = 0;
 	hjstate->hj_CurTuple = (HashJoinTuple) NULL;
-	hjstate->hj_InnerHashKey = (Node *) NULL;
+
+	/*
+	 * The planner already made a list of the inner hashkeys for us,
+	 * but we also need a list of the outer hashkeys.
+	 */
+	hjstate->hj_InnerHashKeys = hashNode->hashkeys;
+	hjstate->hj_OuterHashKeys = NIL;
+	foreach(hcl, node->hashclauses)
+	{
+		hjstate->hj_OuterHashKeys = lappend(hjstate->hj_OuterHashKeys,
+											get_leftop(lfirst(hcl)));
+	}
 
 	hjstate->jstate.cs_OuterTupleSlot = NULL;
 	hjstate->jstate.cs_TupFromTlist = false;
@@ -555,7 +564,7 @@ ExecHashJoinNewBatch(HashJoinState *hjstate)
 	BufFile    *innerFile;
 	TupleTableSlot *slot;
 	ExprContext *econtext;
-	Node	   *innerhashkey;
+	List	   *innerhashkeys;
 
 	if (newbatch > 1)
 	{
@@ -603,7 +612,7 @@ ExecHashJoinNewBatch(HashJoinState *hjstate)
 	ExecHashTableReset(hashtable, innerBatchSize[newbatch - 1]);
 
 	econtext = hjstate->jstate.cs_ExprContext;
-	innerhashkey = hjstate->hj_InnerHashKey;
+	innerhashkeys = hjstate->hj_InnerHashKeys;
 
 	while ((slot = ExecHashJoinGetSavedTuple(hjstate,
 											 innerFile,
@@ -611,7 +620,7 @@ ExecHashJoinNewBatch(HashJoinState *hjstate)
 		   && !TupIsNull(slot))
 	{
 		econtext->ecxt_innertuple = slot;
-		ExecHashTableInsert(hashtable, econtext, innerhashkey);
+		ExecHashTableInsert(hashtable, econtext, innerhashkeys);
 	}
 
 	/*
@@ -694,7 +703,6 @@ ExecReScanHashJoin(HashJoin *node, ExprContext *exprCtxt, Plan *parent)
 
 	hjstate->hj_CurBucketNo = 0;
 	hjstate->hj_CurTuple = (HashJoinTuple) NULL;
-	hjstate->hj_InnerHashKey = (Node *) NULL;
 
 	hjstate->jstate.cs_OuterTupleSlot = (TupleTableSlot *) NULL;
 	hjstate->jstate.cs_TupFromTlist = false;

@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/executor/nodeHash.c,v 1.67 2002/11/06 22:31:23 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/executor/nodeHash.c,v 1.68 2002/11/30 00:08:15 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -45,7 +45,7 @@ ExecHash(Hash *node)
 	EState	   *estate;
 	HashState  *hashstate;
 	Plan	   *outerNode;
-	Node	   *hashkey;
+	List	   *hashkeys;
 	HashJoinTable hashtable;
 	TupleTableSlot *slot;
 	ExprContext *econtext;
@@ -79,7 +79,7 @@ ExecHash(Hash *node)
 	/*
 	 * set expression context
 	 */
-	hashkey = node->hashkey;
+	hashkeys = node->hashkeys;
 	econtext = hashstate->cstate.cs_ExprContext;
 
 	/*
@@ -91,7 +91,7 @@ ExecHash(Hash *node)
 		if (TupIsNull(slot))
 			break;
 		econtext->ecxt_innertuple = slot;
-		ExecHashTableInsert(hashtable, econtext, hashkey);
+		ExecHashTableInsert(hashtable, econtext, hashkeys);
 		ExecClearTuple(slot);
 	}
 
@@ -212,7 +212,9 @@ ExecHashTableCreate(Hash *node)
 	int			totalbuckets;
 	int			nbuckets;
 	int			nbatch;
+	int			nkeys;
 	int			i;
+	List	   *hk;
 	MemoryContext oldcxt;
 
 	/*
@@ -248,11 +250,19 @@ ExecHashTableCreate(Hash *node)
 	hashtable->outerBatchSize = NULL;
 
 	/*
-	 * Get info about the datatype of the hash key.
+	 * Get info about the datatypes of the hash keys.
 	 */
-	get_typlenbyval(exprType(node->hashkey),
-					&hashtable->typLen,
-					&hashtable->typByVal);
+	nkeys = length(node->hashkeys);
+	hashtable->typLens = (int16 *) palloc(nkeys * sizeof(int16));
+	hashtable->typByVals = (bool *) palloc(nkeys * sizeof(bool));
+	i = 0;
+	foreach(hk, node->hashkeys)
+	{
+		get_typlenbyval(exprType(lfirst(hk)),
+						&hashtable->typLens[i],
+						&hashtable->typByVals[i]);
+		i++;
+	}
 
 	/*
 	 * Create temporary memory contexts in which to keep the hashtable
@@ -465,9 +475,9 @@ ExecHashTableDestroy(HashJoinTable hashtable)
 void
 ExecHashTableInsert(HashJoinTable hashtable,
 					ExprContext *econtext,
-					Node *hashkey)
+					List *hashkeys)
 {
-	int			bucketno = ExecHashGetBucket(hashtable, econtext, hashkey);
+	int			bucketno = ExecHashGetBucket(hashtable, econtext, hashkeys);
 	TupleTableSlot *slot = econtext->ecxt_innertuple;
 	HeapTuple	heapTuple = slot->val;
 
@@ -522,44 +532,55 @@ ExecHashTableInsert(HashJoinTable hashtable,
 int
 ExecHashGetBucket(HashJoinTable hashtable,
 				  ExprContext *econtext,
-				  Node *hashkey)
+				  List *hashkeys)
 {
+	uint32		hashkey = 0;
 	int			bucketno;
-	Datum		keyval;
-	bool		isNull;
+	List	   *hk;
+	int			i = 0;
 	MemoryContext oldContext;
 
 	/*
 	 * We reset the eval context each time to reclaim any memory leaked in
-	 * the hashkey expression or ComputeHashFunc itself.
+	 * the hashkey expressions or ComputeHashFunc itself.
 	 */
 	ResetExprContext(econtext);
 
 	oldContext = MemoryContextSwitchTo(econtext->ecxt_per_tuple_memory);
 
-	/*
-	 * Get the join attribute value of the tuple
-	 */
-	keyval = ExecEvalExpr(hashkey, econtext, &isNull, NULL);
-
-	/*
-	 * Compute the hash function
-	 */
-	if (isNull)
-		bucketno = 0;
-	else
+	foreach(hk, hashkeys)
 	{
-		bucketno = ComputeHashFunc(keyval,
-								   (int) hashtable->typLen,
-								   hashtable->typByVal)
-			% (uint32) hashtable->totalbuckets;
+		Datum		keyval;
+		bool		isNull;
+
+		/* rotate hashkey left 1 bit at each step */
+		hashkey = (hashkey << 1) | ((hashkey & 0x80000000) ? 1 : 0);
+
+		/*
+		 * Get the join attribute value of the tuple
+		 */
+		keyval = ExecEvalExpr(lfirst(hk), econtext, &isNull, NULL);
+
+		/*
+		 * Compute the hash function
+		 */
+		if (!isNull)			/* treat nulls as having hash key 0 */
+		{
+			hashkey ^= ComputeHashFunc(keyval,
+									   (int) hashtable->typLens[i],
+									   hashtable->typByVals[i]);
+		}
+
+		i++;
 	}
+
+	bucketno = hashkey % (uint32) hashtable->totalbuckets;
 
 #ifdef HJDEBUG
 	if (bucketno >= hashtable->nbuckets)
-		printf("hash(%ld) = %d SAVED\n", (long) keyval, bucketno);
+		printf("hash(%u) = %d SAVED\n", hashkey, bucketno);
 	else
-		printf("hash(%ld) = %d\n", (long) keyval, bucketno);
+		printf("hash(%u) = %d\n", hashkey, bucketno);
 #endif
 
 	MemoryContextSwitchTo(oldContext);

@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2002, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Id: execnodes.h,v 1.80 2002/11/25 21:29:42 tgl Exp $
+ * $Id: execnodes.h,v 1.81 2002/11/30 00:08:20 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -618,7 +618,8 @@ typedef struct MergeJoinState
  *								tuple, or NULL if starting search
  *								(CurBucketNo and CurTuple are meaningless
  *								 unless OuterTupleSlot is nonempty!)
- *		hj_InnerHashKey			the inner hash key in the hashjoin condition
+ *		hj_OuterHashKeys		the outer hash keys in the hashjoin condition
+ *		hj_InnerHashKeys		the inner hash keys in the hashjoin condition
  *		hj_OuterTupleSlot		tuple slot for outer tuples
  *		hj_HashTupleSlot		tuple slot for hashed tuples
  *		hj_NullInnerTupleSlot	prepared null tuple for left outer joins
@@ -633,7 +634,8 @@ typedef struct HashJoinState
 	HashJoinTable hj_HashTable;
 	int			hj_CurBucketNo;
 	HashJoinTuple hj_CurTuple;
-	Node	   *hj_InnerHashKey;
+	List	   *hj_OuterHashKeys;
+	List	   *hj_InnerHashKeys;
 	TupleTableSlot *hj_OuterTupleSlot;
 	TupleTableSlot *hj_HashTupleSlot;
 	TupleTableSlot *hj_NullInnerTupleSlot;

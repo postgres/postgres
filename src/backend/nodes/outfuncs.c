@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/nodes/outfuncs.c,v 1.183 2002/11/25 21:29:36 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/nodes/outfuncs.c,v 1.184 2002/11/30 00:08:16 tgl Exp $
  *
  * NOTES
  *	  Every node type that can appear in stored rules' parsetrees *must*
@@ -538,7 +538,6 @@ _outHashJoin(StringInfo str, HashJoin *node)
 	_outJoinPlanInfo(str, (Join *) node);
 
 	WRITE_NODE_FIELD(hashclauses);
-	WRITE_OID_FIELD(hashjoinop);
 }
 
 static void
@@ -634,7 +633,7 @@ _outHash(StringInfo str, Hash *node)
 
 	_outPlanInfo(str, (Plan *) node);
 
-	WRITE_NODE_FIELD(hashkey);
+	WRITE_NODE_FIELD(hashkeys);
 }
 
 static void

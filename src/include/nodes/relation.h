@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2002, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Id: relation.h,v 1.70 2002/11/27 20:52:04 tgl Exp $
+ * $Id: relation.h,v 1.71 2002/11/30 00:08:22 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -464,8 +464,6 @@ typedef struct MergePath
  * A hashjoin path has these fields.
  *
  * The remarks above for mergeclauses apply for hashclauses as well.
- * (But note that path_hashclauses will always be a one-element list,
- * since we only hash on one hashable clause.)
  *
  * Hashjoin does not care what order its inputs appear in, so we have
  * no need for sortkeys.

@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/optimizer/path/joinpath.c,v 1.72 2002/11/24 21:52:14 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/optimizer/path/joinpath.c,v 1.73 2002/11/30 00:08:16 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -701,7 +701,7 @@ match_unsorted_inner(Query *root,
 /*
  * hash_inner_and_outer
  *	  Create hashjoin join paths by explicitly hashing both the outer and
- *	  inner join relations of each available hash clause.
+ *	  inner keys of each available hash clause.
  *
  * 'joinrel' is the join relation
  * 'outerrel' is the outer join relation
@@ -719,6 +719,7 @@ hash_inner_and_outer(Query *root,
 					 JoinType jointype)
 {
 	bool		isouterjoin;
+	List	   *hashclauses;
 	List	   *i;
 
 	/*
@@ -737,20 +738,18 @@ hash_inner_and_outer(Query *root,
 	}
 
 	/*
+	 * We need to build only one hashpath for any given pair of outer and
+	 * inner relations; all of the hashable clauses will be used as keys.
+	 *
 	 * Scan the join's restrictinfo list to find hashjoinable clauses that
-	 * are usable with this pair of sub-relations.	Since we currently
-	 * accept only var-op-var clauses as hashjoinable, we need only check
-	 * the membership of the vars to determine whether a particular clause
-	 * can be used with this pair of sub-relations.  This code would need
-	 * to be upgraded if we wanted to allow more-complex expressions in
-	 * hash joins.
+	 * are usable with this pair of sub-relations.
 	 */
+	hashclauses = NIL;
 	foreach(i, restrictlist)
 	{
 		RestrictInfo *restrictinfo = (RestrictInfo *) lfirst(i);
 		Var		   *left,
 				   *right;
-		List	   *hashclauses;
 
 		if (restrictinfo->hashjoinoperator == InvalidOid)
 			continue;			/* not hashjoinable */
@@ -768,6 +767,12 @@ hash_inner_and_outer(Query *root,
 
 		/*
 		 * Check if clause is usable with these input rels.
+		 *
+		 * Since we currently accept only var-op-var clauses as hashjoinable,
+		 * we need only check the membership of the vars to determine whether
+		 * a particular clause can be used with this pair of sub-relations.
+		 * This code would need to be upgraded if we wanted to allow
+		 * more-complex expressions in hash joins.
 		 */
 		if (VARISRELMEMBER(left->varno, outerrel) &&
 			VARISRELMEMBER(right->varno, innerrel))
@@ -782,9 +787,12 @@ hash_inner_and_outer(Query *root,
 		else
 			continue;			/* no good for these input relations */
 
-		/* always a one-element list of hash clauses */
-		hashclauses = makeList1(restrictinfo);
+		hashclauses = lappend(hashclauses, restrictinfo);
+	}
 
+	/* If we found any usable hashclauses, make a path */
+	if (hashclauses)
+	{
 		/*
 		 * We consider both the cheapest-total-cost and
 		 * cheapest-startup-cost outer paths.  There's no need to consider
