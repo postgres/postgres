@@ -1,6 +1,6 @@
 TODO list for PostgreSQL
 ========================
-Last updated:		Tue Jul 20 19:05:04 EDT 1999
+Last updated:		Mon Jul 26 11:27:29 EDT 1999
 
 Current maintainer:	Bruce Momjian (maillist@candle.pha.pa.us)
 
@@ -247,6 +247,7 @@ SOURCE CODE
 * Add use of 'const' for varibles in source tree
 * Fix C optimizer problem where fmgr_ptr calls return different types
 * Add needed includes and removed unneede include files(Bruce)
+* Make configure --enable-debug add -g on compile line
 
 ---------------------------------------------------------------------------
 
