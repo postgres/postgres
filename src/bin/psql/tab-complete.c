@@ -3,7 +3,7 @@
  *
  * Copyright 2000 by PostgreSQL Global Development Group
  *
- * $Header: /cvsroot/pgsql/src/bin/psql/tab-complete.c,v 1.14 2000/02/20 14:28:20 petere Exp $
+ * $Header: /cvsroot/pgsql/src/bin/psql/tab-complete.c,v 1.15 2000/03/05 13:30:19 petere Exp $
  */
 
 /*-----------
@@ -49,6 +49,10 @@
 
 #include "common.h"
 #include "settings.h"
+
+#if defined(HAVE_FILENAME_COMPLETION_FUNCTION) && !defined(HAVE_FILENAME_COMPLETION_FUNCTION_DECL)
+char * filename_completion_function (char *, int);
+#endif
 
 #define BUF_SIZE 2048
 #define ERROR_QUERY_TOO_LONG /* empty */
@@ -532,7 +536,15 @@ char ** psql_completion(char *text, int start, int end)
              strcmp(prev_wd, "\\s")==0 ||
              strcmp(prev_wd, "\\w")==0 || strcmp(prev_wd, "\\write")==0
         ) {
+#ifdef HAVE_FILENAME_COMPLETION_FUNCTION
         matches = completion_matches(text, filename_completion_function);
+#else
+        /*
+         * This will probably have the same effect, but you never know what
+         * the heck some readline incarnation out there is going to do.
+         */
+        matches = NULL;
+#endif
     }
 
 

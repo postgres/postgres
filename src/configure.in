@@ -846,6 +846,18 @@ AC_EGREP_HEADER(rl_completion_append_character, readline.h,
 		AC_DEFINE(HAVE_RL_COMPLETION_APPEND_CHARACTER))])
 AC_SUBST(HAVE_RL_COMPLETION_APPEND_CHARACTER)
 
+dnl Check for readline's filename_completion_function.
+dnl Some versions have it but it's not in the headers, so we have to take
+dnl care of that, too.
+AC_CHECK_FUNCS(filename_completion_function,
+    AC_EGREP_HEADER(filename_completion_function, readline.h,
+        AC_DEFINE(HAVE_FILENAME_COMPLETION_FUNCTION_DECL),
+        [AC_EGREP_HEADER(filename_completion_function, readline/readline.h,
+            AC_DEFINE(HAVE_FILENAME_COMPLETION_FUNCTION_DECL))])
+)
+AC_SUBST(HAVE_FILENAME_COMPLETION_FUNCTION)
+AC_SUBST(HAVE_FILENAME_COMPLETION_FUNCTION_DECL)
+
 dnl Check for GNU style long options support (getopt_long)
 AC_CHECK_FUNCS(getopt_long)
 

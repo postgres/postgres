@@ -3,10 +3,12 @@
  *
  * Copyright 2000 by PostgreSQL Global Development Group
  *
- * $Header: /cvsroot/pgsql/src/bin/psql/tab-complete.h,v 1.3 2000/01/29 16:58:49 petere Exp $
+ * $Header: /cvsroot/pgsql/src/bin/psql/tab-complete.h,v 1.4 2000/03/05 13:30:19 petere Exp $
  */
 #ifndef TAB_COMPLETE_H
 #define TAB_COMPLETE_H
+
+#include "postgres.h"
 
 void initialize_readline(void);
 

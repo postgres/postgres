@@ -3,7 +3,7 @@
  *
  * Copyright 2000 by PostgreSQL Global Development Group
  *
- * $Header: /cvsroot/pgsql/src/bin/psql/help.c,v 1.23 2000/03/01 21:09:58 petere Exp $
+ * $Header: /cvsroot/pgsql/src/bin/psql/help.c,v 1.24 2000/03/05 13:30:19 petere Exp $
  */
 #include "postgres.h"
 #include "help.h"
@@ -183,7 +183,7 @@ slashUsage(void)
 	if (pset.notty == 0 &&
 		(pagerenv = getenv("PAGER")) &&
 		(pagerenv[0] != '\0') &&
-		screen_size.ws_row <= 36 &&
+		screen_size.ws_row <= 39 &&
 		(fout = popen(pagerenv, "w")))
 	{
 		usePipe = true;
@@ -195,6 +195,7 @@ slashUsage(void)
 		fout = stdout;
 
 	/* if you add/remove a line here, change the row test above */
+    fprintf(fout, " \\a             toggle between unaligned and aligned mode\n");
 	fprintf(fout, " \\c[onnect] [dbname|- [user]]\n"
 		  "                 connect to new database (currently '%s')\n", PQdb(pset.db));
 	fprintf(fout, " \\copy ...      perform SQL COPY with data stream to the client machine\n");
@@ -209,8 +210,11 @@ slashUsage(void)
 	fprintf(fout, " \\e [fname]     edit the current query buffer or <fname> with external editor\n");
 	fprintf(fout, " \\echo <text>   write text to stdout\n");
 	fprintf(fout, " \\encoding <encoding>  set client encoding\n");
+    fprintf(fout, " \\f <sep>       change field separator\n");
 	fprintf(fout, " \\g [fname]     send query to backend (and results in <fname> or |pipe)\n");
 	fprintf(fout, " \\h [cmd]       help on syntax of sql commands, * for all commands\n");
+    fprintf(fout, " \\H             toggle HTML mode (currently %s)\n",
+            ON(pset.popt.topt.format==PRINT_HTML));
 	fprintf(fout, " \\i <fname>     read and execute queries from filename\n");
 	fprintf(fout, " \\l             list all databases\n");
 	fprintf(fout, " \\lo_export, \\lo_import, \\lo_list, \\lo_unlink\n"
@@ -226,8 +230,8 @@ slashUsage(void)
 	fprintf(fout, " \\set <var> <value>  set internal variable\n");
 	fprintf(fout, " \\t             don't show table headers or footers (currently %s)\n", ON(pset.popt.topt.tuples_only));
 	fprintf(fout, " \\unset <var>   unset (delete) internal variable\n");
-	fprintf(fout, " \\x             toggle expanded output (currently %s)\n", ON(pset.popt.topt.expanded));
 	fprintf(fout, " \\w <fname>     write current query buffer to a file\n");
+	fprintf(fout, " \\x             toggle expanded output (currently %s)\n", ON(pset.popt.topt.expanded));
 	fprintf(fout, " \\z             list table access permissions\n");
 	fprintf(fout, " \\! [cmd]       shell escape or command\n");
 

@@ -468,6 +468,12 @@ extern void srandom(unsigned int seed);
 /* Set to 1 if your libreadline defines rl_completion_append_character */
 #undef HAVE_RL_COMPLETION_APPEND_CHARACTER
 
+/* Set to 1 if your libreadline has filename_completion_function */
+#undef HAVE_FILENAME_COMPLETION_FUNCTION
+
+/* Set to 1 if your readline headers actually declare the above */
+#undef HAVE_FILENAME_COMPLETION_FUNCTION_DECL
+
 /* Set to 1 if you have getopt_long() (GNU long options) */
 #undef HAVE_GETOPT_LONG
 

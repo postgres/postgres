@@ -3,7 +3,7 @@
  *
  * Copyright 2000 by PostgreSQL Global Development Group
  *
- * $Header: /cvsroot/pgsql/src/bin/psql/mainloop.c,v 1.23 2000/03/01 21:09:58 petere Exp $
+ * $Header: /cvsroot/pgsql/src/bin/psql/mainloop.c,v 1.24 2000/03/05 13:30:19 petere Exp $
  */
 #include "postgres.h"
 #include "mainloop.h"
@@ -92,6 +92,7 @@ MainLoop(FILE *source)
 	/* main loop to get queries and execute them */
 	while (1)
 	{
+#ifndef WIN32
         /*
          * Welcome code for Control-C
          */
@@ -133,7 +134,7 @@ MainLoop(FILE *source)
                 break;
             }
         }
-
+#endif /* not WIN32 */
 
 		if (slashCmdStatus == CMD_NEWEDIT)
 		{

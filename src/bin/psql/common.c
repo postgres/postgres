@@ -3,7 +3,7 @@
  *
  * Copyright 2000 by PostgreSQL Global Development Group
  *
- * $Header: /cvsroot/pgsql/src/bin/psql/common.c,v 1.18 2000/03/01 21:09:58 petere Exp $
+ * $Header: /cvsroot/pgsql/src/bin/psql/common.c,v 1.19 2000/03/05 13:30:19 petere Exp $
  */
 #include "postgres.h"
 #include "common.h"
@@ -247,6 +247,8 @@ simple_prompt(const char *prompt, int maxlen, bool echo)
 PGconn *cancelConn;
 volatile bool cancel_pressed;
 
+#ifndef WIN32
+
 #define write_stderr(String) write(fileno(stderr), String, strlen(String))
 
 void
@@ -269,7 +271,7 @@ handle_sigint(SIGNAL_ARGS)
 		write_stderr(PQerrorMessage(cancelConn));
 	}
 }
-
+#endif /* not WIN32 */
 
 
 /*
