@@ -4,7 +4,7 @@ case $host_cpu in
   alpha*)   CFLAGS="$CFLAGS -O" ;;
 esac
 
-SUPPORTS_THREADS=yes
+SUPPORTS_THREADS=no 	# 4.8, 5.1  2003-09-12
 NEED_REENTRANT_FUNC_NAMES=no
 
 case $host_os in
