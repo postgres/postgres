@@ -1,4 +1,4 @@
-<!-- $Header: /cvsroot/pgsql/doc/src/sgml/backup.sgml,v 2.13 2001/09/09 23:52:12 petere Exp $ -->
+<!-- $Header: /cvsroot/pgsql/doc/src/sgml/backup.sgml,v 2.14 2001/09/10 07:11:28 ishii Exp $ -->
 <chapter id="backup">
  <title>Backup and Restore</title>
 
@@ -227,7 +227,7 @@ pg_dump <replaceable class="parameter">dbname</replaceable> | split -b 1m - <rep
      <informalexample>
 <programlisting>
 createdb <replaceable class="parameter">dbname</replaceable>
-cat <replaceable class="parameter">filename</replaceable>.* | psql <replaceable class="parameter">dbname</replaceable>
+cat <replaceable class="parameter">filename</replaceable>* | psql <replaceable class="parameter">dbname</replaceable>
 </programlisting>
      </informalexample>
     </para>
