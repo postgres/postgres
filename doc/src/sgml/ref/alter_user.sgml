@@ -1,5 +1,5 @@
 <!--
-$PostgreSQL: pgsql/doc/src/sgml/ref/alter_user.sgml,v 1.32 2003/11/29 19:51:38 pgsql Exp $
+$PostgreSQL: pgsql/doc/src/sgml/ref/alter_user.sgml,v 1.33 2004/05/06 16:59:16 momjian Exp $
 PostgreSQL documentation
 -->
 
@@ -57,6 +57,9 @@ ALTER USER <replaceable class="PARAMETER">name</replaceable> RESET <replaceable>
    The second variant changes the name of the user.  Only a database
    superuser can rename user accounts.  The session user cannot be
    renamed.  (Connect as a different user if you need to do that.)
+   Because <literal>MD5</>-encrypted passwords use the username as
+   cryptographic salt, renaming a user clears their <literal>MD5</>
+   password.
   </para>
 
   <para>

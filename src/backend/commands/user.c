@@ -6,7 +6,7 @@
  * Portions Copyright (c) 1996-2003, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/backend/commands/user.c,v 1.139 2004/03/16 05:05:57 momjian Exp $
+ * $PostgreSQL: pgsql/src/backend/commands/user.c,v 1.140 2004/05/06 16:59:16 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -959,8 +959,8 @@ AlterUserSet(AlterUserSetStmt *stmt)
 				(errcode(ERRCODE_UNDEFINED_OBJECT),
 				 errmsg("user \"%s\" does not exist", stmt->user)));
 
-	if (!(superuser()
-	 || ((Form_pg_shadow) GETSTRUCT(oldtuple))->usesysid == GetUserId()))
+	if (!(superuser() ||
+	    ((Form_pg_shadow) GETSTRUCT(oldtuple))->usesysid == GetUserId()))
 		ereport(ERROR,
 				(errcode(ERRCODE_INSUFFICIENT_PRIVILEGE),
 				 errmsg("permission denied")));
@@ -1157,16 +1157,25 @@ DropUser(DropUserStmt *stmt)
 void
 RenameUser(const char *oldname, const char *newname)
 {
-	HeapTuple	tup;
+	HeapTuple	oldtuple,
+				newtuple;
+	TupleDesc	dsc;
 	Relation	rel;
-
+	Datum		datum;
+	bool		isnull;
+	Datum		repl_val[Natts_pg_shadow];
+	char		repl_null[Natts_pg_shadow];
+	char		repl_repl[Natts_pg_shadow];
+	int			i;
+	
 	/* ExclusiveLock because we need to update the password file */
 	rel = heap_openr(ShadowRelationName, ExclusiveLock);
+	dsc = RelationGetDescr(rel);
 
-	tup = SearchSysCacheCopy(SHADOWNAME,
+	oldtuple = SearchSysCache(SHADOWNAME,
 							 CStringGetDatum(oldname),
 							 0, 0, 0);
-	if (!HeapTupleIsValid(tup))
+	if (!HeapTupleIsValid(oldtuple))
 		ereport(ERROR,
 				(errcode(ERRCODE_UNDEFINED_OBJECT),
 				 errmsg("user \"%s\" does not exist", oldname)));
@@ -1177,7 +1186,7 @@ RenameUser(const char *oldname, const char *newname)
 	 * not be an actual problem besides a little confusion, so think about
 	 * this and decide.
 	 */
-	if (((Form_pg_shadow) GETSTRUCT(tup))->usesysid == GetSessionUserId())
+	if (((Form_pg_shadow) GETSTRUCT(oldtuple))->usesysid == GetSessionUserId())
 		ereport(ERROR,
 				(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
 				 errmsg("session user may not be renamed")));
@@ -1196,13 +1205,33 @@ RenameUser(const char *oldname, const char *newname)
 				(errcode(ERRCODE_INSUFFICIENT_PRIVILEGE),
 				 errmsg("must be superuser to rename users")));
 
-	/* rename */
-	namestrcpy(&(((Form_pg_shadow) GETSTRUCT(tup))->usename), newname);
-	simple_heap_update(rel, &tup->t_self, tup);
-	CatalogUpdateIndexes(rel, tup);
+	for (i = 0; i < Natts_pg_shadow; i++)
+		repl_repl[i] = ' ';
 
+	repl_repl[Anum_pg_shadow_usename - 1] = 'r';
+	repl_val[Anum_pg_shadow_usename - 1] = DirectFunctionCall1(namein,
+											CStringGetDatum(newname));
+	repl_null[Anum_pg_shadow_usename - 1] = ' ';
+
+	datum = heap_getattr(oldtuple, Anum_pg_shadow_passwd, dsc, &isnull);
+
+	if (!isnull && isMD5(DatumGetCString(DirectFunctionCall1(textout, datum))))
+	{
+		/* MD5 uses the username as salt, so just clear it on a rename */
+		repl_repl[Anum_pg_shadow_passwd - 1] = 'r';
+		repl_null[Anum_pg_shadow_passwd - 1] = 'n';
+	
+		ereport(NOTICE,
+			(errmsg("MD5 password cleared because of user rename")));
+	}
+			 
+	newtuple = heap_modifytuple(oldtuple, rel, repl_val, repl_null, repl_repl);
+	simple_heap_update(rel, &oldtuple->t_self, newtuple);
+	
+	CatalogUpdateIndexes(rel, newtuple);
+
+	ReleaseSysCache(oldtuple);
 	heap_close(rel, NoLock);
-	heap_freetuple(tup);
 
 	user_file_update_needed = true;
 }
