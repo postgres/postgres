@@ -1,0 +1,533 @@
+array set Messages {
+"Label" "标签"
+
+"Save schema" "保存纲要"
+
+"Is unique ?" "是否唯一?"
+
+"Report builder" "报表生成器"
+
+"Criteria" "标准"
+
+"FATAL ERROR upgrading PgAccess table" "升级 PgAccess 表时发生致命错误"
+
+"Save this query as a view" "把这个查询保存成一个视图"
+
+"Page header" "页头"
+
+"Query name" "查询名字"
+
+"Please select an object first!" "请先选择一个对象!"
+
+"Fields :" "字段 :"
+ 
+"Name" "名字"
+
+"File name" "文件名"
+
+"Detail record" "详细记录"
+
+"Auto-load the last opened database at startup" "启动时自动装载上次打开的数据库"
+
+"Maxvalue" "最大值"
+
+"Start value" "初始值"
+
+"Report fields" "报表字段"
+
+"Test form" "测试表单"
+
+"Error trying to connect to database '%s' on host %s \n\nPostgreSQL error message:%s" "试图联接主机 %s \n\nPostgreSQL 上的数据库 '%s' 时出错, 错误信息:%s"
+
+"No field type ?" "无字段类型?"
+
+"User without name?" "用户没有名字?"
+
+"You have to supply a name for this schema!" "你必须给这个纲要指定一个名字 !"
+
+"Last value" "最后的数值"
+
+"Preferences" " 个人设置"
+
+"View '%s' already exists!\nOverwrite ?" "视图 '%s' 已经存在!\n 覆盖?"
+
+"You have to select an index!" "你还没选定索引呢!"
+
+"Field type" "字段类型"
+
+"Script name" "脚本名字"
+
+"Reload" "刷新"
+
+"Remove table %s from query?" "从查询中删除表 %s?"
+ 
+"SQL window" " SQL 窗口"
+ 
+"Allow user to create other users" "允许用户创建其它用户"
+ 
+"Delete current record ?" "删除当前记录?"
+ 
+"List box" "列表框"
+ 
+"Save to query builder" "保存到查询制作器"
+ 
+"fixed width" "定宽"
+ 
+"Scripts" "脚本"
+ 
+"Yes" "是"
+ 
+"Add label" "加标签"
+ 
+"Sequence created!" "序列已创建!"
+ 
+"Field information" "字段信息"
+ 
+"Design" "设计"
+ 
+"Field" "字段"
+ 
+"You have to supply an external file name!" "你必须提供一个外部文件名!"
+ 
+"Increment" "增加"
+ 
+"No" "否"
+ 
+"Form design" "表单设计"
+ 
+"You must supply a return type!" "你必须提供一种返回类型!"
+ 
+"Remove field from result ?" "从结果中删除字段?"
+ 
+"There is another object (a %s) with the same name.\nPlease change it!" "现存另外一个同名对象 (%s).\n 请改名!"
+ 
+"This query has no commands?" "这条查询没有命令?"
+ 
+"Execute query" "执行查询"
+ 
+"field cannot be null" "字段不能为空"
+ 
+"Help" "帮助"
+ 
+"Rename column" "重命名字段"
+ 
+"Database" "数据库"
+ 
+"Information" "信息"
+ 
+"Close" " 关闭 "
+ 
+"Command" "命令"
+ 
+"Table" "表"
+ 
+"verify password" "验证口令"
+ 
+"Vacuum" " 清理"
+ 
+"Default value" "缺省值"
+ 
+"Import" "输入"
+ 
+"Delete index" "删除索引"
+ 
+"Move up" "向上移"
+ 
+"index properties" "索引属性"
+ 
+"check" "检查"
+ 
+"Create new table" "创建新表"
+ 
+"Visual query designer" "可视化查询设计器"
+ 
+"Delete all" "全部删除"
+ 
+"You are going to delete\n\n %s \n\nProceed?" "你正准备删除\n\n %s \n\n继续?" 
+ 
+"Schema name" "纲要名"
+ 
+"Error executing query" "执行查询错误"
+ 
+"Report name" "报表名字"
+ 
+"Add field" "增加字段"
+ 
+"Field name" "字段名"
+ 
+"FATAL ERROR searching for PgAccess system tables" "搜索 PgAccess 系统表时发生致命错误"
+ 
+"A big number of rows displayed in table view will take a lot of memory!" "在表视图里显示大量的行将使用大量内存!"
+ 
+"Preview" "预览"
+ 
+"Users" "用户"
+ 
+"Owner" "所有者"
+ 
+"Form's window internal name" "表单的窗口内部名字"
+ 
+"Sort field" "排序字段"
+ 
+"New name is the same as the old one!" "新名字和旧名字相同!"
+ 
+"Warning" "警告"
+ 
+"Suggestions at" "请把建议发给"
+ 
+"Functions" "函数"
+ 
+"Schema" "纲要"
+ 
+"Open" " 打开 "
+ 
+"size" "尺寸"
+ 
+"Delete" " 删除"
+ 
+"Returns" "返回值"
+ 
+"Define new user" "定义新用户"
+ 
+"Move down" "向下移"
+ 
+"Design script" "设计脚本"
+ 
+"Check box" "多选框"
+ 
+"FINAL WARNING" "最后警告"
+ 
+"Add table" "增加表"
+ 
+"Table viewer font" "表查看器字体"
+ 
+"The field type is not specified!" "字段类型未声明!"
+ 
+"Close test form" "关闭测试表单"
+ 
+"Export table" " 输出表 "
+ 
+"Add new index" "增加新索引"
+ 
+"Left" "左"
+ 
+"Field delimiter" "字段分隔符"
+ 
+"Add formula" "加公式"
+ 
+"Open database" "打开数据库"
+ 
+"Return" "返回"
+ 
+"Changed fonts may appear in the next working session!" "字体修改将在下次会话中生效!"
+ 
+"Error" "错误"
+ 
+"Enter a field name" "输入字段名"
+ 
+"field name" "字段名"
+ 
+"Forms" "表单"
+ 
+"Cannot add column" "无法追加字段"
+ 
+"Clean" "清空"
+ 
+"Delete all objects ?" "删除所有对象?"
+ 
+"Preferred language" "优选语言"
+ 
+"Execute SQL" "执行 SQL"
+ 
+"Sequences" "序列"
+ 
+"Button" "按钮"
+ 
+"Language" "语言"
+ 
+"Query '%s' was not found!" "没有找到查询 '%s'"
+ 
+"Object" "对象"
+ 
+"Font fixed" "固定字体"
+ 
+"Table name" "表名字"
+ 
+"Export" "输出"
+ 
+"Change user" "更改用户"
+ 
+"You must give object a new name!" "你必须给对象一个新名字!"
+ 
+"Query" "查询"
+ 
+"User name" "用户名"
+ 
+"Font normal" "正常字体"
+ 
+"Import table" " 输入表 "
+ 
+"Toolbar" "工具条"
+ 
+"Radio btn" "收音机按钮"
+ 
+"You must supply a name for this function!" "你必须给这个函数提供一个名字!"
+ 
+"You have to select index fields!" "你必须选择索引字段!"
+ 
+"Constraint" "约束"
+ 
+"The script must have a name" "脚本必须有一个名字"
+ 
+"Save" "保存"
+ 
+"Exit" " 退出 "
+ 
+"Inherits" "继承"
+ 
+"Delete field" "删除字段"
+ 
+"About" " 关于 "
+ 
+"Empty field name ?" "空字段名?"
+ 
+"All report information will be deleted.\n\nProceed ?" "所有报表信息都将删除\n\n继续?"
+ 
+"Host" "主机"
+ 
+"vacuuming database %s ..." "正在清理数据库 %s ..."
+ 
+"Indexes defined" "索引已定义"
+ 
+"You must specify field size!" "你必须声明字段大小!"
+ 
+"Schema '%s' already exists!" "纲要 '%s' 已经存在!"
+ 
+"There is another field with the same name: '%s'!\n\nReplace it ?" "现存另外一个字段 '%s' 与此同名!\n\n替换它?"
+ 
+"Contents" " 内容 "
+ 
+"Views" "视图"
+ 
+"Variable" "变量"
+ 
+"Error executing query\n\n%s\n\nPostgreSQL error message:\n%s\nPostgreSQL status:%s" "执行查询\n\n %s\n\n 发生错误\n\nPostgreSQL 错误信息:\n%s \n PostgreSQL 状态 :%s"
+ 
+"Filter conditions" "过滤条件"
+ 
+"Error retrieving query definition" "检索查询定义错误"
+ 
+"Error deleting view" "删除视图错误"
+ 
+"New" " 新建 "
+ 
+"Tables" "表"
+ 
+"Create" "创建"
+ 
+"Forms need an internal name, only literals, low case" "表单需要一个内部名字, 只能用小写文本"
+ 
+"Do you want to save the form into the database?" "你想把该表单保存到数据库中吗?"
+ 
+"Schema '%s' was not found!" "没有找到纲要 '%s'!"
+ 
+"proportional" "比例"
+ 
+"Function saved!" "函数已存储!"
+ 
+"with OIDs" "带 OID"
+ 
+"Table information" "表信息"
+ 
+"Error inserting new record" "插入新记录时发生错误"
+ 
+"Column name '%s' already exists in this table!" "字段 '%s' 已存在于此表中!"
+ 
+"File" "文件"
+ 
+"Your table has no fields!" "你的表没有字段!"
+ 
+"Height" "高度"
+ 
+"You will always get the latest version at:" "你在这里可以找到最新版本:"
+ 
+"Form must have a name" "表单必须有名字"
+ 
+"Password" "口令"
+ 
+"Valid until (date)" "有效至"
+ 
+"Report source" "报表源数据"
+ 
+"Allow user to create databases" "允许用户创建数据库"
+ 
+"Cancel" "取消"
+ 
+"Is clustered ?" "有无建簇?"
+ 
+"Add new column" "增加新字段"
+ 
+"Show SQL" "显示 SQL"
+ 
+"New name" "新名字"
+ 
+"Table '%s' not found!" "没有找到表 '%s'!"
+ 
+"Form name" "表单名字"
+ 
+"Visual designer" "可视化设计器"
+ 
+"You choose to delete index\n\n %s \n\nProceed?" "你将要删除索引\n\n %s \n\n继续?"
+ 
+"Error retrieving from" "检索错误"
+ 
+"Save query definition" "保存查询定义"
+ 
+"A Tcl/Tk interface to\nPostgreSQL\nby Constantin Teodorescu" "Constantin Teodorescu 制作的\nPostgreSQL\n Tcl/TK 界面"
+ 
+"Operation completed!" "操作完成!"
+ 
+"Max rows displayed in table/query view" "在表/查询视图中显示的最大行数"
+ 
+"Passwords do not match!" "口令不符!"
+ 
+"Rename" " 重命名 "
+ 
+"Entry" "记录"
+ 
+"Error retrieving schema definition" "检索纲要定义出错"
+ 
+"This is an action query!\n\nExecute it?" "这是一条动作查询!\n\n执行?"
+ 
+"Error retrieving view definition for" "为下面对象检索视图定义出错"
+ 
+"options" "选项"
+ 
+"Sequence '%s' not found!" "未发现序列 '%s'!"
+ 
+"Text" "文本"
+ 
+"Tcl error executing pg_exec %s\n\n%s" "Tcl 错误，发生在执行 pg_exec %s\n\n%s"
+ 
+"Width" "宽"
+ 
+"You have to supply a name for this query!" "你必须给这个查询提供名字!"
+ 
+"Accessing data. Please wait ..." "正在访问数据. 请等待..."
+ 
+"Report footer" "报表脚注"
+ 
+"Parameters" "参数"
+ 
+"Queries" "查询"
+ 
+"Query '%s' already exists!" "查询 '%s' 已经存在!"
+ 
+"Font bold" "宽体"
+ 
+"Query builder" "查询制作器"
+ 
+"Error defining view" "定义视图错误"
+ 
+"Top" "顶"
+ 
+"You must supply a name for your table!" "你必须给你的表提供一个名字!"
+ 
+"Page footer" "页脚"
+ 
+"Font italic" "斜体"
+ 
+"Field name not entered!" "未输入字段名!"
+ 
+"Index name cannot be null!" "索引名不能为空!"
+ 
+"Sort" "排序"
+ 
+"Import-Export table" "输入-输出表"
+ 
+"Point" "点"
+ 
+"type" "类型"
+ 
+"You should supply a name for this sequence" "你应该给这个序列提供一个名字"
+ 
+"Remove link ?" "删除链接?"
+ 
+"You have to supply a table name!" "你必须提供一个表名字!"
+ 
+"Report header" "报表头"
+ 
+"Attributes" "属性"
+ 
+"Table '%s' already in schema" "表 '%s' 已经在纲要中"
+ 
+"Username" "用户名"
+ 
+"Minvalue" "最小值"
+ 
+"Sequence name" "序列名"
+ 
+"Define sequence" "定义序列"
+ 
+"Function" "函数"
+ 
+"Sorting and filtering not (yet) available from queries!\n\nPlease enter them in the query definition!" "查询中尚无法做排序和过滤!\n\n请在查询定义中输入它们!"
+ 
+"Reports" "报表"
+
+"Columns" "列"
+ 
+"Indexes" "索引"
+
+"Permissions" "权限"
+
+"not null" "非空"
+
+"Cluster index" "建簇索引" 
+
+"index columns" "索引字段"
+
+"Add user" "增加用户"
+
+"Change permissions" "修改权限"
+
+"select" "选择"
+
+"update" "更新"
+
+"insert" "插入"
+
+"rule" "规则"
+
+"Identification" "标识"
+
+"Owner ID" "所有者 ID"
+
+"Has primary key ?" "有主键吗?"
+
+"Has rules ?" "规则?"
+
+"Statistics" "统计"
+
+"Number of tuples" "记录数"
+
+"Number of pages" "页数"
+
+"Index name" "索引名字"
+
+"Index fields" "索引字段"
+
+"Table OID" "表 OID"
+
+"View system tables" "察看系统表"
+
+"Back" "退回"
+
+"primary key" "主键"
+
+"Comments" "注释"
+
+"Print" "打印"
+}
+
+
