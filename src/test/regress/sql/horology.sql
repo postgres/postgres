@@ -69,7 +69,7 @@ SELECT '' AS four, f1 AS abstime,
 SELECT '' AS "15", f1 AS timestamp, date( f1) AS date
   FROM TEMP_TIMESTAMP
   WHERE f1 <> timestamp 'current'
-  ORDER BY date;
+  ORDER BY date, timestamp;
 
 SELECT '' AS "15", f1 AS timestamp, abstime( f1) AS abstime
   FROM TEMP_TIMESTAMP
@@ -78,7 +78,7 @@ SELECT '' AS "15", f1 AS timestamp, abstime( f1) AS abstime
 SELECT '' AS four, f1 AS abstime, date( f1) AS date
   FROM ABSTIME_TBL
   WHERE isfinite(f1) AND f1 <> abstime 'current'
-  ORDER BY date;
+  ORDER BY date, abstime;
 
 SELECT '' AS five, d1 AS timestamp, abstime(d1) AS abstime
   FROM TIMESTAMP_TBL WHERE NOT isfinite(d1);
