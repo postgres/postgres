@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/optimizer/util/var.c,v 1.44 2003/01/15 19:35:44 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/optimizer/util/var.c,v 1.45 2003/01/16 18:26:02 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -360,6 +360,23 @@ flatten_join_alias_vars_mutator(Node *node,
 		/* expand it; recurse in case join input is itself a join */
 		return flatten_join_alias_vars_mutator(newvar, context);
 	}
+
+	/*
+	 * Since expression_tree_mutator won't touch subselects, we have to
+	 * handle them specially.
+	 */
+	if (IsA(node, SubLink))
+	{
+		SubLink    *sublink = (SubLink *) node;
+		SubLink    *newnode;
+
+		FLATCOPY(newnode, sublink, SubLink);
+		MUTATE(newnode->lefthand, sublink->lefthand, List *,
+			   flatten_join_alias_vars_mutator, context);
+		MUTATE(newnode->subselect, sublink->subselect, Node *,
+			   flatten_join_alias_vars_mutator, context);
+		return (Node *) newnode;
+	}
 	if (IsA(node, Query))
 	{
 		/* Recurse into RTE subquery or not-yet-planned sublink subquery */
@@ -375,6 +392,7 @@ flatten_join_alias_vars_mutator(Node *node,
 	}
 	/* Already-planned tree not supported */
 	Assert(!is_subplan(node));
+
 	return expression_tree_mutator(node, flatten_join_alias_vars_mutator,
 								   (void *) context);
 }
