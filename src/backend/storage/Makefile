@@ -4,9 +4,12 @@
 #    Makefile for the storage manager subsystem
 #
 # IDENTIFICATION
-#    $Header: /cvsroot/pgsql/src/backend/storage/Makefile,v 1.2 1996/11/10 03:13:59 bryanh Exp $
+#    $Header: /cvsroot/pgsql/src/backend/storage/Makefile,v 1.3 1997/06/11 01:13:10 scrappy Exp $
 #
 #-------------------------------------------------------------------------
+
+SRCDIR= ../..
+include ../../Makefile.global
 
 all: submake SUBSYS.o
 

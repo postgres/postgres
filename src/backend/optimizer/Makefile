@@ -4,9 +4,12 @@
 #    Makefile for optimizer
 #
 # IDENTIFICATION
-#    $Header: /cvsroot/pgsql/src/backend/optimizer/Makefile,v 1.3 1997/02/19 12:56:31 scrappy Exp $
+#    $Header: /cvsroot/pgsql/src/backend/optimizer/Makefile,v 1.4 1997/06/11 01:12:55 scrappy Exp $
 #
 #-------------------------------------------------------------------------
+
+SRCDIR= ../..
+include ../../Makefile.global
 
 all: submake SUBSYS.o
 

@@ -4,7 +4,7 @@
 #    Makefile for the bootstrap module
 #
 # IDENTIFICATION
-#    $Header: /cvsroot/pgsql/src/backend/bootstrap/Makefile,v 1.9 1997/06/11 01:05:48 scrappy Exp $
+#    $Header: /cvsroot/pgsql/src/backend/bootstrap/Makefile,v 1.10 1997/06/11 01:11:55 scrappy Exp $
 #
 #
 # We must build bootparse.c and bootscanner.c with yacc and lex and sed,
@@ -38,7 +38,7 @@ OBJS= bootparse.o bootscanner.o bootstrap.o
 all: SUBSYS.o
 
 SUBSYS.o: $(OBJS)
-	ld -r -o SUBSYS.o $(OBJS)
+	$(LD) -r -o SUBSYS.o $(OBJS)
 
 # bootstrap.o's dependency on bootstrap_tokens.h is computed by the
 # make depend, but we state it here explicitly anyway because 

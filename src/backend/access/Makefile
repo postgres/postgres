@@ -4,9 +4,12 @@
 #    Makefile for the access methods module
 #
 # IDENTIFICATION
-#    $Header: /cvsroot/pgsql/src/backend/access/Makefile,v 1.2 1996/11/10 03:11:46 bryanh Exp $
+#    $Header: /cvsroot/pgsql/src/backend/access/Makefile,v 1.3 1997/06/11 01:11:30 scrappy Exp $
 #
 #-------------------------------------------------------------------------
+
+SRCDIR = ../..
+include ../../Makefile.global
 
 OBJS = common/SUBSYS.o gist/SUBSYS.o hash/SUBSYS.o heap/SUBSYS.o \
        index/SUBSYS.o rtree/SUBSYS.o nbtree/SUBSYS.o transam/SUBSYS.o

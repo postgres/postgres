@@ -32,9 +32,9 @@
 #    define hton_l(n) (ntoh_l(n))
 #  else	/* BYTE_ORDER != BIG_ENDIAN */
 #    if BYTE_ORDER == PDP_ENDIAN
-#      #error PDP_ENDIAN macros not written yet
+#      error PDP_ENDIAN macros not written yet
 #    else	/* BYTE_ORDER !=  anything known */
-#      #error BYTE_ORDER not defined as anything understood
+#      error BYTE_ORDER not defined as anything understood
 #    endif	/* BYTE_ORDER == PDP_ENDIAN */
 #  endif	/* BYTE_ORDER == BIG_ENDIAN */
 #endif		/* BYTE_ORDER == LITTLE_ENDIAN */
