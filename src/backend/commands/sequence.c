@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/commands/sequence.c,v 1.103.2.1 2003/11/24 16:54:15 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/commands/sequence.c,v 1.103.2.2 2004/04/06 16:39:40 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -315,32 +315,17 @@ AlterSequence(AlterSeqStmt *stmt)
 	seq = read_info(elm, seqrel, &buf);
 	page = BufferGetPage(buf);
 
-	/* copy old values of options */
-	new.increment_by = seq->increment_by;
-	new.max_value = seq->max_value;
-	new.min_value = seq->min_value;
-	new.cache_value = seq->cache_value;
-	new.is_cycled = seq->is_cycled;
-	new.last_value = seq->last_value;
+	/* Copy old values of options into workspace */
+	memcpy(&new, seq, sizeof(FormData_pg_sequence));
 
 	/* Check and set new values */
 	init_params(stmt->options, &new, false);
 
 	/* Now okay to update the on-disk tuple */
-	seq->increment_by = new.increment_by;
-	seq->max_value = new.max_value;
-	seq->min_value = new.min_value;
-	seq->cache_value = new.cache_value;
-	seq->is_cycled = new.is_cycled;
-	if (seq->last_value != new.last_value)
-	{
-		seq->last_value = new.last_value;
-		seq->is_called = false;
-		seq->log_cnt = 1;
-	}
+	memcpy(seq, &new, sizeof(FormData_pg_sequence));
 
-	/* save info in local cache */
-	elm->last = new.last_value; /* last returned number */
+	/* Clear local cache so that we don't think we have cached numbers */
+	elm->last = new.last_value;			/* last returned number */
 	elm->cached = new.last_value;		/* last cached number (forget
 										 * cached values) */
 
@@ -1008,13 +993,19 @@ init_params(List *options, Form_pg_sequence new, bool isInit)
 
 	/* START WITH */
 	if (last_value != (DefElem *) NULL)
+	{
 		new->last_value = defGetInt64(last_value);
+		new->is_called = false;
+		new->log_cnt = 1;
+	}
 	else if (isInit)
 	{
 		if (new->increment_by > 0)
 			new->last_value = new->min_value;	/* ascending seq */
 		else
 			new->last_value = new->max_value;	/* descending seq */
+		new->is_called = false;
+		new->log_cnt = 1;
 	}
 
 	/* crosscheck */
