@@ -846,6 +846,7 @@ Optional Features:
   --enable-depend         turn on automatic dependency tracking
   --enable-cassert        enable assertion checks (for debugging)
   --enable-thread-safety  make client libraries thread-safe
+  --enable-thread-safety-force  force thread-safety in spite of thread test failure
   --disable-largefile     omit support for large files
 
 Optional Packages:
@@ -2937,11 +2938,7 @@ if test "${enable_thread_safety+set}" = set; then
 
   case $enableval in
     yes)
-
-cat >>confdefs.h <<\_ACEOF
-#define ENABLE_THREAD_SAFETY 1
-_ACEOF
-
+      :
       ;;
     no)
       :
@@ -2958,6 +2955,40 @@ else
 
 fi;
 
+
+
+# Check whether --enable-thread-safety-force or --disable-thread-safety-force was given.
+if test "${enable_thread_safety_force+set}" = set; then
+  enableval="$enable_thread_safety_force"
+
+  case $enableval in
+    yes)
+      :
+      ;;
+    no)
+      :
+      ;;
+    *)
+      { { echo "$as_me:$LINENO: error: no argument expected for --enable-thread-safety-force option" >&5
+echo "$as_me: error: no argument expected for --enable-thread-safety-force option" >&2;}
+   { (exit 1); exit 1; }; }
+      ;;
+  esac
+
+else
+  enable_thread_safety_force=no
+
+fi;
+
+if test "$enable_thread_safety" = yes -o
+   test "$enable_thread_safety_force" = yes; then
+  enable_thread_safety="yes"	# for 'force'
+
+cat >>confdefs.h <<\_ACEOF
+#define ENABLE_THREAD_SAFETY 1
+_ACEOF
+
+fi
 echo "$as_me:$LINENO: result: $enable_thread_safety" >&5
 echo "${ECHO_T}$enable_thread_safety" >&6
 
@@ -17941,7 +17972,20 @@ done
 # We have to run the thread test near the end so we have all our symbols
 # defined.  Cross compiling throws a warning.
 #
-if test "$enable_thread_safety" = yes; then
+if test "$enable_thread_safety_force" = yes; then
+  { echo "$as_me:$LINENO: WARNING:
+*** Skipping thread test program.  --enable-thread-safety-force was used.
+*** Run the program in src/tools/thread on the your machine and add
+proper locking function calls to your applications to guarantee thread
+safety.
+" >&5
+echo "$as_me: WARNING:
+*** Skipping thread test program.  --enable-thread-safety-force was used.
+*** Run the program in src/tools/thread on the your machine and add
+proper locking function calls to your applications to guarantee thread
+safety.
+" >&2;}
+elif test "$enable_thread_safety" = yes; then
 echo "$as_me:$LINENO: checking thread safety of required library functions" >&5
 echo $ECHO_N "checking thread safety of required library functions... $ECHO_C" >&6
 
@@ -17954,11 +17998,11 @@ if test "$cross_compiling" = yes; then
 echo "${ECHO_T}maybe" >&6
   { echo "$as_me:$LINENO: WARNING:
 *** Skipping thread test program because of cross-compile build.
-*** Run the program in src/tools/thread on the target matchine.
+*** Run the program in src/tools/thread on the target machine.
 " >&5
 echo "$as_me: WARNING:
 *** Skipping thread test program because of cross-compile build.
-*** Run the program in src/tools/thread on the target matchine.
+*** Run the program in src/tools/thread on the target machine.
 " >&2;}
 else
   cat >conftest.$ac_ext <<_ACEOF
@@ -17988,10 +18032,22 @@ echo "$as_me:$LINENO: result: no" >&5
 echo "${ECHO_T}no" >&6
   { { echo "$as_me:$LINENO: error:
 *** Thread test program failed.  Your platform is not thread-safe.
-*** Check the file 'config.log'for the exact reason." >&5
+*** Check the file 'config.log'for the exact reason.
+***
+*** You can use the configure option --enable-thread-safety-force
+*** to force threads to be enabled.  However, you must then run
+*** the program in src/tools/thread and add locking function calls
+*** to your applications to guarantee thread safety.
+" >&5
 echo "$as_me: error:
 *** Thread test program failed.  Your platform is not thread-safe.
-*** Check the file 'config.log'for the exact reason." >&2;}
+*** Check the file 'config.log'for the exact reason.
+***
+*** You can use the configure option --enable-thread-safety-force
+*** to force threads to be enabled.  However, you must then run
+*** the program in src/tools/thread and add locking function calls
+*** to your applications to guarantee thread safety.
+" >&2;}
    { (exit 1); exit 1; }; }
 fi
 rm -f core core.* *.core conftest$ac_exeext conftest.$ac_objext conftest.$ac_ext

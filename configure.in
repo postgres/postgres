@@ -1,5 +1,5 @@
 dnl Process this file with autoconf to produce a configure script.
-dnl $PostgreSQL: pgsql/configure.in,v 1.365 2004/06/24 18:55:18 tgl Exp $
+dnl $PostgreSQL: pgsql/configure.in,v 1.366 2004/07/10 01:24:29 momjian Exp $
 dnl
 dnl Developers, please strive to achieve this order:
 dnl
@@ -358,9 +358,14 @@ IFS=$ac_save_IFS
 # Enable thread-safe client libraries
 #
 AC_MSG_CHECKING([allow thread-safe client libraries])
-PGAC_ARG_BOOL(enable, thread-safety, no, [  --enable-thread-safety  make client libraries thread-safe],
-              [AC_DEFINE([ENABLE_THREAD_SAFETY], 1,
-                         [Define to 1 to build client libraries as thread-safe code. (--enable-thread-safety)])])
+PGAC_ARG_BOOL(enable, thread-safety, no, [  --enable-thread-safety  make client libraries thread-safe])
+PGAC_ARG_BOOL(enable, thread-safety-force, no, [  --enable-thread-safety-force  force thread-safety in spite of thread test failure])
+if test "$enable_thread_safety" = yes -o
+   test "$enable_thread_safety_force" = yes; then
+  enable_thread_safety="yes"	# for 'force'
+  AC_DEFINE([ENABLE_THREAD_SAFETY], 1,
+          [Define to 1 to build client libraries as thread-safe code. (--enable-thread-safety)])
+fi
 AC_MSG_RESULT([$enable_thread_safety])
 AC_SUBST(enable_thread_safety)
 
@@ -1184,7 +1189,14 @@ AC_CHECK_PROGS(SGMLSPL, sgmlspl)
 # We have to run the thread test near the end so we have all our symbols
 # defined.  Cross compiling throws a warning.
 #
-if test "$enable_thread_safety" = yes; then
+if test "$enable_thread_safety_force" = yes; then
+  AC_MSG_WARN([
+*** Skipping thread test program.  --enable-thread-safety-force was used.
+*** Run the program in src/tools/thread on the your machine and add
+proper locking function calls to your applications to guarantee thread
+safety.
+])
+elif test "$enable_thread_safety" = yes; then
 AC_MSG_CHECKING([thread safety of required library functions])
 
 _CFLAGS="$CFLAGS"
@@ -1196,11 +1208,17 @@ AC_TRY_RUN([#include "$srcdir/src/tools/thread/thread_test.c"],
   [AC_MSG_RESULT(no)
   AC_MSG_ERROR([
 *** Thread test program failed.  Your platform is not thread-safe.  
-*** Check the file 'config.log'for the exact reason.])],
+*** Check the file 'config.log'for the exact reason.
+***
+*** You can use the configure option --enable-thread-safety-force
+*** to force threads to be enabled.  However, you must then run
+*** the program in src/tools/thread and add locking function calls
+*** to your applications to guarantee thread safety.
+])],
   [AC_MSG_RESULT(maybe)
   AC_MSG_WARN([
 *** Skipping thread test program because of cross-compile build.
-*** Run the program in src/tools/thread on the target matchine.
+*** Run the program in src/tools/thread on the target machine.
 ])])
 CFLAGS="$_CFLAGS"
 LIBS="$_LIBS"
