@@ -1,6 +1,6 @@
 /*-------------------------------------------------------------------------
  *
- * shm.c
+ * shmem.c
  *	  Microsoft Windows Win32 Shared Memory Emulation
  *
  * Portions Copyright (c) 1996-2002, PostgreSQL Global Development Group
@@ -9,7 +9,6 @@
  */
 
 #include "postgres.h"
-#include "windows.h"
 
 #include <stdio.h>
 #include <errno.h>

@@ -1,6 +1,6 @@
 /*-------------------------------------------------------------------------
  *
- * sem.c
+ * sema.c
  *	  Microsoft Windows Win32 Semaphores Emulation
  *
  * Portions Copyright (c) 1996-2002, PostgreSQL Global Development Group
@@ -10,6 +10,7 @@
 
 #include "postgres.h"
 #include "storage/shmem.h"
+#include "sema.h"
 
 #include <errno.h>
 
