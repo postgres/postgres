@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/optimizer/plan/planner.c,v 1.125.2.1 2002/12/05 21:46:55 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/optimizer/plan/planner.c,v 1.125.2.2 2003/03/05 18:38:26 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -838,6 +838,7 @@ inheritance_planner(Query *parse, List *inheritlist)
 {
 	int			parentRTindex = parse->resultRelation;
 	Oid			parentOID = getrelid(parentRTindex, parse->rtable);
+	int			mainrtlength = length(parse->rtable);
 	List	   *subplans = NIL;
 	List	   *tlist = NIL;
 	List	   *l;
@@ -846,6 +847,7 @@ inheritance_planner(Query *parse, List *inheritlist)
 	{
 		int			childRTindex = lfirsti(l);
 		Oid			childOID = getrelid(childRTindex, parse->rtable);
+		int			subrtlength;
 		Query	   *subquery;
 		Plan	   *subplan;
 
@@ -856,6 +858,24 @@ inheritance_planner(Query *parse, List *inheritlist)
 		/* Generate plan */
 		subplan = grouping_planner(subquery, 0.0 /* retrieve all tuples */ );
 		subplans = lappend(subplans, subplan);
+		/*
+		 * It's possible that additional RTEs got added to the rangetable
+		 * due to expansion of inherited source tables (see allpaths.c).
+		 * If so, we must copy 'em back to the main parse tree's rtable.
+		 *
+		 * XXX my goodness this is ugly.  Really need to think about ways
+		 * to rein in planner's habit of scribbling on its input.
+		 */
+		subrtlength = length(subquery->rtable);
+		if (subrtlength > mainrtlength)
+		{
+			List   *subrt = subquery->rtable;
+
+			while (mainrtlength-- > 0) /* wish we had nthcdr() */
+				subrt = lnext(subrt);
+			parse->rtable = nconc(parse->rtable, subrt);
+			mainrtlength = subrtlength;
+		}
 		/* Save preprocessed tlist from first rel for use in Append */
 		if (tlist == NIL)
 			tlist = subplan->targetlist;
