@@ -14,7 +14,7 @@
   alink="#0000ff">
     <H1>Frequently Asked Questions (FAQ) for PostgreSQL</H1>
 
-    <P>Last updated: Mon Jun 24 23:32:16 EDT 2002</P>
+    <P>Last updated: Mon Jun 24 23:35:08 EDT 2002</P>
 
     <P>Current maintainer: Bruce Momjian (<A href=
     "mailto:pgman@candle.pha.pa.us">pgman@candle.pha.pa.us</A>)<BR>
@@ -960,7 +960,7 @@
     of the string, i.e.:</LI>
     <UL>
     <LI><SMALL>LIKE</SMALL> patterns must not start with <I>%.</I></LI>
-    <LI><I>~</I>(regular expression) patterns must start with
+    <LI><I>~</I> (regular expression) patterns must start with
     <I>^.</I></LI>
     </UL>
     <LI>The search string can not start with a character class,
@@ -968,7 +968,7 @@
     <LI>Case-insensitive searches like <SMALL>ILIKE</SMALL> and
     <I>~*</I> can not be used.  Instead, use functional
     indexes, which are described later in this FAQ.</LI>
-    <LI>The default <I>C</I> local must have been used during
+    <LI>The default <I>C</I> local must be used during
     <i>initdb.</i></LI>
     </UL>
     <P>
