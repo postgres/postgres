@@ -1,7 +1,7 @@
 /*
  *	Edmund Mergl <E.Mergl@bawue.de>
  *
- *	$Id: oracle_compat.c,v 1.10 1997/09/08 21:48:39 momjian Exp $
+ *	$Id: oracle_compat.c,v 1.11 1998/01/13 03:49:51 scrappy Exp $
  *
  */
 
@@ -512,7 +512,7 @@ substr(text *string, int4 m, int4 n)
 
 	if ((string == (text *) NULL) ||
 		(m <= 0) || (n <= 0) ||
-		((len = VARSIZE(string) - VARHDRSZ - m) <= 0))
+		((len = VARSIZE(string) - VARHDRSZ - m + 1) <= 0))
 		return string;
 
 	len = len + 1 < n ? len + 1 : n;
