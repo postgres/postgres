@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *    $Header: /cvsroot/pgsql/src/interfaces/libpq/fe-connect.c,v 1.29 1997/04/15 19:08:13 scrappy Exp $
+ *    $Header: /cvsroot/pgsql/src/interfaces/libpq/fe-connect.c,v 1.30 1997/04/16 06:29:19 vadim Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -21,6 +21,7 @@
 #include <ctype.h>
 #include <string.h>
 #include <netdb.h>
+#include <netinet/tcp.h>
 #include <errno.h>
 #include <signal.h>
 #include <ctype.h>      /* for isspace() */
@@ -476,7 +477,25 @@ connectDB(PGconn *conn)
 		       conn->pghost,conn->pgport);
 	goto connect_errReturn;	
     }
-    
+    {
+    	struct protoent *pe;
+    	int on=1;
+    	
+    	pe = getprotobyname ("TCP");
+    	if ( pe == NULL )
+    	{
+	    (void) sprintf(conn->errorMessage,
+	    		"connectDB(): getprotobyname failed\n");
+	    goto connect_errReturn;
+	}
+    	if ( setsockopt (port->sock, pe->p_proto, TCP_NODELAY, 
+    						&on, sizeof (on)) < 0 )
+    	{
+	    (void) sprintf(conn->errorMessage,
+	    		"connectDB(): setsockopt failed\n");
+	    goto connect_errReturn;
+	}
+    }
 
     /* fill in the client address */
     if (getsockname(port->sock, (struct sockaddr *) &port->laddr,
