@@ -6,7 +6,7 @@
  * Portions Copyright (c) 1996-2002, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- *	$Header: /cvsroot/pgsql/src/backend/parser/analyze.c,v 1.253.2.1 2003/02/11 04:13:39 tgl Exp $
+ *	$Header: /cvsroot/pgsql/src/backend/parser/analyze.c,v 1.253.2.2 2003/02/13 22:50:09 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -111,7 +111,8 @@ static void transformTableConstraint(ParseState *pstate,
 static void transformIndexConstraints(ParseState *pstate,
 						  CreateStmtContext *cxt);
 static void transformFKConstraints(ParseState *pstate,
-					   CreateStmtContext *cxt);
+								   CreateStmtContext *cxt,
+								   bool isAddConstraint);
 static void applyColumnNames(List *dst, List *src);
 static List *getSetColTypes(ParseState *pstate, Node *node);
 static void transformForUpdate(Query *qry, List *forUpdate);
@@ -770,7 +771,7 @@ transformCreateStmt(ParseState *pstate, CreateStmt *stmt,
 	/*
 	 * Postprocess foreign-key constraints.
 	 */
-	transformFKConstraints(pstate, &cxt);
+	transformFKConstraints(pstate, &cxt, false);
 
 	/*
 	 * Output results.
@@ -1296,7 +1297,8 @@ transformIndexConstraints(ParseState *pstate, CreateStmtContext *cxt)
 }
 
 static void
-transformFKConstraints(ParseState *pstate, CreateStmtContext *cxt)
+transformFKConstraints(ParseState *pstate, CreateStmtContext *cxt,
+					   bool isAddConstraint)
 {
 	if (cxt->fkconstraints == NIL)
 		return;
@@ -1305,16 +1307,16 @@ transformFKConstraints(ParseState *pstate, CreateStmtContext *cxt)
 		 cxt->stmtType);
 
 	/*
-	 * For ALTER TABLE ADD CONSTRAINT, nothing to do.  For CREATE TABLE,
-	 * gin up an ALTER TABLE ADD CONSTRAINT command to execute after
-	 * the basic CREATE TABLE is complete.
+	 * For ALTER TABLE ADD CONSTRAINT, nothing to do.  For CREATE TABLE or
+	 * ALTER TABLE ADD COLUMN, gin up an ALTER TABLE ADD CONSTRAINT command
+	 * to execute after the basic command is complete.
 	 *
 	 * Note: the ADD CONSTRAINT command must also execute after any index
 	 * creation commands.  Thus, this should run after
 	 * transformIndexConstraints, so that the CREATE INDEX commands are
 	 * already in cxt->alist.
 	 */
-	if (strcmp(cxt->stmtType, "CREATE TABLE") == 0)
+	if (!isAddConstraint)
 	{
 		AlterTableStmt *alterstmt = makeNode(AlterTableStmt);
 		List	   *fkclist;
@@ -2253,7 +2255,7 @@ transformAlterTableStmt(ParseState *pstate, AlterTableStmt *stmt,
 									  (ColumnDef *) stmt->def);
 
 			transformIndexConstraints(pstate, &cxt);
-			transformFKConstraints(pstate, &cxt);
+			transformFKConstraints(pstate, &cxt, false);
 
 			((ColumnDef *) stmt->def)->constraints = cxt.ckconstraints;
 			*extras_before = nconc(*extras_before, cxt.blist);
@@ -2290,9 +2292,10 @@ transformAlterTableStmt(ParseState *pstate, AlterTableStmt *stmt,
 				elog(ERROR, "Unexpected node type in ALTER TABLE ADD CONSTRAINT");
 
 			transformIndexConstraints(pstate, &cxt);
-			transformFKConstraints(pstate, &cxt);
+			transformFKConstraints(pstate, &cxt, true);
 
 			Assert(cxt.columns == NIL);
+			/* fkconstraints should be put into my own stmt in this case */
 			stmt->def = (Node *) nconc(cxt.ckconstraints, cxt.fkconstraints);
 			*extras_before = nconc(*extras_before, cxt.blist);
 			*extras_after = nconc(cxt.alist, *extras_after);
