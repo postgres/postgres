@@ -7,7 +7,7 @@
 #
 #
 # IDENTIFICATION
-#    $Header: /cvsroot/pgsql/src/test/regress/GNUmakefile,v 1.24 2000/09/29 17:17:37 petere Exp $
+#    $Header: /cvsroot/pgsql/src/test/regress/GNUmakefile,v 1.25 2000/10/02 06:07:25 tgl Exp $
 #
 #-------------------------------------------------------------------------
 
@@ -80,10 +80,10 @@ all-spi:
 ##
 
 check: all
-	./pg_regress --temp-install --top-builddir=$(top_builddir) --schedule=parallel_schedule --multibyte=$(MULTIBYTE)
+	$(SHELL) ./pg_regress --temp-install --top-builddir=$(top_builddir) --schedule=parallel_schedule --multibyte=$(MULTIBYTE)
 
 installcheck: all
-	./pg_regress --schedule=serial_schedule --multibyte=$(MULTIBYTE)
+	$(SHELL) ./pg_regress --schedule=serial_schedule --multibyte=$(MULTIBYTE)
 
 
 # old interfaces follow...
