@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/storage/lmgr/lmgr.c,v 1.28 1999/07/15 15:19:51 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/storage/lmgr/lmgr.c,v 1.29 1999/07/15 20:32:27 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -47,7 +47,7 @@
 
 extern Oid	MyDatabaseId;
 
-static MASK LockConflicts[] = {
+static LOCKMASK LockConflicts[] = {
 	(int) NULL,
 
 /* AccessShareLock */

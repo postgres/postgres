@@ -14,7 +14,7 @@ do
 	else	cat "$FILE" >/tmp/$$a
 	fi
 	cat /tmp/$$a | grep "^#include" |
-	sed 's/#include[ 	]*[<"]\([^>"]*\).*$/\1/g' |
+	sed 's/^#include[ 	]*[<"]\([^>"]*\).*$/\1/g' |
 	while read INCLUDE
 	do
 		[ -s /usr/include/$INCLUDE ] && continue
@@ -36,7 +36,7 @@ do
 		if [ "$?" -eq 0 ]
 		then	echo "$FILE $INCLUDE"
 			if [ "$IS_INCLUDE" = "N" ]
-			then	grep -v '#include[ 	]*[<"]$INCLUDE[>"]' $FILE >/tmp/$$b
+			then	grep -v '^#include[ 	][ 	]*[<"]'"$INCLUDE"'[>"]' $FILE >/tmp/$$b
 				mv /tmp/$$b "$FILE"
 			fi
 			if [ "$1" = "-v" ]

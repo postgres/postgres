@@ -5,7 +5,7 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: geqo_random.h,v 1.4 1999/02/13 23:21:48 momjian Exp $
+ * $Id: geqo_random.h,v 1.5 1999/07/15 20:32:28 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -25,9 +25,9 @@
 
 #include <math.h>
 
-#define MASK 2147483647
+#define GEQOMASK 2147483647
 
-#define geqo_rand() ((double)random()/MASK)
+#define geqo_rand() ((double)random()/GEQOMASK)
 
 /* geqo_randint returns integer value
    between lower and upper inclusive */

@@ -12,7 +12,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/storage/lmgr/Attic/multi.c,v 1.29 1999/05/25 16:11:22 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/storage/lmgr/Attic/multi.c,v 1.30 1999/07/15 20:32:27 momjian Exp $
  *
  * NOTES:
  *	 (1) The lock.c module assumes that the caller here is doing
@@ -41,7 +41,7 @@ static bool MultiRelease(LOCKMETHOD lockmethod, LOCKTAG *tag,
  * WRITE conflict between the tuple's intent lock and the relation's
  * write lock.
  */
-static MASK MultiConflicts[] = {
+static LOCKMASK MultiConflicts[] = {
 	(int) NULL,
 	/* All reads and writes at any level conflict with a write lock */
 	(1 << WRITE_LOCK) | (1 << WRITE_INTENT) | (1 << READ_LOCK) | (1 << READ_INTENT),
