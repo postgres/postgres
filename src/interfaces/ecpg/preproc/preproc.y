@@ -2044,7 +2044,7 @@ opt_name:  name							{ $$ = $1; }
 		| /*EMPTY*/					{ $$ = EMPTY; }
 		;
 
-opt_column:  COLUMN					{ $$ = make_str("colmunn"); }
+opt_column:  COLUMN					{ $$ = make_str("column"); }
 		| /*EMPTY*/				{ $$ = EMPTY; }
 		;
 

@@ -1112,5 +1112,9 @@ TUe Okt  2 16:09:26 CEST 2001
 
 	- Re-added Tom's patch fixing my setlocale patch. I accidently
 	  deleted it.
+
+Fri Okt  5 08:37:01 CEST 2001
+
+	- Fixed yet another typo in preproc.y.
 	- Set ecpg version to 2.9.0.
         - Set library version to 3.3.0.
