@@ -9,7 +9,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/optimizer/path/indxpath.c,v 1.149 2003/11/29 19:51:50 pgsql Exp $
+ *	  $PostgreSQL: pgsql/src/backend/optimizer/path/indxpath.c,v 1.150 2003/12/18 00:22:12 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -600,14 +600,43 @@ group_clauses_by_indexkey_for_join(Query *root,
 	{
 		Oid			curClass = classes[0];
 		FastList	clausegroup;
+		int			numsources;
 		List	   *i;
 
 		FastListInit(&clausegroup);
+
+		/*
+		 * We can always use plain restriction clauses for the rel.  We scan
+		 * these first because we want them first in the clausegroup list
+		 * for the convenience of remove_redundant_join_clauses, which can
+		 * never remove non-join clauses and hence won't be able to get rid
+		 * of a non-join clause if it appears after a join clause it is
+		 * redundant with.
+		 */
+		foreach(i, rel->baserestrictinfo)
+		{
+			RestrictInfo *rinfo = (RestrictInfo *) lfirst(i);
+
+			/* Can't use pushed-down clauses in outer join */
+			if (isouterjoin && rinfo->ispusheddown)
+				continue;
+
+			if (match_clause_to_indexcol(rel,
+										 index,
+										 indexcol,
+										 curClass,
+										 rinfo->clause))
+				FastAppend(&clausegroup, rinfo);
+		}
+
+		/* found anything in base restrict list? */
+		numsources = (FastListValue(&clausegroup) != NIL) ? 1 : 0;
 
 		/* Look for joinclauses that are usable with given outer_relids */
 		foreach(i, rel->joininfo)
 		{
 			JoinInfo   *joininfo = (JoinInfo *) lfirst(i);
+			bool		jfoundhere = false;
 			List	   *j;
 
 			if (!bms_is_subset(joininfo->unjoined_relids, outer_relids))
@@ -628,20 +657,21 @@ group_clauses_by_indexkey_for_join(Query *root,
 												  rinfo->clause))
 				{
 					FastAppend(&clausegroup, rinfo);
-					jfound = true;
+					if (!jfoundhere)
+					{
+						jfoundhere = true;
+						jfound = true;
+						numsources++;
+					}
 				}
 			}
 		}
 
 		/*
-		 * If we found join clauses in more than one joininfo list, we may
-		 * now have clauses that are known redundant.  Get rid of 'em.
-		 * (There is no point in looking at restriction clauses, because
-		 * remove_redundant_join_clauses will never think they are
-		 * redundant, so we do this before adding restriction clauses to
-		 * the clause group.)
+		 * If we found clauses in more than one list, we may now have clauses
+		 * that are known redundant.  Get rid of 'em.
 		 */
-		if (FastListValue(&clausegroup) != NIL)
+		if (numsources > 1)
 		{
 			List	   *nl;
 
@@ -649,23 +679,6 @@ group_clauses_by_indexkey_for_join(Query *root,
 											 FastListValue(&clausegroup),
 											   jointype);
 			FastListFromList(&clausegroup, nl);
-		}
-
-		/* We can also use plain restriction clauses for the rel */
-		foreach(i, rel->baserestrictinfo)
-		{
-			RestrictInfo *rinfo = (RestrictInfo *) lfirst(i);
-
-			/* Can't use pushed-down clauses in outer join */
-			if (isouterjoin && rinfo->ispusheddown)
-				continue;
-
-			if (match_clause_to_indexcol(rel,
-										 index,
-										 indexcol,
-										 curClass,
-										 rinfo->clause))
-				FastAppend(&clausegroup, rinfo);
 		}
 
 		/*
