@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/bin/psql/Attic/psql.c,v 1.117 1997/11/26 02:34:28 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/bin/psql/Attic/psql.c,v 1.118 1997/11/30 17:46:01 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -757,6 +757,7 @@ objectDescription(PsqlSettings *pset, char *object, FILE *fout)
 			strcat(descbuf, " pg_type.oid = pg_description.objoid " );
 			if (!(res = PSQLexec(pset, descbuf)))
 				return -1;
+			else if (PQntuples(res) <= 0)
 			{
 				PQclear(res);
 				descbuf[0] = '\0';
