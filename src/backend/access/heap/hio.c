@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Id: hio.c,v 1.17 1999/02/13 23:14:24 momjian Exp $
+ *	  $Id: hio.c,v 1.18 1999/05/01 15:04:46 vadim Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -110,8 +110,15 @@ RelationPutHeapTupleAtEnd(Relation relation, HeapTuple tuple)
 	ItemId		itemId;
 	Item		item;
 
+	/*
+	 * Actually, we lock _relation_ here, not page, but I believe
+	 * that locking page is faster... Obviously, we could get rid
+	 * of ExtendLock mode at all and use ExclusiveLock mode on
+	 * page 0, as long as we use page-level locking for indices only,
+	 * but we are in 6.5-beta currently...	- vadim 05/01/99
+	 */
 	if (!relation->rd_myxactonly)
-		LockRelation(relation, ExtendLock);
+		LockPage(relation, 0, ExtendLock);
 
 	/*
 	 * XXX This does an lseek - VERY expensive - but at the moment it is
@@ -159,7 +166,7 @@ RelationPutHeapTupleAtEnd(Relation relation, HeapTuple tuple)
 	}
 
 	if (!relation->rd_myxactonly)
-		UnlockRelation(relation, ExtendLock);
+		UnlockPage(relation, 0, ExtendLock);
 
 	offnum = PageAddItem((Page) pageHeader, (Item) tuple->t_data,
 						 tuple->t_len, InvalidOffsetNumber, LP_USED);
