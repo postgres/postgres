@@ -10,17 +10,19 @@
   alink="#0000ff">
     <H1>Frequently Asked Questions (FAQ) for PostgreSQL</H1>
 
-    <P>Last updated: Wed Dec 15 20:06:34 EST 2004</P>
+    <P>Last updated: Fri Dec 24 12:18:49 EST 2004</P>
 
     <P>Current maintainer: Bruce Momjian (<A href=
     "mailto:pgman@candle.pha.pa.us">pgman@candle.pha.pa.us</A>)<BR>
     </P>
 
     <P>The most recent version of this document can be viewed at <A href=
-    "http://www.PostgreSQL.org/docs/faqs/FAQ.html">http://www.PostgreSQL.org/docs/faqs/FAQ.html</A>.</P>
+    "http://www.postgresql.org/files/documentation/faqs/FAQ.html">
+    http://www.postgresql.org/files/documentation/faqs/FAQ.html</A>.</P>
 
     <P>Platform-specific questions are answered at <A href=
-    "http://www.PostgreSQL.org/docs/index.html">http://www.PostgreSQL.org/docs/index.html</A>.</P>
+    "http://www.postgresql.org/docs/faq/">
+    http://www.postgresql.org/docs/faq/</A>.</P>
     <HR>
 
     <H2 align="center">General Questions</H2>
@@ -177,7 +179,8 @@
     responsible for all development of PostgreSQL.  It is a community
     project and is not controlled by any company.  To get involved, see
     the developer's FAQ at <A href=
-    "http://www.PostgreSQL.org/docs/faqs/FAQ_DEV.html">http://www.PostgreSQL.org/docs/faqs/FAQ_DEV.html</A>
+    "http://www.postgresql.org/files/documentation/faqs/FAQ_DEV.html">
+    http://www.postgresql.org/files/documentation/faqs/FAQ_DEV.html</A>
     </P>
 
     <P>The authors of PostgreSQL 1.01 were Andrew Yu and Jolly Chen.
@@ -339,8 +342,9 @@
     href=
     "http://techdocs.PostgreSQL.org/">http://techdocs.PostgreSQL.org/</A>.</P>
 
-    <P><I>psql</I> has some nice \d commands to show information about
-    types, operators, functions, aggregates, etc.</P>
+    <P>The command line client program <I>psql</I> has some \d commands to show
+    information about types, operators, functions, aggregates, etc. - use \? to 
+    display the available commands.</P>
 
     <P>Our web site contains even more documentation.</P>
 
@@ -398,8 +402,8 @@
     <H4><A name="1.13">1.13</A>) How do I submit a bug report?</H4>
 
     <P>Visit the PostgreSQL bug form at <A href=
-    "http://www.postgresql.org/bugform.html">
-    http://www.postgresql.org/bugform.html</A>.</P>
+    "http://www.postgresql.org/support/submitbug">
+    http://www.postgresql.org/support/submitbug</A>.</P>
 
     <P>Also check out our ftp site <A href=
     "ftp://ftp.PostgreSQL.org/pub">ftp://ftp.PostgreSQL.org/pub</A> to
@@ -425,21 +429,15 @@
 
       <DT><B>Performance</B></DT>
 
-      <DD>PostgreSQL has performance similar to other commercial and
-      open source databases. it is faster for some things, slower for
+      <DD>PostgreSQL's performance is comparable to other commercial and
+      open source databases. It is faster for some things, slower for
       others. In comparison to MySQL or leaner database systems, we are
       faster for multiple users, complex queries, and a read/write query
       load.  MySQL is faster for simple SELECT queries done by a few users.
       Of course, MySQL does not have most of the features mentioned in the
       <I>Features</I> section above. We are built for reliability and
       features, and we continue to improve performance in every
-      release. There is an interesting Web page comparing PostgreSQL to
-      MySQL at <A href="http://openacs.org/philosophy/why-not-mysql.html">
-      http://openacs.org/philosophy/why-not-mysql.html</A>  Also, MySQL is
-      is a company that distributes its products via open source, and requires
-      a commercial license for close-source software, not an
-      open source development community like PostgreSQL.<BR>
-
+      release. <BR>
       <BR>
       </DD>
 
@@ -498,12 +496,12 @@
     "contributions" item is solely to support the PostgreSQL project
     and does not fund any specific company. If you prefer, you can also
     send a check to the contact address.</P>
+
+    <P>Also, if you have a success story about PostgreSQL, please email
+    it to our advocacy list at <a href="mailto:pgsql-advocacy@postgresql.org">
+    pgsql-advocacy@postgresql.org</a>.</P>
+
     <HR>
-
-    <P>Also, if you have a success story about PostgreSQL, please submit
-    it to our advocacy site at <a href="http://advocacy.postgresql.org">
-    http://advocacy.postgresql.org</a>.</P>
-
 
     <H2 align="center">User Client Questions</H2>
 
@@ -544,7 +542,7 @@
 
     <P>Yes, there are several graphical interfaces to PostgreSQL available.
     These include PgAccess <a href="http://www.pgaccess.org">
-    http://www.pgaccess.org</a>), PgAdmin III (<a
+    http://www.pgaccess.org</a>), pgAdmin III (<a
     href="http://www.pgadmin.org">http://www.pgadmin.org</a>, RHDB Admin (<a
     href="http://sources.redhat.com/rhdb/">http://sources.redhat.com/rhdb/
     </a>), TORA (<a href="http://www.globecom.net/tora/">http://www.globecom.net/tora/
@@ -674,9 +672,9 @@
     kernel's limit on shared memory space. Each buffer is 8K and the
     default is 1000 buffers.</P>
 
-    <P>You can also use the <I>sort_mem</I> and <I>work_mem</I> options
-    to increase the maximum amount of memory used by the backend processes
-    for each temporary sort. The default is 1024 (i.e. 1MB).</P>
+    <P>You can also use the <I>sort_mem</I> (from PostgreSQL 8.0: <I>work_mem</I>)
+    options to increase the maximum amount of memory used by the backend
+    processes for each temporary sort. The default is 1024 (i.e. 1MB).</P>
 
     <P>You can also use the <SMALL>CLUSTER</SMALL> command to group
     data in tables to match an index. See the <SMALL>CLUSTER</SMALL>
@@ -1170,14 +1168,14 @@ BYTEA           bytea           variable-length byte array (null-byte safe)
     execute("INSERT INTO person (name) VALUES ('Blaise Pascal')");
     new_id = execute("SELECT currval('person_id_seq')");
 </PRE>
-
-    Finally, you could use the <A href="#4.16"><SMALL>OID</SMALL></A>
+    
+    <P>Finally, you could use the <A href="#4.16"><SMALL>OID</SMALL></A>
     returned from the <SMALL>INSERT</SMALL> statement to look up the
     default value, though this is probably the least portable approach,
     and the oid value will wrap around when it reaches 4 billion.
-    In Perl, using DBI with Edmund Mergl's DBD::Pg module, the oid
-    value is made available via <I>$sth-&gt;{pg_oid_status}</I> after
-    <I>$sth-&gt;execute()</I>.
+    In Perl, using DBI with the DBD::Pg module, the oid value is made
+    available via <I>$sth-&gt;{pg_oid_status}</I> after
+    <I>$sth-&gt;execute()</I>.</P>
 
     <H4><A name="4.15.3">4.15.3</A>) Doesn't <I>currval()</I>
     lead to a race condition with other users?</H4>
