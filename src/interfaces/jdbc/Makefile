@@ -4,11 +4,9 @@
 #    Makefile for Java JDBC interface
 #
 # IDENTIFICATION
-#    $Header: /cvsroot/pgsql/src/interfaces/jdbc/Attic/Makefile,v 1.10 1998/10/08 00:38:18 momjian Exp $
+#    $Header: /cvsroot/pgsql/src/interfaces/jdbc/Attic/Makefile,v 1.11 1999/01/17 04:51:49 momjian Exp $
 #
 #-------------------------------------------------------------------------
-
-# These are commented out, but would be included in the postgresql source
 
 FIND		= find
 JAR		= jar
@@ -24,7 +22,10 @@ RM		= rm -f
 .SUFFIXES:	.class .java
 .PHONY:		all clean doc examples
 
-all:	  postgresql.jar
+# In 6.5, the all rule builds the makeVersion class which then calls make using
+# the jdbc1 or jdbc2 rules
+all:	makeVersion.class
+	make $$($(JAVA) makeVersion)
 	@echo ------------------------------------------------------------
 	@echo The JDBC driver has now been built. To make it available to
 	@echo other applications, copy the postgresql.jar file to a public
@@ -37,7 +38,9 @@ all:	  postgresql.jar
 	@echo "under unix for HotJava), and add a line containing"
 	@echo jdbc.drivers=postgresql.Driver
 	@echo
-	@echo More details are in the README file.
+	@echo More details are in the README file and in the main postgresql
+	@echo documentation.
+	@echo
 	@echo ------------------------------------------------------------
 	@echo To build the examples, type:
 	@echo "  make examples"
@@ -56,39 +59,83 @@ doc:
 
 # These classes form the driver. These, and only these are placed into
 # the jar file.
-OBJS=	postgresql/CallableStatement.class \
-	postgresql/Connection.class \
-	postgresql/DatabaseMetaData.class \
-	postgresql/Driver.class \
-	postgresql/Field.class \
-	postgresql/PG_Stream.class \
-	postgresql/PreparedStatement.class \
-	postgresql/ResultSet.class \
-	postgresql/ResultSetMetaData.class \
-	postgresql/Statement.class \
-	postgresql/fastpath/Fastpath.class \
-	postgresql/fastpath/FastpathArg.class \
-	postgresql/geometric/PGbox.class \
-	postgresql/geometric/PGcircle.class \
-	postgresql/geometric/PGline.class \
-	postgresql/geometric/PGlseg.class \
-	postgresql/geometric/PGpath.class \
-	postgresql/geometric/PGpoint.class \
-	postgresql/geometric/PGpolygon.class \
-	postgresql/largeobject/LargeObject.class \
-	postgresql/largeobject/LargeObjectManager.class \
-	postgresql/util/PGmoney.class \
-	postgresql/util/PGobject.class \
-	postgresql/util/PGtokenizer.class \
-	postgresql/util/Serialize.class \
-	postgresql/util/UnixCrypt.class
+OBJ_COMMON=	postgresql/Connection.class \
+		postgresql/Driver.class \
+		postgresql/Field.class \
+		postgresql/PG_Stream.class \
+		postgresql/ResultSet.class \
+		postgresql/fastpath/Fastpath.class \
+		postgresql/fastpath/FastpathArg.class \
+		postgresql/geometric/PGbox.class \
+		postgresql/geometric/PGcircle.class \
+		postgresql/geometric/PGline.class \
+		postgresql/geometric/PGlseg.class \
+		postgresql/geometric/PGpath.class \
+		postgresql/geometric/PGpoint.class \
+		postgresql/geometric/PGpolygon.class \
+		postgresql/largeobject/LargeObject.class \
+		postgresql/largeobject/LargeObjectManager.class \
+		postgresql/util/PGmoney.class \
+		postgresql/util/PGobject.class \
+		postgresql/util/PGtokenizer.class \
+		postgresql/util/Serialize.class \
+		postgresql/util/UnixCrypt.class
 
-# If you have problems with the first line, try the second one.
-# This is needed when compiling under Solaris, as the solaris sh doesn't
-# recognise $( )
-postgresql.jar: $(OBJS)
+# These files are unique to the JDBC 1 (JDK 1.1) driver
+OBJ_JDBC1=	postgresql/jdbc1/CallableStatement.class \
+		postgresql/jdbc1/Connection.class \
+		postgresql/jdbc1/DatabaseMetaData.class \
+		postgresql/jdbc1/PreparedStatement.class \
+		postgresql/jdbc1/ResultSet.class \
+		postgresql/jdbc1/ResultSetMetaData.class \
+		postgresql/jdbc1/Statement.class
+
+# These files are unique to the JDBC 2 (JDK 2 nee 1.2) driver
+OBJ_JDBC2=	postgresql/jdbc2/ResultSet.class \
+		postgresql/jdbc2/PreparedStatement.class \
+		postgresql/jdbc2/CallableStatement.class \
+		postgresql/jdbc2/Connection.class \
+		postgresql/jdbc2/DatabaseMetaData.class \
+		postgresql/jdbc2/ResultSetMetaData.class \
+		postgresql/jdbc2/Statement.class
+
+# This rule should never occur, but will be called when makeVersion fails to
+# understand the java.version property correctly.
+jdbc0:
+	@echo
+	@echo FATAL ERROR!
+	@echo
+	@echo makeVersion has not been able to determine what version of
+	@echo the JDK you are using, and hence what version of the driver
+	@echo to compile.
+	@echo
+	@echo There are two versions available, one that conforms to the
+	@echo JDBC 1 specification, and one to the JDBC 2 specification.
+	@echo
+	@echo To build the driver for JDBC 1 (usually for JDK 1.1 thru 1.1.7)
+	@echo then type: make jdbc1
+	@echo
+	@echo To build the driver for JDBC 2 (usually for JDK 1.2 and later)
+	@echo then type: make jdbc2
+	@echo
+	@echo If you still have problems, then please email the interfaces
+	@echo or bugs lists, or better still to me direct (peter@retep.org.uk)
+	@echo
+
+# This rule builds the JDBC1 compliant driver
+jdbc1:	$(OBJ_COMMON) $(OBJ_JDBC1) postgresql.jar
+
+# This rule builds the JDBC2 compliant driver
+jdbc2:	$(OBJ_COMMON) $(OBJ_JDBC2) postgresql.jar
+
+# If you have problems with this rule, replace the $( ) with ` ` as some
+# shells (mainly sh under Solaris) doesn't recognise $( )
+#
+# Note:	This works by storing all compiled classes under the postgresql
+#	directory. We use this later for compiling the dual-mode driver.
+#
+postgresql.jar: $(OBJ) $(OBJ_COMMON)
 	$(JAR) -c0f $@ $$($(FIND) postgresql -name "*.class" -print)
-#	$(JAR) -c0f $@ `$(FIND) postgresql -name "*.class" -print`
 
 # This rule removes any temporary and compiled files from the source tree.
 clean:

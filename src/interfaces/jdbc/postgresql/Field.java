@@ -11,13 +11,14 @@ import postgresql.*;
  */
 public class Field
 {
-  int length;		// Internal Length of this field
-  int oid;		// OID of the type
-  Connection conn;	// Connection Instantation
-  String name;		// Name of this field
+  public int length;		// Internal Length of this field
+  public int oid;		// OID of the type
+  public String name;		// Name of this field
   
-  int sql_type = -1;	// The entry in java.sql.Types for this field
-  String type_name = null;// The sql type name
+  protected Connection conn;	// Connection Instantation
+  
+  public int sql_type = -1;	// The entry in java.sql.Types for this field
+  public String type_name = null;// The sql type name
   
   /**
    * Construct a field based on the information fed to it.

@@ -102,7 +102,7 @@ public class LargeObjectManager
     //
     // This is an example of Fastpath.addFunctions();
     //
-    ResultSet res = (postgresql.ResultSet)conn.createStatement().executeQuery("select proname, oid from pg_proc" +
+    java.sql.ResultSet res = (java.sql.ResultSet)conn.createStatement().executeQuery("select proname, oid from pg_proc" +
 				      " where proname = 'lo_open'" +
 				      "    or proname = 'lo_close'" +
 				      "    or proname = 'lo_creat'" +

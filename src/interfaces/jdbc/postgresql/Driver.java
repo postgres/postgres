@@ -27,8 +27,11 @@ public class Driver implements java.sql.Driver
   // These should be in sync with the backend that the driver was
   // distributed with
   static final int MAJORVERSION = 6;
-  static final int MINORVERSION = 4;
-  
+  static final int MINORVERSION = 5;
+    
+  // Cache the version of the JDK in use
+  static String connectClass;
+    
   static 
   {
     try {
@@ -49,6 +52,13 @@ public class Driver implements java.sql.Driver
    */
   public Driver() throws SQLException
   {
+      // Set the connectClass variable so that future calls will handle the correct
+      // base class
+      if(System.getProperty("java.version").startsWith("1.1")) {
+	  connectClass = "postgresql.jdbc1.Connection";
+      } else {
+	  connectClass = "postgresql.jdbc2.Connection";
+      }
   }
   
   /**
@@ -84,7 +94,19 @@ public class Driver implements java.sql.Driver
     if((props = parseURL(url,info))==null)
       return null;
     
-    return new Connection (host(), port(), props, database(), url, this);
+    DriverManager.println("Using "+connectClass);
+    
+    try {
+	postgresql.Connection con = (postgresql.Connection)(Class.forName(connectClass).newInstance());
+	con.openConnection (host(), port(), props, database(), url, this);
+	return (java.sql.Connection)con;
+    } catch(ClassNotFoundException ex) {
+	throw new SQLException("The postgresql.jar file does not contain the correct JDBC classes for this JVM. Try rebuilding.\nException thrown was "+ex.toString());
+    } catch(Exception ex2) {
+	throw new SQLException("Something unusual has occured to cause the driver to fail. Please report this exception: "+ex2.toString());
+    }
+    // The old call - remove before posting
+    //return new Connection (host(), port(), props, database(), url, this);
   }
   
   /**
@@ -315,5 +337,16 @@ public class Driver implements java.sql.Driver
   {
     return props.getProperty(name);
   }
+    
+    /**
+     * This method was added in v6.5, and simply throws an SQLException
+     * for an unimplemented method. I decided to do it this way while
+     * implementing the JDBC2 extensions to JDBC, as it should help keep the
+     * overall driver size down.
+     */
+    public static SQLException notImplemented()
+    {
+	return new SQLException("This method is not yet implemented.");
+    }
 }
 

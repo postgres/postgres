@@ -7,6 +7,9 @@ import java.util.*;
 import java.sql.*;
 import postgresql.util.*;
 
+// Important: There are a lot of debug code commented out. Please do not
+// delete these.
+
 /**
  * This class implements the Fastpath api.
  *
@@ -54,7 +57,7 @@ public class Fastpath
   {
     this.conn=conn;
     this.stream=stream;
-    DriverManager.println("Fastpath initialised");
+    //DriverManager.println("Fastpath initialised");
   }
   
   /**
@@ -109,7 +112,7 @@ public class Fastpath
     Object result = null; // our result
     while(true) {
       int in = stream.ReceiveChar();
-      DriverManager.println("ReceiveChar() = "+in+" '"+((char)in)+"'");
+      //DriverManager.println("ReceiveChar() = "+in+" '"+((char)in)+"'");
       switch(in)
 	{
 	case 'V':
@@ -120,7 +123,7 @@ public class Fastpath
 	  //
 	case 'G':
 	  int sz = stream.ReceiveIntegerR(4);
-	  DriverManager.println("G: size="+sz);  //debug
+	  //DriverManager.println("G: size="+sz);  //debug
 	  
 	  // Return an Integer if
 	  if(resulttype)
@@ -149,7 +152,7 @@ public class Fastpath
 	  // Here we simply return res, which would contain the result
 	  // processed earlier. If no result, this already contains null
 	case '0':
-	  DriverManager.println("returning "+result);
+	  //DriverManager.println("returning "+result);
 	  return result;
 	  
 	default:
@@ -181,7 +184,7 @@ public class Fastpath
    */
   public Object fastpath(String name,boolean resulttype,FastpathArg[] args) throws SQLException
   {
-    DriverManager.println("Fastpath: calling "+name);
+    //DriverManager.println("Fastpath: calling "+name);
     return fastpath(getID(name),resulttype,args);
   }
   

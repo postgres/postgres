@@ -15,8 +15,11 @@ list:
 
 	http://www.postgresql.org
 
-By the time V6.3 is released, full documentation will be on the web, and in
-the distribution.
+When PostgreSQL V6.4 was released, full documentation for the driver was
+included in the main documentation tree (under the doc directory).
+
+This file was finally amended on December 29 1998 to account for the major
+changes made to the driver since V6.4 was released.
 
 ---------------------------------------------------------------------------
 
@@ -28,14 +31,35 @@ This will compile the driver, and build a .jar file (Java ARchive).
 REMEMBER: once you have compiled the driver, it will work on ALL platforms
 that support the JDK 1.1 api or later.
 
+The V6.5 driver introduced support for the JDBC2 specification (which is used
+with JDK 1.2 api and later). This caused us some problems because classes
+written for JDBC1 and JDBC2 are not compatible, so a large chunk of the
+driver had to be re-written to accomodate this.
+
+Running make will build a .jar file (postgresql.jar) which contains the driver.
+That jar file will contain the driver for _your_ version of the JDK. That is,
+if you run make using JDK 1.1.7, then you will get the JDBC1 driver. If you
+run using 1.2 then you will get the JDBC2 driver.
+
+Tip: If you want the driver to run on both JDBC1 or JDBC2, first compile under
+JDK 1.1.x, then recompile under JDK 1.2.
+
+In testing, I've done this using 1.1.6 (running under linux), and running make
+on my Win95 based Laptop (CygWin B20.1 was used to get a GNUMake - and a
+decent shell {bash}).
+
+When the .jar file is built, it includes all the classes under postgresql, and
+the driver automatically selects the correct classes.
+
 That means you don't have to compile it on every platform. Believe me, I
 still hear from people who ask me "I've compiled it ok under Solaris, but it
 won't compile under Linux" - there's no difference.
 
-PS: When you run make, don't worry if you see just one or two calls to javac.
-    If, while compiling a class, javac needs another class that's not compiled,
-    it will compile it automatically. This reduces the numer of calls to javac
-    that make has to do.
+PS: When you run make, don't worry if you see more than one or two calls to
+    javac. This is normal, because the driver dynamically loads classes, and
+    the Makefile ensures everything gets compiled.
+
+I advise you don't try running javac outside of make. You may miss something.
 
 Possible problems
 
@@ -46,6 +70,9 @@ postgresql/Driver.java:87: interface java.sql.Connection is an interface. It can
 
 This is caused by not having the current directory in your CLASSPATH. Under
 Linux/Solaris, unset the CLASSPATH environment variable, and rerun make.
+
+If you are still having problems, I keep a copy of the driver (for different
+versions of the backend) on my web site http://www.retep.org.uk/postgres/
 
 ---------------------------------------------------------------------------
 
@@ -120,23 +147,11 @@ them to the URL. eg:
 	jdbc:postgresql:database?user=me
 	jdbc:postgresql:database?user=me&password=mypass
 
-By default, the driver doesn't use password authentication. You can enable
-this by adding the argument auth. ie:
+Previous versions you had to use an auth argument to tell the driver what
+authentication scheme to use when connecting to the database.
 
-	jdbc:postgresql:database?user=me&password=mypass&auth=password
-
-or if passing the user & password directly via DriverManager.getConnection():
-
-	jdbc:postgresql:database?auth=password
-
-PS: Password authentication is enabled if the value of auth starts with 'p'.
-    It is case insensitive.
-
-As of postgresql 6.3, Ident (RFC 1413) authentication is also supported.
-Simply use auth=ident in the url.
-
-Also, as of 6.3, a system property of postgresql.auth is supported. This
-defines the default authentication to use. The auth property overides this.
+However, this is no longer supported because the database tells the driver
+what scheme it's expecting.
 
 ---------------------------------------------------------------------------
 
@@ -147,15 +162,6 @@ POSTGRESQL SPECIFICS
 --------------------
 
 Date datatype:
-
-The driver now supports US and European date styles (although it is currently
-limited to postgres format).
-
-Basically the US like to format their dates as mm-dd-yyyy, while in Europe,
-we like to use dd-mm-yyyy. Postgres supports this by the DateStyle variable.
-From psql, you can issue "set datestyle='european';" to set european style,
-and "set datestyle='us';" to set the US format. You can see what the current
-value for this with "show datestyle;".
 
 The driver now issues the "show datestyle;" query when it first connects, so
 any call to ResultSet.getDate() how returns the correct date.
@@ -171,13 +177,16 @@ ie:
 	s.executeUpdate("show datestyle");
 	..
 	s.close();
-	
+
+Please note: This may change later, so that the driver uses the same format
+internally (similar to how the ODBC driver works).
+
 			------------------
 
 JDBC supports database specific data types using the getObject() call. The
 following types have their own Java equivalents supplied by the driver:
 
-	box, circle, lseg, path, point, polygon
+	box, circle, line, lseg, path, point, polygon
 
 When using the getObject() method on a resultset, it returns a PG_Object,
 which holds the postgres type, and its value. This object also supports
@@ -194,10 +203,9 @@ syntax for writing these to the database.
 
 ---------------------------------------------------------------------------
 
-Peter T Mount, January 11 1998
-home email: pmount@maidast.demon.co.uk	http://www.demon.co.uk/finder
-work email: peter@maidstone.gov.uk	http://www.maidstone.gov.uk
+Peter T Mount, December 29 1998
+home email: pmount@retep.org.uk		http://www.retep.org.uk
+work email: petermount@it.maidstone.gov.uk or peter@taer.maidstone.gov.uk
 
-Adrian Hall
-     email: adrian@hottub.org
-
+PS: Please use the home email whenever possible. If you must contact me at work
+then please cc my home one at the same time.

@@ -1,3 +1,42 @@
+Tue Dec 29 15:45:00 GMT 1998
+	- Refreshed the README (which was way out of date)
+
+Tue Dec 29 15:45:00 GMT 1998
+	- Finished adding the additional methods into the JDBC2 driver.
+	- Had to add some explicit package references for the JDK1.2 Javac to
+	  cope with the driver
+
+Tue Dec 29 12:40:00 GMT 1998
+	- Fixed package imports and some references to java.sql.ResultSet in
+	  various files. Compiled and tested the JDBC1 driver.
+
+Mon Dec 28 19:01:37 GMT 1998
+	- created a new package postgresql.jdbc2 which will contain the JDBC 2
+	  specific classes. A similar new package (postgresql.jdbc1) has been
+	  created to hold the JDBC 1 specific classes.
+	- modified Makefile to allow compilation of the JDBC 1 & 2 drivers,
+	  with the possibility of building a dual-spec driver.
+	- changed the version number in postgresql.Driver to 6.5
+	- modified postgresql.Driver class to initiate the correct driver when
+	  used under a 1.1 or 1.2+ JVM.
+	- postgresql.Connection and postgresql.jdbc2.Connection now extends the
+	  new class postgresql.ConnectionStub, which allows us to dynamically
+	  open the JDBC1 or JDBC2 drivers.
+	- enabled compilation of the driver under Win32 when using the Make
+	  from the CygWin package (Cygnus B20.1 was used).
+	- To make future development easier (now we have 2 specifications to
+	  work with) the following classes have moved from the postgresql to
+	  the postgresql.jdbc1 package:
+		CallableStatement	Connection
+		DatabaseMetaData	PreparedStatement
+		ResultSet		ResultSetMetaData
+		Statement
+	  Some of these classes have common code that is not dependent on
+	  either JDBC specification. These common code are still in the
+	  postgresql package.
+		Ie: postgresql.jdbc1.Connection extends postgresql.Connection
+		and postgresql.jdbc2.Connection extends postgresql.Connection
+
 Web Oct  7 22:00:00 BST 1998
 	- removed syncronised from Connection.ExecSQL(). See next entry.
 	- added new syncronised locking in the Connection.ExecSQL() and

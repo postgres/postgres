@@ -112,14 +112,40 @@ public class LargeObject
    * @return byte[] array containing data read
    * @exception SQLException if a database-access error occurs.
    */
-  public byte[] read(int len) throws SQLException
-  {
-    FastpathArg args[] = new FastpathArg[2];
-    args[0] = new FastpathArg(fd);
-    args[1] = new FastpathArg(len);
-    return fp.getData("loread",args);
-  }
-  
+    public byte[] read(int len) throws SQLException
+    {
+	// This is the original method, where the entire block (len bytes)
+	// is retrieved in one go.
+	FastpathArg args[] = new FastpathArg[2];
+	args[0] = new FastpathArg(fd);
+	args[1] = new FastpathArg(len);
+	return fp.getData("loread",args);
+	
+	// This version allows us to break this down into 4k blocks
+	//if(len<=4048) {
+	//// handle as before, return the whole block in one go
+	//FastpathArg args[] = new FastpathArg[2];
+	//args[0] = new FastpathArg(fd);
+	//args[1] = new FastpathArg(len);
+	//return fp.getData("loread",args);
+	//} else {
+	//// return in 4k blocks
+	//byte[] buf=new byte[len];
+	//int off=0;
+	//while(len>0) {
+	//int bs=4048;
+	//len-=bs;
+	//if(len<0) {
+	//bs+=len;
+	//len=0;
+	//}
+	//read(buf,off,bs);
+	//off+=bs;
+	//}
+	//return buf;
+	//}
+    }
+    
   /**
    * Reads some data from the object into an existing array
    *

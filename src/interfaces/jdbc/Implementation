@@ -1,0 +1,123 @@
+This short document is provided to help programmers through the internals of
+the PostgreSQL JDBC driver.
+
+Makefile
+--------
+
+All compilation must be done by using Make. This is because there are two
+versions of the driver, one for JDBC1 (for JDK 1.1.x) and the other for JDBC2
+(for JDK 1.2 or later). The makefile determines which version to compile by
+using a helper class makeVersion. This class is only used by make, and is not
+stored in the Jar file.
+
+Note:	It is not sufficient to simply call javac on postgresql/Driver.java as
+	some classes are dynamically loaded, so javac will not compile them.
+
+postgresql.jar
+--------------
+
+This jar file is produced by make, and contains the driver for your JDK
+platform.
+
+Note:	It is possible to compile the driver under say JDK1.1.7, then under
+	JDK 1.2. Because make doesn't remove the old classes before compiling,
+	jar will simply package both sets together. When the driver is loaded,
+	the postgresql.Driver class will sort out which set of classes to use.
+
+Importing packages
+------------------
+
+In user code, you may have to import one or more packages, if and only if you
+are using the non jdbc extensions (like FastPath, or LargeObject).
+
+DO NOT import the postgresql, postgresql.jdbc1 or postgresql.jdbc2 packages!
+
+Internally, some classes will import the packages when there is a link between
+them and the other packages. However, the above rule still applies. It's there
+because Javac becomes confused between the different places that similar class
+names are present.
+
+However, there are places where they need to refer to classes in the postgresql
+package. In this case, import the individual classes, and not the entire
+package.
+
+ie:	import postgresql.Field
+
+    NOT	import postgresql.*
+
+Package Layout
+--------------
+
+The driver is split into several packages:
+
+postgresql			core classes, common to both JDBC 1 & 2
+postgresql.jdbc1		classes used only in implementing JDBC 1
+postgresql.jdbc2		classes used only in implementing JDBC 2
+postgresql.fastpath		FastPath to backend functions
+postgresql.geometric		2D Geometric types mapped to Java Objects
+postgresql.largeobject		Low level Large Object access
+postgresql.util			Utility classes
+
+
+Package postgresql
+------------------
+
+This package holds the core classes.
+
+Driver		registers the driver when it's loaded, and determines which
+		Connection class (in jdbc1 or jdbc2 packages) to use when
+		connecting to a database.
+
+Field		Used internally to represent a Field
+PG_Stream	Used internally to manage the network stream.
+
+	These classes contains common code that is not dependent to the
+	two JDBC specifications.
+
+Connection	Common code used in Connections, mainly Network Protocol stuff.
+ResultSet	Common code used in ResultSet's
+
+Package postgresql.fastpath
+---------------------------
+
+Fastpath	Handles executing a function on the PostgreSQL Backend
+FastpathArg	Defines an argument for a function call
+
+Package postgresql.geometric
+----------------------------
+
+PGbox		Maps to postgresql type box
+PGcircle	Maps to postgresql type circle
+PGline		Maps to postgresql type line
+PGlseg		Maps to postgresql type lseg
+PGpath		Maps to postgresql type path
+PGpoint		Maps to postgresql type point
+PGpolygon	Maps to postgresql type polygon
+
+Package postgresql.jdbc1
+------------------------
+
+The classes in this package handle the JDBC 1 Specification, for JDK 1.1.x
+All interfaces in the java.sql package are present here.
+
+Package postgresql.jdbc2
+------------------------
+
+The classes in this package handle the JDBC 2 Specification, for JDK 1.2
+All interfaces in the java.sql, and javax.sql packages are present here.
+
+Package postgresql.largeobject
+------------------------------
+
+LargeObject		Represents an open LargeObject
+LargeObjectManager	Handles the opening and deleting of LargeObjects
+
+Package postgresql.util
+-----------------------
+
+PGmoney		Maps to postgresql type money
+PGobject	Used to represent postgresql types that have no Java equivalent
+PGtokenizer	Helper class for the geometric types
+Serialize	Used to serialise Java objects into tabes, rather than Blobs
+UnixCrypt	Used to handle crypt authentication
+
