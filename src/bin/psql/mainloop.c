@@ -3,7 +3,7 @@
  *
  * Copyright 2000 by PostgreSQL Global Development Group
  *
- * $Header: /cvsroot/pgsql/src/bin/psql/mainloop.c,v 1.48 2002/06/15 19:37:48 momjian Exp $
+ * $Header: /cvsroot/pgsql/src/bin/psql/mainloop.c,v 1.49 2002/07/03 16:47:46 tgl Exp $
  */
 #include "postgres_fe.h"
 #include "mainloop.h"
@@ -366,41 +366,46 @@ MainLoop(FILE *source)
 										 * temporarily overwritten */
 
 				in_length = strspn(&line[i + thislen], VALID_VARIABLE_CHARS);
+				/* mark off the possible variable name */
 				after = line[i + thislen + in_length];
 				line[i + thislen + in_length] = '\0';
 
-				/*
-				 * if the variable doesn't exist we'll leave the string as
-				 * is
-				 */
 				value = GetVariable(pset.vars, &line[i + thislen]);
+
+				/* restore overwritten character */
+				line[i + thislen + in_length] = after;
+
 				if (value)
 				{
+					/* It is a variable, perform substitution */
 					out_length = strlen(value);
 
-					/* Allow for 'after' character also 2002-05-27 */
-					new = malloc(len + out_length - (1 + in_length) + 1 + 1);
+					new = malloc(len + out_length - in_length + 1);
 					if (!new)
 					{
 						psql_error("out of memory\n");
 						exit(EXIT_FAILURE);
 					}
 
-					sprintf(new, "%.*s%s%c", i, line, value, after);
-					if (after)
-						strcat(new, line + i + 1 + in_length + 1);
+					sprintf(new, "%.*s%s%s", i, line, value,
+							&line[i + thislen + in_length]);
 
 					free(line);
 					line = new;
 					len = strlen(new);
 
-					goto rescan;	/* reparse the just substituted */
+					if (i < len)
+					{
+						thislen = PQmblen(line+i, pset.encoding);
+						goto rescan;	/* reparse the just substituted */
+					}
 				}
 				else
 				{
-					/* restore overwritten character */
-					line[i + thislen + in_length] = after;
-					/* move on ... */
+					/*
+					 * if the variable doesn't exist we'll leave the string as
+					 * is ... move on ...
+					 */
 				}
 			}
 
