@@ -9,7 +9,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/commands/variable.c,v 1.61 2002/03/29 19:06:07 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/commands/variable.c,v 1.62 2002/04/21 19:12:46 thomas Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -223,9 +223,9 @@ parse_datestyle_internal(char *value)
 		{
 			DateStyle = USE_GERMAN_DATES;
 			dcnt++;
-			EuroDates = TRUE;
 			if ((ecnt > 0) && (!EuroDates))
 				ecnt++;
+			EuroDates = TRUE;
 		}
 		else if (!strncasecmp(tok, "EURO", 4))
 		{
@@ -247,11 +247,11 @@ parse_datestyle_internal(char *value)
 			ecnt++;
 		}
 		else
-			elog(ERROR, "Bad value for date style (%s)", tok);
+			elog(ERROR, "SET DATESTYLE bad value (%s)", tok);
 	}
 
 	if (dcnt > 1 || ecnt > 1)
-		elog(WARNING, "Conflicting settings for date");
+		elog(WARNING, "SET DATESTYLE specified conflicting settings");
 
 	return TRUE;
 }
@@ -259,16 +259,51 @@ parse_datestyle_internal(char *value)
 static bool
 parse_datestyle(List *args)
 {
+	int			rstat;
+	List	   *arg;
 	char	   *value;
 
 	if (args == NULL)
 		return reset_datestyle();
 
-	Assert(IsA(lfirst(args), A_Const));
+	Assert(IsA(args, List));
 
-	value = ((A_Const *) lfirst(args))->val.val.str;
+	foreach(arg, args)
+	{
+		Node	   *n;
 
-	return parse_datestyle_internal(value);
+		Assert(IsA(arg, List));
+		n = lfirst(arg);
+
+		/* Require untyped, stringy constants for arguments. */
+		if (IsA(n, A_Const))
+		{
+			A_Const    *p = (A_Const *) n;
+			TypeName   *type = p->typename;
+			Value	   *v = &(p->val);
+
+			if (type != NULL)
+			{
+				Value *s;
+				Assert(IsA(type->names, List));
+				s = (Value *) lfirst(type->names);
+				elog(ERROR, "SET DATESTYLE does not allow input of type %s", s->val.str);
+			}
+
+			value = v->val.str;
+		}
+		else
+		{
+			elog(ERROR, "SET DATESTYLE argument is not valid");
+		}
+
+		rstat = parse_datestyle_internal(value);
+
+		if (rstat != TRUE)
+			return rstat;
+	}
+
+	return rstat;
 }
 
 static bool
@@ -554,8 +589,12 @@ parse_XactIsoLevel(List *args)
 	if (args == NULL)
 		return reset_XactIsoLevel();
 
+	Assert(IsA(args, List));
 	Assert(IsA(lfirst(args), A_Const));
+	/* Should only get one argument from the parser */
+	Assert(lnext(args) == NIL);
 
+	Assert(((A_Const *) lfirst(args))->val.type = T_String);
 	value = ((A_Const *) lfirst(args))->val.val.str;
 
 	if (SerializableSnapshot != NULL)
@@ -607,17 +646,33 @@ reset_XactIsoLevel(void)
 static bool
 parse_random_seed(List *args)
 {
-	char	   *value;
+	A_Const    *p;
 	double		seed = 0;
 
 	if (args == NULL)
 		return reset_random_seed();
 
-	Assert(IsA(lfirst(args), A_Const));
+	Assert(IsA(args, List));
+	/* Should only get one argument from the parser */
+	Assert(lnext(args) == NIL);
 
-	value = ((A_Const *) lfirst(args))->val.val.str;
+	p = lfirst(args);
+	Assert(IsA(p, A_Const));
 
-	sscanf(value, "%lf", &seed);
+	if ((p->val.type == T_String)
+		|| (p->val.type == T_Float))
+	{
+		seed = DatumGetFloat8(DirectFunctionCall1(float8in, CStringGetDatum(p->val.val.str)));
+	}
+	else if (p->val.type == T_Integer)
+	{
+		seed = p->val.val.ival;
+	}
+	else
+	{
+		elog(ERROR, "SET SEED internal coding error");
+	}
+
 	DirectFunctionCall1(setseed, Float8GetDatum(seed));
 
 	return (TRUE);
@@ -662,6 +717,10 @@ parse_client_encoding(List *args)
 		return reset_client_encoding();
 
 	Assert(IsA(lfirst(args), A_Const));
+	if (((A_Const *) lfirst(args))->val.type != T_String)
+	{
+		elog(ERROR, "SET CLIENT_ENCODING requires an encoding name");
+	}
 
 	value = ((A_Const *) lfirst(args))->val.val.str;
 
@@ -778,12 +837,36 @@ SetPGVariable(const char *name, List *args)
 		 */
 		char	   *value;
 
-		value = ((args != NULL) ? ((A_Const *) lfirst(args))->val.val.str : NULL);
+		if (args != NULL)
+		{
+			A_Const *n;
+
+			/* Ensure one argument only... */
+			if (lnext(args) != NIL)
+				elog(ERROR, "SET takes only one argument for this parameter");
+			n = (A_Const *) lfirst(args);
+			/* If this is a T_Integer, then we should convert back to a string
+			 * but for now we just reject the parameter.
+			 */
+			if ((n->val.type != T_String)
+				&& (n->val.type != T_Float))
+				elog(ERROR, "SET requires a string argument for this parameter"
+					 "\n\tInternal coding error: report to thomas@fourpalms.org");
+
+			value = n->val.val.str;
+		}
+		else
+		{
+			value = NULL;
+		}
 
 		if (strcasecmp(name, "session_authorization") == 0)
 			SetSessionAuthorization(value);
 		else
-			SetConfigOption(name, value, superuser() ? PGC_SUSET : PGC_USERSET, PGC_S_SESSION);
+			SetConfigOption(name,
+							value,
+							(superuser() ? PGC_SUSET : PGC_USERSET),
+							PGC_S_SESSION);
 	}
 	return;
 }
