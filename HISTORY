@@ -1,6 +1,35 @@
  
                                Release Notes
 
+                               Release 7.3.8
+
+     Release date: 2004-10-22
+
+   This release contains a variety of fixes from 7.3.7.
+     _________________________________________________________________
+
+                         Migration to version 7.3.8
+
+   A dump/restore is not required for those running 7.3.X.
+     _________________________________________________________________
+
+                                  Changes
+
+     * Repair possible failure to update hint bits on disk
+       Under rare circumstances this oversight could lead to "could not
+       access transaction status" failures, which qualifies it as a
+       potential-data-loss bug.
+     * Ensure that hashed outer join does not miss tuples
+       Very large left joins using a hash join plan could fail to output
+       unmatched left-side rows given just the right data distribution.
+     * Disallow running pg_ctl as root
+       This is to guard against any possible security issues.
+     * Avoid using temp files in /tmp in make_oidjoins_check
+       This has been reported as a security issue, though it's hardly
+       worthy of concern since there is no reason for non-developers to
+       use this script anyway.
+     _________________________________________________________________
+
                                Release 7.3.7
 
      Release date: 2004-08-16
@@ -847,6 +876,68 @@ Contrib
    Move /contrib/pg_controldata, pg_resetxlog into main tree (Bruce)
    Fixes to /contrib/cube (Bruno Wolff)
    Improve /contrib/fulltextindex (Christopher)
+     _________________________________________________________________
+
+                               Release 7.2.6
+
+     Release date: 2004-10-22
+
+   This release contains a variety of fixes from 7.2.5.
+     _________________________________________________________________
+
+                         Migration to version 7.2.6
+
+   A dump/restore is not required for those running 7.2.X.
+     _________________________________________________________________
+
+                                  Changes
+
+     * Repair possible failure to update hint bits on disk
+       Under rare circumstances this oversight could lead to "could not
+       access transaction status" failures, which qualifies it as a
+       potential-data-loss bug.
+     * Ensure that hashed outer join does not miss tuples
+       Very large left joins using a hash join plan could fail to output
+       unmatched left-side rows given just the right data distribution.
+     * Disallow running pg_ctl as root
+       This is to guard against any possible security issues.
+     * Avoid using temp files in /tmp in make_oidjoins_check
+       This has been reported as a security issue, though it's hardly
+       worthy of concern since there is no reason for non-developers to
+       use this script anyway.
+     * Update to newer versions of Bison
+     _________________________________________________________________
+
+                               Release 7.2.5
+
+     Release date: 2004-08-16
+
+   This release contains a variety of fixes from 7.2.4.
+     _________________________________________________________________
+
+                         Migration to version 7.2.5
+
+   A dump/restore is not required for those running 7.2.X.
+     _________________________________________________________________
+
+                                  Changes
+
+     * Prevent possible loss of committed transactions during crash
+       Due to insufficient interlocking between transaction commit and
+       checkpointing, it was possible for transactions committed just
+       before the most recent checkpoint to be lost, in whole or in part,
+       following a database crash and restart. This is a serious bug that
+       has existed since PostgreSQL 7.1.
+     * Fix corner case for btree search in parallel with first root page
+       split
+     * Fix buffer overrun in to_ascii (Guido Notari)
+     * Fix core dump in deadlock detection on machines where char is
+       unsigned
+     * Fix failure to respond to "pg_ctl stop -m fast" after
+       Async_NotifyHandler runs
+     * Repair memory leaks in pg_dump
+     * Avoid conflict with system definition of isblank() function or
+       macro
      _________________________________________________________________
 
                                Release 7.2.4
