@@ -112,6 +112,17 @@ them to the URL. eg:
 	jdbc:postgresql:database?user=me
 	jdbc:postgresql:database?user=me&password=mypass
 
+By default, the driver doesn't use password authentication. You can enable
+this by adding the argument auth. ie:
+
+	jdbc:postgresql:database?user=me&password=mypass&auth=y
+
+or if passing the user & password directly via DriverManager.getConnection():
+
+	jdbc:postgresql:database?auth=y
+
+PS: 'y' could be anything, aslong as there is something after the '='
+
 ---------------------------------------------------------------------------
 
 That's the basics related to this driver. You'll need to read the JDBC Docs
@@ -119,6 +130,34 @@ on how to use it.
 
 POSTGRESQL SPECIFICS
 --------------------
+
+Date datatype:
+
+The driver now supports US and European date styles (although it is currently
+limited to postgres format).
+
+Basically the US like to format their dates as mm-dd-yyyy, while in Europe,
+we like to use dd-mm-yyyy. Postgres supports this by the DateStyle variable.
+From psql, you can issue "set datestyle='european';" to set european style,
+and "set datestyle='us';" to set the US format. You can see what the current
+value for this with "show datestyle;".
+
+The driver now issues the "show datestyle;" query when it first connects, so
+any call to ResultSet.getDate() how returns the correct date.
+
+One caveat though: if you change the datestyle from within JDBC, you must also
+issue the "show datestyle" query. Without this, the driver will not know of
+the change.
+
+ie:
+	Statement s = db.createStatement();
+	...
+	s.executeUpdate("set datestyle='european'");
+	s.executeUpdate("show datestyle");
+	..
+	s.close();
+	
+			------------------
 
 JDBC supports database specific data types using the getObject() call. The
 following types have their own Java equivalents supplied by the driver:
@@ -140,9 +179,10 @@ syntax for writing these to the database.
 
 ---------------------------------------------------------------------------
 
-Peter T Mount, August 30 1997
+Peter T Mount, October 28 1997
 home email: pmount@maidast.demon.co.uk	http://www.demon.co.uk/finder
 work email: peter@maidstone.gov.uk	http://www.maidstone.gov.uk
 
 Adrian Hall
      email: adrian@hottub.org
+

@@ -377,17 +377,22 @@ public class ResultSet implements java.sql.ResultSet
     
     if (s != null)
       {
-	try
-	  {
-	    if (s.length() != 10)
-	      throw new NumberFormatException("Wrong Length!");
-	    int mon = Integer.parseInt(s.substring(0,2));
-	    int day = Integer.parseInt(s.substring(3,5));
-	    int yr = Integer.parseInt(s.substring(6));
-	    return new java.sql.Date(yr - 1900, mon -1, day);
-	  } catch (NumberFormatException e) {
-	    throw new SQLException("Bad Date Form: " + s);
+	try {
+	  if (s.length() != 10)
+	    throw new NumberFormatException("Wrong Length!");
+	  int mon = Integer.parseInt(s.substring(0,2));
+	  int day = Integer.parseInt(s.substring(3,5));
+	  int yr = Integer.parseInt(s.substring(6));
+	  if(connection.europeanDates) {
+	    // We europeans prefer dd mm yyyy
+	    int t = mon;
+	    mon = day;
+	    day = t;
 	  }
+	  return new java.sql.Date(yr - 1900, mon -1, day);
+	} catch (NumberFormatException e) {
+	  throw new SQLException("Bad Date Form: " + s);
+	}
       }
     return null;		// SQL NULL
   }
@@ -432,19 +437,24 @@ public class ResultSet implements java.sql.ResultSet
   public Timestamp getTimestamp(int columnIndex) throws SQLException
   {
     String s = getString(columnIndex);
-    DateFormat df = DateFormat.getDateInstance();
+    SimpleDateFormat df = new SimpleDateFormat("yyyy-MM-dd HH:mm:sszzz");
     
     if (s != null)
       {
-	try
-	  {
-	    java.sql.Date d = (java.sql.Date)df.parse(s);
-	    return new Timestamp(d.getTime());
-	  } catch (ParseException e) {
-	    throw new SQLException("Bad Timestamp Format: " + s);
-	  }
+	int TZ = new Float(s.substring(19)).intValue();
+	TZ = TZ * 60 * 60 * 1000;
+	TimeZone zone = TimeZone.getDefault();
+	zone.setRawOffset(TZ);
+	String nm = zone.getID();
+	s = s.substring(0,18) + nm;
+	try {
+	  java.util.Date d = df.parse(s);
+	  return new Timestamp(d.getTime());
+	} catch (ParseException e) {
+	  throw new SQLException("Bad Timestamp Format: at " + e.getErrorOffset() + " in " + s);
+	}
       }
-    return null;		// SQL NULL
+    return null;                // SQL NULL
   }
   
   /**
