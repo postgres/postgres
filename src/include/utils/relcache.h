@@ -6,7 +6,7 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: relcache.h,v 1.4 1996/11/10 03:06:33 momjian Exp $
+ * $Id: relcache.h,v 1.5 1997/06/04 09:01:49 vadim Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -27,6 +27,7 @@ extern Relation getreldesc(char *relationName);
 extern void RelationClose(Relation relation);
 extern void RelationFlushRelation(Relation *relationPtr,
 				  bool	onlyFlushReferenceCountZero);
+extern void RelationForgetRelation(Oid rid);
 extern void RelationIdInvalidateRelationCacheByRelationId(Oid relationId);
 
 extern void 
