@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *    $Header: /cvsroot/pgsql/src/backend/storage/smgr/md.c,v 1.12 1997/05/06 02:03:20 vadim Exp $
+ *    $Header: /cvsroot/pgsql/src/backend/storage/smgr/md.c,v 1.13 1997/05/22 17:08:33 vadim Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -42,25 +42,29 @@
  */
 
 typedef struct _MdfdVec {
-    int			mdfd_vfd; /* fd number in vfd pool */
-    uint16		mdfd_flags; /* clean, dirty */
-    int			mdfd_lstbcnt; /* most recent block count */
-    struct _MdfdVec	*mdfd_chain; /* for large relations */
+    int			mdfd_vfd;	/* fd number in vfd pool */
+    uint16		mdfd_flags;	/* clean, dirty, free */
+    int			mdfd_lstbcnt;	/* most recent block count */
+    int			mdfd_nextFree;	/* next free vector */
+    struct _MdfdVec	*mdfd_chain;	/* for large relations */
 } MdfdVec;
 
 static int	Nfds = 100;
 static MdfdVec	*Md_fdvec = (MdfdVec *) NULL;
+static int	Md_Free = -1;
 static int	CurFd = 0;
 static MemoryContext	MdCxt;
 
 #define MDFD_DIRTY	(uint16) 0x01
+#define MDFD_FREE	(uint16) 0x02
 
 #define	RELSEG_SIZE	262144		/* (2 ** 31) / 8192 -- 2GB file */
 
 /* routines declared here */
 static MdfdVec	*_mdfd_openseg(Relation reln, int segno, int oflags);
 static MdfdVec	*_mdfd_getseg(Relation reln, int blkno, int oflag);
-static int _fdvec_ext(void);
+static int _fdvec_alloc (void);
+static void _fdvec_free (int);
 static BlockNumber _mdnblocks(File file, Size blcksz);
 
 /*
@@ -78,6 +82,7 @@ int
 mdinit()
 {
     MemoryContext oldcxt;
+    int i;
 
     MdCxt = (MemoryContext) CreateGlobalMemory("MdSmgr");
     if (MdCxt == (MemoryContext) NULL)
@@ -90,7 +95,16 @@ mdinit()
     if (Md_fdvec == (MdfdVec *) NULL)
 	return (SM_FAIL);
 
-    memset(Md_fdvec, 0, Nfds * sizeof(MdfdVec)); 
+    memset(Md_fdvec, 0, Nfds * sizeof(MdfdVec));
+
+    /* Set free list */
+    for (i = 0; i < Nfds; i++ )
+    {
+    	Md_fdvec[i].mdfd_nextFree = i + 1;
+    	Md_fdvec[i].mdfd_flags = MDFD_FREE;
+    }
+    Md_Free = 0;
+    Md_fdvec[Nfds - 1].mdfd_nextFree = -1;
 
     return (SM_SUCCESS);
 }
@@ -124,18 +138,15 @@ mdcreate(Relation reln)
 	if ( fd < 0 )
 	    return (-1);
     }
+    
+    vfd = _fdvec_alloc ();
+    if ( vfd < 0 )
+	return (-1);
 
-    if (CurFd >= Nfds) {
-	if (_fdvec_ext() == SM_FAIL)
-	    return (-1);
-    }
-
-    Md_fdvec[CurFd].mdfd_vfd = fd;
-    Md_fdvec[CurFd].mdfd_flags = (uint16) 0;
-    Md_fdvec[CurFd].mdfd_chain = (MdfdVec *) NULL;
-    Md_fdvec[CurFd].mdfd_lstbcnt = 0;
-
-    vfd = CurFd++;
+    Md_fdvec[vfd].mdfd_vfd = fd;
+    Md_fdvec[vfd].mdfd_flags = (uint16) 0;
+    Md_fdvec[vfd].mdfd_chain = (MdfdVec *) NULL;
+    Md_fdvec[vfd].mdfd_lstbcnt = 0;
 
     return (vfd);
 }
@@ -175,7 +186,9 @@ mdunlink(Relation reln)
     Md_fdvec[fd].mdfd_flags = (uint16) 0;
 
     oldcxt = MemoryContextSwitchTo(MdCxt);
-    for (v = &Md_fdvec[fd]; v != (MdfdVec *) NULL; ) {
+    for (v = &Md_fdvec[fd]; v != (MdfdVec *) NULL; )
+    {
+    	FileUnlink(v->mdfd_vfd);
 	ov = v;
 	v = v->mdfd_chain;
 	if (ov != &Md_fdvec[fd])
@@ -183,6 +196,8 @@ mdunlink(Relation reln)
     }
     Md_fdvec[fd].mdfd_chain = (MdfdVec *) NULL;
     (void) MemoryContextSwitchTo(oldcxt);
+
+    _fdvec_free (fd);
 
     return (SM_SUCCESS);
 }
@@ -235,11 +250,6 @@ mdopen(Relation reln)
     int fd;
     int vfd;
 
-    if (CurFd >= Nfds) {
-	if (_fdvec_ext() == SM_FAIL)
-	    return (-1);
-    }
-
     path = relpath(&(reln->rd_rel->relname.data[0]));
 
     fd = FileNameOpenFile(path, O_RDWR, 0600);
@@ -248,23 +258,28 @@ mdopen(Relation reln)
     if (fd < 0)
 	fd = FileNameOpenFile(path, O_RDWR|O_CREAT|O_EXCL, 0600);
 
-    Md_fdvec[CurFd].mdfd_vfd = fd;
-    Md_fdvec[CurFd].mdfd_flags = (uint16) 0;
-    Md_fdvec[CurFd].mdfd_chain = (MdfdVec *) NULL;
-    Md_fdvec[CurFd].mdfd_lstbcnt = _mdnblocks(fd, BLCKSZ);
+    vfd = _fdvec_alloc ();
+    if ( vfd < 0 )
+	return (-1);
+
+    Md_fdvec[vfd].mdfd_vfd = fd;
+    Md_fdvec[vfd].mdfd_flags = (uint16) 0;
+    Md_fdvec[vfd].mdfd_chain = (MdfdVec *) NULL;
+    Md_fdvec[vfd].mdfd_lstbcnt = _mdnblocks(fd, BLCKSZ);
 
 #ifdef DIAGNOSTIC
-    if (Md_fdvec[CurFd].mdfd_lstbcnt > RELSEG_SIZE)
+    if (Md_fdvec[vfd].mdfd_lstbcnt > RELSEG_SIZE)
 	elog(FATAL, "segment too big on relopen!");
 #endif
-
-    vfd = CurFd++;
 
     return (vfd);
 }
 
 /*
- *  mdclose() -- Close the specified relation.
+ *  mdclose() -- Close the specified relation
+ *
+ *	AND FREE fd vector! It may be re-used for other relation!
+ *	reln should be flushed from cache after closing !..
  *
  *	Returns SM_SUCCESS or SM_FAIL with errno set as appropriate.
  */
@@ -272,27 +287,39 @@ int
 mdclose(Relation reln)
 {
     int fd;
-    MdfdVec *v;
+    MdfdVec *v, *ov;
+    MemoryContext oldcxt;
 
     fd = RelationGetFile(reln);
 
-    for (v = &Md_fdvec[fd]; v != (MdfdVec *) NULL; v = v->mdfd_chain) {
+    oldcxt = MemoryContextSwitchTo(MdCxt);
+    for (v = &Md_fdvec[fd]; v != (MdfdVec *) NULL; )
+    {
+	/* if not closed already */
+	if ( v->mdfd_vfd >= 0 )
+	{
+	    /*
+	     *  We sync the file descriptor so that we don't need to reopen it at
+	     *  transaction commit to force changes to disk.
+	     */
 
-	/* may be closed already */
-	if (v->mdfd_vfd < 0)
-	    continue;
+	    FileSync(v->mdfd_vfd);
+	    FileClose(v->mdfd_vfd);
 
-	/*
-	 *  We sync the file descriptor so that we don't need to reopen it at
-	 *  transaction commit to force changes to disk.
-	 */
-
-	FileSync(v->mdfd_vfd);
-	FileClose(v->mdfd_vfd);
-
-	/* mark this file descriptor as clean in our private table */
-	v->mdfd_flags &= ~MDFD_DIRTY;
+	    /* mark this file descriptor as clean in our private table */
+	    v->mdfd_flags &= ~MDFD_DIRTY;
+	}
+	/* Now free vector */
+	ov = v;
+	v = v->mdfd_chain;
+	if (ov != &Md_fdvec[fd])
+	    pfree(ov);
     }
+
+    (void) MemoryContextSwitchTo(oldcxt);
+    Md_fdvec[fd].mdfd_chain = (MdfdVec *) NULL;
+    
+    _fdvec_free (fd);
 
     return (SM_SUCCESS);
 }
@@ -605,31 +632,77 @@ mdabort()
 }
 
 /*
- *  _fdvec_ext() -- Extend the md file descriptor vector.
+ *  _fdvec_alloc () -- grab a free (or new) md file descriptor vector.
  *
- *	The file descriptor vector must be large enough to hold at least
- *	'fd' entries.
  */
 static
-int _fdvec_ext()
+int _fdvec_alloc ()
 {
     MdfdVec *nvec;
+    int fdvec, i;
     MemoryContext oldcxt;
+    
+    if ( Md_Free >= 0 )		/* get from free list */
+    {
+    	fdvec = Md_Free;
+    	Md_Free = Md_fdvec[fdvec].mdfd_nextFree;
+    	Assert ( Md_fdvec[fdvec].mdfd_flags == MDFD_FREE );
+    	Md_fdvec[fdvec].mdfd_flags = 0;
+	if ( fdvec >= CurFd )
+	{
+	    Assert ( fdvec == CurFd );
+	    CurFd++;
+	}
+    	return (fdvec);
+    }
 
+    /* Must allocate more room */
+    
+    if ( Nfds != CurFd )
+    	elog (FATAL, "_fdvec_alloc error");
+    
     Nfds *= 2;
 
     oldcxt = MemoryContextSwitchTo(MdCxt);
 
     nvec = (MdfdVec *) palloc(Nfds * sizeof(MdfdVec));
     memset(nvec, 0, Nfds * sizeof(MdfdVec)); 
-    memmove(nvec, (char *) Md_fdvec, (Nfds / 2) * sizeof(MdfdVec)); 
+    memmove(nvec, (char *) Md_fdvec, CurFd * sizeof(MdfdVec)); 
     pfree(Md_fdvec);
 
     (void) MemoryContextSwitchTo(oldcxt);
 
     Md_fdvec = nvec;
 
-    return (SM_SUCCESS);
+    /* Set new free list */
+    for (i = CurFd; i < Nfds; i++ )
+    {
+    	Md_fdvec[i].mdfd_nextFree = i + 1;
+    	Md_fdvec[i].mdfd_flags = MDFD_FREE;
+    }
+    Md_fdvec[Nfds - 1].mdfd_nextFree = -1;
+    Md_Free = CurFd + 1;
+
+    fdvec = CurFd;
+    CurFd++;
+    Md_fdvec[fdvec].mdfd_flags = 0;
+
+    return (fdvec);
+}
+
+/*
+ *  _fdvec_free () -- free md file descriptor vector.
+ *
+ */
+static
+void _fdvec_free (int fdvec)
+{
+    
+    Assert ( Md_Free < 0 ||  Md_fdvec[Md_Free].mdfd_flags == MDFD_FREE );
+    Md_fdvec[fdvec].mdfd_nextFree = Md_Free;
+    Md_fdvec[fdvec].mdfd_flags = MDFD_FREE;
+    Md_Free = fdvec;
+
 }
 
 static MdfdVec *
