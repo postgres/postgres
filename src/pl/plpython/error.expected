@@ -1,12 +1,15 @@
 SELECT invalid_type_uncaught('rick');
-WARNING:  plpython: in function __plpython_procedure_invalid_type_uncaught_49801:
-plpy.SPIError: Cache lookup for type `test' failed.
+WARNING:  plpython: in function invalid_type_uncaught:
+plpy.SPIError: Unknown error in PLy_spi_prepare.
+ERROR:  Type "test" does not exist
 SELECT invalid_type_caught('rick');
-WARNING:  plpython: in function __plpython_procedure_invalid_type_caught_49802:
-plpy.SPIError: Cache lookup for type `test' failed.
+WARNING:  plpython: in function invalid_type_caught:
+plpy.SPIError: Unknown error in PLy_spi_prepare.
+ERROR:  Type "test" does not exist
 SELECT invalid_type_reraised('rick');
-WARNING:  plpython: in function __plpython_procedure_invalid_type_reraised_49803:
-plpy.SPIError: Cache lookup for type `test' failed.
+WARNING:  plpython: in function invalid_type_reraised:
+plpy.SPIError: Unknown error in PLy_spi_prepare.
+ERROR:  Type "test" does not exist
 SELECT valid_type('rick');
  valid_type 
 ------------
@@ -14,20 +17,20 @@ SELECT valid_type('rick');
 (1 row)
 
 SELECT read_file('/etc/passwd');
-ERROR:  plpython: Call of function `__plpython_procedure_read_file_49809' failed.
+ERROR:  plpython: Call of function `read_file' failed.
 exceptions.IOError: can't open files in restricted mode
 SELECT write_file('/tmp/plpython','This is very bad');
-ERROR:  plpython: Call of function `__plpython_procedure_write_file_49810' failed.
+ERROR:  plpython: Call of function `write_file' failed.
 exceptions.IOError: can't open files in restricted mode
 SELECT getpid();
-ERROR:  plpython: Call of function `__plpython_procedure_getpid_49811' failed.
-exceptions.AttributeError: getpid
+ERROR:  plpython: Call of function `getpid' failed.
+exceptions.AttributeError: 'module' object has no attribute 'getpid'
 SELECT uname();
-ERROR:  plpython: Call of function `__plpython_procedure_uname_49812' failed.
-exceptions.AttributeError: uname
+ERROR:  plpython: Call of function `uname' failed.
+exceptions.AttributeError: 'module' object has no attribute 'uname'
 SELECT sys_exit();
-ERROR:  plpython: Call of function `__plpython_procedure_sys_exit_49813' failed.
-exceptions.AttributeError: exit
+ERROR:  plpython: Call of function `sys_exit' failed.
+exceptions.AttributeError: 'module' object has no attribute 'exit'
 SELECT sys_argv();
     sys_argv    
 ----------------
