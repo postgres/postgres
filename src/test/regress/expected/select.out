@@ -241,47 +241,47 @@ linda  | 19
 QUERY: SELECT p.name, p.age FROM person* p ORDER BY age using >;
 name   |age
 -------+---
+zena   | 98
 esther | 98
 louise | 98
-zena   | 98
-martie | 88
-bertha | 88
 trisha | 88
 koko   | 88
 sarah  | 88
 trudy  | 88
+martie | 88
+bertha | 88
 vera   | 78
+sharon | 78
 carmen | 78
 chris  | 78
-sharon | 78
 susan  | 78
 wendy  | 78
-velma  | 68
 leah   | 68
-julie  | 68
+velma  | 68
 paula  | 68
+julie  | 68
 larry  | 60
-carina | 58
 juanita| 58
 jane   | 58
 zola   | 58
+carina | 58
 sue    | 50
-karen  | 48
 rean   | 48
+karen  | 48
 pamela | 48
 mike   | 40
-jenifer| 38
-sandy  | 38
+belinda| 38
 teresa | 38
 liza   | 38
-belinda| 38
+jenifer| 38
 sumi   | 38
+sandy  | 38
 sally  | 34
-alex   | 30
 cim    | 30
+alex   | 30
 sam    | 30
-fred   | 28
 nan    | 28
+fred   | 28
 jean   | 28
 melissa| 28
 sharon | 25
@@ -290,14 +290,14 @@ denise | 24
 jeff   | 23
 joe    | 20
 bill   | 20
-linda  | 19
 sandra | 19
-diane  | 18
-edna   | 18
+linda  | 19
 gina   | 18
-joan   | 18
 pat    | 18
-fanny  |  8
+diane  | 18
+joan   | 18
+edna   | 18
 mary   |  8
+fanny  |  8
 (58 rows)
 
