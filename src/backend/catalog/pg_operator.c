@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/catalog/pg_operator.c,v 1.22 1998/02/26 04:30:41 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/catalog/pg_operator.c,v 1.23 1998/04/01 15:35:04 scrappy Exp $
  *
  * NOTES
  *	  these routines moved here from commands/define.c and somewhat cleaned up.
@@ -19,6 +19,7 @@
 #include <catalog/pg_proc.h>
 #include <utils/syscache.h>
 #include <utils/tqual.h>
+#include <utils/builtins.h>
 #include <access/heapam.h>
 #include <catalog/catname.h>
 #include <catalog/pg_operator.h>
@@ -229,6 +230,7 @@ OperatorShellMakeWithOpenRelation(Relation pg_operator_desc,
 	Datum		values[Natts_pg_operator];
 	char		nulls[Natts_pg_operator];
 	Oid			operatorObjectId;
+	NameData	oname;
 	TupleDesc	tupDesc;
 
 	/* ----------------
@@ -246,7 +248,8 @@ OperatorShellMakeWithOpenRelation(Relation pg_operator_desc,
 	 * ----------------
 	 */
 	i = 0;
-	values[i++] = PointerGetDatum(operatorName);
+	namestrcpy(&oname, operatorName);
+	values[i++] = NameGetDatum(&oname);
 	values[i++] = Int32GetDatum(GetUserId());
 	values[i++] = (Datum) (uint16) 0;
 
@@ -474,6 +477,7 @@ OperatorDef(char *operatorName,
 	char	   *name[4];
 	Oid			typeId[8];
 	int			nargs;
+	NameData		oname;
 	TupleDesc	tupDesc;
 
 	static ScanKeyData opKey[3] = {
@@ -608,7 +612,8 @@ OperatorDef(char *operatorName,
 	 * ----------------
 	 */
 	i = 0;
-	values[i++] = PointerGetDatum(operatorName);
+	namestrcpy(&oname, operatorName);
+	values[i++] = NameGetDatum(&oname);
 	values[i++] = Int32GetDatum(GetUserId());
 	values[i++] = UInt16GetDatum(precedence);
 	values[i++] = leftTypeName ? (rightTypeName ? 'b' : 'r') : 'l';

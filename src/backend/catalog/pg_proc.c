@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/catalog/pg_proc.c,v 1.15 1998/02/26 04:30:43 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/catalog/pg_proc.c,v 1.16 1998/04/01 15:35:05 scrappy Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -71,6 +71,7 @@ ProcedureCreate(char *procedureName,
 	Oid			relid;
 	Oid			toid;
 	text	   *prosrctext;
+	NameData	procname;
 	TupleDesc	tupDesc;
 
 	/* ----------------
@@ -229,7 +230,8 @@ ProcedureCreate(char *procedureName,
 	}
 
 	i = 0;
-	values[i++] = PointerGetDatum(procedureName);
+	namestrcpy(&procname, procedureName);
+	values[i++] = NameGetDatum(&procname);
 	values[i++] = Int32GetDatum(GetUserId());
 	values[i++] = ObjectIdGetDatum(languageObjectId);
 

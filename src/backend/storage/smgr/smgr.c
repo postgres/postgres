@@ -10,7 +10,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/storage/smgr/smgr.c,v 1.13 1998/01/07 21:05:45 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/storage/smgr/smgr.c,v 1.14 1998/04/01 15:35:33 scrappy Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -132,7 +132,7 @@ smgrcreate(int16 which, Relation reln)
 	int			fd;
 
 	if ((fd = (*(smgrsw[which].smgr_create)) (reln)) < 0)
-		elog(ERROR, "cannot open %s",
+		elog(ERROR, "cannot create %s",
 			 &(reln->rd_rel->relname.data[0]));
 
 	return (fd);

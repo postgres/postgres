@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/catalog/pg_aggregate.c,v 1.13 1998/02/26 04:30:40 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/catalog/pg_aggregate.c,v 1.14 1998/04/01 15:35:01 scrappy Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -78,6 +78,7 @@ AggregateCreate(char *aggName,
 	Oid			xret2 = InvalidOid;
 	Oid			fret = InvalidOid;
 	Oid			fnArgs[8];
+	NameData		aname;
 	TupleDesc	tupDesc;
 
 	MemSet(fnArgs, 0, 8 * sizeof(Oid));
@@ -202,7 +203,8 @@ AggregateCreate(char *aggName,
 		nulls[i] = ' ';
 		values[i] = (Datum) NULL;
 	}
-	values[Anum_pg_aggregate_aggname - 1] = PointerGetDatum(aggName);
+	namestrcpy(&aname, aggName);
+	values[Anum_pg_aggregate_aggname - 1] = NameGetDatum(&aname);
 	values[Anum_pg_aggregate_aggowner - 1] =
 		Int32GetDatum(GetUserId());
 	values[Anum_pg_aggregate_aggtransfn1 - 1] =
