@@ -7,7 +7,7 @@
 #
 #
 # IDENTIFICATION
-#    $Header: /cvsroot/pgsql/src/Attic/GNUmakefile.in,v 1.13 1997/05/14 03:32:16 momjian Exp $
+#    $Header: /cvsroot/pgsql/src/Attic/GNUmakefile.in,v 1.14 1997/05/14 04:46:32 momjian Exp $
 #
 #-------------------------------------------------------------------------
 
@@ -55,6 +55,7 @@ clean:
 		false ;\
 	else true;\
 	fi
+	$(MAKE) -C lextest clean
 	$(MAKE) -C utils clean
 	$(MAKE) -C backend clean
 	$(MAKE) -C libpq clean
@@ -92,6 +93,7 @@ distclean: clean
 	  false ;\
         else true;\
 	fi
+	$(MAKE) -C lextest $@
 	$(MAKE) -C utils $@
 	$(MAKE) -C backend $@
 	$(MAKE) -C libpq $@

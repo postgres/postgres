@@ -1,8 +1,14 @@
 #
-# Makefile - tests for 2.5.3 flex bug
+# Makefile - test for 2.5.3 flex bug
+# Bruce Momjian 5/14/97
 #
-#
-lextest : lextest.c scan.l
+.DEFAULT all : lextest
+
+install:
+
+depend:
+
+lextest: lextest.c scan.l
 	$(LEX) scan.l
 	$(CC) -c lex.yy.c
 	$(CC) -c lextest.c
