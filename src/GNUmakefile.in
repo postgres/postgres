@@ -7,7 +7,7 @@
 #
 #
 # IDENTIFICATION
-#    $Header: /cvsroot/pgsql/src/Attic/GNUmakefile.in,v 1.15 1997/05/16 01:59:51 scrappy Exp $
+#    $Header: /cvsroot/pgsql/src/Attic/GNUmakefile.in,v 1.16 1997/08/16 20:56:25 scrappy Exp $
 #
 #-------------------------------------------------------------------------
 
@@ -41,13 +41,7 @@ all:
 	fi
 	$(MAKE) -C utils all
 	$(MAKE) -C backend all
-	$(MAKE) -C libpq all
-ifeq ($(HAVE_Cplusplus), true)
-	$(MAKE) -C libpq++ all
-endif
-ifeq ($(USE_TCL), true)
-	$(MAKE) -C libpgtcl all
-endif
+	$(MAKE) -C interfaces all
 	$(MAKE) -C bin all
 ifneq ($(wildcard man), )
 	$(MAKE) -C man all
@@ -66,13 +60,7 @@ clean:
 	$(MAKE) -C lextest clean
 	$(MAKE) -C utils clean
 	$(MAKE) -C backend clean
-	$(MAKE) -C libpq clean
-ifeq ($(HAVE_Cplusplus), true)
-	$(MAKE) -C libpq++ clean
-endif
-ifeq ($(USE_TCL), true)
-	$(MAKE) -C libpgtcl clean
-endif
+	$(MAKE) -C interfaces clean
 	$(MAKE) -C bin clean
 ifneq ($(wildcard man), )
 	$(MAKE) -C man clean
@@ -104,13 +92,7 @@ distclean: clean
 	$(MAKE) -C lextest $@
 	$(MAKE) -C utils $@
 	$(MAKE) -C backend $@
-	$(MAKE) -C libpq $@
-ifeq ($(HAVE_Cplusplus), true)
-	$(MAKE) -C libpq++ $@
-endif
-ifeq ($(USE_TCL), true)
-	$(MAKE) -C libpgtcl $@
-endif
+	$(MAKE) -C interfaces $@
 	$(MAKE) -C bin $@
 ifneq ($(wildcard man), )
 	$(MAKE) -C man $@
@@ -121,7 +103,7 @@ endif
 
 TAGS:
 	rm -f TAGS; \
-	for i in backend libpq bin; do \
+	for i in backend interfaces/libpq bin; do \
 	  $(FIND) $$i -name '*.[chyl]' -print | $(XARGS) $(ETAGS) -a ; \
 	done
 
