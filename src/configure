@@ -3743,10 +3743,10 @@ main() {
 EOF
 if { (eval echo configure:3745: \"$ac_link\") 1>&5; (eval $ac_link) 2>&5; } && test -s conftest && (./conftest; exit) 2>/dev/null
 then
-  echo "$ac_t""yes" 1>&6 cat >> confdefs.h <<\EOF
+  cat >> confdefs.h <<\EOF
 #define HAVE_LONG_LONG_INT_64 1
 EOF
-
+ echo "$ac_t""yes" 1>&6
 else
   echo "configure: failed program was:" >&5
   cat conftest.$ac_ext >&5
