@@ -1,5 +1,5 @@
 <!--
-$PostgreSQL: pgsql/doc/src/sgml/ref/create_operator.sgml,v 1.40 2003/11/29 19:51:38 pgsql Exp $
+$PostgreSQL: pgsql/doc/src/sgml/ref/create_operator.sgml,v 1.41 2003/12/11 20:13:53 petere Exp $
 PostgreSQL documentation
 -->
 
@@ -133,7 +133,7 @@ CREATE OPERATOR <replaceable>name</replaceable> (
       <term><replaceable class="parameter">lefttype</replaceable></term>
       <listitem>
        <para>
-	The type of the left-hand argument of the operator, if any.
+	The data type of the operator's left operand, if any.
 	This option would be omitted for a left-unary operator.
        </para>
       </listitem>
@@ -143,7 +143,7 @@ CREATE OPERATOR <replaceable>name</replaceable> (
       <term><replaceable class="parameter">righttype</replaceable></term>
       <listitem>
        <para>
-	The type of the right-hand argument of the operator, if any.
+	The data type of the operator's right operand, if any.
 	This option would be omitted for a right-unary operator.
        </para>
       </listitem>
