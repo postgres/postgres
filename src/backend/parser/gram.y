@@ -10,7 +10,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/parser/gram.y,v 2.37 1998/10/14 15:56:43 thomas Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/parser/gram.y,v 2.37.2.1 1998/12/13 04:39:00 momjian Exp $
  *
  * HISTORY
  *	  AUTHOR			DATE			MAJOR EVENT
@@ -5125,7 +5125,7 @@ fmtId(char *rawid)
 		if (! (islower(*cp) || isdigit(*cp) || (*cp == '_'))) break;
 
 	if (*cp != '\0') {
-		cp = palloc(strlen(rawid)+1);
+		cp = palloc(strlen(rawid)+3);
 		strcpy(cp,"\"");
 		strcat(cp,rawid);
 		strcat(cp,"\"");
