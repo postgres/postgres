@@ -13,7 +13,7 @@
  *	  columns. (ie. tuples from the same group are consecutive)
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/executor/nodeGroup.c,v 1.10 1997/09/12 04:07:43 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/executor/nodeGroup.c,v 1.11 1997/10/27 12:00:43 vadim Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -428,7 +428,13 @@ sameGroup(TupleTableSlot *oldslot,
 			 * strcmp for comparison
 			 */
 			if (strcmp(val1, val2) != 0)
+			{
+				pfree (val1);
+				pfree (val2);
 				return FALSE;
+			}
+			pfree (val1);
+			pfree (val2);
 		}
 		else
 		{
