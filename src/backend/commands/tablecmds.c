@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/commands/tablecmds.c,v 1.34 2002/08/27 03:56:34 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/commands/tablecmds.c,v 1.35 2002/08/28 20:18:29 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -3417,12 +3417,13 @@ AlterTableCreateToastTable(Oid relOid, bool silent)
 	/*
 	 * Create unique index on chunk_id, chunk_seq.
 	 *
-	 * NOTE: the tuple toaster could actually function with a single-column
-	 * index on chunk_id only.	However, it couldn't be unique then.  We
-	 * want it to be unique as a check against the possibility of
-	 * duplicate TOAST chunk OIDs.	Too, the index might be a little more
-	 * efficient this way, since btree isn't all that happy with large
-	 * numbers of equal keys.
+	 * NOTE: the normal TOAST access routines could actually function with 
+	 * a single-column index on chunk_id only. However, the slice access
+	 * routines use both columns for faster access to an individual chunk.
+	 * In addition, we want it to be unique as a check against the 
+	 * possibility of duplicate TOAST chunk OIDs. The index might also be
+	 * a little more efficient this way, since btree isn't all that happy 
+	 * with large numbers of equal keys.
 	 */
 
 	indexInfo = makeNode(IndexInfo);
