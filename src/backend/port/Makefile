@@ -19,7 +19,7 @@
 # be converted to Method 2.  
 #
 # IDENTIFICATION
-#    $Header: /cvsroot/pgsql/src/backend/port/Makefile,v 1.8 1997/01/22 04:15:53 scrappy Exp $
+#    $Header: /cvsroot/pgsql/src/backend/port/Makefile,v 1.9 1997/01/23 15:58:34 scrappy Exp $
 #
 #-------------------------------------------------------------------------
 
@@ -31,7 +31,7 @@ else
 
 OBJS = $(PORTNAME)/SUBSYS.o
 
-ifneq (,$(findstring /$(PORTNAME)/, /i386_solaris/sparc_solaris/ultrix4/nextstep/))
+ifneq (,$(findstring /$(PORTNAME)/, /i386_solaris/sparc_solaris/ultrix4/nextstep/svr4))
 # Other ports get the inet_aton() function from their standard C libraries.
 OBJS += inet_aton.o
 endif
