@@ -3,6 +3,7 @@ AC_INIT(backend/access/common/heaptuple.c)
 AC_PREFIX_DEFAULT(/usr/local/pgsql)
 
 AC_CANONICAL_HOST
+need_tas=no
 case "$host_os" in
  solaris*)
         case "$host_cpu" in
