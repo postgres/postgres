@@ -3,7 +3,7 @@
  *			  procedural language
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/pl/plpgsql/src/plpgsql.h,v 1.3 1999/01/27 16:15:22 wieck Exp $
+ *	  $Header: /cvsroot/pgsql/src/pl/plpgsql/src/plpgsql.h,v 1.3.2.1 2000/01/16 00:45:33 tgl Exp $
  *
  *	  This software is copyrighted by Jan Wieck - Hamburg.
  *
@@ -126,7 +126,7 @@ typedef struct
 	Oid			typoid;
 	FmgrInfo	typinput;
 	bool		typbyval;
-	int16		atttypmod;
+	int32		atttypmod;
 }			PLpgSQL_type;
 
 

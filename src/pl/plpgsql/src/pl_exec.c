@@ -3,7 +3,7 @@
  *			  procedural language
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/pl/plpgsql/src/pl_exec.c,v 1.12 1999/07/04 01:03:01 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/pl/plpgsql/src/pl_exec.c,v 1.12.2.1 2000/01/16 00:45:33 tgl Exp $
  *
  *	  This software is copyrighted by Jan Wieck - Hamburg.
  *
@@ -130,7 +130,7 @@ static void exec_move_row(PLpgSQL_execstate * estate,
 static Datum exec_cast_value(Datum value, Oid valtype,
 				Oid reqtype,
 				FmgrInfo *reqinput,
-				int16 reqtypmod,
+				int32 reqtypmod,
 				bool *isnull);
 static void exec_set_found(PLpgSQL_execstate * estate, bool state);
 
@@ -1561,7 +1561,7 @@ exec_stmt_raise(PLpgSQL_execstate * estate, PLpgSQL_stmt_raise * stmt)
 						typeStruct = (Form_pg_type) GETSTRUCT(typetup);
 
 						fmgr_info(typeStruct->typoutput, &finfo_output);
-						extval = (char *) (*fmgr_faddr(&finfo_output)) (var->value, &(var->isnull), var->datatype->atttypmod);
+						extval = (char *) (*fmgr_faddr(&finfo_output)) (var->value, InvalidOid, var->datatype->atttypmod);
 					}
 					plpgsql_dstring_append(&ds, extval);
 					break;
@@ -1874,7 +1874,7 @@ exec_assign_value(PLpgSQL_execstate * estate,
 	char	   *nulls;
 	bool		attisnull;
 	Oid			atttype;
-	int4		atttypmod;
+	int32		atttypmod;
 	HeapTuple	typetup;
 	Form_pg_type typeStruct;
 	FmgrInfo	finfo_input;
@@ -2373,7 +2373,7 @@ static Datum
 exec_cast_value(Datum value, Oid valtype,
 				Oid reqtype,
 				FmgrInfo *reqinput,
-				int16 reqtypmod,
+				int32 reqtypmod,
 				bool *isnull)
 {
 	if (!*isnull)
@@ -2383,7 +2383,7 @@ exec_cast_value(Datum value, Oid valtype,
 		 * that of the variable, convert it.
 		 * ----------
 		 */
-		if (valtype != reqtype || reqtypmod > 0)
+		if (valtype != reqtype || reqtypmod != -1)
 		{
 			HeapTuple	typetup;
 			Form_pg_type typeStruct;
@@ -2397,8 +2397,8 @@ exec_cast_value(Datum value, Oid valtype,
 			typeStruct = (Form_pg_type) GETSTRUCT(typetup);
 
 			fmgr_info(typeStruct->typoutput, &finfo_output);
-			extval = (char *) (*fmgr_faddr(&finfo_output)) (value, &isnull, -1);
-			value = (Datum) (*fmgr_faddr(reqinput)) (extval, &isnull, reqtypmod);
+			extval = (char *) (*fmgr_faddr(&finfo_output)) (value, InvalidOid, -1);
+			value = (Datum) (*fmgr_faddr(reqinput)) (extval, InvalidOid, reqtypmod);
 		}
 	}
 
