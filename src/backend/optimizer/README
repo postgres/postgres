@@ -1,0 +1,66 @@
+Thse directories take the Query structure returned by the parser, and
+generate a plan used by the executor.  The /plan directory generates the
+plan, the /path generates all possible ways to join the tables, and
+/prep handles special cases like inheritance.  /utils is utility stuff.
+
+planner()
+ handle inheritance by processing separately
+-init_query_planner()
+  preprocess target list
+  preprocess qualifications(WHERE)
+--query_planner()
+   pull out constants from target list
+   get a target list that only contains column names, no expressions
+   if none, then return
+---subplanner()
+    make list of relations in target
+    make list of relations in where clause
+    find which relations can do merge sort and hash joins
+----find_paths()
+     find scan and all index paths for each relation not yet joined
+     one relation, return
+     find selectivity of columns used in joins
+-----find_join_paths()
+      Summary:  With OPTIMIZER_DEBUG defined, you see:
+
+      Tables 1, 2, 3, and 4 are joined as:
+         {1 2},{1 3},{1 4},{2 3},{2 4}
+         {1 2 3},{1 2 4},{2 3 4}
+         {1 2 3 4}
+
+      Actual output tests show combinations:
+         {4 2},{3 2},{1 4},{1 3},{1 2}
+         {4 2 3},{1 4 2},{1 3 2}
+         {4 2 3 1}
+
+      Cheapest join order shows:
+         {4 2},{3 2},{1 4},{1 3},{1 2}
+         {3 2 4},{1 4 2},{1 3 2}
+         {1 4 2 3}
+
+      It first finds the best way to join each table to every other
+      table.  It then takes those joined table combinations, and joins
+      them to the other joined table combinations, until all tables are
+      joined.
+
+      jump to geqo if needed
+      again:
+       find_join_rels():
+        for each joinrel:
+         find_clause_joins()
+          for each join on joinrel:
+           if a join from the join clause adds only one relation, do the join
+         or find_clauseless_joins()
+       find_all_join_paths()
+        generate paths(nested,mergesort) for joins found in find_join_rels()
+       prune_joinrels()
+        remove from the join list the relation we just added to each join
+       prune_rel_paths()
+        set cheapest and perhaps remove unordered path, recompute table sizes
+       if we have not done all the tables, go to "again"
+   do group(GROUP)
+   do aggregate
+   put back constants
+   re-flatten target list
+ make unique(DISTINCT)
+ make sort(ORDER BY)
