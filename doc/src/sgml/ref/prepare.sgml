@@ -1,5 +1,5 @@
 <!--
-$PostgreSQL: pgsql/doc/src/sgml/ref/prepare.sgml,v 1.10 2003/12/14 00:55:46 neilc Exp $
+$PostgreSQL: pgsql/doc/src/sgml/ref/prepare.sgml,v 1.11 2004/01/26 17:26:31 neilc Exp $
 PostgreSQL documentation
 -->
 
@@ -139,6 +139,29 @@ PREPARE <replaceable class="PARAMETER">plan_name</replaceable> [ (<replaceable c
   </para>
  </refsect1>
 
+ <refsect1 id="sql-prepare-examples">
+  <title id="sql-prepare-examples-title">Examples</title>
+  <para>
+   Create a prepared query for an <command>INSERT</command> statement,
+   and then execute it:
+<programlisting>
+PREPARE fooplan (int, text, bool, numeric(8,2)) AS
+    INSERT INTO foo VALUES($1, '$2', '$3', '$4');
+EXECUTE fooplan(1, 'Hunter Valley', 't', '200.00');
+</programlisting>
+  </para>
+
+  <para>
+   Create a prepared query for a <command>SELECT</command> statement,
+   and then execute it:
+<programlisting>
+PREPARE usrrptplan (int, date) AS
+    SELECT * FROM users u, logs l WHERE u.usrid=$1 AND u.usrid=l.usrid
+    AND l.date = $2;
+EXECUTE usrrptplan(1, current_date);
+</programlisting>
+  </para>
+ </refsect1>
  <refsect1>
   <title>Compatibility</title>
 
