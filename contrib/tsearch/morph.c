@@ -187,7 +187,7 @@ lemmatize(char *word, int *len, int type)
 				int			oldlen = *len;
 				char	   *newword = (*(dict->lemmatize)) (dictobjs[nd], word, len);
 
-				/* word is recognized by distionary */
+				/* word is recognized by dictionary */
 				if (newword != word || *len != oldlen)
 				{
 					if (dict->is_stemstoplemm &&

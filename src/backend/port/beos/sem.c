@@ -99,7 +99,7 @@ semctl(int semId, int semNum, int flag, union semun semun)
 		return 1;
 	}
 
-	/* Get the last pid which accesed the sem */
+	/* Get the last pid which accessed the sem */
 	if (flag == GETPID)
 	{
 		TRACEDBG("->semctl getpid");
@@ -191,7 +191,7 @@ semget(int semKey, int semNum, int flags)
 	/* find area */
 	parea = find_area(Nom);
 
-	/* Test of area existance */
+	/* Test of area existence */
 	if (parea != B_NAME_NOT_FOUND)
 	{
 		/* Area exist and creation is requested, error */
@@ -221,7 +221,7 @@ semget(int semKey, int semNum, int flags)
 
 			/*
 			 * Limit to 250 (8 byte per sem : 4 for the semid and 4 for
-			 * the last pid which acceced the semaphore in a pool
+			 * the last pid which accessed the semaphore in a pool
 			 */
 			if (semNum > 250)
 			{
@@ -293,7 +293,7 @@ semop(int semId, struct sembuf * sops, int nsops)
 		if (sops[i].sem_op < 0)
 		{
 			/*
-			 * Try acuiring the semaphore till we are not inteerupted by a
+			 * Try acquiring the semaphore till we are not interrupted by a
 			 * signal
 			 */
 			if (sops[i].sem_flg == IPC_NOWAIT)

@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/misc/Attic/database.c,v 1.54 2002/11/08 20:23:57 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/misc/Attic/database.c,v 1.55 2003/03/10 22:28:19 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -33,7 +33,7 @@ static bool PhonyHeapTupleSatisfiesNow(HeapTupleHeader tuple);
  * pg_database.datpath) to a full absolute path for further consumption.
  * NULL means an error, which the caller should process. One reason for
  * such an error would be an absolute alternative path when no absolute
- * paths are alllowed.
+ * paths are allowed.
  */
 
 char *

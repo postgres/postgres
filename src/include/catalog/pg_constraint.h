@@ -8,7 +8,7 @@
  * Portions Copyright (c) 1996-2002, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Id: pg_constraint.h,v 1.5 2002/11/15 02:50:10 momjian Exp $
+ * $Id: pg_constraint.h,v 1.6 2003/03/10 22:28:19 tgl Exp $
  *
  * NOTES
  *	  the genbki.sh script reads this file and generates .bki
@@ -20,7 +20,7 @@
 #define PG_CONSTRAINT_H
 
 /* ----------------
- *		postgres.h contains the system type definintions and the
+ *		postgres.h contains the system type definitions and the
  *		CATALOG(), BOOTSTRAP and DATA() sugar words so this file
  *		can be read by both genbki.sh and the C compiler.
  * ----------------

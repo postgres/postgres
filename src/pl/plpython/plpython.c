@@ -29,7 +29,7 @@
  * MAINTENANCE, SUPPORT, UPDATES, ENHANCEMENTS, OR MODIFICATIONS.
  *
  * IDENTIFICATION
- *	$Header: /cvsroot/pgsql/src/pl/plpython/plpython.c,v 1.30 2003/02/13 23:06:15 tgl Exp $
+ *	$Header: /cvsroot/pgsql/src/pl/plpython/plpython.c,v 1.31 2003/03/10 22:28:22 tgl Exp $
  *
  *********************************************************************
  */
@@ -644,8 +644,8 @@ PLy_modify_tuple(PLyProcedure * proc, PyObject * pltd, TriggerData *tdata,
 						   modvalues, modnulls);
 
 	/*
-	 * FIXME -- these leak if not explicity pfree'd by other elog calls,
-	 * no?
+	 * FIXME -- these leak if not explicitly pfree'd by other elog
+	 * calls, no?
 	 */
 	pfree(modattrs);
 	pfree(modvalues);

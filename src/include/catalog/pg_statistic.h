@@ -8,7 +8,7 @@
  * Portions Copyright (c) 1996-2002, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Id: pg_statistic.h,v 1.18 2002/09/04 20:31:42 momjian Exp $
+ * $Id: pg_statistic.h,v 1.19 2003/03/10 22:28:21 tgl Exp $
  *
  * NOTES
  *	  the genbki.sh script reads this file and generates .bki
@@ -20,7 +20,7 @@
 #define PG_STATISTIC_H
 
 /* ----------------
- *		postgres.h contains the system type definintions and the
+ *		postgres.h contains the system type definitions and the
  *		CATALOG(), BOOTSTRAP and DATA() sugar words so this file
  *		can be read by both genbki.sh and the C compiler.
  * ----------------

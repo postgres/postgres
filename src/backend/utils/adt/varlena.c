@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/varlena.c,v 1.94 2002/12/06 05:20:17 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/varlena.c,v 1.95 2003/03/10 22:28:18 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -1663,7 +1663,7 @@ byteacmp(PG_FUNCTION_ARGS)
 
 /*
  * replace_text
- * replace all occurences of 'old_sub_str' in 'orig_str'
+ * replace all occurrences of 'old_sub_str' in 'orig_str'
  * with 'new_sub_str' to form 'new_str'
  *
  * returns 'orig_str' if 'old_sub_str' == '' or 'orig_str' == ''

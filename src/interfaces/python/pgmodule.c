@@ -1498,7 +1498,7 @@ pgconnect(pgobject * self, PyObject * args, PyObject * dict)
 		return NULL;
 
 #ifdef DEFAULT_VARS
-	/* handles defaults variables (for unintialised vars) */
+	/* handles defaults variables (for uninitialised vars) */
 	if ((!pghost) && (pg_default_host != Py_None))
 		pghost = PyString_AsString(pg_default_host);
 

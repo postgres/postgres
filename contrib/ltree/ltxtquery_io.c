@@ -38,7 +38,7 @@ typedef struct
 	char	   *buf;
 	int4		state;
 	int4		count;
-	/* reverse polish notation in list (for temprorary usage) */
+	/* reverse polish notation in list (for temporary usage) */
 	NODE	   *str;
 	/* number in str */
 	int4		num;

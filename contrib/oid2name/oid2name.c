@@ -50,7 +50,7 @@ void		sql_exec_dumptable(PGconn *, int);
 void		sql_exec_searchtable(PGconn *, const char *);
 void		sql_exec_searchoid(PGconn *, int);
 
-/* fuction to parse command line options and check for some usage errors. */
+/* function to parse command line options and check for some usage errors. */
 void
 get_opts(int argc, char **argv, struct options * my_opts)
 {

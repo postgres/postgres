@@ -22,7 +22,7 @@
  * Portions Copyright (c) 1996-2002, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Id: pg_description.h,v 1.17 2002/06/20 20:29:44 momjian Exp $
+ * $Id: pg_description.h,v 1.18 2003/03/10 22:28:19 tgl Exp $
  *
  * NOTES
  *		the genbki.sh script reads this file and generates .bki
@@ -37,7 +37,7 @@
 #define PG_DESCRIPTION_H
 
 /* ----------------
- *		postgres.h contains the system type definintions and the
+ *		postgres.h contains the system type definitions and the
  *		CATALOG(), BOOTSTRAP and DATA() sugar words so this file
  *		can be read by both genbki.sh and the C compiler.
  * ----------------
@@ -64,7 +64,7 @@ CATALOG(pg_description) BKI_WITHOUT_OIDS
 typedef FormData_pg_description *Form_pg_description;
 
 /* ----------------
- *		compiler constants for pg_descrpition
+ *		compiler constants for pg_description
  * ----------------
  */
 #define Natts_pg_description			4

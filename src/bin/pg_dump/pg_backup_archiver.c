@@ -15,7 +15,7 @@
  *
  *
  * IDENTIFICATION
- *		$Header: /cvsroot/pgsql/src/bin/pg_dump/pg_backup_archiver.c,v 1.69 2003/03/09 19:38:52 tgl Exp $
+ *		$Header: /cvsroot/pgsql/src/bin/pg_dump/pg_backup_archiver.c,v 1.70 2003/03/10 22:28:19 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -1661,7 +1661,7 @@ _discoverArchiveFormat(ArchiveHandle *AH)
 	if (fseeko(fh, 0, SEEK_SET) != 0)
 	{
 		/*
-		 * NOTE: Formats that use the looahead buffer can unset this in
+		 * NOTE: Formats that use the lookahead buffer can unset this in
 		 * their Init routine.
 		 */
 		AH->readHeader = 1;
@@ -2030,7 +2030,7 @@ _tocEntryRequired(TocEntry *te, RestoreOptions *ropt)
 	if (ropt->dataOnly)
 		res = res & REQ_DATA;
 
-	/* Mask it if we don't have a schema contribition */
+	/* Mask it if we don't have a schema contribution */
 	if (!te->defn || strlen(te->defn) == 0)
 		res = res & ~REQ_SCHEMA;
 

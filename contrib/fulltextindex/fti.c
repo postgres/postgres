@@ -83,7 +83,7 @@
  *	 nothing in it, then re-populate the fti-table)
  *
  *	 can we do something with operator overloading or a seperate function
- *	 that can build the final query automatigally?
+ *	 that can build the final query automagically?
  */
 
 #define MAX_FTI_QUERY_LENGTH 8192

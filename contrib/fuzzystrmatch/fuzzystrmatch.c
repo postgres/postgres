@@ -76,7 +76,7 @@ levenshtein(PG_FUNCTION_ARGS)
 	/*
 	 * Restrict the length of the strings being compared to something
 	 * reasonable because we will have to perform rows * cols
-	 * calcualtions. If longer strings need to be compared, increase
+	 * calculations. If longer strings need to be compared, increase
 	 * MAX_LEVENSHTEIN_STRLEN to suit (but within your tolerance for speed
 	 * and memory usage).
 	 */
@@ -250,7 +250,7 @@ metaphone(PG_FUNCTION_ARGS)
  *------------------------------------------------------------------*/
 
 /* I suppose I could have been using a character pointer instead of
- * accesssing the array directly... */
+ * accessing the array directly... */
 
 /* Look at the next letter in the word */
 #define Next_Letter (toupper((unsigned char) word[w_idx+1]))
@@ -421,7 +421,7 @@ _metaphone(
 		 w_idx++)
 	{
 		/*
-		 * How many letters to skip because an eariler encoding handled
+		 * How many letters to skip because an earlier encoding handled
 		 * multiple letters
 		 */
 		unsigned short int skip_letter = 0;

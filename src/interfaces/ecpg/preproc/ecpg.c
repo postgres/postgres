@@ -1,8 +1,8 @@
-/* $Header: /cvsroot/pgsql/src/interfaces/ecpg/preproc/ecpg.c,v 1.60 2003/02/14 13:17:13 meskes Exp $ */
+/* $Header: /cvsroot/pgsql/src/interfaces/ecpg/preproc/ecpg.c,v 1.61 2003/03/10 22:28:21 tgl Exp $ */
 
 /* New main for ecpg, the PostgreSQL embedded SQL precompiler. */
 /* (C) Michael Meskes <meskes@postgresql.org> Feb 5th, 1998 */
-/* Placed under the same license as PostgresSQL */
+/* Placed under the same license as PostgreSQL */
 
 #include "postgres_fe.h"
 

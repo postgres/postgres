@@ -12,7 +12,7 @@
  *	by PostgreSQL
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/bin/pg_dump/pg_dump.c,v 1.318 2003/02/13 22:56:52 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/bin/pg_dump/pg_dump.c,v 1.319 2003/03/10 22:28:19 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -932,7 +932,7 @@ dumpClasses_nodumpData(Archive *fout, char *oid, void *dctxv)
 		 * select(0, NULL, NULL, NULL, &tvi);
 		 *
 		 * This will return after the interval specified in the structure
-		 * tvi. Fianally, call gettimeofday again to save the 'last sleep
+		 * tvi. Finally, call gettimeofday again to save the 'last sleep
 		 * time'.
 		 */
 	}

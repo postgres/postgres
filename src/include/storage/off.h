@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2002, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Id: off.h,v 1.14 2002/06/20 20:29:52 momjian Exp $
+ * $Id: off.h,v 1.15 2003/03/10 22:28:21 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -46,7 +46,7 @@ typedef uint16 OffsetNumber;
  * OffsetNumberPrev
  *		Increments/decrements the argument.  These macros look pointless
  *		but they help us disambiguate the different manipulations on
- *		OffsetNumbers (e.g., sometimes we substract one from an
+ *		OffsetNumbers (e.g., sometimes we subtract one from an
  *		OffsetNumber to move back, and sometimes we do so to form a
  *		real C array index).
  */

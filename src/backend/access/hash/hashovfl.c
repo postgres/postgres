@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/access/hash/hashovfl.c,v 1.33 2002/06/20 20:29:24 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/access/hash/hashovfl.c,v 1.34 2003/03/10 22:28:18 tgl Exp $
  *
  * NOTES
  *	  Overflow pages look like ordinary relation pages.
@@ -452,7 +452,7 @@ _hash_initbitmap(Relation rel,
 /*
  *	_hash_squeezebucket(rel, bucket)
  *
- *	Try to squeeze the tuples onto pages occuring earlier in the
+ *	Try to squeeze the tuples onto pages occurring earlier in the
  *	bucket chain in an attempt to free overflow pages. When we start
  *	the "squeezing", the page from which we start taking tuples (the
  *	"read" page) is the last bucket in the bucket chain and the page

@@ -4,7 +4,7 @@
  * (currently mule internal code (mic) is used)
  * Tatsuo Ishii
  *
- * $Header: /cvsroot/pgsql/src/backend/utils/mb/mbutils.c,v 1.38 2003/02/19 14:31:26 ishii Exp $
+ * $Header: /cvsroot/pgsql/src/backend/utils/mb/mbutils.c,v 1.39 2003/03/10 22:28:18 tgl Exp $
  */
 #include "postgres.h"
 
@@ -41,7 +41,7 @@ static int cliplen(const unsigned char *str, int len, int limit);
 static bool need_to_init_client_encoding = -1;
 
 /*
- * Set the client encoding and save fmgrinfo for the converion
+ * Set the client encoding and save fmgrinfo for the conversion
  * function if necessary. if encoding conversion between client/server
  * encoding is not supported, returns -1
 */
@@ -60,7 +60,7 @@ SetClientEncoding(int encoding, bool doit)
 	if (!PG_VALID_FE_ENCODING(encoding))
 		return (-1);
 
-	/* If we cannot actualy set client encoding info, remeber it
+	/* If we cannot actually set client encoding info, remember it
 	 * so that we could set it using InitializeClientEncoding()
 	 * in InitPostgres()
 	 */
@@ -164,7 +164,7 @@ pg_get_client_encoding_name(void)
  * warn and returns src. We cannot raise an error, since it will cause
  * an infinit loop in error message sending.
  *
- * In the case of no coversion, src is returned.
+ * In the case of no conversion, src is returned.
  *
  * XXX We assume that storage for converted result is 4-to-1 growth in
  * the worst case. The rate for currently supported encoding pares are within 3
@@ -281,7 +281,7 @@ pg_convert2(PG_FUNCTION_ARGS)
 		elog(ERROR, "Encoding conversion failed");
 
 	/*
-	 * build text data type structre. we cannot use textin() here, since
+	 * build text data type structure. we cannot use textin() here, since
 	 * textin assumes that input string encoding is same as database
 	 * encoding.
 	 */

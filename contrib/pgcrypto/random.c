@@ -26,7 +26,7 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- * $Id: random.c,v 1.5 2001/11/05 17:46:23 momjian Exp $
+ * $Id: random.c,v 1.6 2003/03/10 22:28:17 tgl Exp $
  */
 
 
@@ -115,7 +115,7 @@ px_get_random_bytes(uint8 *dst, unsigned count)
 
 	/*
 	 * OpenSSL random should re-feeded occasionally. From /dev/urandom
-	 * preferrably.
+	 * preferably.
 	 */
 
 	res = RAND_bytes(dst, count);

@@ -79,7 +79,7 @@ typedef struct
 	char	   *buf;
 	int4		state;
 	int4		count;
-	/* reverse polish notation in list (for temprorary usage) */
+	/* reverse polish notation in list (for temporary usage) */
 	NODE	   *str;
 	/* number in str */
 	int4		num;
@@ -247,7 +247,7 @@ pushval_morph(QPRS_STATE * state, int typeval, char *strval, int lenval)
 
 #define STACKDEPTH	32
 /*
- * make polish notaion of query
+ * make polish notation of query
  */
 static int4
 makepol(QPRS_STATE * state, void (*pushval) (QPRS_STATE *, int, char *, int))

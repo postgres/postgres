@@ -1,7 +1,7 @@
 /* ----------
  * pg_lzcompress.c -
  *
- * $Header: /cvsroot/pgsql/src/backend/utils/adt/pg_lzcompress.c,v 1.16 2002/11/23 03:59:08 momjian Exp $
+ * $Header: /cvsroot/pgsql/src/backend/utils/adt/pg_lzcompress.c,v 1.17 2003/03/10 22:28:18 tgl Exp $
  *
  *		This is an implementation of LZ compression for PostgreSQL.
  *		It uses a simple history table and generates 2-3 byte tags
@@ -98,7 +98,7 @@
  *			makes total limits of 1-4095 for offset and 3-273 for length.
  *
  *			Now that we have successfully decoded a tag. We simply copy
- *			the output that occured <offset> bytes back to the current
+ *			the output that occurred <offset> bytes back to the current
  *			output location in the specified <length>. Thus, a
  *			sequence of 200 spaces (think about bpchar fields) could be
  *			coded in 4 bytes. One literal space and a three byte tag to
@@ -419,7 +419,7 @@ pglz_find_match(PGLZ_HistEntry **hstart, char *input, char *end,
 		 * bytes, it's worth the call overhead to use memcmp() to check if
 		 * this match is equal for the same size. After that we must
 		 * fallback to character by character comparison to know the exact
-		 * position where the diff occured.
+		 * position where the diff occurred.
 		 */
 		thislen = 0;
 		if (len >= 16)
@@ -783,7 +783,7 @@ pglz_get_next_decomp_char_from_lzdata(PGLZ_DecompState *dstate)
 		/*
 		 * This decompression method saves time only, if we stop near the
 		 * beginning of the data (maybe because we're called by a
-		 * comparision function and a difference occurs early). Otherwise,
+		 * comparison function and a difference occurs early). Otherwise,
 		 * all the checks, needed here, cause too much overhead.
 		 *
 		 * Thus we decompress the entire rest at once into the temporary

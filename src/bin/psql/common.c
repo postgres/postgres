@@ -3,7 +3,7 @@
  *
  * Copyright 2000 by PostgreSQL Global Development Group
  *
- * $Header: /cvsroot/pgsql/src/bin/psql/common.c,v 1.55 2003/02/21 21:34:27 tgl Exp $
+ * $Header: /cvsroot/pgsql/src/bin/psql/common.c,v 1.56 2003/03/10 22:28:19 tgl Exp $
  */
 #include "postgres_fe.h"
 #include "common.h"
@@ -153,7 +153,7 @@ psql_error(const char *fmt,...)
 
 
 /*
- * for backend Notice mesages (INFO, WARNING, etc)
+ * for backend Notice messages (INFO, WARNING, etc)
  */
 void
 NoticeProcessor(void *arg, const char *message)

@@ -199,7 +199,7 @@ usage(void)
 }
 
 /* patch submitted by Jeffrey Y. Sue <jysue@aloha.net> */
-/* Provides functionallity for substituting dBase-fieldnames for others */
+/* Provides functionality for substituting dBase-fieldnames for others */
 /* Mainly for avoiding conflicts between fieldnames and SQL-reserved */
 /* keywords */
 

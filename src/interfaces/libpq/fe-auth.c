@@ -10,7 +10,7 @@
  * exceed INITIAL_EXPBUFFER_SIZE (currently 256 bytes).
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/interfaces/libpq/fe-auth.c,v 1.73 2003/01/29 01:18:21 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/interfaces/libpq/fe-auth.c,v 1.74 2003/03/10 22:28:21 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -270,7 +270,7 @@ pg_an_to_ln(char *aname)
 
 
 /*
- * Various krb5 state which is not connection specfic, and a flag to
+ * Various krb5 state which is not connection specific, and a flag to
  * indicate whether we have initialised it yet.
  */
 static int	pg_krb5_initialised;

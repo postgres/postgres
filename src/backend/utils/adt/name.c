@@ -12,7 +12,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/name.c,v 1.42 2003/02/09 06:56:28 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/name.c,v 1.43 2003/03/10 22:28:18 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -46,7 +46,7 @@ namein(PG_FUNCTION_ARGS)
 	int			len;
 	char	   *ermsg;
 
-	/* veryfy encoding */
+	/* verify encoding */
 	len = strlen(s);
 	if ((ermsg = pg_verifymbstr(s, len)))
 		elog(ERROR, "%s", ermsg);

@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2002, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Id: libpq-fe.h,v 1.87 2002/11/10 00:14:22 momjian Exp $
+ * $Id: libpq-fe.h,v 1.88 2003/03/10 22:28:22 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -264,7 +264,7 @@ extern void PQfreeNotify(PGnotify *notify);
 extern int	PQsendQuery(PGconn *conn, const char *query);
 extern PGresult *PQgetResult(PGconn *conn);
 
-/* Routines for managing an asychronous query */
+/* Routines for managing an asynchronous query */
 extern int	PQisBusy(PGconn *conn);
 extern int	PQconsumeInput(PGconn *conn);
 

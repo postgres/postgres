@@ -2,7 +2,7 @@
 moddatetime.c
 
 What is this?
-It is a function to be called from a trigger for the perpose of updating
+It is a function to be called from a trigger for the purpose of updating
 a modification datetime stamp in a record when that record is UPDATEd.
 
 Credits
@@ -70,14 +70,14 @@ moddatetime(PG_FUNCTION_ARGS)
 								Int32GetDatum(-1));
 
 	/*
-	 * This gets the position in the turple of the field we want. args[0]
+	 * This gets the position in the tuple of the field we want. args[0]
 	 * being the name of the field to update, as passed in from the
 	 * trigger.
 	 */
 	attnum = SPI_fnumber(tupdesc, args[0]);
 
 	/*
-	 * This is were we check to see if the feild we are suppost to update
+	 * This is were we check to see if the field we are supposed to update
 	 * even exits.	The above function must return -1 if name not found?
 	 */
 	if (attnum < 0)

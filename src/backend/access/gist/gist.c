@@ -8,7 +8,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/access/gist/gist.c,v 1.101 2003/02/24 00:57:17 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/access/gist/gist.c,v 1.102 2003/03/10 22:28:18 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -465,7 +465,7 @@ gistlayerinsert(Relation r, BlockNumber blkno,
 		/*
 		 * After this call: 1. if child page was splited, then itup
 		 * contains keys for each page 2. if  child page wasn't splited,
-		 * then itup contains additional for adjustement of current key
+		 * then itup contains additional for adjustment of current key
 		 */
 		ret = gistlayerinsert(r, nblkno, itup, len, res, giststate);
 
@@ -551,7 +551,7 @@ gistlayerinsert(Relation r, BlockNumber blkno,
 			ItemPointerSet(&((*res)->pointerData), blkno, l);
 
 		if (*len > 1)
-		{						/* previos insert ret & SPLITED != 0 */
+		{						/* previous insert ret & SPLITED != 0 */
 			int			i;
 
 			/*

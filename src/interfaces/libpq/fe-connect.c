@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/interfaces/libpq/fe-connect.c,v 1.224 2003/02/19 14:31:26 ishii Exp $
+ *	  $Header: /cvsroot/pgsql/src/interfaces/libpq/fe-connect.c,v 1.225 2003/03/10 22:28:21 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -210,7 +210,7 @@ char *PasswordFromFile(char *hostname, char *port, char *dbname,
  * If it is desired to connect in a synchronous (blocking) manner, use the
  * function PQconnectdb.
  *
- * To connect in an asychronous (non-blocking) manner, use the functions
+ * To connect in an asynchronous (non-blocking) manner, use the functions
  * PQconnectStart, and PQconnectPoll.
  *
  * Internally, the static functions connectDBStart, connectDBComplete

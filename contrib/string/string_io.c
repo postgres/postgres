@@ -166,7 +166,7 @@ string_output(unsigned char *data, int size)
  *
  * This function accepts a C string in input and copies it into a new
  * object allocated with palloc() translating all escape sequences.
- * An optional header can be allocatd before the string, for example
+ * An optional header can be allocated before the string, for example
  * to hold the length of a varlena object.
  * This function is not necessary for input from sql commands because
  * the parser already does escape translation, all data input routines

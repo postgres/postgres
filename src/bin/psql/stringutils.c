@@ -3,7 +3,7 @@
  *
  * Copyright 2000-2002 by PostgreSQL Global Development Group
  *
- * $Header: /cvsroot/pgsql/src/bin/psql/stringutils.c,v 1.31 2002/10/19 00:22:14 tgl Exp $
+ * $Header: /cvsroot/pgsql/src/bin/psql/stringutils.c,v 1.32 2003/03/10 22:28:19 tgl Exp $
  */
 #include "postgres_fe.h"
 
@@ -39,7 +39,7 @@ static void strip_quotes(char *source, char quote, char escape, int encoding);
  * Characters in 'delim', if any, will be returned as single-character
  * tokens unless part of a quoted token.
  *
- * Double occurences of the quoting character are always taken to represent
+ * Double occurrences of the quoting character are always taken to represent
  * a single quote character in the data.  If escape isn't 0, then escape
  * followed by anything (except \0) is a data character too.
  *

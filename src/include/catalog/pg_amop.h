@@ -16,7 +16,7 @@
  * Portions Copyright (c) 1996-2002, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Id: pg_amop.h,v 1.46 2002/06/20 20:29:43 momjian Exp $
+ * $Id: pg_amop.h,v 1.47 2003/03/10 22:28:19 tgl Exp $
  *
  * NOTES
  *	 the genbki.sh script reads this file and generates .bki
@@ -28,7 +28,7 @@
 #define PG_AMOP_H
 
 /* ----------------
- *		postgres.h contains the system type definintions and the
+ *		postgres.h contains the system type definitions and the
  *		CATALOG(), BOOTSTRAP and DATA() sugar words so this file
  *		can be read by both genbki.sh and the C compiler.
  * ----------------

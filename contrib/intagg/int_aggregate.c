@@ -191,7 +191,7 @@ int_agg_state(PG_FUNCTION_ARGS)
 }
 
 /* This is the final function used for the integer aggregator. It returns all the integers
- * collected as a one dimentional integer array */
+ * collected as a one dimensional integer array */
 Datum
 int_agg_final_array(PG_FUNCTION_ARGS)
 {
@@ -225,7 +225,7 @@ int_enum(PG_FUNCTION_ARGS)
 		/* Allocate a working context */
 		pc = (CTX *) palloc(sizeof(CTX));
 
-		/* Don't copy atribute if you don't need too */
+		/* Don't copy attribute if you don't need too */
 		if (VARATT_IS_EXTENDED(p))
 		{
 			/* Toasted!!! */

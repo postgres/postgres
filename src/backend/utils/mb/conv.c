@@ -6,7 +6,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/mb/conv.c,v 1.43 2002/09/04 20:31:31 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/mb/conv.c,v 1.44 2003/03/10 22:28:18 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -335,7 +335,7 @@ compare2(const void *p1, const void *p2)
  * UTF-8 ---> local code
  *
  * utf: input UTF-8 string. Its length is limited by "len" parameter
- *		or a null terminater.
+ *		or a null terminator.
  * iso: pointer to the output.
  * map: the conversion map.
  * size: the size of the conversion map.

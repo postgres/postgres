@@ -116,7 +116,7 @@ freetree(NODE * node)
 
 /*
  * clean tree for ! operator.
- * It's usefull for debug, but in
+ * It's useful for debug, but in
  * other case, such view is used with search in index.
  * Operator ! always return TRUE
  */

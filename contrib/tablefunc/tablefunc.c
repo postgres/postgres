@@ -44,7 +44,7 @@ static bool compatCrosstabTupleDescs(TupleDesc tupdesc1, TupleDesc tupdesc2);
 static bool compatConnectbyTupleDescs(TupleDesc tupdesc1, TupleDesc tupdesc2);
 static void get_normal_pair(float8 *x1, float8 *x2);
 static TupleDesc make_crosstab_tupledesc(TupleDesc spi_tupdesc,
-						int num_catagories);
+						int num_categories);
 static Tuplestorestate *connectby(char *relname,
 		  char *key_fld,
 		  char *parent_key_fld,
@@ -373,9 +373,9 @@ crosstab(PG_FUNCTION_ARGS)
 				elog(ERROR, "Wrong number of arguments specified for function");
 			else
 			{
-				int			num_catagories = PG_GETARG_INT32(1);
+				int			num_categories = PG_GETARG_INT32(1);
 
-				tupdesc = make_crosstab_tupledesc(spi_tupdesc, num_catagories);
+				tupdesc = make_crosstab_tupledesc(spi_tupdesc, num_categories);
 			}
 		}
 		else if (functyptype == 'b')
@@ -1034,7 +1034,7 @@ compatCrosstabTupleDescs(TupleDesc ret_tupdesc, TupleDesc sql_tupdesc)
 }
 
 static TupleDesc
-make_crosstab_tupledesc(TupleDesc spi_tupdesc, int num_catagories)
+make_crosstab_tupledesc(TupleDesc spi_tupdesc, int num_categories)
 {
 	Form_pg_attribute sql_attr;
 	Oid			sql_atttypid;
@@ -1046,10 +1046,10 @@ make_crosstab_tupledesc(TupleDesc spi_tupdesc, int num_catagories)
 
 	/*
 	 * We need to build a tuple description with one column for the
-	 * rowname, and num_catagories columns for the values. Each must be of
+	 * rowname, and num_categories columns for the values. Each must be of
 	 * the same type as the corresponding spi result input column.
 	 */
-	natts = num_catagories + 1;
+	natts = num_categories + 1;
 	tupdesc = CreateTemplateTupleDesc(natts, false);
 
 	/* first the rowname column */
@@ -1063,11 +1063,11 @@ make_crosstab_tupledesc(TupleDesc spi_tupdesc, int num_catagories)
 	TupleDescInitEntry(tupdesc, attnum, attname, sql_atttypid,
 					   -1, 0, false);
 
-	/* now the catagory values columns */
+	/* now the category values columns */
 	sql_attr = spi_tupdesc->attrs[2];
 	sql_atttypid = sql_attr->atttypid;
 
-	for (i = 0; i < num_catagories; i++)
+	for (i = 0; i < num_categories; i++)
 	{
 		attnum++;
 

@@ -2,7 +2,7 @@
  * Encoding names and routines for work with it. All
  * in this file is shared bedween FE and BE.
  *
- * $Id: encnames.c,v 1.11 2002/12/05 23:21:07 momjian Exp $
+ * $Id: encnames.c,v 1.12 2003/03/10 22:28:18 tgl Exp $
  */
 #ifdef FRONTEND
 #include "postgres_fe.h"
@@ -25,7 +25,7 @@
 /* ----------
  * All encoding names, sorted:		 *** A L P H A B E T I C ***
  *
- * All names must be without irrelevan chars, search routines use
+ * All names must be without irrelevant chars, search routines use
  * isalnum() chars only. It means ISO-8859-1, iso_8859-1 and Iso8859_1
  * are always converted to 'iso88591'. All must be lower case.
  *
@@ -52,7 +52,7 @@ pg_encname	pg_encname_tbl[] =
 	{
 		"eucjp", PG_EUC_JP
 	},							/* EUC-JP; Extended UNIX Code fixed Width
-								 * for Japanese, stdandard OSF */
+								 * for Japanese, standard OSF */
 	{
 		"euckr", PG_EUC_KR
 	},							/* EUC-KR; Extended Unix Code for Korean ,

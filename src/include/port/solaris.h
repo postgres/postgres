@@ -1,10 +1,10 @@
-/* $Header: /cvsroot/pgsql/src/include/port/solaris.h,v 1.7 2001/11/05 17:46:35 momjian Exp $ */
+/* $Header: /cvsroot/pgsql/src/include/port/solaris.h,v 1.8 2003/03/10 22:28:21 tgl Exp $ */
 
 #define HAS_TEST_AND_SET
 typedef unsigned char slock_t;
 
 /*
- * Sort this out for all operting systems some time.  The __xxx
+ * Sort this out for all operating systems some time.  The __xxx
  * symbols are defined on both GCC and Solaris CC, although GCC
  * doesn't document them.  The __xxx__ symbols are only on GCC.
  */

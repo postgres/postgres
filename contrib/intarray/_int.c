@@ -133,7 +133,7 @@ typedef ArrayType *(*formarray) (ArrayType *, ArrayType *);
 typedef void (*formfloat) (ArrayType *, float *);
 
 /*
-** usefull function
+** useful function
 */
 static bool isort(int4 *a, const int len);
 static ArrayType *new_intArrayType(int num);
@@ -446,7 +446,7 @@ g_int_decompress(PG_FUNCTION_ARGS)
 	lenin = ARRNELEMS(in);
 
 	if (lenin < 2 * MAXNUMRANGE || ISLEAFKEY(in))
-	{							/* not comressed value */
+	{							/* not compressed value */
 		if (in != (ArrayType *) DatumGetPointer(entry->key))
 		{
 			retval = palloc(sizeof(GISTENTRY));
@@ -1642,7 +1642,7 @@ typedef struct
 	char	   *buf;
 	int4		state;
 	int4		count;
-	/* reverse polish notation in list (for temprorary usage) */
+	/* reverse polish notation in list (for temporary usage) */
 	NODE	   *str;
 	/* number in str */
 	int4		num;
@@ -1747,7 +1747,7 @@ pushquery(WORKSTATE * state, int4 type, int4 val)
 #define STACKDEPTH	16
 
 /*
- * make polish notaion of query
+ * make polish notation of query
  */
 static int4
 makepol(WORKSTATE * state)

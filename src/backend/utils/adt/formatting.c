@@ -1,7 +1,7 @@
 /* -----------------------------------------------------------------------
  * formatting.c
  *
- * $Header: /cvsroot/pgsql/src/backend/utils/adt/formatting.c,v 1.57 2002/11/08 20:23:56 momjian Exp $
+ * $Header: /cvsroot/pgsql/src/backend/utils/adt/formatting.c,v 1.58 2003/03/10 22:28:18 tgl Exp $
  *
  *
  *	 Portions Copyright (c) 1999-2002, PostgreSQL Global Development Group
@@ -264,7 +264,7 @@ typedef struct
 	int			pre,			/* (count) numbers before decimal */
 				post,			/* (count) numbers after decimal  */
 				lsign,			/* want locales sign		  */
-				flag,			/* number parametrs		  */
+				flag,			/* number parameters		  */
 				pre_lsign_num,	/* tmp value for lsign		  */
 				multi,			/* multiplier for 'V'		  */
 				zero_start,		/* position of first zero	  */
@@ -488,7 +488,7 @@ static KeySuffix DCH_suff[] = {
  * it is not good.
  *
  * (!)
- *	 - Position for the keyword is simular as position in the enum DCH/NUM_poz.
+ *	 - Position for the keyword is similar as position in the enum DCH/NUM_poz.
  * (!)
  *
  * For fast search is used the 'int index[]', index is ascii table from position
@@ -776,7 +776,7 @@ static int	DCH_index[KeyWord_INDEX_SIZE] = {
 /*
 0	1	2	3	4	5	6	7	8	9
 */
-	/*---- first 0..31 chars are skiped ----*/
+	/*---- first 0..31 chars are skipped ----*/
 
 	-1, -1, -1, -1, -1, -1, -1, -1,
 	-1, -1, -1, -1, -1, -1, -1, -1, -1, -1,
@@ -838,9 +838,9 @@ typedef struct NUMProc
 				read_post;		/* to_number - number of dec. digit */
 
 	char	   *number,			/* string with number	*/
-			   *number_p,		/* pointer to current number pozition */
+			   *number_p,		/* pointer to current number position */
 			   *inout,			/* in / out buffer	*/
-			   *inout_p,		/* pointer to current inout pozition */
+			   *inout_p,		/* pointer to current inout position */
 			   *last_relevant,	/* last relevant number after decimal
 								 * point */
 
@@ -3753,7 +3753,7 @@ NUM_numpart_to_char(NUMProc *Np, int id)
 		else
 		{
 			/*
-			 * Write Decinal point
+			 * Write Decimal point
 			 */
 			if (*Np->number_p == '.')
 			{
@@ -3934,7 +3934,7 @@ NUM_processor(FormatNode *node, NUMDesc *Num, char *inout, char *number,
 			{
 				Np->sign_pos = Np->num_count + (Np->num_pre ? 1 : 0);
 
-				if (IS_DECIMAL(Np->Num))		/* decimal point correctio */
+				if (IS_DECIMAL(Np->Num))		/* decimal point correction */
 					++Np->sign_pos;
 			}
 			else if (IS_ZERO(Np->Num) && Np->num_pre > Np->Num->zero_start)
