@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/commands/tablecmds.c,v 1.124 2004/08/04 20:53:53 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/commands/tablecmds.c,v 1.125 2004/08/13 04:50:28 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -5379,21 +5379,20 @@ ATExecSetTableSpace(Oid tableOid, Oid newTableSpace)
 	dstrel = smgropen(newrnode);
 	smgrcreate(dstrel, rel->rd_istemp, false);
 
+	/* copy relation data to the new physical file */
+	copy_relation_data(rel, dstrel);
+
 	/* schedule unlinking old physical file */
 	if (rel->rd_smgr == NULL)
 		rel->rd_smgr = smgropen(rel->rd_node);
 	smgrscheduleunlink(rel->rd_smgr, rel->rd_istemp);
-
-	/* copy relation data to the new physical file */
-	copy_relation_data(rel, dstrel);
+	rel->rd_smgr = NULL;
 
 	/*
-	 * Now drop smgr references.  We need not smgrclose() the old file,
-	 * since it will be dropped anyway at commit by the pending unlink.
-	 * We do need to get rid of relcache's reference to it, however.
+	 * Now drop smgr references.  The source was already dropped by
+	 * smgrscheduleunlink.
 	 */
 	smgrclose(dstrel);
-	rel->rd_smgr = NULL;
 
 	/* update the pg_class row */
 	rd_rel->reltablespace = (newTableSpace == MyDatabaseTableSpace) ? InvalidOid : newTableSpace;
