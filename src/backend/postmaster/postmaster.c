@@ -37,7 +37,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/postmaster/postmaster.c,v 1.264 2002/01/10 01:11:45 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/postmaster/postmaster.c,v 1.265 2002/02/19 19:53:35 tgl Exp $
  *
  * NOTES
  *
@@ -723,6 +723,10 @@ PostmasterMain(int argc, char *argv[])
 
 	/*
 	 * Set up signal handlers for the postmaster process.
+	 *
+	 * CAUTION: when changing this list, check for side-effects on the
+	 * signal handling setup of child processes.  See tcop/postgres.c,
+	 * bootstrap/bootstrap.c, and postmaster/pgstat.c.
 	 */
 	pqinitmask();
 	PG_SETMASK(&BlockSig);
@@ -748,6 +752,18 @@ PostmasterMain(int argc, char *argv[])
 	 * reported to stderr.
 	 */
 	whereToSendOutput = None;
+
+	/*
+	 * On many platforms, the first call of localtime() incurs significant
+	 * overhead to load timezone info from the system configuration files.
+	 * By doing it once in the postmaster, we avoid having to do it in every
+	 * started child process.  The savings are not huge, but they add up...
+	 */
+	{
+		time_t		now = time(NULL);
+
+		(void) localtime(&now);
+	}
 
 	/*
 	 * Initialize and startup the statistics collector process
@@ -1793,7 +1809,6 @@ SignalChildren(int signal)
 	Dlelem	   *curr,
 			   *next;
 	Backend    *bp;
-	int			mypid = getpid();
 
 	curr = DLGetHead(BackendList);
 	while (curr)
@@ -1801,7 +1816,7 @@ SignalChildren(int signal)
 		next = DLGetSucc(curr);
 		bp = (Backend *) DLE_VAL(curr);
 
-		if (bp->pid != mypid)
+		if (bp->pid != MyProcPid)
 		{
 			if (DebugLvl >= 1)
 				elog(DEBUG, "SignalChildren: sending signal %d to process %d",
@@ -2412,13 +2427,12 @@ CountChildren(void)
 {
 	Dlelem	   *curr;
 	Backend    *bp;
-	int			mypid = getpid();
 	int			cnt = 0;
 
 	for (curr = DLGetHead(BackendList); curr; curr = DLGetSucc(curr))
 	{
 		bp = (Backend *) DLE_VAL(curr);
-		if (bp->pid != mypid)
+		if (bp->pid != MyProcPid)
 			cnt++;
 	}
 	if (CheckPointPID != 0)
