@@ -3,7 +3,7 @@
  *
  * Copyright 2000 by PostgreSQL Global Development Group
  *
- * $Header: /cvsroot/pgsql/src/bin/psql/command.c,v 1.67 2002/03/05 00:01:00 momjian Exp $
+ * $Header: /cvsroot/pgsql/src/bin/psql/command.c,v 1.68 2002/03/06 20:39:45 momjian Exp $
  */
 #include "postgres_fe.h"
 #include "command.h"
@@ -380,6 +380,10 @@ exec_command(const char *cmd,
 			case 'u':
 				success = describeUsers(name);
 				break;
+			case 'D':
+				success = listDomains(name);
+				break;
+
 			default:
 				status = CMD_UNKNOWN;
 		}
