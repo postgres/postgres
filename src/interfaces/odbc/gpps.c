@@ -43,12 +43,16 @@
 #define FALSE	((BOOL)0)
 #endif
 
+#ifndef ODBCINSTDIR
+#error "ODBCINSTDIR must be defined to compile this file"
+#endif
+
 
 /*
  * theIniFileName is searched for in:
  * 	$HOME/theIniFileName
  * 	theIniFileName
- * 	ODBCINST_INI
+ * 	ODBCINSTDIR/ODBCINST_INI
  */
 DWORD
 GetPrivateProfileString(const char *theSection,		/* section name */
@@ -102,7 +106,7 @@ GetPrivateProfileString(const char *theSection,		/* section name */
 	{
 		aFile = (FILE *) fopen(theIniFileName, PG_BINARY_R);
 		if (!aFile)
-			aFile = (FILE *) fopen(ODBCINST_INI, PG_BINARY_R);
+			aFile = (FILE *) fopen(ODBCINSTDIR "/" ODBCINST_INI, PG_BINARY_R);
 	}
 
 	aLength = (theDefault == NULL) ? 0 : strlen(theDefault);

@@ -22,20 +22,14 @@
 #define UNKNOWNS_AS_DONTKNOW			1
 #define UNKNOWNS_AS_LONGEST				2
 
-/* INI File Stuff */
+/* ODBC initialization files */
 #ifndef WIN32
 #define ODBC_INI						".odbc.ini"
-#ifdef ODBCINSTDIR
-#define ODBCINST_INI					ODBCINSTDIR "/odbcinst.ini"
+#define ODBCINST_INI					"odbcinst.ini"
 #else
-#define ODBCINST_INI					"/etc/odbcinst.ini"
+#define ODBC_INI						"ODBC.INI"
+#define ODBCINST_INI					"ODBCINST.INI"
 #endif
-#else							/* WIN32 */
-#define ODBC_INI						"ODBC.INI"		/* ODBC initialization
-														 * file */
-#define ODBCINST_INI					"ODBCINST.INI"	/* ODBC Installation
-														 * file */
-#endif	 /* WIN32 */
 
 
 #define INI_DSN							DBMS_NAME		/* Name of default
