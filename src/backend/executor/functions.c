@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/executor/functions.c,v 1.53 2002/08/04 19:48:09 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/executor/functions.c,v 1.54 2002/08/05 02:30:50 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -195,7 +195,7 @@ init_sql_fcache(FmgrInfo *finfo)
 	 */
 	fcache->typlen = typeStruct->typlen;
 
-	if (typeStruct->typtype == 'b')
+	if (typeStruct->typtype == 'b' || typeStruct->typtype == 'd')
 	{
 		/* The return type is not a relation, so just use byval */
 		fcache->typbyval = typeStruct->typbyval;

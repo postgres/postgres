@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/catalog/heap.c,v 1.216 2002/08/02 21:54:34 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/catalog/heap.c,v 1.217 2002/08/05 02:30:50 tgl Exp $
  *
  *
  * INTERFACE ROUTINES
@@ -370,18 +370,6 @@ CheckAttributeNames(TupleDesc tupdesc, bool relhasoids, char relkind)
 	}
 
 	/*
-	 * also, warn user if attribute to be created has an unknown typid
-	 * (usually as a result of a 'retrieve into' - jolly
-	 */
-	for (i = 0; i < natts; i++)
-	{
-		if (tupdesc->attrs[i]->atttypid == UNKNOWNOID)
-			elog(WARNING, "Attribute '%s' has an unknown type"
-				 "\n\tProceeding with relation creation anyway",
-				 NameStr(tupdesc->attrs[i]->attname));
-	}
-
-	/*
 	 * next check for repeated attribute names
 	 */
 	for (i = 1; i < natts; i++)
@@ -393,6 +381,28 @@ CheckAttributeNames(TupleDesc tupdesc, bool relhasoids, char relkind)
 				elog(ERROR, "column name \"%s\" is duplicated",
 					 NameStr(tupdesc->attrs[j]->attname));
 		}
+	}
+
+	/*
+	 * We also do some checking of the attribute types here.
+	 *
+	 * Warn user, but don't fail, if column to be created has UNKNOWN type
+	 * (usually as a result of a 'retrieve into' - jolly)
+	 *
+	 * Refuse any attempt to create a pseudo-type column.
+	 */
+	for (i = 0; i < natts; i++)
+	{
+		Oid		att_type = tupdesc->attrs[i]->atttypid;
+
+		if (att_type == UNKNOWNOID)
+			elog(WARNING, "Attribute \"%s\" has an unknown type"
+				 "\n\tProceeding with relation creation anyway",
+				 NameStr(tupdesc->attrs[i]->attname));
+		if (get_typtype(att_type) == 'p')
+			elog(ERROR, "Attribute \"%s\" has pseudo-type %s",
+				 NameStr(tupdesc->attrs[i]->attname),
+				 format_type_be(att_type));
 	}
 }
 

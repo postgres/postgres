@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/catalog/pg_proc.c,v 1.86 2002/08/05 00:21:27 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/catalog/pg_proc.c,v 1.87 2002/08/05 02:30:50 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -25,7 +25,6 @@
 #include "miscadmin.h"
 #include "parser/parse_coerce.h"
 #include "parser/parse_expr.h"
-#include "parser/parse_relation.h"
 #include "parser/parse_type.h"
 #include "tcop/tcopprot.h"
 #include "utils/builtins.h"
@@ -370,7 +369,7 @@ checkretval(Oid rettype, char fn_typtype, List *queryTreeList)
 
 	typerelid = typeidTypeRelid(rettype);
 
-	if (fn_typtype == 'b')
+	if (fn_typtype == 'b' || fn_typtype == 'd')
 	{
 		/* Shouldn't have a typerelid */
 		Assert(typerelid == InvalidOid);
@@ -592,7 +591,7 @@ fmgr_sql_validator(PG_FUNCTION_ARGS)
 	prosrc = DatumGetCString(DirectFunctionCall1(textout, tmp));
 
 	/* check typtype to see if we have a predetermined return type */
-	functyptype = typeid_get_typtype(proc->prorettype);
+	functyptype = get_typtype(proc->prorettype);
 
 	querytree_list = pg_parse_and_rewrite(prosrc, proc->proargtypes, proc->pronargs);
 	checkretval(proc->prorettype, functyptype, querytree_list);

@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/parser/parse_relation.c,v 1.72 2002/08/04 19:48:10 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/parser/parse_relation.c,v 1.73 2002/08/05 02:30:50 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -727,7 +727,7 @@ addRangeTableEntryForFunction(ParseState *pstate,
 	 * Now determine if the function returns a simple or composite type,
 	 * and check/add column aliases.
 	 */
-	functyptype = typeid_get_typtype(funcrettype);
+	functyptype = get_typtype(funcrettype);
 
 	if (functyptype == 'c')
 	{
@@ -776,7 +776,7 @@ addRangeTableEntryForFunction(ParseState *pstate,
 			elog(ERROR, "Invalid return relation specified for function %s",
 				 funcname);
 	}
-	else if (functyptype == 'b')
+	else if (functyptype == 'b' || functyptype == 'd')
 	{
 		/*
 		 * Must be a base data type, i.e. scalar.
@@ -1080,7 +1080,7 @@ expandRTE(ParseState *pstate, RangeTblEntry *rte,
 			{
 				/* Function RTE */
 				Oid	funcrettype = exprType(rte->funcexpr);
-				char functyptype = typeid_get_typtype(funcrettype);
+				char functyptype = get_typtype(funcrettype);
 				List *coldeflist = rte->coldeflist;
 
 				/*
@@ -1091,7 +1091,6 @@ expandRTE(ParseState *pstate, RangeTblEntry *rte,
 					Oid	funcrelid = typeidTypeRelid(funcrettype);
 					if (OidIsValid(funcrelid))
 					{
-
 						/*
 						 * Composite data type, i.e. a table's row type
 						 * Same as ordinary relation RTE
@@ -1142,7 +1141,7 @@ expandRTE(ParseState *pstate, RangeTblEntry *rte,
 						elog(ERROR, "Invalid return relation specified"
 									" for function");
 				}
-				else if (functyptype == 'b')
+				else if (functyptype == 'b' || functyptype == 'd')
 				{
 					/*
 					 * Must be a base data type, i.e. scalar
@@ -1392,7 +1391,7 @@ get_rte_attribute_type(RangeTblEntry *rte, AttrNumber attnum,
 			{
 				/* Function RTE */
 				Oid funcrettype = exprType(rte->funcexpr);
-				char functyptype = typeid_get_typtype(funcrettype);
+				char functyptype = get_typtype(funcrettype);
 				List *coldeflist = rte->coldeflist;
 
 				/*
@@ -1436,7 +1435,7 @@ get_rte_attribute_type(RangeTblEntry *rte, AttrNumber attnum,
 						elog(ERROR, "Invalid return relation specified"
 									" for function");
 				}
-				else if (functyptype == 'b')
+				else if (functyptype == 'b' || functyptype == 'd')
 				{
 					/*
 					 * Must be a base data type, i.e. scalar
@@ -1686,29 +1685,4 @@ warnAutoRange(ParseState *pstate, RangeVar *relation)
 		elog(NOTICE, "Adding missing FROM-clause entry%s for table \"%s\"",
 			 pstate->parentParseState != NULL ? " in subquery" : "",
 			 relation->relname);
-}
-
-char
-typeid_get_typtype(Oid typeid)
-{
-	HeapTuple		typeTuple;
-	Form_pg_type	typeStruct;
-	char			result;
-
-	/*
-	 * determine if the function returns a simple, named composite,
-	 * or anonymous composite type
-	 */
- 	typeTuple = SearchSysCache(TYPEOID,
- 							   ObjectIdGetDatum(typeid),
- 							   0, 0, 0);
- 	if (!HeapTupleIsValid(typeTuple))
- 		elog(ERROR, "cache lookup for type %u failed", typeid);
- 	typeStruct = (Form_pg_type) GETSTRUCT(typeTuple);
- 
-	result = typeStruct->typtype;
-
- 	ReleaseSysCache(typeTuple);
-
-	return result;
 }

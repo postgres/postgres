@@ -8,7 +8,7 @@
  * Portions Copyright (c) 1996-2002, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Id: pg_type.h,v 1.126 2002/08/04 19:48:10 momjian Exp $
+ * $Id: pg_type.h,v 1.127 2002/08/05 02:30:50 tgl Exp $
  *
  * NOTES
  *	  the genbki.sh script reads this file and generates .bki
@@ -60,10 +60,10 @@ CATALOG(pg_type) BOOTSTRAP
 	bool		typbyval;
 
 	/*
-	 * typtype is 'b' for a basic type, 'c' for a catalog type (ie a
-	 * class), or 'p' for a pseudo type. If typtype is 'c', typrelid is the
-	 * OID of the class' entry in pg_class. (Why do we need an entry in
-	 * pg_type for classes, anyway?)
+	 * typtype is 'b' for a basic type, 'c' for a complex type (ie a
+	 * table's rowtype), 'd' for a domain type, or 'p' for a pseudo type.
+	 *
+	 * If typtype is 'c', typrelid is the OID of the class' entry in pg_class.
 	 */
 	char		typtype;
 
@@ -75,7 +75,8 @@ CATALOG(pg_type) BOOTSTRAP
 	bool		typisdefined;
 
 	char		typdelim;		/* delimiter for arrays of this type */
-	Oid			typrelid;		/* 0 if not a class type */
+
+	Oid			typrelid;		/* 0 if not a complex type */
 
 	/*
 	 * If typelem is not 0 then it identifies another row in pg_type. The

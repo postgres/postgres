@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/executor/nodeFunctionscan.c,v 1.4 2002/08/04 19:48:09 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/executor/nodeFunctionscan.c,v 1.5 2002/08/05 02:30:50 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -31,7 +31,6 @@
 #include "executor/nodeFunctionscan.h"
 #include "parser/parsetree.h"
 #include "parser/parse_expr.h"
-#include "parser/parse_relation.h"
 #include "parser/parse_type.h"
 #include "storage/lmgr.h"
 #include "tcop/pquery.h"
@@ -204,7 +203,7 @@ ExecInitFunctionScan(FunctionScan *node, EState *estate, Plan *parent)
 	 * Now determine if the function returns a simple or composite type,
 	 * and check/add column aliases.
 	 */
-	functyptype = typeid_get_typtype(funcrettype);
+	functyptype = get_typtype(funcrettype);
 
 	/*
 	 * Build a suitable tupledesc representing the output rows
@@ -228,7 +227,7 @@ ExecInitFunctionScan(FunctionScan *node, EState *estate, Plan *parent)
 		else
 			elog(ERROR, "Invalid return relation specified for function");
 	}
-	else if (functyptype == 'b')
+	else if (functyptype == 'b' || functyptype == 'd')
 	{
 		/*
 		 * Must be a base data type, i.e. scalar
@@ -462,7 +461,7 @@ function_getonetuple(FunctionScanState *scanstate,
 			 */
 			if (fn_typtype == 'p' && fn_typeid == RECORDOID)
 				if (tupledesc_mismatch(tupdesc, slot->ttc_tupleDescriptor))
-					elog(ERROR, "Query specified return tuple and actual"
+					elog(ERROR, "Query-specified return tuple and actual"
 									" function return tuple do not match");
 		}
 		else

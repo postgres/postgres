@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/access/common/tupdesc.c,v 1.84 2002/08/04 19:48:09 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/access/common/tupdesc.c,v 1.85 2002/08/05 02:30:49 tgl Exp $
  *
  * NOTES
  *	  some of the executor utility code such as "ExecTypeFromTL" should be
@@ -24,9 +24,9 @@
 #include "catalog/namespace.h"
 #include "catalog/pg_type.h"
 #include "nodes/parsenodes.h"
-#include "parser/parse_relation.h"
 #include "parser/parse_type.h"
 #include "utils/builtins.h"
+#include "utils/lsyscache.h"
 #include "utils/syscache.h"
 
 
@@ -601,7 +601,7 @@ RelationNameGetTupleDesc(char *relname)
 TupleDesc
 TypeGetTupleDesc(Oid typeoid, List *colaliases)
 {
-	char		functyptype = typeid_get_typtype(typeoid);
+	char		functyptype = get_typtype(typeoid);
 	TupleDesc	tupdesc = NULL;
 
 	/*
@@ -639,15 +639,13 @@ TypeGetTupleDesc(Oid typeoid, List *colaliases)
 
 					if (label != NULL)
 						namestrcpy(&(tupdesc->attrs[varattno]->attname), label);
-					else
-						MemSet(NameStr(tupdesc->attrs[varattno]->attname), 0, NAMEDATALEN);
 				}
 			}
 		}
 		else
 			elog(ERROR, "Invalid return relation specified for function");
 	}
-	else if (functyptype == 'b')
+	else if (functyptype == 'b' || functyptype == 'd')
 	{
 		/* Must be a base data type, i.e. scalar */
 		char	   *attname;

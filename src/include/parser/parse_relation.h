@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2002, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Id: parse_relation.h,v 1.36 2002/08/04 19:48:11 momjian Exp $
+ * $Id: parse_relation.h,v 1.37 2002/08/05 02:30:50 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -61,6 +61,5 @@ extern List *expandRelAttrs(ParseState *pstate, RangeTblEntry *rte);
 extern int	attnameAttNum(Relation rd, const char *attname, bool sysColOK);
 extern Name attnumAttName(Relation rd, int attid);
 extern Oid	attnumTypeId(Relation rd, int attid);
-extern char typeid_get_typtype(Oid typeid);
 
 #endif   /* PARSE_RELATION_H */

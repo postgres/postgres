@@ -11,7 +11,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/parser/gram.y,v 2.355 2002/08/04 19:48:09 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/parser/gram.y,v 2.356 2002/08/05 02:30:50 tgl Exp $
  *
  * HISTORY
  *	  AUTHOR			DATE			MAJOR EVENT
@@ -203,7 +203,7 @@ static void doNegateFloat(Value *v);
 %type <chr> 	TriggerOneEvent
 
 %type <list>	stmtblock, stmtmulti,
-				OptTableElementList, OptInherit, definition,
+				OptTableElementList, TableElementList, OptInherit, definition,
 				opt_distinct, opt_definition, func_args,
 				func_args_list, func_as, createfunc_opt_list
 				oper_argtypes, RuleActionList, RuleActionMulti,
@@ -216,7 +216,7 @@ static void doNegateFloat(Value *v);
 				insert_target_list, def_list, opt_indirection,
 				group_clause, TriggerFuncArgs, select_limit,
 				opt_select_limit, opclass_item_list, trans_options,
-				tableFuncElementList
+				TableFuncElementList, OptTableFuncElementList
 
 %type <range>	into_clause, OptTempTableName
 
@@ -257,8 +257,8 @@ static void doNegateFloat(Value *v);
 
 %type <vsetstmt> set_rest
 
-%type <node>	OptTableElement, ConstraintElem, tableFuncElement
-%type <node>	columnDef, tableFuncColumnDef
+%type <node>	TableElement, ConstraintElem, TableFuncElement
+%type <node>	columnDef
 %type <defelt>	def_elem
 %type <node>	def_arg, columnElem, where_clause, insert_column_item,
 				a_expr, b_expr, c_expr, r_expr, AexprConst,
@@ -1428,24 +1428,22 @@ OptTemp:	TEMPORARY						{ $$ = TRUE; }
 		;
 
 OptTableElementList:
-			OptTableElementList ',' OptTableElement
-				{
-					if ($3 != NULL)
-						$$ = lappend($1, $3);
-					else
-						$$ = $1;
-				}
-			| OptTableElement
-				{
-					if ($1 != NULL)
-						$$ = makeList1($1);
-					else
-						$$ = NIL;
-				}
+			TableElementList					{ $$ = $1; }
 			| /*EMPTY*/							{ $$ = NIL; }
 		;
 
-OptTableElement:
+TableElementList:
+			TableElementList ',' TableElement
+				{
+					$$ = lappend($1, $3);
+				}
+			| TableElement
+				{
+					$$ = makeList1($1);
+				}
+		;
+
+TableElement:
 			columnDef							{ $$ = $1; }
 			| TableLikeClause					{ $$ = $1; }
 			| TableConstraint					{ $$ = $1; }
@@ -1877,7 +1875,7 @@ CreateSeqStmt:
 		;
 
 OptSeqList: OptSeqList OptSeqElem					{ $$ = lappend($1, $2); }
-			|										{ $$ = NIL; }
+			| /*EMPTY*/								{ $$ = NIL; }
 		;
 
 OptSeqElem: CACHE NumericOnly
@@ -4452,14 +4450,14 @@ table_ref:	relation_expr
 					n->coldeflist = NIL;
 					$$ = (Node *) n;
 				}
-			| func_table AS '(' tableFuncElementList ')'
+			| func_table AS '(' OptTableFuncElementList ')'
 				{
 					RangeFunction *n = makeNode(RangeFunction);
 					n->funccallnode = $1;
 					n->coldeflist = $4;
 					$$ = (Node *) n;
 				}
-			| func_table AS ColId '(' tableFuncElementList ')'
+			| func_table AS ColId '(' OptTableFuncElementList ')'
 				{
 					RangeFunction *n = makeNode(RangeFunction);
 					Alias *a = makeNode(Alias);
@@ -4469,7 +4467,7 @@ table_ref:	relation_expr
 					n->coldeflist = $5;
 					$$ = (Node *) n;
 				}
-			| func_table ColId '(' tableFuncElementList ')'
+			| func_table ColId '(' OptTableFuncElementList ')'
 				{
 					RangeFunction *n = makeNode(RangeFunction);
 					Alias *a = makeNode(Alias);
@@ -4733,29 +4731,23 @@ where_clause:
 		;
 
 
-tableFuncElementList:
-			tableFuncElementList ',' tableFuncElement
-				{
-					if ($3 != NULL)
-						$$ = lappend($1, $3);
-					else
-						$$ = $1;
-				}
-			| tableFuncElement
-				{
-					if ($1 != NULL)
-						$$ = makeList1($1);
-					else
-						$$ = NIL;
-				}
+OptTableFuncElementList:
+			TableFuncElementList				{ $$ = $1; }
 			| /*EMPTY*/							{ $$ = NIL; }
 		;
 
-tableFuncElement:
-			tableFuncColumnDef					{ $$ = $1; }
+TableFuncElementList:
+			TableFuncElementList ',' TableFuncElement
+				{
+					$$ = lappend($1, $3);
+				}
+			| TableFuncElement
+				{
+					$$ = makeList1($1);
+				}
 		;
 
-tableFuncColumnDef:	ColId Typename
+TableFuncElement:	ColId Typename
 				{
 					ColumnDef *n = makeNode(ColumnDef);
 					n->colname = $1;
