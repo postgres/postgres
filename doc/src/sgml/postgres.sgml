@@ -1,5 +1,5 @@
 <!--
-$PostgreSQL: pgsql/doc/src/sgml/postgres.sgml,v 1.70 2004/12/24 19:12:37 tgl Exp $
+$PostgreSQL: pgsql/doc/src/sgml/postgres.sgml,v 1.71 2004/12/29 23:36:47 tgl Exp $
 -->
 
 <!DOCTYPE book PUBLIC "-//OASIS//DTD DocBook V4.2//EN" [
@@ -168,7 +168,8 @@ $PostgreSQL: pgsql/doc/src/sgml/postgres.sgml,v 1.70 2004/12/24 19:12:37 tgl Exp
     with <productname>PostgreSQL</>.  Each of these chapters can be
     read independently.  Note that there are many other programming
     interfaces for client programs that are distributed separately and
-    contain their own documentation.  Readers of this part should be
+    contain their own documentation (<xref linkend="external-projects">
+    lists some of the more popular ones).  Readers of this part should be
     familiar with using <acronym>SQL</acronym> commands to manipulate
     and query the database (see <xref linkend="sql">) and of course
     with the programming language that the interface uses.
@@ -179,7 +180,6 @@ $PostgreSQL: pgsql/doc/src/sgml/postgres.sgml,v 1.70 2004/12/24 19:12:37 tgl Exp
   &lobj;
   &ecpg;
   &infoschema;
-  &external-projects;
 
  </part>
 
@@ -252,6 +252,7 @@ $PostgreSQL: pgsql/doc/src/sgml/postgres.sgml,v 1.70 2004/12/24 19:12:37 tgl Exp
   &release;
   &cvs;
   &docguide;
+  &external-projects;
 
  </part>
 

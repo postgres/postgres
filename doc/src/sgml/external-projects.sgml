@@ -1,8 +1,8 @@
 <!--
-$PostgreSQL: pgsql/doc/src/sgml/external-projects.sgml,v 1.6 2004/12/28 22:47:15 tgl Exp $
+$PostgreSQL: pgsql/doc/src/sgml/external-projects.sgml,v 1.7 2004/12/29 23:36:46 tgl Exp $
 -->
 
- <chapter id="external-projects">
+ <appendix id="external-projects">
   <title>External Projects</title>
 
   <para>
@@ -22,16 +22,16 @@ $PostgreSQL: pgsql/doc/src/sgml/external-projects.sgml,v 1.6 2004/12/28 22:47:15
   <para>
    Many <productname>PostgreSQL</productname>-related projects are
    hosted at either
-   <productname>GBorg</> at <ulink url="http://gborg.postgresql.org">
-   http://gborg.postgresql.org</ulink> or
-   <productname>pgFoundry</> at <ulink
+   <productname>GBorg</> at <ulink
+   url="http://gborg.postgresql.org">http://gborg.postgresql.org</ulink>
+   or <productname>pgFoundry</> at <ulink
    url="http://pgfoundry.org">http://pgfoundry.org</ulink>.
    There are other
    <productname>PostgreSQL</productname>-related projects that are hosted
    elsewhere, but you will have to do an Internet search to find them.
   </para>
 
- <sect1 id="interfaces">
+ <sect1 id="external-interfaces">
   <title>Externally Developed Interfaces</title>
 
   <indexterm>
@@ -147,11 +147,17 @@ $PostgreSQL: pgsql/doc/src/sgml/external-projects.sgml,v 1.6 2004/12/28 22:47:15
     </varlistentry>
 
    </variablelist>
+
+   All of these can be found at 
+   <productname>GBorg</> (<ulink
+   url="http://gborg.postgresql.org">http://gborg.postgresql.org</ulink>)
+   or <productname>pgFoundry</> (<ulink
+   url="http://pgfoundry.org">http://pgfoundry.org</ulink>).
    </para>
 
  </sect1>
  
- <sect1 id="extensions">
+ <sect1 id="external-extensions">
  <title>Extensions</title>
 
   <indexterm>
@@ -181,7 +187,7 @@ $PostgreSQL: pgsql/doc/src/sgml/external-projects.sgml,v 1.6 2004/12/28 22:47:15
   </para> 
 
  </sect1>
-</chapter>
+</appendix>
 
 <!-- Keep this comment at the end of the file
 Local variables:
