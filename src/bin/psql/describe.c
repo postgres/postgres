@@ -3,7 +3,7 @@
  *
  * Copyright 2000 by PostgreSQL Global Development Group
  *
- * $Header: /cvsroot/pgsql/src/bin/psql/describe.c,v 1.31 2001/05/09 17:57:42 momjian Exp $
+ * $Header: /cvsroot/pgsql/src/bin/psql/describe.c,v 1.32 2001/05/27 21:50:50 petere Exp $
  */
 #include "postgres_fe.h"
 #include "describe.h"
@@ -925,14 +925,14 @@ describeUsers (const char *name)
 	headers[cols] = NULL;
 
 	strcpy(buf,
-		   "SELECT u.usename AS \"User Name\"\n
-                 , u.usesysid AS \"User ID\"\n
-                 , u.usesuper AS \"Super User\"\n
-                 , u.usecreatedb AS \"Create DB\"\n
-              FROM pg_user u\n");
+		   "SELECT u.usename AS \"User Name\",\n"
+           "       u.usesysid AS \"User ID\",\n"
+           "       u.usesuper AS \"Super User\",\n"
+           "       u.usecreatedb AS \"Create DB\"\n"
+           "FROM pg_user u\n");
 	if (name)
 	{
-		strcat(buf, "   WHERE u.usename ~ '^");
+		strcat(buf, "WHERE u.usename ~ '^");
 		strncat(buf, name, REGEXP_CUTOFF);
 		strcat(buf, "'\n");
 	}
