@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/cache/relcache.c,v 1.150 2002/01/15 22:33:20 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/cache/relcache.c,v 1.151 2002/01/16 17:34:42 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -2659,33 +2659,22 @@ init_irels(void)
 		return;
 	}
 
-	FileSeek(fd, 0L, SEEK_SET);
-
 	for (relno = 0; relno < Num_indices_bootstrap; relno++)
 	{
 		/* first read the relation descriptor length */
 		if ((nread = FileRead(fd, (char *) &len, sizeof(len))) != sizeof(len))
-		{
-			write_irels();
-			return;
-		}
+			goto read_failed;
 
 		/* safety check for incompatible relcache layout */
 		if (len != sizeof(RelationData))
-		{
-			write_irels();
-			return;
-		}
+			goto read_failed;
 
 		ird = irel[relno] = (Relation) palloc(len);
 		MemSet(ird, 0, len);
 
 		/* then, read the Relation structure */
 		if ((nread = FileRead(fd, (char *) ird, len)) != len)
-		{
-			write_irels();
-			return;
-		}
+			goto read_failed;
 
 		/* reset transient fields */
 		ird->rd_targblock = InvalidBlockNumber;
@@ -2696,33 +2685,21 @@ init_irels(void)
 
 		/* next, read the access method tuple form */
 		if ((nread = FileRead(fd, (char *) &len, sizeof(len))) != sizeof(len))
-		{
-			write_irels();
-			return;
-		}
+			goto read_failed;
 
 		am = (Form_pg_am) palloc(len);
 		if ((nread = FileRead(fd, (char *) am, len)) != len)
-		{
-			write_irels();
-			return;
-		}
+			goto read_failed;
 
 		ird->rd_am = am;
 
 		/* next read the relation tuple form */
 		if ((nread = FileRead(fd, (char *) &len, sizeof(len))) != sizeof(len))
-		{
-			write_irels();
-			return;
-		}
+			goto read_failed;
 
 		relform = (Form_pg_class) palloc(len);
 		if ((nread = FileRead(fd, (char *) relform, len)) != len)
-		{
-			write_irels();
-			return;
-		}
+			goto read_failed;
 
 		ird->rd_rel = relform;
 
@@ -2734,18 +2711,12 @@ init_irels(void)
 		for (i = 0; i < relform->relnatts; i++)
 		{
 			if ((nread = FileRead(fd, (char *) &len, sizeof(len))) != sizeof(len))
-			{
-				write_irels();
-				return;
-			}
+				goto read_failed;
 
 			ird->rd_att->attrs[i] = (Form_pg_attribute) palloc(len);
 
 			if ((nread = FileRead(fd, (char *) ird->rd_att->attrs[i], len)) != len)
-			{
-				write_irels();
-				return;
-			}
+				goto read_failed;
 		}
 
 		/*
@@ -2761,17 +2732,11 @@ init_irels(void)
 
 		/* next, read the index strategy map */
 		if ((nread = FileRead(fd, (char *) &len, sizeof(len))) != sizeof(len))
-		{
-			write_irels();
-			return;
-		}
+			goto read_failed;
 
 		strat = (IndexStrategy) MemoryContextAlloc(indexcxt, len);
 		if ((nread = FileRead(fd, (char *) strat, len)) != len)
-		{
-			write_irels();
-			return;
-		}
+			goto read_failed;
 
 		/* have to invalidate any FmgrInfo data in the strategy maps */
 		nstrategies = am->amstrategies * relform->relnatts;
@@ -2782,17 +2747,11 @@ init_irels(void)
 
 		/* finally, read the vector of support procedures */
 		if ((nread = FileRead(fd, (char *) &len, sizeof(len))) != sizeof(len))
-		{
-			write_irels();
-			return;
-		}
-
+			goto read_failed;
 		support = (RegProcedure *) MemoryContextAlloc(indexcxt, len);
 		if ((nread = FileRead(fd, (char *) support, len)) != len)
-		{
-			write_irels();
-			return;
-		}
+			goto read_failed;
+
 		ird->rd_support = support;
 
 		nsupport = relform->relnatts * am->amsupport;
@@ -2804,7 +2763,16 @@ init_irels(void)
 
 		RelationCacheInsert(ird);
 	}
+
+	/* successfully read the init file */
+	FileClose(fd);
 	criticalRelcachesBuilt = true;
+	return;
+
+	/* init file is broken, so do it the hard way */
+read_failed:
+	FileClose(fd);
+	write_irels();
 }
 
 static void
@@ -2976,6 +2944,10 @@ write_irels(void)
 	/*
 	 * And rename the temp file to its final name, deleting any
 	 * previously-existing init file.
+	 *
+	 * Note: a failure here is possible under Cygwin, if some other
+	 * backend is holding open an unlinked-but-not-yet-gone init file.
+	 * So treat this as a noncritical failure.
 	 */
 	if (rename(tempfilename, finalfilename) < 0)
 	{
