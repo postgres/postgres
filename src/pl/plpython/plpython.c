@@ -29,11 +29,12 @@
  * MAINTENANCE, SUPPORT, UPDATES, ENHANCEMENTS, OR MODIFICATIONS.
  *
  * IDENTIFICATION
- *	$PostgreSQL: pgsql/src/pl/plpython/plpython.c,v 1.52 2004/08/04 21:34:29 tgl Exp $
+ *	$PostgreSQL: pgsql/src/pl/plpython/plpython.c,v 1.53 2004/08/05 03:10:29 joe Exp $
  *
  *********************************************************************
  */
 
+#include <Python.h>
 #include "postgres.h"
 
 /* system stuff */
@@ -54,7 +55,6 @@
 #include "utils/syscache.h"
 #include "utils/typcache.h"
 
-#include <Python.h>
 #include <compile.h>
 #include <eval.h>
 
