@@ -8,7 +8,7 @@
  * Portions Copyright (c) 1996-2000, PostgreSQL, Inc
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Id: pg_operator.h,v 1.70 2000/02/24 02:05:28 tgl Exp $
+ * $Id: pg_operator.h,v 1.71 2000/02/27 12:02:33 wieck Exp $
  *
  * NOTES
  *	  the genbki.sh script reads this file and generates .bki
@@ -683,6 +683,14 @@ DATA(insert OID = 1761 (  "/"	   PGUID 0 b t f 1700 1700 1700    0	0 0 0 numeric
 DATA(insert OID = 1762 (  "%"	   PGUID 0 b t f 1700 1700 1700    0	0 0 0 numeric_mod - - ));
 DATA(insert OID = 1763 (  "@"	   PGUID 0 l t f	0 1700 1700    0	0 0 0 numeric_abs - - ));
 DATA(insert OID = 1788 (  "-"	   PGUID 0 l t f    0 1700 1700    0    0 0 0 numeric_uminus - - ));
+
+/* LZTEXT type */
+DATA(insert OID = 1657 (  "="    PGUID 0 b t f 1625 1625   16 1657 1658 1659 1659 lztext_eq eqsel eqjoinsel ));
+DATA(insert OID = 1658 (  "<>"       PGUID 0 b t f 1625 1625   16 1658 1657 0 0 lztext_ne neqsel neqjoinsel ));
+DATA(insert OID = 1659 (  "<"    PGUID 0 b t f 1625 1625   16 1661 1662 0 0 lztext_lt intltsel intltjoinsel ));
+DATA(insert OID = 1660 (  "<="       PGUID 0 b t f 1625 1625   16 1662 1661 0 0 lztext_le intltsel intltjoinsel ));
+DATA(insert OID = 1661 (  ">"    PGUID 0 b t f 1625 1625   16 1659 1660 0 0 lztext_gt intgtsel intgtjoinsel ));
+DATA(insert OID = 1662 (  ">="       PGUID 0 b t f 1625 1625   16 1660 1659 0 0 lztext_ge intgtsel intgtjoinsel ));
 
 
 /*

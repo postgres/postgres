@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/cache/relcache.c,v 1.90 2000/02/18 09:28:55 inoue Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/cache/relcache.c,v 1.91 2000/02/27 12:02:32 wieck Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -36,6 +36,7 @@
 
 #include "postgres.h"
 
+#include "utils/builtins.h"
 #include "access/genam.h"
 #include "access/heapam.h"
 #include "access/istrat.h"
@@ -55,7 +56,6 @@
 #include "miscadmin.h"
 #include "storage/bufmgr.h"
 #include "storage/smgr.h"
-#include "utils/builtins.h"
 #include "utils/catcache.h"
 #include "utils/relcache.h"
 #include "utils/temprel.h"
@@ -688,7 +688,7 @@ RelationBuildRuleLock(Relation relation)
 								  Anum_pg_rewrite_ev_action,
 								  pg_rewrite_tupdesc,
 								  &isnull);
-		ruleaction_str = textout((text *) DatumGetPointer(ruleaction));
+		ruleaction_str = lztextout((lztext *) DatumGetPointer(ruleaction));
 		rule->actions = (List *) stringToNode(ruleaction_str);
 		pfree(ruleaction_str);
 
@@ -696,7 +696,7 @@ RelationBuildRuleLock(Relation relation)
 								   Anum_pg_rewrite_ev_qual,
 								   pg_rewrite_tupdesc,
 								   &isnull);
-		rule_evqual_str = textout((text *) DatumGetPointer(rule_evqual));
+		rule_evqual_str = lztextout((lztext *) DatumGetPointer(rule_evqual));
 		rule->qual = (Node *) stringToNode(rule_evqual_str);
 		pfree(rule_evqual_str);
 
