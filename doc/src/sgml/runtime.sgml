@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/runtime.sgml,v 1.116 2002/05/17 01:19:16 tgl Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/runtime.sgml,v 1.117 2002/06/15 01:29:49 momjian Exp $
 -->
 
 <Chapter Id="runtime">
@@ -1518,8 +1518,7 @@ dynamic_library_path = '/usr/local/lib/postgresql:/home/my_project/lib:$libdir'
         When a password is specified in <command>CREATE USER</> or
         <command>ALTER USER</> without writing either ENCRYPTED or
         UNENCRYPTED, this flag determines whether the password is to be
-        encrypted. The default is off (do not encrypt the password), but
-        this choice may change in a future release.
+        encrypted. The default is on (encrypt the password).
        </para>
       </listitem>
      </varlistentry>
