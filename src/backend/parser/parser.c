@@ -6,7 +6,7 @@
  *
  *
  * IDENTIFICATION
- *    $Header: /cvsroot/pgsql/src/backend/parser/parser.c,v 1.9 1996/11/10 03:01:30 momjian Exp $
+ *    $Header: /cvsroot/pgsql/src/backend/parser/parser.c,v 1.10 1996/11/10 03:30:46 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -119,7 +119,6 @@ fixupsets(Query *parse)
     define_sets(parse);
 }
 
-#ifdef SETS_FIXED
 /* Recursively find all of the Consts in the parsetree.  Some of
  * these may represent a set.  The value of the Const will be the
  * query (a string) which defines the set.  Call SetDefine to define
