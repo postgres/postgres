@@ -1,6 +1,6 @@
 TODO list for PostgreSQL
 ========================
-Last updated:		Wed May 30 10:37:14 EDT 2001
+Last updated:		Wed May 30 15:48:45 EDT 2001
 
 Current maintainer:	Bruce Momjian (pgman@candle.pha.pa.us)
 
@@ -46,6 +46,7 @@ ADMIN
 * Remove unused files during database vacuum or postmaster startup
 * Add table name mapping for numeric file names
 * Overhaul pg_hba.conf host-based authentication
+* Encrpyt passwords in pg_shadow table using MD5 (Vince)
 * Incremental backups
 
 TYPES
@@ -226,11 +227,11 @@ MISCELLANEOUS
 
 * Increase identifier length(NAMEDATALEN) if small performance hit
 * Create a background process for each database that runs while
-  database is idle, finding superceeded rows, gathering stats and vacuuming
-* Populate backend status area and write program to dump status data
-* Put sort files in their own directory
+  database is idle, finding superceeded rows, gathering stats and
+  vacuuming (Tom)
+* Populate backend status area and write program to dump status data (Jan)
+* -Put sort files in their own directory (Bruce)
 * Show location of syntax error in query [yacc]
-* Encrpyt passwords in pg_shadow table using MD5 (Vince)
 * Allow Java server-side programming [java]
 * Add sed-like regular expression search/replace capability
 * Change representation of whole-tuple parameters to functions
