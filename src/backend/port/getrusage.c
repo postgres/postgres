@@ -1,10 +1,9 @@
-/* $Id: getrusage.c,v 1.5 1998/02/11 19:10:57 momjian Exp $ */
+/* $Id: getrusage.c,v 1.6 1998/02/24 03:45:06 scrappy Exp $ */
 
 #include <math.h>               /* for pow() prototype */
 
 #include <errno.h>
 #include "rusagestub.h"
-#include "port-protos.h"
 
 #if 0 /* this is from univel port ... how does compiler define? */
       /* same for i386_solaris port ... how does compiler define? */
