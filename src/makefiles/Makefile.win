@@ -1,3 +1,4 @@
+# $Header: /cvsroot/pgsql/src/makefiles/Attic/Makefile.win,v 1.5 2000/09/29 13:36:50 petere Exp $
 LDFLAGS+= -g
 DLLTOOL= dlltool
 DLLWRAP= dllwrap
@@ -6,6 +7,9 @@ MK_NO_LORDER=true
 MAKE_DLL=true
 #MAKE_DLL=false
 SHLIB_LINK=$(DLLLIBS)
+# linking with -lm or -lc causes program to crash
+# (see http://sources.redhat.com/cygwin/faq/faq.html#SEC110)
+LIBS:=$(filter-out -lm -lc, $(LIBS))
 
 %.dll: %.o
 	$(DLLTOOL) --export-all --output-def $*.def $<
