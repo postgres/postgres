@@ -2,10 +2,10 @@
     configure.in and configure
     doc/bug.template
     bump interface version numbers
-      o src/interfaces/*/Makefile
-      o src/interfaces/libpq/libpq.rc (update for minor release)
-      o src/include/pg_config.h.win32 (update for minor release)
-      o port/win32ver.rc (update for minor release)
+      o src/interfaces/*/Makefile (major releases only)
+      o src/interfaces/libpq/libpq.rc (major and minor releases)
+      o src/include/pg_config.h.win32 (major and minor releases)
+      o port/win32ver.rc (major and minor releases)
 
 * Release notes
     update doc/src/sgml/release.sgml and generate HISTORY
