@@ -17,8 +17,20 @@ OutDir=.\Release
 ALL : "$(OUTDIR)\psql.exe"
 
 CLEAN :
-	-@erase "$(INTDIR)\psql.obj"
+	-@erase "$(INTDIR)\command.obj"
+	-@erase "$(INTDIR)\common.obj"
+	-@erase "$(INTDIR)\help.obj"
+	-@erase "$(INTDIR)\input.obj"
 	-@erase "$(INTDIR)\stringutils.obj"
+	-@erase "$(INTDIR)\mainloop.obj"
+	-@erase "$(INTDIR)\copy.obj"
+	-@erase "$(INTDIR)\startup.obj"
+	-@erase "$(INTDIR)\prompt.obj"
+	-@erase "$(INTDIR)\variables.obj"
+	-@erase "$(INTDIR)\large_obj.obj"
+	-@erase "$(INTDIR)\print.obj"
+	-@erase "$(INTDIR)\describe.obj"
+	-@erase "$(INTDIR)\tab-complete.obj"
 	-@erase "$(INTDIR)\getopt.obj"
 	-@erase "$(INTDIR)\vc50.idb"
 	-@erase "$(OUTDIR)\psql.exe"
@@ -46,8 +58,20 @@ LINK32_FLAGS=kernel32.lib user32.lib gdi32.lib winspool.lib comdlg32.lib\
  odbccp32.lib wsock32.lib /nologo /subsystem:console /incremental:no\
  /pdb:"$(OUTDIR)\psql.pdb" /machine:I386 /out:"$(OUTDIR)\psql.exe" 
 LINK32_OBJS= \
-	"$(INTDIR)\psql.obj" \
+	"$(INTDIR)\command.obj" \
+	"$(INTDIR)\common.obj" \
+	"$(INTDIR)\help.obj" \
+	"$(INTDIR)\input.obj" \
 	"$(INTDIR)\stringutils.obj" \
+	"$(INTDIR)\mainloop.obj" \
+	"$(INTDIR)\copy.obj" \
+	"$(INTDIR)\startup.obj" \
+	"$(INTDIR)\prompt.obj" \
+	"$(INTDIR)\variables.obj" \
+	"$(INTDIR)\large_obj.obj" \
+	"$(INTDIR)\print.obj" \
+	"$(INTDIR)\describe.obj" \
+	"$(INTDIR)\tab-complete.obj" \
 	"$(INTDIR)\getopt.obj" \
 	"..\..\interfaces\libpq\Release\libpqdll.lib"
 

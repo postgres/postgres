@@ -16,13 +16,19 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Header: /cvsroot/pgsql/src/interfaces/libpq/pqexpbuffer.c,v 1.2 2000/01/17 02:59:46 tgl Exp $
+ * $Header: /cvsroot/pgsql/src/interfaces/libpq/pqexpbuffer.c,v 1.3 2000/01/18 19:05:31 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
 
 #include "postgres.h"
 #include "pqexpbuffer.h"
+
+#ifdef WIN32
+#include <stdarg.h>
+#include <stdio.h>
+#include "win32.h"
+#endif
 
 /*
  * createPQExpBuffer

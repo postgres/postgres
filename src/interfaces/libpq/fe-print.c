@@ -9,7 +9,7 @@
  * didn't really belong there.
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/interfaces/libpq/fe-print.c,v 1.29 2000/01/15 05:37:21 ishii Exp $
+ *	  $Header: /cvsroot/pgsql/src/interfaces/libpq/fe-print.c,v 1.30 2000/01/18 19:05:31 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -30,7 +30,9 @@
 #ifdef HAVE_TERMIOS_H
 #include <termios.h>
 #else
+#ifndef WIN32
 #include <sys/termios.h>
+#endif
 #endif
 
 #ifdef MULTIBYTE

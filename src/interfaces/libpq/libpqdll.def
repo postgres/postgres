@@ -67,3 +67,14 @@ EXPORTS
 	PQmblen			@ 64
 	PQresultErrorMessage	@ 65
 	PQresStatus		@ 66
+ 	termPQExpBuffer		@ 67
+	appendPQExpBufferChar	@ 68
+	initPQExpBuffer		@ 69
+	resetPQExpBuffer	@ 70
+	PQoidValue		@ 71
+	PQclientencoding	@ 72
+	PQenv2encoding		@ 73
+	appendBinaryPQExpBuffer	@ 74
+	appendPQExpBufferStr	@ 75
+	destroyPQExpBuffer	@ 76
+	createPQExpBuffer	@ 77

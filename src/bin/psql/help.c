@@ -176,7 +176,9 @@ slashUsage(void)
 		(fout = popen(pagerenv, "w")))
 	{
 		usePipe = true;
+#ifndef WIN32
 		pqsignal(SIGPIPE, SIG_IGN);
+#endif
 	}
 	else
 		fout = stdout;
@@ -220,7 +222,9 @@ slashUsage(void)
 	if (usePipe)
 	{
 		pclose(fout);
+#ifndef WIN32
 		pqsignal(SIGPIPE, SIG_DFL);
+#endif
 	}
 }
 

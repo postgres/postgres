@@ -922,7 +922,9 @@ printTable(const char *title,
 	if (pager)
 	{
 		output = pager;
+#ifndef WIN32
 		pqsignal(SIGPIPE, SIG_IGN);
+#endif
 	}
 	else
 		output = fout;
@@ -963,7 +965,10 @@ printTable(const char *title,
 	if (pager)
 	{
 		pclose(pager);
+#ifndef WIN32
 		pqsignal(SIGPIPE, SIG_DFL);
+#endif
+
 	}
 }
 

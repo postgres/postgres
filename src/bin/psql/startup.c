@@ -10,7 +10,7 @@
 
 #ifdef WIN32
 #include <io.h>
-#include <window.h>
+#include <windows.h>
 #else
 #include <unistd.h>
 #endif
@@ -223,7 +223,8 @@ main(int argc, char **argv)
 #ifdef WIN32
 /* getopt is not in the standard includes on Win32 */
 int			getopt(int, char *const[], const char *);
-
+/* And it requires progname to be set */
+char        *__progname = "psql";
 #endif
 
 static void

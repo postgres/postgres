@@ -7,13 +7,12 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/interfaces/libpq/fe-connect.c,v 1.112 2000/01/18 06:09:24 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/interfaces/libpq/fe-connect.c,v 1.113 2000/01/18 19:05:31 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
 
 #include <sys/types.h>
-#include <sys/socket.h>
 #include <fcntl.h>
 #include <errno.h>
 #include <ctype.h>
@@ -26,6 +25,7 @@
 #ifdef WIN32
 #include "win32.h"
 #else
+#include <sys/socket.h>
 #include <unistd.h>
 #include <netdb.h>
 #include <netinet/tcp.h>
@@ -41,6 +41,16 @@
 
 #ifdef MULTIBYTE
 #include "mb/pg_wchar.h"
+#endif
+
+#ifdef WIN32
+static int inet_aton(const char *cp, struct in_addr *inp) {
+	unsigned long a = inet_addr(cp);
+	if (a == -1)
+		return 0;
+	inp->s_addr = a;	
+	return 1;
+}
 #endif
 
 /* ----------
@@ -842,7 +852,11 @@ connectDBStart(PGconn *conn)
 	 */
 	if (connect(conn->sock, &conn->raddr.sa, conn->raddr_len) < 0)
 	{
+#ifndef WIN32
 		if (errno == EINPROGRESS)
+#else
+		if (WSAGetLastError() == WSAEINPROGRESS)
+#endif
 		{
 			/* This is fine - we're in non-blocking mode, and the
 			 * connection is in progress. */
@@ -1036,8 +1050,12 @@ PQconnectPoll(PGconn *conn)
 		case CONNECTION_STARTED:
 		{
 			SOCKET_SIZE_TYPE laddrlen;
+#ifndef WIN32
 			int optval;
-			int optlen = sizeof(int);
+#else
+			char optval;
+#endif
+			int optlen = sizeof(optval);
 
 			/* Write ready, since we've made it here, so the connection
 			 * has been made. */

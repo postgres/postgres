@@ -111,10 +111,12 @@ setQFout(const char *fname)
 	}
 
 	/* Direct signals */
+#ifndef WIN32
 	if (pset.queryFoutPipe)
 		pqsignal(SIGPIPE, SIG_IGN);
 	else
 		pqsignal(SIGPIPE, SIG_DFL);
+#endif
 
 	return status;
 }
@@ -252,11 +254,15 @@ PSQLexec(const char *query)
 		return NULL;
 
 	cancelConn = pset.db;
+#ifndef WIN32
 	pqsignal(SIGINT, handle_sigint);	/* control-C => cancel */
+#endif
 
 	res = PQexec(pset.db, query);
 
+#ifndef WIN32
 	pqsignal(SIGINT, SIG_DFL);	/* now control-C is back to normal */
+#endif
 
 	if (PQstatus(pset.db) == CONNECTION_BAD)
 	{
@@ -345,11 +351,15 @@ SendQuery(const char *query)
     }
 
 	cancelConn = pset.db;
+#ifndef WIN32
 	pqsignal(SIGINT, handle_sigint);
+#endif
 
 	results = PQexec(pset.db, query);
 
+#ifndef WIN32
 	pqsignal(SIGINT, SIG_DFL);
+#endif
 
 	if (results == NULL)
 	{

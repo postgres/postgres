@@ -28,6 +28,7 @@
 #include "variables.h"
 
 #ifdef WIN32
+#include "../../interfaces/libpq/win32.h"
 #define popen(x,y) _popen(x,y)
 #define pclose(x) _pclose(x)
 #endif
@@ -849,7 +850,11 @@ unescape(const char *source, int encoding)
 				unsigned int len;
 				char	   *copy;
 				const char *value;
+#ifndef WIN32
 				void	   *new;
+#else
+				char *new;
+#endif
 
 				len = strcspn(p + 2, "}");
 				copy = xstrdup(p + 2);
