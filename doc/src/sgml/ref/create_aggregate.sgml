@@ -1,5 +1,5 @@
 <!--
-$PostgreSQL: pgsql/doc/src/sgml/ref/create_aggregate.sgml,v 1.29 2003/11/29 19:51:38 pgsql Exp $
+$PostgreSQL: pgsql/doc/src/sgml/ref/create_aggregate.sgml,v 1.30 2004/04/21 21:52:41 neilc Exp $
 PostgreSQL documentation
 -->
 
@@ -34,12 +34,12 @@ CREATE AGGREGATE <replaceable class="PARAMETER">name</replaceable> (
   <title>Description</title>
 
   <para>
-   <command>CREATE AGGREGATE</command> defines a new aggregate function. Some aggregate functions
-   for base types such as <function>min(integer)</function>
-   and <function>avg(double precision)</function> are already provided in the standard
-   distribution. If one defines new types or needs an aggregate function not
-   already provided, then <command>CREATE AGGREGATE</command>
-   can be used to provide the desired features.
+   <command>CREATE AGGREGATE</command> defines a new aggregate
+   function. Some basic and commonly-used aggregate functions are
+   included with the distribution; they are documented in <xref
+   linkend="functions-aggregate">. If one defines new types or needs
+   an aggregate function not already provided, then <command>CREATE
+   AGGREGATE</command> can be used to provide the desired features.
   </para>
 
   <para>
