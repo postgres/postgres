@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/interfaces/libpq/fe-exec.c,v 1.78 1999/04/04 20:10:12 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/interfaces/libpq/fe-exec.c,v 1.79 1999/05/12 04:38:24 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -92,11 +92,10 @@ static int	getNotice(PGconn *conn);
  * PGRESULT_SEP_ALLOC_THRESHOLD: objects bigger than this are given separate
  *   blocks, instead of being crammed into a regular allocation block.
  * Requirements for correct function are:
- * PGRESULT_ALIGN_BOUNDARY >= sizeof(pointer)
- *		to ensure the initial pointer in a block is not overwritten.
  * PGRESULT_ALIGN_BOUNDARY must be a multiple of the alignment requirements
- *		of all machine data types.
- * PGRESULT_SEP_ALLOC_THRESHOLD + PGRESULT_ALIGN_BOUNDARY <=
+ *		of all machine data types.  (Currently this is set from configure
+ *		tests, so it should be OK automatically.)
+ * PGRESULT_SEP_ALLOC_THRESHOLD + PGRESULT_BLOCK_OVERHEAD <=
  *			PGRESULT_DATA_BLOCKSIZE
  *		pqResultAlloc assumes an object smaller than the threshold will fit
  *		in a new block.
@@ -105,8 +104,14 @@ static int	getNotice(PGconn *conn);
  * ----------------
  */
 
+#ifdef MAX
+#undef MAX
+#endif
+#define MAX(a,b)  ((a) > (b) ? (a) : (b))
+
 #define PGRESULT_DATA_BLOCKSIZE		2048
 #define PGRESULT_ALIGN_BOUNDARY		MAXIMUM_ALIGNOF /* from configure */
+#define PGRESULT_BLOCK_OVERHEAD		MAX(sizeof(PGresult_data), PGRESULT_ALIGN_BOUNDARY)
 #define PGRESULT_SEP_ALLOC_THRESHOLD	(PGRESULT_DATA_BLOCKSIZE / 2)
 
 
@@ -213,10 +218,10 @@ pqResultAlloc(PGresult *res, int nBytes, int isBinary)
 	 */
 	if (nBytes >= PGRESULT_SEP_ALLOC_THRESHOLD)
 	{
-		block = (PGresult_data *) malloc(nBytes + PGRESULT_ALIGN_BOUNDARY);
+		block = (PGresult_data *) malloc(nBytes + PGRESULT_BLOCK_OVERHEAD);
 		if (! block)
 			return NULL;
-		space = block->space + PGRESULT_ALIGN_BOUNDARY;
+		space = block->space + PGRESULT_BLOCK_OVERHEAD;
 		if (res->curBlock)
 		{
 			/* Tuck special block below the active block, so that we don't
@@ -244,8 +249,8 @@ pqResultAlloc(PGresult *res, int nBytes, int isBinary)
 	if (isBinary)
 	{
 		/* object needs full alignment */
-		res->curOffset = PGRESULT_ALIGN_BOUNDARY;
-		res->spaceLeft = PGRESULT_DATA_BLOCKSIZE - PGRESULT_ALIGN_BOUNDARY;
+		res->curOffset = PGRESULT_BLOCK_OVERHEAD;
+		res->spaceLeft = PGRESULT_DATA_BLOCKSIZE - PGRESULT_BLOCK_OVERHEAD;
 	}
 	else
 	{
