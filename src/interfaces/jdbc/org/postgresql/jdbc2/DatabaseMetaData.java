@@ -676,7 +676,12 @@ public class DatabaseMetaData implements java.sql.DatabaseMetaData
 
   /**
    * Does this driver support the ANSI-92 entry level SQL grammar?
-   * All JDBC Compliant drivers must return true.
+   * All JDBC Compliant drivers must return true.  We currently 
+   * report false until 'schema' support is added.  Then this 
+   * should be changed to return true, since we will be mostly 
+   * compliant (probably more compliant than many other databases)
+   * And since this is a requirement for all JDBC drivers we
+   * need to get to the point where we can return true.
    *
    * @return true if so
    * @exception SQLException if a database access error occurs
@@ -722,7 +727,7 @@ public class DatabaseMetaData implements java.sql.DatabaseMetaData
   }
 
   /**
-   * Is some form of outer join supported?  From my knowledge, nope.
+   * Is some form of outer join supported?
    *
    * @return true if so
    * @exception SQLException if a database access error occurs
@@ -733,8 +738,7 @@ public class DatabaseMetaData implements java.sql.DatabaseMetaData
   }
 
   /**
-   * Are full nexted outer joins supported?  Well, we dont support any
-   * form of outer join, so this is no as well
+   * Are full nexted outer joins supported?
    *
    * @return true if so
    * @exception SQLException if a database access error occurs
@@ -745,8 +749,7 @@ public class DatabaseMetaData implements java.sql.DatabaseMetaData
   }
 
   /**
-   * Is there limited support for outer joins?  (This will be true if
-   * supportFullOuterJoins is true)
+   * Is there limited support for outer joins?
    *
    * @return true if so
    * @exception SQLException if a database access error occurs
