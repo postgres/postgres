@@ -4,7 +4,7 @@
 #    Makefile for utils/mb/conversion_procs
 #
 # IDENTIFICATION
-#    $Header: /cvsroot/pgsql/src/backend/utils/mb/conversion_procs/Makefile,v 1.1 2002/07/16 09:25:04 ishii Exp $
+#    $Header: /cvsroot/pgsql/src/backend/utils/mb/conversion_procs/Makefile,v 1.2 2002/07/18 22:58:08 petere Exp $
 #
 #-------------------------------------------------------------------------
 
@@ -102,9 +102,12 @@ $(SQLSCRIPT): Makefile
 		echo "CREATE DEFAULT CONVERSION pg_catalog.$$name FOR '$$se' TO '$$de' FROM $$func;"; \
 	done > $@
 
-install:
-	$(INSTALL_DATA) $(SQLSCRIPT) $(datadir)
+install: all installdirs
+	$(INSTALL_DATA) $(SQLSCRIPT) $(DESTDIR)$(datadir)
 	@for dir in $(DIRS); do $(MAKE) -C $$dir $@ || exit; done
+
+installdirs:
+	$(mkinstalldirs) $(DESTDIR)$(pkglibdir)
 
 all: $(SQLSCRIPT)
 	@for dir in $(DIRS); do $(MAKE) -C $$dir $@ || exit; done
