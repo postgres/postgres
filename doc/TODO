@@ -1,6 +1,6 @@
 TODO list for PostgreSQL
 ========================
-Last updated:		Thu Oct 12 16:23:34 EDT 2000
+Last updated:		Thu Oct 12 16:26:03 EDT 2000
 
 Current maintainer:	Bruce Momjian (pgman@candle.pha.pa.us)
 
@@ -87,6 +87,7 @@ TYPES
 * Allow LOCALE on a per-column basis, default to ASCII
 * Allow nulls in arrays
 * Allow arrays to be ORDER'ed
+* Support construction of array result values in expressions
 * Change foreign key constraint for array -> element to mean element
    in array
 * Remove Money type, add money formatting for decimal type
@@ -125,6 +126,9 @@ COMMANDS
 * -Add ALTER TABLE ALTER COLUMN feature(Peter E)
 * Add ALTER TABLE DROP COLUMN feature [drop]
 * Add ALTER TABLE command to change table ownership
+* Add ALTER FUNCTION 
+* Add ALTER TABLE ... DROP CONSTRAINT
+* Automatically drop constraints/functions when object is dropped
 * Allow CLUSTER on all tables at once, and improve CLUSTER, loses NOT
 	NULL specification, indexes, permissions, etc on table
 * Add SIMILAR TO to allow character classes, 'pg_[a-c]%'
