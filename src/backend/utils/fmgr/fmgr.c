@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/utils/fmgr/fmgr.c,v 1.79 2004/01/07 18:56:29 neilc Exp $
+ *	  $PostgreSQL: pgsql/src/backend/utils/fmgr/fmgr.c,v 1.80 2004/01/19 02:06:41 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -57,11 +57,29 @@ typedef struct
 												 * toastable datatype? */
 } Oldstyle_fnextra;
 
+/*
+ * Hashtable for fast lookup of external C functions
+ */
+typedef struct
+{
+	/* fn_oid is the hash key and so must be first! */
+	Oid			fn_oid;			/* OID of an external C function */
+	TransactionId fn_xmin;		/* for checking up-to-dateness */
+	CommandId	fn_cmin;
+	PGFunction	user_fn;		/* the function's address */
+	Pg_finfo_record *inforec;	/* address of its info record */
+} CFuncHashTabEntry;
+
+static HTAB *CFuncHash = NULL;
+
 
 static void fmgr_info_cxt_security(Oid functionId, FmgrInfo *finfo, MemoryContext mcxt,
 					   bool ignore_security);
 static void fmgr_info_C_lang(Oid functionId, FmgrInfo *finfo, HeapTuple procedureTuple);
 static void fmgr_info_other_lang(Oid functionId, FmgrInfo *finfo, HeapTuple procedureTuple);
+static CFuncHashTabEntry *lookup_C_func(HeapTuple procedureTuple);
+static void record_C_func(HeapTuple procedureTuple,
+						  PGFunction user_fn, Pg_finfo_record *inforec);
 static Datum fmgr_oldstyle(PG_FUNCTION_ARGS);
 static Datum fmgr_security_definer(PG_FUNCTION_ARGS);
 
@@ -258,36 +276,58 @@ static void
 fmgr_info_C_lang(Oid functionId, FmgrInfo *finfo, HeapTuple procedureTuple)
 {
 	Form_pg_proc procedureStruct = (Form_pg_proc) GETSTRUCT(procedureTuple);
-	Datum		prosrcattr,
-				probinattr;
-	char	   *prosrcstring,
-			   *probinstring;
-	void	   *libraryhandle;
+	CFuncHashTabEntry *hashentry;
 	PGFunction	user_fn;
 	Pg_finfo_record *inforec;
 	Oldstyle_fnextra *fnextra;
 	bool		isnull;
 	int			i;
 
-	/* Get prosrc and probin strings (link symbol and library filename) */
-	prosrcattr = SysCacheGetAttr(PROCOID, procedureTuple,
-								 Anum_pg_proc_prosrc, &isnull);
-	if (isnull)
-		elog(ERROR, "null prosrc for function %u", functionId);
-	prosrcstring = DatumGetCString(DirectFunctionCall1(textout, prosrcattr));
+	/*
+	 * See if we have the function address cached already
+	 */
+	hashentry = lookup_C_func(procedureTuple);
+	if (hashentry)
+	{
+		user_fn = hashentry->user_fn;
+		inforec = hashentry->inforec;
+	}
+	else
+	{
+		Datum		prosrcattr,
+					probinattr;
+		char	   *prosrcstring,
+				   *probinstring;
+		void	   *libraryhandle;
 
-	probinattr = SysCacheGetAttr(PROCOID, procedureTuple,
-								 Anum_pg_proc_probin, &isnull);
-	if (isnull)
-		elog(ERROR, "null probin for function %u", functionId);
-	probinstring = DatumGetCString(DirectFunctionCall1(textout, probinattr));
+		/* Get prosrc and probin strings (link symbol and library filename) */
+		prosrcattr = SysCacheGetAttr(PROCOID, procedureTuple,
+									 Anum_pg_proc_prosrc, &isnull);
+		if (isnull)
+			elog(ERROR, "null prosrc for function %u", functionId);
+		prosrcstring = DatumGetCString(DirectFunctionCall1(textout,
+														   prosrcattr));
 
-	/* Look up the function itself */
-	user_fn = load_external_function(probinstring, prosrcstring, true,
-									 &libraryhandle);
+		probinattr = SysCacheGetAttr(PROCOID, procedureTuple,
+									 Anum_pg_proc_probin, &isnull);
+		if (isnull)
+			elog(ERROR, "null probin for function %u", functionId);
+		probinstring = DatumGetCString(DirectFunctionCall1(textout,
+														   probinattr));
 
-	/* Get the function information record (real or default) */
-	inforec = fetch_finfo_record(libraryhandle, prosrcstring);
+		/* Look up the function itself */
+		user_fn = load_external_function(probinstring, prosrcstring, true,
+										 &libraryhandle);
+
+		/* Get the function information record (real or default) */
+		inforec = fetch_finfo_record(libraryhandle, prosrcstring);
+
+		/* Cache the addresses for later calls */
+		record_C_func(procedureTuple, user_fn, inforec);
+
+		pfree(prosrcstring);
+		pfree(probinstring);
+	}
 
 	switch (inforec->api_version)
 	{
@@ -315,9 +355,6 @@ fmgr_info_C_lang(Oid functionId, FmgrInfo *finfo, HeapTuple procedureTuple)
 				 inforec->api_version);
 			break;
 	}
-
-	pfree(prosrcstring);
-	pfree(probinstring);
 }
 
 /*
@@ -413,6 +450,102 @@ fetch_finfo_record(void *filehandle, char *funcname)
 
 	pfree(infofuncname);
 	return inforec;
+}
+
+
+/*-------------------------------------------------------------------------
+ *		Routines for caching lookup information for external C functions.
+ *
+ * The routines in dfmgr.c are relatively slow, so we try to avoid running
+ * them more than once per external function per session.  We use a hash table
+ * with the function OID as the lookup key.
+ *-------------------------------------------------------------------------
+ */
+
+/*
+ * lookup_C_func: try to find a C function in the hash table
+ *
+ * If an entry exists and is up to date, return it; else return NULL
+ */
+static CFuncHashTabEntry *
+lookup_C_func(HeapTuple procedureTuple)
+{
+	Oid		fn_oid = HeapTupleGetOid(procedureTuple);
+	CFuncHashTabEntry *entry;
+
+	if (CFuncHash == NULL)
+		return NULL;			/* no table yet */
+	entry = (CFuncHashTabEntry *)
+		hash_search(CFuncHash,
+					&fn_oid,
+					HASH_FIND,
+					NULL);
+	if (entry == NULL)
+		return NULL;			/* no such entry */
+	if (entry->fn_xmin == HeapTupleHeaderGetXmin(procedureTuple->t_data) &&
+		entry->fn_cmin == HeapTupleHeaderGetCmin(procedureTuple->t_data))
+		return entry;			/* OK */
+	return NULL;				/* entry is out of date */
+}
+
+/*
+ * record_C_func: enter (or update) info about a C function in the hash table
+ */
+static void
+record_C_func(HeapTuple procedureTuple,
+			  PGFunction user_fn, Pg_finfo_record *inforec)
+{
+	Oid		fn_oid = HeapTupleGetOid(procedureTuple);
+	CFuncHashTabEntry *entry;
+	bool	found;
+
+	/* Create the hash table if it doesn't exist yet */
+	if (CFuncHash == NULL)
+	{
+		HASHCTL		hash_ctl;
+
+		MemSet(&hash_ctl, 0, sizeof(hash_ctl));
+		hash_ctl.keysize = sizeof(Oid);
+		hash_ctl.entrysize = sizeof(CFuncHashTabEntry);
+		hash_ctl.hash = tag_hash;
+		CFuncHash = hash_create("CFuncHash",
+								100,
+								&hash_ctl,
+								HASH_ELEM | HASH_FUNCTION);
+		if (CFuncHash == NULL)
+			ereport(ERROR,
+					(errcode(ERRCODE_OUT_OF_MEMORY),
+					 errmsg("out of memory")));
+	}
+
+	entry = (CFuncHashTabEntry *)
+		hash_search(CFuncHash,
+					&fn_oid,
+					HASH_ENTER,
+					&found);
+	if (entry == NULL)
+		ereport(ERROR,
+				(errcode(ERRCODE_OUT_OF_MEMORY),
+				 errmsg("out of memory")));
+	/* OID is already filled in */
+	entry->fn_xmin = HeapTupleHeaderGetXmin(procedureTuple->t_data);
+	entry->fn_cmin = HeapTupleHeaderGetCmin(procedureTuple->t_data);
+	entry->user_fn = user_fn;
+	entry->inforec = inforec;
+}
+
+/*
+ * clear_external_function_hash: remove entries for a library being closed
+ *
+ * Presently we just zap the entire hash table, but later it might be worth
+ * the effort to remove only the entries associated with the given handle.
+ */
+void
+clear_external_function_hash(void *filehandle)
+{
+	if (CFuncHash)
+		hash_destroy(CFuncHash);
+	CFuncHash = NULL;
 }
 
 

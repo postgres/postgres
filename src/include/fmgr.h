@@ -11,7 +11,7 @@
  * Portions Copyright (c) 1996-2003, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/include/fmgr.h,v 1.32 2003/11/29 22:40:53 pgsql Exp $
+ * $PostgreSQL: pgsql/src/include/fmgr.h,v 1.33 2004/01/19 02:06:42 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -377,6 +377,7 @@ extern Datum OidFunctionCall9(Oid functionId, Datum arg1, Datum arg2,
  * Routines in fmgr.c
  */
 extern Pg_finfo_record *fetch_finfo_record(void *filehandle, char *funcname);
+extern void clear_external_function_hash(void *filehandle);
 extern Oid	fmgr_internal_function(const char *proname);
 extern Oid	get_fn_expr_rettype(FmgrInfo *flinfo);
 extern Oid	get_fn_expr_argtype(FmgrInfo *flinfo, int argnum);

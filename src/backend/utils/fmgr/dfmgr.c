@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/utils/fmgr/dfmgr.c,v 1.68 2004/01/07 18:56:29 neilc Exp $
+ *	  $PostgreSQL: pgsql/src/backend/utils/fmgr/dfmgr.c,v 1.69 2004/01/19 02:06:41 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -213,6 +213,7 @@ load_file(char *filename)
 				prv->next = nxt;
 			else
 				file_list = nxt;
+			clear_external_function_hash(file_scanner->handle);
 			pg_dlclose(file_scanner->handle);
 			free((char *) file_scanner);
 			/* prv does not change */
