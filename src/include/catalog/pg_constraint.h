@@ -8,7 +8,7 @@
  * Portions Copyright (c) 1996-2005, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/include/catalog/pg_constraint.h,v 1.14 2004/12/31 22:03:24 pgsql Exp $
+ * $PostgreSQL: pgsql/src/include/catalog/pg_constraint.h,v 1.15 2005/03/25 21:57:59 tgl Exp $
  *
  * NOTES
  *	  the genbki.sh script reads this file and generates .bki
@@ -180,5 +180,7 @@ extern bool ConstraintNameIsUsed(ConstraintCategory conCat, Oid objId,
 extern char *ChooseConstraintName(const char *name1, const char *name2,
 					 const char *label, Oid namespace,
 					 List *others);
+
+extern char *GetConstraintNameForTrigger(Oid triggerId);
 
 #endif   /* PG_CONSTRAINT_H */

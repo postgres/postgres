@@ -6,7 +6,7 @@
  *
  * Copyright (c) 2001-2005, PostgreSQL Global Development Group
  *
- * $PostgreSQL: pgsql/src/include/executor/instrument.h,v 1.9 2005/03/20 22:27:52 tgl Exp $
+ * $PostgreSQL: pgsql/src/include/executor/instrument.h,v 1.10 2005/03/25 21:57:59 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -70,7 +70,7 @@ typedef struct Instrumentation
 	double		nloops;			/* # of run cycles for this node */
 } Instrumentation;
 
-extern Instrumentation *InstrAlloc(void);
+extern Instrumentation *InstrAlloc(int n);
 extern void InstrStartNode(Instrumentation *instr);
 extern void InstrStopNode(Instrumentation *instr, bool returnedTuple);
 extern void InstrEndLoop(Instrumentation *instr);

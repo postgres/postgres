@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/commands/trigger.c,v 1.180 2005/03/24 00:03:26 neilc Exp $
+ *	  $PostgreSQL: pgsql/src/backend/commands/trigger.c,v 1.181 2005/03/25 21:57:58 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -28,6 +28,7 @@
 #include "commands/defrem.h"
 #include "commands/trigger.h"
 #include "executor/executor.h"
+#include "executor/instrument.h"
 #include "miscadmin.h"
 #include "nodes/makefuncs.h"
 #include "parser/parse_func.h"
@@ -46,7 +47,9 @@ static HeapTuple GetTupleForTrigger(EState *estate,
 				   CommandId cid,
 				   TupleTableSlot **newSlot);
 static HeapTuple ExecCallTriggerFunc(TriggerData *trigdata,
+					int tgindx,
 					FmgrInfo *finfo,
+					Instrumentation *instr,
 					MemoryContext per_tuple_context);
 static void AfterTriggerSaveEvent(ResultRelInfo *relinfo, int event,
 				   bool row_trigger, HeapTuple oldtup, HeapTuple newtup);
@@ -1107,19 +1110,25 @@ equalTriggerDescs(TriggerDesc *trigdesc1, TriggerDesc *trigdesc2)
  * Call a trigger function.
  *
  *		trigdata: trigger descriptor.
- *		finfo: possibly-cached call info for the function.
+ *		tgindx: trigger's index in finfo and instr arrays.
+ *		finfo: array of cached trigger function call information.
+ *		instr: optional array of EXPLAIN ANALYZE instrumentation state.
  *		per_tuple_context: memory context to execute the function in.
  *
  * Returns the tuple (or NULL) as returned by the function.
  */
 static HeapTuple
 ExecCallTriggerFunc(TriggerData *trigdata,
+					int tgindx,
 					FmgrInfo *finfo,
+					Instrumentation *instr,
 					MemoryContext per_tuple_context)
 {
 	FunctionCallInfoData fcinfo;
 	Datum		result;
 	MemoryContext oldContext;
+
+	finfo += tgindx;
 
 	/*
 	 * We cache fmgr lookup info, to avoid making the lookup again on each
@@ -1129,6 +1138,12 @@ ExecCallTriggerFunc(TriggerData *trigdata,
 		fmgr_info(trigdata->tg_trigger->tgfoid, finfo);
 
 	Assert(finfo->fn_oid == trigdata->tg_trigger->tgfoid);
+
+	/*
+	 * If doing EXPLAIN ANALYZE, start charging time to this trigger.
+	 */
+	if (instr)
+		InstrStartNode(instr + tgindx);
 
 	/*
 	 * Do the function evaluation in the per-tuple memory context, so that
@@ -1160,6 +1175,13 @@ ExecCallTriggerFunc(TriggerData *trigdata,
 				 errmsg("trigger function %u returned null value",
 						fcinfo.flinfo->fn_oid)));
 
+	/*
+	 * If doing EXPLAIN ANALYZE, stop charging time to this trigger,
+	 * and count one "tuple returned" (really the number of firings).
+	 */
+	if (instr)
+		InstrStopNode(instr + tgindx, true);
+
 	return (HeapTuple) DatumGetPointer(result);
 }
 
@@ -1183,11 +1205,6 @@ ExecBSInsertTriggers(EState *estate, ResultRelInfo *relinfo)
 	if (ntrigs == 0)
 		return;
 
-	/* Allocate cache space for fmgr lookup info, if not done yet */
-	if (relinfo->ri_TrigFunctions == NULL)
-		relinfo->ri_TrigFunctions = (FmgrInfo *)
-			palloc0(trigdesc->numtriggers * sizeof(FmgrInfo));
-
 	LocTriggerData.type = T_TriggerData;
 	LocTriggerData.tg_event = TRIGGER_EVENT_INSERT |
 		TRIGGER_EVENT_BEFORE;
@@ -1205,7 +1222,9 @@ ExecBSInsertTriggers(EState *estate, ResultRelInfo *relinfo)
 			continue;
 		LocTriggerData.tg_trigger = trigger;
 		newtuple = ExecCallTriggerFunc(&LocTriggerData,
-								   relinfo->ri_TrigFunctions + tgindx[i],
+									   tgindx[i],
+									   relinfo->ri_TrigFunctions,
+									   relinfo->ri_TrigInstrument,
 									   GetPerTupleMemoryContext(estate));
 
 		if (newtuple)
@@ -1237,11 +1256,6 @@ ExecBRInsertTriggers(EState *estate, ResultRelInfo *relinfo,
 	TriggerData LocTriggerData;
 	int			i;
 
-	/* Allocate cache space for fmgr lookup info, if not done yet */
-	if (relinfo->ri_TrigFunctions == NULL)
-		relinfo->ri_TrigFunctions = (FmgrInfo *)
-			palloc0(trigdesc->numtriggers * sizeof(FmgrInfo));
-
 	LocTriggerData.type = T_TriggerData;
 	LocTriggerData.tg_event = TRIGGER_EVENT_INSERT |
 		TRIGGER_EVENT_ROW |
@@ -1259,7 +1273,9 @@ ExecBRInsertTriggers(EState *estate, ResultRelInfo *relinfo,
 		LocTriggerData.tg_trigtuplebuf = InvalidBuffer;
 		LocTriggerData.tg_trigger = trigger;
 		newtuple = ExecCallTriggerFunc(&LocTriggerData,
-								   relinfo->ri_TrigFunctions + tgindx[i],
+									   tgindx[i],
+									   relinfo->ri_TrigFunctions,
+									   relinfo->ri_TrigInstrument,
 									   GetPerTupleMemoryContext(estate));
 		if (oldtuple != newtuple && oldtuple != trigtuple)
 			heap_freetuple(oldtuple);
@@ -1300,11 +1316,6 @@ ExecBSDeleteTriggers(EState *estate, ResultRelInfo *relinfo)
 	if (ntrigs == 0)
 		return;
 
-	/* Allocate cache space for fmgr lookup info, if not done yet */
-	if (relinfo->ri_TrigFunctions == NULL)
-		relinfo->ri_TrigFunctions = (FmgrInfo *)
-			palloc0(trigdesc->numtriggers * sizeof(FmgrInfo));
-
 	LocTriggerData.type = T_TriggerData;
 	LocTriggerData.tg_event = TRIGGER_EVENT_DELETE |
 		TRIGGER_EVENT_BEFORE;
@@ -1322,7 +1333,9 @@ ExecBSDeleteTriggers(EState *estate, ResultRelInfo *relinfo)
 			continue;
 		LocTriggerData.tg_trigger = trigger;
 		newtuple = ExecCallTriggerFunc(&LocTriggerData,
-								   relinfo->ri_TrigFunctions + tgindx[i],
+									   tgindx[i],
+									   relinfo->ri_TrigFunctions,
+									   relinfo->ri_TrigInstrument,
 									   GetPerTupleMemoryContext(estate));
 
 		if (newtuple)
@@ -1360,11 +1373,6 @@ ExecBRDeleteTriggers(EState *estate, ResultRelInfo *relinfo,
 	if (trigtuple == NULL)
 		return false;
 
-	/* Allocate cache space for fmgr lookup info, if not done yet */
-	if (relinfo->ri_TrigFunctions == NULL)
-		relinfo->ri_TrigFunctions = (FmgrInfo *)
-			palloc0(trigdesc->numtriggers * sizeof(FmgrInfo));
-
 	LocTriggerData.type = T_TriggerData;
 	LocTriggerData.tg_event = TRIGGER_EVENT_DELETE |
 		TRIGGER_EVENT_ROW |
@@ -1382,7 +1390,9 @@ ExecBRDeleteTriggers(EState *estate, ResultRelInfo *relinfo,
 		LocTriggerData.tg_trigtuplebuf = InvalidBuffer;
 		LocTriggerData.tg_trigger = trigger;
 		newtuple = ExecCallTriggerFunc(&LocTriggerData,
-								   relinfo->ri_TrigFunctions + tgindx[i],
+									   tgindx[i],
+									   relinfo->ri_TrigFunctions,
+									   relinfo->ri_TrigInstrument,
 									   GetPerTupleMemoryContext(estate));
 		if (newtuple == NULL)
 			break;
@@ -1433,11 +1443,6 @@ ExecBSUpdateTriggers(EState *estate, ResultRelInfo *relinfo)
 	if (ntrigs == 0)
 		return;
 
-	/* Allocate cache space for fmgr lookup info, if not done yet */
-	if (relinfo->ri_TrigFunctions == NULL)
-		relinfo->ri_TrigFunctions = (FmgrInfo *)
-			palloc0(trigdesc->numtriggers * sizeof(FmgrInfo));
-
 	LocTriggerData.type = T_TriggerData;
 	LocTriggerData.tg_event = TRIGGER_EVENT_UPDATE |
 		TRIGGER_EVENT_BEFORE;
@@ -1455,7 +1460,9 @@ ExecBSUpdateTriggers(EState *estate, ResultRelInfo *relinfo)
 			continue;
 		LocTriggerData.tg_trigger = trigger;
 		newtuple = ExecCallTriggerFunc(&LocTriggerData,
-								   relinfo->ri_TrigFunctions + tgindx[i],
+									   tgindx[i],
+									   relinfo->ri_TrigFunctions,
+									   relinfo->ri_TrigInstrument,
 									   GetPerTupleMemoryContext(estate));
 
 		if (newtuple)
@@ -1501,11 +1508,6 @@ ExecBRUpdateTriggers(EState *estate, ResultRelInfo *relinfo,
 	if (newSlot != NULL)
 		intuple = newtuple = ExecRemoveJunk(estate->es_junkFilter, newSlot);
 
-	/* Allocate cache space for fmgr lookup info, if not done yet */
-	if (relinfo->ri_TrigFunctions == NULL)
-		relinfo->ri_TrigFunctions = (FmgrInfo *)
-			palloc0(trigdesc->numtriggers * sizeof(FmgrInfo));
-
 	LocTriggerData.type = T_TriggerData;
 	LocTriggerData.tg_event = TRIGGER_EVENT_UPDATE |
 		TRIGGER_EVENT_ROW |
@@ -1523,7 +1525,9 @@ ExecBRUpdateTriggers(EState *estate, ResultRelInfo *relinfo,
 		LocTriggerData.tg_newtuplebuf = InvalidBuffer;
 		LocTriggerData.tg_trigger = trigger;
 		newtuple = ExecCallTriggerFunc(&LocTriggerData,
-								   relinfo->ri_TrigFunctions + tgindx[i],
+									   tgindx[i],
+									   relinfo->ri_TrigFunctions,
+									   relinfo->ri_TrigInstrument,
 									   GetPerTupleMemoryContext(estate));
 		if (oldtuple != newtuple && oldtuple != intuple)
 			heap_freetuple(oldtuple);
@@ -1798,6 +1802,7 @@ static AfterTriggers afterTriggers;
 static void AfterTriggerExecute(AfterTriggerEvent event,
 								Relation rel, TriggerDesc *trigdesc,
 								FmgrInfo *finfo,
+								Instrumentation *instr,
 								MemoryContext per_tuple_context);
 static SetConstraintState SetConstraintStateCreate(int numalloc);
 static SetConstraintState SetConstraintStateCopy(SetConstraintState state);
@@ -1886,18 +1891,22 @@ afterTriggerAddEvent(AfterTriggerEvent event)
  *
  *	Frequently, this will be fired many times in a row for triggers of
  *	a single relation.	Therefore, we cache the open relation and provide
- *	fmgr lookup cache space at the caller level.
+ *	fmgr lookup cache space at the caller level.  (For triggers fired at
+ *	the end of a query, we can even piggyback on the executor's state.)
  *
  *	event: event currently being fired.
  *	rel: open relation for event.
  *	trigdesc: working copy of rel's trigger info.
  *	finfo: array of fmgr lookup cache entries (one per trigger in trigdesc).
+ *	instr: array of EXPLAIN ANALYZE instrumentation nodes (one per trigger),
+ *		or NULL if no instrumentation is wanted.
  *	per_tuple_context: memory context to call trigger function in.
  * ----------
  */
 static void
 AfterTriggerExecute(AfterTriggerEvent event,
-					Relation rel, TriggerDesc *trigdesc, FmgrInfo *finfo,
+					Relation rel, TriggerDesc *trigdesc,
+					FmgrInfo *finfo, Instrumentation *instr,
 					MemoryContext per_tuple_context)
 {
 	Oid			tgoid = event->ate_tgoid;
@@ -1908,6 +1917,28 @@ AfterTriggerExecute(AfterTriggerEvent event,
 	Buffer		oldbuffer = InvalidBuffer;
 	Buffer		newbuffer = InvalidBuffer;
 	int			tgindx;
+
+	/*
+	 * Locate trigger in trigdesc.
+	 */
+	LocTriggerData.tg_trigger = NULL;
+	for (tgindx = 0; tgindx < trigdesc->numtriggers; tgindx++)
+	{
+		if (trigdesc->triggers[tgindx].tgoid == tgoid)
+		{
+			LocTriggerData.tg_trigger = &(trigdesc->triggers[tgindx]);
+			break;
+		}
+	}
+	if (LocTriggerData.tg_trigger == NULL)
+		elog(ERROR, "could not find trigger %u", tgoid);
+
+	/*
+	 * If doing EXPLAIN ANALYZE, start charging time to this trigger.
+	 * We want to include time spent re-fetching tuples in the trigger cost.
+	 */
+	if (instr)
+		InstrStartNode(instr + tgindx);
 
 	/*
 	 * Fetch the required OLD and NEW tuples.
@@ -1933,18 +1964,6 @@ AfterTriggerExecute(AfterTriggerEvent event,
 	LocTriggerData.tg_event =
 		event->ate_event & (TRIGGER_EVENT_OPMASK | TRIGGER_EVENT_ROW);
 	LocTriggerData.tg_relation = rel;
-
-	LocTriggerData.tg_trigger = NULL;
-	for (tgindx = 0; tgindx < trigdesc->numtriggers; tgindx++)
-	{
-		if (trigdesc->triggers[tgindx].tgoid == tgoid)
-		{
-			LocTriggerData.tg_trigger = &(trigdesc->triggers[tgindx]);
-			break;
-		}
-	}
-	if (LocTriggerData.tg_trigger == NULL)
-		elog(ERROR, "could not find trigger %u", tgoid);
 
 	switch (event->ate_event & TRIGGER_EVENT_OPMASK)
 	{
@@ -1973,11 +1992,13 @@ AfterTriggerExecute(AfterTriggerEvent event,
 	MemoryContextReset(per_tuple_context);
 
 	/*
-	 * Call the trigger and throw away any eventually returned updated
-	 * tuple.
+	 * Call the trigger and throw away any possibly returned updated
+	 * tuple.  (Don't let ExecCallTriggerFunc measure EXPLAIN time.)
 	 */
 	rettuple = ExecCallTriggerFunc(&LocTriggerData,
-								   finfo + tgindx,
+								   tgindx,
+								   finfo,
+								   NULL,
 								   per_tuple_context);
 	if (rettuple != NULL && rettuple != &oldtuple && rettuple != &newtuple)
 		heap_freetuple(rettuple);
@@ -1989,6 +2010,13 @@ AfterTriggerExecute(AfterTriggerEvent event,
 		ReleaseBuffer(oldbuffer);
 	if (newbuffer != InvalidBuffer)
 		ReleaseBuffer(newbuffer);
+
+	/*
+	 * If doing EXPLAIN ANALYZE, stop charging time to this trigger,
+	 * and count one "tuple returned" (really the number of firings).
+	 */
+	if (instr)
+		InstrStopNode(instr + tgindx, true);
 }
 
 
@@ -2093,6 +2121,12 @@ afterTriggerMarkEvents(AfterTriggerEventList *events,
  *	Scan the given event list for events that are marked as to be fired
  *	in the current firing cycle, and fire them.
  *
+ *	If estate isn't NULL, then we expect that all the firable events are
+ *	for triggers of the relations included in the estate's result relation
+ *	array.  This allows us to re-use the estate's open relations and
+ *	trigger cache info.  When estate is NULL, we have to find the relations
+ *	the hard way.
+ *
  *	When delete_ok is TRUE, it's okay to delete fully-processed events.
  *	The events list pointers are updated.
  * ----------
@@ -2100,6 +2134,7 @@ afterTriggerMarkEvents(AfterTriggerEventList *events,
 static void
 afterTriggerInvokeEvents(AfterTriggerEventList *events,
 						 CommandId firing_id,
+						 EState *estate,
 						 bool delete_ok)
 {
 	AfterTriggerEvent event,
@@ -2108,6 +2143,7 @@ afterTriggerInvokeEvents(AfterTriggerEventList *events,
 	Relation	rel = NULL;
 	TriggerDesc *trigdesc = NULL;
 	FmgrInfo   *finfo = NULL;
+	Instrumentation *instr = NULL;
 
 	/* Make a per-tuple memory context for trigger function calls */
 	per_tuple_context =
@@ -2136,35 +2172,65 @@ afterTriggerInvokeEvents(AfterTriggerEventList *events,
 			 */
 			if (rel == NULL || rel->rd_id != event->ate_relid)
 			{
-				if (rel)
-					heap_close(rel, NoLock);
-				if (trigdesc)
-					FreeTriggerDesc(trigdesc);
-				if (finfo)
-					pfree(finfo);
+				if (estate)
+				{
+					/* Find target relation among estate's result rels */
+					ResultRelInfo *rInfo;
+					int		nr;
 
-				/*
-				 * We assume that an appropriate lock is still held by
-				 * the executor, so grab no new lock here.
-				 */
-				rel = heap_open(event->ate_relid, NoLock);
+					rInfo = estate->es_result_relations;
+					nr = estate->es_num_result_relations;
+					while (nr > 0)
+					{
+						if (rInfo->ri_RelationDesc->rd_id == event->ate_relid)
+							break;
+						rInfo++;
+						nr--;
+					}
+					if (nr <= 0)				/* should not happen */
+						elog(ERROR, "could not find relation %u among query result relations",
+							 event->ate_relid);
+					rel = rInfo->ri_RelationDesc;
+					trigdesc = rInfo->ri_TrigDesc;
+					finfo = rInfo->ri_TrigFunctions;
+					instr = rInfo->ri_TrigInstrument;
+				}
+				else
+				{
+					/* Hard way: we manage the resources for ourselves */
+					if (rel)
+						heap_close(rel, NoLock);
+					if (trigdesc)
+						FreeTriggerDesc(trigdesc);
+					if (finfo)
+						pfree(finfo);
+					Assert(instr == NULL);	/* never used in this case */
 
-				/*
-				 * Copy relation's trigger info so that we have a
-				 * stable copy no matter what the called triggers do.
-				 */
-				trigdesc = CopyTriggerDesc(rel->trigdesc);
+					/*
+					 * We assume that an appropriate lock is still held by
+					 * the executor, so grab no new lock here.
+					 */
+					rel = heap_open(event->ate_relid, NoLock);
 
-				if (trigdesc == NULL)		/* should not happen */
-					elog(ERROR, "relation %u has no triggers",
-						 event->ate_relid);
+					/*
+					 * Copy relation's trigger info so that we have a
+					 * stable copy no matter what the called triggers do.
+					 */
+					trigdesc = CopyTriggerDesc(rel->trigdesc);
 
-				/*
-				 * Allocate space to cache fmgr lookup info for
-				 * triggers.
-				 */
-				finfo = (FmgrInfo *)
-					palloc0(trigdesc->numtriggers * sizeof(FmgrInfo));
+					if (trigdesc == NULL)		/* should not happen */
+						elog(ERROR, "relation %u has no triggers",
+							 event->ate_relid);
+
+					/*
+					 * Allocate space to cache fmgr lookup info for
+					 * triggers.
+					 */
+					finfo = (FmgrInfo *)
+						palloc0(trigdesc->numtriggers * sizeof(FmgrInfo));
+
+					/* Never any EXPLAIN info in this case */
+				}
 			}
 
 			/*
@@ -2172,7 +2238,7 @@ afterTriggerInvokeEvents(AfterTriggerEventList *events,
 			 * set, so recursive examinations of the event list won't try
 			 * to re-fire it.
 			 */
-			AfterTriggerExecute(event, rel, trigdesc, finfo,
+			AfterTriggerExecute(event, rel, trigdesc, finfo, instr,
 								per_tuple_context);
 
 			/*
@@ -2214,12 +2280,16 @@ afterTriggerInvokeEvents(AfterTriggerEventList *events,
 	events->tail = prev_event;
 
 	/* Release working resources */
-	if (rel)
-		heap_close(rel, NoLock);
-	if (trigdesc)
-		FreeTriggerDesc(trigdesc);
-	if (finfo)
-		pfree(finfo);
+	if (!estate)
+	{
+		if (rel)
+			heap_close(rel, NoLock);
+		if (trigdesc)
+			FreeTriggerDesc(trigdesc);
+		if (finfo)
+			pfree(finfo);
+		Assert(instr == NULL);	/* never used in this case */
+	}
 	MemoryContextDelete(per_tuple_context);
 }
 
@@ -2308,10 +2378,14 @@ AfterTriggerBeginQuery(void)
  *	Called after one query has been completely processed. At this time
  *	we invoke all AFTER IMMEDIATE trigger events queued by the query, and
  *	transfer deferred trigger events to the global deferred-trigger list.
+ *
+ *	Note that this should be called just BEFORE closing down the executor
+ *	with ExecutorEnd, because we make use of the EState's info about
+ *	target relations.
  * ----------
  */
 void
-AfterTriggerEndQuery(void)
+AfterTriggerEndQuery(EState *estate)
 {
 	AfterTriggerEventList *events;
 
@@ -2339,7 +2413,7 @@ AfterTriggerEndQuery(void)
 		CommandId		firing_id = afterTriggers->firing_counter++;
 
 		/* OK to delete the immediate events after processing them */
-		afterTriggerInvokeEvents(events, firing_id, true);
+		afterTriggerInvokeEvents(events, firing_id, estate, true);
 	}
 
 	afterTriggers->query_depth--;
@@ -2381,7 +2455,7 @@ AfterTriggerEndXact(void)
 	{
 		CommandId		firing_id = afterTriggers->firing_counter++;
 
-		afterTriggerInvokeEvents(events, firing_id, true);
+		afterTriggerInvokeEvents(events, firing_id, NULL, true);
 	}
 
 	/*
@@ -2838,7 +2912,7 @@ AfterTriggerSetState(ConstraintsSetStmt *stmt)
 			 * level, but we'd better not if inside a subtransaction, since
 			 * the subtransaction could later get rolled back.
 			 */
-			afterTriggerInvokeEvents(events, firing_id,
+			afterTriggerInvokeEvents(events, firing_id, NULL,
 									 !IsSubTransaction());
 		}
 	}

@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/tcop/pquery.c,v 1.92 2005/03/16 21:38:08 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/tcop/pquery.c,v 1.93 2005/03/25 21:57:58 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -206,13 +206,13 @@ ProcessQuery(Query *parsetree,
 		}
 	}
 
+	/* Now take care of any queued AFTER triggers */
+	AfterTriggerEndQuery(queryDesc->estate);
+
 	/*
 	 * Now, we close down all the scans and free allocated resources.
 	 */
 	ExecutorEnd(queryDesc);
-
-	/* And take care of any queued AFTER triggers */
-	AfterTriggerEndQuery();
 
 	FreeQueryDesc(queryDesc);
 

@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/executor/spi.c,v 1.135 2005/03/16 21:38:08 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/executor/spi.c,v 1.136 2005/03/25 21:57:58 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -1546,10 +1546,10 @@ _SPI_pquery(QueryDesc *queryDesc, int tcount)
 			elog(ERROR, "consistency check on SPI tuple count failed");
 	}
 
-	ExecutorEnd(queryDesc);
-
 	/* Take care of any queued AFTER triggers */
-	AfterTriggerEndQuery();
+	AfterTriggerEndQuery(queryDesc->estate);
+
+	ExecutorEnd(queryDesc);
 
 	if (queryDesc->dest->mydest == SPI)
 	{

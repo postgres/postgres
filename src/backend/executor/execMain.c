@@ -26,7 +26,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/executor/execMain.c,v 1.243 2005/03/20 23:40:25 neilc Exp $
+ *	  $PostgreSQL: pgsql/src/backend/executor/execMain.c,v 1.244 2005/03/25 21:57:58 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -39,6 +39,7 @@
 #include "commands/trigger.h"
 #include "executor/execdebug.h"
 #include "executor/execdefs.h"
+#include "executor/instrument.h"
 #include "miscadmin.h"
 #include "optimizer/clauses.h"
 #include "optimizer/var.h"
@@ -69,7 +70,8 @@ static void InitPlan(QueryDesc *queryDesc, bool explainOnly);
 static void initResultRelInfo(ResultRelInfo *resultRelInfo,
 				  Index resultRelationIndex,
 				  List *rangeTable,
-				  CmdType operation);
+				  CmdType operation,
+				  bool doInstrument);
 static TupleTableSlot *ExecutePlan(EState *estate, PlanState *planstate,
 			CmdType operation,
 			long numberTuples,
@@ -508,7 +510,8 @@ InitPlan(QueryDesc *queryDesc, bool explainOnly)
 				initResultRelInfo(resultRelInfo,
 								  lfirst_int(l),
 								  rangeTable,
-								  operation);
+								  operation,
+								  estate->es_instrument);
 				resultRelInfo++;
 			}
 		}
@@ -523,7 +526,8 @@ InitPlan(QueryDesc *queryDesc, bool explainOnly)
 			initResultRelInfo(resultRelInfos,
 							  parseTree->resultRelation,
 							  rangeTable,
-							  operation);
+							  operation,
+							  estate->es_instrument);
 		}
 
 		estate->es_result_relations = resultRelInfos;
@@ -798,7 +802,8 @@ static void
 initResultRelInfo(ResultRelInfo *resultRelInfo,
 				  Index resultRelationIndex,
 				  List *rangeTable,
-				  CmdType operation)
+				  CmdType operation,
+				  bool doInstrument)
 {
 	Oid			resultRelationOid;
 	Relation	resultRelationDesc;
@@ -837,7 +842,22 @@ initResultRelInfo(ResultRelInfo *resultRelInfo,
 	resultRelInfo->ri_IndexRelationInfo = NULL;
 	/* make a copy so as not to depend on relcache info not changing... */
 	resultRelInfo->ri_TrigDesc = CopyTriggerDesc(resultRelationDesc->trigdesc);
-	resultRelInfo->ri_TrigFunctions = NULL;
+	if (resultRelInfo->ri_TrigDesc)
+	{
+		int		n = resultRelInfo->ri_TrigDesc->numtriggers;
+
+		resultRelInfo->ri_TrigFunctions = (FmgrInfo *)
+			palloc0(n * sizeof(FmgrInfo));
+		if (doInstrument)
+			resultRelInfo->ri_TrigInstrument = InstrAlloc(n);
+		else
+			resultRelInfo->ri_TrigInstrument = NULL;
+	}
+	else
+	{
+		resultRelInfo->ri_TrigFunctions = NULL;
+		resultRelInfo->ri_TrigInstrument = NULL;
+	}
 	resultRelInfo->ri_ConstraintExprs = NULL;
 	resultRelInfo->ri_junkFilter = NULL;
 

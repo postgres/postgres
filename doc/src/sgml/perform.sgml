@@ -1,5 +1,5 @@
 <!--
-$PostgreSQL: pgsql/doc/src/sgml/perform.sgml,v 1.50 2005/02/03 07:12:37 neilc Exp $
+$PostgreSQL: pgsql/doc/src/sgml/perform.sgml,v 1.51 2005/03/25 21:57:57 tgl Exp $
 -->
 
  <chapter id="performance-tips">
@@ -320,16 +320,19 @@ EXPLAIN ANALYZE SELECT * FROM tenk1 t1, tenk2 t2 WHERE t1.unique1 &lt; 50 AND t1
    </para>
 
    <para>
-    The <literal>Total runtime</literal> shown by <command>EXPLAIN ANALYZE</command> includes
-    executor start-up and shut-down time, as well as time spent processing
-    the result rows.  It does not include parsing, rewriting, or planning
-    time.  For a <command>SELECT</> query, the total run time will normally be just a
-    little larger than the total time reported for the top-level plan node.
-    For <command>INSERT</>, <command>UPDATE</>, and <command>DELETE</> commands, the total run time may be
-    considerably larger, because it includes the time spent processing the
-    result rows.  In these commands, the time for the top plan node
-    essentially is the time spent computing the new rows and/or locating
-    the old ones, but it doesn't include the time spent making the changes.
+    The <literal>Total runtime</literal> shown by <command>EXPLAIN
+    ANALYZE</command> includes executor start-up and shut-down time, as well
+    as time spent processing the result rows.  It does not include parsing,
+    rewriting, or planning time.  For a <command>SELECT</> query, the total
+    run time will normally be just a little larger than the total time
+    reported for the top-level plan node.  For <command>INSERT</>,
+    <command>UPDATE</>, and <command>DELETE</> commands, the total run time
+    may be considerably larger, because it includes the time spent processing
+    the result rows.  In these commands, the time for the top plan node
+    essentially is the time spent computing the new rows and/or locating the
+    old ones, but it doesn't include the time spent making the changes.
+    Time spent firing triggers, if any, is also outside the top plan node,
+    and is shown separately for each trigger.
    </para>
 
    <para>

@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1994-5, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/commands/explain.c,v 1.130 2005/03/20 22:27:51 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/commands/explain.c,v 1.131 2005/03/25 21:57:58 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -15,6 +15,7 @@
 
 #include "access/genam.h"
 #include "access/heapam.h"
+#include "catalog/pg_constraint.h"
 #include "catalog/pg_type.h"
 #include "commands/explain.h"
 #include "commands/prepare.h"
@@ -272,15 +273,75 @@ ExplainOnePlan(QueryDesc *queryDesc, ExplainStmt *stmt,
 	}
 
 	/*
-	 * Close down the query and free resources; also run any queued
-	 * AFTER triggers.  Include time for this in the total runtime.
+	 * If we ran the command, run any AFTER triggers it queued.  (Note this
+	 * will not include DEFERRED triggers; since those don't run until end of
+	 * transaction, we can't measure them.)  Include into total runtime.
+	 */
+	if (stmt->analyze)
+	{
+		INSTR_TIME_SET_CURRENT(starttime);
+		AfterTriggerEndQuery(queryDesc->estate);
+		totaltime += elapsed_time(&starttime);
+	}
+
+	/* Print info about runtime of triggers */
+	if (es->printAnalyze)
+	{
+		ResultRelInfo *rInfo;
+		int		numrels = queryDesc->estate->es_num_result_relations;
+		int		nr;
+
+		rInfo = queryDesc->estate->es_result_relations;
+		for (nr = 0; nr < numrels; rInfo++, nr++)
+		{
+			int		nt;
+
+			if (!rInfo->ri_TrigDesc)
+				continue;
+			for (nt = 0; nt < rInfo->ri_TrigDesc->numtriggers; nt++)
+			{
+				Trigger *trig = rInfo->ri_TrigDesc->triggers + nt;
+				Instrumentation *instr = rInfo->ri_TrigInstrument + nt;
+				char   *conname;
+
+				/* Must clean up instrumentation state */
+				InstrEndLoop(instr);
+
+				/*
+				 * We ignore triggers that were never invoked; they likely
+				 * aren't relevant to the current query type.
+				 */
+				if (instr->ntuples == 0)
+					continue;
+
+				if (trig->tgisconstraint &&
+					(conname = GetConstraintNameForTrigger(trig->tgoid)) != NULL)
+				{
+					appendStringInfo(str, "Trigger for constraint %s",
+									 conname);
+					pfree(conname);
+				}
+				else
+					appendStringInfo(str, "Trigger %s", trig->tgname);
+
+				if (numrels > 1)
+					appendStringInfo(str, " on %s",
+									 RelationGetRelationName(rInfo->ri_RelationDesc));
+
+				appendStringInfo(str, ": time=%.3f calls=%.0f\n",
+								 1000.0 * instr->total,
+								 instr->ntuples);
+			}
+		}
+	}
+
+	/*
+	 * Close down the query and free resources.  Include time for this
+	 * in the total runtime (although it should be pretty minimal).
 	 */
 	INSTR_TIME_SET_CURRENT(starttime);
 
 	ExecutorEnd(queryDesc);
-
-	if (stmt->analyze)
-		AfterTriggerEndQuery();
 
 	FreeQueryDesc(queryDesc);
 

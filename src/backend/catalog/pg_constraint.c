@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/catalog/pg_constraint.c,v 1.22 2004/12/31 21:59:38 pgsql Exp $
+ *	  $PostgreSQL: pgsql/src/backend/catalog/pg_constraint.c,v 1.23 2005/03/25 21:57:57 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -21,12 +21,14 @@
 #include "catalog/dependency.h"
 #include "catalog/indexing.h"
 #include "catalog/pg_constraint.h"
+#include "catalog/pg_depend.h"
 #include "catalog/pg_type.h"
 #include "commands/defrem.h"
 #include "miscadmin.h"
 #include "utils/array.h"
 #include "utils/builtins.h"
 #include "utils/fmgroids.h"
+#include "utils/lsyscache.h"
 #include "utils/syscache.h"
 
 
@@ -509,4 +511,96 @@ RemoveConstraintById(Oid conId)
 	/* Clean up */
 	systable_endscan(conscan);
 	heap_close(conDesc, RowExclusiveLock);
+}
+
+/*
+ * GetConstraintNameForTrigger
+ *		Get the name of the constraint owning a trigger, if any
+ *
+ * Returns a palloc'd string, or NULL if no constraint can be found
+ */
+char *
+GetConstraintNameForTrigger(Oid triggerId)
+{
+	char	   *result;
+	Oid			constraintId = InvalidOid;
+	Oid			pg_trigger_id;
+	Oid			pg_constraint_id;
+	Relation	depRel;
+	Relation	conRel;
+	ScanKeyData key[2];
+	SysScanDesc scan;
+	HeapTuple	tup;
+
+	pg_trigger_id = get_system_catalog_relid(TriggerRelationName);
+	pg_constraint_id = get_system_catalog_relid(ConstraintRelationName);
+
+	/*
+	 * We must grovel through pg_depend to find the owning constraint.
+	 * Perhaps pg_trigger should have a column for the owning constraint ...
+	 * but right now this is not performance-critical code.
+	 */
+	depRel = heap_openr(DependRelationName, AccessShareLock);
+
+	ScanKeyInit(&key[0],
+				Anum_pg_depend_classid,
+				BTEqualStrategyNumber, F_OIDEQ,
+				ObjectIdGetDatum(pg_trigger_id));
+	ScanKeyInit(&key[1],
+				Anum_pg_depend_objid,
+				BTEqualStrategyNumber, F_OIDEQ,
+				ObjectIdGetDatum(triggerId));
+	/* assume we can ignore objsubid for a trigger */
+
+	scan = systable_beginscan(depRel, DependDependerIndex, true,
+							  SnapshotNow, 2, key);
+
+	while (HeapTupleIsValid(tup = systable_getnext(scan)))
+	{
+		Form_pg_depend foundDep = (Form_pg_depend) GETSTRUCT(tup);
+
+		if (foundDep->refclassid == pg_constraint_id &&
+			foundDep->deptype == DEPENDENCY_INTERNAL)
+		{
+			constraintId = foundDep->refobjid;
+			break;
+		}
+	}
+
+	systable_endscan(scan);
+
+	heap_close(depRel, AccessShareLock);
+
+	if (!OidIsValid(constraintId))
+		return NULL;				/* no owning constraint found */
+
+	conRel = heap_openr(ConstraintRelationName, AccessShareLock);
+
+	ScanKeyInit(&key[0],
+				ObjectIdAttributeNumber,
+				BTEqualStrategyNumber, F_OIDEQ,
+				ObjectIdGetDatum(constraintId));
+
+	scan = systable_beginscan(conRel, ConstraintOidIndex, true,
+							  SnapshotNow, 1, key);
+
+	tup = systable_getnext(scan);
+
+	if (HeapTupleIsValid(tup))
+	{
+		Form_pg_constraint con = (Form_pg_constraint) GETSTRUCT(tup);
+
+		result = pstrdup(NameStr(con->conname));
+	}
+	else
+	{
+		/* This arguably should be an error, but we'll just return NULL */
+		result = NULL;
+	}
+
+	systable_endscan(scan);
+
+	heap_close(conRel, AccessShareLock);
+
+	return result;
 }
