@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/datetime.c,v 1.116 2003/08/27 23:29:28 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/datetime.c,v 1.117 2003/09/13 21:12:38 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -1570,9 +1570,10 @@ DecodeDateTime(char **field, int *ftype, int nf,
  * (ie, regular or daylight-savings time) at that time.  Set the struct tm's
  * tm_isdst field accordingly, and return the actual timezone offset.
  *
- * This subroutine exists to centralize uses of mktime() and defend against
- * mktime() bugs/restrictions on various platforms.  This should be
- * the *only* call of mktime() in the backend.
+ * Note: this subroutine exists because mktime() has such a spectacular
+ * variety of, ahem, odd behaviors on various platforms.  We used to try to
+ * use mktime() here, but finally gave it up as a bad job.  Avoid using
+ * mktime() anywhere else.
  */
 int
 DetermineLocalTimeZone(struct tm * tm)
@@ -1586,117 +1587,78 @@ DetermineLocalTimeZone(struct tm * tm)
 	}
 	else if (IS_VALID_UTIME(tm->tm_year, tm->tm_mon, tm->tm_mday))
 	{
-#if defined(HAVE_TM_ZONE) || defined(HAVE_INT_TIMEZONE)
+		/*
+		 * First, generate the time_t value corresponding to the given
+		 * y/m/d/h/m/s taken as GMT time.  This will not overflow (at
+		 * least not for time_t taken as signed) because of the range
+		 * check we did above.
+		 */
+		long		day,
+					mysec,
+					locsec,
+					delta1,
+					delta2;
+		time_t		mytime;
+		struct tm  *tx;
+
+		day = date2j(tm->tm_year, tm->tm_mon, tm->tm_mday) - UNIX_EPOCH_JDATE;
+		mysec = tm->tm_sec + (tm->tm_min + (day * 24 + tm->tm_hour) * 60) * 60;
+		mytime = (time_t) mysec;
 
 		/*
-		 * Some buggy mktime() implementations may change the
-		 * year/month/day when given a time right at a DST boundary.  To
-		 * prevent corruption of the caller's data, give mktime() a
-		 * copy...
+		 * Use localtime to convert that time_t to broken-down time,
+		 * and reassemble to get a representation of local time.
 		 */
-		struct tm	tt,
-				   *tmp = &tt;
+		tx = localtime(&mytime);
+		day = date2j(tx->tm_year + 1900, tx->tm_mon + 1, tx->tm_mday) -
+			UNIX_EPOCH_JDATE;
+		locsec = tx->tm_sec + (tx->tm_min + (day * 24 + tx->tm_hour) * 60) * 60;
 
-		*tmp = *tm;
-		/* change to Unix conventions for year/month */
-		tmp->tm_year -= 1900;
-		tmp->tm_mon -= 1;
+		/*
+		 * The local time offset corresponding to that GMT time is now
+		 * computable as mysec - locsec.
+		 */
+		delta1 = mysec - locsec;
 
-		/* indicate timezone unknown */
-		tmp->tm_isdst = -1;
+		/*
+		 * However, if that GMT time and the local time we are
+		 * actually interested in are on opposite sides of a
+		 * daylight-savings-time transition, then this is not the time
+		 * offset we want.	So, adjust the time_t to be what we think
+		 * the GMT time corresponding to our target local time is, and
+		 * repeat the localtime() call and delta calculation.
+		 */
+		mysec += delta1;
+		mytime = (time_t) mysec;
+		tx = localtime(&mytime);
+		day = date2j(tx->tm_year + 1900, tx->tm_mon + 1, tx->tm_mday) -
+			UNIX_EPOCH_JDATE;
+		locsec = tx->tm_sec + (tx->tm_min + (day * 24 + tx->tm_hour) * 60) * 60;
+		delta2 = mysec - locsec;
 
-		if (mktime(tmp) != ((time_t) -1) &&
-			tmp->tm_isdst >= 0)
+		/*
+		 * We may have to do it again to get the correct delta.
+		 *
+		 * It might seem we should just loop until we get the same delta
+		 * twice in a row, but if we've been given an "impossible" local
+		 * time (in the gap during a spring-forward transition) we'd never
+		 * get out of the loop.  The behavior we want is that "impossible"
+		 * times are taken as standard time, and also that ambiguous times
+		 * (during a fall-back transition) are taken as standard time.
+		 * Therefore, we bias the code to prefer the standard-time solution.
+		 */
+		if (delta2 != delta1 && tx->tm_isdst != 0)
 		{
-			/* mktime() succeeded, trust its result */
-			tm->tm_isdst = tmp->tm_isdst;
-
-#if defined(HAVE_TM_ZONE)
-			/* tm_gmtoff is Sun/DEC-ism */
-			tz = -(tmp->tm_gmtoff);
-#elif defined(HAVE_INT_TIMEZONE)
-			tz = ((tmp->tm_isdst > 0) ? (TIMEZONE_GLOBAL - 3600) : TIMEZONE_GLOBAL);
-#endif   /* HAVE_INT_TIMEZONE */
-		}
-		else
-		{
-			/*
-			 * We have a buggy (not to say deliberately brain damaged)
-			 * mktime().  Work around it by using localtime() instead.
-			 *
-			 * First, generate the time_t value corresponding to the given
-			 * y/m/d/h/m/s taken as GMT time.  This will not overflow (at
-			 * least not for time_t taken as signed) because of the range
-			 * check we did above.
-			 */
-			long		day,
-						mysec,
-						locsec,
-						delta1,
-						delta2;
-			time_t		mytime;
-
-			day = date2j(tm->tm_year, tm->tm_mon, tm->tm_mday) - UNIX_EPOCH_JDATE;
-			mysec = tm->tm_sec + (tm->tm_min + (day * 24 + tm->tm_hour) * 60) * 60;
+			mysec += (delta2 - delta1);
 			mytime = (time_t) mysec;
-
-			/*
-			 * Use localtime to convert that time_t to broken-down time,
-			 * and reassemble to get a representation of local time.
-			 */
-			tmp = localtime(&mytime);
-			day = date2j(tmp->tm_year + 1900, tmp->tm_mon + 1, tmp->tm_mday) -
+			tx = localtime(&mytime);
+			day = date2j(tx->tm_year + 1900, tx->tm_mon + 1, tx->tm_mday) -
 				UNIX_EPOCH_JDATE;
-			locsec = tmp->tm_sec + (tmp->tm_min + (day * 24 + tmp->tm_hour) * 60) * 60;
-
-			/*
-			 * The local time offset corresponding to that GMT time is now
-			 * computable as mysec - locsec.
-			 */
-			delta1 = mysec - locsec;
-
-			/*
-			 * However, if that GMT time and the local time we are
-			 * actually interested in are on opposite sides of a
-			 * daylight-savings-time transition, then this is not the time
-			 * offset we want.	So, adjust the time_t to be what we think
-			 * the GMT time corresponding to our target local time is, and
-			 * repeat the localtime() call and delta calculation.  We may
-			 * have to do it twice before we have a trustworthy delta.
-			 *
-			 * Note: think not to put a loop here, since if we've been given
-			 * an "impossible" local time (in the gap during a
-			 * spring-forward transition) we'd never get out of the loop.
-			 * Twice is enough to give the behavior we want, which is that
-			 * "impossible" times are taken as standard time, while at a
-			 * fall-back boundary ambiguous times are also taken as
-			 * standard.
-			 */
-			mysec += delta1;
-			mytime = (time_t) mysec;
-			tmp = localtime(&mytime);
-			day = date2j(tmp->tm_year + 1900, tmp->tm_mon + 1, tmp->tm_mday) -
-				UNIX_EPOCH_JDATE;
-			locsec = tmp->tm_sec + (tmp->tm_min + (day * 24 + tmp->tm_hour) * 60) * 60;
+			locsec = tx->tm_sec + (tx->tm_min + (day * 24 + tx->tm_hour) * 60) * 60;
 			delta2 = mysec - locsec;
-			if (delta2 != delta1)
-			{
-				mysec += (delta2 - delta1);
-				mytime = (time_t) mysec;
-				tmp = localtime(&mytime);
-				day = date2j(tmp->tm_year + 1900, tmp->tm_mon + 1, tmp->tm_mday) -
-					UNIX_EPOCH_JDATE;
-				locsec = tmp->tm_sec + (tmp->tm_min + (day * 24 + tmp->tm_hour) * 60) * 60;
-				delta2 = mysec - locsec;
-			}
-			tm->tm_isdst = tmp->tm_isdst;
-			tz = (int) delta2;
 		}
-#else							/* not (HAVE_TM_ZONE || HAVE_INT_TIMEZONE) */
-		/* Assume UTC if no system timezone info available */
-		tm->tm_isdst = 0;
-		tz = 0;
-#endif
+		tm->tm_isdst = tx->tm_isdst;
+		tz = (int) delta2;
 	}
 	else
 	{
