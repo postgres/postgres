@@ -124,15 +124,15 @@
 #   		usernames stored in secondary password files but not
 #   		secondary passwords.
 # 
-#   ident:  	Authentication is done by the ident server on the remote
-#   		host. AUTH_ARGUMENT is required and maps names found in
-#   		the $PGDATA/pg_ident.conf file. The connection is
-#   		accepted if the file contains an entry for this map
+#   ident: Authentication is done by the ident server on the local 
+#   		or remote host. AUTH_ARGUMENT is required and maps names 
+#		found in the $PGDATA/pg_ident.conf file. The connection
+#   		is accepted if the file contains an entry for this map
 #   		name with the ident-supplied username and the requested
 #   		PostgreSQL username. The special map name "sameuser"
-#   		indicates an implied map (not in pg_ident.conf)
-#   		that maps each ident username to the identical
-#   		PostgreSQL username.
+#   		indicates an implied map (not in pg_ident.conf) that
+#   		maps each ident username to the identical PostgreSQL 
+#		username.
 # 
 #   krb4:   	Kerberos V4 authentication is used.
 # 

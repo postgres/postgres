@@ -8,7 +8,7 @@
 #
 #
 # IDENTIFICATION
-#    $Header: /cvsroot/pgsql/src/bin/pg_ctl/Attic/pg_ctl.sh,v 1.22 2001/07/11 16:16:52 momjian Exp $
+#    $Header: /cvsroot/pgsql/src/bin/pg_ctl/Attic/pg_ctl.sh,v 1.23 2001/07/11 19:36:41 momjian Exp $
 #
 #-------------------------------------------------------------------------
 
@@ -128,7 +128,8 @@ do
 	-D)
 	    shift
 	    # pass environment into new postmaster
-	    export PGDATA="$1"
+	    PGDATA="$1"
+	    export PGDATA
 	    ;;
 	-l)
 	    logfile="$2"
