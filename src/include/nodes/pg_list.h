@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2002, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Id: pg_list.h,v 1.31 2003/01/20 18:55:04 tgl Exp $
+ * $Id: pg_list.h,v 1.32 2003/01/24 03:58:43 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -141,6 +141,7 @@ extern List *set_differencei(List *list1, List *list2);
 extern List *lreverse(List *l);
 extern List *set_union(List *list1, List *list2);
 extern List *set_unioni(List *list1, List *list2);
+extern List *set_ptrUnion(List *list1, List *list2);
 extern List *set_intersecti(List *list1, List *list2);
 
 extern bool equali(List *list1, List *list2);

@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/optimizer/util/restrictinfo.c,v 1.15 2002/11/24 21:52:14 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/optimizer/util/restrictinfo.c,v 1.16 2003/01/24 03:58:43 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -17,6 +17,7 @@
 #include "optimizer/clauses.h"
 #include "optimizer/paths.h"
 #include "optimizer/restrictinfo.h"
+#include "optimizer/var.h"
 
 
 /*
@@ -101,6 +102,13 @@ get_actual_join_clauses(List *restrictinfo_list,
  * equality between any set member on the left and any member on the right;
  * by transitivity, all the rest are then equal.
  *
+ * However, clauses that are of the form "var expr = const expr" cannot be
+ * eliminated as redundant.  This is because when there are const expressions
+ * in a pathkey set, generate_implied_equalities() suppresses "var = var"
+ * clauses in favor of "var = const" clauses.  We cannot afford to drop any
+ * of the latter, even though they might seem redundant by the pathkey
+ * membership test.
+ *
  * Weird special case: if we have two clauses that seem redundant
  * except one is pushed down into an outer join and the other isn't,
  * then they're not really redundant, because one constrains the
@@ -120,7 +128,7 @@ remove_redundant_join_clauses(Query *root, List *restrictinfo_list,
 	{
 		RestrictInfo *rinfo = (RestrictInfo *) lfirst(item);
 
-		/* eliminate duplicates */
+		/* always eliminate duplicates */
 		if (member(rinfo, result))
 			continue;
 
@@ -132,6 +140,7 @@ remove_redundant_join_clauses(Query *root, List *restrictinfo_list,
 
 			cache_mergeclause_pathkeys(root, rinfo);
 
+			/* do the cheap tests first */
 			foreach(olditem, result)
 			{
 				RestrictInfo *oldrinfo = (RestrictInfo *) lfirst(olditem);
@@ -148,7 +157,20 @@ remove_redundant_join_clauses(Query *root, List *restrictinfo_list,
 			}
 
 			if (redundant)
-				continue;
+			{
+				/*
+				 * It looks redundant, now check for "var = const" case.
+				 * If left_relids/right_relids are set, then there are
+				 * definitely vars on both sides; else we must check the
+				 * hard way.
+				 */
+				if (rinfo->left_relids)
+					continue;	/* var = var, so redundant */
+				if (contain_var_clause(get_leftop(rinfo->clause)) &&
+					contain_var_clause(get_rightop(rinfo->clause)))
+					continue;	/* var = var, so redundant */
+				/* else var = const, not redundant */
+			}
 		}
 
 		/* otherwise, add it to result list */

@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/optimizer/util/relnode.c,v 1.44 2003/01/20 18:54:56 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/optimizer/util/relnode.c,v 1.45 2003/01/24 03:58:43 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -549,14 +549,19 @@ subbuild_joinrel_joinlist(RelOptInfo *joinrel,
 			/*
 			 * These clauses are still join clauses at this level, so find
 			 * or make the appropriate JoinInfo item for the joinrel, and
-			 * add the clauses to it (eliminating duplicates).
+			 * add the clauses to it, eliminating duplicates.  (Since
+			 * RestrictInfo nodes are normally multiply-linked rather than
+			 * copied, pointer equality should be a sufficient test.  If
+			 * two equal() nodes should happen to sneak in, no great harm
+			 * is done --- they'll be detected by redundant-clause testing
+			 * when they reach a restriction list.)
 			 */
 			JoinInfo   *new_joininfo;
 
 			new_joininfo = make_joininfo_node(joinrel, new_unjoined_relids);
 			new_joininfo->jinfo_restrictinfo =
-				set_union(new_joininfo->jinfo_restrictinfo,
-						  joininfo->jinfo_restrictinfo);
+				set_ptrUnion(new_joininfo->jinfo_restrictinfo,
+							 joininfo->jinfo_restrictinfo);
 		}
 	}
 }

@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/optimizer/plan/initsplan.c,v 1.82 2003/01/20 18:54:52 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/optimizer/plan/initsplan.c,v 1.83 2003/01/24 03:58:43 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -40,8 +40,6 @@ static void distribute_qual_to_rels(Query *root, Node *clause,
 						bool isouterjoin,
 						bool isdeduced,
 						Relids qualscope);
-static void add_join_info_to_rels(Query *root, RestrictInfo *restrictinfo,
-					  Relids join_relids);
 static void add_vars_to_targetlist(Query *root, List *vars);
 static bool qual_is_redundant(Query *root, RestrictInfo *restrictinfo,
 				  List *restrictlist);
@@ -539,7 +537,7 @@ distribute_qual_to_rels(Query *root, Node *clause,
 		/*
 		 * Add clause to the join lists of all the relevant relations.
 		 */
-		add_join_info_to_rels(root, restrictinfo, relids);
+		add_join_clause_to_rels(root, restrictinfo, relids);
 
 		/*
 		 * Add vars used in the join clause to targetlists of their
@@ -573,78 +571,95 @@ distribute_qual_to_rels(Query *root, Node *clause,
 }
 
 /*
- * add_join_info_to_rels
- *	  For every relation participating in a join clause, add 'restrictinfo' to
- *	  the appropriate joininfo list (creating a new list and adding it to the
- *	  appropriate rel node if necessary).
- *
- * Note that the same copy of the restrictinfo node is linked to by all the
- * lists it is in.  This allows us to exploit caching of information about
- * the restriction clause (but we must be careful that the information does
- * not depend on context).
- *
- * 'restrictinfo' describes the join clause
- * 'join_relids' is the list of relations participating in the join clause
- */
-static void
-add_join_info_to_rels(Query *root, RestrictInfo *restrictinfo,
-					  Relids join_relids)
-{
-	List	   *join_relid;
-
-	/* For every relid, find the joininfo, and add the proper join entries */
-	foreach(join_relid, join_relids)
-	{
-		int			cur_relid = lfirsti(join_relid);
-		Relids		unjoined_relids = NIL;
-		JoinInfo   *joininfo;
-		List	   *otherrel;
-
-		/* Get the relids not equal to the current relid */
-		foreach(otherrel, join_relids)
-		{
-			if (lfirsti(otherrel) != cur_relid)
-				unjoined_relids = lappendi(unjoined_relids, lfirsti(otherrel));
-		}
-		Assert(unjoined_relids != NIL);
-
-		/*
-		 * Find or make the joininfo node for this combination of rels,
-		 * and add the restrictinfo node to it.
-		 */
-		joininfo = make_joininfo_node(find_base_rel(root, cur_relid),
-									  unjoined_relids);
-		joininfo->jinfo_restrictinfo = lappend(joininfo->jinfo_restrictinfo,
-											   restrictinfo);
-	}
-}
-
-/*
  * process_implied_equality
  *	  Check to see whether we already have a restrictinfo item that says
- *	  item1 = item2, and create one if not.  This is a consequence of
- *	  transitivity of mergejoin equality: if we have mergejoinable
- *	  clauses A = B and B = C, we can deduce A = C (where = is an
- *	  appropriate mergejoinable operator).
+ *	  item1 = item2, and create one if not; or if delete_it is true,
+ *	  remove any such restrictinfo item.
+ *
+ * This processing is a consequence of transitivity of mergejoin equality:
+ * if we have mergejoinable clauses A = B and B = C, we can deduce A = C
+ * (where = is an appropriate mergejoinable operator).  See path/pathkeys.c
+ * for more details.
  */
 void
-process_implied_equality(Query *root, Node *item1, Node *item2,
-						 Oid sortop1, Oid sortop2)
+process_implied_equality(Query *root,
+						 Node *item1, Node *item2,
+						 Oid sortop1, Oid sortop2,
+						 Relids item1_relids, Relids item2_relids,
+						 bool delete_it)
 {
+	Relids		relids;
+	RelOptInfo *rel1;
+	List	   *restrictlist;
+	List	   *itm;
 	Oid			ltype,
 				rtype;
 	Operator	eq_operator;
 	Form_pg_operator pgopform;
 	Expr	   *clause;
 
+	/* Get list of relids referenced in the two expressions */
+	relids = set_unioni(item1_relids, item2_relids);
+
 	/*
-	 * Forget it if this equality is already recorded.
-	 *
-	 * Note: if only a single relation is involved, we may fall through
-	 * here and end up rejecting the equality later on in qual_is_redundant.
-	 * This is a tad slow but should be okay.
+	 * generate_implied_equalities() shouldn't call me on two constants.
 	 */
-	if (exprs_known_equal(root, item1, item2))
+	Assert(relids != NIL);
+
+	/*
+	 * If the exprs involve a single rel, we need to look at that rel's
+	 * baserestrictinfo list.  If multiple rels, any one will have a
+	 * joininfo node for the rest, and we can scan any of 'em.
+	 */
+	rel1 = find_base_rel(root, lfirsti(relids));
+	if (lnext(relids) == NIL)
+		restrictlist = rel1->baserestrictinfo;
+	else
+	{
+		JoinInfo   *joininfo = find_joininfo_node(rel1, lnext(relids));
+
+		restrictlist = joininfo ? joininfo->jinfo_restrictinfo : NIL;
+	}
+
+	/*
+	 * Scan to see if equality is already known.  If so, we're done in
+	 * the add case, and done after removing it in the delete case.
+	 */
+	foreach(itm, restrictlist)
+	{
+		RestrictInfo *restrictinfo = (RestrictInfo *) lfirst(itm);
+		Node	   *left,
+				   *right;
+
+		if (restrictinfo->mergejoinoperator == InvalidOid)
+			continue;			/* ignore non-mergejoinable clauses */
+		/* We now know the restrictinfo clause is a binary opclause */
+		left = get_leftop(restrictinfo->clause);
+		right = get_rightop(restrictinfo->clause);
+		if ((equal(item1, left) && equal(item2, right)) ||
+			(equal(item2, left) && equal(item1, right)))
+		{
+			/* found a matching clause */
+			if (delete_it)
+			{
+				if (lnext(relids) == NIL)
+				{
+					/* delete it from local restrictinfo list */
+					rel1->baserestrictinfo = lremove(restrictinfo,
+													 rel1->baserestrictinfo);
+				}
+				else
+				{
+					/* let joininfo.c do it */
+					remove_join_clause_from_rels(root, restrictinfo, relids);
+				}
+			}
+			return;				/* done */
+		}
+	}
+
+	/* Didn't find it.  Done if deletion requested */
+	if (delete_it)
 		return;
 
 	/*
@@ -692,73 +707,7 @@ process_implied_equality(Query *root, Node *item1, Node *item2,
 	 */
 	distribute_qual_to_rels(root, (Node *) clause,
 							true, false, true,
-							pull_varnos((Node *) clause));
-}
-
-/*
- * exprs_known_equal
- *	  Detect whether two expressions are known equal due to equijoin clauses.
- *
- * This is not completely accurate since we avoid adding redundant restriction
- * clauses to individual base rels (see qual_is_redundant).  However, after
- * the implied-equality-deduction phase, it is complete for expressions
- * involving Vars of multiple rels; that's sufficient for planned uses.
- */
-bool
-exprs_known_equal(Query *root, Node *item1, Node *item2)
-{
-	List	   *relids;
-	RelOptInfo *rel1;
-	List	   *restrictlist;
-	List	   *itm;
-
-	/* Get list of relids referenced in the two expressions */
-	relids = set_unioni(pull_varnos(item1), pull_varnos(item2));
-
-	/*
-	 * If there are no Vars at all, say "true".  This prevents
-	 * process_implied_equality from trying to store "const = const"
-	 * deductions.
-	 */
-	if (relids == NIL)
-		return true;
-
-	/*
-	 * If the exprs involve a single rel, we need to look at that rel's
-	 * baserestrictinfo list.  If multiple rels, any one will have a
-	 * joininfo node for the rest, and we can scan any of 'em.
-	 */
-	rel1 = find_base_rel(root, lfirsti(relids));
-	relids = lnext(relids);
-	if (relids == NIL)
-		restrictlist = rel1->baserestrictinfo;
-	else
-	{
-		JoinInfo   *joininfo = find_joininfo_node(rel1, relids);
-
-		restrictlist = joininfo ? joininfo->jinfo_restrictinfo : NIL;
-	}
-
-	/*
-	 * Scan to see if equality is known.
-	 */
-	foreach(itm, restrictlist)
-	{
-		RestrictInfo *restrictinfo = (RestrictInfo *) lfirst(itm);
-		Node	   *left,
-				   *right;
-
-		if (restrictinfo->mergejoinoperator == InvalidOid)
-			continue;			/* ignore non-mergejoinable clauses */
-		/* We now know the restrictinfo clause is a binary opclause */
-		left = get_leftop(restrictinfo->clause);
-		right = get_rightop(restrictinfo->clause);
-		if ((equal(item1, left) && equal(item2, right)) ||
-			(equal(item2, left) && equal(item1, right)))
-			return true;		/* found a matching clause */
-	}
-
-	return false;
+							relids);
 }
 
 /*
@@ -770,18 +719,31 @@ exprs_known_equal(Query *root, Node *item1, Node *item2)
  *				SELECT * FROM tab WHERE f1 = f2 AND f2 = f3;
  *	  We need to suppress the redundant condition to avoid computing
  *	  too-small selectivity, not to mention wasting time at execution.
+ *
+ * Note: quals of the form "var = const" are never considered redundant,
+ * only those of the form "var = var".  This is needed because when we
+ * have constants in an implied-equality set, we use a different strategy
+ * that suppresses all "var = var" deductions.  We must therefore keep
+ * all the "var = const" quals.
  */
 static bool
 qual_is_redundant(Query *root,
 				  RestrictInfo *restrictinfo,
 				  List *restrictlist)
 {
-	List	   *oldquals;
-	List	   *olditem;
 	Node	   *newleft;
 	Node	   *newright;
+	List	   *oldquals;
+	List	   *olditem;
 	List	   *equalexprs;
 	bool		someadded;
+
+	newleft = get_leftop(restrictinfo->clause);
+	newright = get_rightop(restrictinfo->clause);
+
+	/* Never redundant unless vars appear on both sides */
+	if (!contain_var_clause(newleft) || !contain_var_clause(newright))
+		return false;
 
 	/*
 	 * Set cached pathkeys.  NB: it is okay to do this now because this
@@ -822,8 +784,6 @@ qual_is_redundant(Query *root,
 	 * we find we can reach the right-side expr of the new qual, we are
 	 * done.  We give up when we can't expand the equalexprs list any more.
 	 */
-	newleft = get_leftop(restrictinfo->clause);
-	newright = get_rightop(restrictinfo->clause);
 	equalexprs = makeList1(newleft);
 	do
 	{

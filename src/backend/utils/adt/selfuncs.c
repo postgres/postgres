@@ -15,7 +15,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/selfuncs.c,v 1.128 2003/01/22 20:16:42 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/selfuncs.c,v 1.129 2003/01/24 03:58:43 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -84,8 +84,8 @@
 #include "optimizer/clauses.h"
 #include "optimizer/cost.h"
 #include "optimizer/pathnode.h"
+#include "optimizer/paths.h"
 #include "optimizer/plancat.h"
-#include "optimizer/planmain.h"
 #include "optimizer/prep.h"
 #include "optimizer/tlist.h"
 #include "optimizer/var.h"

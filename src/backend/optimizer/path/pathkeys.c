@@ -11,7 +11,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/optimizer/path/pathkeys.c,v 1.44 2003/01/15 19:35:40 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/optimizer/path/pathkeys.c,v 1.45 2003/01/24 03:58:35 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -23,6 +23,7 @@
 #include "optimizer/paths.h"
 #include "optimizer/planmain.h"
 #include "optimizer/tlist.h"
+#include "optimizer/var.h"
 #include "parser/parsetree.h"
 #include "parser/parse_func.h"
 #include "utils/lsyscache.h"
@@ -147,14 +148,30 @@ add_equijoined_keys(Query *root, RestrictInfo *restrictinfo)
  * generate_implied_equalities
  *	  Scan the completed equi_key_list for the query, and generate explicit
  *	  qualifications (WHERE clauses) for all the pairwise equalities not
- *	  already mentioned in the quals.  This is useful because the additional
- *	  clauses help the selectivity-estimation code, and in fact it's
- *	  *necessary* to ensure that sort keys we think are equivalent really
- *	  are (see src/backend/optimizer/README for more info).
+ *	  already mentioned in the quals; or remove qualifications found to be
+ *	  redundant.
+ *
+ * Adding deduced equalities is useful because the additional clauses help
+ * the selectivity-estimation code and may allow better joins to be chosen;
+ * and in fact it's *necessary* to ensure that sort keys we think are
+ * equivalent really are (see src/backend/optimizer/README for more info).
+ *
+ * If an equi_key_list set includes any constants then we adopt a different
+ * strategy: we record all the "var = const" deductions we can make, and
+ * actively remove all the "var = var" clauses that are implied by the set
+ * (including the clauses that originally gave rise to the set!).  The reason
+ * is that given input like "a = b AND b = 42", once we have deduced "a = 42"
+ * there is no longer any need to apply the clause "a = b"; not only is
+ * it a waste of time to check it, but we will misestimate selectivity if the
+ * clause is left in.  So we must remove it.  For this purpose, any pathkey
+ * item that mentions no Vars of the current level can be taken as a constant.
+ * (The only case where this would be risky is if the item contains volatile
+ * functions; but we will never consider such an expression to be a pathkey
+ * at all, because check_mergejoinable() will reject it.)
  *
  * This routine just walks the equi_key_list to find all pairwise equalities.
- * We call process_implied_equality (in plan/initsplan.c) to determine whether
- * each is already known and add it to the proper restrictinfo list if not.
+ * We call process_implied_equality (in plan/initsplan.c) to adjust the
+ * restrictinfo datastructures for each pair.
  */
 void
 generate_implied_equalities(Query *root)
@@ -164,34 +181,118 @@ generate_implied_equalities(Query *root)
 	foreach(cursetlink, root->equi_key_list)
 	{
 		List	   *curset = lfirst(cursetlink);
+		int			nitems = length(curset);
+		Relids	   *relids;
+		bool		have_consts;
 		List	   *ptr1;
+		int			i1;
 
 		/*
 		 * A set containing only two items cannot imply any equalities
 		 * beyond the one that created the set, so we can skip it.
 		 */
-		if (length(curset) < 3)
+		if (nitems < 3)
 			continue;
+
+		/*
+		 * Collect info about relids mentioned in each item.  For this
+		 * routine we only really care whether there are any at all in
+		 * each item, but process_implied_equality() needs the exact
+		 * lists, so we may as well pull them here.
+		 */
+		relids = (Relids *) palloc(nitems * sizeof(Relids));
+		have_consts = false;
+		i1 = 0;
+		foreach(ptr1, curset)
+		{
+			PathKeyItem *item1 = (PathKeyItem *) lfirst(ptr1);
+
+			relids[i1] = pull_varnos(item1->key);
+			if (relids[i1] == NIL)
+				have_consts = true;
+			i1++;
+		}
 
 		/*
 		 * Match each item in the set with all that appear after it (it's
 		 * sufficient to generate A=B, need not process B=A too).
 		 */
+		i1 = 0;
 		foreach(ptr1, curset)
 		{
 			PathKeyItem *item1 = (PathKeyItem *) lfirst(ptr1);
 			List	   *ptr2;
+			int			i2 = i1 + 1;
 
 			foreach(ptr2, lnext(ptr1))
 			{
 				PathKeyItem *item2 = (PathKeyItem *) lfirst(ptr2);
 
-				process_implied_equality(root, item1->key, item2->key,
-										 item1->sortop, item2->sortop);
+				/*
+				 * If it's "const = const" then just ignore it altogether.
+				 * There is no place in the restrictinfo structure to store
+				 * it.  (If the two consts are in fact unequal, then
+				 * propagating the comparison to Vars will cause us to
+				 * produce zero rows out, as expected.)
+				 */
+				if (relids[i1] != NIL || relids[i2] != NIL)
+				{
+					/*
+					 * Tell process_implied_equality to delete the clause,
+					 * not add it, if it's "var = var" and we have constants
+					 * present in the list.
+					 */
+					bool	delete_it = (have_consts &&
+										 relids[i1] != NIL &&
+										 relids[i2] != NIL);
+					process_implied_equality(root,
+											 item1->key, item2->key,
+											 item1->sortop, item2->sortop,
+											 relids[i1], relids[i2],
+											 delete_it);
+				}
+				i2++;
 			}
+			i1++;
 		}
 	}
 }
+
+/*
+ * exprs_known_equal
+ *	  Detect whether two expressions are known equal due to equijoin clauses.
+ *
+ * Note: does not bother to check for "equal(item1, item2)"; caller must
+ * check that case if it's possible to pass identical items.
+ */
+bool
+exprs_known_equal(Query *root, Node *item1, Node *item2)
+{
+	List	   *cursetlink;
+
+	foreach(cursetlink, root->equi_key_list)
+	{
+		List	   *curset = lfirst(cursetlink);
+		bool		item1member = false;
+		bool		item2member = false;
+		List	   *ptr;
+
+		foreach(ptr, curset)
+		{
+			PathKeyItem *pitem = (PathKeyItem *) lfirst(ptr);
+
+			if (equal(item1, pitem->key))
+				item1member = true;
+			else if (equal(item2, pitem->key))
+				item2member = true;
+			/* Exit as soon as equality is proven */
+			if (item1member && item2member)
+				return true;
+		}
+	}
+	return false;
+}
+
 
 /*
  * make_canonical_pathkey

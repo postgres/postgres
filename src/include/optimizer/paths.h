@@ -8,7 +8,7 @@
  * Portions Copyright (c) 1996-2002, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Id: paths.h,v 1.63 2002/12/16 21:30:30 tgl Exp $
+ * $Id: paths.h,v 1.64 2003/01/24 03:58:43 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -16,6 +16,7 @@
 #define PATHS_H
 
 #include "nodes/relation.h"
+
 
 /* default GEQO threshold (default value for geqo_rels) */
 /* If you change this, update backend/utils/misc/postgresql.sample.conf */
@@ -92,6 +93,7 @@ typedef enum
 } PathKeysComparison;
 
 extern void add_equijoined_keys(Query *root, RestrictInfo *restrictinfo);
+extern bool exprs_known_equal(Query *root, Node *item1, Node *item2);
 extern void generate_implied_equalities(Query *root);
 extern List *canonicalize_pathkeys(Query *root, List *pathkeys);
 extern PathKeysComparison compare_pathkeys(List *keys1, List *keys2);

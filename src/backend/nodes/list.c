@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/nodes/list.c,v 1.44 2003/01/20 18:54:47 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/nodes/list.c,v 1.45 2003/01/24 03:58:34 tgl Exp $
  *
  * NOTES
  *	  XXX a few of the following functions are duplicated to handle
@@ -357,6 +357,7 @@ set_union(List *l1, List *l2)
 	return retval;
 }
 
+/* set_union for integer lists */
 List *
 set_unioni(List *l1, List *l2)
 {
@@ -367,6 +368,21 @@ set_unioni(List *l1, List *l2)
 	{
 		if (!intMember(lfirsti(i), retval))
 			retval = lappendi(retval, lfirsti(i));
+	}
+	return retval;
+}
+
+/* set_union when pointer-equality comparison is sufficient */
+List *
+set_ptrUnion(List *l1, List *l2)
+{
+	List	   *retval = listCopy(l1);
+	List	   *i;
+
+	foreach(i, l2)
+	{
+		if (!ptrMember(lfirst(i), retval))
+			retval = lappend(retval, lfirst(i));
 	}
 	return retval;
 }
