@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/bin/psql/Attic/psql.c,v 1.98 1997/09/23 19:47:59 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/bin/psql/Attic/psql.c,v 1.99 1997/09/24 17:46:14 thomas Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -1882,7 +1882,7 @@ MainLoop(PsqlSettings *pset, FILE *source)
 					}
 				}
 			}
-puts(line);
+
 			/* nothing on line after trimming? then ignore */
 			if (line[0] == '\0')
 			{
