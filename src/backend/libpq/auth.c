@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/libpq/auth.c,v 1.36 1999/05/25 16:08:55 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/libpq/auth.c,v 1.37 1999/05/26 12:55:15 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -50,6 +50,7 @@ static int	pg_passwordv0_recvauth(void *arg, PacketLen len, void *pkt);
 static int	checkPassword(Port *port, char *user, char *password);
 static int	old_be_recvauth(Port *port);
 static int	map_old_to_new(Port *port, UserAuth old, int status);
+static void	auth_failed(Port *port);
 
 
 #ifdef KRB4
@@ -402,7 +403,7 @@ pg_passwordv0_recvauth(void *arg, PacketLen len, void *pkt)
  * postmaster log, which we hope is only readable by good guys.
  */
 
-void
+static void
 auth_failed(Port *port)
 {
 	char		buffer[512];

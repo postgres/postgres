@@ -6,7 +6,7 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: valid.h,v 1.17 1999/02/13 23:20:59 momjian Exp $
+ * $Id: valid.h,v 1.18 1999/05/26 12:56:15 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -145,7 +145,5 @@ do \
 		(tuple)->t_data = NULL; \
 	} \
 } while (0)
-
-extern bool TupleUpdatedByCurXactAndCmd(HeapTuple t);
 
 #endif	 /* VALID_H */

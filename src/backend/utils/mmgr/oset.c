@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/mmgr/Attic/oset.c,v 1.12 1999/05/25 16:12:54 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/mmgr/Attic/oset.c,v 1.13 1999/05/26 12:56:05 momjian Exp $
  *
  * NOTE
  *	  XXX This is a preliminary implementation which lacks fail-fast
@@ -52,11 +52,13 @@ OrderedSetInit(OrderedSet set, Offset offset)
  * OrderedSetContains
  *		True iff ordered set contains given element.
  */
+#ifdef NOT_USED
 bool
 OrderedSetContains(OrderedSet set, OrderedElem elem)
 {
 	return (bool) (elem->set == set && (elem->next || elem->prev));
 }
+#endif
 
 /*
  * OrderedSetGetHead

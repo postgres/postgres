@@ -6,7 +6,7 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: builtins.h,v 1.80 1999/05/25 22:43:31 momjian Exp $
+ * $Id: builtins.h,v 1.81 1999/05/26 12:57:03 momjian Exp $
  *
  * NOTES
  *	  This should normally only be included by fmgr.h.
@@ -518,7 +518,6 @@ extern text *lpad(text *string1, int4 len, text *string2);
 extern text *rpad(text *string1, int4 len, text *string2);
 extern text *ltrim(text *string, text *set);
 extern text *rtrim(text *string, text *set);
-extern text *substr(text *string, int4 m, int4 n);
 extern text *translate(text *string, char from, char to);
 
 /* acl.c */

@@ -1,7 +1,7 @@
 /*
  *	Edmund Mergl <E.Mergl@bawue.de>
  *
- *	$Id: oracle_compat.c,v 1.17 1999/02/21 03:49:32 scrappy Exp $
+ *	$Id: oracle_compat.c,v 1.18 1999/05/26 12:56:00 momjian Exp $
  *
  */
 
@@ -472,6 +472,7 @@ rtrim(text *string, text *set)
  *
  ********************************************************************/
 
+#ifdef NOT_USED
 text *
 substr(text *string, int4 m, int4 n)
 {
@@ -498,7 +499,7 @@ substr(text *string, int4 m, int4 n)
 
 	return ret;
 }
-
+#endif
 
 /********************************************************************
  *

@@ -3,7 +3,7 @@
  *			  procedural language (PL)
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/pl/tcl/pltcl.c,v 1.11 1999/05/25 22:43:51 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/pl/tcl/pltcl.c,v 1.12 1999/05/26 12:57:23 momjian Exp $
  *
  *	  This software is copyrighted by Jan Wieck - Hamburg.
  *
@@ -114,7 +114,7 @@ static void pltcl_init_load_unknown(void);
 #endif	 /* PLTCL_UNKNOWN_SUPPORT */
 
 Datum pltcl_call_handler(FmgrInfo *proinfo,
-				   FmgrValues *proargs, bool *isNull);
+						 FmgrValues *proargs, bool *isNull);
 
 static Datum pltcl_func_handler(FmgrInfo *proinfo,
 				   FmgrValues *proargs, bool *isNull);
@@ -367,6 +367,8 @@ pltcl_init_load_unknown(void)
  *				  call this function for execution of
  *				  PL/Tcl procedures.
  **********************************************************************/
+
+/* keep non-static */
 Datum
 pltcl_call_handler(FmgrInfo *proinfo,
 				   FmgrValues *proargs,
@@ -403,7 +405,6 @@ pltcl_call_handler(FmgrInfo *proinfo,
 
 	return retval;
 }
-
 
 /**********************************************************************
  * pltcl_func_handler()		- Handler for regular function calls

@@ -6,7 +6,7 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: fd.h,v 1.15 1999/05/25 22:43:24 momjian Exp $
+ * $Id: fd.h,v 1.16 1999/05/26 12:56:53 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -94,7 +94,6 @@ extern BufFile *BufFileCreate(File file);
 extern void BufFileClose(BufFile *file);
 extern size_t BufFileRead(BufFile *file, void *ptr, size_t size);
 extern size_t BufFileWrite(BufFile *file, void *ptr, size_t size);
-extern int	BufFileFlush(BufFile *file);
 extern long BufFileSeek(BufFile *file, long offset, int whence);
 
 /* Miscellaneous support routines */

@@ -6,7 +6,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/commands/copy.c,v 1.77 1999/05/25 16:08:19 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/commands/copy.c,v 1.78 1999/05/26 12:55:10 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -73,14 +73,14 @@ static int	lineno;
 /*
  * Internal communications functions
  */
-inline void CopySendData(void *databuf, int datasize, FILE *fp);
-inline void CopySendString(char *str, FILE *fp);
-inline void CopySendChar(char c, FILE *fp);
-inline void CopyGetData(void *databuf, int datasize, FILE *fp);
-inline int	CopyGetChar(FILE *fp);
-inline int	CopyGetEof(FILE *fp);
-inline int	CopyPeekChar(FILE *fp);
-inline void CopyDonePeek(FILE *fp, int c, int pickup);
+static void CopySendData(void *databuf, int datasize, FILE *fp);
+static void CopySendString(char *str, FILE *fp);
+static void CopySendChar(char c, FILE *fp);
+static void CopyGetData(void *databuf, int datasize, FILE *fp);
+static int	CopyGetChar(FILE *fp);
+static int	CopyGetEof(FILE *fp);
+static int	CopyPeekChar(FILE *fp);
+static void CopyDonePeek(FILE *fp, int c, int pickup);
 
 /*
  * CopySendData sends output data either to the file
@@ -92,7 +92,7 @@ inline void CopyDonePeek(FILE *fp, int c, int pickup);
  *
  * NB: no data conversion is applied by these functions
  */
-inline void
+static void
 CopySendData(void *databuf, int datasize, FILE *fp)
 {
 	if (!fp)
@@ -101,13 +101,13 @@ CopySendData(void *databuf, int datasize, FILE *fp)
 		fwrite(databuf, datasize, 1, fp);
 }
 
-inline void
+static void
 CopySendString(char *str, FILE *fp)
 {
 	CopySendData(str, strlen(str), fp);
 }
 
-inline void
+static void
 CopySendChar(char c, FILE *fp)
 {
 	CopySendData(&c, 1, fp);
@@ -123,7 +123,7 @@ CopySendChar(char c, FILE *fp)
  *
  * NB: no data conversion is applied by these functions
  */
-inline void
+static void
 CopyGetData(void *databuf, int datasize, FILE *fp)
 {
 	if (!fp)
@@ -132,7 +132,7 @@ CopyGetData(void *databuf, int datasize, FILE *fp)
 		fread(databuf, datasize, 1, fp);
 }
 
-inline int
+static int
 CopyGetChar(FILE *fp)
 {
 	if (!fp)
@@ -147,7 +147,7 @@ CopyGetChar(FILE *fp)
 		return getc(fp);
 }
 
-inline int
+static int
 CopyGetEof(FILE *fp)
 {
 	if (!fp)
@@ -164,7 +164,7 @@ CopyGetEof(FILE *fp)
  * CopyDonePeek will either take the peeked char off the steam
  * (if pickup is != 0) or leave it on the stream (if pickup == 0)
  */
-inline int
+static int
 CopyPeekChar(FILE *fp)
 {
 	if (!fp)
@@ -173,7 +173,7 @@ CopyPeekChar(FILE *fp)
 		return getc(fp);
 }
 
-inline void
+static void
 CopyDonePeek(FILE *fp, int c, int pickup)
 {
 	if (!fp)

@@ -131,6 +131,7 @@ tprintf(int flag, const char *fmt,...)
 /*
  * Print a timestamp and a message to stdout or to syslog.
  */
+#ifdef NOT_USED
 int
 tprintf1(const char *fmt,...)
 {
@@ -156,6 +157,7 @@ tprintf1(const char *fmt,...)
 
 	return 1;
 }
+#endif
 
 /*
  * Print a timestamp and a message to stderr.
@@ -237,7 +239,8 @@ tprintf_timestamp()
 
 #endif
 
-int
+#ifdef NOT_USED
+static int
 option_flag(int flag)
 {
 	if ((flag < 0) || (flag >= NUM_PG_OPTIONS))
@@ -254,6 +257,7 @@ set_option_flag(int flag, int value)
 	pg_options[flag] = value;
 	return value;
 }
+#endif
 
 /*
  * Parse an option string like "name,name+,name-,name=value".

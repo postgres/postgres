@@ -27,11 +27,8 @@ char	   *tprintf_timestamp(void);
 #define TIMESTAMP_SIZE 0
 #endif
 
-extern int	tprintf1(const char *fmt,...);
 extern int	tprintf(int flag, const char *fmt,...);
 extern int	eprintf(const char *fmt,...);
-extern int	option_flag(int flag);
-extern int	set_option_flag(int flag, int value);
 extern void write_syslog(int level, char *line);
 extern void parse_options(char *str, bool secure);
 extern void read_pg_options(SIGNAL_ARGS);

@@ -4,7 +4,7 @@
 #    Makefile for access/common
 #
 # IDENTIFICATION
-#    $Header: /cvsroot/pgsql/src/backend/access/common/Makefile,v 1.12 1998/07/26 04:30:16 scrappy Exp $
+#    $Header: /cvsroot/pgsql/src/backend/access/common/Makefile,v 1.13 1999/05/26 12:55:05 momjian Exp $
 #
 #-------------------------------------------------------------------------
 
@@ -17,7 +17,7 @@ ifdef MULTIBYTE
 CFLAGS+= $(MBFLAGS)
 endif
 
-OBJS = heaptuple.o heapvalid.o indextuple.o indexvalid.o printtup.o \
+OBJS = heaptuple.o indextuple.o indexvalid.o printtup.o \
        scankey.o tupdesc.o  
 
 all: SUBSYS.o

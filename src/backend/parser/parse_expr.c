@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/parser/parse_expr.c,v 1.48 1999/05/25 16:10:16 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/parser/parse_expr.c,v 1.49 1999/05/26 12:55:37 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -33,6 +33,7 @@
 #include "utils/builtins.h"
 
 static Node *parser_typecast(Value *expr, TypeName *typename, int32 atttypmod);
+static Node *transformIdent(ParseState *pstate, Node *expr, int precedence);
 
 /*
  * transformExpr -
@@ -534,7 +535,7 @@ transformExpr(ParseState *pstate, Node *expr, int precedence)
 	return result;
 }
 
-Node *
+static Node *
 transformIdent(ParseState *pstate, Node *expr, int precedence)
 {
 	Ident	   *ident = (Ident *) expr;

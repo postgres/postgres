@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/tcop/postgres.c,v 1.116 1999/05/25 16:11:40 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/tcop/postgres.c,v 1.117 1999/05/26 12:55:55 momjian Exp $
  *
  * NOTES
  *	  this is the "main" module of the postgres backend and
@@ -190,6 +190,7 @@ int			_exec_repeat_ = 1;
 static char InteractiveBackend(char *inBuf);
 static char SocketBackend(char *inBuf);
 static char ReadCommand(char *inBuf);
+static void pg_exec_query(char *query_string);
 
 
 /* ----------------------------------------------------------------
@@ -647,7 +648,7 @@ pg_parse_and_plan(char *query_string,	/* string to execute */
  * ----------------------------------------------------------------
  */
 
-void
+static void
 pg_exec_query(char *query_string)
 {
 	pg_exec_query_dest(query_string, whereToSendOutput, FALSE);
@@ -1526,7 +1527,7 @@ PostgresMain(int argc, char *argv[], int real_argc, char *real_argv[])
 	if (!IsUnderPostmaster)
 	{
 		puts("\nPOSTGRES backend interactive interface ");
-		puts("$Revision: 1.116 $ $Date: 1999/05/25 16:11:40 $\n");
+		puts("$Revision: 1.117 $ $Date: 1999/05/26 12:55:55 $\n");
 	}
 
 	/* ----------------

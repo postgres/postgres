@@ -6,7 +6,7 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: planmain.h,v 1.26 1999/05/25 16:14:22 momjian Exp $
+ * $Id: planmain.h,v 1.27 1999/05/26 12:56:36 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -57,9 +57,6 @@ extern List *index_outerjoin_references(List *inner_indxqual,
 extern void replace_tlist_with_subplan_refs(List *tlist,
 								Index subvarno,
 								List *subplanTargetList);
-extern void replace_vars_with_subplan_refs(Node *clause,
-							   Index subvarno,
-							   List *subplanTargetList);
 extern bool set_agg_tlist_references(Agg *aggNode);
 extern void del_agg_tlist_references(List *tlist);
 extern void check_having_for_ungrouped_vars(Node *clause,

@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/nodes/Attic/freefuncs.c,v 1.18 1999/05/25 22:41:13 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/nodes/Attic/freefuncs.c,v 1.19 1999/05/26 12:55:20 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -35,6 +35,7 @@
  *					 plannodes.h free functions
  * ****************************************************************
  */
+static void freeObject(void *obj);
 
 /* ----------------
  *		FreePlanFields
@@ -1157,7 +1158,7 @@ _freeValue(Value *node)
  *		recursively frees its items.
  * ----------------
  */
-void
+static void
 freeObject(void *node)
 {
 	if (node == NULL)

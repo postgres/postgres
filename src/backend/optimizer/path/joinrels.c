@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/optimizer/path/joinrels.c,v 1.34 1999/05/25 22:41:31 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/optimizer/path/joinrels.c,v 1.35 1999/05/26 12:55:27 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -28,6 +28,9 @@ static bool nonoverlap_sets(List *s1, List *s2);
 static bool is_subset(List *s1, List *s2);
 static void set_joinrel_size(RelOptInfo *joinrel, RelOptInfo *outer_rel,
 				 RelOptInfo *inner_rel, JoinInfo *jinfo);
+static RelOptInfo *make_join_rel(RelOptInfo *outer_rel, RelOptInfo *inner_rel,
+								 JoinInfo *joininfo);
+static List *new_join_tlist(List *tlist, int first_resdomno);
 
 /*
  * make_rels_by_joins
@@ -191,7 +194,7 @@ make_rels_by_clauseless_joins(RelOptInfo *old_rel, List *inner_rels)
  *
  * Returns the new join relation node.
  */
-RelOptInfo *
+static RelOptInfo *
 make_join_rel(RelOptInfo *outer_rel, RelOptInfo *inner_rel, JoinInfo *joininfo)
 {
 	RelOptInfo *joinrel = makeNode(RelOptInfo);
@@ -265,7 +268,7 @@ make_join_rel(RelOptInfo *outer_rel, RelOptInfo *inner_rel, JoinInfo *joininfo)
  *
  * Returns the new target list.
  */
-List *
+static List *
 new_join_tlist(List *tlist,
 			   int first_resdomno)
 {

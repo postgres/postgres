@@ -8,7 +8,7 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- *	  $Id: stringinfo.c,v 1.16 1999/05/25 16:08:53 momjian Exp $
+ *	  $Id: stringinfo.c,v 1.17 1999/05/26 12:55:14 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -19,6 +19,7 @@
 #include "postgres.h"
 #include "lib/stringinfo.h"
 
+#ifdef NOT_USED
 /*
  * makeStringInfo
  *
@@ -37,6 +38,7 @@ makeStringInfo(void)
 
 	return res;
 }
+#endif
 
 /*
  * initStringInfo

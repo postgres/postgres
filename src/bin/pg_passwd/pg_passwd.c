@@ -27,15 +27,14 @@ extern char *crypt(const char *, const char *);
 #endif
 
 char	   *comname;
-void		usage(FILE *stream);
-void		read_pwd_file(char *filename);
-void		write_pwd_file(char *filename, char *bkname);
-void		encrypt_pwd(char key[9], char salt[3], char passwd[14]);
-int			check_pwd(char key[9], char passwd[14]);
-void		prompt_for_username(char *username);
-void		prompt_for_password(char *prompt, char *password);
+static void	usage(FILE *stream);
+static void	read_pwd_file(char *filename);
+static void	write_pwd_file(char *filename, char *bkname);
+static void	encrypt_pwd(char key[9], char salt[3], char passwd[14]);
+static void	prompt_for_username(char *username);
+static void	prompt_for_password(char *prompt, char *password);
 
-void
+static void
 usage(FILE *stream)
 {
 	fprintf(stream, "Usage: %s <password file>\n", comname);
@@ -54,7 +53,7 @@ pg_pwd		pwds[MAXPWDS];
 int			npwds = 0;
 
 
-void
+static void
 read_pwd_file(char *filename)
 {
 	FILE	   *fp;
@@ -176,7 +175,7 @@ try_again:
 	fclose(fp);
 }
 
-void
+static void
 write_pwd_file(char *filename, char *bkname)
 {
 	FILE	   *fp;
@@ -222,7 +221,7 @@ link_again:
 	fclose(fp);
 }
 
-void
+static void
 encrypt_pwd(char key[9], char salt[3], char passwd[14])
 {
 	int			n;
@@ -253,7 +252,8 @@ encrypt_pwd(char key[9], char salt[3], char passwd[14])
 	 */
 }
 
-int
+#ifdef NOT_USED
+static int
 check_pwd(char key[9], char passwd[14])
 {
 	char		shouldbe[14];
@@ -266,8 +266,9 @@ check_pwd(char key[9], char passwd[14])
 
 	return strncmp(shouldbe, passwd, 13) == 0 ? 1 : 0;
 }
+#endif
 
-void
+static void
 prompt_for_username(char *username)
 {
 	int			length;
@@ -290,7 +291,7 @@ prompt_for_username(char *username)
 		username[length - 1] = '\0';
 }
 
-void
+static void
 prompt_for_password(char *prompt, char *password)
 {
 	int			length;

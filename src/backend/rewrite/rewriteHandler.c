@@ -6,7 +6,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/rewrite/rewriteHandler.c,v 1.45 1999/05/25 16:10:50 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/rewrite/rewriteHandler.c,v 1.46 1999/05/26 12:55:46 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -61,7 +61,12 @@ static SubLink *modifyAggrefMakeSublink(Expr *origexp, Query *parsetree);
 static void modifyAggrefQual(Node **nodePtr, Query *parsetree);
 static bool checkQueryHasAggs(Node *node);
 static Query *fireRIRrules(Query *parsetree);
-
+static Query *Except_Intersect_Rewrite(Query *parsetree);
+static void check_targetlists_are_compatible(List *prev_target,
+											 List *current_target);
+static void create_intersect_list(Node *ptr, List **intersect_list);
+static Node *intersect_tree_analyze(Node *tree, Node *first_select,
+									Node *parsetree);
 
 /*
  * gatherRewriteMeta -
@@ -2934,7 +2939,7 @@ QueryRewrite(Query *parsetree)
 /* This function takes two targetlists as arguments and checks if the
  * targetlists are compatible (i.e. both select for the same number of
  * attributes and the types are compatible */
-void
+static void
 check_targetlists_are_compatible(List *prev_target, List *current_target)
 {
 	List	   *tl,
@@ -3026,7 +3031,7 @@ check_targetlists_are_compatible(List *prev_target, List *current_target)
  * new top Node can differ from the parsetree given as argument because of
  * the translation to DNF. That's why we have to remember the sortClause or
  * unique flag!) */
-Query *
+static Query *
 Except_Intersect_Rewrite(Query *parsetree)
 {
 
@@ -3153,7 +3158,7 @@ Except_Intersect_Rewrite(Query *parsetree)
 		 * returned
 		 */
 		intersect_list = NIL;
-		create_list((Node *) lfirst(intersect), &intersect_list);
+		create_intersect_list((Node *) lfirst(intersect), &intersect_list);
 
 		/*
 		 * This one will become the Select Query node, all other nodes are
@@ -3314,8 +3319,8 @@ Except_Intersect_Rewrite(Query *parsetree)
  * least one non negated Query node. This node is attached to the
  * beginning of the list */
 
-void
-create_list(Node *ptr, List **intersect_list)
+static void
+create_intersect_list(Node *ptr, List **intersect_list)
 {
 	List	   *arg;
 
@@ -3337,7 +3342,7 @@ create_list(Node *ptr, List **intersect_list)
 		else
 		{
 			foreach(arg, ((Expr *) ptr)->args)
-				create_list(lfirst(arg), intersect_list);
+				create_intersect_list(lfirst(arg), intersect_list);
 			return;
 		}
 		return;
@@ -3348,7 +3353,7 @@ create_list(Node *ptr, List **intersect_list)
  * The node given in first_select has already been cooked, so don't transform
  * it again but return a pointer to the previously cooked version given in 'parsetree'
  * instead. */
-Node *
+static Node *
 intersect_tree_analyze(Node *tree, Node *first_select, Node *parsetree)
 {
 	Node	   *result = (Node *) NIL;

@@ -9,7 +9,7 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: stringinfo.h,v 1.12 1999/05/25 16:13:59 momjian Exp $
+ * $Id: stringinfo.h,v 1.13 1999/05/26 12:56:27 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -60,11 +60,13 @@ typedef StringInfoData *StringInfo;
  *-------------------------
  */
 
+#ifdef NOT_USED
 /*------------------------
  * makeStringInfo
  * Create an empty 'StringInfoData' & return a pointer to it.
  */
 extern StringInfo makeStringInfo(void);
+#endif
 
 /*------------------------
  * initStringInfo

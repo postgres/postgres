@@ -6,7 +6,7 @@
  * Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $Id: fd.c,v 1.41 1999/05/25 22:41:57 momjian Exp $
+ *	  $Id: fd.c,v 1.42 1999/05/26 12:55:51 momjian Exp $
  *
  * NOTES:
  *
@@ -191,6 +191,7 @@ static int	FileAccess(File file);
 static File fileNameOpenFile(FileName fileName, int fileFlags, int fileMode);
 static char *filepath(char *filename);
 static long pg_nofile(void);
+static int	BufFileFlush(BufFile *file);
 
 /*
  * pg_fsync --- same as fsync except does nothing if -F switch was given
@@ -1168,7 +1169,7 @@ BufFileWrite(BufFile *file, void *ptr, size_t size)
  *
  * Like fflush()
  */
-int
+static int
 BufFileFlush(BufFile *file)
 {
 	if (file->dirty)

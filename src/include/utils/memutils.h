@@ -15,7 +15,7 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: memutils.h,v 1.26 1999/05/25 22:43:36 momjian Exp $
+ * $Id: memutils.h,v 1.27 1999/05/26 12:57:07 momjian Exp $
  *
  * NOTES
  *	  some of the information in this file will be moved to
@@ -80,7 +80,6 @@ struct OrderedSetData
 };
 
 extern void OrderedSetInit(OrderedSet set, Offset offset);
-extern bool OrderedSetContains(OrderedSet set, OrderedElem elem);
 extern Pointer OrderedSetGetHead(OrderedSet set);
 extern Pointer OrderedElemGetPredecessor(OrderedElem elem);
 extern Pointer OrderedElemGetSuccessor(OrderedElem elem);

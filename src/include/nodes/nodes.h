@@ -6,7 +6,7 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: nodes.h,v 1.48 1999/03/23 16:51:03 momjian Exp $
+ * $Id: nodes.h,v 1.49 1999/05/26 12:56:33 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -279,11 +279,6 @@ extern void *stringToNode(char *str);
  * nodes/copyfuncs.c
  */
 extern void *copyObject(void *obj);
-
-/*
- * nodes/freefuncs.c
- */
-extern void freeObject(void *obj);
 
 /*
  * nodes/equalfuncs.c

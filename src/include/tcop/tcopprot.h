@@ -6,7 +6,7 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: tcopprot.h,v 1.20 1999/05/25 16:14:48 momjian Exp $
+ * $Id: tcopprot.h,v 1.21 1999/05/26 12:56:58 momjian Exp $
  *
  * OLD COMMENTS
  *	  This file was created so that other c files could get the two
@@ -43,7 +43,6 @@ extern bool InError;
 extern List *pg_parse_and_plan(char *query_string, Oid *typev, int nargs,
 				  List **queryListP, CommandDest dest,
 				  bool aclOverride);
-extern void pg_exec_query(char *query_string);
 extern void pg_exec_query_acl_override(char *query_string);
 extern void
 			pg_exec_query_dest(char *query_string, CommandDest dest, bool aclOverride);
