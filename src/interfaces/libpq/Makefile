@@ -4,7 +4,7 @@
 #
 # Copyright (c) 1994, Regents of the University of California
 #
-# $Header: /cvsroot/pgsql/src/interfaces/libpq/Makefile,v 1.83 2003/06/17 17:58:54 petere Exp $
+# $Header: /cvsroot/pgsql/src/interfaces/libpq/Makefile,v 1.84 2003/08/08 02:46:40 momjian Exp $
 #
 #-------------------------------------------------------------------------
 
@@ -23,7 +23,7 @@ override CPPFLAGS := -I$(srcdir) $(CPPFLAGS) $(THREAD_CFLAGS) -DFRONTEND -DSYSCO
 OBJS= fe-auth.o fe-connect.o fe-exec.o fe-misc.o fe-print.o fe-lobj.o \
       fe-protocol2.o fe-protocol3.o pqexpbuffer.o pqsignal.o fe-secure.o \
       dllist.o md5.o ip.o wchar.o encnames.o \
-      $(filter crypt.o getaddrinfo.o inet_aton.o snprintf.o strerror.o path.o threads.o, $(LIBOBJS))
+      $(filter crypt.o getaddrinfo.o inet_aton.o snprintf.o strerror.o path.o thread.o, $(LIBOBJS))
 
 
 # Add libraries that libpq depends (or might depend) on into the
@@ -46,7 +46,7 @@ backend_src = $(top_srcdir)/src/backend
 # For port modules, this only happens if configure decides the module
 # is needed (see filter hack in OBJS, above).
 
-crypt.c getaddrinfo.c inet_aton.c snprintf.c strerror.c path.c threads.c: %.c : $(top_srcdir)/src/port/%.c
+crypt.c getaddrinfo.c inet_aton.c snprintf.c strerror.c path.c thread.c: %.c : $(top_srcdir)/src/port/%.c
 	rm -f $@ && $(LN_S) $< .
 
 # compile this with thread flags
@@ -79,4 +79,4 @@ uninstall: uninstall-lib
 	rm -f $(DESTDIR)$(includedir)/libpq-fe.h $(DESTDIR)$(includedir_internal)/libpq-int.h $(includedir_internal)/pqexpbuffer.h
 
 clean distclean maintainer-clean: clean-lib
-	rm -f $(OBJS) crypt.c getaddrinfo.c inet_aton.c snprintf.c strerror.c path.c dllist.c md5.c ip.c wchar.c encnames.c threads.c
+	rm -f $(OBJS) crypt.c getaddrinfo.c inet_aton.c snprintf.c strerror.c path.c dllist.c md5.c ip.c wchar.c encnames.c thread.c

@@ -7,7 +7,7 @@
  *
  * Portions Copyright (c) 1996-2003, PostgreSQL Global Development Group
  *
- * $Id: threads.c,v 1.2 2003/08/04 00:43:33 momjian Exp $
+ * $Id: thread.c,v 1.1 2003/08/08 02:46:40 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
