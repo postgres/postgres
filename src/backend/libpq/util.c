@@ -5,7 +5,7 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- *  $Id: util.c,v 1.6 1998/12/14 06:50:27 scrappy Exp $
+ *  $Id: util.c,v 1.7 1998/12/14 08:11:07 scrappy Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -17,7 +17,7 @@
  *		PQuntrace		- turn off pqdebug() tracing
  */
 
-#include <stdio.h>				/* for sprintf() */
+#include <stdio.h>			
 #include <string.h>
 
 #include <postgres.h>

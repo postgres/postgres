@@ -6,7 +6,7 @@
  * Copyright (c) 1994, Regents of the University of California
  *
  *
- *  $Id: nodeHash.c,v 1.26 1998/12/14 06:50:21 scrappy Exp $
+ *  $Id: nodeHash.c,v 1.27 1998/12/14 08:11:02 scrappy Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -19,7 +19,7 @@
  */
 
 #include <sys/types.h>
-#include <stdio.h>				/* for sprintf() */
+#include <stdio.h>		
 #include <math.h>
 #include <string.h>
 #include <sys/file.h>

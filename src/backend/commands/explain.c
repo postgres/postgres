@@ -1,15 +1,11 @@
-/*-------------------------------------------------------------------------
- *
+/*
  * explain.c--
  *	  Explain the query execution plan
  *
  * Copyright (c) 1994-5, Regents of the University of California
  *
+ *	  $Id: explain.c,v 1.29 1998/12/14 08:11:00 scrappy Exp $
  *
- * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/commands/explain.c,v 1.28 1998/12/14 05:18:43 scrappy Exp $
- *
- *-------------------------------------------------------------------------
  */
 #include <stdio.h>
 #include <string.h>
@@ -217,7 +213,9 @@ explain_outNode(StringInfo str, Plan *plan, int indent, ExplainState *es)
 			{
 				relation = RelationIdCacheGetRelation((int) lfirst(l));
 				if (++i > 1)
+				{
 					appendStringInfo(str, ", ");
+				}
 				appendStringInfo(str, (RelationGetRelationName(relation))->data);
 			}
 		case T_SeqScan:
@@ -239,9 +237,8 @@ explain_outNode(StringInfo str, Plan *plan, int indent, ExplainState *es)
 	}
 	if (es->printCost)
 	{
-		snprintf(buf, 1000, "  (cost=%.2f size=%d width=%d)",
+		appendStringInfo(str, "  (cost=%.2f size=%d width=%d)",
 				plan->cost, plan->plan_size, plan->plan_width);
-		appendStringInfo(str, buf);
 	}
 	appendStringInfo(str, "\n");
 
@@ -251,14 +248,18 @@ explain_outNode(StringInfo str, Plan *plan, int indent, ExplainState *es)
 		List	   *saved_rtable = es->rtable;
 		List	   *lst;
 
-		for (i = 0; i < indent; i++)
+		for (i = 0; i < indent; i++) 
+		{
 			appendStringInfo(str, "  ");
+		}
 		appendStringInfo(str, "  InitPlan\n");
 		foreach(lst, plan->initPlan)
 		{
 			es->rtable = ((SubPlan *) lfirst(lst))->rtable;
 			for (i = 0; i < indent; i++)
+			{
 				appendStringInfo(str, "  ");
+			}
 			appendStringInfo(str, "    ->  ");
 			explain_outNode(str, ((SubPlan *) lfirst(lst))->plan, indent + 2, es);
 		}
@@ -269,7 +270,9 @@ explain_outNode(StringInfo str, Plan *plan, int indent, ExplainState *es)
 	if (outerPlan(plan))
 	{
 		for (i = 0; i < indent; i++)
+		{
 			appendStringInfo(str, "  ");
+		}
 		appendStringInfo(str, "  ->  ");
 		explain_outNode(str, outerPlan(plan), indent + 3, es);
 	}
@@ -278,7 +281,9 @@ explain_outNode(StringInfo str, Plan *plan, int indent, ExplainState *es)
 	if (innerPlan(plan))
 	{
 		for (i = 0; i < indent; i++)
+		{
 			appendStringInfo(str, "  ");
+		}
 		appendStringInfo(str, "  ->  ");
 		explain_outNode(str, innerPlan(plan), indent + 3, es);
 	}
@@ -290,13 +295,17 @@ explain_outNode(StringInfo str, Plan *plan, int indent, ExplainState *es)
 		List	   *lst;
 
 		for (i = 0; i < indent; i++)
+		{
 			appendStringInfo(str, "  ");
+		}
 		appendStringInfo(str, "  SubPlan\n");
 		foreach(lst, plan->subPlan)
 		{
 			es->rtable = ((SubPlan *) lfirst(lst))->rtable;
 			for (i = 0; i < indent; i++)
+			{
 				appendStringInfo(str, "  ");
+			}
 			appendStringInfo(str, "    ->  ");
 			explain_outNode(str, ((SubPlan *) lfirst(lst))->plan, indent + 4, es);
 		}
@@ -327,7 +336,9 @@ explain_outNode(StringInfo str, Plan *plan, int indent, ExplainState *es)
 				es->rtable = nth(whichplan, appendplan->unionrtables);
 
 			for (i = 0; i < indent; i++)
+			{
 				appendStringInfo(str, "  ");
+			}
 			appendStringInfo(str, "    ->  ");
 
 			explain_outNode(str, subnode, indent + 4, es);

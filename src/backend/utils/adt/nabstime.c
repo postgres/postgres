@@ -1,15 +1,11 @@
-/*-------------------------------------------------------------------------
- *
+/*
  * nabstime.c--
  *	  parse almost any absolute date getdate(3) can (& some it can't)
  *
  * Copyright (c) 1994, Regents of the University of California
  *
+ *	  $Id: nabstime.c,v 1.48 1998/12/14 08:11:12 scrappy Exp $
  *
- * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/nabstime.c,v 1.47 1998/12/13 23:34:17 thomas Exp $
- *
- *-------------------------------------------------------------------------
  */
 #include <stdio.h>
 #include <ctype.h>

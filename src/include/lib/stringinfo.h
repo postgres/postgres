@@ -6,7 +6,7 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: stringinfo.h,v 1.7 1998/09/01 04:36:21 momjian Exp $
+ * $Id: stringinfo.h,v 1.8 1998/12/14 08:11:17 scrappy Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -42,6 +42,6 @@ extern StringInfo makeStringInfo(void);
  * appendStringInfo
  * similar to 'strcat' but reallocates more space if necessary...
  */
-extern void appendStringInfo(StringInfo str, char *buffer);
+extern void appendStringInfo(StringInfo str, const char *fmt,...);
 
 #endif	 /* STRINGINFO_H */

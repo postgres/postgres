@@ -1,13 +1,10 @@
-/*-------------------------------------------------------------------------
- *
+/*
  * psort.c--
  *	  Polyphase merge sort.
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- *
- * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/sort/Attic/psort.c,v 1.44 1998/12/14 05:19:13 scrappy Exp $
+ *	  $Id: psort.c,v 1.45 1998/12/14 08:11:14 scrappy Exp $
  *
  * NOTES
  *		Sorts the first relation into the second relation.
@@ -31,7 +28,7 @@
  *
  *		Arguments? Variables?
  *				MAXMERGE, MAXTAPES
- *-------------------------------------------------------------------------
+ *
  */
 #include <stdio.h>
 #include <math.h>
@@ -323,26 +320,34 @@ initialrun(Sort *node)
 		tp->tp_dummy--;
 		PS(node)->TotalDummy--;
 		if (tp->tp_dummy < (tp + 1)->tp_dummy)
-			tp++;
-		else if (tp->tp_dummy != 0)
-			tp = PS(node)->Tape;
-		else
 		{
-			PS(node)->Level++;
-			baseruns = PS(node)->Tape[0].tp_fib;
-			for (tp = PS(node)->Tape;
-				 tp - PS(node)->Tape < PS(node)->TapeRange; tp++)
+			tp++;
+		}
+		else 
+		{
+			if (tp->tp_dummy != 0)
 			{
-				PS(node)->TotalDummy +=
-					(tp->tp_dummy = baseruns
-					 + (tp + 1)->tp_fib
-					 - tp->tp_fib);
-				tp->tp_fib = baseruns
-					+ (tp + 1)->tp_fib;
+				tp = PS(node)->Tape;
 			}
-			tp = PS(node)->Tape;/* D4 */
-		}						/* D3 */
+			else
+			{
+				PS(node)->Level++;
+				baseruns = PS(node)->Tape[0].tp_fib;
+				for (tp = PS(node)->Tape;
+					 tp - PS(node)->Tape < PS(node)->TapeRange; tp++)
+				{
+					PS(node)->TotalDummy +=
+						(tp->tp_dummy = baseruns
+						 + (tp + 1)->tp_fib
+						 - tp->tp_fib);
+					tp->tp_fib = baseruns
+						+ (tp + 1)->tp_fib;
+				}
+				tp = PS(node)->Tape;/* D4 */
+			}						/* D3 */
+		}
 		if (extrapasses)
+		{
 			if (--extrapasses)
 			{
 				dumptuples(tp->tp_file, node);
@@ -353,7 +358,7 @@ initialrun(Sort *node)
 			{
 				break;
 			}
-
+		}
 		if ((bool) createrun(node, tp->tp_file) == false)
 			extrapasses = 1 + (PS(node)->Tuples != NULL);
 		/* D2 */
@@ -550,7 +555,9 @@ createrun(Sort *node, FILE *file)
 			memtuples[t_last] = tup;
 		}
 		else
+		{
 			puttuple(&PS(node)->Tuples, tup, 0, &PS(node)->treeContext);
+		}
 	}
 	if (lasttuple != NULL)
 	{
@@ -639,9 +646,10 @@ merge(Sort *node, struct tape * dest)
 	tp->tp_fib += times;
 	/* Tape[].tp_fib (A[]) is set to proper exit values */
 
-	if (PS(node)->TotalDummy < PS(node)->TapeRange)		/* no complete dummy
-														 * runs */
+	if (PS(node)->TotalDummy < PS(node)->TapeRange)	/* no complete dummy runs */
+	{
 		outdummy = 0;
+	}
 	else
 	{
 		outdummy = PS(node)->TotalDummy;		/* a large positive number */

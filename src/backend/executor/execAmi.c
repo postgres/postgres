@@ -5,7 +5,7 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- *  $Id: execAmi.c,v 1.27 1998/12/14 06:50:20 scrappy Exp $
+ *  $Id: execAmi.c,v 1.28 1998/12/14 08:11:02 scrappy Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -24,7 +24,7 @@
  *		ExecCreatR		function to create temporary relations
  *
  */
-#include <stdio.h>				/* for sprintf() */
+#include <stdio.h>			
 
 #include "postgres.h"
 

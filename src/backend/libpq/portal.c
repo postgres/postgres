@@ -5,7 +5,7 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- *  $Id: portal.c,v 1.18 1998/12/14 06:50:26 scrappy Exp $
+ *  $Id: portal.c,v 1.19 1998/12/14 08:11:06 scrappy Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -53,7 +53,7 @@
  *		see utils/mmgr/portalmem.c for why. -cim 2/22/91
  *
  */
-#include <stdio.h>				/* for sprintf() */
+#include <stdio.h>			
 #include <string.h>
 
 #include <postgres.h>

@@ -5,11 +5,11 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: user.c,v 1.21 1998/12/14 06:50:18 scrappy Exp $
+ * $Id: user.c,v 1.22 1998/12/14 08:11:00 scrappy Exp $
  *
  *-------------------------------------------------------------------------
  */
-#include <stdio.h>				/* for sprintf() */
+#include <stdio.h>				
 #include <string.h>
 #include <sys/types.h>
 #include <sys/stat.h>
@@ -68,7 +68,7 @@ UpdatePgPwdFile(char *sql)
 	 * SEPCHAR character as the delimiter between fields.  Then rename the
 	 * file to its final name.
 	 */
-	snprintf(sql, QRY_LENGTH, 
+	snprintf(sql, SQL_LENGTH, 
 			"copy %s to '%s' using delimiters %s", 
 			ShadowRelationName, tempname, CRYPT_PWD_FILE_SEPCHAR);
 	pg_exec_query(sql);
@@ -173,7 +173,7 @@ DefineUser(CreateUserStmt *stmt)
 			(stmt->createdb && *stmt->createdb) ? ",'t','t'" : ",'f','t'",
 			(stmt->createuser && *stmt->createuser) ? ",'t','t'" : ",'f','t'",
 			stmt->password ? stmt->password : "''",
-			stmt->validUntil ? stmt->valudUntil : "");
+			stmt->validUntil ? stmt->validUntil : "");
 
 	pg_exec_query(sql);
 
@@ -262,20 +262,20 @@ AlterUser(AlterUserStmt *stmt)
 	if (stmt->createdb)
 	{
 		snprintf(sql, SQL_LENGTH, "%s %susecreatedb='%s'",
-				stmt->password ? "," : "",
-				*stmt->createdb ? "t" : "f");
+				sql, stmt->password ? "," : "", *stmt->createdb ? "t" : "f");
 	}
 
 	if (stmt->createuser)
 	{
 		snprintf(sql, SQL_LENGTH, "%s %susesuper='%s'",
-				(stmt->password || stmt->createdb) ? "," : "",
+				sql, (stmt->password || stmt->createdb) ? "," : "",
 				*stmt->createuser ? "t" : "f");
 	}
 
 	if (stmt->validUntil)
 	{
 		snprintf(sql, SQL_LENGTH, "%s %svaluntil='%s'",
+				sql,
 				(stmt->password || stmt->createdb || stmt->createuser) ? "," : "",
 				stmt->validUntil);
 	}

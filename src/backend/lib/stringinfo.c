@@ -1,5 +1,4 @@
-/*-------------------------------------------------------------------------
- *
+/*
  * stringinfo.c--
  *	  These are routines that can be used to write informations to a string,
  *	  without having to worry about string lengths, space allocation etc.
@@ -7,25 +6,24 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- *
- * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/lib/stringinfo.c,v 1.12 1998/11/08 19:22:24 tgl Exp $
- *
- *-------------------------------------------------------------------------
+ *	  $Id: stringinfo.c,v 1.13 1998/12/14 08:11:04 scrappy Exp $
  */
+
+#include <stdio.h>
 #include <string.h>
+
+#include <stdarg.h>
 
 #include <postgres.h>
 
 #include <nodes/pg_list.h>
 #include <lib/stringinfo.h>
 
-/*---------------------------------------------------------------------
+/*
  * makeStringInfo
  *
  * Create a StringInfoData & return a pointer to it.
  *
- *---------------------------------------------------------------------
  */
 StringInfo
 makeStringInfo()
@@ -52,7 +50,7 @@ makeStringInfo()
 	return res;
 }
 
-/*---------------------------------------------------------------------
+/*
  * appendStringInfo
  *
  * append to the current 'StringInfo' a new string.
@@ -60,26 +58,31 @@ makeStringInfo()
  * some more...
  *
  * NOTE: if we reallocate space, we pfree the old one!
- *---------------------------------------------------------------------
+ *
  */
 void
-appendStringInfo(StringInfo str, char *buffer)
+appendStringInfo(StringInfo str, const char *fmt,...)
 {
-	int			buflen,
+	int		buflen,
 				newlen,
 				needed;
-	char	   *s;
+	char	*s,
+				buffer[512];
+
+  va_list args;
+	va_start(args, fmt);
+  buflen = vsnprintf(buffer, 512, fmt, args);
+  va_end(args);
 
 	Assert(str != NULL);
-	if (buffer == NULL)
-		buffer = "<>";
+	if (buflen == 0)
+		strcpy(buffer, "<>");
 
 	/*
 	 * do we have enough space to append the new string? (don't forget to
 	 * count the null string terminating char!) If no, then reallocate
 	 * some more.
 	 */
-	buflen = strlen(buffer);
 	needed = str->len + buflen + 1;
 	if (needed > str->maxlen)
 	{
@@ -99,8 +102,7 @@ appendStringInfo(StringInfo str, char *buffer)
 		if (s == NULL)
 		{
 			elog(ERROR,
-				 "appendStringInfo: Out of memory (%d bytes requested)",
-				 newlen);
+				 "appendStringInfo: Out of memory (%d bytes requested)", newlen);
 		}
 		/*
 		 * transfer the data.  strcpy() would work, but is probably a tad

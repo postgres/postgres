@@ -5,11 +5,11 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- *  $Id: view.c,v 1.28 1998/12/14 06:50:18 scrappy Exp $
+ *  $Id: view.c,v 1.29 1998/12/14 08:11:01 scrappy Exp $
  *
  *-------------------------------------------------------------------------
  */
-#include <stdio.h>				/* for sprintf() */
+#include <stdio.h>			
 #include <string.h>
 
 #include <postgres.h>
