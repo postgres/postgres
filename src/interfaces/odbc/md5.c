@@ -10,12 +10,24 @@
  *
  *	Sverre H. Huseby <sverrehu@online.no>
  *
- *	There are two copies of this file, one in backend/libpq and another
- *	in interfaces/odbc.  These two files must be identical or they will not
- *	compile.  There is no CVS tag in this file so they can remain identical.
+ *	Portions Copyright (c) 1996-2001, PostgreSQL Global Development Group
+ *	Portions Copyright (c) 1994, Regents of the University of California
+ *
+ * IDENTIFICATION
+ *	  $Log: md5.c,v $
+ *	  Revision 1.5  2001/11/13 22:06:58  momjian
+ *	  Remove md5.c check, add CVS log stamp.  Update comments.
+ *
  */
 
 
+/*
+ *	NOTE:
+ *
+ *	There are two copies of this file, one in backend/libpq and another
+ *	in interfaces/odbc.  They should be identical.
+ */
+ 
 #ifndef MD5_ODBC
 #include "postgres.h"
 #include "libpq/crypt.h"
