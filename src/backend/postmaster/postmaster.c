@@ -37,7 +37,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/postmaster/postmaster.c,v 1.436 2004/11/02 03:34:50 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/postmaster/postmaster.c,v 1.437 2004/11/09 13:01:26 petere Exp $
  *
  * NOTES
  *
@@ -2847,7 +2847,7 @@ internal_forkexec(int argc, char *argv[], Port *port)
 		if (execv(postgres_exec_path, argv) < 0)
 		{
 			ereport(LOG,
-					(errmsg("could not exec backend process \"%s\": %m",
+					(errmsg("could not execute server process \"%s\": %m",
 							postgres_exec_path)));
 			/* We're already in the child process here, can't return */
 			exit(1);
@@ -3760,7 +3760,7 @@ win32_sigchld_waiter(LPVOID param)
 	if (r == WAIT_OBJECT_0)
 		pg_queue_signal(SIGCHLD);
 	else
-		write_stderr("could not wait on child process handle: %d\n",
+		write_stderr("could not wait on child process handle: error code %d\n",
 					 (int) GetLastError());
 	CloseHandle(procHandle);
 	return 0;

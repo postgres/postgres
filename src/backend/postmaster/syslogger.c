@@ -18,7 +18,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/postmaster/syslogger.c,v 1.10 2004/10/12 21:54:40 petere Exp $
+ *	  $PostgreSQL: pgsql/src/backend/postmaster/syslogger.c,v 1.11 2004/11/09 13:01:27 petere Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -416,7 +416,7 @@ SysLogger_Start(void)
 		if (!CreatePipe(&syslogPipe[0], &syslogPipe[1], &sa, 32768))
 			ereport(FATAL,
 					(errcode_for_file_access(),
-				  (errmsg("could not create pipe for syslogging: %m"))));
+				  (errmsg("could not create pipe for syslog: %m"))));
 	}
 #endif
 
