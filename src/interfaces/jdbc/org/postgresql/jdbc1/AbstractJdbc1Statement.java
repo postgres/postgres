@@ -26,7 +26,7 @@ import java.sql.Timestamp;
 import java.sql.Types;
 import java.util.Vector;
 
-/* $Header: /cvsroot/pgsql/src/interfaces/jdbc/org/postgresql/jdbc1/Attic/AbstractJdbc1Statement.java,v 1.41.2.6 2004/05/17 20:38:56 jurka Exp $
+/* $Header: /cvsroot/pgsql/src/interfaces/jdbc/org/postgresql/jdbc1/Attic/AbstractJdbc1Statement.java,v 1.41.2.7 2004/09/13 08:02:41 jurka Exp $
  * This class defines methods of the jdbc1 specification.  This class is
  * extended by org.postgresql.jdbc2.AbstractJdbc2Statement which adds the jdbc2
  * methods.  The real Statement class (for jdbc1) is org.postgresql.jdbc1.Jdbc1Statement
@@ -383,7 +383,7 @@ public abstract class AbstractJdbc1Statement implements BaseStatement
 			return m_executeSqlFragments;
                
 		// First time through.
-		m_statementName = "JDBC_STATEMENT_" + m_preparedCount++;
+		m_statementName = "JDBC_STATEMENT_" + next_preparedCount();
                
 		// Set up m_executeSqlFragments
 		m_executeSqlFragments = new String[m_sqlFragments.length];
@@ -437,7 +437,7 @@ public abstract class AbstractJdbc1Statement implements BaseStatement
 	{
 		
 		// Pinch the prepared count for our own nefarious purposes.
-		m_cursorName = "JDBC_CURS_" + m_preparedCount++;
+		m_cursorName = "JDBC_CURS_" + next_preparedCount();
 		
 		// Create a cursor declaration and initial fetch statement from the original query.
 		int len = m_sqlFragments.length;
