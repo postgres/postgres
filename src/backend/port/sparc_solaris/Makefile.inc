@@ -7,11 +7,9 @@
 #
 #
 # IDENTIFICATION
-#    $Header: /cvsroot/pgsql/src/backend/port/sparc_solaris/Attic/Makefile.inc,v 1.1.1.1 1996/07/09 06:21:45 scrappy Exp $
+#    $Header: /cvsroot/pgsql/src/backend/port/sparc_solaris/Attic/Makefile.inc,v 1.2 1996/10/18 04:48:47 scrappy Exp $
 #
 #-------------------------------------------------------------------------
-
-CFLAGS+= -DUSE_POSIX_TIME -DNEED_ISINF -DNEED_RUSAGE -DNO_EMPTY_STMTS
 
 LDADD+= -ll -ldl
 

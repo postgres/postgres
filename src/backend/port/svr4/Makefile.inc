@@ -11,8 +11,6 @@
 #
 #-------------------------------------------------------------------------
 
-CFLAGS+= -DUSE_POSIX_TIME -DNEED_ISINF -DNEED_RUSAGE -DNO_EMPTY_STMTS
-
 LDADD+= -ll -ldl
 
 SUBSRCS+= port.c

@@ -7,11 +7,9 @@
 #
 #
 # IDENTIFICATION
-#    $Header: /cvsroot/pgsql/src/backend/port/BSD44_derived/Attic/Makefile.inc,v 1.1.1.1 1996/07/09 06:21:41 scrappy Exp $
+#    $Header: /cvsroot/pgsql/src/backend/port/BSD44_derived/Attic/Makefile.inc,v 1.2 1996/10/18 04:46:50 scrappy Exp $
 #
 #-------------------------------------------------------------------------
-
-CFLAGS+= -DUSE_POSIX_TIME
 
 #
 # 4.4-lite BSD-derived OSs require that the lex library be included,

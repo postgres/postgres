@@ -7,7 +7,7 @@
 #
 #
 # IDENTIFICATION
-#    $Header: /cvsroot/pgsql/src/backend/port/aix/Attic/Makefile.inc,v 1.2 1996/07/22 22:59:27 scrappy Exp $
+#    $Header: /cvsroot/pgsql/src/backend/port/aix/Attic/Makefile.inc,v 1.3 1996/10/18 04:46:55 scrappy Exp $
 #
 #-------------------------------------------------------------------------
 
@@ -15,8 +15,6 @@
 # aix has fast linkers and don't need the BIGOBJ stuff.
 #
 BIGOBJS=false
-
-CFLAGS+= -DCLASS_CONFLICT -DDISABLE_XOPEN_NLS -DNEED_ISINF
 
 LDFLAGS+= -bE:$(objdir)/$(PROG).exp
 
