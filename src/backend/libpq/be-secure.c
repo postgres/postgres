@@ -11,7 +11,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/libpq/be-secure.c,v 1.6 2002/06/14 04:38:04 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/libpq/be-secure.c,v 1.7 2002/06/17 07:33:25 momjian Exp $
  *
  *	  Since the server static private key ($DataDir/server.key)
  *	  will normally be stored unencrypted so that the database
@@ -396,7 +396,7 @@ load_dh_file (int keylength)
 	/* is the prime the correct size? */
 	if (dh != NULL && 8*DH_size(dh) < keylength)
 	{
-		elog(DEBUG, "DH errors (%s): %d bits expected, %d bits found",
+		elog(DEBUG1, "DH errors (%s): %d bits expected, %d bits found",
 			fnbuf, keylength, 8*DH_size(dh));
 		dh = NULL;
 	}
@@ -406,18 +406,18 @@ load_dh_file (int keylength)
 	{
 		if (DH_check(dh, &codes))
 		{
-			elog(DEBUG, "DH_check error (%s): %s", fnbuf, SSLerrmessage());
+			elog(DEBUG1, "DH_check error (%s): %s", fnbuf, SSLerrmessage());
 			return NULL;
 		}
 		if (codes & DH_CHECK_P_NOT_PRIME)
 		{
-			elog(DEBUG, "DH error (%s): p is not prime", fnbuf);
+			elog(DEBUG1, "DH error (%s): p is not prime", fnbuf);
 			return NULL;
 		}
 		if ((codes & DH_NOT_SUITABLE_GENERATOR) && 
 			(codes & DH_CHECK_P_NOT_SAFE_PRIME))
 		{
-			elog(DEBUG,
+			elog(DEBUG1,
 				"DH error (%s): neither suitable generator or safe prime",
 				fnbuf);
 			return NULL;
@@ -444,7 +444,7 @@ load_dh_buffer (const char *buffer, size_t len)
 		return NULL;
 	dh = PEM_read_bio_DHparams(bio, NULL, NULL, NULL);
 	if (dh == NULL)
-		elog(DEBUG, "DH load buffer: %s", SSLerrmessage());
+		elog(DEBUG1, "DH load buffer: %s", SSLerrmessage());
 	BIO_free(bio);
 
 	return dh;
@@ -516,7 +516,7 @@ tmp_dh_cb (SSL *s, int is_export, int keylength)
 	/* this may take a long time, but it may be necessary... */
 	if (r == NULL || 8*DH_size(r) < keylength)
 	{
-		elog(DEBUG, "DH: generating parameters (%d bits)....", keylength);
+		elog(DEBUG1, "DH: generating parameters (%d bits)....", keylength);
 		r = DH_generate_parameters(keylength, DH_GENERATOR_2, NULL, NULL);
 	}
 	
@@ -553,29 +553,29 @@ info_cb (SSL *ssl, int type, int args)
 	switch (type)
 	{
 	case SSL_CB_HANDSHAKE_START:
-		elog(DEBUG, "SSL: handshake start");
+		elog(DEBUG1, "SSL: handshake start");
 		break;
 	case SSL_CB_HANDSHAKE_DONE:
-		elog(DEBUG, "SSL: handshake done");
+		elog(DEBUG1, "SSL: handshake done");
 		break;
 	case SSL_CB_ACCEPT_LOOP:
 		if (DebugLvl >= 3)
-			elog(DEBUG, "SSL: accept loop");
+			elog(DEBUG1, "SSL: accept loop");
 		break;
 	case SSL_CB_ACCEPT_EXIT:
-		elog(DEBUG, "SSL: accept exit (%d)", args);
+		elog(DEBUG1, "SSL: accept exit (%d)", args);
 		break;
 	case SSL_CB_CONNECT_LOOP:
-		elog(DEBUG, "SSL: connect loop");
+		elog(DEBUG1, "SSL: connect loop");
 		break;
 	case SSL_CB_CONNECT_EXIT:
-		elog(DEBUG, "SSL: connect exit (%d)", args);
+		elog(DEBUG1, "SSL: connect exit (%d)", args);
 		break;
 	case SSL_CB_READ_ALERT:
-		elog(DEBUG, "SSL: read alert (0x%04x)", args);
+		elog(DEBUG1, "SSL: read alert (0x%04x)", args);
 		break;
 	case SSL_CB_WRITE_ALERT:
-		elog(DEBUG, "SSL: write alert (0x%04x)", args);
+		elog(DEBUG1, "SSL: write alert (0x%04x)", args);
 		break;
 	}
 }
@@ -701,7 +701,7 @@ open_server_SSL (Port *port)
 			NID_commonName, port->peer_cn, sizeof (port->peer_cn));
 		port->peer_cn[sizeof(port->peer_cn)-1] = '\0';
 	}
-	elog(DEBUG, "secure connection from '%s'", port->peer_cn);
+	elog(DEBUG1, "secure connection from '%s'", port->peer_cn);
 
 	/* set up debugging/info callback */
 	SSL_CTX_set_info_callback(SSL_context, info_cb);
