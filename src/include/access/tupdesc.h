@@ -6,7 +6,7 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: tupdesc.h,v 1.5 1996/11/04 07:45:28 scrappy Exp $
+ * $Id: tupdesc.h,v 1.6 1997/08/19 04:45:20 vadim Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -17,6 +17,13 @@
 #include <access/attnum.h>
 #include <catalog/pg_attribute.h>
 
+typedef struct attrConstr {
+/*------------------------------------------------------------------------
+  This structure contains flags to the constraints of a tuple
+  ------------------------------------------------------------------------*/
+  bool    has_not_null;
+} AttrConstr;
+
 typedef struct tupleDesc {
 /*------------------------------------------------------------------------ 
   This structure contains all the attribute information (i.e. from Class 
@@ -26,6 +33,7 @@ typedef struct tupleDesc {
       /* Number of attributes in the tuple */
     AttributeTupleForm *attrs;
       /* attrs[N] is a pointer to the description of Attribute Number N+1.  */
+    AttrConstr *constr;
 } *TupleDesc;
 
 extern TupleDesc CreateTemplateTupleDesc(int natts);

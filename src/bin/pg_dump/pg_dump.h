@@ -5,7 +5,7 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: pg_dump.h,v 1.17 1997/07/23 17:15:13 momjian Exp $
+ * $Id: pg_dump.h,v 1.18 1997/08/19 04:44:40 vadim Exp $
  *
  * Modifications - 6/12/96 - dave@bensoft.com - version 1.13.dhb.2
  *
@@ -70,6 +70,7 @@ typedef struct _tableInfo {
 			      an inherited attribute */
     char **attnames;        /* the attribute names */
     char **typnames;        /* fill out attributes */
+    bool *notnull;          /* Not null constraints of an attribute */
     int numParents;         /* number of (immediate) parent supertables */
     char **parentRels;      /* names of parent relations, NULL
 			       if numParents == 0 */

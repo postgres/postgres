@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *    $Header: /cvsroot/pgsql/src/backend/commands/Attic/creatinh.c,v 1.11 1997/08/18 20:52:16 momjian Exp $
+ *    $Header: /cvsroot/pgsql/src/backend/commands/Attic/creatinh.c,v 1.12 1997/08/19 04:43:30 vadim Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -276,14 +276,16 @@ MergeAttributes(List *schema, List *supers)
 	    AttributeTupleForm	attribute = tupleDesc->attrs[attrno];
 	    char *attributeName;
 	    char *attributeType;
+	    AttrConstr  constraints;
 	    HeapTuple	tuple;
 	    ColumnDef	*def;
 	    TypeName	*typename;
 	    
 	    /*
-	     * form name and type
+	     * form name, type and constraints
 	     */
 	    attributeName = (attribute->attname).data;
+            constraints.has_not_null = attribute->attnotnull;
 	    tuple =
 		SearchSysCacheTuple(TYPOID,
 				    ObjectIdGetDatum(attribute->atttypid),
@@ -311,7 +313,8 @@ MergeAttributes(List *schema, List *supers)
 	    def->colname = pstrdup(attributeName);
 	    typename->name = pstrdup(attributeType); 
 	    def->typename = typename;
-	    partialResult = lcons(def, partialResult);
+	    def->is_not_null = constraints.has_not_null;
+            partialResult = lcons(def, partialResult);
 	}
 	
 	/*

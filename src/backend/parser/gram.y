@@ -10,7 +10,7 @@
  *
  *
  * IDENTIFICATION
- *    $Header: /cvsroot/pgsql/src/backend/parser/gram.y,v 1.35 1997/08/12 20:15:33 momjian Exp $
+ *    $Header: /cvsroot/pgsql/src/backend/parser/gram.y,v 1.36 1997/08/19 04:44:01 vadim Exp $
  *
  * HISTORY
  *    AUTHOR		DATE		MAJOR EVENT
@@ -135,7 +135,7 @@ static Node *makeA_Expr(int oper, char *opname, Node *lexpr, Node *rexpr);
 	def_list, opt_indirection, group_clause, groupby_list
 
 %type <boolean>	opt_inh_star, opt_binary, opt_instead, opt_with_copy,
-		index_opt_unique, opt_verbose, opt_analyze
+		index_opt_unique, opt_verbose, opt_analyze, opt_null
 
 %type <ival>	copy_dirn, archive_type, OptArchiveType, OptArchiveLocation, 
 	def_type, opt_direction, remove_type, opt_column, event
@@ -333,14 +333,20 @@ AddAttrStmt:  ALTER TABLE relation_name opt_inh_star ADD COLUMN columnDef
 		}
 	;
 
-columnDef:  Id Typename
+columnDef:  Id Typename opt_null
 		{  
 		    $$ = makeNode(ColumnDef);
 		    $$->colname = $1;
 		    $$->typename = $2;
+                    $$->is_not_null = $3;
 		}
 	;
 
+opt_null:   PNULL                         { $$ = false; }
+            | NOT PNULL                   { $$ = true; }
+            | NOTNULL                     { $$ = true; }
+            | /* EMPTY */                 { $$ = false; }
+        ;
 	
 /*****************************************************************************
  *	

@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *    $Header: /cvsroot/pgsql/src/bin/psql/Attic/psql.c,v 1.82 1997/08/17 00:48:45 scrappy Exp $
+ *    $Header: /cvsroot/pgsql/src/bin/psql/Attic/psql.c,v 1.83 1997/08/19 04:45:02 vadim Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -422,7 +422,7 @@ tableDesc(PsqlSettings * ps, char *table)
 	    table[i] = tolower(table[i]);
 
     descbuf[0] = '\0';
-    strcat(descbuf, "SELECT a.attnum, a.attname, t.typname, a.attlen");
+    strcat(descbuf, "SELECT a.attnum, a.attname, t.typname, a.attlen, a.attnotnull");
     strcat(descbuf, "  FROM pg_class c, pg_attribute a, pg_type t ");
     strcat(descbuf, "    WHERE c.relname = '");
     strcat(descbuf, table);

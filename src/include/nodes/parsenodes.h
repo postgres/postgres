@@ -6,7 +6,7 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: parsenodes.h,v 1.16 1997/05/22 00:16:13 scrappy Exp $
+ * $Id: parsenodes.h,v 1.17 1997/08/19 04:46:15 vadim Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -607,6 +607,7 @@ typedef struct ColumnDef {
     NodeTag		type;
     char		*colname;	/* name of column */
     TypeName		*typename;	/* type of column */
+    bool                is_not_null;    /* flag to NOT NULL constraint */
 } ColumnDef;
 
 /*

@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *    $Header: /cvsroot/pgsql/src/backend/utils/cache/relcache.c,v 1.13 1997/08/18 20:53:48 momjian Exp $
+ *    $Header: /cvsroot/pgsql/src/backend/utils/cache/relcache.c,v 1.14 1997/08/19 04:44:21 vadim Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -506,7 +506,7 @@ build_tupdesc_seq(RelationBuildDescInfo buildinfo,
     HeapScanDesc pg_attribute_scan;
     ScanKeyData	 key;
     int		 need;
-    
+                                   
     /* ----------------
      *	form a scan key
      * ----------------
@@ -529,6 +529,10 @@ build_tupdesc_seq(RelationBuildDescInfo buildinfo,
      * ----------------
      */
     need = natts;
+    if (!relation->rd_att->constr)
+      relation->rd_att->constr = (AttrConstr *) palloc(sizeof(struct attrConstr));
+    relation->rd_att->constr->has_not_null = false;
+
     pg_attribute_tuple = heap_getnext(pg_attribute_scan, 0, (Buffer *) NULL);
     while (HeapTupleIsValid(pg_attribute_tuple) && need > 0) {
 	attp = (AttributeTupleForm) GETSTRUCT(pg_attribute_tuple);
@@ -540,6 +544,11 @@ build_tupdesc_seq(RelationBuildDescInfo buildinfo,
 	    memmove((char *) (relation->rd_att->attrs[attp->attnum - 1]),
 		    (char *) attp,
 		    ATTRIBUTE_TUPLE_SIZE);
+
+            /* Update if this attribute have a constraint */
+            if (attp->attnotnull)
+	      relation->rd_att->constr->has_not_null = true;
+	    
 	    need--;
 	}
 	pg_attribute_tuple = heap_getnext(pg_attribute_scan,
@@ -567,6 +576,10 @@ build_tupdesc_ind(RelationBuildDescInfo buildinfo,
     Relation attrel;
     HeapTuple atttup;
     int i;
+
+    if (!relation->rd_att->constr)
+      relation->rd_att->constr = (AttrConstr *) palloc(sizeof(struct attrConstr));
+    relation->rd_att->constr->has_not_null = false;
      
     attrel = heap_openr(AttributeRelationName);
     
@@ -585,6 +598,10 @@ build_tupdesc_ind(RelationBuildDescInfo buildinfo,
 	memmove((char *) (relation->rd_att->attrs[i - 1]),
 		(char *) attp,
 		ATTRIBUTE_TUPLE_SIZE);
+
+	/* Update if this attribute have a constraint */
+	if (attp->attnotnull)
+	  relation->rd_att->constr->has_not_null = true;
     }
     
     heap_close(attrel);
@@ -1229,7 +1246,9 @@ RelationFlushRelation(Relation *relationPtr,
 	for (i = 0; i < relation->rd_rel->relnatts; i++, p++)
 	    pfree (*p);
 	pfree (relation->rd_att->attrs);
-	pfree (relation->rd_att);
+        if (relation->rd_att->constr)
+           pfree (relation->rd_att->constr);
+        pfree (relation->rd_att);
 
 #if 0
 	if (relation->rd_rules) {

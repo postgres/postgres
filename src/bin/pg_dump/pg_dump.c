@@ -21,7 +21,7 @@
  *
  *
  * IDENTIFICATION
- *    $Header: /cvsroot/pgsql/src/bin/pg_dump/pg_dump.c,v 1.36 1997/07/28 23:53:54 momjian Exp $
+ *    $Header: /cvsroot/pgsql/src/bin/pg_dump/pg_dump.c,v 1.37 1997/08/19 04:44:38 vadim Exp $
  *
  * Modifications - 6/10/96 - dave@bensoft.com - version 1.13.dhb
  *
@@ -798,6 +798,8 @@ clearTableInfo(TableInfo *tblinfo, int numTables)
         if ( tblinfo[i].sequence )
             continue;
 
+	if (tblinfo[i].notnull) free (tblinfo[i].notnull);
+
 	/* Process Attributes */
         for(j=0;j<tblinfo[i].numatts;j++) {
             if(tblinfo[i].attnames[j]) free (tblinfo[i].attnames[j]);
@@ -1233,6 +1235,7 @@ getTableAttrs(TableInfo* tblinfo, int numTables)
     int i_attname;
     int i_typname;
     int i_attlen;
+    int i_attnotnull;
     PGresult *res;
     int ntups;
 
@@ -1255,7 +1258,7 @@ getTableAttrs(TableInfo* tblinfo, int numTables)
                 tblinfo[i].relname,
                 g_comment_end);
 
-        sprintf(q,"SELECT a.attnum, a.attname, t.typname, a.attlen "
+        sprintf(q,"SELECT a.attnum, a.attname, t.typname, a.attlen, a.attnotnull "
                 "from pg_attribute a, pg_type t "
                 "where a.attrelid = '%s'::oid and a.atttypid = t.oid "
                 "and a.attnum > 0 order by attnum",
@@ -1272,12 +1275,14 @@ getTableAttrs(TableInfo* tblinfo, int numTables)
         i_attname = PQfnumber(res,"attname");
         i_typname = PQfnumber(res,"typname");
         i_attlen  = PQfnumber(res,"attlen");
+	i_attnotnull = PQfnumber(res,"attnotnull");
 
         tblinfo[i].numatts = ntups;
         tblinfo[i].attnames = (char**) malloc( ntups * sizeof(char*));
         tblinfo[i].typnames = (char**) malloc( ntups * sizeof(char*));
         tblinfo[i].attlen   = (int*) malloc(ntups * sizeof(int));
         tblinfo[i].inhAttrs = (int*) malloc (ntups * sizeof(int));
+	tblinfo[i].notnull  = (bool*) malloc (ntups * sizeof(bool));
         tblinfo[i].parentRels = NULL;
         tblinfo[i].numParents = 0;
         for (j=0;j<ntups;j++) {
@@ -1287,6 +1292,7 @@ getTableAttrs(TableInfo* tblinfo, int numTables)
             if (tblinfo[i].attlen[j] > 0) 
               tblinfo[i].attlen[j] = tblinfo[i].attlen[j] - 4;
             tblinfo[i].inhAttrs[j] = 0; /* this flag is set in flagInhAttrs()*/
+	    tblinfo[i].notnull[j]  = PQgetvalue(res,j,i_attnotnull)[0]=='t'?true:false;
         }
         PQclear(res);
     } 
@@ -1766,6 +1772,7 @@ void dumpTables(FILE* fout, TableInfo *tblinfo, int numTables,
                                 tblinfo[i].typnames[j]);
                         actual_atts++;
                     }
+		    sprintf(q, "%s%s NULL", q, tblinfo[i].notnull[j]?" NOT":"");
                 }
             }
 
