@@ -1,7 +1,7 @@
 /* -----------------------------------------------------------------------
  * formatting.c
  *
- * $Header: /cvsroot/pgsql/src/backend/utils/adt/formatting.c,v 1.10 2000/06/09 01:11:08 tgl Exp $
+ * $Header: /cvsroot/pgsql/src/backend/utils/adt/formatting.c,v 1.11 2000/06/09 03:18:34 momjian Exp $
  *
  *
  *	 Portions Copyright (c) 1999-2000, PostgreSQL, Inc
@@ -1258,14 +1258,17 @@ static char *
 get_th(char *num, int type)
 {
 	int			len = strlen(num),
-				last;
+				last, seclast;
 
 	last = *(num + (len - 1));
 	if (!isdigit((unsigned char) last))
 		elog(ERROR, "get_th: '%s' is not number.", num);
 
-	/* 11 || 12 */
-	if (len == 2 && (last == '1' || last == '2') && *num == '1')
+	/*
+	 * All "teens" (<x>1[0-9]) get 'TH/th',
+	 * while <x>[02-9][123] still get 'ST/st', 'ND/nd', 'RD/rd', respectively
+	 */
+	if ((len > 1) && ((seclast = num[len-2]) == '1'))
 		last = 0;
 
 	switch (last)
