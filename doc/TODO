@@ -1,6 +1,6 @@
 TODO list for PostgreSQL
 ========================
-Last updated:		Mon Apr  8 23:55:25 EDT 2002
+Last updated:		Tue Apr  9 00:13:58 EDT 2002
 
 Current maintainer:	Bruce Momjian (pgman@candle.pha.pa.us)
 
@@ -440,6 +440,9 @@ MISCELLANEOUS
   when it is available
 * Use mmap() rather than SYSV shared memory or to write WAL files (?) [mmap]
 * Improve caching of attribute offsets when NULLs exist in the row
+* Add Intimate Shared Memory(ISM) for Solaris
+* Add documentation to lock shared memory into RAM for each OS, if possible
+
 
 SOURCE CODE
 ===========
