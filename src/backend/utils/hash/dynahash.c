@@ -9,7 +9,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/utils/hash/dynahash.c,v 1.54 2004/09/28 20:46:34 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/utils/hash/dynahash.c,v 1.55 2004/10/22 07:21:06 neilc Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -66,7 +66,7 @@ static HASHSEGMENT seg_alloc(HTAB *hashp);
 static bool element_alloc(HTAB *hashp, int nelem);
 static bool dir_realloc(HTAB *hashp);
 static bool expand_table(HTAB *hashp);
-static bool hdefault(HTAB *hashp);
+static void hdefault(HTAB *hashp);
 static bool init_htab(HTAB *hashp, long nelem);
 static void hash_corrupted(HTAB *hashp);
 
@@ -178,8 +178,7 @@ hash_create(const char *tabname, long nelem, HASHCTL *info, int flags)
 			return NULL;
 	}
 
-	if (!hdefault(hashp))
-		return NULL;
+	hdefault(hashp);
 
 	hctl = hashp->hctl;
 #ifdef HASH_STATISTICS
@@ -254,7 +253,7 @@ hash_create(const char *tabname, long nelem, HASHCTL *info, int flags)
 /*
  * Set default HASHHDR parameters.
  */
-static bool
+static void
 hdefault(HTAB *hashp)
 {
 	HASHHDR    *hctl = hashp->hctl;
@@ -268,8 +267,6 @@ hdefault(HTAB *hashp)
 	hctl->nentries = 0;
 	hctl->nsegs = 0;
 
-	/* I added these MS. */
-
 	/* rather pointless defaults for key & entry size */
 	hctl->keysize = sizeof(char *);
 	hctl->entrysize = 2 * sizeof(char *);
@@ -279,8 +276,6 @@ hdefault(HTAB *hashp)
 
 	/* garbage collection for HASH_REMOVE */
 	hctl->freeList = NULL;
-
-	return true;
 }
 
 
