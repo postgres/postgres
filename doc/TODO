@@ -1,6 +1,6 @@
 TODO list for PostgreSQL
 ========================
-Last updated:		Sun Jan 28 10:42:35 EST 2001
+Last updated:		Mon Jan 29 12:48:00 EST 2001
 
 Current maintainer:	Bruce Momjian (pgman@candle.pha.pa.us)
 
@@ -181,6 +181,8 @@ COMMANDS
 * MOVE 0 should not move to end of cursor
 * Overhaul ACL (access control) code
 * Add SHOW command to display locks
+* Bring INSERT ... VALUES up to full SQL92 spec, disallow missing
+  columns, allow DEFAULT
 
 CLIENTS
 
