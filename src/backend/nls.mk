@@ -1,6 +1,6 @@
-# $Header: /cvsroot/pgsql/src/backend/nls.mk,v 1.9.2.1 2003/11/15 10:20:01 petere Exp $
+# $Header: /cvsroot/pgsql/src/backend/nls.mk,v 1.9.2.2 2004/07/25 11:44:56 petere Exp $
 CATALOG_NAME	:= postgres
-AVAIL_LANGUAGES	:= cs de es hr hu it nb pt_BR ru sv tr zh_CN zh_TW
+AVAIL_LANGUAGES	:= cs de es fr hr hu it nb pt_BR ru sv tr zh_CN zh_TW
 GETTEXT_FILES	:= + gettext-files
 # you can add "elog:2" and "errmsg_internal" to this list if you want to
 # include internal messages in the translation list.
