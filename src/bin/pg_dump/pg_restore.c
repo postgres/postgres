@@ -34,7 +34,7 @@
  *
  *
  * IDENTIFICATION
- *		$PostgreSQL: pgsql/src/bin/pg_dump/pg_restore.c,v 1.65 2004/10/22 16:04:35 petere Exp $
+ *		$PostgreSQL: pgsql/src/bin/pg_dump/pg_restore.c,v 1.66 2004/11/11 17:06:46 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -360,7 +360,7 @@ usage(const char *progname)
 	printf(_("  %s [OPTION]... [FILE]\n"), progname);
 
 	printf(_("\nGeneral options:\n"));
-	printf(_("  -d, --dbname=NAME        target database name\n"));
+	printf(_("  -d, --dbname=NAME        connect to database name\n"));
 	printf(_("  -f, --file=FILENAME      output file name\n"));
 	printf(_("  -F, --format=c|t         specify backup file format\n"));
 	printf(_("  -i, --ignore-version     proceed even when server version mismatches\n"));
@@ -372,7 +372,7 @@ usage(const char *progname)
 	printf(_("\nOptions controlling the restore:\n"));
 	printf(_("  -a, --data-only          restore only the data, no schema\n"));
 	printf(_("  -c, --clean              clean (drop) schema prior to create\n"));
-	printf(_("  -C, --create             issue commands to create the database\n"));
+	printf(_("  -C, --create             create the target database\n"));
 	printf(_("  -I, --index=NAME         restore named index\n"));
 	printf(_("  -L, --use-list=FILENAME  use specified table of contents for ordering\n"
 			 "                           output from this file\n"));
