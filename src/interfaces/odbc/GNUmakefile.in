@@ -7,24 +7,23 @@
 #
 #
 # IDENTIFICATION
-#    $Header: /cvsroot/pgsql/src/interfaces/odbc/Attic/GNUmakefile.in,v 1.4 1998/10/09 21:28:50 momjian Exp $
+#    $Header: /cvsroot/pgsql/src/interfaces/odbc/Attic/GNUmakefile.in,v 1.5 1998/10/14 16:09:32 thomas Exp $
 #
 #-------------------------------------------------------------------------
 @SET_MAKE@
 
 NAME = psqlodbc
-SRCDIR=@top_srcdir@
-ODBCSRCDIR=@srcdir@
+SRCDIR= @top_srcdir@
+ODBCSRCDIR= @srcdir@
 include $(SRCDIR)/Makefile.global
 
 include Version.mk
 PORTNAME= @PORTNAME@
 
-FIND = @find@
-
+FIND= @find@
 # assuming gnu tar and split here
-TAR  = @tar@
-SPLIT = @split@
+TAR= @tar@
+SPLIT= @split@
 
 install-shlib-dep := install-shlib
 shlib := lib$(NAME)$(DLSUFFIX).$(SO_MAJOR_VERSION).$(SO_MINOR_VERSION)
@@ -82,14 +81,14 @@ beforeinstall-headers:
 	@if [ ! -d $(HEADERDIR)/iodbc ]; then mkdir -p $(HEADERDIR)/iodbc; fi
 
 install-libpsqlodbc: libpsqlodbc.a
-	$(INSTALL) $(INSTL_LIB_OPTS) libpsqlodbc.a $(DESTDIR)$(LIBDIR)/lib$(NAME).a
+	$(INSTALL) $(INSTL_LIB_OPTS) libpsqlodbc.a $(LIBDIR)/lib$(NAME).a
 
 install-shlib: $(shlib)
-	$(INSTALL) $(INSTL_LIB_OPTS) $(shlib) $(DESTDIR)$(LIBDIR)/$(shlib)
-	rm -f $(DESTDIR)$(LIBDIR)/lib$(NAME)$(DLSUFFIX)
-	rm -f $(DESTDIR)$(LIBDIR)/lib$(NAME)$(DLSUFFIX).$(SO_MAJOR_VERSION).$(SO_MINOR_VERSION)
-	cd $(DESTDIR)$(LIBDIR) && $(LN_S) -f $(shlib) lib$(NAME)$(DLSUFFIX).$(SO_MAJOR_VERSION).$(SO_MINOR_VERSION)
-	cd $(DESTDIR)$(LIBDIR) && $(LN_S) -f lib$(NAME)$(DLSUFFIX).$(SO_MAJOR_VERSION).$(SO_MINOR_VERSION) lib$(NAME)$(DLSUFFIX)
+	$(INSTALL) $(INSTL_LIB_OPTS) $(shlib) $(LIBDIR)/$(shlib)
+	rm -f $(LIBDIR)/lib$(NAME)$(DLSUFFIX)
+	rm -f $(LIBDIR)/lib$(NAME)$(DLSUFFIX).$(SO_MAJOR_VERSION)
+	cd $(LIBDIR) && $(LN_S) -f $(shlib) lib$(NAME)$(DLSUFFIX).$(SO_MAJOR_VERSION)
+	cd $(LIBDIR) && $(LN_S) -f $(shlib) lib$(NAME)$(DLSUFFIX)
 
 install-ini: odbcinst.ini
 	$(INSTALL) $(INSTL_LIB_OPTS) odbcinst.ini $(ODBCINST)
