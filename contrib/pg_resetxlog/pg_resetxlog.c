@@ -23,7 +23,7 @@
  * Portions Copyright (c) 1996-2001, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Header: /cvsroot/pgsql/contrib/pg_resetxlog/Attic/pg_resetxlog.c,v 1.14 2002/01/10 23:40:58 momjian Exp $
+ * $Header: /cvsroot/pgsql/contrib/pg_resetxlog/Attic/pg_resetxlog.c,v 1.15 2002/01/10 23:46:13 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -585,8 +585,12 @@ main(int argc, char **argv)
 	{
 		PrintControlValues(guessed);
 		if (!noupdate)
+		{
 			printf("\nIf these values seem acceptable, use -f to force reset.\n");
-		exit(1);
+			exit(1);
+		}
+		else
+			exit(0);
 	}
 
 	/*
