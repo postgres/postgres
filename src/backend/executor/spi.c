@@ -3,13 +3,21 @@
  * spi.c
  *				Server Programming Interface
  *
- * $Header: /cvsroot/pgsql/src/backend/executor/spi.c,v 1.55 2001/06/01 19:43:55 tgl Exp $
+ * Portions Copyright (c) 1996-2001, PostgreSQL Global Development Group
+ * Portions Copyright (c) 1994, Regents of the University of California
+ *
+ *
+ * IDENTIFICATION
+ *	  $Header: /cvsroot/pgsql/src/backend/executor/spi.c,v 1.56 2001/08/02 16:05:23 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
-#include "executor/spi_priv.h"
+#include "postgres.h"
+
 #include "access/printtup.h"
 #include "commands/command.h"
+#include "executor/spi_priv.h"
+
 
 uint32		SPI_processed = 0;
 Oid			SPI_lastoid = InvalidOid;
@@ -786,10 +794,10 @@ spi_printtup(HeapTuple tuple, TupleDesc tupdesc, DestReceiver *self)
 	if (tuptable == NULL)
 	{
 		tuptabcxt = AllocSetContextCreate(CurrentMemoryContext,
-												  "SPI TupTable",
-												  ALLOCSET_DEFAULT_MINSIZE,
-												  ALLOCSET_DEFAULT_INITSIZE,
-												  ALLOCSET_DEFAULT_MAXSIZE);
+										  "SPI TupTable",
+										  ALLOCSET_DEFAULT_MINSIZE,
+										  ALLOCSET_DEFAULT_INITSIZE,
+										  ALLOCSET_DEFAULT_MAXSIZE);
 		MemoryContextSwitchTo(tuptabcxt);
 
 		_SPI_current->tuptable = tuptable = (SPITupleTable *)
@@ -1253,29 +1261,28 @@ _SPI_copy_plan(_SPI_plan *plan, int location)
 	_SPI_plan  *newplan;
 	MemoryContext oldcxt;
 	MemoryContext plancxt;
-	MemoryContext parentcxt = CurrentMemoryContext;
+	MemoryContext parentcxt;
 
-	/* Determine correct parent for the plans memory context */
+	/* Determine correct parent for the plan's memory context */
 	if (location == _SPI_CPLAN_PROCXT)
 		parentcxt = _SPI_current->procCxt;
-		/*
-		oldcxt = MemoryContextSwitchTo(_SPI_current->procCxt);
-		*/
 	else if (location == _SPI_CPLAN_TOPCXT)
 		parentcxt = TopMemoryContext;
-		/*
-		oldcxt = MemoryContextSwitchTo(TopMemoryContext);
-		*/
+	else
+		parentcxt = CurrentMemoryContext;
 
-	/* Create a memory context for the plan */
+	/*
+	 * Create a memory context for the plan.  We don't expect the plan to
+	 * be very large, so use smaller-than-default alloc parameters.
+	 */
 	plancxt = AllocSetContextCreate(parentcxt,
-									  "SPI Plan",
-									  ALLOCSET_DEFAULT_MINSIZE,
-									  ALLOCSET_DEFAULT_INITSIZE,
-									  ALLOCSET_DEFAULT_MAXSIZE);
+									"SPI Plan",
+									1024,
+									1024,
+									ALLOCSET_DEFAULT_MAXSIZE);
 	oldcxt = MemoryContextSwitchTo(plancxt);
 
-	/* Copy the SPI plan into it's own context */
+	/* Copy the SPI plan into its own context */
 	newplan = (_SPI_plan *) palloc(sizeof(_SPI_plan));
 	newplan->plancxt = plancxt;
 	newplan->qtlist = (List *) copyObject(plan->qtlist);
