@@ -28,7 +28,6 @@
 #  define NEED_SYS_SELECT_H
 #  define HAVE_TZSET
 #  define HAVE_ANSI_CPP
-#  define SB_PAD 44
 #  define HAS_TEST_AND_SET
    typedef unsigned int slock_t;
 #endif
@@ -40,7 +39,6 @@
 #  define NEED_ISINF 
 #  define HAS_LONG_LONG
 #  define NEED_UNION_SEMUN 
-#  define SB_PAD 40
 #  define HAS_TEST_AND_SET
 #  include <sys/mman.h>  /* for msemaphore */
    typedef msemaphore slock_t;
@@ -51,7 +49,6 @@
 #  define USE_POSIX_TIME
 #  define NEED_CBRT
 #  define NEED_I386_TAS_ASM
-#  define SB_PAD 56
 #  define HAS_TEST_AND_SET
 #  if defined(__mips__)
 #    undef HAS_TEST_AND_SET
@@ -62,11 +59,9 @@
 #if defined(bsdi)
 #  if defined(i386)
 #    define NEED_I386_TAS_ASM
-#    define SB_PAD 56
 #  endif
 #  if defined(sparc)
 #    define NEED_SPARC_TAS_ASM
-#    define SB_PAD 56
 #  endif
 #  if defined(PRE_BSDI_2_1)
 #    define NEED_UNION_SEMUN 
@@ -92,7 +87,6 @@
 #  define NEED_CBRT
 #  define NEED_RINT
 #  define NEED_UNION_SEMUN 
-#  define SB_PAD 44
 #  define HAS_TEST_AND_SET
    typedef struct { int sem[4]; } slock_t;
 #endif
@@ -107,7 +101,6 @@
 #  define HAVE_TZSET
 #  define NEED_UNION_SEMUN 
 #  define SYSV_DIRENT
-#  define SB_PAD 56
 #  define HAS_TEST_AND_SET
    typedef unsigned char slock_t;
 #endif
@@ -120,7 +113,6 @@
 #  define NO_VFORK
 #  define HAVE_TZSET
 #  define SYSV_DIRENT
-#  define SB_PAD 44
 #  define HAS_TEST_AND_SET
 #  include <abi_mutex.h>
    typedef abilock_t slock_t;
@@ -138,7 +130,6 @@
 #  define HAVE_TZSET
 #  define NEED_CBRT
 #  define NEED_I386_TAS_ASM
-#  define SB_PAD 56
 #  define HAS_TEST_AND_SET
    typedef unsigned char slock_t;
 #endif
@@ -163,7 +154,6 @@
 
 # define USE_LIMITS_H
 # define JMP_BUF
-# define SB_PAD 56
 # define NO_WAITPID
   typedef struct mutex slock_t;
 #endif
@@ -183,14 +173,12 @@
 #  define HAVE_TZSET
 #  define NEED_UNION_SEMUN 
 #  define SYSV_DIRENT
-#  define SB_PAD 56
 #  define HAS_TEST_AND_SET
 typedef unsigned char slock_t;
 #endif
 
 #if defined(sunos4)
 #  define USE_POSIX_TIME
-#  define SB_PAD 56
 #  undef HAVE_MEMMOVE
 #endif
 
@@ -225,7 +213,6 @@ typedef unsigned char slock_t;
 #  define USE_POSIX_TIME
 #  define NEED_UNION_SEMUN 
 #  define NEED_STRDUP
-#  define SB_PAD 60
 #endif
 
 

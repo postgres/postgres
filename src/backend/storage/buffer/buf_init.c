@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *    $Header: /cvsroot/pgsql/src/backend/storage/buffer/buf_init.c,v 1.4 1997/01/16 08:04:30 vadim Exp $
+ *    $Header: /cvsroot/pgsql/src/backend/storage/buffer/buf_init.c,v 1.5 1997/01/23 18:14:40 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -135,6 +135,14 @@ InitBufferPool(IPCKey key)
     bool foundBufs,foundDescs;
     int i;
     
+    /* check padding of BufferDesc and BufferHdr */
+    if (sizeof(struct sbufdesc) != PADDED_SBUFDESC_SIZE)
+    	elog(WARN,"Internal error:  sbufdesc does not have the proper size, "
+				"contact the Postgres developers");
+    if (sizeof(struct sbufdesc_unpadded) <= PADDED_SBUFDESC_SIZE/2)
+    	elog(WARN,"Internal error:  sbufdesc is greatly over-sized, "
+				"contact the Postgres developers");
+
     Data_Descriptors = NBuffers;
     Free_List_Descriptor = Data_Descriptors;
     Lookup_List_Descriptor = Data_Descriptors + 1;

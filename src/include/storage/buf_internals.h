@@ -6,7 +6,7 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: buf_internals.h,v 1.9 1997/01/20 04:06:13 vadim Exp $
+ * $Id: buf_internals.h,v 1.10 1997/01/23 18:15:29 momjian Exp $
  *
  * NOTE
  *	If BUFFERPAGE0 is defined, then 0 will be used as a
@@ -100,6 +100,30 @@ struct buftag{
  *	to put the buffer, for all storage managers.
  */
 
+#define PADDED_SBUFDESC_SIZE 	128
+
+/* DO NOT CHANGE THIS NEXT STRUCTURE:
+   It is used only to get padding information for the real sbufdesc structure
+   It should match the sbufdesc structure exactly except for a missing sb_pad
+*/
+struct sbufdesc_unpadded {
+    Buffer		freeNext;
+    Buffer		freePrev;
+    SHMEM_OFFSET	data;
+    BufferTag		tag;
+    int			buf_id;
+    BufFlags		flags;
+    int16		bufsmgr;
+    unsigned		refcount;
+    char sb_dbname[NAMEDATALEN+1];
+    char sb_relname[NAMEDATALEN+1];
+#ifdef HAS_TEST_AND_SET
+    slock_t	io_in_progress_lock;
+#endif /* HAS_TEST_AND_SET */
+    /* NOTE NO sb_pad HERE */
+};
+
+/* THE REAL STRUCTURE - the structure above must match it, minus sb_pad */
 struct sbufdesc {
     Buffer		freeNext;	/* link for freelist chain */
     Buffer		freePrev;
@@ -121,7 +145,7 @@ struct sbufdesc {
 #endif /* HAS_TEST_AND_SET */
 
     /*
-     * I padded this structure to a power of 2 (128 bytes on a MIPS) because
+     * I padded this structure to a power of 2 (PADDED_SBUFDESC_SIZE) because
      * BufferDescriptorGetBuffer is called a billion times and it does an
      * C pointer subtraction (i.e., "x - y" -> array index of x relative
      * to y, which is calculated using division by struct size).  Integer
@@ -131,11 +155,7 @@ struct sbufdesc {
      * going to make some of these types bigger soon anyway... -pma 1/2/93
      */
 
-    /*
-     * NOTE: This is now defined in the ..../include/config.h file!
-     */
-
-    char		sb_pad[SB_PAD];
+    char	sb_pad[PADDED_SBUFDESC_SIZE-sizeof(struct sbufdesc_unpadded)];
 };
 
 /*
