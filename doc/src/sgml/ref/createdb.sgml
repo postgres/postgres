@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/ref/createdb.sgml,v 1.17 2001/02/18 17:53:54 tgl Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/ref/createdb.sgml,v 1.18 2001/03/17 16:27:31 petere Exp $
 Postgres documentation
 -->
 
@@ -23,7 +23,7 @@ Postgres documentation
   <cmdsynopsis>
    <command>createdb</command>
    <arg rep="repeat"><replaceable>options</replaceable></arg>
-   <arg choice="plain"><replaceable>dbname</replaceable></arg>
+   <arg><replaceable>dbname</replaceable></arg>
    <arg><replaceable>description</replaceable></arg>
   </cmdsynopsis>
 
@@ -41,7 +41,7 @@ Postgres documentation
 	Specifies the hostname of the machine on which the 
 	<application>postmaster</application>
 	is running.  If host begins with a slash, it is used 
-	as the directory for the Unix-domain socket.
+	as the directory for the Unix domain socket.
        </para>
       </listitem>
      </varlistentry>
@@ -50,8 +50,8 @@ Postgres documentation
       <term>-p, --port <replaceable class="parameter">port</replaceable></term>
       <listitem>
        <para>
-	Specifies the Internet TCP/IP port or local Unix domain socket file 
-	extension on which the <application>postmaster</application>
+	Specifies the Internet TCP/IP port or the local Unix domain socket file 
+	extension on which the <command>postmaster</command>
 	is listening for connections.
        </para>
       </listitem>
@@ -153,7 +153,7 @@ Postgres documentation
     The options <literal>-D</literal>, <literal>-T</literal>, and
     <literal>-E</literal> are converted into options for the underlying
     SQL command <xref linkend="SQL-CREATEDATABASE"
-    endterm="SQL-CREATEDATABASE-title">, which see for more information
+    endterm="SQL-CREATEDATABASE-title">; see there for more information
     about them.
    </para>
   </refsect2>

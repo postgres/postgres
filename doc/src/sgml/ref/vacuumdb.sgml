@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/ref/vacuumdb.sgml,v 1.15 2000/12/25 23:15:27 petere Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/ref/vacuumdb.sgml,v 1.16 2001/03/17 16:27:31 petere Exp $
 Postgres documentation
 -->
 
@@ -26,7 +26,6 @@ Postgres documentation
    <arg><arg>-d</arg> <replaceable>dbname</replaceable></arg>
    <group><arg>--analyze</arg><arg>-z</arg></group>
    <group><arg>--verbose</arg><arg>-v</arg></group>
-   <sbr>
    <arg>--table '<replaceable>table</replaceable>
     <arg>( <replaceable class="parameter">column</replaceable> [,...] )</arg>'
    </arg>

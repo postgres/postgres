@@ -1,4 +1,4 @@
-<!-- $Header: /cvsroot/pgsql/doc/src/sgml/ref/pg_restore.sgml,v 1.9 2001/03/06 18:55:57 petere Exp $ -->
+<!-- $Header: /cvsroot/pgsql/doc/src/sgml/ref/pg_restore.sgml,v 1.10 2001/03/17 16:27:31 petere Exp $ -->
 
 <refentry id="APP-PGRESTORE">
  <docinfo>
@@ -32,7 +32,6 @@
    <arg> -f <replaceable class="parameter">archive-file</replaceable> </arg>
    <arg> -F <replaceable class="parameter">format</replaceable> </arg>
    <arg> -i  <replaceable class="parameter">index</replaceable> </arg>
-   <sbr>
    <arg> -l </arg>
    <arg> -L <replaceable class="parameter">contents-file</replaceable> </arg>
    <group> <arg> -N </arg> <arg> -o </arg> <arg> -r </arg> </group>
@@ -45,11 +44,9 @@
    <arg> -T  <replaceable class="parameter">trigger</replaceable> </arg>
    <arg> -v </arg>
    <arg> -x </arg>
-   <sbr>
    <arg> -h  <replaceable class="parameter">host</replaceable> </arg>
    <arg> -p  <replaceable class="parameter">port</replaceable> </arg>
    <arg> -u </arg>
-   <sbr>
    <arg> <replaceable class="parameter">archive-file</replaceable> </arg>
   </cmdsynopsis>
  </refsynopsisdiv>

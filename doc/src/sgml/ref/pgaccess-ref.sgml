@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/ref/Attic/pgaccess-ref.sgml,v 1.8 2001/02/07 20:46:55 tgl Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/ref/Attic/pgaccess-ref.sgml,v 1.9 2001/03/17 16:27:31 petere Exp $
 Postgres documentation
 -->
 
@@ -375,31 +375,6 @@ select * from invoices where year=[parameter "Year of selection"]
      </para>
     </listitem>
    </itemizedlist>
-  </para>
- </refsect1>
-
- <refsect1>
-  <title>Diagnostics</title>
-
-  <para>
-   If pgaccess fails to start up, with an error message roughly like this:
-<screen>
-<computeroutput>
-Error in startup script: couldn't load file "libpgtcl.so": libpgtcl.so: cannot open shared object file: No such file or directory
-    while executing
-"load ${libpgtclpath}[info sharedlibextension]"
-    (procedure "main" line 8)
-    invoked from within
-"main $argc $argv"
-    (file "/usr/local/pgsql/share/pgaccess/main.tcl" line 249)
-</computeroutput>
-</screen>
-   then you need to configure your runtime linker to find the
-   <filename>libpgtcl.so</filename> and <filename>libpq.so</filename>
-   libraries, most likely by setting
-   the <envar>LD_LIBRARY_PATH</envar> environment variable.  Consult
-   the <productname>PostgreSQL</productname> installation instructions
-   for more information.
   </para>
  </refsect1>
 

@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/ref/pg_dump.sgml,v 1.30 2001/03/06 18:55:57 petere Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/ref/pg_dump.sgml,v 1.31 2001/03/17 16:27:31 petere Exp $
 Postgres documentation
 -->
 
@@ -35,7 +35,6 @@ Postgres documentation
    <arg>-f <replaceable>file</replaceable></arg> 
    <arg>-F <replaceable>format</replaceable></arg>
    <arg>-i</arg>
-   <sbr>
    <group> <arg>-n</arg> <arg>-N</arg> </group>
    <arg>-o</arg>
    <arg>-O</arg>
@@ -45,11 +44,9 @@ Postgres documentation
    <arg>-v</arg>
    <arg>-x</arg>
    <arg>-Z <replaceable>0...9</replaceable></arg>
-   <sbr>
    <arg>-h <replaceable>host</replaceable></arg>
    <arg>-p <replaceable>port</replaceable></arg>
    <arg>-u</arg>
-   <sbr>
    <arg choice="plain"><replaceable>dbname</replaceable></arg>
   </cmdsynopsis>
  </refsynopsisdiv>
