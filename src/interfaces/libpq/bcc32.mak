@@ -67,7 +67,6 @@ LIB32_OBJS= \
 	"$(INTDIR)\thread.obj" \
 	"$(INTDIR)\inet_aton.obj" \
 	"$(INTDIR)\crypt.obj" \
-	"$(INTDIR)\path.obj" \
 	"$(INTDIR)\noblock.obj" \
 	"$(INTDIR)\pgstrcasecmp.obj" \
 	"$(INTDIR)\dllist.obj" \
@@ -93,13 +92,6 @@ RSC_PROJ=-l 0x409 -i$(BCB)\include -fo"$(INTDIR)\libpq.res"
 LINK32=ilink32.exe
 LINK32_FLAGS = -Gn -L$(BCB)\lib;$(INTDIR); -x -Tpd -v
 LINK32_OBJS= "$(INTDIR)\libpqdll.obj"
-	
-# ---------------------------------------------------------------------------
-
-.path.obj = $(INTDIR)
-.path.c = .;..\..\port;..\..\backend\libpq;..\..\backend\lib;..\..\backend\utils\mb
-
-# ---------------------------------------------------------------------------
 
 ALL: config "$(OUTDIR)" "$(OUTDIR)\blibpq.dll" "$(OUTDIR)\blibpq.lib"
 
@@ -108,7 +100,6 @@ CLEAN :
 	-@erase "$(INTDIR)\thread.obj"
 	-@erase "$(INTDIR)\inet_aton.obj"
 	-@erase "$(INTDIR)\crypt.obj"
-	-@erase "$(INTDIR)\path.obj"
 	-@erase "$(INTDIR)\dllist.obj"
 	-@erase "$(INTDIR)\md5.obj"
 	-@erase "$(INTDIR)\ip.obj"

@@ -16,7 +16,7 @@ REFDOCDIR= ../../../doc/src/sgml/ref
 OutDir=.\Release
 # End Custom Macros
 
-ALL : sql_help.h "$(OUTDIR)\psql.exe"
+ALL : sql_help.h pg_config_paths.h "$(OUTDIR)\psql.exe"
 
 CLEAN :
 	-@erase "$(INTDIR)\command.obj"
@@ -41,6 +41,9 @@ CLEAN :
 	-@erase "$(INTDIR)\mbprint.obj"
 	-@erase "$(INTDIR)\*psql.pch"
 	-@erase "$(OUTDIR)\psql.exe"
+
+pg_config_paths.h: win32.mak
+	echo #define SYSCONFDIR "" >pg_config_paths.h
 
 "$(OUTDIR)" :
     if not exist "$(OUTDIR)/$(NULL)" mkdir "$(OUTDIR)"

@@ -53,7 +53,7 @@ REFDOCDIR=../../../doc/src/sgml/ref
 .c.obj:
 	$(CPP) -o"$(INTDIR)\$&" $(CPP_PROJ) $<
 
-ALL : "sql_help.h" "$(OUTDIR)\psql.exe"
+ALL : sql_help.h pg_config_paths.h "$(OUTDIR)\psql.exe"
 
 CLEAN :
 	-@erase "$(INTDIR)\command.obj"
@@ -81,6 +81,9 @@ CLEAN :
 	-@erase "$(INTDIR)\psql.ils"
 	-@erase "$(INTDIR)\psql.ilf"
 	-@erase "$(OUTDIR)\psql.exe"
+
+pg_config_paths.h: win32.mak
+	echo #define SYSCONFDIR "" >pg_config_paths.h
 
 "$(OUTDIR)" :
     if not exist "$(OUTDIR)/$(NULL)" mkdir "$(OUTDIR)"
