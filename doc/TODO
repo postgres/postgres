@@ -5,7 +5,7 @@ TODO list for PostgreSQL
 Bracketed items "[]" have more detail.
 
 Current maintainer:	Bruce Momjian (pgman@candle.pha.pa.us)
-Last updated:		Sat Jul 10 20:28:31 EDT 2004
+Last updated:		Sat Jul 10 22:03:24 EDT 2004
 
 The most recent version of this document can be viewed at the PostgreSQL web site, http://www.PostgreSQL.org.
 
@@ -44,6 +44,7 @@ Administration
 * Allow reporting of which objects are in which tablespaces
 * Allow database recovery where tablespaces can't be created
 * Add include functionality to postgresql.conf
+* Allow changing of already-created database and schema tablespaces
 
 * Improve replication solutions
 	o Automatic failover
