@@ -16,7 +16,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/time/tqual.c,v 1.47 2002/01/16 20:29:02 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/time/tqual.c,v 1.48 2002/01/16 23:09:09 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -38,9 +38,12 @@ bool		ReferentialIntegritySnapshotOverride = false;
 
 /*
  * HeapTupleSatisfiesItself
- *		True iff heap tuple is valid for "itself."
- *		"itself" means valid as of everything that's happened
- *		in the current transaction, _including_ the current command.
+ *
+ *	Visible tuples are those of:
+ *
+ *		transactions committed before our _command_ started (READ COMMITTED)
+ *		previous commands of this transaction
+ *		changes made by the current command
  *
  * Note:
  *		Assumes heap tuple is valid.
@@ -153,10 +156,13 @@ HeapTupleSatisfiesItself(HeapTupleHeader tuple)
 
 /*
  * HeapTupleSatisfiesNow
- *		True iff heap tuple is valid "now."
- *		"now" means valid including everything that's happened
- *		 in the current transaction _up to, but not including,_
- *		 the current command.
+ *
+ *	Visible tuples are those of:
+ *
+ *		transactions committed before our _command_ started (READ COMMITTED)
+ *		previous commands of this transaction
+ *
+ *	Does _not_ include changes made by the current command
  *
  * Note:
  *		Assumes heap tuple is valid.
@@ -296,11 +302,12 @@ HeapTupleSatisfiesNow(HeapTupleHeader tuple)
 
 /*
  * HeapTupleSatisfiesToast
- *		True iff heap tuple is valid for TOAST usage.
+ *
+ *	Valid if the heap tuple is valid for TOAST usage.
  *
  * This is a simplified version that only checks for VACUUM moving conditions.
  * It's appropriate for TOAST usage because TOAST really doesn't want to do
- * its own time qual checks; if you can see the main-table row that contains
+ * its own time qual checks; if you can see the main table row that contains
  * a TOAST reference, you should be able to see the TOASTed value.  However,
  * vacuuming a TOAST table is independent of the main table, and in case such
  * a vacuum fails partway through, we'd better do this much checking.
@@ -353,11 +360,13 @@ HeapTupleSatisfiesToast(HeapTupleHeader tuple)
 
 /*
  * HeapTupleSatisfiesUpdate
- *		Check whether a tuple can be updated.
  *
- * This applies exactly the same checks as HeapTupleSatisfiesNow,
- * but returns a more-detailed result code, since UPDATE needs to know
- * more than "is it visible?"
+ *	Same as HeapTupleSatisfiesNow, but returns more information needed
+ *	by UPDATE.
+ *
+ * This applies the same checks as HeapTupleSatisfiesNow,
+ * but returns a more detailed result code, since UPDATE needs to know
+ * more than "is it visible?".
  */
 int
 HeapTupleSatisfiesUpdate(HeapTuple htuple)
@@ -475,9 +484,13 @@ HeapTupleSatisfiesUpdate(HeapTuple htuple)
 	return HeapTupleUpdated;	/* updated by other */
 }
 
-/*
- * HeapTupleSatisfiesDirty
- *		True iff heap tuple is valid, including effects of concurrent xacts.
+/* HeapTupleSatisfiesDirty
+ *
+ *	Visible tuples are those of:
+ *
+ *		_any_ in-progress transaction
+ *		previous commands of this transaction
+ *		changes by the current command
  *
  * This is essentially like HeapTupleSatisfiesItself as far as effects of
  * the current transaction and committed/aborted xacts are concerned.
@@ -601,11 +614,20 @@ HeapTupleSatisfiesDirty(HeapTupleHeader tuple)
 
 /*
  * HeapTupleSatisfiesSnapshot
- *		True iff heap tuple is valid for the given snapshot.
+ *
+ *	Visible tuples are those of:
+ *
+ *		transactions committed before our transaction started (SERIALIZABLE)
+ *		previous commands of this transaction
+ *
+ *	Does _not_ include:
+ *		transactions in-progress when our transaction started
+ *		transactions committed after our transaction started
+ *		changes made by the current command
  *
  * This is the same as HeapTupleSatisfiesNow, except that transactions that
  * were in progress or as yet unstarted when the snapshot was taken will
- * be treated as uncommitted, even if they really have committed by now.
+ * be treated as uncommitted, even if they have committed by now.
  *
  * (Notice, however, that the tuple status hint bits will be updated on the
  * basis of the true state of the transaction, even if we then pretend we
@@ -746,8 +768,13 @@ HeapTupleSatisfiesSnapshot(HeapTupleHeader tuple, Snapshot snapshot)
 
 
 /*
- * HeapTupleSatisfiesVacuum - determine tuple status for VACUUM and related
- *		operations
+ * HeapTupleSatisfiesVacuum
+ *
+ *	Visible tuples are those of:
+ *
+ *		tuples visible by any running transaction
+ *
+ *	Used by VACUUM and related operations.
  *
  * OldestXmin is a cutoff XID (obtained from GetOldestXmin()).	Tuples
  * deleted by XIDs >= OldestXmin are deemed "recently dead"; they might
