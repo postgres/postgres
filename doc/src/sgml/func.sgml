@@ -1539,7 +1539,7 @@ Not defined by this name. Implements the intersection operator '#'
 
    <para>
     <firstterm>Aggregate functions</firstterm> allow the generation of simple
-    statistics about the values of particular columns over the selected set
+    statistics about the values of given expressions over the selected set
     of rows.
 <!--
 	See also <xref linkend="sql" endterm="aggregates-tutorial"> and
@@ -1556,6 +1556,7 @@ Not defined by this name. Implements the intersection operator '#'
      <title>Aggregate Functions</title>
      <tgroup cols="4">
       <thead>
+
        <row>
         <entry>Function</entry>
         <entry>Returns</entry>
@@ -1563,6 +1564,7 @@ Not defined by this name. Implements the intersection operator '#'
         <entry>Example</entry>
         <entry>Notes</entry>
        </row>
+
       </thead>
       <tbody>
        <row>
@@ -1572,44 +1574,84 @@ Not defined by this name. Implements the intersection operator '#'
         <entry>COUNT(*)</entry>
         <entry></entry>
        </row>
+
        <row>
-        <entry>COUNT(<replaceable class="parameter">column-name</replaceable>)</entry>
+        <entry>COUNT(<replaceable class="parameter">expression</replaceable>)</entry>
         <entry>int4</entry>
-        <entry>Counts the selected rows for which the value of <replaceable class="parameter">column-name</replaceable> is not NULL.</entry>
+        <entry>Counts the selected rows for which the value of
+	<replaceable class="parameter">expression</replaceable> is not
+	NULL.</entry>
         <entry>COUNT(age)</entry>
         <entry></entry>
        </row>
+
        <row>
-        <entry>SUM(<replaceable class="parameter">column-name</replaceable>)</entry>
-        <entry>Same as the data type of the column being summed.</entry>
-        <entry>Finds the total obtained by adding the values of <replaceable class="parameter">column-name</replaceable> across all selected rows.</entry>
+        <entry>SUM(<replaceable class="parameter">expression</replaceable>)</entry>
+        <entry>Depends on the data type being summed.</entry>
+        <entry>Finds the total obtained by adding the values of <replaceable class="parameter">expression</replaceable> across all selected rows.</entry>
         <entry>SUM(hours)</entry>
-        <entry>Summation is supported on the following data types: int8, int4, int2, float4, float8, money, interval, numeric</entry>
+        <entry>Summation is supported on the following data types: int8, int4,
+	int2, float4, float8, money, interval, numeric.  The result is numeric
+	for any integer type, float8 for either float4 or float8 input,
+	otherwise the same as the input data type.</entry>
        </row>
+
        <row>
-        <entry>MAX(<replaceable class="parameter">column-name</replaceable>)</entry>
-        <entry>Same as the data type of the column whose maximum value is sought.</entry>
-        <entry>The maximum value of <replaceable class="parameter">column-name</replaceable> across all selected rows.</entry>
+        <entry>MAX(<replaceable class="parameter">expression</replaceable>)</entry>
+        <entry>Same as the data type of the input expression.</entry>
+        <entry>The maximum value of <replaceable class="parameter">expression</replaceable> across all selected rows.</entry>
         <entry>MAX(age)</entry>
         <entry>Finding the maximum value is supported on the following data types: int8, int4, int2, float4, float8, date, time, timetz, money, timestamp, interval, text, numeric.</entry>
        </row>
+
        <row>
-        <entry>MIN(<replaceable class="parameter">column-name</replaceable>)</entry>
-        <entry>same as the data type of the column whose minimum value is sought.</entry>
-        <entry>The minimum value of <replaceable class="parameter">column-name</replaceable> across all selected rows.</entry>
+        <entry>MIN(<replaceable class="parameter">expression</replaceable>)</entry>
+        <entry>Same as the data type of the input expression.</entry>
+        <entry>The minimum value of <replaceable class="parameter">expression</replaceable> across all selected rows.</entry>
         <entry>MIN(age)</entry>
         <entry>Finding the minimum value is supported on the following data types: int8, int4, int2, float4, float8, date, time, timetz, money, timestamp, interval, text, numeric.</entry>
        </row>
+
        <row>
-        <entry>AVG(<replaceable class="parameter">column-name</replaceable>)</entry>
-        <entry>Same as the data type of the column being averaged.</entry>
-        <entry>The average (mean) of the values in the given column across all selected rows.</entry>
-        <entry>AVG(age)</entry>
-        <entry>Finding the mean value is supported on the following data types: int8, int4, int2, float4, float8, money, interval, numeric. Note that as the return type is the same as that of the data being averaged, using AVG() on discrete data will give a rounded result.</entry>
+        <entry>AVG(<replaceable class="parameter">expression</replaceable>)</entry>
+        <entry>Depends on the data type being averaged.</entry>
+        <entry>The average (mean) of the given values across all selected rows.</entry>
+        <entry>AVG(age+1)</entry>
+        <entry>Finding the mean value is supported on the following data
+	types: int8, int4, int2, float4, float8, interval, numeric.  The
+	result is numeric for any integer type, float8 for either float4 or
+	float8 input, otherwise the same as the input data type.</entry>
        </row>
+
+       <row>
+        <entry>VARIANCE(<replaceable class="parameter">expression</replaceable>)</entry>
+        <entry>Depends on the input data type.</entry>
+        <entry>The sample variance of the given values.</entry>
+        <entry>VARIANCE(reading)</entry>
+        <entry>Finding the variance is supported on the following data
+	types: int8, int4, int2, float4, float8, numeric.  The result is
+	float8 for float4 or float8 input, otherwise numeric.</entry>
+       </row>
+
+       <row>
+        <entry>STDDEV(<replaceable class="parameter">expression</replaceable>)</entry>
+        <entry>Depends on the input data type.</entry>
+        <entry>The sample standard deviation of the given values.</entry>
+        <entry>STDDEV(reading)</entry>
+        <entry>Finding the standard deviation is supported on the following
+	data types: int8, int4, int2, float4, float8, numeric.  The result is
+	float8 for float4 or float8 input, otherwise numeric.</entry>
+       </row>
+
       </tbody>
      </tgroup>
     </table>
+   </para>
+
+   <para>
+    It should be noted that except for COUNT, these functions return NULL
+    when no rows are selected.  In particular, SUM of no rows returns NULL,
+    not zero as one might expect.
    </para>
   </sect1>
  </chapter>
