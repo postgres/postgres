@@ -6,7 +6,7 @@
  * Portions Copyright (c) 1996-2000, PostgreSQL, Inc
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Header: /cvsroot/pgsql/src/backend/access/transam/xlog.c,v 1.9 2000/01/26 05:56:04 momjian Exp $
+ * $Header: /cvsroot/pgsql/src/backend/access/transam/xlog.c,v 1.10 2000/02/15 03:00:37 thomas Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -995,7 +995,7 @@ next_record_is_invalid:;
 		readId = EndRecPtr.xlogid;
 		readSeg = EndRecPtr.xrecoff / XLogSegSize;
 		readOff = (EndRecPtr.xrecoff % XLogSegSize) / BLCKSZ;
-		elog(LOG, "Formating logfile %u seg %u block %u at offset %u",
+		elog(LOG, "Formatting logfile %u seg %u block %u at offset %u",
 					readId, readSeg, readOff, EndRecPtr.xrecoff % BLCKSZ);
 		readFile = XLogFileOpen(readId, readSeg, false);
 		if (lseek(readFile, (off_t)(readOff * BLCKSZ), SEEK_SET) < 0)
@@ -1026,7 +1026,7 @@ next_record_is_invalid:;
 	if (readOff > 0)
 	{
 		if (!XLByteEQ(tmpRecPtr, EndRecPtr))
-			elog(LOG, "Formating logfile %u seg %u block %u at offset 0",
+			elog(LOG, "Formatting logfile %u seg %u block %u at offset 0",
 						readId, readSeg, readOff);
 		readOff *= BLCKSZ;
 		memset(readBuf, 0, BLCKSZ);
@@ -1285,7 +1285,7 @@ tryAgain:
 			 ControlFile->catalog_version_no, CATALOG_VERSION_NO);
 
 	if (ControlFile->state == DB_SHUTDOWNED)
-		elog(LOG, "Data Base System was shutdowned at %s",
+		elog(LOG, "Data Base System was shut down at %s",
 					str_time(ControlFile->time));
 	else if (ControlFile->state == DB_SHUTDOWNING)
 		elog(LOG, "Data Base System was interrupted when shutting down at %s",
@@ -1349,7 +1349,7 @@ tryAgain:
 
 	if (recovery > 0)
 	{
-		elog(LOG, "The DataBase system was not properly shutdowned\n"
+		elog(LOG, "The DataBase system was not properly shut down\n"
 					"\tAutomatic recovery is in progress...");
 		ControlFile->state = DB_IN_RECOVERY;
 		ControlFile->time = time(NULL);
@@ -1456,11 +1456,11 @@ void
 ShutdownXLOG()
 {
 
-	elog(LOG, "Data Base System is shutting down at %s", str_time(time(NULL)));
+	elog(LOG, "Data Base System shutting down at %s", str_time(time(NULL)));
 
 	CreateCheckPoint(true);
 
-	elog(LOG, "Data Base System is shutdowned at %s", str_time(time(NULL)));
+	elog(LOG, "Data Base System shut down at %s", str_time(time(NULL)));
 }
 
 void
