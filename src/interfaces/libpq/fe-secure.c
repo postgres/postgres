@@ -11,7 +11,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/interfaces/libpq/fe-secure.c,v 1.15.2.3 2003/01/08 22:57:05 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/interfaces/libpq/fe-secure.c,v 1.15.2.4 2003/01/08 23:18:35 momjian Exp $
  *
  * NOTES
  *	  The client *requires* a valid server certificate.  Since
@@ -268,6 +268,7 @@ pqsecure_read(PGconn *conn, void *ptr, size_t len)
 			case SSL_ERROR_NONE:
 				break;
 			case SSL_ERROR_WANT_READ:
+			        n = pqsecure_read(conn, ptr, len);
 				break;
 			case SSL_ERROR_SYSCALL:
 				printfPQExpBuffer(&conn->errorMessage,
@@ -313,6 +314,7 @@ pqsecure_write(PGconn *conn, const void *ptr, size_t len)
 			case SSL_ERROR_NONE:
 				break;
 			case SSL_ERROR_WANT_WRITE:
+			        n = pqsecure_write(conn, ptr, len);
 				break;
 			case SSL_ERROR_SYSCALL:
 				printfPQExpBuffer(&conn->errorMessage,

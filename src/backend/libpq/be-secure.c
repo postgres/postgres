@@ -11,7 +11,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/libpq/be-secure.c,v 1.15.2.6 2003/01/08 22:57:05 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/libpq/be-secure.c,v 1.15.2.7 2003/01/08 23:18:34 momjian Exp $
  *
  *	  Since the server static private key ($DataDir/server.key)
  *	  will normally be stored unencrypted so that the database
@@ -273,12 +273,6 @@ secure_read(Port *port, void *ptr, size_t len)
 #ifdef USE_SSL
 	if (port->ssl)
 	{
-		if (port->count > RENEGOTIATION_LIMIT)
-		{
-			SSL_renegotiate(port->ssl);
-			port->count = 0;
-		}
-
 		n = SSL_read(port->ssl, ptr, len);
 		switch (SSL_get_error(port->ssl, n))
 		{
@@ -286,6 +280,7 @@ secure_read(Port *port, void *ptr, size_t len)
 				port->count += n;
 				break;
 			case SSL_ERROR_WANT_READ:
+				n = secure_read(port, ptr, len);
 				break;
 			case SSL_ERROR_SYSCALL:
 				if (n == -1)
@@ -325,7 +320,15 @@ secure_write(Port *port, const void *ptr, size_t len)
 	{
 		if (port->count > RENEGOTIATION_LIMIT)
 		{
-			SSL_renegotiate(port->ssl);
+		        SSL_set_session_id_context(port->ssl, (void *)&SSL_context, sizeof(SSL_context));
+
+		        if (SSL_renegotiate(port->ssl) <= 0)
+			  elog(COMMERROR, "SSL renegotiation failure");
+			if (SSL_do_handshake(port->ssl) <= 0)
+			  elog(COMMERROR, "SSL renegotiation failure");
+			port->ssl->state=SSL_ST_ACCEPT;
+			if (SSL_do_handshake(port->ssl) <= 0)
+			  elog(COMMERROR, "SSL renegotiation failure");
 			port->count = 0;
 		}
 
@@ -336,6 +339,7 @@ secure_write(Port *port, const void *ptr, size_t len)
 				port->count += n;
 				break;
 			case SSL_ERROR_WANT_WRITE:
+				n = secure_read(port, ptr, len);
 				break;
 			case SSL_ERROR_SYSCALL:
 				if (n == -1)
