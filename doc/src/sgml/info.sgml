@@ -1,0 +1,146 @@
+<Sect1>
+<Title>Resources</Title>
+
+<Para>
+This manual set is organized into several parts:
+
+<VariableList>
+<VarListEntry>
+<Term>Tutorial</Term>
+<ListItem>
+<Para>
+An introduction for new users. Does not cover advanced features.
+</Para>
+</ListItem>
+</VarListEntry>
+
+<VarListEntry>
+<Term>User's Guide</Term>
+<ListItem>
+<Para>
+General information for users, including available commands and data types.
+</Para>
+</ListItem>
+</VarListEntry>
+
+<VarListEntry>
+<Term>Programmer's Guide</Term>
+<ListItem>
+<Para>
+Advanced information for application programmers. Topics include
+type and function extensibility, library interfaces, and application design issues.
+</Para>
+</ListItem>
+</VarListEntry>
+
+<VarListEntry>
+<Term>Administrator's Guide</Term>
+<ListItem>
+<Para>
+Installation and management information. List of supported machines.
+</Para>
+</ListItem>
+</VarListEntry>
+
+<VarListEntry>
+<Term>Developer's Guide</Term>
+<ListItem>
+<Para>
+Information for <ProductName>Postgres</ProductName> developers. This is intended
+for those who are contributing to the <ProductName>Postgres</ProductName>
+project; application development information should appear in the Programmer's Guide.
+</Para>
+</ListItem>
+</VarListEntry>
+
+<VarListEntry>
+<Term>Reference Manual</Term>
+<ListItem>
+<Para>
+Detailed reference information on command syntax.
+At the moment, this manual is very sparse, but eventually should contain
+information similar to that in the man pages.
+</Para>
+</ListItem>
+</VarListEntry>
+</VariableList>
+
+<Para>
+In addition to this manual set, there are other resources to help you with
+<ProductName>Postgres</ProductName> installation and use:
+
+<VariableList>
+<VarListEntry>
+<Term>man pages</Term>
+<ListItem>
+<Para>
+The man pages have general information on command syntax.
+</Para>
+</ListItem>
+</VarListEntry>
+
+<VarListEntry>
+<Term>FAQs</Term>
+<ListItem>
+<Para>
+The Frequently Asked Questions (FAQ) documents address both general issues
+and some platform-specific issues.
+</Para>
+</ListItem>
+</VarListEntry>
+
+<VarListEntry>
+<Term>READMEs</Term>
+<ListItem>
+<Para>
+README files are available for some contributed packages.
+</Para>
+</ListItem>
+</VarListEntry>
+
+<VarListEntry>
+<Term>Web Site</Term>
+<ListItem>
+<Para>
+The <ULink url="postgresql.org"><ProductName>Postgres</ProductName></ULink> web site has some information
+not appearing in the distribution. There is a <ProductName>mhonarc</ProductName> catalog of mailing list traffic
+which is a rich resource for many topics.
+</Para>
+</ListItem>
+</VarListEntry>
+
+<VarListEntry>
+<Term>Mailing Lists</Term>
+<ListItem>
+<Para>
+The <ULink url="mailto:questions@postgresql.org"><ProductName>Postgres</ProductName> Questions</ULink>
+mailing list is a good place to have user questions answered. Other mailing lists are available; consult
+the web page for details.
+</Para>
+</ListItem>
+</VarListEntry>
+
+<VarListEntry>
+<Term>Yourself!</Term>
+<ListItem>
+<Para>
+<ProductName>Postgres</ProductName> is an open source product. 
+As such, it depends on the user community for
+ongoing support. As you begin to use <ProductName>Postgres</ProductName>, 
+you will rely on others
+for help, either through the documentation or through the mailing lists. 
+Consider contributing your
+knowledge back. If you learn something which is not in the documentation, 
+write it up and contribute it.
+If you add features to the code, contribute it. 
+Even those without a lot of experience can provide
+corrections and minor changes in the documentation, and that is a good way to start.
+The 
+<ULink url="mailto:docs@postgresql.org"><ProductName>Postgres</ProductName> Documentation</ULink>
+mailing list is the place to get going.
+</Para>
+</ListItem>
+</VarListEntry>
+</VariableList>
+
+</Sect1>

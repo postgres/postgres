@@ -30,6 +30,200 @@ oprleft|oprright|oprresult|oprcode
 </Para>
 
 <sect1>
+<title>Lexical Precedence</title>
+
+<para>
+Operators have a precedence which is currently hardcoded into the parser.
+Most operators have the same precedence and are non-associative. This may lead
+to non-intuitive behavior; for example the boolean operators "&lt;" and "&gt;"
+have a different precedence that the boolean operators "&lt;=" and "&gt;=".
+
+<table tocentry="1">
+<title>
+Operator Ordering (decreasing precedence)
+</title>
+
+<tgroup cols="2">
+<thead>
+<row>
+<entry>
+Element
+<entry>
+Precedence
+<entry>
+Description
+</thead>
+
+<tbody>
+<row>
+<entry>
+UNION
+<entry>
+left
+<entry>
+SQL select construct
+<row>
+<entry>
+::
+<entry>
+<entry>
+<productname>Postgres</productname> typecasting
+
+<row>
+<entry>
+[ ]
+<entry>
+left
+<entry>
+array delimiters
+
+<row>
+<entry>
+.
+<entry>
+left
+<entry>
+table/column delimiter
+
+<row>
+<entry>
+-
+<entry>
+right
+<entry>
+unary minus
+
+<row>
+<entry>
+;
+<entry>
+left
+<entry>
+statement termination, logarithm
+
+<row>
+<entry>
+:
+<entry>
+right
+<entry>
+exponentiation
+
+<row>
+<entry>
+|
+<entry>
+left
+<entry>
+start of interval
+
+<row>
+<entry>
+* /
+<entry>
+left
+<entry>
+multiplication, division
+
+<row>
+<entry>
++ -
+<entry>
+left
+<entry>
+addition, subtraction
+
+<row>
+<entry>
+IS
+<entry>
+<entry>
+test for TRUE, FALSE, NULL
+<row>
+<entry>
+ISNULL
+<entry>
+<entry>
+test for NULL
+
+<row>
+<entry>
+NOTNULL
+<entry>
+<entry>
+test for NOT NULL
+
+<row>
+<entry>
+(all other operators)
+<entry>
+<entry>
+native and user-defined
+
+<row>
+<entry>
+IN
+<entry>
+<entry>
+set membership
+
+<row>
+<entry>
+BETWEEN
+<entry>
+<entry>
+containment
+
+<row>
+<entry>
+LIKE
+<entry>
+<entry>
+string pattern matching
+
+<row>
+<entry>
+&lt; &gt;
+<entry>
+<entry>
+boolean inequality
+
+<row>
+<entry>
+=
+<entry>
+right
+<entry>
+equality
+
+<row>
+<entry>
+NOT
+<entry>
+right
+<entry>
+negation
+
+<row>
+<entry>
+AND
+<entry>
+left
+<entry>
+logical intersection
+
+<row>
+<entry>
+OR
+<entry>
+left
+<entry>
+logical union
+
+</tbody>
+</table>
+
+<sect1>
 <title>General Operators</title>
 
 <para>

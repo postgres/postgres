@@ -1,0 +1,90 @@
+<Chapter Id="runtime">
+<Title>Runtime Environment</Title>
+
+<Para>
+This chapter outlines the interaction between <Productname>Postgres</Productname> and
+the operating system.
+
+<sect1>
+<title>Using <Productname>Postgres</Productname> from Unix</title>
+
+<para>
+All <Productname>Postgres</Productname> commands that are executed 
+directly from a Unix shell are
+found in the directory <quote>.../bin</quote>.  Including this directory in
+your search path will make executing the commands easier.
+
+<para>
+A collection of system catalogs exist at each site.  These include a
+class (<literal>pg_user</literal>) that contains an instance for each valid
+<Productname>Postgres</Productname> user.  The instance specifies a set of
+ <Productname>Postgres</Productname> privileges, such as
+the ability to act as <Productname>Postgres</Productname> super-user,
+ the ability to create/destroy
+databases, and the ability to update the system catalogs.  A Unix
+user cannot do anything with <Productname>Postgres</Productname> 
+until an appropriate instance is
+installed in this class.  Further information on the system catalogs
+is available by running queries on the appropriate classes.
+
+<chapter id="layout">
+<Title>System Layout</Title>
+
+<Para>
+<Figure Id="ADMIN-LAYOUT">
+<Title><ProductName>Postgres</ProductName> file layout</Title>
+<Graphic Align="center" FileRef="layout.gif" Format="GIF"></Graphic>
+</Figure>
+
+<XRef LinkEnd="ADMIN-LAYOUT" EndTerm="ADMIN-LAYOUT">
+shows how the <ProductName>Postgres</ProductName>  distribution  is  laid
+     out  when installed in the default way. For simplicity,
+     we will assume that <ProductName>Postgres</ProductName>
+ has been installed in  the
+     directory  <filename>/usr/local/pgsql</filename>.   Therefore, wherever
+     you see the directory <filename>/usr/local/pgsql</filename> you  should
+     substitute  the name of the directory where
+ <ProductName>Postgres</ProductName> is
+     actually installed.
+     All <ProductName>Postgres</ProductName> commands are installed
+     in  the  directory
+     <filename>/usr/local/pgsql/bin</filename>.   Therefore,  you should add
+     this directory to your shell command path.  If you  use
+     a variant of the Berkeley C shell, such as csh or tcsh,
+     you would add
+<ProgramListing>
+set path = ( /usr/local/pgsql/bin path )
+</ProgramListing>
+     in the .login file in your home directory.  If you  use
+     a  variant  of  the  Bourne  shell, such as sh, ksh, or
+     bash, then you would add
+<ProgramListing>
+PATH=/usr/local/pgsql/bin PATH
+export PATH
+</ProgramListing>
+     to the .profile file in your home directory.
+     From now on, we will assume that  you  have  added  the
+     <ProductName>Postgres</ProductName>  bin  directory to your path.
+     In addition, we
+     will make frequent reference to "setting a shell  
+     variable"  or  "setting an environment variable" throughout
+     this document.  If you did  not  fully  understand  the
+     last  paragraph  on  modifying  your  search  path, you
+     should consult the UNIX manual pages that describe your
+     shell before going any further.
+</Para>
+
+<Para>
+If you have not set things up in the
+default  way,  you may have some more work to do.  
+For example, if the database server machine is a remote machine, you
+will need to set the <envar>PGHOST</envar> environment variable to the name
+of the database server machine.   The  environment  variable
+<envar>PGPORT</envar> may also have to be set.  The bottom line is this: if
+you try to start an application  program  and  it  complains
+that it cannot connect to the <Application>postmaster</Application>,
+you must go back and make sure that your
+environment is properly set up.
+</Para>
+
+</Chapter>

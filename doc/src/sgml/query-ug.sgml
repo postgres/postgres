@@ -4,7 +4,8 @@
 <Para>
 <Note>
 <Para>
-This chapter must go into depth on each area of the query language. Currently a copy of the tutorial.
+This chapter must go into depth on each area of the query language. 
+Currently a copy of the tutorial.
 - thomas 1998-01-12
 </Para>
 </Note>
@@ -15,32 +16,38 @@ This chapter must go into depth on each area of the query language. Currently a 
  <Acronym>SQL3</Acronym>. It
      has many extensions such as an extensible type  system,
      inheritance,  functions and production rules. Those are
-     features carried over from the original <ProductName>Postgres</ProductName>  query
-     language,  <ProductName>PostQuel</ProductName>.  This section provides an overview
-     of how to use <ProductName>Postgres</ProductName> <Acronym>SQL</Acronym>  to  perform  simple  operations.
+     features carried over from the original <ProductName>Postgres</ProductName>  
+query
+     language,  <ProductName>PostQuel</ProductName>.  
+This section provides an overview
+     of how to use <ProductName>Postgres</ProductName> <Acronym>SQL</Acronym>
+  to  perform  simple  operations.
      This manual is only intended to give you an idea of our
      flavor of <Acronym>SQL</Acronym> and is in no way a complete  tutorial  on
      <Acronym>SQL</Acronym>.  Numerous  books  have  been  written  on <Acronym>SQL</Acronym>. For
-     instance, consult <Ulink url="refs.html#MELT93">[MELT93]</ULink> or 
-     <Ulink url="refs.html#DATE93">[DATE93]</ULink>. You should also
-     be  aware  that  some features are not part of the <Acronym>ANSI</Acronym>
-     standard.
+     instance, consult <xref linkend="MELT93" endterm="MELT93-full"> or 
+     <xref linkend="DATE97" endterm="DATE97-full">. You should also
+     be  aware  that  some features of <ProductName>Postgres</ProductName>
+are not part of the <Acronym>ANSI</Acronym> standard.
 </Para>
 
 <Sect1>
 <Title>Concepts</Title>
 
 <Para>
-     The fundamental notion in <ProductName>Postgres</ProductName> is that of a  class,
+     The fundamental notion in <ProductName>Postgres</ProductName> 
+is that of a  class,
      which  is a named collection of object instances.  Each
      instance has the same collection of  named  attributes,
      and each attribute is of a specific type.  Furthermore,
-     each instance has a permanent <FirstTerm>object  identifier</FirstTerm> (<Acronym>OID</Acronym>)
+     each instance has a permanent <FirstTerm>object  
+identifier</FirstTerm> (<Acronym>OID</Acronym>)
      that  is  unique  throughout the installation.  Because
      <Acronym>SQL</Acronym> syntax refers to tables,  we  will use  the  terms
      <FirstTerm>table</FirstTerm> and <FirstTerm>class</FirstTerm> interchangeably.
   Likewise, an <Acronym>SQL</Acronym> <FirstTerm>row</FirstTerm> is an
-     <FirstTerm>instance</FirstTerm> and <Acronym>SQL</Acronym> <FirstTerm>columns</FirstTerm>
+     <FirstTerm>instance</FirstTerm> and <Acronym>SQL</Acronym> 
+<FirstTerm>columns</FirstTerm>
  are <FirstTerm>attributes</FirstTerm>.
      As  previously  discussed,  classes  are  grouped  into
      databases,  and  a collection of databases managed by a

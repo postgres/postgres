@@ -8,7 +8,7 @@
 #
 #
 # IDENTIFICATION
-#    $Header: /cvsroot/pgsql/doc/src/sgml/Makefile,v 1.5 1998/09/25 13:41:25 thomas Exp $
+#    $Header: /cvsroot/pgsql/doc/src/sgml/Makefile,v 1.6 1998/09/30 05:41:39 thomas Exp $
 #
 #----------------------------------------------------------------------------
 
@@ -67,7 +67,7 @@ install::
 all::
 
 clean::
-	(rm -rf *.html *.htm)
+	(rm -rf HTML.manifest *.html *.htm)
 
 distclean::
 	$(MAKE) clean

@@ -1,0 +1,24 @@
+<Chapter Id="intro-ag">
+<TITLE>Introduction</TITLE>
+
+<Para>
+     This document is the Administrator's  Manual  for  the  
+     <Ulink url="http://postgresql.org/"><ProductName>PostgreSQL</ProductName></Ulink>
+     database  management system, originally developed at the University
+     of California at  Berkeley.   
+
+<ProductName>PostgreSQL</ProductName>  is  based  on
+     <Ulink url="http://s2k-ftp.CS.Berkeley.EDU:8000/postgres/postgres.html">
+     <ProductName>Postgres release 4.2</ProductName></Ulink>. 
+The <ProductName>Postgres</ProductName> project, 
+     led by Professor Michael Stonebraker, was sponsored  by  the
+     Defense  Advanced Research Projects Agency (<Acronym>DARPA</Acronym>), the
+     Army Research Office (<Acronym>ARO</Acronym>), the National Science  
+     Foundation (<Acronym>NSF</Acronym>), and ESL, Inc.
+</Para>
+
+&notation;
+
+&legal;
+
+</Chapter>

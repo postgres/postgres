@@ -1,0 +1,155 @@
+<chapter id="security">
+<Title>Security</Title>
+
+<Para>
+
+<Sect1>
+<Title>User Authentication</Title>
+
+<Para>
+<firstterm>Authentication</firstterm>
+is the process by which the backend server and 
+<application>postmaster</application>
+ensure that the user requesting access to data is in fact who he/she
+claims to be.  
+All users who invoke <Productname>Postgres</Productname> are checked against the
+contents of the <literal>pg_user</literal> class to ensure that they are
+authorized to do so.  However, verification of the user's actual
+identity is performed in a variety of ways:
+
+<variablelist>
+<varlistentry>
+<term>
+From the user shell
+</term>
+<listitem>
+<para>
+A backend server started from a user shell notes the user's (effective)
+user-id before performing a 
+<function>setuid</function>
+to the user-id of user <replaceable>postgres</replaceable>.  
+The effective user-id is used
+as the basis for access control checks.  No other authentication is
+conducted.
+
+<varlistentry>
+<term>
+From the network
+</term>
+<listitem>
+<para>
+If the <Productname>Postgres</Productname> system is built as distributed,
+ access to the Internet TCP port of the
+<application>postmaster</application>
+process is available to anyone.  The DBA configures the pg_hba.conf file
+in the PGDATA directory to specify what authentication system is to be used
+according to the host making the connection and which database it is
+connecting to.  See <citetitle>pg_hba.conf(5)</citetitle>
+ for a description of the authentication
+systems available.  Of course, host-based authentication is not fool-proof in
+Unix, either. It is possible for determined intruders to also
+masquerade the origination host. Those security issues are beyond the
+scope of <Productname>Postgres</Productname>.
+
+</variablelist>
+
+
+<Sect1>
+<Title>Access Control</Title>
+
+<Para>
+<Productname>Postgres</Productname> provides mechanisms to allow users 
+to limit the access to their data that is provided to other users.
+
+<variablelist>
+<varlistentry>
+<term>
+Database superusers
+</term>
+<listitem>
+<para>
+Database super-users (i.e., users who have <literal>pg_user.usesuper</literal>
+set) silently bypass all of the access controls described below with
+two exceptions: manual system catalog updates are not permitted if the
+user does not have <literal>pg_user.usecatupd</literal> set, and destruction of
+system catalogs (or modification of their schemas) is never allowed.
+
+<varlistentry>
+<term>
+Access Privilege
+</term>
+<listitem>
+<para>
+The use of access privilege to limit reading, writing and setting
+of rules on classes is covered in
+<citetitle>grant/revoke(l)</citetitle>.
+
+<varlistentry>
+<term>
+Class removal and schema modification
+</term>
+<listitem>
+<para>
+Commands that destroy or modify the structure of an existing class,
+such as <command>alter</command>,
+<command>drop table</command>,
+and
+<command>drop index</command>,
+only operate for the owner of the class.  As mentioned above, these
+operations are <emphasis>never</emphasis>
+permitted on system catalogs.
+
+</variablelist>
+
+<Sect1>
+<Title>Functions and Rules</Title>
+
+<Para>
+Functions and rules allow users to insert code into the backend server
+that other users may execute without knowing it.  Hence, both
+mechanisms permit users to <firstterm>trojan horse</firstterm>
+others with relative impunity.  The only real protection is tight
+control over who can define functions (e.g., write to relations with
+SQL fields) and rules.  Audit trails and alerters on
+<literal>pg_class</literal>, <literal>pg_user</literal>
+ and <literal>pg_group</literal> are also recommended.
+
+<Sect2>
+<Title>Functions</Title>
+
+<Para>
+Functions written in any language except SQL 
+run inside the backend server
+process with the permissions of the user <replaceable>postgres</replaceable> (the
+backend server runs with its real and effective user-id set to
+<replaceable>postgres</replaceable>.  It is possible for users to change the server's
+internal data structures from inside of trusted functions.  Hence,
+among many other things, such functions can circumvent any system
+access controls.  This is an inherent problem with user-defined C functions.
+
+<Sect2>
+<Title>Rules</Title>
+
+<Para>
+Like SQL functions, rules always run with the identity and
+permissions of the user who invoked the backend server.
+
+<sect2>
+<title>
+Caveats
+</title>
+
+<para>
+There are no plans to explicitly support encrypted data inside of
+<Productname>Postgres</Productname> 
+(though there is nothing to prevent users from encrypting
+data within user-defined functions).  There are no plans to explicitly
+support encrypted network connections, either, pending a total rewrite
+of the frontend/backend protocol.
+<para>
+User names, group names and associated system identifiers (e.g., the
+contents of <literal>pg_user.usesysid</literal>) are assumed to be unique
+throughout a database.  Unpredictable results may occur if they are
+not.
+
+</chapter>

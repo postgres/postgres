@@ -1,10 +1,19 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/postgres.sgml,v 1.8 1998/08/17 16:20:33 thomas Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/postgres.sgml,v 1.9 1998/09/30 05:41:49 thomas Exp $
+
 Postgres integrated documentation.
 Other subset docs should be copied and shrunk from here.
 thomas 1998-02-23
 
 $Log: postgres.sgml,v $
+Revision 1.9  1998/09/30 05:41:49  thomas
+Clean up pages. Add information for operator precedence.
+Split introduction sections into separate files to allow the legal notice
+ and notation sections appear in all documents without having the history
+ show up everplace too.
+Add full list of reserved and non-reserved key words in syntax.sgml.
+Add a separate chapter to the admin guide on security.
+
 Revision 1.8  1998/08/17 16:20:33  thomas
 Move SQL reference pages up into the User's Guide.
 
@@ -14,6 +23,12 @@ Include new chapters.
 -->
 
 <!doctype book PUBLIC "-//Davenport//DTD DocBook V3.0//EN" [
+
+<!entity about    SYSTEM "about.sgml">
+<!entity history  SYSTEM "history.sgml">
+<!entity info     SYSTEM "info.sgml">
+<!entity legal    SYSTEM "legal.sgml">
+<!entity notation SYSTEM "notation.sgml">
 
 <!-- tutorial -->
 <!entity intro    SYSTEM "intro.sgml">
@@ -42,8 +57,10 @@ Include new chapters.
 %allfiles;
 
 <!-- administrator's guide -->
+<!entity intro-ag SYSTEM "intro-ag.sgml">
 <!entity start-ag SYSTEM "start-ag.sgml">
 <!entity install  SYSTEM "install.sgml">
+<!entity runtime  SYSTEM "runtime.sgml">
 <!entity recovery SYSTEM "recovery.sgml">
 <!entity regress  SYSTEM "regress.sgml">
 <!entity ports    SYSTEM "ports.sgml">
@@ -195,6 +212,7 @@ Information for users.
 Installation and maintenance information.
 </Para>
 </PartIntro>
+&intro-ag;
 &ports;
 &install;
 &start-ag;

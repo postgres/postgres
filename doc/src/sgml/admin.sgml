@@ -1,23 +1,34 @@
-<!-- admin.sgml
--
-- Postgres administrator's guide.
-- Derived from postgres.sgml.
-- thomas 1998-02-27
--
-- -->
-<!doctype book PUBLIC "-//Davenport//DTD DocBook V3.0//EN" [
-<!entity intro    SYSTEM "intro.sgml">
+<!--
+$header$
 
+Postgres Administrator's Guide.
+Derived from postgres.sgml.
+thomas 1998-02-27
+
+$log$
+
+-->
+
+<!doctype book PUBLIC "-//Davenport//DTD DocBook V3.0//EN" [
+
+<!entity about    SYSTEM "about.sgml">
+<!entity history  SYSTEM "history.sgml">
+<!entity info     SYSTEM "info.sgml">
+<!entity legal    SYSTEM "legal.sgml">
+<!entity notation SYSTEM "notation.sgml">
+
+<!entity intro-ag SYSTEM "intro-ag.sgml">
 <!entity install  SYSTEM "install.sgml">
 <!entity ports    SYSTEM "ports.sgml">
 <!entity recovery SYSTEM "recovery.sgml">
 <!entity regress  SYSTEM "regress.sgml">
 <!entity release  SYSTEM "release.sgml">
+<!entity runtime  SYSTEM "runtime.sgml">
 <!entity start-ag SYSTEM "start-ag.sgml">
 
 <!entity biblio   SYSTEM "biblio.sgml">
 ]>
-<!-- entity manpages SYSTEM "man/manpages.sgml" subdoc -->
+
 <Book Id="admin">
 
 <!-- Title information -->
@@ -86,10 +97,11 @@ It provides SQL92/SQL3 language support,
 </Para>
 </Preface>
 
-&intro;
+&intro-ag;
 
 &ports;
 &install;
+&runtime;
 &start-ag;
 &recovery;
 &regress;

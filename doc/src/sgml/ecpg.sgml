@@ -476,21 +476,33 @@ The following statements are not implemented thus far:
 <VariableList>
 <VarListEntry>
 <Term> exec sql type</Term>
+<ListItem>
+<Para>
 </VarListEntry>
 <VarListEntry>
 <Term> exec sql prepare</Term>
+<ListItem>
+<Para>
 </VarListEntry>
 <VarListEntry>
 <Term> exec sql allocate</Term>
+<ListItem>
+<Para>
 </VarListEntry>
 <VarListEntry>
 <Term> exec sql free</Term>
+<ListItem>
+<Para>
 </VarListEntry>
 <VarListEntry>
 <Term> exec sql whenever sqlwarning</Term>
+<ListItem>
+<Para>
 </VarListEntry>
 <VarListEntry>
 <Term> SQLSTATE</Term>
+<ListItem>
+<Para>
 </VarListEntry>
 </VariableList>
 </Para>

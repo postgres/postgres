@@ -9,14 +9,21 @@ Selected references and readings for <Acronym>SQL</Acronym> and <ProductName>Pos
 <TITLE><Acronym>SQL</Acronym> Reference Books</TITLE>
 <PARA>Reference texts for <Acronym>SQL</Acronym> features.</PARA>
 
-<BIBLIOENTRY ID="BOWMAN93">
+<BIBLIOENTRY>
 <!--
 <BIBLIOMISC>&dash;</BIBLIOMISC>
 
 <BOOKBIBLIO ID="BOWMAN93">
 -->
-<TITLE>The Practical <Acronym>SQL</Acronym> Handbook</TITLE>
-<SUBTITLE>Using Structured Query Language</SUBTITLE>
+<TITLE ID="BOWMAN93-full">
+The Practical <Acronym>SQL</Acronym> Handbook
+</TITLE>
+<TITLEABBREV ID="BOWMAN93">
+Bowman et al, 1993
+</TITLEABBREV>
+<SUBTITLE>
+Using Structured Query Language
+</SUBTITLE>
 <EDITION>3</EDITION>
 <AUTHORGROUP>
 <AUTHOR>
@@ -46,15 +53,21 @@ Selected references and readings for <Acronym>SQL</Acronym> and <ProductName>Pos
 -->
 </BIBLIOENTRY>
 
-<BIBLIOENTRY ID="DATE97">
+<BIBLIOENTRY>
 <!--
 <BIBLIOMISC>&dash;</BIBLIOMISC>
 
 <BOOKBIBLIO ID="DATE97">
 -->
-<TITLE>A Guide to The <Acronym>SQL</Acronym> Standard</TITLE>
-<TITLEABBREV>The <Acronym>SQL</Acronym> Standard</TITLEABBREV>
-<SUBTITLE>A user's guide to the standard database language <Acronym>SQL</Acronym></SUBTITLE>
+<TITLE id="DATE97-full">
+A Guide to the <Acronym>SQL</Acronym> Standard
+</TITLE>
+<TITLEABBREV id="DATE97">
+Date and Darwen, 1997
+</TITLEABBREV>
+<SUBTITLE>
+A user's guide to the standard database language <Acronym>SQL</Acronym>
+</SUBTITLE>
 <EDITION>4</EDITION>
 <AUTHORGROUP>
 <AUTHOR>
@@ -80,13 +93,18 @@ Selected references and readings for <Acronym>SQL</Acronym> and <ProductName>Pos
 -->
 </BIBLIOENTRY>
 
-<BIBLIOENTRY ID="MELT93">
+<BIBLIOENTRY>
 <!--
 <BIBLIOMISC>&dash;</BIBLIOMISC>
 
 <BOOKBIBLIO ID="MELT93">
 -->
-<TITLE>Understanding the New <Acronym>SQL</Acronym></TITLE>
+<TITLE ID="MELT93-full">
+Understanding the New <Acronym>SQL</Acronym>
+</TITLE>
+<TITLEABBREV ID="MELT93">
+Melton and Simon, 1993
+</TITLEABBREV>
 <SUBTITLE>A complete guide</SUBTITLE>
 <AUTHORGROUP>
 <AUTHOR>
@@ -121,19 +139,24 @@ Selected references and readings for <Acronym>SQL</Acronym> and <ProductName>Pos
 <TITLE>PostgreSQL-Specific Documentation</TITLE>
 <PARA>This section is for related documentation.</PARA>
 
-<BIBLIOENTRY ID="ADMIN-GUIDE">
+<BIBLIOENTRY>
 <!--
 <BIBLIOMISC>&dash;</BIBLIOMISC>
 
 <BOOKBIBLIO ID="ADMINISTRATORS-GUIDE">
 -->
-<TITLE>The <ProductName>PostgreSQL</ProductName> Administrator's Guide</TITLE>
+<TITLE ID="admin-guide-full">
+The <ProductName>PostgreSQL</ProductName> Administrator's Guide
+</TITLE>
+<TITLEABBREV ID="admin-guide">
+The Administrator's Guide
+</TITLEABBREV>
 <Editor>
 <FIRSTNAME>Thomas</FIRSTNAME>
 <SURNAME>Lockhart</SURNAME>
 </Editor>
 
-<PUBDATE>1998-03-01</PUBDATE>
+<PUBDATE>1998-10-01</PUBDATE>
 <PUBLISHER>
 <PUBLISHERNAME>The PostgreSQL Global Development Group</PUBLISHERNAME>
 </PUBLISHER>
@@ -142,19 +165,24 @@ Selected references and readings for <Acronym>SQL</Acronym> and <ProductName>Pos
 -->
 </BIBLIOENTRY>
 
-<BIBLIOENTRY ID="DEVELOPERS-GUIDE">
+<BIBLIOENTRY>
 <!--
 <BIBLIOMISC>&dash;</BIBLIOMISC>
 
 <BOOKBIBLIO ID="POSTGRES-REFERENCE">
 -->
-<TITLE>The <ProductName>PostgreSQL</ProductName> Developer's Guide</TITLE>
+<TITLE ID="dev-guide-full">
+The <ProductName>PostgreSQL</ProductName> Developer's Guide
+</TITLE>
+<TITLEABBREV ID="dev-guide">
+The Developer's Guide
+</TITLEABBREV>
 <Editor>
 <FIRSTNAME>Thomas</FIRSTNAME>
 <SURNAME>Lockhart</SURNAME>
 </Editor>
 
-<PUBDATE>1998-03-01</PUBDATE>
+<PUBDATE>1998-10-01</PUBDATE>
 <PUBLISHER>
 <PUBLISHERNAME>The PostgreSQL Global Development Group</PUBLISHERNAME>
 </PUBLISHER>
@@ -163,19 +191,24 @@ Selected references and readings for <Acronym>SQL</Acronym> and <ProductName>Pos
 -->
 </BIBLIOENTRY>
 
-<BIBLIOENTRY ID="PROGRAMMERS-GUIDE">
+<BIBLIOENTRY>
 <!--
 <BIBLIOMISC>&dash;</BIBLIOMISC>
 
 <BOOKBIBLIO ID="PROGRAMMERS-GUIDE">
 -->
-<TITLE>The <ProductName>PostgreSQL</ProductName> Programmer's Guide</TITLE>
+<TITLE ID="pro-guide-full">
+The <ProductName>PostgreSQL</ProductName> Programmer's Guide
+</TITLE>
+<TITLEABBREV ID="pro-guide">
+The Programmer's Guide
+</TITLEABBREV>
 <Editor>
 <FIRSTNAME>Thomas</FIRSTNAME>
 <SURNAME>Lockhart</SURNAME>
 </Editor>
 
-<PUBDATE>1998-03-01</PUBDATE>
+<PUBDATE>1998-10-01</PUBDATE>
 <PUBLISHER>
 <PUBLISHERNAME>The PostgreSQL Global Development Group</PUBLISHERNAME>
 </PUBLISHER>
@@ -184,19 +217,24 @@ Selected references and readings for <Acronym>SQL</Acronym> and <ProductName>Pos
 -->
 </BIBLIOENTRY>
 
-<BIBLIOENTRY ID="TUTORIAL-GUIDE">
+<BIBLIOENTRY>
 <!--
 <BIBLIOMISC>&dash;</BIBLIOMISC>
 
 <BOOKBIBLIO ID="TUTORIAL">
 -->
-<TITLE>The <ProductName>PostgreSQL</ProductName> Tutorial Introduction</TITLE>
+<TITLE ID="tutorial-guide-full">
+The <ProductName>PostgreSQL</ProductName> Tutorial Introduction
+</TITLE>
+<TITLEABBREV ID="tutorial-guide">
+The Tutorial
+</TITLEABBREV>
 <Editor>
 <FIRSTNAME>Thomas</FIRSTNAME>
 <SURNAME>Lockhart</SURNAME>
 </Editor>
 
-<PUBDATE>1998-03-01</PUBDATE>
+<PUBDATE>1998-10-01</PUBDATE>
 <PUBLISHER>
 <PUBLISHERNAME>The PostgreSQL Global Development Group</PUBLISHERNAME>
 </PUBLISHER>
@@ -205,19 +243,24 @@ Selected references and readings for <Acronym>SQL</Acronym> and <ProductName>Pos
 -->
 </BIBLIOENTRY>
 
-<BIBLIOENTRY ID="POSTGRES-USERS">
+<BIBLIOENTRY>
 <!--
 <BIBLIOMISC>&dash;</BIBLIOMISC>
 
 <BOOKBIBLIO ID="USERS-GUIDE">
 -->
-<TITLE>The <ProductName>PostgreSQL</ProductName> User's Guide</TITLE>
+<TITLE ID="users-guide-full">
+The <ProductName>PostgreSQL</ProductName> User's Guide
+</TITLE>
+<TITLEABBREV ID="users-guide">
+The User's Guide
+</TITLEABBREV>
 <Editor>
 <FIRSTNAME>Thomas</FIRSTNAME>
 <SURNAME>Lockhart</SURNAME>
 </Editor>
 
-<PUBDATE>1998-03-01</PUBDATE>
+<PUBDATE>1998-10-01</PUBDATE>
 <PUBLISHER>
 <PUBLISHERNAME>The PostgreSQL Global Development Group</PUBLISHERNAME>
 </PUBLISHER>
@@ -226,14 +269,18 @@ Selected references and readings for <Acronym>SQL</Acronym> and <ProductName>Pos
 -->
 </BIBLIOENTRY>
 
-<BIBLIOENTRY ID="YU95">
+<BIBLIOENTRY>
 <!--
 <BIBLIOMISC>&dash;</BIBLIOMISC>
 
 <BOOKBIBLIO ID="YU95">
 -->
-<TITLE>The <ProductName>Postgres95</ProductName> User Manual</TITLE>
-<TITLEABBREV>YU95</TITLEABBREV>
+<TITLE ID="YU95-full">
+The <ProductName>Postgres95</ProductName> User Manual
+</TITLE>
+<TITLEABBREV ID="YU95">
+Yu and Chen, 1995
+</TITLEABBREV>
 <AUTHORGROUP>
 <AUTHOR>
 <FIRSTNAME>A.</FIRSTNAME>
@@ -266,14 +313,18 @@ The POSTGRES Group
 <TITLE>Proceedings and Articles</TITLE>
 <PARA>This section is for articles and newsletters.</PARA>
 
-<BIBLIOENTRY ID="ONG90">
+<BIBLIOENTRY>
 <!--
 <BIBLIOMISC>&dash;</BIBLIOMISC>
 
 <BOOKBIBLIO ID="ONG90">
 -->
-<TITLE>A Unified Framework for Version Modeling Using Production Rules in a Database System</TITLE>
-<TITLEABBREV>ONG90</TITLEABBREV>
+<TITLE ID="ONG90-full">
+A Unified Framework for Version Modeling Using Production Rules in a Database System
+</TITLE>
+<TITLEABBREV ID="ONG90">
+Ong and Goh, 1990
+</TITLEABBREV>
 <AUTHORGROUP>
 <AUTHOR>
 <FIRSTNAME>L.</FIRSTNAME>
@@ -294,14 +345,18 @@ The POSTGRES Group
 -->
 </BIBLIOENTRY>
 
-<BIBLIOENTRY ID="ROWE87">
+<BIBLIOENTRY>
 <!--
 <BIBLIOMISC>&dash;</BIBLIOMISC>
 
 <BOOKBIBLIO ID="ROWE87">
 -->
-<TITLE>The <ProductName>Postgres</ProductName> Data Model</TITLE>
-<TITLEABBREV>ROWE87</TITLEABBREV>
+<TITLE ID="ROWE87-full">
+The <ProductName>Postgres</ProductName> Data Model
+</TITLE>
+<TITLEABBREV ID="ROWE87">
+Rowe and Stonebraker, 1987
+</TITLEABBREV>
 <AUTHORGROUP>
 <AUTHOR>
 <FIRSTNAME>L.</FIRSTNAME>
@@ -322,14 +377,19 @@ The POSTGRES Group
 -->
 </BIBLIOENTRY>
 
-<BIBLIOENTRY ID="STON86">
+<BIBLIOENTRY>
 <!--
 <BIBLIOMISC>&dash;</BIBLIOMISC>
 
 <BOOKBIBLIO ID="STON86">
 -->
-<TITLE>The Design of <ProductName>Postgres</ProductName></TITLE>
-<TITLEABBREV>STON86</TITLEABBREV>
+<TITLE ID="STON86-full">
+The Design of <ProductName>Postgres</ProductName>
+</TITLE>
+<TITLEABBREV ID="STON86">
+Stonebraker and Rowe, 1986
+STON86
+</TITLEABBREV>
 <AUTHORGROUP>
 <AUTHOR>
 <FIRSTNAME>M.</FIRSTNAME>
@@ -351,14 +411,17 @@ The POSTGRES Group
 -->
 </BIBLIOENTRY>
 
-<BIBLIOENTRY ID="STON87a">
+<BIBLIOENTRY>
 <!--
 <BIBLIOMISC>&dash;</BIBLIOMISC>
 
 <BOOKBIBLIO ID="STON87a">
 -->
-<TITLE>The Design of the <ProductName>Postgres</ProductName> Rules System</TITLE>
-<TITLEABBREV>STON87a</TITLEABBREV>
+<TITLE ID="STON87a-full">
+The Design of the <ProductName>Postgres</ProductName> Rules System</TITLE>
+<TITLEABBREV ID="STON87a">
+Stonebraker, Hanson, Hong, 1987
+</TITLEABBREV>
 <AUTHORGROUP>
 <AUTHOR>
 <FIRSTNAME>M.</FIRSTNAME>
@@ -384,14 +447,18 @@ The POSTGRES Group
 -->
 </BIBLIOENTRY>
 
-<BIBLIOENTRY ID="STON87b">
+<BIBLIOENTRY>
 <!--
 <BIBLIOMISC>&dash;</BIBLIOMISC>
 
 <BOOKBIBLIO ID="STON87b">
 -->
-<TITLE>The <ProductName>Postgres</ProductName> Storage System</TITLE>
-<TITLEABBREV>STON87b</TITLEABBREV>
+<TITLE ID="STON87b-full">
+The <ProductName>Postgres</ProductName> Storage System
+</TITLE>
+<TITLEABBREV ID="STON87b">
+Stonebraker, 1987
+</TITLEABBREV>
 <AUTHORGROUP>
 <AUTHOR>
 <FIRSTNAME>M.</FIRSTNAME>
@@ -408,14 +475,17 @@ The POSTGRES Group
 -->
 </BIBLIOENTRY>
 
-<BIBLIOENTRY ID="STON89">
+<BIBLIOENTRY>
 <!--
 <BIBLIOMISC>&dash;</BIBLIOMISC>
 
 <BOOKBIBLIO ID="STON89">
 -->
-<TITLE>A Commentary on the <ProductName>Postgres</ProductName> Rules System</TITLE>
-<TITLEABBREV>STON89</TITLEABBREV>
+<TITLE ID="STON89-full">
+A Commentary on the <ProductName>Postgres</ProductName> Rules System
+</TITLE>
+<TITLEABBREV ID="STON89">
+Stonebraker et al, 1989</TITLEABBREV>
 <AUTHORGROUP>
 <AUTHOR>
 <FIRSTNAME>M.</FIRSTNAME>
@@ -434,21 +504,25 @@ The POSTGRES Group
 <CONFDATES>Sept. 1989</CONFDATES>
 <CONFTITLE>Record 18(3)</CONFTITLE>
 <CONFSPONSOR>SIGMOD</CONFSPONSOR>
-<CONFNUM>1987</CONFNUM>
+<CONFNUM>1989</CONFNUM>
 </CONFGROUP>
 <!--
 </BOOKBIBLIO>
 -->
 </BIBLIOENTRY>
 
-<BIBLIOENTRY ID="STON90a">
+<BIBLIOENTRY>
 <!--
 <BIBLIOMISC>&dash;</BIBLIOMISC>
 
 <BOOKBIBLIO ID="STON90a">
 -->
-<TITLE>The Implementation of <ProductName>Postgres</ProductName></TITLE>
-<TITLEABBREV>STON90a</TITLEABBREV>
+<TITLE ID="STON90a-full">
+The Implementation of <ProductName>Postgres</ProductName>
+</TITLE>
+<TITLEABBREV ID="STON90a">
+Stonebraker, Rowe, Hirohama, 1990
+</TITLEABBREV>
 <AUTHORGROUP>
 <AUTHOR>
 <FIRSTNAME>M.</FIRSTNAME>
@@ -473,21 +547,25 @@ The POSTGRES Group
 -->
 </BIBLIOENTRY>
 
-<BIBLIOENTRY ID="STON90b">
+<BIBLIOENTRY>
 <!--
 <BIBLIOMISC>&dash;</BIBLIOMISC>
 
 <BOOKBIBLIO ID="STON90b">
 -->
-<TITLE>On Rules, Procedures, Caching and Views in Database Systems</TITLE>
-<TITLEABBREV>STON90b</TITLEABBREV>
+<TITLE ID="STON90b-full">
+On Rules, Procedures, Caching and Views in Database Systems
+</TITLE>
+<TITLEABBREV ID="STON90b">
+Stonebraker et al, ACM, 1990
+</TITLEABBREV>
 <AUTHORGROUP>
 <AUTHOR>
 <FIRSTNAME>M.</FIRSTNAME>
 <SURNAME>Stonebraker</SURNAME>
 </AUTHOR>
 <AUTHOR>
-<SURNAME>et. al.</SURNAME>
+<SURNAME>et al</SURNAME>
 </AUTHOR>
 </AUTHORGROUP>
 <CONFGROUP>
