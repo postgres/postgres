@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/optimizer/plan/initsplan.c,v 1.75 2002/09/04 20:31:21 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/optimizer/plan/initsplan.c,v 1.75.2.1 2003/02/07 00:02:43 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -443,7 +443,8 @@ distribute_qual_to_rels(Query *root, Node *clause,
 			else
 			{
 				/* this relid is for a true baserel */
-				newrelids = lappendi(newrelids, lfirsti(relid));
+				if (!intMember(lfirsti(relid), newrelids))
+					newrelids = lappendi(newrelids, lfirsti(relid));
 			}
 		}
 		relids = newrelids;
