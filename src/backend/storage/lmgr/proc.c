@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/storage/lmgr/proc.c,v 1.92 2001/01/14 05:08:16 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/storage/lmgr/proc.c,v 1.93 2001/01/16 06:11:34 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -48,7 +48,7 @@
  *		This is so that we can support more backends. (system-wide semaphore
  *		sets run out pretty fast.)				  -ay 4/95
  *
- * $Header: /cvsroot/pgsql/src/backend/storage/lmgr/proc.c,v 1.92 2001/01/14 05:08:16 tgl Exp $
+ * $Header: /cvsroot/pgsql/src/backend/storage/lmgr/proc.c,v 1.93 2001/01/16 06:11:34 tgl Exp $
  */
 #include "postgres.h"
 
@@ -230,7 +230,7 @@ InitProcess(void)
 		}
 
 		/* this cannot be initialized until after the buffer pool */
-		SHMQueueInit(&(MyProc->lockQueue));
+		SHMQueueInit(&(MyProc->holderQueue));
 	}
 
 	/*
@@ -311,8 +311,8 @@ ZeroProcSemaphore(PROC *proc)
  * Locktable lock must be held by caller.
  *
  * NB: this does not remove the process' holder object, nor the lock object,
- * even though their holder counts might now have gone to zero.  That will
- * happen during a subsequent LockReleaseAll call, which we expect will happen
+ * even though their counts might now have gone to zero.  That will happen
+ * during a subsequent LockReleaseAll call, which we expect will happen
  * during transaction cleanup.  (Removal of a proc from its wait queue by
  * this routine can only happen if we are aborting the transaction.)
  */
@@ -331,14 +331,14 @@ RemoveFromWaitQueue(PROC *proc)
 	SHMQueueDelete(&(proc->links));
 	waitLock->waitProcs.size--;
 
-	/* Undo increments of holder counts by waiting process */
-	Assert(waitLock->nHolding > 0);
-	Assert(waitLock->nHolding > proc->waitLock->nActive);
-	waitLock->nHolding--;
-	Assert(waitLock->holders[lockmode] > 0);
-	waitLock->holders[lockmode]--;
+	/* Undo increments of request counts by waiting process */
+	Assert(waitLock->nRequested > 0);
+	Assert(waitLock->nRequested > proc->waitLock->nGranted);
+	waitLock->nRequested--;
+	Assert(waitLock->requested[lockmode] > 0);
+	waitLock->requested[lockmode]--;
 	/* don't forget to clear waitMask bit if appropriate */
-	if (waitLock->activeHolders[lockmode] == waitLock->holders[lockmode])
+	if (waitLock->granted[lockmode] == waitLock->requested[lockmode])
 		waitLock->waitMask &= ~(1 << lockmode);
 
 	/* Clean up the proc's own state */
@@ -546,7 +546,7 @@ ProcSleep(LOCKMETHODCTL *lockctl,
 	int			waitMask = lock->waitMask;
 	PROC	   *proc;
 	int			i;
-	int			aheadHolders[MAX_LOCKMODES];
+	int			aheadGranted[MAX_LOCKMODES];
 	bool		selfConflict = (lockctl->conflictTab[lockmode] & myMask),
 				prevSame = false;
 #ifndef __BEOS__
@@ -559,7 +559,7 @@ ProcSleep(LOCKMETHODCTL *lockctl,
 	MyProc->waitLock = lock;
 	MyProc->waitHolder = holder;
 	MyProc->waitLockMode = lockmode;
-	/* We assume the caller set up MyProc->holdLock */
+	/* We assume the caller set up MyProc->heldLocks */
 
 	proc = (PROC *) MAKE_PTR(waitQueue->links.prev);
 
@@ -567,57 +567,61 @@ ProcSleep(LOCKMETHODCTL *lockctl,
 	if (!(lockctl->conflictTab[lockmode] & waitMask))
 		goto ins;
 
+	/* otherwise, determine where we should go into the queue */
 	for (i = 1; i < MAX_LOCKMODES; i++)
-		aheadHolders[i] = lock->activeHolders[i];
-	(aheadHolders[lockmode])++;
+		aheadGranted[i] = lock->granted[i];
+	(aheadGranted[lockmode])++;
 
 	for (i = 0; i < waitQueue->size; i++)
 	{
-		/* am I waiting for him ? */
-		if (lockctl->conflictTab[lockmode] & proc->holdLock)
+		LOCKMODE	procWaitMode = proc->waitLockMode;
+
+		/* must I wait for him ? */
+		if (lockctl->conflictTab[lockmode] & proc->heldLocks)
 		{
 			/* is he waiting for me ? */
-			if (lockctl->conflictTab[proc->waitLockMode] & MyProc->holdLock)
+			if (lockctl->conflictTab[procWaitMode] & MyProc->heldLocks)
 			{
 				/* Yes, report deadlock failure */
 				MyProc->errType = STATUS_ERROR;
 				goto rt;
 			}
-			/* being waiting for him - go past */
+			/* I must go after him in queue - so continue loop */
 		}
-		/* if he waits for me */
-		else if (lockctl->conflictTab[proc->waitLockMode] & MyProc->holdLock)
+		/* if he waits for me, go before him in queue */
+		else if (lockctl->conflictTab[procWaitMode] & MyProc->heldLocks)
 			break;
 		/* if conflicting locks requested */
-		else if (lockctl->conflictTab[proc->waitLockMode] & myMask)
+		else if (lockctl->conflictTab[procWaitMode] & myMask)
 		{
 
 			/*
 			 * If I request non self-conflicting lock and there are others
-			 * requesting the same lock just before me - stay here.
+			 * requesting the same lock just before this guy - stop here.
 			 */
 			if (!selfConflict && prevSame)
 				break;
 		}
 
 		/*
-		 * Last attempt to don't move any more: if we don't conflict with
-		 * rest waiters in queue.
+		 * Last attempt to not move any further to the back of the queue:
+		 * if we don't conflict with remaining waiters, stop here.
 		 */
 		else if (!(lockctl->conflictTab[lockmode] & waitMask))
 			break;
 
-		prevSame = (proc->waitLockMode == lockmode);
-		(aheadHolders[proc->waitLockMode])++;
-		if (aheadHolders[proc->waitLockMode] == lock->holders[proc->waitLockMode])
-			waitMask &= ~(1 << proc->waitLockMode);
+		/* Move past this guy, and update state accordingly */
+		prevSame = (procWaitMode == lockmode);
+		(aheadGranted[procWaitMode])++;
+		if (aheadGranted[procWaitMode] == lock->requested[procWaitMode])
+			waitMask &= ~(1 << procWaitMode);
 		proc = (PROC *) MAKE_PTR(proc->links.prev);
 	}
 
 ins:;
 	/* -------------------
-	 * Insert self into queue.  These operations are atomic (because
-	 * of the spinlock).
+	 * Insert self into queue, ahead of the given proc.
+	 * These operations are atomic (because of the spinlock).
 	 * -------------------
 	 */
 	SHMQueueInsertTL(&(proc->links), &(MyProc->links));
@@ -838,7 +842,7 @@ nextProc:
 void
 ProcAddLock(SHM_QUEUE *elem)
 {
-	SHMQueueInsertTL(&MyProc->lockQueue, elem);
+	SHMQueueInsertTL(&MyProc->holderQueue, elem);
 }
 
 /* --------------------

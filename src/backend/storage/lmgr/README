@@ -1,4 +1,4 @@
-$Header: /cvsroot/pgsql/src/backend/storage/lmgr/README,v 1.4 2000/12/22 00:51:54 tgl Exp $
+$Header: /cvsroot/pgsql/src/backend/storage/lmgr/README,v 1.5 2001/01/16 06:11:34 tgl Exp $
 
 There are two fundamental lock structures: the per-lockable-object LOCK
 struct, and the per-lock-holder HOLDER struct.  A LOCK object exists
@@ -44,51 +44,52 @@ tag -
 	only a single table (see Gray's paper on 2 phase locking if
 	you are puzzled about how multi-level lock tables work).
 
-mask -
-    This field indicates what types of locks are currently held on the
+grantMask -
+    This bitmask indicates what types of locks are currently held on the
     given lockable object.  It is used (against the lock table's conflict
-    table) to determine if the new lock request will conflict with existing
+    table) to determine if a new lock request will conflict with existing
     lock types held.  Conficts are determined by bitwise AND operations
-    between the mask and the conflict table entry for the given lock type
-    to be set.  The current representation is that each bit (1 through 5)
-    is set when that lock type (WRITE, READ, WRITE INTENT, READ INTENT, EXTEND)
-    has been acquired for the lock.
+    between the grantMask and the conflict table entry for the requested
+    lock type.  Bit i of grantMask is 1 if and only if granted[i] > 0.
+
+waitMask -
+    This bitmask shows the types of locks being waited for.  Bit i of waitMask
+    is 1 if and only if requested[i] > granted[i].
 
 waitProcs -
     This is a shared memory queue of all process structures corresponding to
     a backend that is waiting (sleeping) until another backend releases this
     lock.  The process structure holds the information needed to determine
-    if it should be woken up when this lock is released.  If, for example,
-    we are releasing a read lock and the process is sleeping trying to acquire
-    a read lock then there is no point in waking it since the lock being
-    released isn't what caused it to sleep in the first place.  There will
-    be more on this below (when I get to releasing locks and waking sleeping
-    process routines).
+    if it should be woken up when this lock is released.
 
-nHolding -
+nRequested -
     Keeps a count of how many times this lock has been attempted to be
     acquired.  The count includes attempts by processes which were put
     to sleep due to conflicts.  It also counts the same backend twice
     if, for example, a backend process first acquires a read and then
-    acquires a write.
+    acquires a write, or acquires a read lock twice.
 
-holders -
+requested -
     Keeps a count of how many locks of each type have been attempted.  Only
-    elements 1 through MAX_LOCK_TYPES are used as they correspond to the lock
-    type defined constants (WRITE through EXTEND).  Summing the values of
-    holders should come out equal to nHolding.
+    elements 1 through MAX_LOCKMODES-1 are used as they correspond to the lock
+    type defined constants.  Summing the values of requested[] should come out
+    equal to nRequested.
 
-nActive -
-    Keeps a count of how many times this lock has been succesfully acquired.
+nGranted -
+    Keeps count of how many times this lock has been successfully acquired.
     This count does not include attempts that are waiting due to conflicts,
     but can count the same backend twice (e.g. a read then a write -- since
-    its the same transaction this won't cause a conflict)
+    its the same transaction this won't cause a conflict).
 
-activeHolders -
-    Keeps a count of how locks of each type are currently held.  Once again
-    only elements 1 through MAX_LOCK_TYPES are used (0 is not).  Also, like
-    holders, summing the values of activeHolders should total to the value
-    of nActive.
+granted -
+    Keeps count of how many locks of each type are currently held.  Once again
+    only elements 1 through MAX_LOCKMODES-1 are used (0 is not).  Also, like
+    requested, summing the values of granted should total to the value
+    of nGranted.
+
+We should always have 0 <= nGranted <= nRequested, and
+0 <= granted[i] <= requested[i] for each i.  If the request counts go to
+zero, the lock object is no longer needed and can be freed.
 
 ---------------------------------------------------------------------------
 
@@ -116,14 +117,12 @@ tag -
     are always session locks, and we also use session locks for multi-
     transaction operations like VACUUM.
 
-holders -
+holding -
     The number of successfully acquired locks of each type for this holder.
-    (CAUTION: the semantics are not the same as the LOCK's holder[], which
-    counts both acquired and pending requests.  Probably a different name
-    should be used...)
+    This should be <= the corresponding granted[] value of the lock object!
 
 nHolding -
-    Sum of the holders[] array.
+    Sum of the holding[] array.
 
 queue -
     List link for shared memory queue of all the HOLDER objects for the

@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2000, PostgreSQL, Inc
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Id: proc.h,v 1.34 2001/01/14 05:08:16 tgl Exp $
+ * $Id: proc.h,v 1.35 2001/01/16 06:11:34 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -27,13 +27,20 @@ typedef struct
 } SEMA;
 
 /*
- * Each backend has:
+ * Each backend has a PROC struct in shared memory.  There is also a list
+ * of currently-unused PROC structs that will be reallocated to new backends
+ * (a fairly pointless optimization, but it's there anyway).
+ *
+ * links: list link for any list the PROC is in.  When waiting for a lock,
+ * the PROC is linked into that lock's waitProcs queue.  A recycled PROC
+ * is linked into ProcGlobal's freeProcs list.
  */
 struct proc
 {
 	/* proc->links MUST BE THE FIRST ELEMENT OF STRUCT (see ProcWakeup()) */
 
-	SHM_QUEUE	links;			/* proc can be waiting for one event(lock) */
+	SHM_QUEUE	links;			/* list link if process is in a list */
+
 	SEMA		sem;			/* ONE semaphore to sleep on */
 	int			errType;		/* error code tells why we woke up */
 
@@ -48,16 +55,17 @@ struct proc
 
 	/* Info about lock the process is currently waiting for, if any */
 	LOCK	   *waitLock;		/* Lock object we're sleeping on ... */
-	HOLDER	   *waitHolder;		/* Per-holder info for our lock */
+	HOLDER	   *waitHolder;		/* Per-holder info for awaited lock */
 	LOCKMODE	waitLockMode;	/* type of lock we're waiting for */
-	LOCKMASK	holdLock;		/* bitmask for lock types already held */
+	LOCKMASK	heldLocks;		/* bitmask for lock types already held on
+								 * this lock object by this backend */
 
 	int			pid;			/* This backend's process id */
 	Oid			databaseId;		/* OID of database this backend is using */
 
 	short		sLocks[MAX_SPINS];		/* Spin lock stats */
-	SHM_QUEUE	lockQueue;		/* locks associated with current
-								 * transaction */
+	SHM_QUEUE	holderQueue;	/* list of HOLDER objects for locks held or
+								 * awaited by this backend */
 };
 
 /* NOTE: "typedef struct proc PROC" appears in storage/lock.h. */
