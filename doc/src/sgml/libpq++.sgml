@@ -737,14 +737,14 @@
     As an example:
     
     <programlisting>
-	PgDatabase data;
-	data.Exec("create table foo (a int4, b char16, d float8)");
-	data.Exec("copy foo from stdin");
-	data.putline("3\etHello World\et4.5\en");
-	data.putline("4\etGoodbye World\et7.11\en");
-	&amp;...
-	data.putline(".\en");
-	data.endcopy();
+PgDatabase data;
+data.Exec("create table foo (a int4, b char(16), d float8)");
+data.Exec("copy foo from stdin");
+data.putline("3\etHello World\et4.5\en");
+data.putline("4\etGoodbye World\et7.11\en");
+&amp;...
+data.putline(".\en");
+data.endcopy();
     </programlisting>
    </para>
   </sect1>
