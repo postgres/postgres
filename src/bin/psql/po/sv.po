@@ -2,7 +2,7 @@
 # Peter Eisentraut <peter_e@gmx.net>, 2001.
 # Dennis Björklund <db@zigo.dhs.org>, 2002, 2003, 2004.
 #
-# $PostgreSQL: pgsql/src/bin/psql/po/sv.po,v 1.29 2004/08/04 16:40:11 dennis Exp $
+# $PostgreSQL: pgsql/src/bin/psql/po/sv.po,v 1.30 2004/09/01 10:03:47 dennis Exp $
 #
 # Use these quotes: "%s"
 #
@@ -10,8 +10,8 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PostgreSQL 8.0\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2004-08-04 18:17+0200\n"
-"PO-Revision-Date: 2004-08-04 18:37+0200\n"
+"POT-Creation-Date: 2004-09-01 11:56+0200\n"
+"PO-Revision-Date: 2004-09-01 12:03+0200\n"
 "Last-Translator: Dennis Björklund <db@zigo.dhs.org>\n"
 "Language-Team: Swedish <sv@li.org>\n"
 "MIME-Version: 1.0\n"
@@ -47,257 +47,257 @@ msgstr "kunde inte hämta hemkatalogen: %s\n"
 msgid "\\%s: could not change directory to \"%s\": %s\n"
 msgstr "\\%s: kunde inte byta katalog till \"%s\": %s\n"
 
-#: command.c:370 command.c:759
+#: command.c:370 command.c:760
 msgid "no query buffer\n"
 msgstr "ingen frågebuffert\n"
 
-#: command.c:432
+#: command.c:433
 #, c-format
 msgid "%s: invalid encoding name or conversion procedure not found\n"
 msgstr "%s: ogiltigt kodningsnamn eller konverteringsprocedur hittades inte\n"
 
-#: command.c:500 command.c:534 command.c:548 command.c:565 command.c:611
-#: command.c:739 command.c:770
+#: command.c:501 command.c:535 command.c:549 command.c:566 command.c:612
+#: command.c:740 command.c:771
 #, c-format
 msgid "\\%s: missing required argument\n"
 msgstr "\\%s: obligatoriskt argument saknas\n"
 
-#: command.c:597
+#: command.c:598
 msgid "Query buffer is empty."
 msgstr "Frågebufferten är tom."
 
-#: command.c:631
+#: command.c:632
 msgid "Query buffer reset (cleared)."
 msgstr "Frågebufferten har blivit borttagen."
 
-#: command.c:645
+#: command.c:646
 #, c-format
 msgid "Wrote history to file \"%s\".\n"
 msgstr "Kommandohistorien har skrivits till \"%s\".\n"
 
-#: command.c:680 common.c:86 common.c:100 mainloop.c:70
+#: command.c:681 common.c:85 common.c:99 mainloop.c:71
 msgid "out of memory\n"
 msgstr "minnet slut\n"
 
-#: command.c:695 command.c:744
+#: command.c:696 command.c:745
 #, c-format
 msgid "\\%s: error\n"
 msgstr "\\%s: fel\n"
 
-#: command.c:725
+#: command.c:726
 msgid "Timing is on."
 msgstr "Tidtagning är på."
 
-#: command.c:727
+#: command.c:728
 msgid "Timing is off."
 msgstr "Tidtagning är av."
 
-#: command.c:787 command.c:807 command.c:1163 command.c:1170 command.c:1180
-#: command.c:1192 command.c:1205 command.c:1219 command.c:1241 command.c:1272
-#: common.c:171 copy.c:539 copy.c:584
+#: command.c:788 command.c:808 command.c:1164 command.c:1171 command.c:1181
+#: command.c:1193 command.c:1206 command.c:1220 command.c:1242 command.c:1273
+#: common.c:170 copy.c:530 copy.c:575
 #, c-format
 msgid "%s: %s\n"
 msgstr "%s: %s\n"
 
-#: command.c:914 command.c:938 startup.c:184 startup.c:202
+#: command.c:915 command.c:939 startup.c:184 startup.c:202
 msgid "Password: "
 msgstr "Lösenord: "
 
-#: command.c:952 common.c:217 common.c:599 common.c:654 common.c:897
+#: command.c:953 common.c:216 common.c:605 common.c:660 common.c:903
 #, c-format
 msgid "%s"
 msgstr "%s"
 
-#: command.c:956
+#: command.c:957
 msgid "Previous connection kept\n"
 msgstr "Föregående förbindelse bevarad\n"
 
-#: command.c:968
+#: command.c:969
 #, c-format
 msgid "\\connect: %s"
 msgstr "\\connect: %s"
 
-#: command.c:980
+#: command.c:981
 #, c-format
 msgid "You are now connected to database \"%s\".\n"
 msgstr "Du är nu uppkopplad mot databasen \"%s\".\n"
 
-#: command.c:982
+#: command.c:983
 #, c-format
 msgid "You are now connected as new user \"%s\".\n"
 msgstr "Du är nu uppkopplad som ny användare \"%s\".\n"
 
-#: command.c:985
+#: command.c:986
 #, c-format
 msgid "You are now connected to database \"%s\" as user \"%s\".\n"
 msgstr "Du är nu uppkopplad mot databasen \"%s\" som användare \"%s\".\n"
 
-#: command.c:1102
+#: command.c:1103
 #, c-format
 msgid "could not start editor \"%s\"\n"
 msgstr "kunde inte starta editorn \"%s\"\n"
 
-#: command.c:1104
+#: command.c:1105
 msgid "could not start /bin/sh\n"
 msgstr "kunde inte starta /bin/sh\n"
 
-#: command.c:1148
+#: command.c:1149
 #, c-format
 msgid "could not open temporary file \"%s\": %s\n"
 msgstr "kunde inte öppna temporär fil \"%s\": %s\n"
 
-#: command.c:1340
+#: command.c:1341
 msgid "\\pset: allowed formats are unaligned, aligned, html, latex\n"
 msgstr "\\pset: tillåtna formaten är unaligned, aligned, html, latex\n"
 
-#: command.c:1345
+#: command.c:1346
 #, c-format
 msgid "Output format is %s.\n"
 msgstr "Utdataformatet är \"%s\".\n"
 
-#: command.c:1355
+#: command.c:1356
 #, c-format
 msgid "Border style is %d.\n"
 msgstr "Ramstil är %d.\n"
 
-#: command.c:1364
+#: command.c:1365
 #, c-format
 msgid "Expanded display is on.\n"
 msgstr "Utökad visning är på.\n"
 
-#: command.c:1365
+#: command.c:1366
 #, c-format
 msgid "Expanded display is off.\n"
 msgstr "Utökad visning är av.\n"
 
-#: command.c:1377
+#: command.c:1378
 #, c-format
 msgid "Null display is \"%s\".\n"
 msgstr "Null-visare är \"%s\".\n"
 
-#: command.c:1389
+#: command.c:1390
 #, c-format
 msgid "Field separator is \"%s\".\n"
 msgstr "Fältseparatorn är \"%s\".\n"
 
-#: command.c:1403
+#: command.c:1404
 #, c-format
 msgid "Record separator is <newline>."
 msgstr "Postseparatorn är <nyrad>."
 
-#: command.c:1405
+#: command.c:1406
 #, c-format
 msgid "Record separator is \"%s\".\n"
 msgstr "Postseparatorn är \"%s\".\n"
 
-#: command.c:1416
+#: command.c:1417
 msgid "Showing only tuples."
 msgstr "Visar bara tupler."
 
-#: command.c:1418
+#: command.c:1419
 msgid "Tuples only is off."
 msgstr "Visa bara tupler är av."
 
-#: command.c:1434
+#: command.c:1435
 #, c-format
 msgid "Title is \"%s\".\n"
 msgstr "Titeln är \"%s\".\n"
 
-#: command.c:1436
+#: command.c:1437
 #, c-format
 msgid "Title is unset.\n"
 msgstr "Titeln är inte satt.\n"
 
-#: command.c:1452
+#: command.c:1453
 #, c-format
 msgid "Table attribute is \"%s\".\n"
 msgstr "Tabellattribut är \"%s\".\n"
 
-#: command.c:1454
+#: command.c:1455
 #, c-format
 msgid "Table attributes unset.\n"
 msgstr "Tabellattribut är ej satt.\n"
 
-#: command.c:1470
+#: command.c:1471
 msgid "Pager is used for long output."
 msgstr "Siduppdelare är på för lång utdata."
 
-#: command.c:1472
+#: command.c:1473
 msgid "Pager is always used."
 msgstr "Siduppdelare används alltid."
 
-#: command.c:1474
+#: command.c:1475
 msgid "Pager usage is off."
 msgstr "Siduppdelare är av."
 
-#: command.c:1485
+#: command.c:1486
 msgid "Default footer is on."
 msgstr "Standard sidfot är på."
 
-#: command.c:1487
+#: command.c:1488
 msgid "Default footer is off."
 msgstr "Standard sidfot är av."
 
-#: command.c:1493
+#: command.c:1494
 #, c-format
 msgid "\\pset: unknown option: %s\n"
 msgstr "\\pset: okänd parameter: %s\n"
 
-#: command.c:1532
+#: command.c:1533
 msgid "\\!: failed\n"
 msgstr "\\!: misslyckades\n"
 
-#: common.c:79
+#: common.c:78
 #, c-format
 msgid "%s: xstrdup: cannot duplicate null pointer (internal error)\n"
 msgstr "%s: xstrdup: kan inte kopiera null-pekare (internt fel)\n"
 
-#: common.c:124
+#: common.c:123
 msgid "out of memory"
 msgstr "minnet slut"
 
-#: common.c:299
+#: common.c:298
 msgid "connection to server was lost\n"
 msgstr "förbindelsen till servern har brutits\n"
 
-#: common.c:303
+#: common.c:302
 msgid "The connection to the server was lost. Attempting reset: "
 msgstr "Förbindelsen till servern har brutits. Försöker starta om: "
 
-#: common.c:308
+#: common.c:307
 msgid "Failed.\n"
 msgstr "Misslyckades.\n"
 
-#: common.c:315
+#: common.c:314
 msgid "Succeeded.\n"
 msgstr "Lyckades.\n"
 
-#: common.c:383
+#: common.c:391
 #, c-format
 msgid "INTERNAL ERROR: unexpected statement position \"%s\"\n"
 msgstr "INTERNT FEL: felaktig sats-position \"%s\"\n"
 
-#: common.c:519
+#: common.c:527
 #, c-format
 msgid "LINE %d: "
 msgstr "RAD %d: "
 
-#: common.c:538 common.c:547
+#: common.c:544 common.c:553
 #, c-format
 msgid "%s\n"
 msgstr "%s\n"
 
-#: common.c:630 common.c:865
+#: common.c:636 common.c:871
 msgid "You are currently not connected to a database.\n"
 msgstr "Du är för närvarande inte uppkopplad mot en databas.\n"
 
-#: common.c:685
+#: common.c:691
 #, c-format
 msgid ""
 "Asynchronous notification \"%s\" received from server process with PID %d.\n"
 msgstr "Asynkron notificering \"%s\" mottagen från serverprocess med PID %d.\n"
 
-#: common.c:873
+#: common.c:879
 #, c-format
 msgid ""
 "***(Single step mode: verify command)"
@@ -312,7 +312,7 @@ msgstr ""
 "***(tryck return för att fortsätta eller skriv x och return för att avbryta)"
 "*****\n"
 
-#: common.c:924
+#: common.c:930
 #, c-format
 msgid "Time: %.3f ms\n"
 msgstr "Tid: %.3f ms\n"
@@ -321,31 +321,31 @@ msgstr "Tid: %.3f ms\n"
 msgid "\\copy: arguments required\n"
 msgstr "\\copy: argument krävs\n"
 
-#: copy.c:412
+#: copy.c:408
 #, c-format
 msgid "\\copy: parse error at \"%s\"\n"
 msgstr "\\copy: parsfel vid \"%s\"\n"
 
-#: copy.c:414
+#: copy.c:410
 msgid "\\copy: parse error at end of line\n"
 msgstr "\\copy: parsfel vid radslutet\n"
 
-#: copy.c:550
+#: copy.c:541
 #, c-format
 msgid "%s: cannot copy from/to a directory\n"
 msgstr "%s: kan inte kopiera från/till en katalog\n"
 
-#: copy.c:571
+#: copy.c:562
 #, c-format
 msgid "\\copy: %s"
 msgstr "\\copy: %s"
 
-#: copy.c:575
+#: copy.c:566
 #, c-format
 msgid "\\copy: unexpected response (%d)\n"
 msgstr "\\copy: oväntat svar (%d)\n"
 
-#: copy.c:676
+#: copy.c:668
 msgid ""
 "Enter data to be copied followed by a newline.\n"
 "End with a backslash and a period on a line by itself."
@@ -733,7 +733,8 @@ msgstr "  \\da [MALL]     lista aggregatfunktioner\n"
 #: help.c:214
 #, c-format
 msgid "  \\db [PATTERN]  list tablespaces (add \"+\" for more detail)\n"
-msgstr "  \\db [MALL]     lista tabellutrymmen (lägg till \"+\" för mer detaljer)\n"
+msgstr ""
+"  \\db [MALL]     lista tabellutrymmen (lägg till \"+\" för mer detaljer)\n"
 
 #: help.c:215
 #, c-format
@@ -921,7 +922,7 @@ msgstr ""
 "Ingen hjälp tillgänglig för \"%-.*s\".\n"
 "Försök med \\h utan argument för att se den tillgängliga hjälpen.\n"
 
-#: input.c:215
+#: input.c:214
 #, c-format
 msgid "could not save history to file \"%s\": %s\n"
 msgstr "kunde inte skriva kommandohistorien till \"%s\": %s\n"
@@ -941,9 +942,9 @@ msgstr "%s: aktuell transaktion är avbruten\n"
 msgid "%s: unknown transaction status\n"
 msgstr "%s: okänd transaktionsstatus\n"
 
-#: large_obj.c:255 describe.c:83 describe.c:180 describe.c:253 describe.c:315
-#: describe.c:362 describe.c:462 describe.c:749 describe.c:1472
-#: describe.c:1719
+#: large_obj.c:255 describe.c:83 describe.c:187 describe.c:260 describe.c:322
+#: describe.c:369 describe.c:469 describe.c:758 describe.c:1483
+#: describe.c:1730
 msgid "Description"
 msgstr "Beskrivning"
 
@@ -951,21 +952,21 @@ msgstr "Beskrivning"
 msgid "Large objects"
 msgstr "Stora objekt"
 
-#: mainloop.c:173
+#: mainloop.c:172
 #, c-format
 msgid "Use \"\\q\" to leave %s.\n"
 msgstr "Använd \"\\q\" för att lämna %s.\n"
 
-#: print.c:424
+#: print.c:428
 msgid "(No rows)\n"
 msgstr "(Inga rader)\n"
 
-#: print.c:1193
+#: print.c:1200
 #, c-format
 msgid "(1 row)"
 msgstr "(1 rad)"
 
-#: print.c:1195
+#: print.c:1202
 #, c-format
 msgid "(%d rows)"
 msgstr "(%d rader)"
@@ -979,7 +980,7 @@ msgstr "%s: minnet slut\n"
 msgid "User name: "
 msgstr "Användarnamn: "
 
-#: startup.c:283
+#: startup.c:286
 #, c-format
 msgid ""
 "Welcome to %s %s, the PostgreSQL interactive terminal.\n"
@@ -1000,41 +1001,41 @@ msgstr ""
 "        \\q för att avsluta\n"
 "\n"
 
-#: startup.c:444
+#: startup.c:447
 #, c-format
 msgid "%s: couldn't set printing parameter \"%s\"\n"
 msgstr "%s: kunde inte sätta utskriftsparameter \"%s\"\n"
 
-#: startup.c:490
+#: startup.c:493
 #, c-format
 msgid "%s: could not delete variable \"%s\"\n"
 msgstr "%s: kunde inte ta bort variabeln \"%s\"\n"
 
-#: startup.c:500
+#: startup.c:503
 #, c-format
 msgid "%s: could not set variable \"%s\"\n"
 msgstr "%s: kunde inte sätta variabeln \"%s\"\n"
 
-#: startup.c:531 startup.c:537
+#: startup.c:534 startup.c:540
 #, c-format
 msgid "Try \"%s --help\" for more information.\n"
 msgstr "Försök med \"%s --help\" för mer information.\n"
 
-#: startup.c:555
+#: startup.c:558
 #, c-format
 msgid "%s: warning: extra command-line argument \"%s\" ignored\n"
 msgstr "%s: varning: extra kommandoradsargument \"%s\" ignorerad\n"
 
-#: startup.c:562
+#: startup.c:565
 #, c-format
 msgid "%s: Warning: The -u option is deprecated. Use -U.\n"
 msgstr "%s: Varning: Flaggan -u är förlegad. Använd -U istället.\n"
 
-#: startup.c:626
+#: startup.c:629
 msgid "contains support for command-line editing"
 msgstr "innehåller stöd för kommandoradsredigering"
 
-#: startup.c:649
+#: startup.c:652
 #, c-format
 msgid ""
 "SSL connection (cipher: %s, bits: %i)\n"
@@ -1043,14 +1044,14 @@ msgstr ""
 "SSL-förbindelse (krypto: %s, bitar: %i)\n"
 "\n"
 
-#: describe.c:82 describe.c:170 describe.c:240 describe.c:313 describe.c:408
-#: describe.c:462 describe.c:1465 describe.c:1571 describe.c:1619
+#: describe.c:82 describe.c:177 describe.c:247 describe.c:320 describe.c:415
+#: describe.c:469 describe.c:1476 describe.c:1582 describe.c:1630
 msgid "Schema"
 msgstr "Schema"
 
-#: describe.c:82 describe.c:121 describe.c:170 describe.c:240 describe.c:313
-#: describe.c:355 describe.c:408 describe.c:462 describe.c:1465
-#: describe.c:1572 describe.c:1620 describe.c:1713
+#: describe.c:82 describe.c:128 describe.c:177 describe.c:247 describe.c:320
+#: describe.c:362 describe.c:415 describe.c:469 describe.c:1476
+#: describe.c:1583 describe.c:1631 describe.c:1724
 msgid "Name"
 msgstr "Namn"
 
@@ -1066,217 +1067,222 @@ msgstr "Datatyp"
 msgid "List of aggregate functions"
 msgstr "Lista med aggregatfunktioner"
 
-#: describe.c:121 describe.c:179 describe.c:355 describe.c:1467
-#: describe.c:1713
+#: describe.c:117
+#, c-format
+msgid "This server version (%d) does not support tablespaces.\n"
+msgstr "Denna serverversion (%d) stöder inte tabellutrymmen.\n"
+
+#: describe.c:128 describe.c:186 describe.c:362 describe.c:1478
+#: describe.c:1724
 msgid "Owner"
 msgstr "Ägare"
 
-#: describe.c:121
+#: describe.c:128
 msgid "Location"
 msgstr "Plats"
 
-#: describe.c:126 describe.c:408 describe.c:1719
+#: describe.c:133 describe.c:415 describe.c:1730
 msgid "Access privileges"
 msgstr "Åtkomsträttigheter"
 
-#: describe.c:143
+#: describe.c:150
 msgid "List of tablespaces"
 msgstr "Lista med tabellutrymmen"
 
-#: describe.c:170
+#: describe.c:177
 msgid "Result data type"
 msgstr "Resultatdatatyp"
 
-#: describe.c:171
+#: describe.c:178
 msgid "Argument data types"
 msgstr "Argumentdatatyp"
 
-#: describe.c:179
+#: describe.c:186
 msgid "Language"
 msgstr "Språk"
 
-#: describe.c:180
+#: describe.c:187
 msgid "Source code"
 msgstr "Källkod"
 
-#: describe.c:214
+#: describe.c:221
 msgid "List of functions"
 msgstr "Lista med funktioner"
 
-#: describe.c:250
+#: describe.c:257
 msgid "Internal name"
 msgstr "Internt namn"
 
-#: describe.c:250
+#: describe.c:257
 msgid "Size"
 msgstr "Storlek"
 
-#: describe.c:282
+#: describe.c:289
 msgid "List of data types"
 msgstr "Lista med datatyper"
 
-#: describe.c:314
+#: describe.c:321
 msgid "Left arg type"
 msgstr "Vänster argumenttyp"
 
-#: describe.c:314
+#: describe.c:321
 msgid "Right arg type"
 msgstr "Höger argumenttyp"
 
-#: describe.c:315
+#: describe.c:322
 msgid "Result type"
 msgstr "Resultattyp"
 
-#: describe.c:329
+#: describe.c:336
 msgid "List of operators"
 msgstr "Lista med operatorer"
 
-#: describe.c:358
+#: describe.c:365
 msgid "Encoding"
 msgstr "Kodning"
 
-#: describe.c:374
+#: describe.c:381
 msgid "List of databases"
 msgstr "Lista med databaser"
 
-#: describe.c:408 describe.c:536 describe.c:1466
+#: describe.c:415 describe.c:543 describe.c:1477
 msgid "table"
 msgstr "tabell"
 
-#: describe.c:408 describe.c:536 describe.c:1466
+#: describe.c:415 describe.c:543 describe.c:1477
 msgid "view"
 msgstr "vy"
 
-#: describe.c:408 describe.c:536 describe.c:1466
+#: describe.c:415 describe.c:543 describe.c:1477
 msgid "sequence"
 msgstr "sekvens"
 
-#: describe.c:408 describe.c:736 describe.c:1467 describe.c:1573
+#: describe.c:415 describe.c:745 describe.c:1478 describe.c:1584
 msgid "Type"
 msgstr "Typ"
 
-#: describe.c:430
+#: describe.c:437
 #, c-format
 msgid "Access privileges for database \"%s\""
 msgstr "Åtkomsträttigheter för databasen \"%s\""
 
-#: describe.c:462
+#: describe.c:469
 msgid "Object"
 msgstr "Objekt"
 
-#: describe.c:473
+#: describe.c:480
 msgid "aggregate"
 msgstr "aggregat"
 
-#: describe.c:491
+#: describe.c:498
 msgid "function"
 msgstr "funktion"
 
-#: describe.c:505
+#: describe.c:512
 msgid "operator"
 msgstr "operator"
 
-#: describe.c:519
+#: describe.c:526
 msgid "data type"
 msgstr "datatyp"
 
-#: describe.c:536 describe.c:1466
+#: describe.c:543 describe.c:1477
 msgid "index"
 msgstr "index"
 
-#: describe.c:552
+#: describe.c:559
 msgid "rule"
 msgstr "rule"
 
-#: describe.c:568
+#: describe.c:575
 msgid "trigger"
 msgstr "trigger"
 
-#: describe.c:586
+#: describe.c:593
 msgid "Object descriptions"
 msgstr "Objektbeskrivningar"
 
-#: describe.c:634
+#: describe.c:641
 #, c-format
 msgid "Did not find any relation named \"%s\".\n"
 msgstr "Kunde inte hitta en relation med namn \"%s\".\n"
 
-#: describe.c:720
+#: describe.c:728
 #, c-format
 msgid "Did not find any relation with OID %s.\n"
 msgstr "Kunde inte hitta en relation med OID %s.\n"
 
-#: describe.c:735
+#: describe.c:744
 msgid "Column"
 msgstr "Kolumn"
 
-#: describe.c:743
+#: describe.c:752
 msgid "Modifiers"
 msgstr "Modifierare"
 
-#: describe.c:850
+#: describe.c:859
 #, c-format
 msgid "Table \"%s.%s\""
 msgstr "Tabell \"%s.%s\""
 
-#: describe.c:854
+#: describe.c:863
 #, c-format
 msgid "View \"%s.%s\""
 msgstr "Vy \"%s.%s\""
 
-#: describe.c:858
+#: describe.c:867
 #, c-format
 msgid "Sequence \"%s.%s\""
 msgstr "Sekvens \"%s.%s\""
 
-#: describe.c:862
+#: describe.c:871
 #, c-format
 msgid "Index \"%s.%s\""
 msgstr "Index \"%s.%s\""
 
-#: describe.c:866
+#: describe.c:875
 #, c-format
 msgid "Special relation \"%s.%s\""
 msgstr "Särskild relation \"%s.%s\""
 
-#: describe.c:870
+#: describe.c:879
 #, c-format
 msgid "TOAST table \"%s.%s\""
 msgstr "TOAST-tabell \"%s.%s\""
 
-#: describe.c:874
+#: describe.c:883
 #, c-format
 msgid "Composite type \"%s.%s\""
 msgstr "Sammansatt typ \"%s.%s\""
 
-#: describe.c:878
+#: describe.c:887
 #, c-format
 msgid "?%c? \"%s.%s\""
 msgstr "?%c? \"%s.%s\""
 
-#: describe.c:916
+#: describe.c:925
 msgid "PRIMARY KEY, "
 msgstr "PRIMÄRNYCKEL, "
 
-#: describe.c:918
+#: describe.c:927
 msgid "UNIQUE, "
 msgstr "UNIK, "
 
-#: describe.c:924
+#: describe.c:933
 #, c-format
 msgid "for table \"%s.%s\""
 msgstr "för tabell \"%s.%s\""
 
-#: describe.c:928
+#: describe.c:937
 #, c-format
 msgid ", predicate (%s)"
 msgstr ", predikat (%s)"
 
-#: describe.c:931
+#: describe.c:940
 msgid ", CLUSTER"
 msgstr ", KLUSTER"
 
-#: describe.c:968
+#: describe.c:977
 #, c-format
 msgid ""
 "View definition:\n"
@@ -1285,192 +1291,192 @@ msgstr ""
 "Vydefinition:\n"
 "%s"
 
-#: describe.c:974 describe.c:1195
+#: describe.c:983 describe.c:1204
 msgid "Rules:"
 msgstr "Regler:"
 
-#: describe.c:1129
+#: describe.c:1138
 msgid "Indexes:"
 msgstr "Index:"
 
-#: describe.c:1137
+#: describe.c:1146
 #, c-format
 msgid "    \"%s\""
 msgstr "    \"%s\""
 
-#: describe.c:1143
+#: describe.c:1152
 msgid " PRIMARY KEY,"
 msgstr " PRIMÄRNYCKEL,"
 
-#: describe.c:1145
+#: describe.c:1154
 msgid " UNIQUE,"
 msgstr " UNIK,"
 
-#: describe.c:1156
+#: describe.c:1165
 msgid " CLUSTER"
 msgstr " KLUSTER"
 
-#: describe.c:1165
+#: describe.c:1174
 msgid "Check constraints:"
-msgstr "Kontrollera integritetsvillkor:"
+msgstr "Kontrollvillkor:"
 
-#: describe.c:1169 describe.c:1184
+#: describe.c:1178 describe.c:1193
 #, c-format
 msgid "    \"%s\" %s"
 msgstr "    \"%s\" %s"
 
-#: describe.c:1180
+#: describe.c:1189
 msgid "Foreign-key constraints:"
 msgstr "Främmande nyckel-villkor:"
 
-#: describe.c:1214
+#: describe.c:1223
 msgid "Triggers:"
 msgstr "Utlösare:"
 
-#: describe.c:1236
+#: describe.c:1245
 msgid "Inherits"
 msgstr "Ärver"
 
-#: describe.c:1250
+#: describe.c:1259
 msgid "Contains OIDs"
 msgstr "Innehåller OID:er"
 
-#: describe.c:1252 describe.c:1623 describe.c:1680
+#: describe.c:1262 describe.c:1634 describe.c:1691
 msgid "yes"
 msgstr "ja"
 
-#: describe.c:1252 describe.c:1624 describe.c:1678
+#: describe.c:1262 describe.c:1635 describe.c:1689
 msgid "no"
 msgstr "nej"
 
-#: describe.c:1331
+#: describe.c:1342
 #, c-format
 msgid "Tablespace: \"%s\""
 msgstr "Tabellutrymme: \"%s\""
 
-#: describe.c:1364
+#: describe.c:1375
 msgid "User name"
 msgstr "Användarnamn"
 
-#: describe.c:1364
+#: describe.c:1375
 msgid "User ID"
 msgstr "Användar-ID"
 
-#: describe.c:1365
+#: describe.c:1376
 msgid "superuser, create database"
 msgstr "superanvändare, skapa databas"
 
-#: describe.c:1366
+#: describe.c:1377
 msgid "superuser"
 msgstr "superanvändare"
 
-#: describe.c:1366
+#: describe.c:1377
 msgid "create database"
 msgstr "skapa databas"
 
-#: describe.c:1367
+#: describe.c:1378
 msgid "Attributes"
 msgstr "Attribut"
 
-#: describe.c:1367
+#: describe.c:1378
 msgid "Groups"
 msgstr "Grupper"
 
-#: describe.c:1380
+#: describe.c:1391
 msgid "List of database users"
 msgstr "Lista med databasanvändare"
 
-#: describe.c:1407
+#: describe.c:1418
 msgid "Group name"
 msgstr "Gruppnamn"
 
-#: describe.c:1407
+#: describe.c:1418
 msgid "Group ID"
 msgstr "Grupp-ID"
 
-#: describe.c:1420
+#: describe.c:1431
 msgid "List of database groups"
 msgstr "Lista med databasgrupper"
 
-#: describe.c:1467
+#: describe.c:1478
 msgid "special"
 msgstr "särskild"
 
-#: describe.c:1482
+#: describe.c:1493
 msgid "Table"
 msgstr "Tabell"
 
-#: describe.c:1528
+#: describe.c:1539
 #, c-format
 msgid "No matching relations found.\n"
 msgstr "Inga matchande relationer funna.\n"
 
-#: describe.c:1530
+#: describe.c:1541
 #, c-format
 msgid "No relations found.\n"
 msgstr "Inga relationer funna.\n"
 
-#: describe.c:1535
+#: describe.c:1546
 msgid "List of relations"
 msgstr "Lista med relationer"
 
-#: describe.c:1574
+#: describe.c:1585
 msgid "Modifier"
 msgstr "Modifierare"
 
-#: describe.c:1588
+#: describe.c:1599
 msgid "List of domains"
 msgstr "Lista av domäner"
 
-#: describe.c:1621
+#: describe.c:1632
 msgid "Source"
 msgstr "Källa"
 
-#: describe.c:1622
+#: describe.c:1633
 msgid "Destination"
 msgstr "Mål"
 
-#: describe.c:1625
+#: describe.c:1636
 msgid "Default?"
 msgstr "Standard?"
 
-#: describe.c:1639
+#: describe.c:1650
 msgid "List of conversions"
 msgstr "Lista med konverteringar"
 
-#: describe.c:1674
+#: describe.c:1685
 msgid "Source type"
 msgstr "Källtyp"
 
-#: describe.c:1675
+#: describe.c:1686
 msgid "Target type"
 msgstr "Måltyp"
 
-#: describe.c:1676
+#: describe.c:1687
 msgid "(binary compatible)"
 msgstr "(binärkompatibel)"
 
-#: describe.c:1677
+#: describe.c:1688
 msgid "Function"
 msgstr "Funktion"
 
-#: describe.c:1679
+#: describe.c:1690
 msgid "in assignment"
 msgstr "i tilldelning"
 
-#: describe.c:1681
+#: describe.c:1692
 msgid "Implicit?"
 msgstr "Implicit?"
 
-#: describe.c:1689
+#: describe.c:1700
 msgid "List of casts"
 msgstr "Lista med typomvandlingar"
 
-#: describe.c:1739
+#: describe.c:1750
 msgid "List of schemas"
 msgstr "Lista med scheman"
 
-#: sql_help.h:25 sql_help.h:369
+#: sql_help.h:25 sql_help.h:373
 msgid "abort the current transaction"
 msgstr "avbryt aktuell transaktion"
 
@@ -1579,18 +1585,44 @@ msgstr ""
 "ALTER GROUP gruppnamn RENAME TO nyttnamn"
 
 #: sql_help.h:53
+msgid "change the definition of an index"
+msgstr "ändra definitionen av ett index"
+
+#: sql_help.h:54
+msgid ""
+"ALTER INDEX name \n"
+"    action [, ... ]\n"
+"ALTER INDEX name\n"
+"    RENAME TO new_name\n"
+"\n"
+"where action is one of:\n"
+"\n"
+"    OWNER TO new_owner\n"
+"    SET TABLESPACE indexspace_name"
+msgstr ""
+"ALTER INDEX namn\n"
+"    aktion [, ... ]\n"
+"ALTER INDEX namn\n"
+"    RENAME TO nytt_namn\n"
+"\n"
+"där aktion är en av:\n"
+"\n"
+"    OWNER TO ny_ägare\n"
+"    SET TABLESPACE indexutrymmesnamn"
+
+#: sql_help.h:57
 msgid "change the definition of a procedural language"
 msgstr "ändra definitionen av ett procedur-språk"
 
-#: sql_help.h:54
+#: sql_help.h:58
 msgid "ALTER LANGUAGE name RENAME TO newname"
 msgstr "ALTER LANGUAGE namn RENAME TO nyttnamn"
 
-#: sql_help.h:57
+#: sql_help.h:61
 msgid "change the definition of an operator class"
 msgstr "ändra definitionen av en operatorklass"
 
-#: sql_help.h:58
+#: sql_help.h:62
 msgid ""
 "ALTER OPERATOR CLASS name USING index_method RENAME TO newname\n"
 "ALTER OPERATOR CLASS name USING index_method OWNER TO newowner"
@@ -1598,11 +1630,11 @@ msgstr ""
 "ALTER OPERATOR CLASS namn USING index_metod RENAME TO nytt_namn\n"
 "ALTER OPERATOR CLASS namn USING index_metod OWNER TO ny_ägare"
 
-#: sql_help.h:61
+#: sql_help.h:65
 msgid "change the definition of an operator"
 msgstr "ändra definitionen av en operator"
 
-#: sql_help.h:62
+#: sql_help.h:66
 msgid ""
 "ALTER OPERATOR name ( { lefttype | NONE } , { righttype | NONE } ) OWNER TO "
 "newowner"
@@ -1610,11 +1642,11 @@ msgstr ""
 "ALTER OPERATOR namn ( { vänster_typ | NONE }, { höger_typ | NONE } ) OWNER "
 "TO ny_ägare"
 
-#: sql_help.h:65
+#: sql_help.h:69
 msgid "change the definition of a schema"
 msgstr "ändra definitionen av ett schema"
 
-#: sql_help.h:66
+#: sql_help.h:70
 msgid ""
 "ALTER SCHEMA name RENAME TO newname\n"
 "ALTER SCHEMA name OWNER TO newowner"
@@ -1622,11 +1654,11 @@ msgstr ""
 "ALTER SCHEMA namn RENAME TO nytt_namn\n"
 "ALTER SCHEMA namn OWNER TO ny_ägare"
 
-#: sql_help.h:69
-msgid "alter the definition of a sequence generator"
+#: sql_help.h:73
+msgid "change the definition of a sequence generator"
 msgstr "ändra definitionen av en sekvensgenerator"
 
-#: sql_help.h:70
+#: sql_help.h:74
 msgid ""
 "ALTER SEQUENCE name [ INCREMENT [ BY ] increment ]\n"
 "    [ MINVALUE minvalue | NO MINVALUE ] [ MAXVALUE maxvalue | NO MAXVALUE ]\n"
@@ -1636,11 +1668,11 @@ msgstr ""
 "    [ MINVALUE minvärde | NO MINVALUE ] [ MAXVALUE maxvärde | NO MAXVALUE ]\n"
 "    [ RESTART [ WITH ] start ] [ CACHE cache ] [ [ NO ] CYCLE ]"
 
-#: sql_help.h:73
+#: sql_help.h:77
 msgid "change the definition of a table"
 msgstr "ändra definitionen av en tabell"
 
-#: sql_help.h:74
+#: sql_help.h:78
 msgid ""
 "ALTER TABLE [ ONLY ] name [ * ]\n"
 "    action [, ... ]\n"
@@ -1684,7 +1716,8 @@ msgstr ""
 "    ALTER [ COLUMN ] kolumn DROP DEFAULT\n"
 "    ALTER [ COLUMN ] kolumn { SET | DROP } NOT NULL\n"
 "    ALTER [ COLUMN ] kolumn SET STATISTICS heltal\n"
-"    ALTER [ COLUMN ] kolumn SET STORAGE { PLAIN | EXTERNAL | EXTENDED | MAIN }\n"
+"    ALTER [ COLUMN ] kolumn SET STORAGE { PLAIN | EXTERNAL | EXTENDED | "
+"MAIN }\n"
 "    ADD tabellvillkor\n"
 "    DROP CONSTRAINT villkorsnamn [ RESTRICT | CASCADE ]\n"
 "    CLUSTER ON indexnamn\n"
@@ -1693,11 +1726,11 @@ msgstr ""
 "    OWNER TO ny_ägare\n"
 "    SET TABLESPACE tabellutrymme"
 
-#: sql_help.h:77
+#: sql_help.h:81
 msgid "change the definition of a tablespace"
 msgstr "ändra definitionen av ett tabellutrymme"
 
-#: sql_help.h:78
+#: sql_help.h:82
 msgid ""
 "ALTER TABLESPACE name RENAME TO newname\n"
 "ALTER TABLESPACE name OWNER TO newowner"
@@ -1705,27 +1738,27 @@ msgstr ""
 "ALTER TABLESPACE namn RENAME TO nytt_namn\n"
 "ALTER TABLESPACE namn OWNER TO ny_ägare"
 
-#: sql_help.h:81
+#: sql_help.h:85
 msgid "change the definition of a trigger"
 msgstr "ändra definitionen av en utlösare"
 
-#: sql_help.h:82
+#: sql_help.h:86
 msgid "ALTER TRIGGER name ON table RENAME TO newname"
 msgstr "ALTER TRIGGER namb ON tabell RENAME TO nyttnamn"
 
-#: sql_help.h:85
+#: sql_help.h:89
 msgid "change the definition of a type"
 msgstr "ändra definitionen av en typ"
 
-#: sql_help.h:86
+#: sql_help.h:90
 msgid "ALTER TYPE name OWNER TO new_owner"
 msgstr "ALTER TYPE namn OWNER TO ny_ägare"
 
-#: sql_help.h:89
+#: sql_help.h:93
 msgid "change a database user account"
 msgstr "ändra ett användarkonto i databasen"
 
-#: sql_help.h:90
+#: sql_help.h:94
 msgid ""
 "ALTER USER name [ [ WITH ] option [ ... ] ]\n"
 "\n"
@@ -1755,51 +1788,56 @@ msgstr ""
 "ALTER USER namn SET parameter { TO | = } { värde | DEFAULT }\n"
 "ALTER USER namn RESET parameter"
 
-#: sql_help.h:93
+#: sql_help.h:97
 msgid "collect statistics about a database"
 msgstr "samla in statistik om en databas"
 
-#: sql_help.h:94
+#: sql_help.h:98
 msgid "ANALYZE [ VERBOSE ] [ table [ (column [, ...] ) ] ]"
 msgstr "ANALYZE [ VERBOSE ] [ tabell [ (kolumn [, ...] ) ] ]"
 
-#: sql_help.h:97 sql_help.h:409
+#: sql_help.h:101 sql_help.h:413
 msgid "start a transaction block"
 msgstr "starta ett transaktionsblock"
 
-#: sql_help.h:98
+#: sql_help.h:102
 msgid ""
-"BEGIN [ WORK | TRANSACTION ]\n"
-"    [ ISOLATION LEVEL { READ UNCOMMITTED | READ COMMITTED | REPEATABLE READ "
-"| SERIALIZABLE } ]\n"
-"    [ READ WRITE | READ ONLY ]"
+"BEGIN [ WORK | TRANSACTION ] [ transaction_mode [, ...] ]\n"
+"\n"
+"where transaction_mode is one of:\n"
+"\n"
+"    ISOLATION LEVEL { SERIALIZABLE | REPEATABLE READ | READ COMMITTED | READ "
+"UNCOMMITTED }\n"
+"    READ WRITE | READ ONLY"
 msgstr ""
-"BEGIN [ WORK | TRANSACTION ]\n"
-"    [ ISOLATION LEVEL { READ UNCOMMITTED | READ COMMITTED | REPEATABLE READ "
-"| SERIALIZABLE } ]\n"
-"    [ READ WRITE | READ ONLY ]"
+"BEGIN [ WORK | TRANSACTION ] [ transaktionsläge [, ...] ]\n"
+"\n"
+"där transaktionsläge är en av:\n"
+"\n"
+"    ISOLATION LEVEL { SERIALIZABLE | REPEATABLE READ | READ COMMITTED | READ UNCOMMITTED }\n"
+"    READ WRITE | READ ONLY"
 
-#: sql_help.h:101
+#: sql_help.h:105
 msgid "force a transaction log checkpoint"
 msgstr "tvinga transaktionsloggen att göra en checkpoint"
 
-#: sql_help.h:102
+#: sql_help.h:106
 msgid "CHECKPOINT"
 msgstr "CHECKPOINT"
 
-#: sql_help.h:105
+#: sql_help.h:109
 msgid "close a cursor"
 msgstr "stäng en markör"
 
-#: sql_help.h:106
+#: sql_help.h:110
 msgid "CLOSE name"
 msgstr "CLOSE namn"
 
-#: sql_help.h:109
+#: sql_help.h:113
 msgid "cluster a table according to an index"
 msgstr "klustra en tabell efter ett index"
 
-#: sql_help.h:110
+#: sql_help.h:114
 msgid ""
 "CLUSTER indexname ON tablename\n"
 "CLUSTER tablename\n"
@@ -1809,11 +1847,11 @@ msgstr ""
 "CLUSTER tabellnamn\n"
 "CLUSTER"
 
-#: sql_help.h:113
+#: sql_help.h:117
 msgid "define or change the comment of an object"
 msgstr "definiera eller ändra en kommentar på ett objekt"
 
-#: sql_help.h:114
+#: sql_help.h:118
 msgid ""
 "COMMENT ON\n"
 "{\n"
@@ -1863,19 +1901,19 @@ msgstr ""
 "  VIEW objektnamn\n"
 "} IS 'text'"
 
-#: sql_help.h:117 sql_help.h:305
+#: sql_help.h:121 sql_help.h:309
 msgid "commit the current transaction"
 msgstr "utför den aktuella transaktionen"
 
-#: sql_help.h:118
+#: sql_help.h:122
 msgid "COMMIT [ WORK | TRANSACTION ]"
 msgstr "COMMIT [ WORK | TRANSACTION ]"
 
-#: sql_help.h:121
+#: sql_help.h:125
 msgid "copy data between a file and a table"
 msgstr "kopiera data mellan en fil och en tabell"
 
-#: sql_help.h:122
+#: sql_help.h:126
 msgid ""
 "COPY tablename [ ( column [, ...] ) ]\n"
 "    FROM { 'filename' | STDIN }\n"
@@ -1921,11 +1959,11 @@ msgstr ""
 "                [ ESCAPE [ AS ] 'escape' ]\n"
 "                [ FORCE QUOTE kolumn [, ...] ]"
 
-#: sql_help.h:125
+#: sql_help.h:129
 msgid "define a new aggregate function"
 msgstr "definiera en ny aggregatfunktion"
 
-#: sql_help.h:126
+#: sql_help.h:130
 msgid ""
 "CREATE AGGREGATE name (\n"
 "    BASETYPE = input_data_type,\n"
@@ -1943,11 +1981,11 @@ msgstr ""
 "    [ , INITCOND = startvärde ]\n"
 ")"
 
-#: sql_help.h:129
+#: sql_help.h:133
 msgid "define a new cast"
 msgstr "definiera en ny typomvandling"
 
-#: sql_help.h:130
+#: sql_help.h:134
 msgid ""
 "CREATE CAST (sourcetype AS targettype)\n"
 "    WITH FUNCTION funcname (argtypes)\n"
@@ -1965,11 +2003,11 @@ msgstr ""
 "    WITHOUT FUNCTION\n"
 "    [ AS ASSIGNMENT | AS IMPLICIT ]"
 
-#: sql_help.h:133
+#: sql_help.h:137
 msgid "define a new constraint trigger"
 msgstr "definiera en ny villkorsutlösare"
 
-#: sql_help.h:134
+#: sql_help.h:138
 msgid ""
 "CREATE CONSTRAINT TRIGGER name\n"
 "    AFTER events ON\n"
@@ -1981,11 +2019,11 @@ msgstr ""
 "    tabellnamn villkor attribut\n"
 "    FOR EACH ROW EXECUTE PROCEDURE funknamn ( argument )"
 
-#: sql_help.h:137
+#: sql_help.h:141
 msgid "define a new conversion"
 msgstr "definiera en ny konvertering"
 
-#: sql_help.h:138
+#: sql_help.h:142
 msgid ""
 "CREATE [DEFAULT] CONVERSION name\n"
 "    FOR source_encoding TO dest_encoding FROM funcname"
@@ -1993,11 +2031,11 @@ msgstr ""
 "CREATE [DEFAULT] CONVERSION namn\n"
 "    FOR källkodning TO målkodning FROM funknamn"
 
-#: sql_help.h:141
+#: sql_help.h:145
 msgid "create a new database"
 msgstr "skapa en ny databas"
 
-#: sql_help.h:142
+#: sql_help.h:146
 msgid ""
 "CREATE DATABASE name\n"
 "    [ [ WITH ] [ OWNER [=] dbowner ]\n"
@@ -2011,11 +2049,11 @@ msgstr ""
 "           [ ENCODING [=] kodning ]\n"
 "           [ TABLESPACE [=] tabellutrymme ] ]"
 
-#: sql_help.h:145
+#: sql_help.h:149
 msgid "define a new domain"
 msgstr "definiera en ny domän"
 
-#: sql_help.h:146
+#: sql_help.h:150
 msgid ""
 "CREATE DOMAIN name [AS] data_type\n"
 "    [ DEFAULT expression ]\n"
@@ -2035,11 +2073,11 @@ msgstr ""
 "[ CONSTRAINT villkorsnamn ]\n"
 "{ NOT NULL | NULL | CHECK (uttryck) }"
 
-#: sql_help.h:149
+#: sql_help.h:153
 msgid "define a new function"
 msgstr "definiera en ny funktion"
 
-#: sql_help.h:150
+#: sql_help.h:154
 msgid ""
 "CREATE [ OR REPLACE ] FUNCTION name ( [ [ argname ] argtype [, ...] ] )\n"
 "    RETURNS rettype\n"
@@ -2063,11 +2101,11 @@ msgstr ""
 "  } ...\n"
 "    [ WITH ( attribut [, ...] ) ]"
 
-#: sql_help.h:153
+#: sql_help.h:157
 msgid "define a new user group"
 msgstr "definiera en ny användargrupp"
 
-#: sql_help.h:154
+#: sql_help.h:158
 msgid ""
 "CREATE GROUP name [ [ WITH ] option [ ... ] ]\n"
 "\n"
@@ -2083,11 +2121,11 @@ msgstr ""
 "     SYSID gid\n"
 "   | USER  användarnamn [, ...]"
 
-#: sql_help.h:157
+#: sql_help.h:161
 msgid "define a new index"
 msgstr "skapa ett nytt index"
 
-#: sql_help.h:158
+#: sql_help.h:162
 msgid ""
 "CREATE [ UNIQUE ] INDEX name ON table [ USING method ]\n"
 "    ( { column | ( expression ) } [ opclass ] [, ...] )\n"
@@ -2099,11 +2137,11 @@ msgstr ""
 "    [ TABLESPACE tabellutrymme ]\n"
 "    [ WHERE predikat ]"
 
-#: sql_help.h:161
+#: sql_help.h:165
 msgid "define a new procedural language"
 msgstr "definiera ett nytt procedur-språk"
 
-#: sql_help.h:162
+#: sql_help.h:166
 msgid ""
 "CREATE [ TRUSTED ] [ PROCEDURAL ] LANGUAGE name\n"
 "    HANDLER call_handler [ VALIDATOR valfunction ]"
@@ -2111,11 +2149,11 @@ msgstr ""
 "CREATE [ TRUSTED ] [ PROCEDURAL ] LANGUAGE namn\n"
 "    HANDLER anropshanterare [ VALIDATOR val-funktion ]"
 
-#: sql_help.h:165
+#: sql_help.h:169
 msgid "define a new operator class"
 msgstr "definiera en ny operatorklass"
 
-#: sql_help.h:166
+#: sql_help.h:170
 msgid ""
 "CREATE OPERATOR CLASS name [ DEFAULT ] FOR TYPE data_type USING index_method "
 "AS\n"
@@ -2132,11 +2170,11 @@ msgstr ""
 "   | STORAGE lagringstyp\n"
 "  } [, ... ]"
 
-#: sql_help.h:169
+#: sql_help.h:173
 msgid "define a new operator"
 msgstr "definiera en ny operator"
 
-#: sql_help.h:170
+#: sql_help.h:174
 msgid ""
 "CREATE OPERATOR name (\n"
 "    PROCEDURE = funcname\n"
@@ -2158,11 +2196,11 @@ msgstr ""
 "    [, LTCMP = mindre_än_op ] [, GTCMP = större_än_op ]\n"
 ")"
 
-#: sql_help.h:173
+#: sql_help.h:177
 msgid "define a new rewrite rule"
 msgstr "definiera en ny omskrivningsregel"
 
-#: sql_help.h:174
+#: sql_help.h:178
 msgid ""
 "CREATE [ OR REPLACE ] RULE name AS ON event\n"
 "    TO table [ WHERE condition ]\n"
@@ -2173,11 +2211,11 @@ msgstr ""
 "    DO [ ALSO | INSTEAD ] { NOTHING | kommando | ( kommando ; "
 "kommando ... ) }"
 
-#: sql_help.h:177
+#: sql_help.h:181
 msgid "define a new schema"
 msgstr "definiera ett nytt schema"
 
-#: sql_help.h:178
+#: sql_help.h:182
 msgid ""
 "CREATE SCHEMA schemaname [ AUTHORIZATION username ] [ TABLESPACE "
 "tablespace ] [ schema_element [ ... ] ]\n"
@@ -2189,11 +2227,11 @@ msgstr ""
 "CREATE SCHEMA AUTHORIZATION användarnamn [ TABLESPACE tabellutrymme ] "
 "[ schema-element [ ... ] ]"
 
-#: sql_help.h:181
+#: sql_help.h:185
 msgid "define a new sequence generator"
 msgstr "definiera en ny sekvensgenerator"
 
-#: sql_help.h:182
+#: sql_help.h:186
 msgid ""
 "CREATE [ TEMPORARY | TEMP ] SEQUENCE name [ INCREMENT [ BY ] increment ]\n"
 "    [ MINVALUE minvalue | NO MINVALUE ] [ MAXVALUE maxvalue | NO MAXVALUE ]\n"
@@ -2203,11 +2241,11 @@ msgstr ""
 "    [ MINVALUE minvärde | NO MINVALUE ] [ MAXVALUE maxvärde | NO MAXVALUE ]\n"
 "    [ RESTART [ WITH ] start ] [ CACHE cache ] [ [ NO ] CYCLE ]"
 
-#: sql_help.h:185
+#: sql_help.h:189
 msgid "define a new table"
 msgstr "definiera en ny tabell"
 
-#: sql_help.h:186
+#: sql_help.h:190
 msgid ""
 "CREATE [ [ GLOBAL | LOCAL ] { TEMPORARY | TEMP } ] TABLE table_name (\n"
 "  { column_name data_type [ DEFAULT default_expr ] [ column_constraint "
@@ -2248,9 +2286,11 @@ msgid ""
 "[ DEFERRABLE | NOT DEFERRABLE ] [ INITIALLY DEFERRED | INITIALLY IMMEDIATE ]"
 msgstr ""
 "CREATE [ [ GLOBAL | LOCAL ] { TEMPORARY | TEMP } ] TABLE tabellnamn (\n"
-"    { kolumnname datatyp [ DEFAULT default_uttryck ] [ kolumnvillkor [ ... ] ]\n"
+"    { kolumnname datatyp [ DEFAULT default_uttryck ] [ kolumnvillkor "
+"[ ... ] ]\n"
 "    | tabellvillkor\n"
-"    | LIKE föräldratabell [ { INCLUDING | EXCLUDING } DEFAULTS ] }  [, ... ]\n"
+"    | LIKE föräldratabell [ { INCLUDING | EXCLUDING } DEFAULTS ] }  "
+"[, ... ]\n"
 ")\n"
 "[ INHERITS ( föräldratabell [, ... ] ) ]\n"
 "[ WITH OIDS | WITHOUT OIDS ]\n"
@@ -2265,25 +2305,30 @@ msgstr ""
 "  UNIQUE [ USING INDEX TABLESPACE tabellutrymme ] |\n"
 "  PRIMARY KEY [ USING INDEX TABLESPACE tabellutrymme ] |\n"
 "  CHECK (uttryck) |\n"
-"  REFERENCES reftabell [ ( refkolumn ) ] [ MATCH FULL | MATCH PARTIAL | MATCH SIMPLE ]\n"
+"  REFERENCES reftabell [ ( refkolumn ) ] [ MATCH FULL | MATCH PARTIAL | "
+"MATCH SIMPLE ]\n"
 "    [ ON DELETE action ] [ ON UPDATE action ] }\n"
-"[ DEFERRABLE | NOT DEFERRABLE ] [ INITIALLY DEFERRED | INITIALLY IMMEDIATE ]\n"
+"[ DEFERRABLE | NOT DEFERRABLE ] [ INITIALLY DEFERRED | INITIALLY "
+"IMMEDIATE ]\n"
 "\n"
 "och tabellvillkor är:\n"
 "\n"
 "[ CONSTRAINT villkorsnamn ]\n"
 "{ UNIQUE ( kolumnnamn [, ... ] ) [ USING INDEX TABLESPACE tabellutrymme ] |\n"
-"  PRIMARY KEY ( kolumnnamn [, ... ] ) [ USING INDEX TABLESPACE tabellutrymme ] |\n"
+"  PRIMARY KEY ( kolumnnamn [, ... ] ) [ USING INDEX TABLESPACE "
+"tabellutrymme ] |\n"
 "  CHECK ( uttryck ) |\n"
-"  FOREIGN KEY ( kolumnnamn [, ... ] ) REFERENCES reftabell [ ( refkolumn [, ... ] ) ]\n"
-"    [ MATCH FULL | MATCH PARTIAL | MATCH SIMPLE ] [ ON DELETE action ] [ ON UPDATE action ] }\n"
+"  FOREIGN KEY ( kolumnnamn [, ... ] ) REFERENCES reftabell [ ( refkolumn "
+"[, ... ] ) ]\n"
+"    [ MATCH FULL | MATCH PARTIAL | MATCH SIMPLE ] [ ON DELETE action ] [ ON "
+"UPDATE action ] }\n"
 "[ DEFERRABLE | NOT DEFERRABLE ] [ INITIALLY DEFERRED | INITIALLY IMMEDIATE ]"
 
-#: sql_help.h:189 sql_help.h:385
-msgid "create a new table from the results of a query"
-msgstr "skapa en ny tabell från resultatet av en fråga"
+#: sql_help.h:193 sql_help.h:389
+msgid "define a new table from the results of a query"
+msgstr "definiera en ny tabell utifrån resultatet av en fråga"
 
-#: sql_help.h:190
+#: sql_help.h:194
 msgid ""
 "CREATE [ [ GLOBAL | LOCAL ] { TEMPORARY | TEMP } ] TABLE table_name "
 "[ (column_name [, ...] ) ] [ [ WITH | WITHOUT ] OIDS ]\n"
@@ -2293,22 +2338,22 @@ msgstr ""
 "[ (kolumnnamn [, ...] ) ] [ [ WITH | WITHOUT ] OIDS ]\n"
 "    AS fråga"
 
-#: sql_help.h:193
+#: sql_help.h:197
 msgid "define a new tablespace"
 msgstr "definiera ett nytt tabellutrymme"
 
-#: sql_help.h:194
+#: sql_help.h:198
 msgid ""
 "CREATE TABLESPACE tablespacename [ OWNER username ] LOCATION 'directory'"
 msgstr ""
 "CREATE TABLESPACE tabellutrymmesnamn [ OWNER användarnamn ] LOCATION "
 "'katalog'"
 
-#: sql_help.h:197
+#: sql_help.h:201
 msgid "define a new trigger"
 msgstr "definiera en ny utlösare"
 
-#: sql_help.h:198
+#: sql_help.h:202
 msgid ""
 "CREATE TRIGGER name { BEFORE | AFTER } { event [ OR ... ] }\n"
 "    ON table [ FOR [ EACH ] { ROW | STATEMENT } ]\n"
@@ -2318,11 +2363,11 @@ msgstr ""
 "    ON tabell [ FOR [ EACH ] { ROW | STATEMENT } ]\n"
 "    EXECUTE PROCEDURE funknamn ( argument )"
 
-#: sql_help.h:201
+#: sql_help.h:205
 msgid "define a new data type"
 msgstr "definiera en ny datatyp"
 
-#: sql_help.h:202
+#: sql_help.h:206
 msgid ""
 "CREATE TYPE name AS\n"
 "    ( attribute_name data_type [, ... ] )\n"
@@ -2360,11 +2405,11 @@ msgstr ""
 "    [ , DELIMITER = avskiljare ]\n"
 ")"
 
-#: sql_help.h:205
+#: sql_help.h:209
 msgid "define a new database user account"
 msgstr "definiera ett nytt användarkonto i databasen"
 
-#: sql_help.h:206
+#: sql_help.h:210
 msgid ""
 "CREATE USER name [ [ WITH ] option [ ... ] ]\n"
 "\n"
@@ -2388,27 +2433,27 @@ msgstr ""
 "    | IN GROUP gruppnamn [, ...]\n"
 "    | VALID UNTIL 'abs-tid'"
 
-#: sql_help.h:209
+#: sql_help.h:213
 msgid "define a new view"
 msgstr "definiera en ny vy"
 
-#: sql_help.h:210
+#: sql_help.h:214
 msgid "CREATE [ OR REPLACE ] VIEW name [ ( column_name [, ...] ) ] AS query"
 msgstr "CREATE [ OR REPLACE ] VIEW namn [ ( kolumnnamn [, ...] ) ] AS fråga"
 
-#: sql_help.h:213
+#: sql_help.h:217
 msgid "deallocate a prepared statement"
 msgstr "deallokera en förberedd sats"
 
-#: sql_help.h:214
+#: sql_help.h:218
 msgid "DEALLOCATE [ PREPARE ] plan_name"
 msgstr "DEALLOCATE [ PREPARE ] plannamn"
 
-#: sql_help.h:217
+#: sql_help.h:221
 msgid "define a cursor"
 msgstr "definiera en markör"
 
-#: sql_help.h:218
+#: sql_help.h:222
 msgid ""
 "DECLARE name [ BINARY ] [ INSENSITIVE ] [ [ NO ] SCROLL ]\n"
 "    CURSOR [ { WITH | WITHOUT } HOLD ] FOR query\n"
@@ -2418,99 +2463,99 @@ msgstr ""
 "    CURSOR [ { WITH | WITHOUT } HOLD ] FOR fråga\n"
 "    [ FOR { READ ONLY | UPDATE [ OF kolumn [, ...] ] } ]"
 
-#: sql_help.h:221
+#: sql_help.h:225
 msgid "delete rows of a table"
 msgstr "radera rader i en tabell"
 
-#: sql_help.h:222
+#: sql_help.h:226
 msgid "DELETE FROM [ ONLY ] table [ WHERE condition ]"
 msgstr "DELETE FROM [ ONLY ] tabell [ WHERE villkor ]"
 
-#: sql_help.h:225
+#: sql_help.h:229
 msgid "remove an aggregate function"
 msgstr "ta bort en aggregatfunktioner"
 
-#: sql_help.h:226
+#: sql_help.h:230
 msgid "DROP AGGREGATE name ( type ) [ CASCADE | RESTRICT ]"
 msgstr "DROP AGGREGATE namn ( typ ) [ CASCADE | RESTRICT ]"
 
-#: sql_help.h:229
+#: sql_help.h:233
 msgid "remove a cast"
 msgstr "ta bort en typomvandling"
 
-#: sql_help.h:230
+#: sql_help.h:234
 msgid "DROP CAST (sourcetype AS targettype) [ CASCADE | RESTRICT ]"
 msgstr "DROP CAST (källtyp AS måltyp) [ CASCADE | RESTRICT ]"
 
-#: sql_help.h:233
+#: sql_help.h:237
 msgid "remove a conversion"
 msgstr "ta bort en konvertering"
 
-#: sql_help.h:234
+#: sql_help.h:238
 msgid "DROP CONVERSION name [ CASCADE | RESTRICT ]"
 msgstr "DROP CONVERSION namn [ CASCADE | RESTRICT ]"
 
-#: sql_help.h:237
+#: sql_help.h:241
 msgid "remove a database"
 msgstr "ta bort en databas"
 
-#: sql_help.h:238
+#: sql_help.h:242
 msgid "DROP DATABASE name"
 msgstr "DROP DATABASE namn"
 
-#: sql_help.h:241
+#: sql_help.h:245
 msgid "remove a domain"
 msgstr "ta bort en domän"
 
-#: sql_help.h:242
+#: sql_help.h:246
 msgid "DROP DOMAIN name [, ...]  [ CASCADE | RESTRICT ]"
 msgstr "DROP DOMAIN namn [, ...]  [ CASCADE | RESTRICT ]"
 
-#: sql_help.h:245
+#: sql_help.h:249
 msgid "remove a function"
 msgstr "ta bort en funktion"
 
-#: sql_help.h:246
+#: sql_help.h:250
 msgid "DROP FUNCTION name ( [ type [, ...] ] ) [ CASCADE | RESTRICT ]"
 msgstr "DROP FUNCTION namn ( [ typ [, ...] ] ) [ CASCADE | RESTRICT ]"
 
-#: sql_help.h:249
+#: sql_help.h:253
 msgid "remove a user group"
 msgstr "ta bort en användargrupp"
 
-#: sql_help.h:250
+#: sql_help.h:254
 msgid "DROP GROUP name"
 msgstr "DROP GROUP namn"
 
-#: sql_help.h:253
+#: sql_help.h:257
 msgid "remove an index"
 msgstr "ta bort ett index"
 
-#: sql_help.h:254
+#: sql_help.h:258
 msgid "DROP INDEX name [, ...] [ CASCADE | RESTRICT ]"
 msgstr "DROP INDEX namn [, ...] [ CASCADE | RESTRICT ]"
 
-#: sql_help.h:257
+#: sql_help.h:261
 msgid "remove a procedural language"
 msgstr "ta bort ett procedur-språk"
 
-#: sql_help.h:258
+#: sql_help.h:262
 msgid "DROP [ PROCEDURAL ] LANGUAGE name [ CASCADE | RESTRICT ]"
 msgstr "DROP [ PROCEDURAL ] LANGUAGE namn [ CASCADE | RESTRICT ]"
 
-#: sql_help.h:261
+#: sql_help.h:265
 msgid "remove an operator class"
 msgstr "ta bort en operatorklass"
 
-#: sql_help.h:262
+#: sql_help.h:266
 msgid "DROP OPERATOR CLASS name USING index_method [ CASCADE | RESTRICT ]"
 msgstr "DROP OPERATOR CLASS namn USING indexmetod [ CASCADE | RESTRICT ]"
 
-#: sql_help.h:265
+#: sql_help.h:269
 msgid "remove an operator"
 msgstr "ta bort en operator"
 
-#: sql_help.h:266
+#: sql_help.h:270
 msgid ""
 "DROP OPERATOR name ( { lefttype | NONE } , { righttype | NONE } ) [ CASCADE "
 "| RESTRICT ]"
@@ -2518,103 +2563,103 @@ msgstr ""
 "DROP OPERATOR namn ( { vänster_typ | NONE } , { höger_typ | NONE } ) "
 "[ CASCADE | RESTRICT ]"
 
-#: sql_help.h:269
+#: sql_help.h:273
 msgid "remove a rewrite rule"
 msgstr "ta bort en omskrivningsregel"
 
-#: sql_help.h:270
+#: sql_help.h:274
 msgid "DROP RULE name ON relation [ CASCADE | RESTRICT ]"
 msgstr "DROP RULE namn ON relation [ CASCADE | RESTRICT ]"
 
-#: sql_help.h:273
+#: sql_help.h:277
 msgid "remove a schema"
 msgstr "ta bort ett schema"
 
-#: sql_help.h:274
+#: sql_help.h:278
 msgid "DROP SCHEMA name [, ...] [ CASCADE | RESTRICT ]"
 msgstr "DROP SCHEMA namn [, ...] [ CASCADE | RESTRICT ]"
 
-#: sql_help.h:277
+#: sql_help.h:281
 msgid "remove a sequence"
 msgstr "ta bort en sekvens"
 
-#: sql_help.h:278
+#: sql_help.h:282
 msgid "DROP SEQUENCE name [, ...] [ CASCADE | RESTRICT ]"
 msgstr "DROP SEQUENCE namn [, ...] [ CASCADE | RESTRICT ]"
 
-#: sql_help.h:281
+#: sql_help.h:285
 msgid "remove a table"
 msgstr "ta bort en tabell"
 
-#: sql_help.h:282
+#: sql_help.h:286
 msgid "DROP TABLE name [, ...] [ CASCADE | RESTRICT ]"
 msgstr "DROP TABLE namn [, ...] [ CASCADE | RESTRICT ]"
 
-#: sql_help.h:285
+#: sql_help.h:289
 msgid "remove a tablespace"
 msgstr "ta bort ett tabellutrymme"
 
-#: sql_help.h:286
+#: sql_help.h:290
 msgid "DROP TABLESPACE tablespacename"
 msgstr "DROP TABLESPACE tabellutrymmesnamn"
 
-#: sql_help.h:289
+#: sql_help.h:293
 msgid "remove a trigger"
 msgstr "ta bort en utlösare"
 
-#: sql_help.h:290
+#: sql_help.h:294
 msgid "DROP TRIGGER name ON table [ CASCADE | RESTRICT ]"
 msgstr "DROP TRIGGER namn ON tabell [ CASCADE | RESTRICT ]"
 
-#: sql_help.h:293
+#: sql_help.h:297
 msgid "remove a data type"
 msgstr "ta bort en datatyp"
 
-#: sql_help.h:294
+#: sql_help.h:298
 msgid "DROP TYPE name [, ...] [ CASCADE | RESTRICT ]"
 msgstr "DROP TYPE namn [, ...] [ CASCADE | RESTRICT ]"
 
-#: sql_help.h:297
+#: sql_help.h:301
 msgid "remove a database user account"
 msgstr "ta bort ett användarkonto från databasen"
 
-#: sql_help.h:298
+#: sql_help.h:302
 msgid "DROP USER name"
 msgstr "DROP USER namn"
 
-#: sql_help.h:301
+#: sql_help.h:305
 msgid "remove a view"
 msgstr "ta bort en vy"
 
-#: sql_help.h:302
+#: sql_help.h:306
 msgid "DROP VIEW name [, ...] [ CASCADE | RESTRICT ]"
 msgstr "DROP VIEW namn [, ...] [ CASCADE | RESTRICT ]"
 
-#: sql_help.h:306
+#: sql_help.h:310
 msgid "END [ WORK | TRANSACTION ]"
 msgstr "END [ WORK | TRANSACTION ]"
 
-#: sql_help.h:309
+#: sql_help.h:313
 msgid "execute a prepared statement"
 msgstr "utför en förberedd sats"
 
-#: sql_help.h:310
+#: sql_help.h:314
 msgid "EXECUTE plan_name [ (parameter [, ...] ) ]"
 msgstr "EXECUTE plannamn [ (parameter [, ...] ) ]"
 
-#: sql_help.h:313
+#: sql_help.h:317
 msgid "show the execution plan of a statement"
 msgstr "visa körningsplanen för en sats"
 
-#: sql_help.h:314
+#: sql_help.h:318
 msgid "EXPLAIN [ ANALYZE ] [ VERBOSE ] statement"
 msgstr "EXPLAIN [ ANALYZE ] [ VERBOSE ] sats"
 
-#: sql_help.h:317
+#: sql_help.h:321
 msgid "retrieve rows from a query using a cursor"
 msgstr "hämta rader från en fråga med hjälp av en markör"
 
-#: sql_help.h:318
+#: sql_help.h:322
 msgid ""
 "FETCH [ direction { FROM | IN } ] cursorname\n"
 "\n"
@@ -2654,11 +2699,11 @@ msgstr ""
 "    BACKWARD antal\n"
 "    BACKWARD ALL"
 
-#: sql_help.h:321
+#: sql_help.h:325
 msgid "define access privileges"
 msgstr "definera Åtkomsträttigheter"
 
-#: sql_help.h:322
+#: sql_help.h:326
 msgid ""
 "GRANT { { SELECT | INSERT | UPDATE | DELETE | RULE | REFERENCES | TRIGGER }\n"
 "    [,...] | ALL [ PRIVILEGES ] }\n"
@@ -2721,11 +2766,11 @@ msgstr ""
 "    TO { användarnamn | GROUP gruppnamn | PUBLIC } [, ...] [ WITH GRANT "
 "OPTION ]"
 
-#: sql_help.h:325
+#: sql_help.h:329
 msgid "create new rows in a table"
 msgstr "skapa nya rader i en tabell"
 
-#: sql_help.h:326
+#: sql_help.h:330
 msgid ""
 "INSERT INTO table [ ( column [, ...] ) ]\n"
 "    { DEFAULT VALUES | VALUES ( { expression | DEFAULT } [, ...] ) | query }"
@@ -2733,27 +2778,27 @@ msgstr ""
 "INSERT INTO tabell [ ( kolumn [, ...] ) ]\n"
 "    { DEFAULT VALUES | VALUES ( { uttryck | DEFAULT } [, ...] ) | fråga }"
 
-#: sql_help.h:329
+#: sql_help.h:333
 msgid "listen for a notification"
 msgstr "lyssna efter notifiering"
 
-#: sql_help.h:330
+#: sql_help.h:334
 msgid "LISTEN name"
 msgstr "LISTEN namn"
 
-#: sql_help.h:333
+#: sql_help.h:337
 msgid "load or reload a shared library file"
 msgstr "ladda eller ladda om en delad biblioteksfil (shared library)"
 
-#: sql_help.h:334
+#: sql_help.h:338
 msgid "LOAD 'filename'"
 msgstr "LOAD 'filnamn'"
 
-#: sql_help.h:337
+#: sql_help.h:341
 msgid "lock a table"
 msgstr "lås en tabell"
 
-#: sql_help.h:338
+#: sql_help.h:342
 msgid ""
 "LOCK [ TABLE ] name [, ...] [ IN lockmode MODE ] [ NOWAIT ]\n"
 "\n"
@@ -2769,51 +2814,51 @@ msgstr ""
 "    ACCESS SHARE | ROW SHARE | ROW EXCLUSIVE | SHARE UPDATE EXCLUSIVE\n"
 "    | SHARE | SHARE ROW EXCLUSIVE | EXCLUSIVE | ACCESS EXCLUSIVE"
 
-#: sql_help.h:341
+#: sql_help.h:345
 msgid "position a cursor"
 msgstr "flytta en markör"
 
-#: sql_help.h:342
+#: sql_help.h:346
 msgid "MOVE [ direction { FROM | IN } ] cursorname"
 msgstr "MOVE [ riktning { FROM | IN } ] markörnamn"
 
-#: sql_help.h:345
+#: sql_help.h:349
 msgid "generate a notification"
 msgstr "generera en notifiering"
 
-#: sql_help.h:346
+#: sql_help.h:350
 msgid "NOTIFY name"
 msgstr "NOTIFY namn"
 
-#: sql_help.h:349
+#: sql_help.h:353
 msgid "prepare a statement for execution"
 msgstr "förbered en sats för körning"
 
-#: sql_help.h:350
+#: sql_help.h:354
 msgid "PREPARE plan_name [ (datatype [, ...] ) ] AS statement"
 msgstr "PREPARE plannamn [ (datatyp [, ...] ) ] AS sats"
 
-#: sql_help.h:353
+#: sql_help.h:357
 msgid "rebuild indexes"
 msgstr "återskapa index"
 
-#: sql_help.h:354
+#: sql_help.h:358
 msgid "REINDEX { DATABASE | TABLE | INDEX } name [ FORCE ]"
 msgstr "REINDEX { DATABASE | TABLE | INDEX } namn [ FORCE ]"
 
-#: sql_help.h:357
+#: sql_help.h:361
 msgid "destroy a previously defined savepoint"
 msgstr "ta bort en tidigare definierad sparpunkt"
 
-#: sql_help.h:358
-msgid "RELEASE savepoint_name"
-msgstr "RELEASE sparpunktnamn"
+#: sql_help.h:362
+msgid "RELEASE [ SAVEPOINT ] savepoint_name"
+msgstr "RELEASE [ SAVEPOINT ] sparpunktsnamn"
 
-#: sql_help.h:361
+#: sql_help.h:365
 msgid "restore the value of a run-time parameter to the default value"
 msgstr "återställ värde av körningsparameter till standardvärdet"
 
-#: sql_help.h:362
+#: sql_help.h:366
 msgid ""
 "RESET name\n"
 "RESET ALL"
@@ -2821,11 +2866,11 @@ msgstr ""
 "RESET namn\n"
 "RESET ALL"
 
-#: sql_help.h:365
+#: sql_help.h:369
 msgid "remove access privileges"
 msgstr "ta bort Åtkomsträttigheter"
 
-#: sql_help.h:366
+#: sql_help.h:370
 msgid ""
 "REVOKE [ GRANT OPTION FOR ]\n"
 "    { { SELECT | INSERT | UPDATE | DELETE | RULE | REFERENCES | TRIGGER }\n"
@@ -2901,31 +2946,31 @@ msgstr ""
 "    FROM { användarnamn | GROUP gruppnamn | PUBLIC } [, ...]\n"
 "    [ CASCADE | RESTRICT ]"
 
-#: sql_help.h:370
+#: sql_help.h:374
 msgid "ROLLBACK [ WORK | TRANSACTION ]"
 msgstr "ROLLBACK [ WORK | TRANSACTION ]"
 
-#: sql_help.h:373
+#: sql_help.h:377
 msgid "roll back to a savepoint"
 msgstr "rulla tillbaka till sparpunkt"
 
-#: sql_help.h:374
-msgid "ROLLBACK TO savepoint_name"
-msgstr "ROLLBACK TO sparpunktnamn"
+#: sql_help.h:378
+msgid "ROLLBACK [ WORK | TRANSACTION ] TO [ SAVEPOINT ] savepoint_name"
+msgstr "ROLLBACK [ WORK | TRANSACTION ] TO [ SAVEPOINT ] sparpunktsnamn"
 
-#: sql_help.h:377
+#: sql_help.h:381
 msgid "define a new savepoint within the current transaction"
 msgstr "definera en ny sparpunkt i den aktuella transaktionen"
 
-#: sql_help.h:378
+#: sql_help.h:382
 msgid "SAVEPOINT savepoint_name"
 msgstr "SAVEPOINT sparpunktnamn"
 
-#: sql_help.h:381
+#: sql_help.h:385
 msgid "retrieve rows from a table or view"
 msgstr "hämta rader från en tabell eller vy"
 
-#: sql_help.h:382
+#: sql_help.h:386
 msgid ""
 "SELECT [ ALL | DISTINCT [ ON ( expression [, ...] ) ] ]\n"
 "    * | expression [ AS output_name ] [, ...]\n"
@@ -2971,7 +3016,7 @@ msgstr ""
 "    frånval [ NATURAL ] join-typ frånval [ ON join-villkor | USING ( join-"
 "kolumn [, ...] ) ]"
 
-#: sql_help.h:386
+#: sql_help.h:390
 msgid ""
 "SELECT [ ALL | DISTINCT [ ON ( expression [, ...] ) ] ]\n"
 "    * | expression [ AS output_name ] [, ...]\n"
@@ -2999,11 +3044,11 @@ msgstr ""
 "    [ OFFSET start ]\n"
 "    [ FOR UPDATE [ OF tabellnamn [, ...] ] ]"
 
-#: sql_help.h:389
+#: sql_help.h:393
 msgid "change a run-time parameter"
 msgstr "ändra en körningsparamter"
 
-#: sql_help.h:390
+#: sql_help.h:394
 msgid ""
 "SET [ SESSION | LOCAL ] name { TO | = } { value | 'value' | DEFAULT }\n"
 "SET [ SESSION | LOCAL ] TIME ZONE { timezone | LOCAL | DEFAULT }"
@@ -3011,15 +3056,15 @@ msgstr ""
 "SET [ SESSION | LOCAL ] namn { TO | = } { värde | 'värde' | DEFAULT }\n"
 "SET [ SESSION | LOCAL ] TIME ZONE { tidszon | LOCAL | DEFAULT }"
 
-#: sql_help.h:393
+#: sql_help.h:397
 msgid "set the constraint mode of the current transaction"
 msgstr "sätt integritetsvillkorsläge för nuvarande transaktion"
 
-#: sql_help.h:394
+#: sql_help.h:398
 msgid "SET CONSTRAINTS { ALL | name [, ...] } { DEFERRED | IMMEDIATE }"
 msgstr "SET CONSTRAINTS { ALL | namn [, ...] } { DEFERRED | IMMEDIATE }"
 
-#: sql_help.h:397
+#: sql_help.h:401
 msgid ""
 "set the session user identifier and the current user identifier of the "
 "current session"
@@ -3027,7 +3072,7 @@ msgstr ""
 "sätt sessionsanvändaridentifierare och nuvarande användaridentifierare för "
 "den aktiva sessionen"
 
-#: sql_help.h:398
+#: sql_help.h:402
 msgid ""
 "SET [ SESSION | LOCAL ] SESSION AUTHORIZATION username\n"
 "SET [ SESSION | LOCAL ] SESSION AUTHORIZATION DEFAULT\n"
@@ -3037,36 +3082,34 @@ msgstr ""
 "SET [ SESSION | LOCAL ] SESSION AUTHORIZATION DEFAULT\n"
 "RESET SESSION AUTHORIZATION"
 
-#: sql_help.h:401
+#: sql_help.h:405
 msgid "set the characteristics of the current transaction"
 msgstr "sätt inställningar för nuvarande transaktionen"
 
-#: sql_help.h:402
+#: sql_help.h:406
 msgid ""
-"SET TRANSACTION\n"
-"    [ ISOLATION LEVEL { READ UNCOMMITTED | READ COMMITTED | REPEATABLE READ "
-"| SERIALIZABLE } ]\n"
-"    [ READ WRITE | READ ONLY ]\n"
+"SET TRANSACTION transaction_mode [, ...]\n"
+"SET SESSION CHARACTERISTICS AS TRANSACTION transaction_mode [, ...]\n"
 "\n"
-"SET SESSION CHARACTERISTICS AS TRANSACTION\n"
-"    [ ISOLATION LEVEL { READ UNCOMMITTED | READ COMMITTED | REPEATABLE READ "
-"| SERIALIZABLE } ]\n"
-"    [ READ WRITE | READ ONLY ]"
+"where transaction_mode is one of:\n"
+"\n"
+"    ISOLATION LEVEL { SERIALIZABLE | REPEATABLE READ | READ COMMITTED | READ "
+"UNCOMMITTED }\n"
+"    READ WRITE | READ ONLY"
 msgstr ""
-"SET TRANSACTION\n"
-"    [ ISOLATION LEVEL {  READ UNCOMMITTED | READ COMMITTED | REPEATABLE READ "
-"| SERIALIZABLE } ]\n"
-"    [ READ WRITE | READ ONLY ]\n"
-"SET SESSION CHARACTERISTICS AS TRANSACTION\n"
-"    [ ISOLATION LEVEL { READ UNCOMMITTED | READ COMMITTED | REPEATABLE READ "
-"| SERIALIZABLE } ]\n"
-"    [ READ WRITE | READ ONLY ]"
+"SET TRANSACTION transaktionsläge [, ...]\n"
+"SET SESSION CHARACTERISTICS AS TRANSACTION transaktionsläge [, ...]\n"
+"\n"
+"där transaktionsläge är en av:\n"
+"\n"
+"    ISOLATION LEVEL { SERIALIZABLE | REPEATABLE READ | READ COMMITTED | READ UNCOMMITTED }\n"
+"    READ WRITE | READ ONLY"
 
-#: sql_help.h:405
+#: sql_help.h:409
 msgid "show the value of a run-time parameter"
 msgstr "visa värde på en körningsparameter"
 
-#: sql_help.h:406
+#: sql_help.h:410
 msgid ""
 "SHOW name\n"
 "SHOW ALL"
@@ -3074,38 +3117,44 @@ msgstr ""
 "SHOW namn\n"
 "SHOW ALL"
 
-#: sql_help.h:410
+#: sql_help.h:414
 msgid ""
-"START TRANSACTION\n"
-"    [ ISOLATION LEVEL { READ UNCOMMITTED | READ COMMITTED | REPEATABLE READ "
-"| SERIALIZABLE } ]\n"
-"    [ READ WRITE | READ ONLY ]"
+"START TRANSACTION [ transaction_mode [, ...] ]\n"
+"\n"
+"where transaction_mode is one of:\n"
+"\n"
+"    ISOLATION LEVEL { SERIALIZABLE | REPEATABLE READ | READ COMMITTED | READ "
+"UNCOMMITTED }\n"
+"    READ WRITE | READ ONLY"
 msgstr ""
-"START TRANSACTION [ ISOLATION LEVEL { READ UNCOMMITTED | READ COMMITTED | "
-"REPEATABLE READ | SERIALIZABLE } ]\n"
-"    [ READ WRITE | READ ONLY ]"
+"START TRANSACTION [ transaktionsläge [, ...] ]\n"
+"\n"
+"där transaktionsläge är en av:\n"
+"\n"
+"    ISOLATION LEVEL { SERIALIZABLE | REPEATABLE READ | READ COMMITTED | READ UNCOMMITTED }\n"
+"    READ WRITE | READ ONLY"
 
-#: sql_help.h:413
+#: sql_help.h:417
 msgid "empty a table"
 msgstr "töm en tabell"
 
-#: sql_help.h:414
+#: sql_help.h:418
 msgid "TRUNCATE [ TABLE ] name"
 msgstr "TRUNCATE [ TABLE ] namn"
 
-#: sql_help.h:417
+#: sql_help.h:421
 msgid "stop listening for a notification"
 msgstr "sluta att lyssna efter notifiering"
 
-#: sql_help.h:418
+#: sql_help.h:422
 msgid "UNLISTEN { name | * }"
 msgstr "UNLISTEN { namn | * }"
 
-#: sql_help.h:421
+#: sql_help.h:425
 msgid "update rows of a table"
 msgstr "uppdatera rader i en tabell"
 
-#: sql_help.h:422
+#: sql_help.h:426
 msgid ""
 "UPDATE [ ONLY ] table SET column = { expression | DEFAULT } [, ...]\n"
 "    [ FROM fromlist ]\n"
@@ -3115,11 +3164,11 @@ msgstr ""
 "    [ FROM frånlista ]\n"
 "    [ WHERE villkor ]"
 
-#: sql_help.h:425
+#: sql_help.h:429
 msgid "garbage-collect and optionally analyze a database"
 msgstr "skräpsamla och eventuellt analysera en databas"
 
-#: sql_help.h:426
+#: sql_help.h:430
 msgid ""
 "VACUUM [ FULL ] [ FREEZE ] [ VERBOSE ] [ table ]\n"
 "VACUUM [ FULL ] [ FREEZE ] [ VERBOSE ] ANALYZE [ table [ (column "
@@ -3128,3 +3177,29 @@ msgstr ""
 "VACUUM [ FULL ] [ FREEZE ] [ VERBOSE ] [ tabell ]\n"
 "VACUUM [ FULL ] [ FREEZE ] [ VERBOSE ] ANALYZE [ tabell [ (kolumn "
 "[, ...] ) ] ]"
+
+#~ msgid "RELEASE savepoint_name"
+#~ msgstr "RELEASE sparpunktnamn"
+
+#~ msgid "ROLLBACK TO savepoint_name"
+#~ msgstr "ROLLBACK TO sparpunktnamn"
+
+#~ msgid ""
+#~ "SET TRANSACTION\n"
+#~ "    [ ISOLATION LEVEL { READ UNCOMMITTED | READ COMMITTED | REPEATABLE "
+#~ "READ | SERIALIZABLE } ]\n"
+#~ "    [ READ WRITE | READ ONLY ]\n"
+#~ "\n"
+#~ "SET SESSION CHARACTERISTICS AS TRANSACTION\n"
+#~ "    [ ISOLATION LEVEL { READ UNCOMMITTED | READ COMMITTED | REPEATABLE "
+#~ "READ | SERIALIZABLE } ]\n"
+#~ "    [ READ WRITE | READ ONLY ]"
+#~ msgstr ""
+#~ "SET TRANSACTION\n"
+#~ "    [ ISOLATION LEVEL {  READ UNCOMMITTED | READ COMMITTED | REPEATABLE "
+#~ "READ | SERIALIZABLE } ]\n"
+#~ "    [ READ WRITE | READ ONLY ]\n"
+#~ "SET SESSION CHARACTERISTICS AS TRANSACTION\n"
+#~ "    [ ISOLATION LEVEL { READ UNCOMMITTED | READ COMMITTED | REPEATABLE "
+#~ "READ | SERIALIZABLE } ]\n"
+#~ "    [ READ WRITE | READ ONLY ]"
