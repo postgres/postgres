@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/commands/copy.c,v 1.193 2003/04/19 19:55:37 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/commands/copy.c,v 1.194 2003/04/19 20:36:03 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -50,6 +50,13 @@
 #define ISOCTAL(c) (((c) >= '0') && ((c) <= '7'))
 #define OCTVALUE(c) ((c) - '0')
 
+/* Default line termination */
+#ifndef WIN32
+#define PGEOL	"\n"
+#else
+#define PGEOL	"\r\n"
+#endif
+
 /*
  * Represents the different source/dest cases we need to worry about at
  * the bottom level
@@ -71,9 +78,21 @@ typedef enum CopyReadResult
 	END_OF_FILE
 } CopyReadResult;
 
+/*
+ *	Represents the end-of-line terminator of the input
+ */
+typedef enum EolType
+{
+	EOL_UNKNOWN,
+	EOL_NL,
+	EOL_CR,
+	EOL_CRNL
+} EolType;
+
+
 /* non-export function prototypes */
 static void CopyTo(Relation rel, List *attnumlist, bool binary, bool oids,
-				   char *delim, char *null_print);
+				   bool pipe, char *delim, char *null_print);
 static void CopyFrom(Relation rel, List *attnumlist, bool binary, bool oids,
 					 char *delim, char *null_print);
 static Oid	GetInputFunction(Oid type);
@@ -82,7 +101,8 @@ static char *CopyReadAttribute(const char *delim, CopyReadResult *result);
 static void CopyAttributeOut(char *string, char *delim);
 static List *CopyGetAttnums(Relation rel, List *attnamelist);
 
-static const char BinarySignature[12] = "PGBCOPY\n\377\r\n\0";
+/* The trailing null is part of the signature */
+static const char BinarySignature[] = "PGBCOPY\n\377\r\n"; 
 
 /*
  * Static communication variables ... pretty grotty, but COPY has
@@ -94,6 +114,7 @@ static CopyDest copy_dest;
 static FILE *copy_file;			/* if copy_dest == COPY_FILE */
 static StringInfo copy_msgbuf;	/* if copy_dest == COPY_NEW_FE */
 static bool fe_eof;				/* true if detected end of copy data */
+static EolType eol_type;
 
 /*
  * These static variables are used to avoid incurring overhead for each
@@ -181,7 +202,10 @@ static void
 SendCopyEnd(bool binary, bool pipe)
 {
 	if (!binary)
-		CopySendData("\\.\n", 3);
+	{
+		CopySendString("\\.");
+		CopySendString(!pipe ? PGEOL : "\n");
+	}
 	pq_endcopyout(false);
 }
 
@@ -674,7 +698,7 @@ DoCopy(const CopyStmt *stmt)
 				elog(ERROR, "COPY: %s is a directory", filename);
 			}
 		}
-		CopyTo(rel, attnumlist, binary, oids, delim, null_print);
+		CopyTo(rel, attnumlist, binary, oids, pipe, delim, null_print);
 	}
 
 	if (!pipe)
@@ -697,7 +721,7 @@ DoCopy(const CopyStmt *stmt)
  * Copy from relation TO file.
  */
 static void
-CopyTo(Relation rel, List *attnumlist, bool binary, bool oids,
+CopyTo(Relation rel, List *attnumlist, bool binary, bool oids, bool pipe,
 	   char *delim, char *null_print)
 {
 	HeapTuple	tuple;
@@ -762,7 +786,7 @@ CopyTo(Relation rel, List *attnumlist, bool binary, bool oids,
 		int32		tmp;
 
 		/* Signature */
-		CopySendData((char *) BinarySignature, 12);
+		CopySendData((char *) BinarySignature, sizeof(BinarySignature));
 		/* Integer layout field */
 		tmp = 0x01020304;
 		CopySendData(&tmp, sizeof(int32));
@@ -895,7 +919,7 @@ CopyTo(Relation rel, List *attnumlist, bool binary, bool oids,
 		}
 
 		if (!binary)
-			CopySendChar('\n');
+			CopySendString(!pipe ? PGEOL : "\n");
 
 		MemoryContextSwitchTo(oldcontext);
 	}
@@ -1076,7 +1100,8 @@ CopyFrom(Relation rel, List *attnumlist, bool binary, bool oids,
 
 		/* Signature */
 		CopyGetData(readSig, 12);
-		if (CopyGetEof() || memcmp(readSig, BinarySignature, 12) != 0)
+		if (CopyGetEof() || memcmp(readSig, BinarySignature,
+								   sizeof(BinarySignature)) != 0)
 			elog(ERROR, "COPY BINARY: file signature not recognized");
 		/* Integer layout field */
 		CopyGetData(&tmp, sizeof(int32));
@@ -1108,6 +1133,7 @@ CopyFrom(Relation rel, List *attnumlist, bool binary, bool oids,
 
 	/* Initialize static variables */
 	copy_lineno = 0;
+	eol_type = EOL_UNKNOWN;
 	fe_eof = false;
 
 	/* Make room for a PARAM_EXEC value for domain constraint checks */
@@ -1520,8 +1546,44 @@ CopyReadAttribute(const char *delim, CopyReadResult *result)
 			*result = END_OF_FILE;
 			goto copy_eof;
 		}
+		if (c == '\r')
+		{
+			if (eol_type == EOL_NL)
+				elog(ERROR, "CopyReadAttribute: Literal carriage return data value\n"
+							"found in input that has newline termination; use \\r");
+
+			/*	Check for \r\n on first line, _and_ handle \r\n. */
+			if (copy_lineno == 1 || eol_type == EOL_CRNL)
+			{
+				int c2 = CopyPeekChar();
+				if (c2 == '\n')
+				{
+					CopyDonePeek(c2, true);		/* eat newline */
+					eol_type = EOL_CRNL;
+				}
+				else
+				{
+					/* found \r, but no \n */
+					if (eol_type == EOL_CRNL)
+						elog(ERROR, "CopyReadAttribute: Literal carriage return data value\n"
+									"found in input that has carriage return/newline termination; use \\r");
+					/* if we got here, it is the first line and we didn't get \n, so put it back */
+					CopyDonePeek(c2, false);
+					eol_type = EOL_CR;
+				}
+			}
+			*result = END_OF_LINE;
+			break;
+		}
 		if (c == '\n')
 		{
+			if (eol_type == EOL_CRNL)
+				elog(ERROR, "CopyReadAttribute: Literal newline data value found in input\n"
+							"that has carriage return/newline termination; use \\n");
+			if (eol_type == EOL_CR)
+				elog(ERROR, "CopyReadAttribute: Literal newline data value found in input\n"
+							"that has carriage return termination; use \\n");
+			eol_type = EOL_NL;
 			*result = END_OF_LINE;
 			break;
 		}
@@ -1611,9 +1673,20 @@ CopyReadAttribute(const char *delim, CopyReadResult *result)
 					c = '\v';
 					break;
 				case '.':
+					if (eol_type == EOL_CRNL)
+					{
+						c = CopyGetChar();
+						if (c == '\n')
+							elog(ERROR, "CopyReadAttribute: end-of-copy termination does not match previous input");
+						if (c != '\r')
+							elog(ERROR, "CopyReadAttribute: end-of-copy marker corrupt");
+					}
 					c = CopyGetChar();
-					if (c != '\n')
-						elog(ERROR, "CopyReadAttribute: end of record marker corrupted");
+					if (c != '\r' && c != '\n')
+						elog(ERROR, "CopyReadAttribute: end-of-copy marker corrupt");
+					if (((eol_type == EOL_NL || eol_type == EOL_CRNL) && c != '\n') ||
+					    (eol_type == EOL_CR && c != '\r'))
+						elog(ERROR, "CopyReadAttribute: end-of-copy termination does not match previous input");
 					/*
 					 * In protocol version 3, we should ignore anything after
 					 * \. up to the protocol end of copy data.  (XXX maybe
