@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *    $Header: /cvsroot/pgsql/src/backend/commands/vacuum.c,v 1.17 1997/01/25 19:29:36 scrappy Exp $
+ *    $Header: /cvsroot/pgsql/src/backend/commands/vacuum.c,v 1.18 1997/01/29 02:59:03 vadim Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -68,6 +68,7 @@ static void _vc_rpfheap (VRelList curvrl, Relation onerel, VPageList Vvpl, VPage
 static void _vc_vacheap (VRelList curvrl, Relation onerel, VPageList vpl);
 static void _vc_vacpage (Page page, VPageDescr vpd, Relation archrel);
 static void _vc_vaconeind (VPageList vpl, Relation indrel, int nhtups);
+static void _vc_scanoneind (Relation indrel, int nhtups);
 static void _vc_updstats(Oid relid, int npages, int ntuples, bool hasindex);
 static void _vc_setpagelock(Relation rel, BlockNumber blkno);
 static VPageDescr _vc_tidreapped (ItemPointer itemptr, VPageList curvrl);
@@ -400,34 +401,38 @@ _vc_vacone (VRelList curvrl)
     Vvpl.vpl_npages = Fvpl.vpl_npages = 0;
     _vc_scanheap(curvrl, onerel, &Vvpl, &Fvpl);
 
-    /* Now open/count indices */
+    /* Now open indices */
     Irel = (Relation *) NULL;
-    if ( Vvpl.vpl_npages > 0 )
-		    /* Open all indices of this relation */
-	_vc_getindices(curvrl->vrl_relid, &nindices, &Irel);
-    else
-		    /* Count indices only */
-	_vc_getindices(curvrl->vrl_relid, &nindices, NULL);
+    _vc_getindices(curvrl->vrl_relid, &nindices, &Irel);
     
     if ( nindices > 0 )
 	curvrl->vrl_hasindex = true;
     else
 	curvrl->vrl_hasindex = false;
 
-    /* Clean index' relation(s) */
+    /* Clean/scan index relation(s) */
     if ( Irel != (Relation*) NULL )
     {
-	for (i = 0; i < nindices; i++)
-	    _vc_vaconeind (&Vvpl, Irel[i], curvrl->vrl_ntups);
+    	if ( Vvpl.vpl_npages > 0 )
+    	{
+	    for (i = 0; i < nindices; i++)
+	    	_vc_vaconeind (&Vvpl, Irel[i], curvrl->vrl_ntups);
+    	}
+    	else	/* just scan indices to update statistic */
+    	{
+	    for (i = 0; i < nindices; i++)
+	    	_vc_scanoneind (Irel[i], curvrl->vrl_ntups);
+    	}
     }
 
     if ( Fvpl.vpl_npages > 0 )		/* Try to shrink heap */
     	_vc_rpfheap (curvrl, onerel, &Vvpl, &Fvpl, nindices, Irel);
-    else if ( Vvpl.vpl_npages > 0 )	/* Clean pages from Vvpl list */
+    else 
     {
     	if ( Irel != (Relation*) NULL )
 	    _vc_clsindices (nindices, Irel);
-	_vc_vacheap (curvrl, onerel, &Vvpl);
+    	if ( Vvpl.vpl_npages > 0 )	/* Clean pages from Vvpl list */
+	    _vc_vacheap (curvrl, onerel, &Vvpl);
     }
 
     /* ok - free Vvpl list of reapped pages */
@@ -1265,6 +1270,51 @@ _vc_vacpage (Page page, VPageDescr vpd, Relation archrel)
     PageRepairFragmentation(page);
 
 } /* _vc_vacpage */
+
+/*
+ *  _vc_scanoneind() -- scan one index relation to update statistic.
+ *
+ */
+static void
+_vc_scanoneind (Relation indrel, int nhtups)
+{
+    RetrieveIndexResult res;
+    IndexScanDesc iscan;
+    int nitups;
+    int nipages;
+    struct rusage ru0, ru1;
+
+    getrusage(RUSAGE_SELF, &ru0);
+
+    /* walk through the entire index */
+    iscan = index_beginscan(indrel, false, 0, (ScanKey) NULL);
+    nitups = 0;
+
+    while ((res = index_getnext(iscan, ForwardScanDirection))
+					!= (RetrieveIndexResult) NULL)
+    {
+	nitups++;
+	pfree(res);
+    }
+
+    index_endscan(iscan);
+
+    /* now update statistics in pg_class */
+    nipages = RelationGetNumberOfBlocks(indrel);
+    _vc_updstats(indrel->rd_id, nipages, nitups, false);
+
+    getrusage(RUSAGE_SELF, &ru1);
+
+    elog (MESSLEV, "Ind %.*s: Pages %u; Tuples %u. Elapsed %u/%u sec.",
+	NAMEDATALEN, indrel->rd_rel->relname.data, nipages, nitups, 
+	ru1.ru_stime.tv_sec - ru0.ru_stime.tv_sec, 
+	ru1.ru_utime.tv_sec - ru0.ru_utime.tv_sec);
+
+    if ( nitups != nhtups )
+    	elog (NOTICE, "NUMBER OF INDEX' TUPLES (%u) IS NOT THE SAME AS HEAP' (%u)",
+    		nitups, nhtups);
+
+} /* _vc_scanoneind */
 
 /*
  *  _vc_vaconeind() -- vacuum one index relation.
