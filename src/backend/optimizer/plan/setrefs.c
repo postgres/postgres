@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/optimizer/plan/setrefs.c,v 1.13 1998/01/14 15:48:21 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/optimizer/plan/setrefs.c,v 1.14 1998/01/14 19:55:53 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -42,7 +42,7 @@ static List *replace_subclause_joinvar_refs(List *clauses,
 							   List *outer_tlist, List *inner_tlist);
 static Var *replace_joinvar_refs(Var *var, List *outer_tlist, List *inner_tlist);
 static List *tlist_temp_references(Oid tempid, List *tlist);
-static void replace_result_clause(List *clause, List *subplanTargetList);
+static void replace_result_clause(Node *clause, List *subplanTargetList);
 static bool OperandIsInner(Node *opnd, int inner_relid);
 static void replace_agg_clause(Node *expr, List *targetlist);
 static Node *del_agg_clause(Node *clause);
@@ -554,7 +554,7 @@ set_result_tlist_references(Result *resultNode)
 	{
 		entry = (TargetEntry *) lfirst(t);
 		expr = (Expr *) get_expr(entry);
-		replace_result_clause((List *) expr, subplanTargetList);
+		replace_result_clause((Node *) expr, subplanTargetList);
 	}
 }
 
@@ -568,16 +568,15 @@ set_result_tlist_references(Result *resultNode)
  *
  */
 static void
-replace_result_clause(List *clause,
+replace_result_clause(Node *clause,
 					  List *subplanTargetList)	/* target list of the
 												 * subplan */
 {
 	List	   *t;
-	List	   *subClause;
-	TargetEntry *subplanVar;
 
 	if (IsA(clause, Var))
 	{
+		TargetEntry *subplanVar;
 
 		/*
 		 * Ha! A Var node!
@@ -591,15 +590,20 @@ replace_result_clause(List *clause,
 		((Var *) clause)->varno = (Index) OUTER;
 		((Var *) clause)->varattno = subplanVar->resdom->resno;
 	}
-	else if (is_funcclause((Node *) clause))
+	else if (IsA(clause, Aggreg))
 	{
+		replace_result_clause(((Aggreg *) clause)->target, subplanTargetList);
+	}
+	else if (is_funcclause(clause))
+	{
+		List   *subExpr;
 
 		/*
 		 * This is a function. Recursively call this routine for its
 		 * arguments...
 		 */
-		subClause = ((Expr *) clause)->args;
-		foreach(t, subClause)
+		subExpr = ((Expr *) clause)->args;
+		foreach(t, subExpr)
 		{
 			replace_result_clause(lfirst(t), subplanTargetList);
 		}
@@ -607,39 +611,38 @@ replace_result_clause(List *clause,
 	else if (IsA(clause, ArrayRef))
 	{
 		ArrayRef   *aref = (ArrayRef *) clause;
-
+		
 		/*
 		 * This is an arrayref. Recursively call this routine for its
 		 * expression and its index expression...
 		 */
-		subClause = aref->refupperindexpr;
-		foreach(t, subClause)
+		foreach(t, aref->refupperindexpr)
 		{
 			replace_result_clause(lfirst(t), subplanTargetList);
 		}
-		subClause = aref->reflowerindexpr;
-		foreach(t, subClause)
+		foreach(t, aref->reflowerindexpr)
 		{
 			replace_result_clause(lfirst(t), subplanTargetList);
 		}
-		replace_result_clause((List *) aref->refexpr,
+		replace_result_clause(aref->refexpr,
 							  subplanTargetList);
-		replace_result_clause((List *) aref->refassgnexpr,
+		replace_result_clause(aref->refassgnexpr,
 							  subplanTargetList);
 	}
-	else if (is_opclause((Node *) clause))
+	else if (is_opclause(clause))
 	{
+		Node *subNode;
 
 		/*
 		 * This is an operator. Recursively call this routine for both its
 		 * left and right operands
 		 */
-		subClause = (List *) get_leftop((Expr *) clause);
-		replace_result_clause(subClause, subplanTargetList);
-		subClause = (List *) get_rightop((Expr *) clause);
-		replace_result_clause(subClause, subplanTargetList);
+		subNode = (Node *)get_leftop((Expr *) clause);
+		replace_result_clause(subNode, subplanTargetList);
+		subNode = (Node *) get_rightop((Expr *) clause);
+		replace_result_clause(subNode, subplanTargetList);
 	}
-	else if (IsA(clause, Param) ||IsA(clause, Const))
+	else if (IsA(clause, Param) || IsA(clause, Const))
 	{
 		/* do nothing! */
 	}
@@ -731,10 +734,9 @@ static void
 replace_agg_clause(Node *clause, List *subplanTargetList)
 {
 	List	   *t;
-	TargetEntry *subplanVar;
-
 	if (IsA(clause, Var))
 	{
+		TargetEntry *subplanVar;
 
 		/*
 		 * Ha! A Var node!
@@ -784,7 +786,6 @@ replace_agg_clause(Node *clause, List *subplanTargetList)
 	}
 	else if (is_opclause(clause))
 	{
-
 		/*
 		 * This is an operator. Recursively call this routine for both its
 		 * left and right operands
