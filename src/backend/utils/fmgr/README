@@ -1,4 +1,4 @@
-Proposal for function-manager redesign			24-May-2000
+Proposal for function-manager redesign			19-Nov-2000
 --------------------------------------
 
 We know that the existing mechanism for calling Postgres functions needs
@@ -24,10 +24,6 @@ can be done on an incremental file-by-file basis --- we won't need a
 written in the old style can be left in place indefinitely, to provide
 backward compatibility for user-written C functions.
 
-Note that neither the old function manager nor the redesign are intended
-to handle functions that accept or return sets.  Those sorts of functions
-need to be handled by special querytree structures.
-
 
 Changes in pg_proc (system data about a function)
 -------------------------------------------------
@@ -37,7 +33,8 @@ This is a boolean value which will be TRUE if the function is "strict",
 that is it always returns NULL when any of its inputs are NULL.  The
 function manager will check this field and skip calling the function when
 it's TRUE and there are NULL inputs.  This allows us to remove explicit
-NULL-value tests from many functions that currently need them.  A function
+NULL-value tests from many functions that currently need them (not to
+mention fixing many more that need them but don't have them).  A function
 that is not marked "strict" is responsible for checking whether its inputs
 are NULL or not.  Most builtin functions will be marked "strict".
 
@@ -67,7 +64,9 @@ typedef struct
     Oid         fn_oid;     /* OID of function (NOT of handler, if any) */
     short       fn_nargs;   /* 0..FUNC_MAX_ARGS, or -1 if variable arg count */
     bool        fn_strict;  /* function is "strict" (NULL in => NULL out) */
+    bool        fn_retset;  /* function returns a set (over multiple calls) */
     void       *fn_extra;   /* extra space for use by handler */
+    MemoryContext fn_mcxt;  /* memory context to store fn_extra in */
 } FmgrInfo;
 
 For an ordinary built-in function, fn_addr is just the address of the C
@@ -79,8 +78,9 @@ to denote a not-yet-initialized FmgrInfo struct.  fn_extra will always
 be NULL when an FmgrInfo is first filled by the function lookup code, but
 a function handler could set it to avoid making repeated lookups of its
 own when the same FmgrInfo is used repeatedly during a query.)  fn_nargs
-is the number of arguments expected by the function, and fn_strict is
-its strictness flag.
+is the number of arguments expected by the function, fn_strict is its
+strictness flag, and fn_retset shows whether it returns a set; all of
+these values come from the function's pg_proc entry.
 
 FmgrInfo already exists in the current code, but has fewer fields.  This
 change should be transparent at the source-code level.
@@ -109,15 +109,17 @@ context is NULL for an "ordinary" function call, but may point to additional
 info when the function is called in certain contexts.  (For example, the
 trigger manager will pass information about the current trigger event here.)
 If context is used, it should point to some subtype of Node; the particular
-kind of context can then be indicated by the node type field.  (A callee
-should always check the node type before assuming it knows what kind of
-context is being passed.)  fmgr itself puts no other restrictions on the use
-of this field.
+kind of context is indicated by the node type field.  (A callee should
+always check the node type before assuming it knows what kind of context is
+being passed.)  fmgr itself puts no other restrictions on the use of this
+field.
 
 resultinfo is NULL when calling any function from which a simple Datum
 result is expected.  It may point to some subtype of Node if the function
-returns more than a Datum.  Like the context field, resultinfo is a hook
-for expansion; fmgr itself doesn't constrain the use of the field.
+returns more than a Datum.  (For example, resultinfo is used when calling a
+function that returns a set, as discussed below.)  Like the context field,
+resultinfo is a hook for expansion; fmgr itself doesn't constrain the use
+of the field.
 
 nargs, arg[], and argnull[] hold the arguments being passed to the function.
 Notice that all the arguments passed to a function (as well as its result
@@ -257,26 +259,14 @@ types.  Modules or header files that define specialized SQL datatypes
 (eg, timestamp) should define appropriate macros for those types, so that
 functions manipulating the types can be coded in the standard style.
 
-For non-primitive data types (particularly variable-length types) it
-probably won't be very practical to hide the pass-by-reference nature of
-the data type, so the PG_GETARG and PG_RETURN macros for those types
-probably won't do more than DatumGetPointer/PointerGetDatum plus the
-appropriate typecast.  Functions returning such types will need to
-palloc() their result space explicitly.  I recommend naming the GETARG
-and RETURN macros for such types to end in "_P", as a reminder that they
+For non-primitive data types (particularly variable-length types) it won't
+be very practical to hide the pass-by-reference nature of the data type,
+so the PG_GETARG and PG_RETURN macros for those types won't do much more
+than DatumGetPointer/PointerGetDatum plus the appropriate typecast (but see
+TOAST discussion, below).  Functions returning such types will need to
+palloc() their result space explicitly.  I recommend naming the GETARG and
+RETURN macros for such types to end in "_P", as a reminder that they
 produce or take a pointer.  For example, PG_GETARG_TEXT_P yields "text *".
-
-For TOAST-able data types, the PG_GETARG macro will deliver a de-TOASTed
-data value.  There might be a few cases where the still-toasted value is
-wanted, but I am having a hard time coming up with examples.  For the
-moment I'd say that any such code could use a lower-level macro that is
-just ((struct varlena *) DatumGetPointer(fcinfo->arg[n])).
-
-Note: the above examples assume that arguments will be counted starting at
-zero.  We could have the ARG macros subtract one from the argument number,
-so that arguments are counted starting at one.  I'm not sure if that would be
-more or less confusing.  Does anyone have a strong feeling either way about
-it?
 
 When a function needs to access fcinfo->flinfo or one of the other auxiliary
 fields of FunctionCallInfo, it should just do it.  I doubt that providing
@@ -319,10 +309,6 @@ that this style of coding cannot pass a NULL input value nor cope with
 a NULL result (it couldn't before, either!).  We can make the helper
 routines elog an error if they see that the function returns a NULL.
 
-(Note: direct calls like this will have to be changed at the same time
-that their called routines are changed to the new style.  But that will
-still be a lot less of a constraint than a "big bang" conversion.)
-
 When invoking a function that has a known argument signature, we have
 usually written either
 	result = fmgr(targetfuncOid, ... args ... );
@@ -349,6 +335,68 @@ have to change in the first step of implementation, but they can
 continue to support the same external appearance.
 
 
+Support for TOAST-able data types
+---------------------------------
+
+For TOAST-able data types, the PG_GETARG macro will deliver a de-TOASTed
+data value.  There might be a few cases where the still-toasted value is
+wanted, but the vast majority of cases want the de-toasted result, so
+that will be the default.  To get the argument value without causing
+de-toasting, use PG_GETARG_RAW_VARLENA_P(n).
+
+Some functions require a modifiable copy of their input values.  In these
+cases, it's silly to do an extra copy step if we copied the data anyway
+to de-TOAST it.  Therefore, each toastable datatype has an additional
+fetch macro, for example PG_GETARG_TEXT_P_COPY(n), which delivers a
+guaranteed-fresh copy, combining this with the detoasting step if possible.
+
+There is also a PG_FREE_IF_COPY(ptr,n) macro, which pfree's the given
+pointer if and only if it is different from the original value of the n'th
+argument.  This can be used to free the de-toasted value of the n'th
+argument, if it was actually de-toasted.  Currently, doing this is not
+necessary for the majority of functions because the core backend code
+releases temporary space periodically, so that memory leaked in function
+execution isn't a big problem.  However, as of 7.1 memory leaks in
+functions that are called by index searches will not be cleaned up until
+end of transaction.  Therefore, functions that are listed in pg_amop or
+pg_amproc should be careful not to leak detoasted copies, and so these
+functions do need to use PG_FREE_IF_COPY() for toastable inputs.
+
+A function should never try to re-TOAST its result value; it should just
+deliver an untoasted result that's been palloc'd in the current memory
+context.  When and if the value is actually stored into a tuple, the
+tuple toaster will decide whether toasting is needed.
+
+
+Functions accepting or returning sets
+-------------------------------------
+
+As of 7.1, Postgres has limited support for functions returning sets;
+this is presently handled only in SELECT output expressions, and the
+behavior is to generate a separate output tuple for each set element.
+There is no direct support for functions accepting sets; instead, the
+function will be called multiple times, once for each element of the
+input set.  This behavior will very likely be changed in future releases,
+but here is how it works now:
+
+If a function is marked in pg_proc as returning a set, then it is called
+with fcinfo->resultinfo pointing to a node of type ReturnSetInfo.  A
+function that desires to return a set should raise an error "called in
+context that does not accept a set result" if resultinfo is NULL or does
+not point to a ReturnSetInfo node.  ReturnSetInfo contains a single field
+"isDone", which should be set to one of these values:
+
+    ExprSingleResult             /* expression does not return a set */
+    ExprMultipleResult           /* this result is an element of a set */
+    ExprEndResult                /* there are no more elements in the set */
+
+A function returning set returns one set element per call, setting
+fcinfo->resultinfo->isDone to ExprMultipleResult for each element.
+After all elements have been returned, the next call should set
+isDone to ExprEndResult and return a null result.  (Note it is possible
+to return an empty set by doing this on the first call.)
+
+
 Notes about function handlers
 -----------------------------
 
@@ -361,49 +409,91 @@ function is invoked many times.  (fn_extra can only be used as a hint,
 since callers are not required to re-use an FmgrInfo struct.
 But in performance-critical paths they normally will do so.)
 
-Issue: in what context should a handler allocate memory that it intends
-to use for fn_extra data?  The current palloc context when the handler
-is actually called might be considerably shorter-lived than the FmgrInfo
-struct, which would lead to dangling-pointer problems at the next use
-of the FmgrInfo.  Perhaps FmgrInfo should also store a memory context
-identifier that the handler could use to allocate space of the right
-lifespan.  (Having fmgr_info initialize this to CurrentMemoryContext
-should work in nearly all cases, though a few places might have to
-set it differently.)  At the moment I have not done this, since the
-existing PL handlers only need to set fn_extra to point at long-lived
-structures (data in their own caches) and don't really care which
-context the FmgrInfo is in anyway.
-
-Are there any other things needed by the call handlers for PL/pgsql and
-other languages?
-
-During the conversion process, support for old-style builtin functions
-and old-style user-written C functions will be provided by appropriate
-function handlers.  For example, the handler for old-style builtins
-looks roughly like fmgr_c() used to.
+If the handler wants to allocate memory to hold fn_extra data, it should
+NOT do so in CurrentMemoryContext, since the current context may well be
+much shorter-lived than the context where the FmgrInfo is.  Instead,
+allocate the memory in context flinfo->fn_mcxt, or in a long-lived cache
+context.  fn_mcxt normally points at the context that was
+CurrentMemoryContext at the time the FmgrInfo structure was created;
+in any case it is required to be a context at least as long-lived as the
+FmgrInfo itself.
 
 
-System table updates
---------------------
+Telling the difference between old- and new-style functions
+-----------------------------------------------------------
 
-In the initial phase, two new entries will be added to pg_language
-for language types "newinternal" and "newC", corresponding to
-builtin and dynamically-loaded functions having the new calling
-convention.
+During the conversion process, we carried two different pg_language
+entries, "internal" and "newinternal", for internal functions.  The
+function manager used the language code to distinguish which calling
+convention to use.  (Old-style internal functions were supported via
+a function handler.)  As of Nov. 2000, no old-style internal functions
+remain, so we can drop support for them.  We will remove the old "internal"
+pg_language entry and rename "newinternal" to "internal".
 
-There will also be a change to pg_proc to add the new "proisstrict"
-column.
+The interim solution for dynamically-loaded compiled functions has been
+similar: two pg_language entries "C" and "newC".  This naming convention
+is not desirable for the long run, and yet we cannot stop supporting
+old-style user functions.  Instead, it seems better to use just one
+pg_language entry "C", and require the dynamically-loaded library to
+provide additional information that identifies new-style functions.
+This avoids compatibility problems --- for example, existing dump
+scripts will identify PL language handlers as being in language "C",
+which would be wrong under the "newC" convention.  Also, this approach
+should generalize more conveniently for future extensions to the function
+interface specification.
 
-Then pg_proc entries will be changed from language code "internal" to
-"newinternal" piecemeal, as the associated routines are rewritten.
-(This will imply several rounds of forced initdbs as the contents of
-pg_proc change, but I think we can live with that.)
+Given a dynamically loaded function named "foo" (note that the name being
+considered here is the link-symbol name, not the SQL-level function name),
+the function manager will look for another function in the same dynamically
+loaded library named "pg_finfo_foo".  If this second function does not
+exist, then foo is assumed to be called old-style, thus ensuring backwards
+compatibility with existing libraries.  If the info function does exist,
+it is expected to have the signature
 
-The old language names "internal" and "C" will continue to refer to
-functions with the old calling convention.  We should deprecate
-old-style functions because of their portability problems, but the
-support for them will only be one small function handler routine,
-so we can leave them in place for as long as necessary.
+	Pg_finfo_record * pg_finfo_foo (void);
 
-The expected calling convention for PL call handlers will need to change
-all-at-once, but fortunately there are not very many of them to fix.
+The info function will be called by the fmgr, and must return a pointer
+to a Pg_finfo_record struct.  (The returned struct will typically be a
+statically allocated constant in the dynamic-link library.)  The current
+definition of the struct is just
+
+	typedef struct {
+		int	api_version;
+	} Pg_finfo_record;
+
+where api_version is 0 to indicate old-style or 1 to indicate new-style
+calling convention.  In future releases, additional fields may be defined
+after api_version, but these additional fields will only be used if
+api_version is greater than 2.
+
+These details will be hidden from the author of a dynamically loaded
+function by using a macro.  To define a new-style dynamically loaded
+function named foo, write
+
+	PG_FUNCTION_INFO_V1(foo);
+
+	Datum
+	foo(PG_FUNCTION_ARGS)
+	{
+		...
+	}
+
+The function itself is written using the same conventions as for new-style
+internal functions; you just need to add the PG_FUNCTION_INFO_V1() macro.
+Note that old-style and new-style functions can be intermixed in the same
+library, depending on whether or not you write a PG_FUNCTION_INFO_V1() for
+each one.
+
+The SQL declaration for a dynamically-loaded function is CREATE FUNCTION
+foo ... LANGUAGE 'C' regardless of whether it is old- or new-style.
+
+New-style dynamic functions will be invoked directly by fmgr, and will
+therefore have the same performance as internal functions after the initial
+pg_proc lookup overhead.  Old-style dynamic functions will be invoked via
+a handler, and will therefore have a small performance penalty.
+
+To allow old-style dynamic functions to work safely on toastable datatypes,
+the handler for old-style functions will automatically detoast toastable
+arguments before passing them to the old-style function.  A new-style
+function is expected to take care of toasted arguments by using the
+standard argument access macros defined above.
