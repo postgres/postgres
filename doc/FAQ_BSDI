@@ -21,6 +21,14 @@ to your /etc/login.conf file.
 2a)  By default, only 4MB of shared memory is supported by BSDI. Keep in
 mind that shared memory is not pageable.  It is locked in RAM.
 
+The shared memory parameters are:
+
+#define SHMMAX		/* max shared memory segment size (bytes) */
+#define SHMMIN		/* min shared memory segment size (bytes) */
+#define SHMMNI		/* max number of shared memory identifiers */
+#define SHMSEG		/* max shared memory segments per process */
+#define SHMALL		/* max amount of shared memory (pages) */
+
 To increase the number of buffers supported by the postmaseter, add the
 following to your kernel config file.  A SHMALL value of 1024 
 represents 4MB of shared memory.  Increase it accordingly:

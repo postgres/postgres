@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/runtime.sgml,v 1.53 2001/02/16 19:27:19 momjian Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/runtime.sgml,v 1.54 2001/02/16 19:43:52 momjian Exp $
 -->
 
 <Chapter Id="runtime">
@@ -1536,6 +1536,15 @@ env PGOPTIONS='-c geqo=off' psql
         <para>
          By default, only 4 MB of shared memory is supported. Keep in
          mind that shared memory is not pageable; it is locked in RAM.
+	 The shared memory parameters are:
+<programlisting>
+#define SHMMAX		/* max shared memory segment size (bytes) */
+#define SHMMIN		/* min shared memory segment size (bytes) */
+#define SHMMNI		/* max number of shared memory identifiers */
+#define SHMSEG		/* max shared memory segments per process */
+#define SHMALL		/* max amount of shared memory (pages) */
+</programlisting>
+
 	 To increase the number of buffers supported by the postmaseter, add the
 	 following to your kernel config file.  A <varname>SHMALL</> value of 1024 
 	 represents 4MB of shared memory.  Increase it accordingly:
