@@ -1,45 +1,37 @@
-<!--
-$Header: /cvsroot/pgsql/doc/src/sgml/array.sgml,v 1.9 2001/01/13 23:58:55 petere Exp $
--->
+<!-- $Header: /cvsroot/pgsql/doc/src/sgml/array.sgml,v 1.10 2001/01/26 23:40:39 petere Exp $ -->
 
-<Chapter Id="arrays">
-<Title>Arrays</Title>
+<chapter id="arrays">
+ <title>Arrays</title>
 
-<Para>
-<Note>
-<Para>
-This must become a chapter on array behavior. Volunteers? - thomas 1998-01-12
-</Para>
-</Note>
-</Para>
-
-<Para>
-     <ProductName>Postgres</ProductName> allows columns of a table
-     to be defined as variable-length multi-dimensional
-     arrays. Arrays of any built-in type  or  user-defined  type
-     can  be created.  To illustrate their use, we create this table:
-     
-<ProgramListing>
+ <para>
+  <productname>Postgres</productname> allows columns of a table to be
+  defined as variable-length multi-dimensional arrays. Arrays of any
+  built-in type or user-defined type can be created.  To illustrate
+  their use, we create this table:
+<programlisting>
 CREATE TABLE sal_emp (
     name            text,
-    pay_by_quarter  int4[],
+    pay_by_quarter  integer[],
     schedule        text[][]
 );
-</ProgramListing>
-</Para>
+</programlisting>
+  The above query will create a table named
+  <structname>sal_emp</structname> with a <type>text</type> string
+  (<structfield>name</structfield>), a one-dimensional array of type
+  <type>integer</type> (<structfield>pay_by_quarter</structfield>),
+  which shall represent the employee's salary by quarter, and a
+  two-dimensional array of <type>text</type>
+  (<structfield>schedule</structfield>), which represents the
+  employee's weekly schedule.
+ </para>
 
-<Para>
-     The above query will create a table named <FirstTerm>sal_emp</FirstTerm>  with
-     a  <FirstTerm>text</FirstTerm>  string (name), a one-dimensional array of <FirstTerm>int4</FirstTerm>
-     (pay_by_quarter),  which  represents   the   employee's
-     salary by quarter, and a two-dimensional array of <FirstTerm>text</FirstTerm>
-     (schedule),  which  represents  the  employee's  weekly
-     schedule.   Now  we  do  some  <FirstTerm>INSERT</FirstTerm>s; note that when
-     appending to an array, we  enclose  the  values  within
-     braces  and  separate  them  by commas.  If you know <FirstTerm>C</FirstTerm>,
-     this is not unlike the syntax for  initializing  structures.
+ <para>
+  Now we do some <command>INSERT</command>s; note that when appending
+  to an array, we enclose the values within braces and separate them
+  by commas.  If you know C, this is not unlike the syntax for
+  initializing structures.
      
-<ProgramListing>
+<programlisting>
 INSERT INTO sal_emp
     VALUES ('Bill',
     '{10000, 10000, 10000, 10000}',
@@ -49,32 +41,34 @@ INSERT INTO sal_emp
     VALUES ('Carol',
     '{20000, 25000, 25000, 25000}',
     '{{"talk", "consult"}, {"meeting"}}');
-</ProgramListing>
+</programlisting>
+ </para>
 
-     Now,  we  can  run  some queries on sal_emp.  First, we
-     show how to access a single element of an  array  at  a
-     time.   This query retrieves the names of the employees
-     whose pay changed in the second quarter:
+ <para>
+  Now, we can run some queries on <structname>sal_emp</structname>.
+  First, we show how to access a single element of an array at a time.
+  This query retrieves the names of the employees whose pay changed in
+  the second quarter:
      
-<ProgramListing>
+<programlisting>
 SELECT name FROM sal_emp WHERE pay_by_quarter[1] &lt;&gt; pay_by_quarter[2];
 
  name
 -------
  Carol
 (1 row)
-</ProgramListing>
+</programlisting>
 
-     <ProductName>Postgres</ProductName>  uses  the "one-based" numbering
-     convention for arrays --- that is, an array  of  n  elements starts with
-     array[1] and ends with array[n].
-</Para>
+  <productname>Postgres</productname> uses the
+  <quote>one-based</quote> numbering convention for arrays, that is,
+  an array of n elements starts with <literal>array[1]</literal> and
+  ends with <literal>array[n]</literal>.
+ </para>
 
-<Para>
-     This query retrieves  the  third  quarter  pay  of  all
-     employees:
+ <para>
+  This query retrieves the third quarter pay of all employees:
      
-<ProgramListing>
+<programlisting>
 SELECT pay_by_quarter[3] FROM sal_emp;
 
  pay_by_quarter
@@ -82,110 +76,161 @@ SELECT pay_by_quarter[3] FROM sal_emp;
           10000
           25000
 (2 rows)
-</ProgramListing>
-</Para>
+</programlisting>
+ </para>
 
-<Para>
-     We  can  also  access  arbitrary rectangular slices of an array, or
-     subarrays.  An array slice is denoted by writing
-     <replaceable>lower subscript</replaceable> <literal>:</literal>
-     <replaceable>upper subscript</replaceable> for one or more array
-     dimensions.  This query  retrieves  the  first  item  on
-     Bill's schedule for the first two days of the week:
+ <para>
+  We can also access arbitrary rectangular slices of an array, or
+  subarrays.  An array slice is denoted by writing
+  <literal><replaceable>lower subscript</replaceable> :
+  <replaceable>upper subscript</replaceable></literal> for one or more
+  array dimensions.  This query retrieves the first item on Bill's
+  schedule for the first two days of the week:
      
-<ProgramListing>
+<programlisting>
 SELECT schedule[1:2][1:1] FROM sal_emp WHERE name = 'Bill';
 
       schedule
 --------------------
  {{"meeting"},{""}}
 (1 row)
-</ProgramListing>
+</programlisting>
 
-     We could also have written
+  We could also have written
 
-<ProgramListing>
+<programlisting>
 SELECT schedule[1:2][1] FROM sal_emp WHERE name = 'Bill';
-</ProgramListing>
+</programlisting>
 
-     with the same result.  An array subscripting operation is taken to
-     represent an array slice if any of the subscripts are written in
-     the form <replaceable>lower</replaceable> <literal>:</literal>
-     <replaceable>upper</replaceable>.  A lower bound of 1 is assumed
-     for any subscript where only one value is specified.
-</Para>
+  with the same result.  An array subscripting operation is taken to
+  represent an array slice if any of the subscripts are written in the
+  form <replaceable>lower</replaceable> <literal>:</literal>
+  <replaceable>upper</replaceable>.  A lower bound of 1 is assumed for
+  any subscript where only one value is specified.
+ </para>
 
-<Para>
-     An array value can be replaced completely:
+ <para>
+  An array value can be replaced completely:
 
-<ProgramListing>
+<programlisting>
 UPDATE sal_emp SET pay_by_quarter = '{25000,25000,27000,27000}'
     WHERE name = 'Carol';
-</ProgramListing>
+</programlisting>
 
-     or updated at a single element:
+  or updated at a single element:
 
-<ProgramListing>
+<programlisting>
 UPDATE sal_emp SET pay_by_quarter[4] = 15000
     WHERE name = 'Bill';
-</ProgramListing>
+</programListing>
 
-     or updated in a slice:
+  or updated in a slice:
 
-<ProgramListing>
+<programlisting>
 UPDATE sal_emp SET pay_by_quarter[1:2] = '{27000,27000}'
     WHERE name = 'Carol';
-</ProgramListing>
-</Para>
+</programlisting>
+ </para>
 
-<Para>
-     An array can be enlarged by assigning to an element adjacent to
-     those already present, or by assigning to a slice that is adjacent
-     to or overlaps the data already present.
-     For example, if an array value currently has 4 elements, it will
-     have five elements after an update that assigns to array[5].
-     Currently, enlargement in this fashion is only
-     allowed for one-dimensional arrays, not multidimensional arrays.
-</Para>
+ <para>
+  An array can be enlarged by assigning to an element adjacent to
+  those already present, or by assigning to a slice that is adjacent
+  to or overlaps the data already present.  For example, if an array
+  value currently has 4 elements, it will have five elements after an
+  update that assigns to array[5].  Currently, enlargement in this
+  fashion is only allowed for one-dimensional arrays, not
+  multidimensional arrays.
+ </para>
 
-<Para>
-     The syntax for CREATE TABLE allows fixed-length arrays to be
-     defined:
+ <para>
+  The syntax for <command>CREATE TABLE</command> allows fixed-length
+  arrays to be defined:
 
-<ProgramListing>
+<programlisting>
 CREATE TABLE tictactoe (
-    squares   int4[3][3]
+    squares   integer[3][3]
 );
-</ProgramListing>
+</programlisting>
 
-     However, the current implementation does not enforce the array
-     size limits --- the behavior is the same as for arrays of
-     unspecified length.
-</Para>
+  However, the current implementation does not enforce the array size
+  limits --- the behavior is the same as for arrays of unspecified
+  length.
+ </para>
 
-<Para>
-     Actually, the current implementation doesn't enforce the declared
-     number of dimensions either.  Arrays of a particular base type
-     are all considered to be of the same type, regardless of size or
-     number of dimensions.
-</Para>
+ <para>
+  Actually, the current implementation does not enforce the declared
+  number of dimensions either.  Arrays of a particular base type are
+  all considered to be of the same type, regardless of size or number
+  of dimensions.
+ </para>
 
-<Para>
-     The current dimensions of any array value can be retrieved with
-     the <function>array_dims</function> function:
+ <para>
+  The current dimensions of any array value can be retrieved with the
+  <function>array_dims</function> function:
 
-<ProgramListing>
+<programlisting>
 SELECT array_dims(schedule) FROM sal_emp WHERE name = 'Carol';
 
  array_dims
 ------------
  [1:2][1:1]
 (1 row)
-</ProgramListing>
+</programlisting>
 
-     <function>array_dims</function> produces a <type>text</type> result,
-     which is convenient for people to read but perhaps not so convenient
-     for programs.
-</Para>
+  <function>array_dims</function> produces a <type>text</type> result,
+  which is convenient for people to read but perhaps not so convenient
+  for programs.
+ </para>
 
-</Chapter>
+ <para>
+  To search for a value in an array, you must check each value of the
+  array. This can be done by hand (if you know the size of the array):
+
+<programlisting>
+SELECT * FROM sal_emp WHERE pay_by_quarter[1] = 10000 OR
+                            pay_by_quarter[2] = 10000 OR
+                            pay_by_quarter[3] = 10000 OR
+                            pay_by_quarter[4] = 10000;
+</programlisting>
+
+  However, this quickly becomes tedious for large arrays, and is not
+  helpful if the size of the array is unknown. Although it is not part
+  of the primary <productname>PostgreSQL</productname> distribution,
+  in the contributions directory, there is an extension to
+  <productname>PostgreSQL</productname> that defines new functions and
+  operators for iterating over array values. Using this, the above
+  query could be:
+
+<programlisting>
+SELECT * FROM sal_emp WHERE pay_by_quarter[1:4] *= 10000;
+</programlisting>
+
+  To search the entire array (not just specified columns), you could
+  use:
+
+<programlisting>
+SELECT * FROM sal_emp WHERE pay_by_quarter *= 10000;
+</programlisting>
+
+  In addition, you could find rows where the array had all values
+  equal to 10 000 with:
+
+<programlisting>
+SELECT * FROM sal_emp WHERE pay_by_quarter **= 10000;
+</programlisting>
+
+  To install this optional module, look in the
+  <filename>contrib/array</filename> directory of the
+  <productname>PostgreSQL</productname> source distribution.
+ </para>
+
+ <tip>
+  <para>
+   Arrays are not lists; using arrays in the manner described in the
+   previous paragraph is often a sign of database misdesign.  The
+   array field should generally be split off into a separate table.
+   Tables can obviously be searched easily.
+  </para>
+ </tip>
+
+</chapter>
