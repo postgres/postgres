@@ -14,7 +14,7 @@ import org.postgresql.PGConnection;
  *
  * @author Aaron Mulder (ammulder@chariotsolutions.com)
  * @author Csaba Nagy (ncsaba@yahoo.com)
- * @version $Revision: 1.7 $
+ * @version $Revision: 1.8 $
  */
 public class PooledConnectionImpl implements PooledConnection
 {
@@ -266,17 +266,17 @@ public class PooledConnectionImpl implements PooledConnection
             else if(method.getName().equals("createStatement"))
             {
                 Statement st = (Statement)method.invoke(con, args);
-                return Proxy.newProxyInstance(getClass().getClassLoader(), new Class[]{Statement.class}, new StatementHandler(this, st));
+                return Proxy.newProxyInstance(getClass().getClassLoader(), new Class[]{Statement.class, org.postgresql.PGStatement.class}, new StatementHandler(this, st));
             }
             else if(method.getName().equals("prepareCall"))
             {
                 Statement st = (Statement)method.invoke(con, args);
-                return Proxy.newProxyInstance(getClass().getClassLoader(), new Class[]{CallableStatement.class}, new StatementHandler(this, st));
+                return Proxy.newProxyInstance(getClass().getClassLoader(), new Class[]{CallableStatement.class, org.postgresql.PGStatement.class}, new StatementHandler(this, st));
             }
             else if(method.getName().equals("prepareStatement"))
             {
                 Statement st = (Statement)method.invoke(con, args);
-                return Proxy.newProxyInstance(getClass().getClassLoader(), new Class[]{PreparedStatement.class}, new StatementHandler(this, st));
+                return Proxy.newProxyInstance(getClass().getClassLoader(), new Class[]{PreparedStatement.class, org.postgresql.PGStatement.class}, new StatementHandler(this, st));
             }
 			else
 			{

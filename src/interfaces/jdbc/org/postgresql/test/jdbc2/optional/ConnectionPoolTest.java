@@ -11,7 +11,7 @@ import java.sql.*;
  * interface to the PooledConnection is through the CPDS.
  *
  * @author Aaron Mulder (ammulder@chariotsolutions.com)
- * @version $Revision: 1.7 $
+ * @version $Revision: 1.8 $
  */
 public class ConnectionPoolTest extends BaseDataSourceTest
 {
@@ -420,6 +420,29 @@ public class ConnectionPoolTest extends BaseDataSourceTest
         } catch (SQLException e) {
             fail(e.getMessage());
         }
+    }
+
+    /**
+     * Ensure that a statement created from a pool can be used
+     * like any other statement in regard to pg extensions.
+     */
+    public void testStatementsProxyPGStatement() {
+	try {
+	    PooledConnection pc = getPooledConnection();
+	    con = pc.getConnection();
+	    
+	    Statement s = con.createStatement();
+	    boolean b = ((org.postgresql.PGStatement)s).isUseServerPrepare();
+
+	    PreparedStatement ps = con.prepareStatement("select 'x'");
+	    b = ((org.postgresql.PGStatement)ps).isUseServerPrepare();
+
+            CallableStatement cs = con.prepareCall("select 'x'");
+	    b = ((org.postgresql.PGStatement)cs).isUseServerPrepare();
+
+	} catch (SQLException e) {
+	    fail(e.getMessage());
+	}
     }
 
     /**
