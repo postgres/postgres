@@ -4,13 +4,14 @@
 #
 # Copyright (c) 1994, Regents of the University of California
 #
-# $Header: /cvsroot/pgsql/src/interfaces/libpq/Makefile,v 1.62 2002/06/14 04:23:17 momjian Exp $
+# $Header: /cvsroot/pgsql/src/interfaces/libpq/Makefile,v 1.63 2002/07/18 03:59:49 momjian Exp $
 #
 #-------------------------------------------------------------------------
 
 subdir = src/interfaces/libpq
 top_builddir = ../../..
 include $(top_builddir)/src/Makefile.global
+
 
 # shared library parameters
 NAME= pq
@@ -21,11 +22,12 @@ override CPPFLAGS := -I$(srcdir) $(CPPFLAGS) -DFRONTEND -DSYSCONFDIR='"$(sysconf
 
 OBJS= fe-auth.o fe-connect.o fe-exec.o fe-misc.o fe-print.o fe-lobj.o \
       pqexpbuffer.o dllist.o md5.o pqsignal.o fe-secure.o \
-      $(INET_ATON) $(SNPRINTF) $(STRERROR)
+      $(notdir $(INET_ATON)) $(notdir $(SNPRINTF)) $(notdir $(STRERROR))
 
 ifdef MULTIBYTE
 OBJS+= wchar.o encnames.o
 endif
+
 
 # Add libraries that libpq depends (or might depend) on into the
 # shared library link.  (The order in which you list them here doesn't
@@ -37,14 +39,8 @@ all: all-lib
 
 # Shared library stuff
 include $(top_srcdir)/src/Makefile.shlib
-
-
-# We use several backend modules verbatim, but since we need to
-# compile with appropriate options to build a shared lib, we can't
-# necessarily use the same object files as the backend uses. Instead,
-# symlink the source files in here and build our own object file.
-
 backend_src = $(top_srcdir)/src/backend
+
 
 dllist.c: $(backend_src)/lib/dllist.c
 	rm -f $@ && $(LN_S) $< .
@@ -52,17 +48,26 @@ dllist.c: $(backend_src)/lib/dllist.c
 md5.c: $(backend_src)/libpq/md5.c
 	rm -f $@ && $(LN_S) $< .
 
+# We use several backend modules verbatim, but since we need to
+# compile with appropriate options to build a shared lib, we can't
+# necessarily use the same object files as the backend uses. Instead,
+# symlink the source files in here and build our own object file.
 # this only gets done if configure finds system doesn't have inet_aton()
-inet_aton.c: $(backend_src)/port/inet_aton.c
-	rm -f $@ && $(LN_S) $< .
 
-# this only gets done if configure finds system doesn't have snprintf()
-snprintf.c: $(backend_src)/port/snprintf.c
+ifdef INET_ATON
+$(basename $(notdir $(INET_ATON))).c: $(basename $(INET_ATON)).c
 	rm -f $@ && $(LN_S) $< .
+endif
 
-# this only gets done if configure finds system doesn't have strerror()
-strerror.c: $(backend_src)/port/strerror.c
+ifdef SNPRINTF
+$(basename $(notdir $(SNPRINTF))).c: $(basename $(SNPRINTF)).c
 	rm -f $@ && $(LN_S) $< .
+endif
+
+ifdef STRERROR
+$(basename $(notdir $(STRERROR))).c: $(basename $(STRERROR)).c
+	rm -f $@ && $(LN_S) $< .
+endif
 
 ifdef MULTIBYTE
 wchar.c : % : $(backend_src)/utils/mb/%
