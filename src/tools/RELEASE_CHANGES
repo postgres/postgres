@@ -5,6 +5,7 @@
       o src/interfaces/*/Makefile
       o src/interfaces/libpq/libpq.rc (update for minor release)
       o src/include/pg_config.h.win32 (update for minor release)
+      o port/win32ver.rc
 
 * Release notes
     update doc/src/sgml/release.sgml and generate HISTORY
