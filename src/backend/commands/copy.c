@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/commands/copy.c,v 1.163 2002/08/15 16:36:02 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/commands/copy.c,v 1.164 2002/08/19 00:40:14 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -1513,7 +1513,7 @@ CopyGetAttnums(Relation rel, List *attnamelist)
 
 		foreach(l, attnamelist)
 		{
-			char	   *name = strVal(lfirst(l));
+			char	   *name = ((Ident *) lfirst(l))->name;
 			int			attnum;
 
 			/* Lookup column name, elog on failure */

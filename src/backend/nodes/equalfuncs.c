@@ -20,7 +20,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/nodes/equalfuncs.c,v 1.151 2002/08/19 00:11:53 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/nodes/equalfuncs.c,v 1.152 2002/08/19 00:40:14 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -800,6 +800,8 @@ static bool
 _equalCopyStmt(CopyStmt *a, CopyStmt *b)
 {
 	if (!equal(a->relation, b->relation))
+		return false;
+	if (!equal(a->attlist, b->attlist))
 		return false;
 	if (a->is_from != b->is_from)
 		return false;
