@@ -1,6 +1,6 @@
 TODO list for PostgreSQL
 ========================
-Last updated:		Sun Feb  3 14:23:58 EST 2002
+Last updated:		Mon Feb  4 15:43:49 EST 2002
 
 Current maintainer:	Bruce Momjian (pgman@candle.pha.pa.us)
 
@@ -25,7 +25,7 @@ URGENT
 	o queries across databases or servers (two-phase commit)
 	o http://gborg.postgresql.org/project/pgreplication/projdisplay.php
 * Point-in-time data recovery using backup and write-ahead log
-* Allow row re-use without vacuum (Tom)
+* Allow row re-use with automatic vacuum (Tom)
 
 
 REPORTING
@@ -300,7 +300,7 @@ DEPENDENCY CHECKING
 * Automatically drop constraints/functions when object is dropped
 * Make constraints clearer in dump file
 * Make foreign keys easier to identify
-
+* Flush cached query plans when their underlying catalog data changes
 
 TRANSACTIONS
 ------------
