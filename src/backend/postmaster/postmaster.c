@@ -37,7 +37,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/postmaster/postmaster.c,v 1.301 2002/12/06 04:37:02 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/postmaster/postmaster.c,v 1.302 2003/01/06 03:18:27 momjian Exp $
  *
  * NOTES
  *
@@ -669,15 +669,30 @@ PostmasterMain(int argc, char *argv[])
 	 */
 	if (NetServer)
 	{
-		status = StreamServerPort(AF_INET, VirtualHost,
+#ifdef HAVE_IPV6
+		/* Try INET6 first.  May fail if kernel doesn't support IP6 */
+		status = StreamServerPort(AF_INET6, VirtualHost,
 								  (unsigned short) PostPortNumber,
 								  UnixSocketDir,
 								  &ServerSock_INET);
 		if (status != STATUS_OK)
 		{
-			postmaster_error("cannot create INET stream port");
-			ExitPostmaster(1);
+			elog(LOG, "IPv6 support disabled --- perhaps the kernel does not support IPv6");
+#endif
+			status = StreamServerPort(AF_INET, VirtualHost,
+									  (unsigned short) PostPortNumber,
+									  UnixSocketDir,
+									  &ServerSock_INET);
+			if (status != STATUS_OK)
+			{
+				postmaster_error("cannot create INET stream port");
+				ExitPostmaster(1);
+			}
+#ifdef HAVE_IPV6
+			else
+				elog(LOG, "IPv4 socket created");
 		}
+#endif
 	}
 
 #ifdef HAVE_UNIX_SOCKETS
@@ -2091,13 +2106,19 @@ DoBackend(Port *port)
 	/*
 	 * Get the remote host name and port for logging and status display.
 	 */
-	if (port->raddr.sa.sa_family == AF_INET)
+	if (isAF_INETx(port->raddr.sa.sa_family))
 	{
 		unsigned short remote_port;
 		char	   *host_addr;
+#ifdef HAVE_IPV6
+		char	   ip_hostinfo[INET6_ADDRSTRLEN]; 
+#else
+		char	   ip_hostinfo[INET_ADDRSTRLEN];
+#endif
 
 		remote_port = ntohs(port->raddr.in.sin_port);
-		host_addr = inet_ntoa(port->raddr.in.sin_addr);
+		host_addr = SockAddr_ntop(&port->raddr, ip_hostinfo,
+			sizeof(ip_hostinfo), 1);
 
 		remote_host = NULL;
 

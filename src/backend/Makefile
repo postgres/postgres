@@ -4,7 +4,7 @@
 #
 # Copyright (c) 1994, Regents of the University of California
 #
-# $Header: /cvsroot/pgsql/src/backend/Makefile,v 1.89 2002/12/14 00:24:23 petere Exp $
+# $Header: /cvsroot/pgsql/src/backend/Makefile,v 1.90 2003/01/06 03:18:26 momjian Exp $
 #
 #-------------------------------------------------------------------------
 
@@ -132,7 +132,14 @@ ifeq ($(MAKE_DLL), true)
 endif
 endif
 	$(MAKE) -C catalog install-data
+ifdef HAVE_IPV6
 	$(INSTALL_DATA) $(srcdir)/libpq/pg_hba.conf.sample $(DESTDIR)$(datadir)/pg_hba.conf.sample
+else
+	grep -v '^host.*::1.*ffff:ffff:ffff:ffff:ffff:ffff' \
+		$(srcdir)/libpq/pg_hba.conf.sample \
+		> $(srcdir)/libpq/pg_hba.conf.sample.no_ipv6
+	$(INSTALL_DATA) $(srcdir)/libpq/pg_hba.conf.sample.no_ipv6 $(DESTDIR)$(datadir)/pg_hba.conf.sample
+endif
 	$(INSTALL_DATA) $(srcdir)/libpq/pg_ident.conf.sample $(DESTDIR)$(datadir)/pg_ident.conf.sample
 	$(INSTALL_DATA) $(srcdir)/utils/misc/postgresql.conf.sample $(DESTDIR)$(datadir)/postgresql.conf.sample
 
@@ -182,6 +189,9 @@ clean:
 	rm -f postgres$(X) $(POSTGRES_IMP) \
 		$(top_srcdir)/src/include/parser/parse.h \
 		$(top_builddir)/src/include/utils/fmgroids.h
+ifndef HAVE_IPV6
+	rm -f $(srcdir)/libpq/pg_hba.conf.sample.no_ipv6
+endif
 ifeq ($(PORTNAME), win)
 	rm -f postgres.dll postgres.def libpostgres.a
 endif

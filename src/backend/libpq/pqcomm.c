@@ -29,7 +29,7 @@
  * Portions Copyright (c) 1996-2002, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- *	$Id: pqcomm.c,v 1.143 2002/12/06 04:37:02 momjian Exp $
+ *	$Id: pqcomm.c,v 1.144 2003/01/06 03:18:26 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -85,6 +85,18 @@ extern ssize_t secure_read(Port *, void *, size_t);
 extern ssize_t secure_write(Port *, const void *, size_t);
 
 static void pq_close(void);
+
+#ifdef HAVE_UNIX_SOCKETS
+int 	Lock_AF_UNIX(unsigned short portNumber, char *unixSocketName);
+int		Setup_AF_UNIX(void);
+#endif   /* HAVE_UNIX_SOCKETS */
+
+#ifdef HAVE_IPV6
+#define FREEADDRINFO2(family, addrs)	freeaddrinfo2((family), (addrs))
+#else
+/* do nothing */
+#define FREEADDRINFO2(family, addrs)	do {} while (0)
+#endif
 
 
 /*
@@ -182,149 +194,132 @@ int
 StreamServerPort(int family, char *hostName, unsigned short portNumber,
 				 char *unixSocketName, int *fdP)
 {
-	SockAddr	saddr;
 	int			fd,
 				err;
 	int			maxconn;
-	size_t		len = 0;
 	int			one = 1;
+	int			ret;
+	char		portNumberStr[64];
+	char	   *service;
+
+	/*
+	 *	IPv6 address lookups use a hint structure, while IPv4 creates an
+	 *	address structure directly.
+	 */
+
+#ifdef HAVE_IPV6
+	struct addrinfo *addrs = NULL;
+	struct addrinfo hint;
+
+	Assert(family == AF_INET6 || family == AF_INET || family == AF_UNIX);
+
+	/* Initialize hint structure */
+	MemSet(&hint, 0, sizeof(hint));
+	hint.ai_family = family;
+	hint.ai_flags = AI_PASSIVE;
+	hint.ai_socktype = SOCK_STREAM;
+#else
+	SockAddr	saddr;
+	size_t		len;
 
 	Assert(family == AF_INET || family == AF_UNIX);
 
-	if ((fd = socket(family, SOCK_STREAM, 0)) < 0)
+	/* Initialize address structure */
+	MemSet((char *) &saddr, 0, sizeof(saddr));
+	saddr.sa.sa_family = family;
+#endif	/* HAVE_IPV6 */
+
+#ifdef HAVE_UNIX_SOCKETS
+	if (family == AF_UNIX)
 	{
-		elog(LOG, "StreamServerPort: socket() failed: %m");
+		if (Lock_AF_UNIX(portNumber, unixSocketName) != STATUS_OK)
+			return STATUS_ERROR;
+		service = sock_path;
+#ifndef HAVE_IPV6
+		UNIXSOCK_PATH(saddr.un, portNumber, unixSocketName);
+		len = UNIXSOCK_LEN(saddr.un);
+#endif
+	}
+	else
+#endif   /* HAVE_UNIX_SOCKETS */
+	{
+		snprintf(portNumberStr, sizeof(portNumberStr), "%d", portNumber);
+		service = portNumberStr;
+#ifndef HAVE_IPV6
+		len = sizeof(saddr.in);
+#endif
+	}
+	
+	/* Look up name using IPv6 or IPv4 routines */
+#ifdef HAVE_IPV6
+	ret = getaddrinfo2(hostName, service, &hint, &addrs);
+	if (ret || addrs == NULL)
+#else
+	ret = getaddrinfo2(hostName, service, family, &saddr);
+	if (ret)
+#endif
+	{
+		elog(LOG, "server socket failure: getaddrinfo2()%s: %s",
+#ifdef HAVE_IPV6
+			 (family == AF_INET6) ? " using IPv6" : "", gai_strerror(ret));
+		if (addrs != NULL)
+			FREEADDRINFO2(hint.ai_family, addrs);
+#else
+			 "", hostName);
+#endif
 		return STATUS_ERROR;
 	}
 
-	if (family == AF_INET)
+	if ((fd = socket(family, SOCK_STREAM, 0)) < 0)
+	{
+		elog(LOG, "server socket failure: socket(): %s",
+			 strerror(errno));
+		FREEADDRINFO2(hint.ai_family, addrs);
+		return STATUS_ERROR;
+	}
+
+	if (isAF_INETx(family))
 	{
 		if ((setsockopt(fd, SOL_SOCKET, SO_REUSEADDR, (char *) &one,
 						sizeof(one))) == -1)
 		{
-			elog(LOG, "StreamServerPort: setsockopt(SO_REUSEADDR) failed: %m");
+			elog(LOG, "server socket failure: setsockopt(SO_REUSEADDR): %s",
+				 strerror(errno));
+			FREEADDRINFO2(hint.ai_family, addrs);
 			return STATUS_ERROR;
 		}
 	}
 
-	MemSet((char *) &saddr, 0, sizeof(saddr));
-	saddr.sa.sa_family = family;
-
-#ifdef HAVE_UNIX_SOCKETS
-	if (family == AF_UNIX)
-	{
-		UNIXSOCK_PATH(saddr.un, portNumber, unixSocketName);
-		len = UNIXSOCK_LEN(saddr.un);
-		strcpy(sock_path, saddr.un.sun_path);
-
-		/*
-		 * Grab an interlock file associated with the socket file.
-		 */
-		if (!CreateSocketLockFile(sock_path, true))
-			return STATUS_ERROR;
-
-		/*
-		 * Once we have the interlock, we can safely delete any
-		 * pre-existing socket file to avoid failure at bind() time.
-		 */
-		unlink(sock_path);
-	}
-#endif   /* HAVE_UNIX_SOCKETS */
-
-	if (family == AF_INET)
-	{
-		/* TCP/IP socket */
-		if (hostName[0] == '\0')
-			saddr.in.sin_addr.s_addr = htonl(INADDR_ANY);
-		else
-		{
-			struct hostent *hp;
-
-			hp = gethostbyname(hostName);
-			if ((hp == NULL) || (hp->h_addrtype != AF_INET))
-			{
-				elog(LOG, "StreamServerPort: gethostbyname(%s) failed",
-					 hostName);
-				return STATUS_ERROR;
-			}
-			memmove((char *) &(saddr.in.sin_addr), (char *) hp->h_addr,
-					hp->h_length);
-		}
-
-		saddr.in.sin_port = htons(portNumber);
-		len = sizeof(struct sockaddr_in);
-	}
-
-	err = bind(fd, (struct sockaddr *) & saddr.sa, len);
+#ifdef HAVE_IPV6
+	Assert(addrs->ai_next == NULL && addrs->ai_family == family);
+	err = bind(fd, addrs->ai_addr, addrs->ai_addrlen);
+#else
+	err = bind(fd, (struct sockaddr *) &saddr.sa, len);
+#endif
 	if (err < 0)
 	{
+		elog(LOG, "server socket failure: bind(): %s\n"
+			 "\tIs another postmaster already running on port %d?",
+			 strerror(errno), (int) portNumber);
 		if (family == AF_UNIX)
-			elog(LOG, "StreamServerPort: bind() failed: %m\n"
-				 "\tIs another postmaster already running on port %d?\n"
-				 "\tIf not, remove socket node (%s) and retry.",
-				 (int) portNumber, sock_path);
+			elog(LOG, "\tIf not, remove socket node (%s) and retry.",
+				 sock_path);
 		else
-			elog(LOG, "StreamServerPort: bind() failed: %m\n"
-				 "\tIs another postmaster already running on port %d?\n"
-				 "\tIf not, wait a few seconds and retry.",
-				 (int) portNumber);
+			elog(LOG, "\tIf not, wait a few seconds and retry.");
+		FREEADDRINFO2(hint.ai_family, addrs);
 		return STATUS_ERROR;
 	}
 
 #ifdef HAVE_UNIX_SOCKETS
 	if (family == AF_UNIX)
 	{
-		/* Arrange to unlink the socket file at exit */
-		on_proc_exit(StreamDoUnlink, 0);
-
-		/*
-		 * Fix socket ownership/permission if requested.  Note we must do
-		 * this before we listen() to avoid a window where unwanted
-		 * connections could get accepted.
-		 */
-		Assert(Unix_socket_group);
-		if (Unix_socket_group[0] != '\0')
+		if (Setup_AF_UNIX() != STATUS_OK)
 		{
-			char	   *endptr;
-			unsigned long int val;
-			gid_t		gid;
-
-			val = strtoul(Unix_socket_group, &endptr, 10);
-			if (*endptr == '\0')
-			{
-				/* numeric group id */
-				gid = val;
-			}
-			else
-			{
-				/* convert group name to id */
-				struct group *gr;
-
-				gr = getgrnam(Unix_socket_group);
-				if (!gr)
-				{
-					elog(LOG, "No such group as '%s'",
-						 Unix_socket_group);
-					return STATUS_ERROR;
-				}
-				gid = gr->gr_gid;
-			}
-			if (chown(sock_path, -1, gid) == -1)
-			{
-				elog(LOG, "Could not set group of %s: %m",
-					 sock_path);
-				return STATUS_ERROR;
-			}
-		}
-
-		if (chmod(sock_path, Unix_socket_permissions) == -1)
-		{
-			elog(LOG, "Could not set permissions on %s: %m",
-				 sock_path);
+			FREEADDRINFO2(hint.ai_family, addrs);
 			return STATUS_ERROR;
 		}
 	}
-#endif   /* HAVE_UNIX_SOCKETS */
+#endif
 
 	/*
 	 * Select appropriate accept-queue length limit.  PG_SOMAXCONN is only
@@ -338,14 +333,104 @@ StreamServerPort(int family, char *hostName, unsigned short portNumber,
 	err = listen(fd, maxconn);
 	if (err < 0)
 	{
-		elog(LOG, "StreamServerPort: listen() failed: %m");
+		elog(LOG, "server socket failure: listen(): %s",
+			 strerror(errno));
+		FREEADDRINFO2(hint.ai_family, addrs);
 		return STATUS_ERROR;
 	}
 
 	*fdP = fd;
+	FREEADDRINFO2(hint.ai_family, addrs);
+	return STATUS_OK;
+
+}
+
+/*
+ * Lock_AF_UNIX -- configure unix socket file path
+ */
+
+#ifdef HAVE_UNIX_SOCKETS
+int
+Lock_AF_UNIX(unsigned short portNumber, char *unixSocketName)
+{
+	SockAddr	saddr;	/* just used to get socket path */
+
+	UNIXSOCK_PATH(saddr.un, portNumber, unixSocketName);
+	strcpy(sock_path, saddr.un.sun_path);
+
+	/*
+	 * Grab an interlock file associated with the socket file.
+	 */
+	if (!CreateSocketLockFile(sock_path, true))
+		return STATUS_ERROR;
+
+	/*
+	 * Once we have the interlock, we can safely delete any pre-existing
+	 * socket file to avoid failure at bind() time.
+	 */
+	unlink(sock_path);
 
 	return STATUS_OK;
 }
+
+
+/*
+ * Setup_AF_UNIX -- configure unix socket permissions
+ */
+int
+Setup_AF_UNIX(void)
+{
+	/* Arrange to unlink the socket file at exit */
+	on_proc_exit(StreamDoUnlink, 0);
+
+	/*
+	 * Fix socket ownership/permission if requested.  Note we must do this
+	 * before we listen() to avoid a window where unwanted connections
+	 * could get accepted.
+	 */
+	Assert(Unix_socket_group);
+	if (Unix_socket_group[0] != '\0')
+	{
+		char	   *endptr;
+		unsigned long int val;
+		gid_t		gid;
+
+		val = strtoul(Unix_socket_group, &endptr, 10);
+		if (*endptr == '\0')
+		{						/* numeric group id */
+			gid = val;
+		}
+		else
+		{						/* convert group name to id */
+			struct group *gr;
+
+			gr = getgrnam(Unix_socket_group);
+			if (!gr)
+			{
+				elog(LOG, "server socket failure: no such group '%s'",
+					 Unix_socket_group);
+				return STATUS_ERROR;
+			}
+			gid = gr->gr_gid;
+		}
+		if (chown(sock_path, -1, gid) == -1)
+		{
+			elog(LOG, "server socket failure: could not set group of %s: %s",
+				 sock_path, strerror(errno));
+			return STATUS_ERROR;
+		}
+	}
+
+	if (chmod(sock_path, Unix_socket_permissions) == -1)
+	{
+		elog(LOG, "server socket failure: could not set permissions on %s: %s",
+			 sock_path, strerror(errno));
+		return STATUS_ERROR;
+	}
+	return STATUS_OK;
+}
+#endif   /* HAVE_UNIX_SOCKETS */
+
 
 /*
  * StreamConnection -- create a new connection with client using
@@ -365,7 +450,7 @@ StreamConnection(int server_fd, Port *port)
 	/* accept connection (and fill in the client (remote) address) */
 	addrlen = sizeof(port->raddr);
 	if ((port->sock = accept(server_fd,
-							 (struct sockaddr *) & port->raddr,
+							 (struct sockaddr *) &port->raddr,
 							 &addrlen)) < 0)
 	{
 		elog(LOG, "StreamConnection: accept() failed: %m");
@@ -373,7 +458,6 @@ StreamConnection(int server_fd, Port *port)
 	}
 
 #ifdef SCO_ACCEPT_BUG
-
 	/*
 	 * UnixWare 7+ and OpenServer 5.0.4 are known to have this bug, but it
 	 * shouldn't hurt to catch it for all versions of those platforms.
@@ -392,7 +476,7 @@ StreamConnection(int server_fd, Port *port)
 	}
 
 	/* select NODELAY and KEEPALIVE options if it's a TCP connection */
-	if (port->laddr.sa.sa_family == AF_INET)
+	if (isAF_INETx(port->laddr.sa.sa_family))
 	{
 		int			on = 1;
 
@@ -557,10 +641,10 @@ pq_getbytes(char *s, size_t len)
  *
  *		If maxlen is not zero, it is an upper limit on the length of the
  *		string we are willing to accept.  We abort the connection (by
- *		returning EOF) if client tries to send more than that.  Note that
+ *		returning EOF) if client tries to send more than that.	Note that
  *		since we test maxlen in the outer per-bufferload loop, the limit
  *		is fuzzy: we might accept up to PQ_BUFFER_SIZE more bytes than
- *		specified.  This is fine for the intended purpose, which is just
+ *		specified.	This is fine for the intended purpose, which is just
  *		to prevent DoS attacks from not-yet-authenticated clients.
  *
  *		NOTE: this routine does not do any character set conversion,

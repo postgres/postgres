@@ -1,5 +1,5 @@
 # -*-makefile-*-
-# $Header: /cvsroot/pgsql/src/Makefile.global.in,v 1.158 2003/01/05 13:45:47 petere Exp $
+# $Header: /cvsroot/pgsql/src/Makefile.global.in,v 1.159 2003/01/06 03:18:26 momjian Exp $
 
 #------------------------------------------------------------------------------
 # All PostgreSQL makefiles include this file and use the variables it sets,
@@ -277,6 +277,7 @@ ifeq ($(enable_rpath), yes)
 LDFLAGS += $(rpath)
 endif
 
+HAVE_IPV6 = @HAVE_IPV6@
 
 ##########################################################################
 #

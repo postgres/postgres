@@ -10,7 +10,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/libpq/hba.c,v 1.92 2002/12/14 18:49:37 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/libpq/hba.c,v 1.93 2003/01/06 03:18:26 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -586,8 +586,7 @@ parse_hba(List *line, hbaPort *port, bool *found_p, bool *error_p)
 	}
 	else if (strcmp(token, "host") == 0 || strcmp(token, "hostssl") == 0)
 	{
-		struct in_addr file_ip_addr,
-					mask;
+		SockAddr file_ip_addr, mask;
 
 		if (strcmp(token, "hostssl") == 0)
 		{
@@ -623,7 +622,8 @@ parse_hba(List *line, hbaPort *port, bool *found_p, bool *error_p)
 		if (!line)
 			goto hba_syntax;
 		token = lfirst(line);
-		if (!inet_aton(token, &file_ip_addr))
+
+		if(SockAddr_pton(&file_ip_addr, token) < 0)
 			goto hba_syntax;
 
 		/* Read the mask field. */
@@ -631,7 +631,11 @@ parse_hba(List *line, hbaPort *port, bool *found_p, bool *error_p)
 		if (!line)
 			goto hba_syntax;
 		token = lfirst(line);
-		if (!inet_aton(token, &mask))
+
+		if(SockAddr_pton(&mask, token) < 0)
+			goto hba_syntax;
+
+		if(file_ip_addr.sa.sa_family != mask.sa.sa_family)
 			goto hba_syntax;
 
 		/* Read the rest of the line. */
@@ -643,8 +647,8 @@ parse_hba(List *line, hbaPort *port, bool *found_p, bool *error_p)
 			goto hba_syntax;
 
 		/* Must meet network restrictions */
-		if (port->raddr.sa.sa_family != AF_INET ||
-			((file_ip_addr.s_addr ^ port->raddr.in.sin_addr.s_addr) & mask.s_addr) != 0)
+		if (!isAF_INETx(port->raddr.sa.sa_family) ||
+			!rangeSockAddr(&port->raddr, &file_ip_addr, &mask))
 			return;
 	}
 	else

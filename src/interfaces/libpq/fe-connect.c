@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/interfaces/libpq/fe-connect.c,v 1.216 2002/12/19 19:30:24 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/interfaces/libpq/fe-connect.c,v 1.217 2003/01/06 03:18:27 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -39,6 +39,9 @@
 #include <arpa/inet.h>
 #endif
 
+#include "libpq/ip.h"
+
+
 #ifndef HAVE_STRDUP
 #include "strdup.h"
 #endif
@@ -47,6 +50,14 @@
 #endif
 
 #include "mb/pg_wchar.h"
+
+
+#ifdef HAVE_IPV6
+#define FREEADDRINFO2(family, addrs)	freeaddrinfo2((family), (addrs))
+#else
+/* do nothing */
+#define FREEADDRINFO2(family, addrs)	do {} while (0)
+#endif
 
 #ifdef WIN32
 static int
@@ -784,19 +795,32 @@ connectFailureMessage(PGconn *conn, int errorno)
 static int
 connectDBStart(PGconn *conn)
 {
-	int			portno,
-				family;
-
+	int			portnum;
+	int			sockfd;
+	char		portstr[64];
 #ifdef USE_SSL
 	StartupPacket np;			/* Used to negotiate SSL connection */
 	char		SSLok;
+#endif
+#ifdef HAVE_IPV6
+	struct addrinfo *addrs = NULL;
+	struct addrinfo *addr_cur = NULL;
+	struct addrinfo hint;
+	const char *node = NULL;
+	const char *unix_node = "unix";
+	int			ret;
+
+	/* Initialize hint structure */
+	MemSet(&hint, 0, sizeof(hint));
+	hint.ai_socktype = SOCK_STREAM;
+#else
+	int			family = -1;
 #endif
 
 	if (!conn)
 		return 0;
 
 #ifdef NOT_USED
-
 	/*
 	 * parse dbName to get all additional info in it, if any
 	 */
@@ -815,10 +839,26 @@ connectDBStart(PGconn *conn)
 
 	MemSet((char *) &conn->raddr, 0, sizeof(conn->raddr));
 
+	/*
+	 *	This code is confusing because IPv6 creates a hint structure
+	 *	that is passed to getaddrinfo2(), which returns a list of address
+	 *	structures that are looped through, while IPv4 creates an address
+	 *	structure directly.
+	 */
+
+	if (conn->pgport != NULL && conn->pgport[0] != '\0')
+		portnum = atoi(conn->pgport);
+	else
+		portnum = DEF_PGPORT;
+	snprintf(portstr, sizeof(portstr), "%d", portnum);
+
 	if (conn->pghostaddr != NULL && conn->pghostaddr[0] != '\0')
 	{
+#ifdef HAVE_IPV6
+		node = conn->pghostaddr;
+		hint.ai_family = AF_UNSPEC;
+#else
 		/* Using pghostaddr avoids a hostname lookup */
-		/* Note that this supports IPv4 only */
 		struct in_addr addr;
 
 		if (!inet_aton(conn->pghostaddr, &addr))
@@ -833,120 +873,158 @@ connectDBStart(PGconn *conn)
 
 		memmove((char *) &(conn->raddr.in.sin_addr),
 				(char *) &addr, sizeof(addr));
+#endif
 	}
 	else if (conn->pghost != NULL && conn->pghost[0] != '\0')
 	{
+#ifdef HAVE_IPV6
+		node = conn->pghost;
+		hint.ai_family = AF_UNSPEC;
+#else
 		/* Using pghost, so we have to look-up the hostname */
-		struct hostent *hp;
-
-		hp = gethostbyname(conn->pghost);
-		if ((hp == NULL) || (hp->h_addrtype != AF_INET))
-		{
-			printfPQExpBuffer(&conn->errorMessage,
-							  libpq_gettext("unknown host name: %s\n"),
-							  conn->pghost);
+		if (getaddrinfo2(conn->pghost, portstr, family, &conn->raddr) != 0)
 			goto connect_errReturn;
-		}
+
 		family = AF_INET;
-
-		memmove((char *) &(conn->raddr.in.sin_addr),
-				(char *) hp->h_addr,
-				hp->h_length);
-	}
-	else
-	{
-		/* pghostaddr and pghost are NULL, so use Unix domain socket */
-		family = AF_UNIX;
-	}
-
-	/* Set family */
-	conn->raddr.sa.sa_family = family;
-
-	/* Set port number */
-	if (conn->pgport != NULL && conn->pgport[0] != '\0')
-		portno = atoi(conn->pgport);
-	else
-		portno = DEF_PGPORT;
-
-	if (family == AF_INET)
-	{
-		conn->raddr.in.sin_port = htons((unsigned short) (portno));
-		conn->raddr_len = sizeof(struct sockaddr_in);
+#endif
 	}
 #ifdef HAVE_UNIX_SOCKETS
 	else
 	{
-		UNIXSOCK_PATH(conn->raddr.un, portno, conn->pgunixsocket);
+#ifdef HAVE_IPV6
+		node = unix_node;
+		hint.ai_family = AF_UNIX;
+#else
+		/* pghostaddr and pghost are NULL, so use Unix domain socket */
+		family = AF_UNIX;
+#endif
+	}
+#endif   /* HAVE_UNIX_SOCKETS */
+
+#ifndef HAVE_IPV6
+	conn->raddr.sa.sa_family = family;
+#endif
+
+#ifdef HAVE_IPV6
+	if (hint.ai_family == AF_UNSPEC)
+	{/* do nothing*/}
+#else
+	if (family == AF_INET)
+	{
+		conn->raddr.in.sin_port = htons((unsigned short) (portnum));
+		conn->raddr_len = sizeof(struct sockaddr_in);
+	}
+#endif
+#ifdef HAVE_UNIX_SOCKETS
+	else
+	{
+		UNIXSOCK_PATH(conn->raddr.un, portnum, conn->pgunixsocket);
 		conn->raddr_len = UNIXSOCK_LEN(conn->raddr.un);
+		StrNCpy(portstr, conn->raddr.un.sun_path, sizeof(portstr));
 #ifdef USE_SSL
 		/* Don't bother requesting SSL over a Unix socket */
 		conn->allow_ssl_try = false;
 		conn->require_ssl = false;
 #endif
 	}
+#endif   /* HAVE_UNIX_SOCKETS */
+
+#if HAVE_IPV6
+	ret = getaddrinfo2(node, portstr, &hint, &addrs);
+	if (ret || addrs == NULL)
+	{
+		printfPQExpBuffer(&conn->errorMessage,
+						  libpq_gettext("failed to getaddrinfo(): %s\n"),
+						  gai_strerror(ret));
+		goto connect_errReturn;
+	}
+	addr_cur = addrs;
 #endif
 
-	/* Open a socket */
-	if ((conn->sock = socket(family, SOCK_STREAM, 0)) < 0)
+	do
+	{
+#ifdef HAVE_IPV6
+		sockfd = socket(addr_cur->ai_family, SOCK_STREAM,
+						addr_cur->ai_protocol);
+#else
+		sockfd = socket(family, SOCK_STREAM, 0);
+#endif
+		if (sockfd < 0)
+			continue;
+
+		conn->sock = sockfd;
+#ifdef HAVE_IPV6
+		if (isAF_INETx(addr_cur->ai_family))
+#else
+		if (isAF_INETx(family))
+#endif
+		{
+			if (!connectNoDelay(conn))
+				goto connect_errReturn;
+		}
+#if !defined(USE_SSL)
+		if (connectMakeNonblocking(conn) == 0)
+			goto connect_errReturn;
+#endif
+
+		/* ----------
+		 * Start / make connection.  We are hopefully in non-blocking mode
+		 * now, but it is possible that:
+		 *	 1. Older systems will still block on connect, despite the
+		 *		non-blocking flag. (Anyone know if this is true?)
+		 *	 2. We are using SSL.
+		 * Thus, we have to make arrangements for all eventualities.
+		 * ----------
+		 */
+retry1:
+#ifdef HAVE_IPV6
+		if (connect(sockfd, addr_cur->ai_addr, addr_cur->ai_addrlen) == 0)
+#else
+		if (connect(sockfd, &conn->raddr.sa, conn->raddr_len) == 0)
+#endif
+		{
+			/* We're connected already */
+			conn->status = CONNECTION_MADE;
+			break;
+		}
+		else
+		{
+			if (SOCK_ERRNO == EINTR)
+				/* Interrupted system call - we'll just try again */
+				goto retry1;
+
+			if (SOCK_ERRNO == EINPROGRESS || SOCK_ERRNO == EWOULDBLOCK || SOCK_ERRNO == 0)
+			{
+				/*
+				 * This is fine - we're in non-blocking mode, and the
+				 * connection is in progress.
+				 */
+				conn->status = CONNECTION_STARTED;
+				break;
+			}
+		}
+		close(sockfd);
+#ifdef HAVE_IPV6
+	} while ((addr_cur = addr_cur->ai_next) != NULL);
+	if (addr_cur == NULL)
+#else
+	} while (0);
+	if (sockfd < 0)
+#endif
 	{
 		printfPQExpBuffer(&conn->errorMessage,
 						  libpq_gettext("could not create socket: %s\n"),
 						  SOCK_STRERROR(SOCK_ERRNO));
 		goto connect_errReturn;
 	}
-
-	/*
-	 * Set the right options. Normally, we need nonblocking I/O, and we
-	 * don't want delay of outgoing data for AF_INET sockets.  If we are
-	 * using SSL, then we need the blocking I/O (XXX Can this be fixed?).
-	 */
-
-	if (family == AF_INET)
-	{
-		if (!connectNoDelay(conn))
-			goto connect_errReturn;
-	}
-
-#if !defined(USE_SSL)
-	if (connectMakeNonblocking(conn) == 0)
-		goto connect_errReturn;
-#endif
-
-	/* ----------
-	 * Start / make connection.  We are hopefully in non-blocking mode
-	 * now, but it is possible that:
-	 *	 1. Older systems will still block on connect, despite the
-	 *		non-blocking flag. (Anyone know if this is true?)
-	 *	 2. We are using SSL.
-	 * Thus, we have to make arrangements for all eventualities.
-	 * ----------
-	 */
-retry1:
-	if (connect(conn->sock, &conn->raddr.sa, conn->raddr_len) < 0)
-	{
-		if (SOCK_ERRNO == EINTR)
-			/* Interrupted system call - we'll just try again */
-			goto retry1;
-
-		if (SOCK_ERRNO == EINPROGRESS || SOCK_ERRNO == EWOULDBLOCK || SOCK_ERRNO == 0)
-		{
-			/*
-			 * This is fine - we're in non-blocking mode, and the
-			 * connection is in progress.
-			 */
-			conn->status = CONNECTION_STARTED;
-		}
-		else
-		{
-			/* Something's gone wrong */
-			connectFailureMessage(conn, SOCK_ERRNO);
-			goto connect_errReturn;
-		}
-	}
 	else
 	{
-		/* We're connected already */
-		conn->status = CONNECTION_MADE;
+#ifdef HAVE_IPV6
+		memmove(&conn->raddr, addr_cur->ai_addr, addr_cur->ai_addrlen);
+		conn->raddr_len = addr_cur->ai_addrlen;
+		FREEADDRINFO2(hint.ai_family, addrs);
+		addrs = NULL;
+#endif
 	}
 
 #ifdef USE_SSL
@@ -1014,7 +1092,6 @@ retry2:
 	}
 #endif
 
-
 	/*
 	 * This makes the connection non-blocking, for all those cases which
 	 * forced us not to do it above.
@@ -1038,7 +1115,10 @@ connect_errReturn:
 		conn->sock = -1;
 	}
 	conn->status = CONNECTION_BAD;
-
+#ifdef HAVE_IPV6
+	if (addrs != NULL)
+		FREEADDRINFO2(hint.ai_family, addrs);
+#endif
 	return 0;
 }
 

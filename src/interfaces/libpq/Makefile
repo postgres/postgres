@@ -4,7 +4,7 @@
 #
 # Copyright (c) 1994, Regents of the University of California
 #
-# $Header: /cvsroot/pgsql/src/interfaces/libpq/Makefile,v 1.70 2002/12/13 22:17:57 momjian Exp $
+# $Header: /cvsroot/pgsql/src/interfaces/libpq/Makefile,v 1.71 2003/01/06 03:18:27 momjian Exp $
 #
 #-------------------------------------------------------------------------
 
@@ -21,8 +21,8 @@ SO_MINOR_VERSION= 1
 override CPPFLAGS := -I$(srcdir) $(CPPFLAGS) -DFRONTEND -DSYSCONFDIR='"$(sysconfdir)"'
 
 OBJS= fe-auth.o fe-connect.o fe-exec.o fe-misc.o fe-print.o fe-lobj.o \
-      pqexpbuffer.o dllist.o md5.o pqsignal.o fe-secure.o \
-      wchar.o encnames.o \
+      pqexpbuffer.o dllist.o pqsignal.o fe-secure.o wchar.o encnames.o ip.o \
+      md5.o \
       $(filter inet_aton.o snprintf.o strerror.o, $(LIBOBJS))
 
 
@@ -43,6 +43,9 @@ dllist.c: $(backend_src)/lib/dllist.c
 	rm -f $@ && $(LN_S) $< .
 
 md5.c: $(backend_src)/libpq/md5.c
+	rm -f $@ && $(LN_S) $< .
+
+ip.c: $(backend_src)/libpq/ip.c
 	rm -f $@ && $(LN_S) $< .
 
 # We use several backend modules verbatim, but since we need to
@@ -70,5 +73,5 @@ uninstall: uninstall-lib
 	rm -f $(DESTDIR)$(includedir)/libpq-fe.h $(DESTDIR)$(includedir_internal)/libpq-int.h $(includedir_internal)/pqexpbuffer.h
 
 clean distclean maintainer-clean: clean-lib
-	rm -f $(OBJS) dllist.c md5.c wchar.c encnames.c
+	rm -f $(OBJS) dllist.c md5.c v6util.c wchar.c encnames.c
 	rm -f $(OBJS) inet_aton.c snprintf.c strerror.c

@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/client-auth.sgml,v 1.42 2002/12/03 21:50:44 momjian Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/client-auth.sgml,v 1.43 2003/01/06 03:18:26 momjian Exp $
 -->
 
 <chapter id="client-authentication">
@@ -190,7 +190,11 @@ hostssl  <replaceable>database</replaceable>  <replaceable>user</replaceable>  <
        </blockquote>
        must be zero for the record to match.  (Of course IP addresses
        can be spoofed but this consideration is beyond the scope of
-       <productname>PostgreSQL</productname>.)
+       <productname>PostgreSQL</productname>.) If you machine supports
+       IPv6, the default <filename>pg_hba.conf</> will have an IPv6
+       entry for <literal>localhost</>. You can add your own IPv6
+       entries to the file. IPv6 entries are used only for IPv6
+       connections.
       </para>
 
       <para>
