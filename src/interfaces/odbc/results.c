@@ -240,7 +240,10 @@ PGAPI_DescribeCol(
 			mylog("DescribeCol: getting info for icol=%d\n", icol);
 
 			fieldtype = stmt->fi[icol]->type;
-			col_name = stmt->fi[icol]->name;
+			if (stmt->fi[icol]->alias[0])
+				col_name = stmt->fi[icol]->alias;
+			else
+				col_name = stmt->fi[icol]->name;
 			precision = stmt->fi[icol]->precision;
 			scale = stmt->fi[icol]->scale;
 
