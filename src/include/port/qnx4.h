@@ -2,7 +2,6 @@
 #include <arpa/nameser.h>		/* for BYTE_ORDER */
 #include <process.h>			/* for execv */
 #include <ioctl.h>				/* for unix.h */
-#include <termios.h>			/* for unix.h */
 #include <unix.h>
 #include <sys/select.h>			/* for select */
 #if !defined(__GNUC__)
