@@ -35,20 +35,20 @@ END;
 ' LANGUAGE 'plpgsql';
 -- do something
 SELECT count(*) FROM tenk2;
- count
+ count 
 -------
  10000
 (1 row)
 
 SELECT count(*) FROM tenk2 WHERE unique1 = 1;
- count
+ count 
 -------
      1
 (1 row)
 
 -- let stats collector catch up
 SELECT sleep('0:0:2'::interval);
- sleep
+ sleep 
 -------
      0
 (1 row)
@@ -60,7 +60,7 @@ SELECT st.seq_scan >= pr.seq_scan + 1,
        st.idx_tup_fetch >= pr.idx_tup_fetch + 1
   FROM pg_stat_user_tables AS st, pg_class AS cl, prevstats AS pr
  WHERE st.relname='tenk2' AND cl.relname='tenk2';
- ?column? | ?column? | ?column? | ?column?
+ ?column? | ?column? | ?column? | ?column? 
 ----------+----------+----------+----------
  t        | t        | t        | t
 (1 row)
@@ -69,7 +69,7 @@ SELECT st.heap_blks_read + st.heap_blks_hit >= pr.heap_blks + cl.relpages,
        st.idx_blks_read + st.idx_blks_hit >= pr.idx_blks + 1
   FROM pg_statio_user_tables AS st, pg_class AS cl, prevstats AS pr
  WHERE st.relname='tenk2' AND cl.relname='tenk2';
- ?column? | ?column?
+ ?column? | ?column? 
 ----------+----------
  t        | t
 (1 row)
