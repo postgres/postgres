@@ -30,15 +30,17 @@ KNOWN ISSUES:
 -------------
 
 pg_autovacuum has been tested under Redhat Linux (by me) and Debian
-GNU/Linux and Solaris (by Christopher B. Browne) and all known bugs
-have been resolved.  Please report any problems to the hackers list.
+GNU/Linux, Solaris, and AIX (by Christopher B. Browne) and all known
+bugs have been resolved.  Please report any problems to the hackers
+list.
 
 pg_autovacuum requires that the statistics system be enabled and
 reporting row level stats.  The overhead of the stats system has been
-shown to have a significant cost under certain workloads.  For instance,
-a tight loop of queries performing "select 1" was found to run nearly
-30% slower when stats were enabled.  However, in practice, with more
-realistic workloads, the stats system overhead is usually nominal.
+shown to have a significant cost under certain workloads.  For
+instance, a tight loop of queries performing "select 1" was found to
+run nearly 30% slower when stats were enabled.  However, in practice,
+with more realistic workloads, the stats system overhead is usually
+nominal.
 
 pg_autovacuum does not get started automatically by either the
 postmaster or by pg_ctl.  Similarly, when the postmaster exits, no one
@@ -67,6 +69,10 @@ excluded from being vacuumed.  It would probably make sense to
 introduce this sort of functionality by providing arguments to specify
 the database and schema in which to find a configuration table.
 
+It would also be desirable for the daemon to monitor how busy the
+system is, with a view to deferring vacuums until there is less other
+activity.
+
 INSTALL:
 --------
 
@@ -78,7 +84,8 @@ installed for you.
 If you are using an earlier version of PostgreSQL, uncompress the
 tar.gz file into the contrib directory and modify the contrib/Makefile
 to include the pg_autovacuum directory.  pg_autovacuum will then be
-built as part of the standard postgresql install.
+built as part of the standard postgresql install.  It is known to work
+with v7.3 releases; it is not presently compatible with v7.2.
 
 make sure that the following are set in postgresql.conf:
 
