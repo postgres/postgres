@@ -9,7 +9,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/commands/copy.c,v 1.188 2003/01/10 22:03:27 petere Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/commands/copy.c,v 1.189 2003/02/03 21:15:43 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -853,7 +853,7 @@ CopyFrom(Relation rel, List *attnumlist, bool binary, bool oids,
 			}
 		}
 
-		/* If it's a domain type, get info on domain constraints */
+		/* If it's a domain type, set up to check domain constraints */
 		if (get_typtype(attr[i]->atttypid) == 'd')
 		{
 			Param	   *prm;
@@ -863,25 +863,23 @@ CopyFrom(Relation rel, List *attnumlist, bool binary, bool oids,
 			 * Easiest way to do this is to use parse_coerce.c to set up
 			 * an expression that checks the constraints.  (At present,
 			 * the expression might contain a length-coercion-function call
-			 * and/or ConstraintTest nodes.)  The bottom of the expression
+			 * and/or CoerceToDomain nodes.)  The bottom of the expression
 			 * is a Param node so that we can fill in the actual datum during
 			 * the data input loop.
 			 */
 			prm = makeNode(Param);
 			prm->paramkind = PARAM_EXEC;
 			prm->paramid = 0;
-			prm->paramtype = attr[i]->atttypid;
+			prm->paramtype = getBaseType(attr[i]->atttypid);
 
-			node = coerce_type_constraints((Node *) prm, attr[i]->atttypid,
-										   COERCE_IMPLICIT_CAST);
+			node = coerce_to_domain((Node *) prm,
+									prm->paramtype,
+									attr[i]->atttypid,
+									COERCE_IMPLICIT_CAST);
 
-			/* check whether any constraints actually found */
-			if (node != (Node *) prm)
-			{
-				constraintexprs[i] = ExecPrepareExpr((Expr *) node,
-													 estate);
-				hasConstraints = true;
-			}
+			constraintexprs[i] = ExecPrepareExpr((Expr *) node,
+												 estate);
+			hasConstraints = true;
 		}
 	}
 

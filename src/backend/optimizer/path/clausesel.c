@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/optimizer/path/clausesel.c,v 1.56 2003/01/28 22:13:29 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/optimizer/path/clausesel.c,v 1.57 2003/02/03 21:15:44 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -537,6 +537,14 @@ clause_selectivity(Query *root,
 		/* Not sure this case is needed, but it can't hurt */
 		s1 = clause_selectivity(root,
 								(Node *) ((RelabelType *) clause)->arg,
+								varRelid,
+								jointype);
+	}
+	else if (IsA(clause, CoerceToDomain))
+	{
+		/* Not sure this case is needed, but it can't hurt */
+		s1 = clause_selectivity(root,
+								(Node *) ((CoerceToDomain *) clause)->arg,
 								varRelid,
 								jointype);
 	}

@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/cache/lsyscache.c,v 1.89 2003/01/15 19:35:44 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/cache/lsyscache.c,v 1.90 2003/02/03 21:15:44 tgl Exp $
  *
  * NOTES
  *	  Eventually, the index information should go through here, too.
@@ -1010,6 +1010,33 @@ get_typstorage(Oid typid)
 	}
 	else
 		return 'p';
+}
+
+/*
+ * get_typtypmod
+ *
+ *		Given the type OID, return the typtypmod field (domain's typmod
+ *		for base type)
+ */
+int32
+get_typtypmod(Oid typid)
+{
+	HeapTuple	tp;
+
+	tp = SearchSysCache(TYPEOID,
+						ObjectIdGetDatum(typid),
+						0, 0, 0);
+	if (HeapTupleIsValid(tp))
+	{
+		Form_pg_type typtup = (Form_pg_type) GETSTRUCT(tp);
+		int32		result;
+
+		result = typtup->typtypmod;
+		ReleaseSysCache(tp);
+		return result;
+	}
+	else
+		return -1;
 }
 
 /*

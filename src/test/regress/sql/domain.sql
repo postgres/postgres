@@ -224,6 +224,26 @@ alter domain con drop constraint t;
 insert into domcontest values (-5); --fails
 insert into domcontest values (42);
 
+-- Confirm ALTER DOMAIN with RULES.
+create table domtab (col1 integer);
+create domain dom as integer;
+create view domview as select cast(col1 as dom) from domtab;
+insert into domtab (col1) values (null);
+insert into domtab (col1) values (5);
+select * from domview;
+
+alter domain dom set not null;
+select * from domview; -- fail
+
+alter domain dom drop not null;
+select * from domview;
+
+alter domain dom add constraint domchkgt6 check(value > 6);
+select * from domview; --fail
+
+alter domain dom drop constraint domchkgt6 restrict;
+select * from domview;
+
 -- cleanup
 drop domain ddef1 restrict;
 drop domain ddef2 restrict;

@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/parser/parse_expr.c,v 1.141 2003/01/13 00:18:51 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/parser/parse_expr.c,v 1.142 2003/02/03 21:15:44 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -674,8 +674,8 @@ transformExpr(ParseState *pstate, Node *expr)
 		case T_ArrayRef:
 		case T_FieldSelect:
 		case T_RelabelType:
-		case T_ConstraintTest:
-		case T_ConstraintTestValue:
+		case T_CoerceToDomain:
+		case T_CoerceToDomainValue:
 			{
 				result = (Node *) expr;
 				break;
@@ -1017,11 +1017,11 @@ exprType(Node *expr)
 		case T_BooleanTest:
 			type = BOOLOID;
 			break;
-		case T_ConstraintTest:
-			type = exprType((Node *) ((ConstraintTest *) expr)->arg);
+		case T_CoerceToDomain:
+			type = ((CoerceToDomain *) expr)->resulttype;
 			break;
-		case T_ConstraintTestValue:
-			type = ((ConstraintTestValue *) expr)->typeId;
+		case T_CoerceToDomainValue:
+			type = ((CoerceToDomainValue *) expr)->typeId;
 			break;
 		case T_RangeVar:
 			/*
@@ -1117,10 +1117,10 @@ exprTypmod(Node *expr)
 				return typmod;
 			}
 			break;
-		case T_ConstraintTest:
-			return exprTypmod((Node *) ((ConstraintTest *) expr)->arg);
-		case T_ConstraintTestValue:
-			return ((ConstraintTestValue *) expr)->typeMod;
+		case T_CoerceToDomain:
+			return ((CoerceToDomain *) expr)->resulttypmod;
+		case T_CoerceToDomainValue:
+			return ((CoerceToDomainValue *) expr)->typeMod;
 		default:
 			break;
 	}

@@ -15,7 +15,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/optimizer/prep/preptlist.c,v 1.59 2002/12/12 15:49:32 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/optimizer/prep/preptlist.c,v 1.60 2003/02/03 21:15:44 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -185,9 +185,10 @@ expand_targetlist(List *tlist, int command_type,
 												  true, /* isnull */
 												  att_tup->attbyval);
 					if (!att_tup->attisdropped)
-						new_expr = coerce_type_constraints(new_expr,
-														   atttype,
-														   COERCE_IMPLICIT_CAST);
+						new_expr = coerce_to_domain(new_expr,
+													InvalidOid,
+													atttype,
+													COERCE_IMPLICIT_CAST);
 					break;
 				case CMD_UPDATE:
 					/* Insert NULLs for dropped columns */

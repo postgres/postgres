@@ -15,7 +15,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/nodes/copyfuncs.c,v 1.238 2003/01/23 23:38:56 petere Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/nodes/copyfuncs.c,v 1.239 2003/02/03 21:15:43 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -933,29 +933,28 @@ _copyBooleanTest(BooleanTest *from)
 }
 
 /*
- * _copyConstraintTest
+ * _copyCoerceToDomain
  */
-static ConstraintTest *
-_copyConstraintTest(ConstraintTest *from)
+static CoerceToDomain *
+_copyCoerceToDomain(CoerceToDomain *from)
 {
-	ConstraintTest *newnode = makeNode(ConstraintTest);
+	CoerceToDomain *newnode = makeNode(CoerceToDomain);
 
 	COPY_NODE_FIELD(arg);
-	COPY_SCALAR_FIELD(testtype);
-	COPY_STRING_FIELD(name);
-	COPY_STRING_FIELD(domname);
-	COPY_NODE_FIELD(check_expr);
+	COPY_SCALAR_FIELD(resulttype);
+	COPY_SCALAR_FIELD(resulttypmod);
+	COPY_SCALAR_FIELD(coercionformat);
 
 	return newnode;
 }
 
 /*
- * _copyConstraintTestValue
+ * _copyCoerceToDomainValue
  */
-static ConstraintTestValue *
-_copyConstraintTestValue(ConstraintTestValue *from)
+static CoerceToDomainValue *
+_copyCoerceToDomainValue(CoerceToDomainValue *from)
 {
-	ConstraintTestValue *newnode = makeNode(ConstraintTestValue);
+	CoerceToDomainValue *newnode = makeNode(CoerceToDomainValue);
 
 	COPY_SCALAR_FIELD(typeId);
 	COPY_SCALAR_FIELD(typeMod);
@@ -2476,11 +2475,11 @@ copyObject(void *from)
 		case T_BooleanTest:
 			retval = _copyBooleanTest(from);
 			break;
-		case T_ConstraintTest:
-			retval = _copyConstraintTest(from);
+		case T_CoerceToDomain:
+			retval = _copyCoerceToDomain(from);
 			break;
-		case T_ConstraintTestValue:
-			retval = _copyConstraintTestValue(from);
+		case T_CoerceToDomainValue:
+			retval = _copyCoerceToDomainValue(from);
 			break;
 		case T_TargetEntry:
 			retval = _copyTargetEntry(from);

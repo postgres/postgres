@@ -18,7 +18,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/nodes/equalfuncs.c,v 1.182 2003/01/23 23:38:56 petere Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/nodes/equalfuncs.c,v 1.183 2003/02/03 21:15:44 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -383,19 +383,25 @@ _equalBooleanTest(BooleanTest *a, BooleanTest *b)
 }
 
 static bool
-_equalConstraintTest(ConstraintTest *a, ConstraintTest *b)
+_equalCoerceToDomain(CoerceToDomain *a, CoerceToDomain *b)
 {
 	COMPARE_NODE_FIELD(arg);
-	COMPARE_SCALAR_FIELD(testtype);
-	COMPARE_STRING_FIELD(name);
-	COMPARE_STRING_FIELD(domname);
-	COMPARE_NODE_FIELD(check_expr);
+	COMPARE_SCALAR_FIELD(resulttype);
+	COMPARE_SCALAR_FIELD(resulttypmod);
+	/*
+	 * Special-case COERCE_DONTCARE, so that pathkeys can build coercion
+	 * nodes that are equal() to both explicit and implicit coercions.
+	 */
+	if (a->coercionformat != b->coercionformat &&
+		a->coercionformat != COERCE_DONTCARE &&
+		b->coercionformat != COERCE_DONTCARE)
+		return false;
 
 	return true;
 }
 
 static bool
-_equalConstraintTestValue(ConstraintTestValue *a, ConstraintTestValue *b)
+_equalCoerceToDomainValue(CoerceToDomainValue *a, CoerceToDomainValue *b)
 {
 	COMPARE_SCALAR_FIELD(typeId);
 	COMPARE_SCALAR_FIELD(typeMod);
@@ -1599,11 +1605,11 @@ equal(void *a, void *b)
 		case T_BooleanTest:
 			retval = _equalBooleanTest(a, b);
 			break;
-		case T_ConstraintTest:
-			retval = _equalConstraintTest(a, b);
+		case T_CoerceToDomain:
+			retval = _equalCoerceToDomain(a, b);
 			break;
-		case T_ConstraintTestValue:
-			retval = _equalConstraintTestValue(a, b);
+		case T_CoerceToDomainValue:
+			retval = _equalCoerceToDomainValue(a, b);
 			break;
 		case T_TargetEntry:
 			retval = _equalTargetEntry(a, b);

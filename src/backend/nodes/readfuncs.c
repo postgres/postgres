@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/nodes/readfuncs.c,v 1.146 2003/01/10 21:08:11 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/nodes/readfuncs.c,v 1.147 2003/02/03 21:15:44 tgl Exp $
  *
  * NOTES
  *	  Path and Plan nodes do not have any readfuncs support, because we
@@ -635,29 +635,28 @@ _readBooleanTest(void)
 }
 
 /*
- * _readConstraintTest
+ * _readCoerceToDomain
  */
-static ConstraintTest *
-_readConstraintTest(void)
+static CoerceToDomain *
+_readCoerceToDomain(void)
 {
-	READ_LOCALS(ConstraintTest);
+	READ_LOCALS(CoerceToDomain);
 
 	READ_NODE_FIELD(arg);
-	READ_ENUM_FIELD(testtype, ConstraintTestType);
-	READ_STRING_FIELD(name);
-	READ_STRING_FIELD(domname);
-	READ_NODE_FIELD(check_expr);
+	READ_OID_FIELD(resulttype);
+	READ_INT_FIELD(resulttypmod);
+	READ_ENUM_FIELD(coercionformat, CoercionForm);
 
 	READ_DONE();
 }
 
 /*
- * _readConstraintTestValue
+ * _readCoerceToDomainValue
  */
-static ConstraintTestValue *
-_readConstraintTestValue(void)
+static CoerceToDomainValue *
+_readCoerceToDomainValue(void)
 {
-	READ_LOCALS(ConstraintTestValue);
+	READ_LOCALS(CoerceToDomainValue);
 
 	READ_OID_FIELD(typeId);
 	READ_INT_FIELD(typeMod);
@@ -900,10 +899,10 @@ parseNodeString(void)
 		return_value = _readNullTest();
 	else if (MATCH("BOOLEANTEST", 11))
 		return_value = _readBooleanTest();
-	else if (MATCH("CONSTRAINTTEST", 14))
-		return_value = _readConstraintTest();
-	else if (MATCH("CONSTRAINTTESTVALUE", 19))
-		return_value = _readConstraintTestValue();
+	else if (MATCH("COERCETODOMAIN", 14))
+		return_value = _readCoerceToDomain();
+	else if (MATCH("COERCETODOMAINVALUE", 19))
+		return_value = _readCoerceToDomainValue();
 	else if (MATCH("TARGETENTRY", 11))
 		return_value = _readTargetEntry();
 	else if (MATCH("RANGETBLREF", 11))

@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/executor/execQual.c,v 1.123 2003/01/12 04:03:34 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/executor/execQual.c,v 1.124 2003/02/03 21:15:43 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -36,6 +36,7 @@
 
 #include "access/heapam.h"
 #include "catalog/pg_type.h"
+#include "commands/typecmds.h"
 #include "executor/execdebug.h"
 #include "executor/functions.h"
 #include "executor/nodeSubplan.h"
@@ -80,10 +81,10 @@ static Datum ExecEvalNullTest(GenericExprState *nstate,
 static Datum ExecEvalBooleanTest(GenericExprState *bstate,
 								 ExprContext *econtext,
 								 bool *isNull, ExprDoneCond *isDone);
-static Datum ExecEvalConstraintTest(ConstraintTestState *cstate,
+static Datum ExecEvalCoerceToDomain(CoerceToDomainState *cstate,
 					   ExprContext *econtext,
 					   bool *isNull, ExprDoneCond *isDone);
-static Datum ExecEvalConstraintTestValue(ConstraintTestValue *conVal,
+static Datum ExecEvalCoerceToDomainValue(CoerceToDomainValue *conVal,
 					   ExprContext *econtext, bool *isNull);
 static Datum ExecEvalFieldSelect(GenericExprState *fstate,
 								 ExprContext *econtext,
@@ -1559,32 +1560,37 @@ ExecEvalBooleanTest(GenericExprState *bstate,
 }
 
 /*
- * ExecEvalConstraintTest
+ * ExecEvalCoerceToDomain
  *
- * Test the constraint against the data provided.  If the data fits
- * within the constraint specifications, pass it through (return the
+ * Test the provided data against the domain constraint(s).  If the data
+ * passes the constraint specifications, pass it through (return the
  * datum) otherwise throw an error.
  */
 static Datum
-ExecEvalConstraintTest(ConstraintTestState *cstate, ExprContext *econtext,
+ExecEvalCoerceToDomain(CoerceToDomainState *cstate, ExprContext *econtext,
 					   bool *isNull, ExprDoneCond *isDone)
 {
-	ConstraintTest *constraint = (ConstraintTest *) cstate->xprstate.expr;
+	CoerceToDomain *ctest = (CoerceToDomain *) cstate->xprstate.expr;
 	Datum		result;
+	List	   *l;
 
 	result = ExecEvalExpr(cstate->arg, econtext, isNull, isDone);
 
 	if (isDone && *isDone == ExprEndResult)
 		return result;			/* nothing to check */
 
-	switch (constraint->testtype)
+	foreach(l, cstate->constraints)
 	{
-		case CONSTR_TEST_NOTNULL:
-			if (*isNull)
-				elog(ERROR, "Domain %s does not allow NULL values",
-					 constraint->domname);
-			break;
-		case CONSTR_TEST_CHECK:
+		DomainConstraintState *con = (DomainConstraintState *) lfirst(l);
+
+		switch (con->constrainttype)
+		{
+			case DOM_CONSTRAINT_NOTNULL:
+				if (*isNull)
+					elog(ERROR, "Domain %s does not allow NULL values",
+						 format_type_be(ctest->resulttype));
+				break;
+			case DOM_CONSTRAINT_CHECK:
 			{
 				Datum	conResult;
 				bool	conIsNull;
@@ -1592,7 +1598,7 @@ ExecEvalConstraintTest(ConstraintTestState *cstate, ExprContext *econtext,
 				bool	save_isNull;
 
 				/*
-				 * Set up value to be returned by ConstraintTestValue nodes.
+				 * Set up value to be returned by CoerceToDomainValue nodes.
 				 * We must save and restore prior setting of econtext's
 				 * domainValue fields, in case this node is itself within
 				 * a check expression for another domain.
@@ -1603,35 +1609,37 @@ ExecEvalConstraintTest(ConstraintTestState *cstate, ExprContext *econtext,
 				econtext->domainValue_datum = result;
 				econtext->domainValue_isNull = *isNull;
 
-				conResult = ExecEvalExpr(cstate->check_expr,
+				conResult = ExecEvalExpr(con->check_expr,
 										 econtext, &conIsNull, NULL);
 
 				if (!conIsNull &&
 					!DatumGetBool(conResult))
-					elog(ERROR, "ExecEvalConstraintTest: Domain %s constraint %s failed",
-						 constraint->domname, constraint->name);
+					elog(ERROR, "ExecEvalCoerceToDomain: Domain %s constraint %s failed",
+						 format_type_be(ctest->resulttype), con->name);
 
 				econtext->domainValue_datum = save_datum;
 				econtext->domainValue_isNull = save_isNull;
+
+				break;
 			}
-			break;
-		default:
-			elog(ERROR, "ExecEvalConstraintTest: Constraint type unknown");
-			break;
+			default:
+				elog(ERROR, "ExecEvalCoerceToDomain: Constraint type unknown");
+				break;
+		}
 	}
 
-	/* If all has gone well (constraint did not fail) return the datum */
+	/* If all has gone well (constraints did not fail) return the datum */
 	return result;
 }
 
 /*
- * ExecEvalConstraintTestValue
+ * ExecEvalCoerceToDomainValue
  *
- * Return the value stored by constraintTest.
+ * Return the value stored by CoerceToDomain.
  */
 static Datum
-ExecEvalConstraintTestValue(ConstraintTestValue *conVal, ExprContext *econtext,
-							bool *isNull)
+ExecEvalCoerceToDomainValue(CoerceToDomainValue *conVal,
+							ExprContext *econtext, bool *isNull)
 {
 	*isNull = econtext->domainValue_isNull;
 	return econtext->domainValue_datum;
@@ -1830,14 +1838,14 @@ ExecEvalExpr(ExprState *expression,
 										   isNull,
 										   isDone);
 			break;
-		case T_ConstraintTest:
-			retDatum = ExecEvalConstraintTest((ConstraintTestState *) expression,
+		case T_CoerceToDomain:
+			retDatum = ExecEvalCoerceToDomain((CoerceToDomainState *) expression,
 											  econtext,
 											  isNull,
 											  isDone);
 			break;
-		case T_ConstraintTestValue:
-			retDatum = ExecEvalConstraintTestValue((ConstraintTestValue *) expr,
+		case T_CoerceToDomainValue:
+			retDatum = ExecEvalCoerceToDomainValue((CoerceToDomainValue *) expr,
 												   econtext,
 												   isNull);
 			break;
@@ -1915,7 +1923,7 @@ ExecInitExpr(Expr *node, PlanState *parent)
 		case T_Var:
 		case T_Const:
 		case T_Param:
-		case T_ConstraintTestValue:
+		case T_CoerceToDomainValue:
 			/* No special setup needed for these node types */
 			state = (ExprState *) makeNode(ExprState);
 			break;
@@ -2092,13 +2100,13 @@ ExecInitExpr(Expr *node, PlanState *parent)
 				state = (ExprState *) gstate;
 			}
 			break;
-		case T_ConstraintTest:
+		case T_CoerceToDomain:
 			{
-				ConstraintTest   *ctest = (ConstraintTest *) node;
-				ConstraintTestState *cstate = makeNode(ConstraintTestState);
+				CoerceToDomain   *ctest = (CoerceToDomain *) node;
+				CoerceToDomainState *cstate = makeNode(CoerceToDomainState);
 
 				cstate->arg = ExecInitExpr(ctest->arg, parent);
-				cstate->check_expr = ExecInitExpr(ctest->check_expr, parent);
+				cstate->constraints = GetDomainConstraints(ctest->resulttype);
 				state = (ExprState *) cstate;
 			}
 			break;

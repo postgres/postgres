@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/nodes/outfuncs.c,v 1.194 2003/01/20 18:54:47 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/nodes/outfuncs.c,v 1.195 2003/02/03 21:15:44 tgl Exp $
  *
  * NOTES
  *	  Every node type that can appear in stored rules' parsetrees *must*
@@ -745,21 +745,20 @@ _outBooleanTest(StringInfo str, BooleanTest *node)
 }
 
 static void
-_outConstraintTest(StringInfo str, ConstraintTest *node)
+_outCoerceToDomain(StringInfo str, CoerceToDomain *node)
 {
-	WRITE_NODE_TYPE("CONSTRAINTTEST");
+	WRITE_NODE_TYPE("COERCETODOMAIN");
 
 	WRITE_NODE_FIELD(arg);
-	WRITE_ENUM_FIELD(testtype, ConstraintTestType);
-	WRITE_STRING_FIELD(name);
-	WRITE_STRING_FIELD(domname);
-	WRITE_NODE_FIELD(check_expr);
+	WRITE_OID_FIELD(resulttype);
+	WRITE_INT_FIELD(resulttypmod);
+	WRITE_ENUM_FIELD(coercionformat, CoercionForm);
 }
 
 static void
-_outConstraintTestValue(StringInfo str, ConstraintTestValue *node)
+_outCoerceToDomainValue(StringInfo str, CoerceToDomainValue *node)
 {
-	WRITE_NODE_TYPE("CONSTRAINTTESTVALUE");
+	WRITE_NODE_TYPE("COERCETODOMAINVALUE");
 
 	WRITE_OID_FIELD(typeId);
 	WRITE_INT_FIELD(typeMod);
@@ -1548,11 +1547,11 @@ _outNode(StringInfo str, void *obj)
 			case T_BooleanTest:
 				_outBooleanTest(str, obj);
 				break;
-			case T_ConstraintTest:
-				_outConstraintTest(str, obj);
+			case T_CoerceToDomain:
+				_outCoerceToDomain(str, obj);
 				break;
-			case T_ConstraintTestValue:
-				_outConstraintTestValue(str, obj);
+			case T_CoerceToDomainValue:
+				_outCoerceToDomainValue(str, obj);
 				break;
 			case T_TargetEntry:
 				_outTargetEntry(str, obj);

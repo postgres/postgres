@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/optimizer/util/clauses.c,v 1.125 2003/01/20 18:54:54 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/optimizer/util/clauses.c,v 1.126 2003/02/03 21:15:44 tgl Exp $
  *
  * HISTORY
  *	  AUTHOR			DATE			MAJOR EVENT
@@ -2030,7 +2030,7 @@ expression_tree_walker(Node *node,
 		case T_Var:
 		case T_Const:
 		case T_Param:
-		case T_ConstraintTestValue:
+		case T_CoerceToDomainValue:
 		case T_RangeTblRef:
 			/* primitive node types with no subnodes */
 			break;
@@ -2148,10 +2148,8 @@ expression_tree_walker(Node *node,
 			return walker(((NullTest *) node)->arg, context);
 		case T_BooleanTest:
 			return walker(((BooleanTest *) node)->arg, context);
-		case T_ConstraintTest:
-			if (walker(((ConstraintTest *) node)->arg, context))
-				return true;
-			return walker(((ConstraintTest *) node)->check_expr, context);
+		case T_CoerceToDomain:
+			return walker(((CoerceToDomain *) node)->arg, context);
 		case T_TargetEntry:
 			return walker(((TargetEntry *) node)->expr, context);
 		case T_Query:
@@ -2374,7 +2372,7 @@ expression_tree_mutator(Node *node,
 		case T_Var:
 		case T_Const:
 		case T_Param:
-		case T_ConstraintTestValue:
+		case T_CoerceToDomainValue:
 		case T_RangeTblRef:
 			/* primitive node types with no subnodes */
 			return (Node *) copyObject(node);
@@ -2538,14 +2536,13 @@ expression_tree_mutator(Node *node,
 				return (Node *) newnode;
 			}
 			break;
-		case T_ConstraintTest:
+		case T_CoerceToDomain:
 			{
-				ConstraintTest *ctest = (ConstraintTest *) node;
-				ConstraintTest *newnode;
+				CoerceToDomain *ctest = (CoerceToDomain *) node;
+				CoerceToDomain *newnode;
 
-				FLATCOPY(newnode, ctest, ConstraintTest);
+				FLATCOPY(newnode, ctest, CoerceToDomain);
 				MUTATE(newnode->arg, ctest->arg, Expr *);
-				MUTATE(newnode->check_expr, ctest->check_expr, Expr *);
 				return (Node *) newnode;
 			}
 			break;

@@ -3,7 +3,7 @@
  *			  procedural language
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/pl/plpgsql/src/pl_exec.c,v 1.77 2003/01/21 22:06:12 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/pl/plpgsql/src/pl_exec.c,v 1.78 2003/02/03 21:15:45 tgl Exp $
  *
  *	  This software is copyrighted by Jan Wieck - Hamburg.
  *
@@ -3633,6 +3633,9 @@ exec_simple_check_node(Node *node)
 
 		case T_BooleanTest:
 			return exec_simple_check_node((Node *) ((BooleanTest *) node)->arg);
+
+		case T_CoerceToDomain:
+			return exec_simple_check_node((Node *) ((CoerceToDomain *) node)->arg);
 
 		case T_List:
 			{

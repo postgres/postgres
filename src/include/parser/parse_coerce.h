@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2002, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Id: parse_coerce.h,v 1.48 2002/10/24 22:09:00 tgl Exp $
+ * $Id: parse_coerce.h,v 1.49 2003/02/03 21:15:44 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -45,8 +45,8 @@ extern bool can_coerce_type(int nargs, Oid *input_typeids, Oid *target_typeids,
 							CoercionContext ccontext);
 extern Node *coerce_type(Node *node, Oid inputTypeId, Oid targetTypeId,
 						 CoercionContext ccontext, CoercionForm cformat);
-extern Node *coerce_type_constraints(Node *arg, Oid typeId,
-									 CoercionForm cformat);
+extern Node *coerce_to_domain(Node *arg, Oid baseTypeId, Oid typeId,
+							  CoercionForm cformat);
 
 extern Node *coerce_to_boolean(Node *node, const char *constructName);
 

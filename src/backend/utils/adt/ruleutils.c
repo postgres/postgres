@@ -3,7 +3,7 @@
  *				back to source text
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/ruleutils.c,v 1.133 2003/02/03 15:17:24 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/ruleutils.c,v 1.134 2003/02/03 21:15:44 tgl Exp $
  *
  *	  This software is copyrighted by Jan Wieck - Hamburg.
  *
@@ -638,11 +638,11 @@ pg_get_constraintdef(PG_FUNCTION_ARGS)
 				}
 				appendStringInfo(&buf, "%s", string);
 
-				/* Add ON UPDATE and ON DELETE clauses */
+				/* Add ON UPDATE and ON DELETE clauses, if needed */
 				switch (conForm->confupdtype)
 				{
 					case FKCONSTR_ACTION_NOACTION:
-						string = "";
+						string = NULL; /* suppress default */
 						break;
 					case FKCONSTR_ACTION_RESTRICT:
 						string = "RESTRICT";
@@ -659,16 +659,16 @@ pg_get_constraintdef(PG_FUNCTION_ARGS)
 					default:
 						elog(ERROR, "pg_get_constraintdef: Unknown confupdtype '%c' for constraint %u",
 							 conForm->confupdtype, constraintId);
-						string = "";	/* keep compiler quiet */
+						string = NULL;	/* keep compiler quiet */
 						break;
 				}
-				if (strlen(string) != 0)
+				if (string)
 					appendStringInfo(&buf, " ON UPDATE %s", string);
 
 				switch (conForm->confdeltype)
 				{
 					case FKCONSTR_ACTION_NOACTION:
-						string = "";
+						string = NULL; /* suppress default */
 						break;
 					case FKCONSTR_ACTION_RESTRICT:
 						string = "RESTRICT";
@@ -685,10 +685,10 @@ pg_get_constraintdef(PG_FUNCTION_ARGS)
 					default:
 						elog(ERROR, "pg_get_constraintdef: Unknown confdeltype '%c' for constraint %u",
 							 conForm->confdeltype, constraintId);
-						string = "";	/* keep compiler quiet */
+						string = NULL;	/* keep compiler quiet */
 						break;
 				}
-				if (strlen(string) != 0)
+				if (string)
 					appendStringInfo(&buf, " ON DELETE %s", string);
 
 				if (conForm->condeferrable)
@@ -2252,19 +2252,34 @@ get_rule_expr(Node *node, deparse_context *context,
 			}
 			break;
 
-		case T_ConstraintTest:
+		case T_CoerceToDomain:
 			{
-				ConstraintTest *ctest = (ConstraintTest *) node;
+				CoerceToDomain *ctest = (CoerceToDomain *) node;
+				Node   *arg = (Node *) ctest->arg;
 
 				/*
-				 * We assume that the operations of the constraint node
-				 * need not be explicitly represented in the output.
+				 * Any implicit coercion at the top level of the argument
+				 * is presumably due to the domain's own internal typmod
+				 * coercion, so do not force it to be shown.
 				 */
-				get_rule_expr((Node *) ctest->arg, context, showimplicit);
+				if (ctest->coercionformat == COERCE_IMPLICIT_CAST &&
+					!showimplicit)
+				{
+					/* don't show the implicit cast */
+					get_rule_expr(arg, context, false);
+				}
+				else
+				{
+					appendStringInfoChar(buf, '(');
+					get_rule_expr(arg, context, false);
+					appendStringInfo(buf, ")::%s",
+							format_type_with_typemod(ctest->resulttype,
+													 ctest->resulttypmod));
+				}
 			}
 			break;
 
-		case T_ConstraintTestValue:
+		case T_CoerceToDomainValue:
 			appendStringInfo(buf, "VALUE");
 			break;
 
@@ -2444,7 +2459,8 @@ get_agg_expr(Aggref *aggref, deparse_context *context)
  * the expression tree has a length-coercion node atop a type-coercion node.
  *
  * Note: avoid stripping a length-coercion node, since two successive
- * coercions to different lengths aren't a no-op.
+ * coercions to different lengths aren't a no-op.  Also, never strip a
+ * CoerceToDomain node, even though it might be effectively just RelabelType.
  */
 static Node *
 strip_type_coercion(Node *expr, Oid resultType)

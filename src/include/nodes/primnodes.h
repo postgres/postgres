@@ -10,7 +10,7 @@
  * Portions Copyright (c) 1996-2002, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Id: primnodes.h,v 1.77 2003/01/10 21:08:15 tgl Exp $
+ * $Id: primnodes.h,v 1.78 2003/02/03 21:15:44 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -578,28 +578,22 @@ typedef struct BooleanTest
 } BooleanTest;
 
 /*
- * ConstraintTest
+ * CoerceToDomain
  *
- * ConstraintTest represents the operation of testing a value to see whether
- * it meets a constraint.  If so, the input value is returned as the result;
- * if not, an error is raised.
+ * CoerceToDomain represents the operation of coercing a value to a domain
+ * type.  At runtime (and not before) the precise set of constraints to be
+ * checked will be determined.  If the value passes, it is returned as the
+ * result; if not, an error is raised.  Note that this is equivalent to
+ * RelabelType in the scenario where no constraints are applied.
  */
-
-typedef enum ConstraintTestType
-{
-	CONSTR_TEST_NOTNULL,
-	CONSTR_TEST_CHECK
-} ConstraintTestType;
-
-typedef struct ConstraintTest
+typedef struct CoerceToDomain
 {
 	Expr		xpr;
 	Expr	   *arg;			/* input expression */
-	ConstraintTestType testtype;	/* test type */
-	char	   *name;			/* name of constraint (for error msgs) */
-	char	   *domname; 		/* name of domain (for error messages) */
-	Expr	   *check_expr;		/* for CHECK test, a boolean expression */
-} ConstraintTest;
+	Oid			resulttype;		/* domain type ID (result type) */
+	int32		resulttypmod;	/* output typmod (currently always -1) */
+	CoercionForm coercionformat; /* how to display this node */
+} CoerceToDomain;
 
 /*
  * Placeholder node for the value to be processed by a domain's check
@@ -610,12 +604,12 @@ typedef struct ConstraintTest
  * the domain itself.  This is because we shouldn't consider the value to
  * be a member of the domain if we haven't yet checked its constraints.
  */
-typedef struct ConstraintTestValue
+typedef struct CoerceToDomainValue
 {
 	Expr		xpr;
 	Oid			typeId;			/* type for substituted value */
 	int32		typeMod;		/* typemod for substituted value */
-} ConstraintTestValue;
+} CoerceToDomainValue;
 
 
 /*

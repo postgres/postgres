@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2002, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Id: execnodes.h,v 1.92 2003/01/23 05:10:41 tgl Exp $
+ * $Id: execnodes.h,v 1.93 2003/02/03 21:15:44 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -114,7 +114,7 @@ typedef struct ExprContext
 	Datum	   *ecxt_aggvalues; /* precomputed values for Aggref nodes */
 	bool	   *ecxt_aggnulls;	/* null flags for Aggref nodes */
 
-	/* Value to substitute for ConstraintTestValue nodes in expression */
+	/* Value to substitute for CoerceToDomainValue nodes in expression */
 	Datum		domainValue_datum;
 	bool		domainValue_isNull;
 
@@ -539,15 +539,37 @@ typedef struct CaseWhenState
 } CaseWhenState;
 
 /* ----------------
- *		ConstraintTestState node
+ *		CoerceToDomainState node
  * ----------------
  */
-typedef struct ConstraintTestState
+typedef struct CoerceToDomainState
 {
 	ExprState	xprstate;
 	ExprState  *arg;			/* input expression */
-	ExprState  *check_expr;		/* for CHECK test, a boolean expression */
-} ConstraintTestState;
+	/* Cached list of constraints that need to be checked */
+	List	   *constraints;	/* list of DomainConstraintState nodes */
+} CoerceToDomainState;
+
+/*
+ * DomainConstraintState - one item to check during CoerceToDomain
+ *
+ * Note: this is just a Node, and not an ExprState, because it has no
+ * corresponding Expr to link to.  Nonetheless it is part of an ExprState
+ * tree, so we give it a name following the xxxState convention.
+ */
+typedef enum DomainConstraintType
+{
+	DOM_CONSTRAINT_NOTNULL,
+	DOM_CONSTRAINT_CHECK
+} DomainConstraintType;
+
+typedef struct DomainConstraintState
+{
+	NodeTag		type;
+	DomainConstraintType constrainttype; /* constraint type */
+	char	   *name;			/* name of constraint (for error msgs) */
+	ExprState  *check_expr;		/* for CHECK, a boolean expression */
+} DomainConstraintState;
 
 
 /* ----------------------------------------------------------------

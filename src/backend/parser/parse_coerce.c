@@ -8,18 +8,13 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/parser/parse_coerce.c,v 2.91 2002/12/12 20:35:13 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/parser/parse_coerce.c,v 2.92 2003/02/03 21:15:44 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
 #include "postgres.h"
 
-#include "access/genam.h"
-#include "access/heapam.h"
-#include "catalog/catname.h"
-#include "catalog/indexing.h"
 #include "catalog/pg_cast.h"
-#include "catalog/pg_constraint.h"
 #include "catalog/pg_proc.h"
 #include "nodes/makefuncs.h"
 #include "optimizer/clauses.h"
@@ -35,7 +30,7 @@
 
 static Node *coerce_type_typmod(Node *node,
 								Oid targetTypeId, int32 targetTypMod,
-								CoercionForm cformat);
+								CoercionForm cformat, bool isExplicit);
 static Oid	PreferredType(CATEGORY category, Oid type);
 static Node *build_func_call(Oid funcid, Oid rettype, List *args,
 							 CoercionForm fformat);
@@ -103,7 +98,9 @@ coerce_to_target_type(Node *expr, Oid exprtype,
 	 * as well as a type coercion.
 	 */
 	if (expr != NULL)
-		expr = coerce_type_typmod(expr, targettype, targettypmod, cformat);
+		expr = coerce_type_typmod(expr, targettype, targettypmod,
+								  cformat,
+								  (cformat != COERCE_IMPLICIT_CAST));
 
 	return expr;
 }
@@ -119,7 +116,7 @@ coerce_to_target_type(Node *expr, Oid exprtype,
  * No coercion to a typmod (length) is performed here.  The caller must
  * call coerce_type_typmod as well, if a typmod constraint is wanted.
  * (But if the target type is a domain, it may internally contain a
- * typmod constraint, which will be applied inside coerce_type_constraints.)
+ * typmod constraint, which will be applied inside coerce_to_domain.)
  */
 Node *
 coerce_type(Node *node, Oid inputTypeId, Oid targetTypeId,
@@ -186,15 +183,8 @@ coerce_type(Node *node, Oid inputTypeId, Oid targetTypeId,
 
 		/* If target is a domain, apply constraints. */
 		if (targetTyptype == 'd')
-		{
-			result = coerce_type_constraints(result, targetTypeId,
-											 cformat);
-			/* We might now need a RelabelType. */
-			if (exprType(result) != targetTypeId)
-				result = (Node *) makeRelabelType((Expr *) result,
-												  targetTypeId, -1,
-												  cformat);
-		}
+			result = coerce_to_domain(result, InvalidOid, targetTypeId,
+									  cformat);
 
 		ReleaseSysCache(targetType);
 	}
@@ -222,17 +212,12 @@ coerce_type(Node *node, Oid inputTypeId, Oid targetTypeId,
 									 cformat);
 
 			/*
-			 * If domain, test against domain constraints and relabel with
+			 * If domain, coerce to the domain type and relabel with
 			 * domain type ID
 			 */
 			if (targetTypeId != baseTypeId)
-			{
-				result = coerce_type_constraints(result, targetTypeId,
-												 cformat);
-				result = (Node *) makeRelabelType((Expr *) result,
-												  targetTypeId, -1,
-												  cformat);
-			}
+				result = coerce_to_domain(result, baseTypeId, targetTypeId,
+										  cformat);
 
 			/*
 			 * If the input is a constant, apply the type conversion
@@ -257,21 +242,23 @@ coerce_type(Node *node, Oid inputTypeId, Oid targetTypeId,
 			 * higher-level code.
 			 *
 			 * Also, domains may have value restrictions beyond the base type
-			 * that must be accounted for.
+			 * that must be accounted for.  If the destination is a domain
+			 * then we won't need a RelabelType node.
 			 */
-			result = coerce_type_constraints(node, targetTypeId,
-											 cformat);
-
-			/*
-			 * XXX could we label result with exprTypmod(node) instead of
-			 * default -1 typmod, to save a possible length-coercion
-			 * later? Would work if both types have same interpretation of
-			 * typmod, which is likely but not certain (wrong if target is
-			 * a domain, in any case).
-			 */
-			result = (Node *) makeRelabelType((Expr *) result,
-											  targetTypeId, -1,
-											  cformat);
+			result = coerce_to_domain(node, InvalidOid, targetTypeId,
+									  cformat);
+			if (result == node)
+			{
+				/*
+				 * XXX could we label result with exprTypmod(node) instead of
+				 * default -1 typmod, to save a possible length-coercion
+				 * later? Would work if both types have same interpretation of
+				 * typmod, which is likely but not certain.
+				 */
+				result = (Node *) makeRelabelType((Expr *) result,
+												  targetTypeId, -1,
+												  cformat);
+			}
 		}
 	}
 	else if (typeInheritsFrom(inputTypeId, targetTypeId))
@@ -392,120 +379,61 @@ can_coerce_type(int nargs, Oid *input_typeids, Oid *target_typeids,
 
 
 /*
- * Create an expression tree to enforce the constraints (if any)
- * that should be applied by the type.	Currently this is only
- * interesting for domain types.
+ * Create an expression tree to represent coercion to a domain type.
  *
- * NOTE: result tree is not guaranteed to show the correct exprType() for
- * the domain; it may show the base type.  Caller must relabel if needed.
+ * 'arg': input expression
+ * 'baseTypeId': base type of domain, if known (pass InvalidOid if caller
+ *		has not bothered to look this up)
+ * 'typeId': target type to coerce to
+ * 'cformat': coercion format
+ *
+ * If the target type isn't a domain, the given 'arg' is returned as-is.
  */
 Node *
-coerce_type_constraints(Node *arg, Oid typeId, CoercionForm cformat)
+coerce_to_domain(Node *arg, Oid baseTypeId, Oid typeId, CoercionForm cformat)
 {
-	char	   *notNull = NULL;
-	int32		typmod = -1;
+	CoerceToDomain *result;
+	int32	typmod;
 
-	for (;;)
-	{
-		HeapTuple	tup;
-		HeapTuple	conTup;
-		Form_pg_type typTup;
+	/* Get the base type if it hasn't been supplied */
+	if (baseTypeId == InvalidOid)
+		baseTypeId = getBaseType(typeId);
 
-		ScanKeyData key[1];
-		int			nkeys = 0;
-		SysScanDesc scan;
-		Relation	conRel;
-		
-		tup = SearchSysCache(TYPEOID,
-							 ObjectIdGetDatum(typeId),
-							 0, 0, 0);
-		if (!HeapTupleIsValid(tup))
-			elog(ERROR, "coerce_type_constraints: failed to lookup type %u",
-				 typeId);
-		typTup = (Form_pg_type) GETSTRUCT(tup);
-
-		/* Test for NOT NULL Constraint */
-		if (typTup->typnotnull && notNull == NULL)
-			notNull = pstrdup(NameStr(typTup->typname));
-
-		/* Add CHECK Constraints to domains */
-		conRel = heap_openr(ConstraintRelationName, RowShareLock);
-
-		ScanKeyEntryInitialize(&key[nkeys++], 0x0,
-							   Anum_pg_constraint_contypid, F_OIDEQ,
-							   ObjectIdGetDatum(typeId));
-
-		scan = systable_beginscan(conRel, ConstraintTypidIndex, true,
-								  SnapshotNow, nkeys, key);
-
-		while (HeapTupleIsValid(conTup = systable_getnext(scan)))
-		{
-			Datum	val;
-			bool	isNull;
-			ConstraintTest *r = makeNode(ConstraintTest);
-			Form_pg_constraint	c = (Form_pg_constraint) GETSTRUCT(conTup);
-
-			/* Not expecting conbin to be NULL, but we'll test for it anyway */
-			val = fastgetattr(conTup,
-							  Anum_pg_constraint_conbin,
-							  conRel->rd_att, &isNull);
-
-			if (isNull)
-				elog(ERROR, "coerce_type_constraints: domain %s constraint %s has NULL conbin",
-					 NameStr(typTup->typname), NameStr(c->conname));
-
-			r->arg = (Expr *) arg;
-			r->testtype = CONSTR_TEST_CHECK;
-			r->name = NameStr(c->conname);
-			r->domname = NameStr(typTup->typname);
-			r->check_expr =	stringToNode(DatumGetCString(DirectFunctionCall1(textout,
-																			 val)));
-
-			arg = (Node *) r;
-		}
-
-		systable_endscan(scan);
-		heap_close(conRel, RowShareLock);
-
-		if (typTup->typtype != 'd')
-		{
-			/* Not a domain, so done */
-			ReleaseSysCache(tup);
-			break;
-		}
-
-		Assert(typmod < 0);
-
-		typeId = typTup->typbasetype;
-		typmod = typTup->typtypmod;
-		ReleaseSysCache(tup);
-	}
+	/* If it isn't a domain, return the node as it was passed in */
+	if (baseTypeId == typeId)
+		return arg;
 
 	/*
-	 * If domain applies a typmod to its base type, do length coercion.
+	 * If the domain applies a typmod to its base type, build the appropriate
+	 * coercion step.  Mark it implicit for display purposes, because we don't
+	 * want it shown separately by ruleutils.c; but the isExplicit flag passed
+	 * to the conversion function depends on the manner in which the domain
+	 * coercion is invoked, so that the semantics of implicit and explicit
+	 * coercion differ.  (Is that really the behavior we want?)
+	 *
+	 * NOTE: because we apply this as part of the fixed expression structure,
+	 * ALTER DOMAIN cannot alter the typtypmod.  But it's unclear that that
+	 * would be safe to do anyway, without lots of knowledge about what the
+	 * base type thinks the typmod means.
 	 */
+	typmod = get_typtypmod(typeId);
 	if (typmod >= 0)
-		arg = coerce_type_typmod(arg, typeId, typmod, cformat);
+		arg = coerce_type_typmod(arg, baseTypeId, typmod,
+								 COERCE_IMPLICIT_CAST,
+								 (cformat != COERCE_IMPLICIT_CAST));
 
 	/*
-	 * Only need to add one NOT NULL check regardless of how many domains
-	 * in the stack request it.  The topmost domain that requested it is
-	 * used as the constraint name.
+	 * Now build the domain coercion node.  This represents run-time checking
+	 * of any constraints currently attached to the domain.  This also
+	 * ensures that the expression is properly labeled as to result type.
 	 */
-	if (notNull)
-	{
-		ConstraintTest *r = makeNode(ConstraintTest);
+	result = makeNode(CoerceToDomain);
+	result->arg = (Expr *) arg;
+	result->resulttype = typeId;
+	result->resulttypmod = -1;	/* currently, always -1 for domains */
+	result->coercionformat = cformat;
 
-		r->arg = (Expr *) arg;
-		r->testtype = CONSTR_TEST_NOTNULL;
-		r->name = "NOT NULL";
-		r->domname = notNull;
-		r->check_expr = NULL;
-
-		arg = (Node *) r;
-	}
-
-	return arg;
+	return (Node *) result;
 }
 
 
@@ -526,7 +454,7 @@ coerce_type_constraints(Node *arg, Oid typeId, CoercionForm cformat)
  */
 static Node *
 coerce_type_typmod(Node *node, Oid targetTypeId, int32 targetTypMod,
-				   CoercionForm cformat)
+				   CoercionForm cformat, bool isExplicit)
 {
 	Oid			funcId;
 	int			nargs;
@@ -559,7 +487,7 @@ coerce_type_typmod(Node *node, Oid targetTypeId, int32 targetTypMod,
 			/* Pass it a boolean isExplicit parameter, too */
 			cons = makeConst(BOOLOID,
 							 sizeof(bool),
-							 BoolGetDatum(cformat != COERCE_IMPLICIT_CAST),
+							 BoolGetDatum(isExplicit),
 							 false,
 							 true);
 

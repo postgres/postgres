@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2002, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Id: nodes.h,v 1.135 2003/01/20 18:55:00 tgl Exp $
+ * $Id: nodes.h,v 1.136 2003/02/03 21:15:44 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -114,8 +114,8 @@ typedef enum NodeTag
 	T_CaseWhen,
 	T_NullTest,
 	T_BooleanTest,
-	T_ConstraintTest,
-	T_ConstraintTestValue,
+	T_CoerceToDomain,
+	T_CoerceToDomainValue,
 	T_TargetEntry,
 	T_RangeTblRef,
 	T_JoinExpr,
@@ -136,7 +136,8 @@ typedef enum NodeTag
 	T_SubPlanState,
 	T_CaseExprState,
 	T_CaseWhenState,
-	T_ConstraintTestState,
+	T_CoerceToDomainState,
+	T_DomainConstraintState,
 
 	/*
 	 * TAGS FOR PLANNER NODES (relation.h)
