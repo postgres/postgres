@@ -103,13 +103,13 @@ timestampge(time_t t1, time_t t2)
 }
 
 DateTime *
-stamp_datetime(time_t timestamp)
+timestamp_datetime(time_t timestamp)
 {
 	return(abstime_datetime((AbsoluteTime) timestamp));
-} /* stamp_datetime() */
+} /* timestamp_datetime() */
 
 time_t
-datetime_stamp(DateTime *datetime)
+datetime_timestamp(DateTime *datetime)
 {
 	return((AbsoluteTime) datetime_abstime(datetime));
-} /* datetime_stamp() */
+} /* datetime_timestamp() */

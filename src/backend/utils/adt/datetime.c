@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/datetime.c,v 1.17 1997/10/25 05:16:09 thomas Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/datetime.c,v 1.18 1997/12/23 19:23:07 thomas Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -594,13 +594,11 @@ datetime_time(DateTime *datetime)
 } /* datetime_time() */
 
 
-/* datet_datetime()
+/* datetime_datetime()
  * Convert date and time to datetime data type.
- * Should be called datetime_datetime()
- *  but need <= 16 characters for function names.
  */
 DateTime *
-datet_datetime(DateADT date, TimeADT *time)
+datetime_datetime(DateADT date, TimeADT *time)
 {
 	DateTime   *result;
 
@@ -614,7 +612,7 @@ datet_datetime(DateADT date, TimeADT *time)
 	}
 
 	return (result);
-} /* datet_datetime() */
+} /* datetime_datetime() */
 
 
 int32							/* RelativeTime */
