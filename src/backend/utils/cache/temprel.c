@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/cache/Attic/temprel.c,v 1.16 1999/11/16 04:13:59 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/cache/Attic/temprel.c,v 1.17 1999/11/16 16:55:28 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -221,10 +221,6 @@ get_temp_rel_by_physicalname(char *relname)
 {
 	List	   *l;
 
-	/* already physical, needed for bootstrapping temp tables */
-	if (strncmp(relname,"pg_temp.", strlen("pg_temp.")) == 0)
-		return relname;
-		
 	foreach(l, temp_rels)
 	{
 		TempTable  *temp_rel = lfirst(l);
@@ -232,5 +228,6 @@ get_temp_rel_by_physicalname(char *relname)
 		if (strcmp(temp_rel->relname, relname) == 0)
 			return temp_rel->user_relname;
 	}
-	return NULL;
+	/* needed for bootstrapping temp tables */
+	return relname;
 }
