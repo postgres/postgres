@@ -5,7 +5,7 @@
  * command, configuration file, and command line options.
  * See src/backend/utils/misc/README for more information.
  *
- * $Header: /cvsroot/pgsql/src/backend/utils/misc/guc.c,v 1.100 2002/11/08 17:37:52 tgl Exp $
+ * $Header: /cvsroot/pgsql/src/backend/utils/misc/guc.c,v 1.101 2002/11/14 23:53:27 momjian Exp $
  *
  * Copyright 2000 by PostgreSQL Global Development Group
  * Written by Peter Eisentraut <peter_e@gmx.net>.
@@ -105,9 +105,9 @@ int			log_min_error_statement = ERROR;
 char	   *log_min_error_statement_str = NULL;
 const char	log_min_error_statement_str_default[] = "panic";
 
-int			server_min_messages = NOTICE;
-char	   *server_min_messages_str = NULL;
-const char	server_min_messages_str_default[] = "notice";
+int			log_min_messages = NOTICE;
+char	   *log_min_messages_str = NULL;
+const char	log_min_messages_str_default[] = "notice";
 
 int			client_min_messages = NOTICE;
 char	   *client_min_messages_str = NULL;
@@ -805,8 +805,8 @@ static struct config_string
 	},
 
 	{
-		{"server_min_messages", PGC_USERSET}, &server_min_messages_str,
-		server_min_messages_str_default, assign_server_min_messages, NULL
+		{"log_min_messages", PGC_USERSET}, &log_min_messages_str,
+		log_min_messages_str_default, assign_log_min_messages, NULL
 	},
 
 	{
@@ -2927,10 +2927,10 @@ GUCArrayDelete(ArrayType *array, const char *name)
 }
 
 const char *
-assign_server_min_messages(const char *newval,
+assign_log_min_messages(const char *newval,
 						   bool doit, bool interactive)
 {
-	return (assign_msglvl(&server_min_messages, newval, doit, interactive));
+	return (assign_msglvl(&log_min_messages, newval, doit, interactive));
 }
 
 const char *

@@ -4,7 +4,7 @@
  * External declarations pertaining to backend/utils/misc/guc.c and
  * backend/utils/misc/guc-file.l
  *
- * $Id: guc.h,v 1.24 2002/10/21 18:57:35 petere Exp $
+ * $Id: guc.h,v 1.25 2002/11/14 23:53:27 momjian Exp $
  */
 #ifndef GUC_H
 #define GUC_H
@@ -103,7 +103,7 @@ extern ArrayType *GUCArrayDelete(ArrayType *array, const char *name);
 extern const char *assign_min_error_statement(const char *newval, bool doit,
 						   bool interactive);
 
-extern const char *assign_server_min_messages(const char *newval,
+extern const char *assign_log_min_messages(const char *newval,
 						   bool doit, bool interactive);
 extern const char *assign_client_min_messages(const char *newval,
 						   bool doit, bool interactive);
@@ -129,9 +129,9 @@ extern int	log_min_error_statement;
 extern char *log_min_error_statement_str;
 extern const char log_min_error_statement_str_default[];
 
-extern int	server_min_messages;
-extern char *server_min_messages_str;
-extern const char server_min_messages_str_default[];
+extern int	log_min_messages;
+extern char *log_min_messages_str;
+extern const char log_min_messages_str_default[];
 
 extern int	client_min_messages;
 extern char *client_min_messages_str;

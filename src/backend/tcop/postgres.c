@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/tcop/postgres.c,v 1.307 2002/10/31 21:34:16 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/tcop/postgres.c,v 1.308 2002/11/14 23:53:27 momjian Exp $
  *
  * NOTES
  *	  this is the "main" module of the postgres backend and
@@ -1339,7 +1339,7 @@ PostgresMain(int argc, char *argv[], const char *username)
 						char	   *debugstr = palloc(strlen("debug") + strlen(optarg) + 1);
 
 						sprintf(debugstr, "debug%s", optarg);
-						SetConfigOption("server_min_messages", debugstr, ctx, gucsource);
+						SetConfigOption("log_min_messages", debugstr, ctx, gucsource);
 						pfree(debugstr);
 
 					}
@@ -1349,7 +1349,7 @@ PostgresMain(int argc, char *argv[], const char *username)
 						 * from propagating to backend.  It would be nice
 						 * to set it to the postgresql.conf value here.
 						 */
-						SetConfigOption("server_min_messages", "notice",
+						SetConfigOption("log_min_messages", "notice",
 										ctx, gucsource);
 				}
 				break;
@@ -1590,7 +1590,7 @@ PostgresMain(int argc, char *argv[], const char *username)
 
 	/*
 	 * -d is not the same as setting
-	 * server_min_messages because it enables other
+	 * log_min_messages because it enables other
 	 * output options.
 	 */
 	if (debug_flag >= 1)
@@ -1781,7 +1781,7 @@ PostgresMain(int argc, char *argv[], const char *username)
 	if (!IsUnderPostmaster)
 	{
 		puts("\nPOSTGRES backend interactive interface ");
-		puts("$Revision: 1.307 $ $Date: 2002/10/31 21:34:16 $\n");
+		puts("$Revision: 1.308 $ $Date: 2002/11/14 23:53:27 $\n");
 	}
 
 	/*

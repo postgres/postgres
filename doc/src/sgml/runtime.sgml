@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/runtime.sgml,v 1.150 2002/11/11 20:14:03 petere Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/runtime.sgml,v 1.151 2002/11/14 23:53:26 momjian Exp $
 -->
 
 <Chapter Id="runtime">
@@ -854,18 +854,17 @@ env PGOPTIONS='-c geqo=off' psql
    <para>
     <variablelist>
      <varlistentry>
-      <term><varname>SERVER_MIN_MESSAGES</varname> (<type>string</type>)</term>
+      <term><varname>CLIENT_MIN_MESSAGES</varname> (<type>string</type>)</term>
       <listitem>
        <para>
-        This controls how much message detail is written to the server
-        logs.  Valid values are <literal>DEBUG5</>,
+        This controls how much message detail is written to the
+        client.  Valid values are <literal>DEBUG5</>,
         <literal>DEBUG4</>, <literal>DEBUG3</>, <literal>DEBUG2</>,
-        <literal>DEBUG1</>, <literal>INFO</>, <literal>NOTICE</>,
-        <literal>WARNING</>, <literal>ERROR</>, <literal>LOG</>,
-        <literal>FATAL</>, and <literal>PANIC</>. Later values send
-        less detail to the logs.  The default is <literal>NOTICE</>.
-        Note that <literal>LOG</> has a different precedence here than
-        in <literal>CLIENT_MIN_MESSAGES</>.
+        <literal>DEBUG1</>, <literal>LOG</>, <literal>NOTICE</>,
+        <literal>WARNING</>, and <literal>ERROR</>.  Later values send
+        less information to the client.  The default is
+        <literal>NOTICE</>.  Note that <literal>LOG</> has a different
+        precedence here than in <literal>LOG_MIN_MESSAGES</>. 
        </para>
 
        <para>
@@ -948,23 +947,6 @@ env PGOPTIONS='-c geqo=off' psql
           </listitem>
          </varlistentry>
         </variablelist>
-       </para>
-      </listitem>
-     </varlistentry>
-
-     <varlistentry>
-      <term><varname>CLIENT_MIN_MESSAGES</varname> (<type>string</type>)</term>
-      <listitem>
-       <para>
-        This controls how much message detail is written to the
-        client.  Valid values are <literal>DEBUG5</>,
-        <literal>DEBUG4</>, <literal>DEBUG3</>, <literal>DEBUG2</>,
-        <literal>DEBUG1</>, <literal>LOG</>, <literal>NOTICE</>,
-        <literal>WARNING</>, and <literal>ERROR</>.  Later values send
-        less information to the client.  The default is
-        <literal>NOTICE</>.  Note that <literal>LOG</> has a different
-        precedence here than in <literal>SERVER_MIN_MESSAGES</>. Also
-        see that section for an explanation of the various values.
        </para>
       </listitem>
      </varlistentry>
@@ -1073,6 +1055,25 @@ env PGOPTIONS='-c geqo=off' psql
         so you can more easily match the error statement with the error
         message.
        </para>
+      </listitem>
+     </varlistentry>
+
+     <varlistentry>
+      <term><varname>LOG_MIN_MESSAGES</varname> (<type>string</type>)</term>
+      <listitem>
+       <para>
+        This controls how much message detail is written to the server
+        logs.  Valid values are <literal>DEBUG5</>,
+        <literal>DEBUG4</>, <literal>DEBUG3</>, <literal>DEBUG2</>,
+        <literal>DEBUG1</>, <literal>INFO</>, <literal>NOTICE</>,
+        <literal>WARNING</>, <literal>ERROR</>, <literal>LOG</>,
+        <literal>FATAL</>, and <literal>PANIC</>. Later values send
+        less detail to the logs.  The default is <literal>NOTICE</>.
+        Note that <literal>LOG</> has a different precedence here than
+        in <literal>CLIENT_MIN_MESSAGES</>.  Also see that section 
+	for an explanation of the various values.
+       </para>
+
       </listitem>
      </varlistentry>
 
@@ -2177,7 +2178,7 @@ dynamic_library_path = '/usr/local/lib/postgresql:/home/my_project/lib:$libdir'
        </row>
        <row>
         <entry><option>-d <replaceable>x</replaceable></option></entry>
-        <entry><literal>server_min_messages = DEBUG<replaceable>x</replaceable></></entry>
+        <entry><literal>log_min_messages = DEBUG<replaceable>x</replaceable></></entry>
        </row>
        <row>
         <entry><option>-F</option></entry>

@@ -3,7 +3,7 @@
  *
  * Copyright 2000-2002 by PostgreSQL Global Development Group
  *
- * $Header: /cvsroot/pgsql/src/bin/psql/tab-complete.c,v 1.65 2002/11/08 17:37:52 tgl Exp $
+ * $Header: /cvsroot/pgsql/src/bin/psql/tab-complete.c,v 1.66 2002/11/14 23:53:27 momjian Exp $
  */
 
 /*----------------------------------------------------------------------
@@ -229,7 +229,7 @@ psql_completion(char *text, int start, int end)
 		"enable_hashjoin",
 		"geqo",
 		"fsync",
-		"server_min_messages",
+		"log_min_messages",
 		"client_min_messages",
 		"debug_assertions",
 		"log_statement",

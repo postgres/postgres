@@ -37,7 +37,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/postmaster/postmaster.c,v 1.293 2002/11/13 00:39:47 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/postmaster/postmaster.c,v 1.294 2002/11/14 23:53:27 momjian Exp $
  *
  * NOTES
  *
@@ -451,7 +451,7 @@ PostmasterMain(int argc, char *argv[])
 					char	   *debugstr = palloc(strlen("debug") + strlen(optarg) + 1);
 
 					sprintf(debugstr, "debug%s", optarg);
-					SetConfigOption("server_min_messages", debugstr,
+					SetConfigOption("log_min_messages", debugstr,
 									PGC_POSTMASTER, PGC_S_ARGV);
 					pfree(debugstr);
 					debug_flag = atoi(optarg);

@@ -8,7 +8,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/bootstrap/bootstrap.c,v 1.144 2002/09/26 22:58:33 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/bootstrap/bootstrap.c,v 1.145 2002/11/14 23:53:27 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -263,7 +263,7 @@ BootstrapMain(int argc, char *argv[])
 					char	   *debugstr = palloc(strlen("debug") + strlen(optarg) + 1);
 
 					sprintf(debugstr, "debug%s", optarg);
-					SetConfigOption("server_min_messages", debugstr,
+					SetConfigOption("log_min_messages", debugstr,
 									PGC_POSTMASTER, PGC_S_ARGV);
 					SetConfigOption("client_min_messages", debugstr,
 									PGC_POSTMASTER, PGC_S_ARGV);
