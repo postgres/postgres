@@ -18,22 +18,14 @@
 #  define NEED_UNION_SEMUN
 #endif /* WIN32 */
 
-#if defined(__FreeBSD__) || defined(__NetBSD__)
-#  define USE_LIMITS_H
-#endif
-
-#if defined(bsdi)
-#  define USE_LIMITS_H
-#  define NEED_UNION_SEMUN
-#endif
-
-#if defined(bsdi_2_1)
+#if defined(__FreeBSD__) || \
+    defined(__NetBSD__) || \
+    defined(bsdi)
 #  define USE_LIMITS_H
 #endif
 
 #if defined(aix)
 #  define NEED_SYS_SELECT_H
-#  define NEED_UNION_SEMUN
 #endif
 
 #if defined(irix5)
@@ -47,13 +39,15 @@
  * System V header files so we must do it ourselves.
  */
 #if defined(sequent) || \
+    defined(PORTNAME_aix) || \
     defined(PORTNAME_alpha) || \
+    defined(PORTNAME_bsdi) || \
     defined(PORTNAME_hpux) || \
     defined(PORTNAME_dgux) || \
     defined(PORTNAME_i386_solaris) || \
     defined(PORTNAME_sparc_solaris) || \
     defined(PORTNAME_ultrix4) || \
-    defined(PORTNAME_svr4) || \
+    defined(PORTNAME_svr4)
 #define NEED_UNION_SEMUN 
 #endif
 
