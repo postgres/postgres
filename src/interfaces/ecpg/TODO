@@ -20,5 +20,7 @@ instead of libpq so we can write backend functions using ecpg.
 
 remove space_or_nl and line_end from pgc.l
 
+nested C comments do not work
+
 Missing features:
  - SQLSTATE

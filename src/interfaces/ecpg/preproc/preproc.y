@@ -174,8 +174,8 @@ make_name(void)
 %token		SQL_VALUE SQL_VAR SQL_WHENEVER
 
 /* C token */
-%token		S_ANYTHING S_AUTO S_CONST S_EXTERN
-%token		S_REGISTER S_STATIC S_VOLATILE
+%token		S_AND S_ANYTHING S_AUTO S_CONST S_EXTERN S_LSHIFT
+%token		S_MEMBER S_OR S_REGISTER S_RSHIFT S_STATIC S_VOLATILE
 
 /* I need this and don't know where it is defined inside the backend */
 %token		TYPECAST
@@ -5298,11 +5298,16 @@ c_anything:  IDENT 	{ $$ = $1; }
 	| '-'		{ $$ = make_str("-"); }
 	| '/'		{ $$ = make_str("/"); }
 	| '%'		{ $$ = make_str("%"); }
+	| S_AND		{ $$ = make_str("&&"); } 
 	| S_ANYTHING	{ $$ = make_name(); }
 	| S_AUTO	{ $$ = make_str("auto"); }
 	| S_CONST	{ $$ = make_str("const"); }
 	| S_EXTERN	{ $$ = make_str("extern"); }
+	| S_LSHIFT	{ $$ = make_str("<<"); } 
+	| S_MEMBER	{ $$ = make_str("->"); } 
+	| S_OR		{ $$ = make_str("||"); } 
 	| S_REGISTER	{ $$ = make_str("register"); }
+	| S_RSHIFT	{ $$ = make_str(">>"); } 
 	| S_STATIC	{ $$ = make_str("static"); }
 	| SQL_BOOL	{ $$ = make_str("bool"); }
 	| SQL_ENUM	{ $$ = make_str("enum"); }

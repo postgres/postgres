@@ -31,13 +31,12 @@ int g=fb(2);
 int i=3^1;
 int j=1?1:2;
 
-/*int e=y->member; /* compile error */
-/*int c=10>>2; /* compile error */
-/*bool h=2||1; /* compile error */
-long long  iax;
+int e=y->member;
+int c=10>>2;
+bool h=2||1; 
+long iay /* = 1L */ ;
+long long iax /* = 40000000000LL */ ;
 exec sql end declare section;
-
-iax = 40000000000LL;
 
 /* not working */
 int f=fa();

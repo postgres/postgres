@@ -12,7 +12,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/interfaces/ecpg/preproc/pgc.l,v 1.64 2000/09/26 11:41:44 meskes Exp $
+ *	  $Header: /cvsroot/pgsql/src/interfaces/ecpg/preproc/pgc.l,v 1.65 2000/10/17 15:38:25 meskes Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -676,6 +676,11 @@ cppline			{space}*#(.*\\{line_end})*.*
 <C>\[			{ return('['); }
 <C>\]			{ return(']'); }
 <C>\=			{ return('='); }
+<C>"->"			{ return(S_MEMBER); } 
+<C>">>"			{ return(S_RSHIFT); } 
+<C>"<<"			{ return(S_LSHIFT); } 
+<C>"||"			{ return(S_OR); } 
+<C>"&&"			{ return(S_AND); } 
 <C>{other}		{ return S_ANYTHING; }
 
 <C>{exec_sql}{define}{space_or_nl}*	{ BEGIN(def_ident); }
