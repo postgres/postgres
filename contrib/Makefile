@@ -1,4 +1,4 @@
-# $Header: /cvsroot/pgsql/contrib/Makefile,v 1.16 2001/02/11 02:18:48 momjian Exp $
+# $Header: /cvsroot/pgsql/contrib/Makefile,v 1.17 2001/03/13 19:28:02 petere Exp $
 
 subdir = contrib
 top_builddir = ..
@@ -34,7 +34,7 @@ WANTED_DIRS = \
 
 all install installdirs uninstall clean distclean maintainer-clean:
 	for dir in $(WANTED_DIRS); do \
-	    if [ -e $$dir/Makefile ]; then \
+	    if [ -f $$dir/Makefile ]; then \
 		$(MAKE) -C $$dir $@; \
 	    fi; \
 	done
