@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2002, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Id: pg_proc.h,v 1.302 2003/05/26 00:11:27 tgl Exp $
+ * $Id: pg_proc.h,v 1.303 2003/06/11 09:23:55 petere Exp $
  *
  * NOTES
  *	  The script catalog/genbki.sh reads this file and generates .bki
@@ -1318,6 +1318,8 @@ DATA(insert OID = 1036 (  aclremove		   PGNSP PGUID 12 f f t f s 2 1034 "1034 10
 DESCR("remove ACL item");
 DATA(insert OID = 1037 (  aclcontains	   PGNSP PGUID 12 f f t f s 2 16 "1034 1033"	aclcontains - _null_ ));
 DESCR("does ACL contain item?");
+DATA(insert OID = 1365 (  makeaclitem	   PGNSP PGUID 12 f f t f s 5 1033 "23 23 23 25 16"	makeaclitem - _null_ ));
+DESCR("make ACL item");
 DATA(insert OID = 1038 (  seteval		   PGNSP PGUID 12 f f t t v 1 23 "26"  seteval - _null_ ));
 DESCR("internal function supporting PostQuel-style sets");
 DATA(insert OID = 1044 (  bpcharin		   PGNSP PGUID 12 f f t f i 3 1042 "2275 26 23" bpcharin - _null_ ));

@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/acl.c,v 1.87 2003/06/02 19:00:29 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/acl.c,v 1.88 2003/06/11 09:23:55 petere Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -32,11 +32,13 @@
 
 static const char *getid(const char *s, char *n);
 static void putid(char *p, const char *s);
-static Acl *makeacl(int n);
+static Acl *allocacl(int n);
 static const char *aclparse(const char *s, AclItem *aip);
 static bool aclitemeq(const AclItem *a1, const AclItem *a2);
 static Acl *recursive_revoke(Acl *acl, AclId grantee,
 							 AclMode revoke_privs, DropBehavior behavior);
+
+static AclMode convert_priv_string(text *priv_type_text);
 
 static Oid	convert_table_name(text *tablename);
 static AclMode convert_table_priv_string(text *priv_type_text);
@@ -265,20 +267,20 @@ aclparse(const char *s, AclItem *aip)
 }
 
 /*
- * makeacl
+ * allocacl
  *		Allocates storage for a new Acl with 'n' entries.
  *
  * RETURNS:
  *		the new Acl
  */
 static Acl *
-makeacl(int n)
+allocacl(int n)
 {
 	Acl		   *new_acl;
 	Size		size;
 
 	if (n < 0)
-		elog(ERROR, "makeacl: invalid size: %d", n);
+		elog(ERROR, "allocacl: invalid size: %d", n);
 	size = ACL_N_SIZE(n);
 	new_acl = (Acl *) palloc0(size);
 	new_acl->size = size;
@@ -471,7 +473,7 @@ acldefault(GrantObjectType objtype, AclId ownerid)
 			break;
 	}
 
-	acl = makeacl((world_default != ACL_NO_RIGHTS ? 1 : 0)
+	acl = allocacl((world_default != ACL_NO_RIGHTS ? 1 : 0)
 				  + (ownerid ? 1 : 0));
 	aip = ACL_DAT(acl);
 
@@ -513,10 +515,10 @@ aclinsert3(const Acl *old_acl, const AclItem *mod_aip, unsigned modechg, DropBeh
 
 	/* These checks for null input are probably dead code, but... */
 	if (!old_acl || ACL_NUM(old_acl) < 1)
-		old_acl = makeacl(1);
+		old_acl = allocacl(1);
 	if (!mod_aip)
 	{
-		new_acl = makeacl(ACL_NUM(old_acl));
+		new_acl = allocacl(ACL_NUM(old_acl));
 		memcpy((char *) new_acl, (char *) old_acl, ACL_SIZE(old_acl));
 		return new_acl;
 	}
@@ -536,7 +538,7 @@ aclinsert3(const Acl *old_acl, const AclItem *mod_aip, unsigned modechg, DropBeh
 		if (aclitemeq(mod_aip, old_aip + dst))
 		{
 			/* found a match, so modify existing item */
-			new_acl = makeacl(num);
+			new_acl = allocacl(num);
 			new_aip = ACL_DAT(new_acl);
 			memcpy(new_acl, old_acl, ACL_SIZE(old_acl));
 			break;
@@ -546,7 +548,7 @@ aclinsert3(const Acl *old_acl, const AclItem *mod_aip, unsigned modechg, DropBeh
 	if (dst == num)
 	{
 		/* need to append a new item */
-		new_acl = makeacl(num + 1);
+		new_acl = allocacl(num + 1);
 		new_aip = ACL_DAT(new_acl);
 		memcpy(new_aip, old_aip, num * sizeof(AclItem));
 
@@ -671,10 +673,10 @@ aclremove(PG_FUNCTION_ARGS)
 
 	/* These checks for null input should be dead code, but... */
 	if (!old_acl || ACL_NUM(old_acl) < 1)
-		old_acl = makeacl(1);
+		old_acl = allocacl(1);
 	if (!mod_aip)
 	{
-		new_acl = makeacl(ACL_NUM(old_acl));
+		new_acl = allocacl(ACL_NUM(old_acl));
 		memcpy((char *) new_acl, (char *) old_acl, ACL_SIZE(old_acl));
 		PG_RETURN_ACL_P(new_acl);
 	}
@@ -689,13 +691,13 @@ aclremove(PG_FUNCTION_ARGS)
 	if (dst >= old_num)
 	{
 		/* Not found, so return copy of source ACL */
-		new_acl = makeacl(old_num);
+		new_acl = allocacl(old_num);
 		memcpy((char *) new_acl, (char *) old_acl, ACL_SIZE(old_acl));
 	}
 	else
 	{
 		new_num = old_num - 1;
-		new_acl = makeacl(new_num);
+		new_acl = allocacl(new_num);
 		new_aip = ACL_DAT(new_acl);
 		if (dst == 0)
 		{						/* start */
@@ -734,11 +736,95 @@ aclcontains(PG_FUNCTION_ARGS)
 	aidat = ACL_DAT(acl);
 	for (i = 0; i < num; ++i)
 	{
-		if (aip->ai_grantee == aidat[i].ai_grantee &&
-			aip->ai_privs == aidat[i].ai_privs)
+		if (aip->ai_grantee == aidat[i].ai_grantee
+			&& ACLITEM_GET_IDTYPE(*aip) == ACLITEM_GET_IDTYPE(aidat[i])
+			&& aip->ai_grantor == aidat[i].ai_grantor
+			&& (ACLITEM_GET_PRIVS(*aip) & ACLITEM_GET_PRIVS(aidat[i])) == ACLITEM_GET_PRIVS(*aip)
+			&& (ACLITEM_GET_GOPTIONS(*aip) & ACLITEM_GET_GOPTIONS(aidat[i])) == ACLITEM_GET_GOPTIONS(*aip))
 			PG_RETURN_BOOL(true);
 	}
 	PG_RETURN_BOOL(false);
+}
+
+Datum
+makeaclitem(PG_FUNCTION_ARGS)
+{
+	int32		u_grantee = PG_GETARG_INT32(0);
+	int32		g_grantee = PG_GETARG_INT32(1);
+	int32		grantor = PG_GETARG_INT32(2);
+	text	   *privtext = PG_GETARG_TEXT_P(3);
+	bool		goption = PG_GETARG_BOOL(4);
+	AclItem	   *aclitem;
+	AclMode		priv;
+
+	priv = convert_priv_string(privtext);
+
+	aclitem = (AclItem *) palloc(sizeof(*aclitem));
+	if (u_grantee == 0 && g_grantee == 0)
+	{
+		aclitem->ai_grantee = 0;
+		ACLITEM_SET_IDTYPE(*aclitem, ACL_IDTYPE_WORLD);
+	}
+	else if (u_grantee != 0 && g_grantee != 0)
+	{
+		elog(ERROR, "cannot specify both user and group");
+	}
+	else if (u_grantee != 0)
+	{
+		aclitem->ai_grantee = u_grantee;
+		ACLITEM_SET_IDTYPE(*aclitem, ACL_IDTYPE_UID);
+	}
+	else if (g_grantee != 0)
+	{
+		aclitem->ai_grantee = g_grantee;
+		ACLITEM_SET_IDTYPE(*aclitem, ACL_IDTYPE_GID);
+	}
+
+	aclitem->ai_grantor = grantor;
+	ACLITEM_SET_PRIVS(*aclitem, priv);
+	if (goption)
+		ACLITEM_SET_GOPTIONS(*aclitem, priv);
+	else
+		ACLITEM_SET_GOPTIONS(*aclitem, ACL_NO_RIGHTS);
+
+	PG_RETURN_ACLITEM_P(aclitem);
+}
+
+static AclMode
+convert_priv_string(text *priv_type_text)
+{
+	char	   *priv_type;
+
+	priv_type = DatumGetCString(DirectFunctionCall1(textout,
+													PointerGetDatum(priv_type_text)));
+
+	if (strcasecmp(priv_type, "SELECT") == 0)
+		return ACL_SELECT;
+	if (strcasecmp(priv_type, "INSERT") == 0)
+		return ACL_INSERT;
+	if (strcasecmp(priv_type, "UPDATE") == 0)
+		return ACL_UPDATE;
+	if (strcasecmp(priv_type, "DELETE") == 0)
+		return ACL_DELETE;
+	if (strcasecmp(priv_type, "RULE") == 0)
+		return ACL_RULE;
+	if (strcasecmp(priv_type, "REFERENCES") == 0)
+		return ACL_REFERENCES;
+	if (strcasecmp(priv_type, "TRIGGER") == 0)
+		return ACL_TRIGGER;
+	if (strcasecmp(priv_type, "EXECUTE") == 0)
+		return ACL_EXECUTE;
+	if (strcasecmp(priv_type, "USAGE") == 0)
+		return ACL_USAGE;
+	if (strcasecmp(priv_type, "CREATE") == 0)
+		return ACL_CREATE;
+	if (strcasecmp(priv_type, "TEMP") == 0)
+		return ACL_CREATE_TEMP;
+	if (strcasecmp(priv_type, "TEMPORARY") == 0)
+		return ACL_CREATE_TEMP;
+
+	elog(ERROR, "invalid privilege type %s", priv_type);
+	return ACL_NO_RIGHTS;		/* keep compiler quiet */
 }
 
 

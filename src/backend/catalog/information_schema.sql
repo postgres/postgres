@@ -4,7 +4,7 @@
  *
  * Copyright 2002, PostgreSQL Global Development Group
  *
- * $Id: information_schema.sql,v 1.7 2003/06/05 16:08:47 petere Exp $
+ * $Id: information_schema.sql,v 1.8 2003/06/11 09:23:55 petere Exp $
  */
 
 
@@ -604,7 +604,7 @@ GRANT SELECT ON referential_constraints TO PUBLIC;
  */
 
 CREATE VIEW routine_privileges AS
-    SELECT CAST(u_owner.usename AS sql_identifier) AS grantor,
+    SELECT CAST(u_grantor.usename AS sql_identifier) AS grantor,
            CAST(u_grantee.usename AS sql_identifier) AS grantee,
            CAST(current_database() AS sql_identifier) AS specific_catalog,
            CAST(n.nspname AS sql_identifier) AS specific_schema,
@@ -613,17 +613,22 @@ CREATE VIEW routine_privileges AS
            CAST(n.nspname AS sql_identifier) AS routine_schema,
            CAST(p.proname AS sql_identifier) AS routine_name,
            CAST('EXECUTE' AS character_data) AS privilege_type,
-           CAST('NO' AS character_data) AS is_grantable
+           CAST(
+             CASE WHEN aclcontains(p.proacl,
+                                   makeaclitem(u_grantee.usesysid, 0, u_grantor.usesysid, 'EXECUTE', true))
+                  THEN 'YES' ELSE 'NO' END AS character_data) AS is_grantable
 
-    FROM pg_user u_owner,
-         pg_user u_grantee,
+    FROM pg_proc p,
          pg_namespace n,
-         pg_proc p
+         pg_user u_grantor,
+         (SELECT usesysid, usename FROM pg_user UNION SELECT 0, 'PUBLIC') AS u_grantee
 
-    WHERE u_owner.usesysid = p.proowner
-          AND p.pronamespace = n.oid
-          AND has_function_privilege(u_grantee.usename, p.oid, 'EXECUTE')
-          AND (u_owner.usename = current_user OR u_grantee.usename = current_user);
+    WHERE p.pronamespace = n.oid
+          AND aclcontains(p.proacl,
+                          makeaclitem(u_grantee.usesysid, 0, u_grantor.usesysid, 'EXECUTE', false))
+          AND (u_grantor.usename = current_user
+               OR u_grantee.usename = current_user
+               OR u_grantee.usename = 'PUBLIC');
 
 GRANT SELECT ON routine_privileges TO PUBLIC;
 
@@ -940,27 +945,31 @@ GRANT SELECT ON table_constraints TO PUBLIC;
  */
 
 CREATE VIEW table_privileges AS
-    SELECT CAST(u_owner.usename AS sql_identifier) AS grantor,
+    SELECT CAST(u_grantor.usename AS sql_identifier) AS grantor,
            CAST(u_grantee.usename AS sql_identifier) AS grantee,
            CAST(current_database() AS sql_identifier) AS table_catalog,
            CAST(nc.nspname AS sql_identifier) AS table_schema,
            CAST(c.relname AS sql_identifier) AS table_name,
            CAST(pr.type AS character_data) AS privilege_type,
-           CAST('NO' AS character_data) AS is_grantable,
+           CAST(
+             CASE WHEN aclcontains(c.relacl,
+                                   makeaclitem(u_grantee.usesysid, 0, u_grantor.usesysid, pr.type, true))
+                  THEN 'YES' ELSE 'NO' END AS character_data) AS is_grantable,
            CAST('NO' AS character_data) AS with_hierarchy
 
-    FROM pg_user u_owner,
-         pg_user u_grantee,
+    FROM pg_class c,
          pg_namespace nc,
-         pg_class c,
+         pg_user u_grantor,
+         (SELECT usesysid, usename FROM pg_user UNION SELECT 0, 'PUBLIC') AS u_grantee,
          (SELECT 'SELECT' UNION SELECT 'DELETE' UNION SELECT 'INSERT' UNION SELECT 'UPDATE'
           UNION SELECT 'REFERENCES' UNION SELECT 'TRIGGER') AS pr (type)
 
-    WHERE u_owner.usesysid = c.relowner
-          AND c.relnamespace = nc.oid
-          AND has_table_privilege(u_grantee.usename, c.oid, pr.type)
-
-          AND (u_owner.usename = current_user OR u_grantee.usename = current_user);
+    WHERE c.relnamespace = nc.oid
+          AND aclcontains(c.relacl,
+                          makeaclitem(u_grantee.usesysid, 0, u_grantor.usesysid, pr.type, false))
+          AND (u_grantor.usename = current_user
+               OR u_grantee.usename = current_user
+               OR u_grantee.usename = 'PUBLIC');
 
 GRANT SELECT ON table_privileges TO PUBLIC;
 
