@@ -4,7 +4,7 @@
  *						  procedural language
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/pl/plpgsql/src/gram.y,v 1.15 2001/02/10 22:53:40 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/pl/plpgsql/src/gram.y,v 1.16 2001/02/19 19:49:53 tgl Exp $
  *
  *	  This software is copyrighted by Jan Wieck - Hamburg.
  *
@@ -63,7 +63,13 @@ static	PLpgSQL_expr	*make_tupret_expr(PLpgSQL_row *row);
 		{
 			int  nalloc;
 			int  nused;
-			int  *dtnums;
+			int	 *nums;
+		}						intlist;
+		struct
+		{
+			int  nalloc;
+			int  nused;
+			PLpgSQL_diag_item *dtitems;
 		}						dtlist;
 		struct
 		{
@@ -119,11 +125,11 @@ static	PLpgSQL_expr	*make_tupret_expr(PLpgSQL_row *row);
 %type <stmt>	stmt_fors, stmt_select, stmt_perform
 %type <stmt>	stmt_dynexecute, stmt_dynfors, stmt_getdiag
 
-%type <dtlist>	raise_params
+%type <intlist>	raise_params
 %type <ival>	raise_level, raise_param
 %type <str>		raise_msg
 
-%type <dtlist>	getdiag_items, getdiag_targets
+%type <dtlist>	getdiag_list
 %type <ival>	getdiag_item, getdiag_target
 
 %type <ival>	lno
@@ -156,11 +162,11 @@ static	PLpgSQL_expr	*make_tupret_expr(PLpgSQL_row *row);
 %token	K_NOTICE
 %token	K_NULL
 %token	K_PERFORM
-%token	K_PROCESSED
+%token	K_ROW_COUNT
 %token	K_RAISE
 %token	K_RECORD
 %token	K_RENAME
-%token	K_RESULT
+%token	K_RESULT_OID
 %token	K_RETURN
 %token	K_REVERSE
 %token	K_SELECT
@@ -607,7 +613,7 @@ stmt_assign		: assign_var lno K_ASSIGN expr_until_semi
 					}
 				;
 
-stmt_getdiag	: K_GET K_DIAGNOSTICS lno K_SELECT getdiag_items K_INTO getdiag_targets ';'
+stmt_getdiag	: K_GET K_DIAGNOSTICS lno getdiag_list ';'
 					{
 						PLpgSQL_stmt_getdiag	 *new;
 
@@ -616,80 +622,50 @@ stmt_getdiag	: K_GET K_DIAGNOSTICS lno K_SELECT getdiag_items K_INTO getdiag_tar
 
 						new->cmd_type = PLPGSQL_STMT_GETDIAG;
 						new->lineno   = $3;
-						new->nitems   = $5.nused;
-						new->items	  = malloc(sizeof(int) * $5.nused);
-						new->ntargets = $7.nused;
-						new->targets  = malloc(sizeof(int) * $7.nused);
-						memcpy(new->items, $5.dtnums, sizeof(int) * $5.nused);
-						memcpy(new->targets, $7.dtnums, sizeof(int) * $7.nused);
-
-						if (new->nitems != new->ntargets)
-						{
-							plpgsql_error_lineno = new->lineno;
-							plpgsql_comperrinfo();
-							elog(ERROR, "number of diagnostic items does not match target list");
-						};
+						new->ndtitems = $4.nused;
+						new->dtitems  = malloc(sizeof(PLpgSQL_diag_item) * $4.nused);
+						memcpy(new->dtitems, $4.dtitems, sizeof(PLpgSQL_diag_item) * $4.nused);
 
 						$$ = (PLpgSQL_stmt *)new;
 					}
 				;
 
-getdiag_items : getdiag_items ',' getdiag_item
+getdiag_list : getdiag_list ',' getdiag_target K_ASSIGN getdiag_item
 					{
 						if ($1.nused == $1.nalloc)
 						{
 							$1.nalloc *= 2;
-							$1.dtnums = repalloc($1.dtnums, sizeof(int) * $1.nalloc);
+							$1.dtitems = repalloc($1.dtitems, sizeof(PLpgSQL_diag_item) * $1.nalloc);
 						}
-						$1.dtnums[$1.nused++] = $3;
+						$1.dtitems[$1.nused].target = $3;
+						$1.dtitems[$1.nused].item   = $5;
+						$1.nused++;
 
 						$$.nalloc = $1.nalloc;
 						$$.nused  = $1.nused;
-						$$.dtnums = $1.dtnums;
+						$$.dtitems = $1.dtitems;
 					}
-				| getdiag_item
+				| getdiag_target K_ASSIGN getdiag_item
 					{
 						$$.nalloc = 1;
 						$$.nused  = 1;
-						$$.dtnums = palloc(sizeof(int) * $$.nalloc);
-						$$.dtnums[0] = $1;
+						$$.dtitems = palloc(sizeof(PLpgSQL_diag_item) * $$.nalloc);
+						$$.dtitems[0].target = $1;
+						$$.dtitems[0].item   = $3;
 					}
 				;
 
-getdiag_item : K_PROCESSED
+getdiag_item : K_ROW_COUNT
 					{
-						$$ = PLPGSQL_GETDIAG_PROCESSED;
+						$$ = PLPGSQL_GETDIAG_ROW_COUNT;
 					}
-				| K_RESULT
+				| K_RESULT_OID
 					{
-						$$ = PLPGSQL_GETDIAG_RESULT;
-					}
-				;
-
-getdiag_targets : getdiag_targets ',' getdiag_target
-					{
-						if ($1.nused == $1.nalloc)
-						{
-							$1.nalloc *= 2;
-							$1.dtnums = repalloc($1.dtnums, sizeof(int) * $1.nalloc);
-						}
-						$1.dtnums[$1.nused++] = $3;
-
-						$$.nalloc = $1.nalloc;
-						$$.nused  = $1.nused;
-						$$.dtnums = $1.dtnums;
-					}
-				| getdiag_target
-					{
-						$$.nalloc = 1;
-						$$.nused  = 1;
-						$$.dtnums = palloc(sizeof(int) * $$.nalloc);
-						$$.dtnums[0] = $1;
+						$$ = PLPGSQL_GETDIAG_RESULT_OID;
 					}
 				;
 
-
-getdiag_target	   : T_VARIABLE
+getdiag_target	: T_VARIABLE
 					{
 						if (yylval.var->isconst)
 						{
@@ -1070,7 +1046,7 @@ stmt_raise		: K_RAISE lno raise_level raise_msg raise_params ';'
 						new->message	= $4;
 						new->nparams	= $5.nused;
 						new->params		= malloc(sizeof(int) * $5.nused);
-						memcpy(new->params, $5.dtnums, sizeof(int) * $5.nused);
+						memcpy(new->params, $5.nums, sizeof(int) * $5.nused);
 
 						$$ = (PLpgSQL_stmt *)new;
 					}
@@ -1116,20 +1092,20 @@ raise_params	: raise_params raise_param
 						if ($1.nused == $1.nalloc)
 						{
 							$1.nalloc *= 2;
-							$1.dtnums = repalloc($1.dtnums, sizeof(int) * $1.nalloc);
+							$1.nums = repalloc($1.nums, sizeof(int) * $1.nalloc);
 						}
-						$1.dtnums[$1.nused++] = $2;
+						$1.nums[$1.nused++] = $2;
 
 						$$.nalloc = $1.nalloc;
 						$$.nused  = $1.nused;
-						$$.dtnums = $1.dtnums;
+						$$.nums   = $1.nums;
 					}
 				| raise_param
 					{
 						$$.nalloc = 1;
 						$$.nused  = 1;
-						$$.dtnums = palloc(sizeof(int) * $$.nalloc);
-						$$.dtnums[0] = $1;
+						$$.nums   = palloc(sizeof(int) * $$.nalloc);
+						$$.nums[0] = $1;
 					}
 				;
 

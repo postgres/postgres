@@ -3,21 +3,22 @@
  * spi.c
  *				Server Programming Interface
  *
- * $Id: spi.c,v 1.51 2001/01/04 02:36:52 tgl Exp $
+ * $Id: spi.c,v 1.52 2001/02/19 19:49:52 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
 #include "executor/spi_priv.h"
 #include "access/printtup.h"
 
+uint32 SPI_processed = 0;
+Oid SPI_lastoid = InvalidOid;
+SPITupleTable *SPI_tuptable = NULL;
+int SPI_result;
+
 static _SPI_connection *_SPI_stack = NULL;
 static _SPI_connection *_SPI_current = NULL;
 static int	_SPI_connected = -1;
 static int	_SPI_curid = -1;
-
-DLLIMPORT uint32 SPI_processed = 0;
-DLLIMPORT SPITupleTable *SPI_tuptable = NULL;
-DLLIMPORT int SPI_result;
 
 static int	_SPI_execute(char *src, int tcount, _SPI_plan *plan);
 static int	_SPI_pquery(QueryDesc *queryDesc, EState *state, int tcount);
@@ -155,6 +156,7 @@ AtEOXact_SPI(void)
 	_SPI_current = _SPI_stack = NULL;
 	_SPI_connected = _SPI_curid = -1;
 	SPI_processed = 0;
+	SPI_lastoid = InvalidOid;
 	SPI_tuptable = NULL;
 }
 
@@ -623,6 +625,7 @@ _SPI_execute(char *src, int tcount, _SPI_plan *plan)
 	CommandCounterIncrement();
 
 	SPI_processed = 0;
+	SPI_lastoid = InvalidOid;
 	SPI_tuptable = NULL;
 	_SPI_current->tuptable = NULL;
 	_SPI_current->qtlist = NULL;
@@ -723,6 +726,7 @@ _SPI_execute_plan(_SPI_plan *plan, Datum *Values, char *Nulls, int tcount)
 	CommandCounterIncrement();
 
 	SPI_processed = 0;
+	SPI_lastoid = InvalidOid;
 	SPI_tuptable = NULL;
 	_SPI_current->tuptable = NULL;
 	_SPI_current->qtlist = NULL;
@@ -786,6 +790,7 @@ _SPI_pquery(QueryDesc *queryDesc, EState *state, int tcount)
 	bool		isRetrieveIntoRelation = false;
 	char	   *intoName = NULL;
 	int			res;
+	Oid			save_lastoid;
 
 	switch (operation)
 	{
@@ -840,6 +845,8 @@ _SPI_pquery(QueryDesc *queryDesc, EState *state, int tcount)
 	ExecutorRun(queryDesc, state, EXEC_FOR, (long) tcount);
 
 	_SPI_current->processed = state->es_processed;
+	save_lastoid = state->es_lastoid;
+
 	if (operation == CMD_SELECT && queryDesc->dest == SPI)
 	{
 		if (_SPI_checktuples())
@@ -859,6 +866,7 @@ _SPI_pquery(QueryDesc *queryDesc, EState *state, int tcount)
 	if (dest == SPI)
 	{
 		SPI_processed = _SPI_current->processed;
+		SPI_lastoid = save_lastoid;
 		SPI_tuptable = _SPI_current->tuptable;
 	}
 	queryDesc->dest = dest;

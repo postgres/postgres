@@ -3,7 +3,7 @@
  *			  procedural language
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/pl/plpgsql/src/pl_exec.c,v 1.37 2001/02/09 00:14:26 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/pl/plpgsql/src/pl_exec.c,v 1.38 2001/02/19 19:49:53 tgl Exp $
  *
  *	  This software is copyrighted by Jan Wieck - Hamburg.
  *
@@ -82,7 +82,7 @@ static int exec_stmt(PLpgSQL_execstate * estate,
 static int exec_stmt_assign(PLpgSQL_execstate * estate,
 				 PLpgSQL_stmt_assign * stmt);
 static int exec_stmt_getdiag(PLpgSQL_execstate * estate,
-                                 PLpgSQL_stmt_getdiag * stmt);
+							 PLpgSQL_stmt_getdiag * stmt);
 static int exec_stmt_if(PLpgSQL_execstate * estate,
 			 PLpgSQL_stmt_if * stmt);
 static int exec_stmt_loop(PLpgSQL_execstate * estate,
@@ -507,9 +507,9 @@ plpgsql_exec_trigger(PLpgSQL_function * func,
 					case PLPGSQL_STMT_ASSIGN:
 						stmttype = "assignment";
 						break;
-                                        case PLPGSQL_STMT_GETDIAG:
-                                                stmttype = "get diagnostics";
-                                                break;
+					case PLPGSQL_STMT_GETDIAG:
+						stmttype = "get diagnostics";
+						break;
 					case PLPGSQL_STMT_IF:
 						stmttype = "if";
 						break;
@@ -1071,35 +1071,40 @@ exec_stmt_getdiag(PLpgSQL_execstate * estate, PLpgSQL_stmt_getdiag * stmt)
 	PLpgSQL_datum 	*var;
 	bool            isnull = false;
 
-	for ( i=0 ; i < stmt->nitems ; i++) 
+	for ( i=0 ; i < stmt->ndtitems ; i++) 
 	{
-		if ((stmt->targets[i] <= 0))
-			break;
+		PLpgSQL_diag_item *dtitem = & stmt->dtitems[i];
+
+		if (dtitem->target <= 0)
+			continue;
 	
-		var = (estate->datums[stmt->targets[i]]);
+		var = (estate->datums[dtitem->target]);
 
 		if (var == NULL)
-			break;
+			continue;
 
-		switch (stmt->items[i])
+		switch (dtitem->item)
 		{
-			case PLPGSQL_GETDIAG_PROCESSED: 
+			case PLPGSQL_GETDIAG_ROW_COUNT:
 
-				exec_assign_value(estate, var, (Datum)SPI_processed, INT4OID, &isnull);
-        			break;
+				exec_assign_value(estate, var, UInt32GetDatum(SPI_processed),
+								  INT4OID, &isnull);
+				break;
 
-			case PLPGSQL_GETDIAG_RESULT:
+			case PLPGSQL_GETDIAG_RESULT_OID:
 
-				exec_assign_value(estate, var, (Datum)SPI_result, INT4OID, &isnull);
-                                break;
+				exec_assign_value(estate, var, ObjectIdGetDatum(SPI_lastoid),
+								  OIDOID, &isnull);
+				break;
 
 			default:
 			
-				elog(ERROR, "unknown attribute request %d in get_diagnostic", stmt->items[i]);
-		};
-	};
+				elog(ERROR, "unknown attribute request %d in get_diagnostic",
+					 dtitem->item);
+		}
+	}
 	
-        return PLPGSQL_RC_OK;
+	return PLPGSQL_RC_OK;
 }
 
 /* ----------

@@ -71,6 +71,7 @@ typedef struct
 #define SPI_OK_CURSOR			10
 
 extern DLLIMPORT uint32 SPI_processed;
+extern DLLIMPORT Oid SPI_lastoid;
 extern DLLIMPORT SPITupleTable *SPI_tuptable;
 extern DLLIMPORT int SPI_result;
 

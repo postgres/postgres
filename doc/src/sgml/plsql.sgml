@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/Attic/plsql.sgml,v 2.19 2001/02/10 05:32:33 tgl Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/Attic/plsql.sgml,v 2.20 2001/02/19 19:49:52 tgl Exp $
 -->
 
  <chapter id="plsql">
@@ -102,7 +102,7 @@ $Header: /cvsroot/pgsql/doc/src/sgml/Attic/plsql.sgml,v 2.19 2001/02/10 05:32:33
 
     <para>
      The PL/pgSQL language is case insensitive. All keywords and
-     identifiers can be used in mixed upper- and lowercase.
+     identifiers can be used in mixed upper- and lower-case.
     </para>
     <para>
      PL/pgSQL is a block oriented language. A block is defined as
@@ -181,7 +181,7 @@ END;
 	must also have a default value specified.
        </para>
        <para>
-	The default value is evaluated every time the function is called. So
+	The default value is evaluated every time the block is entered. So
 	assigning '<replaceable>now</replaceable>' to a variable of type
 	<type>timestamp</type> causes the variable to have the
 	time of the actual function call, not when the function was
@@ -203,7 +203,7 @@ END;
 	corresponding identifier $n will be a rowtype, but it
 	must be aliased using the ALIAS command described below. Only the user
 	attributes of a table row are accessible in the row, no Oid or other
-	system attributes (hence the row could be from a view and view rows
+	system attributes (because the row could be from a view and view rows
 	don't have useful system attributes).
        </para>
        <para>
@@ -311,7 +311,7 @@ RENAME <replaceable>oldname</replaceable> TO <replaceable>newname</replaceable>;
      Using the <replaceable>table.field</replaceable>%TYPE
      causes PL/pgSQL to look up the attributes definitions at the
      first call to the function during the lifetime of a backend.
-     Have a table with a char(20) attribute and some PL/pgSQL functions
+     Suppose we have a table with a char(20) attribute and some PL/pgSQL functions
      that deal with its content in local variables. Now someone
      decides that char(20) isn't enough, dumps the table, drops it,
      recreates it now with the attribute in question defined as
@@ -549,6 +549,26 @@ EXECUTE ''UPDATE tbl SET ''
         appropriate steps to return the input text enclosed in single
         or double quotes and with any embedded special characters
         properly escaped.
+       </para>
+      </listitem>
+     </varlistentry>
+
+     <varlistentry>
+      <term>Obtaining other results status</term>
+      <listitem>
+       <para>
+	<programlisting>
+GET DIAGNOSTICS <replaceable>variable</replaceable> = <replaceable>item</replaceable> [ , ... ]
+	</programlisting>
+	This command allows retrieval of system status indicators.  Each
+	<replaceable>item</replaceable> is a keyword identifying a state
+	value to be assigned to the specified variable (which should be of
+	the right datatype to receive it).  The currently available status
+	items are <keyword>ROW_COUNT</>, the number of rows processed by
+	the last SQL query sent down to the SQL engine; and
+	<keyword>RESULT_OID</>, the Oid of the last row inserted by the
+	most recent SQL query.  Note that <keyword>RESULT_OID</> is only
+	useful after an INSERT query.
        </para>
       </listitem>
      </varlistentry>

@@ -3,7 +3,7 @@
  *			  procedural language
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/pl/plpgsql/src/plpgsql.h,v 1.11 2000/09/05 09:02:18 wieck Exp $
+ *	  $Header: /cvsroot/pgsql/src/pl/plpgsql/src/plpgsql.h,v 1.12 2001/02/19 19:49:53 tgl Exp $
  *
  *	  This software is copyrighted by Jan Wieck - Hamburg.
  *
@@ -115,8 +115,8 @@ enum
  */
 enum
 {
-        PLPGSQL_GETDIAG_PROCESSED,
-        PLPGSQL_GETDIAG_RESULT
+        PLPGSQL_GETDIAG_ROW_COUNT,
+        PLPGSQL_GETDIAG_RESULT_OID
 };
 
 
@@ -277,14 +277,19 @@ typedef struct
 	PLpgSQL_expr *expr;
 }			PLpgSQL_stmt_assign;
 
+
 typedef struct
-{								/* Get Disgnostics statement		*/
+{								/* Get Diagnostics item		*/
+	int			item;			/* id for diagnostic value desired */
+	int			target;			/* where to assign it */
+}			PLpgSQL_diag_item;
+
+typedef struct
+{								/* Get Diagnostics statement		*/
 	int			cmd_type;
 	int			lineno;
-	int			nitems;
-	int			*items;
-	int			ntargets;
-	int			*targets;
+	int			ndtitems;
+	PLpgSQL_diag_item *dtitems;
 }			PLpgSQL_stmt_getdiag;
 
 

@@ -3,7 +3,7 @@
  *			  procedural language
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/pl/plpgsql/src/pl_funcs.c,v 1.9 2000/12/03 20:45:40 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/pl/plpgsql/src/pl_funcs.c,v 1.10 2001/02/19 19:49:53 tgl Exp $
  *
  *	  This software is copyrighted by Jan Wieck - Hamburg.
  *
@@ -708,20 +708,24 @@ dump_getdiag(PLpgSQL_stmt_getdiag * stmt)
 	int			i;
 
 	dump_ind();
-	printf("GET DIAGNOSTICS SELECT ");
-	for (i = 0; i < stmt->nitems; i++)
+	printf("GET DIAGNOSTICS ");
+	for (i = 0; i < stmt->ndtitems; i++)
 	{
+		PLpgSQL_diag_item *dtitem = & stmt->dtitems[i];
+
 		if (i != 0)
 			printf(", ");
 
-	    switch (stmt->items[i])
+		printf("{var %d} = ", dtitem->target);
+
+	    switch (dtitem->item)
 		{
-		    case PLPGSQL_GETDIAG_PROCESSED:
-				printf("PROCESSED");
+		    case PLPGSQL_GETDIAG_ROW_COUNT:
+				printf("ROW_COUNT");
 				break;
 
-			case PLPGSQL_GETDIAG_RESULT:
-				printf("RESULT");
+			case PLPGSQL_GETDIAG_RESULT_OID:
+				printf("RESULT_OID");
 				break;
 
 			default:
@@ -729,15 +733,6 @@ dump_getdiag(PLpgSQL_stmt_getdiag * stmt)
 				break;
 		}
 	}
-	printf(" INTO ");
-	for (i = 0; i < stmt->ntargets; i++)
-	{
-		if (i != 0)
-			printf(", ");
-
-		printf("{var %d}", stmt->targets[i]);
-	}
-
 	printf("\n");
 }
 
