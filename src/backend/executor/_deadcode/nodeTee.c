@@ -14,7 +14,7 @@
  *		ExecInitTee
  *		ExecEndTee
  *
- *	$Id: nodeTee.c,v 1.5 1999/07/16 04:58:54 momjian Exp $
+ *	$Id: nodeTee.c,v 1.6 1999/12/10 03:55:52 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -470,7 +470,7 @@ ExecEndTee(Tee * node, Plan *parent)
 		bufferRel = teeState->tee_bufferRel;
 		if (bufferRel)
 		{
-			heap_destroy(bufferRel);
+			heap_drop(bufferRel);
 			teeState->tee_bufferRel = NULL;
 			if (teeState->tee_mcxt)
 			{

@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/libpq/be-fsstubs.c,v 1.41 1999/07/17 20:17:01 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/libpq/be-fsstubs.c,v 1.42 1999/12/10 03:55:53 momjian Exp $
  *
  * NOTES
  *	  This should be moved to a more appropriate place.  It is here
@@ -269,14 +269,14 @@ int
 lo_unlink(Oid lobjId)
 {
 	/*
-	 * inv_destroy does not need a context switch, indeed it doesn't
+	 * inv_drop does not need a context switch, indeed it doesn't
 	 * touch any LO-specific data structures at all.  (Again, that's
 	 * probably more than this module ought to be assuming.)
 	 *
 	 * XXX there ought to be some code to clean up any open LOs that
 	 * reference the specified relation... as is, they remain "open".
 	 */
-	return inv_destroy(lobjId);
+	return inv_drop(lobjId);
 }
 
 /*****************************************************************************

@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/commands/dbcommands.c,v 1.45 1999/11/24 16:52:32 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/commands/dbcommands.c,v 1.46 1999/12/10 03:55:49 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -85,7 +85,7 @@ createdb(char *dbname, char *dbpath, int encoding, CommandDest dest)
 }
 
 void
-destroydb(char *dbname, CommandDest dest)
+dropdb(char *dbname, CommandDest dest)
 {
 	int4		user_id;
 	Oid			db_id;
@@ -101,7 +101,7 @@ destroydb(char *dbname, CommandDest dest)
 	 * If this call returns, the database exists and we're allowed to
 	 * remove it.
 	 */
-	check_permissions("destroydb", dbpath, dbname, &db_id, &user_id);
+	check_permissions("dropdb", dbpath, dbname, &db_id, &user_id);
 
 	/* do as much checking as we can... */
 	if (!OidIsValid(db_id))
@@ -308,13 +308,13 @@ check_permissions(char *command,
 		elog(ERROR, "createdb: database '%s' already exists", dbname);
 
 	}
-	else if (!dbfound && !strcmp(command, "destroydb"))
+	else if (!dbfound && !strcmp(command, "dropdb"))
 	{
 
-		elog(ERROR, "destroydb: database '%s' does not exist", dbname);
+		elog(ERROR, "dropdb: database '%s' does not exist", dbname);
 
 	}
-	else if (dbfound && !strcmp(command, "destroydb")
+	else if (dbfound && !strcmp(command, "dropdb")
 			 && dbowner != *userIdP && use_super == false)
 	{
 
@@ -322,7 +322,7 @@ check_permissions(char *command,
 
 	}
 
-	if (dbfound && !strcmp(command, "destroydb"))
+	if (dbfound && !strcmp(command, "dropdb"))
 		strcpy(dbpath, path);
 }	/* check_permissions() */
 
@@ -331,7 +331,7 @@ check_permissions(char *command,
  *
  *	This is currently dead code, since we don't *have* vacuum daemons.
  *	If you want to re-enable it, think about the interlock against deleting
- *	a database out from under running backends, in destroydb() above.
+ *	a database out from under running backends, in dropdb() above.
  */
 static void
 stop_vacuum(char *dbpath, char *dbname)

@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/commands/indexcmds.c,v 1.14 1999/11/22 17:56:01 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/commands/indexcmds.c,v 1.15 1999/12/10 03:55:49 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -564,5 +564,5 @@ RemoveIndex(char *name)
 			 ((Form_pg_class) GETSTRUCT(tuple))->relkind);
 	}
 
-	index_destroy(tuple->t_data->t_oid);
+	index_drop(tuple->t_data->t_oid);
 }

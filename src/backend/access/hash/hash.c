@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/access/hash/hash.c,v 1.32 1999/09/24 00:23:48 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/access/hash/hash.c,v 1.33 1999/12/10 03:55:43 momjian Exp $
  *
  * NOTES
  *	  This file contains only the public interface routines.
@@ -221,7 +221,7 @@ hashbuild(Relation heap,
 	if (pred != NULL || oldPred != NULL)
 	{
 #ifndef OMIT_PARTIAL_INDEX
-		ExecDestroyTupleTable(tupleTable, true);
+		ExecDropTupleTable(tupleTable, true);
 		pfree(econtext);
 #endif	 /* OMIT_PARTIAL_INDEX */
 	}

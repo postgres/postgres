@@ -828,7 +828,7 @@ adjust_array(enum ECPGttype type_enum, int *dimension, int *length, int type_dim
 %type  <str>    NotifyStmt columnElem copy_dirn UnlistenStmt
 %type  <str>    copy_delimiter ListenStmt CopyStmt copy_file_name opt_binary
 %type  <str>    opt_with_copy FetchStmt opt_direction fetch_how_many opt_portal_name
-%type  <str>    ClosePortalStmt DestroyStmt VacuumStmt opt_verbose
+%type  <str>    ClosePortalStmt DropStmt VacuumStmt opt_verbose
 %type  <str>    opt_analyze opt_va_list va_list ExplainStmt index_params
 %type  <str>    index_list func_index index_elem opt_type opt_class access_method_clause
 %type  <str>    index_opt_unique IndexStmt set_opt func_return def_rest
@@ -850,7 +850,7 @@ adjust_array(enum ECPGttype type_enum, int *dimension, int *length, int type_dim
 %type  <str>    TriggerActionTime CreateTrigStmt DropPLangStmt PLangTrusted
 %type  <str>    CreatePLangStmt IntegerOnly TriggerFuncArgs TriggerFuncArg
 %type  <str>    ViewStmt LoadStmt CreatedbStmt opt_database1 opt_database2 location
-%type  <str>    DestroydbStmt ClusterStmt grantee RevokeStmt encoding
+%type  <str>    DropdbStmt ClusterStmt grantee RevokeStmt encoding
 %type  <str>	GrantStmt privileges operation_commalist operation
 %type  <str>	opt_cursor opt_lmode ConstraintsSetStmt comment_tg
 %type  <str>	case_expr when_clause_list case_default case_arg when_clause
@@ -918,7 +918,7 @@ stmt:  AddAttrStmt			{ output_statement($1, 0); }
 		| CreateUserStmt	{ output_statement($1, 0); }
   		| ClusterStmt		{ output_statement($1, 0); }
 		| DefineStmt 		{ output_statement($1, 0); }
-		| DestroyStmt		{ output_statement($1, 0); }
+		| DropStmt		{ output_statement($1, 0); }
 		| TruncateStmt		{ output_statement($1, 0); }
 		| DropPLangStmt		{ output_statement($1, 0); }
 		| DropTrigStmt		{ output_statement($1, 0); }
@@ -953,7 +953,7 @@ stmt:  AddAttrStmt			{ output_statement($1, 0); }
 		| ViewStmt		{ output_statement($1, 0); }
 		| LoadStmt		{ output_statement($1, 0); }
 		| CreatedbStmt		{ output_statement($1, 0); }
-		| DestroydbStmt		{ output_statement($1, 0); }
+		| DropdbStmt		{ output_statement($1, 0); }
 		| VacuumStmt		{ output_statement($1, 0); }
 		| VariableSetStmt	{ output_statement($1, 0); }
 		| VariableShowStmt	{ output_statement($1, 0); }
@@ -1904,11 +1904,11 @@ def_arg:  ColId			{  $$ = $1; }
 /*****************************************************************************
  *
  *		QUERY:
- *				destroy <relname1> [, <relname2> .. <relnameN> ]
+ *				drop <relname1> [, <relname2> .. <relnameN> ]
  *
  *****************************************************************************/
 
-DestroyStmt:  DROP TABLE relation_name_list
+DropStmt:  DROP TABLE relation_name_list
 				{
 					$$ = cat2_str(make1_str("drop table"), $3);
 				}
@@ -2552,11 +2552,11 @@ encoding:  Sconst		{ $$ = $1; }
 /*****************************************************************************
  *
  *		QUERY:
- *				destroydb dbname
+ *				dropdb dbname
  *
  *****************************************************************************/
 
-DestroydbStmt:	DROP DATABASE database_name
+DropdbStmt:	DROP DATABASE database_name
 				{
 					$$ = cat2_str(make1_str("drop database"), $3);
 				}

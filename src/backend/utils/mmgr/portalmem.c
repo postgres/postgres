@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/mmgr/portalmem.c,v 1.30 1999/09/23 17:02:58 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/mmgr/portalmem.c,v 1.31 1999/12/10 03:56:03 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -438,7 +438,7 @@ CollectNamedPortals(Portal *portalP, int destroy)
 		int			i;
 
 		for (i = 0; i < listIndex; i++)
-			PortalDestroy(&portalList[i]);
+			PortalDrop(&portalList[i]);
 		listIndex = 0;
 	}
 	else
@@ -546,7 +546,7 @@ EnablePortalManager(bool on)
 	{							/* cleanup */
 		if (PortalIsValid(BlankPortal))
 		{
-			PortalDestroy(&BlankPortal);
+			PortalDrop(&BlankPortal);
 			MemoryContextFree((MemoryContext) PortalMemory,
 							  (Pointer) BlankPortal);
 			BlankPortal = NULL;
@@ -555,7 +555,7 @@ EnablePortalManager(bool on)
 		/*
 		 * Each portal must free its non-memory resources specially.
 		 */
-		HashTableWalk(PortalHashTable, PortalDestroy, 0);
+		HashTableWalk(PortalHashTable, PortalDrop, 0);
 		hash_destroy(PortalHashTable);
 		PortalHashTable = NULL;
 
@@ -774,7 +774,7 @@ CreatePortal(char *name)		/* XXX PortalName */
 }
 
 /*
- * PortalDestroy
+ * PortalDrop
  *		Destroys portal.
  *
  * Exceptions:
@@ -782,7 +782,7 @@ CreatePortal(char *name)		/* XXX PortalName */
  *		BadArg if portal is invalid.
  */
 void
-PortalDestroy(Portal *portalP)
+PortalDrop(Portal *portalP)
 {
 	Portal		portal = *portalP;
 

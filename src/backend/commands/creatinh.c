@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/commands/Attic/creatinh.c,v 1.52 1999/11/22 17:56:01 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/commands/Attic/creatinh.c,v 1.53 1999/12/10 03:55:49 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -214,7 +214,7 @@ void
 RemoveRelation(char *name)
 {
 	AssertArg(name);
-	heap_destroy_with_catalog(name);
+	heap_drop_with_catalog(name);
 }
 
 /*

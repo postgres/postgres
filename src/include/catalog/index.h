@@ -6,7 +6,7 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: index.h,v 1.19 1999/07/16 17:07:29 momjian Exp $
+ * $Id: index.h,v 1.20 1999/12/10 03:56:05 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -39,7 +39,7 @@ extern void index_create(char *heapRelationName,
 			 bool unique,
 			 bool primary);
 
-extern void index_destroy(Oid indexId);
+extern void index_drop(Oid indexId);
 
 extern void FormIndexDatum(int numberOfAttributes,
 			   AttrNumber *attributeNumber, HeapTuple heapTuple,

@@ -7,7 +7,7 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: large_object.h,v 1.11 1999/07/15 23:04:11 momjian Exp $
+ * $Id: large_object.h,v 1.12 1999/12/10 03:56:10 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -48,7 +48,7 @@ typedef struct LargeObjectDesc
 extern LargeObjectDesc *inv_create(int flags);
 extern LargeObjectDesc *inv_open(Oid lobjId, int flags);
 extern void inv_close(LargeObjectDesc *obj_desc);
-extern int	inv_destroy(Oid lobjId);
+extern int	inv_drop(Oid lobjId);
 extern int	inv_seek(LargeObjectDesc *obj_desc, int offset, int whence);
 extern int	inv_tell(LargeObjectDesc *obj_desc);
 extern int	inv_read(LargeObjectDesc *obj_desc, char *buf, int nbytes);

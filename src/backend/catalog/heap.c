@@ -7,13 +7,13 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/catalog/heap.c,v 1.111 1999/11/28 02:03:04 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/catalog/heap.c,v 1.112 1999/12/10 03:55:47 momjian Exp $
  *
  *
  * INTERFACE ROUTINES
  *		heap_create()			- Create an uncataloged heap relation
  *		heap_create_with_catalog() - Create a cataloged relation
- *		heap_destroy_with_catalog() - Removes named relation from catalogs
+ *		heap_drop_with_catalog() - Removes named relation from catalogs
  *
  * NOTES
  *	  this code taken from access/heap/create.c, which contains
@@ -889,7 +889,7 @@ heap_create_with_catalog(char *relname,
 
 
 /* ----------------------------------------------------------------
- *		heap_destroy_with_catalog	- removes all record of named relation from catalogs
+ *		heap_drop_with_catalog	- removes all record of named relation from catalogs
  *
  *		1)	open relation, check for existence, etc.
  *		2)	remove inheritance information
@@ -1046,7 +1046,7 @@ RelationRemoveIndexes(Relation relation)
 						  &entry);
 
 	while (HeapTupleIsValid(tuple = heap_getnext(scan, 0)))
-		index_destroy(((Form_pg_index) GETSTRUCT(tuple))->indexrelid);
+		index_drop(((Form_pg_index) GETSTRUCT(tuple))->indexrelid);
 
 	heap_endscan(scan);
 	heap_close(indexRelation, RowExclusiveLock);
@@ -1441,12 +1441,12 @@ DeleteTypeTuple(Relation rel)
 }
 
 /* --------------------------------
- *		heap_destroy_with_catalog
+ *		heap_drop_with_catalog
  *
  * --------------------------------
  */
 void
-heap_destroy_with_catalog(char *relname)
+heap_drop_with_catalog(char *relname)
 {
 	Relation	rel;
 	Oid			rid;
@@ -1575,13 +1575,13 @@ heap_destroy_with_catalog(char *relname)
 }
 
 /*
- * heap_destroy
+ * heap_drop
  *	  destroy and close temporary relations
  *
  */
 
 void
-heap_destroy(Relation rel)
+heap_drop(Relation rel)
 {
 	ReleaseRelationBuffers(rel);
 	if (!(rel->rd_isnoname) || !(rel->rd_unlinked))
@@ -1634,7 +1634,7 @@ InitNoNameRelList(void)
 
    MODIFIES the global variable tempRels
 	  we don't really remove it, just mark it as NULL
-	  and DestroyNoNameRels will look for NULLs
+	  and DropNoNameRels will look for NULLs
 */
 static void
 RemoveFromNoNameRelList(Relation r)
@@ -1679,7 +1679,7 @@ AddToNoNameRelList(Relation r)
    go through the tempRels list and destroy each of the relations
 */
 void
-DestroyNoNameRels(void)
+DropNoNameRels(void)
 {
 	int			i;
 	Relation	rel;
@@ -1692,7 +1692,7 @@ DestroyNoNameRels(void)
 		rel = tempRels->rels[i];
 		/* rel may be NULL if it has been removed from the list already */
 		if (rel)
-			heap_destroy(rel);
+			heap_drop(rel);
 	}
 	free(tempRels->rels);
 	free(tempRels);

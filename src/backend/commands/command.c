@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/commands/Attic/command.c,v 1.58 1999/11/24 00:44:30 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/commands/Attic/command.c,v 1.59 1999/12/10 03:55:49 momjian Exp $
  *
  * NOTES
  *	  The PortalExecutorHeapMemory crap needs to be eliminated
@@ -242,7 +242,7 @@ PerformPortalClose(char *name, CommandDest dest)
 	 *	Note: PortalCleanup is called as a side-effect
 	 * ----------------
 	 */
-	PortalDestroy(&portal);
+	PortalDrop(&portal);
 }
 
 /* ----------------

@@ -10,7 +10,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/parser/gram.y,v 2.118 1999/12/10 03:01:05 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/parser/gram.y,v 2.119 1999/12/10 03:55:54 momjian Exp $
  *
  * HISTORY
  *	  AUTHOR			DATE			MAJOR EVENT
@@ -116,7 +116,7 @@ static Node *doNegate(Node *n);
 
 %type <node>	stmt,
 		AddAttrStmt, ClosePortalStmt,
-		CopyStmt, CreateStmt, CreateAsStmt, CreateSeqStmt, DefineStmt, DestroyStmt,
+		CopyStmt, CreateStmt, CreateAsStmt, CreateSeqStmt, DefineStmt, DropStmt,
 		TruncateStmt, CommentStmt,
 		ExtendStmt, FetchStmt,	GrantStmt, CreateTrigStmt, DropTrigStmt,
 		CreatePLangStmt, DropPLangStmt,
@@ -124,7 +124,7 @@ static Node *doNegate(Node *n);
 		ProcedureStmt, RemoveAggrStmt, RemoveOperStmt,
 		RemoveFuncStmt, RemoveStmt,
 		RenameStmt, RevokeStmt, RuleStmt, TransactionStmt, ViewStmt, LoadStmt,
-		CreatedbStmt, DestroydbStmt, VacuumStmt, CursorStmt, SubSelect,
+		CreatedbStmt, DropdbStmt, VacuumStmt, CursorStmt, SubSelect,
 		UpdateStmt, InsertStmt, select_clause, SelectStmt, NotifyStmt, DeleteStmt, 
 		ClusterStmt, ExplainStmt, VariableSetStmt, VariableShowStmt, VariableResetStmt,
 		CreateUserStmt, AlterUserStmt, DropUserStmt, RuleActionStmt,
@@ -402,7 +402,7 @@ stmt :	  AddAttrStmt
 		| CreateUserStmt
 		| ClusterStmt
 		| DefineStmt
-		| DestroyStmt		
+		| DropStmt		
 		| TruncateStmt
 		| CommentStmt
 		| DropPLangStmt
@@ -429,7 +429,7 @@ stmt :	  AddAttrStmt
 		| ViewStmt
 		| LoadStmt
 		| CreatedbStmt
-		| DestroydbStmt
+		| DropdbStmt
 		| VacuumStmt
 		| VariableSetStmt
 		| VariableShowStmt
@@ -1621,20 +1621,20 @@ def_arg:  ColId							{  $$ = (Node *)makeString($1); }
 /*****************************************************************************
  *
  *		QUERY:
- *				destroy <relname1> [, <relname2> .. <relnameN> ]
+ *				drop <relname1> [, <relname2> .. <relnameN> ]
  *
  *****************************************************************************/
 
-DestroyStmt:  DROP TABLE relation_name_list
+DropStmt:  DROP TABLE relation_name_list
 				{
-					DestroyStmt *n = makeNode(DestroyStmt);
+					DropStmt *n = makeNode(DropStmt);
 					n->relNames = $3;
 					n->sequence = FALSE;
 					$$ = (Node *)n;
 				}
 		| DROP SEQUENCE relation_name_list
 				{
-					DestroyStmt *n = makeNode(DestroyStmt);
+					DropStmt *n = makeNode(DropStmt);
 					n->relNames = $3;
 					n->sequence = TRUE;
 					$$ = (Node *)n;
@@ -2495,13 +2495,13 @@ encoding:  Sconst								{ $$ = $1; }
 /*****************************************************************************
  *
  *		QUERY:
- *				destroydb dbname
+ *				dropdb dbname
  *
  *****************************************************************************/
 
-DestroydbStmt:	DROP DATABASE database_name
+DropdbStmt:	DROP DATABASE database_name
 				{
-					DestroydbStmt *n = makeNode(DestroydbStmt);
+					DropdbStmt *n = makeNode(DropdbStmt);
 					n->dbname = $3;
 					$$ = (Node *)n;
 				}

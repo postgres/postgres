@@ -14,7 +14,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/executor/execTuples.c,v 1.32 1999/11/23 20:06:51 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/executor/execTuples.c,v 1.33 1999/12/10 03:55:51 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -23,7 +23,7 @@
  *
  *	 TABLE CREATE/DELETE
  *		ExecCreateTupleTable	- create a new tuple table
- *		ExecDestroyTupleTable	- destroy a table
+ *		ExecDropTupleTable	- destroy a table
  *
  *	 SLOT RESERVERATION
  *		ExecAllocTableSlot		- find an available slot in the table
@@ -84,7 +84,7 @@
  *
  *		At ExecEnd()
  *		----------------
- *		- EndPlan() calls ExecDestroyTupleTable() to clean up any remaining
+ *		- EndPlan() calls ExecDropTupleTable() to clean up any remaining
  *		  tuples left over from executing the query.
  *
  *		The important thing to watch in the executor code is how pointers
@@ -178,7 +178,7 @@ ExecCreateTupleTable(int initialSize)	/* initial number of slots in
 }
 
 /* --------------------------------
- *		ExecDestroyTupleTable
+ *		ExecDropTupleTable
  *
  *		This pfrees the storage assigned to the tuple table and
  *		optionally pfrees the contents of the table also.
@@ -186,7 +186,7 @@ ExecCreateTupleTable(int initialSize)	/* initial number of slots in
  * --------------------------------
  */
 void
-ExecDestroyTupleTable(TupleTable table, /* tuple table */
+ExecDropTupleTable(TupleTable table, /* tuple table */
 					  bool shouldFree)	/* true if we should free slot
 										 * contents */
 {

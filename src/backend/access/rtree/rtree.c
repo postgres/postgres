@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/access/rtree/Attic/rtree.c,v 1.40 1999/11/15 09:59:00 ishii Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/access/rtree/Attic/rtree.c,v 1.41 1999/12/10 03:55:45 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -240,7 +240,7 @@ rtbuild(Relation heap,
 	if (pred != NULL || oldPred != NULL)
 	{
 #ifndef OMIT_PARTIAL_INDEX
-		ExecDestroyTupleTable(tupleTable, true);
+		ExecDropTupleTable(tupleTable, true);
 		pfree(econtext);
 #endif	 /* OMIT_PARTIAL_INDEX */
 	}

@@ -6,7 +6,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/access/gist/gist.c,v 1.47 1999/11/07 23:07:48 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/access/gist/gist.c,v 1.48 1999/12/10 03:55:42 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -264,7 +264,7 @@ gistbuild(Relation heap,
 	if (pred != NULL || oldPred != NULL)
 	{
 #ifndef OMIT_PARTIAL_INDEX
-		ExecDestroyTupleTable(tupleTable, true);
+		ExecDropTupleTable(tupleTable, true);
 		pfree(econtext);
 #endif	 /* OMIT_PARTIAL_INDEX */
 	}

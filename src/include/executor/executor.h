@@ -6,7 +6,7 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: executor.h,v 1.39 1999/10/30 23:13:30 tgl Exp $
+ * $Id: executor.h,v 1.40 1999/12/10 03:56:08 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -107,7 +107,7 @@ extern TupleTableSlot *ExecScan(Scan *node, TupleTableSlot *(*accessMtd) ());
  * prototypes from functions in execTuples.c
  */
 extern TupleTable ExecCreateTupleTable(int initialSize);
-extern void ExecDestroyTupleTable(TupleTable table, bool shouldFree);
+extern void ExecDropTupleTable(TupleTable table, bool shouldFree);
 extern TupleTableSlot *ExecAllocTableSlot(TupleTable table);
 extern TupleTableSlot *ExecStoreTuple(HeapTuple tuple,
 			   TupleTableSlot *slot,

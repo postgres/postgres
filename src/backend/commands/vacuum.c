@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/commands/vacuum.c,v 1.129 1999/12/01 00:29:54 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/commands/vacuum.c,v 1.130 1999/12/10 03:55:49 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -218,7 +218,7 @@ vc_shutdown()
 	/*
 	 * Release our portal for cross-transaction memory.
 	 */
-	PortalDestroy(&vc_portal);
+	PortalDrop(&vc_portal);
 
 	/* okay, we're done */
 	VacuumRunning = false;
@@ -230,13 +230,13 @@ vc_shutdown()
 void
 vc_abort()
 {
-	/* Clear flag first, to avoid recursion if PortalDestroy elog's */
+	/* Clear flag first, to avoid recursion if PortalDrop elog's */
 	VacuumRunning = false;
 
 	/*
 	 * Release our portal for cross-transaction memory.
 	 */
-	PortalDestroy(&vc_portal);
+	PortalDrop(&vc_portal);
 }
 
 /*

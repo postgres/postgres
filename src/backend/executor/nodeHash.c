@@ -6,7 +6,7 @@
  * Copyright (c) 1994, Regents of the University of California
  *
  *
- *	$Id: nodeHash.c,v 1.39 1999/10/13 15:02:25 tgl Exp $
+ *	$Id: nodeHash.c,v 1.40 1999/12/10 03:55:51 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -439,7 +439,7 @@ ExecHashTableDestroy(HashJoinTable hashtable)
 
 	/* Destroy the portal to release all working memory */
 	/* cast here is a kluge for circular includes... */
-	PortalDestroy((Portal *) &hashtable->myPortal);
+	PortalDrop((Portal *) &hashtable->myPortal);
 
 	/* And drop the control block */
 	pfree(hashtable);

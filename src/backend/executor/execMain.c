@@ -26,7 +26,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/executor/execMain.c,v 1.101 1999/11/24 00:44:31 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/executor/execMain.c,v 1.102 1999/12/10 03:55:51 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -778,7 +778,7 @@ EndPlan(Plan *plan, EState *estate)
 	{
 		TupleTable	tupleTable = (TupleTable) estate->es_tupleTable;
 
-		ExecDestroyTupleTable(tupleTable, true);
+		ExecDropTupleTable(tupleTable, true);
 		estate->es_tupleTable = NULL;
 	}
 

@@ -9,7 +9,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/tcop/utility.c,v 1.72 1999/11/21 04:16:16 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/tcop/utility.c,v 1.73 1999/12/10 03:55:59 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -162,9 +162,9 @@ ProcessUtility(Node *parsetree,
 			DefineRelation((CreateStmt *) parsetree, RELKIND_RELATION);
 			break;
 
-		case T_DestroyStmt:
+		case T_DropStmt:
 			{
-				DestroyStmt *stmt = (DestroyStmt *) parsetree;
+				DropStmt *stmt = (DropStmt *) parsetree;
 				List	   *args = stmt->relNames;
 				List	   *arg;
 
@@ -592,19 +592,19 @@ ProcessUtility(Node *parsetree,
 			{
 				CreatedbStmt *stmt = (CreatedbStmt *) parsetree;
 
-				PS_SET_STATUS(commandTag = "CREATEDB");
+				PS_SET_STATUS(commandTag = "CREATE DATABASE");
 				CHECK_IF_ABORTED();
 				createdb(stmt->dbname, stmt->dbpath, stmt->encoding, dest);
 			}
 			break;
 
-		case T_DestroydbStmt:
+		case T_DropdbStmt:
 			{
-				DestroydbStmt *stmt = (DestroydbStmt *) parsetree;
+				DropdbStmt *stmt = (DropdbStmt *) parsetree;
 
-				PS_SET_STATUS(commandTag = "DESTROYDB");
+				PS_SET_STATUS(commandTag = "DROP DATABASE");
 				CHECK_IF_ABORTED();
-				destroydb(stmt->dbname, dest);
+				dropdb(stmt->dbname, dest);
 			}
 			break;
 

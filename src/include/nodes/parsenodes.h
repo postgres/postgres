@@ -6,7 +6,7 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: parsenodes.h,v 1.88 1999/12/06 18:02:47 wieck Exp $
+ * $Id: parsenodes.h,v 1.89 1999/12/10 03:56:09 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -325,12 +325,12 @@ typedef struct DefineStmt
  *		Drop Table Statement
  * ----------------------
  */
-typedef struct DestroyStmt
+typedef struct DropStmt
 {
 	NodeTag		type;
 	List	   *relNames;		/* relations to be dropped */
 	bool		sequence;
-} DestroyStmt;
+} DropStmt;
 
 /* ----------------------
  *              Truncate Table Statement
@@ -577,14 +577,14 @@ typedef struct CreatedbStmt
 } CreatedbStmt;
 
 /* ----------------------
- *		Destroydb Statement
+ *		Dropdb Statement
  * ----------------------
  */
-typedef struct DestroydbStmt
+typedef struct DropdbStmt
 {
 	NodeTag		type;
 	char	   *dbname;			/* database to drop */
-} DestroydbStmt;
+} DropdbStmt;
 
 /* ----------------------
  *		Cluster Statement (support pbrown's cluster index implementation)

@@ -5,7 +5,7 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- *	$Id: view.c,v 1.39 1999/10/07 04:23:00 tgl Exp $
+ *	$Id: view.c,v 1.40 1999/12/10 03:55:50 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -305,6 +305,6 @@ RemoveView(char *viewName)
 	/*
 	 * now remove the relation.
 	 */
-	heap_destroy_with_catalog(viewName);
+	heap_drop_with_catalog(viewName);
 	pfree(rname);
 }

@@ -6,7 +6,7 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: nodes.h,v 1.57 1999/12/06 18:02:46 wieck Exp $
+ * $Id: nodes.h,v 1.58 1999/12/10 03:56:09 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -153,7 +153,7 @@ typedef enum NodeTag
 	T_CreateStmt,
 	T_VersionStmt,
 	T_DefineStmt,
-	T_DestroyStmt,
+	T_DropStmt,
 	T_TruncateStmt,
 	T_CommentStmt,
 	T_ExtendStmt,
@@ -173,7 +173,7 @@ typedef enum NodeTag
 	T_ViewStmt,
 	T_LoadStmt,
 	T_CreatedbStmt,
-	T_DestroydbStmt,
+	T_DropdbStmt,
 	T_VacuumStmt,
 	T_ExplainStmt,
 	T_CreateSeqStmt,

@@ -6,7 +6,7 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: portal.h,v 1.19 1999/09/23 17:03:33 momjian Exp $
+ * $Id: portal.h,v 1.20 1999/12/10 03:56:12 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -73,7 +73,7 @@ extern void PortalSetQuery(Portal portal, QueryDesc *queryDesc,
 extern QueryDesc *PortalGetQueryDesc(Portal portal);
 extern EState *PortalGetState(Portal portal);
 extern Portal CreatePortal(char *name);
-extern void PortalDestroy(Portal *portalP);
+extern void PortalDrop(Portal *portalP);
 extern void StartPortalAllocMode(AllocMode mode, Size limit);
 extern void EndPortalAllocMode(void);
 extern void PortalResetHeapMemory(Portal portal);

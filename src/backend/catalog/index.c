@@ -7,12 +7,12 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/catalog/index.c,v 1.98 1999/11/24 00:44:29 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/catalog/index.c,v 1.99 1999/12/10 03:55:48 momjian Exp $
  *
  *
  * INTERFACE ROUTINES
  *		index_create()			- Create a cataloged index relation
- *		index_destroy()			- Removes index relation from catalogs
+ *		index_drop()			- Removes index relation from catalogs
  *
  *
  *-------------------------------------------------------------------------
@@ -1103,12 +1103,12 @@ index_create(char *heapRelationName,
 
 /* ----------------------------------------------------------------
  *
- *		index_destroy
+ *		index_drop
  *
  * ----------------------------------------------------------------
  */
 void
-index_destroy(Oid indexId)
+index_drop(Oid indexId)
 {
 	Relation	userHeapRelation;
 	Relation	userIndexRelation;
@@ -1213,7 +1213,7 @@ index_destroy(Oid indexId)
 	ReleaseRelationBuffers(userIndexRelation);
 
 	if (smgrunlink(DEFAULT_SMGR, userIndexRelation) != SM_SUCCESS)
-		elog(ERROR, "index_destroy: unlink: %m");
+		elog(ERROR, "index_drop: unlink: %m");
 
 	/*
 	 * Close rels, but keep locks
@@ -1646,7 +1646,7 @@ DefaultBuild(Relation heapRelation,
 	if (predicate != NULL || oldPred != NULL)
 	{
 		/* parameter was 'false', almost certainly wrong --- tgl 9/21/99 */
-		ExecDestroyTupleTable(tupleTable, true);
+		ExecDropTupleTable(tupleTable, true);
 	}
 #endif	 /* OMIT_PARTIAL_INDEX */
 

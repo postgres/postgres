@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/storage/large_object/inv_api.c,v 1.61 1999/11/07 23:08:16 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/storage/large_object/inv_api.c,v 1.62 1999/12/10 03:55:57 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -274,7 +274,7 @@ inv_close(LargeObjectDesc *obj_desc)
  * returns -1 if failed
  */
 int
-inv_destroy(Oid lobjId)
+inv_drop(Oid lobjId)
 {
 	Relation	r;
 
@@ -282,7 +282,7 @@ inv_destroy(Oid lobjId)
 	if (!RelationIsValid(r) || r->rd_rel->relkind != RELKIND_LOBJECT)
 		return -1;
 
-	heap_destroy_with_catalog(RelationGetRelationName(r));
+	heap_drop_with_catalog(RelationGetRelationName(r));
 	return 1;
 }
 

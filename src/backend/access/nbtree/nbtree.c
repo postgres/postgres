@@ -11,7 +11,7 @@
  * Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/access/nbtree/nbtree.c,v 1.49 1999/12/01 00:29:53 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/access/nbtree/nbtree.c,v 1.50 1999/12/10 03:55:44 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -269,7 +269,7 @@ btbuild(Relation heap,
 	if (pred != NULL || oldPred != NULL)
 	{
 #ifndef OMIT_PARTIAL_INDEX
-		ExecDestroyTupleTable(tupleTable, true);
+		ExecDropTupleTable(tupleTable, true);
 		pfree(econtext);
 #endif	 /* OMIT_PARTIAL_INDEX */
 	}

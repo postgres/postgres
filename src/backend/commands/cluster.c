@@ -14,7 +14,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/commands/cluster.c,v 1.47 1999/11/22 17:56:00 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/commands/cluster.c,v 1.48 1999/12/10 03:55:49 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -151,7 +151,7 @@ cluster(char *oldrelname, char *oldindexname)
 
 
 	/* Destroy old heap (along with its index) and rename new. */
-	heap_destroy_with_catalog(oldrelname);
+	heap_drop_with_catalog(oldrelname);
 
 	CommitTransactionCommand();
 	StartTransactionCommand();

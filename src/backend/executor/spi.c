@@ -3,7 +3,7 @@
  * spi.c
  *				Server Programming Interface
  *
- * $Id: spi.c,v 1.42 1999/11/22 17:56:05 momjian Exp $
+ * $Id: spi.c,v 1.43 1999/12/10 03:55:51 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -127,7 +127,7 @@ SPI_finish()
 
 	/* Restore memory context as it was before procedure call */
 	MemoryContextSwitchTo(_SPI_current->savedcxt);
-	PortalDestroy(&(_SPI_current->portal));
+	PortalDrop(&(_SPI_current->portal));
 
 	SetScanCommandId(_SPI_current->savedId);
 
