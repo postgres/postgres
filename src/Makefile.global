@@ -7,7 +7,7 @@
 #
 #
 # IDENTIFICATION
-#    $Header: /cvsroot/pgsql/src/Attic/Makefile.global,v 1.87 1997/01/13 03:52:00 bryanh Exp $
+#    $Header: /cvsroot/pgsql/src/Attic/Makefile.global,v 1.88 1997/01/13 17:04:04 momjian Exp $
 #
 # NOTES
 #    Essentially all Postgres make files include this file and use the 
@@ -409,7 +409,7 @@ ifeq ($(PRE_BSDI_2_1), false)
 # cc is gcc v1.42
 # gcc is gcc v2.7.2
   LEX= lex
-  LDADD_BE= -ltermcap -ldl -lipc
+  LDADD_BE= -ltermcap -ldl
 else
 # cc is gcc v1.42
 # gcc is gcc v2.6.3
@@ -417,7 +417,7 @@ else
 # use the regex library
   USE_REGEX= 1
   CFLAGS_BE= -DPRE_BSDI_2_1
-  LDADD_BE= -ldld -lcompat -lipc
+  LDADD_BE= -ldld -lcompat
 endif
 
 DLSUFFIX= .o
@@ -702,7 +702,7 @@ endif
 
 
 ifneq ($(PORTNAME), nextstep)
-LDADD_BE+= -lIPC
+LDADD_BE+= -lipc
 AROPT= rc
 DLSUFFIX= .o
 endif
