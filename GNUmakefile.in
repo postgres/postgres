@@ -1,7 +1,7 @@
 #
 # PostgreSQL top level makefile
 #
-# $Header: /cvsroot/pgsql/GNUmakefile.in,v 1.7 2000/07/16 14:50:28 petere Exp $
+# $Header: /cvsroot/pgsql/GNUmakefile.in,v 1.8 2000/07/17 22:31:56 petere Exp $
 #
 
 subdir =
@@ -9,20 +9,23 @@ top_builddir = .
 include src/Makefile.global
 
 all:
+	$(MAKE) -C doc all
 	$(MAKE) -C src all
 	@echo "All of PostgreSQL successfully made. Ready to install."
 
 install:
+	$(MAKE) -C doc install
 	$(MAKE) -C src install
 	@cat $(srcdir)/register.txt
 
-installdirs uninstall:
+installdirs uninstall clean:
+	$(MAKE) -C doc $@
 	$(MAKE) -C src $@
 
-clean:
-	$(MAKE) -C src clean
-
+# Important: distclean `doc' before `src', otherwise Makefile.global
+# will be gone too soon.
 distclean maintainer-clean:
+	-$(MAKE) -C doc $@
 	-$(MAKE) -C src $@
 	-rm -f config.cache config.log config.status GNUmakefile
 

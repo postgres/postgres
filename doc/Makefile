@@ -1,78 +1,58 @@
 #----------------------------------------------------------------------------
 #
-# Makefile
-#	Postgres documentation installation makefile
-#	Thomas Lockhart
+# PostgreSQL documentation installation makefile
 #
 # Copyright (c) 1994, Regents of the University of California
 #
-#
-# IDENTIFICATION
-#    $Header: /cvsroot/pgsql/doc/Makefile,v 1.17 2000/07/16 14:50:32 petere Exp $
+# $Header: /cvsroot/pgsql/doc/Makefile,v 1.18 2000/07/17 22:31:57 petere Exp $
 #
 #----------------------------------------------------------------------------
 
-PGDOCS= $(POSTGRESDIR)/doc
-SRCDIR= ../src
-
-TAR= tar
-
-# Pick up Makefile.global from the source area
-# This is the only resource from the code source area and is optional.
-# Actually, we want this to get Makefile.custom - thomas 1998-03-01
-
-ifneq ($(wildcard $(SRCDIR)/Makefile.global), )
-include $(SRCDIR)/Makefile.global
-endif
-
-# Hmm, made this optional but jade _really_ doesn't like them missing
-# - thomas 1998-03-01
-ifneq ($(HDSL), )
-HTMLOPTS= -d $(HDSL)
-endif
-ifneq ($(PDSL), )
-PRINTOPTS= -d $(PDSL)
-endif
-
-MODULES= admin postgres programmer tutorial user
-TARGETS= $(MODULES:%=%.html)
-
-.PRECIOUS: postgres.tex postgres.dvi
-.PHONY: beforeinstall install all clean distclean
-
-beforeinstall:
-	-@if [ ! -d $(PGDOCS) ]; then mkdir $(PGDOCS); fi
-
-install:
-	$(MAKE) all
-	$(MAKE) man
-
-all: beforeinstall $(MODULES)
-
-clean:
-	rm -rf $(MODULES)
-
-distclean:
-	$(MAKE) clean
-
-man:
-	-@if test ! -d $(POSTMANDIR) ; then mkdir $(POSTMANDIR) ; fi
-	gunzip -c man.tar.gz | (cd $(POSTMANDIR) ; $(TAR) xf - )
-
+# This directory doesn't build anything, it is only responsible for
+# installing the documenation. It is invoked automatically by the
+# top-level makefile. The files to be installed are prepared specially
+# and are placed in this directory during distribution bundling. In
+# CVS-based trees these files don't exist, so we skip the installation
+# in that case.
 #
-# Generic production rules
-#
+# To actually build the documenation, look into the src/ and src/sgml
+# subdirectories.
 
-# Unpack tar file
-# Put into area pointed to by $(PGDOCS).
-## Make a local file to keep track of dependencies,
-##  if $(PGDOCS) points somewhere else.
-## Disable this for now - thomas 1998-03-01
-# Remove the contents of the target directory
-#  to replace symlinks - thomas 1998-03-01
+subdir = doc
+top_builddir = ..
+include $(top_builddir)/src/Makefile.global
 
-%:	%.tar.gz
-	rm -rf ./$@ $(PGDOCS)/$*
-	if test ! -d $(PGDOCS)/$* ; then mkdir $(PGDOCS)/$* ; fi
-	gunzip -c $< | (cd $(PGDOCS)/$* ; $(TAR) xf - )
-#	touch ./$*
+
+MODULES := admin postgres programmer tutorial user
+
+found_MODULES := $(foreach module, $(MODULES), $(shell test -f $(srcdir)/$(module).tar.gz && echo $(module)))
+
+ifneq ($(wildcard $(srcdir)/man.tar.gz),)
+found_man := yes
+endif
+
+
+all:
+
+
+install: all installdirs
+ifneq ($(strip $(found_MODULES)),)
+	for module in $(found_MODULES); do \
+	  gunzip -c $${module}.tar.gz | ( cd $(docdir)/$$module && $(TAR) xf - ) || \
+	  exit; \
+	done
+endif
+ifdef found_man
+	gunzip -c man.tar.gz | ( cd $(mandir) && $(TAR) xf - )
+endif
+
+
+installdirs:
+	$(mkinstalldirs) $(mandir) $(addprefix $(docdir)/, . $(found_MODULES))
+
+
+uninstall:
+	-rm -rf $(addprefix $(docdir)/, $(MODULES))
+ifdef found_man
+	-rm -f $(addprefix $(mandir)/, $(shell gunzip -c man.tar.gz | tar tf -))
+endif

@@ -14,7 +14,14 @@ dnl 8. System services
 dnl
 dnl Read the Autoconf manual for details.
 
+dnl The GNU folks apparently haven't heard that some people don't use
+dnl Texinfo. Use this sorcery to use "docdir" instead of "infodir".
+define([info], [doc])
+define([infodir], [docdir])
 AC_INIT(src/backend/access/common/heaptuple.c)
+undefine([infodir])
+undefine([info])
+
 AC_PREFIX_DEFAULT(/usr/local/pgsql)
 AC_CONFIG_HEADER(src/include/config.h)
 
@@ -78,7 +85,7 @@ esac
     AC_MSG_ERROR([
 *******************************************************************
 PostgreSQL has apparently not been ported to your platform yet.
-To try a manual configuration, look info the src/template directory
+To try a manual configuration, look into the src/template directory
 for a similar platform and use the \`--with-template=' option.
 
 Please also contact <pgsql-ports@postgresql.org> to see about

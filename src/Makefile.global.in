@@ -7,7 +7,7 @@
 #
 #
 # IDENTIFICATION
-#    $Header: /cvsroot/pgsql/src/Makefile.global.in,v 1.87 2000/07/16 14:50:41 petere Exp $
+#    $Header: /cvsroot/pgsql/src/Makefile.global.in,v 1.88 2000/07/17 22:31:59 petere Exp $
 #
 # NOTES
 #    Essentially all Postgres make files include this file and use the
@@ -95,8 +95,8 @@ localstatedir = @localstatedir@
 libdir = @libdir@
 includedir = @includedir@
 mandir = @mandir@
+docdir = @docdir@
 
-docdir = ${prefix}/doc
 odbcinst_ini_dir = @odbcinst_ini_dir@
 
 # old variable names for installation directories
