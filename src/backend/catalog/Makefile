@@ -4,7 +4,7 @@
 #    Makefile for catalog
 #
 # IDENTIFICATION
-#    $Header: /cvsroot/pgsql/src/backend/catalog/Makefile,v 1.2 1996/11/03 23:26:58 scrappy Exp $
+#    $Header: /cvsroot/pgsql/src/backend/catalog/Makefile,v 1.3 1997/11/02 15:24:52 vadim Exp $
 #
 #-------------------------------------------------------------------------
 
@@ -30,7 +30,7 @@ GENBKI= ./genbki.sh
 GLOBALBKI_SRCS= $(addprefix ../../include/catalog/, \
                   pg_database.h pg_demon.h pg_magic.h pg_defaults.h \
                   pg_variable.h pg_server.h pg_user.h pg_hosts.h \
-                  pg_group.h pg_log.h pg_time.h \
+                  pg_group.h pg_log.h \
                  )
 
 LOCALBKI_SRCS= $(addprefix ../../include/catalog/, \

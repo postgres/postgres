@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/access/common/indextuple.c,v 1.19 1997/09/18 20:19:37 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/access/common/indextuple.c,v 1.20 1997/11/02 15:24:11 vadim Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -52,7 +52,7 @@ index_formtuple(TupleDesc tupleDescriptor,
 	int			i;
 	unsigned short infomask = 0;
 	bool		hasnull = false;
-	char		tupmask = 0;
+	uint16		tupmask = 0;
 	int			numberOfAttributes = tupleDescriptor->natts;
 
 	if (numberOfAttributes > MaxIndexAttributeNumber)

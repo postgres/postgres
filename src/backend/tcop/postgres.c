@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/tcop/postgres.c,v 1.50 1997/10/25 01:10:16 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/tcop/postgres.c,v 1.51 1997/11/02 15:25:45 vadim Exp $
  *
  * NOTES
  *	  this is the "main" module of the postgres backend and
@@ -494,54 +494,6 @@ pg_plan(char *query_string,		/* string to execute */
 	free(querytree_list);
 
 	querytree_list = new_list;
-
-	/* ----------------
-	 * Fix time range quals
-	 * this _must_ go here, because it must take place after rewrites
-	 * ( if they take place ) so that time quals are usable by the executor
-	 *
-	 * Also, need to frob the range table entries here to plan union
-	 * queries for archived relations.
-	 * ----------------
-	 */
-	for (i = 0; i < querytree_list->len; i++)
-	{
-		List	   *l;
-		List	   *rt = NULL;
-
-		querytree = querytree_list->qtrees[i];
-
-		/* ----------------
-		 *	utilities don't have time ranges
-		 * ----------------
-		 */
-		if (querytree->commandType == CMD_UTILITY)
-			continue;
-
-		rt = querytree->rtable;
-
-		foreach(l, rt)
-		{
-			RangeTblEntry *rte = lfirst(l);
-			TimeRange  *timequal = rte->timeRange;
-
-			if (timequal)
-			{
-				int			timecode = (rte->timeRange->endDate == NULL) ? 0 : 1;
-
-				rte->timeQual = makeTimeRange(rte->timeRange->startDate,
-											  rte->timeRange->endDate,
-											  timecode);
-			}
-			else
-			{
-				rte->timeQual = NULL;
-			}
-		}
-
-		/* check for archived relations */
-		plan_archive(rt);
-	}
 
 	if (DebugPrintRewrittenParsetree == true)
 	{
@@ -1391,7 +1343,7 @@ PostgresMain(int argc, char *argv[])
 	if (IsUnderPostmaster == false)
 	{
 		puts("\nPOSTGRES backend interactive interface");
-		puts("$Revision: 1.50 $ $Date: 1997/10/25 01:10:16 $");
+		puts("$Revision: 1.51 $ $Date: 1997/11/02 15:25:45 $");
 	}
 
 	/* ----------------

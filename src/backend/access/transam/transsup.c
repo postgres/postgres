@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/access/transam/Attic/transsup.c,v 1.13 1997/09/08 21:41:46 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/access/transam/Attic/transsup.c,v 1.14 1997/11/02 15:24:44 vadim Exp $
  *
  * NOTES
  *	  This file contains support functions for the high
@@ -23,15 +23,9 @@
 #include <access/xact.h>
 #include <storage/lmgr.h>
 
-static AbsoluteTime
-TransBlockGetCommitTime(Block tblock,
-						TransactionId transactionId);
 static XidStatus
 TransBlockGetXidStatus(Block tblock,
 					   TransactionId transactionId);
-static void
-TransBlockSetCommitTime(Block tblock,
-				   TransactionId transactionId, AbsoluteTime commitTime);
 static void
 TransBlockSetXidStatus(Block tblock,
 					   TransactionId transactionId, XidStatus xstatus);
@@ -73,8 +67,6 @@ TransComputeBlockNumber(Relation relation,		/* relation to test */
 	 */
 	if (relation == LogRelation)
 		itemsPerBlock = TP_NumXidStatusPerBlock;
-	else if (relation == TimeRelation)
-		itemsPerBlock = TP_NumTimePerBlock;
 	else
 		elog(WARN, "TransComputeBlockNumber: unknown relation");
 
@@ -198,15 +190,6 @@ TransBlockGetXidStatus(Block tblock,
 	BitIndex	offset;
 
 	/* ----------------
-	 *	sanity check
-	 * ----------------
-	 */
-	if (tblock == NULL)
-	{
-		return XID_INVALID;
-	}
-
-	/* ----------------
 	 *	calculate the index into the transaction data where
 	 *	our transaction status is located
 	 *
@@ -249,13 +232,6 @@ TransBlockSetXidStatus(Block tblock,
 	BitIndex	offset;
 
 	/* ----------------
-	 *	sanity check
-	 * ----------------
-	 */
-	if (tblock == NULL)
-		return;
-
-	/* ----------------
 	 *	calculate the index into the transaction data where
 	 *	we sould store our transaction status.
 	 *
@@ -293,90 +269,6 @@ TransBlockSetXidStatus(Block tblock,
 				 xstatus);
 			break;
 	}
-}
-
-/* --------------------------------
- *		TransBlockGetCommitTime
- *
- *		This returns the transaction commit time for the
- *		specified transaction id in the trans block.
- * --------------------------------
- */
-static AbsoluteTime
-TransBlockGetCommitTime(Block tblock,
-						TransactionId transactionId)
-{
-	Index		index;
-	AbsoluteTime *timeArray;
-
-	/* ----------------
-	 *	sanity check
-	 * ----------------
-	 */
-	if (tblock == NULL)
-		return INVALID_ABSTIME;
-
-	/* ----------------
-	 *	calculate the index into the transaction data where
-	 *	our transaction commit time is located
-	 *
-	 *	XXX this will be replaced soon when we move to the
-	 *		new transaction id scheme -cim 3/23/90
-	 *
-	 *	The new scheme is here. -mer 5/24/92
-	 * ----------------
-	 */
-	index = transactionId % TP_NumTimePerBlock;
-
-	/* ----------------
-	 *	return the commit time to the caller
-	 * ----------------
-	 */
-	timeArray = (AbsoluteTime *) tblock;
-	return (AbsoluteTime)
-		timeArray[index];
-}
-
-/* --------------------------------
- *		TransBlockSetCommitTime
- *
- *		This sets the commit time of the specified transaction
- * --------------------------------
- */
-static void
-TransBlockSetCommitTime(Block tblock,
-						TransactionId transactionId,
-						AbsoluteTime commitTime)
-{
-	Index		index;
-	AbsoluteTime *timeArray;
-
-	/* ----------------
-	 *	sanity check
-	 * ----------------
-	 */
-	if (tblock == NULL)
-		return;
-
-
-	/* ----------------
-	 *	calculate the index into the transaction data where
-	 *	we sould store our transaction status.
-	 *
-	 *	XXX this will be replaced soon when we move to the
-	 *		new transaction id scheme -cim 3/23/90
-	 *
-	 *	The new scheme is here.  -mer 5/24/92
-	 * ----------------
-	 */
-	index = transactionId % TP_NumTimePerBlock;
-
-	/* ----------------
-	 *	store the transaction commit time at the specified index
-	 * ----------------
-	 */
-	timeArray = (AbsoluteTime *) tblock;
-	timeArray[index] = commitTime;
 }
 
 /* ----------------------------------------------------------------
@@ -492,121 +384,6 @@ TransBlockNumberSetXidStatus(Relation relation,
 	 * ----------------
 	 */
 	RelationUnsetLockForWrite(relation);
-}
-
-/* --------------------------------
- *		TransBlockNumberGetCommitTime
- * --------------------------------
- */
-AbsoluteTime
-TransBlockNumberGetCommitTime(Relation relation,
-							  BlockNumber blockNumber,
-							  TransactionId xid,
-							  bool *failP)
-{
-	Buffer		buffer;			/* buffer associated with block */
-	Block		block;			/* block containing commit time */
-	bool		localfail;		/* bool used if failP = NULL */
-	AbsoluteTime xtime;			/* commit time */
-
-	/* ----------------
-	 *	SOMEDAY place a read lock on the time relation
-	 *
-	 *	That someday is today 5 Aug. 1991 -mer
-	 * ----------------
-	 */
-	RelationSetLockForRead(relation);
-
-	/* ----------------
-	 *	get the block containing the transaction information
-	 * ----------------
-	 */
-	buffer = ReadBuffer(relation, blockNumber);
-	block = BufferGetBlock(buffer);
-
-	/* ----------------
-	 *	get the commit time from the block
-	 *	note, for now we always return false in failP.
-	 * ----------------
-	 */
-	if (failP == NULL)
-		failP = &localfail;
-	(*failP) = false;
-
-	xtime = TransBlockGetCommitTime(block, xid);
-
-	/* ----------------
-	 *	release the buffer and return the commit time
-	 * ----------------
-	 */
-	ReleaseBuffer(buffer);
-
-	/* ----------------
-	 *	SOMEDAY release our lock on the time relation
-	 * ----------------
-	 */
-	RelationUnsetLockForRead(relation);
-
-	if ((*failP) == false)
-		return xtime;
-	else
-		return INVALID_ABSTIME;
-
-}
-
-/* --------------------------------
- *		TransBlockNumberSetCommitTime
- * --------------------------------
- */
-void
-TransBlockNumberSetCommitTime(Relation relation,
-							  BlockNumber blockNumber,
-							  TransactionId xid,
-							  AbsoluteTime xtime,
-							  bool *failP)
-{
-	Buffer		buffer;			/* buffer associated with block */
-	Block		block;			/* block containing commit time */
-	bool		localfail;		/* bool used if failP = NULL */
-
-	/* ----------------
-	 *	SOMEDAY gain exclusive access to the time relation
-	 *
-	 *	That someday is today 5 Aug. 1991 -mer
-	 * ----------------
-	 */
-	RelationSetLockForWrite(relation);
-
-	/* ----------------
-	 *	get the block containing our commit time
-	 * ----------------
-	 */
-	buffer = ReadBuffer(relation, blockNumber);
-	block = BufferGetBlock(buffer);
-
-	/* ----------------
-	 *	attempt to update the commit time of the transaction on the block.
-	 *	if we are successful, write the block. otherwise release the buffer.
-	 *	note, for now we always return false in failP.
-	 * ----------------
-	 */
-	if (failP == NULL)
-		failP = &localfail;
-	(*failP) = false;
-
-	TransBlockSetCommitTime(block, xid, xtime);
-
-	if ((*failP) == false)
-		WriteBuffer(buffer);
-	else
-		ReleaseBuffer(buffer);
-
-	/* ----------------
-	 *	SOMEDAY release our lock on the time relation
-	 * ----------------
-	 */
-	RelationUnsetLockForWrite(relation);
-
 }
 
 /* --------------------------------

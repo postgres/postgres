@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/commands/vacuum.c,v 1.48 1997/09/22 07:12:33 vadim Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/commands/vacuum.c,v 1.49 1997/11/02 15:25:07 vadim Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -742,54 +742,60 @@ vc_scanheap(VRelStats *vacrelstats, Relation onerel,
 			htup = (HeapTuple) PageGetItem(page, itemid);
 			tupgone = false;
 
-			if (!AbsoluteTimeIsBackwardCompatiblyValid(htup->t_tmin) &&
-				TransactionIdIsValid((TransactionId) htup->t_xmin))
+			if (!(htup->t_infomask & HEAP_XMIN_COMMITTED))
 			{
-
-				if (TransactionIdDidAbort(htup->t_xmin))
-				{
+				if (htup->t_infomask & HEAP_XMIN_INVALID)
 					tupgone = true;
-				}
-				else if (TransactionIdDidCommit(htup->t_xmin))
-				{
-					htup->t_tmin = TransactionIdGetCommitTime(htup->t_xmin);
-					pgchanged = true;
-				}
-				else if (!TransactionIdIsInProgress(htup->t_xmin))
-				{
-
-					/*
-					 * Not Aborted, Not Committed, Not in Progress - so it
-					 * from crashed process. - vadim 11/26/96
-					 */
-					ncrash++;
-					tupgone = true;
-				}
 				else
 				{
-					elog(NOTICE, "Rel %s: TID %u/%u: InsertTransactionInProgress %u - can't shrink relation",
-						 relname, blkno, offnum, htup->t_xmin);
-					do_shrinking = false;
+					if (TransactionIdDidAbort(htup->t_xmin))
+						tupgone = true;
+					else if (TransactionIdDidCommit(htup->t_xmin))
+					{
+						htup->t_infomask |= HEAP_XMIN_COMMITTED;
+						pgchanged = true;
+					}
+					else if (!TransactionIdIsInProgress(htup->t_xmin))
+					{
+						/*
+						 * Not Aborted, Not Committed, Not in Progress - 
+						 * so it's from crashed process. - vadim 11/26/96
+						 */
+						ncrash++;
+						tupgone = true;
+					}
+					else
+					{
+						elog(NOTICE, "Rel %s: TID %u/%u: InsertTransactionInProgress %u - can't shrink relation",
+							 relname, blkno, offnum, htup->t_xmin);
+						do_shrinking = false;
+					}
 				}
 			}
 
-			if (TransactionIdIsValid((TransactionId) htup->t_xmax))
+			/* 
+			 * here we are concerned about tuples with xmin committed 
+			 * and xmax unknown or committed
+			 */
+			if (htup->t_infomask & HEAP_XMIN_COMMITTED && 
+				!(htup->t_infomask & HEAP_XMAX_INVALID))
 			{
-				if (TransactionIdDidAbort(htup->t_xmax))
+				if (htup->t_infomask & HEAP_XMAX_COMMITTED)
+					tupgone = true;
+				else if (TransactionIdDidAbort(htup->t_xmax))
 				{
-					StoreInvalidTransactionId(&(htup->t_xmax));
+					htup->t_infomask |= HEAP_XMAX_INVALID;
 					pgchanged = true;
 				}
 				else if (TransactionIdDidCommit(htup->t_xmax))
 					tupgone = true;
 				else if (!TransactionIdIsInProgress(htup->t_xmax))
 				{
-
 					/*
 					 * Not Aborted, Not Committed, Not in Progress - so it
 					 * from crashed process. - vadim 06/02/97
 					 */
-					StoreInvalidTransactionId(&(htup->t_xmax));
+					htup->t_infomask |= HEAP_XMAX_INVALID;;
 					pgchanged = true;
 				}
 				else
@@ -798,18 +804,6 @@ vc_scanheap(VRelStats *vacrelstats, Relation onerel,
 						 relname, blkno, offnum, htup->t_xmax);
 					do_shrinking = false;
 				}
-			}
-
-			/*
-			 * Is it possible at all ? - vadim 11/26/96
-			 */
-			if (!TransactionIdIsValid((TransactionId) htup->t_xmin))
-			{
-				elog(NOTICE, "Rel %s: TID %u/%u: INSERT_TRANSACTION_ID IS INVALID. \
-DELETE_TRANSACTION_ID_VALID %d, TUPGONE %d.",
-					 relname, blkno, offnum,
-					 TransactionIdIsValid((TransactionId) htup->t_xmax),
-					 tupgone);
 			}
 
 			/*
@@ -973,7 +967,6 @@ vc_rpfheap(VRelStats *vacrelstats, Relation onerel,
 {
 	TransactionId myXID;
 	CommandId	myCID;
-	AbsoluteTime myCTM = 0;
 	Buffer		buf,
 				ToBuf;
 	int			nblocks,
@@ -1187,9 +1180,9 @@ vc_rpfheap(VRelStats *vacrelstats, Relation onerel,
 			TransactionIdStore(myXID, &(newtup->t_xmin));
 			newtup->t_cmin = myCID;
 			StoreInvalidTransactionId(&(newtup->t_xmax));
-			newtup->t_tmin = INVALID_ABSTIME;
-			newtup->t_tmax = CURRENT_ABSTIME;
-			ItemPointerSetInvalid(&newtup->t_chain);
+			/* set xmin to unknown and xmax to invalid */
+			newtup->t_infomask &= ~(HEAP_XACT_MASK);
+			newtup->t_infomask |= HEAP_XMAX_INVALID;
 
 			/* add tuple to the page */
 			newoff = PageAddItem(ToPage, (Item) newtup, tlen,
@@ -1209,7 +1202,8 @@ failed to add item with len = %u to page %u (free space %u, nusd %u, noff %u)",
 			/* now logically delete end-tuple */
 			TransactionIdStore(myXID, &(htup->t_xmax));
 			htup->t_cmax = myCID;
-			memmove((char *) &(htup->t_chain), (char *) &(newtup->t_ctid), sizeof(newtup->t_ctid));
+			/* set xmax to unknown */
+			htup->t_infomask &= ~(HEAP_XMAX_INVALID | HEAP_XMAX_COMMITTED);
 
 			ToVpd->vpd_nusd++;
 			nmoved++;
@@ -1278,11 +1272,10 @@ failed to add item with len = %u to page %u (free space %u, nusd %u, noff %u)",
 		FlushBufferPool(!TransactionFlushEnabled());
 		TransactionIdCommit(myXID);
 		FlushBufferPool(!TransactionFlushEnabled());
-		myCTM = TransactionIdGetCommitTime(myXID);
 	}
 
 	/*
-	 * Clean uncleaned reapped pages from Vvpl list and set commit' times
+	 * Clean uncleaned reapped pages from Vvpl list and set xmin committed
 	 * for inserted tuples
 	 */
 	nchkmvd = 0;
@@ -1316,7 +1309,7 @@ failed to add item with len = %u to page %u (free space %u, nusd %u, noff %u)",
 				htup = (HeapTuple) PageGetItem(page, itemid);
 				if (TransactionIdEquals((TransactionId) htup->t_xmin, myXID))
 				{
-					htup->t_tmin = myCTM;
+					htup->t_infomask |= HEAP_XMIN_COMMITTED;
 					ntups++;
 				}
 			}

@@ -6,7 +6,7 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: catname.h,v 1.6 1997/09/08 02:34:47 momjian Exp $
+ * $Id: catname.h,v 1.7 1997/11/02 15:26:50 vadim Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -40,7 +40,6 @@
 #define  RewriteRelationName "pg_rewrite"
 #define  ServerRelationName "pg_server"
 #define  StatisticRelationName "pg_statistic"
-#define  TimeRelationName "pg_time"
 #define  TypeRelationName "pg_type"
 #define  UserRelationName "pg_user"
 #define  VariableRelationName "pg_variable"

@@ -6,7 +6,7 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: heapam.h,v 1.20 1997/10/30 23:37:01 momjian Exp $
+ * $Id: heapam.h,v 1.21 1997/11/02 15:26:37 vadim Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -142,7 +142,7 @@ extern void heap_restrpos(HeapScanDesc sdesc);
 extern Size ComputeDataSize(TupleDesc tupleDesc, Datum value[], char nulls[]);
 extern void
 DataFill(char *data, TupleDesc tupleDesc,
-		 Datum value[], char nulls[], char *infomask,
+		 Datum value[], char nulls[], uint16 *infomask,
 		 bits8 *bit);
 extern int	heap_attisnull(HeapTuple tup, int attnum);
 extern int	heap_sysattrlen(AttrNumber attno);

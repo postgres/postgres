@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/storage/large_object/inv_api.c,v 1.18 1997/09/12 04:08:15 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/storage/large_object/inv_api.c,v 1.19 1997/11/02 15:25:40 vadim Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -25,6 +25,7 @@
 #include "access/heapam.h"
 #include "access/relscan.h"
 #include "access/tupdesc.h"
+#include "access/transam.h"
 #include "access/xact.h"
 #include "access/nbtree.h"
 #include "access/tupdesc.h"
@@ -791,6 +792,7 @@ inv_wrold(LargeObjectDesc *obj_desc,
 
 	TransactionIdStore(GetCurrentTransactionId(), &(htup->t_xmax));
 	htup->t_cmax = GetCurrentCommandId();
+	htup->t_infomask &= ~(HEAP_XMAX_COMMITTED | HEAP_XMAX_INVALID);
 
 	/*
 	 * If we're overwriting the entire block, we're lucky.	All we need to
@@ -1005,18 +1007,14 @@ inv_newtuple(LargeObjectDesc *obj_desc,
 
 	ntup->t_len = tupsize;
 	ItemPointerSet(&(ntup->t_ctid), BufferGetBlockNumber(buffer), off);
-	ItemPointerSetInvalid(&(ntup->t_chain));
 	LastOidProcessed = ntup->t_oid = newoid();
 	TransactionIdStore(GetCurrentTransactionId(), &(ntup->t_xmin));
 	ntup->t_cmin = GetCurrentCommandId();
 	StoreInvalidTransactionId(&(ntup->t_xmax));
 	ntup->t_cmax = 0;
-	ntup->t_tmin = INVALID_ABSTIME;
-	ntup->t_tmax = CURRENT_ABSTIME;
+	ntup->t_infomask = HEAP_XMAX_INVALID;
 	ntup->t_natts = 2;
 	ntup->t_hoff = hoff;
-	ntup->t_vtype = 0;
-	ntup->t_infomask = 0x0;
 
 	/* if a NULL is passed in, avoid the calculations below */
 	if (dbuf == NULL)
@@ -1132,22 +1130,20 @@ DumpPage(Page page, int blkno)
 						printf("\n\t:ctid=%s:oid=%d",
 								ItemPointerFormExternal(&tup->t_ctid),
 								tup->t_oid);
-						printf(":natts=%d:thoff=%d:vtype=`%c' (0x%02x):",
+						printf(":natts=%d:thoff=%d:",
 								tup->t_natts,
-								tup->t_hoff, tup->t_vtype, tup->t_vtype);
+								tup->t_hoff);
 
-						printf("\n\t:tmin=%d:cmin=%u:",
-								tup->t_tmin, tup->t_cmin);
+						printf("\n\t:cmin=%u:",
+								tup->t_cmin);
 
 						printf("xmin=%u:", tup->t_xmin);
 
-						printf("\n\t:tmax=%d:cmax=%u:",
-								tup->t_tmax, tup->t_cmax);
+						printf("\n\t:cmax=%u:",
+								tup->t_cmax);
 
-						printf("xmax=%u:", tup->t_xmax);
+						printf("xmax=%u:\n", tup->t_xmax);
 
-						printf("\n\t:chain=%s:\n",
-								ItemPointerFormExternal(&tup->t_chain));
 				} else
 						putchar('\n');
 		}

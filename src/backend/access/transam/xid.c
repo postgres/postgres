@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/access/transam/Attic/xid.c,v 1.10 1997/09/08 21:41:56 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/access/transam/Attic/xid.c,v 1.11 1997/11/02 15:24:47 vadim Exp $
  *
  * OLD COMMENTS
  * XXX WARNING
@@ -30,18 +30,6 @@ extern TransactionId DisabledTransactionId;
 extern TransactionId AmiTransactionId;
 extern TransactionId FirstTransactionId;
 
-/* ----------------------------------------------------------------
- *		TransactionIdIsValid
- *
- *		Macro-ize me.
- * ----------------------------------------------------------------
- */
-bool
-TransactionIdIsValid(TransactionId transactionId)
-{
-	return ((bool) (transactionId != NullTransactionId));
-}
-
 /* XXX char16 name for catalogs */
 TransactionId
 xidin(char *representation)
@@ -63,32 +51,6 @@ xidout(TransactionId transactionId)
 
 	return (representation);
 
-}
-
-/* ----------------------------------------------------------------
- *		StoreInvalidTransactionId
- *
- *		Maybe do away with Pointer types in these routines.
- *		Macro-ize this one.
- * ----------------------------------------------------------------
- */
-void
-StoreInvalidTransactionId(TransactionId *destination)
-{
-	*destination = NullTransactionId;
-}
-
-/* ----------------------------------------------------------------
- *		TransactionIdStore
- *
- *		Macro-ize this one.
- * ----------------------------------------------------------------
- */
-void
-TransactionIdStore(TransactionId transactionId,
-				   TransactionId *destination)
-{
-	*destination = transactionId;
 }
 
 /* ----------------------------------------------------------------

@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/nodes/copyfuncs.c,v 1.13 1997/09/19 06:52:49 vadim Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/nodes/copyfuncs.c,v 1.14 1997/11/02 15:25:11 vadim Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -1470,21 +1470,8 @@ _copyRangeTblEntry(RangeTblEntry *from)
 		newnode->relname = pstrdup(from->relname);
 	if (from->refname)
 		newnode->refname = pstrdup(from->refname);
-	if (from->timeRange)
-	{
-		newnode->timeRange = makeNode(TimeRange);
-		if (from->timeRange->startDate)
-			newnode->timeRange->startDate = pstrdup(from->timeRange->startDate);
-		else
-			newnode->timeRange->startDate = NULL;
-		if (from->timeRange->endDate)
-			newnode->timeRange->endDate = pstrdup(from->timeRange->endDate);
-		else
-			newnode->timeRange->endDate = NULL;
-		newnode->timeQual = makeTimeRange(newnode->timeRange->startDate,
-										  newnode->timeRange->endDate,
-						((newnode->timeRange->endDate == NULL) ? 0 : 1));
-	}
+	newnode->timeRange = NULL;
+	newnode->timeQual = NULL;
 
 	return newnode;
 }

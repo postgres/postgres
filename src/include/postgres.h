@@ -6,7 +6,7 @@
  *
  * Copyright (c) 1995, Regents of the University of California
  *
- * $Id: postgres.h,v 1.9 1997/09/08 21:50:28 momjian Exp $
+ * $Id: postgres.h,v 1.10 1997/11/02 15:26:28 vadim Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -163,7 +163,7 @@ typedef struct OidNameData *OidName;
 typedef uint32 TransactionId;
 
 #define InvalidTransactionId	0
-typedef uint16 CommandId;
+typedef uint32 CommandId;
 
 #define FirstCommandId	0
 

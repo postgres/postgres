@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/access/transam/transam.c,v 1.13 1997/09/08 21:41:42 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/access/transam/transam.c,v 1.14 1997/11/02 15:24:42 vadim Exp $
  *
  * NOTES
  *	  This file contains the high level access-method interface to the
@@ -41,17 +41,14 @@ TransactionLogUpdate(TransactionId transactionId,
  */
 
 Relation	LogRelation = (Relation) NULL;
-Relation	TimeRelation = (Relation) NULL;
 Relation	VariableRelation = (Relation) NULL;
 
 /* ----------------
  *		global variables holding cached transaction id's and statuses.
  * ----------------
  */
-TransactionId cachedGetCommitTimeXid;
-AbsoluteTime cachedGetCommitTime;
-TransactionId cachedTestXid;
-XidStatus	cachedTestXidStatus;
+TransactionId	cachedTestXid;
+XidStatus		cachedTestXidStatus;
 
 /* ----------------
  *		transaction system constants
@@ -118,7 +115,7 @@ SetRecoveryCheckingEnabled(bool state)
 #endif
 
 /* ----------------------------------------------------------------
- *		postgres log/time access method interface
+ *		postgres log access method interface
  *
  *		TransactionLogTest
  *		TransactionLogUpdate
@@ -204,7 +201,6 @@ TransactionLogUpdate(TransactionId transactionId,		/* trans id to update */
 {
 	BlockNumber blockNumber;
 	bool		fail = false;	/* success/failure */
-	AbsoluteTime currentTime;	/* time of this transaction */
 
 	/* ----------------
 	 *	during initialization we don't record any updates.
@@ -212,12 +208,6 @@ TransactionLogUpdate(TransactionId transactionId,		/* trans id to update */
 	 */
 	if (!RelationIsValid(LogRelation))
 		return;
-
-	/* ----------------
-	 *	get the transaction commit time
-	 * ----------------
-	 */
-	currentTime = getSystemTime();
 
 	/* ----------------
 	 *	update the log relation
@@ -234,91 +224,12 @@ TransactionLogUpdate(TransactionId transactionId,		/* trans id to update */
 	 *	 update (invalidate) our single item TransactionLogTest cache.
 	 * ----------------
 	 */
-	TransactionIdStore(transactionId, &cachedTestXid);
-	cachedTestXidStatus = status;
-
-	/* ----------------
-	 *	now we update the time relation, if necessary
-	 *	(we only record commit times)
-	 * ----------------
-	 */
-	if (RelationIsValid(TimeRelation) && status == XID_COMMIT)
+	if (status != XID_COMMIT)
 	{
-		TransComputeBlockNumber(TimeRelation, transactionId, &blockNumber);
-		TransBlockNumberSetCommitTime(TimeRelation,
-									  blockNumber,
-									  transactionId,
-									  currentTime,
-									  &fail);
-		/* ----------------
-		 *	 update (invalidate) our single item GetCommitTime cache.
-		 * ----------------
-		 */
-		TransactionIdStore(transactionId, &cachedGetCommitTimeXid);
-		cachedGetCommitTime = currentTime;
+		TransactionIdStore(transactionId, &cachedTestXid);
+		cachedTestXidStatus = status;
 	}
 
-	/* ----------------
-	 *	now we update the "last committed transaction" field
-	 *	in the variable relation if we are recording a commit.
-	 * ----------------
-	 */
-	if (RelationIsValid(VariableRelation) && status == XID_COMMIT)
-		UpdateLastCommittedXid(transactionId);
-}
-
-/* --------------------------------
- *		TransactionIdGetCommitTime
- * --------------------------------
- */
-
-AbsoluteTime					/* commit time of transaction id */
-TransactionIdGetCommitTime(TransactionId transactionId) /* transaction id to
-														 * test */
-{
-	BlockNumber blockNumber;
-	AbsoluteTime commitTime;	/* commit time */
-	bool		fail = false;	/* success/failure */
-
-	/* ----------------
-	 *	 return invalid if we aren't running yet...
-	 * ----------------
-	 */
-	if (!RelationIsValid(TimeRelation))
-		return INVALID_ABSTIME;
-
-	/* ----------------
-	 *	 before going to the buffer manager, check our single
-	 *	 item cache to see if we didn't just get the commit time
-	 *	 a moment ago.
-	 * ----------------
-	 */
-	if (TransactionIdEquals(transactionId, cachedGetCommitTimeXid))
-		return cachedGetCommitTime;
-
-	/* ----------------
-	 *	compute the item pointer corresponding to the
-	 *	page containing our transaction commit time
-	 * ----------------
-	 */
-	TransComputeBlockNumber(TimeRelation, transactionId, &blockNumber);
-	commitTime = TransBlockNumberGetCommitTime(TimeRelation,
-											   blockNumber,
-											   transactionId,
-											   &fail);
-
-	/* ----------------
-	 *	update our cache and return the transaction commit time
-	 * ----------------
-	 */
-	if (!fail)
-	{
-		TransactionIdStore(transactionId, &cachedGetCommitTimeXid);
-		cachedGetCommitTime = commitTime;
-		return commitTime;
-	}
-	else
-		return INVALID_ABSTIME;
 }
 
 /* ----------------------------------------------------------------
@@ -472,7 +383,6 @@ void
 InitializeTransactionLog(void)
 {
 	Relation	logRelation;
-	Relation	timeRelation;
 	MemoryContext oldContext;
 
 	/* ----------------
@@ -503,20 +413,17 @@ InitializeTransactionLog(void)
 	 * ----------------
 	 */
 	logRelation = heap_openr(LogRelationName);
-	timeRelation = heap_openr(TimeRelationName);
 	VariableRelation = heap_openr(VariableRelationName);
 	/* ----------------
 	 *	 XXX TransactionLogUpdate requires that LogRelation
-	 *	 and TimeRelation are valid so we temporarily set
-	 *	 them so we can initialize things properly.
-	 *	 This could be done cleaner.
+	 *	 is valid so we temporarily set it so we can initialize 
+	 *	 things properly. This could be done cleaner.
 	 * ----------------
 	 */
 	LogRelation = logRelation;
-	TimeRelation = timeRelation;
 
 	/* ----------------
-	 *	 if we have a virgin database, we initialize the log and time
+	 *	 if we have a virgin database, we initialize the log 
 	 *	 relation by committing the AmiTransactionId (id 512) and we
 	 *	 initialize the variable relation by setting the next available
 	 *	 transaction id to FirstTransactionId (id 514).  OID initialization
@@ -529,10 +436,12 @@ InitializeTransactionLog(void)
 
 		/* ----------------
 		 *	SOMEDAY initialize the information stored in
-		 *			the headers of the log/time/variable relations.
+		 *			the headers of the log/variable relations.
 		 * ----------------
 		 */
 		TransactionLogUpdate(AmiTransactionId, XID_COMMIT);
+		TransactionIdStore(AmiTransactionId, &cachedTestXid);
+		cachedTestXidStatus = XID_COMMIT;
 		VariableRelationPutNextXid(FirstTransactionId);
 
 	}
@@ -547,7 +456,6 @@ InitializeTransactionLog(void)
 		TransRecover(logRelation);
 	}
 	LogRelation = (Relation) NULL;
-	TimeRelation = (Relation) NULL;
 	SpinRelease(OidGenLockId);
 
 	/* ----------------
@@ -561,7 +469,6 @@ InitializeTransactionLog(void)
 	 * ----------------
 	 */
 	LogRelation = logRelation;
-	TimeRelation = timeRelation;
 
 	/* ----------------
 	 *	restore the memory context to the previous context
@@ -651,15 +558,7 @@ TransactionIdCommit(TransactionId transactionId)
 	if (AMI_OVERRIDE)
 		return;
 
-	/*
-	 * Within TransactionLogUpdate we call UpdateLastCommited() which
-	 * assumes we have exclusive access to pg_variable. Therefore we need
-	 * to get exclusive access before calling TransactionLogUpdate. -mer
-	 * 18 Aug 1992
-	 */
-	SpinAcquire(OidGenLockId);
 	TransactionLogUpdate(transactionId, XID_COMMIT);
-	SpinRelease(OidGenLockId);
 }
 
 /*

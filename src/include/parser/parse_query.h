@@ -6,7 +6,7 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: parse_query.h,v 1.12 1997/09/08 21:53:39 momjian Exp $
+ * $Id: parse_query.h,v 1.13 1997/11/02 15:27:08 vadim Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -34,9 +34,6 @@ addRangeTableEntry(ParseState *pstate,
 extern List *
 expandAll(ParseState *pstate, char *relname, char *refname,
 		  int *this_resno);
-extern TimeQual
-makeTimeRange(char *datestring1, char *datestring2,
-			  int timecode);
 extern Expr *make_op(char *opname, Node *ltree, Node *rtree);
 
 extern Oid	find_atttype(Oid relid, char *attrname);

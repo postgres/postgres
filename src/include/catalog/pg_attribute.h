@@ -7,7 +7,7 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: pg_attribute.h,v 1.16 1997/09/08 02:35:02 momjian Exp $
+ * $Id: pg_attribute.h,v 1.17 1997/11/02 15:26:56 vadim Exp $
  *
  * NOTES
  *	  the genbki.sh script reads this file and generates .bki
@@ -208,14 +208,9 @@ DATA(insert OID = 0 ( 1247 typdefault		25 0 -1  16 0 -1 f f i f f));
 DATA(insert OID = 0 ( 1247 ctid				27 0  6  -1 0 -1 f f i f f));
 DATA(insert OID = 0 ( 1247 oid				26 0  4  -2 0 -1 t f i f f));
 DATA(insert OID = 0 ( 1247 xmin				28 0  4  -3 0 -1 f f i f f));
-DATA(insert OID = 0 ( 1247 cmin				29 0  2  -4 0 -1 t f s f f));
+DATA(insert OID = 0 ( 1247 cmin				29 0  4  -4 0 -1 t f i f f));
 DATA(insert OID = 0 ( 1247 xmax				28 0  4  -5 0 -1 f f i f f));
-DATA(insert OID = 0 ( 1247 cmax				29 0  2  -6 0 -1 t f s f f));
-DATA(insert OID = 0 ( 1247 chain			27 0  6  -7 0 -1 f f i f f));
-DATA(insert OID = 0 ( 1247 anchor			27 0  6  -8 0 -1 f f i f f));
-DATA(insert OID = 0 ( 1247 tmin			   702 0  4  -9 0 -1 t f i f f));
-DATA(insert OID = 0 ( 1247 tmax			   702 0  4 -10 0 -1 t f i f f));
-DATA(insert OID = 0 ( 1247 vtype			18 0  1 -11 0 -1 t f c f f));
+DATA(insert OID = 0 ( 1247 cmax				29 0  4  -6 0 -1 t f i f f));
 
 /* ----------------
  *		pg_database
@@ -227,14 +222,9 @@ DATA(insert OID = 0 ( 1262 datpath			25 0 -1   3 0 -1 f f i f f));
 DATA(insert OID = 0 ( 1262 ctid				27 0  6  -1 0 -1 f f i f f));
 DATA(insert OID = 0 ( 1262 oid				26 0  4  -2 0 -1 t f i f f));
 DATA(insert OID = 0 ( 1262 xmin				28 0  4  -3 0 -1 f f i f f));
-DATA(insert OID = 0 ( 1262 cmin				29 0  2  -4 0 -1 t f s f f));
+DATA(insert OID = 0 ( 1262 cmin				29 0  4  -4 0 -1 t f i f f));
 DATA(insert OID = 0 ( 1262 xmax				28 0  4  -5 0 -1 f f i f f));
-DATA(insert OID = 0 ( 1262 cmax				29 0  2  -6 0 -1 t f s f f));
-DATA(insert OID = 0 ( 1262 chain			27 0  6  -7 0 -1 f f i f f));
-DATA(insert OID = 0 ( 1262 anchor			27 0  6  -8 0 -1 f f i f f));
-DATA(insert OID = 0 ( 1262 tmin			   702 0  4  -9 0 -1 t f i f f));
-DATA(insert OID = 0 ( 1262 tmax			   702 0  4 -10 0 -1 t f i f f));
-DATA(insert OID = 0 ( 1262 vtype			18 0  1 -11 0 -1 t f c f f));
+DATA(insert OID = 0 ( 1262 cmax				29 0  4  -6 0 -1 t f i f f));
 
 /* ----------------
  *		pg_demon
@@ -248,14 +238,9 @@ DATA(insert OID = 0 ( 1251 ctid				27 0  6  -1 0 -1 f f i f f));
 
 DATA(insert OID = 0 ( 1251 oid				26 0  4  -2 0 -1 t f i f f));
 DATA(insert OID = 0 ( 1251 xmin				28 0  4  -3 0 -1 f f i f f));
-DATA(insert OID = 0 ( 1251 cmin				29 0  2  -4 0 -1 t f s f f));
+DATA(insert OID = 0 ( 1251 cmin				29 0  4  -4 0 -1 t f i f f));
 DATA(insert OID = 0 ( 1251 xmax				28 0  4  -5 0 -1 f f i f f));
-DATA(insert OID = 0 ( 1251 cmax				29 0  2  -6 0 -1 t f s f f));
-DATA(insert OID = 0 ( 1251 chain			27 0  6  -7 0 -1 f f i f f));
-DATA(insert OID = 0 ( 1251 anchor			27 0  6  -8 0 -1 f f i f f));
-DATA(insert OID = 0 ( 1251 tmin			   702 0  4  -9 0 -1 t f i f f));
-DATA(insert OID = 0 ( 1251 tmax			   702 0  4 -10 0 -1 t f i f f));
-DATA(insert OID = 0 ( 1251 vtype			18 0  1 -11 0 -1 t f c f f));
+DATA(insert OID = 0 ( 1251 cmax				29 0  4  -6 0 -1 t f i f f));
 
 /* ----------------
  *		pg_proc
@@ -298,14 +283,9 @@ DATA(insert OID = 0 ( 1255 probin			17 0 -1  16 0 -1 f f i f f));
 DATA(insert OID = 0 ( 1255 ctid				27 0  6  -1 0 -1 f f i f f));
 DATA(insert OID = 0 ( 1255 oid				26 0  4  -2 0 -1 t f i f f));
 DATA(insert OID = 0 ( 1255 xmin				28 0  4  -3 0 -1 f f i f f));
-DATA(insert OID = 0 ( 1255 cmin				29 0  2  -4 0 -1 t f s f f));
+DATA(insert OID = 0 ( 1255 cmin				29 0  4  -4 0 -1 t f i f f));
 DATA(insert OID = 0 ( 1255 xmax				28 0  4  -5 0 -1 f f i f f));
-DATA(insert OID = 0 ( 1255 cmax				29 0  2  -6 0 -1 t f s f f));
-DATA(insert OID = 0 ( 1255 chain			27 0  6  -7 0 -1 f f i f f));
-DATA(insert OID = 0 ( 1255 anchor			27 0  6  -8 0 -1 f f i f f));
-DATA(insert OID = 0 ( 1255 tmin			   702 0  4  -9 0 -1 t f i f f));
-DATA(insert OID = 0 ( 1255 tmax			   702 0  4 -10 0 -1 t f i f f));
-DATA(insert OID = 0 ( 1255 vtype			18 0  1 -11 0 -1 t f c f f));
+DATA(insert OID = 0 ( 1255 cmax				29 0  4  -6 0 -1 t f i f f));
 
 /* ----------------
  *		pg_server
@@ -317,14 +297,9 @@ DATA(insert OID = 0 ( 1257 serport			21 0  2   3 0 -1 t f s f f));
 DATA(insert OID = 0 ( 1257 ctid				27 0  6  -1 0 -1 f f i f f));
 DATA(insert OID = 0 ( 1257 oid				26 0  4  -2 0 -1 t f i f f));
 DATA(insert OID = 0 ( 1257 xmin				28 0  4  -3 0 -1 f f i f f));
-DATA(insert OID = 0 ( 1257 cmin				29 0  2  -4 0 -1 t f s f f));
+DATA(insert OID = 0 ( 1257 cmin				29 0  4  -4 0 -1 t f i f f));
 DATA(insert OID = 0 ( 1257 xmax				28 0  4  -5 0 -1 f f i f f));
-DATA(insert OID = 0 ( 1257 cmax				29 0  2  -6 0 -1 t f s f f));
-DATA(insert OID = 0 ( 1257 chain			27 0  6  -7 0 -1 f f i f f));
-DATA(insert OID = 0 ( 1257 anchor			27 0  6  -8 0 -1 f f i f f));
-DATA(insert OID = 0 ( 1257 tmin			   702 0  4  -9 0 -1 t f i f f));
-DATA(insert OID = 0 ( 1257 tmax			   702 0  4 -10 0 -1 t f i f f));
-DATA(insert OID = 0 ( 1257 vtype			18 0  1 -11 0 -1 t f c f f));
+DATA(insert OID = 0 ( 1257 cmax				29 0  4  -6 0 -1 t f i f f));
 
 /* ----------------
  *		pg_user
@@ -339,14 +314,9 @@ DATA(insert OID = 0 ( 1260 usecatupd		16 0  1   6 0 -1 t f c f f));
 DATA(insert OID = 0 ( 1260 ctid				27 0  6  -1 0 -1 f f i f f));
 DATA(insert OID = 0 ( 1260 oid				26 0  4  -2 0 -1 t f i f f));
 DATA(insert OID = 0 ( 1260 xmin				28 0  4  -3 0 -1 f f i f f));
-DATA(insert OID = 0 ( 1260 cmin				29 0  2  -4 0 -1 t f s f f));
+DATA(insert OID = 0 ( 1260 cmin				29 0  4  -4 0 -1 t f i f f));
 DATA(insert OID = 0 ( 1260 xmax				28 0  4  -5 0 -1 f f i f f));
-DATA(insert OID = 0 ( 1260 cmax				29 0  2  -6 0 -1 t f s f f));
-DATA(insert OID = 0 ( 1260 chain			27 0  6  -7 0 -1 f f i f f));
-DATA(insert OID = 0 ( 1260 anchor			27 0  6  -8 0 -1 f f i f f));
-DATA(insert OID = 0 ( 1260 tmin			   702 0  4  -9 0 -1 t f i f f));
-DATA(insert OID = 0 ( 1260 tmax			   702 0  4 -10 0 -1 t f i f f));
-DATA(insert OID = 0 ( 1260 vtype			18 0  1 -11 0 -1 t f c f f));
+DATA(insert OID = 0 ( 1260 cmax				29 0  4  -6 0 -1 t f i f f));
 
 /* ----------------
  *		pg_group
@@ -358,14 +328,9 @@ DATA(insert OID = 0 ( 1261 grolist		  1007 0 -1   3 0 -1 f f i f f));
 DATA(insert OID = 0 ( 1261 ctid				27 0  6  -1 0 -1 f f i f f));
 DATA(insert OID = 0 ( 1261 oid				26 0  4  -2 0 -1 t f i f f));
 DATA(insert OID = 0 ( 1261 xmin				28 0  4  -3 0 -1 f f i f f));
-DATA(insert OID = 0 ( 1261 cmin				29 0  2  -4 0 -1 t f s f f));
+DATA(insert OID = 0 ( 1261 cmin				29 0  4  -4 0 -1 t f i f f));
 DATA(insert OID = 0 ( 1261 xmax				28 0  4  -5 0 -1 f f i f f));
-DATA(insert OID = 0 ( 1261 cmax				29 0  2  -6 0 -1 t f s f f));
-DATA(insert OID = 0 ( 1261 chain			27 0  6  -7 0 -1 f f i f f));
-DATA(insert OID = 0 ( 1261 anchor			27 0  6  -8 0 -1 f f i f f));
-DATA(insert OID = 0 ( 1261 tmin			   702 0  4  -9 0 -1 t f i f f));
-DATA(insert OID = 0 ( 1261 tmax			   702 0  4 -10 0 -1 t f i f f));
-DATA(insert OID = 0 ( 1261 vtype			18 0  1 -11 0 -1 t f c f f));
+DATA(insert OID = 0 ( 1261 cmax				29 0  4  -6 0 -1 t f i f f));
 
 /* ----------------
  *		pg_attribute
@@ -402,14 +367,9 @@ DATA(insert OID = 0 ( 1249 atthasdef		16 0  1  13 0 -1 t f c f f));
 DATA(insert OID = 0 ( 1249 ctid				27 0  6  -1 0 -1 f f i f f));
 DATA(insert OID = 0 ( 1249 oid				26 0  4  -2 0 -1 t f i f f));
 DATA(insert OID = 0 ( 1249 xmin				28 0  4  -3 0 -1 f f i f f));
-DATA(insert OID = 0 ( 1249 cmin				29 0  2  -4 0 -1 t f s f f));
+DATA(insert OID = 0 ( 1249 cmin				29 0  4  -4 0 -1 t f i f f));
 DATA(insert OID = 0 ( 1249 xmax				28 0  4  -5 0 -1 f f i f f));
-DATA(insert OID = 0 ( 1249 cmax				29 0  2  -6 0 -1 t f s f f));
-DATA(insert OID = 0 ( 1249 chain			27 0  6  -7 0 -1 f f i f f));
-DATA(insert OID = 0 ( 1249 anchor			27 0  6  -8 0 -1 f f i f f));
-DATA(insert OID = 0 ( 1249 tmin			   702 0  4  -9 0 -1 t f i f f));
-DATA(insert OID = 0 ( 1249 tmax			   702 0  4 -10 0 -1 t f i f f));
-DATA(insert OID = 0 ( 1249 vtype			18 0  1 -11 0 -1 t f c f f));
+DATA(insert OID = 0 ( 1249 cmax				29 0  4  -6 0 -1 t f i f f));
 
 /* ----------------
  *		pg_class
@@ -456,14 +416,9 @@ DATA(insert OID = 0 ( 1259 relacl		  1034 0 -1  17 0 -1 f f i f f));
 DATA(insert OID = 0 ( 1259 ctid				27 0  6  -1 0 -1 f f i f f));
 DATA(insert OID = 0 ( 1259 oid				26 0  4  -2 0 -1 t f i f f));
 DATA(insert OID = 0 ( 1259 xmin				28 0  4  -3 0 -1 f f i f f));
-DATA(insert OID = 0 ( 1259 cmin				29 0  2  -4 0 -1 t f s f f));
+DATA(insert OID = 0 ( 1259 cmin				29 0  4  -4 0 -1 t f i f f));
 DATA(insert OID = 0 ( 1259 xmax				28 0  4  -5 0 -1 f f i f f));
-DATA(insert OID = 0 ( 1259 cmax				29 0  2  -6 0 -1 t f s f f));
-DATA(insert OID = 0 ( 1259 chain			27 0  6  -7 0 -1 f f i f f));
-DATA(insert OID = 0 ( 1259 anchor			27 0  6  -8 0 -1 f f i f f));
-DATA(insert OID = 0 ( 1259 tmin			   702 0  4  -9 0 -1 t f i f f));
-DATA(insert OID = 0 ( 1259 tmax			   702 0  4 -10 0 -1 t f i f f));
-DATA(insert OID = 0 ( 1259 vtype			18 0  1 -11 0 -1 t f c f f));
+DATA(insert OID = 0 ( 1259 cmax				29 0  4  -6 0 -1 t f i f f));
 
 /* ----------------
  *		pg_magic
@@ -474,14 +429,9 @@ DATA(insert OID = 0 ( 1253 magvalue			19 0 NAMEDATALEN   2 0 -1 f f i f f));
 DATA(insert OID = 0 ( 1253 ctid				27 0  6  -1 0 -1 f f i f f));
 DATA(insert OID = 0 ( 1253 oid				26 0  4  -2 0 -1 t f i f f));
 DATA(insert OID = 0 ( 1253 xmin				28 0  4  -3 0 -1 f f i f f));
-DATA(insert OID = 0 ( 1253 cmin				29 0  2  -4 0 -1 t f s f f));
+DATA(insert OID = 0 ( 1253 cmin				29 0  4  -4 0 -1 t f i f f));
 DATA(insert OID = 0 ( 1253 xmax				28 0  4  -5 0 -1 f f i f f));
-DATA(insert OID = 0 ( 1253 cmax				29 0  2  -6 0 -1 t f s f f));
-DATA(insert OID = 0 ( 1253 chain			27 0  6  -7 0 -1 f f i f f));
-DATA(insert OID = 0 ( 1253 anchor			27 0  6  -8 0 -1 f f i f f));
-DATA(insert OID = 0 ( 1253 tmin			   702 0  4  -9 0 -1 t f i f f));
-DATA(insert OID = 0 ( 1253 tmax			   702 0  4 -10 0 -1 t f i f f));
-DATA(insert OID = 0 ( 1253 vtype			18 0  1 -11 0 -1 t f c f f));
+DATA(insert OID = 0 ( 1253 cmax				29 0  4  -6 0 -1 t f i f f));
 
 /* ----------------
  *		pg_defaults
@@ -492,14 +442,9 @@ DATA(insert OID = 0 ( 1263 defvalue			19 0 NAMEDATALEN   2 0 -1 f f i f f));
 DATA(insert OID = 0 ( 1263 ctid				27 0  6  -1 0 -1 f f i f f));
 DATA(insert OID = 0 ( 1263 oid				26 0  4  -2 0 -1 t f i f f));
 DATA(insert OID = 0 ( 1263 xmin				28 0  4  -3 0 -1 f f i f f));
-DATA(insert OID = 0 ( 1263 cmin				29 0  2  -4 0 -1 t f s f f));
+DATA(insert OID = 0 ( 1263 cmin				29 0  4  -4 0 -1 t f i f f));
 DATA(insert OID = 0 ( 1263 xmax				28 0  4  -5 0 -1 f f i f f));
-DATA(insert OID = 0 ( 1263 cmax				29 0  2  -6 0 -1 t f s f f));
-DATA(insert OID = 0 ( 1263 chain			27 0  6  -7 0 -1 f f i f f));
-DATA(insert OID = 0 ( 1263 anchor			27 0  6  -8 0 -1 f f i f f));
-DATA(insert OID = 0 ( 1263 tmin			   702 0  4  -9 0 -1 t f i f f));
-DATA(insert OID = 0 ( 1263 tmax			   702 0  4 -10 0 -1 t f i f f));
-DATA(insert OID = 0 ( 1263 vtype			18 0  1 -11 0 -1 t f c f f));
+DATA(insert OID = 0 ( 1263 cmax				29 0  4  -6 0 -1 t f i f f));
 
 /* ----------------
  *		pg_attrdef
@@ -512,14 +457,9 @@ DATA(insert OID = 0 ( 1215 adsrc			25 0 -1   4 0 -1 f f i f f));
 DATA(insert OID = 0 ( 1215 ctid				27 0  6  -1 0 -1 f f i f f));
 DATA(insert OID = 0 ( 1215 oid				26 0  4  -2 0 -1 t f i f f));
 DATA(insert OID = 0 ( 1215 xmin				28 0  4  -3 0 -1 f f i f f));
-DATA(insert OID = 0 ( 1215 cmin				29 0  2  -4 0 -1 t f s f f));
+DATA(insert OID = 0 ( 1215 cmin				29 0  4  -4 0 -1 t f i f f));
 DATA(insert OID = 0 ( 1215 xmax				28 0  4  -5 0 -1 f f i f f));
-DATA(insert OID = 0 ( 1215 cmax				29 0  2  -6 0 -1 t f s f f));
-DATA(insert OID = 0 ( 1215 chain			27 0  6  -7 0 -1 f f i f f));
-DATA(insert OID = 0 ( 1215 anchor			27 0  6  -8 0 -1 f f i f f));
-DATA(insert OID = 0 ( 1215 tmin			   702 0  4  -9 0 -1 t f i f f));
-DATA(insert OID = 0 ( 1215 tmax			   702 0  4 -10 0 -1 t f i f f));
-DATA(insert OID = 0 ( 1215 vtype			18 0  1 -11 0 -1 t f c f f));
+DATA(insert OID = 0 ( 1215 cmax				29 0  4  -6 0 -1 t f i f f));
 
 /* ----------------
  *		pg_relcheck
@@ -532,14 +472,9 @@ DATA(insert OID = 0 ( 1216 rcsrc			25 0 -1   4 0 -1 f f i f f));
 DATA(insert OID = 0 ( 1216 ctid				27 0  6  -1 0 -1 f f i f f));
 DATA(insert OID = 0 ( 1216 oid				26 0  4  -2 0 -1 t f i f f));
 DATA(insert OID = 0 ( 1216 xmin				28 0  4  -3 0 -1 f f i f f));
-DATA(insert OID = 0 ( 1216 cmin				29 0  2  -4 0 -1 t f s f f));
+DATA(insert OID = 0 ( 1216 cmin				29 0  4  -4 0 -1 t f i f f));
 DATA(insert OID = 0 ( 1216 xmax				28 0  4  -5 0 -1 f f i f f));
-DATA(insert OID = 0 ( 1216 cmax				29 0  2  -6 0 -1 t f s f f));
-DATA(insert OID = 0 ( 1216 chain			27 0  6  -7 0 -1 f f i f f));
-DATA(insert OID = 0 ( 1216 anchor			27 0  6  -8 0 -1 f f i f f));
-DATA(insert OID = 0 ( 1216 tmin			   702 0  4  -9 0 -1 t f i f f));
-DATA(insert OID = 0 ( 1216 tmax			   702 0  4 -10 0 -1 t f i f f));
-DATA(insert OID = 0 ( 1216 vtype			18 0  1 -11 0 -1 t f c f f));
+DATA(insert OID = 0 ( 1216 cmax				29 0  4  -6 0 -1 t f i f f));
 
 /* ----------------
  *		pg_trigger
@@ -555,14 +490,9 @@ DATA(insert OID = 0 ( 1219 tgargs			17 0 -1   7 0 -1 f f i f f));
 DATA(insert OID = 0 ( 1219 ctid				27 0  6  -1 0 -1 f f i f f));
 DATA(insert OID = 0 ( 1219 oid				26 0  4  -2 0 -1 t f i f f));
 DATA(insert OID = 0 ( 1219 xmin				28 0  4  -3 0 -1 f f i f f));
-DATA(insert OID = 0 ( 1219 cmin				29 0  2  -4 0 -1 t f s f f));
+DATA(insert OID = 0 ( 1219 cmin				29 0  4  -4 0 -1 t f i f f));
 DATA(insert OID = 0 ( 1219 xmax				28 0  4  -5 0 -1 f f i f f));
-DATA(insert OID = 0 ( 1219 cmax				29 0  2  -6 0 -1 t f s f f));
-DATA(insert OID = 0 ( 1219 chain			27 0  6  -7 0 -1 f f i f f));
-DATA(insert OID = 0 ( 1219 anchor			27 0  6  -8 0 -1 f f i f f));
-DATA(insert OID = 0 ( 1219 tmin			   702 0  4  -9 0 -1 t f i f f));
-DATA(insert OID = 0 ( 1219 tmax			   702 0  4 -10 0 -1 t f i f f));
-DATA(insert OID = 0 ( 1219 vtype			18 0  1 -11 0 -1 t f c f f));
+DATA(insert OID = 0 ( 1219 cmax				29 0  4  -6 0 -1 t f i f f));
 
 /* ----------------
  *		pg_hosts - this relation is used to store host based authentication
@@ -595,16 +525,5 @@ DATA(insert OID = 0 ( 1264 varfoo			26 0  4   1 0 -1 t f i f f));
 { 1269l, {"logfoo"},  26l, 0l, 4, 1, 0l, -1l, '\001', '\0', 'i', '\0', '\0' }
 
 DATA(insert OID = 0 ( 1269 logfoo			26 0  4   1 0 -1 t f i f f));
-
-/* ----------------
- *		pg_time - this relation is modified by special purpose access
- *				  method code.	The following is garbage but is needed
- *				  so that the reldesc code works properly.
- * ----------------
- */
-#define Schema_pg_time \
-{ 1271l, {"timefoo"},  26l, 0l, 4, 1, 0l, -1l, '\001', '\0', 'i', '\0', '\0' }
-
-DATA(insert OID = 0 (  1271 timefoo			26 0  4   1 0 -1 t f i f f));
 
 #endif							/* PG_ATTRIBUTE_H */

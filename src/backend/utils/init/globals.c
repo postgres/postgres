@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/init/globals.c,v 1.14 1997/09/18 14:33:46 vadim Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/init/globals.c,v 1.15 1997/11/02 15:26:12 vadim Exp $
  *
  * NOTES
  *	  Globals used all over the place should be declared here and not
@@ -114,7 +114,6 @@ char	   *SharedSystemRelationNames[] = {
 	LogRelationName,
 	MagicRelationName,
 	ServerRelationName,
-	TimeRelationName,
 	UserRelationName,
 	VariableRelationName,
 	0

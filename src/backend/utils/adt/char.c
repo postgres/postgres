@@ -12,7 +12,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/char.c,v 1.13 1997/10/25 05:12:38 thomas Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/char.c,v 1.14 1997/11/02 15:25:57 vadim Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -81,12 +81,7 @@ cidout(int32 c)
 	char	   *result;
 	CommandId	c2;
 
-	/*
-	 * cid is a number between 0 .. 2^16-1, therefore we need at most 6
-	 * chars for the string (5 digits + '\0') NOTE: print it as an
-	 * UNSIGNED int!
-	 */
-	result = palloc(6);
+	result = palloc(12);
 	c2 = (CommandId) c;
 	sprintf(result, "%u", (unsigned) (c2));
 	return (result);

@@ -6,7 +6,7 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: transam.h,v 1.11 1997/09/08 21:51:03 momjian Exp $
+ * $Id: transam.h,v 1.12 1997/11/02 15:26:44 vadim Exp $
  *
  *	 NOTES
  *		Transaction System Version 101 now support proper oid
@@ -18,7 +18,6 @@
 #define TRANSAM_H
 
 #include <storage/bufmgr.h>
-#include <utils/nabstime.h>
 
 /* ----------------
  *		transaction system version id
@@ -33,19 +32,19 @@
  *		even if their minor versions differ.
  * ----------------
  */
-#define TRANS_SYSTEM_VERSION	101
+#define TRANS_SYSTEM_VERSION	200
 
 /* ----------------
  *		transaction id status values
  *
- *		someday we will use "11" = 3 = XID_INVALID to mean the
- *		starting of run-length encoded log data.
+ *		someday we will use "11" = 3 = XID_COMMIT_CHILD to mean the
+ *		commiting of child xactions.
  * ----------------
  */
-#define XID_COMMIT		2		/* transaction commited */
-#define XID_ABORT		1		/* transaction aborted */
-#define XID_INPROGRESS	0		/* transaction in progress */
-#define XID_INVALID		3		/* other */
+#define XID_COMMIT			2		/* transaction commited */
+#define XID_ABORT			1		/* transaction aborted */
+#define XID_INPROGRESS		0		/* transaction in progress */
+#define XID_COMMIT_CHILD	3		/* child xact commited */
 
 typedef unsigned char XidStatus;/* (2 bits) */
 
@@ -69,7 +68,6 @@ typedef unsigned char XidStatus;/* (2 bits) */
  */
 #define TP_DataSize				BLCKSZ
 #define TP_NumXidStatusPerBlock (TP_DataSize * 4)
-#define TP_NumTimePerBlock		(TP_DataSize / 4)
 
 /* ----------------
  *		LogRelationContents structure
@@ -91,25 +89,6 @@ typedef struct LogRelationContentsData
 typedef LogRelationContentsData *LogRelationContents;
 
 /* ----------------
- *		TimeRelationContents structure
- *
- *		This structure describes the storage of the data in the
- *		first 2048 bytes of the time relation.	This storage is never
- *		used for transaction commit times because transaction id's begin
- *		their numbering at 512.
- *
- *		The first 4 bytes of this relation store the version
- *		number of the transction system.
- * ----------------
- */
-typedef struct TimeRelationContentsData
-{
-	int			TransSystemVersion;
-} TimeRelationContentsData;
-
-typedef TimeRelationContentsData *TimeRelationContents;
-
-/* ----------------
  *		VariableRelationContents structure
  *
  *		The variable relation is a special "relation" which
@@ -127,10 +106,10 @@ typedef TimeRelationContentsData *TimeRelationContents;
  */
 typedef struct VariableRelationContentsData
 {
-	int			TransSystemVersion;
-	TransactionId nextXidData;
-	TransactionId lastXidData;
-	Oid			nextOid;
+	int				TransSystemVersion;
+	TransactionId	nextXidData;
+	TransactionId	lastXidData;			/* unused */
+	Oid				nextOid;
 } VariableRelationContentsData;
 
 typedef VariableRelationContentsData *VariableRelationContents;
@@ -143,7 +122,6 @@ typedef VariableRelationContentsData *VariableRelationContents;
 /*
  * prototypes for functions in transam/transam.c
  */
-extern AbsoluteTime TransactionIdGetCommitTime(TransactionId transactionId);
 extern void InitializeTransactionLog(void);
 extern bool TransactionIdDidCommit(TransactionId transactionId);
 extern bool TransactionIdDidAbort(TransactionId transactionId);
@@ -162,18 +140,10 @@ extern void
 TransBlockNumberSetXidStatus(Relation relation,
 		   BlockNumber blockNumber, TransactionId xid, XidStatus xstatus,
 							 bool *failP);
-extern AbsoluteTime
-TransBlockNumberGetCommitTime(Relation relation,
-				BlockNumber blockNumber, TransactionId xid, bool *failP);
-extern void
-TransBlockNumberSetCommitTime(Relation relation,
-		  BlockNumber blockNumber, TransactionId xid, AbsoluteTime xtime,
-							  bool *failP);
 
 /* in transam/varsup.c */
 extern void VariableRelationPutNextXid(TransactionId xid);
 extern void GetNewTransactionId(TransactionId *xid);
-extern void UpdateLastCommittedXid(TransactionId xid);
 extern void GetNewObjectId(Oid *oid_return);
 extern void CheckMaxObjectId(Oid assigned_oid);
 
@@ -184,11 +154,8 @@ extern void CheckMaxObjectId(Oid assigned_oid);
 
 /* in transam.c */
 extern Relation LogRelation;
-extern Relation TimeRelation;
 extern Relation VariableRelation;
 
-extern TransactionId cachedGetCommitTimeXid;
-extern AbsoluteTime cachedGetCommitTime;
 extern TransactionId cachedTestXid;
 extern XidStatus cachedTestXidStatus;
 

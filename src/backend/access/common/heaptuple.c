@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/access/common/heaptuple.c,v 1.27 1997/09/24 17:44:24 thomas Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/access/common/heaptuple.c,v 1.28 1997/11/02 15:24:09 vadim Exp $
  *
  * NOTES
  *	  The old interface functions have been converted to macros
@@ -115,7 +115,7 @@ DataFill(char *data,
 		 TupleDesc tupleDesc,
 		 Datum value[],
 		 char nulls[],
-		 char *infomask,
+		 uint16 *infomask,
 		 bits8 *bit)
 {
 	bits8	   *bitP = 0;
@@ -246,11 +246,6 @@ heap_attisnull(HeapTuple tup, int attnum)
 			case MinCommandIdAttributeNumber:
 			case MaxTransactionIdAttributeNumber:
 			case MaxCommandIdAttributeNumber:
-			case ChainItemPointerAttributeNumber:
-			case AnchorItemPointerAttributeNumber:
-			case MinAbsoluteTimeAttributeNumber:
-			case MaxAbsoluteTimeAttributeNumber:
-			case VersionTypeAttributeNumber:
 				break;
 
 			case 0:
@@ -293,18 +288,6 @@ heap_sysattrlen(AttrNumber attno)
 			return sizeof f->t_xmax;
 		case MaxCommandIdAttributeNumber:
 			return sizeof f->t_cmax;
-		case ChainItemPointerAttributeNumber:
-			return sizeof f->t_chain;
-		case MinAbsoluteTimeAttributeNumber:
-			return sizeof f->t_tmin;
-		case MaxAbsoluteTimeAttributeNumber:
-			return sizeof f->t_tmax;
-		case VersionTypeAttributeNumber:
-			return sizeof f->t_vtype;
-
-		case AnchorItemPointerAttributeNumber:
-			elog(WARN, "heap_sysattrlen: field t_anchor does not exist!");
-			return 0;
 
 		default:
 			elog(WARN, "sysattrlen: System attribute number %d unknown.", attno);
@@ -343,21 +326,6 @@ heap_sysattrbyval(AttrNumber attno)
 		case MaxCommandIdAttributeNumber:
 			byval = true;
 			break;
-		case ChainItemPointerAttributeNumber:
-			byval = false;
-			break;
-		case AnchorItemPointerAttributeNumber:
-			byval = false;
-			break;
-		case MinAbsoluteTimeAttributeNumber:
-			byval = true;
-			break;
-		case MaxAbsoluteTimeAttributeNumber:
-			byval = true;
-			break;
-		case VersionTypeAttributeNumber:
-			byval = true;
-			break;
 		default:
 			byval = true;
 			elog(WARN, "sysattrbyval: System attribute number %d unknown.",
@@ -377,7 +345,7 @@ heap_getsysattr(HeapTuple tup, Buffer b, int attnum)
 {
 	switch (attnum)
 	{
-			case SelfItemPointerAttributeNumber:
+		case SelfItemPointerAttributeNumber:
 			return ((Datum) &tup->t_ctid);
 		case ObjectIdAttributeNumber:
 			return ((Datum) (long) tup->t_oid);
@@ -389,38 +357,6 @@ heap_getsysattr(HeapTuple tup, Buffer b, int attnum)
 			return ((Datum) (long) tup->t_xmax);
 		case MaxCommandIdAttributeNumber:
 			return ((Datum) (long) tup->t_cmax);
-		case ChainItemPointerAttributeNumber:
-			return ((Datum) &tup->t_chain);
-		case AnchorItemPointerAttributeNumber:
-			elog(WARN, "heap_getsysattr: t_anchor does not exist!");
-			break;
-
-			/*
-			 * For tmin and tmax, we need to do some extra work.  These
-			 * don't get filled in until the vacuum cleaner runs (or we
-			 * manage to flush a page after setting the value correctly
-			 * below).	If the vacuum cleaner hasn't run yet, then the
-			 * times stored in the tuple are wrong, and we need to look up
-			 * the commit time of the transaction. We cache this value in
-			 * the tuple to avoid doing the work more than once.
-			 */
-
-		case MinAbsoluteTimeAttributeNumber:
-			if (!AbsoluteTimeIsBackwardCompatiblyValid(tup->t_tmin) &&
-				TransactionIdDidCommit(tup->t_xmin))
-				tup->t_tmin = TransactionIdGetCommitTime(tup->t_xmin);
-			return ((Datum) (long) tup->t_tmin);
-		case MaxAbsoluteTimeAttributeNumber:
-			if (!AbsoluteTimeIsBackwardCompatiblyReal(tup->t_tmax))
-			{
-				if (TransactionIdDidCommit(tup->t_xmax))
-					tup->t_tmax = TransactionIdGetCommitTime(tup->t_xmax);
-				else
-					tup->t_tmax = CURRENT_ABSTIME;
-			}
-			return ((Datum) (long) tup->t_tmax);
-		case VersionTypeAttributeNumber:
-			return ((Datum) (long) tup->t_vtype);
 		default:
 			elog(WARN, "heap_getsysattr: undefined attnum %d", attnum);
 	}
@@ -858,8 +794,6 @@ heap_formtuple(TupleDesc tupleDescriptor,
 	tuple->t_len = len;
 	tuple->t_natts = numberOfAttributes;
 	tuple->t_hoff = hoff;
-	tuple->t_tmin = INVALID_ABSTIME;
-	tuple->t_tmax = CURRENT_ABSTIME;
 
 	DataFill((char *) tuple + tuple->t_hoff,
 			 tupleDescriptor,
@@ -867,6 +801,8 @@ heap_formtuple(TupleDesc tupleDescriptor,
 			 nulls,
 			 &tuple->t_infomask,
 			 (hasnull ? tuple->t_bits : NULL));
+
+	tuple->t_infomask |= HEAP_XMAX_INVALID;
 
 	return (tuple);
 }
@@ -970,9 +906,9 @@ heap_modifytuple(HeapTuple tuple,
 	 * ----------------
 	 */
 	infomask = newTuple->t_infomask;
-	memmove((char *) &newTuple->t_ctid, /* XXX */
-			(char *) &tuple->t_ctid,
-			((char *) &tuple->t_hoff - (char *) &tuple->t_ctid));		/* XXX */
+	memmove((char *) &newTuple->t_oid, /* XXX */
+			(char *) &tuple->t_oid,
+			((char *) &tuple->t_hoff - (char *) &tuple->t_oid));	/* XXX */
 	newTuple->t_infomask = infomask;
 	newTuple->t_natts = numberOfAttributes;		/* fix t_natts just in
 												 * case */
@@ -1013,10 +949,11 @@ heap_addheader(uint32 natts,	/* max domain index */
 	tup = (HeapTuple) tp;
 	MemSet((char *) tup, 0, len);
 
-	tup->t_len = (short) len;	/* XXX */
+	tup->t_len = len;
 	tp += tup->t_hoff = hoff;
 	tup->t_natts = natts;
 	tup->t_infomask = 0;
+	tup->t_infomask |= HEAP_XMAX_INVALID;
 
 	memmove(tp, structure, structlen);
 

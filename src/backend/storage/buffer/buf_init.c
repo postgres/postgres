@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/storage/buffer/buf_init.c,v 1.14 1997/09/18 20:21:16 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/storage/buffer/buf_init.c,v 1.15 1997/11/02 15:25:36 vadim Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -70,9 +70,7 @@ extern IpcSemaphoreId WaitIOSemId;
 long	   *PrivateRefCount;	/* also used in freelist.c */
 long	   *LastRefCount;		/* refcounts of last ExecMain level */
 long	   *CommitInfoNeedsSave;/* to write buffers where we have filled
-								 * in */
-
- /* t_tmin (or t_tmax)						 */
+								 * in t_infomask */
 
 /*
  * Data Structures:

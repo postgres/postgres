@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/cache/relcache.c,v 1.26 1997/10/25 05:38:52 thomas Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/cache/relcache.c,v 1.27 1997/11/02 15:26:06 vadim Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -80,7 +80,6 @@
 
 #include "catalog/pg_variable.h"
 #include "catalog/pg_log.h"
-#include "catalog/pg_time.h"
 #include "catalog/pg_attrdef.h"
 #include "catalog/pg_relcheck.h"
 #include "catalog/indexing.h"
@@ -118,7 +117,6 @@ FormData_pg_attribute Desc_pg_proc[Natts_pg_proc] = {Schema_pg_proc};
 FormData_pg_attribute Desc_pg_type[Natts_pg_type] = {Schema_pg_type};
 FormData_pg_attribute Desc_pg_variable[Natts_pg_variable] = {Schema_pg_variable};
 FormData_pg_attribute Desc_pg_log[Natts_pg_log] = {Schema_pg_log};
-FormData_pg_attribute Desc_pg_time[Natts_pg_time] = {Schema_pg_time};
 
 /* ----------------
  *		global variables
@@ -1679,7 +1677,6 @@ RelationInitialize(void)
 	formrdesc(TypeRelationName, Natts_pg_type, Desc_pg_type);
 	formrdesc(VariableRelationName, Natts_pg_variable, Desc_pg_variable);
 	formrdesc(LogRelationName, Natts_pg_log, Desc_pg_log);
-	formrdesc(TimeRelationName, Natts_pg_time, Desc_pg_time);
 
 	/*
 	 * If this isn't initdb time, then we want to initialize some index

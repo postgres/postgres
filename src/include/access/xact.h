@@ -6,7 +6,7 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: xact.h,v 1.9 1997/09/08 21:51:06 momjian Exp $
+ * $Id: xact.h,v 1.10 1997/11/02 15:26:48 vadim Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -53,6 +53,12 @@ typedef struct TransactionStateData
 
 typedef TransactionStateData *TransactionState;
 
+#define TransactionIdIsValid(xid)		((bool) (xid != NullTransactionId))
+#define TransactionIdStore(xid, dest)	\
+	(*((TransactionId*)dest) = (TransactionId)xid)
+#define StoreInvalidTransactionId(dest)	\
+	(*((TransactionId*)dest) = NullTransactionId)
+
 /* ----------------
  *		extern definitions
  * ----------------
@@ -88,11 +94,6 @@ extern TransactionId DisabledTransactionId;
 extern TransactionId xidin(char *representation);
 extern char *xidout(TransactionId transactionId);
 extern bool xideq(TransactionId xid1, TransactionId xid2);
-extern bool TransactionIdIsValid(TransactionId transactionId);
-extern void StoreInvalidTransactionId(TransactionId *destination);
-extern void
-TransactionIdStore(TransactionId transactionId,
-				   TransactionId *destination);
 extern bool TransactionIdEquals(TransactionId id1, TransactionId id2);
 extern bool TransactionIdIsLessThan(TransactionId id1, TransactionId id2);
 extern void TransactionIdAdd(TransactionId *xid, int value);

@@ -6,7 +6,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/parser/Attic/catalog_utils.c,v 1.28 1997/09/18 20:21:05 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/parser/Attic/catalog_utils.c,v 1.29 1997/11/02 15:25:19 vadim Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -75,21 +75,6 @@ struct
 	{
 		"cmax", MaxCommandIdAttributeNumber
 	},
-	{
-		"chain", ChainItemPointerAttributeNumber
-	},
-	{
-		"anchor", AnchorItemPointerAttributeNumber
-	},
-	{
-		"tmin", MinAbsoluteTimeAttributeNumber
-	},
-	{
-		"tmax", MaxAbsoluteTimeAttributeNumber
-	},
-	{
-		"vtype", VersionTypeAttributeNumber
-	}
 };
 
 #define SPECIALS (sizeof(special_attr)/sizeof(*special_attr))
@@ -101,11 +86,6 @@ static char *attnum_type[SPECIALS] = {
 	"cid",
 	"xid",
 	"cid",
-	"tid",
-	"tid",
-	"abstime",
-	"abstime",
-	"char"
 };
 
 #define MAXFARGS 8				/* max # args to a c or postquel function */

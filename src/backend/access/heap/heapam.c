@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/access/heap/heapam.c,v 1.20 1997/09/18 14:19:30 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/access/heap/heapam.c,v 1.21 1997/11/02 15:24:26 vadim Exp $
  *
  *
  * INTERFACE ROUTINES
@@ -1174,8 +1174,8 @@ heap_insert(Relation relation, HeapTuple tup)
 	TransactionIdStore(GetCurrentTransactionId(), &(tup->t_xmin));
 	tup->t_cmin = GetCurrentCommandId();
 	StoreInvalidTransactionId(&(tup->t_xmax));
-	tup->t_tmin = INVALID_ABSTIME;
-	tup->t_tmax = CURRENT_ABSTIME;
+	tup->t_infomask &= ~(HEAP_XACT_MASK);
+	tup->t_infomask |= HEAP_XMAX_INVALID;
 
 	doinsert(relation, tup);
 
@@ -1281,7 +1281,7 @@ heap_delete(Relation relation, ItemPointer tid)
 	 */
 	TransactionIdStore(GetCurrentTransactionId(), &(tp->t_xmax));
 	tp->t_cmax = GetCurrentCommandId();
-	ItemPointerSetInvalid(&tp->t_chain);
+	tp->t_infomask &= ~(HEAP_XMAX_COMMITTED | HEAP_XMAX_INVALID);
 
 	/* ----------------
 	 *	invalidate caches
@@ -1410,9 +1410,8 @@ heap_replace(Relation relation, ItemPointer otid, HeapTuple tup)
 	TransactionIdStore(GetCurrentTransactionId(), &(tup->t_xmin));
 	tup->t_cmin = GetCurrentCommandId();
 	StoreInvalidTransactionId(&(tup->t_xmax));
-	tup->t_tmin = INVALID_ABSTIME;
-	tup->t_tmax = CURRENT_ABSTIME;
-	ItemPointerSetInvalid(&tup->t_chain);
+	tup->t_infomask &= ~(HEAP_XACT_MASK);
+	tup->t_infomask |= HEAP_XMAX_INVALID;
 
 	/* ----------------
 	 *	insert new item
@@ -1438,7 +1437,7 @@ heap_replace(Relation relation, ItemPointer otid, HeapTuple tup)
 	 */
 	TransactionIdStore(GetCurrentTransactionId(), &(tp->t_xmax));
 	tp->t_cmax = GetCurrentCommandId();
-	tp->t_chain = tup->t_ctid;
+	tp->t_infomask &= ~(HEAP_XMAX_COMMITTED | HEAP_XMAX_INVALID);
 
 	/* ----------------
 	 *	invalidate caches

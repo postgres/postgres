@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/access/transam/varsup.c,v 1.12 1997/09/08 21:41:49 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/access/transam/varsup.c,v 1.13 1997/11/02 15:24:45 vadim Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -23,9 +23,7 @@
 static void GetNewObjectIdBlock(Oid *oid_return, int oid_block_size);
 static void VariableRelationGetNextOid(Oid *oid_return);
 static void VariableRelationGetNextXid(TransactionId *xidP);
-static void VariableRelationPutLastXid(TransactionId xid);
 static void VariableRelationPutNextOid(Oid *oidP);
-static void VariableRelationGetLastXid(TransactionId *xidP);
 
 /* ---------------------
  *		spin lock for oid generation
@@ -81,49 +79,6 @@ VariableRelationGetNextXid(TransactionId *xidP)
 }
 
 /* --------------------------------
- *		VariableRelationGetLastXid
- * --------------------------------
- */
-static void
-VariableRelationGetLastXid(TransactionId *xidP)
-{
-	Buffer		buf;
-	VariableRelationContents var;
-
-	/* ----------------
-	 * We assume that a spinlock has been acquire to guarantee
-	 * exclusive access to the variable relation.
-	 * ----------------
-	 */
-
-	/* ----------------
-	 *	do nothing before things are initialized
-	 * ----------------
-	 */
-	if (!RelationIsValid(VariableRelation))
-		return;
-
-	/* ----------------
-	 *	read the variable page, get the the lastXid field and
-	 *	release the buffer
-	 * ----------------
-	 */
-	buf = ReadBuffer(VariableRelation, 0);
-
-	if (!BufferIsValid(buf))
-	{
-		SpinRelease(OidGenLockId);
-		elog(WARN, "VariableRelationGetNextXid: ReadBuffer failed");
-	}
-
-	var = (VariableRelationContents) BufferGetBlock(buf);
-
-	TransactionIdStore(var->lastXidData, xidP);
-
-	ReleaseBuffer(buf);
-}
-
-/* --------------------------------
  *		VariableRelationPutNextXid
  * --------------------------------
  */
@@ -167,49 +122,6 @@ VariableRelationPutNextXid(TransactionId xid)
 	flushmode = SetBufferWriteMode(BUFFER_FLUSH_WRITE);
 	WriteBuffer(buf);
 	SetBufferWriteMode(flushmode);
-}
-
-/* --------------------------------
- *		VariableRelationPutLastXid
- * --------------------------------
- */
-static void
-VariableRelationPutLastXid(TransactionId xid)
-{
-	Buffer		buf;
-	VariableRelationContents var;
-
-	/* ----------------
-	 * We assume that a spinlock has been acquire to guarantee
-	 * exclusive access to the variable relation.
-	 * ----------------
-	 */
-
-	/* ----------------
-	 *	do nothing before things are initialized
-	 * ----------------
-	 */
-	if (!RelationIsValid(VariableRelation))
-		return;
-
-	/* ----------------
-	 *	read the variable page, update the lastXid field and
-	 *	force the page back out to disk.
-	 * ----------------
-	 */
-	buf = ReadBuffer(VariableRelation, 0);
-
-	if (!BufferIsValid(buf))
-	{
-		SpinRelease(OidGenLockId);
-		elog(WARN, "VariableRelationPutLastXid: ReadBuffer failed");
-	}
-
-	var = (VariableRelationContents) BufferGetBlock(buf);
-
-	TransactionIdStore(xid, &(var->lastXidData));
-
-	WriteBuffer(buf);
 }
 
 /* --------------------------------
@@ -447,40 +359,6 @@ GetNewTransactionId(TransactionId *xid)
 	TransactionIdStore(next_prefetched_xid, xid);
 	TransactionIdAdd(&next_prefetched_xid, 1);
 	prefetched_xid_count--;
-}
-
-/* ----------------
- *		UpdateLastCommittedXid
- * ----------------
- */
-
-void
-UpdateLastCommittedXid(TransactionId xid)
-{
-	TransactionId lastid;
-
-
-	/*
-	 * we assume that spinlock OidGenLockId has been acquired prior to
-	 * entering this function
-	 */
-
-	/* ----------------
-	 *	get the "last committed" transaction id from
-	 *	the variable relation page.
-	 * ----------------
-	 */
-	VariableRelationGetLastXid(&lastid);
-
-	/* ----------------
-	 *	if the transaction id is greater than the last committed
-	 *	transaction then we update the last committed transaction
-	 *	in the variable relation.
-	 * ----------------
-	 */
-	if (TransactionIdIsLessThan(lastid, xid))
-		VariableRelationPutLastXid(xid);
-
 }
 
 /* ----------------------------------------------------------------

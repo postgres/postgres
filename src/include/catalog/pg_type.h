@@ -7,7 +7,7 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: pg_type.h,v 1.19 1997/09/08 21:51:31 momjian Exp $
+ * $Id: pg_type.h,v 1.20 1997/11/02 15:27:03 vadim Exp $
  *
  * NOTES
  *	  the genbki.sh script reads this file and generates .bki
@@ -186,7 +186,7 @@ DATA(insert OID = 26 (	oid		   PGUID  4  10 t b t \054 0   0 int4in int4out int4
 
 DATA(insert OID = 27 (	tid		   PGUID  6  19 f b t \054 0   0 tidin tidout tidin tidout i _null_ ));
 DATA(insert OID = 28 (	xid		   PGUID  4  12 t b t \054 0   0 xidin xidout xidin xidout i _null_ ));
-DATA(insert OID = 29 (	cid		   PGUID  2   3 t b t \054 0   0 cidin cidout cidin cidout s _null_ ));
+DATA(insert OID = 29 (	cid		   PGUID  4  10 t b t \054 0   0 cidin cidout cidin cidout i _null_ ));
 DATA(insert OID = 30 (	oid8	   PGUID 32  89 f b t \054 0  26 oid8in oid8out oid8in oid8out i _null_ ));
 DATA(insert OID = 32 (	SET		   PGUID -1  -1 f r t \054 0  -1 textin textout textin textout i _null_ ));
 
@@ -206,7 +206,6 @@ DATA(insert OID = 99 (	pg_log		 PGUID 1 1 t b t \054 1269 0 foo bar foo bar c _n
 
 /* OIDS 100 - 199 */
 
-DATA(insert OID = 100 (  pg_time	 PGUID 1 1 t b t \054 1271 0 foo bar foo bar c _null_));
 DATA(insert OID = 101 (  pg_hosts	 PGUID 1 1 t b t \054 1273 0 foo bar foo bar c _null_));
 DATA(insert OID = 109 (  pg_attrdef  PGUID 1 1 t b t \054 1215 0 foo bar foo bar c _null_));
 DATA(insert OID = 110 (  pg_relcheck PGUID 1 1 t b t \054 1216 0 foo bar foo bar c _null_));

@@ -7,7 +7,7 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: pg_class.h,v 1.11 1997/09/08 02:35:03 momjian Exp $
+ * $Id: pg_class.h,v 1.12 1997/11/02 15:26:59 vadim Exp $
  *
  * NOTES
  *	  ``pg_relation'' is being replaced by ``pg_class''.  currently
@@ -141,7 +141,6 @@ DATA(insert OID = 1262 (  pg_database 88	  PGUID 0 0 0 0 0 f t r n 3 0 0 0 f _nu
 DATA(insert OID = 1263 (  pg_defaults 89	  PGUID 0 0 0 0 0 f t r n 2 0 0 0 f _null_ ));
 DATA(insert OID = 1264 (  pg_variable 90	  PGUID 0 0 0 0 0 f t s n 2 0 0 0 f _null_ ));
 DATA(insert OID = 1269 (  pg_log  99		  PGUID 0 0 0 0 0 f t s n 1 0 0 0 f _null_ ));
-DATA(insert OID = 1271 (  pg_time 100		  PGUID 0 0 0 0 0 f t s n 1 0 0 0 f _null_ ));
 DATA(insert OID = 1273 (  pg_hosts 101		  PGUID 0 0 0 0 0 f t s n 3 0 0 0 f _null_ ));
 DATA(insert OID = 1215 (  pg_attrdef 109	  PGUID 0 0 0 0 0 t t r n 4 0 0 0 f _null_ ));
 DATA(insert OID = 1216 (  pg_relcheck 110	  PGUID 0 0 0 0 0 t t r n 4 0 0 0 f _null_ ));
@@ -160,7 +159,6 @@ DATA(insert OID = 1219 (  pg_trigger 111	  PGUID 0 0 0 0 0 t t r n 7 0 0 0 f _nu
 #define RelOid_pg_defaults		1263
 #define RelOid_pg_variable		1264
 #define RelOid_pg_log			1269
-#define RelOid_pg_time			1271
 #define RelOid_pg_hosts			1273
 #define RelOid_pg_attrdef		1215
 #define RelOid_pg_relcheck		1216
