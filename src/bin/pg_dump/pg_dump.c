@@ -22,7 +22,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/bin/pg_dump/pg_dump.c,v 1.150 2000/06/09 12:33:42 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/bin/pg_dump/pg_dump.c,v 1.151 2000/06/10 03:53:59 tgl Exp $
  *
  * Modifications - 6/10/96 - dave@bensoft.com - version 1.13.dhb
  *
@@ -490,9 +490,11 @@ prompt_for_password(char *username, char *password)
 
 #ifdef HAVE_TERMIOS_H
 	struct termios t_orig,
+				   t;
 #endif
 
 	fprintf(stderr, "Username: ");
+	fflush(stderr);
 	fgets(username, 100, stdin);
 	length = strlen(username);
 	/* skip rest of the line */
@@ -506,13 +508,14 @@ prompt_for_password(char *username, char *password)
 	if (length > 0 && username[length - 1] == '\n')
 		username[length - 1] = '\0';
 
-	fprintf(stderr, "Password: ");
 #ifdef HAVE_TERMIOS_H
 	tcgetattr(0, &t);
 	t_orig = t;
 	t.c_lflag &= ~ECHO;
 	tcsetattr(0, TCSADRAIN, &t);
 #endif
+	fprintf(stderr, "Password: ");
+	fflush(stderr);
 	fgets(password, 100, stdin);
 #ifdef HAVE_TERMIOS_H
 	tcsetattr(0, TCSADRAIN, &t_orig);
