@@ -1,5 +1,5 @@
 <!--
-$PostgreSQL: pgsql/doc/src/sgml/func.sgml,v 1.189 2004/02/29 15:45:53 neilc Exp $
+$PostgreSQL: pgsql/doc/src/sgml/func.sgml,v 1.190 2004/03/04 20:09:29 dennis Exp $
 PostgreSQL documentation
 -->
 
@@ -1157,11 +1157,13 @@ PostgreSQL documentation
       </row>
 
       <row>
-       <entry><literal><function>ltrim</function>(<parameter>string</parameter> <type>text</type>, <parameter>characters</parameter> <type>text</type>)</literal></entry>
+       <entry><literal><function>ltrim</function>(<parameter>string</parameter> <type>text</type>
+        <optional>, <parameter>characters</parameter> <type>text</type></optional>)</literal>
+       </entry>
        <entry><type>text</type></entry>
        <entry>
         Remove the longest string containing only characters from
-        <parameter>characters</parameter> from the start of
+        <parameter>characters</parameter> (a space by default) from the start of
         <parameter>string</parameter>.
        </entry>
        <entry><literal>ltrim('zzzytrim', 'xyz')</literal></entry>
@@ -1255,12 +1257,13 @@ PostgreSQL documentation
       </row>
 
       <row>
-       <entry><literal><function>rtrim</function>(<parameter>string</parameter>
-        text, <parameter>characters</parameter> text)</literal></entry>
+       <entry><literal><function>rtrim</function>(<parameter>string</parameter> <type>text</type>
+        <optional>, <parameter>characters</parameter> <type>text</type></optional>)</literal>
+       </entry>
        <entry><type>text</type></entry>
        <entry>
         Remove the longest string containing only characters from
-        <parameter>characters</parameter> from the end of
+        <parameter>characters</parameter> (a space by default) from the end of
         <parameter>string</parameter>.
        </entry>
        <entry><literal>rtrim('trimxxxx', 'x')</literal></entry>
