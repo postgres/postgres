@@ -7,7 +7,7 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: pg_operator.h,v 1.25 1998/02/26 04:40:56 momjian Exp $
+ * $Id: pg_operator.h,v 1.26 1998/03/01 08:10:34 thomas Exp $
  *
  * NOTES
  *	  the genbki.sh script reads this file and generates .bki
@@ -380,11 +380,11 @@ DATA(insert OID = 758 (  "@"	   PGUID 0 b t f  600  718	 16  759  0 0 0 pt_conta
 DATA(insert OID = 759 (  "~"	   PGUID 0 b t f  718  600	 16  758  0 0 0 circle_contain_pt - - ));
 
 /* additional operators for geometric types - thomas 1997-07-09 */
-DATA(insert OID =  792 (  "="	   PGUID 0 b t f  602  602	701  792  0 0 0 path_n_eq intltsel intltjoinsel ));
-DATA(insert OID =  793 (  "<"	   PGUID 0 b t f  602  602	701  796  0 0 0 path_n_lt intltsel intltjoinsel ));
-DATA(insert OID =  794 (  ">"	   PGUID 0 b t f  602  602	701  795  0 0 0 path_n_gt intltsel intltjoinsel ));
-DATA(insert OID =  795 (  "<="	   PGUID 0 b t f  602  602	701  794  0 0 0 path_n_le intltsel intltjoinsel ));
-DATA(insert OID =  796 (  ">="	   PGUID 0 b t f  602  602	701  793  0 0 0 path_n_ge intltsel intltjoinsel ));
+DATA(insert OID =  792 (  "="	   PGUID 0 b t f  602  602	 16  792  0 0 0 path_n_eq intltsel intltjoinsel ));
+DATA(insert OID =  793 (  "<"	   PGUID 0 b t f  602  602	 16  796  0 0 0 path_n_lt intltsel intltjoinsel ));
+DATA(insert OID =  794 (  ">"	   PGUID 0 b t f  602  602	 16  795  0 0 0 path_n_gt intltsel intltjoinsel ));
+DATA(insert OID =  795 (  "<="	   PGUID 0 b t f  602  602	 16  794  0 0 0 path_n_le intltsel intltjoinsel ));
+DATA(insert OID =  796 (  ">="	   PGUID 0 b t f  602  602	 16  793  0 0 0 path_n_ge intltsel intltjoinsel ));
 DATA(insert OID =  797 (  "#"	   PGUID 0 l t f	0  602	 23    0  0 0 0 path_npoints - - ));
 DATA(insert OID =  798 (  "?#"	   PGUID 0 b t f  602  602	 16    0  0 0 0 path_inter - - ));
 DATA(insert OID =  799 (  "@-@"    PGUID 0 l t f	0  602	701    0  0 0 0 path_length - - ));
@@ -400,11 +400,11 @@ DATA(insert OID =  808 (  "?-"	   PGUID 0 b t f  600  600	 16  808  0 0 0 point_
 DATA(insert OID =  809 (  "?|"	   PGUID 0 b t f  600  600	 16  809  0 0 0 point_vert - - ));
 
 DATA(insert OID = 811 (  "="	   PGUID 0 b t t 704 704  16 811   0   0   0 intervaleq - - ));
-DATA(insert OID = 812 (  "<>"	   PGUID 0 b t t 704 704  16 812   0   0   0 intervalne - - ));
-DATA(insert OID = 813 (  "<"	   PGUID 0 b t t 704 704  16 813   0   0   0 intervallt - - ));
-DATA(insert OID = 814 (  ">"	   PGUID 0 b t t 704 704  16 814   0   0   0 intervalgt - - ));
-DATA(insert OID = 815 (  "<="	   PGUID 0 b t t 704 704  16 815   0   0   0 intervalle - - ));
-DATA(insert OID = 816 (  ">="	   PGUID 0 b t t 704 704  16 816   0   0   0 intervalge - - ));
+DATA(insert OID = 812 (  "<>"	   PGUID 0 b t f 704 704  16 812   0   0   0 intervalne - - ));
+DATA(insert OID = 813 (  "<"	   PGUID 0 b t f 704 704  16 813   0   0   0 intervallt - - ));
+DATA(insert OID = 814 (  ">"	   PGUID 0 b t f 704 704  16 814   0   0   0 intervalgt - - ));
+DATA(insert OID = 815 (  "<="	   PGUID 0 b t f 704 704  16 815   0   0   0 intervalle - - ));
+DATA(insert OID = 816 (  ">="	   PGUID 0 b t f 704 704  16 816   0   0   0 intervalge - - ));
 
 DATA(insert OID = 830 (  "<"	   PGUID 0 b t f  810  810	16 834 833	0 0 oidint2lt intltsel intltjoinsel ));
 DATA(insert OID = 831 (  "<="	   PGUID 0 b t f  810  810	16 833 834	0 0 oidint2le intltsel intltjoinsel ));
