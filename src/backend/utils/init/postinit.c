@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/init/postinit.c,v 1.53 1999/11/21 01:58:21 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/init/postinit.c,v 1.54 1999/12/22 00:07:16 inoue Exp $
  *
  * NOTES
  *		InitPostgres() is the function called from PostgresMain
@@ -546,6 +546,9 @@ InitPostgres(char *name)		/* database name */
 	 */
 	InitCatalogCache();
 
+	/* start a new transaction here before access to db */
+	if (!bootstrap)
+		StartTransactionCommand();
 	/*
 	 * Set ourselves to the proper user id and figure out our postgres
 	 * user id.  If we ever add security so that we check for valid

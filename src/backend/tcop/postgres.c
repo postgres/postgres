@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/tcop/postgres.c,v 1.137 1999/11/16 06:13:35 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/tcop/postgres.c,v 1.138 1999/12/22 00:07:15 inoue Exp $
  *
  * NOTES
  *	  this is the "main" module of the postgres backend and
@@ -1474,7 +1474,11 @@ PostgresMain(int argc, char *argv[], int real_argc, char *real_argv[])
 
 	on_shmem_exit(remove_all_temp_relations, NULL);
 
-	parser_input = makeStringInfo(); /* initialize input buffer */
+	{
+		MemoryContext	oldcontext = MemoryContextSwitchTo(TopMemoryContext);
+		parser_input = makeStringInfo(); /* initialize input buffer */
+		MemoryContextSwitchTo(oldcontext);
+	}
 
 	/* 
 	 * Send this backend's cancellation info to the frontend. 
@@ -1495,7 +1499,7 @@ PostgresMain(int argc, char *argv[], int real_argc, char *real_argv[])
 	if (!IsUnderPostmaster)
 	{
 		puts("\nPOSTGRES backend interactive interface ");
-		puts("$Revision: 1.137 $ $Date: 1999/11/16 06:13:35 $\n");
+		puts("$Revision: 1.138 $ $Date: 1999/12/22 00:07:15 $\n");
 	}
 
 	/*
