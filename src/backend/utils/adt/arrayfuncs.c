@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/arrayfuncs.c,v 1.39 1999/05/03 19:09:59 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/arrayfuncs.c,v 1.40 1999/05/03 23:48:26 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -1287,7 +1287,7 @@ array_assgn(ArrayType *array,
 ArrayType *
 array_map(ArrayType *v,
 		  Oid type,
-		  char *(fn)(char *p, ...),
+		  char * (*fn)(),
 		  Oid retType,
 		  int nargs,
 		  ...)
