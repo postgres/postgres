@@ -1,4 +1,4 @@
-/* $Header: /cvsroot/pgsql/src/interfaces/ecpg/ecpglib/misc.c,v 1.9 2003/07/01 12:40:51 meskes Exp $ */
+/* $Header: /cvsroot/pgsql/src/interfaces/ecpg/ecpglib/misc.c,v 1.10 2003/07/17 07:54:29 meskes Exp $ */
 
 #define POSTGRES_ECPG_INTERNAL
 #include "postgres_fe.h"
@@ -308,7 +308,7 @@ ECPGset_informix_null(enum ECPGttype type, void *ptr)
 
 static bool _check(unsigned char *ptr, int length)
 {
-	for (;ptr[length] == 0xff && length >= 0; length --);
+	for (;ptr[--length] == 0xff && length >= 0; length --);
 	if (length < 0) return true;
 	return false;
 }

@@ -443,7 +443,12 @@ rtoday (Date *d)
 int
 rjulmdy (Date d, short mdy[3])
 {
-	PGTYPESdate_julmdy(d, (int *)mdy);
+	int mdy_int[3];
+	
+	PGTYPESdate_julmdy(d, mdy_int);
+	mdy[0] = (short)mdy_int[0];
+	mdy[1] = (short)mdy_int[1];
+	mdy[2] = (short)mdy_int[2];
 	return 0;
 }
 
@@ -482,7 +487,12 @@ rfmtdate (Date d, char *fmt, char *str)
 int
 rmdyjul (short mdy[3], Date *d)
 {
-	PGTYPESdate_mdyjul((int *)mdy, d);
+	int mdy_int[3];
+
+	mdy_int[0] = mdy[0];
+	mdy_int[1] = mdy[1];
+	mdy_int[2] = mdy[2];
+	PGTYPESdate_mdyjul(mdy_int, d);
 	return 0;
 }
 

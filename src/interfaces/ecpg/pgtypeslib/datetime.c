@@ -101,9 +101,9 @@ PGTYPESdate_julmdy(Date jd, int* mdy)
 	int y, m, d;
 	
 	j2date((int) jd, &y, &m, &d);
-	mdy[0] = (short int) m;
-	mdy[1] = (short int) d;
-	mdy[2] = (short int) y;
+	mdy[0] = m;
+	mdy[1] = d;
+	mdy[2] = y;
 }
 
 void
