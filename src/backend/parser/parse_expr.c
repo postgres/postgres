@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/parser/parse_expr.c,v 1.171 2004/05/26 04:41:30 neilc Exp $
+ *	  $PostgreSQL: pgsql/src/backend/parser/parse_expr.c,v 1.172 2004/05/30 23:40:35 neilc Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -153,8 +153,8 @@ transformExpr(ParseState *pstate, Node *expr)
 				foreach(fields, pref->fields)
 				{
 					result = ParseFuncOrColumn(pstate,
-											   makeList1(lfirst(fields)),
-											   makeList1(result),
+											   list_make1(lfirst(fields)),
+											   list_make1(result),
 											   false, false, true);
 				}
 				/* handle subscripts, if any */
@@ -183,8 +183,8 @@ transformExpr(ParseState *pstate, Node *expr)
 				foreach(fields, efs->fields)
 				{
 					result = ParseFuncOrColumn(pstate,
-											   makeList1(lfirst(fields)),
-											   makeList1(result),
+											   list_make1(lfirst(fields)),
+											   list_make1(result),
 											   false, false, true);
 				}
 				/* handle subscripts, if any */
@@ -218,7 +218,7 @@ transformExpr(ParseState *pstate, Node *expr)
 							 * into IS NULL exprs.
 							 */
 							if (Transform_null_equals &&
-								length(a->name) == 1 &&
+								list_length(a->name) == 1 &&
 								strcmp(strVal(linitial(a->name)), "=") == 0 &&
 								(exprIsNullConstant(lexpr) ||
 								 exprIsNullConstant(rexpr)))
@@ -284,8 +284,8 @@ transformExpr(ParseState *pstate, Node *expr)
 							rexpr = coerce_to_boolean(pstate, rexpr, "AND");
 
 							result = (Node *) makeBoolExpr(AND_EXPR,
-														 makeList2(lexpr,
-																 rexpr));
+														   list_make2(lexpr,
+																	  rexpr));
 						}
 						break;
 					case AEXPR_OR:
@@ -299,8 +299,8 @@ transformExpr(ParseState *pstate, Node *expr)
 							rexpr = coerce_to_boolean(pstate, rexpr, "OR");
 
 							result = (Node *) makeBoolExpr(OR_EXPR,
-														 makeList2(lexpr,
-																 rexpr));
+														   list_make2(lexpr,
+																	  rexpr));
 						}
 						break;
 					case AEXPR_NOT:
@@ -311,7 +311,7 @@ transformExpr(ParseState *pstate, Node *expr)
 							rexpr = coerce_to_boolean(pstate, rexpr, "NOT");
 
 							result = (Node *) makeBoolExpr(NOT_EXPR,
-													   makeList1(rexpr));
+													   list_make1(rexpr));
 						}
 						break;
 					case AEXPR_OP_ANY:
@@ -446,7 +446,7 @@ transformExpr(ParseState *pstate, Node *expr)
 				 * XXX: repeated lappend() would no longer result in
 				 * O(n^2) behavior; worth reconsidering this design?
 				 */
-				targs = listCopy(fn->args);
+				targs = list_copy(fn->args);
 				foreach(args, targs)
 				{
 					lfirst(args) = transformExpr(pstate,
@@ -474,7 +474,7 @@ transformExpr(ParseState *pstate, Node *expr)
 				}
 				pstate->p_hasSubLinks = true;
 				qtrees = parse_sub_analyze(sublink->subselect, pstate);
-				if (length(qtrees) != 1)
+				if (list_length(qtrees) != 1)
 					elog(ERROR, "bad query in sub-select");
 				qtree = (Query *) linitial(qtrees);
 				if (qtree->commandType != CMD_SELECT ||
@@ -530,7 +530,7 @@ transformExpr(ParseState *pstate, Node *expr)
 					/* ALL, ANY, or MULTIEXPR: generate operator list */
 					List	   *left_list = sublink->lefthand;
 					List	   *right_list = qtree->targetList;
-					int			row_length = length(left_list);
+					int			row_length = list_length(left_list);
 					bool		needNot = false;
 					List	   *op = sublink->operName;
 					char	   *opname = strVal(llast(op));
@@ -548,11 +548,11 @@ transformExpr(ParseState *pstate, Node *expr)
 					 * pre-7.4 Postgres.
 					 */
 					if (sublink->subLinkType == ALL_SUBLINK &&
-						length(op) == 1 && strcmp(opname, "<>") == 0)
+						list_length(op) == 1 && strcmp(opname, "<>") == 0)
 					{
 						sublink->subLinkType = ANY_SUBLINK;
 						opname = pstrdup("=");
-						op = makeList1(makeString(opname));
+						op = list_make1(makeString(opname));
 						sublink->operName = op;
 						needNot = true;
 					}
@@ -626,8 +626,8 @@ transformExpr(ParseState *pstate, Node *expr)
 									 opname),
 									 errhint("The operator of a quantified predicate subquery must return type boolean.")));
 
-						sublink->operOids = lappendo(sublink->operOids,
-													 oprid(optup));
+						sublink->operOids = lappend_oid(sublink->operOids,
+														oprid(optup));
 
 						ReleaseSysCache(optup);
 					}
@@ -640,7 +640,7 @@ transformExpr(ParseState *pstate, Node *expr)
 					{
 						expr = coerce_to_boolean(pstate, expr, "NOT");
 						expr = (Node *) makeBoolExpr(NOT_EXPR,
-													 makeList1(expr));
+													 list_make1(expr));
 					}
 				}
 				result = (Node *) expr;
@@ -709,7 +709,7 @@ transformExpr(ParseState *pstate, Node *expr)
 					neww->result = (Expr *) transformExpr(pstate, warg);
 
 					newargs = lappend(newargs, neww);
-					typeids = lappendo(typeids, exprType((Node *) neww->result));
+					typeids = lappend_oid(typeids, exprType((Node *) neww->result));
 				}
 
 				newc->args = newargs;
@@ -731,7 +731,7 @@ transformExpr(ParseState *pstate, Node *expr)
 				 * code worked before, but it seems a little bogus to me
 				 * --- tgl
 				 */
-				typeids = lconso(exprType((Node *) newc->defresult), typeids);
+				typeids = lcons_oid(exprType((Node *) newc->defresult), typeids);
 
 				ptype = select_common_type(typeids, "CASE");
 				Assert(OidIsValid(ptype));
@@ -779,7 +779,7 @@ transformExpr(ParseState *pstate, Node *expr)
 
 					newe = transformExpr(pstate, e);
 					newelems = lappend(newelems, newe);
-					typeids = lappendo(typeids, exprType(newe));
+					typeids = lappend_oid(typeids, exprType(newe));
 				}
 
 				/* Select a common type for the elements */
@@ -868,7 +868,7 @@ transformExpr(ParseState *pstate, Node *expr)
 
 					newe = transformExpr(pstate, e);
 					newargs = lappend(newargs, newe);
-					typeids = lappendo(typeids, exprType(newe));
+					typeids = lappend_oid(typeids, exprType(newe));
 				}
 
 				newc->coalescetype = select_common_type(typeids, "COALESCE");
@@ -997,7 +997,7 @@ transformIndirection(ParseState *pstate, Node *basenode, List *indirection)
 static Node *
 transformColumnRef(ParseState *pstate, ColumnRef *cref)
 {
-	int			numnames = length(cref->fields);
+	int			numnames = list_length(cref->fields);
 	Node	   *node;
 	int			levels_up;
 
@@ -1095,8 +1095,8 @@ transformColumnRef(ParseState *pstate, ColumnRef *cref)
 					 */
 					node = transformWholeRowRef(pstate, NULL, name1);
 					node = ParseFuncOrColumn(pstate,
-											 makeList1(makeString(name2)),
-											 makeList1(node),
+											 list_make1(makeString(name2)),
+											 list_make1(node),
 											 false, false, true);
 				}
 				break;
@@ -1121,8 +1121,8 @@ transformColumnRef(ParseState *pstate, ColumnRef *cref)
 					/* Try it as a function call */
 					node = transformWholeRowRef(pstate, name1, name2);
 					node = ParseFuncOrColumn(pstate,
-											 makeList1(makeString(name3)),
-											 makeList1(node),
+											 list_make1(makeString(name3)),
+											 list_make1(node),
 											 false, false, true);
 				}
 				break;
@@ -1157,8 +1157,8 @@ transformColumnRef(ParseState *pstate, ColumnRef *cref)
 					/* Try it as a function call */
 					node = transformWholeRowRef(pstate, name2, name3);
 					node = ParseFuncOrColumn(pstate,
-											 makeList1(makeString(name4)),
-											 makeList1(node),
+											 list_make1(makeString(name4)),
+											 list_make1(node),
 											 false, false, true);
 				}
 				break;
@@ -1587,7 +1587,7 @@ exprIsLengthCoercion(Node *expr, int32 *coercedTypmod)
 	 * second argument being an int4 constant, it can't have been created
 	 * from a length coercion (it must be a type coercion, instead).
 	 */
-	nargs = length(func->args);
+	nargs = list_length(func->args);
 	if (nargs < 2 || nargs > 3)
 		return false;
 
@@ -1661,7 +1661,7 @@ make_row_op(ParseState *pstate, List *opname, Node *ltree, Node *rtree)
 	largs = lrow->args;
 	rargs = rrow->args;
 
-	if (length(largs) != length(rargs))
+	if (list_length(largs) != list_length(rargs))
 		ereport(ERROR,
 				(errcode(ERRCODE_SYNTAX_ERROR),
 				 errmsg("unequal number of entries in row expression")));
@@ -1706,7 +1706,7 @@ make_row_op(ParseState *pstate, List *opname, Node *ltree, Node *rtree)
 			result = cmp;
 		else
 			result = (Node *) makeBoolExpr(boolop,
-										   makeList2(result, cmp));
+										   list_make2(result, cmp));
 	}
 
 	if (result == NULL)
@@ -1744,7 +1744,7 @@ make_row_distinct_op(ParseState *pstate, List *opname,
 	largs = lrow->args;
 	rargs = rrow->args;
 
-	if (length(largs) != length(rargs))
+	if (list_length(largs) != list_length(rargs))
 		ereport(ERROR,
 				(errcode(ERRCODE_SYNTAX_ERROR),
 				 errmsg("unequal number of entries in row expression")));
@@ -1760,7 +1760,7 @@ make_row_distinct_op(ParseState *pstate, List *opname,
 			result = cmp;
 		else
 			result = (Node *) makeBoolExpr(OR_EXPR,
-										   makeList2(result, cmp));
+										   list_make2(result, cmp));
 	}
 
 	if (result == NULL)

@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/rewrite/rewriteDefine.c,v 1.95 2004/05/26 04:41:33 neilc Exp $
+ *	  $PostgreSQL: pgsql/src/backend/rewrite/rewriteDefine.c,v 1.96 2004/05/30 23:40:35 neilc Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -251,7 +251,7 @@ DefineQueryRewrite(RuleStmt *stmt)
 		/*
 		 * So there cannot be INSTEAD NOTHING, ...
 		 */
-		if (length(action) == 0)
+		if (list_length(action) == 0)
 			ereport(ERROR,
 					(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
 			errmsg("INSTEAD NOTHING rules on SELECT are not implemented"),
@@ -260,7 +260,7 @@ DefineQueryRewrite(RuleStmt *stmt)
 		/*
 		 * ... there cannot be multiple actions, ...
 		 */
-		if (length(action) > 1)
+		if (list_length(action) > 1)
 			ereport(ERROR,
 					(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
 					 errmsg("multiple actions for rules on SELECT are not implemented")));

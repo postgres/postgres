@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/optimizer/prep/prepqual.c,v 1.42 2004/05/26 04:41:26 neilc Exp $
+ *	  $PostgreSQL: pgsql/src/backend/optimizer/prep/prepqual.c,v 1.43 2004/05/30 23:40:29 neilc Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -445,7 +445,7 @@ process_duplicate_ors(List *orlist)
 
 	if (orlist == NIL)
 		return NULL;			/* probably can't happen */
-	if (length(orlist) == 1)	/* single-expression OR (can this happen?) */
+	if (list_length(orlist) == 1)	/* single-expression OR (can this happen?) */
 		return linitial(orlist);
 
 	/*
@@ -461,7 +461,7 @@ process_duplicate_ors(List *orlist)
 		if (and_clause((Node *) clause))
 		{
 			List	   *subclauses = ((BoolExpr *) clause)->args;
-			int			nclauses = length(subclauses);
+			int			nclauses = list_length(subclauses);
 
 			if (reference == NIL || nclauses < num_subclauses)
 			{
@@ -471,7 +471,7 @@ process_duplicate_ors(List *orlist)
 		}
 		else
 		{
-			reference = makeList1(clause);
+			reference = list_make1(clause);
 			break;
 		}
 	}
@@ -479,7 +479,7 @@ process_duplicate_ors(List *orlist)
 	/*
 	 * Just in case, eliminate any duplicates in the reference list.
 	 */
-	reference = set_union(NIL, reference);
+	reference = list_union(NIL, reference);
 
 	/*
 	 * Check each element of the reference list to see if it's in all the
@@ -498,7 +498,7 @@ process_duplicate_ors(List *orlist)
 
 			if (and_clause((Node *) clause))
 			{
-				if (!member(refclause, ((BoolExpr *) clause)->args))
+				if (!list_member(((BoolExpr *) clause)->args, refclause))
 				{
 					win = false;
 					break;
@@ -531,7 +531,7 @@ process_duplicate_ors(List *orlist)
 	 * (A AND B) OR (A), which can be reduced to just A --- that is, the
 	 * additional conditions in other arms of the OR are irrelevant.
 	 *
-	 * Note that because we use set_difference, any multiple occurrences of
+	 * Note that because we use list_difference, any multiple occurrences of
 	 * a winning clause in an AND sub-clause will be removed automatically.
 	 */
 	neworlist = NIL;
@@ -543,10 +543,10 @@ process_duplicate_ors(List *orlist)
 		{
 			List	   *subclauses = ((BoolExpr *) clause)->args;
 
-			subclauses = set_difference(subclauses, winners);
+			subclauses = list_difference(subclauses, winners);
 			if (subclauses != NIL)
 			{
-				if (length(subclauses) == 1)
+				if (list_length(subclauses) == 1)
 					neworlist = lappend(neworlist, linitial(subclauses));
 				else
 					neworlist = lappend(neworlist, make_andclause(subclauses));
@@ -559,7 +559,7 @@ process_duplicate_ors(List *orlist)
 		}
 		else
 		{
-			if (!member(clause, winners))
+			if (!list_member(winners, clause))
 				neworlist = lappend(neworlist, clause);
 			else
 			{
@@ -577,7 +577,7 @@ process_duplicate_ors(List *orlist)
 	 */
 	if (neworlist != NIL)
 	{
-		if (length(neworlist) == 1)
+		if (list_length(neworlist) == 1)
 			winners = lappend(winners, linitial(neworlist));
 		else
 			winners = lappend(winners, make_orclause(pull_ors(neworlist)));
@@ -587,7 +587,7 @@ process_duplicate_ors(List *orlist)
 	 * And return the constructed AND clause, again being wary of a single
 	 * element and AND/OR flatness.
 	 */
-	if (length(winners) == 1)
+	if (list_length(winners) == 1)
 		return (Expr *) linitial(winners);
 	else
 		return make_andclause(pull_ands(winners));

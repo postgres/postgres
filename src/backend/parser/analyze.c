@@ -6,7 +6,7 @@
  * Portions Copyright (c) 1996-2003, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- *	$PostgreSQL: pgsql/src/backend/parser/analyze.c,v 1.301 2004/05/26 04:41:29 neilc Exp $
+ *	$PostgreSQL: pgsql/src/backend/parser/analyze.c,v 1.302 2004/05/30 23:40:32 neilc Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -248,12 +248,12 @@ do_parse_analyze(Node *parseTree, ParseState *pstate)
 	release_pstate_resources(pstate);
 
 	foreach(l, extras_before)
-		result = nconc(result, parse_sub_analyze(lfirst(l), pstate));
+		result = list_concat(result, parse_sub_analyze(lfirst(l), pstate));
 
 	result = lappend(result, query);
 
 	foreach(l, extras_after)
-		result = nconc(result, parse_sub_analyze(lfirst(l), pstate));
+		result = list_concat(result, parse_sub_analyze(lfirst(l), pstate));
 
 	/*
 	 * Make sure that only the original query is marked original. We have
@@ -592,7 +592,7 @@ transformInsertStmt(ParseState *pstate, InsertStmt *stmt,
 											true);
 		rtr = makeNode(RangeTblRef);
 		/* assume new rte is at end */
-		rtr->rtindex = length(pstate->p_rtable);
+		rtr->rtindex = list_length(pstate->p_rtable);
 		Assert(rte == rt_fetch(rtr->rtindex, pstate->p_rtable));
 		pstate->p_joinlist = lappend(pstate->p_joinlist, rtr);
 
@@ -674,7 +674,7 @@ transformInsertStmt(ParseState *pstate, InsertStmt *stmt,
 		Assert(IsA(col, ResTarget));
 
 		Assert(!tle->resdom->resjunk);
-		updateTargetListEntry(pstate, tle, col->name, lfirsti(attnos),
+		updateTargetListEntry(pstate, tle, col->name, lfirst_int(attnos),
 							  col->indirection);
 
 		icols = lnext(icols);
@@ -874,8 +874,8 @@ transformCreateStmt(ParseState *pstate, CreateStmt *stmt,
 	q->utilityStmt = (Node *) stmt;
 	stmt->tableElts = cxt.columns;
 	stmt->constraints = cxt.ckconstraints;
-	*extras_before = nconc(*extras_before, cxt.blist);
-	*extras_after = nconc(cxt.alist, *extras_after);
+	*extras_before = list_concat(*extras_before, cxt.blist);
+	*extras_after = list_concat(cxt.alist, *extras_after);
 
 	return q;
 }
@@ -893,7 +893,7 @@ transformColumnDefinition(ParseState *pstate, CreateStmtContext *cxt,
 
 	/* Check for SERIAL pseudo-types */
 	is_serial = false;
-	if (length(column->typename->names) == 1)
+	if (list_length(column->typename->names) == 1)
 	{
 		char	   *typname = strVal(linitial(column->typename->names));
 
@@ -969,7 +969,7 @@ transformColumnDefinition(ParseState *pstate, CreateStmtContext *cxt,
 		snamenode->val.val.str = qstring;
 		funccallnode = makeNode(FuncCall);
 		funccallnode->funcname = SystemFuncName("nextval");
-		funccallnode->args = makeList1(snamenode);
+		funccallnode->args = list_make1(snamenode);
 		funccallnode->agg_star = false;
 		funccallnode->agg_distinct = false;
 
@@ -1004,7 +1004,7 @@ transformColumnDefinition(ParseState *pstate, CreateStmtContext *cxt,
 		{
 			FkConstraint *fkconstraint = (FkConstraint *) constraint;
 
-			fkconstraint->fk_attrs = makeList1(makeString(column->colname));
+			fkconstraint->fk_attrs = list_make1(makeString(column->colname));
 			cxt->fkconstraints = lappend(cxt->fkconstraints, fkconstraint);
 			continue;
 		}
@@ -1049,7 +1049,7 @@ transformColumnDefinition(ParseState *pstate, CreateStmtContext *cxt,
 													  NULL,
 													  "pkey");
 				if (constraint->keys == NIL)
-					constraint->keys = makeList1(makeString(column->colname));
+					constraint->keys = list_make1(makeString(column->colname));
 				cxt->ixconstraints = lappend(cxt->ixconstraints, constraint);
 				break;
 
@@ -1059,7 +1059,7 @@ transformColumnDefinition(ParseState *pstate, CreateStmtContext *cxt,
 													  column->colname,
 													  "key");
 				if (constraint->keys == NIL)
-					constraint->keys = makeList1(makeString(column->colname));
+					constraint->keys = list_make1(makeString(column->colname));
 				cxt->ixconstraints = lappend(cxt->ixconstraints, constraint);
 				break;
 
@@ -1437,7 +1437,7 @@ transformIndexConstraints(ParseState *pstate, CreateStmtContext *cxt)
 	if (cxt->pkey != NULL)
 	{
 		/* Make sure we keep the PKEY index in preference to others... */
-		cxt->alist = makeList1(cxt->pkey);
+		cxt->alist = list_make1(cxt->pkey);
 	}
 
 	foreach(l, indexlist)
@@ -1679,7 +1679,7 @@ transformRuleStmt(ParseState *pstate, RuleStmt *stmt,
 	stmt->whereClause = transformWhereClause(pstate, stmt->whereClause,
 											 "WHERE");
 
-	if (length(pstate->p_rtable) != 2)	/* naughty, naughty... */
+	if (list_length(pstate->p_rtable) != 2)	/* naughty, naughty... */
 		ereport(ERROR,
 				(errcode(ERRCODE_INVALID_OBJECT_DEFINITION),
 				 errmsg("rule WHERE condition may not contain references to other relations")));
@@ -1708,7 +1708,7 @@ transformRuleStmt(ParseState *pstate, RuleStmt *stmt,
 		nothing_qry->rtable = pstate->p_rtable;
 		nothing_qry->jointree = makeFromExpr(NIL, NULL);		/* no join wanted */
 
-		stmt->actions = makeList1(nothing_qry);
+		stmt->actions = list_make1(nothing_qry);
 	}
 	else
 	{
@@ -2062,7 +2062,7 @@ transformSetOperationStmt(ParseState *pstate, SelectStmt *stmt)
 
 	foreach(dtlist, sostmt->colTypes)
 	{
-		Oid			colType = lfirsto(dtlist);
+		Oid			colType = lfirst_oid(dtlist);
 		Resdom	   *leftResdom;
 		char	   *colName;
 		Resdom	   *resdom;
@@ -2123,10 +2123,10 @@ transformSetOperationStmt(ParseState *pstate, SelectStmt *stmt)
 	jrtr->rtindex = 1;			/* only entry in dummy rtable */
 
 	sv_rtable = pstate->p_rtable;
-	pstate->p_rtable = makeList1(jrte);
+	pstate->p_rtable = list_make1(jrte);
 
 	sv_namespace = pstate->p_namespace;
-	pstate->p_namespace = makeList1(jrtr);
+	pstate->p_namespace = list_make1(jrtr);
 
 	/*
 	 * For now, we don't support resjunk sort clauses on the output of a
@@ -2134,7 +2134,7 @@ transformSetOperationStmt(ParseState *pstate, SelectStmt *stmt)
 	 * selecting an output column by name or number.  Enforce by checking
 	 * that transformSortClause doesn't add any items to tlist.
 	 */
-	tllen = length(qry->targetList);
+	tllen = list_length(qry->targetList);
 
 	qry->sortClause = transformSortClause(pstate,
 										  sortClause,
@@ -2144,7 +2144,7 @@ transformSetOperationStmt(ParseState *pstate, SelectStmt *stmt)
 	pstate->p_namespace = sv_namespace;
 	pstate->p_rtable = sv_rtable;
 
-	if (tllen != length(qry->targetList))
+	if (tllen != list_length(qry->targetList))
 		ereport(ERROR,
 				(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
 				 errmsg("ORDER BY on a UNION/INTERSECT/EXCEPT result must be on one of the result columns")));
@@ -2231,7 +2231,7 @@ transformSetOperationTree(ParseState *pstate, SelectStmt *stmt)
 		 */
 		selectList = parse_sub_analyze((Node *) stmt, pstate);
 
-		Assert(length(selectList) == 1);
+		Assert(list_length(selectList) == 1);
 		selectQuery = (Query *) linitial(selectList);
 		Assert(IsA(selectQuery, Query));
 
@@ -2253,7 +2253,7 @@ transformSetOperationTree(ParseState *pstate, SelectStmt *stmt)
 		 * Make the leaf query be a subquery in the top-level rangetable.
 		 */
 		snprintf(selectName, sizeof(selectName), "*SELECT* %d",
-				 length(pstate->p_rtable) + 1);
+				 list_length(pstate->p_rtable) + 1);
 		rte = addRangeTableEntryForSubquery(pstate,
 											selectQuery,
 											makeAlias(selectName, NIL),
@@ -2265,7 +2265,7 @@ transformSetOperationTree(ParseState *pstate, SelectStmt *stmt)
 		 */
 		rtr = makeNode(RangeTblRef);
 		/* assume new rte is at end */
-		rtr->rtindex = length(pstate->p_rtable);
+		rtr->rtindex = list_length(pstate->p_rtable);
 		Assert(rte == rt_fetch(rtr->rtindex, pstate->p_rtable));
 		return (Node *) rtr;
 	}
@@ -2298,7 +2298,7 @@ transformSetOperationTree(ParseState *pstate, SelectStmt *stmt)
 		 */
 		lcoltypes = getSetColTypes(pstate, op->larg);
 		rcoltypes = getSetColTypes(pstate, op->rarg);
-		if (length(lcoltypes) != length(rcoltypes))
+		if (list_length(lcoltypes) != list_length(rcoltypes))
 			ereport(ERROR,
 					(errcode(ERRCODE_SYNTAX_ERROR),
 			 errmsg("each %s query must have the same number of columns",
@@ -2307,13 +2307,13 @@ transformSetOperationTree(ParseState *pstate, SelectStmt *stmt)
 		op->colTypes = NIL;
 		forboth(l, lcoltypes, r, rcoltypes)
 		{
-			Oid			lcoltype = lfirsto(l);
-			Oid			rcoltype = lfirsto(r);
+			Oid			lcoltype = lfirst_oid(l);
+			Oid			rcoltype = lfirst_oid(r);
 			Oid			rescoltype;
 
-			rescoltype = select_common_type(makeListo2(lcoltype, rcoltype),
+			rescoltype = select_common_type(list_make2_oid(lcoltype, rcoltype),
 											context);
-			op->colTypes = lappendo(op->colTypes, rescoltype);
+			op->colTypes = lappend_oid(op->colTypes, rescoltype);
 		}
 
 		return (Node *) op;
@@ -2344,7 +2344,7 @@ getSetColTypes(ParseState *pstate, Node *node)
 
 			if (resnode->resjunk)
 				continue;
-			result = lappendo(result, resnode->restype);
+			result = lappend_oid(result, resnode->restype);
 		}
 		return result;
 	}
@@ -2370,7 +2370,7 @@ applyColumnNames(List *dst, List *src)
 	ListCell *dst_item = list_head(dst);
 	ListCell *src_item = list_head(src);
 
-	if (length(src) > length(dst))
+	if (list_length(src) > list_length(dst))
 		ereport(ERROR,
 				(errcode(ERRCODE_SYNTAX_ERROR),
 			 errmsg("CREATE TABLE AS specifies too many column names")));
@@ -2632,8 +2632,8 @@ transformAlterTableStmt(ParseState *pstate, AlterTableStmt *stmt,
 	qry->commandType = CMD_UTILITY;
 	qry->utilityStmt = (Node *) stmt;
 
-	*extras_before = nconc(*extras_before, cxt.blist);
-	*extras_after = nconc(cxt.alist, *extras_after);
+	*extras_before = list_concat(*extras_before, cxt.blist);
+	*extras_after = list_concat(cxt.alist, *extras_after);
 
 	return qry;
 }
@@ -2681,7 +2681,7 @@ transformPrepareStmt(ParseState *pstate, PrepareStmt *stmt)
 	result->utilityStmt = (Node *) stmt;
 
 	/* Transform list of TypeNames to list (and array) of type OIDs */
-	nargs = length(stmt->argtypes);
+	nargs = list_length(stmt->argtypes);
 
 	if (nargs)
 	{
@@ -2695,7 +2695,7 @@ transformPrepareStmt(ParseState *pstate, PrepareStmt *stmt)
 			TypeName   *tn = lfirst(l);
 			Oid			toid = typenameTypeId(tn);
 
-			argtype_oids = lappendo(argtype_oids, toid);
+			argtype_oids = lappend_oid(argtype_oids, toid);
 			argtoids[i++] = toid;
 		}
 	}
@@ -2712,7 +2712,7 @@ transformPrepareStmt(ParseState *pstate, PrepareStmt *stmt)
 	 * Shouldn't get any extra statements, since grammar only allows
 	 * OptimizableStmt
 	 */
-	if (length(queries) != 1)
+	if (list_length(queries) != 1)
 		elog(ERROR, "unexpected extra stuff in prepared statement");
 
 	stmt->query = linitial(queries);
@@ -2733,8 +2733,8 @@ transformExecuteStmt(ParseState *pstate, ExecuteStmt *stmt)
 
 	if (stmt->params || paramtypes)
 	{
-		int			nparams = length(stmt->params);
-		int			nexpected = length(paramtypes);
+		int			nparams = list_length(stmt->params);
+		int			nexpected = list_length(paramtypes);
 		ListCell   *l, *l2;
 		int			i = 1;
 
@@ -2749,7 +2749,7 @@ transformExecuteStmt(ParseState *pstate, ExecuteStmt *stmt)
 		forboth(l, stmt->params, l2, paramtypes)
 		{
 			Node	   *expr = lfirst(l);
-			Oid			expected_type_id = lfirsto(l2);
+			Oid			expected_type_id = lfirst_oid(l2);
 			Oid			given_type_id;
 
 			expr = transformExpr(pstate, expr);
@@ -2838,8 +2838,8 @@ transformForUpdate(Query *qry, List *forUpdate)
 			switch (rte->rtekind)
 			{
 				case RTE_RELATION:
-					if (!intMember(i, rowMarks))	/* avoid duplicates */
-						rowMarks = lappendi(rowMarks, i);
+					if (!list_member_int(rowMarks, i))	/* avoid duplicates */
+						rowMarks = lappend_int(rowMarks, i);
 					rte->requiredPerms |= ACL_SELECT_FOR_UPDATE;
 					break;
 				case RTE_SUBQUERY:
@@ -2847,7 +2847,7 @@ transformForUpdate(Query *qry, List *forUpdate)
 					 * FOR UPDATE of subquery is propagated to subquery's
 					 * rels
 					 */
-					transformForUpdate(rte->subquery, makeList1(NULL));
+					transformForUpdate(rte->subquery, list_make1(NULL));
 					break;
 				default:
 					/* ignore JOIN, SPECIAL, FUNCTION RTEs */
@@ -2873,8 +2873,8 @@ transformForUpdate(Query *qry, List *forUpdate)
 					switch (rte->rtekind)
 					{
 						case RTE_RELATION:
-							if (!intMember(i, rowMarks)) /* avoid duplicates */
-								rowMarks = lappendi(rowMarks, i);
+							if (!list_member_int(rowMarks, i)) /* avoid duplicates */
+								rowMarks = lappend_int(rowMarks, i);
 							rte->requiredPerms |= ACL_SELECT_FOR_UPDATE;
 							break;
 						case RTE_SUBQUERY:
@@ -2882,7 +2882,7 @@ transformForUpdate(Query *qry, List *forUpdate)
 							 * FOR UPDATE of subquery is propagated to
 							 * subquery's rels
 							 */
-							transformForUpdate(rte->subquery, makeList1(NULL));
+							transformForUpdate(rte->subquery, list_make1(NULL));
 							break;
 						case RTE_JOIN:
 							ereport(ERROR,
@@ -3198,12 +3198,12 @@ analyzeCreateSchemaStmt(CreateSchemaStmt *stmt)
 	}
 
 	result = NIL;
-	result = nconc(result, cxt.sequences);
-	result = nconc(result, cxt.tables);
-	result = nconc(result, cxt.views);
-	result = nconc(result, cxt.indexes);
-	result = nconc(result, cxt.triggers);
-	result = nconc(result, cxt.grants);
+	result = list_concat(result, cxt.sequences);
+	result = list_concat(result, cxt.tables);
+	result = list_concat(result, cxt.views);
+	result = list_concat(result, cxt.indexes);
+	result = list_concat(result, cxt.triggers);
+	result = list_concat(result, cxt.grants);
 
 	return result;
 }

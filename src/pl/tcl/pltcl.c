@@ -31,7 +31,7 @@
  *	  ENHANCEMENTS, OR MODIFICATIONS.
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/pl/tcl/pltcl.c,v 1.84 2004/05/26 04:41:50 neilc Exp $
+ *	  $PostgreSQL: pgsql/src/pl/tcl/pltcl.c,v 1.85 2004/05/30 23:40:41 neilc Exp $
  *
  **********************************************************************/
 
@@ -1868,9 +1868,9 @@ pltcl_SPI_prepare(ClientData cdata, Tcl_Interp *interp,
 		qdesc->argtypelems[i] = ((Form_pg_type) GETSTRUCT(typeTup))->typelem;
 		ReleaseSysCache(typeTup);
 
-		freeList(typename->names);
+		list_free(typename->names);
 		pfree(typename);
-		freeList(names);
+		list_free(names);
 		pfree(argcopy);
 	}
 

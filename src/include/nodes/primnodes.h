@@ -10,7 +10,7 @@
  * Portions Copyright (c) 1996-2003, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/include/nodes/primnodes.h,v 1.98 2004/05/10 22:44:49 tgl Exp $
+ * $PostgreSQL: pgsql/src/include/nodes/primnodes.h,v 1.99 2004/05/30 23:40:39 neilc Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -42,8 +42,8 @@
  * transforms INSERT/UPDATE tlists into a normalized form with exactly
  * one entry for each column of the destination table.  Before that's
  * happened, however, it is risky to assume that resno == position.
- * Generally get_tle_by_resno() should be used rather than nth() to fetch
- * tlist entries by resno.
+ * Generally get_tle_by_resno() should be used rather than list_nth()
+ * to fetch tlist entries by resno.
  *
  * resname is required to represent the correct column name in non-resjunk
  * entries of top-level SELECT targetlists, since it will be used as the

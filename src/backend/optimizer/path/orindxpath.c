@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/optimizer/path/orindxpath.c,v 1.58 2004/05/26 04:41:22 neilc Exp $
+ *	  $PostgreSQL: pgsql/src/backend/optimizer/path/orindxpath.c,v 1.59 2004/05/30 23:40:28 neilc Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -149,9 +149,9 @@ create_or_index_quals(Query *root, RelOptInfo *rel)
 	 */
 	newrinfos = make_restrictinfo_from_indexclauses(bestpath->indexclauses,
 													true, true);
-	Assert(length(newrinfos) == 1);
+	Assert(list_length(newrinfos) == 1);
 	or_rinfo = (RestrictInfo *) linitial(newrinfos);
-	rel->baserestrictinfo = nconc(rel->baserestrictinfo, newrinfos);
+	rel->baserestrictinfo = list_concat(rel->baserestrictinfo, newrinfos);
 
 	/*
 	 * Adjust the original OR clause's cached selectivity to compensate

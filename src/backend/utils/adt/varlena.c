@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/utils/adt/varlena.c,v 1.113 2004/05/26 04:41:39 neilc Exp $
+ *	  $PostgreSQL: pgsql/src/backend/utils/adt/varlena.c,v 1.114 2004/05/30 23:40:36 neilc Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -1648,7 +1648,7 @@ textToQualifiedNameList(text *textval, const char *caller)
 	}
 
 	pfree(rawname);
-	freeList(namelist);
+	list_free(namelist);
 
 	return result;
 }

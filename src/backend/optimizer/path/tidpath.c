@@ -9,7 +9,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/optimizer/path/tidpath.c,v 1.19 2004/05/26 04:41:22 neilc Exp $
+ *	  $PostgreSQL: pgsql/src/backend/optimizer/path/tidpath.c,v 1.20 2004/05/30 23:40:28 neilc Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -79,7 +79,7 @@ TidequalClause(int varno, OpExpr *node)
 
 	if (node->opno != TIDEqualOperator)
 		return rnode;
-	if (length(node->args) != 2)
+	if (list_length(node->args) != 2)
 		return rnode;
 	arg1 = linitial(node->args);
 	arg2 = lsecond(node->args);
@@ -184,11 +184,11 @@ TidqualFromExpr(int varno, Expr *expr)
 			node = (Node *) lfirst(l);
 			frtn = TidqualFromExpr(varno, (Expr *) node);
 			if (frtn)
-				rlst = nconc(rlst, frtn);
+				rlst = list_concat(rlst, frtn);
 			else
 			{
 				if (rlst)
-					freeList(rlst);
+					list_free(rlst);
 				rlst = NIL;
 				break;
 			}

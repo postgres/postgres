@@ -12,7 +12,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/utils/mmgr/portalmem.c,v 1.64 2004/02/03 17:34:03 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/utils/mmgr/portalmem.c,v 1.65 2004/05/30 23:40:39 neilc Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -245,7 +245,7 @@ PortalDefineQuery(Portal portal,
 	AssertArg(PortalIsValid(portal));
 	AssertState(portal->queryContext == NULL);	/* else defined already */
 
-	Assert(length(parseTrees) == length(planTrees));
+	Assert(list_length(parseTrees) == list_length(planTrees));
 
 	Assert(commandTag != NULL || parseTrees == NIL);
 

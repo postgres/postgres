@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/utils/cache/relcache.c,v 1.203 2004/05/26 04:41:40 neilc Exp $
+ *	  $PostgreSQL: pgsql/src/backend/utils/cache/relcache.c,v 1.204 2004/05/30 23:40:37 neilc Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -1658,7 +1658,7 @@ RelationClearRelation(Relation relation, bool rebuild)
 		pfree(relation->rd_am);
 	if (relation->rd_rel)
 		pfree(relation->rd_rel);
-	freeList(relation->rd_indexlist);
+	list_free(relation->rd_indexlist);
 	if (relation->rd_indexcxt)
 		MemoryContextDelete(relation->rd_indexcxt);
 
@@ -1922,7 +1922,7 @@ RelationCacheInvalidate(void)
 		}
 	}
 
-	rebuildList = nconc(rebuildFirstList, rebuildList);
+	rebuildList = list_concat(rebuildFirstList, rebuildList);
 
 	/*
 	 * Now zap any remaining smgr cache entries.  This must happen before
@@ -1937,7 +1937,7 @@ RelationCacheInvalidate(void)
 		relation = (Relation) lfirst(l);
 		RelationClearRelation(relation, true);
 	}
-	freeList(rebuildList);
+	list_free(rebuildList);
 }
 
 /*
@@ -2024,7 +2024,7 @@ AtEOXact_RelationCache(bool commit)
 		 */
 		if (relation->rd_indexvalid == 2)
 		{
-			freeList(relation->rd_indexlist);
+			list_free(relation->rd_indexlist);
 			relation->rd_indexlist = NIL;
 			relation->rd_indexvalid = 0;
 		}
@@ -2526,7 +2526,7 @@ RelationGetIndexList(Relation relation)
 
 	/* Quick exit if we already computed the list. */
 	if (relation->rd_indexvalid != 0)
-		return listCopy(relation->rd_indexlist);
+		return list_copy(relation->rd_indexlist);
 
 	/*
 	 * We build the list we intend to return (in the caller's context)
@@ -2558,7 +2558,7 @@ RelationGetIndexList(Relation relation)
 
 	/* Now save a copy of the completed list in the relcache entry. */
 	oldcxt = MemoryContextSwitchTo(CacheMemoryContext);
-	relation->rd_indexlist = listCopy(result);
+	relation->rd_indexlist = list_copy(result);
 	relation->rd_indexvalid = 1;
 	MemoryContextSwitchTo(oldcxt);
 
@@ -2619,10 +2619,10 @@ RelationSetIndexList(Relation relation, List *indexIds)
 	Assert(relation->rd_isnailed == 1);
 	/* Copy the list into the cache context (could fail for lack of mem) */
 	oldcxt = MemoryContextSwitchTo(CacheMemoryContext);
-	indexIds = listCopy(indexIds);
+	indexIds = list_copy(indexIds);
 	MemoryContextSwitchTo(oldcxt);
 	/* Okay to replace old list */
-	freeList(relation->rd_indexlist);
+	list_free(relation->rd_indexlist);
 	relation->rd_indexlist = indexIds;
 	relation->rd_indexvalid = 2;		/* mark list as forced */
 }
@@ -3083,7 +3083,7 @@ load_relcache_init_file(void)
 	{
 		RelationCacheInsert(rels[relno]);
 		/* also make a list of their OIDs, for RelationIdIsInInitFile */
-		initFileRelationIds = lconso(RelationGetRelid(rels[relno]),
+		initFileRelationIds = lcons_oid(RelationGetRelid(rels[relno]),
 									 initFileRelationIds);
 	}
 
@@ -3242,7 +3242,7 @@ write_relcache_init_file(void)
 
 		/* also make a list of their OIDs, for RelationIdIsInInitFile */
 		oldcxt = MemoryContextSwitchTo(CacheMemoryContext);
-		initFileRelationIds = lconso(RelationGetRelid(rel),
+		initFileRelationIds = lcons_oid(RelationGetRelid(rel),
 									 initFileRelationIds);
 		MemoryContextSwitchTo(oldcxt);
 	}
@@ -3299,7 +3299,7 @@ write_relcache_init_file(void)
 bool
 RelationIdIsInInitFile(Oid relationId)
 {
-	return oidMember(relationId, initFileRelationIds);
+	return list_member_oid(initFileRelationIds, relationId);
 }
 
 /*

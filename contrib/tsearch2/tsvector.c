@@ -779,10 +779,10 @@ findFunc(char *fname)
 	FuncCandidateList clist,
 				ptr;
 	Oid			funcid = InvalidOid;
-	List	   *names = makeList1(makeString(fname));
+	List	   *names = list_make1(makeString(fname));
 
 	ptr = clist = FuncnameGetCandidates(names, 1);
-	freeList(names);
+	list_free(names);
 
 	if (!ptr)
 		return funcid;

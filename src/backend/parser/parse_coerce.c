@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/parser/parse_coerce.c,v 2.116 2004/05/26 04:41:30 neilc Exp $
+ *	  $PostgreSQL: pgsql/src/backend/parser/parse_coerce.c,v 2.117 2004/05/30 23:40:35 neilc Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -245,7 +245,7 @@ coerce_type(ParseState *pstate, Node *node,
 			Oid			baseTypeId = getBaseType(targetTypeId);
 
 			result = (Node *) makeFuncExpr(funcId, baseTypeId,
-										   makeList1(node),
+										   list_make1(node),
 										   cformat);
 
 			/*
@@ -508,7 +508,7 @@ coerce_type_typmod(Node *node, Oid targetTypeId, int32 targetTypMod,
 						 false,
 						 true);
 
-		args = makeList2(node, cons);
+		args = list_make2(node, cons);
 
 		if (nargs == 3)
 		{
@@ -562,7 +562,7 @@ coerce_record_to_complex(ParseState *pstate, Node *node,
 		rte = GetRTEByRangeTablePosn(pstate,
 									 ((Var *) node)->varno,
 									 ((Var *) node)->varlevelsup);
-		nfields = length(rte->eref->colnames);
+		nfields = list_length(rte->eref->colnames);
 		for (nf = 1; nf <= nfields; nf++)
 		{
 			Oid		vartype;
@@ -585,7 +585,7 @@ coerce_record_to_complex(ParseState *pstate, Node *node,
 						format_type_be(targetTypeId))));
 
 	tupdesc = lookup_rowtype_tupdesc(targetTypeId, -1);
-	if (length(args) != tupdesc->natts)
+	if (list_length(args) != tupdesc->natts)
 		ereport(ERROR,
 				(errcode(ERRCODE_CANNOT_COERCE),
 				 errmsg("cannot cast type %s to %s",
@@ -728,7 +728,7 @@ select_common_type(List *typeids, const char *context)
 
 	for_each_cell(type_item, lnext(list_head(typeids)))
 	{
-		Oid			ntype = getBaseType(lfirsto(type_item));
+		Oid			ntype = getBaseType(lfirst_oid(type_item));
 
 		/* move on to next one if no new information... */
 		if ((ntype != InvalidOid) && (ntype != UNKNOWNOID) && (ntype != ptype))

@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/optimizer/path/clausesel.c,v 1.66 2004/05/26 04:41:21 neilc Exp $
+ *	  $PostgreSQL: pgsql/src/backend/optimizer/path/clausesel.c,v 1.67 2004/05/30 23:40:28 neilc Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -131,7 +131,7 @@ clauselist_selectivity(Query *root,
 		 * behave in the simple way we are expecting.)  Most of the tests
 		 * here can be done more efficiently with rinfo than without.
 		 */
-		if (is_opclause(clause) && length(((OpExpr *) clause)->args) == 2)
+		if (is_opclause(clause) && list_length(((OpExpr *) clause)->args) == 2)
 		{
 			OpExpr	   *expr = (OpExpr *) clause;
 			bool		varonleft = true;
@@ -480,8 +480,8 @@ clause_selectivity(Query *root,
 				 */
 				s1 = restriction_selectivity(root,
 											 BooleanEqualOperator,
-											 makeList2(var,
-													   makeBoolConst(true,
+											 list_make2(var,
+														makeBoolConst(true,
 																 false)),
 											 varRelid);
 			}

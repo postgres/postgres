@@ -10,7 +10,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/optimizer/plan/createplan.c,v 1.170 2004/05/26 04:41:24 neilc Exp $
+ *	  $PostgreSQL: pgsql/src/backend/optimizer/plan/createplan.c,v 1.171 2004/05/30 23:40:28 neilc Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -395,7 +395,7 @@ create_join_plan(Query *root, JoinPath *best_path)
 	 */
 	if (get_loc_restrictinfo(best_path) != NIL)
 		set_qpqual((Plan) plan,
-				   nconc(get_qpqual((Plan) plan),
+				   list_concat(get_qpqual((Plan) plan),
 				   get_actual_clauses(get_loc_restrictinfo(best_path))));
 #endif
 
@@ -548,12 +548,12 @@ create_unique_plan(Query *root, UniquePath *best_path)
 		elog(ERROR, "could not find UniquePath in in_info_list");
 
 	/* set up to record positions of unique columns */
-	numGroupCols = length(uniq_exprs);
+	numGroupCols = list_length(uniq_exprs);
 	groupColIdx = (AttrNumber *) palloc(numGroupCols * sizeof(AttrNumber));
 	groupColPos = 0;
 	/* not sure if tlist might be shared with other nodes, so copy */
 	newtlist = copyObject(subplan->targetlist);
-	nextresno = length(newtlist) + 1;
+	nextresno = list_length(newtlist) + 1;
 	newitems = false;
 
 	foreach(l, uniq_exprs)
@@ -725,9 +725,9 @@ create_indexscan_plan(Query *root,
 		 * need to worry about the plain AND case.  Also, pointer comparison
 		 * should be enough to determine RestrictInfo matches.
 		 */
-		Assert(length(best_path->indexclauses) == 1);
-		scan_clauses = set_ptrUnion(scan_clauses,
-									(List *) linitial(best_path->indexclauses));
+		Assert(list_length(best_path->indexclauses) == 1);
+		scan_clauses = list_union_ptr(scan_clauses,
+									  (List *) linitial(best_path->indexclauses));
 	}
 
 	/* Reduce RestrictInfo list to bare expressions */
@@ -766,7 +766,7 @@ create_indexscan_plan(Query *root,
 	 * added to qpqual.  The upshot is that qpquals must contain scan_clauses
 	 * minus whatever appears in indxquals.
 	 */
-	if (length(indxquals) > 1)
+	if (list_length(indxquals) > 1)
 	{
 		/*
 		 * Build an expression representation of the indexqual, expanding
@@ -775,7 +775,7 @@ create_indexscan_plan(Query *root,
 		 * scan_clause are not great; perhaps we need more smarts here.)
 		 */
 		indxqual_or_expr = make_expr_from_indexclauses(indxquals);
-		qpqual = set_difference(scan_clauses, makeList1(indxqual_or_expr));
+		qpqual = list_difference(scan_clauses, list_make1(indxqual_or_expr));
 	}
 	else
 	{
@@ -785,7 +785,7 @@ create_indexscan_plan(Query *root,
 		 * behavior.
 		 */
 		Assert(stripped_indxquals != NIL);
-		qpqual = set_difference(scan_clauses, linitial(stripped_indxquals));
+		qpqual = list_difference(scan_clauses, linitial(stripped_indxquals));
 	}
 
 	/*
@@ -950,7 +950,7 @@ create_nestloop_plan(Query *root,
 		List	   *indexclauses = innerpath->indexclauses;
 
 		if (innerpath->isjoininner &&
-			length(indexclauses) == 1)		/* single indexscan? */
+			list_length(indexclauses) == 1)		/* single indexscan? */
 		{
 			joinrestrictclauses =
 				select_nonredundant_join_clauses(root,
@@ -1019,7 +1019,7 @@ create_mergejoin_plan(Query *root,
 	 * the list of quals that must be checked as qpquals.
 	 */
 	mergeclauses = get_actual_clauses(best_path->path_mergeclauses);
-	joinclauses = set_difference(joinclauses, mergeclauses);
+	joinclauses = list_difference(joinclauses, mergeclauses);
 
 	/*
 	 * Rearrange mergeclauses, if needed, so that the outer variable is
@@ -1103,7 +1103,7 @@ create_hashjoin_plan(Query *root,
 	 * the list of quals that must be checked as qpquals.
 	 */
 	hashclauses = get_actual_clauses(best_path->path_hashclauses);
-	joinclauses = set_difference(joinclauses, hashclauses);
+	joinclauses = list_difference(joinclauses, hashclauses);
 
 	/*
 	 * Rearrange hashclauses, if needed, so that the outer variable is
@@ -1248,7 +1248,7 @@ fix_indxqual_sublist(List *indexqual,
 
 		Assert(IsA(rinfo, RestrictInfo));
 		clause = (OpExpr *) rinfo->clause;
-		if (!IsA(clause, OpExpr) || length(clause->args) != 2)
+		if (!IsA(clause, OpExpr) || list_length(clause->args) != 2)
 			elog(ERROR, "indexqual clause is not binary opclause");
 
 		/*
@@ -1287,9 +1287,9 @@ fix_indxqual_sublist(List *indexqual,
 		get_op_opclass_properties(newclause->opno, opclass,
 								  &stratno, &stratsubtype, &recheck);
 
-		*strategy = lappendi(*strategy, stratno);
-		*subtype = lappendo(*subtype, stratsubtype);
-		*lossy = lappendi(*lossy, (int) recheck);
+		*strategy = lappend_int(*strategy, stratno);
+		*subtype = lappend_oid(*subtype, stratsubtype);
+		*lossy = lappend_int(*lossy, (int) recheck);
 	}
 }
 
@@ -1401,7 +1401,7 @@ get_switched_clauses(List *clauses, Relids outerrelids)
 			temp->opfuncid = InvalidOid;
 			temp->opresulttype = clause->opresulttype;
 			temp->opretset = clause->opretset;
-			temp->args = listCopy(clause->args);
+			temp->args = list_copy(clause->args);
 			/* Commute it --- note this modifies the temp node in-place. */
 			CommuteClause(temp);
 			t_list = lappend(t_list, temp);
@@ -1839,8 +1839,8 @@ make_sort_from_pathkeys(Query *root, Plan *lefttree, List *pathkeys)
 	AttrNumber *sortColIdx;
 	Oid		   *sortOperators;
 
-	/* We will need at most length(pathkeys) sort columns; possibly less */
-	numsortkeys = length(pathkeys);
+	/* We will need at most list_length(pathkeys) sort columns; possibly less */
+	numsortkeys = list_length(pathkeys);
 	sortColIdx = (AttrNumber *) palloc(numsortkeys * sizeof(AttrNumber));
 	sortOperators = (Oid *) palloc(numsortkeys * sizeof(Oid));
 
@@ -1888,7 +1888,7 @@ make_sort_from_pathkeys(Query *root, Plan *lefttree, List *pathkeys)
 					if (!tlist_member(lfirst(k), tlist))
 						break;
 				}
-				freeList(exprvars);
+				list_free(exprvars);
 				if (!k)
 					break;		/* found usable expression */
 			}
@@ -1907,7 +1907,7 @@ make_sort_from_pathkeys(Query *root, Plan *lefttree, List *pathkeys)
 			/*
 			 * Add resjunk entry to input's tlist
 			 */
-			resdom = makeResdom(length(tlist) + 1,
+			resdom = makeResdom(list_length(tlist) + 1,
 								exprType(pathkey->key),
 								exprTypmod(pathkey->key),
 								NULL,
@@ -1950,8 +1950,8 @@ make_sort_from_sortclauses(Query *root, List *sortcls, Plan *lefttree)
 	AttrNumber *sortColIdx;
 	Oid		   *sortOperators;
 
-	/* We will need at most length(sortcls) sort columns; possibly less */
-	numsortkeys = length(sortcls);
+	/* We will need at most list_length(sortcls) sort columns; possibly less */
+	numsortkeys = list_length(sortcls);
 	sortColIdx = (AttrNumber *) palloc(numsortkeys * sizeof(AttrNumber));
 	sortOperators = (Oid *) palloc(numsortkeys * sizeof(Oid));
 
@@ -2003,8 +2003,8 @@ make_sort_from_groupcols(Query *root,
 	AttrNumber *sortColIdx;
 	Oid		   *sortOperators;
 
-	/* We will need at most length(groupcls) sort columns; possibly less */
-	numsortkeys = length(groupcls);
+	/* We will need at most list_length(groupcls) sort columns; possibly less */
+	numsortkeys = list_length(groupcls);
 	sortColIdx = (AttrNumber *) palloc(numsortkeys * sizeof(AttrNumber));
 	sortOperators = (Oid *) palloc(numsortkeys * sizeof(Oid));
 
@@ -2207,7 +2207,7 @@ make_unique(Plan *lefttree, List *distinctList)
 {
 	Unique	   *node = makeNode(Unique);
 	Plan	   *plan = &node->plan;
-	int			numCols = length(distinctList);
+	int			numCols = list_length(distinctList);
 	int			keyno = 0;
 	AttrNumber *uniqColIdx;
 	ListCell   *slitem;
@@ -2264,7 +2264,7 @@ make_setop(SetOpCmd cmd, Plan *lefttree,
 {
 	SetOp	   *node = makeNode(SetOp);
 	Plan	   *plan = &node->plan;
-	int			numCols = length(distinctList);
+	int			numCols = list_length(distinctList);
 	int			keyno = 0;
 	AttrNumber *dupColIdx;
 	ListCell   *slitem;

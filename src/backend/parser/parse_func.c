@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/parser/parse_func.c,v 1.169 2004/05/26 04:41:30 neilc Exp $
+ *	  $PostgreSQL: pgsql/src/backend/parser/parse_func.c,v 1.170 2004/05/30 23:40:35 neilc Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -69,7 +69,7 @@ ParseFuncOrColumn(ParseState *pstate, List *funcname, List *fargs,
 	Oid			funcid;
 	ListCell   *l;
 	Node	   *first_arg = NULL;
-	int			nargs = length(fargs);
+	int			nargs = list_length(fargs);
 	int			argn;
 	Oid			actual_arg_types[FUNC_MAX_ARGS];
 	Oid		   *declared_arg_types;
@@ -101,7 +101,7 @@ ParseFuncOrColumn(ParseState *pstate, List *funcname, List *fargs,
 	 * then the "function call" could be a projection.	We also check that
 	 * there wasn't any aggregate decoration.
 	 */
-	if (nargs == 1 && !agg_star && !agg_distinct && length(funcname) == 1)
+	if (nargs == 1 && !agg_star && !agg_distinct && list_length(funcname) == 1)
 	{
 		Oid			argtype = exprType(first_arg);
 
@@ -182,7 +182,7 @@ ParseFuncOrColumn(ParseState *pstate, List *funcname, List *fargs,
 		if (is_column)
 		{
 			Assert(nargs == 1);
-			Assert(length(funcname) == 1);
+			Assert(list_length(funcname) == 1);
 			unknown_attribute(pstate, first_arg, strVal(linitial(funcname)));
 		}
 
@@ -974,8 +974,8 @@ find_inheritors(Oid relid, Oid **supervec)
 	else
 		*supervec = NULL;
 
-	freeList(visited);
-	freeList(queue);
+	list_free(visited);
+	list_free(queue);
 
 	return nvisited;
 }
@@ -1400,7 +1400,7 @@ LookupFuncNameTypeNames(List *funcname, List *argtypes, bool noError)
 	ListCell   *args_item;
 
 	MemSet(argoids, 0, FUNC_MAX_ARGS * sizeof(Oid));
-	argcount = length(argtypes);
+	argcount = list_length(argtypes);
 	if (argcount > FUNC_MAX_ARGS)
 		ereport(ERROR,
 				(errcode(ERRCODE_TOO_MANY_ARGUMENTS),

@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/executor/nodeIndexscan.c,v 1.94 2004/05/26 04:41:16 neilc Exp $
+ *	  $PostgreSQL: pgsql/src/backend/executor/nodeIndexscan.c,v 1.95 2004/05/30 23:40:26 neilc Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -720,7 +720,7 @@ ExecInitIndexScan(IndexScan *node, EState *estate)
 	 * get the index node information
 	 */
 	indxid_item = list_head(node->indxid);
-	numIndices = length(node->indxid);
+	numIndices = list_length(node->indxid);
 	indexPtr = -1;
 
 	CXT1_printf("ExecInitIndexScan: context is %d\n", CurrentMemoryContext);
@@ -772,7 +772,7 @@ ExecInitIndexScan(IndexScan *node, EState *estate)
 		indxsubtype = lnext(indxsubtype);
 		lossyflags = (List *) lfirst(indxlossy);
 		indxlossy = lnext(indxlossy);
-		n_keys = length(quals);
+		n_keys = list_length(quals);
 		scan_keys = (n_keys <= 0) ? NULL :
 			(ScanKey) palloc(n_keys * sizeof(ScanKeyData));
 		run_keys = (n_keys <= 0) ? NULL :
@@ -804,11 +804,11 @@ ExecInitIndexScan(IndexScan *node, EState *estate)
 			 */
 			clause = (OpExpr *) lfirst(qual_cell);
 			qual_cell = lnext(qual_cell);
-			strategy = lfirsti(strategy_cell);
+			strategy = lfirst_int(strategy_cell);
 			strategy_cell = lnext(strategy_cell);
-			subtype = lfirsto(subtype_cell);
+			subtype = lfirst_oid(subtype_cell);
 			subtype_cell = lnext(subtype_cell);
-			lossy = lfirsti(lossyflag_cell);
+			lossy = lfirst_int(lossyflag_cell);
 			lossyflag_cell = lnext(lossyflag_cell);
 
 			if (!IsA(clause, OpExpr))
@@ -892,17 +892,18 @@ ExecInitIndexScan(IndexScan *node, EState *estate)
 								   scanvalue);	/* constant */
 
 			/*
-			 * If this operator is lossy, add its indxqualorig expression
-			 * to the list of quals to recheck.  The nth() calls here could
-			 * be avoided by chasing the lists in parallel to all the other
-			 * lists, but since lossy operators are very uncommon, it's
-			 * probably a waste of time to do so.
+			 * If this operator is lossy, add its indxqualorig
+			 * expression to the list of quals to recheck.  The
+			 * list_nth() calls here could be avoided by chasing the
+			 * lists in parallel to all the other lists, but since
+			 * lossy operators are very uncommon, it's probably a
+			 * waste of time to do so.
 			 */
 			if (lossy)
 			{
+				List *qualOrig = indexstate->indxqualorig;
 				lossyQuals[i] = lappend(lossyQuals[i],
-										nth(j,
-											(List *) nth(i, indexstate->indxqualorig)));
+										list_nth((List *) list_nth(qualOrig, i), j));
 			}
 		}
 
@@ -980,7 +981,7 @@ ExecInitIndexScan(IndexScan *node, EState *estate)
 	 */
 	for (i = 0; i < numIndices; i++)
 	{
-		Oid			indexOid = lfirsto(indxid_item);
+		Oid			indexOid = lfirst_oid(indxid_item);
 
 		indexDescs[i] = index_open(indexOid);
 		scanDescs[i] = index_beginscan(currentRelation,

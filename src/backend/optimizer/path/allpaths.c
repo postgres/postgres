@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/optimizer/path/allpaths.c,v 1.115 2004/05/26 04:41:21 neilc Exp $
+ *	  $PostgreSQL: pgsql/src/backend/optimizer/path/allpaths.c,v 1.116 2004/05/30 23:40:28 neilc Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -88,7 +88,7 @@ make_one_rel(Query *root)
 	/*
 	 * The result should join all the query's base rels.
 	 */
-	Assert(bms_num_members(rel->relids) == length(root->base_rel_list));
+	Assert(bms_num_members(rel->relids) == list_length(root->base_rel_list));
 
 	return rel;
 }
@@ -218,7 +218,7 @@ set_inherited_rel_pathlist(Query *root, RelOptInfo *rel,
 	 * XXX for now, can't handle inherited expansion of FOR UPDATE; can we
 	 * do better?
 	 */
-	if (intMember(parentRTindex, root->rowMarks))
+	if (list_member_int(root->rowMarks, parentRTindex))
 		ereport(ERROR,
 				(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
 				 errmsg("SELECT FOR UPDATE is not supported for inheritance queries")));
@@ -242,7 +242,7 @@ set_inherited_rel_pathlist(Query *root, RelOptInfo *rel,
 	 */
 	foreach(il, inheritlist)
 	{
-		int			childRTindex = lfirsti(il);
+		int			childRTindex = lfirst_int(il);
 		RangeTblEntry *childrte;
 		Oid			childOID;
 		RelOptInfo *childrel;
@@ -338,7 +338,7 @@ set_subquery_pathlist(Query *root, RelOptInfo *rel,
 
 	/* We need a workspace for keeping track of set-op type coercions */
 	differentTypes = (bool *)
-		palloc0((length(subquery->targetList) + 1) * sizeof(bool));
+		palloc0((list_length(subquery->targetList) + 1) * sizeof(bool));
 
 	/*
 	 * If there are any restriction clauses that have been attached to the
@@ -441,7 +441,7 @@ make_fromexpr_rel(Query *root, FromExpr *from)
 	 * dynamic-programming algorithm we must employ to consider all ways
 	 * of joining the child nodes.
 	 */
-	levels_needed = length(from->fromlist);
+	levels_needed = list_length(from->fromlist);
 
 	if (levels_needed <= 0)
 		return NULL;			/* nothing to do? */
@@ -546,7 +546,7 @@ make_one_rel_by_joins(Query *root, int levels_needed, List *initial_rels)
 	 */
 	if (joinitems[levels_needed] == NIL)
 		elog(ERROR, "failed to build any %d-way joins", levels_needed);
-	Assert(length(joinitems[levels_needed]) == 1);
+	Assert(list_length(joinitems[levels_needed]) == 1);
 
 	rel = (RelOptInfo *) linitial(joinitems[levels_needed]);
 
@@ -770,7 +770,7 @@ qual_is_pushdown_safe(Query *subquery, Index rti, Node *qual,
 		}
 	}
 
-	freeList(vars);
+	list_free(vars);
 	bms_free(tested);
 
 	return safe;

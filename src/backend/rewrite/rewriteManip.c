@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/rewrite/rewriteManip.c,v 1.83 2004/05/26 04:41:33 neilc Exp $
+ *	  $PostgreSQL: pgsql/src/backend/rewrite/rewriteManip.c,v 1.84 2004/05/30 23:40:35 neilc Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -231,7 +231,7 @@ OffsetVarNodes(Node *node, int offset, int sublevels_up)
 			if (qry->resultRelation)
 				qry->resultRelation += offset;
 			foreach(l, qry->rowMarks)
-				lfirsti(l) += offset;
+				lfirst_int(l) += offset;
 		}
 		query_tree_walker(qry, OffsetVarNodes_walker,
 						  (void *) &context, 0);
@@ -373,8 +373,8 @@ ChangeVarNodes(Node *node, int rt_index, int new_index, int sublevels_up)
 				qry->resultRelation = new_index;
 			foreach(l, qry->rowMarks)
 			{
-				if (lfirsti(l) == rt_index)
-					lfirsti(l) = new_index;
+				if (lfirst_int(l) == rt_index)
+					lfirst_int(l) = new_index;
 			}
 		}
 		query_tree_walker(qry, ChangeVarNodes_walker,
@@ -671,14 +671,14 @@ getInsertSelectQuery(Query *parsetree, Query ***subquery_ptr)
 	 * query.  If they're not there, it must be an INSERT/SELECT in which
 	 * they've been pushed down to the SELECT.
 	 */
-	if (length(parsetree->rtable) >= 2 &&
+	if (list_length(parsetree->rtable) >= 2 &&
 	 strcmp(rt_fetch(PRS2_OLD_VARNO, parsetree->rtable)->eref->aliasname,
 			"*OLD*") == 0 &&
 	 strcmp(rt_fetch(PRS2_NEW_VARNO, parsetree->rtable)->eref->aliasname,
 			"*NEW*") == 0)
 		return parsetree;
 	Assert(parsetree->jointree && IsA(parsetree->jointree, FromExpr));
-	if (length(parsetree->jointree->fromlist) != 1)
+	if (list_length(parsetree->jointree->fromlist) != 1)
 		elog(ERROR, "expected to find SELECT subquery");
 	rtr = (RangeTblRef *) linitial(parsetree->jointree->fromlist);
 	Assert(IsA(rtr, RangeTblRef));
@@ -687,7 +687,7 @@ getInsertSelectQuery(Query *parsetree, Query ***subquery_ptr)
 	if (!(selectquery && IsA(selectquery, Query) &&
 		  selectquery->commandType == CMD_SELECT))
 		elog(ERROR, "expected to find SELECT subquery");
-	if (length(selectquery->rtable) >= 2 &&
+	if (list_length(selectquery->rtable) >= 2 &&
 	strcmp(rt_fetch(PRS2_OLD_VARNO, selectquery->rtable)->eref->aliasname,
 		   "*OLD*") == 0 &&
 	strcmp(rt_fetch(PRS2_NEW_VARNO, selectquery->rtable)->eref->aliasname,
@@ -933,7 +933,7 @@ ResolveNew_mutator(Node *node, ResolveNew_context *context)
 				RangeTblEntry *rte = context->target_rte;
 				RowExpr *rowexpr;
 				List	*fields = NIL;
-				AttrNumber nfields = length(rte->eref->colnames);
+				AttrNumber nfields = list_length(rte->eref->colnames);
 				AttrNumber nf;
 
 				for (nf = 1; nf <= nfields; nf++)

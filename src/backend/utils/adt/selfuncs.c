@@ -15,7 +15,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/utils/adt/selfuncs.c,v 1.159 2004/05/26 04:41:39 neilc Exp $
+ *	  $PostgreSQL: pgsql/src/backend/utils/adt/selfuncs.c,v 1.160 2004/05/30 23:40:36 neilc Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -983,7 +983,7 @@ patternsel(PG_FUNCTION_ARGS, Pattern_Type ptype)
 
 		if (eqopr == InvalidOid)
 			elog(ERROR, "no = operator for opclass %u", opclass);
-		eqargs = makeList2(vardata.var, prefix);
+		eqargs = list_make2(vardata.var, prefix);
 		result = DatumGetFloat8(DirectFunctionCall4(eqsel,
 													PointerGetDatum(root),
 												 ObjectIdGetDatum(eqopr),
@@ -1966,15 +1966,15 @@ estimate_num_groups(Query *root, List *groupExprs, double input_rows)
 				return input_rows;
 			continue;
 		}
-		allvars = nconc(allvars, varshere);
+		allvars = list_concat(allvars, varshere);
 	}
 
 	/* If now no Vars, we must have an all-constant GROUP BY list. */
 	if (allvars == NIL)
 		return 1.0;
 
-	/* Use set_union() to discard duplicates */
-	allvars = set_union(NIL, allvars);
+	/* Use list_union() to discard duplicates */
+	allvars = list_union(NIL, allvars);
 
 	/*
 	 * Step 2: acquire statistical estimate of number of distinct values
@@ -1993,13 +1993,13 @@ estimate_num_groups(Query *root, List *groupExprs, double input_rows)
 		ndistinct = get_variable_numdistinct(&vardata);
 		ReleaseVariableStats(vardata);
 
-		/* cannot use foreach here because of possible lremove */
+		/* cannot use foreach here because of possible list_delete */
 		l2 = list_head(varinfos);
 		while (l2)
 		{
 			MyVarInfo  *varinfo = (MyVarInfo *) lfirst(l2);
 
-			/* must advance l2 before lremove possibly pfree's it */
+			/* must advance l2 before list_delete possibly pfree's it */
 			l2 = lnext(l2);
 
 			if (var->varno != varinfo->var->varno &&
@@ -2015,7 +2015,7 @@ estimate_num_groups(Query *root, List *groupExprs, double input_rows)
 				else
 				{
 					/* Delete the older item */
-					varinfos = lremove(varinfo, varinfos);
+					varinfos = list_delete_ptr(varinfos, varinfo);
 				}
 			}
 		}
@@ -2841,7 +2841,7 @@ get_restriction_variable(Query *root, List *args, int varRelid,
 	VariableStatData rdata;
 
 	/* Fail if not a binary opclause (probably shouldn't happen) */
-	if (length(args) != 2)
+	if (list_length(args) != 2)
 		return false;
 
 	left = (Node *) linitial(args);
@@ -2892,7 +2892,7 @@ get_join_variables(Query *root, List *args,
 	Node	   *left,
 			   *right;
 
-	if (length(args) != 2)
+	if (list_length(args) != 2)
 		elog(ERROR, "join operator should take two arguments");
 
 	left = (Node *) linitial(args);
@@ -3654,7 +3654,7 @@ prefix_selectivity(Query *root, VariableStatData *vardata,
 								BTGreaterEqualStrategyNumber);
 	if (cmpopr == InvalidOid)
 		elog(ERROR, "no >= operator for opclass %u", opclass);
-	cmpargs = makeList2(vardata->var, prefixcon);
+	cmpargs = list_make2(vardata->var, prefixcon);
 	/* Assume scalargtsel is appropriate for all supported types */
 	prefixsel = DatumGetFloat8(DirectFunctionCall4(scalargtsel,
 												   PointerGetDatum(root),
@@ -3676,7 +3676,7 @@ prefix_selectivity(Query *root, VariableStatData *vardata,
 									BTLessStrategyNumber);
 		if (cmpopr == InvalidOid)
 			elog(ERROR, "no < operator for opclass %u", opclass);
-		cmpargs = makeList2(vardata->var, greaterstrcon);
+		cmpargs = list_make2(vardata->var, greaterstrcon);
 		/* Assume scalarltsel is appropriate for all supported types */
 		topsel = DatumGetFloat8(DirectFunctionCall4(scalarltsel,
 													PointerGetDatum(root),
@@ -4177,7 +4177,7 @@ genericcostestimate(Query *root, RelOptInfo *rel,
 	 * eliminating duplicates is a bit trickier because indexQuals contains
 	 * RestrictInfo nodes and the indpred does not.  It is okay to pass a
 	 * mixed list to clauselist_selectivity, but we have to work a bit to
-	 * generate a list without logical duplicates.  (We could just set_union
+	 * generate a list without logical duplicates.  (We could just list_union
 	 * indpred and strippedQuals, but then we'd not get caching of per-qual
 	 * selectivity estimates.)
 	 */
@@ -4187,8 +4187,8 @@ genericcostestimate(Query *root, RelOptInfo *rel,
 		List   *predExtraQuals;
 
 		strippedQuals = get_actual_clauses(indexQuals);
-		predExtraQuals = set_difference(index->indpred, strippedQuals);
-		selectivityQuals = nconc(predExtraQuals, indexQuals);
+		predExtraQuals = list_difference(index->indpred, strippedQuals);
+		selectivityQuals = list_concat(predExtraQuals, indexQuals);
 	}
 	else
 		selectivityQuals = indexQuals;
@@ -4253,7 +4253,7 @@ genericcostestimate(Query *root, RelOptInfo *rel,
 	 * inaccuracies here ...
 	 */
 	cost_qual_eval(&index_qual_cost, indexQuals);
-	qual_op_cost = cpu_operator_cost * length(indexQuals);
+	qual_op_cost = cpu_operator_cost * list_length(indexQuals);
 	qual_arg_cost = index_qual_cost.startup +
 		index_qual_cost.per_tuple - qual_op_cost;
 	if (qual_arg_cost < 0)		/* just in case... */

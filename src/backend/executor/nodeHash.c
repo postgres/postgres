@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/executor/nodeHash.c,v 1.84 2004/05/26 04:41:15 neilc Exp $
+ *	  $PostgreSQL: pgsql/src/backend/executor/nodeHash.c,v 1.85 2004/05/30 23:40:26 neilc Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -240,17 +240,17 @@ ExecHashTableCreate(Hash *node, List *hashOperators)
 	/*
 	 * Get info about the hash functions to be used for each hash key.
 	 */
-	nkeys = length(hashOperators);
+	nkeys = list_length(hashOperators);
 	hashtable->hashfunctions = (FmgrInfo *) palloc(nkeys * sizeof(FmgrInfo));
 	i = 0;
 	foreach(ho, hashOperators)
 	{
 		Oid			hashfn;
 
-		hashfn = get_op_hash_function(lfirsto(ho));
+		hashfn = get_op_hash_function(lfirst_oid(ho));
 		if (!OidIsValid(hashfn))
 			elog(ERROR, "could not find hash function for hash operator %u",
-				 lfirsto(ho));
+				 lfirst_oid(ho));
 		fmgr_info(hashfn, &hashtable->hashfunctions[i]);
 		i++;
 	}

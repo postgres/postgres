@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/parser/parse_agg.c,v 1.62 2004/05/26 04:41:29 neilc Exp $
+ *	  $PostgreSQL: pgsql/src/backend/parser/parse_agg.c,v 1.63 2004/05/30 23:40:34 neilc Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -307,7 +307,7 @@ check_ungrouped_columns_walker(Node *node,
 
 		/* Found an ungrouped local variable; generate error message */
 		Assert(var->varno > 0 &&
-			   (int) var->varno <= length(context->pstate->p_rtable));
+			   (int) var->varno <= list_length(context->pstate->p_rtable));
 		rte = rt_fetch(var->varno, context->pstate->p_rtable);
 		attname = get_rte_attribute_name(rte, var->varattno);
 		if (context->sublevels_up == 0)
@@ -394,10 +394,10 @@ build_aggregate_fnexprs(Oid agg_input_type,
 		arg1->paramid = -1;
 		arg1->paramtype = agg_input_type;
 
-		args = makeList2(arg0, arg1);
+		args = list_make2(arg0, arg1);
 	}
 	else
-		args = makeList1(arg0);
+		args = list_make1(arg0);
 
 	*transfnexpr = (Expr *) makeFuncExpr(transfn_oid,
 										 agg_state_type,
@@ -418,7 +418,7 @@ build_aggregate_fnexprs(Oid agg_input_type,
 	arg0->paramkind = PARAM_EXEC;
 	arg0->paramid = -1;
 	arg0->paramtype = agg_state_type;
-	args = makeList1(arg0);
+	args = list_make1(arg0);
 
 	*finalfnexpr = (Expr *) makeFuncExpr(finalfn_oid,
 										 agg_result_type,

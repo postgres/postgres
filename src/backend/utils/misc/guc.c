@@ -10,7 +10,7 @@
  * Written by Peter Eisentraut <peter_e@gmx.net>.
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/utils/misc/guc.c,v 1.209 2004/05/29 22:48:21 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/utils/misc/guc.c,v 1.210 2004/05/30 23:40:38 neilc Exp $
  *
  *--------------------------------------------------------------------
  */
@@ -4761,7 +4761,7 @@ assign_log_destination(const char *value, bool doit, GucSource source)
 	{
 		/* syntax error in list */
 		pfree(rawstring);
-		freeList(elemlist);
+		list_free(elemlist);
 		if (source >= PGC_S_INTERACTIVE)
 			ereport(ERROR,
 					(errcode(ERRCODE_INVALID_PARAMETER_VALUE),
@@ -4790,13 +4790,13 @@ assign_log_destination(const char *value, bool doit, GucSource source)
 						 errmsg("unrecognised \"log_destination\" key word: \"%s\"",
 								tok)));
 			pfree(rawstring);
-			freeList(elemlist);
+			list_free(elemlist);
 			return NULL;
 		}
 	}
 
 	pfree(rawstring);
-	freeList(elemlist);
+	list_free(elemlist);
 
 	/* If we aren't going to do the assignment, just return OK indicator. */
 	if (!doit)

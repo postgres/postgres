@@ -9,7 +9,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/optimizer/path/indxpath.c,v 1.159 2004/05/26 04:41:21 neilc Exp $
+ *	  $PostgreSQL: pgsql/src/backend/optimizer/path/indxpath.c,v 1.160 2004/05/30 23:40:28 neilc Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -1042,11 +1042,11 @@ pred_test_simple_clause(Expr *predicate, Node *clause)
 		Expr *nonnullarg = ((NullTest *) predicate)->arg;
 
 		if (is_opclause(clause) &&
-			member(nonnullarg, ((OpExpr *) clause)->args) &&
+			list_member(((OpExpr *) clause)->args, nonnullarg) &&
 			op_strict(((OpExpr *) clause)->opno))
 			return true;
 		if (is_funcclause(clause) &&
-			member(nonnullarg, ((FuncExpr *) clause)->args) &&
+			list_member(((FuncExpr *) clause)->args, nonnullarg) &&
 			func_strict(((FuncExpr *) clause)->funcid))
 			return true;
 		return false;			/* we can't succeed below... */
@@ -1624,9 +1624,9 @@ make_innerjoin_index_path(Query *root,
 	 * Note that we are making a pathnode for a single-scan indexscan;
 	 * therefore, indexinfo etc should be single-element lists.
 	 */
-	pathnode->indexinfo = makeList1(index);
-	pathnode->indexclauses = makeList1(allclauses);
-	pathnode->indexquals = makeList1(indexquals);
+	pathnode->indexinfo = list_make1(index);
+	pathnode->indexclauses = list_make1(allclauses);
+	pathnode->indexquals = list_make1(indexquals);
 
 	pathnode->isjoininner = true;
 
@@ -1649,7 +1649,7 @@ make_innerjoin_index_path(Query *root,
 	 * Always assume the join type is JOIN_INNER; even if some of the join
 	 * clauses come from other contexts, that's not our problem.
 	 */
-	allclauses = set_ptrUnion(rel->baserestrictinfo, allclauses);
+	allclauses = list_union_ptr(rel->baserestrictinfo, allclauses);
 	pathnode->rows = rel->tuples *
 		clauselist_selectivity(root,
 							   allclauses,
@@ -1679,7 +1679,7 @@ flatten_clausegroups_list(List *clausegroups)
 
 	foreach(l, clausegroups)
 	{
-		allclauses = nconc(allclauses, listCopy((List *) lfirst(l)));
+		allclauses = list_concat(allclauses, list_copy((List *) lfirst(l)));
 	}
 	return allclauses;
 }
@@ -1711,7 +1711,7 @@ make_expr_from_indexclauses(List *indexclauses)
 		orclauses = lappend(orclauses, make_ands_explicit(andlist));
 	}
 
-	if (length(orclauses) > 1)
+	if (list_length(orclauses) > 1)
 		return make_orclause(orclauses);
 	else
 		return (Expr *) linitial(orclauses);
@@ -2114,7 +2114,7 @@ expand_indexqual_condition(RestrictInfo *rinfo, Oid opclass)
 			break;
 
 		default:
-			result = makeList1(rinfo);
+			result = list_make1(rinfo);
 			break;
 	}
 
@@ -2209,7 +2209,7 @@ prefix_quals(Node *leftop, Oid opclass,
 			elog(ERROR, "no = operator for opclass %u", opclass);
 		expr = make_opclause(oproid, BOOLOID, false,
 							 (Expr *) leftop, (Expr *) prefix_const);
-		result = makeList1(make_restrictinfo(expr, true, true));
+		result = list_make1(make_restrictinfo(expr, true, true));
 		return result;
 	}
 
@@ -2224,7 +2224,7 @@ prefix_quals(Node *leftop, Oid opclass,
 		elog(ERROR, "no >= operator for opclass %u", opclass);
 	expr = make_opclause(oproid, BOOLOID, false,
 						 (Expr *) leftop, (Expr *) prefix_const);
-	result = makeList1(make_restrictinfo(expr, true, true));
+	result = list_make1(make_restrictinfo(expr, true, true));
 
 	/*-------
 	 * If we can create a string larger than the prefix, we can say
@@ -2311,7 +2311,7 @@ network_prefix_quals(Node *leftop, Oid expr_op, Oid opclass, Datum rightop)
 						 (Expr *) leftop,
 						 (Expr *) makeConst(datatype, -1, opr1right,
 											false, false));
-	result = makeList1(make_restrictinfo(expr, true, true));
+	result = list_make1(make_restrictinfo(expr, true, true));
 
 	/* create clause "key <= network_scan_last( rightop )" */
 

@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/executor/nodeAppend.c,v 1.57 2004/05/26 04:41:15 neilc Exp $
+ *	  $PostgreSQL: pgsql/src/backend/executor/nodeAppend.c,v 1.58 2004/05/30 23:40:26 neilc Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -155,7 +155,7 @@ ExecInitAppend(Append *node, EState *estate)
 	/*
 	 * Set up empty vector of subplan states
 	 */
-	nplans = length(node->appendplans);
+	nplans = list_length(node->appendplans);
 
 	appendplanstates = (PlanState **) palloc0(nplans * sizeof(PlanState *));
 
@@ -215,7 +215,7 @@ ExecInitAppend(Append *node, EState *estate)
 		appendstate->as_whichplan = i;
 		exec_append_initialize_next(appendstate);
 
-		initNode = (Plan *) nth(i, node->appendplans);
+		initNode = (Plan *) list_nth(node->appendplans, i);
 		appendplanstates[i] = ExecInitNode(initNode, estate);
 	}
 

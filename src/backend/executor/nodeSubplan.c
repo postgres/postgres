@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/executor/nodeSubplan.c,v 1.62 2004/05/26 04:41:16 neilc Exp $
+ *	  $PostgreSQL: pgsql/src/backend/executor/nodeSubplan.c,v 1.63 2004/05/30 23:40:26 neilc Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -228,7 +228,7 @@ ExecScanSubPlan(SubPlanState *node,
 	 * calculation we have to do is done in the parent econtext, since the
 	 * Param values don't need to have per-query lifetime.)
 	 */
-	Assert(length(subplan->parParam) == length(node->args));
+	Assert(list_length(subplan->parParam) == list_length(node->args));
 
 	forboth(l, subplan->parParam, pvar, node->args)
 	{
@@ -341,7 +341,7 @@ ExecScanSubPlan(SubPlanState *node,
 		 * For ALL, ANY, and MULTIEXPR sublinks, iterate over combining
 		 * operators for columns of tuple.
 		 */
-		Assert(length(node->exprs) == length(subplan->paramIds));
+		Assert(list_length(node->exprs) == list_length(subplan->paramIds));
 
 		forboth(l, node->exprs, plst, subplan->paramIds)
 		{
@@ -469,7 +469,7 @@ buildSubPlanHash(SubPlanState *node)
 {
 	SubPlan    *subplan = (SubPlan *) node->xprstate.expr;
 	PlanState  *planstate = node->planstate;
-	int			ncols = length(node->exprs);
+	int			ncols = list_length(node->exprs);
 	ExprContext *innerecontext = node->innerecontext;
 	MemoryContext tempcxt = innerecontext->ecxt_per_tuple_memory;
 	MemoryContext oldcontext;
@@ -566,7 +566,7 @@ buildSubPlanHash(SubPlanState *node)
 		 */
 		foreach(plst, subplan->paramIds)
 		{
-			int			paramid = lfirsti(plst);
+			int			paramid = lfirst_int(plst);
 			ParamExecData *prmdata;
 
 			prmdata = &(innerecontext->ecxt_param_exec_vals[paramid]);
@@ -739,7 +739,7 @@ ExecInitSubPlan(SubPlanState *node, EState *estate)
 
 		foreach(lst, subplan->setParam)
 		{
-			int			paramid = lfirsti(lst);
+			int			paramid = lfirst_int(lst);
 			ParamExecData *prm = &(estate->es_param_exec_vals[paramid]);
 
 			prm->execPlan = node;
@@ -773,7 +773,7 @@ ExecInitSubPlan(SubPlanState *node, EState *estate)
 		/* and a short-lived exprcontext for function evaluation */
 		node->innerecontext = CreateExprContext(estate);
 		/* Silly little array of column numbers 1..n */
-		ncols = length(node->exprs);
+		ncols = list_length(node->exprs);
 		node->keyColIdx = (AttrNumber *) palloc(ncols * sizeof(AttrNumber));
 		for (i = 0; i < ncols; i++)
 			node->keyColIdx[i] = i + 1;
@@ -810,7 +810,7 @@ ExecInitSubPlan(SubPlanState *node, EState *estate)
 
 			Assert(IsA(fstate, FuncExprState));
 			Assert(IsA(opexpr, OpExpr));
-			Assert(length(fstate->args) == 2);
+			Assert(list_length(fstate->args) == 2);
 
 			/* Process lefthand argument */
 			exstate = (ExprState *) linitial(fstate->args);
@@ -992,7 +992,7 @@ ExecSetParamPlan(SubPlanState *node, ExprContext *econtext)
 		 */
 		foreach(l, subplan->setParam)
 		{
-			int			paramid = lfirsti(l);
+			int			paramid = lfirst_int(l);
 			ParamExecData *prm = &(econtext->ecxt_param_exec_vals[paramid]);
 
 			prm->execPlan = NULL;
@@ -1017,7 +1017,7 @@ ExecSetParamPlan(SubPlanState *node, ExprContext *econtext)
 		{
 			foreach(l, subplan->setParam)
 			{
-				int			paramid = lfirsti(l);
+				int			paramid = lfirst_int(l);
 				ParamExecData *prm = &(econtext->ecxt_param_exec_vals[paramid]);
 
 				prm->execPlan = NULL;
@@ -1091,7 +1091,7 @@ ExecReScanSetParamPlan(SubPlanState *node, PlanState *parent)
 	 */
 	foreach(l, subplan->setParam)
 	{
-		int			paramid = lfirsti(l);
+		int			paramid = lfirst_int(l);
 		ParamExecData *prm = &(estate->es_param_exec_vals[paramid]);
 
 		prm->execPlan = node;

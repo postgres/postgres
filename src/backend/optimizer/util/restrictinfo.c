@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/optimizer/util/restrictinfo.c,v 1.27 2004/05/26 04:41:27 neilc Exp $
+ *	  $PostgreSQL: pgsql/src/backend/optimizer/util/restrictinfo.c,v 1.28 2004/05/30 23:40:31 neilc Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -99,7 +99,7 @@ make_restrictinfo_from_indexclauses(List *indexclauses,
 	if (indexclauses == NIL)
 		return NIL;
 	/* If single indexscan, just return the ANDed clauses */
-	if (length(indexclauses) == 1)
+	if (list_length(indexclauses) == 1)
 		return (List *) linitial(indexclauses);
 	/* Else we need an OR RestrictInfo structure */
 	foreach(orlist, indexclauses)
@@ -112,7 +112,7 @@ make_restrictinfo_from_indexclauses(List *indexclauses,
 		andlist = get_actual_clauses(andlist);
 		withoutris = lappend(withoutris, make_ands_explicit(andlist));
 	}
-	return makeList1(make_restrictinfo_internal(make_orclause(withoutris),
+	return list_make1(make_restrictinfo_internal(make_orclause(withoutris),
 												make_orclause(withris),
 												is_pushed_down,
 												valid_everywhere));
@@ -139,7 +139,7 @@ make_restrictinfo_internal(Expr *clause, Expr *orclause,
 	 * If it's a binary opclause, set up left/right relids info.
 	 * In any case set up the total clause relids info.
 	 */
-	if (is_opclause(clause) && length(((OpExpr *) clause)->args) == 2)
+	if (is_opclause(clause) && list_length(((OpExpr *) clause)->args) == 2)
 	{
 		restrictinfo->left_relids = pull_varnos(get_leftop(clause));
 		restrictinfo->right_relids = pull_varnos(get_rightop(clause));
@@ -350,7 +350,7 @@ remove_redundant_join_clauses(Query *root, List *restrictinfo_list,
 		else if (CLAUSECOST(rinfo) < CLAUSECOST(prevrinfo))
 		{
 			/* keep this one, drop the previous one */
-			result = lremove(prevrinfo, result);
+			result = list_delete_ptr(result, prevrinfo);
 			result = lappend(result, rinfo);
 		}
 		/* else, drop this one */

@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/optimizer/util/clauses.c,v 1.171 2004/05/26 04:41:27 neilc Exp $
+ *	  $PostgreSQL: pgsql/src/backend/optimizer/util/clauses.c,v 1.172 2004/05/30 23:40:30 neilc Exp $
  *
  * HISTORY
  *	  AUTHOR			DATE			MAJOR EVENT
@@ -96,9 +96,9 @@ make_opclause(Oid opno, Oid opresulttype, bool opretset,
 	expr->opresulttype = opresulttype;
 	expr->opretset = opretset;
 	if (rightop)
-		expr->args = makeList2(leftop, rightop);
+		expr->args = list_make2(leftop, rightop);
 	else
-		expr->args = makeList1(leftop);
+		expr->args = list_make1(leftop);
 	return (Expr *) expr;
 }
 
@@ -164,7 +164,7 @@ make_notclause(Expr *notclause)
 	BoolExpr   *expr = makeNode(BoolExpr);
 
 	expr->boolop = NOT_EXPR;
-	expr->args = makeList1(notclause);
+	expr->args = list_make1(notclause);
 	return (Expr *) expr;
 }
 
@@ -261,7 +261,7 @@ make_and_qual(Node *qual1, Node *qual2)
 		return qual2;
 	if (qual2 == NULL)
 		return qual1;
-	return (Node *) make_andclause(makeList2(qual1, qual2));
+	return (Node *) make_andclause(list_make2(qual1, qual2));
 }
 
 /*
@@ -278,7 +278,7 @@ make_ands_explicit(List *andclauses)
 {
 	if (andclauses == NIL)
 		return (Expr *) makeBoolConst(true, false);
-	else if (length(andclauses) == 1)
+	else if (list_length(andclauses) == 1)
 		return (Expr *) linitial(andclauses);
 	else
 		return make_andclause(andclauses);
@@ -302,7 +302,7 @@ make_ands_implicit(Expr *clause)
 			 DatumGetBool(((Const *) clause)->constvalue))
 		return NIL;				/* constant TRUE input -> NIL list */
 	else
-		return makeList1(clause);
+		return list_make1(clause);
 }
 
 
@@ -599,7 +599,7 @@ contain_mutable_functions_walker(Node *node, void *context)
 
 		foreach(opid, sublink->operOids)
 		{
-			if (op_volatile(lfirsto(opid)) != PROVOLATILE_IMMUTABLE)
+			if (op_volatile(lfirst_oid(opid)) != PROVOLATILE_IMMUTABLE)
 				return true;
 		}
 		/* else fall through to check args */
@@ -682,7 +682,7 @@ contain_volatile_functions_walker(Node *node, void *context)
 
 		foreach(opid, sublink->operOids)
 		{
-			if (op_volatile(lfirsto(opid)) == PROVOLATILE_VOLATILE)
+			if (op_volatile(lfirst_oid(opid)) == PROVOLATILE_VOLATILE)
 				return true;
 		}
 		/* else fall through to check args */
@@ -982,7 +982,7 @@ CommuteClause(OpExpr *clause)
 
 	/* Sanity checks: caller is at fault if these fail */
 	if (!is_opclause(clause) ||
-		length(clause->args) != 2)
+		list_length(clause->args) != 2)
 		elog(ERROR, "cannot commute non-binary-operator clause");
 
 	opoid = get_commutator(clause->opno);
@@ -1281,7 +1281,7 @@ eval_const_expressions_mutator(Node *node, List *active_fns)
 					if (newargs == NIL)
 						return makeBoolConst(false, false);
 					/* If only one nonconst-or-NULL input, it's the result */
-					if (length(newargs) == 1)
+					if (list_length(newargs) == 1)
 						return (Node *) linitial(newargs);
 					/* Else we still need an OR node */
 					return (Node *) make_orclause(newargs);
@@ -1302,13 +1302,13 @@ eval_const_expressions_mutator(Node *node, List *active_fns)
 					if (newargs == NIL)
 						return makeBoolConst(true, false);
 					/* If only one nonconst-or-NULL input, it's the result */
-					if (length(newargs) == 1)
+					if (list_length(newargs) == 1)
 						return (Node *) linitial(newargs);
 					/* Else we still need an AND node */
 					return (Node *) make_andclause(newargs);
 				}
 			case NOT_EXPR:
-				Assert(length(args) == 1);
+				Assert(list_length(args) == 1);
 				if (IsA(linitial(args), Const))
 				{
 					Const *const_input = (Const *) linitial(args);
@@ -1570,8 +1570,8 @@ eval_const_expressions_mutator(Node *node, List *active_fns)
 			RowExpr	*rowexpr = (RowExpr *) arg;
 
 			if (fselect->fieldnum > 0 &&
-				fselect->fieldnum <= length(rowexpr->args))
-				return (Node *) nth(fselect->fieldnum - 1, rowexpr->args);
+				fselect->fieldnum <= list_length(rowexpr->args))
+				return (Node *) list_nth(rowexpr->args, fselect->fieldnum - 1);
 		}
 		newfselect = makeNode(FieldSelect);
 		newfselect->arg = (Expr *) arg;
@@ -1640,9 +1640,9 @@ simplify_or_arguments(List *args, bool *haveNull, bool *forceTrue)
 		}
 		else if (or_clause(arg))
 		{
-			newargs = nconc(newargs,
-							simplify_or_arguments(((BoolExpr *) arg)->args,
-												  haveNull, forceTrue));
+			newargs = list_concat(newargs,
+								  simplify_or_arguments(((BoolExpr *) arg)->args,
+														haveNull, forceTrue));
 		}
 		else
 		{
@@ -1701,9 +1701,9 @@ simplify_and_arguments(List *args, bool *haveNull, bool *forceFalse)
 		}
 		else if (and_clause(arg))
 		{
-			newargs = nconc(newargs,
-							simplify_and_arguments(((BoolExpr *) arg)->args,
-												   haveNull, forceFalse));
+			newargs = list_concat(newargs,
+								  simplify_and_arguments(((BoolExpr *) arg)->args,
+														 haveNull, forceFalse));
 		}
 		else
 		{
@@ -1880,11 +1880,11 @@ inline_function(Oid funcid, Oid result_type, List *args,
 	if (funcform->prolang != SQLlanguageId ||
 		funcform->prosecdef ||
 		funcform->proretset ||
-		funcform->pronargs != length(args))
+		funcform->pronargs != list_length(args))
 		return NULL;
 
 	/* Check for recursive function, and give up trying to expand if so */
-	if (oidMember(funcid, active_fns))
+	if (list_member_oid(active_fns, funcid))
 		return NULL;
 
 	/* Check permission to call function (fail later, if not) */
@@ -1899,7 +1899,7 @@ inline_function(Oid funcid, Oid result_type, List *args,
 			argtypes[i] == ANYELEMENTOID)
 		{
 			polymorphic = true;
-			argtypes[i] = exprType((Node *) nth(i, args));
+			argtypes[i] = exprType((Node *) list_nth(args, i));
 		}
 	}
 
@@ -1943,13 +1943,13 @@ inline_function(Oid funcid, Oid result_type, List *args,
 	 * more than one command in the function body.
 	 */
 	raw_parsetree_list = pg_parse_query(src);
-	if (length(raw_parsetree_list) != 1)
+	if (list_length(raw_parsetree_list) != 1)
 		goto fail;
 
 	querytree_list = parse_analyze(linitial(raw_parsetree_list),
 								   argtypes, funcform->pronargs);
 
-	if (length(querytree_list) != 1)
+	if (list_length(querytree_list) != 1)
 		goto fail;
 
 	querytree = (Query *) linitial(querytree_list);
@@ -1973,7 +1973,7 @@ inline_function(Oid funcid, Oid result_type, List *args,
 		querytree->limitOffset ||
 		querytree->limitCount ||
 		querytree->setOperations ||
-		length(querytree->targetList) != 1)
+		list_length(querytree->targetList) != 1)
 		goto fail;
 
 	newexpr = (Node *) ((TargetEntry *) linitial(querytree->targetList))->expr;
@@ -2048,7 +2048,7 @@ inline_function(Oid funcid, Oid result_type, List *args,
 			 */
 			if (contain_subplans(param))
 				goto fail;
-			cost_qual_eval(&eval_cost, makeList1(param));
+			cost_qual_eval(&eval_cost, list_make1(param));
 			if (eval_cost.startup + eval_cost.per_tuple >
 				10 * cpu_operator_cost)
 				goto fail;
@@ -2078,7 +2078,7 @@ inline_function(Oid funcid, Oid result_type, List *args,
 	 * add the current function to the context list of active functions.
 	 */
 	newexpr = eval_const_expressions_mutator(newexpr,
-											 lconso(funcid, active_fns));
+											 lcons_oid(funcid, active_fns));
 
 	error_context_stack = sqlerrcontext.previous;
 
@@ -2129,7 +2129,7 @@ substitute_actual_parameters_mutator(Node *node,
 
 		/* Select the appropriate actual arg and replace the Param with it */
 		/* We don't need to copy at this time (it'll get done later) */
-		return nth(param->paramid - 1, context->args);
+		return list_nth(context->args, param->paramid - 1);
 	}
 	return expression_tree_mutator(node, substitute_actual_parameters_mutator,
 								   (void *) context);

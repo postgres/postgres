@@ -8,7 +8,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/access/nbtree/nbtxlog.c,v 1.11 2004/05/26 04:41:05 neilc Exp $
+ *	  $PostgreSQL: pgsql/src/backend/access/nbtree/nbtxlog.c,v 1.12 2004/05/30 23:40:25 neilc Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -81,7 +81,7 @@ forget_matching_split(Relation reln, RelFileNode node,
 		{
 			if (is_root != split->is_root)
 				elog(LOG, "forget_matching_split: fishy is_root data");
-			incomplete_splits = lremove(split, incomplete_splits);
+			incomplete_splits = list_delete_ptr(incomplete_splits, split);
 			break;				/* need not look further */
 		}
 	}

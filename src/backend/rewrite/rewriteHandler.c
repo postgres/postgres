@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/rewrite/rewriteHandler.c,v 1.137 2004/05/29 05:55:13 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/rewrite/rewriteHandler.c,v 1.138 2004/05/30 23:40:35 neilc Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -82,7 +82,7 @@ rewriteRuleAction(Query *parsetree,
 	rule_qual = (Node *) copyObject(rule_qual);
 
 	current_varno = rt_index;
-	rt_length = length(parsetree->rtable);
+	rt_length = list_length(parsetree->rtable);
 	new_varno = PRS2_NEW_VARNO + rt_length;
 
 	/*
@@ -131,7 +131,7 @@ rewriteRuleAction(Query *parsetree,
 	 * that rule action's rtable is separate and shares no substructure
 	 * with the main rtable.  Hence do a deep copy here.
 	 */
-	sub_action->rtable = nconc((List *) copyObject(parsetree->rtable),
+	sub_action->rtable = list_concat((List *) copyObject(parsetree->rtable),
 							   sub_action->rtable);
 
 	/*
@@ -174,7 +174,7 @@ rewriteRuleAction(Query *parsetree,
 						 errmsg("conditional UNION/INTERSECT/EXCEPT statements are not implemented")));
 
 			sub_action->jointree->fromlist =
-				nconc(newjointree, sub_action->jointree->fromlist);
+				list_concat(newjointree, sub_action->jointree->fromlist);
 		}
 	}
 
@@ -249,8 +249,8 @@ adjustJoinTreeList(Query *parsetree, bool removert, int rt_index)
 			if (IsA(rtr, RangeTblRef) &&
 				rtr->rtindex == rt_index)
 			{
-				newjointree = lremove(rtr, newjointree);
-				/* foreach is safe because we exit loop after lremove... */
+				newjointree = list_delete_ptr(newjointree, rtr);
+				/* foreach is safe because we exit loop after list_delete... */
 				break;
 			}
 		}
@@ -616,7 +616,7 @@ ApplyRetrieveRule(Query *parsetree,
 	RangeTblEntry *rte,
 			   *subrte;
 
-	if (length(rule->actions) != 1)
+	if (list_length(rule->actions) != 1)
 		elog(ERROR, "expected just one rule action");
 	if (rule->qual != NULL)
 		elog(ERROR, "cannot handle qualified ON SELECT rule");
@@ -657,14 +657,14 @@ ApplyRetrieveRule(Query *parsetree,
 	/*
 	 * FOR UPDATE of view?
 	 */
-	if (intMember(rt_index, parsetree->rowMarks))
+	if (list_member_int(parsetree->rowMarks, rt_index))
 	{
 		/*
 		 * Remove the view from the list of rels that will actually be
 		 * marked FOR UPDATE by the executor.  It will still be access-
 		 * checked for write access, though.
 		 */
-		parsetree->rowMarks = lremovei(rt_index, parsetree->rowMarks);
+		parsetree->rowMarks = list_delete_int(parsetree->rowMarks, rt_index);
 
 		/*
 		 * Set up the view's referenced tables as if FOR UPDATE.
@@ -702,8 +702,8 @@ markQueryForUpdate(Query *qry, bool skipOldNew)
 
 		if (rte->rtekind == RTE_RELATION)
 		{
-			if (!intMember(rti, qry->rowMarks))
-				qry->rowMarks = lappendi(qry->rowMarks, rti);
+			if (!list_member_int(qry->rowMarks, rti))
+				qry->rowMarks = lappend_int(qry->rowMarks, rti);
 			rte->requiredPerms |= ACL_SELECT_FOR_UPDATE;
 		}
 		else if (rte->rtekind == RTE_SUBQUERY)
@@ -766,7 +766,7 @@ fireRIRrules(Query *parsetree, List *activeRIRs)
 	 * can get changed each time through...
 	 */
 	rt_index = 0;
-	while (rt_index < length(parsetree->rtable))
+	while (rt_index < list_length(parsetree->rtable))
 	{
 		RangeTblEntry *rte;
 		Relation	rel;
@@ -825,7 +825,7 @@ fireRIRrules(Query *parsetree, List *activeRIRs)
 		 */
 		if (rt_index == parsetree->resultRelation)
 			lockmode = NoLock;
-		else if (intMember(rt_index, parsetree->rowMarks))
+		else if (list_member_int(parsetree->rowMarks, rt_index))
 			lockmode = RowShareLock;
 		else
 			lockmode = AccessShareLock;
@@ -866,12 +866,12 @@ fireRIRrules(Query *parsetree, List *activeRIRs)
 		{
 			ListCell   *l;
 
-			if (oidMember(RelationGetRelid(rel), activeRIRs))
+			if (list_member_oid(activeRIRs, RelationGetRelid(rel)))
 				ereport(ERROR,
 						(errcode(ERRCODE_INVALID_OBJECT_DEFINITION),
 						 errmsg("infinite recursion detected in rules for relation \"%s\"",
 								RelationGetRelationName(rel))));
-			activeRIRs = lconso(RelationGetRelid(rel), activeRIRs);
+			activeRIRs = lcons_oid(RelationGetRelid(rel), activeRIRs);
 
 			foreach(l, locks)
 			{
@@ -1169,7 +1169,7 @@ RewriteQuery(Query *parsetree, List *rewrite_events)
 					List	   *newstuff;
 
 					newstuff = RewriteQuery(pt, rewrite_events);
-					rewritten = nconc(rewritten, newstuff);
+					rewritten = list_concat(rewritten, newstuff);
 				}
 			}
 		}

@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/executor/execQual.c,v 1.160 2004/05/26 04:41:15 neilc Exp $
+ *	  $PostgreSQL: pgsql/src/backend/executor/execQual.c,v 1.161 2004/05/30 23:40:26 neilc Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -760,7 +760,7 @@ init_fcache(Oid foid, FuncExprState *fcache, MemoryContext fcacheCxt)
 		aclcheck_error(aclresult, ACL_KIND_PROC, get_func_name(foid));
 
 	/* Safety check (should never fail, as parser should check sooner) */
-	if (length(fcache->args) > FUNC_MAX_ARGS)
+	if (list_length(fcache->args) > FUNC_MAX_ARGS)
 		elog(ERROR, "too many arguments");
 
 	/* Set up the primary fmgr lookup information */
@@ -1958,7 +1958,7 @@ ExecEvalArray(ArrayExprState *astate, ExprContext *econtext,
 		int			i = 0;
 
 		ndims = 1;
-		nelems = length(astate->elements);
+		nelems = list_length(astate->elements);
 
 		/* Shouldn't happen here, but if length is 0, return NULL */
 		if (nelems == 0)
@@ -1999,7 +1999,7 @@ ExecEvalArray(ArrayExprState *astate, ExprContext *econtext,
 		char	   *dat = NULL;
 		Size		ndatabytes = 0;
 		int			nbytes;
-		int			outer_nelems = length(astate->elements);
+		int			outer_nelems = list_length(astate->elements);
 		int			elem_ndims = 0;
 		int		   *elem_dims = NULL;
 		int		   *elem_lbs = NULL;
@@ -2128,7 +2128,7 @@ ExecEvalRow(RowExprState *rstate,
 		*isDone = ExprSingleResult;
 
 	/* Allocate workspace */
-	nargs = length(rstate->args);
+	nargs = list_length(rstate->args);
 	if (nargs == 0)				/* avoid palloc(0) if no fields */
 		nargs = 1;
 	values = (Datum *) palloc(nargs * sizeof(Datum));
@@ -3170,7 +3170,7 @@ int
 ExecTargetListLength(List *targetlist)
 {
 	/* This used to be more complex, but fjoins are dead */
-	return length(targetlist);
+	return list_length(targetlist);
 }
 
 /*

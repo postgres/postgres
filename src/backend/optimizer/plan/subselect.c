@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/optimizer/plan/subselect.c,v 1.90 2004/05/26 04:41:24 neilc Exp $
+ *	  $PostgreSQL: pgsql/src/backend/optimizer/plan/subselect.c,v 1.91 2004/05/30 23:40:29 neilc Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -191,7 +191,7 @@ replace_outer_agg(Aggref *agg)
 	pitem->abslevel = abslevel;
 
 	PlannerParamList = lappend(PlannerParamList, pitem);
-	i = length(PlannerParamList) - 1;
+	i = list_length(PlannerParamList) - 1;
 
 	retval = makeNode(Param);
 	retval->paramkind = PARAM_EXEC;
@@ -216,7 +216,7 @@ generate_new_param(Oid paramtype, int32 paramtypmod)
 
 	retval = makeNode(Param);
 	retval->paramkind = PARAM_EXEC;
-	retval->paramid = (AttrNumber) length(PlannerParamList);
+	retval->paramid = (AttrNumber) list_length(PlannerParamList);
 	retval->paramtype = paramtype;
 
 	pitem = (PlannerParamItem *) palloc(sizeof(PlannerParamItem));
@@ -320,10 +320,10 @@ make_subplan(SubLink *slink, List *lefthand, bool isTopQual)
 	tmpset = bms_copy(plan->extParam);
 	while ((paramid = bms_first_member(tmpset)) >= 0)
 	{
-		PlannerParamItem *pitem = nth(paramid, PlannerParamList);
+		PlannerParamItem *pitem = list_nth(PlannerParamList, paramid);
 
 		if (pitem->abslevel == PlannerQueryLevel)
-			node->parParam = lappendi(node->parParam, paramid);
+			node->parParam = lappend_int(node->parParam, paramid);
 	}
 	bms_free(tmpset);
 
@@ -341,7 +341,7 @@ make_subplan(SubLink *slink, List *lefthand, bool isTopQual)
 		Param	   *prm;
 
 		prm = generate_new_param(BOOLOID, -1);
-		node->setParam = makeListi1(prm->paramid);
+		node->setParam = list_make1_int(prm->paramid);
 		PlannerInitPlan = lappend(PlannerInitPlan, node);
 		result = (Node *) prm;
 	}
@@ -352,7 +352,7 @@ make_subplan(SubLink *slink, List *lefthand, bool isTopQual)
 
 		Assert(!te->resdom->resjunk);
 		prm = generate_new_param(te->resdom->restype, te->resdom->restypmod);
-		node->setParam = makeListi1(prm->paramid);
+		node->setParam = list_make1_int(prm->paramid);
 		PlannerInitPlan = lappend(PlannerInitPlan, node);
 		result = (Node *) prm;
 	}
@@ -368,7 +368,7 @@ make_subplan(SubLink *slink, List *lefthand, bool isTopQual)
 			elog(ERROR, "could not find array type for datatype %s",
 				 format_type_be(te->resdom->restype));
 		prm = generate_new_param(arraytype, -1);
-		node->setParam = makeListi1(prm->paramid);
+		node->setParam = list_make1_int(prm->paramid);
 		PlannerInitPlan = lappend(PlannerInitPlan, node);
 		result = (Node *) prm;
 	}
@@ -382,7 +382,7 @@ make_subplan(SubLink *slink, List *lefthand, bool isTopQual)
 									  plan->targetlist,
 									  0,
 									  &node->paramIds);
-		node->setParam = listCopy(node->paramIds);
+		node->setParam = list_copy(node->paramIds);
 		PlannerInitPlan = lappend(PlannerInitPlan, node);
 
 		/*
@@ -390,7 +390,7 @@ make_subplan(SubLink *slink, List *lefthand, bool isTopQual)
 		 * outer plan's expression tree; they are not kept in the initplan
 		 * node.
 		 */
-		if (length(exprs) > 1)
+		if (list_length(exprs) > 1)
 			result = (Node *) (node->useOr ? make_orclause(exprs) :
 							   make_andclause(exprs));
 		else
@@ -473,7 +473,7 @@ make_subplan(SubLink *slink, List *lefthand, bool isTopQual)
 		args = NIL;
 		foreach(l, node->parParam)
 		{
-			PlannerParamItem *pitem = nth(lfirsti(l), PlannerParamList);
+			PlannerParamItem *pitem = list_nth(PlannerParamList, lfirst_int(l));
 
 			/*
 			 * The Var or Aggref has already been adjusted to have the
@@ -517,7 +517,7 @@ convert_sublink_opers(List *lefthand, List *operOids,
 
 	foreach(l, operOids)
 	{
-		Oid			opid = lfirsto(l);
+		Oid			opid = lfirst_oid(l);
 		Node	   *leftop = (Node *) lfirst(lefthand_item);
 		TargetEntry *te = (TargetEntry *) lfirst(tlist_item);
 		Node	   *rightop;
@@ -547,7 +547,7 @@ convert_sublink_opers(List *lefthand, List *operOids,
 			prm = generate_new_param(te->resdom->restype,
 									 te->resdom->restypmod);
 			/* Record its ID */
-			*righthandIds = lappendi(*righthandIds, prm->paramid);
+			*righthandIds = lappend_int(*righthandIds, prm->paramid);
 			rightop = (Node *) prm;
 		}
 
@@ -603,7 +603,7 @@ subplan_is_hashable(SubLink *slink, SubPlan *node)
 	 */
 	if (slink->subLinkType != ANY_SUBLINK)
 		return false;
-	if (length(slink->operName) != 1 ||
+	if (list_length(slink->operName) != 1 ||
 		strcmp(strVal(linitial(slink->operName)), "=") != 0)
 		return false;
 
@@ -640,7 +640,7 @@ subplan_is_hashable(SubLink *slink, SubPlan *node)
 	 */
 	foreach(l, slink->operOids)
 	{
-		Oid			opid = lfirsto(l);
+		Oid			opid = lfirst_oid(l);
 		HeapTuple	tup;
 		Form_pg_operator optup;
 
@@ -691,7 +691,7 @@ convert_IN_to_join(Query *parse, SubLink *sublink)
 	 */
 	if (sublink->subLinkType != ANY_SUBLINK)
 		return NULL;
-	if (length(sublink->operName) != 1 ||
+	if (list_length(sublink->operName) != 1 ||
 		strcmp(strVal(linitial(sublink->operName)), "=") != 0)
 		return NULL;
 
@@ -731,7 +731,7 @@ convert_IN_to_join(Query *parse, SubLink *sublink)
 										makeAlias("IN_subquery", NIL),
 										false);
 	parse->rtable = lappend(parse->rtable, rte);
-	rtindex = length(parse->rtable);
+	rtindex = list_length(parse->rtable);
 	rtr = makeNode(RangeTblRef);
 	rtr->rtindex = rtindex;
 	parse->jointree->fromlist = lappend(parse->jointree->fromlist, rtr);
@@ -874,7 +874,7 @@ process_sublinks_mutator(Node *node, bool *isTopQual)
 			newarg = process_sublinks_mutator(lfirst(l),
 											  (void *) &locTopQual);
 			if (and_clause(newarg))
-				newargs = nconc(newargs, ((BoolExpr *) newarg)->args);
+				newargs = list_concat(newargs, ((BoolExpr *) newarg)->args);
 			else
 				newargs = lappend(newargs, newarg);
 		}
@@ -896,7 +896,7 @@ process_sublinks_mutator(Node *node, bool *isTopQual)
 			newarg = process_sublinks_mutator(lfirst(l),
 											  (void *) &locTopQual);
 			if (or_clause(newarg))
-				newargs = nconc(newargs, ((BoolExpr *) newarg)->args);
+				newargs = list_concat(newargs, ((BoolExpr *) newarg)->args);
 			else
 				newargs = lappend(newargs, newarg);
 		}

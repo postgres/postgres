@@ -3,7 +3,7 @@
  *				back to source text
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/utils/adt/ruleutils.c,v 1.168 2004/05/26 19:30:12 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/utils/adt/ruleutils.c,v 1.169 2004/05/30 23:40:36 neilc Exp $
  *
  *	  This software is copyrighted by Jan Wieck - Hamburg.
  *
@@ -1290,12 +1290,12 @@ deparse_context_for(const char *aliasname, Oid relid)
 	rte->inFromCl = true;
 
 	/* Build one-element rtable */
-	dpns->rtable = makeList1(rte);
+	dpns->rtable = list_make1(rte);
 	dpns->outer_varno = dpns->inner_varno = 0;
 	dpns->outer_rte = dpns->inner_rte = NULL;
 
 	/* Return a one-deep namespace stack */
-	return makeList1(dpns);
+	return list_make1(dpns);
 }
 
 /*
@@ -1327,7 +1327,7 @@ deparse_context_for_plan(int outer_varno, Node *outercontext,
 	dpns->inner_rte = (RangeTblEntry *) innercontext;
 
 	/* Return a one-deep namespace stack */
-	return makeList1(dpns);
+	return list_make1(dpns);
 }
 
 /*
@@ -1360,7 +1360,7 @@ deparse_context_for_subplan(const char *name, List *tlist,
 	RangeTblEntry *rte = makeNode(RangeTblEntry);
 	List	   *attrs = NIL;
 	int			nattrs = 0;
-	int			rtablelength = length(rtable);
+	int			rtablelength = list_length(rtable);
 	ListCell   *tl;
 	char		buf[32];
 
@@ -1539,8 +1539,8 @@ make_ruledef(StringInfo buf, HeapTuple ruletup, TupleDesc rulettc,
 		query = getInsertSelectQuery(query, NULL);
 
 		context.buf = buf;
-		context.namespaces = makeList1(&dpns);
-		context.varprefix = (length(query->rtable) != 1);
+		context.namespaces = list_make1(&dpns);
+		context.varprefix = (list_length(query->rtable) != 1);
 		context.prettyFlags = prettyFlags;
 		context.indentLevel = PRETTYINDENT_STD;
 		dpns.rtable = query->rtable;
@@ -1557,7 +1557,7 @@ make_ruledef(StringInfo buf, HeapTuple ruletup, TupleDesc rulettc,
 		appendStringInfo(buf, "INSTEAD ");
 
 	/* Finally the rules actions */
-	if (length(actions) > 1)
+	if (list_length(actions) > 1)
 	{
 		ListCell   *action;
 		Query	   *query;
@@ -1574,7 +1574,7 @@ make_ruledef(StringInfo buf, HeapTuple ruletup, TupleDesc rulettc,
 		}
 		appendStringInfo(buf, ");");
 	}
-	else if (length(actions) == 0)
+	else if (list_length(actions) == 0)
 	{
 		appendStringInfo(buf, "NOTHING;");
 	}
@@ -1633,7 +1633,7 @@ make_viewdef(StringInfo buf, HeapTuple ruletup, TupleDesc rulettc,
 	if (ev_action != NULL)
 		actions = (List *) stringToNode(ev_action);
 
-	if (length(actions) != 1)
+	if (list_length(actions) != 1)
 	{
 		appendStringInfo(buf, "Not a view");
 		return;
@@ -1675,7 +1675,7 @@ get_query_def(Query *query, StringInfo buf, List *parentnamespace,
 	context.buf = buf;
 	context.namespaces = lcons(&dpns, list_copy(parentnamespace));
 	context.varprefix = (parentnamespace != NIL ||
-						 length(query->rtable) != 1);
+						 list_length(query->rtable) != 1);
 	context.prettyFlags = prettyFlags;
 	context.indentLevel = startIndent;
 
@@ -2284,7 +2284,7 @@ get_names_for_var(Var *var, deparse_context *context,
 										  var->varlevelsup);
 
 	/* Find the relevant RTE */
-	if (var->varno >= 1 && var->varno <= length(dpns->rtable))
+	if (var->varno >= 1 && var->varno <= list_length(dpns->rtable))
 		rte = rt_fetch(var->varno, dpns->rtable);
 	else if (var->varno == dpns->outer_varno)
 		rte = dpns->outer_rte;
@@ -2393,7 +2393,7 @@ get_simple_binary_op_name(OpExpr *expr)
 {
 	List	   *args = expr->args;
 
-	if (length(args) == 2)
+	if (list_length(args) == 2)
 	{
 		/* binary operator */
 		Node	   *arg1 = (Node *) linitial(args);
@@ -3063,7 +3063,7 @@ get_rule_expr(Node *node, deparse_context *context,
 				char	   *sep;
 
 				/*
-				 * SQL99 allows "ROW" to be omitted when length(args) > 1,
+				 * SQL99 allows "ROW" to be omitted when list_length(args) > 1,
 				 * but for simplicity we always print it.
 				 */
 				appendStringInfo(buf, "ROW(");
@@ -3240,7 +3240,7 @@ get_oper_expr(OpExpr *expr, deparse_context *context)
 
 	if (!PRETTY_PAREN(context))
 		appendStringInfoChar(buf, '(');
-	if (length(args) == 2)
+	if (list_length(args) == 2)
 	{
 		/* binary operator */
 		Node	   *arg1 = (Node *) linitial(args);
@@ -3595,7 +3595,7 @@ get_sublink_expr(SubLink *sublink, deparse_context *context)
 
 	if (sublink->lefthand != NIL)
 	{
-		need_paren = (length(sublink->lefthand) > 1);
+		need_paren = (list_length(sublink->lefthand) > 1);
 		if (need_paren)
 			appendStringInfoChar(buf, '(');
 
@@ -3628,7 +3628,7 @@ get_sublink_expr(SubLink *sublink, deparse_context *context)
 			break;
 
 		case ANY_SUBLINK:
-			if (length(sublink->operName) == 1 &&
+			if (list_length(sublink->operName) == 1 &&
 				strcmp(strVal(linitial(sublink->operName)), "=") == 0)
 			{
 				/* Represent = ANY as IN */
@@ -4244,7 +4244,7 @@ generate_function_name(Oid funcid, int nargs, Oid *argtypes)
 	 * resolve the correct function given the unqualified func name with
 	 * the specified argtypes.
 	 */
-	p_result = func_get_detail(makeList1(makeString(proname)),
+	p_result = func_get_detail(list_make1(makeString(proname)),
 							   NIL, nargs, argtypes,
 							   &p_funcid, &p_rettype,
 							   &p_retset, &p_true_typeids);
@@ -4300,13 +4300,13 @@ generate_operator_name(Oid operid, Oid arg1, Oid arg2)
 	switch (operform->oprkind)
 	{
 		case 'b':
-			p_result = oper(makeList1(makeString(oprname)), arg1, arg2, true);
+			p_result = oper(list_make1(makeString(oprname)), arg1, arg2, true);
 			break;
 		case 'l':
-			p_result = left_oper(makeList1(makeString(oprname)), arg2, true);
+			p_result = left_oper(list_make1(makeString(oprname)), arg2, true);
 			break;
 		case 'r':
-			p_result = right_oper(makeList1(makeString(oprname)), arg1, true);
+			p_result = right_oper(list_make1(makeString(oprname)), arg1, true);
 			break;
 		default:
 			elog(ERROR, "unrecognized oprkind: %d", operform->oprkind);
@@ -4342,7 +4342,7 @@ static void
 print_operator_name(StringInfo buf, List *opname)
 {
 	ListCell	*op = list_head(opname);
-	int			 nnames = length(opname);
+	int			 nnames = list_length(opname);
 
 	if (nnames == 1)
 		appendStringInfoString(buf, strVal(lfirst(op)));

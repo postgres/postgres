@@ -16,7 +16,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/optimizer/prep/prepjointree.c,v 1.19 2004/05/26 18:35:41 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/optimizer/prep/prepjointree.c,v 1.20 2004/05/30 23:40:29 neilc Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -224,7 +224,7 @@ pull_up_subqueries(Query *parse, Node *jtnode, bool below_outer_join)
 			 * Adjust level-0 varnos in subquery so that we can append its
 			 * rangetable to upper query's.
 			 */
-			rtoffset = length(parse->rtable);
+			rtoffset = list_length(parse->rtable);
 			OffsetVarNodes((Node *) subquery, rtoffset, 0);
 
 			/*
@@ -269,14 +269,14 @@ pull_up_subqueries(Query *parse, Node *jtnode, bool below_outer_join)
 			 * hold off until after fixing the upper rtable entries; no
 			 * point in running that code on the subquery ones too.)
 			 */
-			parse->rtable = nconc(parse->rtable, subquery->rtable);
+			parse->rtable = list_concat(parse->rtable, subquery->rtable);
 
 			/*
 			 * Pull up any FOR UPDATE markers, too.  (OffsetVarNodes
-			 * already adjusted the marker values, so just nconc the
-			 * list.)
+			 * already adjusted the marker values, so just list_concat
+			 * the list.)
 			 */
-			parse->rowMarks = nconc(parse->rowMarks, subquery->rowMarks);
+			parse->rowMarks = list_concat(parse->rowMarks, subquery->rowMarks);
 
 			/*
 			 * We also have to fix the relid sets of any parent
@@ -295,8 +295,8 @@ pull_up_subqueries(Query *parse, Node *jtnode, bool below_outer_join)
 			/*
 			 * And now append any subquery InClauseInfos to our list.
 			 */
-			parse->in_info_list = nconc(parse->in_info_list,
-										subquery->in_info_list);
+			parse->in_info_list = list_concat(parse->in_info_list,
+											  subquery->in_info_list);
 
 			/*
 			 * Miscellaneous housekeeping.
@@ -662,7 +662,7 @@ reduce_outer_joins_pass2(Node *jtnode,
 		pass_nonnullable = bms_add_members(pass_nonnullable,
 										   nonnullable_rels);
 		/* And recurse --- but only into interesting subtrees */
-		Assert(length(f->fromlist) == length(state->sub_states));
+		Assert(list_length(f->fromlist) == list_length(state->sub_states));
 		forboth(l, f->fromlist, s, state->sub_states)
 		{
 			reduce_outer_joins_state *sub_state = lfirst(s);
@@ -919,20 +919,20 @@ simplify_jointree(Query *parse, Node *jtnode)
 				 * from_collapse_limit.
 				 */
 				FromExpr   *subf = (FromExpr *) child;
-				int			childlen = length(subf->fromlist);
-				int			myothers = length(newlist) + children_remaining;
+				int			childlen = list_length(subf->fromlist);
+				int			myothers = list_length(newlist) + children_remaining;
 
 				if (childlen <= 1 ||
 					(childlen + myothers) <= from_collapse_limit)
 				{
-					newlist = nconc(newlist, subf->fromlist);
+					newlist = list_concat(newlist, subf->fromlist);
 
 					/*
 					 * By now, the quals have been converted to
 					 * implicit-AND lists, so we just need to join the
 					 * lists.  NOTE: we put the pulled-up quals first.
 					 */
-					f->quals = (Node *) nconc((List *) subf->quals,
+					f->quals = (Node *) list_concat((List *) subf->quals,
 											  (List *) f->quals);
 				}
 				else
@@ -963,11 +963,11 @@ simplify_jointree(Query *parse, Node *jtnode)
 						rightlen;
 
 			if (j->larg && IsA(j->larg, FromExpr))
-				leftlen = length(((FromExpr *) j->larg)->fromlist);
+				leftlen = list_length(((FromExpr *) j->larg)->fromlist);
 			else
 				leftlen = 1;
 			if (j->rarg && IsA(j->rarg, FromExpr))
-				rightlen = length(((FromExpr *) j->rarg)->fromlist);
+				rightlen = list_length(((FromExpr *) j->rarg)->fromlist);
 			else
 				rightlen = 1;
 			if ((leftlen + rightlen) <= join_collapse_limit)
@@ -985,22 +985,22 @@ simplify_jointree(Query *parse, Node *jtnode)
 					f->quals = subf->quals;
 				}
 				else
-					f->fromlist = makeList1(j->larg);
+					f->fromlist = list_make1(j->larg);
 
 				if (j->rarg && IsA(j->rarg, FromExpr))
 				{
 					FromExpr   *subf = (FromExpr *) j->rarg;
 
-					f->fromlist = nconc(f->fromlist,
-										subf->fromlist);
-					f->quals = (Node *) nconc((List *) f->quals,
+					f->fromlist = list_concat(f->fromlist,
+											  subf->fromlist);
+					f->quals = (Node *) list_concat((List *) f->quals,
 											  (List *) subf->quals);
 				}
 				else
 					f->fromlist = lappend(f->fromlist, j->rarg);
 
 				/* pulled-up quals first */
-				f->quals = (Node *) nconc((List *) f->quals,
+				f->quals = (Node *) list_concat((List *) f->quals,
 										  (List *) j->quals);
 
 				return (Node *) f;

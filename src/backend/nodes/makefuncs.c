@@ -9,7 +9,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/nodes/makefuncs.c,v 1.43 2004/05/10 22:44:44 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/nodes/makefuncs.c,v 1.44 2004/05/30 23:40:27 neilc Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -47,7 +47,7 @@ makeSimpleA_Expr(A_Expr_Kind kind, const char *name,
 	A_Expr	   *a = makeNode(A_Expr);
 
 	a->kind = kind;
-	a->name = makeList1(makeString((char *) name));
+	a->name = list_make1(makeString((char *) name));
 	a->lexpr = lexpr;
 	a->rexpr = rexpr;
 	return a;
@@ -259,7 +259,7 @@ makeTypeName(char *typnam)
 {
 	TypeName   *n = makeNode(TypeName);
 
-	n->names = makeList1(makeString(typnam));
+	n->names = list_make1(makeString(typnam));
 	n->typmod = -1;
 	return n;
 }

@@ -14,7 +14,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/optimizer/prep/prepunion.c,v 1.111 2004/05/26 04:41:26 neilc Exp $
+ *	  $PostgreSQL: pgsql/src/backend/optimizer/prep/prepunion.c,v 1.112 2004/05/30 23:40:29 neilc Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -235,10 +235,10 @@ generate_union_plan(SetOperationStmt *op, Query *parse,
 	 * generate only one Append and Sort for the lot.  Recurse to find
 	 * such nodes and compute their children's plans.
 	 */
-	planlist = nconc(recurse_union_children(op->larg, parse,
-											op, refnames_tlist),
-					 recurse_union_children(op->rarg, parse,
-											op, refnames_tlist));
+	planlist = list_concat(recurse_union_children(op->larg, parse,
+												  op, refnames_tlist),
+						   recurse_union_children(op->rarg, parse,
+												  op, refnames_tlist));
 
 	/*
 	 * Generate tlist for Append plan node.
@@ -303,7 +303,7 @@ generate_nonunion_plan(SetOperationStmt *op, Query *parse,
 								   op->colTypes, false, 1,
 								   refnames_tlist,
 								   &child_sortclauses);
-	planlist = makeList2(lplan, rplan);
+	planlist = list_make2(lplan, rplan);
 
 	/*
 	 * Generate tlist for Append plan node.
@@ -349,7 +349,7 @@ generate_nonunion_plan(SetOperationStmt *op, Query *parse,
 			cmd = SETOPCMD_INTERSECT;	/* keep compiler quiet */
 			break;
 	}
-	plan = (Plan *) make_setop(cmd, plan, sortList, length(op->colTypes) + 1);
+	plan = (Plan *) make_setop(cmd, plan, sortList, list_length(op->colTypes) + 1);
 
 	*sortClauses = sortList;
 
@@ -375,15 +375,15 @@ recurse_union_children(Node *setOp, Query *parse,
 
 		if (op->op == top_union->op &&
 			(op->all == top_union->all || op->all) &&
-			equalo(op->colTypes, top_union->colTypes))
+			equal(op->colTypes, top_union->colTypes))
 		{
 			/* Same UNION, so fold children into parent's subplan list */
-			return nconc(recurse_union_children(op->larg, parse,
-												top_union,
-												refnames_tlist),
-						 recurse_union_children(op->rarg, parse,
-												top_union,
-												refnames_tlist));
+			return list_concat(recurse_union_children(op->larg, parse,
+													  top_union,
+													  refnames_tlist),
+							   recurse_union_children(op->rarg, parse,
+													  top_union,
+													  refnames_tlist));
 		}
 	}
 
@@ -397,10 +397,10 @@ recurse_union_children(Node *setOp, Query *parse,
 	 * we have an EXCEPT or INTERSECT as child, else there won't be
 	 * resjunk anyway.
 	 */
-	return makeList1(recurse_set_operations(setOp, parse,
-											top_union->colTypes, false,
-											-1, refnames_tlist,
-											&child_sortclauses));
+	return list_make1(recurse_set_operations(setOp, parse,
+											 top_union->colTypes, false,
+											 -1, refnames_tlist,
+											 &child_sortclauses));
 }
 
 /*
@@ -430,7 +430,7 @@ generate_setop_tlist(List *colTypes, int flag,
 	k = list_head(refnames_tlist);
 	foreach(i, colTypes)
 	{
-		Oid			colType = lfirsto(i);
+		Oid			colType = lfirst_oid(i);
 		TargetEntry *inputtle = (TargetEntry *) lfirst(j);
 		TargetEntry *reftle = (TargetEntry *) lfirst(k);
 		int32		colTypmod;
@@ -536,7 +536,7 @@ generate_append_tlist(List *colTypes, bool flag,
 	 * If the inputs all agree on type and typmod of a particular column, use
 	 * that typmod; else use -1.  (+1 here in case of zero columns.)
 	 */
-	colTypmods = (int32 *) palloc(length(colTypes) * sizeof(int32) + 1);
+	colTypmods = (int32 *) palloc(list_length(colTypes) * sizeof(int32) + 1);
 
 	foreach(planl, input_plans)
 	{
@@ -577,7 +577,7 @@ generate_append_tlist(List *colTypes, bool flag,
 	colindex = 0;
 	forboth(curColType, colTypes, ref_tl_item, refnames_tlist)
 	{
-		Oid			colType = lfirsto(curColType);
+		Oid			colType = lfirst_oid(curColType);
 		int32		colTypmod = colTypmods[colindex++];
 		TargetEntry *reftle = (TargetEntry *) lfirst(ref_tl_item);
 
@@ -663,7 +663,7 @@ List *
 find_all_inheritors(Oid parentrel)
 {
 	List	   *examined_relids = NIL;
-	List	   *unexamined_relids = makeListo1(parentrel);
+	List	   *unexamined_relids = list_make1_oid(parentrel);
 
 	/*
 	 * While the queue of unexamined relids is nonempty, remove the first
@@ -676,7 +676,7 @@ find_all_inheritors(Oid parentrel)
 		List	   *currentchildren;
 
 		unexamined_relids = list_delete_first(unexamined_relids);
-		examined_relids = lappendo(examined_relids, currentrel);
+		examined_relids = lappend_oid(examined_relids, currentrel);
 		currentchildren = find_inheritance_children(currentrel);
 
 		/*
@@ -686,8 +686,8 @@ find_all_inheritors(Oid parentrel)
 		 * into an infinite loop, though theoretically there can't be any
 		 * cycles in the inheritance graph anyway.)
 		 */
-		currentchildren = set_differenceo(currentchildren, examined_relids);
-		unexamined_relids = set_uniono(unexamined_relids, currentchildren);
+		currentchildren = list_difference_oid(currentchildren, examined_relids);
+		unexamined_relids = list_union_oid(unexamined_relids, currentchildren);
 	}
 
 	return examined_relids;
@@ -744,17 +744,17 @@ expand_inherited_rtentry(Query *parse, Index rti, bool dup_parent)
 	 * case.  This could happen despite above has_subclass() check, if
 	 * table once had a child but no longer does.
 	 */
-	if (length(inhOIDs) < 2)
+	if (list_length(inhOIDs) < 2)
 		return NIL;
 	/* OK, it's an inheritance set; expand it */
 	if (dup_parent)
 		inhRTIs = NIL;
 	else
-		inhRTIs = makeListi1(rti);		/* include original RTE in result */
+		inhRTIs = list_make1_int(rti);		/* include original RTE in result */
 
 	foreach(l, inhOIDs)
 	{
-		Oid			childOID = lfirsto(l);
+		Oid			childOID = lfirst_oid(l);
 		RangeTblEntry *childrte;
 		Index		childRTindex;
 
@@ -771,9 +771,9 @@ expand_inherited_rtentry(Query *parse, Index rti, bool dup_parent)
 		childrte = copyObject(rte);
 		childrte->relid = childOID;
 		parse->rtable = lappend(parse->rtable, childrte);
-		childRTindex = length(parse->rtable);
+		childRTindex = list_length(parse->rtable);
 
-		inhRTIs = lappendi(inhRTIs, childRTindex);
+		inhRTIs = lappend_int(inhRTIs, childRTindex);
 	}
 
 	return inhRTIs;

@@ -6,7 +6,7 @@
  * Portions Copyright (c) 1996-2003, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/backend/optimizer/geqo/geqo_eval.c,v 1.68 2004/05/26 04:41:20 neilc Exp $
+ * $PostgreSQL: pgsql/src/backend/optimizer/geqo/geqo_eval.c,v 1.69 2004/05/30 23:40:27 neilc Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -175,8 +175,8 @@ gimme_tree(Gene *tour, int num_gene, GeqoEvalData *evaldata)
 
 		/* Get the next input relation and push it */
 		cur_rel_index = (int) tour[rel_count];
-		stack[stack_depth] = (RelOptInfo *) nth(cur_rel_index - 1,
-												evaldata->initial_rels);
+		stack[stack_depth] = (RelOptInfo *) list_nth(evaldata->initial_rels,
+													 cur_rel_index - 1);
 		stack_depth++;
 
 		/*

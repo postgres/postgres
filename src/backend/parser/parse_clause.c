@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/parser/parse_clause.c,v 1.130 2004/05/26 04:41:29 neilc Exp $
+ *	  $PostgreSQL: pgsql/src/backend/parser/parse_clause.c,v 1.131 2004/05/30 23:40:34 neilc Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -148,7 +148,7 @@ setTargetTable(ParseState *pstate, RangeVar *relation,
 	pstate->p_target_rangetblentry = rte;
 
 	/* assume new rte is at end */
-	rtindex = length(pstate->p_rtable);
+	rtindex = list_length(pstate->p_rtable);
 	Assert(rte == rt_fetch(rtindex, pstate->p_rtable));
 
 	/*
@@ -233,7 +233,7 @@ extractRemainingColumns(List *common_colnames,
 	List	   *new_colvars = NIL;
 	ListCell   *lnames, *lvars;
 
-	Assert(length(src_colnames) == length(src_colvars));
+	Assert(list_length(src_colnames) == list_length(src_colvars));
 
 	forboth(lnames, src_colnames, lvars, src_colvars)
 	{
@@ -336,7 +336,7 @@ transformJoinOnClause(ParseState *pstate, JoinExpr *j,
 	 * to be added.
 	 */
 	save_namespace = pstate->p_namespace;
-	pstate->p_namespace = makeList2(j->larg, j->rarg);
+	pstate->p_namespace = list_make2(j->larg, j->rarg);
 
 	result = transformWhereClause(pstate, j->quals, "JOIN/ON");
 
@@ -353,7 +353,7 @@ transformJoinOnClause(ParseState *pstate, JoinExpr *j,
 	clause_varnos = pull_varnos(result);
 	while ((varno = bms_first_member(clause_varnos)) >= 0)
 	{
-		if (!intMember(varno, containedRels))
+		if (!list_member_int(containedRels, varno))
 		{
 			ereport(ERROR,
 					(errcode(ERRCODE_INVALID_COLUMN_REFERENCE),
@@ -391,7 +391,7 @@ transformTableEntry(ParseState *pstate, RangeVar *r)
 	 */
 	rtr = makeNode(RangeTblRef);
 	/* assume new rte is at end */
-	rtr->rtindex = length(pstate->p_rtable);
+	rtr->rtindex = list_length(pstate->p_rtable);
 	Assert(rte == rt_fetch(rtr->rtindex, pstate->p_rtable));
 
 	return rtr;
@@ -429,7 +429,7 @@ transformRangeSubselect(ParseState *pstate, RangeSubselect *r)
 	 * are probably impossible given restrictions of the grammar, but
 	 * check 'em anyway.
 	 */
-	if (length(parsetrees) != 1)
+	if (list_length(parsetrees) != 1)
 		elog(ERROR, "unexpected parse analysis result for subquery in FROM");
 	query = (Query *) linitial(parsetrees);
 	if (query == NULL || !IsA(query, Query))
@@ -476,7 +476,7 @@ transformRangeSubselect(ParseState *pstate, RangeSubselect *r)
 	 */
 	rtr = makeNode(RangeTblRef);
 	/* assume new rte is at end */
-	rtr->rtindex = length(pstate->p_rtable);
+	rtr->rtindex = list_length(pstate->p_rtable);
 	Assert(rte == rt_fetch(rtr->rtindex, pstate->p_rtable));
 
 	return rtr;
@@ -556,7 +556,7 @@ transformRangeFunction(ParseState *pstate, RangeFunction *r)
 	 */
 	rtr = makeNode(RangeTblRef);
 	/* assume new rte is at end */
-	rtr->rtindex = length(pstate->p_rtable);
+	rtr->rtindex = list_length(pstate->p_rtable);
 	Assert(rte == rt_fetch(rtr->rtindex, pstate->p_rtable));
 
 	return rtr;
@@ -584,7 +584,7 @@ transformFromClauseItem(ParseState *pstate, Node *n, List **containedRels)
 		RangeTblRef *rtr;
 
 		rtr = transformTableEntry(pstate, (RangeVar *) n);
-		*containedRels = makeListi1(rtr->rtindex);
+		*containedRels = list_make1_int(rtr->rtindex);
 		return (Node *) rtr;
 	}
 	else if (IsA(n, RangeSubselect))
@@ -593,7 +593,7 @@ transformFromClauseItem(ParseState *pstate, Node *n, List **containedRels)
 		RangeTblRef *rtr;
 
 		rtr = transformRangeSubselect(pstate, (RangeSubselect *) n);
-		*containedRels = makeListi1(rtr->rtindex);
+		*containedRels = list_make1_int(rtr->rtindex);
 		return (Node *) rtr;
 	}
 	else if (IsA(n, RangeFunction))
@@ -602,7 +602,7 @@ transformFromClauseItem(ParseState *pstate, Node *n, List **containedRels)
 		RangeTblRef *rtr;
 
 		rtr = transformRangeFunction(pstate, (RangeFunction *) n);
-		*containedRels = makeListi1(rtr->rtindex);
+		*containedRels = list_make1_int(rtr->rtindex);
 		return (Node *) rtr;
 	}
 	else if (IsA(n, JoinExpr))
@@ -632,7 +632,7 @@ transformFromClauseItem(ParseState *pstate, Node *n, List **containedRels)
 		 * Generate combined list of relation indexes for possible use by
 		 * transformJoinOnClause below.
 		 */
-		my_containedRels = nconc(l_containedRels, r_containedRels);
+		my_containedRels = list_concat(l_containedRels, r_containedRels);
 
 		/*
 		 * Check for conflicting refnames in left and right subtrees. Must
@@ -799,9 +799,9 @@ transformFromClauseItem(ParseState *pstate, Node *n, List **containedRels)
 							 errmsg("column \"%s\" specified in USING clause does not exist in right table",
 									u_colname)));
 
-				l_colvar = nth(l_index, l_colvars);
+				l_colvar = list_nth(l_colvars, l_index);
 				l_usingvars = lappend(l_usingvars, l_colvar);
-				r_colvar = nth(r_index, r_colvars);
+				r_colvar = list_nth(r_colvars, r_index);
 				r_usingvars = lappend(r_usingvars, r_colvar);
 
 				res_colnames = lappend(res_colnames, lfirst(ucol));
@@ -833,10 +833,10 @@ transformFromClauseItem(ParseState *pstate, Node *n, List **containedRels)
 		extractRemainingColumns(res_colnames,
 								r_colnames, r_colvars,
 								&r_colnames, &r_colvars);
-		res_colnames = nconc(res_colnames, l_colnames);
-		res_colvars = nconc(res_colvars, l_colvars);
-		res_colnames = nconc(res_colnames, r_colnames);
-		res_colvars = nconc(res_colvars, r_colvars);
+		res_colnames = list_concat(res_colnames, l_colnames);
+		res_colvars = list_concat(res_colvars, l_colvars);
+		res_colnames = list_concat(res_colnames, r_colnames);
+		res_colvars = list_concat(res_colvars, r_colvars);
 
 		/*
 		 * Check alias (AS clause), if any.
@@ -845,7 +845,7 @@ transformFromClauseItem(ParseState *pstate, Node *n, List **containedRels)
 		{
 			if (j->alias->colnames != NIL)
 			{
-				if (length(j->alias->colnames) > length(res_colnames))
+				if (list_length(j->alias->colnames) > list_length(res_colnames))
 					ereport(ERROR,
 							(errcode(ERRCODE_SYNTAX_ERROR),
 							 errmsg("column alias list for \"%s\" has too many entries",
@@ -864,13 +864,13 @@ transformFromClauseItem(ParseState *pstate, Node *n, List **containedRels)
 										true);
 
 		/* assume new rte is at end */
-		j->rtindex = length(pstate->p_rtable);
+		j->rtindex = list_length(pstate->p_rtable);
 		Assert(rte == rt_fetch(j->rtindex, pstate->p_rtable));
 
 		/*
 		 * Include join RTE in returned containedRels list
 		 */
-		*containedRels = lconsi(j->rtindex, my_containedRels);
+		*containedRels = lcons_int(j->rtindex, my_containedRels);
 
 		return (Node *) j;
 	}
@@ -900,8 +900,8 @@ buildMergedJoinVar(ParseState *pstate, JoinType jointype,
 	outcoltypmod = l_colvar->vartypmod;
 	if (outcoltype != r_colvar->vartype)
 	{
-		outcoltype = select_common_type(makeListo2(l_colvar->vartype,
-												   r_colvar->vartype),
+		outcoltype = select_common_type(list_make2_oid(l_colvar->vartype,
+													   r_colvar->vartype),
 										"JOIN/USING");
 		outcoltypmod = -1;		/* ie, unknown */
 	}
@@ -973,7 +973,7 @@ buildMergedJoinVar(ParseState *pstate, JoinType jointype,
 				CoalesceExpr *c = makeNode(CoalesceExpr);
 
 				c->coalescetype = outcoltype;
-				c->args = makeList2(l_node, r_node);
+				c->args = list_make2(l_node, r_node);
 				res_node = (Node *) c;
 				break;
 			}
@@ -1122,7 +1122,7 @@ findTargetlistEntry(ParseState *pstate, Node *node, List **tlist, int clause)
 	 *----------
 	 */
 	if (IsA(node, ColumnRef) &&
-		length(((ColumnRef *) node)->fields) == 1 &&
+		list_length(((ColumnRef *) node)->fields) == 1 &&
 		((ColumnRef *) node)->indirection == NIL)
 	{
 		char	   *name = strVal(linitial(((ColumnRef *) node)->fields));

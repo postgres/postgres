@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/optimizer/path/joinpath.c,v 1.87 2004/05/26 04:41:22 neilc Exp $
+ *	  $PostgreSQL: pgsql/src/backend/optimizer/path/joinpath.c,v 1.88 2004/05/30 23:40:28 neilc Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -236,8 +236,8 @@ sort_inner_and_outer(Query *root,
 		/* Make a pathkey list with this guy first. */
 		if (l != list_head(all_pathkeys))
 			cur_pathkeys = lcons(front_pathkey,
-								 lremove(front_pathkey,
-										 listCopy(all_pathkeys)));
+								 list_delete_ptr(list_copy(all_pathkeys),
+												 front_pathkey));
 		else
 			cur_pathkeys = all_pathkeys;		/* no work at first one... */
 
@@ -254,7 +254,7 @@ sort_inner_and_outer(Query *root,
 
 		/* Forget it if can't use all the clauses in right/full join */
 		if (useallclauses &&
-			length(cur_mergeclauses) != length(mergeclause_list))
+			list_length(cur_mergeclauses) != list_length(mergeclause_list))
 			continue;
 
 		/*
@@ -510,7 +510,7 @@ match_unsorted_outer(Query *root,
 			else
 				continue;
 		}
-		if (useallclauses && length(mergeclauses) != length(mergeclause_list))
+		if (useallclauses && list_length(mergeclauses) != list_length(mergeclause_list))
 			continue;
 
 		/* Compute the required ordering of the inner path */
@@ -547,9 +547,9 @@ match_unsorted_outer(Query *root,
 		 * consider both cheap startup cost and cheap total cost.  Ignore
 		 * inner_cheapest_total, since we already made a path with it.
 		 */
-		num_sortkeys = length(innersortkeys);
+		num_sortkeys = list_length(innersortkeys);
 		if (num_sortkeys > 1 && !useallclauses)
-			trialsortkeys = listCopy(innersortkeys);	/* need modifiable copy */
+			trialsortkeys = list_copy(innersortkeys);	/* need modifiable copy */
 		else
 			trialsortkeys = innersortkeys;		/* won't really truncate */
 		cheapest_startup_inner = NULL;
@@ -565,7 +565,7 @@ match_unsorted_outer(Query *root,
 			 * 'sortkeycnt' innersortkeys.	NB: trialsortkeys list is
 			 * modified destructively, which is why we made a copy...
 			 */
-			trialsortkeys = ltruncate(sortkeycnt, trialsortkeys);
+			trialsortkeys = list_truncate(trialsortkeys, sortkeycnt);
 			innerpath = get_cheapest_path_for_pathkeys(innerrel->pathlist,
 													   trialsortkeys,
 													   TOTAL_COST);

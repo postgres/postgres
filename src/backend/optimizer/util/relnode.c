@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/optimizer/util/relnode.c,v 1.57 2004/05/26 04:41:27 neilc Exp $
+ *	  $PostgreSQL: pgsql/src/backend/optimizer/util/relnode.c,v 1.58 2004/05/30 23:40:31 neilc Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -162,7 +162,7 @@ make_base_rel(Query *root, int relid)
 			/* Subquery or function --- need only set up attr range */
 			/* Note: 0 is included in range to support whole-row Vars */
 			rel->min_attr = 0;
-			rel->max_attr = length(rte->eref->colnames);
+			rel->max_attr = list_length(rte->eref->colnames);
 			break;
 		default:
 			elog(ERROR, "unrecognized RTE kind: %d",
@@ -446,10 +446,10 @@ build_joinrel_restrictlist(Query *root,
 	/*
 	 * Collect all the clauses that syntactically belong at this level.
 	 */
-	rlist = nconc(subbuild_joinrel_restrictlist(joinrel,
-												outer_rel->joininfo),
-				  subbuild_joinrel_restrictlist(joinrel,
-												inner_rel->joininfo));
+	rlist = list_concat(subbuild_joinrel_restrictlist(joinrel,
+													  outer_rel->joininfo),
+						subbuild_joinrel_restrictlist(joinrel,
+													  inner_rel->joininfo));
 
 	/*
 	 * Eliminate duplicate and redundant clauses.
@@ -462,7 +462,7 @@ build_joinrel_restrictlist(Query *root,
 	 */
 	result = remove_redundant_join_clauses(root, rlist, jointype);
 
-	freeList(rlist);
+	list_free(rlist);
 
 	return result;
 }
@@ -496,8 +496,8 @@ subbuild_joinrel_restrictlist(RelOptInfo *joinrel,
 			 * We must copy the list to avoid disturbing the input relation,
 			 * but we can use a shallow copy.
 			 */
-			restrictlist = nconc(restrictlist,
-								 listCopy(joininfo->jinfo_restrictinfo));
+			restrictlist = list_concat(restrictlist,
+									   list_copy(joininfo->jinfo_restrictinfo));
 		}
 		else
 		{
@@ -549,8 +549,8 @@ subbuild_joinrel_joinlist(RelOptInfo *joinrel,
 
 			new_joininfo = make_joininfo_node(joinrel, new_unjoined_relids);
 			new_joininfo->jinfo_restrictinfo =
-				set_ptrUnion(new_joininfo->jinfo_restrictinfo,
-							 joininfo->jinfo_restrictinfo);
+				list_union_ptr(new_joininfo->jinfo_restrictinfo,
+							   joininfo->jinfo_restrictinfo);
 		}
 	}
 }

@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/optimizer/path/joinrels.c,v 1.68 2004/05/26 04:41:22 neilc Exp $
+ *	  $PostgreSQL: pgsql/src/backend/optimizer/path/joinrels.c,v 1.69 2004/05/30 23:40:28 neilc Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -121,7 +121,7 @@ make_rels_by_joins(Query *root, int level, List **joinrels)
 		{
 			RelOptInfo *jrel = (RelOptInfo *) lfirst(nr);
 
-			if (!ptrMember(jrel, result_rels))
+			if (!list_member_ptr(result_rels, jrel))
 				result_rels = lcons(jrel, result_rels);
 		}
 	}
@@ -185,7 +185,7 @@ make_rels_by_joins(Query *root, int level, List **joinrels)
 							jrel = make_join_rel(root, old_rel, new_rel,
 												 JOIN_INNER);
 							/* Avoid making duplicate entries ... */
-							if (jrel && !ptrMember(jrel, result_rels))
+							if (jrel && !list_member_ptr(result_rels, jrel))
 								result_rels = lcons(jrel, result_rels);
 							break;		/* need not consider more
 										 * joininfos */
@@ -234,7 +234,7 @@ make_rels_by_joins(Query *root, int level, List **joinrels)
 			{
 				RelOptInfo *jrel = (RelOptInfo *) lfirst(nr);
 
-				if (!ptrMember(jrel, result_rels))
+				if (!list_member_ptr(result_rels, jrel))
 					result_rels = lcons(jrel, result_rels);
 			}
 		}
@@ -308,7 +308,7 @@ make_rels_by_clause_joins(Query *root,
 				 * Avoid entering same joinrel into our output list more
 				 * than once.
 				 */
-				if (jrel && !ptrMember(jrel, result))
+				if (jrel && !list_member_ptr(result, jrel))
 					result = lcons(jrel, result);
 			}
 		}

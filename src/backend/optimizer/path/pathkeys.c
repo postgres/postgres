@@ -11,7 +11,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/optimizer/path/pathkeys.c,v 1.57 2004/05/26 04:41:22 neilc Exp $
+ *	  $PostgreSQL: pgsql/src/backend/optimizer/path/pathkeys.c,v 1.58 2004/05/30 23:40:28 neilc Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -126,8 +126,8 @@ add_equijoined_keys(Query *root, RestrictInfo *restrictinfo)
 	while (cursetlink)
 	{
 		List	   *curset = (List *) lfirst(cursetlink);
-		bool		item1here = member(item1, curset);
-		bool		item2here = member(item2, curset);
+		bool		item1here = list_member(curset, item1);
+		bool		item2here = list_member(curset, item2);
 
 		/* must advance cursetlink before lremove possibly pfree's it */
 		cursetlink = lnext(cursetlink);
@@ -147,22 +147,22 @@ add_equijoined_keys(Query *root, RestrictInfo *restrictinfo)
 
 			/* Build the new set only when we know we must */
 			if (newset == NIL)
-				newset = makeList2(item1, item2);
+				newset = list_make2(item1, item2);
 
 			/* Found a set to merge into our new set */
-			newset = set_union(newset, curset);
+			newset = list_union(newset, curset);
 
 			/*
 			 * Remove old set from equi_key_list.
 			 */
-			root->equi_key_list = lremove(curset, root->equi_key_list);
-			freeList(curset);	/* might as well recycle old cons cells */
+			root->equi_key_list = list_delete_ptr(root->equi_key_list, curset);
+			list_free(curset);	/* might as well recycle old cons cells */
 		}
 	}
 
 	/* Build the new set only when we know we must */
 	if (newset == NIL)
-		newset = makeList2(item1, item2);
+		newset = list_make2(item1, item2);
 
 	root->equi_key_list = lcons(newset, root->equi_key_list);
 }
@@ -204,7 +204,7 @@ generate_implied_equalities(Query *root)
 	foreach(cursetlink, root->equi_key_list)
 	{
 		List	   *curset = (List *) lfirst(cursetlink);
-		int			nitems = length(curset);
+		int			nitems = list_length(curset);
 		Relids	   *relids;
 		bool		have_consts;
 		ListCell   *ptr1;
@@ -341,10 +341,10 @@ make_canonical_pathkey(Query *root, PathKeyItem *item)
 	{
 		List	   *curset = (List *) lfirst(cursetlink);
 
-		if (member(item, curset))
+		if (list_member(curset, item))
 			return curset;
 	}
-	newset = makeList1(item);
+	newset = list_make1(item);
 	root->equi_key_list = lcons(newset, root->equi_key_list);
 	return newset;
 }
@@ -383,7 +383,7 @@ canonicalize_pathkeys(Query *root, List *pathkeys)
 		 * canonicalized the keys, so that equivalent-key knowledge is
 		 * used when deciding if an item is redundant.
 		 */
-		if (!ptrMember(cpathkey, new_pathkeys))
+		if (!list_member_ptr(new_pathkeys, cpathkey))
 			new_pathkeys = lappend(new_pathkeys, cpathkey);
 	}
 	return new_pathkeys;
@@ -408,8 +408,8 @@ count_canonical_peers(Query *root, PathKeyItem *item)
 	{
 		List	   *curset = (List *) lfirst(cursetlink);
 
-		if (member(item, curset))
-			return length(curset) - 1;
+		if (list_member(curset, item))
+			return list_length(curset) - 1;
 	}
 	return 0;
 }
@@ -443,8 +443,8 @@ compare_pathkeys(List *keys1, List *keys2)
 		 * input, but query root not accessible here...
 		 */
 #ifdef NOT_USED
-		Assert(ptrMember(subkey1, root->equi_key_list));
-		Assert(ptrMember(subkey2, root->equi_key_list));
+		Assert(list_member_ptr(root->equi_key_list, subkey1));
+		Assert(list_member_ptr(root->equi_key_list, subkey2));
 #endif
 
 		/*
@@ -499,8 +499,8 @@ compare_noncanonical_pathkeys(List *keys1, List *keys2)
 		List	   *subkey1 = (List *) lfirst(key1);
 		List	   *subkey2 = (List *) lfirst(key2);
 
-		Assert(length(subkey1) == 1);
-		Assert(length(subkey2) == 1);
+		Assert(list_length(subkey1) == 1);
+		Assert(list_length(subkey2) == 1);
 		if (!equal(subkey1, subkey2))
 			return PATHKEYS_DIFFERENT;	/* no need to keep looking */
 	}
@@ -693,7 +693,7 @@ build_index_pathkeys(Query *root,
 		 * Eliminate redundant ordering info; could happen if query is
 		 * such that index keys are equijoined...
 		 */
-		if (!ptrMember(cpathkey, retval))
+		if (!list_member_ptr(retval, cpathkey))
 			retval = lappend(retval, cpathkey);
 
 		indexkeys++;
@@ -752,7 +752,7 @@ build_subquery_pathkeys(Query *root, RelOptInfo *rel, Query *subquery)
 {
 	List	   *retval = NIL;
 	int			retvallen = 0;
-	int			outer_query_keys = length(root->query_pathkeys);
+	int			outer_query_keys = list_length(root->query_pathkeys);
 	List	   *sub_tlist = rel->subplan->targetlist;
 	ListCell   *i;
 
@@ -810,8 +810,7 @@ build_subquery_pathkeys(Query *root, RelOptInfo *rel, Query *subquery)
 					score = count_canonical_peers(root, outer_item);
 					/* +1 if it matches the proper query_pathkeys item */
 					if (retvallen < outer_query_keys &&
-						member(outer_item,
-							   nth(retvallen, root->query_pathkeys)))
+						list_member(list_nth(root->query_pathkeys, retvallen), outer_item))
 						score++;
 					if (score > best_score)
 					{
@@ -836,7 +835,7 @@ build_subquery_pathkeys(Query *root, RelOptInfo *rel, Query *subquery)
 		 * Eliminate redundant ordering info; could happen if outer query
 		 * equijoins subquery keys...
 		 */
-		if (!ptrMember(cpathkey, retval))
+		if (!list_member_ptr(retval, cpathkey))
 		{
 			retval = lappend(retval, cpathkey);
 			retvallen++;
@@ -920,7 +919,7 @@ make_pathkeys_for_sortclauses(List *sortclauses,
 		 * canonicalize_pathkeys() might replace it with a longer sublist
 		 * later.
 		 */
-		pathkeys = lappend(pathkeys, makeList1(pathkey));
+		pathkeys = lappend(pathkeys, list_make1(pathkey));
 	}
 	return pathkeys;
 }
@@ -1041,7 +1040,7 @@ find_mergeclauses_for_pathkeys(Query *root,
 			 */
 			if ((pathkey == restrictinfo->left_pathkey ||
 				 pathkey == restrictinfo->right_pathkey) &&
-				!ptrMember(restrictinfo, mergeclauses))
+				!list_member_ptr(mergeclauses, restrictinfo))
 			{
 				matched_restrictinfos = lappend(matched_restrictinfos,
 												restrictinfo);
@@ -1060,7 +1059,7 @@ find_mergeclauses_for_pathkeys(Query *root,
 		 * If we did find usable mergeclause(s) for this sort-key
 		 * position, add them to result list.
 		 */
-		mergeclauses = nconc(mergeclauses, matched_restrictinfos);
+		mergeclauses = list_concat(mergeclauses, matched_restrictinfos);
 	}
 
 	return mergeclauses;
@@ -1124,7 +1123,7 @@ make_pathkeys_for_mergeclauses(Query *root,
 		 * pathkey, a simple ptrMember test is sufficient to detect
 		 * redundant keys.
 		 */
-		if (!ptrMember(pathkey, pathkeys))
+		if (!list_member_ptr(pathkeys, pathkey))
 			pathkeys = lappend(pathkeys, pathkey);
 	}
 
@@ -1214,7 +1213,7 @@ pathkeys_useful_for_merging(Query *root, RelOptInfo *rel, List *pathkeys)
  *
  * Unlike merge pathkeys, this is an all-or-nothing affair: it does us
  * no good to order by just the first key(s) of the requested ordering.
- * So the result is always either 0 or length(root->query_pathkeys).
+ * So the result is always either 0 or list_length(root->query_pathkeys).
  */
 int
 pathkeys_useful_for_ordering(Query *root, List *pathkeys)
@@ -1228,7 +1227,7 @@ pathkeys_useful_for_ordering(Query *root, List *pathkeys)
 	if (pathkeys_contained_in(root->query_pathkeys, pathkeys))
 	{
 		/* It's useful ... or at least the first N keys are */
-		return length(root->query_pathkeys);
+		return list_length(root->query_pathkeys);
 	}
 
 	return 0;					/* path ordering not useful */
@@ -1255,8 +1254,8 @@ truncate_useless_pathkeys(Query *root,
 	 * Note: not safe to modify input list destructively, but we can avoid
 	 * copying the list if we're not actually going to change it
 	 */
-	if (nuseful == length(pathkeys))
+	if (nuseful == list_length(pathkeys))
 		return pathkeys;
 	else
-		return ltruncate(nuseful, listCopy(pathkeys));
+		return list_truncate(list_copy(pathkeys), nuseful);
 }

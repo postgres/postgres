@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/optimizer/util/joininfo.c,v 1.38 2004/05/26 04:41:27 neilc Exp $
+ *	  $PostgreSQL: pgsql/src/backend/optimizer/util/joininfo.c,v 1.39 2004/05/30 23:40:31 neilc Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -162,9 +162,9 @@ remove_join_clause_from_rels(Query *root,
 		 * Remove the restrictinfo from the list.  Pointer comparison is
 		 * sufficient.
 		 */
-		Assert(ptrMember(restrictinfo, joininfo->jinfo_restrictinfo));
-		joininfo->jinfo_restrictinfo = lremove(restrictinfo,
-										   joininfo->jinfo_restrictinfo);
+		Assert(list_member_ptr(joininfo->jinfo_restrictinfo, restrictinfo));
+		joininfo->jinfo_restrictinfo = list_delete_ptr(joininfo->jinfo_restrictinfo,
+													   restrictinfo);
 		bms_free(unjoined_relids);
 	}
 	bms_free(tmprelids);

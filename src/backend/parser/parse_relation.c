@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/parser/parse_relation.c,v 1.95 2004/05/26 04:41:30 neilc Exp $
+ *	  $PostgreSQL: pgsql/src/backend/parser/parse_relation.c,v 1.96 2004/05/30 23:40:35 neilc Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -436,7 +436,7 @@ GetRTEByRangeTablePosn(ParseState *pstate,
 		pstate = pstate->parentParseState;
 		Assert(pstate != NULL);
 	}
-	Assert(varno > 0 && varno <= length(pstate->p_rtable));
+	Assert(varno > 0 && varno <= list_length(pstate->p_rtable));
 	return rt_fetch(varno, pstate->p_rtable);
 }
 
@@ -674,7 +674,7 @@ addRangeTableEntry(ParseState *pstate,
 	rte->relid = RelationGetRelid(rel);
 
 	eref = alias ? (Alias *) copyObject(alias) : makeAlias(refname, NIL);
-	numaliases = length(eref->colnames);
+	numaliases = list_length(eref->colnames);
 
 	/*
 	 * Since the rel is open anyway, let's check that the number of column
@@ -768,7 +768,7 @@ addRangeTableEntryForRelation(ParseState *pstate,
 	rte->relid = relid;
 
 	eref = (Alias *) copyObject(alias);
-	numaliases = length(eref->colnames);
+	numaliases = list_length(eref->colnames);
 
 	/*
 	 * Since the rel is open anyway, let's check that the number of column
@@ -849,7 +849,7 @@ addRangeTableEntryForSubquery(ParseState *pstate,
 	rte->alias = alias;
 
 	eref = copyObject(alias);
-	numaliases = length(eref->colnames);
+	numaliases = list_length(eref->colnames);
 
 	/* fill in any unspecified alias columns */
 	varattno = 0;
@@ -933,7 +933,7 @@ addRangeTableEntryForFunction(ParseState *pstate,
 	eref = alias ? (Alias *) copyObject(alias) : makeAlias(funcname, NIL);
 	rte->eref = eref;
 
-	numaliases = length(eref->colnames);
+	numaliases = list_length(eref->colnames);
 
 	/*
 	 * Now determine if the function returns a simple or composite type,
@@ -1023,7 +1023,7 @@ addRangeTableEntryForFunction(ParseState *pstate,
 			  errmsg("too many column aliases specified for function %s",
 					 funcname)));
 		if (numaliases == 0)
-			eref->colnames = makeList1(makeString(eref->aliasname));
+			eref->colnames = list_make1(makeString(eref->aliasname));
 	}
 	else if (functyptype == 'p' && funcrettype == RECORDOID)
 	{
@@ -1097,12 +1097,12 @@ addRangeTableEntryForJoin(ParseState *pstate,
 	rte->alias = alias;
 
 	eref = alias ? (Alias *) copyObject(alias) : makeAlias("unnamed_join", NIL);
-	numaliases = length(eref->colnames);
+	numaliases = list_length(eref->colnames);
 
 	/* fill in any unspecified alias columns */
-	if (numaliases < length(colnames))
-		eref->colnames = nconc(eref->colnames,
-							   list_copy_tail(colnames, numaliases));
+	if (numaliases < list_length(colnames))
+		eref->colnames = list_concat(eref->colnames,
+									 list_copy_tail(colnames, numaliases));
 
 	rte->eref = eref;
 
@@ -1241,7 +1241,7 @@ expandRTE(ParseState *pstate, RangeTblEntry *rte,
 
 				rel = heap_open(rte->relid, AccessShareLock);
 				maxattrs = RelationGetNumberOfAttributes(rel);
-				numaliases = length(rte->eref->colnames);
+				numaliases = list_length(rte->eref->colnames);
 
 				for (varattno = 0; varattno < maxattrs; varattno++)
 				{
@@ -1255,7 +1255,7 @@ expandRTE(ParseState *pstate, RangeTblEntry *rte,
 						char	   *label;
 
 						if (varattno < numaliases)
-							label = strVal(nth(varattno, rte->eref->colnames));
+							label = strVal(list_nth(rte->eref->colnames, varattno));
 						else
 							label = NameStr(attr->attname);
 						*colnames = lappend(*colnames, makeString(pstrdup(label)));
@@ -1339,7 +1339,7 @@ expandRTE(ParseState *pstate, RangeTblEntry *rte,
 
 					rel = relation_open(funcrelid, AccessShareLock);
 					maxattrs = RelationGetNumberOfAttributes(rel);
-					numaliases = length(rte->eref->colnames);
+					numaliases = list_length(rte->eref->colnames);
 
 					for (varattno = 0; varattno < maxattrs; varattno++)
 					{
@@ -1353,7 +1353,7 @@ expandRTE(ParseState *pstate, RangeTblEntry *rte,
 							char	   *label;
 
 							if (varattno < numaliases)
-								label = strVal(nth(varattno, rte->eref->colnames));
+								label = strVal(list_nth(rte->eref->colnames, varattno));
 							else
 								label = NameStr(attr->attname);
 							*colnames = lappend(*colnames, makeString(pstrdup(label)));
@@ -1442,7 +1442,7 @@ expandRTE(ParseState *pstate, RangeTblEntry *rte,
 				ListCell	*colname;
 				ListCell	*aliasvar;
 
-				Assert(length(rte->eref->colnames) == length(rte->joinaliasvars));
+				Assert(list_length(rte->eref->colnames) == list_length(rte->joinaliasvars));
 
 				varattno = 0;
 				forboth (colname, rte->eref->colnames, aliasvar, rte->joinaliasvars)
@@ -1533,8 +1533,8 @@ get_rte_attribute_name(RangeTblEntry *rte, AttrNumber attnum)
 	 * If there is a user-written column alias, use it.
 	 */
 	if (rte->alias &&
-		attnum > 0 && attnum <= length(rte->alias->colnames))
-		return strVal(nth(attnum - 1, rte->alias->colnames));
+		attnum > 0 && attnum <= list_length(rte->alias->colnames))
+		return strVal(list_nth(rte->alias->colnames, attnum - 1));
 
 	/*
 	 * If the RTE is a relation, go to the system catalogs not the
@@ -1549,8 +1549,8 @@ get_rte_attribute_name(RangeTblEntry *rte, AttrNumber attnum)
 	 * Otherwise use the column name from eref.  There should always be
 	 * one.
 	 */
-	if (attnum > 0 && attnum <= length(rte->eref->colnames))
-		return strVal(nth(attnum - 1, rte->eref->colnames));
+	if (attnum > 0 && attnum <= list_length(rte->eref->colnames))
+		return strVal(list_nth(rte->eref->colnames, attnum - 1));
 
 	/* else caller gave us a bogus attnum */
 	elog(ERROR, "invalid attnum %d for rangetable entry %s",
@@ -1665,7 +1665,7 @@ get_rte_attribute_type(RangeTblEntry *rte, AttrNumber attnum,
 				}
 				else if (functyptype == 'p' && funcrettype == RECORDOID)
 				{
-					ColumnDef  *colDef = nth(attnum - 1, coldeflist);
+					ColumnDef  *colDef = list_nth(coldeflist, attnum - 1);
 
 					*vartype = typenameTypeId(colDef->typename);
 					*vartypmod = -1;
@@ -1684,8 +1684,8 @@ get_rte_attribute_type(RangeTblEntry *rte, AttrNumber attnum,
 				 */
 				Node	   *aliasvar;
 
-				Assert(attnum > 0 && attnum <= length(rte->joinaliasvars));
-				aliasvar = (Node *) nth(attnum - 1, rte->joinaliasvars);
+				Assert(attnum > 0 && attnum <= list_length(rte->joinaliasvars));
+				aliasvar = (Node *) list_nth(rte->joinaliasvars, attnum - 1);
 				*vartype = exprType(aliasvar);
 				*vartypmod = exprTypmod(aliasvar);
 			}
@@ -1777,8 +1777,8 @@ get_rte_attribute_is_dropped(RangeTblEntry *rte, AttrNumber attnum)
  *
  * Returns NULL if resno is not present in list.
  *
- * Note: we need to search, rather than just indexing with nth(), because
- * not all tlists are sorted by resno.
+ * Note: we need to search, rather than just indexing with list_nth(),
+ * because not all tlists are sorted by resno.
  */
 TargetEntry *
 get_tle_by_resno(List *tlist, AttrNumber resno)

@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/parser/parse_target.c,v 1.118 2004/05/26 04:41:30 neilc Exp $
+ *	  $PostgreSQL: pgsql/src/backend/parser/parse_target.c,v 1.119 2004/05/30 23:40:35 neilc Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -108,7 +108,7 @@ transformTargetList(ParseState *pstate, List *targetlist)
 
 			if (strcmp(strVal(llast(fields)), "*") == 0)
 			{
-				int		numnames = length(fields);
+				int		numnames = list_length(fields);
 
 				if (numnames == 1)
 				{
@@ -268,8 +268,8 @@ markTargetListOrigin(ParseState *pstate, Resdom *res, Var *var)
 				/* Join RTE --- recursively inspect the alias variable */
 				Var		   *aliasvar;
 
-				Assert(attnum > 0 && attnum <= length(rte->joinaliasvars));
-				aliasvar = (Var *) nth(attnum - 1, rte->joinaliasvars);
+				Assert(attnum > 0 && attnum <= list_length(rte->joinaliasvars));
+				aliasvar = (Var *) list_nth(rte->joinaliasvars, attnum - 1);
 				markTargetListOrigin(pstate, res, aliasvar);
 			}
 			break;
@@ -460,7 +460,7 @@ checkInsertTargets(ParseState *pstate, List *cols, List **attrnos)
 			col->indirection = NIL;
 			col->val = NULL;
 			cols = lappend(cols, col);
-			*attrnos = lappendi(*attrnos, i + 1);
+			*attrnos = lappend_int(*attrnos, i + 1);
 		}
 	}
 	else
@@ -478,12 +478,12 @@ checkInsertTargets(ParseState *pstate, List *cols, List **attrnos)
 			/* Lookup column name, ereport on failure */
 			attrno = attnameAttNum(pstate->p_target_relation, name, false);
 			/* Check for duplicates */
-			if (intMember(attrno, *attrnos))
+			if (list_member_int(*attrnos, attrno))
 				ereport(ERROR,
 						(errcode(ERRCODE_DUPLICATE_COLUMN),
 					  errmsg("column \"%s\" specified more than once",
 							 name)));
-			*attrnos = lappendi(*attrnos, attrno);
+			*attrnos = lappend_int(*attrnos, attrno);
 		}
 	}
 
@@ -529,7 +529,7 @@ ExpandAllTables(ParseState *pstate)
 			continue;
 
 		found_table = true;
-		target = nconc(target, expandRelAttrs(pstate, rte));
+		target = list_concat(target, expandRelAttrs(pstate, rte));
 	}
 
 	/* Check for SELECT *; */

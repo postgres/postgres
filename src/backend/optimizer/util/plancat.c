@@ -9,7 +9,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/optimizer/util/plancat.c,v 1.92 2004/05/26 04:41:27 neilc Exp $
+ *	  $PostgreSQL: pgsql/src/backend/optimizer/util/plancat.c,v 1.93 2004/05/30 23:40:31 neilc Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -82,7 +82,7 @@ get_relation_info(Oid relationObjectId, RelOptInfo *rel)
 
 		foreach(l, indexoidlist)
 		{
-			Oid			indexoid = lfirsto(l);
+			Oid			indexoid = lfirst_oid(l);
 			Relation	indexRelation;
 			Form_pg_index index;
 			IndexOptInfo *info;
@@ -158,7 +158,7 @@ get_relation_info(Oid relationObjectId, RelOptInfo *rel)
 			indexinfos = lcons(info, indexinfos);
 		}
 
-		freeList(indexoidlist);
+		list_free(indexoidlist);
 	}
 
 	rel->indexlist = indexinfos;
@@ -338,7 +338,7 @@ find_inheritance_children(Oid inhparent)
 	while ((inheritsTuple = heap_getnext(scan, ForwardScanDirection)) != NULL)
 	{
 		inhrelid = ((Form_pg_inherits) GETSTRUCT(inheritsTuple))->inhrelid;
-		list = lappendo(list, inhrelid);
+		list = lappend_oid(list, inhrelid);
 	}
 	heap_endscan(scan);
 	heap_close(relation, AccessShareLock);

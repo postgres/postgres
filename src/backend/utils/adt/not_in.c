@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/utils/adt/not_in.c,v 1.38 2003/11/29 19:51:59 pgsql Exp $
+ *	  $PostgreSQL: pgsql/src/backend/utils/adt/not_in.c,v 1.39 2004/05/30 23:40:35 neilc Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -57,14 +57,14 @@ int4notin(PG_FUNCTION_ARGS)
 	/* Parse the argument */
 
 	names = textToQualifiedNameList(relation_and_attr, "int4notin");
-	nnames = length(names);
+	nnames = list_length(names);
 	if (nnames < 2)
 		ereport(ERROR,
 				(errcode(ERRCODE_INVALID_NAME),
 				 errmsg("invalid name syntax"),
 			   errhint("Must provide \"relationname.columnname\".")));
 	attribute = strVal(llast(names));
-	names = ltruncate(nnames - 1, names);
+	names = list_truncate(names, nnames - 1);
 	relrv = makeRangeVarFromNameList(names);
 
 	/* Open the relation and get a relation descriptor */

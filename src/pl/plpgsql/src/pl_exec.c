@@ -3,7 +3,7 @@
  *			  procedural language
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/pl/plpgsql/src/pl_exec.c,v 1.101 2004/05/26 04:41:48 neilc Exp $
+ *	  $PostgreSQL: pgsql/src/pl/plpgsql/src/pl_exec.c,v 1.102 2004/05/30 23:40:41 neilc Exp $
  *
  *	  This software is copyrighted by Jan Wieck - Hamburg.
  *
@@ -3835,7 +3835,7 @@ exec_simple_check_plan(PLpgSQL_expr * expr)
 	 * 1. We can only evaluate queries that resulted in one single
 	 * execution plan
 	 */
-	if (length(spi_plan->ptlist) != 1)
+	if (list_length(spi_plan->ptlist) != 1)
 		return;
 
 	plan = (Plan *) linitial(spi_plan->ptlist);
@@ -3862,7 +3862,7 @@ exec_simple_check_plan(PLpgSQL_expr * expr)
 	/*
 	 * 4. The plan must have a single attribute as result
 	 */
-	if (length(plan->targetlist) != 1)
+	if (list_length(plan->targetlist) != 1)
 		return;
 
 	tle = (TargetEntry *) linitial(plan->targetlist);

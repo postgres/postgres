@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/optimizer/util/tlist.c,v 1.63 2004/05/26 04:41:27 neilc Exp $
+ *	  $PostgreSQL: pgsql/src/backend/optimizer/util/tlist.c,v 1.64 2004/05/30 23:40:31 neilc Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -121,7 +121,7 @@ flatten_tlist(List *tlist)
 	List	   *new_tlist;
 
 	new_tlist = add_to_flat_tlist(NIL, vlist);
-	freeList(vlist);
+	list_free(vlist);
 	return new_tlist;
 }
 
@@ -137,7 +137,7 @@ flatten_tlist(List *tlist)
 List *
 add_to_flat_tlist(List *tlist, List *vars)
 {
-	int			next_resdomno = length(tlist) + 1;
+	int			next_resdomno = list_length(tlist) + 1;
 	ListCell   *v;
 
 	foreach(v, vars)

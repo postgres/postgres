@@ -10,13 +10,11 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/libpq/hba.c,v 1.124 2004/05/26 18:35:33 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/libpq/hba.c,v 1.125 2004/05/30 23:40:26 neilc Exp $
  *
  *-------------------------------------------------------------------------
  */
 #include "postgres.h"
-
-#define DISABLE_LIST_COMPAT
 
 #include <errno.h>
 #include <pwd.h>

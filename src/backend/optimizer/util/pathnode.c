@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/optimizer/util/pathnode.c,v 1.105 2004/05/26 04:41:27 neilc Exp $
+ *	  $PostgreSQL: pgsql/src/backend/optimizer/util/pathnode.c,v 1.106 2004/05/30 23:40:31 neilc Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -452,9 +452,9 @@ create_index_path(Query *root,
 	 * We are making a pathnode for a single-scan indexscan; therefore,
 	 * indexinfo etc should be single-element lists.
 	 */
-	pathnode->indexinfo = makeList1(index);
-	pathnode->indexclauses = makeList1(restriction_clauses);
-	pathnode->indexquals = makeList1(indexquals);
+	pathnode->indexinfo = list_make1(index);
+	pathnode->indexclauses = list_make1(restriction_clauses);
+	pathnode->indexquals = list_make1(indexquals);
 
 	/* It's not an innerjoin path. */
 	pathnode->isjoininner = false;
@@ -686,12 +686,12 @@ create_unique_path(Query *root, RelOptInfo *rel, Path *subpath)
 	if (sub_targetlist)
 	{
 		pathnode->rows = estimate_num_groups(root, sub_targetlist, rel->rows);
-		numCols = length(sub_targetlist);
+		numCols = list_length(sub_targetlist);
 	}
 	else
 	{
 		pathnode->rows = rel->rows;
-		numCols = length(FastListValue(&rel->reltargetlist));
+		numCols = list_length(FastListValue(&rel->reltargetlist));
 	}
 
 	/*

@@ -11,7 +11,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/parser/gram.y,v 2.457 2004/05/26 15:07:37 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/parser/gram.y,v 2.458 2004/05/30 23:40:34 neilc Exp $
  *
  * HISTORY
  *	  AUTHOR			DATE			MAJOR EVENT
@@ -480,7 +480,7 @@ stmtmulti:	stmtmulti ';' stmt
 				}
 			| stmt
 					{ if ($1 != NULL)
-						$$ = makeList1($1);
+						$$ = list_make1($1);
 					  else
 						$$ = NIL;
 					}
@@ -693,7 +693,7 @@ OptUserElem:
 		;
 
 user_list:	user_list ',' UserId		{ $$ = lappend($1, makeString($3)); }
-			| UserId					{ $$ = makeList1(makeString($1)); }
+			| UserId					{ $$ = list_make1(makeString($1)); }
 		;
 
 
@@ -878,7 +878,7 @@ set_rest:  var_name TO var_list_or_default
 					VariableSetStmt *n = makeNode(VariableSetStmt);
 					n->name = "timezone";
 					if ($3 != NULL)
-						n->args = makeList1($3);
+						n->args = list_make1($3);
 					$$ = n;
 				}
 			| TRANSACTION transaction_mode_list
@@ -900,14 +900,14 @@ set_rest:  var_name TO var_list_or_default
 					VariableSetStmt *n = makeNode(VariableSetStmt);
 					n->name = "client_encoding";
 					if ($2 != NULL)
-						n->args = makeList1(makeStringConst($2, NULL));
+						n->args = list_make1(makeStringConst($2, NULL));
 					$$ = n;
 				}
 			| SESSION AUTHORIZATION ColId_or_Sconst
 				{
 					VariableSetStmt *n = makeNode(VariableSetStmt);
 					n->name = "session_authorization";
-					n->args = makeList1(makeStringConst($3, NULL));
+					n->args = list_make1(makeStringConst($3, NULL));
 					$$ = n;
 				}
 			| SESSION AUTHORIZATION DEFAULT
@@ -937,7 +937,7 @@ var_list_or_default:
 			| DEFAULT								{ $$ = NIL; }
 		;
 
-var_list:	var_value								{ $$ = makeList1($1); }
+var_list:	var_value								{ $$ = list_make1($1); }
 			| var_list ',' var_value				{ $$ = lappend($1, $3); }
 		;
 
@@ -1153,7 +1153,7 @@ AlterTableStmt:
 		;
 
 alter_table_cmds:
-			alter_table_cmd							{ $$ = makeList1($1); }
+			alter_table_cmd							{ $$ = list_make1($1); }
 			| alter_table_cmds ',' alter_table_cmd	{ $$ = lappend($1, $3); }
 		;
 
@@ -1348,7 +1348,7 @@ CopyStmt:	COPY opt_binary qualified_name opt_column_list opt_oids
 					if ($8)
 						n->options = lappend(n->options, $8);
 					if ($10)
-						n->options = nconc(n->options, $10);
+						n->options = list_concat(n->options, $10);
 					$$ = (Node *)n;
 				}
 		;
@@ -1479,7 +1479,7 @@ CreateStmt:	CREATE OptTemp TABLE qualified_name '(' OptTableElementList ')'
 					$4->istemp = $2;
 					n->relation = $4;
 					n->tableElts = $8;
-					n->inhRelations = makeList1($6);
+					n->inhRelations = list_make1($6);
 					n->constraints = NIL;
 					n->hasoids = $10;
 					n->oncommit = $11;
@@ -1511,7 +1511,7 @@ OptTableElementList:
 TableElementList:
 			TableElement
 				{
-					$$ = makeList1($1);
+					$$ = list_make1($1);
 				}
 			| TableElementList ',' TableElement
 				{
@@ -1814,7 +1814,7 @@ opt_column_list:
 		;
 
 columnList:
-			columnElem								{ $$ = makeList1($1); }
+			columnElem								{ $$ = list_make1($1); }
 			| columnList ',' columnElem				{ $$ = lappend($1, $3); }
 		;
 
@@ -1941,7 +1941,7 @@ OptCreateAs:
 		;
 
 CreateAsList:
-			CreateAsElement							{ $$ = makeList1($1); }
+			CreateAsElement							{ $$ = list_make1($1); }
 			| CreateAsList ',' CreateAsElement		{ $$ = lappend($1, $3); }
 		;
 
@@ -2099,7 +2099,7 @@ opt_trusted:
  */
 handler_name:
 			name
-							{ $$ = makeList1(makeString($1)); }
+							{ $$ = list_make1(makeString($1)); }
 			| dotted_name							{ $$ = $1; }
 		;
 
@@ -2236,7 +2236,7 @@ TriggerForType:
 		;
 
 TriggerFuncArgs:
-			TriggerFuncArg							{ $$ = makeList1($1); }
+			TriggerFuncArg							{ $$ = list_make1($1); }
 			| TriggerFuncArgs ',' TriggerFuncArg	{ $$ = lappend($1, $3); }
 			| /*EMPTY*/								{ $$ = NIL; }
 		;
@@ -2328,7 +2328,7 @@ CreateAssertStmt:
 				{
 					CreateTrigStmt *n = makeNode(CreateTrigStmt);
 					n->trigname = $3;
-					n->args = makeList1($6);
+					n->args = list_make1($6);
 					n->isconstraint  = TRUE;
 					n->deferrable = ($8 & 1) != 0;
 					n->initdeferred = ($8 & 2) != 0;
@@ -2395,7 +2395,7 @@ DefineStmt:
 					RangeVar *r = makeNode(RangeVar);
 
 					/* can't use qualified_name, sigh */
-					switch (length($3))
+					switch (list_length($3))
 					{
 						case 1:
 							r->catalogname = NULL;
@@ -2428,7 +2428,7 @@ DefineStmt:
 definition: '(' def_list ')'						{ $$ = $2; }
 		;
 
-def_list:  	def_elem								{ $$ = makeList1($1); }
+def_list:  	def_elem								{ $$ = list_make1($1); }
 			| def_list ',' def_elem					{ $$ = lappend($1, $3); }
 		;
 
@@ -2473,7 +2473,7 @@ CreateOpClassStmt:
 		;
 
 opclass_item_list:
-			opclass_item							{ $$ = makeList1($1); }
+			opclass_item							{ $$ = list_make1($1); }
 			| opclass_item_list ',' opclass_item	{ $$ = lappend($1, $3); }
 		;
 
@@ -2566,11 +2566,11 @@ drop_type:	TABLE									{ $$ = OBJECT_TABLE; }
 		;
 
 any_name_list:
-			any_name								{ $$ = makeList1($1); }
+			any_name								{ $$ = list_make1($1); }
 			| any_name_list ',' any_name			{ $$ = lappend($1, $3); }
 		;
 
-any_name:	ColId						{ $$ = makeList1(makeString($1)); }
+any_name:	ColId						{ $$ = list_make1(makeString($1)); }
 			| dotted_name				{ $$ = $1; }
 		;
 
@@ -2623,7 +2623,7 @@ CommentStmt:
 					CommentStmt *n = makeNode(CommentStmt);
 					n->objtype = OBJECT_AGGREGATE;
 					n->objname = $4;
-					n->objargs = makeList1($6);
+					n->objargs = list_make1($6);
 					n->comment = $9;
 					$$ = (Node *) n;
 				}
@@ -2669,7 +2669,7 @@ CommentStmt:
 					/* Obsolete syntax supported for awhile for compatibility */
 					CommentStmt *n = makeNode(CommentStmt);
 					n->objtype = OBJECT_RULE;
-					n->objname = makeList1(makeString($4));
+					n->objname = list_make1(makeString($4));
 					n->objargs = NIL;
 					n->comment = $6;
 					$$ = (Node *) n;
@@ -2688,7 +2688,7 @@ CommentStmt:
 					CommentStmt *n = makeNode(CommentStmt);
 					n->objtype = OBJECT_OPCLASS;
 					n->objname = $5;
-					n->objargs = makeList1(makeString($7));
+					n->objargs = list_make1(makeString($7));
 					n->comment = $9;
 					$$ = (Node *) n;
 				}
@@ -2696,7 +2696,7 @@ CommentStmt:
 				{
 					CommentStmt *n = makeNode(CommentStmt);
 					n->objtype = OBJECT_LARGEOBJECT;
-					n->objname = makeList1($5);
+					n->objname = list_make1($5);
 					n->objargs = NIL;
 					n->comment = $7;
 					$$ = (Node *) n;
@@ -2705,8 +2705,8 @@ CommentStmt:
 				{
 					CommentStmt *n = makeNode(CommentStmt);
 					n->objtype = OBJECT_CAST;
-					n->objname = makeList1($5);
-					n->objargs = makeList1($7);
+					n->objname = list_make1($5);
+					n->objargs = list_make1($7);
 					n->comment = $10;
 					$$ = (Node *) n;
 				}
@@ -2937,13 +2937,13 @@ RevokeStmt: REVOKE opt_revoke_grant_option privileges ON privilege_target
 
 /* either ALL [PRIVILEGES] or a list of individual privileges */
 privileges: privilege_list				{ $$ = $1; }
-			| ALL						{ $$ = makeListi1(ACL_ALL_RIGHTS); }
-			| ALL PRIVILEGES			{ $$ = makeListi1(ACL_ALL_RIGHTS); }
+			| ALL						{ $$ = list_make1_int(ACL_ALL_RIGHTS); }
+			| ALL PRIVILEGES			{ $$ = list_make1_int(ACL_ALL_RIGHTS); }
 		;
 
 privilege_list:
-			privilege								{ $$ = makeListi1($1); }
-			| privilege_list ',' privilege			{ $$ = lappendi($1, $3); }
+			privilege								{ $$ = list_make1_int($1); }
+			| privilege_list ',' privilege			{ $$ = lappend_int($1, $3); }
 		;
 
 /* Not all of these privilege types apply to all objects, but that
@@ -3013,7 +3013,7 @@ privilege_target:
 
 
 grantee_list:
-			grantee									{ $$ = makeList1($1); }
+			grantee									{ $$ = list_make1($1); }
 			| grantee_list ',' grantee				{ $$ = lappend($1, $3); }
 		;
 
@@ -3054,7 +3054,7 @@ opt_revoke_grant_option:
 
 
 function_with_argtypes_list:
-			function_with_argtypes					{ $$ = makeList1($1); }
+			function_with_argtypes					{ $$ = list_make1($1); }
 			| function_with_argtypes_list ',' function_with_argtypes
 													{ $$ = lappend($1, $3); }
 		;
@@ -3103,7 +3103,7 @@ access_method_clause:
 			| /*EMPTY*/								{ $$ = DEFAULT_INDEX_TYPE; }
 		;
 
-index_params:	index_elem							{ $$ = makeList1($1); }
+index_params:	index_elem							{ $$ = list_make1($1); }
 			| index_params ',' index_elem			{ $$ = lappend($1, $3); }
 		;
 
@@ -3182,7 +3182,7 @@ func_args:	'(' func_args_list ')'					{ $$ = $2; }
 		;
 
 func_args_list:
-			func_arg								{ $$ = makeList1($1); }
+			func_arg								{ $$ = list_make1($1); }
 			| func_args_list ',' func_arg			{ $$ = lappend($1, $3); }
 		;
 
@@ -3259,7 +3259,7 @@ func_type:	Typename								{ $$ = $1; }
 
 createfunc_opt_list:
 			/* Must be at least one to prevent conflict */
-			createfunc_opt_item                     { $$ = makeList1($1); }
+			createfunc_opt_item                     { $$ = list_make1($1); }
 			| createfunc_opt_list createfunc_opt_item { $$ = lappend($1, $2); }
 	;
 
@@ -3314,10 +3314,10 @@ createfunc_opt_item:
 				}
 		;
 
-func_as:	Sconst						{ $$ = makeList1(makeString($1)); }
+func_as:	Sconst						{ $$ = list_make1(makeString($1)); }
 			| Sconst ',' Sconst
 				{
-					$$ = makeList2(makeString($1), makeString($3));
+					$$ = list_make2(makeString($1), makeString($3));
 				}
 		;
 
@@ -3384,16 +3384,16 @@ oper_argtypes:
 							errhint("Use NONE to denote the missing argument of a unary operator.")));
 				}
 			| Typename ',' Typename
-					{ $$ = makeList2($1, $3); }
+					{ $$ = list_make2($1, $3); }
 			| NONE ',' Typename /* left unary */
-					{ $$ = makeList2(NULL, $3); }
+					{ $$ = list_make2(NULL, $3); }
 			| Typename ',' NONE /* right unary */
-					{ $$ = makeList2($1, NULL); }
+					{ $$ = list_make2($1, NULL); }
 		;
 
 any_operator:
 			all_Op
-					{ $$ = makeList1(makeString($1)); }
+					{ $$ = list_make1(makeString($1)); }
 			| ColId '.' any_operator
 					{ $$ = lcons(makeString($1), $3); }
 		;
@@ -3495,7 +3495,7 @@ RenameStmt: ALTER AGGREGATE func_name '(' aggr_argtype ')' RENAME TO name
 					RenameStmt *n = makeNode(RenameStmt);
 					n->renameType = OBJECT_AGGREGATE;
 					n->object = $3;
-					n->objarg = makeList1($5);
+					n->objarg = list_make1($5);
 					n->newname = $9;
 					$$ = (Node *)n;
 				}
@@ -3625,7 +3625,7 @@ RuleStmt:	CREATE opt_or_replace RULE name AS
 
 RuleActionList:
 			NOTHING									{ $$ = NIL; }
-			| RuleActionStmt						{ $$ = makeList1($1); }
+			| RuleActionStmt						{ $$ = list_make1($1); }
 			| '(' RuleActionMulti ')'				{ $$ = $2; }
 		;
 
@@ -3639,7 +3639,7 @@ RuleActionMulti:
 				}
 			| RuleActionStmtOrEmpty
 				{ if ($1 != NULL)
-					$$ = makeList1($1);
+					$$ = list_make1($1);
 				  else
 					$$ = NIL;
 				}
@@ -3788,24 +3788,24 @@ opt_transaction:	WORK							{}
 
 transaction_mode_list:
 			ISOLATION LEVEL iso_level
-					{ $$ = makeList1(makeDefElem("transaction_isolation",
-												 makeStringConst($3, NULL))); }
+					{ $$ = list_make1(makeDefElem("transaction_isolation",
+												  makeStringConst($3, NULL))); }
 			| transaction_access_mode
-					{ $$ = makeList1(makeDefElem("transaction_read_only",
-												 makeIntConst($1))); }
+					{ $$ = list_make1(makeDefElem("transaction_read_only",
+												  makeIntConst($1))); }
 			| ISOLATION LEVEL iso_level transaction_access_mode
 					{
-						$$ = makeList2(makeDefElem("transaction_isolation",
-												   makeStringConst($3, NULL)),
-									   makeDefElem("transaction_read_only",
-												   makeIntConst($4)));
+						$$ = list_make2(makeDefElem("transaction_isolation",
+													makeStringConst($3, NULL)),
+										makeDefElem("transaction_read_only",
+													makeIntConst($4)));
 					}
 			| transaction_access_mode ISOLATION LEVEL iso_level
 					{
-						$$ = makeList2(makeDefElem("transaction_read_only",
-												   makeIntConst($1)),
-									   makeDefElem("transaction_isolation",
-												   makeStringConst($4, NULL)));
+						$$ = list_make2(makeDefElem("transaction_read_only",
+													makeIntConst($1)),
+										makeDefElem("transaction_isolation",
+													makeStringConst($4, NULL)));
 					}
 		;
 
@@ -4258,7 +4258,7 @@ prep_type_clause: '(' prep_type_list ')'	{ $$ = $2; }
 				| /* EMPTY */				{ $$ = NIL; }
 		;
 
-prep_type_list: Typename			{ $$ = makeList1($1); }
+prep_type_list: Typename			{ $$ = list_make1($1); }
 			  | prep_type_list ',' Typename
 									{ $$ = lappend($1, $3); }
 		;
@@ -4380,7 +4380,7 @@ insert_rest:
 		;
 
 insert_column_list:
-			insert_column_item						{ $$ = makeList1($1); }
+			insert_column_item						{ $$ = list_make1($1); }
 			| insert_column_list ',' insert_column_item
 					{ $$ = lappend($1, $3); }
 		;
@@ -4566,13 +4566,13 @@ select_no_parens:
 			| select_clause opt_sort_clause for_update_clause opt_select_limit
 				{
 					insertSelectOptions((SelectStmt *) $1, $2, $3,
-										nth(0, $4), nth(1, $4));
+										list_nth($4, 0), list_nth($4, 1));
 					$$ = $1;
 				}
 			| select_clause opt_sort_clause select_limit opt_for_update_clause
 				{
 					insertSelectOptions((SelectStmt *) $1, $2, $4,
-										nth(0, $3), nth(1, $3));
+										list_nth($3, 0), list_nth($3, 1));
 					$$ = $1;
 				}
 		;
@@ -4701,7 +4701,7 @@ opt_all:	ALL										{ $$ = TRUE; }
  * should be placed in the DISTINCT list during parsetree analysis.
  */
 opt_distinct:
-			DISTINCT								{ $$ = makeList1(NIL); }
+			DISTINCT								{ $$ = list_make1(NIL); }
 			| DISTINCT ON '(' expr_list ')'			{ $$ = $4; }
 			| ALL									{ $$ = NIL; }
 			| /*EMPTY*/								{ $$ = NIL; }
@@ -4717,7 +4717,7 @@ sort_clause:
 		;
 
 sortby_list:
-			sortby									{ $$ = makeList1($1); }
+			sortby									{ $$ = list_make1($1); }
 			| sortby_list ',' sortby				{ $$ = lappend($1, $3); }
 		;
 
@@ -4754,13 +4754,13 @@ sortby:		a_expr USING qual_all_Op
 
 select_limit:
 			LIMIT select_limit_value OFFSET select_offset_value
-				{ $$ = makeList2($4, $2); }
+				{ $$ = list_make2($4, $2); }
 			| OFFSET select_offset_value LIMIT select_limit_value
-				{ $$ = makeList2($2, $4); }
+				{ $$ = list_make2($2, $4); }
 			| LIMIT select_limit_value
-				{ $$ = makeList2(NULL, $2); }
+				{ $$ = list_make2(NULL, $2); }
 			| OFFSET select_offset_value
-				{ $$ = makeList2($2, NULL); }
+				{ $$ = list_make2($2, NULL); }
 			| LIMIT select_limit_value ',' select_offset_value
 				{
 					/* Disabled because it was too confusing, bjm 2002-02-18 */
@@ -4774,7 +4774,7 @@ select_limit:
 opt_select_limit:
 			select_limit							{ $$ = $1; }
 			| /* EMPTY */
-					{ $$ = makeList2(NULL,NULL); }
+					{ $$ = list_make2(NULL,NULL); }
 		;
 
 select_limit_value:
@@ -4822,7 +4822,7 @@ opt_for_update_clause:
 
 update_list:
 			OF name_list							{ $$ = $2; }
-			| /* EMPTY */							{ $$ = makeList1(NULL); }
+			| /* EMPTY */							{ $$ = list_make1(NULL); }
 		;
 
 /*****************************************************************************
@@ -4839,7 +4839,7 @@ from_clause:
 		;
 
 from_list:
-			table_ref								{ $$ = makeList1($1); }
+			table_ref								{ $$ = list_make1($1); }
 			| from_list ',' table_ref				{ $$ = lappend($1, $3); }
 		;
 
@@ -5151,7 +5151,7 @@ where_clause:
 TableFuncElementList:
 			TableFuncElement
 				{
-					$$ = makeList1($1);
+					$$ = list_make1($1);
 				}
 			| TableFuncElementList ',' TableFuncElement
 				{
@@ -5195,13 +5195,13 @@ Typename:	SimpleTypename opt_array_bounds
 				{
 					/* SQL99's redundant syntax */
 					$$ = $1;
-					$$->arrayBounds = makeList1(makeInteger($4));
+					$$->arrayBounds = list_make1(makeInteger($4));
 				}
 			| SETOF SimpleTypename ARRAY '[' Iconst ']'
 				{
 					/* SQL99's redundant syntax */
 					$$ = $2;
-					$$->arrayBounds = makeList1(makeInteger($5));
+					$$->arrayBounds = list_make1(makeInteger($5));
 					$$->setof = TRUE;
 				}
 		;
@@ -5755,7 +5755,7 @@ a_expr:		c_expr									{ $$ = $1; }
 				{
 					FuncCall *n = makeNode(FuncCall);
 					n->funcname = SystemFuncName("timezone");
-					n->args = makeList2($5, $1);
+					n->args = list_make2($5, $1);
 					n->agg_star = FALSE;
 					n->agg_distinct = FALSE;
 					$$ = (Node *) n;
@@ -5820,7 +5820,7 @@ a_expr:		c_expr									{ $$ = $1; }
 				{
 					FuncCall *n = makeNode(FuncCall);
 					n->funcname = SystemFuncName("like_escape");
-					n->args = makeList2($3, $5);
+					n->args = list_make2($3, $5);
 					n->agg_star = FALSE;
 					n->agg_distinct = FALSE;
 					$$ = (Node *) makeSimpleA_Expr(AEXPR_OP, "~~", $1, (Node *) n);
@@ -5831,7 +5831,7 @@ a_expr:		c_expr									{ $$ = $1; }
 				{
 					FuncCall *n = makeNode(FuncCall);
 					n->funcname = SystemFuncName("like_escape");
-					n->args = makeList2($4, $6);
+					n->args = list_make2($4, $6);
 					n->agg_star = FALSE;
 					n->agg_distinct = FALSE;
 					$$ = (Node *) makeSimpleA_Expr(AEXPR_OP, "!~~", $1, (Node *) n);
@@ -5842,7 +5842,7 @@ a_expr:		c_expr									{ $$ = $1; }
 				{
 					FuncCall *n = makeNode(FuncCall);
 					n->funcname = SystemFuncName("like_escape");
-					n->args = makeList2($3, $5);
+					n->args = list_make2($3, $5);
 					n->agg_star = FALSE;
 					n->agg_distinct = FALSE;
 					$$ = (Node *) makeSimpleA_Expr(AEXPR_OP, "~~*", $1, (Node *) n);
@@ -5853,7 +5853,7 @@ a_expr:		c_expr									{ $$ = $1; }
 				{
 					FuncCall *n = makeNode(FuncCall);
 					n->funcname = SystemFuncName("like_escape");
-					n->args = makeList2($4, $6);
+					n->args = list_make2($4, $6);
 					n->agg_star = FALSE;
 					n->agg_distinct = FALSE;
 					$$ = (Node *) makeSimpleA_Expr(AEXPR_OP, "!~~*", $1, (Node *) n);
@@ -5865,7 +5865,7 @@ a_expr:		c_expr									{ $$ = $1; }
 					FuncCall *n = makeNode(FuncCall);
 					c->val.type = T_Null;
 					n->funcname = SystemFuncName("similar_escape");
-					n->args = makeList2($4, (Node *) c);
+					n->args = list_make2($4, (Node *) c);
 					n->agg_star = FALSE;
 					n->agg_distinct = FALSE;
 					$$ = (Node *) makeSimpleA_Expr(AEXPR_OP, "~", $1, (Node *) n);
@@ -5874,7 +5874,7 @@ a_expr:		c_expr									{ $$ = $1; }
 				{
 					FuncCall *n = makeNode(FuncCall);
 					n->funcname = SystemFuncName("similar_escape");
-					n->args = makeList2($4, $6);
+					n->args = list_make2($4, $6);
 					n->agg_star = FALSE;
 					n->agg_distinct = FALSE;
 					$$ = (Node *) makeSimpleA_Expr(AEXPR_OP, "~", $1, (Node *) n);
@@ -5885,7 +5885,7 @@ a_expr:		c_expr									{ $$ = $1; }
 					FuncCall *n = makeNode(FuncCall);
 					c->val.type = T_Null;
 					n->funcname = SystemFuncName("similar_escape");
-					n->args = makeList2($5, (Node *) c);
+					n->args = list_make2($5, (Node *) c);
 					n->agg_star = FALSE;
 					n->agg_distinct = FALSE;
 					$$ = (Node *) makeSimpleA_Expr(AEXPR_OP, "!~", $1, (Node *) n);
@@ -5894,7 +5894,7 @@ a_expr:		c_expr									{ $$ = $1; }
 				{
 					FuncCall *n = makeNode(FuncCall);
 					n->funcname = SystemFuncName("similar_escape");
-					n->args = makeList2($5, $7);
+					n->args = list_make2($5, $7);
 					n->agg_star = FALSE;
 					n->agg_distinct = FALSE;
 					$$ = (Node *) makeSimpleA_Expr(AEXPR_OP, "!~", $1, (Node *) n);
@@ -6037,8 +6037,8 @@ a_expr:		c_expr									{ $$ = $1; }
 							if (IsA($1, RowExpr))
 								n->lefthand = ((RowExpr *) $1)->args;
 							else
-								n->lefthand = makeList1($1);
-							n->operName = makeList1(makeString("="));
+								n->lefthand = list_make1($1);
+							n->operName = list_make1(makeString("="));
 							$$ = (Node *)n;
 					}
 					else
@@ -6068,8 +6068,8 @@ a_expr:		c_expr									{ $$ = $1; }
 						if (IsA($1, RowExpr))
 							n->lefthand = ((RowExpr *) $1)->args;
 						else
-							n->lefthand = makeList1($1);
-						n->operName = makeList1(makeString("="));
+							n->lefthand = list_make1($1);
+						n->operName = list_make1(makeString("="));
 						/* Stick a NOT on top */
 						$$ = (Node *) makeA_Expr(AEXPR_NOT, NIL, NULL, (Node *) n);
 					}
@@ -6096,7 +6096,7 @@ a_expr:		c_expr									{ $$ = $1; }
 					if (IsA($1, RowExpr))
 						n->lefthand = ((RowExpr *) $1)->args;
 					else
-						n->lefthand = makeList1($1);
+						n->lefthand = list_make1($1);
 					n->operName = $2;
 					n->subselect = $4;
 					$$ = (Node *)n;
@@ -6293,7 +6293,7 @@ c_expr:		columnref								{ $$ = (Node *) $1; }
 					star->val.type = T_Integer;
 					star->val.val.ival = 1;
 					n->funcname = $1;
-					n->args = makeList1(star);
+					n->args = list_make1(star);
 					n->agg_star = TRUE;
 					n->agg_distinct = FALSE;
 					$$ = (Node *)n;
@@ -6625,7 +6625,7 @@ c_expr:		columnref								{ $$ = (Node *) $1; }
 					 * at the moment they result in the same thing.
 					 */
 					n->funcname = SystemFuncName(((Value *)llast($5->names))->val.str);
-					n->args = makeList1($3);
+					n->args = list_make1($3);
 					$$ = (Node *)n;
 				}
 			| TRIM '(' BOTH trim_list ')'
@@ -6676,7 +6676,7 @@ c_expr:		columnref								{ $$ = (Node *) $1; }
 					c->val.val.str = NameListToQuotedString($5);
 
 					n->funcname = SystemFuncName("convert_using");
-					n->args = makeList2($3, c);
+					n->args = list_make2($3, c);
 					n->agg_star = FALSE;
 					n->agg_distinct = FALSE;
 					$$ = (Node *)n;
@@ -6764,31 +6764,31 @@ MathOp:		 '+'									{ $$ = "+"; }
 		;
 
 qual_Op:	Op
-					{ $$ = makeList1(makeString($1)); }
+					{ $$ = list_make1(makeString($1)); }
 			| OPERATOR '(' any_operator ')'
 					{ $$ = $3; }
 		;
 
 qual_all_Op:
 			all_Op
-					{ $$ = makeList1(makeString($1)); }
+					{ $$ = list_make1(makeString($1)); }
 			| OPERATOR '(' any_operator ')'
 					{ $$ = $3; }
 		;
 
 subquery_Op:
 			all_Op
-					{ $$ = makeList1(makeString($1)); }
+					{ $$ = list_make1(makeString($1)); }
 			| OPERATOR '(' any_operator ')'
 					{ $$ = $3; }
 			| LIKE
-					{ $$ = makeList1(makeString("~~")); }
+					{ $$ = list_make1(makeString("~~")); }
 			| NOT LIKE
-					{ $$ = makeList1(makeString("!~~")); }
+					{ $$ = list_make1(makeString("!~~")); }
 			| ILIKE
-					{ $$ = makeList1(makeString("~~*")); }
+					{ $$ = list_make1(makeString("~~*")); }
 			| NOT ILIKE
-					{ $$ = makeList1(makeString("!~~*")); }
+					{ $$ = list_make1(makeString("!~~*")); }
 /* cannot put SIMILAR TO here, because SIMILAR TO is a hack.
  * the regular expression is preprocessed by a function (similar_escape),
  * and the ~ operator for posix regular expressions is used. 
@@ -6838,7 +6838,7 @@ extract_list:
 					A_Const *n = makeNode(A_Const);
 					n->val.type = T_String;
 					n->val.val.str = $1;
-					$$ = makeList2((Node *) n, $3);
+					$$ = list_make2((Node *) n, $3);
 				}
 			| /*EMPTY*/								{ $$ = NIL; }
 		;
@@ -6849,12 +6849,12 @@ type_list:  type_list ',' Typename
 				}
 			| Typename
 				{
-					$$ = makeList1($1);
+					$$ = list_make1($1);
 				}
 		;
 
 array_expr_list: array_expr
-				{	$$ = makeList1($1);		}
+				{	$$ = list_make1($1);		}
 			| array_expr_list ',' array_expr
 				{	$$ = lappend($1, $3);	}
 		;
@@ -6896,11 +6896,11 @@ extract_arg:
 overlay_list:
 			a_expr overlay_placing substr_from substr_for
 				{
-					$$ = makeList4($1, $2, $3, $4);
+					$$ = list_make4($1, $2, $3, $4);
 				}
 			| a_expr overlay_placing substr_from
 				{
-					$$ = makeList3($1, $2, $3);
+					$$ = list_make3($1, $2, $3);
 				}
 		;
 
@@ -6912,7 +6912,7 @@ overlay_placing:
 /* position_list uses b_expr not a_expr to avoid conflict with general IN */
 
 position_list:
-			b_expr IN_P b_expr						{ $$ = makeList2($3, $1); }
+			b_expr IN_P b_expr						{ $$ = list_make2($3, $1); }
 			| /*EMPTY*/								{ $$ = NIL; }
 		;
 
@@ -6930,22 +6930,22 @@ position_list:
 substr_list:
 			a_expr substr_from substr_for
 				{
-					$$ = makeList3($1, $2, $3);
+					$$ = list_make3($1, $2, $3);
 				}
 			| a_expr substr_for substr_from
 				{
-					$$ = makeList3($1, $3, $2);
+					$$ = list_make3($1, $3, $2);
 				}
 			| a_expr substr_from
 				{
-					$$ = makeList2($1, $2);
+					$$ = list_make2($1, $2);
 				}
 			| a_expr substr_for
 				{
 					A_Const *n = makeNode(A_Const);
 					n->val.type = T_Integer;
 					n->val.val.ival = 1;
-					$$ = makeList3($1, (Node *)n, $2);
+					$$ = list_make3($1, (Node *)n, $2);
 				}
 			| expr_list
 				{
@@ -7019,7 +7019,7 @@ case_expr:	CASE case_arg when_clause_list case_default END_P
 
 when_clause_list:
 			/* There must be at least one */
-			when_clause								{ $$ = makeList1($1); }
+			when_clause								{ $$ = list_make1($1); }
 			| when_clause_list when_clause			{ $$ = lappend($1, $2); }
 		;
 
@@ -7050,7 +7050,7 @@ case_arg:	a_expr									{ $$ = $1; }
 columnref:	relation_name opt_indirection
 				{
 					$$ = makeNode(ColumnRef);
-					$$->fields = makeList1(makeString($1));
+					$$->fields = list_make1(makeString($1));
 					$$->indirection = $2;
 				}
 			| dotted_name opt_indirection
@@ -7067,9 +7067,9 @@ dotted_name:
 		;
 
 attrs:		'.' attr_name
-					{ $$ = makeList1(makeString($2)); }
+					{ $$ = list_make1(makeString($2)); }
 			| '.' '*'
-					{ $$ = makeList1(makeString("*")); }
+					{ $$ = list_make1(makeString("*")); }
 			| '.' attr_name attrs
 					{ $$ = lcons(makeString($2), $3); }
 		;
@@ -7084,7 +7084,7 @@ attrs:		'.' attr_name
 /* Target lists as found in SELECT ... and INSERT VALUES ( ... ) */
 
 target_list:
-			target_el								{ $$ = makeList1($1); }
+			target_el								{ $$ = list_make1($1); }
 			| target_list ',' target_el				{ $$ = lappend($1, $3); }
 		;
 
@@ -7106,7 +7106,7 @@ target_el:	a_expr AS ColLabel
 			| '*'
 				{
 					ColumnRef *n = makeNode(ColumnRef);
-					n->fields = makeList1(makeString("*"));
+					n->fields = list_make1(makeString("*"));
 					n->indirection = NIL;
 					$$ = makeNode(ResTarget);
 					$$->name = NULL;
@@ -7122,7 +7122,7 @@ target_el:	a_expr AS ColLabel
 }
  */
 update_target_list:
-			update_target_el						{ $$ = makeList1($1); }
+			update_target_el						{ $$ = list_make1($1); }
 			| update_target_list ',' update_target_el { $$ = lappend($1,$3); }
 		;
 
@@ -7145,7 +7145,7 @@ update_target_el:
 		;
 
 insert_target_list:
-			insert_target_el						{ $$ = makeList1($1); }
+			insert_target_el						{ $$ = list_make1($1); }
 			| insert_target_list ',' insert_target_el { $$ = lappend($1, $3); }
 		;
 
@@ -7173,7 +7173,7 @@ relation_name:
 		;
 
 qualified_name_list:
-			qualified_name							{ $$ = makeList1($1); }
+			qualified_name							{ $$ = list_make1($1); }
 			| qualified_name_list ',' qualified_name { $$ = lappend($1, $3); }
 		;
 
@@ -7188,7 +7188,7 @@ qualified_name:
 			| dotted_name
 				{
 					$$ = makeNode(RangeVar);
-					switch (length($1))
+					switch (list_length($1))
 					{
 						case 2:
 							$$->catalogname = NULL;
@@ -7211,7 +7211,7 @@ qualified_name:
 		;
 
 name_list:	name
-					{ $$ = makeList1(makeString($1)); }
+					{ $$ = list_make1(makeString($1)); }
 			| name_list ',' name
 					{ $$ = lappend($1, makeString($3)); }
 		;
@@ -7232,7 +7232,7 @@ index_name: ColId									{ $$ = $1; };
 file_name:	Sconst									{ $$ = $1; };
 
 func_name:	function_name
-					{ $$ = makeList1(makeString($1)); }
+					{ $$ = list_make1(makeString($1)); }
 			| dotted_name							{ $$ = $1; }
 		;
 
@@ -7924,19 +7924,19 @@ makeOverlaps(List *largs, List *rargs)
 {
 	FuncCall *n = makeNode(FuncCall);
 	n->funcname = SystemFuncName("overlaps");
-	if (length(largs) == 1)
+	if (list_length(largs) == 1)
 		largs = lappend(largs, largs);
-	else if (length(largs) != 2)
+	else if (list_length(largs) != 2)
 		ereport(ERROR,
 				(errcode(ERRCODE_SYNTAX_ERROR),
 				 errmsg("wrong number of parameters on left side of OVERLAPS expression")));
-	if (length(rargs) == 1)
+	if (list_length(rargs) == 1)
 		rargs = lappend(rargs, rargs);
-	else if (length(rargs) != 2)
+	else if (list_length(rargs) != 2)
 		ereport(ERROR,
 				(errcode(ERRCODE_SYNTAX_ERROR),
 				 errmsg("wrong number of parameters on right side of OVERLAPS expression")));
-	n->args = nconc(largs, rargs);
+	n->args = list_concat(largs, rargs);
 	n->agg_star = FALSE;
 	n->agg_distinct = FALSE;
 	return n;
@@ -8041,7 +8041,7 @@ makeSetOp(SetOperation op, bool all, Node *larg, Node *rarg)
 List *
 SystemFuncName(char *name)
 {
-	return makeList2(makeString("pg_catalog"), makeString(name));
+	return list_make2(makeString("pg_catalog"), makeString(name));
 }
 
 /* SystemTypeName()
@@ -8054,7 +8054,7 @@ SystemTypeName(char *name)
 {
 	TypeName   *n = makeNode(TypeName);
 
-	n->names = makeList2(makeString("pg_catalog"), makeString(name));
+	n->names = list_make2(makeString("pg_catalog"), makeString(name));
 	n->typmod = -1;
 	return n;
 }

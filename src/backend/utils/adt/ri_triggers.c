@@ -17,7 +17,7 @@
  *
  * Portions Copyright (c) 1996-2003, PostgreSQL Global Development Group
  *
- * $PostgreSQL: pgsql/src/backend/utils/adt/ri_triggers.c,v 1.68 2004/05/26 04:41:38 neilc Exp $
+ * $PostgreSQL: pgsql/src/backend/utils/adt/ri_triggers.c,v 1.69 2004/05/30 23:40:36 neilc Exp $
  *
  * ----------
  */
@@ -2712,7 +2712,7 @@ RI_Initial_Check(FkConstraint *fkconstraint, Relation rel, Relation pkrel)
 	{
 		HeapTuple	tuple = SPI_tuptable->vals[0];
 		TupleDesc	tupdesc = SPI_tuptable->tupdesc;
-		int			nkeys = length(fkconstraint->fk_attrs);
+		int			nkeys = list_length(fkconstraint->fk_attrs);
 		int			i;
 		RI_QueryKey	qkey;
 

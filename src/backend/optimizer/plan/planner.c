@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/optimizer/plan/planner.c,v 1.170 2004/05/26 04:41:24 neilc Exp $
+ *	  $PostgreSQL: pgsql/src/backend/optimizer/plan/planner.c,v 1.171 2004/05/30 23:40:29 neilc Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -131,7 +131,7 @@ planner(Query *parse, bool isCursor, int cursorOptions)
 	}
 
 	/* executor wants to know total number of Params used overall */
-	result_plan->nParamExec = length(PlannerParamList);
+	result_plan->nParamExec = list_length(PlannerParamList);
 
 	/* final cleanup of the plan */
 	set_plan_references(result_plan, parse->rtable);
@@ -493,14 +493,14 @@ inheritance_planner(Query *parse, List *inheritlist)
 {
 	int			parentRTindex = parse->resultRelation;
 	Oid			parentOID = getrelid(parentRTindex, parse->rtable);
-	int			mainrtlength = length(parse->rtable);
+	int			mainrtlength = list_length(parse->rtable);
 	List	   *subplans = NIL;
 	List	   *tlist = NIL;
 	ListCell   *l;
 
 	foreach(l, inheritlist)
 	{
-		int			childRTindex = lfirsti(l);
+		int			childRTindex = lfirst_int(l);
 		Oid			childOID = getrelid(childRTindex, parse->rtable);
 		int			subrtlength;
 		Query	   *subquery;
@@ -522,13 +522,13 @@ inheritance_planner(Query *parse, List *inheritlist)
 		 * XXX my goodness this is ugly.  Really need to think about ways to
 		 * rein in planner's habit of scribbling on its input.
 		 */
-		subrtlength = length(subquery->rtable);
+		subrtlength = list_length(subquery->rtable);
 		if (subrtlength > mainrtlength)
 		{
 			List	   *subrt;
 
 			subrt = list_copy_tail(subquery->rtable, mainrtlength);
-			parse->rtable = nconc(parse->rtable, subrt);
+			parse->rtable = list_concat(parse->rtable, subrt);
 			mainrtlength = subrtlength;
 		}
 		/* Save preprocessed tlist from first rel for use in Append */
@@ -634,7 +634,7 @@ grouping_planner(Query *parse, double tuple_fraction)
 		double		dNumGroups = 0;
 		long		numGroups = 0;
 		int			numAggs = 0;
-		int			numGroupCols = length(parse->groupClause);
+		int			numGroupCols = list_length(parse->groupClause);
 		bool		use_hashed_grouping = false;
 
 		/* Preprocess targetlist in case we are inside an INSERT/UPDATE. */
@@ -672,7 +672,7 @@ grouping_planner(Query *parse, double tuple_fraction)
 
 			foreach(l, parse->rowMarks)
 			{
-				Index		rti = lfirsti(l);
+				Index		rti = lfirst_int(l);
 				char	   *resname;
 				Resdom	   *resdom;
 				Var		   *var;
@@ -680,7 +680,7 @@ grouping_planner(Query *parse, double tuple_fraction)
 
 				resname = (char *) palloc(32);
 				snprintf(resname, 32, "ctid%u", rti);
-				resdom = makeResdom(length(tlist) + 1,
+				resdom = makeResdom(list_length(tlist) + 1,
 									TIDOID,
 									-1,
 									resname,
@@ -1421,7 +1421,7 @@ make_subplanTargetList(Query *parse,
 	sub_tlist = flatten_tlist(tlist);
 	extravars = pull_var_clause(parse->havingQual, false);
 	sub_tlist = add_to_flat_tlist(sub_tlist, extravars);
-	freeList(extravars);
+	list_free(extravars);
 	*need_tlist_eval = false;	/* only eval if not flat tlist */
 
 	/*
@@ -1430,7 +1430,7 @@ make_subplanTargetList(Query *parse,
 	 * already), and make an array showing where the group columns are in
 	 * the sub_tlist.
 	 */
-	numCols = length(parse->groupClause);
+	numCols = list_length(parse->groupClause);
 	if (numCols > 0)
 	{
 		int			keyno = 0;
@@ -1456,7 +1456,7 @@ make_subplanTargetList(Query *parse,
 			}
 			if (!sl)
 			{
-				te = makeTargetEntry(makeResdom(length(sub_tlist) + 1,
+				te = makeTargetEntry(makeResdom(list_length(sub_tlist) + 1,
 												exprType(groupexpr),
 												exprTypmod(groupexpr),
 												NULL,

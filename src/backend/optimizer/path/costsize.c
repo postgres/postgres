@@ -49,7 +49,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/optimizer/path/costsize.c,v 1.127 2004/05/26 04:41:21 neilc Exp $
+ *	  $PostgreSQL: pgsql/src/backend/optimizer/path/costsize.c,v 1.128 2004/05/30 23:40:28 neilc Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -412,7 +412,7 @@ cost_tidscan(Path *path, Query *root,
 	Cost		startup_cost = 0;
 	Cost		run_cost = 0;
 	Cost		cpu_per_tuple;
-	int			ntuples = length(tideval);
+	int			ntuples = list_length(tideval);
 
 	/* Should only be applied to base relations */
 	Assert(baserel->relid > 0);
@@ -1063,7 +1063,7 @@ cost_hashjoin(HashPath *path, Query *root)
 											  outer_path->parent->width);
 	double		innerbytes = relation_byte_size(inner_path_rows,
 											  inner_path->parent->width);
-	int			num_hashclauses = length(hashclauses);
+	int			num_hashclauses = list_length(hashclauses);
 	int			virtualbuckets;
 	int			physicalbuckets;
 	int			numbatches;

@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/optimizer/plan/initsplan.c,v 1.99 2004/05/26 04:41:24 neilc Exp $
+ *	  $PostgreSQL: pgsql/src/backend/optimizer/plan/initsplan.c,v 1.100 2004/05/30 23:40:29 neilc Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -121,7 +121,7 @@ build_base_rel_tlists(Query *root, List *final_tlist)
 	if (tlist_vars != NIL)
 	{
 		add_vars_to_targetlist(root, tlist_vars, bms_make_singleton(0));
-		freeList(tlist_vars);
+		list_free(tlist_vars);
 	}
 }
 
@@ -333,7 +333,7 @@ mark_baserels_for_outer_join(Query *root, Relids rels, Relids outerrels)
 		 */
 		if (rel->outerjoinset == NULL)
 		{
-			if (intMember(relno, root->rowMarks))
+			if (list_member_int(root->rowMarks, relno))
 				ereport(ERROR,
 						(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
 						 errmsg("SELECT FOR UPDATE cannot be applied to the nullable side of an outer join")));
@@ -585,7 +585,7 @@ distribute_qual_to_rels(Query *root, Node *clause,
 			 */
 			vars = pull_var_clause(clause, false);
 			add_vars_to_targetlist(root, vars, relids);
-			freeList(vars);
+			list_free(vars);
 			break;
 		default:
 
@@ -705,8 +705,8 @@ process_implied_equality(Query *root,
 				if (membership == BMS_SINGLETON)
 				{
 					/* delete it from local restrictinfo list */
-					rel1->baserestrictinfo = lremove(restrictinfo,
-												 rel1->baserestrictinfo);
+					rel1->baserestrictinfo = list_delete_ptr(rel1->baserestrictinfo,
+															 restrictinfo);
 				}
 				else
 				{
@@ -728,7 +728,7 @@ process_implied_equality(Query *root,
 	 */
 	ltype = exprType(item1);
 	rtype = exprType(item2);
-	eq_operator = compatible_oper(makeList1(makeString("=")),
+	eq_operator = compatible_oper(list_make1(makeString("=")),
 								  ltype, rtype, true);
 	if (!HeapTupleIsValid(eq_operator))
 	{
@@ -854,11 +854,11 @@ qual_is_redundant(Query *root,
 	 * done.  We give up when we can't expand the equalexprs list any
 	 * more.
 	 */
-	equalexprs = makeList1(newleft);
+	equalexprs = list_make1(newleft);
 	do
 	{
 		someadded = false;
-		/* cannot use foreach here because of possible lremove */
+		/* cannot use foreach here because of possible list_delete */
 		olditem = list_head(oldquals);
 		while (olditem)
 		{
@@ -867,12 +867,12 @@ qual_is_redundant(Query *root,
 			Node	   *oldright = get_rightop(oldrinfo->clause);
 			Node	   *newguy = NULL;
 
-			/* must advance olditem before lremove possibly pfree's it */
+			/* must advance olditem before list_delete possibly pfree's it */
 			olditem = lnext(olditem);
 
-			if (member(oldleft, equalexprs))
+			if (list_member(equalexprs, oldleft))
 				newguy = oldright;
-			else if (member(oldright, equalexprs))
+			else if (list_member(equalexprs, oldright))
 				newguy = oldleft;
 			else
 				continue;
@@ -884,7 +884,7 @@ qual_is_redundant(Query *root,
 			/*
 			 * Remove this qual from list, since we don't need it anymore.
 			 */
-			oldquals = lremove(oldrinfo, oldquals);
+			oldquals = list_delete_ptr(oldquals, oldrinfo);
 		}
 	} while (someadded);
 
@@ -917,7 +917,7 @@ check_mergejoinable(RestrictInfo *restrictinfo)
 
 	if (!is_opclause(clause))
 		return;
-	if (length(((OpExpr *) clause)->args) != 2)
+	if (list_length(((OpExpr *) clause)->args) != 2)
 		return;
 
 	opno = ((OpExpr *) clause)->opno;
@@ -950,7 +950,7 @@ check_hashjoinable(RestrictInfo *restrictinfo)
 
 	if (!is_opclause(clause))
 		return;
-	if (length(((OpExpr *) clause)->args) != 2)
+	if (list_length(((OpExpr *) clause)->args) != 2)
 		return;
 
 	opno = ((OpExpr *) clause)->opno;

@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/parser/parse_oper.c,v 1.77 2003/11/29 19:51:52 pgsql Exp $
+ *	  $PostgreSQL: pgsql/src/backend/parser/parse_oper.c,v 1.78 2004/05/30 23:40:35 neilc Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -881,7 +881,7 @@ make_scalar_array_op(ParseState *pstate, List *opname,
 	tup = oper(opname, ltypeId, rtypeId, false);
 	opform = (Form_pg_operator) GETSTRUCT(tup);
 
-	args = makeList2(ltree, rtree);
+	args = list_make2(ltree, rtree);
 	actual_arg_types[0] = ltypeId;
 	actual_arg_types[1] = rtypeId;
 	declared_arg_types[0] = opform->oprleft;
@@ -960,7 +960,7 @@ make_op_expr(ParseState *pstate, Operator op,
 	if (rtree == NULL)
 	{
 		/* right operator */
-		args = makeList1(ltree);
+		args = list_make1(ltree);
 		actual_arg_types[0] = ltypeId;
 		declared_arg_types[0] = opform->oprleft;
 		nargs = 1;
@@ -968,7 +968,7 @@ make_op_expr(ParseState *pstate, Operator op,
 	else if (ltree == NULL)
 	{
 		/* left operator */
-		args = makeList1(rtree);
+		args = list_make1(rtree);
 		actual_arg_types[0] = rtypeId;
 		declared_arg_types[0] = opform->oprright;
 		nargs = 1;
@@ -976,7 +976,7 @@ make_op_expr(ParseState *pstate, Operator op,
 	else
 	{
 		/* otherwise, binary operator */
-		args = makeList2(ltree, rtree);
+		args = list_make2(ltree, rtree);
 		actual_arg_types[0] = ltypeId;
 		actual_arg_types[1] = rtypeId;
 		declared_arg_types[0] = opform->oprleft;
