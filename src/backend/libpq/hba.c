@@ -10,7 +10,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/libpq/hba.c,v 1.115 2003/09/25 06:57:59 petere Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/libpq/hba.c,v 1.116 2003/10/25 03:48:46 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -1433,15 +1433,15 @@ ident_unix(int sock, char *ident_user)
 	struct msghdr msg;
 
 /* Credentials structure */
-#ifdef HAVE_STRUCT_CMSGCRED
+#if defined(HAVE_STRUCT_CMSGCRED)
 	typedef struct cmsgcred Cred;
 
 #define cruid cmcred_uid
-#elif HAVE_STRUCT_FCRED
+#elif defined(HAVE_STRUCT_FCRED)
 	typedef struct fcred Cred;
 
 #define cruid fc_uid
-#elif HAVE_STRUCT_SOCKCRED
+#elif defined(HAVE_STRUCT_SOCKCRED)
 	typedef struct sockcred Cred;
 
 #define cruid sc_uid
