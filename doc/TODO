@@ -1,6 +1,6 @@
 TODO list for PostgreSQL
 ========================
-Last updated:		Thu Jul  8 01:04:06 EDT 1999
+Last updated:		Mon Sep  6 23:55:43 EDT 1999
 
 Current maintainer:	Bruce Momjian (maillist@candle.pha.pa.us)
 
@@ -27,16 +27,23 @@ PARSER
 * Alter TABLE ADD COLUMN does not honor DEFAULT, add CONSTRAINT
 * Do not allow bpchar column creation without length
 * Select a[1] FROM test fails, it needs test.a[1]
-* Array index references without table name cause problems
+* -Array index references without table name cause problems
 * Update table SET table.value = 3 fails
 * Creating index of TIMESTAMP & RELTIME fails, or rename to DATETIME(Thomas)
 * SELECT foo UNION SELECT foo is incorrectly simplified to SELECT foo
-* INSERT ... SELECT ... GROUP BY groups by target columns not source columns
-* CREATE TABLE test (a char(5) DEFAULT text '', b int4) fails on INSERT
+* -INSERT ... SELECT ... GROUP BY groups by target columns not source columns
+* -CREATE TABLE test (a char(5) DEFAULT text '', b int4) fails on INSERT
 * UNION with LIMIT fails
 * Unique index on base column not honored on inserts from inherited table
   INSERT INTO inherit_table (unique_index_col) VALUES (dup) should fail
-*  CREATE TABLE x AS SELECT 1 UNION SELECT 2 fails
+* CREATE TABLE x AS SELECT 1 UNION SELECT 2 fails
+* CREATE TABLE test(col char(2) DEFAULT user) fails in length restriction
+* SELECT ... UNION ... ORDER BY fails when sort expr not in result list
+* Be smarter about promoting types when UNION merges different data types
+* SELECT ... UNION ... GROUP BY fails if column types disagree
+* redesign INSERT ... SELECT to have two levels of target list
+* -select * from pg_class where oid in (0,-1)
+* have INTERSECT/EXCEPT prevent duplicates unless ALL is specified
 
 VIEWS
 
@@ -48,6 +55,7 @@ MISC
 * User who can create databases can modify pg_database table
 * Plpgsql does not handle quoted mixed-case identifiers
 * Fix btree to give a useful elog when key > 1/2 (page - overhead)
+* pg_dump should preserve primary key information
 
 ENHANCEMENTS
 ------------
@@ -94,7 +102,8 @@ TYPES
 * Remove Money type, add money formatting for decimal type
 * Declare typein/out functions in pg_proc with a special "C string" data type
 * Add non-large-object binary field
-* Add index on NUMERIC type
+* Add index on NUMERIC/DECIMAL type
+* Make Absolutetime/Relativetime int4 because time_t can be int8 on some ports
 
 VIEWS
 
@@ -128,6 +137,7 @@ COMMANDS
   supplied ESCAPE
 * Move LIKE index optimization handling to the optimizer
 * Allow RULE recompilation
+* Support UNION/INTERSECT/EXCEPT in sub-selects
   
 CLIENTS
 
@@ -177,6 +187,7 @@ MISC
 * Make postgres user have a password by default
 * Add configure test to check for C++ need for *.h and namespaces
 * Allow BLCKSZ <= 64k, not <= 32k
+* redesign UNION structures to have separarate target lists
 
 PERFORMANCE
 -----------
@@ -202,6 +213,8 @@ INDEXES
 * Create more system table indexes for faster cache lookups
 * fix indexscan() so it does leak memory by not requiring caller to free
 * Improve _bt_binsrch() to handle equal keys better, remove _bt_firsteq()(Tom)
+* Allow SELECT * FROM tab WHERE int2col = 4 use int2col index
+* Allow optimizer to prefer plans that match ORDER BY
 
 CACHE
 
@@ -217,7 +230,7 @@ MISC
 * Update pg_statistic table to remove operator column
 * Allow char() not to use variable-sized header to reduce disk size
 * Do async I/O to do better read-ahead of data
-* Fix memory exhaustion when using many OR's
+* -Fix memory exhaustion when using many OR's
 * Get faster regex() code from Henry Spencer <henry@zoo.utoronto.ca>
   when it is available
 * Use mmap() rather than SYSV shared memory(?)
@@ -239,6 +252,7 @@ SOURCE CODE
 * Add use of 'const' for varibles in source tree
 * Fix C optimizer problem where fmgr_ptr calls return different types
 * Add needed includes and removed unneede include files(Bruce)
+* Make configure --enable-debug add -g on compile line
 
 ---------------------------------------------------------------------------
 

@@ -48,6 +48,7 @@ s
         make_mkid               make mkid ID files
         mkldexport              create AIX exports file
         pgindent                indents C source files
+        pginclude               scripts for adding/removing include files
 
    Let me note some of these. If you point your browser at the
    file:/usr/local/src/pgsql/src/tools/backend/index.html directory, you
@@ -82,7 +83,8 @@ s
    It auto-formats all source files to make them consistent. Comment
    blocks that need specific line breaks should be formatted as block
    comments, where the comment starts as /*------. These comments will
-   not be reformatted in any way.
+   not be reformatted in any way. pginclude contains scripts used to add
+   needed #include's to include files, and removed unneeded #include's.
    
   2) What books are good for developers?
   
@@ -362,5 +364,6 @@ s
    
    Then, check src/include/port and add your new OS file, with
    appropriate values. Hopefully, there is already locking code in
-   src/include/storage/s_lock.h for your CPU. There is a backend/port
-   directory if you need special files for your OS.
+   src/include/storage/s_lock.h for your CPU. There is also a
+   src/makefiles directory for port-specific Makefile handling. There is
+   a backend/port directory if you need special files for your OS.
