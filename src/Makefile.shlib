@@ -6,7 +6,7 @@
 # Copyright (c) 1998, Regents of the University of California
 #
 # IDENTIFICATION
-#    $PostgreSQL: pgsql/src/Makefile.shlib,v 1.84 2004/10/13 10:20:04 momjian Exp $
+#    $PostgreSQL: pgsql/src/Makefile.shlib,v 1.85 2004/10/15 05:11:00 momjian Exp $
 #
 #-------------------------------------------------------------------------
 
@@ -272,7 +272,7 @@ ifneq ($(PORTNAME), aix)
 
 # Normal case
 $(shlib): $(OBJS)
-	$(LINK.shared) $(OBJS) $(SHLIB_LINK) -o $@
+	$(LINK.shared) $(LDFLAGS_SL) $(OBJS) $(SHLIB_LINK) -o $@
 # If we're using major and minor versions, then make a symlink to major-version-only.
 ifneq ($(shlib), $(shlib_major))
 	rm -f $(shlib_major)
@@ -307,7 +307,7 @@ else # PORTNAME == cygwin
 # Cygwin case
 $(shlib) lib$(NAME).a: $(OBJS)
 	$(DLLTOOL) --export-all $(DLLTOOL_DEFFLAGS) --output-def $(NAME).def $(OBJS)
-	$(DLLWRAP) -o $(shlib) --dllname $(shlib) $(DLLWRAP_FLAGS) --def $(NAME).def $(OBJS) $(SHLIB_LINK)
+	$(DLLWRAP) $(LDFLAGS_SL) -o $(shlib) --dllname $(shlib) $(DLLWRAP_FLAGS) --def $(NAME).def $(OBJS) $(SHLIB_LINK)
 	$(DLLTOOL) --dllname $(shlib) $(DLLTOOL_LIBFLAGS) --def $(NAME).def --output-lib lib$(NAME).a
 
 endif # PORTNAME == cygwin
@@ -317,7 +317,7 @@ else # PORTNAME == win32
 # win32 case
 $(shlib) lib$(NAME).a: $(OBJS)
 	$(DLLTOOL) --export-all $(DLLTOOL_DEFFLAGS) --output-def $(NAME).def $(OBJS)
-	$(DLLWRAP) -o $(shlib) --dllname $(shlib) $(DLLWRAP_FLAGS) --def $(NAME).def $(OBJS) $(SHLIB_LINK)
+	$(DLLWRAP) $(LDFLAGS_SL) -o $(shlib) --dllname $(shlib) $(DLLWRAP_FLAGS) --def $(NAME).def $(OBJS) $(SHLIB_LINK)
 	$(DLLTOOL) --dllname $(shlib) $(DLLTOOL_LIBFLAGS) --def $(NAME).def --output-lib lib$(NAME).a
 
 endif # PORTNAME == win32

@@ -757,6 +757,10 @@ ac_env_CPP_set=${CPP+set}
 ac_env_CPP_value=$CPP
 ac_cv_env_CPP_set=${CPP+set}
 ac_cv_env_CPP_value=$CPP
+ac_env_LDFLAGS_SL_set=${LDFLAGS_SL+set}
+ac_env_LDFLAGS_SL_value=$LDFLAGS_SL
+ac_cv_env_LDFLAGS_SL_set=${LDFLAGS_SL+set}
+ac_cv_env_LDFLAGS_SL_value=$LDFLAGS_SL
 ac_env_DOCBOOKSTYLE_set=${DOCBOOKSTYLE+set}
 ac_env_DOCBOOKSTYLE_value=$DOCBOOKSTYLE
 ac_cv_env_DOCBOOKSTYLE_set=${DOCBOOKSTYLE+set}
@@ -881,6 +885,7 @@ Some influential environment variables:
   CPPFLAGS    C/C++ preprocessor flags, e.g. -I<include dir> if you have
               headers in a nonstandard directory <include dir>
   CPP         C preprocessor
+  LDFLAGS_SL
   DOCBOOKSTYLE
               location of DocBook stylesheets
 
@@ -3497,6 +3502,7 @@ LDFLAGS="$LDFLAGS $LIBDIRS"
 echo "$as_me: using CPPFLAGS=$CPPFLAGS" >&6;}
 { echo "$as_me:$LINENO: using LDFLAGS=$LDFLAGS" >&5
 echo "$as_me: using LDFLAGS=$LDFLAGS" >&6;}
+
 
 
 for ac_prog in gawk mawk nawk awk
@@ -18883,6 +18889,7 @@ s,@with_pam@,$with_pam,;t t
 s,@with_rendezvous@,$with_rendezvous,;t t
 s,@with_openssl@,$with_openssl,;t t
 s,@ELF_SYS@,$ELF_SYS,;t t
+s,@LDFLAGS_SL@,$LDFLAGS_SL,;t t
 s,@AWK@,$AWK,;t t
 s,@FLEX@,$FLEX,;t t
 s,@FLEXFLAGS@,$FLEXFLAGS,;t t
