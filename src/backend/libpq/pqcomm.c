@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/libpq/pqcomm.c,v 1.35 1998/01/26 01:41:11 scrappy Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/libpq/pqcomm.c,v 1.36 1998/01/27 03:25:01 scrappy Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -619,7 +619,7 @@ StreamServerPort(char *hostName, short portName, int *fdP)
 		  errno);
 	  pqdebug("%s", PQerrormsg);
 	  strcat(PQerrormsg, "\tIs another postmaster already running on that port?\n");
-	  if (family == AF_UNIX)
+	  if (family == AF_UNIX) 
 	    strcat(PQerrormsg, "\tIf not, remove socket node (/tmp/.s.PGSQL.<portnr>)and retry.\n");
 	  else
 	    strcat(PQerrormsg, "\tIf not, wait a few seconds and retry.\n");

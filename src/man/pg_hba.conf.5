@@ -1,20 +1,114 @@
 .\" This is -*-nroff-*-
-.\" $Header: /cvsroot/pgsql/src/man/Attic/pg_hba.conf.5,v 1.3 1997/08/26 17:30:03 momjian Exp $
-.TH pg_hba.conf 5 11/04/96 Postgres Postgres
+.\" $Header: /cvsroot/pgsql/src/man/Attic/pg_hba.conf.5,v 1.4 1998/01/27 03:25:14 scrappy Exp $
+.TH pg_hba.conf 5 1/26/98 PostgreSQL PostgreSQL
 .SH NAME
 $PGDATA/pg_hba.conf
 .SH DESCRIPTION
-"Host-based access control" is the name for the basic controls Postgres
-exercises on what clients are allowed to access a database system.
-It is called that because one of the factors that can control access is
-from what host the client is connecting.
+"Host-based access control" is the name for the basic controls PostgreSQL
+exercises on what clients are allowed to access a database and how
+the users on those clients must authenticate themselves.
 .PP
-Each database system contains a file named "pg_hba.conf", in its PGDATA
-directory, that controls who can connect to that database system.
+Each database system contains a file named "pg_hba.conf", in its $PGDATA
+directory, that controls who can connect to each database.
 .PP
-The exact format of the pg_hba.conf file is described in the comments at
-the top of the sample file pg_hba.conf.sample, which resides in the 
-the PostgreSQL "lib" sub-directory of the main postgres directory.
+Every client that wants to access to a database
+.IR must
+be covered by one of
+the entries in pg_hba.conf.  Otherwise all attempted connections from that
+client will be rejected with a "User authentication failed" error message.
+.PP
+The general format of the pg_hba.conf file is of a set of records, one per
+line.  Blank lines and lines beginning with '#' are ignored.  A record is
+made up of a number of fields which are separated by spaces and/or tabs.
+.PP
+Connections from clients can be made using UNIX domain sockets or Internet
+domain sockets (ie. TCP/IP).  Connections made using UNIX domain sockets
+are controlled using records of the following format.
+.PP
+local <database> <authentication method>
+.PP
+<database> specifies the database that this record applies to.  The value
+.IR all
+specifies that it applies to all databases.  <authentication method>
+specifies the method a user must use to authenticate themselves when
+connecting to that database using UNIX domain sockets.  The different methods
+are described below.
+.PP
+Connections made using Internet domain sockets are controlled using records
+of the following format.
+.PP
+host <database> <TCP/IP address> <TCP/IP mask> <authentication method>
+.PP
+The <TCP/IP mask> is logically anded to both the specified <TCP/IP address>
+and the TCP/IP address
+of the connecting client.  If the two values that result are equal then the
+record is used for this connection.  If a connection matches more than one
+record then the earliest one in the file is used.  Both the <TCP/IP address>
+and the <TCP/IP mask> are specified in dotted decimal notation.
+.PP
+If a connection fails to match any record then the
+.IR reject
+authentication method is applied (see below).
+.SH "AUTHENTICATION METHODS"
+The following authentication methods are supported for both UNIX and TCP/IP
+domain sockets.
+.PP
+.IR trust
+- the connection is allowed unconditionally.
+.PP
+.IR reject
+- the connection is rejected unconditionally.
+.PP
+.IR crypt
+- the client is asked for a password for the user.  This is sent encrypted
+(using crypt(3)) and compared against the password held in the pg_user table.
+If the passwords match, the connection is allowed.
+.PP
+.IR password
+- the client is asked for a password for the user.  This is sent in clear
+and compared against the password held in the pg_user table.
+If the passwords match, the connection is allowed.  An optional password file
+may be specified after the
+.IR password
+keyword which is used to match the supplied password rather than the pg_user
+table.  See pg_passwd(1).  
+.PP
+The following authentication methods are supported for TCP/IP
+domain sockets only.
+.PP
+.IR krb4
+- Kerberos V4 is used to authenticate the user.
+.PP
+.IR krb5
+- Kerberos V5 is used to authenticate the user.
+.PP
+.IR ident
+- the ident server on the client is used to authenticate the user (RFC 1413).
+An optional map name may be specified after the
+.IR ident
+keyword which allows ident user names to be mapped onto PostgreSQL user names.
+Maps are held in the file $PGDATA/pg_ident.conf.
+.SH EXAMPLES
+
+# Trust any connection via UNIX domain sockets.
+
+local	trust
+
+# Trust any connection via TCP/IP from this machine.
+
+host	all	127.0.0.1	255.255.255.255		trust
+
+# We don't like this machine.
+
+host	all	192.168.0.10	255.255.255.0		reject
+
+# This machine can't encrypt so we ask for passwords in clear.
+
+host	all	192.168.0.3	255.255.255.0		password
+
+# The rest of this group of machines should provide encrypted passwords.
+
+host	all	192.168.0.0	255.255.255.0		crypt
 
 .SH "SEE ALSO"
 pgintro(1).

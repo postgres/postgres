@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/libpq/auth.c,v 1.22 1998/01/27 03:11:41 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/libpq/auth.c,v 1.23 1998/01/27 03:24:54 scrappy Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -401,7 +401,7 @@ void be_recvauth(Port *port)
 	if (hba_getauthmethod(&port->raddr, port->database, port->auth_arg,
 				&port->auth_method) != STATUS_OK)
 	{
-		PacketSendError(&port->pktInfo, "Error getting authentication method");
+		PacketSendError(&port->pktInfo, "Missing or mis-configured pg_hba.conf file");
 		return;
 	}
 

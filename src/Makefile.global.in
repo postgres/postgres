@@ -7,7 +7,7 @@
 #
 #
 # IDENTIFICATION
-#    $Header: /cvsroot/pgsql/src/Makefile.global.in,v 1.32 1998/01/15 19:41:35 pgsql Exp $
+#    $Header: /cvsroot/pgsql/src/Makefile.global.in,v 1.33 1998/01/27 03:24:51 scrappy Exp $
 #
 # NOTES
 #    Essentially all Postgres make files include this file and use the 
@@ -157,10 +157,10 @@ USE_TCL= @USE_TCL@
 #
 TCL_INCDIR= /usr/local/include
 TCL_LIBDIR= /usr/local/lib
-TCL_LIB= -ltcl80
+TCL_LIB= -ltcl8.0
 TK_INCDIR= /usr/local/include
 TK_LIBDIR= /usr/local/lib
-TK_LIB= -ltk80
+TK_LIB= -ltk8.0
 
 USE_PERL= @USE_PERL@
 

@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/libpq/hba.c,v 1.26 1998/01/26 01:41:08 scrappy Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/libpq/hba.c,v 1.27 1998/01/27 03:24:56 scrappy Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -337,8 +337,15 @@ process_open_config_file(FILE *file, SockAddr *raddr, const char database[],
 		}
 	}
 
-	if (found_entry && !error)
+	if (!error)
+	{
+		/* If no entry was found then force a rejection. */
+
+		if (!found_entry)
+			*userauth_p = uaReject;
+
 		*host_ok_p = true;
+	}
 }
 
 

@@ -122,3 +122,8 @@
 # connect as Postgres user "guest1", the connection is only allowed if
 # there is an entry for map "omicron" in pg_ident.conf that says "bryanh" is 
 # allowed to connect as "guest1".
+
+# By default, allow anything over UNIX domain sockets and localhost.
+
+local        all                                         trust
+host         all         127.0.0.1     255.255.255.255   trust     
