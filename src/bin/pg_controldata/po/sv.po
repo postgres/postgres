@@ -1,39 +1,47 @@
 # Swedish message translation file for pg_controldata
 # This file is put in the public domain.
-# Dennis Björklund <db@zigo.dhs.org>, 2002.
+# Dennis Björklund <db@zigo.dhs.org>, 2002, 2003.
 #
 msgid ""
 msgstr ""
-"Project-Id-Version: PostgreSQL 7.3\n"
-"POT-Creation-Date: 2002-10-25 04:17-0400\n"
-"PO-Revision-Date: 2002-10-26 06:23+0200\n"
+"Project-Id-Version: PostgreSQL 7.4\n"
+"POT-Creation-Date: 2003-08-05 16:17+0200\n"
+"PO-Revision-Date: 2003-08-05 16:20+0200\n"
 "Last-Translator: Dennis Björklund <db@zigo.dhs.org>\n"
 "Language-Team: Swedish <sv@li.org>\n"
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=ISO-8859-1\n"
 "Content-Transfer-Encoding: 8bit\n"
 
-#: pg_controldata.c:28
-#, c-format
-msgid ""
-"%s displays PostgreSQL database cluster control information.\n"
-"\n"
-msgstr "%s visar PostgreSQL-databas klusterkontrollinformation.\n\n"
-
-#: pg_controldata.c:29
+#: pg_controldata.c:31
 #, c-format
 msgid ""
 "Usage:\n"
-"  %s [DATADIR]\n"
+"  %s [OPTION]\n"
+"\n"
+"Options:\n"
+"  DATADIR        show cluster control information for DATADIR\n"
+"  -?, --help     display this help and exit\n"
+"  -V, --version  display pg_controldata's version and exit\n"
 "\n"
 msgstr ""
 "Användning:\n"
-"  %s [DATADIR]\n"
+"  %s [FLAGGA]\n"
+"\n"
+"Flaggor:\n"
+"  DATADIR        visa klusterkontrollinfo för DATADIR\n"
+"  -?, --help     visa denna hjälp och avsluta\n"
+"  -V, --version  visa pg_controldatas version och avsluta\n"
 "\n"
 
-#: pg_controldata.c:30
+#: pg_controldata.c:40
+#, c-format
+msgid "%s displays PostgreSQL database cluster control information.\n"
+msgstr "%s visar PostgreSQL-databas klusterkontrollinformation.\n"
+
+#: pg_controldata.c:41
 msgid ""
-"If not data directory is specified, the environment variable PGDATA\n"
+"If no data directory is specified, the environment variable PGDATA\n"
 "is used.\n"
 "\n"
 msgstr ""
@@ -41,175 +49,190 @@ msgstr ""
 "för detta.\n"
 "\n"
 
-#: pg_controldata.c:31
+#: pg_controldata.c:42
 msgid "Report bugs to <pgsql-bugs@postgresql.org>.\n"
 msgstr "Reportera buggar till <pgsql-bugs@postgresql.org>.\n"
 
-#: pg_controldata.c:41
+#: pg_controldata.c:52
 msgid "starting up"
 msgstr "startar upp"
 
-#: pg_controldata.c:43
+#: pg_controldata.c:54
 msgid "shut down"
 msgstr "nedstängd"
 
-#: pg_controldata.c:45
+#: pg_controldata.c:56
 msgid "shutting down"
 msgstr "stänger ner"
 
-#: pg_controldata.c:47
+#: pg_controldata.c:58
 msgid "in recovery"
 msgstr "i återuppbyggnad"
 
-#: pg_controldata.c:49
+#: pg_controldata.c:60
 msgid "in production"
 msgstr "i produktion"
 
-#: pg_controldata.c:51
+#: pg_controldata.c:62
 msgid "unrecognized status code"
 msgstr "Ej igenkänd statuskod"
 
-#: pg_controldata.c:99
+#: pg_controldata.c:107
 #, c-format
 msgid "%s: no data directory specified\n"
 msgstr "%s: ingen datakatalog angiven\n"
 
-#: pg_controldata.c:107
+#: pg_controldata.c:108
+#, c-format
+msgid "Try '%s --help' for more information.\n"
+msgstr "Försök med '%s --help' för mer information.\n"
+
+#: pg_controldata.c:116
 #, c-format
 msgid "%s: could not open file \"%s\" for reading (%s)\n"
 msgstr "%s: kunde inte öppna filen \"%s\" för läsning (%s)\n"
 
-#: pg_controldata.c:114
+#: pg_controldata.c:123
 #, c-format
 msgid "%s: could not read file \"%s\" (%s)\n"
 msgstr "%s: kunde inte läsa filen \"%s\" (%s)\n"
 
-#: pg_controldata.c:128
+#: pg_controldata.c:137
 msgid ""
 "WARNING: Calculated CRC checksum does not match value stored in file.\n"
 "Either the file is corrupt, or it has a different layout than this program\n"
 "is expecting.  The results below are untrustworthy.\n"
 "\n"
 msgstr ""
-"VARNING: Beräknad CRC-kontrollsumma matchar inte värdet som sparats i filen.\n"
+"VARNING: Beräknad CRC-kontrollsumma matchar inte värdet som sparats i "
+"filen.\n"
 "Antingen är filen trasig, eller så har den en annan uppbyggnad än vad detta\n"
 "program förväntade sig. Resultatet nedan är inte helt tillförlitligt.\n"
 "\n"
 
-#: pg_controldata.c:141
+#: pg_controldata.c:150
 #, c-format
 msgid "pg_control version number:            %u\n"
 msgstr "pg_control versionsnummer:            %u\n"
 
-#: pg_controldata.c:142
+#: pg_controldata.c:151
 #, c-format
 msgid "Catalog version number:               %u\n"
 msgstr "Katalogversionsnummer:                %u\n"
 
-#: pg_controldata.c:143
+#: pg_controldata.c:152
 #, c-format
 msgid "Database cluster state:               %s\n"
 msgstr "Databasens klustertillstånd:          %s\n"
 
-#: pg_controldata.c:144
+#: pg_controldata.c:153
 #, c-format
 msgid "pg_control last modified:             %s\n"
 msgstr "pg_control ändrades senast:           %s\n"
 
-#: pg_controldata.c:145
+#: pg_controldata.c:154
 #, c-format
 msgid "Current log file ID:                  %u\n"
 msgstr "Aktuellt loggfil-ID:                  %u\n"
 
-#: pg_controldata.c:146
+#: pg_controldata.c:155
 #, c-format
 msgid "Next log file segment:                %u\n"
 msgstr "Nästa loggfilsegment:                 %u\n"
 
-#: pg_controldata.c:147
+#: pg_controldata.c:156
 #, c-format
 msgid "Latest checkpoint location:           %X/%X\n"
 msgstr "Senaste kontrollpunktsposition:       %X/%X\n"
 
-#: pg_controldata.c:149
+#: pg_controldata.c:158
 #, c-format
 msgid "Prior checkpoint location:            %X/%X\n"
 msgstr "Tidigare kontrollpunktsposition:      %X/%X\n"
 
-#: pg_controldata.c:151
+#: pg_controldata.c:160
 #, c-format
 msgid "Latest checkpoint's REDO location:    %X/%X\n"
 msgstr "Senaste kontrollpunktens REDO-pos:    %X/%X\n"
 
-#: pg_controldata.c:153
+#: pg_controldata.c:162
 #, c-format
 msgid "Latest checkpoint's UNDO location:    %X/%X\n"
 msgstr "Senaste kontrollpunktens UNDO-pos:    %X/%X\n"
 
-#: pg_controldata.c:155
+#: pg_controldata.c:164
 #, c-format
 msgid "Latest checkpoint's StartUpID:        %u\n"
 msgstr "Senaste kontrollpunktens StartUpID:   %u\n"
 
-#: pg_controldata.c:156
+#: pg_controldata.c:165
 #, c-format
 msgid "Latest checkpoint's NextXID:          %u\n"
 msgstr "Senaste kontrollpunktens NextXID:     %u\n"
 
-#: pg_controldata.c:157
+#: pg_controldata.c:166
 #, c-format
 msgid "Latest checkpoint's NextOID:          %u\n"
 msgstr "Senaste kontrollpunktens NextOID:     %u\n"
 
-#: pg_controldata.c:158
+#: pg_controldata.c:167
 #, c-format
 msgid "Time of latest checkpoint:            %s\n"
 msgstr "Tidpunkt för senaste kontrollpunkt:   %s\n"
 
-#: pg_controldata.c:159
+#: pg_controldata.c:168
 #, c-format
 msgid "Database block size:                  %u\n"
 msgstr "Databasens blockstorlek:              %u\n"
 
-#: pg_controldata.c:160
+#: pg_controldata.c:169
 #, c-format
 msgid "Blocks per segment of large relation: %u\n"
 msgstr "Block per segment i en stor relation: %u\n"
 
-#: pg_controldata.c:161
+#: pg_controldata.c:170
 #, c-format
 msgid "Maximum length of identifiers:        %u\n"
 msgstr "Maximal längd för identifierare:      %u\n"
 
-#: pg_controldata.c:162
+#: pg_controldata.c:171
 #, c-format
 msgid "Maximum number of function arguments: %u\n"
 msgstr "Maximalt antal funktionsargument:     %u\n"
 
-#: pg_controldata.c:163
+#: pg_controldata.c:172
 #, c-format
 msgid "Date/time type storage:               %s\n"
 msgstr "Datum/tid-representation:             %s\n"
 
-#: pg_controldata.c:164
+#: pg_controldata.c:173
 msgid "64-bit integers"
 msgstr "64-bits heltal"
 
-#: pg_controldata.c:164
+#: pg_controldata.c:173
 msgid "Floating point"
 msgstr "Flyttal"
 
-#: pg_controldata.c:165
+#: pg_controldata.c:174
 #, c-format
 msgid "Maximum length of locale name:        %u\n"
 msgstr "Maximal längd för lokalnamn:          %u\n"
 
-#: pg_controldata.c:166
+#: pg_controldata.c:175
 #, c-format
 msgid "LC_COLLATE:                           %s\n"
 msgstr "LC_COLLATE:                           %s\n"
 
-#: pg_controldata.c:167
+#: pg_controldata.c:176
 #, c-format
 msgid "LC_CTYPE:                             %s\n"
 msgstr "LC_CTYPE:                             %s\n"
+
+#~ msgid ""
+#~ "Usage:\n"
+#~ "  %s [DATADIR]\n"
+#~ "\n"
+#~ msgstr ""
+#~ "Användning:\n"
+#~ "  %s [DATADIR]\n"
+#~ "\n"
