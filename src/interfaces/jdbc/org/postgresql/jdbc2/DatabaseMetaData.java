@@ -15,7 +15,7 @@ import org.postgresql.util.PSQLException;
 /*
  * This class provides information about the database as a whole.
  *
- * $Id: DatabaseMetaData.java,v 1.57 2002/06/25 16:30:49 davec Exp $
+ * $Id: DatabaseMetaData.java,v 1.58 2002/07/12 13:07:48 davec Exp $
  *
  * <p>Many of the methods here return lists of information in ResultSets.  You
  * can use the normal ResultSet methods such as getString and getInt to
@@ -2625,8 +2625,8 @@ WHERE
 
 
       // Parse the tgargs data
-      StringBuffer fkeyColumns = new StringBuffer();
-      StringBuffer pkeyColumns = new StringBuffer();
+      String fkeyColumn="";
+      String pkeyColumn="";
 
 
       // Note, I am guessing at most of this, but it should be close
@@ -2634,46 +2634,31 @@ WHERE
       // the keys are in pairs and start after the first four arguments
       // the arguments are seperated by \000
 
-      int numColumns = (rs.getInt(8) >> 1) - 2;
-
-
+      int keySequence = rs.getInt(4); //KEY_SEQ
 
       // get the args
       String targs = rs.getString(9);
 
-      // start parsing from the end
-      int pos = targs.lastIndexOf("\\000");
+      // args look like this
+      //<unnamed>\000ww\000vv\000UNSPECIFIED\000m\000a\000n\000b\000
+      // we are primarily interested in the column names which are the last items in the string
 
-      for (int c = 0;c < numColumns;c++)
+      StringTokenizer st = new StringTokenizer(targs, "\\000");
+
+      int advance = 4 + (keySequence-1) * 2;
+      for( int i=0; st.hasMoreTokens() && i < advance ; i++ ) st.nextToken(); // advance to the key column of interest
+
+      if ( st.hasMoreTokens() )
       {
-        // this should never be, since we should never get to the beginning of the string
-        // as the number of columns should override this, but it is a safe test
-        if (pos > -1)
-        {
-          int pos2 = targs.lastIndexOf("\\000", pos - 1);
-          if (pos2 > -1)
-          {
-            // seperate the pkColumns by ',' s
-            if (pkeyColumns.length() > 0)
-                    pkeyColumns.insert(0, ',');
-
-            // extract the column name out 4 characters ahead essentially removing the /000
-            pkeyColumns.insert(0, targs.substring(pos2 + 4, pos)); //PKCOLUMN_NAME
-
-            // now find the associated fkColumn
-            pos = targs.lastIndexOf("\\000", pos2 - 1);
-            if (pos > -1)
-            {
-              if (fkeyColumns.length() > 0)
-                  fkeyColumns.insert(0, ',');
-              fkeyColumns.insert(0, targs.substring(pos + 4, pos2)); //FKCOLUMN_NAME
-            }
-          }
-        }
+        fkeyColumn = st.nextToken();
+      }
+      if ( st.hasMoreTokens() )
+      {
+         pkeyColumn = st.nextToken();
       }
 
-      tuple[3] = pkeyColumns.toString().getBytes(); //PKCOLUMN_NAME
-      tuple[7] = fkeyColumns.toString().getBytes(); //FKCOLUMN_NAME
+      tuple[3] = pkeyColumn.getBytes(); //PKCOLUMN_NAME
+      tuple[7] = fkeyColumn.getBytes(); //FKCOLUMN_NAME
 
       tuple[8] =  rs.getBytes(4); //KEY_SEQ
       tuple[11] = rs.getBytes(3); //FK_NAME
