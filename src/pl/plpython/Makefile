@@ -1,4 +1,4 @@
-# $PostgreSQL: pgsql/src/pl/plpython/Makefile,v 1.13 2004/01/21 19:04:11 tgl Exp $
+# $PostgreSQL: pgsql/src/pl/plpython/Makefile,v 1.14 2004/09/24 20:08:42 tgl Exp $
 
 subdir = src/pl/plpython
 top_builddir = ../../..
@@ -10,6 +10,12 @@ include $(top_builddir)/src/Makefile.global
 # we see if there is a file that is named like a shared library.
 ifneq (,$(wildcard $(python_configdir)/libpython*$(DLSUFFIX)*))
 shared_libpython = yes
+endif
+
+# Darwin (OS X) has its own ideas about how to do this.
+ifeq ($(PORTNAME), darwin)
+shared_libpython = yes
+override python_libspec := -framework Python
 endif
 
 # If we don't have a shared library and the platform doesn't allow it
