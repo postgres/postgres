@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/tcop/postgres.c,v 1.279 2002/08/04 23:56:01 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/tcop/postgres.c,v 1.280 2002/08/06 05:24:04 momjian Exp $
  *
  * NOTES
  *	  this is the "main" module of the postgres backend and
@@ -648,38 +648,13 @@ pg_exec_query_string(StringInfo query_string,		/* string to execute */
 			{
 				TransactionStmt *stmt = (TransactionStmt *) parsetree;
 
-				switch (stmt->command)
-				{
-					case COMMIT:
-					case ROLLBACK:
-						allowit = true;
-						break;
-					default:
-						break;
-				}
+				if (stmt->command == COMMIT || stmt->command == ROLLBACK)
+					allowit = true;
 			}
 
 			if (!allowit)
-			{
-				elog(WARNING, "current transaction is aborted, "
+				elog(ERROR, "current transaction is aborted, "
 					 "queries ignored until end of transaction block");
-
-				/*
-				 * We need to emit a command-complete report to the client,
-				 * even though we didn't process the query.
-				 * - cim 6/1/90
-				 */
-				commandTag = "*ABORT STATE*";
-
-				EndCommand(commandTag, dest);
-
-				/*
-				 * We continue in the loop, on the off chance that there
-				 * is a COMMIT or ROLLBACK utility command later in the
-				 * query string.
-				 */
-				continue;
-			}
 		}
 
 		/* Make sure we are in a transaction command */
@@ -1701,7 +1676,7 @@ PostgresMain(int argc, char *argv[], const char *username)
 	if (!IsUnderPostmaster)
 	{
 		puts("\nPOSTGRES backend interactive interface ");
-		puts("$Revision: 1.279 $ $Date: 2002/08/04 23:56:01 $\n");
+		puts("$Revision: 1.280 $ $Date: 2002/08/06 05:24:04 $\n");
 	}
 
 	/*
