@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/libpq/auth.c,v 1.54 2001/07/21 00:29:56 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/libpq/auth.c,v 1.55 2001/08/01 23:25:39 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -494,8 +494,7 @@ ClientAuthentication(Port *port)
 			break;
 
 		case uaIdent:
-			status = authident(&port->raddr.in, &port->laddr.in,
-							   port->user, port->auth_arg);
+			status = authident(port);
 			break;
 
 		case uaPassword:
@@ -654,8 +653,7 @@ map_old_to_new(Port *port, UserAuth old, int status)
 			break;
 
 		case uaIdent:
-			status = authident(&port->raddr.in, &port->laddr.in,
-							   port->user, port->auth_arg);
+			status = authident(port);
 			break;
 
 		case uaPassword:

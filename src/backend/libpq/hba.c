@@ -5,7 +5,7 @@
  *	  wherein you authenticate a user by seeing what IP address the system
  *	  says he comes from and possibly using ident).
  *
- *	$Id: hba.c,v 1.57 2001/07/31 22:55:45 tgl Exp $
+ *	$Id: hba.c,v 1.58 2001/08/01 23:25:39 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -286,12 +286,25 @@ parse_hba(List *line, hbaPort *port, bool *found_p, bool *error_p)
 
 		/*
 		 * Disallow auth methods that need AF_INET sockets to work.
+		 * Allow "ident" if we can get the identity of the connection
+		 * peer on Unix domain sockets from the OS.
 		 */
-		if (!*error_p &&
-			(port->auth_method == uaIdent ||
-			 port->auth_method == uaKrb4 ||
-			 port->auth_method == uaKrb5))
+		if (port->auth_method == uaKrb4 ||
+			port->auth_method == uaKrb5)
 			goto hba_syntax;
+#ifndef HAVE_SO_PEERCRED
+		if (port->auth_method == uaIdent)
+		{
+			/* Give a special error message for this case... */
+			snprintf(PQerrormsg, PQERRORMSG_LENGTH,
+					 "parse_hba: \"ident\" auth is not supported on local connections on this platform\n");
+			fputs(PQerrormsg, stderr);
+			pqdebug("%s", PQerrormsg);
+
+			*error_p = true;
+			return;
+		}
+#endif
 
 		/*
 		 * If this record doesn't match the parameters of the connection
@@ -732,12 +745,12 @@ interpret_ident_response(char *ident_response,
  *
  *  But iff we're unable to get the information from ident, return false.
  */
-static int
-ident(const struct in_addr remote_ip_addr,
-	  const struct in_addr local_ip_addr,
-	  const ushort remote_port,
-	  const ushort local_port,
-	  char *ident_user)
+static bool
+ident_inet(const struct in_addr remote_ip_addr,
+		   const struct in_addr local_ip_addr,
+		   const ushort remote_port,
+		   const ushort local_port,
+		   char *ident_user)
 {
 	int			sock_fd,		/* File descriptor for socket on which we
 								 * talk to Ident */
@@ -848,28 +861,103 @@ ident(const struct in_addr remote_ip_addr,
 	return ident_return;
 }
 
+#ifdef HAVE_SO_PEERCRED
+/*
+ *  Ask kernel about the credentials of the connecting process and
+ *  determine the symbolic name of the corresponding user.
+ *
+ *  Returns either true and the username put into "ident_user",
+ *  or false if we were unable to determine the username.
+ */
+static bool
+ident_unix(int sock, char *ident_user)
+{
+	struct ucred	peercred;
+	socklen_t		so_len;
+	struct passwd *pass;
+
+#ifdef SO_PASSCRED
+	int passcred = -1;
+
+	so_len = sizeof(passcred);
+	if (setsockopt(sock, SOL_SOCKET, SO_PASSCRED, &passcred, so_len) != 0)
+	{
+		/* We could not set the socket to pass credentials */
+		snprintf(PQerrormsg, PQERRORMSG_LENGTH,
+				 "Could not set the UNIX socket to pass credentials: %s\n",
+				 strerror(errno));
+		fputs(PQerrormsg, stderr);
+		pqdebug("%s", PQerrormsg);
+		return false;
+	}
+#endif /* SO_PASSCRED */
+
+	errno = 0;
+	so_len = sizeof(peercred);
+	if (getsockopt(sock, SOL_SOCKET, SO_PEERCRED, &peercred, &so_len) != 0 ||
+		so_len != sizeof(peercred))
+	{
+		/* We didn't get a valid credentials struct. */
+		snprintf(PQerrormsg, PQERRORMSG_LENGTH,
+				 "Could not get valid credentials from the UNIX socket: %s\n",
+				 strerror(errno));
+		fputs(PQerrormsg, stderr);
+		pqdebug("%s", PQerrormsg);
+		return false;
+	}
+
+	/* Convert UID to user login name */
+	pass = getpwuid(peercred.uid);
+
+	if (pass == NULL)
+	{
+		/* Error - no username with the given uid */
+		snprintf(PQerrormsg, PQERRORMSG_LENGTH,
+				 "There is no entry in /etc/passwd with the socket's uid\n");
+		fputs(PQerrormsg, stderr);
+		pqdebug("%s", PQerrormsg);
+		return false;
+	}
+
+	StrNCpy(ident_user, pass->pw_name, IDENT_USERNAME_MAX);
+
+	return true;
+}
+#endif
 
 /*
- *  Talk to the ident server on the remote host and find out who owns the
- *  connection described by "port".  Then look in the usermap file under
- *  the usermap *auth_arg and see if that user is equivalent to
- *  Postgres user *user.
+ *  Determine the username of the initiator of the connection described
+ *  by "port".  Then look in the usermap file under the usermap
+ *  port->auth_arg and see if that user is equivalent to Postgres user
+ *  port->user.
  *
- *  Return STATUS_OK if yes.
+ *  Return STATUS_OK if yes, STATUS_ERROR if no match (or couldn't get info).
  */
 int
-authident(struct sockaddr_in *raddr, struct sockaddr_in *laddr,
-		  const char *pg_user, const char *auth_arg)
+authident(hbaPort *port)
 {
-	/* We were unable to get ident to give us a username */
 	char		ident_user[IDENT_USERNAME_MAX + 1];
 
-	/* The username returned by ident */
-	if (!ident(raddr->sin_addr, laddr->sin_addr,
-		  raddr->sin_port, laddr->sin_port, ident_user))
-		return STATUS_ERROR;
+	switch (port->raddr.sa.sa_family)
+	{
+		case AF_INET:
+			if (!ident_inet(port->raddr.in.sin_addr,
+							port->laddr.in.sin_addr,
+							port->raddr.in.sin_port,
+							port->laddr.in.sin_port, ident_user))
+				return STATUS_ERROR;
+			break;
+#ifdef HAVE_SO_PEERCRED
+		case AF_UNIX:
+			if (!ident_unix(port->sock, ident_user))
+				return STATUS_ERROR;
+			break;
+#endif
+		default:
+			return STATUS_ERROR;
+	}
 
-	if (check_ident_usermap(auth_arg, pg_user, ident_user))
+	if (check_ident_usermap(port->auth_arg, port->user, ident_user))
 		return STATUS_OK;
 	else
 		return STATUS_ERROR;

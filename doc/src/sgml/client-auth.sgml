@@ -1,4 +1,4 @@
-<!-- $Header: /cvsroot/pgsql/doc/src/sgml/client-auth.sgml,v 1.14 2001/08/01 00:48:52 momjian Exp $ -->
+<!-- $Header: /cvsroot/pgsql/doc/src/sgml/client-auth.sgml,v 1.15 2001/08/01 23:25:39 tgl Exp $ -->
 
 <chapter id="client-authentication">
  <title>Client Authentication</title>
@@ -237,14 +237,28 @@ hostssl <replaceable>database</replaceable> <replaceable>IP-address</replaceable
        <varlistentry>
         <term>ident</term>
         <listitem>
+	 <para>
+	  The identity of the user as determined on login to the
+	  operating system is used by <productname>Postgres</productname>
+	  to determine whether the user
+          is allowed to connect as the requested database user.
+	  For TCP/IP connections the user's identity is determined by
+	  contacting the <firstterm>ident</firstterm> server on the client
+	  host.  (Note that this is only as reliable as the remote ident
+	  server; ident authentication should never be used for remote hosts
+	  whose administrators are not trustworthy.)
+	  On operating systems
+	  supporting SO_PEERCRED requests for Unix domain sockets,
+	  ident authentication is possible for local connections;
+	  the system is then asked for the connecting user's identity.
+	 </para>
          <para>
-          The ident server on the client host is asked for the identity
-          of the connecting user. <productname>Postgres</productname>
-          then verifies whether the so identified operating system user
-          is allowed to connect as the database user that is requested.
-	  This is only available for TCP/IP connections.  It can be used
-	  on the local machine by specifying the localhost address 127.0.0.1.
-         </para>
+	  On systems without SO_PEERCRED requests, ident authentication
+	  is only available for TCP/IP connections.  As a workaround,
+	  it is possible to
+	  specify the localhost address 127.0.0.1 and make connections
+	  to this address.
+	 </para>
          <para>
           The <replaceable>authentication option</replaceable> following
           the <literal>ident</> keyword specifies the name of an
@@ -283,7 +297,8 @@ hostssl <replaceable>database</replaceable> <replaceable>IP-address</replaceable
    The <filename>pg_hba.conf</filename> file is loaded only on startup
    and when the <application>postmaster</> receives a SIGHUP signal. If
    you edit the file on an active system, you will need to issue a
-   SIGHUP to the <application>postmaster</> using <application>kill</>.
+   SIGHUP to the <application>postmaster</> using <application>kill</>
+   to make it re-read the file.
   </para>
 
   <para>
@@ -564,10 +579,18 @@ host         all        192.168.0.0    255.255.0.0        ident     omicron
    </para>
 
    <para>
+    On systems supporting SO_PEERCRED requests for Unix-domain sockets,
+    ident authentication can also be applied to local connections.  In this
+    case, no security risk is added by using ident authentication; indeed
+    it is a preferable choice for such a system.
+   </para>
+
+   <para>
     When using ident-based authentication, after having determined the
-    operating system user that initiated the connection,
-    <productname>Postgres</productname> determines as what database
-    system user he may connect. This is controlled by the ident map
+    name of the operating system user that initiated the connection,
+    <productname>Postgres</productname> checks whether that user is allowed
+    to connect as the database user he is requesting to connect as.
+    This is controlled by the ident map
     argument that follows the <literal>ident</> keyword in the
     <filename>pg_hba.conf</filename> file. The simplest ident map is
     <literal>sameuser</literal>, which allows any operating system
@@ -588,8 +611,9 @@ host         all        192.168.0.0    255.255.0.0        ident     omicron
     The other two fields specify which operating system user is
     allowed to connect as which database user. The same
     <replaceable>map-name</> can be used repeatedly to specify more
-    user-mappings. There is also no restriction regarding how many
-    database users a given operating system may correspond to and vice
+    user-mappings within a single map. There is no restriction regarding
+    how many 
+    database users a given operating system user may correspond to and vice
     versa.
    </para>
 
@@ -668,6 +692,12 @@ FATAL 1:  Database "testdb" does not exist in the system catalog.
     The database you're trying to connect to doesn't exist. Note that
     if you don't specify a database name, it defaults to the database
     user name, which may or may not be the right thing.
+   </para>
+
+   <para>
+    Note that the postmaster's stderr log may contain more information
+    about an authentication failure than is reported to the client.
+    If you are confused about the reason for a failure, check the log.
    </para>
   </sect1>
 

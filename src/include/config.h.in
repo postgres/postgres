@@ -8,7 +8,7 @@
  * or in config.h afterwards.  Of course, if you edit config.h, then your
  * changes will be overwritten the next time you run configure.
  *
- * $Id: config.h.in,v 1.168 2001/07/16 05:07:00 tgl Exp $
+ * $Id: config.h.in,v 1.169 2001/08/01 23:25:39 tgl Exp $
  */
 
 #ifndef CONFIG_H
@@ -684,6 +684,9 @@ extern int fdatasync(int fildes);
 
 /* Define if you have on_exit() */
 #undef HAVE_ON_EXIT
+
+/* Define if you have SO_PEERCRED */
+#undef HAVE_SO_PEERCRED
 
 /*
  *------------------------------------------------------------------------
