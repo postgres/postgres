@@ -6,7 +6,7 @@
  *
  *
  * IDENTIFICATION
- *    $Header: /cvsroot/pgsql/src/backend/commands/copy.c,v 1.2.2.3 1996/10/28 22:09:30 scrappy Exp $
+ *    $Header: /cvsroot/pgsql/src/backend/commands/copy.c,v 1.2.2.4 1996/10/29 19:03:48 scrappy Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -733,7 +733,8 @@ CopyReadAttribute(FILE *fp, bool *isnull, char *delim)
     char c;
     int done = 0;
     int i = 0;
-    
+   
+    *isnull = (bool) false;   /* set default */
     if (feof(fp)) 
 	return(NULL);
     
@@ -742,7 +743,7 @@ CopyReadAttribute(FILE *fp, bool *isnull, char *delim)
 	    
 	if (feof(fp)) 
 	    return(NULL);
-	}else if (c == '\\') {
+	else if (c == '\\') {
 	    c = getc(fp);
 #ifdef ESCAPE_PATCH
 #define ISOCTAL(c)    (((c) >= '0') && ((c) <= '7'))
