@@ -4,7 +4,7 @@
 #
 # Copyright (c) 1998-2002, PostgreSQL Global Development Group
 #
-# $PostgreSQL: pgsql/src/bin/pg_controldata/Makefile,v 1.4 2003/11/29 19:52:04 pgsql Exp $
+# $PostgreSQL: pgsql/src/bin/pg_controldata/Makefile,v 1.5 2004/02/10 23:24:13 tgl Exp $
 #
 #-------------------------------------------------------------------------
 
@@ -17,7 +17,7 @@ OBJS= pg_controldata.o pg_crc.o
 all: submake-libpgport pg_controldata
 
 pg_controldata: $(OBJS)
-	$(CC) $(CFLAGS) $^ $(libpq) $(LDFLAGS) $(LIBS) -o $@
+	$(CC) $(CFLAGS) $^ $(LDFLAGS) $(LIBS) -o $@
 
 pg_crc.c: $(top_srcdir)/src/backend/utils/hash/pg_crc.c
 	rm -f $@ && $(LN_S) $< .
