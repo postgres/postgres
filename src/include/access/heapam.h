@@ -6,15 +6,14 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: heapam.h,v 1.4 1996/11/03 08:17:18 scrappy Exp $
+ * $Id: heapam.h,v 1.5 1996/11/05 07:22:50 scrappy Exp $
  *
  *-------------------------------------------------------------------------
  */
 #ifndef	HEAPAM_H
 #define HEAPAM_H
 
-#include "access/relscan.h"
-#include "storage/buf.h"
+#include <access/relscan.h>
 
 /* ----------------------------------------------------------------
  *		heap access method statistics
@@ -83,7 +82,6 @@ extern HeapAccessStatistics heap_access_stats;	/* in stats.c */
  * ----------------
  */
 /* heap_create, heap_creatr, and heap_destroy are declared in catalog/heap.h */
-#include "catalog/heap.h"
 
 /* heapam.c */
 extern void doinsert(Relation relation, HeapTuple tup);
