@@ -14,16 +14,17 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  *
- *  $Id: pgcursordb.h,v 1.4 2000/01/26 05:58:48 momjian Exp $
+ *  $Id: pgcursordb.h,v 1.5 2000/04/22 22:39:15 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
  
-#ifndef PGCURSOR_H
-#define PGCURSOR_H
+#ifndef PGCURSORDB_H
+#define PGCURSORDB_H
 
+#ifndef PGTRANSDB_H
 #include "pgtransdb.h"
-
+#endif
 
 
 // ****************************************************************
@@ -60,6 +61,12 @@ protected:
   
 protected:
   PgCursor() : PgTransaction() {}	// Do not connect
+
+private:
+// We don't support copying of PgCursor objects,
+// so make copy constructor and assignment op private.
+   PgCursor(const PgCursor&);
+   PgCursor& operator= (const PgCursor&);
 }; // End PgCursor Class Declaration
 
-#endif	// PGCURSOR_H
+#endif	// PGCURSORDB_H

@@ -11,18 +11,17 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  *
- *  $Id: pglobject.h,v 1.4 2000/01/26 05:58:48 momjian Exp $
+ *  $Id: pglobject.h,v 1.5 2000/04/22 22:39:15 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
  
-#ifndef PGLOBJ_H
-#define PGLOBJ_H
-
+#ifndef PGLOBJECT_H
+#define PGLOBJECT_H
+ 
+#ifndef PGCONNECTION_H
 #include "pgconnection.h"
-
-// buffer size
-#define BUFSIZE 1024
+#endif
 
 
 // ****************************************************************
@@ -54,8 +53,12 @@ public:
   Oid Import(const char* filename);
   int Export(const char* filename); 
   string Status();
+
+private:
+// We don't support copying of PgLargeObject objects,
+// so make copy constructor and assignment op private.
+   PgLargeObject(const PgLargeObject&);
+   PgLargeObject& operator= (const PgLargeObject&);
 };
 
-#endif	// PGLOBJ_H
-
-// sig 11's if the filename points to a binary file.
+#endif	// PGLOBJECT_H

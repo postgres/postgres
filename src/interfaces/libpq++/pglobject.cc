@@ -10,16 +10,16 @@
  * Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/interfaces/libpq++/Attic/pglobject.cc,v 1.5 1999/05/30 15:17:58 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/interfaces/libpq++/Attic/pglobject.cc,v 1.6 2000/04/22 22:39:15 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
+
+#include "pglobject.h"
  
 extern "C" {
 #include "libpq/libpq-fs.h"
 }
-
-#include "pglobject.h"
 
 // ****************************************************************
 //
@@ -33,8 +33,10 @@ PgLargeObject::PgLargeObject(const char* conninfo)
 	: PgConnection(conninfo)
 {
   Init();
-  Create();
-  Open();
+  if (! ConnectionBad()) {
+	  Create();
+	  Open();
+  }
 }
 
 // constructor
@@ -43,12 +45,12 @@ PgLargeObject::PgLargeObject(const char* conninfo)
 PgLargeObject::PgLargeObject(Oid lobjId, const char* conninfo) 
 	: PgConnection(conninfo)
 {
-
   Init(lobjId);
-  if ( !pgObject ) {
-	Create();
+  if (! ConnectionBad()) {
+	  if ( !pgObject )
+		  Create();
+	  Open();
   }
-  Open();
 }
 
 // destructor -- closes large object
@@ -83,6 +85,8 @@ void PgLargeObject::Create()
 // open large object and check for errors
 void PgLargeObject::Open()
 {
+  // Close any prior object
+  Close();
   // Open the object
   pgFd = lo_open(pgConn, pgObject, INV_READ|INV_WRITE);
   
@@ -115,7 +119,8 @@ int PgLargeObject::Unlink()
 
 void PgLargeObject::Close()
 { 
-  if (pgFd >= 0) lo_close(pgConn, pgFd); 
+  if (pgFd >= 0) lo_close(pgConn, pgFd);
+  pgFd = -1;
 }
 
 
@@ -159,4 +164,3 @@ string PgLargeObject::Status()
 { 
   return loStatus; 
 }
-

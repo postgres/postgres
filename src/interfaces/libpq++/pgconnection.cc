@@ -1,7 +1,7 @@
 /*-------------------------------------------------------------------------
  *
  *   FILE
- *	pgconnection.cpp
+ *	pgconnection.cc
  *
  *   DESCRIPTION
  *      implementation of the PgConnection class.
@@ -10,16 +10,13 @@
  * Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/interfaces/libpq++/Attic/pgconnection.cc,v 1.8 2000/03/30 05:30:42 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/interfaces/libpq++/Attic/pgconnection.cc,v 1.9 2000/04/22 22:39:15 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
 
 #include "pgconnection.h"
 
-extern "C" {
-#include "fe-auth.h"
-}
 
 // ****************************************************************
 //
@@ -46,12 +43,7 @@ PgConnection::PgConnection(const char* conninfo)
 // destructor - closes down the connection and cleanup
 PgConnection::~PgConnection()
 {
-  // Terminate the debugging output if it was turned on
-  #if defined(DEBUGFILE)
-  	PQuntrace(pgConn);
-  #endif
-  
-  // Close the conneciton only if needed
+  // Close the connection only if needed
   // This feature will most probably be used by the derived classes that
   // need not close the connection after they are destructed.
   if ( pgCloseConnection ) {
@@ -64,22 +56,14 @@ PgConnection::~PgConnection()
 // establish a connection to a backend
 ConnStatusType PgConnection::Connect(const char* conninfo)
 {
-ConnStatusType cst;
-  // Turn the trace on
-#if defined(DEBUGFILE)
-  FILE *debug = fopen("/tmp/trace.out","w");
-  PQtrace(pgConn, debug);
-#endif
-  
   // Connect to the database
   pgConn = PQconnectdb(conninfo);
+
+  // Now we have a connection we must close (even if it's bad!)
+  pgCloseConnection = 1;
   
   // Status will return either CONNECTION_OK or CONNECTION_BAD
-  cst =  Status();
-  if(CONNECTION_OK == cst) pgCloseConnection = (ConnStatusType)1;
-  else pgCloseConnection = (ConnStatusType)0;
-
-return cst;
+  return Status();
 }
 
 // PgConnection::status -- return connection or result status

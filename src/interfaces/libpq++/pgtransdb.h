@@ -14,7 +14,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  *
- *  $Id: pgtransdb.h,v 1.4 2000/01/26 05:58:48 momjian Exp $
+ *  $Id: pgtransdb.h,v 1.5 2000/04/22 22:39:15 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -22,7 +22,9 @@
 #ifndef PGTRANSDB_H
 #define PGTRANSDB_H
 
+#ifndef PGDATABASE_H
 #include "pgdatabase.h"
+#endif
 
 // ****************************************************************
 //
@@ -45,6 +47,12 @@ protected:
   
 protected:
   PgTransaction() : PgDatabase() {}	// Do not connect
+
+private:
+// We don't support copying of PgTransaction objects,
+// so make copy constructor and assignment op private.
+   PgTransaction(const PgTransaction&);
+   PgTransaction& operator= (const PgTransaction&);
 }; // End PgTransaction Class Declaration
 
 #endif	// PGTRANSDB_H
