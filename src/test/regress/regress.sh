@@ -1,5 +1,5 @@
 #!/bin/sh
-# $Header: /cvsroot/pgsql/src/test/regress/Attic/regress.sh,v 1.9 1997/04/27 18:55:37 scrappy Exp $
+# $Header: /cvsroot/pgsql/src/test/regress/Attic/regress.sh,v 1.10 1997/05/11 15:46:19 thomas Exp $
 #
 if echo '\c' | grep -s c >/dev/null 2>&1
 then
@@ -21,12 +21,10 @@ FRONTEND="psql -n -e -q"
 
 echo "=============== Notes...                              ================="
 echo "postmaster must already be running for the regression tests to succeed."
-echo "The non-GEQ optimizer will give more consistant results than will the"
-echo " GEQ optimizer. See the regression testing README for more details."
-echo "The time zone might need to be set to PST/PDT for the date and time data"
-echo " types to pass the regression tests; to do this type"
-echo "  setenv TZ $TZ"
-echo " before starting the postmaster."
+echo "The time zone must be set to PST/PDT for the date and time data types"
+echo " to pass the regression tests; to do this type"
+echo "   setenv TZ $TZ"
+echo " before starting postmaster."
 echo ""
 
 echo "=============== destroying old regression database... ================="

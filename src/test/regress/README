@@ -84,16 +84,15 @@ OID differences
 
     The 'a,523676' row is composed from an OID.
 
-TIME differences
+DATE/TIME differences
 
-  Some of the tests involving date/time functions use the implicit
-  time zone in effect at the time the regression test is run. In other
-  tests the timezone to be inserted into the regression data base is
-  explicitly specified.
+  On many supported platforms, you can force PostgreSQL to believe that it
+  is running in the same time zone as Berkeley, California. See details in
+  the section on how to run the regression tests.
 
-  The 'expected.input' file was prepared in the 'US/Pacific' timezone
-  so there may be differences where the 'expected.out' file has
-  PST/PDT times and the 'regress.out' file has your local timezone.
+  If you do not explicitly set your time zone environment to PST/PDT, then
+  most of the date and time results will reflect your local time zone and
+  will fail the regression testing.
 
 FLOATING POINT differences
 
@@ -125,26 +124,14 @@ POLYGON differences
     QUERY: SELECT * from street;
     QUERY: SELECT * from iexit;
 
-DATE/TIME differences
-
-  On many supported platforms, you can force PostgreSQL to believe that it
-  is running in the same time zone as Berkeley, California. See details in
-  the section on how to run the regression tests.
-
-  The Makefile attempts to adjust for timezone differences, but it is
-  not possible to totally eliminate them.  People outside North America
-  will probabablly find the Makefile's adjustments are incorrect.  Also
-  entries that use the time -infinity display with year 1970 plus/minus the
-  number of hours you are different from GMT.
-
 Random differences
 
-  There is at least one test case in misc.out which is intended to produce
-  random results. This causes misc to fail the regression testing.
-  Typing "diff results/misc.out expected/misc.out" should produce only
+  There is at least one test case in random.out which is intended to produce
+  random results. This causes random to fail the regression testing.
+  Typing "diff results/random.out expected/random.out" should produce only
   one or a few lines of differences for this reason, but other floating
   point differences on dissimilar architectures might cause many more
-  differences.
+  differences. See the release notes below.
 
 The 'expected' files
 
@@ -165,11 +152,7 @@ The 'expected' files
   have been created on a DEC ALPHA machine as the 'Makefile.global'
   in the postgres-1.01 release has PORTNAME=alpha.
 
-Current release notes
-
-  There are no release notes for PostgreSQL v6.0.
-
-v6.1beta release notes
+Current release notes (Thomas.Lockhart@jpl.nasa.gov)
 
   The regression tests have been adapted and extensively modified for the
   v6.1 release of PostgreSQL.
@@ -182,29 +165,25 @@ v6.1beta release notes
   misc.out has only been spot-checked for correctness relative to the
   original regression output.
 
-  To get consistant results from the regression tests, compile the PostgreSQL
-  backend with the genetic optimizer (GEQ) turned off. The genetic algorithms
-  introduce a random behavior in the output ordering which causes the
-  simple "diff" implementation of the tests to fail. To turn off the genetic
-  optimizer, edit the src/include/config.h file and comment-out the line
-  containing "#define GEQ", then do a "make clean install" to regenerate
-  the backend. Existing v6.1 databases are not affected by the choice of
-  optimizer, so there is no need to reload after changing the optimizer.
-  The new genetic optimizer has very nice performance with many-table joins,
-  so you may want to make sure to re-enable it and reinstall the code after
-  you have concluded your regression testing.
+  PostgreSQL v6.1 introduces a new, alternate optimizer which uses "genetic"
+  algorithms. These algorithms introduce a random behavior in the ordering
+  of query results when the query contains multiple qualifiers or multiple
+  tables (giving the optimizer a choice on order of evaluation). Several
+  regression tests have been modified to explicitly order the results, and
+  hence are insensitive to optimizer choices. A few regression tests are
+  for data types which are inherently unordered (e.g. points and time
+  intervals) and tests involving those types are explicitly bracketed with
+  "set geqo to 'off'" and "reset geqo".
 
-XXX update this for the production release - tgl 97/04/26
   The interpretation of array specifiers (the curly braces around atomic
   values) appears to have changed sometime after the original regression
   tests were generated. The current ./expected/*.out files reflect this
   new interpretation, which may not be correct!
 
-XXX update this for the production release - tgl 97/04/26
-  The float8 regression test fails. This may be due to the parser continuing
-  rather than aborting when given invalid constants for input values.
+  The float8 regression test fails on at least some platforms. This is due
+  to differences in implementations of pow() and exp() and the signaling
+  mechanisms used for overflow and underflow conditions.
 
-XXX update this for the production release - tgl 97/04/26
-  Regression tests involving indexed tables fail in at least some environments.
-  This may indicate a problem with the current index code.
+  The "random" results in the random test do not seem to produce random
+  results on my test machine (Linux/gcc/i686).
 
