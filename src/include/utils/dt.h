@@ -8,7 +8,7 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: dt.h,v 1.7 1997/04/27 19:24:16 thomas Exp $
+ * $Id: dt.h,v 1.8 1997/05/11 15:13:49 thomas Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -287,8 +287,8 @@ extern DateTime *datetime_sub_span(DateTime *dt, TimeSpan *span);
 
 extern void GetCurrentTime(struct tm *tm);
 extern DateTime SetDateTime(DateTime datetime);
-extern DateTime tm2datetime(struct tm *tm, double fsec, int *tzp);
-extern int datetime2tm( DateTime dt, int *tzp, struct tm *tm, double *fsec);
+extern int tm2datetime(struct tm *tm, double fsec, int *tzp, DateTime *dt);
+extern int datetime2tm( DateTime dt, int *tzp, struct tm *tm, double *fsec, char **tzn);
 
 extern int timespan2tm(TimeSpan span, struct tm *tm, float8 *fsec);
 extern int tm2timespan(struct tm *tm, double fsec, TimeSpan *span);
@@ -323,7 +323,7 @@ extern int DecodeDateDelta( char *field[], int ftype[],
 extern int DecodeUnits(int field, char *lowtoken, int *val);
 
 extern int EncodeSpecialDateTime(DateTime dt, char *str);
-extern int EncodeDateTime(struct tm *tm, double fsec, int *tzp, int style, char *str);
+extern int EncodeDateTime(struct tm *tm, double fsec, int *tzp, char **tzn, int style, char *str);
 extern int EncodeTimeSpan(struct tm *tm, double fsec, int style, char *str);
 
 extern datetkn *datebsearch(char *key, datetkn *base, unsigned int nel);

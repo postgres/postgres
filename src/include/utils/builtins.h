@@ -6,7 +6,7 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: builtins.h,v 1.16 1997/04/27 19:24:13 thomas Exp $
+ * $Id: builtins.h,v 1.17 1997/05/11 15:13:47 thomas Exp $
  *
  * NOTES
  *    This should normally only be included by fmgr.h.
@@ -290,20 +290,28 @@ extern float64 float8mi(float64 arg1, float64 arg2);
 extern float64 float8mul(float64 arg1, float64 arg2);
 extern float64 float8div(float64 arg1, float64 arg2);
 extern float64 float8inc(float64 arg1);
-extern long float4eq(float32 arg1, float32 arg2);
-extern long float4ne(float32 arg1, float32 arg2);
-extern long float4lt(float32 arg1, float32 arg2);
-extern long float4le(float32 arg1, float32 arg2);
-extern long float4gt(float32 arg1, float32 arg2);
-extern long float4ge(float32 arg1, float32 arg2);
-extern long float8eq(float64 arg1, float64 arg2);
-extern long float8ne(float64 arg1, float64 arg2);
-extern long float8lt(float64 arg1, float64 arg2);
-extern long float8le(float64 arg1, float64 arg2);
-extern long float8gt(float64 arg1, float64 arg2);
-extern long float8ge(float64 arg1, float64 arg2);
+extern bool float4eq(float32 arg1, float32 arg2);
+extern bool float4ne(float32 arg1, float32 arg2);
+extern bool float4lt(float32 arg1, float32 arg2);
+extern bool float4le(float32 arg1, float32 arg2);
+extern bool float4gt(float32 arg1, float32 arg2);
+extern bool float4ge(float32 arg1, float32 arg2);
+extern bool float8eq(float64 arg1, float64 arg2);
+extern bool float8ne(float64 arg1, float64 arg2);
+extern bool float8lt(float64 arg1, float64 arg2);
+extern bool float8le(float64 arg1, float64 arg2);
+extern bool float8gt(float64 arg1, float64 arg2);
+extern bool float8ge(float64 arg1, float64 arg2);
 extern float64 ftod(float32 num);
+extern float64 itod(int32 num);
+extern float64 i2tod(int16 num);
 extern float32 dtof(float64 num);
+extern int32 dtoi(float64 num);
+extern int16 dtoi2(float64 num);
+extern float32 itof(int32 num);
+extern float32 i2tof(int16 num);
+extern int32 ftoi(float32 num);
+extern int16 ftoi2(float32 num);
 extern float64 dround(float64 arg1);
 extern float64 dtrunc(float64 arg1);
 extern float64 dsqrt(float64 arg1);
@@ -319,18 +327,18 @@ extern float64 float84pl(float64 arg1, float32 arg2);
 extern float64 float84mi(float64 arg1, float32 arg2);
 extern float64 float84mul(float64 arg1, float32 arg2);
 extern float64 float84div(float64 arg1, float32 arg2);
-extern long float48eq(float32 arg1, float64 arg2);
-extern long float48ne(float32 arg1, float64 arg2);
-extern long float48lt(float32 arg1, float64 arg2);
-extern long float48le(float32 arg1, float64 arg2);
-extern long float48gt(float32 arg1, float64 arg2);
-extern long float48ge(float32 arg1, float64 arg2);
-extern long float84eq(float64 arg1, float32 arg2);
-extern long float84ne(float64 arg1, float32 arg2);
-extern long float84lt(float64 arg1, float32 arg2);
-extern long float84le(float64 arg1, float32 arg2);
-extern long float84gt(float64 arg1, float32 arg2);
-extern long float84ge(float64 arg1, float32 arg2);
+extern bool float48eq(float32 arg1, float64 arg2);
+extern bool float48ne(float32 arg1, float64 arg2);
+extern bool float48lt(float32 arg1, float64 arg2);
+extern bool float48le(float32 arg1, float64 arg2);
+extern bool float48gt(float32 arg1, float64 arg2);
+extern bool float48ge(float32 arg1, float64 arg2);
+extern bool float84eq(float64 arg1, float32 arg2);
+extern bool float84ne(float64 arg1, float32 arg2);
+extern bool float84lt(float64 arg1, float32 arg2);
+extern bool float84le(float64 arg1, float32 arg2);
+extern bool float84gt(float64 arg1, float32 arg2);
+extern bool float84ge(float64 arg1, float32 arg2);
 
 /* geo_ops.c, geo_selfuncs.c */
 
