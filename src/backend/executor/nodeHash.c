@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/executor/nodeHash.c,v 1.72 2002/12/29 22:28:50 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/executor/nodeHash.c,v 1.73 2002/12/30 15:21:18 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -59,9 +59,6 @@ ExecHash(HashState *node)
 	outerNode = outerPlanState(node);
 
 	hashtable = node->hashtable;
-	if (hashtable == NULL)
-		elog(ERROR, "ExecHash: hash table is NULL.");
-
 	nbatch = hashtable->nbatch;
 
 	if (nbatch > 0)
@@ -284,20 +281,13 @@ ExecHashTableCreate(Hash *node)
 		 * allocate and initialize the file arrays in hashCxt
 		 */
 		hashtable->innerBatchFile = (BufFile **)
-			palloc(nbatch * sizeof(BufFile *));
+			palloc0(nbatch * sizeof(BufFile *));
 		hashtable->outerBatchFile = (BufFile **)
-			palloc(nbatch * sizeof(BufFile *));
+			palloc0(nbatch * sizeof(BufFile *));
 		hashtable->innerBatchSize = (long *)
-			palloc(nbatch * sizeof(long));
+			palloc0(nbatch * sizeof(long));
 		hashtable->outerBatchSize = (long *)
-			palloc(nbatch * sizeof(long));
-		for (i = 0; i < nbatch; i++)
-		{
-			hashtable->innerBatchFile[i] = NULL;
-			hashtable->outerBatchFile[i] = NULL;
-			hashtable->innerBatchSize[i] = 0;
-			hashtable->outerBatchSize[i] = 0;
-		}
+			palloc0(nbatch * sizeof(long));
 		/* The files will not be opened until later... */
 	}
 
@@ -308,13 +298,7 @@ ExecHashTableCreate(Hash *node)
 	MemoryContextSwitchTo(hashtable->batchCxt);
 
 	hashtable->buckets = (HashJoinTuple *)
-		palloc(nbuckets * sizeof(HashJoinTuple));
-
-	if (hashtable->buckets == NULL)
-		elog(ERROR, "Insufficient memory for hash table.");
-
-	for (i = 0; i < nbuckets; i++)
-		hashtable->buckets[i] = NULL;
+		palloc0(nbuckets * sizeof(HashJoinTuple));
 
 	MemoryContextSwitchTo(oldcxt);
 
@@ -414,15 +398,14 @@ ExecChooseHashTableSize(double ntuples, int tupwidth,
 		 * totalbuckets/nbuckets; in fact, it is the number of groups we
 		 * will use for the part of the data that doesn't fall into the
 		 * first nbuckets hash buckets.  We try to set it to make all the
-		 * batches the same size.  But we have to keep nbatch small
-		 * enough to avoid integer overflow in ExecHashJoinGetBatch().
+		 * batches the same size.
 		 */
 		dtmp = ceil((inner_rel_bytes - hash_table_bytes) /
 					hash_table_bytes);
-		if (dtmp < INT_MAX / totalbuckets)
+		if (dtmp < INT_MAX)
 			nbatch = (int) dtmp;
 		else
-			nbatch = INT_MAX / totalbuckets;
+			nbatch = INT_MAX;
 		if (nbatch <= 0)
 			nbatch = 1;
 	}
@@ -481,13 +464,14 @@ ExecHashTableInsert(HashJoinTable hashtable,
 					List *hashkeys)
 {
 	int			bucketno = ExecHashGetBucket(hashtable, econtext, hashkeys);
+	int			batchno = ExecHashGetBatch(bucketno, hashtable);
 	TupleTableSlot *slot = econtext->ecxt_innertuple;
 	HeapTuple	heapTuple = slot->val;
 
 	/*
 	 * decide whether to put the tuple in the hash table or a tmp file
 	 */
-	if (bucketno < hashtable->nbuckets)
+	if (batchno < 0)
 	{
 		/*
 		 * put the tuple in hash table
@@ -498,8 +482,6 @@ ExecHashTableInsert(HashJoinTable hashtable,
 		hashTupleSize = MAXALIGN(sizeof(*hashTuple)) + heapTuple->t_len;
 		hashTuple = (HashJoinTuple) MemoryContextAlloc(hashtable->batchCxt,
 													   hashTupleSize);
-		if (hashTuple == NULL)
-			elog(ERROR, "Insufficient memory for hash table.");
 		memcpy((char *) &hashTuple->htup,
 			   (char *) heapTuple,
 			   sizeof(hashTuple->htup));
@@ -515,11 +497,8 @@ ExecHashTableInsert(HashJoinTable hashtable,
 	else
 	{
 		/*
-		 * put the tuple into a tmp file for other batches
+		 * put the tuple into a tmp file for later batches
 		 */
-		int			batchno = (hashtable->nbatch * (bucketno - hashtable->nbuckets)) /
-		(hashtable->totalbuckets - hashtable->nbuckets);
-
 		hashtable->innerBatchSize[batchno]++;
 		ExecHashJoinSaveTuple(heapTuple,
 							  hashtable->innerBatchFile[batchno]);
@@ -590,6 +569,24 @@ ExecHashGetBucket(HashJoinTable hashtable,
 	MemoryContextSwitchTo(oldContext);
 
 	return bucketno;
+}
+
+/* ----------------------------------------------------------------
+ *		ExecHashGetBatch
+ *
+ *		determine the batch number for a bucketno
+ *
+ * Returns -1 if bucket belongs to initial (or current) batch,
+ * else 0..nbatch-1 corresponding to external batch file number for bucket.
+ * ----------------------------------------------------------------
+ */
+int
+ExecHashGetBatch(int bucketno, HashJoinTable hashtable)
+{
+	if (bucketno < hashtable->nbuckets)
+		return -1;
+
+	return (bucketno - hashtable->nbuckets) % hashtable->nbatch;
 }
 
 /* ----------------------------------------------------------------
@@ -727,7 +724,6 @@ ExecHashTableReset(HashJoinTable hashtable, long ntuples)
 {
 	MemoryContext oldcxt;
 	int			nbuckets = hashtable->nbuckets;
-	int			i;
 
 	/*
 	 * Release all the hash buckets and tuples acquired in the prior pass,
@@ -750,13 +746,7 @@ ExecHashTableReset(HashJoinTable hashtable, long ntuples)
 
 	/* Reallocate and reinitialize the hash bucket headers. */
 	hashtable->buckets = (HashJoinTuple *)
-		palloc(nbuckets * sizeof(HashJoinTuple));
-
-	if (hashtable->buckets == NULL)
-		elog(ERROR, "Insufficient memory for hash table.");
-
-	for (i = 0; i < nbuckets; i++)
-		hashtable->buckets[i] = NULL;
+		palloc0(nbuckets * sizeof(HashJoinTuple));
 
 	MemoryContextSwitchTo(oldcxt);
 }

@@ -42,7 +42,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/optimizer/path/costsize.c,v 1.97 2002/12/26 23:38:42 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/optimizer/path/costsize.c,v 1.98 2002/12/30 15:21:21 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -85,7 +85,8 @@ bool		enable_mergejoin = true;
 bool		enable_hashjoin = true;
 
 
-static Selectivity estimate_hash_bucketsize(Query *root, Var *var);
+static Selectivity estimate_hash_bucketsize(Query *root, Var *var,
+											int nbuckets);
 static bool cost_qual_eval_walker(Node *node, Cost *total);
 static Selectivity approx_selectivity(Query *root, List *quals);
 static void set_rel_width(Query *root, RelOptInfo *rel);
@@ -882,7 +883,9 @@ cost_hashjoin(Path *path, Query *root,
 											  outer_path->parent->width);
 	double		innerbytes = relation_byte_size(inner_path->parent->rows,
 											  inner_path->parent->width);
-	long		hashtablebytes = SortMem * 1024L;
+	int			virtualbuckets;
+	int			physicalbuckets;
+	int			numbatches;
 	Selectivity innerbucketsize;
 	List	   *hcl;
 
@@ -897,6 +900,13 @@ cost_hashjoin(Path *path, Query *root,
 	/* cost of computing hash function: must do it once per input tuple */
 	startup_cost += cpu_operator_cost * inner_path->parent->rows;
 	run_cost += cpu_operator_cost * outer_path->parent->rows;
+
+	/* Get hash table size that executor would use for inner relation */
+	ExecChooseHashTableSize(inner_path->parent->rows,
+							inner_path->parent->width,
+							&virtualbuckets,
+							&physicalbuckets,
+							&numbatches);
 
 	/*
 	 * Determine bucketsize fraction for inner relation.  We use the
@@ -931,7 +941,8 @@ cost_hashjoin(Path *path, Query *root,
 			if (thisbucketsize < 0)
 			{
 				/* not cached yet */
-				thisbucketsize = estimate_hash_bucketsize(root, right);
+				thisbucketsize = estimate_hash_bucketsize(root, right,
+														  virtualbuckets);
 				restrictinfo->right_bucketsize = thisbucketsize;
 			}
 		}
@@ -943,7 +954,8 @@ cost_hashjoin(Path *path, Query *root,
 			if (thisbucketsize < 0)
 			{
 				/* not cached yet */
-				thisbucketsize = estimate_hash_bucketsize(root, left);
+				thisbucketsize = estimate_hash_bucketsize(root, left,
+														  virtualbuckets);
 				restrictinfo->left_bucketsize = thisbucketsize;
 			}
 		}
@@ -982,7 +994,7 @@ cost_hashjoin(Path *path, Query *root,
 	 * should be nice and sequential...).  Writing the inner rel counts as
 	 * startup cost, all the rest as run cost.
 	 */
-	if (innerbytes > hashtablebytes)
+	if (numbatches)
 	{
 		double		outerpages = page_size(outer_path->parent->rows,
 										   outer_path->parent->width);
@@ -1019,7 +1031,7 @@ cost_hashjoin(Path *path, Query *root,
  * smart enough to figure out how the restrict clauses might change the
  * distribution, so this will have to do for now.
  *
- * We can get the number of buckets the executor will use for the given
+ * We are passed the number of buckets the executor will use for the given
  * input relation.	If the data were perfectly distributed, with the same
  * number of tuples going into each available bucket, then the bucketsize
  * fraction would be 1/nbuckets.  But this happy state of affairs will occur
@@ -1039,13 +1051,10 @@ cost_hashjoin(Path *path, Query *root,
  * inner rel is well-dispersed (or the alternatives seem much worse).
  */
 static Selectivity
-estimate_hash_bucketsize(Query *root, Var *var)
+estimate_hash_bucketsize(Query *root, Var *var, int nbuckets)
 {
 	Oid			relid;
 	RelOptInfo *rel;
-	int			virtualbuckets;
-	int			physicalbuckets;
-	int			numbatches;
 	HeapTuple	tuple;
 	Form_pg_statistic stats;
 	double		estfract,
@@ -1071,12 +1080,6 @@ estimate_hash_bucketsize(Query *root, Var *var)
 	if (rel->tuples <= 0.0 || rel->rows <= 0.0)
 		return 0.1;				/* ensure we can divide below */
 
-	/* Get hash table size that executor would use for this relation */
-	ExecChooseHashTableSize(rel->rows, rel->width,
-							&virtualbuckets,
-							&physicalbuckets,
-							&numbatches);
-
 	tuple = SearchSysCache(STATRELATT,
 						   ObjectIdGetDatum(relid),
 						   Int16GetDatum(var->varattno),
@@ -1093,7 +1096,7 @@ estimate_hash_bucketsize(Query *root, Var *var)
 			case ObjectIdAttributeNumber:
 			case SelfItemPointerAttributeNumber:
 				/* these are unique, so buckets should be well-distributed */
-				return 1.0 / (double) virtualbuckets;
+				return 1.0 / (double) nbuckets;
 			case TableOidAttributeNumber:
 				/* hashing this is a terrible idea... */
 				return 1.0;
@@ -1134,8 +1137,8 @@ estimate_hash_bucketsize(Query *root, Var *var)
 	 * the number of buckets is less than the expected number of distinct
 	 * values; otherwise it is 1/ndistinct.
 	 */
-	if (ndistinct > (double) virtualbuckets)
-		estfract = 1.0 / (double) virtualbuckets;
+	if (ndistinct > (double) nbuckets)
+		estfract = 1.0 / (double) nbuckets;
 	else
 		estfract = 1.0 / ndistinct;
 

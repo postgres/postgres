@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/executor/nodeHashjoin.c,v 1.45 2002/12/15 16:17:46 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/executor/nodeHashjoin.c,v 1.46 2002/12/30 15:21:20 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -27,7 +27,6 @@ static TupleTableSlot *ExecHashJoinOuterGetTuple(PlanState *node,
 static TupleTableSlot *ExecHashJoinGetSavedTuple(HashJoinState *hjstate,
 						  BufFile *file,
 						  TupleTableSlot *tupleSlot);
-static int	ExecHashJoinGetBatch(int bucketno, HashJoinTable hashtable);
 static int	ExecHashJoinNewBatch(HashJoinState *hjstate);
 
 
@@ -179,17 +178,15 @@ ExecHashJoin(HashJoinState *node)
 			 */
 			if (hashtable->curbatch == 0)
 			{
-				int			batch = ExecHashJoinGetBatch(node->hj_CurBucketNo,
-														 hashtable);
+				int			batchno = ExecHashGetBatch(node->hj_CurBucketNo,
+													   hashtable);
 
-				if (batch > 0)
+				if (batchno >= 0)
 				{
 					/*
 					 * Need to postpone this outer tuple to a later batch.
 					 * Save it in the corresponding outer-batch file.
 					 */
-					int			batchno = batch - 1;
-
 					hashtable->outerBatchSize[batchno]++;
 					ExecHashJoinSaveTuple(outerTupleSlot->val,
 									 hashtable->outerBatchFile[batchno]);
@@ -638,28 +635,6 @@ ExecHashJoinNewBatch(HashJoinState *hjstate)
 
 	hashtable->curbatch = newbatch;
 	return newbatch;
-}
-
-/* ----------------------------------------------------------------
- *		ExecHashJoinGetBatch
- *
- *		determine the batch number for a bucketno
- *		+----------------+-------+-------+ ... +-------+
- *		0			  nbuckets						 totalbuckets
- * batch		 0			 1		 2	   ...
- * ----------------------------------------------------------------
- */
-static int
-ExecHashJoinGetBatch(int bucketno, HashJoinTable hashtable)
-{
-	int			b;
-
-	if (bucketno < hashtable->nbuckets || hashtable->nbatch == 0)
-		return 0;
-
-	b = (hashtable->nbatch * (bucketno - hashtable->nbuckets)) /
-		(hashtable->totalbuckets - hashtable->nbuckets);
-	return b + 1;
 }
 
 /* ----------------------------------------------------------------
