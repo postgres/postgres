@@ -43,6 +43,7 @@ extern		"C"
 		ECPGt_varchar, ECPGt_varchar2,
 		ECPGt_array,
 		ECPGt_struct,
+		ECPGt_union,
 		ECPGt_char_variable,
 		ECPGt_EOIT,				/* End of insert types. */
 		ECPGt_EORT,				/* End of result types. */

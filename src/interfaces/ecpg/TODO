@@ -11,9 +11,11 @@ DESCRIPTOR statement will be ignored.
 
 it would be nice to be able to use :var[:index] as cvariable
 
-support for dynamic SQL with unknown number of variables with SQLDA structure
+it would also be nice to be able to work with varchar * (inculding automatic
+allocating)
 
-allocate memory for pointers as C input variables
+support for dynamic SQL with unknown number of variables with SQLDA structure
+or something similar
 
 Missing statements:
  - exec sql allocate

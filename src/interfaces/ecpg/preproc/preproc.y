@@ -144,7 +144,8 @@ find_struct_member(char *name, char *str, struct ECPGstruct_member *members)
 			   case ECPGt_array:
 				return(new_variable(name, ECPGmake_array_type(members->typ->u.element, members->typ->size)));
 			   case ECPGt_struct:
-				return(new_variable(name, ECPGmake_struct_type(members->typ->u.members)));
+			   case ECPGt_union:
+				return(new_variable(name, ECPGmake_struct_type(members->typ->u.members, members->typ->typ)));
 			   default:
 				return(new_variable(name, ECPGmake_simple_type(members->typ->typ, members->typ->size)));
 			}
@@ -175,14 +176,39 @@ find_struct(char * name, char *next)
     *next = '\0';
     p = find_variable(name);
 
-    /* restore the name, we will need it later on */
-    *next = c;
     if (c == '-')
     {
+	if (p->type->typ != ECPGt_struct && p->type->typ != ECPGt_union)
+        {
+                sprintf(errortext, "variable %s is not a pointer", name);
+                yyerror (errortext);
+        }
+
+	if (p->type->u.element->typ  != ECPGt_struct && p->type->u.element->typ != ECPGt_union)
+        {
+                sprintf(errortext, "variable %s is not a pointer to a structure or a union", name);
+                yyerror (errortext);
+        }
+
+	/* restore the name, we will need it later on */
+	*next = c;
 	next++;
+
 	return find_struct_member(name, next, p->type->u.element->u.members);
     }
-    else return find_struct_member(name, next, p->type->u.members);
+    else
+    {
+	if (p->type->typ != ECPGt_struct && p->type->typ != ECPGt_union)
+	{
+		sprintf(errortext, "variable %s is neither a structure nor a union", name);
+		yyerror (errortext);
+	}
+
+	/* restore the name, we will need it later on */
+	*next = c;
+
+	return find_struct_member(name, next, p->type->u.members);
+    }
 }
 
 static struct variable *
@@ -323,6 +349,7 @@ check_indicator(struct ECPGtype *var)
 			break;
 
 		case ECPGt_struct:
+		case ECPGt_union:
 			for (p = var->u.members; p; p = p->next)
 				check_indicator(p->typ);
 			break;
@@ -549,6 +576,7 @@ adjust_array(enum ECPGttype type_enum, int *dimension, int *length, int type_dim
 	switch (type_enum)
 	{
 	   case ECPGt_struct:
+	   case ECPGt_union:
 	        /* pointer has to get dimension 0 */
                 if (pointer)
 	        {
@@ -740,8 +768,7 @@ adjust_array(enum ECPGttype type_enum, int *dimension, int *length, int type_dim
 %type  <str>	opt_table opt_union opt_unique sort_clause sortby_list
 %type  <str>	sortby OptUseOp opt_inh_star relation_name_list name_list
 %type  <str>	group_clause having_clause from_clause c_list 
-%type  <str>	from_list from_val join_expr join_outer join_spec join_list
-%type  <str> 	join_using where_clause relation_expr row_op sub_type
+%type  <str>	table_list join_outer where_clause relation_expr row_op sub_type
 %type  <str>	opt_column_list insert_rest InsertStmt OptimizableStmt
 %type  <str>    columnList DeleteStmt LockStmt UpdateStmt CursorStmt
 %type  <str>    NotifyStmt columnElem copy_dirn c_expr UnlistenStmt
@@ -754,7 +781,7 @@ adjust_array(enum ECPGttype type_enum, int *dimension, int *length, int type_dim
 %type  <str>    func_args_list func_args opt_with ProcedureStmt def_arg
 %type  <str>    def_elem def_list definition def_name def_type DefineStmt
 %type  <str>    opt_instead event event_object RuleActionList,
-%type  <str>	RuleActionBlock RuleActionMulti 
+%type  <str>	RuleActionBlock RuleActionMulti join_list
 %type  <str>    RuleStmt opt_column opt_name oper_argtypes
 %type  <str>    MathOp RemoveFuncStmt aggr_argtype for_update_clause
 %type  <str>    RemoveAggrStmt remove_type RemoveStmt ExtendStmt RecipeStmt
@@ -773,8 +800,10 @@ adjust_array(enum ECPGttype type_enum, int *dimension, int *length, int type_dim
 %type  <str>	GrantStmt privileges operation_commalist operation
 %type  <str>	cursor_clause opt_cursor opt_readonly opt_of opt_lmode
 %type  <str>	case_expr when_clause_list case_default case_arg when_clause
-%type  <str>    select_w_o_sort opt_select_limit select_limit_value,
-%type  <str>    select_offset_value
+%type  <str>    select_clause opt_select_limit select_limit_value,
+%type  <str>    select_offset_value table_list using_expr join_expr
+%type  <str>	using_list from_expr table_expr join_clause join_type
+%type  <str>	join_qual update_list join_clause join_clause_with_union
 
 %type  <str>	ECPGWhenever ECPGConnect connection_target ECPGOpen opt_using
 %type  <str>	indicator ECPGExecute ecpg_expr dotext ECPGPrepare
@@ -790,7 +819,7 @@ adjust_array(enum ECPGttype type_enum, int *dimension, int *length, int type_dim
 %type  <str>	ECPGFree ECPGDeclare ECPGVar sql_variable_declarations
 %type  <str>	sql_declaration sql_variable_list sql_variable opt_at
 %type  <str>    struct_type s_struct declaration variable_declarations
-%type  <str>    s_struct_or_union sql_struct_or_union
+%type  <str>    s_struct s_union union_type
 
 %type  <type_enum> simple_type varchar_type
 
@@ -1320,20 +1349,15 @@ ColConstraint:
 				{ $$ = $1; }
 		;
 
-/* The column constraint WITH NULL gives a shift/reduce error
- * because it requires yacc to look more than one token ahead to
- * resolve WITH TIME ZONE and WITH NULL.
- * So, leave it out of the syntax for now.
-                       | WITH NULL_P
-                               {
-                                       $$ = NULL;
-                               }
- * - thomas 1998-09-12
- *
- * DEFAULT NULL is already the default for Postgres.
+/* DEFAULT NULL is already the default for Postgres.
  * Bue define it here and carry it forward into the system
  * to make it explicit.
  * - thomas 1998-09-13
+ * WITH NULL and NULL are not SQL92-standard syntax elements,
+ * so leave them out. Use DEFAULT NULL to explicitly indicate
+ * that a column may have that value. WITH NULL leads to
+ * shift/reduce conflicts with WITH TIME ZONE anyway.
+ * - thomas 1999-01-08
  */
 ColConstraintElem:  CHECK '(' constraint_expr ')'
 				{
@@ -2801,8 +2825,11 @@ opt_of:  OF columnList { $$ = make2_str(make1_str("of"), $2); }
 /***S*I***/
 /* The new 'SelectStmt' rule adapted for the optional use of INTERSECT EXCEPT a nd UNION
  * accepts the use of '(' and ')' to select an order of set operations.
+ * The rule returns a SelectStmt Node having the set operations attached to
+ * unionClause and intersectClause (NIL if no set operations were present)
  */
-SelectStmt:  select_w_o_sort sort_clause for_update_clause opt_select_limit
+
+SelectStmt:      select_clause sort_clause for_update_clause opt_select_limit
 				{
 					if (strlen($3) > 0 && ForUpdateNotAllowed != 0)
 							yyerror("SELECT FOR UPDATE is not allowed in this context");
@@ -2819,7 +2846,7 @@ SelectStmt:  select_w_o_sort sort_clause for_update_clause opt_select_limit
  *
  *  The sort_clause is not handled here!
  */
-select_w_o_sort: '(' select_w_o_sort ')'
+select_clause: '(' select_clause ')'
                         {
                                $$ = make3_str(make1_str("("), $2, make1_str(")")); 
                         }
@@ -2827,17 +2854,17 @@ select_w_o_sort: '(' select_w_o_sort ')'
                         {
                                $$ = $1; 
                         }
-                | select_w_o_sort EXCEPT select_w_o_sort
+                | select_clause EXCEPT select_clause
 			{
 				$$ = cat3_str($1, make1_str("except"), $3);
 				ForUpdateNotAllowed = 1;
 			}
-		| select_w_o_sort UNION opt_union select_w_o_sort
+		| select_clause UNION opt_union select_clause
 			{
 				$$ = cat3_str($1, make1_str("union"), $3);
 				ForUpdateNotAllowed = 1;
 			}
-		| select_w_o_sort INTERSECT opt_union select_w_o_sort
+		| select_clause INTERSECT opt_union select_clause
 			{
 				$$ = cat3_str($1, make1_str("intersect"), $3);
 				ForUpdateNotAllowed = 1;
@@ -2949,20 +2976,24 @@ having_clause:  HAVING a_expr
 		| /*EMPTY*/		{ $$ = make1_str(""); }
 		;
 
-for_update_clause:
-	                FOR UPDATE
-                        {
-                                $$ = make1_str("for update");
-                        }
-                |       FOR UPDATE OF va_list
-                        {
-                                $$ = cat2_str(make1_str("for update of"), $4);
-                        }
-                | /* EMPTY */
-                        {
-                                $$ = make1_str("");
-                        }
+for_update_clause:  FOR UPDATE update_list
+		{
+                	$$ = make1_str("for update"); 
+		}
+		| /* EMPTY */
+                {
+                        $$ = make1_str("");
+                }
                 ;
+update_list:  OF va_list
+              {
+			$$ = cat2_str(make1_str("of"), $2);
+	      }
+              | /* EMPTY */
+              {
+                        $$ = make1_str("");
+              }
+              ;
 
 /*****************************************************************************
  *
@@ -2972,77 +3003,143 @@ for_update_clause:
  *
  *****************************************************************************/
 
-from_clause:  FROM '(' relation_expr join_expr JOIN relation_expr join_spec ')'
-				{
-					yyerror("JOIN not yet implemented");
-				}
-		| FROM from_list	{ $$ = cat2_str(make1_str("from"), $2); }
-		| /*EMPTY*/		{ $$ = make1_str(""); }
-		;
+from_clause:  FROM from_expr
+		{
+			$$ = cat2_str(make1_str("from"), $2);
+		}
+		| /* EMPTY */
+		{
+			$$ = make1_str("");
+		}
 
-from_list:	from_list ',' from_val
-				{ $$ = cat3_str($1, make1_str(","), $3); }
-		| from_val CROSS JOIN from_val
-				{ yyerror("CROSS JOIN not yet implemented"); }
-		| from_val
-				{ $$ = $1; }
-		;
 
-from_val:  relation_expr AS ColLabel
-				{
-					$$ = cat3_str($1, make1_str("as"), $3);
-				}
-		| relation_expr ColId
-				{
+from_expr:  '(' join_clause_with_union ')'
+                                { $$ = make3_str(make1_str("("), $2, make1_str(")")); }
+                | join_clause
+                                { $$ = $1; }
+                | table_list
+                                { $$ = $1; }
+                ;
+
+table_list:  table_list ',' table_expr
+                                { $$ = make3_str($1, make1_str(","), $3); }
+                | table_expr
+                                { $$ = $1; }
+                ;
+
+table_expr:  relation_expr AS ColLabel
+                                {
+                                        $$ = cat3_str($1, make1_str("as"), $3);
+                                }
+                | relation_expr ColId
+                                {
+                                        $$ = cat2_str($1, $2);
+                                }
+                | relation_expr
+                                {
+                                        $$ = $1;
+                                }
+                ;
+
+/* A UNION JOIN is the same as a FULL OUTER JOIN which *omits*
+ * all result rows which would have matched on an INNER JOIN.
+ * Let's reject this for now. - thomas 1999-01-08
+ */
+join_clause_with_union:  join_clause
+                                {       $$ = $1; }
+                | table_expr UNION JOIN table_expr
+                                {       yyerror("UNION JOIN not yet implemented"); }
+                ;
+
+join_clause:  table_expr join_list
+                                {
 					$$ = cat2_str($1, $2);
-				}
-		| relation_expr
-				{
-					$$ = $1;
-				}
-		;
+                                }
+                ;
 
-join_expr:  NATURAL join_expr					{ $$ = cat2_str(make1_str("natural"), $2); }
-		| FULL join_outer
-				{ yyerror("FULL OUTER JOIN not yet implemented"); }
-		| LEFT join_outer
-				{ yyerror("LEFT OUTER JOIN not yet implemented"); }
-		| RIGHT join_outer
-				{ yyerror("RIGHT OUTER JOIN not yet implemented"); }
-		| OUTER_P
-				{ yyerror("OUTER JOIN not yet implemented"); }
-		| INNER_P
-				{ yyerror("INNER JOIN not yet implemented"); }
-		| UNION
-				{ yyerror("UNION JOIN not yet implemented"); }
-		| /*EMPTY*/
-				{ yyerror("INNER JOIN not yet implemented"); }
-		;
+join_list:  join_list join_expr
+                                {
+                                        $$ = cat2_str($1, $2);
+                                }
+                | join_expr
+                                {
+                                        $$ = $1;
+                                }
+                ;
+
+/* This is everything but the left side of a join.
+ * Note that a CROSS JOIN is the same as an unqualified
+ * inner join, so just pass back the right-side table.
+ * A NATURAL JOIN implicitly matches column names between
+ * tables, so we'll collect those during the later transformation.
+ */
+
+join_expr:  join_type JOIN table_expr join_qual
+                                {
+					$$ = cat4_str($1, make1_str("join"), $3, $4);
+                                }
+                | NATURAL join_type JOIN table_expr
+                                {
+					$$ = cat4_str(make1_str("natural"), $2, make1_str("join"), $4);
+                                }
+                | CROSS JOIN table_expr
+                                { 	$$ = cat2_str(make1_str("cross join"), $3); }
+                ;
+
+/* OUTER is just noise... */
+join_type:  FULL join_outer
+                                {
+                                        $$ = cat2_str(make1_str("full"), $2);
+                                        fprintf(stderr,"FULL OUTER JOIN not yet implemented\n");
+                                }
+                | LEFT join_outer
+                                {
+                                        $$ = cat2_str(make1_str("left"), $2);
+                                        fprintf(stderr,"LEFT OUTER JOIN not yet implemented\n");
+                                }
+                | RIGHT join_outer
+                                {
+                                        $$ = cat2_str(make1_str("right"), $2);
+                                        fprintf(stderr,"RIGHT OUTER JOIN not yet implemented\n");
+                                }
+                | OUTER_P
+                                {
+                                        $$ = make1_str("outer");
+                                        fprintf(stderr,"OUTER JOIN not yet implemented\n");
+                                }
+                | INNER_P
+                                {
+                                        $$ = make1_str("inner");
+				}
+                | /* EMPTY */
+                                {
+                                        $$ = make1_str("");
+				}
+
 
 join_outer:  OUTER_P				{ $$ = make1_str("outer"); }
 		| /*EMPTY*/			{ $$ = make1_str("");  /* no qualifiers */ }
 		;
 
-join_spec:	ON '(' a_expr ')'			{ $$ = make3_str(make1_str("on ("), $3, make1_str(")")); }
-		| USING '(' join_list ')'		{ $$ = make3_str(make1_str("using ("), $3, make1_str(")")); }
-		| /*EMPTY*/				{ $$ = make1_str("");  /* no qualifiers */ }
-		;
+/* JOIN qualification clauses
+ * Possibilities are:
+ *  USING ( column list ) allows only unqualified column names,
+ *                        which must match between tables.
+ *  ON expr allows more general qualifications.
+ * - thomas 1999-01-07
+ */
 
-join_list:  join_using					{ $$ = $1; }
-		| join_list ',' join_using		{ $$ = cat3_str($1, make1_str(","), $3); }
-		;
+join_qual:  USING '(' using_list ')'                   { $$ = make3_str(make1_str("using ("), $3, make1_str(")")); }
+               | ON a_expr			       { $$ = cat2_str(make1_str("on"), $2); }
+                ;
 
-join_using:  ColId
+using_list:  using_list ',' using_expr                  { $$ = make3_str($1, make1_str(","), $3); }
+               | using_expr				{ $$ = $1; }
+               ;
+
+using_expr:  ColId
 				{
 					$$ = $1;
-				}
-		| ColId '.' ColId
-				{
-					$$ = make3_str($1, make1_str("."), $3);
-				}
-		| Iconst
-				{
-					$$ = $1;;
 				}
 		;
 
@@ -4053,8 +4150,6 @@ case_expr:  CASE case_arg when_clause_list case_default END_TRANS
                 | COALESCE '(' expr_list ')'
                                 {
 					$$ = cat3_str(make1_str("coalesce("), $3, make1_str(")"));
-
-					fprintf(stderr, "COALESCE() not yet fully implemented");
 				}
 		;
 
@@ -4390,7 +4485,6 @@ ColLabel:  ColId						{ $$ = $1; }
 		| COALESCE                                        { $$ = make1_str("coalesce"); }
 		| CONSTRAINT					{ $$ = make1_str("constraint"); }
 		| COPY							{ $$ = make1_str("copy"); }
-		| CROSS							{ $$ = make1_str("cross"); }
 		| CURRENT							{ $$ = make1_str("current"); }
 		| DO							{ $$ = make1_str("do"); }
 		| ELSE                                        { $$ = make1_str("else"); }
@@ -4733,6 +4827,13 @@ type: simple_type
 			$$.type_dimension = -1;
   			$$.type_index = -1;
 		}
+	| union_type
+		{
+			$$.type_enum = ECPGt_union;
+			$$.type_str = $1;
+			$$.type_dimension = -1;
+  			$$.type_index = -1;
+		}
 	| enum_type
 		{
 			$$.type_str = $1;
@@ -4766,16 +4867,28 @@ struct_type: s_struct '{' variable_declarations '}'
 	    $$ = cat4_str($1, make1_str("{"), $3, make1_str("}"));
 	}
 
-s_struct : s_struct_or_union opt_symbol
+union_type: s_union '{' variable_declarations '}'
+	{
+	    ECPGfree_struct_member(struct_member_list[struct_level]);
+	    free(actual_storage[struct_level--]);
+	    $$ = cat4_str($1, make1_str("{"), $3, make1_str("}"));
+	}
+
+s_struct : S_STRUCT opt_symbol
         {
             struct_member_list[struct_level++] = NULL;
             if (struct_level >= STRUCT_DEPTH)
                  yyerror("Too many levels in nested structure definition");
-	    $$ = cat2_str($1, $2);
+	    $$ = cat2_str(make1_str("struct"), $2);
 	}
 
-s_struct_or_union: S_STRUCT { $$ = make1_str("struct"); }
-		|  S_UNION  { $$ = make1_str("union"); }
+s_union : S_UNION opt_symbol
+        {
+            struct_member_list[struct_level++] = NULL;
+            if (struct_level >= STRUCT_DEPTH)
+                 yyerror("Too many levels in nested structure definition");
+	    $$ = cat2_str(make1_str("union"), $2);
+	}
 
 opt_symbol: /* empty */ 	{ $$ = make1_str(""); }
 	| symbol		{ $$ = $1; }
@@ -4815,10 +4928,11 @@ variable: opt_pointer symbol opt_array_bounds opt_initializer
 			switch (actual_type[struct_level].type_enum)
 			{
 			   case ECPGt_struct:
+			   case ECPGt_union:
                                if (dimension < 0)
-                                   type = ECPGmake_struct_type(struct_member_list[struct_level]);
+                                   type = ECPGmake_struct_type(struct_member_list[struct_level], actual_type[struct_level].type_enum);
                                else
-                                   type = ECPGmake_array_type(ECPGmake_struct_type(struct_member_list[struct_level]), dimension); 
+                                   type = ECPGmake_array_type(ECPGmake_struct_type(struct_member_list[struct_level], actual_type[struct_level].type_enum), dimension); 
 
                                $$ = make4_str($1, mm_strdup($2), $3.str, $4);
                                break;
@@ -4846,7 +4960,8 @@ variable: opt_pointer symbol opt_array_bounds opt_initializer
                                if (length > 0)
                                    $$ = make4_str(make5_str(mm_strdup(actual_storage[struct_level]), make1_str(" struct varchar_"), mm_strdup($2), make1_str(" { int len; char arr["), mm_strdup(ascii_len)), make1_str("]; } "), mm_strdup($2), mm_strdup(dim));
                                else
-                                   $$ = make4_str(make3_str(mm_strdup(actual_storage[struct_level]), make1_str(" struct varchar_"), mm_strdup($2)), make1_str(" { int len; char *arr; } "), mm_strdup($2), mm_strdup(dim));
+				   yyerror ("pointer to varchar are not implemented yet");
+/*                                   $$ = make4_str(make3_str(mm_strdup(actual_storage[struct_level]), make1_str(" struct varchar_"), mm_strdup($2)), make1_str(" { int len; char *arr; }"), mm_strdup($2), mm_strdup(dim));*/
                                break;
                            case ECPGt_char:
                            case ECPGt_unsigned_char:
@@ -5189,7 +5304,7 @@ ctype: CHAR
 		$$.type_index = -1;
 		$$.type_dimension = -1;
 	}
-	| sql_struct_or_union
+	| SQL_STRUCT
 	{
 		struct_member_list[struct_level++] = NULL;
 		if (struct_level >= STRUCT_DEPTH)
@@ -5197,8 +5312,21 @@ ctype: CHAR
 	} '{' sql_variable_declarations '}'
 	{
 		ECPGfree_struct_member(struct_member_list[struct_level--]);
-		$$.type_str = cat4_str($1, make1_str("{"), $4, make1_str("}"));
+		$$.type_str = cat3_str(make1_str("struct {"), $4, make1_str("}"));
 		$$.type_enum = ECPGt_struct;
+                $$.type_index = -1;
+                $$.type_dimension = -1;
+	}
+	| UNION
+	{
+		struct_member_list[struct_level++] = NULL;
+		if (struct_level >= STRUCT_DEPTH)
+        		yyerror("Too many levels in nested structure definition");
+	} '{' sql_variable_declarations '}'
+	{
+		ECPGfree_struct_member(struct_member_list[struct_level--]);
+		$$.type_str = cat3_str(make1_str("union {"), $4, make1_str("}"));
+		$$.type_enum = ECPGt_union;
                 $$.type_index = -1;
                 $$.type_dimension = -1;
 	}
@@ -5212,9 +5340,6 @@ ctype: CHAR
 		$$.type_index = this->type->type_index;
 		struct_member_list[struct_level] = this->struct_member_list;
 	}
-
-sql_struct_or_union: SQL_STRUCT	{ $$ = make1_str("struct"); }
-		|    UNION  { $$ = make1_str("union"); }
 
 opt_signed: SQL_SIGNED | /* empty */
 
@@ -5260,10 +5385,11 @@ sql_variable: opt_pointer symbol opt_array_bounds
 			switch (actual_type[struct_level].type_enum)
 			{
 			   case ECPGt_struct:
+			   case ECPGt_union:
                                if (dimension < 0)
-                                   type = ECPGmake_struct_type(struct_member_list[struct_level]);
+                                   type = ECPGmake_struct_type(struct_member_list[struct_level], actual_type[struct_level].type_enum);
                                else
-                                   type = ECPGmake_array_type(ECPGmake_struct_type(struct_member_list[struct_level]), dimension); 
+                                   type = ECPGmake_array_type(ECPGmake_struct_type(struct_member_list[struct_level], actual_type[struct_level].type_enum), dimension); 
 
                                break;
                            case ECPGt_varchar:
@@ -5330,10 +5456,11 @@ ECPGVar: SQL_VAR symbol IS ctype opt_type_array_bounds opt_reference
 		switch ($4.type_enum)
 		{
 		   case ECPGt_struct:
+		   case ECPGt_union:
                         if (dimension < 0)
-                            type = ECPGmake_struct_type(struct_member_list[struct_level]);
+                            type = ECPGmake_struct_type(struct_member_list[struct_level], $4.type_enum);
                         else
-                            type = ECPGmake_array_type(ECPGmake_struct_type(struct_member_list[struct_level]), dimension); 
+                            type = ECPGmake_array_type(ECPGmake_struct_type(struct_member_list[struct_level], $4.type_enum), dimension); 
                         break;
                    case ECPGt_varchar:
                         if (dimension == -1)

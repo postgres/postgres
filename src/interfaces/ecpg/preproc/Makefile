@@ -20,7 +20,7 @@ preproc.c preproc.h: preproc.y
 	mv y.tab.h preproc.h
 
 clean:
-	rm -f *.o core a.out ecpg$(X) *~
+	rm -f *.o core a.out ecpg$(X) *~ *.output *.tab.?
 
 install: all
 	$(INSTALL) $(INSTL_EXE_OPTS) ecpg$(X) $(DESTDIR)$(BINDIR)

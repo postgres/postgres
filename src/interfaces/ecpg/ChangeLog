@@ -475,5 +475,17 @@ Mon Feb 22 19:47:45 CET 1999
 	  requires me to increase the major version number.
 	- Synced pgc.l with scan.l.
 	- Added support for unions.
+
+Tue Feb 23 17:32:25 CET 1999
+
+	- Other than a struct a union itself cannot be specified as variable.
+
+Fri Feb 26 07:18:25 CET 1999
+
+	- Synced preproc.y with gram.y.
+
+Sat Feb 27 20:30:03 CET 1999
+
+	- Added automatic allocating for NULL pointers.
 	- Set library version to 3.0.0
 	- Set ecpg version to 3.0.0

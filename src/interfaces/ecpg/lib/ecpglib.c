@@ -64,6 +64,7 @@ struct variable
 {
 	enum ECPGttype type;
 	void	   *value;
+	void	   *pointer;
 	long		varcharsize;
 	long		arrsize;
 	long		offset;
@@ -91,6 +92,12 @@ struct prepared_statement
 	struct prepared_statement	*next;
 }	*prep_stmts = NULL;
 
+struct auto_mem
+{
+	void *pointer;
+	struct auto_mem *next;
+}	*auto_allocs = NULL;
+
 static int	simple_debug = 0;
 static FILE *debugstream = NULL;
 
@@ -98,12 +105,25 @@ static void
 register_error(long code, char *fmt,...)
 {
 	va_list		args;
-
+	struct auto_mem *am;
+	
 	sqlca.sqlcode = code;
 	va_start(args, fmt);
 	vsprintf(sqlca.sqlerrm.sqlerrmc, fmt, args);
 	va_end(args);
 	sqlca.sqlerrm.sqlerrml = strlen(sqlca.sqlerrm.sqlerrmc);
+	
+	/* free all memory we allocate for the user */
+	for (am = auto_allocs; am;)
+	{
+		struct auto_mem *act = am;
+	
+		am = am->next;	
+		free(act->pointer);
+		free(act);
+	}
+	
+	auto_allocs = NULL;
 }
 
 static struct connection *
@@ -166,7 +186,7 @@ ecpg_alloc(long size, int lineno)
 		register_error(ECPG_OUT_OF_MEMORY, "out of memory in line %d", lineno);
 		return NULL;
 	}
-
+	
 	memset(new, '\0', size);
 	return (new);
 }
@@ -184,6 +204,15 @@ ecpg_strdup(const char *string, int lineno)
 	}
 
 	return (new);
+}
+
+static void
+add_mem(void *ptr, int lineno)
+{
+	struct auto_mem *am = (struct auto_mem *) ecpg_alloc(sizeof(struct auto_mem), lineno);
+	
+	am->next = auto_allocs;
+	auto_allocs = am;
 }
 
 /* This function returns a newly malloced string that has the ' and \
@@ -301,25 +330,32 @@ create_statement(int lineno, struct connection *connection, struct statement ** 
 				return false;
 
 			var->type = type;
-			var->value = va_arg(ap, void *);
-			var->varcharsize = va_arg(ap, long);
-			var->arrsize = va_arg(ap, long);
-			var->offset = va_arg(ap, long);
-			var->ind_type = va_arg(ap, enum ECPGttype);
-			var->ind_value = va_arg(ap, void *);
-			var->ind_varcharsize = va_arg(ap, long);
-			var->ind_arrsize = va_arg(ap, long);
-			var->ind_offset = va_arg(ap, long);
-			var->next = NULL;
-
+			var->pointer = va_arg(ap, void *);
+			
 			/* if variable is NULL, the statement hasn't been prepared */			
-			if (var->value == NULL)
+			if (var->pointer == NULL)
 			{
 				ECPGlog("create_statement: invalid statement name\n");
 				register_error(ECPG_INVALID_STMT, "Invalid statement name in line %d", lineno);
 				free(var);
 				return false;
 			}
+			
+			var->varcharsize = va_arg(ap, long);
+			var->arrsize = va_arg(ap, long);
+			var->offset = va_arg(ap, long);
+			
+			if (var->arrsize == 0 || var->varcharsize == 0)
+				var->value = *((void **)(var->pointer));
+			else
+				var->value = var->pointer;
+			
+			var->ind_type = va_arg(ap, enum ECPGttype);
+			var->ind_value = va_arg(ap, void *);
+			var->ind_varcharsize = va_arg(ap, long);
+			var->ind_arrsize = va_arg(ap, long);
+			var->ind_offset = va_arg(ap, long);
+			var->next = NULL;
 
 			for (ptr = *list; ptr && ptr->next; ptr = ptr->next);
 
@@ -478,8 +514,7 @@ ECPGexecute(struct statement * stmt)
 					break;
 				case ECPGt_char_variable:
 					{
-						/* set slen to string length if type is char * */
-						int			slen = (var->varcharsize == 0) ? strlen((char *) var->value) : var->varcharsize;
+						int			slen = strlen((char *) var->value);
 						char	   *tmp;
 
 						if (!(newcopy = ecpg_alloc(slen + 1, stmt->lineno)))
@@ -632,13 +667,6 @@ ECPGexecute(struct statement * stmt)
 							act_field;
 
 			case PGRES_TUPLES_OK:
-
-				/*
-				 * XXX Cheap Hack. For now, we see only the last group of
-				 * tuples.	This is clearly not the right way to do things
-				 * !!
-				 */
-
 				nfields = PQnfields(results);
 				sqlca.sqlerrd[2] = ntuples = PQntuples(results);
 				status = true;
@@ -676,18 +704,67 @@ ECPGexecute(struct statement * stmt)
 						status = false;
 						break;
 					}
-					
-					for (act_tuple = 0; act_tuple < ntuples; act_tuple++)
+
+					/*
+					 * allocate memory for NULL pointers
+					 */					 
+					if (var->arrsize == 0 || var->varcharsize == 0)
+					{
+					    switch(var->type)
+					    {
+						case ECPGt_char:
+						case ECPGt_unsigned_char:
+							if (var->value == NULL)
+							{
+								var->varcharsize = 0;
+								/* check strlen for each tuple */
+								for (act_tuple = 0; act_tuple < ntuples; act_tuple++)
+								{
+									int len = strlen(PQgetvalue(results, act_tuple, act_field));
+									
+									if (len > var->varcharsize)
+										var->varcharsize = len;
+								}
+								var->offset *= var->varcharsize;
+								add_mem((void *)(var->value) = *((void **)(var->pointer)) = (void *) ecpg_alloc(var->offset * ntuples, stmt->lineno), stmt->lineno);
+							}
+							break;
+#if 0							
+						case ECPGt_varchar:
+							if (((struct ECPGgeneric_varchar *)var->value)->arr == NULL)
+							{
+								var->varcharsize = 0;
+								/* check strlen for each tuple */
+								for (act_tuple = 0; act_tuple < ntuples; act_tuple++)
+								{
+									int len = strlen(PQgetvalue(results, act_tuple, act_field));
+									
+									if (len > var->varcharsize)
+										var->varcharsize = len;
+										
+									((struct ECPGgeneric_varchar *) ((long) var->value + var->offset * act_tuple))->arr = (char *) ecpg_alloc(len, stmt->lineno);
+								}
+							}
+							break;							                    
+#endif
+						default:
+							if (var->value == NULL)
+								add_mem((void *)(var->value) = *((void **)(var->pointer)) = (void *) ecpg_alloc(var->offset * ntuples, stmt->lineno), stmt->lineno);
+							break;
+					    }
+					}
+									
+					for (act_tuple = 0; act_tuple < ntuples && status; act_tuple++)
 					{
 						pval = PQgetvalue(results, act_tuple, act_field);
 
 						ECPGlog("ECPGexecute line %d: RESULT: %s\n", stmt->lineno, pval ? pval : "");
 
-						/* Now the pval is a pointer to the var->value. */
-						/* We will have to decode the var->value */
+						/* Now the pval is a pointer to the value. */
+						/* We will have to decode the value */
 
 						/*
-						 * check for null var->value and set indicator
+						 * check for null value and set indicator
 						 * accordingly
 						 */
 						switch (var->ind_type)
@@ -840,37 +917,28 @@ ECPGexecute(struct statement * stmt)
 							case ECPGt_char:
 							case ECPGt_unsigned_char:
 								{
-									if (var->varcharsize == 0)
+									strncpy((char *) ((long) var->value + var->offset * act_tuple), pval, var->varcharsize);
+									if (var->varcharsize && var->varcharsize < strlen(pval))
 									{
-										/* char* */
-										strncpy(((char **) var->value)[act_tuple], pval, strlen(pval));
-										(((char **) var->value)[act_tuple])[strlen(pval)] = '\0';
-									}
-									else
-									{
-										strncpy((char *) ((long) var->value + var->offset * act_tuple), pval, var->varcharsize);
-										if (var->varcharsize < strlen(pval))
+										/* truncation */
+										switch (var->ind_type)
 										{
-											/* truncation */
-											switch (var->ind_type)
-											{
-												case ECPGt_short:
-												case ECPGt_unsigned_short:
-													((short *) var->ind_value)[act_tuple] = var->varcharsize;
-													break;
-												case ECPGt_int:
-												case ECPGt_unsigned_int:
-													((int *) var->ind_value)[act_tuple] = var->varcharsize;
-													break;
-												case ECPGt_long:
-												case ECPGt_unsigned_long:
-													((long *) var->ind_value)[act_tuple] = var->varcharsize;
-													break;
-												default:
-													break;
-											}
-											sqlca.sqlwarn[0] = sqlca.sqlwarn[1] = 'W';
+											case ECPGt_short:
+											case ECPGt_unsigned_short:
+												((short *) var->ind_value)[act_tuple] = var->varcharsize;
+												break;
+											case ECPGt_int:
+											case ECPGt_unsigned_int:
+												((int *) var->ind_value)[act_tuple] = var->varcharsize;
+												break;
+											case ECPGt_long:
+											case ECPGt_unsigned_long:
+												((long *) var->ind_value)[act_tuple] = var->varcharsize;
+												break;
+											default:
+												break;
 										}
+										sqlca.sqlwarn[0] = sqlca.sqlwarn[1] = 'W';
 									}
 								}
 								break;
@@ -914,8 +982,7 @@ ECPGexecute(struct statement * stmt)
 								break;
 
 							default:
-								register_error(ECPG_UNSUPPORTED, "Unsupported type %s on line %d.",
-								 ECPGtype_name(var->type), stmt->lineno);
+								register_error(ECPG_UNSUPPORTED, "Unsupported type %s on line %d.", ECPGtype_name(var->type), stmt->lineno);
 								status = false;
 								break;
 						}

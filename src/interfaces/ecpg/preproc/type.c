@@ -47,7 +47,8 @@ ECPGstruct_member_dup(struct ECPGstruct_member * rm)
 		switch (rm->typ->typ)
 		{
 			case ECPGt_struct:
-				type = ECPGmake_struct_type(rm->typ->u.members);
+			case ECPGt_union:
+				type = ECPGmake_struct_type(rm->typ->u.members, rm->typ->typ);
 				break;
 			case ECPGt_array:
 				type = ECPGmake_array_type(ECPGmake_simple_type(rm->typ->u.element->typ, rm->typ->u.element->size), rm->typ->size);
@@ -108,9 +109,9 @@ ECPGmake_array_type(struct ECPGtype * typ, long siz)
 }
 
 struct ECPGtype *
-ECPGmake_struct_type(struct ECPGstruct_member * rm)
+ECPGmake_struct_type(struct ECPGstruct_member * rm, enum ECPGttype type)
 {
-	struct ECPGtype *ne = ECPGmake_simple_type(ECPGt_struct, 1);
+	struct ECPGtype *ne = ECPGmake_simple_type(type, 1);
 
 	ne->u.members = ECPGstruct_member_dup(rm);
 
@@ -122,7 +123,7 @@ get_type(enum ECPGttype typ)
 {
 	switch (typ)
 	{
-			case ECPGt_char:
+		case ECPGt_char:
 			return ("ECPGt_char");
 			break;
 		case ECPGt_unsigned_char:
@@ -167,6 +168,8 @@ get_type(enum ECPGttype typ)
 			sprintf(errortext, "illegal variable type %d\n", typ);
 			yyerror(errortext);
 	}
+	
+	return NULL;
 }
 
 /* Dump a type.
@@ -202,37 +205,44 @@ ECPGdump_a_type(FILE *o, const char *name, struct ECPGtype * typ, const char *in
 	switch (typ->typ)
 	{
 		case ECPGt_array:
-			if (IS_SIMPLE_TYPE(typ->u.element->typ))
+			switch (typ->u.element->typ)
 			{
-				ECPGdump_a_simple(o, name, typ->u.element->typ,
+				case ECPGt_array:
+					yyerror("No nested arrays allowed (except strings)");	/* array of array */
+					break;
+				case ECPGt_struct:
+				case ECPGt_union:
+					ECPGdump_a_struct(o, name, ind_name, typ->size, typ->u.element, ind_typ->u.element, NULL, prefix, ind_prefix); 
+					break;
+				default:					
+					if (!IS_SIMPLE_TYPE(typ->u.element->typ))
+						yyerror("Internal error: unknown datatype, please inform pgsql-bugs@postgresql.org");
+	
+					ECPGdump_a_simple(o, name, typ->u.element->typ,
 						  typ->u.element->size, typ->size, NULL, prefix);
-				if (ind_typ->typ == ECPGt_NO_INDICATOR)
-					ECPGdump_a_simple(o, ind_name, ind_typ->typ, ind_typ->size, -1, NULL, ind_prefix);
-				else
-				{
-					if (ind_typ->typ != ECPGt_array)
+					if (ind_typ->typ == ECPGt_NO_INDICATOR)
+						ECPGdump_a_simple(o, ind_name, ind_typ->typ, ind_typ->size, -1, NULL, ind_prefix);
+					else
 					{
-						fprintf(stderr, "Indicator for an array has to be array too.\n");
-					        exit(INDICATOR_NOT_ARRAY);
-					}                	
-					ECPGdump_a_simple(o, ind_name, ind_typ->u.element->typ,
+						if (ind_typ->typ != ECPGt_array)
+						{
+							fprintf(stderr, "Indicator for an array has to be array too.\n");
+						        exit(INDICATOR_NOT_ARRAY);
+						}                	
+						ECPGdump_a_simple(o, ind_name, ind_typ->u.element->typ,
 									  ind_typ->u.element->size, ind_typ->size, NULL, prefix);
-				}
+					}
 			}
-			else if (typ->u.element->typ == ECPGt_array)
-			{
-				yyerror("No nested arrays allowed (except strings)");	/* array of array */
-			}
-			else if (typ->u.element->typ == ECPGt_struct)
-			{
-				/* Array of structs */
-				ECPGdump_a_struct(o, name, ind_name, typ->size, typ->u.element, ind_typ->u.element, NULL, prefix, ind_prefix);
-			}
-			else
-				yyerror("Internal error: unknown datatype, please inform pgsql-bugs@postgresql.org");
 			break;
 		case ECPGt_struct:
 			ECPGdump_a_struct(o, name, ind_name, 1, typ, ind_typ, NULL, prefix, ind_prefix);
+			break;
+		case ECPGt_union: /* cannot dump a complete union */
+			yyerror("Type of union has to be specified");
+			break;
+		case ECPGt_char_variable:
+			ECPGdump_a_simple(o, name, typ->typ, 1, 1, NULL, prefix);
+			ECPGdump_a_simple(o, ind_name, ind_typ->typ, ind_typ->size, -1, NULL, ind_prefix);
 			break;
 		default:
 			ECPGdump_a_simple(o, name, typ->typ, typ->size, -1, NULL, prefix);
@@ -259,7 +269,9 @@ ECPGdump_a_simple(FILE *o, const char *name, enum ECPGttype typ,
 		char	   *variable = (char *) mm_alloc(strlen(name) + ((prefix == NULL) ? 0 : strlen(prefix)) + 4);
 		char	   *offset = (char *) mm_alloc(strlen(name) + strlen("sizeof(struct varchar_)") + 1);
 
-		if (varcharsize == 0 || arrsize >= 0)
+/*		if (varcharsize == 0 || arrsize >= 0)*/
+		/* we have to use the pointer except for arrays with given bounds */
+		if (arrsize > 0)
 			sprintf(variable, "(%s%s)", prefix ? prefix : "", name);
 		else
 			sprintf(variable, "&(%s%s)", prefix ? prefix : "", name);
@@ -272,7 +284,7 @@ ECPGdump_a_simple(FILE *o, const char *name, enum ECPGttype typ,
 			case ECPGt_char:
 			case ECPGt_unsigned_char:
 			case ECPGt_char_variable:
-				sprintf(offset, "%ld*sizeof(char)", varcharsize);
+				sprintf(offset, "%ld*sizeof(char)", varcharsize == 0 ? 1 : varcharsize);
 				break;
 			default:
 				sprintf(offset, "sizeof(%s)", ECPGtype_name(typ));
@@ -353,34 +365,36 @@ ECPGfree_type(struct ECPGtype * typ)
 {
 	if (!IS_SIMPLE_TYPE(typ->typ))
 	{
-		if (typ->typ == ECPGt_array)
+		switch(typ->typ)
 		{
-			if (IS_SIMPLE_TYPE(typ->u.element->typ))
-				free(typ->u.element);
-			else if (typ->u.element->typ == ECPGt_array)
-				/* Array of array, */
-				yyerror("internal error, found multi-dimensional array\n");
-			else if (typ->u.element->typ == ECPGt_struct)
-			{
-				/* Array of structs. */
-				ECPGfree_struct_member(typ->u.element->u.members);
+			case ECPGt_array:
+				switch (typ->u.element->typ)
+				{
+					case ECPGt_array:
+						yyerror("internal error, found multi-dimensional array\n");
+						break;
+					case ECPGt_struct:
+					case ECPGt_union:
+						/* Array of structs. */
+						ECPGfree_struct_member(typ->u.element->u.members);
+						free(typ->u.members);
+						break;
+					default:					
+						if (!IS_SIMPLE_TYPE(typ->u.element->typ))
+							yyerror("Internal error: unknown datatype, please inform pgsql-bugs@postgresql.org");
+
+						free(typ->u.element);
+				}
+				break;
+			case ECPGt_struct:
+			case ECPGt_union:
+				ECPGfree_struct_member(typ->u.members);
 				free(typ->u.members);
-			}
-			else
-			{
-				sprintf(errortext, "illegal variable type %d\n", typ);
+				break;
+			default:
+				sprintf(errortext, "illegal variable type %d\n", typ->typ);
 				yyerror(errortext);
-			}
-		}
-		else if (typ->typ == ECPGt_struct)
-		{
-			ECPGfree_struct_member(typ->u.members);
-			free(typ->u.members);
-		}
-		else
-		{
-			sprintf(errortext, "illegal variable type %d\n", typ);
-			yyerror(errortext);
+				break;
 		}
 	}
 	free(typ);

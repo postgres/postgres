@@ -29,7 +29,7 @@ void		ECPGmake_struct_member(char *, struct ECPGtype *, struct ECPGstruct_member
 struct ECPGtype *ECPGmake_simple_type(enum ECPGttype, long);
 struct ECPGtype *ECPGmake_varchar_type(enum ECPGttype, long);
 struct ECPGtype *ECPGmake_array_type(struct ECPGtype *, long);
-struct ECPGtype *ECPGmake_struct_type(struct ECPGstruct_member *);
+struct ECPGtype *ECPGmake_struct_type(struct ECPGstruct_member *, enum ECPGttype type);
 struct ECPGstruct_member * ECPGstruct_member_dup(struct ECPGstruct_member *);
 
 /* Frees a type. */

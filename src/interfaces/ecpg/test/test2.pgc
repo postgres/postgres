@@ -5,8 +5,8 @@ exec sql include header_test;
 exec sql type c is char reference;
 typedef char* c;
 
-exec sql type ind is union { int integer; short smallinteger; };
-typedef union { int integer; short smallinteger; } ind;
+exec sql type ind is union { int integer; short smallint; };
+typedef union { int integer; short smallint; } ind;
 
 int
 main ()
@@ -23,7 +23,7 @@ exec sql begin declare section;
 	int ind_married;
 	ind children;
 	ind ind_children;
-	char married[9];
+	char *married = NULL;
 	c testname="Petra";
 	char *query="select name, born, age, married, children from meskes where name = :var1";
 exec sql end declare section;
@@ -43,7 +43,7 @@ exec sql end declare section;
 	exec sql connect to unix:postgresql://localhost:5432/mm; 
 
 	strcpy(msg, "create");
-	exec sql create table meskes(name char(8), born integer, age smallint, married char(8), children integer);
+	exec sql create table meskes(name char(8), born integer, age smallint, married date, children integer);
 
 	strcpy(msg, "insert");
 	exec sql insert into meskes(name, married, children) values ('Petra', '19900404', 3);
@@ -62,17 +62,20 @@ exec sql end declare section;
 
 	while (1) {
 		strcpy(msg, "fetch");
-		exec sql fetch in cur into :personal:ind_personal, :married:ind_married, :children.integer:ind_children.smallinteger;
+		exec sql fetch in cur into :personal:ind_personal, :married:ind_married, :children.integer:ind_children.smallint;
 		printf("%8.8s", personal.name.arr);
-		if (!ind_personal.ind_birth.born)
+		if (ind_personal.ind_birth.born >= 0)
 			printf(", born %d", personal.birth.born);
-		if (!ind_personal.ind_birth.age)
+		if (ind_personal.ind_birth.age >= 0)
 			printf(", age = %d", personal.birth.age);
-		if (!ind_married)
-			printf(", married %s", married);
-		if (!ind_children.smallinteger)
+		if (ind_married >= 0)
+			printf(", married %10.10s", married);
+		if (ind_children.smallint >= 0)
 			printf(", children = %d", children.integer);
 		putchar('\n');
+
+		free(married);
+		married = NULL;
 	}
 
 	strcpy(msg, "close");
@@ -89,18 +92,20 @@ exec sql end declare section;
 
 	while (1) {
 		strcpy(msg, "fetch");
-		exec sql fetch in prep into :personal:ind_personal, :married:ind_married, :children.integer:ind_children.smallinteger;
+		exec sql fetch in prep into :personal:ind_personal, :married:ind_married, :children.integer:ind_children.smallint;
 		printf("%8.8s", personal.name.arr);
-		if (!ind_personal.ind_birth.born)
+		if (ind_personal.ind_birth.born >= 0)
 			printf(", born %d", personal.birth.born);
-		if (!ind_personal.ind_birth.age)
+		if (ind_personal.ind_birth.age >= 0)
 			printf(", age = %d", personal.birth.age);
-		if (!ind_married)
-			printf(", married %s", married);
-		if (!ind_children.smallinteger)
+		if (ind_married >= 0)
+			printf(", married %10.10s", married);
+		if (ind_children.smallint >= 0)
 			printf(", children = %d", children.integer);
 		putchar('\n');
 	}
+
+	free(married);
 
 	strcpy(msg, "close");
 	exec sql close prep;
