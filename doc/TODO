@@ -1,6 +1,6 @@
 TODO list for PostgreSQL
 ========================
-Last updated:		Wed Nov  6 01:20:47 EST 2002
+Last updated:		Wed Nov  6 12:50:56 EST 2002
 
 Current maintainer:	Bruce Momjian (pgman@candle.pha.pa.us)
 
@@ -417,7 +417,6 @@ Source Code
 * Remove memory/file descriptor freeing befor elog(ERROR)  (Bruce)
 * Create native Win32 port [win32]
 * Acquire lock on a relation before building a relcache entry for it
-* Move dbmirror and rserv from /contrib to gborg.postgresql.org
 
 ---------------------------------------------------------------------------
 
