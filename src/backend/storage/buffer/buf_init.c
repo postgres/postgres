@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/storage/buffer/buf_init.c,v 1.47 2001/11/05 17:46:27 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/storage/buffer/buf_init.c,v 1.47.2.1 2002/09/30 20:18:59 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -35,8 +35,6 @@
 #include "utils/hsearch.h"
 #include "utils/memutils.h"
 
-
-static void ShutdownBufferPoolAccess(void);
 
 /*
  *	if BMTRACE is defined, we trace the last 200 buffer allocations and
@@ -244,27 +242,6 @@ InitBufferPoolAccess(void)
 	 */
 	for (i = 0; i < NBuffers; i++)
 		BufferBlockPointers[i] = (Block) MAKE_PTR(BufferDescriptors[i].data);
-
-	/*
-	 * Now that buffer access is initialized, set up a callback to shut it
-	 * down again at backend exit.
-	 */
-	on_shmem_exit(ShutdownBufferPoolAccess, 0);
-}
-
-/*
- * Shut down buffer manager at backend exit.
- *
- * This is needed mainly to ensure that we don't leave any buffer reference
- * counts set during an error exit.
- */
-static void
-ShutdownBufferPoolAccess(void)
-{
-	/* Release any buffer context locks we are holding */
-	UnlockBuffers();
-	/* Release any buffer reference counts we are holding */
-	ResetBufferPool(false);
 }
 
 /* -----------------------------------------------------

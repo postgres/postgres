@@ -8,7 +8,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/bootstrap/bootstrap.c,v 1.120.2.2 2002/09/30 19:55:08 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/bootstrap/bootstrap.c,v 1.120.2.3 2002/09/30 20:18:59 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -359,6 +359,9 @@ BootstrapMain(int argc, char *argv[])
 
 	BaseInit();
 
+	if (IsUnderPostmaster)
+		InitDummyProcess();		/* needed to get LWLocks */
+
 	/*
 	 * XLOG operations
 	 */
@@ -376,8 +379,6 @@ BootstrapMain(int argc, char *argv[])
 			break;
 
 		case BS_XLOG_CHECKPOINT:
-			if (IsUnderPostmaster)
-				InitDummyProcess();		/* needed to get LWLocks */
 			CreateDummyCaches();
 			CreateCheckPoint(false, false);
 			SetSavedRedoRecPtr(); /* pass redo ptr back to postmaster */

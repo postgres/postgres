@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/storage/lmgr/proc.c,v 1.117 2001/12/28 18:16:43 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/storage/lmgr/proc.c,v 1.117.2.1 2002/09/30 20:18:59 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -449,6 +449,10 @@ ProcKill(void)
 
 	/* Abort any buffer I/O in progress */
 	AbortBufferIO();
+	/* Release any buffer context locks we are holding */
+	UnlockBuffers();
+	/* Release any buffer reference counts we are holding */
+	ResetBufferPool(false);
 
 	/* Get off any wait queue I might be on */
 	LockWaitCancel();
@@ -492,6 +496,10 @@ DummyProcKill(void)
 
 	/* Abort any buffer I/O in progress */
 	AbortBufferIO();
+	/* Release any buffer context locks we are holding */
+	UnlockBuffers();
+	/* Release any buffer reference counts we are holding */
+	ResetBufferPool(false);
 
 	/* I can't be on regular lock queues, so needn't check */
 
