@@ -3,7 +3,7 @@
  *	is for IP V4 CIDR notation, but prepared for V6: just
  *	add the necessary bits where the comments indicate.
  *
- *	$Id: inet.c,v 1.10 1998/10/22 00:35:23 momjian Exp $
+ *	$Id: inet.c,v 1.11 1998/10/22 04:58:07 momjian Exp $
  *	Jon Postel RIP 16 Oct 1998
  */
 
@@ -355,10 +355,22 @@ inet_host(inet *ip)
 	return (ret);
 }
 
+text *
+cidr_host(inet *ip)
+{
+		inet_host(ip);
+}
+
 int4
 inet_netmasklen(inet *ip)
 {
 	return ip_bits(ip);
+}
+
+int4
+cidr_netmasklen(inet *ip)
+{
+	return inet_netmasklen(ip);
 }
 
 text *
@@ -403,6 +415,12 @@ inet_broadcast(inet *ip)
 }
 
 text *
+cidr_broadcast(inet *ip)
+{
+	inet_broadcast(ip);
+}
+	
+text *
 inet_netmask(inet *ip)
 {
 	text	   *ret;
@@ -439,6 +457,12 @@ inet_netmask(inet *ip)
 	VARSIZE(ret) = len;
 	strcpy(VARDATA(ret), tmp);
 	return (ret);
+}
+
+text *
+cidr_netmask(inet *ip)
+{
+	inet_netmask(ip);
 }
 
 /*
