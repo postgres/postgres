@@ -1854,7 +1854,7 @@ public abstract class AbstractJdbc1DatabaseMetaData
 
 			// decide if we are returning a single column result.
 			if (!returnTypeType.equals("c")) {
-				byte[][] tuple = new byte[13][0];
+				byte[][] tuple = new byte[13][];
 				tuple[0] = null;
 				tuple[1] = schema;
 				tuple[2] = procedureName;
@@ -1874,7 +1874,7 @@ public abstract class AbstractJdbc1DatabaseMetaData
 			// Add a row for each argument.
 			for (int i=0; i<argTypes.size(); i++) {
 				int argOid = ((Integer)argTypes.elementAt(i)).intValue();
-				byte[][] tuple = new byte[13][0];
+				byte[][] tuple = new byte[13][];
 				tuple[0] = null;
 				tuple[1] = schema;
 				tuple[2] = procedureName;
@@ -1897,7 +1897,7 @@ public abstract class AbstractJdbc1DatabaseMetaData
 				ResultSet columnrs = connection.createStatement().executeQuery(columnsql);
 				while (columnrs.next()) {
 					int columnTypeOid = columnrs.getInt("atttypid");
-					byte[][] tuple = new byte[13][0];
+					byte[][] tuple = new byte[13][];
 					tuple[0] = null;
 					tuple[1] = schema;
 					tuple[2] = procedureName;
@@ -2199,7 +2199,7 @@ public abstract class AbstractJdbc1DatabaseMetaData
 		f[0] = new Field(connection, new String("TABLE_TYPE"), iVarcharOid, getMaxNameLength());
 		for (i=0; i < types.length; i++)
 		{
-			byte[][] tuple = new byte[1][0];
+			byte[][] tuple = new byte[1][];
 			tuple[0] = types[i].getBytes();
 			v.addElement(tuple);
 		}
@@ -2318,7 +2318,7 @@ public abstract class AbstractJdbc1DatabaseMetaData
 		ResultSet rs = connection.createStatement().executeQuery(sql);
 		while (rs.next())
 		{
-			byte[][] tuple = new byte[18][0];
+			byte[][] tuple = new byte[18][];
 			int typeOid = rs.getInt("atttypid");
 
 			tuple[0] = null;					// Catalog name, not supported
@@ -2328,6 +2328,11 @@ public abstract class AbstractJdbc1DatabaseMetaData
 			tuple[4] = Integer.toString(connection.getSQLType(typeOid)).getBytes();
 			String pgType = connection.getPGType(typeOid);
 			tuple[5] = pgType.getBytes();		// Type name
+
+			// by default no decimal_digits
+			// if the type is numeric or decimal we will
+			// overwrite later.
+			tuple[8] = "0".getBytes();
 
 			if (pgType.equals("bpchar") || pgType.equals("varchar"))
 			{
@@ -2465,7 +2470,7 @@ public abstract class AbstractJdbc1DatabaseMetaData
 				for (int j=0; j<grantees.size(); j++) {
 					String grantee = (String)grantees.elementAt(j);
 					String grantable = owner.equals(grantee) ? "YES" : "NO";
-					byte[][] tuple = new byte[8][0];
+					byte[][] tuple = new byte[8][];
 					tuple[0] = null;
 					tuple[1] = schemaName;
 					tuple[2] = tableName;
@@ -2567,7 +2572,7 @@ public abstract class AbstractJdbc1DatabaseMetaData
 				for (int j=0; j<grantees.size(); j++) {
 					String grantee = (String)grantees.elementAt(j);
 					String grantable = owner.equals(grantee) ? "YES" : "NO";
-					byte[][] tuple = new byte[7][0];
+					byte[][] tuple = new byte[7][];
 					tuple[0] = null;
 					tuple[1] = schema;
 					tuple[2] = table;
@@ -2819,7 +2824,7 @@ public abstract class AbstractJdbc1DatabaseMetaData
 		f[6] = new Field(connection, "DECIMAL_DIGITS", iInt2Oid, 2);
 		f[7] = new Field(connection, "PSEUDO_COLUMN", iInt2Oid, 2);
 
-		byte tuple[][] = new byte[8][0];
+		byte tuple[][] = new byte[8][];
 
 		/* Postgresql does not have any column types that are
 		 * automatically updated like some databases' timestamp type.
