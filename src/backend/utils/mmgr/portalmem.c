@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/mmgr/portalmem.c,v 1.44 2001/10/25 05:49:51 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/mmgr/portalmem.c,v 1.45 2002/02/14 15:24:09 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -168,6 +168,7 @@ PortalSetQuery(Portal portal,
 
 	portal->queryDesc = queryDesc;
 	portal->attinfo = attinfo;
+	portal->commandId = GetScanCommandId();
 	portal->state = state;
 	portal->atStart = true;		/* Allow fetch forward only */
 	portal->atEnd = false;
@@ -213,6 +214,7 @@ CreatePortal(char *name)
 	/* initialize portal query */
 	portal->queryDesc = NULL;
 	portal->attinfo = NULL;
+	portal->commandId = 0;
 	portal->state = NULL;
 	portal->atStart = true;		/* disallow fetches until query is set */
 	portal->atEnd = true;

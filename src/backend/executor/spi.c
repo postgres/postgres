@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/executor/spi.c,v 1.64 2002/01/03 20:30:47 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/executor/spi.c,v 1.65 2002/02/14 15:24:08 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -740,9 +740,9 @@ SPI_cursor_open(char *name, void *plan, Datum *Values, char *Nulls)
 	_SPI_current->processed = 0;
 	_SPI_current->tuptable = NULL;
 
-	/* Make up a portal name if none given */
 	if (name == NULL)
 	{
+		/* Make up a portal name if none given */
 		for (;;)
 		{
 			unnamed_portal_count++;
@@ -755,11 +755,13 @@ SPI_cursor_open(char *name, void *plan, Datum *Values, char *Nulls)
 
 		name = portalname;
 	}
-
-	/* Ensure the portal doesn't exist already */
-	portal = GetPortalByName(name);
-	if (portal != NULL)
-		elog(ERROR, "cursor \"%s\" already in use", name);
+	else
+	{
+		/* Ensure the portal doesn't exist already */
+		portal = GetPortalByName(name);
+		if (portal != NULL)
+			elog(ERROR, "cursor \"%s\" already in use", name);
+	}
 
 	/* Create the portal */
 	portal = CreatePortal(name);
@@ -1228,6 +1230,7 @@ _SPI_cursor_operation(Portal portal, bool forward, int count,
 	QueryDesc  *querydesc;
 	EState	   *estate;
 	MemoryContext oldcontext;
+	CommandId	savedId;
 	CommandDest olddest;
 
 	/* Check that the portal is valid */
@@ -1245,6 +1248,7 @@ _SPI_cursor_operation(Portal portal, bool forward, int count,
 
 	/* Switch to the portals memory context */
 	oldcontext = MemoryContextSwitchTo(PortalGetHeapMemory(portal));
+
 	querydesc = PortalGetQueryDesc(portal);
 	estate = PortalGetState(portal);
 
@@ -1252,6 +1256,14 @@ _SPI_cursor_operation(Portal portal, bool forward, int count,
 	/* or None (for move) */
 	olddest = querydesc->dest;
 	querydesc->dest = dest;
+
+	/*
+	 * Restore the scanCommandId that was current when the cursor was
+	 * opened.  This ensures that we see the same tuples throughout the
+	 * execution of the cursor.
+	 */
+	savedId = GetScanCommandId();
+	SetScanCommandId(PortalGetCommandId(portal));
 
 	/* Run the executor like PerformPortalFetch and remember states */
 	if (forward)
@@ -1278,6 +1290,11 @@ _SPI_cursor_operation(Portal portal, bool forward, int count,
 				portal->atStart = true;
 		}
 	}
+
+	/*
+	 * Restore outer command ID.
+	 */
+	SetScanCommandId(savedId);
 
 	/* Restore the old command destination and switch back to callers */
 	/* memory context */
