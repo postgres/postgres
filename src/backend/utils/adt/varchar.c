@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/utils/adt/varchar.c,v 1.103 2003/11/29 19:51:59 pgsql Exp $
+ *	  $PostgreSQL: pgsql/src/backend/utils/adt/varchar.c,v 1.104 2004/02/01 06:27:48 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -510,14 +510,16 @@ Datum
 bpcharlen(PG_FUNCTION_ARGS)
 {
 	BpChar	   *arg = PG_GETARG_BPCHAR_P(0);
+	int			len;
 
-	/* optimization for single byte encoding */
-	if (pg_database_encoding_max_length() <= 1)
-		PG_RETURN_INT32(VARSIZE(arg) - VARHDRSZ);
+	/* get number of bytes, ignoring trailing spaces */
+	len = bcTruelen(arg);
+	
+	/* in multibyte encoding, convert to number of characters */
+	if (pg_database_encoding_max_length() != 1)
+		len = pg_mbstrlen_with_len(VARDATA(arg), len);
 
-	PG_RETURN_INT32(
-			  pg_mbstrlen_with_len(VARDATA(arg), VARSIZE(arg) - VARHDRSZ)
-		);
+	PG_RETURN_INT32(len);
 }
 
 Datum

@@ -1,5 +1,5 @@
 <!--
-$PostgreSQL: pgsql/doc/src/sgml/datatype.sgml,v 1.140 2004/01/20 22:46:06 tgl Exp $
+$PostgreSQL: pgsql/doc/src/sgml/datatype.sgml,v 1.141 2004/02/01 06:27:48 tgl Exp $
 -->
 
  <chapter id="datatype">
@@ -902,6 +902,18 @@ CREATE TABLE <replaceable class="parameter">tablename</replaceable> (
    </para>
 
    <para>
+    Values of type <type>character</type> are physically padded
+    with spaces to the specified width <replaceable>n</>, and are
+    stored and displayed that way.  However, the padding spaces are
+    treated as semantically insignificant.  Trailing spaces are
+    disregarded when comparing two values of type <type>character</type>,
+    and they will be removed when converting a <type>character</type> value
+    to one of the other string types.  Note that trailing spaces
+    <emphasis>are</> semantically significant in
+    <type>character varying</type> and <type>text</type> values.
+   </para>
+
+   <para>
     The storage requirement for data of these types is 4 bytes plus the
     actual string, and in case of <type>character</type> plus the
     padding. Long strings are compressed by the system automatically, so
@@ -922,7 +934,11 @@ CREATE TABLE <replaceable class="parameter">tablename</replaceable> (
     <para>
      There are no performance differences between these three types,
      apart from the increased storage size when using the blank-padded
-     type.
+     type.  While <type>character(<replaceable>n</>)</type> has performance
+     advantages in some other database systems, it has no such advantages in
+     <productname>PostgreSQL</productname>.  In most situations
+     <type>text</type> or <type>character varying</type> should be used
+     instead.
     </para>
    </tip>
 
