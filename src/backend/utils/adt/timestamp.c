@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/utils/adt/timestamp.c,v 1.101 2004/03/15 03:29:22 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/utils/adt/timestamp.c,v 1.102 2004/03/22 01:38:17 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -48,6 +48,7 @@ static int	EncodeSpecialTimestamp(Timestamp dt, char *str);
 static Timestamp dt2local(Timestamp dt, int timezone);
 static void AdjustTimestampForTypmod(Timestamp *time, int32 typmod);
 static void AdjustIntervalForTypmod(Interval *interval, int32 typmod);
+static TimestampTz timestamp2timestamptz(Timestamp timestamp);
 
 
 /*****************************************************************************
@@ -1388,6 +1389,179 @@ timestamp_cmp(PG_FUNCTION_ARGS)
 {
 	Timestamp	dt1 = PG_GETARG_TIMESTAMP(0);
 	Timestamp	dt2 = PG_GETARG_TIMESTAMP(1);
+
+	PG_RETURN_INT32(timestamp_cmp_internal(dt1, dt2));
+}
+
+
+/*
+ * Crosstype comparison functions for timestamp vs timestamptz
+ */
+
+Datum
+timestamp_eq_timestamptz(PG_FUNCTION_ARGS)
+{
+	Timestamp	timestampVal = PG_GETARG_TIMESTAMP(0);
+	TimestampTz	dt2 = PG_GETARG_TIMESTAMPTZ(1);
+	TimestampTz	dt1;
+
+	dt1 = timestamp2timestamptz(timestampVal);
+
+	PG_RETURN_BOOL(timestamp_cmp_internal(dt1, dt2) == 0);
+}
+
+Datum
+timestamp_ne_timestamptz(PG_FUNCTION_ARGS)
+{
+	Timestamp	timestampVal = PG_GETARG_TIMESTAMP(0);
+	TimestampTz	dt2 = PG_GETARG_TIMESTAMPTZ(1);
+	TimestampTz	dt1;
+
+	dt1 = timestamp2timestamptz(timestampVal);
+
+	PG_RETURN_BOOL(timestamp_cmp_internal(dt1, dt2) != 0);
+}
+
+Datum
+timestamp_lt_timestamptz(PG_FUNCTION_ARGS)
+{
+	Timestamp	timestampVal = PG_GETARG_TIMESTAMP(0);
+	TimestampTz	dt2 = PG_GETARG_TIMESTAMPTZ(1);
+	TimestampTz	dt1;
+
+	dt1 = timestamp2timestamptz(timestampVal);
+
+	PG_RETURN_BOOL(timestamp_cmp_internal(dt1, dt2) < 0);
+}
+
+Datum
+timestamp_gt_timestamptz(PG_FUNCTION_ARGS)
+{
+	Timestamp	timestampVal = PG_GETARG_TIMESTAMP(0);
+	TimestampTz	dt2 = PG_GETARG_TIMESTAMPTZ(1);
+	TimestampTz	dt1;
+
+	dt1 = timestamp2timestamptz(timestampVal);
+
+	PG_RETURN_BOOL(timestamp_cmp_internal(dt1, dt2) > 0);
+}
+
+Datum
+timestamp_le_timestamptz(PG_FUNCTION_ARGS)
+{
+	Timestamp	timestampVal = PG_GETARG_TIMESTAMP(0);
+	TimestampTz	dt2 = PG_GETARG_TIMESTAMPTZ(1);
+	TimestampTz	dt1;
+
+	dt1 = timestamp2timestamptz(timestampVal);
+
+	PG_RETURN_BOOL(timestamp_cmp_internal(dt1, dt2) <= 0);
+}
+
+Datum
+timestamp_ge_timestamptz(PG_FUNCTION_ARGS)
+{
+	Timestamp	timestampVal = PG_GETARG_TIMESTAMP(0);
+	TimestampTz	dt2 = PG_GETARG_TIMESTAMPTZ(1);
+	TimestampTz	dt1;
+
+	dt1 = timestamp2timestamptz(timestampVal);
+
+	PG_RETURN_BOOL(timestamp_cmp_internal(dt1, dt2) >= 0);
+}
+
+Datum
+timestamp_cmp_timestamptz(PG_FUNCTION_ARGS)
+{
+	Timestamp	timestampVal = PG_GETARG_TIMESTAMP(0);
+	TimestampTz	dt2 = PG_GETARG_TIMESTAMPTZ(1);
+	TimestampTz	dt1;
+
+	dt1 = timestamp2timestamptz(timestampVal);
+
+	PG_RETURN_INT32(timestamp_cmp_internal(dt1, dt2));
+}
+
+Datum
+timestamptz_eq_timestamp(PG_FUNCTION_ARGS)
+{
+	TimestampTz	dt1 = PG_GETARG_TIMESTAMPTZ(0);
+	Timestamp	timestampVal = PG_GETARG_TIMESTAMP(1);
+	TimestampTz	dt2;
+
+	dt2 = timestamp2timestamptz(timestampVal);
+
+	PG_RETURN_BOOL(timestamp_cmp_internal(dt1, dt2) == 0);
+}
+
+Datum
+timestamptz_ne_timestamp(PG_FUNCTION_ARGS)
+{
+	TimestampTz	dt1 = PG_GETARG_TIMESTAMPTZ(0);
+	Timestamp	timestampVal = PG_GETARG_TIMESTAMP(1);
+	TimestampTz	dt2;
+
+	dt2 = timestamp2timestamptz(timestampVal);
+
+	PG_RETURN_BOOL(timestamp_cmp_internal(dt1, dt2) != 0);
+}
+
+Datum
+timestamptz_lt_timestamp(PG_FUNCTION_ARGS)
+{
+	TimestampTz	dt1 = PG_GETARG_TIMESTAMPTZ(0);
+	Timestamp	timestampVal = PG_GETARG_TIMESTAMP(1);
+	TimestampTz	dt2;
+
+	dt2 = timestamp2timestamptz(timestampVal);
+
+	PG_RETURN_BOOL(timestamp_cmp_internal(dt1, dt2) < 0);
+}
+
+Datum
+timestamptz_gt_timestamp(PG_FUNCTION_ARGS)
+{
+	TimestampTz	dt1 = PG_GETARG_TIMESTAMPTZ(0);
+	Timestamp	timestampVal = PG_GETARG_TIMESTAMP(1);
+	TimestampTz	dt2;
+
+	dt2 = timestamp2timestamptz(timestampVal);
+
+	PG_RETURN_BOOL(timestamp_cmp_internal(dt1, dt2) > 0);
+}
+
+Datum
+timestamptz_le_timestamp(PG_FUNCTION_ARGS)
+{
+	TimestampTz	dt1 = PG_GETARG_TIMESTAMPTZ(0);
+	Timestamp	timestampVal = PG_GETARG_TIMESTAMP(1);
+	TimestampTz	dt2;
+
+	dt2 = timestamp2timestamptz(timestampVal);
+
+	PG_RETURN_BOOL(timestamp_cmp_internal(dt1, dt2) <= 0);
+}
+
+Datum
+timestamptz_ge_timestamp(PG_FUNCTION_ARGS)
+{
+	TimestampTz	dt1 = PG_GETARG_TIMESTAMPTZ(0);
+	Timestamp	timestampVal = PG_GETARG_TIMESTAMP(1);
+	TimestampTz	dt2;
+
+	dt2 = timestamp2timestamptz(timestampVal);
+
+	PG_RETURN_BOOL(timestamp_cmp_internal(dt1, dt2) >= 0);
+}
+
+Datum
+timestamptz_cmp_timestamp(PG_FUNCTION_ARGS)
+{
+	TimestampTz	dt1 = PG_GETARG_TIMESTAMPTZ(0);
+	Timestamp	timestampVal = PG_GETARG_TIMESTAMP(1);
+	TimestampTz	dt2;
+
+	dt2 = timestamp2timestamptz(timestampVal);
 
 	PG_RETURN_INT32(timestamp_cmp_internal(dt1, dt2));
 }
@@ -3635,6 +3809,13 @@ Datum
 timestamp_timestamptz(PG_FUNCTION_ARGS)
 {
 	Timestamp	timestamp = PG_GETARG_TIMESTAMP(0);
+
+	PG_RETURN_TIMESTAMPTZ(timestamp2timestamptz(timestamp));
+}
+
+static TimestampTz
+timestamp2timestamptz(Timestamp timestamp)
+{
 	TimestampTz result;
 	struct tm	tt,
 			   *tm = &tt;
@@ -3658,7 +3839,7 @@ timestamp_timestamptz(PG_FUNCTION_ARGS)
 					 errmsg("timestamp out of range")));
 	}
 
-	PG_RETURN_TIMESTAMPTZ(result);
+	return result;
 }
 
 /* timestamptz_timestamp()

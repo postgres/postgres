@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2003, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/include/catalog/pg_proc.h,v 1.321 2004/03/21 22:29:11 tgl Exp $
+ * $PostgreSQL: pgsql/src/include/catalog/pg_proc.h,v 1.322 2004/03/22 01:38:18 tgl Exp $
  *
  * NOTES
  *	  The script catalog/genbki.sh reads this file and generates .bki
@@ -1324,15 +1324,15 @@ DATA(insert OID = 1031 (  aclitemin		   PGNSP PGUID 12 f f t f s 1 1033 "2275" _
 DESCR("I/O");
 DATA(insert OID = 1032 (  aclitemout	   PGNSP PGUID 12 f f t f s 1 2275 "1033" _null_  aclitemout - _null_ ));
 DESCR("I/O");
-DATA(insert OID = 1035 (  aclinsert		   PGNSP PGUID 12 f f t f s 2 1034 "1034 1033" _null_	aclinsert - _null_ ));
+DATA(insert OID = 1035 (  aclinsert		   PGNSP PGUID 12 f f t f i 2 1034 "1034 1033" _null_	aclinsert - _null_ ));
 DESCR("add/update ACL item");
-DATA(insert OID = 1036 (  aclremove		   PGNSP PGUID 12 f f t f s 2 1034 "1034 1033" _null_	aclremove - _null_ ));
+DATA(insert OID = 1036 (  aclremove		   PGNSP PGUID 12 f f t f i 2 1034 "1034 1033" _null_	aclremove - _null_ ));
 DESCR("remove ACL item");
-DATA(insert OID = 1037 (  aclcontains	   PGNSP PGUID 12 f f t f s 2 16 "1034 1033" _null_	aclcontains - _null_ ));
+DATA(insert OID = 1037 (  aclcontains	   PGNSP PGUID 12 f f t f i 2 16 "1034 1033" _null_	aclcontains - _null_ ));
 DESCR("does ACL contain item?");
-DATA(insert OID = 1062 (  aclitemeq		   PGNSP PGUID 12 f f t f s 2 16 "1033 1033" _null_	aclitem_eq - _null_ ));
+DATA(insert OID = 1062 (  aclitemeq		   PGNSP PGUID 12 f f t f i 2 16 "1033 1033" _null_	aclitem_eq - _null_ ));
 DESCR("equality operator for ACL items");
-DATA(insert OID = 1365 (  makeaclitem	   PGNSP PGUID 12 f f t f s 5 1033 "23 23 23 25 16" _null_ makeaclitem - _null_ ));
+DATA(insert OID = 1365 (  makeaclitem	   PGNSP PGUID 12 f f t f i 5 1033 "23 23 23 25 16" _null_ makeaclitem - _null_ ));
 DESCR("make ACL item");
 DATA(insert OID = 1038 (  seteval		   PGNSP PGUID 12 f f t t v 1 23 "26" _null_  seteval - _null_ ));
 DESCR("internal function supporting PostQuel-style sets");
@@ -3260,6 +3260,38 @@ DATA(insert OID = 2382 (  timestamptz_ne_date	   PGNSP PGUID 12 f f t f s 2 16 "
 DESCR("not equal");
 DATA(insert OID = 2383 (  timestamptz_cmp_date	   PGNSP PGUID 12 f f t f s 2 23 "1184 1082" _null_	timestamptz_cmp_date - _null_ ));
 DESCR("less-equal-greater");
+
+/* crosstype operations for timestamp vs. timestamptz */
+DATA(insert OID = 2520 (  timestamp_lt_timestamptz	PGNSP PGUID 12 f f t f s 2 16 "1114 1184" _null_	timestamp_lt_timestamptz - _null_ ));
+DESCR("less-than");
+DATA(insert OID = 2521 (  timestamp_le_timestamptz	PGNSP PGUID 12 f f t f s 2 16 "1114 1184" _null_	timestamp_le_timestamptz - _null_ ));
+DESCR("less-than-or-equal");
+DATA(insert OID = 2522 (  timestamp_eq_timestamptz	PGNSP PGUID 12 f f t f s 2 16 "1114 1184" _null_	timestamp_eq_timestamptz - _null_ ));
+DESCR("equal");
+DATA(insert OID = 2523 (  timestamp_gt_timestamptz	PGNSP PGUID 12 f f t f s 2 16 "1114 1184" _null_	timestamp_gt_timestamptz - _null_ ));
+DESCR("greater-than");
+DATA(insert OID = 2524 (  timestamp_ge_timestamptz	PGNSP PGUID 12 f f t f s 2 16 "1114 1184" _null_	timestamp_ge_timestamptz - _null_ ));
+DESCR("greater-than-or-equal");
+DATA(insert OID = 2525 (  timestamp_ne_timestamptz	PGNSP PGUID 12 f f t f s 2 16 "1114 1184" _null_	timestamp_ne_timestamptz - _null_ ));
+DESCR("not equal");
+DATA(insert OID = 2526 (  timestamp_cmp_timestamptz	PGNSP PGUID 12 f f t f s 2 23 "1114 1184" _null_	timestamp_cmp_timestamptz - _null_ ));
+DESCR("less-equal-greater");
+
+DATA(insert OID = 2527 (  timestamptz_lt_timestamp	PGNSP PGUID 12 f f t f s 2 16 "1184 1114" _null_	timestamptz_lt_timestamp - _null_ ));
+DESCR("less-than");
+DATA(insert OID = 2528 (  timestamptz_le_timestamp	PGNSP PGUID 12 f f t f s 2 16 "1184 1114" _null_	timestamptz_le_timestamp - _null_ ));
+DESCR("less-than-or-equal");
+DATA(insert OID = 2529 (  timestamptz_eq_timestamp	PGNSP PGUID 12 f f t f s 2 16 "1184 1114" _null_	timestamptz_eq_timestamp - _null_ ));
+DESCR("equal");
+DATA(insert OID = 2530 (  timestamptz_gt_timestamp	PGNSP PGUID 12 f f t f s 2 16 "1184 1114" _null_	timestamptz_gt_timestamp - _null_ ));
+DESCR("greater-than");
+DATA(insert OID = 2531 (  timestamptz_ge_timestamp	PGNSP PGUID 12 f f t f s 2 16 "1184 1114" _null_	timestamptz_ge_timestamp - _null_ ));
+DESCR("greater-than-or-equal");
+DATA(insert OID = 2532 (  timestamptz_ne_timestamp	PGNSP PGUID 12 f f t f s 2 16 "1184 1114" _null_	timestamptz_ne_timestamp - _null_ ));
+DESCR("not equal");
+DATA(insert OID = 2533 (  timestamptz_cmp_timestamp	PGNSP PGUID 12 f f t f s 2 23 "1184 1114" _null_	timestamptz_cmp_timestamp - _null_ ));
+DESCR("less-equal-greater");
+
 
 /* send/receive functions */
 DATA(insert OID = 2400 (  array_recv		   PGNSP PGUID 12 f f t f s 2 2277 "2281 26" _null_  array_recv - _null_ ));

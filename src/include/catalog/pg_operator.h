@@ -8,7 +8,7 @@
  * Portions Copyright (c) 1996-2003, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/include/catalog/pg_operator.h,v 1.124 2004/02/14 20:16:17 tgl Exp $
+ * $PostgreSQL: pgsql/src/include/catalog/pg_operator.h,v 1.125 2004/03/22 01:38:17 tgl Exp $
  *
  * NOTES
  *	  the genbki.sh script reads this file and generates .bki
@@ -822,31 +822,47 @@ DATA(insert OID = 2337 ( "~<>~" PGNSP PGUID b f 19 19 16 2337 2334 0 0 0 0 name_
 
 DATA(insert OID = 2345 ( "<"	   PGNSP PGUID b f	1082	1114   16 2375 2348  0 0 0 0 date_lt_timestamp scalarltsel scalarltjoinsel ));
 DATA(insert OID = 2346 ( "<="	   PGNSP PGUID b f	1082	1114   16 2374 2349  0 0 0 0 date_le_timestamp scalarltsel scalarltjoinsel ));
-DATA(insert OID = 2347 ( "="	   PGNSP PGUID b f	1082	1114   16 2373 2350  0 0 0 0 date_eq_timestamp eqsel eqjoinsel ));
+DATA(insert OID = 2347 ( "="	   PGNSP PGUID b f	1082	1114   16 2373 2350  1095 2062 2345 2349 date_eq_timestamp eqsel eqjoinsel ));
 DATA(insert OID = 2348 ( ">="	   PGNSP PGUID b f	1082	1114   16 2372 2345  0 0 0 0 date_ge_timestamp scalargtsel scalargtjoinsel ));
 DATA(insert OID = 2349 ( ">"	   PGNSP PGUID b f	1082	1114   16 2371 2346  0 0 0 0 date_gt_timestamp scalargtsel scalargtjoinsel ));
 DATA(insert OID = 2350 ( "<>"	   PGNSP PGUID b f	1082	1114   16 2376 2347  0 0 0 0 date_ne_timestamp neqsel neqjoinsel ));
 
 DATA(insert OID = 2358 ( "<"	   PGNSP PGUID b f	1082	1184   16 2388 2361  0 0 0 0 date_lt_timestamptz scalarltsel scalarltjoinsel ));
 DATA(insert OID = 2359 ( "<="	   PGNSP PGUID b f	1082	1184   16 2387 2362  0 0 0 0 date_le_timestamptz scalarltsel scalarltjoinsel ));
-DATA(insert OID = 2360 ( "="	   PGNSP PGUID b f	1082	1184   16 2386 2363  0 0 0 0 date_eq_timestamptz eqsel eqjoinsel ));
+DATA(insert OID = 2360 ( "="	   PGNSP PGUID b f	1082	1184   16 2386 2363  1095 1322 2358 2362 date_eq_timestamptz eqsel eqjoinsel ));
 DATA(insert OID = 2361 ( ">="	   PGNSP PGUID b f	1082	1184   16 2385 2358  0 0 0 0 date_ge_timestamptz scalargtsel scalargtjoinsel ));
 DATA(insert OID = 2362 ( ">"	   PGNSP PGUID b f	1082	1184   16 2384 2359  0 0 0 0 date_gt_timestamptz scalargtsel scalargtjoinsel ));
 DATA(insert OID = 2363 ( "<>"	   PGNSP PGUID b f	1082	1184   16 2389 2360  0 0 0 0 date_ne_timestamptz neqsel neqjoinsel ));
 
 DATA(insert OID = 2371 ( "<"	   PGNSP PGUID b f	1114	1082   16 2349 2374  0 0 0 0 timestamp_lt_date scalarltsel scalarltjoinsel ));
 DATA(insert OID = 2372 ( "<="	   PGNSP PGUID b f	1114	1082   16 2348 2375  0 0 0 0 timestamp_le_date scalarltsel scalarltjoinsel ));
-DATA(insert OID = 2373 ( "="	   PGNSP PGUID b f	1114	1082   16 2347 2376  0 0 0 0 timestamp_eq_date eqsel eqjoinsel ));
+DATA(insert OID = 2373 ( "="	   PGNSP PGUID b f	1114	1082   16 2347 2376  2062 1095 2371 2375 timestamp_eq_date eqsel eqjoinsel ));
 DATA(insert OID = 2374 ( ">="	   PGNSP PGUID b f	1114	1082   16 2346 2371  0 0 0 0 timestamp_ge_date scalargtsel scalargtjoinsel ));
 DATA(insert OID = 2375 ( ">"	   PGNSP PGUID b f	1114	1082   16 2345 2372  0 0 0 0 timestamp_gt_date scalargtsel scalargtjoinsel ));
 DATA(insert OID = 2376 ( "<>"	   PGNSP PGUID b f	1114	1082   16 2350 2373  0 0 0 0 timestamp_ne_date neqsel neqjoinsel ));
 
 DATA(insert OID = 2384 ( "<"	   PGNSP PGUID b f	1184	1082   16 2362 2387  0 0 0 0 timestamptz_lt_date scalarltsel scalarltjoinsel ));
 DATA(insert OID = 2385 ( "<="	   PGNSP PGUID b f	1184	1082   16 2361 2388  0 0 0 0 timestamptz_le_date scalarltsel scalarltjoinsel ));
-DATA(insert OID = 2386 ( "="	   PGNSP PGUID b f	1184	1082   16 2360 2389  0 0 0 0 timestamptz_eq_date eqsel eqjoinsel ));
+DATA(insert OID = 2386 ( "="	   PGNSP PGUID b f	1184	1082   16 2360 2389  1322 1095 2384 2388 timestamptz_eq_date eqsel eqjoinsel ));
 DATA(insert OID = 2387 ( ">="	   PGNSP PGUID b f	1184	1082   16 2359 2384  0 0 0 0 timestamptz_ge_date scalargtsel scalargtjoinsel ));
 DATA(insert OID = 2388 ( ">"	   PGNSP PGUID b f	1184	1082   16 2358 2385  0 0 0 0 timestamptz_gt_date scalargtsel scalargtjoinsel ));
 DATA(insert OID = 2389 ( "<>"	   PGNSP PGUID b f	1184	1082   16 2363 2386  0 0 0 0 timestamptz_ne_date neqsel neqjoinsel ));
+
+/* crosstype operations for timestamp vs. timestamptz */
+
+DATA(insert OID = 2534 ( "<"	   PGNSP PGUID b f	1114	1184   16 2544 2537  0 0 0 0 timestamp_lt_timestamptz scalarltsel scalarltjoinsel ));
+DATA(insert OID = 2535 ( "<="	   PGNSP PGUID b f	1114	1184   16 2543 2538  0 0 0 0 timestamp_le_timestamptz scalarltsel scalarltjoinsel ));
+DATA(insert OID = 2536 ( "="	   PGNSP PGUID b f	1114	1184   16 2542 2539  2062 1322 2534 2538 timestamp_eq_timestamptz eqsel eqjoinsel ));
+DATA(insert OID = 2537 ( ">="	   PGNSP PGUID b f	1114	1184   16 2541 2534  0 0 0 0 timestamp_ge_timestamptz scalargtsel scalargtjoinsel ));
+DATA(insert OID = 2538 ( ">"	   PGNSP PGUID b f	1114	1184   16 2540 2535  0 0 0 0 timestamp_gt_timestamptz scalargtsel scalargtjoinsel ));
+DATA(insert OID = 2539 ( "<>"	   PGNSP PGUID b f	1114	1184   16 2545 2536  0 0 0 0 timestamp_ne_timestamptz neqsel neqjoinsel ));
+
+DATA(insert OID = 2540 ( "<"	   PGNSP PGUID b f	1184	1114   16 2538 2543  0 0 0 0 timestamptz_lt_timestamp scalarltsel scalarltjoinsel ));
+DATA(insert OID = 2541 ( "<="	   PGNSP PGUID b f	1184	1114   16 2537 2544  0 0 0 0 timestamptz_le_timestamp scalarltsel scalarltjoinsel ));
+DATA(insert OID = 2542 ( "="	   PGNSP PGUID b f	1184	1114   16 2536 2545  1322 2062 2540 2544 timestamptz_eq_timestamp eqsel eqjoinsel ));
+DATA(insert OID = 2543 ( ">="	   PGNSP PGUID b f	1184	1114   16 2535 2540  0 0 0 0 timestamptz_ge_timestamp scalargtsel scalargtjoinsel ));
+DATA(insert OID = 2544 ( ">"	   PGNSP PGUID b f	1184	1114   16 2534 2541  0 0 0 0 timestamptz_gt_timestamp scalargtsel scalargtjoinsel ));
+DATA(insert OID = 2545 ( "<>"	   PGNSP PGUID b f	1184	1114   16 2539 2542  0 0 0 0 timestamptz_ne_timestamp neqsel neqjoinsel ));
 
 
 /*

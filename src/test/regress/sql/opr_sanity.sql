@@ -640,6 +640,23 @@ WHERE p1.amopopr = p2.oid AND p1.amopclaid = p3.oid AND
     p1.amopsubtype != 0 AND
     p1.amopsubtype != p2.oprright;
 
+-- Operators that are primary members of opclasses must be immutable (else
+-- it suggests that the index ordering isn't fixed).  Operators that are
+-- cross-type members need only be stable, since they are just shorthands
+-- for index probe queries.
+
+SELECT p1.amopclaid, p1.amopopr, p2.oprname, p3.prosrc
+FROM pg_amop AS p1, pg_operator AS p2, pg_proc AS p3
+WHERE p1.amopopr = p2.oid AND p2.oprcode = p3.oid AND
+    p1.amopsubtype = 0 AND
+    p3.provolatile != 'i';
+
+SELECT p1.amopclaid, p1.amopopr, p2.oprname, p3.prosrc
+FROM pg_amop AS p1, pg_operator AS p2, pg_proc AS p3
+WHERE p1.amopopr = p2.oid AND p2.oprcode = p3.oid AND
+    p1.amopsubtype != 0 AND
+    p3.provolatile = 'v';
+
 -- **************** pg_amproc ****************
 
 -- Look for illegal values in pg_amproc fields
@@ -738,3 +755,20 @@ WHERE p3.opcamid = (SELECT oid FROM pg_am WHERE amname = 'hash')
      OR pronargs != 1
 --   OR NOT physically_coercible(opcintype, proargtypes[0])
 );
+
+-- Support routines that are primary members of opclasses must be immutable
+-- (else it suggests that the index ordering isn't fixed).  But cross-type
+-- members need only be stable, since they are just shorthands
+-- for index probe queries.
+
+SELECT p1.amopclaid, p1.amproc, p2.prosrc
+FROM pg_amproc AS p1, pg_proc AS p2
+WHERE p1.amproc = p2.oid AND
+    p1.amprocsubtype = 0 AND
+    p2.provolatile != 'i';
+
+SELECT p1.amopclaid, p1.amproc, p2.prosrc
+FROM pg_amproc AS p1, pg_proc AS p2
+WHERE p1.amproc = p2.oid AND
+    p1.amprocsubtype != 0 AND
+    p2.provolatile = 'v';

@@ -6,7 +6,7 @@
  * Portions Copyright (c) 1996-2003, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/include/utils/timestamp.h,v 1.34 2004/02/14 20:16:18 tgl Exp $
+ * $PostgreSQL: pgsql/src/include/utils/timestamp.h,v 1.35 2004/03/22 01:38:18 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -168,6 +168,22 @@ extern Datum timestamp_finite(PG_FUNCTION_ARGS);
 extern Datum timestamp_cmp(PG_FUNCTION_ARGS);
 extern Datum timestamp_smaller(PG_FUNCTION_ARGS);
 extern Datum timestamp_larger(PG_FUNCTION_ARGS);
+
+extern Datum timestamp_eq_timestamptz(PG_FUNCTION_ARGS);
+extern Datum timestamp_ne_timestamptz(PG_FUNCTION_ARGS);
+extern Datum timestamp_lt_timestamptz(PG_FUNCTION_ARGS);
+extern Datum timestamp_le_timestamptz(PG_FUNCTION_ARGS);
+extern Datum timestamp_gt_timestamptz(PG_FUNCTION_ARGS);
+extern Datum timestamp_ge_timestamptz(PG_FUNCTION_ARGS);
+extern Datum timestamp_cmp_timestamptz(PG_FUNCTION_ARGS);
+
+extern Datum timestamptz_eq_timestamp(PG_FUNCTION_ARGS);
+extern Datum timestamptz_ne_timestamp(PG_FUNCTION_ARGS);
+extern Datum timestamptz_lt_timestamp(PG_FUNCTION_ARGS);
+extern Datum timestamptz_le_timestamp(PG_FUNCTION_ARGS);
+extern Datum timestamptz_gt_timestamp(PG_FUNCTION_ARGS);
+extern Datum timestamptz_ge_timestamp(PG_FUNCTION_ARGS);
+extern Datum timestamptz_cmp_timestamp(PG_FUNCTION_ARGS);
 
 extern Datum interval_in(PG_FUNCTION_ARGS);
 extern Datum interval_out(PG_FUNCTION_ARGS);
