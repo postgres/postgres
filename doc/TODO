@@ -6,7 +6,7 @@ TODO list for PostgreSQL
 Bracketed items "[]" have more detail.
 
 Current maintainer:	Bruce Momjian (pgman@candle.pha.pa.us)
-Last updated:		Tue Nov  9 21:48:31 EST 2004
+Last updated:		Wed Nov 10 00:47:03 EST 2004
 
 The most recent version of this document can be viewed at the PostgreSQL web
 site, http://www.PostgreSQL.org.
@@ -521,17 +521,6 @@ Clients
 	  into a single binary.
 
 	o Add CSV output format
-
-* psql tab completion
-
-	o Provide a list of conversions after ALTER CONVERSION?
-	o Support for ALTER SEQUENCE clauses
-	o Add RENAME TO to ALTER TRIGGER
-	o Support for ALTER USER
-	o Fix ALTER (GROUP|DOMAIN|...) <sth> DROP
-	o Support for ALTER LANGUAGE <sth> RENAME TO
-	o Improve support for COPY
-	o Improve support for ALTER TABLE
 
 * ECPG (?)
 	o Docs
