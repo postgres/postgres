@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/tcop/pquery.c,v 1.16 1998/06/04 17:26:47 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/tcop/pquery.c,v 1.17 1998/08/25 21:24:07 scrappy Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -35,13 +35,12 @@
 #include "executor/execdesc.h"
 #include "executor/executor.h"
 #include "tcop/pquery.h"
+#include "utils/ps_status.h"
 
 #include "commands/command.h"
 
 static char *CreateOperationTag(int operationType);
 static void ProcessQueryDesc(QueryDesc *queryDesc);
-
-extern const char **ps_status;	/* from postgres.c */
 
 
 /* ----------------------------------------------------------------
@@ -228,7 +227,7 @@ ProcessQueryDesc(QueryDesc *queryDesc)
 	plan = queryDesc->plantree;
 
 	operation = queryDesc->operation;
-	*ps_status = tag = CreateOperationTag(operation);
+	PS_SET_STATUS( tag = CreateOperationTag(operation) );
 	dest = queryDesc->dest;
 
 	/* ----------------

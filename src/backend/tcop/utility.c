@@ -9,7 +9,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/tcop/utility.c,v 1.46 1998/08/24 01:13:50 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/tcop/utility.c,v 1.47 1998/08/25 21:24:09 scrappy Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -49,6 +49,7 @@
 #include "tcop/utility.h"
 #include "fmgr.h"				/* For load_file() */
 #include "storage/fd.h"
+#include "utils/ps_status.h"
 
 #ifndef NO_SECURITY
 #include "miscadmin.h"
@@ -59,8 +60,6 @@
 void		DefineUser(CreateUserStmt *stmt);
 void		AlterUser(AlterUserStmt *stmt);
 void		RemoveUser(char *username);
-
-extern const char **ps_status;	/* from postgres.c */
 
 /* ----------------
  *		CHECK_IF_ABORTED() is used to avoid doing unnecessary
@@ -109,18 +108,18 @@ ProcessUtility(Node *parsetree,
 				switch (stmt->command)
 				{
 					case BEGIN_TRANS:
-						*ps_status = commandTag = "BEGIN";
+						PS_SET_STATUS( commandTag = "BEGIN" );
 						CHECK_IF_ABORTED();
 						BeginTransactionBlock();
 						break;
 
 					case END_TRANS:
-						*ps_status = commandTag = "END";
+						PS_SET_STATUS( commandTag = "END" );
 						EndTransactionBlock();
 						break;
 
 					case ABORT_TRANS:
-						*ps_status = commandTag = "ABORT";
+						PS_SET_STATUS( commandTag = "ABORT" );
 						UserAbortTransactionBlock();
 						break;
 				}
@@ -135,7 +134,7 @@ ProcessUtility(Node *parsetree,
 			{
 				ClosePortalStmt *stmt = (ClosePortalStmt *) parsetree;
 
-				*ps_status = commandTag = "CLOSE";
+				PS_SET_STATUS( commandTag = "CLOSE" );
 				CHECK_IF_ABORTED();
 
 				PerformPortalClose(stmt->portalname, dest);
@@ -149,7 +148,7 @@ ProcessUtility(Node *parsetree,
 				bool		forward;
 				int			count;
 
-				*ps_status = commandTag = (stmt->ismove) ? "MOVE" : "FETCH";
+				PS_SET_STATUS( commandTag = (stmt->ismove) ? "MOVE" : "FETCH" );
 				CHECK_IF_ABORTED();
 
 				forward = (bool) (stmt->direction == FORWARD);
@@ -170,7 +169,7 @@ ProcessUtility(Node *parsetree,
 			 *
 			 */
 		case T_CreateStmt:
-			*ps_status = commandTag = "CREATE";
+			PS_SET_STATUS( commandTag = "CREATE" );
 			CHECK_IF_ABORTED();
 
 			DefineRelation((CreateStmt *) parsetree, RELKIND_RELATION);
@@ -183,7 +182,7 @@ ProcessUtility(Node *parsetree,
 				List	   *args = stmt->relNames;
 				Relation	rel;
 
-				*ps_status = commandTag = "DROP";
+				PS_SET_STATUS( commandTag = "DROP" );
 				CHECK_IF_ABORTED();
 
 				foreach(arg, args)
@@ -223,7 +222,7 @@ ProcessUtility(Node *parsetree,
 			{
 				CopyStmt   *stmt = (CopyStmt *) parsetree;
 
-				*ps_status = commandTag = "COPY";
+				PS_SET_STATUS( commandTag = "COPY" );
 				CHECK_IF_ABORTED();
 
 				DoCopy(stmt->relname,
@@ -245,7 +244,7 @@ ProcessUtility(Node *parsetree,
 			{
 				AddAttrStmt *stmt = (AddAttrStmt *) parsetree;
 
-				*ps_status = commandTag = "ADD";
+				PS_SET_STATUS( commandTag = "ADD" );
 				CHECK_IF_ABORTED();
 
 				/*
@@ -266,7 +265,7 @@ ProcessUtility(Node *parsetree,
 			{
 				RenameStmt *stmt = (RenameStmt *) parsetree;
 
-				*ps_status = commandTag = "RENAME";
+				PS_SET_STATUS( commandTag = "RENAME" );
 				CHECK_IF_ABORTED();
 
 				relname = stmt->relname;
@@ -324,7 +323,7 @@ ProcessUtility(Node *parsetree,
 				AclItem    *aip;
 				unsigned	modechg;
 
-				*ps_status = commandTag = "CHANGE";
+				PS_SET_STATUS( commandTag = "CHANGE" );
 				CHECK_IF_ABORTED();
 
 				aip = stmt->aclitem;
@@ -357,7 +356,7 @@ ProcessUtility(Node *parsetree,
 			{
 				DefineStmt *stmt = (DefineStmt *) parsetree;
 
-				*ps_status = commandTag = "CREATE";
+				PS_SET_STATUS( commandTag = "CREATE" );
 				CHECK_IF_ABORTED();
 
 				switch (stmt->defType)
@@ -381,14 +380,14 @@ ProcessUtility(Node *parsetree,
 			{
 				ViewStmt   *stmt = (ViewStmt *) parsetree;
 
-				*ps_status = commandTag = "CREATE";
+				PS_SET_STATUS( commandTag = "CREATE" );
 				CHECK_IF_ABORTED();
 				DefineView(stmt->viewname, stmt->query);		/* retrieve parsetree */
 			}
 			break;
 
 		case T_ProcedureStmt:	/* CREATE FUNCTION */
-			*ps_status = commandTag = "CREATE";
+			PS_SET_STATUS( commandTag = "CREATE" );
 			CHECK_IF_ABORTED();
 			CreateFunction((ProcedureStmt *) parsetree, dest);	/* everything */
 			break;
@@ -397,7 +396,7 @@ ProcessUtility(Node *parsetree,
 			{
 				IndexStmt  *stmt = (IndexStmt *) parsetree;
 
-				*ps_status = commandTag = "CREATE";
+				PS_SET_STATUS( commandTag = "CREATE" );
 				CHECK_IF_ABORTED();
 				DefineIndex(stmt->relname,		/* relation name */
 							stmt->idxname,		/* index name */
@@ -421,14 +420,14 @@ ProcessUtility(Node *parsetree,
 				if (aclcheck_result != ACLCHECK_OK)
 					elog(ERROR, "%s: %s", relname, aclcheck_error_strings[aclcheck_result]);
 #endif
-				*ps_status = commandTag = "CREATE";
+				PS_SET_STATUS( commandTag = "CREATE" );
 				CHECK_IF_ABORTED();
 				DefineQueryRewrite(stmt);
 			}
 			break;
 
 		case T_CreateSeqStmt:
-			*ps_status = commandTag = "CREATE";
+			PS_SET_STATUS( commandTag = "CREATE" );
 			CHECK_IF_ABORTED();
 
 			DefineSequence((CreateSeqStmt *) parsetree);
@@ -438,7 +437,7 @@ ProcessUtility(Node *parsetree,
 			{
 				ExtendStmt *stmt = (ExtendStmt *) parsetree;
 
-				*ps_status = commandTag = "EXTEND";
+				PS_SET_STATUS( commandTag = "EXTEND" );
 				CHECK_IF_ABORTED();
 
 				ExtendIndex(stmt->idxname,		/* index name */
@@ -451,7 +450,7 @@ ProcessUtility(Node *parsetree,
 			{
 				RemoveStmt *stmt = (RemoveStmt *) parsetree;
 
-				*ps_status = commandTag = "DROP";
+				PS_SET_STATUS( commandTag = "DROP" );
 				CHECK_IF_ABORTED();
 
 				switch (stmt->removeType)
@@ -513,7 +512,7 @@ ProcessUtility(Node *parsetree,
 			{
 				RemoveAggrStmt *stmt = (RemoveAggrStmt *) parsetree;
 
-				*ps_status = commandTag = "DROP";
+				PS_SET_STATUS( commandTag = "DROP" );
 				CHECK_IF_ABORTED();
 				RemoveAggregate(stmt->aggname, stmt->aggtype);
 			}
@@ -523,7 +522,7 @@ ProcessUtility(Node *parsetree,
 			{
 				RemoveFuncStmt *stmt = (RemoveFuncStmt *) parsetree;
 
-				*ps_status = commandTag = "DROP";
+				PS_SET_STATUS( commandTag = "DROP" );
 				CHECK_IF_ABORTED();
 				RemoveFunction(stmt->funcname,
 							   length(stmt->args),
@@ -537,7 +536,7 @@ ProcessUtility(Node *parsetree,
 				char	   *type1 = (char *) NULL;
 				char	   *type2 = (char *) NULL;
 
-				*ps_status = commandTag = "DROP";
+				PS_SET_STATUS( commandTag = "DROP" );
 				CHECK_IF_ABORTED();
 
 				if (lfirst(stmt->args) != NULL)
@@ -556,7 +555,7 @@ ProcessUtility(Node *parsetree,
 			{
 				CreatedbStmt *stmt = (CreatedbStmt *) parsetree;
 
-				*ps_status = commandTag = "CREATEDB";
+				PS_SET_STATUS( commandTag = "CREATEDB" );
 				CHECK_IF_ABORTED();
 				createdb(stmt->dbname, stmt->dbpath, stmt->encoding);
 			}
@@ -566,7 +565,7 @@ ProcessUtility(Node *parsetree,
 			{
 				DestroydbStmt *stmt = (DestroydbStmt *) parsetree;
 
-				*ps_status = commandTag = "DESTROYDB";
+				PS_SET_STATUS( commandTag = "DESTROYDB" );
 				CHECK_IF_ABORTED();
 				destroydb(stmt->dbname);
 			}
@@ -577,7 +576,7 @@ ProcessUtility(Node *parsetree,
 			{
 				NotifyStmt *stmt = (NotifyStmt *) parsetree;
 
-				*ps_status = commandTag = "NOTIFY";
+				PS_SET_STATUS( commandTag = "NOTIFY" );
 				CHECK_IF_ABORTED();
 
 				Async_Notify(stmt->relname);
@@ -588,7 +587,7 @@ ProcessUtility(Node *parsetree,
 			{
 				ListenStmt *stmt = (ListenStmt *) parsetree;
 
-				*ps_status = commandTag = "LISTEN";
+				PS_SET_STATUS( commandTag = "LISTEN" );
 				CHECK_IF_ABORTED();
 
 				Async_Listen(stmt->relname, MyProcPid);
@@ -605,7 +604,7 @@ ProcessUtility(Node *parsetree,
 				FILE	   *fp;
 				char	   *filename;
 
-				*ps_status = commandTag = "LOAD";
+				PS_SET_STATUS( commandTag = "LOAD" );
 				CHECK_IF_ABORTED();
 
 				filename = stmt->filename;
@@ -621,7 +620,7 @@ ProcessUtility(Node *parsetree,
 			{
 				ClusterStmt *stmt = (ClusterStmt *) parsetree;
 
-				*ps_status = commandTag = "CLUSTER";
+				PS_SET_STATUS( commandTag = "CLUSTER" );
 				CHECK_IF_ABORTED();
 
 				cluster(stmt->relname, stmt->indexname);
@@ -629,7 +628,7 @@ ProcessUtility(Node *parsetree,
 			break;
 
 		case T_VacuumStmt:
-			*ps_status = commandTag = "VACUUM";
+			PS_SET_STATUS( commandTag = "VACUUM" );
 			CHECK_IF_ABORTED();
 			vacuum(((VacuumStmt *) parsetree)->vacrel,
 				   ((VacuumStmt *) parsetree)->verbose,
@@ -641,7 +640,7 @@ ProcessUtility(Node *parsetree,
 			{
 				ExplainStmt *stmt = (ExplainStmt *) parsetree;
 
-				*ps_status = commandTag = "EXPLAIN";
+				PS_SET_STATUS( commandTag = "EXPLAIN" );
 				CHECK_IF_ABORTED();
 
 				ExplainQuery(stmt->query, stmt->verbose, dest);
@@ -655,7 +654,7 @@ ProcessUtility(Node *parsetree,
 			{
 				RecipeStmt *stmt = (RecipeStmt *) parsetree;
 
-				*ps_status = commandTag = "EXECUTE RECIPE";
+				PS_SET_STATUS( commandTag = "EXECUTE RECIPE" );
 				CHECK_IF_ABORTED();
 				beginRecipe(stmt);
 			}
@@ -669,7 +668,7 @@ ProcessUtility(Node *parsetree,
 				VariableSetStmt *n = (VariableSetStmt *) parsetree;
 
 				SetPGVariable(n->name, n->value);
-				*ps_status = commandTag = "SET VARIABLE";
+				PS_SET_STATUS( commandTag = "SET VARIABLE" );
 			}
 			break;
 
@@ -678,7 +677,7 @@ ProcessUtility(Node *parsetree,
 				VariableShowStmt *n = (VariableShowStmt *) parsetree;
 
 				GetPGVariable(n->name);
-				*ps_status = commandTag = "SHOW VARIABLE";
+				PS_SET_STATUS( commandTag = "SHOW VARIABLE" );
 			}
 			break;
 
@@ -687,7 +686,7 @@ ProcessUtility(Node *parsetree,
 				VariableResetStmt *n = (VariableResetStmt *) parsetree;
 
 				ResetPGVariable(n->name);
-				*ps_status = commandTag = "RESET VARIABLE";
+				PS_SET_STATUS( commandTag = "RESET VARIABLE" );
 			}
 			break;
 
@@ -695,14 +694,14 @@ ProcessUtility(Node *parsetree,
 			 * ******************************** TRIGGER statements *******************************
 			 */
 		case T_CreateTrigStmt:
-			*ps_status = commandTag = "CREATE";
+			PS_SET_STATUS( commandTag = "CREATE" );
 			CHECK_IF_ABORTED();
 
 			CreateTrigger((CreateTrigStmt *) parsetree);
 			break;
 
 		case T_DropTrigStmt:
-			*ps_status = commandTag = "DROP";
+			PS_SET_STATUS( commandTag = "DROP" );
 			CHECK_IF_ABORTED();
 
 			DropTrigger((DropTrigStmt *) parsetree);
@@ -712,14 +711,14 @@ ProcessUtility(Node *parsetree,
 			 * ************* PROCEDURAL LANGUAGE statements *****************
 			 */
 		case T_CreatePLangStmt:
-			*ps_status = commandTag = "CREATE";
+			PS_SET_STATUS( commandTag = "CREATE" );
 			CHECK_IF_ABORTED();
 
 			CreateProceduralLanguage((CreatePLangStmt *) parsetree);
 			break;
 
 		case T_DropPLangStmt:
-			*ps_status = commandTag = "DROP";
+			PS_SET_STATUS( commandTag = "DROP" );
 			CHECK_IF_ABORTED();
 
 			DropProceduralLanguage((DropPLangStmt *) parsetree);
@@ -730,21 +729,21 @@ ProcessUtility(Node *parsetree,
 			 *
 			 */
 		case T_CreateUserStmt:
-			*ps_status = commandTag = "CREATE USER";
+			PS_SET_STATUS( commandTag = "CREATE USER" );
 			CHECK_IF_ABORTED();
 
 			DefineUser((CreateUserStmt *) parsetree);
 			break;
 
 		case T_AlterUserStmt:
-			*ps_status = commandTag = "ALTER USER";
+			PS_SET_STATUS( commandTag = "ALTER USER" );
 			CHECK_IF_ABORTED();
 
 			AlterUser((AlterUserStmt *) parsetree);
 			break;
 
 		case T_DropUserStmt:
-			*ps_status = commandTag = "DROP USER";
+			PS_SET_STATUS( commandTag = "DROP USER" );
 			CHECK_IF_ABORTED();
 
 			RemoveUser(((DropUserStmt *) parsetree)->user);

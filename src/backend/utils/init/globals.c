@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/init/globals.c,v 1.24 1998/07/09 03:28:51 scrappy Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/init/globals.c,v 1.25 1998/08/25 21:24:10 scrappy Exp $
  *
  * NOTES
  *	  Globals used all over the place should be declared here and not
@@ -43,7 +43,7 @@ bool		Quiet = false;
 bool		QueryCancel = false;
 
 int			MyProcPid;
-
+struct Port *MyProcPort;
 long		MyCancelKey;
 
 char	   *DataDir;
