@@ -6,7 +6,7 @@
  * Portions Copyright (c) 1996-2001, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- *	$Header: /cvsroot/pgsql/src/backend/parser/analyze.c,v 1.228 2002/04/09 20:35:51 tgl Exp $
+ *	$Header: /cvsroot/pgsql/src/backend/parser/analyze.c,v 1.229 2002/04/12 19:11:49 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -3204,8 +3204,8 @@ analyzeCreateSchemaStmt(CreateSchemaStmt *stmt)
 
 					if (elp->relation->schemaname == NULL)
 						elp->relation->schemaname = cxt.schemaname;
-					else if (strcmp(cxt.schemaname, elp->relation->schemaname))
-						elog(ERROR, "New table refers to a schema (%s)"
+					else if (strcmp(cxt.schemaname, elp->relation->schemaname) != 0)
+						elog(ERROR, "New table specifies a schema (%s)"
 							" different from the one being created (%s)",
 							elp->relation->schemaname, cxt.schemaname);
 
@@ -3223,8 +3223,8 @@ analyzeCreateSchemaStmt(CreateSchemaStmt *stmt)
 
 					if (elp->view->schemaname == NULL)
 						elp->view->schemaname = cxt.schemaname;
-					else if (strcmp(cxt.schemaname, elp->view->schemaname))
-						elog(ERROR, "New view refers to a schema (%s)"
+					else if (strcmp(cxt.schemaname, elp->view->schemaname) != 0)
+						elog(ERROR, "New view specifies a schema (%s)"
 							" different from the one being created (%s)",
 							elp->view->schemaname, cxt.schemaname);
 
