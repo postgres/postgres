@@ -32,6 +32,8 @@ LANGUAGE 'C' IMMUTABLE STRICT;
 
 COMMENT ON FUNCTION cube(text) IS 'convert text to cube';
 
+CREATE CAST (text AS cube) WITH FUNCTION cube(text) AS ASSIGNMENT;
+
 --
 -- External C-functions for R-tree methods
 --
