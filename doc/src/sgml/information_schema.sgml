@@ -1,4 +1,4 @@
-<!-- $Header: /cvsroot/pgsql/doc/src/sgml/information_schema.sgml,v 1.1 2003/05/18 20:55:56 petere Exp $ -->
+<!-- $Header: /cvsroot/pgsql/doc/src/sgml/information_schema.sgml,v 1.2 2003/05/25 09:36:09 petere Exp $ -->
 
 <chapter id="information-schema">
  <title>The Information Schema</title>
@@ -148,7 +148,8 @@
   <para>
    The view <literal>check_constraints</literal> contains all check
    constraints, either defined on a table or on a domain, that are
-   owned by the current user.
+   owned by the current user.  (The owner of the table or domain is
+   the owner of the constraint.)
   </para>
 
   <table>
@@ -266,7 +267,9 @@
   <para>
    The view <literal>columns</literal> contains information about all
    table columns (or view columns) in the database.  System columns
-   (<literal>oid</>, etc.) are not included.
+   (<literal>oid</>, etc.) are not included.  Only those columns are
+   shown that the current user has access to (by way of being the
+   owner or having some privilege).
   </para>
 
   <table>
@@ -335,16 +338,24 @@
      <row>
       <entry><literal>data_type</literal></entry>
       <entry><type>character_data</type></entry>
-      <entry>Data type of the column</entry>
+      <entry>
+       Data type of the column, if it is a built-in type, else
+       <literal>USER-DEFINED</literal> (in that case, the type is
+       identified in <literal>udt_name</literal> and associated
+       columns).  If the column is based on a domain, this column
+       refers to the type underlying the domain (and the domain is
+       identified in <literal>domain_name</literal> and associated
+       columns).
+      </entry>
      </row>
 
      <row>
       <entry><literal>character_maximum_length</literal></entry>
       <entry><type>cardinal_number</type></entry>
       <entry>
-       If the column has a character or bit string type, the declared
-       maximum length; null for all other data types or if no maximum
-       length was declared.
+       If <literal>data_type</literal> identifies a character or bit
+       string type, the declared maximum length; null for all other
+       data types or if no maximum length was declared.
       </entry>
      </row>
 
@@ -352,9 +363,10 @@
       <entry><literal>character_octet_length</literal></entry>
       <entry><type>cardinal_number</type></entry>
       <entry>
-       If the column has a character type, the maximum possible length
-       in octets (bytes) of a datum (this should not be of concern to
-       PostgreSQL users); null for all other data types.
+       If <literal>data_type</literal> identifies a character type,
+       the maximum possible length in octets (bytes) of a datum (this
+       should not be of concern to PostgreSQL users); null for all
+       other data types.
       </entry>
      </row>
 
@@ -362,11 +374,11 @@
       <entry><literal>numeric_precision</literal></entry>
       <entry><type>cardinal_number</type></entry>
       <entry>
-       If the column has a numeric type, this column contains the
-       (declared or implicit) precision of the type for this column.
-       The precision indicates the number of significant digits.  It
-       may be expressed in decimal (base 10) or binary (base 2) terms,
-       as specified in the column
+       If <literal>data_type</literal> identifies a numeric type, this
+       column contains the (declared or implicit) precision of the
+       type for this column.  The precision indicates the number of
+       significant digits.  It may be expressed in decimal (base 10)
+       or binary (base 2) terms, as specified in the column
        <literal>numeric_precision_radix</literal>.  For all other data
        types, this column is null.
       </entry>
@@ -376,8 +388,8 @@
       <entry><literal>numeric_precision_radix</literal></entry>
       <entry><type>cardinal_number</type></entry>
       <entry>
-       If the column has a numeric type, this column indicates in
-       which base the values in the columns
+       If <literal>data_type</literal> identifies a numeric type, this
+       column indicates in which base the values in the columns
        <literal>numeric_precision</literal> and
        <literal>numeric_scale</literal> are expressed.  The value is
        either 2 or 10.  For all other data types, this column is null.
@@ -388,11 +400,12 @@
       <entry><literal>numeric_scale</literal></entry>
       <entry><type>cardinal_number</type></entry>
       <entry>
-       If the column has an exact numeric type, this column contains
-       the (declared or implicit) scale of the type for this column.
-       The scale indicates the number of significant digits to the
-       right of the decimal point.  It may be expressed in decimal
-       (base 10) or binary (base 2) terms, as specified in the column
+       If <literal>data_type</literal> identifies an exact numeric
+       type, this column contains the (declared or implicit) scale of
+       the type for this column.  The scale indicates the number of
+       significant digits to the right of the decimal point.  It may
+       be expressed in decimal (base 10) or binary (base 2) terms, as
+       specified in the column
        <literal>numeric_precision_radix</literal>.  For all other data
        types, this column is null.
       </entry>
@@ -402,9 +415,9 @@
       <entry><literal>datetime_precision</literal></entry>
       <entry><type>cardinal_number</type></entry>
       <entry>
-       If the column has a date, time, or interval type, the declared
-       precision; null for all other data types or if no precision was
-       declared.
+       If <literal>data_type</literal> identifies a date, time, or
+       interval type, the declared precision; null for all other data
+       types or if no precision was declared.
       </entry>
      </row>
 
@@ -485,9 +498,9 @@
       <entry><literal>udt_catalog</literal></entry>
       <entry><type>sql_identifier</type></entry>
       <entry>
-       Name of the database that the column data type is defined in
-       (always the current database), null if the column has a domain
-       type.
+       Name of the database that the column data type (the underlying
+       type of the domain, if applicable) is defined in (always the
+       current database)
       </entry>
      </row>
 
@@ -495,15 +508,18 @@
       <entry><literal>udt_schema</literal></entry>
       <entry><type>sql_identifier</type></entry>
       <entry>
-       Name of the schema that the column data type is defined in,
-       null if the column has a domain type.
+       Name of the schema that the column data type (the underlying
+       type of the domain, if applicable) is defined in
       </entry>
      </row>
 
      <row>
       <entry><literal>udt_name</literal></entry>
       <entry><type>sql_identifier</type></entry>
-      <entry>Name of the column data type, null if the column has a domain type.</entry>
+      <entry>
+       Name of the column data type (the underlying type of the
+       domain, if applicable)
+      </entry>
      </row>
 
      <row>
@@ -533,13 +549,120 @@
      <row>
       <entry><literal>dtd_identifier</literal></entry>
       <entry><type>sql_identifier</type></entry>
-      <entry>Applies to a feature not available in PostgreSQL</entry>
+      <entry>
+       A unique identifier of the data type of the column (The
+       specific format of the identifier is not defined and not
+       guaranteed to remain the same in future versions.)
+      </entry>
      </row>
 
      <row>
       <entry><literal>is_self_referencing</literal></entry>
       <entry><type>character_data</type></entry>
       <entry>Applies to a feature not available in PostgreSQL</entry>
+     </row>
+    </tbody>
+   </tgroup>
+  </table>
+
+  <para>
+   Since data types can be defined in a variety of ways in SQL, and
+   PostgreSQL contains additional ways to define data types, their
+   representation in the information schema can be somewhat difficult.
+   The column <literal>data_type</literal> is supposed to identify the
+   underlying built-in type of the column.  In PostgreSQL, this means
+   that the type is defined in the system catalog schema
+   <literal>pg_catalog</literal>.  This column may be useful if the
+   application can handle the well-known built-in types specially (for
+   example, format the numeric types differently or use the data in
+   the precision columns).  The columns <literal>udt_name</literal>,
+   <literal>udt_schema</literal>, and <literal>udt_catalog</literal>
+   always identify the underlying data type of the column, even if the
+   column is based on a domain.  (Since PostgreSQL treats built-in
+   types like user-defined types, built-in types appear here as well.
+   This is an extension of the SQL standard.)  These columns should be
+   used if an application wants to process data differently according
+   to the type, because in that case it wouldn't matter if the column
+   is really based on a domain.  If the column is based on a domain,
+   the identity of the domain is stored in the columns
+   <literal>domain_name</literal>, <literal>domain_schema</literal>,
+   and <literal>domain_catalog</literal>.  If you want to pair up
+   columns with their associated data types and treat domains as
+   separate types, you could write <literal>coalesce(domain_name,
+   udt_name)</literal>, etc.  Finally, if you want to check whether
+   two columns have the same type, use
+   <literal>dtd_identifier</literal>.
+  </para>
+ </sect1>
+
+ <sect1 id="infoschema-constraint-table-usage">
+  <title><literal>constraint_table_usage</literal></title>
+
+  <para>
+   The view <literal>constraint_table_usage</literal> identifies all
+   tables in the current database that are used by some constraint and
+   are owned by the current user.  (This is different from the view
+   <literal>table_constraints</literal>, which identifies all table
+   constraints along with the table they are defined on.)  For a
+   foreign key constraint, this view identifies the table that the
+   foreign key references.  Unique and primary key constraints simply
+   identify the table they belong to.  Check constraints and not-null
+   constraints are not included in this view.
+  </para>
+
+  <table>
+   <title><literal>constraint_table_usage</literal> Columns</title>
+
+   <tgroup cols="3">
+    <thead>
+     <row>
+      <entry>Name</entry>
+      <entry>Data Type</entry>
+      <entry>Description</entry>
+     </row>
+    </thead>
+
+    <tbody>
+     <row>
+      <entry><literal>table_catalog</literal></entry>
+      <entry><type>sql_identifier</type></entry>
+      <entry>
+       Name of the database that contains the table that is used by
+       some constraint (always the current database)
+      </entry>
+     </row>
+
+     <row>
+      <entry><literal>table_schema</literal</entry>
+      <entry><type>sql_identifier</type></entry>
+      <entry>
+       Name of the schema that contains the table that is used by some
+       constraint
+      </entry>
+     </row>
+
+     <row>
+      <entry><literal>table_name</literal</entry>
+      <entry><type>sql_identifier</type></entry>
+      <entry>Name of the table that is used by some constraint</entry>
+     </row>
+
+     <row>
+      <entry><literal>constraint_catalog</literal></entry>
+      <entry><type>sql_identifier</type></entry>
+      <entry>Name of the database that contains the constraint (always the current database)</entry>
+     </row>
+
+     <row>
+      <entry><literal>constraint_schema</literal</entry>
+      <entry><type>sql_identifier</type></entry>
+      <entry>Name of the schema that contains the constraint</entry>
+     </row>
+
+     <row>
+      <entry><literal>constraint_name</literal</entry>
+      <entry><type>sql_identifier</type></entry>
+      <entry>Name of the constraint</entry>
      </row>
     </tbody>
    </tgroup>
@@ -551,7 +674,7 @@
 
   <para>
    The view <literal>domain_constraints</literal> contains all
-   constraints belonging to domains.
+   constraints belonging to domains owned by the current user.
   </para>
 
   <table>
@@ -883,26 +1006,36 @@
      <row>
       <entry><literal>unique_constraint_catalog</literal></entry>
       <entry><literal>sql_identifier</literal></entry>
-      <entry>Not yet implemented</entry>
+      <entry>
+       Name of the database that contains the unique or primary key
+       constraint that the foreign key constraint references (always
+       the current database)
+      </entry>
      </row>
 
      <row>
       <entry><literal>unique_constraint_schema</literal></entry>
       <entry><literal>sql_identifier</literal></entry>
-      <entry>Not yet implemented</entry>
+      <entry>
+       Name of the schema that contains the unique or primary key
+       constraint that the foreign key constraint references
+      </entry>
      </row>
 
      <row>
       <entry><literal>unique_constraint_name</literal></entry>
       <entry><literal>sql_identifier</literal></entry>
-      <entry>Not yet implemented</entry>
+      <entry>
+       Name of the unique or primary key constraint that the foreign
+       key constraint references
+      </entry>
      </row>
 
      <row>
       <entry><literal>match_option</literal></entry>
       <entry><literal>character_data</literal></entry>
       <entry>
-       Match option of the referential constraint:
+       Match option of the foreign key constraint:
        <literal>FULL</literal>, <literal>PARTIAL</literal>, or
        <literal>NONE</literal>.
       </entry>
@@ -912,7 +1045,7 @@
       <entry><literal>update_rule</literal></entry>
       <entry><literal>character_data</literal></entry>
       <entry>
-       Update rule of the referential constraint:
+       Update rule of the foreign key constraint:
        <literal>CASCADE</literal>, <literal>SET NULL</literal>,
        <literal>SET DEFAULT</literal>, <literal>RESTRICT</literal>,or
        <literal>NO ACTION</literal>.
@@ -923,7 +1056,7 @@
       <entry><literal>delete_rule</literal></entry>
       <entry><literal>character_data</literal></entry>
       <entry>
-       Delete rule of the referential constraint:
+       Delete rule of the foreign key constraint:
        <literal>CASCADE</literal>, <literal>SET NULL</literal>,
        <literal>SET DEFAULT</literal>, <literal>RESTRICT</literal>,or
        <literal>NO ACTION</literal>.
@@ -939,7 +1072,7 @@
 
   <para>
    The view <literal>schemata</literal> contains all schemas in the
-   current database.
+   current database that are owned by the current user.
   </para>
 
   <table>
@@ -1420,7 +1553,7 @@
 
   <para>
    The view <literal>table_constraints</literal> contains all
-   constraints belonging to tables.
+   constraints belonging to tables owned by the current user.
   </para>
 
   <table>
@@ -1583,7 +1716,9 @@
 
   <para>
    The view <literal>tables</literal> contains all tables and views
-   defined in the current database.
+   defined in the current database.  Only those tables and views are
+   shown that the current user has access to (by way of being the
+   owner or having some privilege).
   </para>
 
   <table>
@@ -1667,7 +1802,8 @@
 
   <para>
    The view <literal>views</literal> contains all views defined in the
-   current database.
+   current database.  Only those views are shown that the current user
+   has access to (by way of being the owner or having some privilege).
   </para>
 
   <table>

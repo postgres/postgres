@@ -4,7 +4,7 @@
  *
  * Copyright 2002, PostgreSQL Global Development Group
  *
- * $Id: information_schema.sql,v 1.5 2003/05/18 20:55:57 petere Exp $
+ * $Id: information_schema.sql,v 1.6 2003/05/25 09:36:09 petere Exp $
  */
 
 
@@ -76,12 +76,13 @@ CREATE VIEW check_constraints AS
            CAST(rs.nspname AS sql_identifier) AS constraint_schema,
            CAST(con.conname AS sql_identifier) AS constraint_name,
            CAST(con.consrc AS character_data) AS check_clause
-    FROM pg_namespace rs, pg_constraint con
-         left outer join pg_class c on (c.oid = con.conrelid)
-         left outer join pg_type t on (t.oid = con.contypid),
+    FROM pg_namespace rs,
+         pg_constraint con
+           LEFT OUTER JOIN pg_class c on (c.oid = con.conrelid)
+           LEFT OUTER JOIN pg_type t on (t.oid = con.contypid),
          pg_user u
     WHERE rs.oid = con.connamespace
-          AND u.usesysid IN (c.relowner, t.typowner)
+          AND u.usesysid = coalesce(c.relowner, t.typowner)
           AND u.usename = current_user
           AND con.contype = 'c';
 
@@ -150,30 +151,51 @@ CREATE VIEW columns AS
              CASE WHEN u.usename = current_user THEN a.adsrc ELSE null END
              AS character_data)
              AS column_default,
-           CAST(CASE WHEN a.attnotnull THEN 'NO' ELSE 'YES' END
+           CAST(CASE WHEN a.attnotnull OR (t.typtype = 'd' AND t.typnotnull) THEN 'NO' ELSE 'YES' END
              AS character_data)
              AS is_nullable,
-           CAST(format_type(a.atttypid, null) AS character_data)
+
+           CAST(
+             CASE WHEN t.typtype = 'd' THEN
+               CASE WHEN nbt.nspname = 'pg_catalog'
+                    THEN format_type(t.typbasetype, null)
+                    ELSE 'USER-DEFINED' END
+             ELSE
+               CASE WHEN nt.nspname = 'pg_catalog'
+                    THEN format_type(a.atttypid, null)
+                    ELSE 'USER-DEFINED' END
+             END
+             AS character_data)
              AS data_type,
 
            CAST(
-             CASE WHEN a.atttypid IN (25, 1042, 1043, 1560, 1562) AND a.atttypmod <> -1
-                  THEN a.atttypmod - 4
-                  ELSE null END
+             CASE WHEN t.typtype = 'd' THEN
+               CASE WHEN t.typbasetype IN (25, 1042, 1043, 1560, 1562) AND t.typtypmod <> -1
+                    THEN t.typtypmod - 4
+                    ELSE null END
+             ELSE
+               CASE WHEN a.atttypid IN (25, 1042, 1043, 1560, 1562) AND a.atttypmod <> -1
+                    THEN a.atttypmod - 4
+                    ELSE null END
+             END
              AS cardinal_number)
              AS character_maximum_length,
 
            CAST(
-             CASE WHEN a.atttypid IN (25, 1042, 1043) THEN 2^30 ELSE null END
+             CASE WHEN t.typtype = 'd' THEN
+               CASE WHEN t.typbasetype IN (25, 1042, 1043) THEN 2^30 ELSE null END
+             ELSE
+               CASE WHEN a.atttypid IN (25, 1042, 1043) THEN 2^30 ELSE null END
+             END
              AS cardinal_number)
              AS character_octet_length,
 
            CAST(
-             CASE a.atttypid
+             CASE (CASE WHEN t.typtype = 'd' THEN t.typbasetype ELSE a.atttypid END)
                WHEN 21 /*int2*/ THEN 16
                WHEN 23 /*int4*/ THEN 32
                WHEN 20 /*int8*/ THEN 64
-               WHEN 1700 /*numeric*/ THEN ((a.atttypmod - 4) >> 16) & 65535
+               WHEN 1700 /*numeric*/ THEN ((CASE WHEN t.typtype = 'd' THEN t.typtypmod ELSE a.atttypmod END - 4) >> 16) & 65535
                WHEN 700 /*float4*/ THEN 24 /*FLT_MANT_DIG*/
                WHEN 701 /*float8*/ THEN 53 /*DBL_MANT_DIG*/
                ELSE null END
@@ -181,25 +203,45 @@ CREATE VIEW columns AS
              AS numeric_precision,
 
            CAST(
-             CASE WHEN a.atttypid IN (21, 23, 20, 700, 701) THEN 2
-                  WHEN a.atttypid IN (1700) THEN 10
-                  ELSE null END
+             CASE WHEN t.typtype = 'd' THEN
+               CASE WHEN t.typbasetype IN (21, 23, 20, 700, 701) THEN 2
+                    WHEN t.typbasetype IN (1700) THEN 10
+                    ELSE null END
+             ELSE
+               CASE WHEN a.atttypid IN (21, 23, 20, 700, 701) THEN 2
+                    WHEN a.atttypid IN (1700) THEN 10
+                    ELSE null END
+             END
              AS cardinal_number)
              AS numeric_precision_radix,
 
            CAST(
-             CASE WHEN a.atttypid IN (21, 23, 20) THEN 0
-                  WHEN a.atttypid IN (1700) THEN (a.atttypmod - 4) & 65535
-                  ELSE null END
+             CASE WHEN t.typtype = 'd' THEN
+               CASE WHEN t.typbasetype IN (21, 23, 20) THEN 0
+                    WHEN t.typbasetype IN (1700) THEN (t.typtypmod - 4) & 65535
+                    ELSE null END
+             ELSE
+               CASE WHEN a.atttypid IN (21, 23, 20) THEN 0
+                    WHEN a.atttypid IN (1700) THEN (a.atttypmod - 4) & 65535
+                    ELSE null END
+             END
              AS cardinal_number)
              AS numeric_scale,
 
            CAST(
-             CASE WHEN a.atttypid IN (1083, 1114, 1184, 1266)
-                  THEN (CASE WHEN a.atttypmod <> -1 THEN a.atttypmod ELSE null END)
-                  WHEN a.atttypid IN (1186)
-                  THEN (CASE WHEN a.atttypmod <> -1 THEN a.atttypmod & 65535 ELSE null END)
-                  ELSE null END
+             CASE WHEN t.typtype = 'd' THEN
+               CASE WHEN t.typbasetype IN (1083, 1114, 1184, 1266)
+                    THEN (CASE WHEN t.typtypmod <> -1 THEN t.typtypmod ELSE null END)
+                    WHEN t.typbasetype IN (1186)
+                    THEN (CASE WHEN t.typtypmod <> -1 THEN t.typtypmod & 65535 ELSE null END)
+                    ELSE null END
+             ELSE
+               CASE WHEN a.atttypid IN (1083, 1114, 1184, 1266)
+                    THEN (CASE WHEN a.atttypmod <> -1 THEN a.atttypmod ELSE null END)
+                    WHEN a.atttypid IN (1186)
+                    THEN (CASE WHEN a.atttypmod <> -1 THEN a.atttypmod & 65535 ELSE null END)
+                    ELSE null END
+             END
              AS cardinal_number)
              AS datetime_precision,
 
@@ -221,34 +263,103 @@ CREATE VIEW columns AS
            CAST(CASE WHEN t.typtype = 'd' THEN t.typname ELSE null END
              AS sql_identifier) AS domain_name,
 
-           CAST(CASE WHEN t.typtype <> 'd' THEN current_database() ELSE null END
-             AS sql_identifier) AS udt_catalog,
-           CAST(CASE WHEN t.typtype <> 'd' THEN nt.nspname ELSE null END
-             AS sql_identifier) AS udt_schema,
-           CAST(CASE WHEN t.typtype <> 'd' THEN t.typname ELSE null END
-             AS sql_identifier) AS udt_name,
+           CAST(current_database() AS sql_identifier) AS udt_catalog,
+           CAST(coalesce(nbt.nspname, nt.nspname) AS sql_identifier) AS udt_schema,
+           CAST(coalesce(bt.typname, t.typname) AS sql_identifier) AS udt_name,
 
            CAST(null AS sql_identifier) AS scope_catalog,
            CAST(null AS sql_identifier) AS scope_schema,
            CAST(null AS sql_identifier) AS scope_name,
 
            CAST(null AS cardinal_number) AS maximum_cardinality,
-           CAST(null AS sql_identifier) AS dtd_identifier,
+           CAST(CAST(t.oid AS varchar) AS sql_identifier) AS dtd_identifier,
            CAST('NO' AS character_data) AS is_self_referencing
 
-           FROM (pg_attribute LEFT JOIN pg_attrdef ON attrelid = adrelid AND attnum = adnum) AS a,
-                pg_class c, pg_namespace nc, pg_type t, pg_namespace nt, pg_user u
+    FROM (pg_attribute LEFT JOIN pg_attrdef ON attrelid = adrelid AND attnum = adnum) AS a,
+         pg_class c, pg_namespace nc, pg_user u,
+         (pg_type t JOIN pg_namespace nt ON (t.typnamespace = nt.oid))
+           LEFT JOIN (pg_type bt JOIN pg_namespace nbt ON (bt.typnamespace = nbt.oid))
+           ON (t.typtype = 'd' AND t.typbasetype = bt.oid)
 
-           WHERE a.attrelid = c.oid
-                 AND a.atttypid = t.oid
-                 AND u.usesysid = c.relowner
-                 AND nc.oid = c.relnamespace
-                 AND nt.oid = t.typnamespace
-                 AND u.usename = current_user
+    WHERE a.attrelid = c.oid
+          AND a.atttypid = t.oid
+          AND u.usesysid = c.relowner
+          AND nc.oid = c.relnamespace
 
-                 AND a.attnum > 0 AND NOT a.attisdropped AND c.relkind in ('r', 'v');
+          AND a.attnum > 0 AND NOT a.attisdropped AND c.relkind in ('r', 'v')
+
+          AND (u.usename = current_user
+               OR has_table_privilege(c.oid, 'SELECT')
+               OR has_table_privilege(c.oid, 'INSERT')
+               OR has_table_privilege(c.oid, 'UPDATE')
+               OR has_table_privilege(c.oid, 'DELETE')
+               OR has_table_privilege(c.oid, 'RULE')
+               OR has_table_privilege(c.oid, 'RERERENCES')
+               OR has_table_privilege(c.oid, 'TRIGGER') );
 
 GRANT SELECT ON columns TO PUBLIC;
+
+
+/*
+ * 20.19
+ * CONSTRAINT_COLUMN_USAGE view
+ */
+
+-- FIXME: This only works for check constraints so far; for the others
+-- we need a built-in way to convert arrays to virtual tables.
+
+CREATE VIEW constraint_column_usage AS
+    SELECT CAST(current_database() AS sql_identifier) AS table_catalog,
+           CAST(tblschema AS sql_identifier) AS table_schema,
+           CAST(tblname AS sql_identifier) AS table_name,
+           CAST(colname AS sql_identifier) AS column_name,
+           CAST(current_database() AS sql_identifier) AS constraint_catalog,
+           CAST(cstrschema AS sql_identifier) AS constraint_schema,
+           CAST(cstrname AS sql_identifier) AS constraint_name
+
+    FROM (
+        SELECT DISTINCT nr.nspname, r.relname, r.relowner, a.attname, nc.nspname, c.conname
+          FROM pg_namespace nr, pg_class r, pg_attribute a, pg_depend d, pg_namespace nc, pg_constraint c
+          WHERE nr.oid = r.relnamespace
+            AND r.oid = a.attrelid
+            AND d.refclassid = (SELECT oid FROM pg_class WHERE relname = 'pg_class')
+            AND d.refobjid = r.oid
+            AND d.refobjsubid = a.attnum
+            AND d.classid = (SELECT oid FROM pg_class WHERE relname = 'pg_constraint')
+            AND d.objid = c.oid
+            AND c.connamespace = nc.oid
+            AND c.contype = 'c'
+      ) AS x (tblschema, tblname, tblowner, colname, cstrschema, cstrname),
+      pg_user u
+
+    WHERE x.tblowner = u.usesysid AND u.usename = current_user;
+
+GRANT SELECT ON constraint_column_usage TO PUBLIC;
+
+
+/*
+ * 20.20
+ * CONSTRAINT_TABLE_USAGE view
+ */
+
+CREATE VIEW constraint_table_usage AS
+    SELECT CAST(current_database() AS sql_identifier) AS table_catalog,
+           CAST(nr.nspname AS sql_identifier) AS table_schema,
+           CAST(r.relname AS sql_identifier) AS table_name,
+           CAST(current_database() AS sql_identifier) AS constraint_catalog,
+           CAST(nc.nspname AS sql_identifier) AS constraint_schema,
+           CAST(c.conname AS sql_identifier) AS constraint_name
+
+    FROM pg_constraint c, pg_namespace nc,
+         pg_class r, pg_namespace nr,
+         pg_user u
+
+    WHERE c.connamespace = nc.oid AND r.relnamespace = nr.oid
+          AND ( (c.contype = 'f' AND c.confrelid = r.oid)
+             OR (c.contype IN ('p', 'u') AND c.conrelid = r.oid) )
+          AND r.relowner = u.usesysid AND u.usename = current_user;
+
+GRANT SELECT ON constraint_table_usage TO PUBLIC;
 
 
 /*
@@ -284,9 +395,14 @@ GRANT SELECT ON domain_constraints TO PUBLIC;
 
 CREATE VIEW domains AS
     SELECT CAST(current_database() AS sql_identifier) AS domain_catalog,
-           CAST(rs.nspname AS sql_identifier) AS domain_schema,
+           CAST(nt.nspname AS sql_identifier) AS domain_schema,
            CAST(t.typname AS sql_identifier) AS domain_name,
-           CAST(format_type(t.typbasetype, null) AS character_data)
+
+           CAST(
+             CASE WHEN nbt.nspname = 'pg_catalog'
+               THEN format_type(t.typbasetype, null)
+               ELSE 'USER-DEFINED' END
+             AS character_data)
              AS data_type,
 
            CAST(
@@ -300,6 +416,7 @@ CREATE VIEW domains AS
              CASE WHEN t.typbasetype IN (25, 1042, 1043) THEN 2^30 ELSE null END
              AS cardinal_number)
              AS character_octet_length,
+
            CAST(null AS sql_identifier) AS character_set_catalog,
            CAST(null AS sql_identifier) AS character_set_schema,
            CAST(null AS sql_identifier) AS character_set_name,
@@ -346,42 +463,26 @@ CREATE VIEW domains AS
            CAST(null AS character_data) AS interval_type, -- XXX
            CAST(null AS character_data) AS interval_precision, -- XXX
 
-           CAST(typdefault AS character_data) AS domain_default,
+           CAST(t.typdefault AS character_data) AS domain_default,
 
-           CAST(CASE WHEN t.typbasetype = 0 THEN current_database() ELSE null END
-             AS sql_identifier) AS udt_catalog,
-           CAST(CASE WHEN t.typbasetype = 0 THEN rs.nspname ELSE null END
-             AS sql_identifier) AS udt_schema,
-           CAST(CASE WHEN t.typbasetype = 0 THEN t.typname ELSE null END
-             AS sql_identifier) AS udt_name,
+           CAST(current_database() AS sql_identifier) AS udt_catalog,
+           CAST(nbt.nspname AS sql_identifier) AS udt_schema,
+           CAST(bt.typname AS sql_identifier) AS udt_name,
 
            CAST(null AS sql_identifier) AS scope_catalog,
            CAST(null AS sql_identifier) AS scope_schema,
            CAST(null AS sql_identifier) AS scope_name,
 
            CAST(null AS cardinal_number) AS maximum_cardinality,
-           CAST(null AS sql_identifier) AS dtd_identifier
+           CAST(CAST(t.oid AS varchar) AS sql_identifier) AS dtd_identifier
 
-    FROM pg_namespace rs,
-         pg_type t,
-         pg_user u
+    FROM pg_type t, pg_namespace nt,
+         pg_type bt, pg_namespace nbt
 
-    WHERE rs.oid = t.typnamespace
-          AND t.typtype = 'd'
-          AND t.typowner = u.usesysid
-          AND (u.usename = current_user
-              OR EXISTS (SELECT 1
-                         FROM pg_user AS u2
-                         WHERE rs.nspowner = u2.usesysid
-                           AND u2.usename = current_user)
-              OR EXISTS (SELECT 1
-                         FROM pg_user AS u3,
-                              pg_attribute AS a3,
-                              pg_class AS c3
-                         WHERE u3.usesysid = c3.relowner
-                           AND a3.attrelid = c3.oid
-                           AND a3.atttypid = t.oid));
-
+    WHERE t.typnamespace = nt.oid
+          AND t.typbasetype = bt.oid
+          AND bt.typnamespace = nbt.oid
+          AND t.typtype = 'd';
 
 GRANT SELECT ON domains TO PUBLIC;
 
@@ -396,8 +497,8 @@ CREATE VIEW referential_constraints AS
            CAST(ncon.nspname AS sql_identifier) AS constraint_schema,
            CAST(con.conname AS sql_identifier) AS constraint_name,
            CAST(current_database() AS sql_identifier) AS unique_constraint_catalog,
-           CAST(null AS sql_identifier) AS unique_constraint_schema, -- XXX
-           CAST(null AS sql_identifier) AS unique_constraint_name, -- XXX
+           CAST(npkc.nspname AS sql_identifier) AS unique_constraint_schema,
+           CAST(pkc.conname AS sql_identifier) AS unique_constraint_name,
 
            CAST(
              CASE con.confmatchtype WHEN 'f' THEN 'FULL'
@@ -423,11 +524,16 @@ CREATE VIEW referential_constraints AS
 
     FROM pg_namespace ncon,
          pg_constraint con,
-         pg_class r,
+         pg_class c,
+         pg_constraint pkc,
+         pg_namespace npkc,
          pg_user u
 
     WHERE ncon.oid = con.connamespace
-          AND con.conrelid = r.oid AND r.relowner = u.usesysid
+          AND con.conrelid = c.oid
+          AND con.confkey = pkc.conkey
+          AND pkc.connamespace = npkc.oid
+          AND c.relowner = u.usesysid
           AND u.usename = current_user;
 
 GRANT SELECT ON referential_constraints TO PUBLIC;
@@ -714,13 +820,15 @@ CREATE VIEW tables AS
     FROM pg_namespace nc, pg_class c, pg_user u
 
     WHERE c.relnamespace = nc.oid AND u.usesysid = c.relowner
+          AND c.relkind IN ('r', 'v')
           AND (u.usename = current_user
-               OR EXISTS(SELECT 1 FROM information_schema.table_privileges tp
-                                  WHERE tp.table_schema = nc.nspname
-                                        AND tp.table_name = c.relname
-                                        AND tp.grantee = current_user))
-
-          AND c.relkind IN ('r', 'v');
+               OR has_table_privilege(c.oid, 'SELECT')
+               OR has_table_privilege(c.oid, 'INSERT')
+               OR has_table_privilege(c.oid, 'UPDATE')
+               OR has_table_privilege(c.oid, 'DELETE')
+               OR has_table_privilege(c.oid, 'RULE')
+               OR has_table_privilege(c.oid, 'RERERENCES')
+               OR has_table_privilege(c.oid, 'TRIGGER') );
 
 GRANT SELECT ON tables TO PUBLIC;
 
@@ -777,12 +885,14 @@ CREATE VIEW views AS
     FROM pg_namespace nc, pg_class c, pg_user u
 
     WHERE c.relnamespace = nc.oid AND u.usesysid = c.relowner
+          AND c.relkind = 'v'
           AND (u.usename = current_user
-               OR EXISTS(SELECT 1 FROM information_schema.table_privileges tp
-                                  WHERE tp.table_schema = nc.nspname
-                                        AND tp.table_name = c.relname
-                                        AND tp.grantee = current_user))
-
-          AND c.relkind = 'v';
+               OR has_table_privilege(c.oid, 'SELECT')
+               OR has_table_privilege(c.oid, 'INSERT')
+               OR has_table_privilege(c.oid, 'UPDATE')
+               OR has_table_privilege(c.oid, 'DELETE')
+               OR has_table_privilege(c.oid, 'RULE')
+               OR has_table_privilege(c.oid, 'RERERENCES')
+               OR has_table_privilege(c.oid, 'TRIGGER') );
 
 GRANT SELECT ON views TO PUBLIC;
