@@ -1,5 +1,5 @@
 -- PostgreSQL catalog extensions for ODBC compatibility
--- $Header: /cvsroot/pgsql/src/interfaces/odbc/Attic/odbc.sql,v 1.6 2001/12/10 00:11:06 thomas Exp $
+-- $Header: /cvsroot/pgsql/src/interfaces/odbc/Attic/odbc.sql,v 1.7 2001/12/21 06:01:36 thomas Exp $
 
 -- ODBC functions are described here:
 -- <http://msdn.microsoft.com/library/en-us/odbc/htm/odbcscalar_functions.asp>
@@ -210,18 +210,6 @@ CREATE OR REPLACE FUNCTION year(timestamp) RETURNS integer AS '
 
 
 -- System Functions
-
-CREATE OR REPLACE FUNCTION odbc_user() RETURNS text AS '
-    SELECT CAST(current_user AS TEXT);
-' LANGUAGE SQL;
-
-CREATE OR REPLACE FUNCTION odbc_current_user() RETURNS text AS '
-    SELECT CAST(current_user AS TEXT);
-' LANGUAGE SQL;
-
-CREATE OR REPLACE FUNCTION odbc_session_user() RETURNS text AS '
-    SELECT CAST(session_user AS TEXT);
-' LANGUAGE SQL;
 -- ++++++++++++++++
 --
 -- Built-in: USER
