@@ -26,7 +26,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/executor/execMain.c,v 1.227 2004/01/14 23:01:54 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/executor/execMain.c,v 1.228 2004/01/22 02:23:21 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -591,7 +591,8 @@ InitPlan(QueryDesc *queryDesc, bool explainOnly)
 	if (operation == CMD_SELECT && parseTree->into != NULL)
 	{
 		do_select_into = true;
-		estate->es_force_oids = parseTree->intoHasOids;
+		estate->es_select_into = true;
+		estate->es_into_oids = parseTree->intoHasOids;
 	}
 
 	/*
@@ -895,6 +896,63 @@ initResultRelInfo(ResultRelInfo *resultRelInfo,
 	if (resultRelationDesc->rd_rel->relhasindex &&
 		operation != CMD_DELETE)
 		ExecOpenIndices(resultRelInfo);
+}
+
+/*
+ *		ExecContextForcesOids
+ *
+ * This is pretty grotty: when doing INSERT, UPDATE, or SELECT INTO,
+ * we need to ensure that result tuples have space for an OID iff they are
+ * going to be stored into a relation that has OIDs.  In other contexts
+ * we are free to choose whether to leave space for OIDs in result tuples
+ * (we generally don't want to, but we do if a physical-tlist optimization
+ * is possible).  This routine checks the plan context and returns TRUE if the
+ * choice is forced, FALSE if the choice is not forced.  In the TRUE case,
+ * *hasoids is set to the required value.
+ *
+ * One reason this is ugly is that all plan nodes in the plan tree will emit
+ * tuples with space for an OID, though we really only need the topmost node
+ * to do so.  However, node types like Sort don't project new tuples but just
+ * return their inputs, and in those cases the requirement propagates down
+ * to the input node.  Eventually we might make this code smart enough to
+ * recognize how far down the requirement really goes, but for now we just
+ * make all plan nodes do the same thing if the top level forces the choice.
+ *
+ * We assume that estate->es_result_relation_info is already set up to
+ * describe the target relation.  Note that in an UPDATE that spans an
+ * inheritance tree, some of the target relations may have OIDs and some not.
+ * We have to make the decisions on a per-relation basis as we initialize
+ * each of the child plans of the topmost Append plan.
+ *
+ * SELECT INTO is even uglier, because we don't have the INTO relation's
+ * descriptor available when this code runs; we have to look aside at a
+ * flag set by InitPlan().
+ */
+bool
+ExecContextForcesOids(PlanState *planstate, bool *hasoids)
+{
+	if (planstate->state->es_select_into)
+	{
+		*hasoids = planstate->state->es_into_oids;
+		return true;
+	}
+	else
+	{
+		ResultRelInfo *ri = planstate->state->es_result_relation_info;
+
+		if (ri != NULL)
+		{
+			Relation	rel = ri->ri_RelationDesc;
+
+			if (rel != NULL)
+			{
+				*hasoids = rel->rd_rel->relhasoids;
+				return true;
+			}
+		}
+	}
+
+	return false;
 }
 
 /* ----------------------------------------------------------------
@@ -2058,7 +2116,8 @@ EvalPlanQualStart(evalPlanQual *epq, EState *estate, evalPlanQual *priorepq)
 			palloc0(estate->es_topPlan->nParamExec * sizeof(ParamExecData));
 	epqstate->es_rowMark = estate->es_rowMark;
 	epqstate->es_instrument = estate->es_instrument;
-	epqstate->es_force_oids = estate->es_force_oids;
+	epqstate->es_select_into = estate->es_select_into;
+	epqstate->es_into_oids = estate->es_into_oids;
 	epqstate->es_topPlan = estate->es_topPlan;
 
 	/*

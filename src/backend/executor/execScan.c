@@ -12,7 +12,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/executor/execScan.c,v 1.29 2003/11/29 19:51:48 pgsql Exp $
+ *	  $PostgreSQL: pgsql/src/backend/executor/execScan.c,v 1.30 2004/01/22 02:23:21 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -23,7 +23,7 @@
 #include "utils/memutils.h"
 
 
-static bool tlist_matches_tupdesc(List *tlist, Index varno, TupleDesc tupdesc);
+static bool tlist_matches_tupdesc(PlanState *ps, List *tlist, Index varno, TupleDesc tupdesc);
 
 
 /* ----------------------------------------------------------------
@@ -180,7 +180,8 @@ ExecAssignScanProjectionInfo(ScanState *node)
 {
 	Scan	   *scan = (Scan *) node->ps.plan;
 
-	if (tlist_matches_tupdesc(scan->plan.targetlist,
+	if (tlist_matches_tupdesc(&node->ps,
+							  scan->plan.targetlist,
 							  scan->scanrelid,
 							node->ss_ScanTupleSlot->ttc_tupleDescriptor))
 		node->ps.ps_ProjInfo = NULL;
@@ -189,11 +190,13 @@ ExecAssignScanProjectionInfo(ScanState *node)
 }
 
 static bool
-tlist_matches_tupdesc(List *tlist, Index varno, TupleDesc tupdesc)
+tlist_matches_tupdesc(PlanState *ps, List *tlist, Index varno, TupleDesc tupdesc)
 {
 	int			numattrs = tupdesc->natts;
 	int			attrno;
+	bool		hasoid;
 
+	/* Check the tlist attributes */
 	for (attrno = 1; attrno <= numattrs; attrno++)
 	{
 		Form_pg_attribute att_tup = tupdesc->attrs[attrno - 1];
@@ -218,6 +221,14 @@ tlist_matches_tupdesc(List *tlist, Index varno, TupleDesc tupdesc)
 
 	if (tlist)
 		return false;			/* tlist too long */
+
+	/*
+	 * If the plan context requires a particular hasoid setting, then
+	 * that has to match, too.
+	 */
+	if (ExecContextForcesOids(ps, &hasoid) &&
+		hasoid != tupdesc->tdhasoid)
+		return false;
 
 	return true;
 }

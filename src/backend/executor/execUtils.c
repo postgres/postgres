@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/executor/execUtils.c,v 1.108 2003/12/18 20:21:37 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/executor/execUtils.c,v 1.109 2004/01/22 02:23:21 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -201,7 +201,8 @@ CreateExecutorState(void)
 	estate->es_rowMark = NIL;
 
 	estate->es_instrument = false;
-	estate->es_force_oids = false;
+	estate->es_select_into = false;
+	estate->es_into_oids = false;
 
 	estate->es_exprcontexts = NIL;
 
@@ -446,43 +447,17 @@ ExecAssignResultTypeFromOuterPlan(PlanState *planstate)
 void
 ExecAssignResultTypeFromTL(PlanState *planstate)
 {
-	bool		hasoid = false;
+	bool		hasoid;
 	TupleDesc	tupDesc;
 
-	/*
-	 * This is pretty grotty: we need to ensure that result tuples have
-	 * space for an OID iff they are going to be stored into a relation
-	 * that has OIDs.  We assume that estate->es_result_relation_info is
-	 * already set up to describe the target relation.	One reason this is
-	 * ugly is that all plan nodes in the plan tree will emit tuples with
-	 * space for an OID, though we really only need the topmost plan to do
-	 * so.
-	 *
-	 * It would be better to have InitPlan adjust the topmost plan node's
-	 * output descriptor after plan tree initialization.  However, that
-	 * doesn't quite work because in an UPDATE that spans an inheritance
-	 * tree, some of the target relations may have OIDs and some not. We
-	 * have to make the decision on a per-relation basis as we initialize
-	 * each of the child plans of the topmost Append plan.	So, this is
-	 * ugly but it works, for now ...
-	 *
-	 * SELECT INTO is also pretty grotty, because we don't yet have the INTO
-	 * relation's descriptor at this point; we have to look aside at a
-	 * flag set by InitPlan().
-	 */
-	if (planstate->state->es_force_oids)
-		hasoid = true;
+	if (ExecContextForcesOids(planstate, &hasoid))
+	{
+		/* context forces OID choice; hasoid is now set correctly */
+	}
 	else
 	{
-		ResultRelInfo *ri = planstate->state->es_result_relation_info;
-
-		if (ri != NULL)
-		{
-			Relation	rel = ri->ri_RelationDesc;
-
-			if (rel != NULL)
-				hasoid = rel->rd_rel->relhasoids;
-		}
+		/* given free choice, don't leave space for OIDs in result tuples */
+		hasoid = false;
 	}
 
 	/*
