@@ -53,6 +53,6 @@ END`"
 	echo "${BS}connect template1 $POSTGRES_USER"
 	echo "create database $DATABASE;"
 	echo "${BS}connect $DATABASE $POSTGRES_USER"
-	pg_dump "$@" $DATABASE
+	pg_dump "$@" $DATABASE || echo "pg_dump failed on $DATABASE" 1>&2
 done
 # done
