@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/bin/psql/Attic/psql.c,v 1.181 1999/05/30 15:32:45 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/bin/psql/Attic/psql.c,v 1.182 1999/06/04 21:21:13 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -421,6 +421,7 @@ tableList(PsqlSettings *pset, bool deep_tablelist, char info_type,
 	char	   *rr;
 	PGresult   *res;
 	int			usePipe = 0;
+	bool		haveIndexes = false;
 	char	   *pagerenv;
 	FILE	   *fout;
 
@@ -440,27 +441,39 @@ tableList(PsqlSettings *pset, bool deep_tablelist, char info_type,
 	listbuf[0] = '\0';
 	strcat(listbuf, "SELECT usename, relname, relkind, relhasrules ");
 	strcat(listbuf, "FROM pg_class, pg_user ");
+	strcat(listbuf, "WHERE usesysid = relowner ");
 	switch (info_type)
 	{
 		case 't':
-			strcat(listbuf, "WHERE ( relkind = 'r') ");
+			strcat(listbuf, "and ( relkind = 'r') ");
 			break;
 		case 'i':
-			strcat(listbuf, "WHERE ( relkind = 'i') ");
+			strcat(listbuf, "and ( relkind = 'i') ");
+			haveIndexes = true;
 			break;
 		case 'S':
-			strcat(listbuf, "WHERE ( relkind = 'S') ");
+			strcat(listbuf, "and ( relkind = 'S') ");
 			break;
 		case 'b':
 		default:
-			strcat(listbuf, "WHERE ( relkind = 'r' OR relkind = 'i' OR relkind = 'S') ");
+			strcat(listbuf, "and ( relkind = 'r' OR relkind = 'i' OR relkind = 'S') ");
+			haveIndexes = true;
 			break;
 	}
 	if (!system_tables)
-		strcat(listbuf, "  and relname !~ '^pg_'");
+		strcat(listbuf, "and relname !~ '^pg_' ");
 	else
-		strcat(listbuf, "  and relname ~ '^pg_'");
-	strcat(listbuf, " and usesysid = relowner");
+		strcat(listbuf, "and relname ~ '^pg_' ");
+	/*
+	 * Large-object relations are automatically ignored because they have
+	 * relkind 'l'.  However, we want to ignore their indexes as well.
+	 * The clean way to do that would be to do a join to find out which
+	 * table each index is for.  The ugly but fast way is to know that
+	 * large object indexes have names starting with 'xinx'.
+	 */
+	if (haveIndexes)
+		strcat(listbuf, "and (relkind != 'i' OR relname !~ '^xinx') ");
+
 	strcat(listbuf, " ORDER BY relname ");
 	if (!(res = PSQLexec(pset, listbuf)))
 		return -1;
@@ -603,10 +616,10 @@ rightsList(PsqlSettings *pset)
 
 	listbuf[0] = '\0';
 	strcat(listbuf, "SELECT relname, relacl ");
-	strcat(listbuf, "FROM pg_class, pg_user ");
-	strcat(listbuf, "WHERE ( relkind = 'r' OR relkind = 'i' OR relkind = 'S') ");
+	strcat(listbuf, "FROM pg_class ");
+	/* Currently, we ignore indexes since they have no meaningful rights */
+	strcat(listbuf, "WHERE ( relkind = 'r' OR relkind = 'S') ");
 	strcat(listbuf, "  and relname !~ '^pg_'");
-	strcat(listbuf, "  and usesysid = relowner");
 	strcat(listbuf, "  ORDER BY relname ");
 	if (!(res = PSQLexec(pset, listbuf)))
 		return -1;
