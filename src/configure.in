@@ -22,6 +22,7 @@ nextstep*) PORTNAME='nextstep';;
      osf*) PORTNAME='alpha';;
      sco*) PORTNAME='sco';;
    sysv4*) PORTNAME='svr4';;
+ machten*) PORTNAME='machten';;
  sysv4.2*) 
        case "$host_vendor" in
                univel) PORTNAME='univel';;
