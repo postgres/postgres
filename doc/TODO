@@ -1,6 +1,6 @@
 TODO list for PostgreSQL
 ========================
-Last updated:		Fri Nov 22 22:52:37 EST 2002
+Last updated:		Sat Nov 23 22:13:57 EST 2002
 
 Current maintainer:	Bruce Momjian (pgman@candle.pha.pa.us)
 
@@ -270,7 +270,8 @@ Referential Integrity
   in array
 * Allow DEFERRABLE UNIQUE constraints
 * Allow triggers to be disabled [trigger]
-* -Support statement-level triggers and triggers on columns (Neil)
+* -Support statement-level triggers (Neil)
+* Support triggers on columns (Neil)
 
 
 Dependency Checking
