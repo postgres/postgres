@@ -225,7 +225,6 @@ ECPGdump_a_type(FILE *o, const char *name, struct ECPGtype * type,
 		case ECPGt_array:
 			if (indicator_set && ind_type->type != ECPGt_array)
 				mmerror(INDICATOR_NOT_ARRAY, ET_FATAL, "Indicator for array/pointer has to be array/pointer.\n");
-
 			switch (type->u.element->type)
 			{
 				case ECPGt_array:
@@ -233,8 +232,14 @@ ECPGdump_a_type(FILE *o, const char *name, struct ECPGtype * type,
 					break;
 				case ECPGt_struct:
 				case ECPGt_union:
-					/* If var_array_element is not equal                                                                                                                                   * NULL, we have to use the                                                                                                                                            * <var_array_element>th entry and not                                                                                                                                 * the whole array */                                                                                                                                                 if (var_array_element == NULL)
-						ECPGdump_a_struct(o, name, ind_name, type->size,
+					/* If var_array_element is not equal
+					 * NULL, we have to use the
+					 * <var_array_element>th entry and
+					 * not the whole array */
+					if (var_array_element == NULL)
+						ECPGdump_a_struct(o, name,
+								ind_name,
+								type->size,
 								type->u.element,
 								(ind_type->type == ECPGt_NO_INDICATOR) ? ind_type : ind_type->u.element,
 								NULL, prefix, ind_prefix);

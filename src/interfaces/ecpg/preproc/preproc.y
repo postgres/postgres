@@ -1,4 +1,4 @@
-/* $Header: /cvsroot/pgsql/src/interfaces/ecpg/preproc/Attic/preproc.y,v 1.223 2003/05/27 11:31:52 meskes Exp $ */
+/* $Header: /cvsroot/pgsql/src/interfaces/ecpg/preproc/Attic/preproc.y,v 1.224 2003/05/29 12:00:21 meskes Exp $ */
 
 /* Copyright comment */
 %{
@@ -26,6 +26,9 @@ struct ECPGstruct_member *struct_member_list[STRUCT_DEPTH] = { NULL };
 
 /* also store struct type so we can do a sizeof() later */
 static char *ECPGstruct_sizeof = NULL;
+
+/* for forward declarations we have to store some data as well */
+static char *forward_name = NULL;
 
 struct ECPGtype ecpg_no_indicator = {ECPGt_NO_INDICATOR, 0L, NULL, {NULL}};
 struct variable no_indicator = {"no_indicator", &ecpg_no_indicator, 0, NULL};
@@ -196,6 +199,7 @@ create_questionmarks(char *name, bool array)
 	enum	ECPGttype	type_enum;
 	enum	ECPGdtype	dtype_enum;
 	struct	fetch_desc	descriptor;
+	struct  su_symbol	struct_union;
 }
 
 /* special embedded SQL token */
@@ -440,7 +444,9 @@ create_questionmarks(char *name, bool array)
 %type  <str>	reserved_keyword unreserved_keyword ecpg_interval
 %type  <str>	col_name_keyword func_name_keyword precision opt_scale
 %type  <str>	ECPGTypeName variablelist ECPGColLabelCommon c_variable
-%type  <str>	s_struct_union_symbol inf_val_list inf_col_list
+%type  <str>	inf_val_list inf_col_list
+
+%type  <struct_union> s_struct_union_symbol
 
 %type  <descriptor> ECPGGetDescriptor
 
@@ -4039,7 +4045,6 @@ connection_target: database_name opt_server opt_port
 		}
 		| StringConst
 		{
-			printf("MM: %s\n", $1);
 			if ($1[0] == '\"')
 				$$ = $1;
 			else if (strcmp($1, " ?") == 0) /* variable */
@@ -4425,16 +4430,34 @@ single_vt_type: common_type
 		| s_struct_union_symbol
 		{
 			/* this is for named structs/unions */
-			char *name = $1;
-			struct typedefs *this = get_typedef(name);
+			char *name;
+			struct typedefs *this;
+			bool forward = (strcmp($1.symbol, forward_name) == 0 && strcmp($1.su, "struct") == 0);
 
-			$$.type_str = mm_strdup(this->name);
-			$$.type_enum = this->type->type_enum;
-			$$.type_dimension = this->type->type_dimension;
-			$$.type_index = this->type->type_index;
-			$$.type_sizeof = this->type->type_sizeof;
-			struct_member_list[struct_level] = ECPGstruct_member_dup(this->struct_member_list);
-			free(name);
+			name = cat2_str($1.su, $1.symbol);
+			/* Do we have a forward definition? */
+			if (!forward)
+			{
+				/* No */
+				
+				this = get_typedef(name);
+				$$.type_str = mm_strdup(this->name);
+				$$.type_enum = this->type->type_enum;
+				$$.type_dimension = this->type->type_dimension;
+				$$.type_index = this->type->type_index;
+				$$.type_sizeof = this->type->type_sizeof;
+				struct_member_list[struct_level] = ECPGstruct_member_dup(this->struct_member_list);
+				free(name);
+			}
+			else
+			{
+				$$.type_str = name;
+                                $$.type_enum = ECPGt_long;
+                                $$.type_dimension = make_str("-1");
+                                $$.type_index = make_str("-1");
+                                $$.type_sizeof = make_str("");
+                                struct_member_list[struct_level] = NULL;
+			}
 		}
 		;
 
@@ -4761,15 +4784,34 @@ var_type:	common_type
 		| s_struct_union_symbol
 		{
 			/* this is for named structs/unions */
-			char *name = $1;
-			struct typedefs *this = get_typedef(name);
-			$$.type_str = mm_strdup(this->name);
-			$$.type_enum = this->type->type_enum;
-			$$.type_dimension = this->type->type_dimension;
-			$$.type_index = this->type->type_index;
-			$$.type_sizeof = this->type->type_sizeof;
-			struct_member_list[struct_level] = ECPGstruct_member_dup(this->struct_member_list);
-			free(name);
+			char *name;
+			struct typedefs *this;
+			bool forward = (strcmp($1.symbol, forward_name) == 0 && strcmp($1.su, "struct") == 0);
+
+			name = cat2_str($1.su, $1.symbol);
+			/* Do we have a forward definition? */
+			if (!forward)
+			{
+				/* No */
+				
+				this = get_typedef(name);
+				$$.type_str = mm_strdup(this->name);
+				$$.type_enum = this->type->type_enum;
+				$$.type_dimension = this->type->type_dimension;
+				$$.type_index = this->type->type_index;
+				$$.type_sizeof = this->type->type_sizeof;
+				struct_member_list[struct_level] = ECPGstruct_member_dup(this->struct_member_list);
+				free(name);
+			}
+			else
+			{
+				$$.type_str = name;
+                                $$.type_enum = ECPGt_long;
+                                $$.type_dimension = make_str("-1");
+                                $$.type_index = make_str("-1");
+                                $$.type_sizeof = make_str("");
+                                struct_member_list[struct_level] = NULL;
+			}
 		}
 		;
 
@@ -4789,18 +4831,21 @@ struct_union_type_with_symbol: s_struct_union_symbol
 			struct_member_list[struct_level++] = NULL;
 			if (struct_level >= STRUCT_DEPTH)
 				 mmerror(PARSE_ERROR, ET_ERROR, "Too many levels in nested structure/union definition");
+			forward_name = mm_strdup($1.symbol);
 		} 
 		'{' variable_declarations '}'
 		{
 			ECPGfree_struct_member(struct_member_list[struct_level]);
 			struct_member_list[struct_level] = NULL;
 			free(actual_storage[struct_level--]);
-			if (strncmp($1, "struct", sizeof("struct")-1) == 0)
+			if (strncmp($1.su, "struct", sizeof("struct")-1) == 0)
 				$$.type_enum = ECPGt_struct;
 			else
 				$$.type_enum = ECPGt_union;
-			$$.type_str = mm_strdup($1);
-			$$.type_sizeof = cat_str(4, $1, make_str("{"), $4, make_str("}"));
+			$$.type_str = cat2_str($1.su, $1.symbol);
+			$$.type_sizeof = cat_str(4, mm_strdup($$.type_str), make_str("{"), $4, make_str("}"));
+			free(forward_name);
+			forward_name = NULL;
 		}
 		;
 
@@ -4822,12 +4867,14 @@ struct_union_type: struct_union_type_with_symbol	{ $$ = $1.type_sizeof; }
 
 s_struct_union_symbol: SQL_STRUCT symbol
 		{
-			$$ = cat2_str(make_str("struct"), $2);
-			ECPGstruct_sizeof = cat_str(3, make_str("sizeof("), strdup($$), make_str(")")); 
+			$$.su = make_str("struct");
+			$$.symbol = $2;
+			ECPGstruct_sizeof = cat_str(3, make_str("sizeof("), cat2_str(mm_strdup($$.su), mm_strdup($$.symbol)), make_str(")")); 
 		}
 		| UNION symbol
 		{
-			$$ = cat2_str(make_str("union"), $2);
+			$$.su = make_str("union");
+			$$.symbol = $2;
 		}
 		;
 

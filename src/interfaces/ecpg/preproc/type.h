@@ -88,6 +88,12 @@ struct index
 	char	*str;
 };
 
+struct su_symbol
+{
+	char	*su;
+	char 	*symbol;
+};
+
 struct this_type
 {
 	enum ECPGttype type_enum;

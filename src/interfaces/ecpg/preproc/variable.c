@@ -67,7 +67,7 @@ find_struct_member(char *name, char *str, struct ECPGstruct_member * members, in
 }
 
 static struct variable *
-find_struct(char *name, char *next)
+find_struct(char *name, char *next, char *end)
 {
 	struct variable *p;
 	char		c = *next;
@@ -90,24 +90,45 @@ find_struct(char *name, char *next)
 			mmerror(PARSE_ERROR, ET_FATAL, errortext);
 		}
 
-		/* restore the name, we will need it later on */
+		/* restore the name, we will need it later */
 		*next = c;
-		next++;
 
-		return find_struct_member(name, next, p->type->u.element->u.members, p->brace_level);
+		return find_struct_member(name, end, p->type->u.element->u.members, p->brace_level);
 	}
 	else
 	{
-		if (p->type->type != ECPGt_struct && p->type->type != ECPGt_union)
+		if (next == end)
 		{
-			snprintf(errortext, sizeof(errortext), "variable %s is neither a structure nor a union", name);
-			mmerror(PARSE_ERROR, ET_FATAL, errortext);
+			if (p->type->type != ECPGt_struct && p->type->type != ECPGt_union)
+			{
+				snprintf(errortext, sizeof(errortext), "variable %s is neither a structure nor a union", name);
+				mmerror(PARSE_ERROR, ET_FATAL, errortext);
+			}
+
+			/* restore the name, we will need it later */
+			*next = c;
+
+			return find_struct_member(name, end, p->type->u.members, p->brace_level);
 		}
+		else
+		{
+			if (p->type->type != ECPGt_array)
+			{
+				snprintf(errortext, sizeof(errortext), "variable %s is not an array", name);
+				mmerror(PARSE_ERROR, ET_FATAL, errortext);
+			}
 
-		/* restore the name, we will need it later on */
-		*next = c;
+			if (p->type->u.element->type != ECPGt_struct && p->type->u.element->type != ECPGt_union)
+			{
+				snprintf(errortext, sizeof(errortext), "variable %s is not a pointer to a structure or a union", name);
+				mmerror(PARSE_ERROR, ET_FATAL, errortext);
+			}
 
-		return find_struct_member(name, next, p->type->u.members, p->brace_level);
+			/* restore the name, we will need it later */
+			*next = c;
+
+			return find_struct_member(name, end, p->type->u.element->u.members, p->brace_level);
+		}
 	}
 }
 
@@ -130,15 +151,43 @@ find_simple(char *name)
 struct variable *
 find_variable(char *name)
 {
-	char	   *next;
+	char	   *next, *end;
 	struct variable *p;
+	int count;
 
-	if ((next = strchr(name, '.')) != NULL)
-		p = find_struct(name, next);
-	else if ((next = strstr(name, "->")) != NULL)
-		p = find_struct(name, next);
-	else
-		p = find_simple(name);
+	printf("MM: find %s\n", name);
+
+	next = strpbrk(name, ".[-");
+	if (next)
+	{
+		if (*next == '[')
+		{
+			/* We don't care about what's inside the array braces
+			 * so just eat up the character */
+			for (count=1, end=next+1; count; end++)
+			{
+				  switch (*end)
+				  {
+					  case '[': count++;
+						    break;
+					  case ']': count--;
+						    break;
+					  default : break;
+				  }
+			}
+			if (*end == '.') p = find_struct(name, next, end);
+			else
+			{
+				 char c = *next;
+				 
+				 *next = '\0';
+				 p = find_simple(name);
+				 *next = c;
+			}
+		}
+		else p = find_struct(name, next, next);
+	}
+	else p = find_simple(name);
 
 	if (p == NULL)
 	{
@@ -330,6 +379,7 @@ adjust_array(enum ECPGttype type_enum, char **dimension, char **length, char *ty
 		mmerror(PARSE_ERROR, ET_FATAL, errortext);
 /*		mmerror(PARSE_ERROR, ET_FATAL, "No multilevel (more than 2) pointer supported %d",pointer_len);*/
 	}
+
 	if (pointer_len > 1 && type_enum != ECPGt_char && type_enum != ECPGt_unsigned_char)
 		mmerror(PARSE_ERROR, ET_FATAL, "No pointer to pointer supported for this type");
 

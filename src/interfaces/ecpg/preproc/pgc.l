@@ -12,7 +12,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/interfaces/ecpg/preproc/pgc.l,v 1.111 2003/05/27 14:36:00 meskes Exp $
+ *	  $Header: /cvsroot/pgsql/src/interfaces/ecpg/preproc/pgc.l,v 1.112 2003/05/29 12:00:21 meskes Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -184,6 +184,7 @@ letter_or_digit [\200-\377_A-Za-z0-9]
 
 identifier		{letter}{letter_or_digit}*
 
+array			({letter_or_digit}|[\+\-\*\%\/\(\)])*
 typecast		"::"
 
 /*
@@ -949,96 +950,7 @@ cppline			{space}*#(.*\\{space})+.*
 
 <incl>\<[^\>]+\>{space}*";"?		{	parse_include(); }
 <incl>{dquote}{xdinside}{dquote}{space}*";"?	{	parse_include(); }
-<incl>[^;\<\>\"]+";"		{
-				parse_include();
-#if 0
-						/* got the include file name */
-						struct _yy_buffer *yb;
-					  	struct _include_path *ip;
-					  	char inc_file[MAXPGPATH];
-					  	unsigned int i;
-
-					  	yb = mm_alloc(sizeof(struct _yy_buffer));
-
-					  	yb->buffer =	YY_CURRENT_BUFFER;
-					  	yb->lineno = yylineno;
-					  	yb->filename = input_filename;
-					  	yb->next = yy_buffer;
-
-					  	yy_buffer = yb;
-
-					  	/*
-						 * skip the ";" and trailing whitespace. Note that yytext contains
-						 * at least one non-space character plus the ";" 
-						 */
-					  	for ( i = strlen(yytext)-2;
-							i > 0 && isspace((unsigned char) yytext[i]);
-							i-- )
-					  		{}
-
-						yytext[i+1] = '\0';
-						yyin = NULL;
-
-						/* If file name is enclosed in '"' remove these and look only in '.' */
-						/* Informix does look into all include paths though, except filename starts with '/' */
-						if ((yytext[0] == '"' && yytext[i] == '"') && (compat != ECPG_COMPAT_INFORMIX || yytext[0] == '/'))
-						{
-							yytext[i] = '\0';
-							memmove(yytext, yytext+1, strlen(yytext));
-						
-							strncpy(inc_file, yytext, sizeof(inc_file));
-							yyin = fopen(inc_file, "r");
-							if (!yyin)
-							{
-								if (strcmp(inc_file + strlen(inc_file) - 2, ".h"))
-								{
-									strcat(inc_file, ".h");
-									yyin = fopen(inc_file, "r");
-								}
-							}
-							
-						}
-						else
-						{
-							if (yytext[0] == '"' && yytext[i] == '"')
-							{
-								yytext[i] = '\0';
-								memmove(yytext, yytext+1, strlen(yytext));
-							}
-							
-						  	for (ip = include_paths; yyin == NULL && ip != NULL; ip = ip->next)
-						  	{
-								if (strlen(ip->path) + strlen(yytext) + 3 > MAXPGPATH)
-								{
-									fprintf(stderr, "Error: Path %s/%s is too long in line %d, skipping.\n", ip->path, yytext, yylineno);
-									continue;
-								}
-								snprintf (inc_file, sizeof(inc_file), "%s/%s", ip->path, yytext);
-								yyin = fopen(inc_file, "r");
-								if (!yyin)
-								{
-									if (strcmp(inc_file + strlen(inc_file) - 2, ".h"))
-									{
-										strcat(inc_file, ".h");
-										yyin = fopen( inc_file, "r" );
-									}
-								}
-							}
-						}
-						if (!yyin)
-						{
-							snprintf(errortext, sizeof(errortext), "Cannot open include file %s in line %d\n", yytext, yylineno);
-							mmerror(NO_INCLUDE_FILE, ET_FATAL, errortext);
-					  	}
-
-						input_filename = mm_strdup(inc_file);
-						yy_switch_to_buffer(yy_create_buffer(yyin,YY_BUF_SIZE ));
-						yylineno = 1;
-						output_line_number();
-
-					  	BEGIN C;
-#endif
-					}
+<incl>[^;\<\>\"]+";"		{ parse_include(); }
 
 <<EOF>>				{
 				  		if (yy_buffer == NULL) {
