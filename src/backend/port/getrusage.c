@@ -1,5 +1,6 @@
-/* $Id: getrusage.c,v 1.10 1998/09/01 03:24:26 momjian Exp $ */
+/* $Id: getrusage.c,v 1.11 1998/12/12 19:57:51 momjian Exp $ */
 
+#include <stdio.h>
 #include <errno.h>
 #include "rusagestub.h"
 
