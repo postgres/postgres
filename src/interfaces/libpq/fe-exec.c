@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *    $Header: /cvsroot/pgsql/src/interfaces/libpq/fe-exec.c,v 1.24 1996/12/26 22:08:21 momjian Exp $
+ *    $Header: /cvsroot/pgsql/src/interfaces/libpq/fe-exec.c,v 1.25 1996/12/28 01:57:13 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -370,8 +370,9 @@ PQexec(PGconn* conn, const char* query)
   char pname[MAX_MESSAGE_LEN]; /* portal name */
   PGnotify *newNotify;
   FILE *pfin, *pfout, *pfdebug;
-  int emptiesSent = 0;
-
+  static int emptiesPending = 0;
+  bool emptySent = false;
+  
   pname[0]='\0';
 
   if (!conn) return NULL;
@@ -457,12 +458,13 @@ PQexec(PGconn* conn, const char* query)
         // send an empty query down, and keep reading out of the pipe
         // until an 'I' is received.
         */
-        pqPuts("Q ",pfout,pfdebug); /* send an empty query */
+        pqPuts("Q",pfout,pfdebug); /* send an empty query */
         /*
          * Increment a flag and process messages in the usual way because
          * there may be async notifications pending.  DZ - 31-8-1996
          */
-        emptiesSent++;
+        emptiesPending++;
+        emptySent = true;
       }
       break;
     case 'E': /* error return */
@@ -480,8 +482,8 @@ PQexec(PGconn* conn, const char* query)
         if ((c = pqGetc(pfin,pfdebug)) != '\0') {
           fprintf(stderr,"error!, unexpected character %c following 'I'\n", c);
         }
-        if (emptiesSent) {
-	    if (--emptiesSent == 0) { /* is this the last one? */
+        if (emptiesPending) {
+	    if (--emptiesPending == 0 && emptySent) { /* is this the last one? */
             	/*
              	 * If this is the result of a portal query command set the
              	 * command status and message accordingly.  DZ - 31-8-1996
@@ -621,42 +623,36 @@ PQputline(PGconn *conn, const char *s)
  *      to a "copy".
  *
  * RETURNS:
- *      0 on failure
- *      1 on success
+ *      0 on success
+ *      1 on failure
  */
 int
 PQendcopy(PGconn *conn)
 {
-    char id;
     FILE *pfin, *pfdebug;
+    bool valid = true;
 
     if (!conn) return (int)NULL;
 
     pfin = conn->Pfin;
     pfdebug = conn->Pfdebug;
 
-    if ( (id = pqGetc(pfin,pfdebug)) > 0)
-        return(0);
-    switch (id) {
-    case 'Z': /* backend finished the copy */
-        return(1);
-    case 'E':
-    case 'N':
-        if (pqGets(conn->errorMessage, ERROR_MSG_LENGTH, pfin, pfdebug) == 1) {
-            sprintf(conn->errorMessage,
+    if ( pqGetc(pfin,pfdebug) == 'C')
+    {
+      char command[MAX_MESSAGE_LEN];
+      pqGets(command,MAX_MESSAGE_LEN, pfin, pfdebug); /* read command tag */
+    }
+    else valid = false;
+
+    if ( valid )
+	return (0);
+    else {
+        sprintf(conn->errorMessage,
                     "Error return detected from backend, "
                     "but attempt to read the message failed.");
-        }
-        return(0);
-        break;
-    default:
-        (void) sprintf(conn->errorMessage,
-                       "FATAL: PQendcopy: protocol error: id=%x\n",
-                       id);
-        fputs(conn->errorMessage, stderr);
         fprintf(stderr,"resetting connection\n");
         PQreset(conn);
-        return(0);
+        return(1);
     }
 }
 
