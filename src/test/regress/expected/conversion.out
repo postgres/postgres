@@ -1,8 +1,8 @@
 --
 -- create user defined conversion
 --
-CREATE USER foo WITH NOCREATEDB NOCREATEUSER;
-SET SESSION AUTHORIZATION foo;
+CREATE USER conversion_test_user WITH NOCREATEDB NOCREATEUSER;
+SET SESSION AUTHORIZATION conversion_test_user;
 CREATE CONVERSION myconv FOR 'LATIN1' TO 'UNICODE' FROM iso8859_1_to_utf8;
 --
 -- cannot make same name conversion in same schema
@@ -1511,4 +1511,4 @@ SELECT CONVERT('foo', 'WIN874', 'UNICODE');
 -- return to the super user
 --
 RESET SESSION AUTHORIZATION;
-DROP USER foo;
+DROP USER conversion_test_user;
