@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2000, PostgreSQL, Inc
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Id: elog.h,v 1.21 2000/12/18 00:44:50 tgl Exp $
+ * $Id: elog.h,v 1.22 2001/01/07 04:17:28 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -30,11 +30,13 @@ extern int Use_syslog;
 /*
  * If CritSectionCount > 0, signal handlers mustn't do
  * elog(ERROR|FATAL), instead remember what action is
- * required with QueryCancel & ProcDiePending.
+ * required with QueryCancel or ProcDiePending.
+ * ProcDiePending will be honored at critical section exit,
+ * but QueryCancel is only checked at specified points.
  */
 extern uint32 CritSectionCount;	/* duplicates access/xlog.h */
-extern bool QueryCancel;		/* duplicates miscadmin.h */
-extern bool	ProcDiePending;
+extern volatile bool ProcDiePending;
+extern void ForceProcDie(void);	/* in postgres.c */
 
 #define	START_CRIT_CODE		(CritSectionCount++)
 
@@ -43,13 +45,8 @@ extern bool	ProcDiePending;
 		if (CritSectionCount == 0) \
 			elog(STOP, "Not in critical section"); \
 		CritSectionCount--; \
-		if (CritSectionCount == 0 && QueryCancel) \
-		{ \
-			if (ProcDiePending) \
-				elog(FATAL, "The system is shutting down"); \
-			else \
-				elog(ERROR, "Query was cancelled."); \
-		} \
+		if (CritSectionCount == 0 && ProcDiePending) \
+			ForceProcDie(); \
 	} while(0)
 
 extern bool Log_timestamp;

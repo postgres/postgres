@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/tcop/postgres.c,v 1.198 2000/12/20 21:51:52 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/tcop/postgres.c,v 1.199 2001/01/07 04:17:29 tgl Exp $
  *
  * NOTES
  *	  this is the "main" module of the postgres backend and
@@ -94,7 +94,7 @@ DLLIMPORT sigjmp_buf Warn_restart;
 
 bool		Warn_restart_ready = false;
 bool		InError = false;
-bool		ProcDiePending = false;
+volatile bool ProcDiePending = false;
 
 static bool EchoQuery = false;	/* default don't echo */
 char		pg_pathname[MAXPGPATH];
@@ -920,7 +920,10 @@ finish_xact_command(void)
 void
 handle_warn(SIGNAL_ARGS)
 {
-	/* Don't joggle the elbow of a critical section */
+	/* Don't joggle the elbow of proc_exit */
+	if (proc_exit_inprogress)
+		return;
+	/* Don't joggle the elbow of a critical section, either */
 	if (CritSectionCount > 0)
 	{
 		QueryCancel = true;
@@ -956,19 +959,70 @@ quickdie(SIGNAL_ARGS)
 void
 die(SIGNAL_ARGS)
 {
+	int			save_errno = errno;
+
 	PG_SETMASK(&BlockSig);
 
-	/* Don't joggle the elbow of a critical section */
-	if (CritSectionCount > 0)
+	/* Don't joggle the elbow of proc_exit */
+	if (proc_exit_inprogress)
 	{
-		QueryCancel = true;
-		ProcDiePending = true;
+		errno = save_errno;
 		return;
 	}
-	/* Don't joggle the elbow of proc_exit, either */
-	if (proc_exit_inprogress)
+	/* Don't joggle the elbow of a critical section, either */
+	if (CritSectionCount > 0)
+	{
+		ProcDiePending = true;
+		errno = save_errno;
 		return;
+	}
+	/* Otherwise force immediate proc_exit */
+	ForceProcDie();
+}
+
+/*
+ * This is split out of die() so that it can be invoked later from
+ * END_CRIT_CODE.
+ */
+void
+ForceProcDie(void)
+{
+	/* Reset flag to avoid another elog() during shutdown */
+	ProcDiePending = false;
+	/* Send error message and do proc_exit() */
 	elog(FATAL, "The system is shutting down");
+}
+
+/* signal handler for query cancel signal from postmaster */
+static void
+QueryCancelHandler(SIGNAL_ARGS)
+{
+	int			save_errno = errno;
+
+	/* Don't joggle the elbow of proc_exit, nor an already-in-progress abort */
+	if (proc_exit_inprogress || InError)
+	{
+		errno = save_errno;
+		return;
+	}
+
+	/* Set flag to cause CancelQuery to be called when it's safe */
+	QueryCancel = true;
+
+	/* If we happen to be waiting for a lock, get out of that */
+	LockWaitCancel();
+
+	/* Otherwise, bide our time... */
+	errno = save_errno;
+}
+
+void
+CancelQuery(void)
+{
+	/* Reset flag to avoid another elog() during error recovery */
+	QueryCancel = false;
+	/* Create an artificial error condition to get out of query */
+	elog(ERROR, "Query was cancelled.");
 }
 
 /* signal handler for floating point exception */
@@ -978,28 +1032,6 @@ FloatExceptionHandler(SIGNAL_ARGS)
 	elog(ERROR, "floating point exception!"
 		 " The last floating point operation either exceeded legal ranges"
 		 " or was a divide by zero");
-}
-
-/* signal handler for query cancel signal from postmaster */
-static void
-QueryCancelHandler(SIGNAL_ARGS)
-{
-	int			save_errno = errno;
-
-	QueryCancel = true;
-	LockWaitCancel();
-	errno = save_errno;
-}
-
-void
-CancelQuery(void)
-{
-
-	/*
-	 * QueryCancel flag will be reset in main loop, which we reach by
-	 * longjmp from elog().
-	 */
-	elog(ERROR, "Query was cancelled.");
 }
 
 static void
@@ -1651,7 +1683,7 @@ PostgresMain(int argc, char *argv[], int real_argc, char *real_argv[], const cha
 	if (!IsUnderPostmaster)
 	{
 		puts("\nPOSTGRES backend interactive interface ");
-		puts("$Revision: 1.198 $ $Date: 2000/12/20 21:51:52 $\n");
+		puts("$Revision: 1.199 $ $Date: 2001/01/07 04:17:29 $\n");
 	}
 
 	/*

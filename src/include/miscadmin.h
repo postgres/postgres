@@ -12,7 +12,7 @@
  * Portions Copyright (c) 1996-2000, PostgreSQL, Inc
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Id: miscadmin.h,v 1.75 2000/11/29 20:59:54 tgl Exp $
+ * $Id: miscadmin.h,v 1.76 2001/01/07 04:17:28 tgl Exp $
  *
  * NOTES
  *	  some of the information in this file will be moved to
@@ -42,7 +42,7 @@ extern int	PostmasterMain(int argc, char *argv[]);
  */
 extern bool Noversion;
 extern bool Quiet;
-extern bool QueryCancel;
+extern volatile bool QueryCancel;
 extern char *DataDir;
 
 extern int	MyProcPid;
