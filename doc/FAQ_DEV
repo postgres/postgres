@@ -560,7 +560,7 @@
    Table, column, type, function, and view names are stored in system
    tables in columns of type Name. Name is a fixed-length,
    null-terminated type of NAMEDATALEN bytes. (The default value for
-   NAMEDATALEN is 32 bytes.)
+   NAMEDATALEN is 64 bytes.)
 typedef struct nameData
     {
         char        data[NAMEDATALEN];
