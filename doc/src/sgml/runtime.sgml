@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/runtime.sgml,v 1.68 2001/06/18 16:14:43 momjian Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/runtime.sgml,v 1.69 2001/06/23 00:03:10 petere Exp $
 -->
 
 <Chapter Id="runtime">
@@ -1201,6 +1201,7 @@ dynamic_library_path = '/usr/local/lib:/home/my_project/lib:$libdir:$libdir/cont
       </listitem>
      </varlistentry>
 
+     <varlistentry>
       <term>AUSTRALIAN_TIMEZONES (<type>bool</type>)</term>
       <listitem>
        <para>
