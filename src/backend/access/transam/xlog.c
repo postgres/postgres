@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2003, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/backend/access/transam/xlog.c,v 1.154 2004/08/03 20:32:32 tgl Exp $
+ * $PostgreSQL: pgsql/src/backend/access/transam/xlog.c,v 1.155 2004/08/04 16:25:02 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -145,6 +145,9 @@ static time_t          recoveryTargetTime;
 static TransactionId   recoveryStopXid;
 static time_t          recoveryStopTime;
 static bool			   recoveryStopAfter;
+
+/* constraint set by read_backup_label */
+static XLogRecPtr		recoveryMinXlogOffset = { 0, 0 };
 
 /*
  * During normal operation, the only timeline we care about is ThisTimeLineID.
@@ -453,6 +456,8 @@ static void issue_xlog_fsync(void);
 #ifdef WAL_DEBUG
 static void xlog_outrec(char *buf, XLogRecord *record);
 #endif
+static bool read_backup_label(XLogRecPtr *checkPointLoc);
+static void remove_backup_label(void);
 
 
 /*
@@ -1437,7 +1442,7 @@ XLogFlush(XLogRecPtr record)
 	 * scenario has actually happened in the field several times with 7.1
 	 * releases. Note that we cannot get here while InRedo is true, but if
 	 * the bad page is brought in and marked dirty during recovery then
-	 * CreateCheckpoint will try to flush it at the end of recovery.)
+	 * CreateCheckPoint will try to flush it at the end of recovery.)
 	 *
 	 * The current approach is to ERROR under normal conditions, but only
 	 * WARNING during recovery, so that the system can be brought up even
@@ -4020,33 +4025,58 @@ StartupXLOG(void)
 						recoveryTargetTLI,
 						ControlFile->checkPointCopy.ThisTimeLineID)));
 
-	/*
-	 * Get the last valid checkpoint record.  If the latest one according
-	 * to pg_control is broken, try the next-to-last one.
-	 */
-	record = ReadCheckpointRecord(ControlFile->checkPoint, 1, buffer);
-	if (record != NULL)
+	if (read_backup_label(&checkPointLoc))
 	{
-		checkPointLoc = ControlFile->checkPoint;
-		ereport(LOG,
-				(errmsg("checkpoint record is at %X/%X",
-						checkPointLoc.xlogid, checkPointLoc.xrecoff)));
-	}
-	else
-	{
-		record = ReadCheckpointRecord(ControlFile->prevCheckPoint, 2, buffer);
+		/*
+		 * When a backup_label file is present, we want to roll forward from
+		 * the checkpoint it identifies, rather than using pg_control.
+		 */
+		record = ReadCheckpointRecord(checkPointLoc, 0, buffer);
 		if (record != NULL)
 		{
-			checkPointLoc = ControlFile->prevCheckPoint;
 			ereport(LOG,
-					(errmsg("using previous checkpoint record at %X/%X",
-						  checkPointLoc.xlogid, checkPointLoc.xrecoff)));
+					(errmsg("checkpoint record is at %X/%X",
+							checkPointLoc.xlogid, checkPointLoc.xrecoff)));
 			InRecovery = true;	/* force recovery even if SHUTDOWNED */
 		}
 		else
+		{
 			ereport(PANIC,
-				 (errmsg("could not locate a valid checkpoint record")));
+					(errmsg("could not locate required checkpoint record"),
+					 errhint("If you are not restoring from a backup, try removing $PGDATA/backup_label.")));
+		}
 	}
+	else
+	{
+		/*
+		 * Get the last valid checkpoint record.  If the latest one according
+		 * to pg_control is broken, try the next-to-last one.
+		 */
+		checkPointLoc = ControlFile->checkPoint;
+		record = ReadCheckpointRecord(checkPointLoc, 1, buffer);
+		if (record != NULL)
+		{
+			ereport(LOG,
+					(errmsg("checkpoint record is at %X/%X",
+							checkPointLoc.xlogid, checkPointLoc.xrecoff)));
+		}
+		else
+		{
+			checkPointLoc = ControlFile->prevCheckPoint;
+			record = ReadCheckpointRecord(checkPointLoc, 2, buffer);
+			if (record != NULL)
+			{
+				ereport(LOG,
+						(errmsg("using previous checkpoint record at %X/%X",
+								checkPointLoc.xlogid, checkPointLoc.xrecoff)));
+				InRecovery = true;	/* force recovery even if SHUTDOWNED */
+			}
+			else
+				ereport(PANIC,
+						(errmsg("could not locate a valid checkpoint record")));
+		}
+	}
+
 	LastRec = RecPtr = checkPointLoc;
 	memcpy(&checkPoint, XLogRecGetData(record), sizeof(CheckPoint));
 	wasShutdown = (record->xl_info == XLOG_CHECKPOINT_SHUTDOWN);
@@ -4097,25 +4127,24 @@ StartupXLOG(void)
 	}
 	else if (ControlFile->state != DB_SHUTDOWNED)
 		InRecovery = true;
+	else if (InArchiveRecovery)
+	{
+		/* force recovery due to presence of recovery.conf */
+		InRecovery = true;
+	}
 
 	/* REDO */
-	if (InRecovery || InArchiveRecovery)
+	if (InRecovery)
 	{
 		int			rmid;
 
-		if (InRecovery)
-		{
+		if (InArchiveRecovery)
+			ereport(LOG,
+					(errmsg("automatic recovery in progress")));
+		else
 			ereport(LOG,
 					(errmsg("database system was not properly shut down; "
 							"automatic recovery in progress")));
-		}
-		else
-		{
-			/* force recovery due to presence of recovery.conf */
-			InRecovery = true;
-			ereport(LOG,
-					(errmsg("automatic recovery in progress")));
-		}
 		ControlFile->state = DB_IN_RECOVERY;
 		ControlFile->time = time(NULL);
 		UpdateControlFile();
@@ -4227,6 +4256,20 @@ StartupXLOG(void)
 	record = ReadRecord(&LastRec, PANIC, buffer);
 	EndOfLog = EndRecPtr;
 	XLByteToPrevSeg(EndOfLog, endLogId, endLogSeg);
+
+	/*
+	 * Complain if we did not roll forward far enough to render the backup
+	 * dump consistent.
+	 */
+	if (XLByteLT(EndOfLog, recoveryMinXlogOffset))
+	{
+		if (needNewTimeLine)	/* stopped because of stop request */
+			ereport(FATAL,
+					(errmsg("requested recovery stop point is before end time of backup dump")));
+		else					/* ran off end of WAL */
+			ereport(FATAL,
+					(errmsg("WAL ends before end time of backup dump")));
+	}
 
 	/*
 	 * Consider whether we need to assign a new timeline ID.
@@ -4370,13 +4413,21 @@ StartupXLOG(void)
 		 * CreateCheckPoint operation; we don't want the broken primary
 		 * checkpoint to become prevCheckPoint...
 		 */
-		ControlFile->checkPoint = checkPointLoc;
+		if (XLByteEQ(checkPointLoc, ControlFile->prevCheckPoint))
+			ControlFile->checkPoint = checkPointLoc;
+
 		CreateCheckPoint(true, true);
 
 		/*
 		 * Close down recovery environment
 		 */
 		XLogCloseRelationCache();
+
+		/*
+		 * Now that we've checkpointed the recovery, it's safe to
+		 * flush old backup_label, if present.
+		 */
+		remove_backup_label();
 	}
 
 	/*
@@ -4418,7 +4469,9 @@ StartupXLOG(void)
 
 /*
  * Subroutine to try to fetch and validate a prior checkpoint record.
- * whichChkpt = 1 for "primary", 2 for "secondary", merely informative
+ *
+ * whichChkpt identifies the checkpoint (merely for reporting purposes).
+ * 1 for "primary", 2 for "secondary", 0 for "other" (backup_label)
  */
 static XLogRecord *
 ReadCheckpointRecord(XLogRecPtr RecPtr,
@@ -4429,12 +4482,21 @@ ReadCheckpointRecord(XLogRecPtr RecPtr,
 
 	if (!XRecOffIsValid(RecPtr.xrecoff))
 	{
-		if (whichChkpt == 1)
-			ereport(LOG,
-					(errmsg("invalid primary checkpoint link in control file")));
-		else
-			ereport(LOG,
-					(errmsg("invalid secondary checkpoint link in control file")));
+		switch (whichChkpt)
+		{
+			case 1:
+				ereport(LOG,
+						(errmsg("invalid primary checkpoint link in control file")));
+				break;
+			case 2:
+				ereport(LOG,
+						(errmsg("invalid secondary checkpoint link in control file")));
+				break;
+			default:
+				ereport(LOG,
+						(errmsg("invalid checkpoint link in backup_label file")));
+				break;
+		}
 		return NULL;
 	}
 
@@ -4442,43 +4504,79 @@ ReadCheckpointRecord(XLogRecPtr RecPtr,
 
 	if (record == NULL)
 	{
-		if (whichChkpt == 1)
-			ereport(LOG,
-					(errmsg("invalid primary checkpoint record")));
-		else
-			ereport(LOG,
-					(errmsg("invalid secondary checkpoint record")));
+		switch (whichChkpt)
+		{
+			case 1:
+				ereport(LOG,
+						(errmsg("invalid primary checkpoint record")));
+				break;
+			case 2:
+				ereport(LOG,
+						(errmsg("invalid secondary checkpoint record")));
+				break;
+			default:
+				ereport(LOG,
+						(errmsg("invalid checkpoint record")));
+				break;
+		}
 		return NULL;
 	}
 	if (record->xl_rmid != RM_XLOG_ID)
 	{
-		if (whichChkpt == 1)
-			ereport(LOG,
-					(errmsg("invalid resource manager ID in primary checkpoint record")));
-		else
-			ereport(LOG,
-					(errmsg("invalid resource manager ID in secondary checkpoint record")));
+		switch (whichChkpt)
+		{
+			case 1:
+				ereport(LOG,
+						(errmsg("invalid resource manager ID in primary checkpoint record")));
+				break;
+			case 2:
+				ereport(LOG,
+						(errmsg("invalid resource manager ID in secondary checkpoint record")));
+				break;
+			default:
+				ereport(LOG,
+						(errmsg("invalid resource manager ID in checkpoint record")));
+				break;
+		}
 		return NULL;
 	}
 	if (record->xl_info != XLOG_CHECKPOINT_SHUTDOWN &&
 		record->xl_info != XLOG_CHECKPOINT_ONLINE)
 	{
-		if (whichChkpt == 1)
-			ereport(LOG,
-					(errmsg("invalid xl_info in primary checkpoint record")));
-		else
-			ereport(LOG,
-					(errmsg("invalid xl_info in secondary checkpoint record")));
+		switch (whichChkpt)
+		{
+			case 1:
+				ereport(LOG,
+						(errmsg("invalid xl_info in primary checkpoint record")));
+				break;
+			case 2:
+				ereport(LOG,
+						(errmsg("invalid xl_info in secondary checkpoint record")));
+				break;
+			default:
+				ereport(LOG,
+						(errmsg("invalid xl_info in checkpoint record")));
+				break;
+		}
 		return NULL;
 	}
 	if (record->xl_len != sizeof(CheckPoint))
 	{
-		if (whichChkpt == 1)
-			ereport(LOG,
-					(errmsg("invalid length of primary checkpoint record")));
-		else
-			ereport(LOG,
-					(errmsg("invalid length of secondary checkpoint record")));
+		switch (whichChkpt)
+		{
+			case 1:
+				ereport(LOG,
+						(errmsg("invalid length of primary checkpoint record")));
+				break;
+			case 2:
+				ereport(LOG,
+						(errmsg("invalid length of secondary checkpoint record")));
+				break;
+			default:
+				ereport(LOG,
+						(errmsg("invalid length of checkpoint record")));
+				break;
+		}
 		return NULL;
 	}
 	return record;
@@ -5065,10 +5163,11 @@ pg_start_backup(PG_FUNCTION_ARGS)
 	text	   *backupid = PG_GETARG_TEXT_P(0);
 	text	   *result;
 	char	   *backupidstr;
+	XLogRecPtr	checkpointloc;
 	XLogRecPtr	startpoint;
 	time_t stamp_time;
 	char		strfbuf[128];
-	char		labelfilename[MAXPGPATH];
+	char		labelfilepath[MAXPGPATH];
 	char		xlogfilename[MAXFNAMELEN];
 	uint32		_logId;
 	uint32		_logSeg;
@@ -5082,10 +5181,23 @@ pg_start_backup(PG_FUNCTION_ARGS)
 	backupidstr = DatumGetCString(DirectFunctionCall1(textout,
 													  PointerGetDatum(backupid)));
 	/*
-	 * The oldest point in WAL that would be needed to restore starting from
-	 * the most recent checkpoint is precisely the RedoRecPtr.
+	 * Force a CHECKPOINT.  This is not strictly necessary, but it seems
+	 * like a good idea to minimize the amount of past WAL needed to use the
+	 * backup.  Also, this guarantees that two successive backup runs
+	 * will have different checkpoint positions and hence different history
+	 * file names, even if nothing happened in between.
 	 */
-	startpoint = GetRedoRecPtr();
+	RequestCheckpoint(true);
+	/*
+	 * Now we need to fetch the checkpoint record location, and also its
+	 * REDO pointer.  The oldest point in WAL that would be needed to restore
+	 * starting from the checkpoint is precisely the REDO pointer.
+	 */
+	LWLockAcquire(ControlFileLock, LW_EXCLUSIVE);
+	checkpointloc = ControlFile->checkPoint;
+	startpoint = ControlFile->checkPointCopy.redo;
+	LWLockRelease(ControlFileLock);
+
 	XLByteToSeg(startpoint, _logId, _logSeg);
 	XLogFileName(xlogfilename, ThisTimeLineID, _logId, _logSeg);
 	/*
@@ -5101,39 +5213,41 @@ pg_start_backup(PG_FUNCTION_ARGS)
 	/*
 	 * Check for existing backup label --- implies a backup is already running
 	 */
-	snprintf(labelfilename, MAXPGPATH, "%s/backup_label", DataDir);
-	if (stat(labelfilename, &stat_buf) != 0)
+	snprintf(labelfilepath, MAXPGPATH, "%s/backup_label", DataDir);
+	if (stat(labelfilepath, &stat_buf) != 0)
 	{
 		if (errno != ENOENT)
 			ereport(ERROR,
 					(errcode_for_file_access(),
 					 errmsg("could not stat \"%s\": %m",
-							labelfilename)));
+							labelfilepath)));
 	}
 	else
 		ereport(ERROR,
 				(errcode(ERRCODE_OBJECT_NOT_IN_PREREQUISITE_STATE),
 				 errmsg("a backup is already in progress"),
 				 errhint("If you're sure there is no backup in progress, remove file \"%s\" and try again.",
-						 labelfilename)));
+						 labelfilepath)));
 	/*
 	 * Okay, write the file
 	 */
-	fp = AllocateFile(labelfilename, "w");
+	fp = AllocateFile(labelfilepath, "w");
 	if (!fp)
 		ereport(ERROR,
 				(errcode_for_file_access(),
 				 errmsg("could not create file \"%s\": %m",
-						labelfilename)));
+						labelfilepath)));
 	fprintf(fp, "START WAL LOCATION: %X/%X (file %s)\n",
 			startpoint.xlogid, startpoint.xrecoff, xlogfilename);
+	fprintf(fp, "CHECKPOINT LOCATION: %X/%X\n",
+			checkpointloc.xlogid, checkpointloc.xrecoff);
 	fprintf(fp, "START TIME: %s\n", strfbuf);
 	fprintf(fp, "LABEL: %s\n", backupidstr);
 	if (fflush(fp) || ferror(fp) || FreeFile(fp))
 		ereport(ERROR,
 				(errcode_for_file_access(),
 				 errmsg("could not write file \"%s\": %m",
-						labelfilename)));
+						labelfilepath)));
 	/*
 	 * We're done.  As a convenience, return the starting WAL offset.
 	 */
@@ -5161,8 +5275,8 @@ pg_stop_backup(PG_FUNCTION_ARGS)
 	XLogRecPtr	stoppoint;
 	time_t stamp_time;
 	char		strfbuf[128];
-	char		labelfilename[MAXPGPATH];
-	char		histfilename[MAXPGPATH];
+	char		labelfilepath[MAXPGPATH];
+	char		histfilepath[MAXPGPATH];
 	char		startxlogfilename[MAXFNAMELEN];
 	char		stopxlogfilename[MAXFNAMELEN];
 	uint32		_logId;
@@ -5199,15 +5313,15 @@ pg_stop_backup(PG_FUNCTION_ARGS)
 	/*
 	 * Open the existing label file
 	 */
-	snprintf(labelfilename, MAXPGPATH, "%s/backup_label", DataDir);
-	lfp = AllocateFile(labelfilename, "r");
+	snprintf(labelfilepath, MAXPGPATH, "%s/backup_label", DataDir);
+	lfp = AllocateFile(labelfilepath, "r");
 	if (!lfp)
 	{
 		if (errno != ENOENT)
 			ereport(ERROR,
 					(errcode_for_file_access(),
 					 errmsg("could not read file \"%s\": %m",
-							labelfilename)));
+							labelfilepath)));
 		ereport(ERROR,
 				(errcode(ERRCODE_OBJECT_NOT_IN_PREREQUISITE_STATE),
 				 errmsg("a backup is not in progress")));
@@ -5221,24 +5335,24 @@ pg_stop_backup(PG_FUNCTION_ARGS)
 			   &ch) != 4 || ch != '\n')
 		ereport(ERROR,
 				(errcode(ERRCODE_OBJECT_NOT_IN_PREREQUISITE_STATE),
-				 errmsg("invalid data in file \"%s\"", labelfilename)));
+				 errmsg("invalid data in file \"%s\"", labelfilepath)));
 	/*
 	 * Write the backup history file
 	 */
 	XLByteToSeg(startpoint, _logId, _logSeg);
-	BackupHistoryFilePath(histfilename, ThisTimeLineID, _logId, _logSeg,
+	BackupHistoryFilePath(histfilepath, ThisTimeLineID, _logId, _logSeg,
 						  startpoint.xrecoff % XLogSegSize);
-	fp = AllocateFile(histfilename, "w");
+	fp = AllocateFile(histfilepath, "w");
 	if (!fp)
 		ereport(ERROR,
 				(errcode_for_file_access(),
 				 errmsg("could not create file \"%s\": %m",
-						histfilename)));
+						histfilepath)));
 	fprintf(fp, "START WAL LOCATION: %X/%X (file %s)\n",
 			startpoint.xlogid, startpoint.xrecoff, startxlogfilename);
 	fprintf(fp, "STOP WAL LOCATION: %X/%X (file %s)\n",
 			stoppoint.xlogid, stoppoint.xrecoff, stopxlogfilename);
-	/* transfer start time and label lines from label to history file */
+	/* transfer remaining lines from label to history file */
 	while ((ich = fgetc(lfp)) != EOF)
 		fputc(ich, fp);
 	fprintf(fp, "STOP TIME: %s\n", strfbuf);
@@ -5246,7 +5360,7 @@ pg_stop_backup(PG_FUNCTION_ARGS)
 		ereport(ERROR,
 				(errcode_for_file_access(),
 				 errmsg("could not write file \"%s\": %m",
-						histfilename)));
+						histfilepath)));
 	/*
 	 * Close and remove the backup label file
 	 */
@@ -5254,20 +5368,20 @@ pg_stop_backup(PG_FUNCTION_ARGS)
 		ereport(ERROR,
 				(errcode_for_file_access(),
 				 errmsg("could not read file \"%s\": %m",
-						labelfilename)));
-	if (unlink(labelfilename) != 0)
+						labelfilepath)));
+	if (unlink(labelfilepath) != 0)
 		ereport(ERROR,
 				(errcode_for_file_access(),
 				 errmsg("could not remove file \"%s\": %m",
-						labelfilename)));
+						labelfilepath)));
 	/*
 	 * Notify archiver that history file may be archived immediately
 	 */
 	if (XLogArchivingActive())
 	{
-		BackupHistoryFileName(histfilename, ThisTimeLineID, _logId, _logSeg,
+		BackupHistoryFileName(histfilepath, ThisTimeLineID, _logId, _logSeg,
 							  startpoint.xrecoff % XLogSegSize);
-		XLogArchiveNotify(histfilename);
+		XLogArchiveNotify(histfilepath);
 	}
 	/*
 	 * We're done.  As a convenience, return the ending WAL offset.
@@ -5277,4 +5391,137 @@ pg_stop_backup(PG_FUNCTION_ARGS)
 	result = DatumGetTextP(DirectFunctionCall1(textin,
 											   CStringGetDatum(stopxlogfilename)));
 	PG_RETURN_TEXT_P(result);
+}
+
+/*
+ * read_backup_label: check to see if a backup_label file is present
+ *
+ * If we see a backup_label during recovery, we assume that we are recovering
+ * from a backup dump file, and we therefore roll forward from the checkpoint
+ * identified by the label file, NOT what pg_control says.  This avoids the
+ * problem that pg_control might have been archived one or more checkpoints
+ * later than the start of the dump, and so if we rely on it as the start
+ * point, we will fail to restore a consistent database state.
+ *
+ * We also attempt to retrieve the corresponding backup history file.
+ * If successful, set recoveryMinXlogOffset to constrain valid PITR stopping
+ * points.
+ *
+ * Returns TRUE if a backup_label was found (and fills the checkpoint
+ * location into *checkPointLoc); returns FALSE if not.
+ */
+static bool
+read_backup_label(XLogRecPtr *checkPointLoc)
+{
+	XLogRecPtr	startpoint;
+	XLogRecPtr	stoppoint;
+	char		labelfilepath[MAXPGPATH];
+	char		histfilename[MAXFNAMELEN];
+	char		histfilepath[MAXPGPATH];
+	char		startxlogfilename[MAXFNAMELEN];
+	char		stopxlogfilename[MAXFNAMELEN];
+	TimeLineID	tli;
+	uint32		_logId;
+	uint32		_logSeg;
+	FILE	   *lfp;
+	FILE	   *fp;
+	char		ch;
+
+	/*
+	 * See if label file is present
+	 */
+	snprintf(labelfilepath, MAXPGPATH, "%s/backup_label", DataDir);
+	lfp = AllocateFile(labelfilepath, "r");
+	if (!lfp)
+	{
+		if (errno != ENOENT)
+			ereport(FATAL,
+					(errcode_for_file_access(),
+					 errmsg("could not read file \"%s\": %m",
+							labelfilepath)));
+		return false;			/* it's not there, all is fine */
+	}
+	/*
+	 * Read and parse the START WAL LOCATION and CHECKPOINT lines (this code
+	 * is pretty crude, but we are not expecting any variability in the file
+	 * format).
+	 */
+	if (fscanf(lfp, "START WAL LOCATION: %X/%X (file %08X%16s)%c",
+			   &startpoint.xlogid, &startpoint.xrecoff, &tli,
+			   startxlogfilename, &ch) != 5 || ch != '\n')
+		ereport(FATAL,
+				(errcode(ERRCODE_OBJECT_NOT_IN_PREREQUISITE_STATE),
+				 errmsg("invalid data in file \"%s\"", labelfilepath)));
+	if (fscanf(lfp, "CHECKPOINT LOCATION: %X/%X%c",
+			   &checkPointLoc->xlogid, &checkPointLoc->xrecoff,
+			   &ch) != 3 || ch != '\n')
+		ereport(FATAL,
+				(errcode(ERRCODE_OBJECT_NOT_IN_PREREQUISITE_STATE),
+				 errmsg("invalid data in file \"%s\"", labelfilepath)));
+	if (ferror(lfp) || FreeFile(lfp))
+		ereport(FATAL,
+				(errcode_for_file_access(),
+				 errmsg("could not read file \"%s\": %m",
+						labelfilepath)));
+	/*
+	 * Try to retrieve the backup history file (no error if we can't)
+	 */
+	XLByteToSeg(startpoint, _logId, _logSeg);
+	BackupHistoryFileName(histfilename, tli, _logId, _logSeg,
+						  startpoint.xrecoff % XLogSegSize);
+
+	if (InArchiveRecovery)
+		RestoreArchivedFile(histfilepath, histfilename, "RECOVERYHISTORY", 0);
+	else
+		BackupHistoryFilePath(histfilepath, tli, _logId, _logSeg,
+							  startpoint.xrecoff % XLogSegSize);
+
+    fp = AllocateFile(histfilepath, "r");
+	if (fp)
+	{
+		/*
+		 * Parse history file to identify stop point.
+		 */
+		if (fscanf(fp, "START WAL LOCATION: %X/%X (file %24s)%c",
+				   &startpoint.xlogid, &startpoint.xrecoff, startxlogfilename,
+				   &ch) != 4 || ch != '\n')
+			ereport(FATAL,
+					(errcode(ERRCODE_OBJECT_NOT_IN_PREREQUISITE_STATE),
+					 errmsg("invalid data in file \"%s\"", histfilename)));
+		if (fscanf(fp, "STOP WAL LOCATION: %X/%X (file %24s)%c",
+				   &stoppoint.xlogid, &stoppoint.xrecoff, stopxlogfilename,
+				   &ch) != 4 || ch != '\n')
+			ereport(FATAL,
+					(errcode(ERRCODE_OBJECT_NOT_IN_PREREQUISITE_STATE),
+					 errmsg("invalid data in file \"%s\"", histfilename)));
+		recoveryMinXlogOffset = stoppoint;
+		if (ferror(fp) || FreeFile(fp))
+			ereport(FATAL,
+					(errcode_for_file_access(),
+					 errmsg("could not read file \"%s\": %m",
+							histfilepath)));
+	}
+
+	return true;
+}
+
+/*
+ * remove_backup_label: remove any extant backup_label after successful
+ * recovery.  Once we have completed the end-of-recovery checkpoint there
+ * is no reason to have to replay from the start point indicated by the
+ * label (and indeed we'll probably have removed/recycled the needed WAL
+ * segments), so remove the label to prevent trouble in later crash recoveries.
+ */
+static void
+remove_backup_label(void)
+{
+	char		labelfilepath[MAXPGPATH];
+
+	snprintf(labelfilepath, MAXPGPATH, "%s/backup_label", DataDir);
+	if (unlink(labelfilepath) != 0)
+		if (errno != ENOENT)
+			ereport(FATAL,
+					(errcode_for_file_access(),
+					 errmsg("could not remove file \"%s\": %m",
+							labelfilepath)));
 }
