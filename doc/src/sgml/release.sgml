@@ -1,5 +1,5 @@
 <!--
-$PostgreSQL: pgsql/doc/src/sgml/release.sgml,v 1.320 2005/01/15 07:53:04 tgl Exp $
+$PostgreSQL: pgsql/doc/src/sgml/release.sgml,v 1.321 2005/01/15 21:11:46 tgl Exp $
 -->
 
 <appendix id="release">
@@ -28,8 +28,8 @@ $PostgreSQL: pgsql/doc/src/sgml/release.sgml,v 1.320 2005/01/15 07:53:04 tgl Exp
       <listitem>
        <para>
         This is the first <productname>PostgreSQL</productname> release
-        to natively run on <productname>Microsoft Windows</> as a
-        server. It can run as a <productname>Windows</> service. This
+        to run natively on <trademark class=registered>Microsoft Windows</> as
+        a server. It can run as a <productname>Windows</> service. This
         release supports NT-based Windows releases like
         <productname>Windows 2000</>, <productname>Windows XP</>, and
         <productname>Windows 2003</>. Older releases like
@@ -38,7 +38,7 @@ $PostgreSQL: pgsql/doc/src/sgml/release.sgml,v 1.320 2005/01/15 07:53:04 tgl Exp
         systems do not have the infrastructure to support
         <productname>PostgreSQL</productname>. A separate installer
         project has been created to ease installation on
-        <productname>Windows</>: <ulink
+        <productname>Windows</> &mdash; see <ulink
         url="http://pgfoundry.org/projects/pginstaller">
         http://pgfoundry.org/projects/pginstaller</ulink>.
        </para>
@@ -47,7 +47,7 @@ $PostgreSQL: pgsql/doc/src/sgml/release.sgml,v 1.320 2005/01/15 07:53:04 tgl Exp
         Although tested throughout our release cycle, the Windows port
         does not have the benefit of years of use in production
         environments that <productname>PostgreSQL</productname> has on
-        Unix platforms and therefore should be treated with the same
+        Unix platforms.  Therefore it should be treated with the same
         level of caution as you would a new product.
        </para>
 
@@ -85,8 +85,7 @@ $PostgreSQL: pgsql/doc/src/sgml/release.sgml,v 1.320 2005/01/15 07:53:04 tgl Exp
 
       <listitem>
        <para>
-        Though <productname>PostgreSQL</productname> is very reliable,
-        in previous releases there was no way to recover from disk
+        In previous releases there was no way to recover from disk
         drive failure except to restore from a previous backup or use
         a standby replication server.  Point-in-time recovery allows
         continuous backup of the server.  You can recover either to
@@ -102,8 +101,8 @@ $PostgreSQL: pgsql/doc/src/sgml/release.sgml,v 1.320 2005/01/15 07:53:04 tgl Exp
 
       <listitem>
        <para>
-        Tablespaces allow administrators to select the file systems
-        used for storage of tables, indexes, and entire databases.
+        Tablespaces allow administrators to select different file systems
+        for storage of individual tables, indexes, and databases.
         This improves performance and control over disk space
         usage. Prior releases used <application>initlocation</> and
         manual symlink management for such tasks.
@@ -188,6 +187,37 @@ $PostgreSQL: pgsql/doc/src/sgml/release.sgml,v 1.320 2005/01/15 07:53:04 tgl Exp
 
      <listitem>
       <para>
+       In <option>READ COMMITTED</> serialization mode, volatile functions
+       now see the results of concurrent transactions committed up to the
+       beginning of each statement within the function, rather than up to the
+       beginning of the interactive command that called the function.
+      </para>
+     </listitem>
+
+     <listitem>
+      <para>
+       Functions declared <option>STABLE</> or <option>IMMUTABLE</> always
+       use the snapshot of the calling query, and therefore do not see the
+       effects of actions taken after the calling query starts, whether in
+       their own transaction or other transactions.  Such a function must be
+       read-only, too, meaning that it cannot use any SQL commands other than
+       <command>SELECT</>.
+      </para>
+     </listitem>
+
+     <listitem>
+      <para>
+       Non-deferred <option>AFTER</> triggers are now fired immediately
+       after completion of the triggering query, rather than upon
+       finishing the current interactive command. This makes a
+       difference when the triggering query occurred within a function:
+       the trigger is invoked before the function proceeds to its next
+       operation.
+      </para>
+     </listitem>
+
+     <listitem>
+      <para>
        Server configuration parameters <varname>virtual_host</> and
        <varname>tcpip_socket</> have been replaced with a more general
        parameter <varname>listen_addresses</>. Also, the server now listens on
@@ -210,14 +240,13 @@ $PostgreSQL: pgsql/doc/src/sgml/release.sgml,v 1.320 2005/01/15 07:53:04 tgl Exp
       <para>
        Server configuration parameters <varname>log_pid</>,
        <varname>log_timestamp</>, and <varname>log_source_port</> have been
-       removed now that a more flexible <varname>log_line_prefix</> has been
-       added.
+       replaced with a more general parameter <varname>log_line_prefix</>.
       </para>
      </listitem>
 
      <listitem>
       <para>
-       Server configuration parameter <varname>syslog</> has been removed and
+       Server configuration parameter <varname>syslog</> has been
        replaced with a more logical <varname>log_destination</> variable to
        control the log output destination.
       </para>
@@ -227,8 +256,8 @@ $PostgreSQL: pgsql/doc/src/sgml/release.sgml,v 1.320 2005/01/15 07:53:04 tgl Exp
       <para>
        Server configuration parameter <varname>log_statement</> has been
        changed so it can selectively log just database modification or
-       data definition statements.  Server configuration parameter <varname>
-       log_duration</> now prints only when <varname>log_statement</>
+       data definition statements.  Server configuration parameter
+       <varname>log_duration</> now prints only when <varname>log_statement</>
        prints the query.
       </para>
      </listitem>
@@ -267,6 +296,18 @@ $PostgreSQL: pgsql/doc/src/sgml/release.sgml,v 1.320 2005/01/15 07:53:04 tgl Exp
 
      <listitem>
       <para>
+       Syntax checking of array input values has been tightened up
+       considerably. Junk that was previously allowed in odd places with
+       odd results now causes an error. Empty-string element values
+       must now be written as <literal>""</>, rather than writing nothing.
+       Also changed behavior with respect to whitespace surrounding
+       array elements: trailing whitespace is now ignored, for symmetry
+       with leading whitespace (which has always been ignored).
+      </para>
+     </listitem>
+
+     <listitem>
+      <para>
        Overflow in integer arithmetic operations is now detected and
        reported as an error.
       </para>
@@ -281,20 +322,28 @@ $PostgreSQL: pgsql/doc/src/sgml/release.sgml,v 1.320 2005/01/15 07:53:04 tgl Exp
 
      <listitem>
       <para>
-       The server now warns of empty strings passed to
-       <type>oid</type>/<type>float4</type>/<type>float8</type> data
-       types. In the next major release, doing this will generate an
-       error.
-      </para>
-     </listitem>
-
-     <listitem>
-      <para>
        The <function>extract()</> function (also called
        <function>date_part</>) now returns the proper year for BC dates.
        It previously returned one less than the correct year. The
        function now also returns the proper values for millennium and
        century.
+      </para>
+     </listitem>
+
+    <listitem>
+     <para>
+      <type>CIDR</> values now must have their non-masked bits be zero.
+      For example, we no longer allow
+      <literal>204.248.199.1/31</literal> as a <type>CIDR</> value. Such
+      values should never have been accepted by
+      <productname>PostgreSQL</productname> and will now be rejected.
+     </para>
+    </listitem>
+
+     <listitem>
+      <para>
+       <command>EXECUTE</command> now returns a completion tag that
+       matches the executed statement.
       </para>
      </listitem>
 
@@ -309,9 +358,15 @@ $PostgreSQL: pgsql/doc/src/sgml/release.sgml,v 1.320 2005/01/15 07:53:04 tgl Exp
      </listitem>
 
      <listitem>
-      <para> The JDBC client interface has been removed from the core
+      <para>
+      The JDBC client interface has been removed from the core
       distribution, and is now hosted at <ulink url=
       "http://jdbc.postgresql.org">http://jdbc.postgresql.org</ulink>.
+      </para>
+     </listitem>
+
+     <listitem>
+      <para>
       The Tcl client interface has also been removed. There are several
       Tcl interfaces now hosted at <ulink url=
       "http://gborg.postgresql.org">http://gborg.postgresql.org</ulink>.
@@ -324,15 +379,9 @@ $PostgreSQL: pgsql/doc/src/sgml/release.sgml,v 1.320 2005/01/15 07:53:04 tgl Exp
        one supplied by the operating system. This will provide consistent
        behavior across all platforms.  In most cases, there should be
        little noticeable difference in time zone behavior, except that
-       the time zone names used by SET/SHOW <varname>TimeZone</> may
+       the time zone names used by <command>SET</>/<command>SHOW</>
+       <varname>TimeZone</> may
        be different from what your platform provides.
-      </para>
-     </listitem>
-
-     <listitem>
-      <para>
-       <command>EXECUTE</command> now returns a completion tag that
-       matches the executed statement.
       </para>
      </listitem>
 
@@ -350,60 +399,6 @@ $PostgreSQL: pgsql/doc/src/sgml/release.sgml,v 1.320 2005/01/15 07:53:04 tgl Exp
        <application>initlocation</> has been removed.
       </para>
      </listitem>
-
-     <listitem>
-      <para>
-       Syntax checking of array input values has been tightened up
-       considerably. Junk that was previously allowed in odd places with
-       odd results now causes an error. Empty-string element values
-       must now be written as <literal>""</>, rather than writing nothing.
-       Also changed behavior with respect to whitespace surrounding
-       array elements: trailing whitespace is now ignored, for symmetry
-       with leading whitespace (which has always been ignored).
-      </para>
-     </listitem>
-
-     <listitem>
-      <para>
-       In <option>READ COMMITTED</> serialization mode, volatile functions
-       now see the results of concurrent transactions committed up to the
-       beginning of each statement within the function, rather than up to the
-       beginning of the interactive command that called the function.
-      </para>
-     </listitem>
-
-     <listitem>
-      <para>
-       Functions declared <option>STABLE</> or <option>IMMUTABLE</> always
-       use the snapshot of the calling query, and therefore do not see the
-       effects of actions taken after the calling query starts, whether in
-       their own transaction or other transactions.  Such a function must be
-       read-only, too, meaning that it cannot use any SQL commands other than
-       <command>SELECT</>.
-      </para>
-     </listitem>
-
-     <listitem>
-      <para>
-       Non-deferred <option>AFTER</> triggers are now fired immediately
-       after completion of the triggering query, rather than upon
-       finishing the current interactive command. This makes a
-       difference when the triggering query occurred within a function:
-       the trigger is invoked before the function proceeds to its next
-       operation.
-      </para>
-     </listitem>
-
-    <listitem>
-     <para>
-      <type>CIDR</> values now must have their non-masked bits be zero.
-      For example, we no longer allow
-      <literal>204.248.199.1/31</literal> as a <type>CIDR</> value. Such
-      values should never have been accepted by
-      <productname>PostgreSQL</productname> and will now be rejected.
-     </para>
-    </listitem>
-
 
     </itemizedlist>
    </para>
@@ -424,9 +419,19 @@ $PostgreSQL: pgsql/doc/src/sgml/release.sgml,v 1.320 2005/01/15 07:53:04 tgl Exp
     <listitem>
      <para>
       The 8.1 release will remove the function
-       <function>to_char(interval)</>.
+       <function>to_char(interval, text)</>.
      </para>
     </listitem>
+
+     <listitem>
+      <para>
+       The server now warns of empty strings passed to
+       <type>oid</type>/<type>float4</type>/<type>float8</type> data
+       types, but continues to interpret them as zeroes as before.
+       In the next major release, empty strings will be considered
+       invalid input for these data types.
+      </para>
+     </listitem>
 
     <listitem>
      <para>
@@ -435,7 +440,7 @@ $PostgreSQL: pgsql/doc/src/sgml/release.sgml,v 1.320 2005/01/15 07:53:04 tgl Exp
       this will <emphasis>not</emphasis> be the case: to create a table
       that contains <type>OID</>s, the <option>WITH OIDS</> clause must
       be specified or the <varname>default_with_oids</varname>
-      configuration parameter must be enabled. Users are encouraged to
+      configuration parameter must be set. Users are encouraged to
       explicitly specify <option>WITH OIDS</> if their tables
       require OIDs for compatibility with future releases of
       <productname>PostgreSQL</productname>.
@@ -494,7 +499,7 @@ $PostgreSQL: pgsql/doc/src/sgml/release.sgml,v 1.320 2005/01/15 07:53:04 tgl Exp
       In previous releases, the checkpoint process, which runs every few
       minutes, would write all dirty buffers to the operating system's
       buffer cache then flush all dirty operating system buffers to
-      disk. This often resulted in a periodic spike in disk usage that
+      disk. This resulted in a periodic spike in disk usage that often
       hurt performance. The new code uses a background writer to trickle
       disk writes at a steady pace so checkpoints have far fewer dirty
       pages to write to disk. Also, the new code does not issue a global
@@ -532,16 +537,15 @@ $PostgreSQL: pgsql/doc/src/sgml/release.sgml,v 1.320 2005/01/15 07:53:04 tgl Exp
       Use dynamically-generated table size estimates while planning (Tom)
      </para>
      <para>
-      The optimizer now uses a table's current actual size on disk as its
-      estimate of the number of blocks in the table, and it makes an estimate
-      of the number of rows in the table based on the current size on disk.
-      Formerly, the
-      <structname>pg_class</structname>.<structfield>relpages</structfield>
-      and
-      <structname>pg_class</structname>.<structfield>reltuples</structfield>
-      fields were used as-is, but these values might be quite out-of-date,
-      leading to poor choices of plans.  They are now treated only as an
-      indication of the table's density (rows per page).
+      Formerly the planner estimated table sizes using the values seen
+      by the last <command>VACUUM</command> or <command>ANALYZE</command>,
+      both as to physical table size (number of pages) and number of rows.
+      Now, the current physical table size is obtained from the kernel,
+      and the number of rows is estimated by multiplying the table size
+      by the row density (rows per page) seen by the last
+      <command>VACUUM</command> or <command>ANALYZE</command>.  This should
+      produce more reliable estimates in cases where the table size has
+      changed significantly since the last housekeeping command.
      </para>
     </listitem>
 
@@ -612,7 +616,7 @@ $PostgreSQL: pgsql/doc/src/sgml/release.sgml,v 1.320 2005/01/15 07:53:04 tgl Exp
 
     <listitem>
      <para>
-      Allow collection of <command>ANALYZE</command> statistics for
+      <command>ANALYZE</command> now collects statistics for
       expression indexes (Tom)
      </para>
      <para>
@@ -643,23 +647,6 @@ $PostgreSQL: pgsql/doc/src/sgml/release.sgml,v 1.320 2005/01/15 07:53:04 tgl Exp
      <para>
       This buys back some of the performance loss observed in 7.4, while still
       keeping <command>TRUNCATE</command> transaction-safe.
-     </para>
-    </listitem>
-
-    <listitem>
-     <para>
-      Improve optimizer rowcount estimates (Tom)
-     </para>
-     <para>
-      Formerly the planner estimated table sizes using the values seen
-      by the last <command>VACUUM</command> or <command>ANALYZE</command>,
-      both as to physical table size (number of pages) and number of rows.
-      Now, the physical table size is obtained directly from the kernel,
-      and the number of rows is estimated by multiplying the table size
-      by the row density (rows per page) seen by the last
-      <command>VACUUM</command> or <command>ANALYZE</command>.  This should
-      produce more reliable estimates in cases where the table size has
-      changed significantly since the last housekeeping command.
      </para>
     </listitem>
 
@@ -696,7 +683,7 @@ $PostgreSQL: pgsql/doc/src/sgml/release.sgml,v 1.320 2005/01/15 07:53:04 tgl Exp
 
     <listitem>
      <para>
-      Add new read-only server configuration parameters to query server
+      Add new read-only server configuration parameters to show server
       compile-time settings: <varname>block_size</>,
       <varname>integer_datetimes</>, <varname>max_function_args</>,
       <varname>max_identifier_length</>, <varname>max_index_keys</>  (Joe)
@@ -769,6 +756,11 @@ $PostgreSQL: pgsql/doc/src/sgml/release.sgml,v 1.320 2005/01/15 07:53:04 tgl Exp
       parameters with a unified <varname>listen_addresses</> parameter
       (Andrew, Tom)
      </para>
+     <para>
+      <varname>virtual_host</> could only specify a single IP address to
+      listen on.  <varname>listen_addresses</> allows multiple addresses
+      to be specified.
+     </para>
     </listitem>
 
     <listitem>
@@ -839,7 +831,8 @@ $PostgreSQL: pgsql/doc/src/sgml/release.sgml,v 1.320 2005/01/15 07:53:04 tgl Exp
       parameters to be used in the query.  In this release, planning of
       unnamed prepared statements is delayed until the first execution,
       and the actual parameter values of that execution are used as
-      optimization hints.
+      optimization hints.  This allows use of out-of-line parameter passing
+      without incurring a performance penalty.
      </para>
     </listitem>
 
@@ -1052,9 +1045,11 @@ $PostgreSQL: pgsql/doc/src/sgml/release.sgml,v 1.320 2005/01/15 07:53:04 tgl Exp
       control whether tables are created with <type>OID</>s by default (Neil)
      </para>
      <para>
-      This allows administrators to default all <command>CREATE
-      TABLE</command> commands to create tables without <type>OID</>
-      columns.
+      This allows administrators to control whether <command>CREATE
+      TABLE</command> commands create tables with or without <type>OID</>
+      columns by default.  (Note: the current factory default setting for
+      <varname>default_with_oids</> is <literal>TRUE</>, but the default
+      will become <literal>FALSE</> in future releases.)
      </para>
     </listitem>
 
@@ -1156,7 +1151,8 @@ $PostgreSQL: pgsql/doc/src/sgml/release.sgml,v 1.320 2005/01/15 07:53:04 tgl Exp
 
     <listitem>
      <para>
-      Constraint/Index/<type>SERIAL</> names are now table_column_type
+      Constraint/Index/<type>SERIAL</> names are now
+      <replaceable>table_column_type</>
       with numbers appended to guarantee uniqueness within the schema
       (Tom)
      </para>
@@ -1300,11 +1296,11 @@ $PostgreSQL: pgsql/doc/src/sgml/release.sgml,v 1.320 2005/01/15 07:53:04 tgl Exp
      </para>
      <para>
       <productname>PostgreSQL</productname> uses the user name as salt
-      when encrypting passwords via MD5. When a user name is changed,
-      their salt no longer matches the stored MD5 password, so the
+      when encrypting passwords via MD5. When a user's name is changed,
+      the salt will no longer match the stored MD5 password, so the
       stored password becomes useless.  In this release a notice is
       generated and the password is cleared.  A new password must then
-      be assigned.
+      be assigned if the user is to be able to log in with a password.
      </para>
     </listitem>
 
@@ -1389,7 +1385,8 @@ $PostgreSQL: pgsql/doc/src/sgml/release.sgml,v 1.320 2005/01/15 07:53:04 tgl Exp
        Formerly, the parser would select these operators in many situations
        where an <quote>unable to select an operator</> error would be more
        appropriate, such as <literal>null * null</>.  If you actually want
-       to do arithmetic on a <type>"char"</> column, you can cast it to integer.
+       to do arithmetic on a <type>"char"</> column, you can cast it to
+       integer explicitly.
       </para>
      </listitem>
 
@@ -1479,7 +1476,7 @@ $PostgreSQL: pgsql/doc/src/sgml/release.sgml,v 1.320 2005/01/15 07:53:04 tgl Exp
 
     <listitem>
      <para>
-      Warn of empty string being passed to
+      Warn about empty string being passed to
       <type>OID</>/<type>float4</>/<type>float8</> data types (Neil)
      </para>
      <para>
@@ -1489,9 +1486,9 @@ $PostgreSQL: pgsql/doc/src/sgml/release.sgml,v 1.320 2005/01/15 07:53:04 tgl Exp
 
     <listitem>
      <para>
-      Allow
-      <type>int2</>/<type>int4</>/<type>int8</>/<type>float4</>/<type>float8</> 
-      input routines to have leading or trailing whitespace
+      Allow leading or trailing whitespace in
+      <type>int2</>/<type>int4</>/<type>int8</>/<type>float4</>/<type>float8</>
+      input routines
       (Neil)
      </para>
     </listitem>
@@ -1656,7 +1653,9 @@ $PostgreSQL: pgsql/doc/src/sgml/release.sgml,v 1.320 2005/01/15 07:53:04 tgl Exp
       effects of actions taken after the calling query starts, whether in
       their own transaction or other transactions.  Such a function must be
       read-only, too, meaning that it cannot use any SQL commands other than
-      <command>SELECT</>.
+      <command>SELECT</>.  There is a considerable performance gain from
+      declaring a function <literal>STABLE</> or <literal>IMMUTABLE</>
+      rather than <literal>VOLATILE</>.
      </para>
     </listitem>
 
@@ -1967,7 +1966,7 @@ $PostgreSQL: pgsql/doc/src/sgml/release.sgml,v 1.320 2005/01/15 07:53:04 tgl Exp
 
     <listitem>
      <para>
-      Make libpq <option>SIGPIPE</> thread-safe (Bruce)
+      Make libpq's <option>SIGPIPE</> handling thread-safe (Bruce)
      </para>
     </listitem>
 
@@ -2326,7 +2325,8 @@ $PostgreSQL: pgsql/doc/src/sgml/release.sgml,v 1.320 2005/01/15 07:53:04 tgl Exp
 
     <listitem>
      <para>
-      Removed <filename>contrib/pg_logger</>
+      Removed <filename>contrib/pg_logger</>: obsoleted by integrated logging
+      subprocess
      </para>
     </listitem>
 
