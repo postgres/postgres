@@ -2089,5 +2089,17 @@ select sp_add_user('user2');
           -1
 (1 row)
 
+select sp_add_user('user3');
+ sp_add_user 
+-------------
+           3
+(1 row)
+
+select sp_add_user('user3');
+ sp_add_user 
+-------------
+          -1
+(1 row)
+
 drop function sp_add_user(text);
 drop function sp_id_user(text);

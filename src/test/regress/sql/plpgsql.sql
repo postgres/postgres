@@ -1802,6 +1802,8 @@ end$$ language plpgsql;
 select sp_add_user('user1');
 select sp_add_user('user2');
 select sp_add_user('user2');
+select sp_add_user('user3');
+select sp_add_user('user3');
 
 drop function sp_add_user(text);
 drop function sp_id_user(text);
