@@ -1,5 +1,5 @@
 #
-# $Header: /cvsroot/pgsql/contrib/cube/Makefile,v 1.1 2000/12/11 20:39:14 tgl Exp $
+# $Header: /cvsroot/pgsql/contrib/cube/Makefile,v 1.2 2001/02/10 22:31:42 petere Exp $
 #
 
 subdir = contrib/cube
@@ -25,9 +25,13 @@ include $(top_srcdir)/src/Makefile.shlib
 
 
 cubeparse.c cubeparse.h: cubeparse.y
+ifdef YACC
 	$(YACC) -d $(YFLAGS) -p cube_yy $<
 	mv -f y.tab.c cubeparse.c
 	mv -f y.tab.h cubeparse.h
+else
+	@$(missing) bison $< $@
+endif
 
 cubescan.c: cubescan.l
 ifdef FLEX

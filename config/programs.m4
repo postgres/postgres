@@ -1,4 +1,4 @@
-# $Header: /cvsroot/pgsql/config/programs.m4,v 1.3 2001/02/06 19:20:16 petere Exp $
+# $Header: /cvsroot/pgsql/config/programs.m4,v 1.4 2001/02/10 22:31:42 petere Exp $
 
 
 # PGAC_PATH_FLEX
@@ -46,19 +46,16 @@ fi
 if test x"$pgac_cv_path_flex" = x"no"; then
   if test -n "$pgac_broken_flex"; then
     AC_MSG_WARN([
-***
-The Flex version 2.5.3 you have at $pgac_broken_flex contains a bug. You
-should get version 2.5.4 or later.
-###])
+*** The Flex version 2.5.3 you have at $pgac_broken_flex contains a bug. You
+*** should get version 2.5.4 or later.])
   fi
 
   AC_MSG_WARN([
-***
-Without Flex you won't be able to build PostgreSQL from scratch, or change
-any of the scanner definition files. You can obtain Flex from a GNU mirror
-site. (If you are using the official distribution of PostgreSQL then you
-do not need to worry about this because the lexer files are pre-generated.)
-***])
+*** Without Flex you will not be able to build PostgreSQL from CVS or
+*** change any of the scanner definition files.  You can obtain Flex from
+*** a GNU mirror site.  (If you are using the official distribution of
+*** PostgreSQL then you do not need to worry about this because the Flex
+*** output is pre-generated.)])
 fi
 
 if test x"$pgac_cv_path_flex" = x"no"; then

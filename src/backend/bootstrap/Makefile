@@ -2,7 +2,7 @@
 #
 # Makefile for the bootstrap module
 #
-# $Header: /cvsroot/pgsql/src/backend/bootstrap/Makefile,v 1.26 2000/10/20 21:03:41 petere Exp $
+# $Header: /cvsroot/pgsql/src/backend/bootstrap/Makefile,v 1.27 2001/02/10 22:31:42 petere Exp $
 #
 #-------------------------------------------------------------------------
 
@@ -42,10 +42,14 @@ endef
 
 
 $(srcdir)/bootparse.c $(srcdir)/bootstrap_tokens.h: bootparse.y Makefile
+ifdef YACC
 	$(YACC) -d $(YFLAGS) $<
 	$(sed-magic) < y.tab.c > $(srcdir)/bootparse.c
 	$(sed-magic) < y.tab.h > $(srcdir)/bootstrap_tokens.h
 	rm -f y.tab.c y.tab.h
+else
+	@$(missing) bison $< $@
+endif
 
 $(srcdir)/bootscanner.c: bootscanner.l Makefile
 ifdef FLEX

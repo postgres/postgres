@@ -1,5 +1,5 @@
 #
-# $Header: /cvsroot/pgsql/contrib/seg/Makefile,v 1.1 2000/12/11 20:40:33 tgl Exp $
+# $Header: /cvsroot/pgsql/contrib/seg/Makefile,v 1.2 2001/02/10 22:31:42 petere Exp $
 #
 
 subdir = contrib/seg
@@ -25,9 +25,13 @@ include $(top_srcdir)/src/Makefile.shlib
 
 
 segparse.c segparse.h: segparse.y
+ifdef YACC
 	$(YACC) -d $(YFLAGS) -p seg_yy $<
 	mv -f y.tab.c segparse.c
 	mv -f y.tab.h segparse.h
+else
+	@$(missing) bison $< $@
+endif
 
 segscan.c: segscan.l
 ifdef FLEX

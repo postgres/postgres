@@ -2,7 +2,7 @@
 #
 # Makefile for the plpgsql shared object
 #
-# $Header: /cvsroot/pgsql/src/pl/plpgsql/src/Makefile,v 1.10 2001/02/09 01:05:42 tgl Exp $
+# $Header: /cvsroot/pgsql/src/pl/plpgsql/src/Makefile,v 1.11 2001/02/10 22:31:42 petere Exp $
 #
 #-------------------------------------------------------------------------
 
@@ -55,10 +55,14 @@ pl_parse.o: $(srcdir)/pl_gram.c $(srcdir)/pl_scan.c plpgsql.h
 # they must be generated in the srcdir (as opposed to builddir).
 
 $(srcdir)/pl_gram.c $(srcdir)/pl.tab.h: gram.y
+ifdef YACC
 	$(YACC) -d $(YFLAGS) $<
 	sed -e 's/yy/plpgsql_yy/g' -e 's/YY/PLPGSQL_YY/g' < y.tab.c > $(srcdir)/pl_gram.c
 	sed -e 's/yy/plpgsql_yy/g' -e 's/YY/PLPGSQL_YY/g' < y.tab.h > $(srcdir)/pl.tab.h
 	rm -f y.tab.c y.tab.h
+else
+	@$(missing) bison $< $@
+endif
 
 $(srcdir)/pl_scan.c: scan.l
 ifdef FLEX

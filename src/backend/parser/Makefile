@@ -2,7 +2,7 @@
 #
 # Makefile for parser
 #
-# $Header: /cvsroot/pgsql/src/backend/parser/Makefile,v 1.31 2000/10/20 21:03:44 petere Exp $
+# $Header: /cvsroot/pgsql/src/backend/parser/Makefile,v 1.32 2001/02/10 22:31:42 petere Exp $
 #
 #-------------------------------------------------------------------------
 
@@ -25,9 +25,13 @@ SUBSYS.o: $(OBJS)
 	$(LD) $(LDREL) $(LDOUT) $@ $^
 
 $(srcdir)/gram.c $(srcdir)/parse.h: gram.y
+ifdef YACC
 	$(YACC) -d $(YFLAGS) $<
 	mv y.tab.c $(srcdir)/gram.c
 	mv y.tab.h $(srcdir)/parse.h
+else
+	@$(missing) bison $< $@
+endif
 
 $(srcdir)/scan.c: scan.l
 ifdef FLEX

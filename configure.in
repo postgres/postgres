@@ -641,8 +641,20 @@ AC_PROG_RANLIB
 AC_CHECK_PROGS(LORDER, lorder)
 AC_PATH_PROG(TAR, tar)
 AC_CHECK_PROGS(PERL, perl)
-AC_PROG_YACC
+
+AC_CHECK_PROGS(YACC, ['bison -y'])
+if test -z "$YACC"; then
+  AC_MSG_WARN([
+*** Without Bison you will not be able to build PostgreSQL from CVS or
+*** change any of the parser definition files.  You can obtain Bison from
+*** a GNU mirror site.  (If you are using the official distribution of
+*** PostgreSQL then you do not need to worry about this because the Bison
+*** output is pre-generated.)  To use a different yacc program (possible,
+*** but not recommended), set the environment variable YACC before running
+*** 'configure'.])
+fi
 AC_SUBST(YFLAGS)
+
 if test "$with_tk" = yes; then
     AC_PATH_PROG(WISH, wish)
     test -z "$WISH" && AC_MSG_ERROR(['wish' is required for Tk support])

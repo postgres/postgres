@@ -5,16 +5,16 @@
 # behavior when certain utility programs are missing.
 
 case $1 in
-    flex)
-        # `missing flex <input> <output>'
+    flex|bison)
+        # `missing flex|bison <input> <output>'
         input=$2
         output=$3
         if test -f "$output"; then
             echo "\
 ***
-WARNING: \`flex' is missing on your system. You should only need it
+WARNING: \`$1' is missing on your system. You should only need it
 if you changed the file \`$input'; these changes will not take effect.
-You can get flex from a GNU mirror site.
+You can get $1 from a GNU mirror site.
 ***"
             echo "touch $output"
             touch "$output"
@@ -22,10 +22,10 @@ You can get flex from a GNU mirror site.
         else # ! test -f $output
             echo "\
 ***
-ERROR: \`flex' is missing on your system. It is needed to create the
-file \`$output'. You can either get flex from a GNU mirror site
+ERROR: \`$1' is missing on your system. It is needed to create the
+file \`$output'. You can either get $1 from a GNU mirror site
 or download an official distribution of PostgreSQL, which contains
-pre-packaged flex output.
+pre-packaged $1 output.
 ***"
             exit 1
         fi
