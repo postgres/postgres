@@ -6,7 +6,7 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: lock.h,v 1.15 1998/06/30 02:33:33 momjian Exp $
+ * $Id: lock.h,v 1.16 1998/08/01 15:26:37 vadim Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -40,7 +40,11 @@ typedef int LOCKMODE;
 typedef int LOCKMETHOD;
 
 /* MAX_LOCKMODES cannot be larger than the bits in MASK */
-#define MAX_LOCKMODES 6
+#ifdef LowLevelLocking
+#define MAX_LOCKMODES	9
+#else
+#define MAX_LOCKMODES	6
+#endif
 
 /*
  * MAX_LOCK_METHODS corresponds to the number of spin locks allocated in

@@ -12,7 +12,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/storage/lmgr/Attic/multi.c,v 1.20 1998/07/13 16:34:51 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/storage/lmgr/Attic/multi.c,v 1.21 1998/08/01 15:26:26 vadim Exp $
  *
  * NOTES:
  *	 (1) The lock.c module assumes that the caller here is doing
@@ -36,6 +36,55 @@ static bool
 MultiRelease(LOCKMETHOD lockmethod, LOCKTAG *tag, LOCKMODE lockmode,
 			 PG_LOCK_LEVEL level);
 
+#ifdef LowLevelLocking
+
+static MASK	MultiConflicts[] = {
+	(int) NULL,
+	
+/* RowShareLock */
+	(1 << ExclusiveLock),
+
+/* RowExclusiveLock */
+	(1 << ExclusiveLock) | (1 << ShareRowExclusiveLock) | (1 << ShareLock),
+
+/* ShareLock */
+	(1 << ExclusiveLock) | (1 << ShareRowExclusiveLock) | 
+	(1 << RowExclusiveLock),
+
+/* ShareRowExclusiveLock */
+	(1 << ExclusiveLock) | (1 << ShareRowExclusiveLock) | 
+	(1 << ShareLock) | (1 << RowExclusiveLock),
+	
+/* ExclusiveLock */
+	(1 << ExclusiveLock) | (1 << ShareRowExclusiveLock) | (1 << ShareLock) | 
+	(1 << RowExclusiveLock) | (1 << RowShareLock),
+	
+/* ObjShareLock */
+	(1 << ObjExclusiveLock),
+	
+/* ObjExclusiveLock */
+	(1 << ObjExclusiveLock) | (1 << ObjShareLock),
+	
+/* ExtendLock */
+	(1 << ExtendLock)
+	
+};
+
+/*
+ * write locks have higher priority than read locks and extend locks.  May
+ * want to treat INTENT locks differently.
+ */
+static int	MultiPrios[] = {
+	(int) NULL,
+	2,
+	1,
+	2,
+	1,
+	1
+};
+
+#else
+
 /*
  * INTENT indicates to higher level that a lower level lock has been
  * set.  For example, a write lock on a tuple conflicts with a write
@@ -43,7 +92,7 @@ MultiRelease(LOCKMETHOD lockmethod, LOCKTAG *tag, LOCKMODE lockmode,
  * WRITE conflict between the tuple's intent lock and the relation's
  * write lock.
  */
-static int	MultiConflicts[] = {
+static MASK	MultiConflicts[] = {
 	(int) NULL,
 	/* All reads and writes at any level conflict with a write lock */
 	(1 << WRITE_LOCK) | (1 << WRITE_INTENT) | (1 << READ_LOCK) | (1 << READ_INTENT),
@@ -74,6 +123,8 @@ static int	MultiPrios[] = {
 	1
 };
 
+#endif	/* !LowLevelLocking */
+
 /*
  * Lock table identifier for this lock table.  The multi-level
  * lock table is ONE lock table, not three.
@@ -91,7 +142,8 @@ InitMultiLevelLocks()
 {
 	int			lockmethod;
 
-	lockmethod = LockMethodTableInit("MultiLevelLockTable", MultiConflicts, MultiPrios, 5);
+	lockmethod = LockMethodTableInit("MultiLevelLockTable", 
+				 MultiConflicts, MultiPrios, MAX_LOCKMODES - 1);
 	MultiTableId = lockmethod;
 	if (!(MultiTableId))
 		elog(ERROR, "InitMultiLocks: couldnt initialize lock table");

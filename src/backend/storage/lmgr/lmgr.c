@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/storage/lmgr/lmgr.c,v 1.15 1998/07/26 04:30:41 scrappy Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/storage/lmgr/lmgr.c,v 1.16 1998/08/01 15:26:24 vadim Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -51,219 +51,47 @@
 #include "storage/bufmgr.h"
 #include "access/transam.h"		/* for AmiTransactionId */
 
-static void LockRelIdAssign(LockRelId *lockRelId, Oid dbId, Oid relId);
-
-/* ----------------
- *
- * ----------------
- */
-#define MaxRetries		4		/* XXX about 1/4 minute--a hack */
-
-#define IntentReadRelationLock	0x0100
-#define ReadRelationLock		0x0200
-#define IntentWriteRelationLock 0x0400
-#define WriteRelationLock		0x0800
-#define IntentReadPageLock		0x1000
-#define ReadTupleLock			0x2000
-
-#define TupleLevelLockCountMask 0x000f
-
-#define TupleLevelLockLimit		10
-
 extern Oid	MyDatabaseId;
-
-LockRelId VariableRelationLockRelId = {
-	RelOid_pg_variable,
-	InvalidOid
-};
-
-/*
- * LockRelIdGetDatabaseId --
- *		Returns database identifier for a "lock" relation identifier.
- */
-/* ----------------
- *		LockRelIdGetDatabaseId
- *
- * Note: The argument may not be correct, if it is not used soon
- *		 after it is created.
- * ----------------
- */
-#ifdef NOT_USED
-Oid
-LockRelIdGetDatabaseId(LockRelId lockRelId)
-{
-	return (lockRelId.dbId);
-}
-
-#endif
-
-/*
- * LockRelIdGetRelationId --
- *		Returns relation identifier for a "lock" relation identifier.
- */
-Oid
-LockRelIdGetRelationId(LockRelId lockRelId)
-{
-	return (lockRelId.relId);
-}
-
-/*
- * DatabaseIdIsMyDatabaseId --
- *		True iff database object identifier is valid in my present database.
- */
-#ifdef NOT_USED
-bool
-DatabaseIdIsMyDatabaseId(Oid databaseId)
-{
-	return (bool)
-	(!OidIsValid(databaseId) || databaseId == MyDatabaseId);
-}
-
-#endif
-
-/*
- * LockRelIdContainsMyDatabaseId --
- *		True iff "lock" relation identifier is valid in my present database.
- */
-#ifdef NOT_USED
-bool
-LockRelIdContainsMyDatabaseId(LockRelId lockRelId)
-{
-	return (bool)
-	(!OidIsValid(lockRelId.dbId) || lockRelId.dbId == MyDatabaseId);
-}
-
-#endif
 
 /*
  * RelationInitLockInfo --
  *		Initializes the lock information in a relation descriptor.
  */
-/* ----------------
- *		RelationInitLockInfo
- *
- *		XXX processingVariable is a hack to prevent problems during
- *		VARIABLE relation initialization.
- * ----------------
- */
 void
 RelationInitLockInfo(Relation relation)
 {
-	LockInfo	info;
-	char	   *relname;
-	Oid			relationid;
-	bool		processingVariable;
-	extern Oid	MyDatabaseId;	/* XXX use include */
-	extern GlobalMemory CacheCxt;
+	LockInfo			info;
+	char			   *relname;
+	MemoryContext		oldcxt;
+	extern Oid			MyDatabaseId;	/* XXX use include */
+	extern GlobalMemory	CacheCxt;
 
-	/* ----------------
-	 *	sanity checks
-	 * ----------------
-	 */
 	Assert(RelationIsValid(relation));
 	Assert(OidIsValid(RelationGetRelationId(relation)));
 
-	/* ----------------
-	 *	get information from relation descriptor
-	 * ----------------
-	 */
 	info = (LockInfo) relation->lockInfo;
-	relname = (char *) RelationGetRelationName(relation);
-	relationid = RelationGetRelationId(relation);
-	processingVariable = (strcmp(relname, VariableRelationName) == 0);
-
-	/* ----------------
-	 *	create a new lockinfo if not already done
-	 * ----------------
-	 */
-	if (!PointerIsValid(info))
-	{
-		MemoryContext oldcxt;
-
-		oldcxt = MemoryContextSwitchTo((MemoryContext) CacheCxt);
-		info = (LockInfo) palloc(sizeof(LockInfoData));
-		MemoryContextSwitchTo(oldcxt);
-	}
-	else if (processingVariable)
-	{
-		if (IsTransactionState())
-		{
-			TransactionIdStore(GetCurrentTransactionId(),
-							   &info->transactionIdData);
-		}
-		info->flags = 0x0;
-		return;					/* prevent an infinite loop--still true? */
-	}
-	else if (info->initialized)
-	{
-		/* ------------
-		 *	If we've already initialized we're done.
-		 * ------------
-		 */
+	
+	if (LockInfoIsValid(info))
 		return;
-	}
+	
+	relname = (char *) RelationGetRelationName(relation);
 
-	/* ----------------
-	 *	initialize lockinfo.dbId and .relId appropriately
-	 * ----------------
-	 */
+	oldcxt = MemoryContextSwitchTo((MemoryContext) CacheCxt);
+	info = (LockInfo) palloc(sizeof(LockInfoData));
+	MemoryContextSwitchTo(oldcxt);
+
+	info->lockRelId.relId = RelationGetRelationId(relation);
 	if (IsSharedSystemRelationName(relname))
-		LockRelIdAssign(&info->lockRelId, InvalidOid, relationid);
+		info->lockRelId.dbId = InvalidOid;
 	else
-		LockRelIdAssign(&info->lockRelId, MyDatabaseId, relationid);
+		info->lockRelId.dbId = MyDatabaseId;
 
-	/* ----------------
-	 *	store the transaction id in the lockInfo field
-	 * ----------------
-	 */
-	if (processingVariable)
-		TransactionIdStore(AmiTransactionId,
-						   &info->transactionIdData);
-	else if (IsTransactionState())
-		TransactionIdStore(GetCurrentTransactionId(),
-						   &info->transactionIdData);
-	else
-		StoreInvalidTransactionId(&(info->transactionIdData));
+#ifdef LowLevelLocking
+	memset(info->lockHeld, 0, sizeof(info->lockHeld));
+#endif
 
-	/* ----------------
-	 *	initialize rest of lockinfo
-	 * ----------------
-	 */
-	info->flags = 0x0;
-	info->initialized = (bool) true;
 	relation->lockInfo = (Pointer) info;
 }
-
-/* ----------------
- *		RelationDiscardLockInfo
- * ----------------
- */
-#ifdef	LOCKDEBUG
-#define LOCKDEBUG_20 \
-elog(DEBUG, "DiscardLockInfo: NULL relation->lockInfo")
-#else
-#define LOCKDEBUG_20
-#endif							/* LOCKDEBUG */
-
-/*
- * RelationDiscardLockInfo --
- *		Discards the lock information in a relation descriptor.
- */
-#ifdef NOT_USED
-void
-RelationDiscardLockInfo(Relation relation)
-{
-	if (!LockInfoIsValid(relation->lockInfo))
-	{
-		LOCKDEBUG_20;
-		return;
-	}
-
-	pfree(relation->lockInfo);
-	relation->lockInfo = NULL;
-}
-
-#endif
 
 /*
  * RelationSetLockForDescriptorOpen --
@@ -337,7 +165,6 @@ RelationSetLockForRead(Relation relation)
 	{
 		RelationInitLockInfo(relation);
 		lockinfo = (LockInfo) relation->lockInfo;
-		lockinfo->flags |= ReadRelationLock;
 		MultiLockReln(lockinfo, READ_LOCK);
 		return;
 	}
@@ -433,7 +260,6 @@ RelationSetLockForWrite(Relation relation)
 	{
 		RelationInitLockInfo(relation);
 		lockinfo = (LockInfo) relation->lockInfo;
-		lockinfo->flags |= WriteRelationLock;
 		MultiLockReln(lockinfo, WRITE_LOCK);
 		return;
 	}
@@ -483,120 +309,6 @@ RelationUnsetLockForWrite(Relation relation)
 
 	MultiReleaseReln(lockinfo, WRITE_LOCK);
 }
-
-/* ----------------
- *		RelationSetLockForTupleRead
- * ----------------
- */
-#ifdef	LOCKDEBUG
-#define LOCKDEBUG_80 \
-elog(DEBUG, "RelationSetLockForTupleRead(%s[%d,%d], 0x%x) called", \
-	 RelationGetRelationName(relation), lockRelId.dbId, lockRelId.relId, \
-	 itemPointer)
-#define LOCKDEBUG_81 \
-	 elog(DEBUG, "RelationSetLockForTupleRead() escalating")
-#else
-#define LOCKDEBUG_80
-#define LOCKDEBUG_81
-#endif							/* LOCKDEBUG */
-
-/*
- * RelationSetLockForTupleRead --
- *		Sets tuple level read lock.
- */
-#ifdef NOT_USED
-void
-RelationSetLockForTupleRead(Relation relation, ItemPointer itemPointer)
-{
-	LockInfo	lockinfo;
-	TransactionId curXact;
-
-	/* ----------------
-	 *	sanity checks
-	 * ----------------
-	 */
-	Assert(RelationIsValid(relation));
-	if (LockingDisabled())
-		return;
-
-	LOCKDEBUG_80;
-
-	/* ---------------------
-	 * If our lock info is invalid don't bother trying to short circuit
-	 * the lock manager.
-	 * ---------------------
-	 */
-	if (!LockInfoIsValid(relation->lockInfo))
-	{
-		RelationInitLockInfo(relation);
-		lockinfo = (LockInfo) relation->lockInfo;
-		lockinfo->flags |=
-			IntentReadRelationLock |
-			IntentReadPageLock |
-			ReadTupleLock;
-		MultiLockTuple(lockinfo, itemPointer, READ_LOCK);
-		return;
-	}
-	else
-		lockinfo = (LockInfo) relation->lockInfo;
-
-	/* ----------------
-	 *	no need to set a lower granularity lock
-	 * ----------------
-	 */
-	curXact = GetCurrentTransactionId();
-	if ((lockinfo->flags & ReadRelationLock) &&
-		TransactionIdEquals(curXact, lockinfo->transactionIdData))
-		return;
-
-	/* ----------------
-	 * If we don't already have a tuple lock this transaction
-	 * ----------------
-	 */
-	if (!((lockinfo->flags & ReadTupleLock) &&
-		  TransactionIdEquals(curXact, lockinfo->transactionIdData)))
-	{
-
-		lockinfo->flags |=
-			IntentReadRelationLock |
-			IntentReadPageLock |
-			ReadTupleLock;
-
-		/* clear count */
-		lockinfo->flags &= ~TupleLevelLockCountMask;
-
-	}
-	else
-	{
-		if (TupleLevelLockLimit == (TupleLevelLockCountMask &
-									lockinfo->flags))
-		{
-			LOCKDEBUG_81;
-
-			/* escalate */
-			MultiLockReln(lockinfo, READ_LOCK);
-
-			/* clear count */
-			lockinfo->flags &= ~TupleLevelLockCountMask;
-			return;
-		}
-
-		/* increment count */
-		lockinfo->flags =
-			(lockinfo->flags & ~TupleLevelLockCountMask) |
-			(1 + (TupleLevelLockCountMask & lockinfo->flags));
-	}
-
-	TransactionIdStore(curXact, &lockinfo->transactionIdData);
-
-	/* ----------------
-	 * Lock the tuple.
-	 * ----------------
-	 */
-	MultiLockTuple(lockinfo, itemPointer, READ_LOCK);
-}
-
-#endif
 
 /* ----------------
  *		RelationSetLockForReadPage
@@ -902,12 +614,3 @@ RelationUnsetLockForExtend(Relation relation)
 
 #endif
 
-/*
- * Create an LockRelid --- Why not just pass in a pointer to the storage?
- */
-static void
-LockRelIdAssign(LockRelId *lockRelId, Oid dbId, Oid relId)
-{
-	lockRelId->dbId = dbId;
-	lockRelId->relId = relId;
-}

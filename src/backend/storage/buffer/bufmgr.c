@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/storage/buffer/bufmgr.c,v 1.39 1998/07/13 16:34:49 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/storage/buffer/bufmgr.c,v 1.40 1998/08/01 15:26:12 vadim Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -114,18 +114,18 @@ RelationGetBufferWithBuffer(Relation relation,
 							Buffer buffer)
 {
 	BufferDesc *bufHdr;
-	LockRelId		lrelId;
 
 	if (BufferIsValid(buffer))
 	{
 		if (!BufferIsLocal(buffer))
 		{
+			LockRelId   *lrelId = &(((LockInfo)(relation->lockInfo))->lockRelId);
+			
 			bufHdr = &BufferDescriptors[buffer - 1];
-			lrelId = RelationGetLockRelId(relation);
 			SpinAcquire(BufMgrLock);
 			if (bufHdr->tag.blockNum == blockNumber &&
-				bufHdr->tag.relId.relId == lrelId.relId &&
-				bufHdr->tag.relId.dbId == lrelId.dbId)
+				bufHdr->tag.relId.relId == lrelId->relId &&
+				bufHdr->tag.relId.dbId == lrelId->dbId)
 			{
 				SpinRelease(BufMgrLock);
 				return (buffer);
@@ -1282,7 +1282,7 @@ BufferGetRelation(Buffer buffer)
 	Assert(!BufferIsLocal(buffer));		/* not supported for local buffers */
 
 	/* XXX should be a critical section */
-	relid = LockRelIdGetRelationId(BufferDescriptors[buffer - 1].tag.relId);
+	relid = BufferDescriptors[buffer - 1].tag.relId.relId;
 	relation = RelationIdGetRelation(relid);
 
 	RelationDecrementReferenceCount(relation);

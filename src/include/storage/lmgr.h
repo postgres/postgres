@@ -6,7 +6,7 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: lmgr.h,v 1.13 1998/07/13 16:34:56 momjian Exp $
+ * $Id: lmgr.h,v 1.14 1998/08/01 15:26:36 vadim Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -27,45 +27,23 @@ typedef struct LockRelId
 	Oid			dbId;			/* a database identifier */
 } LockRelId;
 
+#ifdef LowLevelLocking
 typedef struct LockInfoData
 {
-	bool		initialized;
 	LockRelId	lockRelId;
-	TransactionId transactionIdData;
-	uint16		flags;
+	bool		lockHeld[MAX_LOCKMODES];	/* on table level */
 } LockInfoData;
+#else
+typedef struct LockInfoData
+{
+	LockRelId	lockRelId;
+} LockInfoData;
+#endif
+
 typedef LockInfoData *LockInfo;
 
-#define LockInfoIsValid(lockinfo) \
-		((PointerIsValid(lockinfo)) &&  ((LockInfo) lockinfo)->initialized)
+#define LockInfoIsValid(lockinfo)	PointerIsValid(lockinfo)
 
-extern LockRelId VariableRelationLockRelId;
-		
-/*
- * RelationGetLockRelId --
- *		Returns "lock" relation identifier for a relation.
- */
-/* ----------------
- * final condition is a hack to prevent problems during
- * VARIABLE relation initialization
- * ----------------
- */
-#define RelationGetLockRelId(relation) \
-( \
-	AssertMacro(RelationIsValid(relation)), \
-	(!LockInfoIsValid((LockInfo)(relation)->lockInfo)) ? \
-		RelationInitLockInfo(relation) \
-	: \
-		(void)NULL, \
-	(strcmp(RelationGetRelationName(relation)->data, \
-			VariableRelationName) == 0) ? \
-		VariableRelationLockRelId \
-	: \
-		((LockInfo)(relation)->lockInfo)->lockRelId \
-)
-
-
-extern Oid	LockRelIdGetRelationId(LockRelId lockRelId);
 extern void RelationInitLockInfo(Relation relation);
 extern void RelationSetLockForDescriptorOpen(Relation relation);
 extern void RelationSetLockForRead(Relation relation);
