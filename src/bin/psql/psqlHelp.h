@@ -5,7 +5,7 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: psqlHelp.h,v 1.49 1998/07/26 01:18:09 momjian Exp $
+ * $Id: psqlHelp.h,v 1.50 1998/08/25 21:36:58 scrappy Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -273,9 +273,9 @@ static struct _helpStruct QL_HELP[] = {
 \t[HAVING having_clause]\n\
 \t[UNION [ALL] SELECT ...];"},
 	{"listen",
-		"listen for notification on a relation",
+		"listen for notification on a relation name",
 	"\
-\tLISTEN class_name"},
+\tLISTEN class_name|\"name\""},
 	{"load",
 		"dynamically load a module",
 	"\
@@ -345,7 +345,11 @@ set R_PLANS TO 'ON'| 'OFF'"},
 	"\
 \tSHOW DateStyle|GEQO|R_PLANS"},
 #endif
-	{"UPDATE",
+	{"unlisten",
+		"unlisten for notification on a relation name",
+	"\
+\tUNLISTEN class_name|\"name\"|\"*\""},
+	{"update",
 		"update tuples",
 	"\
 \tUPDATE class_name SET attr1 = expr1, ...attrN = exprN\n\

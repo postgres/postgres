@@ -10,7 +10,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/parser/gram.y,v 2.25 1998/08/25 15:04:23 thomas Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/parser/gram.y,v 2.26 1998/08/25 21:36:53 scrappy Exp $
  *
  * HISTORY
  *	  AUTHOR			DATE			MAJOR EVENT
@@ -122,7 +122,7 @@ Oid	param_type(int t); /* used in parse_expr.c */
 		CopyStmt, CreateStmt, CreateAsStmt, CreateSeqStmt, DefineStmt, DestroyStmt,
 		ExtendStmt, FetchStmt,	GrantStmt, CreateTrigStmt, DropTrigStmt,
 		CreatePLangStmt, DropPLangStmt,
-		IndexStmt, ListenStmt, LockStmt, OptimizableStmt,
+		IndexStmt, ListenStmt, UnlistenStmt, LockStmt, OptimizableStmt,
 		ProcedureStmt, 	RecipeStmt, RemoveAggrStmt, RemoveOperStmt,
 		RemoveFuncStmt, RemoveStmt,
 		RenameStmt, RevokeStmt, RuleStmt, TransactionStmt, ViewStmt, LoadStmt,
@@ -378,6 +378,7 @@ stmt :	  AddAttrStmt
 		| GrantStmt
 		| IndexStmt
 		| ListenStmt
+		| UnlistenStmt
 		| LockStmt
 		| ProcedureStmt
 		| RecipeStmt
@@ -2034,6 +2035,14 @@ NotifyStmt:  NOTIFY relation_name
 ListenStmt:  LISTEN relation_name
 				{
 					ListenStmt *n = makeNode(ListenStmt);
+					n->relname = $2;
+					$$ = (Node *)n;
+				}
+;
+
+UnlistenStmt:  UNLISTEN relation_name
+				{
+					UnlistenStmt *n = makeNode(UnlistenStmt);
 					n->relname = $2;
 					$$ = (Node *)n;
 				}

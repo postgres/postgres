@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/interfaces/ecpg/preproc/keywords.c,v 1.2 1998/05/18 16:05:00 scrappy Exp $
+ *	  $Header: /cvsroot/pgsql/src/interfaces/ecpg/preproc/keywords.c,v 1.3 1998/08/25 21:37:06 scrappy Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -201,6 +201,7 @@ static ScanKeyword ScanKeywords[] = {
 	{"type", TYPE_P},
 	{"union", UNION},
 	{"unique", UNIQUE},
+	{"unlisten", UNLISTEN},
 	{"until", UNTIL},
 	{"update", UPDATE},
 	{"user", USER},

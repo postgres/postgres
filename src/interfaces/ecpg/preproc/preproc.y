@@ -563,7 +563,7 @@ output_statement(char * stmt, int mode)
                 DATABASE, DELIMITERS, DO, EACH, EXPLAIN, EXTEND,
                 FORWARD, FUNCTION, HANDLER,
                 INCREMENT, INDEX, INHERITS, INSTEAD, ISNULL,
-                LANCOMPILER, LISTEN, LOAD, LOCK_P, LOCATION, MAXVALUE, MINVALUE, MOVE,
+                LANCOMPILER, LISTEN, UNLISTEN, LOAD, LOCK_P, LOCATION, MAXVALUE, MINVALUE, MOVE,
                 NEW, NONE, NOTHING, NOTNULL, OIDS, OPERATOR, PROCEDURAL,
                 RECIPE, RENAME, RESET, RETURNS, ROW, RULE,
                 SEQUENCE, SETOF, SHOW, START, STATEMENT, STDIN, STDOUT, TRUSTED,
@@ -723,6 +723,7 @@ stmt:  AddAttrStmt			{ output_statement($1, 0); }
 		| GrantStmt		{ output_statement($1, 0); }
 		| IndexStmt		{ output_statement($1, 0); }
 		| ListenStmt		{ output_statement($1, 0); }
+		| UnlistenStmt		{ output_statement($1, 0); }
 		| LockStmt		{ output_statement($1, 0); }
 		| ProcedureStmt		{ output_statement($1, 0); }
  		| RecipeStmt		{ output_statement($1, 0); }
@@ -2105,6 +2106,12 @@ NotifyStmt:  NOTIFY relation_name
 ListenStmt:  LISTEN relation_name
 				{
 					$$ = cat2_str(make1_str("listen"), $2);
+                                }
+;
+
+UnlistenStmt:  UNLISTEN relation_name
+				{
+					$$ = cat2_str(make1_str("unlisten"), $2);
                                 }
 ;
 

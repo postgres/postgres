@@ -9,7 +9,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/tcop/utility.c,v 1.47 1998/08/25 21:24:09 scrappy Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/tcop/utility.c,v 1.48 1998/08/25 21:36:56 scrappy Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -591,6 +591,17 @@ ProcessUtility(Node *parsetree,
 				CHECK_IF_ABORTED();
 
 				Async_Listen(stmt->relname, MyProcPid);
+			}
+			break;
+
+		case T_UnlistenStmt:
+			{
+				UnlistenStmt *stmt = (UnlistenStmt *) parsetree;
+
+				PS_SET_STATUS( commandTag = "UNLISTEN" );
+				CHECK_IF_ABORTED();
+
+				Async_Unlisten(stmt->relname, MyProcPid);
 			}
 			break;
 

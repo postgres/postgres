@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/parser/keywords.c,v 1.41 1998/08/25 15:04:24 thomas Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/parser/keywords.c,v 1.42 1998/08/25 21:36:55 scrappy Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -209,6 +209,7 @@ static ScanKeyword ScanKeywords[] = {
 	{"type", TYPE_P},
 	{"union", UNION},
 	{"unique", UNIQUE},
+	{"unlisten", UNLISTEN},
 	{"until", UNTIL},
 	{"update", UPDATE},
 	{"user", USER},

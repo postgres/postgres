@@ -6,7 +6,7 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: nodes.h,v 1.27 1998/08/18 00:49:01 scrappy Exp $
+ * $Id: nodes.h,v 1.28 1998/08/25 21:37:02 scrappy Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -171,6 +171,7 @@ typedef enum NodeTag
 	T_RuleStmt,
 	T_NotifyStmt,
 	T_ListenStmt,
+	T_UnlistenStmt,
 	T_TransactionStmt,
 	T_ViewStmt,
 	T_LoadStmt,

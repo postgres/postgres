@@ -6,7 +6,7 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: parsenodes.h,v 1.56 1998/08/25 15:09:31 thomas Exp $
+ * $Id: parsenodes.h,v 1.57 1998/08/25 21:37:04 scrappy Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -439,6 +439,16 @@ typedef struct ListenStmt
 	NodeTag		type;
 	char	   *relname;		/* relation to listen on */
 } ListenStmt;
+
+/* ----------------------
+ *		Unlisten Statement
+ * ----------------------
+ */
+typedef struct UnlistenStmt
+{
+	NodeTag		type;
+	char	   *relname;		/* relation to unlisten on */
+} UnlistenStmt;
 
 /* ----------------------
  *		{Begin|Abort|End} Transaction Statement
