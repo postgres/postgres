@@ -1,10 +1,13 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/postgres.sgml,v 1.7 1998/08/15 06:52:53 thomas Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/postgres.sgml,v 1.8 1998/08/17 16:20:33 thomas Exp $
 Postgres integrated documentation.
 Other subset docs should be copied and shrunk from here.
 thomas 1998-02-23
 
 $Log: postgres.sgml,v $
+Revision 1.8  1998/08/17 16:20:33  thomas
+Move SQL reference pages up into the User's Guide.
+
 Revision 1.7  1998/08/15 06:52:53  thomas
 Include new chapters.
 
@@ -33,6 +36,10 @@ Include new chapters.
 <!entity storage  SYSTEM "storage.sgml">
 <!entity psql     SYSTEM "psql.sgml">
 <!entity pgaccess SYSTEM "pgaccess.sgml">
+
+<!-- reference pages -->
+<!entity % allfiles SYSTEM "allfiles.sgml">
+%allfiles;
 
 <!-- administrator's guide -->
 <!entity start-ag SYSTEM "start-ag.sgml">
@@ -64,11 +71,6 @@ Include new chapters.
 <!entity odbc     SYSTEM "odbc.sgml">
 <!entity jdbc     SYSTEM "jdbc.sgml">
 
-<!-- reference pages -->
-<!entity intro-ref  SYSTEM "intro-ref.sgml">
-<!entity % allfiles SYSTEM "allfiles.sgml">
-%allfiles;
-
 <!-- developer's guide -->
 <!entity arch-dev SYSTEM "arch-dev.sgml">
 <!entity geqo     SYSTEM "geqo.sgml">
@@ -87,7 +89,7 @@ Include new chapters.
 
 <Title>PostgreSQL</Title>
 <BookInfo>
-    <ReleaseInfo>Covering v6.3 for general release</ReleaseInfo>
+    <ReleaseInfo>Covering v6.4 for general release</ReleaseInfo>
     <BookBiblio>
     <AuthorGroup>
       <CorpAuthor>The PostgreSQL Development Team</CorpAuthor>
@@ -183,6 +185,7 @@ Information for users.
 &storage;
 &psql;
 &pgaccess;
+&commands;
 </Part>
 
 <part Id="part-admin">
@@ -237,17 +240,6 @@ User and programmer interfaces.
 &libpgtcl;
 &odbc;
 &jdbc;
-</Part>
-
-<part Id="part-reference">
-<Title>Reference</Title>
-<PartIntro>
-<Para>
-Command syntax.
-</Para>
-</PartIntro>
-<!-- &intro-ref; -->
-&commands;
 </Part>
 
 <part Id="part-developer">

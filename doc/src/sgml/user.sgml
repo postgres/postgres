@@ -1,10 +1,13 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/Attic/user.sgml,v 1.4 1998/08/15 06:52:54 thomas Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/Attic/user.sgml,v 1.5 1998/08/17 16:20:32 thomas Exp $
 Postgres User's Manual.
 Derived from postgres.sgml.
 thomas 1998-02-24
 
 $Log: user.sgml,v $
+Revision 1.5  1998/08/17 16:20:32  thomas
+Move SQL reference pages up into the User's Guide.
+
 Revision 1.4  1998/08/15 06:52:54  thomas
 Include new chapters.
 
@@ -27,6 +30,10 @@ Include new chapters.
 <!entity psql     SYSTEM "psql.sgml">
 <!entity pgaccess SYSTEM "pgaccess.sgml">
 <!entity biblio   SYSTEM "biblio.sgml">
+
+<!-- reference pages -->
+<!entity % allfiles SYSTEM "allfiles.sgml">
+%allfiles;
 ]>
 <!-- entity manpages SYSTEM "man/manpages.sgml" subdoc -->
 <Book Id="user">
@@ -35,7 +42,7 @@ Include new chapters.
 
 <Title>PostgreSQL User's Guide</Title>
 <BookInfo>
-    <ReleaseInfo>Covering v6.3 for general release</ReleaseInfo>
+    <ReleaseInfo>Covering v6.4 for general release</ReleaseInfo>
     <BookBiblio>
     <AuthorGroup>
       <CorpAuthor>The PostgreSQL Development Team</CorpAuthor>
@@ -111,6 +118,7 @@ It provides SQL92/SQL3 language support,
 &storage;
 &psql;
 &pgaccess;
+&commands;
 
 <!--
 &contacts;
