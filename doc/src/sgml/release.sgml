@@ -1,5 +1,5 @@
 <!--
-$PostgreSQL: pgsql/doc/src/sgml/release.sgml,v 1.258 2004/03/07 22:07:56 tgl Exp $
+$PostgreSQL: pgsql/doc/src/sgml/release.sgml,v 1.259 2004/05/03 08:47:54 neilc Exp $
 -->
 
 <appendix id="release">
@@ -1938,7 +1938,7 @@ DROP SCHEMA information_schema CASCADE;
 
     <listitem>
      <para>
-      Improve performance of function <function>PGunescapeBytea</function> (Ben Lamb)
+      Improve performance of function <function>PQunescapeBytea</function> (Ben Lamb)
      </para>
     </listitem>
 
