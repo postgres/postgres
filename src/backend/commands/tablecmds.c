@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/commands/tablecmds.c,v 1.39 2002/09/04 20:31:15 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/commands/tablecmds.c,v 1.40 2002/09/06 00:01:53 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -3325,11 +3325,9 @@ AlterTableCreateToastTable(Oid relOid, bool silent)
 {
 	Relation	rel;
 	HeapTuple	reltup;
-	HeapTupleData classtuple;
 	TupleDesc	tupdesc;
 	bool		shared_relation;
 	Relation	class_rel;
-	Buffer		buffer;
 	Oid			toast_relid;
 	Oid			toast_idxid;
 	char		toast_relname[NAMEDATALEN];
@@ -3367,41 +3365,13 @@ AlterTableCreateToastTable(Oid relOid, bool silent)
 		elog(ERROR, "Shared relations cannot be toasted after initdb");
 
 	/*
-	 * lock the pg_class tuple for update (is that really needed?)
-	 */
-	class_rel = heap_openr(RelationRelationName, RowExclusiveLock);
-
-	reltup = SearchSysCache(RELOID,
-							ObjectIdGetDatum(relOid),
-							0, 0, 0);
-	if (!HeapTupleIsValid(reltup))
-		elog(ERROR, "ALTER TABLE: relation \"%s\" not found",
-			 RelationGetRelationName(rel));
-	classtuple.t_self = reltup->t_self;
-	ReleaseSysCache(reltup);
-
-	switch (heap_mark4update(class_rel, &classtuple, &buffer,
-							 GetCurrentCommandId()))
-	{
-		case HeapTupleSelfUpdated:
-		case HeapTupleMayBeUpdated:
-			break;
-		default:
-			elog(ERROR, "couldn't lock pg_class tuple");
-	}
-	reltup = heap_copytuple(&classtuple);
-	ReleaseBuffer(buffer);
-
-	/*
 	 * Is it already toasted?
 	 */
-	if (((Form_pg_class) GETSTRUCT(reltup))->reltoastrelid != InvalidOid)
+	if (rel->rd_rel->reltoastrelid != InvalidOid)
 	{
 		if (silent)
 		{
 			heap_close(rel, NoLock);
-			heap_close(class_rel, NoLock);
-			heap_freetuple(reltup);
 			return;
 		}
 
@@ -3417,8 +3387,6 @@ AlterTableCreateToastTable(Oid relOid, bool silent)
 		if (silent)
 		{
 			heap_close(rel, NoLock);
-			heap_close(class_rel, NoLock);
-			heap_freetuple(reltup);
 			return;
 		}
 
@@ -3509,8 +3477,17 @@ AlterTableCreateToastTable(Oid relOid, bool silent)
 	setRelhasindex(toast_relid, true, true, toast_idxid);
 
 	/*
-	 * Store the toast table's OID in the parent relation's tuple
+	 * Store the toast table's OID in the parent relation's pg_class row
 	 */
+	class_rel = heap_openr(RelationRelationName, RowExclusiveLock);
+
+	reltup = SearchSysCacheCopy(RELOID,
+								ObjectIdGetDatum(relOid),
+								0, 0, 0);
+	if (!HeapTupleIsValid(reltup))
+		elog(ERROR, "ALTER TABLE: relation \"%s\" not found",
+			 RelationGetRelationName(rel));
+
 	((Form_pg_class) GETSTRUCT(reltup))->reltoastrelid = toast_relid;
 
 	simple_heap_update(class_rel, &reltup->t_self, reltup);
@@ -3519,6 +3496,8 @@ AlterTableCreateToastTable(Oid relOid, bool silent)
 	CatalogUpdateIndexes(class_rel, reltup);
 
 	heap_freetuple(reltup);
+
+	heap_close(class_rel, RowExclusiveLock);
 
 	/*
 	 * Register dependency from the toast table to the master, so that the
@@ -3534,9 +3513,8 @@ AlterTableCreateToastTable(Oid relOid, bool silent)
 	recordDependencyOn(&toastobject, &baseobject, DEPENDENCY_INTERNAL);
 
 	/*
-	 * Close relations and make changes visible
+	 * Clean up and make changes visible
 	 */
-	heap_close(class_rel, NoLock);
 	heap_close(rel, NoLock);
 
 	CommandCounterIncrement();
