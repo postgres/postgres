@@ -10,7 +10,7 @@ import java.sql.*;
  *
  * PS: Do you know how difficult it is to type on a train? ;-)
  *
- * $Id: ConnectionTest.java,v 1.3 2001/09/07 22:17:48 momjian Exp $
+ * $Id: ConnectionTest.java,v 1.4 2001/09/10 14:54:22 momjian Exp $
  */
 
 public class ConnectionTest extends TestCase {
@@ -203,36 +203,94 @@ public class ConnectionTest extends TestCase {
     }
   }
 
-  /**
-   * Transaction Isolation Levels
-   */
-  public void testTransactionIsolation() {
-    try {
-      Connection con = JDBC2Tests.openDB();
+	/**
+	 * Transaction Isolation Levels
+	 */
+	public void testTransactionIsolation()
+	{
+		try
+		{
+			Connection con = JDBC2Tests.openDB();
 
-      con.setAutoCommit(false);
+			// PostgreSQL defaults to READ COMMITTED
+			assertEquals( con.getTransactionIsolation(),
+						  Connection.TRANSACTION_READ_COMMITTED );
 
-      // These are the currently available ones
-      con.setTransactionIsolation(Connection.TRANSACTION_SERIALIZABLE);
-      assert(con.getTransactionIsolation()==Connection.TRANSACTION_SERIALIZABLE);
+			// Begin a transaction
+			con.setAutoCommit(false);
 
-      con.setTransactionIsolation(Connection.TRANSACTION_READ_COMMITTED);
-      assert(con.getTransactionIsolation()==Connection.TRANSACTION_READ_COMMITTED);
+			// The isolation level should not have changed
+			assertEquals( con.getTransactionIsolation(),
+						  Connection.TRANSACTION_READ_COMMITTED );
 
-      // Now turn on AutoCommit. Transaction Isolation doesn't work outside of
-      // a transaction, so they should return READ_COMMITTED at all times!
-      con.setAutoCommit(true);
-      con.setTransactionIsolation(Connection.TRANSACTION_SERIALIZABLE);
-      assert(con.getTransactionIsolation()==Connection.TRANSACTION_READ_COMMITTED);
+			// Now change the default for future transactions
+			con.setTransactionIsolation( Connection.TRANSACTION_SERIALIZABLE );
 
-      con.setTransactionIsolation(Connection.TRANSACTION_READ_COMMITTED);
-      assert(con.getTransactionIsolation()==Connection.TRANSACTION_READ_COMMITTED);
+			// Since the call to setTransactionIsolation() above was made
+			// inside the transaction, the isolation level of the current
+			// transaction did not change. It affects only future transactions.
+			// This behaviour is recommended by the JDBC spec.
+			assertEquals( con.getTransactionIsolation(),
+						  Connection.TRANSACTION_READ_COMMITTED );
 
-      JDBC2Tests.closeDB(con);
-    } catch(SQLException ex) {
-      assert(ex.getMessage(),false);
-    }
-  }
+			// Begin a new transaction
+			con.commit();
+
+			// Now we should see the new isolation level
+			assertEquals( con.getTransactionIsolation(),
+						  Connection.TRANSACTION_SERIALIZABLE );
+
+			// Repeat the steps above with the transition back to
+			// READ COMMITTED.
+			con.setTransactionIsolation(
+				Connection.TRANSACTION_READ_COMMITTED );
+			assertEquals( con.getTransactionIsolation(),
+						  Connection.TRANSACTION_SERIALIZABLE );
+			con.commit();
+			assertEquals( con.getTransactionIsolation(),
+						  Connection.TRANSACTION_READ_COMMITTED );
+
+			// Now run some tests with autocommit enabled.
+			con.setAutoCommit(true);
+
+			assertEquals( con.getTransactionIsolation(),
+						  Connection.TRANSACTION_READ_COMMITTED );
+
+			con.setTransactionIsolation( Connection.TRANSACTION_SERIALIZABLE );
+			assertEquals( con.getTransactionIsolation(),
+						  Connection.TRANSACTION_SERIALIZABLE );
+
+			con.setTransactionIsolation(
+				Connection.TRANSACTION_READ_COMMITTED );
+			assertEquals( con.getTransactionIsolation(),
+						  Connection.TRANSACTION_READ_COMMITTED );
+
+			// Test if a change of isolation level before beginning the
+			// transaction affects the isolation level inside the transaction.
+			con.setTransactionIsolation( Connection.TRANSACTION_SERIALIZABLE );
+			assertEquals( con.getTransactionIsolation(),
+						  Connection.TRANSACTION_SERIALIZABLE );
+			con.setAutoCommit(false);
+			assertEquals( con.getTransactionIsolation(),
+						  Connection.TRANSACTION_SERIALIZABLE );
+			con.setAutoCommit(true);
+			assertEquals( con.getTransactionIsolation(),
+						  Connection.TRANSACTION_SERIALIZABLE );
+			con.setTransactionIsolation( 
+				Connection.TRANSACTION_READ_COMMITTED );
+			assertEquals( con.getTransactionIsolation(),
+						  Connection.TRANSACTION_READ_COMMITTED );
+			con.setAutoCommit(false);
+			assertEquals( con.getTransactionIsolation(),
+						  Connection.TRANSACTION_READ_COMMITTED );
+
+			JDBC2Tests.closeDB(con);
+		} 
+		catch ( SQLException ex ) 
+		{
+			fail( ex.getMessage() );
+		}
+	}
 
   /**
    * JDBC2 Type mappings
