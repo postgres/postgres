@@ -1,5 +1,5 @@
 dnl Process this file with autoconf to produce a configure script.
-dnl $Header: /cvsroot/pgsql/configure.in,v 1.181 2002/04/24 01:56:20 momjian Exp $
+dnl $Header: /cvsroot/pgsql/configure.in,v 1.182 2002/04/26 13:55:38 ishii Exp $
 
 dnl Developers, please strive to achieve this order:
 dnl
@@ -162,33 +162,8 @@ AC_MSG_RESULT([$enable_recode])
 #
 # Multibyte support
 #
-MULTIBYTE=
-AC_MSG_CHECKING([whether to build with multibyte character support])
-
-PGAC_ARG_OPTARG(enable, multibyte, [  --enable-multibyte      enable multibyte character support],
-[MULTIBYTE=SQL_ASCII],
-[
-  case $enableval in
-    SQL_ASCII|EUC_JP|EUC_CN|EUC_KR|EUC_TW|JOHAB|UNICODE|MULE_INTERNAL|LATIN1|LATIN2|LATIN3|LATIN4|LATIN5|LATIN6|LATIN7|LATIN8|LATIN9|LATIN10|WIN1256|TCVN|WIN874|KOI8|WIN|ALT|ISO_8859_5|ISO_8859_6|ISO_8859_7|ISO_8859_8)
-      MULTIBYTE=$enableval;;
-    *)
-      AC_MSG_ERROR(
-[argument to --enable-multibyte must be one of:
-  SQL_ASCII, EUC_JP, EUC_CN, EUC_KR, EUC_TW, JOHAB,
-  UNICODE, MULE_INTERNAL,
-  LATIN1, LATIN2, LATIN3, LATIN4, LATIN5,
-  LATIN6, LATIN7, LATIN8, LATIN9, LATIN10,
-  WIN1256, TCVN, WIN874, KOI8, WIN, ALT,
-  ISO_8859_5, ISO_8859_6, ISO_8859_7, ISO_8859_8
-Or do not specify an argument to the option to use the default.]);;
-  esac
-],
-[
-  AC_DEFINE(MULTIBYTE, 1, [Set to 1 if you want to use multibyte characters (--enable-multibyte)])
-  AC_MSG_RESULT([yes, default $MULTIBYTE])
-],
-[AC_MSG_RESULT(no)])
-
+MULTIBYTE=SQL_ASCII
+AC_DEFINE(MULTIBYTE, 1, [Set to 1 if you want to use multibyte characters (--enable-multibyte)])
 AC_SUBST(MULTIBYTE)
 
 #
@@ -694,7 +669,7 @@ if test "$with_python" = yes; then
 fi
 
 
-##
+v##
 ## Libraries
 ##
 
@@ -984,7 +959,10 @@ AC_TRY_LINK([#include <setjmp.h>],
 AC_MSG_RESULT(yes)],
             [AC_MSG_RESULT(no)])
 
-AC_CHECK_FUNCS([syslog])
+AC_CHECK_FUNC(syslog, 
+	     [AC_CHECK_HEADER(syslog.h,
+	     [AC_DEFINE(HAVE_SYSLOG, 1, [])],
+	     [])])
 
 AC_CACHE_CHECK([for optreset], pgac_cv_var_int_optreset,
 [AC_TRY_LINK([#include <unistd.h>],
