@@ -6,8 +6,8 @@ QUERY: CREATE OPERATOR ## (
 );
 QUERY: CREATE OPERATOR <% (
    leftarg = point,
-   rightarg = circle,
-   procedure = pt_in_circle,
+   rightarg = widget,
+   procedure = pt_in_widget,
    commutator = >=%
 );
 QUERY: CREATE OPERATOR @#@ (

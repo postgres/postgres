@@ -7,7 +7,7 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: pg_type.h,v 1.10 1997/04/15 17:41:19 scrappy Exp $
+ * $Id: pg_type.h,v 1.11 1997/04/22 17:32:26 scrappy Exp $
  *
  * NOTES
  *    the genbki.sh script reads this file and generates .bki
@@ -220,7 +220,10 @@ DATA(insert OID = 601 (  lseg      PGUID 32  48 f b t \054 0 600 lseg_in lseg_ou
 DATA(insert OID = 602 (  path      PGUID -1  -1 f b t \054 0 600 path_in path_out path_in path_out d _null_ ));
 DATA(insert OID = 603 (  box       PGUID 32 100 f b t \073 0 600 box_in box_out box_in box_out d _null_ ));
 DATA(insert OID = 604 (  polygon   PGUID -1  -1 f b t \054 0  -1 poly_in poly_out poly_in poly_out d _null_ ));
-DATA(insert OID = 605 (  filename  PGUID 256 -1 f b t \054 0 18 filename_in filename_out filename_in filename_out i _null_ ));
+DATA(insert OID = 605 (  filename  PGUID 256 -1 f b t \054 0  18 filename_in filename_out filename_in filename_out i _null_ ));
+
+DATA(insert OID = 628 (  line      PGUID 32  48 f b t \054 0 701 line_in line_out line_in line_out d _null_ ));
+DATA(insert OID = 629 (  _line     PGUID  -1 -1 f b t \054 0 628 array_in array_out array_in array_out d _null_ ));
 
 /* OIDS 700 - 799 */
 
@@ -234,8 +237,9 @@ DATA(insert OID = 704 (  tinterval PGUID 12  47 f b t \054 0   0 tintervalin tin
 DATA(insert OID = 705 (  unknown   PGUID -1  -1 f b t \054 0   18 textin textout textin textout i _null_ ));
 #define UNKNOWNOID	705
 
-DATA(insert OID = 790 (  money     PGUID  4  47 f b t \054 0    0 cash_in cash_out cash_in cash_out i _null_ ));
-#define CASHOID	790
+DATA(insert OID = 718 (  circle    PGUID  24 47 f b t \054 0    0 circle_in circle_out circle_in circle_out d _null_ ));
+DATA(insert OID = 719 (  _circle   PGUID  -1 -1 f b t \054 0  718 array_in array_out array_in array_out i _null_ ));
+DATA(insert OID = 790 (  money     PGUID   4 24 f b t \054 0    0 cash_in cash_out cash_in cash_out i _null_ ));
 DATA(insert OID = 791 (  _money    PGUID  -1 -1 f b t \054 0  790 array_in array_out array_in array_out i _null_ ));
 
 /* OIDS 800 - 899 */

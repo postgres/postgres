@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *    $Header: /cvsroot/pgsql/src/backend/access/rtree/Attic/rtproc.c,v 1.6 1997/03/14 23:17:41 scrappy Exp $
+ *    $Header: /cvsroot/pgsql/src/backend/access/rtree/Attic/rtproc.c,v 1.7 1997/04/22 17:31:23 scrappy Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -30,10 +30,10 @@ BOX
     if ((n = (BOX *) palloc(sizeof (*n))) == (BOX *) NULL)
 	elog(WARN, "Cannot allocate box for union");
     
-    n->xh = Max(a->xh, b->xh);
-    n->yh = Max(a->yh, b->yh);
-    n->xl = Min(a->xl, b->xl);
-    n->yl = Min(a->yl, b->yl);
+    n->high.x = Max(a->high.x, b->high.x);
+    n->high.y = Max(a->high.y, b->high.y);
+    n->low.x = Min(a->low.x, b->low.x);
+    n->low.y = Min(a->low.y, b->low.y);
     
     return (n);
 }
@@ -46,12 +46,12 @@ rt_box_inter(BOX *a, BOX *b)
     if ((n = (BOX *) palloc(sizeof (*n))) == (BOX *) NULL)
 	elog(WARN, "Cannot allocate box for union");
     
-    n->xh = Min(a->xh, b->xh);
-    n->yh = Min(a->yh, b->yh);
-    n->xl = Max(a->xl, b->xl);
-    n->yl = Max(a->yl, b->yl);
+    n->high.x = Min(a->high.x, b->high.x);
+    n->high.y = Min(a->high.y, b->high.y);
+    n->low.x = Max(a->low.x, b->low.x);
+    n->low.y = Max(a->low.y, b->low.y);
     
-    if (n->xh < n->xl || n->yh < n->yl) {
+    if (n->high.x < n->low.x || n->high.y < n->low.y) {
 	pfree(n);
 	return ((BOX *) NULL);
     }
@@ -62,10 +62,10 @@ rt_box_inter(BOX *a, BOX *b)
 void
 rt_box_size(BOX *a, float *size)
 {
-    if (a == (BOX *) NULL || a->xh <= a->xl || a->yh <= a->yl)
+    if (a == (BOX *) NULL || a->high.x <= a->low.x || a->high.y <= a->low.y)
 	*size = 0.0;
     else
-	*size = (float) ((a->xh - a->xl) * (a->yh - a->yl));
+	*size = (float) ((a->high.x - a->low.x) * (a->high.y - a->low.y));
     
     return;
 }
@@ -97,10 +97,10 @@ rt_poly_union(POLYGON *a, POLYGON *b)
     memset((char *) p, 0, sizeof(POLYGON));	/* zero any holes */
     p->size = sizeof(POLYGON);
     p->npts = 0;
-    p->boundbox.xh = Max(a->boundbox.xh, b->boundbox.xh);
-    p->boundbox.yh = Max(a->boundbox.yh, b->boundbox.yh);
-    p->boundbox.xl = Min(a->boundbox.xl, b->boundbox.xl);
-    p->boundbox.yl = Min(a->boundbox.yl, b->boundbox.yl);
+    p->boundbox.high.x = Max(a->boundbox.high.x, b->boundbox.high.x);
+    p->boundbox.high.y = Max(a->boundbox.high.y, b->boundbox.high.y);
+    p->boundbox.low.x = Min(a->boundbox.low.x, b->boundbox.low.x);
+    p->boundbox.low.y = Min(a->boundbox.low.y, b->boundbox.low.y);
     return p;
 }
 
@@ -111,12 +111,12 @@ rt_poly_size(POLYGON *a, float *size)
     
     size = (float *) palloc(sizeof(float));
     if (a == (POLYGON *) NULL || 
-	a->boundbox.xh <= a->boundbox.xl || 
-	a->boundbox.yh <= a->boundbox.yl)
+	a->boundbox.high.x <= a->boundbox.low.x || 
+	a->boundbox.high.y <= a->boundbox.low.y)
 	*size = 0.0;
     else {
-	xdim = (a->boundbox.xh - a->boundbox.xl);
-	ydim = (a->boundbox.yh - a->boundbox.yl);
+	xdim = (a->boundbox.high.x - a->boundbox.low.x);
+	ydim = (a->boundbox.high.y - a->boundbox.low.y);
 	
 	*size = (float) (xdim * ydim);
     }
@@ -137,12 +137,12 @@ rt_poly_inter(POLYGON *a, POLYGON *b)
     memset((char *) p, 0, sizeof(POLYGON));	/* zero any holes */
     p->size = sizeof(POLYGON);
     p->npts = 0;
-    p->boundbox.xh = Min(a->boundbox.xh, b->boundbox.xh);
-    p->boundbox.yh = Min(a->boundbox.yh, b->boundbox.yh);
-    p->boundbox.xl = Max(a->boundbox.xl, b->boundbox.xl);
-    p->boundbox.yl = Max(a->boundbox.yl, b->boundbox.yl);
+    p->boundbox.high.x = Min(a->boundbox.high.x, b->boundbox.high.x);
+    p->boundbox.high.y = Min(a->boundbox.high.y, b->boundbox.high.y);
+    p->boundbox.low.x = Max(a->boundbox.low.x, b->boundbox.low.x);
+    p->boundbox.low.y = Max(a->boundbox.low.y, b->boundbox.low.y);
     
-    if (p->boundbox.xh < p->boundbox.xl || p->boundbox.yh < p->boundbox.yl)
+    if (p->boundbox.high.x < p->boundbox.low.x || p->boundbox.high.y < p->boundbox.low.y)
 	{
 	    pfree(p);
 	    return ((POLYGON *) NULL);

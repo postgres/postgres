@@ -1,32 +1,247 @@
 /*-------------------------------------------------------------------------
  *
- * geo-ops.c--
+ * geo_ops.c--
  *    2D geometric operations
  *
  * Copyright (c) 1994, Regents of the University of California
  *
  *
  * IDENTIFICATION
- *    $Header: /cvsroot/pgsql/src/backend/utils/adt/geo_ops.c,v 1.2 1997/03/14 23:20:15 scrappy Exp $
+ *    $Header: /cvsroot/pgsql/src/backend/utils/adt/geo_ops.c,v 1.3 1997/04/22 17:31:32 scrappy Exp $
  *
  *-------------------------------------------------------------------------
  */
 #include <math.h>
-#include <float.h>	/* faked on sunos */
+#include <float.h>
 #include <stdio.h>	/* for sprintf proto, etc. */
+#include <stdlib.h>	/* for strtod, etc. */
 #include <string.h>
+#include <ctype.h>
 
 #include "postgres.h"
 
 #include "utils/geo_decls.h"
 #include "utils/palloc.h"
 
+#define OLD_FORMAT_IN	1
+#define OLD_FORMAT_OUT	0
+
+/*
+ * Delimiters for input and output strings.
+ * LDELIM, RDELIM, and DELIM are left, right, and separator delimiters, respectively.
+ * LDELIM_EP, RDELIM_EP are left and right delimiters for paths with endpoints.
+ */
+
 #define LDELIM		'('
 #define RDELIM		')'
 #define	DELIM		','
-#define BOXNARGS	4
-#define	LSEGNARGS	4
-#define	POINTNARGS	2
+#define LDELIM_EP	'['
+#define RDELIM_EP	']'
+#define LDELIM_C	'<'
+#define RDELIM_C	'>'
+
+/* Maximum number of output digits printed */
+#define P_MAXDIG DBL_DIG
+#define P_MAXLEN (2*(P_MAXDIG+7)+1)
+
+static int digits8 = P_MAXDIG;
+
+int geo_precision(int digits);
+
+int geo_precision(int digits)
+{
+    if (digits > P_MAXDIG) {
+	digits8 = P_MAXDIG;
+    } else if (digits > 0) {
+	digits8 = digits;
+    };
+    return digits8;
+}
+
+/*
+ * Geometric data types are composed of points.
+ * This code tries to support a common format throughout the data types,
+ *  to allow for more predictable usage and data type conversion.
+ * The fundamental unit is the point. Other units are line segments,
+ *  open paths, boxes, closed paths, and polygons (which should be considered
+ *  non-intersecting closed paths).
+ *
+ * Data representation is as follows:
+ *  point:		(x,y)
+ *  line segment:	[(x1,y1),(x2,y2)]
+ *  box:		(x1,y1),(x2,y2)
+ *  open path:		[(x1,y1),...,(xn,yn)]
+ *  closed path:	((x1,y1),...,(xn,yn))
+ *  polygon:		((x1,y1),...,(xn,yn))
+ *
+ * For boxes, the points are opposite corners with the first point at the top right.
+ * For closed paths and polygons, the points should be reordered to allow
+ *  fast and correct equality comparisons.
+ *
+ * XXX perhaps points in complex shapes should be reordered internally
+ *  to allow faster internal operations, but should keep track of input order
+ *  and restore that order for text output - tgl 97/01/16
+ */
+
+int pair_decode(char *str, float8 *x, float8 *y, char **s);
+int pair_encode(float8 x, float8 y, char *str);
+int pair_count(char *s, char delim);
+int path_decode(int opentype, int npts, char *str, int *isopen, char **ss, Point *p);
+
+char *path_encode( bool closed, int npts, Point *pt);
+
+int pair_decode(char *str, float8 *x, float8 *y, char **s)
+{
+    int has_delim;
+    char *cp;
+
+    if (!PointerIsValid((char *)str))
+	return(FALSE);
+
+    while (isspace( *str)) str++;
+    if ((has_delim = (*str == LDELIM))) str++;
+
+    while (isspace( *str)) str++;
+    *x = strtod( str, &cp);
+    if (cp <= str) return(FALSE);
+    while (isspace( *cp)) cp++;
+    if (*cp++ != DELIM) return(FALSE);
+    while (isspace( *cp)) cp++;
+    *y = strtod( cp, &str);
+    if (str <= cp) return(FALSE);
+    while (isspace( *str)) str++;
+    if (has_delim) {
+	if (*str != RDELIM) return(FALSE);
+	str++;
+	while (isspace( *str)) str++;
+    };
+    if (s != NULL) *s = str;
+
+    return(TRUE);
+}
+
+int pair_encode(float8 x, float8 y, char *str)
+{
+    (void) sprintf(str, "%.*g,%.*g", digits8, x, digits8, y);
+    return(TRUE);
+}
+
+int path_decode(int opentype, int npts, char *str, int *isopen, char **ss, Point *p)
+{
+    int depth = 0;
+    char *s, *cp;
+    int i;
+
+    s = str;
+    while (isspace( *s)) s++;
+    if ((*isopen = (*s == LDELIM_EP))) {
+	/* no open delimiter allowed? */
+	if (! opentype) return(FALSE);
+	depth++;
+	s++;
+	while (isspace( *s)) s++;
+
+    } else if (*s == LDELIM) {
+	cp = (s+1);
+	while (isspace( *cp)) cp++;
+	if (*cp == LDELIM) {
+	    /* nested delimiters with only one point? */
+	    if (npts <= 1) return(FALSE);
+	    depth++;
+	    s = cp;
+	} else if (strrchr( s, LDELIM) == s) {
+	    depth++;
+	    s = cp;
+	};
+    };
+
+    for (i = 0; i < npts; i++) {
+	if (! pair_decode( s, &(p->x), &(p->y), &s))
+	    return(FALSE);
+
+	if (*s == DELIM) s++;
+	p++;
+    };
+
+    while (depth > 0) {
+	if ((*s == RDELIM)
+         || ((*s == RDELIM_EP) && (*isopen) && (depth == 1))) {
+	    depth--;
+	    s++;
+	    while (isspace( *s)) s++;
+	} else {
+	    return(FALSE);
+	};
+    };
+    *ss = s;
+
+    return(TRUE);
+} /* path_decode() */
+
+char *path_encode( bool closed, int npts, Point *pt)
+{
+    char *result;
+
+    char *cp;
+    int i;
+
+    if (!PointerIsValid(result = (char *)PALLOC(npts*(P_MAXLEN+3)+2)))
+	elog(WARN, "Memory allocation failed, can't output path", NULL);
+
+    cp = result;
+    switch (closed) {
+    case TRUE:
+	*cp++ = LDELIM;
+	break;
+    case FALSE:
+	*cp++ = LDELIM_EP;
+	break;
+    default:
+	break;
+    };
+
+    for (i = 0; i < npts; i++) {
+        *cp++ = LDELIM;
+	if (! pair_encode( pt->x, pt->y, cp))
+	  elog (WARN, "Unable to format path", NULL);
+	cp += strlen(cp);
+	*cp++ = RDELIM;
+	*cp++ = DELIM;
+	pt++;
+    };
+    cp--;
+    switch (closed) {
+    case TRUE:
+	*cp++ = RDELIM;
+	break;
+    case FALSE:
+	*cp++ = RDELIM_EP;
+	break;
+    default:
+	break;
+    };
+    *cp = '\0';
+
+    return(result);
+} /* path_encode() */
+
+/*-------------------------------------------------------------
+ * pair_count - count the number of points
+ * allow the following notation:
+ * '((1,2),(3,4))'
+ * '(1,3,2,4)'
+ * require an odd number of delim characters in the string
+ *-------------------------------------------------------------*/
+int pair_count(char *s, char delim)
+{
+    int ndelim = 0;
+
+    while ((s = strchr( s, delim)) != NULL) {
+	ndelim++;
+	s++;
+    };
+    return((ndelim % 2)? ((ndelim+1)/2): -1);
+}
 
 /***********************************************************************
  **
@@ -40,57 +255,76 @@
 
 /*	box_in	-	convert a string to internal form.
  *
- *	str:	input string "(f8, f8, f8, f8)"
+ *	External format: (two corners of box)
+ *		"(f8, f8), (f8, f8)"
+ *		also supports the older style "(f8, f8, f8, f8)"
  */
 BOX *box_in(char *str)
 {
-    double	tmp;
-    char	*p, *coord[BOXNARGS];
-    int	i;
-    BOX	*result;
-    
-    if (str == NULL)
-	elog (WARN," Bad (null) box external representation");
-    
-    if ((p = (char *)strchr(str, LDELIM)) == (char *)NULL)
+    BOX	*box;
+
+    int isopen;
+    char *s;
+    double x, y;
+
+    if (!PointerIsValid((char *)str))
+	elog (WARN," Bad (null) box external representation",NULL);
+
+    if (!PointerIsValid(box = PALLOCTYPE(BOX)))
+      elog(WARN, "Memory allocation failed, can't input box '%s'",str);
+
+    if ((! path_decode(FALSE, 2, str, &isopen, &s, &(box->high)))
+      || (*s != '\0'))
 	elog (WARN, "Bad box external representation '%s'",str);
-    for (i = 0, p = str; *p && i < BOXNARGS && *p != RDELIM; p++)
-	if (*p == DELIM || (*p == LDELIM && !i))
-	    coord[i++] = p + 1;
-    if (i < BOXNARGS - 1)
-	elog (WARN, "Bad box external representation '%s'", str);
-    result = PALLOCTYPE(BOX);
-    result->xh = atof(coord[0]);
-    result->yh = atof(coord[1]);
-    result->xl = atof(coord[2]);
-    result->yl = atof(coord[3]);
-    if (result->xh < result->xl) {
-	tmp = result->xh;
-	result->xh = result->xl;
-	result->xl = tmp;
-    }
-    if (result->yh < result->yl) {
-	tmp = result->yh;
-	result->yh = result->yl;
-	result->yl = tmp;
-    }
-    
-    return(result);
+
+    /* reorder corners if necessary... */
+    if (box->high.x < box->low.x) {
+	x = box->high.x;
+	box->high.x = box->low.x;
+	box->low.x = x;
+    };
+    if (box->high.y < box->low.y) {
+	y = box->high.y;
+	box->high.y = box->low.y;
+	box->low.y = y;
+    };
+
+    return(box);
 }
 
 /*	box_out	-	convert a box to external form.
  */
 char *box_out(BOX *box)
 {
-    char	*result;
-    
-    if (box == NULL)
+#if OLD_FORMAT_OUT
+    char *result;
+
+    char *cp;
+#endif
+
+    if (!PointerIsValid((char *)box))
 	return(NULL);
-    result = (char *)PALLOC(80);
-    (void) sprintf(result, "(%G,%G,%G,%G)",
-		   box->xh, box->yh, box->xl, box->yl);
-    
-    return(result);
+
+#if OLD_FORMAT_OUT
+    if (!PointerIsValid(result = (char *)PALLOC(2*(P_MAXLEN+1)+2)))
+	elog(WARN, "Memory allocation failed, can't output box", NULL);
+
+    cp = result;
+    *cp++ = LDELIM;
+    if (! pair_encode( box->high.x, box->high.y, cp))
+	  elog (WARN, "Unable to format box", NULL);
+    cp += strlen(cp);
+    *cp++ = DELIM;
+    if (! pair_encode( box->low.x, box->low.y, cp))
+	  elog (WARN, "Unable to format box", NULL);
+    cp += strlen(cp);
+    *cp++ = RDELIM;
+    *cp = '\0';
+
+    return( result);
+#else
+    return( path_encode( -1, 2, (Point *) &(box->high)));
+#endif
 }
 
 
@@ -109,22 +343,20 @@ BOX *box_construct(double x1, double x2, double y1, double y2)
  */
 BOX *box_fill(BOX *result, double x1, double x2, double y1, double y2)
 {
-    double	tmp;
-    
-    result->xh = x1;
-    result->xl = x2;
-    result->yh = y1;
-    result->yl = y2;
-    if (result->xh < result->xl) {
-	tmp = result->xh;
-	result->xh = result->xl;
-	result->xl = tmp;
-    }
-    if (result->yh < result->yl) {
-	tmp = result->yh;
-	result->yh = result->yl;
-	result->yl = tmp;
-    }
+    if (x1 > x2) {
+	result->high.x = x1;
+	result->low.x = x2;
+    } else {
+	result->high.x = x2;
+	result->low.x = x1;
+    };
+    if (y1 > y2) {
+	result->high.y = y1;
+	result->low.y = y2;
+    } else {
+	result->high.y = y2;
+	result->low.y = y1;
+    };
     
     return(result);
 }
@@ -150,20 +382,20 @@ BOX *box_copy(BOX *box)
 
 /*	box_same	-	are two boxes identical?
  */
-long box_same(BOX *box1, BOX *box2)
+bool box_same(BOX *box1, BOX *box2)
 {
-    return((box1->xh == box2->xh && box1->xl == box2->xl) &&
-	   (box1->yh == box2->yh && box1->yl == box2->yl));
+    return((FPeq(box1->high.x,box2->high.x) && FPeq(box1->low.x,box2->low.x)) &&
+	  (FPeq(box1->high.y,box2->high.y) && FPeq(box1->low.y,box2->low.y)));
 }
 
 /*	box_overlap	-	does box1 overlap box2?
  */
-long box_overlap(BOX *box1, BOX *box2)
+bool box_overlap(BOX *box1, BOX *box2)
 {
-    return(((box1->xh >= box2->xh && box1->xl <= box2->xh) ||
-	    (box2->xh >= box1->xh && box2->xl <= box1->xh)) &&
-	   ((box1->yh >= box2->yh && box1->yl <= box2->yh) ||
-	    (box2->yh >= box1->yh && box2->yl <= box1->yh)) );
+    return(((FPge(box1->high.x,box2->high.x) && FPle(box1->low.x,box2->high.x)) ||
+	    (FPge(box2->high.x,box1->high.x) && FPle(box2->low.x,box1->high.x))) &&
+	   ((FPge(box1->high.y,box2->high.y) && FPle(box1->low.y,box2->high.y)) ||
+	    (FPge(box2->high.y,box1->high.y) && FPle(box2->low.y,box1->high.y))) );
 }
 
 /*	box_overleft	-	is the right edge of box1 to the left of
@@ -172,23 +404,23 @@ long box_overlap(BOX *box1, BOX *box2)
  *	This is "less than or equal" for the end of a time range,
  *	when time ranges are stored as rectangles.
  */
-long box_overleft(BOX *box1, BOX *box2)
+bool box_overleft(BOX *box1, BOX *box2)
 {
-    return(box1->xh <= box2->xh);
+    return(FPle(box1->high.x,box2->high.x));
 }
 
 /*	box_left	-	is box1 strictly left of box2?
  */
-long box_left(BOX *box1, BOX *box2)
+bool box_left(BOX *box1, BOX *box2)
 {
-    return(box1->xh < box2->xl);
+    return(FPlt(box1->high.x,box2->low.x));
 }
 
 /*	box_right	-	is box1 strictly right of box2?
  */
-long box_right(BOX *box1, BOX *box2)
+bool box_right(BOX *box1, BOX *box2)
 {
-    return(box1->xl > box2->xh);
+    return(FPgt(box1->low.x,box2->high.x));
 }
 
 /*	box_overright	-	is the left edge of box1 to the right of
@@ -197,66 +429,66 @@ long box_right(BOX *box1, BOX *box2)
  *	This is "greater than or equal" for time ranges, when time ranges
  *	are stored as rectangles.
  */
-long box_overright(BOX *box1, BOX *box2)
+bool box_overright(BOX *box1, BOX *box2)
 {
-    return(box1->xl >= box2->xl);
+    return(box1->low.x >= box2->low.x);
 }
 
 /*	box_contained	-	is box1 contained by box2?
  */
-long box_contained(BOX *box1, BOX *box2)
+bool box_contained(BOX *box1, BOX *box2)
 {
-    return((box1->xh <= box2->xh && box1->xl >= box2->xl &&
-	    box1->yh <= box2->yh && box1->yl >= box2->yl));
+    return((FPle(box1->high.x,box2->high.x) && FPge(box1->low.x,box2->low.x)) &&
+	   (FPle(box1->high.y,box2->high.y) && FPge(box1->low.y,box2->low.y)));
 }
 
 /*	box_contain	-	does box1 contain box2?
  */
-long box_contain(BOX *box1, BOX *box2)
+bool box_contain(BOX *box1, BOX *box2)
 {
-    return((box1->xh >= box2->xh && box1->xl <= box2->xl &&
-	    box1->yh >= box2->yh && box1->yl <= box2->yl));
+    return((FPge(box1->high.x,box2->high.x) && FPle(box1->low.x,box2->low.x) &&
+	    FPge(box1->high.y,box2->high.y) && FPle(box1->low.y,box2->low.y)));
 }
 
 
 /*	box_positionop	-
- *		is box1 entirely {above, below } box2?
+ *		is box1 entirely {above,below} box2?
  */
-long box_below(BOX *box1, BOX *box2)
+bool box_below(BOX *box1, BOX *box2)
 {
-    return( box1->yh <= box2->yl );
+    return( FPle(box1->high.y,box2->low.y) );
 }
 
-long box_above(BOX *box1, BOX *box2)
+bool box_above(BOX *box1, BOX *box2)
 {
-    return( box1->yl >= box2->yh );
+    return( FPge(box1->low.y,box2->high.y) );
 }
 
 
 /*	box_relop	-	is area(box1) relop area(box2), within
  *			  	our accuracy constraint?
  */
-long box_lt(BOX *box1, BOX *box2)
+bool box_lt(BOX *box1, BOX *box2)
 {
     return( FPlt(box_ar(box1), box_ar(box2)) );
 }
 
-long box_gt(BOX *box1, BOX *box2)
+bool box_gt(BOX *box1, BOX *box2)
 {
     return( FPgt(box_ar(box1), box_ar(box2)) );
 }
 
-long box_eq(BOX *box1, BOX *box2)
+bool box_eq(BOX *box1, BOX *box2)
 {
     return( FPeq(box_ar(box1), box_ar(box2)) );
 }
 
-long box_le(BOX	*box1, BOX *box2)
+bool box_le(BOX	*box1, BOX *box2)
 {
     return( FPle(box_ar(box1), box_ar(box2)) );
 }
 
-long box_ge(BOX	*box1, BOX *box2)
+bool box_ge(BOX	*box1, BOX *box2)
 {
     return( FPge(box_ar(box1), box_ar(box2)) );
 }
@@ -292,7 +524,7 @@ double *box_length(BOX *box)
     double	*result;
     
     result = PALLOCTYPE(double);
-    *result = box->xh - box->xl;
+    *result = box->high.x - box->low.x;
     
     return(result);
 }
@@ -306,7 +538,7 @@ double *box_height(BOX *box)
     double	*result;
     
     result = PALLOCTYPE(double);
-    *result = box->yh - box->yl;
+    *result = box->high.y - box->low.y;
     
     return(result);
 }
@@ -318,7 +550,7 @@ double *box_height(BOX *box)
 double *box_distance(BOX *box1, BOX *box2)
 {
     double	*result;
-    Point	*box_center(), *a, *b;
+    Point	*a, *b;
     
     result = PALLOCTYPE(double);
     a = box_center(box1);
@@ -338,8 +570,8 @@ Point *box_center(BOX *box)
     Point	*result;
     
     result = PALLOCTYPE(Point);
-    result->x = (box->xh + box->xl) / 2.0;
-    result->y = (box->yh + box->yl) / 2.0;
+    result->x = (box->high.x + box->low.x) / 2.0;
+    result->y = (box->high.y + box->low.y) / 2.0;
     
     return(result);
 }
@@ -358,7 +590,7 @@ double box_ar(BOX *box)
  */
 double box_ln(BOX *box)
 {
-    return( box->xh - box->xl );
+    return( box->high.x - box->low.x );
 }
 
 
@@ -367,7 +599,7 @@ double box_ln(BOX *box)
  */
 double box_ht(BOX *box)
 {
-    return( box->yh - box->yl );
+    return( box->high.y - box->low.y );
 }
 
 
@@ -377,8 +609,7 @@ double box_ht(BOX *box)
 double box_dt(BOX *box1, BOX *box2)
 {
     double	result;
-    Point	*box_center(),
-    *a, *b;
+    Point	*a, *b;
     
     a = box_center(box1);
     b = box_center(box2);
@@ -400,15 +631,14 @@ double box_dt(BOX *box1, BOX *box2)
 BOX *box_intersect(BOX	*box1, BOX *box2)
 {
     BOX	*result;
-    long	box_overlap();
-    
+
     if (! box_overlap(box1,box2))
 	return(NULL);
     result = PALLOCTYPE(BOX);
-    result->xh = Min(box1->xh, box2->xh);
-    result->xl = Max(box1->xl, box2->xl);
-    result->yh = Min(box1->yh, box2->yh);
-    result->yl = Max(box1->yl, box2->yl);
+    result->high.x = Min(box1->high.x, box2->high.x);
+    result->low.x = Max(box1->low.x, box2->low.x);
+    result->high.y = Min(box1->high.y, box2->high.y);
+    result->low.y = Max(box1->low.y, box2->low.y);
     
     return(result);
 }
@@ -423,10 +653,10 @@ LSEG *box_diagonal(BOX *box)
 {
     Point	p1, p2;
     
-    p1.x = box->xh;
-    p1.y = box->yh;
-    p2.x = box->xl;
-    p2.y = box->yl;
+    p1.x = box->high.x;
+    p1.y = box->high.y;
+    p2.x = box->low.x;
+    p2.y = box->low.y;
     return( lseg_construct( &p1, &p2 ) );
     
 }
@@ -486,17 +716,17 @@ line_construct_pp(Point *pt1, Point *pt2)
  *  Relative position routines.
  *---------------------------------------------------------*/
 
-long line_intersect(LINE *l1, LINE *l2)
+bool line_intersect(LINE *l1, LINE *l2)
 {
     return( ! line_parallel(l1, l2) );
 }
 
-long line_parallel(LINE *l1, LINE *l2)
+bool line_parallel(LINE *l1, LINE *l2)
 {
     return( FPeq(l1->m, l2->m) );
 }
 
-long line_perp(LINE *l1, LINE *l2)
+bool line_perp(LINE *l1, LINE *l2)
 {
     if (l1->m)
 	return( FPeq(l2->m / l1->m, -1.0) );
@@ -505,18 +735,18 @@ long line_perp(LINE *l1, LINE *l2)
     return(1);	/* both 0.0 */
 }
 
-long line_vertical(LINE *line)
+bool line_vertical(LINE *line)
 {
     return( FPeq(line->A, -1.0) && FPzero(line->B) );
 }
 
-long line_horizontal(LINE *line)
+bool line_horizontal(LINE *line)
 {
     return( FPzero(line->m) );
 }
 
 
-long line_eq(LINE *l1, LINE *l2)
+bool line_eq(LINE *l1, LINE *l2)
 {
     double	k;
     
@@ -589,88 +819,116 @@ line_interpt(LINE *l1, LINE *l2)
  **
  ***********************************************************************/
 
-#define	PATHALLOCSIZE(N) \
-    (long) ((unsigned) (sizeof(PATH) + \
-			(((N)-1) > 0 ? ((N)-1) : 0) \
-			* sizeof(Point)))
-
 /*----------------------------------------------------------
  *  String to path / path to string conversion.
  *	External format: 
+ *		"((xcoord, ycoord),... )"
+ *		"[(xcoord, ycoord),... ]"
+ *		"(xcoord, ycoord),... "
+ *		"[xcoord, ycoord,... ]"
+ *	Also support older format:
  *		"(closed, npts, xcoord, ycoord,... )"
  *---------------------------------------------------------*/
 
 PATH *path_in(char *str)
 {
-    double	coord;
-    long	field[2];
-    char	*s;
-    int	ct, i;
-    PATH	*result;
-    long	pathsize;
-    
-    if (str == NULL)
+    PATH *path;
+
+    int isopen;
+    char *s;
+    int npts;
+    int size;
+#if OLD_FORMAT_IN
+    int oldstyle = FALSE;
+    double x, y;
+#endif
+
+    if (!PointerIsValid((char *)str))
 	elog(WARN, "Bad (null) path external representation");
-    
-    /* read the path header information */
-    for (i = 0, s = str; *s && i < 2 && *s != RDELIM; ++s)
-	if (*s == DELIM || (*s == LDELIM && !i))
-	    field[i++] = atol(s + 1);
-    if (i < 1)
+
+    if ((npts = pair_count(str, ',')) <= 0)
 	elog(WARN, "Bad path external representation '%s'", str);
-    pathsize = PATHALLOCSIZE(field[1]);
-    result = (PATH *)palloc(pathsize);
-    result->length = pathsize;
-    result->closed = field[0];
-    result->npts =  field[1];
-    
-    /* read the path points */
-    
-    ct = result->npts * 2;	/* two coords for every point */
-    for (i = 0;
-	 *s && i < ct && *s != RDELIM; 
-	 ++s) {
-	if (*s == ',') {
-	    coord = atof(s + 1);
-	    if (i % 2)
-		(result->p[i/2]).y = coord;
-	    else
-		(result->p[i/2]).x = coord;
-	    ++i;
-	}
-    }
-    if (i % 2 || i < --ct) {
-	PFREE(result);
-	elog(WARN, "Bad path external representation '%s'", str);
-    } 
-    
-    return(result);
+
+#if OLD_FORMAT_IN
+    s = str;
+    while (isspace( *s)) s++;
+    /* identify old style format as having only one left delimiter in string... */
+    oldstyle = ((*s == LDELIM) && (strrchr( s, LDELIM) == s));
+
+    /* old-style format? then first two fields are closed flag and point count... */
+    if (oldstyle) {
+	s++;
+	if ((! pair_decode( s, &x, &y, &s)) || (*s++ != DELIM)
+	  || ((x != 0) && (x != 1)) || (y <= 0))
+	    elog (WARN, "Bad path external representation '%s'",str);
+	isopen = (x == 0);
+	npts = y;
+    };
+#endif
+
+    size = offsetof(PATH, p[0]) + (sizeof(path->p[0]) * npts);
+    if (!PointerIsValid(path = PALLOC(size)))
+	elog(WARN, "Memory allocation failed, can't input path '%s'",str);
+
+    path->size = size;
+    path->npts =  npts;
+    if (oldstyle) path->closed = (! isopen);
+
+#if OLD_FORMAT_IN
+    if ((! path_decode(TRUE, npts, s, &isopen, &s, &(path->p[0])))
+     || ! (oldstyle? (*s++ == RDELIM): (*s == '\0')))
+#else
+    if ((! path_decode(TRUE, npts, s, &isopen, &s, &(path->p[0])))
+     || (*s != '\0'))
+#endif
+	elog (WARN, "Bad path external representation '%s'",str);
+
+#if OLD_FORMAT_IN
+    if (oldstyle) {
+	while (isspace( *s)) s++;
+	if (*s != '\0')
+	    elog (WARN, "Bad path external representation '%s'",str);
+    };
+#endif
+
+    if (! oldstyle) path->closed = (! isopen);
+
+    return(path);
 }
 
 
 char *path_out(PATH *path)
 {
-    char 		buf[BUFSIZ + 20000], *result, *s;
-    int		i;
-    char	tmp[64];
-    
-    if (path == NULL)
-	return(NULL);
-    (void) sprintf(buf,"%c%d,%d", LDELIM, 
-		   path->closed, path->npts);
-    s = buf + strlen(buf);
-    for (i = 0; i < path->npts; ++i) {
-	(void) sprintf(tmp, ",%G,%G", 
-		       path->p[i].x, path->p[i].y);
-	(void) strcpy(s, tmp);
-	s += strlen(tmp);
-    }
-    *s++ = RDELIM;
-    *s = '\0';
-    result = (char *)PALLOC(strlen(buf) + 1);
-    (void) strcpy(result, buf);
-    
+#if OLD_FORMAT_OUT
+    int i;
+    char *result, *cp;
+#endif
+
+    if (!PointerIsValid((char *)path))
+	return NULL;
+
+#if OLD_FORMAT_OUT
+    if (!PointerIsValid(result = (char *)PALLOC(path->npts*(P_MAXLEN+3)+2)))
+	elog(WARN, "Memory allocation failed, can't output path", NULL);
+
+    cp = result;
+    *cp++ = LDELIM;
+    if (! pair_encode( path->closed, path->npts, cp))
+	elog (WARN, "Unable to format path", NULL);
+    cp += strlen(cp);
+
+    for (i=0; i<path->npts; i++) {
+        *cp++ = DELIM;
+	if (! pair_encode( path->p[i].x, path->p[i].y, cp))
+	    elog (WARN, "Unable to format path", NULL);
+	cp += strlen(cp);
+    };
+    *cp++ = RDELIM;
+    *cp = '\0';
     return(result);
+#else
+    return( path_encode( path->closed, path->npts, (Point *) &(path->p[0])));
+#endif
 }
 
 
@@ -682,55 +940,133 @@ char *path_out(PATH *path)
  *	Better relops and access methods coming soon.
  *---------------------------------------------------------*/
 
-long path_n_lt(PATH *p1, PATH *p2)
+bool path_n_lt(PATH *p1, PATH *p2)
 {
     return( (p1->npts < p2->npts ) );
 }
 
-long path_n_gt(PATH *p1, PATH *p2)
+bool path_n_gt(PATH *p1, PATH *p2)
 {
     return( (p1->npts > p2->npts ) );
 }
 
-long path_n_eq(PATH *p1, PATH *p2)
+bool path_n_eq(PATH *p1, PATH *p2)
 {
     return( (p1->npts == p2->npts) );
 }
 
-long path_n_le(PATH *p1, PATH *p2)
+bool path_n_le(PATH *p1, PATH *p2)
 {
     return( (p1->npts <= p2->npts ) );
 }
 
-long path_n_ge(PATH *p1, PATH *p2)
+bool path_n_ge(PATH *p1, PATH *p2)
 {
     return( (p1->npts >= p2->npts ) );
 }
+
+
+/*----------------------------------------------------------
+ * Conversion operators.
+ *---------------------------------------------------------*/
+
+PATH *path_copy(PATH *path);
+
+bool
+path_isclosed( PATH *path)
+{
+    if (!PointerIsValid((char *)path))
+	return FALSE;
+
+    return(path->closed);
+} /* path_isclosed() */
+
+bool
+path_isopen( PATH *path)
+{
+    if (!PointerIsValid((char *)path))
+	return FALSE;
+
+    return(! path->closed);
+} /* path_isopen() */
+
+
+int4
+path_npoints( PATH *path)
+{
+    if (!PointerIsValid((char *)path))
+	return 0;
+
+    return(path->npts);
+} /* path_npoints() */
+
+PATH *
+path_close(PATH *path)
+{
+    PATH *result;
+
+    if (PointerIsValid((char *)result = path_copy(path)))
+	result->closed = TRUE;
+
+    return(result);
+} /* path_close() */
+
+PATH *
+path_open(PATH *path)
+{
+    PATH *result;
+
+    if (PointerIsValid((char *)result = path_copy(path)))
+	result->closed = FALSE;
+
+    return(result);
+} /* path_open() */
+
+
+PATH *
+path_copy(PATH *path)
+{
+    PATH *result;
+    int size;
+
+    if (!PointerIsValid((char *)path))
+	return NULL;
+
+    size = offsetof(PATH, p[0]) + (sizeof(path->p[0]) * path->npts);
+    if (!PointerIsValid(result = PALLOC(size)))
+	elog(WARN, "Memory allocation failed, can't copy path",NULL);
+
+    memmove((char *) result, (char *) path, size);
+    return(result);
+} /* path_copy() */
+
 
 /* path_inter -
  *	Does p1 intersect p2 at any point?
  *	Use bounding boxes for a quick (O(n)) check, then do a 
  *	O(n^2) iterative edge check.
  */
-long path_inter(PATH *p1, PATH *p2)
+bool path_inter(PATH *p1, PATH *p2)
 {
     BOX	b1, b2;
     int	i, j;
     LSEG seg1, seg2;
     
-    b1.xh = b1.yh = b2.xh = b2.yh = (double)DBL_MAX;
-    b1.xl = b1.yl = b2.xl = b2.yl = -(double)DBL_MAX;
-    for (i = 0; i < p1->npts; ++i) {
-	b1.xh = Max(p1->p[i].x, b1.xh);
-	b1.yh = Max(p1->p[i].y, b1.yh);
-	b1.xl = Min(p1->p[i].x, b1.xl);
-	b1.yl = Min(p1->p[i].y, b1.yl);
+    b1.high.x = b1.low.x = p1->p[0].x;
+    b1.high.y = b1.low.y = p1->p[0].y;
+    for (i = 1; i < p1->npts; i++) {
+	b1.high.x = Max(p1->p[i].x, b1.high.x);
+	b1.high.y = Max(p1->p[i].y, b1.high.y);
+	b1.low.x = Min(p1->p[i].x, b1.low.x);
+	b1.low.y = Min(p1->p[i].y, b1.low.y);
     }
-    for (i = 0; i < p2->npts; ++i) {
-	b2.xh = Max(p2->p[i].x, b2.xh);
-	b2.yh = Max(p2->p[i].y, b2.yh);
-	b2.xl = Min(p2->p[i].x, b2.xl);
-	b2.yl = Min(p2->p[i].y, b2.yl);
+    b2.high.x = b2.low.x = p2->p[0].x;
+    b2.high.y = b2.low.y = p2->p[0].y;
+    for (i = 1; i < p2->npts; i++) {
+	b2.high.x = Max(p2->p[i].x, b2.high.x);
+	b2.high.y = Max(p2->p[i].y, b2.high.y);
+	b2.low.x = Min(p2->p[i].x, b2.low.x);
+	b2.low.y = Min(p2->p[i].y, b2.low.y);
     }
     if (! box_overlap(&b1, &b2))
 	return(0);
@@ -753,25 +1089,31 @@ long path_inter(PATH *p1, PATH *p2)
    two paths, and finds the min distance between any two lsegs */
 double *path_distance(PATH *p1, PATH *p2)
 {
-    double *min, *tmp;
+    double *min = NULL, *tmp;
     int i,j;
     LSEG seg1, seg2;
-    
+
+/*
     statlseg_construct(&seg1, &p1->p[0], &p1->p[1]);
     statlseg_construct(&seg2, &p2->p[0], &p2->p[1]);
     min = lseg_distance(&seg1, &seg2);
-    
+*/
+
     for (i = 0; i < p1->npts - 1; i++)
 	for (j = 0; j < p2->npts - 1; j++)
 	    {
 		statlseg_construct(&seg1, &p1->p[i], &p1->p[i+1]);
 		statlseg_construct(&seg2, &p2->p[j], &p2->p[j+1]);
 		
-		if (*min < *(tmp = lseg_distance(&seg1, &seg2)))
-		    *min = *tmp;
-		PFREE(tmp);
+		tmp = lseg_distance(&seg1, &seg2);
+		if ((min == NULL) || (*min < *tmp)) {
+		    if (min != NULL) PFREE(min);
+		    min = tmp;
+		} else {
+		    PFREE(tmp);
+		};
 	    }
-    
+
     return(min);
 }
 
@@ -782,12 +1124,12 @@ double *path_distance(PATH *p1, PATH *p2)
 
 double *path_length(PATH *path)
 {
-    double	*result;
+    double *result;
     int	ct, i;
     
     result = PALLOCTYPE(double);
     ct = path->npts - 1;
-    for (i = 0; i < ct; ++i)
+    for (i = 0; i < ct; i++)
 	*result += point_dt(&path->p[i], &path->p[i+1]);
     
     return(result);
@@ -797,11 +1139,11 @@ double *path_length(PATH *path)
 
 double path_ln(PATH *path)
 {
-    double	result;
+    double result;
     int	ct, i;
     
     ct = path->npts - 1;
-    for (result = i = 0; i < ct; ++i)
+    for (result = i = 0; i < ct; i++)
 	result += point_dt(&path->p[i], &path->p[i+1]);
     
     return(result);
@@ -814,52 +1156,49 @@ double path_ln(PATH *path)
 
 /*----------------------------------------------------------
  *  String to point, point to string conversion.
- *	External form:	"(x, y)"
+ *	External format:
+ *		"(x,y)"
+ *		"x,y"
  *---------------------------------------------------------*/
 
-Point *point_in(char *str)
+Point *
+point_in(char *str)
 {
-    char	*coord[POINTNARGS], *p, *r;
-    int	i;
-    Point	*result;
-    
-    if (str == NULL)
-	elog(WARN, "Bad (null) point external representation");
-    
-    if ((p = (char *)strchr(str, LDELIM)) == (char *)NULL)
-	elog (WARN, "Bad point external representation '%s'",str);
-    for (i = 0, p++; *p && i < POINTNARGS-1 && *p != RDELIM; p = r+1)
-	if ((r = (char *)strchr(p, DELIM)) == (char *)NULL)
-	    elog (WARN, "Bad point external representation '%s'",str);
-	else	
-	    coord[i++] = p;
-    if ((r = (char *)strchr(p, RDELIM)) == (char *)NULL)
-	elog (WARN, "Bad point external representation '%s'",str);
-    coord[i++] = p;
-    
-    if (i < POINTNARGS - 1)
-	elog(WARN, "Bad point external representation '%s'",str);
-    result = PALLOCTYPE(Point);
-    result->x = atof(coord[0]);
-    result->y = atof(coord[1]);
-    return(result);
-}
+    Point *point;
 
-char *point_out(Point *pt)
-{
-    char	*result;
+    double x, y;
+    char *s;
     
-    if (pt == NULL)
+    if (str == NULL) {
+	elog(WARN, "Bad (null) point external representation");
+	return NULL;
+    }
+
+    if (! pair_decode( str, &x, &y, &s) || (strlen(s) > 0))
+      elog (WARN, "Bad point external representation '%s'",str);
+
+    if (!PointerIsValid(point = PALLOCTYPE(Point)))
+      elog (WARN, "Unable to allocate point storage for '%s'",str);
+
+    point->x = x;
+    point->y = y;
+
+    return(point);
+} /* point_in() */
+
+char *
+point_out(Point *pt)
+{
+    if (!PointerIsValid((char *)pt))
 	return(NULL);
-    result = (char *)PALLOC(40);
-    (void) sprintf(result, "(%G,%G)", pt->x, pt->y);
-    return(result);
-}
+
+    return( path_encode( -1, 1, pt));
+} /* point_out() */
 
 
 Point *point_construct(double x, double y)
 {
-    Point	*result;
+    Point *result;
     
     result = PALLOCTYPE(Point);
     result->x = x;
@@ -870,7 +1209,7 @@ Point *point_construct(double x, double y)
 
 Point *point_copy(Point *pt)
 {
-    Point	*result;
+    Point *result;
     
     result = PALLOCTYPE(Point);
     result->x = pt->x;
@@ -888,37 +1227,37 @@ Point *point_copy(Point *pt)
  *	EPSILON = 0.0).
  *---------------------------------------------------------*/
 
-long point_left(Point *pt1, Point *pt2)
+bool point_left(Point *pt1, Point *pt2)
 {
     return( FPlt(pt1->x, pt2->x) );
 }
 
-long point_right(Point *pt1, Point *pt2)
+bool point_right(Point *pt1, Point *pt2)
 {
     return( FPgt(pt1->x, pt2->x) );
 }
 
-long point_above(Point *pt1, Point *pt2)
+bool point_above(Point *pt1, Point *pt2)
 {
     return( FPgt(pt1->y, pt2->y) );
 }
 
-long point_below(Point *pt1, Point *pt2)
+bool point_below(Point *pt1, Point *pt2)
 {
     return( FPlt(pt1->y, pt2->y) );
 }
 
-long point_vert(Point *pt1, Point *pt2)
+bool point_vert(Point *pt1, Point *pt2)
 {
     return( FPeq( pt1->x, pt2->x ) );
 }
 
-long point_horiz(Point *pt1, Point *pt2)
+bool point_horiz(Point *pt1, Point *pt2)
 {
     return( FPeq( pt1->y, pt2->y ) );
 }
 
-long point_eq(Point *pt1, Point *pt2)
+bool point_eq(Point *pt1, Point *pt2)
 {
     return( point_horiz(pt1, pt2) && point_vert(pt1, pt2) );
 }
@@ -927,9 +1266,9 @@ long point_eq(Point *pt1, Point *pt2)
  *  "Arithmetic" operators on points.
  *---------------------------------------------------------*/
 
-long pointdist(Point *p1, Point *p2)
+int32 pointdist(Point *p1, Point *p2)
 {
-    long result;
+    int32 result;
     
     result = point_dt(p1, p2);
     return(result);
@@ -937,7 +1276,7 @@ long pointdist(Point *p1, Point *p2)
 
 double *point_distance(Point *pt1, Point *pt2)
 {
-    double	*result;
+    double *result;
     
     result = PALLOCTYPE(double);
     *result = HYPOT( pt1->x - pt2->x, pt1->y - pt2->y );
@@ -952,7 +1291,7 @@ double point_dt(Point *pt1, Point *pt2)
 
 double *point_slope(Point *pt1, Point *pt2)
 {
-    double	*result;
+    double *result;
     
     result = PALLOCTYPE(double);
     if (point_vert(pt1, pt2))
@@ -970,6 +1309,7 @@ double point_sl(Point *pt1, Point *pt2)
 	   : (pt1->y - pt2->y) / (pt1->x - pt2->x) );
 }
 
+
 /***********************************************************************
  **
  ** 	Routines for 2D line segments.
@@ -978,46 +1318,42 @@ double point_sl(Point *pt1, Point *pt2)
 
 /*----------------------------------------------------------
  *  String to lseg, lseg to string conversion.
- *	External form:	"(id, info, x1, y1, x2, y2)"
+ *	External forms:	"[(x1, y1), (x2, y2)]"
+ *			"(x1, y1), (x2, y2)"
+ *			"x1, y1, x2, y2"
+ *	closed form ok	"((x1, y1), (x2, y2))"
+ *	(old form)	"(x1, y1, x2, y2)"
  *---------------------------------------------------------*/
 
 LSEG *lseg_in(char *str)
 {
-    char	*coord[LSEGNARGS], *p;
-    int	i;
-    LSEG	*result;
-    
-    if (str == NULL)
-	elog (WARN," Bad (null) box external representation");
-    
-    if ((p = (char *)strchr(str, LDELIM)) == (char *)NULL)
+    LSEG *lseg;
+
+    int isopen;
+    char *s;
+
+    if (!PointerIsValid((char *)str))
+	elog (WARN," Bad (null) lseg external representation",NULL);
+
+    if (!PointerIsValid(lseg = PALLOCTYPE(LSEG)))
+      elog(WARN, "Memory allocation failed, can't input lseg '%s'",str);
+
+    if ((! path_decode(TRUE, 2, str, &isopen, &s, &(lseg->p[0])))
+      || (*s != '\0'))
 	elog (WARN, "Bad lseg external representation '%s'",str);
-    for (i = 0, p = str; *p && i < LSEGNARGS && *p != RDELIM; p++)
-	if (*p == DELIM || (*p == LDELIM && !i))
-	    coord[i++] = p + 1;
-    if (i < LSEGNARGS - 1)
-	elog (WARN, "Bad lseg external representation '%s'", str);
-    result = PALLOCTYPE(LSEG);
-    result->p[0].x = atof(coord[0]);
-    result->p[0].y = atof(coord[1]);
-    result->p[1].x = atof(coord[2]);
-    result->p[1].y = atof(coord[3]);
-    result->m = point_sl(&result->p[0], &result->p[1]);
+
+    lseg->m = point_sl(&lseg->p[0], &lseg->p[1]);
     
-    return(result);
+    return(lseg);
 }
 
 
 char *lseg_out(LSEG *ls)
 {
-    char	*result;
-    
-    if (ls == NULL)
+    if (!PointerIsValid((char *)ls))
 	return(NULL);
-    result = (char *)PALLOC(80);
-    (void) sprintf(result, "(%G,%G,%G,%G)",
-		   ls->p[0].x, ls->p[0].y, ls->p[1].x, ls->p[1].y);
-    return(result);
+
+    return( path_encode( FALSE, 2, (Point *) &(ls->p[0])));
 }
 
 
@@ -1033,6 +1369,7 @@ LSEG *lseg_construct(Point *pt1, Point *pt2)
     result->p[0].y = pt1->y;
     result->p[1].x = pt2->x;
     result->p[1].y = pt2->y;
+
     result->m = point_sl(pt1, pt2);
     
     return(result);
@@ -1045,6 +1382,7 @@ void statlseg_construct(LSEG *lseg, Point *pt1, Point *pt2)
     lseg->p[0].y = pt1->y;
     lseg->p[1].x = pt2->x;
     lseg->p[1].y = pt2->y;
+
     lseg->m = point_sl(pt1, pt2);
 }
 
@@ -1056,29 +1394,29 @@ void statlseg_construct(LSEG *lseg, Point *pt1, Point *pt2)
  **  find intersection of the two lines, and see if it falls on 
  **  both segments.
  */
-long lseg_intersect(LSEG *l1, LSEG *l2)
+bool lseg_intersect(LSEG *l1, LSEG *l2)
 {
     LINE *ln;
     Point *interpt;
-    long retval;
+    bool retval;
     
     ln = line_construct_pp(&l2->p[0], &l2->p[1]);
     interpt = interpt_sl(l1, ln);
     
     if (interpt != NULL && on_ps(interpt, l2)) /* interpt on l1 and l2 */
-	retval = 1;
-    else retval = 0;
+	retval = TRUE;
+    else retval = FALSE;
     if (interpt != NULL) PFREE(interpt);
     PFREE(ln);
     return(retval);
 }
 
-long lseg_parallel(LSEG *l1, LSEG *l2)
+bool lseg_parallel(LSEG *l1, LSEG *l2)
 {
     return( FPeq(l1->m, l2->m) );
 }
 
-long lseg_perp(LSEG *l1, LSEG *l2)
+bool lseg_perp(LSEG *l1, LSEG *l2)
 {
     if (! FPzero(l1->m))
 	return( FPeq(l2->m / l1->m, -1.0) );
@@ -1087,18 +1425,18 @@ long lseg_perp(LSEG *l1, LSEG *l2)
     return(0);	/* both 0.0 */
 }
 
-long lseg_vertical(LSEG *lseg)
+bool lseg_vertical(LSEG *lseg)
 {
     return( FPeq(lseg->p[0].x, lseg->p[1].x) );
 }
 
-long lseg_horizontal(LSEG *lseg)
+bool lseg_horizontal(LSEG *lseg)
 {
     return( FPeq(lseg->p[0].y, lseg->p[1].y) );
 }
 
 
-long lseg_eq(LSEG *l1, LSEG *l2)
+bool lseg_eq(LSEG *l1, LSEG *l2)
 {
     return( FPeq(l1->p[0].x, l2->p[0].x) &&
 	   FPeq(l1->p[1].y, l2->p[1].y) &&
@@ -1118,27 +1456,11 @@ long lseg_eq(LSEG *l1, LSEG *l2)
  */
 double *lseg_distance(LSEG *l1, LSEG *l2)
 {
-    double	*d, *result;
+    double *result;
     
     result = PALLOCTYPE(double);
-    if (lseg_intersect(l1, l2)) {
-	*result = 0.0;
-	return(result);
-    }
-    *result = (double)DBL_MAX;
-    d = dist_ps(&l1->p[0], l2);
-    *result = Min(*result, *d);
-    PFREE(d);
-    d = dist_ps(&l1->p[1], l2);
-    *result = Min(*result, *d);
-    PFREE(d);
-    d = dist_ps(&l2->p[0], l1);
-    *result = Min(*result, *d);
-    PFREE(d);
-    d = dist_ps(&l2->p[1], l1);
-    *result = Min(*result, *d);
-    PFREE(d);
-    
+    *result = lseg_dt( l1, l2);
+
     return(result);
 }
 
@@ -1149,9 +1471,9 @@ double lseg_dt(LSEG *l1, LSEG *l2)
     
     if (lseg_intersect(l1, l2))
 	return(0.0);
-    result = (double)DBL_MAX;
+
     d = dist_ps(&l1->p[0], l2);
-    result = Min(result, *d);
+    result = *d;
     PFREE(d);
     d = dist_ps(&l1->p[1], l2);
     result = Min(result, *d);
@@ -1265,21 +1587,23 @@ double *dist_ppth(Point *pt, PATH *path)
     LSEG lseg;
     
     switch (path->npts) {
+    /* no points in path? then result is undefined... */
     case 0:
-	result = PALLOCTYPE(double);
-	*result = Abs((double) DBL_MAX);	/* +infinity */
+	result = NULL;
 	break;
+    /* one point in path? then get distance between two points... */
     case 1:
 	result = point_distance(pt, &path->p[0]);
 	break;
     default:
+	/* make sure the path makes sense... */
+	Assert(path->npts > 1);
 	/*
 	 * the distance from a point to a path is the smallest distance
 	 * from the point to any of its constituent segments.
 	 */
-	Assert(path->npts > 1);
 	result = PALLOCTYPE(double);
-	for (i = 0; i < path->npts - 1; ++i) {
+	for (i = 0; i < path->npts - 1; i++) {
 	    statlseg_construct(&lseg, &path->p[i], &path->p[i+1]);
 	    tmp = dist_ps(pt, &lseg);
 	    if (i == 0 || *tmp < *result)
@@ -1298,21 +1622,30 @@ double *dist_pb(Point *pt, BOX *box)
     
     tmp = close_pb(pt, box);
     result = point_distance(tmp, pt);
-    
     PFREE(tmp);
+
     return(result);
 }
 
 
 double *dist_sl(LSEG *lseg, LINE *line)
 {
-    double	*result;
-    
+    double *result, *d2;
+
     if (inter_sl(lseg, line)) {
 	result = PALLOCTYPE(double);
 	*result = 0.0;
-    } else	/* parallel */
+
+    } else {
 	result = dist_pl(&lseg->p[0], line);
+	d2 = dist_pl(&lseg->p[1], line);
+	if (*d2 > *result) {
+	    PFREE( result);
+	    result = d2;
+	} else {
+	    PFREE( d2);
+	};
+    };
     
     return(result);
 }
@@ -1502,7 +1835,7 @@ Point *close_lb(LINE *line, BOX *box)
 /* on_pl -
  *	Does the point satisfy the equation? 
  */
-long on_pl(Point *pt, LINE *line)
+bool on_pl(Point *pt, LINE *line)
 {
     return( FPzero(line->A * pt->x + line->B * pt->y + line->C) );
 }
@@ -1511,16 +1844,16 @@ long on_pl(Point *pt, LINE *line)
 /* on_ps -
  *	Determine colinearity by detecting a triangle inequality.
  */
-long on_ps(Point *pt, LSEG *lseg)
+bool on_ps(Point *pt, LSEG *lseg)
 {
     return( FPeq (point_dt(pt, &lseg->p[0]) + point_dt(pt, &lseg->p[1]),
             point_dt(&lseg->p[0], &lseg->p[1])) );
 }
 
-long on_pb(Point *pt, BOX *box)
+bool on_pb(Point *pt, BOX *box)
 {
-    return( pt->x <= box->xh && pt->x >= box->xl &&
-	   pt->y <= box->yh && pt->y >= box->yl );
+    return( pt->x <= box->high.x && pt->x >= box->low.x &&
+	   pt->y <= box->high.y && pt->y >= box->low.y );
 }
 
 /* on_ppath - 
@@ -1535,7 +1868,7 @@ long on_pb(Point *pt, BOX *box)
  */
 #define NEXT(A)	((A+1) % path->npts)	/* cyclic "i+1" */
 
-long on_ppath(Point *pt, PATH *path)
+bool on_ppath(Point *pt, PATH *path)
 {
     int	above, next,	/* is the seg above the ray? */
     inter,		/* # of times path crosses ray */
@@ -1604,12 +1937,12 @@ long on_ppath(Point *pt, PATH *path)
 }
 
 
-long on_sl(LSEG *lseg, LINE *line)
+bool on_sl(LSEG *lseg, LINE *line)
 {
     return( on_pl(&lseg->p[0], line) && on_pl(&lseg->p[1], line) );
 }
 
-long on_sb(LSEG *lseg, BOX *box)
+bool on_sb(LSEG *lseg, BOX *box)
 {
     return( on_pb(&lseg->p[0], box) && on_pb(&lseg->p[1], box) );
 }
@@ -1619,7 +1952,7 @@ long on_sb(LSEG *lseg, BOX *box)
  *		Whether one object intersects another.
  *-------------------------------------------------------------------*/
 
-long inter_sl(LSEG *lseg, LINE *line)
+bool inter_sl(LSEG *lseg, LINE *line)
 {
     Point	*tmp;
 
@@ -1631,207 +1964,195 @@ long inter_sl(LSEG *lseg, LINE *line)
     return(0);
 }
 
-long inter_sb(LSEG *lseg, BOX *box)
+/* XXX segment and box should be able to intersect; tgl - 97/01/09 */
+
+bool inter_sb(LSEG *lseg, BOX *box)
 {
     return(0);
 }
 
-long inter_lb(LINE *line, BOX *box)
+/* XXX line and box should be able to intersect; tgl - 97/01/09 */
+
+bool inter_lb(LINE *line, BOX *box)
 {
     return(0);
 }
 
 /*------------------------------------------------------------------
  * The following routines define a data type and operator class for
- * POLYGONS .... Part of which (the polygon's bounding box is built on 
+ * POLYGONS .... Part of which (the polygon's bounding box) is built on 
  * top of the BOX data type.
  *
  * make_bound_box - create the bounding box for the input polygon
  *------------------------------------------------------------------*/
-
-/* Maximum number of output digits printed */
-#define P_MAXDIG 12
 
 /*---------------------------------------------------------------------
  * Make the smallest bounding box for the given polygon.
  *---------------------------------------------------------------------*/
 void make_bound_box(POLYGON *poly)
 {
+    int i;
     double x1,y1,x2,y2;
-    int npts = poly->npts;
-    
-    if (npts > 0) {
-	x1 = poly_min((double *)poly->pts, npts);
-	x2 = poly_max((double *)poly->pts, npts);
-	y1 = poly_min(((double *)poly->pts)+npts, npts),
-	y2 = poly_max(((double *)poly->pts)+npts, npts);
+
+    if (poly->npts > 0) {
+	x2 = x1 = poly->p[0].x;
+	y2 = y1 = poly->p[0].y;
+	for (i = 1; i < poly->npts; i++) {
+	    if (poly->p[i].x < x1) x1 = poly->p[i].x;
+	    if (poly->p[i].x > x2) x2 = poly->p[i].x;
+	    if (poly->p[i].y < y1) y1 = poly->p[i].y;
+	    if (poly->p[i].y > y2) y2 = poly->p[i].y;
+	};
+
 	box_fill(&(poly->boundbox), x1, x2, y1, y2); 
-    }
+    } else {
+	elog (WARN, "Unable to create bounding box for empty polygon", NULL);
+    };
 }
 
 /*------------------------------------------------------------------
- * polygon_in - read in the polygon from a string specification
- *              the string is of the form "(f8,f8,f8,f8,...,f8)"
+ * poly_in - read in the polygon from a string specification
+ *
+ *	External format:
+ *              "((x0,y0),...,(xn,yn))"
+ *              "x0,y0,...,xn,yn"
+ *		also supports the older style "(x1,...,xn,y1,...yn)"
  *------------------------------------------------------------------*/
-POLYGON *poly_in(char *s)
+POLYGON *poly_in(char *str)
 {
     POLYGON *poly;
-    long points;
-    double *xp, *yp, strtod();
-    int i, size;
-    
-    if((points = poly_pt_count(s, ',')) < 0)
-	elog(WARN, "Bad polygon external representation '%s'", s);
-    
-    size = offsetof(POLYGON, pts[0]) + 2 * sizeof(double) * points;
-    poly = (POLYGON *) PALLOC(size);
-    memset((char *) poly, 0, size);	/* zero any holes */
-    
-    if (!PointerIsValid(poly))
-	elog(WARN, "Memory allocation failed, can't input polygon");
-    
-    poly->npts = points;
-    poly->size = size;
-    
-    /* Store all x coords followed by all y coords */
-    xp = (double *) &(poly->pts[0]);
-    yp = (double *) (poly->pts + points*sizeof(double));
-    
-    s++;				/* skip LDELIM */
-    
-    for (i=0; i<points; i++,xp++,yp++)
-	{
-	    *xp = strtod(s, &s);
-	    s++;					/* skip delimiter */
-	    *yp = strtod(s, &s);
-	    s++;					/* skip delimiter */
-	}
-    make_bound_box(poly);
-    return (poly);
-}
+    int npts;
+    int size;
+    int isopen;
 
-/*-------------------------------------------------------------
- * poly_pt_count - count the number of points specified in the
- *                 polygon.
- *-------------------------------------------------------------*/
-long poly_pt_count(char *s, char delim)
-{
-    long total = 0;
-    
-    if (*s++ != LDELIM)		/* no left delimeter */
-	return (long) -1;
-    
-    while (*s && (*s != RDELIM))
-	{
-	    while (*s && (*s != delim))
-		s++;
-	    total++;	/* found one */
-	    if (*s)
-		s++;	/* bump s past the delimiter */
-	}
-    
-    /* if there was no right delimiter OR an odd number of points */
-    
-    if ((*(s-1) != RDELIM) || ((total%2) != 0))
-	return (long) -1;
-    
-    return (total/2);
-}
+#if OLD_FORMAT_IN
+    char *s;
+    int oldstyle;
+    int oddcount;
+    int i;
+    double x1, x2;
+#endif
+
+    if (!PointerIsValid((char *)str))
+	elog (WARN," Bad (null) polygon external representation");
+
+    if ((npts = pair_count(str, ',')) <= 0)
+	elog(WARN, "Bad polygon external representation '%s'", str);
+
+    size = offsetof(POLYGON, p[0]) + (sizeof(poly->p[0]) * npts);
+    if (!PointerIsValid(poly = (POLYGON *) PALLOC(size)))
+      elog(WARN, "Memory allocation failed, can't input polygon '%s'",str);
+
+    memset((char *) poly, 0, size);	/* zero any holes */
+    poly->size = size;
+    poly->npts = npts;
+
+#if OLD_FORMAT_IN
+    s = str;
+    while (isspace( *s)) s++;
+    /* identify old style format as having only one left delimiter in string... */
+    oldstyle = ((*s == LDELIM) && (strrchr( s, LDELIM) == s));
+
+    if (oldstyle) {
+	s++;
+	while (isspace( *s)) s++;
+
+	for (i=0; i<npts/2; i++) {
+	    if (! pair_decode( s, &x1, &x2, &s))
+		elog (WARN, "Bad polygon external representation '%s'",str);
+
+	    if (*s == DELIM) s++;
+	    poly->p[i*2].x = x1;
+	    poly->p[i*2+1].x = x2;
+	};
+	oddcount = (npts % 2);
+	if (oddcount) {
+	    if (! pair_decode( s, &x1, &x2, &s))
+		elog (WARN, "Bad polygon external representation '%s'",str);
+
+	    if (*s == DELIM) s++;
+	    poly->p[npts-1].x = x1;
+	    poly->p[0].y = x2;
+	};
+	for (i=0; i<npts/2; i++) {
+	    if (! pair_decode( s, &x1, &x2, &s))
+		elog (WARN, "Bad polygon external representation '%s'",str);
+
+	    if (*s == DELIM) s++;
+	    poly->p[i*2+oddcount].y = x1;
+	    poly->p[i*2+1+oddcount].y = x2;
+	};
+
+	if (*s == RDELIM) {
+	    s++;
+	    while (isspace( *s)) s++;
+	    if (*s != '\0')
+		elog(WARN, "Bad polygon external representation '%s'", str);
+
+	} else {
+	    elog(WARN, "Bad polygon external representation '%s'", str);
+	};
+
+    } else {
+#endif
+	if ((! path_decode(FALSE, npts, str, &isopen, &s, &(poly->p[0])))
+	  || (*s != '\0'))
+	elog (WARN, "Bad polygon external representation '%s'",str);
+
+#if OLD_FORMAT_IN
+    };
+#endif;
+
+    make_bound_box(poly);
+
+    return( poly);
+} /* poly_in() */
 
 /*---------------------------------------------------------------
  * poly_out - convert internal POLYGON representation to the 
- *            character string format "(f8,f8,f8,f8,...f8)"
+ *            character string format "((f8,f8),...,(f8,f8))"
+ *            also support old format "(f8,f8,...,f8,f8)"
  *---------------------------------------------------------------*/
 char *poly_out(POLYGON *poly)
 {
+#if OLD_FORMAT_OUT
     int i;
-    double *xp, *yp;
-    char *output, *outptr;
-    
-    /*-----------------------------------------------------
-     * Get enough space for "(f8,f8,f8,f8,...,f8)"
-     * which P_MAXDIG+1 for each coordinate plus 2
-     * for parens and 1 for the null
-     *-----------------------------------------------------*/
-    output = (char *)PALLOC(2*(P_MAXDIG+1)*poly->npts + 3);
-    outptr = output;
-    
-    if (!output)
-	elog(WARN, "Memory allocation failed, can't output polygon");
-    
-    *outptr++ = LDELIM;
-    
-    xp = (double *) poly->pts;
-    yp = (double *) (poly->pts + (poly->npts * sizeof(double)));
-    
-    sprintf(outptr, "%*g,%*g", P_MAXDIG, *xp++, P_MAXDIG, *yp++);
-    outptr += (2*P_MAXDIG + 1);
-    
-    for (i=1; i<poly->npts; i++,xp++,yp++)
-	{
-	    sprintf(outptr, ",%*g,%*g", P_MAXDIG, *xp, P_MAXDIG, *yp);
-	    outptr += 2*(P_MAXDIG + 1);
-	}
-    *outptr++ = RDELIM;
-    *outptr = '\0';
-    return (output);
+    char *result, *cp;
+#endif
+
+    if (!PointerIsValid((char *)poly))
+	return NULL;
+
+#if OLD_FORMAT_OUT
+    if (!PointerIsValid(result = (char *)PALLOC(poly->npts*(P_MAXLEN+3)+2)))
+	elog(WARN, "Memory allocation failed, can't output polygon", NULL);
+
+    cp = result;
+    *cp++ = LDELIM;
+
+    for (i=0; i<poly->npts; i++) {
+	if (! pair_encode( poly->p[i].x, poly->p[i].y, cp))
+	    elog (WARN, "Unable to format polygon", NULL);
+	cp += strlen(cp);
+	*cp++ = DELIM;
+    };
+    *(cp-1) = RDELIM;
+    *cp = '\0';
+    return(result);
+#else
+    return( path_encode( TRUE, poly->npts, &(poly->p[0])));
+#endif
 }
 
-/*-------------------------------------------------------
- * Find the largest coordinate out of n coordinates
- *-------------------------------------------------------*/
-double poly_max(double *coords, int ncoords)
-{
-    double max;
-    
-    max = *coords++;
-    ncoords--;
-    while (ncoords--)
-	{
-	    if (*coords > max)
-		max = *coords;
-	    coords++;
-	}
-    return max;
-}
-
-/*-------------------------------------------------------
- * Find the smallest coordinate out of n coordinates
- *-------------------------------------------------------*/
-double poly_min(double *coords, int ncoords)
-{
-    double min;
-    
-    min = *coords++;
-    ncoords--;
-    while (ncoords--)
-	{
-	    if (*coords < min)
-		min = *coords;
-	    coords++;
-	}
-    return min;
-}
 
 /*-------------------------------------------------------
  * Is polygon A strictly left of polygon B? i.e. is
  * the right most point of A left of the left most point
  * of B?
  *-------------------------------------------------------*/
-long poly_left(POLYGON *polya, POLYGON *polyb)
+bool poly_left(POLYGON *polya, POLYGON *polyb)
 {
-    double right, left;
-    
-    if (polya->npts > 0)
-	right = poly_max((double *)polya->pts, polya->npts);
-    else
-	right = polya->boundbox.xh;
-    if (polyb->npts > 0)
-	left = poly_min((double *)polyb->pts, polyb->npts);
-    else
-	left = polyb->boundbox.xl;
-    
-    return (right < left);
+    return (polya->boundbox.high.x < polyb->boundbox.low.x);
 }
 
 /*-------------------------------------------------------
@@ -1839,20 +2160,9 @@ long poly_left(POLYGON *polya, POLYGON *polyb)
  * the left most point of A left of the right most point
  * of B?
  *-------------------------------------------------------*/
-long poly_overleft(POLYGON *polya, POLYGON *polyb)
+bool poly_overleft(POLYGON *polya, POLYGON *polyb)
 {
-    double left, right;
-    
-    if (polya->npts > 0)
-	left = poly_min((double *)polya->pts, polya->npts);
-    else
-	left = polya->boundbox.xl;
-    if (polyb->npts > 0)
-	right = poly_max((double *)polyb->pts, polyb->npts);
-    else
-	right = polyb->boundbox.xh;
-    
-    return (left <= right);
+    return (polya->boundbox.low.x <= polyb->boundbox.high.x);
 }
 
 /*-------------------------------------------------------
@@ -1860,20 +2170,9 @@ long poly_overleft(POLYGON *polya, POLYGON *polyb)
  * the left most point of A right of the right most point
  * of B?
  *-------------------------------------------------------*/
-long poly_right(POLYGON *polya, POLYGON *polyb)
+bool poly_right(POLYGON *polya, POLYGON *polyb)
 {
-    double right, left;
-    
-    if (polya->npts > 0)
-	left = poly_min((double *)polya->pts, polya->npts);
-    else
-	left = polya->boundbox.xl;
-    if (polyb->npts > 0)
-	right = poly_max((double *)polyb->pts, polyb->npts);
-    else
-	right = polyb->boundbox.xh;
-    
-    return (left > right);
+    return( polya->boundbox.low.x > polyb->boundbox.high.x);
 }
 
 /*-------------------------------------------------------
@@ -1881,50 +2180,34 @@ long poly_right(POLYGON *polya, POLYGON *polyb)
  * the right most point of A right of the left most point
  * of B?
  *-------------------------------------------------------*/
-long poly_overright(POLYGON *polya, POLYGON *polyb)
+bool poly_overright(POLYGON *polya, POLYGON *polyb)
 {
-    double right, left;
-    
-    if (polya->npts > 0)
-	right = poly_max((double *)polya->pts, polya->npts);
-    else
-	right = polya->boundbox.xh;
-    if (polyb->npts > 0)
-	left = poly_min((double *)polyb->pts, polyb->npts);
-    else
-	left = polyb->boundbox.xl;
-    
-    return (right > left);
+    return( polya->boundbox.high.x > polyb->boundbox.low.x);
 }
 
 /*-------------------------------------------------------
  * Is polygon A the same as polygon B? i.e. are all the
  * points the same?
  *-------------------------------------------------------*/
-long poly_same(POLYGON *polya, POLYGON *polyb)
+bool poly_same(POLYGON *polya, POLYGON *polyb)
 {
     int i;
-    double *axp, *bxp; /* point to x coordinates for a and b */
-    
     if (polya->npts != polyb->npts)
-	return 0;
-    
-    axp = (double *)polya->pts;
-    bxp = (double *)polyb->pts;
-    
-    for (i=0; i<polya->npts; axp++, bxp++, i++)
-	{
-	    if (*axp != *bxp)
-		return 0;
-	}
-    return 1;
+	return FALSE;
+
+    for (i = 0; i < polya->npts; i++) {
+	if ((polya->p[i].x != polyb->p[i].x)
+	 || (polya->p[i].y != polyb->p[i].y))
+	    return FALSE;
+    };
+    return TRUE;
 }
 
 /*-----------------------------------------------------------------
  * Determine if polygon A overlaps polygon B by determining if
  * their bounding boxes overlap.
  *-----------------------------------------------------------------*/
-long poly_overlap(POLYGON *polya, POLYGON *polyb)
+bool poly_overlap(POLYGON *polya, POLYGON *polyb)
 {
     return box_overlap(&(polya->boundbox), &(polyb->boundbox));
 }
@@ -1933,7 +2216,7 @@ long poly_overlap(POLYGON *polya, POLYGON *polyb)
  * Determine if polygon A contains polygon B by determining if A's
  * bounding box contains B's bounding box.
  *-----------------------------------------------------------------*/
-long poly_contain(POLYGON *polya, POLYGON *polyb)
+bool poly_contain(POLYGON *polya, POLYGON *polyb)
 {
     return box_contain(&(polya->boundbox), &(polyb->boundbox));
 }
@@ -1942,7 +2225,995 @@ long poly_contain(POLYGON *polya, POLYGON *polyb)
  * Determine if polygon A is contained by polygon B by determining 
  * if A's bounding box is contained by B's bounding box.
  *-----------------------------------------------------------------*/
-long poly_contained(POLYGON *polya, POLYGON *polyb)
+bool poly_contained(POLYGON *polya, POLYGON *polyb)
 {
     return box_contained(&(polya->boundbox), &(polyb->boundbox));
+}
+
+
+/***********************************************************************
+ **
+ ** 	Routines for 2D points.
+ **
+ ***********************************************************************/
+
+Point *
+point(float8 *x, float8 *y)
+{
+    if (! (PointerIsValid(x) && PointerIsValid(y)))
+	return(NULL);
+
+    return(point_construct(*x, *y));
+} /* point() */
+
+
+Point *
+point_add(Point *p1, Point *p2)
+{
+    Point *result;
+
+    if (! (PointerIsValid(p1) && PointerIsValid(p2)))
+	return(NULL);
+
+    if (!PointerIsValid(result = PALLOCTYPE(Point)))
+	elog(WARN, "Memory allocation failed, can't add points",NULL);
+
+    result->x = (p1->x + p2->x);
+    result->y = (p1->y + p2->y);
+
+    return(result);
+} /* point_add() */
+
+Point *
+point_sub(Point *p1, Point *p2)
+{
+    Point *result;
+
+    if (! (PointerIsValid(p1) && PointerIsValid(p2)))
+	return(NULL);
+
+    if (!PointerIsValid(result = PALLOCTYPE(Point)))
+	elog(WARN, "Memory allocation failed, can't add points",NULL);
+
+    result->x = (p1->x - p2->x);
+    result->y = (p1->y - p2->y);
+
+    return(result);
+} /* point_sub() */
+
+Point *
+point_mul(Point *p1, Point *p2)
+{
+    Point *result;
+
+    if (! (PointerIsValid(p1) && PointerIsValid(p2)))
+	return(NULL);
+
+    if (!PointerIsValid(result = PALLOCTYPE(Point)))
+	elog(WARN, "Memory allocation failed, can't multiply points",NULL);
+
+    result->x = (p1->x*p2->x) - (p1->y*p2->y);
+    result->y = (p1->x*p2->y) + (p1->y*p2->x);
+
+    return(result);
+} /* point_mul() */
+
+Point *
+point_div(Point *p1, Point *p2)
+{
+    Point *result;
+    double div;
+
+    if (! (PointerIsValid(p1) && PointerIsValid(p2)))
+	return(NULL);
+
+    if (!PointerIsValid(result = PALLOCTYPE(Point)))
+	elog(WARN, "Memory allocation failed, can't multiply path",NULL);
+
+    div = (p2->x*p2->x) + (p2->y*p2->y);
+
+    result->x = ((p1->x*p2->x) + (p1->y*p2->y)) / div;
+    result->y = ((p2->x*p1->y) - (p2->y*p1->x)) / div;
+
+    return(result);
+} /* point_div() */
+
+
+/***********************************************************************
+ **
+ ** 	Routines for 2D boxes.
+ **
+ ***********************************************************************/
+
+BOX *
+box(Point *p1, Point *p2)
+{
+    BOX *result;
+
+    if (! (PointerIsValid(p1) && PointerIsValid(p2)))
+	return(NULL);
+
+    result = box_construct( p1->x, p2->x, p1->y, p2->y);
+
+    return(result);
+} /* box() */
+
+BOX *
+box_add(BOX *box, Point *p)
+{
+    BOX *result;
+
+    if (! (PointerIsValid(box) && PointerIsValid(p)))
+	return(NULL);
+
+    result = box_construct( (box->high.x + p->x), (box->low.x + p->x),
+      (box->high.y + p->y), (box->low.y + p->y));
+
+    return(result);
+} /* box_add() */
+
+BOX *
+box_sub(BOX *box, Point *p)
+{
+    BOX *result;
+
+    if (! (PointerIsValid(box) && PointerIsValid(p)))
+	return(NULL);
+
+    result = box_construct( (box->high.x - p->x), (box->low.x - p->x),
+      (box->high.y - p->y), (box->low.y - p->y));
+
+    return(result);
+} /* box_sub() */
+
+BOX *
+box_mul(BOX *box, Point *p)
+{
+    BOX *result;
+    Point *high, *low;
+
+    if (! (PointerIsValid(box) && PointerIsValid(p)))
+	return(NULL);
+
+    high = point_mul( &box->high, p);
+    low = point_mul( &box->low, p);
+
+    result = box_construct( high->x, low->x, high->y, low->y);
+    PFREE( high);
+    PFREE( low);
+
+    return(result);
+} /* box_mul() */
+
+BOX *
+box_div(BOX *box, Point *p)
+{
+    BOX *result;
+    Point *high, *low;
+
+    if (! (PointerIsValid(box) && PointerIsValid(p)))
+	return(NULL);
+
+    high = point_div( &box->high, p);
+    low = point_div( &box->low, p);
+
+    result = box_construct( high->x, low->x, high->y, low->y);
+    PFREE( high);
+    PFREE( low);
+
+    return(result);
+} /* box_div() */
+
+
+/***********************************************************************
+ **
+ ** 	Routines for 2D lines.
+ **		Lines are not intended to be used as ADTs per se,
+ **		but their ops are useful tools for other ADT ops.  Thus,
+ **		there are few relops.
+ **
+ ***********************************************************************/
+
+
+/***********************************************************************
+ **
+ ** 	Routines for 2D paths.
+ **
+ ***********************************************************************/
+
+POLYGON *path_poly(PATH *path);
+
+/* path_add()
+ * Concatenate two paths (only if they are both open).
+ */
+PATH *
+path_add(PATH *p1, PATH *p2)
+{
+    PATH *result;
+    int size;
+    int i;
+
+    if (! (PointerIsValid(p1) && PointerIsValid(p2))
+      || p1->closed || p2->closed)
+	return(NULL);
+
+    size = offsetof(PATH, p[0]) + (sizeof(p1->p[0]) * (p1->npts+p2->npts));
+    if (!PointerIsValid(result = PALLOC(size)))
+	elog(WARN, "Memory allocation failed, can't add paths",NULL);
+
+    result->size = size;
+    result->npts = (p1->npts+p2->npts);
+    result->closed = p1->closed;
+
+    for (i=0; i<p1->npts; i++) {
+	result->p[i].x = p1->p[i].x;
+	result->p[i].y = p1->p[i].y;
+    };
+    for (i=0; i<p2->npts; i++) {
+	result->p[i+p1->npts].x = p2->p[i].x;
+	result->p[i+p1->npts].y = p2->p[i].y;
+    };
+
+    return(result);
+} /* path_add() */
+
+/* path_add_pt()
+ * Translation operator.
+ */
+PATH *
+path_add_pt(PATH *path, Point *point)
+{
+    PATH *result;
+    int i;
+
+    if (! (PointerIsValid(path) && PointerIsValid(point)))
+	return(NULL);
+
+    if (! PointerIsValid(result = path_copy(path)))
+	elog(WARN, "Memory allocation failed, can't add path",NULL);
+
+    for (i=0; i<path->npts; i++) {
+	result->p[i].x += point->x;
+	result->p[i].y += point->y;
+    };
+
+    return(result);
+} /* path_add_pt() */
+
+PATH *
+path_sub_pt(PATH *path, Point *point)
+{
+    PATH *result;
+    int i;
+
+    if (! (PointerIsValid(path) && PointerIsValid(point)))
+	return(NULL);
+
+    if (! PointerIsValid(result = path_copy(path)))
+	elog(WARN, "Memory allocation failed, can't subtract path",NULL);
+
+    for (i=0; i<path->npts; i++) {
+	result->p[i].x -= point->x;
+	result->p[i].y -= point->y;
+    };
+
+    return(result);
+} /* path_sub_pt() */
+
+
+/* path_mul_pt()
+ * Rotation and scaling operators.
+ */
+PATH *
+path_mul_pt(PATH *path, Point *point)
+{
+    PATH *result;
+    Point *p;
+    int i;
+
+    if (! (PointerIsValid(path) && PointerIsValid(point)))
+	return(NULL);
+
+    if (! PointerIsValid(result = path_copy(path)))
+	elog(WARN, "Memory allocation failed, can't multiply path",NULL);
+
+    for (i=0; i<path->npts; i++) {
+	p = point_mul( &path->p[i], point);
+	result->p[i].x = p->x;
+	result->p[i].y = p->y;
+	PFREE(p);
+    };
+
+    return(result);
+} /* path_mul_pt() */
+
+PATH *
+path_div_pt(PATH *path, Point *point)
+{
+    PATH *result;
+    Point *p;
+    int i;
+
+    if (! (PointerIsValid(path) && PointerIsValid(point)))
+	return(NULL);
+
+    if (! PointerIsValid(result = path_copy(path)))
+	elog(WARN, "Memory allocation failed, can't divide path",NULL);
+
+    for (i=0; i<path->npts; i++) {
+	p = point_div( &path->p[i], point);
+	result->p[i].x = p->x;
+	result->p[i].y = p->y;
+	PFREE(p);
+    };
+
+    return(result);
+} /* path_div_pt() */
+
+
+POLYGON *path_poly(PATH *path)
+{
+    POLYGON *poly;
+    int size;
+    int i;
+
+    if (!PointerIsValid(path))
+	return(NULL);
+
+    if (!path->closed)
+	elog(WARN, "Open path cannot be converted to polygon",NULL);
+
+    size = offsetof(POLYGON, p[0]) + (sizeof(poly->p[0]) * path->npts);
+    if (!PointerIsValid(poly = PALLOC(size)))
+	elog(WARN, "Memory allocation failed, can't convert path to polygon",NULL);
+
+    poly->size = size;
+    poly->npts = path->npts;
+
+    for (i=0; i<path->npts; i++) {
+	poly->p[i].x = path->p[i].x;
+	poly->p[i].y = path->p[i].y;
+    };
+
+    make_bound_box(poly);
+
+    return(poly);
+} /* path_polygon() */
+
+
+/***********************************************************************
+ **
+ ** 	Routines for 2D polygons.
+ **
+ ***********************************************************************/
+
+int4
+poly_npoints( POLYGON *poly)
+{
+    if (!PointerIsValid(poly))
+	return(0);
+
+    return(poly->npts);
+} /* poly_npoints() */
+
+BOX *
+poly_box(POLYGON *poly)
+{
+    BOX *box;
+
+    if (!PointerIsValid(poly) || (poly->npts < 1))
+	return(NULL);
+
+    box = box_copy( &poly->boundbox);
+
+    return(box);
+} /* poly_box() */
+
+POLYGON *
+box_poly(BOX *box)
+{
+    POLYGON *poly;
+    int size;
+
+    if (!PointerIsValid(box))
+	return(NULL);
+
+    size = offsetof(POLYGON, p[0]) + (sizeof(poly->p[0]) * 4);
+    if (!PointerIsValid(poly = PALLOC(size)))
+	elog(WARN, "Memory allocation failed, can't convert box to polygon",NULL);
+
+    poly->size = size;
+    poly->npts = 4;
+
+    poly->p[0].x = box->low.x;
+    poly->p[0].y = box->low.y;
+    poly->p[1].x = box->low.x;
+    poly->p[1].y = box->high.y;
+    poly->p[2].x = box->high.x;
+    poly->p[2].y = box->high.y;
+    poly->p[3].x = box->high.x;
+    poly->p[3].y = box->low.y;
+
+    box_fill( &poly->boundbox, box->high.x, box->low.x, box->high.y, box->low.y);
+
+    return(poly);
+} /* box_poly() */
+
+PATH *
+poly_path(POLYGON *poly)
+{
+    PATH *path;
+    int size;
+    int i;
+
+    if (!PointerIsValid(poly) || (poly->npts < 0))
+	return(NULL);
+
+    size = offsetof(PATH, p[0]) + (sizeof(path->p[0]) * poly->npts);
+    if (!PointerIsValid(path = PALLOC(size)))
+	elog(WARN, "Memory allocation failed, can't convert polygon to path",NULL);
+
+    path->size = size;
+    path->npts = poly->npts;
+    path->closed = TRUE;
+
+    for (i=0; i<poly->npts; i++) {
+	path->p[i].x = poly->p[i].x;
+	path->p[i].y = poly->p[i].y;
+    };
+
+    return(path);
+} /* poly_path() */
+
+
+/*-------------------------------------------------------------------------
+ *
+ * circle.c--
+ *    2D geometric operations
+ *
+ * Copyright (c) 1994, Regents of the University of California
+ *
+ *
+ * IDENTIFICATION
+ *    $Header: /cvsroot/pgsql/src/backend/utils/adt/geo_ops.c,v 1.3 1997/04/22 17:31:32 scrappy Exp $
+ *
+ *-------------------------------------------------------------------------
+ */
+#ifndef PI
+#define PI 3.1415926536
+#endif
+
+int single_decode(char *str, float8 *x, char **ss);
+int single_encode(float8 x, char *str);
+
+int single_decode(char *str, float8 *x, char **s)
+{
+    char *cp;
+
+    if (!PointerIsValid(str))
+	return(FALSE);
+
+    while (isspace( *str)) str++;
+    *x = strtod( str, &cp);
+#ifdef GEODEBUG
+fprintf( stderr, "single_decode- (%x) try decoding %s to %g\n", (cp-str), str, *x);
+#endif
+    if (cp <= str) return(FALSE);
+    while (isspace( *cp)) cp++;
+
+    if (s != NULL) *s = cp;
+
+    return(TRUE);
+}
+
+int single_encode(float8 x, char *str)
+{
+    (void) sprintf(str, "%.*g", digits8, x);
+    return(TRUE);
+}
+
+
+/***********************************************************************
+ **
+ ** 	Routines for circles.
+ **
+ ***********************************************************************/
+
+/*----------------------------------------------------------
+ * Formatting and conversion routines.
+ *---------------------------------------------------------*/
+
+/*	circle_in	-	convert a string to internal form.
+ *
+ *	External format: (center and radius of circle)
+ *		"((f8,f8)<f8>)"
+ *		also supports quick entry style "(f8,f8,f8)"
+ */
+CIRCLE *circle_in(char *str)
+{
+    CIRCLE *circle;
+
+    char *s, *cp;
+    int depth = 0;
+
+    if (!PointerIsValid(str))
+	elog (WARN," Bad (null) circle external representation",NULL);
+
+    if (!PointerIsValid(circle = PALLOCTYPE(CIRCLE)))
+      elog(WARN, "Memory allocation failed, can't input circle '%s'",str);
+
+    s = str;
+    while (isspace( *s)) s++;
+    if ((*s == LDELIM_C) || (*s == LDELIM)) {
+	depth++;
+	cp = (s+1);
+	while (isspace( *cp)) cp++;
+	if (*cp == LDELIM) {
+	    s = cp;
+	};
+    };
+
+    if (! pair_decode( s, &circle->center.x, &circle->center.y, &s))
+      elog (WARN, "Bad circle external representation '%s'",str);
+
+    if (*s == DELIM) s++;
+    while (isspace( *s)) s++;
+
+    if (! single_decode( s, &circle->radius, &s))
+      elog (WARN, "Bad circle external representation '%s'",str);
+
+    while (depth > 0) {
+	if ((*s == RDELIM)
+         || ((*s == RDELIM_C) && (depth == 1))) {
+	    depth--;
+	    s++;
+	    while (isspace( *s)) s++;
+	} else {
+	    elog (WARN, "Bad circle external representation '%s'",str);
+	};
+    };
+
+    if (*s != '\0')
+      elog (WARN, "Bad circle external representation '%s'",str);
+
+    return(circle);
+} /* circle_in() */
+
+/*	circle_out	-	convert a circle to external form.
+ */
+char *circle_out(CIRCLE *circle)
+{
+    char *result;
+    char *cp;
+
+    if (!PointerIsValid(circle))
+	return(NULL);
+
+    if (!PointerIsValid(result = (char *)PALLOC(3*(P_MAXLEN+1)+3)))
+	elog(WARN, "Memory allocation failed, can't output circle", NULL);
+
+    cp = result;
+    *cp++ = LDELIM_C;
+    *cp++ = LDELIM;
+    if (! pair_encode( circle->center.x, circle->center.y, cp))
+	  elog (WARN, "Unable to format circle", NULL);
+
+    cp += strlen(cp);
+    *cp++ = RDELIM;
+    *cp++ = DELIM;
+    if (! single_encode( circle->radius, cp))
+	  elog (WARN, "Unable to format circle", NULL);
+
+    cp += strlen(cp);
+    *cp++ = RDELIM_C;
+    *cp = '\0';
+
+    return(result);
+} /* circle_out() */
+
+
+/*----------------------------------------------------------
+ *  Relational operators for CIRCLEs.
+ *	<, >, <=, >=, and == are based on circle area.
+ *---------------------------------------------------------*/
+
+/*	circles identical?
+ */
+bool circle_same(CIRCLE *circle1, CIRCLE *circle2)
+{
+    return( FPeq(circle1->radius,circle2->radius)
+      && FPeq(circle1->center.x,circle2->center.x)
+      && FPeq(circle1->center.y,circle2->center.y));
+}
+
+/*	circle_overlap	-	does circle1 overlap circle2?
+ */
+bool circle_overlap(CIRCLE *circle1, CIRCLE *circle2)
+{
+    return( FPle(point_dt(&circle1->center,&circle2->center),(circle1->radius+circle2->radius)));
+}
+
+/*	circle_overleft	-	is the right edge of circle1 to the left of
+ *				the right edge of circle2?
+ */
+bool circle_overleft(CIRCLE *circle1, CIRCLE *circle2)
+{
+    return( FPle((circle1->center.x+circle1->radius),(circle2->center.x+circle2->radius)));
+}
+
+/*	circle_left	-	is circle1 strictly left of circle2?
+ */
+bool circle_left(CIRCLE *circle1, CIRCLE *circle2)
+{
+    return( FPle((circle1->center.x+circle1->radius),(circle2->center.x-circle2->radius)));
+}
+
+/*	circle_right	-	is circle1 strictly right of circle2?
+ */
+bool circle_right(CIRCLE *circle1, CIRCLE *circle2)
+{
+    return( FPge((circle1->center.x-circle1->radius),(circle2->center.x+circle2->radius)));
+}
+
+/*	circle_overright	-	is the left edge of circle1 to the right of
+ *				the left edge of circle2?
+ */
+bool circle_overright(CIRCLE *circle1, CIRCLE *circle2)
+{
+    return( FPge((circle1->center.x-circle1->radius),(circle2->center.x-circle2->radius)));
+}
+
+/*	circle_contained	-	is circle1 contained by circle2?
+ */
+bool circle_contained(CIRCLE *circle1, CIRCLE *circle2)
+{
+    return( FPle((point_dt(&circle1->center,&circle2->center)+circle1->radius),circle2->radius));
+}
+
+/*	circle_contain	-	does circle1 contain circle2?
+ */
+bool circle_contain(CIRCLE *circle1, CIRCLE *circle2)
+{
+    return( FPle((point_dt(&circle1->center,&circle2->center)+circle2->radius),circle1->radius));
+}
+
+
+/*	circle_positionop	-
+ *		is circle1 entirely {above,below} circle2?
+ */
+bool circle_below(CIRCLE *circle1, CIRCLE *circle2)
+{
+    return( FPle((circle1->center.y+circle1->radius),(circle2->center.y-circle2->radius)));
+}
+
+bool circle_above(CIRCLE *circle1, CIRCLE *circle2)
+{
+    return( FPge((circle1->center.y-circle1->radius),(circle2->center.y+circle2->radius)));
+}
+
+
+/*	circle_relop	-	is area(circle1) relop area(circle2), within
+ *			  	our accuracy constraint?
+ */
+bool circle_eq(CIRCLE *circle1, CIRCLE *circle2)
+{
+    return( FPeq(circle_ar(circle1), circle_ar(circle2)) );
+} /* circle_eq() */
+
+bool circle_ne(CIRCLE *circle1, CIRCLE *circle2)
+{
+    return( !circle_eq(circle1, circle2));
+} /* circle_ne() */
+
+bool circle_lt(CIRCLE *circle1, CIRCLE *circle2)
+{
+    return( FPlt(circle_ar(circle1), circle_ar(circle2)) );
+} /* circle_lt() */
+
+bool circle_gt(CIRCLE *circle1, CIRCLE *circle2)
+{
+    return( FPgt(circle_ar(circle1), circle_ar(circle2)) );
+} /* circle_gt() */
+
+bool circle_le(CIRCLE *circle1, CIRCLE *circle2)
+{
+    return( FPle(circle_ar(circle1), circle_ar(circle2)) );
+} /* circle_le() */
+
+bool circle_ge(CIRCLE	*circle1, CIRCLE *circle2)
+{
+    return( FPge(circle_ar(circle1), circle_ar(circle2)) );
+} /* circle_ge() */
+
+
+/*----------------------------------------------------------
+ *  "Arithmetic" operators on circles.
+ *	circle_foo	returns foo as an object (pointer) that
+ can be passed between languages.
+ *	circle_xx	is an internal routine which returns the
+ *			actual value.
+ *---------------------------------------------------------*/
+
+CIRCLE *circle_copy(CIRCLE *circle);
+
+CIRCLE *
+circle_copy(CIRCLE *circle)
+{
+    CIRCLE *result;
+
+    if (!PointerIsValid(circle))
+	return NULL;
+
+    if (!PointerIsValid(result = PALLOCTYPE(CIRCLE)))
+	elog(WARN, "Memory allocation failed, can't copy circle",NULL);
+
+    memmove((char *) result, (char *) circle, sizeof(CIRCLE));
+    return(result);
+} /* circle_copy() */
+
+
+/* circle_add_pt()
+ * Translation operator.
+ */
+CIRCLE *
+circle_add_pt(CIRCLE *circle, Point *point)
+{
+    CIRCLE *result;
+
+    if (!PointerIsValid(circle) && !PointerIsValid(point))
+	return(NULL);
+
+    if (! PointerIsValid(result = circle_copy(circle)))
+	elog(WARN, "Memory allocation failed, can't add circle",NULL);
+
+    result->center.x += point->x;
+    result->center.y += point->y;
+
+    return(result);
+} /* circle_add_pt() */
+
+CIRCLE *
+circle_sub_pt(CIRCLE *circle, Point *point)
+{
+    CIRCLE *result;
+
+    if (!PointerIsValid(circle) && !PointerIsValid(point))
+	return(NULL);
+
+    if (! PointerIsValid(result = circle_copy(circle)))
+	elog(WARN, "Memory allocation failed, can't subtract circle",NULL);
+
+    result->center.x -= point->x;
+    result->center.y -= point->y;
+
+    return(result);
+} /* circle_sub_pt() */
+
+
+/* circle_mul_pt()
+ * Rotation and scaling operators.
+ */
+CIRCLE *
+circle_mul_pt(CIRCLE *circle, Point *point)
+{
+    CIRCLE *result;
+    Point *p;
+
+    if (!PointerIsValid(circle) && !PointerIsValid(point))
+	return(NULL);
+
+    if (! PointerIsValid(result = circle_copy(circle)))
+	elog(WARN, "Memory allocation failed, can't multiply circle",NULL);
+
+    p = point_mul( &circle->center, point);
+    result->center.x = p->x;
+    result->center.y = p->y;
+    PFREE(p);
+    result->radius *= HYPOT( point->x, point->y);
+
+    return(result);
+} /* circle_mul_pt() */
+
+CIRCLE *
+circle_div_pt(CIRCLE *circle, Point *point)
+{
+    CIRCLE *result;
+    Point *p;
+
+    if (!PointerIsValid(circle) && !PointerIsValid(point))
+	return(NULL);
+
+    if (! PointerIsValid(result = circle_copy(circle)))
+	elog(WARN, "Memory allocation failed, can't add circle",NULL);
+
+    p = point_div( &circle->center, point);
+    result->center.x = p->x;
+    result->center.y = p->y;
+    PFREE(p);
+    result->radius /= HYPOT( point->x, point->y);
+
+    return(result);
+} /* circle_div_pt() */
+
+
+/*	circle_area	-	returns the area of the circle.
+ */
+double *circle_area(CIRCLE *circle)
+{
+    double *result;
+
+    result = PALLOCTYPE(double);
+    *result = circle_ar(circle);
+
+    return(result);
+}
+
+
+/*	circle_diameter	-	returns the diameter of the circle.
+ */
+double *circle_diameter(CIRCLE *circle)
+{
+    double	*result;
+
+    result = PALLOCTYPE(double);
+    *result = (2*circle->radius);
+
+    return(result);
+}
+
+
+/*	circle_radius	-	returns the radius of the circle.
+ */
+double *circle_radius(CIRCLE *circle)
+{
+    double	*result;
+
+    result = PALLOCTYPE(double);
+    *result = circle->radius;
+
+    return(result);
+}
+
+
+/*	circle_distance	-	returns the distance between the
+ *				  center points of two circlees.
+ */
+double *circle_distance(CIRCLE *circle1, CIRCLE *circle2)
+{
+    double	*result;
+
+    result = PALLOCTYPE(double);
+    *result = point_dt(&circle1->center,&circle2->center);
+
+    return(result);
+}
+
+
+/*	circle_center	-	returns the center point of the circle.
+ */
+Point *circle_center(CIRCLE *circle)
+{
+    Point	*result;
+
+    result = PALLOCTYPE(Point);
+    result->x = circle->center.x;
+    result->y = circle->center.y;
+
+    return(result);
+}
+
+
+/*	circle_ar	-	returns the area of the circle.
+ */
+double circle_ar(CIRCLE *circle)
+{
+    return(PI*(circle->radius*circle->radius));
+}
+
+
+/*	circle_dt	-	returns the distance between the
+ *			  center points of two circlees.
+ */
+double circle_dt(CIRCLE *circle1, CIRCLE *circle2)
+{
+    double	result;
+
+    result = point_dt(&circle1->center,&circle2->center);
+
+    return(result);
+}
+
+
+/*----------------------------------------------------------
+ *  Conversion operators.
+ *---------------------------------------------------------*/
+
+CIRCLE *circle(Point *center, float8 *radius)
+{
+    CIRCLE *result;
+
+    if (! (PointerIsValid(center) && PointerIsValid(radius)))
+	return(NULL);
+
+    if (!PointerIsValid(result = PALLOCTYPE(CIRCLE)))
+      elog(WARN, "Memory allocation failed, can't convert point to circle",NULL);
+
+    result->center.x = center->x;
+    result->center.y = center->y;
+    result->radius = *radius;
+
+    return(result);
+}
+
+POLYGON *circle_poly(int npts, CIRCLE *circle)
+{
+    POLYGON *poly;
+    int size;
+    int i;
+    double angle;
+
+    if (!PointerIsValid(circle))
+	return(NULL);
+
+    if (FPzero(circle->radius) || (npts <= 2))
+	  elog (WARN, "Unable to convert circle to polygon", NULL);
+
+    size = offsetof(POLYGON, p[0]) + (sizeof(poly->p[0]) * npts);
+    if (!PointerIsValid(poly = (POLYGON *) PALLOC(size)))
+      elog(WARN, "Memory allocation failed, can't convert circle to polygon",NULL);
+
+    memset((char *) poly, 0, size);	/* zero any holes */
+    poly->size = size;
+    poly->npts = npts;
+
+    for (i=0;i<npts;i++) {
+	angle = i*(2*PI/npts);
+	poly->p[i].x = circle->center.x - (circle->radius*cos(angle));
+	poly->p[i].y = circle->center.y + (circle->radius*sin(angle));
+    };
+
+    make_bound_box(poly);
+
+    return(poly);
+}
+
+/*	poly_circle	- convert polygon to circle
+ *
+ * XXX This algorithm should use weighted means of line segments
+ *  rather than straight average values of points - tgl 97/01/21.
+ */
+CIRCLE *poly_circle(POLYGON *poly)
+{
+    CIRCLE *circle;
+    int i;
+
+    if (!PointerIsValid(poly))
+	return(NULL);
+
+    if (poly->npts <= 2)
+	  elog (WARN, "Unable to convert polygon to circle", NULL);
+
+    if (!PointerIsValid(circle = PALLOCTYPE(CIRCLE)))
+      elog(WARN, "Memory allocation failed, can't convert polygon to circle",NULL);
+
+    circle->center.x = 0;
+    circle->center.y = 0;
+    circle->radius = 0;
+
+    for (i=0;i<poly->npts;i++) {
+	circle->center.x += poly->p[i].x;
+	circle->center.y += poly->p[i].y;
+    };
+    circle->center.x /= poly->npts;
+    circle->center.y /= poly->npts;
+
+    for (i=0;i<poly->npts;i++) {
+	circle->radius += point_dt( &poly->p[i], &circle->center);
+    };
+    circle->radius /= poly->npts;
+
+    if (FPzero(circle->radius))
+	  elog (WARN, "Unable to convert polygon to circle", NULL);
+
+    return(circle);
 }

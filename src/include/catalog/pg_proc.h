@@ -6,7 +6,7 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: pg_proc.h,v 1.17 1997/04/15 17:41:03 scrappy Exp $
+ * $Id: pg_proc.h,v 1.18 1997/04/22 17:32:12 scrappy Exp $
  *
  * NOTES
  *    The script catalog/genbki.sh reads this file and generates .bki
@@ -92,6 +92,7 @@ typedef FormData_pg_proc	*Form_pg_proc;
 /* keep the following ordered by OID so that later changes can be made easier*/
 
 /* OIDS 1 - 99 */
+
 DATA(insert OID = 1242 (  boolin           PGUID 11 f t f 1 f 16 "0" 100 0 0  100  foo bar ));
 DATA(insert OID = 1243 (  boolout          PGUID 11 f t f 1 f 23 "0" 100 0 0 100  foo bar ));
 DATA(insert OID = 1244 (  byteain          PGUID 11 f t f 1 f 17 "0" 100 0 0 100  foo bar ));
@@ -524,6 +525,7 @@ DATA(insert OID = 696 (  char8regexne      PGUID 11 f t f 2 f 16 "411 25" 100 0 
 DATA(insert OID = 699 (  char2regexeq      PGUID 11 f t f 2 f 16 "409 25" 100 0 0 100  foo bar ));
 
 /* OIDS 700 - 799 */
+
 DATA(insert OID = 1288 (  char16regexeq    PGUID 11 f t f 2 f 16 "19 25" 100 0 0 100  foo bar ));
 DATA(insert OID = 1289 (  char16regexne    PGUID 11 f t f 2 f 16 "19 25" 100 0 0 100  foo bar ));
 
@@ -534,12 +536,15 @@ DATA(insert OID = 715 (  oidsrand          PGUID 11 f t f 1 f 16 "23" 100 0 0 10
 DATA(insert OID = 716 (  oideqint4         PGUID 11 f t f 2 f 16 "26 23" 100 0 0 100  foo bar ));
 DATA(insert OID = 717 (  int4eqoid         PGUID 11 f t f 2 f 16 "23 26" 100 0 0 100  foo bar ));
 
-
 DATA(insert OID = 720 (  byteaGetSize	   PGUID 11 f t f 1 f 23 "17" 100 0 0 100  foo bar ));
 DATA(insert OID = 721 (  byteaGetByte	   PGUID 11 f t f 2 f 23 "17 23" 100 0 0 100  foo bar ));
 DATA(insert OID = 722 (  byteaSetByte	   PGUID 11 f t f 3 f 17 "17 23 23" 100 0 0 100  foo bar ));
 DATA(insert OID = 723 (  byteaGetBit	   PGUID 11 f t f 2 f 23 "17 23" 100 0 0 100  foo bar ));
 DATA(insert OID = 724 (  byteaSetBit	   PGUID 11 f t f 3 f 17 "17 23 23" 100 0 0 100  foo bar ));
+
+DATA(insert OID = 725 (  dist_pl           PGUID 11 f t f 2 f 701 "600 654" 100 0 0 100  foo bar ));
+DATA(insert OID = 726 (  dist_lb           PGUID 11 f t f 2 f 701 "654 603" 100 0 0 100  foo bar ));
+DATA(insert OID = 727 (  dist_sl           PGUID 11 f t f 2 f 701 "601 654" 100 0 0 100  foo bar ));
 
 DATA(insert OID = 730 (  pqtest            PGUID 11 f t f 1 f 23 "25" 100 0 0 100  foo bar ));
 
@@ -587,6 +592,7 @@ DATA(insert OID = 781 (  gistrestrpos      PGUID 11 f t f 1 f 23 "0" 100 0 0 100
 DATA(insert OID = 782 (  gistbuild         PGUID 11 f t f 9 f 23 "0" 100 0 0 100  foo bar ));
 
 /* OIDS 800 - 899 */
+
 DATA(insert OID = 820 (  oidint2in	   PGUID 11 f t f 1 f 810 "0" 100 0 0 100  foo bar));
 DATA(insert OID = 821 (  oidint2out	   PGUID 11 f t f 1 f 19 "0" 100 0 0 100  foo bar));
 DATA(insert OID = 822 (  oidint2lt	   PGUID 11 f t f 2 f 16 "810 810" 100 0 0 100  foo bar));
@@ -747,6 +753,7 @@ DATA(insert OID = 1091 (  date_ne          PGUID 11 f t f 2 f 16 "1082 1082" 100
 DATA(insert OID = 1092 (  date_cmp         PGUID 11 f t f 2 f 23 "1082 1082" 100 0 0 100  foo bar ));
 
 /* OIDS 1100 - 1199 */
+
 DATA(insert OID = 1102 (  time_lt          PGUID 11 f t f 2 f 16 "1083 1083" 100 0 0 100  foo bar ));
 DATA(insert OID = 1103 (  time_le          PGUID 11 f t f 2 f 16 "1083 1083" 100 0 0 100  foo bar ));
 DATA(insert OID = 1104 (  time_gt          PGUID 11 f t f 2 f 16 "1083 1083" 100 0 0 100  foo bar ));
@@ -806,6 +813,7 @@ DATA(insert OID = 1194 (  timespan_reltime   PGUID 11 f t f 1 f  703 "1186" 100 
 /* reserve OIDs 1195-1199 for additional date/time conversion routines! tgl 97/03/19 */
 
 /* OIDS 1200 - 1299 */
+
 DATA(insert OID = 1200 (  int42reltime     PGUID 11 f t f 1 f 703 "21" 100 0 0 100  foo bar ));
 
 DATA(insert OID = 1290 (  char2icregexeq   PGUID 11 f t f 2 f 16 "409 25" 100 0 0 100  foo bar ));
@@ -826,6 +834,7 @@ DATA(insert OID = 1298 (  timestamp_out    PGUID 11 f t f 1 f 23 "0" 100 0 0 100
 DATA(insert OID = 1299 (  now              PGUID 11 f t f 0 f 1296 "0" 100 0 0 100  foo bar ));
 
 /* OIDS 1300 - 1399 */
+
 DATA(insert OID = 1306 (  timestampeq      PGUID 11 f t f 2 f 16 "1296 1296" 100 0 0 100  foo bar ));
 DATA(insert OID = 1307 (  timestampne      PGUID 11 f t f 2 f 16 "1296 1296" 100 0 0 100  foo bar ));
 DATA(insert OID = 1308 (  timestamplt      PGUID 11 f t f 2 f 16 "1296 1296" 100 0 0 100  foo bar ));
@@ -873,12 +882,116 @@ DATA(insert OID = 1392 (  isfinite     PGUID 14 f t f 1 f   16  "702" 100 0 0 10
 /* reserve OIDs 1370-1399 for additional date/time conversion routines! tgl 97/04/01 */
 
 /* OIDS 1400 - 1499 */
+
 DATA(insert OID = 1400 (  float        PGUID 14 f t f 1 f  701  "701" 100 0 0 100  "select $1" - ));
 DATA(insert OID = 1401 (  float        PGUID 14 f t f 1 f  701  "700" 100 0 0 100  "select ftod($1)" - ));
 DATA(insert OID = 1402 (  float4       PGUID 14 f t f 1 f  700  "700" 100 0 0 100  "select $1" - ));
 DATA(insert OID = 1403 (  float4       PGUID 14 f t f 1 f  700  "701" 100 0 0 100  "select dtof($1)" - ));
 DATA(insert OID = 1404 (  int          PGUID 14 f t f 1 f   23   "23" 100 0 0 100  "select $1" - ));
 DATA(insert OID = 1405 (  int2         PGUID 14 f t f 1 f   21   "21" 100 0 0 100  "select $1" - ));
+
+DATA(insert OID = 1421 (  box               PGUID 11 f t f 2 f 603 "600 600" 100 0 0 100  foo bar ));
+DATA(insert OID = 1422 (  box_add           PGUID 11 f t f 2 f 603 "603 600" 100 0 0 100  foo bar ));
+DATA(insert OID = 1423 (  box_sub           PGUID 11 f t f 2 f 603 "603 600" 100 0 0 100  foo bar ));
+DATA(insert OID = 1424 (  box_mul           PGUID 11 f t f 2 f 603 "603 600" 100 0 0 100  foo bar ));
+DATA(insert OID = 1425 (  box_div           PGUID 11 f t f 2 f 603 "603 600" 100 0 0 100  foo bar ));
+
+DATA(insert OID = 1430 (  path_isclosed     PGUID 11 f t f 1 f  16 "602" 100 0 0 100  foo bar ));
+DATA(insert OID = 1431 (  path_isopen       PGUID 11 f t f 1 f  16 "602" 100 0 0 100  foo bar ));
+DATA(insert OID = 1432 (  path_npoints      PGUID 11 f t f 1 f  23 "602" 100 0 0 100  foo bar ));
+DATA(insert OID = 1433 (  path_close        PGUID 11 f t f 1 f 602 "602" 100 0 0 100  foo bar ));
+DATA(insert OID = 1434 (  path_open         PGUID 11 f t f 1 f 602 "602" 100 0 0 100  foo bar ));
+DATA(insert OID = 1435 (  path_add          PGUID 11 f t f 2 f 602 "602 602" 100 0 0 100  foo bar ));
+DATA(insert OID = 1436 (  path_add_pt       PGUID 11 f t f 2 f 602 "602 600" 100 0 0 100  foo bar ));
+DATA(insert OID = 1437 (  path_sub_pt       PGUID 11 f t f 2 f 602 "602 600" 100 0 0 100  foo bar ));
+DATA(insert OID = 1438 (  path_mul_pt       PGUID 11 f t f 2 f 602 "602 600" 100 0 0 100  foo bar ));
+DATA(insert OID = 1439 (  path_div_pt       PGUID 11 f t f 2 f 602 "602 600" 100 0 0 100  foo bar ));
+
+DATA(insert OID = 1440 (  point             PGUID 11 f t f 2 f 600 "701 701" 100 0 0 100  foo bar ));
+DATA(insert OID = 1441 (  point_add         PGUID 11 f t f 2 f 600 "600 600" 100 0 0 100  foo bar ));
+DATA(insert OID = 1442 (  point_sub         PGUID 11 f t f 2 f 600 "600 600" 100 0 0 100  foo bar ));
+DATA(insert OID = 1443 (  point_mul         PGUID 11 f t f 2 f 600 "600 600" 100 0 0 100  foo bar ));
+DATA(insert OID = 1444 (  point_div         PGUID 11 f t f 2 f 600 "600 600" 100 0 0 100  foo bar ));
+
+DATA(insert OID = 1445 (  poly_npoints      PGUID 11 f t f 1 f  23 "604" 100 0 0 100  foo bar ));
+DATA(insert OID = 1446 (  poly_box          PGUID 11 f t f 1 f 603 "604" 100 0 0 100  foo bar ));
+DATA(insert OID = 1447 (  poly_path         PGUID 11 f t f 1 f 602 "604" 100 0 0 100  foo bar ));
+DATA(insert OID = 1448 (  box_poly          PGUID 11 f t f 1 f 604 "603" 100 0 0 100  foo bar ));
+DATA(insert OID = 1449 (  path_poly         PGUID 11 f t f 1 f 604 "602" 100 0 0 100  foo bar ));
+
+DATA(insert OID = 1450 (  circle_in         PGUID 11 f t f 1 f 718 "0" 100 0 1 0  foo bar ));
+DATA(insert OID = 1451 (  circle_out        PGUID 11 f t f 1 f  23  "0" 100 0 1 0  foo bar ));
+DATA(insert OID = 1452 (  circle_same       PGUID 11 f t f 2 f  16 "718 718" 100 0 1 0  foo bar ));
+DATA(insert OID = 1453 (  circle_contain    PGUID 11 f t f 2 f  16 "718 718" 100 0 1 0  foo bar ));
+DATA(insert OID = 1454 (  circle_left       PGUID 11 f t f 2 f  16 "718 718" 100 0 1 0  foo bar ));
+DATA(insert OID = 1455 (  circle_overleft   PGUID 11 f t f 2 f  16 "718 718" 100 0 1 0  foo bar ));
+DATA(insert OID = 1456 (  circle_overright  PGUID 11 f t f 2 f  16 "718 718" 100 0 1 0  foo bar ));
+DATA(insert OID = 1457 (  circle_right      PGUID 11 f t f 2 f  16 "718 718" 100 0 1 0  foo bar ));
+DATA(insert OID = 1458 (  circle_contained  PGUID 11 f t f 2 f  16 "718 718" 100 0 1 0  foo bar ));
+DATA(insert OID = 1459 (  circle_overlap    PGUID 11 f t f 2 f  16 "718 718" 100 0 1 0  foo bar ));
+DATA(insert OID = 1460 (  circle_below      PGUID 11 f t f 2 f  16 "718 718" 100 0 1 0  foo bar ));
+DATA(insert OID = 1461 (  circle_above      PGUID 11 f t f 2 f  16 "718 718" 100 0 1 0  foo bar ));
+DATA(insert OID = 1462 (  circle_eq         PGUID 11 f t f 2 f  16 "718 718" 100 0 1 0  foo bar ));
+DATA(insert OID = 1463 (  circle_ne         PGUID 11 f t f 2 f  16 "718 718" 100 0 1 0  foo bar ));
+DATA(insert OID = 1464 (  circle_lt         PGUID 11 f t f 2 f  16 "718 718" 100 0 1 0  foo bar ));
+DATA(insert OID = 1465 (  circle_gt         PGUID 11 f t f 2 f  16 "718 718" 100 0 1 0  foo bar ));
+DATA(insert OID = 1466 (  circle_le         PGUID 11 f t f 2 f  16 "718 718" 100 0 1 0  foo bar ));
+DATA(insert OID = 1467 (  circle_ge         PGUID 11 f t f 2 f  16 "718 718" 100 0 1 0  foo bar ));
+DATA(insert OID = 1468 (  circle_area       PGUID 11 f t f 1 f 701 "718" 100 0 1 0  foo bar ));
+DATA(insert OID = 1469 (  circle_diameter   PGUID 11 f t f 1 f 701 "718" 100 0 1 0  foo bar ));
+DATA(insert OID = 1470 (  circle_radius     PGUID 11 f t f 1 f 701 "718" 100 0 1 0  foo bar ));
+DATA(insert OID = 1471 (  circle_distance   PGUID 11 f t f 2 f 701 "718 718" 100 0 1 0  foo bar ));
+DATA(insert OID = 1472 (  circle_center     PGUID 11 f t f 1 f 600 "718" 100 0 1 0  foo bar ));
+DATA(insert OID = 1473 (  circle            PGUID 11 f t f 2 f 718 "600 701" 100 0 1 0  foo bar ));
+DATA(insert OID = 1474 (  poly_circle       PGUID 11 f t f 1 f 718 "604" 100 0 1 0  foo bar ));
+DATA(insert OID = 1475 (  circle_poly       PGUID 11 f t f 2 f 604 "23 718" 100 0 1 0  foo bar ));
+
+DATA(insert OID = 1530 (  point             PGUID 14 f t f 2 f 600 "601 601" 100 0 0 100  "select lseg_interpt($1, $2)" - ));
+DATA(insert OID = 1531 (  point             PGUID 14 f t f 1 f 600 "718" 100 0 0 100  "select circle_center($1)" - ));
+DATA(insert OID = 1532 (  isvertical        PGUID 14 f t f 2 f  16 "600 600" 100 0 0 100  "select point_vert($1, $2)" - ));
+DATA(insert OID = 1533 (  ishorizonal       PGUID 14 f t f 2 f  16 "600 600" 100 0 0 100  "select point_horiz($1, $2)" - ));
+DATA(insert OID = 1534 (  slope             PGUID 14 f t f 2 f 701 "600 600" 100 0 0 100  "select point_slope($1, $2)" - ));
+
+DATA(insert OID = 1540 (  lseg              PGUID 14 f t f 2 f 601 "600 600" 100 0 0 100  "select lseg_construct($1, $2)" - ));
+DATA(insert OID = 1541 (  lseg              PGUID 14 f t f 1 f 601 "603" 100 0 0 100  "select box_diagonal($1)" - ));
+DATA(insert OID = 1542 (  isparallel        PGUID 14 f t f 2 f  16 "601 601" 100 0 0 100  "select lseg_parallel($1, $2)" - ));
+DATA(insert OID = 1543 (  isperpendicular   PGUID 14 f t f 2 f  16 "601 601" 100 0 0 100  "select lseg_perp($1, $2)" - ));
+DATA(insert OID = 1544 (  isvertical        PGUID 14 f t f 1 f  16 "601" 100 0 0 100  "select lseg_vertical($1)" - ));
+DATA(insert OID = 1545 (  ishorizontal      PGUID 14 f t f 1 f  16 "601" 100 0 0 100  "select lseg_horizontal($1)" - ));
+
+/* XXX "length" for boxes is different than "length" for paths, so use "width" for boxes instead.
+ * should go back into code and change subroutine name from "box_length" to "box_width".
+ * pclose and popen might better be named close and open, but that crashes initdb.
+ * - tgl 97/04/20
+ */
+
+DATA(insert OID = 1550 (  path              PGUID 14 f t f 1 f 602 "604" 100 0 0 100  "select poly_path($1)" - ));
+DATA(insert OID = 1551 (  length            PGUID 14 f t f 1 f 701 "602" 100 0 1 0  "select path_length($1)" - ));
+DATA(insert OID = 1552 (  points            PGUID 14 f t f 1 f  23 "602" 100 0 0 100  "select path_npoints($1)" - ));
+DATA(insert OID = 1553 (  pclose            PGUID 14 f t f 1 f 602 "602" 100 0 0 100  "select path_close($1)" - ));
+DATA(insert OID = 1554 (  popen             PGUID 14 f t f 1 f 602 "602" 100 0 0 100  "select path_open($1)" - ));
+DATA(insert OID = 1555 (  isopen            PGUID 14 f t f 1 f  16 "602" 100 0 0 100  "select path_isopen($1)" - ));
+DATA(insert OID = 1555 (  isclosed          PGUID 14 f t f 1 f  16 "602" 100 0 0 100  "select path_isclosed($1)" - ));
+
+DATA(insert OID = 1560 (  box               PGUID 14 f t f 2 f 603 "603 603" 100 0 0 100  "select box_intersect($1, $2)" - ));
+DATA(insert OID = 1561 (  box               PGUID 14 f t f 1 f 603 "604" 100 0 0 100  "select poly_box($1)" - ));
+DATA(insert OID = 1562 (  width             PGUID 14 f t f 1 f 701 "603" 100 0 0 100  "select box_length($1)" - ));
+DATA(insert OID = 1563 (  height            PGUID 14 f t f 1 f 701 "603" 100 0 0 100  "select box_height($1)" - ));
+DATA(insert OID = 1564 (  center            PGUID 14 f t f 1 f 600 "603" 100 0 0 100  "select box_center($1)" - ));
+DATA(insert OID = 1565 (  area              PGUID 14 f t f 1 f 701 "603" 100 0 0 100  "select box_area($1)" - ));
+
+DATA(insert OID = 1570 (  polygon           PGUID 14 f t f 1 f 604 "602" 100 0 0 100  "select path_poly($1)" - ));
+DATA(insert OID = 1571 (  polygon           PGUID 14 f t f 1 f 604 "603" 100 0 0 100  "select box_poly($1)" - ));
+DATA(insert OID = 1572 (  polygon           PGUID 14 f t f 2 f 604 "23 718" 100 0 0 100  "select circle_poly($1, $2)" - ));
+DATA(insert OID = 1573 (  polygon           PGUID 14 f t f 1 f 604 "718" 100 0 0 100  "select circle_poly(12, $1)" - ));
+DATA(insert OID = 1574 (  points            PGUID 14 f t f 1 f  23 "604" 100 0 0 100  "select poly_npoints($1)" - ));
+DATA(insert OID = 1575 (  center            PGUID 14 f t f 1 f 600 "604" 100 0 0 100  "select poly_center($1)" - ));
+
+DATA(insert OID = 1580 (  circle            PGUID 14 f t f 1 f 701 "604" 100 0 0 100  "select poly_circle($1)" - ));
+DATA(insert OID = 1581 (  center            PGUID 14 f t f 1 f 600 "718" 100 0 0 100  "select circle_center($1)" - ));
+DATA(insert OID = 1582 (  radius            PGUID 14 f t f 1 f 701 "718" 100 0 0 100  "select circle_radius($1)" - ));
+DATA(insert OID = 1583 (  diameter          PGUID 14 f t f 1 f 701 "718" 100 0 0 100  "select circle_diameter($1)" - ));
+DATA(insert OID = 1584 (  area              PGUID 14 f t f 1 f 701 "718" 100 0 0 100  "select circle_area($1)" - ));
 
 /* Oracle Compatibility Related Functions - By Edmund Mergl <E.Mergl@bawue.de> */
 DATA(insert OID =  870 (  lower        PGUID 11 f t f 1 f 25 "25" 100 0 0 100  foo bar ));

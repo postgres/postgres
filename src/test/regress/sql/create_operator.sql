@@ -10,8 +10,8 @@ CREATE OPERATOR ## (
 
 CREATE OPERATOR <% (
    leftarg = point,
-   rightarg = circle,
-   procedure = pt_in_circle,
+   rightarg = widget,
+   procedure = pt_in_widget,
    commutator = >=% 
 );
 

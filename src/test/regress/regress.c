@@ -1,5 +1,5 @@
 /*
- * $Header: /cvsroot/pgsql/src/test/regress/regress.c,v 1.5 1997/03/14 23:34:16 scrappy Exp $
+ * $Header: /cvsroot/pgsql/src/test/regress/regress.c,v 1.6 1997/04/22 17:33:00 scrappy Exp $
  */
 
 #include <float.h>		/* faked on sunos */
@@ -103,22 +103,19 @@ poly2path(poly)
 {
     int i;
     char *output = (char *)PALLOC(2*(P_MAXDIG + 1)*poly->npts + 64);
-    char *outptr = output;
-    double *xp, *yp;
+    char buf[2*(P_MAXDIG)+20];
 
-    sprintf(outptr, "(1, %*d", P_MAXDIG, poly->npts);
-    xp = (double *) poly->pts;
-    yp = (double *) (poly->pts + (poly->npts * sizeof(double *)));
+    sprintf(output, "(1, %*d", P_MAXDIG, poly->npts);
 
-    for (i=1; i<poly->npts; i++,xp++,yp++)
+    for (i=0; i<poly->npts; i++)
      {
-	 sprintf(outptr, ",%*g,%*g", P_MAXDIG, *xp, P_MAXDIG, *yp);
-	 outptr += 2*(P_MAXDIG + 1);
+	 sprintf(buf, ",%*g,%*g", P_MAXDIG, poly->p[i].x, P_MAXDIG, poly->p[i].y);
+	 strcat(output, buf);
      }
 
-    *outptr++ = RDELIM;
-    *outptr = '\0';
-    return(path_in(outptr));
+    sprintf(buf, "%c", RDELIM);
+    strcat(output, buf);
+    return(path_in(output));
 }
 
 /* return the point where two paths intersect.  Assumes that they do. */
@@ -176,24 +173,29 @@ char overpaid(tuple)
     return(salary > 699);
 }
 
+/* New type "widget"
+ * This used to be "circle", but I added circle to builtins,
+ *  so needed to make sure the names do not collide. - tgl 97/04/21
+ */
+
 typedef struct {
 	Point	center;
 	double	radius;
-} CIRCLE;
+} WIDGET;
 
-extern CIRCLE *circle_in (char *str);
-extern char *circle_out (CIRCLE *circle);
-extern int pt_in_circle (Point *point, CIRCLE *circle);
+extern WIDGET *widget_in (char *str);
+extern char *widget_out (WIDGET *widget);
+extern int pt_in_widget (Point *point, WIDGET *widget);
 
 #define NARGS	3
 
-CIRCLE *
-circle_in(str)
+WIDGET *
+widget_in(str)
 char	*str;
 {
 	char	*p, *coord[NARGS], buf2[1000];
 	int	i;
-	CIRCLE	*result;
+	WIDGET	*result;
 
 	if (str == NULL)
 		return(NULL);
@@ -202,39 +204,39 @@ char	*str;
 			coord[i++] = p + 1;
 	if (i < NARGS - 1)
 		return(NULL);
-	result = (CIRCLE *) palloc(sizeof(CIRCLE));
+	result = (WIDGET *) palloc(sizeof(WIDGET));
 	result->center.x = atof(coord[0]);
 	result->center.y = atof(coord[1]);
 	result->radius = atof(coord[2]);
 
-	sprintf(buf2, "circle_in: read (%f, %f, %f)\n", result->center.x,
+	sprintf(buf2, "widget_in: read (%f, %f, %f)\n", result->center.x,
 	result->center.y,result->radius);
 	return(result);
 }
 
 char *
-circle_out(circle)
-    CIRCLE	*circle;
+widget_out(widget)
+    WIDGET	*widget;
 {
     char	*result;
 
-    if (circle == NULL)
+    if (widget == NULL)
 	return(NULL);
 
     result = (char *) palloc(60);
     (void) sprintf(result, "(%g,%g,%g)",
-		   circle->center.x, circle->center.y, circle->radius);
+		   widget->center.x, widget->center.y, widget->radius);
     return(result);
 }
 
 int
-pt_in_circle(point, circle)
+pt_in_widget(point, widget)
 	Point	*point;
-	CIRCLE	*circle;
+	WIDGET	*widget;
 {
 	extern double	point_dt();
 
-	return( point_dt(point, &circle->center) < circle->radius );
+	return( point_dt(point, &widget->center) < widget->radius );
 }
 
 #define ABS(X) ((X) > 0 ? (X) : -(X))
@@ -247,8 +249,8 @@ BOX *box;
 {
 	int width, height;
 
-	width  = ABS(box->xh - box->xl);
-	height = ABS(box->yh - box->yl);
+	width  = ABS(box->high.x - box->low.x);
+	height = ABS(box->high.y - box->low.y);
 	return (width * height);
 }
 
