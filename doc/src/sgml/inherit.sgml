@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/Attic/inherit.sgml,v 1.18 2002/01/07 02:29:12 petere Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/Attic/inherit.sgml,v 1.19 2002/04/13 17:17:29 tgl Exp $
 -->
 
  <chapter id="inherit">
@@ -56,35 +56,28 @@ SELECT name, altitude
    which returns:
 
    <programlisting>
-+----------+----------+
-|name      | altitude |
-+----------+----------+
-|Las Vegas | 2174     |
-+----------+----------+
-|Mariposa  | 1953     |
-+----------+----------+
-|Madison   | 845      |
-+----------+----------+
+   name    | altitude
+-----------+----------
+ Las Vegas |     2174
+ Mariposa  |     1953
+ Madison   |      845
    </programlisting>
   </para>
 
   <para>
     On the other hand, the  following  query  finds
     all  the cities that are not state capitals and
-    are situated at an altitude of 500ft or higher:
+    are situated at an altitude over 500ft:
 
    <programlisting>
 SELECT name, altitude
     FROM ONLY cities
     WHERE altitude &gt; 500;
 
-+----------+----------+
-|name      | altitude |
-+----------+----------+
-|Las Vegas | 2174     |
-+----------+----------+
-|Mariposa  | 1953     |
-+----------+----------+
+   name    | altitude
+-----------+----------
+ Las Vegas |     2174
+ Mariposa  |     1953
    </programlisting>         
   </para>
 
@@ -112,18 +105,16 @@ SELECT name, altitude
    which returns:
 
    <programlisting>
-+---------+----------+----------+
-|tableoid |name      | altitude |
-+---------+----------+----------+
-|37292    |Las Vegas | 2174     |
-+---------+----------+----------+
-|37280    |Mariposa  | 1953     |
-+---------+----------+----------+
-|37280    |Madison   | 845      |
-+---------+----------+----------+
+ tableoid |   name    | altitude
+----------+-----------+----------
+   139793 | Las Vegas |     2174
+   139793 | Mariposa  |     1953
+   139798 | Madison   |      845
    </programlisting>
 
-   If you do a join with pg_class you can see the actual table name:
+   (If you try to reproduce this example, you will probably get different
+   numeric OIDs.)  By doing a join with pg_class you can see the actual table
+   names:
 
    <programlisting>
     SELECT p.relname, c.name, c.altitude
@@ -134,15 +125,11 @@ SELECT name, altitude
    which returns:
 
    <programlisting>
-+---------+----------+----------+
-|relname  |name      | altitude |
-+---------+----------+----------+
-|capitals |Las Vegas | 2174     |
-+---------+----------+----------+
-|cities   |Mariposa  | 1953     |
-+---------+----------+----------+
-|cities   |Madison   | 845      |
-+---------+----------+----------+
+ relname  |   name    | altitude
+----------+-----------+----------
+ cities   | Las Vegas |     2174
+ cities   | Mariposa  |     1953
+ capitals | Madison   |      845
    </programlisting>
    
   </para>
