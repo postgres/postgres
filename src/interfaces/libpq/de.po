@@ -1,7 +1,7 @@
 # German message translation file for libpq
 # Peter Eisentraut <peter_e@gmx.net>, 2001.
 #
-# $Header: /cvsroot/pgsql/src/interfaces/libpq/Attic/de.po,v 1.1 2001/07/15 13:45:04 petere Exp $
+# $Header: /cvsroot/pgsql/src/interfaces/libpq/Attic/de.po,v 1.2 2001/08/01 14:07:41 tgl Exp $
 #
 # Use these quotes: »%s«
 #
@@ -75,7 +75,7 @@ msgstr "konnte den zu verwendenden PostgreSQL-Benutzernamen nicht bestimmen\n"
 
 #: fe-connect.c:713
 #, c-format
-msgid "could not socket to non-blocking mode: %s\n"
+msgid "could not set socket to non-blocking mode: %s\n"
 msgstr "konnte Socket nicht auf nicht-blockierenden Modus umstellen: %s\n"
 
 #: fe-connect.c:737
