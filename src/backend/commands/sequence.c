@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/commands/sequence.c,v 1.52 2001/03/22 03:59:23 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/commands/sequence.c,v 1.53 2001/04/03 21:58:00 vadim Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -181,9 +181,41 @@ DefineSequence(CreateSeqStmt *seq)
 	/* Now - form & insert sequence tuple */
 	tuple = heap_formtuple(tupDesc, value, null);
 	heap_insert(rel, tuple);
+	ReleaseBuffer(buf);
 
-	if (WriteBuffer(buf) == STATUS_ERROR)
-		elog(ERROR, "DefineSequence: WriteBuffer failed");
+	/*
+	 * After crash REDO of heap_insert above would re-init page and
+	 * our magic number would be lost. We have to log sequence creation.
+	 * This means two log records instead of one -:(
+	 */
+	START_CRIT_SECTION();
+	{
+		xl_seq_rec			xlrec;
+		XLogRecPtr			recptr;
+		XLogRecData 		rdata[2];
+		Form_pg_sequence	newseq = (Form_pg_sequence) GETSTRUCT(tuple);
+
+		/* We do not log first nextval call, so "advance" sequence here */
+		newseq->is_called = 't';
+		newseq->log_cnt = 0;
+
+		xlrec.node = rel->rd_node;
+		rdata[0].buffer = InvalidBuffer;
+		rdata[0].data = (char *) &xlrec;
+		rdata[0].len = sizeof(xl_seq_rec);
+		rdata[0].next = &(rdata[1]);
+
+		rdata[1].buffer = InvalidBuffer;
+		rdata[1].data = (char*) tuple->t_data;
+		rdata[1].len = tuple->t_len;
+		rdata[1].next = NULL;
+
+		recptr = XLogInsert(RM_SEQ_ID, XLOG_SEQ_LOG | XLOG_NO_TRAN, rdata);
+
+		PageSetLSN(page, recptr);
+		PageSetSUI(page, ThisStartUpID);
+	}
+	END_CRIT_SECTION();
 
 	heap_close(rel, AccessExclusiveLock);
 }
