@@ -13,7 +13,6 @@ gbt_num_compress(GISTENTRY *retval, GISTENTRY *entry, const gbtree_ninfo * tinfo
 		{
 			int16		i2;
 			int32		i4;
-			TimeADT		ts;
 			DateADT		dt;
 		}			v;
 
@@ -33,10 +32,6 @@ gbt_num_compress(GISTENTRY *retval, GISTENTRY *entry, const gbtree_ninfo * tinfo
 			case gbt_t_oid:
 				v.i4 = DatumGetObjectId(entry->key);
 				leaf = &v.i4;
-				break;
-			case gbt_t_time:
-				v.ts = DatumGetTimeADT(entry->key);
-				leaf = &v.ts;
 				break;
 			case gbt_t_date:
 				v.dt = DatumGetDateADT(entry->key);
