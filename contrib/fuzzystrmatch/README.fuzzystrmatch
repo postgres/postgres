@@ -23,6 +23,11 @@
  * Metaphone was originally created by Lawrence Philips and presented in article
  * in "Computer Language" December 1990 issue.
  *
+ * dmetaphone() and dmetaphone_alt()
+ * ---------------------------------
+ * A port of the DoubleMetaphone perl module by Andrew Dunstan. See dmetaphone.c
+ * for more detail.
+ *
  * soundex()
  * -----------
  * Folded existing soundex contrib into this one. Renamed text_soundex() (C function)
@@ -48,11 +53,14 @@
  */
 
 
-Version 0.2 (7 August, 2001):
-  Functions to calculate the degree to which two strings match in a "fuzzy" way
-  Tested under Linux (Red Hat 6.2 and 7.0) and PostgreSQL 7.2devel
+Version 0.3 (30 June, 2004):
 
 Release Notes:
+  Version 0.3
+   - added double metaphone code from Andrew Dunstan
+   - change metaphone so that an empty input string causes an empty
+     output string to be returned, instead of throwing an ERROR
+   - fixed examples in README.soundex
 
   Version 0.2
     - folded soundex contrib into this one

@@ -20,7 +20,7 @@ insert into s values ('wobbly')\g
 select * from s
 where soundex(nm) = soundex('john')\g
 
-select nm from s a, s b
+select a.nm, b.nm from s a, s b
 where soundex(a.nm) = soundex(b.nm)
 and a.oid <> b.oid\g
 
@@ -51,7 +51,7 @@ LANGUAGE 'sql';
 DROP OPERATOR #= (text,text)\g
 
 CREATE OPERATOR #= (leftarg=text, rightarg=text, procedure=text_sx_eq,
-commutator=text_sx_eq)\g
+commutator = #=)\g
 
 SELECT *
 FROM s

@@ -202,6 +202,8 @@ levenshtein(PG_FUNCTION_ARGS)
  * Returns number of characters requested
  * (suggested value is 4)
  */
+#define GET_TEXT(cstrp) DatumGetTextP(DirectFunctionCall1(textin, CStringGetDatum(cstrp)))
+
 PG_FUNCTION_INFO_V1(metaphone);
 Datum
 metaphone(PG_FUNCTION_ARGS)
@@ -215,6 +217,10 @@ metaphone(PG_FUNCTION_ARGS)
 
 	str_i = DatumGetCString(DirectFunctionCall1(textout, PointerGetDatum(PG_GETARG_TEXT_P(0))));
 	str_i_len = strlen(str_i);
+
+	/* return an empty string if we receive one */
+	if (!(str_i_len > 0))
+		PG_RETURN_TEXT_P(GET_TEXT(""));
 
 	if (str_i_len > MAX_METAPHONE_STRLEN)
 		ereport(ERROR,

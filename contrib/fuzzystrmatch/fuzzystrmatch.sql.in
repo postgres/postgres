@@ -18,3 +18,11 @@ LANGUAGE 'C' WITH (iscachable, isstrict);
 CREATE FUNCTION text_soundex(text) RETURNS text
 AS 'MODULE_PATHNAME', 'soundex'
 LANGUAGE 'C';
+
+CREATE FUNCTION dmetaphone (text) RETURNS text 
+LANGUAGE C IMMUTABLE STRICT
+AS 'MODULE_PATHNAME', 'dmetaphone';
+
+CREATE FUNCTION dmetaphone_alt (text) RETURNS text 
+LANGUAGE C IMMUTABLE STRICT
+AS 'MODULE_PATHNAME', 'dmetaphone_alt';
