@@ -1,0 +1,201 @@
+<HTML>
+<HEAD>
+	<TITLE>The POSTGRES95 User Manual - Introduction</TITLE>
+</HEAD>
+
+<BODY>
+<font size=-1>
+<A HREF="pg95user.html">[ TOC ]</A> 
+[ Previous ] 
+<A HREF="architec.html">[ Next ]</A> 
+</font>
+<HR>
+<H1>1.  INTRODUCTION</H1>
+<HR>
+     This document is the user  manual  for  the  
+     <A HREF="http://s2k-ftp.cs.berkeley.edu:8000/postgres95/"><B>POSTGRES95</B></A>
+     database  management system developed at the University
+     of California at  Berkeley.   <B>POSTGRES95</B>  is  based  on
+     <A HREF="http://s2k-ftp.CS.Berkeley.EDU:8000/postgres/postgres.html">
+     <B>POSTGRES release 4.2</B></A>. The POSTGRES project, 
+     led by Professor Michael Stonebraker, has been sponsored  by  the
+     Defense  Advanced Research Projects Agency (DARPA), the
+     Army Research Office (ARO), the National Science  
+     Foundation (NSF), and ESL, Inc.
+<H2>1.1.  What is POSTGRES?</H2>
+     Traditional   relational  database  management  systems
+     (DBMSs) support a data model consisting of a collection
+     of named relations, containing attributes of a specific
+     type.  In current commercial  systems,  possible  types
+     include  floating  point  numbers,  integers, character
+     strings, money, and dates.  It is  commonly  recognized
+     that  this model is inadequate for future data 
+     processing applications.
+     The relational  model  successfully  replaced  previous
+     models  in  part  because  of its "Spartan simplicity".
+     However, as mentioned, this simplicity often makes  the
+     implementation  of  certain applications very difficult
+     to implement.  POSTGRES offers  substantial  additional
+     power  by  incorporating  the following four additional
+     basic constructs in such a way that  users  can  easily
+     extend the system:
+<p>
+<PRE>         classes
+         inheritance
+         types
+         functions
+</PRE><p>
+     In  addition,  POSTGRES  supports a powerful production
+     rule system.
+     
+<H2><A NAME="a-short-history-of-the-postgres-project">1.2.  A Short History of the POSTGRES Project</A></H2>
+     Implementation of the POSTGRES DBMS began in 1986.  The
+     initial  concepts  for  the  system  were  presented in
+     <A HREF="refs.html#STON86">[STON86]</A> and the definition of the initial  data  model
+     appeared in <A HREF="refs.html#ROW87">[ROWE87]</A>.  The design of the rule system at
+     that time was described in  <A HREF="refs.html#STON87a">[STON87a]</A>.   The  rationale
+     and  architecture  of the storage manager were detailed
+     in <A HREF="refs.html#STON87b">[STON87b]</A>.
+     POSTGRES has undergone  several  major  releases  since
+     then.   The  first "demoware" system became operational
+     in 1987 and was shown at the  1988  <B>ACM-SIGMOD</B>  
+     Conference.   We  released Version 1, described in <A HREF="refs.html#STON90a">[STON90a]</A>,
+     to a few external users in June 1989.  In response to a
+     critique  of  the  first rule system <A HREF="refs.html#STON89">[STON89]</A>, the rule
+     system was  redesigned  <A HREF="refs.html#STON90">[STON90b]</A>  and  Version  2  was
+     released  in  June 1990 with the new rule system.  
+     Version 3 appeared in 1991 and added support for  multiple
+     storage  managers,  an  improved  query executor, and a
+     rewritten rewrite rule  system.   For  the  most  part,
+     releases  since  then  have  focused on portability and
+     reliability.
+     POSTGRES has been  used  to  implement  many  different
+     research and production applications.  These include: a
+     financial data analysis system, a  jet  engine  
+     performance   monitoring   package,   an   asteroid  tracking
+     database, a medical information database,  and  several
+     geographic information systems.  POSTGRES has also been
+     used as an educational tool  at  several  universities.
+     Finally,  <A HREF="http://www.illustra.com/">Illustra  Information  Technologies</A> picked up
+     the code and commercialized it.
+     POSTGRES  became  the  primary  data  manager  for  the
+     <A HREF="http://www.sdsc.edu/0/Parts_Collabs/S2K/s2k_home.html">Sequoia 2000</A> scientific computing project in late 1992.
+     Furthermore, the size of the  external  user  community
+     nearly  doubled  during  1993.   It became increasingly
+     obvious that maintenance of the prototype code and 
+     support  was  taking  up large amounts of time that should
+     have been devoted to database research.  In  an  effort
+     to  reduce  this support burden, the project officially
+     ended with <B>Version 4.2</B>.
+     
+<H2><A NAME="what-is-postgres95">1.3.  What is <B>POSTGRES95</B>?</A></H2>
+     <B>POSTGRES95</B> is a derivative of the last official release
+     of  POSTGRES  (version 4.2). The code is now completely
+     ANSI C and the code size has been trimmed by 25&#37;. There
+     are  a lot of internal changes that improve performance
+     and code maintainability. <B>POSTGRES95</B> runs about  30-50&#37;
+     faster  on  the  Wisconsin  Benchmark compared to v4.2.
+     Apart from bug fixes, these are the major enhancements:
+<UL>
+      	<LI>The  query  language <B>POSTQUEL</B> has been replaced with
+        	<B>SQL</B> (implemented in the server). We do  not  support
+        	subqueries  (which can be imitated with user defined
+        	<B>SQL</B> functions) at the moment. Aggregates  have  been
+        	re-implemented.  We also added support for <B>GROUP BY</B>.
+        	The <B>libpq</B> interface is still available  for  <B>C</B>  
+        	programs.
+      	<LI>In addition to the monitor program, we provide a new
+        	program (<B>psql</B>) which supports <B>GNU</B> <B>readline</B>.
+      	<LI>We added a new  front-end  library,  <B>libpgtcl</B>,  that
+        	supports  <B>Tcl</B>-based  clients.   A sample shell, 
+        	pgtclsh, provides new Tcl  commands  to  interface  <B>tcl</B>
+        	programs with the <B>POSTGRES95</B> backend.
+      	<LI>The  large  object interface has been overhauled. We
+        	kept Inversion large objects as the  only  mechanism
+        	for  storing  large objects. (This is not to be 
+        	confused with the Inversion file system which has  been
+        	removed.)
+      	<LI>The  instance-level  rule  system  has been removed.
+        	<LI>Rules are still available as rewrite rules.
+      	<LI>A short tutorial introducing regular <B>SQL</B> features as
+        	well as those of ours is distributed with the source
+        	code.
+      	<LI><B>GNU</B> make (instead of  <B>BSD</B>  make)  is  used  for  the
+        	build.  Also,  <B>POSTGRES95</B>  can  be  compiled with an
+        	unpatched <B>gcc</B> (data alignment of  doubles  has  been
+        	fixed).
+</UL>
+<p>
+<H2><A NAME="about-this-release">1.4.  About This Release</A></H2>
+     <B>POSTGRES95</B>  is  available  free  of charge. This manual
+     describes version 1.0 of <B>POSTGRES95</B>.  The authors  have
+     compiled  and  tested <B>POSTGRES95</B> on the following 
+     platforms:
+<p>
+<center>
+<table border=4>
+  <tr>
+    <th>Architecture</th>
+    <th>Processor</th>
+    <th>Operating System</th>
+  </tr>
+  <tr>
+    <td>DECstation 3000</td>
+    <td>Alpha AXP</td>
+    <td>OSF/1 2.1, 3.0, 3.2</td>
+  </tr>
+  <tr>
+    <td>DECstation 5000</td>
+    <td>MIPS</td>
+    <td>ULTRIX 4.4</td>
+  </tr>
+  <tr>
+    <td>Sun4</td>
+    <td>SPARC</td>
+    <td>SunOS 4.1.3, 4.1.3_U1; Solaris 2.4</td>
+  </tr>
+  <tr>
+    <td>H-P 9000/700 and 800</td>
+    <td>PA-RISC</td>
+    <td>HP-UX 9.00, 9.01, 9.03</td>
+  </tr>
+  <tr>
+    <td>Intel</td>
+    <td>X86</td>
+    <td>Linux 1.2.8, ELF</td>
+</table>
+</center>
+<p>
+<H2><A NAME="outline-of-this-manual">1.5.  Outline of This Manual</A></H2>
+     From  now  on, We will use POSTGRES to mean <B>POSTGRES95</B>.
+     The first part of this manual goes over some basic sys-
+     tem  concepts  and procedures for starting the POSTGRES
+     system.  We then turn to a  tutorial  overview  of  the
+     POSTGRES data model and SQL query language, introducing
+     a few of its advanced features.  Next, we  explain  the
+     POSTGRES  approach  to  extensibility  and describe how
+     users can extend POSTGRES by adding user-defined types,
+     operators, aggregates, and both query language and pro-
+     gramming language functions.  After an extremely  brief
+     overview  of  the POSTGRES rule system, the manual 
+     concludes with a detailed appendix that discusses some  of
+     the  more involved and operating system-specific 
+     procedures involved in extending the system.
+<HR>
+<B>UNIX</B> is a trademark of X/Open, Ltd.  Sun4,  SPARC,  SunOS
+and  Solaris  are trademarks of Sun Microsystems, Inc.  DEC,
+DECstation, Alpha AXP and ULTRIX are trademarks  of  Digital
+Equipment   Corp.   PA-RISC  and  HP-UX  are  trademarks  of
+Hewlett-Packard Co.  OSF/1 is a trademark of the Open  
+Software Foundation.<p>
+
+     We assume proficiency with UNIX and C programming.
+     
+<HR>
+<font size=-1>
+<A HREF="pg95user.html">[ TOC ]</A> 
+[ Previous ] 
+<A HREF="architec.html">[ Next ]</A> 
+</font>
+</BODY>
+</HTML>

@@ -1,0 +1,70 @@
+<HTML>
+<HEAD>
+	<TITLE>The POSTGRES95 User Manual - THE QUERY LANGUAGE</TITLE>
+</HEAD>
+
+<BODY>
+
+<font size=-1>
+<A HREF="pg95user.html">[ TOC ]</A> 
+<A HREF="xtypes.html">[ Previous ]</A> 
+<A HREF="xaggr.html">[ Next ]</A> 
+</font>
+<HR>
+<H1>9.  EXTENDING SQL: OPERATORS</H1>
+<HR>
+     POSTGRES supports left unary, right  unary  and  binary
+     operators.   Operators  can  be  overloaded, or re-used
+     with different numbers  and  types  of  arguments.   If
+     there  is  an ambiguous situation and the system cannot
+     determine the correct operator to use, it  will  return
+     an  error  and you may have to typecast the left and/or
+     right operands to help it understand which operator you
+     meant to use.
+     To  create  an  operator for adding two complex numbers
+     can be done as follows.  First  we  need  to  create  a
+     function  to add the new types. Then, we can create the
+     operator with the function.
+     
+<pre>
+         CREATE FUNCTION complex_add(complex, complex)
+            RETURNS complex
+            AS '&#36;PWD/obj/complex.so'
+            LANGUAGE 'c';
+
+
+         CREATE OPERATOR + (
+            leftarg = complex,
+            rightarg = complex,
+            procedure = complex_add,
+            commutator = +
+         );
+</pre>
+
+     We've shown how to create a binary  operator  here.  To
+     create  unary  operators, just omit one of leftarg (for
+     left unary) or rightarg (for right unary).
+     If we give the system enough type information,  it  can
+     automatically figure out which operators to use.
+     
+<pre>
+         SELECT (a + b) AS c FROM test_complex;
+
+
+         +----------------+
+         |c               |
+         +----------------+
+         |(5.2,6.05)      |
+         +----------------+
+         |(133.42,144.95) |
+         +----------------+
+</pre>
+<HR>
+<font size=-1>
+<A HREF="pg95user.html">[ TOC ]</A> 
+<A HREF="xtypes.html">[ Previous ]</A> 
+<A HREF="xaggr.html">[ Next ]</A> 
+</font>
+</BODY>
+</HTML>
+

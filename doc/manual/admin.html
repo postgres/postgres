@@ -1,0 +1,539 @@
+<HTML>
+<HEAD>
+	<TITLE>The POSTGRES95 User Manual - ADMINISTERING POSTGRES</TITLE>
+</HEAD>
+
+<BODY>
+
+<font size=-1>
+<A HREF="pg95user.html">[ TOC ]</A> 
+<A HREF="rules.html">[ Previous ]</A> 
+<A HREF="refs.html">[ Next ]</A> 
+</font>
+<HR>
+<H1>15.  ADMINISTERING POSTGRES</H1>
+<HR>
+     In this section, we will discuss  aspects  of  POSTGRES
+     that are of interest to those who make extensive use of
+     POSTGRES, or who are the site administrator for a group
+     of POSTGRES users.
+
+<H2>15.1.  Frequent Tasks</H2>
+     Here we will briefly discuss some procedures  that  you
+     should  be  familiar  with  in  managing  any  POSTGRES
+     installation.
+
+<H3>15.1.1.  Starting the Postmaster</H3>
+     If you did not install POSTGRES exactly as described in
+     the  installation instructions, you may have to perform
+     some additional steps before  starting  the  postmaster
+     process.
+     <UL>
+      <LI>Even  if you were not the person who installed POSTGRES,  
+      you  should   understand   the   installation
+        instructions.  The installation instructions explain
+        some important issues with respect to where POSTGRES
+        places  some  important  files,  proper settings for
+        environment variables, etc. that may vary  from  one
+        version of POSTGRES to another.<p>
+      <LI>You must start the postmaster process with the userid 
+      that owns the installed database files.  In  most
+        cases,   if   you  have  followed  the  installation
+        instructions, this will be the user "<B>postgres</B>".   If
+        you do not start the postmaster with the right userid, 
+        the backend servers  that  are  started  by  the
+        postmaster will not be able to read the data.<p>
+      <LI>Make  sure that <CODE>/usr/local/postgres95/bin</CODE> is in your
+        shell command path, because the postmaster will  use
+        your <B>PATH</B> to locate POSTGRES commands.<p>
+      <LI>Remember  to  set the environment variable <B>PGDATA</B> to
+        the  directory  where  the  POSTGRES  databases  are
+        installed.   (This  variable is more fully explained
+        in the POSTGRES installation instructions.)<p>
+      <LI>If you do start the  postmaster  using  non-standard
+        options, such as a different TCP port number, remember 
+        to tell all users so that  they  can  set  their
+        <B>PGPORT</B> environment variable correctly.<p>
+     </UL>
+
+<H3>15.1.2.  Shutting Down the Postmaster</H3>
+     If you need to halt the postmaster process, you can use
+     the <B>UNIX</B> <B>kill(1)</B> command.  Some people  habitually  use
+     the  <B>-9</B> or <B>-KILL</B> option; this should never be necessary
+     and we do not recommend that you do this, as the  postmaster  
+     will  be  unable  to  free  its  various shared
+     resources, its child processes will be unable  to  exit
+     gracefully, etc.
+
+<H3>15.1.3.  Adding and Removing Users</H3>
+     The createuser and destroyuser commands enable and disable 
+     access to POSTGRES by specific users on  the  host
+     system.
+
+<H3>15.1.4.  Periodic Upkeep</H3>
+     The vacuum command should be run on each database periodically.   
+     This  command  processes deleted instances<A HREF="#9"><font size=-1>[9]</font></A>
+     and, more importantly, updates  the  system  statistics
+     concerning the size of each class.  If these statistics
+     are permitted to become out-of-date and inaccurate, the
+     POSTGRES  query optimizer may make extremely poor decisions 
+     with  respect  to  query  evaluation  strategies.
+     Therefore,  we  recommend running vacuum every night or
+     so (perhaps in a script that is executed  by  the  <B>UNIX</B>
+     <B>cron(1)</B> or <B>at(1)</B> commands).
+     Do  frequent  backups.  That is, you should either back
+     up your database directories using  the  POSTGRES  copy
+     command  and/or  the  <B>UNIX</B>  <B>dump(1)</B> or <B>tar(1)</B> commands.
+     You may think, "Why am I backing up my database?   What
+     about crash recovery?"  One side effect of the POSTGRES
+     "no overwrite" storage manager is that it is also a "no
+     log" storage manager.  That is, the database log stores
+     only abort/commit data, and this is not enough information  
+     to  recover  the  database  if the storage medium
+     (disk) or the database files are corrupted!   In  other
+     words,  if a disk block goes bad or POSTGRES happens to
+     corrupt a database file, you cannot recover that  file.
+     This can be disastrous if the file is one of the shared
+     catalogs, such as pg_database.
+
+<H3>15.1.5.  Tuning</H3>
+     Once your users start to load a significant  amount  of
+     data, you will typically run into performance problems.
+     POSTGRES is not the fastest DBMS in the world, but many
+     of  the  worst problems encountered by users are due to
+     their lack of experience with any DBMS.   Some  general
+     tips include:
+     <OL>
+      <LI>   Define indices over attributes that are commonly
+            used for qualifications.  For  example,  if  you
+            often execute queries of the form
+            
+<pre>                SELECT &#42; from EMP where salary &lt; 5000
+</pre>
+            then a B-tree index on the salary attribute will
+            probably be useful.  If scans involving equality
+            are more common, as in
+            
+<pre>                SELECT &#42; from EMP where salary = 5000
+</pre>
+            then  you  should consider defining a hash index
+            on salary.  You can define both, though it  will
+            use  more disk space and may slow down updates a
+            bit.  Scans using indices are much  faster  than
+            sequential scans of the entire class.<p>
+      <LI>   Run  the  vacuum  command  a  lot.  This command
+            updates the statistics that the query  optimizer
+            uses  to  make  intelligent  decisions;  if  the
+            statistics are inaccurate, the system will  make
+            inordinately  stupid  decisions  with respect to
+            the way it joins and scans classes.<p>
+      <LI>   When specifying query qualfications  (i.e.,  the
+            where  part  of the query), try to ensure that a
+            clause involving a constant can be  turned  into
+            one  of  the  form  range_variable operator constant, e.g.,
+            
+<pre>                EMP.salary = 5000
+</pre>
+            The POSTGRES query optimizer will  only  use  an
+            index  with  a  constant  qualification  of this
+            form.  It doesn't hurt to write the clause as
+            
+<pre>                5000 = EMP.salary
+</pre>
+            if the operator (in this case, =) has a commutator   
+            operator  defined  so  that  POSTGRES  can
+            rewrite the query into the desired  form.   However,  
+            if such an operator does not exist, POSTGRES 
+            will never consider the use of an index.<p>
+      <LI>   When joining several  classes  together  in  one
+            query,  try  to  write  the  join  clauses  in a
+            "chained" form, e.g.,
+            
+<pre>                where A.a = B.b and B.b = C.c and ...
+</pre>
+            Notice that relatively few clauses  refer  to  a
+            given  class  and  attribute; the clauses form a
+            linear sequence connecting the attributes,  like
+            links in a chain.  This is preferable to a query
+            written in a "star" form, such as
+            
+<pre>                where A.a = B.b and A.a = C.c and ...
+</pre>
+            Here, many clauses refer to the same  class  and
+            attribute  (in  this case, A.a).  When presented
+            with a query of this form,  the  POSTGRES  query
+            optimizer will tend to consider far more choices
+            than it should and may run out of memory.<p>
+      <LI>   If you are really desperate to  see  what  query
+            plans look like, you can run the postmaster with
+            the -d option and then run monitor with  the  -t
+            option.  The format in which query plans will be
+            printed is hard to read but you should  be  able
+            to  tell  whether any index scans are being performed.<br>
+</OL>
+
+<H2>15.2.  Infrequent Tasks</H2>
+
+     At  some  time or another, every POSTGRES site 
+     administrator has to perform all of the following actions.
+
+15.2.1.  Cleaning Up After Crashes
+     The <B>postgres</B> server and the <B>postmaster</B> run as two  
+     different   processes.    They  may  crash  separately  or
+     together.  The housekeeping procedures required to  fix
+     one  kind of crash are different from those required to
+     fix the other.
+     The message you  will  usually  see  when  the  backend
+     server crashes is:
+     
+<pre>         FATAL: no response from backend: detected in ...
+</pre>
+     This  generally means one of two things: there is a bug
+     in the POSTGRES server, or there is a bug in some  user
+     code  that  has  been dynamically loaded into POSTGRES.
+     You should be able  to  restart  your  application  and
+     resume processing, but there are some considerations:
+     <OL>
+      <LI>   POSTGRES  usually  dumps a core file (a snapshot
+            of process memory used  for  debugging)  in  the
+            database directory
+<pre>                /usr/local/postgres95/data/base/&lt;database&gt;/core
+</pre>
+            on the server machine.  If you don't want to try
+            to debug the problem or produce a stack trace to
+            report  the  bug to someone else, you can delete
+            this file (which is probably around 10MB).<p>
+      <LI>   When one backend crashes in an uncontrolled  way
+            (i.e.,  without  calling  its  built-in  cleanup
+            routines), the postmaster will detect this situation, 
+            kill all running servers and reinitialize
+            the state shared among all backends  (e.g.,  the
+            shared  buffer  pool and locks).  If your server
+            crashed, you will get the "no response"  message
+            shown  above.  If your server was killed because
+            someone else's server crashed, you will see  the
+            following message:
+            
+<pre>                I have been signalled by the postmaster.
+                Some backend process has died unexpectedly and possibly
+                corrupted shared memory.  The current transaction was
+                aborted, and I am going to exit.  Please resend the
+                last query. -- The postgres backend
+</pre><br>
+      <LI>   Sometimes shared state is not completely cleaned
+            up.  Frontend applications may see errors of the
+            form:
+            
+<pre>                WARN: cannot write block 34 of myclass [mydb] blind
+</pre>
+            In this case, you should kill the postmaster and
+            restart it.<p>
+      <LI>   When the system crashes while updating the  system  
+      catalogs  (e.g.,  when  you  are creating a
+            class, defining  an  index,  retrieving  into  a
+            class,  etc.)  the B-tree indices defined on the
+            catalogs are sometimes corrupted.   The  general
+            (and  non-unique)  symptom  is  that all queries
+            stop working.  If you  have  tried  all  of  the
+            above  steps and nothing else seems to work, try
+            using the reindexdb command.  If reindexdb  succeeds  
+            but  things  still  don't  work, you have
+            another problem; if it fails, the  system  catalogs  
+            themselves were almost certainly corrupted
+            and you will have to go back to your backups.<p>
+     </OL>
+     The postmaster does not usually crash  (it  doesn't  do
+     very  much  except start servers) but it does happen on
+     occasion.  In addition, there are a few cases where  it
+     encounters  problems  during  the  reinitialization  of
+     shared resources.  Specifically, there are race  conditions  
+     where  the  operating system lets the postmaster
+     free shared resources but then will not  permit  it  to
+     reallocate  the  same  amount of shared resources (even
+     when there is no contention).
+     You will typically have to run the ipcclean command  if
+     system  errors  cause the postmaster to crash.  If this
+     happens, you may find (using the UNIX ipcs(1)  command)
+     that  the  "<B>postgres</B>"  user  has  shared  memory and/or
+     semaphores allocated even though no postmaster  process
+     is  running.   In this case, you should run ipcclean as
+     the  "<B>postgres</B>"  user  in  order  to  deallocate  these
+     resources.   Be warned that all such resources owned by
+     the "<B>postgres</B>" user will be deallocated.  If  you  have
+     multiple  postmaster  processes  running  on  the  same
+     machine, you should kill all  of  them  before  running
+     ipcclean  (otherwise, they will crash on their own when
+     their shared resources are suddenly deallocated).
+
+<H3>15.2.2.  Moving Database Directories</H3>
+     By default, all POSTGRES databases are stored in  
+     separate subdirectories under
+     <CODE>/usr/local/postgres95/data/base</CODE>.<A HREF="#10"><font size=-1>[10]</font></A>  At  some point, you
+     may find that you wish to move one or more databases to
+     another  location (e.g., to a filesystem with more free
+     space).
+     If you wish to move all of your databases  to  the  new
+     location, you can simply:
+     <UL>
+      <LI>Kill the postmaster.<p>
+      <LI>Copy  the  entire data directory to the new location
+        (making sure that the new files are  owned  by  user
+        "<B>postgres</B>").
+        
+<pre>            &#37; cp -rp /usr/local/postgres95/data /new/place/data
+</pre><p>
+      <LI>Reset your PGDATA environment variable (as described
+        earlier in  this  manual  and  in  the  installation
+        instructions).
+        
+<pre>            # using csh or tcsh...
+            &#37; setenv PGDATA /new/place/data
+
+            # using sh, ksh or bash...
+            &#37; PGDATA=/new/place/data; export PGDATA
+            
+</pre><p>
+      <LI>Restart the postmaster.
+      
+<pre>            &#37; postmaster &amp;
+</pre><p>
+      <LI>After  you  run  some  queries and are sure that the
+        newly-moved database works, you can remove  the  old
+        data directory.
+<pre>            &#37; rm -rf /usr/local/postgres95/data
+</pre><p>
+</UL>
+     To  install a single database in an alternate directory
+     while leaving all other databases in place, do the following:
+<UL>
+      <LI>Create  the  database  (if it doesn't already exist)
+        using the createdb command.  In the following  steps
+        we will assume the database is named foo.<p>
+      <LI>Kill the postmaster.<p>
+      <LI>Copy the directory
+        <CODE>/usr/local/postgres95/data/base/foo</CODE> and its contents
+        to  its  ultimate  destination.   It should still be
+        owned by the "<B>postgres</B>" user.
+        
+<pre>            &#37; cp -rp /usr/local/postgres95/data/base/foo /new/place/foo
+</pre>
+      <LI>Remove the directory
+        <CODE>/usr/local/postgres95/data/base/foo</CODE>:
+        
+<pre>            &#37; rm -rf /usr/local/postgres95/data/base/foo
+</pre>
+      <LI>Make a symbolic link from
+        <CODE>/usr/local/postgres95/data/base</CODE> to  the  new  directory:
+        
+<pre>            &#37; ln -s /new/place/foo /usr/local/postgres95/data/base/foo
+</pre>
+      <LI>Restart the postmaster.
+</UL>
+<p>
+<H3>15.2.3.  Updating Databases</H3>
+     POSTGRES  is  a  research system.  In general, POSTGRES
+     may not retain the same binary format for  the  storage
+     of  databases from release to release.  Therefore, when
+     you update your POSTGRES software,  you  will  probably
+     have  to modify your databases as well.  This is a common 
+     occurrence  with  commercial  database  systems  as
+     well;  unfortunately,  unlike commercial systems, POSTGRES 
+     does not come with user-friendly utilities to make
+     your life easier when these updates occur.
+     In  general,  you  must do the following to update your
+     databases to a new software release:
+     <UL>
+      <LI>Extensions (such as user-defined  types,  functions,
+        aggregates,  etc.)  must be reloaded by re-executing
+        the <B>SQL CREATE</B> commands.  See Appendix  A  for  more
+        details.
+      <LI>Data  must be dumped from the old classes into ASCII
+        files (using the <B>COPY</B> command), the new classes created 
+        in the new database (using the <B>CREATE TABLE</B> 
+        command), and the data reloaded from the ASCII files.
+      <LI>Rules  and  views  must  also  be  reloaded  by  
+      reexecuting the various CREATE commands.
+     </UL>
+     You  should  give  any new release a "trial period"; in
+     particular, do not delete the old  database  until  you
+     are  satisfied that there are no compatibility problems
+     with the new software.  For example, you do not want to
+     discover  that  a  bug  in a type's "input" (conversion
+     from ASCII) and "output" (conversion to ASCII) routines
+     prevents  you  from  reloading your data after you have
+     destroyed your old databases!  (This should be standard
+     procedure  when updating any software package, but some
+     people try to economize on disk space without  applying
+     enough foresight.)
+
+<H2>15.3.  Database Security</H2>
+
+     Most  sites  that  use  POSTGRES  are  educational   or
+     research  institutions and do not pay much attention to
+     security in their POSTGRES installations.  If  desired,
+     one  can install POSTGRES with additional security 
+     features.  Naturally, such features come  with  additional
+     administrative overhead that must be dealt with.
+
+<H3>15.3.1.  Kerberos</H3>
+     POSTGRES can be configured to use the <B>MIT</B> <B>Kerberos</B> network  
+     authentication  system.   This  prevents  outside
+     users  from  connecting to your databases over the network 
+     without the correct authentication information.
+<p>
+<H2>15.4.  Querying the System Catalogs</H2>
+     As an administrator (or sometimes as a plain user), you
+     want to find out what extensions have been added  to  a
+     given  database.  The queries listed below are "canned"
+     queries that you can run on any database to get  simple
+     answers.  Before executing any of the queries below, be
+     sure to execute  the  POSTGRES  <B>vacuum</B>  command.   (The
+     queries  will  run  much more quickly that way.)  Also,
+     note that these queries are also listed in
+<pre>         /usr/local/postgres95/tutorial/syscat.sql
+</pre>
+     so use cut-and-paste (or the  <B>\i</B>  command)  instead  of
+     doing a lot of typing.
+     This  query prints the names of all database adminstrators 
+     and the name of their database(s).
+<pre>         SELECT usename, datname
+             FROM pg_user, pg_database
+             WHERE usesysid = int2in(int4out(datdba))
+             ORDER BY usename, datname;
+</pre>
+     This  query  lists  all  user-defined  classes  in  the
+     database.
+<pre>         SELECT relname
+             FROM pg_class
+             WHERE relkind = 'r'           -- not indices
+               and relname !~ '^pg_'       -- not catalogs
+               and relname !~ '^Inv'       -- not large objects
+             ORDER BY relname;
+</pre>
+     This  query  lists all simple indices (i.e., those that
+     are not defined over a function of several attributes).
+<pre>         SELECT bc.relname AS class_name,
+                  ic.relname AS index_name,
+                  a.attname
+             FROM pg_class bc,             -- base class
+                  pg_class ic,             -- index class
+                  pg_index i,
+                  pg_attribute a           -- att in base
+             WHERE i.indrelid = bc.oid
+                and i.indexrelid = ic.oid
+                and i.indkey[0] = a.attnum
+                and a.attrelid = bc.oid
+                and i.indproc = '0'::oid   -- no functional indices
+             ORDER BY class_name, index_name, attname;
+</pre>
+     This   query   prints  a  report  of  the  user-defined
+     attributes and their types for all user-defined classes
+     in the database.
+<pre>         SELECT c.relname, a.attname, t.typname
+             FROM pg_class c, pg_attribute a, pg_type t
+             WHERE c.relkind = 'r'     -- no indices
+               and c.relname !~ '^pg_' -- no catalogs
+               and c.relname !~ '^Inv' -- no large objects
+               and a.attnum &gt; 0       -- no system att's
+               and a.attrelid = c.oid
+               and a.atttypid = t.oid
+             ORDER BY relname, attname;
+</pre>
+     This  query  lists  all  user-defined  base  types (not
+     including array types).
+<pre>         SELECT u.usename, t.typname
+             FROM pg_type t, pg_user u
+             WHERE u.usesysid = int2in(int4out(t.typowner))
+               and t.typrelid = '0'::oid   -- no complex types
+               and t.typelem = '0'::oid    -- no arrays
+               and u.usename &lt;&gt; 'postgres'
+             ORDER BY usename, typname;
+</pre>
+     This query lists all left-unary (post-fix) operators.
+<pre>         SELECT o.oprname AS left_unary,
+                  right.typname AS operand,
+                  result.typname AS return_type
+             FROM pg_operator o, pg_type right, pg_type result
+             WHERE o.oprkind = 'l'           -- left unary
+               and o.oprright = right.oid
+               and o.oprresult = result.oid
+             ORDER BY operand;
+</pre>
+     This query lists all right-unary (pre-fix) operators.
+<pre>         SELECT o.oprname AS right_unary,
+                  left.typname AS operand,
+                  result.typname AS return_type
+             FROM pg_operator o, pg_type left, pg_type result
+             WHERE o.oprkind = 'r'          -- right unary
+               and o.oprleft = left.oid
+               and o.oprresult = result.oid
+             ORDER BY operand;
+</pre>
+     This query lists all binary operators.
+<pre>         SELECT o.oprname AS binary_op,
+                  left.typname AS left_opr,
+                  right.typname AS right_opr,
+                  result.typname AS return_type
+             FROM pg_operator o, pg_type left, pg_type right, pg_type result
+             WHERE o.oprkind = 'b'         -- binary
+               and o.oprleft = left.oid
+               and o.oprright = right.oid
+               and o.oprresult = result.oid
+             ORDER BY left_opr, right_opr;
+</pre>
+     This  query  returns  the  name,  number  of  arguments
+     (parameters)  and  return  type  of  all user-defined C
+     functions.  The same query can  be  used  to  find  all
+     built-in  C  functions if you change the "<B>C</B>" to "<B>internal</B>", 
+     or all <B>SQL</B> functions if you  change  the  "<B>C</B>"  to
+     "<B>sql</B>".
+<pre>         SELECT p.proname, p.pronargs, t.typname
+             FROM pg_proc p, pg_language l, pg_type t
+             WHERE p.prolang = l.oid
+               and p.prorettype = t.oid
+               and l.lanname = 'c'
+             ORDER BY proname;
+</pre>
+     This  query  lists  all of the aggregate functions that
+     have been installed and the types to which they can  be
+     applied.  count is not included because it can take any
+     type as its argument.
+<pre>         SELECT a.aggname, t.typname
+             FROM pg_aggregate a, pg_type t
+             WHERE a.aggbasetype = t.oid
+             ORDER BY aggname, typname;
+</pre>
+     This query lists all of the operator classes  that  can
+     be  used  with each access method as well as the operators 
+     that can be  used  with  the  respective  operator
+     classes.
+<pre>         SELECT am.amname, opc.opcname, opr.oprname
+             FROM pg_am am, pg_amop amop, pg_opclass opc, pg_operator opr
+             WHERE amop.amopid = am.oid
+               and amop.amopclaid = opc.oid
+               and amop.amopopr = opr.oid
+             ORDER BY amname, opcname, oprname;
+</pre>
+<p>
+
+<HR>
+<A NAME="9"><B>9.</B></A>
+This may mean different things depending on the archive
+mode  with  which each class has been created.  However, the
+current implementation of the vacuum command does  not  perform  any  compaction or clustering of data.  Therefore, the
+UNIX files which store each POSTGRES class never shrink  and
+the space "reclaimed" by vacuum is never actually reused.
+
+<HR width=50 align=left>
+<A NAME="10"><B>10.</B></A>
+Data for certain classes may  stored  elsewhere  if  a
+non-standard  storage  manager  was specified when they were
+created.  Use of non-standard storage managers is an experimental feature that is not supported outside of Berkeley.
+<HR>
+<font size=-1>
+<A HREF="pg95user.html">[ TOC ]</A> 
+<A HREF="rules.html">[ Previous ]</A> 
+<A HREF="refs.html">[ Next ]</A> 
+</font>
+
+

@@ -1,0 +1,259 @@
+<HTML>
+<HEAD>
+	<TITLE>The POSTGRES95 User Manual - THE QUERY LANGUAGE</TITLE>
+</HEAD>
+
+<BODY>
+
+<font size=-1>
+<A HREF="pg95user.html">[ TOC ]</A> 
+<A HREF="start.html">[ Previous ]</A> 
+<A HREF="advanced.html">[ Next ]</A> 
+</font>
+<HR>
+<H1>4.  THE QUERY LANGUAGE</H1>
+<HR>
+     The  POSTGRES  query language is a variant of <B>SQL-3</B>. It
+     has many extensions such as an extensible type  system,
+     inheritance,  functions and production rules. Those are
+     features carried over from the original POSTGRES  query
+     language,  POSTQUEL.  This section provides an overview
+     of how to use POSTGRES <B>SQL</B>  to  perform  simple  operations.
+     This manual is only intended to give you an idea of our
+     flavor of <B>SQL</B> and is in no way a complete  tutorial  on
+     <B>SQL</B>.  Numerous  books  have  been  written  on <B>SQL</B>. For
+     instance, consult <A HREF="refs.html#MELT93">[MELT93]</A> or 
+     <A HREF="refs.html#DATE93">[DATE93]</A>. You should also
+     be  aware  that  some features are not part of the <B>ANSI</B>
+     standard.
+     In the examples that follow, we assume  that  you  have
+     created  the mydb database as described in the previous
+     subsection and have started <B>psql</B>.
+     Examples  in  this  manual  can  also   be   found   in
+     <CODE>/usr/local/postgres95/src/tutorial</CODE>.    Refer   to   the
+     <CODE>README</CODE> file in that directory for how to use them.   To
+     start the tutorial, do the following:
+<pre>         &#37; cd /usr/local/postgres95/src/tutorial
+         &#37; psql -s mydb
+         Welcome to the POSTGRES95 interactive sql monitor:
+
+            type \? for help on slash commands
+            type \q to quit
+            type \g or terminate with semicolon to execute query
+          You are currently connected to the database: jolly
+
+
+         mydb=&gt; \i basics.sql
+</pre>
+     The  <B>\i</B>  command  read  in  queries  from the specified
+     files. The <B>-s</B> option puts you in single step mode which
+     pauses  before  sending a query to the backend. Queries
+     in this section are in the file <CODE>basics.sql</CODE>.
+
+<H2><A NAME="concepts">4.1.  Concepts</A></H2>
+     The fundamental notion in POSTGRES is that of a  class,
+     which  is a named collection of object instances.  Each
+     instance has the same collection of  named  attributes,
+     and each attribute is of a specific type.  Furthermore,
+     each instance has a permanent <B>object  identifier  (OID)</B>
+     that  is  unique  throughout the installation.  Because
+     <B>SQL</B> syntax refers to tables,  we  will  <B>use  the  terms
+     table< and class interchangeably</B>.  Likewise, a <B>row is an
+     instance</B> and <B>columns are attributes</B>.
+     As  previously  discussed,  classes  are  grouped  into
+     databases,  and  a collection of databases managed by a
+     single <B>postmaster</B> process constitutes  an  installation
+     or site.
+
+<H2><A NAME="creating-a-new-class">4.2.  Creating a New Class</A></H2>
+     You  can  create  a  new  class by specifying the class
+     name, along with all attribute names and their types:
+<pre>         CREATE TABLE weather (
+                 city            varchar(80),
+                 temp_lo         int,           -- low temperature
+                 temp_hi         int,           -- high temperature
+                 prcp            real,          -- precipitation
+                 date            date
+           );
+</pre>
+     Note that keywords are case-insensitive but identifiers
+     are  case-sensitive.   POSTGRES  <B>SQL</B> supports the usual
+     <B>SQL</B> types <B>int, float,  real,  smallint,  char(N),  
+     varchar(N),  date,</B>  and <B>time</B>.  As we will 
+     see later, POSTGRES can be customized  with  an  
+     arbitrary  number  of
+     user-defined  data types.  Consequently, type names are
+     not keywords.
+     So far, the POSTGRES create command looks exactly  like
+     the  command  used  to  create a table in a traditional
+     relational system.  However, we will presently see that
+     classes  have  properties  that  are  extensions of the
+     relational model.
+
+<H2><A NAME="populating-a-class-with-instances">4.3.  Populating a Class with Instances</A></H2>
+     The <B>insert</B> statement is used to populate a  class  with
+     instances:
+<pre>         INSERT INTO weather
+            VALUES ('San Francisco', 46, 50, 0.25, '11/27/1994')
+</pre>
+     You can also use the <B>copy</B> command to perform load large
+     amounts of data from flat (<B>ASCII</B>) files.
+
+<H2><A NAME="querying-a-class">4.4.  Querying a Class</A></H2>
+     The weather class can be queried with normal relational
+     selection  and projection queries.  A <B>SQL</B> <B>select</B> 
+     statement is used to do this.  The statement is divided into
+     a target list (the part that lists the attributes to be
+     returned) and a qualification (the part that  specifies
+     any  restrictions).   For  example, to retrieve all the
+     rows of weather, type:
+<pre>         SELECT &#42; FROM WEATHER;
+</pre>
+
+     and the output should be:
+<pre>
+         +--------------+---------+---------+------+------------+
+         |city          | temp_lo | temp_hi | prcp | date       |
+         +--------------+---------+---------+------+------------+
+         |San Francisco | 46      | 50      | 0.25 | 11-27-1994 |
+         +--------------+---------+---------+------+------------+
+         |San Francisco | 43      | 57      | 0    | 11-29-1994 |
+         +--------------+---------+---------+------+------------+
+         |Hayward       | 37      | 54      |      | 11-29-1994 |
+         +--------------+---------+---------+------+------------+
+</pre>
+     You may specify any aribitrary expressions in the  target list. For example, you can do:
+<pre>         &#42; SELECT city, (temp_hi+temp_lo)/2 AS temp_avg, date FROM weather;
+</pre>
+     Arbitrary  Boolean  operators  (  <B>and</B>,  or and <B>not</B>) are
+     allowed in the qualification of any query.   For  example,
+<pre>         SELECT &#42;
+           FROM weather
+           WHERE city = 'San Francisco'
+              and prcp &gt; 0.0;
+
+         +--------------+---------+---------+------+------------+
+         |city          | temp_lo | temp_hi | prcp | date       |
+         +--------------+---------+---------+------+------------+
+         |San Francisco | 46      | 50      | 0.25 | 11-27-1994 |
+         +--------------+---------+---------+------+------------+
+</pre>
+
+     As  a final note, you can specify that the results of a
+     select can be returned in a <B>sorted order</B> or with <B>duplicate instances removed</B>.
+<pre>         SELECT DISTINCT city
+           FROM weather
+           ORDER BY city;
+</pre>
+
+<H2><A NAME="redirecting-select-queries">4.5.  Redirecting SELECT Queries</A></H2>
+     Any select query can be redirected to a new class
+<pre>         SELECT &#42; INTO temp from weather;
+</pre>     
+     This creates an implicit create command, creating a new
+     class temp with the attribute names and types specified
+     in  the target list of the <B>SELECT INTO</B> command.  We can
+     then, of course, perform any operations on the  resulting 
+     class that we can perform on other classes.
+
+<H2><A NAME="joins-between-classes">4.6.  Joins Between Classes</A></H2>
+     Thus far, our queries have only accessed one class at a
+     time.  Queries can access multiple classes at once,  or
+     access  the  same  class  in  such  a way that multiple
+     instances of the class are being processed at the  same
+     time.   A query that accesses multiple instances of the
+     same or different classes at one time is called a  join
+     query.
+     As an example, say we wish to find all the records that
+     are in the  temperature  range  of  other  records.  In
+     effect,  we  need  to  compare  the temp_lo and temp_hi
+     attributes of each EMP  instance  to  the  temp_lo  and
+     temp_hi  attributes of all other EMP instances.<A HREF="#2">2</A> We can
+     do this with the following query:
+<pre>         SELECT W1.city, W1.temp_lo, W1.temp_hi,
+                  W2.city, W2.temp_lo, W2.temp_hi
+         FROM weather W1, weather W2
+         WHERE W1.temp_lo &lt; W2.temp_lo
+              and W1.temp_hi &gt; W2.temp_hi;
+
+         +--------------+---------+---------+---------------+---------+---------+
+         |city          | temp_lo | temp_hi | city          | temp_lo | temp_hi |
+         +--------------+---------+---------+---------------+---------+---------+
+         |San Francisco | 43      | 57      | San Francisco | 46      | 50      |
+         +--------------+---------+---------+---------------+---------+---------+
+         |San Francisco | 37      | 54      | San Francisco | 46      | 50      |
+         +--------------+---------+---------+---------------+---------+---------+
+</pre>     
+     In this case, both W1 and  W2  are  surrogates  for  an
+     instance  of the class weather, and both range over all
+     instances of the class.  (In the  terminology  of  most
+     database  systems,  W1 and W2 are known as "range variables.")  
+     A query can contain an  arbitrary  number  of
+     class names and surrogates.<A HREF="#3">3</A>
+
+<H2><A NAME="updates">4.7.  Updates</A></H2>
+     You can update existing instances using the update command. 
+     Suppose you discover the temperature readings are
+     all  off  by 2 degrees as of Nov 28, you may update the
+     data as follow:
+<pre>         &#42; UPDATE weather
+           SET temp_hi = temp_hi - 2,  temp_lo = temp_lo - 2
+           WHERE date &gt; '11/28/1994;
+</pre>
+
+<H2><A NAME="deletions">4.8.  Deletions</A></H2>
+     Deletions are performed using the <B>delete</B> command:
+<pre>         &#42; DELETE FROM weather WHERE city = 'Hayward';
+</pre>
+     All weather recording belongs to Hayward is removed.
+     One should be wary of queries of the form
+<pre>         DELETE FROM classname;
+</pre>
+     Without a qualification, the delete command will simply
+     delete  all  instances  of  the given class, leaving it
+     empty.  The system will not request confirmation before
+     doing this.
+
+<H2><A NAME="using-aggregate-functions">4.9.  Using Aggregate Functions</A></H2>
+     Like  most  other  query  languages,  POSTGRES supports
+     aggregate functions.  However, the current  
+     implementation  of  POSTGRES aggregate functions is very limited.
+     Specifically, while there  are  aggregates  to  compute
+     such  functions as the <B>count, sum, average, maximum</B> and
+     <B>minimum</B> over a set of instances,  aggregates  can  only
+     appear  in  the  target  list of a query and not in the
+     qualification ( where clause) As an example,
+<pre>         SELECT max(temp_lo)
+         FROM weather;
+</pre>
+     Aggregates may also have <B>GROUP BY</B> clauses:
+<pre>
+         SELECT city, max(temp_lo)
+         FROM weather
+         GROUP BY city;
+</pre>
+<HR>
+   <A NAME="2"><B>2.</B></A>  This  is only a conceptual model.  The actual join may
+   be performed in a more efficient manner, but this is invisible to the user.<br>
+
+   <A NAME="3"><B>3.</B></A> The semantics of such a join are 
+   that the qualification
+   is a truth expression defined for the Cartesian  product  of
+   the  classes indicated in the query.  For those instances in
+   the Cartesian product for which the qualification  is  true,
+   POSTGRES  computes  and  returns the values specified in the
+   target list.  POSTGRES <B>SQL</B> does not assign  any  meaning  to
+   duplicate values in such expressions.  This means that POSTGRES 
+   sometimes recomputes the same target list several times
+   this frequently happens when Boolean expressions are connected 
+   with an or.  To remove such duplicates, you must  use
+   the select distinct statement.
+
+<HR>
+<font size=-1>
+<A HREF="pg95user.html">[ TOC ]</A> 
+<A HREF="start.html">[ Previous ]</A> 
+<A HREF="advanced.html">[ Next ]</A> 
+</font>
+</BODY>
+</HTML>

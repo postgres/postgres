@@ -1,0 +1,474 @@
+<HTML>
+<HEAD>
+	<TITLE>The POSTGRES95 User Manual - EXTENDING SQL: FUNCTIONS</TITLE>
+</HEAD>
+
+<BODY>
+
+<font size=-1>
+<A HREF="pg95user.html">[ TOC ]</A> 
+<A HREF="extend.html">[ Previous ]</A> 
+<A HREF="xtypes.html">[ Next ]</A> 
+</font>
+<HR>
+<H1>7.  EXTENDING <B>SQL</B>: FUNCTIONS</H1>
+<HR>
+     As  it  turns  out,  part of defining a new type is the
+     definition of functions  that  describe  its  behavior.
+     Consequently,  while  it  is  possible  to define a new
+     function without defining a new type,  the  reverse  is
+     not  true.   We therefore describe how to add new functions 
+     to POSTGRES before  describing  how  to  add  new
+     types.
+     POSTGRES  <B>SQL</B>  provides  two  types of functions: query
+     language functions (functions written in <B>SQL</B>  and  
+     programming  language  functions  (functions  written in a
+     compiled programming language such as <B>C</B>.)  Either  kind
+     of  function  can take a base type, a composite type or
+     some combination as arguments (parameters).   In  addition, 
+     both kinds of functions can return a base type or
+     a composite type.  It's easier to define <B>SQL</B> functions,
+     so we'll start with those.
+     Examples in this section can also be found in <CODE>funcs.sql</CODE>
+     and <CODE>C-code/funcs.c</CODE>.
+<p>
+<H2><A NAME="query-language-sql-functions">7.1.  Query Language (<B>SQL</B>) Functions</A></H2>
+
+<H3><A NAME="sql-functions-on-base-types">7.1.1.  <B>SQL</B> Functions on Base Types</A></H3>
+     The simplest possible <B>SQL</B> function has no arguments and
+     simply returns a base type, such as <B>int4</B>:
+     
+<pre>         CREATE FUNCTION one() RETURNS int4
+              AS 'SELECT 1 as RESULT' LANGUAGE 'sql';
+
+
+         SELECT one() AS answer;
+
+         +-------+
+         |answer |
+         +-------+
+         |1      |
+         +-------+
+</pre>
+     Notice that we defined a target list for  the  function
+     (with  the  name  RESULT),  but  the target list of the
+     query that invoked the function overrode the function's
+     target  list.   Hence,  the  result  is labelled answer
+     instead of one.
+<p>
+     It's almost as easy to define <B>SQL</B> functions  that  take
+     base  types as arguments.  In the example below, notice
+     how we refer to the arguments within the function as &#36;1
+     and &#36;2.
+     
+<pre>         CREATE FUNCTION add_em(int4, int4) RETURNS int4
+              AS 'SELECT &#36;1 + &#36;2;' LANGUAGE 'sql';
+
+
+         SELECT add_em(1, 2) AS answer;
+
+
+         +-------+
+         |answer |
+         +-------+
+         |3      |
+         +-------+
+</pre>
+
+<H3>7.1.2.  <B>SQL</B> Functions on Composite Types</H3>
+     When  specifying  functions with arguments of composite
+     types (such as EMP), we must  not  only  specify  which
+     argument  we  want (as we did above with &#36;1 and &#36;2) but
+     also the attributes of  that  argument.   For  example,
+     take the function double_salary that computes what your
+     salary would be if it were doubled.
+     
+<pre>         CREATE FUNCTION double_salary(EMP) RETURNS int4
+              AS 'SELECT &#36;1.salary &#42; 2 AS salary;' LANGUAGE 'sql';
+
+         SELECT name, double_salary(EMP) AS dream
+           FROM EMP
+           WHERE EMP.dept = 'toy';
+
+
+         +-----+-------+
+         |name | dream |
+         +-----+-------+
+         |Sam  | 2400  |
+         +-----+-------+
+</pre>
+     Notice the use of the syntax &#36;1.salary.
+     Before launching into the  subject  of  functions  that
+     return  composite  types,  we  must first introduce the
+     function notation for projecting attributes.  The  simple  way 
+     to explain this is that we can usually use the
+     notation attribute(class)  and  class.attribute  interchangably.
+     
+<pre>         --
+         -- this is the same as:
+         --   SELECT EMP.name AS youngster FROM EMP WHERE EMP.age &lt; 30
+         --
+         SELECT name(EMP) AS youngster
+         FROM EMP
+         WHERE age(EMP) &lt; 30;
+
+
+         +----------+
+         |youngster |
+         +----------+
+         |Sam       |
+         +----------+
+</pre>
+     As  we shall see, however, this is not always the case.
+     This function notation is important when we want to use
+     a  function that returns a single instance.  We do this
+     by assembling the entire instance within the  function,
+     attribute  by attribute.  This is an example of a function 
+     that returns a single EMP instance:
+     
+<pre>         CREATE FUNCTION new_emp() RETURNS EMP
+            AS 'SELECT \'None\'::text AS name,
+                       1000 AS salary,
+                       25 AS age,
+                       \'none\'::char16 AS dept;'
+            LANGUAGE 'sql';
+</pre>
+
+     In this case we have specified each of  the  attributes
+     with  a  constant value, but any computation or expression 
+     could have been substituted for these constants.
+     Defining a function like this can be tricky.   Some  of
+     the more important caveats are as follows:
+     
+     
+     <UL>
+      <LI>The  target  list  order must be exactly the same as
+        that in which the attributes appear  in  the  <B>CREATE
+        TABLE</B> statement (or when you execute a .&#42;  query).
+      <LI>You  must  be  careful  to  typecast the expressions
+        (using ::) very carefully or you will see  the  following error:
+        
+<pre>            WARN::function declared to return type EMP does not retrieve (EMP.&#42;)
+</pre>
+      <LI>When calling a function that returns an instance, we
+        cannot retrieve the entire instance.  We must either
+        project an attribute out of the instance or pass the
+        entire instance into another function.
+<pre>            SELECT name(new_emp()) AS nobody;
+
+
+            +-------+
+            |nobody |
+            +-------+
+            |None   |
+            +-------+
+</pre>
+      <LI>The reason why, in general, we must use the function
+        syntax  for projecting attributes of function return
+        values is that the parser  just  doesn't  understand
+        the  other (dot) syntax for projection when combined
+        with function calls.
+        
+<pre>            SELECT new_emp().name AS nobody;
+            WARN:parser: syntax error at or near "."
+</pre>
+     </UL>
+     
+     Any collection of commands in the  <B>SQL</B>  query  language
+     can  be  packaged  together  and defined as a function.
+     The commands can include updates (i.e., <B>insert</B>,  <B>update</B>
+     and  <B>delete</B>)  as  well as <B>select</B> queries.  However, the
+     final command must be a <B>select</B> that returns whatever is
+     specified as the function's returntype.
+     
+<pre>
+         CREATE FUNCTION clean_EMP () RETURNS int4
+            AS 'DELETE FROM EMP WHERE EMP.salary &lt;= 0;
+                SELECT 1 AS ignore_this'
+            LANGUAGE 'sql';
+
+         SELECT clean_EMP();
+
+
+         +--+
+         |x |
+         +--+
+         |1 |
+         +--+
+</pre>
+<p>
+
+<H2><A NAME="programming-language-functions">7.2.  Programming Language Functions</A></H2>
+<H3><A NAME="programming-language-functions-on-base-types">7.2.1.  Programming Language Functions on Base Types</A></H3>
+     Internally, POSTGRES regards a base type as a "blob  of
+     memory."   The  user-defined  functions that you define
+     over a type in turn define the way  that  POSTGRES  can
+     operate  on  it.  That is, POSTGRES will only store and
+     retrieve the data from disk and use  your  user-defined
+     functions to input, process, and output the data.
+     Base types can have one of three internal formats:
+     <UL>
+      <LI>pass by value, fixed-length
+      <LI>pass by reference, fixed-length
+      <LI>pass by reference, variable-length
+     </UL>
+     By-value  types  can  only be 1, 2 or 4 bytes in length
+     (even if your computer supports by-value types of other
+     sizes).   POSTGRES  itself only passes integer types by
+     value.  You should be careful to define your types such
+     that  they  will  be  the  same  size (in bytes) on all
+     architectures.  For example, the <B>long</B> type is dangerous
+     because  it  is 4 bytes on some machines and 8 bytes on
+     others, whereas <B>int</B>  type  is  4  bytes  on  most  <B>UNIX</B>
+     machines  (though  not  on most personal computers).  A
+     reasonable implementation of  the  <B>int4</B>  type  on  <B>UNIX</B>
+     machines might be:
+     
+<pre>         /&#42; 4-byte integer, passed by value &#42;/
+         typedef int int4;
+</pre>
+
+     On  the  other hand, fixed-length types of any size may
+     be passed by-reference.  For example, here is a  sample
+     implementation of the POSTGRES char16 type:
+     
+<pre>         /&#42; 16-byte structure, passed by reference &#42;/
+         typedef struct {
+             char data[16];
+         } char16;
+</pre>
+
+     Only  pointers  to  such types can be used when passing
+     them in and out of POSTGRES functions.
+     Finally, all variable-length types must also be  passed
+     by  reference.   All  variable-length  types must begin
+     with a length field of exactly 4 bytes, and all data to
+     be  stored within that type must be located in the memory 
+     immediately  following  that  length  field.   The
+     length  field  is  the  total  length  of the structure
+     (i.e.,  it  includes  the  size  of  the  length  field
+     itself).  We can define the text type as follows:
+
+<pre>         typedef struct {
+             int4 length;
+             char data[1];
+         } text;
+</pre>
+
+     Obviously,  the  data  field is not long enough to hold
+     all possible strings -- it's impossible to declare such
+     a  structure  in  <B>C</B>.  When manipulating variable-length
+     types, we must  be  careful  to  allocate  the  correct
+     amount  of memory and initialize the length field.  For
+     example, if we wanted to  store  40  bytes  in  a  text
+     structure, we might use a code fragment like this:
+
+<pre>         #include "postgres.h"
+         #include "utils/palloc.h"
+
+         ...
+
+         char buffer[40]; /&#42; our source data &#42;/
+
+         ...
+
+         text &#42;destination = (text &#42;) palloc(VARHDRSZ + 40);
+         destination-&gt;length = VARHDRSZ + 40;
+         memmove(destination-&gt;data, buffer, 40);
+
+         ...
+
+</pre>
+     Now that we've gone over all of the possible structures
+     for base types, we can show some examples of real functions. 
+     Suppose <CODE>funcs.c</CODE> look like:
+
+<pre>         #include &lt;string.h&gt;
+         #include "postgres.h"  /&#42; for char16, etc. &#42;/
+         #include "utils/palloc.h" /&#42; for palloc &#42;/
+
+         int
+         add_one(int arg)
+         {
+             return(arg + 1);
+         }
+
+         char16 &#42;
+         concat16(char16 &#42;arg1, char16 &#42;arg2)
+         {
+             char16 &#42;new_c16 = (char16 &#42;) palloc(sizeof(char16));
+
+             memset((void &#42;) new_c16, 0, sizeof(char16));
+             (void) strncpy(new_c16, arg1, 16);
+             return (char16 &#42;)(strncat(new_c16, arg2, 16));
+         }
+<p>
+         text &#42;
+         copytext(text &#42;t)
+         {
+             /&#42;
+              &#42; VARSIZE is the total size of the struct in bytes.
+              &#42;/
+             text &#42;new_t = (text &#42;) palloc(VARSIZE(t));
+<p>
+             memset(new_t, 0, VARSIZE(t));
+<p>
+             VARSIZE(new_t) = VARSIZE(t);
+             /&#42;
+              &#42; VARDATA is a pointer to the data region of the struct.
+              &#42;/
+             memcpy((void &#42;) VARDATA(new_t), /&#42; destination &#42;/
+                    (void &#42;) VARDATA(t),     /&#42; source &#42;/
+                    VARSIZE(t)-VARHDRSZ);        /&#42; how many bytes &#42;/
+<p>
+             return(new_t);
+         }
+</pre>
+     On <B>OSF/1</B> we would type:
+     
+<pre>         CREATE FUNCTION add_one(int4) RETURNS int4
+              AS '/usr/local/postgres95/tutorial/obj/funcs.so' LANGUAGE 'c';
+
+         CREATE FUNCTION concat16(char16, char16) RETURNS char16
+              AS '/usr/local/postgres95/tutorial/obj/funcs.so' LANGUAGE 'c';
+
+         CREATE FUNCTION copytext(text) RETURNS text
+              AS '/usr/local/postgres95/tutorial/obj/funcs.so' LANGUAGE 'c';
+</pre>
+
+     On  other  systems,  we might have to make the filename
+     end in .sl (to indicate that it's a shared library).
+<p>
+<H3><A NAME="programming-language-functions-on-composite-types">7.2.2.  Programming Language Functions on Composite Types</A></H3>
+     Composite types do not  have  a  fixed  layout  like  C
+     structures.   Instances of a composite type may contain
+     null fields.  In addition,  composite  types  that  are
+     part  of  an  inheritance  hierarchy may have different
+     fields than other members of the same inheritance hierarchy.    
+     Therefore,  POSTGRES  provides  a  procedural
+     interface for accessing fields of composite types  from
+     C.
+     As POSTGRES processes a set of instances, each instance
+     will be passed into your function as an  opaque  structure of type <B>TUPLE</B>.
+     Suppose we want to write a function to answer the query
+
+<pre>         &#42; SELECT name, c_overpaid(EMP, 1500) AS overpaid
+           FROM EMP
+           WHERE name = 'Bill' or name = 'Sam';
+</pre>
+     In the query above, we can define c_overpaid as:
+     
+<pre>         #include "postgres.h"  /&#42; for char16, etc. &#42;/
+         #include "libpq-fe.h" /&#42; for TUPLE &#42;/
+<p>
+         bool
+         c_overpaid(TUPLE t,/&#42; the current instance of EMP &#42;/
+                    int4 limit)
+         {
+             bool isnull = false;
+             int4 salary;
+<p>
+             salary = (int4) GetAttributeByName(t, "salary", &amp;isnull);
+<p>
+             if (isnull)
+                 return (false);
+             return(salary &gt; limit);
+         }
+</pre>
+
+     <B>GetAttributeByName</B> is the POSTGRES system function that
+     returns attributes out of the current instance.  It has
+     three arguments: the argument of type TUPLE passed into
+     the  function, the name of the desired attribute, and a
+     return parameter that describes whether  the  attribute
+     is  null.   <B>GetAttributeByName</B> will align data properly
+     so you can cast its return value to the  desired  type.
+     For  example, if you have an attribute name which is of
+     the type char16, the <B>GetAttributeByName</B> call would look
+     like:
+
+<pre>         char &#42;str;
+         ...
+         str = (char &#42;) GetAttributeByName(t, "name", &amp;isnull)
+</pre>
+
+     The  following  query  lets  POSTGRES  know  about  the
+     c_overpaid function:
+     
+<pre>         &#42; CREATE FUNCTION c_overpaid(EMP, int4) RETURNS bool
+              AS '/usr/local/postgres95/tutorial/obj/funcs.so' LANGUAGE 'c';
+</pre>
+     While there are ways to construct new instances or modify  
+     existing instances from within a C function, these
+     are far too complex to discuss in this manual.
+<p>
+<H3><A NAME="caveats">7.2.3.  Caveats</A></H3>
+     We now turn to the more difficult task of writing  
+     programming  language  functions.  Be warned: this section
+     of the manual will not make you a programmer.  You must
+     have  a  good  understanding of <B>C</B> (including the use of
+     pointers and the malloc memory manager)  before  trying
+     to write <B>C</B> functions for use with POSTGRES.
+     While  it  may be possible to load functions written in
+     languages other than <B>C</B> into  POSTGRES,  this  is  often
+     difficult  (when  it  is possible at all) because other
+     languages, such as <B>FORTRAN</B> and <B>Pascal</B> often do not follow 
+     the same "calling convention" as <B>C</B>.  That is, other
+     languages  do  not  pass  argument  and  return  values
+     between functions in the same way.  For this reason, we
+     will assume that your  programming  language  functions
+     are written in <B>C</B>.
+     The  basic  rules  for building <B>C</B> functions are as follows:
+     <OL>
+      <LI>   Most of the header (include) files for  POSTGRES
+            should      already      be     installed     in
+            /usr/local/postgres95/include  (see  Figure  2).
+            You should always include
+            
+<pre>                -I/usr/local/postgres95/include
+</pre>
+            on  your  cc  command lines.  Sometimes, you may
+            find that you require header files that  are  in
+            the  server source itself (i.e., you need a file
+            we neglected to install in include).   In  those
+            cases you may need to add one or more of
+<pre>
+                -I/usr/local/postgres95/src/backend
+                -I/usr/local/postgres95/src/backend/include
+                -I/usr/local/postgres95/src/backend/port/&lt;PORTNAME&gt;
+                -I/usr/local/postgres95/src/backend/obj
+</pre>
+
+            (where &lt;PORTNAME&gt; is the name of the port, e.g.,
+            alpha or sparc).
+      <LI>   When allocating memory, use  the  POSTGRES  
+            routines  palloc  and  pfree  instead of the 
+            corresponding <B>C</B> library  routines  malloc  and  free.
+            The  memory  allocated  by  palloc will be freed
+            automatically at the end  of  each  transaction,
+            preventing memory leaks.
+      <LI>   Always  zero  the bytes of your structures using
+            memset or bzero.  Several routines (such as  the
+            hash access method, hash join and the sort algorithm) 
+            compute functions of the  raw  bits  contained  in 
+            your structure.  Even if you initialize all fields 
+            of your structure, there  may  be
+            several bytes of alignment padding (holes in the
+            structure) that may contain garbage values.
+      <LI>   Most of the internal POSTGRES types are declared
+            in  postgres.h,  so  it's usually a good idea to
+            include that file as well.
+      <LI>   Compiling and loading your object code  so  that
+            it  can  be  dynamically  loaded  into  POSTGRES
+            always requires special flags.  See  Appendix  A
+            for  a  detailed explanation of how to do it for
+            your particular operating system.
+     </OL>
+<HR>
+<font size=-1>
+<A HREF="pg95user.html">[ TOC ]</A> 
+<A HREF="extend.html">[ Previous ]</A> 
+<A HREF="xtypes.html">[ Next ]</A> 
+</font>
+</BODY>
+</HTML>

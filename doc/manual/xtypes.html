@@ -1,0 +1,148 @@
+<HTML>
+<HEAD>
+	<TITLE>The POSTGRES95 User Manual - EXTENDING SQL: TYPES</TITLE>
+</HEAD>
+
+<BODY>
+
+<font size=-1>
+<A HREF="pg95user.html">[ TOC ]</A> 
+<A HREF="xfunc.html">[ Previous ]</A> 
+<A HREF="xoper.html">[ Next ]</A> 
+</font>
+<HR>
+<H1>8.  EXTENDING SQL: TYPES</H1>
+<HR>
+     As previously mentioned, there are two kinds  of  types
+     in  POSTGRES: base types (defined in a programming language) 
+     and composite types (instances).
+     Examples in this section up to interfacing indices  can
+     be  found in <CODE>complex.sql</CODE> and <CODE>complex.c</CODE>.  Composite examples 
+     are in <CODE>funcs.sql</CODE>.
+<p>
+<H2><A NAME="user-defined-types">8.1.  User-Defined Types</A></H2>
+<p>
+<H3><A NAME="functions-needed-for-a-user-defined-type">8.1.1.  Functions Needed for a User-Defined Type</A></H3>
+     A  user-defined  type must always have input and output
+     functions.  These  functions  determine  how  the  type
+     appears in strings (for input by the user and output to
+     the user) and how the type is organized in memory.  The
+     input  function takes a null-delimited character string
+     as its input and returns the internal (in memory)  
+     representation of the type.  The output function takes the
+     internal representation of the type and returns a null
+     delimited character string.
+     Suppose  we  want to define a complex type which represents 
+     complex numbers. Naturally, we choose  to  represent a 
+     complex in memory as the following <B>C</B> structure:
+
+<pre>         typedef struct Complex {
+             double      x;
+             double      y;
+         } Complex;
+</pre>
+     and  a  string of the form (x,y) as the external string
+     representation.
+     These functions are usually not hard  to  write,  especially  
+     the output function.  However, there are a number of points 
+     to remember.
+     
+     <OL>
+      <LI>  When defining your external (string) representation,  
+            remember that you must eventually write a
+            complete and robust parser for that  representation 
+            as your input function!
+            
+<pre>                Complex &#42;
+                complex_in(char &#42;str)
+                {
+                    double x, y;
+                    Complex &#42;result;
+
+                    if (sscanf(str, " ( &#37;lf , &#37;lf )", &amp;x, &amp;y) != 2) {
+                        elog(WARN, "complex_in: error in parsing
+                        return NULL;
+                    }
+                    result = (Complex &#42;)palloc(sizeof(Complex));
+                    result-&gt;x = x;
+                    result-&gt;y = y;
+                    return (result);
+                }
+</pre>
+
+            The output function can simply be:
+
+<pre>                char &#42;
+                complex_out(Complex &#42;complex)
+                {
+                    char &#42;result;
+<p>
+                    if (complex == NULL)
+                        return(NULL);
+<p>
+                    result = (char &#42;) palloc(60);
+                    sprintf(result, "(&#37;g,&#37;g)", complex-&gt;x, complex-&gt;y);
+                    return(result);
+                }
+</pre>
+      <LI>  You  should  try  to  make  the input and output
+            functions inverses of each  other.   If  you  do
+            not, you will have severe problems when you need
+            to dump your data into a file and then  read  it
+            back  in  (say,  into someone else's database on
+            another computer).  This is a particularly  common  
+            problem  when  floating-point  numbers  are
+            involved.
+     </OL>
+     To define the <B>complex</B> type, we need to create  the  two
+     user-defined   functions   complex_in  and  complex_out
+     before creating the type:
+     
+<pre>         CREATE FUNCTION complex_in(opaque)
+            RETURNS complex
+            AS '/usr/local/postgres95/tutorial/obj/complex.so'
+            LANGUAGE 'c';
+
+         CREATE FUNCTION complex_out(opaque)
+            RETURNS opaque
+            AS '/usr/local/postgres95/tutorial/obj/complex.so'
+            LANGUAGE 'c';
+
+         CREATE TYPE complex (
+            internallength = 16,
+            input = complex_in,
+            output = complex_out
+         );
+</pre>
+
+     As discussed earlier, POSTGRES fully supports arrays of
+     base  types.  Additionally, POSTGRES supports arrays of
+     user-defined types as well.  When you  define  a  type,
+     POSTGRES  automatically  provides support for arrays of
+     that type.  For historical reasons, the array type  has
+     the  same name as the user-defined type with the 
+     underscore character _ prepended.
+     Composite types do not need  any  function  defined  on
+     them,  since  the  system already understands what they
+     look like inside.
+<p>
+<H3><A NAME="large-objects">8.1.2.  Large Objects</A></H3>
+     The types discussed  to  this  point  are  all  "small"
+     objects -- that is, they are smaller than 8KB<A HREF="#7"><font size=-1>[7]</font></A> in size.
+     If you require a larger type for something like a document  
+     retrieval system or for storing bitmaps, you will
+     need to use the POSTGRES large object interface.
+<p>
+<HR>
+<A NAME="8"><B>[7]</B></A> 8 &#42; 1024 == 8192 bytes.  In fact, the type must be considerably smaller than 8192 bytes, since the POSTGRES  tuple
+and  page  overhead  must also fit into this 8KB limitation.
+The actual value that fits depends on the machine  architecture.
+<HR>
+<font size=-1>
+<A HREF="pg95user.html">[ TOC ]</A> 
+<A HREF="xfunc.html">[ Previous ]</A> 
+<A HREF="xoper.html">[ Next ]</A> 
+</font>
+</BODY>
+</HTML>
+

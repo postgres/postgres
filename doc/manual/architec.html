@@ -1,0 +1,76 @@
+<HTML>
+<HEAD>
+	<TITLE>The POSTGRES95 User Manual - ARCHITECTURE</TITLE>
+</HEAD>
+
+<BODY>
+
+<font size=-1>
+<A HREF="pg95user.html">[ TOC ]</A> 
+<A HREF="intro.html">[ Previous ]</A> 
+<A HREF="start.html">[ Next ]</A> 
+</font>
+<HR>
+<H1>2.  POSTGRES ARCHITECTURE CONCEPTS</H1>
+<HR>
+     Before we continue, you  should  understand  the  basic
+     POSTGRES  system  architecture.   Understanding how the
+     parts of POSTGRES interact will make the  next  chapter
+     somewhat clearer.
+     In  database  jargon,  POSTGRES uses a simple "process  
+     per-user" client/server model.  A POSTGRES session 
+     consists of the following cooperating UNIX processes (programs):
+<UL>
+      	<LI>A supervisory daemon process (the <B>postmaster</B>),
+      	<LI>the user's frontend application (e.g., the <B>psql</B> program), and
+      	<LI>the  one or more backend database servers (the <B>postgres</B> process itself).
+</UL>
+     A single  <B>postmaster</B>  manages  a  given  collection  of
+     databases  on  a  single  host.   Such  a collection of
+     databases is called an installation or site.   Frontend
+     applications  that  wish  to  access  a  given database
+     within an installation make calls to the   library.
+     The library sends user requests over the network to the
+     <B>postmaster</B> (Figure 1(a)), which in turn  starts  a  new
+     backend  server  process (Figure 1(b)) 
+     
+     <IMG SRC="figure01.gif" ALIGN=right ALT="Figure 1- How a connection is established"><br>
+
+     and connects the
+     frontend process to the new server (Figure 1(c)).  From
+     that  point  on,  the  frontend process and the backend
+     server communicate without intervention by the 
+     <B>postmaster</B>.   Hence, the <B>postmaster</B> is always running, waiting
+     for requests, whereas frontend  and  backend  processes
+     come  and  go.  The <B>LIBPQ</B> library allows a single 
+     frontend to make multiple connections to backend processes.
+     However,  the  frontend  application is still a 
+     single-threaded process.  Multithreaded frontend/backend  
+     connections are not currently supported in <B>LIBPQ</B>.
+     One  implication of this architecture is that the 
+     <B>postmaster</B> and the backend always run on the  same  
+     machine (the  database  server), while the frontend 
+     application may run  anywhere.   You  should  keep  this  
+     in  mind,
+     because  the  files  that  can  be accessed on a client
+     machine may not be accessible (or may only be  accessed
+     using  a  different  filename)  on  the database server
+     machine.
+     You should also be aware that the <B>postmaster</B> and  
+     postgres  servers  run  with  the  user-id  of the POSTGRES
+     "superuser."  Note that the POSTGRES superuser does not
+     have  to  be  a special user (e.g., a user named 
+     "postgres").  Furthermore,  the  POSTGRES  superuser  
+     should
+     definitely  not  be the UNIX superuser, "root"!  In any
+     case, all files relating to a database should belong to
+     this POSTGRES superuser.
+
+<HR>
+<font size=-1>
+<A HREF="pg95user.html">[ TOC ]</A> 
+<A HREF="intro.html">[ Previous ]</A> 
+<A HREF="start.html">[ Next ]</A> 
+</font>
+</BODY>
+</HTML>
