@@ -1617,7 +1617,8 @@ public class DatabaseMetaData implements java.sql.DatabaseMetaData
    * </ol>
    *
    * <p>The valid values for the types parameter are:
-   * "TABLE", "INDEX", "SEQUENCE", "SYSTEM TABLE" and "SYSTEM INDEX"
+   * "TABLE", "INDEX", "LARGE OBJECT", "SEQUENCE", "SYSTEM TABLE" and
+   * "SYSTEM INDEX"
    *
    * @param catalog a catalog name; For org.postgresql, this is ignored, and
    * should be set to null
@@ -1720,9 +1721,10 @@ public class DatabaseMetaData implements java.sql.DatabaseMetaData
   //
   // IMPORTANT: the query must be enclosed in ( )
   private static final String getTableTypes[][] = {
-    {"TABLE",		"(relkind='r' and relhasrules='f' and relname !~ '^pg_')"},
-    {"VIEW",        "(relkind='v' and relname !~ '^pg_')"},
-    {"INDEX",		"(relkind='i' and relname !~ '^pg_')"},
+    {"TABLE",		"(relkind='r' and relhasrules='f' and relname !~ '^pg_' and relname !~ '^xinv')"},
+    {"VIEW",        "(relkind='v' and relname !~ '^pg_' and relname !~ '^xinv')"},
+    {"INDEX",		"(relkind='i' and relname !~ '^pg_' and relname !~ '^xinx')"},
+    {"LARGE OBJECT",	"(relkind='r' and relname ~ '^xinv')"},
     {"SEQUENCE",	"(relkind='S' and relname !~ '^pg_')"},
     {"SYSTEM TABLE",	"(relkind='r' and relname ~ '^pg_')"},
     {"SYSTEM INDEX",	"(relkind='i' and relname ~ '^pg_')"}
