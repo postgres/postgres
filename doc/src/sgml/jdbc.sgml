@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/Attic/jdbc.sgml,v 1.46 2003/08/06 23:50:19 barry Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/Attic/jdbc.sgml,v 1.47 2003/08/07 05:06:40 barry Exp $
 -->
 
  <chapter id="jdbc">
@@ -365,7 +365,7 @@ st.close();
     </para>
    </example>
 
-   <sect2 id="query-with-cursor">
+   <sect2 id="jdbc-query-with-cursor">
      <title>Getting results based on a cursor</title>
 
      <para>By default the driver collects all the results for the
@@ -407,7 +407,8 @@ rs.close();
 st.close();
 </programlisting>
      </para>
-
+   </example>
+   </sect2>
 
    <sect2>
     <title>Using the <classname>Statement</classname> or <classname>PreparedStatement</classname> Interface</title>
@@ -607,7 +608,7 @@ upperProc.close();
 
 	<para>When calling a function that returns
 	  a <type>refcursor</type> you must cast the return type
-	  of <methodname>getObject</methodname> to
+	  of getObject to
 	  a <classname>ResultSet</classname></para>
 
 <programlisting>
