@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/rewrite/rewriteHandler.c,v 1.112 2002/10/19 19:00:47 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/rewrite/rewriteHandler.c,v 1.113 2002/10/20 00:58:55 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -842,9 +842,11 @@ fireRIRrules(Query *parsetree)
 
 
 /*
- * Modify the given query by adding 'AND NOT rule_qual' to its qualification.
- * This is used to generate suitable "else clauses" for conditional INSTEAD
- * rules.
+ * Modify the given query by adding 'AND rule_qual IS NOT TRUE' to its
+ * qualification.  This is used to generate suitable "else clauses" for
+ * conditional INSTEAD rules.  (Unfortunately we must use "x IS NOT TRUE",
+ * not just "NOT x" which the planner is much smarter about, else we will
+ * do the wrong thing when the qual evaluates to NULL.)
  *
  * The rule_qual may contain references to OLD or NEW.	OLD references are
  * replaced by references to the specified rt_index (the relation that the
@@ -853,10 +855,10 @@ fireRIRrules(Query *parsetree)
  * of the related entries in the query's own targetlist.
  */
 static Query *
-CopyAndAddQual(Query *parsetree,
-			   Node *rule_qual,
-			   int rt_index,
-			   CmdType event)
+CopyAndAddInvertedQual(Query *parsetree,
+					   Node *rule_qual,
+					   int rt_index,
+					   CmdType event)
 {
 	Query	   *new_tree = (Query *) copyObject(parsetree);
 	Node	   *new_qual = (Node *) copyObject(rule_qual);
@@ -872,7 +874,7 @@ CopyAndAddQual(Query *parsetree,
 							  event,
 							  rt_index);
 	/* And attach the fixed qual */
-	AddNotQual(new_tree, new_qual);
+	AddInvertedQual(new_tree, new_qual);
 
 	return new_tree;
 }
@@ -956,10 +958,10 @@ fireRules(Query *parsetree,
 			{
 				if (*qual_product == NULL)
 					*qual_product = parsetree;
-				*qual_product = CopyAndAddQual(*qual_product,
-											   event_qual,
-											   rt_index,
-											   event);
+				*qual_product = CopyAndAddInvertedQual(*qual_product,
+													   event_qual,
+													   rt_index,
+													   event);
 			}
 		}
 
