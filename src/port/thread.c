@@ -7,7 +7,7 @@
  *
  * Portions Copyright (c) 1996-2003, PostgreSQL Global Development Group
  *
- * $PostgreSQL: pgsql/src/port/thread.c,v 1.19 2004/03/23 02:03:55 momjian Exp $
+ * $PostgreSQL: pgsql/src/port/thread.c,v 1.20 2004/04/23 18:15:55 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -76,10 +76,6 @@ pqStrerror(int errnum, char *strerrbuf, size_t buflen)
 
 #else
 
-#if defined(FRONTEND) && defined(ENABLE_THREAD_SAFETY) && !defined(STRERROR_THREADSAFE)
-#error This platform can not create a thread-safe version because strerror is not thread-safe and there is no reentrant version
-#endif
-
 	/* no strerror_r() available, just use strerror */
 	StrNCpy(strerrbuf, strerror(errnum), buflen);
 
@@ -111,10 +107,6 @@ pqGetpwuid(uid_t uid, struct passwd *resultbuf, char *buffer,
 
 #else
 
-#if defined(FRONTEND) && defined(ENABLE_THREAD_SAFETY) && !defined(GETPWUID_THREADSAFE)
-#error This platform can not create a thread-safe version because getpwuid is not thread-safe and there is no reentrant version
-#endif
-
 	/* no getpwuid_r() available, just use getpwuid() */
 	*result = getpwuid(uid);
 #endif
@@ -145,10 +137,6 @@ pqGethostbyname(const char *name,
 	return (*result == NULL) ? -1 : 0;
 
 #else
-
-#if defined(FRONTEND) && defined(ENABLE_THREAD_SAFETY) && !defined(GETHOSTBYNAME_THREADSAFE)
-#error This platform can not create a thread-safe version because getaddrinfo is not thread-safe and there is no reentrant version
-#endif
 
 	/* no gethostbyname_r(), just use gethostbyname() */
 	*result = gethostbyname(name);

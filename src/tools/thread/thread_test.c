@@ -6,7 +6,7 @@
  * Portions Copyright (c) 1996-2003, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- *	$PostgreSQL: pgsql/src/tools/thread/thread_test.c,v 1.19 2004/04/22 23:58:03 momjian Exp $
+ *	$PostgreSQL: pgsql/src/tools/thread/thread_test.c,v 1.20 2004/04/23 18:15:55 momjian Exp $
  *
  *	This program tests to see if your standard libc functions use
  *	pthread_setspecific()/pthread_getspecific() to be thread-safe.
@@ -78,7 +78,7 @@ int main(int argc, char *argv[])
 	}
 
 	printf("\
-Make sure you have added any needed 'THREAD_CPPFLAGS' and 'THREAD_LIBS'\n\
+Make sure you have added any needed 'PTHREAD_CFLAGS' and 'PTHREAD_LIBS'\n\
 defines to your template/$port file before compiling this program.\n\n"
 );
 

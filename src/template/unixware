@@ -1,5 +1,5 @@
 if test "$GCC" = yes; then
-  THREAD_CPPFLAGS="-pthread"
+  PTHREAD_CFLAGS="-pthread"
 else
   # The -Kno_host is for a bug in the compiler.  See -hackers
   # discussion on 7-8/Aug/2003.
@@ -21,17 +21,11 @@ __EOF__
   fi
   rm -f conftest.*
 
-  THREAD_CPPFLAGS="-K pthread"
+  PTHREAD_CFLAGS="-Kpthread"
 fi
 
 # tools/thread/thread_test must be run
-THREAD_CPPFLAGS="$THREAD_CPPFLAGS -D_REENTRANT"
+PTHREAD_CFLAGS="$PTHREAD_CFLAGS -D_REENTRANT"
 
 # Disabled because flags are required for all apps using libpq.
 # Waiting to see if other platforms need this too.  2004-03-22
-#THREAD_SUPPORT=yes
-# verified UnixWare 7.1.4 2004-03-18
-STRERROR_THREADSAFE=yes
-GETPWUID_THREADSAFE=yes
-GETHOSTBYNAME_THREADSAFE=yes
-

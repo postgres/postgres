@@ -7,7 +7,7 @@
 # with broken/missing library files.
 
 # IDENTIFICATION
-#    $PostgreSQL: pgsql/src/port/Makefile,v 1.9 2003/11/29 19:52:13 pgsql Exp $
+#    $PostgreSQL: pgsql/src/port/Makefile,v 1.10 2004/04/23 18:15:55 momjian Exp $
 #
 #-------------------------------------------------------------------------
 
@@ -23,7 +23,7 @@ libpgport.a: $(LIBOBJS)
 	$(AR) $(AROPT) $@ $^
 
 thread.o: thread.c
-	$(CC) $(CFLAGS) $(CPPFLAGS) $(THREAD_CPPFLAGS) -c $<
+	$(CC) $(CFLAGS) $(CPPFLAGS) $(PTHREAD_CFLAGS) -c $<
 
 clean distclean maintainer-clean:
 	rm -f libpgport.a $(LIBOBJS)

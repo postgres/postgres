@@ -4,7 +4,7 @@
 #
 # Copyright (c) 1994, Regents of the University of California
 #
-# $PostgreSQL: pgsql/src/interfaces/libpq/Makefile,v 1.101 2004/04/19 17:42:59 momjian Exp $
+# $PostgreSQL: pgsql/src/interfaces/libpq/Makefile,v 1.102 2004/04/23 18:15:55 momjian Exp $
 #
 #-------------------------------------------------------------------------
 
@@ -18,7 +18,7 @@ NAME= pq
 SO_MAJOR_VERSION= 3
 SO_MINOR_VERSION= 2
 
-override CPPFLAGS := -I$(srcdir) $(CPPFLAGS) $(THREAD_CPPFLAGS) -DFRONTEND -DSYSCONFDIR='"$(sysconfdir)"'
+override CPPFLAGS := -I$(srcdir) $(CPPFLAGS) $(PTHREAD_CFLAGS) -DFRONTEND -DSYSCONFDIR='"$(sysconfdir)"'
 
 OBJS= fe-auth.o fe-connect.o fe-exec.o fe-misc.o fe-print.o fe-lobj.o \
       fe-protocol2.o fe-protocol3.o pqexpbuffer.o pqsignal.o fe-secure.o \
@@ -32,7 +32,7 @@ endif
 # Add libraries that libpq depends (or might depend) on into the
 # shared library link.  (The order in which you list them here doesn't
 # matter.)
-SHLIB_LINK += $(filter -lcrypt -ldes -lkrb -lcom_err -lcrypto -lk5crypto -lkrb5 -lssl -lsocket -lnsl -lresolv -lintl, $(LIBS)) $(THREAD_LIBS)
+SHLIB_LINK += $(filter -lcrypt -ldes -lkrb -lcom_err -lcrypto -lk5crypto -lkrb5 -lssl -lsocket -lnsl -lresolv -lintl, $(LIBS)) $(PTHREAD_LIBS)
 ifeq ($(PORTNAME), win32)
 SHLIB_LINK += -lwsock32 -lws2_32
 endif

@@ -4,7 +4,7 @@
 #
 # Copyright (c) 1994, Regents of the University of California
 #
-# $PostgreSQL: pgsql/src/interfaces/ecpg/compatlib/Makefile,v 1.14 2004/02/10 07:26:25 tgl Exp $
+# $PostgreSQL: pgsql/src/interfaces/ecpg/compatlib/Makefile,v 1.15 2004/04/23 18:15:54 momjian Exp $
 #
 #-------------------------------------------------------------------------
 
@@ -16,9 +16,9 @@ NAME= ecpg_compat
 SO_MAJOR_VERSION= 1
 SO_MINOR_VERSION= 1
 
-override CPPFLAGS := -I$(top_srcdir)/src/interfaces/ecpg/include -I$(libpq_srcdir) -I$(top_srcdir)/src/include/utils $(CPPFLAGS) $(THREAD_CPPFLAGS)
+override CPPFLAGS := -I$(top_srcdir)/src/interfaces/ecpg/include -I$(libpq_srcdir) -I$(top_srcdir)/src/include/utils $(CPPFLAGS) $(PTHREAD_CFLAGS)
 SHLIB_LINK = -L../ecpglib -lecpg -L../pgtypeslib -lpgtypes $(libpq) \
-	$(filter -lintl -lssl -lcrypto -lkrb5 -lcrypt -lm, $(LIBS)) $(THREAD_LIBS)
+	$(filter -lintl -lssl -lcrypto -lkrb5 -lcrypt -lm, $(LIBS)) $(PTHREAD_LIBS)
 
 OBJS= informix.o
 

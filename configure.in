@@ -1,5 +1,5 @@
 dnl Process this file with autoconf to produce a configure script.
-dnl $PostgreSQL: pgsql/configure.in,v 1.323 2004/04/20 00:33:45 pgsql Exp $
+dnl $PostgreSQL: pgsql/configure.in,v 1.324 2004/04/23 18:15:53 momjian Exp $
 dnl
 dnl Developers, please strive to achieve this order:
 dnl
@@ -957,43 +957,35 @@ AC_FUNC_FSEEKO
 # See the comment at the top of src/port/thread.c for more information.
 #
 if test "$enable_thread_safety" = yes; then
-AC_CHECK_HEADER(pthread.h, [], [AC_MSG_ERROR([pthread.h not found, required for --enable-thread-safety])])
+ACX_PTHREAD	# set thread flags
 
-if test "$THREAD_SUPPORT" != yes; then
+# ACX_PTHREAD sets PTHREAD_CFLAGS that should be used for linking too
+PTHREAD_LIBS="$PTHREAD_CFLAGS $PTHREAD_LIBS"
+
+# At this point, we don't want to muck with the compiler name for threading.
+# Let's see who fails, perhaps AIX.  2004-04-23
+if test "$PTHREAD_CC" != "$CC"; then
 AC_MSG_ERROR([
-Cannot enable threads on your platform.
-Please report your platform threading info to the PostgreSQL mailing lists
-so it can be added to the next release.  Report all compile flags, link flags,
-functions, or libraries required for threading support.
-See the comment at the top of src/port/thread.c for more information.
+PostgreSQL does not support platforms that require a special
+compiler binary for thread-safety.
 ])
 fi
 
-#
-# Check for re-entrant versions of certain functions
-#
-# Include special flags if threads are enabled _and_ if required for 
-# threading on this platform.  Some platforms have *_r functions but
-# their natively named funcs are thread-safe too.
-#
-# One trick here is that if we don't call AC_CHECK_FUNCS; the
-# functions are marked "not found", which is perfect.
-#
-if test "$enable_thread_safety" = yes -a "$STRERROR_THREADSAFE" = yes ; then
-AC_DEFINE(STRERROR_THREADSAFE, 1, [Define if strerror is not thread safe])
+if test "$THREAD_SUPPORT" = no; then
+AC_MSG_ERROR([
+Cannot enable threads on your platform.
+Your platform is known to not support thread-safe programs.
+For details, compile and run src/bin/pg_thread_test.
+])
 fi
-if test "$enable_thread_safety" = yes -a "$GETPWUID_THREADSAFE" = yes ; then
-AC_DEFINE(GETPWUID_THREADSAFE, 1, [Define if getpwuid is not thread safe])
-fi
-if test "$enable_thread_safety" = yes -a "$GETHOSTBYNAME_THREADSAFE" = yes ; then
-AC_DEFINE(GETHOSTBYNAME_THREADSAFE, 1, [Define if gethostbyname is not thread safe])
-fi
+
+AC_CHECK_HEADER(pthread.h, [], [AC_MSG_ERROR([pthread.h not found, required for --enable-thread-safety])])
 
 # Check for *_r functions
 _CFLAGS="$CFLAGS"
 _LIBS="$LIBS"
-CFLAGS="$CFLAGS $THREAD_CPPFLAGS"
-LIBS="$LIBS $THREAD_LIBS"
+CFLAGS="$CFLAGS $PTHREAD_CFLAGS"
+LIBS="$LIBS $PTHREAD_LIBS"
 AC_CHECK_FUNCS([strerror_r getpwuid_r gethostbyname_r])
 CFLAGS="$_CFLAGS"
 LIBS="$_LIBS"
@@ -1002,13 +994,13 @@ PGAC_FUNC_GETPWUID_R_5ARG
 
 else
 # do not use values from template file
-THREAD_CPPFLAGS=
-THREAD_LIBS=
+PTHREAD_CFLAGS=
+PTHREAD_LIBS=
 fi
 
 AC_SUBST(THREAD_SUPPORT)
-AC_SUBST(THREAD_CPPFLAGS)
-AC_SUBST(THREAD_LIBS)
+AC_SUBST(PTHREAD_CFLAGS)
+AC_SUBST(PTHREAD_LIBS)
 
 
 # This test makes sure that run tests work at all.  Sometimes a shared

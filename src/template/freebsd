@@ -2,9 +2,7 @@ case $host_cpu in
   alpha*)   CFLAGS="-O";;  # alpha has problems with -O2
 esac
 
-# tools/thread/thread_test must be run
-THREAD_CPPFLAGS="-D_THREAD_SAFE"
 case $host_os in
-	freebsd2*|freebsd3*|freebsd4*) THREAD_LIBS="-pthread";;
-	*) THREAD_LIBS="-lc_r";;
+	freebsd2*|freebsd3*|freebsd4*) ;;
+	*) THREAD_LIBS="c_r";;	 # do we need this?  2004-04-23
 esac

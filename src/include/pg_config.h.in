@@ -43,14 +43,8 @@
    (--enable-thread-safety) */
 #undef ENABLE_THREAD_SAFETY
 
-/* Define if gethostbyname is not thread safe */
-#undef GETHOSTBYNAME_THREADSAFE
-
 /* Define to 1 if getpwuid_r() takes a 5th argument. */
 #undef GETPWUID_R_5ARG
-
-/* Define if getpwuid is not thread safe */
-#undef GETPWUID_THREADSAFE
 
 /* Define to 1 if gettimeofday() takes only 1 argument. */
 #undef GETTIMEOFDAY_1ARG
@@ -324,6 +318,9 @@
 /* Define to 1 if the PS_STRINGS thing exists. */
 #undef HAVE_PS_STRINGS
 
+/* Define if you have POSIX threads libraries and header files. */
+#undef HAVE_PTHREAD
+
 /* Define to 1 if you have the <pwd.h> header file. */
 #undef HAVE_PWD_H
 
@@ -588,14 +585,15 @@
 /* A string containing the version number, platform, and C compiler */
 #undef PG_VERSION_STR
 
+/* Define to the necessary symbol if this constant uses a non-standard name on
+   your system. */
+#undef PTHREAD_CREATE_JOINABLE
+
 /* The size of a `unsigned long', as computed by sizeof. */
 #undef SIZEOF_UNSIGNED_LONG
 
 /* Define to 1 if you have the ANSI C header files. */
 #undef STDC_HEADERS
-
-/* Define if strerror is not thread safe */
-#undef STRERROR_THREADSAFE
 
 /* Define to 1 if your <sys/time.h> declares `struct tm'. */
 #undef TM_IN_SYS_TIME

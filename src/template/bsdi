@@ -1,9 +1,3 @@
 case $host_os in
   bsdi2.0 | bsdi2.1 | bsdi3*) CC=gcc2;;
 esac
-
-THREAD_SUPPORT=yes
-# verified 4.3.1 2004-02-11
-STRERROR_THREADSAFE=yes
-GETPWUID_THREADSAFE=yes
-GETHOSTBYNAME_THREADSAFE=yes

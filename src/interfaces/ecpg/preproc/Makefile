@@ -1,4 +1,4 @@
-# $PostgreSQL: pgsql/src/interfaces/ecpg/preproc/Makefile,v 1.99 2004/03/02 06:45:05 meskes Exp $
+# $PostgreSQL: pgsql/src/interfaces/ecpg/preproc/Makefile,v 1.100 2004/04/23 18:15:55 momjian Exp $
 
 subdir = src/interfaces/ecpg/preproc
 top_builddir = ../../../..
@@ -8,7 +8,7 @@ MAJOR_VERSION=3
 MINOR_VERSION=2
 PATCHLEVEL=0
 
-override CPPFLAGS := -I$(srcdir)/../include -I$(srcdir) $(CPPFLAGS) $(THREAD_CPPFLAGS) \
+override CPPFLAGS := -I$(srcdir)/../include -I$(srcdir) $(CPPFLAGS) $(PTHREAD_CFLAGS) \
 	-DMAJOR_VERSION=$(MAJOR_VERSION) \
 	-DMINOR_VERSION=$(MINOR_VERSION) -DPATCHLEVEL=$(PATCHLEVEL) \
 	-DINCLUDEDIR=\"$(includedir)\" \
@@ -25,7 +25,7 @@ OBJS=preproc.o type.o ecpg.o ecpg_keywords.o output.o\
 all: submake-libpgport ecpg
 
 ecpg: $(OBJS)
-	$(CC) $(CFLAGS) $(LDFLAGS) $^ $(LIBS) $(THREAD_LIBS) -o $@
+	$(CC) $(CFLAGS) $(LDFLAGS) $^ $(LIBS) $(PTHREAD_LIBS) -o $@
 
 # pgc is compiled as part of preproc
 preproc.o: $(srcdir)/pgc.c

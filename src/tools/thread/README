@@ -6,9 +6,11 @@ thread-safe, or if we should use *_r functions or thread locking.
 
 To use this program, you must:
 
-	o add "THREAD_SUPPORT=yes" to your template/${port} file 
-	o add any THREAD_CPPFLAGS and THREAD_LIBS defines to your
-	  template/${port} file
 	o run "configure --enable-thread-safety"
 	o compile the main source tree
 	o compile and run this program
+
+If your platform requires special thread flags that are not tested by
+/config/acx_pthread.m4, add PTHREAD_CFLAGS and PTHREAD_LIBS defines to 
+your template/${port} file.
+

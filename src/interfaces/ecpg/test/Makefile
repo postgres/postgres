@@ -1,10 +1,10 @@
-# $PostgreSQL: pgsql/src/interfaces/ecpg/test/Makefile,v 1.44 2004/03/14 12:16:30 meskes Exp $
+# $PostgreSQL: pgsql/src/interfaces/ecpg/test/Makefile,v 1.45 2004/04/23 18:15:55 momjian Exp $
 
 subdir = src/interfaces/ecpg/test
 top_builddir = ../../../..
 include $(top_builddir)/src/Makefile.global
 
-override CPPFLAGS := -I$(srcdir)/../include -I$(libpq_srcdir) $(CPPFLAGS) $(THREAD_CPPFLAGS)
+override CPPFLAGS := -I$(srcdir)/../include -I$(libpq_srcdir) $(CPPFLAGS) $(PTHREAD_CFLAGS)
 
 ECPG = ../preproc/ecpg -I$(srcdir)/../include
 
@@ -16,10 +16,10 @@ endif
 all: $(TESTS)
 
 %: %.o
-	$(CC) $(CFLAGS) $(LDFLAGS) -L../ecpglib -L ../pgtypeslib -L../../libpq $^ $(LIBS) -lpgtypes -lecpg -lpq $(THREAD_LIBS) -o $@
+	$(CC) $(CFLAGS) $(LDFLAGS) -L../ecpglib -L ../pgtypeslib -L../../libpq $^ $(LIBS) -lpgtypes -lecpg -lpq $(PTHREAD_LIBS) -o $@
 
 test_informix: test_informix.o
-	$(CC) $(CFLAGS) $(LDFLAGS) -L../compatlib -L../ecpglib -L ../pgtypeslib -L../../libpq $^ $(LIBS) -lpgtypes -lecpg -lecpg_compat -lpq $(THREAD_LIBS) -o $@
+	$(CC) $(CFLAGS) $(LDFLAGS) -L../compatlib -L../ecpglib -L ../pgtypeslib -L../../libpq $^ $(LIBS) -lpgtypes -lecpg -lecpg_compat -lpq $(PTHREAD_LIBS) -o $@
 	
 %.c: %.pgc
 	$(ECPG) $<
