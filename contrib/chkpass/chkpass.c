@@ -4,7 +4,7 @@
  * darcy@druid.net
  * http://www.druid.net/darcy/
  *
- * $Id: chkpass.c,v 1.10 2003/07/24 17:52:12 tgl Exp $
+ * $Id: chkpass.c,v 1.11 2003/09/07 15:27:25 tgl Exp $
  * best viewed with tabs set to 4
  */
 
@@ -69,7 +69,6 @@ chkpass_in(PG_FUNCTION_ARGS)
 	char	   *str = PG_GETARG_CSTRING(0);
 	chkpass    *result;
 	char		mysalt[4];
-	static bool random_initialized = false;
 	static char salt_chars[] =
 	"./0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz";
 
@@ -92,12 +91,6 @@ chkpass_in(PG_FUNCTION_ARGS)
 	}
 
 	result = (chkpass *) palloc(sizeof(chkpass));
-
-	if (!random_initialized)
-	{
-		srandom((unsigned int) time(NULL));
-		random_initialized = true;
-	}
 
 	mysalt[0] = salt_chars[random() & 0x3f];
 	mysalt[1] = salt_chars[random() & 0x3f];
