@@ -9,7 +9,7 @@
  * Copyright (c) 2003, PostgreSQL Global Development Group
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/interfaces/jdbc/org/postgresql/jdbc2/Attic/AbstractJdbc2ResultSet.java,v 1.25.2.5 2004/04/24 01:54:45 jurka Exp $
+ *	  $Header: /cvsroot/pgsql/src/interfaces/jdbc/org/postgresql/jdbc2/Attic/AbstractJdbc2ResultSet.java,v 1.25.2.6 2004/06/16 05:11:44 jurka Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -584,6 +584,8 @@ public abstract class AbstractJdbc2ResultSet extends org.postgresql.jdbc1.Abstra
 		deleteStatement.executeUpdate();
 
 		rows.removeElementAt(current_row);
+		current_row--;
+		moveToCurrentRow();
 	}
 
 
@@ -738,22 +740,19 @@ public abstract class AbstractJdbc2ResultSet extends org.postgresql.jdbc1.Abstra
 
 	public boolean rowDeleted() throws SQLException
 	{
-		// only sub-classes implement CONCURuPDATEABLE
-		throw Driver.notImplemented();
+		return false;
 	}
 
 
 	public boolean rowInserted() throws SQLException
 	{
-		// only sub-classes implement CONCURuPDATEABLE
-		throw Driver.notImplemented();
+		return false;
 	}
 
 
 	public boolean rowUpdated() throws SQLException
 	{
-		// only sub-classes implement CONCURuPDATEABLE
-		throw Driver.notImplemented();
+		return false;
 	}
 
 
@@ -938,73 +937,68 @@ public abstract class AbstractJdbc2ResultSet extends org.postgresql.jdbc1.Abstra
 		{
 			throw new PSQLException( "postgresql.updateable.notupdateable" );
 		}
+		if (onInsertRow)
+			throw new PSQLException("postgresql.res.oninsertrow");
 
-		try
+		if (isBeforeFirst() || isAfterLast())
+			return;
+
+		StringBuffer selectSQL = new StringBuffer( "select ");
+
+		final int numColumns = java.lang.reflect.Array.getLength(fields);
+
+		for (int i = 0; i < numColumns; i++ )
 		{
-			StringBuffer selectSQL = new StringBuffer( "select ");
 
-			final int numColumns = java.lang.reflect.Array.getLength(fields);
+			selectSQL.append( fields[i].getName() );
 
-			for (int i = 0; i < numColumns; i++ )
+			if ( i < numColumns - 1 )
 			{
 
-				selectSQL.append( fields[i].getName() );
-
-				if ( i < numColumns - 1 )
-				{
-
-					selectSQL.append(", ");
-				}
-
+				selectSQL.append(", ");
 			}
-			selectSQL.append(" from " ).append(tableName).append(" where ");
-
-			int numKeys = primaryKeys.size();
-
-			for ( int i = 0; i < numKeys; i++ )
-			{
-
-				PrimaryKey primaryKey = ((PrimaryKey) primaryKeys.get(i));
-				selectSQL.append(primaryKey.name).append("= ?");
-
-				if ( i < numKeys - 1 )
-				{
-					selectSQL.append(" and ");
-				}
-			}
-			if ( Driver.logDebug )
-				Driver.debug("selecting " + selectSQL.toString());
-			selectStatement = ((java.sql.Connection) connection).prepareStatement(selectSQL.toString());
-
-
-			for ( int j = 0, i = 1; j < numKeys; j++, i++)
-			{
-				selectStatement.setObject( i, ((PrimaryKey) primaryKeys.get(j)).getValue() );
-			}
-
-			AbstractJdbc2ResultSet rs = (AbstractJdbc2ResultSet) selectStatement.executeQuery();
-
-			if ( rs.first() )
-			{
-				rowBuffer = rs.rowBuffer;
-			}
-
-			rows.setElementAt( rowBuffer, current_row );
-			this_row = rowBuffer;
-			if ( Driver.logDebug )
-				Driver.debug("done updates");
-
-			rs.close();
-			selectStatement.close();
-			selectStatement = null;
 
 		}
-		catch (Exception e)
+		selectSQL.append(" from " ).append(tableName).append(" where ");
+
+		int numKeys = primaryKeys.size();
+
+		for ( int i = 0; i < numKeys; i++ )
 		{
-			if ( Driver.logDebug )
-				Driver.debug(e.getClass().getName() + e);
-			throw new SQLException( e.getMessage() );
+
+			PrimaryKey primaryKey = ((PrimaryKey) primaryKeys.get(i));
+			selectSQL.append(primaryKey.name).append("= ?");
+
+			if ( i < numKeys - 1 )
+			{
+				selectSQL.append(" and ");
+			}
 		}
+		if ( Driver.logDebug )
+			Driver.debug("selecting " + selectSQL.toString());
+		selectStatement = ((java.sql.Connection) connection).prepareStatement(selectSQL.toString());
+
+
+		for ( int j = 0, i = 1; j < numKeys; j++, i++)
+		{
+			selectStatement.setObject( i, ((PrimaryKey) primaryKeys.get(j)).getValue() );
+		}
+
+		AbstractJdbc2ResultSet rs = (AbstractJdbc2ResultSet) selectStatement.executeQuery();
+
+		if ( rs.first() )
+		{
+			rowBuffer = rs.rowBuffer;
+		}
+
+		rows.setElementAt( rowBuffer, current_row );
+		this_row = rowBuffer;
+		if ( Driver.logDebug )
+			Driver.debug("done updates");
+
+		rs.close();
+		selectStatement.close();
+		selectStatement = null;
 
 	}
 
