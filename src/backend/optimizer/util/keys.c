@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/optimizer/util/Attic/keys.c,v 1.9 1998/09/01 04:30:07 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/optimizer/util/Attic/keys.c,v 1.10 1999/02/01 04:20:50 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -120,16 +120,20 @@ extract_subkey(JoinKey *jk, int which_subkey)
 bool
 samekeys(List *keys1, List *keys2)
 {
-	bool		allmember = true;
 	List	   *key1,
 			   *key2;
 
 	for (key1 = keys1, key2 = keys2; key1 != NIL && key2 != NIL;
 		 key1 = lnext(key1), key2 = lnext(key2))
 		if (!member(lfirst(key1), lfirst(key2)))
-			allmember = false;
+			return false;
 
-	if ((length(keys2) >= length(keys1)) && allmember)
+	/* Now the result should be true if list keys2 has at least as many
+	 * entries as keys1, ie, we did not fall off the end of keys2 first.
+	 * If key1 is now NIL then we hit the end of keys1 before or at the
+	 * same time as the end of keys2.
+	 */
+	if (key1 == NIL)
 		return true;
 	else
 		return false;
