@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/datetime.c,v 1.71 2001/10/10 00:02:42 petere Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/datetime.c,v 1.72 2001/10/11 18:06:52 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -294,8 +294,8 @@ static datetkn deltatktbl[] = {
 	{"secs", UNITS, DTK_SECOND},
 	{DTIMEZONE, UNITS, DTK_TZ}, /* "timezone" time offset */
 	{"timezone", UNITS, DTK_TZ},		/* "timezone" time offset */
-	{"timezone_hour", UNITS, DTK_TZ_HOUR},	/* timezone hour units */
-	{"timezone_minute", UNITS, DTK_TZ_MINUTE},		/* timezone minutes units */
+	{"timezone_h", UNITS, DTK_TZ_HOUR},		/* timezone hour units */
+	{"timezone_m", UNITS, DTK_TZ_MINUTE},	/* timezone minutes units */
 	{"undefined", RESERV, DTK_INVALID}, /* pre-v6.1 invalid time */
 	{"us", UNITS, DTK_MICROSEC},/* "microsecond" relative time units */
 	{"usec", UNITS, DTK_MICROSEC},		/* "microsecond" relative time
