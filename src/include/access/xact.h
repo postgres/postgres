@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2003, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/include/access/xact.h,v 1.59 2003/11/29 22:40:55 pgsql Exp $
+ * $PostgreSQL: pgsql/src/include/access/xact.h,v 1.60 2004/01/26 22:51:56 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -75,12 +75,12 @@ typedef void (*EOXactCallback) (bool isCommit, void *arg);
  */
 typedef struct TransactionStateData
 {
-	TransactionId transactionIdData;
-	CommandId	commandId;
-	AbsoluteTime startTime;
-	int			startTimeUsec;
-	TransState	state;
-	TBlockState blockState;
+	TransactionId	transactionIdData;
+	CommandId		commandId;
+	AbsoluteTime	startTime;
+	int				startTimeUsec;
+	TransState		state;
+	TBlockState		blockState;
 } TransactionStateData;
 
 typedef TransactionStateData *TransactionState;

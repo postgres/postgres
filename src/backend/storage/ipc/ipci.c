@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/storage/ipc/ipci.c,v 1.60 2003/12/20 17:31:21 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/storage/ipc/ipci.c,v 1.61 2004/01/26 22:51:56 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -63,6 +63,9 @@ CreateSharedMemoryAndSemaphores(bool makePrivate,
 	size += LWLockShmemSize();
 	size += SInvalShmemSize(maxBackends);
 	size += FreeSpaceShmemSize();
+#ifdef EXEC_BACKEND
+	size += ShmemBackendArraySize();
+#endif
 #ifdef STABLE_MEMORY_STORAGE
 	size += MMShmemSize();
 #endif
@@ -132,6 +135,13 @@ CreateSharedMemoryAndSemaphores(bool makePrivate,
 	 * Set up child-to-postmaster signaling mechanism
 	 */
 	PMSignalInit();
+
+#ifdef EXEC_BACKEND
+	/*
+	 * Alloc the win32 shared backend array
+	 */
+	ShmemBackendArrayAllocation();
+#endif
 }
 
 

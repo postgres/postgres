@@ -13,7 +13,7 @@
  *
  *	Copyright (c) 2001-2003, PostgreSQL Global Development Group
  *
- *	$PostgreSQL: pgsql/src/backend/postmaster/pgstat.c,v 1.53 2004/01/11 03:49:31 momjian Exp $
+ *	$PostgreSQL: pgsql/src/backend/postmaster/pgstat.c,v 1.54 2004/01/26 22:51:55 momjian Exp $
  * ----------
  */
 #include "postgres.h"
@@ -147,7 +147,7 @@ static void pgstat_recv_resetcounter(PgStat_MsgResetcounter *msg, int len);
 #define piperead(a,b,c)		read(a,b,c)
 #define pipewrite(a,b,c)	write(a,b,c)
 #else
-/* pgpipe() is in /src/port */
+extern int pgpipe(int handles[2]); /* pgpipe() is in /src/port */
 #define piperead(a,b,c)		recv(a,b,c,0)
 #define pipewrite(a,b,c)	send(a,b,c,0)
 #endif
@@ -322,7 +322,7 @@ pgstat_init(void)
 	/*
 	 * Create the pipe that controls the statistics collector shutdown
 	 */
-	if (pipe(pgStatPmPipe) < 0)
+	if (pgpipe(pgStatPmPipe) < 0)
 	{
 		ereport(LOG,
 				(errcode_for_socket_access(),
