@@ -12,7 +12,7 @@
  * Portions Copyright (c) 1996-2003, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/include/c.h,v 1.158 2003/12/20 17:31:21 momjian Exp $
+ * $PostgreSQL: pgsql/src/include/c.h,v 1.159 2004/01/10 23:39:51 neilc Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -235,29 +235,12 @@ typedef unsigned int uint32;	/* == 32 bits */
 #endif   /* not HAVE_UINT8 */
 
 /*
- * boolN
- *		Boolean value, AT LEAST N BITS IN SIZE.
- */
-typedef uint8 bool8;			/* >= 8 bits */
-typedef uint16 bool16;			/* >= 16 bits */
-typedef uint32 bool32;			/* >= 32 bits */
-
-/*
  * bitsN
  *		Unit of bitwise operation, AT LEAST N BITS IN SIZE.
  */
 typedef uint8 bits8;			/* >= 8 bits */
 typedef uint16 bits16;			/* >= 16 bits */
 typedef uint32 bits32;			/* >= 32 bits */
-
-/*
- * wordN
- *		Unit of storage, AT LEAST N BITS IN SIZE,
- *		used to fetch/store data.
- */
-typedef uint8 word8;			/* >= 8 bits */
-typedef uint16 word16;			/* >= 16 bits */
-typedef uint32 word32;			/* >= 32 bits */
 
 /*
  * floatN
@@ -298,8 +281,7 @@ typedef long long int int64;
 typedef unsigned long long int uint64;
 #endif
 
-#else							/* not HAVE_LONG_INT_64 and not
-								 * HAVE_LONG_LONG_INT_64 */
+#else	/* not HAVE_LONG_INT_64 and not HAVE_LONG_LONG_INT_64 */
 
 /* Won't actually work, but fall back to long int so that code compiles */
 #ifndef HAVE_INT64
@@ -310,8 +292,7 @@ typedef unsigned long int uint64;
 #endif
 
 #define INT64_IS_BUSTED
-#endif   /* not HAVE_LONG_INT_64 and not
-								 * HAVE_LONG_LONG_INT_64 */
+#endif   /* not HAVE_LONG_INT_64 and not HAVE_LONG_LONG_INT_64 */
 
 /* Decide if we need to decorate 64-bit constants */
 #ifdef HAVE_LL_CONSTANTS
