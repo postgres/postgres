@@ -6,7 +6,7 @@
  *
  * Copyright (c) 1995, Regents of the University of California
  *
- * $Id: postgres.h,v 1.33 2000/01/10 05:20:26 momjian Exp $
+ * $Id: postgres.h,v 1.34 2000/01/10 16:13:18 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -19,7 +19,7 @@
  *				Oid		   regproc	  RegProcedure
  *				aclitem
  *				struct varlena
- *				int28	  oid8
+ *				int2vector	  oidvector
  *				bytea	   text
  *				NameData   Name
  *
@@ -101,8 +101,8 @@ struct varlena
 typedef struct varlena bytea;
 typedef struct varlena text;
 
-typedef int2 int28[INDEX_MAX_KEYS];
-typedef Oid oid8[INDEX_MAX_KEYS];
+typedef int2 int2vector[INDEX_MAX_KEYS];
+typedef Oid oidvector[INDEX_MAX_KEYS];
 
 
 /*

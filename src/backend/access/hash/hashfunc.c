@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/access/hash/hashfunc.c,v 1.20 1999/11/07 23:07:49 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/access/hash/hashfunc.c,v 1.21 2000/01/10 16:13:10 momjian Exp $
  *
  * NOTES
  *	  These functions are stored in pg_amproc.	For each operator class
@@ -140,7 +140,7 @@ hashoid(Oid key)
 }
 
 uint32
-hashoid8(Oid *key)
+hashoidvector(Oid *key)
 {
 	int			i;
 	uint32		result = 0;

@@ -7,7 +7,7 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: pg_type.h,v 1.72 1999/12/28 13:40:50 wieck Exp $
+ * $Id: pg_type.h,v 1.73 2000/01/10 16:13:21 momjian Exp $
  *
  * NOTES
  *	  the genbki.sh script reads this file and generates .bki
@@ -174,16 +174,16 @@ DATA(insert OID = 21 (	int2	   PGUID  2   5 t b t \054 0   0 int2in int2out int2
 DESCR("-32 thousand to 32 thousand, 2-byte storage");
 #define INT2OID			21
 
-DATA(insert OID = 22 (	int28	   PGUID 16  50 f b t \054 0  21 int28in int28out int28in int28out i _null_ ));
+DATA(insert OID = 22 (	int2vector PGUID 16  50 f b t \054 0  21 int2vectorin int2vectorout int2vectorin int2vectorout i _null_ ));
 DESCR("8 int2 integers, used internally");
 /*
- * XXX -- the implementation of int28's in postgres is a hack, and will
+ * XXX -- the implementation of int2vector's in postgres is a hack, and will
  *		  go away someday.	until that happens, there is a case (in the
  *		  catalog cache management code) where we need to step gingerly
- *		  over piles of int28's on the sidewalk.  in order to do so, we
- *		  need the OID of the int28 row from pg_type.
+ *		  over piles of int2vector's on the sidewalk.  in order to do so, we
+ *		  need the OID of the int2vector row from pg_type.
  */
-#define INT28OID		22
+#define INT2VECTOROID	22
 
 DATA(insert OID = 23 (	int4	   PGUID  4  10 t b t \054 0   0 int4in int4out int4in int4out i _null_ ));
 DESCR("-2 billion to 2 billion integer, 4-byte storage");
@@ -213,7 +213,7 @@ DATA(insert OID = 29 (	cid		   PGUID  4  10 t b t \054 0   0 cidin cidout cidin 
 DESCR("command identifier type, sequence in transaction id");
 #define CIDOID 29
 
-DATA(insert OID = 30 (	oid8	   PGUID 32  89 f b t \054 0  26 oid8in oid8out oid8in oid8out i _null_ ));
+DATA(insert OID = 30 (	oidvector  PGUID 32  89 f b t \054 0  26 oidvectorin oidvectorout oidvectorin oidvectorout i _null_ ));
 DESCR("array of 8 oids, used in system tables");
 DATA(insert OID = 32 (	SET		   PGUID -1  -1 f b t \054 0   0 textin textout textin textout i _null_ ));
 DESCR("set of tuples");
@@ -317,7 +317,7 @@ DATA(insert OID = 1001 (  _bytea	 PGUID -1  -1 f b t \054 0	17 array_in array_ou
 DATA(insert OID = 1002 (  _char		 PGUID -1  -1 f b t \054 0	18 array_in array_out array_in array_out i _null_ ));
 DATA(insert OID = 1003 (  _name		 PGUID -1  -1 f b t \054 0	19 array_in array_out array_in array_out i _null_ ));
 DATA(insert OID = 1005 (  _int2		 PGUID -1  -1 f b t \054 0	21 array_in array_out array_in array_out i _null_ ));
-DATA(insert OID = 1006 (  _int28	 PGUID -1  -1 f b t \054 0	22 array_in array_out array_in array_out i _null_ ));
+DATA(insert OID = 1006 (  _int2vector PGUID -1  -1 f b t \054 0	22 array_in array_out array_in array_out i _null_ ));
 DATA(insert OID = 1007 (  _int4		 PGUID -1  -1 f b t \054 0	23 array_in array_out array_in array_out i _null_ ));
 DATA(insert OID = 1008 (  _regproc	 PGUID -1  -1 f b t \054 0	24 array_in array_out array_in array_out i _null_ ));
 DATA(insert OID = 1009 (  _text		 PGUID -1  -1 f b t \054 0	25 array_in array_out array_in array_out i _null_ ));
@@ -325,7 +325,7 @@ DATA(insert OID = 1028 (  _oid		 PGUID -1  -1 f b t \054 0	26 array_in array_out
 DATA(insert OID = 1010 (  _tid		 PGUID -1  -1 f b t \054 0	27 array_in array_out array_in array_out i _null_ ));
 DATA(insert OID = 1011 (  _xid		 PGUID -1  -1 f b t \054 0	28 array_in array_out array_in array_out i _null_ ));
 DATA(insert OID = 1012 (  _cid		 PGUID -1  -1 f b t \054 0	29 array_in array_out array_in array_out i _null_ ));
-DATA(insert OID = 1013 (  _oid8		 PGUID -1  -1 f b t \054 0	30 array_in array_out array_in array_out i _null_ ));
+DATA(insert OID = 1013 (  _oidvector PGUID -1  -1 f b t \054 0	30 array_in array_out array_in array_out i _null_ ));
 DATA(insert OID = 1014 (  _bpchar	 PGUID -1  -1 f b t \054 0 1042 array_in array_out array_in array_out i _null_ ));
 DATA(insert OID = 1015 (  _varchar	 PGUID -1  -1 f b t \054 0 1043 array_in array_out array_in array_out i _null_ ));
 DATA(insert OID = 1017 (  _point	 PGUID -1  -1 f b t \054 0 600 array_in array_out array_in array_out d _null_ ));

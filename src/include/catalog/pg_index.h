@@ -7,7 +7,7 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: pg_index.h,v 1.13 2000/01/10 04:36:37 momjian Exp $
+ * $Id: pg_index.h,v 1.14 2000/01/10 16:13:20 momjian Exp $
  *
  * NOTES
  *	  the genbki.sh script reads this file and generates .bki
@@ -45,8 +45,8 @@ CATALOG(pg_index)
 	Oid			indrelid;
 	Oid			indproc;		/* registered procedure for functional
 								 * index */
-	int28		indkey;
-	oid8		indclass;
+	int2vector	indkey;
+	oidvector	indclass;
 	bool		indisclustered;
 	bool		indislossy;		/* do we fetch false tuples (lossy
 								 * compression)? */

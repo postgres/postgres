@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/oid.c,v 1.31 2000/01/10 15:41:26 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/oid.c,v 1.32 2000/01/10 16:13:14 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -22,13 +22,13 @@
  *****************************************************************************/
 
 /*
- *		oid8in			- converts "num num ..." to internal form
+ *		oidvectorin			- converts "num num ..." to internal form
  *
  *		Note:
  *				Fills any nonexistent digits with NULL oids.
  */
 Oid *
-oid8in(char *oidString)
+oidvectorin(char *oidString)
 {
 	Oid		   *result;
 	int			slot;
@@ -50,7 +50,7 @@ oid8in(char *oidString)
 	while (*oidString && isspace(*oidString))
 		oidString++;
 	if (*oidString)
-		elog(ERROR,"oid8 value has too many values");
+		elog(ERROR,"oidvector value has too many values");
 	while (slot < INDEX_MAX_KEYS)
 		result[slot++] = 0;
 
@@ -58,10 +58,10 @@ oid8in(char *oidString)
 }
 
 /*
- *		oid8out - converts internal form to "num num ..."
+ *		oidvectorout - converts internal form to "num num ..."
  */
 char *
-oid8out(Oid *oidArray)
+oidvectorout(Oid *oidArray)
 {
 	int			num, maxnum;
 	char	   *rp;
@@ -81,7 +81,7 @@ oid8out(Oid *oidArray)
 			break;
 
 	/* assumes sign, 10 digits, ' ' */
-	rp = result = (char *) palloc(maxnum * 12 + 1);
+	rp = result = (char *) palloc((maxnum+1) * 12 + 1);
 	for (num = 0; num <= maxnum; num++)
 	{
 		if (num != 0)
@@ -127,19 +127,19 @@ oidne(Oid arg1, Oid arg2)
 }
 
 bool
-oid8eq(Oid *arg1, Oid *arg2)
+oidvectoreq(Oid *arg1, Oid *arg2)
 {
 	return (bool) (memcmp(arg1, arg2, INDEX_MAX_KEYS * sizeof(Oid)) == 0);
 }
 
 bool
-oid8ne(Oid *arg1, Oid *arg2)
+oidvectorne(Oid *arg1, Oid *arg2)
 {
 	return (bool) (memcmp(arg1, arg2, INDEX_MAX_KEYS * sizeof(Oid)) != 0);
 }
 
 bool
-oid8lt(Oid *arg1, Oid *arg2)
+oidvectorlt(Oid *arg1, Oid *arg2)
 {
 	int			i;
 
@@ -150,7 +150,7 @@ oid8lt(Oid *arg1, Oid *arg2)
 }
 
 bool
-oid8le(Oid *arg1, Oid *arg2)
+oidvectorle(Oid *arg1, Oid *arg2)
 {
 	int			i;
 
@@ -161,7 +161,7 @@ oid8le(Oid *arg1, Oid *arg2)
 }
 
 bool
-oid8ge(Oid *arg1, Oid *arg2)
+oidvectorge(Oid *arg1, Oid *arg2)
 {
 	int			i;
 
@@ -172,7 +172,7 @@ oid8ge(Oid *arg1, Oid *arg2)
 }
 
 bool
-oid8gt(Oid *arg1, Oid *arg2)
+oidvectorgt(Oid *arg1, Oid *arg2)
 {
 	int			i;
 

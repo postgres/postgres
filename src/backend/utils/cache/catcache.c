@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/cache/catcache.c,v 1.55 1999/12/16 22:19:54 wieck Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/cache/catcache.c,v 1.56 2000/01/10 16:13:15 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -70,7 +70,7 @@ GlobalMemory CacheCxt;			/* context in which caches are allocated */
 static long eqproc[] = {
 	F_BOOLEQ, 0l, F_CHAREQ, F_NAMEEQ, 0l,
 	F_INT2EQ, F_KEYFIRSTEQ, F_INT4EQ, 0l, F_TEXTEQ,
-	F_OIDEQ, 0l, 0l, 0l, F_OID8EQ
+	F_OIDEQ, 0l, 0l, 0l, F_OIDVECTOREQ
 };
 
 #define EQPROC(SYSTEMTYPEOID)	eqproc[(SYSTEMTYPEOID)-16]
@@ -191,14 +191,14 @@ CatalogCacheInitializeCache(struct catcache * cache,
 
 			/*
 			 * Yoiks.  The implementation of the hashing code and the
-			 * implementation of int28's are at loggerheads.  The right
-			 * thing to do is to throw out the implementation of int28's
+			 * implementation of int2vector's are at loggerheads.  The right
+			 * thing to do is to throw out the implementation of int2vector's
 			 * altogether; until that happens, we do the right thing here
 			 * to guarantee that the hash key generator doesn't try to
 			 * dereference an int2 by mistake.
 			 */
 
-			if (tupdesc->attrs[cache->cc_key[i] - 1]->atttypid == INT28OID)
+			if (tupdesc->attrs[cache->cc_key[i] - 1]->atttypid == INT2VECTOROID)
 				cache->cc_klen[i] = sizeof(short);
 			else
 				cache->cc_klen[i] = tupdesc->attrs[cache->cc_key[i] - 1]->attlen;
@@ -851,7 +851,7 @@ SearchSelfReferences(struct catcache * cache)
 		{
 			HeapScanDesc	sd;
 			MemoryContext	oldcxt;
-	
+
 			if (!CacheCxt)
 				CacheCxt = CreateGlobalMemory("Cache");
 			rel = heap_open(cache->relationId, AccessShareLock);
@@ -872,7 +872,7 @@ SearchSelfReferences(struct catcache * cache)
 		/* bootstrapping this requires preloading a range of rows. bjm */
 		static HeapTuple	operatorSelfTuple[MAX_OIDCMP-MIN_OIDCMP+1];
 		Oid					lookup_oid = (Oid)cache->cc_skey[0].sk_argument;
-		
+
 		if (lookup_oid < MIN_OIDCMP || lookup_oid > MAX_OIDCMP)
 			return (HeapTuple)0;
 
@@ -880,7 +880,7 @@ SearchSelfReferences(struct catcache * cache)
 		{
 			HeapScanDesc	sd;
 			MemoryContext	oldcxt;
-	
+
 			if (!CacheCxt)
 				CacheCxt = CreateGlobalMemory("Cache");
 			rel = heap_open(cache->relationId, AccessShareLock);

@@ -7,14 +7,14 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/int.c,v 1.30 2000/01/10 15:41:26 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/int.c,v 1.31 2000/01/10 16:13:14 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
 /*
  * OLD COMMENTS
  *		I/O routines:
- *		 int2in, int2out, int28in, int28out, int4in, int4out
+ *		 int2in, int2out, int2vectorin, int2vectorout, int4in, int4out
  *		Conversion routines:
  *		 itoi, int2_text, int4_text
  *		Boolean operators:
@@ -71,13 +71,13 @@ int2out(int16 sh)
 }
 
 /*
- *		int28in			- converts "num num ..." to internal form
+ *		int2vectorin			- converts "num num ..." to internal form
  *
  *		Note:
  *				Fills any nonexistent digits with NULLs.
  */
 int16 *
-int28in(char *intString)
+int2vectorin(char *intString)
 {
 	int16	   *result;
 	int			slot;
@@ -99,7 +99,7 @@ int28in(char *intString)
 	while (*intString && isspace(*intString))
 		intString++;
 	if (*intString)
-		elog(ERROR,"int28 value has too many values");
+		elog(ERROR,"int2vector value has too many values");
 	while (slot < INDEX_MAX_KEYS)
 		result[slot++] = 0;
 
@@ -107,10 +107,10 @@ int28in(char *intString)
 }
 
 /*
- *		int28out		- converts internal form to "num num ..."
+ *		int2vectorout		- converts internal form to "num num ..."
  */
 char *
-int28out(int16 *int2Array)
+int2vectorout(int16 *int2Array)
 {
 	int			num, maxnum;
 	char	   *rp;
@@ -130,7 +130,7 @@ int28out(int16 *int2Array)
 			break;
 
 	/* assumes sign, 5 digits, ' ' */
-	rp = result = (char *) palloc(maxnum * 7 + 1);
+	rp = result = (char *) palloc((maxnum+1) * 7 + 1);
 	for (num = 0; num <= maxnum; num++)
 	{
 		if (num != 0)
@@ -168,7 +168,7 @@ int44in(char *input_string)
 }
 
 /*
- *		int28out		- converts internal form to "num num ..."
+ *		int2vectorout		- converts internal form to "num num ..."
  */
 char *
 int44out(int32 *an_array)

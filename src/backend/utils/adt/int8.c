@@ -519,7 +519,7 @@ int84(int64 *val)
 
 #if NOT_USED
 int64 *
-int28		(int16 val)
+int2vector		(int16 val)
 {
 	int64	   *result;
 
@@ -528,7 +528,7 @@ int28		(int16 val)
 	*result = val;
 
 	return result;
-}	/* int28() */
+}	/* int2vector() */
 
 int16
 int82(int64 *val)

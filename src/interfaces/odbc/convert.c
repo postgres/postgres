@@ -209,7 +209,7 @@ char tempBuf[TEXT_FIELD_SIZE+5];
 		break;
 
 	/* This is for internal use by SQLStatistics() */
-	case PG_TYPE_INT28: {
+	case PG_TYPE_INT2VECTOR: {
 		// this is an array of eight integers
 		short *short_array = (short *) ( (char *) rgbValue + rgbValueOffset);
 

@@ -24,7 +24,7 @@
 #define PG_TYPE_NAME         19
 #define PG_TYPE_CHAR16       20
 #define PG_TYPE_INT2         21
-#define PG_TYPE_INT28        22
+#define PG_TYPE_INT2VECTOR   22
 #define PG_TYPE_INT4         23
 #define PG_TYPE_REGPROC      24
 #define PG_TYPE_TEXT         25
@@ -32,7 +32,7 @@
 #define PG_TYPE_TID          27
 #define PG_TYPE_XID          28
 #define PG_TYPE_CID          29
-#define PG_TYPE_OID8         30
+#define PG_TYPE_OIDVECTOR    30
 #define PG_TYPE_SET          32
 #define PG_TYPE_CHAR2       409
 #define PG_TYPE_CHAR4       410

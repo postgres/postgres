@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/tcop/fastpath.c,v 1.31 1999/11/22 17:56:26 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/tcop/fastpath.c,v 1.32 2000/01/10 16:13:13 momjian Exp $
  *
  * NOTES
  *	  This cruft is the server side of PQfn.
@@ -181,7 +181,7 @@ valid_fp_info(Oid func_id, struct fp_info * fip)
 static void
 update_fp_info(Oid func_id, struct fp_info * fip)
 {
-	Oid		   *argtypes;		/* an oid8 */
+	Oid		   *argtypes;		/* an oidvector */
 	Oid			rettype;
 	HeapTuple	func_htp,
 				type_htp;

@@ -7,7 +7,7 @@
  * Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/bootstrap/bootstrap.c,v 1.74 1999/12/20 10:40:39 wieck Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/bootstrap/bootstrap.c,v 1.75 2000/01/10 16:13:11 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -109,7 +109,7 @@ static struct typinfo Procid[] = {
 	{"dummy", 20, 0, 16, 0, 0},
 /*	  { "dt",		  20,	 0,  4, F_DTIN,			F_DTOUT}, */
 	{"int2", 21, 0, 2, F_INT2IN, F_INT2OUT},
-	{"int28", 22, 0, 16, F_INT28IN, F_INT28OUT},
+	{"int2vector", 22, 0, 16, F_INT2VECTORIN, F_INT2VECTOROUT},
 	{"int4", 23, 0, 4, F_INT4IN, F_INT4OUT},
 	{"regproc", 24, 0, 4, F_REGPROCIN, F_REGPROCOUT},
 	{"text", 25, 0, -1, F_TEXTIN, F_TEXTOUT},
@@ -117,7 +117,7 @@ static struct typinfo Procid[] = {
 	{"tid", 27, 0, 6, F_TIDIN, F_TIDOUT},
 	{"xid", 28, 0, 5, F_XIDIN, F_XIDOUT},
 	{"iid", 29, 0, 1, F_CIDIN, F_CIDOUT},
-	{"oid8", 30, 0, 32, F_OID8IN, F_OID8OUT},
+	{"oidvector", 30, 0, 32, F_OIDVECTORIN, F_OIDVECTOROUT},
 	{"smgr", 210, 0, 2, F_SMGRIN, F_SMGROUT},
 	{"_int4", 1007, 23, -1, F_ARRAY_IN, F_ARRAY_OUT},
 	{"_aclitem", 1034, 1033, -1, F_ARRAY_IN, F_ARRAY_OUT}

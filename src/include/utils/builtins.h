@@ -6,7 +6,7 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: builtins.h,v 1.94 2000/01/06 20:47:01 wieck Exp $
+ * $Id: builtins.h,v 1.95 2000/01/10 16:13:22 momjian Exp $
  *
  * NOTES
  *	  This should normally only be included by fmgr.h.
@@ -67,8 +67,8 @@ extern text *char_text(int8 arg1);
 /* int.c */
 extern int32 int2in(char *num);
 extern char *int2out(int16 sh);
-extern int16 *int28in(char *shs);
-extern char *int28out(int16 *shs);
+extern int16 *int2vectorin(char *shs);
+extern char *int2vectorout(int16 *shs);
 extern int32 *int44in(char *input_string);
 extern char *int44out(int32 *an_array);
 extern int32 int4in(char *num);
@@ -174,7 +174,7 @@ extern int32 btint42cmp(int32 a, int16 b);
 extern int32 btfloat4cmp(float32 a, float32 b);
 extern int32 btfloat8cmp(float64 a, float64 b);
 extern int32 btoidcmp(Oid a, Oid b);
-extern int32 btoid8cmp(Oid *a, Oid *b);
+extern int32 btoidvectorcmp(Oid *a, Oid *b);
 extern int32 btabstimecmp(AbsoluteTime a, AbsoluteTime b);
 extern int32 btcharcmp(char a, char b);
 extern int32 btnamecmp(NameData *a, NameData *b);
@@ -340,18 +340,18 @@ extern bool int4notin(int32 not_in_arg, char *relation_and_attr);
 extern bool oidnotin(Oid the_oid, char *compare);
 
 /* oid.c */
-extern Oid *oid8in(char *oidString);
-extern char *oid8out(Oid *oidArray);
+extern Oid *oidvectorin(char *oidString);
+extern char *oidvectorout(Oid *oidArray);
 extern Oid	oidin(char *s);
 extern char *oidout(Oid o);
 extern bool oideq(Oid arg1, Oid arg2);
 extern bool oidne(Oid arg1, Oid arg2);
-extern bool oid8eq(Oid *arg1, Oid *arg2);
-extern bool oid8ne(Oid *arg1, Oid *arg2);
-extern bool oid8lt(Oid *arg1, Oid *arg2);
-extern bool oid8le(Oid *arg1, Oid *arg2);
-extern bool oid8ge(Oid *arg1, Oid *arg2);
-extern bool oid8gt(Oid *arg1, Oid *arg2);
+extern bool oidvectoreq(Oid *arg1, Oid *arg2);
+extern bool oidvectorne(Oid *arg1, Oid *arg2);
+extern bool oidvectorlt(Oid *arg1, Oid *arg2);
+extern bool oidvectorle(Oid *arg1, Oid *arg2);
+extern bool oidvectorge(Oid *arg1, Oid *arg2);
+extern bool oidvectorgt(Oid *arg1, Oid *arg2);
 extern bool oideqint4(Oid arg1, int32 arg2);
 extern bool int4eqoid(int32 arg1, Oid arg2);
 extern text *oid_text(Oid arg1);
@@ -371,7 +371,7 @@ extern bool texticregexne(struct varlena * s, struct varlena * p);
 /* regproc.c */
 extern int32 regprocin(char *pro_name_and_oid);
 extern char *regprocout(RegProcedure proid);
-extern text *oid8types(Oid *oidArray);
+extern text *oidvectortypes(Oid *oidArray);
 extern Oid	regproctooid(RegProcedure rp);
 
 /* define macro to replace mixed-case function call - tgl 97/04/27 */

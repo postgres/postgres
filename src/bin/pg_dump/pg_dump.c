@@ -21,7 +21,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/bin/pg_dump/pg_dump.c,v 1.129 1999/12/27 18:21:07 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/bin/pg_dump/pg_dump.c,v 1.130 2000/01/10 16:13:16 momjian Exp $
  *
  * Modifications - 6/10/96 - dave@bensoft.com - version 1.13.dhb
  *
@@ -1770,7 +1770,6 @@ getTables(int *numTables, FuncInfo *finfo, int numFuncs)
 				for (findx = 0; findx < tgnargs; findx++)
 				{
 					const char	   *s;
-                    char           *d;
 
 					for (p = tgargs;;)
 					{

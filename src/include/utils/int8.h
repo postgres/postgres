@@ -6,7 +6,7 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: int8.h,v 1.14 1999/05/25 22:43:35 momjian Exp $
+ * $Id: int8.h,v 1.15 2000/01/10 16:13:22 momjian Exp $
  *
  * NOTES
  * These data types are supported on all 64-bit architectures, and may
@@ -92,7 +92,7 @@ extern int64 *int48(int32 val);
 extern int32 int84(int64 *val);
 
 #if NOT_USED
-extern int64 *int28 (int16 val);
+extern int64 *int2vector (int16 val);
 extern int16 int82(int64 *val);
 
 #endif

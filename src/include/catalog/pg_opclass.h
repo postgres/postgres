@@ -7,7 +7,7 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: pg_opclass.h,v 1.25 1999/12/28 13:40:50 wieck Exp $
+ * $Id: pg_opclass.h,v 1.26 2000/01/10 16:13:20 momjian Exp $
  *
  * NOTES
  *	  the genbki.sh script reads this file and generates .bki
@@ -89,7 +89,7 @@ DATA(insert OID =  433 (	bigbox_ops		603   ));
 DESCR("");
 DATA(insert OID =  434 (	poly_ops		604   ));
 DESCR("");
-DATA(insert OID =  435 (	oid8_ops		 30   ));
+DATA(insert OID =  435 (	oidvector_ops	 30   ));
 DESCR("");
 DATA(insert OID =  714 (	circle_ops		718   ));
 DESCR("");

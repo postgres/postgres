@@ -6,7 +6,7 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: pg_proc.h,v 1.111 2000/01/06 20:46:54 wieck Exp $
+ * $Id: pg_proc.h,v 1.112 2000/01/10 16:13:21 momjian Exp $
  *
  * NOTES
  *	  The script catalog/genbki.sh reads this file and generates .bki
@@ -47,7 +47,7 @@ CATALOG(pg_proc) BOOTSTRAP
 	int2		pronargs;
 	bool		proretset;
 	Oid			prorettype;
-	oid8		proargtypes;
+	oidvector	proargtypes;
 	int4		probyte_pct;
 	int4		properbyte_cpu;
 	int4		propercall_cpu;
@@ -116,9 +116,9 @@ DATA(insert OID =  38 (  int2in			   PGUID 11 f t t 1 f 21 "0" 100 0 0 100  int2
 DESCR("(internal)");
 DATA(insert OID =  39 (  int2out		   PGUID 11 f t t 1 f 23 "0" 100 0 0 100  int2out - ));
 DESCR("(internal)");
-DATA(insert OID =  40 (  int28in		   PGUID 11 f t t 1 f 22 "0" 100 0 0 100  int28in - ));
+DATA(insert OID =  40 (  int2vectorin	   PGUID 11 f t t 1 f 22 "0" 100 0 0 100  int2vectorin - ));
 DESCR("(internal)");
-DATA(insert OID =  41 (  int28out		   PGUID 11 f t t 1 f 23 "0" 100 0 0 100  int28out - ));
+DATA(insert OID =  41 (  int2vectorout	   PGUID 11 f t t 1 f 23 "0" 100 0 0 100  int2vectorout - ));
 DESCR("(internal)");
 DATA(insert OID =  42 (  int4in			   PGUID 11 f t t 1 f 23 "0" 100 0 0 100  int4in - ));
 DESCR("(internal)");
@@ -144,9 +144,9 @@ DATA(insert OID =  52 (  cidin			   PGUID 11 f t t 1 f 29 "0" 100 0 0 100  cidin
 DESCR("(internal)");
 DATA(insert OID =  53 (  cidout			   PGUID 11 f t t 1 f 23 "0" 100 0 0 100  cidout - ));
 DESCR("(internal)");
-DATA(insert OID =  54 (  oid8in			   PGUID 11 f t t 1 f 30 "0" 100 0 0 100  oid8in - ));
+DATA(insert OID =  54 (  oidvectorin	   PGUID 11 f t t 1 f 30 "0" 100 0 0 100  oidvectorin - ));
 DESCR("(internal)");
-DATA(insert OID =  55 (  oid8out		   PGUID 11 f t t 1 f 23 "0" 100 0 0 100  oid8out - ));
+DATA(insert OID =  55 (  oidvectorout	   PGUID 11 f t t 1 f 23 "0" 100 0 0 100  oidvectorout - ));
 DESCR("(internal)");
 DATA(insert OID =  56 (  boollt			   PGUID 11 f t t 2 f 16 "16 16" 100 0 0 100  boollt - ));
 DESCR("less-than");
@@ -750,7 +750,7 @@ DATA(insert OID = 355 (  btfloat8cmp	   PGUID 11 f t t 2 f 23 "701 701" 100 0 0 
 DESCR("btree less-equal-greater");
 DATA(insert OID = 356 (  btoidcmp		   PGUID 11 f t t 2 f 23 "26 26" 100 0 0 100  btoidcmp - ));
 DESCR("btree less-equal-greater");
-DATA(insert OID = 404 (  btoid8cmp		   PGUID 11 f t t 2 f 23 "30 30" 100 0 0 100  btoid8cmp - ));
+DATA(insert OID = 404 (  btoidvectorcmp	   PGUID 11 f t t 2 f 23 "30 30" 100 0 0 100  btoidvectorcmp - ));
 DESCR("btree less-equal-greater");
 DATA(insert OID = 357 (  btabstimecmp	   PGUID 11 f t f 2 f 23 "702 702" 100 0 0 100	btabstimecmp - ));
 DESCR("btree less-equal-greater");
@@ -840,7 +840,7 @@ DATA(insert OID = 455 (  hashname		   PGUID 11 f t t 1 f 23 "19" 100 0 0 100  ha
 DESCR("hash");
 DATA(insert OID = 456 (  hashtext		   PGUID 11 f t t 1 f 23 "25" 100 0 0 100  hashtext - ));
 DESCR("hash");
-DATA(insert OID = 457 (  hashoid8		   PGUID 11 f t t 1 f 23 "30" 100 0 0 100  hashoid8 - ));
+DATA(insert OID = 457 (  hashoidvector	   PGUID 11 f t t 1 f 23 "30" 100 0 0 100  hashoidvector - ));
 DESCR("hash");
 DATA(insert OID = 458 (  text_larger	   PGUID 11 f t t 2 f 25 "25 25" 100 0 0 100  text_larger - ));
 DESCR("larger of two");
@@ -926,17 +926,17 @@ DESCR("truncate varchar()");
 
 DATA(insert OID = 676 (  mktinterval	   PGUID 11 f t f 2 f 704 "702 702" 100 0 0 100 mktinterval - ));
 DESCR("convert to interval");
-DATA(insert OID = 619 (  oid8ne			   PGUID 11 f t t 2 f 16 "30 30" 100 0 0 100  oid8ne - ));
+DATA(insert OID = 619 (  oidvectorne	   PGUID 11 f t t 2 f 16 "30 30" 100 0 0 100  oidvectorne - ));
 DESCR("less-than");
-DATA(insert OID = 677 (  oid8lt			   PGUID 11 f t t 2 f 16 "30 30" 100 0 0 100  oid8lt - ));
+DATA(insert OID = 677 (  oidvectorlt	   PGUID 11 f t t 2 f 16 "30 30" 100 0 0 100  oidvectorlt - ));
 DESCR("less-than");
-DATA(insert OID = 678 (  oid8le			   PGUID 11 f t t 2 f 16 "30 30" 100 0 0 100  oid8le - ));
+DATA(insert OID = 678 (  oidvectorle	   PGUID 11 f t t 2 f 16 "30 30" 100 0 0 100  oidvectorle - ));
 DESCR("less-than-or-equal");
-DATA(insert OID = 679 (  oid8eq			   PGUID 11 f t t 2 f 16 "30 30" 100 0 0 100  oid8eq - ));
+DATA(insert OID = 679 (  oidvectoreq	   PGUID 11 f t t 2 f 16 "30 30" 100 0 0 100  oidvectoreq - ));
 DESCR("equal");
-DATA(insert OID = 680 (  oid8ge			   PGUID 11 f t t 2 f 16 "30 30" 100 0 0 100  oid8ge - ));
+DATA(insert OID = 680 (  oidvectorge	   PGUID 11 f t t 2 f 16 "30 30" 100 0 0 100  oidvectorge - ));
 DESCR("greater-than-or-equal");
-DATA(insert OID = 681 (  oid8gt			   PGUID 11 f t t 2 f 16 "30 30" 100 0 0 100  oid8gt - ));
+DATA(insert OID = 681 (  oidvectorgt	   PGUID 11 f t t 2 f 16 "30 30" 100 0 0 100  oidvectorgt - ));
 DESCR("greater-than");
 
 /* OIDS 700 - 799 */
@@ -1621,8 +1621,8 @@ DATA(insert OID = 1347 (  int4				 PGUID 11 f t t 1 f   23 "25" 100 0 0 100  tex
 DESCR("convert text to int4");
 DATA(insert OID = 1348 (  obj_description	 PGUID 14 f t f 1 f   25 "26" 100 0 0 100  "select description from pg_description where objoid = $1" - ));
 DESCR("get description for object id");
-DATA(insert OID = 1349 (  oid8types			 PGUID 11 f t f 1 f   25 "30" 100 0 0 100  oid8types - ));
-DESCR("print type names of oid8 field");
+DATA(insert OID = 1349 (  oidvectortypes	 PGUID 11 f t f 1 f   25 "30" 100 0 0 100  oidvectortypes - ));
+DESCR("print type names of oidvector field");
 
 DATA(insert OID = 1350 (  datetime			 PGUID 14 f t f 1 f 1184 "1184" 100 0 0 100  "select $1" - ));
 DESCR("convert (noop)");

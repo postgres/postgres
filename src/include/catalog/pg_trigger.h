@@ -41,7 +41,7 @@ CATALOG(pg_trigger) BOOTSTRAP
 	bool		tgdeferrable;	/* RI trigger is deferrable */
 	bool		tginitdeferred;	/* RI trigger is deferred initially */
 	int2		tgnargs;		/* # of extra arguments in tgargs */
-	int28		tgattr;			/* UPDATE of attr1, attr2 ... (NI) */
+	int2vector	tgattr;			/* UPDATE of attr1, attr2 ... (NI) */
 	bytea		tgargs;			/* first\000second\000tgnargs\000 */
 } FormData_pg_trigger;
 

@@ -7,7 +7,7 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: pg_operator.h,v 1.63 1999/12/28 13:40:50 wieck Exp $
+ * $Id: pg_operator.h,v 1.64 2000/01/10 16:13:20 momjian Exp $
  *
  * NOTES
  *	  the genbki.sh script reads this file and generates .bki
@@ -282,12 +282,12 @@ DATA(insert OID = 611 (  "<="	   PGUID 0 b t f  26  26  16 612 610  0  0 int4le 
 DATA(insert OID = 612 (  ">="	   PGUID 0 b t f  26  26  16 611 609  0  0 int4ge intgtsel intgtjoinsel ));
 #define MAX_OIDCMP 612 /* used by cache code */
 
-DATA(insert OID = 644 (  "<>"	   PGUID 0 b t f  30  30  16 644 649   0   0 oid8ne neqsel neqjoinsel ));
-DATA(insert OID = 645 (  "<"	   PGUID 0 b t f  30  30  16 646 648   0   0 oid8lt intltsel intltjoinsel ));
-DATA(insert OID = 646 (  ">"	   PGUID 0 b t f  30  30  16 645 647   0   0 oid8gt intgtsel intgtjoinsel ));
-DATA(insert OID = 647 (  "<="	   PGUID 0 b t f  30  30  16 648 646   0   0 oid8le intltsel intltjoinsel ));
-DATA(insert OID = 648 (  ">="	   PGUID 0 b t f  30  30  16 647 645   0   0 oid8ge intgtsel intgtjoinsel ));
-DATA(insert OID = 649 (  "="	   PGUID 0 b t t  30  30  16 649 644 645 645 oid8eq eqsel eqjoinsel ));
+DATA(insert OID = 644 (  "<>"	   PGUID 0 b t f  30  30  16 644 649   0   0 oidvectorne neqsel neqjoinsel ));
+DATA(insert OID = 645 (  "<"	   PGUID 0 b t f  30  30  16 646 648   0   0 oidvectorlt intltsel intltjoinsel ));
+DATA(insert OID = 646 (  ">"	   PGUID 0 b t f  30  30  16 645 647   0   0 oidvectorgt intgtsel intgtjoinsel ));
+DATA(insert OID = 647 (  "<="	   PGUID 0 b t f  30  30  16 648 646   0   0 oidvectorle intltsel intltjoinsel ));
+DATA(insert OID = 648 (  ">="	   PGUID 0 b t f  30  30  16 647 645   0   0 oidvectorge intgtsel intgtjoinsel ));
+DATA(insert OID = 649 (  "="	   PGUID 0 b t t  30  30  16 649 644 645 645 oidvectoreq eqsel eqjoinsel ));
 
 DATA(insert OID = 613 (  "<->"	   PGUID 0 b t f 600 628 701   0   0  0  0 dist_pl - - ));
 DATA(insert OID = 614 (  "<->"	   PGUID 0 b t f 600 601 701   0   0  0  0 dist_ps - - ));

@@ -118,7 +118,7 @@ describeFunctions(const char *name, PsqlSettings *pset, bool verbose, bool desc)
 	 */
 	strcpy(buf,
 	   "SELECT t.typname as \"Result\", p.proname as \"Function\",\n"
-		   "       oid8types(p.proargtypes) as \"Arguments\"");
+		   "       oidvectortypes(p.proargtypes) as \"Arguments\"");
     if (verbose)
 	strcat(buf, ",\n       u.usename as \"Owner\", l.lanname as \"Language\", p.prosrc as \"Source\"");
 	if (desc)
@@ -127,12 +127,12 @@ describeFunctions(const char *name, PsqlSettings *pset, bool verbose, bool desc)
     if (!verbose)
 	strcat(buf,
 	       "\nFROM pg_proc p, pg_type t\n"
-	       "WHERE p.prorettype = t.oid and (pronargs = 0 or oid8types(p.proargtypes) != '')\n");
+	       "WHERE p.prorettype = t.oid and (pronargs = 0 or oidvectortypes(p.proargtypes) != '')\n");
     else
 	strcat(buf,
 	       "\nFROM pg_proc p, pg_type t, pg_language l, pg_user u\n"
 	       "WHERE p.prorettype = t.oid AND p.prolang = l.oid AND p.proowner = u.usesysid\n"
-	       "  AND (pronargs = 0 or oid8types(p.proargtypes) != '')\n");
+	       "  AND (pronargs = 0 or oidvectortypes(p.proargtypes) != '')\n");
 
 	if (name)
 	{
@@ -427,7 +427,7 @@ objectDescription(const char *object, PsqlSettings *pset)
 	strcat(descbuf, "\nUNION ALL\n\n");
 	strcat(descbuf, "SELECT DISTINCT p.proname as \"Name\", 'function'::text as \"What\", d.description as \"Description\"\n"
 		   "FROM pg_proc p, pg_description d\n"
-		   "WHERE p.oid = d.objoid AND (p.pronargs = 0 or oid8types(p.proargtypes) != '')\n");
+		   "WHERE p.oid = d.objoid AND (p.pronargs = 0 or oidvectortypes(p.proargtypes) != '')\n");
 	if (object)
 	{
 		strcat(descbuf, "  AND p.proname ~* '");

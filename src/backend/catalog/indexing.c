@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/catalog/indexing.c,v 1.55 1999/12/30 05:04:55 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/catalog/indexing.c,v 1.56 2000/01/10 16:13:12 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -763,7 +763,7 @@ ProcedureNameIndexScan(Relation heapRelation,
 	ScanKeyEntryInitialize(&skey[2],
 						   (bits16) 0x0,
 						   (AttrNumber) 3,
-						   (RegProcedure) F_OID8EQ,
+						   (RegProcedure) F_OIDVECTOREQ,
 						   PointerGetDatum(argTypes));
 
 	idesc = index_openr(ProcedureNameIndex);
