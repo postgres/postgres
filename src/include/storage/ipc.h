@@ -6,7 +6,7 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: ipc.h,v 1.14 1997/02/06 05:30:50 scrappy Exp $
+ * $Id: ipc.h,v 1.15 1997/03/03 23:34:27 scrappy Exp $
  *
  * NOTES
  *    This file is very architecture-specific.  This stuff should actually
@@ -87,7 +87,7 @@ typedef int	IpcMemoryId;
 /* ipc.c */
 extern void exitpg(int code);
 extern void quasi_exitpg(void);
-extern on_exitpg(void (*function)(), caddr_t arg);
+extern int on_exitpg(void (*function)(), caddr_t arg);
 
 extern IpcSemaphoreId IpcSemaphoreCreate(IpcSemaphoreKey semKey,
 		int semNum, int permission, int semStartValue,
