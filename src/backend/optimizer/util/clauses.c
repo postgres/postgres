@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/optimizer/util/clauses.c,v 1.91 2001/11/05 17:46:26 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/optimizer/util/clauses.c,v 1.92 2001/12/10 22:54:12 tgl Exp $
  *
  * HISTORY
  *	  AUTHOR			DATE			MAJOR EVENT
@@ -47,6 +47,7 @@ typedef struct
 
 static bool contain_agg_clause_walker(Node *node, void *context);
 static bool pull_agg_clause_walker(Node *node, List **listptr);
+static bool contain_iter_clause_walker(Node *node, void *context);
 static bool contain_subplans_walker(Node *node, void *context);
 static bool pull_subplans_walker(Node *node, List **listptr);
 static bool check_subplans_for_ungrouped_vars_walker(Node *node,
@@ -449,6 +450,39 @@ pull_agg_clause_walker(Node *node, List **listptr)
 								  (void *) listptr);
 }
 
+
+/*****************************************************************************
+ *		Iter clause manipulation
+ *****************************************************************************/
+
+/*
+ * contain_iter_clause
+ *	  Recursively search for Iter nodes within a clause.
+ *
+ *	  Returns true if any Iter found.
+ *
+ * XXX Iter is a crock.  It'd be better to look directly at each function
+ * or operator to see if it can return a set.  However, that would require
+ * a lot of extra cycles as things presently stand.  The return-type info
+ * for function and operator nodes should be extended to include whether
+ * the return is a set.
+ */
+bool
+contain_iter_clause(Node *clause)
+{
+	return contain_iter_clause_walker(clause, NULL);
+}
+
+static bool
+contain_iter_clause_walker(Node *node, void *context)
+{
+	if (node == NULL)
+		return false;
+	if (IsA(node, Iter))
+		return true;			/* abort the tree traversal and return
+								 * true */
+	return expression_tree_walker(node, contain_iter_clause_walker, context);
+}
 
 /*****************************************************************************
  *		Subplan clause manipulation

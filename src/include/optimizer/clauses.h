@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2001, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Id: clauses.h,v 1.49 2001/11/05 17:46:34 momjian Exp $
+ * $Id: clauses.h,v 1.50 2001/12/10 22:54:12 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -41,6 +41,8 @@ extern List *make_ands_implicit(Expr *clause);
 
 extern bool contain_agg_clause(Node *clause);
 extern List *pull_agg_clause(Node *clause);
+
+extern bool contain_iter_clause(Node *clause);
 
 extern bool contain_subplans(Node *clause);
 extern List *pull_subplans(Node *clause);

@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/optimizer/plan/planner.c,v 1.113 2001/11/05 17:46:26 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/optimizer/plan/planner.c,v 1.114 2001/12/10 22:54:12 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -459,6 +459,15 @@ is_simple_subquery(Query *subquery)
 		subquery->distinctClause ||
 		subquery->limitOffset ||
 		subquery->limitCount)
+		return false;
+
+	/*
+	 * Don't pull up a subquery that has any set-returning functions in
+	 * its targetlist.  Otherwise we might well wind up inserting
+	 * set-returning functions into places where they mustn't go,
+	 * such as quals of higher queries.
+	 */
+	if (contain_iter_clause((Node *) subquery->targetList))
 		return false;
 
 	/*
