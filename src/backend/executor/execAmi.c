@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/executor/execAmi.c,v 1.15 1998/01/16 05:03:45 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/executor/execAmi.c,v 1.16 1998/01/16 23:19:47 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -42,7 +42,6 @@
 #include "access/genam.h"
 #include "access/heapam.h"
 #include "catalog/heap.h"
-#include "catalog/pg_type.h"
 
 static Pointer
 ExecBeginScan(Relation relation, int nkeys, ScanKey skeys,
@@ -125,31 +124,6 @@ ExecOpenR(Oid relationOid, bool isindex)
 	if (relation == NULL)
 		elog(DEBUG, "ExecOpenR: relation == NULL, heap_open failed.");
 
-	{
-		int i;
-		Relation trel = palloc(sizeof(RelationData));
-		TupleDesc tdesc = palloc(sizeof(struct tupleDesc));
-		AttributeTupleForm *tatt =
-				palloc(sizeof(AttributeTupleForm*)*relation->rd_att->natts);
-
-		memcpy(trel, relation, sizeof(RelationData));
-		memcpy(tdesc, relation->rd_att, sizeof(struct tupleDesc));
-		trel->rd_att = tdesc;
-		tdesc->attrs = tatt;
-		
-		for (i = 0; i < relation->rd_att->natts; i++)
-		{
-			if (relation->rd_att->attrs[i]->atttypid != VARCHAROID)
-				tdesc->attrs[i] = relation->rd_att->attrs[i];
-			else
-			{
-				tdesc->attrs[i] = palloc(sizeof(FormData_pg_attribute));
-				memcpy(tdesc->attrs[i], relation->rd_att->attrs[i],
-											sizeof(FormData_pg_attribute));
-				tdesc->attrs[i]->attlen = -1;
-			}
-		}
-	}
 	return relation;
 }
 

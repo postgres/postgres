@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/parser/parse_type.c,v 1.3 1998/01/05 03:32:33 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/parser/parse_type.c,v 1.4 1998/01/16 23:20:23 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -136,15 +136,14 @@ typeTypeFlag(Type t)
 /* Given a type structure and a string, returns the internal form of
    that string */
 char *
-stringTypeString(Type tp, char *string, int typlen)
+stringTypeString(Type tp, char *string, int atttypmod)
 {
 	Oid			op;
 	Oid			typelem;
 
 	op = ((TypeTupleForm) GETSTRUCT(tp))->typinput;
 	typelem = ((TypeTupleForm) GETSTRUCT(tp))->typelem;	/* XXX - used for array_in */
-	/* typlen is for bpcharin() and varcharin() */
-	return ((char *) fmgr(op, string, typelem, typlen));
+	return ((char *) fmgr(op, string, typelem, atttypmod));
 }
 
 /* Given a type id, returns the out-conversion function of the type */

@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/varchar.c,v 1.23 1998/01/08 06:18:18 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/varchar.c,v 1.24 1998/01/16 23:20:34 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -50,7 +50,7 @@
  *	  because we pass typelem as the second argument for array_in.)
  */
 char *
-bpcharin(char *s, int dummy, int typlen)
+bpcharin(char *s, int dummy, int atttypmod)
 {
 	char	   *result,
 			   *r;
@@ -60,23 +60,23 @@ bpcharin(char *s, int dummy, int typlen)
 	if (s == NULL)
 		return ((char *) NULL);
 
-	if (typlen == -1)
+	if (atttypmod == -1)
 	{
 
 		/*
-		 * this is here because some functions can't supply the typlen
+		 * this is here because some functions can't supply the atttypmod
 		 */
 		len = strlen(s);
-		typlen = len + VARHDRSZ;
+		atttypmod = len + VARHDRSZ;
 	}
 	else
-		len = typlen - VARHDRSZ;
+		len = atttypmod - VARHDRSZ;
 
 	if (len > 4096)
 		elog(ERROR, "bpcharin: length of char() must be less than 4096");
 
-	result = (char *) palloc(typlen);
-	VARSIZE(result) = typlen;
+	result = (char *) palloc(atttypmod);
+	VARSIZE(result) = atttypmod;
 	r = VARDATA(result);
 	for (i = 0; i < len; i++, r++, s++)
 	{
@@ -124,7 +124,7 @@ bpcharout(char *s)
  *	  because we pass typelem as the second argument for array_in.)
  */
 char *
-varcharin(char *s, int dummy, int typlen)
+varcharin(char *s, int dummy, int atttypmod)
 {
 	char	   *result;
 	int			len;
@@ -133,8 +133,8 @@ varcharin(char *s, int dummy, int typlen)
 		return ((char *) NULL);
 
 	len = strlen(s) + VARHDRSZ;
-	if (typlen != -1 && len > typlen)
-		len = typlen;	/* clip the string at max length */
+	if (atttypmod != -1 && len > atttypmod)
+		len = atttypmod;	/* clip the string at max length */
 
 	if (len > 4096)
 		elog(ERROR, "varcharin: length of char() must be less than 4096");

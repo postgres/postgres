@@ -98,6 +98,7 @@ DefineSequence(CreateSeqStmt *seq)
 		typnam = makeNode(TypeName);
 		typnam->setof = FALSE;
 		typnam->arrayBounds = NULL;
+		typnam->typmod = 0;
 		coldef = makeNode(ColumnDef);
 		coldef->typename = typnam;
 		coldef->defval = NULL;

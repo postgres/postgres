@@ -5,7 +5,7 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: pg_dump.h,v 1.28 1997/12/04 01:31:28 scrappy Exp $
+ * $Id: pg_dump.h,v 1.29 1998/01/16 23:20:43 momjian Exp $
  *
  * Modifications - 6/12/96 - dave@bensoft.com - version 1.13.dhb.2
  *
@@ -86,7 +86,7 @@ typedef struct _tableInfo
 								 * needed because the SQL tables will not
 								 * have the same order of attributes as
 								 * the POSTQUEL tables */
-	int		   *attlen;			/* attribute lengths */
+	int		   *atttypmod;		/* type-specific type modifier */
 	char	   *usename;
 	int			ncheck;			/* # of CHECK expressions */
 	char	  **check_expr;		/* [CONSTRAINT name] CHECK expressions */

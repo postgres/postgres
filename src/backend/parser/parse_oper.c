@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/parser/parse_oper.c,v 1.6 1998/01/15 20:54:28 scrappy Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/parser/parse_oper.c,v 1.7 1998/01/16 23:20:20 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -401,9 +401,9 @@ unary_oper_get_candidates(char *op,
 
 	*candidates = NULL;
 
-	fmgr_info(NameEqualRegProcedure, (func_ptr *) &opKey[0].sk_func);
+	fmgr_info(NameEqualRegProcedure, (FmgrInfo *) &opKey[0].sk_func);
 	opKey[0].sk_argument = NameGetDatum(op);
-	fmgr_info(CharacterEqualRegProcedure, (func_ptr *) &opKey[1].sk_func);
+	fmgr_info(CharacterEqualRegProcedure, (FmgrInfo *) &opKey[1].sk_func);
 	opKey[1].sk_argument = CharGetDatum(rightleft);
 
 	/* currently, only "unknown" can be coerced */

@@ -21,7 +21,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/bin/pg_dump/pg_dump.c,v 1.59 1997/12/26 08:45:27 vadim Exp $
+ *	  $Header: /cvsroot/pgsql/src/bin/pg_dump/pg_dump.c,v 1.60 1998/01/16 23:20:39 momjian Exp $
  *
  * Modifications - 6/10/96 - dave@bensoft.com - version 1.13.dhb
  *
@@ -924,8 +924,8 @@ clearTableInfo(TableInfo *tblinfo, int numTables)
 			if (tblinfo[i].typnames[j])
 				free(tblinfo[i].typnames[j]);
 		}
-		if (tblinfo[i].attlen)
-			free((int *) tblinfo[i].attlen);
+		if (tblinfo[i].atttypmod)
+			free((int *) tblinfo[i].atttypmod);
 		if (tblinfo[i].inhAttrs)
 			free((int *) tblinfo[i].inhAttrs);
 		if (tblinfo[i].attnames)
@@ -1613,7 +1613,7 @@ getTableAttrs(TableInfo *tblinfo, int numTables)
 	char		q[MAXQUERYLEN];
 	int			i_attname;
 	int			i_typname;
-	int			i_attlen;
+	int			i_atttypmod;
 	int			i_attnotnull;
 	int			i_atthasdef;
 	PGresult   *res;
@@ -1638,7 +1638,7 @@ getTableAttrs(TableInfo *tblinfo, int numTables)
 					tblinfo[i].relname,
 					g_comment_end);
 
-		sprintf(q, "SELECT a.attnum, a.attname, t.typname, a.attlen, "
+		sprintf(q, "SELECT a.attnum, a.attname, t.typname, a.atttypmod, "
 				"a.attnotnull, a.atthasdef "
 				"from pg_attribute a, pg_type t "
 				"where a.attrelid = '%s'::oid and a.atttypid = t.oid "
@@ -1656,14 +1656,14 @@ getTableAttrs(TableInfo *tblinfo, int numTables)
 
 		i_attname = PQfnumber(res, "attname");
 		i_typname = PQfnumber(res, "typname");
-		i_attlen = PQfnumber(res, "attlen");
+		i_atttypmod = PQfnumber(res, "atttypmod");
 		i_attnotnull = PQfnumber(res, "attnotnull");
 		i_atthasdef = PQfnumber(res, "atthasdef");
 
 		tblinfo[i].numatts = ntups;
 		tblinfo[i].attnames = (char **) malloc(ntups * sizeof(char *));
 		tblinfo[i].typnames = (char **) malloc(ntups * sizeof(char *));
-		tblinfo[i].attlen = (int *) malloc(ntups * sizeof(int));
+		tblinfo[i].atttypmod = (int *) malloc(ntups * sizeof(int));
 		tblinfo[i].inhAttrs = (int *) malloc(ntups * sizeof(int));
 		tblinfo[i].notnull = (bool *) malloc(ntups * sizeof(bool));
 		tblinfo[i].adef_expr = (char **) malloc(ntups * sizeof(char *));
@@ -1673,9 +1673,7 @@ getTableAttrs(TableInfo *tblinfo, int numTables)
 		{
 			tblinfo[i].attnames[j] = strdup(PQgetvalue(res, j, i_attname));
 			tblinfo[i].typnames[j] = strdup(PQgetvalue(res, j, i_typname));
-			tblinfo[i].attlen[j] = atoi(PQgetvalue(res, j, i_attlen));
-			if (tblinfo[i].attlen[j] > 0)
-				tblinfo[i].attlen[j] = tblinfo[i].attlen[j] - VARHDRSZ;
+			tblinfo[i].atttypmod[j] = atoi(PQgetvalue(res, j, i_atttypmod));
 			tblinfo[i].inhAttrs[j] = 0; /* this flag is set in
 										 * flagInhAttrs() */
 			tblinfo[i].notnull[j] = (PQgetvalue(res, j, i_attnotnull)[0] == 't') ? true : false;
@@ -2321,11 +2319,9 @@ dumpTables(FILE *fout, TableInfo *tblinfo, int numTables,
 								(actual_atts > 0) ? ", " : "",
 								fmtId(tblinfo[i].attnames[j]));
 
-						/* stored length can be -1 (variable) */
-						if (tblinfo[i].attlen[j] > 0)
-							sprintf(q, "%s(%d)",
-									q,
-									tblinfo[i].attlen[j]);
+						sprintf(q, "%s(%d)",
+								q,
+								tblinfo[i].atttypmod[j]-VARHDRSZ);
 						actual_atts++;
 					}
 					else if (!strcmp(tblinfo[i].typnames[j], "varchar"))
@@ -2336,11 +2332,9 @@ dumpTables(FILE *fout, TableInfo *tblinfo, int numTables,
 								fmtId(tblinfo[i].attnames[j]),
 								tblinfo[i].typnames[j]);
 
-						/* stored length can be -1 (variable) */
-						if (tblinfo[i].attlen[j] > 0)
-							sprintf(q, "%s(%d)",
-									q,
-									tblinfo[i].attlen[j]);
+						sprintf(q, "%s(%d)",
+								q,
+								tblinfo[i].atttypmod[j]-VARHDRSZ);
 						actual_atts++;
 					}
 					else

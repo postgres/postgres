@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/access/common/tupdesc.c,v 1.31 1998/01/07 21:00:45 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/access/common/tupdesc.c,v 1.32 1998/01/16 23:19:16 momjian Exp $
  *
  * NOTES
  *	  some of the executor utility code such as "ExecTypeFromTL" should be
@@ -301,11 +301,12 @@ TupleDescInitEntry(TupleDesc desc,
 
 	att->attdisbursion = 0;		/* dummy value */
 	att->attcacheoff = -1;
+	att->atttypmod = 0;
 
 	att->attnum = attributeNumber;
 	att->attnelems = attdim;
 	att->attisset = attisset;
-
+	
 	att->attnotnull = false;
 	att->atthasdef = false;
 
@@ -512,17 +513,7 @@ BuildDescForRelation(List *schema, char *relname)
 					 typename);
 		}
 
-		/*
-		 * this is for char() and varchar(). When an entry is of type
-		 * char() or varchar(), typlen is set to the appropriate length,
-		 * which we'll use here instead. (The catalog lookup only returns
-		 * the length of bpchar and varchar which is not what we want!) -
-		 * ay 6/95
-		 */
-		if (entry->typename->typlen > 0)
-		{
-			desc->attrs[attnum - 1]->attlen = entry->typename->typlen;
-		}
+		desc->attrs[attnum - 1]->atttypmod = entry->typename->typmod;
 
 		/* This is for constraints */
 		if (entry->is_not_null)

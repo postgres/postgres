@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/optimizer/prep/preptlist.c,v 1.6 1997/11/25 22:00:06 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/optimizer/prep/preptlist.c,v 1.7 1998/01/16 23:20:09 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -278,13 +278,9 @@ new_relation_targetlist(Oid relid, Index rt_index, NodeTag node_type)
 		 */
 		attisset = get_attisset( /* type_id, */ relid, attname);
 		if (attisset)
-		{
 			typlen = typeLen(typeidType(OIDOID));
-		}
 		else
-		{
 			typlen = get_typlen(atttype);
-		}
 
 		switch (node_type)
 		{

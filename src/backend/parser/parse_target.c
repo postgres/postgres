@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/parser/parse_target.c,v 1.5 1998/01/05 03:32:31 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/parser/parse_target.c,v 1.6 1998/01/16 23:20:22 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -326,7 +326,8 @@ make_targetlist_expr(ParseState *pstate,
 	Oid			type_id,
 				attrtype;
 	int			type_len,
-				attrlen;
+				attrlen,
+				attrtypmod;
 	int			resdomno;
 	Relation	rd;
 	bool		attrisset;
@@ -360,14 +361,8 @@ make_targetlist_expr(ParseState *pstate,
 		attrtype = attnumTypeId(rd, resdomno);
 		if ((arrayRef != NIL) && (lfirst(arrayRef) == NIL))
 			attrtype = GetArrayElementType(attrtype);
-		if (attrtype == BPCHAROID || attrtype == VARCHAROID)
-		{
-			attrlen = rd->rd_att->attrs[resdomno - 1]->attlen;
-		}
-		else
-		{
-			attrlen = typeLen(typeidType(attrtype));
-		}
+		attrlen = typeLen(typeidType(attrtype));
+		attrtypmod = rd->rd_att->attrs[resdomno - 1]->atttypmod;
 #if 0
 		if (Input_is_string && Typecast_ok)
 		{
@@ -438,13 +433,13 @@ make_targetlist_expr(ParseState *pstate,
 					expr = (Node *) parser_typecast2(expr,
 													 type_id,
 													 typeidType(typelem),
-													 attrlen);
+													 attrtypmod);
 				}
 				else
 					expr = (Node *) parser_typecast2(expr,
 													 type_id,
 												   typeidType(attrtype),
-													 attrlen);
+													 attrtypmod);
 			}
 			else
 			{

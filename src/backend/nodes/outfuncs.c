@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/nodes/outfuncs.c,v 1.21 1998/01/15 18:59:26 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/nodes/outfuncs.c,v 1.22 1998/01/16 23:19:59 momjian Exp $
  *
  * NOTES
  *	  Every (plan) node in POSTGRES has an associated "out" routine which
@@ -137,11 +137,11 @@ _outTypeName(StringInfo str, TypeName *node)
 	appendStringInfo(str, (node->timezone ? "true" : "false"));
 	appendStringInfo(str, " :setof ");
 	appendStringInfo(str, (node->setof ? "true" : "false"));
+	appendStringInfo(str, " :typmod ");
+	sprintf(buf," %d ", node->typmod);
+	appendStringInfo(str, buf);
 	appendStringInfo(str, " :arrayBounds ");
 	_outNode(str, node->arrayBounds);
-	appendStringInfo(str, " :typlen ");
-	sprintf(buf," %d ", node->typlen);
-	appendStringInfo(str, buf);
 }
 
 static void

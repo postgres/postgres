@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/parser/parse_relation.c,v 1.5 1998/01/05 03:32:30 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/parser/parse_relation.c,v 1.6 1998/01/16 23:20:21 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -430,10 +430,15 @@ checkTargetTypes(ParseState *pstate, char *target_colname,
 		elog(ERROR, "Type of %s does not match target column %s",
 			 colname, target_colname);
 
-	if ((attrtype_id == BPCHAROID || attrtype_id == VARCHAROID) &&
-		rd->rd_att->attrs[resdomno_id - 1]->attlen !=
-	pstate->p_target_relation->rd_att->attrs[resdomno_target - 1]->attlen)
-		elog(ERROR, "Length of %s does not match length of target column %s",
+	if (attrtype_id == BPCHAROID &&
+		rd->rd_att->attrs[resdomno_id - 1]->atttypmod !=
+	pstate->p_target_relation->rd_att->attrs[resdomno_target - 1]->atttypmod)
+		elog(ERROR, "Length of %s is longer than length of target column %s",
+			 colname, target_colname);
+	if (attrtype_id == VARCHAROID &&
+		rd->rd_att->attrs[resdomno_id - 1]->atttypmod >
+	pstate->p_target_relation->rd_att->attrs[resdomno_target - 1]->atttypmod)
+		elog(ERROR, "Length of %s is longer than length of target column %s",
 			 colname, target_colname);
 
 	heap_close(rd);

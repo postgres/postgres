@@ -26,7 +26,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/executor/execMain.c,v 1.38 1998/01/14 15:48:09 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/executor/execMain.c,v 1.39 1998/01/16 23:19:49 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -563,13 +563,8 @@ InitPlan(CmdType operation, Query *parseTree, Plan *plan, EState *estate)
 				 */
 				tupdesc = CreateTupleDescCopy(tupType);
 
-				/* fixup to prevent zero-length columns in create */
-				setVarAttrLenForCreateTable(tupdesc, targetList, rangeTable);
-
 				intoRelationId = heap_create_with_catalog(intoName, tupdesc);
-#ifdef NOT_USED					/* it's copy ... */
-				resetVarAttrLenForCreateTable(tupdesc);
-#endif
+
 				FreeTupleDesc(tupdesc);
 
 				/* ----------------

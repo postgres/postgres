@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/nodes/copyfuncs.c,v 1.30 1998/01/15 18:59:20 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/nodes/copyfuncs.c,v 1.31 1998/01/16 23:19:56 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -1480,8 +1480,8 @@ _copyTypeName(TypeName *from)
 		newnode->name = pstrdup(from->name);
 	newnode->timezone = from->timezone;
 	newnode->setof = from->setof;
+	newnode->typmod = from->typmod;
 	Node_Copy(from, newnode, arrayBounds);
-	newnode->typlen = from->typlen;
 
 	return newnode;
 }

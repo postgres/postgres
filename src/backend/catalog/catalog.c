@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/catalog/catalog.c,v 1.12 1998/01/06 19:42:26 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/catalog/catalog.c,v 1.13 1998/01/16 23:19:23 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -190,16 +190,9 @@ fillatt(TupleDesc tupleDesc)
 			 * and byval, since those were already set in
 			 * TupleDescInitEntry.	In fact, this seems redundant here,
 			 * but who knows what I'll break if I take it out...
-			 *
-			 * same for char() and varchar() stuff. I share the same
-			 * sentiments. This function is poorly written anyway. -ay
-			 * 6/95
 			 */
-			if (!(*attributeP)->attisset &&
-				(*attributeP)->atttypid != BPCHAROID &&
-				(*attributeP)->atttypid != VARCHAROID)
+			if (!(*attributeP)->attisset)
 			{
-
 				typp = (TypeTupleForm) GETSTRUCT(tuple);		/* XXX */
 				(*attributeP)->attlen = typp->typlen;
 				(*attributeP)->attbyval = typp->typbyval;

@@ -6,7 +6,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/commands/copy.c,v 1.38 1998/01/15 19:42:36 pgsql Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/commands/copy.c,v 1.39 1998/01/16 23:19:40 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -574,7 +574,7 @@ CopyFrom(Relation rel, bool binary, bool oids, FILE *fp, char *delim)
 					values[i] =
 						(Datum) (*fmgr_faddr(&in_functions[i])) (string,
 												   elements[i],
-												   attr[i]->attlen);
+												   attr[i]->atttypmod);
 
 					/*
 					 * Sanity check - by reference attributes cannot
