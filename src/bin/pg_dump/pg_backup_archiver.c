@@ -15,7 +15,7 @@
  *
  *
  * IDENTIFICATION
- *		$Header: /cvsroot/pgsql/src/bin/pg_dump/pg_backup_archiver.c,v 1.63 2002/11/23 03:59:08 momjian Exp $
+ *		$Header: /cvsroot/pgsql/src/bin/pg_dump/pg_backup_archiver.c,v 1.64 2003/01/03 18:05:02 inoue Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -120,6 +120,85 @@ CloseArchive(Archive *AHX)
 
 	if (res != 0)
 		die_horribly(AH, modulename, "could not close the output file in CloseArchive\n");
+}
+
+/*
+ *      Adjust lo type in contrib for 7.3 or later.
+ *	There must be a cast between lo and oid.	
+ */
+static void
+Adjust_lo_type(ArchiveHandle *AH)
+{
+	PGresult   *res;
+
+	/*
+	 *	The cast function lo(oid) should be immutable.
+	 *	If it's volatile it should be changed to
+	 *	be immutable and the cast (oid as lo)
+	 *	should be created. 
+	 */
+	res = PQexec(AH->blobConnection, "begin;"
+			"update pg_proc set provolatile = 'i'"
+			" where proname = 'lo'"
+			" and pronargs = 1"
+			" and provolatile = 'v'"
+			" and prorettype in (select oid from pg_type where typname = 'lo')"
+			" and proargtypes[0] in (select oid from pg_type where typname = 'oid')");
+
+	if (!res || PQresultStatus(res) != PGRES_COMMAND_OK)
+		die_horribly(AH, modulename, "could not adjust lo(oid) function");
+	if (strcmp(PQcmdTuples(res), "1") == 0)
+	{
+		PQclear(res);
+		/* create cast */
+		res = PQexec(AH->blobConnection, "create cast"
+			" (oid as lo) with function lo(oid) as implicit;commit");
+		if (!res)
+			die_horribly(AH, modulename, "couldn't create cast (oid as lo)");
+	}
+	else
+	{
+		PQclear(res);
+		/* The change is needless */
+		res = PQexec(AH->blobConnection, "rollback");
+		if (!res)
+			die_horribly(AH, modulename, "rollback error");
+	}
+	PQclear(res);
+
+	/*	
+	 *	The cast function oid(lo) should be immutable.
+	 *	If it's volatile it should be changed to
+	 *	be immutable and the cast (lo as oid)
+	 *	should be created. 
+	 */
+	res = PQexec(AH->blobConnection, "begin;"
+			"update pg_proc set provolatile = 'i'"
+			" where proname = 'oid'"
+			" and provolatile = 'v'"
+			" and pronargs = 1"
+			" and prorettype in (select oid from pg_type where typname = 'oid')"
+			" and proargtypes[0] in (select oid from pg_type where typname = 'lo')");
+	if (!res || PQresultStatus(res) != PGRES_COMMAND_OK)
+		die_horribly(AH, modulename, "could not adjust oid(lo) function");
+	if (strcmp(PQcmdTuples(res), "1") == 0)
+	{
+		PQclear(res);
+		/* create cast */
+		res = PQexec(AH->blobConnection, "create cast"
+			" (lo as oid) with function oid(lo) as implicit;commit");
+		if (!res)
+			die_horribly(AH, modulename, "couldn't create cast (lo as oid)");
+	}
+	else
+	{
+		PQclear(res);
+		/* the change is needless */
+		res = PQexec(AH->blobConnection, "rollback");
+		if (!res)
+			die_horribly(AH, modulename, "rollback error");
+	}
+	PQclear(res);
 }
 
 /* Public */
@@ -357,6 +436,7 @@ RestoreArchive(Archive *AHX, RestoreOptions *ropt)
 		/* NULL parameter means disable ALL user triggers */
 		_disableTriggersIfNecessary(AH, NULL, ropt);
 
+		Adjust_lo_type(AH);
 		te = AH->toc->next;
 		while (te != AH->toc)
 		{
