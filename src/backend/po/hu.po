@@ -2,7 +2,7 @@
 # Zoltan Kovacs <kovzol@math.u-szeged.hu>, 2001.
 # Robert Zana <zerobert@freemail.hu>, 2001.
 #
-# $Header: /cvsroot/pgsql/src/backend/po/Attic/hu.po,v 1.1 2001/12/04 17:00:51 momjian Exp $
+# $Header: /cvsroot/pgsql/src/backend/po/Attic/hu.po,v 1.2 2001/12/13 22:02:20 petere Exp $
 #
 msgid ""
 msgstr ""
@@ -13,6 +13,7 @@ msgstr ""
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=ISO-8859-2\n"
 "Content-Transfer-Encoding: 8bit\n"
+"Language-Team: Trend Kft. <rendszergazdi@trendkft.hu>"
 
 #: ../access/common/heaptuple.c:171
 msgid "heap_attisnull: zero attnum disallowed"
@@ -35,7 +36,7 @@ msgstr "heap_formtuple: a(z) %d attributumszám > %d"
 #: ../access/common/heaptuple.c:692
 #, c-format
 msgid "heap_modifytuple: repl is \\%3d"
-msgstr "heap_modifytuple:"
+msgstr ""
 
 #: ../access/common/indextuple.c:56
 #, c-format
@@ -81,7 +82,7 @@ msgstr "initGISTstate: a(z) %u index nem található"
 #: ../access/gist/gist.c:1523
 #, c-format
 msgid "initGISTstate: no attribute tuple %u %d"
-msgstr "initGISTstate:"
+msgstr ""
 
 #: ../access/gist/gist.c:1720
 #, c-format
@@ -560,7 +561,7 @@ msgstr "OperatorRelationFillScanKeyEntry: ismeretlen operátor: %u"
 #: ../access/index/istrat.c:514
 #, c-format
 msgid "OperatorRelationFillScanKeyEntry: no procedure for operator %u"
-msgstr "OperatorRelationFillScanKeyEntry: a %u eljáráshoz nincs operátor"
+msgstr "OperatorRelationFillScanKeyEntry: a(z) %u eljáráshoz nincs operátor"
 
 #: ../access/index/istrat.c:581
 #, c-format
@@ -671,7 +672,7 @@ msgstr "btree_undo: ismeretlen operátorkód: %u"
 #: ../access/nbtree/nbtinsert.c:245
 #, c-format
 msgid "Cannot insert a duplicate key into unique index %s"
-msgstr "A(z) %s egyedi indexet nem lehet többször beszúrni"
+msgstr "A(z) %s egyedi indexbe nem lehet többször ugyanazt a kulcsot felvenni"
 
 #: ../access/nbtree/nbtinsert.c:361
 #, c-format
@@ -698,7 +699,7 @@ msgid ""
 "_bt_getstackbuf: my bits moved right off the end of the world!\n"
 "\tRecreate index %s."
 msgstr "_bt_getstackbuf: a bitjeim kiszaladtak a világból!\n"
-"\tA %s indexet újra kell generálni."
+"\tA(z) %s indexet újra kell generálni."
  
 #: ../access/nbtree/nbtinsert.c:554
 #, c-format
@@ -796,7 +797,7 @@ msgstr "bt_fixbranch[%s]: a jobb pointer nem található (1) (az indexet újra létr
 #: ../access/nbtree/nbtinsert.c:1838
 #, c-format
 msgid "bt_fixbranch[%s]: right pointer unfound(2) (need to recreate index)"
-msgstr "a jobb pointer nem található (2) (az indexet újra létre kell hozni)"
+msgstr "bt_fixbranch[%s]: a jobb pointer nem található (2) (az indexet újra létre kell hozni)"
 
 #: ../access/nbtree/nbtinsert.c:1886
 #, c-format
@@ -831,7 +832,7 @@ msgstr "A(z) %s index nem b-fa"
 #: ../access/nbtree/nbtpage.c:131
 #, c-format
 msgid "Version mismatch on %s: version %d file, version %d code"
-msgstr "Verzió összeférhetetlenség a %s-n: %d fájl, %d kód"
+msgstr "Verzió összeférhetetlenség a(z) %s-n: %d fájl, %d kód"
 
 #: ../access/nbtree/nbtpage.c:259
 #, c-format
@@ -1335,12 +1336,12 @@ msgstr ""
 #: ../access/transam/xlog.c:2463
 #, c-format
 msgid "database system was shut down at %s"
-msgstr "Datenbanksystem wurde am %s heruntergefahren"
+msgstr "az adatbáziskezelõ rendszer a(z) %s idõpontban leállítva"
 
 #: ../access/transam/xlog.c:2466
 #, c-format
 msgid "database system shutdown was interrupted at %s"
-msgstr "Datenbanksystem wurde am %s w„hrend des Herunterfahrens unterbrochen"
+msgstr "az adatbáziskezelõ rendszer leállítása a(z) %s idõpontban megszakítva"
 
 #: ../access/transam/xlog.c:2469
 #, c-format
@@ -1353,12 +1354,12 @@ msgstr ""
 #: ../access/transam/xlog.c:2474
 #, c-format
 msgid "database system was interrupted at %s"
-msgstr "Datenbanksystem wurde am %s unterbrochen"
+msgstr "az adatbáziskezelõ rendszer a(z) %s idõpontban megszakítva"
 
 #: ../access/transam/xlog.c:2485
 #, c-format
 msgid "checkpoint record is at (%u, %u)"
-msgstr "Checkpoint-Eintrag ist bei (%u, %u)"
+msgstr "ellenõrzõpont-bejegyzés a(z) (%u, %u) pozíciónál"
 
 #: ../access/transam/xlog.c:2494
 #, c-format
@@ -1372,13 +1373,12 @@ msgstr ""
 #: ../access/transam/xlog.c:2505
 #, c-format
 msgid "redo record is at (%u, %u); undo record is at (%u, %u); shutdown %s"
-msgstr ""
-"Redo-Eintrag ist bei (%u, %u); Undo-Eintrag ist bei (%u, %u); Shutdown %s"
+msgstr "redo-bejegyzés a(z) (%u, %u) pozíciónál; undo-bejegyzés a(z) (%u, %u) pozíciónál; leállítás %s"
 
 #: ../access/transam/xlog.c:2509
 #, c-format
 msgid "next transaction id: %u; next oid: %u"
-msgstr "n„chste Transaktions-Id: %u; n„chste Oid: %u"
+msgstr "következõ tranzakció-azonosító: %u; következõ oid: %u"
 
 #: ../access/transam/xlog.c:2512
 msgid "invalid next transaction id"
@@ -1431,7 +1431,7 @@ msgstr ""
 
 #: ../access/transam/xlog.c:2722
 msgid "database system is ready"
-msgstr "Datenbanksystem is bereit"
+msgstr "az adatbáziskezelõ munkára kész"
 
 #: ../access/transam/xlog.c:2754
 msgid "invalid primary checkpoint link in control file"
@@ -1475,11 +1475,11 @@ msgstr ""
 
 #: ../access/transam/xlog.c:2835
 msgid "shutting down"
-msgstr "fahre herunter"
+msgstr "leállítás"
 
 #: ../access/transam/xlog.c:2845
 msgid "database system is shut down"
-msgstr "Datenbanksystem ist heruntergefahren"
+msgstr "az adatbáziskezelõ rendszer leállítva"
 
 #: ../access/transam/xlog.c:2864
 msgid "CreateCheckPoint: cannot be called inside transaction block"
@@ -1660,7 +1660,7 @@ msgstr ""
 #: ../bootstrap/bootstrap.c:852
 #, c-format
 msgid "Error: unknown type '%s'.\n"
-msgstr "Hiba: a(z) '%s' egy ismeretlen tipus.\n"
+msgstr "Hiba: a(z) '%s' egy ismeretlen típus.\n"
 
 #: ../bootstrap/bootstrap.c:868
 msgid "AllocateAttribute: malloc failed"
@@ -1701,12 +1701,12 @@ msgstr ""
 #: bootparse.y:206
 #, c-format
 msgid "relation created with oid %u"
-msgstr "a(z) %u oid-al lett létrehozva a reláció"
+msgstr "a(z) %u oid-dal lett létrehozva a reláció"
 
 #: bootparse.y:219
 #, c-format
 msgid "inserting row with oid %u..."
-msgstr "sor beillesztése a %u oid-al..."
+msgstr "sor beillesztése a(z) %u oid-al..."
 
 #: bootparse.y:221
 msgid "inserting row..."
@@ -1719,25 +1719,25 @@ msgstr ""
 
 #: bootparse.y:232
 msgid "relation not open"
-msgstr "A reláció nincs nyitva"
+msgstr "a reláció nincs nyitva"
 
 #: bootparse.y:299
 msgid "too many columns"
-msgstr "Túl sok az oszlop"
+msgstr "túl sok az oszlop"
 
 #: bootscanner.l:125
 #, c-format
 msgid "syntax error at line %d: unexpected character %s"
-msgstr "szintaktikai hiba a %d. sorban: a(z) %s egy nem várt karakter"
+msgstr "szintaktikai hiba a(z) %d. sorban: a(z) %s egy nem várt karakter"
 
 #: bootscanner.l:141
 #, c-format
 msgid "syntax error at line %d: unexpected token %s"
-msgstr "szintaktikai hiba a %d. sorban: a(z) %s egy nem várt szimbólum"
+msgstr "szintaktikai hiba a(z) %d. sorban: a(z) %s egy nem várt szimbólum"
 
 #: ../catalog/catalog.c:145
 msgid "newoid: GetNewObjectId returns invalid oid"
-msgstr "newoid: GetNewObjectId ergab ungltige Oid"
+msgstr "newoid: a GetNewObjectId érvénytelen oid-ot ad vissza"
 
 #: ../catalog/aclchk.c:56
 #, c-format
@@ -1845,7 +1845,7 @@ msgstr "pg_ownercheck: a(z) \"%s\" osztály nem található"
 #: ../catalog/aclchk.c:558
 #, c-format
 msgid "pg_ownercheck: type \"%s\" not found"
-msgstr "pg_ownercheck: a(z) \"%s\" tipus nem található"
+msgstr "pg_ownercheck: a(z) \"%s\" típus nem található"
 
 #: ../catalog/aclchk.c:563
 #, c-format
@@ -1860,7 +1860,7 @@ msgstr "pg_oper_ownercheck: a(z) %u érvénytelen felhasználó azonosító"
 #: ../catalog/aclchk.c:611
 #, c-format
 msgid "pg_ownercheck: operator %u not found"
-msgstr ""
+msgstr "pg_ownercheck: a(z) %u operátór nem található"
 
 #: ../catalog/aclchk.c:638
 #, c-format
@@ -1887,12 +1887,14 @@ msgstr "SystemAttributeDefinition: érvénytelen attributumszám %d"
 msgid ""
 "invalid relation name \"%s\"; the 'pg_' name prefix is reserved for system "
 "catalogs"
-msgstr "ungltiger Relationsname »%s«; der Pr„fix »pg_« ist fr die Systemkataloge reserviert"
+msgstr ""
+"a(z) \"%s\" relációnév érvénytelen; a 'pg_' prefix a rendszerkatalógusnak"
+"van lefoglalva"
 
 #: ../catalog/heap.c:359
 #, c-format
 msgid "name of column \"%s\" conflicts with an existing system column"
-msgstr "Name der Spalte »%s« steht im Konflikt mit einer bestehenden Systemspalte"
+msgstr "a \"%s\" oszlop neve  konfliktusban van egy létezõ rendszer oszloppal"
 
 #: ../catalog/heap.c:365
 #, c-format
@@ -1900,67 +1902,67 @@ msgid ""
 "Attribute '%s' has an unknown type\n"
 "\tRelation created; continue"
 msgstr ""
-"Az '%s' attributum ismeretlen tipusú\n"
+"Az '%s' attributum ismeretlen típusú\n"
 "\t reláció létrehozva; folytatás"
 
 #: ../catalog/heap.c:381
 #, c-format
 msgid "column name \"%s\" is duplicated"
-msgstr "Spaltenname »%s« besteht mehrfach"
+msgstr "a(z) \"%s\" oszlopnév kétszer szerepel"
 
 #: ../catalog/heap.c:715
 #, c-format
 msgid "Number of columns is out of range (1 to %d)"
-msgstr "Anzahl der Spalten ist außerhalb des zul„ssigen Bereichs (1 bis %d)"
+msgstr "Túl lett lépve a megengedett oszlopszám (1-tõl %d-ig)"
 
 #: ../catalog/heap.c:723
 #, c-format
 msgid "Relation '%s' already exists"
-msgstr "Relation »%s« existiert bereits"
+msgstr "A(z) '%s' reláció már létezik"
 
 #: ../catalog/heap.c:860
 #, c-format
 msgid "Relation \"%s\" inherits from \"%s\""
-msgstr "Relation »%s« ist von »%s« abgeleitet"
+msgstr "A(z) \"%s\" reláció a(z) \"%s\"-nek a leszármazottja"
 
 #: ../catalog/heap.c:863
 #, c-format
 msgid "Relation %u inherits from \"%s\""
-msgstr "Relation %u ist von »%s« abgeleitet"
+msgstr "A(z) %u a \"%s\"-nek a leszármazottja"
 
 #: ../catalog/heap.c:946 ../commands/rename.c:205
 #, c-format
 msgid "Relation \"%s\" does not exist"
-msgstr "Relation »%s« existiert bereits"
+msgstr "A(z) \"%s\" reláció nem létezik"
 
 #: ../catalog/heap.c:999
 #, c-format
 msgid "RelationTruncateIndexes: index %u not found in pg_class"
-msgstr "RelationTruncateIndexes: Index %u nicht in pg_class gefunden"
+msgstr "RelationTruncateIndexes: a(z) %u nem található a pg_class-ban"
 
 #: ../catalog/heap.c:1073
 msgid "TRUNCATE TABLE cannot run inside a transaction block"
-msgstr "TRUNCATE TABLE kann nicht in einem Transaktionsblock laufen"
+msgstr "TRUNCATE TABLE nem tud futtatni tranzakción belöli blokkot"
 
 #: ../catalog/heap.c:1186
 #, c-format
 msgid "DeleteTypeTuple: type \"%s\" does not exist"
-msgstr "DeleteTypeTuple: Typ »%s« existiert nicht"
+msgstr "DeleteTypeTuple: a \"%s\" típus nem létezik"
 
 #: ../catalog/heap.c:1226
 #, c-format
 msgid "DeleteTypeTuple: column of type %s exists in relation %u"
-msgstr "DeleteTypeTuple: Spalte des Typs %s existiert in Relation %u"
+msgstr "DeleteTypeTuple: a(z) %s típusú oszlop már létezik a(z) %u relációban"
 
 #: ../catalog/heap.c:1297
 #, c-format
 msgid "System relation \"%s\" may not be dropped"
-msgstr "Systemrelation »%s« darf nicht entfernt werden"
+msgstr "A \"%s\" rendszerrelációt nem lehet törölni"
 
 #: ../catalog/heap.c:1306
 #, c-format
 msgid "heap_drop_with_catalog: FlushRelationBuffers returned %d"
-msgstr "heap_drop_with_catalog: FlushRelationBuffers ergab %d"
+msgstr "heap_drop_with_catalog: FlushRelationBuffers %d-vel tér vissza"
 
 #: ../catalog/heap.c:1448 ../parser/parse_relation.c:949
 #: ../utils/adt/ruleutils.c:2679
@@ -1970,15 +1972,15 @@ msgstr "Cachesuche nach Attribut %d von Relation %u fehlgeschlagen"
 
 #: ../catalog/heap.c:1639
 msgid "cannot use column references in DEFAULT clause"
-msgstr "Spaltenreferenzen k÷nnen nicht in DEFAULT-Klausel verwendet werden"
+msgstr "nem lehet használni oszlophivatkozást a DEFAULT záradékban"
 
 #: ../catalog/heap.c:1645
 msgid "cannot use subselects in DEFAULT clause"
-msgstr "Subselects k÷nnen nicht in DEFAULT-Klausel verwendet werden"
+msgstr "nem lehet használni alselect-et a DEFAULT záradékban"
 
 #: ../catalog/heap.c:1647
 msgid "cannot use aggregate functions in DEFAULT clause"
-msgstr "Aggregatfunktionen k÷nnen nicht in DEFAULT-Klausel verwendet werden"
+msgstr "nem lehet használni aggregált függvényeket a DEFAULT záradékban"
 
 #: ../catalog/heap.c:1669
 #, c-format
@@ -1986,78 +1988,78 @@ msgid ""
 "Column \"%s\" is of type %s but default expression is of type %s\n"
 "\tYou will need to rewrite or cast the expression"
 msgstr ""
-"Spalte »%s« hat Typ %s, aber der Default-Ausdruck hat Typ %s\n"
-"\tSie mssen den Ausdruck umschreiben oder ein Typumwandlung vornehmen"
+"a(z) \"%s\" oszlopnak %s a típusa, de az alapértelmezett kifejezés %s típusú\n"
+"\tA kifejezést át kell írni vagy konvertálni"
 
 #: ../catalog/heap.c:1719 ../catalog/heap.c:1733 ../commands/creatinh.c:109
 #, c-format
 msgid "Duplicate CHECK constraint name: '%s'"
-msgstr "doppelter CHECK-Constraint-Name: %s"
+msgstr ""
 
 #: ../catalog/heap.c:1791
 #, c-format
 msgid "CHECK constraint expression '%s' does not yield boolean result"
-msgstr "CHECK-Constraint-Ausdruck %s ergibt kein Resultat vom Typ boolean"
+msgstr ""
 
 #: ../catalog/heap.c:1798
 #, c-format
 msgid "Only relation \"%s\" can be referenced in CHECK constraint expression"
-msgstr "Nur Referenzen auf Tabelle »%s« sind im CHECK-Constraint-Ausdruck zugelassen"
+msgstr ""
 
 #: ../catalog/heap.c:1805
 msgid "cannot use subselect in CHECK constraint expression"
-msgstr "Subselects k÷nnen nicht in CHECK-Constraint-Ausdrcken verwendet werden"
+msgstr ""
 
 #: ../catalog/heap.c:1807
 msgid "cannot use aggregate function in CHECK constraint expression"
-msgstr "Aggregatfunktionen k÷nnen nicht in CHECK-Constraint-Ausdrcken verwendet werden"
+msgstr ""
 
 #: ../catalog/heap.c:1848 ../catalog/heap.c:2029 ../utils/adt/ruleutils.c:2655
 #, c-format
 msgid "cache lookup of relation %u failed"
-msgstr "Cachesuche nach Relation %u fehlgeschlagen"
+msgstr "A(z) %u reláció nincs a cache-ben"
 
 #: ../catalog/heap.c:2022
 msgid "check count became negative"
-msgstr "Anzahl der CHECK-Constraints wurde negativ"
+msgstr "az ellenõrzõ összeg negatívvá vált"
 
 #: ../catalog/indexing.c:162
 #, c-format
 msgid "CatalogIndexInsert: index %u not found"
-msgstr "CatalogIndexInsert: index %u nicht gefunden"
+msgstr "CatalogIndexInsert: a(z)%u index nem található"
 
 #: ../catalog/index.c:114
 #, c-format
 msgid "index named \"%s\" already exists"
-msgstr "Index mit Namen »%s« existiert bereits"
+msgstr "a(z) \"%s\" nevû index már létezik"
 
 #: ../catalog/index.c:120
 #, c-format
 msgid "cannot create index on non-existent relation \"%s\""
-msgstr "kann keinen Index fr nicht existierende Relation »%s« erstellen"
+msgstr "nem tud indexet létrehozni a \"%s\" nem létezõ relációban"
 
 #: ../catalog/index.c:147
 #, c-format
 msgid "Function %u does not exist"
-msgstr "Funktion %u existiert nicht"
+msgstr "A(z) %u függvény nem létezik"
 
 #: ../catalog/index.c:165
 #, c-format
 msgid "Type %u does not exist"
-msgstr "Typ %u existiert nicht"
+msgstr "A(z) %u típus nem létezik"
 
 #: ../catalog/index.c:240
 #, c-format
 msgid "cannot create index: column %d does not exist"
-msgstr "kann Index nicht erstellen: Spalte %d existiert nicht"
+msgstr "nem lehet létrehozni indexet: a(z) %d oszlop em létezik"
 
 #: ../catalog/index.c:689
 msgid "must index at least one column"
-msgstr "mindestens eine Spalte muß indiziert werden"
+msgstr ""
 
 #: ../catalog/index.c:693
 msgid "User-defined indexes on system catalogs are not supported"
-msgstr "benutzerdefinierte Indizies fr Systemkataloge werden nicht untersttzt"
+msgstr "a felhasznaló által definiált indexek a rendszer katalógusában nem támogatottak"
 
 #: ../catalog/index.c:867 ../catalog/index.c:912
 #, c-format
@@ -2067,35 +2069,35 @@ msgstr "index_drop: Cachesuche nach Index %u fehlgeschlagen"
 #: ../catalog/index.c:924
 #, c-format
 msgid "index_drop: FlushRelationBuffers returned %d"
-msgstr "index_drop: FlushRelationBuffers ergab %d"
+msgstr "index_drop: FlushRelationBuffers %d-vel tér vissza"
 
 #: ../catalog/index.c:1144
 #, c-format
 msgid "LockClassinfoForUpdate couldn't lock relid %u"
-msgstr "LockClassinfoForUpdate: konnte relid %u nicht sperren"
+msgstr "LockClassinfoForUpdate nem lehet lezárni a(z) %u reláció azonosítót"
 
 #: ../catalog/index.c:1155
 msgid "The tuple isn't committed"
-msgstr ""
+msgstr "A sor nincs véglegesítve"
 
 #: ../catalog/index.c:1158
 msgid "The tuple is already deleted"
-msgstr ""
+msgstr "A sor már ki lett törölve"
 
 #: ../catalog/index.c:1179
 #, c-format
 msgid "IndexesAreActive couldn't lock %u"
-msgstr "IndexesAreActive konnte %u nicht sperren"
+msgstr "IndexesAreActive nincs lezárva a(z) %u"
 
 #: ../catalog/index.c:1182
 #, c-format
 msgid "relation %u isn't an indexable relation"
-msgstr "Relation %u ist nicht indizierbar"
+msgstr "a(z) %u reláció nem indextáblareláció"
 
 #: ../catalog/index.c:1246
 #, c-format
 msgid "setRelhasindex: cannot find relation %u in pg_class"
-msgstr "setRelhasindex: kann Relation %u nicht in pg_class finden"
+msgstr "setRelhasindex: a(z) %u reláció nem található a pg_class-ban"
 
 #: ../catalog/index.c:1309
 msgid "setNewRelfilenode impossible to lock class tuple"
@@ -2104,96 +2106,96 @@ msgstr ""
 #: ../catalog/index.c:1409
 #, c-format
 msgid "UpdateStats: cannot open relation id %u"
-msgstr "UpdateStats: kann Relation %u nicht ÷ffnen"
+msgstr "UpdateStats: a(z) %u azonosítójú relációt nem lehet megnyitni"
 
 #: ../catalog/index.c:1445
 #, c-format
 msgid "UpdateStats: cannot find relation %u in pg_class"
-msgstr "UpdateStats: kann Relation %u nicht in pg_class finden"
+msgstr "UpdateStats: a(z) %u reláció nem található a pg_class-ban"
 
 #: ../catalog/index.c:1711
 msgid "IndexBuildHeapScan: concurrent insert in progress"
-msgstr ""
+msgstr "IndexBuildHeapScan: párhuzamos beillesztések van a folyamatban"
 
 #: ../catalog/index.c:1719
 msgid "IndexBuildHeapScan: concurrent delete in progress"
-msgstr ""
+msgstr "IndexBuildHeapScan: párhuzamos tõrlés van a folyamatban"
 
 #: ../catalog/index.c:1723 ../commands/vacuum.c:896
 #: ../commands/vacuumlazy.c:331 ../commands/vacuumlazy.c:805
 msgid "Unexpected HeapTupleSatisfiesVacuum result"
-msgstr "unerwartetes Ergebnis von HeapTupleSatisfiesVacuum"
+msgstr "Nem várt HeapTupleSatisfiesVacuum eredmény"
 
 #: ../catalog/index.c:1810
 #, c-format
 msgid "IndexGetRelation: can't find index id %u"
-msgstr "IndexGetRelation: kann Index %u nicht finden"
+msgstr "IndexGetRelation: nem található a(z) %u azonosítójú index"
 
 #: ../catalog/index.c:1859
 msgid "REINDEX cannot run inside a transaction block"
-msgstr "REINDEX kann nicht in einem Transaktionsblock laufen"
+msgstr "REINDEX-et nem lehet futtatni egy tranzakción belül"
 
 #: ../catalog/index.c:1870
 #, c-format
 msgid "reindex_index: index %u not found in pg_index"
-msgstr "reindex_index: Index %u nicht in pg_index gefunden"
+msgstr "reindex_index: a(z) %u index nem található a pg_index-ben"
 
 #: ../catalog/index.c:1886
 #, c-format
 msgid "reindex_index: index %u not found in pg_class"
-msgstr "reindex_index: Index %u nicht in pg_class gefunden"
+msgstr "reindex_index: a(z) %u index nem található a pg_class-ben"
 
 #: ../catalog/index.c:1893
 msgid "reindex_index: can't open heap relation"
-msgstr ""
+msgstr "reindex_index: a heaprelációt nem lehet megnyitni"
 
 #: ../catalog/index.c:1896
 msgid "reindex_index: can't open index relation"
-msgstr ""
+msgstr "reindex_index: indexrelációt nem lehet megnyitni"
 
 #: ../catalog/index.c:2013
 #, c-format
 msgid "the target relation %u is nailed"
-msgstr ""
+msgstr "a(z) %u célreláció rögzített"
 
 #: ../catalog/index.c:2029
 #, c-format
 msgid "the target relation %u is shared"
-msgstr ""
+msgstr "a(z) %u célreláció megosztott"
 
 #: ../catalog/pg_aggregate.c:75
 msgid "no aggregate name supplied"
-msgstr "kein Name fr Aggregatfunktion angegeben"
+msgstr ""
 
 #: ../catalog/pg_aggregate.c:78
 msgid "aggregate must have a transition function"
-msgstr "Aggregatfunktion muß eine šbergangsfunktion haben"
+msgstr ""
 
 #: ../catalog/pg_aggregate.c:91
 #, c-format
 msgid "data type %s does not exist"
-msgstr "Datentyp %s existiert nicht"
+msgstr "A(z) %s adattípus nem létezik"
 
 #: ../catalog/pg_aggregate.c:102
 #, c-format
 msgid "aggregate function \"%s\" with base type %s already exists"
-msgstr "Aggregatfunktion »%s« mit Basistyp %s existiert bereits"
+msgstr ""
 
 #: ../catalog/pg_aggregate.c:110
 #, c-format
 msgid "data type %s does not exit"
-msgstr "Datentyp %s existiert nicht"
+msgstr "A(z) %s adattípus nem létezik"
 
 #: ../catalog/pg_aggregate.c:133
 #, c-format
 msgid "return type of transition function %s is not %s"
-msgstr "Rckgabetyp der šbergangsfunktion %s ist nicht %s"
+msgstr ""
 
 #: ../catalog/pg_aggregate.c:146
 msgid ""
 "must not omit initval when transfn is strict and transtype is not compatible "
 "with input type"
-msgstr "Der Anfangswert darf nicht ausgelassen werden wenn die šbergangsfunktion strikt ist und der šbergangstyp nicht mit dem Eingabetyp kompatibel ist"
+msgstr ""
 
 #: ../catalog/pg_aggregate.c:204
 msgid "AggregateCreate: heap_formtuple failed"
@@ -2206,208 +2208,208 @@ msgstr "AggregateCreate: heap_insert fehlgeschlagen"
 #: ../catalog/pg_aggregate.c:239
 #, c-format
 msgid "AggNameGetInitVal: cache lookup failed for aggregate '%s'"
-msgstr "AggNameGetInitVal: Cachesuche nach Aggregatfunktion »%s« fehlgeschlagen"
+msgstr ""
 
 #: ../catalog/pg_aggregate.c:264
 #, c-format
 msgid ""
 "AggNameGetInitVal: cache lookup failed on aggregate transition function "
 "return type %u"
-msgstr "AggNameGetInitVal: Cachesuche fehlgeschlagen fr Rckgabetyp %u der šbergangsfunktion"
+msgstr ""
 
 #: ../catalog/pg_operator.c:177
 #, c-format
 msgid "left type \"%s\" of operator %s does not exist"
-msgstr "linker Typ »%s« des Operators %s existiert nicht"
+msgstr ""
 
 #: ../catalog/pg_operator.c:186
 #, c-format
 msgid "right type \"%s\" of operator %s does not exist"
-msgstr "rechter Typ »%s« des Operators %s existiert nicht"
+msgstr ""
 
 #: ../catalog/pg_operator.c:192
 #, c-format
 msgid "operator %s must have at least one operand type"
-msgstr "Operator %s muß mindestens einen Operandentyp haben"
+msgstr ""
 
 #: ../catalog/pg_operator.c:333
 msgid "OperatorShellMake: the operand types are not valid"
-msgstr "OperatorShellMake: die Operandentypen sind ungltig"
+msgstr ""
 
 #: ../catalog/pg_operator.c:479
 #, c-format
 msgid "OperatorDef: operator \"%s\" already defined"
-msgstr "OperatorDef: Operator %s ist bereits definiert"
+msgstr ""
 
 #: ../catalog/pg_operator.c:497
 #, c-format
 msgid "left type \"%s\" does not exist"
-msgstr "linker Typ »%s« existiert bereits"
+msgstr ""
 
 #: ../catalog/pg_operator.c:506
 #, c-format
 msgid "right type \"%s\" does not exist"
-msgstr "rechter Typ »%s« existiert bereits"
+msgstr ""
 
 #: ../catalog/pg_operator.c:512
 msgid "operator must have at least one operand type"
-msgstr "Operator muß mindestens einen Operandentyp haben"
+msgstr ""
 
 #: ../catalog/pg_operator.c:707
 #, c-format
 msgid "OperatorDef: can't create operator shell \"%s\""
-msgstr "OperatorDef: kann Operatorhlle %s nicht erstellen"
+msgstr ""
 
 #: ../catalog/pg_operator.c:720
 msgid "operator cannot be its own negator or sort operator"
-msgstr "Operator kann nicht sein eigener Negator oder Sortierungsoperator sein"
+msgstr ""
 
 #: ../catalog/pg_operator.c:775
 #, c-format
 msgid "OperatorDef: operator %u not found"
-msgstr "OperatorDef: Operator %u nicht gefunden"
+msgstr ""
 
 #: ../catalog/pg_operator.c:1026
 msgid "at least one of leftarg or rightarg must be specified"
-msgstr "entweder leftarg oder rightarg (oder beides) muß angegeben werden"
+msgstr ""
 
 #: ../catalog/pg_operator.c:1032
 msgid "only binary operators can have commutators"
-msgstr "nur bin„re Operatoren k÷nnen Kommutatoren haben"
+msgstr ""
 
 #: ../catalog/pg_operator.c:1034
 msgid "only binary operators can have join selectivity"
-msgstr "nur bin„re Operatoren k÷nnen Join-Selectivity haben"
+msgstr ""
 
 #: ../catalog/pg_operator.c:1036
 msgid "only binary operators can hash"
-msgstr "nur bin„re Operatoren k÷nnen eine Hash-Funktion haben"
+msgstr ""
 
 #: ../catalog/pg_operator.c:1038
 msgid "only binary operators can have sort links"
-msgstr "nur bin„re Operatoren k÷nnen Sortierverbindungen haben"
+msgstr ""
 
 #: ../catalog/pg_proc.c:86
 #, c-format
 msgid "language '%s' does not exist"
-msgstr "Sprache »%s« existiert nicht"
+msgstr ""
 
 #: ../catalog/pg_proc.c:96 ../commands/comment.c:593 ../commands/remove.c:305
 #, c-format
 msgid "functions cannot have more than %d arguments"
-msgstr "Funktionen k÷nnen nicht mehr als %d Argumente haben"
+msgstr ""
 
 #: ../catalog/pg_proc.c:102
 msgid "SQL functions cannot have arguments of type \"opaque\""
-msgstr "SQL-Funktionen k÷nnen keine Argument vom Typ »opaque« haben"
+msgstr ""
 
 #: ../catalog/pg_proc.c:110
 #, c-format
 msgid "argument type %s does not exist"
-msgstr "Argumenttyp %s existiert nicht"
+msgstr ""
 
 #: ../catalog/pg_proc.c:113
 #, c-format
 msgid "argument type %s is only a shell"
-msgstr "Argumenttyp %s ist nur eine Hlle"
+msgstr ""
 
 #: ../catalog/pg_proc.c:118
 msgid "functions cannot accept set arguments"
-msgstr "Funktionen k÷nnen keine SET Argumente haben"
+msgstr ""
 
 #: ../catalog/pg_proc.c:129
 #, c-format
 msgid "function %s already exists with same argument types"
-msgstr "Funktion %s existiert bereits mit den selben Argumenttypen"
+msgstr ""
 
 #: ../catalog/pg_proc.c:166
 msgid "lookup for procedure by source needs fix (Jan)"
-msgstr "Suche nach Prozedur mit Quelltext muß erst noch repariert werden (Jan)"
+msgstr ""
 
 #: ../catalog/pg_proc.c:174
 msgid "SQL functions cannot return type \"opaque\""
-msgstr "SQL-Funktionen k÷nnen keinen Rckgabetyp »opaque« haben"
+msgstr ""
 
 #: ../catalog/pg_proc.c:183
 #, c-format
 msgid "ProcedureCreate: type %s is not yet defined"
-msgstr "ProcedureCreate: Typ %s ist noch nicht definiert"
+msgstr ""
 
 #: ../catalog/pg_proc.c:187
 #, c-format
 msgid "could not create type %s"
-msgstr "konnte Typ %s nicht erstellen"
+msgstr ""
 
 #: ../catalog/pg_proc.c:191
 #, c-format
 msgid "return type %s is only a shell"
-msgstr "Rckgabetyp %s ist nur eine Hlle"
+msgstr ""
 
 #: ../catalog/pg_proc.c:204
 #, c-format
 msgid "method %s already an attribute of type %s"
-msgstr "Methode %s ist schon ein Attribut von Typ %s"
+msgstr ""
 
 #: ../catalog/pg_proc.c:239
 #, c-format
 msgid "there is no built-in function named \"%s\""
-msgstr "Es gibt keine eingebaute Funktion namens %s"
+msgstr ""
 
 #: ../catalog/pg_proc.c:345
 #, c-format
 msgid "function declared to return %s, but no SELECT provided"
-msgstr "Funktion mit Rckgabetyp %s deklariert, aber enth„lt kein SELECT"
+msgstr ""
 
 #: ../catalog/pg_proc.c:363
 msgid "function declared with no return type, but final statement is a SELECT"
-msgstr "Funktion ohne Rckgabetyp deklariert, aber letzte Anweisung ist SELECT"
+msgstr ""
 
 #: ../catalog/pg_proc.c:369
 #, c-format
 msgid "function declared to return %s, but final statement is not a SELECT"
-msgstr "Funktion mit Rckgabetyp %s deklariert, aber letzte Anweisung ist kein SELECT"
+msgstr ""
 
 #: ../catalog/pg_proc.c:385
 #, c-format
 msgid "function declared to return %s returns multiple columns in final SELECT"
-msgstr "Funktion ist mit Rckgabetyp %s deklariert, aber letztes SELECT ergibt mehr als eine Spalte"
+msgstr ""
 
 #: ../catalog/pg_proc.c:390
 #, c-format
 msgid "return type mismatch in function: declared to return %s, returns %s"
-msgstr "Rckgabetyp stimmt nicht berein: deklariert als %s, aber tats„chlich %s"
+msgstr ""
 
 #: ../catalog/pg_proc.c:421 ../catalog/pg_proc.c:445
 #, c-format
 msgid ""
 "function declared to return %s does not SELECT the right number of columns (%"
 "d)"
-msgstr "Funktion deklariert mit Rckgabetyp %s, aber die Abfrage ergibt nicht die richtige Anzahl Spalten (%d)"
+msgstr ""
 
 #: ../catalog/pg_proc.c:435
 #, c-format
 msgid "function declared to return %s returns %s instead of %s at column %d"
-msgstr "Funktion mit deklariertem Rckgabetyp %s ergibt %s statt %s in Spalte %d"
+msgstr ""
 
 #: ../catalog/pg_type.c:307 ../catalog/pg_type.c:538
 #, c-format
 msgid "type named %s already exists"
-msgstr "Typ namens %s existiert bereits"
+msgstr ""
 
 #: ../catalog/pg_type.c:317 ../catalog/pg_type.c:533
 #, c-format
 msgid "type %s does not exist"
-msgstr "a(z) %s tipus nem létezik"
+msgstr "a(z) %s típus nem létezik"
 
 #: ../catalog/pg_type.c:467
 #, c-format
 msgid "type %s already exists"
-msgstr "a(z) %s tipus már létezik"
+msgstr "a(z) %s típus már létezik"
 
 #: ../catalog/pg_largeobject.c:133
 #, c-format
 msgid "LargeObjectDrop: large object %u not found"
-msgstr "LargeObjectDrop: Large Object %u nicht gefunden"
+msgstr ""
 
 #: ../commands/_deadcode/recipe.c:42
 msgid "You must compile with TIOGA defined in order to use recipes\n"
@@ -2465,7 +2467,7 @@ msgstr ""
 #: ../commands/_deadcode/recipe.c:716
 #, c-format
 msgid "getParamTypes: arg type '%s' is not defined"
-msgstr "getParamTypes: a(z) %s argumentum tipus nem lett definiálva"
+msgstr "getParamTypes: a(z) %s argumentum típus nem lett definiálva"
 
 #: ../commands/_deadcode/recipe.c:718
 #, c-format
@@ -2475,7 +2477,7 @@ msgstr ""
 #: ../commands/_deadcode/recipe.c:844 ../commands/_deadcode/recipe.c:887
 #, c-format
 msgid "calling parser with %s"
-msgstr "a parser hívása a(z) %e-el"
+msgstr "a parser hívása a(z) %s-el"
 
 #: ../commands/_deadcode/recipe.c:854 ../commands/_deadcode/recipe.c:894
 msgid "tg_parseSubQuery: parser produced > 1 query tree"
@@ -2631,14 +2633,14 @@ msgstr ""
 #: ../commands/command.c:1029 ../tcop/utility.c:373
 #, c-format
 msgid "ALTER TABLE: relation \"%s\" is a system catalog"
-msgstr ""
+msgstr "ALTER TABLE: A(z) \"%s\" reláció egy rendszerkatalógus"
 
 #: ../commands/command.c:315 ../commands/command.c:527
 #: ../commands/command.c:696 ../commands/command.c:1033
 #: ../commands/command.c:1169 ../commands/command.c:1614
 #: ../commands/command.c:1683 ../commands/command.c:1762
 msgid "ALTER TABLE: permission denied"
-msgstr ""
+msgstr "ALTER TABLE: nem jogosult"
 
 #: ../commands/command.c:324 ../commands/command.c:532
 #: ../commands/command.c:701 ../commands/command.c:1043
@@ -2802,12 +2804,12 @@ msgstr "ALTER TABLE / DROP CONSTRAINT nem támogatja a CASCADE kulcsszót"
 #: ../commands/command.c:1631
 #, c-format
 msgid "ALTER TABLE / DROP CONSTRAINT: %s is not a table"
-msgstr "ALTER TABLE / DROP CONSTRAINT: a %s nem tábla"
+msgstr "ALTER TABLE / DROP CONSTRAINT: a(z) %s nem tábla"
 
 #: ../commands/command.c:1659
 #, c-format
 msgid "ALTER TABLE / DROP CONSTRAINT: %s does not exist"
-msgstr "ALTER TABLE / DROP CONSTRAINT: a %s nem létezik"
+msgstr "ALTER TABLE / DROP CONSTRAINT: a(z) %s nem létezik"
 
 #: ../commands/command.c:1663
 msgid "Multiple constraints dropped"
@@ -3120,7 +3122,7 @@ msgstr ""
 #: ../commands/creatinh.c:323
 #, c-format
 msgid "CREATE TABLE: attribute \"%s\" duplicated"
-msgstr "CREATE TABLE: az \"%s\" attributum duplázott"
+msgstr "CREATE TABLE: az \"%s\" attributum többszõr szerepel"
 
 #: ../commands/creatinh.c:337
 #, c-format
@@ -3594,7 +3596,7 @@ msgstr ""
 #: ../commands/indexcmds.c:518 ../commands/indexcmds.c:555
 #, c-format
 msgid "index \"%s\" does not exist"
-msgstr ""
+msgstr "A(z) \"%s\" index nem létezik"
 
 #: ../commands/indexcmds.c:521 ../commands/indexcmds.c:558
 #: ../commands/indexcmds.c:597
@@ -3614,7 +3616,7 @@ msgstr ""
 #: ../commands/indexcmds.c:594
 #, c-format
 msgid "table \"%s\" does not exist"
-msgstr ""
+msgstr "A(z) \"%s\" tábla nem létezik"
 
 #: ../commands/indexcmds.c:601
 #, c-format
@@ -3647,7 +3649,7 @@ msgstr ""
 #: ../commands/proclang.c:84
 #, c-format
 msgid "Language %s already exists"
-msgstr ""
+msgstr "A(z) %s nyelv már létezik"
 
 #: ../commands/proclang.c:97
 #, c-format
@@ -3668,7 +3670,7 @@ msgstr ""
 #: ../commands/proclang.c:172
 #, c-format
 msgid "Language %s doesn't exist"
-msgstr ""
+msgstr "A(z) %s nyelv nem létezik"
 
 #: ../commands/proclang.c:175
 #, c-format
@@ -6001,19 +6003,19 @@ msgstr ""
 #: ../parser/parse_agg.c:118
 #, c-format
 msgid "Attribute %s.%s must be GROUPed or used in an aggregate function"
-msgstr "A %s.%s attributumot be kell rakni a GROUP záradékba vagy használd agregáló fügvénytben"
+msgstr "A(z) %s.%s attributumot be kell rakni a GROUP záradékba vagy használd Aggregáló fügvénytben"
 
 #: ../parser/parse_agg.c:156
 msgid "Aggregates not allowed in WHERE clause"
-msgstr "Agregáló függvényekek nem lehet használni a WHERE záradékban"
+msgstr "Aggregáló függvényekek nem lehet használni a WHERE záradékban"
 
 #: ../parser/parse_agg.c:158
 msgid "Aggregates not allowed in JOIN conditions"
-msgstr "Agregáló függvényekek nem lehet használni a JOIN feltételben"
+msgstr "Aggregáló függvényeket nem lehet használni a JOIN feltételben"
 
 #: ../parser/parse_agg.c:174
 msgid "Aggregates not allowed in GROUP BY clause"
-msgstr "Agregáló függvényekek nem lehet használni a GROUP BY záradékban"
+msgstr "Aggregáló függvényeket nem lehet használni a GROUP BY záradékban"
 
 #: ../parser/parse_agg.c:250
 #, c-format
@@ -6032,12 +6034,12 @@ msgstr ""
 #: ../parser/parse_clause.c:296
 #, c-format
 msgid "JOIN/USING clause must return type boolean, not type %s"
-msgstr "A JOIN/USING záradékban boolean tipusnak kell visszatérnie, nem %s tipusnak"
+msgstr "A JOIN/USING záradékban boolean típusnak kell visszatérnie, nem %s típusnak"
 
 #: ../parser/parse_clause.c:332
 #, c-format
 msgid "JOIN/ON clause must return type boolean, not type %s"
-msgstr "A JOIN/ON záradékban boolean tipusnak kell visszatérnie, nem %s tipusnak"
+msgstr "A JOIN/ON záradékban boolean típusnak kell visszatérnie, nem %s típusnak"
 
 #: ../parser/parse_clause.c:352
 #, c-format
@@ -6046,7 +6048,7 @@ msgstr ""
 
 #: ../parser/parse_clause.c:412
 msgid "sub-select in FROM must have an alias"
-msgstr "a FROM-ban lévõ beágyazott select-nek adni kell alias nevet"
+msgstr "a FROM-ban lévõ beágyazott select-nek alias nevet kell adni"
 
 #: ../parser/parse_clause.c:434 ../parser/parse_clause.c:437
 msgid "Unexpected parse analysis result for subselect in FROM"
@@ -6535,7 +6537,7 @@ msgstr ""
 #: ../parser/parse_type.c:65
 #, c-format
 msgid "Unable to locate type name '%s' in catalog"
-msgstr "Nincs '%s' nevû tipus a katalógusban"
+msgstr "Nincs '%s' nevû típus a katalógusban"
 
 #: ../parser/parse_type.c:74
 msgid "typeTypeId() called with NULL type struct"
@@ -6853,47 +6855,41 @@ msgid ""
 "but unable to open file \"%s\": %s\n"
 "\n"
 msgstr ""
-"%s findet das Datenbanksystem nicht.\n"
-"Es wurde im Verzeichnis »%s« erwartet,\n"
-"aber die Datei »%s« konnte nicht ge÷ffnet werden (%s).\n"
-"\n"
 
 #: ../postmaster/postmaster.c:399 ../postmaster/postmaster.c:410
 #: ../postmaster/postmaster.c:552 ../postmaster/postmaster.c:591
 #, c-format
 msgid "Try '%s --help' for more information.\n"
-msgstr "Versuchen Sie »%s --help« fr weitere Informationen.\n"
+msgstr ""
 
 #: ../postmaster/postmaster.c:409
 #, c-format
 msgid "invalid argument -- %s"
-msgstr "ungltiges Argument -- %s"
+msgstr ""
 
 #: ../postmaster/postmaster.c:433
 msgid "Assert checking is not compiled in."
-msgstr "Assert-Prfungen sind bei der šbersetzung nicht konfiguriert worden."
+msgstr ""
 
 #: ../postmaster/postmaster.c:538 ../tcop/postgres.c:1466
 #, c-format
 msgid "--%s requires argument"
-msgstr "--%s ben÷tigt ein Argument"
+msgstr ""
 
 #: ../postmaster/postmaster.c:540 ../tcop/postgres.c:1468
 #, c-format
 msgid "-c %s requires argument"
-msgstr "-c %s ben÷tigt ein Argument"
+msgstr ""
 
 #: ../postmaster/postmaster.c:567
 msgid ""
 "The number of buffers (-B) must be at least twice the number of allowed "
 "connections (-N) and at least 16."
 msgstr ""
-"Die Zahl der Puffer (-B) muß mindestens doppelt so hoch wie die Anzahl der "
-"erlaubten Verbindungen (-N) und mindestens 16 sein."
 
 #: ../postmaster/postmaster.c:590
 msgid "For SSL, TCP/IP connections must be enabled."
-msgstr "Fr SSL mssen TCP/IP-Verbindungen aktiviert sein."
+msgstr ""
 
 #: ../postmaster/postmaster.c:636
 msgid "cannot create INET stream port"
@@ -6919,8 +6915,6 @@ msgid ""
 "%s is the PostgreSQL server.\n"
 "\n"
 msgstr ""
-"%s ist der PostgreSQL-Server.\n"
-"\n"
 
 #: ../postmaster/postmaster.c:765
 #, c-format
@@ -6929,89 +6923,86 @@ msgid ""
 "  %s [options...]\n"
 "\n"
 msgstr ""
-"Benutzung:\n"
-"  %s [Optionen...]\n"
-"\n"
 
 #: ../postmaster/postmaster.c:766
 msgid "Options:\n"
-msgstr "Optionen:\n"
+msgstr ""
 
 #: ../postmaster/postmaster.c:768
 msgid "  -A 1|0          enable/disable run-time assert checking\n"
-msgstr "  -A 1|0          Assert-Prfungen ein-/ausschalten\n"
+msgstr ""
 
 #: ../postmaster/postmaster.c:770
 #, c-format
 msgid "  -B NBUFFERS     number of shared buffers (default %d)\n"
-msgstr "  -B ZAHL         Anzahl der geteilten Puffer (Standard: %d)\n"
+msgstr ""
 
 #: ../postmaster/postmaster.c:771
 msgid "  -c NAME=VALUE   set run-time parameter\n"
-msgstr "  -c NAME=WERT    setze Konfigurationsparameter\n"
+msgstr ""
 
 #: ../postmaster/postmaster.c:772
 msgid "  -d 1-5          debugging level\n"
-msgstr "  -d 1-5          Debug-Level\n"
+msgstr ""
 
 #: ../postmaster/postmaster.c:773
 msgid "  -D DATADIR      database directory\n"
-msgstr "  -D VERZEICHNIS  Datenbankverzeichnis\n"
+msgstr ""
 
 #: ../postmaster/postmaster.c:774
 msgid "  -F              turn fsync off\n"
-msgstr "  -F              »fsync« ausschalten\n"
+msgstr ""
 
 #: ../postmaster/postmaster.c:775
 msgid "  -h HOSTNAME     host name or IP address to listen on\n"
-msgstr "  -h HOSTNAME     horche auf Hostname oder IP-Adresse\n"
+msgstr ""
 
 #: ../postmaster/postmaster.c:776
 msgid "  -i              enable TCP/IP connections\n"
-msgstr "  -i              erm÷gliche TCP/IP-Verbindungen\n"
+msgstr ""
 
 #: ../postmaster/postmaster.c:777
 msgid "  -k DIRECTORY    Unix-domain socket location\n"
-msgstr "  -k VERZEICHNIS  Ort der Unix-Domain-Socket\n"
+msgstr ""
 
 #: ../postmaster/postmaster.c:779
 msgid "  -l              enable SSL connections\n"
-msgstr "  -l              erm÷gliche SSL-Verbindungen\n"
+msgstr ""
 
 #: ../postmaster/postmaster.c:781
 #, c-format
 msgid ""
 "  -N MAX-CONNECT  maximum number of allowed connections (1..%d, default %d)\n"
-msgstr "  -N ZAHL         Anzahl der erlaubten Verbindugen (1..%d, Standard: %d)\n"
+msgstr ""
 
 #: ../postmaster/postmaster.c:783
 msgid "  -o OPTIONS      pass 'OPTIONS' to each backend server\n"
-msgstr "  -o OPTIONEN      »OPTIONEN« an Kindprozesse weiterreichen\n"
+msgstr ""
 
 #: ../postmaster/postmaster.c:784
 #, c-format
 msgid "  -p PORT         port number to listen on (default %d)\n"
-msgstr "  -p PORT         auf dieser Portnummer horchen (Standard: %d)\n"
+msgstr ""
 
 #: ../postmaster/postmaster.c:785
 msgid ""
 "  -S              silent mode (start in background without logging output)\n"
-msgstr "  -S              Stiller Modus (im Hintergrund starten, ohne Log-Ausgaben)\n"
+msgstr ""
 
 #: ../postmaster/postmaster.c:787
 msgid ""
 "\n"
 "Developer options:\n"
-msgstr "\nEntwickleroptionen:\n"
+msgstr ""
 
 #: ../postmaster/postmaster.c:788
 msgid ""
 "  -n              do not reinitialize shared memory after abnormal exit\n"
-msgstr "  -n              Shared Memory nach abnormalem Ende nicht neu initialisieren\n"
+msgstr ""
 
 #: ../postmaster/postmaster.c:789
 msgid "  -s              send SIGSTOP to all backend servers if one dies\n"
-msgstr "  -s              SIGSTOP an alle Kindprozesse senden wenn einer stirbt\n"
+msgstr ""
 
 #: ../postmaster/postmaster.c:791
 msgid ""
@@ -7023,25 +7014,25 @@ msgid ""
 "Report bugs to <pgsql-bugs@postgresql.org>.\n"
 msgstr ""
 "\n"
-"In der Dokumentation finden Sie eine komplette Liste der Konfigurations-\n"
-"parameter und Informationen wie man sie auf der Kommandozeile oder in der\n"
-"Konfiguratonsdatei setzen kann.\n"
-"\n"
-"Berichten Sie Fehler an <pgsql-bugs@postgresql.org>.\n"
+"Kérjük olvassa el a dokumentációt, amelyben a konfigurációs lehetõségek\n"
+"teljes skálája megtalálható, s ezen felül az is, hogy akár parancssori\n"
+"módban, akár a konfigurációs file segítségével hogyan finomhangolhatja\n"
+"a rendszert.\n\n"
+"A hibajelzéséket kérjük a <pgsql-bugs@postgresql.org> címre küldje.\n"
 
 #: ../postmaster/postmaster.c:863
 #, c-format
 msgid "ServerLoop: select failed: %s"
-msgstr "ServerLoop: select fehlgeschlagen: %s"
+msgstr ""
 
 #: ../postmaster/postmaster.c:994
 msgid "invalid length of startup packet"
-msgstr "ungltige L„nge des Startpakets"
+msgstr "az induló csomag hossza érvénytelen"
 
 #: ../postmaster/postmaster.c:1028
 #, c-format
 msgid "failed to send SSL negotiation response: %s"
-msgstr "konnte SSL-Verhandlungsantwort nicht senden: %s"
+msgstr ""
 
 #: ../postmaster/postmaster.c:1040
 #, c-format
@@ -7050,31 +7041,31 @@ msgstr ""
 
 #: ../postmaster/postmaster.c:1060
 msgid "unsupported frontend protocol"
-msgstr "nicht untersttztes Protokoll"
+msgstr "nem támogatott elõtét protokoll"
 
 #: ../postmaster/postmaster.c:1088
 msgid "no PostgreSQL user name specified in startup packet"
-msgstr "kein PostgreSQL-Benutzername im Startpaket angegeben"
+msgstr "nincs megadva PostgreSQL felhasználói név az induló csomagban"
 
 #: ../postmaster/postmaster.c:1124
 #, c-format
 msgid "processCancelRequest: CheckPointPID in cancel request for process %d"
-msgstr "processCancelRequest: CheckPointPID in Abbruchanfrage fr Prozess %d"
+msgstr ""
 
 #: ../postmaster/postmaster.c:1139
 #, c-format
 msgid "processing cancel request: sending SIGINT to process %d"
-msgstr "bearbeite Abbruchanfrage: sende SIGINT an Prozess %d"
+msgstr ""
 
 #: ../postmaster/postmaster.c:1147
 #, c-format
 msgid "bad key in cancel request for process %d"
-msgstr "falscher Schlssel in Abbruchanfrage fr Prozess %d"
+msgstr ""
 
 #: ../postmaster/postmaster.c:1156
 #, c-format
 msgid "bad pid in cancel request for process %d"
-msgstr "falsche Pid in Abbruchanfrage fr Prozess %d"
+msgstr ""
 
 #: ../postmaster/postmaster.c:1201
 msgid "ConnCreate: malloc failed"
@@ -7088,27 +7079,27 @@ msgstr ""
 #: ../postmaster/postmaster.c:1347
 #, c-format
 msgid "Smart Shutdown request at %s"
-msgstr ""
+msgstr "Elegáns Leállási kérelem a(z) %s helyen"
 
 #: ../postmaster/postmaster.c:1366 ../postmaster/postmaster.c:1422
 #: ../postmaster/postmaster.c:1520
 #, c-format
 msgid "Shutdown process %d already running"
-msgstr ""
+msgstr "A(z) %d leállási processz már fut"
 
 #: ../postmaster/postmaster.c:1389
 #, c-format
 msgid "Fast Shutdown request at %s"
-msgstr ""
+msgstr "Gyors Leállási kérelem a(z) %s helyen"
 
 #: ../postmaster/postmaster.c:1396
 msgid "Aborting any active transaction...\n"
-msgstr ""
+msgstr "Minden aktív tranzakció megszakítása...\n"
 
 #: ../postmaster/postmaster.c:1440
 #, c-format
 msgid "Immediate Shutdown request at %s"
-msgstr ""
+msgstr "Azonnali leálláskérés a(z) %s idõpontban"
 
 #: ../postmaster/postmaster.c:1475
 msgid "reaping dead processes"
@@ -7130,6 +7121,8 @@ msgid ""
 "Server processes were terminated at %sReinitializing shared memory and "
 "semaphores\n"
 msgstr ""
+"A szerver processzek mûködése befejezõdött a(z) %s helyen"
+"Az osztott memóriarészek és szemaforok újrainicializálódnak\n"
 
 #: ../postmaster/postmaster.c:1604
 #, c-format
@@ -7142,6 +7135,8 @@ msgid ""
 "Server process (pid %d) exited with status %d at %sTerminating any active "
 "server processes...\n"
 msgstr ""
+"A(z) %d pid számú szerver processz %d státusszal lépett ki a(z) %s helyen"
+"Minden aktív szerver processz mûködése befejezõdik...\n"
 
 #: ../postmaster/postmaster.c:1674
 #, c-format
@@ -7176,22 +7171,22 @@ msgstr ""
 #: ../postmaster/postmaster.c:2164
 #, c-format
 msgid "failed to create SSL context: %s"
-msgstr "konnte SSL-Kontext nicht erstellen: %s"
+msgstr "az SSL kontextus létrehozása sikertelen: %s"
 
 #: ../postmaster/postmaster.c:2171
 #, c-format
 msgid "failed to load server certificate (%s): %s"
-msgstr "konnte Serverzertifikat (%s) nicht laden: %s"
+msgstr "a(z) %s szerver-igazolás nem tölthetõ be: %s"
 
 #: ../postmaster/postmaster.c:2178
 #, c-format
 msgid "failed to load private key file (%s): %s"
-msgstr "konnte Private-Key-Datei (%s) nicht laden: %s"
+msgstr "a(z) %s titkos kulcs fájl beolvasása sikertelen: %s"
 
 #: ../postmaster/postmaster.c:2184
 #, c-format
 msgid "check of private key failed: %s"
-msgstr "šberprfung des Private Key fehlgeschlagen: %s"
+msgstr "hiba a titkos kulcs ellenõrzésekor: %s"
 
 #: ../postmaster/postmaster.c:2287
 msgid "CheckPointDataBase: malloc failed"
@@ -7200,7 +7195,7 @@ msgstr ""
 #: ../postmaster/postmaster.c:2327
 #, c-format
 msgid "cannot create file %s: %s"
-msgstr "kann Datei %s nicht erstellen: %s"
+msgstr "a(z) %s file nem hozható létre: %s"
 
 #: ../postmaster/postmaster.c:2339
 #, c-format
@@ -7249,7 +7244,7 @@ msgstr ""
 #: ../rewrite/rewriteHandler.c:491 ../rewrite/rewriteHandler.c:778
 #, c-format
 msgid "Relation \"%s\" with OID %u no longer exists"
-msgstr ""
+msgstr "A(z) \"%s\" reláció a(z) %u OID-dal már nem létezik"
 
 #: ../rewrite/rewriteHandler.c:558
 msgid "fireRIRrules: failed to remove aggs from qual"
@@ -7262,15 +7257,15 @@ msgstr ""
 
 #: ../rewrite/rewriteHandler.c:951
 msgid "Cannot insert into a view without an appropriate rule"
-msgstr ""
+msgstr "Nézettáblába csak egy arra vonatkozó szabállyal lehet beszúrni"
 
 #: ../rewrite/rewriteHandler.c:954
 msgid "Cannot update a view without an appropriate rule"
-msgstr ""
+msgstr "Nézettáblát csak egy arra vonatkozó szabállyal lehet módosítani"
 
 #: ../rewrite/rewriteHandler.c:957
 msgid "Cannot delete from a view without an appropriate rule"
-msgstr ""
+msgstr "Nézettáblából csak egy arra vonatkozó szabállyal lehet törölni"
 
 #: ../rewrite/rewriteHandler.c:960
 #, c-format
@@ -7280,7 +7275,7 @@ msgstr ""
 #: ../rewrite/rewriteDefine.c:61
 #, c-format
 msgid "Attempt to insert rule \"%s\" failed: already exists"
-msgstr ""
+msgstr "Már létezik \"%s\" nevû szabály, a definiálás sikertelen"
 
 #: ../rewrite/rewriteDefine.c:128
 msgid "rules not allowed for insert or delete events to an attribute"
@@ -7356,7 +7351,7 @@ msgstr ""
 #: ../rewrite/rewriteDefine.c:344
 #, c-format
 msgid "Relation \"%s\" is not empty. Cannot convert it to view"
-msgstr ""
+msgstr "A \"%s\" reláció nem üres. Nem konvertálható nézettáblává"
 
 #: ../rewrite/rewriteManip.c:559 ../rewrite/rewriteManip.c:566
 msgid "getInsertSelectQuery: expected to find SELECT subquery"
@@ -7381,17 +7376,17 @@ msgstr ""
 #: ../rewrite/rewriteRemove.c:44
 #, c-format
 msgid "Rule or view \"%s\" not found"
-msgstr ""
+msgstr "A \"%s\" szabály vagy nézettábla nem található"
 
 #: ../rewrite/rewriteRemove.c:53 ../utils/adt/tid.c:143
 #, c-format
 msgid "Relation %u not found"
-msgstr ""
+msgstr "A(z) %u reláció nem található"
 
 #: ../rewrite/rewriteRemove.c:93
 #, c-format
 msgid "Rule \"%s\" not found"
-msgstr ""
+msgstr "A(z) \"%s\" szabály nem található"
 
 #: ../rewrite/rewriteRemove.c:114
 msgid "Cannot remove a view's SELECT rule"
@@ -7777,7 +7772,7 @@ msgstr ""
 
 #: ../storage/ipc/sinval.c:53
 msgid "Sorry, too many clients already"
-msgstr ""
+msgstr "Sajnálom, már túl sok kliens fut"
 
 #: ../storage/ipc/sinval.c:69
 msgid "SendSharedInvalidMessage: SI buffer overflow"
@@ -8256,16 +8251,16 @@ msgstr ""
 #: ../tcop/postgres.c:388
 #, c-format
 msgid "query: %s"
-msgstr ""
+msgstr "lekérdezés: %s"
 
 #: ../tcop/postgres.c:451
 msgid "parse tree:"
-msgstr ""
+msgstr "értelmezõ fa:"
 
 #: ../tcop/postgres.c:455
 #, c-format
 msgid "parse tree: %s"
-msgstr ""
+msgstr "értelmezõ fa: %s"
 
 #: ../tcop/postgres.c:489
 msgid "pg_analyze_and_rewrite: copyObject failed on parse tree"
@@ -8273,7 +8268,7 @@ msgstr ""
 
 #: ../tcop/postgres.c:498 ../tcop/postgres.c:508
 msgid "rewritten parse tree:"
-msgstr ""
+msgstr "újraírt értelmezõ fa:"
 
 #: ../tcop/postgres.c:555
 msgid "pg_plan_query: copyObject failed on plan tree"
@@ -8281,18 +8276,19 @@ msgstr ""
 
 #: ../tcop/postgres.c:569
 msgid "plan:"
-msgstr ""
+msgstr "terv:"
 
 #: ../tcop/postgres.c:573
 #, c-format
 msgid "plan: %s"
-msgstr ""
+msgstr "terv: %s"
 
 #: ../tcop/fastpath.c:333 ../tcop/postgres.c:707
 msgid ""
 "current transaction is aborted, queries ignored until end of transaction "
 "block"
-msgstr ""
+msgstr "a jelenlegi tranzakció megszakadt, a tranzakció végéig minden "
+"lekérdezés figyelmen kívül lesz hagyva"
 
 #: ../tcop/postgres.c:774
 #, c-format
@@ -8324,6 +8320,14 @@ msgid ""
 "database system connection and exit.\n"
 "\tPlease reconnect to the database system and repeat your query."
 msgstr ""
+"Üzenet érkezett a PostgreSQL szerveren futó száltól:\n"
+"\tA Postmaster program információja szerint egy másik szál\n"
+"\tnem normális módon állt le (meghalt), s az osztott memóriát valószínûleg\n"
+"\tkorrupt állapotban hagyta.\n"
+"\tAz aktuális tranzakciót nem hajtottam végre, s pillanatokon belül\n"
+"\tvéget vetek az Ön adatbázis-kapcsolatának is, majd kilépek.\n"
+"\tKérem próbáljon ismételten kapcsolatba lépni az adatbáziskezelõ rendszerrel,\n"
+"\tés ismételje meg a lekérdezést."
 
 #: ../tcop/postgres.c:1015
 msgid ""
@@ -8333,11 +8337,11 @@ msgstr ""
 
 #: ../tcop/postgres.c:1047
 msgid "This connection has been terminated by the administrator."
-msgstr ""
+msgstr "Az adminisztrátor megszüntette ezt a kapcsolatot."
 
 #: ../tcop/postgres.c:1053
 msgid "Query was cancelled."
-msgstr ""
+msgstr "A lekérdezés visszavonva."
 
 #: ../tcop/postgres.c:1622
 #, c-format
@@ -8347,7 +8351,7 @@ msgstr ""
 #: ../tcop/postgres.c:1681
 #, c-format
 msgid "connection: host=%s user=%s database=%s"
-msgstr ""
+msgstr "kapcsolat: kiszolgáló=%s felhasználó=%s adatbázis=%s"
 
 #: ../tcop/postgres.c:1692
 msgid "InitPostgres"
@@ -8405,42 +8409,42 @@ msgstr ""
 #: ../tcop/utility.c:89
 #, c-format
 msgid "\"%s\" is not %s %s. Use DROP %s to remove %s %s"
-msgstr ""
+msgstr "\"%s\" nem %s %s. Használd a DROP %s utasítást %s %s eltávolításához"
 
 #: ../tcop/utility.c:93
 #, c-format
 msgid "\"%s\" is not %s %s"
-msgstr ""
+msgstr "\"%s\" nem %s %s"
 
 #: ../tcop/utility.c:113
 #, c-format
 msgid "%s \"%s\" does not exist"
-msgstr ""
+msgstr "%s \"%s\" nem létezik"
 
 #: ../tcop/utility.c:121
 #, c-format
 msgid "you do not own %s \"%s\""
-msgstr ""
+msgstr "nem te vagy %s \"%s\" tulajdonosa"
 
 #: ../tcop/utility.c:126
 #, c-format
 msgid "%s \"%s\" is a system %s"
-msgstr ""
+msgstr "%s \"%s\" egy rendszer %s"
 
 #: ../tcop/utility.c:304
 #, c-format
 msgid "TRUNCATE cannot be used on system tables. '%s' is a system table"
-msgstr ""
+msgstr "Rendszertáblákon nem használható a TRUNCATE. A(z) '%s' egy rendszertábla"
 
 #: ../tcop/utility.c:310
 #, c-format
 msgid "TRUNCATE cannot be used on sequences. '%s' is a sequence"
-msgstr ""
+msgstr "Szekvenciákon nem használható a TRUNCATE. A(z) '%s' egy szekvencia"
 
 #: ../tcop/utility.c:313
 #, c-format
 msgid "TRUNCATE cannot be used on views. '%s' is a sequence"
-msgstr ""
+msgstr "Nézettáblákon nem használható a TRUNCATE. A(z) '%s' egy szekvencia"
 
 #: ../tcop/utility.c:318
 #, c-format
@@ -8458,7 +8462,7 @@ msgstr ""
 #: ../tcop/utility.c:692
 #, c-format
 msgid "CLUSTER: relation \"%s\" is a system catalog"
-msgstr ""
+msgstr "CLUSTER: a(z) \"%s\" reláció egy rendszerkatalógus"
 
 #: ../tcop/utility.c:872
 #, c-format
@@ -8466,6 +8470,8 @@ msgid ""
 "\"%s\" is a system index. call REINDEX under standalone postgres with -O -P "
 "options"
 msgstr ""
+"A(z) \"%s\" rendszerindex. A REINDEX utasítást kell meghívni parancssorból "
+"indított, -O -P opciókkal futtatott postgresbõl"
 
 #: ../tcop/utility.c:875
 #, c-format
@@ -8473,14 +8479,16 @@ msgid ""
 "\"%s\" is a system index. call REINDEX under standalone postgres with -P -O "
 "options"
 msgstr ""
+"A(z) \"%s\" rendszerindex. A REINDEX utasítást kell meghívni parancssorból "
+"indított, -O -P opciókkal futtatott postgresbõl"
 
 #: ../tcop/utility.c:891
 msgid "must be called under standalone postgres with -O -P options"
-msgstr ""
+msgstr "parancssorból indított, -O -P opciókkal futtatott postgresbõl hívható csak"
 
 #: ../tcop/utility.c:893
 msgid "must be called under standalone postgres with -P -O options"
-msgstr ""
+msgstr "parancssorból indított, -O -P opciókkal futtatott postgresbõl hívható csak"
 
 #: ../tcop/utility.c:906
 #, c-format
@@ -8589,7 +8597,7 @@ msgstr ""
 #: ../utils/adt/acl.c:89
 #, c-format
 msgid "getid: identifier must be <%d characters"
-msgstr ""
+msgstr "getid: az azonosítónak kevesebbnek kell lennie %d karakternél"
 
 #: ../utils/adt/acl.c:125
 #, c-format
@@ -8598,11 +8606,11 @@ msgstr ""
 
 #: ../utils/adt/acl.c:137
 msgid "aclparse: bad keyword, must be [group|user]"
-msgstr ""
+msgstr "aclparse: rossz kulcsszó, [group|user] lehet csak"
 
 #: ../utils/adt/acl.c:140
 msgid "aclparse: a name must follow the [group|user] keyword"
-msgstr ""
+msgstr "aclpares: névnek kell követnia a [group|user] kulcsszót"
 
 #: ../utils/adt/acl.c:157
 #, c-format
@@ -8734,12 +8742,12 @@ msgstr ""
 #: ../utils/adt/arrayfuncs.c:1538
 #, c-format
 msgid "array_out: Cache lookup failed for type %u"
-msgstr ""
+msgstr "array_out: Nem sikerült a cache-ben megtalálni a(z) %u típust"
 
 #: ../utils/adt/cash.c:210
 #, c-format
 msgid "Bad money external representation %s"
-msgstr ""
+msgstr "A(z) %s alak nem pénzforma"
 
 #: ../utils/adt/cash.c:320 ../utils/adt/cash.c:333
 msgid "Memory allocation failed, can't output cash"
@@ -8747,51 +8755,51 @@ msgstr ""
 
 #: ../utils/adt/cash.c:473 ../utils/adt/cash.c:523
 msgid "cash_div:  divide by 0.0 error"
-msgstr ""
+msgstr "cash_div:  0.0-val osztás"
 
 #: ../utils/adt/cash.c:574
 msgid "cash_div_int4: divide by 0 error"
-msgstr ""
+msgstr "cash_div_int4: 0-val osztás"
 
 #: ../utils/adt/cash.c:624
 msgid "cash_div:  divide by 0 error"
-msgstr ""
+msgstr "cash_div:  0-val osztás"
 
 #: ../utils/adt/bool.c:77
 #, c-format
 msgid "Bad boolean external representation '%s'"
-msgstr ""
+msgstr "A(z) '%s' alakú logikai kifejezés hibás"
 
 #: ../utils/adt/float.c:152
 msgid "Bad float4 input format -- overflow"
-msgstr ""
+msgstr "Hibás float4 típusú bemenet -- túlcsordulás"
 
 #: ../utils/adt/float.c:154
 msgid "Bad float4 input format -- underflow"
-msgstr ""
+msgstr "Hibás float8 típusú bemenet -- alulcsordulás"
 
 #: ../utils/adt/float.c:177
 msgid "Bad float8 input format -- overflow"
-msgstr ""
+msgstr "Hibás float8 típusú bemenet -- túlcsordulás"
 
 #: ../utils/adt/float.c:179
 msgid "Bad float8 input format -- underflow"
-msgstr ""
+msgstr "Hibás float8 típusú bemenet -- alulcsordulás"
 
 #: ../utils/adt/float.c:210
 #, c-format
 msgid "Bad float4 input format '%s'"
-msgstr ""
+msgstr "A(z) '%s' alakú float4 típusú bemenet hibás"
 
 #: ../utils/adt/float.c:215
 #, c-format
 msgid "Input '%s' is out of range for float4"
-msgstr ""
+msgstr "A(z) '%s' float4 típusú bemenet a megengedett értéktartományon kívül esik"
 
 #: ../utils/adt/float.c:275
 #, c-format
 msgid "Bad float8 input format '%s'"
-msgstr ""
+msgstr "A(z) '%s' alakú float8 típusú bemenet hibás"
 
 #: ../utils/adt/float.c:280
 #, c-format
@@ -8889,11 +8897,11 @@ msgstr ""
 
 #: ../utils/adt/float.c:1686
 msgid "float48div: divide by zero"
-msgstr ""
+msgstr "float48div: 0-val osztás"
 
 #: ../utils/adt/float.c:1746
 msgid "float84div: divide by zero"
-msgstr ""
+msgstr "float84div: 0-val osztás"
 
 #: ../utils/adt/ascii.c:110
 #, c-format
@@ -8903,12 +8911,12 @@ msgstr ""
 #: ../utils/adt/date.c:53
 #, c-format
 msgid "Bad date external representation '%s'"
-msgstr ""
+msgstr "A dátum '%s' alakú megadása helytelen"
 
 #: ../utils/adt/date.c:71
 #, c-format
 msgid "Unrecognized date external representation '%s'"
-msgstr ""
+msgstr "Felismerhetetlen formátumú dátummegadás ('%s')"
 
 #: ../utils/adt/date.c:245
 msgid "Unable to convert date to tm"
@@ -8917,7 +8925,7 @@ msgstr ""
 #: ../utils/adt/date.c:277 ../utils/adt/date.c:286 ../utils/adt/date.c:672
 #: ../utils/adt/date.c:681 ../utils/adt/date.c:1217 ../utils/adt/date.c:1229
 msgid "Unable to convert timestamp to date"
-msgstr ""
+msgstr "A timestamp típusú adatot nem sikerült date típusúvá konvertálni"
 
 #: ../utils/adt/date.c:312
 msgid "Unable to convert reserved abstime value to date"
@@ -8925,16 +8933,16 @@ msgstr ""
 
 #: ../utils/adt/date.c:380
 msgid "Bad date external representation (too long)"
-msgstr ""
+msgstr "Az idõ megadása helytelen (túl hosszú)"
 
 #: ../utils/adt/date.c:413 ../utils/adt/date.c:867
 #, c-format
 msgid "Bad time external representation '%s'"
-msgstr ""
+msgstr "Az idõ '%s' alakú megadása helytelen"
 
 #: ../utils/adt/date.c:832
 msgid "Bad time external representation (too long)"
-msgstr ""
+msgstr "Az idõ megadása helytelen (túl hosszú)"
 
 #: ../utils/adt/date.c:1302
 msgid "Bad timetz external representation (too long)"
@@ -9099,12 +9107,12 @@ msgstr ""
 #: ../utils/adt/formatting.c:1869
 #, c-format
 msgid "to_timestamp(): bad value for %s"
-msgstr ""
+msgstr "to_timestamp(): a(z) %s számára rossz érték lett megadva"
 
 #: ../utils/adt/formatting.c:2464 ../utils/adt/formatting.c:3016
 #, c-format
 msgid "Cache is full (%d)"
-msgstr ""
+msgstr "A cache megtelt (%d)"
 
 #: ../utils/adt/formatting.c:2472 ../utils/adt/formatting.c:3034
 #, c-format
@@ -9327,34 +9335,34 @@ msgstr ""
 #: ../utils/adt/int.c:250
 #, c-format
 msgid "i4toi2: '%d' causes int2 underflow"
-msgstr ""
+msgstr "i4toi2: a(z) '%d' szám int2 alulcsordulást okoz"
 
 #: ../utils/adt/int.c:252
 #, c-format
 msgid "i4toi2: '%d' causes int2 overflow"
-msgstr ""
+msgstr "i4toi2: a(z) '%d' szám int2 túlcsordulást okoz"
 
 #: ../utils/adt/int8.c:77 ../utils/adt/int8.c:87
 #, c-format
 msgid "Bad int8 external representation \"%s\""
-msgstr ""
+msgstr "Az int8 típusú \"%s\" reprezentáció rossz"
 
 #: ../utils/adt/int8.c:83
 #, c-format
 msgid "int8 value out of range: \"%s\""
-msgstr ""
+msgstr "A(z) \"%s\" int8 érték értéktartományon kívül esik"
 
 #: ../utils/adt/int8.c:106
 msgid "Unable to format int8"
-msgstr ""
+msgstr "Az int8 típusú számnak nem adható formátum"
 
 #: ../utils/adt/int8.c:684
 msgid "int8 conversion to int4 is out of range"
-msgstr ""
+msgstr "Az int4-re történõ int8-konverzió túlcsordult"
 
 #: ../utils/adt/int8.c:722
 msgid "Floating point conversion to int8 is out of range"
-msgstr ""
+msgstr "Az int8-ra történõ lebegõpontos szám konverziója túlcsordult"
 
 #: ../utils/adt/oid.c:46
 #, c-format
@@ -9515,7 +9523,7 @@ msgstr ""
 #: ../utils/adt/numeric.c:2303
 #, c-format
 msgid "Bad numeric input format '%s'"
-msgstr ""
+msgstr "A(z) '%s' numerikus bemenetformátum rossz"
 
 #: ../utils/adt/numeric.c:2622
 #, c-format
@@ -9554,12 +9562,12 @@ msgstr ""
 #: ../utils/adt/numutils.c:75
 #, c-format
 msgid "pg_atoi: error in \"%s\": can't parse \"%s\""
-msgstr ""
+msgstr "pg_atoi: hiba a(z) \"%s\"-ben: szintaktikai hiba a(z) \"%s%-ben"
 
 #: ../utils/adt/numutils.c:119
 #, c-format
 msgid "pg_atoi: invalid result size: %d"
-msgstr ""
+msgstr "pg_atoi: az eredmény mérete érvénytelen: %d"
 
 #: ../utils/adt/varbit.c:102 ../utils/adt/varbit.c:218
 #, c-format
@@ -10083,7 +10091,7 @@ msgstr ""
 #: ../utils/adt/ri_triggers.c:276
 #, c-format
 msgid "%s referential integrity violation - no rows found in %s"
-msgstr "Hivatkozási épség sérülés - %s nem tartalmaz egyetlen sort sem"
+msgstr "%s hivatkozási épség sérülés - %s nem tartalmaz egyetlen sort sem"
 
 #: ../utils/adt/ri_triggers.c:282 ../utils/adt/ri_triggers.c:466
 msgid "SPI_finish() failed in RI_FKey_check()"
