@@ -3,14 +3,14 @@
  * functioncmds.c
  *
  *	  Routines for CREATE and DROP FUNCTION commands and CREATE and DROP
- *		  CAST commands.
+ *	  CAST commands.
  *
  * Portions Copyright (c) 1996-2005, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/commands/functioncmds.c,v 1.55 2005/03/13 05:19:26 neilc Exp $
+ *	  $PostgreSQL: pgsql/src/backend/commands/functioncmds.c,v 1.56 2005/03/14 00:19:36 neilc Exp $
  *
  * DESCRIPTION
  *	  These routines take the parse tree and pick out the
@@ -195,12 +195,75 @@ examine_parameter_list(List *parameter, Oid languageOid,
 	return parameterCount;
 }
 
+/*
+ * Recognize one of the options that can be passed to both CREATE
+ * FUNCTION and ALTER FUNCTION and return it via one of the out
+ * parameters. Returns true if the passed option was recognized. If
+ * the out parameter we were going to assign to points to non-NULL,
+ * raise a duplicate error.
+ */
+static bool
+compute_common_attribute(DefElem *defel,
+						 DefElem **volatility_item,
+						 DefElem **strict_item,
+						 DefElem **security_item)
+{
+	if (strcmp(defel->defname, "volatility") == 0)
+	{
+		if (*volatility_item)
+			goto duplicate_error;
+
+		*volatility_item = defel;
+	}
+	else if (strcmp(defel->defname, "strict") == 0)
+	{
+		if (*strict_item)
+			goto duplicate_error;
+
+		*strict_item = defel;
+	}
+	else if (strcmp(defel->defname, "security") == 0)
+	{
+		if (*security_item)
+			goto duplicate_error;
+
+		*security_item = defel;
+	}
+	else
+		return false;
+
+	/* Recognized an option */
+	return true;
+
+duplicate_error:
+	ereport(ERROR,
+			(errcode(ERRCODE_SYNTAX_ERROR),
+			 errmsg("conflicting or redundant options")));
+	return false; /* keep compiler quiet */
+}
+
+static char
+interpret_func_volatility(DefElem *defel)
+{
+	char *str = strVal(defel->arg);
+
+	if (strcmp(str, "immutable") == 0)
+		return PROVOLATILE_IMMUTABLE;
+	else if (strcmp(str, "stable") == 0)
+		return PROVOLATILE_STABLE;
+	else if (strcmp(str, "volatile") == 0)
+		return PROVOLATILE_VOLATILE;
+	else
+	{
+		elog(ERROR, "invalid volatility \"%s\"", str);
+		return 0; /* keep compiler quiet */
+	}
+}
 
 /*
  * Dissect the list of options assembled in gram.y into function
  * attributes.
  */
-
 static void
 compute_attributes_sql_style(List *options,
 							 List **as,
@@ -236,29 +299,13 @@ compute_attributes_sql_style(List *options,
 						 errmsg("conflicting or redundant options")));
 			language_item = defel;
 		}
-		else if (strcmp(defel->defname, "volatility") == 0)
+		else if (compute_common_attribute(defel,
+										  &volatility_item,
+										  &strict_item,
+										  &security_item))
 		{
-			if (volatility_item)
-				ereport(ERROR,
-						(errcode(ERRCODE_SYNTAX_ERROR),
-						 errmsg("conflicting or redundant options")));
-			volatility_item = defel;
-		}
-		else if (strcmp(defel->defname, "strict") == 0)
-		{
-			if (strict_item)
-				ereport(ERROR,
-						(errcode(ERRCODE_SYNTAX_ERROR),
-						 errmsg("conflicting or redundant options")));
-			strict_item = defel;
-		}
-		else if (strcmp(defel->defname, "security") == 0)
-		{
-			if (security_item)
-				ereport(ERROR,
-						(errcode(ERRCODE_SYNTAX_ERROR),
-						 errmsg("conflicting or redundant options")));
-			security_item = defel;
+			/* recognized common option */
+			continue;
 		}
 		else
 			elog(ERROR, "option \"%s\" not recognized",
@@ -280,18 +327,7 @@ compute_attributes_sql_style(List *options,
 				 errmsg("no language specified")));
 
 	if (volatility_item)
-	{
-		if (strcmp(strVal(volatility_item->arg), "immutable") == 0)
-			*volatility_p = PROVOLATILE_IMMUTABLE;
-		else if (strcmp(strVal(volatility_item->arg), "stable") == 0)
-			*volatility_p = PROVOLATILE_STABLE;
-		else if (strcmp(strVal(volatility_item->arg), "volatile") == 0)
-			*volatility_p = PROVOLATILE_VOLATILE;
-		else
-			elog(ERROR, "invalid volatility \"%s\"",
-				 strVal(volatility_item->arg));
-	}
-
+		*volatility_p = interpret_func_volatility(volatility_item);
 	if (strict_item)
 		*strict_p = intVal(strict_item->arg);
 	if (security_item)
@@ -301,7 +337,7 @@ compute_attributes_sql_style(List *options,
 
 /*-------------
  *	 Interpret the parameters *parameters and return their contents via
- *	 out parameters *isStrict_p and *volatility_p.
+ *	 *isStrict_p and *volatility_p.
  *
  *	These parameters supply optional information about a function.
  *	All have defaults if not specified. Parameters:
@@ -347,9 +383,7 @@ compute_attributes_with_style(List *parameters, bool *isStrict_p, char *volatili
  * In all other cases
  *
  *	   AS <object reference, or sql code>
- *
  */
-
 static void
 interpret_AS_clause(Oid languageOid, const char *languageName, List *as,
 					char **prosrc_str_p, char **probin_str_p)
@@ -799,7 +833,74 @@ AlterFunctionOwner(List *name, List *argtypes, AclId newOwnerSysId)
 	heap_close(rel, NoLock);
 }
 
+/*
+ * Implements the ALTER FUNCTION utility command (except for the
+ * RENAME and OWNER clauses, which are handled as part of the generic
+ * ALTER framework).
+ */
+void
+AlterFunction(AlterFunctionStmt *stmt)
+{
+	HeapTuple tup;
+	Oid funcOid;
+	Form_pg_proc procForm;
+	Relation rel;
+	ListCell *l;
+	DefElem *volatility_item = NULL;
+	DefElem *strict_item = NULL;
+	DefElem *security_def_item = NULL;
 
+	rel = heap_openr(ProcedureRelationName, RowExclusiveLock);
+
+	funcOid = LookupFuncNameTypeNames(stmt->func->funcname,
+									  stmt->func->funcargs,
+									  false);
+
+	tup = SearchSysCacheCopy(PROCOID,
+							 ObjectIdGetDatum(funcOid),
+							 0, 0, 0);
+	if (!HeapTupleIsValid(tup)) /* should not happen */
+		elog(ERROR, "cache lookup failed for function %u", funcOid);
+
+	procForm = (Form_pg_proc) GETSTRUCT(tup);
+
+	/* Permission check: must own function */
+	if (!pg_proc_ownercheck(funcOid, GetUserId()))
+		aclcheck_error(ACLCHECK_NOT_OWNER, ACL_KIND_PROC,
+					   NameListToString(stmt->func->funcname));
+
+	if (procForm->proisagg)
+		ereport(ERROR,
+				(errcode(ERRCODE_WRONG_OBJECT_TYPE),
+				 errmsg("\"%s\" is an aggregate function",
+						NameListToString(stmt->func->funcname))));
+
+	/* Examine requested actions. */
+	foreach (l, stmt->actions)
+	{
+		DefElem *defel = (DefElem *) lfirst(l);
+
+		if (compute_common_attribute(defel,
+									 &volatility_item,
+									 &strict_item,
+									 &security_def_item) == false)
+			elog(ERROR, "option \"%s\" not recognized", defel->defname);
+	}
+
+	if (volatility_item)
+		procForm->provolatile = interpret_func_volatility(volatility_item);
+	if (strict_item)
+		procForm->proisstrict = intVal(strict_item->arg);
+	if (security_def_item)
+		procForm->prosecdef = intVal(security_def_item->arg);
+
+	/* Do the update */
+	simple_heap_update(rel, &tup->t_self, tup);
+	CatalogUpdateIndexes(rel, tup);
+
+	heap_close(rel, NoLock);
+	heap_freetuple(tup);
+}
 
 /*
  * SetFunctionReturnType - change declared return type of a function

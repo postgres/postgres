@@ -10,7 +10,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/tcop/utility.c,v 1.233 2005/01/27 03:18:10 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/tcop/utility.c,v 1.234 2005/03/14 00:19:36 neilc Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -277,6 +277,7 @@ check_xact_readonly(Node *parsetree)
 	{
 		case T_AlterDatabaseSetStmt:
 		case T_AlterDomainStmt:
+		case T_AlterFunctionStmt:
 		case T_AlterGroupStmt:
 		case T_AlterOwnerStmt:
 		case T_AlterSeqStmt:
@@ -709,6 +710,10 @@ ProcessUtility(Node *parsetree,
 
 		case T_CreateFunctionStmt:		/* CREATE FUNCTION */
 			CreateFunction((CreateFunctionStmt *) parsetree);
+			break;
+
+		case T_AlterFunctionStmt: /* ALTER FUNCTION */
+			AlterFunction((AlterFunctionStmt *) parsetree);
 			break;
 
 		case T_IndexStmt:		/* CREATE INDEX */
@@ -1394,8 +1399,13 @@ CreateCommandTag(Node *parsetree)
 					tag = "ALTER TABLE";
 			}
 			break;
+
 		case T_AlterDomainStmt:
 			tag = "ALTER DOMAIN";
+			break;
+
+		case T_AlterFunctionStmt:
+			tag = "ALTER FUNCTION";
 			break;
 
 		case T_GrantStmt:

@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2005, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/include/commands/defrem.h,v 1.62 2004/12/31 22:03:28 pgsql Exp $
+ * $PostgreSQL: pgsql/src/include/commands/defrem.h,v 1.63 2005/03/14 00:19:37 neilc Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -49,6 +49,7 @@ extern void SetFunctionReturnType(Oid funcOid, Oid newRetType);
 extern void SetFunctionArgType(Oid funcOid, int argIndex, Oid newArgType);
 extern void RenameFunction(List *name, List *argtypes, const char *newname);
 extern void AlterFunctionOwner(List *name, List *argtypes, AclId newOwnerSysId);
+extern void AlterFunction(AlterFunctionStmt *stmt);
 extern void CreateCast(CreateCastStmt *stmt);
 extern void DropCast(DropCastStmt *stmt);
 extern void DropCastById(Oid castOid);

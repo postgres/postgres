@@ -975,3 +975,20 @@ alter table another
 select * from another;
 
 drop table another;
+
+--
+-- alter function
+--
+create function test_strict(text) returns text as
+    'select coalesce($1, ''got passed a null'');'
+    language sql returns null on null input;
+select test_strict(NULL);
+alter function test_strict(text) called on null input;
+select test_strict(NULL);
+
+create function non_strict(text) returns text as
+    'select coalesce($1, ''got passed a null'');'
+    language sql called on null input;
+select non_strict(NULL);
+alter function non_strict(text) returns null on null input;
+select non_strict(NULL);

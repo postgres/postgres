@@ -15,7 +15,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/nodes/copyfuncs.c,v 1.297 2005/03/10 23:21:21 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/nodes/copyfuncs.c,v 1.298 2005/03/14 00:19:36 neilc Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -1892,6 +1892,17 @@ _copyFunctionParameter(FunctionParameter *from)
 	return newnode;
 }
 
+static AlterFunctionStmt *
+_copyAlterFunctionStmt(AlterFunctionStmt *from)
+{
+	AlterFunctionStmt *newnode = makeNode(AlterFunctionStmt);
+
+	COPY_NODE_FIELD(func);
+	COPY_NODE_FIELD(actions);
+
+	return newnode;
+}
+
 static RemoveAggrStmt *
 _copyRemoveAggrStmt(RemoveAggrStmt *from)
 {
@@ -2881,6 +2892,9 @@ copyObject(void *from)
 			break;
 		case T_FunctionParameter:
 			retval = _copyFunctionParameter(from);
+			break;
+		case T_AlterFunctionStmt:
+			retval = _copyAlterFunctionStmt(from);
 			break;
 		case T_RemoveAggrStmt:
 			retval = _copyRemoveAggrStmt(from);

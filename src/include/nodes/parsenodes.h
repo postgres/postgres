@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2005, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/include/nodes/parsenodes.h,v 1.273 2005/03/10 23:21:24 tgl Exp $
+ * $PostgreSQL: pgsql/src/include/nodes/parsenodes.h,v 1.274 2005/03/14 00:19:37 neilc Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -1396,6 +1396,13 @@ typedef struct FunctionParameter
 	TypeName   *argType;		/* TypeName for parameter type */
 	/* someday add IN/OUT/INOUT indicator here */
 } FunctionParameter;
+
+typedef struct AlterFunctionStmt
+{
+	NodeTag		type;
+	FuncWithArgs *func;			/* name and args of function */
+	List	   *actions;		/* list of DefElem */
+} AlterFunctionStmt;
 
 /* ----------------------
  *		Drop Aggregate Statement

@@ -11,7 +11,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/parser/gram.y,v 2.483 2005/02/02 06:36:01 neilc Exp $
+ *	  $PostgreSQL: pgsql/src/backend/parser/gram.y,v 2.484 2005/03/14 00:19:36 neilc Exp $
  *
  * HISTORY
  *	  AUTHOR			DATE			MAJOR EVENT
@@ -142,7 +142,7 @@ static void doNegateFloat(Value *v);
 		DropUserStmt DropdbStmt DropTableSpaceStmt ExplainStmt FetchStmt
 		GrantStmt IndexStmt InsertStmt ListenStmt LoadStmt
 		LockStmt NotifyStmt ExplainableStmt PreparableStmt
-		CreateFunctionStmt ReindexStmt RemoveAggrStmt
+		CreateFunctionStmt AlterFunctionStmt ReindexStmt RemoveAggrStmt
 		RemoveFuncStmt RemoveOperStmt RenameStmt RevokeStmt
 		RuleActionStmt RuleActionStmtOrEmpty RuleStmt
 		SelectStmt TransactionStmt TruncateStmt
@@ -213,7 +213,7 @@ static void doNegateFloat(Value *v);
 %type <list>	stmtblock stmtmulti
 				OptTableElementList TableElementList OptInherit definition
 				opt_distinct opt_definition func_args
-				func_args_list func_as createfunc_opt_list
+				func_args_list func_as createfunc_opt_list alterfunc_opt_list
 				oper_argtypes RuleActionList RuleActionMulti
 				opt_column_list columnList opt_name_list
 				sort_clause opt_sort_clause sortby_list index_params
@@ -231,7 +231,7 @@ static void doNegateFloat(Value *v);
 
 %type <range>	into_clause OptTempTableName
 
-%type <defelt>	createfunc_opt_item
+%type <defelt>	createfunc_opt_item common_func_opt_item
 %type <fun_param> func_arg
 %type <typnam>	func_return func_type aggr_argtype
 
@@ -486,6 +486,7 @@ stmtmulti:	stmtmulti ';' stmt
 stmt :
 			AlterDatabaseSetStmt
 			| AlterDomainStmt
+			| AlterFunctionStmt
 			| AlterGroupStmt
 			| AlterOwnerStmt
 			| AlterSeqStmt
@@ -3371,14 +3372,21 @@ createfunc_opt_list:
 			| createfunc_opt_list createfunc_opt_item { $$ = lappend($1, $2); }
 	;
 
-createfunc_opt_item:
-			AS func_as
+/*
+ * Options common to both CREATE FUNCTION and ALTER FUNCTION
+ */
+common_func_opt_item:
+			CALLED ON NULL_P INPUT_P
 				{
-					$$ = makeDefElem("as", (Node *)$2);
+					$$ = makeDefElem("strict", (Node *)makeInteger(FALSE));
 				}
-			| LANGUAGE ColId_or_Sconst
+			| RETURNS NULL_P ON NULL_P INPUT_P
 				{
-					$$ = makeDefElem("language", (Node *)makeString($2));
+					$$ = makeDefElem("strict", (Node *)makeInteger(TRUE));
+				}
+			| STRICT_P
+				{
+					$$ = makeDefElem("strict", (Node *)makeInteger(TRUE));
 				}
 			| IMMUTABLE
 				{
@@ -3392,18 +3400,7 @@ createfunc_opt_item:
 				{
 					$$ = makeDefElem("volatility", (Node *)makeString("volatile"));
 				}
-			| CALLED ON NULL_P INPUT_P
-				{
-					$$ = makeDefElem("strict", (Node *)makeInteger(FALSE));
-				}
-			| RETURNS NULL_P ON NULL_P INPUT_P
-				{
-					$$ = makeDefElem("strict", (Node *)makeInteger(TRUE));
-				}
-			| STRICT_P
-				{
-					$$ = makeDefElem("strict", (Node *)makeInteger(TRUE));
-				}
+
 			| EXTERNAL SECURITY DEFINER
 				{
 					$$ = makeDefElem("security", (Node *)makeInteger(TRUE));
@@ -3422,6 +3419,21 @@ createfunc_opt_item:
 				}
 		;
 
+createfunc_opt_item:
+			AS func_as
+				{
+					$$ = makeDefElem("as", (Node *)$2);
+				}
+			| LANGUAGE ColId_or_Sconst
+				{
+					$$ = makeDefElem("language", (Node *)makeString($2));
+				}
+			| common_func_opt_item
+				{
+					$$ = $1;
+				}
+		;
+
 func_as:	Sconst						{ $$ = list_make1(makeString($1)); }
 			| Sconst ',' Sconst
 				{
@@ -3432,6 +3444,36 @@ func_as:	Sconst						{ $$ = list_make1(makeString($1)); }
 opt_definition:
 			WITH definition							{ $$ = $2; }
 			| /*EMPTY*/								{ $$ = NIL; }
+		;
+
+/*****************************************************************************
+ * ALTER FUNCTION
+ *
+ * RENAME and OWNER subcommands are already provided by the generic
+ * ALTER infrastructure, here we just specify alterations that can
+ * only be applied to functions.
+ *
+ *****************************************************************************/
+AlterFunctionStmt:
+			ALTER FUNCTION function_with_argtypes alterfunc_opt_list opt_restrict
+				{
+					AlterFunctionStmt *n = makeNode(AlterFunctionStmt);
+					n->func = (FuncWithArgs *) $3;
+					n->actions = $4;
+					$$ = (Node *) n;
+				}
+		;
+
+alterfunc_opt_list:
+			/* At least one option must be specified */
+			common_func_opt_item					{ $$ = list_make1($1); }
+			| alterfunc_opt_list common_func_opt_item { $$ = lappend($1, $2); }
+		;
+
+/* Ignored, merely for SQL compliance */
+opt_restrict:
+			RESTRICT
+			| /* EMPTY */
 		;
 
 

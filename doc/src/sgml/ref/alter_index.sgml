@@ -1,5 +1,5 @@
 <!--
-$PostgreSQL: pgsql/doc/src/sgml/ref/alter_index.sgml,v 1.4 2004/08/24 00:06:51 neilc Exp $
+$PostgreSQL: pgsql/doc/src/sgml/ref/alter_index.sgml,v 1.5 2005/03/14 00:19:36 neilc Exp $
 PostgreSQL documentation
 -->
 
@@ -20,10 +20,8 @@ PostgreSQL documentation
 
  <refsynopsisdiv>
 <synopsis>
-ALTER INDEX <replaceable class="PARAMETER">name</replaceable> 
-    <replaceable class="PARAMETER">action</replaceable> [, ... ]
-ALTER INDEX <replaceable class="PARAMETER">name</replaceable>
-    RENAME TO <replaceable class="PARAMETER">new_name</replaceable>
+ALTER INDEX <replaceable class="PARAMETER">name</replaceable> <replaceable class="PARAMETER">action</replaceable> [, ... ]
+ALTER INDEX <replaceable class="PARAMETER">name</replaceable> RENAME TO <replaceable class="PARAMETER">new_name</replaceable>
 
 where <replaceable class="PARAMETER">action</replaceable> is one of:
 

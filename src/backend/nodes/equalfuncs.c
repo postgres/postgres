@@ -18,7 +18,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/nodes/equalfuncs.c,v 1.236 2005/03/10 23:21:21 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/nodes/equalfuncs.c,v 1.237 2005/03/14 00:19:36 neilc Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -949,6 +949,15 @@ _equalFunctionParameter(FunctionParameter *a, FunctionParameter *b)
 {
 	COMPARE_STRING_FIELD(name);
 	COMPARE_NODE_FIELD(argType);
+
+	return true;
+}
+
+static bool
+_equalAlterFunctionStmt(AlterFunctionStmt *a, AlterFunctionStmt *b)
+{
+	COMPARE_NODE_FIELD(func);
+	COMPARE_NODE_FIELD(actions);
 
 	return true;
 }
@@ -2013,6 +2022,9 @@ equal(void *a, void *b)
 			break;
 		case T_FunctionParameter:
 			retval = _equalFunctionParameter(a, b);
+			break;
+		case T_AlterFunctionStmt:
+			retval = _equalAlterFunctionStmt(a, b);
 			break;
 		case T_RemoveAggrStmt:
 			retval = _equalRemoveAggrStmt(a, b);
