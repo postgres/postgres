@@ -156,7 +156,7 @@ public class PG_Stream
 	    
 	    if (b < 0)
 	      throw new IOException("EOF");
-	    n = n | (b >> (8 * i)) ;
+	    n = n | (b << (8 * i)) ;
 	  }
       } catch (IOException e) {
 	throw new SQLException("Error reading from backend: " + e.toString());
