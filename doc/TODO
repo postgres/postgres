@@ -1,6 +1,6 @@
 TODO list for PostgreSQL
 ========================
-Last updated:		Wed Jun 12 17:20:38 EDT 2002
+Last updated:		Wed Jun 12 19:36:14 EDT 2002
 
 Current maintainer:	Bruce Momjian (pgman@candle.pha.pa.us)
 
@@ -282,6 +282,7 @@ Clients
 	o Implement set descriptor, using descriptor
 	o Make casts work in variable initializations
 	o Implement SQLDA
+	o Allow multi-threaded use of SQLCA
 	o Solve cardinality > 1 for input descriptors / variables
 	o Understand structure definitions outside a declare section
 	o sqlwarn[6] should be 'W' if the PRECISION or SCALE value specified
