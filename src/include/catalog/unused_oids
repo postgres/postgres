@@ -1,7 +1,7 @@
 #!/bin/sh
 # unused_oids
 #
-# $Header: /cvsroot/pgsql/src/include/catalog/unused_oids,v 1.2 1998/12/31 20:09:49 momjian Exp $
+# $Header: /cvsroot/pgsql/src/include/catalog/unused_oids,v 1.3 2000/01/17 00:53:11 tgl Exp $
 #
 #	finds blocks of oids that have not already been claimed by 
 #	post_hackers for internal purposes.  primarily useful for
@@ -16,7 +16,7 @@
 #	non-berkeley post_hackers should probably not try to use oids 
 #	less than the highest one that comes with the distributed source.
 #
-#	run this script in src/backend/catalog.
+#	run this script in src/include/catalog.
 #
 egrep '^DATA' pg_*.h | \
 	sed -e 's/^.*OID[^=]*=[^0-9]*//' -e 's/[^0-9].*$//' | \
@@ -37,5 +37,6 @@ BEGIN {
 	last = $1;
 }
 END {
-	print last + 1, "-", 2^14-1; /* current BootstrapObjectIdData value */
+# 2^14-1 = current BootstrapObjectIdData value
+	print last + 1, "-", 2^14-1;
 }'
