@@ -7,9 +7,6 @@ make this code as independent as possible of the byte length, but it
 is quite possible that there may be problems on machines that don't
 have 8 bits/byte (are there still any around?).
 
-In the input routines I have assumed that the parser eats the quotes
-in B'...' or X'...'.
-
 The SQL standard only defines comparison, SUBSTR and concatenation
 operators, and these have been implemented. In addition all logical
 operators have been implemented, i.e. ~,|,&,^,<< and >>. This is

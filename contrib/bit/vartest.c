@@ -2,6 +2,8 @@
 #include "varbit.h"
 #include <stdio.h>
 
+void print_details (unsigned char *s);
+
 const int numb = 8;
 /*
 const char *b[] = { "B0010", "B11011011", "B0001", "X3F12", "X27", "B",
@@ -23,13 +25,13 @@ void print_details (unsigned char *s)
   printf("\n");
 }
 
-void
+int
 main () 
 {
   int i, j;
   char *s[numb];
 
-    for (i=0; i<numb; i++) {
+  for (i=0; i<numb; i++) {
     printf ("Input: %s\n",b[i]);
     s[i] = zpbitin(b[i], 0, atttypmod[i]);
     //print_details(s[i]);
@@ -53,13 +55,13 @@ main ()
 	 zpbitsout(bitsubstr(s[3],1,8)));
   printf("%s (%d,%d) => %s\n",zpbitsout(s[3]),9,8,
 	 zpbitsout(bitsubstr(s[3],9,8)));
- printf("%s (%d,%d) => %s\n",zpbitsout(s[3]),1,9,
+  printf("%s (%d,%d) => %s\n",zpbitsout(s[3]),1,9,
 	 zpbitsout(bitsubstr(s[3],1,9)));
- printf("%s (%d,%d) => %s\n",zpbitsout(s[3]),3,5,
+  printf("%s (%d,%d) => %s\n",zpbitsout(s[3]),3,5,
 	 zpbitsout(bitsubstr(s[3],3,5)));
- printf("%s (%d,%d) => %s\n",zpbitsout(s[3]),3,9,
+  printf("%s (%d,%d) => %s\n",zpbitsout(s[3]),3,9,
 	 zpbitsout(bitsubstr(s[3],3,9)));
- printf("%s (%d,%d) => %s\n",zpbitsout(s[3]),3,17,
+  printf("%s (%d,%d) => %s\n",zpbitsout(s[3]),3,17,
 	 zpbitsout(bitsubstr(s[3],3,17)));
   printf ("\nLOGICAL AND:\n");
   for (i=0; i<numb; i++)
@@ -124,14 +126,14 @@ main ()
 	 zpbitsout(bitsubstr(s[3],1,8)));
   printf("%s (%d,%d) => %s\n",zpbitsout(s[3]),9,8,
 	 zpbitsout(bitsubstr(s[3],9,8)));
- printf("%s (%d,%d) => %s\n",zpbitsout(s[3]),1,9,
+  printf("%s (%d,%d) => %s\n",zpbitsout(s[3]),1,9,
 	 zpbitsout(bitsubstr(s[3],1,9)));
- printf("%s (%d,%d) => %s\n",zpbitsout(s[3]),3,5,
+  printf("%s (%d,%d) => %s\n",zpbitsout(s[3]),3,5,
 	 zpbitsout(bitsubstr(s[3],3,5)));
- printf("%s (%d,%d) => %s\n",zpbitsout(s[3]),3,9,
+  printf("%s (%d,%d) => %s\n",zpbitsout(s[3]),3,9,
 	 zpbitsout(bitsubstr(s[3],3,9)));
- printf("%s (%d,%d) => %s\n",zpbitsout(s[3]),3,17,
-	 zpbitsout(bitsubstr(s[3],3,17)));
+  printf("%s (%d,%d) => %s (%s)\n",zpbitsout(s[3]),3,17,
+	 zpbitsout(bitsubstr(s[3],3,17)),zpbitsout(bitsubstr(s[3],3,17)));
   printf ("\nLOGICAL AND:\n");
   for (i=0; i<numb; i++)
     for (j=i+1; j<numb; j++)

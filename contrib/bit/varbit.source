@@ -1,0 +1,171 @@
+LOAD '_OBJWD_/varbit.so';
+
+CREATE FUNCTION varbit_in(opaque)
+   RETURNS bit
+   AS '_OBJWD_/varbit.so'
+   LANGUAGE 'c';
+
+CREATE FUNCTION varbit_out(opaque)
+   RETURNS opaque
+   AS '_OBJWD_/varbit.so'
+   LANGUAGE 'c';
+
+CREATE TYPE bits (
+   internallength = -1,
+   input = varbit_in,
+   output = varbit_out
+);
+
+CREATE FUNCTION bitcat(bits,bits) RETURNS bits
+  AS '_OBJWD_/varbit.so'
+  LANGUAGE 'C';
+
+CREATE OPERATOR || (
+  leftarg = bits,
+  rightarg = bits,
+  procedure = bitcat
+);
+
+CREATE FUNCTION bitsubstr(bits,integer,integer) RETURNS bits
+  AS '_OBJWD_/varbit.so'
+  LANGUAGE 'C';
+
+CREATE FUNCTION biteq(bits,bits) RETURNS bool
+  AS '_OBJWD_/varbit.so'
+  LANGUAGE 'C';
+
+CREATE OPERATOR = (
+  leftarg = bits,
+  rightarg = bits,
+  procedure = biteq,
+  negator = <>,
+  commutator = =
+); 
+
+CREATE FUNCTION bitne(bits,bits) RETURNS bool
+  AS '_OBJWD_/varbit.so'
+  LANGUAGE 'C';
+
+CREATE OPERATOR <> (
+  leftarg = bits,
+  rightarg = bits,
+  procedure = bitne,
+  negator = =,
+  commutator = <>
+); 
+
+CREATE FUNCTION bitlt(bits,bits) RETURNS bool
+  AS '_OBJWD_/varbit.so'
+  LANGUAGE 'C';
+
+CREATE OPERATOR < (
+  leftarg = bits,
+  rightarg = bits,
+  procedure = bitlt
+); 
+
+CREATE FUNCTION bitle(bits,bits) RETURNS bool
+  AS '_OBJWD_/varbit.so'
+  LANGUAGE 'C';
+
+CREATE OPERATOR <= (
+  leftarg = bits,
+  rightarg = bits,
+  procedure = bitle
+); 
+
+CREATE FUNCTION bitgt(bits,bits) RETURNS bool
+  AS '_OBJWD_/varbit.so'
+  LANGUAGE 'C';
+
+CREATE OPERATOR > (
+  leftarg = bits,
+  rightarg = bits,
+  procedure = bitgt,
+  negator = <=,
+  commutator = <
+); 
+
+CREATE FUNCTION bitge(bits,bits) RETURNS bool
+  as '_OBJWD_/varbit.so'
+  language 'C';
+
+CREATE OPERATOR >= (
+  leftarg = bits,
+  rightarg = bits,
+  procedure = bitge,
+  negator = <,
+  commutator = <=
+); 
+
+CREATE FUNCTION bitcmp(bits,bits) RETURNS int4
+  AS '_OBJWD_/varbit.so'
+  LANGUAGE 'C';
+
+CREATE OPERATOR <=> (
+  leftarg = bits,
+  rightarg = bits,
+  procedure = bitcmp
+); 
+
+CREATE FUNCTION bitor(bits,bits) RETURNS bits
+  AS '_OBJWD_/varbit.so'
+  LANGUAGE 'C';
+
+CREATE OPERATOR | (
+  leftarg = bits,
+  rightarg = bits,
+  procedure = bitor,
+  commutator = |
+); 
+
+CREATE FUNCTION bitand(bits,bits) RETURNS bits
+  AS '_OBJWD_/varbit.so'
+  LANGUAGE 'C';
+
+CREATE OPERATOR & (
+  leftarg = bits,
+  rightarg = bits,
+  procedure = bitand,
+  commutator = &
+); 
+
+
+CREATE FUNCTION bitxor(bits,bits) RETURNS bits
+  AS '_OBJWD_/varbit.so'
+  LANGUAGE 'C';
+
+CREATE OPERATOR ^ (
+  leftarg = bits,
+  rightarg = bits,
+  procedure = bitxor
+); 
+
+CREATE FUNCTION bitnot(bits) RETURNS bits
+  AS '_OBJWD_/varbit.so'
+  LANGUAGE 'C';
+
+CREATE OPERATOR ~ (
+  rightarg = bits,
+  procedure = bitnot
+); 
+
+CREATE FUNCTION bitshiftleft(bits,int4) RETURNS bits
+  AS '_OBJWD_/varbit.so'
+  LANGUAGE 'C';
+
+CREATE OPERATOR << (
+  leftarg = bits,
+  rightarg = int4,
+  procedure = bitshiftleft
+);
+
+CREATE FUNCTION bitshiftright(bits,int4) RETURNS bits
+  AS '_OBJWD_/varbit.so'
+  LANGUAGE 'C';
+
+CREATE OPERATOR >> (
+  leftarg = bits,
+  rightarg = int4,
+  procedure = bitshiftright
+);

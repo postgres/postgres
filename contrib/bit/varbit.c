@@ -4,18 +4,14 @@
  *	  Functions for the built-in type bit() and varying bit().
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/contrib/bit/Attic/varbit.c,v 1.1 1999/11/29 22:34:36 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/contrib/bit/Attic/varbit.c,v 1.2 2000/04/03 20:56:40 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
-#include "postgres.h"
 #include "varbit.h"
-/*
 #include "access/htup.h"
-#include "catalog/pg_type.h"
-#include "utils/builtins.h"
-*/
-
+/*#include "catalog/pg_type.h" */
+/*#include "utils/builtins.h" */
 
 
 /* 
@@ -43,22 +39,22 @@
  *	  (XXX dummy is here because we pass typelem as the second argument 
  *        for array_in. copied this, no idea what it means??)
  */
-char *
+bits8 *
 zpbitin(char *s, int dummy,  int32 atttypmod)
 {
-  char *result, 
-    *sp;		/* pointer into the character string  */
+  bits8 *result;	/* the bits string that was read in   */ 
+  char  *sp;		/* pointer into the character string  */
   bits8 *r;
   int len,		/* Length of the whole data structure */
     bitlen,		/* Number of bits in the bit string   */
     slen;		/* Length of the input string         */
-  int bit_not_hex;      /* 0 = hex string  1=bit string       */
-  int i, bc, ipad;
-  bits8 x, y;
+  int bit_not_hex = 0;  /* 0 = hex string  1=bit string       */
+  int bc, ipad;
+  bits8 x = 0;
 
 
   if (s == NULL)
-    return NULL;
+    return (bits8 *) NULL;
 
   /* Check that the first character is a b or an x */
   if (s[0]=='b' || s[0]=='B') 
@@ -82,7 +78,8 @@ zpbitin(char *s, int dummy,  int32 atttypmod)
   if (atttypmod == -1)
     atttypmod = bitlen;
   else
-    if (bitlen>atttypmod && bit_not_hex || bitlen>atttypmod+3 && !bit_not_hex)
+    if ((bitlen>atttypmod && bit_not_hex) || 
+	(bitlen>atttypmod+3 && !bit_not_hex))
 	  elog(ERROR, "zpbitin: bit string of size %d cannot be written into bits(%d)",
 	       bitlen,atttypmod);
 
@@ -90,10 +87,10 @@ zpbitin(char *s, int dummy,  int32 atttypmod)
   len = VARBITDATALEN(atttypmod);
 
   if (len > MaxAttrSize)
-    elog(ERROR, "zpbitin: length of bit() must be less than %d",
+    elog(ERROR, "zpbitin: length of bit() must be less than %ld",
 	 (MaxAttrSize-VARHDRSZ-VARBITHDRSZ)*BITSPERBYTE);
 
-  result = (char *) palloc(len);
+  result = (bits8 *) palloc(len);
   /* set to 0 so that *r is always initialised and strin is zero-padded */
   memset(result, 0, len);
   VARSIZE(result) = len;
@@ -103,7 +100,7 @@ zpbitin(char *s, int dummy,  int32 atttypmod)
      significant byte first. s points to the byte before the beginning
      of the bitstring */
   sp = s+1;
-  r = (bits8 *) VARBITS(result);
+  r = VARBITS(result);
   if (bit_not_hex) 
     {
       /* Parse the bit representation of the string */
@@ -166,10 +163,10 @@ zpbitin(char *s, int dummy,  int32 atttypmod)
  *    for long strings
  */
 char *
-zpbitout(char *s)
+zpbitout(bits8 *s)
 {
   char	   *result, *r;
-  VarBit   sp;
+  bits8    *sp;
   int	   i, len, bitlen;
   
   if (s == NULL)
@@ -183,7 +180,7 @@ zpbitout(char *s)
       bitlen = VARBITLEN(s);
       len = bitlen/4 + (bitlen%4>0 ? 1 : 0);
       result = (char *) palloc(len + 4);
-      sp = (bits8 *) VARBITS(s);
+      sp = VARBITS(s);
       r = result;
       *r++ = 'X';
       *r++ = '\'';
@@ -206,10 +203,10 @@ zpbitout(char *s)
  *    Prints the string a bits
  */
 char *
-zpbitsout(char *s)
+zpbitsout(bits8 *s)
 {
   char	   *result, *r;
-  VarBit   sp;
+  bits8    *sp;
   bits8    x;
   int	   i, k, len;
   
@@ -223,7 +220,7 @@ zpbitsout(char *s)
     {
       len = VARBITLEN(s);
       result = (char *) palloc(len + 4);
-      sp = (bits8 *) VARBITS(s);
+      sp = VARBITS(s);
       r = result;
       *r++ = 'B';
       *r++ = '\'';
@@ -252,22 +249,22 @@ zpbitsout(char *s)
  * varbitin -
  *	  converts a string to the internal representation of a bitstring.
 */
-char *
+bits8 *
 varbitin(char *s, int dummy,  int32 atttypmod)
 {
-  char *result, 
-    *sp;		/* pointer into the character string  */
+  bits8 *result;	/* The resulting bit string           */
+  char *sp;		/* pointer into the character string  */
   bits8 *r;
   int len,		/* Length of the whole data structure */
     bitlen,		/* Number of bits in the bit string   */
     slen;		/* Length of the input string         */
-  int bit_not_hex;
-  int i, bc, ipad;
-  bits8 x, y;
+  int bit_not_hex = 0;
+  int bc, ipad;
+  bits8 x = 0;
 
 
   if (s == NULL)
-    return NULL;
+    return (bits8 *) NULL;
 
   /* Check that the first character is a b or an x */
   if (s[0]=='b' || s[0]=='B') 
@@ -289,7 +286,8 @@ varbitin(char *s, int dummy,  int32 atttypmod)
      reading a hex string and not by more than 3 bits, as a hex string gives 
      and accurate length upto 4 bits */
   if (atttypmod > -1)
-    if (bitlen>atttypmod && bit_not_hex || bitlen>atttypmod+3 && !bit_not_hex)
+    if ((bitlen>atttypmod && bit_not_hex) || 
+	(bitlen>atttypmod+3 && !bit_not_hex))
 	  elog(ERROR, "varbitin: bit string of size %d cannot be written into varying bits(%d)",
 	       bitlen,atttypmod);
 
@@ -297,10 +295,10 @@ varbitin(char *s, int dummy,  int32 atttypmod)
   len = VARBITDATALEN(bitlen);
 
   if (len > MaxAttrSize)
-    elog(ERROR, "varbitin: length of bit() must be less than %d",
+    elog(ERROR, "varbitin: length of bit() must be less than %ld",
 	 (MaxAttrSize-VARHDRSZ-VARBITHDRSZ)*BITSPERBYTE);
 
-  result = (char *) palloc(len);
+  result = (bits8 *) palloc(len);
   /* set to 0 so that *r is always initialised and strin is zero-padded */
   memset(result, 0, len);
   VARSIZE(result) = len;
@@ -310,7 +308,7 @@ varbitin(char *s, int dummy,  int32 atttypmod)
      significant byte first. s points to the byte before the beginning
      of the bitstring */
   sp = s + 1;
-  r = (VarBit) VARBITS(result);
+  r = VARBITS(result);
   if (bit_not_hex) 
     {
       /* Parse the bit representation of the string */
@@ -383,11 +381,10 @@ varbitin(char *s, int dummy,  int32 atttypmod)
  */
 
 bool
-biteq (char *arg1, char *arg2)
+biteq (bits8 *arg1, bits8 *arg2)
 {
   int bitlen1,
     bitlen2;
-  bits8 *p1, *p2;
 
   if (!PointerIsValid(arg1) || !PointerIsValid(arg2))
     return (bool) 0;
@@ -402,11 +399,10 @@ biteq (char *arg1, char *arg2)
 }
 
 bool
-bitne (char *arg1, char *arg2)
+bitne (bits8 *arg1, bits8 *arg2)
 {
   int bitlen1,
     bitlen2;
-  bits8 *p1, *p2;
 
   if (!PointerIsValid(arg1) || !PointerIsValid(arg2))
     return (bool) 0;
@@ -429,11 +425,10 @@ bitne (char *arg1, char *arg2)
  *   Anything is equal to undefined.
  */
 int 
-bitcmp (char *arg1, char *arg2)
+bitcmp (bits8 *arg1, bits8 *arg2)
 {
   int bitlen1, bytelen1,
     bitlen2, bytelen2;
-  bits8 *p1, *p2;
   int cmp;
 
   if (!PointerIsValid(arg1) || !PointerIsValid(arg2))
@@ -452,25 +447,25 @@ bitcmp (char *arg1, char *arg2)
 }
 
 bool
-bitlt (char *arg1, char *arg2)
+bitlt (bits8 *arg1, bits8 *arg2)
 {
   return (bool) (bitcmp(arg1,arg2) == -1);
 }
 
 bool
-bitle (char *arg1, char *arg2)
+bitle (bits8 *arg1, bits8 *arg2)
 {
   return (bool) (bitcmp(arg1,arg2) <= 0);
 }
 
 bool
-bitge (char *arg1, char *arg2)
+bitge (bits8 *arg1, bits8 *arg2)
 {
   return (bool) (bitcmp(arg1,arg2) >= 0);
 }
 
 bool
-bitgt (char *arg1, char *arg2)
+bitgt (bits8 *arg1, bits8 *arg2)
 {
   return (bool) (bitcmp(arg1,arg2) == 1);
 }
@@ -478,11 +473,11 @@ bitgt (char *arg1, char *arg2)
 /* bitcat
  * Concatenation of bit strings
  */
-char *
-bitcat (char *arg1, char *arg2)
+bits8 *
+bitcat (bits8 *arg1, bits8 *arg2)
 {
   int bitlen1, bitlen2, bytelen, bit1pad, bit2shift;
-  char *result;
+  bits8 *result;
   bits8 *pr, *pa;
 
   if (!PointerIsValid(arg1) || !PointerIsValid(arg2))
@@ -493,7 +488,7 @@ bitcat (char *arg1, char *arg2)
 
   bytelen = VARBITDATALEN(bitlen1+bitlen2);
   
-  result = (char *) palloc(bytelen*sizeof(bits8));
+  result = (bits8 *) palloc(bytelen*sizeof(bits8));
   VARSIZE(result) = bytelen;
   VARBITLEN(result) = bitlen1+bitlen2;
   printf("%d %d %d \n",VARBITBYTES(arg1),VARBITLEN(arg1),VARBITPAD(arg1));
@@ -510,10 +505,10 @@ bitcat (char *arg1, char *arg2)
     {
       /* We need to shift all the results to fit */
       bit2shift = BITSPERBYTE - bit1pad;
-      pa = (VarBit) VARBITS(arg2);
-      pr = (VarBit) VARBITS(result)+VARBITBYTES(arg1)-1;
+      pa = VARBITS(arg2);
+      pr = VARBITS(result)+VARBITBYTES(arg1)-1;
       for ( ; pa < VARBITEND(arg2); pa++) {
-	*pr = *pr | ((*pa >> bit2shift) & BITMASK);
+	*pr |= ((*pa >> bit2shift) & BITMASK);
 	pr++;
 	if (pr < VARBITEND(result))
 	  *pr = (*pa << bit1pad) & BITMASK;
@@ -528,17 +523,17 @@ bitcat (char *arg1, char *arg2)
  * Note, s is 1-based.
  * SQL draft 6.10 9)
  */
-char * 
-bitsubstr (char *arg, int32 s, int32 l)
+bits8 * 
+bitsubstr (bits8 *arg, int32 s, int32 l)
 {
   int bitlen,
     rbitlen,
     len,
-    ipad,
+    ipad = 0,
     ishift,
     i;
   int e, s1, e1;
-  char * result;
+  bits8 * result;
   bits8 mask, *r, *ps;
 
   if (!PointerIsValid(arg))
@@ -552,7 +547,7 @@ bitsubstr (char *arg, int32 s, int32 l)
     {
       /* Need to return a null string */
       len = VARBITDATALEN(0);
-      result = (char *) palloc(len);
+      result = (bits8 *) palloc(len);
       VARBITLEN(result) = 0;
       VARSIZE(result) = len;
     } 
@@ -562,22 +557,22 @@ bitsubstr (char *arg, int32 s, int32 l)
 	 ending at position e1-1 */
       rbitlen = e1-s1;
       len = VARBITDATALEN(rbitlen);
-      result = (char *) palloc(len);
+      result = (bits8 *) palloc(len);
       VARBITLEN(result) = rbitlen;
       VARSIZE(result) = len;
+      len -= VARHDRSZ + VARBITHDRSZ;
       /* Are we copying from a byte boundary? */
       if ((s1-1)%BITSPERBYTE==0) 
 	{
 	  /* Yep, we are copying bytes */
-	  len -= VARHDRSZ + VARBITHDRSZ;
 	  memcpy(VARBITS(result),VARBITS(arg)+(s1-1)/BITSPERBYTE,len);
 	} 
       else 
 	{
 	  /* Figure out how much we need to shift the sequence by */
 	  ishift = (s1-1)%BITSPERBYTE;
-	  r = (VarBit) VARBITS(result);
-	  ps = (VarBit) VARBITS(arg) + (s1-1)/BITSPERBYTE;
+	  r = VARBITS(result);
+	  ps = VARBITS(arg) + (s1-1)/BITSPERBYTE;
 	  for (i=0; i<len; i++) 
 	    {
 	      *r = (*ps <<ishift) & BITMASK;
@@ -602,12 +597,12 @@ bitsubstr (char *arg, int32 s, int32 l)
  * perform a logical AND on two bit strings. The result is automatically
  * truncated to the shorter bit string
  */
-char *
-bitand (char * arg1, char * arg2)
+bits8 *
+bitand (bits8 * arg1, bits8 * arg2)
 {
   int len,
     i;
-  char *result;
+  bits8 *result;
   bits8 *p1, 
     *p2, 
     *r;
@@ -616,7 +611,7 @@ bitand (char * arg1, char * arg2)
     return (bool) 0;
 
   len = Min(VARSIZE(arg1),VARSIZE(arg2));
-  result = (char *) palloc(len);
+  result = (bits8 *) palloc(len);
   VARSIZE(result) = len;
   VARBITLEN(result) = Min(VARBITLEN(arg1),VARBITLEN(arg2));
 
@@ -635,12 +630,12 @@ bitand (char * arg1, char * arg2)
  * perform a logical OR on two bit strings. The result is automatically
  * truncated to the shorter bit string.
  */
-char *
-bitor (char * arg1, char * arg2)
+bits8 *
+bitor (bits8 * arg1, bits8 * arg2)
 {
   int len,
     i;
-  char *result;
+  bits8 *result;
   bits8 *p1, 
     *p2, 
     *r;
@@ -650,7 +645,7 @@ bitor (char * arg1, char * arg2)
     return (bool) 0;
 
   len = Min(VARSIZE(arg1),VARSIZE(arg2));
-  result = (char *) palloc(len);
+  result = (bits8 *) palloc(len);
   VARSIZE(result) = len;
   VARBITLEN(result) = Min(VARBITLEN(arg1),VARBITLEN(arg2));
 
@@ -671,12 +666,12 @@ bitor (char * arg1, char * arg2)
  * perform a logical XOR on two bit strings. The result is automatically
  * truncated to the shorter bit string.
  */
-char *
-bitxor (char * arg1, char * arg2)
+bits8 *
+bitxor (bits8 * arg1, bits8 * arg2)
 {
   int len,
     i;
-  char *result;
+  bits8 *result;
   bits8 *p1, 
     *p2, 
     *r;
@@ -686,7 +681,7 @@ bitxor (char * arg1, char * arg2)
     return (bool) 0;
 
   len = Min(VARSIZE(arg1),VARSIZE(arg2));
-  result = (char *) palloc(len);
+  result = (bits8 *) palloc(len);
   VARSIZE(result) = len;
   VARBITLEN(result) = Min(VARBITLEN(arg1),VARBITLEN(arg2));
 
@@ -708,11 +703,10 @@ bitxor (char * arg1, char * arg2)
 /* bitnot
  * perform a logical NOT on a bit strings.
  */
-char *
-bitnot (char * arg)
+bits8 *
+bitnot (bits8 * arg)
 {
-  int len;
-  char *result;
+  bits8 *result;
   bits8 *p, 
     *r;
   bits8 mask;
@@ -720,7 +714,7 @@ bitnot (char * arg)
   if (!PointerIsValid(arg))
     return (bool) 0;
 
-  result = (char *) palloc(VARSIZE(arg));
+  result = (bits8 *) palloc(VARSIZE(arg));
   VARSIZE(result) = VARSIZE(arg);
   VARBITLEN(result) = VARBITLEN(arg);
 
@@ -739,11 +733,11 @@ bitnot (char * arg)
 /* bitshiftleft
  * do a left shift (i.e. to the beginning of the string) of the bit string
  */
-char *
-bitshiftleft (char * arg, int shft)
+bits8 *
+bitshiftleft (bits8 * arg, int shft)
 {
   int byte_shift, ishift, len;
-  char *result;
+  bits8 *result;
   bits8 *p, 
     *r;
 
@@ -754,7 +748,7 @@ bitshiftleft (char * arg, int shft)
   if (shft < 0) 
     return bitshiftright(arg, -shft);
 
-  result = (char *) palloc(VARSIZE(arg));
+  result = (bits8 *) palloc(VARSIZE(arg));
   VARSIZE(result) = VARSIZE(arg);
   VARBITLEN(result) = VARBITLEN(arg);
   r = (bits8 *) VARBITS(result);
@@ -784,22 +778,22 @@ bitshiftleft (char * arg, int shft)
 /* bitshiftright
  * do a right shift (i.e. to the beginning of the string) of the bit string
  */
-char *
-bitshiftright (char * arg, int shft)
+bits8 *
+bitshiftright (bits8 * arg, int shft)
 {
   int byte_shift, ishift, len;
-  char *result;
+  bits8 *result;
   bits8 *p, 
     *r;
 
   if (!PointerIsValid(arg))
-    return (bool) 0;
+    return (bits8 *) 0;
 
   /* Negative shift is a shift to the left */
   if (shft < 0) 
     return bitshiftleft(arg, -shft);
 
-  result = (char *) palloc(VARSIZE(arg));
+  result = (bits8 *) palloc(VARSIZE(arg));
   VARSIZE(result) = VARSIZE(arg);
   VARBITLEN(result) = VARBITLEN(arg);
   r = (bits8 *) VARBITS(result);
