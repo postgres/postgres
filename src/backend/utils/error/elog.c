@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/error/elog.c,v 1.103 2002/09/04 20:31:30 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/error/elog.c,v 1.104 2002/11/01 17:55:23 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -500,13 +500,13 @@ elog(int lev, const char *fmt,...)
 		 * Serious crash time. Postmaster will observe nonzero process
 		 * exit status and kill the other backends too.
 		 *
-		 * XXX: what if we are *in* the postmaster?  proc_exit() won't kill
+		 * XXX: what if we are *in* the postmaster?  abort() won't kill
 		 * our children...
 		 */
 		ImmediateInterruptOK = false;
 		fflush(stdout);
 		fflush(stderr);
-		proc_exit(2);
+		abort();
 	}
 
 	/* We reach here if lev <= WARNING. OK to return to caller. */
