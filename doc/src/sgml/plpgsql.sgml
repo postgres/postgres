@@ -1,5 +1,5 @@
 <!--
-$PostgreSQL: pgsql/doc/src/sgml/plpgsql.sgml,v 1.30 2003/11/29 19:51:37 pgsql Exp $
+$PostgreSQL: pgsql/doc/src/sgml/plpgsql.sgml,v 1.31 2003/11/30 04:47:37 momjian Exp $
 -->
 
 <chapter id="plpgsql"> 
@@ -986,7 +986,6 @@ END IF;
 <programlisting>
 DECLARE
     users_rec RECORD;
-    full_name varchar;
 BEGIN
     SELECT INTO users_rec * FROM users WHERE user_id=3;
 
