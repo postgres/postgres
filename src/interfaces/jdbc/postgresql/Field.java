@@ -6,10 +6,8 @@ import java.util.*;
 import postgresql.*;
 
 /**
- * postgresql.Field is a class used to describe fields in a PostgreSQL ResultSet
- *
- * @version 1.0 15-APR-1997
- * @author <A HREF="mailto:adrian@hottub.org">Adrian Hall</A>
+ * postgresql.Field is a class used to describe fields in a PostgreSQL
+ * ResultSet
  */
 public class Field
 {
@@ -22,7 +20,7 @@ public class Field
   String type_name = null;// The sql type name
   
   /**
-   *	Construct a field based on the information fed to it.
+   * Construct a field based on the information fed to it.
    *
    * @param conn the connection this field came from
    * @param name the name of the field
@@ -38,6 +36,14 @@ public class Field
   }
   
   /**
+   * @return the oid of this Field's data type
+   */
+  public int getOID()
+  {
+    return oid;
+  }
+  
+  /**
    * the ResultSet and ResultMetaData both need to handle the SQL
    * type, which is gained from another query.  Note that we cannot
    * use getObject() in this, since getObject uses getSQLType().
@@ -47,46 +53,76 @@ public class Field
    */
   public int getSQLType() throws SQLException
   {
-    if (sql_type == -1)
-      {
-	ResultSet result = (postgresql.ResultSet)conn.ExecSQL("select typname from pg_type where oid = " + oid);
-	if (result.getColumnCount() != 1 || result.getTupleCount() != 1)
-	  throw new SQLException("Unexpected return from query for type");
-	result.next();
-	type_name = result.getString(1);
-	if (type_name.equals("int2"))
-	  sql_type = Types.SMALLINT;
-	else if (type_name.equals("int4"))
-	  sql_type = Types.INTEGER;
-	else if (type_name.equals("int8"))
-	  sql_type = Types.BIGINT;
-	else if (type_name.equals("cash"))
-	  sql_type = Types.DECIMAL;
-	else if (type_name.equals("money"))
-	  sql_type = Types.DECIMAL;
-	else if (type_name.equals("float4"))
-	  sql_type = Types.REAL;
-	else if (type_name.equals("float8"))
-	  sql_type = Types.DOUBLE;
-	else if (type_name.equals("bpchar"))
-	  sql_type = Types.CHAR;
-	else if (type_name.equals("varchar"))
-	  sql_type = Types.VARCHAR;
-	else if (type_name.equals("bool"))
-	  sql_type = Types.BIT;
-	else if (type_name.equals("date"))
-	  sql_type = Types.DATE;
-	else if (type_name.equals("time"))
-	  sql_type = Types.TIME;
-	else if (type_name.equals("abstime"))
-	  sql_type = Types.TIMESTAMP;
-	else if (type_name.equals("timestamp"))
-	  sql_type = Types.TIMESTAMP;
-	else
-	  sql_type = Types.OTHER;
-      }	
+    if(sql_type == -1) {
+      ResultSet result = (postgresql.ResultSet)conn.ExecSQL("select typname from pg_type where oid = " + oid);
+      if (result.getColumnCount() != 1 || result.getTupleCount() != 1)
+	throw new SQLException("Unexpected return from query for type");
+      result.next();
+      sql_type = getSQLType(result.getString(1));
+      result.close();
+    }
     return sql_type;
   }
+  
+  /**
+   * This returns the SQL type. It is called by the Field and DatabaseMetaData classes
+   * @param type_name PostgreSQL type name
+   * @return java.sql.Types value for oid
+   */
+  public static int getSQLType(String type_name)
+  {
+    int sql_type = Types.OTHER; // default value
+    for(int i=0;i<types.length;i++)
+      if(type_name.equals(types[i]))
+	sql_type=typei[i];
+    return sql_type;
+  }
+  
+  /**
+   * This table holds the postgresql names for the types supported.
+   * Any types that map to Types.OTHER (eg POINT) don't go into this table.
+   * They default automatically to Types.OTHER
+   *
+   * Note: This must be in the same order as below.
+   *
+   * Tip: keep these grouped together by the Types. value
+   */
+  private static final String types[] = {
+    "int2",
+    "int4","oid",
+    "int8",
+    "cash","money",
+    "float4",
+    "float8",
+    "bpchar","char","char2","char4","char8","char16",
+    "varchar","text","name","filename",
+    "bool",
+    "date",
+    "time",
+    "abstime","timestamp"
+  };
+  
+  /**
+   * This table holds the JDBC type for each entry above.
+   *
+   * Note: This must be in the same order as above
+   *
+   * Tip: keep these grouped together by the Types. value
+   */
+  private static final int typei[] = {
+    Types.SMALLINT,
+    Types.INTEGER,Types.INTEGER,
+    Types.BIGINT,
+    Types.DECIMAL,Types.DECIMAL,
+    Types.REAL,
+    Types.DOUBLE,
+    Types.CHAR,Types.CHAR,Types.CHAR,Types.CHAR,Types.CHAR,Types.CHAR,
+    Types.VARCHAR,Types.VARCHAR,Types.VARCHAR,Types.VARCHAR,
+    Types.BIT,
+    Types.DATE,
+    Types.TIME,
+    Types.TIMESTAMP,Types.TIMESTAMP
+  };
   
   /**
    * We also need to get the type name as returned by the back end.

@@ -6,9 +6,6 @@ import java.util.*;
 import postgresql.*;
 
 /**
- * @version 1.0 15-APR-1997
- * @author <A HREF="mailto:adrian@hottub.org">Adrian Hall</A>
- *
  * A ResultSetMetaData object can be used to find out about the types and
  * properties of the columns in a ResultSet
  *

@@ -71,6 +71,28 @@ public class PG_Stream
   }
   
   /**
+   * Sends an integer to the back end in reverse order.
+   *
+   * This is required when the backend uses the routines in the
+   * src/backend/libpq/pqcomprim.c module.
+   *
+   * @param val the integer to be sent
+   * @param siz the length of the integer in bytes (size of structure)
+   * @exception IOException if an I/O error occurs
+   */
+  public void SendIntegerReverse(int val, int siz) throws IOException
+  {
+    byte[] buf = new byte[siz];
+    int p=0;
+    while (siz-- > 0)
+      {
+	buf[p++] = (byte)(val & 0xff);
+	val >>= 8;
+      }
+    Send(buf);
+  }
+  
+  /**
    * Send an array of bytes to the backend
    *
    * @param buf The array of bytes to be sent
@@ -293,6 +315,20 @@ public class PG_Stream
       } catch (IOException e) {
 	throw new SQLException("Error reading from backend: " + e.toString());
       }
+  }
+  
+  /**
+   * This flushes any pending output to the backend. It is used primarily
+   * by the Fastpath code.
+   * @exception SQLException if an I/O error occurs
+   */
+  public void flush() throws SQLException
+  {
+    try {
+      pg_output.flush();
+    } catch (IOException e) {
+      throw new SQLException("Error flushing output: " + e.toString());
+    }
   }
   
   /**

@@ -7,17 +7,17 @@ import java.util.*;
  * The Java SQL framework allows for multiple database drivers.  Each
  * driver should supply a class that implements the Driver interface
  *
- * The DriverManager will try to load as many drivers as it can find and then
- * for any given connection request, it will ask each driver in turn to try
- * to connect to the target URL.
+ * <p>The DriverManager will try to load as many drivers as it can find and
+ * then for any given connection request, it will ask each driver in turn
+ * to try to connect to the target URL.
  *
- * It is strongly recommended that each Driver class should be small and
+ * <p>It is strongly recommended that each Driver class should be small and
  * standalone so that the Driver class can be loaded and queried without
  * bringing in vast quantities of supporting code.
  *
- * When a Driver class is loaded, it should create an instance of itself and
- * register it with the DriverManager.  This means that a user can load and
- * register a driver by doing Class.forName("foo.bah.Driver")
+ * <p>When a Driver class is loaded, it should create an instance of itself
+ * and register it with the DriverManager.  This means that a user can load
+ * and register a driver by doing Class.forName("foo.bah.Driver")
  *
  * @see postgresql.Connection
  * @see java.sql.Driver
@@ -58,18 +58,18 @@ public class Driver implements java.sql.Driver
    * when the JDBC driverManager is asked to connect to a given URL,
    * it passes the URL to each loaded driver in turn.
    *
-   * The driver should raise an SQLException if it is the right driver
+   * <p>The driver should raise an SQLException if it is the right driver
    * to connect to the given URL, but has trouble connecting to the
    * database.
    *
-   * The java.util.Properties argument can be used to pass arbitrary
+   * <p>The java.util.Properties argument can be used to pass arbitrary
    * string tag/value pairs as connection arguments.  Normally, at least
    * "user" and "password" properties should be included in the 
    * properties.
    *
-   * Our protocol takes the form:
+   * Our protocol takes the forms:
    * <PRE>
-   *	jdbc:postgresql://host:port/database
+   *	jdbc:postgresql://host:port/database?param1=val1&...
    * </PRE>
    *
    * @param url the URL of the database to connect to
@@ -110,7 +110,8 @@ public class Driver implements java.sql.Driver
    * The getPropertyInfo method is intended to allow a generic GUI
    * tool to discover what properties it should prompt a human for
    * in order to get enough information to connect to a database.
-   * Note that depending on the values the human has supplied so
+   *
+   * <p>Note that depending on the values the human has supplied so
    * far, additional values may become necessary, so it may be necessary
    * to iterate through several calls to getPropertyInfo
    *
@@ -169,6 +170,9 @@ public class Driver implements java.sql.Driver
    * tests, otherwise it is required to return false.  JDBC compliance
    * requires full support for the JDBC API and full support for SQL 92
    * Entry Level.  
+   *
+   * <p>For PostgreSQL, this is not yet possible, as we are not SQL92
+   * compliant (yet).
    */
   public boolean jdbcCompliant()
   {
@@ -185,7 +189,7 @@ public class Driver implements java.sql.Driver
    * @param url JDBC URL to parse
    * @param defaults Default properties
    * @return Properties with elements added from the url
-   * @throws SQLException
+   * @exception SQLException
    */
   Properties parseURL(String url,Properties defaults) throws SQLException
   {
@@ -280,7 +284,7 @@ public class Driver implements java.sql.Driver
   }
   
   /**
-   * Returns the hostname portion of the URL
+   * @return the hostname portion of the URL
    */
   public String host()
   {
@@ -288,8 +292,7 @@ public class Driver implements java.sql.Driver
   }
   
   /**
-   * Returns the port number portion of the URL
-   * or -1 if no port was specified
+   * @return the port number portion of the URL or -1 if no port was specified
    */
   public int port()
   {
@@ -297,7 +300,7 @@ public class Driver implements java.sql.Driver
   }
   
   /**
-   * Returns the database name of the URL
+   * @return the database name of the URL
    */
   public String database()
   {
@@ -305,7 +308,8 @@ public class Driver implements java.sql.Driver
   }
   
   /**
-   * Returns any property
+   * @return the value of any property specified in the URL or properties
+   * passed to connect(), or null if not found.
    */
   public String property(String name)
   {

@@ -5,21 +5,20 @@ import java.math.*;
 import java.sql.*;
 import java.text.*;
 import java.util.*;
+import postgresql.largeobject.*;
+import postgresql.util.*;
 
 /**
- * @version 6.3 15-APR-1997
- * @author <A HREF="mailto:adrian@hottub.org">Adrian Hall</A><A HREF="mailto:petermount@earthling.net">Peter Mount</A>
- *
  * A SQL Statement is pre-compiled and stored in a PreparedStatement object.
  * This object can then be used to efficiently execute this statement multiple
  * times.
  *
- * <B>Note:</B> The setXXX methods for setting IN parameter values must
+ * <p><B>Note:</B> The setXXX methods for setting IN parameter values must
  * specify types that are compatible with the defined SQL type of the input
  * parameter.  For instance, if the IN parameter has SQL type Integer, then
  * setInt should be used.
  *
- * If arbitrary parameter type conversions are required, then the setObject 
+ * <p>If arbitrary parameter type conversions are required, then the setObject 
  * method should be used with a target SQL type.
  *
  * @see ResultSet
@@ -33,10 +32,10 @@ public class PreparedStatement extends Statement implements java.sql.PreparedSta
 	Connection connection;
 
 	/**
-	 * Constructor for the PreparedStatement class.  Split the SQL statement
-	 * into segments - separated by the arguments.  When we rebuild the
-	 * thing with the arguments, we can substitute the args and join the
-	 * whole thing together.
+	 * Constructor for the PreparedStatement class.
+	 * Split the SQL statement into segments - separated by the arguments.
+	 * When we rebuild the thing with the arguments, we can substitute the
+	 * args and join the whole thing together.
 	 *
 	 * @param conn the instanatiating connection
 	 * @param sql the SQL statement with ? for IN markers
@@ -125,7 +124,7 @@ public class PreparedStatement extends Statement implements java.sql.PreparedSta
 	/**
 	 * Set a parameter to SQL NULL
 	 *
-	 * <B>Note:</B> You must specify the parameters SQL type (although
+	 * <p><B>Note:</B> You must specify the parameters SQL type (although
 	 * PostgreSQL ignores it)
 	 *
 	 * @param parameterIndex the first parameter is 1, etc...
@@ -254,35 +253,49 @@ public class PreparedStatement extends Statement implements java.sql.PreparedSta
 	 */
 	public void setString(int parameterIndex, String x) throws SQLException
 	{
-		StringBuffer b = new StringBuffer();
-		int i;
-
-		b.append('\'');
-		for (i = 0 ; i < x.length() ; ++i)
-		{
-			char c = x.charAt(i);
-			if (c == '\\' || c == '\'')
-				b.append((char)'\\');
-			b.append(c);
-		}
-		b.append('\'');
-		set(parameterIndex, b.toString());
+	  // if the passed string is null, then set this column to null
+	  if(x==null)
+	    set(parameterIndex,"null");
+	  else {
+	    StringBuffer b = new StringBuffer();
+	    int i;
+	    
+	    b.append('\'');
+	    for (i = 0 ; i < x.length() ; ++i)
+	      {
+		char c = x.charAt(i);
+		if (c == '\\' || c == '\'')
+		  b.append((char)'\\');
+		b.append(c);
+	      }
+	    b.append('\'');
+	    set(parameterIndex, b.toString());
+	  }
 	}
 
-	/**
-	 * Set a parameter to a Java array of bytes.  The driver converts this
-	 * to a SQL VARBINARY or LONGVARBINARY (depending on the argument's
-	 * size relative to the driver's limits on VARBINARYs) when it sends
-	 * it to the database.
-	 *
-	 * @param parameterIndex the first parameter is 1...
-	 * @param x the parameter value
-	 * @exception SQLException if a database access error occurs
-	 */
-	public void setBytes(int parameterIndex, byte x[]) throws SQLException
-	{
-		throw new SQLException("Binary Data not supported");
-	}
+  /**
+   * Set a parameter to a Java array of bytes.  The driver converts this
+   * to a SQL VARBINARY or LONGVARBINARY (depending on the argument's
+   * size relative to the driver's limits on VARBINARYs) when it sends
+   * it to the database.
+   *
+   * <p>Implementation note:
+   * <br>With postgresql, this creates a large object, and stores the
+   * objects oid in this column.
+   *
+   * @param parameterIndex the first parameter is 1...
+   * @param x the parameter value
+   * @exception SQLException if a database access error occurs
+   */
+  public void setBytes(int parameterIndex, byte x[]) throws SQLException
+  {
+    LargeObjectManager lom = connection.getLargeObjectAPI();
+    int oid = lom.create();
+    LargeObject lob = lom.open(oid);
+    lob.write(x);
+    lob.close();
+    setInt(parameterIndex,oid);
+  }
 
 	/**
 	 * Set a parameter to a java.sql.Date value.  The driver converts this
@@ -294,16 +307,30 @@ public class PreparedStatement extends Statement implements java.sql.PreparedSta
 	 */
 	public void setDate(int parameterIndex, java.sql.Date x) throws SQLException
 	{
-	  SimpleDateFormat df = new SimpleDateFormat(connection.europeanDates?"''dd-MM-yyyy''":"''MM-dd-yyyy''");
-	  
-	  set(parameterIndex, df.format(x));
+	  SimpleDateFormat df = new SimpleDateFormat("''"+connection.getDateStyle()+"''");
+	  	  
+	  // Ideally the following should work:
+	  //
+	  //    set(parameterIndex, df.format(x));
+	  //
+	  // however, SimpleDateFormat seems to format a date to the previous
+	  // day. So a fix (for now) is to add a day before formatting.
+	  // This needs more people to confirm this is really happening, or
+	  // possibly for us to implement our own formatting code.
+	  //
+	  // I've tested this with the Linux jdk1.1.3 and the Win95 JRE1.1.5
+	  //
+	  set(parameterIndex, df.format(new java.util.Date(x.getTime()+DAY)));
 	}
+  
+  // This equates to 1 day
+  private static final int DAY = 86400000;
 
 	/**
 	 * Set a parameter to a java.sql.Time value.  The driver converts
 	 * this to a SQL TIME value when it sends it to the database.
 	 *
-	 * @param parameterIndex the first parameter is 1...
+	 * @param parameterIndex the first parameter is 1...));
 	 * @param x the parameter value
 	 * @exception SQLException if a database access error occurs
 	 */
@@ -332,7 +359,7 @@ public class PreparedStatement extends Statement implements java.sql.PreparedSta
 	 * end-of-file.  The JDBC driver will do any necessary conversion from
 	 * ASCII to the database char format.
 	 *
-	 * <B>Note:</B> This stream object can either be a standard Java
+	 * <P><B>Note:</B> This stream object can either be a standard Java
 	 * stream object or your own subclass that implements the standard
 	 * interface.
 	 *
@@ -353,7 +380,7 @@ public class PreparedStatement extends Statement implements java.sql.PreparedSta
 	 * end-of-file.  The JDBC driver will do any necessary conversion from
 	 * UNICODE to the database char format.
 	 *
-	 * <B>Note:</B> This stream object can either be a standard Java
+	 * <P><B>Note:</B> This stream object can either be a standard Java
 	 * stream object or your own subclass that implements the standard
 	 * interface.
 	 *
@@ -372,7 +399,7 @@ public class PreparedStatement extends Statement implements java.sql.PreparedSta
 	 * JDBC will read the data from the stream as needed, until it reaches
 	 * end-of-file.  
 	 *
-	 * <B>Note:</B> This stream object can either be a standard Java
+	 * <P><B>Note:</B> This stream object can either be a standard Java
 	 * stream object or your own subclass that implements the standard
 	 * interface.
 	 *
@@ -406,10 +433,10 @@ public class PreparedStatement extends Statement implements java.sql.PreparedSta
 	 * Set the value of a parameter using an object; use the java.lang
 	 * equivalent objects for integral values.
 	 *
-	 * The given Java object will be converted to the targetSqlType before
+	 * <P>The given Java object will be converted to the targetSqlType before
 	 * being sent to the database.
 	 *
-	 * note that this method may be used to pass database-specific
+	 * <P>note that this method may be used to pass database-specific
 	 * abstract data types.  This is done by using a Driver-specific
 	 * Java type and using a targetSqlType of java.sql.Types.OTHER
 	 *
@@ -450,7 +477,7 @@ public class PreparedStatement extends Statement implements java.sql.PreparedSta
 			case Types.TIMESTAMP:
 				setTimestamp(parameterIndex, (Timestamp)x);
 			case Types.OTHER:
-				setString(parameterIndex, ((PG_Object)x).value);
+				setString(parameterIndex, ((PGobject)x).getValue());
 			default:
 				throw new SQLException("Unknown Types value");
 		}
@@ -485,8 +512,8 @@ public class PreparedStatement extends Statement implements java.sql.PreparedSta
 			setTimestamp(parameterIndex, (Timestamp)x);
 		else if (x instanceof Boolean)
 			setBoolean(parameterIndex, ((Boolean)x).booleanValue());
-		else if (x instanceof PG_Object)
-			setString(parameterIndex, ((PG_Object)x).value);
+		else if (x instanceof PGobject)
+			setString(parameterIndex, ((PGobject)x).getValue());
 		else
 			throw new SQLException("Unknown object type");
 	}

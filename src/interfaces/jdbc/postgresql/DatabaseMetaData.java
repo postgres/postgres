@@ -4,17 +4,14 @@ import java.sql.*;
 import java.util.*;
 
 /**
- * @version 1.0 15-APR-1997
- * @author <A HREF="mailto:adrian@hottub.org">Adrian Hall</A>
- *
  * This class provides information about the database as a whole.
  *
- * Many of the methods here return lists of information in ResultSets.  You
+ * <p>Many of the methods here return lists of information in ResultSets.  You
  * can use the normal ResultSet methods such as getString and getInt to 
  * retrieve the data from these ResultSets.  If a given form of metadata is
  * not available, these methods should throw a SQLException.
  *
- * Some of these methods take arguments that are String patterns.  These
+ * <p>Some of these methods take arguments that are String patterns.  These
  * arguments all have names such as fooPattern.  Within a pattern String,
  * "%" means match any substring of 0 or more characters, and "_" means
  * match any one character.  Only metadata entries matching the search
@@ -22,7 +19,7 @@ import java.util.*;
  * ref, it means that argument's criteria should be dropped from the
  * search.
  *
- * A SQLException will be throws if a driver does not support a meta
+ * <p>A SQLException will be throws if a driver does not support a meta
  * data method.  In the case of methods that return a ResultSet, either
  * a ResultSet (which may be empty) is returned or a SQLException is
  * thrown.
@@ -32,6 +29,12 @@ import java.util.*;
 public class DatabaseMetaData implements java.sql.DatabaseMetaData 
 {
   Connection connection;		// The connection association
+  
+  // These define various OID's. Hopefully they will stay constant.
+  static final int iVarcharOid = 1043;	// OID for varchar
+  static final int iBoolOid = 16;	// OID for bool
+  static final int iInt2Oid = 21;	// OID for int2
+  static final int iInt4Oid = 23;	// OID for int4
   
   public DatabaseMetaData(Connection conn)
   {
@@ -152,19 +155,21 @@ public class DatabaseMetaData implements java.sql.DatabaseMetaData
   }
   
   /**
-   * What is the version of this database product.  Note that
-   * PostgreSQL 6.1 has a system catalog called pg_version - 
+   * What is the version of this database product.
+   *
+   * <p>Note that PostgreSQL 6.3 has a system catalog called pg_version - 
    * however, select * from pg_version on any database retrieves
-   * no rows.  For now, we will return the version 6.1 (in the
-   * hopes that we change this driver as often as we change the
-   * database)
+   * no rows.
+   *
+   * <p>For now, we will return the version 6.3 (in the hope that we change
+   * this driver as often as we change the database)
    *
    * @return the database version
    * @exception SQLException if a database access error occurs
    */
   public String getDatabaseProductVersion() throws SQLException
   {
-    return ("6.2");
+    return ("6.3");
   }
   
   /**
@@ -240,7 +245,7 @@ public class DatabaseMetaData implements java.sql.DatabaseMetaData
    * as case sensitive and as a result store them in mixed case?
    * A JDBC-Compliant driver will always return false.
    *
-   * Predicament - what do they mean by "SQL identifiers" - if it
+   * <p>Predicament - what do they mean by "SQL identifiers" - if it
    * means the names of the tables and columns, then the answers
    * given below are correct - otherwise I don't know.
    *
@@ -290,7 +295,7 @@ public class DatabaseMetaData implements java.sql.DatabaseMetaData
    * case sensitive and as a result store them in mixed case?  A
    * JDBC compliant driver will always return true. 
    *
-   * Predicament - what do they mean by "SQL identifiers" - if it
+   * <p>Predicament - what do they mean by "SQL identifiers" - if it
    * means the names of the tables and columns, then the answers
    * given below are correct - otherwise I don't know.
    *
@@ -340,7 +345,7 @@ public class DatabaseMetaData implements java.sql.DatabaseMetaData
    * a space if identifier quoting isn't supported.  A JDBC Compliant
    * driver will always use a double quote character.
    *
-   * If an SQL identifier is a table name, column name, etc. then
+   * <p>If an SQL identifier is a table name, column name, etc. then
    * we do not support it.
    *
    * @return the quoting string
@@ -355,10 +360,12 @@ public class DatabaseMetaData implements java.sql.DatabaseMetaData
    * Get a comma separated list of all a database's SQL keywords that
    * are NOT also SQL92 keywords.
    *
-   * Within PostgreSQL, the keywords are found in
+   * <p>Within PostgreSQL, the keywords are found in
    * 	src/backend/parser/keywords.c
-   * For SQL Keywords, I took the list provided at
-   * 	http://web.dementia.org/~shadow/sql/sql3bnf.sep93.txt
+   *
+   * <p>For SQL Keywords, I took the list provided at
+   * 	<a href="http://web.dementia.org/~shadow/sql/sql3bnf.sep93.txt">
+   * http://web.dementia.org/~shadow/sql/sql3bnf.sep93.txt</a>
    * which is for SQL3, not SQL-92, but it is close enough for
    * this purpose.
    *
@@ -410,7 +417,7 @@ public class DatabaseMetaData implements java.sql.DatabaseMetaData
    * Get all the "extra" characters that can bew used in unquoted
    * identifier names (those beyond a-zA-Z0-9 and _)
    *
-   * From the file src/backend/parser/scan.l, an identifier is
+   * <p>From the file src/backend/parser/scan.l, an identifier is
    * {letter}{letter_or_digit} which makes it just those listed
    * above.
    *
@@ -449,14 +456,16 @@ public class DatabaseMetaData implements java.sql.DatabaseMetaData
   /**
    * Is column aliasing supported?
    *
-   * If so, the SQL AS clause can be used to provide names for
+   * <p>If so, the SQL AS clause can be used to provide names for
    * computed columns or to provide alias names for columns as
    * required.  A JDBC Compliant driver always returns true.
    *
-   * e.g.
+   * <p>e.g.
    *
+   * <br><pre>
    * select count(C) as C_COUNT from T group by C;
    *
+   * </pre><br>
    * should return a column named as C_COUNT instead of count(C)
    *
    * @return true if so
@@ -506,7 +515,7 @@ public class DatabaseMetaData implements java.sql.DatabaseMetaData
   /**
    * Are expressions in "ORCER BY" lists supported?
    * 
-   * e.g. select * from t order by a + b;
+   * <br>e.g. select * from t order by a + b;
    *
    * @return true if so
    * @exception SQLException if a database access error occurs
@@ -607,7 +616,7 @@ public class DatabaseMetaData implements java.sql.DatabaseMetaData
    * Can columns be defined as non-nullable.  A JDBC Compliant driver
    * always returns true.
    *
-   * This changed from false to true in v6.2 of the driver, as this
+   * <p>This changed from false to true in v6.2 of the driver, as this
    * support was added to the backend.
    *
    * @return true if so
@@ -622,9 +631,9 @@ public class DatabaseMetaData implements java.sql.DatabaseMetaData
    * Does this driver support the minimum ODBC SQL grammar.  This
    * grammar is defined at:
    *
-   * http://www.microsoft.com/msdn/sdk/platforms/doc/odbc/src/intropr.htm
+   * <p><a href="http://www.microsoft.com/msdn/sdk/platforms/doc/odbc/src/intropr.htm">http://www.microsoft.com/msdn/sdk/platforms/doc/odbc/src/intropr.htm</a>
    *
-   * In Appendix C.  From this description, we seem to support the
+   * <p>In Appendix C.  From this description, we seem to support the
    * ODBC minimal (Level 0) grammar.
    *
    * @return true if so
@@ -1142,7 +1151,7 @@ public class DatabaseMetaData implements java.sql.DatabaseMetaData
    * What is the maximum number of columns in a table? From the
    * create_table(l) manual page...
    *
-   * "The new class is created as a heap with no initial data.  A
+   * <p>"The new class is created as a heap with no initial data.  A
    * class can have no more than 1600 attributes (realistically,
    * this is limited by the fact that tuple sizes must be less than
    * 8192 bytes)..."
@@ -1393,6 +1402,7 @@ public class DatabaseMetaData implements java.sql.DatabaseMetaData
    * Does a data definition statement within a transaction force
    * the transaction to commit?  I think this means something like:
    *
+   * <p><pre>
    * CREATE TABLE T (A INT);
    * INSERT INTO T (A) VALUES (2);
    * BEGIN;
@@ -1400,6 +1410,7 @@ public class DatabaseMetaData implements java.sql.DatabaseMetaData
    * CREATE TABLE X (A INT);
    * SELECT A FROM T INTO X;
    * COMMIT;
+   * </pre><p>
    *
    * does the CREATE TABLE call cause a commit?  The answer is no.  
    *
@@ -1412,7 +1423,7 @@ public class DatabaseMetaData implements java.sql.DatabaseMetaData
   }
   
   /**
-   *  Is a data definition statement within a transaction ignored?
+   * Is a data definition statement within a transaction ignored?
    * It seems to be (from experiment in previous method)
    *
    * @return true if so
@@ -1426,22 +1437,26 @@ public class DatabaseMetaData implements java.sql.DatabaseMetaData
   /**
    * Get a description of stored procedures available in a catalog
    * 
-   * Only procedure descriptions matching the schema and procedure
+   * <p>Only procedure descriptions matching the schema and procedure
    * name criteria are returned.  They are ordered by PROCEDURE_SCHEM
    * and PROCEDURE_NAME
    *
-   * Each procedure description has the following columns:
-   * PROCEDURE_CAT String => procedure catalog (may be null)
-   * PROCEDURE_SCHEM String => procedure schema (may be null)
-   * PROCEDURE_NAME String => procedure name
-   * Field 4 reserved (make it null)
-   * Field 5 reserved (make it null)
-   * Field 6 reserved (make it null)
-   * REMARKS String => explanatory comment on the procedure
-   * PROCEDURE_TYPE short => kind of procedure
-   *	* procedureResultUnknown - May return a result
-   * 	* procedureNoResult - Does not return a result
-   *	* procedureReturnsResult - Returns a result
+   * <p>Each procedure description has the following columns:
+   * <ol>
+   * <li><b>PROCEDURE_CAT</b> String => procedure catalog (may be null)
+   * <li><b>PROCEDURE_SCHEM</b> String => procedure schema (may be null)
+   * <li><b>PROCEDURE_NAME</b> String => procedure name
+   * <li><b>Field 4</b> reserved (make it null)
+   * <li><b>Field 5</b> reserved (make it null)
+   * <li><b>Field 6</b> reserved (make it null)
+   * <li><b>REMARKS</b> String => explanatory comment on the procedure
+   * <li><b>PROCEDURE_TYPE</b> short => kind of procedure
+   *	<ul>
+   *    <li> procedureResultUnknown - May return a result
+   * 	<li> procedureNoResult - Does not return a result
+   *	<li> procedureReturnsResult - Returns a result
+   *    </ul>
+   * </ol>
    *
    * @param catalog - a catalog name; "" retrieves those without a
    *	catalog; null means drop catalog name from criteria
@@ -1451,8 +1466,6 @@ public class DatabaseMetaData implements java.sql.DatabaseMetaData
    * @return ResultSet - each row is a procedure description
    * @exception SQLException if a database access error occurs
    */
-  static final int iVarcharOid = 1043; // This is the OID for a varchar()
-  static final int iInt2Oid = 21;	 // This is the OID for an int2
   public java.sql.ResultSet getProcedures(String catalog, String schemaPattern, String procedureNamePattern) throws SQLException
   {
     // the field descriptors for the new ResultSet
@@ -1497,16 +1510,182 @@ public class DatabaseMetaData implements java.sql.DatabaseMetaData
     return new ResultSet(connection, f, v, "OK", 1);
   }
   
+  /**
+   * Get a description of a catalog's stored procedure parameters
+   * and result columns.
+   *
+   * <p>Only descriptions matching the schema, procedure and parameter
+   * name criteria are returned. They are ordered by PROCEDURE_SCHEM
+   * and PROCEDURE_NAME. Within this, the return value, if any, is
+   * first. Next are the parameter descriptions in call order. The
+   * column descriptions follow in column number order.
+   *
+   * <p>Each row in the ResultSet is a parameter description or column 
+   * description with the following fields:
+   * <ol>
+   * <li><b>PROCEDURE_CAT</b> String => procedure catalog (may be null)
+   * <li><b>PROCEDURE_SCHE</b>M String => procedure schema (may be null)
+   * <li><b>PROCEDURE_NAME</b> String => procedure name
+   * <li><b>COLUMN_NAME</b> String => column/parameter name
+   * <li><b>COLUMN_TYPE</b> Short => kind of column/parameter:
+   * <ul><li>procedureColumnUnknown - nobody knows
+   * <li>procedureColumnIn - IN parameter
+   * <li>procedureColumnInOut - INOUT parameter
+   * <li>procedureColumnOut - OUT parameter
+   * <li>procedureColumnReturn - procedure return value
+   * <li>procedureColumnResult - result column in ResultSet
+   * </ul>
+   * <li><b>DATA_TYPE</b> short => SQL type from java.sql.Types
+   * <li><b>TYPE_NAME</b> String => SQL type name
+   * <li><b>PRECISION</b> int => precision
+   * <li><b>LENGTH</b> int => length in bytes of data
+   * <li><b>SCALE</b> short => scale
+   * <li><b>RADIX</b> short => radix
+   * <li><b>NULLABLE</b> short => can it contain NULL?
+   * <ul><li>procedureNoNulls - does not allow NULL values
+   * <li>procedureNullable - allows NULL values
+   * <li>procedureNullableUnknown - nullability unknown
+   * <li><b>REMARKS</b> String => comment describing parameter/column
+   * </ol>
+   * @param catalog This is ignored in postgresql, advise this is set to null
+   * @param schemaPattern This is ignored in postgresql, advise this is set to null
+   * @param procedureNamePattern a procedure name pattern
+   * @param columnNamePattern a column name pattern
+   * @return each row is a stored procedure parameter or column description
+   * @exception SQLException if a database-access error occurs
+   * @see #getSearchStringEscape
+   */
+  // Implementation note: This is required for Borland's JBuilder to work
   public java.sql.ResultSet getProcedureColumns(String catalog, String schemaPattern, String procedureNamePattern, String columnNamePattern) throws SQLException
   {
-    // XXX-Not Implemented
-    return null;
+    // for now, this returns an empty result set.
+    Field f[] = new Field[13];
+    ResultSet r;	// ResultSet for the SQL query that we need to do
+    Vector v = new Vector();		// The new ResultSet tuple stuff
+    
+    f[0] = new Field(connection, new String("PROCEDURE_CAT"), iVarcharOid, 32);
+    f[1] = new Field(connection, new String("PROCEDURE_SCHEM"), iVarcharOid, 32);
+    f[2] = new Field(connection, new String("PROCEDURE_NAME"), iVarcharOid, 32);
+    f[3] = new Field(connection, new String("COLUMN_NAME"), iVarcharOid, 32);
+    f[4] = new Field(connection, new String("COLUMN_TYPE"), iInt2Oid, 2);
+    f[5] = new Field(connection, new String("DATA_TYPE"), iInt2Oid, 2);
+    f[6] = new Field(connection, new String("TYPE_NAME"), iVarcharOid, 32);
+    f[7] = new Field(connection, new String("PRECISION"), iInt4Oid, 4);
+    f[8] = new Field(connection, new String("LENGTH"), iInt4Oid, 4);
+    f[9] = new Field(connection, new String("SCALE"), iInt2Oid, 2);
+    f[10] = new Field(connection, new String("RADIX"), iInt2Oid, 2);
+    f[11] = new Field(connection, new String("NULLABLE"), iInt2Oid, 2);
+    f[12] = new Field(connection, new String("REMARKS"), iVarcharOid, 32);
+    
+    return new ResultSet(connection, f, v, "OK", 1);
   }
   
+  /**
+   * Get a description of tables available in a catalog.              
+   *
+   * <p>Only table descriptions matching the catalog, schema, table
+   * name and type criteria are returned. They are ordered by
+   * TABLE_TYPE, TABLE_SCHEM and TABLE_NAME.                      
+   * 
+   * <p>Each table description has the following columns:     
+   *
+   * <ol>
+   * <li><b>TABLE_CAT</b> String => table catalog (may be null)      
+   * <li><b>TABLE_SCHEM</b> String => table schema (may be null)         
+   * <li><b>TABLE_NAME</b> String => table name
+   * <li><b>TABLE_TYPE</b> String => table type. Typical types are "TABLE",
+   * "VIEW", "SYSTEM TABLE", "GLOBAL TEMPORARY", "LOCAL
+   * TEMPORARY", "ALIAS", "SYNONYM".                             
+   * <li><b>REMARKS</b> String => explanatory comment on the table
+   * </ol>
+   *
+   * <p>The valid values for the types parameter are:
+   * "TABLE", "INDEX", "LARGE OBJECT", "SEQUENCE", "SYSTEM TABLE" and
+   * "SYSTEM INDEX"
+   *
+   * @param catalog a catalog name; For postgresql, this is ignored, and
+   * should be set to null
+   * @param schemaPattern a schema name pattern; For postgresql, this is ignored, and
+   * should be set to null
+   * @param tableNamePattern a table name pattern. For all tables this should be "%"
+   * @param types a list of table types to include; null returns
+   * all types
+   * @return each row is a table description      
+   * @exception SQLException if a database-access error occurs.                     
+   */
   public java.sql.ResultSet getTables(String catalog, String schemaPattern, String tableNamePattern, String types[]) throws SQLException
   {
-    return connection.createStatement().executeQuery("SELECT '' as TABLE_CAT,'' AS TABLE_SCHEM,relname AS TABLE_NAME,'TABLE' AS TABLE_TYPE,'' AS REMARKS FROM pg_class WHERE relkind = 'r' and relname !~ '^pg_' and relname !~ '^Inv' and relname ~ '"+tableNamePattern+"' ORDER BY TABLE_NAME");
+    // the field descriptors for the new ResultSet
+    Field f[] = new Field[5];
+    ResultSet r;	// ResultSet for the SQL query that we need to do
+    Vector v = new Vector();		// The new ResultSet tuple stuff
+    
+    f[0] = new Field(connection, new String("TABLE_CAT"), iVarcharOid, 32);
+    f[1] = new Field(connection, new String("TABLE_SCHEM"), iVarcharOid, 32);
+    f[2] = new Field(connection, new String("TABLE_NAME"), iVarcharOid, 32);
+    f[3] = new Field(connection, new String("TABLE_TYPE"), iVarcharOid, 32);
+    f[4] = new Field(connection, new String("REMARKS"), iVarcharOid, 32);
+    
+    // Now form the query
+    StringBuffer sql = new StringBuffer("select relname,oid from pg_class where ");
+    boolean notFirst=false;
+    for(int i=0;i<types.length;i++) {
+      if(notFirst)
+	sql.append(" or ");
+      for(int j=0;j<getTableTypes.length;j++)
+	if(getTableTypes[j][0].equals(types[i])) {
+	  sql.append(getTableTypes[j][1]);
+	  notFirst=true;
+	}
+    }
+    
+    // Now run the query
+    r = connection.ExecSQL(sql.toString());
+    
+    if (r.getColumnCount() != 2)
+      throw new SQLException("Unexpected return from query for table list");
+    
+    while (r.next())
+      {
+	byte[][] tuple = new byte[5][0];
+	
+	String name = r.getString(1);
+	String remarks = new String("no remarks");
+	
+	// Fetch the description for the table (if any)
+	ResultSet dr = connection.ExecSQL("select description from pg_description where objoid="+r.getInt(2));
+	if(dr.getTupleCount()==1) {
+	  dr.next();
+	  remarks=dr.getString(1);
+	}
+	dr.close();
+	
+	tuple[0] = null;			// Catalog name
+	tuple[1] = null;			// Schema name
+	tuple[2] = name.getBytes();		// Table name
+	tuple[3] = null;			// Table type
+	tuple[4] = remarks.getBytes();		// Remarks
+	v.addElement(tuple);
+      }
+    r.close();
+    return new ResultSet(connection, f, v, "OK", 1);
   }
+  
+  // This array contains the valid values for the types argument
+  // in getTables().
+  //
+  // Each supported type consists of it's name, and the sql where
+  // clause to retrieve that value.
+  //
+  // IMPORTANT: the query must be enclosed in ( )
+  private static final String getTableTypes[][] = {
+    {"TABLE",		"(relkind='r' and relname !~ '^pg_' and relname !~ '^xinv')"},
+    {"INDEX",		"(relkind='i' and relname !~ '^pg_' and relname !~ '^xinx')"},
+    {"LARGE OBJECT",	"(relkind='r' and relname ~ '^xinv')"},
+    {"SEQUENCE",	"(relkind='S' and relname !~ '^pg_')"},
+    {"SYSTEM TABLE",	"(relkind='r' and relname ~ '^pg_')"},
+    {"SYSTEM INDEX",	"(relkind='i' and relname ~ '^pg_')"}
+  };
   
   /**
    * Get the schema names available in this database.  The results
@@ -1522,8 +1701,15 @@ public class DatabaseMetaData implements java.sql.DatabaseMetaData
    */
   public java.sql.ResultSet getSchemas() throws SQLException
   {
-    // XXX-Not Implemented
-    return null;
+    // We don't use schemas, so we simply return a single schema name "".
+    //
+    Field f[] = new Field[1];
+    Vector v = new Vector();
+    byte[][] tuple = new byte[1][0];
+    f[0] = new Field(connection,new String("TABLE_SCHEM"),iVarcharOid,32);
+    tuple[0] = "".getBytes();
+    v.addElement(tuple);
+    return new ResultSet(connection,f,v,"OK",1);
   }
   
   /**
@@ -1538,10 +1724,16 @@ public class DatabaseMetaData implements java.sql.DatabaseMetaData
    * @return ResultSet each row has a single String column that is a
    * catalog name
    */
-  // We don't use catalog names, so this returns a single catalog
   public java.sql.ResultSet getCatalogs() throws SQLException
   {
-    return connection.createStatement().executeQuery("SELECT '' as TABLE_CAT");
+    // We don't use catalogs, so we simply return a single catalog name "".
+    Field f[] = new Field[1];
+    Vector v = new Vector();
+    byte[][] tuple = new byte[1][0];
+    f[0] = new Field(connection,new String("TABLE_CAT"),iVarcharOid,32);
+    tuple[0] = "".getBytes();
+    v.addElement(tuple);
+    return new ResultSet(connection,f,v,"OK",1);
   }
   
   /**
@@ -1560,8 +1752,15 @@ public class DatabaseMetaData implements java.sql.DatabaseMetaData
    */
   public java.sql.ResultSet getTableTypes() throws SQLException
   {
-    // XXX-Not Implemented
-    return null;
+    Field f[] = new Field[1];
+    Vector v = new Vector();
+    byte[][] tuple = new byte[1][0];
+    f[0] = new Field(connection,new String("TABLE_TYPE"),iVarcharOid,32);
+    for(int i=0;i<getTableTypes.length;i++) {
+      tuple[0] = getTableTypes[i][0].getBytes();
+      v.addElement(tuple);
+    }
+    return new ResultSet(connection,f,v,"OK",1);
   }
   
   /**
@@ -1614,10 +1813,87 @@ public class DatabaseMetaData implements java.sql.DatabaseMetaData
    */
   public java.sql.ResultSet getColumns(String catalog, String schemaPattern, String tableNamePattern, String columnNamePattern) throws SQLException
   {
-    // XXX-Not Implemented
-    // PM: this will be implemented, as soon as I sort out how to convert the
-    // code from the other driver (private note: look at getProcedures() )
-    return null;
+    // the field descriptors for the new ResultSet
+    Field f[] = new Field[18];
+    ResultSet r;	// ResultSet for the SQL query that we need to do
+    Vector v = new Vector();		// The new ResultSet tuple stuff
+    
+    f[0] = new Field(connection, new String("TABLE_CAT"), iVarcharOid, 32);
+    f[1] = new Field(connection, new String("TABLE_SCHEM"), iVarcharOid, 32);
+    f[2] = new Field(connection, new String("TABLE_NAME"), iVarcharOid, 32);
+    f[3] = new Field(connection, new String("COLUMN_NAME"), iVarcharOid, 32);
+    f[4] = new Field(connection, new String("DATA_TYPE"), iInt2Oid, 2);
+    f[5] = new Field(connection, new String("TYPE_NAME"), iVarcharOid, 32);
+    f[6] = new Field(connection, new String("COLUMN_SIZE"), iInt4Oid, 4);
+    f[7] = new Field(connection, new String("BUFFER_LENGTH"), iVarcharOid, 32);
+    f[8] = new Field(connection, new String("DECIMAL_DIGITS"), iInt4Oid, 4);
+    f[9] = new Field(connection, new String("NUM_PREC_RADIX"), iInt4Oid, 4);
+    f[10] = new Field(connection, new String("NULLABLE"), iInt4Oid, 4);
+    f[11] = new Field(connection, new String("REMARKS"), iVarcharOid, 32);
+    f[12] = new Field(connection, new String("COLUMN_DEF"), iVarcharOid, 32);
+    f[13] = new Field(connection, new String("SQL_DATA_TYPE"), iInt4Oid, 4);
+    f[14] = new Field(connection, new String("SQL_DATETIME_SUB"), iInt4Oid, 4);
+    f[15] = new Field(connection, new String("CHAR_OCTET_LENGTH"), iVarcharOid, 32);
+    f[16] = new Field(connection, new String("ORDINAL_POSITION"), iInt4Oid,4);
+    f[17] = new Field(connection, new String("IS_NULLABLE"), iVarcharOid, 32);
+    
+    // Now form the query
+    r = connection.ExecSQL("select a.oid,c.relname,a.attname,a.atttypid,a.attnum,a.attnotnull,a.attlen from pg_class c, pg_attribute a where a.attrelid=c.oid and c.relname like '"+tableNamePattern+"' and a.attname like '"+columnNamePattern+"' and a.attnum>0 order by c.relname,a.attnum");
+    
+    while(r.next()) {
+	byte[][] tuple = new byte[18][0];
+	
+	String name = r.getString(1);
+	String remarks = new String("no remarks");
+	
+	// Fetch the description for the table (if any)
+	ResultSet dr = connection.ExecSQL("select description from pg_description where objoid="+r.getInt(1));
+	if(dr.getTupleCount()==1) {
+	  dr.next();
+	  remarks=dr.getString(1);
+	}
+	dr.close();
+	
+	tuple[0] = "".getBytes();	// Catalog name
+	tuple[1] = "".getBytes();	// Schema name
+	tuple[2] = r.getString(2).getBytes();	// Table name
+	tuple[3] = r.getString(3).getBytes();	// Column name
+	
+	dr = connection.ExecSQL("select typname from pg_type where oid = "+r.getString(4));
+	dr.next();
+	String typname=dr.getString(1);
+	dr.close();
+	tuple[4] = Integer.toString(Field.getSQLType(typname)).getBytes();	// Data type
+	tuple[5] = typname.getBytes();	// Type name
+	
+	tuple[6] = r.getString(7).getBytes();	// Column size
+	
+	tuple[7] = null;	// Buffer length
+	
+	tuple[8] = "0".getBytes();	// Decimal Digits - how to get this?
+	tuple[9] = "10".getBytes();	// Num Prec Radix - assume decimal
+	
+	// tuple[10] is below
+	
+	tuple[11] = remarks.getBytes();		// Remarks
+	
+	tuple[12] = null;	// column default
+	
+	tuple[13] = null;	// sql data type (unused)
+	tuple[14] = null;	// sql datetime sub (unused)
+	
+	tuple[15] = tuple[6];	// char octet length
+	
+	tuple[16] = r.getString(5).getBytes();	// ordinal position
+	
+	String nullFlag = r.getString(6);
+	tuple[10] = Integer.toString(nullFlag.equals("f")?java.sql.DatabaseMetaData.columnNullable:java.sql.DatabaseMetaData.columnNoNulls).getBytes();	// Nullable
+	tuple[17] = (nullFlag.equals("f")?"YES":"NO").getBytes();	// is nullable
+	
+	v.addElement(tuple);
+      }
+    r.close();
+    return new ResultSet(connection, f, v, "OK", 1);
   }
   
   /**
@@ -1649,8 +1925,30 @@ public class DatabaseMetaData implements java.sql.DatabaseMetaData
    */
   public java.sql.ResultSet getColumnPrivileges(String catalog, String schema, String table, String columnNamePattern) throws SQLException
   {
-    // XXX-Not Implemented
+    // XXX-Not Implemented as grant is broken
     return null;
+    //Field f[] = new Field[8];
+    //Vector v = new Vector();
+    //
+    //f[0] = new Field(connection,new String("TABLE_CAT"),iVarcharOid,32);
+    //f[1] = new Field(connection,new String("TABLE_SCHEM"),iVarcharOid,32);
+    //f[2] = new Field(connection,new String("TABLE_NAME"),iVarcharOid,32);
+    //f[3] = new Field(connection,new String("COLUMN_NAME"),iVarcharOid,32);
+    //f[4] = new Field(connection,new String("GRANTOR"),iVarcharOid,32);
+    //f[5] = new Field(connection,new String("GRANTEE"),iVarcharOid,32);
+    //f[6] = new Field(connection,new String("PRIVILEGE"),iVarcharOid,32);
+    //f[7] = new Field(connection,new String("IS_GRANTABLE"),iVarcharOid,32);
+    //
+    //// This is taken direct from the psql source
+    //ResultSet r = connection.ExecSQL("SELECT relname, relacl FROM pg_class, pg_user WHERE ( relkind = 'r' OR relkind = 'i') and relname !~ '^pg_' and relname !~ '^xin[vx][0-9]+' and usesysid = relowner ORDER BY relname");
+    //while(r.next()) {
+    //byte[][] tuple = new byte[8][0];
+    //tuple[0] = tuple[1]= "default".getBytes();
+    //
+    //v.addElement(tuple);
+    //}
+    //
+    //return new ResultSet(connection,f,v,"OK",1);
   }
   
   /**
@@ -1722,10 +2020,24 @@ public class DatabaseMetaData implements java.sql.DatabaseMetaData
    * @param nullable include columns that are nullable?
    * @return ResultSet each row is a column description
    */
+  // Implementation note: This is required for Borland's JBuilder to work
   public java.sql.ResultSet getBestRowIdentifier(String catalog, String schema, String table, int scope, boolean nullable) throws SQLException
   {
-    // XXX-Not Implemented
-    return null;
+    // for now, this returns an empty result set.
+    Field f[] = new Field[8];
+    ResultSet r;	// ResultSet for the SQL query that we need to do
+    Vector v = new Vector();		// The new ResultSet tuple stuff
+    
+    f[0] = new Field(connection, new String("SCOPE"), iInt2Oid, 2);
+    f[1] = new Field(connection, new String("COLUMN_NAME"), iVarcharOid, 32);
+    f[2] = new Field(connection, new String("DATA_TYPE"), iInt2Oid, 2);
+    f[3] = new Field(connection, new String("TYPE_NAME"), iVarcharOid, 32);
+    f[4] = new Field(connection, new String("COLUMN_SIZE"), iInt4Oid, 4);
+    f[5] = new Field(connection, new String("BUFFER_LENGTH"), iInt4Oid, 4);
+    f[6] = new Field(connection, new String("DECIMAL_DIGITS"), iInt2Oid, 2);
+    f[7] = new Field(connection, new String("PSEUDO_COLUMN"), iInt2Oid, 2);
+    
+    return new ResultSet(connection, f, v, "OK", 1);
   }
   
   /**
@@ -2078,9 +2390,29 @@ public class DatabaseMetaData implements java.sql.DatabaseMetaData
    *     accurate
    * @return ResultSet each row is an index column description
    */
+  // Implementation note: This is required for Borland's JBuilder to work
   public java.sql.ResultSet getIndexInfo(String catalog, String schema, String table, boolean unique, boolean approximate) throws SQLException
   {
-    // XXX-Not Implemented
-    return null;
+    // for now, this returns an empty result set.
+    Field f[] = new Field[13];
+    ResultSet r;	// ResultSet for the SQL query that we need to do
+    Vector v = new Vector();		// The new ResultSet tuple stuff
+    
+    f[0] = new Field(connection, new String("TABLE_CAT"), iVarcharOid, 32);
+    f[1] = new Field(connection, new String("TABLE_SCHEM"), iVarcharOid, 32);
+    f[2] = new Field(connection, new String("TABLE_NAME"), iVarcharOid, 32);
+    f[3] = new Field(connection, new String("NON_UNIQUE"), iBoolOid, 1);
+    f[4] = new Field(connection, new String("INDEX_QUALIFIER"), iVarcharOid, 32);
+    f[5] = new Field(connection, new String("INDEX_NAME"), iVarcharOid, 32);
+    f[6] = new Field(connection, new String("TYPE"), iInt2Oid, 2);
+    f[7] = new Field(connection, new String("ORDINAL_POSITION"), iInt2Oid, 2);
+    f[8] = new Field(connection, new String("COLUMN_NAME"), iVarcharOid, 32);
+    f[9] = new Field(connection, new String("ASC_OR_DESC"), iVarcharOid, 32);
+    f[10] = new Field(connection, new String("CARDINALITY"), iInt4Oid, 4);
+    f[11] = new Field(connection, new String("PAGES"), iInt4Oid, 4);
+    f[12] = new Field(connection, new String("FILTER_CONDITION"), iVarcharOid, 32);
+    
+    return new ResultSet(connection, f, v, "OK", 1);
   }
 }
+

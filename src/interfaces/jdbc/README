@@ -10,6 +10,14 @@ or the JDBC mailing list:
 
 	http://www.blackdown.org
 
+For problems with this driver, then refer to the postgres-interfaces email
+list:
+
+	http://www.postgresql.org
+
+By the time V6.3 is released, full documentation will be on the web, and in
+the distribution.
+
 ---------------------------------------------------------------------------
 
 COMPILING
@@ -115,14 +123,20 @@ them to the URL. eg:
 By default, the driver doesn't use password authentication. You can enable
 this by adding the argument auth. ie:
 
-	jdbc:postgresql:database?user=me&password=mypass&auth=y
+	jdbc:postgresql:database?user=me&password=mypass&auth=password
 
 or if passing the user & password directly via DriverManager.getConnection():
 
-	jdbc:postgresql:database?auth=y
+	jdbc:postgresql:database?auth=password
 
-PS: Password authentication is enabled if the value of auth starts with 'y'.
+PS: Password authentication is enabled if the value of auth starts with 'p'.
     It is case insensitive.
+
+As of postgresql 6.3, Ident (RFC 1413) authentication is also supported.
+Simply use auth=ident in the url.
+
+Also, as of 6.3, a system property of postgresql.auth is supported. This
+defines the default authentication to use. The auth property overides this.
 
 ---------------------------------------------------------------------------
 
@@ -180,7 +194,7 @@ syntax for writing these to the database.
 
 ---------------------------------------------------------------------------
 
-Peter T Mount, October 28 1997
+Peter T Mount, January 11 1998
 home email: pmount@maidast.demon.co.uk	http://www.demon.co.uk/finder
 work email: peter@maidstone.gov.uk	http://www.maidstone.gov.uk
 
