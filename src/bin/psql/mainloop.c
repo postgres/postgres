@@ -136,9 +136,10 @@ MainLoop(PsqlSettings *pset, FILE *source)
 		if (line == NULL)
 		{
 			if (GetVariableBool(pset->vars, "echo") && !GetVariableBool(pset->vars, "quiet"))
-				puts("EOF\n");
-			else
-				puts(""); /* put out newline */
+				puts("EOF");
+			else if (pset->cur_cmd_interactive)
+				puts(""); /* just newline */
+
 			eof = true;
 			continue;
 		}

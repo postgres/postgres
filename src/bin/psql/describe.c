@@ -158,7 +158,7 @@ describeTypes(const char *name, PsqlSettings *pset)
 	descbuf[0] = '\0';
 	strcat(descbuf, "SELECT typname AS \"Type\"");
 	if (GetVariableBool(pset->vars, "description"))
-		strcat(descbuf, ", obj_description(p.oid) as \"Description\"");
+		strcat(descbuf, ", obj_description(oid) as \"Description\"");
 	strcat(descbuf, "\nFROM pg_type\n"
 		   "WHERE typrelid = 0 AND typname !~ '^_.*'\n");
 
