@@ -1,7 +1,7 @@
 /*
  * conversion functions between pg_wchar and multi-byte streams.
  * Tatsuo Ishii
- * $Id: wchar.c,v 1.21 2001/09/21 15:27:38 tgl Exp $
+ * $Id: wchar.c,v 1.22 2001/09/23 10:59:45 ishii Exp $
  *
  * WIN1250 client encoding updated by Pavel Behal
  *
@@ -573,4 +573,14 @@ pg_verifymbstr(const unsigned char *mbstr, int len)
 	}
 	return NULL;
 }
+
+/*
+ * fetch maximum length of a char encoding for the current database
+ */
+int
+pg_database_encoding_max_length(void)
+{
+	return pg_wchar_table[GetDatabaseEncoding()].maxmblen;
+}
+
 #endif

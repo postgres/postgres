@@ -1,4 +1,4 @@
-/* $Id: pg_wchar.h,v 1.31 2001/09/21 15:27:38 tgl Exp $ */
+/* $Id: pg_wchar.h,v 1.32 2001/09/23 10:59:45 ishii Exp $ */
 
 #ifndef PG_WCHAR_H
 #define PG_WCHAR_H
@@ -226,6 +226,7 @@ extern int	pg_mbstrlen_with_len(const unsigned char *, int);
 extern int	pg_mbcliplen(const unsigned char *, int, int);
 extern int	pg_mbcharcliplen(const unsigned char *, int, int);
 extern int	pg_encoding_max_length(int);
+extern int	pg_database_encoding_max_length(void);
 
 extern int		pg_set_client_encoding(int);
 extern int		pg_get_client_encoding(void);
