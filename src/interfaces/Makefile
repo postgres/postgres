@@ -7,7 +7,7 @@
 #
 #
 # IDENTIFICATION
-#    $Header: /cvsroot/pgsql/src/interfaces/Makefile,v 1.9 1998/03/05 13:18:51 scrappy Exp $
+#    $Header: /cvsroot/pgsql/src/interfaces/Makefile,v 1.10 1998/05/29 17:00:29 momjian Exp $
 #
 #-------------------------------------------------------------------------
 
@@ -16,7 +16,7 @@ include $(SRCDIR)/Makefile.global
 
 .DEFAULT all:
 	$(MAKE) -C libpq $@
-	$(MAKE) -C ecpg $@
+#	$(MAKE) -C ecpg $@
 ifeq ($(HAVE_Cplusplus), true)
 	$(MAKE) -C libpq++ $@
 else

@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/tcop/postgres.c,v 1.71 1998/05/27 18:32:03 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/tcop/postgres.c,v 1.72 1998/05/29 17:00:15 momjian Exp $
  *
  * NOTES
  *	  this is the "main" module of the postgres backend and
@@ -82,8 +82,6 @@
 #if FALSE
 #include "nodes/memnodes.h"
 #endif
-
-static void quickdie(SIGNAL_ARGS);
 
 /* ----------------
  *		global variables
@@ -743,7 +741,7 @@ handle_warn(SIGNAL_ARGS)
 	siglongjmp(Warn_restart, 1);
 }
 
-static void
+void
 quickdie(SIGNAL_ARGS)
 {
 	elog(NOTICE, "Message from PostgreSQL backend:"
@@ -770,7 +768,7 @@ die(SIGNAL_ARGS)
 }
 
 /* signal handler for floating point exception */
-static void
+void
 FloatExceptionHandler(SIGNAL_ARGS)
 {
 	elog(ERROR, "floating point exception!"
@@ -850,26 +848,6 @@ PostgresMain(int argc, char *argv[])
 	extern short DebugLvl;
 
 	/* ----------------
-	 *	register signal handlers.
-	 * ----------------
-	 */
-	pqsignal(SIGINT, die);
-
-	pqsignal(SIGHUP, die);
-	pqsignal(SIGTERM, die);
-	pqsignal(SIGPIPE, die);
-	pqsignal(SIGUSR1, quickdie);
-	pqsignal(SIGUSR2, Async_NotifyHandler);
-	pqsignal(SIGFPE, FloatExceptionHandler);
-
-	/* --------------------
-	 *	initialize globals
-	 * -------------------
-	 */
-
-	MyProcPid = getpid();
-
-	/* ----------------
 	 *	parse command line arguments
 	 * ----------------
 	 */
@@ -915,6 +893,8 @@ PostgresMain(int argc, char *argv[])
 			EuroDates = TRUE;
 	}
 
+    optind = 1; /* reset after postmaster usage */
+	
 	while ((flag = getopt(argc, argv, "B:bCD:d:Eef:iK:Lm:MNo:P:pQS:st:v:x:F"))
 		   != EOF)
 		switch (flag)
@@ -1254,7 +1234,7 @@ PostgresMain(int argc, char *argv[])
 	 *	initialize portal file descriptors
 	 * ----------------
 	 */
-	if (IsUnderPostmaster == true)
+	if (IsUnderPostmaster)
 	{
 		if (Portfd < 0)
 		{
@@ -1314,10 +1294,10 @@ PostgresMain(int argc, char *argv[])
 	 *	POSTGRES main processing loop begins here
 	 * ----------------
 	 */
-	if (IsUnderPostmaster == false)
+	if (!IsUnderPostmaster)
 	{
 		puts("\nPOSTGRES backend interactive interface");
-		puts("$Revision: 1.71 $ $Date: 1998/05/27 18:32:03 $");
+		puts("$Revision: 1.72 $ $Date: 1998/05/29 17:00:15 $");
 	}
 
 	/* ----------------
@@ -1327,7 +1307,7 @@ PostgresMain(int argc, char *argv[])
 	 * ----------------
 	 */
 	if (!TransactionFlushEnabled())
-		on_exitpg(FlushBufferPool, (caddr_t) 0);
+		on_exitpg(FlushBufferPool, NULL);
 
 	for (;;)
 	{

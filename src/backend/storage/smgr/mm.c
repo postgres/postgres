@@ -10,7 +10,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/storage/smgr/Attic/mm.c,v 1.7 1997/09/18 20:21:53 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/storage/smgr/Attic/mm.c,v 1.8 1998/05/29 17:00:13 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -79,7 +79,6 @@ typedef struct MMRelHashEntry
 #define MMNRELATIONS	2
 
 SPINLOCK	MMCacheLock;
-extern bool IsPostmaster;
 extern Oid	MyDatabaseId;
 
 static int *MMCurTop;
@@ -139,7 +138,7 @@ mminit()
 		return (SM_FAIL);
 	}
 
-	if (IsPostmaster)
+	if (IsUnderPostmaster) /* was IsPostmaster bjm */
 	{
 		MemSet(mmcacheblk, 0, mmsize);
 		SpinRelease(MMCacheLock);

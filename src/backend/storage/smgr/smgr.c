@@ -10,7 +10,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/storage/smgr/smgr.c,v 1.14 1998/04/01 15:35:33 scrappy Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/storage/smgr/smgr.c,v 1.15 1998/05/29 17:00:14 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -100,7 +100,7 @@ smgrinit()
 	}
 
 	/* register the shutdown proc */
-	on_exitpg(smgrshutdown, 0);
+	on_exitpg(smgrshutdown, NULL);
 
 	return (SM_SUCCESS);
 }

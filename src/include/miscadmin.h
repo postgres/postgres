@@ -11,7 +11,7 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: miscadmin.h,v 1.23 1998/05/19 18:05:52 momjian Exp $
+ * $Id: miscadmin.h,v 1.24 1998/05/29 17:00:22 momjian Exp $
  *
  * NOTES
  *	  some of the information in this file will be moved to
@@ -55,7 +55,6 @@ extern Oid	MyDatabaseId;
 extern bool TransactionInitWasProcessed;
 
 extern bool IsUnderPostmaster;
-extern bool IsPostmaster;
 
 extern short DebugLvl;
 

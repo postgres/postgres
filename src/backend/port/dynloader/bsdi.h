@@ -20,7 +20,7 @@
 
 #ifndef  PRE_BSDI_2_1
 #include <dlfcn.h>
-#define		  pg_dlopen(f)	  dlopen(f, 1)
+#define		  pg_dlopen(f)	  dlopen(f, RTLD_LAZY)
 #define		  pg_dlsym		  dlsym
 #define		  pg_dlclose	  dlclose
 #define		  pg_dlerror	  dlerror

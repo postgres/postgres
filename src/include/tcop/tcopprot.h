@@ -6,7 +6,7 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: tcopprot.h,v 1.12 1998/05/19 18:05:58 momjian Exp $
+ * $Id: tcopprot.h,v 1.13 1998/05/29 17:00:28 momjian Exp $
  *
  * OLD COMMENTS
  *	  This file was created so that other c files could get the two
@@ -33,9 +33,11 @@ pg_exec_query_dest(char *query_string, char **argv, Oid *typev,
 #endif							/* BOOTSTRAP_HEADER */
 
 extern void handle_warn(SIGNAL_ARGS);
+extern void quickdie(SIGNAL_ARGS);
 extern void die(SIGNAL_ARGS);
+extern void FloatExceptionHandler(SIGNAL_ARGS);
 extern void CancelQuery(void);
-extern int	PostgresMain(int argc, char *argv[]);
+extern int PostgresMain(int argc, char *argv[]);
 extern void ResetUsage(void);
 extern void ShowUsage(void);
 

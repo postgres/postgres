@@ -10,7 +10,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/postmaster/postmaster.c,v 1.77 1998/05/27 18:32:02 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/postmaster/postmaster.c,v 1.78 1998/05/29 17:00:09 momjian Exp $
  *
  * NOTES
  *
@@ -82,6 +82,8 @@
 #include "miscadmin.h"
 #include "version.h"
 #include "lib/dllist.h"
+#include "tcop/tcopprot.h"
+#include "commands/async.h"
 #include "nodes/nodes.h"
 #include "utils/mcxt.h"
 #include "storage/proc.h"
@@ -90,16 +92,6 @@
 #include "port-protos.h"		/* For gethostname() */
 #endif
 #include "storage/fd.h"
-
-#if defined(DBX_VERSION)
-#define FORK() (0)
-#else
-#ifndef HAVE_VFORK
-#define FORK() fork()
-#else
-#define FORK() vfork()
-#endif
-#endif
 
 #if !defined(MAXINT)
 #define MAXINT		   INT_MAX
@@ -165,6 +157,7 @@ static IpcMemoryKey ipc_key;
 
 static int	NextBackendId = MAXINT;		/* XXX why? */
 static char *progname = (char *) NULL;
+static char **argv_name;
 
 /*
  * Default Values
@@ -192,6 +185,19 @@ static int	SendStop = false;
 static bool	NetServer = false;		/* if not zero, postmaster listen for
 								 * non-local connections */
 
+
+/*
+ * GH: For !HAVE_SIGPROCMASK (NEXTSTEP), TRH implemented an
+ * alternative interface.
+ */
+#ifdef HAVE_SIGPROCMASK
+static	sigset_t	oldsigmask,
+				newsigmask;
+#else
+static	int			orgsigmask = sigblock(0);
+#endif
+
+								 
 /*
  * postmaster.c - function prototypes
  */
@@ -202,7 +208,7 @@ static void pmdie(SIGNAL_ARGS);
 static void reaper(SIGNAL_ARGS);
 static void dumpstatus(SIGNAL_ARGS);
 static void CleanupProc(int pid, int exitstatus);
-static int	DoExec(Port *port);
+static int	DoBackend(Port *port);
 static void ExitPostmaster(int status);
 static void usage(const char *);
 static int	ServerLoop(void);
@@ -284,7 +290,6 @@ int
 PostmasterMain(int argc, char *argv[])
 {
 	extern int	NBuffers;		/* from buffer/bufmgr.c */
-	extern bool IsPostmaster;	/* from smgr/mm.c */
 	int			opt;
 	char	   *hostName;
 	int			status;
@@ -293,9 +298,8 @@ PostmasterMain(int argc, char *argv[])
 	char		hostbuf[MAXHOSTNAMELEN];
 
 	progname = argv[0];
-
-	IsPostmaster = true;
-
+	argv_name = &argv[0];
+	
 	/*
 	 * for security, no dir or file created can be group or other
 	 * accessible
@@ -531,26 +535,14 @@ ServerLoop(void)
 	int			nSockets;
 	Dlelem	   *curr;
 
-	/*
-	 * GH: For !HAVE_SIGPROCMASK (NEXTSTEP), TRH implemented an
-	 * alternative interface.
-	 */
-#ifdef HAVE_SIGPROCMASK
-	sigset_t	oldsigmask,
-				newsigmask;
-
-#else
-	int			orgsigmask = sigblock(0);
-
-#endif
-
 	nSockets = initMasks(&readmask, &writemask);
 
 #ifdef HAVE_SIGPROCMASK
-	sigprocmask(0, 0, &oldsigmask);
+	sigprocmask(0, NULL, &oldsigmask);
 	sigemptyset(&newsigmask);
 	sigaddset(&newsigmask, SIGCHLD);
 #endif
+
 	for (;;)
 	{
 		Port	   *port;
@@ -1048,13 +1040,17 @@ BackendStartup(Port *port)
 		fprintf(stderr, "-----------------------------------------\n");
 	}
 
-	if ((pid = FORK()) == 0)
-	{							/* child */
-		if (DoExec(port))
-			fprintf(stderr, "%s child[%d]: BackendStartup: execv failed\n",
-					progname, pid);
-		/* use _exit to keep from double-flushing stdio */
-		_exit(1);
+    if ((pid = fork()) == 0)
+	{  /* child */
+        if (DoBackend(port))
+		{
+            fprintf(stderr, "%s child[%d]: BackendStartup: backend startup failed\n",
+                    progname, pid);
+			/* use _exit to keep from double-flushing stdio */
+	 		_exit(1);
+		}
+		else
+	    	_exit(0);
 	}
 
 	/* in parent */
@@ -1123,19 +1119,14 @@ split_opts(char **argv, int *argcp, char *s)
 }
 
 /*
- * DoExec -- set up the argument list and perform an execv system call
+ * DoBackend -- set up the argument list and perform an execv system call
  *
- * Tries fairly hard not to dork with anything that isn't automatically
- * allocated so we don't do anything weird to the postmaster when it gets
- * its thread back.  (This is vfork() we're talking about.  If we're using
- * fork() because we don't have vfork(), then we don't really care.)
- *
- * returns:
- *		Shouldn't return at all.
- *		If execv() fails, return status.
+ * returns: 
+ *      Shouldn't return at all.
+ *      If execv() fails, return status.
  */
 static int
-DoExec(Port *port)
+DoBackend(Port *port)
 {
 	char		execbuf[MAXPATHLEN];
 	char		portbuf[ARGV_SIZE];
@@ -1154,8 +1145,57 @@ DoExec(Port *port)
 	int			ac = 0;
 	int			i;
 
+	/*
+	 *	Let's clean up ourselves as the postmaster child
+	 */
+	
+	clear_exitpg(); /* we don't want the postmaster's exitpg() handlers */
+
+	/* ----------------
+	 *	register signal handlers.
+	 *  Thanks to the postmaster, these are currently blocked.
+	 * ----------------
+	 */
+	pqsignal(SIGINT, die);
+
+	pqsignal(SIGHUP, die);
+	pqsignal(SIGTERM, die);
+	pqsignal(SIGPIPE, die);
+	pqsignal(SIGUSR1, quickdie);
+	pqsignal(SIGUSR2, Async_NotifyHandler);
+	pqsignal(SIGFPE, FloatExceptionHandler);
+
+	pqsignal(SIGCHLD, SIG_DFL);
+	pqsignal(SIGTTIN, SIG_DFL);
+	pqsignal(SIGTTOU, SIG_DFL);
+	pqsignal(SIGCONT, SIG_DFL);
+
+	/* OK, let's unblock our signals, all together now... */
+	sigprocmask(SIG_SETMASK, &oldsigmask, 0);
+
+	/* Close the postmater sockets */
+	if (NetServer)
+		StreamClose(ServerSock_INET);
+	StreamClose(ServerSock_UNIX);
+	
+	/* Now, on to standard postgres stuff */
+	
+	MyProcPid = getpid();
+
 	strncpy(execbuf, Execfile, MAXPATHLEN - 1);
 	av[ac++] = execbuf;
+
+	/*
+	 *	We need to set our argv[0] to an absolute path name because
+	 *	some OS's use this for dynamic loading, like BSDI.  Without it,
+	 *	when we change directories to the database dir, the dynamic
+	 *	loader can't find the base executable and fails.
+	 *	Another advantage is that this changes the 'ps' displayed
+	 *	process name on some platforms.  It does on BSDI.  That's
+	 *	a big win.
+	 */
+	
+	*argv_name = Execfile;
 
 	/* Tell the backend it is being called from the postmaster */
 	av[ac++] = "-p";
@@ -1195,7 +1235,7 @@ DoExec(Port *port)
 
 	/* Tell the backend what protocol the frontend is using. */
 
-	sprintf(protobuf, "-v %u", port->proto);
+	sprintf(protobuf, "-v%u", port->proto);
 	av[ac++] = protobuf;
 
 	StrNCpy(dbbuf, port->database, ARGV_SIZE);
@@ -1205,14 +1245,14 @@ DoExec(Port *port)
 
 	if (DebugLvl > 1)
 	{
-		fprintf(stderr, "%s child[%ld]: execv(",
-				progname, (long) MyProcPid);
+		fprintf(stderr, "%s child[%d]: starting with (",
+				progname, MyProcPid);
 		for (i = 0; i < ac; ++i)
 			fprintf(stderr, "%s, ", av[i]);
 		fprintf(stderr, ")\n");
 	}
 
-	return (execv(av[0], av));
+    return(PostgresMain(ac, av));
 }
 
 /*
@@ -1228,9 +1268,9 @@ ExitPostmaster(int status)
 	 * the backends all be killed? probably not.
 	 */
 	if (ServerSock_INET != INVALID_SOCK)
-		close(ServerSock_INET);
+		StreamClose(ServerSock_INET);
 	if (ServerSock_UNIX != INVALID_SOCK)
-		close(ServerSock_UNIX);
+		StreamClose(ServerSock_UNIX);
 	exitpg(status);
 }
 

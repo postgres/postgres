@@ -6,7 +6,7 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: libpq.h,v 1.14 1998/05/19 18:05:55 momjian Exp $
+ * $Id: libpq.h,v 1.15 1998/05/29 17:00:24 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -279,9 +279,9 @@ extern int	StreamOpen(char *hostName, short portName, Port *port);
 extern void pq_regoob(void (*fptr) ());
 extern void pq_unregoob(void);
 extern void pq_async_notify(void);
-extern int	StreamServerPort(char *hostName, short portName, int *fdP);
-extern int	StreamConnection(int server_fd, Port *port);
+extern void StreamDoUnlink();
+extern int StreamServerPort(char *hostName, short portName, int *fdP);
+extern int StreamConnection(int server_fd, Port *port);
 extern void StreamClose(int sock);
-extern void StreamDoUnlink(void);
 
 #endif							/* LIBPQ_H */

@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/init/postinit.c,v 1.27 1998/04/05 21:04:43 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/init/postinit.c,v 1.28 1998/05/29 17:00:21 momjian Exp $
  *
  * NOTES
  *		InitPostgres() is the function called from PostgresMain
@@ -384,8 +384,11 @@ forcesharedmemory:
 
 #endif
 
-	PostgresIpcKey = key;
-	AttachSharedMemoryAndSemaphores(key);
+    if (!IsUnderPostmaster) /* postmaster already did this */
+	{
+		PostgresIpcKey = key;
+		AttachSharedMemoryAndSemaphores(key);
+	}
 }
 
 

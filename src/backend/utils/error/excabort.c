@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/error/Attic/excabort.c,v 1.4 1997/09/08 21:49:03 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/error/Attic/excabort.c,v 1.5 1998/05/29 17:00:16 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -22,10 +22,6 @@ ExcAbort(const Exception *excP,
 		 ExcData data,
 		 ExcMessage message)
 {
-#ifdef	__SABER__
-	saber_stop();
-#else
 	/* dump core */
 	abort();
-#endif
 }

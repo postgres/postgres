@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/storage/ipc/ipci.c,v 1.7 1997/09/08 02:28:48 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/storage/ipc/ipci.c,v 1.8 1998/05/29 17:00:12 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -101,7 +101,7 @@ CreateSharedMemoryAndSemaphores(IPCKey key)
 	 * ----------------
 	 */
 	InitProcGlobal(key);
-	on_exitpg(ProcFreeAllSemaphores, 0);
+	on_exitpg(ProcFreeAllSemaphores, NULL);
 
 	CreateSharedInvalidationState(key);
 }

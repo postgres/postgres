@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/libpq/pqcomm.c,v 1.42 1998/05/27 18:32:01 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/libpq/pqcomm.c,v 1.43 1998/05/29 17:00:07 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -564,8 +564,8 @@ static char sock_path[MAXPGPATH + 1] = "";
 void
 StreamDoUnlink()
 {
-	if (sock_path[0])
-		unlink(sock_path);
+	Assert(sock_path[0]);
+	unlink(sock_path);
 }
 
 int
@@ -627,6 +627,9 @@ StreamServerPort(char *hostName, short portName, int *fdP)
 		fputs(PQerrormsg, stderr);
 		return (STATUS_ERROR);
 	}
+
+	if (family == AF_UNIX)
+		on_exitpg(StreamDoUnlink, NULL);
 
 	listen(fd, SOMAXCONN);
 

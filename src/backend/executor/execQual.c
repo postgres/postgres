@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/executor/execQual.c,v 1.31 1998/04/27 04:05:35 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/executor/execQual.c,v 1.32 1998/05/29 17:00:06 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -671,7 +671,7 @@ ExecMakeFunctionResult(Node *node,
 					   bool *isNull,
 					   bool *isDone)
 {
-	Datum		argv[MAXFMGRARGS];
+	Datum		argV[MAXFMGRARGS];
 	FunctionCachePtr fcache;
 	Func	   *funcNode = NULL;
 	Oper	   *operNode = NULL;
@@ -699,7 +699,7 @@ ExecMakeFunctionResult(Node *node,
 	 *	arguments is a list of expressions to evaluate
 	 *	before passing to the function manager.
 	 *	We collect the results of evaluating the expressions
-	 *	into a datum array (argv) and pass this array to arrayFmgr()
+	 *	into a datum array (argV) and pass this array to arrayFmgr()
 	 * ----------------
 	 */
 	if (fcache->nargs != 0)
@@ -718,11 +718,11 @@ ExecMakeFunctionResult(Node *node,
 		 */
 		if ((fcache->hasSetArg) && fcache->setArg != NULL)
 		{
-			argv[0] = (Datum) fcache->setArg;
+			argV[0] = (Datum) fcache->setArg;
 			argDone = false;
 		}
 		else
-			ExecEvalFuncArgs(fcache, econtext, arguments, argv, &argDone);
+			ExecEvalFuncArgs(fcache, econtext, arguments, argV, &argDone);
 
 		if ((fcache->hasSetArg) && (argDone))
 		{
@@ -745,7 +745,7 @@ ExecMakeFunctionResult(Node *node,
 	 * which defines this set.	So replace the existing funcid in the
 	 * funcnode with the set's OID.  Also, we want a new fcache which
 	 * points to the right function, so get that, now that we have the
-	 * right OID.  Also zero out the argv, since the real set doesn't take
+	 * right OID.  Also zero out the argV, since the real set doesn't take
 	 * any arguments.
 	 */
 	if (((Func *) node)->funcid == F_SETEVAL)
@@ -753,18 +753,18 @@ ExecMakeFunctionResult(Node *node,
 		funcisset = true;
 		if (fcache->setArg)
 		{
-			argv[0] = 0;
+			argV[0] = 0;
 
 			((Func *) node)->funcid = (Oid) PointerGetDatum(fcache->setArg);
 
 		}
 		else
 		{
-			((Func *) node)->funcid = (Oid) argv[0];
-			setFcache(node, argv[0], NIL, econtext);
+			((Func *) node)->funcid = (Oid) argV[0];
+			setFcache(node, argV[0], NIL, econtext);
 			fcache = ((Func *) node)->func_fcache;
-			fcache->setArg = (char *) argv[0];
-			argv[0] = (Datum) 0;
+			fcache->setArg = (char *) argV[0];
+			argV[0] = (Datum) 0;
 		}
 	}
 
@@ -778,7 +778,7 @@ ExecMakeFunctionResult(Node *node,
 		Datum		result;
 
 		Assert(funcNode);
-		result = postquel_function(funcNode, (char **) argv, isNull, isDone);
+		result = postquel_function(funcNode, (char **) argV, isNull, isDone);
 
 		/*
 		 * finagle the situation where we are iterating through all
@@ -791,7 +791,7 @@ ExecMakeFunctionResult(Node *node,
 		{
 			bool		argDone;
 
-			ExecEvalFuncArgs(fcache, econtext, arguments, argv, &argDone);
+			ExecEvalFuncArgs(fcache, econtext, arguments, argV, &argDone);
 
 			if (argDone)
 			{
@@ -801,7 +801,7 @@ ExecMakeFunctionResult(Node *node,
 			}
 			else
 				result = postquel_function(funcNode,
-										   (char **) argv,
+										   (char **) argV,
 										   isNull,
 										   isDone);
 		}
@@ -837,7 +837,7 @@ ExecMakeFunctionResult(Node *node,
 			if (fcache->nullVect[i] == true)
 				*isNull = true;
 
-		return ((Datum) fmgr_c(&fcache->func, (FmgrValues *) argv, isNull));
+		return ((Datum) fmgr_c(&fcache->func, (FmgrValues *) argV, isNull));
 	}
 }
 

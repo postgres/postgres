@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/init/globals.c,v 1.22 1998/05/19 18:05:51 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/init/globals.c,v 1.23 1998/05/29 17:00:18 momjian Exp $
  *
  * NOTES
  *	  Globals used all over the place should be declared here and not
@@ -66,7 +66,6 @@ Oid			MyDatabaseId = InvalidOid;
 bool		TransactionInitWasProcessed = false;
 
 bool		IsUnderPostmaster = false;
-bool		IsPostmaster = false;
 
 short		DebugLvl = 0;
 

@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/storage/ipc/ipc.c,v 1.20 1998/03/02 05:41:55 scrappy Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/storage/ipc/ipc.c,v 1.21 1998/05/29 17:00:10 momjian Exp $
  *
  * NOTES
  *
@@ -137,7 +137,6 @@ exitpg(int code)
 	for (i = onexit_index - 1; i >= 0; --i)
 		(*onexit_list[i].function) (code, onexit_list[i].arg);
 
- 	StreamDoUnlink();
 	exit(code);
 }
 
@@ -168,7 +167,9 @@ quasi_exitpg()
 	 * ----------------
 	 */
 	for (i = onexit_index - 1; i >= 0; --i)
-		(*onexit_list[i].function) (0, onexit_list[i].arg);
+		/* Don't do StreamDoUnlink on quasi_exit */
+		if (onexit_list[i].function != StreamDoUnlink)
+			(*onexit_list[i].function) (0, onexit_list[i].arg);
 
 	onexit_index = 0;
 	exitpg_inprogress = 0;
@@ -182,7 +183,7 @@ quasi_exitpg()
  * ----------------------------------------------------------------
  */
 int
-			on_exitpg(void (*function) (), caddr_t arg)
+on_exitpg(void (*function) (), caddr_t arg)
 {
 	if (onexit_index >= MAX_ON_EXITS)
 		return (-1);
@@ -193,6 +194,18 @@ int
 	++onexit_index;
 
 	return (0);
+}
+
+/* ----------------------------------------------------------------
+ *		clear_exitpg
+ *
+ *		this function clears all exitpg() registered functions.
+ * ----------------------------------------------------------------
+ */
+void
+clear_exitpg(void)
+{
+	onexit_index = 0;
 }
 
 /****************************************************************************/
