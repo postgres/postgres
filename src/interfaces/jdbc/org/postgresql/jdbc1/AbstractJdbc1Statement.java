@@ -25,7 +25,7 @@ import java.sql.Timestamp;
 import java.sql.Types;
 import java.util.Vector;
 
-/* $Header: /cvsroot/pgsql/src/interfaces/jdbc/org/postgresql/jdbc1/Attic/AbstractJdbc1Statement.java,v 1.22 2003/05/29 04:39:49 barry Exp $
+/* $Header: /cvsroot/pgsql/src/interfaces/jdbc/org/postgresql/jdbc1/Attic/AbstractJdbc1Statement.java,v 1.23 2003/05/29 04:48:33 barry Exp $
  * This class defines methods of the jdbc1 specification.  This class is
  * extended by org.postgresql.jdbc2.AbstractJdbc2Statement which adds the jdbc2
  * methods.  The real Statement class (for jdbc1) is org.postgresql.jdbc1.Jdbc1Statement
@@ -1032,7 +1032,7 @@ public abstract class AbstractJdbc1Statement implements BaseStatement
 			synchronized (sbuf)
 			{
 				sbuf.setLength(0);
-				sbuf.ensureCapacity(x.length());
+				sbuf.ensureCapacity(x.length() + (int)(x.length() / 10));
 				int i;
 
 				sbuf.append('\'');

@@ -6,7 +6,7 @@
  * Copyright (c) 2003, PostgreSQL Global Development Group
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/interfaces/jdbc/org/postgresql/util/Attic/PGbytea.java,v 1.7 2003/03/07 18:39:46 barry Exp $
+ *	  $Header: /cvsroot/pgsql/src/interfaces/jdbc/org/postgresql/util/Attic/PGbytea.java,v 1.8 2003/05/29 04:48:33 barry Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -68,7 +68,7 @@ public class PGbytea
 	{
 		if (p_buf == null)
 			return null;
-		StringBuffer l_strbuf = new StringBuffer(p_buf.length);
+		StringBuffer l_strbuf = new StringBuffer(2 * p_buf.length);
 		for (int i = 0; i < p_buf.length; i++)
 		{
 			int l_int = (int)p_buf[i];
