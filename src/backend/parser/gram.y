@@ -10,7 +10,7 @@
  *
  *
  * IDENTIFICATION
- *    $Header: /cvsroot/pgsql/src/backend/parser/gram.y,v 1.31 1997/04/23 03:17:00 scrappy Exp $
+ *    $Header: /cvsroot/pgsql/src/backend/parser/gram.y,v 1.32 1997/04/23 06:04:42 vadim Exp $
  *
  * HISTORY
  *    AUTHOR		DATE		MAJOR EVENT
@@ -128,14 +128,14 @@ static Node *makeA_Expr(int oper, char *opname, Node *lexpr, Node *rexpr);
 	tableElementList, OptInherit, definition,
 	opt_with, def_args, def_name_list, func_argtypes, 
 	oper_argtypes, OptStmtList, OptStmtBlock, OptStmtMulti,
-	opt_column_list, columnList,
+	opt_column_list, columnList, opt_va_list, va_list,
 	sort_clause, sortby_list, index_params, index_list,
 	name_list, from_clause, from_list, opt_array_bounds, nest_array_bounds,
 	expr_list, attrs, res_target_list, res_target_list2,
 	def_list, opt_indirection, group_clause, groupby_list
 
 %type <boolean>	opt_inh_star, opt_binary, opt_instead, opt_with_copy,
-		index_opt_unique, opt_verbose
+		index_opt_unique, opt_verbose, opt_analyze
 
 %type <ival>	copy_dirn, archive_type, OptArchiveType, OptArchiveLocation, 
 	def_type, opt_direction, remove_type, opt_column, event
@@ -179,11 +179,12 @@ static Node *makeA_Expr(int oper, char *opname, Node *lexpr, Node *rexpr);
  */
 
 /* Keywords */
-%token	ABORT_TRANS, ACL, ADD, AFTER, AGGREGATE, ALL, ALTER, AND, APPEND,
-	ARCHIVE, ARCH_STORE, AS, ASC, BACKWARD, BEFORE, BEGIN_TRANS, BETWEEN,
-	BINARY, BY, CAST, CHANGE, CLOSE, CLUSTER, COLUMN, COMMIT, COPY, CREATE,
-	CURRENT, CURSOR, DATABASE, DECLARE, DELETE, DELIMITERS, DESC, DISTINCT,
-	DO, DROP, END_TRANS,
+%token	ABORT_TRANS, ACL, ADD, AFTER, AGGREGATE, ALL, ALTER, ANALYZE, 
+	AND, APPEND, ARCHIVE, ARCH_STORE, AS, ASC, 
+	BACKWARD, BEFORE, BEGIN_TRANS, BETWEEN, BINARY, BY, 
+	CAST, CHANGE, CLOSE, CLUSTER, COLUMN, COMMIT, COPY, CREATE,
+	CURRENT, CURSOR, DATABASE, DECLARE, DELETE, DELIMITERS, DESC, 
+	DISTINCT, DO, DROP, END_TRANS,
 	EXTEND, FETCH, FOR, FORWARD, FROM, FUNCTION, GRANT, GROUP, 
 	HAVING, HEAVY, IN, INDEX, INHERITS, INSERT, INSTEAD, INTO, IS,
 	ISNULL, LANGUAGE, LIGHT, LISTEN, LOAD, MERGE, MOVE, NEW, 
@@ -288,11 +289,10 @@ stmt :	  AddAttrStmt
 
 VariableSetStmt: SET var_name TO var_value
 		{
-		VariableSetStmt *n = makeNode(VariableSetStmt);
-		n->name  = $2;
-		n->value = $4;
-
-		$$ = (Node *) n;
+		    VariableSetStmt *n = makeNode(VariableSetStmt);
+		    n->name  = $2;
+		    n->value = $4;
+		    $$ = (Node *) n;
 		}
 	;
 
@@ -301,21 +301,17 @@ var_value:	Sconst		{ $$ = $1; }
 
 VariableShowStmt: SHOW var_name
 		{
-		VariableSetStmt *n = makeNode(VariableSetStmt);
-		n->name  = $2;
-		n->value = NULL;
-
-		$$ = (Node *) n;
+		    VariableShowStmt *n = makeNode(VariableShowStmt);
+		    n->name  = $2;
+		    $$ = (Node *) n;
 		}
 	;
 
 VariableResetStmt: RESET var_name
 		{
-		VariableSetStmt *n = makeNode(VariableSetStmt);
-		n->name  = $2;
-		n->value = NULL;
-		
-		$$ = (Node *) n;
+		    VariableResetStmt *n = makeNode(VariableResetStmt);
+		    n->name  = $2;
+		    $$ = (Node *) n;
 		}
 	;
 
@@ -1295,17 +1291,24 @@ ClusterStmt:  CLUSTER index_name ON relation_name
  *
  *****************************************************************************/
 
-VacuumStmt:  VACUUM opt_verbose
+VacuumStmt:  VACUUM opt_verbose opt_analyze
                {
                    VacuumStmt *n = makeNode(VacuumStmt);
                    n->verbose = $2;
+                   n->analyze = $3;
+                   n->vacrel = NULL;
+                   n->va_spec = NIL;
                    $$ = (Node *)n;
                }
-         | VACUUM opt_verbose relation_name
+         | VACUUM opt_verbose relation_name opt_analyze opt_va_list
                {
                    VacuumStmt *n = makeNode(VacuumStmt);
                    n->verbose = $2;
+                   n->analyze = $4;
                    n->vacrel = $3;
+                   n->va_spec = $5;
+                   if ( $5 != NIL && !$4 )
+                   	elog (WARN, "parser: syntax error at or near \"(\"");
                    $$ = (Node *)n;
                }
        ;
@@ -1313,6 +1316,22 @@ VacuumStmt:  VACUUM opt_verbose
 opt_verbose:  VERBOSE			{ $$ = TRUE; }
 	| /* EMPTY */			{ $$ = FALSE; }
 	;
+
+opt_analyze:  ANALYZE			{ $$ = TRUE; }
+	| /* EMPTY */			{ $$ = FALSE; }
+	;
+
+opt_va_list: '(' va_list ')'
+		{ $$ = $2; }
+	| /* EMPTY */
+		{ $$ = NIL; }
+	;	
+
+va_list: name
+		{ $$=lcons($1,NIL); }
+	| va_list ',' name
+		{ $$=lappend($1,$3); }
+	;	
        
 /*****************************************************************************
  *

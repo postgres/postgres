@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *    $Header: /cvsroot/pgsql/src/backend/parser/keywords.c,v 1.9 1997/04/23 03:17:04 scrappy Exp $
+ *    $Header: /cvsroot/pgsql/src/backend/parser/keywords.c,v 1.10 1997/04/23 06:04:46 vadim Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -38,6 +38,7 @@ static ScanKeyword ScanKeywords[] = {
 	{ "aggregate",          AGGREGATE       },
 	{ "all",		ALL		},
 	{ "alter",		ALTER		},
+	{ "analyze",		ANALYZE		},
 	{ "and",		AND		},
 	{ "append",		APPEND		},
 	{ "archIve",		ARCHIVE		},   /* XXX crooked: I < _ */
