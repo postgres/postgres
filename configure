@@ -337,7 +337,7 @@ localstatedir='${prefix}/var'
 libdir='${exec_prefix}/lib'
 includedir='${prefix}/include'
 oldincludedir='/usr/include'
-docdir='${prefix}/doc'
+infodir='${prefix}/info'
 mandir='${prefix}/man'
 
 ac_prev=
@@ -436,10 +436,10 @@ do
   | --includ=* | --inclu=* | --incl=* | --inc=*)
     includedir=$ac_optarg ;;
 
-  -docdir | --docdir | --infodi | --infod | --doc | --inf)
-    ac_prev=docdir ;;
-  -docdir=* | --docdir=* | --infodi=* | --infod=* | --doc=* | --inf=*)
-    docdir=$ac_optarg ;;
+  -infodir | --infodir | --infodi | --infod | --info | --inf)
+    ac_prev=infodir ;;
+  -infodir=* | --infodir=* | --infodi=* | --infod=* | --info=* | --inf=*)
+    infodir=$ac_optarg ;;
 
   -libdir | --libdir | --libdi | --libd)
     ac_prev=libdir ;;
@@ -658,7 +658,7 @@ done
 
 # Be sure to have absolute paths.
 for ac_var in bindir sbindir libexecdir datadir sysconfdir sharedstatedir \
-              localstatedir libdir includedir oldincludedir docdir mandir
+              localstatedir libdir includedir oldincludedir infodir mandir
 do
   eval ac_val=$`echo $ac_var`
   case $ac_val in
@@ -852,6 +852,8 @@ Optional Packages:
   --with-PACKAGE[=ARG]    use PACKAGE [ARG=yes]
   --without-PACKAGE       do not use PACKAGE (same as --with-PACKAGE=no)
 
+  --with-docdir=DIR       install the documentation in DIR [PREFIX/doc]
+  --without-docdir        do not install the documentation
   --with-includes=DIRS    look for additional header files in DIRS
   --with-libraries=DIRS   look for additional libraries in DIRS
   --with-libs=DIRS        alternative spelling of --with-libraries
@@ -865,13 +867,13 @@ Optional Packages:
   --with-java             build JDBC interface and Java tools
   --with-krb4[=DIR]       build with Kerberos 4 support [/usr/athena]
   --with-krb5[=DIR]       build with Kerberos 5 support [/usr/athena]
-  --with-krb-srvnam=NAME  name of the service principal in Kerberos postgres
+  --with-krb-srvnam=NAME  name of the service principal in Kerberos [postgres]
   --with-pam              build with PAM support
   --with-rendezvous       build with Rendezvous support
   --with-openssl[=DIR]    build with OpenSSL support [/usr/local/ssl]
   --without-readline      do not use Readline
   --without-zlib          do not use Zlib
-  --with-gnu-ld           assume the C compiler uses GNU ld default=no
+  --with-gnu-ld           assume the C compiler uses GNU ld [default=no]
 
 Some influential environment variables:
   CC          C compiler command
@@ -1249,9 +1251,6 @@ ac_compiler_gnu=$ac_cv_c_compiler_gnu
 
 
 
-
-
-
 ac_aux_dir=
 for ac_dir in config $srcdir/config; do
   if test -f $ac_dir/install-sh; then
@@ -1471,6 +1470,36 @@ fi
 ##
 ## Command line options
 ##
+
+#
+# Installation directory for documentation
+#
+
+
+
+# Check whether --with-docdir or --without-docdir was given.
+if test "${with_docdir+set}" = set; then
+  withval="$with_docdir"
+
+  case $withval in
+    yes)
+      { { echo "$as_me:$LINENO: error: option --with-docdir requires an argument" >&5
+echo "$as_me: error: option --with-docdir requires an argument" >&2;}
+   { (exit 1); exit 1; }; }
+      ;;
+    no)
+      docdir=
+      ;;
+    *)
+      docdir=$withval
+      ;;
+  esac
+
+else
+  docdir='${prefix}/doc'
+fi;
+
+
 
 
 #
@@ -18225,7 +18254,6 @@ s,@ECHO_C@,$ECHO_C,;t t
 s,@ECHO_N@,$ECHO_N,;t t
 s,@ECHO_T@,$ECHO_T,;t t
 s,@LIBS@,$LIBS,;t t
-s,@docdir@,$docdir,;t t
 s,@configure_args@,$configure_args,;t t
 s,@build@,$build,;t t
 s,@build_cpu@,$build_cpu,;t t
@@ -18237,6 +18265,7 @@ s,@host_vendor@,$host_vendor,;t t
 s,@host_os@,$host_os,;t t
 s,@PORTNAME@,$PORTNAME,;t t
 s,@TAS@,$TAS,;t t
+s,@docdir@,$docdir,;t t
 s,@enable_nls@,$enable_nls,;t t
 s,@WANTED_LANGUAGES@,$WANTED_LANGUAGES,;t t
 s,@default_port@,$default_port,;t t

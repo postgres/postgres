@@ -1,4 +1,4 @@
-<!-- $Header: /cvsroot/pgsql/doc/src/sgml/installation.sgml,v 1.182 2003/11/16 17:16:47 tgl Exp $ -->
+<!-- $Header: /cvsroot/pgsql/doc/src/sgml/installation.sgml,v 1.183 2003/11/24 14:52:58 petere Exp $ -->
 
 <chapter id="installation">
  <title><![%standalone-include[<productname>PostgreSQL</>]]>
@@ -611,17 +611,6 @@ JAVACMD=$JAVA_HOME/bin/java
       </varlistentry>
 
       <varlistentry>
-       <term><option>--docdir=<replaceable>DIRECTORY</></option></term>
-       <listitem>
-        <para>
-         Documentation files, except <quote>man</> pages, will be
-         installed into this directory. The default is
-         <filename><replaceable>PREFIX</>/doc</>.
-        </para>
-       </listitem>
-      </varlistentry>
-
-      <varlistentry>
        <term><option>--mandir=<replaceable>DIRECTORY</></option></term>
        <listitem>
         <para>
@@ -634,10 +623,25 @@ JAVACMD=$JAVA_HOME/bin/java
       </varlistentry>
      </variablelist>
 
+      <varlistentry>
+       <term><option>--with-docdir=<replaceable>DIRECTORY</></option></term>
+       <term><option>--without-docdir</option></term>
+       <listitem>
+        <para>
+         Documentation files, except <quote>man</> pages, will be
+         installed into this directory. The default is
+         <filename><replaceable>PREFIX</>/doc</>.  If the option
+         <option>--without-docdir</option> is specified, the
+         documentation will not be installed by <command>make
+         install</command>.  This is intended for packaging scripts
+         that have special methods for installing documentation.
+        </para>
+       </listitem>
+      </varlistentry>
+
      <note>
       <para>
-       Care has been taken to make it possible to install
-        <productname>PostgreSQL</> 
+       Care has been taken to make it possible to install <productname>PostgreSQL</> 
        into shared installation locations (such as
        <filename>/usr/local/include</filename>) without interfering
        with the namespace of the rest of the system.  First, the

@@ -1,5 +1,5 @@
 dnl Process this file with autoconf to produce a configure script.
-dnl $Header: /cvsroot/pgsql/configure.in,v 1.303 2003/11/24 13:16:22 petere Exp $
+dnl $Header: /cvsroot/pgsql/configure.in,v 1.304 2003/11/24 14:52:57 petere Exp $
 dnl
 dnl Developers, please strive to achieve this order:
 dnl
@@ -16,15 +16,8 @@ dnl
 dnl Read the Autoconf manual for details.
 dnl
 m4_pattern_forbid(^PGAC_)dnl to catch undefined macros
-dnl
-dnl The GNU folks apparently haven't heard that some people don't use
-dnl Texinfo. Use this sorcery to use "docdir" instead of "infodir".
-m4_define([info], [doc])
-m4_define([infodir], [docdir])
+
 AC_INIT([PostgreSQL], [7.5devel], [pgsql-bugs@postgresql.org])
-m4_undefine([infodir])
-m4_undefine([info])
-AC_SUBST(docdir)
 
 AC_PREREQ(2.53)
 AC_COPYRIGHT([Copyright 2003 PostgreSQL Global Development Group])
@@ -125,6 +118,17 @@ AC_SUBST(TAS)
 ##
 ## Command line options
 ##
+
+#
+# Installation directory for documentation
+#
+PGAC_ARG(with, docdir, [  --with-docdir=DIR       install the documentation in DIR [[PREFIX/doc]]
+  --without-docdir        do not install the documentation],
+         [AC_MSG_ERROR([option --with-docdir requires an argument])],
+         [docdir=],
+         [docdir=$withval],
+         [docdir='${prefix}/doc'])
+AC_SUBST(docdir)
 
 
 #
@@ -490,7 +494,7 @@ AC_SUBST(krb_srvtab)
 # Kerberos configuration parameters
 #
 PGAC_ARG_REQ(with, krb-srvnam,
-             [  --with-krb-srvnam=NAME  name of the service principal in Kerberos [postgres]],
+             [  --with-krb-srvnam=NAME  name of the service principal in Kerberos [[postgres]]],
              [],
              [with_krb_srvnam="postgres"])
 AC_DEFINE_UNQUOTED([PG_KRB_SRVNAM], ["$with_krb_srvnam"],

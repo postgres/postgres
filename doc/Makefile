@@ -4,7 +4,7 @@
 #
 # Copyright (c) 1994, Regents of the University of California
 #
-# $Header: /cvsroot/pgsql/doc/Makefile,v 1.25 2003/08/04 20:52:48 tgl Exp $
+# $Header: /cvsroot/pgsql/doc/Makefile,v 1.26 2003/11/24 14:52:58 petere Exp $
 #
 #----------------------------------------------------------------------------
 
@@ -26,7 +26,9 @@ include $(top_builddir)/src/Makefile.global
 .NOTPARALLEL:
 
 ifneq ($(wildcard $(srcdir)/postgres.tar.gz),)
+ifneq (,$(docdir))
 found_html := yes
+endif
 endif
 
 ifneq ($(wildcard $(srcdir)/man.tar.gz),)

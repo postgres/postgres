@@ -31,7 +31,7 @@
 # AC_PROG_LD - find the path to the GNU or non-GNU linker
 AC_DEFUN([AC_PROG_LD],
 [AC_ARG_WITH(gnu-ld,
-[  --with-gnu-ld           assume the C compiler uses GNU ld [default=no]],
+[  --with-gnu-ld           assume the C compiler uses GNU ld [[default=no]]],
 test "$withval" = no || with_gnu_ld=yes, with_gnu_ld=no)
 AC_REQUIRE([AC_PROG_CC])dnl
 AC_REQUIRE([AC_CANONICAL_HOST])dnl
