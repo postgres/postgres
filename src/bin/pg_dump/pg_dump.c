@@ -22,7 +22,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/bin/pg_dump/pg_dump.c,v 1.225 2001/08/27 00:44:40 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/bin/pg_dump/pg_dump.c,v 1.226 2001/08/27 01:09:59 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -2883,7 +2883,7 @@ getIndexes(int *numIndexes)
 					  "SELECT i.indexrelid as indexreloid, "
 					  "i.indrelid as indreloid, "
 					  "t1.relname as indexrelname, t2.relname as indrelname, "
-					  "i.indproc, i.indkey, i.indclass, "
+					  "i.indproc :: oid AS indproc, i.indkey, i.indclass, "
 					  "a.amname as indamname, i.indisunique, i.indisprimary, "
 					  "length(i.indpred) > 0 as indhaspred "
 					  "from pg_index i, pg_class t1, pg_class t2, pg_am a "
@@ -4370,16 +4370,15 @@ dumpIndexes(Archive *fout, IndInfo *indinfo, int numIndexes,
 			continue;
 		}
 
-		/* indproc is regproc in 7.2, oid previously, so check both */
-		if (strcmp(indinfo[i].indproc, "-") == 0 ||
-			strcmp(indinfo[i].indproc, "0") == 0)
+
+		if (strcmp(indinfo[i].indproc, "0") == 0)
 			funcname = NULL;
 		else
 		{
 			int			numFuncs;
 
 			/*
-			 * the funcname is an oid which we use to find the name of the
+			 * the indproc is an oid which we use to find the name of the
 			 * pg_proc.  We need to do this because getFuncs() only reads
 			 * in the user-defined funcs not all the funcs.  We might not
 			 * find what we want by looking in FuncInfo*
