@@ -14,7 +14,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/selfuncs.c,v 1.49 2000/01/22 23:50:20 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/selfuncs.c,v 1.50 2000/01/23 02:06:56 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -725,7 +725,8 @@ genericcostestimate(Query *root, RelOptInfo *rel,
 	double numIndexPages;
 
 	/* Estimate the fraction of main-table tuples that will be visited */
-    *indexSelectivity = clauselist_selec(root, indexQuals);
+    *indexSelectivity = clauselist_selectivity(root, indexQuals,
+											   lfirsti(rel->relids));
 
 	/* Estimate the number of index tuples that will be visited */
 	numIndexTuples = *indexSelectivity * index->tuples;

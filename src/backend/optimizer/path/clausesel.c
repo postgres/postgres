@@ -1,13 +1,13 @@
 /*-------------------------------------------------------------------------
  *
  * clausesel.c
- *	  Routines to compute and set clause selectivities
+ *	  Routines to compute clause selectivities
  *
  * Copyright (c) 1994, Regents of the University of California
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/optimizer/path/clausesel.c,v 1.27 2000/01/09 00:26:31 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/optimizer/path/clausesel.c,v 1.28 2000/01/23 02:06:58 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -28,52 +28,76 @@
  ****************************************************************************/
 
 /*
- * restrictlist_selec -
+ * restrictlist_selectivity -
  *	  Compute the selectivity of an implicitly-ANDed list of RestrictInfo
  *	  clauses.
  *
- * This is the same as clauselist_selec except for the form of the input.
+ * This is the same as clauselist_selectivity except for the representation
+ * of the clause list.
  */
 Selectivity
-restrictlist_selec(Query *root, List *restrictinfo_list)
+restrictlist_selectivity(Query *root,
+						 List *restrictinfo_list,
+						 int varRelid)
 {
 	List	   *clauselist = get_actual_clauses(restrictinfo_list);
 	Selectivity	result;
 
-	result = clauselist_selec(root, clauselist);
+	result = clauselist_selectivity(root, clauselist, varRelid);
 	freeList(clauselist);
 	return result;
 }
 
 /*
- * clauselist_selec -
+ * clauselist_selectivity -
  *	  Compute the selectivity of an implicitly-ANDed list of boolean
- *	  expression clauses.
+ *	  expression clauses.  The list can be empty, in which case 1.0
+ *	  must be returned.
+ *
+ * See clause_selectivity() for the meaning of the varRelid parameter.
  */
 Selectivity
-clauselist_selec(Query *root, List *clauses)
+clauselist_selectivity(Query *root,
+					   List *clauses,
+					   int varRelid)
 {
 	Selectivity		s1 = 1.0;
 	List		   *clause;
 
 	/* Use the product of the selectivities of the subclauses.
-	 * XXX this is probably too optimistic, since the subclauses
+	 * XXX this is too optimistic, since the subclauses
 	 * are very likely not independent...
 	 */
 	foreach(clause, clauses)
 	{
-		Selectivity	s2 = compute_clause_selec(root, (Node *) lfirst(clause));
+		Selectivity	s2 = clause_selectivity(root,
+											(Node *) lfirst(clause),
+											varRelid);
 		s1 = s1 * s2;
 	}
 	return s1;
 }
 
 /*
- * compute_clause_selec -
+ * clause_selectivity -
  *	  Compute the selectivity of a general boolean expression clause.
+ *
+ * varRelid is either 0 or a rangetable index.
+ *
+ * When varRelid is not 0, only variables belonging to that relation are
+ * considered in computing selectivity; other vars are treated as constants
+ * of unknown values.  This is appropriate for estimating the selectivity of
+ * a join clause that is being used as a restriction clause in a scan of a
+ * nestloop join's inner relation --- varRelid should then be the ID of the
+ * inner relation.
+ *
+ * When varRelid is 0, all variables are treated as variables.  This
+ * is appropriate for ordinary join clauses and restriction clauses.
  */
 Selectivity
-compute_clause_selec(Query *root, Node *clause)
+clause_selectivity(Query *root,
+				   Node *clause,
+				   int varRelid)
 {
 	Selectivity		s1 = 1.0;	/* default for any unhandled clause type */
 
@@ -88,13 +112,16 @@ compute_clause_selec(Query *root, Node *clause)
 		 * didn't want to have to do system cache look ups to find out all
 		 * of that info.
 		 */
-		s1 = restriction_selectivity(F_EQSEL,
-									 BooleanEqualOperator,
-									 getrelid(((Var *) clause)->varno,
-											  root->rtable),
-									 ((Var *) clause)->varattno,
-									 Int8GetDatum(true),
-									 SEL_CONSTANT | SEL_RIGHT);
+		Index	varno = ((Var *) clause)->varno;
+
+		if (varRelid == 0 || varRelid == varno)
+			s1 = restriction_selectivity(F_EQSEL,
+										 BooleanEqualOperator,
+										 getrelid(varno, root->rtable),
+										 ((Var *) clause)->varattno,
+										 Int8GetDatum(true),
+										 SEL_CONSTANT | SEL_RIGHT);
+		/* an outer-relation bool var is taken as always true... */
 	}
 	else if (IsA(clause, Param))
 	{
@@ -109,12 +136,16 @@ compute_clause_selec(Query *root, Node *clause)
 	else if (not_clause(clause))
 	{
 		/* inverse of the selectivity of the underlying clause */
-		s1 = 1.0 - compute_clause_selec(root,
-										(Node *) get_notclausearg((Expr *) clause));
+		s1 = 1.0 - clause_selectivity(root,
+									  (Node*) get_notclausearg((Expr*) clause),
+									  varRelid);
 	}
 	else if (and_clause(clause))
 	{
-		s1 = clauselist_selec(root, ((Expr *) clause)->args);
+		/* share code with clauselist_selectivity() */
+		s1 = clauselist_selectivity(root,
+									((Expr *) clause)->args,
+									varRelid);
 	}
 	else if (or_clause(clause))
 	{
@@ -127,50 +158,37 @@ compute_clause_selec(Query *root, Node *clause)
 		s1 = 0.0;
 		foreach(arg, ((Expr *) clause)->args)
 		{
-			Selectivity	s2 = compute_clause_selec(root, (Node *) lfirst(arg));
+			Selectivity	s2 = clause_selectivity(root,
+												(Node *) lfirst(arg),
+												varRelid);
 			s1 = s1 + s2 - s1 * s2;
 		}
 	}
 	else if (is_opclause(clause))
 	{
-		if (NumRelids(clause) == 1)
+		Oid			opno = ((Oper *) ((Expr *) clause)->oper)->opno;
+		bool		is_join_clause;
+
+		if (varRelid != 0)
 		{
-			/* The opclause is not a join clause, since there is only one
-			 * relid in the clause.  The clause selectivity will be based on
-			 * the operator selectivity and operand values.
-			 */
-			Oid			opno = ((Oper *) ((Expr *) clause)->oper)->opno;
-			RegProcedure oprrest = get_oprrest(opno);
-
 			/*
-			 * if the oprrest procedure is missing for whatever reason, use a
-			 * selectivity of 0.5
+			 * If we are considering a nestloop join then all clauses
+			 * are restriction clauses, since we are only interested in
+			 * the one relation.
 			 */
-			if (!oprrest)
-				s1 = (Selectivity) 0.5;
-			else
-			{
-				int			relidx;
-				AttrNumber	attno;
-				Datum		constval;
-				int			flag;
-				Oid			reloid;
-
-				get_relattval(clause, 0, &relidx, &attno, &constval, &flag);
-				reloid = relidx ? getrelid(relidx, root->rtable) : InvalidOid;
-				s1 = restriction_selectivity(oprrest, opno,
-											 reloid, attno,
-											 constval, flag);
-			}
+			is_join_clause = false;
 		}
 		else
 		{
 			/*
-			 * The clause must be a join clause.  The clause selectivity will
-			 * be based on the relations to be scanned and the attributes they
-			 * are to be joined on.
+			 * Otherwise, it's a join if there's more than one relation used.
 			 */
-			Oid			opno = ((Oper *) ((Expr *) clause)->oper)->opno;
+			is_join_clause = (NumRelids(clause) > 1);
+		}
+
+		if (is_join_clause)
+		{
+			/* Estimate selectivity for a join clause. */
 			RegProcedure oprjoin = get_oprjoin(opno);
 
 			/*
@@ -194,6 +212,33 @@ compute_clause_selec(Query *root, Node *clause)
 				s1 = join_selectivity(oprjoin, opno,
 									  reloid1, attno1,
 									  reloid2, attno2);
+			}
+		}
+		else
+		{
+			/* Estimate selectivity for a restriction clause. */
+			RegProcedure oprrest = get_oprrest(opno);
+
+			/*
+			 * if the oprrest procedure is missing for whatever reason, use a
+			 * selectivity of 0.5
+			 */
+			if (!oprrest)
+				s1 = (Selectivity) 0.5;
+			else
+			{
+				int			relidx;
+				AttrNumber	attno;
+				Datum		constval;
+				int			flag;
+				Oid			reloid;
+
+				get_relattval(clause, varRelid,
+							  &relidx, &attno, &constval, &flag);
+				reloid = relidx ? getrelid(relidx, root->rtable) : InvalidOid;
+				s1 = restriction_selectivity(oprrest, opno,
+											 reloid, attno,
+											 constval, flag);
 			}
 		}
 	}

@@ -9,7 +9,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/optimizer/plan/createplan.c,v 1.79 2000/01/15 02:59:30 petere Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/optimizer/plan/createplan.c,v 1.80 2000/01/23 02:07:00 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -305,6 +305,7 @@ create_indexscan_node(Query *root,
 					  List *scan_clauses)
 {
 	List	   *indxqual = best_path->indexqual;
+	Index		baserelid;
 	List	   *qpqual;
 	List	   *fixed_indxqual;
 	List	   *ixid;
@@ -314,6 +315,7 @@ create_indexscan_node(Query *root,
 
 	/* there should be exactly one base rel involved... */
 	Assert(length(best_path->path.parent->relids) == 1);
+	baserelid = lfirsti(best_path->path.parent->relids);
 
 	/* check to see if any of the indices are lossy */
 	foreach(ixid, best_path->indexid)
@@ -382,7 +384,9 @@ create_indexscan_node(Query *root,
 		{
 			/* recompute output row estimate using all available quals */
 			plan_rows = best_path->path.parent->tuples *
-				clauselist_selec(root, lcons(indxqual_expr, qpqual));
+				clauselist_selectivity(root,
+									   lcons(indxqual_expr, qpqual),
+									   baserelid);
 		}
 
 		if (lossy)
@@ -401,7 +405,9 @@ create_indexscan_node(Query *root,
 		{
 			/* recompute output row estimate using all available quals */
 			plan_rows = best_path->path.parent->tuples *
-				clauselist_selec(root, nconc(listCopy(indxqual_list), qpqual));
+				clauselist_selectivity(root,
+									   nconc(listCopy(indxqual_list), qpqual),
+									   baserelid);
 		}
 
 		if (lossy)
@@ -417,7 +423,7 @@ create_indexscan_node(Query *root,
 
 	scan_node = make_indexscan(tlist,
 							   qpqual,
-							   lfirsti(best_path->path.parent->relids),
+							   baserelid,
 							   best_path->indexid,
 							   fixed_indxqual,
 							   indxqual);
