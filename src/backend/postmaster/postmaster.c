@@ -37,7 +37,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/postmaster/postmaster.c,v 1.418 2004/08/01 17:45:43 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/postmaster/postmaster.c,v 1.419 2004/08/04 20:09:47 tgl Exp $
  *
  * NOTES
  *
@@ -248,8 +248,8 @@ static void pmdie(SIGNAL_ARGS);
 static void reaper(SIGNAL_ARGS);
 static void sigusr1_handler(SIGNAL_ARGS);
 static void dummy_handler(SIGNAL_ARGS);
-static void CleanupProc(int pid, int exitstatus);
-static void HandleChildCrash(int pid, int exitstatus);
+static void CleanupBackend(int pid, int exitstatus);
+static void HandleChildCrash(int pid, int exitstatus, const char *procname);
 static void LogChildExit(int lev, const char *procname,
 			 int pid, int exitstatus);
 static int	BackendRun(Port *port);
@@ -1947,7 +1947,7 @@ reaper(SIGNAL_ARGS)
 	while ((pid = win32_waitpid(&exitstatus)) > 0)
 	{
 		/*
-		 * We need to do this here, and not in CleanupProc, since this is
+		 * We need to do this here, and not in CleanupBackend, since this is
 		 * to be called on all children when we are done with them. Could
 		 * move to LogChildExit, but that seems like asking for future
 		 * trouble...
@@ -2025,9 +2025,8 @@ reaper(SIGNAL_ARGS)
 			/*
 			 * Any unexpected exit of the bgwriter is treated as a crash.
 			 */
-			LogChildExit(LOG, gettext("background writer process"),
-						 pid, exitstatus);
-			HandleChildCrash(pid, exitstatus);
+			HandleChildCrash(pid, exitstatus,
+							 gettext("background writer process"));
 			continue;
 		}
 
@@ -2067,7 +2066,7 @@ reaper(SIGNAL_ARGS)
 		/*
 		 * Else do standard backend child cleanup.
 		 */
-		CleanupProc(pid, exitstatus);
+		CleanupBackend(pid, exitstatus);
 	}							/* loop over pending child-death reports */
 
 	if (FatalError)
@@ -2116,13 +2115,13 @@ reaper_done:
 
 
 /*
- * CleanupProc -- cleanup after terminated backend.
+ * CleanupBackend -- cleanup after terminated backend.
  *
  * Remove all local state associated with backend.
  */
 static void
-CleanupProc(int pid,
-			int exitstatus)		/* child's exit status. */
+CleanupBackend(int pid,
+			   int exitstatus)		/* child's exit status. */
 {
 	Dlelem	   *curr;
 
@@ -2136,7 +2135,7 @@ CleanupProc(int pid,
 	 */
 	if (exitstatus != 0)
 	{
-		HandleChildCrash(pid, exitstatus);
+		HandleChildCrash(pid, exitstatus, gettext("server process"));
 		return;
 	}
 
@@ -2166,8 +2165,7 @@ CleanupProc(int pid,
  * process, and to signal all other remaining children to quickdie.
  */
 static void
-HandleChildCrash(int pid,
-				 int exitstatus) /* child's exit status. */
+HandleChildCrash(int pid, int exitstatus, const char *procname)
 {
 	Dlelem	   *curr,
 			   *next;
@@ -2179,11 +2177,7 @@ HandleChildCrash(int pid,
 	 */
 	if (!FatalError)
 	{
-		LogChildExit(LOG,
-					 (pid == BgWriterPID) ?
-					 gettext("background writer process") :
-					 gettext("server process"),
-					 pid, exitstatus);
+		LogChildExit(LOG, procname, pid, exitstatus);
 		ereport(LOG,
 				(errmsg("terminating any other active server processes")));
 	}
