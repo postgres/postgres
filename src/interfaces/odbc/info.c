@@ -2135,7 +2135,7 @@ Int2 result_cols;
 		return SQL_ERROR;
 	}
 
-	sprintf(tables_query, "select distinct on attnum a2.attname, a2.attnum from pg_attribute a1, pg_attribute a2, pg_class c, pg_index i where c.relname = '%s_pkey' AND c.oid = i.indexrelid AND a1.attrelid = c.oid AND a2.attrelid = c.oid AND (i.indkey[0] = a1.attnum OR i.indkey[1] = a1.attnum OR i.indkey[2] = a1.attnum OR i.indkey[3] = a1.attnum OR i.indkey[4] = a1.attnum OR i.indkey[5] = a1.attnum OR i.indkey[6] = a1.attnum OR i.indkey[7] = a1.attnum) order by a2.attnum", pktab);
+	sprintf(tables_query, "select distinct on (attnum) a2.attname, a2.attnum from pg_attribute a1, pg_attribute a2, pg_class c, pg_index i where c.relname = '%s_pkey' AND c.oid = i.indexrelid AND a1.attrelid = c.oid AND a2.attrelid = c.oid AND (i.indkey[0] = a1.attnum OR i.indkey[1] = a1.attnum OR i.indkey[2] = a1.attnum OR i.indkey[3] = a1.attnum OR i.indkey[4] = a1.attnum OR i.indkey[5] = a1.attnum OR i.indkey[6] = a1.attnum OR i.indkey[7] = a1.attnum) order by a2.attnum", pktab);
 
 	mylog("SQLPrimaryKeys: tables_query='%s'\n", tables_query);
 
