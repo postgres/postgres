@@ -1,0 +1,525 @@
+# Norwegian bokmål translation of messages for PostgreSQL 7.3 (libpq).
+# Copyright (C) 2003 The PostgreSQL Global Development Group.
+# Trond Endrestøl <trond@ramstind.gtf.ol.no>, 2003.
+#
+# In the translator's comments for each message below, these initials
+# might occur:
+#
+#   TE = Trond Endrestøl
+#
+# Send this file as an gzipped attachment to:
+# pgsql-patches@postgresql.org
+#
+msgid ""
+msgstr ""
+"Project-Id-Version: PostgreSQL 7.3\n"
+"POT-Creation-Date: 2002-10-25 04:17-0400\n"
+"PO-Revision-Date: 2003-08-20 18:13+0200\n"
+"Last-Translator: Trond Endrestøl <trond@ramstind.gtf.ol.no>\n"
+"Language-Team: Norwegian bokmål <i18n-nb@lister.ping.uio.no>\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=ISO-8859-1\n"
+"Content-Transfer-Encoding: 8bit\n"
+
+#: fe-auth.c:232
+#, c-format
+msgid "Kerberos 4 error: %s\n"
+msgstr "Kerberos-4-feil: %s\n"
+
+#: fe-auth.c:395
+#, c-format
+msgid "could not set socket to blocking mode: %s\n"
+msgstr "kunne ikke stille socket i blokkerende tilstand: %s\n"
+
+#: fe-auth.c:412 fe-auth.c:416
+#, c-format
+msgid "Kerberos 5 authentication rejected: %*s\n"
+msgstr "Kerberos-5-autentiseringskontroll ble avvist: %*s\n"
+
+#: fe-auth.c:440
+#, c-format
+msgid "could not restore non-blocking mode on socket: %s\n"
+msgstr "kunne ikke tilbakestille ikke-blokkerende tilstand for socket: %s\n"
+
+#: fe-auth.c:503
+msgid "SCM_CRED authentication method not supported\n"
+msgstr "autentiseringsmetoden SCM_CRED støttes ikke\n"
+
+#: fe-auth.c:589
+msgid "Kerberos 4 authentication failed\n"
+msgstr "Mislykket Kerberos-4-autentisering\n"
+
+#: fe-auth.c:595
+msgid "Kerberos 4 authentication not supported\n"
+msgstr "Kerberos-4-autentisering støttes ikke\n"
+
+#: fe-auth.c:606
+msgid "Kerberos 5 authentication failed\n"
+msgstr "Mislykket Kerberos-5-autentisering\n"
+
+#: fe-auth.c:612
+msgid "Kerberos 5 authentication not supported\n"
+msgstr "Kerberos-5-autentisering støttes ikke\n"
+
+#: fe-auth.c:640
+#, c-format
+msgid "authentication method %u not supported\n"
+msgstr "autentiseringsmetoden %u støttes ikke\n"
+
+#: fe-auth.c:677
+#, c-format
+msgid "invalid authentication service name \"%s\", ignored\n"
+msgstr "ugyldig navn for autentiseringstjenesten «%s», ignorert\n"
+
+#: fe-auth.c:734
+#, c-format
+msgid "fe_getauthname: invalid authentication system: %d\n"
+msgstr "fe_getauthname: ugyldig autentiseringssystem: %d\n"
+
+#: fe-connect.c:483
+msgid "could not determine the PostgreSQL user name to use\n"
+msgstr "kan ikke avgjøre hvilket PostgreSQL-brukernavn som skal brukes\n"
+
+#: fe-connect.c:710
+#, c-format
+msgid "could not set socket to non-blocking mode: %s\n"
+msgstr "kunne ikke sette socket til ikke-blokkerende modus: %s\n"
+
+#: fe-connect.c:734
+#, c-format
+msgid "could not set socket to TCP no delay mode: %s\n"
+msgstr "kunne ikke sette socket i TCP-ingen-forsinkelse-modus (TCP no delay mode): %s\n"
+
+# The term Unix domain socket was renamed to local domain socket some
+# years ago. TE, 2003-08-20.
+#: fe-connect.c:754
+#, c-format
+msgid ""
+"could not connect to server: %s\n"
+"\tIs the server running locally and accepting\n"
+"\tconnections on Unix domain socket \"%s\"?\n"
+msgstr ""
+"kan ikke koble til serveren: %s\n"
+"\tKjører serveren lokalt og aksepterer den forbindelser\n"
+"\tpå local domain socket «%s»?\n"
+
+#: fe-connect.c:763
+#, c-format
+msgid ""
+"could not connect to server: %s\n"
+"\tIs the server running on host %s and accepting\n"
+"\tTCP/IP connections on port %s?\n"
+msgstr ""
+"kunne ikke kopble til serveren: %s\n"
+"\tKjører serveren på verten %s og aksepterer den\n"
+"\tTCP/IP-oppkopplinger på porten %s?\n"
+
+#: fe-connect.c:827
+#, c-format
+msgid "invalid host address: %s\n"
+msgstr "ugyldig vertsadresse: %s\n"
+
+#: fe-connect.c:846
+#, c-format
+msgid "unknown host name: %s\n"
+msgstr "ukjent vertsnavn: %s\n"
+
+#: fe-connect.c:893
+#, c-format
+msgid "could not create socket: %s\n"
+msgstr "kan ikke opprette socket: %s\n"
+
+#: fe-connect.c:961
+#, c-format
+msgid "could not send SSL negotiation packet: %s\n"
+msgstr "kunne ikke sende SSL-pakke for oppkoblingsforhandling: %s\n"
+
+#: fe-connect.c:974
+#, c-format
+msgid "could not receive server response to SSL negotiation packet: %s\n"
+msgstr "kunne ikke ta imot serversvar for SSL-oppkoblingsforhandling: %s\n"
+
+#: fe-connect.c:1003
+#, c-format
+msgid "received invalid response to SSL negotiation: %c\n"
+msgstr "tok imot ugyldig svar for SSL-oppkoblingsforhandling: %c\n"
+
+#: fe-connect.c:1012
+msgid "server does not support SSL, but SSL was required\n"
+msgstr "SSL støttes ikke av serveren, men SSL var påkrevet\n"
+
+#: fe-connect.c:1198
+msgid "invalid connection state, probably indicative of memory corruption\n"
+msgstr "ugyldig forbindelsestilstand, indikerer antakelig korrupt minne\n"
+
+#: fe-connect.c:1229
+#, c-format
+msgid "could not get socket error status: %s\n"
+msgstr "kunne ikke hente feilstatus for socket: %s\n"
+
+#: fe-connect.c:1249
+#, c-format
+msgid "could not get client address from socket: %s\n"
+msgstr "kunne ikke få tak i klientadressen fra socket: %s\n"
+
+#: fe-connect.c:1288
+#, c-format
+msgid "could not send startup packet: %s\n"
+msgstr "kan ikke sende oppstartspakke: %s\n"
+
+#: fe-connect.c:1344
+#, c-format
+msgid "expected authentication request from server, but received %c\n"
+msgstr "forventet autentiseringsforespørsel fra serveren, men fikk %c\n"
+
+#: fe-connect.c:1456
+msgid "unexpected message from server during startup\n"
+msgstr "uventet melding fra serveren under oppstart\n"
+
+#: fe-connect.c:1515
+#, c-format
+msgid "invalid connection state %c, probably indicative of memory corruption\n"
+msgstr "ugyldig forbindelsetilstand %c, indikerer antakelig korrupt minne\n"
+
+#: fe-connect.c:1601
+#, c-format
+msgid "invalid setenv state %c, probably indicative of memory corruption\n"
+msgstr "ugyldig setenv-tilstand %c, indikerer antakelig korrupt minne\n"
+
+#: fe-connect.c:1638
+#, c-format
+msgid "invalid encoding name in PGCLIENTENCODING: %s\n"
+msgstr "ugyldig kodingsnavn i PGCLIENTENCODING: %s\n"
+
+#: fe-connect.c:1757
+#, c-format
+msgid "invalid state %c, probably indicative of memory corruption\n"
+msgstr "ugyldig tilstand %c, indikerer antakelig korrupt minne\n"
+
+#: fe-connect.c:2385 fe-connect.c:2394 fe-connect.c:2891 fe-exec.c:1284
+#: fe-lobj.c:536
+msgid "out of memory\n"
+msgstr "tomt for minne\n"
+
+#: fe-connect.c:2433
+#, c-format
+msgid "missing \"=\" after \"%s\" in connection info string\n"
+msgstr "manglende «=» etter «%s» i forbindelsesinfostreng\n"
+
+#: fe-connect.c:2482
+msgid "unterminated quoted string in connection info string\n"
+msgstr "uterminert streng i oppkoblingsinformasjon\n"
+
+#: fe-connect.c:2516
+#, c-format
+msgid "invalid connection option \"%s\"\n"
+msgstr "ugyldig forbindelsesvalg «%s»\n"
+
+#: fe-connect.c:2702
+msgid "connection pointer is NULL\n"
+msgstr "tilkoblingspeker er NULL\n"
+
+#: fe-connect.c:2912
+#, c-format
+msgid ""
+"WARNING: Password file %s has world or group read access; permission should "
+"be u=rw (0600)\n"
+msgstr ""
+"ADVARSEL: Passordfilen %s har leserettigheter for verden eller gruppe;\n"
+"          rettighetene skal være u=rw (0600)\n"
+
+#: fe-exec.c:737
+msgid "command string is a null pointer\n"
+msgstr "kommandostrengen er en nullpeker\n"
+
+#: fe-exec.c:745
+msgid "no connection to the server\n"
+msgstr "ingen forbindelse til serveren\n"
+
+#: fe-exec.c:752
+msgid "another command is already in progress\n"
+msgstr "en annen kommando pågår allerede\n"
+
+#: fe-exec.c:950
+#, c-format
+msgid "message type 0x%02x arrived from server while idle\n"
+msgstr "melding av typen 0x%02x kom fra serveren mens jeg var i hviletilstand\n"
+
+#: fe-exec.c:992
+#, c-format
+msgid ""
+"unexpected character %c following empty query response (\"I\" message)\n"
+msgstr "uventet tegn %c følger etter tomt spørreresultat («I»-melding)\n"
+
+#: fe-exec.c:1049
+msgid ""
+"server sent data (\"D\" message) without prior row description (\"T\" "
+"message)\n"
+msgstr "serveren sendte data («D»-melding) uten foregående radbeskrivelse («T»-melding)\n"
+
+#: fe-exec.c:1066
+msgid ""
+"server sent binary data (\"B\" message) without prior row description (\"T\" "
+"message)\n"
+msgstr "serveren sendte binær data («B»-melding) uten foregående radbeskrivelse («T»-melding)\n"
+
+#: fe-exec.c:1082
+#, c-format
+msgid "unexpected response from server; first received character was \"%c\"\n"
+msgstr "uventet svar fra server; det første mottatte tegnet var «%c»\n"
+
+#: fe-exec.c:1371
+#, c-format
+msgid "unexpected asyncStatus: %d\n"
+msgstr "uventet asyncStatus: %d\n"
+
+#: fe-exec.c:1421
+msgid "COPY state must be terminated first\n"
+msgstr "COPY-tilstand må avsluttes først\n"
+
+#: fe-exec.c:1780
+msgid "no COPY in progress\n"
+msgstr "ingen COPY pågår\n"
+
+#: fe-exec.c:1819
+msgid "lost synchronization with server, resetting connection\n"
+msgstr "mistet synkronisering med serveren, resetter forbindelsen\n"
+
+#: fe-exec.c:1884
+msgid "connection in wrong state\n"
+msgstr "forbindelse i feil tilstand\n"
+
+#: fe-exec.c:1986 fe-exec.c:2020
+#, c-format
+msgid "protocol error: id=0x%x\n"
+msgstr "protokollfeil: id=0x%x\n"
+
+#: fe-exec.c:2055
+msgid "invalid ExecStatusType code"
+msgstr "ugyldig ExecStatusType-kode"
+
+#: fe-exec.c:2108 fe-exec.c:2141
+#, c-format
+msgid "column number %d is out of range 0..%d\n"
+msgstr "kolonnenummer %d er utenfor gyldig intervall 0..%d\n"
+
+#: fe-exec.c:2130
+#, c-format
+msgid "row number %d is out of range 0..%d\n"
+msgstr "radnummer %d er utenfor gyldig intervall 0..%d\n"
+
+#: fe-exec.c:2325
+#, c-format
+msgid "could not interpret result from server: %s\n"
+msgstr "kunne ikke tolke svaret fra serveren: %s\n"
+
+#: fe-exec.c:2341
+msgid "no row count available\n"
+msgstr "antal rader er ikke tilgjengelig\n"
+
+#: fe-lobj.c:400 fe-lobj.c:483
+#, c-format
+msgid "could not open file \"%s\": %s\n"
+msgstr "kan ikke åpne filen «%s»: %s\n"
+
+#: fe-lobj.c:412
+#, c-format
+msgid "could not create large object for file \"%s\"\n"
+msgstr "kan ikke opprette stort objekt for filen «%s»\n"
+
+#: fe-lobj.c:422 fe-lobj.c:472
+#, c-format
+msgid "could not open large object %u\n"
+msgstr "kunne ikke åpne stort objekt %u\n"
+
+#: fe-lobj.c:437
+#, c-format
+msgid "error while reading file \"%s\"\n"
+msgstr "feil ved lesing av filen «%s»\n"
+
+#: fe-lobj.c:498
+#, c-format
+msgid "error while writing to file \"%s\"\n"
+msgstr "feil ved skriving til filen «%s»\n"
+
+#: fe-lobj.c:564
+msgid "query to initialize large object functions did not return data\n"
+msgstr "spørring for å initialisere store objektfunksjoner returnerte ingen data\n"
+
+#: fe-lobj.c:602
+msgid "cannot determine OID of function lo_open\n"
+msgstr "kan ikke bestemme OID for funksjonen lo_open\n"
+
+#: fe-lobj.c:609
+msgid "cannot determine OID of function lo_close\n"
+msgstr "kan ikke bestemme OID for funksjonen lo_close\n"
+
+#: fe-lobj.c:616
+msgid "cannot determine OID of function lo_creat\n"
+msgstr "kan ikke bestemme OID for funksjonen lo_create\n"
+
+#: fe-lobj.c:623
+msgid "cannot determine OID of function lo_unlink\n"
+msgstr "kan ikke bestemme OID for funksjonen lo_unlink\n"
+
+#: fe-lobj.c:630
+msgid "cannot determine OID of function lo_lseek\n"
+msgstr "kan ikke bestemme OID for funksjonen lo_lseek\n"
+
+#: fe-lobj.c:637
+msgid "cannot determine OID of function lo_tell\n"
+msgstr "kan ikke bestemme OID for funksjonen lo_tell\n"
+
+#: fe-lobj.c:644
+msgid "cannot determine OID of function loread\n"
+msgstr "kan ikke bestemme OID for funksjonen loread\n"
+
+#: fe-lobj.c:651
+msgid "cannot determine OID of function lowrite\n"
+msgstr "kan ikke bestemme OID for funksjonen lowrite\n"
+
+#: fe-misc.c:303
+#, c-format
+msgid "integer of size %lu not supported by pqGetInt\n"
+msgstr "heltall med størrelse %lu støttes ikke av pqGetInt\n"
+
+#: fe-misc.c:341
+#, c-format
+msgid "integer of size %lu not supported by pqPutInt\n"
+msgstr "heltall med størrelse %lu støttes ikke av pqPutInt\n"
+
+#: fe-misc.c:389 fe-misc.c:423 fe-misc.c:856
+#, c-format
+msgid "select() failed: %s\n"
+msgstr "select() mislyktes: %s\n"
+
+#: fe-misc.c:450 fe-misc.c:642 fe-misc.c:807
+msgid "connection not open\n"
+msgstr "forbindelsen er ikke åpen\n"
+
+#: fe-misc.c:515 fe-misc.c:595
+#, c-format
+msgid "could not receive data from server: %s\n"
+msgstr "kunne ikke ta imot data fra serveren: %s\n"
+
+#: fe-misc.c:612 fe-misc.c:686
+msgid ""
+"server closed the connection unexpectedly\n"
+"\tThis probably means the server terminated abnormally\n"
+"\tbefore or while processing the request.\n"
+msgstr ""
+"serveren stengte uventet forbindelsen\n"
+"\tDette betyr muligens at serveren avsluttet unaturlig\n"
+"\tfør eller under behandling av forespørselen.\n"
+
+#: fe-misc.c:702
+#, c-format
+msgid "could not send data to server: %s\n"
+msgstr "kunne ikke sende data til serveren: %s\n"
+
+#: fe-misc.c:863
+msgid "timeout expired\n"
+msgstr "timeout ble utløst\n"
+
+#: fe-secure.c:275 fe-secure.c:321
+#, c-format
+msgid "SSL SYSCALL error: %s\n"
+msgstr "SSL SYSCALL-feil: %s\n"
+
+#: fe-secure.c:280 fe-secure.c:326
+#, c-format
+msgid "SSL error: %s\n"
+msgstr "SSL-feil: %s\n"
+
+#: fe-secure.c:387
+#, c-format
+msgid "error querying socket: %s\n"
+msgstr "feil under spørring av socket: %s\n"
+
+#: fe-secure.c:400
+#, c-format
+msgid "could not get information about host (%s): %s\n"
+msgstr "kunne ikke få informasjon om verten (%s): %s\n"
+
+#: fe-secure.c:419
+msgid "unsupported protocol\n"
+msgstr "protokollen støttes ikke\n"
+
+#: fe-secure.c:441
+#, c-format
+msgid "server common name \"%s\" does not resolve to %ld.%ld.%ld.%ld\n"
+msgstr "vertens vanlige navn «%s» løses ikke (does not resolve) til %ld.%ld.%ld.%ld\n"
+
+#: fe-secure.c:448
+#, c-format
+msgid "server common name \"%s\" does not resolve to peer address\n"
+msgstr "vertens vanlige navn «%s» løses ikke (does not resolve) til motpartens adresse\n"
+
+#: fe-secure.c:617
+msgid "could not get user information\n"
+msgstr "kunne ikke få tak i brukerinformasjon\n"
+
+#: fe-secure.c:629
+#, c-format
+msgid "could not open certificate (%s): %s\n"
+msgstr "kunne ikke åpne sertifikatet (%s): %s\n"
+
+#: fe-secure.c:636
+#, c-format
+msgid "could not read certificate (%s): %s\n"
+msgstr "kunne ikke lese sertifikatet (%s): %s\n"
+
+#: fe-secure.c:649
+#, c-format
+msgid "certificate present, but not private key (%s)\n"
+msgstr "sertifikat tilgjenglig, men ikke den private nøkkelen (%s)\n"
+
+#: fe-secure.c:658
+#, c-format
+msgid "private key (%s) has wrong permissions\n"
+msgstr "den private nøkkelen (%s) har feil rettigheter\n"
+
+#: fe-secure.c:665
+#, c-format
+msgid "could not open private key file (%s): %s\n"
+msgstr "kan ikke åpne privat nøkkelfil (%s): %s\n"
+
+#: fe-secure.c:674
+#, c-format
+msgid "private key (%s) changed during execution\n"
+msgstr "privat nøkkel (%s) endret seg under kjøring\n"
+
+#: fe-secure.c:681
+#, c-format
+msgid "could not read private key (%s): %s\n"
+msgstr "kunne ikke lese privat nøkkel (%s): %s\n"
+
+#: fe-secure.c:693
+#, c-format
+msgid "certificate/private key mismatch (%s): %s\n"
+msgstr "sertifikat/privat nøkkel stemmer ikke (%s): %s\n"
+
+#: fe-secure.c:721
+#, c-format
+msgid "could not create SSL context: %s\n"
+msgstr "kan ikke opprette SSL-sammenheng: %s\n"
+
+#: fe-secure.c:737 fe-secure.c:745
+#, c-format
+msgid "could not read root certificate list (%s): %s\n"
+msgstr "kunne ikke lese root-sertifikatlisten (%s): %s\n"
+
+#: fe-secure.c:794
+#, c-format
+msgid "could not establish SSL connection: %s\n"
+msgstr "kunne ikke etablere SSL-forbindelse: %s\n"
+
+#: fe-secure.c:812
+#, c-format
+msgid "certificate could not be validated: %s\n"
+msgstr "sertifikatet kunne ikke bekreftes: %s\n"
+
+#: fe-secure.c:824
+#, c-format
+msgid "certificate could not be obtained: %s\n"
+msgstr "sertifikatet kunne ikke hentes: %s\n"
