@@ -14,7 +14,7 @@ href="mailto:pgman@candle.pha.pa.us">pgman@candle.pha.pa.us</a>).</p>
 
     <p>Deutsche Übersetzung von Ian Barwick (<a href="mailto:barwick@gmx.net">barwick@gmx.net</a>).</p>
 
-    <p>Letzte Aktualisierung der deutschen Übersetzung: Di., den 22.07.2003, 16:20 CET</p>
+    <p>Letzte Aktualisierung der deutschen Übersetzung: Di., den 02.09.2003, 10:00 CET</p>
 
     <p>Die aktuellste Version dieses Dokuments liegt auf der PostgreSQL Website:</p>
     <ul>
@@ -1060,8 +1060,12 @@ BYTEA         bytea           Bytearray mit variabler Länge
     new_id = output of execute("SELECT currval('person_id_seq')");
 </pre>
     <p>Schließlich besteht noch die Möglichkeit, den von einer <small>INSERT</small>-Anweisung
-    zurückgelieferten <small>OID</small>-Wert als einmaligen Wert zu verwenden.
-    In Perl mit dem <em>DBD::Pg</em>-Modul von Edmund Mergl wird der OID-Wert nach einem
+    zurückgelieferten <a href="#4.16"><small>OID</small></a>-Wert als einmaligen Wert zu verwenden.
+    Dieser Ansatz ist allerdings PostgreSQL-spezifisch; außerdem wird nach 
+    ca. 4 Milliarden Einträgen der <small>OID</small>-Wert wieder auf eine kleine Zahl
+    gesetzt, ist also nicht garantiert einmalig.</p>
+
+    <p>In Perl mit dem <em>DBD::Pg</em>-Modul wird der OID-Wert nach einem
     <em>$sth->excute()</em> über <em>$sth->{pg_oid_status}</em> zurückgeliefert.</p>
 
     <h4><a name="4.15.3">4.15.3</a>) Führen <em>currval()</em> und <em>nextval()</em> zu einer Race-Condition mit anderen
@@ -1285,13 +1289,21 @@ BYTEA         bytea           Bytearray mit variabler Länge
 
     <ul>
     <li><em>contrib/pgcrypto</em> enthält diverse Funktionen für die Benützung mit
-      SQL-Abfragen;</li>
-    <li>die einzige Möglichkeit, Kommunikationen zwischen Client und Server
-      zu verschlüsseln, ist durch die Anwendung von <em>hostssl</em> in <em>pg_hba.conf</em>;</li>
+      SQL-Abfragen.</li>
+
+    <li>Um Verbindungen zwischen dem Server und Client-Anwendungen zu
+      verschlüsseln, muss in der Server-Konfigurationsdatei <em>postgresql.conf</em>
+      die <em>ssl</em>-Option auf <em>true</em> (Voreinstellung: <em>false</em>) gesetzt werden
+      und ein passender <em>host</em>- bzw. <em>hostssl</em>-Eintrag muss in 
+      <em>pg_hba.conf</em> vorhanden sein. Zudem muss die <em>sslmode</em>-Einstellung
+      beim Client nicht auf <em>disable</em> gesetzt werden. (Bitte beachten Sie auch,
+      daß neben der eingebauten SSL-Unterstützung verschlüsselte Verbindungen 
+      auch über externe Anwendungen wie <em>stunnel</em> oder <em>ssh</em> aufgebaut werden können).</li>
+
     <li>Die Passwörter der Datenbanknutzer werden ab Version 7.3 automatisch
       verschlüsselt (in früheren Versionen muß der Parameter <em>PASSWORD_ENCRYPTION</em>
-      in <em>postgresql.conf</em> explizit eingeschaltet werden);</li>
-    <li>der Server läuft auf einem verschlüsselten Dateisystem.</li>
+      in <em>postgresql.conf</em> explizit eingeschaltet werden).</li>
+    <li>Betrieb des Servers auf einem verschlüsselten Dateisystem.</li>
     </ul>
 
     <hr />
@@ -1333,9 +1345,15 @@ BYTEA         bytea           Bytearray mit variabler Länge
     <p>Die englische Vorlage dieser FAQ wird ständig überarbeitet. Daher liegt
     die Übersetzung nicht immer auf dem aktuellsten Stand.</p>
 
+    <p>Die aktuellste Version der deutschen Übersetzung befindet sich immer unter
+    <a href="http://sql-info.de/postgresql/FAQ_german.html">http://sql-info.de/postgresql/FAQ_german.html</a>.
+    Diese "Arbeitsversion" enthält eventuell Änderungen, die noch nicht auf der 
+    PostgreSQL-Website eingebunden worden sind.</p>
+
     <p>Über Verbesserungshinweise und Korrekturvorschläge sowie Verständnisfragen
     zum Inhalt der FAQ freue ich mich. Ich nehme auch allgemeine Fragen zu PostgreSQL gerne
-    entgegen, kann aber leider keine zeitige Antwort garantieren.</p>
+    entgegen, verweise jedoch auf die Mailing-Listen als schnelle und zuverlässige
+    Anlaufstellen.</p>
 
     <p>Diese Übersetzung basiert teilweise auf einer früheren Übersetzung von Karsten
     Schulz (<a href="mailto:schulz@linux-systemhaus.de">schulz@linux-systemhaus.de</a>).</p>

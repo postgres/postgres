@@ -5,8 +5,8 @@
    
    Deutsche Übersetzung von Ian Barwick (barwick@gmx.net).
    
-   Letzte Aktualisierung der deutschen Übersetzung: Di., den 22.07.2003,
-   16:20 CET
+   Letzte Aktualisierung der deutschen Übersetzung: Di., den 02.09.2003,
+   10:00 CET
    
    Die aktuellste Version dieses Dokuments liegt auf der PostgreSQL
    Website:
@@ -1063,9 +1063,12 @@ BYTEA         bytea           Bytearray mit variabler Länge
 
    Schließlich besteht noch die Möglichkeit, den von einer
    INSERT-Anweisung zurückgelieferten OID-Wert als einmaligen Wert zu
-   verwenden. In Perl mit dem DBD::Pg-Modul von Edmund Mergl wird der
-   OID-Wert nach einem $sth->excute() über $sth->{pg_oid_status}
-   zurückgeliefert.
+   verwenden. Dieser Ansatz ist allerdings PostgreSQL-spezifisch;
+   außerdem wird nach ca. 4 Milliarden Einträgen der OID-Wert wieder auf
+   eine kleine Zahl gesetzt, ist also nicht garantiert einmalig.
+   
+   In Perl mit dem DBD::Pg-Modul wird der OID-Wert nach einem
+   $sth->excute() über $sth->{pg_oid_status} zurückgeliefert.
    
     4.15.3) Führen currval() und nextval() zu einer Race-Condition mit anderen
     Nutzern?
@@ -1278,15 +1281,21 @@ BYTEA         bytea           Bytearray mit variabler Länge
     4.28) Welche Möglichkeiten zur Verschlüsselung gibt es?
     
      * contrib/pgcrypto enthält diverse Funktionen für die Benützung mit
-       SQL-Abfragen;
-     * die einzige Möglichkeit, Kommunikationen zwischen Client und
-       Server zu verschlüsseln, ist durch die Anwendung von hostssl in
-       pg_hba.conf;
+       SQL-Abfragen.
+     * Um Verbindungen zwischen dem Server und Client-Anwendungen zu
+       verschlüsseln, muss in der Server-Konfigurationsdatei
+       postgresql.conf die ssl-Option auf true (Voreinstellung: false)
+       gesetzt werden und ein passender host- bzw. hostssl-Eintrag muss
+       in pg_hba.conf vorhanden sein. Zudem muss die sslmode-Einstellung
+       beim Client nicht auf disable gesetzt werden. (Bitte beachten Sie
+       auch, daß neben der eingebauten SSL-Unterstützung verschlüsselte
+       Verbindungen auch über externe Anwendungen wie stunnel oder ssh
+       aufgebaut werden können).
      * Die Passwörter der Datenbanknutzer werden ab Version 7.3
        automatisch verschlüsselt (in früheren Versionen muß der Parameter
        PASSWORD_ENCRYPTION in postgresql.conf explizit eingeschaltet
-       werden);
-     * der Server läuft auf einem verschlüsselten Dateisystem.
+       werden).
+     * Betrieb des Servers auf einem verschlüsselten Dateisystem.
      _________________________________________________________________
    
                             PostgreSQL erweitern
@@ -1326,10 +1335,15 @@ BYTEA         bytea           Bytearray mit variabler Länge
    Die englische Vorlage dieser FAQ wird ständig überarbeitet. Daher
    liegt die Übersetzung nicht immer auf dem aktuellsten Stand.
    
+   Die aktuellste Version der deutschen Übersetzung befindet sich immer
+   unter http://sql-info.de/postgresql/FAQ_german.html. Diese
+   "Arbeitsversion" enthält eventuell Änderungen, die noch nicht auf der
+   PostgreSQL-Website eingebunden worden sind.
+   
    Über Verbesserungshinweise und Korrekturvorschläge sowie
    Verständnisfragen zum Inhalt der FAQ freue ich mich. Ich nehme auch
-   allgemeine Fragen zu PostgreSQL gerne entgegen, kann aber leider keine
-   zeitige Antwort garantieren.
+   allgemeine Fragen zu PostgreSQL gerne entgegen, verweise jedoch auf
+   die Mailing-Listen als schnelle und zuverlässige Anlaufstellen.
    
    Diese Übersetzung basiert teilweise auf einer früheren Übersetzung von
    Karsten Schulz (schulz@linux-systemhaus.de).
