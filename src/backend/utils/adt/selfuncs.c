@@ -15,7 +15,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/utils/adt/selfuncs.c,v 1.154 2004/01/07 18:56:28 neilc Exp $
+ *	  $PostgreSQL: pgsql/src/backend/utils/adt/selfuncs.c,v 1.155 2004/01/17 20:09:35 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -3897,6 +3897,8 @@ genericcostestimate(Query *root, RelOptInfo *rel,
 	double		numIndexTuples;
 	double		numIndexPages;
 	QualCost	index_qual_cost;
+	double		qual_op_cost;
+	double		qual_arg_cost;
 	List	   *selectivityQuals;
 
 	/*
@@ -3976,16 +3978,31 @@ genericcostestimate(Query *root, RelOptInfo *rel,
 	/*
 	 * Compute the index access cost.
 	 *
-	 * Our generic assumption is that the index pages will be read
-	 * sequentially, so they have cost 1.0 each, not random_page_cost.
-	 * Also, we charge for evaluation of the indexquals at each index
-	 * tuple. All the costs are assumed to be paid incrementally during
-	 * the scan.
+	 * Disk cost: our generic assumption is that the index pages will be
+	 * read sequentially, so they have cost 1.0 each, not random_page_cost.
+	 */
+	*indexTotalCost = numIndexPages;
+
+	/*
+	 * CPU cost: any complex expressions in the indexquals will need to
+	 * be evaluated once at the start of the scan to reduce them to runtime
+	 * keys to pass to the index AM (see nodeIndexscan.c).  We model the
+	 * per-tuple CPU costs as cpu_index_tuple_cost plus one cpu_operator_cost
+	 * per indexqual operator.
+	 *
+	 * Note: this neglects the possible costs of rechecking lossy operators
+	 * and OR-clause expressions.  Detecting that that might be needed seems
+	 * more expensive than it's worth, though, considering all the other
+	 * inaccuracies here ...
 	 */
 	cost_qual_eval(&index_qual_cost, indexQuals);
-	*indexStartupCost = index_qual_cost.startup;
-	*indexTotalCost = numIndexPages +
-		(cpu_index_tuple_cost + index_qual_cost.per_tuple) * numIndexTuples;
+	qual_op_cost = cpu_operator_cost * length(indexQuals);
+	qual_arg_cost = index_qual_cost.startup +
+		index_qual_cost.per_tuple - qual_op_cost;
+	if (qual_arg_cost < 0)		/* just in case... */
+		qual_arg_cost = 0;
+	*indexStartupCost = qual_arg_cost;
+	*indexTotalCost += numIndexTuples * (cpu_index_tuple_cost + qual_op_cost);
 
 	/*
 	 * Generic assumption about index correlation: there isn't any.
