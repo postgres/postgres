@@ -11,14 +11,27 @@ ifeq ($(HAVE_POSIX_SIGNALS), no)
    LIBS := -lBSD $(LIBS)
 endif
 
+# Using X/Open Networking Interfaces requires to link with libxnet.
+# Without specifying this, bind(), getpeername() and so on don't work
+# correctly in the LP64 data model.
+LIBS := -lxnet $(LIBS)
+
 # Embed 'libdir' as the shared library search path so that the executables
 # don't need SHLIB_PATH to be set.  (We do not observe the --enable-rpath
 # switch here because you'd get rather bizarre behavior if you leave this
 # option off.)
-LDFLAGS += -Wl,+b -Wl,$(libdir)
+ifeq ($(with_gnu_ld), yes)
+   LDFLAGS += -Wl,-rpath -Wl,$(libdir)
+else
+   LDFLAGS += -Wl,+b -Wl,$(libdir)
+endif
 
 # catch null pointer dereferences
-LDFLAGS += -Wl,-z
+ifeq ($(with_gnu_ld), yes)
+# XXX what to put here?
+else
+   LDFLAGS += -Wl,-z
+endif
 
 # set up appropriate options for shared library builds
 export_dynamic = -Wl,-E
@@ -28,16 +41,24 @@ INSTALL_SHLIB_OPTS = -m 555
 
 AROPT = crs
 
-DLSUFFIX = .sl
-ifeq ($(GCC), yes)
-CFLAGS_SL = -fpic
+ifeq ($(host_cpu), ia64)
+   DLSUFFIX = .so
 else
-CFLAGS_SL = +z
+   DLSUFFIX = .sl
+endif
+ifeq ($(GCC), yes)
+   CFLAGS_SL = -fpic
+else
+   CFLAGS_SL = +z
 endif
 
 # Rule for building shared libs (currently used only for regression test
 # shlib ... should go away, since this is not really enough knowledge)
-%.sl: %.o
+%$(DLSUFFIX): %.o
+ifeq ($(with_gnu_ld), yes)
+	$(CC) $(LDFLAGS) -shared -o $@ $<
+else
 	$(LD) -b -o $@ $<
+endif
 
 sqlmansect = 5

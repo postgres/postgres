@@ -6,7 +6,7 @@
 # Copyright (c) 1998, Regents of the University of California
 #
 # IDENTIFICATION
-#    $PostgreSQL: pgsql/src/Makefile.shlib,v 1.77 2004/07/13 00:06:46 tgl Exp $
+#    $PostgreSQL: pgsql/src/Makefile.shlib,v 1.78 2004/09/02 23:06:43 tgl Exp $
 #
 #-------------------------------------------------------------------------
 
@@ -148,9 +148,13 @@ endif
 
 ifeq ($(PORTNAME), hpux)
   shlib			= lib$(NAME)$(DLSUFFIX).$(SO_MAJOR_VERSION)
-  LINK.shared		= $(LD) +h $(soname) -b +b $(libdir)
   ifeq ($(GCC), yes)
     SHLIB_LINK		+= `$(CC) -print-libgcc-file-name`
+  endif
+  ifeq ($(with_gnu_ld), yes)
+    LINK.shared		= $(CC) $(LDFLAGS) -shared -Wl,-h -Wl,$(soname)
+  else
+    LINK.shared		= $(LD) +h $(soname) -b +b $(libdir)
   endif
 endif
 
