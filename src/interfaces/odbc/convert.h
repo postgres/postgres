@@ -35,7 +35,7 @@ int copy_and_convert_field(StatementClass *stmt, Int4 field_type, void *value, I
 
 int			copy_statement_with_parameters(StatementClass *stmt);
 char	   *convert_escape(char *value);
-char	   *convert_money(char *s);
+BOOL	   convert_money(const char *s, char *sout, size_t soutmax);
 char		parse_datetime(char *buf, SIMPLE_TIME *st);
 int		convert_linefeeds(const char *s, char *dst, size_t max, BOOL *changed);
 int	   convert_special_chars(const char *si, char *dst, int used);

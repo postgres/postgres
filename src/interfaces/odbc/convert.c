@@ -167,8 +167,9 @@ copy_and_convert_field(StatementClass *stmt, Int4 field_type, void *value, Int2 
 	BOOL		changed;
 	static		char *tempBuf= NULL;
 	static		unsigned int tempBuflen = 0;
-	const char *neutstr = value;
-	char	midtemp[16];
+	const char *neut_str = value;
+	char	midtemp[2][32];
+	int	mtemp_cnt = 0;
 
 	if (!tempBuf)
 		tempBuflen = 0;
@@ -265,27 +266,18 @@ copy_and_convert_field(StatementClass *stmt, Int4 field_type, void *value, Int2 
 			break;
 
 		case PG_TYPE_BOOL:
-			{					/* change T/F to 1/0 */
-				char	   *s = (char *) value;
+			{			/* change T/F to 1/0 */
+				char	   *s;
 
-				/*  Aidan Mountford (aidan@oz.to) 1/08/2001:  
-					
-					>> if (s[0] == 'T' || s[0] == 't') <<< This wont work...
-
-					When MoveFirst is called twice on one set of tuples, 
-					this will have the effect of setting s[0] to 1 on the
-					first pass, and s[0] on the second.
-
-					This is bad ;)
-
-				*/
-
-				strcpy(midtemp, value);
+				s = midtemp[mtemp_cnt];
+				strcpy(s, (char *) value);
 				if (s[0] == 'f' || s[0] == 'F' || s[0] == 'n' || s[0] == 'N' || s[0] == '0')
-					midtemp[0] = '0';
+					s[0] = '0';
 				else
-					midtemp[0] = '1';
-				neutstr = midtemp;
+					s[0] = '1';
+				s[1] = '\0';
+				neut_str = midtemp[mtemp_cnt];
+				mtemp_cnt++;
 
 			}
 			break;
@@ -406,7 +398,7 @@ copy_and_convert_field(StatementClass *stmt, Int4 field_type, void *value, Int2 
 				len = 1;
 				if (cbValueMax > len)
 				{
-					strcpy(rgbValueBindRow, neutstr);
+					strcpy(rgbValueBindRow, neut_str);
 					mylog("PG_TYPE_BOOL: rgbValueBindRow = '%s'\n", rgbValueBindRow);
 				}
 				break;
@@ -426,7 +418,7 @@ copy_and_convert_field(StatementClass *stmt, Int4 field_type, void *value, Int2 
 				 */
 			case PG_TYPE_BYTEA:/* convert binary data to hex strings
 								 * (i.e, 255 = "FF") */
-				len = convert_pgbinary_to_char(value, rgbValueBindRow, cbValueMax);
+				len = convert_pgbinary_to_char(neut_str, rgbValueBindRow, cbValueMax);
 
 				/***** THIS IS NOT PROPERLY IMPLEMENTED *****/
 				break;
@@ -437,7 +429,7 @@ copy_and_convert_field(StatementClass *stmt, Int4 field_type, void *value, Int2 
 				if (stmt->current_col < 0 || stmt->bindings[stmt->current_col].data_left < 0)
 				{
 					/* convert linefeeds to carriage-return/linefeed */
-					len = convert_linefeeds(value, NULL, 0, &changed);
+					len = convert_linefeeds(neut_str, NULL, 0, &changed);
 					if (cbValueMax == 0) /* just returns length info */
 					{
 						result = COPY_RESULT_TRUNCATED;
@@ -450,7 +442,7 @@ copy_and_convert_field(StatementClass *stmt, Int4 field_type, void *value, Int2 
 							tempBuf = realloc(tempBuf, len + 1);
 							tempBuflen = len + 1;
 						}
-						convert_linefeeds(value, tempBuf, tempBuflen, &changed);
+						convert_linefeeds(neut_str, tempBuf, tempBuflen, &changed);
 						ptr = tempBuf;
 					}
 					else
@@ -460,7 +452,7 @@ copy_and_convert_field(StatementClass *stmt, Int4 field_type, void *value, Int2 
 							free(tempBuf);
 							tempBuf = NULL;
 						}
-						ptr = value;
+						ptr = neut_str;
 					}
 				}
 				else
@@ -534,7 +526,15 @@ copy_and_convert_field(StatementClass *stmt, Int4 field_type, void *value, Int2 
 		 * those.
 		 */
 		if (field_type == PG_TYPE_MONEY)
-			convert_money(value);
+		{
+			if (convert_money(neut_str, midtemp[mtemp_cnt], sizeof(midtemp[0])))
+			{
+				neut_str = midtemp[mtemp_cnt];
+				mtemp_cnt++;
+			}
+			else
+				return COPY_UNSUPPORTED_TYPE;
+		}
 
 		switch (fCType)
 		{
@@ -590,13 +590,13 @@ copy_and_convert_field(StatementClass *stmt, Int4 field_type, void *value, Int2 
 			case SQL_C_BIT:
 				len = 1;
 				if (bind_size > 0)
-					*(UCHAR *) ((char *) rgbValue + (bind_row * bind_size)) = atoi(neutstr);
+					*(UCHAR *) ((char *) rgbValue + (bind_row * bind_size)) = atoi(neut_str);
 				else
-					*((UCHAR *) rgbValue + bind_row) = atoi(neutstr);
+					*((UCHAR *) rgbValue + bind_row) = atoi(neut_str);
 
 				/*
 				 * mylog("SQL_C_BIT: bind_row = %d val = %d, cb = %d, rgb=%d\n",
-				 * bind_row, atoi(neutstr), cbValueMax, *((UCHAR *)rgbValue));
+				 * bind_row, atoi(neut_str), cbValueMax, *((UCHAR *)rgbValue));
 				 */
 				break;
 
@@ -604,67 +604,67 @@ copy_and_convert_field(StatementClass *stmt, Int4 field_type, void *value, Int2 
 			case SQL_C_TINYINT:
 				len = 1;
 				if (bind_size > 0)
-					*(SCHAR *) ((char *) rgbValue + (bind_row * bind_size)) = atoi(value);
+					*(SCHAR *) ((char *) rgbValue + (bind_row * bind_size)) = atoi(neut_str);
 				else
-					*((SCHAR *) rgbValue + bind_row) = atoi(value);
+					*((SCHAR *) rgbValue + bind_row) = atoi(neut_str);
 				break;
 
 			case SQL_C_UTINYINT:
 				len = 1;
 				if (bind_size > 0)
-					*(UCHAR *) ((char *) rgbValue + (bind_row * bind_size)) = atoi(value);
+					*(UCHAR *) ((char *) rgbValue + (bind_row * bind_size)) = atoi(neut_str);
 				else
-					*((UCHAR *) rgbValue + bind_row) = atoi(value);
+					*((UCHAR *) rgbValue + bind_row) = atoi(neut_str);
 				break;
 
 			case SQL_C_FLOAT:
 				len = 4;
 				if (bind_size > 0)
-					*(SFLOAT *) ((char *) rgbValue + (bind_row * bind_size)) = (float) atof(value);
+					*(SFLOAT *) ((char *) rgbValue + (bind_row * bind_size)) = (float) atof(neut_str);
 				else
-					*((SFLOAT *) rgbValue + bind_row) = (float) atof(value);
+					*((SFLOAT *) rgbValue + bind_row) = (float) atof(neut_str);
 				break;
 
 			case SQL_C_DOUBLE:
 				len = 8;
 				if (bind_size > 0)
-					*(SDOUBLE *) ((char *) rgbValue + (bind_row * bind_size)) = atof(value);
+					*(SDOUBLE *) ((char *) rgbValue + (bind_row * bind_size)) = atof(neut_str);
 				else
-					*((SDOUBLE *) rgbValue + bind_row) = atof(value);
+					*((SDOUBLE *) rgbValue + bind_row) = atof(neut_str);
 				break;
 
 			case SQL_C_SSHORT:
 			case SQL_C_SHORT:
 				len = 2;
 				if (bind_size > 0)
-					*(SWORD *) ((char *) rgbValue + (bind_row * bind_size)) = atoi(value);
+					*(SWORD *) ((char *) rgbValue + (bind_row * bind_size)) = atoi(neut_str);
 				else
-					*((SWORD *) rgbValue + bind_row) = atoi(value);
+					*((SWORD *) rgbValue + bind_row) = atoi(neut_str);
 				break;
 
 			case SQL_C_USHORT:
 				len = 2;
 				if (bind_size > 0)
-					*(UWORD *) ((char *) rgbValue + (bind_row * bind_size)) = atoi(value);
+					*(UWORD *) ((char *) rgbValue + (bind_row * bind_size)) = atoi(neut_str);
 				else
-					*((UWORD *) rgbValue + bind_row) = atoi(value);
+					*((UWORD *) rgbValue + bind_row) = atoi(neut_str);
 				break;
 
 			case SQL_C_SLONG:
 			case SQL_C_LONG:
 				len = 4;
 				if (bind_size > 0)
-					*(SDWORD *) ((char *) rgbValue + (bind_row * bind_size)) = atol(value);
+					*(SDWORD *) ((char *) rgbValue + (bind_row * bind_size)) = atol(neut_str);
 				else
-					*((SDWORD *) rgbValue + bind_row) = atol(value);
+					*((SDWORD *) rgbValue + bind_row) = atol(neut_str);
 				break;
 
 			case SQL_C_ULONG:
 				len = 4;
 				if (bind_size > 0)
-					*(UDWORD *) ((char *) rgbValue + (bind_row * bind_size)) = atol(value);
+					*(UDWORD *) ((char *) rgbValue + (bind_row * bind_size)) = atol(neut_str);
 				else
-					*((UDWORD *) rgbValue + bind_row) = atol(value);
+					*((UDWORD *) rgbValue + bind_row) = atol(neut_str);
 				break;
 
 			case SQL_C_BINARY:
@@ -672,12 +672,12 @@ copy_and_convert_field(StatementClass *stmt, Int4 field_type, void *value, Int2 
 				/* truncate if necessary */
 				/* convert octal escapes to bytes */
 
-				if (len = strlen(value), len >= (int) tempBuflen)
+				if (len = strlen(neut_str), len >= (int) tempBuflen)
 				{
 					tempBuf = realloc(tempBuf, len + 1);
 					tempBuflen = len + 1;
 				}
-				len = convert_from_pgbinary(value, tempBuf, tempBuflen);
+				len = convert_from_pgbinary(neut_str, tempBuf, tempBuflen);
 				ptr = tempBuf;
 
 				if (stmt->current_col >= 0)
@@ -1811,23 +1811,27 @@ convert_escape(char *value)
 }
 
 
-char *
-convert_money(char *s)
+BOOL
+convert_money(const char *s, char *sout, size_t soutmax)
 {
-	size_t		i = 0,
-				out = 0;
+	size_t		i = 0, out = 0;
 
-	for (i = 0; i < strlen(s); i++)
+	for (i = 0; s[i]; i++)
 	{
 		if (s[i] == '$' || s[i] == ',' || s[i] == ')')
 			;					/* skip these characters */
-		else if (s[i] == '(')
-			s[out++] = '-';
 		else
-			s[out++] = s[i];
+		{
+			if (out + 1 >= soutmax)
+				return FALSE; /* sout is too short */
+			if (s[i] == '(')
+				sout[out++] = '-';
+			else
+				sout[out++] = s[i];
+		}
 	}
-	s[out] = '\0';
-	return s;
+	sout[out] = '\0';
+	return TRUE;
 }
 
 
@@ -2270,6 +2274,7 @@ convert_lo(StatementClass *stmt, const void *value, Int2 fCType, PTR rgbValue,
 			lo_lseek(conn, stmt->lobj_fd, 0L, SEEK_SET);
 		}
 	}
+	mylog("lo data left = %d\n", left);
 
 	if (left == 0)
 		return COPY_NO_DATA_FOUND;
