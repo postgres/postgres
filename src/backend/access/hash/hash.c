@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *    $Header: /cvsroot/pgsql/src/backend/access/hash/hash.c,v 1.6 1996/10/23 07:38:29 scrappy Exp $
+ *    $Header: /cvsroot/pgsql/src/backend/access/hash/hash.c,v 1.7 1996/10/24 06:30:23 scrappy Exp $
  *
  * NOTES
  *    This file contains only the public interface routines.
@@ -440,9 +440,7 @@ hashendscan(IndexScanDesc scan)
     _hash_dropscan(scan);
     
     /* be tidy */
-#ifdef PERFECT_MMGR
     pfree (scan->opaque);
-#endif /* PERFECT_MMGR */
 }
 
 /*

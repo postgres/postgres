@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *    $Header: /cvsroot/pgsql/src/backend/access/nbtree/nbtree.c,v 1.5 1996/10/23 07:39:06 scrappy Exp $
+ *    $Header: /cvsroot/pgsql/src/backend/access/nbtree/nbtree.c,v 1.6 1996/10/24 06:30:40 scrappy Exp $
  *
  * NOTES
  *    This file contains only the public interface routines.
@@ -503,11 +503,9 @@ btendscan(IndexScanDesc scan)
     _bt_dropscan(scan);
     
     /* be tidy */
-#ifdef PERFECT_MMGR
     if ( so->keyData != (ScanKey) NULL )
     	pfree (so->keyData);
     pfree (scan->opaque);
-#endif /* PERFECT_MMGR */
 }
 
 /*
