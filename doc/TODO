@@ -1,6 +1,6 @@
 TODO list for PostgreSQL
 ========================
-Last updated:		Fri Oct 12 13:34:31 EDT 2001
+Last updated:		Thu Oct 18 21:30:11 EDT 2001
 
 Current maintainer:	Bruce Momjian (pgman@candle.pha.pa.us)
 
@@ -223,6 +223,7 @@ CLIENTS
 	o JDBC-standard BLOB support
 	o Error Codes (pending backend implementation)
 	o Support for binary data/bytea
+	o Move from Ant to Make builds
 
 REFERENTIAL INTEGRITY
 
