@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/commands/async.c,v 1.59 2000/04/12 17:14:57 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/commands/async.c,v 1.60 2000/05/14 03:18:35 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -249,6 +249,15 @@ Async_Listen(char *relname, int pid)
 	tupDesc = lRel->rd_att;
 	newtup = heap_formtuple(tupDesc, values, nulls);
 	heap_insert(lRel, newtup);
+	if (RelationGetForm(lRel)->relhasindex)
+	{
+		Relation	idescs[Num_pg_listener_indices];
+
+		CatalogOpenIndices(Num_pg_listener_indices, Name_pg_listener_indices, idescs);
+		CatalogIndexInsert(idescs, Num_pg_listener_indices, lRel, newtup);
+		CatalogCloseIndices(Num_pg_listener_indices, idescs);
+	}
+
 	heap_freetuple(newtup);
 
 	heap_close(lRel, AccessExclusiveLock);
