@@ -14,7 +14,7 @@
  * Copyright (c) 1998-2003, PostgreSQL Global Development Group
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/numeric.c,v 1.61 2003/05/12 23:08:50 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/numeric.c,v 1.62 2003/07/03 19:41:47 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -2983,6 +2983,7 @@ numericvar_to_int8(NumericVar *var, int64 *result)
 {
 	NumericDigit *digits;
 	int			ndigits;
+	int			weight;
 	int			i;
 	int64		val,
 				oldval;
@@ -3000,15 +3001,23 @@ numericvar_to_int8(NumericVar *var, int64 *result)
 		return true;
 	}
 
+	/*
+	 * For input like 10000000000, we must treat stripped digits as real.
+	 * So the loop assumes there are weight+1 digits before the decimal point.
+	 */
+	weight = var->weight;
+	Assert(weight >= 0 && ndigits <= weight+1);
+
 	/* Construct the result */
 	digits = var->digits;
 	neg = (var->sign == NUMERIC_NEG);
 	val = digits[0];
-	for (i = 1; i < ndigits; i++)
+	for (i = 1; i <= weight; i++)
 	{
 		oldval = val;
 		val *= NBASE;
-		val += digits[i];
+		if (i < ndigits)
+			val += digits[i];
 		/*
 		 * The overflow check is a bit tricky because we want to accept
 		 * INT64_MIN, which will overflow the positive accumulator.  We
