@@ -1,6 +1,6 @@
 TODO list for PostgreSQL
 ========================
-Last updated:		Fri Dec 28 14:43:42 EST 2001
+Last updated:		Fri Dec 28 14:47:30 EST 2001
 
 Current maintainer:	Bruce Momjian (pgman@candle.pha.pa.us)
 
@@ -424,6 +424,7 @@ SOURCE CODE
 * Use our own getopt() for FreeBSD/OpenBSD to allow --xxx flags (Bruce)
 * Add OpenBSD's getpeereid() call for local socket authentication (Bruce)
 * Improve access-permissions check on data directory in Cygwin (Tom)
+* Report failure to find readline or zlib at end of configure run
 
 ---------------------------------------------------------------------------
 
