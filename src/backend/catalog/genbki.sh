@@ -10,7 +10,7 @@
 #
 #
 # IDENTIFICATION
-#    $Header: /cvsroot/pgsql/src/backend/catalog/Attic/genbki.sh,v 1.10 1998/04/06 00:22:16 momjian Exp $
+#    $Header: /cvsroot/pgsql/src/backend/catalog/Attic/genbki.sh,v 1.11 1998/04/20 18:11:42 momjian Exp $
 #
 # NOTES
 #    non-essential whitespace is removed from the generated file.
@@ -24,6 +24,12 @@ trap "rm -f /tmp/genbki.tmp" 0 1 2 3 15
 >/tmp/genbki.tmp
 
 PATH=$PATH:/lib:/usr/ccs/lib		# to find cpp
+cpp /dev/null >/dev/null
+if [ "$?" -ne 0 ]
+then	echo "Can't find cpp.  Exiting." 1>&2
+	exit 1
+fi
+
 BKIOPTS=''
 if [ $? != 0 ]
 then
@@ -264,7 +270,7 @@ END {
 ' | \
 cpp $BKIOPTS | \
 sed -e '/^[ 	]*$/d' \
-    -e 's/[ 	][ 	]*/ /g'
+    -e 's/[ 	][ 	]*/ /g' || exit 1
 
 # send pg_description file contents to standard error
 cat /tmp/genbki.tmp 1>&2
