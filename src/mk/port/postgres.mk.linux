@@ -5,7 +5,7 @@
 #
 # Copyright (c) 1994-5, Regents of the University of California
 #
-#    $Id: postgres.mk.linux,v 1.1.1.1 1996/07/09 06:22:20 scrappy Exp $
+#    $Id: postgres.mk.linux,v 1.1.1.1.2.1 1996/11/09 10:55:35 scrappy Exp $
 #
 # NOTE
 #    you may remove lines that start with ## which are general comments
@@ -48,7 +48,7 @@ CFLAGS_OPT=	-O2 -pipe -m486
 CFLAGS_BE= -D__USE_BSD -D__USE_BSD_SIGNAL
 LDADD_BE= -lbsd
 
-LEX = flex
-#YACC = bison -y
+#LEX = flex
+YACC = bison -y
 
 endif
