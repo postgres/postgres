@@ -37,7 +37,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/postmaster/postmaster.c,v 1.290.2.1 2002/11/21 06:36:27 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/postmaster/postmaster.c,v 1.290.2.2 2003/01/16 00:27:17 tgl Exp $
  *
  * NOTES
  *
@@ -589,6 +589,15 @@ PostmasterMain(int argc, char *argv[])
 	if (ReservedBackends >= MaxBackends)
 	{
 		postmaster_error("superuser_reserved_connections must be less than max_connections.");
+		ExitPostmaster(1);
+	}
+
+	/*
+	 * Other one-time internal sanity checks can go here.
+	 */
+	if (!CheckDateTokenTables())
+	{
+		postmaster_error("Invalid datetoken tables, please fix.");
 		ExitPostmaster(1);
 	}
 
