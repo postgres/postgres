@@ -1,7 +1,6 @@
 /*-------------------------------------------------------------------------
  *
- * port_protos.h
- *	  port-specific prototypes for SunOS 4
+ * Dynamic loader interface for BSD/OS
  *
  *
  * Portions Copyright (c) 1996-2001, PostgreSQL Global Development Group
@@ -16,19 +15,20 @@
 
 #include "utils/dynamic_loader.h"
 
-/* dynloader.c */
 
-#ifndef  PRE_BSDI_2_1
+#ifdef HAVE_DLOPEN
+
 #include <dlfcn.h>
-#define		  pg_dlopen(f)	  dlopen(f, RTLD_LAZY)
+#define		  pg_dlopen(f)	  dlopen((f), RTLD_LAZY | RTLD_GLOBAL)
 #define		  pg_dlsym		  dlsym
 #define		  pg_dlclose	  dlclose
 #define		  pg_dlerror	  dlerror
-#else
+
+#else /* not HAVE_DLOPEN */
+
 #define pg_dlsym(handle, funcname)	  ((PGFunction) dld_get_func((funcname)))
 #define pg_dlclose(handle)			  ({ dld_unlink_by_file(handle, 1); free(handle); })
-#endif
 
-/* port.c */
+#endif /* not HAVE_DLOPEN */
 
 #endif	 /* PORT_PROTOS_H */

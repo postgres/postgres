@@ -15,7 +15,7 @@
  *
  *-------------------------------------------------------------------------
  */
-#ifdef PRE_BSDI_2_1
+#ifndef HAVE_DLOPEN
 #include "postgres.h"
 
 extern char pg_pathname[];
@@ -95,4 +95,4 @@ pg_dlerror()
 	return dld_strerror(dld_errno);
 }
 
-#endif
+#endif /* not HAVE_DLOPEN */

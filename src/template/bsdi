@@ -5,10 +5,6 @@ case $host_cpu in
 esac
 
 case $host_os in
-  bsdi2.0) CFLAGS="$CFLAGS -DPRE_BSDI_2_1";;
-esac
-
-case $host_os in
   bsdi2.0 | bsdi2.1 | bsdi3*)
     CC=gcc2
     ;;
