@@ -1,6 +1,6 @@
 TODO list for PostgreSQL
 ========================
-Last updated:		Sun Feb 20 22:00:39 EST 2000
+Last updated:		Mon Feb 21 19:58:12 EST 2000
 
 Current maintainer:	Bruce Momjian (pgman@candle.pha.pa.us)
 
@@ -91,6 +91,9 @@ ENHANCEMENTS
 URGENT
 
 * -Add referential integrity(Jan)[primary]
+* Add MATCH PARTIAL referential integrity
+* Foreign key does not check that columns referenced form a primary key
+  or constrained by UNIQUE 
 * Add OUTER joins, left and right[outer](Thomas, Bruce)
 * Allow long tuples by chaining or auto-storing outside db (TOAST)(Jan)
 * -Eliminate limits on query length
