@@ -18,7 +18,8 @@ do
 	sed 's;/\*  *---;/*---X_X;g' |
 	sed 's;\([} 	]\)else[ 	]*\(/\*.*\)$;\1else\
 \2;g' | # workaround for indent bug
-	detab -t4 -qc >/tmp/$$a
+	detab -t4 -qc |
+	sed 's;^DATA(.*$;/*&*/;' >/tmp/$$a    # protect backslashes in DATA() 
 	indent -bad -bap -bbb -bc -bl -d0 -cdb -nce -cli1 -di16 -nfc1 \
 		-lp -nip -nbc -psl -di1 -i4 -l75 -npro /tmp/$$a >/tmp/$$ 2>&1
 	if [ "$?" -ne 0 -o -s /tmp/$$ ]
@@ -26,6 +27,7 @@ do
 		cat /tmp/$$
 	fi
 	cat /tmp/$$a |
+	sed 's;^/\*\(DATA(.*\)\*/$;\1;' |
 	detab -t8 -qc |
 	entab -t4 -qc |
 	sed 's;/\*---X_X;/* ---;g' >/tmp/$$ && cat /tmp/$$ >$FILE

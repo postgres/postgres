@@ -10,7 +10,7 @@
 #
 #
 # IDENTIFICATION
-#    $Header: /cvsroot/pgsql/src/backend/catalog/Attic/genbki.sh,v 1.7 1997/09/06 00:22:36 momjian Exp $
+#    $Header: /cvsroot/pgsql/src/backend/catalog/Attic/genbki.sh,v 1.8 1997/09/06 18:27:11 momjian Exp $
 #
 # NOTES
 #    non-essential whitespace is removed from the generated file.
@@ -54,13 +54,20 @@ done
 # ----------------
 #	also, change Oid to oid. -- AY 8/94.
 #	also, change NameData to name. -- jolly 8/21/95.
+#	put multi-line start/end comments on a separate line
 #
 cat $SYSFILES | \
-sed -e 's/\/\*.*\*\///g' \
-    -e 's/;[ 	]*$//g'  \
+sed -e 's;/\*.*\*/;;g' \
+    -e 's;/\*;\
+/*\
+;g' \
+    -e 's;\*/;\
+*/\
+;g' | # we must run a new sed here to see the newlines we added
+sed -e 's/;[ 	]*$//g' \
     -e 's/^[ 	]*//' \
-    -e 's/\[ 	]Oid/\ oid/g' \
-    -e 's/\[ 	]NameData/\ name/g' \
+    -e 's/[ 	]Oid/\ oid/g' \
+    -e 's/[ 	]NameData/\ name/g' \
     -e 's/^Oid/oid/g' \
     -e 's/^NameData/\name/g' \
     -e 's/(NameData/(name/g' \
