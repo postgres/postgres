@@ -10,6 +10,7 @@
  */
 #include "postgres.h"
 
+#include <ctype.h>
 #include <float.h>
 
 #include "access/gist.h"
