@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/commands/trigger.c,v 1.98 2001/11/12 00:00:55 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/commands/trigger.c,v 1.99 2001/11/16 16:31:16 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -935,10 +935,7 @@ ExecARInsertTriggers(EState *estate, ResultRelInfo *relinfo,
 {
 	TriggerDesc *trigdesc = relinfo->ri_TrigDesc;
 
-	/* Must save info if there are any deferred triggers on this rel */
-	if (trigdesc->n_after_row[TRIGGER_EVENT_INSERT] > 0 ||
-		trigdesc->n_after_row[TRIGGER_EVENT_UPDATE] > 0 ||
-		trigdesc->n_after_row[TRIGGER_EVENT_DELETE] > 0)
+	if (trigdesc->n_after_row[TRIGGER_EVENT_INSERT] > 0)
 		DeferredTriggerSaveEvent(relinfo, TRIGGER_EVENT_INSERT,
 								 NULL, trigtuple);
 }
@@ -1000,9 +997,7 @@ ExecARDeleteTriggers(EState *estate, ResultRelInfo *relinfo,
 {
 	TriggerDesc *trigdesc = relinfo->ri_TrigDesc;
 
-	/* Must save info if there are upd/del deferred triggers on this rel */
-	if (trigdesc->n_after_row[TRIGGER_EVENT_UPDATE] > 0 ||
-		trigdesc->n_after_row[TRIGGER_EVENT_DELETE] > 0)
+	if (trigdesc->n_after_row[TRIGGER_EVENT_DELETE] > 0)
 	{
 		HeapTuple	trigtuple = GetTupleForTrigger(estate, relinfo,
 												   tupleid, NULL);
@@ -1077,9 +1072,7 @@ ExecARUpdateTriggers(EState *estate, ResultRelInfo *relinfo,
 {
 	TriggerDesc *trigdesc = relinfo->ri_TrigDesc;
 
-	/* Must save info if there are upd/del deferred triggers on this rel */
-	if (trigdesc->n_after_row[TRIGGER_EVENT_UPDATE] > 0 ||
-		trigdesc->n_after_row[TRIGGER_EVENT_DELETE] > 0)
+	if (trigdesc->n_after_row[TRIGGER_EVENT_UPDATE] > 0)
 	{
 		HeapTuple	trigtuple = GetTupleForTrigger(estate, relinfo,
 												   tupleid, NULL);
@@ -1208,17 +1201,17 @@ static bool deftrig_all_isdeferred;
 static List *deftrig_trigstates;
 
 /* ----------
- * The list of events during the entire transaction.  deftrig_events
- * is the head, deftrig_event_tail is the last entry.  Because this can
- * grow pretty large, we don't use separate List nodes, but instead thread
- * the list through the dte_next fields of the member nodes.  Saves just a
- * few bytes per entry, but that adds up.
+ * The list of pending deferred trigger events during the current transaction.
+ *
+ * deftrig_events is the head, deftrig_event_tail is the last entry.
+ * Because this can grow pretty large, we don't use separate List nodes,
+ * but instead thread the list through the dte_next fields of the member
+ * nodes.  Saves just a few bytes per entry, but that adds up.
  *
  * XXX Need to be able to shove this data out to a file if it grows too
  *	   large...
  * ----------
  */
-static int	deftrig_n_events;
 static DeferredTriggerEvent deftrig_events;
 static DeferredTriggerEvent deftrig_event_tail;
 
@@ -1284,7 +1277,6 @@ deferredTriggerCheckState(Oid tgoid, int32 itemstate)
  * deferredTriggerAddEvent()
  *
  *	Add a new trigger event to the queue.
- *	Caller must have switched into appropriate memory context!
  * ----------
  */
 static void
@@ -1307,44 +1299,6 @@ deferredTriggerAddEvent(DeferredTriggerEvent event)
 		deftrig_event_tail->dte_next = event;
 		deftrig_event_tail = event;
 	}
-	deftrig_n_events++;
-}
-
-
-/* ----------
- * deferredTriggerGetPreviousEvent()
- *
- *	Scan the eventlist to find the event a given OLD tuple
- *	resulted from in the same transaction.
- * ----------
- */
-static DeferredTriggerEvent
-deferredTriggerGetPreviousEvent(Oid relid, ItemPointer ctid)
-{
-	DeferredTriggerEvent previous = NULL;
-	DeferredTriggerEvent prev;
-
-	/* Search the list to find the last event affecting this tuple */
-	for (prev = deftrig_events; prev != NULL; prev = prev->dte_next)
-	{
-		if (prev->dte_relid != relid)
-			continue;
-		if (prev->dte_event & TRIGGER_DEFERRED_CANCELED)
-			continue;
-
-		if (ItemPointerGetBlockNumber(ctid) ==
-			ItemPointerGetBlockNumber(&(prev->dte_newctid)) &&
-			ItemPointerGetOffsetNumber(ctid) ==
-			ItemPointerGetOffsetNumber(&(prev->dte_newctid)))
-			previous = prev;
-	}
-
-	if (previous == NULL)
-		elog(ERROR,
-		 "deferredTriggerGetPreviousEvent: event for tuple %s not found",
-			 DatumGetCString(DirectFunctionCall1(tidout,
-												 PointerGetDatum(ctid))));
-	return previous;
 }
 
 
@@ -1473,18 +1427,25 @@ DeferredTriggerExecute(DeferredTriggerEvent event, int itemno,
 static void
 deferredTriggerInvokeEvents(bool immediate_only)
 {
-	DeferredTriggerEvent event;
+	DeferredTriggerEvent event,
+				prev_event = NULL;
 	MemoryContext per_tuple_context;
 	Relation	rel = NULL;
 	FmgrInfo   *finfo = NULL;
 
 	/*
-	 * For now we process all events - to speedup transaction blocks we
-	 * need to remember the actual end of the queue at EndQuery and
-	 * process only events that are newer. On state changes we simply
-	 * reset the position to the beginning of the queue and process all
-	 * events once with the new states when the SET CONSTRAINTS ...
-	 * command finishes and calls EndQuery.
+	 * If immediate_only is true, we remove fully-processed events from
+	 * the event queue to recycle space.  If immediate_only is false,
+	 * we are going to discard the whole event queue on return anyway,
+	 * so no need to bother with "retail" pfree's.
+	 *
+	 * In a scenario with many commands in a transaction and many
+	 * deferred-to-end-of-transaction triggers, it could get annoying
+	 * to rescan all the deferred triggers at each command end.
+	 * To speed this up, we could remember the actual end of the queue at
+	 * EndQuery and examine only events that are newer. On state changes 
+	 * we simply reset the saved position to the beginning of the queue 
+	 * and process all events once with the new states.
 	 */
 
 	/* Make a per-tuple memory context for trigger function calls */
@@ -1495,80 +1456,118 @@ deferredTriggerInvokeEvents(bool immediate_only)
 							  ALLOCSET_DEFAULT_INITSIZE,
 							  ALLOCSET_DEFAULT_MAXSIZE);
 
-	for (event = deftrig_events; event != NULL; event = event->dte_next)
+	event = deftrig_events;
+	while (event != NULL)
 	{
-		bool		still_deferred_ones;
+		bool		still_deferred_ones = false;
+		DeferredTriggerEvent next_event;
 		int			i;
 
 		/*
-		 * Check if event is completely done.
+		 * Check if event is already completely done.
 		 */
-		if (event->dte_event & (TRIGGER_DEFERRED_DONE |
-								TRIGGER_DEFERRED_CANCELED))
-			continue;
-
-		MemoryContextReset(per_tuple_context);
-
-		/*
-		 * Check each trigger item in the event.
-		 */
-		still_deferred_ones = false;
-		for (i = 0; i < event->dte_n_items; i++)
+		if (! (event->dte_event & (TRIGGER_DEFERRED_DONE |
+								   TRIGGER_DEFERRED_CANCELED)))
 		{
-			if (event->dte_item[i].dti_state & TRIGGER_DEFERRED_DONE)
-				continue;
+			MemoryContextReset(per_tuple_context);
 
 			/*
-			 * This trigger item hasn't been called yet. Check if we
-			 * should call it now.
+			 * Check each trigger item in the event.
 			 */
-			if (immediate_only && deferredTriggerCheckState(
-											event->dte_item[i].dti_tgoid,
-										   event->dte_item[i].dti_state))
+			for (i = 0; i < event->dte_n_items; i++)
 			{
-				still_deferred_ones = true;
-				continue;
-			}
-
-			/*
-			 * So let's fire it... but first, open the correct relation if
-			 * this is not the same relation as before.
-			 */
-			if (rel == NULL || rel->rd_id != event->dte_relid)
-			{
-				if (rel)
-					heap_close(rel, NoLock);
-				if (finfo)
-					pfree(finfo);
+				if (event->dte_item[i].dti_state & TRIGGER_DEFERRED_DONE)
+					continue;
 
 				/*
-				 * We assume that an appropriate lock is still held by the
-				 * executor, so grab no new lock here.
+				 * This trigger item hasn't been called yet. Check if we
+				 * should call it now.
 				 */
-				rel = heap_open(event->dte_relid, NoLock);
+				if (immediate_only &&
+					deferredTriggerCheckState(event->dte_item[i].dti_tgoid,
+											  event->dte_item[i].dti_state))
+				{
+					still_deferred_ones = true;
+					continue;
+				}
 
 				/*
-				 * Allocate space to cache fmgr lookup info for triggers
-				 * of this relation.
+				 * So let's fire it... but first, open the correct relation
+				 * if this is not the same relation as before.
 				 */
-				finfo = (FmgrInfo *)
-					palloc(rel->trigdesc->numtriggers * sizeof(FmgrInfo));
-				MemSet(finfo, 0,
-					   rel->trigdesc->numtriggers * sizeof(FmgrInfo));
-			}
+				if (rel == NULL || rel->rd_id != event->dte_relid)
+				{
+					if (rel)
+						heap_close(rel, NoLock);
+					if (finfo)
+						pfree(finfo);
 
-			DeferredTriggerExecute(event, i, rel, finfo, per_tuple_context);
+					/*
+					 * We assume that an appropriate lock is still held by the
+					 * executor, so grab no new lock here.
+					 */
+					rel = heap_open(event->dte_relid, NoLock);
 
-			event->dte_item[i].dti_state |= TRIGGER_DEFERRED_DONE;
+					/*
+					 * Allocate space to cache fmgr lookup info for triggers
+					 * of this relation.
+					 */
+					finfo = (FmgrInfo *)
+						palloc(rel->trigdesc->numtriggers * sizeof(FmgrInfo));
+					MemSet(finfo, 0,
+						   rel->trigdesc->numtriggers * sizeof(FmgrInfo));
+				}
+
+				DeferredTriggerExecute(event, i, rel, finfo,
+									   per_tuple_context);
+
+				event->dte_item[i].dti_state |= TRIGGER_DEFERRED_DONE;
+			} /* end loop over items within event */
 		}
 
 		/*
-		 * Remember in the event itself if all trigger items are done.
+		 * If it's now completely done, throw it away.
+		 *
+		 * NB: it's possible the trigger calls above added more events to the
+		 * queue, or that calls we will do later will want to add more,
+		 * so we have to be careful about maintaining list validity here.
 		 */
-		if (!still_deferred_ones)
-			event->dte_event |= TRIGGER_DEFERRED_DONE;
+		next_event = event->dte_next;
+
+		if (still_deferred_ones)
+		{
+			/* Not done, keep in list */
+			prev_event = event;
+		}
+		else
+		{
+			/* Done */
+			if (immediate_only)
+			{
+				/* delink it from list and free it */
+				if (prev_event)
+					prev_event->dte_next = next_event;
+				else
+					deftrig_events = next_event;
+				pfree(event);
+			}
+			else
+			{
+				/*
+				 * We will clean up later, but just for paranoia's sake,
+				 * mark the event done.
+				 */
+				event->dte_event |= TRIGGER_DEFERRED_DONE;
+			}
+		}
+
+		event = next_event;
 	}
 
+	/* Update list tail pointer in case we just deleted tail event */
+	deftrig_event_tail = prev_event;
+
+	/* Release working resources */
 	if (rel)
 		heap_close(rel, NoLock);
 	if (finfo)
@@ -1649,7 +1648,6 @@ DeferredTriggerBeginXact(void)
 
 	MemoryContextSwitchTo(oldcxt);
 
-	deftrig_n_events = 0;
 	deftrig_events = NULL;
 	deftrig_event_tail = NULL;
 }
@@ -1986,9 +1984,7 @@ DeferredTriggerSetState(ConstraintsSetStmt *stmt)
  *	Called by ExecAR...Triggers() to add the event to the queue.
  *
  *	NOTE: should be called only if we've determined that an event must
- *	be added to the queue.	We must save *all* events if there is either
- *	an UPDATE or a DELETE deferred trigger; see uses of
- *	deferredTriggerGetPreviousEvent.
+ *	be added to the queue.
  * ----------
  */
 static void
@@ -1999,7 +1995,6 @@ DeferredTriggerSaveEvent(ResultRelInfo *relinfo, int event,
 	TriggerDesc *trigdesc = relinfo->ri_TrigDesc;
 	MemoryContext oldcxt;
 	DeferredTriggerEvent new_event;
-	DeferredTriggerEvent prev_event;
 	int			new_size;
 	int			i;
 	int			ntriggers;
@@ -2060,26 +2055,12 @@ DeferredTriggerSaveEvent(ResultRelInfo *relinfo, int event,
 	switch (event & TRIGGER_EVENT_OPMASK)
 	{
 		case TRIGGER_EVENT_INSERT:
-			new_event->dte_event |= TRIGGER_DEFERRED_ROW_INSERTED;
-			new_event->dte_event |= TRIGGER_DEFERRED_KEY_CHANGED;
+			/* nothing to do */
 			break;
 
 		case TRIGGER_EVENT_UPDATE:
-
 			/*
-			 * On UPDATE check if the tuple updated has been inserted or a
-			 * foreign referenced key value that's changing now has been
-			 * updated once before in this transaction.
-			 */
-			if (!TransactionIdEquals(oldtup->t_data->t_xmin,
-									 GetCurrentTransactionId()))
-				prev_event = NULL;
-			else
-				prev_event =
-					deferredTriggerGetPreviousEvent(rel->rd_id, &oldctid);
-
-			/*
-			 * Now check if one of the referenced keys is changed.
+			 * Check if one of the referenced keys is changed.
 			 */
 			for (i = 0; i < ntriggers; i++)
 			{
@@ -2120,109 +2101,21 @@ DeferredTriggerSaveEvent(ResultRelInfo *relinfo, int event,
 				{
 					/*
 					 * The key hasn't changed, so no need later to invoke
-					 * the trigger at all. But remember other states from
-					 * the possible earlier event.
+					 * the trigger at all.
 					 */
 					new_event->dte_item[i].dti_state |= TRIGGER_DEFERRED_DONE;
-
-					if (prev_event)
-					{
-						if (prev_event->dte_event &
-							TRIGGER_DEFERRED_ROW_INSERTED)
-						{
-							/*
-							 * This is a row inserted during our
-							 * transaction. So any key value is considered
-							 * changed.
-							 */
-							new_event->dte_event |=
-								TRIGGER_DEFERRED_ROW_INSERTED;
-							new_event->dte_event |=
-								TRIGGER_DEFERRED_KEY_CHANGED;
-							new_event->dte_item[i].dti_state |=
-								TRIGGER_DEFERRED_KEY_CHANGED;
-						}
-						else
-						{
-							/*
-							 * This is a row, previously updated. So if
-							 * this key has been changed before, we still
-							 * remember that it happened.
-							 */
-							if (prev_event->dte_item[i].dti_state &
-								TRIGGER_DEFERRED_KEY_CHANGED)
-							{
-								new_event->dte_item[i].dti_state |=
-									TRIGGER_DEFERRED_KEY_CHANGED;
-								new_event->dte_event |=
-									TRIGGER_DEFERRED_KEY_CHANGED;
-							}
-						}
-					}
-				}
-				else
-				{
-					/*
-					 * Bomb out if this key has been changed before.
-					 * Otherwise remember that we do so.
-					 */
-					if (prev_event)
-					{
-						if (prev_event->dte_event &
-							TRIGGER_DEFERRED_ROW_INSERTED)
-							elog(ERROR, "triggered data change violation "
-								 "on relation \"%s\"",
-							 DatumGetCString(DirectFunctionCall1(nameout,
-								NameGetDatum(&(rel->rd_rel->relname)))));
-
-						if (prev_event->dte_item[i].dti_state &
-							TRIGGER_DEFERRED_KEY_CHANGED)
-							elog(ERROR, "triggered data change violation "
-								 "on relation \"%s\"",
-							 DatumGetCString(DirectFunctionCall1(nameout,
-								NameGetDatum(&(rel->rd_rel->relname)))));
-					}
-
-					/*
-					 * This is the first change to this key, so let it
-					 * happen.
-					 */
-					new_event->dte_item[i].dti_state |=
-						TRIGGER_DEFERRED_KEY_CHANGED;
-					new_event->dte_event |= TRIGGER_DEFERRED_KEY_CHANGED;
 				}
 			}
 
 			break;
 
 		case TRIGGER_EVENT_DELETE:
-
-			/*
-			 * On DELETE check if the tuple deleted has been inserted or a
-			 * possibly referenced key value has changed in this
-			 * transaction.
-			 */
-			if (!TransactionIdEquals(oldtup->t_data->t_xmin,
-									 GetCurrentTransactionId()))
-				break;
-
-			/*
-			 * Look at the previous event to the same tuple.
-			 */
-			prev_event = deferredTriggerGetPreviousEvent(rel->rd_id, &oldctid);
-			if (prev_event->dte_event & TRIGGER_DEFERRED_KEY_CHANGED)
-				elog(ERROR, "triggered data change violation "
-					 "on relation \"%s\"",
-					 DatumGetCString(DirectFunctionCall1(nameout,
-								NameGetDatum(&(rel->rd_rel->relname)))));
-
+			/* nothing to do */
 			break;
 	}
 
 	/*
-	 * Anything's fine up to here. Add the new event to the queue.
+	 * Add the new event to the queue.
 	 */
-	oldcxt = MemoryContextSwitchTo(deftrig_cxt);
 	deferredTriggerAddEvent(new_event);
-	MemoryContextSwitchTo(oldcxt);
 }

@@ -6,7 +6,7 @@
  * Portions Copyright (c) 1996-2001, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Id: trigger.h,v 1.31 2001/11/12 00:46:36 tgl Exp $
+ * $Id: trigger.h,v 1.32 2001/11/16 16:31:16 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -50,9 +50,6 @@ typedef struct TriggerData
 #define TRIGGER_DEFERRED_DEFERRABLE		0x00000040
 #define TRIGGER_DEFERRED_INITDEFERRED	0x00000080
 #define TRIGGER_DEFERRED_HAS_BEFORE		0x00000100
-#define TRIGGER_DEFERRED_ROW_INSERTED	0x00000200
-#define TRIGGER_DEFERRED_KEY_CHANGED	0x00000400
-#define TRIGGER_DEFERRED_MASK			0x000007F0
 
 #define TRIGGER_FIRED_BY_INSERT(event)	\
 		(((TriggerEvent) (event) & TRIGGER_EVENT_OPMASK) == \
