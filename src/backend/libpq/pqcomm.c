@@ -30,7 +30,7 @@
  * Portions Copyright (c) 1996-2003, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- *	$Header: /cvsroot/pgsql/src/backend/libpq/pqcomm.c,v 1.163 2003/08/04 02:39:59 momjian Exp $
+ *	$Header: /cvsroot/pgsql/src/backend/libpq/pqcomm.c,v 1.164 2003/08/07 19:37:13 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -501,8 +501,8 @@ StreamConnection(int server_fd, Port *port)
 	 * UnixWare 7+ and OpenServer 5.0.4 are known to have this bug, but it
 	 * shouldn't hurt to catch it for all versions of those platforms.
 	 */
-	if (port->raddr.sa.sa_family == 0)
-		port->raddr.sa.sa_family = AF_UNIX;
+	if (port->raddr.addr.ss_family == 0)
+		port->raddr.addr.ss_family = AF_UNIX;
 #endif
 
 	/* fill in the server (local) address */
