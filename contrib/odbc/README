@@ -1,0 +1,38 @@
+This directory contains support functions for the ODBC driver
+supplied with PostgreSQL-7.0.
+
+To enable additional ODBC functions with PostgreSQL-7.0, simply
+execute the commands in odbc.sql:
+
+psql
+Welcome to psql, the PostgreSQL interactive terminal.
+
+Type:  \copyright for distribution terms
+       \h for help with SQL commands
+       \? for help on internal slash commands
+       \g or terminate with semicolon to execute query
+       \q to quit
+
+postgres=# \i odbc.sql
+CREATE
+...
+
+
+To enable additional ODBC functions with versions of PostgreSQL
+prior to PostgreSQL-7.0 (e.g. PostgreSQL-6.5.3), build the shared
+library and SQL commands as follows:
+
+make pre7
+psql
+Welcome to psql, the PostgreSQL interactive terminal.
+
+Type:  \copyright for distribution terms
+       \h for help with SQL commands
+       \? for help on internal slash commands
+       \g or terminate with semicolon to execute query
+       \q to quit
+
+postgres=# \i odbc-pre7.sql
+CREATE
+...
+
