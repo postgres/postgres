@@ -1,4 +1,4 @@
-<!-- $Header: /cvsroot/pgsql/doc/src/sgml/func.sgml,v 1.51 2001/02/12 14:21:27 momjian Exp $ -->
+<!-- $Header: /cvsroot/pgsql/doc/src/sgml/func.sgml,v 1.52 2001/02/18 17:17:17 petere Exp $ -->
 
 <chapter id="functions">
  <title>Functions and Operators</title>
@@ -17,8 +17,8 @@
   If you are concerned about portability then take note that most of
   the functions and operators described in this chapter, with the
   exception of the most trivial arithmetic and comparison operators
-  and some explicitly marked functions, are not specified by the SQL
-  standard.  However, many other RDBMS packages provide a lot of the
+  and some explicitly marked functions, are not specified by the <acronym>SQL</acronym>
+  standard.  However, many other <acronym>RDBMS</acronym> packages provide a lot of the
   same or similar functions, and some of the ones provided in
   <productname>Postgres</productname> have in fact been inspired by
   other implementations.
@@ -37,7 +37,7 @@
     <member>NOT</member>
    </simplelist>
 
-   SQL uses a three-valued boolean logic where NULL represents
+   <acronym>SQL</acronym> uses a three-valued Boolean logic where NULL represents
    <quote>unknown</quote>.  Observe the following truth tables:
 
    <informaltable>
@@ -179,9 +179,9 @@
   <para>
    Comparison operators are available for all data types where this
    makes sense.  All comparison operators are binary operators that
-   return boolean values; expressions like <literal>1 &lt; 2 &lt;
-   3</literal> are not valid (because there is no
-   <literal>&lt;</literal> operator to compare a boolean with
+   return values of type <type>boolean</type>; expressions like
+   <literal>1 &lt; 2 &lt; 3</literal> are not valid (because there is
+   no <literal>&lt;</literal> operator to compare a Boolean value with
    <literal>3</literal>).
   </para>
 
@@ -685,7 +685,7 @@
   </para>
 
   <para>
-   SQL defines some string functions with a special syntax where
+   <acronym>SQL</acronym> defines some string functions with a special syntax where
    certain keywords rather than commas are used to separate the
    arguments.  Details are in <xref linkend="functions-string-sql">.
    These functions are also implemented using the regular syntax for
@@ -784,7 +784,7 @@
   <para>
    Additional string manipulation functions are available and are
    listed below.  Some of them are used internally to implement the
-   SQL string functions listed above.
+   <acronym>SQL</acronym> string functions listed above.
   </para>
 
   <table id="functions-string-other">
@@ -1049,7 +1049,7 @@
    <para>
     The keyword <token>ILIKE</token> can be used instead of
     <token>LIKE</token> to make the match case insensitive according
-    to the active locale.  This is not in the SQL standard but is a
+    to the active locale.  This is not in the <acronym>SQL</acronym> standard but is a
     <productname>Postgres</productname> extension.
    </para>
 
@@ -1066,7 +1066,7 @@
 
 
   <sect2 id="functions-regexp">
-   <title>POSIX Regular Expressions</title>
+   <title><acronym>POSIX</acronym> Regular Expressions</title>
 
    <table>
     <title>Regular Expression Match Operators</title>
@@ -1106,7 +1106,7 @@
    </table>
 
    <para>
-    POSIX regular expressions provide a more powerful means for
+    <acronym>POSIX</acronym> regular expressions provide a more powerful means for
     pattern matching than the <function>LIKE</function> function.
     Many Unix tools such as <command>egrep</command>,
     <command>sed</command>, or <command>awk</command> use a pattern
@@ -1131,7 +1131,7 @@
 
 <!-- derived from the re_format.7 man page -->
    <para>
-    Regular expressions (<quote>RE</quote>s), as defined in POSIX
+    Regular expressions (<quote>RE</quote>s), as defined in <acronym>POSIX</acronym>
     1003.2, come in two forms: modern REs (roughly those of
     <command>egrep</command>; 1003.2 calls these
     <quote>extended</quote> REs) and obsolete REs (roughly those of
@@ -1379,7 +1379,7 @@
     The <productname>Postgres</productname> formatting functions
     provide a powerful set of tools for converting various data types
     (date/time, integer, floating point, numeric) to formatted strings
-    and for converting from formatted strings to specific datetypes.
+    and for converting from formatted strings to specific data types.
     These functions all follow a common calling convention:  The first
     argument is the value to be formatted and the second argument is a
     template that defines the output format.
@@ -1713,7 +1713,7 @@
       <para>
        A double quote (<quote><literal>"</literal></quote>) between
        quotation marks is skipped and is not parsed.  If you want to
-       have a double quote in the output you must preceed it with a
+       have a double quote in the output you must precede it with a
        double backslash, for example <literal>'\\"YYYY
        Month\\"'</literal>. <!-- " font-lock sanity :-) -->
       </para>
@@ -1829,7 +1829,7 @@
        but to_char(-12, 'MI9999') produces <literal>'-  12'</literal>.
        The Oracle implementation does not allow the use of
        <literal>MI</literal> ahead of <literal>9</literal>, but rather
-       requires that <literal>9</literal> preceed
+       requires that <literal>9</literal> precede
        <literal>MI</literal>.
       </para>
      </listitem>
@@ -2027,125 +2027,648 @@
    <title>Date/Time Functions</title>
 
    <para>
-    The date/time functions provide a powerful set of tools
-    for manipulating various date/time types.
+    <xref linkend="functions-datetime-table"> shows the available
+    functions for date/time value processing.  The basic arithmetic
+    operators (<literal>+</literal>, <literal>*</literal>, etc.) are
+    also available.  For formatting functions, refer to <xref
+    linkend="functions-formatting">.  You should be familiar with the
+    background information on date/time data types (see <xref
+    linkend="datatype-datetime">).
    </para>
 
-   <para>
-    <table tocentry="1">
+    <table id="functions-datetime-table">
      <title>Date/Time Functions</title>
      <tgroup cols="4">
       <thead>
        <row>
-	<entry>Function</entry>
-	<entry>Returns</entry>
+	<entry>Name</entry>
+	<entry>Return Type</entry>
 	<entry>Description</entry>
 	<entry>Example</entry>
+	<entry>Result</entry>
        </row>
       </thead>
+
       <tbody>
-       <row>
-	<entry>abstime(timestamp)</entry>
-	<entry>abstime</entry>
-	<entry>convert to abstime</entry>
-	<entry>abstime(timestamp 'now')</entry>
-       </row>
+<![IGNORE[
+<!--
+These two functions don't seem to do what it says here, or anything
+reasonable at all for that matter.
+-->
        <row>
 	<entry>age(timestamp)</entry>
 	<entry>interval</entry>
-	<entry>preserve months and years</entry>
+	<entry>Subtract argument from current date, preserve years and months and days</entry>
 	<entry>age(timestamp '1957-06-13')</entry>
+	<entry>43 years 8 mons 3 days</entry>
        </row>
+
        <row>
-	<entry>age(timestamp,timestamp)</entry>
+	<entry>age(timestamp, timestamp)</entry>
 	<entry>interval</entry>
 	<entry>preserve months and years</entry>
 	<entry>age('now', timestamp '1957-06-13')</entry>
+	<entry></entry>
        </row>
+]]>
+
        <row>
-	<entry>date_part(text,timestamp)</entry>
-	<entry>double precision</entry>
-	<entry>portion of date</entry>
-	<entry>date_part('dow',timestamp 'now')</entry>
+	<entry>current_date</entry>
+	<entry>date</entry>
+	<entry>
+	 returns current date; see also <link
+	 linkend="functions-datetime-current">below</link>
+	</entry>
+	<entry></entry>
+	<entry></entry>
        </row>
+
        <row>
-	<entry>date_part(text,interval)</entry>
-	<entry>double precision</entry>
-	<entry>portion of time</entry>
-	<entry>date_part('hour',interval '4 hrs 3 mins')</entry>
+	<entry>current_time</entry>
+	<entry>time</entry>
+	<entry>
+	 returns current time (of day); see also <link
+	 linkend="functions-datetime-current">below</link>
+	</entry>
+	<entry></entry>
+	<entry></entry>
        </row>
+
        <row>
-	<entry>date_trunc(text,timestamp)</entry>
+	<entry>current_timestamp</entry>
 	<entry>timestamp</entry>
-	<entry>truncate date</entry>
-	<entry>date_trunc('month',abstime 'now')</entry>
+	<entry>
+	 returns current date and time; see also <link
+	 linkend="functions-datetime-current">below</link>
+	</entry>
+	<entry></entry>
+	<entry></entry>
        </row>
+
        <row>
-	<entry>interval(reltime)</entry>
-	<entry>interval</entry>
-	<entry>convert to interval</entry>
-	<entry>interval(reltime '4 hours')</entry>
+	<entry>date_part(text, timestamp)</entry>
+	<entry>double precision</entry>
+	<entry>
+	 extract subfield from date/time value (equivalent to
+	 <function>extract</function>); see also <link
+	 linkend="functions-datetime-datepart">below</link>
+        </entry>
+	<entry>date_part('hour', timestamp '2001-02-16 20:38:40')</entry>
+	<entry>20</entry>
        </row>
+
+       <row>
+	<entry>date_part(text, interval)</entry>
+	<entry>double precision</entry>
+	<entry>
+         extract subfield from interval value (equivalent to
+	 <function>extract</function>); see also <link
+	 linkend="functions-datetime-datepart">below</link>
+        </entry>
+	<entry>date_part('month', interval '2 years 3 months')</entry>
+	<entry>3</entry>
+       </row>
+
+       <row>
+	<entry>date_trunc(text, timestamp)</entry>
+	<entry>timestamp</entry>
+	<entry>
+         truncate date to specified precision; see also <link
+         linkend="functions-datetime-trunc">below</link>
+        </entry>
+	<entry>date_trunc('hour', timestamp '2001-02-16 20:38:40')</entry>
+	<entry>2001-02-16 20:00:00+00</entry>
+       </row>
+
+       <row>
+	<entry>extract(identifier from timestamp)</entry>
+	<entry>double precision</entry>
+	<entry>
+         extract subfield from date/time value; see also <link
+         linkend="functions-datetime-extract">below</link>
+        </entry>
+	<entry>extract(hour from timestamp '2001-02-16 20:38:40')</entry>
+	<entry>20</entry>
+       </row>
+
+       <row>
+	<entry>extract(identifier from interval)</entry>
+	<entry>double precision</entry>
+	<entry>
+	 extract subfield from interval value; see also <link
+         linkend="functions-datetime-extract">below</link>
+        </entry>
+	<entry>extract(month from interval '2 years 3 months')</entry>
+	<entry>3</entry>
+       </row>
+
        <row>
 	<entry>isfinite(timestamp)</entry>
-	<entry>bool</entry>
-	<entry>a finite time?</entry>
-	<entry>isfinite(timestamp 'now')</entry>
+	<entry>boolean</entry>
+	<entry>Returns true if the time stamp is finite (neither invalid nor infinity)</entry>
+	<entry>isfinite(timestamp '2001-02-16 21:28:30')</entry>
+	<entry>true</entry>
        </row>
+
        <row>
 	<entry>isfinite(interval)</entry>
-	<entry>bool</entry>
-	<entry>a finite time?</entry>
-	<entry>isfinite(interval '4 hrs')</entry>
+	<entry>boolean</entry>
+	<entry>Returns true if the interval is finite in length</entry>
+	<entry>isfinite(interval '4 hours')</entry>
+	<entry>true</entry>
        </row>
+
        <row>
-	<entry>reltime(interval)</entry>
-	<entry>reltime</entry>
-	<entry>convert to reltime</entry>
-	<entry>reltime(interval '4 hrs')</entry>
+	<entry>now()</entry>
+	<entry>timestamp</entry>
+	<entry>
+	 returns current date and time (equivalent to
+	 <function>current_timestamp</function>); see also <link
+	 linkend="functions-datetime-current">below</link>
+	</entry>
+	<entry></entry>
+	<entry></entry>
        </row>
+
        <row>
 	<entry>timestamp(date)</entry>
 	<entry>timestamp</entry>
-	<entry>convert to timestamp</entry>
-	<entry>timestamp(date 'today')</entry>
+	<entry>convert date to timestamp</entry>
+	<entry>timestamp(date '2000-12-25')</entry>
+	<entry>2000-12-25 00:00:00</entry>
        </row>
+
        <row>
-	<entry>timestamp(date,time)</entry>
+	<entry>timestamp(date, time)</entry>
 	<entry>timestamp</entry>
-	<entry>convert to timestamp</entry>
-	<entry>timestamp(timestamp '1998-02-24',time '23:07');</entry>
-       </row>
-       <row>
-	<entry>to_char(timestamp,text)</entry>
-	<entry>text</entry>
-	<entry>convert to string</entry>
-	<entry>to_char(timestamp '1998-02-24','DD');</entry>
+	<entry>combine date and time into a timestamp</entry>
+	<entry>timestamp(date '1998-02-24',time '23:07')</entry>
+	<entry>1998-02-24 23:07:00</entry>
        </row>
       </tbody>
      </tgroup>
     </table>
+
+
+  <sect2 id="functions-datetime-extract">
+   <title><function>EXTRACT</function>, <function>date_part</function></title>
+
+<synopsis>
+EXTRACT (<replaceable>field</replaceable> FROM <replaceable>source</replaceable>)
+</synopsis>
+
+   <para>
+    The <function>extract</function> function retrieves sub-fields
+    from date/time values, such as year or hour.
+    <replaceable>source</replaceable> is a value expression that
+    evaluates to type <type>timestamp</type> or <type>interval</type>.
+    (Expressions of type <type>date</type> or <type>time</type> will
+    be cast to <type>timestamp</type> and can therefore be used as
+    well.)  <replaceable>field</replaceable> is an identifier (not a
+    string!) that selects what field to extract from the source value.
+    The <function>extract</function> function returns values of type
+    <type>double precision</type>.
+    The following are valid values:
+
+    <!-- alphabetical -->
+    <variablelist>
+     <varlistentry>
+      <term>century</term>
+      <listitem>
+       <para>
+        The year field divided by 100
+       </para>
+
+       <informalexample>
+<screen>
+SELECT EXTRACT(CENTURY FROM TIMESTAMP '2001-02-16 20:38:40');
+<lineannotation>Result: </lineannotation><computeroutput>20</computeroutput>
+</screen>
+       </informalexample>
+
+       <para>
+        Note that this is not really the century that the date is in.
+       </para>
+      </listitem>
+     </varlistentry>
+
+     <varlistentry>
+      <term>day</term>
+      <listitem>
+       <para>
+        The day (of the month) field (1 - 31)
+       </para>
+
+       <informalexample>
+<screen>
+SELECT EXTRACT(DAY FROM TIMESTAMP '2001-02-16 20:38:40');
+<lineannotation>Result: </lineannotation><computeroutput>16</computeroutput>
+</screen>
+       </informalexample>
+      </listitem>
+     </varlistentry>
+
+     <varlistentry>
+      <term>decade</term>
+      <listitem>
+       <para>
+        The year field divided by 10
+       </para>
+
+       <informalexample>
+<screen>
+SELECT EXTRACT(DECADE FROM TIMESTAMP '2001-02-16 20:38:40');
+<lineannotation>Result: </lineannotation><computeroutput>200</computeroutput>
+</screen>
+       </informalexample>
+      </listitem>
+     </varlistentry>
+
+     <varlistentry>
+      <term>dow</term>
+      <listitem>
+       <para>
+        The day of the week (0 - 6; Sunday is 0) (for
+        <type>timestamp</type> values only)
+       </para>
+
+       <informalexample>
+<screen>
+SELECT EXTRACT(DOW FROM TIMESTAMP '2001-02-16 20:38:40');
+<lineannotation>Result: </lineannotation><computeroutput>5</computeroutput>
+</screen>
+       </informalexample>
+      </listitem>
+     </varlistentry>
+
+     <varlistentry>
+      <term>doy</term>
+      <listitem>
+       <para>
+        The day of the year (1 - 365/366) (for <type>timestamp</type> values only)
+       </para>
+       <informalexample>
+<screen>
+SELECT EXTRACT(DOY FROM TIMESTAMP '2001-02-16 20:38:40');
+<lineannotation>Result: </lineannotation><computeroutput>47</computeroutput>
+</screen>
+       </informalexample>
+      </listitem>
+     </varlistentry>
+
+     <varlistentry>
+      <term>epoch</term>
+      <listitem>
+       <para>
+        For <type>date</type> and <type>timestamp</type> values, the
+        number of seconds since 1970-01-01 00:00:00 (Result may be
+        negative.); for <type>interval</type> values, the total number
+        of seconds in the interval
+       </para>
+
+       <informalexample>
+<screen>
+SELECT EXTRACT(EPOCH FROM TIMESTAMP '2001-02-16 20:38:40');
+<lineannotation>Result: </lineannotation><computeroutput>982352320</computeroutput>
+
+SELECT EXTRACT(EPOCH FROM INTERVAL '5 days 3 hours');
+<lineannotation>Result: </lineannotation><computeroutput>442800</computeroutput>
+</screen>
+       </informalexample>
+      </listitem>
+     </varlistentry>
+
+     <varlistentry>
+      <term>hour</term>
+      <listitem>
+       <para>
+        The hour field (0 - 23)
+       </para>
+
+       <informalexample>
+<screen>
+SELECT EXTRACT(HOUR FROM TIMESTAMP '2001-02-16 20:38:40');
+<lineannotation>Result: </lineannotation><computeroutput>20</computeroutput>
+</screen>
+       </informalexample>
+      </listitem>
+     </varlistentry>
+
+     <varlistentry>
+      <term>microseconds</term>
+      <listitem>
+       <para>
+        The seconds field, including fractional parts, multiplied by 1
+        000 000.  Note that this includes full seconds.
+       </para>
+
+       <informalexample>
+<screen>
+SELECT EXTRACT(MICROSECONDS FROM TIME '17:12:28.5');
+<lineannotation>Result: </lineannotation><computeroutput>28500000</computeroutput>
+</screen>
+       </informalexample>
+      </listitem>
+     </varlistentry>
+
+     <varlistentry>
+      <term>millennium</term>
+      <listitem>
+       <para>
+        The year field divided by 1000
+       </para>
+
+       <informalexample>
+<screen>
+SELECT EXTRACT(MILLENNIUM FROM TIMESTAMP '2001-02-16 20:38:40');
+<lineannotation>Result: </lineannotation><computeroutput>2</computeroutput>
+</screen>
+       </informalexample>
+
+       <para>
+        Note that this is not really the millennium that the date is in.
+       </para>
+      </listitem>
+     </varlistentry>
+
+     <varlistentry>
+      <term>milliseconds</term>
+      <listitem>
+       <para>
+        The seconds field, including fractional parts, multiplied by
+        1000.  Note that this includes full seconds.
+       </para>
+
+       <informalexample>
+<screen>
+SELECT EXTRACT(MILLISECONDS FROM TIME '17:12:28.5');
+<lineannotation>Result: </lineannotation><computeroutput>28500</computeroutput>
+</screen>
+       </informalexample>
+      </listitem>
+     </varlistentry>
+
+     <varlistentry>
+      <term>minute</term>
+      <listitem>
+       <para>
+        The minutes field (0 - 59)
+       </para>
+
+       <informalexample>
+<screen>
+SELECT EXTRACT(MINUTE FROM TIMESTAMP '2001-02-16 20:38:40');
+<lineannotation>Result: </lineannotation><computeroutput>38</computeroutput>
+</screen>
+       </informalexample>
+      </listitem>
+     </varlistentry>
+
+     <varlistentry>
+      <term>month</term>
+      <listitem>
+       <para>
+        For <type>timestamp</type> values, the number of the month
+        within the year (1 - 12) ; for <type>interval</type> values
+        the number of months, modulo 12 (0 - 11)
+       </para>
+
+       <informalexample>
+<screen>
+SELECT EXTRACT(MONTH FROM TIMESTAMP '2001-02-16 20:38:40');
+<lineannotation>Result: </lineannotation><computeroutput>2</computeroutput>
+
+SELECT EXTRACT(MONTH FROM INTERVAL '2 years 3 months');
+<lineannotation>Result: </lineannotation><computeroutput>3</computeroutput>
+
+SELECT EXTRACT(MONTH FROM INTERVAL '2 years 13 months');
+<lineannotation>Result: </lineannotation><computeroutput>1</computeroutput>
+</screen>
+       </informalexample>
+      </listitem>
+     </varlistentry>
+
+     <varlistentry>
+      <term>quarter</term>
+      <listitem>
+       <para>
+        The quarter of the year (1 - 4) that the day is in (for
+        <type>timestamp</type> values only)
+       </para>
+
+       <informalexample>
+<screen>
+SELECT EXTRACT(QUARTER FROM TIMESTAMP '2001-02-16 20:38:40');
+<lineannotation>Result: </lineannotation><computeroutput>1</computeroutput>
+</screen>
+       </informalexample>
+      </listitem>
+     </varlistentry>
+
+     <varlistentry>
+      <term>second</term>
+      <listitem>
+       <para>
+        The seconds field, including fractional parts (0 -
+        59<footnote><simpara>60 if leap seconds are
+        implemented by the operating system</simpara></footnote>)
+       </para>
+
+       <informalexample>
+<screen>
+SELECT EXTRACT(SECOND FROM TIMESTAMP '2001-02-16 20:38:40');
+<lineannotation>Result: </lineannotation><computeroutput>40</computeroutput>
+
+SELECT EXTRACT(SECOND FROM TIME '17:12:28.5');
+<lineannotation>Result: </lineannotation><computeroutput>28.5</computeroutput>
+</screen>
+       </informalexample>
+      </listitem>
+     </varlistentry>
+
+     <varlistentry>
+      <term>week</term>
+      <listitem>
+       <para>
+        From a <type>timestamp</type> value, calculate the number of
+        the week of the year that the day is in.  By definition
+        (<acronym>ISO</acronym> 8601), the first week of a year
+        contains January 4 of that year.  (The <acronym>ISO</acronym>
+        week starts on Monday.)  In other words, the first Thursday of
+        a year is in week 1 of that year.
+       </para>
+
+       <informalexample>
+<screen>
+SELECT EXTRACT(WEEK FROM TIMESTAMP '2001-02-16 20:38:40');
+<lineannotation>Result: </lineannotation><computeroutput>7</computeroutput>
+</screen>
+       </informalexample>
+      </listitem>
+     </varlistentry>
+
+     <varlistentry>
+      <term>year</term>
+      <listitem>
+       <para>
+        The year field
+       </para>
+
+       <informalexample>
+<screen>
+SELECT EXTRACT(YEAR FROM TIMESTAMP '2001-02-16 20:38:40');
+<lineannotation>Result: </lineannotation><computeroutput>2001</computeroutput>
+</screen>
+       </informalexample>
+      </listitem>
+     </varlistentry>
+
+<!--
+tz
+tz_hour
+tz_minute
+-->
+
+    </variablelist>
+
    </para>
 
    <para>
-    For the
-    <function>date_part</function> and <function>date_trunc</function>
-    functions, arguments can be
-    `<literal>year</literal>', `<literal>month</literal>',
-    `<literal>day</literal>', `<literal>hour</literal>',
-    `<literal>minute</literal>', and `<literal>second</literal>',
-    as well as the more specialized quantities
-    `<literal>decade</literal>', `<literal>century</literal>',
-    `<literal>millennium</literal>', `<literal>millisecond</literal>',
-    and `<literal>microsecond</literal>'. 
-    <function>date_part</function> allows `<literal>dow</literal>'
-    to return day of week, '<literal>week</literal>' to return the
-    ISO-defined week of year, and `<literal>epoch</literal>' to return
-    seconds since 1970 (for <type>timestamp</type>)
-    or '<literal>epoch</literal>' to return total elapsed seconds
-    (for <type>interval</type>).
+    The <function>extract</function> function is primarily intended
+    for computational processing.  For formatting date/time values for
+    display, see <xref linkend="functions-formatting">.
    </para>
-  </sect1>
+
+   <anchor id="functions-datetime-datepart">
+   <para>
+    The <function>date_part</function> function is the traditional
+    <productname>Postgres</productname> equivalent to the
+    <acronym>SQL</acronym>-function <function>extract</function>:
+<synopsis>
+date_part('<replaceable>field</replaceable>', <replaceable>source</replaceable>)
+</synopsis>
+    Note that here the <replaceable>field</replaceable> value needs to
+    be a string.  The valid field values for
+    <function>date_part</function> are the same as for
+    <function>extract</function>.
+   </para>
+
+   <informalexample>
+<screen>
+SELECT date_part('day', TIMESTAMP '2001-02-16 20:38:40');
+<lineannotation>Result: </lineannotation><computeroutput>16</computeroutput>
+
+SELECT date_part('hour', INTERVAL '4 hours 3 minutes')
+<lineannotation>Result: </lineannotation><computeroutput>4</computeroutput>
+</screen>
+   </informalexample>
+
+  </sect2>
+
+  <sect2 id="functions-datetime-trunc">
+   <title><function>date_trunc</function></title>
+
+   <para>
+    The function <function>date_trunc</function> is conceptually
+    similar to the <function>trunc</function> function for numbers.
+   </para>
+
+   <para>
+<synopsis>
+date_trunc('<replaceable>field</replaceable>', <replaceable>source</replaceable>)
+</synopsis>
+    <replaceable>source</replaceable> is a value expression of type
+    <type>timestamp</type> (values of type <type>date</type> and
+    <type>time</type> are cast automatically).
+    <replaceable>field</replaceable> selects to which precision to
+    truncate the time stamp value.  The return value is of type
+    <type>timestamp</type> with all fields that are less than the
+    selected one set to zero (or one, for day and month).
+   </para>
+
+   <para>
+    Valid values for <replaceable>field</replaceable> are:
+    <simplelist>
+     <member>microseconds</member>
+     <member>milliseconds</member>
+     <member>second</member>
+     <member>minute</member>
+     <member>hour</member>
+     <member>day</member>
+     <member>month</member>
+     <member>year</member>
+     <member>decade</member>
+     <member>century</member>
+     <member>millennium</member>
+    </simplelist>
+   </para>
+
+   <informalexample>
+    <para>
+<screen>
+SELECT date_trunc('hour', TIMESTAMP '2001-02-16 20:38:40');
+<lineannotation>Result: </lineannotation><computeroutput>2001-02-16 20:00:00+00</computeroutput>
+
+SELECT date_trunc('year', TIMESTAMP '2001-02-16 20:38:40');
+<lineannotation>Result: </lineannotation><computeroutput>2001-01-01 00:00:00+00</computeroutput>
+</screen>
+    </para>
+   </informalexample>
+  </sect2>
+
+  <sect2 id="functions-datetime-current">
+   <title>Current Date/Time</title>
+
+   <para>
+    The following functions are available to select the current date and/or time:
+<synopsis>
+CURRENT_TIME
+CURRENT_DATE
+CURRENT_TIMESTAMP
+</synopsis>
+    Note that because of the requirements of the
+    <acronym>SQL</acronym> standard, these functions must not be
+    called with trailing parentheses.
+   </para>
+
+   <informalexample>
+<screen>
+SELECT CURRENT_TIME;
+<computeroutput>19:07:13</computeroutput>
+
+SELECT CURRENT_DATE;
+<computeroutput>2001-02-17</computeroutput>
+
+SELECT CURRENT_TIMESTAMP;
+<computeroutput>2001-02-17 19:07:32+00</computeroutput>
+</screen>
+   </informalexample>
+
+   <para>
+    The function <function>now()</function> is the traditional
+    <productname>Postgres</productname> equivalent to
+    <function>CURRENT_TIMESTAMP</function>.
+    <productname>Postgres</productname> furthermore has special
+    date/time <quote>constants</quote> that can be used to specify the
+    current time.  The following three all return the same result:
+<programlisting>
+SELECT CURRENT_TIMESTAMP;
+SELECT now();
+SELECT TIMESTAMP 'now';
+</programlisting>
+    <note>
+     <para>
+      You do not want to use the third form when specifying a DEFAULT
+      value when creating a table.  The system will immediately
+      evaluate the constant, thus when the default value is needed,
+      the time of the table creation would be used!  The first two
+      forms will not be evaluated until the default value is used,
+      because they are function calls.
+     </para>
+    </note>
+   </para>
+  </sect2>
+ </sect1>
 
   
  <sect1 id="functions-geometry">
@@ -2335,13 +2858,13 @@
        </row>
        <row>
 	<entry>isclosed(path)</entry>
-	<entry>bool</entry>
+	<entry>boolean</entry>
 	<entry>a closed path?</entry>
 	<entry>isclosed(path '((0,0),(1,1),(2,0))')</entry>
        </row>
        <row>
 	<entry>isopen(path)</entry>
-	<entry>bool</entry>
+	<entry>boolean</entry>
 	<entry>an open path?</entry>
 	<entry>isopen(path '[(0,0),(1,1),(2,0)]')</entry>
        </row>
@@ -2704,7 +3227,7 @@ Not defined by this name. Implements the intersection operator '#'
   <title>Conditional Expressions</title>
 
   <para>
-   This section descibes the SQL-compliant conditional expressions
+   This section describes the <acronym>SQL</acronym>-compliant conditional expressions
    available in <productname>Postgres</productname>.
   </para>
 
@@ -2728,9 +3251,9 @@ END
   <para>
    The <acronym>SQL</acronym> <token>CASE</token> expression is a
    generic conditional expression, similar to if/else statements in
-   other languages.  <token>CASE</token> clauses can be used whereever
+   other languages.  <token>CASE</token> clauses can be used wherever
    an expression is valid.  <replaceable>condition</replaceable> is an
-   expression that returns a boolean result.  If the result is true
+   expression that returns a <type>boolean</type> result.  If the result is true
    then the value of the <token>CASE</token> expression is
    <replaceable>result</replaceable>.  If the result is false any
    subsequent <token>WHEN</token> clauses are searched in the same
