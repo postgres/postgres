@@ -6,7 +6,8 @@ A dump/restore is NOT required for those running 6.4.*.
 Changes
 -------
 Repackaged release to fix packaging problem of 6.4.1.
-Fix for date/time constants
+Fix for datetime constant problem on some platforms(Thomas)
+
 
 
 PostgreSQL 6.4.1             Fri Dec 18 00:29:11 EST 1998
