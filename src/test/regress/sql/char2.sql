@@ -42,5 +42,4 @@ SELECT '' AS one, c.f1 FROM CHAR2_TBL c WHERE c.f1 ~ '34';
 
 SELECT '' AS one, c.f1 FROM CHAR2_TBL c WHERE c.f1 ~ '3.*';
 
-
-
+DROP TABLE CHAR2_TBL;

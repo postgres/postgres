@@ -115,3 +115,4 @@ SELECT '(2.0,2.0,0.0,0.0,4.0,0.0)'::polygon ~= '(3.0,3.0,1.0,1.0,3.0,0.0)'::poly
 -- overlap 
 SELECT '(2.0,2.0,0.0,0.0,4.0,0.0)'::polygon && '(3.0,3.0,1.0,1.0,3.0,0.0)'::polygon AS true;
 
+DROP TABLE  POLYGON_TBL;

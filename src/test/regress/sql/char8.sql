@@ -42,5 +42,4 @@ SELECT '' AS four, c.f1 FROM CHAR8_TBL c WHERE c.f1 ~ '[0-9]';
 
 SELECT '' AS three, c.f1 FROM CHAR8_TBL c WHERE c.f1 ~ '.*34.*';
 
-
-
+DROP TABLE  CHAR8_TBL;

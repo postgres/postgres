@@ -40,4 +40,4 @@ SELECT '' AS zero, c.f1 FROM CHAR4_TBL c WHERE c.f1 !~ '.*';
 
 SELECT '' AS three, c.f1 FROM CHAR4_TBL c WHERE c.f1 ~ '.*34.*';
 
-
+DROP TABLE  CHAR4_TBL;

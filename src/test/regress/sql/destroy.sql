@@ -1,7 +1,7 @@
 --
 -- destroy.source
 --
--- $Header: /cvsroot/pgsql/src/test/regress/sql/Attic/destroy.sql,v 1.1 1997/04/27 03:56:20 scrappy Exp $
+-- $Header: /cvsroot/pgsql/src/test/regress/sql/Attic/destroy.sql,v 1.2 1997/04/27 04:35:31 scrappy Exp $
 --
 
 --
@@ -230,48 +230,11 @@ DROP TABLE  bt_txt_heap;
 DROP TABLE  bt_f8_heap;
 
 
-DROP TABLE  BOOLTBL1;
-
-DROP TABLE  BOOLTBL2;
-
 DROP TABLE  ABSTIME_TBL;
 
 DROP TABLE  RELTIME_TBL;
 
 DROP TABLE  TINTERVAL_TBL;
-
-DROP TABLE  BOX_TBL;
-
-DROP TABLE  CHAR_TBL;
-
-DROP TABLE  CHAR2_TBL;
-
-DROP TABLE  CHAR4_TBL;
-
-DROP TABLE  CHAR8_TBL;
-
-DROP TABLE  CHAR16_TBL;
-
-DROP TABLE  FLOAT4_TBL;
-
-DROP TABLE  FLOAT8_TBL;
-
-DROP TABLE  INT2_TBL;
-
-DROP TABLE  INT4_TBL;
-
-DROP TABLE  OID_TBL;
-
-DROP TABLE  OIDNAME_TBL;
-
-DROP TABLE  OIDINT2_TBL;
-
-DROP TABLE  OIDINT4_TBL;
-
-DROP TABLE  POINT_TBL;
-
-DROP TABLE  POLYGON_TBL;
-
 
 --
 -- VIRTUAL CLASS REMOVAL

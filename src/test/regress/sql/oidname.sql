@@ -36,4 +36,4 @@ SELECT '' AS three, o.* FROM OIDNAME_TBL o WHERE o.f1 >= '1234,abcd';
 
 SELECT '' AS two, o.* FROM OIDNAME_TBL o WHERE o.f1 > '1234,abcd';
 
-
+DROP TABLE  OIDNAME_TBL;

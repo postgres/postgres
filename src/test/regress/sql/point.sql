@@ -69,3 +69,4 @@ SELECT '' AS three, p1.f1, p2.f1
 	p1.f1 !< p2.f1 and
 	p1.f1 !^ p2.f1;
 
+DROP TABLE  POINT_TBL;
