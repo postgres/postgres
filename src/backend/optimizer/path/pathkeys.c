@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/optimizer/path/pathkeys.c,v 1.7 1999/02/22 05:26:20 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/optimizer/path/pathkeys.c,v 1.8 1999/04/30 03:59:06 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -240,10 +240,8 @@ get_cheapest_path_for_joinkeys(List *joinkeys,
 			pathorder_match(ordering, path->pathorder, &better_sort) &&
 			better_sort == 0)
 		{
-			if (matched_path)
-				if (path->path_cost < matched_path->path_cost)
-					matched_path = path;
-			else
+			if (matched_path == NULL ||
+				path->path_cost < matched_path->path_cost)
 				matched_path = path;
 		}
 	}
