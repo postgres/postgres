@@ -1,6 +1,6 @@
 .\" This is -*-nroff-*-
 .\" XXX standard disclaimer belongs here....
-.\" $Header: /cvsroot/pgsql/src/man/Attic/destroyuser.1,v 1.8 1998/06/24 13:21:25 momjian Exp $
+.\" $Header: /cvsroot/pgsql/src/man/Attic/destroyuser.1,v 1.9 1998/07/24 16:10:19 momjian Exp $
 .TH DESTROYUSER UNIX 11/05/95 PostgreSQL PostgreSQL
 .SH NAME
 destroyuser - destroy a Postgres user and associated databases
@@ -115,3 +115,7 @@ An internal error occurred in
 or the backend server.  Contact your Postgres site administrator to
 ensure that the files and database entries associated with the user
 and his/her associated databases are completely removed.
+.SH NOTE
+The command internally runs \fIpsql\fP connected to the \fItemplate1\fP
+database to perform the operation.
+

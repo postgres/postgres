@@ -1,6 +1,6 @@
 .\" This is -*-nroff-*-
 .\" XXX standard disclaimer belongs here....
-.\" $Header: /cvsroot/pgsql/src/man/Attic/createuser.1,v 1.8 1998/06/24 13:21:25 momjian Exp $
+.\" $Header: /cvsroot/pgsql/src/man/Attic/createuser.1,v 1.9 1998/07/24 16:10:18 momjian Exp $
 .TH CREATEUSER UNIX 11/05/95 PostgreSQL PostgreSQL
 .SH NAME
 createuser - create a Postgres user
@@ -115,6 +115,9 @@ An internal error occurred in
 or the backend server.  Ensure that your Postgres site administrator has
 properly installed Postgres and initialized the site with 
 .IR initdb .
+.SH NOTE
+The command internally runs \fIpsql\fP connected to the \fItemplate1\fP
+database to perform the operation.
 .SH BUGS
 Postgres user-ids and user names should not have anything to do with the
 constraints of Unix.
