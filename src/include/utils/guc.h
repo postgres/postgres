@@ -7,7 +7,7 @@
  * Copyright (c) 2000-2003, PostgreSQL Global Development Group
  * Written by Peter Eisentraut <peter_e@gmx.net>.
  *
- * $PostgreSQL: pgsql/src/include/utils/guc.h,v 1.42 2003/11/29 22:41:15 pgsql Exp $
+ * $PostgreSQL: pgsql/src/include/utils/guc.h,v 1.43 2003/12/01 22:08:02 momjian Exp $
  *--------------------------------------------------------------------
  */
 #ifndef GUC_H
@@ -108,6 +108,8 @@ extern bool log_btree_build_stats;
 
 extern bool SQL_inheritance;
 extern bool Australian_timezones;
+
+extern bool default_with_oids;
 
 extern int	log_min_error_statement;
 extern int	log_min_messages;

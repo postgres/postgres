@@ -1,5 +1,5 @@
 <!--
-$PostgreSQL: pgsql/doc/src/sgml/ref/prepare.sgml,v 1.8 2003/11/29 19:51:39 pgsql Exp $
+$PostgreSQL: pgsql/doc/src/sgml/ref/prepare.sgml,v 1.9 2003/12/01 22:07:58 momjian Exp $
 PostgreSQL documentation
 -->
 
@@ -52,13 +52,12 @@ PREPARE <replaceable class="PARAMETER">plan_name</replaceable> [ (<replaceable c
   </para>
 
   <para>
-   Prepared statements are only stored in and for the duration of
-   the current database session. When
-   the session ends, the prepared statement is forgotten, and so it must be
-   recreated before being used again. This also means that a single
-   prepared statement cannot be used by multiple simultaneous database
-   clients; however, each client can create their own prepared statement
-   to use.
+   Prepared statements are only for the duration of the current
+   database session. When the session ends, the prepared statement is
+   forgotten, so it must be recreated before being used again. This
+   also means that a single prepared statement cannot be used by
+   multiple simultaneous database clients; however, each client can
+   create their own prepared statement to use.
   </para>
 
   <para>

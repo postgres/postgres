@@ -12,7 +12,7 @@
  *	by PostgreSQL
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/bin/pg_dump/pg_dump.c,v 1.358 2003/11/29 19:52:05 pgsql Exp $
+ *	  $PostgreSQL: pgsql/src/bin/pg_dump/pg_dump.c,v 1.359 2003/12/01 22:08:01 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -5627,8 +5627,7 @@ dumpOneTable(Archive *fout, TableInfo *tbinfo, TableInfo *g_tblinfo)
 			appendPQExpBuffer(q, ")");
 		}
 
-		if (!tbinfo->hasoids)
-			appendPQExpBuffer(q, " WITHOUT OIDS");
+		appendPQExpBuffer(q, tbinfo->hasoids ? " WITH OIDS" : " WITHOUT OIDS");
 
 		appendPQExpBuffer(q, ";\n");
 

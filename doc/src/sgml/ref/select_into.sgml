@@ -1,5 +1,5 @@
 <!--
-$PostgreSQL: pgsql/doc/src/sgml/ref/select_into.sgml,v 1.25 2003/11/29 19:51:39 pgsql Exp $
+$PostgreSQL: pgsql/doc/src/sgml/ref/select_into.sgml,v 1.26 2003/12/01 22:07:58 momjian Exp $
 PostgreSQL documentation
 -->
 
@@ -82,13 +82,29 @@ SELECT [ ALL | DISTINCT [ ON ( <replaceable class="PARAMETER">expression</replac
   <title>Notes</title>
 
   <para>
-   <xref linkend="sql-createtableas" endterm="sql-createtableas-title">
-   is functionally equivalent to <command>SELECT INTO</command>.
-   <command>CREATE TABLE AS</command> is the recommended syntax, since
-   this form of <command>SELECT INTO</command> is not available in
-   <application>ECPG</application> or
-   <application>PL/pgSQL</application>, because they interpret the
-   <literal>INTO</literal> clause differently.
+   <xref linkend="sql-createtableas"
+   endterm="sql-createtableas-title"> is functionally similar to
+   <command>SELECT INTO</command>.  <command>CREATE TABLE AS</command>
+   is the recommended syntax, since this form of <command>SELECT
+   INTO</command> is not available in <application>ECPG</application>
+   or <application>PL/pgSQL</application>, because they interpret the
+   <literal>INTO</literal> clause differently. Furthermore,
+   <command>CREATE TABLE AS</command> offers a superset of the
+   functionality provided by <command>SELECT INTO</command>.
+  </para>
+
+  <para>
+   Prior to PostgreSQL 7.5, the table created by <command>SELECT
+   INTO</command> always included OIDs. Furthermore, these OIDs were
+   newly generated: they were distinct from the OIDs of any of the
+   rows in the source tables of the <command>SELECT INTO</command>
+   statement. Therefore, if <command>SELECT INTO</command> was
+   frequently executed, the OID counter would be rapidly
+   incremented. As of PostgreSQL 7.5, the inclusion of OIDs in the
+   table created by <command>SELECT INTO</command> is controlled by
+   the <varname>default_with_oids</varname> configuration
+   variable. This variable currently defaults to true, but will likely
+   default to false in a future release of <productname>PostgreSQL</>.
   </para>
  </refsect1>
 
@@ -96,7 +112,7 @@ SELECT [ ALL | DISTINCT [ ON ( <replaceable class="PARAMETER">expression</replac
   <title>Compatibility</title>
 
   <para>
-   The SQL standard uses <command>SELECT ... INTO</command> to
+   The SQL standard uses <command>SELECT INTO</command> to
    represent selecting values into scalar variables of a host program,
    rather than creating a new table.  This indeed is the usage found
    in <application>ECPG</application> (see <xref linkend="ecpg">) and

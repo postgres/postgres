@@ -26,7 +26,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/executor/execMain.c,v 1.222 2003/11/29 19:51:48 pgsql Exp $
+ *	  $PostgreSQL: pgsql/src/backend/executor/execMain.c,v 1.223 2003/12/01 22:07:58 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -43,6 +43,7 @@
 #include "optimizer/var.h"
 #include "parser/parsetree.h"
 #include "utils/acl.h"
+#include "utils/guc.h"
 #include "utils/lsyscache.h"
 
 
@@ -593,11 +594,12 @@ InitPlan(QueryDesc *queryDesc, bool explainOnly)
 		do_select_into = true;
 
 		/*
-		 * For now, always create OIDs in SELECT INTO; this is for
-		 * backwards compatibility with pre-7.3 behavior.  Eventually we
-		 * might want to allow the user to choose.
+		 * The presence of OIDs in the result set of SELECT INTO is
+		 * controlled by the default_with_oids GUC parameter. The
+		 * behavior in versions of PostgreSQL prior to 7.5 is to
+		 * always include OIDs.
 		 */
-		estate->es_force_oids = true;
+		estate->es_force_oids = default_with_oids;
 	}
 
 	/*

@@ -1,5 +1,5 @@
 <!--
-$PostgreSQL: pgsql/doc/src/sgml/ref/alter_table.sgml,v 1.63 2003/11/29 19:51:38 pgsql Exp $
+$PostgreSQL: pgsql/doc/src/sgml/ref/alter_table.sgml,v 1.64 2003/12/01 22:07:58 momjian Exp $
 PostgreSQL documentation
 -->
 
@@ -148,6 +148,12 @@ ALTER TABLE <replaceable class="PARAMETER">name</replaceable>
       updated.  Without updating the row, both the space and the value
       of the OID are kept indefinitely.  This is semantically similar
       to the <literal>DROP COLUMN</literal> process.
+     </para>
+
+     <para>
+      Note that there is no variant of <command>ALTER TABLE</command>
+      that allows OIDs to be restored to a table once they have been
+      removed.
      </para>
     </listitem>
    </varlistentry>

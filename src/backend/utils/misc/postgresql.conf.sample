@@ -100,7 +100,7 @@
 # QUERY TUNING
 #---------------------------------------------------------------------------
 
-# - Planner Method Enabling -
+# - Planner Method Configuration -
 
 #enable_hashagg = true
 #enable_hashjoin = true
@@ -255,6 +255,7 @@
 #add_missing_from = true
 #regex_flavor = advanced	# advanced, extended, or basic
 #sql_inheritance = true
+#default_with_oids = true
 
 # - Other Platforms & Clients -
 

@@ -1,5 +1,5 @@
 <!--
-$PostgreSQL: pgsql/doc/src/sgml/ref/pg_dump.sgml,v 1.67 2003/11/29 19:51:39 pgsql Exp $
+$PostgreSQL: pgsql/doc/src/sgml/ref/pg_dump.sgml,v 1.68 2003/12/01 22:07:58 momjian Exp $
 PostgreSQL documentation
 -->
 
@@ -611,8 +611,11 @@ CREATE DATABASE foo WITH TEMPLATE template0;
   </para>
 
   <para>
-   Once restored, it is wise to run <command>ANALYZE</> on each
-   restored table so the optimizer has useful statistics.
+   The dump file produced by <application>pg_dump</application> does
+   not contain the statistics used by the optimizer to make query
+   planning decisions.  Therefore, it is wise to run
+   <command>ANALYZE</command> after restoring from a dump file to
+   ensure good performance.
   </para>
 
  </refsect1>

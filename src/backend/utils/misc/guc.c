@@ -10,7 +10,7 @@
  * Written by Peter Eisentraut <peter_e@gmx.net>.
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/utils/misc/guc.c,v 1.173 2003/12/01 03:55:21 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/utils/misc/guc.c,v 1.174 2003/12/01 22:08:00 momjian Exp $
  *
  *--------------------------------------------------------------------
  */
@@ -125,6 +125,8 @@ bool		SQL_inheritance = true;
 bool		Australian_timezones = false;
 
 bool		Password_encryption = true;
+
+bool		default_with_oids = true;
 
 int			log_min_error_statement = PANIC;
 int			log_min_messages = NOTICE;
@@ -263,7 +265,7 @@ const char *const config_group_names[] =
 	/* QUERY_TUNING */
 	gettext_noop("Query Tuning"),
 	/* QUERY_TUNING_METHOD */
-	gettext_noop("Query Tuning / Planner Method Enabling"),
+	gettext_noop("Query Tuning / Planner Method Configuration"),
 	/* QUERY_TUNING_COST */
 	gettext_noop("Query Tuning / Planner Cost Constants"),
 	/* QUERY_TUNING_GEQO */
@@ -829,6 +831,14 @@ static struct config_bool ConfigureNamesBool[] =
 			NULL
 		},
 		&check_function_bodies,
+		true, NULL, NULL
+	},
+	{
+		{"default_with_oids", PGC_USERSET, COMPAT_OPTIONS_PREVIOUS,
+		 gettext_noop("By default, newly-created tables should have OIDs"),
+		 NULL
+		},
+		&default_with_oids,
 		true, NULL, NULL
 	},
 

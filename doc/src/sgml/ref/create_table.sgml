@@ -1,5 +1,5 @@
 <!--
-$PostgreSQL: pgsql/doc/src/sgml/ref/create_table.sgml,v 1.76 2003/11/29 19:51:38 pgsql Exp $
+$PostgreSQL: pgsql/doc/src/sgml/ref/create_table.sgml,v 1.77 2003/12/01 22:07:58 momjian Exp $
 PostgreSQL documentation
 -->
 
@@ -111,12 +111,12 @@ and <replaceable class="PARAMETER">table_constraint</replaceable> is:
      <para>
       If specified, the table is created as a temporary table.
       Temporary tables are automatically dropped at the end of a
-      session, or optionally at the end of the current transaction 
-      (see ON COMMIT below).  Existing permanent tables with the same 
-      name are not visible to the current session while the temporary 
-      table exists, unless they are referenced with schema-qualified 
-      names. Any indexes created on a temporary table are automatically
-      temporary as well.
+      session, or optionally at the end of the current transaction
+      (see <literal>ON COMMIT</literal> below).  Existing permanent
+      tables with the same name are not visible to the current session
+      while the temporary table exists, unless they are referenced
+      with schema-qualified names. Any indexes created on a temporary
+      table are automatically temporary as well.
      </para>
 
      <para>
@@ -243,22 +243,30 @@ and <replaceable class="PARAMETER">table_constraint</replaceable> is:
     <listitem>
      <para>
       This optional clause specifies whether rows of the new table
-      should have OIDs (object identifiers) assigned to them.  The
-      default is to have OIDs.  (If the new table inherits from any
-      tables that have OIDs, then <literal>WITH OIDS</> is forced even
-      if the command says <literal>WITHOUT OIDS</>.)
+      should have OIDs (object identifiers) assigned to them.  If
+      neither <literal>WITH OIDS</literal> nor <literal>WITHOUT
+      OIDS</literal> is specified, the default value depends upon the
+      <varname>default_with_oids</varname> configuration parameter. (If
+      the new table inherits from any tables that have OIDs, then
+      <literal>WITH OIDS</> is forced even if the command says
+      <literal>WITHOUT OIDS</>.)
      </para>
 
      <para>
-      Specifying <literal>WITHOUT OIDS</> allows the user to suppress
-      generation of OIDs for rows of a table.  This may be worthwhile
-      for large tables, since it will reduce OID consumption and
-      thereby postpone wraparound of the 32-bit OID counter.  Once the
-      counter wraps around, uniqueness of OIDs can no longer be
-      assumed, which considerably reduces their usefulness. Specifying
-      <literal>WITHOUT OIDS</literal> also reduces the space required
-      to store the table on disk by 4 bytes per row of the table,
-      thereby improving performance.
+      If <literal>WITHOUT OIDS</literal> is specified or implied, this
+      means that the generation of OIDs for this table will be
+      supressed. This is generally considered worthwhile, since it
+      will reduce OID consumption and thereby postpone the wraparound
+      of the 32-bit OID counter. Once the counter wraps around, OIDs
+      can no longer be assumed to be unique, which makes them
+      considerably less useful. In addition, excluding OIDs from a
+      table reduces the space required on disk to storage the table by
+      4 bytes per row, leading to increased performance.
+     </para>
+
+     <para>
+      To remove OIDs from a table after it has been created, use <xref
+      linkend="sql-altertable" endterm="sql-altertable-title">.
      </para>
     </listitem>
    </varlistentry>
@@ -572,18 +580,17 @@ and <replaceable class="PARAMETER">table_constraint</replaceable> is:
   <itemizedlist>
    <listitem>
     <para>
-     Whenever an application makes use of OIDs to identify specific
+     Using OIDs in new applications is not recommended: where
+     possible, using a <literal>SERIAL</literal> or other sequence
+     generator as the table's primary key is preferred. However, if
+     your application does make use of OIDs to identify specific rows
      rows of a table, it is recommended to create a unique constraint
      on the <structfield>oid</> column of that table, to ensure that
      OIDs in the table will indeed uniquely identify rows even after
      counter wraparound.  Avoid assuming that OIDs are unique across
      tables; if you need a database-wide unique identifier, use the
      combination of <structfield>tableoid</> and row OID for the
-     purpose.  (It is likely that future <productname>PostgreSQL</>
-     releases will use a separate OID counter for each table, so that
-     it will be <emphasis>necessary</>, not optional, to include
-     <structfield>tableoid</> to have a unique identifier
-     database-wide.)
+     purpose.
     </para>
 
     <tip>
