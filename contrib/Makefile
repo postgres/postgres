@@ -1,4 +1,4 @@
-# $Header: /cvsroot/pgsql/contrib/Makefile,v 1.22 2001/06/18 17:20:56 momjian Exp $
+# $Header: /cvsroot/pgsql/contrib/Makefile,v 1.23 2001/07/06 23:07:19 petere Exp $
 
 subdir = contrib
 top_builddir = ..
@@ -37,6 +37,11 @@ WANTED_DIRS = \
 		unixdate	\
 		userlock	\
 		vacuumlo	
+
+ifeq ($(with_java),yes)
+WANTED_DIRS += retep
+endif
+
 
 all install installdirs uninstall clean distclean maintainer-clean:
 	for dir in $(WANTED_DIRS); do \

@@ -1,31 +1,25 @@
+<?xml version="1.0"?>
 <!--
 
   build file to allow ant (http://jakarta.apache.org/ant/) to be used
-  to build the PostgreSQL JDBC Driver.
+  to build the PostgreSQL JDBC Driver
 
-  $Id: build.xml,v 1.16 2001/07/04 15:07:54 momjian Exp $
+  $Header: /cvsroot/pgsql/src/interfaces/jdbc/Attic/build.xml,v 1.17 2001/07/06 23:07:20 petere Exp $
 
 -->
 
-<project name="postgresqlJDBC" default="jar" basedir=".">
+<!DOCTYPE project [
+  <!ENTITY jarfiles "postgresql.jar,postgresql-examples.jar">
+]>
+
+<project name="postgresqlJDBC" default="all" basedir=".">
 
   <!-- set global properties for this build -->
-  <property name="src"     value="." />
-  <property name="jars"    value="jars" />
-  <property name="dest"    value="build" />
+  <property name="srcdir"  value="." />
+  <property name="jardir"  value="jars" />
+  <property name="builddir" value="build" />
   <property name="package" value="org/postgresql" />
 
-  <!--
-    defaults for the tests - overide these if required
-    junit.ui is one of textui, awtui or swingui
-
-    password must be something. Doesnt matter if trust is used!
-  -->
-  <property name="database" value="jdbc:postgresql:test" />
-  <property name="username" value="test" />
-  <property name="password" value="password" />
-  <property name="tablename" value="jdbctest" />
-  <property name="junit.ui" value="textui" />
 
   <!--
     This is a simpler method than utils.CheckVersion
@@ -41,12 +35,62 @@
     <available property="junit" classname="junit.framework.Test" />
   </target>
 
+
+  <!-- default target -->
+  <target name="all">
+    <antcall target="jar" />
+  </target>
+
+
+  <!-- create the jar file -->
+  <target name="jar" depends="compile,examples">
+    <jar jarfile="${jardir}/postgresql.jar" whenempty="fail">
+      <fileset dir="${builddir}">
+        <include name="${package}/**/*.class" />
+        <exclude name="${package}/test/**" />
+      </fileset>
+
+      <fileset dir="${srcdir}">
+        <include name="${package}/*.properties" />
+      </fileset>
+    </jar>
+
+    <jar jarfile="${jardir}/postgresql-examples.jar" whenempty="fail">
+      <fileset dir="${builddir}">
+        <include name="example/**/*.class" />
+      </fileset>
+
+      <fileset dir="${srcdir}">
+        <include name="example/*.properties" />
+      </fileset>
+    </jar>
+  </target>
+
+
+  <!-- This is the core of the driver.  It is common for all three versions. -->
+  <target name="compile" depends="prepare,check_versions,driver">
+    <javac srcdir="${srcdir}" destdir="${builddir}">
+      <include name="${package}/**" />
+
+      <exclude name="${package}/jdbc1/**" if="jdk1.2+" />
+      <exclude name="${package}/jdbc2/**" unless="jdk1.2+" />
+
+      <exclude name="${package}/largeobject/PGblob.java" unless="jdk1.2+" />
+      <exclude name="${package}/largeobject/PGclob.java" unless="jdk1.2+" />
+
+      <exclude name="${package}/PostgresqlDataSource.java" unless="jdk1.2e+" />
+      <exclude name="${package}/xa/**" unless="jdk1.2e+" />
+
+      <exclude name="${package}/test/**" unless="junit" />
+    </javac>
+  </target>
+
+
   <!--
     This generates Driver.java from Driver.java.in
     It's required for importing the driver version properties
   -->
   <target name="driver" depends="prepare,check_versions">
-
     <!-- determine the edition text -->
     <property name="edition" value="JDBC1" />
     <available property="edition" value="JDBC2" classname="java.lang.ThreadLocal" />
@@ -71,115 +115,94 @@
           tofile="${package}/Driver.java"
           filtering="yes" />
 
-    <echo message="Configured build for the ${edition} edition driver." />
-
+    <echo message="Configured build for the ${edition} edition driver" />
   </target>
 
-  <!-- This target removes any class files from the build directory -->
-  <target name="clean">
-    <!-- 
-	This should be just 'delete', but ant 1.3 fails.  
-	This code doesn't delete the directories.  bjm 2001-05-25 
-    -->
-    <delete>
-	<fileset dir="${dest}" />
-    	<fileset dir="${jars}" />
-    </delete>
-    <delete file="${package}/Driver.java" />
-  </target>
 
   <!-- Prepares the build directory -->
   <target name="prepare">
-    <mkdir dir="${dest}" />
-    <mkdir dir="${jars}" />
+    <mkdir dir="${builddir}" />
+    <mkdir dir="${jardir}" />
   </target>
 
-  <!-- This is the core of the driver. It is common for all three versions -->
-  <target name="compile" depends="prepare,check_versions,driver">
-    <javac srcdir="${src}" destdir="${dest}">
-      <include name="${package}/**" />
-      <exclude name="${package}/jdbc1/**" if="jdk1.2+" />
-      <exclude name="${package}/jdbc2/**" unless="jdk1.2+" />
-      <exclude name="${package}/largeobject/PGblob.java" unless="jdk1.2+" />
-      <exclude name="${package}/largeobject/PGclob.java" unless="jdk1.2+" />
-      <exclude name="${package}/PostgresqlDataSource.java" unless="jdk1.2e+" />
-      <exclude name="${package}/xa/**" unless="jdk1.2e+" />
-      <exclude name="${package}/test/**" unless="junit" />
-    </javac>
-    <copy todir="${dest}" overwrite="true" filtering="on">
-      <fileset dir="${src}">
-        <include name="${package}/**/*.properties" />
-        <exclude name="${dest}/**" />
-      </fileset>
-    </copy>
-  </target>
 
   <!-- This builds the examples -->
   <target name="examples" depends="compile">
-    <javac srcdir="${src}" destdir="${dest}">
+    <javac srcdir="${srcdir}" destdir="${builddir}">
       <include name="example/**" />
       <exclude name="example/corba/**"/>
       <exclude name="example/blobtest.java" unless="jdk1.2+"/>
     </javac>
   </target>
 
+
   <!-- Builds the corba example -->
   <target name="corba" if="jdk1.2+">
-    <exec dir="${src}/example/corba" executable="idl2java">
+    <exec dir="${srcdir}/example/corba" executable="idl2java">
       <arg value="stock.idl" />
     </exec>
-    <javac srcdir="${src}" destdir="${dest}">
+
+    <javac srcdir="${srcdir}" destdir="${builddir}">
       <include name="example/corba/**" />
     </javac>
   </target>
 
-  <!-- This builds the jar file containing the driver -->
-  <target name="jar" depends="compile,examples">
-    <jar jarfile="${jars}/postgresql.jar" basedir="${dest}" includes="${package}/**/*.class,${package}/*.properties" excludes="${package}/test/**"/>
-    <jar jarfile="${jars}/postgresql-examples.jar" basedir="${dest}" includes="example/**/*.class,example/*.properties" />
-  </target>
 
-  <!--
-    This installs the jar file. It's called by the build.xml file in the
-    root directory of the source (where configure is). Refer to that file
-    on how to use it.
-  -->
-  <target name="install" depends="jar" if="install.directory">
-    <copy todir="${install.directory}" overwrite="true" filtering="off">
-      <fileset dir="${jars}">
-        <include name="**/*.jar" />
-      </fileset>
+
+  <!-- Install the jar files -->
+  <target name="install" depends="all" if="install.directory">
+    <copy todir="${install.directory}" overwrite="true">
+      <fileset dir="${jardir}" includes="&jarfiles;" />
     </copy>
   </target>
 
-  <!--
-    Uninstall the jar file.
-  -->
+
+  <!-- Uninstall the jar file -->
   <target name="uninstall" if="install.directory">
     <delete>
-      <fileset dir="${install.directory}">
-        <include name="**/*.jar" />
-      </fileset>
+      <fileset dir="${install.directory}" includes="&jarfiles;" />
     </delete>
   </target>
 
-  <!--
-    This compiles and executes the JUnit tests
-  -->
+
+
+  <!-- This target removes any class files from the build directory -->
+  <target name="clean">
+    <delete quiet="true" dir="${builddir}" />
+    <delete quiet="true" dir="${jardir}" />
+    <delete quiet="true" file="${package}/Driver.java" />
+  </target>
+
+
+
+  <!-- This compiles and executes the JUnit tests -->
+
+  <!-- defaults for the tests - override these if required -->
+  <property name="database" value="jdbc:postgresql:test" />
+  <property name="username" value="test" />
+  <!-- Password must be something.  Doesn't matter if trust is used! -->
+  <property name="password" value="password" />
+  <property name="tablename" value="jdbctest" />
+  <!-- junit.ui is one of textui, awtui, or swingui -->
+  <property name="junit.ui" value="textui" />
+
+
   <target name="test" depends="jar" if="junit">
-    <javac srcdir="${src}" destdir="${dest}">
+    <javac srcdir="${srcdir}" destdir="${builddir}">
       <include name="${package}/test/jdbc2/**" if="jdk1.2+" />
       <include name="${package}/test/java2ee/**" if="jdk1.2e+" />
     </javac>
+
     <java fork="yes" classname="junit.${junit.ui}.TestRunner" taskname="junit" failonerror="true">
       <arg value="org.postgresql.test.JDBC2Tests" />
       <sysproperty key="database" value="${database}" />
       <sysproperty key="username" value="${username}" />
       <sysproperty key="password" value="${password}" />
       <classpath>
-        <pathelement location="${dest}" />
+        <pathelement location="${builddir}" />
         <pathelement path="${java.class.path}" />
       </classpath>
     </java>
   </target>
+
 </project>
