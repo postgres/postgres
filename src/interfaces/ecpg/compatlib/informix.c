@@ -60,8 +60,7 @@ deccall3(decimal * arg1, decimal * arg2, decimal * result, int (*ptr) (numeric *
 			   *nres;
 	int			i;
 
-	/* set it to null in case it errors out later */
-		rsetnull(CDECIMALTYPE, (char *) result);
+	/* we must NOT set the result to NULL here because it may be the same variable as one of the arguments */
 	if (risnull(CDECIMALTYPE, (char *) arg1) || risnull(CDECIMALTYPE, (char *) arg2))
 		return 0;
 
@@ -100,8 +99,13 @@ deccall3(decimal * arg1, decimal * arg2, decimal * result, int (*ptr) (numeric *
 	i = (*ptr) (a1, a2, nres);
 
 	if (i == 0)					/* No error */
+	{
+		
+		/* set the result to null in case it errors out later */
+		rsetnull(CDECIMALTYPE, (char *) result);
 		PGTYPESnumeric_to_decimal(nres, result);
-
+	}
+	
 	PGTYPESnumeric_free(nres);
 	PGTYPESnumeric_free(a1);
 	PGTYPESnumeric_free(a2);
@@ -268,7 +272,6 @@ decdiv(decimal * n1, decimal * n2, decimal * result)
 	
 	int			i;
 
-	rsetnull(CDECIMALTYPE, (char *) result);
 	i = deccall3(n1, n2, result, PGTYPESnumeric_div);
 
 	if (i != 0)
@@ -293,7 +296,6 @@ decmul(decimal * n1, decimal * n2, decimal * result)
 {
 	int			i;
 	
-	rsetnull(CDECIMALTYPE, (char *) result);	
 	i = deccall3(n1, n2, result, PGTYPESnumeric_mul);
 
 	if (i != 0)
@@ -315,7 +317,6 @@ decsub(decimal * n1, decimal * n2, decimal * result)
 {
 	int			i;
 	
-	rsetnull(CDECIMALTYPE, (char *) result);
 	i = deccall3(n1, n2, result, PGTYPESnumeric_sub);
 
 	if (i != 0)
