@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/bin/psql/Attic/psql.c,v 1.124 1998/01/05 13:56:05 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/bin/psql/Attic/psql.c,v 1.125 1998/01/09 19:34:38 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -472,8 +472,23 @@ rightsList(PsqlSettings *pset)
 	char		listbuf[256];
 	int			nColumns;
 	int			i;
-
+	int			usePipe = 0;
+	char	   *pagerenv;
+	FILE	   *fout;
 	PGresult   *res;
+
+#ifdef TIOCGWINSZ
+	if (pset->notty == 0 &&
+		(ioctl(fileno(stdout), TIOCGWINSZ, &screen_size) == -1 ||
+		 screen_size.ws_col == 0 ||
+		 screen_size.ws_row == 0))
+	{
+#endif
+		screen_size.ws_row = 24;
+		screen_size.ws_col = 80;
+#ifdef TIOCGWINSZ
+	}
+#endif
 
 	listbuf[0] = '\0';
 	strcat(listbuf, "SELECT relname, relacl ");
@@ -485,26 +500,43 @@ rightsList(PsqlSettings *pset)
 	strcat(listbuf, "  ORDER BY relname ");
 	if (!(res = PSQLexec(pset, listbuf)))
 		return -1;
-
+	/* first, print out the attribute names */
 	nColumns = PQntuples(res);
 	if (nColumns > 0)
 	{
+		if (pset->notty == 0 &&
+			(pagerenv = getenv("PAGER")) &&
+			pagerenv[0] != '\0' &&
+			screen_size.ws_row <= nColumns + 7 &&
+			(fout = popen(pagerenv, "w")))
+		{
+			usePipe = 1;
+			pqsignal(SIGPIPE, SIG_IGN);
+		}
+		else
+			fout = stdout;
+
 		/* Display the information */
 
-		printf("\nDatabase    = %s\n", PQdb(pset->db));
-		printf(" +------------------+----------------------------------------------------+\n");
-		printf(" |  Relation        |             Grant/Revoke Permissions               |\n");
-		printf(" +------------------+----------------------------------------------------+\n");
+		fprintf(fout,"\nDatabase    = %s\n", PQdb(pset->db));
+		fprintf(fout," +------------------+----------------------------------------------------+\n");
+		fprintf(fout," |  Relation        |             Grant/Revoke Permissions               |\n");
+		fprintf(fout," +------------------+----------------------------------------------------+\n");
 
 		/* next, print out the instances */
 		for (i = 0; i < PQntuples(res); i++)
 		{
-			printf(" | %-16.16s", PQgetvalue(res, i, 0));
-			printf(" | %-50.50s | ", PQgetvalue(res, i, 1));
-			printf("\n");
+			fprintf(fout," | %-16.16s", PQgetvalue(res, i, 0));
+			fprintf(fout," | %-50.50s | ", PQgetvalue(res, i, 1));
+			fprintf(fout,"\n");
 		}
-		printf(" +------------------+----------------------------------------------------+\n");
+		fprintf(fout," +------------------+----------------------------------------------------+\n");
 		PQclear(res);
+		if (usePipe)
+		{
+			pclose(fout);
+			pqsignal(SIGPIPE, SIG_DFL);
+		}
 		return (0);
 	}
 	else
