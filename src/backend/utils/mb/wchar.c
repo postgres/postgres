@@ -1,7 +1,7 @@
 /*
  * conversion functions between pg_wchar and multi-byte streams.
  * Tatsuo Ishii
- * $Id: wchar.c,v 1.23 2001/10/11 14:20:35 ishii Exp $
+ * $Id: wchar.c,v 1.24 2001/10/15 01:19:15 ishii Exp $
  *
  * WIN1250 client encoding updated by Pavel Behal
  *
@@ -537,11 +537,19 @@ pg_verifymbstr(const unsigned char *mbstr, int len)
 	int	slen = 0;
 
 	/* we do not check single byte encodings */
-	if (pg_encoding_max_length(GetDatabaseEncoding()) <= 1)
+	if (pg_database_encoding_max_length() <= 1)
 	    return NULL;
 
 	while (len > 0 && *mbstr)
 	{
+		/* special UTF-8 check */
+		if (GetDatabaseEncoding() == PG_UTF8 &&
+		    (*mbstr & 0xf8) == 0xf0)
+		{
+		    snprintf(buf, sizeof(buf), "Unicode >= 0x10000 is not supoorted");
+		    return(buf);
+		}
+		    
 		l = pg_mblen(mbstr);
 
 		/* multi-byte letter? */
