@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/executor/nodeMergejoin.c,v 1.13 1998/02/26 04:31:30 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/executor/nodeMergejoin.c,v 1.14 1998/02/27 16:11:28 vadim Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -77,6 +77,7 @@
  */
 #include "postgres.h"
 
+#include "access/heapam.h"
 #include "executor/executor.h"
 #include "executor/execdefs.h"
 #include "executor/nodeMergejoin.h"
@@ -86,45 +87,13 @@
 
 static bool MergeCompare(List *eqQual, List *compareQual, ExprContext *econtext);
 
-/* ----------------------------------------------------------------
- *		MarkInnerTuple and RestoreInnerTuple macros
- *
- *		when we "mark" a tuple, we place a pointer to it
- *		in the marked tuple slot.  now there are two pointers
- *		to this tuple and we don't want it to be freed until
- *		next time we mark a tuple, so we move the policy to
- *		the marked tuple slot and set the inner tuple slot policy
- *		to false.
- *
- *		But, when we restore the inner tuple, the marked tuple
- *		retains the policy.  Basically once a tuple is marked, it
- *		should only be freed when we mark another tuple.  -cim 9/27/90
- *
- *		Note:  now that we store buffers in the tuple table,
- *			   we have to also increment buffer reference counts
- *			   correctly whenever we propagate an additional pointer
- *			   to a buffer item.  Later, when ExecStoreTuple() is
- *			   called again on this slot, the refcnt is decremented
- *			   when the old tuple is replaced.
- * ----------------------------------------------------------------
- */
 #define MarkInnerTuple(innerTupleSlot, mergestate) \
 { \
-	bool		   shouldFree; \
-	shouldFree = ExecSetSlotPolicy(innerTupleSlot, false); \
-	ExecStoreTuple(innerTupleSlot->val, \
+	ExecStoreTuple(heap_copytuple(innerTupleSlot->val), \
 				   mergestate->mj_MarkedTupleSlot, \
-				   innerTupleSlot->ttc_buffer, \
-				   shouldFree); \
-	ExecIncrSlotBufferRefcnt(innerTupleSlot); \
+				   InvalidBuffer, \
+				   true); \
 }
-
-#define RestoreInnerTuple(innerTupleSlot, markedTupleSlot) \
-	ExecStoreTuple(markedTupleSlot->val, \
-				   innerTupleSlot, \
-				   markedTupleSlot->ttc_buffer, \
-				   false); \
-	ExecIncrSlotBufferRefcnt(innerTupleSlot)
 
 /* ----------------------------------------------------------------
  *		MJFormOSortopI
@@ -467,8 +436,6 @@ ExecMergeJoin(MergeJoin *node)
 	Plan	   *outerPlan;
 	TupleTableSlot *outerTupleSlot;
 
-	TupleTableSlot *markedTupleSlot;
-
 	ExprContext *econtext;
 
 	/* ----------------
@@ -528,8 +495,8 @@ ExecMergeJoin(MergeJoin *node)
 				 * means that this is the first time ExecMergeJoin() has
 				 * been called and so we have to initialize the inner,
 				 * outer and marked tuples as well as various stuff in the
-				 * expression context. ********************************
-				 *
+				 * expression context.
+				 * ********************************
 				 */
 			case EXEC_MJ_INITIALIZE:
 				MJ_printf("ExecMergeJoin: EXEC_MJ_INITIALIZE\n");
@@ -560,19 +527,9 @@ ExecMergeJoin(MergeJoin *node)
 				econtext->ecxt_innertuple = innerTupleSlot;
 				econtext->ecxt_outertuple = outerTupleSlot;
 
-				/* ----------------
-				 *	 set the marked tuple to nil
-				 *	 and initialize its tuple descriptor atttributes.
-				 *		-jeff 10 july 1991
-				 * ----------------
-				 */
-				ExecClearTuple(mergestate->mj_MarkedTupleSlot);
 				mergestate->mj_MarkedTupleSlot->ttc_tupleDescriptor =
 					innerTupleSlot->ttc_tupleDescriptor;
-/*
-			mergestate->mj_MarkedTupleSlot->ttc_execTupDescriptor =
-			  innerTupleSlot->ttc_execTupDescriptor;
-*/
+				
 				/* ----------------
 				 *	initialize merge join state to skip inner tuples.
 				 * ----------------
@@ -584,15 +541,14 @@ ExecMergeJoin(MergeJoin *node)
 				 * ******************************** EXEC_MJ_JOINMARK means
 				 * we have just found a new outer tuple and a possible
 				 * matching inner tuple. This is the case after the
-				 * INITIALIZE, SKIPOUTER or SKIPINNER states. ********************************
-				 *
+				 * INITIALIZE, SKIPOUTER or SKIPINNER states. 
+				 * ********************************
 				 */
 			case EXEC_MJ_JOINMARK:
 				MJ_printf("ExecMergeJoin: EXEC_MJ_JOINMARK\n");
 				ExecMarkPos(innerPlan);
 
-				innerTupleSlot = econtext->ecxt_innertuple;
-				MarkInnerTuple(innerTupleSlot, mergestate);
+				MarkInnerTuple(econtext->ecxt_innertuple, mergestate);
 
 				mergestate->mj_JoinState = EXEC_MJ_JOINTEST;
 				break;
@@ -724,8 +680,8 @@ ExecMergeJoin(MergeJoin *node)
 				break;
 
 				/*
-				 * ******************************** EXEC_MJ_TESTOUTER If
-				 * the new outer tuple and the marked tuple satisify the
+				 * ******************************** EXEC_MJ_TESTOUTER 
+				 * If the new outer tuple and the marked tuple satisify the
 				 * merge clause then we know we have duplicates in the
 				 * outer scan so we have to restore the inner scan to the
 				 * marked tuple and proceed to join the new outer tuples
@@ -749,12 +705,7 @@ ExecMergeJoin(MergeJoin *node)
 				 *
 				 * new outer tuple > marked tuple
 				 *
-				****************************
-				 *
-				 *
-				 *
-				 *
-				 *
+				 * ****************************
 				 */
 			case EXEC_MJ_TESTOUTER:
 				MJ_printf("ExecMergeJoin: EXEC_MJ_TESTOUTER\n");
@@ -765,29 +716,32 @@ ExecMergeJoin(MergeJoin *node)
 				 * ----------------
 				 */
 				innerTupleSlot = econtext->ecxt_innertuple;
-				markedTupleSlot = mergestate->mj_MarkedTupleSlot;
-				econtext->ecxt_innertuple = markedTupleSlot;
+				econtext->ecxt_innertuple = mergestate->mj_MarkedTupleSlot;
 
 				qualResult = ExecQual((List *) mergeclauses, econtext);
 				MJ_DEBUG_QUAL(mergeclauses, qualResult);
 
 				if (qualResult)
 				{
-					/* ----------------
+					/* 
 					 *	the merge clause matched so now we juggle the slots
 					 *	back the way they were and proceed to JOINTEST.
-					 * ----------------
+					 *
+					 *  I can't understand why we have to go to JOINTEST
+					 *  and compare outer tuple with the same inner one
+					 *  again -> go to JOINTUPLES...	- vadim 02/27/98
 					 */
-					econtext->ecxt_innertuple = innerTupleSlot;
-
-					RestoreInnerTuple(innerTupleSlot, markedTupleSlot);
 
 					ExecRestrPos(innerPlan);
+#if 0
 					mergestate->mj_JoinState = EXEC_MJ_JOINTEST;
+#endif
+					mergestate->mj_JoinState = EXEC_MJ_JOINTUPLES;
 
 				}
 				else
 				{
+					econtext->ecxt_innertuple = innerTupleSlot;
 					/* ----------------
 					 *	if the inner tuple was nil and the new outer
 					 *	tuple didn't match the marked outer tuple then
@@ -809,12 +763,7 @@ ExecMergeJoin(MergeJoin *node)
 						return NULL;
 					}
 
-					/* ----------------
-					 *	restore the inner tuple and continue on to
-					 *	skip outer tuples.
-					 * ----------------
-					 */
-					econtext->ecxt_innertuple = innerTupleSlot;
+					/*	continue on to skip outer tuples */
 					mergestate->mj_JoinState = EXEC_MJ_SKIPOUTER;
 				}
 				break;
@@ -853,9 +802,8 @@ ExecMergeJoin(MergeJoin *node)
 				if (qualResult)
 				{
 					ExecMarkPos(innerPlan);
-					innerTupleSlot = econtext->ecxt_innertuple;
 
-					MarkInnerTuple(innerTupleSlot, mergestate);
+					MarkInnerTuple(econtext->ecxt_innertuple, mergestate);
 
 					mergestate->mj_JoinState = EXEC_MJ_JOINTUPLES;
 					break;
@@ -958,9 +906,8 @@ ExecMergeJoin(MergeJoin *node)
 				if (qualResult)
 				{
 					ExecMarkPos(innerPlan);
-					innerTupleSlot = econtext->ecxt_innertuple;
 
-					MarkInnerTuple(innerTupleSlot, mergestate);
+					MarkInnerTuple(econtext->ecxt_innertuple, mergestate);
 
 					mergestate->mj_JoinState = EXEC_MJ_JOINTUPLES;
 					break;
@@ -1074,10 +1021,11 @@ bool
 ExecInitMergeJoin(MergeJoin *node, EState *estate, Plan *parent)
 {
 	MergeJoinState *mergestate;
-	List	   *joinclauses;
-	RegProcedure rightsortop;
-	RegProcedure leftsortop;
-	RegProcedure sortop;
+	List		   *joinclauses;
+	RegProcedure	rightsortop;
+	RegProcedure	leftsortop;
+	RegProcedure	sortop;
+	TupleTableSlot *mjSlot;
 
 	List	   *OSortopI;
 	List	   *ISortopO;
@@ -1120,8 +1068,14 @@ ExecInitMergeJoin(MergeJoin *node, EState *estate, Plan *parent)
 	 * ----------------
 	 */
 	ExecInitResultTupleSlot(estate, &mergestate->jstate);
-	ExecInitMarkedTupleSlot(estate, mergestate);
-
+	mjSlot = (TupleTableSlot *) palloc(sizeof(TupleTableSlot));
+	mjSlot->val = NULL;
+	mjSlot->ttc_shouldFree = true;
+	mjSlot->ttc_tupleDescriptor = NULL;
+	mjSlot->ttc_whichplan = -1;
+	mjSlot->ttc_descIsNew = true;
+	mergestate->mj_MarkedTupleSlot = mjSlot;
+	
 	/* ----------------
 	 *	get merge sort operators.
 	 *
@@ -1245,7 +1199,35 @@ ExecEndMergeJoin(MergeJoin *node)
 	 */
 	ExecClearTuple(mergestate->jstate.cs_ResultTupleSlot);
 	ExecClearTuple(mergestate->mj_MarkedTupleSlot);
-
+	pfree (mergestate->mj_MarkedTupleSlot);
+	mergestate->mj_MarkedTupleSlot = NULL;
+	
 	MJ1_printf("ExecEndMergeJoin: %s\n",
 			   "node processing ended");
+}
+
+void
+ExecReScanMergeJoin(MergeJoin *node, ExprContext *exprCtxt, Plan *parent)
+{
+	MergeJoinState *mergestate = node->mergestate;
+	TupleTableSlot *mjSlot = mergestate->mj_MarkedTupleSlot;
+
+	ExecClearTuple(mjSlot);
+	mjSlot->val = NULL;
+	mjSlot->ttc_shouldFree = true;
+	mjSlot->ttc_tupleDescriptor = NULL;
+	mjSlot->ttc_whichplan = -1;
+	mjSlot->ttc_descIsNew = true;
+	
+	mergestate->mj_JoinState = EXEC_MJ_INITIALIZE;
+
+	/*
+	 * if chgParam of subnodes is not null then plans will be re-scanned by
+	 * first ExecProcNode.
+	 */
+	if (((Plan *) node)->lefttree->chgParam == NULL)
+		ExecReScan(((Plan *) node)->lefttree, exprCtxt, (Plan *) node);
+	if (((Plan *) node)->righttree->chgParam == NULL)
+		ExecReScan(((Plan *) node)->righttree, exprCtxt, (Plan *) node);
+
 }
