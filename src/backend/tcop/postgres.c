@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/tcop/postgres.c,v 1.432 2004/09/13 20:07:05 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/tcop/postgres.c,v 1.433 2004/09/26 00:26:25 tgl Exp $
  *
  * NOTES
  *	  this is the "main" module of the postgres backend and
@@ -2810,6 +2810,9 @@ PostgresMain(int argc, char *argv[], const char *username)
 		 */
 		DisableNotifyInterrupt();
 		DisableCatchupInterrupt();
+
+		/* Make sure libpq is in a good state */
+		pq_comm_reset();
 
 		/* Report the error to the client and/or server log */
 		EmitErrorReport();

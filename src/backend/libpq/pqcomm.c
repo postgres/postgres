@@ -30,7 +30,7 @@
  * Portions Copyright (c) 1996-2004, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- *	$PostgreSQL: pgsql/src/backend/libpq/pqcomm.c,v 1.171 2004/08/29 05:06:43 momjian Exp $
+ *	$PostgreSQL: pgsql/src/backend/libpq/pqcomm.c,v 1.172 2004/09/26 00:26:19 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -44,6 +44,7 @@
  *		StreamClose			- Close a client/backend connection
  *		TouchSocketFile		- Protect socket file against /tmp cleaners
  *		pq_init			- initialize libpq at backend startup
+ *		pq_comm_reset	- reset libpq during error recovery
  *		pq_close		- shutdown libpq at backend exit
  *
  * low-level I/O:
@@ -88,19 +89,15 @@
 #include "storage/ipc.h"
 
 
-static void pq_close(int code, Datum arg);
-
-#ifdef HAVE_UNIX_SOCKETS
-static int	Lock_AF_UNIX(unsigned short portNumber, char *unixSocketName);
-static int	Setup_AF_UNIX(void);
-#endif   /* HAVE_UNIX_SOCKETS */
-
-
 /*
  * Configuration options
  */
 int			Unix_socket_permissions;
 char	   *Unix_socket_group;
+
+
+/* Where the Unix socket file is */
+static char sock_path[MAXPGPATH];
 
 
 /*
@@ -121,7 +118,18 @@ static int	PqRecvLength;		/* End of data available in PqRecvBuffer */
 /*
  * Message status
  */
+static bool PqCommBusy;
 static bool DoingCopyOut;
+
+
+/* Internal functions */
+static void pq_close(int code, Datum arg);
+static int	internal_putbytes(const char *s, size_t len);
+static int	internal_flush(void);
+#ifdef HAVE_UNIX_SOCKETS
+static int	Lock_AF_UNIX(unsigned short portNumber, char *unixSocketName);
+static int	Setup_AF_UNIX(void);
+#endif   /* HAVE_UNIX_SOCKETS */
 
 
 /* --------------------------------
@@ -132,10 +140,27 @@ void
 pq_init(void)
 {
 	PqSendPointer = PqRecvPointer = PqRecvLength = 0;
+	PqCommBusy = false;
 	DoingCopyOut = false;
 	on_proc_exit(pq_close, 0);
 }
 
+/* --------------------------------
+ *		pq_comm_reset - reset libpq during error recovery
+ *
+ * This is called from error recovery at the outer idle loop.  It's
+ * just to get us out of trouble if we somehow manage to elog() from
+ * inside a pqcomm.c routine (which ideally will never happen, but...)
+ * --------------------------------
+ */
+void
+pq_comm_reset(void)
+{
+	/* Do not throw away pending data, but do reset the busy flag */
+	PqCommBusy = false;
+	/* We can abort any old-style COPY OUT, too */
+	pq_endcopyout(true);
+}
 
 /* --------------------------------
  *		pq_close - shutdown libpq at backend exit
@@ -173,8 +198,6 @@ pq_close(int code, Datum arg)
  *
  *		Stream functions are used for vanilla TCP connection protocol.
  */
-
-static char sock_path[MAXPGPATH];
 
 
 /* StreamDoUnlink()
@@ -886,12 +909,29 @@ pq_getmessage(StringInfo s, int maxlen)
 int
 pq_putbytes(const char *s, size_t len)
 {
+	int			res;
+
+	/* Should only be called by old-style COPY OUT */
+	Assert(DoingCopyOut);
+	/* No-op if reentrant call */
+	if (PqCommBusy)
+		return 0;
+	PqCommBusy = true;
+	res = internal_putbytes(s, len);
+	PqCommBusy = false;
+	return res;
+}
+
+static int
+internal_putbytes(const char *s, size_t len)
+{
 	size_t		amount;
 
 	while (len > 0)
 	{
+		/* If buffer is full, then flush it out */
 		if (PqSendPointer >= PQ_BUFFER_SIZE)
-			if (pq_flush())		/* If buffer is full, then flush it out */
+			if (internal_flush())
 				return EOF;
 		amount = PQ_BUFFER_SIZE - PqSendPointer;
 		if (amount > len)
@@ -912,6 +952,20 @@ pq_putbytes(const char *s, size_t len)
  */
 int
 pq_flush(void)
+{
+	int			res;
+
+	/* No-op if reentrant call */
+	if (PqCommBusy)
+		return 0;
+	PqCommBusy = true;
+	res = internal_flush();
+	PqCommBusy = false;
+	return res;
+}
+
+static int
+internal_flush(void)
 {
 	static int	last_reported_send_errno = 0;
 
@@ -988,26 +1042,40 @@ pq_flush(void)
  *		then; dropping them is annoying, but at least they will still appear
  *		in the postmaster log.)
  *
+ *		We also suppress messages generated while pqcomm.c is busy.  This
+ *		avoids any possibility of messages being inserted within other
+ *		messages.  The only known trouble case arises if SIGQUIT occurs
+ *		during a pqcomm.c routine --- quickdie() will try to send a warning
+ *		message, and the most reasonable approach seems to be to drop it.
+ *
  *		returns 0 if OK, EOF if trouble
  * --------------------------------
  */
 int
 pq_putmessage(char msgtype, const char *s, size_t len)
 {
-	if (DoingCopyOut)
+	if (DoingCopyOut || PqCommBusy)
 		return 0;
+	PqCommBusy = true;
 	if (msgtype)
-		if (pq_putbytes(&msgtype, 1))
-			return EOF;
+		if (internal_putbytes(&msgtype, 1))
+			goto fail;
 	if (PG_PROTOCOL_MAJOR(FrontendProtocol) >= 3)
 	{
 		uint32		n32;
 
 		n32 = htonl((uint32) (len + 4));
-		if (pq_putbytes((char *) &n32, 4))
-			return EOF;
+		if (internal_putbytes((char *) &n32, 4))
+			goto fail;
 	}
-	return pq_putbytes(s, len);
+	if (internal_putbytes(s, len))
+		goto fail;
+	PqCommBusy = false;
+	return 0;
+
+fail:
+	PqCommBusy = false;
+	return EOF;
 }
 
 /* --------------------------------
@@ -1036,8 +1104,8 @@ pq_endcopyout(bool errorAbort)
 {
 	if (!DoingCopyOut)
 		return;
-	DoingCopyOut = false;
 	if (errorAbort)
 		pq_putbytes("\n\n\\.\n", 5);
 	/* in non-error case, copy.c will have emitted the terminator line */
+	DoingCopyOut = false;
 }
