@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *    $Header: /cvsroot/pgsql/src/backend/commands/async.c,v 1.12 1997/01/24 23:48:25 scrappy Exp $
+ *    $Header: /cvsroot/pgsql/src/backend/commands/async.c,v 1.13 1997/03/10 00:18:09 scrappy Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -83,6 +83,8 @@
 #include <libpq/libpq.h>
 
 #include <port-protos.h>  /* for strdup() */
+
+#include <storage/lmgr.h>
 
 static int notifyFrontEndPending = 0;
 static int notifyIssued = 0;
@@ -194,6 +196,7 @@ Async_Notify(char *relname)
     
     lRel = heap_openr(ListenerRelationName);
     tdesc = RelationGetTupleDescriptor(lRel);
+    RelationSetLockForWrite(lRel);
     sRel = heap_beginscan(lRel, 0, NowTimeQual, 1, &key);
     
     nulls[0] = nulls[1] = nulls[2] = ' ';
@@ -212,6 +215,7 @@ Async_Notify(char *relname)
 	ReleaseBuffer(b);
     }
     heap_endscan(sRel);
+    RelationUnsetLockForWrite(lRel);
     heap_close(lRel);
     notifyIssued = 1;
 }
@@ -269,6 +273,7 @@ Async_NotifyAtCommit()
 				   Integer32EqualRegProcedure,
 				   Int32GetDatum(1));
 	    lRel = heap_openr(ListenerRelationName);
+	    RelationSetLockForWrite(lRel);
 	    sRel = heap_beginscan(lRel, 0, NowTimeQual, 1, &key);
 	    tdesc = RelationGetTupleDescriptor(lRel);
 	    ourpid = getpid();
@@ -302,6 +307,7 @@ Async_NotifyAtCommit()
 		ReleaseBuffer(b);
 	    }
 	    heap_endscan(sRel);
+	    RelationUnsetLockForWrite(lRel);
 	    heap_close(lRel);
 
 	    CommitTransactionCommand();
@@ -405,6 +411,7 @@ Async_Listen(char *relname, int pid)
     values[i++] = (Datum) 0;	/* no notifies pending */
     
     lDesc = heap_openr(ListenerRelationName);
+    RelationSetLockForWrite(lDesc);
     
     /* is someone already listening.  One listener per relation */
     tdesc = RelationGetTupleDescriptor(lDesc);
@@ -440,6 +447,8 @@ Async_Listen(char *relname, int pid)
     /*    if (alreadyListener) {
 	  elog(NOTICE,"Async_Listen: already one listener on %s (possibly dead)",relname);
 	  }*/
+
+    RelationUnsetLockForWrite(lDesc);
     heap_close(lDesc);
     
     /*
@@ -480,9 +489,13 @@ Async_Unlisten(char *relname, int pid)
 				 Int32GetDatum(pid),
 				 0,0);
     lDesc = heap_openr(ListenerRelationName);
+    RelationSetLockForWrite(lDesc);
+
     if (lTuple != NULL) {
 	heap_delete(lDesc,&lTuple->t_ctid);
     }
+
+    RelationUnsetLockForWrite(lDesc);
     heap_close(lDesc);
 }
 
@@ -549,6 +562,7 @@ Async_NotifyFrontEnd()
 			   Integer32EqualRegProcedure,
 			   Int32GetDatum(ourpid));
     lRel = heap_openr(ListenerRelationName);
+    RelationSetLockForWrite(lRel);
     tdesc = RelationGetTupleDescriptor(lRel);
     sRel = heap_beginscan(lRel, 0, NowTimeQual, 2, key);
     
