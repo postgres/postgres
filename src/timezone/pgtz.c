@@ -6,7 +6,7 @@
  * Portions Copyright (c) 1996-2003, PostgreSQL Global Development Group
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/timezone/pgtz.c,v 1.12 2004/05/23 22:24:08 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/timezone/pgtz.c,v 1.13 2004/05/23 23:26:53 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -219,9 +219,14 @@ identify_system_timezone(void)
 	if (try_timezone(__tzbuf, &tt, dst_found))
 		return __tzbuf;
 
-	/* Did not find the timezone. Fallback to try a GMT zone. */
+	/*
+	 * Did not find the timezone.  Fallback to try a GMT zone.  Note that the
+	 * zic timezone database names the GMT-offset zones in POSIX style: plus
+	 * is west of Greenwich.  It's unfortunate that this is opposite of SQL
+	 * conventions.  Should we therefore change the names?  Probably not...
+	 */
 	sprintf(__tzbuf, "Etc/GMT%s%d",
-			(-tt.std_ofs < 0) ? "+" : "", tt.std_ofs / 3600);
+			(-tt.std_ofs > 0) ? "+" : "", -tt.std_ofs / 3600);
 	ereport(LOG,
 	 (errmsg("could not recognize system timezone, defaulting to \"%s\"",
 			 __tzbuf),
