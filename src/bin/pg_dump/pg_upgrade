@@ -3,15 +3,15 @@
 # pg_upgrade: update a database without needing a full dump/reload cycle.
 # CAUTION: Read the manual page before trying to use this!
 
-# $Header: /cvsroot/pgsql/src/bin/pg_dump/Attic/pg_upgrade,v 1.30 2002/01/13 01:13:59 momjian Exp $
+# $Header: /cvsroot/pgsql/src/bin/pg_dump/Attic/pg_upgrade,v 1.31 2002/01/13 01:22:27 momjian Exp $
 #
 # NOTE: we must be sure to update the version-checking code a few dozen lines
 # below for each new PostgreSQL release.
 
-set -x
+#set -x
 
 # Set this to "Y" to enable this program
-ENABLE="Y"
+ENABLE="N"
 
 # UPGRADE_VERSION is the expected old database version
 UPGRADE_VERSION="7.1"
