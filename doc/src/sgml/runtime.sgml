@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/runtime.sgml,v 1.19 2000/08/25 10:00:29 petere Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/runtime.sgml,v 1.20 2000/08/26 19:34:24 petere Exp $
 -->
 
 <Chapter Id="runtime">
@@ -296,6 +296,13 @@ IpcSemaphoreCreate: semget(key=5440026, num=16, 01600) failed: No space left on 
      postmaster with a reduced number of backend processes
      (<option>-N</option> switch), but you'll eventually want to
      increase the kernel limit.
+    </para>
+
+    <para>
+     If you get an <quote>illegal system call</> error, then it is likely that
+     shared memory or semaphores are not supported at all in your kernel. In
+     that case your only option is to re-configure the kernel to turn on these
+     features.
     </para>
 
     <para>

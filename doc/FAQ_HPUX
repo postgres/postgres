@@ -1,9 +1,9 @@
 =======================================================
-Frequently Asked Questions (FAQ) for PostgreSQL  V6.5
+Frequently Asked Questions (FAQ) for PostgreSQL 7.1
 HP-UX Specific
 TO BE READ IN CONJUNCTION WITH THE NORMAL FAQ
 =======================================================
-last updated:           Sun May 23 19:48:07 EDT 1999
+last updated:           $Date: 2000/08/26 19:34:24 $
 
 current maintainer:     Tom Lane (tgl@sss.pgh.pa.us)
 original author:        Tom Lane (tgl@sss.pgh.pa.us)
@@ -55,36 +55,25 @@ than 6.4.
 
 1.2)	Anything special about the build/install procedure?
 
-When you run configure, you will want to explicitly select either the
-hpux_cc or hpux_gcc template depending on which compiler you plan to
-use:
-	./configure --with-template=hpux_cc
+If you have both HP's C compiler and GCC's, then you might want to
+explicitly select the compiler to use when you run `configure':
+	CC=cc ./configure
 for HP's C compiler, or
-	./configure --with-template=hpux_gcc
-for GNU gcc.  (If you omit --with-template, configure may either
-default to hpux_cc or give up entirely, depending on which HPUX and
-PostgreSQL releases you have.)
-
-You may want to tweak the CFLAGS setting in template/hpux_[g]cc before
-you configure.  The distributed copy of hpux_cc contains neither -O nor -g
-switches, which is hardly optimal for any situation.  As of Postgres 6.5,
-hpux_gcc sets CFLAGS to -O2, which is fine unless you want to do debugging;
-in that case you may want -g as well (or instead).
+	CC=gcc ./configure
+for GCC.  If you omit this setting then configure will pick gcc.
 
 The default install target location is /usr/local/pgsql, which
 (particularly on HPUX 10) you might want to change to something under
 /opt.  If so, use the --prefix switch to configure.
 
-If you have both HP and GNU C++ compilers in your PATH, keep an eye on
-whether configure picks the right one --- you want the HP c++ if you are
-using HP C, or g++ if you are using gcc.  Mixing HP and GNU compilers
-won't work.  You may need to provide a --with-CXX=compiler switch to
-force configure to pick the matching C++ compiler, or even say
---without-CXX if you have a C++ compiler but it doesn't match the C
-compiler you want to use.
-
-Otherwise the standard build/install procedure described in the
-PostgreSQL documentation works fine.
+If you want to build the C++ client library (libpq++) then you need
+to use a C++ compiler from the same source as the C compiler; mixing
+HP and GNU compilers doesn't work. If you have both C++ compilers
+in your PATH, keep an eye on whether configure picks the right one.
+To override the choice, set the environment variable CXX:
+	CC=gcc CXX=g++ ./configure
+or
+	CC=cc CXX=aCC ./configure
 
 
 1.3)	yacc dies trying to process src/backend/parser/gram.y.

@@ -3,7 +3,7 @@ Frequently Asked Questions (FAQ) for PostgreSQL  V7.0
 SCO UnixWare and OpenServer Specific
 TO BE READ IN CONJUNCTION WITH THE NORMAL FAQ
 =======================================================
-last updated:           Mon May  1 23:35:43 EDT 2000
+last updated:           $Date: 2000/08/26 19:34:24 $
 
 current maintainer:     Billy G. Allie (Bill.Allie@mug.org)
 original author:        Andrew Merrill (andrew@compclass.com)
@@ -22,8 +22,6 @@ Topics:
 *) Readline
 *) Using the UDK on OpenServer
 *) Compiling PostgreSQL using the UDK
-*) Shared Memory and SHMMAX
-*) Java and JDBC
 *) Reading the PostgreSQL man pages on UnixWare
 
 
@@ -147,105 +145,6 @@ the following patch:
   
   	return result;
 ------------------------------8< CUT HERE >8------------------------------
-
-***************************************************************************
-*) Shared Memory and SHMMAX
-
-PostgreSQL supports multiple backend daemons running at once.  A block
-of shared memory is used by the backend processes.  A larger block
-of shared memory allows PostgreSQL to run faster and support more
-complicated queries.
-
-By default, UnixWare 7 and OpenServer are confiugured to support shared memory
-blocks that are no larger than 524288 bytes, or 512K.  By default, PostgreSQL
-tries to allocate a shared memory block that is larger than this.  If
-you don't do anything, this allocation will fail, and the postmaster
-daemon will not be able to run.
-
-The error message looks like this (the numbers may be different):
-
-IpcMemoryCreate: shmget failed (Invalid argument) key=5432001, size=831176, permission=600
-FATAL 1:  ShmemCreate: cannot create region
-
-You have two choices: tell PostgreSQL to allocate a smaller shared memory
-block, or tell Unix to allow larger shared memory blocks.  The latter
-is the preferred solution, but it requires a kernel tunable change and a 
-reboot to implement.
-
-To configure the size of the PostgreSQL shared memory block, use the -B
-option to the postmaster command, which configures the number of buffers
-used by PostgresSQL.  (The shared memory block consists of these buffers
-and around 300K of other stuff.)  Each buffer uses 8K, and by default
-there are 64 buffers, or 64*8*1024 = 524288 bytes (plus the ~300K of other
-stuff).
-
-To use PostgreSQL without doing any kernel tuning, use a -B value of 
-about 24.  This would take up 24*8*1024 = 196608 bytes, plus ~300K
-of other stuff, yields about 500000, which will fit in under the
-default 512K limit.
-
-Example: postmaster -B 24
-
-The recommended option is to instead raise the kernel tunable SHMMAX, 
-which controls the size of the largest allowed shared memory block.
-
-*** Tuning SHMMAX on UnixWare ***
-
-To display the current value of SHMMAX, run:
-/etc/conf/bin/idtune -g SHMMAX
-which displays the current, default, minimum, and maximum values, in bytes.
-
-To set a new value for SHMMAX, run:
-/etc/conf/bin/idtune SHMMAX value
-where value is the new value you want to use (in bytes).
-
-After setting SHMMAX, rebuild the kernel and reboot.
-To rebuild the kernel:
-/etc/conf/bin/idbuild -B
-
-*** Tuning SHMMAX on OpenServer ***
-
-First, cd to /etc/conf/cf.d.
-
-To display the current value of SHMMAX, in bytes, run:
-./configure -y SHMMAX
-
-To set a new value for SHMMAX, run:
-./configure SHMMAX=value
-where value is the new value you want to use (in bytes).
-
-After setting SHMMAX, rebuild the kernel and reboot.
-To rebuild the kernel:
-./link_unix
-
-
-***************************************************************************
-*) Java and JDBC
-
-The JDBC interface will not build on UnixWare or OpenServer without changes.  
-The JDBC Makefile in src/interfaces/jdbc/Makefile uses the $$( ) construction
-to run an external shell command, instead of the older ` ` syntax.
-However, the $$( ) syntax does not work on UnixWare or OpenServer.  
-So, each of the two uses of it must be replaced with backquotes.  You can 
-search for $$( to locate the two lines that need changing.
-
-In the file src/interfaces/jdbc/Makefile :
-
-change:
-    make $$($(JAVA) makeVersion)
-to:
-    make `$(JAVA) makeVersion`
-
-and change:
-    $(JAR) -c0f $@ $$($(FIND) postgresql -name "*.class" -print)
-to:
-    $(JAR) -c0f $@ `$(FIND) postgresql -name "*.class" -print`
-
-Of course, you also need to have installed Java on your system, and 
-make sure that /usr/java/bin is in your PATH.
-
-And, remember to use GNU make, as always.
-
 
 ***************************************************************************
 *) Reading the PostgreSQL man pages on UnixWare
