@@ -14,7 +14,7 @@
  * Copyright (c) 1998-2003, PostgreSQL Global Development Group
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/utils/adt/numeric.c,v 1.73 2004/05/07 00:24:58 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/utils/adt/numeric.c,v 1.74 2004/05/14 21:42:28 neilc Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -252,6 +252,7 @@ static Numeric make_result(NumericVar *var);
 
 static void apply_typmod(NumericVar *var, int32 typmod);
 
+static int32 numericvar_to_int4(NumericVar *var);
 static bool numericvar_to_int8(NumericVar *var, int64 *result);
 static void int8_to_numericvar(int64 val, NumericVar *var);
 static double numeric_to_double_no_overflow(Numeric num);
@@ -285,6 +286,8 @@ static void sub_abs(NumericVar *var1, NumericVar *var2, NumericVar *result);
 static void round_var(NumericVar *var, int rscale);
 static void trunc_var(NumericVar *var, int rscale);
 static void strip_var(NumericVar *var);
+static void compute_bucket(Numeric operand, Numeric bound1, Numeric bound2,
+						   NumericVar *count_var, NumericVar *result_var);
 
 
 /* ----------------------------------------------------------------------
@@ -803,6 +806,125 @@ numeric_floor(PG_FUNCTION_ARGS)
 	PG_RETURN_NUMERIC(res);
 }
 
+/*
+ * width_bucket_numeric() -
+ *
+ * 'bound1' and 'bound2' are the lower and upper bounds of the
+ * histogram's range, respectively. 'count' is the number of buckets
+ * in the histogram. width_bucket() returns an integer indicating the
+ * bucket number that 'operand' belongs in for an equiwidth histogram
+ * with the specified characteristics. An operand smaller than the
+ * lower bound is assigned to bucket 0. An operand greater than the
+ * upper bound is assigned to an additional bucket (with number
+ * count+1).
+ */
+Datum
+width_bucket_numeric(PG_FUNCTION_ARGS)
+{
+	Numeric		operand = PG_GETARG_NUMERIC(0);
+	Numeric		bound1 = PG_GETARG_NUMERIC(1);
+	Numeric		bound2 = PG_GETARG_NUMERIC(2);
+	int32		count = PG_GETARG_INT32(3);
+	NumericVar	count_var;
+	NumericVar	result_var;
+	int32		result;
+
+	if (count <= 0)
+		ereport(ERROR,
+				(errcode(ERRCODE_INVALID_ARGUMENT_FOR_WIDTH_BUCKET_FUNCTION),
+				 errmsg("count must be greater than zero")));
+
+	init_var(&result_var);
+	init_var(&count_var);
+
+	/* Convert 'count' to a numeric, for ease of use later */
+	int8_to_numericvar((int64) count, &count_var);
+
+	switch (cmp_numerics(bound1, bound2))
+	{
+		case 0:
+			ereport(ERROR,
+					(errcode(ERRCODE_INVALID_ARGUMENT_FOR_WIDTH_BUCKET_FUNCTION),
+					 errmsg("lower bound cannot equal upper bound")));
+
+		/* bound1 < bound2 */
+		case -1:
+			if (cmp_numerics(operand, bound1) < 0)
+				set_var_from_var(&const_zero, &result_var);
+			else if (cmp_numerics(operand, bound2) >= 0)
+				add_var(&count_var, &const_one, &result_var);
+			else
+				compute_bucket(operand, bound1, bound2,
+							   &count_var, &result_var);
+			break;
+
+		/* bound1 > bound2 */
+		case 1:
+			if (cmp_numerics(operand, bound1) > 0)
+				set_var_from_var(&const_zero, &result_var);
+			else if (cmp_numerics(operand, bound2) <= 0)
+				add_var(&count_var, &const_one, &result_var);
+			else
+				compute_bucket(operand, bound1, bound2,
+							   &count_var, &result_var);
+			break;
+	}
+
+	result = numericvar_to_int4(&result_var);
+
+	free_var(&count_var);
+	free_var(&result_var);
+
+	PG_RETURN_INT32(result);
+}
+
+/*
+ * compute_bucket() -
+ *
+ * If 'operand' is not outside the bucket range, determine the correct
+ * bucket for it to go. The calculations performed by this function
+ * are derived directly from the SQL2003 spec.
+ */
+static void
+compute_bucket(Numeric operand, Numeric bound1, Numeric bound2,
+			   NumericVar *count_var, NumericVar *result_var)
+{
+	NumericVar bound1_var;
+	NumericVar bound2_var;
+	NumericVar operand_var;
+
+	init_var(&bound1_var);
+	init_var(&bound2_var);
+	init_var(&operand_var);
+
+	set_var_from_num(bound1, &bound1_var);
+	set_var_from_num(bound2, &bound2_var);
+	set_var_from_num(operand, &operand_var);
+
+	if (cmp_var(&bound1_var, &bound2_var) < 0)
+	{
+		sub_var(&operand_var, &bound1_var, &operand_var);
+		sub_var(&bound2_var, &bound1_var, &bound2_var);
+		div_var(&operand_var, &bound2_var, result_var,
+				select_div_scale(&operand_var, &bound2_var));
+	}
+	else
+	{
+		sub_var(&bound1_var, &operand_var, &operand_var);
+		sub_var(&bound1_var, &bound2_var, &bound1_var);
+		div_var(&operand_var, &bound1_var, result_var,
+				select_div_scale(&operand_var, &bound1_var));
+	}
+
+	mul_var(result_var, count_var, result_var,
+			result_var->dscale + count_var->dscale);
+	add_var(result_var, &const_one, result_var);
+	floor_var(result_var, result_var);
+
+	free_var(&bound1_var);
+	free_var(&bound2_var);
+	free_var(&operand_var);
+}	
 
 /* ----------------------------------------------------------------------
  *
@@ -1612,7 +1734,6 @@ numeric_int4(PG_FUNCTION_ARGS)
 {
 	Numeric		num = PG_GETARG_NUMERIC(0);
 	NumericVar	x;
-	int64		val;
 	int32		result;
 
 	/* XXX would it be better to return NULL? */
@@ -1621,16 +1742,29 @@ numeric_int4(PG_FUNCTION_ARGS)
 				(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
 				 errmsg("cannot convert NaN to integer")));
 
-	/* Convert to variable format and thence to int8 */
+	/* Convert to variable format, then convert to int4 */
 	init_var(&x);
 	set_var_from_num(num, &x);
+	result = numericvar_to_int4(&x);
+	free_var(&x);
+	PG_RETURN_INT32(result);
+}
 
-	if (!numericvar_to_int8(&x, &val))
+/*
+ * Given a NumericVar, convert it to an int32. If the NumericVar
+ * exceeds the range of an int32, raise the appropriate error via
+ * ereport(). The input NumericVar is *not* free'd.
+ */
+static int32
+numericvar_to_int4(NumericVar *var)
+{
+	int32 result;
+	int64 val;
+
+	if (!numericvar_to_int8(var, &val))
 		ereport(ERROR,
 				(errcode(ERRCODE_NUMERIC_VALUE_OUT_OF_RANGE),
 				 errmsg("integer out of range")));
-
-	free_var(&x);
 
 	/* Down-convert to int4 */
 	result = (int32) val;
@@ -1641,9 +1775,8 @@ numeric_int4(PG_FUNCTION_ARGS)
 				(errcode(ERRCODE_NUMERIC_VALUE_OUT_OF_RANGE),
 				 errmsg("integer out of range")));
 
-	PG_RETURN_INT32(result);
+	return result;
 }
-
 
 Datum
 int8_numeric(PG_FUNCTION_ARGS)

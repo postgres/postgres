@@ -1,5 +1,5 @@
 <!--
-$PostgreSQL: pgsql/doc/src/sgml/func.sgml,v 1.201 2004/05/10 22:44:42 tgl Exp $
+$PostgreSQL: pgsql/doc/src/sgml/func.sgml,v 1.202 2004/05/14 21:42:27 neilc Exp $
 PostgreSQL documentation
 -->
 
@@ -751,6 +751,16 @@ PostgreSQL documentation
        <entry><literal>42.43</literal></entry>
       </row>
 
+      <row>
+       <entry><literal><function>width_bucket</function>(<parameter>op</parameter> <type>numeric</type>, <parameter>b1</parameter> <type>numeric</type>, <parameter>b2</parameter> <type>numeric</type>, <parameter>count</parameter> <type>integer</type>)</literal></entry>
+       <entry><type>integer</type></entry>
+       <entry>return the bucket to which <parameter>operand</> would
+       be assigned in an equidepth histogram with <parameter>count</>
+       buckets, an upper bound of <parameter>b1</>, and a lower bound
+       of <parameter>b2</></entry>
+       <entry><literal>width_bucket(5.35, 0.024, 10.06, 5)</literal></entry>
+       <entry><literal>3</literal></entry>
+      </row>
      </tbody>
     </tgroup>
    </table>

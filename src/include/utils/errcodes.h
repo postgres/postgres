@@ -11,7 +11,7 @@
  *
  * Copyright (c) 2003, PostgreSQL Global Development Group
  *
- * $PostgreSQL: pgsql/src/include/utils/errcodes.h,v 1.9 2004/05/14 18:04:02 neilc Exp $
+ * $PostgreSQL: pgsql/src/include/utils/errcodes.h,v 1.10 2004/05/14 21:42:30 neilc Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -116,6 +116,7 @@
 #define ERRCODE_ESCAPE_CHARACTER_CONFLICT	MAKE_SQLSTATE('2','2', '0','0','B')
 #define ERRCODE_INDICATOR_OVERFLOW			MAKE_SQLSTATE('2','2', '0','2','2')
 #define ERRCODE_INTERVAL_FIELD_OVERFLOW		MAKE_SQLSTATE('2','2', '0','1','5')
+#define ERRCODE_INVALID_ARGUMENT_FOR_WIDTH_BUCKET_FUNCTION		MAKE_SQLSTATE('2','2', '0', '1', 'G')
 #define ERRCODE_INVALID_CHARACTER_VALUE_FOR_CAST		MAKE_SQLSTATE('2','2', '0','1','8')
 #define ERRCODE_INVALID_DATETIME_FORMAT		MAKE_SQLSTATE('2','2', '0','0','7')
 #define ERRCODE_INVALID_ESCAPE_CHARACTER	MAKE_SQLSTATE('2','2', '0','1','9')

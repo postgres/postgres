@@ -667,6 +667,52 @@ INSERT INTO ceil_floor_round VALUES ('-0.000001');
 SELECT a, ceil(a), ceiling(a), floor(a), round(a) FROM ceil_floor_round;
 DROP TABLE ceil_floor_round;
 
+-- Testing for width_bucket()
+-- NULL result
+SELECT width_bucket(NULL, NULL, NULL, NULL);
+
+-- errors
+SELECT width_bucket(5.0, 3.0, 4.0, 0);
+SELECT width_bucket(5.0, 3.0, 4.0, -5);
+SELECT width_bucket(3.0, 3.0, 3.0, 888);
+
+-- normal operation
+CREATE TABLE width_bucket_test (operand numeric);
+
+COPY width_bucket_test FROM stdin;
+-5.2
+-0.0000000000001
+0.0000000000001
+1
+1.99999999999999
+2
+2.00000000000001
+3
+4
+4.5
+5
+5.5
+6
+7
+8
+9
+9.99999999999999
+10
+10.0000000000001
+NaN
+\.
+
+SELECT
+    operand,
+    width_bucket(operand, 0, 10, 5) AS wb_1,
+    width_bucket(operand, 10, 0, 5) AS wb_2,
+    width_bucket(operand, 2, 8, 4) AS wb_3,
+    width_bucket(operand, 5.0, 5.5, 20) AS wb_4,
+    width_bucket(operand, -25, 25, 10) AS wb_5
+    FROM width_bucket_test;
+
+DROP TABLE width_bucket_test;
+
 -- TO_CHAR()
 --
 SELECT '' AS to_char_1, to_char(val, '9G999G999G999G999G999') 

@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/errcodes.sgml,v 1.4 2004/05/14 18:04:02 neilc Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/errcodes.sgml,v 1.5 2004/05/14 21:42:27 neilc Exp $ -->
 
 <appendix id="errcodes-appendix">
  <title><productname>PostgreSQL</productname> Error Codes</title>
@@ -308,6 +308,11 @@
 <row>
 <entry><literal>22015</literal></entry>
 <entry>INTERVAL FIELD OVERFLOW</entry>
+</row>
+
+<row>
+<entry><literal>2201G</literal></entry>
+<entry>INVALID ARGUMENT FOR WIDTH BUCKET FUNCTION</entry>
 </row>
 
 <row>

@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2003, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/include/catalog/pg_proc.h,v 1.328 2004/05/07 16:57:16 tgl Exp $
+ * $PostgreSQL: pgsql/src/include/catalog/pg_proc.h,v 1.329 2004/05/14 21:42:28 neilc Exp $
  *
  * NOTES
  *	  The script catalog/genbki.sh reads this file and generates .bki
@@ -2508,6 +2508,8 @@ DATA(insert OID = 1745 ( float4					PGNSP PGUID 12 f f t f i 1 700 "1700" _null_
 DESCR("(internal)");
 DATA(insert OID = 1746 ( float8					PGNSP PGUID 12 f f t f i 1 701 "1700" _null_  numeric_float8 - _null_ ));
 DESCR("(internal)");
+DATA(insert OID = 2170 ( width_bucket			PGNSP PGUID 12 f f t f i 4 23 "1700 1700 1700 23" _null_  width_bucket_numeric - _null_ ));
+DESCR("bucket number of operand in equidepth histogram");
 
 DATA(insert OID = 1747 ( time_pl_interval		PGNSP PGUID 12 f f t f i 2 1083 "1083 1186" _null_  time_pl_interval - _null_ ));
 DESCR("plus");

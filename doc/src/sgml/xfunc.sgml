@@ -1,5 +1,5 @@
 <!--
-$PostgreSQL: pgsql/doc/src/sgml/xfunc.sgml,v 1.82 2004/05/10 22:44:43 tgl Exp $
+$PostgreSQL: pgsql/doc/src/sgml/xfunc.sgml,v 1.83 2004/05/14 21:42:27 neilc Exp $
 -->
 
  <sect1 id="xfunc">
@@ -56,7 +56,7 @@ $PostgreSQL: pgsql/doc/src/sgml/xfunc.sgml,v 1.82 2004/05/10 22:44:43 tgl Exp $
   </para>
 
   <para>
-   It's easiest to define <acronym>SQL</acronym> 
+   It's easiest to define <acronym>SQL</acronym>
    functions, so we'll start by discussing those.
    Most of the concepts presented for <acronym>SQL</acronym> functions
    will carry over to the other types of functions.
@@ -64,12 +64,12 @@ $PostgreSQL: pgsql/doc/src/sgml/xfunc.sgml,v 1.82 2004/05/10 22:44:43 tgl Exp $
 
   <para>
    Throughout this chapter, it can be useful to look at the reference
-   page of the <command>CREATE FUNCTION</command> command to
-   understand the examples better.
-   Some examples from this chapter
-   can be found in <filename>funcs.sql</filename> 
-   and <filename>funcs.c</filename> in the <filename>src/tutorial</>
-   directory in the <productname>PostgreSQL</productname> source distribution.
+   page of the <xref linkend="sql-createfunction"> command to
+   understand the examples better.  Some examples from this chapter
+   can be found in <filename>funcs.sql</filename> and
+   <filename>funcs.c</filename> in the <filename>src/tutorial</>
+   directory in the <productname>PostgreSQL</productname> source
+   distribution.
   </para>
   </sect1>
 
