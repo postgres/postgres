@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/advanced.sgml,v 1.10 2000/04/07 13:30:58 thomas Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/advanced.sgml,v 1.11 2000/04/11 05:39:06 thomas Exp $
 -->
 
  <chapter id="advanced">
@@ -233,105 +233,6 @@ SELECT SAL_EMP.schedule[1:2][1:1]
     </para>
    </sect2>
   </sect1>
-
-<!--
-
-We haven't had Time Travel for two or three years, so let's stop
-mentioning it. - thomas 2000-04-02
-
-  <sect1>
-   <title>Time Travel</title>
-
-   <para>
-    As of <productname>Postgres</productname> v6.2, <emphasis>time
-     travel is no longer supported</emphasis>. There are
-    several reasons for this: performance impact, storage size, and a
-    pg_time file which grows
-    toward infinite size in a short period of time.
-   </para>
-
-   <para>
-    New features such as triggers allow one to mimic the behavior of
-    time travel when desired, without
-    incurring the overhead when it is not needed (for most users, this
-    is most of the time).
-    See examples in the <filename>contrib</filename> directory for
-    more information.
-   </para>
-
-   <note>
-    <title>Time travel is deprecated</title>
-    <para>
-     The remaining text in this section is retained only until it can
-     be rewritten in the context
-     of new techniques to accomplish the same purpose.
-     Volunteers? - thomas 1998-01-12
-    </para>
-   </note>
-
-   <para>
-    <productname>Postgres</productname> supports the notion of time
-    travel.  This feature 
-    allows a user  to  run  historical  queries.   For
-    example,  to  find  the  current population of Mariposa
-    city, one would query:
-
-    <programlisting>
-SELECT * FROM cities WHERE name = 'Mariposa';
-
-+---------+------------+----------+
-|name     | population | altitude |
-+---------+------------+----------+
-|Mariposa | 1320       | 1953     |
-+---------+------------+----------+
-    </programlisting>
-
-    <productname>Postgres</productname> will automatically find the
-    version  of  Mariposa's 
-    record valid at the current time.
-    One can also give a time range.  For example to see the
-    past and present populations  of  Mariposa,  one  would
-    query:
-
-    <programlisting>
-SELECT name, population
-    FROM cities['epoch', 'now']
-    WHERE name = 'Mariposa';
-</programlisting>
-
-    where  "epoch"  indicates  the  beginning of the system
-    clock.
-
-    <note>
-     <para>
-      On Unix systems, this is always  midnight,  January  1, 1970 GMT.
-     </para>
-    </note>
-   </para>
-
-   <para>
-    If  you  have  executed all of the examples so
-    far, then the above query returns:
-
-    <programlisting>
-+---------+------------+
-|name     | population |
-+---------+------------+
-|Mariposa | 1200       |
-+---------+------------+
-|Mariposa | 1320       |
-+---------+------------+
-    </programlisting>
-   </para>
-
-   <para>
-    The default beginning of a time range is  the  earliest
-    time representable by the system and the default end is
-    the current time; thus, the above  time  range  can  be
-    abbreviated as ``[,].''
-   </para>
-  </sect1>
--->
 
   <sect1>
    <title>More Advanced Features</title>

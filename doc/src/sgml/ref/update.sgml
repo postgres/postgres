@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/ref/update.sgml,v 1.8 2000/03/26 18:32:27 petere Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/ref/update.sgml,v 1.9 2000/04/11 05:39:15 thomas Exp $
 Postgres documentation
 -->
 
@@ -182,7 +182,7 @@ SELECT * FROM films WHERE kind = 'Dramatic' OR kind = 'Drama';
     the positioned UPDATE statement:
 
     <synopsis>
-UPDATE table SET column = expression [, ...]
+UPDATE <replaceable>table</replaceable> SET <replaceable>column</replaceable> = <replaceable>expression</replaceable> [, ...]
     WHERE CURRENT OF <replaceable class="parameter">cursor</replaceable>
     </synopsis>
 

@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/ref/comment.sgml,v 1.3 1999/10/26 16:36:28 momjian Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/ref/comment.sgml,v 1.4 2000/04/11 05:39:15 thomas Exp $
 Postgres documentation
 -->
 
@@ -101,7 +101,7 @@ COMMENT
   <para>
    <command>COMMENT</command> adds a comment to an object that can be 
     easily retrieved with <application>psql's</application>
-    <emphasize>\dd</emphasize> command.
+    <emphasis>\dd</emphasis> command.
     To remove a comment, use <literal>NULL</literal>.
     Comments are automatically dropped when the object is dropped.
   </para>

@@ -150,11 +150,15 @@
 	 (<ulink url="mailto:t-ishii@sra.co.jp">Tatsuo Ishii</ulink>)</entry>
        </row>
        <row>
-	<entry>NetBSD</entry>
+	<entry>NetBSD 1.4</entry>
 	<entry>arm32</entry>
-	<entry>v6.5</entry>
-	<entry>1999-04-14</entry>
+	<entry>v7.0</entry>
+	<entry>2000-04-08</entry>
+	<entry>(<ulink url="mailto:prlw1@newn.cam.ac.uk">Patrick
+	  Welche</ulink>)</entry>
+<!--
 	<entry>(<ulink url="mailto:a.mcmurry1@physics.oxford.ac.uk">Andrew McMurry</ulink>)</entry>
+-->
        </row>
        <row>
 	<entry>NetBSD 1.4U</entry>
