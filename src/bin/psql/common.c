@@ -3,7 +3,7 @@
  *
  * Copyright (c) 2000-2004, PostgreSQL Global Development Group
  *
- * $PostgreSQL: pgsql/src/bin/psql/common.c,v 1.90 2004/08/29 05:06:54 momjian Exp $
+ * $PostgreSQL: pgsql/src/bin/psql/common.c,v 1.91 2004/09/20 18:51:19 tgl Exp $
  */
 #include "postgres_fe.h"
 #include "common.h"
@@ -62,7 +62,7 @@ typedef struct _timeb TimevalStruct;
 extern bool prompt_state;
 
 
-static bool is_transact_command(const char *query);
+static bool command_no_begin(const char *query);
 
 
 /*
@@ -895,7 +895,7 @@ SendQuery(const char *query)
 
 	if (PQtransactionStatus(pset.db) == PQTRANS_IDLE &&
 		!GetVariableBool(pset.vars, "AUTOCOMMIT") &&
-		!is_transact_command(query))
+		!command_no_begin(query))
 	{
 		results = PQexec(pset.db, "BEGIN");
 		if (PQresultStatus(results) != PGRES_COMMAND_OK)
@@ -946,64 +946,146 @@ SendQuery(const char *query)
 	return OK;
 }
 
+
 /*
- * check whether a query string begins with BEGIN/COMMIT/ROLLBACK/START XACT
+ * Advance the given char pointer over white space and SQL comments.
+ */
+static const char *
+skip_white_space(const char *query)
+{
+	int			cnestlevel = 0;		/* slash-star comment nest level */
+
+	while (*query)
+	{
+		int		mblen = PQmblen(query, pset.encoding);
+
+		/*
+		 * Note: we assume the encoding is a superset of ASCII, so that
+		 * for example "query[0] == '/'" is meaningful.  However, we do NOT
+		 * assume that the second and subsequent bytes of a multibyte
+		 * character couldn't look like ASCII characters; so it is critical
+		 * to advance by mblen, not 1, whenever we haven't exactly identified
+		 * the character we are skipping over.
+		 */
+		if (isspace((unsigned char) *query))
+			query += mblen;
+		else if (query[0] == '/' && query[1] == '*')
+		{
+			cnestlevel++;
+			query += 2;
+		}
+		else if (cnestlevel > 0 && query[0] == '*' && query[1] == '/')
+		{
+			cnestlevel--;
+			query += 2;
+		}
+		else if (cnestlevel == 0 && query[0] == '-' && query[1] == '-')
+		{
+			query += 2;
+			/*
+			 * We have to skip to end of line since any slash-star inside
+			 * the -- comment does NOT start a slash-star comment.
+			 */
+			while (*query)
+			{
+				if (*query == '\n')
+				{
+					query++;
+					break;
+				}
+				query += PQmblen(query, pset.encoding);
+			}
+		}
+		else if (cnestlevel > 0)
+			query += mblen;
+		else
+			break;				/* found first token */
+	}
+
+	return query;
+}
+
+
+/*
+ * Check whether a command is one of those for which we should NOT start
+ * a new transaction block (ie, send a preceding BEGIN).
+ *
+ * These include the transaction control statements themselves, plus
+ * certain statements that the backend disallows inside transaction blocks.
  */
 static bool
-is_transact_command(const char *query)
+command_no_begin(const char *query)
 {
 	int			wordlen;
 
 	/*
 	 * First we must advance over any whitespace and comments.
 	 */
-	while (*query)
-	{
-		if (isspace((unsigned char) *query))
-			query++;
-		else if (query[0] == '-' && query[1] == '-')
-		{
-			query += 2;
-			while (*query && *query != '\n')
-				query++;
-		}
-		else if (query[0] == '/' && query[1] == '*')
-		{
-			query += 2;
-			while (*query)
-			{
-				if (query[0] == '*' && query[1] == '/')
-				{
-					query += 2;
-					break;
-				}
-				else
-					query++;
-			}
-		}
-		else
-			break;				/* found first token */
-	}
+	query = skip_white_space(query);
 
 	/*
-	 * Check word length ("beginx" is not "begin").
+	 * Check word length (since "beginx" is not "begin").
 	 */
 	wordlen = 0;
 	while (isalpha((unsigned char) query[wordlen]))
-		wordlen++;
+		wordlen += PQmblen(&query[wordlen], pset.encoding);
 
-	if (wordlen == 5 && pg_strncasecmp(query, "begin", 5) == 0)
-		return true;
-	if (wordlen == 6 && pg_strncasecmp(query, "commit", 6) == 0)
-		return true;
-	if (wordlen == 8 && pg_strncasecmp(query, "rollback", 8) == 0)
-		return true;
+	/*
+	 * Transaction control commands.  These should include every keyword
+	 * that gives rise to a TransactionStmt in the backend grammar, except
+	 * for the savepoint-related commands.
+	 *
+	 * (We assume that START must be START TRANSACTION, since there is 
+	 * presently no other "START foo" command.)
+	 */
 	if (wordlen == 5 && pg_strncasecmp(query, "abort", 5) == 0)
 		return true;
-	if (wordlen == 3 && pg_strncasecmp(query, "end", 3) == 0)
+	if (wordlen == 5 && pg_strncasecmp(query, "begin", 5) == 0)
 		return true;
 	if (wordlen == 5 && pg_strncasecmp(query, "start", 5) == 0)
 		return true;
+	if (wordlen == 6 && pg_strncasecmp(query, "commit", 6) == 0)
+		return true;
+	if (wordlen == 3 && pg_strncasecmp(query, "end", 3) == 0)
+		return true;
+	if (wordlen == 8 && pg_strncasecmp(query, "rollback", 8) == 0)
+		return true;
+
+	/*
+	 * Commands not allowed within transactions.  The statements checked
+	 * for here should be exactly those that call PreventTransactionChain()
+	 * in the backend.
+	 *
+	 * Note: we are a bit sloppy about CLUSTER, which is transactional in
+	 * some variants but not others.
+	 */
+	if (wordlen == 6 && pg_strncasecmp(query, "vacuum", 6) == 0)
+		return true;
+	if (wordlen == 7 && pg_strncasecmp(query, "cluster", 7) == 0)
+		return true;
+
+	/*
+	 * Note: these tests will match REINDEX TABLESPACE, which isn't really
+	 * a valid command so we don't care much.  The other five possible
+	 * matches are correct.
+	 */
+	if ((wordlen == 6 && pg_strncasecmp(query, "create", 6) == 0) ||
+		(wordlen == 4 && pg_strncasecmp(query, "drop", 4) == 0) ||
+		(wordlen == 7 && pg_strncasecmp(query, "reindex", 7) == 0))
+	{
+		query += wordlen;
+
+		query = skip_white_space(query);
+
+		wordlen = 0;
+		while (isalpha((unsigned char) query[wordlen]))
+			wordlen += PQmblen(&query[wordlen], pset.encoding);
+
+		if (wordlen == 8 && pg_strncasecmp(query, "database", 8) == 0)
+			return true;
+		if (wordlen == 10 && pg_strncasecmp(query, "tablespace", 10) == 0)
+			return true;
+	}
 
 	return false;
 }
