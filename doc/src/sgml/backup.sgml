@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/backup.sgml,v 2.22 2001/11/28 20:49:09 petere Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/backup.sgml,v 2.23 2002/10/21 02:11:37 tgl Exp $
 -->
 <chapter id="backup">
  <title>Backup and Restore</title>
@@ -419,7 +419,7 @@ cd /usr/src/postgresql-&version;
 gmake install
 initdb -D /usr/local/pgsql/data
 postmaster -D /usr/local/pgsql/data
-psql < backup
+psql template1 < backup
 </programlisting>
 </informalexample>
    See <xref linkend="runtime"> about ways to start and stop the
