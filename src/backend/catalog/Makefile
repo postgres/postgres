@@ -4,7 +4,7 @@
 #    Makefile for catalog
 #
 # IDENTIFICATION
-#    $Header: /cvsroot/pgsql/src/backend/catalog/Makefile,v 1.15 1999/01/17 06:18:14 momjian Exp $
+#    $Header: /cvsroot/pgsql/src/backend/catalog/Makefile,v 1.16 1999/01/18 06:32:24 momjian Exp $
 #
 #-------------------------------------------------------------------------
 
@@ -57,8 +57,7 @@ depend dep:
 
 clean: 
 	rm -f SUBSYS.o $(OBJS) global1.bki.source local1_template1.bki.source \
-				global1.description local1_template1.description \
-				$(GENBKI)
+				global1.description local1_template1.description
 
 ifeq (depend,$(wildcard depend))
 include depend

@@ -28,6 +28,13 @@ ZeroSecs
 @ 0     
 (1 row)
 
+QUERY: SET DateStyle = 'Postgres,noneuropean';
+QUERY: SELECT datetime('1994-01-01', '11:00') AS "Jan_01_1994_11am";
+Jan_01_1994_11am
+----------------------------
+Sat Jan 01 11:00:00 1994 PST
+(1 row)
+
 QUERY: CREATE TABLE DATETIME_TBL( d1 datetime);
 QUERY: INSERT INTO DATETIME_TBL VALUES ('current');
 QUERY: INSERT INTO DATETIME_TBL VALUES ('today');
