@@ -143,12 +143,13 @@ To upgrade to PostgreSQL v6.1 do the following:
      /usr/lib/libfl.a, /usr/include/FlexLexer.h and will add link
      /usr/bin/flex++ which points to flex.
 
-  6) If you are upgrading an existing system from any version before
-     version 6.1 beta release 970525 then back up the current
-     database.  (If you don't mind the restored tables being owned by
-     the postgres account then you may use your current pg_dumpall
-     script instead of the new pg_dumpall script used below.)  Type
-     (with the gunzip line and the following line typed as one line):
+  6) If you are upgrading an existing system then back up your database.
+     The database format is liable to change every few weeks with no
+     notice besides a quick comment in the HACKERS mailing list.  It is
+     therefore a bad idea to skip this step.  Also, do not use the
+     pg_dumpall script from v6.0 or everything will be owned by the
+     postgres super user.  Type (with the gunzip line and the following
+     line typed as one line):
         cd
         gunzip -c postgresql-v6.1.tar.gz |
             tar xvf - src/bin/pg_dump/pg_dumpall
@@ -493,9 +494,26 @@ To upgrade to PostgreSQL v6.1 do the following:
           loading order of the various programs pointed to in directory
           /etc/rc3.d.  (Note that this example has not been tested yet.)
 
-     You might also want to modify your computer so that cron will run
-     the vacuum command nightly and do regular backups.  Look at the
-     man page for crontab for a starting point on how to do this.
+ 22a) If you haven't already done so, this would be a good time to modify
+      your computer to do regular maintainence.  The following should be
+      done at regular intervals:
+
+        a) Run the SQL command vacuum.  This will clean up your database.
+        b) Back up your system.  (You should probably keep the last few
+           backups on hand.)  Ideally, no one else should be using the
+           system at the time.
+        c) Stop and restart the postmaster.  The software currently
+           suffers from memory leaks.  This means that as more commands
+           are processed, the program will allocate, then forget about,
+           more and more memory.  Eventually your computer will run
+           low on memory and start to swap excessively.  This problem
+           will probably be gone in the next release.
+
+      Ideally, the above tasks should be done by a shell script that is
+      run nightly or weekly by cron.  Look at the man page for crontab
+      for a starting point on how to do this.  (If you do it, please
+      e-mail us a copy of your shell script.  We would like to set up
+      our own systems to do this too.)
 
  23) If you are upgrading an existing system then install your old database.
      Type
