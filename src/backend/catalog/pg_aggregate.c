@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/catalog/pg_aggregate.c,v 1.69 2004/12/31 21:59:38 pgsql Exp $
+ *	  $PostgreSQL: pgsql/src/backend/catalog/pg_aggregate.c,v 1.70 2005/01/27 23:42:15 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -22,10 +22,13 @@
 #include "catalog/pg_aggregate.h"
 #include "catalog/pg_language.h"
 #include "catalog/pg_proc.h"
+#include "miscadmin.h"
 #include "optimizer/cost.h"
 #include "parser/parse_coerce.h"
 #include "parser/parse_func.h"
+#include "utils/acl.h"
 #include "utils/builtins.h"
+#include "utils/lsyscache.h"
 #include "utils/syscache.h"
 
 
@@ -262,6 +265,7 @@ lookup_agg_function(List *fnName,
 	bool		retset;
 	Oid		   *true_oid_array;
 	FuncDetailCode fdresult;
+	AclResult	aclresult;
 
 	/*
 	 * func_get_detail looks up the function in the catalogs, does
@@ -325,6 +329,11 @@ lookup_agg_function(List *fnName,
 				(errcode(ERRCODE_DATATYPE_MISMATCH),
 				 errmsg("function %s requires run-time type coercion",
 				 func_signature_string(fnName, nargs, true_oid_array))));
+
+	/* Check aggregate creator has permission to call the function */
+	aclresult = pg_proc_aclcheck(fnOid, GetUserId(), ACL_EXECUTE);
+	if (aclresult != ACLCHECK_OK)
+		aclcheck_error(aclresult, ACL_KIND_PROC, get_func_name(fnOid));
 
 	return fnOid;
 }
