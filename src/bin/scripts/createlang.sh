@@ -7,7 +7,7 @@
 # Portions Copyright (c) 1996-2002, PostgreSQL Global Development Group
 # Portions Copyright (c) 1994, Regents of the University of California
 #
-# $Header: /cvsroot/pgsql/src/bin/scripts/Attic/createlang.sh,v 1.42 2002/10/18 22:05:36 petere Exp $
+# $Header: /cvsroot/pgsql/src/bin/scripts/Attic/createlang.sh,v 1.42.2.1 2003/04/26 15:19:05 tgl Exp $
 #
 #-------------------------------------------------------------------------
 
@@ -256,7 +256,7 @@ fi
 # ----------
 # Check whether the call handler exists
 # ----------
-sqlcmd="SELECT oid FROM pg_proc WHERE proname = '$handler' AND prorettype = 0 AND pronargs = 0;"
+sqlcmd="SELECT oid FROM pg_proc WHERE proname = '$handler' AND prorettype = (SELECT oid FROM pg_type WHERE typname = 'language_handler') AND pronargs = 0;"
 if [ "$showsql" = yes ]; then
 	echo "$sqlcmd"
 fi
