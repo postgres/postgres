@@ -10,7 +10,7 @@
 #
 #
 # IDENTIFICATION
-#    $Header: /cvsroot/pgsql/src/backend/catalog/Attic/genbki.sh.in,v 1.1 1998/10/14 16:05:01 thomas Exp $
+#    $Header: /cvsroot/pgsql/src/backend/catalog/Attic/genbki.sh.in,v 1.2 1998/10/28 19:38:46 tgl Exp $
 #
 # NOTES
 #    non-essential whitespace is removed from the generated file.
@@ -18,7 +18,7 @@
 #    end can be changed into another awk script or something smarter..
 #
 #-------------------------------------------------------------------------
-trap "rm -f /tmp/genbki.tmp" 0 1 2 3 15
+trap "rm -f /tmp/genbki.tmp /tmp/genbkitmp.c" 0 1 2 3 15
 
 # make sure it is empty
 >/tmp/genbki.tmp
@@ -261,8 +261,9 @@ END {
 		reln_open = 0;
 	}
 }
-' | \
-@CPP@ @CPPSTDIN@ $BKIOPTS | \
+' >/tmp/genbkitmp.c
+
+@CPP@ $BKIOPTS /tmp/genbkitmp.c | \
 sed -e '/^[ 	]*$/d' \
     -e 's/[ 	][ 	]*/ /g' || exit 1
 
