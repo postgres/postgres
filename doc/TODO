@@ -72,7 +72,7 @@ MISC
 * Plpgsql does not handle quoted mixed-case identifiers
 * -Fix btree to give a useful elog when key > 1/2 (page - overhead)(Tom)
 * -pg_dump should preserve primary key information(Peter E)
-* plpgsql regression tests fails on BSD/OS
+* -plpgsql regression tests fails on BSD/OS
 * -database names with spaces fail
 * -insert of 0.0 into DECIMAL(4,4) field fails(Tom)
 * -* Interlock to prevent DROP DATABASE on a database with running backendsInterlock to prevent DROP DATABASE on a database with running backends

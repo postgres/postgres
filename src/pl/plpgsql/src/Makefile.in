@@ -4,7 +4,7 @@
 #    Makefile for the plpgsql shared object
 #
 # IDENTIFICATION
-#    $Header: /cvsroot/pgsql/src/pl/plpgsql/src/Attic/Makefile.in,v 1.19 2000/01/16 20:04:59 petere Exp $
+#    $Header: /cvsroot/pgsql/src/pl/plpgsql/src/Attic/Makefile.in,v 1.20 2000/02/23 22:24:45 momjian Exp $
 #
 #-------------------------------------------------------------------------
 
@@ -22,6 +22,10 @@ CFLAGS+= -I$(SRCDIR)/backend
 
 # If using flex, ask for a case-insensitive, lex-compatible lexer.
 ifneq (,$(findstring flex,$(LEX)))
+LFLAGS+= -i -l
+endif
+# bsdi calls flex lex
+ifeq ($(PORTNAME), bsdi)
 LFLAGS+= -i -l
 endif
 

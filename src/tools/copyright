@@ -1,0 +1,5 @@
+rgrepc -l 'Copyright.*Regents' | while read FILE
+do
+	pipe sed 's/^\(.*\)\(Copyright.*Regents.*\)$/ * Portions Copyright (c) 1996-1999, PostgreSQL, Inc\
+\1Portions \2/g' $FILE
+done
