@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/optimizer/plan/planner.c,v 1.55 1999/06/06 17:38:10 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/optimizer/plan/planner.c,v 1.56 1999/06/12 19:27:41 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -222,6 +222,10 @@ union_planner(Query *parse)
 		if (vpm != NULL)
 			pfree(vpm);
 	}
+
+	/* query_planner returns NULL if it thinks plan is bogus */
+	if (! result_plan)
+		elog(ERROR, "union_planner: failed to create plan");
 
 	/*
 	 * If we have a GROUP BY clause, insert a group node (with the
