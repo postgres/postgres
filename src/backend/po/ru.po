@@ -1,10 +1,10 @@
 # ru.po
 # POSTGRES Translated Messages into the Russian Language (KOI8-R)
 #
-# $Header: /cvsroot/pgsql/src/backend/po/Attic/ru.po,v 1.16 2004/06/13 21:41:33 petere Exp $
+# $Header: /cvsroot/pgsql/src/backend/po/Attic/ru.po,v 1.17 2004/07/02 15:07:10 petere Exp $
 #
 # ChangeLog:
-#   - March 27 - May 16, 2004: updates for 7.4 - 7.5 branches; <mokhov@cs.concordia.ca>
+#   - March 27 - June 24, 2004: updates for 7.4 - 7.5 branches; <mokhov@cs.concordia.ca>
 #   - July - August 23, 2003: updates for 7.4.x; <mokhov@cs.concordia.ca>
 #   - January 2, 2003: Fuzzy Fixes, Serguei A. Mokhov <mokhov@cs.concordia.ca>
 #   - October 12, 2002: Post-7.3 beta 2, Fuzzy Fixes, Serguei A. Mokhov <mokhov@cs.concordia.ca>
@@ -15,8 +15,8 @@
 msgid ""
 msgstr ""
 "Project-Id-Version: PostgreSQL 7.4.x\n"
-"POT-Creation-Date: 2004-06-12 19:13-0300\n"
-"PO-Revision-Date: 2004-06-13 14:46-0500\n"
+"POT-Creation-Date: 2004-06-21 01:17-0300\n"
+"PO-Revision-Date: 2004-06-24 00:04-0500\n"
 "Last-Translator: Serguei A. Mokhov <mokhov@cs.concordia.ca>\n"
 "Language-Team: pgsql-rus <pgsql-rus@yahoogroups.com>\n"
 "MIME-Version: 1.0\n"
@@ -26,7 +26,7 @@ msgstr ""
 #: parser/parse_clause.c:336
 #, c-format
 msgid "JOIN/ON clause refers to \"%s\", which is not part of JOIN"
-msgstr ""
+msgstr "выражение JOIN/ON ссылается на \"%s\", что не является частью JOIN"
 
 #: gram.y:4765
 #: parser/parse_clause.c:396
@@ -39,15 +39,15 @@ msgstr "подзапрос в FROM не может содержать SELECT INTO"
 
 #: parser/parse_clause.c:441
 msgid "subquery in FROM may not refer to other relations of same query level"
-msgstr ""
+msgstr "позапрос во FROM не может ссылаться на другие отношения на том же уровне запроса"
 
 #: parser/parse_clause.c:496
 msgid "function expression in FROM may not refer to other relations of same query level"
-msgstr ""
+msgstr "функциональное выражение во FROM не может ссылаться на другие отношения на том же уровне запроса"
 
 #: parser/parse_clause.c:508
 msgid "cannot use aggregate function in function expression in FROM"
-msgstr ""
+msgstr "нельзя использовать агрегатную фунцию в фунциональном выражении в FROM"
 
 #: parser/parse_clause.c:728
 #, c-format
@@ -57,7 +57,7 @@ msgstr "имя колонки \"%s\" фигурирует больше одного раза в USING-выражении"
 #: parser/parse_clause.c:743
 #, c-format
 msgid "common column name \"%s\" appears more than once in left table"
-msgstr ""
+msgstr "общее имя колонки \"%s\" фигурирует более одного раза в таблице слева"
 
 #: parser/parse_clause.c:752
 #, c-format
@@ -67,7 +67,7 @@ msgstr "колонка \"%s\" в USING-выражении не существует в таблице слева"
 #: parser/parse_clause.c:766
 #, c-format
 msgid "common column name \"%s\" appears more than once in right table"
-msgstr ""
+msgstr "общее имя колонки \"%s\" фигурирует более одного раза в таблице справа"
 
 #: parser/parse_clause.c:775
 #, c-format
@@ -77,7 +77,7 @@ msgstr "колонка \"%s\" в USING-выражении не существует в таблице справа"
 #: parser/parse_clause.c:827
 #, c-format
 msgid "column alias list for \"%s\" has too many entries"
-msgstr ""
+msgstr "слишком много записей в списке алиасов колонки \"%s\""
 
 #. translator: %s is name of a SQL construct, eg LIMIT
 #: parser/parse_clause.c:1020
@@ -101,7 +101,7 @@ msgstr "аргумент к %s не должен содержать подзапросы"
 #: parser/parse_clause.c:1146
 #, c-format
 msgid "%s \"%s\" is ambiguous"
-msgstr ""
+msgstr "выражение %s \"%s\" двусмысленно"
 
 #. translator: %s is name of a SQL construct, eg ORDER BY
 #: parser/parse_clause.c:1168
@@ -113,7 +113,7 @@ msgstr "нецелочисленная константа в %s"
 #: parser/parse_clause.c:1185
 #, c-format
 msgid "%s position %d is not in select list"
-msgstr ""
+msgstr "позиция %s %d не в списке выборки"
 
 #: parser/parse_clause.c:1370
 msgid "for SELECT DISTINCT, ORDER BY expressions must appear in select list"
@@ -171,17 +171,17 @@ msgstr ""
 #: parser/analyze.c:1442
 #, c-format
 msgid "column \"%s\" named in key does not exist"
-msgstr ""
+msgstr "колонка \"%s\" указанная в ключе не существует"
 
 #: parser/analyze.c:1454
 #, c-format
 msgid "column \"%s\" appears twice in primary key constraint"
-msgstr ""
+msgstr "колонка \"%s\" фигурирует дважды в первичном ключе"
 
 #: parser/analyze.c:1459
 #, c-format
 msgid "column \"%s\" appears twice in unique constraint"
-msgstr ""
+msgstr "колонка \"%s\" фигурирует дважды в констрейнте UNIQUE"
 
 #: parser/analyze.c:1553
 #, c-format
@@ -190,19 +190,19 @@ msgstr "%s / %s%s создаст подразумеваемый индекс \"%s\" для таблицы \"%s\""
 
 #: parser/analyze.c:1658
 msgid "index expression may not return a set"
-msgstr ""
+msgstr "идексное выражение не может возвращать множество"
 
 #: parser/analyze.c:1750
 msgid "rule WHERE condition may not contain references to other relations"
-msgstr ""
+msgstr "условие правила WHERE не может содержать ссылки на другие отношения"
 
 #: parser/analyze.c:1756
 msgid "rule WHERE condition may not contain aggregate functions"
-msgstr ""
+msgstr "условие правила WHERE не может содержать аггрегатные функции"
 
 #: parser/analyze.c:1827
 msgid "rules with WHERE conditions may only have SELECT, INSERT, UPDATE, or DELETE actions"
-msgstr ""
+msgstr "правила с условиями WHERE могут содержать только действия SELECT, INSERT, UPDATE илм DELETE"
 
 #: parser/analyze.c:1846
 #: parser/analyze.c:1918
@@ -210,7 +210,7 @@ msgstr ""
 #: rewrite/rewriteManip.c:746
 #: rewrite/rewriteManip.c:802
 msgid "conditional UNION/INTERSECT/EXCEPT statements are not implemented"
-msgstr ""
+msgstr "условные команды UNION/INTERSECT/EXCEPT не реализованы"
 
 #: parser/analyze.c:1864
 msgid "ON SELECT rule may not use OLD"
@@ -237,7 +237,7 @@ msgstr "нельзя использовать SELECT FOR UPDATE в UNION/INTERSECT/EXCEPT"
 
 #: parser/analyze.c:2211
 msgid "ORDER BY on a UNION/INTERSECT/EXCEPT result must be on one of the result columns"
-msgstr ""
+msgstr "ORDER BY для результата UNION/INTERSECT/EXCEPT должен быть по одной из результирующих колонок"
 
 #: parser/analyze.c:2249
 msgid "INTO is only allowed on first SELECT of UNION/INTERSECT/EXCEPT"
@@ -250,7 +250,7 @@ msgstr ""
 #: parser/analyze.c:2363
 #, c-format
 msgid "each %s query must have the same number of columns"
-msgstr ""
+msgstr "каждый запрос %s должен иметь одинаковое число колонок"
 
 #: parser/analyze.c:2433
 msgid "CREATE TABLE AS specifies too many column names"
@@ -305,11 +305,11 @@ msgstr "нельзя использовать SELECT FOR UPDATE с агрегатными функциями"
 
 #: parser/analyze.c:2901
 msgid "SELECT FOR UPDATE cannot be applied to a join"
-msgstr ""
+msgstr "нельзя применять SELECT FOR UPDATE к JOIN"
 
 #: parser/analyze.c:2906
 msgid "SELECT FOR UPDATE cannot be applied to NEW or OLD"
-msgstr ""
+msgstr "нельзя применять SELECT FOR UPDATE к NEW или OLD"
 
 #: parser/analyze.c:2911
 msgid "SELECT FOR UPDATE cannot be applied to a function"
@@ -318,7 +318,7 @@ msgstr "SELECT FOR UPDATE: нельзя применять к функции"
 #: parser/analyze.c:2924
 #, c-format
 msgid "relation \"%s\" in FOR UPDATE clause not found in FROM clause"
-msgstr ""
+msgstr "отношение \"%s\" в выражении FOR UPDATE не найдено в выражении FROM"
 
 #: parser/analyze.c:3016
 msgid "misplaced DEFERRABLE clause"
@@ -371,30 +371,30 @@ msgstr "параметр $%d не существует"
 #: tcop/postgres.c:1142
 #, c-format
 msgid "could not determine data type of parameter $%d"
-msgstr ""
+msgstr "не определить тип данныз параметра $%d"
 
 #: executor/execQual.c:2454
 #: optimizer/util/clauses.c:411
 #: parser/parse_agg.c:74
 msgid "aggregate function calls may not be nested"
-msgstr ""
+msgstr "вызовы агрегатных функций не могут быть вложенными"
 
 #: parser/parse_agg.c:120
 msgid "aggregates not allowed in WHERE clause"
-msgstr ""
+msgstr "агрегаты не дозволены в WHERE"
 
 #: parser/parse_agg.c:124
 msgid "aggregates not allowed in JOIN conditions"
-msgstr ""
+msgstr "агрегаты не дозволены в условиях JOIN"
 
 #: parser/parse_agg.c:143
 msgid "aggregates not allowed in GROUP BY clause"
-msgstr ""
+msgstr "агрегаты не дозволены в GROUP BY"
 
 #: parser/parse_agg.c:316
 #, c-format
 msgid "column \"%s.%s\" must appear in the GROUP BY clause or be used in an aggregate function"
-msgstr ""
+msgstr "колонка \"%s.%s\" должна фигурировать в выражении GROUP BY или использоваться в агрегатной функции"
 
 #: parser/parse_agg.c:321
 #, c-format
@@ -427,7 +427,7 @@ msgstr "тип аргумента конструкции %s должен быть boolean, а не %s"
 #: parser/parse_coerce.c:626
 #, c-format
 msgid "argument of %s must not return a set"
-msgstr ""
+msgstr "аргумент к %s не должнен возвращать множество"
 
 #. translator: first %s is name of a SQL construct, eg LIMIT
 #: parser/parse_coerce.c:618
@@ -484,13 +484,13 @@ msgstr ""
 #: parser/parse_relation.c:189
 #, c-format
 msgid "table reference \"%s\" is ambiguous"
-msgstr ""
+msgstr "ссылка на таблицу \"%s\" неоднозначна"
 
 #: parser/parse_relation.c:249
 #: parser/parse_relation.c:264
 #, c-format
 msgid "table reference %u is ambiguous"
-msgstr ""
+msgstr "ссылка на таблицу %u неоднозначна"
 
 #: parser/parse_relation.c:356
 #: parser/parse_relation.c:368
@@ -502,7 +502,7 @@ msgstr "имя таблицы \"%s\" указано больше одного раза"
 #: parser/parse_relation.c:574
 #, c-format
 msgid "column reference \"%s\" is ambiguous"
-msgstr ""
+msgstr "ссылка на колонку \"%s\" неоднозначна"
 
 #: parser/parse_relation.c:669
 #: parser/parse_relation.c:764
@@ -950,7 +950,7 @@ msgstr "%s в конце ввода"
 #: scan.l:572
 #, c-format
 msgid "%s at or near \"%s\""
-msgstr ""
+msgstr "%s в или рядом \"%s\""
 
 #: y.tab.c:9086
 msgid "syntax error: cannot back up"
@@ -992,7 +992,7 @@ msgstr ""
 #: utils/adt/ri_triggers.c:2535
 #: utils/adt/ri_triggers.c:2657
 msgid "MATCH PARTIAL not yet implemented"
-msgstr ""
+msgstr "выражение MATCH PARTIAL ещё не реализовано"
 
 #: gram.y:1852
 msgid "CREATE TABLE AS may not specify INTO"
@@ -1000,19 +1000,19 @@ msgstr "CREATE TABLE AS не может указывать INTO"
 
 #: gram.y:2260
 msgid "CREATE ASSERTION is not yet implemented"
-msgstr ""
+msgstr "выражение CREATE ASSERTION ещё не реализовано"
 
 #: gram.y:2276
 msgid "DROP ASSERTION is not yet implemented"
-msgstr ""
+msgstr "выражение DROP ASSERTION ещё не реализовано"
 
 #: gram.y:3086
 msgid "CREATE FUNCTION / OUT parameters are not implemented"
-msgstr ""
+msgstr "CREATE FUNCTION / OUT параметры ещё не реализованы"
 
 #: gram.y:3093
 msgid "CREATE FUNCTION / INOUT parameters are not implemented"
-msgstr ""
+msgstr "CREATE FUNCTION / INOUT параметры ещё не реализованы"
 
 #: gram.y:3247
 #: utils/adt/regproc.c:639
@@ -1026,7 +1026,7 @@ msgstr ""
 
 #: gram.y:4150
 msgid "column name list not allowed in CREATE TABLE / AS EXECUTE"
-msgstr ""
+msgstr "список имён колонок не дозволен в CREATE TABLE / AS EXECUTE"
 
 #: gram.y:4615
 msgid "LIMIT #,# syntax is not supported"
@@ -1042,33 +1042,33 @@ msgstr "Например, FROM (SELECT ...) [AS] foo."
 
 #: gram.y:5193
 msgid "precision for type float must be at least 1 bit"
-msgstr ""
+msgstr "точность типа float должна быть минимум 1 бит"
 
 #: gram.y:5201
 msgid "precision for type float must be less than 54 bits"
-msgstr ""
+msgstr "точность типа float должна быть менее 54 бит"
 
 #: gram.y:5215
 #: gram.y:5230
 #, c-format
 msgid "NUMERIC precision %d must be between 1 and %d"
-msgstr ""
+msgstr "точность NUMERIC %d должна быть между 1 и %d"
 
 #: gram.y:5220
 #, c-format
 msgid "NUMERIC scale %d must be between 0 and precision %d"
-msgstr ""
+msgstr "масштаб NUMERIC %d должен быть между 0 и точностью %d"
 
 #: gram.y:5248
 #: gram.y:5263
 #, c-format
 msgid "DECIMAL precision %d must be between 1 and %d"
-msgstr ""
+msgstr "точность DECIMAL %d должна быть между 1 и %d"
 
 #: gram.y:5253
 #, c-format
 msgid "DECIMAL scale %d must be between 0 and precision %d"
-msgstr ""
+msgstr "масштаб DECIMAL %d должен быть между 0 и точностью %d"
 
 #: gram.y:5313
 #: gram.y:5391
@@ -7512,7 +7512,7 @@ msgstr ""
 #: utils/adt/varlena.c:1622
 #: utils/adt/varlena.c:1627
 msgid "invalid name syntax"
-msgstr ""
+msgstr "ошибка синтаксиса имени"
 
 #: utils/adt/not_in.c:65
 msgid "Must provide \"relationname.columnname\"."
@@ -8389,19 +8389,19 @@ msgstr "Настройка запросов / Другие опции планнера"
 
 #: utils/misc/guc.c:272
 msgid "Reporting and Logging"
-msgstr ""
+msgstr "Отчётность и журналирование"
 
 #: utils/misc/guc.c:274
 msgid "Reporting and Logging / Syslog"
-msgstr ""
+msgstr "Отчётность и журналирование / Syslog"
 
 #: utils/misc/guc.c:276
 msgid "Reporting and Logging / When to Log"
-msgstr ""
+msgstr "Отчётность и журналирование / Когда вести журнал"
 
 #: utils/misc/guc.c:278
 msgid "Reporting and Logging / What to Log"
-msgstr ""
+msgstr "Отчётность и журналирование / Что писать в журнал"
 
 #: utils/misc/guc.c:280
 msgid "Statistics"
