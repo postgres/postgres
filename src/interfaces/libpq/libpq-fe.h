@@ -6,7 +6,7 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: libpq-fe.h,v 1.18 1997/03/12 21:23:16 scrappy Exp $
+ * $Id: libpq-fe.h,v 1.19 1997/05/09 03:28:54 scrappy Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -301,6 +301,9 @@ int lo_export(PGconn *conn, Oid lobjId, char *filename);
 #define DefaultHost	"localhost"
 #define DefaultTty	""
 #define DefaultOption	""
+#define DefaultAuthtype       ""
+#define DefaultPassword       ""
+
 
 typedef void *TUPLE;
 #define palloc malloc
