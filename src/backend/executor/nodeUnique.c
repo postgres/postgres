@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/executor/nodeUnique.c,v 1.18 1998/11/27 19:52:03 vadim Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/executor/nodeUnique.c,v 1.19 1999/01/24 05:40:48 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -31,7 +31,7 @@
 #include "executor/nodeUnique.h"
 #include "optimizer/clauses.h"
 #include "access/heapam.h"
-#include "access/printtup.h"	/* for typtoout() */
+#include "access/printtup.h"	/* for getTypeOutAndElem() */
 #include "utils/builtins.h"		/* for namecpy() */
 
 /* ----------------------------------------------------------------
@@ -117,7 +117,8 @@ ExecUnique(Unique *node)
 	char	   *uniqueAttr;
 	AttrNumber	uniqueAttrNum;
 	TupleDesc	tupDesc;
-	Oid			typoutput;
+	Oid			typoutput,
+				typelem;
 
 	/* ----------------
 	 *	get information from the node
@@ -132,12 +133,14 @@ ExecUnique(Unique *node)
 	if (uniqueAttr)
 	{
 		tupDesc = ExecGetResultType(uniquestate);
-		typoutput = typtoout((Oid) tupDesc->attrs[uniqueAttrNum - 1]->atttypid);
+		getTypeOutAndElem((Oid) tupDesc->attrs[uniqueAttrNum - 1]->atttypid,
+						  &typoutput, &typelem);
 	}
 	else
 	{							/* keep compiler quiet */
 		tupDesc = NULL;
-		typoutput = 0;
+		typoutput = InvalidOid;
+		typelem = InvalidOid;
 	}
 
 	/* ----------------
@@ -196,11 +199,9 @@ ExecUnique(Unique *node)
 			{
 				if (isNull1)	/* both are null, they are equal */
 					continue;
-				val1 = fmgr(typoutput, attr1,
-				 gettypelem(tupDesc->attrs[uniqueAttrNum - 1]->atttypid),
+				val1 = fmgr(typoutput, attr1, typelem,
 							tupDesc->attrs[uniqueAttrNum - 1]->atttypmod);
-				val2 = fmgr(typoutput, attr2,
-				 gettypelem(tupDesc->attrs[uniqueAttrNum - 1]->atttypid),
+				val2 = fmgr(typoutput, attr2, typelem,
 							tupDesc->attrs[uniqueAttrNum - 1]->atttypmod);
 
 				/*

@@ -3,7 +3,7 @@
  * spi.c--
  *				Server Programming Interface
  *
- * $Id: spi.c,v 1.29 1998/12/14 05:18:51 scrappy Exp $
+ * $Id: spi.c,v 1.30 1999/01/24 05:40:48 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -409,7 +409,8 @@ SPI_getvalue(HeapTuple tuple, TupleDesc tupdesc, int fnumber)
 {
 	Datum		val;
 	bool		isnull;
-	Oid			foutoid;
+	Oid			foutoid,
+				typelem;
 
 	SPI_result = 0;
 	if (tuple->t_data->t_natts < fnumber || fnumber <= 0)
@@ -421,15 +422,14 @@ SPI_getvalue(HeapTuple tuple, TupleDesc tupdesc, int fnumber)
 	val = heap_getattr(tuple, fnumber, tupdesc, &isnull);
 	if (isnull)
 		return NULL;
-	foutoid = typtoout((Oid) tupdesc->attrs[fnumber - 1]->atttypid);
-	if (!OidIsValid(foutoid))
+	if (! getTypeOutAndElem((Oid) tupdesc->attrs[fnumber - 1]->atttypid,
+							&foutoid, &typelem))
 	{
 		SPI_result = SPI_ERROR_NOOUTFUNC;
 		return NULL;
 	}
 
-	return (fmgr(foutoid, val,
-				 gettypelem(tupdesc->attrs[fnumber - 1]->atttypid),
+	return (fmgr(foutoid, val, typelem,
 				 tupdesc->attrs[fnumber - 1]->atttypmod));
 }
 

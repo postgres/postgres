@@ -6,7 +6,7 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- *  $Id: be-dumpdata.c,v 1.19 1998/12/14 06:50:23 scrappy Exp $
+ *  $Id: be-dumpdata.c,v 1.20 1999/01/24 05:40:49 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -213,7 +213,8 @@ be_printtup(HeapTuple tuple, TupleDesc typeinfo)
 	int			i;
 	Datum		attr;
 	bool		isnull;
-	Oid			typoutput;
+	Oid			typoutput,
+				typelem;
 
 	PortalEntry *entry = NULL;
 	PortalBuffer *portal = NULL;
@@ -298,7 +299,8 @@ be_printtup(HeapTuple tuple, TupleDesc typeinfo)
 	for (i = 0; i < tuple->t_data->t_natts; i++)
 	{
 		attr = heap_getattr(tuple, i + 1, typeinfo, &isnull);
-		typoutput = typtoout((Oid) typeinfo->attrs[i]->atttypid);
+		getTypeOutAndElem((Oid) typeinfo->attrs[i]->atttypid,
+						  &typoutput, &typelem);
 
 		lengths[i] = typeinfo->attrs[i]->attlen;
 
@@ -311,11 +313,8 @@ be_printtup(HeapTuple tuple, TupleDesc typeinfo)
 		}
 
 		if (!isnull && OidIsValid(typoutput))
-		{
-			values[i] = fmgr(typoutput, attr,
-							 gettypelem(typeinfo->attrs[i]->atttypid),
+			values[i] = fmgr(typoutput, attr, typelem,
 							 typeinfo->attrs[i]->atttypmod);
-		}
 		else
 			values[i] = NULL;
 

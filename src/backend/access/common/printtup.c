@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/access/common/printtup.c,v 1.37 1998/12/12 22:04:09 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/access/common/printtup.c,v 1.38 1999/01/24 05:40:47 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -33,11 +33,15 @@
  */
 
 /* ----------------
- *		typtoout - used by printtup and debugtup
+ *		getTypeOutAndElem -- get both typoutput and typelem for a type
+ *
+ * We used to fetch these with two separate function calls,
+ * typtoout() and gettypelem(), which each called SearchSysCacheTuple.
+ * This way takes half the time.
  * ----------------
  */
-Oid
-typtoout(Oid type)
+int
+getTypeOutAndElem(Oid type, Oid* typOutput, Oid* typElem)
 {
 	HeapTuple	typeTuple;
 
@@ -46,26 +50,18 @@ typtoout(Oid type)
 									0, 0, 0);
 
 	if (HeapTupleIsValid(typeTuple))
-		return (Oid) ((Form_pg_type) GETSTRUCT(typeTuple))->typoutput;
+	{
+		Form_pg_type pt = (Form_pg_type) GETSTRUCT(typeTuple);
+		*typOutput = (Oid) pt->typoutput;
+		*typElem = (Oid) pt->typelem;
+		return OidIsValid(*typOutput);
+	}
 
-	elog(ERROR, "typtoout: Cache lookup of type %d failed", type);
-	return InvalidOid;
-}
+	elog(ERROR, "getTypeOutAndElem: Cache lookup of type %d failed", type);
 
-Oid
-gettypelem(Oid type)
-{
-	HeapTuple	typeTuple;
-
-	typeTuple = SearchSysCacheTuple(TYPOID,
-									ObjectIdGetDatum(type),
-									0, 0, 0);
-
-	if (HeapTupleIsValid(typeTuple))
-		return (Oid) ((Form_pg_type) GETSTRUCT(typeTuple))->typelem;
-
-	elog(ERROR, "typtoout: Cache lookup of type %d failed", type);
-	return InvalidOid;
+	*typOutput = InvalidOid;
+	*typElem = InvalidOid;
+	return 0;
 }
 
 /* ----------------
@@ -77,19 +73,19 @@ printtup(HeapTuple tuple, TupleDesc typeinfo)
 {
 	int			i,
 				j,
-				k;
+				k,
+				outputlen;
 	char	   *outputstr;
 	Datum		attr;
 	bool		isnull;
-	Oid			typoutput;
-
+	Oid			typoutput,
+				typelem;
 #ifdef MULTIBYTE
 	unsigned char *p;
-
 #endif
 
 	/* ----------------
-	 *	tell the frontend to expect new tuple data
+	 *	tell the frontend to expect new tuple data (in ASCII style)
 	 * ----------------
 	 */
 	pq_putnchar("D", 1);
@@ -127,28 +123,29 @@ printtup(HeapTuple tuple, TupleDesc typeinfo)
 		attr = heap_getattr(tuple, i + 1, typeinfo, &isnull);
 		if (isnull)
 			continue;
-
-		typoutput = typtoout((Oid) typeinfo->attrs[i]->atttypid);
-		if (OidIsValid(typoutput))
+		if (getTypeOutAndElem((Oid) typeinfo->attrs[i]->atttypid,
+							  &typoutput, &typelem))
 		{
-			outputstr = fmgr(typoutput, attr,
-							 gettypelem(typeinfo->attrs[i]->atttypid),
+			outputstr = fmgr(typoutput, attr, typelem,
 							 typeinfo->attrs[i]->atttypmod);
 #ifdef MULTIBYTE
 			p = pg_server_to_client(outputstr, strlen(outputstr));
-			pq_putint(strlen(p) + VARHDRSZ, VARHDRSZ);
-			pq_putnchar(p, strlen(p));
+			outputlen = strlen(p);
+			pq_putint(outputlen + VARHDRSZ, VARHDRSZ);
+			pq_putnchar(p, outputlen);
 #else
-			pq_putint(strlen(outputstr) + VARHDRSZ, VARHDRSZ);
-			pq_putnchar(outputstr, strlen(outputstr));
+			outputlen = strlen(outputstr);
+			pq_putint(outputlen + VARHDRSZ, VARHDRSZ);
+			pq_putnchar(outputstr, outputlen);
 #endif
 			pfree(outputstr);
 		}
 		else
 		{
 			outputstr = "<unprintable>";
-			pq_putint(strlen(outputstr) + VARHDRSZ, VARHDRSZ);
-			pq_putnchar(outputstr, strlen(outputstr));
+			outputlen = strlen(outputstr);
+			pq_putint(outputlen + VARHDRSZ, VARHDRSZ);
+			pq_putnchar(outputstr, outputlen);
 		}
 	}
 }
@@ -202,17 +199,18 @@ debugtup(HeapTuple tuple, TupleDesc typeinfo)
 	Datum		attr;
 	char	   *value;
 	bool		isnull;
-	Oid			typoutput;
+	Oid			typoutput,
+				typelem;
 
 	for (i = 0; i < tuple->t_data->t_natts; ++i)
 	{
 		attr = heap_getattr(tuple, i + 1, typeinfo, &isnull);
-		typoutput = typtoout((Oid) typeinfo->attrs[i]->atttypid);
-
-		if (!isnull && OidIsValid(typoutput))
+		if (isnull)
+			continue;
+		if (getTypeOutAndElem((Oid) typeinfo->attrs[i]->atttypid,
+							  &typoutput, &typelem))
 		{
-			value = fmgr(typoutput, attr,
-						 gettypelem(typeinfo->attrs[i]->atttypid),
+			value = fmgr(typoutput, attr, typelem,
 						 typeinfo->attrs[i]->atttypmod);
 			printatt((unsigned) i + 1, typeinfo->attrs[i], value);
 			pfree(value);
@@ -223,7 +221,6 @@ debugtup(HeapTuple tuple, TupleDesc typeinfo)
 
 /* ----------------
  *		printtup_internal
- *		Protocol expects either T, D, C, E, or N.
  *		We use a different data prefix, e.g. 'B' instead of 'D' to
  *		indicate a tuple in internal (binary) form.
  *
@@ -240,7 +237,7 @@ printtup_internal(HeapTuple tuple, TupleDesc typeinfo)
 	bool		isnull;
 
 	/* ----------------
-	 *	tell the frontend to expect new tuple data
+	 *	tell the frontend to expect new tuple data (in binary style)
 	 * ----------------
 	 */
 	pq_putnchar("B", 1);

@@ -13,7 +13,7 @@
  *	  columns. (ie. tuples from the same group are consecutive)
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/executor/nodeGroup.c,v 1.23 1998/11/27 19:52:01 vadim Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/executor/nodeGroup.c,v 1.24 1999/01/24 05:40:47 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -364,12 +364,14 @@ sameGroup(HeapTuple oldtuple,
 			   *val2;
 	int			i;
 	AttrNumber	att;
-	Oid			typoutput;
+	Oid			typoutput,
+				typelem;
 
 	for (i = 0; i < numCols; i++)
 	{
 		att = grpColIdx[i];
-		typoutput = typtoout((Oid) tupdesc->attrs[att - 1]->atttypid);
+		getTypeOutAndElem((Oid) tupdesc->attrs[att - 1]->atttypid,
+						  &typoutput, &typelem);
 
 		attr1 = heap_getattr(oldtuple,
 							 att,
@@ -386,11 +388,9 @@ sameGroup(HeapTuple oldtuple,
 			if (isNull1)		/* both are null, they are equal */
 				continue;
 
-			val1 = fmgr(typoutput, attr1,
-						gettypelem(tupdesc->attrs[att - 1]->atttypid),
+			val1 = fmgr(typoutput, attr1, typelem,
 						tupdesc->attrs[att - 1]->atttypmod);
-			val2 = fmgr(typoutput, attr2,
-						gettypelem(tupdesc->attrs[att - 1]->atttypid),
+			val2 = fmgr(typoutput, attr2, typelem,
 						tupdesc->attrs[att - 1]->atttypmod);
 
 			/*
