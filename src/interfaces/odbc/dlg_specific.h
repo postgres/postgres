@@ -36,7 +36,6 @@
 #  define ODBCINST_INI    ODBCINSTDIR "/odbcinst.ini"
 # else
 #  define ODBCINST_INI    "/etc/odbcinst.ini"
-#  warning "location of odbcinst.ini file defaulted to /etc"
 # endif
 #else /* WIN32 */
 # define ODBC_INI        "ODBC.INI"         /* ODBC initialization file */
