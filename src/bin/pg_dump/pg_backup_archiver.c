@@ -15,7 +15,7 @@
  *
  *
  * IDENTIFICATION
- *		$Header: /cvsroot/pgsql/src/bin/pg_dump/pg_backup_archiver.c,v 1.47 2002/05/28 22:26:56 tgl Exp $
+ *		$Header: /cvsroot/pgsql/src/bin/pg_dump/pg_backup_archiver.c,v 1.48 2002/05/29 01:38:56 tgl Exp $
  *
  * Modifications - 28-Jun-2000 - pjw@rhyme.com.au
  *
@@ -525,14 +525,15 @@ _disableTriggersIfNecessary(ArchiveHandle *AH, TocEntry *te, RestoreOptions *rop
 	ahprintf(AH, "-- Disable triggers\n");
 
 	/*
-	 * Just update the AFFECTED table, if known.
+	 * Just update the AFFECTED table, if known.  Otherwise update all
+	 * non-system tables.
 	 */
 	if (te && te->name && strlen(te->name) > 0)
-		ahprintf(AH, "UPDATE pg_class SET reltriggers = 0 "
-				 "WHERE oid = '%s'::regclass;\n\n",
+		ahprintf(AH, "UPDATE pg_catalog.pg_class SET reltriggers = 0 "
+				 "WHERE oid = '%s'::pg_catalog.regclass;\n\n",
 				 fmtId(te->name, false));
 	else
-		ahprintf(AH, "UPDATE pg_class SET reltriggers = 0 FROM pg_namespace "
+		ahprintf(AH, "UPDATE pg_catalog.pg_class SET reltriggers = 0 FROM pg_catalog.pg_namespace "
 				 "WHERE relnamespace = pg_namespace.oid AND nspname !~ '^pg_';\n\n");
 
 	/*
@@ -591,17 +592,18 @@ _enableTriggersIfNecessary(ArchiveHandle *AH, TocEntry *te, RestoreOptions *ropt
 	ahprintf(AH, "-- Enable triggers\n");
 
 	/*
-	 * Just update the AFFECTED table, if known.
+	 * Just update the AFFECTED table, if known.  Otherwise update all
+	 * non-system tables.
 	 */
 	if (te && te->name && strlen(te->name) > 0)
-		ahprintf(AH, "UPDATE pg_class SET reltriggers = "
-				 "(SELECT count(*) FROM pg_trigger where pg_class.oid = tgrelid) "
-				 "WHERE oid = '%s'::regclass;\n\n",
+		ahprintf(AH, "UPDATE pg_catalog.pg_class SET reltriggers = "
+				 "(SELECT count(*) FROM pg_catalog.pg_trigger where pg_class.oid = tgrelid) "
+				 "WHERE oid = '%s'::pg_catalog.regclass;\n\n",
 				 fmtId(te->name, false));
 	else
-		ahprintf(AH, "UPDATE pg_class SET reltriggers = "
-				 "(SELECT count(*) FROM pg_trigger where pg_class.oid = tgrelid) "
-				 "FROM pg_namespace "
+		ahprintf(AH, "UPDATE pg_catalog.pg_class SET reltriggers = "
+				 "(SELECT count(*) FROM pg_catalog.pg_trigger where pg_class.oid = tgrelid) "
+				 "FROM pg_catalog.pg_namespace "
 				 "WHERE relnamespace = pg_namespace.oid AND nspname !~ '^pg_';\n\n");
 
 	/*
@@ -856,18 +858,20 @@ StartRestoreBlob(ArchiveHandle *AH, Oid oid)
 void
 EndRestoreBlob(ArchiveHandle *AH, Oid oid)
 {
-        if(AH->lo_buf_used > 0) {
-	  /* Write remaining bytes from the LO buffer */
-  	  int res;
-          res = lo_write(AH->connection, AH->loFd, (void *) AH->lo_buf, AH->lo_buf_used);
+	if (AH->lo_buf_used > 0)
+	{
+		/* Write remaining bytes from the LO buffer */
+		int res;
 
-	  ahlog(AH, 5, "wrote remaining %d bytes of large object data (result = %d)\n",
-	  	  (int)AH->lo_buf_used, res);
-	  if (res != AH->lo_buf_used)
-		die_horribly(AH, modulename, "could not write to large object (result: %d, expected: %d)\n",
-			 res, AH->lo_buf_used);
-          AH->lo_buf_used = 0;
-        }
+		res = lo_write(AH->connection, AH->loFd, (void *) AH->lo_buf, AH->lo_buf_used);
+
+		ahlog(AH, 5, "wrote remaining %d bytes of large object data (result = %d)\n",
+			  (int)AH->lo_buf_used, res);
+		if (res != AH->lo_buf_used)
+			die_horribly(AH, modulename, "could not write to large object (result: %d, expected: %d)\n",
+						 res, AH->lo_buf_used);
+		AH->lo_buf_used = 0;
+	}
 
 	lo_close(AH->connection, AH->loFd);
 	AH->writingBlob = 0;
@@ -1444,7 +1448,7 @@ WriteInt(ArchiveHandle *AH, int i)
 	for (b = 0; b < AH->intSize; b++)
 	{
 		(*AH->WriteBytePtr) (AH, i & 0xFF);
-		i = i / 256;
+		i >>= 8;
 	}
 
 	return AH->intSize + 1;

@@ -20,7 +20,7 @@
  *
  *
  * IDENTIFICATION
- *		$Header: /cvsroot/pgsql/src/bin/pg_dump/pg_backup_files.c,v 1.15 2002/04/24 02:21:04 momjian Exp $
+ *		$Header: /cvsroot/pgsql/src/bin/pg_dump/pg_backup_files.c,v 1.16 2002/05/29 01:38:56 tgl Exp $
  *
  * Modifications - 28-Jun-2000 - pjw@rhyme.com.au
  *
@@ -76,7 +76,7 @@ typedef struct
 
 static char *modulename = gettext_noop("file archiver");
 static void _LoadBlobs(ArchiveHandle *AH, RestoreOptions *ropt);
-static void _getBlobTocEntry(ArchiveHandle *AH, int *oid, char *fname);
+static void _getBlobTocEntry(ArchiveHandle *AH, Oid *oid, char *fname);
 
 /*
  *	Initializer
@@ -328,7 +328,7 @@ _PrintTocData(ArchiveHandle *AH, TocEntry *te, RestoreOptions *ropt)
 }
 
 static void
-_getBlobTocEntry(ArchiveHandle *AH, int *oid, char fname[K_STD_BUF_SIZE])
+_getBlobTocEntry(ArchiveHandle *AH, Oid *oid, char fname[K_STD_BUF_SIZE])
 {
 	lclContext *ctx = (lclContext *) AH->formatData;
 	char		blobTe[K_STD_BUF_SIZE];
@@ -337,7 +337,7 @@ _getBlobTocEntry(ArchiveHandle *AH, int *oid, char fname[K_STD_BUF_SIZE])
 
 	if (fgets(&blobTe[0], K_STD_BUF_SIZE - 1, ctx->blobToc) != NULL)
 	{
-		*oid = atoi(blobTe);
+		*oid = atooid(blobTe);
 
 		fpos = strcspn(blobTe, " ");
 
@@ -360,7 +360,7 @@ _getBlobTocEntry(ArchiveHandle *AH, int *oid, char fname[K_STD_BUF_SIZE])
 static void
 _LoadBlobs(ArchiveHandle *AH, RestoreOptions *ropt)
 {
-	int			oid;
+	Oid			oid;
 	lclContext *ctx = (lclContext *) AH->formatData;
 	char		fname[K_STD_BUF_SIZE];
 
@@ -509,9 +509,9 @@ _StartBlob(ArchiveHandle *AH, TocEntry *te, Oid oid)
 		sfx = "";
 
 	sprintf(fmode, "wb%d", AH->compression);
-	sprintf(fname, "blob_%d.dat%s", oid, sfx);
+	sprintf(fname, "blob_%u.dat%s", oid, sfx);
 
-	fprintf(ctx->blobToc, "%d %s\n", oid, fname);
+	fprintf(ctx->blobToc, "%u %s\n", oid, fname);
 
 #ifdef HAVE_LIBZ
 	tctx->FH = gzopen(fname, fmode);

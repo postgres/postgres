@@ -16,7 +16,7 @@
  *
  *
  * IDENTIFICATION
- *		$Header: /cvsroot/pgsql/src/bin/pg_dump/pg_backup_tar.c,v 1.22 2002/05/10 22:36:26 tgl Exp $
+ *		$Header: /cvsroot/pgsql/src/bin/pg_dump/pg_backup_tar.c,v 1.23 2002/05/29 01:38:56 tgl Exp $
  *
  * Modifications - 28-Jun-2000 - pjw@rhyme.com.au
  *
@@ -666,34 +666,6 @@ _PrintTocData(ArchiveHandle *AH, TocEntry *te, RestoreOptions *ropt)
 		_PrintFileData(AH, tctx->filename, ropt);
 }
 
-/* static void _getBlobTocEntry(ArchiveHandle* AH, int *oid, char fname[K_STD_BUF_SIZE])
- * {
- *	lclContext*		ctx = (lclContext*)AH->formatData;
- *	char			blobTe[K_STD_BUF_SIZE];
- *	int				fpos;
- *	int				eos;
- *
- *	if (tarGets(&blobTe[0], K_STD_BUF_SIZE - 1, ctx->blobToc) != NULL)
- *	{
- *		*oid = atoi(blobTe);
- *
- *		fpos = strcspn(blobTe, " ");
- *
- *		strncpy(fname, &blobTe[fpos+1], K_STD_BUF_SIZE - 1);
- *
- *		eos = strlen(fname)-1;
- *
- *		if (fname[eos] == '\n')
- *			fname[eos] = '\0';
- *
- *	} else {
- *
- *		*oid = 0;
- *		fname[0] = '\0';
- *	}
- *}
- */
-
 static void
 _LoadBlobs(ArchiveHandle *AH, RestoreOptions *ropt)
 {
@@ -710,20 +682,22 @@ _LoadBlobs(ArchiveHandle *AH, RestoreOptions *ropt)
 	{
 		ctx->FH = th;
 
-		oid = (Oid) strtoul(&th->targetFile[5], NULL, 10);
-
-		if (strncmp(th->targetFile, "blob_", 5) == 0 && oid != 0)
+		if (strncmp(th->targetFile, "blob_", 5) == 0)
 		{
-			ahlog(AH, 1, "restoring large object OID %u\n", oid);
-
-			StartRestoreBlob(AH, oid);
-
-			while ((cnt = tarRead(buf, 4095, th)) > 0)
+			oid = atooid(&th->targetFile[5]);
+			if (oid != 0)
 			{
-				buf[cnt] = '\0';
-				ahwrite(buf, 1, cnt, AH);
+				ahlog(AH, 1, "restoring large object OID %u\n", oid);
+
+				StartRestoreBlob(AH, oid);
+
+				while ((cnt = tarRead(buf, 4095, th)) > 0)
+				{
+					buf[cnt] = '\0';
+					ahwrite(buf, 1, cnt, AH);
+				}
+				EndRestoreBlob(AH, oid);
 			}
-			EndRestoreBlob(AH, oid);
 		}
 
 		tarClose(AH, th);
@@ -916,9 +890,9 @@ _StartBlob(ArchiveHandle *AH, TocEntry *te, Oid oid)
 	else
 		sfx = "";
 
-	sprintf(fname, "blob_%d.dat%s", oid, sfx);
+	sprintf(fname, "blob_%u.dat%s", oid, sfx);
 
-	tarPrintf(AH, ctx->blobToc, "%d %s\n", oid, fname);
+	tarPrintf(AH, ctx->blobToc, "%u %s\n", oid, fname);
 
 	tctx->TH = tarOpen(AH, fname, 'w');
 

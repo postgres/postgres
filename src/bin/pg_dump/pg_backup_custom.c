@@ -19,7 +19,7 @@
  *
  *
  * IDENTIFICATION
- *		$Header: /cvsroot/pgsql/src/bin/pg_dump/pg_backup_custom.c,v 1.18 2002/04/24 02:21:04 momjian Exp $
+ *		$Header: /cvsroot/pgsql/src/bin/pg_dump/pg_backup_custom.c,v 1.19 2002/05/29 01:38:56 tgl Exp $
  *
  * Modifications - 28-Jun-2000 - pjw@rhyme.com.au
  *
@@ -638,7 +638,7 @@ _PrintData(ArchiveHandle *AH)
 static void
 _LoadBlobs(ArchiveHandle *AH)
 {
-	int			oid;
+	Oid			oid;
 
 	StartRestoreBlobs(AH);
 
@@ -664,7 +664,7 @@ _LoadBlobs(ArchiveHandle *AH)
 static void
 _skipBlobs(ArchiveHandle *AH)
 {
-	int			oid;
+	Oid			oid;
 
 	oid = ReadInt(AH);
 	while (oid != 0)
