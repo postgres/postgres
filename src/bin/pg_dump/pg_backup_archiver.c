@@ -15,7 +15,7 @@
  *
  *
  * IDENTIFICATION
- *		$Header: /cvsroot/pgsql/src/bin/pg_dump/pg_backup_archiver.c,v 1.32 2001/08/22 20:23:23 petere Exp $
+ *		$Header: /cvsroot/pgsql/src/bin/pg_dump/pg_backup_archiver.c,v 1.33 2001/09/21 21:58:30 petere Exp $
  *
  * Modifications - 28-Jun-2000 - pjw@rhyme.com.au
  *
@@ -333,7 +333,7 @@ RestoreArchive(Archive *AHX, RestoreOptions *ropt)
 						 * warnings.
 						 */
 						if (!AH->CustomOutPtr)
-							write_msg(modulename, "WARNING: skipping BLOB restoration\n");
+							write_msg(modulename, "WARNING: skipping large object restoration\n");
 
 					}
 					else
@@ -398,12 +398,12 @@ RestoreArchive(Archive *AHX, RestoreOptions *ropt)
 
 				if ((reqs & 2) != 0)	/* We loaded the data */
 				{
-					ahlog(AH, 1, "fixing up BLOB reference for %s\n", te->name);
+					ahlog(AH, 1, "fixing up large object cross-reference for %s\n", te->name);
 					FixupBlobRefs(AH, te->name);
 				}
 			}
 			else
-				ahlog(AH, 2, "ignoring BLOB cross-references for %s %s\n", te->desc, te->name);
+				ahlog(AH, 2, "ignoring large object cross-references for %s %s\n", te->desc, te->name);
 
 			te = te->next;
 		}
@@ -717,7 +717,7 @@ StartBlob(Archive *AHX, Oid oid)
 	ArchiveHandle *AH = (ArchiveHandle *) AHX;
 
 	if (!AH->StartBlobPtr)
-		die_horribly(AH, modulename, "BLOB output not supported in chosen format\n");
+		die_horribly(AH, modulename, "large object output not supported in chosen format\n");
 
 	(*AH->StartBlobPtr) (AH, AH->currToc, oid);
 
@@ -757,14 +757,14 @@ EndRestoreBlobs(ArchiveHandle *AH)
 {
 	if (AH->txActive)
 	{
-		ahlog(AH, 2, "committing BLOB transactions\n");
+		ahlog(AH, 2, "committing large object transactions\n");
 		CommitTransaction(AH);
 	}
 
 	if (AH->blobTxActive)
 		CommitTransactionXref(AH);
 
-	ahlog(AH, 1, "restored %d BLOBs\n", AH->blobCount);
+	ahlog(AH, 1, "restored %d large objects\n", AH->blobCount);
 }
 
 
@@ -781,7 +781,7 @@ StartRestoreBlob(ArchiveHandle *AH, Oid oid)
 	if (!AH->createdBlobXref)
 	{
 		if (!AH->connection)
-			die_horribly(AH, modulename, "cannot restore BLOBs without a database connection\n");
+			die_horribly(AH, modulename, "cannot restore large objects without a database connection\n");
 
 		CreateBlobXrefTable(AH);
 		AH->createdBlobXref = 1;
@@ -792,7 +792,7 @@ StartRestoreBlob(ArchiveHandle *AH, Oid oid)
 	 */
 	if (!AH->txActive)
 	{
-		ahlog(AH, 2, "starting BLOB transactions\n");
+		ahlog(AH, 2, "starting large object transactions\n");
 		StartTransaction(AH);
 	}
 	if (!AH->blobTxActive)
@@ -800,15 +800,15 @@ StartRestoreBlob(ArchiveHandle *AH, Oid oid)
 
 	loOid = lo_creat(AH->connection, INV_READ | INV_WRITE);
 	if (loOid == 0)
-		die_horribly(AH, modulename, "could not create BLOB\n");
+		die_horribly(AH, modulename, "could not create large object\n");
 
-	ahlog(AH, 2, "restoring BLOB oid %u as %u\n", oid, loOid);
+	ahlog(AH, 2, "restoring large object with oid %u as %u\n", oid, loOid);
 
 	InsertBlobXref(AH, oid, loOid);
 
 	AH->loFd = lo_open(AH->connection, loOid, INV_WRITE);
 	if (AH->loFd == -1)
-		die_horribly(AH, modulename, "could not open BLOB\n");
+		die_horribly(AH, modulename, "could not open large object\n");
 
 	AH->writingBlob = 1;
 }
@@ -824,7 +824,7 @@ EndRestoreBlob(ArchiveHandle *AH, Oid oid)
 	 */
 	if (((AH->blobCount / BLOB_BATCH_SIZE) * BLOB_BATCH_SIZE) == AH->blobCount)
 	{
-		ahlog(AH, 2, "committing BLOB transactions\n");
+		ahlog(AH, 2, "committing large object transactions\n");
 		CommitTransaction(AH);
 		CommitTransactionXref(AH);
 	}
@@ -1198,7 +1198,7 @@ ahwrite(const void *ptr, size_t size, size_t nmemb, ArchiveHandle *AH)
 	if (AH->writingBlob)
 	{
 		res = lo_write(AH->connection, AH->loFd, (void *) ptr, size * nmemb);
-		ahlog(AH, 5, "wrote %d bytes of BLOB data (result = %d)\n", size * nmemb, res);
+		ahlog(AH, 5, "wrote %d bytes of large object data (result = %d)\n", size * nmemb, res);
 		if (res < size * nmemb)
 			die_horribly(AH, modulename, "could not write to large object (result: %d, expected: %d)\n",
 						 res, size * nmemb);

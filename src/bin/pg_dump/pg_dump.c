@@ -22,7 +22,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/bin/pg_dump/pg_dump.c,v 1.229 2001/09/07 01:11:50 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/bin/pg_dump/pg_dump.c,v 1.230 2001/09/21 21:58:30 petere Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -141,7 +141,7 @@ help(const char *progname)
 #ifdef HAVE_GETOPT_LONG
 	puts(gettext(
 		"  -a, --data-only          dump only the data, not the schema\n"
-		"  -b, --blobs              include BLOB data in dump\n"
+		"  -b, --blobs              include large objects in dump\n"
 		"  -c, --clean              clean (drop) schema prior to create\n"
 		"  -C, --create             include commands to create database in dump\n"
 		"  -d, --inserts            dump data as INSERT, rather than COPY, commands\n"
@@ -175,7 +175,7 @@ help(const char *progname)
 #else
 	puts(gettext(
 		"  -a                       dump only the data, not the schema\n"
-		"  -b                       include BLOB data in dump\n"
+		"  -b                       include large objects in dump\n"
 		"  -c                       clean (drop) schema prior to create\n"
 		"  -C                       include commands to create database in dump\n"
 		"  -d                       dump data as INSERT, rather than COPY, commands\n"
@@ -961,7 +961,7 @@ main(int argc, char **argv)
 
 	if (outputBlobs && tablename != NULL && strlen(tablename) > 0)
 	{
-		write_msg(NULL, "BLOB output is not supported for a single table.\n");
+		write_msg(NULL, "Large object output is not supported for a single table.\n");
 		write_msg(NULL, "Use all tables or a full dump instead.\n");
 		exit(1);
 	}
@@ -975,7 +975,7 @@ main(int argc, char **argv)
 
 	if (outputBlobs == true && (format[0] == 'p' || format[0] == 'P'))
 	{
-		write_msg(NULL, "BLOB output is not supported for plain text dump files.\n");
+		write_msg(NULL, "large object output is not supported for plain text dump files.\n");
 		write_msg(NULL, "(Use a different output format.)\n");
 		exit(1);
 	}
@@ -1216,7 +1216,7 @@ dumpBlobs(Archive *AH, char *junkOid, void *junkVal)
 	Oid			blobOid;
 
 	if (g_verbose)
-		write_msg(NULL, "saving BLOBs\n");
+		write_msg(NULL, "saving large objects\n");
 
 	/* Cursor to get all BLOB tables */
 	if (AH->remoteVersion >= 70100)

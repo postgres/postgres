@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/ref/pg_dump.sgml,v 1.36 2001/09/03 12:57:50 petere Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/ref/pg_dump.sgml,v 1.37 2001/09/21 21:58:29 petere Exp $
 Postgres documentation
 -->
 
@@ -144,7 +144,7 @@ Postgres documentation
       <term>--blobs</term>
       <listitem>
        <para>
- 	Dump data and <acronym>BLOB</acronym> data.
+ 	Include large objects in dump.
        </para>
       </listitem>
      </varlistentry>
@@ -616,8 +616,8 @@ connectDBStart() -- connect() failed: No such file or directory
   </para>
 
   <para>
-   To dump a database called mydb that contains
-   <acronym>BLOB</acronym>s to a <filename>tar</filename> file:
+   To dump a database called <literal>mydb</> that contains
+   large objects to a <filename>tar</filename> file:
 
 <screen>
 <prompt>$</prompt> <userinput>pg_dump -Ft -b mydb &gt; db.tar</userinput>
@@ -625,8 +625,8 @@ connectDBStart() -- connect() failed: No such file or directory
   </para>
 
   <para>
-   To reload this database (with <acronym>BLOB</acronym>s) to an
-   existing database called newdb:
+   To reload this database (with large objects) to an
+   existing database called <literal>newdb</>:
 
 <screen>
 <prompt>$</prompt> <userinput>pg_restore -d newdb db.tar</userinput>

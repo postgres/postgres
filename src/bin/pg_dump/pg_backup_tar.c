@@ -16,7 +16,7 @@
  *
  *
  * IDENTIFICATION
- *		$Header: /cvsroot/pgsql/src/bin/pg_dump/pg_backup_tar.c,v 1.17 2001/07/03 20:21:48 petere Exp $
+ *		$Header: /cvsroot/pgsql/src/bin/pg_dump/pg_backup_tar.c,v 1.18 2001/09/21 21:58:30 petere Exp $
  *
  * Modifications - 28-Jun-2000 - pjw@rhyme.com.au
  *
@@ -715,7 +715,7 @@ _LoadBlobs(ArchiveHandle *AH, RestoreOptions *ropt)
 
 		if (strncmp(th->targetFile, "blob_", 5) == 0 && oid != 0)
 		{
-			ahlog(AH, 1, "restoring BLOB oid %u\n", oid);
+			ahlog(AH, 1, "restoring large object OID %u\n", oid);
 
 			StartRestoreBlob(AH, oid);
 
@@ -911,7 +911,7 @@ _StartBlob(ArchiveHandle *AH, TocEntry *te, Oid oid)
 	char	   *sfx;
 
 	if (oid == 0)
-		die_horribly(AH, modulename, "invalid OID for BLOB (%u)\n", oid);
+		die_horribly(AH, modulename, "invalid OID for large object (%u)\n", oid);
 
 	if (AH->compression != 0)
 		sfx = ".gz";

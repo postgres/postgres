@@ -20,7 +20,7 @@
  *
  *
  * IDENTIFICATION
- *		$Header: /cvsroot/pgsql/src/bin/pg_dump/pg_backup_files.c,v 1.12 2001/07/03 20:21:48 petere Exp $
+ *		$Header: /cvsroot/pgsql/src/bin/pg_dump/pg_backup_files.c,v 1.13 2001/09/21 21:58:30 petere Exp $
  *
  * Modifications - 28-Jun-2000 - pjw@rhyme.com.au
  *
@@ -363,7 +363,7 @@ _LoadBlobs(ArchiveHandle *AH, RestoreOptions *ropt)
 	ctx->blobToc = fopen("blobs.toc", PG_BINARY_R);
 
 	if (ctx->blobToc == NULL)
-		die_horribly(AH, modulename, "could not open BLOB TOC for input: %s\n", strerror(errno));
+		die_horribly(AH, modulename, "could not open large object TOC for input: %s\n", strerror(errno));
 
 	_getBlobTocEntry(AH, &oid, fname);
 
@@ -376,7 +376,7 @@ _LoadBlobs(ArchiveHandle *AH, RestoreOptions *ropt)
 	}
 
 	if (fclose(ctx->blobToc) != 0)
-		die_horribly(AH, modulename, "could not close BLOB TOC file: %s\n", strerror(errno));
+		die_horribly(AH, modulename, "could not close large object TOC file: %s\n", strerror(errno));
 
 	EndRestoreBlobs(AH);
 }
@@ -474,7 +474,7 @@ _StartBlobs(ArchiveHandle *AH, TocEntry *te)
 
 	if (ctx->blobToc == NULL)
 		die_horribly(AH, modulename,
-					 "could not open BLOB TOC for output: %s\n", strerror(errno));
+					 "could not open large object TOC for output: %s\n", strerror(errno));
 
 }
 
@@ -495,7 +495,7 @@ _StartBlob(ArchiveHandle *AH, TocEntry *te, Oid oid)
 	char	   *sfx;
 
 	if (oid == 0)
-		die_horribly(AH, modulename, "invalid OID for BLOB (%u)\n", oid);
+		die_horribly(AH, modulename, "invalid OID for large object (%u)\n", oid);
 
 	if (AH->compression != 0)
 		sfx = ".gz";
@@ -514,7 +514,7 @@ _StartBlob(ArchiveHandle *AH, TocEntry *te, Oid oid)
 #endif
 
 	if (tctx->FH == NULL)
-		die_horribly(AH, modulename, "could not open BLOB file\n");
+		die_horribly(AH, modulename, "could not open large object file\n");
 }
 
 /*
@@ -529,7 +529,7 @@ _EndBlob(ArchiveHandle *AH, TocEntry *te, Oid oid)
 	lclTocEntry *tctx = (lclTocEntry *) te->formatData;
 
 	if (GZCLOSE(tctx->FH) != 0)
-		die_horribly(AH, modulename, "could not close BLOB file\n");
+		die_horribly(AH, modulename, "could not close large object file\n");
 }
 
 /*
@@ -547,7 +547,7 @@ _EndBlobs(ArchiveHandle *AH, TocEntry *te)
 	/* WriteInt(AH, 0); */
 
 	if (fclose(ctx->blobToc) != 0)
-		die_horribly(AH, modulename, "could not close BLOB TOC file: %s\n", strerror(errno));
+		die_horribly(AH, modulename, "could not close large object TOC file: %s\n", strerror(errno));
 
 }
 

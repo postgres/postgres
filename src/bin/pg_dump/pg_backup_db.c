@@ -5,7 +5,7 @@
  *	Implements the basic DB functions used by the archiver.
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/bin/pg_dump/pg_backup_db.c,v 1.25 2001/09/17 02:07:51 inoue Exp $
+ *	  $Header: /cvsroot/pgsql/src/bin/pg_dump/pg_backup_db.c,v 1.26 2001/09/21 21:58:30 petere Exp $
  *
  * NOTES
  *
@@ -738,7 +738,7 @@ FixupBlobRefs(ArchiveHandle *AH, char *tablename)
 	{
 		attr = PQgetvalue(res, i, 0);
 
-		ahlog(AH, 1, "fixing BLOB cross-references for %s.%s\n", tablename, attr);
+		ahlog(AH, 1, "fixing large object cross-references for %s.%s\n", tablename, attr);
 
 		resetPQExpBuffer(tblQry);
 
@@ -785,16 +785,16 @@ CreateBlobXrefTable(ArchiveHandle *AH)
 	if (!AH->blobConnection)
 		AH->blobConnection = _connectDB(AH, NULL, NULL);
 
-	ahlog(AH, 1, "creating table for BLOB cross-references\n");
+	ahlog(AH, 1, "creating table for large object cross-references\n");
 
 	appendPQExpBuffer(qry, "Create Temporary Table %s(oldOid oid, newOid oid);", BLOB_XREF_TABLE);
 
-	ExecuteSqlCommand(AH, qry, "could not create BLOB cross reference table", true);
+	ExecuteSqlCommand(AH, qry, "could not create large object cross-reference table", true);
 
 	resetPQExpBuffer(qry);
 
 	appendPQExpBuffer(qry, "Create Unique Index %s_ix on %s(oldOid)", BLOB_XREF_TABLE, BLOB_XREF_TABLE);
-	ExecuteSqlCommand(AH, qry, "could not create index on BLOB cross reference table", true);
+	ExecuteSqlCommand(AH, qry, "could not create index on large object cross-reference table", true);
 
 	destroyPQExpBuffer(qry);
 }
@@ -806,7 +806,7 @@ InsertBlobXref(ArchiveHandle *AH, int old, int new)
 
 	appendPQExpBuffer(qry, "Insert Into %s(oldOid, newOid) Values (%d, %d);", BLOB_XREF_TABLE, old, new);
 
-	ExecuteSqlCommand(AH, qry, "could not create BLOB cross reference entry", true);
+	ExecuteSqlCommand(AH, qry, "could not create large object cross-reference entry", true);
 
 	destroyPQExpBuffer(qry);
 }
@@ -832,7 +832,7 @@ StartTransactionXref(ArchiveHandle *AH)
 	appendPQExpBuffer(qry, "Begin;");
 
 	ExecuteSqlCommand(AH, qry,
-					  "could not start transaction for BLOB cross references", true);
+					  "could not start transaction for large object cross-references", true);
 	AH->blobTxActive = true;
 
 	destroyPQExpBuffer(qry);
@@ -858,7 +858,7 @@ CommitTransactionXref(ArchiveHandle *AH)
 
 	appendPQExpBuffer(qry, "Commit;");
 
-	ExecuteSqlCommand(AH, qry, "could not commit transaction for BLOB cross references", true);
+	ExecuteSqlCommand(AH, qry, "could not commit transaction for large object cross-references", true);
 	AH->blobTxActive = false;
 
 	destroyPQExpBuffer(qry);
