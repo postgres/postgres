@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/varchar.c,v 1.71 2000/11/26 11:35:23 ishii Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/varchar.c,v 1.72 2000/12/08 23:57:03 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -663,11 +663,17 @@ hashbpchar(PG_FUNCTION_ARGS)
 	BpChar	   *key = PG_GETARG_BPCHAR_P(0);
 	char	   *keydata;
 	int			keylen;
+	Datum		result;
 
 	keydata = VARDATA(key);
 	keylen = bcTruelen(key);
 
-	return hash_any(keydata, keylen);
+	result = hash_any(keydata, keylen);
+
+	/* Avoid leaking memory for toasted inputs */
+	PG_FREE_IF_COPY(key, 0);
+
+	return result;
 }
 
 

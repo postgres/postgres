@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/access/hash/hashfunc.c,v 1.27 2000/06/19 03:54:17 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/access/hash/hashfunc.c,v 1.28 2000/12/08 23:57:02 tgl Exp $
  *
  * NOTES
  *	  These functions are stored in pg_amproc.	For each operator class
@@ -106,8 +106,14 @@ Datum
 hashvarlena(PG_FUNCTION_ARGS)
 {
 	struct varlena *key = PG_GETARG_VARLENA_P(0);
+	Datum		result;
 
-	return hash_any(VARDATA(key), VARSIZE(key) - VARHDRSZ);
+	result = hash_any(VARDATA(key), VARSIZE(key) - VARHDRSZ);
+
+	/* Avoid leaking memory for toasted inputs */
+	PG_FREE_IF_COPY(key, 0);
+
+	return result;
 }
 
 

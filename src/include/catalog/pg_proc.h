@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2000, PostgreSQL, Inc
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Id: pg_proc.h,v 1.177 2000/12/07 18:38:58 tgl Exp $
+ * $Id: pg_proc.h,v 1.178 2000/12/08 23:57:02 tgl Exp $
  *
  * NOTES
  *	  The script catalog/genbki.sh reads this file and generates .bki
@@ -829,6 +829,8 @@ DESCR("hash");
 DATA(insert OID = 456 (  hashvarlena	   PGUID 12 f t t t 1 f 23 "0" 100 0 0 100  hashvarlena - ));
 DESCR("hash any varlena type");
 DATA(insert OID = 457 (  hashoidvector	   PGUID 12 f t t t 1 f 23 "30" 100 0 0 100  hashoidvector - ));
+DESCR("hash");
+DATA(insert OID = 399 (  hashmacaddr	   PGUID 12 f t t t 1 f 23 "829" 100 0 0 100  hashmacaddr - ));
 DESCR("hash");
 DATA(insert OID = 458 (  text_larger	   PGUID 12 f t t t 2 f 25 "25 25" 100 0 0 100  text_larger - ));
 DESCR("larger of two");

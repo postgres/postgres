@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/geo_ops.c,v 1.55 2000/12/03 20:45:35 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/geo_ops.c,v 1.56 2000/12/08 23:57:03 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -3097,8 +3097,15 @@ poly_left(PG_FUNCTION_ARGS)
 {
 	POLYGON	   *polya = PG_GETARG_POLYGON_P(0);
 	POLYGON	   *polyb = PG_GETARG_POLYGON_P(1);
+	bool		result;
 
-	PG_RETURN_BOOL(polya->boundbox.high.x < polyb->boundbox.low.x);
+	result = polya->boundbox.high.x < polyb->boundbox.low.x;
+
+	/* Avoid leaking memory for toasted inputs ... needed for rtree indexes */
+	PG_FREE_IF_COPY(polya, 0);
+	PG_FREE_IF_COPY(polyb, 1);
+
+	PG_RETURN_BOOL(result);
 }
 
 /*-------------------------------------------------------
@@ -3111,8 +3118,15 @@ poly_overleft(PG_FUNCTION_ARGS)
 {
 	POLYGON	   *polya = PG_GETARG_POLYGON_P(0);
 	POLYGON	   *polyb = PG_GETARG_POLYGON_P(1);
+	bool		result;
 
-	PG_RETURN_BOOL(polya->boundbox.low.x <= polyb->boundbox.high.x);
+	result = polya->boundbox.low.x <= polyb->boundbox.high.x;
+
+	/* Avoid leaking memory for toasted inputs ... needed for rtree indexes */
+	PG_FREE_IF_COPY(polya, 0);
+	PG_FREE_IF_COPY(polyb, 1);
+
+	PG_RETURN_BOOL(result);
 }
 
 /*-------------------------------------------------------
@@ -3125,8 +3139,15 @@ poly_right(PG_FUNCTION_ARGS)
 {
 	POLYGON	   *polya = PG_GETARG_POLYGON_P(0);
 	POLYGON	   *polyb = PG_GETARG_POLYGON_P(1);
+	bool		result;
 
-	PG_RETURN_BOOL(polya->boundbox.low.x > polyb->boundbox.high.x);
+	result = polya->boundbox.low.x > polyb->boundbox.high.x;
+
+	/* Avoid leaking memory for toasted inputs ... needed for rtree indexes */
+	PG_FREE_IF_COPY(polya, 0);
+	PG_FREE_IF_COPY(polyb, 1);
+
+	PG_RETURN_BOOL(result);
 }
 
 /*-------------------------------------------------------
@@ -3139,8 +3160,15 @@ poly_overright(PG_FUNCTION_ARGS)
 {
 	POLYGON	   *polya = PG_GETARG_POLYGON_P(0);
 	POLYGON	   *polyb = PG_GETARG_POLYGON_P(1);
+	bool		result;
 
-	PG_RETURN_BOOL(polya->boundbox.high.x > polyb->boundbox.low.x);
+	result = polya->boundbox.high.x > polyb->boundbox.low.x;
+
+	/* Avoid leaking memory for toasted inputs ... needed for rtree indexes */
+	PG_FREE_IF_COPY(polya, 0);
+	PG_FREE_IF_COPY(polyb, 1);
+
+	PG_RETURN_BOOL(result);
 }
 
 /*-------------------------------------------------------
@@ -3155,11 +3183,18 @@ poly_same(PG_FUNCTION_ARGS)
 {
 	POLYGON	   *polya = PG_GETARG_POLYGON_P(0);
 	POLYGON	   *polyb = PG_GETARG_POLYGON_P(1);
+	bool		result;
 
 	if (polya->npts != polyb->npts)
-		PG_RETURN_BOOL(false);
+		result = false;
+	else
+		result = plist_same(polya->npts, polya->p, polyb->p);
 
-	PG_RETURN_BOOL(plist_same(polya->npts, polya->p, polyb->p));
+	/* Avoid leaking memory for toasted inputs ... needed for rtree indexes */
+	PG_FREE_IF_COPY(polya, 0);
+	PG_FREE_IF_COPY(polyb, 1);
+
+	PG_RETURN_BOOL(result);
 }
 
 /*-----------------------------------------------------------------
@@ -3173,8 +3208,15 @@ poly_overlap(PG_FUNCTION_ARGS)
 {
 	POLYGON	   *polya = PG_GETARG_POLYGON_P(0);
 	POLYGON	   *polyb = PG_GETARG_POLYGON_P(1);
+	bool		result;
 
-	PG_RETURN_BOOL(box_ov(&polya->boundbox, &polyb->boundbox));
+	result = box_ov(&polya->boundbox, &polyb->boundbox);
+
+	/* Avoid leaking memory for toasted inputs ... needed for rtree indexes */
+	PG_FREE_IF_COPY(polya, 0);
+	PG_FREE_IF_COPY(polyb, 1);
+
+	PG_RETURN_BOOL(result);
 }
 
 
@@ -3186,6 +3228,7 @@ poly_contain(PG_FUNCTION_ARGS)
 {
 	POLYGON	   *polya = PG_GETARG_POLYGON_P(0);
 	POLYGON	   *polyb = PG_GETARG_POLYGON_P(1);
+	bool		result;
 	int			i;
 
 	/*
@@ -3195,6 +3238,7 @@ poly_contain(PG_FUNCTION_ARGS)
 										 BoxPGetDatum(&polya->boundbox),
 										 BoxPGetDatum(&polyb->boundbox))))
 	{
+		result = true;			/* assume true for now */
 		for (i = 0; i < polyb->npts; i++)
 		{
 			if (point_inside(&(polyb->p[i]), polya->npts, &(polya->p[0])) == 0)
@@ -3202,28 +3246,40 @@ poly_contain(PG_FUNCTION_ARGS)
 #if GEODEBUG
 				printf("poly_contain- point (%f,%f) not in polygon\n", polyb->p[i].x, polyb->p[i].y);
 #endif
-				PG_RETURN_BOOL(false);
+				result = false;
+				break;
 			}
 		}
-		for (i = 0; i < polya->npts; i++)
+		if (result)
 		{
-			if (point_inside(&(polya->p[i]), polyb->npts, &(polyb->p[0])) == 1)
+			for (i = 0; i < polya->npts; i++)
 			{
+				if (point_inside(&(polya->p[i]), polyb->npts, &(polyb->p[0])) == 1)
+				{
 #if GEODEBUG
-				printf("poly_contain- point (%f,%f) in polygon\n", polya->p[i].x, polya->p[i].y);
+					printf("poly_contain- point (%f,%f) in polygon\n", polya->p[i].x, polya->p[i].y);
 #endif
-				PG_RETURN_BOOL(false);
+					result = false;
+					break;
+				}
 			}
 		}
-		PG_RETURN_BOOL(true);
+	}
+	else
+	{
+#if GEODEBUG
+		printf("poly_contain- bound box ((%f,%f),(%f,%f)) not inside ((%f,%f),(%f,%f))\n",
+			   polyb->boundbox.low.x, polyb->boundbox.low.y, polyb->boundbox.high.x, polyb->boundbox.high.y,
+			   polya->boundbox.low.x, polya->boundbox.low.y, polya->boundbox.high.x, polya->boundbox.high.y);
+#endif
+		result = false;
 	}
 
-#if GEODEBUG
-	printf("poly_contain- bound box ((%f,%f),(%f,%f)) not inside ((%f,%f),(%f,%f))\n",
-		   polyb->boundbox.low.x, polyb->boundbox.low.y, polyb->boundbox.high.x, polyb->boundbox.high.y,
-		   polya->boundbox.low.x, polya->boundbox.low.y, polya->boundbox.high.x, polya->boundbox.high.y);
-#endif
-	PG_RETURN_BOOL(false);
+	/* Avoid leaking memory for toasted inputs ... needed for rtree indexes */
+	PG_FREE_IF_COPY(polya, 0);
+	PG_FREE_IF_COPY(polyb, 1);
+
+	PG_RETURN_BOOL(result);
 }
 
 

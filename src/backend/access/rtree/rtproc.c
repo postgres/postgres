@@ -15,7 +15,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/access/rtree/Attic/rtproc.c,v 1.29 2000/07/30 20:43:40 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/access/rtree/Attic/rtproc.c,v 1.30 2000/12/08 23:57:01 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -182,6 +182,9 @@ rt_poly_size(PG_FUNCTION_ARGS)
 
 		*size = (float) (xdim * ydim);
 	}
+
+	/* Avoid leaking memory when handed toasted input. */
+	PG_FREE_IF_COPY(a, 0);
 
 	PG_RETURN_VOID();
 }
