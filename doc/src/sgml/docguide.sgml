@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/docguide.sgml,v 1.52 2005/02/19 04:34:17 momjian Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/docguide.sgml,v 1.53 2005/02/19 04:39:52 momjian Exp $ -->
 
 <appendix id="docguide">
  <title>Documentation</title>
@@ -66,7 +66,7 @@
    site</ulink> has good introductory and reference documentation and
    a complete O'Reilly book for your online reading pleasure.  The
    <ulink url="http://newbiedoc.sourceforge.net/metadoc/docbook-guide.html">
-   NewbieDoc Docbook Guide<</ulink> is very helpful for beginners.
+   NewbieDoc Docbook Guide</ulink> is very helpful for beginners.
    The <ulink url="http://www.freebsd.org/docproj/docproj.html">FreeBSD
    Documentation Project</ulink> also uses DocBook and has some good
    information, including a number of style guidelines that might be
