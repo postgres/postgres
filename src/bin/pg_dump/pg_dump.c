@@ -13,14 +13,15 @@
  *        indices
  *        aggregates
  *        operators
+ *        ACL - grant/revoke
  *
- * the output script is SQL that is understood by Postgres95
+ * the output script is SQL that is understood by PostgreSQL
  *
  * Copyright (c) 1994, Regents of the University of California
  *
  *
  * IDENTIFICATION
- *    $Header: /cvsroot/pgsql/src/bin/pg_dump/pg_dump.c,v 1.26 1997/04/02 04:17:21 vadim Exp $
+ *    $Header: /cvsroot/pgsql/src/bin/pg_dump/pg_dump.c,v 1.27 1997/04/12 09:24:07 scrappy Exp $
  *
  * Modifications - 6/10/96 - dave@bensoft.com - version 1.13.dhb
  *
@@ -110,6 +111,8 @@ usage(const char* progname)
             "\t -t table    \t\t dump for this table only\n");
     fprintf(stderr, 
             "\t -o          \t\t dump object id's (oids)\n");
+    fprintf(stderr, 
+            "\t -z          \t\t dump ACLs (grant/revoke)\n");
     fprintf(stderr, 
             "\nIf dbname is not supplied, then the DATABASE environment "
             "variable value is used.\n");
@@ -390,20 +393,16 @@ main(int argc, char** argv)
 {
     int c;
     const char* progname;
-    const char* filename;
-    const char* dbname;
+    const char* filename = NULL;
+    const char* dbname = NULL;
     const char *pghost = NULL;
     const char *pgport = NULL;
-    const char *tablename;
-    int oids;
+    const char *tablename = NULL;
+    int oids = 0, acls = 0;
     TableInfo *tblinfo;
     int numTables;
 
-    dbname = NULL;
-    filename = NULL;
-    tablename = NULL;
     g_verbose = false;
-    oids = 0;
     
     strcpy(g_comment_start,"-- ");
     g_comment_end[0] = '\0';
@@ -413,7 +412,7 @@ main(int argc, char** argv)
 
     progname = *argv;
 
-    while ((c = getopt(argc, argv,"f:H:p:t:vSDdDao")) != EOF) {
+    while ((c = getopt(argc, argv,"f:H:p:t:vSDdDaoz")) != EOF) {
         switch(c) {
         case 'f': /* output file name */
             filename = optarg;
@@ -445,6 +444,9 @@ main(int argc, char** argv)
             break;
         case 'o': /* Dump oids */
             oids = 1;
+            break;
+        case 'z': /* Dump oids */
+            acls = 1;
             break;
         default:
             usage(progname);
@@ -488,10 +490,10 @@ main(int argc, char** argv)
         if (g_verbose) 
             fprintf(stderr, "%s last builtin oid is %d %s\n",
                     g_comment_start,  g_last_builtin_oid, g_comment_end);
-        tblinfo = dumpSchema(g_fout, &numTables, tablename);
+        tblinfo = dumpSchema(g_fout, &numTables, tablename, acls);
     }
     else
-      tblinfo = dumpSchema(NULL, &numTables, tablename);
+      tblinfo = dumpSchema(NULL, &numTables, tablename, acls);
     
     if (!schemaOnly) {
       dumpClasses(tblinfo, numTables, g_fout, tablename, oids);
@@ -924,6 +926,7 @@ getTables(int *numTables)
     int i_relname;
     int i_relarch;
     int i_relkind;
+    int i_relacl;
 
     /* find all the user-defined tables (no indices and no catalogs),
      ordering by oid is important so that we always process the parent
@@ -940,7 +943,7 @@ getTables(int *numTables)
     PQclear(res);
 
     sprintf(query, 
-            "SELECT oid, relname, relarch, relkind from pg_class "
+            "SELECT oid, relname, relarch, relkind, relacl from pg_class "
             "where (relkind = 'r' or relkind = 'S') and relname !~ '^pg_' "
             "and relname !~ '^Xinv' order by oid;");
 
@@ -961,11 +964,13 @@ getTables(int *numTables)
     i_relname = PQfnumber(res,"relname");
     i_relarch = PQfnumber(res,"relarch");
     i_relkind = PQfnumber(res,"relkind");
+    i_relacl = PQfnumber(res,"relacl");
 
     for (i=0;i<ntups;i++) {
         tblinfo[i].oid = strdup(PQgetvalue(res,i,i_oid));
         tblinfo[i].relname = strdup(PQgetvalue(res,i,i_relname));
         tblinfo[i].relarch = strdup(PQgetvalue(res,i,i_relarch));
+        tblinfo[i].relacl = strdup(PQgetvalue(res,i,i_relacl));
         tblinfo[i].sequence = (strcmp (PQgetvalue(res,i,i_relkind), "S") == 0);
     }
 
@@ -1504,7 +1509,8 @@ dumpAggs(FILE* fout, AggInfo* agginfo, int numAggs,
 
 void dumpTables(FILE* fout, TableInfo *tblinfo, int numTables,
            InhInfo *inhinfo, int numInherits,
-           TypeInfo *tinfo, int numTypes, const char *tablename)
+           TypeInfo *tinfo, int numTypes, const char *tablename,
+           const bool acls)
 {
     int i,j,k;
     char q[MAXQUERYLEN];
@@ -1611,6 +1617,11 @@ void dumpTables(FILE* fout, TableInfo *tblinfo, int numTables,
                     q,
                     archiveMode);
             fputs(q,fout);
+
+            if(acls) 
+              fprintf(fout, 
+                      "UPDATE pg_class SET relacl='%s' where relname='%s';\n",
+                      tblinfo[i].relacl, tblinfo[i].relname);
         }
     }
 }

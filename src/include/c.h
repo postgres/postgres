@@ -7,7 +7,7 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: c.h,v 1.9 1997/02/14 04:18:27 momjian Exp $
+ * $Id: c.h,v 1.10 1997/04/12 09:24:23 scrappy Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -60,7 +60,9 @@
  */
 #define false	((char) 0)
 #define true	((char) 1)
+#ifndef __cplusplus
 typedef char	bool;
+#endif /* not C++ */
 typedef bool	*BoolPtr;
 
 #ifndef TRUE

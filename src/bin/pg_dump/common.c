@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *    $Header: /cvsroot/pgsql/src/bin/pg_dump/common.c,v 1.10 1997/02/13 08:31:17 scrappy Exp $
+ *    $Header: /cvsroot/pgsql/src/bin/pg_dump/common.c,v 1.11 1997/04/12 09:23:59 scrappy Exp $
  *
  * Modifications - 6/12/96 - dave@bensoft.com - version 1.13.dhb.2
  *
@@ -192,7 +192,10 @@ strInArray(const char* pattern, char** arr, int arr_size)
  */
 
 TableInfo *
-dumpSchema(FILE *fout, int *numTablesPtr, const char *tablename)
+dumpSchema(FILE *fout, 
+           int *numTablesPtr, 
+           const char *tablename, 
+           const bool acls)
 {
     int numTypes;
     int numFuncs;
@@ -249,7 +252,7 @@ if (fout) {
   if (g_verbose) fprintf(stderr,"%s dumping out tables %s\n",
 		       g_comment_start, g_comment_end);
     dumpTables(fout, tblinfo, numTables, inhinfo, numInherits,
-	       tinfo, numTypes, tablename);
+	       tinfo, numTypes, tablename, acls);
 }	       
 
 if (!tablename && fout) {
