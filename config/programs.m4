@@ -1,4 +1,4 @@
-# $PostgreSQL: pgsql/config/programs.m4,v 1.14 2004/05/19 22:12:30 momjian Exp $
+# $PostgreSQL: pgsql/config/programs.m4,v 1.15 2004/09/02 15:39:55 tgl Exp $
 
 
 # PGAC_PATH_FLEX
@@ -14,8 +14,9 @@ if test -n "$FLEX"; then
   pgac_cv_path_flex=$FLEX
 else
   pgac_save_IFS=$IFS
-  IFS=:
+  IFS=$PATH_SEPARATOR
   for pgac_dir in $PATH; do
+    IFS=$pgac_save_IFS
     if test -z "$pgac_dir" || test x"$pgac_dir" = x"."; then
       pgac_dir=`pwd`
     fi
@@ -37,7 +38,6 @@ else
       fi
     done
   done
-  IFS=$pgac_save_IFS
   rm -f conftest.l
   : ${pgac_cv_path_flex=no}
 fi
