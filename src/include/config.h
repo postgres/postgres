@@ -11,6 +11,7 @@
 #  define WIN32
 #  define NO_UNISTD_H
 #  define USES_WINSOCK 
+#  define NOFILE	100
 #endif /* WIN32 */
 
 #if defined(__FreeBSD__) || defined(__NetBSD__)
