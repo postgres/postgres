@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/ref/grant.sgml,v 1.23 2002/04/22 19:17:40 tgl Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/ref/grant.sgml,v 1.24 2002/04/29 22:28:19 tgl Exp $
 PostgreSQL documentation
 -->
 
@@ -182,6 +182,7 @@ GRANT { { CREATE | USAGE } [,...] | ALL [ PRIVILEGES ] }
        Allows the use of the specified function and the use of any
        operators that are implemented on top of the function.  This is
        the only type of privilege that is applicable to functions.
+       (This syntax works for aggregate functions, as well.)
       </para>
      </listitem>
     </varlistentry>

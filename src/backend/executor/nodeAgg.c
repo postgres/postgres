@@ -46,7 +46,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/executor/nodeAgg.c,v 1.82 2002/04/16 23:08:10 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/executor/nodeAgg.c,v 1.83 2002/04/29 22:28:19 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -58,11 +58,13 @@
 #include "catalog/pg_operator.h"
 #include "executor/executor.h"
 #include "executor/nodeAgg.h"
+#include "miscadmin.h"
 #include "optimizer/clauses.h"
 #include "parser/parse_coerce.h"
 #include "parser/parse_expr.h"
 #include "parser/parse_oper.h"
 #include "parser/parse_type.h"
+#include "utils/acl.h"
 #include "utils/builtins.h"
 #include "utils/lsyscache.h"
 #include "utils/syscache.h"
@@ -843,6 +845,7 @@ ExecInitAgg(Agg *node, EState *estate, Plan *parent)
 		AggStatePerAgg peraggstate = &peragg[++aggno];
 		HeapTuple	aggTuple;
 		Form_pg_aggregate aggform;
+		AclResult	aclresult;
 		Oid			transfn_oid,
 					finalfn_oid;
 		Datum		textInitVal;
@@ -860,6 +863,12 @@ ExecInitAgg(Agg *node, EState *estate, Plan *parent)
 			elog(ERROR, "ExecAgg: cache lookup failed for aggregate %u",
 				 aggref->aggfnoid);
 		aggform = (Form_pg_aggregate) GETSTRUCT(aggTuple);
+
+		/* Check permission to call aggregate function */
+		aclresult = pg_proc_aclcheck(aggref->aggfnoid, GetUserId(),
+									 ACL_EXECUTE);
+		if (aclresult != ACLCHECK_OK)
+			aclcheck_error(aclresult, get_func_name(aggref->aggfnoid));
 
 		get_typlenbyval(aggref->aggtype,
 						&peraggstate->resulttypeLen,
