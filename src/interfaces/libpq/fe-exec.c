@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/interfaces/libpq/fe-exec.c,v 1.57 1998/07/13 00:01:44 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/interfaces/libpq/fe-exec.c,v 1.58 1998/07/13 02:41:58 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -498,21 +498,21 @@ getRowDescriptions(PGconn *conn)
 	{
 		char		typName[MAX_MESSAGE_LEN];
 		int			adtid;
-		int			adtsize;
-		int			adtmod = -1;
+		int			typlen;
+		int			atttypmod = -1;
 
 		if (pqGets(typName, MAX_MESSAGE_LEN, conn) ||
 			pqGetInt(&adtid, 4, conn) ||
-			pqGetInt(&adtsize, 2, conn) ||
-			pqGetInt(&adtmod, 4, conn))
+			pqGetInt(&typlen, 2, conn) ||
+			pqGetInt(&atttypmod, 4, conn))
 		{
 			PQclear(result);
 			return EOF;
 		}
 		result->attDescs[i].name = strdup(typName);
 		result->attDescs[i].adtid = adtid;
-		result->attDescs[i].adtsize = (short) adtsize;
-		result->attDescs[i].adtmod = adtmod;
+		result->attDescs[i].typlen = (short) typlen;
+		result->attDescs[i].atttypmod = atttypmod;
 	}
 
 	/* Success! */
@@ -1294,7 +1294,7 @@ PQfsize(PGresult *res, int field_num)
 		return 0;
 	}
 	if (res->attDescs)
-		return res->attDescs[field_num].adtsize;
+		return res->attDescs[field_num].typlen;
 	else
 		return 0;
 }
@@ -1316,7 +1316,7 @@ PQfmod(PGresult *res, int field_num)
 		return 0;
 	}
 	if (res->attDescs)
-		return res->attDescs[field_num].adtmod;
+		return res->attDescs[field_num].atttypmod;
 	else
 		return 0;
 }

@@ -6,7 +6,7 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: libpq-fe.h,v 1.32 1998/07/13 00:01:45 momjian Exp $
+ * $Id: libpq-fe.h,v 1.33 1998/07/13 02:41:59 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -78,7 +78,7 @@ extern		"C"
 		char	   *name;		/* type name */
 		Oid			adtid;		/* type id */
 		short		adtsize;	/* type size */
-		int			adtmod;		/* type-specific modifier info */
+		int			atttypmod;	/* type-specific modifier info */
 	} PGresAttDesc;
 
 /* use char* for Attribute values,
