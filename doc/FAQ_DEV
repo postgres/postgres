@@ -1,7 +1,7 @@
 
           Developer's Frequently Asked Questions (FAQ) for PostgreSQL
                                        
-   Last updated: Fri Dec 24 11:43:42 EST 1999
+   Last updated: Fri Jun 9 21:54:54 EDT 2000
    
    Current maintainer: Bruce Momjian (pgman@candle.pha.pa.us)
    
@@ -91,11 +91,11 @@ s
             or
                 ; Cmd to set tab stops &etc for working with PostgreSQL code
              (c-add-style "pgsql"
-			          '("bsd"
+                                  '("bsd"
                                  (indent-tabs-mode . t)
                                  (c-basic-offset   . 4)
                                  (tab-width . 4)
-			                     (c-offsets-alist .
+                                             (c-offsets-alist .
                                             ((case-label . +))))
                        t) ; t = set this mode on
 
@@ -309,8 +309,8 @@ c-mode)
    you to query the system catalogs. This is the preferred way to access
    system tables, because the first call to the cache loads the needed
    rows, and future requests can return the results without accessing the
-   base table. Some of the caches use system table indexes to look up
-   tuples. A list of available caches is located in
+   base table. The caches use system table indexes to look up tuples. A
+   list of available caches is located in
    src/backend/utils/cache/syscache.c.
    src/backend/utils/cache/lsyscache.c contains many column-specific
    cache lookup functions.
@@ -353,11 +353,12 @@ c-mode)
    is to use heap_tuplemodify() and pass it your palloc'ed tuple, and the
    values you want changed. It returns another palloc'ed tuple, which you
    pass to heap_replace(). You can delete tuples by passing the tuple's
-   t_self to heap_destroy(). Remember, tuples can be either system cache
-   versions, which may go away soon after you get them, buffer cache
-   version, which will go away when you heap_getnext(), heap_endscan, or
-   ReleaseBuffer(), in the heap_fetch() case. Or it may be a palloc'ed
-   tuple, that you must pfree() when finished.
+   t_self to heap_destroy(). You can use it for heap_update() too.
+   Remember, tuples can be either system cache versions, which may go
+   away soon after you get them, buffer cache versions, which go away
+   when you heap_getnext(), heap_endscan, or ReleaseBuffer(), in the
+   heap_fetch() case. Or it may be a palloc'ed tuple, that you must
+   pfree() when finished.
    
   10) What is elog()?
   
