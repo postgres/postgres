@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/func.sgml,v 1.140 2003/02/16 02:30:36 tgl Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/func.sgml,v 1.141 2003/02/19 03:12:22 momjian Exp $
 PostgreSQL documentation
 -->
 
@@ -7073,6 +7073,57 @@ SELECT pg_type_is_visible('myschema.widget'::regtype);
    zero as one might expect.  The function <function>coalesce</function> may be
    used to substitute zero for null when necessary.
   </para>
+
+  <note>
+   <para>
+    Users accustomed to working with other RDBMS products may be
+    surprised by the performance characteristics of certain aggregate
+    functions in <productname>PostgreSQL</productname> when the
+    aggregate is applied to the entire table (in other words, no
+    <literal>WHERE</literal> clause is specified). In particular,
+    a query like
+<programlisting>
+SELECT min(col) FROM sometable;
+</programlisting>
+   will be executed by <productname>PostgreSQL</productname> using a
+   sequential scan of the entire table. Other database systems may
+   optimize queries of this form to use an index on the column, if one
+   is available. Similarly, the aggregate functions
+   <function>max()</function> and <function>count()</function> always
+   require a sequential scan if applied to the entire table in
+   <productname>PostgreSQL</productname>.
+   </para>
+
+   <para>
+    <productname>PostgreSQL</productname> cannot easily implement this
+    optimization because it also allows for user-defined aggregate
+    queries. Since <function>min()</function>,
+    <function>max()</function>, and <function>count()</function> are
+    defined using a generic API for aggregate functions, there is no
+    provision for <quote>special-casing</quote> the execution of these
+    functions under certain circumstances.
+   </para>
+
+   <para>
+    Fortunately, there is a simple workaround for
+    <function>min()</function> and <function>max()</function>. The
+    query shown below is equivalent to the query above, except that it
+    can take advantage of a B+-Tree index if there is one present on
+    the column in question.
+<programlisting>
+SELECT col FROM sometable ORDER BY col ASC LIMIT 1;
+</programlisting>
+    A similar query (obtained by substituting <literal>DESC</literal>
+    for <literal>ASC</literal> in the query above) can be used in the
+    place of <function>max()</function>).
+   </para>
+
+   <para>
+    Unfortunately, there is no similarly trivial query that can be
+    used to improve the performance of <function>count()</function>
+    when applied to the entire table.
+   </para>
+  </note>
 
  </sect1>
 
