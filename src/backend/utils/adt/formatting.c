@@ -1,7 +1,7 @@
 /* -----------------------------------------------------------------------
  * formatting.c
  *
- * $Header: /cvsroot/pgsql/src/backend/utils/adt/formatting.c,v 1.55 2002/09/20 03:54:57 momjian Exp $
+ * $Header: /cvsroot/pgsql/src/backend/utils/adt/formatting.c,v 1.56 2002/09/20 03:57:09 momjian Exp $
  *
  *
  *	 Portions Copyright (c) 1999-2002, PostgreSQL Global Development Group
@@ -3767,11 +3767,11 @@ NUM_numpart_to_char(NUMProc *Np, int id)
 					strcpy(Np->inout_p, Np->decimal);	/* Write DEC/D */
 					Np->inout_p += strlen(Np->inout_p);
 
-					/*
-					 * terrible Ora '0' -- 9.9 --> '0.'
-					 */
 				}
-				else if (IS_FILLMODE(Np->Num) && *Np->number == '0' &&
+				/*
+				 * Ora 'n' -- FM9.9 --> 'n.'
+				 */
+				else if (IS_FILLMODE(Np->Num)  &&
 						 Np->last_relevant && *Np->last_relevant == '.')
 				{
 
@@ -3798,11 +3798,10 @@ NUM_numpart_to_char(NUMProc *Np, int id)
 					{
 						*Np->inout_p = ' ';
 						++Np->inout_p;
-
-						/*
-						 * total terrible Ora: '0' -- FM9.9 --> '0.'
-						 */
 					}
+					/*
+					 * total terrible Ora: '0' -- FM9.9 --> '0.'
+					 */
 					else if (Np->last_relevant && *Np->last_relevant == '.')
 					{
 						*Np->inout_p = '0';
