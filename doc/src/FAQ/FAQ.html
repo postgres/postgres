@@ -10,7 +10,7 @@
   alink="#0000ff">
     <H1>Frequently Asked Questions (FAQ) for PostgreSQL</H1>
 
-    <P>Last updated: Wed Jul 23 12:53:27 EDT 2003</P>
+    <P>Last updated: Fri Jul 25 18:07:30 EDT 2003</P>
 
     <P>Current maintainer: Bruce Momjian (<A href=
     "mailto:pgman@candle.pha.pa.us">pgman@candle.pha.pa.us</A>)<BR>
@@ -1401,10 +1401,15 @@ BYTEA           bytea           variable-length byte array (null-byte safe)
     <UL>
     <LI><I>contrib/pgcrypto</I> contains many encryption functions for
     use in <SMALL>SQL</SMALL> queries.</LI>
-    <LI>The only way to encrypt transmission from the client to the
-    server is by using <I>hostssl</I> in <I>pg_hba.conf</I>.</LI>
-    <LI>Database user passwords are automatically encrypted when stored
-    in version 7.3. In previous versions, you must enable the option
+    <LI>To encrypt transmission from the client to the server, the server
+    must have the <I>ssl</I> option set to <I>true</I> in <I>postgresql.conf,
+    </I> and an applicable <I>host</I> or <I>hostssl</I> record must exist in
+    <I>pg_hba.conf</I>, and the client <I>sslmode</I> must not be
+    <I>disable.</I> (Note that it is also possible to use a third-party
+    encrypted transport, such as stunnel or ssh, rather than PostgreSQL's
+    native SSL connections.)
+    <LI>Database user passwords are automatically encrypted when stored in
+    version 7.3. In previous versions, you must enable the option
     <I>PASSWORD_ENCRYPTION</I> in <I>postgresql.conf</I>.</LI>
     <LI>The server can run using an encrypted file system.</LI>
     </UL>
