@@ -29,6 +29,7 @@ extern struct arguments *argsinsert;
 extern struct arguments *argsresult;
 extern struct when when_error, when_nf, when_warn;
 extern struct ECPGstruct_member *struct_member_list[STRUCT_DEPTH];
+extern struct descriptor *descriptors;
 
 /* functions */
 

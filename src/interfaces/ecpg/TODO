@@ -18,8 +18,6 @@ cvariable for an array var
 
 How can one insert arrays from c variables?
 
-support for dynamic SQL with unknown number of variables with DESCRIPTORS
-
 What happens to the output variable during read if there was an
 indicator-error? 
 

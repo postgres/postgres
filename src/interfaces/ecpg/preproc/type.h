@@ -139,4 +139,18 @@ struct arguments
 	struct arguments *next;
 };
 
+struct descriptor
+{
+	char	*name;
+	char	*connection;
+	struct descriptor *next;
+};
+
+struct assignment
+{	
+	char 	*variable;
+	char	*value;
+	struct assignment *next;
+};
+
 enum errortype {ET_WARN, ET_ERROR, ET_FATAL};

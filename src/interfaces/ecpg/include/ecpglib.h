@@ -1,4 +1,5 @@
 #include <postgres.h>
+#include <libpq-fe.h>
 
 #ifdef __cplusplus
 extern		"C"
@@ -48,6 +49,17 @@ extern		"C"
 /* define this for simplicity as well as compatibility */
 
 #define		  SQLCODE	 sqlca.sqlcode
+
+/* dynamic SQL */
+
+	unsigned int	ECPGDynamicType(Oid type);
+	unsigned int	ECPGDynamicType_DDT(Oid type);
+	PGresult *		ECPGresultByDescriptor(int line,const char *name);
+	bool			ECPGdo_descriptor(int line,const char *connection,
+							const char *descriptor,const char *query);
+	bool			ECPGdeallocate_desc(int line,const char *name);
+	bool			ECPGallocate_desc(int line,const char *name);
+	void			ECPGraise(int line,int code);
 
 #ifdef __cplusplus
 }

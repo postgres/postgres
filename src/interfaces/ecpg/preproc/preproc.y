@@ -23,6 +23,8 @@
 int	struct_level = 0;
 char	errortext[128];
 static char	*connection = NULL;
+static char *descriptor_name = NULL;
+static char *descriptor_index= NULL;
 static int      QueryIsRule = 0, ForUpdateNotAllowed = 0, FoundInto = 0;
 static int	FoundSort = 0;
 static int	initializer = 0;
@@ -37,6 +39,11 @@ struct ECPGtype ecpg_no_indicator = {ECPGt_NO_INDICATOR, 0L, {NULL}};
 struct variable no_indicator = {"no_indicator", &ecpg_no_indicator, 0, NULL};
 
 struct ECPGtype ecpg_query = {ECPGt_char_variable, 0L, {NULL}};
+
+/* variable lookup */
+
+static struct variable * find_variable(char * name);
+static void whenever_action(int mode);
 
 /*
  * Handle parsing errors and warnings
@@ -78,6 +85,275 @@ output_simple_statement(char *cmd)
 	fputs(cmd, yyout);
 	output_line_number();
         free(cmd);
+}
+
+/*
+ * assignment handling function (descriptor)
+ */
+ 
+static struct assignment *assignments;
+
+static void push_assignment(char *var,char *value)
+{
+	struct assignment *new=(struct assignment *)mm_alloc(sizeof(struct assignment));
+	
+	new->next=assignments;
+	new->variable=mm_alloc(strlen(var)+1);
+	strcpy(new->variable,var);
+	new->value=mm_alloc(strlen(value)+1);
+	strcpy(new->value,value);
+	assignments=new;
+}
+
+static void drop_assignments(void)
+{	while (assignments)
+	{	struct assignment *old_head=assignments;
+		assignments=old_head->next;
+		free(old_head->variable);
+		free(old_head->value);
+		free(old_head);
+	}
+}
+
+/* XXX: these should be more accurate (consider ECPGdump_a_* ) */
+static void ECPGnumeric_lvalue(FILE *f,char *name)
+{	const struct variable *v=find_variable(name);
+	switch(v->type->typ)
+	{	case ECPGt_short:
+		case ECPGt_int: 
+		case ECPGt_long:
+		case ECPGt_unsigned_short:
+		case ECPGt_unsigned_int:
+		case ECPGt_unsigned_long:
+			fputs(name,yyout);
+			break;
+		default:
+			snprintf(errortext,sizeof errortext,"variable %s: numeric type needed"
+					,name);
+			mmerror(ET_ERROR,errortext);
+			break;
+	}
+}
+
+static void ECPGstring_buffer(FILE *f,char *name)
+{   const struct variable *v=find_variable(name);
+	switch(v->type->typ)
+	{	case ECPGt_varchar:
+			fprintf(yyout,"%s.arr",name);
+			break;
+			
+		case ECPGt_char:
+		case ECPGt_unsigned_char:
+			fputs(name,yyout);
+			break;
+			
+		default:
+			snprintf(errortext,sizeof errortext,"variable %s: character type needed"
+					,name);
+			mmerror(ET_ERROR,errortext);
+			break;
+	}
+}
+
+static void ECPGstring_length(FILE *f,char *name)
+{   const struct variable *v=find_variable(name);
+	switch(v->type->typ)
+	{	case ECPGt_varchar:
+		case ECPGt_char:
+		case ECPGt_unsigned_char:
+		    if (!v->type->size) 
+		    {	snprintf(errortext,sizeof errortext,"zero length char variable %s for assignment",
+		    									v->name);
+		    	mmerror(ET_ERROR,errortext);
+		    }
+			fprintf(yyout,"%ld",v->type->size);
+			break;
+		default:
+			snprintf(errortext,sizeof errortext,"variable %s: character type needed"
+					,name);
+			mmerror(ET_ERROR,errortext);
+			break;
+	}
+}
+
+static void ECPGdata_assignment(char *variable,char *index_plus_1)
+{	const struct variable *v=find_variable(variable);
+	fprintf(yyout,"\t\t\tif (!PQgetisnull(ECPGresult,0,(%s)-1))\n",index_plus_1);
+	switch(v->type->typ)
+	{	case ECPGt_short:
+		case ECPGt_int: /* use the same conversion as ecpglib does */
+		case ECPGt_long:
+			fprintf(yyout,"\t\t\t\t%s=strtol(PQgetvalue(ECPGresult,0,(%s)-1),NULL,10);\n"
+											,variable,index_plus_1);
+			break;
+		case ECPGt_unsigned_short:
+		case ECPGt_unsigned_int:
+		case ECPGt_unsigned_long:
+			fprintf(yyout,"\t\t\t\t%s=strtoul(PQgetvalue(ECPGresult,0,(%s)-1),NULL,10);\n"
+											,variable,index_plus_1);
+			break;
+		case ECPGt_float:
+		case ECPGt_double:
+			fprintf(yyout,"\t\t\t\t%s=strtod(PQgetvalue(ECPGresult,0,(%s)-1),NULL);\n"
+											,variable,index_plus_1);
+			break;
+			
+		case ECPGt_bool:
+			fprintf(yyout,"\t\t\t\t%s=PQgetvalue(ECPGresult,0,(%s)-1)[0]=='t';\n"
+											,variable,index_plus_1);
+			break;
+		
+		case ECPGt_varchar:
+			fprintf(yyout,"\t\t\t{\tstrncpy(%s.arr,PQgetvalue(ECPGresult,0,(%s)-1),%ld);\n"
+											,variable,index_plus_1,v->type->size);
+			fprintf(yyout,"\t\t\t\t%s.len=strlen(PQgetvalue(ECPGresult,0,(%s)-1)\n"
+											,variable,index_plus_1);
+			fprintf(yyout,"\t\t\t\tif (%s.len>%ld) { %s.len=%ld; sqlca.sqlwarn[0]=sqlca.sqlwarn[1]='W'; }\n"
+											,variable,v->type->size,variable,v->type->size);
+			fputs("\t\t\t}\n",yyout);											
+			break;
+			
+		case ECPGt_char:
+		case ECPGt_unsigned_char:
+		    if (!v->type->size) 
+		    {	snprintf(errortext,sizeof errortext,"zero length char variable %s for DATA assignment",
+		    									v->name);
+		    	mmerror(ET_ERROR,errortext);
+		    }
+			fprintf(yyout,"\t\t\t{\tstrncpy(%s,PQgetvalue(ECPGresult,0,(%s)-1),%ld);\n"
+											,variable,index_plus_1,v->type->size);
+			fprintf(yyout,"\t\t\t\tif (strlen(PQgetvalue(ECPGresult,0,(%s)-1))>=%ld)\n"
+				"\t\t\t\t{ %s[%ld]=0; sqlca.sqlwarn[0]=sqlca.sqlwarn[1]='W'; }\n"
+											,index_plus_1,v->type->size,variable,v->type->size-1);
+			fputs("\t\t\t}\n",yyout);											
+			break;
+			
+		default:
+			snprintf(errortext,sizeof errortext,"unknown variable type %d for DATA assignment"
+					,v->type->typ);
+			mmerror(ET_ERROR,errortext);
+			break;
+	}
+}
+
+static void
+output_get_descr_header(char *desc_name)
+{	struct assignment *results;
+	fprintf(yyout,"{\tPGresult *ECPGresult=ECPGresultByDescriptor(%d, \"%s\");\n"
+													,yylineno,desc_name);
+	fputs("\tif (ECPGresult)\n\t{",yyout);
+	for (results=assignments;results!=NULL;results=results->next)
+	{	if (!strcasecmp(results->value,"count"))
+		{	fputs("\t\t",yyout);
+			ECPGnumeric_lvalue(yyout,results->variable);
+			fputs("=PQnfields(ECPGresult);\n",yyout);
+		}
+		else
+		{	snprintf(errortext,sizeof errortext,"unknown descriptor header item '%s'",results->value);
+			mmerror(ET_WARN,errortext);
+		}
+	}
+	drop_assignments();
+	fputs("}",yyout);
+	
+	whenever_action(2|1);
+}
+
+static void
+output_get_descr(char *desc_name)
+{	struct assignment *results;
+	int flags=0;
+	const int DATA_SEEN=1;
+	const int INDICATOR_SEEN=2;
+	
+	fprintf(yyout,"{\tPGresult *ECPGresult=ECPGresultByDescriptor(%d, \"%s\");\n"
+													,yylineno,desc_name);
+	fputs("\tif (ECPGresult)\n\t{",yyout);
+	fprintf(yyout,"\tif (PQntuples(ECPGresult)<1) ECPGraise(%d,ECPG_NOT_FOUND);\n",yylineno);
+	fprintf(yyout,"\t\telse if (%s<1 || %s>PQnfields(ECPGresult))\n"
+			"\t\t\tECPGraise(%d,ECPG_INVALID_DESCRIPTOR_INDEX);\n"
+				,descriptor_index,descriptor_index,yylineno);
+	fputs("\t\telse\n\t\t{\n",yyout);
+	for (results=assignments;results!=NULL;results=results->next)
+	{	if (!strcasecmp(results->value,"type"))
+		{	fputs("\t\t\t",yyout);
+			ECPGnumeric_lvalue(yyout,results->variable);
+			fprintf(yyout,"=ECPGDynamicType(PQftype(ECPGresult,(%s)-1));\n",descriptor_index);
+		}
+		else if (!strcasecmp(results->value,"datetime_interval_code"))
+		{	fputs("\t\t\t",yyout);
+			ECPGnumeric_lvalue(yyout,results->variable);
+			fprintf(yyout,"=ECPGDynamicType_DDT(PQftype(ECPGresult,(%s)-1));\n",descriptor_index);
+		}
+		else if (!strcasecmp(results->value,"length"))
+		{	fputs("\t\t\t",yyout);
+			ECPGnumeric_lvalue(yyout,results->variable);
+			fprintf(yyout,"=PQfmod(ECPGresult,(%s)-1)-VARHDRSZ;\n",descriptor_index);
+		}
+		else if (!strcasecmp(results->value,"octet_length"))
+		{	fputs("\t\t\t",yyout);
+			ECPGnumeric_lvalue(yyout,results->variable);
+			fprintf(yyout,"=PQfsize(ECPGresult,(%s)-1);\n",descriptor_index);
+		}
+		else if (!strcasecmp(results->value,"returned_length")
+			|| !strcasecmp(results->value,"returned_octet_length"))
+		{	fputs("\t\t\t",yyout);
+			ECPGnumeric_lvalue(yyout,results->variable);
+			fprintf(yyout,"=PQgetlength(ECPGresult,0,(%s)-1);\n",descriptor_index);
+		}
+		else if (!strcasecmp(results->value,"precision"))
+		{	fputs("\t\t\t",yyout);
+			ECPGnumeric_lvalue(yyout,results->variable);
+			fprintf(yyout,"=PQfmod(ECPGresult,(%s)-1)>>16;\n",descriptor_index);
+		}
+		else if (!strcasecmp(results->value,"scale"))
+		{	fputs("\t\t\t",yyout);
+			ECPGnumeric_lvalue(yyout,results->variable);
+			fprintf(yyout,"=(PQfmod(ECPGresult,(%s)-1)-VARHDRSZ)&0xffff;\n",descriptor_index);
+		}
+		else if (!strcasecmp(results->value,"nullable"))
+		{	mmerror(ET_WARN,"nullable is always 1");
+			fputs("\t\t\t",yyout);
+			ECPGnumeric_lvalue(yyout,results->variable);
+			fprintf(yyout,"=1;\n");
+		}
+		else if (!strcasecmp(results->value,"key_member"))
+		{	mmerror(ET_WARN,"key_member is always 0");
+			fputs("\t\t\t",yyout);
+			ECPGnumeric_lvalue(yyout,results->variable);
+			fprintf(yyout,"=0;\n");
+		}
+		else if (!strcasecmp(results->value,"name"))
+		{	fputs("\t\t\tstrncpy(",yyout);
+			ECPGstring_buffer(yyout,results->variable);
+			fprintf(yyout,",PQfname(ECPGresult,(%s)-1),",descriptor_index);
+			ECPGstring_length(yyout,results->variable);
+			fputs(");\n",yyout);
+		}
+		else if (!strcasecmp(results->value,"indicator"))
+		{	flags|=INDICATOR_SEEN;
+		    fputs("\t\t\t",yyout);
+			ECPGnumeric_lvalue(yyout,results->variable);
+			fprintf(yyout,"=-PQgetisnull(ECPGresult,0,(%s)-1);\n",descriptor_index);
+		}
+		else if (!strcasecmp(results->value,"data"))
+		{	flags|=DATA_SEEN;
+		    ECPGdata_assignment(results->variable,descriptor_index);
+		}
+		else
+		{	snprintf(errortext,sizeof errortext,"unknown descriptor header item '%s'",results->value);
+			mmerror(ET_WARN,errortext);
+		}
+	}
+	if (flags==DATA_SEEN) /* no indicator */
+	{	fprintf(yyout,"\t\t\tif (PQgetisnull(ECPGresult,0,(%s)-1))\n"
+					"\t\t\t\tECPGraise(%d,ECPG_MISSING_INDICATOR);\n"
+				,descriptor_index,yylineno);
+	}
+	drop_assignments();
+	fputs("\t\t}\n\t}\n",yyout);
+	
+	whenever_action(2|1);
 }
 
 /*
@@ -156,8 +432,6 @@ new_variable(const char * name, struct ECPGtype * type)
 
     return(p);
 }
-
-static struct variable * find_variable(char * name);
 
 static struct variable *
 find_struct_member(char *name, char *str, struct ECPGstruct_member *members)
@@ -401,6 +675,67 @@ check_indicator(struct ECPGtype *var)
 	}
 }
 
+/*
+ * descriptor name lookup
+ */
+ 
+static struct descriptor *descriptors;
+
+static void add_descriptor(char *name,char *connection)
+{
+	struct descriptor *new=(struct descriptor *)mm_alloc(sizeof(struct descriptor));
+	
+	new->next=descriptors;
+	new->name=mm_alloc(strlen(name)+1);
+	strcpy(new->name,name);
+	if (connection) 
+	{	new->connection=mm_alloc(strlen(connection)+1);
+		strcpy(new->connection,connection);
+	}
+	else new->connection=connection;
+	descriptors=new;
+}
+
+static void drop_descriptor(char *name,char *connection)
+{	struct descriptor *i;
+	struct descriptor **lastptr=&descriptors;
+	for (i=descriptors;i;lastptr=&i->next,i=i->next)
+	{	if (!strcmp(name,i->name))
+		{	if ((!connection && !i->connection) 
+				|| (connection && i->connection 
+					&& !strcmp(connection,i->connection)))
+			{	*lastptr=i->next;
+				if (i->connection) free(i->connection);
+				free(i->name);
+				free(i);
+				return;
+			}
+		}
+	}
+	snprintf(errortext,sizeof errortext,"unknown descriptor %s",name);
+	mmerror(ET_WARN,errortext);
+}
+
+static struct descriptor *lookup_descriptor(char *name,char *connection)
+{	struct descriptor *i;
+	for (i=descriptors;i;i=i->next)
+	{	if (!strcmp(name,i->name))
+		{	if ((!connection && !i->connection) 
+				|| (connection && i->connection 
+					&& !strcmp(connection,i->connection)))
+			{	return i;
+			}
+		}
+	}
+	snprintf(errortext,sizeof errortext,"unknown descriptor %s",name);
+	mmerror(ET_WARN,errortext);
+	return NULL;
+}
+
+/*
+ * string concatenation
+ */
+
 static char *
 cat2_str(char *str1, char *str2)
 { 
@@ -522,6 +857,32 @@ output_statement(char * stmt, int mode)
 		free(connection);
 }
 
+static void
+output_statement_desc(char * stmt, int mode)
+{
+	int i, j=strlen(stmt);
+
+	fprintf(yyout, "{ ECPGdo_descriptor(__LINE__, %s, \"%s\", \"", 
+		connection ? connection : "NULL", descriptor_name);
+
+	/* do this char by char as we have to filter '\"' */
+	for (i = 0;i < j; i++) {
+		if (stmt[i] != '\"')
+			fputc(stmt[i], yyout);
+		else
+			fputs("\\\"", yyout);
+	}
+
+	fputs("\");", yyout);
+
+	mode |= 2;
+	whenever_action(mode);
+	free(stmt);
+	if (connection != NULL)
+		free(connection);
+	free(descriptor_name);
+}
+
 static struct typedefs *
 get_typedef(char *name)
 {
@@ -632,15 +993,16 @@ adjust_array(enum ECPGttype type_enum, int *dimension, int *length, int type_dim
 }
 
 /* special embedded SQL token */
-%token		SQL_AT SQL_AUTOCOMMIT SQL_BOOL SQL_BREAK 
+%token		SQL_ALLOCATE SQL_AT SQL_AUTOCOMMIT SQL_BOOL SQL_BREAK 
 %token		SQL_CALL SQL_CONNECT SQL_CONNECTION SQL_CONTINUE
-%token		SQL_DEALLOCATE SQL_DISCONNECT SQL_ENUM 
-%token		SQL_FOUND SQL_FREE SQL_GO SQL_GOTO
+%token		SQL_DEALLOCATE SQL_DESCRIPTOR SQL_DISCONNECT SQL_ENUM 
+%token		SQL_FOUND SQL_FREE SQL_GET SQL_GO SQL_GOTO
 %token		SQL_IDENTIFIED SQL_INDICATOR SQL_INT SQL_LONG
 %token		SQL_OFF SQL_OPEN SQL_PREPARE SQL_RELEASE SQL_REFERENCE
-%token		SQL_SECTION SQL_SHORT SQL_SIGNED SQL_SQLERROR SQL_SQLPRINT
+%token		SQL_SECTION SQL_SHORT SQL_SIGNED SQL_SQL 
+%token		SQL_SQLERROR SQL_SQLPRINT
 %token		SQL_SQLWARNING SQL_START SQL_STOP SQL_STRUCT SQL_UNSIGNED
-%token		SQL_VAR SQL_WHENEVER
+%token		SQL_VALUE SQL_VAR SQL_WHENEVER
 
 /* C token */
 %token		S_ANYTHING S_AUTO S_CONST S_EXTERN
@@ -829,6 +1191,9 @@ adjust_array(enum ECPGttype type_enum, int *dimension, int *length, int type_dim
 %type  <str>	ECPGFree ECPGDeclare ECPGVar opt_at enum_definition
 %type  <str>    struct_type s_struct declaration declarations variable_declarations
 %type  <str>    s_struct s_union union_type ECPGSetAutocommit on_off
+%type  <str>	ECPGAllocateDescr ECPGDeallocateDescr
+%type  <str>	ECPGGetDescriptor ECPGGetDescriptorHeader 
+%type  <str>	FetchDescriptorStmt
 
 %type  <type_enum> simple_type signed_type unsigned_type varchar_type
 
@@ -879,6 +1244,7 @@ stmt:  AlterTableStmt			{ output_statement($1, 0); }
 		| ExtendStmt 		{ output_statement($1, 0); }
 		| ExplainStmt		{ output_statement($1, 0); }
 		| FetchStmt		{ output_statement($1, 1); }
+		| FetchDescriptorStmt		{ output_statement_desc($1, 1); }
 		| GrantStmt		{ output_statement($1, 0); }
 		| IndexStmt		{ output_statement($1, 0); }
 		| ListenStmt		{ output_statement($1, 0); }
@@ -912,6 +1278,10 @@ stmt:  AlterTableStmt			{ output_statement($1, 0); }
 		| VariableShowStmt	{ output_statement($1, 0); }
 		| VariableResetStmt	{ output_statement($1, 0); }
 		| ConstraintsSetStmt	{ output_statement($1, 0); }
+		| ECPGAllocateDescr	{	fprintf(yyout,"ECPGallocate_desc(__LINE__, \"%s\");",$1);
+								whenever_action(0);
+								free($1);
+							}
 		| ECPGConnect		{
 						if (connection)
 							mmerror(ET_ERROR, "no at option for connect statement.\n");
@@ -932,6 +1302,10 @@ stmt:  AlterTableStmt			{ output_statement($1, 0); }
 						whenever_action(2);
 						free($1);
 					}
+		| ECPGDeallocateDescr	{	fprintf(yyout,"ECPGdeallocate_desc(__LINE__, \"%s\");",$1);
+									whenever_action(0);
+									free($1);
+								}
 		| ECPGDeclare		{
 						output_simple_statement($1);
 					}
@@ -951,6 +1325,14 @@ stmt:  AlterTableStmt			{ output_statement($1, 0); }
 
 						whenever_action(2);
 						free($1);
+					}
+		| ECPGGetDescriptor	{	
+						lookup_descriptor($1,connection);
+						output_get_descr($1);
+					}
+		| ECPGGetDescriptorHeader	{	
+						lookup_descriptor($1,connection);
+						output_get_descr_header($1);
 					}
 		| ECPGOpen		{	
 						struct cursor *ptr;
@@ -5013,6 +5395,78 @@ ECPGPrepare: SQL_PREPARE ident FROM execstring
 	{
 		$$ = cat2_str(make3_str(make_str("\""), $2, make_str("\",")), $4);
 	}
+
+/*
+ * dynamic SQL: descriptor based access
+ * 	written by Christof Petig <christof.petig@wtal.de>
+ */
+
+/*
+ * deallocate a descriptor
+ */
+ECPGDeallocateDescr:	SQL_DEALLOCATE SQL_DESCRIPTOR ident	
+{	drop_descriptor($3,connection);
+	$$ = $3;
+}
+
+/*
+ * allocate a descriptor
+ */
+ECPGAllocateDescr:	SQL_ALLOCATE SQL_DESCRIPTOR ident	
+{   add_descriptor($3,connection);
+	$$ = $3;
+}
+
+/*
+ * read from descriptor
+ */
+
+ECPGGetDescHeaderItem: cvariable '=' ident  {
+		push_assignment($1,$3);
+}
+
+ECPGGetDescItem: cvariable '=' ident  {
+		push_assignment($1,$3);
+}
+	| cvariable '=' TYPE_P {
+		push_assignment($1,"type");
+}
+	| cvariable '=' PRECISION {
+		push_assignment($1,"precision");
+}
+	| cvariable '=' SQL_INDICATOR {
+		push_assignment($1,"indicator");
+}
+
+ECPGGetDescHeaderItems: ECPGGetDescHeaderItem
+	| ECPGGetDescHeaderItems ',' ECPGGetDescHeaderItem;
+ 
+ECPGGetDescItems: ECPGGetDescItem
+	| ECPGGetDescItems ',' ECPGGetDescItem;
+ 
+ECPGGetDescriptorHeader:	SQL_GET SQL_DESCRIPTOR ident ECPGGetDescHeaderItems
+{  $$ = $3; }
+
+ECPGGetDescriptor:	SQL_GET SQL_DESCRIPTOR ident SQL_VALUE cvariable ECPGGetDescItems
+{  $$ = $3; descriptor_index=$5; }
+	|	SQL_GET SQL_DESCRIPTOR ident SQL_VALUE Iconst ECPGGetDescItems
+{  $$ = $3; descriptor_index=$5; }
+
+/*
+ *  fetch [ in | from ] <portalname> into sql descriptor <name>
+ */
+
+FetchDescriptorStmt:	FETCH from_in name INTO SQL_SQL SQL_DESCRIPTOR ident
+  				{
+					$$ = cat_str(3, make_str("fetch"), $2, $3);
+					descriptor_name=$7;
+				}
+		|	FETCH name INTO SQL_SQL SQL_DESCRIPTOR ident
+  				{
+					$$ = cat2_str(make_str("fetch"), $2);
+					descriptor_name=$6;
+				}
+		;
 
 /*
  * for compatibility with ORACLE we will also allow the keyword RELEASE

@@ -6,7 +6,7 @@
 # Copyright (c) 1994, Regents of the University of California
 #
 # IDENTIFICATION
-#    $Header: /cvsroot/pgsql/src/interfaces/ecpg/lib/Attic/Makefile.in,v 1.57 2000/02/16 11:52:24 meskes Exp $
+#    $Header: /cvsroot/pgsql/src/interfaces/ecpg/lib/Attic/Makefile.in,v 1.58 2000/02/16 16:18:05 meskes Exp $
 #
 #-------------------------------------------------------------------------
 
@@ -36,7 +36,7 @@ include $(SRCDIR)/Makefile.shlib
 install: install-lib $(install-shlib-dep)
 
 # Handmade dependencies in case make depend not done
-ecpglib.o : ecpglib.c ../include/ecpglib.h ../include/ecpgtype.h
+ecpglib.o : ecpglib.c ../include/ecpglib.h ../include/ecpgtype.h dynamic.c
 typename.o : typename.c ../include/ecpgtype.h
 
 

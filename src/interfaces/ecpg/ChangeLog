@@ -809,5 +809,10 @@ Tue Feb 15 17:39:19 CET 2000
 Wed Feb 16 11:57:02 CET 2000
 
 	- Fixed library to be able to input complete arrays.
+
+Wed Feb 16 17:04:41 CET 2000
+
+	- Apply patch by Christof Petig <christof.petig@wtal.de> that adds
+	  descriptors.
 	- Set library version to 3.1.0.
 	- Set ecpg version to 2.7.0.
