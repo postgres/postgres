@@ -1,6 +1,6 @@
 .\" This is -*-nroff-*-
 .\" XXX standard disclaimer belongs here....
-.\" $Header: /cvsroot/pgsql/src/man/Attic/psql.1,v 1.6 1997/03/15 01:11:54 scrappy Exp $
+.\" $Header: /cvsroot/pgsql/src/man/Attic/psql.1,v 1.7 1997/04/10 11:58:59 scrappy Exp $
 .TH PSQL UNIX 1/20/96 PostgreSQL PostgreSQL
 .SH NAME
 psql \(em run the interactive query front-end
@@ -331,6 +331,9 @@ Toggles extended row format mode. When enabled each row will have its column
 names printed on the left with the column values printed on the right.
 This is useful for rows which are otherwise too long to fit into
 one screen line. HTML row output mode supports this flag too.
+.IP "\ez"
+Produces a list of all tables in database with their appropriate ACLs
+(grant/revoke permissions) listed.
 .IP "\e! [\fIcommand\fR]"
 Escape to shell or execute
 .IR command.
