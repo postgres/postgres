@@ -1,7 +1,7 @@
 
                 Frequently Asked Questions (FAQ) for PostgreSQL
                                        
-   Last updated: Mon Jun 18 14:55:56 EDT 2001
+   Last updated: Tue Jul 10 21:01:47 EDT 2001
    
    Current maintainer: Bruce Momjian (pgman@candle.pha.pa.us)
    
@@ -649,7 +649,7 @@ Maximum number of indexes on a table?    unlimited
    
    The maximum table size of 16TB does not require large file support
    from the operating system. Large tables are stored as multiple 1GB
-   files.
+   files so file system size limits are not important.
    
    The maximum table size and maximum number of columns can be increased
    if the default block size is increased to 32k.
