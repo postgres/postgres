@@ -1,5 +1,7 @@
 #include <stdlib.h>
 #include <string.h>
+#include <stdlib.h>
+#include <stdio.h>
 
 /* just a test comment */ exec sql whenever sqlerror do PrintAndStop(msg);
 exec sql whenever sqlwarning do warn();
