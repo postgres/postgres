@@ -1693,7 +1693,7 @@ comment_text:    StringConst		{ $$ = $1; }
 
 GrantStmt:  GRANT privileges ON opt_table relation_name_list TO grantee_list opt_with_grant
 				{
-					$$ = cat_str(7, make_str("grant"), $2, make_str("on"), $4, $5, make_str("to"), $7);
+					$$ = cat_str(8, make_str("grant"), $2, make_str("on"), $4, $5, make_str("to"), $7, $8);
 				}
 		;
 
@@ -1769,11 +1769,8 @@ grantee_list: grantee  				{ $$ = $1; }
 		| grantee_list ',' grantee 	{ $$ = cat_str(3, $1, make_str(","), $3); }
 		;
 
-opt_with_grant:  WITH GRANT OPTION
-				{
-					mmerror(ET_ERROR, "WITH GRANT OPTION is not supported.  Only relation owners can set privileges");
-				 }
-		| /*EMPTY*/ 
+opt_with_grant:  WITH GRANT OPTION { $$ = make_str("with grant option"); }
+		| /*EMPTY*/ { $$ = EMPTY; }
 		;
 
 
