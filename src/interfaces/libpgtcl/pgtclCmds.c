@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/interfaces/libpgtcl/Attic/pgtclCmds.c,v 1.39 1999/01/17 21:12:55 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/interfaces/libpgtcl/Attic/pgtclCmds.c,v 1.40 1999/02/07 22:08:51 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -545,7 +545,7 @@ Pg_result(ClientData cData, Tcl_Interp * interp, int argc, char *argv[])
 
 	if (strcmp(opt, "-status") == 0)
 	{
-		Tcl_AppendResult(interp, pgresStatus[PQresultStatus(result)], 0);
+		Tcl_AppendResult(interp, PQresStatus(PQresultStatus(result)), 0);
 		return TCL_OK;
 	}
 	else if (strcmp(opt, "-error") == 0)

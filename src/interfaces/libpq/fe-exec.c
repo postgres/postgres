@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/interfaces/libpq/fe-exec.c,v 1.72 1999/02/03 20:19:10 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/interfaces/libpq/fe-exec.c,v 1.73 1999/02/07 22:08:52 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -1516,6 +1516,15 @@ PQresultStatus(PGresult *res)
 	if (!res)
 		return PGRES_NONFATAL_ERROR;
 	return res->resultStatus;
+}
+
+const char *
+PQresStatus(ExecStatusType status)
+{
+	if (((int) status) < 0 ||
+		((int) status) >= (sizeof(pgresStatus) / sizeof(pgresStatus[0])))
+		return "Invalid ExecStatusType code";
+	return pgresStatus[status];
 }
 
 const char *

@@ -90,7 +90,7 @@ main()
 		/* async notification only come back as a result of a query */
 		/* we can send empty queries */
 		res = PQexec(conn, " ");
-/*		printf("res->status = %s\n", pgresStatus[PQresultStatus(res)]); */
+/*		printf("res->status = %s\n", PQresStatus(PQresultStatus(res))); */
 		/* check for asynchronous returns */
 		notify = PQnotifies(conn);
 		if (notify)

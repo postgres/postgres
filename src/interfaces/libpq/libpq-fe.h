@@ -6,7 +6,7 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: libpq-fe.h,v 1.47 1999/02/05 04:25:55 momjian Exp $
+ * $Id: libpq-fe.h,v 1.48 1999/02/07 22:08:53 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -49,7 +49,9 @@ extern		"C"
 		PGRES_FATAL_ERROR
 	} ExecStatusType;
 
-/* String descriptions of the ExecStatusTypes */
+/* String descriptions of the ExecStatusTypes.
+ * NB: direct use of this array is now deprecated; call PQresStatus() instead.
+ */
 	extern const char * const pgresStatus[];
 
 /* PGconn encapsulates a connection to the backend.
@@ -79,7 +81,6 @@ extern		"C"
 
 /* PQnoticeProcessor is the function type for the notice-message callback.
  */
-
 	typedef void (*PQnoticeProcessor) (void * arg, const char * message);
 
 /* Print options for PQprint() */
@@ -153,8 +154,8 @@ extern		"C"
 	extern PGconn *PQconnectdb(const char *conninfo);
 	extern PGconn *PQsetdbLogin(const char *pghost, const char *pgport,
 								const char *pgoptions, const char *pgtty,
-											const char *dbName,
-									 const char *login, const char *pwd);
+								const char *dbName,
+								const char *login, const char *pwd);
 #define PQsetdb(M_PGHOST,M_PGPORT,M_PGOPT,M_PGTTY,M_DBNAME)  \
 	PQsetdbLogin(M_PGHOST, M_PGPORT, M_PGOPT, M_PGTTY, M_DBNAME, NULL, NULL)
 
@@ -192,8 +193,8 @@ extern		"C"
 
 	/* Override default notice processor */
 	extern void PQsetNoticeProcessor(PGconn *conn,
-												 PQnoticeProcessor proc,
-												 void *arg);
+									 PQnoticeProcessor proc,
+									 void *arg);
 
 /* === in fe-exec.c === */
 
@@ -230,6 +231,7 @@ extern		"C"
 
 	/* Accessor functions for PGresult objects */
 	extern ExecStatusType PQresultStatus(PGresult *res);
+	extern const char *PQresStatus(ExecStatusType status);
 	extern const char *PQresultErrorMessage(PGresult *res);
 	extern int	PQntuples(PGresult *res);
 	extern int	PQnfields(PGresult *res);
