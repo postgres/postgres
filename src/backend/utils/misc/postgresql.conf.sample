@@ -127,7 +127,7 @@
 #log_duration = false
 #log_timestamp = false
 
-#log_min_error_statement = error # Values in order of increasing severity:
+#log_min_error_statement = panic # Values in order of increasing severity:
 				 #   debug5, debug4, debug3, debug2, debug1,
 				 #   info, notice, warning, error, panic(off)
 
