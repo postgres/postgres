@@ -655,14 +655,21 @@ CFLAGS="$CFLAGS $X_CFLAGS"
 CPPFLAGS="$CPPFLAGS $X_CFLAGS"
 LDFLAGS="$LDFLAGS $X_LIBS"
 TK_LIB=
-AC_CHECK_LIB(tk, main, TK_LIB=tk,,$X11_LIBS $TCL_LIB)
-if test -z "$TK_LIB"; then
-AC_MSG_WARN(tcl support disabled; Tk library missing)
-USE_TCL=
-else
-TK_LIB=-l$TK_LIB
+	TK_LIB=
+	tk_libs="tk8.0 tk80 tk4.2 tk42 tk"
+	for tk_lib in $tk_libs; do
+	    if test -z "$TK_LIB"; then
+		AC_CHECK_LIB($tk_lib, main, TK_LIB=$tk_lib)
+	    fi
+	done
+	if test -z "$TK_LIB"; then
+	    AC_MSG_WARN(tk support disabled; Tk library missing)
+	    USE_TCL=
+	else
+	    TK_LIB=-l$TK_LIB
+	fi
+	AC_SUBST(TK_LIB)
 fi
-AC_SUBST(TK_LIB)
 LIBS="$ice_save_LIBS"
 CFLAGS="$ice_save_CFLAGS"
 CPPFLAGS="$ice_save_CPPFLAGS"
