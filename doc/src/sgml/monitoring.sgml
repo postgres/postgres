@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/monitoring.sgml,v 1.4 2001/11/12 19:19:39 petere Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/monitoring.sgml,v 1.5 2001/11/29 20:26:55 momjian Exp $
 -->
 
 <chapter id="monitoring">
@@ -72,6 +72,21 @@ postgres: <replaceable>user</> <replaceable>database</> <replaceable>host</> <re
   that process 1003 is waiting for process 1016 to complete its transaction and
   thereby release some lock or other.
   </para>
+
+  <tip>
+  <para>
+  <productname>Solaris</productname> requires special handling. You must
+  use <command>/usr/ucb/ps</command>, rather than
+  <command>/bin/ps</command>. You also must use two <command>w</command>
+  flags, not just one. In addition, your original invocation of the
+  <application>postmaster</application> must have a shorter
+  <command>ps</command> status display than that provided by each
+  backend.
+  </para>
+  </tip>
+
+
+
  </sect1>
 
  <sect1 id="monitoring-stats">
