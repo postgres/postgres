@@ -1,6 +1,6 @@
 TODO list for PostgreSQL
 ========================
-Last updated:		Fri Jun 18 12:03:13 EDT 2004
+Last updated:		Fri Jun 18 14:35:43 EDT 2004
 
 Current maintainer:	Bruce Momjian (pgman@candle.pha.pa.us)
 
@@ -52,7 +52,8 @@ Administration
 * Allow GRANT/REVOKE permissions to be given to all schema objects with one command
 * Remove unreferenced table files created by transactions that were
   in-progress when the server terminated abruptly
-
+* Allow reporting of which objects are in which tablespaces
+* Allow database recovery where tablespaces can't be created
 
 
 Data Types
@@ -209,6 +210,8 @@ Commands
 	o Allow ALTER TABLE to change constraint deferrability and actions
 	o Disallow dropping of an inherited constraint
 	o Allow the schema of objects to be changed
+	o Add ALTER TABLESPACE to change location, name, owner
+	o Allow objects to be moved between tablespaces
 
 * CLUSTER
 	o Automatically maintain clustering on a table
