@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2003, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Id: bufpage.h,v 1.55 2003/08/04 02:40:14 momjian Exp $
+ * $Id: bufpage.h,v 1.55.4.1 2004/06/05 17:42:50 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -283,13 +283,14 @@ typedef PageHeaderData *PageHeader;
  *		Since offset numbers are 1-based, this is also the number
  *		of items on the page.
  *
- *		NOTE: to ensure sane behavior if the page is not initialized
- *		(pd_lower == 0), cast the unsigned values to int before dividing.
- *		That way we get -1 or so, not a huge positive number...
+ *		NOTE: if the page is not initialized (pd_lower == 0), we must
+ *		return zero to ensure sane behavior.  Accept double evaluation
+ *		of the argument so that we can ensure this.
  */
 #define PageGetMaxOffsetNumber(page) \
-	(((int) (((PageHeader) (page))->pd_lower - SizeOfPageHeaderData)) \
-	 / ((int) sizeof(ItemIdData)))
+	(((PageHeader) (page))->pd_lower <= SizeOfPageHeaderData ? 0 : \
+	 ((((PageHeader) (page))->pd_lower - SizeOfPageHeaderData) \
+	  / sizeof(ItemIdData)))
 
 #define PageGetLSN(page) \
 	(((PageHeader) (page))->pd_lsn)
