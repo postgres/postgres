@@ -1,6 +1,6 @@
 TODO list for PostgreSQL
 ========================
-Last updated:		Fri May 12 08:23:51 EDT 2000
+Last updated:		Sat May 13 21:27:24 EDT 2000
 
 Current maintainer:	Bruce Momjian (pgman@candle.pha.pa.us)
 
@@ -52,7 +52,6 @@ MISC
 * Permission to UPDATE table allows DELETE also
 * Some database schema's are not dumpable;  do dumps in oid order
 
-
 ENHANCEMENTS
 ------------
 
@@ -95,6 +94,7 @@ TYPES
 * Add non-large-object binary field
 * Functions returning sets don't really work right[function]
 * Add hash for int8
+* SELECT col FROM tab WHERE numeric_col = 10.1 fails
 
 VIEWS
 
