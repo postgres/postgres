@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2000, PostgreSQL, Inc
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Id: bufpage.h,v 1.28 2000/01/26 05:58:32 momjian Exp $
+ * $Id: bufpage.h,v 1.29 2000/06/02 10:20:27 vadim Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -117,6 +117,10 @@ typedef OpaqueData *Opaque;
  */
 typedef struct PageHeaderData
 {
+#ifdef XLOG
+	XLogRecPtr	pd_lsn;			/* XLOG: next byte after last byte of xlog */
+								/* record for last change of this page */
+#endif
 	LocationIndex pd_lower;		/* offset to start of free space */
 	LocationIndex pd_upper;		/* offset to end of free space */
 	LocationIndex pd_special;	/* offset to start of special space */

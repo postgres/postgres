@@ -47,7 +47,12 @@ typedef struct XLogSubRecord
 
 #define SizeOfXLogSubRecord DOUBLEALIGN(sizeof(XLogSubRecord))
 
+/*
+ * XLOG uses only low 4 bits of xl_info. High 4 bits may be used
+ * by rmgr...
+ */
 #define XLR_TO_BE_CONTINUED		0x01
+#define	XLR_INFO_MASK			0x0F
 
 #define XLOG_PAGE_MAGIC 0x17345168
 
@@ -63,8 +68,9 @@ typedef XLogPageHeaderData *XLogPageHeader;
 
 #define XLP_FIRST_IS_SUBRECORD	0x0001
 
-extern XLogRecPtr XLogInsert(RmgrId rmid, char *hdr, uint32 hdrlen,
-		   char *buf, uint32 buflen);
+extern XLogRecPtr XLogInsert(RmgrId rmid, uint8 info, 
+			char *hdr, uint32 hdrlen,
+			char *buf, uint32 buflen);
 extern void XLogFlush(XLogRecPtr RecPtr);
 
 #endif	 /* XLOG_H */

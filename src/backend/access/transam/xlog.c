@@ -6,7 +6,7 @@
  * Portions Copyright (c) 1996-2000, PostgreSQL, Inc
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Header: /cvsroot/pgsql/src/backend/access/transam/xlog.c,v 1.14 2000/06/02 03:58:34 tgl Exp $
+ * $Header: /cvsroot/pgsql/src/backend/access/transam/xlog.c,v 1.15 2000/06/02 10:20:25 vadim Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -219,7 +219,7 @@ static char readBuf[BLCKSZ];
 static XLogRecord *nextRecord = NULL;
 
 XLogRecPtr
-XLogInsert(RmgrId rmid, char *hdr, uint32 hdrlen, char *buf, uint32 buflen)
+XLogInsert(RmgrId rmid, uint8 info, char *hdr, uint32 hdrlen, char *buf, uint32 buflen)
 {
 	XLogCtlInsert *Insert = &XLogCtl->Insert;
 	XLogRecord *record;
@@ -231,6 +231,7 @@ XLogInsert(RmgrId rmid, char *hdr, uint32 hdrlen, char *buf, uint32 buflen)
 	uint16		curridx;
 	bool		updrqst = false;
 
+	Assert(!(info & XLR_INFO_MASK));
 	if (len == 0 || len > MAXLOGRECSZ)
 		elog(STOP, "XLogInsert: invalid record len %u", len);
 
@@ -306,7 +307,8 @@ XLogInsert(RmgrId rmid, char *hdr, uint32 hdrlen, char *buf, uint32 buflen)
 	}
 	record->xl_xid = GetCurrentTransactionId();
 	record->xl_len = (len > freespace) ? freespace : len;
-	record->xl_info = (len > freespace) ? XLR_TO_BE_CONTINUED : 0;
+	record->xl_info = (len > freespace) ? 
+		(info | XLR_TO_BE_CONTINUED) : info;
 	record->xl_rmid = rmid;
 	RecPtr.xlogid = XLogCtl->xlblocks[curridx].xlogid;
 	RecPtr.xrecoff =
@@ -318,8 +320,7 @@ XLogInsert(RmgrId rmid, char *hdr, uint32 hdrlen, char *buf, uint32 buflen)
 		MyProc->logRec = RecPtr;
 		SpinRelease(SInvalLock);
 	}
-	MyLastRecPtr = RecPtr;
-	RecPtr.xrecoff += record->xl_len;
+	MyLastRecPtr = RecPtr;	/* begin of record */
 	Insert->currpos += SizeOfXLogRecord;
 	if (freespace > 0)
 	{
@@ -364,6 +365,7 @@ nbuf:
 		if (hdrlen > freespace)
 		{
 			subrecord->xl_len = freespace;
+			/* we don't store info in subrecord' xl_info */
 			subrecord->xl_info = XLR_TO_BE_CONTINUED;
 			memcpy(Insert->currpos, hdr, freespace);
 			hdrlen -= freespace;
@@ -383,6 +385,7 @@ nbuf:
 		if (buflen > freespace)
 		{
 			subrecord->xl_len += freespace;
+			/* we don't store info in subrecord' xl_info */
 			subrecord->xl_info = XLR_TO_BE_CONTINUED;
 			memcpy(Insert->currpos, buf, freespace);
 			buflen -= freespace;
@@ -395,14 +398,21 @@ nbuf:
 			memcpy(Insert->currpos, buf, buflen);
 			Insert->currpos += buflen;
 		}
+		/* we don't store info in subrecord' xl_info */
 		subrecord->xl_info = 0;
-		RecPtr.xlogid = XLogCtl->xlblocks[curridx].xlogid;
-		RecPtr.xrecoff = XLogCtl->xlblocks[curridx].xrecoff -
-			BLCKSZ + SizeOfXLogPHD + subrecord->xl_len;
 		Insert->currpos = ((char *) Insert->currpage) +
 			DOUBLEALIGN(Insert->currpos - ((char *) Insert->currpage));
 	}
 	freespace = ((char *) Insert->currpage) + BLCKSZ - Insert->currpos;
+
+	/*
+	 * Begin of the next record will be stored as LSN for
+	 * changed data page...
+	 */
+	RecPtr.xlogid = XLogCtl->xlblocks[curridx].xlogid;
+	RecPtr.xrecoff =
+		XLogCtl->xlblocks[curridx].xrecoff - BLCKSZ +
+		Insert->currpos - ((char *) Insert->currpage);
 
 	/*
 	 * All done! Update global LgwrRqst if some block was filled up.
@@ -884,7 +894,8 @@ got_record:;
 		XLogSubRecord *subrecord;
 		uint32		len = record->xl_len;
 
-		if (record->xl_len + RecPtr->xrecoff % BLCKSZ + SizeOfXLogRecord != BLCKSZ)
+		if (DOUBLEALIGN(record->xl_len) + RecPtr->xrecoff % BLCKSZ + 
+			SizeOfXLogRecord != BLCKSZ)
 		{
 			elog(emode, "ReadRecord: invalid fragmented record len %u in (%u, %u)",
 				 record->xl_len, RecPtr->xlogid, RecPtr->xrecoff);
@@ -945,7 +956,7 @@ got_record:;
 			buffer += subrecord->xl_len;
 			if (subrecord->xl_info & XLR_TO_BE_CONTINUED)
 			{
-				if (subrecord->xl_len +
+				if (DOUBLEALIGN(subrecord->xl_len) +
 					SizeOfXLogPHD + SizeOfXLogSubRecord != BLCKSZ)
 				{
 					elog(emode, "ReadRecord: invalid fragmented subrecord len %u in logfile %u seg %u off %u",
@@ -956,23 +967,26 @@ got_record:;
 			}
 			break;
 		}
-		if (BLCKSZ - SizeOfXLogRecord >=
-			subrecord->xl_len + SizeOfXLogPHD + SizeOfXLogSubRecord)
+		if (BLCKSZ - SizeOfXLogRecord >= DOUBLEALIGN(subrecord->xl_len) + 
+			SizeOfXLogPHD + SizeOfXLogSubRecord)
 		{
-			nextRecord = (XLogRecord *)
-				((char *) subrecord + subrecord->xl_len + SizeOfXLogSubRecord);
+			nextRecord = (XLogRecord *) ((char *) subrecord + 
+				DOUBLEALIGN(subrecord->xl_len) + SizeOfXLogSubRecord);
 		}
 		EndRecPtr.xlogid = readId;
 		EndRecPtr.xrecoff = readSeg * XLogSegSize + readOff * BLCKSZ +
-			SizeOfXLogPHD + SizeOfXLogSubRecord + subrecord->xl_len;
+			SizeOfXLogPHD + SizeOfXLogSubRecord + 
+			DOUBLEALIGN(subrecord->xl_len);
 		ReadRecPtr = *RecPtr;
 		return (record);
 	}
-	if (BLCKSZ - SizeOfXLogRecord >=
-		record->xl_len + RecPtr->xrecoff % BLCKSZ + SizeOfXLogRecord)
-		nextRecord = (XLogRecord *) ((char *) record + record->xl_len + SizeOfXLogRecord);
+	if (BLCKSZ - SizeOfXLogRecord >= DOUBLEALIGN(record->xl_len) + 
+		RecPtr->xrecoff % BLCKSZ + SizeOfXLogRecord)
+		nextRecord = (XLogRecord *) ((char *) record + 
+			DOUBLEALIGN(record->xl_len) + SizeOfXLogRecord);
 	EndRecPtr.xlogid = RecPtr->xlogid;
-	EndRecPtr.xrecoff = RecPtr->xrecoff + record->xl_len + SizeOfXLogRecord;
+	EndRecPtr.xrecoff = RecPtr->xrecoff + 
+		DOUBLEALIGN(record->xl_len) + SizeOfXLogRecord;
 	ReadRecPtr = *RecPtr;
 
 	return (record);

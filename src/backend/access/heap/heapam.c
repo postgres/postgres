@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/access/heap/heapam.c,v 1.69 2000/05/30 00:49:39 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/access/heap/heapam.c,v 1.70 2000/06/02 10:20:24 vadim Exp $
  *
  *
  * INTERFACE ROUTINES
@@ -1246,6 +1246,27 @@ heap_insert(Relation relation, HeapTuple tup)
 
 	RelationPutHeapTupleAtEnd(relation, tup);
 
+#ifdef XLOG
+	/* XLOG stuff */
+	{
+		xl_heap_insert	xlrec;
+		xlrec.itid.dbId = relation->rd_lockInfo.lockRelId.dbId;
+		xlrec.itid.relId = relation->rd_lockInfo.lockRelId.relId;
+XXX		xlrec.itid.tid = tp.t_self;
+		xlrec.t_natts = tup->t_data->t_natts;
+		xlrec.t_oid = tup->t_data->t_oid;
+		xlrec.t_hoff = tup->t_data->t_hoff;
+		xlrec.mask = tup->t_data->t_infomask;
+		
+		XLogRecPtr recptr = XLogInsert(RM_HEAP_ID, XLOG_HEAP_INSERT,
+			(char*) xlrec, sizeof(xlrec), 
+			(char*) tup->t_data + offsetof(HeapTupleHeaderData, tbits), 
+			tup->t_len - offsetof(HeapTupleHeaderData, tbits));
+
+		dp->pd_lsn = recptr;
+	}
+#endif
+
 	if (IsSystemRelationName(RelationGetRelationName(relation)))
 		RelationMark4RollbackHeapTuple(relation, tup);
 
@@ -1332,6 +1353,20 @@ l1:
 		ReleaseBuffer(buffer);
 		return result;
 	}
+
+#ifdef XLOG
+	/* XLOG stuff */
+	{
+		xl_heap_delete	xlrec;
+		xlrec.dtid.dbId = relation->rd_lockInfo.lockRelId.dbId;
+		xlrec.dtid.relId = relation->rd_lockInfo.lockRelId.relId;
+		xlrec.dtid.tid = tp.t_self;
+		XLogRecPtr recptr = XLogInsert(RM_HEAP_ID, XLOG_HEAP_DELETE,
+			(char*) xlrec, sizeof(xlrec), NULL, 0);
+
+		dp->pd_lsn = recptr;
+	}
+#endif
 
 	/* store transaction information of xact deleting the tuple */
 	TransactionIdStore(GetCurrentTransactionId(), &(tp.t_data->t_xmax));

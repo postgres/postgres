@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2000, PostgreSQL, Inc
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Id: htup.h,v 1.29 2000/04/12 17:16:26 momjian Exp $
+ * $Id: htup.h,v 1.30 2000/06/02 10:20:26 vadim Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -44,6 +44,8 @@ typedef struct HeapTupleHeaderData
 
 	uint8		t_hoff;			/* sizeof tuple header */
 
+								/* ^ - 31 bytes - ^ */
+
 	bits8		t_bits[MinHeapTupleBitmapSize / 8];
 	/* bit map of domains */
 
@@ -51,6 +53,71 @@ typedef struct HeapTupleHeaderData
 } HeapTupleHeaderData;
 
 typedef HeapTupleHeaderData *HeapTupleHeader;
+
+
+#ifdef XLOG
+
+/* XLOG stuff */
+
+/*
+ * XLOG allows to store some information in high 4 bits of log
+ * record xl_info field
+ */
+#define	XLOG_HEAP_INSERT	0x00
+#define	XLOG_HEAP_DELETE	0x10
+#define	XLOG_HEAP_UPDATE	0x20
+#define	XLOG_HEAP_MOVE		0x30
+
+/*
+ * All what we need to find changed tuple (14 bytes)
+ */
+typedef struct xl_heaptid
+{
+	Oid					dbId;		/* database */
+	Oid					relId;		/* relation */
+	ItemPointerData		tid;		/* changed tuple id */
+} xl_heaptid;
+
+/* This is what we need to know about delete - ALIGN(14) = 16 bytes */
+typedef struct xl_heap_delete
+{
+	xl_heaptid			dtid;		/* deleted tuple id */
+} xl_heap_delete;
+
+/* This is what we need to know about insert - 22 + data */
+typedef struct xl_heap_insert
+{
+	xl_heaptid			itid;		/* inserted tuple id */
+	/* something from tuple header */
+	int16				t_natts;
+	Oid					t_oid;
+	uint8				t_hoff;
+	uint8				mask;		/* low 8 bits of t_infomask */
+	/* TUPLE DATA FOLLOWS AT END OF STRUCT */
+} xl_heap_insert;
+
+/* This is what we need to know about update - 28 + data */
+typedef struct xl_heap_update
+{
+	xl_heaptid			dtid;		/* deleted tuple id */
+	ItemPointerData		itid;		/* new inserted tuple id */
+	/* something from header of new tuple version */
+	int16				t_natts;
+	uint8				t_hoff;
+	uint8				mask;		/* low 8 bits of t_infomask */
+	/* NEW TUPLE DATA FOLLOWS AT END OF STRUCT */
+} xl_heap_update;
+
+/* This is what we need to know about tuple move - ALIGN(20) = 24 bytes */
+typedef struct xl_heap_move
+{
+	xl_heaptid			ftid;		/* moved from */
+	ItemPointerData		ttid;		/* moved to */
+} xl_heap_move;
+
+/* end of XLOG stuff */
+
+#endif	/* XLOG */
 
 #define MinTupleSize	(MAXALIGN(sizeof (PageHeaderData)) + \
 						 MAXALIGN(sizeof(HeapTupleHeaderData)) + \
