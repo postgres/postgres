@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/access/transam/xact.c,v 1.42.2.2 1999/08/08 20:24:12 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/access/transam/xact.c,v 1.42.2.3 1999/09/09 16:29:22 tgl Exp $
  *
  * NOTES
  *		Transaction aborts can now occur two ways:
@@ -693,19 +693,13 @@ static void
 AtCommit_Memory()
 {
 	Portal		portal;
-	MemoryContext portalContext;
 
 	/* ----------------
-	 *	Release memory in the blank portal.
-	 *	Since EndPortalAllocMode implicitly works on the current context,
-	 *	first make real sure that the blank portal is the selected context.
-	 *	(This is probably not necessary, but seems like a good idea...)
+	 *	Release all heap memory in the blank portal.
 	 * ----------------
 	 */
 	portal = GetPortalByName(NULL);
-	portalContext = (MemoryContext) PortalGetHeapMemory(portal);
-	MemoryContextSwitchTo(portalContext);
-	EndPortalAllocMode();
+	PortalResetHeapMemory(portal);
 
 	/* ----------------
 	 *	Now that we're "out" of a transaction, have the
@@ -782,19 +776,13 @@ static void
 AtAbort_Memory()
 {
 	Portal		portal;
-	MemoryContext portalContext;
 
 	/* ----------------
-	 *	Release memory in the blank portal.
-	 *	Since EndPortalAllocMode implicitly works on the current context,
-	 *	first make real sure that the blank portal is the selected context.
-	 *	(This is ESSENTIAL in case we aborted from someplace where it wasn't.)
+	 *	Release all heap memory in the blank portal.
 	 * ----------------
 	 */
 	portal = GetPortalByName(NULL);
-	portalContext = (MemoryContext) PortalGetHeapMemory(portal);
-	MemoryContextSwitchTo(portalContext);
-	EndPortalAllocMode();
+	PortalResetHeapMemory(portal);
 
 	/* ----------------
 	 *	Now that we're "out" of a transaction, have the
