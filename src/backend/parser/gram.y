@@ -10,7 +10,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/parser/gram.y,v 1.92 1998/01/17 04:53:16 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/parser/gram.y,v 1.93 1998/01/17 05:01:34 momjian Exp $
  *
  * HISTORY
  *	  AUTHOR			DATE			MAJOR EVENT
@@ -63,6 +63,7 @@ extern List *parsetree;
 
 static char *xlateSqlType(char *);
 static Node *makeA_Expr(int oper, char *opname, Node *lexpr, Node *rexpr);
+static Node *makeRowExpr(char *opr, List *largs, List *rargs);
 void mapTargetColumns(List *source, List *target);
 static List *makeConstantList( A_Const *node);
 static char *FlattenStringList(List *list);
@@ -2882,7 +2883,6 @@ row_expr: '(' row_descriptor ')' IN '(' SubSelect ')'
 					n->subselect = $7;
 					$$ = (Node *)n;
 				}
-/* We accept all Operators? */
 		| '(' row_descriptor ')' Op '(' SubSelect ')'
 				{
 					SubLink *n = makeNode(SubLink);
@@ -2892,17 +2892,10 @@ row_expr: '(' row_descriptor ')' IN '(' SubSelect ')'
 					n->subselect = $6;
 					$$ = (Node *)n;
 				}
-/* Do we need this?
 		| '(' row_descriptor ')' Op '(' row_descriptor ')'
 				{
-					SubLink *n = makeNode(SubLink);
-					n->lefthand = $2;
-					n->subLinkType = OPER_SUBLINK;
-					n->oper = lcons($4, NIL);
-					n->subselect = $6;
-					$$ = (Node *)n;
+					$$ = makeRowExpr($4, $2, $6);
 				}
-*/
 		;
 
 row_descriptor:  row_list ',' a_expr
@@ -3839,6 +3832,68 @@ makeA_Expr(int oper, char *opname, Node *lexpr, Node *rexpr)
 	a->lexpr = lexpr;
 	a->rexpr = rexpr;
 	return (Node *)a;
+}
+
+/* makeRowExpr()
+ * Generate separate operator nodes for a single row descriptor expression.
+ * Perhaps this should go deeper in the parser someday... - thomas 1997-12-22
+ */
+static Node *
+makeRowExpr(char *opr, List *largs, List *rargs)
+{
+	Node *expr = NULL;
+	Node *larg, *rarg;
+
+	if (length(largs) != length(rargs))
+		elog(ERROR,"Unequal number of entries in row expression");
+
+	if (lnext(largs) != NIL)
+		expr = makeRowExpr(opr,lnext(largs),lnext(rargs));
+
+	larg = lfirst(largs);
+	rarg = lfirst(rargs);
+
+	if ((strcmp(opr, "=") == 0)
+	 || (strcmp(opr, "<") == 0)
+	 || (strcmp(opr, "<=") == 0)
+	 || (strcmp(opr, ">") == 0)
+	 || (strcmp(opr, ">=") == 0))
+	{
+		if (expr == NULL)
+			expr = makeA_Expr(OP, opr, larg, rarg);
+		else
+			expr = makeA_Expr(AND, NULL, expr, makeA_Expr(OP, opr, larg, rarg));
+	}
+	else if (strcmp(opr, "<>") == 0)
+	{
+		if (expr == NULL)
+			expr = makeA_Expr(OP, opr, larg, rarg);
+		else
+			expr = makeA_Expr(OR, NULL, expr, makeA_Expr(OP, opr, larg, rarg));
+	}
+	else
+	{
+		elog(ERROR,"Operator '%s' not implemented for row expressions",opr);
+	}
+
+#if FALSE
+	while ((largs != NIL) && (rargs != NIL))
+	{
+		larg = lfirst(largs);
+		rarg = lfirst(rargs);
+
+		if (expr == NULL)
+			expr = makeA_Expr(OP, opr, larg, rarg);
+		else
+			expr = makeA_Expr(AND, NULL, expr, makeA_Expr(OP, opr, larg, rarg));
+
+		largs = lnext(largs);
+		rargs = lnext(rargs);
+	}
+	pprint(expr);
+#endif
+
+	return expr;
 }
 
 void
