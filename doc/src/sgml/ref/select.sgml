@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/ref/select.sgml,v 1.49 2001/10/23 16:42:36 momjian Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/ref/select.sgml,v 1.50 2001/10/31 04:50:52 momjian Exp $
 Postgres documentation
 -->
 
@@ -601,6 +601,13 @@ SELECT name FROM distributors ORDER BY code;
     specific ordering operator name may be specified.  ASC is equivalent
     to USING &lt; and DESC is equivalent to USING &gt;.
    </para>
+
+   <para>
+   The null value sorts higher than any other value in a domain. In other
+   words, with ascending sort order nulls sort at the end and with
+   descending sort order nulls sort at the beginning.
+   </para>
+
   </refsect2>
   
   <refsect2 id="SQL-UNION">
