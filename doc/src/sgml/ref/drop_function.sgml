@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/ref/drop_function.sgml,v 1.9 2000/12/25 23:15:26 petere Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/ref/drop_function.sgml,v 1.10 2001/04/28 13:59:07 momjian Exp $
 Postgres documentation
 -->
 
@@ -168,7 +168,7 @@ DROP FUNCTION sqrt(int4);
     SQL/PSM
    </title>
    <para>
-    SQL/PSM is a proposed standard to enable function extensibility.
+    SQL/PSM is a standard to enable function extensibility.
     The SQL/PSM DROP FUNCTION statement has the following syntax:
 
     <synopsis>
