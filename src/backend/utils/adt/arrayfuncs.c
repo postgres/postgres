@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *    $Header: /cvsroot/pgsql/src/backend/utils/adt/arrayfuncs.c,v 1.6 1996/11/04 04:05:10 momjian Exp $
+ *    $Header: /cvsroot/pgsql/src/backend/utils/adt/arrayfuncs.c,v 1.7 1996/11/04 04:19:49 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -890,11 +890,7 @@ array_set(ArrayType *array,
          * fixed length arrays -- these are assumed to be 1-d
          */
         if (indx[0]*elmlen > arraylen) 
-#ifdef ARRAY_PATCH
             elog(WARN, "array_ref: array bound exceeded");
-#else
-            elog(WARN, "array_set: array bound exceeded");
-#endif
         pos = (char *)array + indx[0]*elmlen;
         ArrayCastAndSet(dataPtr, (bool) reftype, elmlen, pos);
         return((char *)array);
@@ -905,14 +901,10 @@ array_set(ArrayType *array,
     nbytes = (* (int32 *) array) - ARR_OVERHEAD(ndim);
     
     if (!SanityCheckInput(ndim, n,  dim, lb, indx)) 
-#ifdef ARRAY_PATCH
     {
 	elog(WARN, "array_set: array bound exceeded");
         return((char *)array);
     }
-#else
-        return((char *)array);
-#endif
     offset = GetOffset( n, dim, lb, indx);
     
     if (ARR_IS_LO(array)) {
@@ -948,7 +940,6 @@ array_set(ArrayType *array,
         if (nbytes - offset < 1) return((char *)array);
         pos = ARR_DATA_PTR (array) + offset;
     } else {
-#ifdef ARRAY_PATCH
 	ArrayType *newarray;
 	char *elt_ptr;
 	int oldsize, newsize, oldlen, newlen, lth0, lth1, lth2;
@@ -980,9 +971,6 @@ array_set(ArrayType *array,
 
 	/* ??? who should free this storage ??? */
 	return((char *)newarray);
-#else
-        elog(WARN, "array_set: update of variable length fields not supported");
-#endif
     } 
     ArrayCastAndSet(dataPtr, (bool) reftype, elmlen, pos);
     return((char *)array);
