@@ -6,7 +6,7 @@
  * Copyright (c) 2003, PostgreSQL Global Development Group
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/interfaces/jdbc/org/postgresql/Attic/Driver.java.in,v 1.36 2003/09/13 04:02:12 barry Exp $
+ *	  $Header: /cvsroot/pgsql/src/interfaces/jdbc/org/postgresql/Attic/Driver.java.in,v 1.36.2.1 2003/12/05 21:22:03 davec Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -123,6 +123,7 @@ public class Driver implements java.sql.Driver
 	 */
 	public java.sql.Connection connect(String url, Properties info) throws SQLException
 	{
+		Properties props;
 		if ((props = parseURL(url, info)) == null)
 		{
 			if (Driver.logDebug)
@@ -135,7 +136,7 @@ public class Driver implements java.sql.Driver
 				Driver.debug("connect " + url);
 
 			@JDBCCONNECTCLASS@ con = (@JDBCCONNECTCLASS@)(Class.forName("@JDBCCONNECTCLASS@").newInstance());
-			con.openConnection (host(), port(), props, database(), url, this);
+			con.openConnection (host(props), port(props), props, database(props), url, this);
 			return (java.sql.Connection)con;
 		}
 		catch (ClassNotFoundException ex)
@@ -246,8 +247,6 @@ public class Driver implements java.sql.Driver
 	{
 		return false;
 	}
-
-	private Properties props;
 
 	static private String[] protocols = { "jdbc", "postgresql" };
 
@@ -382,7 +381,7 @@ public class Driver implements java.sql.Driver
 	/*
 	 * @return the hostname portion of the URL
 	 */
-	public String host()
+	public String host(Properties props)
 	{
 		return props.getProperty("PGHOST", "localhost");
 	}
@@ -390,7 +389,7 @@ public class Driver implements java.sql.Driver
 	/*
 	 * @return the port number portion of the URL or the default if no port was specified
 	 */
-	public int port()
+	public int port(Properties props)
 	{
 		return Integer.parseInt(props.getProperty("PGPORT", "@DEF_PGPORT@"));
 	}
@@ -398,18 +397,9 @@ public class Driver implements java.sql.Driver
 	/*
 	 * @return the database name of the URL
 	 */
-	public String database()
+	public String database(Properties props)
 	{
 		return props.getProperty("PGDBNAME", "");
-	}
-
-	/*
-	 * @return the value of any property specified in the URL or properties
-	 * passed to connect(), or null if not found.
-	 */
-	public String property(String name)
-	{
-		return props.getProperty(name);
 	}
 
 	/*
@@ -426,7 +416,7 @@ public class Driver implements java.sql.Driver
 	/**
 	*	used to turn logging on to a certain level, can be called
 	*	by specifying fully qualified class ie org.postgresql.Driver.setLogLevel()
-	*	@param int logLevel sets the level which logging will respond to
+	*	@param logLevel sets the level which logging will respond to
 	*	INFO being almost no messages
 	*	DEBUG most verbose
 	*/
