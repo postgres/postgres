@@ -13,35 +13,53 @@
 #include "access/htup.h"
 #include "utils/rel.h"
 
-typedef uint32 TriggerAction;
+typedef uint32 TriggerEvent;
 
-#define TRIGGER_ACTION_INSERT		0x00000000  
-#define TRIGGER_ACTION_DELETE		0x00000001   
-#define TRIGGER_ACTION_UPDATE		0x00000010
-#define TRIGGER_ACTION_OPMASK		0x00000011
-#define TRIGGER_ACTION_ROW		4
+typedef struct TriggerData {
+    TriggerEvent	tg_event;
+    Relation		tg_relation;
+    HeapTuple		tg_trigtuple;
+    HeapTuple		tg_newtuple;
+    Trigger		*tg_trigger;
+} TriggerData;
 
-#define TRIGGER_FIRED_BY_INSERT (action)	\
-	(((TriggerAction) action & TRIGGER_ACTION_OPMASK) == \
-						TRIGGER_ACTION_INSERT)
+extern TriggerData *CurrentTriggerData;
 
-#define TRIGGER_FIRED_BY_DELETE (action)	\
-	(((TriggerAction) action & TRIGGER_ACTION_OPMASK) == \
-						TRIGGER_ACTION_DELETE)
+#define TRIGGER_EVENT_INSERT		0x00000000  
+#define TRIGGER_EVENT_DELETE		0x00000001   
+#define TRIGGER_EVENT_UPDATE		0x00000002
+#define TRIGGER_EVENT_OPMASK		0x00000003
+#define TRIGGER_EVENT_ROW		0x00000004
+#define TRIGGER_EVENT_BEFORE		0x00000008
 
-#define TRIGGER_FIRED_BY_UPDATE (action)	\
-	(((TriggerAction) action & TRIGGER_ACTION_OPMASK) == \
-						TRIGGER_ACTION_UPDATE)
+#define TRIGGER_FIRED_BY_INSERT(event)	\
+	(((TriggerEvent) (event) & TRIGGER_EVENT_OPMASK) == \
+						TRIGGER_EVENT_INSERT)
 
-#define TRIGGER_FIRED_FOR_ROW (action)		\
-	((TriggerAction) action & TRIGGER_ACTION_ROW)
+#define TRIGGER_FIRED_BY_DELETE(event)	\
+	(((TriggerEvent) (event) & TRIGGER_EVENT_OPMASK) == \
+						TRIGGER_EVENT_DELETE)
 
-#define TRIGGER_FIRED_FOR_STATEMENT (action)	\
-	(!TRIGGER_FIRED_FOR_ROW (action))
+#define TRIGGER_FIRED_BY_UPDATE(event)	\
+	(((TriggerEvent) (event) & TRIGGER_EVENT_OPMASK) == \
+						TRIGGER_EVENT_UPDATE)
+
+#define TRIGGER_FIRED_FOR_ROW(event)		\
+	((TriggerEvent) (event) & TRIGGER_EVENT_ROW)
+
+#define TRIGGER_FIRED_FOR_STATEMENT(event)	\
+	(!TRIGGER_FIRED_FOR_ROW (event))
+
+#define TRIGGER_FIRED_BEFORE(event)		\
+	((TriggerEvent) (event) & TRIGGER_EVENT_BEFORE)
+
+#define TRIGGER_FIRED_AFTER(event)		\
+	(!TRIGGER_FIRED_BEFORE (event))
 
 
 extern void CreateTrigger (CreateTrigStmt *stmt);
 extern void DropTrigger (DropTrigStmt *stmt);
+extern void RelationRemoveTriggers (Relation rel);
 
 extern HeapTuple ExecBRInsertTriggers (Relation rel, HeapTuple tuple);
 extern void ExecARInsertTriggers (Relation rel, HeapTuple tuple);
