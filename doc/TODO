@@ -1,6 +1,6 @@
 TODO list for PostgreSQL
 ========================
-Last updated:		Thu May 31 10:48:15 EDT 2001
+Last updated:		Sat Jun  2 15:11:24 EDT 2001
 
 Current maintainer:	Bruce Momjian (pgman@candle.pha.pa.us)
 
@@ -179,8 +179,8 @@ COMMANDS
 
 CLIENTS
 
-* Make NULL's come out at the beginning or end depending on the
-  ORDER BY direction
+* -Make NULL's come out at the beginning or end depending on the
+  ORDER BY direction (Tom)
 * have pg_dump use LEFT OUTER JOIN in multi-table SELECTs
   or multiple SELECTS to avoid bad system catalog entries
 * allow psql \d to show foreign keys
