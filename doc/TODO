@@ -1,6 +1,6 @@
 TODO list for PostgreSQL
 ========================
-Last updated:		Sun Mar 31 20:56:13 EST 2002
+Last updated:		Mon Apr  1 09:11:01 EST 2002
 
 Current maintainer:	Bruce Momjian (pgman@candle.pha.pa.us)
 
@@ -185,8 +185,9 @@ COMMANDS
 	o Add ALTER TABLE DROP COLUMN feature [drop] (Bruce)
 	o Add ALTER FUNCTION
 	o Add ALTER TABLE DROP non-CHECK CONSTRAINT
-	o ALTER TABLE ADD PRIMARY KEY (Christopher Kings-Lynne)
-	o ALTER TABLE ADD UNIQUE (Christopher Kings-Lynne)
+	o -ALTER TABLE ADD PRIMARY KEY (Tom)
+	o -ALTER TABLE ADD UNIQUE (Tom)
+	o -ALTER TABLE ALTER COLUMN SET/DROP NOT NULL (Christopher Kings-Lynne)
 	o ALTER TABLE ADD COLUMN column SERIAL doesn't create sequence
 	o ALTER TABLE ADD COLUMN column SET DEFAULT should fill existing
 	  rows with DEFAULT value
