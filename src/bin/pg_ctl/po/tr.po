@@ -5,7 +5,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: pg_ctl-tr\n"
 "POT-Creation-Date: 2004-09-13 07:40+0100\n"
-"PO-Revision-Date: 2004-09-18 16:53+0300\n"
+"PO-Revision-Date: 2004-10-09 11:52+0300\n"
 "Last-Translator: Devrim GUNDUZ <devrim@PostgreSQL.org>\n"
 "Language-Team: Turkish <pgsql-tr-genel@PostgreSQL.org>\n"
 "MIME-Version: 1.0\n"
@@ -327,66 +327,80 @@ msgid ""
 "(The default is to wait for shutdown, but not for start or restart.)\n"
 "\n"
 msgstr ""
+"(Ön tanımlı işlem kapanmak için beklemekti; ancak başlamak ya da yeniden başlamak değildir.)\n"
+"\n"
 
 #: pg_ctl.c:1101
 msgid ""
 "If the -D option is omitted, the environment variable PGDATA is used.\n"
 "\n"
 msgstr ""
+"Eğer D seçeneği gözardı edilirse, PGDATA çevresel değişkeni kullanılacaktır.\n"
+"\n"
 
 #: pg_ctl.c:1102
 msgid "Options for start or restart:\n"
-msgstr ""
+msgstr "Başlatmak ya da yeniden başlatmak için seçenekler:\n"
 
 #: pg_ctl.c:1103
 msgid ""
 "  -l, --log FILENAME      write (or append) server log to FILENAME.  The\n"
 "                          use of this option is highly recommended.\n"
 msgstr ""
+"  -l, --log DOSYA_ADI      Sunucu loglarını DOSYA_ADI dosyasına yaz (ya da dosyanın sonuna ekle). Bu\n"
+"                          seçeneğin kullanılması şiddetle önerilmektedir..\n"
 
 #: pg_ctl.c:1105
 msgid ""
 "  -o OPTIONS              command line options to pass to the postmaster\n"
 "                          (PostgreSQL server executable)\n"
 msgstr ""
+"  -o SEÇENEKLER              postmaster'a geçilecek komut satırı seçenekleri\n"
+"                          (PostgreSQL sunucusu çalıştırılabilir dosyası)\n"
 
 #: pg_ctl.c:1107
 msgid ""
 "  -p PATH-TO-POSTMASTER   normally not necessary\n"
 "\n"
 msgstr ""
+"  -p POSTMASTER'IN_OLDUĞU_DIZINE_YOL  normalde gerekli değildir\n"
+"\n"
 
 #: pg_ctl.c:1108
 msgid "Options for stop or restart:\n"
-msgstr ""
+msgstr "Başlatmak ya da yeniden başlatmak için seçenekler:\n"
 
 #: pg_ctl.c:1109
 msgid ""
 "  -m SHUTDOWN-MODE   may be 'smart', 'fast', or 'immediate'\n"
 "\n"
 msgstr ""
+"  -m KAPANMA-MODU   'smart', 'fast', ya da 'immediate' olabilir\n"
+"\n"
 
 #: pg_ctl.c:1110
 msgid "Allowed signal names for kill:\n"
-msgstr ""
+msgstr "kill için izin verilen sinyal adları:\n"
 
 #: pg_ctl.c:1111
 msgid ""
 "  HUP INT QUIT ABRT TERM USR1 USR2\n"
 "\n"
 msgstr ""
+"  HUP INT QUIT ABRT TERM USR1 USR2\n"
+"\n"
 
 #: pg_ctl.c:1112
 msgid "Shutdown modes are:\n"
-msgstr ""
+msgstr "Kapatma modları:\n"
 
 #: pg_ctl.c:1113
 msgid "  smart       quit after all clients have disconnected\n"
-msgstr ""
+msgstr "  smart       tüm istemciler bağlantılarını kestikten sonra dur\n"
 
 #: pg_ctl.c:1114
 msgid "  fast        quit directly, with proper shutdown\n"
-msgstr ""
+msgstr "  fast        düzgünce kapanmadan direk olarak dur\n"
 
 #: pg_ctl.c:1115
 msgid ""
@@ -394,48 +408,50 @@ msgid ""
 "restart\n"
 "\n"
 msgstr ""
+"  immediate   tam bir kapanma gerçekleşmeden dur; yeniden başladığında recovery modunda açılır\n"
+"\n"
 
 #: pg_ctl.c:1116
 msgid "Report bugs to <pgsql-bugs@postgresql.org>.\n"
-msgstr ""
+msgstr "Hataları <pgsql-bugs@postgresql.org> adresine bildiriniz.\n"
 
 #: pg_ctl.c:1141
 #, c-format
 msgid "%s: invalid shutdown mode %s\n"
-msgstr ""
+msgstr "%s: geçersiz kapanma modu %s\n"
 
 #: pg_ctl.c:1174
 #, c-format
 msgid "%s: invalid signal \"%s\"\n"
-msgstr ""
+msgstr "%s: geçersiz sinyal \"%s\"\n"
 
 #: pg_ctl.c:1309
 #, c-format
 msgid "%s: invalid option %s\n"
-msgstr ""
+msgstr "%s: geçersiz seçenek %s\n"
 
 #: pg_ctl.c:1320
 #, c-format
 msgid "%s: extra operation mode %s\n"
-msgstr ""
+msgstr "%s: fazladan işlem modu %s\n"
 
 #: pg_ctl.c:1339
 #, c-format
 msgid "%s: invalid kill syntax\n"
-msgstr ""
+msgstr "%s: geçersiz kill sözdizimi\n"
 
 #: pg_ctl.c:1357
 #, c-format
 msgid "%s: invalid operation mode %s\n"
-msgstr ""
+msgstr "%s: geçersiz işlem modu %s\n"
 
 #: pg_ctl.c:1367
 #, c-format
 msgid "%s: no operation specified\n"
-msgstr ""
+msgstr "%s: hiçbir işlem belirtilmedi\n"
 
 #: pg_ctl.c:1383
 #, c-format
 msgid "%s: no database directory specified and environment variable PGDATA unset\n"
-msgstr ""
+msgstr "%s: Hiçbir veritabanı dizini belirtilmemiş ve PGDATA çevresel değişkeni boş\n"
 
