@@ -53,7 +53,7 @@ exec sql endif;
 	char *connection="pm";
 	int how_many;
 exec sql end declare section;
-	exec sql var name is string(AMOUNT);
+	exec sql var name is string[AMOUNT];
 	char msg[128];
         FILE *dbgs;
         int i,j;

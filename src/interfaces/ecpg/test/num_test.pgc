@@ -1,10 +1,11 @@
 #include <stdio.h>
+#include <pgtypes_numeric.h>
 
 int
 main()
 {
 	char *text="error\n";
-		NumericVar *value1, *value2, *res;
+	NumericVar *value1, *value2, *res;
 	exec sql begin declare section;
 		decimal(14,7) des = {0, 0, 0, 0, 0, NULL, NULL} ;
 	exec sql end declare section;
@@ -23,8 +24,8 @@ main()
 	text = PGTYPESnumeric_ntoa(value1);
 	printf("long = %s\n", text);
 		
-	value1 = PGTYPESnumeric_aton("2369.7", -1);
-	value2 = PGTYPESnumeric_aton("10.0", -1);
+	value1 = PGTYPESnumeric_aton("2369.7", NULL);
+	value2 = PGTYPESnumeric_aton("10.0", NULL);
 	res = PGTYPESnew();
 	decadd(value1, value2, res);
 	text = PGTYPESnumeric_ntoa(res);
@@ -37,7 +38,7 @@ main()
 	PGTYPESnumeric_copy(res, &des);
 	exec sql insert into test (text, num) values ('test', :des);
 	
-	value2 = PGTYPESnumeric_aton("2369.7", -1);
+	value2 = PGTYPESnumeric_aton("2369.7", NULL);
 	PGTYPESnumeric_mul(value1, value2, res);
 
 	exec sql select num into :des from test where text = 'test';
@@ -46,7 +47,7 @@ main()
 	text = PGTYPESnumeric_ntoa(res);
 	printf("mul = %s\n", text);
 
-	value2 = PGTYPESnumeric_aton("10000", -1);
+	value2 = PGTYPESnumeric_aton("10000", NULL);
 	PGTYPESnumeric_div(res, value2, res);
 	text = PGTYPESnumeric_ntoa(res);
 	PGTYPESnumeric_ntod(res, &d);

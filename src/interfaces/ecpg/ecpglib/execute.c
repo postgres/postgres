@@ -1,4 +1,4 @@
-/* $Header: /cvsroot/pgsql/src/interfaces/ecpg/ecpglib/execute.c,v 1.1 2003/03/16 10:42:53 meskes Exp $ */
+/* $Header: /cvsroot/pgsql/src/interfaces/ecpg/ecpglib/execute.c,v 1.2 2003/03/18 10:46:39 meskes Exp $ */
 
 /*
  * The aim is to get a simpler inteface to the database routines.
@@ -861,7 +861,7 @@ ECPGstore_input(const struct statement * stmt, const struct variable * var,
 					}
 					else
 					{
-						*str = PGTYPESnumeric_ntoa((NumericVar *)(var->value));
+						str = PGTYPESnumeric_ntoa((NumericVar *)(var->value));
 						slen = strlen (str);
 					
 						if (!(mallocedval = ECPGalloc(slen + 1, stmt->lineno)))

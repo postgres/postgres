@@ -40,6 +40,7 @@ pgtypes_alloc(long size)
 	return (new);
 }
 
+#if 0
 /* ----------
  * apply_typmod() -
  *
@@ -119,6 +120,7 @@ apply_typmod(NumericVar *var, long typmod)
 	var->dscale = scale;
 	return (0);
 }
+#endif
 
 /* ----------
  *  alloc_var() -
@@ -387,7 +389,9 @@ PGTYPESnumeric_aton(char *str, char **endptr)
 {
 	NumericVar *value = (NumericVar *)pgtypes_alloc(sizeof(NumericVar));
 	int ret;
+#if 0
 	long typmod = -1;
+#endif
 	char *realptr;
 	char **ptr = (endptr != NULL) ? endptr : &realptr;
 	
@@ -398,10 +402,11 @@ PGTYPESnumeric_aton(char *str, char **endptr)
 	if (ret)
 		return (NULL);
 
+#if 0
 	ret = apply_typmod(value, typmod);
 	if (ret)
 		return (NULL);
-	
+#endif	
 	return(value);
 }
 

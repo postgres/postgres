@@ -1,4 +1,4 @@
-/* $Header: /cvsroot/pgsql/src/interfaces/ecpg/preproc/ecpg.c,v 1.62 2003/03/16 10:42:54 meskes Exp $ */
+/* $Header: /cvsroot/pgsql/src/interfaces/ecpg/preproc/ecpg.c,v 1.63 2003/03/18 10:46:39 meskes Exp $ */
 
 /* New main for ecpg, the PostgreSQL embedded SQL precompiler. */
 /* (C) Michael Meskes <meskes@postgresql.org> Feb 5th, 1998 */
@@ -7,6 +7,7 @@
 #include "postgres_fe.h"
 
 #include <unistd.h>
+#include <string.h>
 #ifdef HAVE_GETOPT_H
 #include <getopt.h>
 #endif
@@ -69,10 +70,27 @@ static void
 add_preprocessor_define(char *define)
 {
 	struct _defines *pd = defines;
-
+	char *ptr, *define_copy = mm_strdup(define);
+	
 	defines = mm_alloc(sizeof(struct _defines));
-	defines->old = strdup(define);
-	defines->new = strdup("");
+	
+	/* look for = sign */
+	ptr = strchr(define_copy, '=');
+	if (ptr != NULL)
+	{
+		char *tmp;
+		
+		/* symbol gets a value */
+		for (tmp=ptr-1; *tmp == ' '; tmp--);
+		tmp[1] = '\0';
+		defines->old = define_copy;
+		defines->new = ptr+1;
+	}
+	else
+	{
+		defines->old = define_copy;
+		defines->new = mm_strdup("");
+	}
 	defines->pertinent = true;
 	defines->next = pd;
 }
@@ -137,7 +155,10 @@ main(int argc, char *const argv[])
 				break;
 			case 'C':
 				if (strcmp(optarg, "INFORMIX") == 0)
+				{
 					compat = ECPG_COMPAT_INFORMIX;
+					add_preprocessor_define("dec_t=NumericVar");
+				}
 				else
 				{
 					fprintf(stderr, "Try '%s --help' for more information.\n", argv[0]);
@@ -313,7 +334,7 @@ main(int argc, char *const argv[])
 				lex_init();
 
 				/* we need several includes */
-				fprintf(yyout, "/* Processed by ecpg (%d.%d.%d) */\n/* These four include files are added by the preprocessor */\n#include <ecpgtype.h>\n#include <ecpglib.h>\n#include <ecpgerrno.h>\n#include <sqlca.h>\n#include <pgtypes_numeric.h>\n#line 1 \"%s\"\n", MAJOR_VERSION, MINOR_VERSION, PATCHLEVEL, input_filename);
+				fprintf(yyout, "/* Processed by ecpg (%d.%d.%d) */\n/* These four include files are added by the preprocessor */\n#include <ecpgtype.h>\n#include <ecpglib.h>\n#include <ecpgerrno.h>\n#include <sqlca.h>\n#line 1 \"%s\"\n", MAJOR_VERSION, MINOR_VERSION, PATCHLEVEL, input_filename);
 
 				/* add some compatibility headers */
 				if (compat == ECPG_COMPAT_INFORMIX)
