@@ -3,7 +3,7 @@
  *
  * Copyright (c) 2000-2003, PostgreSQL Global Development Group
  *
- * $PostgreSQL: pgsql/src/bin/psql/describe.c,v 1.88 2003/11/29 19:52:06 pgsql Exp $
+ * $PostgreSQL: pgsql/src/bin/psql/describe.c,v 1.89 2003/12/01 22:11:06 momjian Exp $
  */
 #include "postgres_fe.h"
 #include "describe.h"
@@ -857,7 +857,7 @@ describeOneTableDetails(const char *schemaname,
 
 		printfPQExpBuffer(&buf,
 		  "SELECT i.indisunique, i.indisprimary, a.amname, c2.relname,\n"
-					  "  pg_catalog.pg_get_expr(i.indpred, i.indrelid)\n"
+					  "  pg_catalog.pg_get_expr(i.indpred, i.indrelid, true)\n"
 						  "FROM pg_catalog.pg_index i, pg_catalog.pg_class c, pg_catalog.pg_class c2, pg_catalog.pg_am a\n"
 						  "WHERE i.indexrelid = c.oid AND c.oid = '%s' AND c.relam = a.oid\n"
 						  "AND i.indrelid = c2.oid",
@@ -880,9 +880,9 @@ describeOneTableDetails(const char *schemaname,
 			char	   *indpred = PQgetvalue(result, 0, 4);
 
 			if (strcmp(indisprimary, "t") == 0)
-				printfPQExpBuffer(&tmpbuf, _("primary key, "));
+				printfPQExpBuffer(&tmpbuf, _("PRIMARY KEY, "));
 			else if (strcmp(indisunique, "t") == 0)
-				printfPQExpBuffer(&tmpbuf, _("unique, "));
+				printfPQExpBuffer(&tmpbuf, _("UNIQUE, "));
 			else
 				resetPQExpBuffer(&tmpbuf);
 			appendPQExpBuffer(&tmpbuf, "%s, ", indamname);
@@ -892,7 +892,7 @@ describeOneTableDetails(const char *schemaname,
 							  schemaname, indtable);
 
 			if (strlen(indpred))
-				appendPQExpBuffer(&tmpbuf, ", predicate %s", indpred);
+				appendPQExpBuffer(&tmpbuf, ", predicate (%s)", indpred);
 
 			footers = xmalloczero(2 * sizeof(*footers));
 			footers[0] = xstrdup(tmpbuf.data);
@@ -911,7 +911,7 @@ describeOneTableDetails(const char *schemaname,
 		if (tableinfo.hasrules)
 		{
 			printfPQExpBuffer(&buf,
-							  "SELECT r.rulename\n"
+							  "SELECT r.rulename, trim(trailing ';' from pg_catalog.pg_get_ruledef(r.oid, true))\n"
 							  "FROM pg_catalog.pg_rewrite r\n"
 				   "WHERE r.ev_class = '%s' AND r.rulename != '_RETURN'",
 							  oid);
@@ -923,27 +923,31 @@ describeOneTableDetails(const char *schemaname,
 		}
 
 		/* Footer information about a view */
-		footers = xmalloczero((rule_count + 2) * sizeof(*footers));
+		footers = xmalloczero((rule_count + 3) * sizeof(*footers));
 		footers[count_footers] = xmalloc(64 + strlen(view_def));
 		snprintf(footers[count_footers], 64 + strlen(view_def),
 				 _("View definition:\n%s"), view_def);
 		count_footers++;
 
 		/* print rules */
-		for (i = 0; i < rule_count; i++)
+		if (rule_count > 0)
 		{
-			char	   *s = _("Rules");
-
-			if (i == 0)
-				printfPQExpBuffer(&buf, "%s: %s", s, PQgetvalue(result, i, 0));
-			else
-				printfPQExpBuffer(&buf, "%*s  %s", (int) strlen(s), "", PQgetvalue(result, i, 0));
-			if (i < rule_count - 1)
-				appendPQExpBuffer(&buf, ",");
-
+			printfPQExpBuffer(&buf, _("Rules:"));
 			footers[count_footers++] = xstrdup(buf.data);
+			for (i = 0; i < rule_count; i++)
+			{
+				const char *ruledef;
+
+				/* Everything after "CREATE RULE" is echoed verbatim */
+				ruledef = PQgetvalue(result, i, 1);
+				ruledef += 12;
+
+				printfPQExpBuffer(&buf, " %s", ruledef);
+
+				footers[count_footers++] = xstrdup(buf.data);
+			}
+			PQclear(result);
 		}
-		PQclear(result);
 
 		footers[count_footers] = NULL;
 
@@ -970,7 +974,7 @@ describeOneTableDetails(const char *schemaname,
 		{
 			printfPQExpBuffer(&buf,
 					 "SELECT c2.relname, i.indisprimary, i.indisunique, "
-							  "pg_catalog.pg_get_indexdef(i.indexrelid)\n"
+							  "pg_catalog.pg_get_indexdef(i.indexrelid, 0, true)\n"
 							  "FROM pg_catalog.pg_class c, pg_catalog.pg_class c2, pg_catalog.pg_index i\n"
 							  "WHERE c.oid = '%s' AND c.oid = i.indrelid AND i.indexrelid = c2.oid\n"
 							  "ORDER BY i.indisprimary DESC, i.indisunique DESC, c2.relname",
@@ -1006,7 +1010,7 @@ describeOneTableDetails(const char *schemaname,
 		if (tableinfo.hasrules)
 		{
 			printfPQExpBuffer(&buf,
-							  "SELECT r.rulename, trim(trailing ';' from pg_catalog.pg_get_ruledef(r.oid))\n"
+							  "SELECT r.rulename, trim(trailing ';' from pg_catalog.pg_get_ruledef(r.oid, true))\n"
 							  "FROM pg_catalog.pg_rewrite r\n"
 							  "WHERE r.ev_class = '%s'",
 							  oid);
@@ -1051,7 +1055,7 @@ describeOneTableDetails(const char *schemaname,
 		{
 			printfPQExpBuffer(&buf,
 							  "SELECT conname,\n"
-					 "  pg_catalog.pg_get_constraintdef(oid) as condef\n"
+					 "  pg_catalog.pg_get_constraintdef(oid, true) as condef\n"
 							  "FROM pg_catalog.pg_constraint r\n"
 						   "WHERE r.conrelid = '%s' AND r.contype = 'f'",
 							  oid);
@@ -1097,9 +1101,9 @@ describeOneTableDetails(const char *schemaname,
 				/* Label as primary key or unique (but not both) */
 				appendPQExpBuffer(&buf,
 							  strcmp(PQgetvalue(result1, i, 1), "t") == 0
-								  ? _(" primary key,") :
+								  ? _(" PRIMARY KEY,") :
 							 (strcmp(PQgetvalue(result1, i, 2), "t") == 0
-							  ? _(" unique,")
+							  ? _(" UNIQUE,")
 							  : ""));
 
 				/* Everything after "USING" is echoed verbatim */
