@@ -13,7 +13,7 @@
 # be converted to Method 2.  
 #
 # IDENTIFICATION
-#    $Header: /cvsroot/pgsql/src/backend/port/Attic/Makefile.in,v 1.29 2001/05/08 19:38:57 petere Exp $
+#    $Header: /cvsroot/pgsql/src/backend/port/Attic/Makefile.in,v 1.30 2001/12/20 21:23:05 momjian Exp $
 #
 #-------------------------------------------------------------------------
 
@@ -22,7 +22,7 @@ top_builddir = ../../..
 include $(top_builddir)/src/Makefile.global
 
 OBJS = dynloader.o @INET_ATON@ @STRERROR@ @MISSING_RANDOM@ @SRANDOM@
-OBJS+= @GETHOSTNAME@ @GETRUSAGE@ @STRCASECMP@ @TAS@ @ISINF@
+OBJS+= @GETHOSTNAME@ @GETRUSAGE@ @MEMCMP@ @STRCASECMP@ @TAS@ @ISINF@
 OBJS+= @STRTOL@ @STRTOUL@ @SNPRINTF@
 ifdef STRDUP
 OBJS += $(top_builddir)/src/utils/strdup.o

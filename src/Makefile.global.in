@@ -1,5 +1,5 @@
 # -*-makefile-*-
-# $Header: /cvsroot/pgsql/src/Makefile.global.in,v 1.140 2001/10/13 15:24:23 tgl Exp $
+# $Header: /cvsroot/pgsql/src/Makefile.global.in,v 1.141 2001/12/20 21:23:05 momjian Exp $
 
 #------------------------------------------------------------------------------
 # All PostgreSQL makefiles include this file and use the variables it sets,
@@ -328,6 +328,7 @@ INET_ATON = @INET_ATON@
 STRERROR = @STRERROR@
 SNPRINTF = @SNPRINTF@
 STRDUP = @STRDUP@
+MEMCMP = @MEMCMP@
 STRTOUL = @STRTOUL@
 
 
