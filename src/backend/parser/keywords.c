@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/parser/keywords.c,v 1.21 1997/10/28 14:56:10 vadim Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/parser/keywords.c,v 1.22 1997/11/07 07:02:10 thomas Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -129,6 +129,7 @@ static ScanKeyword ScanKeywords[] = {
 	{"listen", LISTEN},
 	{"load", LOAD},
 	{"local", LOCAL},
+	{"location", LOCATION},
 	{"match", MATCH},
 	{"merge", MERGE},
 	{"minute", MINUTE_P},

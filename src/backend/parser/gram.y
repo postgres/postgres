@@ -10,7 +10,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/parser/gram.y,v 1.62 1997/11/02 15:25:26 vadim Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/parser/gram.y,v 1.63 1997/11/07 07:02:07 thomas Exp $
  *
  * HISTORY
  *	  AUTHOR			DATE			MAJOR EVENT
@@ -119,6 +119,8 @@ static Node *makeIndexable(char *opname, Node *lexpr, Node *rexpr);
 		CreatedbStmt, DestroydbStmt, VacuumStmt, RetrieveStmt, CursorStmt,
 		ReplaceStmt, AppendStmt, NotifyStmt, DeleteStmt, ClusterStmt,
 		ExplainStmt, VariableSetStmt, VariableShowStmt, VariableResetStmt
+
+%type <str>		opt_database, location
 
 %type <node>	SubSelect
 %type <str>		join_expr, join_outer, join_spec
@@ -240,7 +242,7 @@ static Node *makeIndexable(char *opname, Node *lexpr, Node *rexpr);
 		MATCH, MINUTE_P, MONTH_P,
 		NATIONAL, NATURAL, NCHAR, NO, NOT, NOTIFY, NOTNULL, NULL_P, NUMERIC,
 		ON, OPTION, OR, ORDER, OUTER_P,
-		PARTIAL, PRECISION, POSITION, PRIMARY, PRIVILEGES, PROCEDURE, PUBLIC,
+		PARTIAL, POSITION, PRECISION, PRIMARY, PRIVILEGES, PROCEDURE, PUBLIC,
 		REFERENCES, REVOKE, RIGHT, ROLLBACK,
 		SECOND_P, SELECT, SET, SUBSTRING,
 		TABLE, TIME, TIMESTAMP, TO, TRAILING, TRANSACTION, TRIM,
@@ -261,7 +263,7 @@ static Node *makeIndexable(char *opname, Node *lexpr, Node *rexpr);
 		DATABASE, DELIMITERS, DO, EXPLAIN, EXTEND,
 		FORWARD, FUNCTION, HANDLER, HEAVY,
 		INDEX, INHERITS, INSTEAD, ISNULL,
-		LANCOMPILER, LIGHT, LISTEN, LOAD, MERGE, MOVE,
+		LANCOMPILER, LIGHT, LISTEN, LOAD, LOCATION, MERGE, MOVE,
 		NEW, NONE, NOTHING, OIDS, OPERATOR, PROCEDURAL, PURGE,
 		RECIPE, RENAME, REPLACE, RESET, RETRIEVE, RETURNS, RULE,
 		SEQUENCE, SETOF, SHOW, STDIN, STDOUT, STORE, TRUSTED, 
@@ -302,17 +304,17 @@ static Node *makeIndexable(char *opname, Node *lexpr, Node *rexpr);
 %left		UNION
 %%
 
-stmtblock: stmtmulti
+stmtblock:  stmtmulti
 				{ parsetree = $1; }
-		|  stmt
+		| stmt
 				{ parsetree = lcons($1,NIL); }
 		;
 
-stmtmulti: stmtmulti stmt ';'
+stmtmulti:  stmtmulti stmt ';'
 				{ $$ = lappend($1, $2); }
-		|  stmtmulti stmt
+		| stmtmulti stmt
 				{ $$ = lappend($1, $2); }
-		|  stmt ';'
+		| stmt ';'
 				{ $$ = lcons($1,NIL); }
 		;
 
@@ -373,14 +375,14 @@ VariableSetStmt:  SET ColId TO var_value
 					n->value = $4;
 					$$ = (Node *) n;
 				}
-		|  SET ColId '=' var_value
+		| SET ColId '=' var_value
 				{
 					VariableSetStmt *n = makeNode(VariableSetStmt);
 					n->name  = $2;
 					n->value = $4;
 					$$ = (Node *) n;
 				}
-		|  SET TIME ZONE zone_value
+		| SET TIME ZONE zone_value
 				{
 					VariableSetStmt *n = makeNode(VariableSetStmt);
 					n->name  = "timezone";
@@ -390,9 +392,11 @@ VariableSetStmt:  SET ColId TO var_value
 		;
 
 var_value:  Sconst			{ $$ = $1; }
+		| DEFAULT			{ $$ = NULL; }
 		;
 
 zone_value:  Sconst			{ $$ = $1; }
+		| DEFAULT			{ $$ = NULL; }
 		| LOCAL				{ $$ = "default"; }
 		;
 
@@ -481,7 +485,7 @@ opt_default:  DEFAULT default_expr
 				{
 					$$ = FlattenStringList($2);
 				}
-			|  /*EMPTY*/		{ $$ = NULL; }
+			| /*EMPTY*/		{ $$ = NULL; }
 	;
 
 default_expr:  AexprConst
@@ -626,7 +630,7 @@ CopyStmt:  COPY opt_binary relation_name opt_with_copy copy_dirn copy_file_name 
 
 copy_dirn:	TO
 				{ $$ = TO; }
-		|  FROM
+		| FROM
 				{ $$ = FROM; }
 		;
 
@@ -640,18 +644,18 @@ copy_file_name:  Sconst							{ $$ = $1; }
 		| STDOUT								{ $$ = NULL; }
 		;
 
-opt_binary: BINARY								{ $$ = TRUE; }
-		|  /*EMPTY*/							{ $$ = FALSE; }
+opt_binary:  BINARY								{ $$ = TRUE; }
+		| /*EMPTY*/								{ $$ = FALSE; }
 		;
 
 opt_with_copy:	WITH OIDS						{ $$ = TRUE; }
-		|  /* EMPTY */							{ $$ = FALSE; }
+		| /* EMPTY */							{ $$ = FALSE; }
 		;
 
 /*
  * the default copy delimiter is tab but the user can configure it
  */
-copy_delimiter: USING DELIMITERS Sconst { $$ = $3;}
+copy_delimiter:  USING DELIMITERS Sconst { $$ = $3;}
 		| /* EMPTY */  { $$ = "\t"; }
 		;
 
@@ -706,14 +710,14 @@ OptLocation:  STORE '=' Sconst
 				{  $$ = -1;  }
 		;
 
-OptArchiveLocation: ARCH_STORE '=' Sconst
+OptArchiveLocation:  ARCH_STORE '=' Sconst
 				{  $$ = smgrin($3);  }
 		| /*EMPTY*/
 				{  $$ = -1;  }
 		;
 
 OptInherit:  INHERITS '(' relation_name_list ')'		{ $$ = $3; }
-		|  /*EMPTY*/									{ $$ = NIL; }
+		| /*EMPTY*/										{ $$ = NIL; }
 		;
 
 OptConstraint:	ConstraintList							{ $$ = $1; }
@@ -894,7 +898,7 @@ OptSeqElem:		IDENT NumConst
  *
  *****************************************************************************/
 
-CreatePLangStmt: CREATE PLangTrusted PROCEDURAL LANGUAGE Sconst 
+CreatePLangStmt:  CREATE PLangTrusted PROCEDURAL LANGUAGE Sconst 
 			HANDLER def_name LANCOMPILER Sconst
 			{
 				CreatePLangStmt *n = makeNode(CreatePLangStmt);
@@ -909,7 +913,7 @@ CreatePLangStmt: CREATE PLangTrusted PROCEDURAL LANGUAGE Sconst
 PLangTrusted:		TRUSTED { $$ = TRUE; }
 			|	{ $$ = FALSE; }
 
-DropPLangStmt: DROP PROCEDURAL LANGUAGE Sconst
+DropPLangStmt:  DROP PROCEDURAL LANGUAGE Sconst
 			{
 				DropPLangStmt *n = makeNode(DropPLangStmt);
 				n->plname = $4;
@@ -925,7 +929,7 @@ DropPLangStmt: DROP PROCEDURAL LANGUAGE Sconst
  *
  *****************************************************************************/
 
-CreateTrigStmt: CREATE TRIGGER name TriggerActionTime TriggerEvents ON
+CreateTrigStmt:  CREATE TRIGGER name TriggerActionTime TriggerEvents ON
 				relation_name TriggerForSpec EXECUTE PROCEDURE
 				name '(' TriggerFuncArgs ')'
 				{
@@ -968,7 +972,7 @@ TriggerOneEvent:		INSERT	{ $$ = 'i'; }
 				|		UPDATE	{ $$ = 'u'; }
 		;
 
-TriggerForSpec: FOR name name
+TriggerForSpec:  FOR name name
 				{
 						if ( strcmp ($2, "each") != 0 )
 								elog(WARN,"parser: syntax error near %s",$2);
@@ -981,14 +985,15 @@ TriggerForSpec: FOR name name
 				}
 		;
 
-TriggerFuncArgs: TriggerFuncArg
+TriggerFuncArgs:  TriggerFuncArg
 				{ $$ = lcons($1, NIL); }
-		|  TriggerFuncArgs ',' TriggerFuncArg
+		| TriggerFuncArgs ',' TriggerFuncArg
 				{ $$ = lappend($1, $3); }
-		|  /* EMPTY */	{ $$ = NIL; }
+		| /*EMPTY*/
+				{ $$ = NIL; }
 		;
 
-TriggerFuncArg: ICONST
+TriggerFuncArg:  ICONST
 					{
 						char *s = (char *) palloc (256);
 						sprintf (s, "%d", $1);
@@ -1040,27 +1045,28 @@ printf("def_rest: defname is %s\n", $1);
 		;
 
 def_type:  OPERATOR							{ $$ = OPERATOR; }
-		|  Type
+		| Type
 				{
 #ifdef PARSEDEBUG
 printf("def_type: decoding TYPE_P\n");
 #endif
 					$$ = TYPE_P;
 				}
-		|  AGGREGATE						{ $$ = AGGREGATE; }
+		| AGGREGATE							{ $$ = AGGREGATE; }
 		;
 
 def_name:  PROCEDURE						{ $$ = "procedure"; }
-		|  ColId							{ $$ = $1; }
-		|  MathOp							{ $$ = $1; }
-		|  Op								{ $$ = $1; }
+		| JOIN								{ $$ = "join"; }
+		| ColId								{ $$ = $1; }
+		| MathOp							{ $$ = $1; }
+		| Op								{ $$ = $1; }
 		;
 
 definition:  '(' def_list ')'				{ $$ = $2; }
 		;
 
 def_list:  def_elem							{ $$ = lcons($1, NIL); }
-		|  def_list ',' def_elem			{ $$ = lappend($1, $3); }
+		| def_list ',' def_elem				{ $$ = lappend($1, $3); }
 		;
 
 def_elem:  def_name '=' def_arg
@@ -1073,7 +1079,7 @@ pprint($3);
 					$$->defname = $1;
 					$$->arg = (Node *)$3;
 				}
-		|  def_name
+		| def_name
 				{
 #ifdef PARSEDEBUG
 printf("def_elem: decoding %s\n", $1);
@@ -1082,7 +1088,7 @@ printf("def_elem: decoding %s\n", $1);
 					$$->defname = $1;
 					$$->arg = (Node *)NULL;
 				}
-		|  DEFAULT '=' def_arg
+		| DEFAULT '=' def_arg
 				{
 #ifdef PARSEDEBUG
 printf("def_elem: decoding DEFAULT =\n");
@@ -1169,11 +1175,11 @@ opt_direction:	FORWARD							{ $$ = FORWARD; }
 fetch_how_many:  Iconst
 			   { $$ = $1;
 				 if ($1 <= 0) elog(WARN,"Please specify nonnegative count for fetch",NULL); }
-		|  ALL							{ $$ = 0; /* 0 means fetch all tuples*/}
-		|  /*EMPTY*/					{ $$ = 1; /*default*/ }
+		| ALL							{ $$ = 0; /* 0 means fetch all tuples*/}
+		| /*EMPTY*/						{ $$ = 1; /*default*/ }
 		;
 
-opt_portal_name: IN name				{ $$ = $2;}
+opt_portal_name:  IN name				{ $$ = $2;}
 		| /*EMPTY*/						{ $$ = NULL; }
 		;
 
@@ -1269,7 +1275,7 @@ opt_with_grant:  WITH GRANT OPTION
  *
  *****************************************************************************/
 
-RevokeStmt: REVOKE privileges ON relation_name_list FROM grantee
+RevokeStmt:  REVOKE privileges ON relation_name_list FROM grantee
 				{
 					$$ = (Node*)makeAclStmt($2,$4,$6,'-');
 					free($2);
@@ -1321,7 +1327,7 @@ index_list:  index_list ',' index_elem			{ $$ = lappend($1, $3); }
 		| index_elem							{ $$ = lcons($1, NIL); }
 		;
 
-func_index: name '(' name_list ')' opt_type opt_class
+func_index:  name '(' name_list ')' opt_type opt_class
 				{
 					$$ = makeNode(IndexElem);
 					$$->name = $1;
@@ -1350,10 +1356,10 @@ opt_type:  ':' Typename							{ $$ = $2;}
  *  for Typename of "TIMESTAMP WITH TIME ZONE"
  * So, remove "WITH class" from the syntax. OK??
  * - thomas 1997-10-12
- *		|  WITH class							{ $$ = $2; }
+ *		| WITH class							{ $$ = $2; }
  */
 opt_class:  class								{ $$ = $1; }
-		|  USING class							{ $$ = $2; }
+		| USING class							{ $$ = $2; }
 		| /*EMPTY*/								{ $$ = NULL; }
 		;
 
@@ -1425,11 +1431,11 @@ ProcedureStmt:	CREATE FUNCTION def_name def_args
 				};
 
 opt_with:  WITH definition						{ $$ = $2; }
-		|  /* EMPTY */							{ $$ = NIL; }
+		| /* EMPTY */							{ $$ = NIL; }
 		;
 
 def_args:  '(' def_name_list ')'				{ $$ = $2; }
-		|  '(' ')'								{ $$ = NIL; }
+		| '(' ')'								{ $$ = NIL; }
 		;
 
 def_name_list:	name_list;
@@ -1457,25 +1463,25 @@ purge_quals:  before_clause
 					$$->beforeDate = $1;
 					$$->afterDate = NULL;
 				}
-		|  after_clause
+		| after_clause
 				{
 					$$ = makeNode(PurgeStmt);
 					$$->beforeDate = NULL;
 					$$->afterDate = $1;
 				}
-		|  before_clause after_clause
+		| before_clause after_clause
 				{
 					$$ = makeNode(PurgeStmt);
 					$$->beforeDate = $1;
 					$$->afterDate = $2;
 				}
-		|  after_clause before_clause
+		| after_clause before_clause
 				{
 					$$ = makeNode(PurgeStmt);
 					$$->beforeDate = $2;
 					$$->afterDate = $1;
 				}
-		|  /*EMPTY*/
+		| /*EMPTY*/
 				{
 					$$ = makeNode(PurgeStmt);
 					$$->beforeDate = NULL;
@@ -1514,9 +1520,9 @@ RemoveStmt:  DROP remove_type name
 		;
 
 remove_type:  Type								{  $$ = TYPE_P; }
-		|  INDEX								{  $$ = INDEX; }
-		|  RULE									{  $$ = RULE; }
-		|  VIEW									{  $$ = VIEW; }
+		| INDEX									{  $$ = INDEX; }
+		| RULE									{  $$ = RULE; }
+		| VIEW									{  $$ = VIEW; }
 		;
 
 RemoveAggrStmt:  DROP AGGREGATE name aggr_argtype
@@ -1529,7 +1535,7 @@ RemoveAggrStmt:  DROP AGGREGATE name aggr_argtype
 		;
 
 aggr_argtype:  name								{ $$ = $1; }
-		|  '*'									{ $$ = NULL; }
+		| '*'									{ $$ = NULL; }
 		;
 
 RemoveFuncStmt:  DROP FUNCTION name '(' func_argtypes ')'
@@ -1542,7 +1548,7 @@ RemoveFuncStmt:  DROP FUNCTION name '(' func_argtypes ')'
 		;
 
 func_argtypes:	name_list						{ $$ = $1; }
-		|  /*EMPTY*/							{ $$ = NIL; }
+		| /*EMPTY*/								{ $$ = NIL; }
 		;
 
 RemoveOperStmt:  DROP OPERATOR all_Op '(' oper_argtypes ')'
@@ -1554,15 +1560,15 @@ RemoveOperStmt:  DROP OPERATOR all_Op '(' oper_argtypes ')'
 				}
 		;
 
-all_Op: Op | MathOp;
+all_Op:  Op | MathOp;
 
 MathOp:	'+'				{ $$ = "+"; }
-		|  '-'			{ $$ = "-"; }
-		|  '*'			{ $$ = "*"; }
-		|  '/'			{ $$ = "/"; }
-		|  '<'			{ $$ = "<"; }
-		|  '>'			{ $$ = ">"; }
-		|  '='			{ $$ = "="; }
+		| '-'			{ $$ = "-"; }
+		| '*'			{ $$ = "*"; }
+		| '/'			{ $$ = "/"; }
+		| '<'			{ $$ = "<"; }
+		| '>'			{ $$ = ">"; }
+		| '='			{ $$ = "="; }
 		;
 
 oper_argtypes:	name
@@ -1599,7 +1605,7 @@ RenameStmt:  ALTER TABLE relation_name opt_inh_star
 		;
 
 opt_name:  name							{ $$ = $1; }
-		|  /*EMPTY*/					{ $$ = NULL; }
+		| /*EMPTY*/						{ $$ = NULL; }
 		;
 
 opt_column:  COLUMN						{ $$ = COLUMN; }
@@ -1639,19 +1645,19 @@ OptStmtList:  NOTHING					{ $$ = NIL; }
 
 OptStmtBlock:  OptStmtMulti
 				{  $$ = $1; }
-		|  OptimizableStmt
+		| OptimizableStmt
 				{ $$ = lcons($1, NIL); }
 		;
 
 OptStmtMulti:  OptStmtMulti OptimizableStmt ';'
 				{  $$ = lappend($1, $2); }
-		|  OptStmtMulti OptimizableStmt
+		| OptStmtMulti OptimizableStmt
 				{  $$ = lappend($1, $2); }
-		|  OptimizableStmt ';'
+		| OptimizableStmt ';'
 				{ $$ = lcons($1, NIL); }
 		;
 
-event_object: relation_name '.' attr_name
+event_object:  relation_name '.' attr_name
 				{
 					$$ = makeNode(Attr);
 					$$->relname = $1;
@@ -1689,7 +1695,7 @@ opt_instead:  INSTEAD					{ $$ = TRUE; }
  *
  *****************************************************************************/
 
-NotifyStmt: NOTIFY relation_name
+NotifyStmt:  NOTIFY relation_name
 				{
 					NotifyStmt *n = makeNode(NotifyStmt);
 					n->relname = $2;
@@ -1697,7 +1703,7 @@ NotifyStmt: NOTIFY relation_name
 				}
 		;
 
-ListenStmt: LISTEN relation_name
+ListenStmt:  LISTEN relation_name
 				{
 					ListenStmt *n = makeNode(ListenStmt);
 					n->relname = $2;
@@ -1814,7 +1820,7 @@ ViewStmt:  CREATE VIEW name AS RetrieveStmt
  *
  *****************************************************************************/
 
-LoadStmt: LOAD file_name
+LoadStmt:  LOAD file_name
 				{
 					LoadStmt *n = makeNode(LoadStmt);
 					n->filename = $2;
@@ -1830,14 +1836,23 @@ LoadStmt: LOAD file_name
  *
  *****************************************************************************/
 
-CreatedbStmt:  CREATE DATABASE database_name
+CreatedbStmt:  CREATE DATABASE database_name opt_database
 				{
 					CreatedbStmt *n = makeNode(CreatedbStmt);
 					n->dbname = $3;
+					n->dbpath = $4;
 					$$ = (Node *)n;
 				}
 		;
 
+opt_database:  WITH LOCATION '=' location		{ $$ = $4; }
+		| /*EMPTY*/								{ $$ = NULL; }
+		;
+
+location:  Sconst								{ $$ = $1; }
+		| DEFAULT								{ $$ = NULL; }
+		| /*EMPTY*/								{ $$ = NULL; }
+		;
 
 /*****************************************************************************
  *
@@ -1909,13 +1924,13 @@ opt_analyze:  ANALYZE							{ $$ = TRUE; }
 		| /* EMPTY */							{ $$ = FALSE; }
 		;
 
-opt_va_list: '(' va_list ')'
+opt_va_list:  '(' va_list ')'
 				{ $$ = $2; }
 		| /* EMPTY */
 				{ $$ = NIL; }
 		;
 
-va_list: name
+va_list:  name
 				{ $$=lcons($1,NIL); }
 		| va_list ',' name
 				{ $$=lappend($1,$3); }
@@ -1974,7 +1989,7 @@ AppendStmt:  INSERT INTO relation_name opt_column_list insert_rest
 				}
 		;
 
-insert_rest: VALUES '(' res_target_list2 ')'
+insert_rest:  VALUES '(' res_target_list2 ')'
 				{
 					$$ = makeNode(AppendStmt);
 					$$->targetList = $3;
@@ -1990,7 +2005,7 @@ insert_rest: VALUES '(' res_target_list2 ')'
 				}
 		;
 
-opt_column_list: '(' columnList ')'				{ $$ = $2; }
+opt_column_list:  '(' columnList ')'			{ $$ = $2; }
 		| /*EMPTY*/								{ $$ = NIL; }
 		;
 
@@ -2001,7 +2016,7 @@ columnList:
 				{ $$ = lcons($1, NIL); }
 		;
 
-columnElem: ColId opt_indirection
+columnElem:  ColId opt_indirection
 				{
 					Ident *id = makeNode(Ident);
 					id->name = $1;
@@ -2151,7 +2166,7 @@ opt_unique:  DISTINCT							{ $$ = "*"; }
 		;
 
 sort_clause:  ORDER BY sortby_list				{ $$ = $3; }
-		|  /*EMPTY*/							{ $$ = NIL; }
+		| /*EMPTY*/								{ $$ = NIL; }
 		;
 
 sortby_list:  sortby							{ $$ = lcons($1, NIL); }
@@ -2271,9 +2286,9 @@ from_clause:  FROM '(' relation_expr join_expr JOIN relation_expr join_spec ')'
 
 from_list:	from_list ',' from_val
 				{ $$ = lappend($1, $3); }
-		|  from_val CROSS JOIN from_val
+		| from_val CROSS JOIN from_val
 				{ elog(WARN,"CROSS JOIN not yet implemented",NULL); }
-		|  from_val
+		| from_val
 				{ $$ = lcons($1, NIL); }
 		;
 
@@ -2323,7 +2338,7 @@ join_spec:	ON '(' a_expr ')'					{ $$ = NULL; }
 		| /*EMPTY*/								{ $$ = NULL;  /* no qualifiers */ }
 		;
 
-join_list: join_using							{ $$ = lcons($1, NIL); }
+join_list:  join_using							{ $$ = lcons($1, NIL); }
 		| join_list ',' join_using				{ $$ = lappend($1, $3); }
 		;
 
@@ -2403,11 +2418,11 @@ time_range:  '[' opt_range_start ',' opt_range_end ']'
 		;
 
 opt_range_start:  date
-		|  /*EMPTY*/							{ $$ = "epoch"; }
+		| /*EMPTY*/								{ $$ = "epoch"; }
 		;
 
 opt_range_end:	date
-		|  /*EMPTY*/							{ $$ = "now"; }
+		| /*EMPTY*/								{ $$ = "now"; }
 		;
 
 opt_array_bounds:  '[' ']' nest_array_bounds
@@ -2692,7 +2707,7 @@ opt_interval:  datetime							{ $$ = lcons($1, NIL); }
  *
  *****************************************************************************/
 
-a_expr_or_null: a_expr
+a_expr_or_null:  a_expr
 				{ $$ = $1;}
 		| Pnull
 				{
@@ -2877,7 +2892,7 @@ a_expr:  attr opt_indirection
 
 					$$ = (Node *)n;
 				}
-			| CURRENT_USER
+		| CURRENT_USER
 				{
 					FuncCall *n = makeNode(FuncCall);
 					n->funcname = "getpgusername";
@@ -3029,15 +3044,15 @@ opt_indirection:  '[' a_expr ']' opt_indirection
 				{	$$ = NIL; }
 		;
 
-expr_list: a_expr_or_null
+expr_list:  a_expr_or_null
 				{ $$ = lcons($1, NIL); }
-		|  expr_list ',' a_expr_or_null
+		| expr_list ',' a_expr_or_null
 				{ $$ = lappend($1, $3); }
-		|  expr_list USING a_expr
+		| expr_list USING a_expr
 				{ $$ = lappend($1, $3); }
 		;
 
-extract_list: datetime FROM a_expr
+extract_list:  datetime FROM a_expr
 				{
 					A_Const *n = makeNode(A_Const);
 					n->val.type = T_String;
@@ -3051,7 +3066,7 @@ printf( "string is %s\n", $1);
 				{	$$ = NIL; }
 		;
 
-position_list: position_expr IN position_expr
+position_list:  position_expr IN position_expr
 				{	$$ = makeList($3, $1, -1); }
 		| /* EMPTY */
 				{	$$ = NIL; }
@@ -3176,7 +3191,7 @@ position_expr:  attr opt_indirection
 				}
 		;
 
-substr_list: expr_list substr_from substr_for
+substr_list:  expr_list substr_from substr_for
 				{
 					$$ = nconc(nconc($1,$2),$3);
 				}
@@ -3184,7 +3199,7 @@ substr_list: expr_list substr_from substr_for
 				{	$$ = NIL; }
 		;
 
-substr_from: FROM expr_list
+substr_from:  FROM expr_list
 				{	$$ = $2; }
 		| /* EMPTY */
 				{
@@ -3195,17 +3210,17 @@ substr_from: FROM expr_list
 				}
 		;
 
-substr_for: FOR expr_list
+substr_for:  FOR expr_list
 				{	$$ = $2; }
 		| /* EMPTY */
 				{	$$ = NIL; }
 		;
 
-trim_list: a_expr FROM expr_list
+trim_list:  a_expr FROM expr_list
 				{ $$ = lappend($3, $1); }
-		|  FROM expr_list
+		| FROM expr_list
 				{ $$ = $2; }
-		|  expr_list
+		| expr_list
 				{ $$ = $1; }
 		;
 
@@ -3218,9 +3233,9 @@ in_expr:  SubSelect
 				{	$$ = $1; }
 		;
 
-in_expr_nodes: AexprConst
+in_expr_nodes:  AexprConst
 				{	$$ = makeA_Expr(OP, "=", saved_In_Expr, $1); }
-		|  in_expr_nodes ',' AexprConst
+		| in_expr_nodes ',' AexprConst
 				{	$$ = makeA_Expr(OR, NULL, $1,
 						makeA_Expr(OP, "=", saved_In_Expr, $3));
 				}
@@ -3235,9 +3250,9 @@ not_in_expr:  SubSelect
 				{	$$ = $1; }
 		;
 
-not_in_expr_nodes: AexprConst
+not_in_expr_nodes:  AexprConst
 				{	$$ = makeA_Expr(OP, "<>", saved_In_Expr, $1); }
-		|  not_in_expr_nodes ',' AexprConst
+		| not_in_expr_nodes ',' AexprConst
 				{	$$ = makeA_Expr(AND, NULL, $1,
 						makeA_Expr(OP, "<>", saved_In_Expr, $3));
 				}
@@ -3295,7 +3310,7 @@ res_target_list:  res_target_list ',' res_target_el
 				}
 		;
 
-res_target_el: ColId opt_indirection '=' a_expr_or_null
+res_target_el:  ColId opt_indirection '=' a_expr_or_null
 				{
 					$$ = makeNode(ResTarget);
 					$$->name = $1;
@@ -3328,14 +3343,14 @@ res_target_el: ColId opt_indirection '=' a_expr_or_null
 ** should get rid of the other but is still needed by the defunct retrieve into
 ** and update (uses a subset)
 */
-res_target_list2: res_target_list2 ',' res_target_el2
+res_target_list2:  res_target_list2 ',' res_target_el2
 				{	$$ = lappend($1, $3);  }
 		| res_target_el2
 				{	$$ = lcons($1, NIL);  }
 		;
 
 /* AS is not optional because shift/red conflict with unary ops */
-res_target_el2: a_expr_or_null AS ColLabel
+res_target_el2:  a_expr_or_null AS ColLabel
 				{
 					$$ = makeNode(ResTarget);
 					$$->name = $3;
@@ -3463,7 +3478,7 @@ ParamNo:  PARAM
 		;
 
 NumConst:  Iconst						{ $$ = makeInteger($1); }
-		|  FCONST						{ $$ = makeFloat($1); }
+		| FCONST						{ $$ = makeFloat($1); }
 		;
 
 Iconst:  ICONST							{ $$ = $1; };
@@ -3479,11 +3494,32 @@ Id:  IDENT								{ $$ = $1; };
 /* Column identifier
  * Include date/time keywords as SQL92 extension.
  * Include TYPE as a SQL92 unreserved keyword. - thomas 1997-10-05
+ * Add other keywords. Note that as the syntax expands,
+ *  some of these keywords will have to be removed from this
+ *  list due to shift/reduce conflicts in yacc. If so, move
+ *  down to the ColLabel entity. - thomas 1997-11-06
  */
 ColId:  Id								{ $$ = $1; }
 		| datetime						{ $$ = $1; }
+		| ACTION						{ $$ = "action"; }
+		| DATABASE						{ $$ = "database"; }
+		| DELIMITERS					{ $$ = "delimiters"; }
+		| FUNCTION						{ $$ = "function"; }
+		| INDEX							{ $$ = "index"; }
+		| KEY							{ $$ = "key"; }
+		| LANGUAGE						{ $$ = "language"; }
+		| LIGHT							{ $$ = "light"; }
+		| LOCATION						{ $$ = "location"; }
+		| MATCH							{ $$ = "match"; }
+		| OPERATOR						{ $$ = "operator"; }
+		| OPTION						{ $$ = "option"; }
+		| PRIVILEGES					{ $$ = "privileges"; }
+		| RECIPE						{ $$ = "recipe"; }
 		| TIME							{ $$ = "time"; }
+		| TRIGGER						{ $$ = "trigger"; }
 		| TYPE_P						{ $$ = "type"; }
+		| VERSION						{ $$ = "version"; }
+		| ZONE							{ $$ = "zone"; }
 		;
 
 /* Column label
@@ -3492,8 +3528,24 @@ ColId:  Id								{ $$ = $1; }
  *  compatibility. Cannot allow this for column names since the
  *  syntax would not distinguish between the constant value and
  *  a column name. - thomas 1997-10-24
+ * Add other keywords to this list. Note that they appear here
+ *  rather than in ColId if there was a shift/reduce conflict
+ *  when used as a full identifier. - thomas 1997-11-06
  */
 ColLabel:  ColId						{ $$ = $1; }
+		| ARCHIVE						{ $$ = "archive"; }
+		| CLUSTER						{ $$ = "cluster"; }
+		| CONSTRAINT					{ $$ = "constraint"; }
+		| CROSS							{ $$ = "cross"; }
+		| FOREIGN						{ $$ = "foreign"; }
+		| GROUP							{ $$ = "group"; }
+		| LOAD							{ $$ = "load"; }
+		| ORDER							{ $$ = "order"; }
+		| POSITION						{ $$ = "position"; }
+		| PRECISION						{ $$ = "precision"; }
+		| STORE							{ $$ = "store"; }
+		| TABLE							{ $$ = "table"; }
+		| TRANSACTION					{ $$ = "transaction"; }
 		| TRUE_P						{ $$ = "true"; }
 		| FALSE_P						{ $$ = "false"; }
 		;
@@ -3707,8 +3759,8 @@ static Node *makeIndexable(char *opname, Node *lexpr, Node *rexpr)
 static char *
 xlateSqlType(char *name)
 {
-	if (!strcasecmp(name,"int") ||
-		!strcasecmp(name,"integer"))
+	if (!strcasecmp(name,"int")
+	 || !strcasecmp(name,"integer"))
 		return "int4";
 	else if (!strcasecmp(name, "smallint"))
 		return "int2";
