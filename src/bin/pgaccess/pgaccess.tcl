@@ -8,12 +8,16 @@
 #
 global activetab; 
 global dbc; 
+global username;
+global password;
 global dbname; 
 global host; 
 global mw; 
 global newdbname; 
 global newhost; 
 global newpport; 
+global newusername;
+global newpassword;
 global pport; 
 global pref; 
 global qlvar; 
@@ -986,12 +990,14 @@ proc {load_pref} {} {
 global pref
 set retval [catch {set fid [open "~/.pgaccessrc" r]}]
 if {$retval} {
-    set pref(rows) 200
-    set pref(tvfont) clean
-    set pref(autoload) 1
-    set pref(lastdb) {}
-    set pref(lasthost) localhost
-    set pref(lastport) 5432
+	set pref(rows) 200
+	set pref(tvfont) clean
+	set pref(autoload) 1
+	set pref(lastdb) {}
+	set pref(lasthost) localhost
+	set pref(lastport) 5432
+	set pref(username) {}
+	set pref(password) {}
 } else {
     while {![eof $fid]} {
         set pair [gets $fid]
@@ -1483,27 +1489,35 @@ if {$mw(row_edited)==$mw(nrecs)} {
 }
 
 proc {open_database} {} {
-global dbc host pport dbname sdbname newdbname newhost newpport pref
+global dbc host pport dbname username password newusername newpassword sdbname newdbname newhost newpport pref
 catch {cursor_watch .dbod}
-if {[catch {set newdbc [pg_connect $newdbname -host $newhost -port $newpport]} msg]} {
+if {$newusername!=""} {
+	set connres [catch {set newdbc [pg_connect -conninfo "host=$newhost port=$newpport dbname=$newdbname user=$newusername password=$newpassword"]} msg]
+} else {
+	set connres [catch {set newdbc [pg_connect $newdbname -host $newhost -port $newpport]} msg]
+}
+if {$connres} {
     catch {cursor_arrow .dbod}
     show_error "Error connecting database\n$msg"
 } else {
-    catch {pg_disconnect $dbc}
-    set dbc $newdbc
-    set host $newhost
-    set pport $newpport
-    set dbname $newdbname
-    set sdbname $dbname
-    set pref(lastdb) $dbname
-    set pref(lasthost) $host
-    set pref(lastport) $pport
-    save_pref
-    catch {cursor_arrow .dbod; Window hide .dbod}
-    tab_click .dw.tabTables
-    # Check for pga_ tables
-    foreach {table structure} { pga_queries {queryname varchar(64),querytype char(1),querycommand text} pga_forms {formname varchar(64),formsource text} pga_scripts {scriptname varchar(64),scriptsource text} pga_reports {reportname varchar(64),reportsource text,reportbody text,reportprocs text,reportoptions text}} {
-        set pgres [pg_exec $dbc "select relname from pg_class where relname='$table'"]
+	catch {pg_disconnect $dbc}
+	set dbc $newdbc
+	set host $newhost
+	set pport $newpport
+	set dbname $newdbname
+	set username $newusername
+	set password $newpassword
+	set sdbname $dbname
+	set pref(lastdb) $dbname
+	set pref(lasthost) $host
+	set pref(lastport) $pport
+	set pref(lastusername) $username
+	save_pref
+	catch {cursor_arrow .dbod; Window hide .dbod}
+	tab_click .dw.tabTables
+	# Check for pga_ tables
+	foreach {table structure} { pga_queries {queryname varchar(64),querytype char(1),querycommand text} pga_forms {formname varchar(64),formsource text} pga_scripts {scriptname varchar(64),scriptsource text} pga_reports {reportname varchar(64),reportsource text,reportbody text,reportprocs text,reportoptions text}} {
+	set pgres [pg_exec $dbc "select relname from pg_class where relname='$table'"]
         if {[pg_result $pgres -numTuples]==0} {
             pg_result $pgres -clear
             sql_exec quiet "create table $table ($structure)"
@@ -2430,22 +2444,21 @@ Window show .tiw
 set tiw(isunique) {}
 set tiw(isclustered) {}
 set tiw(indexfields) {}
-pg_select $dbc "select attnum,attname,typname,attlen,usename,pg_class.oid from pg_class,pg_user,pg_attribute,pg_type where (pg_class.relname='$tiw(tablename)') and (pg_class.oid=pg_attribute.attrelid) and (pg_class.relowner=pg_user.usesysid) and (pg_attribute.atttypid=pg_type.oid) order by attnum" rec {
-    set fsize $rec(attlen)
-    set ftype $rec(typname)
-    if {$ftype=="varchar"} {
-        incr fsize -4
-    }
-    if {$ftype=="bpchar"} {
-    	incr fsize -4
-    }
-    if {$ftype=="text"} {
-        set fsize ""
-    }
-    if {$rec(attnum)>0} {.tiw.lb insert end [format "%-33s %-14s %-4s" $rec(attname) $ftype $fsize]}
-    set tiw(owner) $rec(usename)
-    set tiw(tableoid) $rec(oid)
-    set tiw(f$rec(attnum)) $rec(attname)
+pg_select $dbc "select attnum,attname,typname,attlen,atttypmod,usename,pg_class.oid from pg_class,pg_user,pg_attribute,pg_type where (pg_class.relname='$tiw(tablename)') and (pg_class.oid=pg_attribute.attrelid) and (pg_class.relowner=pg_user.usesysid) and (pg_attribute.atttypid=pg_type.oid) order by attnum" rec {
+	set fsize $rec(attlen)
+	set fsize1 $rec(atttypmod)
+	set ftype $rec(typname)
+	if { $fsize=="-1" && $fsize1!="-1" } {
+		set fsize $rec(atttypmod)
+		incr fsize -4
+	}
+	if { $fsize1=="-1" && $fsize=="-1" } {
+		set fsize ""
+	}
+	if {$rec(attnum)>0} {.tiw.lb insert end [format "%-33s %-14s %-4s" $rec(attname) $ftype $fsize]}
+	set tiw(owner) $rec(usename)
+	set tiw(tableoid) $rec(oid)
+	set tiw(f$rec(attnum)) $rec(attname)
 }
 set tiw(indexlist) {}
 pg_select $dbc "select oid,indexrelid from pg_index where (pg_class.relname='$tiw(tablename)') and (pg_class.oid=pg_index.indrelid)" rec {
@@ -2540,10 +2553,12 @@ if {$retval} {
 }
 
 proc {main} {argc argv} {
-global pref newdbname newpport newhost dbc
+global pref newdbname newpport newhost newusername newpassword dbc
 load libpgtcl.so
 catch {draw_tabs}
 load_pref
+set newusername {}
+set newpassword {}
 if {$argc>0} {
 	set newdbname [lindex $argv 0]
 	set newhost localhost
@@ -2553,6 +2568,7 @@ if {$argc>0} {
 	set newdbname $pref(lastdb)
 	set newhost $pref(lasthost)
 	set newpport $pref(lastport)
+	catch {set newusername $pref(lastusername)}
 	open_database
 }
 wm protocol .dw WM_DELETE_WINDOW {
@@ -2636,7 +2652,7 @@ proc vTclWindow.about {base} {
     label $base.l2  -font -Adobe-Helvetica-Medium-R-Normal-*-*-120-*-*-*-*-*  -relief groove  -text {A Tcl/Tk interface to
 PostgreSQL
 by Constantin Teodorescu} 
-    label $base.l3  -borderwidth 0  -font -Adobe-Helvetica-Medium-R-Normal-*-*-120-*-*-*-*-*  -relief sunken -text {vers 0.86}
+    label $base.l3  -borderwidth 0  -font -Adobe-Helvetica-Medium-R-Normal-*-*-120-*-*-*-*-*  -relief sunken -text {vers 0.88}
     label $base.l4  -font -Adobe-Helvetica-Medium-R-Normal-*-*-120-*-*-*-*-*  -relief groove  -text {You will always get the latest version at:
 http://www.flex.ro/pgaccess
 
@@ -2662,33 +2678,92 @@ proc vTclWindow.dbod {base} {
     ###################
     # CREATING WIDGETS
     ###################
-    toplevel $base -class Toplevel  -cursor top_left_arrow 
+    toplevel $base -class Toplevel \
+        -cursor top_left_arrow 
     wm focusmodel $base passive
-    wm geometry $base 282x128+353+310
+    wm geometry $base 282x180+358+333
     wm maxsize $base 1009 738
     wm minsize $base 1 1
     wm overrideredirect $base 0
     wm resizable $base 0 0
+    wm deiconify $base
     wm title $base "Open database"
-    label $base.lhost  -borderwidth 0  -relief raised -text Host 
-    entry $base.ehost  -background #fefefe -borderwidth 1 -highlightthickness 1  -selectborderwidth 0 -textvariable newhost 
-    label $base.lport  -borderwidth 0  -relief raised -text Port 
-    entry $base.epport  -background #fefefe -borderwidth 1 -highlightthickness 1  -selectborderwidth 0 -textvariable newpport 
-    label $base.ldbname  -borderwidth 0  -relief raised -text Database 
-    entry $base.edbname  -background #fefefe -borderwidth 1 -highlightthickness 1  -selectborderwidth 0 -textvariable newdbname 
-    button $base.opbtu  -borderwidth 1 -command open_database  -padx 9 -pady 3 -text Open 
-    button $base.canbut  -borderwidth 1 -command {Window hide .dbod}  -padx 9  -pady 3 -text Cancel 
+    label $base.lhost \
+        -borderwidth 0 -relief raised -text Host 
+    entry $base.ehost \
+        -background #fefefe -borderwidth 1 -highlightthickness 1 \
+        -selectborderwidth 0 -textvariable newhost 
+    bind $base.ehost <Key-Return> {
+        focus .dbod.epport
+    }
+    label $base.lport \
+        -borderwidth 0 -relief raised -text Port 
+    entry $base.epport \
+        -background #fefefe -borderwidth 1 -highlightthickness 1 \
+        -selectborderwidth 0 -textvariable newpport 
+    bind $base.epport <Key-Return> {
+        focus .dbod.edbname
+    }
+    label $base.ldbname \
+        -borderwidth 0 -relief raised -text Database 
+    entry $base.edbname \
+        -background #fefefe -borderwidth 1 -highlightthickness 1 \
+        -selectborderwidth 0 -textvariable newdbname 
+    bind $base.edbname <Key-Return> {
+        focus .dbod.eusername
+	.dbod.eusername selection range 0 end
+    }
+    label $base.lusername \
+        -borderwidth 0 -relief raised -text Username 
+    entry $base.eusername \
+        -background #fefefe -borderwidth 1 -highlightthickness 1 \
+        -selectborderwidth 0 -textvariable newusername 
+    bind $base.eusername <Key-Return> {
+        focus .dbod.epassword
+    }
+    label $base.lpassword \
+        -borderwidth 0 -relief raised -text Password 
+    entry $base.epassword \
+        -background #fefefe -borderwidth 1 -highlightthickness 1 \
+        -selectborderwidth 0 -textvariable newpassword -show "*"
+    bind $base.epassword <Key-Return> {
+        focus .dbod.opbtu
+    }
+    button $base.opbtu \
+        -borderwidth 1 -command open_database -padx 9 -pady 3 -text Open 
+    bind $base.opbtu <Key-Return> {
+        open_database
+    }
+    button $base.canbut \
+        -borderwidth 1 -command {Window hide .dbod} -padx 9 -pady 3 \
+        -text Cancel 
     ###################
     # SETTING GEOMETRY
     ###################
-    place $base.lhost  -x 35 -y 7 -anchor nw -bordermode ignore 
-    place $base.ehost  -x 100 -y 5 -anchor nw -bordermode ignore 
-    place $base.lport  -x 35 -y 32 -anchor nw -bordermode ignore 
-    place $base.epport  -x 100 -y 30 -anchor nw -bordermode ignore 
-    place $base.ldbname  -x 35 -y 57 -anchor nw -bordermode ignore 
-    place $base.edbname  -x 100 -y 55 -anchor nw -bordermode ignore 
-    place $base.opbtu  -x 70 -y 90 -width 60 -height 26 -anchor nw -bordermode ignore 
-    place $base.canbut  -x 150 -y 90 -width 60 -height 26 -anchor nw -bordermode ignore
+    place $base.lhost \
+        -x 35 -y 7 -anchor nw -bordermode ignore 
+    place $base.ehost \
+        -x 100 -y 5 -anchor nw -bordermode ignore 
+    place $base.lport \
+        -x 35 -y 32 -anchor nw -bordermode ignore 
+    place $base.epport \
+        -x 100 -y 30 -anchor nw -bordermode ignore 
+    place $base.ldbname \
+        -x 35 -y 57 -anchor nw -bordermode ignore 
+    place $base.edbname \
+        -x 100 -y 55 -anchor nw -bordermode ignore 
+    place $base.lusername \
+        -x 35 -y 82 -anchor nw -bordermode ignore 
+    place $base.eusername \
+        -x 100 -y 80 -anchor nw -bordermode ignore 
+    place $base.lpassword \
+        -x 35 -y 107 -anchor nw -bordermode ignore 
+    place $base.epassword \
+        -x 100 -y 105 -anchor nw -bordermode ignore 
+    place $base.opbtu \
+        -x 70 -y 140 -width 60 -height 26 -anchor nw -bordermode ignore 
+    place $base.canbut \
+        -x 150 -y 140 -width 60 -height 26 -anchor nw -bordermode ignore 
 }
 
 proc vTclWindow.dw {base} {
@@ -2755,7 +2830,8 @@ proc vTclWindow.dw {base} {
 Window show .dbod
 set newhost $host
 set newpport $pport
-focus .dbod.edbname} \
+focus .dbod.edbname
+.dbod.edbname selection range 0 end} \
         -label Open 
     $base.menubutton23.01 add command \
         \
@@ -2972,6 +3048,12 @@ proc vTclWindow.iew {base} {
     place $base.oicb  -x 170 -y 75 -anchor nw -bordermode ignore
 }
 
+proc {mw_canvas_paste} {x y} {
+       global mw
+       .mw.c insert $mw(id_edited) insert [selection get]
+       set mw(dirtyrec) 1
+}
+
 proc vTclWindow.mw {base} {
     if {$base == ""} {
         set base .mw
@@ -3035,6 +3117,9 @@ if {[mw_save_new_record]} {mw_select_records $nq}
     scrollbar $base.sb  -borderwidth 1 -orient vert -width 12  -command mw_scroll_window
     bind $base.c <Button-1> {
         mw_canvas_click %x %y
+    }
+    bind $base.c <Button-2> {
+        mw_canvas_paste %x %y
     }
     bind $base.c <Button-3> {
         if {[mw_exit_edit]} {mw_save_new_record}

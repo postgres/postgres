@@ -2,11 +2,9 @@ README
 INSTALL
 HISTORY
 register.txt
-configure.in
 doc/Machine-specific FAQ's
 doc/TODO
 doc/bug.template
-make new /mirgration file
 update include/version.h after release
 update backend/parser/scan.c and gram.c so  flex/bison not necessary
 update pgaccess

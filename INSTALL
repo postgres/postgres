@@ -2,7 +2,7 @@ POSTGRESQL INSTALLATION INSTRUCTIONS
 Copyright (c) 1997 Regents of  the University of California
 
 This is file /usr/src/pgsql/INSTALL.  It contains notes on how to install
-PostgreSQL v6.3.2.  Up to date information on PostgreSQL may be found at
+PostgreSQL v6.4.  Up to date information on PostgreSQL may be found at
 http://www.postgresql.org.
 
 PostgreSQL is an RDBMS database server.  It is not completely ANSI SQL
@@ -68,14 +68,11 @@ You should have at least 8 MB of memory and at least 45 MB of disk space
 to hold the source, binaries, and user databases.  After installation
 you may reduce this to about 3 Mbytes plus space for user databases.
 
-To those upgrading from PostgreSQL 6.3:
----------------------------------------
+To those upgrading from PostgreSQL 6.3.*:
+----------------------------------------
 
-A dump/restore is NOT required for those running 6.3.  A
-'make distclean', 'make', and 'make install' is all that is required.
-This last step should be performed while the postmaster is not running.
-You should re-link any custom applications that use PostgreSQL libraries.
-
+A dump/restore is required for those running 6.3.*.  pg_dumpall can help
+with this task.
 
 To those doing a fresh install or upgrading from previous releases of
 PostgreSQL:
@@ -118,7 +115,7 @@ PostgreSQL:
 
       To check for disk space, use command "df -k".
 
-  4) Ftp file ftp://ftp.postgresql.org/pub/postgresql-6.3.2.tar.gz from the
+  4) Ftp file ftp://ftp.postgresql.org/pub/postgresql-6.4.tar.gz from the
      Internet.  Store it in your home directory.
 
   5) Some platforms use flex.  If your system uses flex then make sure
@@ -160,7 +157,7 @@ PostgreSQL:
      step.  Type (with the gunzip line and the following line typed as one
      line):
         cd
-        gunzip -c postgresql-6.3.2.tar.gz |
+        gunzip -c postgresql-6.4.tar.gz |
             tar xvf - src/bin/pg_dump/pg_dumpall
         chmod a+x src/bin/pg_dump/pg_dumpall
         src/bin/pg_dump/pg_dumpall > db.out
@@ -226,7 +223,7 @@ PostgreSQL:
 
  10) Unzip and untar the new source file.  Type
         cd /usr/src/pgsql
-        gunzip -c ~/postgresql-6.3.2.tar.gz | tar xvf -
+        gunzip -c ~/postgresql-6.4.tar.gz | tar xvf -
 
  11) Configure the source code for your system.  It is this step at which
      you can specify your actual source path and installation paths for
@@ -433,7 +430,7 @@ PostgreSQL:
      PostgreSQL.
 
      For a i686/Linux-ELF platform, no tests failed since this is the
-     v6.3.2 regression testing reference platform.
+     v6.4 regression testing reference platform.
 
      For the SPARC/Linux-ELF platform, using the 970525 beta version of
      PostgreSQL v6.2 the following tests "failed":
@@ -553,7 +550,7 @@ PostgreSQL:
         rm -rf /usr/local/pgsql_6_0
         # Also delete old database directory tree if it is not in
         #  /usr/local/pgsql_6_0/data
-        rm ~/postgresql-6.3.2.tar.gz
+        rm ~/postgresql-6.4.tar.gz
 
  26) You will probably want to print out the documentation.  Here is how
      you might do it if you have Ghostscript on your system and are
@@ -580,7 +577,7 @@ PostgreSQL:
      supported platforms.  We therefore ask you to let us know if you did
      or did not get PostgreSQL to work on you system.  Please send a
      mail message to pgsql-ports@postgresql.org telling us the following:
-       - The version of PostgreSQL (6.3.2, 6.2.1, beta 970703, etc.).
+       - The version of PostgreSQL (6.4, 6.3.2, beta 970703, etc.).
        - Your operating system (i.e. RedHat v4.0 Linux v2.0.26).
        - Your hardware (SPARC, i486, etc.).
        - Did you compile, install and run the regression tests cleanly?

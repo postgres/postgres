@@ -22,15 +22,15 @@ PROVIDE MAINTENANCE, SUPPORT, UPDATES, ENHANCEMENTS, OR MODIFICATIONS.
 ---------------------------------------------------------------------------
 
 
-PGACCESS 0.86 29 March 1998
+PGACCESS 0.88 7 June 1998
 ================================
-I dedicate this program to my little 4 year daughter Ana-Maria and my wife
-for their understanding. I hope they will forgive me for spending so many
+I dedicate this program to my little daughters Ana-Maria and Emilia and to my
+wife for their understanding. I hope they will forgive me for spending so many
 time far from them.
 
 
 
-1.Why PGACCESS ?
+1.Why PgAccess ?
 
 First of all because PostgreSQL lacks a graphical interface where you
 can manage your tables, edit them, define queries, sequences and
@@ -77,7 +77,7 @@ pgaccess.tcl file.
 
 4.What does it now ?
 
-- Opens any database on a specified host at the specified port.
+- Opens any database on a specified host at the specified port, username and password
 - Perform vacuum command.
 - Saves preferences in ~/pgaccessrc file
 

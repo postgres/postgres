@@ -1,3 +1,168 @@
+PostgreSQL 6.4               Tue Sep  1 21:18:17 EDT 1998
+=========================================================
+
+A dump/restore is required for those wishing to migrate data from
+previous releases of PostgreSQL.
+
+Bug Fixes
+---------
+Fix for a tiny memory leak in PQsetdb/PQfinish(Bryan)
+Remove char2-16 data types, use char/varchar(Darren)
+Pqfn not handles a NOTICE message(Anders)
+Short-term locks now retry locking at random times(David)
+Fix up "ISO-style" timespan decoding and encoding(Thomas)
+Fix problem with table drop after rollback of transaction(Vadim)
+Change error message and remove non-functional update message(Vadim)
+Fix for COPY array checking
+Fix for SELECT 1 UNION SELECT NULL
+Fix for buffer leaks in large object calls(Pascal)
+Change owner from oid to int4 type(Bruce)
+Fix a bug in the oracle compatibility functions btrim() ltrim() and rtrim()
+Fix for usernames longer than eight characters(Tom)
+Fix for shared invalidation cache overflow(Massimo)
+Prevent file descriptor leaks in failed COPY's(Bruce)
+
+Enhancements
+------------
+Upgrade ECPG to 2.0, see src/interfaces/ecpc/ChangeLog(Michael)
+Show the index used in an explain(Zeugswetter)
+Multi-byte awareness of many data data types and functions(Tatsuo)
+New configure --with-mb option(Tatsuo)
+New initdb --pgencoding option(Tatsuo)
+New createdb -E multibyte option(Tatsuo)
+Select version(); now returns PostgreSQL version(Jeroen)
+Libpq now allows asynchronous clients(Tom)
+Allow cancel from client of backend query(Tom)
+Psql now cancels query with Control-C(Tom)
+Define "tz_hour" and "tz_minute" arguments to date_part()(Thomas)
+Add routines to convert between varchar and bpchar(Thomas)
+Add routines to allow sizing of varchar and bpchar into target columns(Thomas)
+Add bit flags to support timezonehour and minute in data retrieval(Thomas)
+Allow more variations on valid floating point numbers (e.g. ".1", "1e6")(Thomas)
+Fixes for unary minus parsing with leading spaces(Thomas)
+Implement TIMEZONE_HOUR, TIMEZONE_MINUTE per SQL92 specs(Thomas)
+Check for and properly ignore FOREIGN KEY column constraints(Thomas)
+Define USER as synonym for CURRENT_USER per SQL92 specs(Thomas)
+Enable HAVING clause but no fixes elsewhere yet.
+Make "char" type a synonym for "char(1)" (actually implemented as bpchar)(Thomas)
+Save string type if specified for DEFAULT clause handling(Thomas)
+Coerce operations involving different data types(Thomas)
+Allow some index use for columns of different types(Thomas)
+Add capabilities for automatic type conversion(Thomas)
+Cleanups for large objects, so file is truncated on open(Peter)
+Readline cleanups(Tom)
+Allow psql  \f \ to make spaces as delimiter(Bruce)
+Pass pg_attribute.atttypmod to the frontend for column field lengths(Tom,Bruce)
+Msql compatibility library in /contrib(Aldrin)
+Remove the requirement that ORDER/GROUP BY clause identifiers be 
+included in the target list(David)
+Convert columns to match columns in UNION clauses(Thomas)
+Remove fork()/exec() and only do fork()(Bruce)
+Jdbc cleanups(Peter)
+Show backend status on ps command line(only works on some platforms)(Bruce)
+Pg_hba.conf now has a sameuser option in the database field
+Make lo_unlink take oid param, not int4
+New DISABLE_COMPLEX_MACRO for compilers that can't handle our macros(Bruce)
+Libpgtcl now gets async notifies from libpq(Tom)
+New locale patch, see docs/README/locale(Oleg)
+Fix for pg_dump so CONSTRAINT and CHECK syntax is correct(ccb)
+New contrib/lo code for large object orphan removal(Peter)
+New psql command "SET CLIENT_ENCODING TO 'encoding'" for multi-bytes
+feature, see /doc/README.mb(Tatsuo)
+/contrib/noupdate code to revoke update permission on a column
+Libpq can now be compiled on win32(Magnus)
+Add PQsetdbLogin() in libpq
+Two styles we agreed upon for database descriptors(Thomas)
+New 8-byte integer type, checked by configure for OS support(Thomas)
+Surround table and column names with double-quotes(Thomas) in generated 
+sql code to preserve case (SQL92 syntax)(Thomas)
+New libpqrequestCancel(Tom)
+PQreset() now works with passwords(Tom)
+Handle case of GROUP BY target list column number out of range(David)
+Allow UNION in subselects
+Add auto-size to screen to \d? commands(Bruce)
+Use UNION to show all \d? results in one query(Bruce)
+Add \d? field search feature(Bruce)
+Pg_dump issues fewer \connect requests(Tom)
+Document pg_dump -z flag in manual page(Tom)
+Add HAVING clause with full support for subselects and unions(Stephan)
+Full text indexing routines in contrib/fulltextindex(Marteen)
+Transaction ids now stored in shared memory(Vadim)
+New PGCLIENTENCODING when issuing COPY command(Tatsuo)
+Support for SQL92 syntax "SET NAMES"(Tatsuo)
+Support for LATIN2-5(Tatsuo)
+Add UNICODE regression test case(Tatsuo)
+Lock manager cleanup, new locking modes for LLL(Vadim)
+Allow index use with OR clauses(Bruce)
+Allows "SELECT NULL ORDER BY 1;"
+Explain VERBOSE prints the plan, and now pretty-prints the plan to
+the postmaster log file(Bruce)
+Add Indices display to \d command(Bruce)
+Allow GROUP BY on functions(David)
+New pg_class.relkind for large objects(Bruce)
+New way to send libpq NOTICE messages to a different location(Tom)
+New \w write command to psql(Bruce)
+New /contrib/findoidjoins scans oid columns to find join relationships(Bruce)
+Allow binary-compatible indices to be considered when checking for valid
+indices for restriction clauses containing a constant(Thomas)
+New ISBN/ISSN code in /contrib/isbn_issn
+Allow NOT LIKE, IN, NOT IN, BETWEEN, and NOT BETWEEN constraint(Thomas)
+New rewrite system fixes many problems with rules and views(Jan)
+	* Rules on relations work
+	* Event qualifications on insert/update/delete work
+	* New OLD variable to reference CURRENT, CURRENT will be remove in future
+	* Update rules can reference NEW and OLD in rule qualifications/actions
+	* Insert/update/delete rules on views work
+	* Multiple rule actions are now supported, surrounded by parentheses
+	* Regular users can create views/rules on tables they have RULE permits
+	* Rules and views inherit the permissions on the creator
+	* No rules at the column level
+	* No UPDATE NEW/OLD rules
+	* New pg_rule and pg_view system views
+	* Only a single action on SELECT rules
+	* Total rewrite overhaul, perhaps for 6.5
+
+System indexes are now multi-key(Bruce)
+Oidint2, oidint4, and oidname types are removed(Bruce)
+Use system cache for more system table lookups(Bruce)
+New backend programming language PL/pgSQL in backend/pl(Jan)
+New SERIAL data type, auto-creates sequence/index(Thomas)
+Enable assert checking without a recompile(Massimo)
+User lock enhancements(Massimo)
+New setval() command to set sequence value(Massimo)
+Auto-remove unix socket file on startup if no postmaster running(Massimo)
+Conditional trace package(Massimo)
+New UNLISTEN command(Massimo)
+Psql now compiles under win32 using win32.mak(Magnus)
+Lo_read no longer stores trailing NULL(Bruce)
+Identifiers are now truncated to 31 characters internally(Bruce)
+
+Source Tree Changes
+-------------------
+/contrib cleanup(Jun)
+Inline some small functions called for every row(Bruce)
+Alpha/linux fixes
+Hp/UX cleanups(Tom)
+Multi-byte regression tests(Soonmyung.)
+Remove --disabled options from configure
+Define PGDOC to use POSTGRESDIR by default
+Make regression optional
+Remove extra braces code to pgindent(Bruce)
+Add bsdi shared library support(Bruce)
+New --without-CXX support configure option(Brook)
+New FAQ_CVS
+Update backend flowchart in tools/backend(Bruce)
+Change atttypmod from int16 to int32(Bruce, Tom)
+Getrusage() fix for platforms that do not have it(Tom)
+Add PGUSER to libpq man page
+Ns32k platform fixes(Phil Nelson)
+Sco 7/UnixWare 2.x fixes(Billy,others)
+Sparc/Solaris 2.5 fixes(Ryan)
+Pgbuiltin.3 is obsolete, move to doc files(Thomas)
+Even more documention(Thomas)
+
+
+
 PostgreSQL 6.3.2             Tue Apr  7 16:53:16 EDT 1998
 =========================================================
 
