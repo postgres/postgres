@@ -1,0 +1,1086 @@
+From Inoue@tpf.co.jp Tue Jan 18 19:08:30 2000
+From: "Hiroshi Inoue" <Inoue@tpf.co.jp>
+To: "Bruce Momjian" <pgman@candle.pha.pa.us>
+Cc: "pgsql-hackers" <pgsql-hackers@postgreSQL.org>
+Subject: RE: [HACKERS] Index recreation in vacuum
+Date: Wed, 19 Jan 2000 10:13:40 +0900
+Message-ID: <000201bf621a$6b9baf20$2801007e@tpf.co.jp>
+X-Priority: 3 (Normal)
+X-MSMail-Priority: Normal
+X-Mailer: Microsoft Outlook 8.5, Build 4.71.2173.0
+X-MimeOLE: Produced By Microsoft MimeOLE V5.00.2314.1300
+Importance: Normal
+In-Reply-To: <200001181821.NAA02988@candle.pha.pa.us>
+Content-Length:  1479
+
+[ Charset ISO-8859-1 unsupported, converting... ]
+> -----Original Message-----
+> From: Bruce Momjian [mailto:pgman@candle.pha.pa.us]
+> 
+> [Charset iso-8859-1 unsupported, filtering to ASCII...]
+> > Hi all,
+> > 
+> > I'm trying to implement REINDEX command.
+> > 
+> > REINDEX operation itself is available everywhere and
+> > I've thought about applying it to VACUUM.
+> 
+> That is a good idea.  Vacuuming of indexes can be very slow.
+> 
+> > .
+> > My plan is as follows.
+> > 
+> > Add a new option to force index recreation in vacuum
+> > and if index recreation is specified.
+> 
+> Couldn't we auto-recreate indexes based on the number of tuples moved by
+> vacuum,
+
+Yes,we could probably do it. But I'm not sure the availability of new
+vacuum.
+
+New vacuum would give us a big advantage that
+1) Much faster than current if vacuum remove/moves many tuples.
+2) Does shrink index files
+
+But in case of abort/crash
+1) couldn't choose index scan for the table
+2) unique constraints of the table would be lost
+
+I don't know how people estimate this disadvantage.
+  
+> 
+> > Now I'm inclined to use relhasindex of pg_class to
+> > validate/invalidate indexes of a table at once.
+> 
+> There are a few calls to CatalogIndexInsert() that know the 
+> system table they
+> are using and know it has indexes, so it does not check that field.  You
+> could add cases for that.
+>
+
+I think there aren't so many places to check.
+I would examine it if my idea is OK.
+
+Regards.
+
+Hiroshi Inoue
+Inoue@tpf.co.jp
+
+From owner-pgsql-hackers@hub.org Tue Jan 18 19:15:27 2000
+From: "Hiroshi Inoue" <Inoue@tpf.co.jp>
+To: "Bruce Momjian" <pgman@candle.pha.pa.us>
+Cc: "pgsql-hackers" <pgsql-hackers@postgreSQL.org>
+Subject: RE: [HACKERS] Index recreation in vacuum
+Date: Wed, 19 Jan 2000 10:13:40 +0900
+Message-ID: <000201bf621a$6b9baf20$2801007e@tpf.co.jp>
+X-Priority: 3 (Normal)
+X-MSMail-Priority: Normal
+X-Mailer: Microsoft Outlook 8.5, Build 4.71.2173.0
+X-MimeOLE: Produced By Microsoft MimeOLE V5.00.2314.1300
+Importance: Normal
+In-Reply-To: <200001181821.NAA02988@candle.pha.pa.us>
+Sender: owner-pgsql-hackers@postgreSQL.org
+Content-Length:  1493
+
+[ Charset ISO-8859-1 unsupported, converting... ]
+> -----Original Message-----
+> From: Bruce Momjian [mailto:pgman@candle.pha.pa.us]
+> 
+> [Charset iso-8859-1 unsupported, filtering to ASCII...]
+> > Hi all,
+> > 
+> > I'm trying to implement REINDEX command.
+> > 
+> > REINDEX operation itself is available everywhere and
+> > I've thought about applying it to VACUUM.
+> 
+> That is a good idea.  Vacuuming of indexes can be very slow.
+> 
+> > .
+> > My plan is as follows.
+> > 
+> > Add a new option to force index recreation in vacuum
+> > and if index recreation is specified.
+> 
+> Couldn't we auto-recreate indexes based on the number of tuples moved by
+> vacuum,
+
+Yes,we could probably do it. But I'm not sure the availability of new
+vacuum.
+
+New vacuum would give us a big advantage that
+1) Much faster than current if vacuum remove/moves many tuples.
+2) Does shrink index files
+
+But in case of abort/crash
+1) couldn't choose index scan for the table
+2) unique constraints of the table would be lost
+
+I don't know how people estimate this disadvantage.
+  
+> 
+> > Now I'm inclined to use relhasindex of pg_class to
+> > validate/invalidate indexes of a table at once.
+> 
+> There are a few calls to CatalogIndexInsert() that know the 
+> system table they
+> are using and know it has indexes, so it does not check that field.  You
+> could add cases for that.
+>
+
+I think there aren't so many places to check.
+I would examine it if my idea is OK.
+
+Regards.
+
+Hiroshi Inoue
+Inoue@tpf.co.jp
+
+************
+
+From owner-pgsql-hackers@hub.org Tue Jan 18 19:57:21 2000
+From: Bruce Momjian <pgman@candle.pha.pa.us>
+Message-Id: <200001190150.UAA11421@candle.pha.pa.us>
+Subject: Re: [HACKERS] Index recreation in vacuum
+In-Reply-To: <000201bf621a$6b9baf20$2801007e@tpf.co.jp> from Hiroshi Inoue at
+	"Jan 19, 2000 10:13:40 am"
+To: Hiroshi Inoue <Inoue@tpf.co.jp>
+Date: Tue, 18 Jan 2000 20:50:50 -0500 (EST)
+CC: pgsql-hackers <pgsql-hackers@postgreSQL.org>
+X-Mailer: ELM [version 2.4ME+ PL66 (25)]
+Sender: owner-pgsql-hackers@postgreSQL.org
+Content-Length:  2329
+
+> > > Add a new option to force index recreation in vacuum
+> > > and if index recreation is specified.
+> > 
+> > Couldn't we auto-recreate indexes based on the number of tuples moved by
+> > vacuum,
+> 
+> Yes,we could probably do it. But I'm not sure the availability of new
+> vacuum.
+> 
+> New vacuum would give us a big advantage that
+> 1) Much faster than current if vacuum remove/moves many tuples.
+> 2) Does shrink index files
+> 
+> But in case of abort/crash
+> 1) couldn't choose index scan for the table
+> 2) unique constraints of the table would be lost
+> 
+> I don't know how people estimate this disadvantage.
+
+That's why I was recommending rename().  The actual window of
+vunerability goes from perhaps hours to fractions of a second.
+
+In fact, if I understand this right, you could make the vulerability
+zero by just performing the rename as one operation.
+
+In fact, for REINDEX cases where you don't have a lock on the entire
+table as you do in vacuum, you could reindex the table with a simple
+read-lock on the base table and index, and move the new index into place
+with the users seeing no change.  Only people traversing the index
+during the change would have a problem.  You just need an exclusive
+access on the index for the duration of the rename() so no one is
+traversing the index during the rename().
+
+Destroying the index and recreating opens a large time span that there
+is no index, and you have to jury-rig something so people don't try to
+use the index.  With rename() you just put the new index in place with
+one operation.  Just don't let people traverse the index during the
+change.  The pointers to the heap tuples is the same in both indexes.
+
+In fact, with WAL, we will allow multiple physical files for the same
+table by appending the table oid to the file name.  In this case, the
+old index could be deleted by rename, and people would continue to use
+the old index until they deleted the open file pointers.  Not sure how
+this works in practice because new tuples would not be inserted into the
+old copy of the index.
+
+
+-- 
+  Bruce Momjian                        |  http://www.op.net/~candle
+  pgman@candle.pha.pa.us               |  (610) 853-3000
+  +  If your life is a hard drive,     |  830 Blythe Avenue
+  +  Christ can be your backup.        |  Drexel Hill, Pennsylvania 19026
+
+************
+
+From pgman Tue Jan 18 20:04:11 2000
+From: Bruce Momjian <pgman>
+Message-Id: <200001190204.VAA11990@candle.pha.pa.us>
+Subject: Re: [HACKERS] Index recreation in vacuum
+In-Reply-To: <200001190150.UAA11421@candle.pha.pa.us> from Bruce Momjian at "Jan
+	18, 2000 08:50:50 pm"
+To: Bruce Momjian <pgman@candle.pha.pa.us>
+Date: Tue, 18 Jan 2000 21:04:11 -0500 (EST)
+CC: Hiroshi Inoue <Inoue@tpf.co.jp>,
+        pgsql-hackers <pgsql-hackers@postgreSQL.org>
+X-Mailer: ELM [version 2.4ME+ PL66 (25)]
+Content-Length:  2434
+
+> > I don't know how people estimate this disadvantage.
+> 
+> That's why I was recommending rename().  The actual window of
+> vunerability goes from perhaps hours to fractions of a second.
+> 
+> In fact, if I understand this right, you could make the vulerability
+> zero by just performing the rename as one operation.
+> 
+> In fact, for REINDEX cases where you don't have a lock on the entire
+> table as you do in vacuum, you could reindex the table with a simple
+> read-lock on the base table and index, and move the new index into place
+> with the users seeing no change.  Only people traversing the index
+> during the change would have a problem.  You just need an exclusive
+> access on the index for the duration of the rename() so no one is
+> traversing the index during the rename().
+> 
+> Destroying the index and recreating opens a large time span that there
+> is no index, and you have to jury-rig something so people don't try to
+> use the index.  With rename() you just put the new index in place with
+> one operation.  Just don't let people traverse the index during the
+> change.  The pointers to the heap tuples is the same in both indexes.
+> 
+> In fact, with WAL, we will allow multiple physical files for the same
+> table by appending the table oid to the file name.  In this case, the
+> old index could be deleted by rename, and people would continue to use
+> the old index until they deleted the open file pointers.  Not sure how
+> this works in practice because new tuples would not be inserted into the
+> old copy of the index.
+
+Maybe I am all wrong here.  Maybe most of the advantage of rename() are
+meaningless with reindex using during vacuum, which is the most
+important use of reindex.
+
+Let's look at index using during vacuum.  Right now, how does vacuum
+handle indexes when it moves a tuple?  Does it do each index update as
+it moves a tuple?  Is that why it is so slow?
+
+If we don't do that and vacuum fails, what state is the table left in? 
+If we don't update the index for every tuple, the index is invalid in a
+vacuum failure.  rename() is not going to help us here.  It keeps the
+old index around, but the index is invalid anyway, right?
+
+
+-- 
+  Bruce Momjian                        |  http://www.op.net/~candle
+  pgman@candle.pha.pa.us               |  (610) 853-3000
+  +  If your life is a hard drive,     |  830 Blythe Avenue
+  +  Christ can be your backup.        |  Drexel Hill, Pennsylvania 19026
+
+From Inoue@tpf.co.jp Tue Jan 18 20:18:48 2000
+From: "Hiroshi Inoue" <Inoue@tpf.co.jp>
+To: "Bruce Momjian" <pgman@candle.pha.pa.us>
+Cc: "pgsql-hackers" <pgsql-hackers@postgreSQL.org>
+Subject: RE: [HACKERS] Index recreation in vacuum
+Date: Wed, 19 Jan 2000 11:23:55 +0900
+Message-ID: <000801bf6224$3bfdd9a0$2801007e@tpf.co.jp>
+X-Priority: 3 (Normal)
+X-MSMail-Priority: Normal
+X-Mailer: Microsoft Outlook 8.5, Build 4.71.2173.0
+X-MimeOLE: Produced By Microsoft MimeOLE V5.00.2314.1300
+Importance: Normal
+In-Reply-To: <200001190204.VAA11990@candle.pha.pa.us>
+Content-Length:  2308
+
+[ Charset ISO-8859-1 unsupported, converting... ]
+> -----Original Message-----
+> From: Bruce Momjian [mailto:pgman@candle.pha.pa.us]
+>
+> > > I don't know how people estimate this disadvantage.
+> >
+> > That's why I was recommending rename().  The actual window of
+> > vunerability goes from perhaps hours to fractions of a second.
+> >
+> > In fact, if I understand this right, you could make the vulerability
+> > zero by just performing the rename as one operation.
+> >
+> > In fact, for REINDEX cases where you don't have a lock on the entire
+> > table as you do in vacuum, you could reindex the table with a simple
+> > read-lock on the base table and index, and move the new index into place
+> > with the users seeing no change.  Only people traversing the index
+> > during the change would have a problem.  You just need an exclusive
+> > access on the index for the duration of the rename() so no one is
+> > traversing the index during the rename().
+> >
+> > Destroying the index and recreating opens a large time span that there
+> > is no index, and you have to jury-rig something so people don't try to
+> > use the index.  With rename() you just put the new index in place with
+> > one operation.  Just don't let people traverse the index during the
+> > change.  The pointers to the heap tuples is the same in both indexes.
+> >
+> > In fact, with WAL, we will allow multiple physical files for the same
+> > table by appending the table oid to the file name.  In this case, the
+> > old index could be deleted by rename, and people would continue to use
+> > the old index until they deleted the open file pointers.  Not sure how
+> > this works in practice because new tuples would not be inserted into the
+> > old copy of the index.
+>
+> Maybe I am all wrong here.  Maybe most of the advantage of rename() are
+> meaningless with reindex using during vacuum, which is the most
+> important use of reindex.
+>
+> Let's look at index using during vacuum.  Right now, how does vacuum
+> handle indexes when it moves a tuple?  Does it do each index update as
+> it moves a tuple?  Is that why it is so slow?
+>
+
+Yes,I believe so.  It's necessary to keep consistency between heap
+table and indexes even in case of abort/crash.
+As far as I see,it has been a big charge for vacuum.
+
+Regards.
+
+Hiroshi Inoue
+Inoue@tpf.co.jp
+
+
+From owner-pgsql-hackers@hub.org Tue Jan 18 20:53:49 2000
+From: Bruce Momjian <pgman@candle.pha.pa.us>
+Message-Id: <200001190245.VAA13040@candle.pha.pa.us>
+Subject: Re: [HACKERS] Index recreation in vacuum
+In-Reply-To: <000801bf6224$3bfdd9a0$2801007e@tpf.co.jp> from Hiroshi Inoue at
+	"Jan 19, 2000 11:23:55 am"
+To: Hiroshi Inoue <Inoue@tpf.co.jp>
+Date: Tue, 18 Jan 2000 21:45:27 -0500 (EST)
+CC: pgsql-hackers <pgsql-hackers@postgreSQL.org>
+X-Mailer: ELM [version 2.4ME+ PL66 (25)]
+Sender: owner-pgsql-hackers@postgreSQL.org
+Content-Length:  2480
+
+> > > In fact, for REINDEX cases where you don't have a lock on the entire
+> > > table as you do in vacuum, you could reindex the table with a simple
+> > > read-lock on the base table and index, and move the new index into place
+> > > with the users seeing no change.  Only people traversing the index
+> > > during the change would have a problem.  You just need an exclusive
+> > > access on the index for the duration of the rename() so no one is
+> > > traversing the index during the rename().
+> > >
+> > > Destroying the index and recreating opens a large time span that there
+> > > is no index, and you have to jury-rig something so people don't try to
+> > > use the index.  With rename() you just put the new index in place with
+> > > one operation.  Just don't let people traverse the index during the
+> > > change.  The pointers to the heap tuples is the same in both indexes.
+> > >
+> > > In fact, with WAL, we will allow multiple physical files for the same
+> > > table by appending the table oid to the file name.  In this case, the
+> > > old index could be deleted by rename, and people would continue to use
+> > > the old index until they deleted the open file pointers.  Not sure how
+> > > this works in practice because new tuples would not be inserted into the
+> > > old copy of the index.
+> >
+> > Maybe I am all wrong here.  Maybe most of the advantage of rename() are
+> > meaningless with reindex using during vacuum, which is the most
+> > important use of reindex.
+> >
+> > Let's look at index using during vacuum.  Right now, how does vacuum
+> > handle indexes when it moves a tuple?  Does it do each index update as
+> > it moves a tuple?  Is that why it is so slow?
+> >
+> 
+> Yes,I believe so.  It's necessary to keep consistency between heap
+> table and indexes even in case of abort/crash.
+> As far as I see,it has been a big charge for vacuum.
+
+OK, how about making a copy of the heap table before starting vacuum,
+moving all the tuples in that copy, create new index, and then move the
+new heap and indexes over the old version.  We already have an exclusive
+lock on the table.  That would be 100% reliable, with the disadvantage
+of using 2x the disk space.  Seems like a big win.
+
+-- 
+  Bruce Momjian                        |  http://www.op.net/~candle
+  pgman@candle.pha.pa.us               |  (610) 853-3000
+  +  If your life is a hard drive,     |  830 Blythe Avenue
+  +  Christ can be your backup.        |  Drexel Hill, Pennsylvania 19026
+
+************
+
+From owner-pgsql-hackers@hub.org Tue Jan 18 21:15:24 2000
+From: Bruce Momjian <pgman@candle.pha.pa.us>
+Message-Id: <200001190308.WAA13965@candle.pha.pa.us>
+Subject: Re: [HACKERS] Index recreation in vacuum
+In-Reply-To: <000f01bf622a$bf423940$2801007e@tpf.co.jp> from Hiroshi Inoue at
+	"Jan 19, 2000 12:10:32 pm"
+To: Hiroshi Inoue <Inoue@tpf.co.jp>
+Date: Tue, 18 Jan 2000 22:08:25 -0500 (EST)
+CC: pgsql-hackers <pgsql-hackers@postgreSQL.org>
+X-Mailer: ELM [version 2.4ME+ PL66 (25)]
+Sender: owner-pgsql-hackers@postgreSQL.org
+Content-Length:    50
+
+[ Charset UNKNOWN-8BIT unsupported, skipping... ]
+
+From Inoue@tpf.co.jp Tue Jan 18 21:05:23 2000
+From: "Hiroshi Inoue" <Inoue@tpf.co.jp>
+To: "Bruce Momjian" <pgman@candle.pha.pa.us>
+Cc: "pgsql-hackers" <pgsql-hackers@postgreSQL.org>
+Subject: RE: [HACKERS] Index recreation in vacuum
+Date: Wed, 19 Jan 2000 12:10:32 +0900
+Message-ID: <000f01bf622a$bf423940$2801007e@tpf.co.jp>
+X-Priority: 3 (Normal)
+X-MSMail-Priority: Normal
+X-Mailer: Microsoft Outlook 8.5, Build 4.71.2173.0
+X-MimeOLE: Produced By Microsoft MimeOLE V5.00.2314.1300
+Importance: Normal
+In-Reply-To: <200001190245.VAA13040@candle.pha.pa.us>
+Content-Length:  1509
+
+[ Charset ISO-8859-1 unsupported, converting... ]
+> -----Original Message-----
+> From: Bruce Momjian [mailto:pgman@candle.pha.pa.us]
+> > >
+> > > Maybe I am all wrong here.  Maybe most of the advantage of
+> rename() are
+> > > meaningless with reindex using during vacuum, which is the most
+> > > important use of reindex.
+> > >
+> > > Let's look at index using during vacuum.  Right now, how does vacuum
+> > > handle indexes when it moves a tuple?  Does it do each index update as
+> > > it moves a tuple?  Is that why it is so slow?
+> > >
+> >
+> > Yes,I believe so.  It's necessary to keep consistency between heap
+> > table and indexes even in case of abort/crash.
+> > As far as I see,it has been a big charge for vacuum.
+>
+> OK, how about making a copy of the heap table before starting vacuum,
+> moving all the tuples in that copy, create new index, and then move the
+> new heap and indexes over the old version.  We already have an exclusive
+> lock on the table.  That would be 100% reliable, with the disadvantage
+> of using 2x the disk space.  Seems like a big win.
+>
+
+I heard from someone that old vacuum had been like so.
+Probably 2x disk space for big tables was a big disadvantage.
+
+In addition,rename(),unlink(),mv aren't preferable for transaction
+control as far as I see. We couldn't avoid inconsistency using
+those OS functions.
+We have to wait the change of relation file naming if copying
+vacuum is needed.
+Under the spec we need not rename(),mv etc.
+
+Regards.
+
+Hiroshi Inoue
+Inoue@tpf.co.jp
+
+
+
+
+From dms@wplus.net Wed Jan 19 15:30:40 2000
+X-Real-To: pgman@candle.pha.pa.us
+Message-ID: <38862C9D.C2151E4E@wplus.net>
+Date: Thu, 20 Jan 2000 00:29:01 +0300
+From: Dmitry Samersoff <dms@wplus.net>
+X-Mailer: Mozilla 4.61 [en] (WinNT; I)
+X-Accept-Language: ru,en
+To: Hiroshi Inoue <Inoue@tpf.co.jp>
+CC: Bruce Momjian <pgman@candle.pha.pa.us>,
+        pgsql-hackers <pgsql-hackers@postgreSQL.org>
+Subject: Re: [HACKERS] Index recreation in vacuum
+References: <000f01bf622a$bf423940$2801007e@tpf.co.jp>
+Content-Length:  1204
+
+[ Charset KOI8-R unsupported, converting... ]
+Hiroshi Inoue wrote:
+> > > Yes,I believe so.  It's necessary to keep consistency between heap
+> > > table and indexes even in case of abort/crash.
+> > > As far as I see,it has been a big charge for vacuum.
+> >
+> > OK, how about making a copy of the heap table before starting vacuum,
+> > moving all the tuples in that copy, create new index, and then move the
+> > new heap and indexes over the old version.  We already have an exclusive
+> > lock on the table.  That would be 100% reliable, with the disadvantage
+> > of using 2x the disk space.  Seems like a big win.
+> >
+> 
+> I heard from someone that old vacuum had been like so.
+> Probably 2x disk space for big tables was a big disadvantage.
+
+Yes, It is critical.
+
+How about sequence like this:
+
+* Drop indices (keeping somewhere index descriptions)
+* vacuuming table
+* recreate indices
+
+If something crash, user have been noticed 
+to re-run vacuum or recreate indices by hand 
+when system restarts.
+
+I use script like described above for vacuuming
+ - it really increase vacuum performance for large table.
+
+
+-- 
+Dmitry Samersoff, DM\S
+dms@wplus.net http://devnull.wplus.net
+* there will come soft rains
+
+From dms@wplus.net Wed Jan 19 15:42:49 2000
+X-Real-To: pgman@candle.pha.pa.us
+Message-ID: <38862F86.20328BD3@wplus.net>
+Date: Thu, 20 Jan 2000 00:41:26 +0300
+From: Dmitry Samersoff <dms@wplus.net>
+X-Mailer: Mozilla 4.61 [en] (WinNT; I)
+X-Accept-Language: ru,en
+To: Bruce Momjian <pgman@candle.pha.pa.us>
+CC: Hiroshi Inoue <Inoue@tpf.co.jp>,
+        pgsql-hackers <pgsql-hackers@postgreSQL.org>
+Subject: Re: [HACKERS] Index recreation in vacuum
+References: <200001192132.QAA26048@candle.pha.pa.us>
+Content-Length:   431
+
+[ Charset KOI8-R unsupported, converting... ]
+Bruce Momjian wrote:
+> 
+> We need two things:
+> 
+
+>         auto-create index on startup
+
+IMHO, It have to be controlled by user, because creating large index 
+can take a number of hours. Sometimes it's better to live without
+indices
+at all, and then build it by hand after workday end.
+
+
+-- 
+Dmitry Samersoff, DM\S
+dms@wplus.net http://devnull.wplus.net
+* there will come soft rains
+
+From owner-pgsql-hackers@hub.org Fri Jan 21 00:34:56 2000
+Message-ID: <3887FC19.80305217@krs.ru>
+Date: Fri, 21 Jan 2000 13:26:33 +0700
+From: Vadim Mikheev <vadim@krs.ru>
+Organization: OJSC Rostelecom (Krasnoyarsk)
+X-Mailer: Mozilla 4.5 [en] (X11; I; FreeBSD 3.0-RELEASE i386)
+X-Accept-Language: ru, en
+To: Bruce Momjian <pgman@candle.pha.pa.us>
+CC: Tom Lane <tgl@sss.pgh.pa.us>,
+        PostgreSQL-development <pgsql-hackers@postgreSQL.org>
+Subject: Re: [HACKERS] vacuum timings
+References: <200001210543.AAA13592@candle.pha.pa.us>
+Sender: owner-pgsql-hackers@postgreSQL.org
+Content-Length:   557
+
+Bruce Momjian wrote:
+> 
+> I loaded 10,000,000 rows into CREATE TABLE test (x INTEGER);  Table is
+> 400MB and index is 160MB.
+> 
+> With index on the single in4 column, I got:
+>          78 seconds for a vacuum
+>         121 seconds for vacuum after deleting a single row
+>         662 seconds for vacuum after deleting the entire table
+> 
+> With no index, I got:
+>          43 seconds for a vacuum
+>          43 seconds for vacuum after deleting a single row
+>          43 seconds for vacuum after deleting the entire table
+
+Wi/wo -F ?
+
+Vadim
+
+************
+
+From vadim@krs.ru Fri Jan 21 00:26:33 2000
+Sender: root@sunpine.krs.ru
+Message-ID: <3887FC19.80305217@krs.ru>
+Date: Fri, 21 Jan 2000 13:26:33 +0700
+From: Vadim Mikheev <vadim@krs.ru>
+Organization: OJSC Rostelecom (Krasnoyarsk)
+X-Mailer: Mozilla 4.5 [en] (X11; I; FreeBSD 3.0-RELEASE i386)
+X-Accept-Language: ru, en
+To: Bruce Momjian <pgman@candle.pha.pa.us>
+CC: Tom Lane <tgl@sss.pgh.pa.us>,
+        PostgreSQL-development <pgsql-hackers@postgreSQL.org>
+Subject: Re: [HACKERS] vacuum timings
+References: <200001210543.AAA13592@candle.pha.pa.us>
+Content-Length:   543
+
+Bruce Momjian wrote:
+> 
+> I loaded 10,000,000 rows into CREATE TABLE test (x INTEGER);  Table is
+> 400MB and index is 160MB.
+> 
+> With index on the single in4 column, I got:
+>          78 seconds for a vacuum
+>         121 seconds for vacuum after deleting a single row
+>         662 seconds for vacuum after deleting the entire table
+> 
+> With no index, I got:
+>          43 seconds for a vacuum
+>          43 seconds for vacuum after deleting a single row
+>          43 seconds for vacuum after deleting the entire table
+
+Wi/wo -F ?
+
+Vadim
+
+From Inoue@tpf.co.jp Fri Jan 21 00:40:35 2000
+From: "Hiroshi Inoue" <Inoue@tpf.co.jp>
+To: "Bruce Momjian" <pgman@candle.pha.pa.us>
+Cc: "PostgreSQL-development" <pgsql-hackers@postgreSQL.org>,
+        "Tom Lane" <tgl@sss.pgh.pa.us>
+Subject: RE: [HACKERS] vacuum timings
+Date: Fri, 21 Jan 2000 15:46:15 +0900
+Message-ID: <000201bf63db$36cdae20$2801007e@tpf.co.jp>
+X-Priority: 3 (Normal)
+X-MSMail-Priority: Normal
+X-Mailer: Microsoft Outlook 8.5, Build 4.71.2173.0
+Importance: Normal
+X-MimeOLE: Produced By Microsoft MimeOLE V5.00.2314.1300
+In-Reply-To: <200001210543.AAA13592@candle.pha.pa.us>
+Content-Length:   737
+
+[ Charset ISO-8859-1 unsupported, converting... ]
+> -----Original Message-----
+> From: owner-pgsql-hackers@postgreSQL.org
+> [mailto:owner-pgsql-hackers@postgreSQL.org]On Behalf Of Bruce Momjian
+> 
+> I loaded 10,000,000 rows into CREATE TABLE test (x INTEGER);  Table is
+> 400MB and index is 160MB.
+> 
+> With index on the single in4 column, I got:
+> 	 78 seconds for a vacuum
+		vc_vaconeind() is called once
+
+> 	121 seconds for vacuum after deleting a single row
+		vc_vaconeind() is called twice
+
+Hmmm,vc_vaconeind() takes pretty long time even if it does little. 
+
+> 	662 seconds for vacuum after deleting the entire table
+>
+
+How about half of the rows deleted case ?
+It would take longer time.
+
+Regards.
+
+Hiroshi Inoue
+Inoue@tpf.co.jp
+
+From owner-pgsql-hackers@hub.org Fri Jan 21 12:00:49 2000
+From: Bruce Momjian <pgman@candle.pha.pa.us>
+Message-Id: <200001211751.MAA12106@candle.pha.pa.us>
+Subject: [HACKERS] Re: vacuum timings
+In-Reply-To: <3641.948433911@sss.pgh.pa.us> from Tom Lane at "Jan 21, 2000 00:51:51
+	am"
+To: Tom Lane <tgl@sss.pgh.pa.us>
+Date: Fri, 21 Jan 2000 12:51:53 -0500 (EST)
+CC: PostgreSQL-development <pgsql-hackers@postgreSQL.org>
+X-Mailer: ELM [version 2.4ME+ PL66 (25)]
+Sender: owner-pgsql-hackers@postgreSQL.org
+Content-Length:  1437
+
+> Bruce Momjian <pgman@candle.pha.pa.us> writes:
+> > I loaded 10,000,000 rows into CREATE TABLE test (x INTEGER);  Table is
+> > 400MB and index is 160MB.
+> 
+> > With index on the single in4 column, I got:
+> > 	 78 seconds for a vacuum
+> > 	121 seconds for vacuum after deleting a single row
+> > 	662 seconds for vacuum after deleting the entire table
+> 
+> > With no index, I got:
+> > 	 43 seconds for a vacuum
+> > 	 43 seconds for vacuum after deleting a single row
+> > 	 43 seconds for vacuum after deleting the entire table
+> 
+> > I find this quite interesting.
+> 
+> How long does it take to create the index on your setup --- ie,
+> if vacuum did a drop/create index, would it be competitive?
+
+OK, new timings with -F enabled:
+
+	index	no index
+	519	same	load	
+	247	"	first vacuum
+	40	"	other vacuums
+	
+	1222	X	index creation
+	90	X	first vacuum
+	80	X	other vacuums
+	
+	<1	90	delete one row
+	121	38	vacuum after delete 1 row
+	
+	346	344	delete all rows
+	440	44	first vacuum
+	20	<1	other vacuums(index is still same size)
+
+Conclusions:
+
+	o  indexes never get smaller
+	o  drop/recreate index is slower than vacuum of indexes
+
+What other conclusions can be made?
+
+-- 
+  Bruce Momjian                        |  http://www.op.net/~candle
+  pgman@candle.pha.pa.us               |  (610) 853-3000
+  +  If your life is a hard drive,     |  830 Blythe Avenue
+  +  Christ can be your backup.        |  Drexel Hill, Pennsylvania 19026
+
+************
+
+From scrappy@hub.org Fri Jan 21 12:45:38 2000
+X-Authentication-Warning: thelab.hub.org: scrappy owned process doing -bs
+Date: Fri, 21 Jan 2000 14:45:34 -0400 (AST)
+From: The Hermit Hacker <scrappy@hub.org>
+To: Bruce Momjian <pgman@candle.pha.pa.us>
+cc: Tom Lane <tgl@sss.pgh.pa.us>,
+        PostgreSQL-development <pgsql-hackers@postgresql.org>
+Subject: Re: [HACKERS] Re: vacuum timings
+In-Reply-To: <200001211751.MAA12106@candle.pha.pa.us>
+Message-ID: <Pine.BSF.4.21.0001211443480.23487-100000@thelab.hub.org>
+Content-Length:   787
+
+On Fri, 21 Jan 2000, Bruce Momjian wrote:
+
+> OK, new timings with -F enabled:
+> 
+> 	index	no index
+> 	519	same	load	
+> 	247	"	first vacuum
+> 	40	"	other vacuums
+> 	
+> 	1222	X	index creation
+> 	90	X	first vacuum
+> 	80	X	other vacuums
+> 	
+> 	<1	90	delete one row
+> 	121	38	vacuum after delete 1 row
+> 	
+> 	346	344	delete all rows
+> 	440	44	first vacuum
+> 	20	<1	other vacuums(index is still same size)
+> 
+> Conclusions:
+> 
+> 	o  indexes never get smaller
+
+this one, I thought, was a known?  if I remember right, Vadim changed it
+so that space was reused, but index never shrunk in size ... no?
+
+Marc G. Fournier                   ICQ#7615664               IRC Nick: Scrappy
+Systems Administrator @ hub.org 
+primary: scrappy@hub.org           secondary: scrappy@{freebsd|postgresql}.org 
+
+
+From tgl@sss.pgh.pa.us Fri Jan 21 13:06:35 2000
+To: Bruce Momjian <pgman@candle.pha.pa.us>
+cc: PostgreSQL-development <pgsql-hackers@postgreSQL.org>
+Subject: Re: vacuum timings 
+In-reply-to: <200001211751.MAA12106@candle.pha.pa.us> 
+References: <200001211751.MAA12106@candle.pha.pa.us>
+Comments: In-reply-to Bruce Momjian <pgman@candle.pha.pa.us>
+	message dated "Fri, 21 Jan 2000 12:51:53 -0500"
+Date: Fri, 21 Jan 2000 14:06:31 -0500
+Message-ID: <16498.948481591@sss.pgh.pa.us>
+From: Tom Lane <tgl@sss.pgh.pa.us>
+Content-Length:   391
+
+Bruce Momjian <pgman@candle.pha.pa.us> writes:
+> Conclusions:
+> 	o  indexes never get smaller
+
+Which we knew...
+
+> 	o  drop/recreate index is slower than vacuum of indexes
+
+Quite a few people have reported finding the opposite in practice.
+You should probably try vacuuming after deleting or updating some
+fraction of the rows, rather than just the all or none cases.
+
+			regards, tom lane
+
+From dms@wplus.net Fri Jan 21 13:51:27 2000
+X-Real-To: pgman@candle.pha.pa.us
+Message-ID: <3888B822.28F79A1F@wplus.net>
+Date: Fri, 21 Jan 2000 22:48:50 +0300
+From: Dmitry Samersoff <dms@wplus.net>
+X-Mailer: Mozilla 4.7 [en] (WinNT; I)
+X-Accept-Language: ru,en
+To: Tom Lane <tgl@sss.pgh.pa.us>
+CC: Bruce Momjian <pgman@candle.pha.pa.us>,
+        PostgreSQL-development <pgsql-hackers@postgresql.org>
+Subject: Re: [HACKERS] Re: vacuum timings
+References: <200001211751.MAA12106@candle.pha.pa.us> <16498.948481591@sss.pgh.pa.us>
+Content-Length:   585
+
+[ Charset KOI8-R unsupported, converting... ]
+Tom Lane wrote:
+> 
+> Bruce Momjian <pgman@candle.pha.pa.us> writes:
+> > Conclusions:
+> >       o  indexes never get smaller
+> 
+> Which we knew...
+> 
+> >       o  drop/recreate index is slower than vacuum of indexes
+> 
+> Quite a few people have reported finding the opposite in practice.
+
+I'm one of them. On 1,5 GB table with three indices it about twice
+slowly.
+Probably becouse vacuuming indices brakes system cache policy.
+(FreeBSD 3.3)
+
+
+
+-- 
+Dmitry Samersoff, DM\S
+dms@wplus.net http://devnull.wplus.net
+* there will come soft rains
+
+From owner-pgsql-hackers@hub.org Fri Jan 21 14:04:08 2000
+From: Bruce Momjian <pgman@candle.pha.pa.us>
+Message-Id: <200001211954.OAA15772@candle.pha.pa.us>
+Subject: Re: [HACKERS] Re: vacuum timings
+In-Reply-To: <3888B822.28F79A1F@wplus.net> from Dmitry Samersoff at "Jan 21,
+	2000 10:48:50 pm"
+To: Dmitry Samersoff <dms@wplus.net>
+Date: Fri, 21 Jan 2000 14:54:21 -0500 (EST)
+CC: Tom Lane <tgl@sss.pgh.pa.us>,
+        PostgreSQL-development <pgsql-hackers@postgreSQL.org>
+X-Mailer: ELM [version 2.4ME+ PL66 (25)]
+Sender: owner-pgsql-hackers@postgreSQL.org
+Content-Length:  1093
+
+[Charset koi8-r unsupported, filtering to ASCII...]
+> Tom Lane wrote:
+> > 
+> > Bruce Momjian <pgman@candle.pha.pa.us> writes:
+> > > Conclusions:
+> > >       o  indexes never get smaller
+> > 
+> > Which we knew...
+> > 
+> > >       o  drop/recreate index is slower than vacuum of indexes
+> > 
+> > Quite a few people have reported finding the opposite in practice.
+> 
+> I'm one of them. On 1,5 GB table with three indices it about twice
+> slowly.
+> Probably becouse vacuuming indices brakes system cache policy.
+> (FreeBSD 3.3)
+
+OK, we are researching what things can be done to improve this.  We are
+toying with:
+
+	lock table for less duration, or read lock
+	creating another copy of heap/indexes, and rename() over old files
+	improving heap vacuum speed
+	improving index vacuum speed
+	moving analyze out of vacuum
+	
+
+-- 
+  Bruce Momjian                        |  http://www.op.net/~candle
+  pgman@candle.pha.pa.us               |  (610) 853-3000
+  +  If your life is a hard drive,     |  830 Blythe Avenue
+  +  Christ can be your backup.        |  Drexel Hill, Pennsylvania 19026
+
+************
+
+From scrappy@hub.org Fri Jan 21 14:12:16 2000
+X-Authentication-Warning: thelab.hub.org: scrappy owned process doing -bs
+Date: Fri, 21 Jan 2000 16:12:25 -0400 (AST)
+From: The Hermit Hacker <scrappy@hub.org>
+To: Bruce Momjian <pgman@candle.pha.pa.us>
+cc: Dmitry Samersoff <dms@wplus.net>, Tom Lane <tgl@sss.pgh.pa.us>,
+        PostgreSQL-development <pgsql-hackers@postgresql.org>
+Subject: Re: [HACKERS] Re: vacuum timings
+In-Reply-To: <200001211954.OAA15772@candle.pha.pa.us>
+Message-ID: <Pine.BSF.4.21.0001211607080.23487-100000@thelab.hub.org>
+Content-Length:  2345
+
+On Fri, 21 Jan 2000, Bruce Momjian wrote:
+
+> [Charset koi8-r unsupported, filtering to ASCII...]
+> > Tom Lane wrote:
+> > > 
+> > > Bruce Momjian <pgman@candle.pha.pa.us> writes:
+> > > > Conclusions:
+> > > >       o  indexes never get smaller
+> > > 
+> > > Which we knew...
+> > > 
+> > > >       o  drop/recreate index is slower than vacuum of indexes
+> > > 
+> > > Quite a few people have reported finding the opposite in practice.
+> > 
+> > I'm one of them. On 1,5 GB table with three indices it about twice
+> > slowly.
+> > Probably becouse vacuuming indices brakes system cache policy.
+> > (FreeBSD 3.3)
+> 
+> OK, we are researching what things can be done to improve this.  We are
+> toying with:
+> 
+> 	lock table for less duration, or read lock
+
+if there is some way that we can work around the bug that I believe Tom
+found with removing the lock altogether (ie. makig use of MVCC), I think
+that would be the best option ... if not possible, at least get things
+down to a table lock vs the whole database?
+
+a good example is the udmsearch that we are using on the site ... it uses
+multiple tables to store the dictionary, each representing words of X size
+... if I'm searching on a 4 letter word, and the whole database is locked
+while it is working on the dictionary with 8 letter words, I'm sitting
+there idle ... at least if we only locked the 8 letter table, everyone not
+doing 8 letter searches can go on their merry way ...
+
+Slightly longer vacuum's, IMHO, are acceptable if, to the end users, its
+as transparent as possible ... locking per table would be slightly slower,
+I think, because once a table is finished, the next table would need to
+have an exclusive lock put on it before starting, so you'd have to
+possibly wait for that...?
+
+> 	creating another copy of heap/indexes, and rename() over old files
+
+sounds to me like introducing a large potential for error here ...
+
+> 	moving analyze out of vacuum
+
+I think that should be done anyway ... if we ever get to the point that
+we're able to re-use rows in tables, then that would eliminate the
+immediate requirement for vacuum, but still retain a requirement for a
+periodic analyze ... no?
+
+Marc G. Fournier                   ICQ#7615664               IRC Nick: Scrappy
+Systems Administrator @ hub.org 
+primary: scrappy@hub.org           secondary: scrappy@{freebsd|postgresql}.org 
+
+
+From tgl@sss.pgh.pa.us Fri Jan 21 16:02:07 2000
+To: The Hermit Hacker <scrappy@hub.org>
+cc: Bruce Momjian <pgman@candle.pha.pa.us>,
+        PostgreSQL-development <pgsql-hackers@postgreSQL.org>
+Subject: Re: [HACKERS] Re: vacuum timings 
+In-reply-to: <Pine.BSF.4.21.0001211607080.23487-100000@thelab.hub.org> 
+References: <Pine.BSF.4.21.0001211607080.23487-100000@thelab.hub.org>
+Comments: In-reply-to The Hermit Hacker <scrappy@hub.org>
+	message dated "Fri, 21 Jan 2000 16:12:25 -0400"
+Date: Fri, 21 Jan 2000 17:02:06 -0500
+Message-ID: <9694.948492126@sss.pgh.pa.us>
+From: Tom Lane <tgl@sss.pgh.pa.us>
+Content-Length:  1274
+
+The Hermit Hacker <scrappy@hub.org> writes:
+>> lock table for less duration, or read lock
+
+> if there is some way that we can work around the bug that I believe Tom
+> found with removing the lock altogether (ie. makig use of MVCC), I think
+> that would be the best option ... if not possible, at least get things
+> down to a table lock vs the whole database?
+
+Huh?  VACUUM only requires an exclusive lock on the table it is
+currently vacuuming; there's no database-wide lock.
+
+Even a single-table exclusive lock is bad, of course, if it's a large
+table that's critical to a 24x7 application.  Bruce was talking about
+the possibility of having VACUUM get just a write lock on the table;
+other backends could still read it, but not write it, during the vacuum
+process.  That'd be a considerable step forward for 24x7 applications,
+I think.
+
+It looks like that could be done if we rewrote the table as a new file
+(instead of compacting-in-place), but there's a problem when it comes
+time to rename the new files into place.  At that point you'd need to
+get an exclusive lock to ensure all the readers are out of the table too
+--- and upgrading from a plain lock to an exclusive lock is a well-known
+recipe for deadlocks.  Not sure if this can be solved.
+
+			regards, tom lane
+
+From tgl@sss.pgh.pa.us Fri Jan 21 22:50:34 2000
+To: Bruce Momjian <pgman@candle.pha.pa.us>
+cc: PostgreSQL-development <pgsql-hackers@postgreSQL.org>
+Subject: Re: vacuum timings 
+In-reply-to: <200001211751.MAA12106@candle.pha.pa.us> 
+References: <200001211751.MAA12106@candle.pha.pa.us>
+Comments: In-reply-to Bruce Momjian <pgman@candle.pha.pa.us>
+	message dated "Fri, 21 Jan 2000 12:51:53 -0500"
+Date: Fri, 21 Jan 2000 23:50:13 -0500
+Message-ID: <19678.948516613@sss.pgh.pa.us>
+From: Tom Lane <tgl@sss.pgh.pa.us>
+Content-Length:  1302
+
+Bruce Momjian <pgman@candle.pha.pa.us> writes:
+> Conclusions:
+> 	o  drop/recreate index is slower than vacuum of indexes
+
+BTW, I did some profiling of CREATE INDEX this evening (quite
+unintentionally actually; I was interested in COPY IN, but the pg_dump
+script I used as driver happened to create some indexes too).  I was
+startled to discover that 60% of the runtime of CREATE INDEX is spent in
+_bt_invokestrat (which is called from tuplesort.c's comparetup_index,
+and exists only to figure out which specific comparison routine to call).
+Of this, a whopping 4% was spent in the useful subroutine, int4gt.  All
+the rest went into lookup and validation checks that by rights should be
+done once per index creation, not once per comparison.
+
+In short: a fairly straightforward bit of optimization will eliminate
+circa 50% of the CPU time consumed by CREATE INDEX.  All we need is to
+figure out where to cache the lookup results.  The optimization would
+improve insertions and lookups in indexes, as well, if we can cache
+the lookup results in those scenarios.
+
+This was for a table small enough that tuplesort.c could do the sort
+entirely in memory, so I'm sure the gains would be smaller for a large
+table that requires a disk-based sort.  Still, it seems worth looking
+into...
+
+			regards, tom lane
+
+From owner-pgsql-hackers@hub.org Sat Jan 22 02:31:03 2000
+From: "Hiroshi Inoue" <Inoue@tpf.co.jp>
+To: "Tom Lane" <tgl@sss.pgh.pa.us>, "Bruce Momjian" <pgman@candle.pha.pa.us>
+Cc: "PostgreSQL-development" <pgsql-hackers@postgresql.org>
+Subject: RE: [HACKERS] Re: vacuum timings 
+Date: Sat, 22 Jan 2000 17:15:37 +0900
+Message-ID: <NDBBIJLOILGIKBGDINDFIEEACCAA.Inoue@tpf.co.jp>
+X-Priority: 3 (Normal)
+X-MSMail-Priority: Normal
+X-Mailer: Microsoft Outlook IMO, Build 9.0.2416 (9.0.2910.0)
+X-MimeOLE: Produced By Microsoft MimeOLE V5.00.2314.1300
+In-Reply-To: <16498.948481591@sss.pgh.pa.us>
+Importance: Normal
+Sender: owner-pgsql-hackers@postgresql.org
+Content-Length:    49
+
+[ Charset iso-2022-jp unsupported, skipping... ]
+
+From tgl@sss.pgh.pa.us Sat Jan 22 10:31:02 2000
+To: "Hiroshi Inoue" <Inoue@tpf.co.jp>
+cc: "Bruce Momjian" <pgman@candle.pha.pa.us>,
+        "PostgreSQL-development" <pgsql-hackers@postgreSQL.org>
+Subject: Re: [HACKERS] Re: vacuum timings 
+In-reply-to: <NDBBIJLOILGIKBGDINDFIEEACCAA.Inoue@tpf.co.jp> 
+References: <NDBBIJLOILGIKBGDINDFIEEACCAA.Inoue@tpf.co.jp>
+Comments: In-reply-to "Hiroshi Inoue" <Inoue@tpf.co.jp>
+	message dated "Sat, 22 Jan 2000 17:15:37 +0900"
+Date: Sat, 22 Jan 2000 11:11:25 -0500
+Message-ID: <20566.948557485@sss.pgh.pa.us>
+From: Tom Lane <tgl@sss.pgh.pa.us>
+Content-Length:   186
+
+"Hiroshi Inoue" <Inoue@tpf.co.jp> writes:
+> Vacuum after deleting half of rows may be one of the worst case.
+
+Or equivalently, vacuum after updating all the rows.
+
+			regards, tom lane
+

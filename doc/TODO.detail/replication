@@ -43,7 +43,7 @@ From owner-pgsql-hackers@hub.org Fri Dec 24 10:01:18 1999
 Received: from renoir.op.net (root@renoir.op.net [207.29.195.4])
 	by candle.pha.pa.us (8.9.0/8.9.0) with ESMTP id LAA11295
 	for <pgman@candle.pha.pa.us>; Fri, 24 Dec 1999 11:01:17 -0500 (EST)
-Received: from hub.org (hub.org [216.126.84.1]) by renoir.op.net (o1/$Revision: 1.2 $) with ESMTP id KAA20310 for <pgman@candle.pha.pa.us>; Fri, 24 Dec 1999 10:39:18 -0500 (EST)
+Received: from hub.org (hub.org [216.126.84.1]) by renoir.op.net (o1/$Revision: 1.3 $) with ESMTP id KAA20310 for <pgman@candle.pha.pa.us>; Fri, 24 Dec 1999 10:39:18 -0500 (EST)
 Received: from localhost (majordom@localhost)
 	by hub.org (8.9.3/8.9.3) with SMTP id KAA61760;
 	Fri, 24 Dec 1999 10:31:13 -0500 (EST)
@@ -129,7 +129,7 @@ From owner-pgsql-hackers@hub.org Fri Dec 24 18:31:03 1999
 Received: from renoir.op.net (root@renoir.op.net [207.29.195.4])
 	by candle.pha.pa.us (8.9.0/8.9.0) with ESMTP id TAA26244
 	for <pgman@candle.pha.pa.us>; Fri, 24 Dec 1999 19:31:02 -0500 (EST)
-Received: from hub.org (hub.org [216.126.84.1]) by renoir.op.net (o1/$Revision: 1.2 $) with ESMTP id TAA12730 for <pgman@candle.pha.pa.us>; Fri, 24 Dec 1999 19:30:05 -0500 (EST)
+Received: from hub.org (hub.org [216.126.84.1]) by renoir.op.net (o1/$Revision: 1.3 $) with ESMTP id TAA12730 for <pgman@candle.pha.pa.us>; Fri, 24 Dec 1999 19:30:05 -0500 (EST)
 Received: from localhost (majordom@localhost)
 	by hub.org (8.9.3/8.9.3) with SMTP id TAA57851;
 	Fri, 24 Dec 1999 19:23:31 -0500 (EST)
@@ -212,7 +212,7 @@ From owner-pgsql-hackers@hub.org Fri Dec 24 21:31:10 1999
 Received: from renoir.op.net (root@renoir.op.net [207.29.195.4])
 	by candle.pha.pa.us (8.9.0/8.9.0) with ESMTP id WAA02578
 	for <pgman@candle.pha.pa.us>; Fri, 24 Dec 1999 22:31:09 -0500 (EST)
-Received: from hub.org (hub.org [216.126.84.1]) by renoir.op.net (o1/$Revision: 1.2 $) with ESMTP id WAA16641 for <pgman@candle.pha.pa.us>; Fri, 24 Dec 1999 22:18:56 -0500 (EST)
+Received: from hub.org (hub.org [216.126.84.1]) by renoir.op.net (o1/$Revision: 1.3 $) with ESMTP id WAA16641 for <pgman@candle.pha.pa.us>; Fri, 24 Dec 1999 22:18:56 -0500 (EST)
 Received: from localhost (majordom@localhost)
 	by hub.org (8.9.3/8.9.3) with SMTP id WAA89135;
 	Fri, 24 Dec 1999 22:11:12 -0500 (EST)
@@ -486,7 +486,7 @@ From owner-pgsql-hackers@hub.org Sun Dec 26 08:31:09 1999
 Received: from renoir.op.net (root@renoir.op.net [207.29.195.4])
 	by candle.pha.pa.us (8.9.0/8.9.0) with ESMTP id JAA17976
 	for <pgman@candle.pha.pa.us>; Sun, 26 Dec 1999 09:31:07 -0500 (EST)
-Received: from hub.org (hub.org [216.126.84.1]) by renoir.op.net (o1/$Revision: 1.2 $) with ESMTP id JAA23337 for <pgman@candle.pha.pa.us>; Sun, 26 Dec 1999 09:28:36 -0500 (EST)
+Received: from hub.org (hub.org [216.126.84.1]) by renoir.op.net (o1/$Revision: 1.3 $) with ESMTP id JAA23337 for <pgman@candle.pha.pa.us>; Sun, 26 Dec 1999 09:28:36 -0500 (EST)
 Received: from localhost (majordom@localhost)
 	by hub.org (8.9.3/8.9.3) with SMTP id JAA90738;
 	Sun, 26 Dec 1999 09:21:58 -0500 (EST)
@@ -909,7 +909,7 @@ From owner-pgsql-hackers@hub.org Thu Dec 30 08:01:09 1999
 Received: from renoir.op.net (root@renoir.op.net [207.29.195.4])
 	by candle.pha.pa.us (8.9.0/8.9.0) with ESMTP id JAA10317
 	for <pgman@candle.pha.pa.us>; Thu, 30 Dec 1999 09:01:08 -0500 (EST)
-Received: from hub.org (hub.org [216.126.84.1]) by renoir.op.net (o1/$Revision: 1.2 $) with ESMTP id IAA02365 for <pgman@candle.pha.pa.us>; Thu, 30 Dec 1999 08:37:10 -0500 (EST)
+Received: from hub.org (hub.org [216.126.84.1]) by renoir.op.net (o1/$Revision: 1.3 $) with ESMTP id IAA02365 for <pgman@candle.pha.pa.us>; Thu, 30 Dec 1999 08:37:10 -0500 (EST)
 Received: from localhost (majordom@localhost)
 	by hub.org (8.9.3/8.9.3) with SMTP id IAA87902;
 	Thu, 30 Dec 1999 08:34:22 -0500 (EST)
@@ -999,6 +999,562 @@ I do like your approach:  triggers and a separate process. (Maintainable!! :)
 
 Anyway, just figured I'd throw in a few suggestions,
 Duane
+
+************
+
+From owner-pgsql-patches@hub.org Sun Jan  2 23:01:38 2000
+Received: from renoir.op.net (root@renoir.op.net [207.29.195.4])
+	by candle.pha.pa.us (8.9.0/8.9.0) with ESMTP id AAA16274
+	for <pgman@candle.pha.pa.us>; Mon, 3 Jan 2000 00:01:28 -0500 (EST)
+Received: from hub.org (hub.org [216.126.84.1]) by renoir.op.net (o1/$Revision: 1.3 $) with ESMTP id XAA02655 for <pgman@candle.pha.pa.us>; Sun, 2 Jan 2000 23:45:55 -0500 (EST)
+Received: from hub.org (hub.org [216.126.84.1])
+	by hub.org (8.9.3/8.9.3) with ESMTP id XAA13828;
+	Sun, 2 Jan 2000 23:40:47 -0500 (EST)
+	(envelope-from owner-pgsql-patches@hub.org)
+Received: by hub.org (TLB v0.10a (1.23 tibbs 1997/01/09 00:29:32)); Sun, 02 Jan 2000 23:38:34 +0000 (EST)
+Received: (from majordom@localhost)
+	by hub.org (8.9.3/8.9.3) id XAA13624
+	for pgsql-patches-outgoing; Sun, 2 Jan 2000 23:37:36 -0500 (EST)
+	(envelope-from owner-pgsql-patches@postgreSQL.org)
+Received: from falla.videotron.net (falla.videotron.net [205.151.222.106])
+	by hub.org (8.9.3/8.9.3) with ESMTP id XAA13560
+	for <pgsql-patches@postgresql.org>; Sun, 2 Jan 2000 23:37:02 -0500 (EST)
+	(envelope-from P.Marchesso@Videotron.ca)
+Received: from Videotron.ca ([207.253.210.234])
+	by falla.videotron.net (Sun Internet Mail Server sims.3.5.1999.07.30.00.05.p8)
+	with ESMTP id <0FNQ000TEST8VI@falla.videotron.net> for pgsql-patches@postgresql.org; Sun,
+	2 Jan 2000 23:37:01 -0500 (EST)
+Date: Sun, 02 Jan 2000 23:39:23 -0500
+From: Philippe Marchesseault <P.Marchesso@Videotron.ca>
+Subject: [PATCHES] Distributed PostgreSQL!
+To: pgsql-patches@postgreSQL.org
+Message-id: <387027FB.EB88D757@Videotron.ca>
+MIME-version: 1.0
+X-Mailer: Mozilla 4.51 [en] (X11; I; Linux 2.2.11 i586)
+Content-type: MULTIPART/MIXED; BOUNDARY="Boundary_(ID_GeYGc69fE1/bkYLTPwOGFg)"
+X-Accept-Language: en
+Sender: owner-pgsql-patches@postgreSQL.org
+Precedence: bulk
+Status: ORr
+
+This is a multi-part message in MIME format.
+
+--Boundary_(ID_GeYGc69fE1/bkYLTPwOGFg)
+Content-type: text/plain; charset=us-ascii
+Content-transfer-encoding: 7bit
+
+Hi all!
+
+Here is a small patch to make postgres a distributed database. By
+distributed I mean that you can have the same copy of the database on N
+different machines and keep them all in sync.
+It does not improve performances unless you distribute your clients in a
+sensible manner. It does not allow you to do parallel selects.
+
+The support page is : pages.infinit.net/daemon  and soon to be in
+english.
+
+The patch was tested with RedHat Linux 6.0 on Intel with kernel 2.2.11.
+Only two machines where used so i'm not competely sure that it works
+with more than two. -But it should-
+
+I would like to know if somebody else is interested in this otherwise
+i'm probably not gonna keep it growing. So please reply me to my e-mail
+(P.Marchesso@videotron.ca) to give me an idea of the amount of people
+interested in this.
+
+Thanks all.
+
+Philippe Marchesseault
+
+--
+It's not the size of the dog in the fight,
+but the size of the fight in the dog.
+                        -Archie Griffen
+
+
+
+--Boundary_(ID_GeYGc69fE1/bkYLTPwOGFg)
+Content-type: application/octet-stream; name=replicator-0.1.tgz
+Content-disposition: attachment; filename=replicator-0.1.tgz
+Content-transfer-encoding: base64
+
+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
+8/h5/Dx+Hj+Pn8fP/9fP/wKykq3cAMgAAA==
+
+--Boundary_(ID_GeYGc69fE1/bkYLTPwOGFg)--
+
+************
+
+
+From owner-pgsql-hackers@hub.org Mon Jan  3 13:47:07 2000
+Received: from hub.org (hub.org [216.126.84.1])
+	by candle.pha.pa.us (8.9.0/8.9.0) with ESMTP id OAA23987
+	for <pgman@candle.pha.pa.us>; Mon, 3 Jan 2000 14:47:06 -0500 (EST)
+Received: from localhost (majordom@localhost)
+	by hub.org (8.9.3/8.9.3) with SMTP id OAA03234;
+	Mon, 3 Jan 2000 14:39:56 -0500 (EST)
+	(envelope-from owner-pgsql-hackers)
+Received: by hub.org (bulk_mailer v1.5); Mon, 3 Jan 2000 14:39:49 -0500
+Received: (from majordom@localhost)
+	by hub.org (8.9.3/8.9.3) id OAA03050
+	for pgsql-hackers-outgoing; Mon, 3 Jan 2000 14:38:50 -0500 (EST)
+	(envelope-from owner-pgsql-hackers@postgreSQL.org)
+Received: from ara.zf.jcu.cz (zakkr@ara.zf.jcu.cz [160.217.161.4])
+	by hub.org (8.9.3/8.9.3) with ESMTP id OAA02975
+	for <pgsql-hackers@postgreSQL.org>; Mon, 3 Jan 2000 14:38:05 -0500 (EST)
+	(envelope-from zakkr@zf.jcu.cz)
+Received: from localhost (zakkr@localhost)
+	by ara.zf.jcu.cz (8.9.3/8.9.3/Debian/GNU) with SMTP id UAA19297;
+	Mon, 3 Jan 2000 20:23:35 +0100
+Date: Mon, 3 Jan 2000 20:23:35 +0100 (CET)
+From: Karel Zak - Zakkr <zakkr@zf.jcu.cz>
+To: P.Marchesso@videotron.ca
+cc: pgsql-hackers <pgsql-hackers@postgresql.org>
+Subject: [HACKERS] replicator
+Message-ID: <Pine.LNX.3.96.1000103194931.19115A-100000@ara.zf.jcu.cz>
+MIME-Version: 1.0
+Content-Type: TEXT/PLAIN; charset=US-ASCII
+Sender: owner-pgsql-hackers@postgresql.org
+Status: OR
+
+
+Hi,
+
+I look at your (Philippe's) replicator, but I don't good understand
+your replication concept.
+
+
+    node1:  SQL --IPC--> node-broker
+                       |
+                      TCP/IP
+                       |
+                    master-node --IPC--> replikator
+                                         |   |   |
+                                           libpq
+                                         |   |   |
+                                       node2 node..n     
+
+(Is it right picture?)
+
+If I good understand, all nodes make connection to master node and data
+replicate "replicator" on this master node. But it (master node) is very
+critical space in this concept - If master node not work replication for 
+*all* nodes is lost. Hmm.. but I want use replication for high available
+applications...
+
+IMHO is problem with node registration / authentification on master node.
+Why concept is not more upright? As:
+
+	SQL --IPC--> node-replicator
+			|  |  | 
+		     via libpq send data to all nodes with
+                     current client/backend auth.
+
+	(not exist any master node, all nodes have connection to all nodes)	
+
+
+Use replicator as external proces and copy data from SQL to this replicator
+via IPC is (your) very good idea. 
+
+							Karel
+
+
+----------------------------------------------------------------------
+Karel Zak <zakkr@zf.jcu.cz>              http://home.zf.jcu.cz/~zakkr/
+
+Docs:        http://docs.linux.cz                    (big docs archive)	
+Kim Project: http://home.zf.jcu.cz/~zakkr/kim/        (process manager)
+FTP:         ftp://ftp2.zf.jcu.cz/users/zakkr/        (C/ncurses/PgSQL)
+-----------------------------------------------------------------------
+
+
+************
+
+From owner-pgsql-hackers@hub.org Tue Jan  4 10:31:01 2000
+Received: from renoir.op.net (root@renoir.op.net [207.29.195.4])
+	by candle.pha.pa.us (8.9.0/8.9.0) with ESMTP id LAA17522
+	for <pgman@candle.pha.pa.us>; Tue, 4 Jan 2000 11:31:00 -0500 (EST)
+Received: from hub.org (hub.org [216.126.84.1]) by renoir.op.net (o1/$Revision: 1.3 $) with ESMTP id LAA01541 for <pgman@candle.pha.pa.us>; Tue, 4 Jan 2000 11:27:30 -0500 (EST)
+Received: from localhost (majordom@localhost)
+	by hub.org (8.9.3/8.9.3) with SMTP id LAA09992;
+	Tue, 4 Jan 2000 11:18:07 -0500 (EST)
+	(envelope-from owner-pgsql-hackers)
+Received: by hub.org (bulk_mailer v1.5); Tue, 4 Jan 2000 11:17:58 -0500
+Received: (from majordom@localhost)
+	by hub.org (8.9.3/8.9.3) id LAA09856
+	for pgsql-hackers-outgoing; Tue, 4 Jan 2000 11:17:17 -0500 (EST)
+	(envelope-from owner-pgsql-hackers@postgreSQL.org)
+Received: from ara.zf.jcu.cz (zakkr@ara.zf.jcu.cz [160.217.161.4])
+	by hub.org (8.9.3/8.9.3) with ESMTP id LAA09763
+	for <pgsql-hackers@postgreSQL.org>; Tue, 4 Jan 2000 11:16:43 -0500 (EST)
+	(envelope-from zakkr@zf.jcu.cz)
+Received: from localhost (zakkr@localhost)
+	by ara.zf.jcu.cz (8.9.3/8.9.3/Debian/GNU) with SMTP id RAA31673;
+	Tue, 4 Jan 2000 17:02:06 +0100
+Date: Tue, 4 Jan 2000 17:02:06 +0100 (CET)
+From: Karel Zak - Zakkr <zakkr@zf.jcu.cz>
+To: Philippe Marchesseault <P.Marchesso@Videotron.ca>
+cc: pgsql-hackers <pgsql-hackers@postgreSQL.org>
+Subject: Re: [HACKERS] replicator
+In-Reply-To: <38714B6F.2DECAEC0@Videotron.ca>
+Message-ID: <Pine.LNX.3.96.1000104162226.27234D-100000@ara.zf.jcu.cz>
+MIME-Version: 1.0
+Content-Type: TEXT/PLAIN; charset=US-ASCII
+Sender: owner-pgsql-hackers@postgreSQL.org
+Status: OR
+
+
+On Mon, 3 Jan 2000, Philippe Marchesseault wrote:
+
+> So it could become:
+> 
+> SQL --IPC--> node-replicator
+>                            |   |   |
+>       via TCP send statements to each node
+>                       replicator (on local node)
+>                            |
+>          via libpq send data to
+>         current (local) backend.
+> 
+> >  (not exist any master node, all nodes have connection to all nodes)
+> 
+> Exactly, if the replicator dies only the node dies, everything else keeps
+> working.
+
+
+ Hi,
+
+ I a little explore replication conception on Oracle and Sybase (in manuals).
+(Know anyone some interesting links or publication about it?)
+
+ Firstly, I sure, untimely is write replication to PgSQL now, if we
+haven't exactly conception for it. It need more suggestion from more
+developers. We need firstly answers for next qestion:
+
+	1/ How replication concept choose for PG?
+	2/ How manage transaction for nodes? (and we need define any 
+           replication protocol for this)
+	3/ How involve replication in current PG transaction code?
+
+My idea (dream:-) is replication that allow you use full read-write on all
+nodes and replication which use current transaction method in PG - not is
+difference between more backends on one host or more backend on more hosts
+- it makes "global transaction consistency".
+
+Now is transaction manage via ICP (one host), my dream is alike manage 
+this transaction, but between more host via TCP. (And make optimalization 
+for this - transfer commited data/commands only.)
+
+
+Any suggestion?
+
+
+-------------------
+Note:
+ 
+(transaction oriented replication)
+
+ Sybase - I. model (only one node is read-write) 
+
+	 primary SQL data (READ-WRITE)
+                |
+	 replication agent (transaction log monitoring)
+		|
+	 primary distribution server (one or more repl. servers)
+	        |               /  |  \
+                |            nodes (READ-ONLY)
+                |
+         secondary dist. server
+                          /  |  \
+                       nodes (READ-ONLY)
+
+
+       If primary SQL is read-write and the other nodes *read-only* 
+       => system good work if connection is disable (data are save to
+          replication-log and if connection is available log is write 
+	  to node).   
+
+
+ Sybase - II. model (all nodes read-write)
+
+     	    SQL data 1 --->--+                        NODE I.
+                |            |
+                ^            |
+	        |     replication agent 1 (transaction log monitoring)
+                V        |
+		|        V
+                |        |
+         replication server 1
+                |
+		^
+                V
+                |
+         replication server 2                        NODE II.
+                |         |
+                ^         +-<-->--- SQL data 2
+                |                    |                      
+               replcation agent 2 -<--
+
+
+
+Sorry, I not sure if I re-draw previous picture total good..
+
+								Karel   
+
+
+	
+    
+
 
 ************
 
