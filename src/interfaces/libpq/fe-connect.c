@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *    $Header: /cvsroot/pgsql/src/interfaces/libpq/fe-connect.c,v 1.11 1996/10/16 09:41:13 bryanh Exp $
+ *    $Header: /cvsroot/pgsql/src/interfaces/libpq/fe-connect.c,v 1.12 1996/10/29 21:53:48 bryanh Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -338,7 +338,7 @@ freePGconn(PGconn *conn)
 static void
 closePGconn(PGconn *conn)
 {
-    struct sigaction ignore_action = {SIG_IGN, 0, 0};
+    struct sigaction ignore_action;
       /* This is used as a constant, but not declared as such because the
          sigaction structure is defined differently on different systems */
     struct sigaction oldaction;
@@ -347,7 +347,7 @@ closePGconn(PGconn *conn)
        to kill us when we try to write to it.  So ignore SIGPIPE signals.
        */
     ignore_action.sa_handler = SIG_IGN;
-    ignore_action.sa_mask = 0;
+    sigemptyset(&ignore_action.sa_mask);
     ignore_action.sa_flags = 0;
     sigaction(SIGPIPE, (struct sigaction *) &ignore_action, &oldaction);
 
