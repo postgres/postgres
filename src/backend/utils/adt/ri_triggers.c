@@ -17,7 +17,7 @@
  *
  * Portions Copyright (c) 1996-2002, PostgreSQL Global Development Group
  *
- * $Header: /cvsroot/pgsql/src/backend/utils/adt/ri_triggers.c,v 1.48 2003/03/27 19:25:40 tgl Exp $
+ * $Header: /cvsroot/pgsql/src/backend/utils/adt/ri_triggers.c,v 1.49 2003/04/07 20:30:38 wieck Exp $
  *
  * ----------
  */
@@ -395,13 +395,19 @@ RI_FKey_check(PG_FUNCTION_ARGS)
 	}
 
 	/*
-	 * Note: We cannot avoid the check on UPDATE, even if old and new key
-	 * are the same. Otherwise, someone could DELETE the PK that consists
-	 * of the DEFAULT values, and if there are any references, a ON DELETE
-	 * SET DEFAULT action would update the references to exactly these
-	 * values but we wouldn't see that weird case (this is the only place
-	 * to see it).
+	 * No need to check anything if old and new references are the
+	 * same on UPDATE.
 	 */
+	if (TRIGGER_FIRED_BY_UPDATE(trigdata->tg_event))
+	{
+		if (ri_KeysEqual(fk_rel, old_row, new_row, &qkey,
+						 RI_KEYPAIR_FK_IDX))
+		{
+			heap_close(pk_rel, RowShareLock);
+			return PointerGetDatum(NULL);
+		}
+	}
+
 	if (SPI_connect() != SPI_OK_CONNECT)
 		elog(ERROR, "SPI_connect() failed in RI_FKey_check()");
 
@@ -2397,6 +2403,16 @@ RI_FKey_setdefault_del(PG_FUNCTION_ARGS)
 
 			heap_close(fk_rel, RowExclusiveLock);
 
+			/*
+			 * In the case we delete the row who's key is equal to the
+			 * default values AND a referencing row in the foreign key
+			 * table exists, we would just have updated it to the same
+			 * values. We need to do another lookup now and in case a
+			 * reference exists, abort the operation. That is already
+			 * implemented in the NO ACTION trigger.
+			 */
+			RI_FKey_noaction_del(fcinfo);
+
 			return PointerGetDatum(NULL);
 
 			/*
@@ -2634,6 +2650,16 @@ RI_FKey_setdefault_upd(PG_FUNCTION_ARGS)
 				elog(ERROR, "SPI_finish() failed in RI_FKey_setdefault_upd()");
 
 			heap_close(fk_rel, RowExclusiveLock);
+
+			/*
+			 * In the case we updated the row who's key was equal to the
+			 * default values AND a referencing row in the foreign key
+			 * table exists, we would just have updated it to the same
+			 * values. We need to do another lookup now and in case a
+			 * reference exists, abort the operation. That is already
+			 * implemented in the NO ACTION trigger.
+			 */
+			RI_FKey_noaction_upd(fcinfo);
 
 			return PointerGetDatum(NULL);
 

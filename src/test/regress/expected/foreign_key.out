@@ -882,7 +882,7 @@ delete from pktable where base1=2;
 ERROR:  $1 referential integrity violation - key (base1,ptest1)=(2,2) in pktable still referenced from pktable
 -- fails (1,1) is being referenced (twice)
 update pktable set base1=3 where base1=1;
-ERROR:  $1 referential integrity violation - key (base2,ptest2)=(1,1) referenced from pktable not found in pktable
+ERROR:  $1 referential integrity violation - key (base1,ptest1)=(1,1) in pktable still referenced from pktable
 -- this sequence of two deletes will work, since after the first there will be no (2,*) references
 delete from pktable where base2=2;
 delete from pktable where base1=2;
