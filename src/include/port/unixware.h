@@ -2,7 +2,7 @@
 #define NEED_I386_TAS_ASM
 
 /* see src/backend/libpq/pqcomm.c */
-#define PG_ON_UNIXWARE
+#define SCO_ACCEPT_BUG
 
 /***************************************
  * Define this if you are compiling with
