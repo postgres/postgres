@@ -37,7 +37,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/postmaster/postmaster.c,v 1.283 2002/08/10 20:29:18 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/postmaster/postmaster.c,v 1.284 2002/08/17 15:12:06 momjian Exp $
  *
  * NOTES
  *
@@ -346,7 +346,6 @@ PostmasterMain(int argc, char *argv[])
 	int			status;
 	char		original_extraoptions[MAXPGPATH];
 	char	   *potential_DataDir = NULL;
-	char	   *potential_XLogDir = NULL;
 
 	*original_extraoptions = '\0';
 
@@ -404,11 +403,10 @@ PostmasterMain(int argc, char *argv[])
 	InitializeGUCOptions();
 
 	potential_DataDir = getenv("PGDATA");		/* default value */
-	potential_XLogDir = getenv("PGXLOG");		/* default value */
 
 	opterr = 1;
 
-	while ((opt = getopt(argc, argv, "A:a:B:b:c:D:X:d:Fh:ik:lm:MN:no:p:Ss-:")) != -1)
+	while ((opt = getopt(argc, argv, "A:a:B:b:c:D:d:Fh:ik:lm:MN:no:p:Ss-:")) != -1)
 	{
 		switch (opt)
 		{
@@ -430,9 +428,6 @@ PostmasterMain(int argc, char *argv[])
 				break;
 			case 'D':
 				potential_DataDir = optarg;
-				break;
-			case 'X':
-				potential_XLogDir = optarg;
 				break;
 			case 'd':
 			{
@@ -568,7 +563,6 @@ PostmasterMain(int argc, char *argv[])
 
 	checkDataDir(potential_DataDir);	/* issues error messages */
 	SetDataDir(potential_DataDir);
-	SetXLogDir(potential_XLogDir);
 
 	ProcessConfigFile(PGC_POSTMASTER);
 

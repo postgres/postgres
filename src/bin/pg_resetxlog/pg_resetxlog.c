@@ -23,7 +23,7 @@
  * Portions Copyright (c) 1996-2002, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Header: /cvsroot/pgsql/src/bin/pg_resetxlog/pg_resetxlog.c,v 1.1 2002/08/17 02:44:24 momjian Exp $
+ * $Header: /cvsroot/pgsql/src/bin/pg_resetxlog/pg_resetxlog.c,v 1.2 2002/08/17 15:12:07 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -67,7 +67,7 @@
 
 
 static char *DataDir;			/* locations of important stuff */
-static char *XLogDir;
+static char XLogDir[MAXPGPATH];
 static char ControlFilePath[MAXPGPATH];
 
 static ControlFileData ControlFile;		/* pg_control values */
@@ -527,7 +527,6 @@ main(int argc, char **argv)
 
 	DataDir = argv[argn++];
 
-	XLogDir=malloc(MAXPGPATH);
 	snprintf(XLogDir, MAXPGPATH, "%s/pg_xlog", DataDir);
 
 	snprintf(ControlFilePath, MAXPGPATH, "%s/global/pg_control", DataDir);

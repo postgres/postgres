@@ -8,7 +8,7 @@
 #
 #
 # IDENTIFICATION
-#    $Header: /cvsroot/pgsql/src/bin/pg_ctl/Attic/pg_ctl.sh,v 1.28 2002/08/04 06:26:38 thomas Exp $
+#    $Header: /cvsroot/pgsql/src/bin/pg_ctl/Attic/pg_ctl.sh,v 1.29 2002/08/17 15:12:07 momjian Exp $
 #
 #-------------------------------------------------------------------------
 
@@ -19,23 +19,20 @@ $CMDNAME is a utility to start, stop, restart, reload configuration files,
 or report the status of a PostgreSQL server.
 
 Usage:
-  $CMDNAME start   [-w] [-D DATADIR] [-s] [-X PGXLOG] [-l FILENAME] [-o \"OPTIONS\"]
+  $CMDNAME start   [-w] [-D DATADIR] [-s] [-l FILENAME] [-o \"OPTIONS\"]
   $CMDNAME stop    [-W] [-D DATADIR] [-s] [-m SHUTDOWN-MODE]
-  $CMDNAME restart [-w] [-D DATADIR] [-s] [-X PGXLOG] [-m SHUTDOWN-MODE] [-o \"OPTIONS\"]
+  $CMDNAME restart [-w] [-D DATADIR] [-s] [-m SHUTDOWN-MODE] [-o \"OPTIONS\"]
   $CMDNAME reload  [-D DATADIR] [-s]
   $CMDNAME status  [-D DATADIR]
 
 Common options:
   -D DATADIR            Location of the database storage area
-  -X XLOGDIR            Location of the WAL log file storage area
   -s                    Only print errors, no informational messages
   -w                    Wait until operation completes
   -W                    Do not wait until operation completes
 (The default is to wait for shutdown, but not for start or restart.)
 
 If the -D option is omitted, the environment variable PGDATA is used.
-If the -X option is omitted, the environment variable PGXLOG is used
-or the postmaster defaults to looking in $PGDATA/pg_xlog.
 
 Options for start or restart:
   -l FILENAME           Write (or append) server log to FILENAME.  The
@@ -134,12 +131,6 @@ do
 	    # pass environment into new postmaster
 	    PGDATA="$1"
 	    export PGDATA
-	    ;;
-	-X)
-	    shift
-	    # pass environment into new postmaster
-	    PGXLOG="$1"
-	    export PGXLOG
 	    ;;
 	-l)
 	    logfile="$2"

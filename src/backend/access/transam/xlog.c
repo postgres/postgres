@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2002, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Header: /cvsroot/pgsql/src/backend/access/transam/xlog.c,v 1.101 2002/08/06 02:36:33 tgl Exp $
+ * $Header: /cvsroot/pgsql/src/backend/access/transam/xlog.c,v 1.102 2002/08/17 15:12:06 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -398,8 +398,7 @@ static ControlFileData *ControlFile = NULL;
 
 
 /* File path names */
-char *XLogDir = NULL;
-
+static char XLogDir[MAXPGPATH];
 static char ControlFilePath[MAXPGPATH];
 
 /*
@@ -2076,28 +2075,10 @@ ValidXLOGHeader(XLogPageHeader hdr, int emode, bool checkSUI)
  */
 
 void
-SetXLogDir(char *path)
-{
-	char *xsubdir = "/pg_xlog";
-
-	if (path != NULL)
-	{
-		XLogDir = malloc(strlen(path)+1);
-		strcpy(XLogDir, path);
-	}
-	else
-	{
-		XLogDir = malloc(strlen(DataDir)+strlen(xsubdir)+1);
-		snprintf(XLogDir, MAXPGPATH, "%s%s", DataDir, xsubdir);
-	}
-}
-
-void
 XLOGPathInit(void)
 {
 	/* Init XLOG file paths */
-	if (XLogDir == NULL)
-		SetXLogDir(NULL);
+	snprintf(XLogDir, MAXPGPATH, "%s/pg_xlog", DataDir);
 	snprintf(ControlFilePath, MAXPGPATH, "%s/global/pg_control", DataDir);
 }
 

@@ -8,7 +8,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/bootstrap/bootstrap.c,v 1.137 2002/08/10 20:29:17 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/bootstrap/bootstrap.c,v 1.138 2002/08/17 15:12:06 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -222,7 +222,6 @@ BootstrapMain(int argc, char *argv[])
 	int			flag;
 	int			xlogop = BS_XLOG_NOP;
 	char	   *potential_DataDir = NULL;
-	char	   *potential_XLogDir = NULL;
 
 	/*
 	 * initialize globals
@@ -249,21 +248,16 @@ BootstrapMain(int argc, char *argv[])
 	if (!IsUnderPostmaster)
 	{
 		InitializeGUCOptions();
-		/* Null if no PGDATA variable */
-		potential_DataDir = getenv("PGDATA");
-		/* Null if no PGXLOG variable */
-		potential_XLogDir = getenv("PGXLOG");
+		potential_DataDir = getenv("PGDATA");	/* Null if no PGDATA
+												 * variable */
 	}
 
-	while ((flag = getopt(argc, argv, "B:d:D:X:Fo:px:")) != -1)
+	while ((flag = getopt(argc, argv, "B:d:D:Fo:px:")) != -1)
 	{
 		switch (flag)
 		{
 			case 'D':
 				potential_DataDir = optarg;
-				break;
-			case 'X':
-				potential_XLogDir = optarg;
 				break;
 			case 'd':
 			{
@@ -319,7 +313,6 @@ BootstrapMain(int argc, char *argv[])
 			proc_exit(1);
 		}
 		SetDataDir(potential_DataDir);
-		SetXLogDir(potential_XLogDir);
 	}
 
 	/* Validate we have been given a reasonable-looking DataDir */

@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/tcop/postgres.c,v 1.282 2002/08/15 16:36:05 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/tcop/postgres.c,v 1.283 2002/08/17 15:12:07 momjian Exp $
  *
  * NOTES
  *	  this is the "main" module of the postgres backend and
@@ -1120,7 +1120,6 @@ PostgresMain(int argc, char *argv[], const char *username)
 	StringInfo	parser_input;
 
 	char	   *potential_DataDir = NULL;
-	char	   *potential_XLogDir = NULL;
 
 	/*
 	 * Catch standard options before doing much else.  This even works on
@@ -1164,7 +1163,6 @@ PostgresMain(int argc, char *argv[], const char *username)
 	{
 		InitializeGUCOptions();
 		potential_DataDir = getenv("PGDATA");
-		potential_XLogDir = getenv("PGXLOG");
 	}
 
 	/* ----------------
@@ -1189,7 +1187,7 @@ PostgresMain(int argc, char *argv[], const char *username)
 	ctx = PGC_POSTMASTER;
 	gucsource = PGC_S_ARGV;		/* initial switches came from command line */
 
-	while ((flag = getopt(argc, argv, "A:B:c:CD:X:d:Eef:FiNOPo:p:S:st:v:W:x:-:")) != -1)
+	while ((flag = getopt(argc, argv, "A:B:c:CD:d:Eef:FiNOPo:p:S:st:v:W:x:-:")) != -1)
 		switch (flag)
 		{
 			case 'A':
@@ -1219,11 +1217,6 @@ PostgresMain(int argc, char *argv[], const char *username)
 			case 'D':			/* PGDATA directory */
 				if (secure)
 					potential_DataDir = optarg;
-				break;
-
-			case 'X':			/* PGXLOG directory */
-				if (secure)
-					potential_XLogDir = optarg;
 				break;
 
 			case 'd':			/* debug level */
@@ -1517,7 +1510,6 @@ PostgresMain(int argc, char *argv[], const char *username)
 			proc_exit(1);
 		}
 		SetDataDir(potential_DataDir);
-		SetXLogDir(potential_XLogDir);
 	}
 	Assert(DataDir);
 
@@ -1674,7 +1666,7 @@ PostgresMain(int argc, char *argv[], const char *username)
 	if (!IsUnderPostmaster)
 	{
 		puts("\nPOSTGRES backend interactive interface ");
-		puts("$Revision: 1.282 $ $Date: 2002/08/15 16:36:05 $\n");
+		puts("$Revision: 1.283 $ $Date: 2002/08/17 15:12:07 $\n");
 	}
 
 	/*
