@@ -12,4 +12,4 @@ update backend/parser/scan.c and gram.c so  flex/bison not necessary
 update pgaccess
 update odbc
 update doc/src/sgml/release.sgml 
-
+update interfaces/libpq/libpq.rc
