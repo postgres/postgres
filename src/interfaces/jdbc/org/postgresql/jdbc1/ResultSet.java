@@ -258,7 +258,7 @@ public class ResultSet extends org.postgresql.ResultSet implements java.sql.Resu
 	  {
 	    return Integer.parseInt(s);
 	  } catch (NumberFormatException e) {
-	    throw new PSQLException ("postgresql.badint",s);
+	    throw new PSQLException ("postgresql.res.badint",s);
 	  }
       }
     return 0;		// SQL NULL
