@@ -1,5 +1,5 @@
 /*
- * $Header: /cvsroot/pgsql/src/test/regress/regress.c,v 1.16 1997/09/24 08:35:10 vadim Exp $
+ * $Header: /cvsroot/pgsql/src/test/regress/regress.c,v 1.17 1997/11/10 15:43:26 thomas Exp $
  */
 
 #include <float.h>				/* faked on sunos */
@@ -411,8 +411,6 @@ funny_dup17()
 
 	return (tuple);
 }
-
-#include <ctype.h>				/* tolower () */
 
 HeapTuple		ttdummy(void);
 int32			set_ttdummy(int32 on);
