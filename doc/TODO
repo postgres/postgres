@@ -7,7 +7,7 @@ Current maintainer:	Bruce Momjian (pgman@candle.pha.pa.us)
 The most recent version of this document can be viewed at
 the PostgreSQL web site, http://www.PostgreSQL.org.
 
-A dash (-) marks changes that will appear in the upcoming 7.4 release.
+A dash (-) marks changes that appeared in the 7.4 release.
 
 Bracketed items "[]" have more detailed.
 
@@ -522,7 +522,7 @@ Source Code
 * Acquire lock on a relation before building a relcache entry for it
 * Research interaction of setitimer() and sleep() used by statement_timeout
 * Add checks for fclose() failure
-* Change CVS $Id: TODO,v 1.1161.2.1 2003/11/14 17:54:15 momjian Exp $ to $PostgreSQL: pgsql/doc/TODO,v 1.1161.2.1 2003/11/14 17:54:15 momjian Exp $
+* Change CVS $Id: TODO,v 1.1161.2.2 2003/11/30 03:41:56 momjian Exp $ to $PostgreSQL: pgsql/doc/TODO,v 1.1161.2.2 2003/11/30 03:41:56 momjian Exp $
 * Exit postmaster if postgresql.conf can not be opened
 * Rename /scripts directory because they are all C programs now
 * Allow the regression tests to start postmaster with -i so the tests
@@ -565,7 +565,7 @@ Developers who have claimed items are:
 * Greg is Greg Sabino Mullane <greg@turnstep.com>
 * Hiroshi is Hiroshi Inoue <Inoue@tpf.co.jp>
 * Karel is Karel Zak <zakkr@zf.jcu.cz>
-* Jan is Jan Wieck <JanWieck@Yahoo.com> of PeerDirect Corp.
+* Jan is Jan Wieck <JanWieck@Yahoo.com> of Afilias, Inc.
 * Liam is Liam Stewart <liams@redhat.com> of Red Hat
 * Marc is Marc Fournier <scrappy@hub.org> of PostgreSQL, Inc.
 * Mark is Mark Hollomon <mhh@mindspring.com>
