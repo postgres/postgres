@@ -4,7 +4,7 @@
 <FirstName>Phil</FirstName>
 <Surname>Thompson</Surname>
 </Author>
-<Date>1998-07-13</Date>
+<Date>1998-08-08</Date>
 </DocInfo>
 <Title>Frontend/Backend Protocol</Title>
 
@@ -389,9 +389,19 @@ The possible response messages from the backend are:
 
 <Para>
 A frontend must be prepared to accept ErrorResponse and NoticeResponse
-messages whenever it is expecting any other type of message.  Also,
-if it issues any listen(l) commands then it must be prepared to accept
-NotificationResponse messages at any time; see below.
+messages whenever it is expecting any other type of message.
+
+<Para>
+Actually, it is possible for NoticeResponse to arrive even when the frontend
+is not expecting any kind of message, that is, the backend is nominally idle.
+(In particular, the backend can be commanded to terminate by its postmaster.
+In that case it will send a NoticeResponse before closing the connection.)
+It is recommended that the frontend check for such asynchronous notices just
+before issuing any new command.
+
+<Para>
+Also, if the frontend issues any listen(l) commands then it must be prepared
+to accept NotificationResponse messages at any time; see below.
 
 
 <Sect2>
