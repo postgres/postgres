@@ -1339,6 +1339,19 @@ Release 6.5
           Most interfaces have new versions, and existing 
          functionality has been improved. 
         
+        Documentation
+          New and updated material is present throughout the
+         documentation. New FAQs have been contributed for SGI
+         and AIX platforms. The Tutorial has introductory
+         information on SQL from Stefan Simkovics. For the User's
+         Guide, there are reference pages covering the postmaster
+         and more utility programs, and a new appendix contains
+         details on date/time behavior. The Administrator's Guide
+         has a new chapter on troubleshooting from Tom Lane. And
+         the Programmer's Guide has a description of query
+         processing, also from Stefan, and details on obtaining
+         the Postgres source tree via anonymous CVS and CVSup.
+
 
 Migration to v6.5
 
