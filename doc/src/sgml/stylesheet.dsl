@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/stylesheet.dsl,v 1.27 2004/06/29 20:44:34 petere Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/stylesheet.dsl,v 1.28 2004/11/10 23:01:47 petere Exp $ -->
 <!DOCTYPE style-sheet PUBLIC "-//James Clark//DTD DSSSL Style Sheet//EN" [
 
 <!-- must turn on one of these with -i on the jade command line -->
@@ -193,9 +193,10 @@
       (make empty-element gi: "HR")
       (empty-sosofo)))
 
-;; Put date of creation into HTML header
+;; Add character encoding and time of creation into HTML header
 (define %html-header-tags% 
-  (list (list "META" '("NAME" "creation") (list "CONTENT" (time->string (time) #t)))))
+  (list (list "META" '("HTTP-EQUIV" "Content-Type") '("CONTENT" "text/html; charset=ISO-8859-1"))
+	(list "META" '("NAME" "creation") (list "CONTENT" (time->string (time) #t)))))
 
 ;; Create an index
 (define html-index #t)
