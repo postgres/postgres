@@ -22,7 +22,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/bin/pg_dump/pg_dump.c,v 1.242 2002/02/27 20:59:05 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/bin/pg_dump/pg_dump.c,v 1.243 2002/03/06 20:48:42 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -4259,7 +4259,7 @@ dumpTables(Archive *fout, TableInfo *tblinfo, int numTables,
 
 
 
-				/* put the CONSTRAINTS inside the table def */
+				/* Put the CONSTRAINTS inside the table def */
 				for (k = 0; k < tblinfo[i].ncheck; k++)
 				{
 					if (actual_atts + k > 0)
@@ -4269,36 +4269,15 @@ dumpTables(Archive *fout, TableInfo *tblinfo, int numTables,
 									  tblinfo[i].check_expr[k]);
 				}
 
-				/* Primary Key */
-				if (tblinfo[i].pkIndexOid != NULL)
-				{
-					PQExpBuffer consDef;
-
-					/* Find the corresponding index */
-					for (k = 0; k < numIndexes; k++)
-					{
-						if (strcmp(indinfo[k].indexreloid,
-								   tblinfo[i].pkIndexOid) == 0)
-							break;
-					}
-
-					if (k >= numIndexes)
-					{
-						write_msg(NULL, "dumpTables(): failed sanity check, could not find index (%s) for primary key constraint\n",
-								  tblinfo[i].pkIndexOid);
-						exit_nicely();
-					}
-
-					consDef = getPKconstraint(&tblinfo[i], &indinfo[k]);
-
-					if ((actual_atts + tblinfo[i].ncheck) > 0)
-						appendPQExpBuffer(q, ",\n\t");
-
-					appendPQExpBuffer(q, "%s", consDef->data);
-
-					destroyPQExpBuffer(consDef);
-				}
-
+				/*
+				 * Primary Key: In versions of PostgreSQL prior to 7.2, we
+				 * needed to include the primary key in the table definition.
+				 * However, this is not ideal because it creates an index
+				 * on the table, which makes COPY slower. As of release 7.2,
+				 * we can add primary keys to a table after is has been created,
+				 * using ALTER TABLE ; see dumpIndexes() for more information.
+				 * Therefore, we ignore primary keys in this function.
+				 */
 
 				appendPQExpBuffer(q, "\n)");
 
@@ -4454,27 +4433,19 @@ dumpIndexes(Archive *fout, IndInfo *indinfo, int numIndexes,
 		/* Handle PK indexes */
 		if (strcmp(indinfo[i].indisprimary, "t") == 0)
 		{
-#if 0
-
-			/*
-			 * PK: Enable this code when ALTER TABLE supports PK
-			 * constraints.
-			 */
-
 			PQExpBuffer consDef = getPKconstraint(&tblinfo[tableInd], &indinfo[i]);
 
 			resetPQExpBuffer(q);
 
 			appendPQExpBuffer(q, "Alter Table %s Add %s;",
-						  fmtId(tblinfo[tableInd].relname, force_quotes),
+							  fmtId(tblinfo[tableInd].relname, force_quotes),
 							  consDef->data);
 
-			ArchiveEntry(fout, indinfo[i].oid, tblinfo[tableInd].primary_key_name,
+			ArchiveEntry(fout, indinfo[i].indexreloid, tblinfo[tableInd].primary_key_name,
 						 "CONSTRAINT", NULL, q->data, "",
 						 "", tblinfo[tableInd].usename, NULL, NULL);
 
 			destroyPQExpBuffer(consDef);
-#endif
 
 			/*
 			 * Don't need to do anything else for this system-generated
