@@ -493,7 +493,12 @@ AC_CHECK_FUNC(strdup,
 AC_SUBST(STRDUP)
 AC_CHECK_FUNC(strtol, 
               AC_DEFINE(HAVE_STRTOL), 
-              STRDUP='strtol.o')
+              STRTOL='strtol.o')
+AC_SUBST(STRTOL)
+AC_CHECK_FUNC(strtoul, 
+              AC_DEFINE(HAVE_STRTOUL), 
+              STRTOL='strtoul.o')
+AC_SUBST(STRTOUL)
 AC_CHECK_FUNC(strcasecmp, 
               AC_DEFINE(HAVE_STRCASECMP), 
               STRCASECMP='strcasecmp.o')

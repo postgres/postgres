@@ -7,7 +7,7 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: c.h,v 1.34 1998/02/12 01:50:01 momjian Exp $
+ * $Id: c.h,v 1.35 1998/02/24 06:04:35 scrappy Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -792,7 +792,7 @@ extern char *form(const char *fmt,...);
 #endif							/* hpux */
 #endif
 
-#if defined(sunos4)
+#if defined(sun) && defined(sparc) && !defined(__svr4)
 #define memmove(d, s, l)		bcopy(s, d, l)
 #include <unistd.h>
 #endif

@@ -6,7 +6,7 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: libpq-fe.h,v 1.25 1998/01/26 01:42:37 scrappy Exp $
+ * $Id: libpq-fe.h,v 1.26 1998/02/24 06:04:55 scrappy Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -349,7 +349,7 @@ extern		"C"
 #define palloc malloc
 #define pfree free
 
-#if defined(sunos4)
+#if defined(sun) && defined(sparc) && !defined(__svr4)
 	extern char *sys_errlist[];
 #define strerror(A) (sys_errlist[(A)])
 #endif							/* sunos4 */
