@@ -12,6 +12,6 @@ QUERY: SELECT 'first line'
 ' - third line';
 ERROR:  parser: parse error at or near "'"
 QUERY: SELECT text(f1) FROM CHAR_TBL;
-ERROR:  func_get_detail: function text(bpchar) does not exist
+ERROR:  function text(bpchar) does not exist
 QUERY: SELECT text(f1) FROM VARCHAR_TBL;
-ERROR:  func_get_detail: function text(varchar) does not exist
+ERROR:  function text(varchar) does not exist
