@@ -1,73 +1,20 @@
 .\" This is -*-nroff-*-
 .\" XXX standard disclaimer belongs here....
-.\" $Header: /cvsroot/pgsql/src/man/Attic/pgbuiltin.3,v 1.9 1997/11/17 22:15:03 momjian Exp $
+.\" $Header: /cvsroot/pgsql/src/man/Attic/pgbuiltin.3,v 1.10 1997/11/18 23:04:27 momjian Exp $
 .TH PGBUILTIN INTRO 04/01/97 PostgreSQL PostgreSQL
+.PP
 .SH "DESCRIPTION"
 This section describes the data types, functions and operators
 available to users in Postgres as it is distributed.
+.PP
 .SH "PGBUILTIN TYPES"
-This section describes 
-.BR pgbuiltin
-data types.
-These Built-in types are installed in every database.
+Built-in types are installed in every database.
+.IR "psql"
+has a \ed command to show these types.
 .PP
 Users may add new types to Postgres using the
 .IR "define type"
-command described in this manual.  User-defined types are not
-described in this section.
-.SH "List of built-in types"
-.PP
-.if n .ta 5 +15 +40
-.if t .ta 0.5i +1.5i +3.0i
-.in 0
-.nf
-	\fBPOSTGRES Type\fP	\fBMeaning\fP
-	abstime	(absolute) limited-range date and time
-	aclitem	access control list item
-	bool	boolean
-	box	2-dimensional rectangle
-	bpchar	blank-padded characters
-	bytea	variable length array of bytes
-	char	character
-	char2	array of 2 characters
-	char4	array of 4 characters
-	char8	array of 8 characters
-	char16	array of 16 characters
-	cid	command identifier type
-	date	ANSI SQL date type
-	datetime	general-use date and time
-	filename	large object filename
-	int2	two-byte signed integer
-	int28	array of 8 int2
-	int4	four-byte signed integer
-	float4	single-precision floating-point number
-	float8	double-precision floating-point number
-	lseg	2-dimensional line segment
-	money	decimal type with fixed precision
-	name	a multi-character type for storing system identifiers
-	oid	object identifier type
-	oid8	array of 8 oid
-	oidchar16	oid and char16 composed
-	oidint2	oid and int2 composed
-	oidint4	oid and int4 composed
-	path	open or closed line segments
-	point	2-dimensional geometric point
-	polygon	2-dimensional polygon (same as a closed path)
-	circle	2-dimensional circle (center and radius)
-	regproc	registered procedure
-	reltime	(relative) date and time span (duration)
-	smgr	storage manager
-	text	variable length array of characters
-	tid	tuple identifier type
-	time 	ANSI SQL time type
-	timespan	general-use time span (duration)
-	timestamp	limited-range ISO-format date and time
-	tinterval	time interval (start and stop abstime)
-	varchar	variable-length characters
-	xid	transaction identifier type
-
-.fi
-.in
+command described in this manual.
 .PP
 There are some data types defined by SQL/92 syntax which are mapped directly
 into native Postgres types. Note that the "exact numerics"
@@ -76,10 +23,10 @@ and
 .IR numeric
 have fully implemented syntax but currently (postgres v6.2) support only a limited 
 range of the values allowed by SQL/92.
-
+.PP
 .SH "List of SQL/92 types"
 .PP
-.if n .ta 5 +15 +25 +40
+.if n .ta 2 +15 +25 +40
 .if t .ta 0.5i +1.5i +3.0i
 .in 0
 .nf
@@ -101,9 +48,10 @@ range of the values allowed by SQL/92.
 .in
 .PP
 There are some constants and functions defined in SQL/92.
+.PP
 .SH "List of SQL/92 constants"
 .PP
-.if n .ta 5 +20 +40
+.if n .ta 2 +20 +40
 .if t .ta 0.5i +1.5i +3.0i +4.0i
 .in 0
 .nf
@@ -118,7 +66,7 @@ There are some constants and functions defined in SQL/92.
 Many of the built-in types have obvious external formats. However, several
 types are either unique to Postgres, such as open and closed paths, or have
 several possibilities for formats, such as date and time types.
-
+.PP
 .SH "Syntax of date and time types"
 Most date and time types share code for data input. For those types (
 .IR datetime ,
@@ -145,7 +93,7 @@ In future releases, the number of date/time types will decrease, with the curren
 implementation of datetime becoming timestamp, timespan becoming interval,
 and (possibly) abstime
 and reltime being deprecated in favor of timestamp and interval.
-
+.PP
 .SH "DATETIME"
 General-use date and time is input using a wide range of
 styles, including ISO-compatible, SQL-compatible, traditional
@@ -196,7 +144,7 @@ and `epoch' can be used to specify
 time values.  `now' means the current time, and differs from
 `current' in that the current time is immediately substituted
 for it.  `epoch' means Jan 1 00:00:00 1970 GMT.
-
+.PP
 .SH "TIMESPAN"
 General-use time span is input using a wide range of
 syntaxes, including ISO-compatible, SQL-compatible, traditional
@@ -221,6 +169,7 @@ where
 	or abbreviations or plurals of these units.
 	Direction is `ago'.
 .fi
+.PP
 .SH "ABSOLUTE TIME"
 Absolute time (abstime) is a limited-range (+/- 68 years) and limited-precision (1 sec)
 date data type.
@@ -251,7 +200,7 @@ All special values allowed for
 .IR "datetime"
 are also allowed for
 .IR "absolute time".
-
+.PP
 .SH "RELATIVE TIME"
 Relative time (reltime) is a limited-range (+/- 68 years) and limited-precision (1 sec)
 time span data type.
@@ -279,7 +228,7 @@ where
 Valid relative times are less than or equal to 68 years.)
 In addition, the special relative time \*(lqUndefined RelTime\*(rq is
 provided.
-
+.PP
 .SH "TIMESTAMP"
 This is currently a limited-range absolute time which closely resembles the
 .IR abstime
@@ -289,7 +238,7 @@ and will move toward SQL92 compliance.
 
 .PP
 timestamp is specified using the same syntax as for datetime.
-
+.PP
 .SH "TIME RANGES"
 Time ranges are specified as:
 .PP
@@ -300,7 +249,7 @@ where
 .IR abstime
 is a time in the absolute time format.  Special abstime values such as 
 \*(lqcurrent\*(rq, \*(lqinfinity\*(rq and \*(lq-infinity\*(rq can be used.
-
+.PP
 .SH "Syntax of geometric types"
 .SH "POINT"
 Points are specified using the following syntax:
@@ -353,6 +302,7 @@ The corners are reordered on input to store
 the lower left corner first and the upper right corner last.
 Other corners of the box can be entered, but the lower
 left and upper right corners are determined from the input and stored.
+.PP
 .SH "PATH"
 Paths are represented by sets of points. Paths can be "open", where
 the first and last points in the set are not connected, and "closed",
@@ -391,7 +341,7 @@ v6.1 used a format for paths which had a single leading parenthesis, a "closed" 
 an integer count of the number of points, then the list of points followed by a
 closing parenthesis. The built-in function upgradepath() is supplied to convert
 paths dumped and reloaded from pre-v6.1 databases.
-
+.PP
 .SH "POLYGON"
 Polygons are represented by sets of points. Polygons should probably be
 considered 
@@ -423,7 +373,7 @@ v6.1 used a format for polygons which had a single leading parenthesis, the list
 of x-axis coordinates, the list of y-axis coordinates, followed by a closing parenthesis.
 The built-in function upgradepoly() is supplied to convert
 polygons dumped and reloaded from pre-v6.1 databases.
-
+.PP
 .SH "CIRCLE"
 Circles are represented by a center point and a radius.
 .PP
@@ -444,7 +394,7 @@ where
 .fi
 .PP
 Circles are output using the first syntax.
-
+.PP
 .SH "Built-in operators and functions"
 .SH OPERATORS
 Postgres provides a large number of built-in operators on system types.
@@ -452,130 +402,27 @@ These operators are declared in the system catalog
 \*(lqpg_operator\*(rq.  Every entry in \*(lqpg_operator\*(rq includes
 the object ID of the procedure that implements the operator.
 .PP
-Users may invoke operators using the operator name, as in
+Users may invoke operators using the operator name, as in:
+.PP
+.in 1i
 .nf
 select * from emp where salary < 40000;
 .fi
+.in
+.PP
 Alternatively, users may call the functions that implement the
 operators directly.  In this case, the query above would be expressed
-as
+as:
+.PP
+.in 1i
 .nf
 select * from emp where int4lt(salary, 40000);
 .fi
-The rest of this section provides a list of the built-in operators and
-the functions that implement them.  Binary operators are listed first,
-followed by unary operators.
-
-.nf
-Operators:
-
-general
-	<\(eq	less or equal
-	<>	inequality
-	<	less than
-	<\(eq	greater or equal
-	>\(eq	greater or equal
-	>	greater than
-	\(eq	equality
-	~	A matches regular expression B, case-sensitive
-	!~	A does not match regular expression B, case-sensitive
-	~*	A matches regular expression B, case-insensitive.
-	!~*	A does not match regular expression B, case-insensitive
-	~~	A matches LIKE expression B, case-sensitive
-	!~~	A does not match LIKE expression B, case-sensitive
-
-	+	addition
-	\(mi	subtraction
-	*	multiplication
-	/	division
-	%	modulus
-	@	absolute value
-
-geometric
-	@	A contained by (inside or on) B
-	~	A contains (around or on) B
-	@@	center of object
-	<->	distance between A and B
-	&&	objects overlap
-	&<	A overlaps B, but does not extend to right of B
-	&>	A overlaps B, but does not extend to left of B
-	<<	A is left of B
-	>>	A is right of B
-	>^	A is above B
-	<^	A is below B
-
-float8	
-	^	exponentiation
-	%	truncate to integer
-	|/	square root
-	||/	cube root
-	:	exponential function
-	;	natural logarithm (in psql, protect with parentheses)
-
-point
-	<<	A is left of B
-	>>	A is right of B
-	>^	A is above B
-	<^	A is below B
-	~\(eq	A same as B (equality)
-	@	point inside (or on) path, box, circle, polygon
-
-box
-	&&	boxes overlap
-	&<	box A overlaps box B, but does not extend to right of box B
-	&>	box A overlaps box B, but does not extend to left of box B
-	<<	A is left of B
-	>>	A is right of B
-	>^	A is above B
-	<^	A is below B
-	\(eq	area equal
-	<	area less than
-	<\(eq	area less or equal
-	>\(eq	area greater or equal
-	>	area greater than
-	~\(eq	A same as B (equality)
-	@	A is contained in B
-	~	A contains B
-	@@	center of box
-
-polygon	
-	&&	polygons overlap
-	&<	A overlaps B but does not extend to right of B
-	&>	A overlaps B but does not extend to left of B
-	<<	A is left of B
-	>>	A is right of B
-	~\(eq	A same as B (equality)
-	@	A is contained by B
-	~	A contains B
-
-circle	
-	&&	circles overlap
-	&<	A overlaps B but does not extend to right of B
-	&>	A overlaps B but does not extend to left of B
-	<<	A is left of B
-	>>	A is right of B
-	>^	A is above B
-	<^	A is below B
-	~\(eq	A same as B (equality)
-	@	A is contained by B
-	~	A contains B
-
-tinterval
-	#<\(eq	interval length less or equal reltime
-	#<>	interval length not equal to reltime.
-	#<	interval length less than reltime
-	#\(eq	interval length equal to reltime
-	#>\(eq	interval length greater or equal reltime
-	#>	interval length greater than reltime
-	&&	intervals overlap
-	<<	A contains B
-	\(eq	equality
-	<>	interval bounded by two abstimes
-	<?>	abstime in tinterval
-	|	start of interval
-	<#>	convert to interval
-.fi
-
+.in
+.PP
+.IR "psql"
+has a \ed command to show these operators.
+.PP
 .SH "FUNCTIONS"
 Many data types have functions available for conversion to other related types.
 In addition, there are some type-specific functions. Functions which are also
@@ -672,15 +519,14 @@ text
                                        trim characters from text
 
 .fi
-
-.SH "PSQL HELP"
-.IR "psq"
+.PP
+.SH "ADDITIONAL INFORMATION"
+.IR "psql"
 has a variety of \ed commands for showing system information.
 Consult those
 .IR "psql"
 commands for more listings.
-
-.in
+.PP
 .SH "SEE ALSO"
 .IR set (l),
 .IR show (l),
@@ -688,8 +534,8 @@ commands for more listings.
 .IR psql (1).
 For examples on specifying literals of built-in types, see
 .IR SQL (l).
-.SH BUGS
 .PP
+.SH BUGS
 Although most of the input and output functions corresponding to the
 base types (e.g., integers and floating point numbers) do some
 error-checking, some are not particularly rigorous about it.  More
