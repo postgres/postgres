@@ -253,18 +253,18 @@ unsigned char *
 pg_mbschr(int csc, const unsigned char *string, unsigned int character)
 {
 	int			mb_st = 0;
-	unsigned char *s;
-	s = (unsigned char *) string;
+	const unsigned char *s, *rs = NULL;
 
-	for(;;) 
+	for(s = string; *s ; s++) 
 	{
 		mb_st = pg_CS_stat(mb_st, (unsigned char) *s, csc);
-		if (mb_st == 0 && (*s == character || *s == 0))
+		if (mb_st == 0 && (*s == character))
+		{
+			rs = s;
 			break;
-		else
-			s++;
+		}
 	}
-	return (s);
+	return (rs);
 }
 
 int
