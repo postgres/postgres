@@ -3,5 +3,6 @@ if test "$GCC" = yes ; then
   CCC=g++
 else
   CC="$CC -Ae"
+  CFLAGS=+O2
   CCC=aCC
 fi
