@@ -12,7 +12,7 @@ OBJS = xpath.o xslt_proc.o
 SHLIB_LINK = -lxml2 -lxslt
 
 DATA_built = pgxml.sql
-DOCS = README.pgxml
+DOCS = README.xml2
 
 include $(top_builddir)contrib/contrib-global.mk
 

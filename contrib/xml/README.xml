@@ -3,7 +3,8 @@ This version is obsoleted by /contrib/xml2.
 This package contains some simple routines for manipulating XML
 documents stored in PostgreSQL. This is a work-in-progress and
 somewhat basic at the moment (see the file TODO for some outline of
-what remains to be done).
+what remains to be done).  It has the same BSD licence as PostgreSQL.
+
 
 At present, two modules (based on different XML handling libraries)
 are provided.

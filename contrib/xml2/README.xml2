@@ -2,6 +2,7 @@ XML-handling functions for PostgreSQL
 =====================================
 
 Development of this module was sponsored by Torchbox Ltd. (www.torchbox.com)
+It has the same BSD licence as PostgreSQL.
 
 This version of the XML functions provides both XPath querying and
 XSLT functionality. There is also a new table function which allows
