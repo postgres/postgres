@@ -1,5 +1,5 @@
 <!--
-$PostgreSQL: pgsql/doc/src/sgml/plperl.sgml,v 2.29 2004/10/15 16:51:48 momjian Exp $
+$PostgreSQL: pgsql/doc/src/sgml/plperl.sgml,v 2.30 2004/11/06 14:32:10 petere Exp $
 -->
 
  <chapter id="plperl">
@@ -37,7 +37,6 @@ $PostgreSQL: pgsql/doc/src/sgml/plperl.sgml,v 2.29 2004/10/15 16:51:48 momjian E
     PL/Perl during the installation process.  (Refer to <xref
     linkend="install-short"> for more information.)  Users of
     binary packages might find PL/Perl in a separate subpackage.
-
    </para>
   </note>
 
@@ -85,22 +84,19 @@ $$ LANGUAGE plperl;
   </para>
 
   <para>
-   If an SQL <literal>NULL</literal> value<indexterm><primary>null
-    value</><secondary sortas="PL/Perl">in PL/Perl</></indexterm> is
-    passed to a function, the argument value will appear as
-    <quote>undefined</> in Perl.  The above function definition will not
-    behave very nicely with <literal>NULL</literal> inputs (in fact, it
-    will act as though they are zeroes).  We could add <literal>STRICT</>
-    to the function definition to make
-    <productname>PostgreSQL</productname> do something more reasonable: if
-    a <literal>NULL</literal> value is passed, the function will not be
-    called at all, but will just return a <literal>NULL</literal> result
-    automatically.  Alternatively, we could check for undefined inputs in
-    the function body.  For example, suppose that we wanted
-    <function>perl_max</function> with one <literal>NULL</literal> and one
-    non-<literal>NULL</literal> argument to return the
-    non-<literal>NULL</literal> argument, rather than a
-    <literal>NULL</literal> value:
+   If an SQL null value<indexterm><primary>null value</><secondary
+   sortas="PL/Perl">in PL/Perl</></indexterm> is passed to a function,
+   the argument value will appear as <quote>undefined</> in Perl.  The
+   above function definition will not behave very nicely with null
+   inputs (in fact, it will act as though they are zeroes).  We could
+   add <literal>STRICT</> to the function definition to make
+   <productname>PostgreSQL</productname> do something more reasonable:
+   if a null value is passed, the function will not be called at all,
+   but will just return a null result automatically.  Alternatively,
+   we could check for undefined inputs in the function body.  For
+   example, suppose that we wanted <function>perl_max</function> with
+   one null and one nonnull argument to return the nonnull argument,
+   rather than a null value:
 
 <programlisting>
 CREATE FUNCTION perl_max (integer, integer) RETURNS integer AS $$
@@ -114,12 +110,9 @@ CREATE FUNCTION perl_max (integer, integer) RETURNS integer AS $$
     return $b;
 $$ LANGUAGE plperl;
 </programlisting>
-  </para>
-
-  <para>
-    As shown above, to return an SQL <literal>NULL</literal> value from
-    a PL/Perl function, return an undefined value.  This can be done
-    whether the function is strict or not.
+   As shown above, to return an SQL null value from a PL/Perl
+   function, return an undefined value.  This can be done whether the
+   function is strict or not.
   </para>
 
   <para>
@@ -142,26 +135,23 @@ $$ LANGUAGE plperl;
 SELECT name, empcomp(employee) FROM employee;
 </programlisting>
   </para>
-
-  <para>
-   There is now support for returning a composite-type result value.
-  </para>
-
  </sect1>
 
  <sect1 id="plperl-database">
   <title>Database Access from PL/Perl</title>
 
   <para>
-   Access to the database itself from your Perl function can be done via
-   spi_exec_query, or via an experimental module <ulink
+   Access to the database itself from your Perl function can be done
+   via the function <function>spi_exec_query</function> described
+   below, or via an experimental module <ulink
    url="http://www.cpan.org/modules/by-module/DBD/APILOS/"><literal>DBD::PgSPI</literal></ulink>
-   (also available at <ulink url="http://www.cpan.org/SITES.html"><acronym>CPAN</>
-   mirror sites</ulink>).  This module makes available a
+   (also available at <ulink
+   url="http://www.cpan.org/SITES.html"><acronym>CPAN</> mirror
+   sites</ulink>).  This module makes available a
    <acronym>DBI</>-compliant database-handle named
-   <varname>$pg_dbh</varname> that can be used to perform queries
-   with normal <acronym>DBI</> syntax.<indexterm><primary>DBI</></indexterm>
-
+   <varname>$pg_dbh</varname> that can be used to perform queries with
+   normal <acronym>DBI</>
+   syntax.<indexterm><primary>DBI</></indexterm>
   </para>
 
   <para>
@@ -173,59 +163,56 @@ SELECT name, empcomp(employee) FROM employee;
       <primary>spi_exec_query</primary>
       <secondary>in PL/Perl</secondary>
      </indexterm>
+
+     <term><literal><function>spi_exec_query</>(<replaceable>query</replaceable> [, <replaceable>max-rows</replaceable>])</literal></term>
+     <term><literal><function>spi_exec_query</>(<replaceable>command</replaceable>)</literal></term>
+     <listitem>
+      <para>
+       Executes an SQL command.  Here is an example of a query
+       (<command>SELECT</command> command) with the optional maximum
+       number of rows:
+<programlisting>
+$rv = spi_exec_query('SELECT * FROM my_table', 5);
+</programlisting>
+       This returns up to 5 rows from the table
+       <literal>my_table</literal>.  If <literal>my_table</literal>
+       has a column <literal>my_column</literal>, it could be accessed
+       like this:
+<programlisting>
+$foo = $rv->{rows}[$i]->{my_column};
+</programlisting>
+       The total number of rows returned can be accessed like this:
+<programlisting>
+$nrows = @{$rv->{rows}};
+</programlisting>
+      </para>
+
+      <para>
+       Here is an example using a different command type:
+<programlisting>
+$query = "INSERT INTO my_table VALUES (1, 'test')";
+$rv = spi_exec_query($query);
+</programlisting>
+       You can then access the command status (e.g.,
+       <literal>SPI_OK_INSERT</literal>) like this:
+<programlisting>
+$res = $rv->{status};
+</programlisting>
+       To get the number of rows affected, do:
+<programlisting>
+$nrows = $rv->{rows};
+</programlisting>
+      </para>
+     </listitem>
+    </varlistentry>
+
+    <varlistentry>
      <indexterm>
       <primary>elog</primary>
       <secondary>in PL/Perl</secondary>
      </indexterm>
 
-     <term><function>spi_exec_query(</> [ <replaceable>SELECT query</replaceable> [, <replaceable>max_rows</replaceable>]] | [<replaceable>non-SELECT query</replaceable>] ) </term>
-     <listitem>
-       <para>
-        Here is an example of a SELECT query with the optional maximum
-number of rows.
-<programlisting>
-$rv = spi_exec_query('SELECT * from my_table', 5);
-</programlisting>
-
-This returns up to 5 rows from my_table.
-       </para>
-       <para>
-If my_table has a column my_column, it would be accessed as
-<programlisting>
-$foo = $rv->{rows}[$i]->{my_column};
-</programlisting>
-       </para>
-       <para>
-The number of rows actually returned would be:
-<programlisting>
-$nrows = @{$rv->{rows}};
-</programlisting>
-       </para>
-       <para>
-Here is an example using a non-SELECT statement.
-<programlisting>
-$query = "INSERT INTO my_table VALUES (1, 'test')";
-$rv = spi_exec_query($query);
-</programlisting>
-
-You can then access status (SPI_OK_INSERT, e.g.) like this.
-<programlisting>
-$res = $rv->{status};
-</programlisting>
-
-       </para>
-       <para>
-To get the rows affected, do:
-<programlisting>
-$nrows = $rv->{rows};
-</programlisting>
-       </para>
-
-     </listitem>
-
-    </varlistentry>
-    <varlistentry>
-     <term><function>elog</> <replaceable>level</replaceable>, <replaceable>msg</replaceable></term>
+     <term><literal><function>elog</>(<replaceable>level</replaceable>, <replaceable>msg</replaceable>)</literal></term>
      <listitem>
       <para>
        Emit a log or error message. Possible levels are
@@ -255,102 +242,94 @@ $nrows = $rv->{rows};
   </para>
 
   <para>
-   PL/Perl can now return rowsets and composite types, and rowsets of
-composite types.
-  </para>
-
-  <para>
-   Here is an example of a PL/Perl function returning a rowset of a
-   row type.  Note that a composite type is always represented as a
-   hash reference.
+   PL/Perl can also return row sets and composite types, and row sets
+   of composite types.  Here is an example of a PL/Perl function
+   returning a row set of a row type.  Note that a composite type is
+   always represented as a hash reference.
 <programlisting>
 CREATE TABLE test (
-       i int,
-       v varchar
+    i int,
+    v varchar
 );
 
-INSERT INTO test (i, v) VALUES (1,'first line');
-INSERT INTO test (i, v) VALUES (2,'second line');
-INSERT INTO test (i, v) VALUES (3,'third line');
-INSERT INTO test (i, v) VALUES (4,'immortal');
+INSERT INTO test (i, v) VALUES (1, 'first line');
+INSERT INTO test (i, v) VALUES (2, 'second line');
+INSERT INTO test (i, v) VALUES (3, 'third line');
+INSERT INTO test (i, v) VALUES (4, 'immortal');
 
-create function test_munge() returns setof test language plperl as $$
+CREATE FUNCTION test_munge() RETURNS SETOF test AS $$
     my $res = [];
-    my $rv = spi_exec_query('select i,v from test;');
+    my $rv = spi_exec_query('select i, v from test;');
     my $status = $rv->{status};
     my $rows = @{$rv->{rows}};
     my $processed = $rv->{processed};
-    foreach my $rn (0..$rows-1) {
+    foreach my $rn (0 .. $rows - 1) {
         my $row = $rv->{rows}[$rn];
         $row->{i} += 200 if defined($row->{i});
         $row->{v} =~ tr/A-Za-z/a-zA-Z/ if (defined($row->{v}));
-        push @$res,$row;
+        push @$res, $row;
     }
     return $res;
-$$;
+$$ LANGUAGE plperl;
 
-select * from test_munge();
+SELECT * FROM test_munge();
 </programlisting>
   </para>
 
   <para>
-   Here is an example of a PL/Perl function returning a composite type:
-  <programlisting>
+   Here is an example of a PL/Perl function returning a composite
+   type:
+<programlisting>
 CREATE TYPE testrowperl AS (f1 integer, f2 text, f3 text);
 
 CREATE OR REPLACE FUNCTION perl_row() RETURNS testrowperl AS $$
-
- return {f2 => 'hello', f1 => 1, f3 => 'world'};
-
+    return {f2 => 'hello', f1 => 1, f3 => 'world'};
 $$ LANGUAGE plperl;
-  </programlisting>
+</programlisting>
   </para>
 
   <para>
-  Here is an example of a PL/Perl function returning a rowset of a
-composite type.  As a rowset is always a reference to an array
-and a composite type is always a reference to a hash, a rowset of a
-composite type is a reference to an array of hash references.
-  <programlisting>
+   Here is an example of a PL/Perl function returning a row set of a
+   composite type.  Since a row set is always a reference to an array
+   and a composite type is always a reference to a hash, a rowset of a
+   composite type is a reference to an array of hash references.
+<programlisting>
 CREATE TYPE testsetperl AS (f1 integer, f2 text, f3 text);
 
 CREATE OR REPLACE FUNCTION perl_set() RETURNS SETOF testsetperl AS $$
- return[
-        {f1 => 1, f2 => 'hello', f3 =>  'world'},
-        {f1 => 2, f2 => 'hello', f3 =>  'postgres'},
-        {f1 => 3, f2 => 'hello', f3 =>  'plperl'}
-       ];
+    return [
+        { f1 => 1, f2 => 'Hello', f3 =>  'World' },
+        { f1 => 2, f2 => 'Hello', f3 =>  'PostgreSQL' },
+        { f1 => 3, f2 => 'Hello', f3 =>  'PL/Perl' }
+    ];
 $$  LANGUAGE plperl;
   </programlisting>
   </para>
  </sect1>
+
  <sect1 id="plperl-global">
   <title>Global Values in PL/Perl</title>
+
   <para>
-  You can use the %_SHARED to store data between function calls.
-  </para>
-  <para>
-For example:
+   You can use the global hash <varname>%_SHARED</varname> to store
+   data between function calls.  For example:
 <programlisting>
-CREATE OR REPLACE FUNCTION set_var(name TEXT, val TEXT) RETURNS TEXT AS $$
+CREATE OR REPLACE FUNCTION set_var(name text, val text) RETURNS text AS $$
     if ($_SHARED{$_[0]} = $_[1]) {
         return 'ok';
     } else {
-        return "Can't set shared variable $_[0] to $_[1]";
+        return "can't set shared variable $_[0] to $_[1]";
     }
 $$ LANGUAGE plperl;
 
-CREATE OR REPLACE FUNCTION get_var(name TEXT) RETURNS text AS $$
+CREATE OR REPLACE FUNCTION get_var(name text) RETURNS text AS $$
     return $_SHARED{$_[0]};
 $$ LANGUAGE plperl;
 
-SELECT set_var('sample', $q$Hello, PL/Perl!  How's tricks?$q$);
+SELECT set_var('sample', 'Hello, PL/Perl!  How's tricks?');
 SELECT get_var('sample');
 </programlisting>
-
   </para>
-   
-
  </sect1>
 
  <sect1 id="plperl-trusted">
@@ -413,63 +392,166 @@ $$ LANGUAGE plperl;
    <literal>plperlu</>, execution would succeed.
   </para>
  </sect1>
+
  <sect1 id="plperl-triggers">
   <title>PL/Perl Triggers</title>
 
   <para>
-   PL/Perl can now be used to write trigger functions using the
-<varname>$_TD</varname> hash reference.
-  </para>
+   PL/Perl can be used to write trigger functions.  The global hash
+   reference <varname>$_TD</varname> contains information about the
+   current trigger event.  The parts of <varname>$_TD</varname> hash
+   reference are:
 
-  <para>
-   Some useful parts of the $_TD hash reference are:
+   <variablelist>
+    <varlistentry>
+     <term><literal>$_TD->{new}{foo}</literal></term>
+     <listitem>
+      <para>
+       <literal>NEW</literal> value of column <literal>foo</literal>
+      </para>
+     </listitem>
+    </varlistentry>
 
-<programlisting>
-$_TD->{new}{foo} # NEW value of column foo
-$_TD->{old}{bar} # OLD value of column bar
-$_TD{name}       # Name of the trigger being called
-$_TD{event}      # INSERT, UPDATE, DELETE or UNKNOWN
-$_TD{when}       # BEFORE, AFTER or UNKNOWN
-$_TD{level}      # ROW, STATEMENT or UNKNOWN
-$_TD{relid}      # Relation ID of the table on which the trigger occurred.
-$_TD{relname}    # Name of the table on which the trigger occurred.
-@{$_TD{argv}}    # Array of arguments to the trigger function.  May be empty.
-$_TD{argc}       # Number of arguments to the trigger.  Why is this here?
-</programlisting>
+    <varlistentry>
+     <term><literal>$_TD->{old}{foo}</literal></term>
+     <listitem>
+      <para>
+       <literal>OLD</literal> value of column <literal>foo</literal>
+      </para>
+     </listitem>
+    </varlistentry>
 
+    <varlistentry>
+     <term><literal>$_TD{name}</literal></term>
+     <listitem>
+      <para>
+       Name of the trigger being called
+      </para>
+     </listitem>
+    </varlistentry>
+
+    <varlistentry>
+     <term><literal>$_TD{event}</literal></term>
+     <listitem>
+      <para>
+       Trigger event: <literal>INSERT</>, <literal>UPDATE</>, <literal>DELETE</>, or <literal>UNKNOWN</>
+      </para>
+     </listitem>
+    </varlistentry>
+
+    <varlistentry>
+     <term><literal>$_TD{when}</literal></term>
+     <listitem>
+      <para>
+       When the trigger was called: <literal>BEFORE</literal>, <literal>AFTER</literal>, or <literal>UNKNOWN</literal>
+      </para>
+     </listitem>
+    </varlistentry>
+
+    <varlistentry>
+     <term><literal>$_TD{level}</literal></term>
+     <listitem>
+      <para>
+       The trigger level: <literal>ROW</literal>, <literal>STATEMENT</literal>, or <literal>UNKNOWN</literal>
+      </para>
+     </listitem>
+    </varlistentry>
+
+    <varlistentry>
+     <term><literal>$_TD{relid}</literal></term>
+     <listitem>
+      <para>
+       OID of the table on which the trigger fired
+      </para>
+     </listitem>
+    </varlistentry>
+
+    <varlistentry>
+     <term><literal>$_TD{relname}</literal></term>
+     <listitem>
+      <para>
+       Name of the table on which the trigger fired
+      </para>
+     </listitem>
+    </varlistentry>
+
+    <varlistentry>
+     <term><literal>@{$_TD{argv}}</literal></term>
+     <listitem>
+      <para>
+       Arguments of the trigger function
+      </para>
+     </listitem>
+    </varlistentry>
+
+    <varlistentry>
+     <term><literal>$_TD{argc}</literal></term>
+     <listitem>
+      <para>
+       Number of arguments of the trigger functions
+      </para>
+     </listitem>
+    </varlistentry>
+   </variablelist>
   </para>
 
   <para>
    Triggers can return one of the following:
-<programlisting>
-return;   -- Executes the statement
-SKIP;     -- Doesn't execute the statement
-MODIFY; -- Says it modified a NEW row
-</programlisting>
+
+   <variablelist>
+    <varlistentry>
+     <term><literal>return;</literal></term>
+     <listitem>
+      <para>
+       Execute the statement
+      </para>
+     </listitem>
+    </varlistentry>
+
+    <varlistentry>
+     <term><literal>"SKIP"</literal></term>
+     <listitem>
+      <para>
+       Don't execute the statement
+      </para>
+     </listitem>
+    </varlistentry>
+
+    <varlistentry>
+     <term><literal>"MODIFY"</literal></term>
+     <listitem>
+      <para>
+       Indicates that the <literal>NEW</literal> rows was modified by
+       the trigger function
+      </para>
+     </listitem>
+    </varlistentry>
+   </variablelist>
   </para>
 
   <para>
-Here is an example of a trigger function, illustrating some of the
-above.
+   Here is an example of a trigger function, illustrating some of the
+   above:
 <programlisting>
 CREATE TABLE test (
-        i int,
-        v varchar
+    i int,
+    v varchar
 );
 
 CREATE OR REPLACE FUNCTION valid_id() RETURNS trigger AS $$
-    if (($_TD->{new}{i}>=100) || ($_TD->{new}{i}<=0)) {
-        return "SKIP";   # Skip INSERT/UPDATE command
+    if (($_TD->{new}{i} &gt;= 100) || ($_TD->{new}{i} &lt;= 0)) {
+        return "SKIP";    # skip INSERT/UPDATE command
     } elsif ($_TD->{new}{v} ne "immortal") {
         $_TD->{new}{v} .= "(modified by trigger)";
-        return "MODIFY"; # Modify tuple and proceed INSERT/UPDATE command
+        return "MODIFY";  # modify row and execute INSERT/UPDATE command
     } else {
-        return;      # Proceed INSERT/UPDATE command
+        return;           # execute INSERT/UPDATE command
     }
 $$ LANGUAGE plperl;
 
-CREATE TRIGGER "test_valid_id_trig" BEFORE INSERT OR UPDATE ON test
-FOR EACH ROW EXECUTE PROCEDURE "valid_id"();
+CREATE TRIGGER test_valid_id_trig
+    BEFORE INSERT OR UPDATE ON test
+    FOR EACH ROW EXECUTE PROCEDURE valid_id();
 </programlisting>
   </para>
  </sect1>
@@ -491,19 +573,19 @@ FOR EACH ROW EXECUTE PROCEDURE "valid_id"();
 
     <listitem>
      <para>
-      <application>Full SPI</application> is not yet implemented.
+      SPI is not yet fully implemented.
      </para>
     </listitem>
-    <listitem>
-      <para>
-        In the current implementation, if you are fetching or
-        returning very large datasets, you should be aware that these
-        will all go into memory.  Future features will help with this.
-        In the meantime, we suggest that you not use pl/perl if you
-        will fetch or return very large result sets.
-      </para>
-    </listitem>
 
+    <listitem>
+     <para>
+      In the current implementation, if you are fetching or returning
+      very large data sets, you should be aware that these will all go
+      into memory.  Future features will help with this.  In the
+      meantime, we suggest that you not use PL/Perl if you will fetch
+      or return very large result sets.
+     </para>
+    </listitem>
    </itemizedlist>
   </para>
  </sect1>
