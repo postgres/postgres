@@ -196,7 +196,7 @@ make_name(void)
                 ISOLATION, JOIN, KEY, LANGUAGE, LEADING, LEFT, LEVEL, LIKE, LOCAL,
                 MATCH, MINUTE_P, MONTH_P, NAMES,
                 NATIONAL, NATURAL, NCHAR, NEXT, NO, NOT, NULLIF, NULL_P, NUMERIC,
-                OF, ON, ONLY, OPTION, OR, ORDER, OUTER_P,
+                OF, ON, ONLY, OPTION, OR, ORDER, OUTER_P, OVERLAPS,
                 PARTIAL, POSITION, PRECISION, PRIMARY, PRIOR, PRIVILEGES, PROCEDURE, PUBLIC,
                 READ, REFERENCES, RELATIVE, REVOKE, RIGHT, ROLLBACK,
                 SCROLL, SECOND_P, SELECT, SESSION_USER, SET, SUBSTRING,
@@ -253,6 +253,7 @@ make_name(void)
 %right		'='
 %nonassoc	'<' '>'
 %nonassoc	LIKE
+%nonassoc	OVERLAPS
 %nonassoc	BETWEEN
 %nonassoc	IN
 %left		Op				/* multi-character ops and user-defined operators */
@@ -291,7 +292,7 @@ make_name(void)
 %type  <str>	Typename SimpleTypename Generic Numeric generic opt_float opt_numeric
 %type  <str> 	opt_decimal Character character opt_varying opt_charset
 %type  <str>	opt_collate Datetime datetime opt_timezone opt_interval
-%type  <str>	numeric a_expr_or_null row_expr row_descriptor row_list
+%type  <str>	numeric row_expr row_descriptor row_list
 %type  <str>	SelectStmt SubSelect result OptTemp ConstraintAttributeSpec
 %type  <str>	opt_table opt_all sort_clause sortby_list ConstraintAttr 
 %type  <str>	sortby OptUseOp opt_inh_star relation_name_list name_list
@@ -898,7 +899,6 @@ DEFAULT} */
 
 alter_column_action:
         SET DEFAULT a_expr	{ $$ = cat2_str(make_str("set default"), $3); }
-        | SET DEFAULT NULL_P    { $$ = make_str("set default null"); }
         | DROP DEFAULT          { $$ = make_str("drop default"); }
         ;
 
@@ -1089,10 +1089,6 @@ ColConstraintElem: 	NOT NULL_P
 			| CHECK '(' a_expr ')'
 				{
 					$$ = cat_str(3, make_str("check ("), $3, make_str(")"));
-				}
-			| DEFAULT NULL_P
-				{
-					$$ = make_str("default null");
 				}
 			| DEFAULT b_expr
 				{
@@ -1529,46 +1525,46 @@ TruncateStmt:  TRUNCATE opt_table relation_name
  *
  *****************************************************************************/
 
-FetchStmt:	FETCH direction fetch_how_many from_in name INTO into_list
+FetchStmt: FETCH direction fetch_how_many from_in name INTO into_list
 				{
 					if (strcmp($2, "relative") == 0 && atol($3) == 0L)
 						mmerror(ET_ERROR, "FETCH/RELATIVE at current position is not supported");
 
 					$$ = cat_str(5, make_str("fetch"), $2, $3, $4, $5);
 				}
-		|	FETCH fetch_how_many from_in name INTO into_list
+		| FETCH fetch_how_many from_in name INTO into_list
   				{
 					$$ = cat_str(4, make_str("fetch"), $2, $3, $4);
 				}
-		|	FETCH direction from_in name INTO into_list
+		| FETCH direction from_in name INTO into_list
   				{
 					$$ = cat_str(4, make_str("fetch"), $2, $3, $4);
 				}
-		|	FETCH from_in name INTO into_list
+		| FETCH from_in name INTO into_list
   				{
 					$$ = cat_str(3, make_str("fetch"), $2, $3);
 				}
-		|	FETCH name INTO into_list
+		| FETCH name INTO into_list
   				{
 					$$ = cat2_str(make_str("fetch"), $2);
 				}
-		|	MOVE direction fetch_how_many from_in name
+		| MOVE direction fetch_how_many from_in name
 				{
 					$$ = cat_str(5, make_str("move"), $2, $3, $4, $5);
 				}
-		|	MOVE fetch_how_many from_in name
+		| MOVE fetch_how_many from_in name
 				{
 					$$ = cat_str(4, make_str("move"), $2, $3, $4);
 				}
-		|	MOVE direction from_in name
+		| MOVE direction from_in name
 				{
 					$$ = cat_str(4, make_str("move"), $2, $3, $4);
 				}
-		|	MOVE from_in name
+		| MOVE from_in name
 				{
 					$$ = cat_str(3, make_str("move"), $2, $3);
 				}
-		|	MOVE name
+		| MOVE name
 				{
 					$$ = cat2_str(make_str("move"), $2);
 				}
@@ -2119,9 +2115,9 @@ opt_trans: WORK 	{ $$ = ""; }
  *
  *****************************************************************************/
 
-ViewStmt:  CREATE VIEW name AS SelectStmt
+ViewStmt:  CREATE VIEW name opt_column_list AS SelectStmt
 				{
-					$$ = cat_str(4, make_str("create view"), $3, make_str("as"), $5);
+					$$ = cat_str(5, make_str("create view"), $3, $4, make_str("as"), $6);
 				}
 		;
 
@@ -3093,10 +3089,11 @@ character:  CHARACTER opt_varying opt_charset
 				{
 					$$ = cat_str(3, make_str("character"), $2, $3);
 				}
-		| CHAR opt_varying	{ $$ = cat2_str(make_str("char"), $2); }
-		| VARCHAR		{ $$ = make_str("varchar"); }
-		| NATIONAL CHARACTER opt_varying { $$ = cat2_str(make_str("national character"), $3); }
-		| NCHAR opt_varying		{ $$ = cat2_str(make_str("nchar"), $2); }
+		| CHAR opt_varying			{ $$ = cat2_str(make_str("char"), $2); }
+		| VARCHAR				{ $$ = make_str("varchar"); }
+		| NATIONAL CHARACTER opt_varying	{ $$ = cat2_str(make_str("national character"), $3); }
+		| NATIONAL CHAR opt_varying 		{ $$ = cat2_str(make_str("national char"), $3); }
+		| NCHAR opt_varying			{ $$ = cat2_str(make_str("nchar"), $2); }
 		;
 
 opt_varying:  VARYING			{ $$ = make_str("varying"); }
@@ -3119,9 +3116,9 @@ Datetime:  datetime
 				{
 					$$ = cat2_str(make_str("timestamp"), $2);
 				}
-		| TIME
+		| TIME opt_timezone
 				{
-					$$ = make_str("time");
+					$$ = cat2_str(make_str("time"), $2);
 				}
 		| INTERVAL opt_interval
 				{
@@ -3159,14 +3156,6 @@ opt_interval:  datetime					{ $$ = $1; }
  *
  *****************************************************************************/
 
-a_expr_or_null:  a_expr
-				{ $$ = $1; }
-		| NULL_P
-				{
-					$$ = make_str("null");
-				}
-		;
-
 /* Expressions using row descriptors
  * Define row_descriptor to allow yacc to break the reduce/reduce conflict
  *  with singleton expressions.
@@ -3190,6 +3179,10 @@ row_expr: '(' row_descriptor ')' IN '(' SubSelect ')'
 		| '(' row_descriptor ')' all_Op '(' row_descriptor ')'
 				{
 					$$ = cat_str(7, make_str("("), $2, make_str(")"), $4, make_str("("), $6, make_str(")"));
+				}
+		| '(' row_descriptor ')' OVERLAPS '(' row_descriptor ')'
+				{
+					$$ = cat_str(5, make_str("("), $2, make_str(") overlaps ("), $6, make_str(")"));
 				}
 		;
 
@@ -3248,14 +3241,6 @@ a_expr:  c_expr
 				{	$$ = $1; }
 		| a_expr TYPECAST Typename
 				{	$$ = cat_str(3, $1, make_str("::"), $3); }
-		 /*
-                 * Can't collapse this into prior rule by using a_expr_or_null;
-                 * that creates reduce/reduce conflicts.  Grumble.
-                 */
-                | NULL_P TYPECAST Typename
-                                {
-					$$ = cat2_str(make_str("null::"), $3);
-                                }
 		/*
                  * These operators must be called out explicitly in order to make use
                  * of yacc/bison's automatic operator-precedence handling.  All other
@@ -3302,11 +3287,6 @@ a_expr:  c_expr
 				{	$$ = cat_str(3, $1, make_str("<"), $3); }
 		| a_expr '>' a_expr
 				{	$$ = cat_str(3, $1, make_str(">"), $3); }
-		| a_expr '=' NULL_P
-                                {       $$ = cat2_str($1, make_str("= NULL")); }
-		/* We allow this for standards-broken SQL products, like MS stuff */
-		| NULL_P '=' a_expr
-                                {       $$ = cat2_str(make_str("= NULL"), $3); }
 		| a_expr '=' a_expr
 				{	$$ = cat_str(3, $1, make_str("="), $3); }
 		| a_expr Op a_expr
@@ -3376,7 +3356,7 @@ a_expr:  c_expr
  *
  * b_expr is a subset of the complete expression syntax
  *
- * Presently, AND, NOT, IS, IN, and NULL are the a_expr keywords that would
+ * Presently, AND, NOT, IS and IN are the a_expr keywords that would
  * cause trouble in the places where b_expr is used.  For simplicity, we
  * just eliminate all the boolean-keyword-operator productions from b_expr.
  */
@@ -3388,10 +3368,6 @@ b_expr:  c_expr
 				{
 					$$ = cat_str(3, $1, make_str("::"), $3);
 				}
-                | NULL_P TYPECAST Typename
-                                {
-					$$ = cat2_str(make_str("null::"), $3);
-                                }
 		| '-' b_expr %prec UMINUS
 				{	$$ = cat2_str(make_str("-"), $2); }
 		| '%' b_expr
@@ -3455,9 +3431,9 @@ c_expr:  attr
 				{	$$ = cat2_str($1, $2);	}
 		| AexprConst
 				{	$$ = $1;  }
-		| '(' a_expr_or_null ')'
+		| '(' a_expr ')'
 				{	$$ = cat_str(3, make_str("("), $2, make_str(")")); }
-		| CAST '(' a_expr_or_null AS Typename ')'
+		| CAST '(' a_expr AS Typename ')'
 				{ 	$$ = cat_str(5, make_str("cast("), $3, make_str("as"), $5, make_str(")")); }
 		| case_expr
 				{       $$ = $1; }
@@ -3539,9 +3515,9 @@ opt_indirection:  '[' a_expr ']' opt_indirection
 				{	$$ = EMPTY; }
 		;
 
-expr_list:  a_expr_or_null
+expr_list:  a_expr
 				{ $$ = $1; }
-		| expr_list ',' a_expr_or_null
+		| expr_list ',' a_expr
 				{ $$ = cat_str(3, $1, make_str(","), $3); }
 		| expr_list USING a_expr
 				{ $$ = cat_str(3, $1, make_str("using"), $3); }
@@ -3648,13 +3624,13 @@ when_clause_list:  when_clause_list when_clause
                                { $$ = $1; }
                ;
 
-when_clause:  WHEN a_expr THEN a_expr_or_null
+when_clause:  WHEN a_expr THEN a_expr
                                {
 					$$ = cat_str(4, make_str("when"), $2, make_str("then"), $4);
                                }
                ;
 
-case_default:  ELSE a_expr_or_null	{ $$ = cat2_str(make_str("else"), $2); }
+case_default:  ELSE a_expr		{ $$ = cat2_str(make_str("else"), $2); }
                | /*EMPTY*/        	{ $$ = EMPTY; }
                ;
 
@@ -3698,11 +3674,11 @@ target_list:  target_list ',' target_el
 		;
 
 /* AS is not optional because shift/red conflict with unary ops */
-target_el:  a_expr_or_null AS ColLabel
+target_el:  a_expr AS ColLabel
 				{
 					$$ = cat_str(3, $1, make_str("as"), $3);
 				}
-		| a_expr_or_null
+		| a_expr
 				{
 					$$ = $1;
 				}
@@ -3724,7 +3700,7 @@ update_target_list:  update_target_list ',' update_target_el
 		| '*'		{ $$ = make_str("*"); }
 		;
 
-update_target_el:  ColId opt_indirection '=' a_expr_or_null
+update_target_el:  ColId opt_indirection '=' a_expr
 				{
 					$$ = cat_str(4, $1, $2, make_str("="), $4);
 				}
@@ -3800,6 +3776,10 @@ AexprConst:  Iconst
 		| FALSE_P
 				{
 					$$ = make_str("false");
+				}
+		| NULL_P
+				{
+					$$ = make_str("null");
 				}
 		;
 
@@ -4935,6 +4915,7 @@ ECPGColId:  /* to be used instead of ColId */
 	| ONLY				{ $$ = make_str("only"); }
 	| OPERATOR			{ $$ = make_str("operator"); }
 	| OPTION			{ $$ = make_str("option"); }
+	| OVERLAPS			{ $$ = make_str("overlaps"); }
 	| PASSWORD			{ $$ = make_str("password"); }
 	| PENDANT			{ $$ = make_str("pendant"); }
 	| PRIOR				{ $$ = make_str("prior"); }
