@@ -28,10 +28,11 @@
 
 #include "array_iterator.h"
 
+static int32
 array_iterator(Oid elemtype, Oid proc, int and, ArrayType *array, Datum value)
 {
 	HeapTuple	typ_tuple;
-	TypeTupleForm typ_struct;
+	Form_pg_type typ_struct;
 	bool		typbyval;
 	int			typlen;
 	func_ptr	proc_fn;
@@ -43,6 +44,7 @@ array_iterator(Oid elemtype, Oid proc, int and, ArrayType *array, Datum value)
 			   *dim;
 	char	   *p;
 	FmgrInfo finf;    /*Tobias Gabele Jan 18 1999*/
+	
 
 	/* Sanity checks */
 	if ((array == (ArrayType *) NULL)
@@ -67,7 +69,7 @@ array_iterator(Oid elemtype, Oid proc, int and, ArrayType *array, Datum value)
 		elog(ERROR, "array_iterator: cache lookup failed for type %d", elemtype);
 		return 0;
 	}
-	typ_struct = (TypeTupleForm) GETSTRUCT(typ_tuple);
+	typ_struct = (Form_pg_type) GETSTRUCT(typ_tuple);
 	typlen = typ_struct->typlen;
 	typbyval = typ_struct->typbyval;
 
