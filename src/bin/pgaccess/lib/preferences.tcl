@@ -10,8 +10,8 @@ global PgAcVar
 	set PgAcVar(pref,autoload) 1
 	set PgAcVar(pref,systemtables) 0
 	set PgAcVar(pref,lastdb) {}
-	set PgAcVar(pref,lasthost) localhost
-	set PgAcVar(pref,lastport) 5432
+	set PgAcVar(pref,lasthost) {}
+	set PgAcVar(pref,lastport) {}
 	set PgAcVar(pref,username) {}
 	set PgAcVar(pref,password) {}
 	set PgAcVar(pref,language) english

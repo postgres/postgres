@@ -4,7 +4,7 @@
 #
 # Copyright (c) 1994, Regents of the University of California
 #
-# $Header: /cvsroot/pgsql/src/bin/pgaccess/Attic/Makefile,v 1.14 2000/10/20 21:03:58 petere Exp $
+# $Header: /cvsroot/pgsql/src/bin/pgaccess/Attic/Makefile,v 1.15 2001/02/07 20:30:20 tgl Exp $
 #
 #-------------------------------------------------------------------------
 
@@ -19,6 +19,8 @@ all: pgaccess
 pgaccess: pgaccess.sh $(top_builddir)/src/Makefile.global
 	sed -e 's,@WISH@,$(WISH),g' \
 	    -e 's,@PGACCESSHOME@,$(pgaccessdir),g' \
+	    -e 's,@PGLIB@,$(libdir),g' \
+	    -e 's,@DEF_PGPORT@,$(DEF_PGPORT),g' \
 	  $< >$@
 	chmod a+x $@
 

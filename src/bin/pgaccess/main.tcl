@@ -61,8 +61,8 @@ global PgAcVar CurrentDB
 	foreach module {mainlib database tables queries visualqb forms views functions reports scripts users sequences schema help preferences} {
 		source [file join $PgAcVar(PGACCESS_HOME) lib $module.tcl]
 	}
-	set PgAcVar(currentdb,host) localhost
-	set PgAcVar(currentdb,pgport) 5432
+	set PgAcVar(currentdb,host) [default_pg_host]
+	set PgAcVar(currentdb,pgport) [default_pg_port]
 	set CurrentDB {}
 	set PgAcVar(tablist) [list Tables Queries Views Sequences Functions Reports Forms Scripts Users Schema]
 	set PgAcVar(activetab) {}
@@ -71,6 +71,19 @@ global PgAcVar CurrentDB
 	set PgAcVar(query,results) {}
 	set PgAcVar(mwcount) 0
 	Preferences::load
+}
+
+proc default_pg_host {} {
+    return localhost
+}
+
+proc default_pg_port {} {
+global env
+	if {[info exists env(PGPORT)]} {
+		return $env(PGPORT)
+	} else {
+		return 5432
+	}
 }
 
 proc {wpg_exec} {db cmd} {
@@ -165,15 +178,20 @@ global PgAcVar CurrentDB
 
 
 proc {main} {argc argv} {
-global PgAcVar CurrentDB tcl_platform
-	load libpgtcl[info sharedlibextension]
+global PgAcVar CurrentDB tcl_platform env
+	if {[info exists env(PGLIB)]} {
+		set libpgtclpath [file join $env(PGLIB) libpgtcl]
+	} else {
+		set libpgtclpath {libpgtcl}
+	}
+	load ${libpgtclpath}[info sharedlibextension]
 	catch {Mainlib::draw_tabs}
 	set PgAcVar(opendb,username) {}
 	set PgAcVar(opendb,password) {}
 	if {$argc>0} {
 		set PgAcVar(opendb,dbname) [lindex $argv 0]
-		set PgAcVar(opendb,host) localhost
-		set PgAcVar(opendb,pgport) 5432
+		set PgAcVar(opendb,host) [default_pg_host]
+		set PgAcVar(opendb,pgport) [default_pg_port]
 		Mainlib::open_database
 	} elseif {$PgAcVar(pref,autoload) && ($PgAcVar(pref,lastdb)!="")} {
 		set PgAcVar(opendb,dbname) $PgAcVar(pref,lastdb)
