@@ -14,7 +14,7 @@ endif
 
 ifeq ($(DLSUFFIX), .so)
 CFLAGS_SL = -fpic
-rpath = -Wl,-rpath,$(libdir)
+rpath = -Wl,-rpath,$(rpathdir)
 export_dynamic = -export-dynamic
 shlib_symbolic = -Wl,-Bsymbolic
 else

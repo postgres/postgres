@@ -1,5 +1,5 @@
 # -*-makefile-*-
-# $PostgreSQL: pgsql/src/Makefile.global.in,v 1.204 2004/10/20 02:12:07 neilc Exp $
+# $PostgreSQL: pgsql/src/Makefile.global.in,v 1.205 2004/11/19 00:41:38 tgl Exp $
 
 #------------------------------------------------------------------------------
 # All PostgreSQL makefiles include this file and use the variables it sets,
@@ -283,6 +283,10 @@ ELF_SYSTEM= @ELF_SYS@
 
 # Pull in platform-specific magic
 include $(top_builddir)/src/Makefile.port
+
+# Set up rpath if enabled.  By default it will point to our libdir,
+# but individual Makefiles can force other rpath paths if needed.
+rpathdir = $(libdir)
 
 ifeq ($(enable_rpath), yes)
 LDFLAGS += $(rpath)

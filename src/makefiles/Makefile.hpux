@@ -16,14 +16,12 @@ endif
 # correctly in the LP64 data model.
 LIBS := -lxnet $(LIBS)
 
-# Embed 'libdir' as the shared library search path so that the executables
-# don't need SHLIB_PATH to be set.  (We do not observe the --enable-rpath
-# switch here because you'd get rather bizarre behavior if you leave this
-# option off.)
+# Set up rpath so that the executables don't need SHLIB_PATH to be set.
+# (Note: --disable-rpath is a really bad idea on this platform...)
 ifeq ($(with_gnu_ld), yes)
-   LDFLAGS += -Wl,-rpath -Wl,$(libdir)
+   rpath = -Wl,-rpath,$(rpathdir)
 else
-   LDFLAGS += -Wl,+b -Wl,$(libdir)
+   rpath = -Wl,+b,$(rpathdir)
 endif
 
 # catch null pointer dereferences
