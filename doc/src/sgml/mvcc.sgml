@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/mvcc.sgml,v 2.9 2000/10/11 17:38:36 tgl Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/mvcc.sgml,v 2.10 2000/10/11 18:29:52 tgl Exp $
 -->
 
  <chapter id="mvcc">
@@ -476,20 +476,20 @@ ERROR:  Can't serialize access due to concurrent update
 	</para>
 
 	<para>
-	 Conflicts with RowShareLock, RowExclusiveLock, ShareLock,
-	 ShareRowExclusiveLock, ExclusiveLock and AccessExclusiveLock
-	 modes.
-
-	 <note>
-	  <para>
-	   Only AccessExclusiveLock blocks <command>SELECT</command> (without
-	   <option>FOR UPDATE</option>) statement.
-	  </para>
-	 </note>
+	 Conflicts with all modes (AccessShareLock, RowShareLock,
+	 RowExclusiveLock, ShareLock,
+	 ShareRowExclusiveLock, ExclusiveLock and AccessExclusiveLock).
 	</para>
        </listitem>
       </varlistentry>
      </variablelist>
+
+     <note>
+      <para>
+       Only AccessExclusiveLock blocks <command>SELECT</command> (without
+       <option>FOR UPDATE</option>) statement.
+      </para>
+     </note>
     </para>
    </sect2>
 
