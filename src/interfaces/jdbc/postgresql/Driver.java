@@ -130,16 +130,16 @@ public class Driver implements java.sql.Driver
     
     // naughty, but its best for speed. If anyone adds a property here, then
     // this _MUST_ be increased to accomodate them.
-    DriverPropertyInfo d,dpi[] = new DriverPropertyInfo[1];
-    int i=0;
+    DriverPropertyInfo d,dpi[] = new DriverPropertyInfo[0];
+    //int i=0;
     
-    dpi[i++] = d = new DriverPropertyInfo("auth",p.getProperty("auth","default"));
-    d.description = "determines if password authentication is used";
-    d.choices = new String[4];
-    d.choices[0]="default";	// Get value from postgresql.auth property, defaults to trust
-    d.choices[1]="trust";	// No password authentication
-    d.choices[2]="password";	// Password authentication
-    d.choices[3]="ident";	// Ident (RFC 1413) protocol
+    //dpi[i++] = d = new DriverPropertyInfo("auth",p.getProperty("auth","default"));
+    //d.description = "determines if password authentication is used";
+    //d.choices = new String[4];
+    //d.choices[0]="default";	// Get value from postgresql.auth property, defaults to trust
+    //d.choices[1]="trust";	// No password authentication
+    //d.choices[2]="password";	// Password authentication
+    //d.choices[3]="ident";	// Ident (RFC 1413) protocol
     
     return dpi;
   }

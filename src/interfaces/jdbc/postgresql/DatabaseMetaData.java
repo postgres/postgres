@@ -1615,6 +1615,10 @@ public class DatabaseMetaData implements java.sql.DatabaseMetaData
    */
   public java.sql.ResultSet getTables(String catalog, String schemaPattern, String tableNamePattern, String types[]) throws SQLException
   {
+    // Handle default value for types
+    if(types==null)
+      types = defaultTableTypes;
+    
     // the field descriptors for the new ResultSet
     Field f[] = new Field[5];
     ResultSet r;	// ResultSet for the SQL query that we need to do
@@ -1685,6 +1689,12 @@ public class DatabaseMetaData implements java.sql.DatabaseMetaData
     {"SEQUENCE",	"(relkind='S' and relname !~ '^pg_')"},
     {"SYSTEM TABLE",	"(relkind='r' and relname ~ '^pg_')"},
     {"SYSTEM INDEX",	"(relkind='i' and relname ~ '^pg_')"}
+  };
+  
+  // These are the default tables, used when NULL is passed to getTables
+  // The choice of these provide the same behaviour as psql's \d
+  private static final String defaultTableTypes[] = {
+    "TABLE","INDEX","SEQUENCE"
   };
   
   /**

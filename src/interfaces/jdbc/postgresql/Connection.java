@@ -139,6 +139,14 @@ public class Connection implements java.sql.Connection
   {
     //int len = STARTUP_LEN;	// Length of a startup packet
     
+    // Throw an exception if the user or password properties are missing
+    // This occasionally occurs when the client uses the properties version
+    // of getConnection(), and is a common question on the email lists
+    if(info.getProperty("user")==null)
+      throw new SQLException("The user property is missing. It is mandatory.");
+    if(info.getProperty("password")==null)
+      throw new SQLException("The password property is missing. It is mandatory.")
+    
     this_driver = d;
     this_url = new String(url);
     PG_DATABASE = new String(database);
