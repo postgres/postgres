@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/ref/drop_user.sgml,v 1.9 1999/12/07 22:41:41 momjian Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/ref/drop_user.sgml,v 1.10 2000/01/14 22:11:32 petere Exp $
 Postgres documentation
 -->
 
@@ -15,7 +15,7 @@ Postgres documentation
    DROP USER
   </refname>
   <refpurpose>
-   Removes an user account information
+   Removes a user
   </refpurpose>
  </refnamediv>
  <refsynopsisdiv>
@@ -58,18 +58,17 @@ DROP USER <replaceable class="PARAMETER">name</replaceable>
    <para>
     <variablelist>
      <varlistentry>
-      <term><computeroutput>
-DROP
-       </computeroutput></term>
+      <term><computeroutput>DROP USER</computeroutput></term>
       <listitem>
        <para>
 	The message returned if the user is successfully deleted.
        </para>
       </listitem>
      </varlistentry>
+
      <varlistentry>
       <term><computeroutput>
-ERROR: removeUser: user "<replaceable class="parameter">name</replaceable>" does not exist.
+ERROR:  DROP USER: user "<replaceable class="parameter">name</replaceable>" does not exist
        </computeroutput></term>
       <listitem>
        <para>
@@ -77,6 +76,18 @@ ERROR: removeUser: user "<replaceable class="parameter">name</replaceable>" does
        </para>
       </listitem>
      </varlistentry>
+
+     <varlistentry>
+      <term><computeroutput>
+DROP USER: user "<replaceable class="parameter">name</replaceable>" owns database "<replaceable class="parameter">name</replaceable>", cannot be removed
+       </computeroutput></term>
+      <listitem>
+       <para>
+        You must drop the database first or change its ownership.
+       </para>
+      </listitem>
+     </varlistentry>
+
     </variablelist>
    </para>
   </refsect2>
@@ -90,30 +101,20 @@ ERROR: removeUser: user "<replaceable class="parameter">name</replaceable>" does
    Description
   </title>
   <para>
-   <command>DROP USER</command> removes the specified
-   user from the database,
-   along with any databases owned by the user. It
-   does not remove tables, views, or triggers owned by the
-   named user in databases not owned by the user.
+   <command>DROP USER</command> removes the specified user from the database.
+   It does not remove tables, views, or other objects owned by the user. If the
+   user owns any database you get an error.
   </para>
-
-  <refsect2 id="R2-SQL-DROPUSER-3">
-   <refsect2info>
-    <date>1998-09-22</date>
-   </refsect2info>
-   <title>
-    Notes
-   </title>
-   <para>
-    <command>DROP USER</command> is a <productname>Postgres</productname>
-    language extension.
-   </para>
-   <para>
-    Refer to <command>CREATE USER</command> and
-    <command>ALTER USER</command> for information on
-    how to create or modify user accounts.
-   </para>
-  </refsect2>
+  <para>
+   Use <xref linkend="SQL-CREATEUSER" endterm="SQL-CREATEUSER-title">
+   to add new users, and <xref linkend="SQL-ALTERUSER"
+   endterm="SQL-ALTERUSER-title"> to change a user's properties.
+   <productname>PostgreSQL</productname>
+   comes with a script <xref linkend="APP-DROPUSER"
+   endterm="APP-DROPUSER-title">
+   which has the same functionality as this command (in fact, it calls this command)
+   but can be run from the command shell.
+  </para>  
  </refsect1>
 
  <refsect1 id="R1-SQL-DROPUSER-2">
@@ -122,9 +123,9 @@ ERROR: removeUser: user "<replaceable class="parameter">name</replaceable>" does
   </title>
   <para>
    To drop a user account:
-   <programlisting>
-DROP USER Jonathan;
-   </programlisting>
+<programlisting>
+DROP USER jonathan;
+</programlisting>
   </para>
  </refsect1>
  

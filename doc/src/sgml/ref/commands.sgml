@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/ref/Attic/commands.sgml,v 1.21 1999/12/05 20:02:42 momjian Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/ref/Attic/commands.sgml,v 1.22 2000/01/14 22:11:32 petere Exp $
 Postgres documentation
 -->
 
@@ -14,6 +14,7 @@ Postgres documentation
   </abstract>
 
    &abort;
+   &alterGroup;
    &alterTable;
    &alterUser;
    &begin;
@@ -24,6 +25,7 @@ Postgres documentation
    &createAggregate;
    &createDatabase;
    &createFunction;
+   &createGroup;
    &createIndex;
    &createLanguage;
    &createOperator;
@@ -40,6 +42,7 @@ Postgres documentation
    &dropAggregate;
    &dropDatabase;
    &dropFunction;
+   &dropGroup;
    &dropIndex;
    &dropLanguage;
    &dropOperator;

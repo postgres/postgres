@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/ref/allfiles.sgml,v 1.14 1999/12/05 20:02:42 momjian Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/ref/allfiles.sgml,v 1.15 2000/01/14 22:11:32 petere Exp $
 Postgres documentation
 Complete list of usable sgml source files in this directory.
 -->
@@ -40,6 +40,7 @@ Complete list of usable sgml source files in this directory.
 
 <!-- these are in the "commands" reference chapter -->
 <!entity abort              system "abort.sgml">
+<!entity alterGroup         system "alter_group.sgml">
 <!entity alterTable         system "alter_table.sgml">
 <!entity alterUser          system "alter_user.sgml">
 <!entity begin              system "begin.sgml">
@@ -50,6 +51,7 @@ Complete list of usable sgml source files in this directory.
 <!entity createAggregate    system "create_aggregate.sgml">
 <!entity createDatabase     system "create_database.sgml">
 <!entity createFunction     system "create_function.sgml">
+<!entity createGroup        system "create_group.sgml">
 <!entity createIndex        system "create_index.sgml">
 <!entity createLanguage     system "create_language.sgml">
 <!entity createOperator     system "create_operator.sgml">
@@ -66,6 +68,7 @@ Complete list of usable sgml source files in this directory.
 <!entity dropAggregate      system "drop_aggregate.sgml">
 <!entity dropDatabase       system "drop_database.sgml">
 <!entity dropFunction       system "drop_function.sgml">
+<!entity dropGroup          system "drop_group.sgml">
 <!entity dropIndex          system "drop_index.sgml">
 <!entity dropLanguage       system "drop_language.sgml">
 <!entity dropOperator       system "drop_operator.sgml">

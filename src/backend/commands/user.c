@@ -5,7 +5,7 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: user.c,v 1.47 1999/12/21 22:39:01 wieck Exp $
+ * $Id: user.c,v 1.48 2000/01/14 22:11:33 petere Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -31,6 +31,7 @@
 #include "tcop/tcopprot.h"
 #include "utils/acl.h"
 #include "utils/array.h"
+#include "utils/builtins.h"
 #include "utils/syscache.h"
 
 static void CheckPgUserAclNotNull(void);
@@ -38,30 +39,26 @@ static void CheckPgUserAclNotNull(void);
 #define SQL_LENGTH	512
 
 /*---------------------------------------------------------------------
- * update_pg_pwd
+ * write_password_file / update_pg_pwd
  *
  * copy the modified contents of pg_shadow to a file used by the postmaster
  * for user authentication.  The file is stored as $PGDATA/pg_pwd.
  *
- * NB: caller is responsible for ensuring that only one backend can
- * execute this routine at a time.  Acquiring AccessExclusiveLock on
- * pg_shadow is the standard way to do that.
+ * This function set is both a trigger function for direct updates to pg_shadow
+ * as well as being called directly from create/alter/drop user.
  *---------------------------------------------------------------------
  */
-
-HeapTuple
-update_pg_pwd(void)
+static void
+write_password_file(Relation rel)
 {
 	char	   *filename,
 			   *tempname;
 	int			bufsize;
-
-
-	/*
-	 * This is a trigger, so clean out the information provided by
-	 * the trigger manager.
-	 */
-	CurrentTriggerData = NULL;
+    FILE       *fp;
+    mode_t      oumask;
+    HeapScanDesc scan;
+    HeapTuple   tuple;
+	TupleDesc dsc = RelationGetDescr(rel);
 
 	/*
 	 * Create a temporary filename to be renamed later.  This prevents the
@@ -71,86 +68,134 @@ update_pg_pwd(void)
 	filename = crypt_getpwdfilename();
 	bufsize = strlen(filename) + 12;
 	tempname = (char *) palloc(bufsize);
+
 	snprintf(tempname, bufsize, "%s.%d", filename, MyProcPid);
+    oumask = umask((mode_t) 077);
+    fp = AllocateFile(tempname, "w");
+    umask(oumask);
+    if (fp == NULL)
+        elog(ERROR, "%s: %s", tempname, strerror(errno));
 
-	/*
-	 * Copy the contents of pg_shadow to the pg_pwd ASCII file using the
-	 * SEPCHAR character as the delimiter between fields.  Make sure the
-	 * file is created with mode 600 (umask 077).
-	 */
-	DoCopy(ShadowRelationName,	/* relname */
-		   false,				/* binary */
-		   false,				/* oids */
-		   false,				/* from */
-		   false,				/* pipe */
-		   tempname,			/* filename */
-		   CRYPT_PWD_FILE_SEPSTR, /* delim */
-           "",                  /* nulls */
-		   0077);				/* fileumask */
-	/*
-	 * And rename the temp file to its final name, deleting the old pg_pwd.
-	 */
-	rename(tempname, filename);
+    /* read table */
+    scan = heap_beginscan(rel, false, SnapshotSelf, 0, NULL);
+    while (HeapTupleIsValid(tuple = heap_getnext(scan, 0)))
+    {
+        Datum		datum_n, datum_p, datum_v;
+        bool        null_n, null_p, null_v;
 
-	/*
+		datum_n = heap_getattr(tuple, Anum_pg_shadow_usename, dsc, &null_n);
+        if (null_n)
+            continue; /* don't allow empty users */
+		datum_p = heap_getattr(tuple, Anum_pg_shadow_passwd, dsc, &null_p);
+        /* It could be argued that people having a null password
+           shouldn't be allowed to connect, because they need
+           to have a password set up first. If you think assuming
+           an empty password in that case is better, erase the following line. */
+        if (null_p)
+            continue;
+		datum_v = heap_getattr(tuple, Anum_pg_shadow_valuntil, dsc, &null_v);
+
+        /* These fake entries are not really necessary. To remove them, the parser
+           in backend/libpq/crypt.c would need to be adjusted. Initdb might also
+           need adjustments. */
+        fprintf(fp, 
+                "%s"
+                CRYPT_PWD_FILE_SEPSTR
+                "0"
+                CRYPT_PWD_FILE_SEPSTR
+                "x"
+                CRYPT_PWD_FILE_SEPSTR
+                "x"
+                CRYPT_PWD_FILE_SEPSTR
+                "x"
+                CRYPT_PWD_FILE_SEPSTR
+                "x"
+                CRYPT_PWD_FILE_SEPSTR
+                "%s"
+                CRYPT_PWD_FILE_SEPSTR
+                "%s\n",
+                nameout(DatumGetName(datum_n)),
+                null_p ? "" : textout((text*)datum_p),
+                null_v ? "\\N" : nabstimeout((AbsoluteTime)datum_v) /* this is how the parser wants it */
+                );
+        if (ferror(fp))
+            elog(ERROR, "%s: %s", tempname, strerror(errno));
+        fflush(fp);
+    }
+    heap_endscan(scan);
+    FreeFile(fp);
+
+    /*
+     * And rename the temp file to its final name, deleting the old pg_pwd.
+     */
+    rename(tempname, filename);
+
+    /*
 	 * Create a flag file the postmaster will detect the next time it
 	 * tries to authenticate a user.  The postmaster will know to reload
 	 * the pg_pwd file contents.
 	 */
 	filename = crypt_getpwdreloadfilename();
-	creat(filename, S_IRUSR | S_IWUSR);
+	if (creat(filename, S_IRUSR | S_IWUSR) == -1)
+        elog(ERROR, "%s: %s", filename, strerror(errno));
 
 	pfree((void *) tempname);
-
-	return NULL;
 }
 
-/*---------------------------------------------------------------------
- * DefineUser
- *
- * Add the user to the pg_shadow relation, and if specified make sure the
- * user is specified in the desired groups of defined in pg_group.
- *---------------------------------------------------------------------
+
+
+/* This is the wrapper for triggers. */
+HeapTuple
+update_pg_pwd(void)
+{
+    Relation rel = heap_openr(ShadowRelationName,  AccessExclusiveLock);
+    write_password_file(rel);
+    heap_close(rel,  AccessExclusiveLock);
+
+	/*
+	 * This is a trigger, so clean out the information provided by
+	 * the trigger manager.
+	 */
+	CurrentTriggerData = NULL;
+    return NULL;
+}
+
+
+
+/*
+ * CREATE USER
  */
 void
-DefineUser(CreateUserStmt *stmt, CommandDest dest)
+CreateUser(CreateUserStmt *stmt)
 {
-	char	   *pg_shadow,
-				sql[SQL_LENGTH];
 	Relation	pg_shadow_rel;
 	TupleDesc	pg_shadow_dsc;
 	HeapScanDesc scan;
 	HeapTuple	tuple;
+    Datum       new_record[Natts_pg_shadow];
+    char        new_record_nulls[Natts_pg_shadow];
 	bool		user_exists = false,
                 sysid_exists = false,
-				inblock,
-                havesysid,
-				havepassword,
-				havevaluntil;
+                havesysid;
 	int			max_id = -1;
     List       *item;
 
-    havesysid    = stmt->sysid >= 0;
-	havepassword = stmt->password && stmt->password[0];
-	havevaluntil = stmt->validUntil && stmt->validUntil[0];
+    havesysid    = stmt->sysid > 0;
 
-	if (havepassword)
+    /* Check some permissions first */
+	if (stmt->password)
 		CheckPgUserAclNotNull();
-	if (!(inblock = IsTransactionBlock()))
-		BeginTransactionBlock();
 
-	/*
-	 * Make sure the user attempting to create a user can insert into the
-	 * pg_shadow relation.
-	 */
-	pg_shadow = GetPgUserName();
-	if (pg_aclcheck(ShadowRelationName, pg_shadow, ACL_RD | ACL_WR | ACL_AP) != ACLCHECK_OK)
-	{
-		UserAbortTransactionBlock();
-		elog(ERROR, "DefineUser: user \"%s\" does not have SELECT and INSERT privilege for \"%s\"",
-			 pg_shadow, ShadowRelationName);
-		return;
-	}
+    if (!superuser())
+        elog(ERROR, "CREATE USER: permission denied");
+
+    /* The reason for the following is this:
+     * If you start a transaction block, create a user, then roll back the
+     * transaction, the pg_pwd won't get rolled back due to a bug in the
+     * Unix file system ( :}). Hence this is in the interest of security.
+     */
+	if (IsTransactionBlock())
+        elog(ERROR, "CREATE USER: may not be called in a transaction block");
 
 	/*
 	 * Scan the pg_shadow relation to be certain the user or id doesn't already
@@ -184,49 +229,64 @@ DefineUser(CreateUserStmt *stmt, CommandDest dest)
 	if (user_exists || sysid_exists)
 	{
 		heap_close(pg_shadow_rel, AccessExclusiveLock);
-		UserAbortTransactionBlock();
         if (user_exists)
-            elog(ERROR, "DefineUser: user name \"%s\" already exists", stmt->user);
+            elog(ERROR, "CREATE USER: user name \"%s\" already exists", stmt->user);
         else
-            elog(ERROR, "DefineUser: sysid %d is already assigned", stmt->sysid);
+            elog(ERROR, "CREATE USER: sysid %d is already assigned", stmt->sysid);
 		return;
 	}
 
-	/*
-	 * Build the insert statement to be executed.
-	 *
-	 * XXX Ugly as this code is, it still fails to cope with ' or \ in any of
-	 * the provided strings.
-	 *
-	 * XXX This routine would be *lots* better if it inserted the new
-	 * tuple with formtuple/heap_insert.  For one thing, all of the
-	 * transaction-block gamesmanship could be eliminated, because
-	 * it's only there to make the world safe for a recursive call
-	 * to pg_exec_query_dest().
-	 */
-	snprintf(sql, SQL_LENGTH,
-			 "insert into %s (usename,usesysid,usecreatedb,usetrace,"
-			 "usesuper,usecatupd,passwd,valuntil) "
-			 "values('%s',%d,'%c','f','%c','%c',%s%s%s,%s%s%s)",
-			 ShadowRelationName,
-			 stmt->user,
-			 havesysid ? stmt->sysid : max_id + 1,
-			 (stmt->createdb && *stmt->createdb) ? 't' : 'f',
-			 (stmt->createuser && *stmt->createuser) ? 't' : 'f',
-			 ((stmt->createdb && *stmt->createdb) ||
-			  (stmt->createuser && *stmt->createuser)) ? 't' : 'f',
-			 havepassword ? "'" : "",
-			 havepassword ? stmt->password : "NULL",
-			 havepassword ? "'" : "",
-			 havevaluntil ? "'" : "",
-			 havevaluntil ? stmt->validUntil : "NULL",
-			 havevaluntil ? "'" : "");
+    /*
+     * Build a tuple to insert
+     */
+    new_record[Anum_pg_shadow_usename-1] = PointerGetDatum(namein(stmt->user)); /* this truncated properly */
+    new_record[Anum_pg_shadow_usesysid-1] = Int32GetDatum(havesysid ? stmt->sysid : max_id + 1);
 
-	/*
-	 * XXX If insert fails, say because a bogus valuntil date is given,
-	 * need to catch the resulting error and undo our transaction.
-	 */
-	pg_exec_query_dest(sql, dest, false);
+    AssertState(BoolIsValid(stmt->createdb));
+    new_record[Anum_pg_shadow_usecreatedb-1] = (Datum)(stmt->createdb);
+    new_record[Anum_pg_shadow_usetrace-1] = (Datum)(false);
+    AssertState(BoolIsValid(stmt->createuser));
+    new_record[Anum_pg_shadow_usesuper-1] = (Datum)(stmt->createuser);
+    /* superuser gets catupd right by default */
+    new_record[Anum_pg_shadow_usecatupd-1] = (Datum)(stmt->createuser);
+
+    if (stmt->password)
+        new_record[Anum_pg_shadow_passwd-1] = PointerGetDatum(textin(stmt->password));
+    if (stmt->validUntil)
+        new_record[Anum_pg_shadow_valuntil-1] = PointerGetDatum(nabstimein(stmt->validUntil));
+
+    new_record_nulls[Anum_pg_shadow_usename-1] = ' ';
+    new_record_nulls[Anum_pg_shadow_usesysid-1] = ' ';
+
+    new_record_nulls[Anum_pg_shadow_usecreatedb-1] = ' ';
+    new_record_nulls[Anum_pg_shadow_usetrace-1] = ' ';
+    new_record_nulls[Anum_pg_shadow_usesuper-1] = ' ';
+    new_record_nulls[Anum_pg_shadow_usecatupd-1] = ' ';
+
+    new_record_nulls[Anum_pg_shadow_passwd-1] = stmt->password ? ' ' : 'n';
+    new_record_nulls[Anum_pg_shadow_valuntil-1] = stmt->validUntil ? ' ' : 'n';
+
+    tuple = heap_formtuple(pg_shadow_dsc, new_record, new_record_nulls);
+    Assert(tuple);
+
+    /*
+     * Insert a new record in the pg_shadow table
+     */
+    if (heap_insert(pg_shadow_rel, tuple) == InvalidOid)
+        elog(ERROR, "CREATE USER: heap_insert failed");
+
+    /*
+     * Update indexes
+     */
+    if (RelationGetForm(pg_shadow_rel)->relhasindex) {
+        Relation idescs[Num_pg_shadow_indices];
+      
+        CatalogOpenIndices(Num_pg_shadow_indices, 
+                           Name_pg_shadow_indices, idescs);
+        CatalogIndexInsert(idescs, Num_pg_shadow_indices, pg_shadow_rel, 
+                           tuple);
+        CatalogCloseIndices(Num_pg_shadow_indices, idescs);
+    }
 
 	/*
 	 * Add the user to the groups specified. We'll just call the below
@@ -236,59 +296,49 @@ DefineUser(CreateUserStmt *stmt, CommandDest dest)
     {
         AlterGroupStmt ags;
 
-        ags.name = strVal(lfirst(item));
+        ags.name = strVal(lfirst(item)); /* the group name to add this in */
         ags.action = +1;
-        ags.listUsers = lcons((void*)makeString(stmt->user), NIL);
-        AlterGroup(&ags, dest);
+        ags.listUsers = lcons((void*)makeInteger(havesysid ? stmt->sysid : max_id + 1), NIL);
+        AlterGroup(&ags, "CREATE USER");
     }
 
 	/*
 	 * Write the updated pg_shadow data to the flat password file.
-	 * Because we are still holding AccessExclusiveLock on pg_shadow,
-	 * we can be sure no other backend will try to write the flat
-	 * file at the same time.
 	 */
-	update_pg_pwd();
-
+    write_password_file(pg_shadow_rel);
 	/*
 	 * Now we can clean up.
 	 */
 	heap_close(pg_shadow_rel, AccessExclusiveLock);
-
-	if (IsTransactionBlock() && !inblock)
-		EndTransactionBlock();
 }
 
 
-extern void
-AlterUser(AlterUserStmt *stmt, CommandDest dest)
-{
 
-	char	   *pg_shadow,
-				sql[SQL_LENGTH];
+/*
+ * ALTER USER
+ */
+extern void
+AlterUser(AlterUserStmt *stmt)
+{
+    Datum       new_record[Natts_pg_shadow];
+    char        new_record_nulls[Natts_pg_shadow];
 	Relation	pg_shadow_rel;
 	TupleDesc	pg_shadow_dsc;
-	HeapTuple	tuple;
-	bool		inblock;
-    bool        comma = false;
+	HeapTuple	tuple, new_tuple;
+    bool        null;
 
 	if (stmt->password)
 		CheckPgUserAclNotNull();
-	if (!(inblock = IsTransactionBlock()))
-		BeginTransactionBlock();
 
-	/*
-	 * Make sure the user attempting to create a user can insert into the
-	 * pg_shadow relation.
-	 */
-	pg_shadow = GetPgUserName();
-	if (pg_aclcheck(ShadowRelationName, pg_shadow, ACL_RD | ACL_WR) != ACLCHECK_OK)
-	{
-		UserAbortTransactionBlock();
-		elog(ERROR, "AlterUser: user \"%s\" does not have SELECT and UPDATE privilege for \"%s\"",
-			 pg_shadow, ShadowRelationName);
-		return;
-	}
+    /* must be superuser or just want to change your own password */
+    if (!superuser() &&
+        !(stmt->createdb==0 && stmt->createuser==0 && !stmt->validUntil
+          && stmt->password && strcmp(GetPgUserName(), stmt->user)==0))
+        elog(ERROR, "ALTER USER: permission denied");
+
+    /* see comments in create user */
+	if (IsTransactionBlock())
+        elog(ERROR, "ALTER USER: may not be called in a transaction block");
 
 	/*
 	 * Scan the pg_shadow relation to be certain the user exists.
@@ -304,142 +354,135 @@ AlterUser(AlterUserStmt *stmt, CommandDest dest)
 	if (!HeapTupleIsValid(tuple))
 	{
 		heap_close(pg_shadow_rel, AccessExclusiveLock);
-		UserAbortTransactionBlock();
-		elog(ERROR, "AlterUser: user \"%s\" does not exist", stmt->user);
+		elog(ERROR, "ALTER USER: user \"%s\" does not exist", stmt->user);
 	}
 
-    /* look for duplicate sysid */
-	tuple = SearchSysCacheTuple(SHADOWSYSID,
-								Int32GetDatum(stmt->sysid),
-								0, 0, 0);
-    if (HeapTupleIsValid(tuple))
-    {
-        Datum datum;
-        bool null;
+    /*
+     * Build a tuple to update, perusing the information just obtained
+     */
+    new_record[Anum_pg_shadow_usename-1] = PointerGetDatum(namein(stmt->user));
+    new_record_nulls[Anum_pg_shadow_usename-1] = ' ';
 
-		datum = heap_getattr(tuple, Anum_pg_shadow_usename, pg_shadow_dsc, &null);
-        if (datum && !null && strcmp((char *) datum, stmt->user) != 0)
-        {
-            heap_close(pg_shadow_rel, AccessExclusiveLock);
-            UserAbortTransactionBlock();
-            elog(ERROR, "AlterUser: sysid %d is already assigned", stmt->sysid);
-        }
+    /* sysid - leave as is */
+    new_record[Anum_pg_shadow_usesysid-1] = heap_getattr(tuple, Anum_pg_shadow_usesysid, pg_shadow_dsc, &null);
+    new_record_nulls[Anum_pg_shadow_usesysid-1] = null ? 'n' : ' ';
+
+    /* createdb */
+    if (stmt->createdb == 0)
+    {
+        /* don't change */
+        new_record[Anum_pg_shadow_usecreatedb-1] = heap_getattr(tuple, Anum_pg_shadow_usecreatedb, pg_shadow_dsc, &null);
+        new_record_nulls[Anum_pg_shadow_usecreatedb-1] = null ? 'n' : ' ';
+    }
+    else
+    {
+        new_record[Anum_pg_shadow_usecreatedb-1] = (Datum)(stmt->createdb > 0 ? true : false);
+        new_record_nulls[Anum_pg_shadow_usecreatedb-1] = ' ';
     }
 
+    /* trace - leave as is */
+    new_record[Anum_pg_shadow_usetrace-1] = heap_getattr(tuple, Anum_pg_shadow_usetrace, pg_shadow_dsc, &null);
+    new_record_nulls[Anum_pg_shadow_usetrace-1] = null ? 'n' : ' ';
 
-	/*
-	 * Create the update statement to modify the user.
-	 *
-	 * XXX see diatribe in preceding routine.  This code is just as bogus.
-	 */
-	snprintf(sql, SQL_LENGTH, "update %s set ", ShadowRelationName);
-
-	if (stmt->password)
+    /* createuser (superuser) */
+    if (stmt->createuser == 0)
     {
-		snprintf(sql + strlen(sql), SQL_LENGTH - strlen(sql),
-				 "passwd = '%s'", stmt->password);
-        comma = true;
+        /* don't change */
+        new_record[Anum_pg_shadow_usesuper-1] = heap_getattr(tuple, Anum_pg_shadow_usesuper, pg_shadow_dsc, &null);
+        new_record_nulls[Anum_pg_shadow_usesuper-1] = null ? 'n' : ' ';
+    }
+    else
+    {
+        new_record[Anum_pg_shadow_usesuper-1] = (Datum)(stmt->createuser > 0 ? true : false);
+        new_record_nulls[Anum_pg_shadow_usesuper-1] = ' ';
     }
 
-    if (stmt->sysid>=0)
+    /* catupd - set to false if someone's superuser priv is being yanked */
+    if (stmt->createuser < 0)
     {
-        if (comma)
-            strcat(sql, ", ");
-        snprintf(sql + strlen(sql), SQL_LENGTH - strlen(sql),
-                 "usesysid = %d", stmt->sysid);
-        comma = true;
+        new_record[Anum_pg_shadow_usecatupd-1] = (Datum)(false);
+        new_record_nulls[Anum_pg_shadow_usecatupd-1] = ' ';
+    }
+    else
+    {
+        /* leave alone */
+        new_record[Anum_pg_shadow_usecatupd-1] = heap_getattr(tuple, Anum_pg_shadow_usecatupd, pg_shadow_dsc, &null);
+        new_record_nulls[Anum_pg_shadow_usecatupd-1] = null ? 'n' : ' ';
     }
 
-	if (stmt->createdb)
+    /* password */
+    if (stmt->password)
     {
-        if (comma)
-            strcat(sql, ", ");
-		snprintf(sql + strlen(sql), SQL_LENGTH - strlen(sql),
-				 "usecreatedb='%c'",
-				 *stmt->createdb ? 't' : 'f');
-        comma = true;
+        new_record[Anum_pg_shadow_passwd-1] = PointerGetDatum(textin(stmt->password));
+        new_record_nulls[Anum_pg_shadow_passwd-1] = ' ';
+    }
+    else
+    {
+        /* leave as is */
+        new_record[Anum_pg_shadow_passwd-1] = heap_getattr(tuple, Anum_pg_shadow_passwd, pg_shadow_dsc, &null);
+        new_record_nulls[Anum_pg_shadow_passwd-1] = null ? 'n' : ' ';
     }
 
-	if (stmt->createuser)
+    /* valid until */
+    if (stmt->validUntil)
+    {    
+        new_record[Anum_pg_shadow_valuntil-1] = PointerGetDatum(nabstimein(stmt->validUntil));
+        new_record_nulls[Anum_pg_shadow_valuntil-1] = ' ';
+    }
+    else
     {
-        if (comma)
-            strcat(sql, ", ");
-		snprintf(sql + strlen(sql), SQL_LENGTH - strlen(sql),
-				 "usesuper='%c'",
-				 *stmt->createuser ? 't' : 'f');
-        comma = true;
+        /* leave as is */
+        new_record[Anum_pg_shadow_valuntil-1] = heap_getattr(tuple, Anum_pg_shadow_valuntil, pg_shadow_dsc, &null);
+        new_record_nulls[Anum_pg_shadow_valuntil-1] = null ? 'n' : ' ';
     }
 
-	if (stmt->validUntil)
+    new_tuple = heap_formtuple(pg_shadow_dsc, new_record, new_record_nulls);
+    Assert(new_tuple);
+    /* XXX check return value of this? */
+    heap_update(pg_shadow_rel, &tuple->t_self, new_tuple, NULL);
+
+
+    /* Update indexes */
+    if (RelationGetForm(pg_shadow_rel)->relhasindex)
     {
-        if (comma)
-            strcat(sql, ", ");
-		snprintf(sql + strlen(sql), SQL_LENGTH - strlen(sql),
-				 "valuntil='%s'",
-				 stmt->validUntil);
+        Relation idescs[Num_pg_shadow_indices];
+      
+        CatalogOpenIndices(Num_pg_shadow_indices, 
+                           Name_pg_shadow_indices, idescs);
+        CatalogIndexInsert(idescs, Num_pg_shadow_indices, pg_shadow_rel, 
+                           tuple);
+        CatalogCloseIndices(Num_pg_shadow_indices, idescs);
     }
-
-	snprintf(sql + strlen(sql), SQL_LENGTH - strlen(sql),
-			 " where usename = '%s'",
-			 stmt->user);
-
-	pg_exec_query_dest(sql, dest, false);
-
-	/*
-	 * Add stuff here for groups?
-	 */
-    if (stmt->groupElts)
-        elog(NOTICE, "IN GROUP is not implemented for ALTER USER.");
 
 	/*
 	 * Write the updated pg_shadow data to the flat password file.
-	 * Because we are still holding AccessExclusiveLock on pg_shadow,
-	 * we can be sure no other backend will try to write the flat
-	 * file at the same time.
 	 */
-	update_pg_pwd();
+    write_password_file(pg_shadow_rel);
 
 	/*
 	 * Now we can clean up.
 	 */
 	heap_close(pg_shadow_rel, AccessExclusiveLock);
 
-	if (IsTransactionBlock() && !inblock)
-		EndTransactionBlock();
 }
 
 
-extern void
-RemoveUser(char *user, CommandDest dest)
+
+/*
+ * DROP USER
+ */
+void
+DropUser(DropUserStmt *stmt)
 {
-	char	   *pg_shadow;
-	Relation	pg_shadow_rel,
-				pg_rel;
-	TupleDesc	pg_dsc;
-	HeapScanDesc scan;
-	HeapTuple	tuple;
-	Datum		datum;
-	char		sql[SQL_LENGTH];
-	bool		n,
-				inblock;
-	int32		usesysid;
-	int			ndbase = 0;
-	char	  **dbase = NULL;
+	Relation	pg_shadow_rel;
+	TupleDesc	pg_shadow_dsc;
+    List       *item;
 
-	if (!(inblock = IsTransactionBlock()))
-		BeginTransactionBlock();
+    if (!superuser())
+        elog(ERROR, "DROP USER: permission denied");
 
-	/*
-	 * Make sure the user attempting to create a user can delete from the
-	 * pg_shadow relation.
-	 */
-	pg_shadow = GetPgUserName();
-	if (pg_aclcheck(ShadowRelationName, pg_shadow, ACL_RD | ACL_WR) != ACLCHECK_OK)
-	{
-		UserAbortTransactionBlock();
-		elog(ERROR, "RemoveUser: user \"%s\" does not have SELECT and DELETE privilege for \"%s\"",
-			 pg_shadow, ShadowRelationName);
-	}
+	if (IsTransactionBlock())
+        elog(ERROR, "DROP USER: may not be called in a transaction block");
 
 	/*
 	 * Scan the pg_shadow relation to find the usesysid of the user to be
@@ -447,99 +490,108 @@ RemoveUser(char *user, CommandDest dest)
 	 * our update of the flat password file.
 	 */
 	pg_shadow_rel = heap_openr(ShadowRelationName, AccessExclusiveLock);
-	pg_dsc = RelationGetDescr(pg_shadow_rel);
+	pg_shadow_dsc = RelationGetDescr(pg_shadow_rel);
 
-	tuple = SearchSysCacheTuple(SHADOWNAME,
-								PointerGetDatum(user),
-								0, 0, 0);
-	if (!HeapTupleIsValid(tuple))
-	{
-		heap_close(pg_shadow_rel, AccessExclusiveLock);
-		UserAbortTransactionBlock();
-		elog(ERROR, "RemoveUser: user \"%s\" does not exist", user);
-	}
+    foreach(item, stmt->users)
+    {
+        HeapTuple	tuple,
+            tmp_tuple;
+        Relation    pg_rel;
+        TupleDesc   pg_dsc;
+        ScanKeyData scankey;
+        HeapScanDesc scan;
+        Datum		datum;
+        bool		null;
+        int32		usesysid;
+        const char *user = strVal(lfirst(item));
 
-	usesysid = (int32) heap_getattr(tuple, Anum_pg_shadow_usesysid, pg_dsc, &n);
+        tuple = SearchSysCacheTuple(SHADOWNAME,
+                                    PointerGetDatum(user),
+                                    0, 0, 0);
+        if (!HeapTupleIsValid(tuple))
+        {
+            heap_close(pg_shadow_rel, AccessExclusiveLock);
+            elog(ERROR, "DROP USER: user \"%s\" does not exist%s", user,
+                 (length(stmt->users) > 1) ? " (no users removed)" : "");
+        }
 
-	/*
-	 * Perform a scan of the pg_database relation to find the databases
-	 * owned by usesysid.  Then drop them.
-	 */
-	pg_rel = heap_openr(DatabaseRelationName, AccessExclusiveLock);
-	pg_dsc = RelationGetDescr(pg_rel);
+        usesysid = DatumGetInt32(heap_getattr(tuple, Anum_pg_shadow_usesysid, pg_shadow_dsc, &null));
 
-	scan = heap_beginscan(pg_rel, false, SnapshotNow, 0, NULL);
-	while (HeapTupleIsValid(tuple = heap_getnext(scan, 0)))
-	{
-		datum = heap_getattr(tuple, Anum_pg_database_datdba, pg_dsc, &n);
+        /*-------------------
+         * Check if user still owns a database. If so, error out.
+         *
+         * (It used to be that this function would drop the database automatically.
+         *  This is not only very dangerous for people that don't read the manual,
+         *  it doesn't seem to be the behaviour one would expect either.)
+         *                                                   -- petere 2000/01/14)
+         *-------------------*/
+        pg_rel = heap_openr(DatabaseRelationName, AccessExclusiveLock);
+        pg_dsc = RelationGetDescr(pg_rel);
 
-		if ((int) datum == usesysid)
-		{
-			datum = heap_getattr(tuple, Anum_pg_database_datname, pg_dsc, &n);
-			if (memcmp((void *) datum, "template1", 9) != 0)
-			{
-				dbase =
-					(char **) repalloc((void *) dbase, sizeof(char *) * (ndbase + 1));
-				dbase[ndbase] = (char *) palloc(NAMEDATALEN + 1);
-				memcpy((void *) dbase[ndbase], (void *) datum, NAMEDATALEN);
-				dbase[ndbase++][NAMEDATALEN] = '\0';
-			}
-		}
-	}
-	heap_endscan(scan);
-	heap_close(pg_rel, AccessExclusiveLock);
+        ScanKeyEntryInitialize(&scankey, 0x0, Anum_pg_database_datdba, F_INT4EQ,
+                               Int32GetDatum(usesysid));
 
-	while (ndbase--)
-	{
-		elog(NOTICE, "Dropping database %s", dbase[ndbase]);
-		snprintf(sql, SQL_LENGTH, "DROP DATABASE %s", dbase[ndbase]);
-		pfree((void *) dbase[ndbase]);
-		pg_exec_query_dest(sql, dest, false);
-	}
-	if (dbase)
-		pfree((void *) dbase);
+        scan = heap_beginscan(pg_rel, false, SnapshotNow, 1, &scankey);
 
-	/*
-	 * Since pg_shadow is global over all databases, one of two things
-	 * must be done to insure complete consistency.  First, pg_shadow
-	 * could be made non-global. This would elminate the code above for
-	 * deleting database and would require the addition of code to delete
-	 * tables, views, etc owned by the user.
-	 *
-	 * The second option would be to create a means of deleting tables, view,
-	 * etc. owned by the user from other databases.  pg_shadow is global
-	 * and so this must be done at some point.
-	 *
-	 * Let us not forget that the user should be removed from the pg_groups
-	 * also.
-	 *
-	 * Todd A. Brandys 11/18/1997
-	 *
-	 */
+        if (HeapTupleIsValid(tmp_tuple = heap_getnext(scan, 0)))
+        {
+            datum = heap_getattr(tmp_tuple, Anum_pg_database_datname, pg_dsc, &null);
+            heap_close(pg_shadow_rel, AccessExclusiveLock);
+            elog(ERROR, "DROP USER: user \"%s\" owns database \"%s\", cannot be removed%s",
+                 user, nameout(DatumGetName(datum)),
+                 (length(stmt->users) > 1) ? " (no users removed)" : ""
+                );
+        }
+            
+        heap_endscan(scan);
+        heap_close(pg_rel, AccessExclusiveLock);
 
-	/*
-	 * Remove the user from the pg_shadow table
-	 */
-	snprintf(sql, SQL_LENGTH,
-		"delete from %s where usename = '%s'", ShadowRelationName, user);
-	pg_exec_query_dest(sql, dest, false);
+        /*
+         * Somehow we'd have to check for tables, views, etc. owned by the user
+         * as well, but those could be spread out over all sorts of databases
+         * which we don't have access to (easily).
+         */
+
+        /*
+         * Remove the user from the pg_shadow table
+         */
+        heap_delete(pg_shadow_rel, &tuple->t_self, NULL);
+
+        /*
+         * Remove user from groups
+         *
+         * try calling alter group drop user for every group
+         */
+        pg_rel = heap_openr(GroupRelationName, AccessExclusiveLock);
+        pg_dsc = RelationGetDescr(pg_rel);
+        scan = heap_beginscan(pg_rel, false, SnapshotNow, 0, NULL);
+        while (HeapTupleIsValid(tmp_tuple = heap_getnext(scan, 0)))
+        {
+            AlterGroupStmt ags;
+
+            datum = heap_getattr(tmp_tuple, Anum_pg_group_groname, pg_dsc, &null);
+
+            ags.name = nameout(DatumGetName(datum)); /* the group name from which to try to drop the user */
+            ags.action = -1;
+            ags.listUsers = lcons((void*)makeInteger(usesysid), NIL);
+            AlterGroup(&ags, "DROP USER");
+        }
+        heap_endscan(scan);
+        heap_close(pg_rel, AccessExclusiveLock);        
+    }
 
 	/*
 	 * Write the updated pg_shadow data to the flat password file.
-	 * Because we are still holding AccessExclusiveLock on pg_shadow,
-	 * we can be sure no other backend will try to write the flat
-	 * file at the same time.
 	 */
-	update_pg_pwd();
+    write_password_file(pg_shadow_rel);
 
-	/*
-	 * Now we can clean up.
-	 */
-	heap_close(pg_shadow_rel, AccessExclusiveLock);
-
-	if (IsTransactionBlock() && !inblock)
-		EndTransactionBlock();
+    /*
+     * Now we can clean up.
+     */
+    heap_close(pg_shadow_rel, AccessExclusiveLock);
 }
+
+
 
 /*
  * CheckPgUserAclNotNull
@@ -556,51 +608,56 @@ CheckPgUserAclNotNull()
 							   0, 0, 0);
 	if (!HeapTupleIsValid(htup))
 	{
-		elog(ERROR, "IsPgUserAclNull: class \"%s\" not found",
+        /* BIG problem */
+		elog(ERROR, "IsPgUserAclNull: \"%s\" not found",
 			 ShadowRelationName);
 	}
 
 	if (heap_attisnull(htup, Anum_pg_class_relacl))
 	{
-		elog(NOTICE, "To use passwords, you have to revoke permissions on pg_shadow");
-		elog(NOTICE, "so normal users can not read the passwords.");
-		elog(ERROR, "Try 'REVOKE ALL ON pg_shadow FROM PUBLIC'");
+		elog(ERROR,
+             "To use passwords, you have to revoke permissions on %s "
+             "so normal users cannot read the passwords. "
+             "Try 'REVOKE ALL ON \"%s\" FROM PUBLIC'.",
+             ShadowRelationName, ShadowRelationName);
 	}
 
 	return;
 }
 
 
-/*** GROUP THINGS ***/
 
+/*
+ * CREATE GROUP
+ */
 void
-CreateGroup(CreateGroupStmt *stmt, CommandDest dest)
+CreateGroup(CreateGroupStmt *stmt)
 {
 	Relation	pg_group_rel;
 	HeapScanDesc scan;
 	HeapTuple	tuple;
     TupleDesc   pg_group_dsc;
-	bool		inblock;
     bool        group_exists = false,
                 sysid_exists = false;
-    int         max_id = -1;
+    int         max_id = 0;
     Datum       new_record[Natts_pg_group];
     char        new_record_nulls[Natts_pg_group];
     List       *item, *newlist=NULL;
     ArrayType  *userarray;
 
-
-	if (!(inblock = IsTransactionBlock()))
-		BeginTransactionBlock();
-
 	/*
 	 * Make sure the user can do this.
 	 */
-	if (pg_aclcheck(GroupRelationName, GetPgUserName(), ACL_RD | ACL_AP) != ACLCHECK_OK)
-	{
-		UserAbortTransactionBlock();
-		elog(ERROR, "CreateGroup: Permission denied.");
-	}
+	if (!superuser())
+		elog(ERROR, "CREATE GROUP: permission denied");
+
+    /*
+     * There is not real reason for this, but it makes it consistent
+     * with create user, and it seems like a good idea anyway.
+     */
+	if (IsTransactionBlock())
+        elog(ERROR, "CREATE GROUP: may not be called in a transaction block");
+
 
 	pg_group_rel = heap_openr(GroupRelationName, AccessExclusiveLock);
 	pg_group_dsc = RelationGetDescr(pg_group_rel);
@@ -628,11 +685,10 @@ CreateGroup(CreateGroupStmt *stmt, CommandDest dest)
 	if (group_exists || sysid_exists)
 	{
 		heap_close(pg_group_rel, AccessExclusiveLock);
-		UserAbortTransactionBlock();
         if (group_exists)
-            elog(ERROR, "CreateGroup: Group name \"%s\" already exists.", stmt->name);
+            elog(ERROR, "CREATE GROUP: group name \"%s\" already exists", stmt->name);
         else
-            elog(ERROR, "CreateGroup: Group sysid %d is already assigned.", stmt->sysid);
+            elog(ERROR, "CREATE GROUP: group sysid %d is already assigned", stmt->sysid);
 	}
 
     /*
@@ -650,8 +706,7 @@ CreateGroup(CreateGroupStmt *stmt, CommandDest dest)
         if (!HeapTupleIsValid(tuple))
         {
             heap_close(pg_group_rel, AccessExclusiveLock);
-            UserAbortTransactionBlock();
-            elog(ERROR, "CreateGroup: User \"%s\" does not exist.", groupuser);
+            elog(ERROR, "CREATE GROUP: user \"%s\" does not exist", groupuser);
         }
 
         v = makeInteger(((Form_pg_shadow) GETSTRUCT(tuple))->usesysid);
@@ -716,33 +771,34 @@ CreateGroup(CreateGroupStmt *stmt, CommandDest dest)
         CatalogCloseIndices(Num_pg_group_indices, idescs);
     }
 
-	heap_close(pg_group_rel, NoLock);
-
-	if (IsTransactionBlock() && !inblock)
-		EndTransactionBlock();
+	heap_close(pg_group_rel, AccessExclusiveLock);
 }
 
 
 
+/*
+ * ALTER GROUP
+ */
 void
-AlterGroup(AlterGroupStmt *stmt, CommandDest dest)
+AlterGroup(AlterGroupStmt *stmt, const char * tag)
 {
 	Relation	pg_group_rel;
     TupleDesc   pg_group_dsc;
-	bool		inblock;
     HeapTuple   group_tuple;
 
-	if (!(inblock = IsTransactionBlock()))
-		BeginTransactionBlock();
-
-	/*
+    /*
 	 * Make sure the user can do this.
 	 */
-	if (pg_aclcheck(GroupRelationName, GetPgUserName(), ACL_RD | ACL_WR) != ACLCHECK_OK)
-	{
-		UserAbortTransactionBlock();
-		elog(ERROR, "AlterGroup: Permission denied.");
-	}
+	if (!superuser())
+		elog(ERROR, "%s: permission denied", tag);
+
+    /*
+     * There is not real reason for this, but it makes it consistent
+     * with alter user, and it seems like a good idea anyway.
+     */
+	if (IsTransactionBlock())
+        elog(ERROR, "%s: may not be called in a transaction block", tag);
+
 
     pg_group_rel = heap_openr(GroupRelationName, AccessExclusiveLock);
     pg_group_dsc = RelationGetDescr(pg_group_rel);
@@ -755,69 +811,14 @@ AlterGroup(AlterGroupStmt *stmt, CommandDest dest)
     if (!HeapTupleIsValid(group_tuple = SearchSysCacheTupleCopy(GRONAME, PointerGetDatum(stmt->name), 0, 0, 0)))
 	{
         heap_close(pg_group_rel, AccessExclusiveLock);
-		UserAbortTransactionBlock();
-		elog(ERROR, "AlterGroup: Group \"%s\" does not exist.", stmt->name);
+		elog(ERROR, "%s: group \"%s\" does not exist", tag, stmt->name);
 	}
 
+    AssertState(stmt->action == +1 || stmt->action == -1);
     /*
      * Now decide what to do.
      */
-    if (stmt->action == 0) /* change sysid */
-    {
-        ScanKeyData   keys[2];
-        HeapTuple	  tuple;
-        HeapScanDesc  scan;
-        Datum       new_record[Natts_pg_group];
-        char        new_record_nulls[Natts_pg_group];
-        bool null;
-
-        /*
-         * First check if the id is already assigned.
-         */
-        ScanKeyEntryInitialize(&keys[0], 0x0, Anum_pg_group_grosysid, F_INT4EQ,
-                               Int32GetDatum(stmt->sysid));
-        ScanKeyEntryInitialize(&keys[1], 0x0, Anum_pg_group_groname, F_NAMENE,
-                               PointerGetDatum(stmt->name));
-        scan = heap_beginscan(pg_group_rel, false, SnapshotNow, 2, keys);
-
-        if (HeapTupleIsValid(heap_getnext(scan, false)))
-        {
-            heap_endscan(scan);
-            heap_close(pg_group_rel, AccessExclusiveLock);
-            UserAbortTransactionBlock();
-            elog(ERROR, "AlterGroup: Group sysid %d is already assigned.", stmt->sysid);
-        }
-        heap_endscan(scan);
-
-        /*
-         * Insert the new tuple with the updated sysid
-         */
-        new_record[Anum_pg_group_groname-1] = (Datum)(stmt->name);
-        new_record[Anum_pg_group_grosysid-1] = (Datum)(stmt->sysid);
-        new_record[Anum_pg_group_grolist-1] = heap_getattr(group_tuple, Anum_pg_group_grolist, pg_group_dsc, &null);
-        new_record_nulls[Anum_pg_group_groname-1] = ' ';
-        new_record_nulls[Anum_pg_group_grosysid-1] = ' ';
-        new_record_nulls[Anum_pg_group_grolist-1] = null ? 'n' : ' ';
-
-        tuple = heap_formtuple(pg_group_dsc, new_record, new_record_nulls);
-        heap_update(pg_group_rel, &group_tuple->t_self, tuple, NULL);
-
-        /* Update indexes */
-        if (RelationGetForm(pg_group_rel)->relhasindex) {
-            Relation idescs[Num_pg_group_indices];
-      
-            CatalogOpenIndices(Num_pg_group_indices, 
-                               Name_pg_group_indices, idescs);
-            CatalogIndexInsert(idescs, Num_pg_group_indices, pg_group_rel, 
-                               tuple);
-            CatalogCloseIndices(Num_pg_group_indices, idescs);
-        }
-    }
-
-    /*
-     * add users to group 
-     */
-    else if (stmt->action > 0)
+    if (stmt->action == +1) /* add users, might also be invoked by create user */
     {
         Datum       new_record[Natts_pg_group];
         char        new_record_nulls[Natts_pg_group] = { ' ', ' ', ' '};
@@ -853,22 +854,34 @@ AlterGroup(AlterGroupStmt *stmt, CommandDest dest)
         foreach(item, stmt->listUsers)
         {
             Value *v;
-            /* Get the uid of the proposed user to add. */
-            tuple = SearchSysCacheTuple(SHADOWNAME,
-                                        PointerGetDatum(strVal(lfirst(item))),
-                                        0, 0, 0);
-            if (!HeapTupleIsValid(tuple))
+            if (strcmp(tag, "ALTER GROUP")==0)
             {
-                heap_close(pg_group_rel, AccessExclusiveLock);
-                UserAbortTransactionBlock();
-                elog(ERROR, "AlterGroup: User \"%s\" does not exist.", strVal(lfirst(item)));
+                /* Get the uid of the proposed user to add. */
+                tuple = SearchSysCacheTuple(SHADOWNAME,
+                                            PointerGetDatum(strVal(lfirst(item))),
+                                            0, 0, 0);
+                if (!HeapTupleIsValid(tuple))
+                {
+                    heap_close(pg_group_rel, AccessExclusiveLock);
+                    elog(ERROR, "%s: user \"%s\" does not exist", tag, strVal(lfirst(item)));
+                }
+                v = makeInteger(((Form_pg_shadow) GETSTRUCT(tuple))->usesysid);
             }
-            
-            v = makeInteger(((Form_pg_shadow) GETSTRUCT(tuple))->usesysid);
+            else if (strcmp(tag, "CREATE USER")==0)
+            {
+                /* in this case we already know the uid and it wouldn't
+                   be in the cache anyway yet */
+                v = lfirst(item);
+            }
+            else
+                elog(ERROR, "AlterGroup: unknown tag %s", tag);
+
             if (!member(v, newlist))
                 newlist = lcons(v, newlist);
             else
-                elog(NOTICE, "AlterGroup: User \"%s\" is already in group \"%s\".", strVal(lfirst(item)), stmt->name);
+                /* we silently assume here that this error will only come up
+                   in a ALTER GROUP statement */
+                elog(NOTICE, "%s: user \"%s\" is already in group \"%s\"", tag, strVal(lfirst(item)), stmt->name);
         }
              
         newarray = palloc(ARR_OVERHEAD(1) + length(newlist) * sizeof(int32));
@@ -906,17 +919,18 @@ AlterGroup(AlterGroupStmt *stmt, CommandDest dest)
         }
     } /* endif alter group add user */
 
-    /*
-     * drop users from group
-     */
-    else if (stmt->action < 0)
+    else if (stmt->action == -1) /*drop users from group */
     {
         Datum         datum;
         bool          null;
+        bool          is_dropuser = strcmp(tag, "DROP USER")==0;
         
         datum = heap_getattr(group_tuple, Anum_pg_group_grolist, pg_group_dsc, &null);
         if (null)
-            elog(NOTICE, "AlterGroup: Group \"%s\"'s membership is NULL.", stmt->name);
+        {
+            if (!is_dropuser)
+                elog(NOTICE, "ALTER GROUP: group \"%s\" does not have any members", stmt->name);
+        }
         else
         {
             HeapTuple	  tuple;
@@ -950,22 +964,28 @@ AlterGroup(AlterGroupStmt *stmt, CommandDest dest)
             foreach(item, stmt->listUsers)
             {
                 Value *v;
-                /* Get the uid of the proposed user to drop. */
-                tuple = SearchSysCacheTuple(SHADOWNAME,
-                                            PointerGetDatum(strVal(lfirst(item))),
-                                            0, 0, 0);
-                if (!HeapTupleIsValid(tuple))
+                if (!is_dropuser)
                 {
-                    heap_close(pg_group_rel, AccessExclusiveLock);
-                    UserAbortTransactionBlock();
-                    elog(ERROR, "AlterGroup: User \"%s\" does not exist.", strVal(lfirst(item)));
+                    /* Get the uid of the proposed user to drop. */
+                    tuple = SearchSysCacheTuple(SHADOWNAME,
+                                                PointerGetDatum(strVal(lfirst(item))),
+                                                0, 0, 0);
+                    if (!HeapTupleIsValid(tuple))
+                    {
+                        heap_close(pg_group_rel, AccessExclusiveLock);
+                        elog(ERROR, "ALTER GROUP: user \"%s\" does not exist", strVal(lfirst(item)));
+                    }
+                    v = makeInteger(((Form_pg_shadow) GETSTRUCT(tuple))->usesysid);
                 }
-            
-                v = makeInteger(((Form_pg_shadow) GETSTRUCT(tuple))->usesysid);
+                else
+                {
+                    /* for dropuser we already know the uid */
+                    v = lfirst(item);
+                }
                 if (member(v, newlist))
                     newlist = LispRemove(v, newlist);
-                else
-                    elog(NOTICE, "AlterGroup: User \"%s\" is not in group \"%s\".", strVal(lfirst(item)), stmt->name);
+                else if (!is_dropuser)
+                    elog(NOTICE, "ALTER GROUP: user \"%s\" is not in group \"%s\"", strVal(lfirst(item)), stmt->name);
             }
 
             newarray = palloc(ARR_OVERHEAD(1) + length(newlist) * sizeof(int32));
@@ -1005,40 +1025,40 @@ AlterGroup(AlterGroupStmt *stmt, CommandDest dest)
         } /* endif group not null */
     } /* endif alter group drop user */
 
-    heap_close(pg_group_rel, NoLock);
+    heap_close(pg_group_rel, AccessExclusiveLock);
 
     pfree(group_tuple);
-
-	if (IsTransactionBlock() && !inblock)
-		EndTransactionBlock();
 }
 
 
 
+/*
+ * DROP GROUP
+ */
 void
-DropGroup(DropGroupStmt *stmt, CommandDest dest)
+DropGroup(DropGroupStmt *stmt)
 {
 	Relation	pg_group_rel;
 	HeapScanDesc scan;
 	HeapTuple	tuple;
     TupleDesc   pg_group_dsc;
-	bool		inblock;
     bool        gro_exists = false;
 
-	if (!(inblock = IsTransactionBlock()))
-		BeginTransactionBlock();
-
-	/*
+    /*
 	 * Make sure the user can do this.
 	 */
-	if (pg_aclcheck(GroupRelationName, GetPgUserName(), ACL_RD | ACL_WR) != ACLCHECK_OK)
-	{
-		UserAbortTransactionBlock();
-		elog(ERROR, "DropGroup: Permission denied.");
-	}
+	if (!superuser())
+		elog(ERROR, "DROP GROUP: permission denied");
 
     /*
-     * Scan the pg_group table and delete all matching users.
+     * There is not real reason for this, but it makes it consistent
+     * with drop user, and it seems like a good idea anyway.
+     */
+	if (IsTransactionBlock())
+        elog(ERROR, "DROP GROUP: may not be called in a transaction block");
+
+    /*
+     * Scan the pg_group table and delete all matching groups.
      */
 	pg_group_rel = heap_openr(GroupRelationName, AccessExclusiveLock);
 	pg_group_dsc = RelationGetDescr(pg_group_rel);
@@ -1055,7 +1075,6 @@ DropGroup(DropGroupStmt *stmt, CommandDest dest)
             gro_exists = true;
             heap_delete(pg_group_rel, &tuple->t_self, NULL);
         }
-
 	}
 
 	heap_endscan(scan);
@@ -1067,12 +1086,8 @@ DropGroup(DropGroupStmt *stmt, CommandDest dest)
     {
         heap_close(pg_group_rel, AccessExclusiveLock);
 		UserAbortTransactionBlock();
-		elog(ERROR, "DropGroup: Group \"%s\" does not exist.", stmt->name);
+		elog(ERROR, "DROP GROUP: group \"%s\" does not exist", stmt->name);
     }
 
-	heap_close(pg_group_rel, NoLock);
-
-	if (IsTransactionBlock() && !inblock)
-		EndTransactionBlock();
+	heap_close(pg_group_rel, AccessExclusiveLock);
 }
-

@@ -9,7 +9,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/tcop/utility.c,v 1.77 2000/01/13 18:26:10 petere Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/tcop/utility.c,v 1.78 2000/01/14 22:11:35 petere Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -266,11 +266,7 @@ ProcessUtility(Node *parsetree,
 				 */
 					   stmt->filename,
 					   stmt->delimiter,
-                       stmt->null_print,
-				/*
-				 * specify 022 umask while writing files with COPY.
-				 */
-					   0022);
+                       stmt->null_print);
 			}
 			break;
 
@@ -775,21 +771,21 @@ ProcessUtility(Node *parsetree,
 			PS_SET_STATUS(commandTag = "CREATE USER");
 			CHECK_IF_ABORTED();
 
-			DefineUser((CreateUserStmt *) parsetree, dest);
+			CreateUser((CreateUserStmt *) parsetree);
 			break;
 
 		case T_AlterUserStmt:
 			PS_SET_STATUS(commandTag = "ALTER USER");
 			CHECK_IF_ABORTED();
 
-			AlterUser((AlterUserStmt *) parsetree, dest);
+			AlterUser((AlterUserStmt *) parsetree);
 			break;
 
 		case T_DropUserStmt:
 			PS_SET_STATUS(commandTag = "DROP USER");
 			CHECK_IF_ABORTED();
 
-			RemoveUser(((DropUserStmt *) parsetree)->user, dest);
+			DropUser((DropUserStmt *) parsetree);
 			break;
 
 		case T_LockStmt:
@@ -810,21 +806,21 @@ ProcessUtility(Node *parsetree,
             PS_SET_STATUS(commandTag = "CREATE GROUP");
 			CHECK_IF_ABORTED();
 
-            CreateGroup((CreateGroupStmt *) parsetree, dest);
+            CreateGroup((CreateGroupStmt *) parsetree);
             break;
 
         case T_AlterGroupStmt:
             PS_SET_STATUS(commandTag = "ALTER GROUP");
 			CHECK_IF_ABORTED();
 
-            AlterGroup((AlterGroupStmt *) parsetree, dest);
+            AlterGroup((AlterGroupStmt *) parsetree, "ALTER GROUP");
             break;
 
         case T_DropGroupStmt:
             PS_SET_STATUS(commandTag = "DROP GROUP");
 			CHECK_IF_ABORTED();
 
-            DropGroup((DropGroupStmt *) parsetree, dest);
+            DropGroup((DropGroupStmt *) parsetree);
             break;
 
 			/*

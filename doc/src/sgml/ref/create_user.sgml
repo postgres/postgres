@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/ref/create_user.sgml,v 1.12 1999/12/04 05:03:49 momjian Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/ref/create_user.sgml,v 1.13 2000/01/14 22:11:32 petere Exp $
 Postgres documentation
 -->
 
@@ -15,7 +15,7 @@ Postgres documentation
    CREATE USER
   </refname>
   <refpurpose>
-   Creates account information for a new user
+   Creates a new database user
   </refpurpose>
  </refnamediv>
  <refsynopsisdiv>
@@ -26,7 +26,7 @@ Postgres documentation
 CREATE USER <replaceable class="PARAMETER">username</replaceable>
     [ WITH
      [ SYSID <replaceable class="PARAMETER">uid</replaceable> ]
-     [ PASSWORD <replaceable class="PARAMETER">password</replaceable> ] ]
+     [ PASSWORD '<replaceable class="PARAMETER">password</replaceable>' ] ]
     [ CREATEDB   | NOCREATEDB ] [ CREATEUSER | NOCREATEUSER ]
     [ IN GROUP     <replaceable class="PARAMETER">groupname</replaceable> [, ...] ]
     [ VALID UNTIL  '<replaceable class="PARAMETER">abstime</replaceable>' ]
@@ -62,13 +62,6 @@ CREATE USER <replaceable class="PARAMETER">username</replaceable>
         choose to keep the numbers the same.
        </para>
        <para>
-	If you still want the
-	OS user id and the <filename>usesysid</filename> to match
-	for any given user,
-	use the <application>createuser</application> script provided with
-	the <productname>Postgres</productname> distribution.
-       </para>
-       <para>
         If this is not specified, the highest assigned user id plus one
         will be used as default.
        </para>
@@ -79,30 +72,11 @@ CREATE USER <replaceable class="PARAMETER">username</replaceable>
       <term><replaceable class="parameter">password</replaceable></term>
       <listitem>
        <para>
-	The PASSWORD clause sets the user's password within
-	the "<filename>pg_shadow</filename>" table. For this reason,
-	<filename>"pg_shadow</filename>" is no
-	longer accessible to the instance of
-	<productname>Postgres</productname> that the
-	<productname>Postgres</productname>
-	user's password is initially set to NULL.
-       </para>
-       <para>
-	When a
-	user's password in the "<filename>pg_shadow</filename>"
-	table is NULL, user
-	authentication proceeds as it historically has (HBA,
-	PG_PASSWORD, etc). However, if a password is set for a
-	user, a new authentication system supplants any other
-	configured for the <productname>Postgres</productname>
-	instance, and the password
-	stored in the "<filename>pg_shadow</filename>" table is used
-	for authentication.
-	For more details on how this authentication system
-	functions see pg_crypt(3). If the WITH PASSWORD clause is
-	omitted, the user's password is set to the empty
-	string which equates to a NULL value in the authentication
-	system mentioned above.
+        Sets the user's password. If you do not plan to use password
+        authentication you can omit this option, otherwise the user
+        won't be able to connect to a password-authenticated server.
+        See pg_hba.conf(5) or the administrator's guide for details on
+        how to set up authentication mechanisms.
        </para>
       </listitem>
      </varlistentry>
@@ -127,8 +101,8 @@ CREATE USER <replaceable class="PARAMETER">username</replaceable>
       <listitem>
        <para>
 	These clauses determine whether a user will be permitted to
-	create new
-	users in an instance of <productname>Postgres</productname>.
+	create new users himself. This option will also make the user
+        a superuser who can override all access restrictions.
 	Omitting this clause will set the user's value of this
 	attribute to be NOCREATEUSER.
        </para>
@@ -149,15 +123,8 @@ CREATE USER <replaceable class="PARAMETER">username</replaceable>
       <listitem>
        <para>
 	The VALID UNTIL clause sets an absolute time after which the
-	user's <productname>Postgres</productname>
-	login is no longer valid. Please note that
-	if a user does not have a password defined in the
-	"<filename>pg_shadow</filename>"
-	table, the valid until date will not be checked
-	during user authentication. If this clause is omitted,
-	a NULL value is stored in "<filename>pg_shadow</filename>" 
-	for this attribute,
-	and the login will be valid for all time.
+	user's password is no longer valid. 
+	If this clause is omitted the login will be valid for all time.
        </para>
       </listitem>
      </varlistentry>
@@ -176,9 +143,7 @@ CREATE USER <replaceable class="PARAMETER">username</replaceable>
    <para>
     <variablelist>
      <varlistentry>
-      <term><computeroutput>
-CREATE USER
-       </computeroutput></term>
+      <term><computeroutput>CREATE USER</computeroutput></term>
       <listitem>
        <para>
 	Message returned if the command completes successfully.
@@ -199,61 +164,38 @@ CREATE USER
   </title>
   <para>
    CREATE USER will add a new user to an instance of 
-   <productname>PostgreSQL</productname>.
+   <productname>PostgreSQL</productname>. Refer to the adminstrator's
+   guide for information about managing users and authentication.
+   You must be a database superuser to use this command.
   </para>
-
-  <refsect2 id="R2-SQL-CREATEUSER-3">
-   <refsect2info>
-    <date>1998-09-21</date>
-   </refsect2info>
-   <title>
-    Notes
-   </title>
-   <para>
-    <command>CREATE USER</command> statement is a
-    <productname>Postgres</productname> language extension.
-   </para>
-   <para>
-    Use <command>DROP USER</command> or <command>ALTER USER</command>
-    statements to remove or modify a user account.
-   </para>
-   <para>
-    Refer to the <filename>pg_shadow</filename> table for further information.
-   </para>
-   <programlisting>
-      Table "pg_shadow"
-  Attribute  |  Type   | Extra
--------------+---------+-------
- usename     | name    |
- usesysid    | int4    |
- usecreatedb | bool    |
- usetrace    | bool    |
- usesuper    | bool    |
- usecatupd   | bool    |
- passwd      | text    |
- valuntil    | abstime |
-   </programlisting>
-  </refsect2>
- </refsect1>
-  
+  <para>
+   Use <xref linkend="SQL-ALTERUSER" endterm="SQL-ALTERUSER-title">
+   to change a user's password and privileges, and <xref linkend="SQL-DROPUSER"
+   endterm="SQL-DROPUSER-title"> to remove a user.
+   Use <command>ALTER GROUP</command> to add or remove the user from other groups.
+   <productname>PostgreSQL</productname>
+   comes with a script <xref linkend="APP-CREATEUSER"
+   endterm="APP-CREATEUSER-title">
+   which has the same functionality as this command (in fact, it calls this command)
+   but can be run from the command shell.
+  </para>  
+ </refsect1> 
  <refsect1 id="R1-SQL-CREATEUSER-2">
   <title>
    Usage
   </title>
   <para>
    Create a user with no password:
-
-   <programlisting>
+<programlisting>
 CREATE USER jonathan
-   </programlisting>
+</programlisting>
   </para>
 
   <para>
    Create a user with a password:
-
-   <programlisting>
-CREATE USER davide WITH PASSWORD "jw8s0F4"
-   </programlisting>
+<programlisting>
+CREATE USER davide WITH PASSWORD 'jw8s0F4'
+</programlisting>
   </para>
 
   <para>
@@ -261,17 +203,16 @@ CREATE USER davide WITH PASSWORD "jw8s0F4"
    Note that after one second has ticked in 2002, the account is not
    valid:
 
-   <programlisting>
-CREATE USER miriam WITH PASSWORD "jw8s0F4" VALID UNTIL 'Jan 1 2002'
-   </programlisting>
+<programlisting>
+CREATE USER miriam WITH PASSWORD 'jw8s0F4' VALID UNTIL 'Jan 1 2002'
+</programlisting>
   </para>
 
   <para> 
    Create an account where the user can create databases:
-
-   <programlisting>
-CREATE USER manuel WITH PASSWORD "jw8s0F4" CREATEDB
-   </programlisting>
+<programlisting>
+CREATE USER manuel WITH PASSWORD 'jw8s0F4' CREATEDB
+</programlisting>
   </para>
  </refsect1>
  

@@ -6,7 +6,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/commands/copy.c,v 1.94 1999/12/16 22:19:41 wieck Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/commands/copy.c,v 1.95 2000/01/14 22:11:33 petere Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -97,7 +97,11 @@ CopySendData(void *databuf, int datasize, FILE *fp)
 			fe_eof = true;
 	}
 	else
+    {
 		fwrite(databuf, datasize, 1, fp);
+        if (ferror(fp))
+            elog(ERROR, "CopySendData: %s", strerror(errno));
+    }
 }
 
 static void
@@ -219,7 +223,7 @@ CopyDonePeek(FILE *fp, int c, int pickup)
 
 void
 DoCopy(char *relname, bool binary, bool oids, bool from, bool pipe,
-	   char *filename, char *delim, char *null_print, int fileumask)
+	   char *filename, char *delim, char *null_print)
 {
 /*----------------------------------------------------------------------------
   Either unload or reload contents of class <relname>, depending on <from>.
@@ -234,11 +238,6 @@ DoCopy(char *relname, bool binary, bool oids, bool from, bool pipe,
 
   If in the text format, delimit columns with delimiter <delim> and print
   NULL values as <null_print>.
-
-  <fileumask> is the umask(2) setting to use while creating an output file.
-  This should usually be more liberal than the backend's normal 077 umask,
-  but not always (in particular, "pg_pwd" should be written with 077!).
-  Up through version 6.5, <fileumask> was always 000, which was foolhardy.
 
   When loading in the text format from an input stream (as opposed to
   a file), recognize a "." on a line by itself as EOF.	Also recognize
@@ -272,12 +271,11 @@ DoCopy(char *relname, bool binary, bool oids, bool from, bool pipe,
 	result = pg_aclcheck(relname, UserName, required_access);
 	if (result != ACLCHECK_OK)
 		elog(ERROR, "%s: %s", relname, aclcheck_error_strings[result]);
-	else if (!pipe && !superuser())
+    if (!pipe && !superuser())
 		elog(ERROR, "You must have Postgres superuser privilege to do a COPY "
 			 "directly to or from a file.  Anyone can COPY to stdout or "
 			 "from stdin.  Psql's \\copy command also works for anyone.");
-	else
-	{
+
 		if (from)
 		{						/* copy from file to database */
 			if (rel->rd_rel->relkind == RELKIND_SEQUENCE)
@@ -324,7 +322,7 @@ DoCopy(char *relname, bool binary, bool oids, bool from, bool pipe,
 			{
 				mode_t		oumask;		/* Pre-existing umask value */
 
-				oumask = umask((mode_t) fileumask);
+            oumask = umask((mode_t) 022);
 #ifndef __CYGWIN32__
 				fp = AllocateFile(filename, "w");
 #else
@@ -350,7 +348,6 @@ DoCopy(char *relname, bool binary, bool oids, bool from, bool pipe,
 			if (IsUnderPostmaster)
 				pq_endcopyout(false);
 		}
-	}
 
 	/*
 	 * Close the relation.  If reading, we can release the AccessShareLock

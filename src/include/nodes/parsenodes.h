@@ -6,7 +6,7 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: parsenodes.h,v 1.92 1999/12/16 17:24:19 momjian Exp $
+ * $Id: parsenodes.h,v 1.93 2000/01/14 22:11:38 petere Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -270,18 +270,26 @@ typedef struct CreateUserStmt
 	char	   *user;			/* PostgreSQL user login			  */
 	char	   *password;		/* PostgreSQL user password			  */
     int         sysid;          /* PgSQL system id (-1 if don't care) */
-	bool	   *createdb;		/* Can the user create databases?	  */
-	bool	   *createuser;		/* Can this user create users?		  */
+	bool        createdb;		/* Can the user create databases?	  */
+	bool 	    createuser;		/* Can this user create users?		  */
 	List	   *groupElts;		/* The groups the user is a member of */
 	char	   *validUntil;		/* The time the login is valid until  */
 } CreateUserStmt;
 
-typedef CreateUserStmt AlterUserStmt;
+typedef struct AlterUserStmt
+{
+	NodeTag		type;
+	char	   *user;			/* PostgreSQL user login			  */
+	char	   *password;		/* PostgreSQL user password			  */
+	int 	    createdb;		/* Can the user create databases?	  */
+	int 	    createuser;		/* Can this user create users?		  */
+	char	   *validUntil;		/* The time the login is valid until  */
+} AlterUserStmt;
 
 typedef struct DropUserStmt
 {
 	NodeTag		type;
-	char	   *user;			/* PostgreSQL user login			  */
+    List       *users;          /* List of users to remove */
 } DropUserStmt;
 
 
@@ -301,7 +309,7 @@ typedef struct AlterGroupStmt
 {
     NodeTag     type;
     char       *name;           /* name of group to alter */
-    int         action;         /* +1 = add, -1 = drop, 0 = other (HACK!) */
+    int         action;         /* +1 = add, -1 = drop user */
     int         sysid;          /* sysid change */
     List       *listUsers;      /* list of users to add/drop */
 } AlterGroupStmt;

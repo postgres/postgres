@@ -10,7 +10,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/parser/gram.y,v 2.124 2000/01/13 18:26:07 petere Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/parser/gram.y,v 2.125 2000/01/14 22:11:34 petere Exp $
  *
  * HISTORY
  *	  AUTHOR			DATE			MAJOR EVENT
@@ -90,7 +90,6 @@ static Node *doNegate(Node *n);
 	char				chr;
 	char				*str;
 	bool				boolean;
-	bool*				pboolean;	/* for pg_shadow privileges */
 	List				*list;
 	Node				*node;
 	Value				*value;
@@ -137,11 +136,11 @@ static Node *doNegate(Node *n);
 %type <ival>	opt_lock, lock_type
 %type <boolean>	opt_lmode
 
-%type <pboolean> user_createdb_clause, user_createuser_clause
+%type <ival>    user_createdb_clause, user_createuser_clause
 %type <str>		user_passwd_clause
 %type <ival>            sysid_clause
 %type <str>		user_valid_clause
-%type <list>	user_group_list, user_group_clause, users_in_new_group_clause
+%type <list>	user_list, user_group_clause, users_in_new_group_clause
 
 %type <boolean>	TriggerActionTime, TriggerForSpec, PLangTrusted
 
@@ -459,8 +458,8 @@ CreateUserStmt:  CREATE USER UserId
 					n->user = $3;
                     n->sysid = -1;
 					n->password = NULL;
-					n->createdb = $4;
-					n->createuser = $5;
+					n->createdb = $4 == +1 ? true : false;
+					n->createuser = $5 == +1 ? true : false;
 					n->groupElts = $6;
 					n->validUntil = $7;
 					$$ = (Node *)n;
@@ -473,8 +472,8 @@ CreateUserStmt:  CREATE USER UserId
 					n->user = $3;
                     n->sysid = $5;
 					n->password = $6;
-					n->createdb = $7;
-					n->createuser = $8;
+					n->createdb = $7 == +1 ? true : false;
+					n->createuser = $8 == +1 ? true : false;
 					n->groupElts = $9;
 					n->validUntil = $10;
 					$$ = (Node *)n;
@@ -489,30 +488,26 @@ CreateUserStmt:  CREATE USER UserId
  *****************************************************************************/
 
 AlterUserStmt:  ALTER USER UserId user_createdb_clause
-                user_createuser_clause user_group_clause user_valid_clause
+                user_createuser_clause user_valid_clause
 				{
 					AlterUserStmt *n = makeNode(AlterUserStmt);
 					n->user = $3;
-                    n->sysid = -1;
 					n->password = NULL;
 					n->createdb = $4;
 					n->createuser = $5;
-					n->groupElts = $6;
-					n->validUntil = $7;
+					n->validUntil = $6;
 					$$ = (Node *)n;
 				}
-              | ALTER USER UserId WITH sysid_clause user_passwd_clause
+              | ALTER USER UserId WITH PASSWORD Sconst
                 user_createdb_clause
-                user_createuser_clause user_group_clause user_valid_clause
+                user_createuser_clause user_valid_clause
 				{
 					AlterUserStmt *n = makeNode(AlterUserStmt);
 					n->user = $3;
-                    n->sysid = $5;
 					n->password = $6;
 					n->createdb = $7;
 					n->createuser = $8;
-					n->groupElts = $9;
-					n->validUntil = $10;
+                    n->validUntil = $9;
 					$$ = (Node *)n;
 				}
 		;
@@ -524,53 +519,38 @@ AlterUserStmt:  ALTER USER UserId user_createdb_clause
  *
  *****************************************************************************/
 
-DropUserStmt:  DROP USER UserId
+DropUserStmt:  DROP USER user_list
 				{
 					DropUserStmt *n = makeNode(DropUserStmt);
-					n->user = $3;
+					n->users = $3;
 					$$ = (Node *)n;
 				}
 		;
 
-user_passwd_clause:  PASSWORD UserId		        { $$ = $2; }
+user_passwd_clause:  PASSWORD Sconst		        { $$ = $2; }
                         | /*EMPTY*/					{ $$ = NULL; }
 		;
 
-sysid_clause: SYSID Iconst                              { $$ = $2; }
+sysid_clause: SYSID Iconst
+              {
+                  if ($2 <= 0)
+                      elog(ERROR, "sysid must be positive");
+                  $$ = $2;
+              }
                         | /*EMPTY*/                     { $$ = -1; }
         ;
 
-user_createdb_clause:  CREATEDB
-				{
-					bool*  b;
-					$$ = (b = (bool*)palloc(sizeof(bool)));
-					*b = true;
-				}
-			| NOCREATEDB
-				{
-					bool*  b;
-					$$ = (b = (bool*)palloc(sizeof(bool)));
-					*b = false;
-				}
-			| /*EMPTY*/							{ $$ = NULL; }
+user_createdb_clause:  CREATEDB                         { $$ = +1; }
+            | NOCREATEDB                    { $$ = -1; }
+			| /*EMPTY*/			{ $$ = 0; }
 		;
 
-user_createuser_clause:  CREATEUSER
-				{
-					bool*  b;
-					$$ = (b = (bool*)palloc(sizeof(bool)));
-					*b = true;
-				}
-			| NOCREATEUSER
-				{
-					bool*  b;
-					$$ = (b = (bool*)palloc(sizeof(bool)));
-					*b = false;
-				}
-			| /*EMPTY*/							{ $$ = NULL; }
+user_createuser_clause:  CREATEUSER                     { $$ = +1; }
+			| NOCREATEUSER                  { $$ = -1; }
+			| /*EMPTY*/			{ $$ = 0; }
 		;
 
-user_group_list:  user_group_list ',' UserId
+user_list:  user_list ',' UserId
 				{
 					$$ = lcons((void*)makeString($3), $1);
 				}
@@ -580,7 +560,7 @@ user_group_list:  user_group_list ',' UserId
 				}
 		;
 
-user_group_clause:  IN GROUP user_group_list    { $$ = $3; }
+user_group_clause:  IN GROUP user_list    { $$ = $3; }
 			| /*EMPTY*/             { $$ = NULL; }
 		;
 
@@ -615,7 +595,7 @@ CreateGroupStmt:  CREATE GROUP UserId
                   }
                 ;
 
-users_in_new_group_clause:  USER user_group_list   { $$ = $2; }
+users_in_new_group_clause:  USER user_list   { $$ = $2; }
                             | /* EMPTY */          { $$ = NULL; }
                 ;                         
 
@@ -626,17 +606,7 @@ users_in_new_group_clause:  USER user_group_list   { $$ = $2; }
  *
  *****************************************************************************/
 
-AlterGroupStmt: ALTER GROUP UserId WITH SYSID Iconst
-                {
-                        AlterGroupStmt *n = makeNode(AlterGroupStmt);
-			n->name = $3;
-                        n->sysid = $6;
-                        n->action = 0;
-                        n->listUsers = NULL;
-                        $$ = (Node *)n;
-                }
-                |
-                ALTER GROUP UserId ADD USER user_group_list
+AlterGroupStmt: ALTER GROUP UserId ADD USER user_list
                 {
                         AlterGroupStmt *n = makeNode(AlterGroupStmt);
 			n->name = $3;
@@ -646,7 +616,7 @@ AlterGroupStmt: ALTER GROUP UserId WITH SYSID Iconst
                         $$ = (Node *)n;
                 }
                 |
-                ALTER GROUP UserId DROP USER user_group_list
+                ALTER GROUP UserId DROP USER user_list
                 {
                         AlterGroupStmt *n = makeNode(AlterGroupStmt);
 			n->name = $3;

@@ -11,15 +11,15 @@
 #define USER_H
 
 #include "nodes/parsenodes.h"
-#include "tcop/dest.h"
+#include "access/htup.h"
 
-extern void DefineUser(CreateUserStmt *stmt, CommandDest);
-extern void AlterUser(AlterUserStmt *stmt, CommandDest);
-extern void RemoveUser(char *user, CommandDest);
+extern void CreateUser(CreateUserStmt *stmt);
+extern void AlterUser(AlterUserStmt *stmt);
+extern void DropUser(DropUserStmt *stmt);
 
-extern void CreateGroup(CreateGroupStmt *stmt, CommandDest dest);
-extern void AlterGroup(AlterGroupStmt *stmt, CommandDest dest);
-extern void DropGroup(DropGroupStmt *stmt, CommandDest dest);
+extern void CreateGroup(CreateGroupStmt *stmt);
+extern void AlterGroup(AlterGroupStmt *stmt, const char * tag);
+extern void DropGroup(DropGroupStmt *stmt);
 
 extern HeapTuple update_pg_pwd(void);
 

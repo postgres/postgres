@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/ref/alter_user.sgml,v 1.9 1999/11/30 03:57:22 momjian Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/ref/alter_user.sgml,v 1.10 2000/01/14 22:11:32 petere Exp $
 Postgres documentation
 -->
 
@@ -24,11 +24,8 @@ Postgres documentation
   </refsynopsisdivinfo>
   <synopsis>
 ALTER USER <replaceable class="PARAMETER">username</replaceable>
-    [ WITH
-     [ SYSID <replaceable class="PARAMETER">uid</replaceable> ]
-     [ PASSWORD <replaceable class="PARAMETER">password</replaceable> ] ]
+    [ WITH PASSWORD '<replaceable class="PARAMETER">password</replaceable>' ]
     [ CREATEDB | NOCREATEDB ] [ CREATEUSER | NOCREATEUSER ]
-    [ IN GROUP <replaceable class="PARAMETER">groupname</replaceable> [, ...] ]
     [ VALID UNTIL '<replaceable class="PARAMETER">abstime</replaceable>' ]
   </synopsis>
 
@@ -41,23 +38,18 @@ ALTER USER <replaceable class="PARAMETER">username</replaceable>
    </title>
 
    <para>
-    Refer to <command>CREATE USER</command> for a detailed description of each
-    clause.
-   </para>
-
-   <para>
     <variablelist>
      <varlistentry>
-      <term><replaceable class="PARAMETER"> username </replaceable></term>
+      <term><replaceable class="PARAMETER">username</replaceable></term>
       <listitem>
        <para>
-	The Postgres account name of the user whose details are to be altered.
+	The name of the user whose details are to be altered.
        </para>
       </listitem>
      </varlistentry>
 
      <varlistentry>
-      <term><replaceable class="PARAMETER"> password </replaceable></term>
+      <term><replaceable class="PARAMETER">password</replaceable></term>
       <listitem>
        <para>
 	The new password to be used for this account.
@@ -66,36 +58,36 @@ ALTER USER <replaceable class="PARAMETER">username</replaceable>
      </varlistentry>
 
      <varlistentry>
-      <term><replaceable class="parameter">uid</replaceable></term>
+      <term>CREATEDB</term>
+      <term>NOCREATEDB</term>
       <listitem>
-       <para>
-        The new <productname>PostgreSQL</productname> user id of the user.
-        Since this number is used as a key into the
-        <literal>pg_shadow</literal>/<literal>pg_user</literal> table
-        throughout the system catalogs, it is not recommended that you change
-        it unless the user in question does not own anything at all and/or
-        you really know what you are doing. Note that it is not necessary that
-        database and <acronym>UNIX</acronym> user ids match, but some people
-        choose to keep the numbers the same.
+       <para> 
+	These clauses define a user's ability to create databases.
+	If CREATEDB is specified, the user being defined will
+	be allowed to create his own databases. Using NOCREATEDB
+	will deny a user the ability to create databases.
        </para>
       </listitem>
      </varlistentry>
 
      <varlistentry>
-      <term><replaceable class="PARAMETER"> groupname </replaceable></term>
+      <term>CREATEUSER</term>
+      <term>NOCREATEUSER</term>
       <listitem>
        <para>
-	The name of an access group into which this account is to be put.
+	These clauses determine whether a user will be permitted to
+	create new users himself. This option will also make the user
+        a superuser who can override all access restrictions.
        </para>
       </listitem>
      </varlistentry>
 
      <varlistentry>
-      <term><replaceable class="PARAMETER"> abstime </replaceable></term>
+      <term><replaceable class="PARAMETER">abstime</replaceable></term>
       <listitem>
        <para>
 	The date (and, optionally, the time)
-	at which this user's access is to be terminated.
+	at which this user's password is to expire.
        </para>
       </listitem>
      </varlistentry>
@@ -113,9 +105,7 @@ ALTER USER <replaceable class="PARAMETER">username</replaceable>
    <para>
     <variablelist>
      <varlistentry>
-      <term><computeroutput>
-ALTER USER
-       </computeroutput></term>
+      <term><computeroutput>ALTER USER</computeroutput></term>
       <listitem>
        <para>
 	Message returned if the alteration was successful.
@@ -125,7 +115,7 @@ ALTER USER
      
      <varlistentry>
       <term><computeroutput>
-ERROR: alterUser: user "username" does not exist
+ERROR:  ALTER USER: user "username" does not exist
        </computeroutput></term>
       <listitem>
        <para>
@@ -148,39 +138,15 @@ ERROR: alterUser: user "username" does not exist
   </title>
   <para>
    <command>ALTER USER</command> is used to change the attributes of a user's
-   <productname>Postgres</productname> account.
-   Also, it is only possible for the
-   <productname>Postgres</productname>
-   user or any user with read and modify permissions on
-   <literal>pg_shadow</literal> to alter user passwords.
+   <productname>PostgreSQL</productname> account. Only a database superuser
+   can change privileges and password expiration with this command. Ordinary
+   users can only change their own password.
   </para>
-
   <para>
-   If any of the clauses of the alter user statement are
-   omitted, the corresponding value in the <literal>pg_shadow</literal> table
-   is left unchanged.
+   Use <xref linkend="SQL-CREATEUSER" endterm="SQL-CREATEUSER-title">
+   to create a new user and <xref linkend="SQL-DROPUSER"
+   endterm="SQL-DROPUSER-title"> to remove a user.
   </para>
-    
-  <refsect2 id="R2-SQL-ALTERUSER-3">
-   <refsect2info>
-    <date>1998-09-08</date>
-   </refsect2info>
-   <title>
-    Notes
-   </title>
-   <para>
-    <command>ALTER USER</command>
-    is a <productname>Postgres</productname>
-    language extension.
-   </para>
-   <para>
-    Refer to <command>CREATE/DROP USER</command>
-    to create or remove a user account.
-   </para>
-   <para>
-    The IN GROUP clause is not yet implemented.
-   </para>
-  </refsect2>
  </refsect1>
 
  <refsect1 id="R1-SQL-ALTERUSER-2">
@@ -190,34 +156,29 @@ ERROR: alterUser: user "username" does not exist
   <para>
    Change a user password:
 
-  <programlisting>
-ALTER USER davide WITH PASSWORD hu8jmn3;
-  </programlisting>
+<programlisting>
+ALTER USER davide WITH PASSWORD 'hu8jmn3';
+</programlisting>
 
    Change a user's valid until date
 
-   <programlisting>
+<programlisting>
 ALTER USER manuel VALID UNTIL 'Jan 31 2030';
-   </programlisting>
+</programlisting>
 
    Change a user's valid until date, specifying that his
    authorisation should expire at midday on 4th May 1998 using
    the time zone which is one hour ahead of UTC
-   <programlisting>
+<programlisting>
 ALTER USER chris VALID UNTIL 'May 4 12:00:00 1998 +1';
-   </programlisting>
+</programlisting>
 
    Give a user the ability to create other users and new databases.
 
-   <programlisting>
+<programlisting>
 ALTER USER miriam CREATEUSER CREATEDB;
-   </programlisting>
+</programlisting>
 
-   Place a user in two groups
-
-   <programlisting>
-ALTER USER miriam IN GROUP sales, payroll;
-   </programlisting>
   </para>
  </refsect1>
 

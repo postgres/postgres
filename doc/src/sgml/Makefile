@@ -8,7 +8,7 @@
 #
 #
 # IDENTIFICATION
-#    $Header: /cvsroot/pgsql/doc/src/sgml/Makefile,v 1.12 1999/12/05 20:21:59 momjian Exp $
+#    $Header: /cvsroot/pgsql/doc/src/sgml/Makefile,v 1.13 2000/01/14 22:11:31 petere Exp $
 #
 #----------------------------------------------------------------------------
 
@@ -85,15 +85,17 @@ APPLICATIONS= createdb.sgml createuser.sgml \
 	psql-ref.sgml \
 	vacuumdb.sgml
 
-COMMANDS= abort.sgml alter_table.sgml alter_user.sgml \
+COMMANDS= abort.sgml alter_group.sgml alter_table.sgml alter_user.sgml \
 	begin.sgml \
 	close.sgml cluster.sgml commit.sgml copy.sgml \
-	create_aggregate.sgml create_database.sgml create_function.sgml create_index.sgml \
+	create_aggregate.sgml create_database.sgml create_function.sgml create_group.sgml \
+	create_index.sgml \
 	create_language.sgml create_operator.sgml create_rule.sgml create_sequence.sgml \
 	create_table.sgml create_table_as.sgml create_trigger.sgml create_type.sgml \
 	create_user.sgml create_view.sgml \
 	declare.sgml delete.sgml \
-	drop_aggregate.sgml drop_database.sgml drop_function.sgml drop_index.sgml \
+	drop_aggregate.sgml drop_database.sgml drop_function.sgml drop_group.sgml \
+	drop_index.sgml \
 	drop_language.sgml drop_operator.sgml drop_rule.sgml drop_sequence.sgml \
 	drop_table.sgml drop_trigger.sgml drop_type.sgml drop_user.sgml drop_view.sgml \
 	explain.sgml fetch.sgml grant.sgml \

@@ -8,7 +8,7 @@
 #
 #
 # IDENTIFICATION
-#    $Header: /cvsroot/pgsql/src/bin/scripts/Attic/createuser,v 1.5 2000/01/12 19:36:36 petere Exp $
+#    $Header: /cvsroot/pgsql/src/bin/scripts/Attic/createuser,v 1.6 2000/01/14 22:11:36 petere Exp $
 #
 # Note - this should NOT be setuid.
 #
@@ -193,7 +193,7 @@ QUERY="CREATE USER \"$NewUser\""
 
 SUBQUERY=
 [ "$SysID" ] &&    SUBQUERY="$SUBQUERY SYSID $SysID"
-[ "$Password" ] && SUBQUERY="$SUBQUERY PASSWORD \"$Password\""
+[ "$Password" ] && SUBQUERY="$SUBQUERY PASSWORD '$Password'"
 [ "$SUBQUERY" ] &&        QUERY="$QUERY WITH $SUBQUERY"
 
 [ "$CanCreateDb" = t ] && QUERY="$QUERY CREATEDB"
