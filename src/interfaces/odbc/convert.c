@@ -1,5 +1,5 @@
 /*-------
- * Module:		   convert.c
+ * Module:               convert.c
  *
  * Description:    This module contains routines related to
  *				   converting parameters and columns into requested data types.
@@ -190,8 +190,12 @@ copy_and_convert_field(StatementClass *stmt, Int4 field_type, void *value, Int2 
 	int			bind_row = stmt->bind_row;
 	int			bind_size = stmt->options.bind_size;
 	int			result = COPY_OK;
-	char		tempBuf[TEXT_FIELD_SIZE + 5];
+	BOOL		changed;
+	static		char *tempBuf= NULL;
+	static		unsigned int tempBuflen = 0;
 
+	if (!tempBuf)
+		tempBuflen = 0;
 	/*---------
 	 *	rgbValueOffset is *ONLY* for character and binary data.
 	 *	pcbValueOffset is for computing any pcbValue location
@@ -437,23 +441,62 @@ copy_and_convert_field(StatementClass *stmt, Int4 field_type, void *value, Int2 
 				break;
 
 			default:
-				/* convert linefeeds to carriage-return/linefeed */
-				len = convert_linefeeds(value, tempBuf, sizeof(tempBuf));
-				ptr = tempBuf;
+				if (stmt->current_col >= 0 && stmt->bindings[stmt->current_col].data_left == -2)
+					stmt->bindings[stmt->current_col].data_left = (cbValueMax > 0) ? 0 : -1; /* This seems to be needed for ADO ? */
+				if (stmt->current_col < 0 || stmt->bindings[stmt->current_col].data_left < 0)
+				{
+					/* convert linefeeds to carriage-return/linefeed */
+					len = convert_linefeeds(value, NULL, 0, &changed);
+					if (cbValueMax == 0) /* just returns length info */
+					{
+						result = COPY_RESULT_TRUNCATED;
+						break;
+					}
+					if (changed || len >= cbValueMax)
+					{
+						if (len >= (int) tempBuflen)
+						{
+							tempBuf = realloc(tempBuf, len + 1);
+							tempBuflen = len + 1;
+						}
+						convert_linefeeds(value, tempBuf, tempBuflen, &changed);
+						ptr = tempBuf;
+					}
+					else
+					{
+						if (tempBuf)
+						{
+							free(tempBuf);
+							tempBuf = NULL;
+						}
+						ptr = value;
+					}
+				}
+				else
+					ptr = tempBuf;
 
 				mylog("DEFAULT: len = %d, ptr = '%s'\n", len, ptr);
 
 				if (stmt->current_col >= 0)
 				{
 					if (stmt->bindings[stmt->current_col].data_left == 0)
+					{
+						if (tempBuf)
+						{
+							free(tempBuf);
+							tempBuf = NULL;
+						}
+						/* The following seems to be needed for ADO ? */
+						stmt->bindings[stmt->current_col].data_left = -2;
 						return COPY_NO_DATA_FOUND;
+					}
 					else if (stmt->bindings[stmt->current_col].data_left > 0)
 					{
-						ptr += len - stmt->bindings[stmt->current_col].data_left;
+						ptr += strlen(ptr) - stmt->bindings[stmt->current_col].data_left;
 						len = stmt->bindings[stmt->current_col].data_left;
 					}
 					else
-						stmt->bindings[stmt->current_col].data_left = strlen(ptr);
+						stmt->bindings[stmt->current_col].data_left = len;
 				}
 
 				if (cbValueMax > 0)
@@ -461,7 +504,8 @@ copy_and_convert_field(StatementClass *stmt, Int4 field_type, void *value, Int2 
 					copy_len = (len >= cbValueMax) ? cbValueMax - 1 : len;
 
 					/* Copy the data */
-					strncpy_null(rgbValueBindRow, ptr, copy_len + 1);
+					memcpy(rgbValueBindRow, ptr, copy_len);
+					rgbValueBindRow[copy_len] = '\0';
 
 					/* Adjust data_left for next time */
 					if (stmt->current_col >= 0)
@@ -472,8 +516,16 @@ copy_and_convert_field(StatementClass *stmt, Int4 field_type, void *value, Int2 
 				 * Finally, check for truncation so that proper status can
 				 * be returned
 				 */
-				if (len >= cbValueMax)
+				if (cbValueMax > 0 && len >= cbValueMax)
 					result = COPY_RESULT_TRUNCATED;
+				else
+				{
+					if (tempBuf)
+					{
+						free(tempBuf);
+						tempBuf = NULL;
+					}
+				}
 
 
 				mylog("    SQL_C_CHAR, default: len = %d, cbValueMax = %d, rgbValueBindRow = '%s'\n", len, cbValueMax, rgbValueBindRow);
@@ -629,14 +681,23 @@ copy_and_convert_field(StatementClass *stmt, Int4 field_type, void *value, Int2 
 				/* truncate if necessary */
 				/* convert octal escapes to bytes */
 
-				len = convert_from_pgbinary(value, tempBuf, sizeof(tempBuf));
+				if (len = strlen(value), len >= (int) tempBuflen)
+				{
+					tempBuf = realloc(tempBuf, len + 1);
+					tempBuflen = len + 1;
+				}
+				len = convert_from_pgbinary(value, tempBuf, tempBuflen);
 				ptr = tempBuf;
 
 				if (stmt->current_col >= 0)
 				{
 					/* No more data left for this column */
 					if (stmt->bindings[stmt->current_col].data_left == 0)
+					{
+						free(tempBuf);
+						tempBuf = NULL;
 						return COPY_NO_DATA_FOUND;
+					}
 
 					/*
 					 * Second (or more) call to SQLGetData so move the
@@ -673,6 +734,11 @@ copy_and_convert_field(StatementClass *stmt, Int4 field_type, void *value, Int2 
 				if (len > cbValueMax)
 					result = COPY_RESULT_TRUNCATED;
 
+				if (tempBuf)
+				{
+					free(tempBuf);
+					tempBuf = NULL;
+				}
 				mylog("SQL_C_BINARY: len = %d, copy_len = %d\n", len, copy_len);
 				break;
 
@@ -690,10 +756,181 @@ copy_and_convert_field(StatementClass *stmt, Int4 field_type, void *value, Int2 
 }
 
 
+/*--------------------------------------------------------------------
+ *	Functions/Macros to get rid of query size limit.
+ *
+ *	I always used the follwoing macros to convert from
+ *	old_statement to new_statement.	 Please improve it
+ *	if you have a better way.	Hiroshi 2001/05/22
+ *--------------------------------------------------------------------
+ */
+#define	INIT_MIN_ALLOC	4096
+static int enlarge_statement(StatementClass *stmt, unsigned int newsize)
+{
+	unsigned int	newalsize = INIT_MIN_ALLOC;
+	static char *func = "enlarge_statement";
+
+	if (stmt->stmt_size_limit > 0 && stmt->stmt_size_limit < (int) newsize)
+	{
+		stmt->errormsg = "Query buffer overflow in copy_statement_with_parameters";
+		stmt->errornumber = STMT_EXEC_ERROR;
+		SC_log_error(func, "", stmt);
+		return -1;
+	}
+	while (newalsize <= newsize)
+		newalsize *= 2;
+	if (!(stmt->stmt_with_params = realloc(stmt->stmt_with_params, newalsize)))
+	{
+		stmt->errormsg = "Query buffer allocate error in copy_statement_with_parameters";
+		stmt->errornumber = STMT_EXEC_ERROR;
+		SC_log_error(func, "", stmt);
+		return 0;
+	}
+	return newalsize;
+}
+
+/*----------
+ *	Enlarge stmt_with_params if necessary.
+ *----------
+ */
+#define	ENLARGE_NEWSTATEMENT(newpos) \
+	if (newpos >= new_stsize) \
+	{ \
+		if ((new_stsize = enlarge_statement(stmt, newpos)) <= 0) \
+			return SQL_ERROR; \
+		new_statement = stmt->stmt_with_params; \
+	}
+/*----------
+ *	Initialize stmt_with_params, new_statement etc.
+ *----------
+ */
+#define	CVT_INIT(size) \
+{ \
+	if (stmt->stmt_with_params) \
+		free(stmt->stmt_with_params); \
+	if (stmt->stmt_size_limit > 0) \
+		new_stsize = stmt->stmt_size_limit; \
+	else \
+	{ \
+		new_stsize = INIT_MIN_ALLOC; \
+		while (new_stsize <= size) \
+			new_stsize *= 2; \
+	} \
+	new_statement = malloc(new_stsize); \
+	stmt->stmt_with_params = new_statement; \
+	npos = 0; \
+	new_statement[0] = '\0'; \
+}
+/*----------
+ *	Terminate the stmt_with_params string with NULL.
+ *----------
+ */
+#define	CVT_TERMINATE { new_statement[npos] = '\0'; }
+
+/*----------
+ *	Append a data.
+ *----------
+ */
+#define	CVT_APPEND_DATA(s, len) \
+{ \
+	unsigned int	newpos = npos + len; \
+	ENLARGE_NEWSTATEMENT(newpos) \
+	memcpy(&new_statement[npos], s, len); \
+	npos = newpos; \
+	new_statement[npos] = '\0'; \
+}
+/*----------
+ *	Append a string.
+ *----------
+ */
+#define	CVT_APPEND_STR(s) \
+{ \
+	unsigned int len = strlen(s); \
+	CVT_APPEND_DATA(s, len); \
+}
+/*----------
+ *	Append a char.	
+ *----------
+ */
+#define	CVT_APPEND_CHAR(c) \
+{ \
+	ENLARGE_NEWSTATEMENT(npos + 1); \
+	new_statement[npos++] = c; \
+}
+/*----------
+ *	Append a binary data.
+ *	Newly reqeuired size may be overestimated currently. 
+ *----------
+ */
+#define	CVT_APPEND_BINARY(buf, used) \
+{ \
+	unsigned int	newlimit = npos + 5 * used; \
+	ENLARGE_NEWSTATEMENT(newlimit); \
+	npos += convert_to_pgbinary(buf, &new_statement[npos], used); \
+}
+/*----------
+ *
+ *----------
+ */
+#define	CVT_SPECIAL_CHARS(buf, used) \
+{ \
+	int	cnvlen = convert_special_chars(buf, NULL, used); \
+	unsigned int	newlimit = npos + cnvlen; \
+\
+	ENLARGE_NEWSTATEMENT(newlimit); \
+	convert_special_chars(buf, &new_statement[npos], used); \
+	npos += cnvlen; \
+}
+
+/*----------
+ *	Check if the statement is	
+ *	SELECT ... INTO table FROM .....
+ *	This isn't really a strict check but ...
+ *---------- 
+ */
+static BOOL
+into_table_from(const char *stmt)
+{
+	if (strnicmp(stmt, "into", 4))
+		return FALSE;
+	stmt += 4;
+	if (!isspace((unsigned char) *stmt))
+		return FALSE;
+	while (isspace((unsigned char) *(++stmt)));
+	switch (*stmt)
+	{
+		case '\0':
+		case ',':
+		case '\'':
+			return FALSE;
+		case '\"': /* double quoted table name ? */
+			do
+			{
+				do
+				{
+					 while (*(++stmt) != '\"' && *stmt);
+				}
+				while (*stmt && *(++stmt) == '\"');
+				while (*stmt && !isspace((unsigned char) *stmt) && *stmt != '\"') stmt++;
+			}
+			while (*stmt == '\"');
+			break;
+		default:
+			while (!isspace((unsigned char) *(++stmt)));
+			break;
+	}
+	if (! *stmt)
+		return FALSE;
+	while (isspace((unsigned char) *(++stmt)));
+	if (strnicmp(stmt, "from", 4))
+		return FALSE;
+	return isspace((unsigned char) stmt[4]);
+}
+
 /*
  *	This function inserts parameters into an SQL statements.
  *	It will also modify a SELECT statement for use with declare/fetch cursors.
- *	This function no longer does any dynamic memory allocation!
+ *	This function does a dynamic memory allocation to get rid of query siz elimit!
  */
 int
 copy_statement_with_parameters(StatementClass *stmt)
@@ -704,22 +941,25 @@ copy_statement_with_parameters(StatementClass *stmt)
 				oldstmtlen;
 	char		param_string[128],
 				tmp[256],
-				cbuf[TEXT_FIELD_SIZE + 5];
+				cbuf[PG_NUMERIC_MAX_PRECISION * 2]; /* seems big enough to handle the data in this function */
 	int			param_number;
 	Int2		param_ctype,
 				param_sqltype;
 	char	   *old_statement = stmt->statement;
 	char	   *new_statement = stmt->stmt_with_params;
+	unsigned int	new_stsize = 0;
 	SIMPLE_TIME st;
 	time_t		t = time(NULL);
 	struct tm  *tim;
 	SDWORD		used;
 	char	   *buffer,
 			   *buf;
-	char		in_quote = FALSE;
+	BOOL		in_quote = FALSE, in_dquote = FALSE, in_escape = FALSE;
 	Oid			lobj_oid;
 	int			lobj_fd,
 				retval;
+	BOOL	check_select_into = FALSE; /* select into check */
+	unsigned int	declare_pos;
 
 
 	if (!old_statement)
@@ -740,43 +980,66 @@ copy_statement_with_parameters(StatementClass *stmt)
 	if (stmt->cursor_name[0] == '\0')
 		sprintf(stmt->cursor_name, "SQL_CUR%p", stmt);
 
+	oldstmtlen = strlen(old_statement);
+	CVT_INIT(oldstmtlen);
 	/* For selects, prepend a declare cursor to the statement */
 	if (stmt->statement_type == STMT_TYPE_SELECT && globals.use_declarefetch)
 	{
 		sprintf(new_statement, "declare %s cursor for ", stmt->cursor_name);
 		npos = strlen(new_statement);
-	}
-	else
-	{
-		new_statement[0] = '0';
-		npos = 0;
+		check_select_into = TRUE;
+		declare_pos = npos;
 	}
 
 	param_number = -1;
 
-	oldstmtlen = strlen(old_statement);
 #ifdef MULTIBYTE
 	multibyte_init();
 #endif
 
 	for (opos = 0; opos < oldstmtlen; opos++)
 	{
+#ifdef MULTIBYTE
+		if (multibyte_char_check(old_statement[opos]) != 0)
+		{
+			CVT_APPEND_CHAR(old_statement[opos]);
+			continue;
+		}
+		/*
+		 *	From here we are guaranteed to handle a
+		 *	1-byte character.
+		 */
+#endif
 		/* Squeeze carriage-return/linefeed pairs to linefeed only */
 		if (old_statement[opos] == '\r' && opos + 1 < oldstmtlen &&
 			old_statement[opos + 1] == '\n')
 			continue;
 
+		else if (in_escape) /* escape check */
+		{
+			in_escape = FALSE;
+			CVT_APPEND_CHAR(old_statement[opos]);
+			continue;
+		}	
+		else if (in_quote || in_dquote) /* quote/double quote check */
+		{
+			if (old_statement[opos] == '\'' && in_quote)
+				in_quote = FALSE;
+			else if (old_statement[opos] == '\"' && in_dquote)
+				in_dquote = FALSE;
+			CVT_APPEND_CHAR(old_statement[opos]);
+			continue;	
+		}
+		/*
+		 *	From here we are guranteed to be in neither
+		 *	an escape nor a quote nor a double quote.
+		 */
 		/*
 		 * Handle literals (date, time, timestamp) and ODBC scalar
 		 * functions
 		 */
-#ifdef MULTIBYTE
-		else if (multibyte_char_check(old_statement[opos]) == 0 && old_statement[opos] == '{')
-		{
-#else
 		else if (old_statement[opos] == '{')
 		{
-#endif
 			char	   *esc;
 			char	   *begin = &old_statement[opos + 1];
 
@@ -796,13 +1059,12 @@ copy_statement_with_parameters(StatementClass *stmt)
 			esc = convert_escape(begin);
 			if (esc)
 			{
-				memcpy(&new_statement[npos], esc, strlen(esc));
-				npos += strlen(esc);
+				CVT_APPEND_STR(esc);
 			}
 			else
 			{					/* it's not a valid literal so just copy */
 				*end = '}';
-				new_statement[npos++] = old_statement[opos];
+				CVT_APPEND_CHAR(old_statement[opos]);
 				continue;
 			}
 
@@ -816,14 +1078,26 @@ copy_statement_with_parameters(StatementClass *stmt)
 		 * so. All the queries I've seen expect the driver to put quotes
 		 * if needed.
 		 */
-		else if (old_statement[opos] == '?' && !in_quote)
+		else if (old_statement[opos] == '?')
 			;					/* ok */
 		else
 		{
 			if (old_statement[opos] == '\'')
-				in_quote = (in_quote ? FALSE : TRUE);
-
-			new_statement[npos++] = old_statement[opos];
+				in_quote = TRUE;
+			else if (old_statement[opos] == '\\')
+				in_escape = TRUE;
+			else if (old_statement[opos] == '\"')
+				in_dquote = TRUE;
+			else if (check_select_into && /* select into check */
+    				 opos > 0 &&
+    				 isspace((unsigned char) old_statement[opos - 1]) &&
+    				 into_table_from(&old_statement[opos]))
+			{
+				stmt->statement_type = STMT_TYPE_CREATE;
+				memmove(new_statement, new_statement + declare_pos, npos - declare_pos);
+				npos -= declare_pos;
+			}
+			CVT_APPEND_CHAR(old_statement[opos]);
 			continue;
 		}
 
@@ -836,14 +1110,13 @@ copy_statement_with_parameters(StatementClass *stmt)
 		{
 			if (stmt->pre_executing)
 			{
-				strcpy(&new_statement[npos], "NULL");
-				npos += 4;
+				CVT_APPEND_STR("NULL");
 				stmt->inaccurate_result = TRUE;
 				continue;
 			}
 			else
 			{
-				new_statement[npos++] = '?';
+				CVT_APPEND_CHAR('?');
 				continue;
 			}
 		}
@@ -863,8 +1136,7 @@ copy_statement_with_parameters(StatementClass *stmt)
 		/* Handle NULL parameter data */
 		if (used == SQL_NULL_DATA)
 		{
-			strcpy(&new_statement[npos], "NULL");
-			npos += 4;
+			CVT_APPEND_STR("NULL");
 			continue;
 		}
 
@@ -876,14 +1148,13 @@ copy_statement_with_parameters(StatementClass *stmt)
 		{
 			if (stmt->pre_executing)
 			{
-				strcpy(&new_statement[npos], "NULL");
-				npos += 4;
+				CVT_APPEND_STR("NULL");
 				stmt->inaccurate_result = TRUE;
 				continue;
 			}
 			else
 			{
-				new_statement[npos++] = '?';
+				CVT_APPEND_CHAR('?');
 				continue;
 			}
 		}
@@ -1002,7 +1273,7 @@ copy_statement_with_parameters(StatementClass *stmt)
 				/* error */
 				stmt->errormsg = "Unrecognized C_parameter type in copy_statement_with_parameters";
 				stmt->errornumber = STMT_NOT_IMPLEMENTED_ERROR;
-				new_statement[npos] = '\0';		/* just in case */
+				CVT_TERMINATE	/* just in case */
 				SC_log_error(func, "", stmt);
 				return SQL_ERROR;
 		}
@@ -1018,20 +1289,18 @@ copy_statement_with_parameters(StatementClass *stmt)
 			case SQL_VARCHAR:
 			case SQL_LONGVARCHAR:
 
-				new_statement[npos++] = '\'';	/* Open Quote */
+				CVT_APPEND_CHAR('\'');	/* Open Quote */
 
 				/* it was a SQL_C_CHAR */
 				if (buf)
 				{
-					convert_special_chars(buf, &new_statement[npos], used);
-					npos += strlen(&new_statement[npos]);
+					CVT_SPECIAL_CHARS(buf, used);
 				}
 
 				/* it was a numeric type */
 				else if (param_string[0] != '\0')
 				{
-					strcpy(&new_statement[npos], param_string);
-					npos += strlen(param_string);
+					CVT_APPEND_STR(param_string);
 				}
 
 				/* it was date,time,timestamp -- use m,d,y,hh,mm,ss */
@@ -1040,11 +1309,10 @@ copy_statement_with_parameters(StatementClass *stmt)
 					sprintf(tmp, "%.4d-%.2d-%.2d %.2d:%.2d:%.2d",
 							st.y, st.m, st.d, st.hh, st.mm, st.ss);
 
-					strcpy(&new_statement[npos], tmp);
-					npos += strlen(tmp);
+					CVT_APPEND_STR(tmp);
 				}
 
-				new_statement[npos++] = '\'';	/* Close Quote */
+				CVT_APPEND_CHAR('\'');	/* Close Quote */
 
 				break;
 
@@ -1057,8 +1325,7 @@ copy_statement_with_parameters(StatementClass *stmt)
 
 				sprintf(tmp, "'%.4d-%.2d-%.2d'", st.y, st.m, st.d);
 
-				strcpy(&new_statement[npos], tmp);
-				npos += strlen(tmp);
+				CVT_APPEND_STR(tmp);
 				break;
 
 			case SQL_TIME:
@@ -1070,8 +1337,7 @@ copy_statement_with_parameters(StatementClass *stmt)
 
 				sprintf(tmp, "'%.2d:%.2d:%.2d'", st.hh, st.mm, st.ss);
 
-				strcpy(&new_statement[npos], tmp);
-				npos += strlen(tmp);
+				CVT_APPEND_STR(tmp);
 				break;
 
 			case SQL_TIMESTAMP:
@@ -1085,21 +1351,20 @@ copy_statement_with_parameters(StatementClass *stmt)
 				sprintf(tmp, "'%.4d-%.2d-%.2d %.2d:%.2d:%.2d'",
 						st.y, st.m, st.d, st.hh, st.mm, st.ss);
 
-				strcpy(&new_statement[npos], tmp);
-				npos += strlen(tmp);
+				CVT_APPEND_STR(tmp);
 
 				break;
 
 			case SQL_BINARY:
 			case SQL_VARBINARY:/* non-ascii characters should be
 								 * converted to octal */
-				new_statement[npos++] = '\'';	/* Open Quote */
+				CVT_APPEND_CHAR('\'');	/* Open Quote */
 
 				mylog("SQL_VARBINARY: about to call convert_to_pgbinary, used = %d\n", used);
 
-				npos += convert_to_pgbinary(buf, &new_statement[npos], used);
+				CVT_APPEND_BINARY(buf, used);
 
-				new_statement[npos++] = '\'';	/* Close Quote */
+				CVT_APPEND_CHAR('\'');	/* Close Quote */
 
 				break;
 
@@ -1194,8 +1459,7 @@ copy_statement_with_parameters(StatementClass *stmt)
 				 * the large object
 				 */
 				sprintf(param_string, "'%d'", lobj_oid);
-				strcpy(&new_statement[npos], param_string);
-				npos += strlen(param_string);
+				CVT_APPEND_STR(param_string);
 
 				break;
 
@@ -1209,16 +1473,14 @@ copy_statement_with_parameters(StatementClass *stmt)
 				if (buf)
 					my_strcpy(param_string, sizeof(param_string), buf, used);
 				sprintf(tmp, "'%s'::float4", param_string);
-				strcpy(&new_statement[npos], tmp);
-				npos += strlen(tmp);
+				CVT_APPEND_STR(tmp);
 				break;
 			case SQL_FLOAT:
 			case SQL_DOUBLE:
 				if (buf)
 					my_strcpy(param_string, sizeof(param_string), buf, used);
 				sprintf(tmp, "'%s'::float8", param_string);
-				strcpy(&new_statement[npos], tmp);
-				npos += strlen(tmp);
+				CVT_APPEND_STR(tmp);
 				break;
 			case SQL_NUMERIC:
 				if (buf)
@@ -1231,33 +1493,30 @@ copy_statement_with_parameters(StatementClass *stmt)
 				}
 				else
 					sprintf(cbuf, "'%s'::numeric", param_string);
-				my_strcpy(&new_statement[npos], sizeof(stmt->stmt_with_params) - npos - 1, cbuf, strlen(cbuf));
-				npos += strlen(&new_statement[npos]);
+				CVT_APPEND_STR(cbuf);
 				break;
 			default:			/* a numeric type or SQL_BIT */
 				if (param_sqltype == SQL_BIT)
-					new_statement[npos++] = '\'';		/* Open Quote */
+					CVT_APPEND_CHAR('\'');		/* Open Quote */
 
 				if (buf)
 				{
-					my_strcpy(&new_statement[npos], sizeof(stmt->stmt_with_params) - npos, buf, used);
-					npos += strlen(&new_statement[npos]);
+					CVT_APPEND_DATA(buf, used);
 				}
 				else
 				{
-					strcpy(&new_statement[npos], param_string);
-					npos += strlen(param_string);
+					CVT_APPEND_STR(param_string);
 				}
 
 				if (param_sqltype == SQL_BIT)
-					new_statement[npos++] = '\'';		/* Close Quote */
+					CVT_APPEND_CHAR('\'');		/* Close Quote */
 
 				break;
 		}
 	}							/* end, for */
 
 	/* make sure new_statement is always null-terminated */
-	new_statement[npos] = '\0';
+	CVT_TERMINATE
 
 	if (stmt->hdbc->DriverToDataSource != NULL)
 	{
@@ -1458,29 +1717,47 @@ parse_datetime(char *buf, SIMPLE_TIME *st)
 
 /*	Change linefeed to carriage-return/linefeed */
 int
-convert_linefeeds(char *si, char *dst, size_t max)
+convert_linefeeds(const char *si, char *dst, size_t max, BOOL *changed)
 {
 	size_t		i = 0,
 				out = 0;
 
-	for (i = 0; i < strlen(si) && out < max - 1; i++)
+	if (max == 0)
+		max = 0xffffffff;
+	*changed = FALSE;
+	for (i = 0; si[i] && out < max - 1; i++)
 	{
 		if (si[i] == '\n')
 		{
 			/* Only add the carriage-return if needed */
 			if (i > 0 && si[i - 1] == '\r')
 			{
-				dst[out++] = si[i];
+				if (dst)
+					dst[out++] = si[i];
+				else
+					out++;
 				continue;
 			}
+			*changed = TRUE;
 
-			dst[out++] = '\r';
-			dst[out++] = '\n';
+			if (dst)
+			{
+				dst[out++] = '\r';
+				dst[out++] = '\n';
+			}
+			else
+				out += 2;
 		}
 		else
-			dst[out++] = si[i];
+		{
+			if (dst)
+				dst[out++] = si[i];
+			else
+				out++;
+		}
 	}
-	dst[out] = '\0';
+	if (dst)
+		dst[out] = '\0';
 	return out;
 }
 
@@ -1489,45 +1766,51 @@ convert_linefeeds(char *si, char *dst, size_t max)
  *	Change carriage-return/linefeed to just linefeed
  *	Plus, escape any special characters.
  */
-char *
+int
 convert_special_chars(char *si, char *dst, int used)
 {
 	size_t		i = 0,
 				out = 0,
 				max;
-	static char sout[TEXT_FIELD_SIZE + 5];
-	char	   *p;
+	char	   *p = NULL;
 
-	if (dst)
-		p = dst;
-	else
-		p = sout;
-
-	p[0] = '\0';
 
 	if (used == SQL_NTS)
 		max = strlen(si);
 	else
 		max = used;
+	if (dst)
+	{
+		p = dst;
+		p[0] = '\0';
+	}
 #ifdef MULTIBYTE
 	multibyte_init();
 #endif
 
 	for (i = 0; i < max; i++)
 	{
-		if (si[i] == '\r' && i + 1 < strlen(si) && si[i + 1] == '\n')
+		if (si[i] == '\r' && si[i + 1] == '\n')
 			continue;
 #ifdef MULTIBYTE
 		else if (multibyte_char_check(si[i]) == 0 && (si[i] == '\'' || si[i] == '\\'))
 #else
 		else if (si[i] == '\'' || si[i] == '\\')
 #endif
-			p[out++] = '\\';
-
-		p[out++] = si[i];
+		{
+			if (p)
+				p[out++] = '\\';
+			else
+				out++;
+		}
+		if (p)
+			p[out++] = si[i];
+		else
+			out++;
 	}
-	p[out] = '\0';
-	return p;
+	if (p)
+		p[out] = '\0';
+	return out;
 }
 
 
@@ -1583,11 +1866,11 @@ conv_from_hex(unsigned char *s)
 int
 convert_from_pgbinary(unsigned char *value, unsigned char *rgbValue, int cbValueMax)
 {
-	size_t		i;
+	size_t		i, ilen = strlen(value);
 	int			o = 0;
 
 
-	for (i = 0; i < strlen(value);)
+	for (i = 0; i < ilen;)
 	{
 		if (value[i] == '\\')
 		{
@@ -1654,10 +1937,10 @@ convert_to_pgbinary(unsigned char *in, char *out, int len)
 void
 encode(char *in, char *out)
 {
-	unsigned int i,
+	unsigned int i, ilen = strlen(in),
 				o = 0;
 
-	for (i = 0; i < strlen(in); i++)
+	for (i = 0; i < ilen; i++)
 	{
 		if (in[i] == '+')
 		{
@@ -1681,10 +1964,10 @@ encode(char *in, char *out)
 void
 decode(char *in, char *out)
 {
-	unsigned int i,
+	unsigned int i, ilen = strlen(in),
 				o = 0;
 
-	for (i = 0; i < strlen(in); i++)
+	for (i = 0; i < ilen; i++)
 	{
 		if (in[i] == '+')
 			out[o++] = ' ';

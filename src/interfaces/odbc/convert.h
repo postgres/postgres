@@ -37,8 +37,8 @@ int			copy_statement_with_parameters(StatementClass *stmt);
 char	   *convert_escape(char *value);
 char	   *convert_money(char *s);
 char		parse_datetime(char *buf, SIMPLE_TIME *st);
-int			convert_linefeeds(char *s, char *dst, size_t max);
-char	   *convert_special_chars(char *si, char *dst, int used);
+int		convert_linefeeds(const char *s, char *dst, size_t max, BOOL *changed);
+int	   convert_special_chars(char *si, char *dst, int used);
 
 int			convert_pgbinary_to_char(char *value, char *rgbValue, int cbValueMax);
 int			convert_from_pgbinary(unsigned char *value, unsigned char *rgbValue, int cbValueMax);

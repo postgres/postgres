@@ -131,6 +131,7 @@ SQLAllocStmt(HDBC hdbc,
 	/* Copy default statement options based from Connection options */
 	stmt->options = conn->stmtOptions;
 
+	stmt->stmt_size_limit = CC_get_max_query_len(conn);
 	/* Save the handle for later */
 	stmt->phstmt = phstmt;
 
@@ -249,7 +250,8 @@ SC_Constructor(void)
 		rv->errormsg_created = FALSE;
 
 		rv->statement = NULL;
-		rv->stmt_with_params[0] = '\0';
+		rv->stmt_with_params = NULL;
+		rv->stmt_size_limit = -1;
 		rv->statement_type = STMT_TYPE_UNKNOWN;
 
 		rv->bindings = NULL;
@@ -313,6 +315,11 @@ SC_Destructor(StatementClass *self)
 
 	if (self->statement)
 		free(self->statement);
+	if (self->stmt_with_params)
+	{
+		free(self->stmt_with_params);
+		self->stmt_with_params = NULL;
+	}
 
 	SC_free_params(self, STMT_FREE_PARAMS_ALL);
 

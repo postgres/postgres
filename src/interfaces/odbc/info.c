@@ -379,16 +379,7 @@ SQLGetInfo(
 		case SQL_MAX_STATEMENT_LEN:		/* ODBC 2.0 */
 			/* maybe this should be 0? */
 			len = 4;
-			/* Long Queries in 7.0+ */
-			if (PG_VERSION_GE(conn, 7.0))
-				value = MAX_STATEMENT_LEN;
-			/* Prior to 7.0 we used 2*BLCKSZ */
-			else if (PG_VERSION_GE(conn, 6.5))
-				value = (2 * BLCKSZ);
-			else
-				/* Prior to 6.5 we used BLCKSZ */
-				value = BLCKSZ;
-
+			value = CC_get_max_query_len(conn);
 			break;
 
 		case SQL_MAX_TABLE_NAME_LEN:	/* ODBC 1.0 */

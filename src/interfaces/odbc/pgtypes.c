@@ -503,6 +503,13 @@ getCharPrecision(StatementClass *stmt, Int4 type, int col, int handle_unknown_si
 	 * Static Precision (i.e., the Maximum Precision of the datatype) This
 	 * has nothing to do with a result set.
 	 */
+	if (maxsize == TEXT_FIELD_SIZE + 1) /* magic length for testing */
+	{
+		if (PG_VERSION_GE(SC_get_conn(stmt), 7.1))
+			maxsize = 0;
+		else 
+			maxsize = TEXT_FIELD_SIZE;
+	}
 	if (col < 0)
 		return maxsize;
 

@@ -307,6 +307,6 @@ void		CC_lookup_lo(ConnectionClass *conn);
 void		CC_lookup_pg_version(ConnectionClass *conn);
 void		CC_initialize_pg_version(ConnectionClass *conn);
 void		CC_log_error(char *func, char *desc, ConnectionClass *self);
-
+int		CC_get_max_query_len(const  ConnectionClass *self);
 
 #endif

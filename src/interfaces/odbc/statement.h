@@ -210,9 +210,10 @@ struct StatementClass_
 
 	char		cursor_name[MAX_CURSOR_LEN + 1];
 
-	char		stmt_with_params[STD_STATEMENT_LEN];	/* statement after
+	char		*stmt_with_params;	/* statement after
 														 * parameter
 														 * substitution */
+	int		stmt_size_limit;	
 
 	char		pre_executing;	/* This statement is prematurely executing */
 	char		inaccurate_result;		/* Current status is PREMATURE but

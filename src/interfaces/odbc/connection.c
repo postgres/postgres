@@ -915,6 +915,7 @@ CC_send_query(ConnectionClass *self, char *query, QueryInfo *qi)
 	char		swallow;
 	int			id;
 	SocketClass *sock = self->sock;
+	int		maxlen;
 
 	/* ERROR_MSG_LENGTH is suffcient */
 	static char msgbuffer[ERROR_MSG_LENGTH + 1];
@@ -926,7 +927,8 @@ CC_send_query(ConnectionClass *self, char *query, QueryInfo *qi)
 	qlog("conn=%u, query='%s'\n", self, query);
 
 	/* Indicate that we are sending a query to the backend */
-	if (strlen(query) > MAX_MESSAGE_LEN - 2)
+	maxlen = CC_get_max_query_len(self);
+	if (maxlen > 0 && maxlen < (int) strlen(query) + 1)
 	{
 		self->errornumber = CONNECTION_MSG_TOO_LONG;
 		self->errormsg = "Query string is too long";
@@ -1642,4 +1644,19 @@ CC_log_error(char *func, char *desc, ConnectionClass *self)
 	else
 		qlog("INVALID CONNECTION HANDLE ERROR: func=%s, desc='%s'\n", func, desc);
 #undef PRN_NULLCHECK
+}
+
+int     CC_get_max_query_len(const ConnectionClass *conn)
+{
+        int     value;
+        /* Long Queries in 7.0+ */
+        if (PG_VERSION_GE(conn, 7.0))
+                value = 0 /* MAX_STATEMENT_LEN */;
+        /* Prior to 7.0 we used 2*BLCKSZ */
+        else if (PG_VERSION_GE(conn, 6.5))
+                value = (2 * BLCKSZ);
+        else
+                /* Prior to 6.5 we used BLCKSZ */
+                value = BLCKSZ;
+        return value;
 }
