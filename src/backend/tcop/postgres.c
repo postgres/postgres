@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/tcop/postgres.c,v 1.437 2004/11/14 19:35:31 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/tcop/postgres.c,v 1.438 2004/11/20 00:48:58 tgl Exp $
  *
  * NOTES
  *	  this is the "main" module of the postgres backend and
@@ -2904,12 +2904,11 @@ PostgresMain(int argc, char *argv[], const char *username)
 		 * This is also a good time to send collected statistics to the
 		 * collector, and to update the PS stats display.  We avoid doing
 		 * those every time through the message loop because it'd slow
-		 * down processing of batched messages.
+		 * down processing of batched messages, and because we don't want
+		 * to report uncommitted updates (that confuses autovacuum).
 		 */
 		if (send_rfq)
 		{
-			pgstat_report_tabstat();
-
 			if (IsTransactionOrTransactionBlock())
 			{
 				set_ps_display("idle in transaction");
@@ -2917,6 +2916,8 @@ PostgresMain(int argc, char *argv[], const char *username)
 			}
 			else
 			{
+				pgstat_report_tabstat();
+
 				set_ps_display("idle");
 				pgstat_report_activity("<IDLE>");
 			}
