@@ -1,6 +1,6 @@
 TODO list for PostgreSQL
 ========================
-Last updated:		Tue Feb 19 15:30:51 EST 2002
+Last updated:		Tue Feb 19 16:36:28 EST 2002
 
 Current maintainer:	Bruce Momjian (pgman@candle.pha.pa.us)
 
@@ -426,7 +426,7 @@ MISCELLANEOUS
 * Get faster regex() code from Henry Spencer <henry@zoo.utoronto.ca>
   when it is available
 * Use mmap() rather than SYSV shared memory or to write WAL files (?) [mmap]
-
+* Improve caching of attribute offsets when NULLs exist in the row
 
 SOURCE CODE
 ===========
