@@ -2,12 +2,11 @@
 #include <c.h>
 #include "stringutils.h"
 
-//
 #include <ctype.h>
 #include <stdlib.h>
 #include <string.h>
 #include <assert.h>
-//
+
 #include <stdio.h>
 
 #include <postgres.h>

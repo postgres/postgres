@@ -65,7 +65,7 @@ static char * complete_from_list(char *text, int state);
 
 static PGresult * exec_query(char * query);
 char * quote_file_name(char *text, int match_type, char * quote_pointer);
-//static char * dequote_file_name(char *text, char quote_char);
+/*static char * dequote_file_name(char *text, char quote_char);*/
 static char * previous_word(int point, int skip);
 
 /* These variables are used to pass information into the completion functions.
@@ -98,7 +98,7 @@ void initialize_readline(PGconn ** conn)
     rl_attempted_completion_function = psql_completion;
 
     rl_filename_quoting_function = quote_file_name;
-//    rl_filename_dequoting_function = dequote_file_name;
+	/*rl_filename_dequoting_function = dequote_file_name;*/
     rl_filename_quote_characters = "qwertyuioplkjhgfdsazxcvbnm";
 
     rl_special_prefixes = "()'";
