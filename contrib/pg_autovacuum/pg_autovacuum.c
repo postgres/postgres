@@ -4,7 +4,7 @@
  * Revisions by Christopher B. Browne, Liberty RMS
  * Win32 Service code added by Dave Page
  *
- * $PostgreSQL: pgsql/contrib/pg_autovacuum/pg_autovacuum.c,v 1.27 2004/12/02 22:48:10 momjian Exp $
+ * $PostgreSQL: pgsql/contrib/pg_autovacuum/pg_autovacuum.c,v 1.28 2005/01/24 00:13:38 neilc Exp $
  */
 
 #include "postgres_fe.h"
@@ -22,11 +22,10 @@
 #include "pg_autovacuum.h"
 
 #ifdef WIN32
-unsigned int sleep();
-
 SERVICE_STATUS ServiceStatus;
 SERVICE_STATUS_HANDLE hStatus;
 int			appMode = 0;
+char       deps[255];
 #endif
 
 /* define atooid */
@@ -1073,6 +1072,7 @@ get_cmd_args(int argc, char *argv[])
 #ifndef WIN32
 	args->daemonize = 0;
 #else
+    args->service_dependencies = 0;
 	args->install_as_service = 0;
 	args->remove_as_service = 0;
 	args->service_user = 0;
@@ -1166,7 +1166,17 @@ get_cmd_args(int argc, char *argv[])
 				exit(0);
 #ifdef WIN32
 			case 'E':
-				args->service_dependencies = optarg;
+				/*
+				 * CreateService() expects a list of service
+				 * dependencies as a NUL-separated, double-NUL
+				 * terminated list (although we only allow the user to
+				 * specify a single dependency). So we zero out the
+				 * list first, and make sure to leave room for two NUL
+				 * terminators.
+				 */
+				ZeroMemory(deps, sizeof(deps));
+				snprintf(deps, sizeof(deps) - 2, "%s", optarg);
+				args->service_dependencies = deps;
 				break;
 			case 'I':
 				args->install_as_service++;
@@ -1359,7 +1369,7 @@ ControlHandler(DWORD request)
 
 /* Register with the Service Control Manager */
 static int
-InstallService()
+InstallService(void)
 {
 	SC_HANDLE	schService = NULL;
 	SC_HANDLE	schSCManager = NULL;
@@ -1471,7 +1481,7 @@ InstallService()
 
 /* Unregister from the Service Control Manager */
 static int
-RemoveService()
+RemoveService(void)
 {
 	SC_HANDLE	schService = NULL;
 	SC_HANDLE	schSCManager = NULL;
@@ -1699,7 +1709,7 @@ VacuumLoop(int argc, char **argv)
 			fflush(LOGOUTPUT);
 		}
 
-		sleep(sleep_secs);		/* Larger Pause between outer loops */
+		pg_usleep(sleep_secs * 1000000);	/* Larger Pause between outer loops */
 
 		gettimeofday(&then, 0); /* Reset time counter */
 
@@ -1753,15 +1763,12 @@ main(int argc, char *argv[])
 		if (InstallService() != 0)
 		{
 			FormatMessage(FORMAT_MESSAGE_ALLOCATE_BUFFER | FORMAT_MESSAGE_FROM_SYSTEM, NULL, GetLastError(), MAKELANGID(LANG_NEUTRAL, SUBLANG_DEFAULT), (LPTSTR) & lpMsgBuf, 0, NULL);
-			sprintf(logbuffer, "%s", (char *) lpMsgBuf);
-			log_entry(logbuffer, LVL_ERROR);
-			fflush(LOGOUTPUT);
+            fprintf(stderr, "Error: %s\n", (char *) lpMsgBuf);
 			exit(-1);
 		}
 		else
 		{
-			log_entry("Successfully installed Windows service", LVL_INFO);
-			fflush(LOGOUTPUT);
+			fprintf(stderr, "Successfully installed pg_autovacuum as a service.\n");
 			exit(0);
 		}
 	}
@@ -1772,15 +1779,12 @@ main(int argc, char *argv[])
 		if (RemoveService() != 0)
 		{
 			FormatMessage(FORMAT_MESSAGE_ALLOCATE_BUFFER | FORMAT_MESSAGE_FROM_SYSTEM, NULL, GetLastError(), MAKELANGID(LANG_NEUTRAL, SUBLANG_DEFAULT), (LPTSTR) & lpMsgBuf, 0, NULL);
-			sprintf(logbuffer, "%s", (char *) lpMsgBuf);
-			log_entry(logbuffer, LVL_ERROR);
-			fflush(LOGOUTPUT);
+            fprintf(stderr, "Error: %s\n", (char *) lpMsgBuf);
 			exit(-1);
 		}
 		else
 		{
-			log_entry("Successfully removed Windows service", LVL_INFO);
-			fflush(LOGOUTPUT);
+			fprintf(stderr, "Successfully removed pg_autovacuum as a service.\n");
 			exit(0);
 		}
 	}
