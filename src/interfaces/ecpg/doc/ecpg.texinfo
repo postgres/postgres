@@ -356,7 +356,7 @@ you are not interested in how it really works, skip this chapter.
 @comment  node-name,  next,  previous,  up
 @section To do list
 
-In the alpha version the preprocessor has a lot of flaws:
+This version the preprocessor has some flaws:
 @table @asis
 
 @item Preprocessor output

@@ -29,27 +29,24 @@ output_line_number()
 /*
  * Handling of the variables.
  */
-/* Since we don't want to keep track of where the functions end we just
- * have a list of functions that we search in, most reasently defined
- * function. This won't work if we use block scope for variables with the
- * same name but different types but in all other cases the c-compiler will
- * signal an error (hopefully).
- *
- * This list is leaked on program exit. This is because I don't think it is
- * important enough to spend the extra ten minutes to write the function that
- * deletes it. It would be another thing if I would have written in C++.
+
+/*
+ * brace level counter
  */
+int braces_open;
+
 /* This is a linked list of the variable names and types. */
 struct variable
 {
     char * name;
     struct ECPGtype * type;
+    int brace_level;
     struct variable * next;
 };
 
 static struct variable * allvariables = NULL;
 
-struct variable *
+static struct variable *
 find_variable(char * name)
 {
     struct variable * p;
@@ -71,16 +68,40 @@ find_variable(char * name)
 }
 
 
-void
+static void
 new_variable(const char * name, struct ECPGtype * type)
 {
     struct variable * p = (struct variable*) malloc(sizeof(struct variable));
 
     p->name = strdup(name);
     p->type = type;
+    p->brace_level = braces_open;
 
     p->next = allvariables;
     allvariables = p;
+}
+
+static void
+remove_variables(int brace_level)
+{
+    struct variable * p, *prev;
+
+    for (p = prev = allvariables; p; p = p->next)
+    {
+	if (p->brace_level >= brace_level)
+	{
+	    /* remove it */
+	    if (p == allvariables)
+		prev = allvariables = p->next;
+	    else
+		prev->next = p->next;
+
+	    free(p);
+	    p = prev;
+	}
+	else
+	    prev = p;
+    }
 }
 
 
@@ -161,7 +182,7 @@ dump_variables(struct arguments * list)
 %token <tagname> S_EXTERN S_STATIC
 %token <tagname> S_UNSIGNED S_SIGNED
 %token <tagname> S_LONG S_SHORT S_INT S_CHAR S_FLOAT S_DOUBLE S_BOOL
-%token <tagname> '[' ']' ';' ','
+%token <tagname> '[' ']' ';' ',' '{' '}'
 
 %type <type> type type_detailed varchar_type simple_type array_type
 %type <symbolname> symbol
@@ -184,7 +205,9 @@ statement : sqldeclaration
 	  | sqlcommit
 	  | sqlrollback
 	  | sqlstatement
-	  | cthing;
+	  | cthing
+	  | blockstart
+	  | blockend;
 
 sqldeclaration : sql_startdeclare
 		 variable_declarations
@@ -356,6 +379,15 @@ both_anything : S_LENGTH | S_VARCHAR | S_VARCHAR2
 	  | '[' | ']' | ','
 	  | S_ANYTHING;
 
+blockstart : '{' {
+    braces_open++;
+    fwrite(yytext, yyleng, 1, yyout);
+}
+
+blockend : '}' {
+    remove_variables(braces_open--);
+    fwrite(yytext, yyleng, 1, yyout);
+}
 %%
 static void yyerror(char * error)
 {

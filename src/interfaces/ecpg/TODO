@@ -44,8 +44,5 @@ could be realised in a script.
 
 Now comes my list (MM):
 
-Ecpg should remove variables from its list as soon as they are undefined and
-not rely on cc to report an error.
-
 Variable definitions containing static/volatile have to be possible.
 

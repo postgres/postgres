@@ -3,7 +3,7 @@
 #include "type.h"
 #include "y.tab.h"
 
-extern int debugging;
+#include "extern.h"
 
 #define dbg(arg)       if (debugging) fprintf(stderr, "DEBUG, %d: %s\n", yylineno, #arg);
 %}
@@ -56,7 +56,7 @@ int			{ dbg(S_INT); return S_INT; }
 char			{ dbg(S_CHAR); return S_CHAR; }
 float			{ dbg(S_FLOAT); return S_FLOAT; }
 double			{ dbg(S_DOUBLE); return S_DOUBLE; }
-bool                   { dbg(S_BOOL); return S_BOOL; }
+bool                    { dbg(S_BOOL); return S_BOOL; }
 
 {string}		{ dbg(SQL_STRING); return SQL_STRING; }
 <SQL>{ws}		; 
@@ -97,6 +97,8 @@ bool                   { dbg(S_BOOL); return S_BOOL; }
 "]"			{ dbg(]); return ']'; }
 ";"			{ dbg(;); return ';'; }
 ","			{ dbg(komma); return ','; }
+\{			{ dbg(blockstart); return '{'; }
+\}			{ dbg(blockend); return'}'; }
 
 <SQL>":"		{ dbg(:); return ':'; }
 
@@ -106,6 +108,7 @@ bool                   { dbg(S_BOOL); return S_BOOL; }
 void
 lex_init(void)
 {
+    braces_open = 0;
     BEGIN C;
 }
 
