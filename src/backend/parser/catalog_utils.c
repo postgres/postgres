@@ -6,7 +6,7 @@
  *
  *
  * IDENTIFICATION
- *    $Header: /cvsroot/pgsql/src/backend/parser/Attic/catalog_utils.c,v 1.3 1996/08/09 19:06:59 scrappy Exp $
+ *    $Header: /cvsroot/pgsql/src/backend/parser/Attic/catalog_utils.c,v 1.4 1996/08/28 22:50:17 scrappy Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -25,7 +25,7 @@
 #include "utils/syscache.h"
 #include "catalog/catname.h"
 
-#include "catalog_utils.h"
+#include "parser/catalog_utils.h"
 #include "catalog/pg_inherits.h"
 #include "catalog/pg_type.h"
 #include "catalog/indexing.h"

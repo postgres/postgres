@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *    $Header: /cvsroot/pgsql/src/backend/parser/Attic/parse_query.c,v 1.3 1996/08/13 01:29:34 scrappy Exp $
+ *    $Header: /cvsroot/pgsql/src/backend/parser/Attic/parse_query.c,v 1.4 1996/08/28 22:50:24 scrappy Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -27,7 +27,7 @@
 
 #include "utils/syscache.h"
 #include "catalog/pg_type.h"
-#include "catalog_utils.h"
+#include "parser/catalog_utils.h"
 #include "parser/parse_query.h"
 /* #include "parser/io.h" */
 #include "utils/lsyscache.h"
