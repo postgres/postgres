@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/optimizer/util/tlist.c,v 1.56 2003/05/06 00:20:32 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/optimizer/util/tlist.c,v 1.57 2003/06/29 23:05:05 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -20,7 +20,7 @@
 
 
 /*****************************************************************************
- *	---------- RELATION node target list routines ----------
+ *		Target list creation and searching utilities
  *****************************************************************************/
 
 /*
@@ -77,24 +77,6 @@ tlist_member(Node *node, List *targetlist)
 		return tlentry->resdom;
 
 	return (Resdom *) NULL;
-}
-
-/*
- * add_var_to_tlist
- *	  Creates a targetlist entry corresponding to the supplied var node
- *	  'var' and adds the new targetlist entry to the targetlist field of
- *	  'rel'.  No entry is created if 'var' is already in the tlist.
- */
-void
-add_var_to_tlist(RelOptInfo *rel, Var *var)
-{
-	if (!tlistentry_member((Node *) var, rel->targetlist))
-	{
-		/* XXX is copyObject necessary here? */
-		rel->targetlist = lappend(rel->targetlist,
-							   create_tl_element((Var *) copyObject(var),
-										   length(rel->targetlist) + 1));
-	}
 }
 
 /*

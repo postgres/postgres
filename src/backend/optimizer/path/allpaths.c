@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/optimizer/path/allpaths.c,v 1.102 2003/04/24 23:43:09 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/optimizer/path/allpaths.c,v 1.103 2003/06/29 23:05:04 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -235,6 +235,9 @@ set_inherited_rel_pathlist(Query *root, RelOptInfo *rel,
 		RangeTblEntry *childrte;
 		Oid			childOID;
 		RelOptInfo *childrel;
+		List	   *reltlist;
+		List	   *parentvars;
+		List	   *childvars;
 
 		childrte = rt_fetch(childRTindex, root->rtable);
 		childOID = childrte->relid;
@@ -251,21 +254,24 @@ set_inherited_rel_pathlist(Query *root, RelOptInfo *rel,
 		 * Copy the parent's targetlist and restriction quals to the
 		 * child, with attribute-number adjustment as needed.  We don't
 		 * bother to copy the join quals, since we can't do any joining of
-		 * the individual tables.
+		 * the individual tables.  Also, we just zap attr_needed rather
+		 * than trying to adjust it; it won't be looked at in the child.
 		 */
-		childrel->targetlist = (List *)
-			adjust_inherited_attrs((Node *) rel->targetlist,
+		reltlist = FastListValue(&rel->reltargetlist);
+		reltlist = (List *)
+			adjust_inherited_attrs((Node *) reltlist,
 								   parentRTindex,
 								   parentOID,
 								   childRTindex,
 								   childOID);
+		FastListFromList(&childrel->reltargetlist, reltlist);
+		childrel->attr_needed = NULL;
 		childrel->baserestrictinfo = (List *)
 			adjust_inherited_attrs((Node *) rel->baserestrictinfo,
 								   parentRTindex,
 								   parentOID,
 								   childRTindex,
 								   childOID);
-		childrel->baserestrictcost = rel->baserestrictcost;
 
 		/*
 		 * Now compute child access paths, and save the cheapest.
@@ -274,10 +280,27 @@ set_inherited_rel_pathlist(Query *root, RelOptInfo *rel,
 
 		subpaths = lappend(subpaths, childrel->cheapest_total_path);
 
-		/* Also update total size estimates */
+		/*
+		 * Propagate size information from the child back to the parent.
+		 * For simplicity, we use the largest widths from any child as the
+		 * parent estimates.
+		 */
 		rel->rows += childrel->rows;
 		if (childrel->width > rel->width)
 			rel->width = childrel->width;
+		
+		childvars = FastListValue(&childrel->reltargetlist);
+		foreach(parentvars, FastListValue(&rel->reltargetlist))
+		{
+			Var	   *parentvar = (Var *) lfirst(parentvars);
+			Var	   *childvar = (Var *) lfirst(childvars);
+			int		parentndx = parentvar->varattno - rel->min_attr;
+			int		childndx = childvar->varattno - childrel->min_attr;
+
+			if (childrel->attr_widths[childndx] > rel->attr_widths[parentndx])
+				rel->attr_widths[parentndx] = childrel->attr_widths[childndx];
+			childvars = lnext(childvars);
+		}
 	}
 
 	/*

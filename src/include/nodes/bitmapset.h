@@ -13,7 +13,7 @@
  *
  * Copyright (c) 2003, PostgreSQL Global Development Group
  *
- * $Id: bitmapset.h,v 1.1 2003/02/08 20:20:55 tgl Exp $
+ * $Id: bitmapset.h,v 1.2 2003/06/29 23:05:05 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -59,6 +59,7 @@ extern Bitmapset *bms_difference(const Bitmapset *a, const Bitmapset *b);
 extern bool bms_is_subset(const Bitmapset *a, const Bitmapset *b);
 extern bool bms_is_member(int x, const Bitmapset *a);
 extern bool bms_overlap(const Bitmapset *a, const Bitmapset *b);
+extern bool bms_nonempty_difference(const Bitmapset *a, const Bitmapset *b);
 extern int	bms_singleton_member(const Bitmapset *a);
 extern int	bms_num_members(const Bitmapset *a);
 /* optimized tests when we don't need to know exact membership count: */

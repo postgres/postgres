@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/optimizer/util/relnode.c,v 1.48 2003/02/15 20:12:40 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/optimizer/util/relnode.c,v 1.49 2003/06/29 23:05:04 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -24,7 +24,7 @@
 
 
 static RelOptInfo *make_base_rel(Query *root, int relid);
-static List *new_join_tlist(List *tlist, int first_resdomno);
+static void build_joinrel_tlist(Query *root, RelOptInfo *joinrel);
 static List *build_joinrel_restrictlist(Query *root,
 						   RelOptInfo *joinrel,
 						   RelOptInfo *outer_rel,
@@ -130,7 +130,7 @@ make_base_rel(Query *root, int relid)
 	rel->relids = bms_make_singleton(relid);
 	rel->rows = 0;
 	rel->width = 0;
-	rel->targetlist = NIL;
+	FastListInit(&rel->reltargetlist);
 	rel->pathlist = NIL;
 	rel->cheapest_startup_path = NULL;
 	rel->cheapest_total_path = NULL;
@@ -138,7 +138,7 @@ make_base_rel(Query *root, int relid)
 	rel->pruneable = true;
 	rel->relid = relid;
 	rel->rtekind = rte->rtekind;
-	rel->varlist = NIL;
+	/* min_attr, max_attr, attr_needed, attr_widths are set below */
 	rel->indexlist = NIL;
 	rel->pages = 0;
 	rel->tuples = 0;
@@ -160,12 +160,27 @@ make_base_rel(Query *root, int relid)
 			break;
 		case RTE_SUBQUERY:
 		case RTE_FUNCTION:
-			/* Subquery or function --- nothing to do here */
+			/* Subquery or function --- need only set up attr range */
+			rel->min_attr = 1;
+			rel->max_attr = length(rte->eref->colnames);
 			break;
 		default:
 			elog(ERROR, "make_base_rel: unsupported RTE kind %d",
 				 (int) rte->rtekind);
 			break;
+	}
+
+	if (rel->max_attr >= rel->min_attr)
+	{
+		rel->attr_needed = (Relids *)
+			palloc0((rel->max_attr - rel->min_attr + 1) * sizeof(Relids));
+		rel->attr_widths = (int32 *)
+			palloc0((rel->max_attr - rel->min_attr + 1) * sizeof(int32));
+	}
+	else
+	{
+		rel->attr_needed = NULL;
+		rel->attr_widths = NULL;
 	}
 
 	return rel;
@@ -252,8 +267,6 @@ build_join_rel(Query *root,
 {
 	RelOptInfo *joinrel;
 	List	   *restrictlist;
-	List	   *new_outer_tlist;
-	List	   *new_inner_tlist;
 
 	/*
 	 * See if we already have a joinrel for this set of base rels.
@@ -283,7 +296,7 @@ build_join_rel(Query *root,
 	joinrel->relids = bms_copy(joinrelids);
 	joinrel->rows = 0;
 	joinrel->width = 0;
-	joinrel->targetlist = NIL;
+	FastListInit(&joinrel->reltargetlist);
 	joinrel->pathlist = NIL;
 	joinrel->cheapest_startup_path = NULL;
 	joinrel->cheapest_total_path = NULL;
@@ -291,7 +304,10 @@ build_join_rel(Query *root,
 	joinrel->pruneable = true;
 	joinrel->relid = 0;			/* indicates not a baserel */
 	joinrel->rtekind = RTE_JOIN;
-	joinrel->varlist = NIL;
+	joinrel->min_attr = 0;
+	joinrel->max_attr = 0;
+	joinrel->attr_needed = NULL;
+	joinrel->attr_widths = NULL;
 	joinrel->indexlist = NIL;
 	joinrel->pages = 0;
 	joinrel->tuples = 0;
@@ -305,24 +321,10 @@ build_join_rel(Query *root,
 	joinrel->index_inner_paths = NIL;
 
 	/*
-	 * Create a new tlist by removing irrelevant elements from both tlists
-	 * of the outer and inner join relations and then merging the results
-	 * together.
-	 *
-	 * XXX right now we don't remove any irrelevant elements, we just append
-	 * the two tlists together.  Someday consider pruning vars from the
-	 * join's targetlist if they are needed only to evaluate restriction
-	 * clauses of this join, and will never be accessed at higher levels
-	 * of the plantree.
-	 *
-	 * NOTE: the tlist order for a join rel will depend on which pair of
-	 * outer and inner rels we first try to build it from.	But the
-	 * contents should be the same regardless.
+	 * Create a new tlist containing just the vars that need to be output
+	 * from this join (ie, are needed for higher joinclauses or final output).
 	 */
-	new_outer_tlist = new_join_tlist(outer_rel->targetlist, 1);
-	new_inner_tlist = new_join_tlist(inner_rel->targetlist,
-									 length(new_outer_tlist) + 1);
-	joinrel->targetlist = nconc(new_outer_tlist, new_inner_tlist);
+	build_joinrel_tlist(root, joinrel);
 
 	/*
 	 * Construct restrict and join clause lists for the new joinrel. (The
@@ -353,42 +355,51 @@ build_join_rel(Query *root,
 }
 
 /*
- * new_join_tlist
- *	  Builds a join relation's target list by keeping those elements that
- *	  will be in the final target list and any other elements that are still
- *	  needed for future joins.	For a target list entry to still be needed
- *	  for future joins, its 'joinlist' field must not be empty after removal
- *	  of all relids in 'other_relids'.
+ * build_joinrel_tlist
+ *	  Builds a join relation's target list.
  *
- *	  XXX the above comment refers to code that is long dead and gone;
- *	  we don't keep track of joinlists for individual targetlist entries
- *	  anymore.	For now, all vars present in either input tlist will be
- *	  emitted in the join's tlist.
+ * The join's targetlist includes all Vars of its member relations that
+ * will still be needed above the join.
  *
- * 'tlist' is the target list of one of the join relations
- * 'first_resdomno' is the resdom number to use for the first created
- *				target list entry
+ * In a former lifetime, this just merged the tlists of the two member
+ * relations first presented.  While we could still do that, working from
+ * lists of Vars would mean doing a find_base_rel lookup for each Var.
+ * It seems more efficient to scan the list of base rels and collect the
+ * needed vars directly from there.
  *
- * Returns the new target list.
+ * We also compute the expected width of the join's output, making use
+ * of data that was cached at the baserel level by set_rel_width().
  */
-static List *
-new_join_tlist(List *tlist,
-			   int first_resdomno)
+static void
+build_joinrel_tlist(Query *root, RelOptInfo *joinrel)
 {
-	int			resdomno = first_resdomno - 1;
-	List	   *t_list = NIL;
-	List	   *i;
+	Relids		relids = joinrel->relids;
+	List	   *rels;
+	List	   *vars;
 
-	foreach(i, tlist)
+	FastListInit(&joinrel->reltargetlist);
+	joinrel->width = 0;
+
+	foreach(rels, root->base_rel_list)
 	{
-		TargetEntry *tle = lfirst(i);
+		RelOptInfo *baserel = (RelOptInfo *) lfirst(rels);
 
-		resdomno += 1;
-		t_list = lappend(t_list,
-						 create_tl_element((Var *) tle->expr, resdomno));
+		if (!bms_is_member(baserel->relid, relids))
+			continue;
+
+		foreach(vars, FastListValue(&baserel->reltargetlist))
+		{
+			Var	   *var = (Var *) lfirst(vars);
+			int		ndx = var->varattno - baserel->min_attr;
+
+			if (bms_nonempty_difference(baserel->attr_needed[ndx], relids))
+			{
+				FastAppend(&joinrel->reltargetlist, var);
+				Assert(baserel->attr_widths[ndx] > 0);
+				joinrel->width += baserel->attr_widths[ndx];
+			}
+		}
 	}
-
-	return t_list;
 }
 
 /*

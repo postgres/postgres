@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2002, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Id: plancat.h,v 1.29 2003/02/03 15:07:08 tgl Exp $
+ * $Id: plancat.h,v 1.30 2003/06/29 23:05:05 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -18,6 +18,8 @@
 
 
 extern void get_relation_info(Oid relationObjectId, RelOptInfo *rel);
+
+extern List *build_physical_tlist(Query *root, RelOptInfo *rel);
 
 extern List *find_inheritance_children(Oid inhparent);
 

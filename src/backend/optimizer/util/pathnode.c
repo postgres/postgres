@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/optimizer/util/pathnode.c,v 1.90 2003/06/15 22:51:45 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/optimizer/util/pathnode.c,v 1.91 2003/06/29 23:05:04 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -581,7 +581,7 @@ create_unique_path(Query *root, RelOptInfo *rel, Path *subpath)
 	else
 	{
 		pathnode->rows = rel->rows;
-		numCols = length(rel->targetlist); /* second-best estimate */
+		numCols = length(FastListValue(&rel->reltargetlist));
 	}
 
 	/*

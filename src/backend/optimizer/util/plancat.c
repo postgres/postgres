@@ -9,7 +9,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/optimizer/util/plancat.c,v 1.83 2003/05/28 16:03:56 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/optimizer/util/plancat.c,v 1.84 2003/06/29 23:05:04 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -26,6 +26,7 @@
 #include "nodes/makefuncs.h"
 #include "optimizer/clauses.h"
 #include "optimizer/plancat.h"
+#include "optimizer/tlist.h"
 #include "parser/parsetree.h"
 #include "rewrite/rewriteManip.h"
 #include "utils/builtins.h"
@@ -44,7 +45,8 @@
  * Given the Oid of the relation, return the following info into fields
  * of the RelOptInfo struct:
  *
- *	varlist		list of physical columns (expressed as Vars)
+ *	min_attr	lowest valid AttrNumber
+ *	max_attr	highest valid AttrNumber
  *	indexlist	list of IndexOptInfos for relation's indexes
  *	pages		number of pages
  *	tuples		number of tuples
@@ -52,49 +54,15 @@
 void
 get_relation_info(Oid relationObjectId, RelOptInfo *rel)
 {
-	Relation	relation;
 	Index		varno = rel->relid;
+	Relation	relation;
 	bool		hasindex;
-	List	   *varlist = NIL;
 	List	   *indexinfos = NIL;
-	int			attrno,
-				numattrs;
 
 	relation = heap_open(relationObjectId, AccessShareLock);
 
-	/*
-	 * Make list of physical Vars.  But if there are any dropped columns,
-	 * punt and set varlist to NIL.  (XXX Ideally we would like to include
-	 * dropped columns so that the varlist models the physical tuples
-	 * of the relation.  However this creates problems for ExecTypeFromTL,
-	 * which may be asked to build a tupdesc for a tlist that includes vars
-	 * of no-longer-existent types.  In theory we could dig out the required
-	 * info from the pg_attribute entries of the relation, but that data is
-	 * not readily available to ExecTypeFromTL.  For now, punt and don't
-	 * apply the physical-tlist optimization when there are dropped cols.)
-	 */
-	numattrs = RelationGetNumberOfAttributes(relation);
-
-	for (attrno = 1; attrno <= numattrs; attrno++)
-	{
-		Form_pg_attribute att_tup = relation->rd_att->attrs[attrno - 1];
-
-		if (att_tup->attisdropped)
-		{
-			/* found a dropped col, so punt */
-			varlist = NIL;
-			break;
-		}
-
-		varlist = lappend(varlist,
-						  makeVar(varno,
-								  attrno,
-								  att_tup->atttypid,
-								  att_tup->atttypmod,
-								  0));
-	}
-
-	rel->varlist = varlist;
+	rel->min_attr = FirstLowInvalidHeapAttributeNumber + 1;
+	rel->max_attr = RelationGetNumberOfAttributes(relation);
 
 	/*
 	 * Make list of indexes.  Ignore indexes on system catalogs if told to.
@@ -197,6 +165,65 @@ get_relation_info(Oid relationObjectId, RelOptInfo *rel)
 
 	/* XXX keep the lock here? */
 	heap_close(relation, AccessShareLock);
+}
+
+/*
+ * build_physical_tlist
+ *
+ * Build a targetlist consisting of exactly the relation's user attributes,
+ * in order.  The executor can special-case such tlists to avoid a projection
+ * step at runtime, so we use such tlists preferentially for scan nodes.
+ *
+ * Exception: if there are any dropped columns, we punt and return NIL.
+ * Ideally we would like to handle the dropped-column case too.  However this
+ * creates problems for ExecTypeFromTL, which may be asked to build a tupdesc
+ * for a tlist that includes vars of no-longer-existent types.  In theory we
+ * could dig out the required info from the pg_attribute entries of the
+ * relation, but that data is not readily available to ExecTypeFromTL.
+ * For now, we don't apply the physical-tlist optimization when there are
+ * dropped cols.
+ */
+List *
+build_physical_tlist(Query *root, RelOptInfo *rel)
+{
+	Index		varno = rel->relid;
+	RangeTblEntry *rte = rt_fetch(varno, root->rtable);
+	Relation	relation;
+	FastList	tlist;
+	int			attrno,
+				numattrs;
+
+	FastListInit(&tlist);
+
+	Assert(rte->rtekind == RTE_RELATION);
+
+	relation = heap_open(rte->relid, AccessShareLock);
+
+	numattrs = RelationGetNumberOfAttributes(relation);
+
+	for (attrno = 1; attrno <= numattrs; attrno++)
+	{
+		Form_pg_attribute att_tup = relation->rd_att->attrs[attrno - 1];
+
+		if (att_tup->attisdropped)
+		{
+			/* found a dropped col, so punt */
+			FastListInit(&tlist);
+			break;
+		}
+
+		FastAppend(&tlist,
+				   create_tl_element(makeVar(varno,
+											 attrno,
+											 att_tup->atttypid,
+											 att_tup->atttypmod,
+											 0),
+									 attrno));
+	}
+
+	heap_close(relation, AccessShareLock);
+
+	return FastListValue(&tlist);
 }
 
 /*

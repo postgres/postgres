@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/optimizer/plan/initsplan.c,v 1.85 2003/03/02 23:46:34 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/optimizer/plan/initsplan.c,v 1.86 2003/06/29 23:05:04 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -40,7 +40,8 @@ static void distribute_qual_to_rels(Query *root, Node *clause,
 									bool isdeduced,
 									Relids outerjoin_nonnullable,
 									Relids qualscope);
-static void add_vars_to_targetlist(Query *root, List *vars);
+static void add_vars_to_targetlist(Query *root, List *vars,
+								   Relids where_needed);
 static bool qual_is_redundant(Query *root, RestrictInfo *restrictinfo,
 				  List *restrictlist);
 static void check_mergejoinable(RestrictInfo *restrictinfo);
@@ -112,34 +113,54 @@ add_base_rels_to_query(Query *root, Node *jtnode)
 
 /*
  * build_base_rel_tlists
- *	  Creates targetlist entries for each var seen in 'tlist' and adds
- *	  them to the tlist of the appropriate rel node.
+ *	  Add targetlist entries for each var needed in the query's final tlist
+ *	  to the appropriate base relations.
+ *
+ * We mark such vars as needed by "relation 0" to ensure that they will
+ * propagate up through all join plan steps.
  */
 void
-build_base_rel_tlists(Query *root, List *tlist)
+build_base_rel_tlists(Query *root, List *final_tlist)
 {
-	List	   *tlist_vars = pull_var_clause((Node *) tlist, false);
+	List	   *tlist_vars = pull_var_clause((Node *) final_tlist, false);
 
-	add_vars_to_targetlist(root, tlist_vars);
-	freeList(tlist_vars);
+	if (tlist_vars != NIL)
+	{
+		add_vars_to_targetlist(root, tlist_vars, bms_make_singleton(0));
+		freeList(tlist_vars);
+	}
 }
 
 /*
  * add_vars_to_targetlist
  *	  For each variable appearing in the list, add it to the owning
- *	  relation's targetlist if not already present.
+ *	  relation's targetlist if not already present, and mark the variable
+ *	  as being needed for the indicated join (or for final output if
+ *	  where_needed includes "relation 0").
  */
 static void
-add_vars_to_targetlist(Query *root, List *vars)
+add_vars_to_targetlist(Query *root, List *vars, Relids where_needed)
 {
 	List	   *temp;
+
+	Assert(!bms_is_empty(where_needed));
 
 	foreach(temp, vars)
 	{
 		Var		   *var = (Var *) lfirst(temp);
 		RelOptInfo *rel = find_base_rel(root, var->varno);
+		int			attrno = var->varattno;
 
-		add_var_to_tlist(rel, var);
+		Assert(attrno >= rel->min_attr && attrno <= rel->max_attr);
+		attrno -= rel->min_attr;
+		if (bms_is_empty(rel->attr_needed[attrno]))
+		{
+			/* Variable not yet requested, so add to reltargetlist */
+			/* XXX is copyObject necessary here? */
+			FastAppend(&rel->reltargetlist, copyObject(var));
+		}
+		rel->attr_needed[attrno] = bms_add_members(rel->attr_needed[attrno],
+												   where_needed);
 	}
 }
 
@@ -575,7 +596,7 @@ distribute_qual_to_rels(Query *root, Node *clause,
 			 * scan those relations (else they won't be available at the join
 			 * node!).
 			 */
-			add_vars_to_targetlist(root, vars);
+			add_vars_to_targetlist(root, vars, relids);
 			break;
 		default:
 			/*

@@ -10,7 +10,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/optimizer/plan/createplan.c,v 1.146 2003/06/16 02:03:37 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/optimizer/plan/createplan.c,v 1.147 2003/06/29 23:05:04 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -23,6 +23,7 @@
 #include "optimizer/clauses.h"
 #include "optimizer/cost.h"
 #include "optimizer/paths.h"
+#include "optimizer/plancat.h"
 #include "optimizer/planmain.h"
 #include "optimizer/restrictinfo.h"
 #include "optimizer/tlist.h"
@@ -34,6 +35,7 @@
 
 
 static Scan *create_scan_plan(Query *root, Path *best_path);
+static List *build_relation_tlist(RelOptInfo *rel);
 static bool use_physical_tlist(RelOptInfo *rel);
 static void disuse_physical_tlist(Plan *plan, Path *path);
 static Join *create_join_plan(Query *root, JoinPath *best_path);
@@ -199,20 +201,13 @@ create_scan_plan(Query *root, Path *best_path)
 	 */
 	if (use_physical_tlist(rel))
 	{
-		int		resdomno = 1;
-		List   *v;
-
-		tlist = NIL;
-		foreach(v, rel->varlist)
-		{
-			Var	   *var = (Var *) lfirst(v);
-
-			tlist = lappend(tlist, create_tl_element(var, resdomno));
-			resdomno++;
-		}
+		tlist = build_physical_tlist(root, rel);
+		/* if fail because of dropped cols, use regular method */
+		if (tlist == NIL)
+			tlist = build_relation_tlist(rel);
 	}
 	else
-		tlist = rel->targetlist;
+		tlist = build_relation_tlist(rel);
 
 	/*
 	 * Extract the relevant restriction clauses from the parent relation;
@@ -267,6 +262,28 @@ create_scan_plan(Query *root, Path *best_path)
 }
 
 /*
+ * Build a target list (ie, a list of TargetEntry) for a relation.
+ */
+static List *
+build_relation_tlist(RelOptInfo *rel)
+{
+	FastList	tlist;
+	int			resdomno = 1;
+	List	   *v;
+
+	FastListInit(&tlist);
+	foreach(v, FastListValue(&rel->reltargetlist))
+	{
+		/* Do we really need to copy here?  Not sure */
+		Var	   *var = (Var *) copyObject(lfirst(v));
+
+		FastAppend(&tlist, create_tl_element(var, resdomno));
+		resdomno++;
+	}
+	return FastListValue(&tlist);
+}
+
+/*
  * use_physical_tlist
  *		Decide whether to use a tlist matching relation structure,
  *		rather than only those Vars actually referenced.
@@ -274,12 +291,12 @@ create_scan_plan(Query *root, Path *best_path)
 static bool
 use_physical_tlist(RelOptInfo *rel)
 {
-	List	   *t;
+	int			i;
 
 	/*
 	 * Currently, can't do this for subquery or function scans.  (This
-	 * is mainly because we don't set up the necessary info when creating
-	 * their RelOptInfo nodes.)
+	 * is mainly because we don't have an equivalent of build_physical_tlist
+	 * for them; worth adding?)
 	 */
 	if (rel->rtekind != RTE_RELATION)
 		return false;
@@ -290,25 +307,14 @@ use_physical_tlist(RelOptInfo *rel)
 	if (rel->reloptkind != RELOPT_BASEREL)
 		return false;
 	/*
-	 * Can't do it if relation contains dropped columns.  This is detected
-	 * in plancat.c, see notes there.
-	 */
-	if (rel->varlist == NIL)
-		return false;
-	/*
 	 * Can't do it if any system columns are requested, either.  (This could
 	 * possibly be fixed but would take some fragile assumptions in setrefs.c,
 	 * I think.)
 	 */
-	foreach(t, rel->targetlist)
+	for (i = rel->min_attr; i <= 0; i++)
 	{
-		TargetEntry *tle = (TargetEntry *) lfirst(t);
-		Var		   *var = (Var *) tle->expr;
-
-		if (!var || !IsA(var, Var))
-			return false;		/* probably can't happen */
-		if (var->varattno <= 0)
-			return false;		/* system column! */
+		if (!bms_is_empty(rel->attr_needed[i - rel->min_attr]))
+			return false;
 	}
 	return true;
 }
@@ -333,7 +339,7 @@ disuse_physical_tlist(Plan *plan, Path *path)
 		case T_TidScan:
 		case T_SubqueryScan:
 		case T_FunctionScan:
-			plan->targetlist = path->parent->targetlist;
+			plan->targetlist = build_relation_tlist(path->parent);
 			break;
 		default:
 			break;
@@ -411,7 +417,7 @@ static Append *
 create_append_plan(Query *root, AppendPath *best_path)
 {
 	Append	   *plan;
-	List	   *tlist = best_path->path.parent->targetlist;
+	List	   *tlist = build_relation_tlist(best_path->path.parent);
 	List	   *subplans = NIL;
 	List	   *subpaths;
 
@@ -443,7 +449,7 @@ create_result_plan(Query *root, ResultPath *best_path)
 	Plan	   *subplan;
 
 	if (best_path->path.parent)
-		tlist = best_path->path.parent->targetlist;
+		tlist = build_relation_tlist(best_path->path.parent);
 	else
 		tlist = NIL;			/* will be filled in later */
 
@@ -842,7 +848,7 @@ create_nestloop_plan(Query *root,
 					 Plan *outer_plan,
 					 Plan *inner_plan)
 {
-	List	   *tlist = best_path->path.parent->targetlist;
+	List	   *tlist = build_relation_tlist(best_path->path.parent);
 	List	   *joinrestrictclauses = best_path->joinrestrictinfo;
 	List	   *joinclauses;
 	List	   *otherclauses;
@@ -912,7 +918,7 @@ create_mergejoin_plan(Query *root,
 					  Plan *outer_plan,
 					  Plan *inner_plan)
 {
-	List	   *tlist = best_path->jpath.path.parent->targetlist;
+	List	   *tlist = build_relation_tlist(best_path->jpath.path.parent);
 	List	   *joinclauses;
 	List	   *otherclauses;
 	List	   *mergeclauses;
@@ -992,7 +998,7 @@ create_hashjoin_plan(Query *root,
 					 Plan *outer_plan,
 					 Plan *inner_plan)
 {
-	List	   *tlist = best_path->jpath.path.parent->targetlist;
+	List	   *tlist = build_relation_tlist(best_path->jpath.path.parent);
 	List	   *joinclauses;
 	List	   *otherclauses;
 	List	   *hashclauses;

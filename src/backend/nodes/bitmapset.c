@@ -14,7 +14,7 @@
  * Copyright (c) 2003, PostgreSQL Global Development Group
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/nodes/bitmapset.c,v 1.1 2003/02/08 20:20:53 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/nodes/bitmapset.c,v 1.2 2003/06/29 23:05:04 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -383,6 +383,36 @@ bms_overlap(const Bitmapset *a, const Bitmapset *b)
 	for (i = 0; i < shortlen; i++)
 	{
 		if ((a->words[i] & b->words[i]) != 0)
+			return true;
+	}
+	return false;
+}
+
+/*
+ * bms_nonempty_difference - do sets have a nonempty difference?
+ */
+bool
+bms_nonempty_difference(const Bitmapset *a, const Bitmapset *b)
+{
+	int			shortlen;
+	int			i;
+
+	/* Handle cases where either input is NULL */
+	if (a == NULL)
+		return false;
+	if (b == NULL)
+		return !bms_is_empty(a);
+	/* Check words in common */
+	shortlen = Min(a->nwords, b->nwords);
+	for (i = 0; i < shortlen; i++)
+	{
+		if ((a->words[i] & ~ b->words[i]) != 0)
+			return true;
+	}
+	/* Check extra words in a */
+	for (; i < a->nwords; i++)
+	{
+		if (a->words[i] != 0)
 			return true;
 	}
 	return false;

@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2002, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Id: relation.h,v 1.81 2003/06/15 22:51:45 tgl Exp $
+ * $Id: relation.h,v 1.82 2003/06/29 23:05:05 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -89,8 +89,8 @@ typedef struct QualCost
  *			   clauses have been applied (ie, output rows of a plan for it)
  *		width - avg. number of bytes per tuple in the relation after the
  *				appropriate projections have been done (ie, output width)
- *		targetlist - List of TargetEntry nodes for the attributes we need
- *					 to output from this relation
+ *		reltargetlist - List of Var nodes for the attributes we need to
+ *						output from this relation (in no particular order)
  *		pathlist - List of Path nodes, one for each potentially useful
  *				   method of generating the relation
  *		cheapest_startup_path - the pathlist member with lowest startup cost
@@ -107,7 +107,12 @@ typedef struct QualCost
  *		relid - RTE index (this is redundant with the relids field, but
  *				is provided for convenience of access)
  *		rtekind - distinguishes plain relation, subquery, or function RTE
- *		varlist - list of Vars for physical columns (only if table)
+ *		min_attr, max_attr - range of valid AttrNumbers for rel
+ *		attr_needed - array of bitmapsets indicating the highest joinrel
+ *				in which each attribute is needed; if bit 0 is set then
+ *				the attribute is needed as part of final targetlist
+ *		attr_widths - cache space for per-attribute width estimates;
+ *					  zero means not computed yet
  *		indexlist - list of IndexOptInfo nodes for relation's indexes
  *					(always NIL if it's not a table)
  *		pages - number of disk pages in relation (zero if not a table)
@@ -183,7 +188,7 @@ typedef struct RelOptInfo
 	int			width;			/* estimated avg width of result tuples */
 
 	/* materialization information */
-	List	   *targetlist;
+	FastList	reltargetlist;
 	List	   *pathlist;		/* Path structures */
 	struct Path *cheapest_startup_path;
 	struct Path *cheapest_total_path;
@@ -193,7 +198,10 @@ typedef struct RelOptInfo
 	/* information about a base rel (not set for join rels!) */
 	Index		relid;
 	RTEKind		rtekind;		/* RELATION, SUBQUERY, or FUNCTION */
-	List	   *varlist;
+	AttrNumber	min_attr;		/* smallest attrno of rel (often <0) */
+	AttrNumber	max_attr;		/* largest attrno of rel */
+	Relids	   *attr_needed;	/* array indexed [min_attr .. max_attr] */
+	int32	   *attr_widths;	/* array indexed [min_attr .. max_attr] */
 	List	   *indexlist;
 	long		pages;
 	double		tuples;

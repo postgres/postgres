@@ -49,7 +49,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/optimizer/path/costsize.c,v 1.108 2003/06/29 00:33:43 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/optimizer/path/costsize.c,v 1.109 2003/06/29 23:05:04 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -1792,13 +1792,9 @@ set_joinrel_size_estimates(Query *root, RelOptInfo *rel,
 	rel->rows = temp;
 
 	/*
-	 * We could apply set_rel_width() to compute the output tuple width
-	 * from scratch, but at present it's always just the sum of the input
-	 * widths, so why work harder than necessary?  If relnode.c is ever
-	 * taught to remove unneeded columns from join targetlists, go back to
-	 * using set_rel_width here.
+	 * We need not compute the output width here, because build_joinrel_tlist
+	 * already did.
 	 */
-	rel->width = outer_rel->width + inner_rel->width;
 }
 
 /*
@@ -1858,13 +1854,16 @@ set_function_size_estimates(Query *root, RelOptInfo *rel)
 
 /*
  * set_rel_width
- *		Set the estimated output width of the relation.
+ *		Set the estimated output width of a base relation.
  *
- * NB: this works best on base relations because it prefers to look at
+ * NB: this works best on plain relations because it prefers to look at
  * real Vars.  It will fail to make use of pg_statistic info when applied
  * to a subquery relation, even if the subquery outputs are simple vars
  * that we could have gotten info for.	Is it worth trying to be smarter
  * about subqueries?
+ *
+ * The per-attribute width estimates are cached for possible re-use while
+ * building join relations.
  */
 static void
 set_rel_width(Query *root, RelOptInfo *rel)
@@ -1872,38 +1871,41 @@ set_rel_width(Query *root, RelOptInfo *rel)
 	int32		tuple_width = 0;
 	List	   *tllist;
 
-	foreach(tllist, rel->targetlist)
+	foreach(tllist, FastListValue(&rel->reltargetlist))
 	{
-		TargetEntry *tle = (TargetEntry *) lfirst(tllist);
+		Var		   *var = (Var *) lfirst(tllist);
+		int			ndx = var->varattno - rel->min_attr;
+		Oid			relid;
 		int32		item_width;
 
-		/*
-		 * If it's a Var, try to get statistical info from pg_statistic.
-		 */
-		if (tle->expr && IsA(tle->expr, Var))
-		{
-			Var		   *var = (Var *) tle->expr;
-			Oid			relid;
+		Assert(IsA(var, Var));
 
-			relid = getrelid(var->varno, root->rtable);
-			if (relid != InvalidOid)
+		/* The width probably hasn't been cached yet, but may as well check */
+		if (rel->attr_widths[ndx] > 0)
+		{
+				tuple_width += rel->attr_widths[ndx];
+				continue;
+		}
+
+		relid = getrelid(var->varno, root->rtable);
+		if (relid != InvalidOid)
+		{
+			item_width = get_attavgwidth(relid, var->varattno);
+			if (item_width > 0)
 			{
-				item_width = get_attavgwidth(relid, var->varattno);
-				if (item_width > 0)
-				{
-					tuple_width += item_width;
-					continue;
-				}
+				rel->attr_widths[ndx] = item_width;
+				tuple_width += item_width;
+				continue;
 			}
 		}
 
 		/*
-		 * Not a Var, or can't find statistics for it.  Estimate using
-		 * just the type info.
+		 * Not a plain relation, or can't find statistics for it.
+		 * Estimate using just the type info.
 		 */
-		item_width = get_typavgwidth(tle->resdom->restype,
-									 tle->resdom->restypmod);
+		item_width = get_typavgwidth(var->vartype, var->vartypmod);
 		Assert(item_width > 0);
+		rel->attr_widths[ndx] = item_width;
 		tuple_width += item_width;
 	}
 	Assert(tuple_width >= 0);
