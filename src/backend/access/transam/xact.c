@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *    $Header: /cvsroot/pgsql/src/backend/access/transam/xact.c,v 1.6 1996/11/27 07:14:51 vadim Exp $
+ *    $Header: /cvsroot/pgsql/src/backend/access/transam/xact.c,v 1.7 1997/03/12 20:41:14 scrappy Exp $
  *	
  * NOTES
  *	Transaction aborts can now occur two ways:
@@ -30,6 +30,7 @@
  *	default state.  In case 2, there may be more commands coming
  *	our way which are part of the same transaction block and we have
  *	to ignore these commands until we see an END transaction.
+ *      (or an ABORT! --djm)
  *
  *	Internal aborts are now handled by AbortTransactionBlock(), just as
  *	they always have been, and user aborts are now handled by
@@ -1265,7 +1266,7 @@ AbortTransactionBlock(void)
      *  state after the upcoming CommitTransactionCommand().
      * ----------------
      */
-    elog(NOTICE, "AbortTransactionBlock and not inprogress state");
+    elog(NOTICE, "AbortTransactionBlock and not in in-progress state");
     AbortTransaction();
     s->blockState = TBLOCK_ENDABORT;
 }
@@ -1285,7 +1286,17 @@ UserAbortTransactionBlock()
      */
     if (s->state == TRANS_DISABLED)
 	return;
-    
+
+    /*
+     * if the transaction has already been automatically aborted with an error,
+     * and the user subsequently types 'abort', allow it.  (the behavior is
+     * the same as if they had typed 'end'.)
+     */
+    if (s->blockState == TBLOCK_ABORT) {
+        s->blockState = TBLOCK_ENDABORT;
+        return;
+    }
+
     if (s->blockState == TBLOCK_INPROGRESS) {
 	/* ----------------
 	 *  here we were inside a transaction block and we
@@ -1320,7 +1331,7 @@ UserAbortTransactionBlock()
      *  state after the upcoming CommitTransactionCommand().
      * ----------------
      */
-    elog(NOTICE, "UserAbortTransactionBlock and not inprogress state");
+    elog(NOTICE, "UserAbortTransactionBlock and not in in-progress state");
     AbortTransaction();
     s->blockState = TBLOCK_ENDABORT;
 }
