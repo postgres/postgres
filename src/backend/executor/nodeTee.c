@@ -15,7 +15,7 @@
  *		ExecEndTee
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/executor/Attic/nodeTee.c,v 1.25 1998/11/27 19:52:03 vadim Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/executor/Attic/nodeTee.c,v 1.26 1998/12/14 05:18:51 scrappy Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -47,12 +47,12 @@
 bool
 ExecInitTee(Tee *node, EState *currentEstate, Plan *parent)
 {
-	TeeState   *teeState;
-	Plan	   *outerPlan;
-	int			len;
+	TeeState	*teeState;
+	Plan			*outerPlan;
+	int				len;
 	Relation	bufferRel;
 	TupleDesc	tupType;
-	EState	   *estate;
+	EState		*estate;
 
 	/*
 	 * it is possible that the Tee has already been initialized since it
@@ -144,8 +144,6 @@ ExecInitTee(Tee *node, EState *currentEstate, Plan *parent)
 	tupType = ExecGetResultType(&(teeState->cstate));
 	len = ExecTargetListLength(((Plan *) node)->targetlist);
 
-/*	  bufferRel = ExecCreatR(len, tupType, _TEMP_RELATION_ID_);  */
-
 	/*
 	 * create a catalogued relation even though this is a temporary
 	 * relation
@@ -176,7 +174,6 @@ ExecInitTee(Tee *node, EState *currentEstate, Plan *parent)
 		sprintf(teeState->tee_bufferRelname,
 				"ttemp_%d",		/* 'ttemp' for 'tee' temporary */
 				newoid());
-/*		bufferRel = ExecCreatR(len, tupType, _TEMP_RELATION_ID); */
 		bufferRel = heap_open(
 					heap_create_with_catalog(teeState->tee_bufferRelname,
 											 tupType, RELKIND_RELATION));
@@ -428,52 +425,6 @@ ExecTee(Tee *node, Plan *parent)
 
 	return result;
 }
-
-#ifdef NOT_USED
-/* ----------------------------------------------------------------
- *		ExecTeeReScan(node)
- *
- *		Rescans the relation.
- * ----------------------------------------------------------------
- */
-void
-ExecTeeReScan(Tee *node, ExprContext *exprCtxt, Plan *parent)
-{
-
-	EState	   *estate;
-	TeeState   *teeState;
-	ScanDirection dir;
-
-	estate = ((Plan *) node)->state;
-	teeState = node->teestate;
-
-	dir = estate->es_direction;
-
-	/* XXX doesn't handle backwards direction yet */
-
-	if (parent == node->leftParent)
-	{
-		if (teeState->tee_leftScanDesc)
-		{
-			heap_rescan(teeState->tee_leftScanDesc,
-						ScanDirectionIsBackward(dir),
-						NULL);
-			teeState->tee_leftPlace = 0;
-		}
-	}
-	else
-	{
-		if (teeState->tee_rightScanDesc)
-		{
-			heap_rescan(teeState->tee_leftScanDesc,
-						ScanDirectionIsBackward(dir),
-						NULL);
-			teeState->tee_rightPlace = 0;
-		}
-	}
-}
-#endif
-
 
 /* ---------------------------------------------------------------------
  *		ExecEndTee

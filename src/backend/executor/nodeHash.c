@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/executor/nodeHash.c,v 1.24 1998/11/27 19:52:02 vadim Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/executor/nodeHash.c,v 1.25 1998/12/14 05:18:50 scrappy Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -341,7 +341,8 @@ ExecHashTableCreate(Hash *node)
 	if (nbatch == 0)
 		nbuckets = totalbuckets;
 #ifdef HJDEBUG
-	printf("nbatch = %d, totalbuckets = %d, nbuckets = %d\n", nbatch, totalbuckets, nbuckets);
+	printf("nbatch = %d, totalbuckets = %d, nbuckets = %d\n", 
+			nbatch, totalbuckets, nbuckets);
 #endif
 
 	/* ----------------
@@ -617,32 +618,14 @@ ExecHashOverflowInsert(HashJoinTable hashtable,
 									  + heapTuple->t_len + HEAPTUPLESIZE);
 	if (newend > hashtable->bottom)
 	{
-#if 0
-		elog(DEBUG, "hash table out of memory. expanding.");
-		/* ------------------
-		 * XXX this is a temporary hack
-		 * eventually, recursive hash partitioning will be
-		 * implemented
-		 * ------------------
-		 */
-		hashtable->readbuf = hashtable->bottom = 2 * hashtable->bottom;
-		hashtable =
-			(HashJoinTable) repalloc(hashtable, hashtable->bottom + BLCKSZ);
-		if (hashtable == NULL)
-		{
-			perror("repalloc");
-			elog(ERROR, "can't expand hashtable.");
-		}
-#else
 		/* ------------------
 		 * XXX the temporary hack above doesn't work because things
 		 * above us don't know that we've moved the hash table!
 		 *	- Chris Dunlop, <chris@onthe.net.au>
 		 * ------------------
 		 */
-		elog(ERROR, "hash table out of memory. Use -B parameter to increase buffers.");
-#endif
-
+		elog(ERROR, 
+				"hash table out of memory. Use -B parameter to increase buffers.");
 	}
 
 	/* ----------------
@@ -897,7 +880,7 @@ static int	hjtmpcnt = 0;
 static void
 mk_hj_temp(char *tempname)
 {
-	sprintf(tempname, "HJ%d.%d", (int) MyProcPid, hjtmpcnt);
+	snprintf(tempname, strlen(tempname), "HJ%d.%d", (int) MyProcPid, hjtmpcnt);
 	hjtmpcnt = (hjtmpcnt + 1) % 1000;
 }
 

@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/commands/Attic/recipe.c,v 1.25 1998/10/21 16:21:21 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/commands/Attic/recipe.c,v 1.26 1998/12/14 05:18:44 scrappy Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -121,18 +121,18 @@ static QueryTreeList *tg_parseTeeNode(TgRecipe * r,
 void
 beginRecipe(RecipeStmt *stmt)
 {
-	TgRecipe   *r;
-	int			i;
+	TgRecipe			*r;
+	int						i,
+								numTees;
 	QueryTreeList *qList;
-	char		portalName[1024];
+	char					portalName[1024];
 
-	Plan	   *plan;
-	TupleDesc	attinfo;
-	QueryDesc  *queryDesc;
-	Query	   *parsetree;
+	Plan					*plan;
+	TupleDesc			attinfo;
+	QueryDesc			*queryDesc;
+	Query					*parsetree;
 
-	int			numTees;
-	TeeInfo    *teeInfo;
+	TeeInfo				*teeInfo;
 
 	/*
 	 * retrieveRecipe() reads the recipe from the database and returns a
@@ -269,7 +269,7 @@ beginRecipe(RecipeStmt *stmt)
 
 		/* define a portal for this viewer input */
 		/* for now, eyes can only have one input */
-		sprintf(portalName, "%s%d", e->nodeName, 0);
+		snprintf(portalName, 1024, "%s%d", e->nodeName, 0);
 
 		queryDesc = CreateQueryDesc(parsetree,
 									plan,
@@ -808,21 +808,21 @@ tg_parseTeeNode(TgRecipe * r,
 static QueryTreeList *
 tg_parseSubQuery(TgRecipe * r, TgNode * n, TeeInfo * teeInfo)
 {
-	TgElement  *elem;
-	char	   *funcName;
-	Oid			typev[8];		/* eight arguments maximum	*/
-	int			i;
-	int			parameterCount;
+	TgElement			*elem;
+	char					*funcName;
+	Oid						typev[8],		/* eight arguments maximum	*/
+								relid;
+	int						i,
+								parameterCount;
 
 	QueryTreeList *qList;		/* the parse tree of the nodeElement */
 	QueryTreeList *inputQlist;	/* the list of parse trees for the inputs
 								 * to this node */
 	QueryTreeList *q;
-	Oid			relid;
-	TgNode	   *child;
-	Relation	rel;
-	unsigned int len;
-	TupleDesc	tupdesc;
+	TgNode				*child;
+	Relation			rel;
+	unsigned int	len;
+	TupleDesc			tupdesc;
 
 	qList = NULL;
 
@@ -876,13 +876,13 @@ tg_parseSubQuery(TgRecipe * r, TgNode * n, TeeInfo * teeInfo)
 					{
 						int			i;
 
-						sprintf(newquery, "select %s($1", funcName);
+						snprintf(newquery, 1000, "select %s($1", funcName);
 						for (i = 1; i < parameterCount; i++)
-							sprintf(newquery, "%s,$%d", newquery, i);
-						sprintf(newquery, "%s)", newquery);
+							snprintf(newquery, 1000, "%s,$%d", newquery, i);
+						snprintf(newquery, 1000, "%s)", newquery);
 					}
 					else
-						sprintf(newquery, "select %s()", funcName);
+						snprintf(newquery, 1000, "select %s()", funcName);
 
 #ifdef DEBUG_RECIPE
 					elog(NOTICE, "calling parser with %s", newquery);

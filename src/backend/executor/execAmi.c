@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/executor/execAmi.c,v 1.25 1998/09/01 04:28:13 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/executor/execAmi.c,v 1.26 1998/12/14 05:18:49 scrappy Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -518,10 +518,6 @@ ExecCreatR(TupleDesc tupType,
 		 *	 from the range table.. -cim 10/12/89)
 		 * ----------------
 		 */
-/*
-		sprintf(tempname, "temp_%d.%d", getpid(), tmpcnt++);
-		EU1_printf("ExecCreatR: attempting to create %s\n", tempname);
-*/
 
 		/*
 		 * heap_create creates a name if the argument to heap_create is

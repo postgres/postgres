@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/commands/view.c,v 1.26 1998/10/21 16:21:22 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/commands/view.c,v 1.27 1998/12/14 05:18:44 scrappy Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -122,7 +122,7 @@ MakeRetrieveViewRuleName(char *viewName)
 	char	   *buf;
 
 	buf = palloc(strlen(viewName) + 5);
-	sprintf(buf, "_RET%s", viewName);
+	snprintf(buf, strlen(viewName) + 5, "_RET%s", viewName);
 
 	return buf;
 }

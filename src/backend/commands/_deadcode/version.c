@@ -10,7 +10,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/commands/_deadcode/Attic/version.c,v 1.15 1998/09/01 04:28:09 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/commands/_deadcode/Attic/version.c,v 1.16 1998/12/14 05:18:44 scrappy Exp $
  *
  * NOTES
  *	  At the point the version is defined, 2 physical relations are created
@@ -36,11 +36,6 @@
 #define MAX_QUERY_LEN 1024
 
 char		rule_buf[MAX_QUERY_LEN];
-
-#ifdef NOT_USED
-static char attr_list[MAX_QUERY_LEN];
-
-#endif
 
 /*
  * problem: the version system assumes that the rules it declares will

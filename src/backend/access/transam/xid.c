@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/access/transam/Attic/xid.c,v 1.18 1998/10/08 18:29:18 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/access/transam/Attic/xid.c,v 1.19 1998/12/14 05:18:33 scrappy Exp $
  *
  * OLD COMMENTS
  * XXX WARNING
@@ -53,18 +53,6 @@ xidout(TransactionId transactionId)
 
 }
 
-#ifdef NOT_USED
-/* ----------------------------------------------------------------
- *		TransactionIdIsLessThan
- * ----------------------------------------------------------------
- */
-bool
-TransactionIdIsLessThan(TransactionId id1, TransactionId id2)
-{
-	return (bool) (id1 < id2);
-}
-#endif
-
 /* ----------------------------------------------------------------
  *		xideq
  * ----------------------------------------------------------------
@@ -81,23 +69,6 @@ xideq(TransactionId xid1, TransactionId xid2)
 }
 
 
-
-/* ----------------------------------------------------------------
- *		TransactionIdIncrement
- * ----------------------------------------------------------------
- */
-#ifdef NOT_USED
-void
-TransactionIdIncrement(TransactionId *transactionId)
-{
-
-	(*transactionId)++;
-	if (*transactionId == DisabledTransactionId)
-		elog(FATAL, "TransactionIdIncrement: exhausted XID's");
-	return;
-}
-
-#endif
 
 /* ----------------------------------------------------------------
  *		TransactionIdAdd

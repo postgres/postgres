@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/sort/Attic/psort.c,v 1.43 1998/11/27 19:52:32 vadim Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/sort/Attic/psort.c,v 1.44 1998/12/14 05:19:13 scrappy Exp $
  *
  * NOTES
  *		Sorts the first relation into the second relation.
@@ -350,7 +350,9 @@ initialrun(Sort *node)
 				continue;
 			}
 			else
+			{
 				break;
+			}
 
 		if ((bool) createrun(node, tp->tp_file) == false)
 			extrapasses = 1 + (PS(node)->Tuples != NULL);

@@ -3,6 +3,8 @@
  * spi.c--
  *				Server Programming Interface
  *
+ * $Id: spi.c,v 1.29 1998/12/14 05:18:51 scrappy Exp $
+ *
  *-------------------------------------------------------------------------
  */
 #include "executor/spi.h"
@@ -43,10 +45,6 @@ typedef struct
 static int	_SPI_execute(char *src, int tcount, _SPI_plan *plan);
 static int	_SPI_pquery(QueryDesc *queryDesc, EState *state, int tcount);
 
-#if 0
-static void _SPI_fetch(FetchStmt *stmt);
-
-#endif
 static int _SPI_execute_plan(_SPI_plan *plan,
 				  Datum *Values, char *Nulls, int tcount);
 
@@ -74,8 +72,8 @@ extern void ShowUsage(void);
 int
 SPI_connect()
 {
-	char		pname[64];
-	PortalVariableMemory pvmem;
+	char									pname[64];
+	PortalVariableMemory	pvmem;
 
 	/*
 	 * It's possible on startup and after commit/abort. In future we'll
@@ -128,7 +126,7 @@ SPI_connect()
 	_SPI_current->tuptable = NULL;
 
 	/* Create Portal for this procedure ... */
-	sprintf(pname, "<SPI %d>", _SPI_connected);
+	snprintf(pname, 64, "<SPI %d>", _SPI_connected);
 	_SPI_current->portal = CreatePortal(pname);
 	if (!PortalIsValid(_SPI_current->portal))
 		elog(FATAL, "SPI_connect: initialization failed");
@@ -875,46 +873,6 @@ _SPI_pquery(QueryDesc *queryDesc, EState *state, int tcount)
 	return res;
 
 }
-
-#if 0
-static void
-_SPI_fetch(FetchStmt *stmt)
-{
-	char	   *name = stmt->portalname;
-	int			feature = (stmt->direction == FORWARD) ? EXEC_FOR : EXEC_BACK;
-	int			count = stmt->howMany;
-	Portal		portal;
-	QueryDesc  *queryDesc;
-	EState	   *state;
-	MemoryContext context;
-
-	if (name == NULL)
-		elog(FATAL, "SPI_fetch from blank portal unsupported");
-
-	portal = GetPortalByName(name);
-	if (!PortalIsValid(portal))
-		elog(FATAL, "SPI_fetch: portal \"%s\" not found", name);
-
-	context = MemoryContextSwitchTo((MemoryContext) PortalGetHeapMemory(portal));
-
-	queryDesc = PortalGetQueryDesc(portal);
-	state = PortalGetState(portal);
-
-	ExecutorRun(queryDesc, state, feature, count);
-
-	MemoryContextSwitchTo(context);		/* switch to the normal Executor
-										 * context */
-
-	_SPI_current->processed = state->es_processed;
-	if (_SPI_checktuples())
-		elog(FATAL, "SPI_fetch: # of processed tuples check failed");
-
-	SPI_processed = _SPI_current->processed;
-	SPI_tuptable = _SPI_current->tuptable;
-
-}
-
-#endif
 
 static MemoryContext
 _SPI_execmem()

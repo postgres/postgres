@@ -14,7 +14,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/commands/cluster.c,v 1.33 1998/11/27 19:51:54 vadim Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/commands/cluster.c,v 1.34 1998/12/14 05:18:39 scrappy Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -165,7 +165,7 @@ cluster(char *oldrelname, char *oldindexname)
 
 	/* Create new index over the tuples of the new heap. */
 	copy_index(OIDOldIndex, OIDNewHeap);
-	sprintf(NewIndexName, "temp_%x", OIDOldIndex);
+	snprintf(NewIndexName, NAMEDATALEN, "temp_%x", OIDOldIndex);
 
 	/*
 	 * make this really happen. Flush all the buffers. (Believe me, it is
@@ -207,7 +207,7 @@ copy_heap(Oid OIDOldHeap)
 	 * Create a new heap relation with a temporary name, which has the
 	 * same tuple description as the old one.
 	 */
-	sprintf(NewName, "temp_%x", OIDOldHeap);
+	snprintf(NewName, NAMEDATALEN, "temp_%x", OIDOldHeap);
 
 	OldHeap = heap_open(OIDOldHeap);
 	OldHeapDesc = RelationGetDescr(OldHeap);
@@ -235,17 +235,17 @@ copy_heap(Oid OIDOldHeap)
 static void
 copy_index(Oid OIDOldIndex, Oid OIDNewHeap)
 {
-	Relation	OldIndex,
-				NewHeap;
-	HeapTuple	Old_pg_index_Tuple,
-				Old_pg_index_relation_Tuple,
-				pg_proc_Tuple;
+	Relation			OldIndex,
+								NewHeap;
+	HeapTuple			Old_pg_index_Tuple,
+								Old_pg_index_relation_Tuple,
+								pg_proc_Tuple;
 	Form_pg_index Old_pg_index_Form;
 	Form_pg_class Old_pg_index_relation_Form;
-	Form_pg_proc pg_proc_Form;
-	char	   *NewIndexName;
-	AttrNumber *attnumP;
-	int			natts;
+	Form_pg_proc	pg_proc_Form;
+	char					*NewIndexName;
+	AttrNumber		*attnumP;
+	int						natts;
 	FuncIndexInfo *finfo;
 
 	NewHeap = heap_open(OIDNewHeap);
@@ -273,8 +273,9 @@ copy_index(Oid OIDOldIndex, Oid OIDNewHeap)
 	Old_pg_index_relation_Form =
 		(Form_pg_class) GETSTRUCT(Old_pg_index_relation_Tuple);
 
+	/* Set the name. */
 	NewIndexName = palloc(NAMEDATALEN); /* XXX */
-	sprintf(NewIndexName, "temp_%x", OIDOldIndex);		/* Set the name. */
+	snprintf(NewIndexName, NAMEDATALEN, "temp_%x", OIDOldIndex);
 
 	/*
 	 * Ugly as it is, the only way I have of working out the number of

@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/commands/dbcommands.c,v 1.26 1998/11/27 19:51:56 vadim Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/commands/dbcommands.c,v 1.27 1998/12/14 05:18:43 scrappy Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -47,8 +47,8 @@ createdb(char *dbname, char *dbpath, int encoding)
 	Oid			db_id;
 	int4		user_id;
 	char		buf[512];
-	char	   *lp,
-				loc[512];
+	char		*lp,
+					loc[512];
 
 	/*
 	 * If this call returns, the database does not exist and we're allowed
@@ -64,7 +64,7 @@ createdb(char *dbname, char *dbpath, int encoding)
 	{
 		if (*(dbpath + strlen(dbpath) - 1) == SEP_CHAR)
 			*(dbpath + strlen(dbpath) - 1) = '\0';
-		sprintf(loc, "%s%c%s", dbpath, SEP_CHAR, dbname);
+		snprintf(loc, 512, "%s%c%s", dbpath, SEP_CHAR, dbname);
 	}
 	else
 		strcpy(loc, dbname);
@@ -79,19 +79,13 @@ createdb(char *dbname, char *dbpath, int encoding)
 	if (mkdir(lp, S_IRWXU) != 0)
 		elog(ERROR, "Unable to create database directory '%s'", lp);
 
-	sprintf(buf, "%s %s%cbase%ctemplate1%c* %s",
+	snprintf(buf, 512, "%s %s%cbase%ctemplate1%c* %s",
 			COPY_CMD, DataDir, SEP_CHAR, SEP_CHAR, SEP_CHAR, lp);
 	system(buf);
 
-#if FALSE
-	sprintf(buf, "insert into pg_database (datname, datdba, datpath) \
-                  values ('%s'::name, '%d'::oid, '%s'::text);",
-			dbname, user_id, dbname);
-#endif
-
-	sprintf(buf, "insert into pg_database (datname, datdba, encoding, datpath)"
+	snprintf(buf, 512, 
+			"insert into pg_database (datname, datdba, encoding, datpath)"
 			" values ('%s', '%d', '%d', '%s');", dbname, user_id, encoding, loc);
-
 
 	pg_exec_query(buf);
 }
@@ -101,9 +95,9 @@ destroydb(char *dbname)
 {
 	int4		user_id;
 	Oid			db_id;
-	char	   *path;
-	char		dbpath[MAXPGPATH + 1];
-	char		buf[512];
+	char		*path,
+					dbpath[MAXPGPATH + 1],
+					buf[512];
 
 	/*
 	 * If this call returns, the database exists and we're allowed to
@@ -127,8 +121,8 @@ destroydb(char *dbname)
 	 * remove the pg_database tuple FIRST, this may fail due to
 	 * permissions problems
 	 */
-	sprintf(buf, "delete from pg_database where pg_database.oid = \'%d\'::oid",
-			db_id);
+	snprintf(buf, 512, 
+			"delete from pg_database where pg_database.oid = \'%d\'::oid", db_id);
 	pg_exec_query(buf);
 
 	/*
@@ -136,7 +130,7 @@ destroydb(char *dbname)
 	 * not be reached
 	 */
 
-	sprintf(buf, "rm -r %s", path);
+	snprintf(buf, 512, "rm -r %s", path);
 	system(buf);
 
 	/* drop pages for this database that are in the shared buffer cache */
@@ -300,16 +294,16 @@ static void
 stop_vacuum(char *dbpath, char *dbname)
 {
 	char		filename[256];
-	FILE	   *fp;
+	FILE		*fp;
 	int			pid;
 
 	if (strchr(dbpath, SEP_CHAR) != 0)
 	{
-		sprintf(filename, "%s%cbase%c%s%c%s.vacuum", DataDir, SEP_CHAR, SEP_CHAR,
-				dbname, SEP_CHAR, dbname);
+		snprintf(filename, 256, "%s%cbase%c%s%c%s.vacuum", 
+				DataDir, SEP_CHAR, SEP_CHAR, dbname, SEP_CHAR, dbname);
 	}
 	else
-		sprintf(filename, "%s%c%s.vacuum", dbpath, SEP_CHAR, dbname);
+		snprintf(filename, 256, "%s%c%s.vacuum", dbpath, SEP_CHAR, dbname);
 
 	if ((fp = AllocateFile(filename, "r")) != NULL)
 	{

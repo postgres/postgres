@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/catalog/heap.c,v 1.68 1998/12/13 23:50:58 thomas Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/catalog/heap.c,v 1.69 1998/12/14 05:18:37 scrappy Exp $
  *
  * INTERFACE ROUTINES
  *		heap_create()			- Create an uncataloged heap relation
@@ -244,7 +244,7 @@ heap_create(char *name,
 
 		if (name[0] == '\0')
 		{
-			sprintf(tempname, "temp_%d", relid);
+			snprintf(tempname, NAMEDATALEN, "temp_%d", relid);
 			Assert(strlen(tempname) < NAMEDATALEN);
 			relname = tempname;
 			isTemp = 1;
@@ -1448,8 +1448,9 @@ start:;
 	/* Surround table name with double quotes to allow mixed-case and
 	 * whitespaces in names. - BGA 1998-11-14
 	 */
-	sprintf(str, "select %s%s from \"%.*s\"", attrdef->adsrc, cast,
-			NAMEDATALEN, rel->rd_rel->relname.data);
+	snprintf(str, MAX_PARSE_BUFFER, 
+			 "select %s%s from \"%.*s\"", attrdef->adsrc, cast,
+			 NAMEDATALEN, rel->rd_rel->relname.data);
 	setheapoverride(true);
 	planTree_list = (List *) pg_parse_and_plan(str, NULL, 0, &queryTree_list, None, FALSE);
 	setheapoverride(false);
@@ -1463,22 +1464,6 @@ start:;
 	expr = te->expr;
 	type = exprType(expr);
 
-#if 0
-	if (IsA(expr, Const))
-	{
-		if (((Const *) expr)->consttype != atp->atttypid)
-		{
-			if (*cast != 0)
-				elog(ERROR, "DEFAULT: const type mismatched");
-			sprintf(cast, ":: %s", typeidTypeName(atp->atttypid));
-			goto start;
-		}
-	}
-	else if ((exprType(expr) != atp->atttypid)
-			 && !IS_BINARY_COMPATIBLE(exprType(expr), atp->atttypid))
-		elog(ERROR, "DEFAULT: type mismatched");
-#endif
-
 	if (type != atp->atttypid)
 	{
 		if (IS_BINARY_COMPATIBLE(type, atp->atttypid))
@@ -1490,7 +1475,7 @@ start:;
 			if (*cast != 0)
 				elog(ERROR, "DEFAULT clause const type '%s' mismatched with column type '%s'",
 					 typeidTypeName(type), typeidTypeName(atp->atttypid));
-			sprintf(cast, ":: %s", typeidTypeName(atp->atttypid));
+			snprintf(cast, 2*NAMEDATALEN, ":: %s", typeidTypeName(atp->atttypid));
 			goto start;
 		}
 		else
@@ -1544,7 +1529,8 @@ StoreRelCheck(Relation rel, ConstrCheck *check)
 	/* Check for table's existance. Surround table name with double-quotes
 	 * to allow mixed-case and whitespace names. - thomas 1998-11-12
 	 */
-	sprintf(str, "select 1 from \"%.*s\" where %s",
+	snprintf(str, MAX_PARSE_BUFFER, 
+			"select 1 from \"%.*s\" where %s",
 			NAMEDATALEN, rel->rd_rel->relname.data, check->ccsrc);
 	setheapoverride(true);
 	planTree_list = (List *) pg_parse_and_plan(str, NULL, 0, &queryTree_list, None, FALSE);

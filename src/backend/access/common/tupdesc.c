@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/access/common/tupdesc.c,v 1.45 1998/11/27 19:51:28 vadim Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/access/common/tupdesc.c,v 1.46 1998/12/14 05:18:30 scrappy Exp $
  *
  * NOTES
  *	  some of the executor utility code such as "ExecTypeFromTL" should be
@@ -488,7 +488,8 @@ BuildDescForRelation(List *schema, char *relname)
 		if (arry != NIL)
 		{
 			/* array of XXX is _XXX */
-			sprintf(typename, "_%.*s", NAMEDATALEN - 2, entry->typename->name);
+			snprintf(typename, NAMEDATALEN,
+							 "_%.*s", NAMEDATALEN - 2, entry->typename->name);
 			attdim = length(arry);
 		}
 		else

@@ -1326,34 +1326,6 @@ _gistdump(Relation r)
 	}
 }
 
-#ifdef NOT_USED
-static char *
-text_range_out(TXTRANGE *r)
-{
-	char	   *result;
-	char	   *lower,
-			   *upper;
-
-	if (r == NULL)
-		return NULL;
-	result = (char *) palloc(NAMEDATALEN + VARSIZE(TRLOWER(r)) + VARSIZE(TRUPPER(r))
-							 - 2 * VARHDRSZ);
-
-	lower = (char *) palloc(VARSIZE(TRLOWER(r)) + 1 - VARHDRSZ);
-	memcpy(lower, VARDATA(TRLOWER(r)), VARSIZE(TRLOWER(r)) - VARHDRSZ);
-	lower[VARSIZE(TRLOWER(r)) - VARHDRSZ] = '\0';
-	upper = (char *) palloc(VARSIZE(TRUPPER(r)) + 1 - VARHDRSZ);
-	memcpy(upper, VARDATA(TRUPPER(r)), VARSIZE(TRUPPER(r)) - VARHDRSZ);
-	upper[VARSIZE(TRUPPER(r)) - VARHDRSZ] = '\0';
-
-	sprintf(result, "[%s,%s): %d", lower, upper, r->flag);
-	pfree(lower);
-	pfree(upper);
-	return result;
-}
-
-#endif
-
 static char *
 int_range_out(INTRANGE *r)
 {
@@ -1362,7 +1334,7 @@ int_range_out(INTRANGE *r)
 	if (r == NULL)
 		return NULL;
 	result = (char *) palloc(80);
-	sprintf(result, "[%d,%d): %d", r->lower, r->upper, r->flag);
+	snprintf(result, 80, "[%d,%d): %d", r->lower, r->upper, r->flag);
 
 	return result;
 }

@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/catalog/catalog.c,v 1.18 1998/09/01 04:27:28 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/catalog/catalog.c,v 1.19 1998/12/14 05:18:36 scrappy Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -29,39 +29,18 @@
 char *
 relpath(char *relname)
 {
-	char	   *path;
+	char	*path;
+	int		bufsize = 0;
 
 	if (IsSharedSystemRelationName(relname))
 	{
-		path = (char *) palloc(strlen(DataDir) + sizeof(NameData) + 2);
-		sprintf(path, "%s/%s", DataDir, relname);
+		bufsize = strlen(DataDir) + sizeof(NameData) + 2;
+		path = (char *) palloc(bufsize);
+		snprintf(path, bufsize, "%s/%s", DataDir, relname);
 		return path;
 	}
 	return relname;
 }
-
-#ifdef NOT_USED
-/*
- * issystem		- returns non-zero iff relname is a system catalog
- *
- *		We now make a new requirement where system catalog relns must begin
- *		with pg_ while user relns are forbidden to do so.  Make the test
- *		trivial and instantaneous.
- *
- *		XXX this is way bogus. -- pma
- */
-bool
-issystem(char *relname)
-{
-	if (relname[0] && relname[1] && relname[2])
-		return (relname[0] == 'p' &&
-				relname[1] == 'g' &&
-				relname[2] == '_');
-	else
-		return FALSE;
-}
-
-#endif
 
 /*
  * IsSystemRelationName --
