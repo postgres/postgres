@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/syntax.sgml,v 1.82 2003/08/14 23:13:27 tgl Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/syntax.sgml,v 1.83 2003/08/19 06:06:48 tgl Exp $
 -->
 
 <chapter id="sql-syntax">
@@ -1268,6 +1268,23 @@ SELECT ARRAY[[1,2],[3,4]];
 
     Since multidimensional arrays must be rectangular, inner constructors
     at the same level must produce sub-arrays of identical dimensions.
+  </para>
+
+  <para>
+    Multidimensional array constructor elements can be anything yielding
+    an array of the proper kind, not only a sub-<literal>ARRAY</> construct.
+    For example:
+<programlisting>
+create table arr(f1 int[], f2 int[]);
+CREATE TABLE
+insert into arr values (ARRAY[[1,2],[3,4]],ARRAY[[5,6],[7,8]]);
+INSERT 2635544 1
+select ARRAY[f1, f2, '{{9,10},{11,12}}'::int[]] from arr;
+                     array
+------------------------------------------------
+ {{{1,2},{3,4}},{{5,6},{7,8}},{{9,10},{11,12}}}
+(1 row)
+</programlisting>
   </para>
 
   <para>

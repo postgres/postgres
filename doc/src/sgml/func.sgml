@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/func.sgml,v 1.167 2003/08/17 04:52:41 momjian Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/func.sgml,v 1.168 2003/08/19 06:06:43 tgl Exp $
 PostgreSQL documentation
 -->
 
@@ -7032,7 +7032,7 @@ SELECT pg_type_is_visible('myschema.widget'::regtype);
 
   <para>
    <xref linkend="array-operators-table"> shows the operators
-   available for the <type>array</type> types.
+   available for <type>array</type> types.
   </para>
 
     <table id="array-operators-table">
@@ -7093,7 +7093,7 @@ SELECT pg_type_is_visible('myschema.widget'::regtype);
 	<entry> <literal>||</literal> </entry>
 	<entry>array-to-array concatenation</entry>
 	<entry><literal>ARRAY[1,2,3] || ARRAY[4,5,6]</literal></entry>
-	<entry><literal>{{1,2,3},{4,5,6}}</literal></entry>
+	<entry><literal>{1,2,3,4,5,6}</literal></entry>
        </row>
 
        <row>
@@ -7119,6 +7119,11 @@ SELECT pg_type_is_visible('myschema.widget'::regtype);
       </tbody>
      </tgroup>
     </table>
+
+  <para>
+   See <xref linkend="arrays"> for more details about array operator
+   behavior.
+  </para>
 
   <para>
    <xref linkend="array-functions-table"> shows the functions
@@ -7167,7 +7172,7 @@ SELECT pg_type_is_visible('myschema.widget'::regtype);
      for <literal>NULL</literal> inputs
     </entry>
 	<entry><literal>array_cat(ARRAY[1,2,3], ARRAY[4,5,6])</literal></entry>
-	<entry><literal>{{1,2,3},{4,5,6}}</literal></entry>
+	<entry><literal>{1,2,3,4,5,6}</literal></entry>
        </row>
        <row>
 	<entry>
