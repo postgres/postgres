@@ -1,6 +1,6 @@
 TODO list for PostgreSQL
 ========================
-Last updated:		Sun Mar 24 22:36:39 EST 2002
+Last updated:		Mon Mar 25 15:55:30 EST 2002
 
 Current maintainer:	Bruce Momjian (pgman@candle.pha.pa.us)
 
@@ -121,7 +121,7 @@ VIEWS / RULES
 * Add the functionality for WITH CHECK OPTION clause of CREATE VIEW
 * Allow NOTIFY in rules involving conditionals
 * Allow temporary views
-* Automatically make a view temporary if it uses a temporary table
+* Require view using temporary tables to be temporary views
 * Move psql backslash information into views
 * Allow RULE recompilation
 * -Remove brackets as multi-statement rule grouping, must use parens (Bruce)
