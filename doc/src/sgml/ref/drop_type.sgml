@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/ref/drop_type.sgml,v 1.7 2000/07/22 04:30:27 momjian Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/ref/drop_type.sgml,v 1.8 2000/10/22 23:32:38 tgl Exp $
 Postgres documentation
 -->
 
@@ -15,7 +15,7 @@ Postgres documentation
    DROP TYPE
   </refname>
   <refpurpose>
-   Removes a user-defined type from the system catalogs
+   Removes user-defined types from the system catalogs
   </refpurpose>
  </refnamediv>
  <refsynopsisdiv>
@@ -23,7 +23,7 @@ Postgres documentation
    <date>1999-07-20</date>
   </refsynopsisdivinfo>
   <synopsis>
-DROP TYPE <replaceable class="PARAMETER">typename</replaceable>
+DROP TYPE <replaceable class="PARAMETER">typename</replaceable> [, ...]
   </synopsis>
   
   <refsect2 id="R2-SQL-DROPTYPE-1">

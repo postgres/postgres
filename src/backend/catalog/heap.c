@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/catalog/heap.c,v 1.149 2000/10/16 14:52:02 vadim Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/catalog/heap.c,v 1.150 2000/10/22 23:32:38 tgl Exp $
  *
  *
  * INTERFACE ROUTINES
@@ -1091,7 +1091,7 @@ DeleteRelationTuple(Relation rel)
 	if (!HeapTupleIsValid(tup))
 	{
 		heap_close(pg_class_desc, RowExclusiveLock);
-		elog(ERROR, "Relation '%s' does not exist",
+		elog(ERROR, "Relation \"%s\" does not exist",
 			 RelationGetRelationName(rel));
 	}
 
@@ -1342,7 +1342,7 @@ DeleteTypeTuple(Relation rel)
 	{
 		heap_endscan(pg_type_scan);
 		heap_close(pg_type_desc, RowExclusiveLock);
-		elog(ERROR, "DeleteTypeTuple: %s type nonexistent",
+		elog(ERROR, "DeleteTypeTuple: type \"%s\" does not exist",
 			 RelationGetRelationName(rel));
 	}
 

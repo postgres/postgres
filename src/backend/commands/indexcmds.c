@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/commands/indexcmds.c,v 1.38 2000/09/06 14:15:16 petere Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/commands/indexcmds.c,v 1.39 2000/10/22 23:32:39 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -610,7 +610,7 @@ RemoveIndex(char *name)
 								0, 0, 0);
 
 	if (!HeapTupleIsValid(tuple))
-		elog(ERROR, "index \"%s\" nonexistent", name);
+		elog(ERROR, "index \"%s\" does not exist", name);
 
 	if (((Form_pg_class) GETSTRUCT(tuple))->relkind != RELKIND_INDEX)
 	{
@@ -640,7 +640,7 @@ ReindexIndex(const char *name, bool force /* currently unused */ )
 								0, 0, 0);
 
 	if (!HeapTupleIsValid(tuple))
-		elog(ERROR, "index \"%s\" nonexistent", name);
+		elog(ERROR, "index \"%s\" does not exist", name);
 
 	if (((Form_pg_class) GETSTRUCT(tuple))->relkind != RELKIND_INDEX)
 	{
@@ -650,7 +650,7 @@ ReindexIndex(const char *name, bool force /* currently unused */ )
 	}
 
 	if (!reindex_index(tuple->t_data->t_oid, force))
-		elog(NOTICE, "index '%s' wasn't reindexed", name);
+		elog(NOTICE, "index \"%s\" wasn't reindexed", name);
 }
 
 /*
@@ -671,7 +671,7 @@ ReindexTable(const char *name, bool force)
 								0, 0, 0);
 
 	if (!HeapTupleIsValid(tuple))
-		elog(ERROR, "table \"%s\" nonexistent", name);
+		elog(ERROR, "table \"%s\" does not exist", name);
 
 	if (((Form_pg_class) GETSTRUCT(tuple))->relkind != RELKIND_RELATION)
 	{
@@ -681,7 +681,7 @@ ReindexTable(const char *name, bool force)
 	}
 
 	if (!reindex_relation(tuple->t_data->t_oid, force))
-		elog(NOTICE, "table '%s' wasn't reindexed", name);
+		elog(NOTICE, "table \"%s\" wasn't reindexed", name);
 }
 
 /*
@@ -719,7 +719,7 @@ ReindexDatabase(const char *dbname, bool force, bool all)
 	scan = heap_beginscan(relation, 0, SnapshotNow, 1, &scankey);
 	dbtuple = heap_getnext(scan, 0);
 	if (!HeapTupleIsValid(dbtuple))
-		elog(ERROR, "Database \"%s\" doesn't exist", dbname);
+		elog(ERROR, "Database \"%s\" does not exist", dbname);
 	db_id = dbtuple->t_data->t_oid;
 	db_owner = ((Form_pg_database) GETSTRUCT(dbtuple))->datdba;
 	heap_endscan(scan);
@@ -789,7 +789,7 @@ ReindexDatabase(const char *dbname, bool force, bool all)
 	{
 		StartTransactionCommand();
 		if (reindex_relation(relids[i], force))
-			elog(NOTICE, "relation %d was reindexed", relids[i]);
+			elog(NOTICE, "relation %u was reindexed", relids[i]);
 		CommitTransactionCommand();
 	}
 	StartTransactionCommand();

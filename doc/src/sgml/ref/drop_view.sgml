@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/ref/drop_view.sgml,v 1.7 2000/10/18 16:16:03 momjian Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/ref/drop_view.sgml,v 1.8 2000/10/22 23:32:38 tgl Exp $
 Postgres documentation
 -->
 
@@ -15,7 +15,7 @@ Postgres documentation
    DROP VIEW
   </refname>
   <refpurpose>
-   Removes an existing view from a database
+   Removes existing views from a database
   </refpurpose>
  </refnamediv>
  <refsynopsisdiv>
@@ -70,7 +70,7 @@ DROP
      </varlistentry>
      <varlistentry>
       <term><computeroutput>
-ERROR: view <replaceable class="parameter">name</replaceable> is nonexistent
+ERROR: view <replaceable class="parameter">name</replaceable> does not exist
        </computeroutput></term>
       <listitem>
        <para>
@@ -104,10 +104,6 @@ ERROR: view <replaceable class="parameter">name</replaceable> is nonexistent
    <title>
     Notes
    </title>
-   <para>
-    The <productname>Postgres</productname>
-    <command>DROP TABLE</command> statement also drops views.
-   </para>
    <para>
     Refer to <command>CREATE VIEW</command>
     for information on how to create views.

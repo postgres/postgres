@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/commands/Attic/rename.c,v 1.50 2000/10/20 02:53:10 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/commands/Attic/rename.c,v 1.51 2000/10/22 23:32:39 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -137,7 +137,7 @@ renameatt(char *relname,
 										PointerGetDatum(oldattname),
 										0, 0);
 	if (!HeapTupleIsValid(oldatttup))
-		elog(ERROR, "renameatt: attribute \"%s\" nonexistent", oldattname);
+		elog(ERROR, "renameatt: attribute \"%s\" does not exist", oldattname);
 
 	if (((Form_pg_attribute) GETSTRUCT(oldatttup))->attnum < 0)
 		elog(ERROR, "renameatt: system attribute \"%s\" not renamed", oldattname);

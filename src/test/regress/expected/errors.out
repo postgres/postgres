@@ -52,7 +52,7 @@ drop table;
 ERROR:  parser: parse error at or near ";"
 -- no such relation 
 drop table nonesuch;
-ERROR:  table "nonesuch" is nonexistent
+ERROR:  table "nonesuch" does not exist
 --
 -- RENAME
  
@@ -81,7 +81,7 @@ alter table nonesuchrel rename column nonesuchatt to newnonesuchatt;
 ERROR:  Relation 'nonesuchrel' does not exist
 -- no such attribute 
 alter table emp rename column nonesuchatt to newnonesuchatt;
-ERROR:  renameatt: attribute "nonesuchatt" nonexistent
+ERROR:  renameatt: attribute "nonesuchatt" does not exist
 -- conflict 
 alter table emp rename column salary to manager;
 ERROR:  renameatt: attribute "manager" exists
@@ -122,7 +122,7 @@ drop index 314159;
 ERROR:  parser: parse error at or near "314159"
 -- no such index 
 drop index nonesuch;
-ERROR:  index "nonesuch" is nonexistent
+ERROR:  index "nonesuch" does not exist
 --
 -- REMOVE AGGREGATE
  

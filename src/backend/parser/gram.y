@@ -11,7 +11,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/parser/gram.y,v 2.196 2000/10/18 16:16:05 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/parser/gram.y,v 2.197 2000/10/22 23:32:48 tgl Exp $
  *
  * HISTORY
  *	  AUTHOR			DATE			MAJOR EVENT
@@ -125,7 +125,7 @@ static void doNegateFloat(Value *v);
 		DropUserStmt, DropdbStmt, ExplainStmt, ExtendStmt, FetchStmt,
 		GrantStmt, IndexStmt, InsertStmt, ListenStmt, LoadStmt, LockStmt,
 		NotifyStmt, OptimizableStmt, ProcedureStmt, ReindexStmt,
-		RemoveAggrStmt, RemoveFuncStmt, RemoveOperStmt, RemoveStmt,
+		RemoveAggrStmt, RemoveFuncStmt, RemoveOperStmt,
 		RenameStmt, RevokeStmt, RuleActionStmt, RuleActionStmtOrEmpty,
 		RuleStmt, SelectStmt, SetSessionStmt, TransactionStmt, TruncateStmt,
 		UnlistenStmt, UpdateStmt, VacuumStmt, VariableResetStmt,
@@ -202,7 +202,7 @@ static void doNegateFloat(Value *v);
 				opt_with_copy, index_opt_unique, opt_verbose, opt_analyze
 %type <boolean> opt_cursor
 
-%type <ival>	copy_dirn, def_type, direction, reindex_type, remove_type,
+%type <ival>	copy_dirn, def_type, direction, reindex_type, drop_type,
 		opt_column, event, comment_type, comment_cl,
 		comment_ag, comment_fn, comment_op, comment_tg
 
@@ -447,7 +447,6 @@ stmt :	AlterSchemaStmt
 		| RemoveAggrStmt
 		| RemoveOperStmt
 		| RemoveFuncStmt
-		| RemoveStmt
 		| RenameStmt
 		| RevokeStmt
 		| OptimizableStmt
@@ -1935,31 +1934,26 @@ def_arg:  func_return  					{  $$ = (Node *)$1; }
 /*****************************************************************************
  *
  *		QUERY:
- *				drop <relname1> [, <relname2> .. <relnameN> ]
+ *
+ *		DROP itemtype itemname [, itemname ...]
  *
  *****************************************************************************/
 
-DropStmt:  DROP TABLE relation_name_list
+DropStmt:  DROP drop_type name_list
 				{
 					DropStmt *n = makeNode(DropStmt);
+					n->removeType = $2;
 					n->names = $3;
-					n->removeType = DROP_TABLE;
 					$$ = (Node *)n;
 				}
-		| DROP SEQUENCE relation_name_list
-				{
-					DropStmt *n = makeNode(DropStmt);
-					n->names = $3;
-					n->removeType = DROP_SEQUENCE;
-					$$ = (Node *)n;
-				}
-		| DROP VIEW relation_name_list
-				{
-					DropStmt *n = makeNode(DropStmt);
-					n->names = $3;
-					n->removeType = DROP_VIEW;
-					$$ = (Node *)n;
-				}
+		;
+
+drop_type: TABLE								{ $$ = DROP_TABLE; }
+		| SEQUENCE								{ $$ = DROP_SEQUENCE; }
+		| VIEW									{ $$ = DROP_VIEW; }
+		| INDEX									{ $$ = DROP_INDEX; }
+		| RULE									{ $$ = DROP_RULE; }
+		| TYPE_P								{ $$ = DROP_TYPE_P; }
 		;
 
 /*****************************************************************************
@@ -2550,33 +2544,20 @@ func_return:  Typename
  *
  *		QUERY:
  *
- *		remove function <funcname>
- *				(REMOVE FUNCTION "funcname" (arg1, arg2, ...))
- *		remove aggregate <aggname>
- *				(REMOVE AGGREGATE "aggname" "aggtype")
- *		remove operator <opname>
- *				(REMOVE OPERATOR "opname" (leftoperand_typ rightoperand_typ))
- *		remove type <typename>
- *				(REMOVE TYPE "typename")
- *		remove rule <rulename>
- *				(REMOVE RULE "rulename")
+ *		DROP FUNCTION funcname (arg1, arg2, ...)
+ *		DROP AGGREGATE aggname aggtype
+ *		DROP OPERATOR opname (leftoperand_typ rightoperand_typ)
  *
  *****************************************************************************/
 
-RemoveStmt:  DROP remove_type name
+RemoveFuncStmt:  DROP FUNCTION func_name func_args
 				{
-					DropStmt *n = makeNode(DropStmt);
-					n->removeType = $2;
-					n->names =  makeList1(makeString($3));
+					RemoveFuncStmt *n = makeNode(RemoveFuncStmt);
+					n->funcname = $3;
+					n->args = $4;
 					$$ = (Node *)n;
 				}
 		;
-
-remove_type:  TYPE_P							{  $$ = DROP_TYPE_P; }
-		| INDEX									{  $$ = DROP_INDEX; }
-		| RULE									{  $$ = DROP_RULE; }
-		;
-
 
 RemoveAggrStmt:  DROP AGGREGATE name aggr_argtype
 				{
@@ -2590,17 +2571,6 @@ RemoveAggrStmt:  DROP AGGREGATE name aggr_argtype
 aggr_argtype:  Typename							{ $$ = $1; }
 		| '*'									{ $$ = NULL; }
 		;
-
-
-RemoveFuncStmt:  DROP FUNCTION func_name func_args
-				{
-					RemoveFuncStmt *n = makeNode(RemoveFuncStmt);
-					n->funcname = $3;
-					n->args = $4;
-					$$ = (Node *)n;
-				}
-		;
-
 
 RemoveOperStmt:  DROP OPERATOR all_Op '(' oper_argtypes ')'
 				{

@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2000, PostgreSQL, Inc
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Id: nodes.h,v 1.78 2000/10/05 19:11:36 tgl Exp $
+ * $Id: nodes.h,v 1.79 2000/10/22 23:32:44 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -169,7 +169,7 @@ typedef enum NodeTag
 	T_RemoveAggrStmt,
 	T_RemoveFuncStmt,
 	T_RemoveOperStmt,
-	T_RemoveStmt,
+	T_RemoveStmt_XXX,			/* not used anymore; this tag# is available */
 	T_RenameStmt,
 	T_RuleStmt,
 	T_NotifyStmt,

@@ -3,7 +3,7 @@
 --
 -- prepare the table...
 DROP TABLE INET_TBL;
-ERROR:  table "inet_tbl" is nonexistent
+ERROR:  table "inet_tbl" does not exist
 CREATE TABLE INET_TBL (c cidr, i inet);
 INSERT INTO INET_TBL (c, i) VALUES ('192.168.1', '192.168.1.226/24');
 INSERT INTO INET_TBL (c, i) VALUES ('192.168.1.2/24', '192.168.1.226');

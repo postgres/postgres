@@ -10,7 +10,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/tcop/utility.c,v 1.97 2000/10/18 16:16:06 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/tcop/utility.c,v 1.98 2000/10/22 23:32:41 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -47,21 +47,22 @@
 
 
 /*
- *
+ * Error-checking support for DROP commands
  */
 
 struct kindstrings {
 	char kind;
+	char *indef_article;
 	char *name;
 	char *command;
 };
 
 static struct kindstrings kindstringarray[] = {
-	{ RELKIND_RELATION, "table", "TABLE" },
-	{ RELKIND_SEQUENCE, "sequence", "SEQUENCE" },
-	{ RELKIND_VIEW, "view", "VIEW" },
-	{ RELKIND_INDEX, "index", "INDEX" },
-	{ '\0', "", "" }
+	{ RELKIND_RELATION, "a", "table", "TABLE" },
+	{ RELKIND_SEQUENCE, "a", "sequence", "SEQUENCE" },
+	{ RELKIND_VIEW, "a", "view", "VIEW" },
+	{ RELKIND_INDEX, "an", "index", "INDEX" },
+	{ '\0', "a", "???", "???" }
 };
 
 
@@ -81,35 +82,43 @@ DropErrorMsg(char* relname, char wrongkind, char rightkind)
 			break;
 	Assert(wentry->kind != '\0');
 	
-	elog(ERROR, "%s is not a %s. Use 'DROP %s' to remove a %s",
-			relname, rentry->name, wentry->command, wentry->name);
+	elog(ERROR, "\"%s\" is not %s %s. Use DROP %s to remove %s %s",
+		 relname, rentry->indef_article, rentry->name,
+		 wentry->command, wentry->indef_article, wentry->name);
 }
 
 static void
-CheckClassKind(char *name, char rightkind)
+CheckDropPermissions(char *name, char rightkind)
 {
-	HeapTuple	tuple;
 	struct kindstrings *rentry;
+	HeapTuple	tuple;
 	Form_pg_class classform;
+
+	for (rentry = kindstringarray; rentry->kind != '\0'; rentry++)
+		if (rentry->kind == rightkind)
+			break;
+	Assert(rentry->kind != '\0');
 
 	tuple = SearchSysCacheTuple(RELNAME,
 								PointerGetDatum(name),
 								0, 0, 0);
-
 	if (!HeapTupleIsValid(tuple))
-	{
-		for (rentry = kindstringarray; rentry->kind != '\0'; rentry++)
-			if (rentry->kind == rightkind)
-				break;
-		Assert(rentry->kind != '\0');
-		elog(ERROR, "%s \"%s\" is nonexistent", rentry->name, name);
-	}
+		elog(ERROR, "%s \"%s\" does not exist", rentry->name, name);
 
 	classform = (Form_pg_class) GETSTRUCT(tuple);
 
 	if (classform->relkind != rightkind)
 		DropErrorMsg(name, classform->relkind, rightkind);
+
+	if (!pg_ownercheck(GetUserId(), name, RELNAME))
+		elog(ERROR, "you do not own %s \"%s\"",
+			 rentry->name, name);
+
+	if (!allowSystemTableMods && IsSystemRelationName(name))
+		elog(ERROR, "%s \"%s\" is a system %s",
+			 rentry->name, name, rentry->name);
 }
+
 
 /* ----------------
  *		general utility function invoker
@@ -204,7 +213,6 @@ ProcessUtility(Node *parsetree,
 			/*
 			 * Let AlterTableCreateToastTable decide if this
 			 * one needs a secondary relation too.
-			 *
 			 */
 			CommandCounterIncrement();
 			AlterTableCreateToastTable(((CreateStmt *)parsetree)->relname,
@@ -217,51 +225,32 @@ ProcessUtility(Node *parsetree,
 				List	   *args = stmt->names;
 				List	   *arg;
 
-				foreach(arg, args) {
+				set_ps_display(commandTag = "DROP");
 
+				foreach(arg, args)
+				{
 					relname = strVal(lfirst(arg));
-					if (!allowSystemTableMods && IsSystemRelationName(relname))
-						elog(ERROR, "class \"%s\" is a system catalog",
-							 relname);
-
-					set_ps_display(commandTag = "DROP");
 
 					switch(stmt->removeType)
 					{
 						case DROP_TABLE:
-							CheckClassKind(relname, RELKIND_RELATION);
-							if (!pg_ownercheck(GetUserId(), relname, RELNAME))
-								elog(ERROR, "you do not own table \"%s\"",
-									 relname);
+							CheckDropPermissions(relname, RELKIND_RELATION);
 							RemoveRelation(relname);
-
 							break;
 
 						case DROP_SEQUENCE:
-							CheckClassKind(relname, RELKIND_SEQUENCE);
-							if (!pg_ownercheck(GetUserId(), relname, RELNAME))
-								elog(ERROR, "you do not own sequence \"%s\"",
-									 relname);
+							CheckDropPermissions(relname, RELKIND_SEQUENCE);
 							RemoveRelation(relname);
-
 							break;
 
 						case DROP_VIEW:
-							CheckClassKind(relname, RELKIND_VIEW);
-							if (!pg_ownercheck(GetUserId(), relname, RELNAME))
-								elog(ERROR, "you do not own view \"%s\"",
-									 relname);
+							CheckDropPermissions(relname, RELKIND_VIEW);
 							RemoveView(relname);
-
 							break;
 
 						case DROP_INDEX:
-							CheckClassKind(relname, RELKIND_INDEX);
-							if (!pg_ownercheck(GetUserId(), relname, RELNAME))
-								elog(ERROR, "%s: %s", relname, 
-										aclcheck_error_strings[ACLCHECK_NOT_OWNER]);
+							CheckDropPermissions(relname, RELKIND_INDEX);
 							RemoveIndex(relname);
-
 							break;
 
 						case DROP_RULE:
@@ -279,11 +268,18 @@ ProcessUtility(Node *parsetree,
 							break;
 
 						case DROP_TYPE_P:
+							/* RemoveType does its own permissions checks */
 							RemoveType(relname);
 							break;
 					}
-				}
 
+					/*
+					 * Make sure subsequent loop iterations will see results
+					 * of this one; needed if removing multiple rules for
+					 * same table, for example.
+					 */
+					CommandCounterIncrement();
+				}
 			}
 			break;
 
