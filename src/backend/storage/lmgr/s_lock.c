@@ -9,7 +9,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/storage/lmgr/s_lock.c,v 1.10 2002/11/10 00:33:43 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/storage/lmgr/s_lock.c,v 1.11 2003/04/20 21:54:34 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -110,39 +110,6 @@ _success:						\n\
 ");
 }
 #endif   /* __m68k__ */
-
-#if defined(__APPLE__) && defined(__ppc__)
-/* used in darwin. */
-/* We key off __APPLE__ here because this function differs from
- * the LinuxPPC implementation only in compiler syntax.
- *
- * NOTE: per the Enhanced PowerPC Architecture manual, v1.0 dated 7-May-2002,
- * an isync is a sufficient synchronization barrier after a lwarx/stwcx loop.
- */
-static void
-tas_dummy()
-{
-	__asm__		__volatile__(
-										 "\
-			.globl 	tas			\n\
-			.globl 	_tas		\n\
-_tas:							\n\
-tas:							\n\
-			lwarx	r5,0,r3		\n\
-			cmpwi 	r5,0		\n\
-			bne 	fail		\n\
-			addi 	r5,r5,1		\n\
-			stwcx. 	r5,0,r3		\n\
-			beq 	success		\n\
-fail:		li 		r3,1		\n\
-			blr 				\n\
-success:						\n\
-			isync				\n\
-			li 		r3,0		\n\
-			blr					\n\
-");
-}
-#endif   /* __APPLE__ && __ppc__ */
 
 #if defined(__mips__) && !defined(__sgi)
 static void
