@@ -3252,7 +3252,7 @@ echo "$as_me: error: Ant is required to build Java components
 If you have Ant already installed, see config.log for details on the failure." >&2;}
    { (exit 1); exit 1; }; }
 fi
-if "$ANT" -version | sed q | egrep -v ' 1\.[5-9]| [2-9]\.' >/dev/null ; then
+if "$ANT" -version | egrep -i 'ant version' | sed q | egrep -v ' 1\.[5-9]| [2-9]\.' >/dev/null ; then
   { { echo "$as_me:$LINENO: error: Ant version >= 1.5 is required to build Java components" >&5
 echo "$as_me: error: Ant version >= 1.5 is required to build Java components" >&2;}
    { (exit 1); exit 1; }; }
