@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/queries.sgml,v 1.28 2003/11/29 19:51:37 pgsql Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/queries.sgml,v 1.29 2004/03/03 22:22:24 neilc Exp $ -->
 
 <chapter id="queries">
  <title>Queries</title>
@@ -108,8 +108,9 @@ SELECT random();
    <title>The <literal>FROM</literal> Clause</title>
  
    <para>
-    The <literal>FROM</> clause derives a table from one or more other
-    tables given in a comma-separated table reference list.
+    The <xref linkend="sql-from" endterm="sql-from-title"> derives a
+    table from one or more other tables given in a comma-separated
+    table reference list.
 <synopsis>
 FROM <replaceable>table_reference</replaceable> <optional>, <replaceable>table_reference</replaceable> <optional>, ...</optional></optional>
 </synopsis>
@@ -677,7 +678,8 @@ SELECT *
    </indexterm>
 
    <para>
-    The syntax of the <literal>WHERE</> clause is
+    The syntax of the <xref linkend="sql-where"
+    endterm="sql-where-title"> clause is
 <synopsis>
 WHERE <replaceable>search_condition</replaceable>
 </synopsis>
@@ -783,13 +785,14 @@ SELECT <replaceable>select_list</replaceable>
 </synopsis>
 
    <para>
-    The <literal>GROUP BY</> clause is used to group together those rows in
-    a table that share the same values in all the columns listed. The
-    order in which the columns are listed does not matter.  The
-    purpose is to reduce each group of rows sharing common values into
-    one group row that is representative of all rows in the group.
-    This is done to eliminate redundancy in the output and/or compute
-    aggregates that apply to these groups.  For instance:
+    The <xref linkend="sql-groupby" endterm="sql-groupby-title"> is
+    used to group together those rows in a table that share the same
+    values in all the columns listed. The order in which the columns
+    are listed does not matter.  The purpose is to reduce each group
+    of rows sharing common values into one group row that is
+    representative of all rows in the group.  This is done to
+    eliminate redundancy in the output and/or compute aggregates that
+    apply to these groups.  For instance:
 <screen>
 <prompt>=></> <userinput>SELECT * FROM test1;</>
  x | y
@@ -1058,7 +1061,7 @@ SELECT a AS value, b + c AS sum FROM ...
 <synopsis>
 SELECT DISTINCT <replaceable>select_list</replaceable> ...
 </synopsis>
-    (Instead of <literal>DISTINCT</> the word <literal>ALL</literal>
+    (Instead of <literal>DISTINCT</> the key word <literal>ALL</literal>
     can be used to select the default behavior of retaining all rows.)
    </para>
 

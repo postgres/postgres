@@ -1,5 +1,5 @@
 <!--
-$PostgreSQL: pgsql/doc/src/sgml/ref/select.sgml,v 1.74 2003/12/14 00:15:03 neilc Exp $
+$PostgreSQL: pgsql/doc/src/sgml/ref/select.sgml,v 1.75 2004/03/03 22:22:24 neilc Exp $
 PostgreSQL documentation
 -->
 
@@ -174,7 +174,8 @@ where <replaceable class="parameter">from_item</replaceable> can be one of:
    </para>
 
    <para>
-    <literal>FROM</literal>-clause elements can contain:
+    The <literal>FROM</literal> clause can contain the following
+    elements:
 
     <variablelist>
      <varlistentry>
@@ -289,16 +290,16 @@ where <replaceable class="parameter">from_item</replaceable> can be one of:
         A <literal>JOIN</literal> clause combines two
         <literal>FROM</> items.  Use parentheses if necessary to
         determine the order of nesting.  In the absence of parentheses,
-	<literal>JOIN</literal>s nest left-to-right.  In any case
-	<literal>JOIN</literal> binds more tightly than the commas
-	separating <literal>FROM</> items.
+        <literal>JOIN</literal>s nest left-to-right.  In any case
+        <literal>JOIN</literal> binds more tightly than the commas
+        separating <literal>FROM</> items.
        </para>
 
        <para>
         <literal>CROSS JOIN</> and <literal>INNER JOIN</literal>
         produce a simple Cartesian product, the same result as you get from
         listing the two items at the top level of <literal>FROM</>,
-	but restricted by the join condition (if any).
+        but restricted by the join condition (if any).
         <literal>CROSS JOIN</> is equivalent to <literal>INNER JOIN ON
         (TRUE)</>, that is, no rows are removed by qualification.
         These join types are just a notational convenience, since they
@@ -647,7 +648,7 @@ SELECT name FROM distributors ORDER BY code;
     <literal>INTERSECT</>, or <literal>EXCEPT</> clause may only
     specify an output column name or number, not an expression.
    </para>
-    
+
    <para>
     If an <literal>ORDER BY</> expression is a simple name that
     matches both a result column name and an input column name,

@@ -1,5 +1,5 @@
 <!--
-$PostgreSQL: pgsql/doc/src/sgml/ref/update.sgml,v 1.27 2003/11/29 19:51:39 pgsql Exp $
+$PostgreSQL: pgsql/doc/src/sgml/ref/update.sgml,v 1.28 2004/03/03 22:22:24 neilc Exp $
 PostgreSQL documentation
 -->
 
@@ -32,8 +32,8 @@ UPDATE [ ONLY ] <replaceable class="PARAMETER">table</replaceable> SET <replacea
   <para>
    <command>UPDATE</command> changes the values of the specified
    columns in all rows that satisfy the condition. Only the columns to
-   be modified need be mentioned in the statement; columns not explicitly
-   <literal>SET</> retain their previous values.
+   be modified need be mentioned in the <literal>SET</literal> clause;
+   columns not explicitly modified retain their previous values.
   </para>
 
   <para>
@@ -41,6 +41,14 @@ UPDATE [ ONLY ] <replaceable class="PARAMETER">table</replaceable> SET <replacea
    specified table and all its subtables. If you wish to only update
    the specific table mentioned, you must use the <literal>ONLY</>
    clause.
+  </para>
+
+  <para>
+   There are two ways to modify a table using information contained in
+   other tables in the database: using sub-selects, or specifying
+   additional tables in the <literal>FROM</literal> clause. Which
+   technique is more appropriate depends on the specific
+   circumstances.
   </para>
 
   <para>
@@ -99,7 +107,12 @@ UPDATE [ ONLY ] <replaceable class="PARAMETER">table</replaceable> SET <replacea
     <listitem>
      <para>
       A list of table expressions, allowing columns from other tables
-      to appear in the <literal>WHERE</> condition and the update expressions.
+      to appear in the <literal>WHERE</> condition and the update
+      expressions. This is similar to the list of tables that can be
+      specified in the <xref linkend="sql-from"
+      endterm="sql-from-title"> of a <command>SELECT</command>
+      statement; for example, an alias for the table name can be
+      specified.
      </para>
     </listitem>
    </varlistentry>
@@ -139,7 +152,7 @@ UPDATE <replaceable class="parameter">count</replaceable>
 
   <para>
    Change the word <literal>Drama</> to <literal>Dramatic</> in the
-   column <structfield>kind</> of the table <literal>films</literal>:
+   column <structfield>kind</> of the table <structname>films</structname>:
 
 <programlisting>
 UPDATE films SET kind = 'Dramatic' WHERE kind = 'Drama';
@@ -148,7 +161,7 @@ UPDATE films SET kind = 'Dramatic' WHERE kind = 'Drama';
 
   <para>
    Adjust temperature entries and reset precipitation to its default
-   value in one row of the table <literal>weather</literal>:
+   value in one row of the table <structname>weather</structname>:
 
 <programlisting>
 UPDATE weather SET temp_lo = temp_lo+1, temp_hi = temp_lo+15, prcp = DEFAULT
@@ -156,13 +169,30 @@ UPDATE weather SET temp_lo = temp_lo+1, temp_hi = temp_lo+15, prcp = DEFAULT
 </programlisting>
   </para>
 
+  <para>
+   Increment the sales count of the salesperson who manages the
+   account for Acme Corporation, using the <literal>FROM</literal>
+   clause syntax:
+<programlisting>
+UPDATE employees SET sales_count = sales_count + 1 FROM accounts
+  WHERE accounts.name = 'Acme Corporation'
+  AND employees.id = accounts.sales_person;
+</programlisting>
+
+   Perform the same operation, using a sub-select in the
+   <literal>WHERE</literal> clause:
+<programlisting>
+UPDATE employees SET sales_count = sales_count + 1 WHERE id =
+  (SELECT sales_person FROM accounts WHERE name = 'Acme Corporation');
+</programlisting>
+  </para>
  </refsect1>
 
  <refsect1>
   <title>Compatibility</title>
 
   <para>
-   This command conforms to the SQL standard.  The
+   This command conforms to the <acronym>SQL</acronym> standard.  The
    <literal>FROM</literal> clause is a
    <productname>PostgreSQL</productname> extension.
   </para>

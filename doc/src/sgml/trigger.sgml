@@ -1,5 +1,5 @@
 <!--
-$PostgreSQL: pgsql/doc/src/sgml/trigger.sgml,v 1.34 2004/01/22 19:50:21 neilc Exp $
+$PostgreSQL: pgsql/doc/src/sgml/trigger.sgml,v 1.35 2004/03/03 22:22:24 neilc Exp $
 -->
 
  <chapter id="triggers">
@@ -449,9 +449,9 @@ typedef struct Trigger
 
    <para>
     The function <function>trigf</> reports the number of rows in the
-    table <literal>ttest</> and skips the actual operation if the
+    table <structname>ttest</> and skips the actual operation if the
     command attempts to insert a null value into the column
-    <literal>x</>. (So the trigger acts as a not-null constraint but
+    <structfield>x</>. (So the trigger acts as a not-null constraint but
     doesn't abort the transaction.)
    </para>
 
