@@ -10,7 +10,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/parser/gram.y,v 2.8 1998/03/30 16:36:35 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/parser/gram.y,v 2.9 1998/04/08 06:38:57 thomas Exp $
  *
  * HISTORY
  *	  AUTHOR			DATE			MAJOR EVENT
@@ -215,6 +215,7 @@ Oid	param_type(int t); /* used in parse_expr.c */
 
 %type <typnam>	Typename, opt_type, Array, Generic, Character, Datetime, Numeric
 %type <str>		generic, numeric, character, datetime
+%type <str>		extract_arg
 %type <str>		opt_charset, opt_collate
 %type <str>		opt_float, opt_numeric, opt_decimal
 %type <boolean>	opt_varying, opt_timezone
@@ -540,7 +541,7 @@ var_value:  Sconst			{ $$ = $1; }
 
 zone_value:  Sconst			{ $$ = $1; }
 		| DEFAULT			{ $$ = NULL; }
-		| LOCAL				{ $$ = "default"; }
+		| LOCAL				{ $$ = NULL; }
 		;
 
 VariableShowStmt:  SHOW ColId
@@ -701,8 +702,19 @@ CreateStmt:  CREATE TABLE relation_name '(' OptTableElementList ')'
 		;
 
 OptTableElementList:  OptTableElementList ',' OptTableElement
-												{ $$ = lappend($1, $3); }
-			| OptTableElement					{ $$ = lcons($1, NIL); }
+				{
+					if ($3 != NULL)
+						$$ = lappend($1, $3);
+					else
+						$$ = $1;
+				}
+			| OptTableElement
+				{
+					if ($1 != NULL)
+						$$ = lcons($1, NIL);
+					else
+						$$ = NULL;
+				}
 			| /*EMPTY*/							{ $$ = NULL; }
 		;
 
@@ -734,7 +746,7 @@ ColConstraint:
 		CONSTRAINT name ColConstraintElem
 				{
 						Constraint *n = (Constraint *)$3;
-						n->name = fmtId($2);
+						if (n != NULL) n->name = fmtId($2);
 						$$ = $3;
 				}
 		| ColConstraintElem
@@ -893,7 +905,7 @@ default_expr:  AexprConst
 TableConstraint:  CONSTRAINT name ConstraintElem
 				{
 						Constraint *n = (Constraint *)$3;
-						n->name = fmtId($2);
+						if (n != NULL) n->name = fmtId($2);
 						$$ = $3;
 				}
 		| ConstraintElem
@@ -927,7 +939,10 @@ ConstraintElem:  CHECK '(' constraint_expr ')'
 					$$ = (Node *)n;
 				}
 		| FOREIGN KEY '(' columnList ')' REFERENCES ColId opt_column_list key_match key_actions
-				{	elog(NOTICE,"CREATE TABLE/FOREIGN KEY clause ignored; not yet implemented"); }
+				{
+					elog(NOTICE,"CREATE TABLE/FOREIGN KEY clause ignored; not yet implemented");
+					$$ = NULL;
+				}
 		;
 
 constraint_list:  constraint_list ',' constraint_expr
@@ -4164,7 +4179,7 @@ expr_list:  a_expr_or_null
 				{ $$ = lappend($1, $3); }
 		;
 
-extract_list:  datetime FROM a_expr
+extract_list:  extract_arg FROM a_expr
 				{
 					A_Const *n = makeNode(A_Const);
 					n->val.type = T_String;
@@ -4173,6 +4188,14 @@ extract_list:  datetime FROM a_expr
 				}
 		| /* EMPTY */
 				{	$$ = NIL; }
+		;
+
+/* Add in TIMEZONE_HOUR and TIMEZONE_MINUTE for SQL92 compliance
+ *  for next release. Just set up extract_arg for now...
+ * - thomas 1998-04-08
+ */
+extract_arg:  datetime
+				{	$$ = $1; }
 		;
 
 position_list:  position_expr IN position_expr
@@ -4660,6 +4683,7 @@ ColId:  IDENT							{ $$ = $1; }
 		| PRIVILEGES					{ $$ = "privileges"; }
 		| RECIPE						{ $$ = "recipe"; }
 		| ROW							{ $$ = "row"; }
+		| START							{ $$ = "start"; }
 		| STATEMENT						{ $$ = "statement"; }
 		| TIME							{ $$ = "time"; }
 		| TRIGGER						{ $$ = "trigger"; }
