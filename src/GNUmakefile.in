@@ -7,7 +7,7 @@
 #
 #
 # IDENTIFICATION
-#    $Header: /cvsroot/pgsql/src/Attic/GNUmakefile.in,v 1.35 1998/10/12 05:07:53 momjian Exp $
+#    $Header: /cvsroot/pgsql/src/Attic/GNUmakefile.in,v 1.36 1998/10/16 17:00:42 momjian Exp $
 #
 #-------------------------------------------------------------------------
 
@@ -78,6 +78,14 @@ distclean: clean
 		bin/psql/Makefile \
 		bin/pgtclsh/mkMakefile.tcltkdefs.sh \
 		bin/pgtclsh/Makefile.tcltkdefs \
+
+? pgsql/src/bin/pgtclsh/mkMakefile.tcldefs.sh
+? pgsql/src/bin/pgtclsh/mkMakefile.tkdefs.sh.in
+? pgsql/src/bin/pgtclsh/mkMakefile.tcldefs.sh.in
+? pgsql/src/bin/pgtclsh/mkMakefile.tkdefs.sh
+? pgsql/src/bin/pgtclsh/Makefile.tkdefs
+? pgsql/src/bin/pgtclsh/Makefile.
+
 		bin/pg_dump/Makefile \
 		bin/pg_version/Makefile \
 		include/config.h \
