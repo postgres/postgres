@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/storage/page/bufpage.c,v 1.42 2002/01/15 22:14:17 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/storage/page/bufpage.c,v 1.43 2002/01/30 19:34:55 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -447,7 +447,7 @@ PageIndexTupleDelete(Page page, OffsetNumber offnum)
 	if (offset < phdr->pd_upper || (offset + size) > phdr->pd_special ||
 		offset != MAXALIGN(offset) || size != MAXALIGN(size))
 		elog(ERROR, "PageIndexTupleDelete: corrupted item pointer: offset = %u size = %u",
-			 offset, size);
+			 offset, (unsigned int) size);
 
 	/*
 	 * First, we want to get rid of the pd_linp entry for the index tuple.
