@@ -340,7 +340,7 @@ To upgrade to PostgreSQL v6.1 do the following:
 
      Add the following lines to your login shell, ~/.bash_profile:
         PATH=$PATH:/usr/local/pgsql/bin
-        MANPATH=/usr/local/pgsql/man
+        MANPATH=$MANPATH:/usr/local/pgsql/man
         PGLIB=/usr/local/pgsql/lib
         PGDATA=/usr/local/pgsql/data
         export PATH MANPATH PGLIB PGDATA
