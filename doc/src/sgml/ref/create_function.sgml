@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/ref/create_function.sgml,v 1.44 2003/01/19 00:13:29 momjian Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/ref/create_function.sgml,v 1.45 2003/03/20 04:41:13 momjian Exp $
 -->
 
 <refentry id="SQL-CREATEFUNCTION">
@@ -66,18 +66,22 @@ CREATE [ OR REPLACE ] FUNCTION <replaceable class="parameter">name</replaceable>
 
      <listitem>
       <para>
-       The data type(s) of the function's arguments, if any.  The
-       input types may be base, complex, or domain types,
-       or the same as the type of an existing column.
-	The type of a column is referenced by writing <replaceable
-	class="parameter">tablename</replaceable>.<replaceable
-	class="parameter">columnname</replaceable><literal>%TYPE</literal>;
-	using this can sometimes help make a function independent from
-	changes to the definition of a table.
-	Depending on the implementation language it may also be allowed
-	to specify <quote>pseudo-types</> such as <type>cstring</>.
-	Pseudo-types indicate that the actual argument type is either
-	incompletely specified, or outside the set of ordinary SQL data types.
+       The data type(s) of the function's arguments (optionally 
+       schema-qualified), if any. The input types may be base, complex, or 
+       domain types, or the same as the type of an existing column.
+      </para>
+      <para>
+       The type of a column is referenced by writing <replaceable
+       class="parameter">tablename</replaceable>.<replaceable
+       class="parameter">columnname</replaceable><literal>%TYPE</literal>;
+       using this can sometimes help make a function independent from
+       changes to the definition of a table.
+      </para>
+      <para>
+       Depending on the implementation language it may also be allowed
+       to specify <quote>pseudo-types</> such as <type>cstring</>.
+       Pseudo-types indicate that the actual argument type is either
+       incompletely specified, or outside the set of ordinary SQL data types.
       </para>
      </listitem>
     </varlistentry>
@@ -87,9 +91,13 @@ CREATE [ OR REPLACE ] FUNCTION <replaceable class="parameter">name</replaceable>
 
      <listitem>
       <para>
-       The return data type.  The return type may be specified as a
-       base, complex, or domain type, or the same as the type of an
-       existing column.
+       The return data type (optionally schema-qualified). The return type 
+       may be specified as a base, complex, domain type 
+       or the same as the type of an existing column. See the description
+       under <literal>argtype</literal> above on how to reference the type
+       of an existing column.
+      </para>
+      <para>
        Depending on the implementation language it may also be allowed
        to specify <quote>pseudo-types</> such as <type>cstring</>.
        The <literal>setof</literal>
@@ -432,13 +440,13 @@ CREATE FUNCTION point(complex) RETURNS point
 <programlisting>
 Point * complex_to_point (Complex *z)
 {
-	Point *p;
+    Point *p;
 
-	p = (Point *) palloc(sizeof(Point));
-	p->x = z->x;
-	p->y = z->y;
-		
-	return p;
+    p = (Point *) palloc(sizeof(Point));
+    p->x = z->x;
+    p->y = z->y;
+        
+    return p;
 }
 </programlisting>
 
