@@ -1,12 +1,12 @@
 .\" This is -*-nroff-*-
 .\" XXX standard disclaimer belongs here....
-.\" $Header: /cvsroot/pgsql/src/man/Attic/load.l,v 1.3 1998/01/11 22:17:43 momjian Exp $
+.\" $Header: /cvsroot/pgsql/src/man/Attic/load.l,v 1.4 1998/07/25 00:17:30 momjian Exp $
 .TH LOAD SQL 01/23/93 PostgreSQL PostgreSQL
 .SH NAME
 load - dynamically load an object file
 .SH SYNOPSIS
 .nf
-\fBload\fR "filename"
+\fBload\fR 'filename'
 .fi
 .SH DESCRIPTION
 .BR Load
@@ -27,7 +27,7 @@ at this time.
 --
 --Load the file /usr/postgres/demo/circle.o
 --
-load "/usr/postgres/demo/circle.o"
+load '/usr/postgres/demo/circle.o'
 .fi
 .SH CAVEATS
 Functions in loaded object files should not call functions in other

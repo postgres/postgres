@@ -10,7 +10,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/parser/gram.y,v 2.16 1998/07/24 03:31:23 scrappy Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/parser/gram.y,v 2.17 1998/07/25 00:17:28 momjian Exp $
  *
  * HISTORY
  *	  AUTHOR			DATE			MAJOR EVENT
@@ -175,6 +175,7 @@ Oid	param_type(int t); /* used in parse_expr.c */
 				join_using
 %type <boolean>	opt_union
 %type <boolean>	opt_table
+%type <boolean>	opt_trans
 
 %type <node>	position_expr
 %type <list>	extract_list, position_list
@@ -1994,74 +1995,41 @@ ListenStmt:  LISTEN relation_name
  *
  *****************************************************************************/
 
-TransactionStmt:  ABORT_TRANS TRANSACTION
+TransactionStmt: ABORT_TRANS opt_trans
 				{
 					TransactionStmt *n = makeNode(TransactionStmt);
 					n->command = ABORT_TRANS;
 					$$ = (Node *)n;
 				}
-		| BEGIN_TRANS TRANSACTION
+		| BEGIN_TRANS opt_trans
 				{
 					TransactionStmt *n = makeNode(TransactionStmt);
 					n->command = BEGIN_TRANS;
 					$$ = (Node *)n;
 				}
-		| BEGIN_TRANS WORK
-				{
-					TransactionStmt *n = makeNode(TransactionStmt);
-					n->command = BEGIN_TRANS;
-					$$ = (Node *)n;
-				}
-		| COMMIT WORK
+		| COMMIT opt_trans
 				{
 					TransactionStmt *n = makeNode(TransactionStmt);
 					n->command = END_TRANS;
 					$$ = (Node *)n;
 				}
-		| END_TRANS TRANSACTION
+		| END_TRANS opt_trans
 				{
 					TransactionStmt *n = makeNode(TransactionStmt);
 					n->command = END_TRANS;
 					$$ = (Node *)n;
 				}
-		| ROLLBACK WORK
+		| ROLLBACK opt_trans
 				{
 					TransactionStmt *n = makeNode(TransactionStmt);
 					n->command = ABORT_TRANS;
 					$$ = (Node *)n;
 				}
+		;
 
-		| ABORT_TRANS
-				{
-					TransactionStmt *n = makeNode(TransactionStmt);
-					n->command = ABORT_TRANS;
-					$$ = (Node *)n;
-				}
-		| BEGIN_TRANS
-				{
-					TransactionStmt *n = makeNode(TransactionStmt);
-					n->command = BEGIN_TRANS;
-					$$ = (Node *)n;
-				}
-		| COMMIT
-				{
-					TransactionStmt *n = makeNode(TransactionStmt);
-					n->command = END_TRANS;
-					$$ = (Node *)n;
-				}
-
-		| END_TRANS
-				{
-					TransactionStmt *n = makeNode(TransactionStmt);
-					n->command = END_TRANS;
-					$$ = (Node *)n;
-				}
-		| ROLLBACK
-				{
-					TransactionStmt *n = makeNode(TransactionStmt);
-					n->command = ABORT_TRANS;
-					$$ = (Node *)n;
-				}
+opt_trans:  WORK								{ $$ = NULL; }
+		|	TRANSACTION							{ $$ = NULL: }
+		|  /*EMPTY*/							{ $$ = NULL; }
 		;
 
 

@@ -1,6 +1,6 @@
 .\" This is -*-nroff-*-
 .\" XXX standard disclaimer belongs here....
-.\" $Header: /cvsroot/pgsql/src/man/Attic/create_operator.l,v 1.6 1998/06/24 13:21:24 momjian Exp $
+.\" $Header: /cvsroot/pgsql/src/man/Attic/create_operator.l,v 1.7 1998/07/25 00:17:30 momjian Exp $
 .TH "CREATE OPERATOR" SQL 11/05/95 PostgreSQL PostgreSQL
 .SH NAME
 create operator - define a new user operator
@@ -30,7 +30,7 @@ The user who defines an operator becomes its owner.
 .PP
 The
 .IR "operator_name"
-is a sequence of up to sixteen punctuation characters.  The following
+is a sequence of punctuation characters.  The following
 characters are valid for single-character operator names:
 .nf
 
