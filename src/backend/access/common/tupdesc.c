@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *    $Header: /cvsroot/pgsql/src/backend/access/common/tupdesc.c,v 1.18 1997/08/21 14:33:05 momjian Exp $
+ *    $Header: /cvsroot/pgsql/src/backend/access/common/tupdesc.c,v 1.19 1997/08/22 02:55:39 vadim Exp $
  *
  * NOTES
  *    some of the executor utility code such as "ExecTypeFromTL" should be
@@ -99,6 +99,7 @@ CreateTupleDesc(int natts, AttributeTupleForm* attrs)
  *	This function creates a new TupleDesc by copying from an existing
  *      TupleDesc
  * 
+ * 	!!! Constraints are not copied !!!
  * ----------------------------------------------------------------
  */
 TupleDesc
@@ -117,13 +118,125 @@ CreateTupleDescCopy(TupleDesc tupdesc)
 	memmove(desc->attrs[i],
 		tupdesc->attrs[i],
 		ATTRIBUTE_TUPLE_SIZE);
+	desc->attrs[i]->attnotnull = false;
+	desc->attrs[i]->atthasdef = false;
     }
-    if (tupdesc->constr) {
-      desc->constr = (TupleConstr *) palloc(sizeof(TupleConstr));
-      memmove(desc->constr, tupdesc->constr, sizeof(TupleConstr));
-    } else
-      desc->constr = NULL;
+    desc->constr = NULL;
+    
     return desc;
+}
+
+/* ----------------------------------------------------------------
+ *	CreateTupleDescCopyConstr
+ *
+ *	This function creates a new TupleDesc by copying from an existing
+ *      TupleDesc (with Constraints)
+ * 
+ * ----------------------------------------------------------------
+ */
+TupleDesc
+CreateTupleDescCopyConstr(TupleDesc tupdesc)
+{
+    TupleDesc desc;
+    TupleConstr *constr = tupdesc->constr;
+    int i, size;
+
+    desc = (TupleDesc) palloc(sizeof(struct tupleDesc));
+    desc->natts = tupdesc->natts;
+    size = desc->natts * sizeof (AttributeTupleForm);
+    desc->attrs = (AttributeTupleForm*) palloc(size);
+    for (i=0;i<desc->natts;i++) {
+	desc->attrs[i] = 
+	    (AttributeTupleForm)palloc(ATTRIBUTE_TUPLE_SIZE);
+	memmove(desc->attrs[i],
+		tupdesc->attrs[i],
+		ATTRIBUTE_TUPLE_SIZE);
+    }
+    if (constr)
+    {
+    	TupleConstr *cpy = (TupleConstr *) palloc(sizeof(TupleConstr));
+    	
+    	cpy->has_not_null = constr->has_not_null;
+    	
+    	if ( ( cpy->num_defval = constr->num_defval ) > 0 )
+    	{
+    	    cpy->defval = (AttrDefault *) palloc (cpy->num_defval * sizeof (AttrDefault));
+    	    memcpy (cpy->defval, constr->defval, cpy->num_defval * sizeof (AttrDefault));
+    	    for (i = cpy->num_defval - 1; i >= 0; i--)
+    	    {
+    	    	if ( constr->defval[i].adbin )
+    	    	    cpy->defval[i].adbin = pstrdup (constr->defval[i].adbin);
+    	    	if ( constr->defval[i].adsrc )
+    	    	    cpy->defval[i].adsrc = pstrdup (constr->defval[i].adsrc);
+    	    }
+    	}
+    	
+    	if ( ( cpy->num_check = constr->num_check ) > 0 )
+    	{
+    	    cpy->check = (ConstrCheck *) palloc (cpy->num_check * sizeof (ConstrCheck));
+    	    memcpy (cpy->check, constr->check, cpy->num_check * sizeof (ConstrCheck));
+    	    for (i = cpy->num_check - 1; i >= 0; i--)
+    	    {
+    	    	if ( constr->check[i].ccname )
+    	    	    cpy->check[i].ccname = pstrdup (constr->check[i].ccname);
+    	    	if ( constr->check[i].ccbin )
+    	    	    cpy->check[i].ccbin = pstrdup (constr->check[i].ccbin);
+    	    	if ( constr->check[i].ccsrc )
+    	    	    cpy->check[i].ccsrc = pstrdup (constr->check[i].ccsrc);
+    	    }
+    	}
+    	
+    	desc->constr = cpy;
+    }
+    else
+    	desc->constr = NULL;
+    
+    return desc;
+}
+
+void
+FreeTupleDesc (TupleDesc tupdesc)
+{
+    int i;
+    
+    for (i = 0; i < tupdesc->natts; i++)
+    	pfree (tupdesc->attrs[i]);
+    pfree (tupdesc->attrs);
+    if ( tupdesc->constr )
+    {
+    	if ( tupdesc->constr->num_defval > 0 )
+    	{
+    	    AttrDefault *attrdef = tupdesc->constr->defval;
+    	    
+    	    for (i = tupdesc->constr->num_defval - 1; i >= 0; i--)
+    	    {
+    	    	if ( attrdef[i].adbin )
+    	    	    pfree (attrdef[i].adbin);
+    	    	if ( attrdef[i].adsrc )
+    	    	    pfree (attrdef[i].adsrc);
+    	    }
+    	    pfree (attrdef);
+    	}
+    	if ( tupdesc->constr->num_check > 0 )
+    	{
+    	    ConstrCheck *check = tupdesc->constr->check;
+    	    
+    	    for (i = tupdesc->constr->num_check - 1; i >= 0; i--)
+    	    {
+    	    	if ( check[i].ccname )
+    	    	    pfree (check[i].ccname);
+    	    	if ( check[i].ccbin )
+    	    	    pfree (check[i].ccbin);
+    	    	if ( check[i].ccsrc )
+    	    	    pfree (check[i].ccsrc);
+    	    }
+    	    pfree (check);
+    	}
+    	pfree (tupdesc->constr);
+    }
+    
+    pfree (tupdesc);
+
 }
 
 /* ----------------------------------------------------------------
@@ -179,7 +292,7 @@ TupleDescInitEntry(TupleDesc desc,
 	memset(att->attname.data,0,NAMEDATALEN);
 
     
-    att->attdisbursion = 0;			/* dummy value */
+    att->attdisbursion  = 0;			/* dummy value */
     att->attcacheoff = 	-1;
     
     att->attnum = attributeNumber;
@@ -318,9 +431,12 @@ BuildDescForRelation(List *schema, char *relname)
     AttrNumber		attnum;
     List		*p;
     TupleDesc		desc;
-    char               *attname;
-    char               *typename;
+    AttrDefault		*attrdef = NULL;
+    TupleConstr		*constr = (TupleConstr *) palloc(sizeof(TupleConstr));
+    char                *attname;
+    char                *typename;
     int			attdim;
+    int			ndef = 0;
     bool                attisset;
     
     /* ----------------
@@ -329,6 +445,7 @@ BuildDescForRelation(List *schema, char *relname)
      */
     natts = 	length(schema);
     desc = 	CreateTemplateTupleDesc(natts);
+    constr->has_not_null = false;
     
     attnum = 0;
     
@@ -385,13 +502,43 @@ BuildDescForRelation(List *schema, char *relname)
 	}
 
 	/* This is for constraints */
-	if (entry->is_not_null) {
-           if (!desc->constr)
-               desc->constr = (TupleConstr *) palloc(sizeof(TupleConstr));
-           desc->constr->has_not_null = true;
-        } 
+	if (entry->is_not_null)
+            constr->has_not_null = true;
         desc->attrs[attnum-1]->attnotnull = entry->is_not_null;
+        
+	if ( entry->defval != NULL )
+	{
+	    if ( attrdef == NULL )
+	    	attrdef = (AttrDefault*) palloc (natts * sizeof (AttrDefault));
+	    attrdef[ndef].adnum = attnum;
+	    attrdef[ndef].adbin = NULL;
+	    attrdef[ndef].adsrc = entry->defval;
+	    ndef++;
+	    desc->attrs[attnum-1]->atthasdef = true;
+	}
 
+    }
+    if ( constr->has_not_null || ndef > 0  )
+    {
+    	desc->constr = constr;
+    	
+    	if ( ndef > 0 )					/* DEFAULTs */
+    	{
+    	    if ( ndef < natts )
+    	    	constr->defval = (AttrDefault*) 
+    	    		repalloc (attrdef, ndef * sizeof (AttrDefault));
+    	    else
+    	    	constr->defval = attrdef;
+    	    constr->num_defval = ndef;
+    	}
+    	else
+    	    constr->num_defval = 0;
+	constr->num_check = 0;
+    }
+    else
+    {
+    	pfree (constr);
+    	desc->constr = NULL;
     }
     return desc;
 }
