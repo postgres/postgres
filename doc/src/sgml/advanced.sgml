@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/advanced.sgml,v 1.18 2000/12/22 18:57:49 petere Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/advanced.sgml,v 1.19 2000/12/30 19:11:45 petere Exp $
 -->
 
  <chapter id="advanced">
@@ -33,9 +33,9 @@ CREATE TABLE cities (
     altitude        int     -- (in ft)
 );
 
-CREATE TABLE capitals (
+CREATE TABLE capitals UNDER cities (
     state           char(2)
-) UNDER cities;
+);
     </programlisting>
 
     In this case, an  instance  of  capitals  <firstterm>inherits</firstterm>  all
