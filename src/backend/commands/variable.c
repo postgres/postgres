@@ -9,7 +9,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/commands/variable.c,v 1.75 2003/04/27 17:31:25 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/commands/variable.c,v 1.76 2003/05/18 01:06:25 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -235,7 +235,147 @@ show_datestyle(void)
 /*
  * Storage for TZ env var is allocated with an arbitrary size of 64 bytes.
  */
-static char tzbuf[64];
+#define TZBUF_LEN	64
+
+static char tzbuf[TZBUF_LEN];
+
+/*
+ * First time through, we remember the original environment TZ value, if any.
+ */
+static bool have_saved_tz = false;
+static char orig_tzbuf[TZBUF_LEN];
+
+/*
+ * Convenience subroutine for assigning the value of TZ
+ */
+static void
+set_tz(const char *tz)
+{
+	strcpy(tzbuf, "TZ=");
+	strncpy(tzbuf + 3, tz, sizeof(tzbuf) - 4);
+	if (putenv(tzbuf) != 0)		/* shouldn't happen? */
+		elog(LOG, "Unable to set TZ environment variable");
+	tzset();
+}
+
+/*
+ * Remove any value of TZ we have established
+ *
+ * Note: this leaves us with *no* value of TZ in the environment, and
+ * is therefore only appropriate for reverting to that state, not for
+ * reverting to a state where TZ was set to something else.
+ */
+static void
+clear_tz(void)
+{
+	/*
+	 * unsetenv() works fine, but is BSD, not POSIX, and is not
+	 * available under Solaris, among others. Apparently putenv()
+	 * called as below clears the process-specific environment
+	 * variables.  Other reasonable arguments to putenv() (e.g.
+	 * "TZ=", "TZ", "") result in a core dump (under Linux
+	 * anyway). - thomas 1998-01-26
+	 */
+	if (tzbuf[0] == 'T')
+	{
+		strcpy(tzbuf, "=");
+		if (putenv(tzbuf) != 0)
+			elog(LOG, "Unable to clear TZ environment variable");
+		tzset();
+	}
+}
+
+/*
+ * Check whether tzset() succeeded
+ *
+ * Unfortunately, tzset doesn't offer any well-defined way to detect that the
+ * value of TZ was bad.  Often it will just select UTC (GMT) as the effective
+ * timezone.  We use the following heuristics:
+ *
+ * If tzname[1] is a nonempty string, *or* the global timezone variable is
+ * not zero, then tzset must have recognized the TZ value as something
+ * different from UTC.  Return true.
+ *
+ * Otherwise, check to see if the TZ name is a known spelling of "UTC"
+ * (ie, appears in our internal tables as a timezone equivalent to UTC).
+ * If so, accept it.
+ *
+ * This will reject nonstandard spellings of UTC unless tzset() chose to
+ * set tzname[1] as well as tzname[0].  The glibc version of tzset() will
+ * do so, but on other systems we may be tightening the spec a little.
+ *
+ * Another problem is that on some platforms (eg HPUX), if tzset thinks the
+ * input is bogus then it will adopt the system default timezone, which we
+ * really can't tell is not the intended translation of the input.
+ *
+ * Still, it beats failing to detect bad TZ names at all, and a silent
+ * failure mode of adopting the system-wide default is much better than
+ * a silent failure mode of adopting UTC.
+ *
+ * NB: this must NOT elog(ERROR).  The caller must get control back so that
+ * it can restore the old value of TZ if we don't like the new one.
+ */
+static bool
+tzset_succeeded(const char *tz)
+{
+	char		tztmp[TZBUF_LEN];
+	char	   *cp;
+	int			tzval;
+
+	/*
+	 * Check first set of heuristics to say that tzset definitely worked.
+	 */
+	if (tzname[1] && tzname[1][0] != '\0')
+		return true;
+	if (TIMEZONE_GLOBAL != 0)
+		return true;
+
+	/*
+	 * Check for known spellings of "UTC".  Note we must downcase the input
+	 * before passing it to DecodePosixTimezone().
+	 */
+	StrNCpy(tztmp, tz, sizeof(tztmp));
+	for (cp = tztmp; *cp; cp++)
+		*cp = tolower((unsigned char) *cp);
+	if (DecodePosixTimezone(tztmp, &tzval) == 0)
+		if (tzval == 0)
+			return true;
+
+	return false;
+}
+
+/*
+ * Check whether timezone is acceptable.
+ *
+ * What we are doing here is checking for leap-second-aware timekeeping.
+ * We need to reject such TZ settings because they'll wreak havoc with our
+ * date/time arithmetic.
+ *
+ * NB: this must NOT elog(ERROR).  The caller must get control back so that
+ * it can restore the old value of TZ if we don't like the new one.
+ */
+static bool
+tz_acceptable(void)
+{
+	struct tm	tt;
+	time_t		time2000;
+
+	/*
+	 * To detect leap-second timekeeping, compute the time_t value for
+	 * local midnight, 2000-01-01.  Insist that this be a multiple of 60;
+	 * any partial-minute offset has to be due to leap seconds.
+	 */
+	MemSet(&tt, 0, sizeof(tt));
+	tt.tm_year = 100;
+	tt.tm_mon = 0;
+	tt.tm_mday = 1;
+	tt.tm_isdst = -1;
+	time2000 = mktime(&tt);
+	if ((time2000 % 60) != 0)
+		return false;
+
+	return true;
+}
 
 /*
  * assign_timezone: GUC assign_hook for timezone
@@ -246,6 +386,21 @@ assign_timezone(const char *value, bool doit, bool interactive)
 	char	   *result;
 	char	   *endptr;
 	double		hours;
+
+	/*
+	 * On first call, see if there is a TZ in the original environment.
+	 * Save that value permanently.
+	 */
+	if (!have_saved_tz)
+	{
+		char   *orig_tz = getenv("TZ");
+
+		if (orig_tz)
+			StrNCpy(orig_tzbuf, orig_tz, sizeof(orig_tzbuf));
+		else
+			orig_tzbuf[0] = '\0';
+		have_saved_tz = true;
+	}
 
 	/*
 	 * Check for INTERVAL 'foo'
@@ -313,25 +468,36 @@ assign_timezone(const char *value, bool doit, bool interactive)
 		else if (strcasecmp(value, "UNKNOWN") == 0)
 		{
 			/*
-			 * Clear any TZ value we may have established.
-			 *
-			 * unsetenv() works fine, but is BSD, not POSIX, and is not
-			 * available under Solaris, among others. Apparently putenv()
-			 * called as below clears the process-specific environment
-			 * variables.  Other reasonable arguments to putenv() (e.g.
-			 * "TZ=", "TZ", "") result in a core dump (under Linux
-			 * anyway). - thomas 1998-01-26
+			 * UNKNOWN is the value shown as the "default" for TimeZone
+			 * in guc.c.  We interpret it as meaning the original TZ
+			 * inherited from the environment.  Note that if there is an
+			 * original TZ setting, we will return that rather than UNKNOWN
+			 * as the canonical spelling.
 			 */
 			if (doit)
 			{
-				if (tzbuf[0] == 'T')
+				bool	ok;
+
+				/* Revert to original setting of TZ, whatever it was */
+				if (orig_tzbuf[0])
 				{
-					strcpy(tzbuf, "=");
-					if (putenv(tzbuf) != 0)
-						elog(ERROR, "Unable to clear TZ environment variable");
-					tzset();
+					set_tz(orig_tzbuf);
+					ok = tzset_succeeded(orig_tzbuf) && tz_acceptable();
 				}
-				HasCTZSet = false;
+				else
+				{
+					clear_tz();
+					ok = tz_acceptable();
+				}
+
+				if (ok)
+					HasCTZSet = false;
+				else
+				{
+					/* Bogus, so force UTC (equivalent to INTERVAL 0) */
+					CTimeZone = 0;
+					HasCTZSet = true;
+				}
 			}
 		}
 		else
@@ -339,18 +505,57 @@ assign_timezone(const char *value, bool doit, bool interactive)
 			/*
 			 * Otherwise assume it is a timezone name.
 			 *
-			 * XXX unfortunately we have no reasonable way to check whether a
-			 * timezone name is good, so we have to just assume that it
-			 * is.
+			 * We have to actually apply the change before we can have any
+			 * hope of checking it.  So, save the old value in case we have
+			 * to back out.  Note that it's possible the old setting is in
+			 * tzbuf, so we'd better copy it.
 			 */
-			if (doit)
+			char	save_tzbuf[TZBUF_LEN];
+			char   *save_tz;
+			bool	known,
+					acceptable;
+
+			save_tz = getenv("TZ");
+			if (save_tz)
+				StrNCpy(save_tzbuf, save_tz, sizeof(save_tzbuf));
+
+			set_tz(value);
+
+			known = tzset_succeeded(value);
+			acceptable = tz_acceptable();
+
+			if (doit && known && acceptable)
 			{
-				strcpy(tzbuf, "TZ=");
-				strncat(tzbuf, value, sizeof(tzbuf) - 4);
-				if (putenv(tzbuf) != 0) /* shouldn't happen? */
-					elog(LOG, "assign_timezone: putenv failed");
-				tzset();
+				/* Keep the changed TZ */
 				HasCTZSet = false;
+			}
+			else
+			{
+				/*
+				 * Revert to prior TZ setting; note we haven't changed
+				 * HasCTZSet in this path, so if we were previously using
+				 * a fixed offset, we still are.
+				 */
+				if (save_tz)
+					set_tz(save_tzbuf);
+				else
+					clear_tz();
+				/* Complain if it was bad */
+				if (!known)
+				{
+					elog(interactive ? ERROR : LOG,
+						 "unrecognized timezone name \"%s\"",
+						 value);
+					return NULL;
+				}
+				if (!acceptable)
+				{
+					elog(interactive ? ERROR : LOG,
+						 "timezone \"%s\" appears to use leap seconds"
+						 "\n\tPostgreSQL does not support leap seconds",
+						 value);
+					return NULL;
+				}
 			}
 		}
 	}
@@ -369,10 +574,7 @@ assign_timezone(const char *value, bool doit, bool interactive)
 		return NULL;
 
 	if (HasCTZSet)
-	{
-		snprintf(result, sizeof(tzbuf), "%.5f",
-				 (double) CTimeZone / 3600.0);
-	}
+		snprintf(result, sizeof(tzbuf), "%.5f", (double) CTimeZone / 3600.0);
 	else if (tzbuf[0] == 'T')
 		strcpy(result, tzbuf + 3);
 	else

@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/datetime.c,v 1.104 2003/05/04 04:30:15 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/datetime.c,v 1.105 2003/05/18 01:06:26 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -36,7 +36,6 @@ static int DecodeTime(char *str, int fmask, int *tmask,
 static int	DecodeTimezone(char *str, int *tzp);
 static datetkn *datebsearch(char *key, datetkn *base, unsigned int nel);
 static int	DecodeDate(char *str, int fmask, int *tmask, struct tm * tm);
-static int	DecodePosixTimezone(char *str, int *val);
 static void TrimTrailingZeros(char *str);
 
 
@@ -942,8 +941,6 @@ DecodeDateTime(char **field, int *ftype, int nf,
 						return -1;
 
 					val = strtol(field[i], &cp, 10);
-					if (*cp != '-')
-						return -1;
 
 					j2date(val, &tm->tm_year, &tm->tm_mon, &tm->tm_mday);
 					/* Get the time zone from the end of the string */
@@ -2555,6 +2552,10 @@ DecodeNumberField(int len, char *str, int fmask,
 /* DecodeTimezone()
  * Interpret string as a numeric timezone.
  *
+ * Return 0 if okay (and set *tzp), nonzero if not okay.
+ *
+ * NB: this must *not* elog on failure; see commands/variable.c.
+ *
  * Note: we allow timezone offsets up to 13:59.  There are places that
  * use +1300 summer time.
  */
@@ -2567,7 +2568,10 @@ DecodeTimezone(char *str, int *tzp)
 	char	   *cp;
 	int			len;
 
-	/* assume leading character is "+" or "-" */
+	/* leading character must be "+" or "-" */
+	if (*str != '+' && *str != '-')
+		return -1;
+
 	hr = strtol((str + 1), &cp, 10);
 
 	/* explicit delimiter? */
@@ -2589,6 +2593,7 @@ DecodeTimezone(char *str, int *tzp)
 		min = 0;
 
 	tz = (hr * 60 + min) * 60;
+
 	if (*str == '-')
 		tz = -tz;
 
@@ -2601,9 +2606,14 @@ DecodeTimezone(char *str, int *tzp)
  * Interpret string as a POSIX-compatible timezone:
  *	PST-hh:mm
  *	PST+h
+ *	PST
  * - thomas 2000-03-15
+ *
+ * Return 0 if okay (and set *tzp), nonzero if not okay.
+ *
+ * NB: this must *not* elog on failure; see commands/variable.c.
  */
-static int
+int
 DecodePosixTimezone(char *str, int *tzp)
 {
 	int			val,
@@ -2612,13 +2622,21 @@ DecodePosixTimezone(char *str, int *tzp)
 	char	   *cp;
 	char		delim;
 
+	/* advance over name part */
 	cp = str;
-	while ((*cp != '\0') && isalpha((unsigned char) *cp))
+	while (*cp && isalpha((unsigned char) *cp))
 		cp++;
 
-	if (DecodeTimezone(cp, &tz) != 0)
-		return -1;
+	/* decode offset, if present */
+	if (*cp)
+	{
+		if (DecodeTimezone(cp, &tz) != 0)
+			return -1;
+	}
+	else
+		tz = 0;
 
+	/* decode name part.  We must temporarily scribble on the input! */
 	delim = *cp;
 	*cp = '\0';
 	type = DecodeSpecial(MAXDATEFIELDS - 1, str, &val);
@@ -2641,8 +2659,12 @@ DecodePosixTimezone(char *str, int *tzp)
 
 /* DecodeSpecial()
  * Decode text string using lookup table.
+ *
  * Implement a cache lookup since it is likely that dates
  *	will be related in format.
+ *
+ * NB: this must *not* elog on failure;
+ * see commands/variable.c.
  */
 int
 DecodeSpecial(int field, char *lowtoken, int *val)
