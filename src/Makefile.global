@@ -7,7 +7,7 @@
 #
 #
 # IDENTIFICATION
-#    $Header: /cvsroot/pgsql/src/Attic/Makefile.global,v 1.16 1996/07/29 20:51:41 scrappy Exp $
+#    $Header: /cvsroot/pgsql/src/Attic/Makefile.global,v 1.17 1996/07/31 02:07:25 scrappy Exp $
 #
 # NOTES
 #    This is seen by any Makefiles that include mk/postgres.mk. To
@@ -130,7 +130,7 @@ CFLAGS+= -DNAMEDATALEN=$(NAMEDATALEN) -DOIDNAMELEN=$(OIDNAMELEN)
 # Comment out CDEBUG to turn off debugging and sanity-checking.
 #
 #	XXX on MIPS, use -g3 if you want to compile with -O
-CDEBUG= #-g
+#CDEBUG= -g
 
 # Comment out ENFORCE_ALIGNMENT if you do NOT want unaligned access to
 # multi-byte types to generate a bus error.
