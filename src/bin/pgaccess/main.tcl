@@ -1,6 +1,6 @@
 #!/bin/sh
 # the next line restarts using wish \
-exec wish "$0" "$@"
+exec wish "$0" ${1:+"$@"}
 
 image create bitmap dnarw -data  {
 #define down_arrow_width 15
