@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/ref/psql-ref.sgml,v 1.71 2002/08/10 19:35:00 tgl Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/ref/psql-ref.sgml,v 1.72 2002/08/16 20:34:06 momjian Exp $
 PostgreSQL documentation
 -->
 
@@ -22,7 +22,7 @@ PostgreSQL documentation
    <command>psql</command>
    <arg><replaceable class="parameter">options</replaceable></arg>
    <arg><replaceable class="parameter">dbname</replaceable>
-     <arg><replaceable class="parameter">user</replaceable></arg></arg>
+   <arg><replaceable class="parameter">user</replaceable></arg></arg>
   </cmdsynopsis>
  </refsynopsisdiv>
 
