@@ -1,11 +1,14 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/postgres.sgml,v 1.20 1999/04/06 15:41:13 thomas Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/postgres.sgml,v 1.21 1999/05/04 02:19:20 thomas Exp $
 
 Postgres integrated documentation.
 Other subset docs should be copied and shrunk from here.
 thomas 1998-02-23
 
 $Log: postgres.sgml,v $
+Revision 1.21  1999/05/04 02:19:20  thomas
+Include chapters on security and an intro to SQL.
+
 Revision 1.20  1999/04/06 15:41:13  thomas
 Fix markup to include all closing tags.
 Required by newest versions of DocBook and style sheets.
@@ -87,6 +90,7 @@ Move SQL reference pages up into the User's Guide.
 <!entity oper     SYSTEM "oper.sgml">
 <!entity pgaccess SYSTEM "pgaccess.sgml">
 <!entity psql     SYSTEM "psql.sgml">
+<!entity sql      SYSTEM "sql.sgml">
 <!entity query-ug SYSTEM "query-ug.sgml">
 <!entity storage  SYSTEM "storage.sgml">
 <!entity syntax   SYSTEM "syntax.sgml">
@@ -107,6 +111,7 @@ Move SQL reference pages up into the User's Guide.
 <!entity recovery SYSTEM "recovery.sgml">
 <!entity regress  SYSTEM "regress.sgml">
 <!entity release  SYSTEM "release.sgml">
+<!entity security SYSTEM "security.sgml">
 <!entity start-ag SYSTEM "start-ag.sgml">
 
 <!-- programmer's guide -->
@@ -236,8 +241,10 @@ Your name here...
     Information for users.
    </Para>
   </PartIntro>
+
+  &sql;
    &environ;
-   &manage;
+  &manage;
   &syntax;
    &datatype;
    &oper;
@@ -264,10 +271,11 @@ Your name here...
    &ports;
    &config;
    &install;
-  &installw;
+   &installw;
    &runtime;
+   &security;
    &options;
-  &start-ag;
+   &start-ag;
    &recovery;
    &regress;
    &release;
