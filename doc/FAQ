@@ -1,7 +1,7 @@
 
                 Frequently Asked Questions (FAQ) for PostgreSQL
                                        
-   Last updated: Mon Jan 31 21:40:28 EST 2005
+   Last updated: Tue Feb 1 16:10:47 EST 2005
    
    Current maintainer: Bruce Momjian (pgman@candle.pha.pa.us)
    
@@ -378,7 +378,7 @@
    Hardware Selection
           The effect of hardware on performance is detailed in
           http://candle.pha.pa.us/main/writings/pgsql/hw_performance/inde
-          x.html.
+          x.html and http://www.powerpostgresql.com/PerfList/.
           
     3.4) What debugging features are available?
     
