@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/optimizer/plan/createplan.c,v 1.18 1997/12/18 12:20:30 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/optimizer/plan/createplan.c,v 1.19 1997/12/18 12:30:43 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -1114,7 +1114,7 @@ make_agg(List *tlist, int nagg, Aggreg **aggs, Plan *lefttree)
 	node->plan.state = (EState *) NULL;
 	node->plan.qual = NULL;
 	node->plan.targetlist = tlist;
-	node->plan.lefttree = (Plan *) NULL;
+	node->plan.lefttree = lefttree;
 	node->plan.righttree = (Plan *) NULL;
 	node->numAgg = nagg;
 	node->aggs = aggs;
