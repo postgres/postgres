@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/commands/vacuum.c,v 1.116 1999/08/01 04:54:24 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/commands/vacuum.c,v 1.117 1999/08/08 17:13:10 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -2339,19 +2339,27 @@ vc_updstats(Oid relid, int num_pages, int num_tuples, bool hasindex, VRelStats *
 			/* overwrite the existing statistics in the tuple */
 			if (VacAttrStatsEqValid(stats))
 			{
-				if (stats->nonnull_cnt + stats->null_cnt == 0 ||
-					(stats->null_cnt <= 1 && stats->best_cnt == 1))
+				if (stats->nonnull_cnt == 0 && stats->null_cnt == 0)
+				{
+					/* empty relation, so put a dummy value in attdisbursion */
 					selratio = 0;
+				}
+				else if (stats->null_cnt <= 1 && stats->best_cnt == 1)
+				{
+					/* looks like we have a unique-key attribute */
+					double		total = ((double) stats->nonnull_cnt) + ((double) stats->null_cnt);
+
+					selratio = 1.0 / total;
+				}
 				else if (VacAttrStatsLtGtValid(stats) && stats->min_cnt + stats->max_cnt == stats->nonnull_cnt)
 				{
 					/* exact result when there are just 1 or 2 values... */
 					double		min_cnt_d = stats->min_cnt,
 								max_cnt_d = stats->max_cnt,
-								null_cnt_d = stats->null_cnt,
-								nonnull_cnt_d = stats->nonnull_cnt;		/* prevent overflow */
+								null_cnt_d = stats->null_cnt;
+					double		total = ((double) stats->nonnull_cnt) + null_cnt_d;
 
-					selratio = (min_cnt_d * min_cnt_d + max_cnt_d * max_cnt_d + null_cnt_d * null_cnt_d) /
-						(nonnull_cnt_d + null_cnt_d) / (nonnull_cnt_d + null_cnt_d);
+					selratio = (min_cnt_d * min_cnt_d + max_cnt_d * max_cnt_d + null_cnt_d * null_cnt_d) / (total * total);
 				}
 				else
 				{
@@ -2362,7 +2370,7 @@ vc_updstats(Oid relid, int num_pages, int num_tuples, bool hasindex, VRelStats *
 					 * we assume count of other values are 20% of best
 					 * count in table
 					 */
-					selratio = (most * most + 0.20 * most * (total - most)) / total / total;
+					selratio = (most * most + 0.20 * most * (total - most)) / (total * total);
 				}
 				if (selratio < 0.0)
 					selratio = 0.0;
