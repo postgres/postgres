@@ -833,30 +833,6 @@ if test "$USE_TCL"; then
 	fi
 fi
 
-dnl Check for Tcl configuration script tclConfig.sh
-if test "$USE_TCL"; then
-	AC_MSG_CHECKING(for tclConfig.sh)
-	library_dirs="/usr/lib $LIBRARY_DIRS"
-	TCL_CONFIG_SH=
-	for dir in $library_dirs; do
-		for tcl_dir in $tcl_dirs; do
-			if test -z "$TCL_CONFIG_SH"; then
-				if test -d "$dir/$tcl_dir" -a -r "$dir/$tcl_dir/tclConfig.sh"; then
-					TCL_CONFIG_SH=$dir/$tcl_dir/tclConfig.sh
-				fi
-			fi
-		done
-	done
-	if test -z "$TCL_CONFIG_SH"; then
-		AC_MSG_RESULT(no)
-		AC_MSG_WARN(tcl support disabled; Tcl configuration script missing)
-		USE_TCL=
-	else
-		AC_MSG_RESULT($TCL_CONFIG_SH)
-		AC_SUBST(TCL_CONFIG_SH)
-	fi
-fi
-
 dnl Check for location of Tk support (only if Tcl used)
 dnl Disable Tcl support if Tk not found
 
@@ -958,22 +934,4 @@ AC_OUTPUT(
 	interfaces/odbc/Makefile.global
 	pl/plpgsql/src/Makefile
 	pl/tcl/mkMakefile.tcldefs.sh
-)
-
-  GNUmakefile
-  Makefile.global
-  backend/port/Makefile
-  backend/utils/Gen_fmgrtab.sh
-  bin/pg_dump/Makefile
-  bin/pg_version/Makefile
-  bin/psql/Makefile
-  include/version.h
-  interfaces/ecpg/lib/Makefile
-  interfaces/libpgtcl/Makefile
-  interfaces/libpq++/Makefile
-  interfaces/libpq/Makefile
-  interfaces/odbc/GNUmakefile
-  interfaces/odbc/Makefile.global
-  pl/plpgsql/src/Makefile
-  pl/tcl/mkMakefile.tcldefs.sh
 )
