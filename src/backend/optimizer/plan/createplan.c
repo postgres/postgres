@@ -9,7 +9,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/optimizer/plan/createplan.c,v 1.78 2000/01/09 00:26:34 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/optimizer/plan/createplan.c,v 1.79 2000/01/15 02:59:30 petere Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -168,7 +168,7 @@ create_scan_node(Query *root, Path *best_path, List *tlist)
 			break;
 
 		default:
-			elog(ERROR, "create_scan_node: unknown node type",
+			elog(ERROR, "create_scan_node: unknown node type: %d",
 				 best_path->pathtype);
 			break;
 	}
@@ -234,7 +234,7 @@ create_join_node(Query *root, JoinPath *best_path, List *tlist)
 												   inner_tlist);
 			break;
 		default:
-			elog(ERROR, "create_join_node: unknown node type",
+			elog(ERROR, "create_join_node: unknown node type: %d",
 				 best_path->path.pathtype);
 	}
 

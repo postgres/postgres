@@ -29,7 +29,7 @@ typedef unsigned int slock_t;
 
 #endif
 
-#if (__GLIBC__ >= 2)
+#if defined(__GLIBC__) && (__GLIBC__ >= 2)
 #ifdef HAVE_INT_TIMEZONE
 #undef HAVE_INT_TIMEZONE
 #endif

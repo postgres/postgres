@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Id: hio.c,v 1.27 1999/11/29 04:34:55 tgl Exp $
+ *	  $Id: hio.c,v 1.28 2000/01/15 02:59:20 petere Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -114,7 +114,7 @@ RelationPutHeapTupleAtEnd(Relation relation, HeapTuple tuple)
 	 * this code should go away eventually.
 	 */
 	if (len > MaxTupleSize)
-		elog(ERROR, "Tuple is too big: size %d, max size %d",
+		elog(ERROR, "Tuple is too big: size %d, max size %ld",
 			 len, MaxTupleSize);
 
 	/*

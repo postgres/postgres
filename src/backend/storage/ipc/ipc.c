@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/storage/ipc/ipc.c,v 1.43 1999/11/22 02:06:31 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/storage/ipc/ipc.c,v 1.44 2000/01/15 02:59:34 petere Exp $
  *
  * NOTES
  *
@@ -554,7 +554,7 @@ static void
 IpcMemoryDetach(int status, char *shmaddr)
 {
 	if (shmdt(shmaddr) < 0)
-		elog(NOTICE, "IpcMemoryDetach: shmdt(0x%x): %m", shmaddr);
+		elog(NOTICE, "IpcMemoryDetach: shmdt(0x%p): %m", shmaddr);
 }
 
 /****************************************************************************/

@@ -4,7 +4,7 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- *	  $Id: nabstime.c,v 1.63 2000/01/02 01:37:27 momjian Exp $
+ *	  $Id: nabstime.c,v 1.64 2000/01/15 02:59:38 petere Exp $
  *
  */
 #include <ctype.h>
@@ -265,7 +265,7 @@ nabstimein(char *str)
 				ftype[MAXDATEFIELDS];
 
 	if (!PointerIsValid(str))
-		elog(ERROR, "Bad (null) abstime external representation", NULL);
+		elog(ERROR, "Bad (null) abstime external representation");
 
 	if (strlen(str) > MAXDATELEN)
 		elog(ERROR, "Bad (length) abstime external representation '%s'", str);
@@ -552,7 +552,7 @@ abstime_datetime(AbsoluteTime abstime)
 	DateTime   *result;
 
 	if (!PointerIsValid(result = palloc(sizeof(DateTime))))
-		elog(ERROR, "Unable to allocate space to convert abstime to datetime", NULL);
+		elog(ERROR, "Unable to allocate space to convert abstime to datetime");
 
 	switch (abstime)
 	{

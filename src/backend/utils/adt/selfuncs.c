@@ -10,7 +10,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/selfuncs.c,v 1.46 2000/01/10 17:14:38 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/selfuncs.c,v 1.47 2000/01/15 02:59:38 petere Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -760,7 +760,7 @@ btreesel(Oid operatorObjectId,
 	if (!PointerIsValid(result))
 		elog(ERROR, "Btree Selectivity: bad pointer");
 	if (*result < 0.0 || *result > 1.0)
-		elog(ERROR, "Btree Selectivity: bad value %lf", *result);
+		elog(ERROR, "Btree Selectivity: bad value %f", *result);
 
 	return result;
 }
@@ -911,7 +911,7 @@ hashsel(Oid operatorObjectId,
 	if (!PointerIsValid(result))
 		elog(ERROR, "Hash Table Selectivity: bad pointer");
 	if (*result < 0.0 || *result > 1.0)
-		elog(ERROR, "Hash Table Selectivity: bad value %lf", *result);
+		elog(ERROR, "Hash Table Selectivity: bad value %f", *result);
 
 	return result;
 

@@ -417,7 +417,7 @@ init_sequence(char *caller, char *name)
 		if (RelationGetRelid(seqrel) != elm->relid)
 		{
 			elog(NOTICE, "%s.%s: sequence was re-created",
-				 name, caller, name);
+				 name, caller);
 			elm->relid = RelationGetRelid(seqrel);
 			elm->cached = elm->last = elm->increment = 0;
 		}

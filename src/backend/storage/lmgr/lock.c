@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/storage/lmgr/lock.c,v 1.63 1999/11/28 01:56:48 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/storage/lmgr/lock.c,v 1.64 2000/01/15 02:59:35 petere Exp $
  *
  * NOTES
  *	  Outside modules can create a lock table and acquire/release
@@ -1362,7 +1362,7 @@ LockReleaseAll(LOCKMETHOD lockmethod, SHM_QUEUE *lockQueue)
 			{
 				/* Should never happen */
 				elog(NOTICE,
-					 "LockReleaseAll: INVALID PID: [%u] [%d,%d,%d]",
+					 "LockReleaseAll: INVALID PID: [%u] [%ld,%d,%d]",
 					 lock->tag.objId.blkno,
 				  xidLook->tag.lock, xidLook->tag.pid, xidLook->tag.xid);
 				nleft++;

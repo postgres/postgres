@@ -10,7 +10,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/parser/gram.y,v 2.125 2000/01/14 22:11:34 petere Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/parser/gram.y,v 2.126 2000/01/15 02:59:32 petere Exp $
  *
  * HISTORY
  *	  AUTHOR			DATE			MAJOR EVENT
@@ -3622,7 +3622,7 @@ Character:  character '(' Iconst ')'
 					if ($3 < 1)
 						elog(ERROR,"length for '%s' type must be at least 1",$1);
 					else if ($3 > MaxAttrSize)
-						elog(ERROR,"length for type '%s' cannot exceed %d",$1,
+						elog(ERROR,"length for type '%s' cannot exceed %ld",$1,
 							MaxAttrSize);
 
 					/* we actually implement this sort of like a varlen, so

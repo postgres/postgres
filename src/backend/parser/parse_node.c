@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/parser/parse_node.c,v 1.34 1999/12/24 06:43:33 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/parser/parse_node.c,v 1.35 2000/01/15 02:59:32 petere Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -261,7 +261,7 @@ transformArraySubscripts(ParseState *pstate,
 	typeelement = type_struct_array->typelem;
 	if (typeelement == InvalidOid)
 		elog(ERROR, "transformArraySubscripts: type %s is not an array",
-			 type_struct_array->typname);
+			 NameStr(type_struct_array->typname));
 
 	/* Get the type tuple for the array element type */
 	type_tuple = SearchSysCacheTuple(TYPEOID,

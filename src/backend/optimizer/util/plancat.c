@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/optimizer/util/plancat.c,v 1.43 2000/01/12 00:53:21 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/optimizer/util/plancat.c,v 1.44 2000/01/15 02:59:31 petere Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -410,7 +410,7 @@ restriction_selectivity(Oid functionObjectId,
 		elog(ERROR, "restriction_selectivity: bad pointer");
 
 	if (*result < 0.0 || *result > 1.0)
-		elog(ERROR, "restriction_selectivity: bad value %lf", *result);
+		elog(ERROR, "restriction_selectivity: bad value %f", *result);
 
 	return (Selectivity) *result;
 }
@@ -446,7 +446,7 @@ join_selectivity(Oid functionObjectId,
 		elog(ERROR, "join_selectivity: bad pointer");
 
 	if (*result < 0.0 || *result > 1.0)
-		elog(ERROR, "join_selectivity: bad value %lf", *result);
+		elog(ERROR, "join_selectivity: bad value %f", *result);
 
 	return (Selectivity) *result;
 }

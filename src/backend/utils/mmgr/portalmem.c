@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/mmgr/portalmem.c,v 1.31 1999/12/10 03:56:03 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/mmgr/portalmem.c,v 1.32 2000/01/15 02:59:40 petere Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -269,7 +269,7 @@ PortalHeapMemoryFree(PortalHeapMemory this,
 	else
 	{
 		elog(NOTICE,
-			 "PortalHeapMemoryFree: 0x%x not in alloc set!",
+			 "PortalHeapMemoryFree: 0x%p not in alloc set!",
 			 pointer);
 #ifdef ALLOCFREE_ERROR_ABORT
 		Assert(AllocSetContains(&block->setData, pointer));

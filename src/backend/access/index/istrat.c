@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/access/index/Attic/istrat.c,v 1.38 1999/11/22 17:55:53 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/access/index/Attic/istrat.c,v 1.39 2000/01/15 02:59:21 petere Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -502,8 +502,8 @@ OperatorRelationFillScanKeyEntry(Relation operatorRelation,
 	{
 		if (IsBootstrapProcessingMode())
 			heap_endscan(scan);
-		elog(ERROR, "OperatorObjectIdFillScanKeyEntry: unknown operator %lu",
-			 (uint32) operatorObjectId);
+		elog(ERROR, "OperatorObjectIdFillScanKeyEntry: unknown operator %u",
+			 operatorObjectId);
 	}
 
 	entry->sk_flags = 0;
@@ -517,8 +517,8 @@ OperatorRelationFillScanKeyEntry(Relation operatorRelation,
 	if (!RegProcedureIsValid(entry->sk_procedure))
 	{
 		elog(ERROR,
-		"OperatorObjectIdFillScanKeyEntry: no procedure for operator %lu",
-			 (uint32) operatorObjectId);
+		"OperatorObjectIdFillScanKeyEntry: no procedure for operator %u",
+			 operatorObjectId);
 	}
 }
 

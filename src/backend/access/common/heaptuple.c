@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/access/common/heaptuple.c,v 1.59 1999/12/16 22:19:34 wieck Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/access/common/heaptuple.c,v 1.60 2000/01/15 02:59:17 petere Exp $
  *
  * NOTES
  *	  The old interface functions have been converted to macros
@@ -136,8 +136,9 @@ DataFill(char *data,
 								   *((int32 *) value[i]));
 				break;
 			default:
-				memmove(data, DatumGetPointer(value[i]),
-						att[i]->attlen);
+                Assert(att[i]->attlen >= 0);
+                memmove(data, DatumGetPointer(value[i]),
+                        (size_t)(att[i]->attlen));
 				break;
 		}
 		data = (char *) att_addlength((long) data, att[i]->attlen, value[i]);
@@ -324,8 +325,8 @@ nocachegetattr(HeapTuple tuple,
 	Form_pg_attribute *att = tupleDesc->attrs;
 	int			slow = 0;		/* do we have to walk nulls? */
 
-
-#if IN_MACRO
+    (void)isnull; /*not used*/
+#ifdef IN_MACRO
 /* This is handled in the macro */
 	Assert(attnum > 0);
 
@@ -346,7 +347,7 @@ nocachegetattr(HeapTuple tuple,
 
 	if (HeapTupleNoNulls(tuple))
 	{
-#if IN_MACRO
+#ifdef IN_MACRO
 /* This is handled in the macro */
 		if (att[attnum]->attcacheoff != -1)
 		{
@@ -376,7 +377,7 @@ nocachegetattr(HeapTuple tuple,
 		 * ----------------
 		 */
 
-#if IN_MACRO
+#ifdef IN_MACRO
 /* This is handled in the macro */
 		if (att_isnull(attnum, bp))
 		{
@@ -565,7 +566,7 @@ heap_copytuple(HeapTuple tuple)
 	newTuple->t_datamcxt = CurrentMemoryContext;
 	newTuple->t_data = (HeapTupleHeader) ((char *) newTuple + HEAPTUPLESIZE);
 	memmove((char *) newTuple->t_data,
-			(char *) tuple->t_data, (int) tuple->t_len);
+			(char *) tuple->t_data, tuple->t_len);
 	return newTuple;
 }
 
@@ -589,7 +590,7 @@ heap_copytuple_with_tuple(HeapTuple src, HeapTuple dest)
 	dest->t_datamcxt = CurrentMemoryContext;
 	dest->t_data = (HeapTupleHeader) palloc(src->t_len);
 	memmove((char *) dest->t_data,
-			(char *) src->t_data, (int) src->t_len);
+			(char *) src->t_data, src->t_len);
 	return;
 }
 
@@ -655,7 +656,7 @@ heap_formtuple(TupleDesc tupleDescriptor,
 	HeapTuple	tuple;			/* return tuple */
 	HeapTupleHeader td;			/* tuple data */
 	int			bitmaplen;
-	long		len;
+	unsigned long len;
 	int			hoff;
 	bool		hasnull = false;
 	int			i;
@@ -687,7 +688,7 @@ heap_formtuple(TupleDesc tupleDescriptor,
 	tuple->t_datamcxt = CurrentMemoryContext;
 	td = tuple->t_data = (HeapTupleHeader) ((char *) tuple + HEAPTUPLESIZE);
 
-	MemSet((char *) td, 0, (int) len);
+	MemSet((char *) td, 0, len);
 
 	tuple->t_len = len;
 	ItemPointerSetInvalid(&(tuple->t_self));
@@ -803,8 +804,6 @@ heap_modifytuple(HeapTuple tuple,
 void
 heap_freetuple(HeapTuple htup)
 {
-	extern int getpid();
-
 	if (htup->t_data != NULL)
 		if (htup->t_datamcxt != NULL && (char *)(htup->t_data) != 
 									((char *) htup + HEAPTUPLESIZE))
@@ -828,7 +827,7 @@ heap_addheader(uint32 natts,	/* max domain index */
 {
 	HeapTuple	tuple;
 	HeapTupleHeader td;			/* tuple data */
-	long		len;
+	unsigned long len;
 	int			hoff;
 
 	AssertArg(natts > 0);
@@ -841,7 +840,7 @@ heap_addheader(uint32 natts,	/* max domain index */
 	tuple->t_datamcxt = CurrentMemoryContext;
 	td = tuple->t_data = (HeapTupleHeader) ((char *) tuple + HEAPTUPLESIZE);
 
-	MemSet((char *) td, 0, (int) len);
+	MemSet((char *) td, 0, len);
 
 	tuple->t_len = len;
 	ItemPointerSetInvalid(&(tuple->t_self));
@@ -850,7 +849,8 @@ heap_addheader(uint32 natts,	/* max domain index */
 	td->t_infomask = 0;
 	td->t_infomask |= HEAP_XMAX_INVALID;
 
-	memmove((char *) td + hoff, structure, structlen);
+    if (structlen > 0)
+        memmove((char *) td + hoff, structure, (size_t)structlen);
 
 	return tuple;
 }

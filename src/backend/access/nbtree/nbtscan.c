@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/access/nbtree/Attic/nbtscan.c,v 1.28 1999/08/08 20:12:51 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/access/nbtree/Attic/nbtscan.c,v 1.29 2000/01/15 02:59:23 petere Exp $
  *
  *
  * NOTES
@@ -95,7 +95,7 @@ _bt_dropscan(IndexScanDesc scan)
 		last = chk;
 
 	if (chk == (BTScanList) NULL)
-		elog(ERROR, "btree scan list trashed; can't find 0x%lx", scan);
+		elog(ERROR, "btree scan list trashed; can't find 0x%p", (void*)scan);
 
 	if (last == (BTScanList) NULL)
 		BTScans = chk->btsl_next;

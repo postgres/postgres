@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/varchar.c,v 1.55 1999/11/07 23:08:24 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/varchar.c,v 1.56 2000/01/15 02:59:38 petere Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -83,7 +83,7 @@ bpcharin(char *s, int dummy, int32 atttypmod)
 		len = atttypmod - VARHDRSZ;
 
 	if (len > MaxAttrSize)
-		elog(ERROR, "bpcharin: length of char() must be less than %d",
+		elog(ERROR, "bpcharin: length of char() must be less than %ld",
 				MaxAttrSize);
 
 	result = (char *) palloc(atttypmod);
@@ -154,7 +154,7 @@ bpchar(char *s, int32 len)
 	rlen = len - VARHDRSZ;
 
 	if (rlen > MaxAttrSize)
-		elog(ERROR, "bpchar: length of char() must be less than %d",
+		elog(ERROR, "bpchar: length of char() must be less than %ld",
 			MaxAttrSize);
 
 #ifdef STRINGDEBUG
@@ -336,7 +336,7 @@ varcharin(char *s, int dummy, int32 atttypmod)
 		len = atttypmod;		/* clip the string at max length */
 
 	if (len > MaxAttrSize)
-		elog(ERROR, "varcharin: length of char() must be less than %d",
+		elog(ERROR, "varcharin: length of char() must be less than %ld",
 				MaxAttrSize);
 
 	result = (char *) palloc(len);
@@ -408,7 +408,7 @@ varchar(char *s, int32 slen)
 #endif
 
 	if (len > MaxAttrSize)
-		elog(ERROR, "varchar: length of varchar() must be less than %d",
+		elog(ERROR, "varchar: length of varchar() must be less than %ld",
 			MaxAttrSize);
 
 	result = (char *) palloc(slen);
@@ -460,7 +460,7 @@ bpcharlen(char *arg)
 
 #endif
 	if (!PointerIsValid(arg))
-		elog(ERROR, "Bad (null) char() external representation", NULL);
+		elog(ERROR, "Bad (null) char() external representation");
 #ifdef MULTIBYTE
 	l = bcTruelen(arg);
 	len = 0;
@@ -482,7 +482,7 @@ int32
 bpcharoctetlen(char *arg)
 {
 	if (!PointerIsValid(arg))
-		elog(ERROR, "Bad (null) char() external representation", NULL);
+		elog(ERROR, "Bad (null) char() external representation");
 
 	return bcTruelen(arg);
 }
@@ -629,7 +629,7 @@ varcharlen(char *arg)
 
 #endif
 	if (!PointerIsValid(arg))
-		elog(ERROR, "Bad (null) varchar() external representation", NULL);
+		elog(ERROR, "Bad (null) varchar() external representation");
 
 #ifdef MULTIBYTE
 	len = 0;
@@ -652,7 +652,7 @@ int32
 varcharoctetlen(char *arg)
 {
 	if (!PointerIsValid(arg))
-		elog(ERROR, "Bad (null) varchar() external representation", NULL);
+		elog(ERROR, "Bad (null) varchar() external representation");
 	return VARSIZE(arg) - VARHDRSZ;
 }
 

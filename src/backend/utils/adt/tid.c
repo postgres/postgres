@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/tid.c,v 1.13 1999/12/20 01:23:04 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/tid.c,v 1.14 2000/01/15 02:59:38 petere Exp $
  *
  * NOTES
  *	  input routine largely stolen from boxin().
@@ -200,7 +200,7 @@ currtid_byrelname(const text *relname, ItemPointer tid)
 		heap_close(rel, AccessShareLock);
 	}
 	else
-		elog(ERROR, "Relation %s not found", relname);
+		elog(ERROR, "Relation %s not found", textout((text *)relname));
 	pfree(str);
 
 	return result;

@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/catalog/catalog.c,v 1.26 1999/11/22 17:55:56 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/catalog/catalog.c,v 1.27 2000/01/15 02:59:28 petere Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -29,7 +29,7 @@ char *
 relpath(char *relname)
 {
 	char	   *path;
-	int			bufsize = 0;
+	size_t		bufsize = 0;
 
 	if (IsSharedSystemRelationName(relname))
 	{
@@ -156,7 +156,7 @@ fillatt(TupleDesc tupleDesc)
 									0, 0, 0);
 		if (!HeapTupleIsValid(tuple))
 		{
-			elog(ERROR, "fillatt: unknown atttypid %ld",
+			elog(ERROR, "fillatt: unknown atttypid %d",
 				 (*attributeP)->atttypid);
 		}
 		else

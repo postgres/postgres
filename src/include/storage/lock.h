@@ -6,7 +6,7 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: lock.h,v 1.34 1999/09/06 19:37:37 tgl Exp $
+ * $Id: lock.h,v 1.35 2000/01/15 02:59:42 petere Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -234,7 +234,6 @@ typedef struct LOCK
 #define LockLockTable() SpinAcquire(LockMgrLock);
 #define UnlockLockTable() SpinRelease(LockMgrLock);
 
-extern SPINLOCK LockMgrLock;
 
 /*
  * function prototypes

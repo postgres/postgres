@@ -7,7 +7,7 @@
  * Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/bootstrap/bootstrap.c,v 1.76 2000/01/11 04:00:30 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/bootstrap/bootstrap.c,v 1.77 2000/01/15 02:59:27 petere Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -771,7 +771,7 @@ cleanup()
 		beenhere = 1;
 	else
 	{
-		elog(FATAL, "Memory manager fault: cleanup called twice.\n", stderr);
+		elog(FATAL, "Memory manager fault: cleanup called twice.\n");
 		proc_exit(1);
 	}
 	if (reldesc != (Relation) NULL)

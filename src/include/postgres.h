@@ -6,7 +6,7 @@
  *
  * Copyright (c) 1995, Regents of the University of California
  *
- * $Id: postgres.h,v 1.34 2000/01/10 16:13:18 momjian Exp $
+ * $Id: postgres.h,v 1.35 2000/01/15 02:59:41 petere Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -210,6 +210,7 @@ typedef uint32 CommandId;
 #define CATALOG(x) \
 	typedef struct CppConcat(FormData_,x)
 
+/* Huh? */
 #define DATA(x) extern int errno
 #define DESCR(x) extern int errno
 #define DECLARE_INDEX(x) extern int errno

@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/varlena.c,v 1.54 1999/11/07 23:08:24 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/varlena.c,v 1.55 2000/01/15 02:59:38 petere Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -172,6 +172,7 @@ textin(char *inputText)
  *		textout			- converts internal representation to "..."
  */
 char *
+
 textout(text *vlena)
 {
 	int			len;

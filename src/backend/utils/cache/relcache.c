@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/cache/relcache.c,v 1.84 1999/12/30 05:05:11 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/cache/relcache.c,v 1.85 2000/01/15 02:59:39 petere Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -845,7 +845,7 @@ RelationBuildDesc(RelationBuildDescInfo buildinfo,
 	Assert(fd >= -1);
 	if (fd == -1)
 		elog(NOTICE, "RelationIdBuildRelation: smgropen(%s): %m",
-			 &relp->relname);
+			 NameStr(relp->relname));
 
 	relation->rd_fd = fd;
 

@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/storage/buffer/bufmgr.c,v 1.69 2000/01/05 18:23:49 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/storage/buffer/bufmgr.c,v 1.70 2000/01/15 02:59:33 petere Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -1225,8 +1225,8 @@ BufferPoolCheckLeak()
 			BufferDesc *buf = &(BufferDescriptors[i - 1]);
 
 			elog(NOTICE,
-				 "Buffer Leak: [%03d] (freeNext=%d, freePrev=%d, \
-relname=%s, blockNum=%d, flags=0x%x, refcount=%d %d)",
+				 "Buffer Leak: [%03d] (freeNext=%ld, freePrev=%ld, \
+relname=%s, blockNum=%d, flags=0x%x, refcount=%d %ld)",
 				 i - 1, buf->freeNext, buf->freePrev,
 				 buf->sb_relname, buf->tag.blockNum, buf->flags,
 				 buf->refcount, PrivateRefCount[i - 1]);
@@ -1536,8 +1536,8 @@ PrintBufferDescs()
 		SpinAcquire(BufMgrLock);
 		for (i = 0; i < NBuffers; ++i, ++buf)
 		{
-			elog(DEBUG, "[%02d] (freeNext=%d, freePrev=%d, relname=%s, \
-blockNum=%d, flags=0x%x, refcount=%d %d)",
+			elog(DEBUG, "[%02d] (freeNext=%ld, freePrev=%ld, relname=%s, \
+blockNum=%d, flags=0x%x, refcount=%d %ld)",
 				 i, buf->freeNext, buf->freePrev,
 				 buf->sb_relname, buf->tag.blockNum, buf->flags,
 				 buf->refcount, PrivateRefCount[i]);
@@ -1566,8 +1566,8 @@ PrintPinnedBufs()
 	for (i = 0; i < NBuffers; ++i, ++buf)
 	{
 		if (PrivateRefCount[i] > 0)
-			elog(NOTICE, "[%02d] (freeNext=%d, freePrev=%d, relname=%s, \
-blockNum=%d, flags=0x%x, refcount=%d %d)\n",
+			elog(NOTICE, "[%02d] (freeNext=%ld, freePrev=%ld, relname=%s, \
+blockNum=%d, flags=0x%x, refcount=%d %ld)\n",
 				 i, buf->freeNext, buf->freePrev, buf->sb_relname,
 				 buf->tag.blockNum, buf->flags,
 				 buf->refcount, PrivateRefCount[i]);
@@ -1668,7 +1668,7 @@ FlushRelationBuffers(Relation rel, BlockNumber block, bool doFlush)
 				}
 				if (LocalRefCount[i] > 0)
 				{
-					elog(NOTICE, "FlushRelationBuffers(%s (local), %u): block %u is referenced (%d)",
+					elog(NOTICE, "FlushRelationBuffers(%s (local), %u): block %u is referenced (%ld)",
 						 RelationGetRelationName(rel), block,
 						 buf->tag.blockNum, LocalRefCount[i]);
 					return -2;
@@ -1694,7 +1694,7 @@ FlushRelationBuffers(Relation rel, BlockNumber block, bool doFlush)
 					SpinRelease(BufMgrLock);
 					if (FlushBuffer(i+1, false) != STATUS_OK)
 					{
-						elog(NOTICE, "FlushRelationBuffers(%s, %u): block %u is dirty (private %d, global %d), could not flush it",
+						elog(NOTICE, "FlushRelationBuffers(%s, %u): block %u is dirty (private %ld, global %d), could not flush it",
 							 buf->sb_relname, block, buf->tag.blockNum,
 							 PrivateRefCount[i], buf->refcount);
 						return -1;
@@ -1704,7 +1704,7 @@ FlushRelationBuffers(Relation rel, BlockNumber block, bool doFlush)
 				else
 				{
 					SpinRelease(BufMgrLock);
-					elog(NOTICE, "FlushRelationBuffers(%s, %u): block %u is dirty (private %d, global %d)",
+					elog(NOTICE, "FlushRelationBuffers(%s, %u): block %u is dirty (private %ld, global %d)",
 						 buf->sb_relname, block, buf->tag.blockNum,
 						 PrivateRefCount[i], buf->refcount);
 					return -1;
@@ -1713,7 +1713,7 @@ FlushRelationBuffers(Relation rel, BlockNumber block, bool doFlush)
 			if (!(buf->flags & BM_FREE))
 			{
 				SpinRelease(BufMgrLock);
-				elog(NOTICE, "FlushRelationBuffers(%s, %u): block %u is referenced (private %d, global %d)",
+				elog(NOTICE, "FlushRelationBuffers(%s, %u): block %u is referenced (private %ld, global %d)",
 					 buf->sb_relname, block, buf->tag.blockNum,
 					 PrivateRefCount[i], buf->refcount);
 				return -2;
@@ -2091,7 +2091,7 @@ LockBuffer(Buffer buffer, int mode)
 			BufferLocks[buffer - 1] &= ~BL_W_LOCK;
 		}
 		else
-			elog(ERROR, "UNLockBuffer: buffer %u is not locked", buffer);
+			elog(ERROR, "UNLockBuffer: buffer %lu is not locked", buffer);
 	}
 	else if (mode == BUFFER_LOCK_SHARE)
 	{

@@ -2,7 +2,7 @@
  * Routines for handling of 'SET var TO',
  *	'SHOW var' and 'RESET var' statements.
  *
- * $Id: variable.c,v 1.26 1999/09/27 20:27:03 momjian Exp $
+ * $Id: variable.c,v 1.27 2000/01/15 02:59:29 petere Exp $
  *
  */
 
@@ -523,7 +523,7 @@ reset_timezone()
 	{
 		strcpy(tzbuf, "=");
 		if (putenv(tzbuf) != 0)
-			elog(ERROR, "Unable to clear TZ environment variable", NULL);
+			elog(ERROR, "Unable to clear TZ environment variable");
 		tzset();
 	}
 

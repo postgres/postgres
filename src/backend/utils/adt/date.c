@@ -9,7 +9,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/date.c,v 1.39 2000/01/02 01:37:26 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/date.c,v 1.40 2000/01/15 02:59:36 petere Exp $
  *
  * NOTES
  *	 This code is actually (almost) unused.
@@ -133,7 +133,7 @@ reltimein(char *str)
 	char		lowstr[MAXDATELEN + 1];
 
 	if (!PointerIsValid(str))
-		elog(ERROR, "Bad (null) date external representation", NULL);
+		elog(ERROR, "Bad (null) date external representation");
 
 	if (strlen(str) > MAXDATELEN)
 		elog(ERROR, "Bad (length) reltime external representation '%s'", str);
@@ -362,7 +362,7 @@ reltime_timespan(RelativeTime reltime)
 				month;
 
 	if (!PointerIsValid(result = palloc(sizeof(TimeSpan))))
-		elog(ERROR, "Memory allocation failed, can't convert reltime to timespan", NULL);
+		elog(ERROR, "Memory allocation failed, can't convert reltime to timespan");
 
 	switch (reltime)
 	{

@@ -5,7 +5,7 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- *	$Id: analyze.c,v 1.128 2000/01/10 05:20:21 momjian Exp $
+ *	$Id: analyze.c,v 1.129 2000/01/15 02:59:31 petere Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -732,7 +732,7 @@ transformCreateStmt(ParseState *pstate, CreateStmt *stmt)
 							break;
 
 						default:
-							elog(ERROR, "parser: unrecognized constraint (internal error)", NULL);
+							elog(ERROR, "parser: unrecognized constraint (internal error)");
 							break;
 					}
 				}
@@ -1598,7 +1598,7 @@ transformForUpdate(Query *qry, List *forUpdate)
 			i++;
 		}
 		if (l2 == NULL)
-			elog(ERROR, "FOR UPDATE: relation %s not found in FROM clause", lfirst(l));
+			elog(ERROR, "FOR UPDATE: relation %s not found in FROM clause", strVal(lfirst(l)));
 	}
 
 	qry->rowMark = rowMark;

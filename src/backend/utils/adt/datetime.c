@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/datetime.c,v 1.39 2000/01/02 01:37:26 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/datetime.c,v 1.40 2000/01/15 02:59:36 petere Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -46,7 +46,7 @@ date_in(char *str)
 	char		lowstr[MAXDATELEN + 1];
 
 	if (!PointerIsValid(str))
-		elog(ERROR, "Bad (null) date external representation", NULL);
+		elog(ERROR, "Bad (null) date external representation");
 
 	if ((ParseDateTime(str, lowstr, field, ftype, MAXDATEFIELDS, &nf) != 0)
 	 || (DecodeDateTime(field, ftype, nf, &dtype, tm, &fsec, &tzp) != 0))
@@ -199,10 +199,10 @@ date_datetime(DateADT dateVal)
 	result = palloc(sizeof(DateTime));
 
 	if (date2tm(dateVal, &tz, tm, &fsec, &tzn) != 0)
-		elog(ERROR, "Unable to convert date to datetime", NULL);
+		elog(ERROR, "Unable to convert date to datetime");
 
 	if (tm2datetime(tm, fsec, &tz, result) != 0)
-		elog(ERROR, "Datetime out of range", NULL);
+		elog(ERROR, "Datetime out of range");
 
 	return result;
 }	/* date_datetime() */
@@ -222,10 +222,10 @@ datetime_date(DateTime *datetime)
 	char	   *tzn;
 
 	if (!PointerIsValid(datetime))
-		elog(ERROR, "Unable to convert null datetime to date", NULL);
+		elog(ERROR, "Unable to convert null datetime to date");
 
 	if (DATETIME_NOT_FINITE(*datetime))
-		elog(ERROR, "Unable to convert datetime to date", NULL);
+		elog(ERROR, "Unable to convert datetime to date");
 
 	if (DATETIME_IS_EPOCH(*datetime))
 	{
@@ -240,7 +240,7 @@ datetime_date(DateTime *datetime)
 	else
 	{
 		if (datetime2tm(*datetime, &tz, tm, &fsec, &tzn) != 0)
-			elog(ERROR, "Unable to convert datetime to date", NULL);
+			elog(ERROR, "Unable to convert datetime to date");
 	}
 
 	result = (date2j(tm->tm_year, tm->tm_mon, tm->tm_mday) - date2j(2000, 1, 1));
@@ -265,7 +265,7 @@ abstime_date(AbsoluteTime abstime)
 		case INVALID_ABSTIME:
 		case NOSTART_ABSTIME:
 		case NOEND_ABSTIME:
-			elog(ERROR, "Unable to convert reserved abstime value to date", NULL);
+			elog(ERROR, "Unable to convert reserved abstime value to date");
 
 			/*
 			 * pretend to drop through to make compiler think that result
@@ -387,7 +387,7 @@ time_in(char *str)
 	int			ftype[MAXDATEFIELDS];
 
 	if (!PointerIsValid(str))
-		elog(ERROR, "Bad (null) time external representation", NULL);
+		elog(ERROR, "Bad (null) time external representation");
 
 	if ((ParseDateTime(str, lowstr, field, ftype, MAXDATEFIELDS, &nf) != 0)
 		|| (DecodeTimeOnly(field, ftype, nf, &dtype, tm, &fsec) != 0))
@@ -505,10 +505,10 @@ datetime_time(DateTime *datetime)
 	char	   *tzn;
 
 	if (!PointerIsValid(datetime))
-		elog(ERROR, "Unable to convert null datetime to date", NULL);
+		elog(ERROR, "Unable to convert null datetime to date");
 
 	if (DATETIME_NOT_FINITE(*datetime))
-		elog(ERROR, "Unable to convert datetime to date", NULL);
+		elog(ERROR, "Unable to convert datetime to date");
 
 	if (DATETIME_IS_EPOCH(*datetime))
 	{
@@ -523,7 +523,7 @@ datetime_time(DateTime *datetime)
 	else
 	{
 		if (datetime2tm(*datetime, &tz, tm, &fsec, &tzn) != 0)
-			elog(ERROR, "Unable to convert datetime to date", NULL);
+			elog(ERROR, "Unable to convert datetime to date");
 	}
 
 	result = palloc(sizeof(TimeADT));

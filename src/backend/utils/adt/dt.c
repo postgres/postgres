@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/Attic/dt.c,v 1.80 2000/01/04 07:53:27 thomas Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/Attic/dt.c,v 1.81 2000/01/15 02:59:36 petere Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -114,7 +114,7 @@ datetime_in(char *str)
 	char		lowstr[MAXDATELEN + 1];
 
 	if (!PointerIsValid(str))
-		elog(ERROR, "Bad (null) datetime external representation", NULL);
+		elog(ERROR, "Bad (null) datetime external representation");
 
 	if ((ParseDateTime(str, lowstr, field, ftype, MAXDATEFIELDS, &nf) != 0)
 	  || (DecodeDateTime(field, ftype, nf, &dtype, tm, &fsec, &tz) != 0))
@@ -223,7 +223,7 @@ timespan_in(char *str)
 	fsec = 0;
 
 	if (!PointerIsValid(str))
-		elog(ERROR, "Bad (null) timespan external representation", NULL);
+		elog(ERROR, "Bad (null) timespan external representation");
 
 	if ((ParseDateTime(str, lowstr, field, ftype, MAXDATEFIELDS, &nf) != 0)
 		|| (DecodeDateDelta(field, ftype, nf, &dtype, tm, &fsec) != 0))
@@ -270,7 +270,7 @@ timespan_out(TimeSpan *span)
 		return NULL;
 
 	if (EncodeTimeSpan(tm, fsec, DateStyle, buf) != 0)
-		elog(ERROR, "Unable to format timespan", NULL);
+		elog(ERROR, "Unable to format timespan");
 
 	result = palloc(strlen(buf) + 1);
 
@@ -841,7 +841,7 @@ datetime_pl_span(DateTime *datetime, TimeSpan *span)
 					tm->tm_mday = (day_tab[isleap(tm->tm_year)][tm->tm_mon - 1]);
 
 				if (tm2datetime(tm, fsec, &tz, &dt) != 0)
-					elog(ERROR, "Unable to add datetime and timespan", NULL);
+					elog(ERROR, "Unable to add datetime and timespan");
 
 			}
 			else
@@ -1037,7 +1037,7 @@ timespan_div(TimeSpan *span1, float8 *arg2)
 		return NULL;
 
 	if (!PointerIsValid(result = palloc(sizeof(TimeSpan))))
-		elog(ERROR, "Memory allocation failed, can't divide timespans", NULL);
+		elog(ERROR, "Memory allocation failed, can't divide timespans");
 
 	if (*arg2 == 0.0)
 		elog(ERROR, "timespan_div:  divide by 0.0 error");
@@ -1164,11 +1164,11 @@ datetime_age(DateTime *datetime1, DateTime *datetime2)
 		}
 
 		if (tm2timespan(tm, fsec, result) != 0)
-			elog(ERROR, "Unable to decode datetime", NULL);
+			elog(ERROR, "Unable to decode datetime");
 
 	}
 	else
-		elog(ERROR, "Unable to decode datetime", NULL);
+		elog(ERROR, "Unable to decode datetime");
 
 	return result;
 }	/* datetime_age() */
@@ -1528,7 +1528,7 @@ timespan_trunc(text *units, TimeSpan *timespan)
 		}
 		else
 		{
-			elog(NOTICE, "Timespan out of range", NULL);
+			elog(NOTICE, "Timespan out of range");
 			result = NULL;
 		}
 
@@ -1547,7 +1547,7 @@ timespan_trunc(text *units, TimeSpan *timespan)
 	}
 	else
 	{
-		elog(ERROR, "Timespan units '%s' not recognized", units);
+		elog(ERROR, "Timespan units '%s' not recognized", textout(units));
 		result = NULL;
 	}
 
@@ -1688,14 +1688,14 @@ datetime_part(text *units, DateTime *datetime)
 
 				case DTK_DOW:
 					if (datetime2tm(dt, &tz, tm, &fsec, &tzn) != 0)
-						elog(ERROR, "Unable to encode datetime", NULL);
+						elog(ERROR, "Unable to encode datetime");
 
 					*result = j2day(date2j(tm->tm_year, tm->tm_mon, tm->tm_mday));
 					break;
 
 				case DTK_DOY:
 					if (datetime2tm(dt, &tz, tm, &fsec, &tzn) != 0)
-						elog(ERROR, "Unable to encode datetime", NULL);
+						elog(ERROR, "Unable to encode datetime");
 
 					*result = (date2j(tm->tm_year, tm->tm_mon, tm->tm_mday)
 							   - date2j(tm->tm_year, 1, 1) + 1);
@@ -1754,7 +1754,7 @@ timespan_part(text *units, TimeSpan *timespan)
 	if (TIMESPAN_IS_INVALID(*timespan))
 	{
 #if NOT_USED
-		elog(ERROR, "Timespan is not finite", NULL);
+		elog(ERROR, "Timespan is not finite");
 #endif
 		*result = 0;
 
@@ -1815,14 +1815,14 @@ timespan_part(text *units, TimeSpan *timespan)
 					break;
 
 				default:
-					elog(ERROR, "Timespan units '%s' not yet supported", units);
+					elog(ERROR, "Timespan units '%s' not yet supported", textout(units));
 					result = NULL;
 			}
 
 		}
 		else
 		{
-			elog(NOTICE, "Timespan out of range", NULL);
+			elog(NOTICE, "Timespan out of range");
 			*result = 0;
 		}
 
@@ -1839,7 +1839,7 @@ timespan_part(text *units, TimeSpan *timespan)
 	}
 	else
 	{
-		elog(ERROR, "Timespan units '%s' not recognized", units);
+		elog(ERROR, "Timespan units '%s' not recognized", textout(units));
 		*result = 0;
 	}
 
@@ -1889,7 +1889,7 @@ datetime_zone(text *zone, DateTime *datetime)
 		 * could return null but Postgres doesn't like that currently. -
 		 * tgl 97/06/12
 		 */
-		elog(ERROR, "Datetime is not finite", NULL);
+		elog(ERROR, "Datetime is not finite");
 		result = NULL;
 
 	}
@@ -1902,7 +1902,7 @@ datetime_zone(text *zone, DateTime *datetime)
 		dt = dt2local(dt, tz);
 
 		if (datetime2tm(dt, NULL, tm, &fsec, NULL) != 0)
-			elog(ERROR, "Datetime not legal", NULL);
+			elog(ERROR, "Datetime not legal");
 
 		up = upzone;
 		lp = lowzone;

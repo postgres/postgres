@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/access/hash/hashscan.c,v 1.20 1999/07/15 23:02:55 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/access/hash/hashscan.c,v 1.21 2000/01/15 02:59:19 petere Exp $
  *
  * NOTES
  *	  Because we can be doing an index scan on a relation while we
@@ -74,7 +74,7 @@ _hash_dropscan(IndexScanDesc scan)
 		last = chk;
 
 	if (chk == (HashScanList) NULL)
-		elog(ERROR, "hash scan list trashed; can't find 0x%lx", scan);
+		elog(ERROR, "hash scan list trashed; can't find 0x%p", (void*)scan);
 
 	if (last == (HashScanList) NULL)
 		HashScans = chk->hashsl_next;

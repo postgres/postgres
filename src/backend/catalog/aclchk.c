@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/catalog/aclchk.c,v 1.33 2000/01/13 18:26:04 petere Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/catalog/aclchk.c,v 1.34 2000/01/15 02:59:28 petere Exp $
  *
  * NOTES
  *	  See acl.h.
@@ -264,7 +264,7 @@ aclcheck(char *relname, Acl *acl, AclId id, AclIdType idtype, AclMode mode)
 	 */
 	if (num < 1)
 	{
-#if ACLDEBUG_TRACE || 1
+#if defined(ACLDEBUG_TRACE) || 1
 		elog(DEBUG, "aclcheck: zero-length ACL, returning 1");
 #endif
 		return ACLCHECK_OK;

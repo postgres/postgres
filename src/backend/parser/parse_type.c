@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/parser/parse_type.c,v 1.27 1999/11/22 17:56:21 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/parser/parse_type.c,v 1.28 2000/01/15 02:59:32 petere Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -226,7 +226,7 @@ GetArrayElementType(Oid typearray)
 	if (type_struct_array->typelem == InvalidOid)
 	{
 		elog(ERROR, "GetArrayElementType: type %s is not an array",
-			 type_struct_array->typname);
+			 NameStr(type_struct_array->typname));
 	}
 
 	return type_struct_array->typelem;
