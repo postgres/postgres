@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/parser/parse_node.c,v 1.6 1998/01/15 19:00:04 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/parser/parse_node.c,v 1.7 1998/01/17 04:53:19 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -47,16 +47,9 @@ make_parsestate(void)
 	ParseState *pstate;
 
 	pstate = palloc(sizeof(ParseState));
+	MemSet(pstate, 0, sizeof(ParseState));
+
 	pstate->p_last_resno = 1;
-	pstate->p_rtable = NIL;
-	pstate->p_hasAggs = false;
-	pstate->p_is_insert = false;
-	pstate->p_insert_columns = NIL;
-	pstate->p_is_update = false;
-	pstate->p_is_rule = false;
-	pstate->p_in_where_clause = false;
-	pstate->p_target_relation = NULL;
-	pstate->p_target_rangetblentry = NULL;
 
 	return (pstate);
 }

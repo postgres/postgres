@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/bin/psql/Attic/psql.c,v 1.125 1998/01/09 19:34:38 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/bin/psql/Attic/psql.c,v 1.126 1998/01/17 04:53:32 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -562,7 +562,7 @@ tableDesc(PsqlSettings *pset, char *table, FILE *fout)
 	char	   *rnotnull;
 	char	   *rhasdef;
 	int			i;
-	int			rsize;
+	int			attlen, atttypmod;
 	PGresult   *res, *res2;
 	int			usePipe = 0;
 	char	   *pagerenv;
@@ -598,7 +598,8 @@ tableDesc(PsqlSettings *pset, char *table, FILE *fout)
 	}
 
 	descbuf[0] = '\0';
-	strcat(descbuf, "SELECT a.attnum, a.attname, t.typname, a.attlen, a.attnotnull, a.atthasdef ");
+	strcat(descbuf, "SELECT a.attnum, a.attname, t.typname, a.attlen, ");
+	strcat(descbuf, "a.atttypmod, a.attnotnull, a.atthasdef ");
 	strcat(descbuf, "FROM pg_class c, pg_attribute a, pg_type t ");
 	strcat(descbuf, "WHERE c.relname = '");
 	strcat(descbuf, table);
@@ -643,9 +644,10 @@ tableDesc(PsqlSettings *pset, char *table, FILE *fout)
 			
 			fprintf(fout,"| %-32.32s | ", PQgetvalue(res, i, 1));
 			rtype = PQgetvalue(res, i, 2);
-			rsize = atoi(PQgetvalue(res, i, 3));
-			rnotnull = PQgetvalue(res, i, 4);
-			rhasdef = PQgetvalue(res, i, 5);
+			attlen = atoi(PQgetvalue(res, i, 3));
+			atttypmod = atoi(PQgetvalue(res, i, 4));
+			rnotnull = PQgetvalue(res, i, 5);
+			rhasdef = PQgetvalue(res, i, 6);
 
 			strcpy(type_str, rtype);
 			if (strcmp(rtype, "bpchar") == 0)
@@ -687,11 +689,11 @@ tableDesc(PsqlSettings *pset, char *table, FILE *fout)
 				fprintf(fout,"%6s |", "var");
 			else if (strcmp(rtype, "bpchar") == 0 ||
 					 strcmp(rtype, "varchar") == 0)
-				fprintf(fout,"%6i |", rsize > 0 ? rsize - VARHDRSZ : 0);
+				fprintf(fout,"%6i |", atttypmod > 0 ? atttypmod - VARHDRSZ : 0);
 			else
 			{
-				if (rsize > 0)
-					fprintf(fout,"%6i |", rsize);
+				if (attlen > 0)
+					fprintf(fout,"%6i |", attlen);
 				else
 					fprintf(fout,"%6s |", "var");
 			}

@@ -6,7 +6,7 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: nodes.h,v 1.22 1998/01/10 04:30:08 momjian Exp $
+ * $Id: nodes.h,v 1.23 1998/01/17 04:53:38 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -60,6 +60,7 @@ typedef enum NodeTag
 	T_Const,
 	T_Param,
 	T_Aggreg,
+	T_SubLink,
 	T_Func,
 	T_Array,
 	T_ArrayRef,

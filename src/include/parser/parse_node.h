@@ -5,7 +5,7 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: parse_node.h,v 1.4 1998/01/15 19:00:16 momjian Exp $
+ * $Id: parse_node.h,v 1.5 1998/01/17 04:53:46 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -32,6 +32,7 @@ typedef struct ParseState
 	List	   *p_rtable;
 	List	   *p_insert_columns;
 	bool		p_hasAggs;
+	bool		p_hasSubLinks;
 	bool		p_is_insert;
 	bool		p_is_update;
 	bool		p_is_rule;

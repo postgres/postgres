@@ -10,7 +10,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/parser/gram.y,v 1.91 1998/01/16 23:20:14 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/parser/gram.y,v 1.92 1998/01/17 04:53:16 momjian Exp $
  *
  * HISTORY
  *	  AUTHOR			DATE			MAJOR EVENT
@@ -63,7 +63,6 @@ extern List *parsetree;
 
 static char *xlateSqlType(char *);
 static Node *makeA_Expr(int oper, char *opname, Node *lexpr, Node *rexpr);
-static Node *makeRowExpr(char *opr, List *largs, List *rargs);
 void mapTargetColumns(List *source, List *target);
 static List *makeConstantList( A_Const *node);
 static char *FlattenStringList(List *list);
@@ -2151,9 +2150,9 @@ insert_rest:  VALUES '(' res_target_list2 ')'
 					$$->unique = NULL;
 					$$->targetList = $3;
 					$$->fromClause = NIL;
-					$$->whereClause = NIL;
+					$$->whereClause = NULL;
 					$$->groupClause = NIL;
-					$$->havingClause = NIL;
+					$$->havingClause = NULL;
 					$$->unionClause = NIL;
 				}
 		| SELECT opt_unique res_target_list2
@@ -2869,28 +2868,41 @@ a_expr_or_null:  a_expr
  */
 row_expr: '(' row_descriptor ')' IN '(' SubSelect ')'
 				{
-					$$ = NULL;
+					SubLink *n = makeNode(SubLink);
+					n->lefthand = $2;
+					n->subLinkType = IN_SUBLINK;
+					n->subselect = $6;
+					$$ = (Node *)n;
 				}
 		| '(' row_descriptor ')' NOT IN '(' SubSelect ')'
 				{
-					$$ = NULL;
+					SubLink *n = makeNode(SubLink);
+					n->lefthand = $2;
+					n->subLinkType = NOTIN_SUBLINK;
+					n->subselect = $7;
+					$$ = (Node *)n;
 				}
-		| '(' row_descriptor ')' '=' '(' row_descriptor ')'
+/* We accept all Operators? */
+		| '(' row_descriptor ')' Op '(' SubSelect ')'
 				{
-					$$ = makeRowExpr("=", $2, $6);
+					SubLink *n = makeNode(SubLink);
+					n->lefthand = $2;
+					n->subLinkType = OPER_SUBLINK;
+					n->oper = lcons($4, NIL);
+					n->subselect = $6;
+					$$ = (Node *)n;
 				}
-		| '(' row_descriptor ')' '<' '(' row_descriptor ')'
-				{
-					$$ = makeRowExpr("<", $2, $6);
-				}
-		| '(' row_descriptor ')' '>' '(' row_descriptor ')'
-				{
-					$$ = makeRowExpr("<", $2, $6);
-				}
+/* Do we need this?
 		| '(' row_descriptor ')' Op '(' row_descriptor ')'
 				{
-					$$ = makeRowExpr($4, $2, $6);
+					SubLink *n = makeNode(SubLink);
+					n->lefthand = $2;
+					n->subLinkType = OPER_SUBLINK;
+					n->oper = lcons($4, NIL);
+					n->subselect = $6;
+					$$ = (Node *)n;
 				}
+*/
 		;
 
 row_descriptor:  row_list ',' a_expr
@@ -3116,8 +3128,12 @@ a_expr:  attr opt_indirection
 		 */
 		| EXISTS '(' SubSelect ')'
 				{
-					elog(ERROR,"EXISTS not yet implemented");
-					$$ = $3;
+					SubLink *n = makeNode(SubLink);
+					n->lefthand = NIL;
+					n->subLinkType = EXISTS_SUBLINK;
+					n->oper = NIL;
+					n->subselect = $3;
+					$$ = (Node *)n;
 				}
 		| EXTRACT '(' extract_list ')'
 				{
@@ -3231,9 +3247,25 @@ a_expr:  attr opt_indirection
 						makeA_Expr(OP, ">", $1, $6));
 				}
 		| a_expr IN { saved_In_Expr = $1; } '(' in_expr ')'
-				{	$$ = $5; }
+				{
+					if (nodeTag($5) == T_SubLink)
+					{
+						((SubLink *)$5)->lefthand = lcons($1, NIL);
+						((SubLink *)$5)->subLinkType = IN_SUBLINK;
+						$$ = (Node *)$5;
+					}
+					else	$$ = $5;
+				}
 		| a_expr NOT IN { saved_In_Expr = $1; } '(' not_in_expr ')'
-				{	$$ = $6; }
+				{
+					if (nodeTag($6) == T_SubLink)
+					{
+						((SubLink *)$6)->lefthand = lcons($1, NIL);
+						((SubLink *)$6)->subLinkType = NOTIN_SUBLINK;
+						$$ = (Node *)$6;
+					}
+					else	$$ = $6;
+				}
 		| a_expr AND a_expr
 				{	$$ = makeA_Expr(AND, NULL, $1, $3); }
 		| a_expr OR a_expr
@@ -3446,8 +3478,9 @@ trim_list:  a_expr FROM expr_list
 
 in_expr:  SubSelect
 				{
-					elog(ERROR,"IN (SUBSELECT) not yet implemented");
-					$$ = $1;
+					SubLink *n = makeNode(SubLink);
+					n->subselect = $1;
+					$$ = (Node *)n;
 				}
 		| in_expr_nodes
 				{	$$ = $1; }
@@ -3463,8 +3496,9 @@ in_expr_nodes:  AexprConst
 
 not_in_expr:  SubSelect
 				{
-					elog(ERROR,"NOT IN (SUBSELECT) not yet implemented");
-					$$ = $1;
+					SubLink *n = makeNode(SubLink);
+					n->subselect = $1;
+					$$ = (Node *)n;
 				}
 		| not_in_expr_nodes
 				{	$$ = $1; }
@@ -3806,68 +3840,6 @@ makeA_Expr(int oper, char *opname, Node *lexpr, Node *rexpr)
 	a->rexpr = rexpr;
 	return (Node *)a;
 }
-
-/* makeRowExpr()
- * Generate separate operator nodes for a single row descriptor expression.
- * Perhaps this should go deeper in the parser someday... - thomas 1997-12-22
- */
-static Node *
-makeRowExpr(char *opr, List *largs, List *rargs)
-{
-	Node *expr = NULL;
-	Node *larg, *rarg;
-
-	if (length(largs) != length(rargs))
-		elog(ERROR,"Unequal number of entries in row expression");
-
-	if (lnext(largs) != NIL)
-		expr = makeRowExpr(opr,lnext(largs),lnext(rargs));
-
-	larg = lfirst(largs);
-	rarg = lfirst(rargs);
-
-	if ((strcmp(opr, "=") == 0)
-	 || (strcmp(opr, "<") == 0)
-	 || (strcmp(opr, "<=") == 0)
-	 || (strcmp(opr, ">") == 0)
-	 || (strcmp(opr, ">=") == 0))
-	{
-		if (expr == NULL)
-			expr = makeA_Expr(OP, opr, larg, rarg);
-		else
-			expr = makeA_Expr(AND, NULL, expr, makeA_Expr(OP, opr, larg, rarg));
-	}
-	else if (strcmp(opr, "<>") == 0)
-	{
-		if (expr == NULL)
-			expr = makeA_Expr(OP, opr, larg, rarg);
-		else
-			expr = makeA_Expr(OR, NULL, expr, makeA_Expr(OP, opr, larg, rarg));
-	}
-	else
-	{
-		elog(ERROR,"Operator '%s' not implemented for row expressions",opr);
-	}
-
-#if FALSE
-	while ((largs != NIL) && (rargs != NIL))
-	{
-		larg = lfirst(largs);
-		rarg = lfirst(rargs);
-
-		if (expr == NULL)
-			expr = makeA_Expr(OP, opr, larg, rarg);
-		else
-			expr = makeA_Expr(AND, NULL, expr, makeA_Expr(OP, opr, larg, rarg));
-
-		largs = lnext(largs);
-		rargs = lnext(rargs);
-	}
-	pprint(expr);
-#endif
-
-	return expr;
-} /* makeRowExpr() */
 
 void
 mapTargetColumns(List *src, List *dst)

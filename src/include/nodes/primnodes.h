@@ -6,7 +6,7 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: primnodes.h,v 1.12 1998/01/04 04:31:37 momjian Exp $
+ * $Id: primnodes.h,v 1.13 1998/01/17 04:53:42 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -269,6 +269,33 @@ typedef struct Aggreg
 	int			aggno;
 	bool		usenulls;
 } Aggreg;
+
+/* ----------------
+ * SubLink
+ *		subLinkType		- EXISTS, ALL, ANY, EXPR
+ *		useor			- TRUE for <>
+ *		lefthand		- list of Var/Const nodes on the left
+ *		oper			- list of Oper nodes
+ *		subselect		- subselect as Query* or parsetree
+ * ----------------
+ */
+typedef enum SubLinkType
+{
+	EXISTS_SUBLINK, ALL_SUBLINK, ANY_SUBLINK, EXPR_SUBLINK,
+	IN_SUBLINK, NOTIN_SUBLINK, OPER_SUBLINK
+} SubLinkType;
+
+
+typedef struct SubLink
+{
+struct Query;
+	NodeTag		type;
+	SubLinkType	subLinkType;
+	bool		useor;
+	List		*lefthand;
+	List		*oper;
+	Node		*subselect;
+} SubLink;
 
 /* ----------------
  * Array

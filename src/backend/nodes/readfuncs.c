@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/nodes/readfuncs.c,v 1.18 1998/01/15 18:59:31 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/nodes/readfuncs.c,v 1.19 1998/01/17 04:53:11 momjian Exp $
  *
  * NOTES
  *	  Most of the read functions for plan nodes are tested. (In fact, they
@@ -155,6 +155,10 @@ _readQuery()
 	token = lsptok(NULL, &length);		/* skip the :hasAggs */
 	token = lsptok(NULL, &length);		/* get hasAggs */
 	local_node->hasAggs = (token[0] == 't') ? true : false;
+
+	token = lsptok(NULL, &length);		/* skip the :hasSubLinks */
+	token = lsptok(NULL, &length);		/* get hasSubLinks */
+	local_node->hasSubLinks = (token[0] == 't') ? true : false;
 
 	token = lsptok(NULL, &length);		/* skip :unionClause */
 	local_node->unionClause = nodeRead(true);
@@ -1151,6 +1155,41 @@ _readAggreg()
 	return (local_node);
 }
 
+/* ----------------
+ *		_readSubLink
+ *
+ *	SubLink is a subclass of Node
+ * ----------------
+ */
+static SubLink *
+_readSubLink()
+{
+	SubLink	   *local_node;
+	char	   *token;
+	int			length;
+
+	local_node = makeNode(SubLink);
+
+	token = lsptok(NULL, &length);		/* eat :subLinkType */
+	token = lsptok(NULL, &length);		/* get subLinkType */
+	local_node->subLinkType = atoi(token);
+
+	token = lsptok(NULL, &length);		/* eat :useor */
+	token = lsptok(NULL, &length);		/* get useor */
+	local_node->useor = (token[0] == 't') ? true : false;
+
+	token = lsptok(NULL, &length);		/* eat :lefthand */
+	local_node->lefthand = nodeRead(true);		/* now read it */
+
+	token = lsptok(NULL, &length);		/* eat :oper */
+	local_node->oper = nodeRead(true);		/* now read it */
+
+	token = lsptok(NULL, &length);		/* eat :subselect */
+	local_node->subselect = nodeRead(true);		/* now read it */
+
+	return (local_node);
+}
+
 /*
  *	Stuff from execnodes.h
  */
@@ -1970,6 +2009,10 @@ parsePlanString(void)
 	else if (!strncmp(token, "AGGREG", 6))
 	{
 		return_value = _readAggreg();
+	}
+	else if (!strncmp(token, "SUBLINK", 6))
+	{
+		return_value = _readSubLink();
 	}
 	else if (!strncmp(token, "AGG", 3))
 	{
