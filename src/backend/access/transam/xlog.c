@@ -6,7 +6,7 @@
  * Portions Copyright (c) 1996-2000, PostgreSQL, Inc
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Header: /cvsroot/pgsql/src/backend/access/transam/xlog.c,v 1.36 2000/11/28 23:27:54 tgl Exp $
+ * $Header: /cvsroot/pgsql/src/backend/access/transam/xlog.c,v 1.37 2000/11/30 01:47:31 vadim Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -240,17 +240,26 @@ static bool InRedo = false;
 XLogRecPtr
 XLogInsert(RmgrId rmid, uint8 info, char *hdr, uint32 hdrlen, char *buf, uint32 buflen)
 {
-	XLogCtlInsert *Insert = &XLogCtl->Insert;
-	XLogRecord *record;
-	XLogSubRecord *subrecord;
-	XLogRecPtr	RecPtr;
-	uint32		len = hdrlen + buflen,
-				freespace,
-				wlen;
-	uint16		curridx;
-	bool		updrqst = false;
+	XLogCtlInsert  *Insert = &XLogCtl->Insert;
+	XLogRecord	   *record;
+	XLogSubRecord  *subrecord;
+	XLogRecPtr		RecPtr;
+	uint32			len = hdrlen + buflen,
+					freespace,
+					wlen;
+	uint16			curridx;
+	bool			updrqst = false;
+	bool			no_tran = (rmid == RM_XLOG_ID) ? true : false;
 
-	Assert(!(info & XLR_INFO_MASK));
+	if (info & XLR_INFO_MASK)
+	{
+		if ((info & XLR_INFO_MASK) != XLOG_NO_TRAN)
+			elog(STOP, "XLogInsert: invalid info mask %02X", 
+				(info & XLR_INFO_MASK));
+		no_tran = true;
+		info &= ~XLR_INFO_MASK;
+	}
+
 	if (len == 0 || len > MAXLOGRECSZ)
 		elog(STOP, "XLogInsert: invalid record len %u", len);
 
@@ -324,13 +333,14 @@ XLogInsert(RmgrId rmid, uint8 info, char *hdr, uint32 hdrlen, char *buf, uint32 
 	freespace -= SizeOfXLogRecord;
 	record = (XLogRecord *) Insert->currpos;
 	record->xl_prev = Insert->PrevRecord;
-	if (rmid != RM_XLOG_ID)
-		record->xl_xact_prev = MyLastRecPtr;
-	else
+	if (no_tran)
 	{
 		record->xl_xact_prev.xlogid = 0;
 		record->xl_xact_prev.xrecoff = 0;
 	}
+	else
+		record->xl_xact_prev = MyLastRecPtr;
+
 	record->xl_xid = GetCurrentTransactionId();
 	record->xl_len = (len > freespace) ? freespace : len;
 	record->xl_info = (len > freespace) ? 
@@ -340,7 +350,7 @@ XLogInsert(RmgrId rmid, uint8 info, char *hdr, uint32 hdrlen, char *buf, uint32 
 	RecPtr.xrecoff =
 		XLogCtl->xlblocks[curridx].xrecoff - BLCKSZ +
 		Insert->currpos - ((char *) Insert->currpage);
-	if (MyLastRecPtr.xrecoff == 0 && rmid != RM_XLOG_ID)
+	if (MyLastRecPtr.xrecoff == 0 && !no_tran)
 	{
 		SpinAcquire(SInvalLock);
 		MyProc->logRec = RecPtr;

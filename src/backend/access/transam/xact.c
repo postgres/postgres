@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/access/transam/xact.c,v 1.84 2000/11/21 21:15:57 petere Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/access/transam/xact.c,v 1.85 2000/11/30 01:47:31 vadim Exp $
  *
  * NOTES
  *		Transaction aborts can now occur two ways:
@@ -222,7 +222,7 @@ int			XactIsoLevel;
 #ifdef XLOG
 #include "access/xlogutils.h"
 
-int			CommitDelay = 5;	/* 1/200 sec */
+int			CommitDelay = 5;	/* 1/200000 sec */
 
 static void (*_RollbackFunc)(void*) = NULL;
 static void *_RollbackData = NULL;

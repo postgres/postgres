@@ -7,8 +7,7 @@
 #include "access/xact.h"
 #include "access/xlog.h"
 #include "storage/smgr.h"
-
-#ifdef XLOG
+#include "commands/sequence.h"
 
 RmgrData   RmgrTable[] = {
 {"XLOG", xlog_redo, xlog_undo, xlog_desc},
@@ -25,15 +24,7 @@ RmgrData   RmgrTable[] = {
 {"Btree", btree_redo, btree_undo, btree_desc},
 {"Hash", hash_redo, hash_undo, hash_desc},
 {"Rtree", rtree_redo, rtree_undo, rtree_desc},
-{"Gist", gist_redo, gist_undo, gist_desc}
+{"Gist", gist_redo, gist_undo, gist_desc},
+{"Sequence", seq_redo, seq_undo, seq_desc}
 };
 
-#else /* not XLOG */
-
-/*
- * This is a dummy, but don't write RmgrTable[] = {} here,
- * that's not accepted by some compilers. -- petere
- */
-RmgrData   RmgrTable[1];
-
-#endif /* not XLOG */

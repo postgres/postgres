@@ -3,7 +3,7 @@
  *
  * PostgreSQL transaction log manager
  *
- * $Header: /cvsroot/pgsql/src/include/access/xlog.h,v 1.11 2000/11/25 20:33:53 tgl Exp $
+ * $Header: /cvsroot/pgsql/src/include/access/xlog.h,v 1.12 2000/11/30 01:47:32 vadim Exp $
  */
 #ifndef XLOG_H
 #define XLOG_H
@@ -53,6 +53,12 @@ typedef struct XLogSubRecord
  */
 #define XLR_TO_BE_CONTINUED		0x01
 #define	XLR_INFO_MASK			0x0F
+
+/*
+ * Sometimes we log records which are out of transaction control.
+ * Rmgr may use flag below for this purpose.
+ */
+#define	XLOG_NO_TRAN			XLR_INFO_MASK
 
 #define XLOG_PAGE_MAGIC 0x17345168
 

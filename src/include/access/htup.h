@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2000, PostgreSQL, Inc
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Id: htup.h,v 1.39 2000/11/14 21:04:32 tgl Exp $
+ * $Id: htup.h,v 1.40 2000/11/30 01:47:32 vadim Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -186,9 +186,9 @@ extern long heap_sysoffset[];
  */
 typedef struct HeapTupleData
 {
-	uint32		t_len;			/* length of *t_data */
+	uint32			t_len;			/* length of *t_data */
 	ItemPointerData t_self;		/* SelfItemPointer */
-	Oid			t_tableOid;		/* table the tuple came from */
+	Oid				t_tableOid;		/* table the tuple came from */
 	MemoryContext	t_datamcxt;	/* mcxt in which allocated */
 	HeapTupleHeader	t_data;		/* -> tuple header and data */
 } HeapTupleData;
