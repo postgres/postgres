@@ -51,7 +51,7 @@ static int
 comparePos(const void *a, const void *b)
 {
 	if (WEP_GETPOS(*(WordEntryPos *) a) == WEP_GETPOS(*(WordEntryPos *) b))
-		return 1;
+		return 0;
 	return (WEP_GETPOS(*(WordEntryPos *) a)> WEP_GETPOS(*(WordEntryPos *) b)) ? 1 : -1;
 }
 

@@ -92,7 +92,9 @@ reset_dict(void)
 static int
 comparedict(const void *a, const void *b)
 {
-	return ((DictInfo *) a)->dict_id - ((DictInfo *) b)->dict_id;
+	if ( ((DictInfo *) a)->dict_id == ((DictInfo *) b)->dict_id )
+		return 0;
+	return ( ((DictInfo *) a)->dict_id < ((DictInfo *) b)->dict_id ) ? -1 : 1;
 }
 
 DictInfo *

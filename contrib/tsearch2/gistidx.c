@@ -54,6 +54,7 @@ Datum		gtsvector_picksplit(PG_FUNCTION_ARGS);
 	GETBITBYTE(val,7)	\
 )
 
+static int4 sizebitvec(BITVECP sign);
 
 Datum
 gtsvector_in(PG_FUNCTION_ARGS)
@@ -64,13 +65,31 @@ gtsvector_in(PG_FUNCTION_ARGS)
 	PG_RETURN_DATUM(0);
 }
 
+#define	SINGOUTSTR	"%d true bits, %d false bits"
+#define	ARROUTSTR	"%d unique words"
+#define EXTRALEN	( 2*13 )
+
+static int outbuf_maxlen = 0;
+
 Datum
 gtsvector_out(PG_FUNCTION_ARGS)
 {
-	ereport(ERROR,
-			(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
-			 errmsg("gtsvector_out not implemented")));
-	PG_RETURN_DATUM(0);
+	GISTTYPE   *key = (GISTTYPE *) DatumGetPointer(PG_DETOAST_DATUM(PG_GETARG_POINTER(0)));
+	char *outbuf;
+
+	if ( outbuf_maxlen==0 )
+		outbuf_maxlen = 2*EXTRALEN + Max( strlen(SINGOUTSTR), strlen(ARROUTSTR) ) + 1;
+	outbuf = palloc( outbuf_maxlen );
+
+	if ( ISARRKEY(key) ) 
+		sprintf( outbuf, ARROUTSTR, ARRNELEM(key) );  
+	else {
+		int cnttrue = ( ISALLTRUE(key) ) ? SIGLENBIT : sizebitvec(GETSIGN(key));
+		sprintf( outbuf, SINGOUTSTR, cnttrue, SIGLENBIT - cnttrue ); 
+	}	
+
+	PG_FREE_IF_COPY(key,0);
+	PG_RETURN_POINTER(outbuf);
 }
 
 static int

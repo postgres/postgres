@@ -93,7 +93,9 @@ reset_prs(void)
 static int
 compareprs(const void *a, const void *b)
 {
-	return ((WParserInfo *) a)->prs_id - ((WParserInfo *) b)->prs_id;
+	if ( ((WParserInfo *) a)->prs_id == ((WParserInfo *) b)->prs_id )
+		return 0;
+	return ( ((WParserInfo *) a)->prs_id < ((WParserInfo *) b)->prs_id ) ? -1 : 1;
 }
 
 WParserInfo *
