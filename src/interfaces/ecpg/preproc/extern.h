@@ -79,7 +79,7 @@ extern void add_variable_to_head(struct arguments **, struct variable *, struct 
 extern void add_variable_to_tail(struct arguments **, struct variable *, struct variable *);
 extern void dump_variables(struct arguments *, int);
 extern struct typedefs *get_typedef(char *);
-extern void adjust_array(enum ECPGttype, char **, char **, char *, char *, int);
+extern void adjust_array(enum ECPGttype, char **, char **, char *, char *, int, bool);
 extern void reset_variables(void);
 extern void check_indicator(struct ECPGtype *);
 extern void remove_variables(int);

@@ -1,0 +1,66 @@
+#include <stdio.h>
+#include <stdlib.h>
+
+EXEC SQL typedef long mmInteger;
+EXEC SQL typedef char mmChar;
+EXEC SQL typedef short mmSmallInt;
+
+EXEC SQL BEGIN DECLARE SECTION;
+struct TBempl
+   {
+   mmInteger     idnum;
+   mmChar        name[21];
+   mmSmallInt    accs;
+   };
+EXEC SQL END DECLARE SECTION;
+
+int main()
+{
+EXEC SQL BEGIN DECLARE SECTION;
+struct TBempl empl;
+EXEC SQL END DECLARE SECTION;
+FILE *dbgs;
+
+if ((dbgs = fopen("log", "w")) != NULL)
+    ECPGdebug(1, dbgs);
+		    
+empl.idnum = 1;
+EXEC SQL connect to mm;
+if (sqlca.sqlcode)
+   {
+   printf("connect error = %ld\n", sqlca.sqlcode);
+   exit(sqlca.sqlcode);
+   }
+
+EXEC SQL create table empl
+   (
+      idnum    integer,
+      name     char(20),
+      accs     smallint
+   );
+if (sqlca.sqlcode)
+   {
+   printf("select error = %ld\n", sqlca.sqlcode);
+   exit(sqlca.sqlcode);
+   }
+
+EXEC SQL insert into empl values (1, 'first user', 20);
+if (sqlca.sqlcode)
+   {
+   printf("select error = %ld\n", sqlca.sqlcode);
+   exit(sqlca.sqlcode);
+   }
+
+EXEC SQL select name, accs 
+         into :empl.name, :empl.accs
+         from empl where idnum = :empl.idnum;
+if (sqlca.sqlcode)
+   {
+   printf("select error = %ld\n", sqlca.sqlcode);
+   exit(sqlca.sqlcode);
+   }
+printf("name=%s, accs=%d\n", empl.name, empl.accs);
+EXEC SQL disconnect;
+fclose(dbgs);
+exit(0);
+}

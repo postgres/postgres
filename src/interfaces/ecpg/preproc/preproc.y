@@ -1,4 +1,4 @@
-/* $PostgreSQL: pgsql/src/interfaces/ecpg/preproc/preproc.y,v 1.280 2004/05/07 00:24:59 tgl Exp $ */
+/* $PostgreSQL: pgsql/src/interfaces/ecpg/preproc/preproc.y,v 1.281 2004/05/07 13:42:49 meskes Exp $ */
 
 /* Copyright comment */
 %{
@@ -4574,8 +4574,7 @@ type_declaration: S_TYPEDEF
 					mmerror(PARSE_ERROR, ET_ERROR, errortext);
 				}
 			}
-
-			adjust_array($3.type_enum, &dimension, &length, $3.type_dimension, $3.type_index, *$4?1:0);
+			adjust_array($3.type_enum, &dimension, &length, $3.type_dimension, $3.type_index, *$4?1:0, true);
 
 			this = (struct typedefs *) mm_alloc(sizeof(struct typedefs));
 
@@ -5021,7 +5020,7 @@ variable: opt_pointer ECPGColLabel opt_array_bounds opt_initializer
 			char *length = $3.index2;    /* length of string */
 			char dim[14L];
 
-			adjust_array(actual_type[struct_level].type_enum, &dimension, &length, actual_type[struct_level].type_dimension, actual_type[struct_level].type_index, strlen($1));
+			adjust_array(actual_type[struct_level].type_enum, &dimension, &length, actual_type[struct_level].type_dimension, actual_type[struct_level].type_index, strlen($1), false);
 
 			switch (actual_type[struct_level].type_enum)
 			{
@@ -5411,7 +5410,7 @@ ECPGTypedef: TYPE_P
 					}
 				}
 
-				adjust_array($5.type_enum, &dimension, &length, $5.type_dimension, $5.type_index, *$7?1:0);
+				adjust_array($5.type_enum, &dimension, &length, $5.type_dimension, $5.type_index, *$7?1:0, false);
 
 				this = (struct typedefs *) mm_alloc(sizeof(struct typedefs));
 
@@ -5469,7 +5468,7 @@ ECPGVar: SQL_VAR
 				mmerror(PARSE_ERROR, ET_ERROR, "Initializer not allowed in EXEC SQL VAR command");
 			else
 			{
-				adjust_array($5.type_enum, &dimension, &length, $5.type_dimension, $5.type_index, *$7?1:0);
+				adjust_array($5.type_enum, &dimension, &length, $5.type_dimension, $5.type_index, *$7?1:0, false);
 
 				switch ($5.type_enum)
 				{

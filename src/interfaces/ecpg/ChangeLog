@@ -1784,6 +1784,12 @@ Wed May  5 11:51:47 CEST 2004
 	  variables.
 	- Synced parser again.
 	- Synced lexer.
+	
+Fri May  7 15:34:05 CEST 2004
+
+	- Added portability file to pgtypeslib.
+	- Fixed bug that reversed string length in typedefs.
+	- Added additional test case.
 	- Set pgtypes library version to 1.2.
 	- Set ecpg version to 3.2.0.
 	- Set compat library version to 1.2.
