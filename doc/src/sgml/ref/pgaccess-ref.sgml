@@ -1,58 +1,45 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/ref/Attic/pgaccess-ref.sgml,v 1.6 2000/12/25 23:15:26 petere Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/ref/Attic/pgaccess-ref.sgml,v 1.7 2000/12/30 17:11:32 petere Exp $
 Postgres documentation
 -->
 
 <refentry id="APP-PGACCESS">
+ <docinfo>
+  <date>2000-12-30</date>
+ </docinfo>
+
  <refmeta>
-  <refentrytitle id="app-pgaccess-title">
-   <application>pgaccess</application>
-  </refentrytitle>
+  <refentrytitle id="app-pgaccess-title"><application>pgaccess</application></refentrytitle>
   <manvolnum>1</manvolnum>
   <refmiscinfo>Application</refmiscinfo>
  </refmeta>
+
  <refnamediv>
-  <refname>
-   <application>pgaccess</application>
-  </refname>
-  <refpurpose>
-   <productname>Postgres</productname> graphical interactive client
-  </refpurpose>
+  <refname>pgaccess</refname>
+  <refpurpose><productname>PostgreSQL</productname> graphical client</refpurpose>
  </refnamediv>
+
  <refsynopsisdiv>
-  <refsynopsisdivinfo>
-   <date>1999-08-03</date>
-  </refsynopsisdivinfo>
-  <synopsis>
-pgaccess [ <replaceable class="parameter">dbname</replaceable> ]
-  </synopsis>
+  <cmdsynopsis>
+   <command>pgaccess</command>
+   <arg><replaceable>dbname</replaceable></arg>
+  </cmdsynopsis>
 
-  <refsect2 id="R2-APP-PGACCESS-1">
-   <title>
-    Inputs
-   </title>
-   <para>
+  <refsect2 id="app-pgaccess-options">
+   <title>Options</title>
 
-    <variablelist>
-     <varlistentry>
-      <term><replaceable class="PARAMETER">dbname</replaceable></term>
-      <listitem>
-       <para>
+   <variablelist>
+    <varlistentry>
+     <term><replaceable>dbname</replaceable></term>
+     <listitem>
+      <para>
 	The name of an existing database to access.
-       </para>
-      </listitem>
-     </varlistentry>
-    </variablelist>
-   </para>
+      </para>
+     </listitem>
+    </varlistentry>
+   </variablelist>
   </refsect2>
 
-  <refsect2 id="R2-APP-PGACCESS-2">
-   <title>
-    Outputs
-   </title>
-   <para>
-   </para>
-  </refsect2>
  </refsynopsisdiv>
 
  <refsect1 id="R1-APP-PGACCESS-1">
@@ -68,21 +55,13 @@ pgaccess [ <replaceable class="parameter">dbname</replaceable> ]
   </para>
 
   <para>
-   Another way of accessing <productname>Postgres</productname>
-   through tcl is to use
-   <xref linkend="app-pgtclsh">
-   or
-   <xref linkend="app-pgtksh">.
-  </para>
-
-  <para>
    <application>pgaccess</application> can:
 
    <itemizedlist mark="bullet" spacing="compact">
     <listitem>
      <para>
       Open any database on a specified host at the specified port,
-      username and password.
+      username, and password.
      </para>
     </listitem>
 
@@ -94,7 +73,7 @@ pgaccess [ <replaceable class="parameter">dbname</replaceable> ]
 
     <listitem>
      <para>
-      Save preferences in <filename>~/.pgaccessrc</filename> file.
+      Save preferences in the <filename>~/.pgaccessrc</filename> file.
      </para>
     </listitem>
    </itemizedlist>
@@ -106,7 +85,7 @@ pgaccess [ <replaceable class="parameter">dbname</replaceable> ]
    <itemizedlist mark="bullet" spacing="compact">
     <listitem>
      <para>
-      Open multiple tables for viewing, max n records (configurable).
+      Open multiple tables for viewing, with a configurable number of rows shown.
      </para>
     </listitem>
 
@@ -136,13 +115,13 @@ pgaccess [ <replaceable class="parameter">dbname</replaceable> ]
 
     <listitem>
      <para>
-      Import/export to external files (SDF,CSV).
+      Import/export to external files (<acronym>SDF</acronym>, <acronym>CSV</acronym>).
      </para>
     </listitem>
 
     <listitem>
      <para>
-      Use filter capabilities; enter filter like price>3.14.
+      Use filter capabilities; enter filters like <literal>price &gt; 3.14</literal>.
      </para>
     </listitem>
 
@@ -160,13 +139,13 @@ pgaccess [ <replaceable class="parameter">dbname</replaceable> ]
 
     <listitem>
      <para>
-      Delete records; point to the record, press Del key.
+      Delete records; point to the record, press <keycap>Delete</keycap> key.
      </para>
     </listitem>
 
     <listitem>
      <para>
-      Add new records; save new row with right-button-click.
+      Add new records; save new row with right-button click.
      </para>
     </listitem>
 
@@ -196,7 +175,7 @@ pgaccess [ <replaceable class="parameter">dbname</replaceable> ]
    <itemizedlist mark="bullet" spacing="compact">
     <listitem>
      <para>
-      Define, edit and store <firstterm>user defined queries</firstterm>.
+      Define, edit and store <firstterm>user-defined queries</firstterm>.
      </para>
     </listitem>
 
@@ -214,10 +193,10 @@ pgaccess [ <replaceable class="parameter">dbname</replaceable> ]
 
     <listitem>
      <para>
-      Execute with optional user input parameters; e.g.,
-      <programlisting>
+      Execute with optional user input parameters, e.g.,
+<programlisting>
 select * from invoices where year=[parameter "Year of selection"]
-      </programlisting>.
+</programlisting>
      </para>
     </listitem>
 
@@ -236,7 +215,7 @@ select * from invoices where year=[parameter "Year of selection"]
     <listitem>
      <para>
       Construct queries using a visual query builder
-      with drag & drop support, table aliasing.
+      with drag &amp; drop support, table aliasing.
      </para>
     </listitem>
    </itemizedlist>
@@ -332,7 +311,7 @@ select * from invoices where year=[parameter "Year of selection"]
 
     <listitem>
      <para>
-      Change font, size and style of fields and labels.
+      Change font, size, and style of fields and labels.
      </para>
     </listitem>
 
@@ -344,7 +323,7 @@ select * from invoices where year=[parameter "Year of selection"]
 
     <listitem>
      <para>
-      Preview tables, sample postscript print.
+      Preview tables, sample <productname>Postscript</productname> print.
      </para>
     </listitem>
    </itemizedlist>
@@ -356,7 +335,7 @@ select * from invoices where year=[parameter "Year of selection"]
    <itemizedlist mark="bullet" spacing="compact">
     <listitem>
      <para>
-      Open user defined forms.
+      Open user-defined forms.
      </para>
     </listitem>
 
@@ -398,6 +377,42 @@ select * from invoices where year=[parameter "Year of selection"]
    </itemizedlist>
   </para>
  </refsect1>
+
+ <refsect1>
+  <title>Diagnosistics</title>
+
+  <para>
+   If you get output like this:
+<screen>
+<computeroutput>
+Error in startup script: couldn't load file "libpgtcl.so": libpgtcl.so: cannot open shared object file: No such file or directory
+    while executing
+"load libpgtcl[info sharedlibextension]"
+    (procedure "main" line 3)
+    invoked from within
+"main $argc $argv"
+    (file "/usr/local/pgsql/share/pgaccess/main.tcl" line 249)
+</computeroutput>
+</screen>
+   then you need to configure your runtime linker to find the
+   <filename>libpgtcl.so</filename> library, most likely by setting
+   the <envar>LD_LIBRARY_PATH</envar> environment variable.  Consult
+   the <productname>PostgreSQL</productname> installation instructions
+   for more information.
+  </para>
+ </refsect1>
+
+ <refsect1>
+  <title>Notes</title>
+
+  <para>
+   <application>pgaccess</application> is written in Tcl/Tk.  Your
+   <productname>PostgreSQL</productname> installation needs to be
+   build with Tcl support for <application>pgaccess</application> to
+   be available.
+  </para>
+ </refsect1>
+
 </refentry>
 
 <!-- Keep this comment at the end of the file
