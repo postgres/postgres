@@ -7,7 +7,7 @@
 #
 #
 # IDENTIFICATION
-#    $Header: /cvsroot/pgsql/src/Attic/GNUmakefile.in,v 1.28 1998/09/14 04:17:40 scrappy Exp $
+#    $Header: /cvsroot/pgsql/src/Attic/GNUmakefile.in,v 1.29 1998/09/29 12:40:34 scrappy Exp $
 #
 #-------------------------------------------------------------------------
 
@@ -37,6 +37,7 @@ all:
 	$(MAKE) -C backend all
 	$(MAKE) -C interfaces all
 	$(MAKE) -C bin all
+	$(MAKE) -C pl all
 ifneq ($(wildcard man), )
 	$(MAKE) -C man all
 endif
@@ -49,6 +50,7 @@ install:
 	$(MAKE) -C utils install
 	$(MAKE) -C backend install
 	$(MAKE) -C bin install
+	$(MAKE) -C pl install
 ifneq ($(wildcard man), )
 	$(MAKE) -C man install
 endif
@@ -61,6 +63,7 @@ clean:
 	$(MAKE) -C backend clean
 	$(MAKE) -C interfaces clean
 	$(MAKE) -C bin clean
+	$(MAKE) -C pl clean
 	$(MAKE) -C test clean
 	$(MAKE) -C ../contrib/spi clean
 ifneq ($(wildcard man), )
@@ -98,6 +101,7 @@ distclean: clean
 	$(MAKE) -C backend $@
 	$(MAKE) -C interfaces $@
 	$(MAKE) -C bin $@
+	$(MAKE) -C pl $@
 ifneq ($(wildcard man), )
 	$(MAKE) -C man $@
 endif

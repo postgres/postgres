@@ -59,3 +59,5 @@ select_views
 alter_table
 portals_p2
 rules
+install_plpgsql
+plpgsql

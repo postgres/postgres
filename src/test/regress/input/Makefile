@@ -7,7 +7,7 @@
 #
 #
 # IDENTIFICATION
-#    $Header: /cvsroot/pgsql/src/test/regress/input/Attic/Makefile,v 1.6 1997/08/28 04:49:18 vadim Exp $
+#    $Header: /cvsroot/pgsql/src/test/regress/input/Attic/Makefile,v 1.7 1998/09/29 12:41:56 scrappy Exp $
 #
 #-------------------------------------------------------------------------
 
@@ -22,7 +22,8 @@ INFILES= copy.sql \
          create_function_1.sql \
          create_function_2.sql \
          misc.sql \
-	 constraints.sql
+	 constraints.sql \
+	 install_plpgsql.sql
 
 all: $(INFILES)
 
@@ -34,4 +35,5 @@ all: $(INFILES)
 	OBJ=`pwd`; \
 	sed -e "s:_OBJWD_:$$OBJ/\.\.:g" \
 	    -e "s:_DLSUFFIX_:$(DLSUFFIX):g" \
+	    -e "s:_LIBDIR_:$(LIBDIR):g" \
 	    -e "s/_USER_/$$USER/g" < $< > ../sql/$@
