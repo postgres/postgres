@@ -190,24 +190,24 @@ FindWord(IspellDict * Conf, const char *word, int affixflag, char compoundonly)
 {
 	SPNode *node = Conf->Dictionary;
 	SPNodeData *StopLow, *StopHigh, *StopMiddle;
-	int level=0, wrdlen=strlen(word);
+	uint8 *ptr =(uint8*)word;
 
-	while( node && level<wrdlen) {
+	while( node && *ptr) {
 		StopLow = node->data;
 		StopHigh = node->data+node->length;
 		while (StopLow < StopHigh) {
-			StopMiddle = StopLow + (StopHigh - StopLow) / 2;
-			if ( StopMiddle->val == ((uint8*)(word))[level] ) {
-				if ( wrdlen==level+1 && StopMiddle->isword ) {
+			StopMiddle = StopLow + ((StopHigh - StopLow) >> 1);
+			if ( StopMiddle->val == *ptr ) {
+				if ( *(ptr+1)=='\0' && StopMiddle->isword ) {
 					if ( compoundonly && !StopMiddle->compoundallow )
 						return 0;
 					if ( (affixflag == 0) || (strchr(Conf->AffixData[StopMiddle->affix], affixflag) != NULL))
 						return 1;
 				}
 				node=StopMiddle->node;
-				level++;
+				ptr++;
 				break;
-			} else if ( StopMiddle->val < ((uint8*)(word))[level] ) {
+			} else if ( StopMiddle->val < *ptr ) {
 				StopLow = StopMiddle + 1;
 			} else {
 				StopHigh = StopMiddle;
@@ -236,19 +236,32 @@ NIAddAffix(IspellDict * Conf, int flag, char flagflags, const char *mask, const 
 		}
 		MEMOUT(Conf->Affix);
 	}
-	if (type == 's')
-		sprintf(Conf->Affix[Conf->naffixes].mask, "%s$", mask);
-	else
-		sprintf(Conf->Affix[Conf->naffixes].mask, "^%s", mask);
-	Conf->Affix[Conf->naffixes].compile = 1;
-	Conf->Affix[Conf->naffixes].flagflags = flagflags;
-	Conf->Affix[Conf->naffixes].flag = flag;
-	Conf->Affix[Conf->naffixes].type = type;
 
-	strcpy(Conf->Affix[Conf->naffixes].find, find);
-	strcpy(Conf->Affix[Conf->naffixes].repl, repl);
-	Conf->Affix[Conf->naffixes].replen = strlen(repl);
-	Conf->naffixes++;
+        if ( strcmp(mask,".")==0 ) {
+                Conf->Affix[Conf->naffixes].issimple=1;
+                Conf->Affix[Conf->naffixes].isregis=0;
+                *( Conf->Affix[Conf->naffixes].mask )='\0';
+        } else if ( RS_isRegis(mask) ) {
+                Conf->Affix[Conf->naffixes].issimple=0;
+                Conf->Affix[Conf->naffixes].isregis=1;
+                strcpy(Conf->Affix[Conf->naffixes].mask, mask);
+        } else {
+                Conf->Affix[Conf->naffixes].issimple=0;
+                Conf->Affix[Conf->naffixes].isregis=0;
+                if (type == FF_SUFFIX)
+                        sprintf(Conf->Affix[Conf->naffixes].mask, "%s$", mask);
+                else
+                        sprintf(Conf->Affix[Conf->naffixes].mask, "^%s", mask);
+        }
+        Conf->Affix[Conf->naffixes].compile = 1;
+        Conf->Affix[Conf->naffixes].flagflags = flagflags;
+        Conf->Affix[Conf->naffixes].flag = flag;
+        Conf->Affix[Conf->naffixes].type = type;
+
+        strcpy(Conf->Affix[Conf->naffixes].find, find);
+        strcpy(Conf->Affix[Conf->naffixes].repl, repl);
+        Conf->Affix[Conf->naffixes].replen = strlen(repl);
+        Conf->naffixes++;
 	return (0);
 }
 
@@ -366,7 +379,7 @@ NIImportAffixes(IspellDict * Conf, const char *filename)
 				continue;
 		}
 
-		NIAddAffix(Conf, (int) flag, (char) flagflags, mask, find, repl, suffixes ? 's' : 'p');
+		NIAddAffix(Conf, (int) flag, (char) flagflags, mask, find, repl, suffixes ? FF_SUFFIX : FF_PREFIX);
 
 	}
 	fclose(affix);
@@ -550,6 +563,46 @@ mkANode(IspellDict *Conf, int low, int high, int level, int type) {
 	return rs;
 }
 
+static void
+mkVoidAffix(IspellDict * Conf, int issuffix, int startsuffix) {
+        int i,cnt=0;
+        int start = (issuffix) ? startsuffix : 0;
+        int end = (issuffix) ? Conf->naffixes : startsuffix;
+        AffixNode       *Affix = (AffixNode*)malloc( ANHRDSZ + sizeof(AffixNodeData));
+
+	MEMOUT(Affix);
+        memset(Affix, 0, ANHRDSZ + sizeof(AffixNodeData) );
+        Affix->length=1;
+        Affix->isvoid=1;
+
+        if (issuffix) {
+                Affix->data->node=Conf->Suffix;
+                Conf->Suffix = Affix;
+        } else {
+                Affix->data->node=Conf->Prefix;
+                Conf->Prefix = Affix;
+        }
+
+
+        for(i=start;i<end;i++)
+                if (Conf->Affix[i].replen==0)
+                        cnt++;
+
+        if ( cnt==0 )
+                return;
+
+        Affix->data->aff = (AFFIX**)malloc( sizeof(AFFIX*) * cnt );
+	MEMOUT(Affix->data->aff);
+        Affix->data->naff = (uint32)cnt;
+
+        cnt=0; 
+        for(i=start;i<end;i++)
+                if (Conf->Affix[i].replen==0) {
+                        Affix->data->aff[cnt] = Conf->Affix + i;
+                        cnt++;
+                }
+}
+
 void
 NISortAffixes(IspellDict * Conf)
 {
@@ -584,6 +637,8 @@ NISortAffixes(IspellDict * Conf)
 
 	Conf->Prefix = mkANode(Conf, 0, firstsuffix, 0, 'p'); 
 	Conf->Suffix = mkANode(Conf, firstsuffix, Conf->naffixes, 0, 's');
+        mkVoidAffix(Conf, 1, firstsuffix);
+        mkVoidAffix(Conf, 0, firstsuffix);
 }
 
 static AffixNodeData*
@@ -591,17 +646,23 @@ FinfAffixes(AffixNode *node, const char *word, int wrdlen, int *level, int type)
 	AffixNodeData *StopLow, *StopHigh, *StopMiddle;
 	uint8 symbol;
 
+        if ( node->isvoid ) { /* search void affixes */
+                if (node->data->naff)
+                        return node->data;
+                node = node->data->node;
+        }
+
 	while( node && *level<wrdlen) {
 		StopLow = node->data;
 		StopHigh = node->data+node->length;
 		while (StopLow < StopHigh) {
-			StopMiddle = StopLow + (StopHigh - StopLow) / 2;
+			StopMiddle = StopLow + ((StopHigh - StopLow) >> 1);
 			symbol = GETWCHAR(word,wrdlen,*level,type);
 			if ( StopMiddle->val == symbol ) {
+				(*level)++;
 				if ( StopMiddle->naff ) 
 					return StopMiddle;
 				node=StopMiddle->node;
-				(*level)++;
 				break;
 			} else if ( StopMiddle->val < symbol ) {
 				StopLow = StopMiddle + 1;
@@ -617,11 +678,6 @@ FinfAffixes(AffixNode *node, const char *word, int wrdlen, int *level, int type)
 
 static char *
 CheckAffix(const char *word, size_t len, AFFIX * Affix, char flagflags, char *newword) {
-	regmatch_t	subs[2];		/* workaround for apache&linux */
-	int			err;
-	pg_wchar   *data;
-	size_t		data_len;
-	int			dat_len;
 
 	if ( flagflags & FF_COMPOUNDONLYAFX ) {
 		if ( (Affix->flagflags & FF_COMPOUNDONLYAFX) == 0 )
@@ -631,7 +687,7 @@ CheckAffix(const char *word, size_t len, AFFIX * Affix, char flagflags, char *ne
 			return NULL;
 	} 
 
-	if ( Affix->type=='s' ) {
+	if ( Affix->type==FF_SUFFIX ) {
 		strcpy(newword, word);
 		strcpy(newword + len - Affix->replen, Affix->find);
 	} else {
@@ -639,34 +695,50 @@ CheckAffix(const char *word, size_t len, AFFIX * Affix, char flagflags, char *ne
 		strcat(newword, word + Affix->replen);
 	}
 
-	if (Affix->compile)
-	{
-		int wmasklen,masklen = strlen(Affix->mask);
-		pg_wchar *mask;
-		mask = (pg_wchar *) palloc((masklen + 1) * sizeof(pg_wchar));
-		wmasklen = pg_mb2wchar_with_len( Affix->mask, mask, masklen);
-		
-		err = pg_regcomp(&(Affix->reg), mask, wmasklen, REG_EXTENDED | REG_ICASE | REG_NOSUB);
-		pfree(mask);
-		if (err)
+        if ( Affix->issimple ) {
+                return newword;
+        } else if ( Affix->isregis ) {
+                if (Affix->compile) {
+                        RS_compile(&(Affix->reg.regis), (Affix->type==FF_SUFFIX) ? 1 : 0, Affix->mask);
+                        Affix->compile = 0;
+                }
+                if ( RS_execute(&(Affix->reg.regis), newword, -1) )
+                        return newword;
+	} else {
+		regmatch_t	subs[2];		/* workaround for apache&linux */
+		int			err;
+		pg_wchar   *data;
+		size_t		data_len;
+		int	dat_len;
+		if (Affix->compile)
 		{
-			/* regerror(err, &(Affix->reg), regerrstr, ERRSTRSIZE); */
-			pg_regfree(&(Affix->reg));
-			return (NULL);
+			int wmasklen,masklen = strlen(Affix->mask);
+			pg_wchar *mask;
+			mask = (pg_wchar *) palloc((masklen + 1) * sizeof(pg_wchar));
+			wmasklen = pg_mb2wchar_with_len( Affix->mask, mask, masklen);
+		
+			err = pg_regcomp(&(Affix->reg.regex), mask, wmasklen, REG_EXTENDED | REG_ICASE | REG_NOSUB);
+			pfree(mask);
+			if (err)
+			{
+				/* regerror(err, &(Affix->reg.regex), regerrstr, ERRSTRSIZE); */
+				pg_regfree(&(Affix->reg.regex));
+				return (NULL);
+			}
+			Affix->compile = 0;
 		}
-		Affix->compile = 0;
-	}
 
-	/* Convert data string to wide characters */
-	dat_len = strlen(newword);
-	data = (pg_wchar *) palloc((dat_len + 1) * sizeof(pg_wchar));
-	data_len = pg_mb2wchar_with_len(newword, data, dat_len);
+		/* Convert data string to wide characters */
+		dat_len = strlen(newword);
+		data = (pg_wchar *) palloc((dat_len + 1) * sizeof(pg_wchar));
+		data_len = pg_mb2wchar_with_len(newword, data, dat_len);
 
-	if (!(err = pg_regexec(&(Affix->reg), data,dat_len,NULL, 1, subs, 0))) {
-			pfree(data); 
-			return newword;
+		if (!(err = pg_regexec(&(Affix->reg.regex), data,dat_len,NULL, 1, subs, 0))) {
+				pfree(data); 
+				return newword;
+		}
+		pfree(data);
 	}
-	pfree(data);
 
 	return NULL;
 }
@@ -715,7 +787,6 @@ NormalizeSubWord(IspellDict * Conf, char *word, char flag) {
 			}
 		}
 		pnode = prefix->node;
-		plevel++;
 	}
  
 	/* Find all other NORMAL forms of the 'word' (check suffix and then prefix)*/
@@ -754,13 +825,11 @@ NormalizeSubWord(IspellDict * Conf, char *word, char flag) {
 						}
 					}
 					pnode = prefix->node;
-					plevel++;
 				} 
 			}
 		}
 
 		snode=suffix->node;
-		slevel++;
 	}
 
 	if (cur == forms) {
@@ -1013,8 +1082,12 @@ NIFree(IspellDict * Conf)
 	
 	for (i = 0; i < Conf->naffixes; i++)
 	{
-		if (Affix[i].compile == 0)
-			pg_regfree(&(Affix[i].reg));
+		if (Affix[i].compile == 0) {
+                        if ( Affix[i].isregis )
+                                RS_free(&(Affix[i].reg.regis));
+                        else
+				pg_regfree(&(Affix[i].reg.regex));
+		}
 	}
 	if (Conf->Spell) {
 		for (i = 0; i < Conf->nspell; i++)

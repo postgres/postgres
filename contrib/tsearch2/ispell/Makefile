@@ -1,4 +1,4 @@
-# $PostgreSQL: pgsql/contrib/tsearch2/ispell/Makefile,v 1.5 2003/11/29 19:51:36 pgsql Exp $
+# $PostgreSQL: pgsql/contrib/tsearch2/ispell/Makefile,v 1.6 2004/06/23 11:06:11 teodor Exp $
 
 subdir = contrib/tsearch2/ispell
 top_builddir = ../../..
@@ -8,7 +8,7 @@ include $(top_builddir)/src/Makefile.global
 PG_CPPFLAGS = -I$(srcdir)/.. $(CPPFLAGS)
 override CFLAGS += $(CFLAGS_SL)
 
-SUBOBJS = spell.o 
+SUBOBJS = spell.o regis.o 
 
 all: SUBSYS.o
 

@@ -3,6 +3,7 @@
 
 #include <sys/types.h>
 #include "regex/regex.h"
+#include "regis.h"
 #include "c.h"
 
 
@@ -40,20 +41,29 @@ typedef struct spell_struct
 
 typedef struct aff_struct
 {
-	char		flag;
-	char		flagflags;
-	char		type;
-	char		mask[33];
-	char		find[16];
-	char		repl[16];
-	regex_t		reg;
-	size_t		replen;
-	char		compile;
+        uint32
+                flag:8,
+                type:2,
+                compile:1,
+                flagflags:3,
+                issimple:1,
+                isregis:1,
+                unused:1,
+                replen:16;
+        char            mask[32];
+        char            find[16];
+        char            repl[16];
+        union {
+                regex_t         regex;
+                Regis           regis;
+        } reg;
 }	AFFIX;
 
 #define FF_CROSSPRODUCT 	0x01
 #define FF_COMPOUNDWORD 	0x02
 #define FF_COMPOUNDONLYAFX      0x04
+#define FF_SUFFIX               2
+#define FF_PREFIX               1
 
 struct AffixNode;
 
@@ -66,17 +76,12 @@ typedef struct {
 } AffixNodeData;
 
 typedef struct AffixNode {
-	uint32 length;
+        uint32  isvoid:1,
+                length:31;
 	AffixNodeData	data[1];
 } AffixNode;
 
 #define ANHRDSZ        (sizeof(uint32))
-
-typedef struct Tree_struct
-{
-	int			Left[256],
-				Right[256];
-}	Tree_struct;
 
 typedef struct {
 	char *affix;
