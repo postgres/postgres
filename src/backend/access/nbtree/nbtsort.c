@@ -5,7 +5,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Id: nbtsort.c,v 1.27 1998/01/13 04:03:41 scrappy Exp $
+ *	  $Id: nbtsort.c,v 1.28 1998/02/21 19:23:14 scrappy Exp $
  *
  * NOTES
  *
@@ -85,7 +85,7 @@ static void _bt_uppershutdown(Relation index, BTPageState *state);
 
 #define MAXTAPES		(7)
 #define TAPEBLCKSZ		(BLCKSZ << 2)
-#define TAPETEMP		"pg_btsortXXXXXX"
+#define TAPETEMP		"pg_btsortXXXXXXX"
 
 extern int	NDirectFileRead;
 extern int	NDirectFileWrite;
