@@ -37,7 +37,7 @@
 #
 # Format:
 # 
-#   host DBNAME IP_ADDRESS ADDRESS_MASK USERAUTH [AUTH_ARGUMENT]
+#   host DBNAME IP_ADDRESS ADDRESS_MASK AUTHTYPE [AUTH_ARGUMENT]
 # 
 # DBNAME is the name of a PostgreSQL database, "all" to indicate all 
 # databases, or "sameuser" to restrict a user's access to a database
@@ -47,7 +47,7 @@
 # mask to identify a set of hosts.  These hosts are allowed to connect to 
 # Database DBNAME. 
 # 
-# USERAUTH is a keyword indicating the method used to authenticate the 
+# AUTHTYPE is a keyword indicating the method used to authenticate the 
 # user, i.e. to determine that the principal is authorized to connect
 # under the PostgreSQL username he supplies in his connection parameters.
 #
@@ -99,18 +99,18 @@
 #
 # Format:
 # 
-#   local DBNAME USERAUTH [AUTH_ARGUMENT]
+#   local DBNAME AUTHTYPE [AUTH_ARGUMENT]
 #
 # The format is the same as that of the "host" record type except that the
 # IP_ADDRESS and ADDRESS_MASK are omitted and the "ident", "krb4" and "krb5"
-# values of USERAUTH are not allowed.
+# values of AUTHTYPE are not allowed.
 
 # For backwards compatibility, PostgreSQL also accepts pre-version 6 records,
 # which look like:
 # 
 #   all         127.0.0.1    0.0.0.0
 
-# TYPE       DATABASE    IP_ADDRESS    MASK                USERAUTH  MAP
+# TYPE       DATABASE    IP_ADDRESS    MASK                AUTHTYPE  MAP
  
 #host         all         127.0.0.1    255.255.255.255     trust     
  
