@@ -21,7 +21,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/bin/pg_dump/pg_dump.c,v 1.84 1998/09/03 02:10:36 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/bin/pg_dump/pg_dump.c,v 1.85 1998/09/20 03:18:43 momjian Exp $
  *
  * Modifications - 6/10/96 - dave@bensoft.com - version 1.13.dhb
  *
@@ -472,6 +472,7 @@ dumpClasses(const TableInfo *tblinfo, const int numTables, FILE *fout,
 static void
 prompt_for_password(char *username, char *password)
 {
+	char		buf[512];
 	int			length;
 
 #ifdef HAVE_TERMIOS_H
@@ -481,13 +482,11 @@ prompt_for_password(char *username, char *password)
 #endif
 
 	printf("Username: ");
-	fgets(username, 9, stdin);
+	fgets(username, 100, stdin);
 	length = strlen(username);
 	/* skip rest of the line */
 	if (length > 0 && username[length - 1] != '\n')
 	{
-		static char buf[512];
-
 		do
 		{
 			fgets(buf, 512, stdin);
@@ -503,7 +502,7 @@ prompt_for_password(char *username, char *password)
 	t.c_lflag &= ~ECHO;
 	tcsetattr(0, TCSADRAIN, &t);
 #endif
-	fgets(password, 9, stdin);
+	fgets(password, 100, stdin);
 #ifdef HAVE_TERMIOS_H
 	tcsetattr(0, TCSADRAIN, &t_orig);
 #endif
@@ -512,8 +511,6 @@ prompt_for_password(char *username, char *password)
 	/* skip rest of the line */
 	if (length > 0 && password[length - 1] != '\n')
 	{
-		static char buf[512];
-
 		do
 		{
 			fgets(buf, 512, stdin);
@@ -541,8 +538,8 @@ main(int argc, char **argv)
 	int			numTables;
 	char		connect_string[512] = "";
 	char		tmp_string[128];
-	char		username[64];
-	char		password[64];
+	char		username[100];
+	char		password[100];
 	int			use_password = 0;
 
 	g_verbose = false;
@@ -2584,7 +2581,13 @@ dumpIndices(FILE *fout, IndInfo *indinfo, int numIndices,
 	for (i = 0; i < numIndices; i++)
 	{
 		tableInd = findTableByName(tblinfo, numTables,
-								   (indinfo[i].indrelname));
+								   indinfo[i].indrelname);
+		if (tableInd < 0)
+		{
+			fprintf(stderr, "failed sanity check, table %s was not found\n",
+					indinfo[i].indrelname);
+			exit(2);
+		}
 
 		if (strcmp(indinfo[i].indproc, "0") == 0)
 			funcname = NULL;
