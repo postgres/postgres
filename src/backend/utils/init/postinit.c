@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *    $Header: /cvsroot/pgsql/src/backend/utils/init/postinit.c,v 1.1.1.1 1996/07/09 06:22:09 scrappy Exp $
+ *    $Header: /cvsroot/pgsql/src/backend/utils/init/postinit.c,v 1.2 1996/08/27 22:21:34 scrappy Exp $
  *
  * NOTES
  *	InitPostgres() is the function called from PostgresMain
@@ -35,9 +35,6 @@
 
 #include "postgres.h"
 
-#include "machine.h"		/* for BLCKSZ, for InitMyDatabaseId() 
-				 * and where the decarations for this file go
-				 */
 #include "access/heapam.h"
 #include "access/xact.h"
 #include "storage/bufmgr.h"
