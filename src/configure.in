@@ -131,7 +131,13 @@ echo "files, then you probably need to enter something here.
 echo "enter 'none' or new directories to override default"
 echo ""
 $ECHO_N "Additional directories to search for include files { $SRCH_INC }: $ECHO_C"
-read a
+if test "X$with_defaults" = "Xyes"
+then
+	a=$SRCH_INC
+	echo ""
+else
+	read a
+fi
 if test "$a." = "none." 
 then
 	SRCH_INC=
@@ -148,7 +154,13 @@ export CPPFLAGS
 echo "- setting CPPFLAGS=$CPPFLAGS"
 
 $ECHO_N "Additional directories to search for library files { $SRCH_LIB }: $ECHO_C"
-read a
+if test "X$with_defaults" = "Xyes"
+then
+	a=$SRCH_LIB
+	echo ""
+else
+	read a
+fi
 if test "$a." = "none."
 then
 	SRCH_LIB=
@@ -186,6 +198,24 @@ else
 	DEF_PGPORT=5432
 fi
 export DEF_PGPORT
+
+dnl We exclude tcl support unless we override it with --with-tcl
+if test "X$with_tcl" = "Xyes"
+then
+	USE_TCL=true
+else
+	USE_TCL=
+fi
+export USE_TCL
+
+dnl We exclude perl support unless we override it with --with-perl
+if test "X$with_perl" = "Xyes"
+then
+	USE_PERL=true
+else
+	USE_PERL=
+fi
+export USE_PERL
 
 dnl Unless we specify the command line options
 dnl	--disable-hba		to explicitly disable it 
@@ -247,6 +277,8 @@ AC_SUBST(SHARED_LIB)
 AC_SUBST(CFLAGS)
 AC_SUBST(DLSUFFIX)
 AC_SUBST(DL_LIB)
+AC_SUBST(USE_TCL)
+AC_SUBST(USE_PERL)
 
 dnl ****************************************************************
 dnl Hold off on the C++ stuff until we can figure out why it doesn't 

@@ -7,7 +7,7 @@
 #
 #
 # IDENTIFICATION
-#    $Header: /cvsroot/pgsql/src/Makefile.global.in,v 1.26 1997/08/17 00:39:02 scrappy Exp $
+#    $Header: /cvsroot/pgsql/src/Makefile.global.in,v 1.27 1997/10/30 04:46:39 momjian Exp $
 #
 # NOTES
 #    Essentially all Postgres make files include this file and use the 
@@ -159,15 +159,17 @@ endif
 # location of Tcl/Tk headers and libraries
 #
 # Uncomment this to build the tcl utilities.
-# USE_TCL= true
+USE_TCL= @USE_TCL@
 # customize these to your site's needs
 #
-TCL_INCDIR= /home/tools/include
-TCL_LIBDIR= /home/tools/lib
-TCL_LIB= -ltcl7.5
-TK_INCDIR= /home/tools/include
-TK_LIBDIR= /home/tools/lib
-TK_LIB= -ltk4.1
+TCL_INCDIR= /usr/local/include
+TCL_LIBDIR= /usr/local/lib
+TCL_LIB= -ltcl80
+TK_INCDIR= /usr/local/include
+TK_LIBDIR= /usr/local/lib
+TK_LIB= -ltk80
+
+USE_PERL= @USE_PERL@
 
 X11_INCDIR= /usr/include
 X11_LIBDIR= /usr/lib
