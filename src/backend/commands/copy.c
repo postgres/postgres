@@ -6,7 +6,7 @@
  *
  *
  * IDENTIFICATION
- *    $Header: /cvsroot/pgsql/src/backend/commands/copy.c,v 1.27 1997/08/22 14:22:09 vadim Exp $
+ *    $Header: /cvsroot/pgsql/src/backend/commands/copy.c,v 1.28 1997/09/01 07:59:04 vadim Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -34,6 +34,7 @@
 #include <catalog/catname.h>
 #include <catalog/pg_user.h>
 #include <commands/copy.h>
+#include "commands/trigger.h"
 #include <storage/fd.h>
 
 #define ISOCTAL(c) (((c) >= '0') && ((c) <= '7'))
@@ -334,6 +335,7 @@ CopyFrom(Relation rel, bool binary, bool oids, FILE *fp, char *delim)
     InsertIndexResult indexRes;
     TupleDesc tupDesc;
     Oid loaded_oid;
+    bool skip_tuple = false;
     
     tupDesc = RelationGetTupleDescriptor(rel);
     attr = tupDesc->attrs;
@@ -602,41 +604,65 @@ CopyFrom(Relation rel, bool binary, bool oids, FILE *fp, char *delim)
         tuple = heap_formtuple(tupDesc, values, nulls);
         if (oids)
             tuple->t_oid = loaded_oid;
-
-	/* ----------------
-	 * Check the constraints of a tuple
-	 * ----------------
-	 */
-	
-    	if ( rel->rd_att->constr )
+    	
+    	skip_tuple = false;
+    	/* BEFORE ROW INSERT Triggers */
+    	if ( rel->trigdesc && 
+    		rel->trigdesc->n_before_row[TRIGGER_ACTION_INSERT] > 0 )
     	{
     	    HeapTuple newtuple;
     	
-    	    newtuple = ExecConstraints ("CopyFrom", rel, tuple);
-    	    
-    	    if ( newtuple != tuple )
+    	    newtuple = ExecBRInsertTriggers (rel, tuple);
+    	
+    	    if ( newtuple == NULL )		/* "do nothing" */
+    	    	skip_tuple = true;
+    	    else if ( newtuple != tuple )	/* modified by Trigger(s) */
     	    {
     	    	pfree (tuple);
     	    	tuple = newtuple;
     	    }
     	}
+    	
+    	if ( !skip_tuple )
+    	{
+	    /* ----------------
+	     * Check the constraints of a tuple
+	     * ----------------
+	     */
 	
-        heap_insert(rel, tuple);
+    	    if ( rel->rd_att->constr )
+    	    {
+    	    	HeapTuple newtuple;
+    	
+    	    	newtuple = ExecConstraints ("CopyFrom", rel, tuple);
+    	    
+    	    	if ( newtuple != tuple )
+    	    	{
+    	    	    pfree (tuple);
+    	    	    tuple = newtuple;
+    	    	}
+    	    }
+	
+            heap_insert(rel, tuple);
             
-        if (has_index) {
-            for (i = 0; i < n_indices; i++) {
-                if (indexPred[i] != NULL) {
+            if (has_index) 
+            {
+            	for (i = 0; i < n_indices; i++) 
+            	{
+                    if (indexPred[i] != NULL) 
+                    {
 #ifndef OMIT_PARTIAL_INDEX
-                    /* if tuple doesn't satisfy predicate,
-                     * don't update index
-                     */
-                    slot->val = tuple;
-                    /*SetSlotContents(slot, tuple); */
-                    if (ExecQual((List*)indexPred[i], econtext) == false)
-                        continue;
+                    	/* 
+                    	 * if tuple doesn't satisfy predicate,
+                     	 * don't update index
+                     	 */
+                    	slot->val = tuple;
+                    	/*SetSlotContents(slot, tuple); */
+                    	if (ExecQual((List*)indexPred[i], econtext) == false)
+                            continue;
 #endif /* OMIT_PARTIAL_INDEX */         
-                }
-                FormIndexDatum(indexNatts[i],
+                    }
+                    FormIndexDatum(indexNatts[i],
                                (AttrNumber *)&(pgIndexP[i]->indkey[0]),
                                tuple,
                                tupDesc,
@@ -644,12 +670,17 @@ CopyFrom(Relation rel, bool binary, bool oids, FILE *fp, char *delim)
                                idatum,
                                index_nulls,
                                finfoP[i]);
-                indexRes = index_insert(index_rels[i], idatum, index_nulls,
+                    indexRes = index_insert(index_rels[i], idatum, index_nulls,
                                         &(tuple->t_ctid), rel);
-                if (indexRes) pfree(indexRes);
+                    if (indexRes) pfree(indexRes);
+            	}
             }
+    	    /* AFTER ROW INSERT Triggers */
+    	    if ( rel->trigdesc && 
+    	    	    rel->trigdesc->n_after_row[TRIGGER_ACTION_INSERT] > 0 )
+    	    	ExecARInsertTriggers (rel, tuple);
         }
-            
+        
         if (binary) pfree(string);
             
         for (i = 0; i < attr_count; i++) {
