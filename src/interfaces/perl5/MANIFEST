@@ -7,5 +7,6 @@ README
 examples/ApachePg.pl
 examples/example.newstyle
 examples/example.oldstyle
+ppport.h
 test.pl
 typemap
