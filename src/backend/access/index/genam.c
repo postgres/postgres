@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *    $Header: /cvsroot/pgsql/src/backend/access/index/genam.c,v 1.2 1996/10/20 09:27:21 scrappy Exp $
+ *    $Header: /cvsroot/pgsql/src/backend/access/index/genam.c,v 1.3 1996/10/21 07:38:17 scrappy Exp $
  *
  * NOTES
  *    many of the old access method routines have been turned into
@@ -80,6 +80,18 @@
 
 #include "access/funcindex.h"
 #include "access/genam.h"
+
+#include "utils/palloc.h"
+
+#ifndef HAVE_MEMMOVE
+# include "regex/utils.h"
+#else
+# include <string.h>
+#endif
+
+#include <stdio.h>
+#include "storage/ipc.h"
+#include "storage/bufmgr.h"
 
 /* ----------------------------------------------------------------
  *	general access method routines

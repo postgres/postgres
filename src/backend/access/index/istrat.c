@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *    $Header: /cvsroot/pgsql/src/backend/access/index/Attic/istrat.c,v 1.2 1996/10/20 09:27:24 scrappy Exp $
+ *    $Header: /cvsroot/pgsql/src/backend/access/index/Attic/istrat.c,v 1.3 1996/10/21 07:38:20 scrappy Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -54,6 +54,11 @@
 #include "utils/memutils.h" /* could have been access/itup.h */
 
 #include "access/heapam.h"
+
+#include "access/istrat.h"
+
+#include "fmgr.h"
+
 /* ----------------------------------------------------------------
  *	           misc strategy support routines
  * ----------------------------------------------------------------
