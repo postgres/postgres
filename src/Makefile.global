@@ -7,7 +7,7 @@
 #
 #
 # IDENTIFICATION
-#    $Header: /cvsroot/pgsql/src/Attic/Makefile.global,v 1.103 1997/01/28 03:46:58 momjian Exp $
+#    $Header: /cvsroot/pgsql/src/Attic/Makefile.global,v 1.104 1997/01/28 13:53:50 momjian Exp $
 #
 # NOTES
 #    Essentially all Postgres make files include this file and use the 
@@ -168,10 +168,10 @@ USE_READLINE= false
 # if you have a libhistory.a
 #READLINE_INC+=	-DHAVE_LIBHISTORY
 
-# where to find includes
+# where to find includes, if not in include search path
 #READLINE_INC+=	-I/home/tools/include
 
-# where to find library files
+# where to find library files, if not in library search path
 #READLINE_LIB+= -L/home/tools/lib
 
 # not optional if USE_READLINE enabled
