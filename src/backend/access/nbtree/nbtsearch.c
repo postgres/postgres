@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *    $Header: /cvsroot/pgsql/src/backend/access/nbtree/nbtsearch.c,v 1.12 1996/12/15 09:05:10 bryanh Exp $
+ *    $Header: /cvsroot/pgsql/src/backend/access/nbtree/nbtsearch.c,v 1.13 1997/01/05 10:56:36 vadim Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -1080,6 +1080,7 @@ _bt_endpoint(IndexScanDesc scan, ScanDirection dir)
     
     rel = scan->relation;
     current = &(scan->currentItemData);
+    so = (BTScanOpaque) scan->opaque;
     
     buf = _bt_getroot(rel, BT_READ);
     blkno = BufferGetBlockNumber(buf);
@@ -1153,6 +1154,9 @@ _bt_endpoint(IndexScanDesc scan, ScanDirection dir)
 	    if ( start != P_HIKEY )	/* non-rightmost page */
 		elog (WARN, "_bt_endpoint: non-rightmost page (%u) is empty", blkno);
 	    /* It's left- & right- most page - root page, - and it's empty... */
+	    _bt_relbuf(rel, buf, BT_READ);
+	    ItemPointerSetInvalid(current);
+	    so->btso_curbuf = InvalidBuffer;
 	    return ((RetrieveIndexResult) NULL);
 	}
 	if ( start > maxoff )		/* start == 2 && maxoff == 1 */
@@ -1188,7 +1192,12 @@ _bt_endpoint(IndexScanDesc scan, ScanDirection dir)
 	{
 	    /* If it's leftmost page too - it's empty root page... */
 	    if ( P_LEFTMOST(opaque) )
+	    {
+		_bt_relbuf(rel, buf, BT_READ);
+		ItemPointerSetInvalid(current);
+		so->btso_curbuf = InvalidBuffer;
 	    	return ((RetrieveIndexResult) NULL);
+	    }
 	    /* Go back ! */
 	    ItemPointerSet(current, blkno, FirstOffsetNumber);
 	    if (!_bt_step(scan, &buf, BackwardScanDirection))
@@ -1214,7 +1223,6 @@ _bt_endpoint(IndexScanDesc scan, ScanDirection dir)
 	res = FormRetrieveIndexResult(current, &(itup->t_tid));
 	
 	/* remember which buffer we have pinned */
-	so = (BTScanOpaque) scan->opaque;
 	so->btso_curbuf = buf;
     } else {
 	_bt_relbuf(rel, buf, BT_READ);
