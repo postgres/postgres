@@ -3,7 +3,7 @@
 # pg_upgrade: update a database without needing a full dump/reload cycle.
 # CAUTION: read the manual page before trying to use this!
 
-# $Header: /cvsroot/pgsql/src/bin/pg_dump/Attic/pg_upgrade,v 1.23 2002/01/11 00:27:42 momjian Exp $
+# $Header: /cvsroot/pgsql/src/bin/pg_dump/Attic/pg_upgrade,v 1.24 2002/01/11 04:39:19 momjian Exp $
 #
 # NOTE: we must be sure to update the version-checking code a few dozen lines
 # below for each new PostgreSQL release.
@@ -13,7 +13,6 @@ TMPFILE="/tmp/pgupgrade.$$"
 trap "rm -f $TMPFILE" 0 1 2 3 15
 
 SCHEMA=""
-DATA=""
 while [ "$#" -gt 1 ]
 do
 	if [ "X$1" = "X-s" ]
@@ -23,20 +22,13 @@ do
 			exit 1
 		fi
 		shift 2
-	elif [ "X$1" = "X-d" ]
-	then	DATA="$2"
-		if [ ! -s "$DATA" ]
-		then	echo "$DATA does not exist" 1>&2
-			exit 1
-		fi
-		shift 2
-	else	echo "Usage:  $0 -s schema_dump [ -d data_dump ] old_data_dir" 1>&2
+	else	echo "Usage:  $0 -s schema_dump old_data_dir" 1>&2
 		exit 1
 	fi
 done
 
 if [ "$#" -ne 1 -o ! "$SCHEMA" ]
-then	echo "Usage:  $0 -s schema_dump [ -d data_dump ] old_data_dir" 1>&2
+then	echo "Usage:  $0 -s schema_dump old_data_dir" 1>&2
 	exit 1
 fi
 
@@ -86,21 +78,6 @@ SRC_VERSION=`cat ./$OLDDIR/PG_VERSION`
 # UPGRADE_VERSION is the expected output database version
 UPGRADE_VERSION="7.1"
 
-if [ "$SRC_VERSION" = "7.1" -a ! "$DATA" ]
-then	echo "$0 requires a full data dump file to upgrade from version $SRC_VERSION." 1>&2
-	echo "Use the '-d' parameter to specify the data dump file" 1>&2
-	echo "If you don't have enough disk space to keep a dump file, grep out the '\\connect' and" 1>&2
-	echo "'SELECT setval' lines from the dump file and pass that file to $0, e.g:" 1>&2
-	echo 1>&2
-	echo "	pg_dumpall | egrep '^(\\connect)|SELECT setval \()[^	]*$' > data.out" 1>&2
-	exit 1
-fi
-
-if [ "$SRC_VERSION" != "7.1" -a "$DATA" ]
-then	echo "$0 does not require the -d option for this version." 1>&2
-	exit 1
-fi
-
 if [ "$DEST_VERSION" != "$UPGRADE_VERSION" -a "$DEST_VERSION" != "$SRC_VERSION" ]
 then	echo "`basename $0` is for PostgreSQL version $UPGRADE_VERSION, but ./data/PG_VERSION contains $DEST_VERSION." 1>&2
 	echo "Did you run initdb for version $UPGRADE_VERSION?" 1>&2
@@ -134,8 +111,8 @@ Install a newer version from pgsql/contrib/pg_resetxlog and continue.;  exiting"
 	exit 1
 fi
 
-# We need a high XID number so there is 1 gig gap in XID numbers so the
-# moved-over rows can be frozen on next VACUUM.
+# If the XID is > 2 billion, 7.1 database will have non-frozen XID's in 
+# low numbers, and 7.2 will think they are in the future --- bad.
 
 XID=`pg_resetxlog -n "$OLDDIR" | grep "NextXID" | awk -F'  *' '{print $4}'`
 if [ "$SRC_VERSION" = "7.1" -a "$XID" -gt 2000000000 ]
@@ -171,26 +148,11 @@ $0 aborted." 1>&2
 	exit 1
 fi
 
-# Set sequence values for 7.1-version sequences, which are int4.
-if [ "$SRC_VERSION" != "7.1" ]
-then	echo "Input script $SCHEMA complete, fixing row commit statuses..."
-else	echo "Input script $SCHEMA complete, setting int8 sequences..."
+echo "Input script $SCHEMA complete, fixing row commit statuses..."
 
-	# Set all the sequence counters because they are not brought over
-	# in the schema dump.
-	cat $DATA | egrep '^(\\connect)|SELECT setval \()[^	]*$' |
-	psql "template1"
-	if [ $? -ne 0 ]
-	then	echo "There were errors in setting the sequence values.
-$0 aborted." 1>&2
-		exit 1
-	fi
-
-	echo "Int8 sequences set, fixing row commit statuses..."
-fi
-
-# Now vacuum each result database in case our transaction increase
-# causes all the XID's to be marked with the frozen XID.
+# XXX do we still need this?
+# Now vacuum each result database because our movement of transaction log
+# causes some committed transactions to appear as non-committed
 
 psql -d template1 -At -c "SELECT datname FROM pg_database" | while read DB
 do
@@ -335,6 +297,82 @@ pg_ctl start
 if [ "$?" -ne 0 ]
 then	echo "Unable to restart database server.;  exiting" 1>&2
 	exit 1
+fi
+
+# Set sequence values for 7.1-version sequences, which were int4.
+if [ "$SRC_VERSION" = "7.1" ]
+else	echo "Set int8 sequence values from 7.1..."
+
+	psql -d template1 -At -c "SELECT datname FROM pg_database" | 
+	while read DB
+	do	
+		echo "$DB"
+		# XXX is concurrency a problem here?
+		psql -d "$DB" -At -c "SELECT relname FROM pg_class where relkind = 'S';" |
+		while read SEQUENCE
+		do
+			psql -d "$DB" -At <<SQL_END
+
+-- This table matches the 7.1 sequence schema
+CREATE TABLE temp_seq_int4 (
+	sequence_name name
+	last_value    integer
+	increment_by  integer
+	max_value     integer
+	min_value     integer
+	cache_value   integer
+	log_cnt       integer
+	is_cycled     "char"
+	is_called     "char"
+);
+
+-- Move int8 version of sequence out of the way
+UPDATE pg_attribute
+SET attrelid = 1 -- OID of template1, not used anywhere else  XXX correct?
+WHERE attrelid = (SELECT oid FROM pg_class WHERE relname = '$SEQUENCE');
+
+-- Replace with int4 sequence schema
+UPDATE pg_attribute
+SET attrelid = (SELECT oid FROM pg_class WHERE relname = '$SEQUENCE')
+WHERE attrelid = (SELECT oid FROM pg_class WHERE relname = 'temp_seq_int4');
+
+-- Select sequence value into temp table
+CREATE TEMP TABLE hold_sequence AS
+SELECT last_value
+FROM "$SEQUENCE"
+
+-- Prepare int4 sequence table for removal and remove it
+UPDATE pg_attribute
+SET attrelid = (SELECT oid FROM pg_class WHERE relname = 'temp_seq_int4')
+WHERE attrelid = (SELECT oid FROM pg_class WHERE relname = '$SEQUENCE');
+
+DROP TABLE temp_seq_int4;
+
+-- Restore int8 version of sequence
+UPDATE pg_attribute
+SET attrelid = (SELECT oid FROM pg_class WHERE relname = '$SEQUENCE')
+WHERE attrelid = 1;
+
+-- Mark sequence as ordinary table and update it
+UPDATE pg_class
+SET relkind = 't'
+WHERE relname = '$SEQUENCE';
+
+UPDATE "$SEQUENCE"
+SET last_value = (SELECT last_value FROM hold_sequence);
+
+-- Restore sequence flag
+UPDATE pg_class
+SET relkind = 'S'
+WHERE relname = '$SEQUENCE';
+
+SQL_END
+		if [ $? -ne 0 ]
+		then	echo "There were errors during int4 sequence restore.
+	$0 aborted." 1>&2
+			exit 1
+		done
+	done
 fi
 
 echo "You may remove the $OLDDIR directory with 'rm -r $OLDDIR'."

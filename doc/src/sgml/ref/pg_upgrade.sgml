@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/ref/Attic/pg_upgrade.sgml,v 1.15 2002/01/10 04:58:19 momjian Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/ref/Attic/pg_upgrade.sgml,v 1.16 2002/01/11 04:39:19 momjian Exp $
 PostgreSQL documentation
 -->
 
@@ -24,7 +24,7 @@ PostgreSQL documentation
    <date>1999-07-31</date>
   </refsynopsisdivinfo>
   <synopsis>
-pg_upgrade -s <replaceable class="parameter">filename</replaceable> [ -d <replaceable class="parameter">filename</replaceable> ] <replaceable class="parameter">old_data_dir</replaceable>
+pg_upgrade -s <replaceable class="parameter">filename</replaceable> <replaceable class="parameter">old_data_dir</replaceable>
   </synopsis>
  </refsynopsisdiv>
 
@@ -50,10 +50,14 @@ pg_upgrade -s <replaceable class="parameter">filename</replaceable> [ -d <replac
    <step performance="required">
     <para>
      Back up your existing data directory, preferably by making a
-     complete dump with pg_dumpall. Those upgrading from 7.1 are
-     required to supply this dump filename to pg_upgrade with the
-     <option>-d</option> option. Other releases should not use the
-     <option>-d</option> option.
+     complete dump with pg_dumpall.
+    </para>
+   </step>
+
+   <step performance="required">
+    <para>
+     <command>VACUUM</command> your entire database using
+     <command>vacuumdb -a</command.>
     </para>
    </step>
 
@@ -111,7 +115,7 @@ $ make install
      Change your working directory to the 
      pgsql main directory, and type:
      <programlisting>
-$ pg_upgrade -s schema.out -d data.out data.old
+$ pg_upgrade -s schema.out data.old
      </programlisting>
      The program will do some checking to make sure everything is properly
      configured, and will run your db.out script to recreate all the databases
@@ -127,12 +131,6 @@ $ pg_upgrade -s schema.out -d data.out data.old
     <para>
      Restore your old <filename>pg_hba.conf</filename> if needed to allow
      user logins.
-    </para>
-   </step>
-
-   <step performance="required">
-    <para>
-     Stop and restart the postmaster.
     </para>
    </step>
 
@@ -154,6 +152,11 @@ $ pg_upgrade -s schema.out -d data.out data.old
     </para>
    </step>
 
+   <note>
+    <para>
+     pg_upgrade does not migrate large objects.
+    </para>
+   </note>
   </procedure>
  </refsect1>
 </refentry>
