@@ -3,7 +3,7 @@
  *
  * Copyright (c) 2000-2004, PostgreSQL Global Development Group
  *
- * $PostgreSQL: pgsql/src/bin/psql/variables.c,v 1.18 2004/08/29 04:13:03 momjian Exp $
+ * $PostgreSQL: pgsql/src/bin/psql/variables.c,v 1.19 2004/10/15 05:02:31 momjian Exp $
  */
 #include "postgres_fe.h"
 #include "common.h"
@@ -51,12 +51,12 @@ GetVariableBool(VariableSpace space, const char *name)
 	val = GetVariable(space, name);
 	if (val == NULL)
 		return false;			/* not set -> assume "off" */
-	if (strcmp(val, "off") == 0)
-		return false;
+	if (strcasecmp(val, "off") == 0)
+		return false;			/* accept "off" or "OFF" as true */
 
 	/*
-	 * for backwards compatibility, anything except "off" is taken as
-	 * "true"
+	 * for backwards compatibility, anything except "off" or "OFF" is
+	 * taken as "true"
 	 */
 	return true;
 }
