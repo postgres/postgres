@@ -615,10 +615,10 @@ ERROR:  ALTER TABLE: relation "pg_class" is a system catalog
 alter table pg_class alter relname set not null;
 ERROR:  ALTER TABLE: relation "pg_class" is a system catalog
 -- try altering non-existent table, should fail
-alter table foo alter column bar set not null;
-ERROR:  Relation "foo" does not exist
-alter table foo alter column bar drop not null;
-ERROR:  Relation "foo" does not exist
+alter table non_existent alter column bar set not null;
+ERROR:  Relation "non_existent" does not exist
+alter table non_existent alter column bar drop not null;
+ERROR:  Relation "non_existent" does not exist
 -- test setting columns to null and not null and vice versa
 -- test checking for null values and primary key
 create table atacc1 (test int not null);

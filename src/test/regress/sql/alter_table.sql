@@ -478,8 +478,8 @@ alter table pg_class alter column relname drop not null;
 alter table pg_class alter relname set not null;
 
 -- try altering non-existent table, should fail
-alter table foo alter column bar set not null;
-alter table foo alter column bar drop not null;
+alter table non_existent alter column bar set not null;
+alter table non_existent alter column bar drop not null;
 
 -- test setting columns to null and not null and vice versa
 -- test checking for null values and primary key
