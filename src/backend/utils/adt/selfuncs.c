@@ -15,7 +15,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/selfuncs.c,v 1.118 2002/09/20 03:55:40 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/selfuncs.c,v 1.119 2002/10/19 02:56:16 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -1007,10 +1007,9 @@ icnlikesel(PG_FUNCTION_ARGS)
  *		booltestsel		- Selectivity of BooleanTest Node.
  */
 Selectivity
-booltestsel(Query *root, BooleanTest *clause, int varRelid)
+booltestsel(Query *root, BoolTestType booltesttype, Node *arg, int varRelid)
 {
 	Var		   *var;
-	Node	   *arg;
 	Oid			relid;
 	HeapTuple	statsTuple;
 	Datum	   *values;
@@ -1018,10 +1017,6 @@ booltestsel(Query *root, BooleanTest *clause, int varRelid)
 	float4	   *numbers;
 	int			nnumbers;
 	double		selec;
-
-	Assert(clause && IsA(clause, BooleanTest));
-
-	arg = (Node *) clause->arg;
 
 	/*
 	 * Ignore any binary-compatible relabeling (probably unnecessary, but
@@ -1040,7 +1035,7 @@ booltestsel(Query *root, BooleanTest *clause, int varRelid)
 		 * the possibility of a NULL value when using clause_selectivity,
 		 * and just assume the value is either TRUE or FALSE.
 		 */
-		switch (clause->booltesttype)
+		switch (booltesttype)
 		{
 			case IS_UNKNOWN:
 				selec = DEFAULT_UNK_SEL;
@@ -1058,7 +1053,7 @@ booltestsel(Query *root, BooleanTest *clause, int varRelid)
 				break;
 			default:
 				elog(ERROR, "booltestsel: unexpected booltesttype %d",
-					 (int) clause->booltesttype);
+					 (int) booltesttype);
 				selec = 0.0;	/* Keep compiler quiet */
 				break;
 		}
@@ -1107,7 +1102,7 @@ booltestsel(Query *root, BooleanTest *clause, int varRelid)
 			 */
 			freq_false = 1.0 - freq_true - freq_null;
 
-			switch (clause->booltesttype)
+			switch (booltesttype)
 			{
 				case IS_UNKNOWN:
 					/* select only NULL values */
@@ -1135,7 +1130,7 @@ booltestsel(Query *root, BooleanTest *clause, int varRelid)
 					break;
 				default:
 					elog(ERROR, "booltestsel: unexpected booltesttype %d",
-						 (int) clause->booltesttype);
+						 (int) booltesttype);
 					selec = 0.0;	/* Keep compiler quiet */
 					break;
 			}
@@ -1151,7 +1146,7 @@ booltestsel(Query *root, BooleanTest *clause, int varRelid)
 			 * Otherwise adjust for null fraction and assume an even split
 			 * for boolean tests.
 			 */
-			switch (clause->booltesttype)
+			switch (booltesttype)
 			{
 				case IS_UNKNOWN:
 
@@ -1176,7 +1171,7 @@ booltestsel(Query *root, BooleanTest *clause, int varRelid)
 					break;
 				default:
 					elog(ERROR, "booltestsel: unexpected booltesttype %d",
-						 (int) clause->booltesttype);
+						 (int) booltesttype);
 					selec = 0.0;	/* Keep compiler quiet */
 					break;
 			}
@@ -1190,7 +1185,7 @@ booltestsel(Query *root, BooleanTest *clause, int varRelid)
 		 * No VACUUM ANALYZE stats available, so use a default value.
 		 * (Note: not much point in recursing to clause_selectivity here.)
 		 */
-		switch (clause->booltesttype)
+		switch (booltesttype)
 		{
 			case IS_UNKNOWN:
 				selec = DEFAULT_UNK_SEL;
@@ -1206,7 +1201,7 @@ booltestsel(Query *root, BooleanTest *clause, int varRelid)
 				break;
 			default:
 				elog(ERROR, "booltestsel: unexpected booltesttype %d",
-					 (int) clause->booltesttype);
+					 (int) booltesttype);
 				selec = 0.0;	/* Keep compiler quiet */
 				break;
 		}
@@ -1222,19 +1217,16 @@ booltestsel(Query *root, BooleanTest *clause, int varRelid)
  *		nulltestsel		- Selectivity of NullTest Node.
  */
 Selectivity
-nulltestsel(Query *root, NullTest *clause, int varRelid)
+nulltestsel(Query *root, NullTestType nulltesttype, Node *arg, int varRelid)
 {
 	Var		   *var;
-	Node	   *arg;
 	Oid			relid;
 	HeapTuple	statsTuple;
 	double		selec;
 	double		defselec;
 	double		freq_null;
 
-	Assert(clause && IsA(clause, NullTest));
-
-	switch (clause->nulltesttype)
+	switch (nulltesttype)
 	{
 		case IS_NULL:
 			defselec = DEFAULT_UNK_SEL;
@@ -1244,11 +1236,9 @@ nulltestsel(Query *root, NullTest *clause, int varRelid)
 			break;
 		default:
 			elog(ERROR, "nulltestsel: unexpected nulltesttype %d",
-				 (int) clause->nulltesttype);
+				 (int) nulltesttype);
 			return (Selectivity) 0;		/* keep compiler quiet */
 	}
-
-	arg = (Node *) clause->arg;
 
 	/*
 	 * Ignore any binary-compatible relabeling
@@ -1256,13 +1246,12 @@ nulltestsel(Query *root, NullTest *clause, int varRelid)
 	if (IsA(arg, RelabelType))
 		arg = ((RelabelType *) arg)->arg;
 
-	if (IsA(arg, Var) &&(varRelid == 0 || varRelid == ((Var *) arg)->varno))
+	if (IsA(arg, Var) &&
+		(varRelid == 0 || varRelid == ((Var *) arg)->varno))
 		var = (Var *) arg;
 	else
 	{
-		/*
-		 * punt if non-Var argument
-		 */
+		/* punt if non-Var argument */
 		return (Selectivity) defselec;
 	}
 
@@ -1282,7 +1271,7 @@ nulltestsel(Query *root, NullTest *clause, int varRelid)
 		stats = (Form_pg_statistic) GETSTRUCT(statsTuple);
 		freq_null = stats->stanullfrac;
 
-		switch (clause->nulltesttype)
+		switch (nulltesttype)
 		{
 			case IS_NULL:
 
@@ -1301,7 +1290,7 @@ nulltestsel(Query *root, NullTest *clause, int varRelid)
 				break;
 			default:
 				elog(ERROR, "nulltestsel: unexpected nulltesttype %d",
-					 (int) clause->nulltesttype);
+					 (int) nulltesttype);
 				return (Selectivity) 0; /* keep compiler quiet */
 		}
 
@@ -2978,6 +2967,10 @@ prefix_selectivity(Query *root, Var *var, Const *prefixcon)
 	else
 		prefix = DatumGetCString(DirectFunctionCall1(byteaout, prefixcon->constvalue));
 
+	/* If var is type NAME, must adjust type of comparison constant */
+	if (var->vartype == NAMEOID)
+		prefixcon = string_to_const(prefix, NAMEOID);
+
 	cmpargs = makeList2(var, prefixcon);
 	/* Assume scalargtsel is appropriate for all supported types */
 	prefixsel = DatumGetFloat8(DirectFunctionCall4(scalargtsel,
@@ -3013,6 +3006,9 @@ prefix_selectivity(Query *root, Var *var, Const *prefixcon)
 		 * query (see clauselist_selectivity()).
 		 */
 		prefixsel = topsel + prefixsel - 1.0;
+
+		/* Adjust for double-exclusion of NULLs */
+		prefixsel += nulltestsel(root, IS_NULL, (Node *) var, var->varno);
 
 		/*
 		 * A zero or slightly negative prefixsel should be converted into
@@ -3351,6 +3347,7 @@ make_greater_string(const Const *str_const)
 	while (len > 0)
 	{
 		unsigned char *lastchar = (unsigned char *) (workstr + len - 1);
+		unsigned char savelastchar = *lastchar;
 
 		/*
 		 * Try to generate a larger string by incrementing the last byte.
@@ -3368,6 +3365,9 @@ make_greater_string(const Const *str_const)
 				return workstr_const;
 			}
 		}
+
+		/* restore last byte so we don't confuse pg_mbcliplen */
+		*lastchar = savelastchar;
 
 		/*
 		 * Truncate off the last character, which might be more than 1

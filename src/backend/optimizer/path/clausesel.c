@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/optimizer/path/clausesel.c,v 1.51 2002/06/20 20:29:29 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/optimizer/path/clausesel.c,v 1.52 2002/10/19 02:56:16 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -102,7 +102,9 @@ restrictlist_selectivity(Query *root,
  * see that hisel is the fraction of the range below the high bound, while
  * losel is the fraction above the low bound; so hisel can be interpreted
  * directly as a 0..1 value but we need to convert losel to 1-losel before
- * interpreting it as a value.	Then the available range is 1-losel to hisel.)
+ * interpreting it as a value.	Then the available range is 1-losel to hisel.
+ * However, this calculation double-excludes nulls, so really we need
+ * hisel + losel + null_frac - 1.)
  * If the calculation yields zero or negative, however, we chicken out and
  * use a default estimate; that probably means that one or both
  * selectivities is a default estimate rather than an actual range value.
@@ -198,6 +200,9 @@ clauselist_selectivity(Query *root,
 		{
 			/* Successfully matched a pair of range clauses */
 			Selectivity s2 = rqlist->hibound + rqlist->lobound - 1.0;
+
+			/* Adjust for double-exclusion of NULLs */
+			s2 += nulltestsel(root, IS_NULL, rqlist->var, varRelid);
 
 			/*
 			 * A zero or slightly negative s2 should be converted into a
@@ -503,12 +508,18 @@ clause_selectivity(Query *root,
 	else if (IsA(clause, NullTest))
 	{
 		/* Use node specific selectivity calculation function */
-		s1 = nulltestsel(root, (NullTest *) clause, varRelid);
+		s1 = nulltestsel(root,
+						 ((NullTest *) clause)->nulltesttype,
+						 ((NullTest *) clause)->arg,
+						 varRelid);
 	}
 	else if (IsA(clause, BooleanTest))
 	{
 		/* Use node specific selectivity calculation function */
-		s1 = booltestsel(root, (BooleanTest *) clause, varRelid);
+		s1 = booltestsel(root,
+						 ((BooleanTest *) clause)->booltesttype,
+						 ((BooleanTest *) clause)->arg,
+						 varRelid);
 	}
 	else if (IsA(clause, RelabelType))
 	{
