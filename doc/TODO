@@ -1,6 +1,6 @@
 TODO list for PostgreSQL
 ========================
-Last updated:		Sat Jan 24 23:50:15 EST 2004
+Last updated:		Mon Jan 26 13:32:06 EST 2004
 
 Current maintainer:	Bruce Momjian (pgman@candle.pha.pa.us)
 
@@ -176,6 +176,7 @@ Commands
 * Allow LISTEN/NOTIFY to store info in memory rather than tables
 * -COMMENT ON [ CAST | CONVERSION | OPERATOR CLASS | LARGE OBJECT | LANGUAGE ] 
   (Christopher) 
+* Dump large object comments in custom dump format
 * Add optional textual message to NOTIFY
 * Allow more ISOLATION LEVELS to be accepted, but issue a warning for them
 * Allow CREATE TABLE foo (f1 INT CHECK (f1 > 0) CHECK (f1 < 10)) to work
@@ -463,7 +464,7 @@ Source Code
 * Acquire lock on a relation before building a relcache entry for it
 * Research interaction of setitimer() and sleep() used by statement_timeout
 * Add checks for fclose() failure
-* Change CVS $PostgreSQL: pgsql/doc/TODO,v 1.1190 2004/01/25 04:50:16 momjian Exp $ to $PostgreSQL: pgsql/doc/TODO,v 1.1190 2004/01/25 04:50:16 momjian Exp $
+* Change CVS $PostgreSQL: pgsql/doc/TODO,v 1.1191 2004/01/26 18:32:08 momjian Exp $ to $PostgreSQL: pgsql/doc/TODO,v 1.1191 2004/01/26 18:32:08 momjian Exp $
 * Exit postmaster if postgresql.conf can not be opened
 * Rename /scripts directory because they are all C programs now
 * Allow the regression tests to start postmaster with -i so the tests
