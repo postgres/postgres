@@ -7,20 +7,16 @@
  *
  *
  * IDENTIFICATION
- *    $Header: /cvsroot/pgsql/src/backend/access/rtree/Attic/rtstrat.c,v 1.4 1996/11/03 22:58:10 scrappy Exp $
+ *    $Header: /cvsroot/pgsql/src/backend/access/rtree/Attic/rtstrat.c,v 1.5 1996/11/05 10:54:20 scrappy Exp $
  *
  *-------------------------------------------------------------------------
  */
 
-#include "postgres.h"
+#include <postgres.h>
  
-#include "utils/rel.h"
-
-#include "storage/off.h"
-#include "storage/block.h"
-#include "access/rtree.h"
-
-#include "access/istrat.h"
+#include <utils/rel.h>
+#include <access/rtree.h>
+#include <access/istrat.h>
 
 /*
  *  Note:  negate, commute, and negatecommute all assume that operators are

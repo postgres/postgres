@@ -7,34 +7,30 @@
  *
  *
  * IDENTIFICATION
- *    $Header: /cvsroot/pgsql/src/backend/access/rtree/Attic/rtree.c,v 1.8 1996/11/03 22:58:06 scrappy Exp $
+ *    $Header: /cvsroot/pgsql/src/backend/access/rtree/Attic/rtree.c,v 1.9 1996/11/05 10:54:18 scrappy Exp $
  *
  *-------------------------------------------------------------------------
  */
 
-#include <stdio.h>
+#include <postgres.h>
 
-#include "postgres.h"
-#include "access/genam.h"
+#include <access/genam.h>
+#include <catalog/index.h>
+#include <access/rtscan.h>
+#include <storage/lmgr.h>
+#include <access/rtree.h>
+#include <storage/bufmgr.h>
+#include <utils/geo-decls.h>
+#include <executor/executor.h>
+#include <access/heapam.h>
+#include <fmgr.h>
+#include <storage/bufpage.h>
 
-#include "utils/palloc.h"
-#include "catalog/index.h"
-
-#include "access/rtscan.h"
-
-#include "storage/lmgr.h"
-
-#include "access/rtree.h"
- 
-#include "storage/bufmgr.h"
-
-#include "utils/geo-decls.h"
- 
-#include "executor/executor.h"
-
-#include "access/heapam.h"
-
-#include "storage/bufpage.h"
+#ifndef HAVE_MEMMOVE
+# include <regex/utils.h>
+#else
+# include <string.h>
+#endif
 
 typedef struct SPLITVEC {
     OffsetNumber	*spl_left;
