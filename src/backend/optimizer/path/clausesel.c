@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/optimizer/path/clausesel.c,v 1.36 2000/05/30 00:49:46 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/optimizer/path/clausesel.c,v 1.37 2000/05/31 15:38:53 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -95,7 +95,7 @@ restrictlist_selectivity(Query *root,
  * directly as a 0..1 value but we need to convert losel to 1-losel before
  * interpreting it as a value.	Then the available range is 1-losel to hisel.)
  * If the calculation yields zero or negative, however, we chicken out and
- * use the default interpretation; that probably means that one or both
+ * use a default estimate; that probably means that one or both
  * selectivities is a default estimate rather than an actual range value.
  * Of course this is all very dependent on the behavior of
  * scalarltsel/scalargtsel; perhaps some day we can generalize the approach.
@@ -120,10 +120,12 @@ clauselist_selectivity(Query *root,
 		Selectivity s2;
 
 		/*
-		 * See if it looks like a restriction clause with a constant. (If
-		 * it's not a constant we can't really trust the selectivity!) NB:
-		 * for consistency of results, this fragment of code had better
-		 * match what clause_selectivity() would do.
+		 * See if it looks like a restriction clause with a Const or Param
+		 * on one side.  (Anything more complicated than that might not
+		 * behave in the simple way we are expecting.)
+		 *
+		 * NB: for consistency of results, this fragment of code had better
+		 * match what clause_selectivity() would do in the cases it handles.
 		 */
 		if (varRelid != 0 || NumRelids(clause) == 1)
 		{
@@ -134,41 +136,48 @@ clauselist_selectivity(Query *root,
 
 			get_relattval(clause, varRelid,
 						  &relidx, &attno, &constval, &flag);
-			if (relidx != 0 && (flag & SEL_CONSTANT))
+			if (relidx != 0)
 			{
 				/* if get_relattval succeeded, it must be an opclause */
-				Oid			opno = ((Oper *) ((Expr *) clause)->oper)->opno;
-				RegProcedure oprrest = get_oprrest(opno);
+				Var		   *other;
 
-				if (!oprrest)
-					s2 = (Selectivity) 0.5;
-				else
-					s2 = restriction_selectivity(oprrest, opno,
-												 getrelid(relidx,
-														  root->rtable),
-												 attno,
-												 constval, flag);
-
-				/*
-				 * If we reach here, we have computed the same result that
-				 * clause_selectivity would, so we can just use s2 if it's
-				 * the wrong oprrest.  But if it's the right oprrest, add
-				 * the clause to rqlist for later processing.
-				 */
-				switch (oprrest)
+				other = (flag & SEL_RIGHT) ? get_rightop((Expr *) clause) :
+					get_leftop((Expr *) clause);
+				if (IsA(other, Const) || IsA(other, Param))
 				{
-					case F_SCALARLTSEL:
-						addRangeClause(&rqlist, clause, flag, true, s2);
-						break;
-					case F_SCALARGTSEL:
-						addRangeClause(&rqlist, clause, flag, false, s2);
-						break;
-					default:
-						/* Just merge the selectivity in generically */
-						s1 = s1 * s2;
-						break;
+					Oid		opno = ((Oper *) ((Expr *) clause)->oper)->opno;
+					RegProcedure oprrest = get_oprrest(opno);
+
+					if (!oprrest)
+						s2 = (Selectivity) 0.5;
+					else
+						s2 = restriction_selectivity(oprrest, opno,
+													 getrelid(relidx,
+															  root->rtable),
+													 attno,
+													 constval, flag);
+
+					/*
+					 * If we reach here, we have computed the same result that
+					 * clause_selectivity would, so we can just use s2 if it's
+					 * the wrong oprrest.  But if it's the right oprrest, add
+					 * the clause to rqlist for later processing.
+					 */
+					switch (oprrest)
+					{
+						case F_SCALARLTSEL:
+							addRangeClause(&rqlist, clause, flag, true, s2);
+							break;
+						case F_SCALARGTSEL:
+							addRangeClause(&rqlist, clause, flag, false, s2);
+							break;
+						default:
+							/* Just merge the selectivity in generically */
+							s1 = s1 * s2;
+							break;
+					}
+					continue;	/* drop to loop bottom */
 				}
-				continue;		/* drop to loop bottom */
 			}
 		}
 		/* Not the right form, so treat it generically. */
@@ -374,7 +383,7 @@ clause_selectivity(Query *root,
 										 BooleanEqualOperator,
 										 getrelid(varno, root->rtable),
 										 ((Var *) clause)->varattno,
-										 Int8GetDatum(true),
+										 BoolGetDatum(true),
 										 SEL_CONSTANT | SEL_RIGHT);
 		/* an outer-relation bool var is taken as always true... */
 	}
