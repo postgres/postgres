@@ -5,15 +5,14 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: prs2lock.h,v 1.1 1996/08/28 07:24:05 scrappy Exp $
+ * $Id: prs2lock.h,v 1.2 1996/10/19 04:25:53 scrappy Exp $
  *
  *-------------------------------------------------------------------------
  */
 #ifndef PRS2LOCK_H
 #define PRS2LOCK_H
 
-#include "access/attnum.h"
-#include "nodes/pg_list.h"
+#include "nodes/nodes.h"
 
 /*
  * RewriteRule -
