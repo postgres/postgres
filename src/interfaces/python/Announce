@@ -1,11 +1,14 @@
 
-Announce: Release of PyGreSQL version 3.1
+Announce: Release of PyGreSQL version 3.2 (beta)
 ===============================================
 
-PyGreSQL v3.1 has been released.
+PyGreSQL v3.2 has been released.
 It is available at: ftp://ftp.druid.net/pub/distrib/PyGreSQL.tgz.  If
 you are running NetBSD, look in the packages directory under databases.
 There is also a package in the FreeBSD ports collection.              
+
+From March 1 2001 the PyGreSQL development has moved into the PostgreSQL
+development tree.
 
 PostgreSQL is a database system derived from Postgres4.2. It conforms
 to (most of) ANSI SQL and offers many interesting capabilities (C
