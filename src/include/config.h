@@ -299,20 +299,6 @@
 #define FUNC_UTIL_PATCH
 
 /*
- * Async notifies received while a backend is in the middle of a begin/end
- * transaction block are lost by libpq when the final end command is issued.
- * 
- * The bug is in the routine PQexec of libpq. The routine throws away any
- * message from the backend when a message of type 'C' is received. This
- * type of message is sent when the result of a portal query command with
- * no tuples is returned. Unfortunately this is the case of the end command.
- * As all async notification are sent only when the transaction is finished,
- * if they are received in the middle of a transaction they are lost in the
- * libpq library. I added some tracing code to PQexec and this is the output:
- */
-#define PQ_NOTIFY_PATCH
-
-/*
  * Define this if you want to retrieve arrays attributes as Tcl lists instead
  * of postgres C-like arrays, for example {{"a1" "a2"} {"b1" "b2"}} instead 
  * of {{"a1","a2"},{"b1","b2"}}.
