@@ -1634,6 +1634,7 @@ the time zone becomes GMT (on most systems anyway).
        which has an offset of +10:00 hours from UTC.
       </para>
      </note>
+</para>
 
     <para>
      Australian time zones and their naming variants

@@ -38,10 +38,12 @@
     <filename>src/libpq++/examples</filename>, including the source
     code for the three examples in this chapter.
   </para>
+
   <sect1>
     <title>Control and Initialization</title>
     
     <para>
+    </para>
       
       <sect2>
 	<title>Environment Variables</title>
@@ -189,10 +191,12 @@
 	</Para>
       </sect2>
   </sect1>
+
   <sect1>
     <title>Database Connection Functions</title>
     
     <para>
+    </para>
       
       <sect2>
 	<title>Database Environment Class: <classname>PGenv</classname></title>
@@ -271,6 +275,7 @@
 	</para>
       </sect2>
   </sect1>
+
   <sect1>
     <title>Query Execution Functions</title>
     
@@ -443,6 +448,7 @@
       </itemizedlist>
     </para>
   </sect1>
+
   <sect1>
     <title>Asynchronous Notification</title>
     
@@ -507,6 +513,7 @@
       notification.
     </para>
   </sect1>
+
   <sect1>
     <title>Functions Associated with the COPY Command</title>
     
@@ -613,6 +620,7 @@
       </programlisting>
     </para>
   </sect1>
+
   <sect1>
     <title>Caveats</title>
     

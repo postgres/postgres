@@ -213,8 +213,8 @@ SELECT [ALL|DISTINCT [ON <replaceable class="PARAMETER">column</replaceable>] ]
    selection.
    <command>DISTINCT ON <replaceable class="PARAMETER">column</replaceable></command> will eliminate all duplicates in the specified column; this is
 equivalent to using <command>GROUP BY <replaceable class="PARAMETER">column</replaceable></command>.  <command>ALL</command> will return all candidate rows,
-including duplicates.
-   
+including duplicates.</para>
+
   <para>
    The GROUP BY clause allows a user to divide a table
    conceptually into groups. (See GROUP BY clause).</para>
