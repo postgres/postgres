@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2001, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Id: itup.h,v 1.28 2001/01/24 19:43:19 momjian Exp $
+ * $Id: itup.h,v 1.29 2001/02/21 19:07:04 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -22,7 +22,7 @@
 
 typedef struct IndexTupleData
 {
-	ItemPointerData t_tid;		/* reference TID to base tuple */
+	ItemPointerData t_tid;		/* reference TID to heap tuple */
 
 	/*
 	 * t_info is layed out in the following fashion:

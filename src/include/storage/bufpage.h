@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2001, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Id: bufpage.h,v 1.39 2001/01/24 19:43:27 momjian Exp $
+ * $Id: bufpage.h,v 1.40 2001/02/21 19:07:04 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -23,7 +23,7 @@
 #include "access/xlog.h"
 
 /*
- * a postgres disk page is an abstraction layered on top of a postgres
+ * A postgres disk page is an abstraction layered on top of a postgres
  * disk block (which is simply a unit of i/o, see block.h).
  *
  * specifically, while a disk block can be unformatted, a postgres

@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2001, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Id: htup.h,v 1.45 2001/01/24 19:43:19 momjian Exp $
+ * $Id: htup.h,v 1.46 2001/02/21 19:07:04 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -32,7 +32,9 @@
 #define MaxHeapAttributeNumber	1600	/* 8 * 200 */
 
 /*
- * to avoid wasting space, the attributes should be layed out in such a
+ * This is the on-disk copy of the tuple.
+ * 
+ * To avoid wasting space, the attributes should be layed out in such a
  * way to reduce structure padding.
  */
 typedef struct HeapTupleHeaderData
@@ -51,12 +53,12 @@ typedef struct HeapTupleHeaderData
 
 	uint16		t_infomask;		/* various infos */
 
-	uint8		t_hoff;			/* sizeof tuple header */
+	uint8		t_hoff;			/* sizeof() tuple header */
 
 								/* ^ - 31 bytes - ^ */
 
 	bits8		t_bits[MinHeapTupleBitmapSize / 8];
-	/* bit map of domains */
+	/* bit map of NULLs */
 
 	/* MORE DATA FOLLOWS AT END OF STRUCT */
 } HeapTupleHeaderData;
@@ -174,6 +176,8 @@ typedef struct xl_heap_clean
 #define FirstLowInvalidHeapAttributeNumber		(-8)
 
 /*
+ * This is the in-memory copy of the tuple.
+ *
  * This new HeapTuple for version >= 6.5 and this is why it was changed:
  *
  * 1. t_len moved off on-disk tuple data - ItemIdData is used to get len;
@@ -190,10 +194,10 @@ typedef struct xl_heap_clean
 typedef struct HeapTupleData
 {
 	uint32			t_len;			/* length of *t_data */
-	ItemPointerData t_self;		/* SelfItemPointer */
+	ItemPointerData t_self;			/* SelfItemPointer */
 	Oid				t_tableOid;		/* table the tuple came from */
-	MemoryContext	t_datamcxt;	/* mcxt in which allocated */
-	HeapTupleHeader	t_data;		/* -> tuple header and data */
+	MemoryContext	t_datamcxt;		/* memory context of allocation */
+	HeapTupleHeader	t_data;			/* -> tuple header and data */
 } HeapTupleData;
 
 typedef HeapTupleData *HeapTuple;

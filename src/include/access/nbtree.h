@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2001, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Id: nbtree.h,v 1.51 2001/02/07 23:34:18 vadim Exp $
+ * $Id: nbtree.h,v 1.52 2001/02/21 19:07:04 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -37,15 +37,17 @@ typedef struct BTPageOpaqueData
 	BlockNumber btpo_parent;
 	uint16		btpo_flags;
 
+} BTPageOpaqueData;
+
+typedef BTPageOpaqueData *BTPageOpaque;
+
 /* Bits defined in btpo_flags */
 #define BTP_LEAF		(1 << 0)	/* It's a leaf page */
 #define BTP_ROOT		(1 << 1)	/* It's the root page (has no parent) */
 #define BTP_FREE		(1 << 2)	/* not currently used... */
 #define BTP_META		(1 << 3)	/* Set in the meta-page only */
 #define	BTP_REORDER		(1 << 4)	/* items must be re-ordered */
-} BTPageOpaqueData;
 
-typedef BTPageOpaqueData *BTPageOpaque;
 
 #define BTREE_METAPAGE	0	/* first page is meta */
 #define BTREE_MAGIC		0x053162
