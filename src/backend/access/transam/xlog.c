@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2002, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Header: /cvsroot/pgsql/src/backend/access/transam/xlog.c,v 1.103 2002/08/30 16:50:50 momjian Exp $
+ * $Header: /cvsroot/pgsql/src/backend/access/transam/xlog.c,v 1.104 2002/09/01 01:58:42 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -1056,10 +1056,6 @@ XLogWrite(XLogwrtRqst WriteRqst)
 			openLogFile = XLogFileInit(openLogId, openLogSeg,
 									   &use_existent, true);
 			openLogOff = 0;
-
-			if (!use_existent)	/* there was no precreated file */
-				elog(LOG, "XLogWrite: new log file created - "
-					 "consider increasing 'wal_files' in postgresql.conf.");
 
 			/* update pg_control, unless someone else already did */
 			LWLockAcquire(ControlFileLock, LW_EXCLUSIVE);
