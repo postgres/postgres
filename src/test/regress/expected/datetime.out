@@ -30,7 +30,7 @@ ZeroSecs
 
 QUERY: SET DateStyle = 'Postgres,noneuropean';
 QUERY: SELECT datetime('1994-01-01', '11:00') AS "Jan_01_1994_11am";
-Jan_01_1994_11am
+Jan_01_1994_11am            
 ----------------------------
 Sat Jan 01 11:00:00 1994 PST
 (1 row)
@@ -145,6 +145,7 @@ QUERY: INSERT INTO DATETIME_TBL VALUES ('Dec 31 17:32:01 1996');
 QUERY: INSERT INTO DATETIME_TBL VALUES ('Jan 01 17:32:01 1997');
 QUERY: INSERT INTO DATETIME_TBL VALUES ('Feb 28 17:32:01 1997');
 QUERY: INSERT INTO DATETIME_TBL VALUES ('Feb 29 17:32:01 1997');
+ERROR:  Bad datetime external representation 'Feb 29 17:32:01 1997'
 QUERY: INSERT INTO DATETIME_TBL VALUES ('Mar 01 17:32:01 1997');
 QUERY: INSERT INTO DATETIME_TBL VALUES ('Dec 30 17:32:01 1997');
 QUERY: INSERT INTO DATETIME_TBL VALUES ('Dec 31 17:32:01 1997');
@@ -214,14 +215,13 @@ sixtythree|d1
           |Wed Jan 01 17:32:01 1997 PST   
           |Fri Feb 28 17:32:01 1997 PST   
           |Sat Mar 01 17:32:01 1997 PST   
-          |Sat Mar 01 17:32:01 1997 PST   
           |Tue Dec 30 17:32:01 1997 PST   
           |Wed Dec 31 17:32:01 1997 PST   
           |Fri Dec 31 17:32:01 1999 PST   
           |Sat Jan 01 17:32:01 2000 PST   
           |Sun Dec 31 17:32:01 2000 PST   
           |Mon Jan 01 17:32:01 2001 PST   
-(62 rows)
+(61 rows)
 
 QUERY: SELECT '' AS fortythree, d1 FROM DATETIME_TBL
    WHERE d1 > '1997-01-02'::datetime and d1 != 'current'::datetime;
@@ -263,14 +263,13 @@ fortythree|d1
           |Sat Feb 16 17:32:01 2097       
           |Fri Feb 28 17:32:01 1997 PST   
           |Sat Mar 01 17:32:01 1997 PST   
-          |Sat Mar 01 17:32:01 1997 PST   
           |Tue Dec 30 17:32:01 1997 PST   
           |Wed Dec 31 17:32:01 1997 PST   
           |Fri Dec 31 17:32:01 1999 PST   
           |Sat Jan 01 17:32:01 2000 PST   
           |Sun Dec 31 17:32:01 2000 PST   
           |Mon Jan 01 17:32:01 2001 PST   
-(43 rows)
+(42 rows)
 
 QUERY: SELECT '' AS fifteen, d1 FROM DATETIME_TBL
    WHERE d1 < '1997-01-02'::datetime and d1 != 'current'::datetime;
@@ -355,14 +354,13 @@ fiftyeight|d1
           |Wed Jan 01 17:32:01 1997 PST   
           |Fri Feb 28 17:32:01 1997 PST   
           |Sat Mar 01 17:32:01 1997 PST   
-          |Sat Mar 01 17:32:01 1997 PST   
           |Tue Dec 30 17:32:01 1997 PST   
           |Wed Dec 31 17:32:01 1997 PST   
           |Fri Dec 31 17:32:01 1999 PST   
           |Sat Jan 01 17:32:01 2000 PST   
           |Sun Dec 31 17:32:01 2000 PST   
           |Mon Jan 01 17:32:01 2001 PST   
-(58 rows)
+(57 rows)
 
 QUERY: SELECT '' AS sixteen, d1 FROM DATETIME_TBL
    WHERE d1 <= '1997-01-02'::datetime and d1 != 'current'::datetime;
@@ -427,14 +425,13 @@ fortyfour|d1
          |Sat Feb 16 17:32:01 2097       
          |Fri Feb 28 17:32:01 1997 PST   
          |Sat Mar 01 17:32:01 1997 PST   
-         |Sat Mar 01 17:32:01 1997 PST   
          |Tue Dec 30 17:32:01 1997 PST   
          |Wed Dec 31 17:32:01 1997 PST   
          |Fri Dec 31 17:32:01 1999 PST   
          |Sat Jan 01 17:32:01 2000 PST   
          |Sun Dec 31 17:32:01 2000 PST   
          |Mon Jan 01 17:32:01 2001 PST   
-(44 rows)
+(43 rows)
 
 QUERY: SELECT '' AS sixtythree, d1 + '1 year'::timespan AS one_year FROM DATETIME_TBL;
 sixtythree|one_year                       
@@ -494,14 +491,13 @@ sixtythree|one_year
           |Thu Jan 01 17:32:01 1998 PST   
           |Sat Feb 28 17:32:01 1998 PST   
           |Sun Mar 01 17:32:01 1998 PST   
-          |Sun Mar 01 17:32:01 1998 PST   
           |Wed Dec 30 17:32:01 1998 PST   
           |Thu Dec 31 17:32:01 1998 PST   
           |Sun Dec 31 17:32:01 2000 PST   
           |Mon Jan 01 17:32:01 2001 PST   
           |Mon Dec 31 17:32:01 2001 PST   
           |Tue Jan 01 17:32:01 2002 PST   
-(62 rows)
+(61 rows)
 
 QUERY: SELECT '' AS sixtythree, d1 - '1 year'::timespan AS one_year FROM DATETIME_TBL;
 sixtythree|one_year                       
@@ -561,14 +557,13 @@ sixtythree|one_year
           |Mon Jan 01 17:32:01 1996 PST   
           |Wed Feb 28 17:32:01 1996 PST   
           |Fri Mar 01 17:32:01 1996 PST   
-          |Fri Mar 01 17:32:01 1996 PST   
           |Mon Dec 30 17:32:01 1996 PST   
           |Tue Dec 31 17:32:01 1996 PST   
           |Thu Dec 31 17:32:01 1998 PST   
           |Fri Jan 01 17:32:01 1999 PST   
           |Fri Dec 31 17:32:01 1999 PST   
           |Sat Jan 01 17:32:01 2000 PST   
-(62 rows)
+(61 rows)
 
 QUERY: SELECT '' AS fifty, d1 - '1997-01-02'::datetime AS diff
    FROM DATETIME_TBL WHERE d1 BETWEEN '1902-01-01' AND '2038-01-01';
@@ -616,14 +611,13 @@ fifty|diff
      |@ 6 hours 27 mins 59 secs ago         
      |@ 57 days 17 hours 32 mins 1 sec      
      |@ 58 days 17 hours 32 mins 1 sec      
-     |@ 58 days 17 hours 32 mins 1 sec      
      |@ 362 days 17 hours 32 mins 1 sec     
      |@ 363 days 17 hours 32 mins 1 sec     
      |@ 1093 days 17 hours 32 mins 1 sec    
      |@ 1094 days 17 hours 32 mins 1 sec    
      |@ 1459 days 17 hours 32 mins 1 sec    
      |@ 1460 days 17 hours 32 mins 1 sec    
-(49 rows)
+(48 rows)
 
 QUERY: SELECT '' AS fortynine, date_part( 'year', d1) AS year, date_part( 'month', d1) AS month,
    date_part( 'day', d1) AS day, date_part( 'hour', d1) AS hour,
@@ -673,14 +667,13 @@ fortynine|year|month|day|hour|minute|  second
          |1997|    1|  1|  17|    32|       1
          |1997|    2| 28|  17|    32|       1
          |1997|    3|  1|  17|    32|       1
-         |1997|    3|  1|  17|    32|       1
          |1997|   12| 30|  17|    32|       1
          |1997|   12| 31|  17|    32|       1
          |1999|   12| 31|  17|    32|       1
          |2000|    1|  1|  17|    32|       1
          |2000|   12| 31|  17|    32|       1
          |2001|    1|  1|  17|    32|       1
-(49 rows)
+(48 rows)
 
 QUERY: SELECT '' AS fortynine, date_part( 'quarter', d1) AS quarter, date_part( 'msec', d1) AS msec,
    date_part( 'usec', d1) AS usec
@@ -729,12 +722,11 @@ fortynine|quarter|                msec|             usec
          |      1|                   0|                0
          |      1|                   0|                0
          |      1|                   0|                0
-         |      1|                   0|                0
          |      4|                   0|                0
          |      4|                   0|                0
          |      4|                   0|                0
          |      1|                   0|                0
          |      4|                   0|                0
          |      1|                   0|                0
-(49 rows)
+(48 rows)
 

@@ -409,7 +409,6 @@ fifty|datetime                       |year|month|day|hour|minute|  second
      |Sun Feb 16 17:32:01 1997 PST   |1997|    2| 16|  17|    32|       1
      |Fri Feb 28 17:32:01 1997 PST   |1997|    2| 28|  17|    32|       1
      |Sat Mar 01 17:32:01 1997 PST   |1997|    3|  1|  17|    32|       1
-     |Sat Mar 01 17:32:01 1997 PST   |1997|    3|  1|  17|    32|       1
      |Tue Jun 10 17:32:01 1997 PDT   |1997|    6| 10|  17|    32|       1
      |Tue Jun 10 18:32:01 1997 PDT   |1997|    6| 10|  18|    32|       1
      |Tue Dec 30 17:32:01 1997 PST   |1997|   12| 30|  17|    32|       1
@@ -419,7 +418,7 @@ fifty|datetime                       |year|month|day|hour|minute|  second
      |Sun Dec 31 17:32:01 2000 PST   |2000|   12| 31|  17|    32|       1
      |Mon Jan 01 17:32:01 2001 PST   |2001|    1|  1|  17|    32|       1
      |Sat Feb 16 17:32:01 2097       |2097|    2| 16|  17|    32|       1
-(50 rows)
+(49 rows)
 
 QUERY: SELECT '' AS four, f1 AS abstime,
   date_part('year', f1) AS year, date_part('month', f1) AS month,
@@ -593,14 +592,13 @@ sixty_two|us_postgres
          |Wed Jan 01 17:32:01 1997 PST   
          |Fri Feb 28 17:32:01 1997 PST   
          |Sat Mar 01 17:32:01 1997 PST   
-         |Sat Mar 01 17:32:01 1997 PST   
          |Tue Dec 30 17:32:01 1997 PST   
          |Wed Dec 31 17:32:01 1997 PST   
          |Fri Dec 31 17:32:01 1999 PST   
          |Sat Jan 01 17:32:01 2000 PST   
          |Sun Dec 31 17:32:01 2000 PST   
          |Mon Jan 01 17:32:01 2001 PST   
-(62 rows)
+(61 rows)
 
 QUERY: SELECT '' AS eight, f1 AS us_postgres FROM ABSTIME_TBL;
 eight|us_postgres                 
@@ -674,14 +672,13 @@ sixty_two|us_iso
          |1997-01-01 17:32:01-08   
          |1997-02-28 17:32:01-08   
          |1997-03-01 17:32:01-08   
-         |1997-03-01 17:32:01-08   
          |1997-12-30 17:32:01-08   
          |1997-12-31 17:32:01-08   
          |1999-12-31 17:32:01-08   
          |2000-01-01 17:32:01-08   
          |2000-12-31 17:32:01-08   
          |2001-01-01 17:32:01-08   
-(62 rows)
+(61 rows)
 
 QUERY: SELECT '' AS eight, f1 AS us_iso FROM ABSTIME_TBL;
 eight|us_iso                
@@ -757,14 +754,13 @@ sixty_two|us_sql
          |01/01/1997 17:32:01.00 PST
          |02/28/1997 17:32:01.00 PST
          |03/01/1997 17:32:01.00 PST
-         |03/01/1997 17:32:01.00 PST
          |12/30/1997 17:32:01.00 PST
          |12/31/1997 17:32:01.00 PST
          |12/31/1999 17:32:01.00 PST
          |01/01/2000 17:32:01.00 PST
          |12/31/2000 17:32:01.00 PST
          |01/01/2001 17:32:01.00 PST
-(62 rows)
+(61 rows)
 
 QUERY: SELECT '' AS eight, f1 AS us_sql FROM ABSTIME_TBL;
 eight|us_sql                    
@@ -847,7 +843,6 @@ sixty_three|european_postgres
            |Wed 01 Jan 17:32:01 1997 PST   
            |Fri 28 Feb 17:32:01 1997 PST   
            |Sat 01 Mar 17:32:01 1997 PST   
-           |Sat 01 Mar 17:32:01 1997 PST   
            |Tue 30 Dec 17:32:01 1997 PST   
            |Wed 31 Dec 17:32:01 1997 PST   
            |Fri 31 Dec 17:32:01 1999 PST   
@@ -855,7 +850,7 @@ sixty_three|european_postgres
            |Sun 31 Dec 17:32:01 2000 PST   
            |Mon 01 Jan 17:32:01 2001 PST   
            |Thu 13 Jun 00:00:00 1957 PDT   
-(63 rows)
+(62 rows)
 
 QUERY: SELECT '' AS eight, f1 AS european_postgres FROM ABSTIME_TBL;
 eight|european_postgres           
@@ -931,7 +926,6 @@ sixty_three|european_iso
            |1997-01-01 17:32:01-08   
            |1997-02-28 17:32:01-08   
            |1997-03-01 17:32:01-08   
-           |1997-03-01 17:32:01-08   
            |1997-12-30 17:32:01-08   
            |1997-12-31 17:32:01-08   
            |1999-12-31 17:32:01-08   
@@ -939,7 +933,7 @@ sixty_three|european_iso
            |2000-12-31 17:32:01-08   
            |2001-01-01 17:32:01-08   
            |1957-06-13 00:00:00-07   
-(63 rows)
+(62 rows)
 
 QUERY: SELECT '' AS eight, f1 AS european_iso FROM ABSTIME_TBL;
 eight|european_iso          
@@ -1015,7 +1009,6 @@ sixty_three|european_sql
            |01/01/1997 17:32:01.00 PST
            |28/02/1997 17:32:01.00 PST
            |01/03/1997 17:32:01.00 PST
-           |01/03/1997 17:32:01.00 PST
            |30/12/1997 17:32:01.00 PST
            |31/12/1997 17:32:01.00 PST
            |31/12/1999 17:32:01.00 PST
@@ -1023,7 +1016,7 @@ sixty_three|european_sql
            |31/12/2000 17:32:01.00 PST
            |01/01/2001 17:32:01.00 PST
            |13/06/1957 00:00:00.00 PDT
-(63 rows)
+(62 rows)
 
 QUERY: SELECT '' AS eight, f1 AS european_sql FROM ABSTIME_TBL;
 eight|european_sql              
@@ -1102,7 +1095,6 @@ sixty_two|us_postgres
          |Wed Jan 01 17:32:01 1997 PST   
          |Fri Feb 28 17:32:01 1997 PST   
          |Sat Mar 01 17:32:01 1997 PST   
-         |Sat Mar 01 17:32:01 1997 PST   
          |Tue Dec 30 17:32:01 1997 PST   
          |Wed Dec 31 17:32:01 1997 PST   
          |Fri Dec 31 17:32:01 1999 PST   
@@ -1110,7 +1102,7 @@ sixty_two|us_postgres
          |Sun Dec 31 17:32:01 2000 PST   
          |Mon Jan 01 17:32:01 2001 PST   
          |Thu Jun 13 00:00:00 1957 PDT   
-(63 rows)
+(62 rows)
 
 QUERY: SELECT '' AS eight, f1 AS us_postgres FROM ABSTIME_TBL;
 eight|us_postgres                 
@@ -1184,7 +1176,6 @@ sixty_two|us_iso
          |1997-01-01 17:32:01-08   
          |1997-02-28 17:32:01-08   
          |1997-03-01 17:32:01-08   
-         |1997-03-01 17:32:01-08   
          |1997-12-30 17:32:01-08   
          |1997-12-31 17:32:01-08   
          |1999-12-31 17:32:01-08   
@@ -1192,7 +1183,7 @@ sixty_two|us_iso
          |2000-12-31 17:32:01-08   
          |2001-01-01 17:32:01-08   
          |1957-06-13 00:00:00-07   
-(63 rows)
+(62 rows)
 
 QUERY: SELECT '' AS eight, f1 AS us_iso FROM ABSTIME_TBL;
 eight|us_iso                
@@ -1268,7 +1259,6 @@ sixty_two|us_sql
          |01/01/1997 17:32:01.00 PST
          |02/28/1997 17:32:01.00 PST
          |03/01/1997 17:32:01.00 PST
-         |03/01/1997 17:32:01.00 PST
          |12/30/1997 17:32:01.00 PST
          |12/31/1997 17:32:01.00 PST
          |12/31/1999 17:32:01.00 PST
@@ -1276,7 +1266,7 @@ sixty_two|us_sql
          |12/31/2000 17:32:01.00 PST
          |01/01/2001 17:32:01.00 PST
          |06/13/1957 00:00:00.00 PDT
-(63 rows)
+(62 rows)
 
 QUERY: SELECT '' AS eight, f1 AS us_sql FROM ABSTIME_TBL;
 eight|us_sql                    
@@ -1359,7 +1349,6 @@ sixty_three|european_postgres
            |Wed 01 Jan 17:32:01 1997 PST   
            |Fri 28 Feb 17:32:01 1997 PST   
            |Sat 01 Mar 17:32:01 1997 PST   
-           |Sat 01 Mar 17:32:01 1997 PST   
            |Tue 30 Dec 17:32:01 1997 PST   
            |Wed 31 Dec 17:32:01 1997 PST   
            |Fri 31 Dec 17:32:01 1999 PST   
@@ -1368,7 +1357,7 @@ sixty_three|european_postgres
            |Mon 01 Jan 17:32:01 2001 PST   
            |Thu 13 Jun 00:00:00 1957 PDT   
            |Thu 13 Jun 00:00:00 1957 PDT   
-(64 rows)
+(63 rows)
 
 QUERY: SELECT '' AS eight, f1 AS european_postgres FROM ABSTIME_TBL;
 eight|european_postgres           
@@ -1444,7 +1433,6 @@ sixty_three|european_iso
            |1997-01-01 17:32:01-08   
            |1997-02-28 17:32:01-08   
            |1997-03-01 17:32:01-08   
-           |1997-03-01 17:32:01-08   
            |1997-12-30 17:32:01-08   
            |1997-12-31 17:32:01-08   
            |1999-12-31 17:32:01-08   
@@ -1453,7 +1441,7 @@ sixty_three|european_iso
            |2001-01-01 17:32:01-08   
            |1957-06-13 00:00:00-07   
            |1957-06-13 00:00:00-07   
-(64 rows)
+(63 rows)
 
 QUERY: SELECT '' AS eight, f1 AS european_iso FROM ABSTIME_TBL;
 eight|european_iso          
@@ -1529,7 +1517,6 @@ sixty_three|european_sql
            |01/01/1997 17:32:01.00 PST
            |28/02/1997 17:32:01.00 PST
            |01/03/1997 17:32:01.00 PST
-           |01/03/1997 17:32:01.00 PST
            |30/12/1997 17:32:01.00 PST
            |31/12/1997 17:32:01.00 PST
            |31/12/1999 17:32:01.00 PST
@@ -1538,7 +1525,7 @@ sixty_three|european_sql
            |01/01/2001 17:32:01.00 PST
            |13/06/1957 00:00:00.00 PDT
            |13/06/1957 00:00:00.00 PDT
-(64 rows)
+(63 rows)
 
 QUERY: SELECT '' AS eight, f1 AS european_sql FROM ABSTIME_TBL;
 eight|european_sql              
