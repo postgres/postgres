@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/commands/trigger.c,v 1.63 2000/04/12 17:14:59 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/commands/trigger.c,v 1.64 2000/04/16 04:25:42 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -169,8 +169,8 @@ CreateTrigger(CreateTrigStmt *stmt)
 			ObjectIdGetDatum(((Form_pg_proc) GETSTRUCT(tuple))->prolang),
 									  0, 0, 0);
 		if (!HeapTupleIsValid(langTup))
-			elog(ERROR, "CreateTrigger: cache lookup for PL failed");
-
+			elog(ERROR, "CreateTrigger: cache lookup for PL %u failed",
+				 ((Form_pg_proc) GETSTRUCT(tuple))->prolang);
 		if (((Form_pg_language) GETSTRUCT(langTup))->lanispl == false)
 			elog(ERROR, "CreateTrigger: only builtin, C and PL functions are supported");
 	}
