@@ -5,7 +5,7 @@
 *
 * Copyright (c) 1994, Regents of the University of California
 *
-* $Id: geqo_params.c,v 1.16 1999/05/22 19:29:01 tgl Exp $
+* $Id: geqo_params.c,v 1.17 1999/05/22 23:27:19 tgl Exp $
 *
 *-------------------------------------------------------------------------
 */
@@ -240,10 +240,7 @@ geqo_params(int string_length)
 	/**************** Effort: essential ****************/
 	if (!(effort))
 	{
-		if (PoolSize == MAX_POOL)
-			effort = HIGH_EFFORT;
-		else
-			effort = MEDIUM_EFFORT;
+		effort = MEDIUM_EFFORT;
 
 		elog(DEBUG, "geqo_params: no optimization effort specified;\nusing value of %d", effort);
 
