@@ -3,7 +3,7 @@
  *
  * Copyright 2000 by PostgreSQL Global Development Group
  *
- * $Header: /cvsroot/pgsql/src/bin/psql/tab-complete.c,v 1.28 2001/03/22 04:00:23 momjian Exp $
+ * $Header: /cvsroot/pgsql/src/bin/psql/tab-complete.c,v 1.29 2001/03/30 04:50:47 tgl Exp $
  */
 
 /*----------------------------------------------------------------------
@@ -207,7 +207,7 @@ psql_completion(char *text, int start, int end)
 		"TimeZone",
 		"client_encoding",
 		"server_encoding",
-		"random_seed",
+		"seed",
 
 		/*
 		 * the rest should match USERSET entries in
