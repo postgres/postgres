@@ -12,7 +12,7 @@
   alink="#0000FF">
     <H1>Frequently Asked Questions (FAQ) for PostgreSQL</H1>
 
-    <P>Last updated: Thu Sep  6 20:45:54 EDT 2001</P>
+    <P>Last updated: Thu Sep  6 20:51:03 EDT 2001</P>
 
     <P>Current maintainer: Bruce Momjian (<A href=
     "mailto:pgman@candle.pha.pa.us">pgman@candle.pha.pa.us</A>)<BR>
@@ -722,14 +722,9 @@
     <P>You need to increase the <I>postmaster's</I> limit on how many
     concurrent backend processes it can start.</P>
 
-    <P>In PostgreSQL 6.5 and up, the default limit is 32 processes. You
-    can increase it by restarting the <I>postmaster</I> with a suitable
-    <I>-N</I> value. With the default configuration you can set
-    <I>-N</I> as large as 1024. If you need more, increase
-    <SMALL>MAXBACKENDS</SMALL> in <I>include/pg_config.h</I> and rebuild.
-    You can set the default value of <I>-N</I> at configuration time,
-    if you like, using <I>configure's</I> <I>--with-maxbackends</I>
-    switch.</P>
+    <P>The default limit is 32 processes. You can increase it by
+    restarting the <I>postmaster</I> with a suitable <I>-N</I> value or
+    modifying <I>postgresql.conf</I>.</P>
 
     <P>Note that if you make <I>-N</I> larger than 32, you must also
     increase <I>-B</I> beyond its default of 64; <I>-B</I> must be at
