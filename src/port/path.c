@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/port/path.c,v 1.5 2004/03/09 04:49:02 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/port/path.c,v 1.6 2004/05/11 21:57:15 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -121,3 +121,4 @@ get_progname(char *argv0)
 	else
 		return last_path_separator(argv0) + 1;
 }
+

@@ -1,17 +1,22 @@
 /*-------------------------------------------------------------------------
  *
- * findbe.c
+ * exec.c
  *
  * Portions Copyright (c) 1996-2003, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/utils/init/findbe.c,v 1.42 2004/03/15 16:18:43 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/port/exec.c,v 1.1 2004/05/11 21:57:15 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
+
+#ifndef FRONTEND
 #include "postgres.h"
+#else
+#include "postgres_fe.h"
+#endif
 
 #include <grp.h>
 #include <pwd.h>
@@ -32,16 +37,24 @@
 #define S_IXOTH		 ((S_IXUSR)>>6)
 #endif
 
+#ifndef FRONTEND
+/* We use only 3-parameter elog calls in this file, for simplicity */
+#define log_debug(str, param)	elog(DEBUG2, str, param)
+#else
+#define log_debug(str, param)	{}	/* do nothing */
+#endif
+
+static void win32_make_absolute(char *path);
 
 /*
- * ValidateBinary -- validate "path" as a POSTMASTER/POSTGRES executable file
+ * validate_exec -- validate "path" as an executable file
  *
  * returns 0 if the file is found and no error is encountered.
  *		  -1 if the regular file "path" does not exist or cannot be executed.
  *		  -2 if the file is otherwise valid but cannot be read.
  */
 static int
-ValidateBinary(char *path)
+validate_exec(char *path)
 {
 	struct stat buf;
 
@@ -59,7 +72,8 @@ ValidateBinary(char *path)
 
 #ifdef WIN32
 	/* Win32 requires a .exe suffix for stat() */
-	if (strlen(path) >= 4 && strcmp(path + strlen(path) - strlen(".exe"), ".exe") != 0)
+	if (strlen(path) >= strlen(".exe") &&
+		pg_strcasecmp(path + strlen(path) - strlen(".exe"), ".exe") != 0)
 	{
 		strcpy(path_exe, path);
 		strcat(path_exe, ".exe");
@@ -75,22 +89,18 @@ ValidateBinary(char *path)
 	 */
 	if (stat(path, &buf) < 0)
 	{
-		elog(DEBUG3, "could not stat \"%s\": %m", path);
+		log_debug("could not stat \"%s\": %m", path);
 		return -1;
 	}
 
 	if ((buf.st_mode & S_IFMT) != S_IFREG)
 	{
-		elog(DEBUG3, "\"%s\" is not a regular file", path);
+		log_debug("\"%s\" is not a regular file", path);
 		return -1;
 	}
 
 	/*
-	 * Ensure that we are using an authorized backend.
-	 *
-	 * XXX I'm open to suggestions here.  I would like to enforce ownership
-	 * of binaries by user "postgres" but people seem to like to run as
-	 * users other than "postgres"...
+	 * Ensure that we are using an authorized executable.
 	 */
 
 	/*
@@ -103,23 +113,28 @@ ValidateBinary(char *path)
 	return is_x ? (is_r ? 0 : -2) : -1;
 #else
 	euid = geteuid();
+
+	/* If owned by us, just check owner bits */
 	if (euid == buf.st_uid)
 	{
 		is_r = buf.st_mode & S_IRUSR;
 		is_x = buf.st_mode & S_IXUSR;
 		if (!(is_r && is_x))
-			elog(DEBUG3, "\"%s\" is not user read/execute", path);
+			log_debug("\"%s\" is not user read/execute", path);
 		return is_x ? (is_r ? 0 : -2) : -1;
 	}
-	pwp = getpwuid(euid);
+
+	/* OK, check group bits */
+	
+	pwp = getpwuid(euid);	/* not thread-safe */
 	if (pwp)
 	{
-		if (pwp->pw_gid == buf.st_gid)
+		if (pwp->pw_gid == buf.st_gid)	/* my primary group? */
 			++in_grp;
 		else if (pwp->pw_name &&
-				 (gp = getgrgid(buf.st_gid)) != NULL &&
+				 (gp = getgrgid(buf.st_gid)) != NULL && /* not thread-safe */
 				 gp->gr_mem != NULL)
-		{
+		{	/* try list of member groups */
 			for (i = 0; gp->gr_mem[i]; ++i)
 			{
 				if (!strcmp(gp->gr_mem[i], pwp->pw_name))
@@ -134,28 +149,35 @@ ValidateBinary(char *path)
 			is_r = buf.st_mode & S_IRGRP;
 			is_x = buf.st_mode & S_IXGRP;
 			if (!(is_r && is_x))
-				elog(DEBUG3, "\"%s\" is not group read/execute", path);
+				log_debug("\"%s\" is not group read/execute", path);
 			return is_x ? (is_r ? 0 : -2) : -1;
 		}
 	}
+
+	/* Check "other" bits */
 	is_r = buf.st_mode & S_IROTH;
 	is_x = buf.st_mode & S_IXOTH;
 	if (!(is_r && is_x))
-		elog(DEBUG3, "\"%s\" is not other read/execute", path);
+		log_debug("\"%s\" is not other read/execute", path);
 	return is_x ? (is_r ? 0 : -2) : -1;
+
 #endif
 }
 
 /*
- * FindExec -- find an absolute path to a valid backend executable
+ * find_my_binary -- find an absolute path to a valid executable
  *
  * The reason we have to work so hard to find an absolute path is that
  * on some platforms we can't do dynamic loading unless we know the
  * executable's location.  Also, we need a full path not a relative
  * path because we will later change working directory.
+ *
+ * This function is not thread-safe because of it calls validate_exec(),
+ * which calls getgrgid().  This function should be used only in
+ * non-threaded binaries, not in library routines.
  */
 int
-FindExec(char *full_path, const char *argv0, const char *binary_name)
+find_my_binary(char *full_path, const char *argv0, const char *binary_name)
 {
 	char		buf[MAXPGPATH + 2];
 	char	   *p;
@@ -164,13 +186,13 @@ FindExec(char *full_path, const char *argv0, const char *binary_name)
 			   *endp;
 
 	/*
-	 * for the postmaster: First try: use the binary that's located in the
-	 * same directory as the postmaster, if it was invoked with an
-	 * explicit path. Presumably the user used an explicit path because it
+	 * First try: use the binary that's located in the
+	 * same directory if it was invoked with an explicit path.
+	 * Presumably the user used an explicit path because it
 	 * wasn't in PATH, and we don't want to use incompatible executables.
 	 *
 	 * This has the neat property that it works for installed binaries, old
-	 * source trees (obj/support/post{master,gres}) and new marc source
+	 * source trees (obj/support/post{master,gres}) and new source
 	 * trees (obj/post{master,gres}) because they all put the two binaries
 	 * in the same place.
 	 *
@@ -187,13 +209,14 @@ FindExec(char *full_path, const char *argv0, const char *binary_name)
 		strcat(buf, argv0);
 		p = last_path_separator(buf);
 		strcpy(++p, binary_name);
-		if (ValidateBinary(buf) == 0)
+		if (validate_exec(buf) == 0)
 		{
 			strncpy(full_path, buf, MAXPGPATH);
-			elog(DEBUG2, "found \"%s\" using argv[0]", full_path);
+			win32_make_absolute(full_path);
+			log_debug("found \"%s\" using argv[0]", full_path);
 			return 0;
 		}
-		elog(DEBUG2, "invalid binary \"%s\"", buf);
+		log_debug("invalid binary \"%s\"", buf);
 		return -1;
 	}
 
@@ -203,7 +226,7 @@ FindExec(char *full_path, const char *argv0, const char *binary_name)
 	 */
 	if ((p = getenv("PATH")) && *p)
 	{
-		elog(DEBUG2, "searching PATH for executable");
+		log_debug("searching PATH for executable%s", "");
 		path = strdup(p);		/* make a modifiable copy */
 		for (startp = path, endp = strchr(path, PATHSEP);
 			 startp && *startp;
@@ -220,17 +243,18 @@ FindExec(char *full_path, const char *argv0, const char *binary_name)
 			strcat(buf, startp);
 			strcat(buf, "/");
 			strcat(buf, binary_name);
-			switch (ValidateBinary(buf))
+			switch (validate_exec(buf))
 			{
 				case 0: /* found ok */
 					strncpy(full_path, buf, MAXPGPATH);
-					elog(DEBUG2, "found \"%s\" using PATH", full_path);
+					win32_make_absolute(full_path);
+					log_debug("found \"%s\" using PATH", full_path);
 					free(path);
 					return 0;
 				case -1:		/* wasn't even a candidate, keep looking */
 					break;
 				case -2:		/* found but disqualified */
-					elog(DEBUG2, "could not read binary \"%s\"", buf);
+					log_debug("could not read binary \"%s\"", buf);
 					free(path);
 					return -1;
 			}
@@ -240,6 +264,77 @@ FindExec(char *full_path, const char *argv0, const char *binary_name)
 		free(path);
 	}
 
-	elog(DEBUG2, "could not find a \"%s\" to execute", binary_name);
+	log_debug("could not find a \"%s\" to execute", binary_name);
 	return -1;
 }
+
+
+/*
+ * Find our binary directory, then make sure the "target" executable
+ * is the proper version.
+ */
+int find_other_binary(char *retpath, const char *argv0, const char *progname,
+			    char const *target, const char *versionstr)
+{
+	char		cmd[MAXPGPATH];
+	char		line[100];
+	FILE	   *pgver;
+
+	if (find_my_binary(retpath, argv0, progname) < 0)
+		return -1;
+
+	/* Trim off program name and keep just directory */	
+	*last_path_separator(retpath) = '\0';
+
+	snprintf(retpath + strlen(retpath), MAXPGPATH - strlen(retpath),
+			 "/%s%s", target, EXE);
+
+	if (validate_exec(retpath))
+		return -1;
+	
+	snprintf(cmd, sizeof(cmd), "\"%s\" -V 2>%s", retpath, DEVNULL);
+
+	/* flush output buffers in case popen does not... */
+	fflush(stdout);
+	fflush(stderr);
+
+	if ((pgver = popen(cmd, "r")) == NULL)
+		return -1;
+
+	if (fgets(line, sizeof(line), pgver) == NULL)
+		perror("fgets failure");
+
+	if (pclose_check(pgver))
+		return -1;
+
+	if (strcmp(line, versionstr) != 0)
+		return -2;
+
+	return 0;
+}
+
+
+/*
+ * Windows doesn't like relative paths to executables (other things work fine)
+ * so we call its builtin function to expand them. Elsewhere this is a NOOP
+ *
+ * Returns malloc'ed memory.
+ */
+static void
+win32_make_absolute(char *path)
+{
+#ifdef WIN32
+	char		abspath[MAXPGPATH];
+
+	if (_fullpath(abspath, path, MAXPGPATH) == NULL)
+	{
+		log_debug("Win32 path expansion failed:  %s", strerror());
+		return path;
+	}
+	canonicalize_path(abspath);
+
+	StrNCpy(path, abspath, MAXPGPATH);
+#endif
+	return;
+}
+

@@ -6,7 +6,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  *
- * $PostgreSQL: pgsql/src/bin/pg_dump/pg_dumpall.c,v 1.30 2004/01/22 19:09:32 tgl Exp $
+ * $PostgreSQL: pgsql/src/bin/pg_dump/pg_dumpall.c,v 1.31 2004/05/11 21:57:14 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -35,6 +35,9 @@ int			optreset;
 
 #define _(x) gettext((x))
 
+/* version string we expect back from postgres */
+#define PG_VERSIONSTR "pg_dump (PostgreSQL) " PG_VERSION "\n"
+
 
 static char *progname;
 
@@ -52,10 +55,9 @@ static int	runPgDump(const char *dbname);
 static PGconn *connectDatabase(const char *dbname, const char *pghost, const char *pgport,
 				const char *pguser, bool require_password);
 static PGresult *executeQuery(PGconn *conn, const char *query);
-static char *findPgDump(const char *argv0);
 
 
-char	   *pgdumploc;
+char	    pg_dump_bin[MAXPGPATH];
 PQExpBuffer pgdumpopts;
 bool		output_clean = false;
 bool		skip_acls = false;
@@ -75,7 +77,7 @@ main(int argc, char *argv[])
 	bool		globals_only = false;
 	bool		schema_only = false;
 	PGconn	   *conn;
-	int			c;
+	int			c, ret;
 
 	static struct option long_options[] = {
 		{"data-only", no_argument, NULL, 'a'},
@@ -121,7 +123,24 @@ main(int argc, char *argv[])
 		}
 	}
 
-	pgdumploc = findPgDump(argv[0]);
+	if ((ret = find_other_binary(pg_dump_bin, argv[0], progname, "pg_dump",
+						   PG_VERSIONSTR)) < 0)
+	{
+		if (ret == -1)
+			fprintf(stderr,
+						_("The program \"pg_dump\" is needed by %s "
+						"but was not found in the same directory as \"%s\".\n"
+						"Check your installation.\n"),
+						progname, progname);
+		else
+			fprintf(stderr,
+						_("The program \"pg_dump\" was found by %s "
+						"but was not the same version as \"%s\".\n"
+						"Check your installation.\n"),
+						progname, progname);
+		exit(1);
+	}
+
 	pgdumpopts = createPQExpBuffer();
 
 	while ((c = getopt_long(argc, argv, "acdDgh:iop:sU:vWx", long_options, &optindex)) != -1)
@@ -667,7 +686,7 @@ runPgDump(const char *dbname)
 	const char *p;
 	int			ret;
 
-	appendPQExpBuffer(cmd, "%s %s -Fp '", pgdumploc, pgdumpopts->data);
+	appendPQExpBuffer(cmd, "\"%s\" %s -Fp '", pg_dump_bin, pgdumpopts->data);
 
 	/* Shell quoting is not quite like SQL quoting, so can't use fmtId */
 	for (p = dbname; *p; p++)
@@ -791,52 +810,4 @@ executeQuery(PGconn *conn, const char *query)
 	}
 
 	return res;
-}
-
-
-
-/*
- * Find location of pg_dump executable.
- */
-static char *
-findPgDump(const char *argv0)
-{
-	char	   *last;
-	PQExpBuffer cmd;
-	static char *result = NULL;
-
-	if (result)
-		return result;
-
-	cmd = createPQExpBuffer();
-	last = last_path_separator(argv0);
-
-	if (!last)
-		appendPQExpBuffer(cmd, "pg_dump");
-	else
-	{
-		char	   *dir = strdup(argv0);
-
-		*(dir + (last - argv0)) = '\0';
-		appendPQExpBuffer(cmd, "%s/pg_dump", dir);
-	}
-
-	result = strdup(cmd->data);
-
-	appendPQExpBuffer(cmd, " -V >/dev/null 2>&1");
-	if (system(cmd->data) == 0)
-		goto end;
-
-	result = BINDIR "/pg_dump";
-	if (system(BINDIR "/pg_dump -V >/dev/null 2>&1") == 0)
-		goto end;
-
-	fprintf(stderr, _("%s: could not find pg_dump\n"
-		"Make sure it is in the path or in the same directory as %s.\n"),
-			progname, progname);
-	exit(1);
-
-end:
-	destroyPQExpBuffer(cmd);
-	return result;
 }

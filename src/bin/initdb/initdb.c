@@ -25,10 +25,6 @@
  *
  * template0 is made just by copying the completed template1.
  *
- *
- * TODO:
- *	 - clean up find_postgres code and return values
- *
  * Note:
  *	 The program has some memory leakage - it isn't worth cleaning it up.
  *
@@ -43,7 +39,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  * Portions taken from FreeBSD.
  *
- * $PostgreSQL: pgsql/src/bin/initdb/initdb.c,v 1.26 2004/05/10 20:51:58 momjian Exp $
+ * $PostgreSQL: pgsql/src/bin/initdb/initdb.c,v 1.27 2004/05/11 21:57:14 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -52,7 +48,6 @@
 
 #include <dirent.h>
 #include <sys/stat.h>
-#include <sys/wait.h>
 #include <unistd.h>
 #include <locale.h>
 #include <signal.h>
@@ -78,7 +73,6 @@ int			optreset;
  * Note that "datadir" is not the directory we're going to initialize,
  * it's merely how Autoconf names PREFIX/share.
  */
-char	   *bindir = PGBINDIR;
 char	   *datadir = PGDATADIR;
 
 /* values to be obtained from arguments */
@@ -100,7 +94,6 @@ bool		show_setting = false;
 
 /* internal vars */
 char	   *progname;
-char	   *self_path;
 char	   *postgres;
 char	   *encodingid = "0";
 char	   *bki_file;
@@ -135,25 +128,9 @@ static const char *boot_options = "-F";
 static const char *backend_options = "-F -O -c search_path=pg_catalog -c exit_on_error=true";
 
 
-/* platform specific path stuff */
-#if defined(__CYGWIN__) || defined(WIN32)
-#define EXE ".exe"
-#define DEVNULL "nul"
-#else
-#define EXE ""
-#define DEVNULL "/dev/null"
-#endif
-
-
-/* detected path to postgres and (we assume) friends */
-char	   *pgpath;
-
-/* forward declare all our functions */
-#ifdef WIN32
-static char *expanded_path(char *);
-#else
-#define expanded_path(x) (x)
-#endif
+/* path to 'initdb' binary directory */
+char	   bindir[MAXPGPATH];
+char	   backendbin[MAXPGPATH];
 
 static void *xmalloc(size_t size);
 static char *xstrdup(const char *s);
@@ -161,7 +138,6 @@ static bool rmtree(char *path, bool rmtopdir);
 static char **replace_token(char **lines, char *token, char *replacement);
 static char **readfile(char *path);
 static void writefile(char *path, char **lines);
-static void pclose_check(FILE *stream);
 static int mkdir_p(char *path, mode_t omode);
 static void exit_nicely(void);
 static char *get_id(void);
@@ -171,8 +147,6 @@ static int check_data_dir(void);
 static bool mkdatadir(char *subdir);
 static void set_input(char **dest, char *filename);
 static void check_input(char *path);
-static int find_postgres(char *path);
-static int set_paths(void);
 static void set_short_version(char *short_version, char *extrapath);
 static void set_null_conf(void);
 static void test_connections(void);
@@ -216,7 +190,8 @@ do { \
 
 #define PG_CMD_CLOSE \
 do { \
-	pclose_check(pg); \
+	if (pclose_check(pg)) \
+		exit_nicely(); \
 } while (0)
 
 #define PG_CMD_PUTLINE \
@@ -435,41 +410,6 @@ writefile(char *path, char **lines)
 	}
 	if (fclose(out_file))
 		exit_nicely();
-}
-
-/* pclose() plus useful error reporting */
-static void
-pclose_check(FILE *stream)
-{
-	int		exitstatus;
-
-	exitstatus = pclose(stream);
-
-	if (exitstatus == 0)
-		return;					/* all is well */
-
-	if (exitstatus == -1)
-	{
-		/* pclose() itself failed, and hopefully set errno */
-		perror("pclose failed");
-	}
-	else if (WIFEXITED(exitstatus))
-	{
-		fprintf(stderr, _("%s: child process exited with exit code %d\n"),
-				progname, WEXITSTATUS(exitstatus));
-	}
-	else if (WIFSIGNALED(exitstatus))
-	{
-		fprintf(stderr, _("%s: child process was terminated by signal %d\n"),
-				progname, WTERMSIG(exitstatus));
-	}
-	else
-	{
-		fprintf(stderr, _("%s: child process exited with unrecognized status %d\n"),
-				progname, exitstatus);
-	}
-
-	exit_nicely();
 }
 
 /* source stolen from FreeBSD /src/bin/mkdir/mkdir.c and adapted */
@@ -815,193 +755,6 @@ check_input(char *path)
 }
 
 /*
- * TODO - clean this up and handle the errors properly
- * don't overkill
- */
-#define FIND_SUCCESS 0
-#define FIND_NOT_FOUND 1
-#define FIND_STAT_ERR 2
-#define FIND_NOT_REGFILE 3
-#define FIND_BAD_PERM 4
-#define FIND_EXEC_ERR 5
-#define FIND_WRONG_VERSION 6
-
-/*
- * see if there is a postgres executable in the given path, and giving the
- * right version number
- */
-static int
-find_postgres(char *path)
-{
-	char		fn[MAXPGPATH];
-	char		cmd[MAXPGPATH];
-	char		line[100];
-
-#ifndef WIN32
-	int			permmask = S_IROTH | S_IXOTH;
-#endif
-
-	struct stat statbuf;
-	FILE	   *pgver;
-	int			plen = strlen(path);
-
-	if (plen > 0 && path[plen - 1] != '/')
-		snprintf(fn, sizeof(fn), "%s/postgres%s", path, EXE);
-	else
-		snprintf(fn, sizeof(fn), "%spostgres%s", path, EXE);
-
-	if (stat(fn, &statbuf) != 0)
-	{
-		if (errno == ENOENT)
-			return FIND_NOT_FOUND;
-		else
-			return FIND_STAT_ERR;
-	}
-	if (!S_ISREG(statbuf.st_mode))
-		return FIND_NOT_REGFILE;
-
-#ifndef WIN32
-
-	/*
-	 * Only unix requires this test, on WIN32 an .exe file should be
-	 * executable
-	 */
-	if ((statbuf.st_mode & permmask) != permmask)
-		return FIND_BAD_PERM;
-#endif
-
-	snprintf(cmd, sizeof(cmd), "\"%s/postgres\" -V 2>%s", path, DEVNULL);
-
-	/* flush output buffers in case popen does not... */
-	fflush(stdout);
-	fflush(stderr);
-
-	if ((pgver = popen(cmd, "r")) == NULL)
-		return FIND_EXEC_ERR;
-
-	if (fgets(line, sizeof(line), pgver) == NULL)
-		perror("fgets failure");
-
-	pclose_check(pgver);
-
-	if (strcmp(line, PG_VERSIONSTR) != 0)
-		return FIND_WRONG_VERSION;
-
-	return FIND_SUCCESS;
-}
-
-/*
- * Windows doesn't like relative paths to executables (other things work fine)
- * so we call its builtin function to expand them. Elsewhere this is a NOOP
- */
-#ifdef WIN32
-static char *
-expanded_path(char *path)
-{
-	char		abspath[MAXPGPATH];
-
-	if (_fullpath(abspath, path, sizeof(abspath)) == NULL)
-	{
-		perror("expanded path");
-		return path;
-	}
-	canonicalize_path(abspath);
-	return xstrdup(abspath);
-}
-#endif
-
-/*
- * set the paths pointing to postgres
- *
- * look for it in the same place we found this program, or in the environment
- * path, or in the configured bindir.
- * We do it in this order because during upgrades users might move
- * their trees to backup places, so the hard-wired bindir might be inaccurate.
- *
- * XXX this needs work, as its error handling is vastly inferior to the
- * shell-script version, in particular the case where a postgres executable
- * is failing
- */
-static int
-set_paths(void)
-{
-	if (testpath && !self_path)
-	{
-		char	   *path,
-				   *cursor;
-		int			pathlen,
-					i,
-					pathsegs;
-		char	  **pathbits;
-		char		buf[MAXPGPATH];
-		struct stat statbuf;
-
-		path = xstrdup(getenv("PATH"));
-		pathlen = strlen(path);
-
-		for (i = 0, pathsegs = 1; i < pathlen; i++)
-		{
-			if (path[i] == PATHSEP)
-				pathsegs++;
-		}
-
-		pathbits = (char **) xmalloc(pathsegs * sizeof(char *));
-		for (i = 0, pathsegs = 0, cursor = path; i <= pathlen; i++)
-		{
-			if (path[i] == PATHSEP || path[i] == 0)
-			{
-				path[i] = 0;
-				if (strlen(cursor) == 0)
-				{
-					/* empty path segment means current directory */
-					pathbits[pathsegs] = xstrdup(".");
-				}
-				else
-				{
-					canonicalize_path(cursor);
-					pathbits[pathsegs] = cursor;
-				}
-				pathsegs++;
-				cursor = path + i + 1;
-			}
-		}
-
-		for (i = 0; i < pathsegs; i++)
-		{
-			snprintf(buf, sizeof(buf), "%s/%s%s", pathbits[i], progname, EXE);
-			if (stat(buf, &statbuf) == 0 && S_ISREG(statbuf.st_mode))
-			{
-				self_path = pathbits[i];
-				break;
-			}
-		}
-	}
-
-	if (testpath && self_path &&
-		(find_postgres(expanded_path(self_path)) == 0))
-	{
-		/* we found postgres on out own path */
-		pgpath = expanded_path(self_path);
-	}
-	else
-	{
-		/* look in the hardcoded bindir */
-		int			res;
-		char	   *cbindir;
-
-		cbindir = xstrdup(bindir);
-		canonicalize_path(cbindir);
-		res = find_postgres(expanded_path(cbindir));
-		if (res == 0)
-			pgpath = expanded_path(cbindir);
-		else
-			return 1;
-	}
-
-	return 0;
-}
-
-/*
  * write out the PG_VERSION file in the data dir, or its subdirectory
  * if extrapath is not NULL
  */
@@ -1063,10 +816,10 @@ test_connections(void)
 	for (i = 0; i < len; i++)
 	{
 		snprintf(cmd, sizeof(cmd),
-				 "\"%s/postgres\" -boot -x0 %s "
+				 "\"%s\" -boot -x0 %s "
 				 "-c shared_buffers=%d -c max_connections=%d template1 "
 				 "<%s >%s 2>&1",
-				 pgpath, boot_options,
+				 backendbin, boot_options,
 				 conns[i] * 5, conns[i],
 				 DEVNULL, DEVNULL);
 		status = system(cmd);
@@ -1099,10 +852,10 @@ test_buffers(void)
 	for (i = 0; i < len; i++)
 	{
 		snprintf(cmd, sizeof(cmd),
-				 "\"%s/postgres\" -boot -x0 %s "
+				 "\"%s\" -boot -x0 %s "
 				 "-c shared_buffers=%d -c max_connections=%d template1 "
 				 "<%s >%s 2>&1",
-				 pgpath, boot_options,
+				 backendbin, boot_options,
 				 bufs[i], n_connections,
 				 DEVNULL, DEVNULL);
 		status = system(cmd);
@@ -1250,8 +1003,8 @@ bootstrap_template1(char *short_version)
 	unsetenv("PGCLIENTENCODING");
 
 	snprintf(cmd, sizeof(cmd),
-			 "\"%s/postgres\" -boot -x1 %s %s template1",
-			 pgpath, boot_options, talkargs);
+			 "\"%s\" -boot -x1 %s %s template1",
+			 backendbin, boot_options, talkargs);
 
 	PG_CMD_OPEN;
 
@@ -1300,8 +1053,8 @@ setup_shadow(void)
 	fflush(stdout);
 
 	snprintf(cmd, sizeof(cmd),
-			 "\"%s/postgres\" %s template1 >%s",
-			 pgpath, backend_options,
+			 "\"%s\" %s template1 >%s",
+			 backendbin, backend_options,
 			 DEVNULL);
 
 	PG_CMD_OPEN;
@@ -1340,8 +1093,8 @@ get_set_pwd(void)
 	fflush(stdout);
 
 	snprintf(cmd, sizeof(cmd),
-			 "\"%s/postgres\" %s template1 >%s",
-			 pgpath, backend_options,
+			 "\"%s\" %s template1 >%s",
+			 backendbin, backend_options,
 			 DEVNULL);
 
 	PG_CMD_OPEN;
@@ -1394,8 +1147,8 @@ unlimit_systables(void)
 	fflush(stdout);
 
 	snprintf(cmd, sizeof(cmd),
-			 "\"%s/postgres\" %s template1 >%s",
-			 pgpath, backend_options,
+			 "\"%s\" %s template1 >%s",
+			 backendbin, backend_options,
 			 DEVNULL);
 
 	PG_CMD_OPEN;
@@ -1467,8 +1220,8 @@ setup_depend(void)
 	fflush(stdout);
 
 	snprintf(cmd, sizeof(cmd),
-			 "\"%s/postgres\" %s template1 >%s",
-			 pgpath, backend_options,
+			 "\"%s\" %s template1 >%s",
+			 backendbin, backend_options,
 			 DEVNULL);
 
 	PG_CMD_OPEN;
@@ -1500,8 +1253,8 @@ setup_sysviews(void)
 	 * We use -N here to avoid backslashing stuff in system_views.sql
 	 */
 	snprintf(cmd, sizeof(cmd),
-			 "\"%s/postgres\" %s -N template1 >%s",
-			 pgpath, backend_options,
+			 "\"%s\" %s -N template1 >%s",
+			 backendbin, backend_options,
 			 DEVNULL);
 
 	PG_CMD_OPEN;
@@ -1532,8 +1285,8 @@ setup_description(void)
 	fflush(stdout);
 
 	snprintf(cmd, sizeof(cmd),
-			 "\"%s/postgres\" %s template1 >%s",
-			 pgpath, backend_options,
+			 "\"%s\" %s template1 >%s",
+			 backendbin, backend_options,
 			 DEVNULL);
 
 	PG_CMD_OPEN;
@@ -1580,8 +1333,8 @@ setup_conversion(void)
 	fflush(stdout);
 
 	snprintf(cmd, sizeof(cmd),
-			 "\"%s/postgres\" %s template1 >%s",
-			 pgpath, backend_options,
+			 "\"%s\" %s template1 >%s",
+			 backendbin, backend_options,
 			 DEVNULL);
 
 	PG_CMD_OPEN;
@@ -1636,8 +1389,8 @@ setup_privileges(void)
 	fflush(stdout);
 
 	snprintf(cmd, sizeof(cmd),
-			 "\"%s/postgres\" %s template1 >%s",
-			 pgpath, backend_options,
+			 "\"%s\" %s template1 >%s",
+			 backendbin, backend_options,
 			 DEVNULL);
 
 	PG_CMD_OPEN;
@@ -1699,8 +1452,8 @@ setup_schema(void)
 	 * We use -N here to avoid backslashing stuff in information_schema.sql
 	 */
 	snprintf(cmd, sizeof(cmd),
-			 "\"%s/postgres\" %s -N template1 >%s",
-			 pgpath, backend_options,
+			 "\"%s\" %s -N template1 >%s",
+			 backendbin, backend_options,
 			 DEVNULL);
 
 	PG_CMD_OPEN;
@@ -1716,8 +1469,8 @@ setup_schema(void)
 	PG_CMD_CLOSE;
 
 	snprintf(cmd, sizeof(cmd),
-			 "\"%s/postgres\" %s template1 >%s",
-			 pgpath, backend_options,
+			 "\"%s\" %s template1 >%s",
+			 backendbin, backend_options,
 			 DEVNULL);
 
 	PG_CMD_OPEN;
@@ -1756,8 +1509,8 @@ vacuum_db(void)
 	fflush(stdout);
 
 	snprintf(cmd, sizeof(cmd),
-			 "\"%s/postgres\" %s template1 >%s",
-			 pgpath, backend_options,
+			 "\"%s\" %s template1 >%s",
+			 backendbin, backend_options,
 			 DEVNULL);
 
 	PG_CMD_OPEN;
@@ -1812,8 +1565,8 @@ make_template0(void)
 	fflush(stdout);
 
 	snprintf(cmd, sizeof(cmd),
-			 "\"%s/postgres\" %s template1 >%s",
-			 pgpath, backend_options,
+			 "\"%s\" %s template1 >%s",
+			 backendbin, backend_options,
 			 DEVNULL);
 
 	PG_CMD_OPEN;
@@ -2043,48 +1796,17 @@ main(int argc, char *argv[])
 	};
 
 	int			c,
-				i;
+				i,
+				ret;
 	int			option_index;
 	char	   *short_version;
 	char	   *pgdenv;			/* PGDATA value got from sent to
 								 * environment */
 	char	   *subdirs[] =
 	{"global", "pg_xlog", "pg_clog", "base", "base/1"};
-	char	   *lastsep;
-	char	   *carg0;
-#if defined(__CYGWIN__) || defined(WIN32)
-	char	   *exe;			/* location of exe suffix in progname */
-#endif
-
 	init_nls();
 
-	/* parse argv[0] - detect explicit path if there was one */
-	carg0 = xstrdup(argv[0]);
-	canonicalize_path(carg0);
-
-	lastsep = strrchr(carg0, '/');
-	progname = lastsep ? xstrdup(lastsep + 1) : carg0;
-
-#if defined(__CYGWIN__) || defined(WIN32)
-	if (strlen(progname) > 4 &&
-		(exe = progname + (strlen(progname) - 4)) &&
-		stricmp(exe, EXE) == 0)
-	{
-		/* strip .exe suffix, regardless of case */
-		*exe = '\0';
-	}
-#endif
-
-	if (lastsep)
-	{
-		self_path = carg0;
-		*lastsep = '\0';
-	}
-	else
-	{
-		/* no path known to ourselves from argv[0] */
-		self_path = NULL;
-	}
+	progname = get_progname(argv[0]);
 
     if (argc > 1)
     {
@@ -2210,16 +1932,28 @@ main(int argc, char *argv[])
 	sprintf(pgdenv, "PGDATA=%s", pg_data);
 	putenv(pgdenv);
 
-	if (set_paths() != 0)
+	if ((ret = find_other_binary(backendbin, argv[0], progname, "postgres",
+						   PG_VERSIONSTR)) < 0)
 	{
-		fprintf(stderr,
-				_("The program \"postgres\" is needed by %s "
-				"but was not found in \n"
-				"the directory \"%s\". Check your installation.\n"),
-				progname, bindir);
+		if (ret == -1)
+			fprintf(stderr,
+						_("The program \"postgres\" is needed by %s "
+						"but was not found in the same directory as \"%s\".\n"
+						"Check your installation.\n"),
+						progname, progname);
+		else
+			fprintf(stderr,
+						_("The program \"postgres\" was found by %s "
+						"but was not the same version as \"%s\".\n"
+						"Check your installation.\n"),
+						progname, progname);
 		exit(1);
 	}
 
+	/* store binary directory */
+	strcpy(bindir, backendbin);
+	*last_path_separator(bindir) = '\0';
+	
 	if ((short_version = get_short_version()) == NULL)
 	{
 		fprintf(stderr, _("%s: could not determine valid short version string\n"), progname);
@@ -2255,7 +1989,7 @@ main(int argc, char *argv[])
 				"POSTGRES_DESCR=%s\nPOSTGRESQL_CONF_SAMPLE=%s\n"
 				"PG_HBA_SAMPLE=%s\nPG_IDENT_SAMPLE=%s\n",
 				PG_VERSION,
-				pg_data, datadir, pgpath,
+				pg_data, datadir, bindir,
 				encoding, encodingid,
 				username, bki_file,
 				desc_file, conf_file,
@@ -2448,8 +2182,8 @@ main(int argc, char *argv[])
 		   "    %s%s%s/postmaster -D %s%s%s\n"
 		   "or\n"
 		   "    %s%s%s/pg_ctl -D %s%s%s -l logfile start\n\n"),
-		 QUOTE_PATH, pgpath, QUOTE_PATH, QUOTE_PATH, pg_data, QUOTE_PATH,
-		QUOTE_PATH, pgpath, QUOTE_PATH, QUOTE_PATH, pg_data, QUOTE_PATH);
+		 QUOTE_PATH, bindir, QUOTE_PATH, QUOTE_PATH, pg_data, QUOTE_PATH,
+		QUOTE_PATH, bindir, QUOTE_PATH, QUOTE_PATH, pg_data, QUOTE_PATH);
 
 	return 0;
 }

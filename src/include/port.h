@@ -6,7 +6,7 @@
  * Portions Copyright (c) 1996-2003, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/include/port.h,v 1.28 2004/05/07 00:24:58 tgl Exp $
+ * $PostgreSQL: pgsql/src/include/port.h,v 1.29 2004/05/11 21:57:15 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -26,6 +26,20 @@ extern char *first_path_separator(const char *filename);
 extern char *last_path_separator(const char *filename);
 extern void canonicalize_path(char *path);
 extern char *get_progname(char *argv0);
+
+/* Portable way to find binaries */
+extern int find_my_binary(char *full_path, const char *argv0,
+					 const char *binary_name);
+extern int find_other_binary(char *retpath, const char *argv0, const char *progname,
+					   char const *target, const char *versionstr);
+
+#if defined(__CYGWIN__) || defined(WIN32)
+#define EXE ".exe"
+#define DEVNULL "nul"
+#else
+#define EXE ""
+#define DEVNULL "/dev/null"
+#endif
 
 /* Portable delay handling */
 extern void pg_usleep(long microsec);
@@ -57,6 +71,7 @@ extern int pgpipe(int handles[2]);
 extern int piperead(int s, char* buf, int len);
 #define pipewrite(a,b,c)	send(a,b,c,0)
 #endif
+extern int pclose_check(FILE *stream);
 
 #if defined(__MINGW32__) || defined(__CYGWIN__)
 /*
