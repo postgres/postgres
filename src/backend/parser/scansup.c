@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *    $Header: /cvsroot/pgsql/src/backend/parser/scansup.c,v 1.4 1996/11/04 04:04:58 momjian Exp $
+ *    $Header: /cvsroot/pgsql/src/backend/parser/scansup.c,v 1.5 1996/11/15 18:38:55 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -22,15 +22,6 @@
 #include "miscadmin.h"
 #include "utils/elog.h"
 #include "parser/scansup.h"
-
-/*
- *	Scanner error handler.
- */
-static void
-serror(char *str)
-{
-    elog(WARN, "*** scanner error: %s\n", str);
-}
 
 /* ----------------
  *	scanstr
@@ -51,31 +42,14 @@ char*
 scanstr(char *s)
 {
     static char newStr[MAX_PARSE_BUFFER]; 
-    int len, i, start, j;
-    char delimiter;
+    int len, i, j;
     
     if (s == NULL || s[0] == '\0')
 	return s;
 
     len = strlen(s);
-    start = 0;
 
-    /* remove leading and trailing quotes, if any */
-    /* the normal backend lexer only accepts single quotes, but the
-       bootstrap lexer accepts double quotes */
-    delimiter = 0;
-    if (s[0] == '"' || s[0] == '\''){
-	delimiter = s[0];
-	start = 1;
-    }
-    if (delimiter != 0)  {
-	if (s[len-1] == delimiter) 
-	    len = len - 1;
-	else
-	    serror("mismatched quote delimiters");
-    }
-
-    for (i = start, j = 0; i < len ; i++) {
+    for (i = 0, j = 0; i < len ; i++) {
 	if (s[i] == '\'') {
 	    i = i + 1;
 	    if (s[i] == '\'')
