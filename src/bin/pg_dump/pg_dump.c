@@ -12,7 +12,7 @@
  *	by PostgreSQL
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/bin/pg_dump/pg_dump.c,v 1.388 2004/10/06 23:31:45 neilc Exp $
+ *	  $PostgreSQL: pgsql/src/bin/pg_dump/pg_dump.c,v 1.389 2004/10/18 00:20:41 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -107,6 +107,9 @@ static const CatalogId nilCatalogId = {0, 0};
 /* these are to avoid passing around info for findNamespace() */
 static NamespaceInfo *g_namespaces;
 static int	g_numNamespaces;
+
+/* need the name of the database's default tablespace */
+static char *dbDefaultTableSpace;
 
 /* flag to turn on/off dollar quoting */
 static int	disable_dollar_quoting = 0;
@@ -1249,6 +1252,9 @@ dumpDatabase(Archive *AH)
 	encoding = PQgetvalue(res, 0, i_encoding);
 	tablespace = PQgetvalue(res, 0, i_tablespace);
 
+	/* save dattablespace name for later dump routines */
+	dbDefaultTableSpace = strdup(tablespace);
+
 	appendPQExpBuffer(creaQry, "CREATE DATABASE %s WITH TEMPLATE = template0",
 					  fmtId(datname));
 	if (strlen(encoding) > 0)
@@ -1257,7 +1263,8 @@ dumpDatabase(Archive *AH)
 		appendStringLiteral(creaQry, encoding, true);
 	}
 	if (strlen(tablespace) > 0 && strcmp(tablespace, "pg_default") != 0)
-		appendPQExpBuffer(creaQry, " TABLESPACE = %s", fmtId(tablespace));
+		appendPQExpBuffer(creaQry, " TABLESPACE = %s",
+						  fmtId(tablespace));
 	appendPQExpBuffer(creaQry, ";\n");
 
 	appendPQExpBuffer(delQry, "DROP DATABASE %s;\n",
@@ -4428,7 +4435,7 @@ dumpNamespace(Archive *fout, NamespaceInfo *nspinfo)
 	appendPQExpBuffer(q, "CREATE SCHEMA %s AUTHORIZATION %s",
 					  qnspname, fmtId(nspinfo->usename));
 
-	/* Add tablespace qualifier, if not default */
+	/* Add tablespace qualifier, if not default for database */
 	if (strlen(nspinfo->nsptablespace) != 0)
 		appendPQExpBuffer(q, " TABLESPACE %s",
 						  fmtId(nspinfo->nsptablespace));
@@ -6652,13 +6659,16 @@ dumpTableSchema(Archive *fout, TableInfo *tbinfo)
 			appendPQExpBuffer(q, ")");
 		}
 
-		/* Output tablespace clause if necessary */
-		if (strlen(tbinfo->reltablespace) != 0 &&
-			strcmp(tbinfo->reltablespace,
+		/* Output tablespace clause if different from parent schema's */
+		if (strcmp(tbinfo->reltablespace,
 				   tbinfo->dobj.namespace->nsptablespace) != 0)
 		{
-			appendPQExpBuffer(q, " TABLESPACE %s",
-							  fmtId(tbinfo->reltablespace));
+			if (strlen(tbinfo->reltablespace) != 0)
+				appendPQExpBuffer(q, " TABLESPACE %s",
+								  fmtId(tbinfo->reltablespace));
+			else if (strlen(dbDefaultTableSpace) != 0)
+				appendPQExpBuffer(q, " TABLESPACE %s",
+								  fmtId(dbDefaultTableSpace));
 		}
 
 		appendPQExpBuffer(q, ";\n");
@@ -6947,13 +6957,16 @@ dumpConstraint(Archive *fout, ConstraintInfo *coninfo)
 
 		appendPQExpBuffer(q, ")");
 
-		/* Output tablespace clause if necessary */
-		if (strlen(indxinfo->tablespace) != 0 &&
-			strcmp(indxinfo->tablespace,
+		/* Output tablespace clause if different from parent table's */
+		if (strcmp(indxinfo->tablespace,
 				   indxinfo->indextable->reltablespace) != 0)
 		{
-			appendPQExpBuffer(q, " USING INDEX TABLESPACE %s",
-							  fmtId(indxinfo->tablespace));
+			if (strlen(indxinfo->tablespace) != 0)
+				appendPQExpBuffer(q, " USING INDEX TABLESPACE %s",
+								  fmtId(indxinfo->tablespace));
+			else if (strlen(dbDefaultTableSpace) != 0)
+				appendPQExpBuffer(q, " USING INDEX TABLESPACE %s",
+								  fmtId(dbDefaultTableSpace));
 		}
 
 		appendPQExpBuffer(q, ";\n");
