@@ -1196,7 +1196,6 @@ gistcentryinit(GISTSTATE *giststate, GISTENTRY *e, char *pr, Relation r,
 							 
 
 
-#define GISTDEBUG
 #ifdef GISTDEBUG
 
 extern char *text_range_out();
