@@ -7,7 +7,7 @@ import org.postgresql.core.Encoding;
 import org.postgresql.fastpath.Fastpath;
 import org.postgresql.largeobject.LargeObjectManager;
 
-/* $Header: /cvsroot/pgsql/src/interfaces/jdbc/org/postgresql/Attic/PGConnection.java,v 1.3 2002/09/06 21:23:05 momjian Exp $
+/* $Header: /cvsroot/pgsql/src/interfaces/jdbc/org/postgresql/Attic/PGConnection.java,v 1.3.2.1 2003/04/08 17:26:39 davec Exp $
  * This interface defines PostgreSQL extentions to the java.sql.Connection interface.
  * Any java.sql.Connection object returned by the driver will also implement this
  * interface
@@ -67,6 +67,28 @@ public interface PGConnection
 	 * @see org.postgresql.util.Serialize
 	 */
 	public Object getObject(String type, String value) throws SQLException;
+
+	/*
+	 * This allows client code to add a handler for one of org.postgresql's
+	 * more unique data types.
+	 *
+	 * <p><b>NOTE:</b> This is not part of JDBC, but an extension.
+	 *
+	 * <p>The best way to use this is as follows:
+	 *
+	 * <p><pre>
+	 * ...
+	 * ((org.postgresql.PGConnection)myconn).addDataType("mytype","my.class.name");
+	 * ...
+	 * </pre>
+	 *
+	 * <p>where myconn is an open Connection to org.postgresql.
+	 *
+	 * <p>The handling class must extend org.postgresql.util.PGobject
+	 *
+	 * @see org.postgresql.util.PGobject
+	 */
+	public void addDataType(String type, String name);
 
 
 	/*
