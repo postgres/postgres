@@ -7,7 +7,7 @@
 #
 #
 # IDENTIFICATION
-#    $Header: /cvsroot/pgsql/src/Attic/Makefile.global,v 1.48 1996/11/01 03:32:57 momjian Exp $
+#    $Header: /cvsroot/pgsql/src/Attic/Makefile.global,v 1.49 1996/11/01 21:04:48 momjian Exp $
 #
 # NOTES
 #    This is seen by any Makefiles that include mk/postgres.mk. To
@@ -141,14 +141,14 @@ OIDNAMELEN = 36
 # To disable a feature, comment out the entire definition
 # (that is, prepend '#', don't set it to "0" or "no").
 
+# Compile libpq++
 #HAVE_Cplusplus= true
 
 # Set CDEBUG to -O for optimization, or -g for debuggable binaries
-#
 CDEBUG= -O
 
 # Commenting out CASSERT will make things go a LOT faster, but you will
-# also lose a lot of useful error-checking.
+# also loose a lot of useful error-checking.
 CASSERT= true
 
 # Comment out ENFORCE_ALIGNMENT if you do NOT want unaligned access to
