@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/Attic/install.sgml,v 1.41 2000/05/02 20:01:51 thomas Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/Attic/install.sgml,v 1.42 2000/06/01 05:47:06 momjian Exp $
 -->
 
  <chapter id="install">
@@ -8,7 +8,7 @@ $Header: /cvsroot/pgsql/doc/src/sgml/Attic/install.sgml,v 1.41 2000/05/02 20:01:
   <abstract>
    <para>
     Installation instructions for 
-    <productname>PostgreSQL</productname> 7.0.
+    <productname>PostgreSQL</productname> 7.0.1.
    </para>
   </abstract>
 
@@ -18,9 +18,9 @@ $Header: /cvsroot/pgsql/doc/src/sgml/Attic/install.sgml,v 1.41 2000/05/02 20:01:
    then unpack it:
 
    <programlisting>
-&gt; gunzip postgresql-7.0.tar.gz
-&gt; tar -xf postgresql-7.0.tar
-&gt; mv postgresql-7.0 /usr/src
+&gt; gunzip postgresql-7.0.1.tar.gz
+&gt; tar -xf postgresql-7.0.1.tar
+&gt; mv postgresql-7.0.1 /usr/src
    </programlisting>
   </para>
 
@@ -261,7 +261,7 @@ All of PostgreSQL is successfully made. Ready to install.
      <para>
       Make sure to use the <application>pg_dumpall</application>
       command from the version you are currently running.
-      7.0's <application>pg_dumpall</application> will not work on older databases.
+      7.0.1's <application>pg_dumpall</application> will not work on older databases.
       However, if you are still using 6.0, do not use the
       <application>pg_dumpall</application> script from 6.0 or everything will be
       owned by the <productname>PostgreSQL</productname> superuser after you
@@ -329,8 +329,9 @@ All of PostgreSQL is successfully made. Ready to install.
      </tip>
 
      <para>
-      Also move the old directories  out of the way. Type the following:
-      <programlisting>
+      If you used pg_dumpall, move the old directories out of the way.
+      Type the following:      
+<programlisting>
 &gt; mv /usr/local/pgsql /usr/local/pgsql.old
       </programlisting>
       (substitute your particular paths).
@@ -438,7 +439,7 @@ libpq.so.2.1: cannot open shared object file: No such file or directory
 
     <step performance="optional">
      <para>
-      If you are upgrading from an existing installation, dump your data back in:
+      If you did a pg_dumpall, reload your data back in:
       <programlisting>
 &gt; /usr/local/pgsql/bin/psql -d template1 -f db.out
       </programlisting>
@@ -485,7 +486,7 @@ libpq.so.2.1: cannot open shared object file: No such file or directory
       You probably want to install the <application>man</application> and
       <acronym>HTML</acronym> documentation. Type
       <programlisting>
-&gt; cd /usr/src/pgsql/postgresql-7.0/doc
+&gt; cd /usr/src/pgsql/postgresql-7.0.1/doc
 &gt; gmake install
       </programlisting>
       This will install files under <filename>/usr/local/pgsql/doc</filename>
