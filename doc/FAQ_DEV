@@ -1,7 +1,7 @@
 
           Developer's Frequently Asked Questions (FAQ) for PostgreSQL
                                        
-   Last updated: Fri Oct 15 12:26:50 EDT 2004
+   Last updated: Sat Nov 27 01:02:35 EST 2004
    
    Current maintainer: Bruce Momjian (pgman@candle.pha.pa.us)
    
@@ -24,6 +24,7 @@
    1.10) How are RPM's packaged?
    1.11) How are CVS branches handled?
    1.12) Where can I get a copy of the SQL standards?
+   1.1) How do I get involved in PostgreSQL web site development?
    
                             Technical Questions
                                       
@@ -522,6 +523,17 @@
      * http://www.contrib.andrew.cmu.edu/~shadow/sql.html#syntax (SQL-92)
      * http://dbs.uni-leipzig.de/en/lokal/standards.pdf (paper)
        
+  1.13) How go I get involved in PostgreSQL web site development?
+  
+   PostgreSQL website development is discussed on the
+   pgsql-www@postgresql.org mailing list. The is a project page where the
+   source code is available at
+   http://gborg.postgresql.org/project/pgweb/projdisplay.php , the code
+   for the next version of the website is under the "portal" module. You
+   will al so find code for the "techdocs" website if you would like to
+   contribute to that. A temporary todo list for current website
+   development issues is available at http://xzilla.postgresql.org/todo
+   
                             Technical Questions
                                       
   2.1) How do I efficiently access information in tables from the backend code?
