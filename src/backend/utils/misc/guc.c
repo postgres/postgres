@@ -10,7 +10,7 @@
  * Written by Peter Eisentraut <peter_e@gmx.net>.
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/utils/misc/guc.c,v 1.196 2004/04/05 02:48:09 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/utils/misc/guc.c,v 1.197 2004/04/05 03:02:07 momjian Exp $
  *
  *--------------------------------------------------------------------
  */
@@ -74,6 +74,9 @@ extern int	CommitDelay;
 extern int	CommitSiblings;
 extern char *preload_libraries_string;
 extern int	DebugSharedBuffers;
+
+static const char *assign_log_destination(const char *value,
+				bool doit, GucSource source);
 
 #ifdef HAVE_SYSLOG
 extern char *Syslog_facility;
@@ -143,6 +146,7 @@ static char *client_min_messages_str;
 static char *log_min_messages_str;
 static char *log_error_verbosity_str;
 static char *log_min_error_statement_str;
+static char *log_destination_string;
 static bool phony_autocommit;
 static bool session_auth_is_superuser;
 static double phony_random_seed;
@@ -279,8 +283,8 @@ const char *const config_group_names[] =
 	gettext_noop("Query Tuning / Other Planner Options"),
 	/* LOGGING */
 	gettext_noop("Reporting and Logging"),
-	/* LOGGING_SYSLOG */
-	gettext_noop("Reporting and Logging / Syslog"),
+	/* LOGGING_WHERE */
+	gettext_noop("Reporting and Logging / Where to Log"),
 	/* LOGGING_WHEN */
 	gettext_noop("Reporting and Logging / When to Log"),
 	/* LOGGING_WHAT */
@@ -932,20 +936,6 @@ static struct config_int ConfigureNamesInt[] =
 		&DeadlockTimeout,
 		1000, 0, INT_MAX, NULL, NULL
 	},
-
-#ifdef HAVE_SYSLOG
-	{
-		{"syslog", PGC_SIGHUP, LOGGING_SYSLOG,
-			gettext_noop("Uses syslog for logging."),
-			gettext_noop("If this parameter is 1, messages go both to syslog "
-						 "and the standard output. A value of 2 sends output only to syslog. "
-						 "(Some messages will still go to the standard output/error.) The "
-						 "default is 0, which means syslog is off.")
-		},
-		&Use_syslog,
-		0, 0, 2, NULL, NULL
-	},
-#endif
 
 	/*
 	 * Note: There is some postprocessing done in PostmasterMain() to make
@@ -1644,9 +1634,20 @@ static struct config_string ConfigureNamesString[] =
 		NULL, assign_session_authorization, show_session_authorization
 	},
 
+	{
+		{"log_destination", PGC_POSTMASTER, LOGGING_WHERE,
+		 gettext_noop("Sets the target for log output."),
+		 gettext_noop("Valid values are combinations of stderr, syslog "
+					  "and eventlog, depending on platform."),
+		 GUC_LIST_INPUT | GUC_REPORT
+		},
+		&log_destination_string,
+		"stderr", assign_log_destination, NULL
+	},
+
 #ifdef HAVE_SYSLOG
 	{
-		{"syslog_facility", PGC_POSTMASTER, LOGGING_SYSLOG,
+		{"syslog_facility", PGC_POSTMASTER, LOGGING_WHERE,
 			gettext_noop("Sets the syslog \"facility\" to be used when syslog enabled."),
 			gettext_noop("Valid values are LOCAL0, LOCAL1, LOCAL2, LOCAL3, "
 						 "LOCAL4, LOCAL5, LOCAL6, LOCAL7.")
@@ -1655,7 +1656,7 @@ static struct config_string ConfigureNamesString[] =
 		"LOCAL0", assign_facility, NULL
 	},
 	{
-		{"syslog_ident", PGC_POSTMASTER, LOGGING_SYSLOG,
+		{"syslog_ident", PGC_POSTMASTER, LOGGING_WHERE,
 			gettext_noop("Sets the program name used to identify PostgreSQL messages "
 						 "in syslog."),
 			NULL
@@ -4417,6 +4418,68 @@ GUCArrayDelete(ArrayType *array, const char *name)
 /*
  * assign_hook subroutines
  */
+
+static const char *
+assign_log_destination(const char *value, bool doit, GucSource source)
+{
+	char *rawstring;
+	List *elemlist;
+	List *l;
+	unsigned int  newlogdest = 0;
+ 
+	/* Need a modifiable copy of string */
+	rawstring = pstrdup(value);
+
+	/* Parse string into list of identifiers */
+	if (!SplitIdentifierString(rawstring, ',', &elemlist)) 
+	{
+		/* syntax error in list */
+		pfree(rawstring);
+		freeList(elemlist);
+		if (source >= PGC_S_INTERACTIVE)
+			ereport(ERROR,
+					(errcode(ERRCODE_INVALID_PARAMETER_VALUE),
+					 errmsg("invalid list syntax for parameter \"log_destination\"")));
+		return NULL;
+	}
+
+	foreach(l, elemlist)
+	{
+		char *tok = (char *) lfirst(l);
+	
+		if (strcasecmp(tok,"stderr") == 0)
+			newlogdest |= LOG_DESTINATION_STDERR;
+#ifdef HAVE_SYSLOG
+		else if (strcasecmp(tok,"syslog") == 0)
+			newlogdest |= LOG_DESTINATION_SYSLOG;
+#endif
+#ifdef WIN32
+		else if (strcasecmp(tok,"eventlog") == 0)
+			newlogdest |= LOG_DESTINATION_EVENTLOG;
+#endif
+		else {
+			if (source >= PGC_S_INTERACTIVE)
+				ereport(ERROR,
+						(errcode(ERRCODE_INVALID_PARAMETER_VALUE),
+						 errmsg("unrecognised \"log_destination\" key word: \"%s\"",
+								tok)));
+			pfree(rawstring);
+			freeList(elemlist);
+			return NULL;
+		}
+	}
+
+	pfree(rawstring);
+	freeList(elemlist);
+
+	/* If we aren't going to do the assignment, just return OK indicator. */
+	if (!doit)
+		return value;
+
+	Log_destination = newlogdest;
+
+	return value;
+}
 
 #ifdef HAVE_SYSLOG
 

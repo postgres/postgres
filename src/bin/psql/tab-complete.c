@@ -3,7 +3,7 @@
  *
  * Copyright (c) 2000-2003, PostgreSQL Global Development Group
  *
- * $PostgreSQL: pgsql/src/bin/psql/tab-complete.c,v 1.103 2004/03/24 22:40:29 tgl Exp $
+ * $PostgreSQL: pgsql/src/bin/psql/tab-complete.c,v 1.104 2004/04/05 03:02:09 momjian Exp $
  */
 
 /*----------------------------------------------------------------------
@@ -523,6 +523,7 @@ psql_completion(char *text, int start, int end)
 		"lc_monetary",
 		"lc_numeric",
 		"lc_time",
+		"log_destination",
 		"log_duration",
 		"log_error_verbosity",
 		"log_executor_stats",
@@ -557,7 +558,6 @@ psql_completion(char *text, int start, int end)
 		"stats_row_level",
 		"stats_start_collector",
 		"superuser_reserved_connections",
-		"syslog",
 		"syslog_facility",
 		"syslog_ident",
 		"TimeZone",

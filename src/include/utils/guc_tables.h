@@ -7,7 +7,7 @@
  *
  * Portions Copyright (c) 1996-2003, PostgreSQL Global Development Group
  *
- *	  $PostgreSQL: pgsql/src/include/utils/guc_tables.h,v 1.9 2004/01/19 19:04:40 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/include/utils/guc_tables.h,v 1.10 2004/04/05 03:02:11 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -36,7 +36,7 @@ enum config_group
 	QUERY_TUNING_GEQO,
 	QUERY_TUNING_OTHER,
 	LOGGING,
-	LOGGING_SYSLOG,
+	LOGGING_WHERE,
 	LOGGING_WHEN,
 	LOGGING_WHAT,
 	STATS,

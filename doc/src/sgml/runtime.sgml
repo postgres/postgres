@@ -1,5 +1,5 @@
 <!--
-$PostgreSQL: pgsql/doc/src/sgml/runtime.sgml,v 1.256 2004/03/31 19:59:22 momjian Exp $
+$PostgreSQL: pgsql/doc/src/sgml/runtime.sgml,v 1.257 2004/04/05 03:02:03 momjian Exp $
 -->
 
 <Chapter Id="runtime">
@@ -469,7 +469,7 @@ psql: could not connect to server: No such file or directory
 <programlisting>
 # This is a comment
 log_connections = yes
-syslog = 2
+log_destination = 'syslog'
 search_path = '$user, public'
 </programlisting>
     One parameter is specified per line. The equal sign between name and
@@ -497,7 +497,7 @@ search_path = '$user, public'
     A second way to set these configuration parameters is to give them
     as a command line option to the <command>postmaster</command>, such as:
 <programlisting>
-postmaster -c log_connections=yes -c syslog=2
+postmaster -c log_connections=yes -c log_destination='syslog'
 </programlisting>
     Command-line options override any conflicting settings in
     <filename>postgresql.conf</filename>.
@@ -1705,27 +1705,26 @@ SET ENABLE_SEQSCAN TO OFF;
      <primary>server log</primary>
     </indexterm>
 
-    <sect3 id="runtime-config-logging-syslog">
-     <title>Syslog</title>
+    <sect3 id="runtime-config-logging-where">
+     <title>Where to log</title>
 
-     <indexterm zone="runtime-config-logging-syslog">
-      <primary>syslog</primary>
+     <indexterm zone="runtime-config-logging-where">
+      <primary>where to log</primary>
      </indexterm>
 
      <variablelist>
 
-     <varlistentry id="guc-syslog" xreflabel="syslog">
-      <term><varname>syslog</varname> (<type>integer</type>)</term>
+     <varlistentry id="guc-log-destination" xreflabel="log_destination">
+      <term><varname>log_destination</varname> (<type>string</type>)</term>
       <listitem>
        <para>
-        <productname>PostgreSQL</productname> allows the use of
-        <systemitem>syslog</systemitem> for logging. If this option is
-        set to 1, messages go both to <systemitem>syslog</> and the
-        standard output. A setting of 2 sends output only to
-        <systemitem>syslog</>. (Some messages will still go to the
-        standard output/error.) The default is 0, which means
-        <systemitem>syslog</> is off. This option must be set at server
-        start.
+	<productname>PostgreSQL</productname> supports several methods
+	 for loggning, including <systemitem>stderr</systemitem> and
+	 <systemitem>syslog</systemitem>. On Windows, 
+	 <systemitem>eventlog</systemitem> is also supported. Set this
+	 option to a list of desired log destinations separated by a
+	 comma. The default is to log to <systemitem>stderr</systemitem> 
+	 only. This option must be set at server start.
        </para>
       </listitem>
      </varlistentry>

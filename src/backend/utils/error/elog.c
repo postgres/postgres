@@ -37,7 +37,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/utils/error/elog.c,v 1.131 2004/03/22 15:34:22 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/utils/error/elog.c,v 1.132 2004/04/05 03:02:06 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -70,25 +70,17 @@ ErrorContextCallback *error_context_stack = NULL;
 /* GUC parameters */
 PGErrorVerbosity Log_error_verbosity = PGERROR_VERBOSE;
 char       *Log_line_prefix = NULL; /* format for extra log line info */
+unsigned int Log_destination;
 
 #ifdef HAVE_SYSLOG
-/*
- * 0 = only stdout/stderr
- * 1 = stdout+stderr and syslog
- * 2 = syslog only
- * ... in theory anyway
- */
-int			Use_syslog = 0;
 char	   *Syslog_facility;	/* openlog() parameters */
 char	   *Syslog_ident;
 
 static void write_syslog(int level, const char *line);
-
-#else
-
-#define Use_syslog 0
-#endif   /* HAVE_SYSLOG */
-
+#endif
+#ifdef WIN32
+static void write_eventlog(int level, const char *line);
+#endif
 
 /*
  * ErrorData holds the data accumulated during any one ereport() cycle.
@@ -1005,9 +997,6 @@ write_syslog(int level, const char *line)
 
 	int			len = strlen(line);
 
-	if (Use_syslog == 0)
-		return;
-
 	if (!openlog_done)
 	{
 		if (strcasecmp(Syslog_facility, "LOCAL0") == 0)
@@ -1099,6 +1088,34 @@ write_syslog(int level, const char *line)
 	}
 }
 #endif   /* HAVE_SYSLOG */
+#ifdef WIN32
+/*
+ * Write a message line to the windows event log
+ */
+static void
+write_eventlog(int level, const char *line)
+{
+	static HANDLE evtHandle = INVALID_HANDLE_VALUE;
+	
+	if (evtHandle == INVALID_HANDLE_VALUE) {
+		evtHandle = RegisterEventSource(NULL,"PostgreSQL");
+		if (evtHandle == NULL) {
+			evtHandle = INVALID_HANDLE_VALUE;
+			return;
+		}
+	}
+
+	ReportEvent(evtHandle,
+				level,
+				0,
+				0, /* All events are Id 0 */
+				NULL,
+				1,
+				0,
+				&line,
+				NULL);
+}
+#endif /* WIN32*/
 
 /*
  * Format tag info for log lines; append to the provided buffer.
@@ -1344,7 +1361,7 @@ send_message_to_server_log(ErrorData *edata)
 
 #ifdef HAVE_SYSLOG
 	/* Write to syslog, if enabled */
-	if (Use_syslog >= 1)
+	if (Log_destination & LOG_DESTINATION_SYSLOG)
 	{
 		int			syslog_level;
 
@@ -1381,9 +1398,38 @@ send_message_to_server_log(ErrorData *edata)
 		write_syslog(syslog_level, buf.data);
 	}
 #endif   /* HAVE_SYSLOG */
-
+#ifdef WIN32
+	if (Log_destination & LOG_DESTINATION_EVENTLOG)
+	{
+		int eventlog_level;
+		switch (edata->elevel) 
+		{
+			case DEBUG5:
+			case DEBUG4:
+			case DEBUG3:
+			case DEBUG2:
+			case DEBUG1:
+			case LOG:
+			case COMMERROR:
+			case INFO:
+			case NOTICE:
+				eventlog_level = EVENTLOG_INFORMATION_TYPE;
+				break;
+			case WARNING:
+				eventlog_level = EVENTLOG_WARNING_TYPE;
+				break;
+			case ERROR:
+			case FATAL:
+			case PANIC:
+			default:
+				eventlog_level = EVENTLOG_ERROR_TYPE;
+				break;
+		}
+		write_eventlog(eventlog_level, buf.data);
+	}
+#endif   /* WIN32 */
 	/* Write to stderr, if enabled */
-	if (Use_syslog <= 1 || whereToSendOutput == Debug)
+	if ((Log_destination & LOG_DESTINATION_STDERR) || whereToSendOutput == Debug)
 	{
 		fprintf(stderr, "%s", buf.data);
 	}

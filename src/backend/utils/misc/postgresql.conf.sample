@@ -145,9 +145,11 @@
 # ERROR REPORTING AND LOGGING
 #---------------------------------------------------------------------------
 
-# - Syslog -
+# - Where to Log -
 
-#syslog = 0			# range 0-2; 0=stdout; 1=both; 2=syslog
+#log_destination = 'stderr'	# Valid values are combinations of stderr,
+                                # syslog and eventlog, depending on
+                                # platform.
 #syslog_facility = 'LOCAL0'
 #syslog_ident = 'postgres'
 
