@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/acl.c,v 1.95 2003/08/14 14:19:07 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/acl.c,v 1.96 2003/08/17 19:58:05 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -479,6 +479,23 @@ aclitem_eq(PG_FUNCTION_ARGS)
 		a1->ai_grantor == a2->ai_grantor;
 	PG_RETURN_BOOL(result);
 }
+
+/*
+ * aclitem hash function
+ *
+ * We make aclitems hashable not so much because anyone is likely to hash
+ * them, as because we want array equality to work on aclitem arrays, and
+ * with the typcache mechanism we must have a hash or btree opclass.
+ */
+Datum
+hash_aclitem(PG_FUNCTION_ARGS)
+{
+	AclItem    *a = PG_GETARG_ACLITEM_P(0);
+
+	/* not very bright, but avoids any issue of padding in struct */
+	PG_RETURN_UINT32((uint32) (a->ai_privs + a->ai_grantee + a->ai_grantor));
+}
+
 
 /*
  * acldefault()  --- create an ACL describing default access permissions

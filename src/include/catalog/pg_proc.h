@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2003, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Id: pg_proc.h,v 1.312 2003/08/04 02:40:12 momjian Exp $
+ * $Id: pg_proc.h,v 1.313 2003/08/17 19:58:06 tgl Exp $
  *
  * NOTES
  *	  The script catalog/genbki.sh reads this file and generates .bki
@@ -758,6 +758,12 @@ DATA(insert OID = 359 (  btnamecmp		   PGNSP PGUID 12 f f t f i 2 23 "19 19"	btn
 DESCR("btree less-equal-greater");
 DATA(insert OID = 360 (  bttextcmp		   PGNSP PGUID 12 f f t f i 2 23 "25 25"	bttextcmp - _null_ ));
 DESCR("btree less-equal-greater");
+DATA(insert OID = 377 (  cash_cmp		   PGNSP PGUID 12 f f t f i 2 23 "790 790"	cash_cmp - _null_ ));
+DESCR("btree less-equal-greater");
+DATA(insert OID = 380 (  btreltimecmp	   PGNSP PGUID 12 f f t f i 2 23 "703 703"	btreltimecmp - _null_ ));
+DESCR("btree less-equal-greater");
+DATA(insert OID = 381 (  bttintervalcmp	   PGNSP PGUID 12 f f t f i 2 23 "704 704"	bttintervalcmp - _null_ ));
+DESCR("btree less-equal-greater");
 DATA(insert OID = 382 (  btarraycmp		   PGNSP PGUID 12 f f t f i 2 23 "2277 2277"	btarraycmp - _null_ ));
 DESCR("btree less-equal-greater");
 
@@ -843,6 +849,8 @@ DESCR("hash");
 DATA(insert OID = 456 (  hashvarlena	   PGNSP PGUID 12 f f t f i 1 23 "2281" hashvarlena - _null_ ));
 DESCR("hash any varlena type");
 DATA(insert OID = 457 (  hashoidvector	   PGNSP PGUID 12 f f t f i 1 23 "30"  hashoidvector - _null_ ));
+DESCR("hash");
+DATA(insert OID = 329 (  hash_aclitem	   PGNSP PGUID 12 f f t f i 1 23 "1033"  hash_aclitem - _null_ ));
 DESCR("hash");
 DATA(insert OID = 398 (  hashint2vector    PGNSP PGUID 12 f f t f i 1 23 "22"  hashint2vector - _null_ ));
 DESCR("hash");

@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/parser/parse_oper.c,v 1.73 2003/08/04 02:40:02 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/parser/parse_oper.c,v 1.74 2003/08/17 19:58:05 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -26,6 +26,7 @@
 #include "utils/fmgroids.h"
 #include "utils/lsyscache.h"
 #include "utils/syscache.h"
+#include "utils/typcache.h"
 
 
 static Oid binary_oper_exact(Oid arg1, Oid arg2,
@@ -135,52 +136,49 @@ LookupOperNameTypeNames(List *opername, TypeName *oprleft,
 Operator
 equality_oper(Oid argtype, bool noError)
 {
+	TypeCacheEntry *typentry;
+	Oid			oproid;
 	Operator	optup;
-	Oid			elem_type;
+
+	/*
+	 * Look for an "=" operator for the datatype.  We require it to be
+	 * an exact or binary-compatible match, since most callers are not
+	 * prepared to cope with adding any run-time type coercion steps.
+	 */
+	typentry = lookup_type_cache(argtype, TYPECACHE_EQ_OPR);
+	oproid = typentry->eq_opr;
 
 	/*
 	 * If the datatype is an array, then we can use array_eq ... but only
-	 * if there is a suitable equality operator for the element type. (We
-	 * must run this test first, since compatible_oper will find array_eq,
-	 * but would not notice the lack of an element operator.)
+	 * if there is a suitable equality operator for the element type.
+	 * (This check is not in the raw typcache.c code ... should it be?)
 	 */
-	elem_type = get_element_type(argtype);
-	if (OidIsValid(elem_type))
+	if (oproid == ARRAY_EQ_OP)
 	{
-		optup = equality_oper(elem_type, true);
-		if (optup != NULL)
+		Oid		elem_type = get_element_type(argtype);
+
+		if (OidIsValid(elem_type))
 		{
-			ReleaseSysCache(optup);
-			return SearchSysCache(OPEROID,
-								  ObjectIdGetDatum(ARRAY_EQ_OP),
-								  0, 0, 0);
+			optup = equality_oper(elem_type, true);
+			if (optup != NULL)
+				ReleaseSysCache(optup);
+			else
+				oproid = InvalidOid;	/* element type has no "=" */
 		}
+		else
+			oproid = InvalidOid;		/* bogus array type? */
 	}
-	else
+
+	if (OidIsValid(oproid))
 	{
-		/*
-		 * Look for an "=" operator for the datatype.  We require it to be
-		 * an exact or binary-compatible match, since most callers are not
-		 * prepared to cope with adding any run-time type coercion steps.
-		 */
-		optup = compatible_oper(makeList1(makeString("=")),
-								argtype, argtype, true);
-		if (optup != NULL)
-		{
-			/*
-			 * Only believe that it's equality if it's mergejoinable,
-			 * hashjoinable, or uses eqsel() as oprrest.
-			 */
-			Form_pg_operator pgopform = (Form_pg_operator) GETSTRUCT(optup);
-
-			if (OidIsValid(pgopform->oprlsortop) ||
-				pgopform->oprcanhash ||
-				pgopform->oprrest == F_EQSEL)
-				return optup;
-
-			ReleaseSysCache(optup);
-		}
+		optup = SearchSysCache(OPEROID,
+							   ObjectIdGetDatum(oproid),
+							   0, 0, 0);
+		if (optup == NULL)		/* should not fail */
+			elog(ERROR, "cache lookup failed for operator %u", oproid);
+		return optup;
 	}
+
 	if (!noError)
 		ereport(ERROR,
 				(errcode(ERRCODE_UNDEFINED_FUNCTION),
@@ -197,53 +195,119 @@ equality_oper(Oid argtype, bool noError)
 Operator
 ordering_oper(Oid argtype, bool noError)
 {
+	TypeCacheEntry *typentry;
+	Oid			oproid;
 	Operator	optup;
-	Oid			elem_type;
+
+	/*
+	 * Look for a "<" operator for the datatype.  We require it to be
+	 * an exact or binary-compatible match, since most callers are not
+	 * prepared to cope with adding any run-time type coercion steps.
+	 *
+	 * Note: the search algorithm used by typcache.c ensures that if a "<"
+	 * operator is returned, it will be consistent with the "=" operator
+	 * returned by equality_oper.  This is critical for sorting and grouping
+	 * purposes.
+	 */
+	typentry = lookup_type_cache(argtype, TYPECACHE_LT_OPR);
+	oproid = typentry->lt_opr;
 
 	/*
 	 * If the datatype is an array, then we can use array_lt ... but only
-	 * if there is a suitable ordering operator for the element type. (We
-	 * must run this test first, since the code below would find array_lt
-	 * if there's an element = operator, but would not notice the lack of
-	 * an element < operator.)
+	 * if there is a suitable less-than operator for the element type.
+	 * (This check is not in the raw typcache.c code ... should it be?)
 	 */
-	elem_type = get_element_type(argtype);
-	if (OidIsValid(elem_type))
+	if (oproid == ARRAY_LT_OP)
 	{
-		optup = ordering_oper(elem_type, true);
-		if (optup != NULL)
-		{
-			ReleaseSysCache(optup);
-			return SearchSysCache(OPEROID,
-								  ObjectIdGetDatum(ARRAY_LT_OP),
-								  0, 0, 0);
-		}
-	}
-	else
-	{
-		/*
-		 * Find the type's equality operator, and use its lsortop (it
-		 * *must* be mergejoinable).  We use this definition because for
-		 * sorting and grouping purposes, it's important that the equality
-		 * and ordering operators are consistent.
-		 */
-		optup = equality_oper(argtype, noError);
-		if (optup != NULL)
-		{
-			Oid			lsortop;
+		Oid		elem_type = get_element_type(argtype);
 
-			lsortop = ((Form_pg_operator) GETSTRUCT(optup))->oprlsortop;
-			ReleaseSysCache(optup);
-			if (OidIsValid(lsortop))
-			{
-				optup = SearchSysCache(OPEROID,
-									   ObjectIdGetDatum(lsortop),
-									   0, 0, 0);
-				if (optup != NULL)
-					return optup;
-			}
+		if (OidIsValid(elem_type))
+		{
+			optup = ordering_oper(elem_type, true);
+			if (optup != NULL)
+				ReleaseSysCache(optup);
+			else
+				oproid = InvalidOid;	/* element type has no "<" */
 		}
+		else
+			oproid = InvalidOid;		/* bogus array type? */
 	}
+
+	if (OidIsValid(oproid))
+	{
+		optup = SearchSysCache(OPEROID,
+							   ObjectIdGetDatum(oproid),
+							   0, 0, 0);
+		if (optup == NULL)		/* should not fail */
+			elog(ERROR, "cache lookup failed for operator %u", oproid);
+		return optup;
+	}
+
+	if (!noError)
+		ereport(ERROR,
+				(errcode(ERRCODE_UNDEFINED_FUNCTION),
+			errmsg("could not identify an ordering operator for type %s",
+				   format_type_be(argtype)),
+				 errhint("Use an explicit ordering operator or modify the query.")));
+	return NULL;
+}
+
+/*
+ * reverse_ordering_oper - identify DESC sort operator (">") for a datatype
+ *
+ * On failure, return NULL if noError, else report a standard error
+ */
+Operator
+reverse_ordering_oper(Oid argtype, bool noError)
+{
+	TypeCacheEntry *typentry;
+	Oid			oproid;
+	Operator	optup;
+
+	/*
+	 * Look for a ">" operator for the datatype.  We require it to be
+	 * an exact or binary-compatible match, since most callers are not
+	 * prepared to cope with adding any run-time type coercion steps.
+	 *
+	 * Note: the search algorithm used by typcache.c ensures that if a ">"
+	 * operator is returned, it will be consistent with the "=" operator
+	 * returned by equality_oper.  This is critical for sorting and grouping
+	 * purposes.
+	 */
+	typentry = lookup_type_cache(argtype, TYPECACHE_GT_OPR);
+	oproid = typentry->gt_opr;
+
+	/*
+	 * If the datatype is an array, then we can use array_gt ... but only
+	 * if there is a suitable greater-than operator for the element type.
+	 * (This check is not in the raw typcache.c code ... should it be?)
+	 */
+	if (oproid == ARRAY_GT_OP)
+	{
+		Oid		elem_type = get_element_type(argtype);
+
+		if (OidIsValid(elem_type))
+		{
+			optup = reverse_ordering_oper(elem_type, true);
+			if (optup != NULL)
+				ReleaseSysCache(optup);
+			else
+				oproid = InvalidOid;	/* element type has no ">" */
+		}
+		else
+			oproid = InvalidOid;		/* bogus array type? */
+	}
+
+	if (OidIsValid(oproid))
+	{
+		optup = SearchSysCache(OPEROID,
+							   ObjectIdGetDatum(oproid),
+							   0, 0, 0);
+		if (optup == NULL)		/* should not fail */
+			elog(ERROR, "cache lookup failed for operator %u", oproid);
+		return optup;
+	}
+
 	if (!noError)
 		ereport(ERROR,
 				(errcode(ERRCODE_UNDEFINED_FUNCTION),
@@ -286,16 +350,16 @@ ordering_oper_opid(Oid argtype)
 }
 
 /*
- * ordering_oper_funcid - convenience routine for oprfuncid(ordering_oper())
+ * reverse_ordering_oper_opid - convenience routine for oprid(reverse_ordering_oper())
  */
 Oid
-ordering_oper_funcid(Oid argtype)
+reverse_ordering_oper_opid(Oid argtype)
 {
 	Operator	optup;
 	Oid			result;
 
-	optup = ordering_oper(argtype, false);
-	result = oprfuncid(optup);
+	optup = reverse_ordering_oper(argtype, false);
+	result = oprid(optup);
 	ReleaseSysCache(optup);
 	return result;
 }

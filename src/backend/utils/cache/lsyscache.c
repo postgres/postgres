@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/cache/lsyscache.c,v 1.106 2003/08/11 23:04:49 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/cache/lsyscache.c,v 1.107 2003/08/17 19:58:06 tgl Exp $
  *
  * NOTES
  *	  Eventually, the index information should go through here, too.
@@ -122,7 +122,6 @@ get_op_hash_function(Oid opno)
 {
 	CatCList   *catlist;
 	int			i;
-	HeapTuple	tuple;
 	Oid			opclass = InvalidOid;
 
 	/*
@@ -137,10 +136,8 @@ get_op_hash_function(Oid opno)
 
 	for (i = 0; i < catlist->n_members; i++)
 	{
-		Form_pg_amop aform;
-
-		tuple = &catlist->members[i]->tuple;
-		aform = (Form_pg_amop) GETSTRUCT(tuple);
+		HeapTuple	tuple = &catlist->members[i]->tuple;
+		Form_pg_amop aform = (Form_pg_amop) GETSTRUCT(tuple);
 
 		if (aform->amopstrategy == HTEqualStrategyNumber &&
 			opclass_is_hash(aform->amopclaid))
@@ -155,24 +152,40 @@ get_op_hash_function(Oid opno)
 	if (OidIsValid(opclass))
 	{
 		/* Found a suitable opclass, get its hash support function */
-		tuple = SearchSysCache(AMPROCNUM,
-							   ObjectIdGetDatum(opclass),
-							   Int16GetDatum(HASHPROC),
-							   0, 0);
-		if (HeapTupleIsValid(tuple))
-		{
-			Form_pg_amproc aform = (Form_pg_amproc) GETSTRUCT(tuple);
-			RegProcedure result;
-
-			result = aform->amproc;
-			ReleaseSysCache(tuple);
-			Assert(RegProcedureIsValid(result));
-			return result;
-		}
+		return get_opclass_proc(opclass, HASHPROC);
 	}
 
 	/* Didn't find a match... */
 	return InvalidOid;
+}
+
+
+/*				---------- AMPROC CACHES ----------						 */
+
+/*
+ * get_opclass_proc
+ *		Get the OID of the specified support function
+ *		for the specified opclass.
+ *
+ * Returns InvalidOid if there is no pg_amproc entry for the given keys.
+ */
+Oid
+get_opclass_proc(Oid opclass, int16 procnum)
+{
+	HeapTuple	tp;
+	Form_pg_amproc amproc_tup;
+	RegProcedure result;
+
+	tp = SearchSysCache(AMPROCNUM,
+						ObjectIdGetDatum(opclass),
+						Int16GetDatum(procnum),
+						0, 0);
+	if (!HeapTupleIsValid(tp))
+		return InvalidOid;
+	amproc_tup = (Form_pg_amproc) GETSTRUCT(tp);
+	result = amproc_tup->amproc;
+	ReleaseSysCache(tp);
+	return result;
 }
 
 

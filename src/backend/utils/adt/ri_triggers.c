@@ -17,7 +17,7 @@
  *
  * Portions Copyright (c) 1996-2003, PostgreSQL Global Development Group
  *
- * $Header: /cvsroot/pgsql/src/backend/utils/adt/ri_triggers.c,v 1.54 2003/08/04 02:40:05 momjian Exp $
+ * $Header: /cvsroot/pgsql/src/backend/utils/adt/ri_triggers.c,v 1.55 2003/08/17 19:58:05 tgl Exp $
  *
  * ----------
  */
@@ -39,6 +39,7 @@
 #include "parser/parse_oper.h"
 #include "rewrite/rewriteHandler.h"
 #include "utils/lsyscache.h"
+#include "utils/typcache.h"
 #include "miscadmin.h"
 
 
@@ -48,7 +49,6 @@
  */
 
 #define RI_INIT_QUERYHASHSIZE			128
-#define RI_INIT_OPREQHASHSIZE			128
 
 #define RI_MATCH_TYPE_UNSPECIFIED		0
 #define RI_MATCH_TYPE_FULL				1
@@ -109,20 +109,11 @@ typedef struct RI_QueryHashEntry
 } RI_QueryHashEntry;
 
 
-typedef struct RI_OpreqHashEntry
-{
-	Oid			typeid;
-	FmgrInfo	oprfmgrinfo;
-} RI_OpreqHashEntry;
-
-
-
 /* ----------
  * Local data
  * ----------
  */
 static HTAB *ri_query_cache = (HTAB *) NULL;
-static HTAB *ri_opreq_cache = (HTAB *) NULL;
 
 
 /* ----------
@@ -3197,8 +3188,8 @@ ri_NullCheck(Relation rel, HeapTuple tup, RI_QueryKey *key, int pairidx)
 /* ----------
  * ri_InitHashTables -
  *
- *	Initialize our internal hash tables for prepared
- *	query plans and equal operators.
+ *	Initialize our internal hash table for prepared
+ *	query plans.
  * ----------
  */
 static void
@@ -3211,12 +3202,6 @@ ri_InitHashTables(void)
 	ctl.entrysize = sizeof(RI_QueryHashEntry);
 	ctl.hash = tag_hash;
 	ri_query_cache = hash_create("RI query cache", RI_INIT_QUERYHASHSIZE,
-								 &ctl, HASH_ELEM | HASH_FUNCTION);
-
-	ctl.keysize = sizeof(Oid);
-	ctl.entrysize = sizeof(RI_OpreqHashEntry);
-	ctl.hash = tag_hash;
-	ri_opreq_cache = hash_create("RI OpReq cache", RI_INIT_OPREQHASHSIZE,
 								 &ctl, HASH_ELEM | HASH_FUNCTION);
 }
 
@@ -3438,57 +3423,22 @@ ri_OneKeyEqual(Relation rel, int column, HeapTuple oldtup, HeapTuple newtup,
 static bool
 ri_AttributesEqual(Oid typeid, Datum oldvalue, Datum newvalue)
 {
-	RI_OpreqHashEntry *entry;
-	bool		found;
+	TypeCacheEntry *typentry;
 
 	/*
-	 * On the first call initialize the hashtable
+	 * Find the data type in the typcache, and ask for eq_opr info.
 	 */
-	if (!ri_opreq_cache)
-		ri_InitHashTables();
+	typentry = lookup_type_cache(typeid, TYPECACHE_EQ_OPR_FINFO);
 
-	/*
-	 * Try to find the '=' operator for this type in our cache
-	 */
-	entry = (RI_OpreqHashEntry *) hash_search(ri_opreq_cache,
-											  (void *) &typeid,
-											  HASH_FIND, NULL);
-
-	/*
-	 * If not found, lookup the operator, then do the function manager
-	 * lookup, and remember that info.
-	 */
-	if (!entry)
-	{
-		Oid			opr_proc;
-		FmgrInfo	finfo;
-
-		opr_proc = equality_oper_funcid(typeid);
-
-		/*
-		 * Since fmgr_info could fail, call it *before* creating the
-		 * hashtable entry --- otherwise we could ereport leaving an
-		 * incomplete entry in the hashtable.  Also, because this will be
-		 * a permanent table entry, we must make sure any subsidiary
-		 * structures of the fmgr record are kept in TopMemoryContext.
-		 */
-		fmgr_info_cxt(opr_proc, &finfo, TopMemoryContext);
-
-		entry = (RI_OpreqHashEntry *) hash_search(ri_opreq_cache,
-												  (void *) &typeid,
-												  HASH_ENTER, &found);
-		if (entry == NULL)
-			ereport(ERROR,
-					(errcode(ERRCODE_OUT_OF_MEMORY),
-					 errmsg("out of memory")));
-
-		entry->typeid = typeid;
-		memcpy(&(entry->oprfmgrinfo), &finfo, sizeof(FmgrInfo));
-	}
+	if (!OidIsValid(typentry->eq_opr_finfo.fn_oid))
+		ereport(ERROR,
+				(errcode(ERRCODE_UNDEFINED_FUNCTION),
+				 errmsg("could not identify an equality operator for type %s",
+						format_type_be(typeid))));
 
 	/*
 	 * Call the type specific '=' function
 	 */
-	return DatumGetBool(FunctionCall2(&(entry->oprfmgrinfo),
+	return DatumGetBool(FunctionCall2(&(typentry->eq_opr_finfo),
 									  oldvalue, newvalue));
 }

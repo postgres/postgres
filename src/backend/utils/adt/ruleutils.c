@@ -3,7 +3,7 @@
  *				back to source text
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/ruleutils.c,v 1.151 2003/08/11 23:04:49 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/ruleutils.c,v 1.152 2003/08/17 19:58:05 tgl Exp $
  *
  *	  This software is copyrighted by Jan Wieck - Hamburg.
  *
@@ -69,6 +69,7 @@
 #include "utils/array.h"
 #include "utils/fmgroids.h"
 #include "utils/lsyscache.h"
+#include "utils/typcache.h"
 
 
 /* ----------
@@ -1815,21 +1816,24 @@ get_select_query_def(Query *query, deparse_context *context,
 			SortClause *srt = (SortClause *) lfirst(l);
 			Node	   *sortexpr;
 			Oid			sortcoltype;
-			char	   *opname;
+			TypeCacheEntry *typentry;
 
 			appendStringInfo(buf, sep);
 			sortexpr = get_rule_sortgroupclause(srt, query->targetList,
 												force_colno, context);
 			sortcoltype = exprType(sortexpr);
-			opname = generate_operator_name(srt->sortop,
-											sortcoltype, sortcoltype);
-			if (strcmp(opname, "<") != 0)
-			{
-				if (strcmp(opname, ">") == 0)
-					appendStringInfo(buf, " DESC");
-				else
-					appendStringInfo(buf, " USING %s", opname);
-			}
+			/* See whether operator is default < or > for datatype */
+			typentry = lookup_type_cache(sortcoltype,
+										 TYPECACHE_LT_OPR | TYPECACHE_GT_OPR);
+			if (srt->sortop == typentry->lt_opr)
+				/* ASC is default, so emit nothing */ ;
+			else if (srt->sortop == typentry->gt_opr)
+				appendStringInfo(buf, " DESC");
+			else
+				appendStringInfo(buf, " USING %s",
+								 generate_operator_name(srt->sortop,
+														sortcoltype,
+														sortcoltype));
 			sep = ", ";
 		}
 	}
@@ -4032,6 +4036,15 @@ get_opclass_name(Oid opclass, Oid actual_datatype,
 	if (!HeapTupleIsValid(ht_opc))
 		elog(ERROR, "cache lookup failed for opclass %u", opclass);
 	opcrec = (Form_pg_opclass) GETSTRUCT(ht_opc);
+
+	/* Special case for ARRAY_OPS: pretend it is default for any array type */
+	if (OidIsValid(actual_datatype))
+	{
+		if (opcrec->opcintype == ANYARRAYOID &&
+			OidIsValid(get_element_type(actual_datatype)))
+			actual_datatype = opcrec->opcintype;
+	}
+	
 	if (actual_datatype != opcrec->opcintype || !opcrec->opcdefault)
 	{
 		/* Okay, we need the opclass name.	Do we need to qualify it? */

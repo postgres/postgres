@@ -78,7 +78,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/sort/tuplesort.c,v 1.36 2003/08/04 02:40:09 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/sort/tuplesort.c,v 1.37 2003/08/17 19:58:06 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -88,7 +88,6 @@
 #include "access/heapam.h"
 #include "access/nbtree.h"
 #include "catalog/pg_amop.h"
-#include "catalog/pg_amproc.h"
 #include "catalog/pg_operator.h"
 #include "miscadmin.h"
 #include "utils/catcache.h"
@@ -1754,26 +1753,17 @@ SelectSortFunction(Oid sortOperator,
 	if (OidIsValid(opclass))
 	{
 		/* Found a suitable opclass, get its comparator support function */
-		tuple = SearchSysCache(AMPROCNUM,
-							   ObjectIdGetDatum(opclass),
-							   Int16GetDatum(BTORDER_PROC),
-							   0, 0);
-		if (HeapTupleIsValid(tuple))
-		{
-			Form_pg_amproc aform = (Form_pg_amproc) GETSTRUCT(tuple);
-
-			*sortFunction = aform->amproc;
-			ReleaseSysCache(tuple);
-			Assert(RegProcedureIsValid(*sortFunction));
-			return;
-		}
+		*sortFunction = get_opclass_proc(opclass, BTORDER_PROC);
+		Assert(RegProcedureIsValid(*sortFunction));
+		return;
 	}
 
 	/*
 	 * Can't find a comparator, so use the operator as-is.  Decide whether
 	 * it is forward or reverse sort by looking at its name (grotty, but
 	 * this only matters for deciding which end NULLs should get sorted
-	 * to).
+	 * to).  XXX possibly better idea: see whether its selectivity function
+	 * is scalargtcmp?
 	 */
 	tuple = SearchSysCache(OPEROID,
 						   ObjectIdGetDatum(sortOperator),

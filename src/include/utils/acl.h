@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2003, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Id: acl.h,v 1.61 2003/08/08 21:42:55 momjian Exp $
+ * $Id: acl.h,v 1.62 2003/08/17 19:58:06 tgl Exp $
  *
  * NOTES
  *	  For backward-compatibility purposes we have to allow there
@@ -209,6 +209,7 @@ extern Datum aclremove(PG_FUNCTION_ARGS);
 extern Datum aclcontains(PG_FUNCTION_ARGS);
 extern Datum makeaclitem(PG_FUNCTION_ARGS);
 extern Datum aclitem_eq(PG_FUNCTION_ARGS);
+extern Datum hash_aclitem(PG_FUNCTION_ARGS);
 
 /*
  * prototypes for functions in aclchk.c

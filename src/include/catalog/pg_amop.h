@@ -16,7 +16,7 @@
  * Portions Copyright (c) 1996-2003, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Id: pg_amop.h,v 1.54 2003/08/04 02:40:10 momjian Exp $
+ * $Id: pg_amop.h,v 1.55 2003/08/17 19:58:06 tgl Exp $
  *
  * NOTES
  *	 the genbki.sh script reads this file and generates .bki
@@ -419,6 +419,36 @@ DATA(insert (	2098 4 f 2335 ));
 DATA(insert (	2098 5 f 2336 ));
 
 /*
+ *	btree money_ops
+ */
+
+DATA(insert (	2099 1 f  902 ));
+DATA(insert (	2099 2 f  904 ));
+DATA(insert (	2099 3 f  900 ));
+DATA(insert (	2099 4 f  905 ));
+DATA(insert (	2099 5 f  903 ));
+
+/*
+ *	btree reltime_ops
+ */
+
+DATA(insert (	2233 1 f  568 ));
+DATA(insert (	2233 2 f  570 ));
+DATA(insert (	2233 3 f  566 ));
+DATA(insert (	2233 4 f  569 ));
+DATA(insert (	2233 5 f  571 ));
+
+/*
+ *	btree tinterval_ops
+ */
+
+DATA(insert (	2234 1 f  813 ));
+DATA(insert (	2234 2 f  815 ));
+DATA(insert (	2234 3 f  811 ));
+DATA(insert (	2234 4 f  814 ));
+DATA(insert (	2234 5 f  816 ));
+
+/*
  *	btree array_ops
  */
 
@@ -496,5 +526,7 @@ DATA(insert (	2230 1 f 2316 ));
 DATA(insert (	2231 1 f 2328 ));
 /* name_pattern_ops */
 DATA(insert (	2232 1 f 2334 ));
+/* aclitem_ops */
+DATA(insert (	2235 1 f  974 ));
 
 #endif   /* PG_AMOP_H */

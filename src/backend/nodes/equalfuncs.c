@@ -18,7 +18,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/nodes/equalfuncs.c,v 1.207 2003/08/08 21:41:43 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/nodes/equalfuncs.c,v 1.208 2003/08/17 19:58:05 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -1480,8 +1480,9 @@ _equalTypeCast(TypeCast *a, TypeCast *b)
 }
 
 static bool
-_equalSortGroupBy(SortGroupBy *a, SortGroupBy *b)
+_equalSortBy(SortBy *a, SortBy *b)
 {
+	COMPARE_SCALAR_FIELD(sortby_kind);
 	COMPARE_NODE_FIELD(useOp);
 	COMPARE_NODE_FIELD(node);
 
@@ -2045,8 +2046,8 @@ equal(void *a, void *b)
 		case T_TypeCast:
 			retval = _equalTypeCast(a, b);
 			break;
-		case T_SortGroupBy:
-			retval = _equalSortGroupBy(a, b);
+		case T_SortBy:
+			retval = _equalSortBy(a, b);
 			break;
 		case T_RangeSubselect:
 			retval = _equalRangeSubselect(a, b);

@@ -11,7 +11,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/parser/gram.y,v 2.428 2003/08/04 02:40:01 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/parser/gram.y,v 2.429 2003/08/17 19:58:05 tgl Exp $
  *
  * HISTORY
  *	  AUTHOR			DATE			MAJOR EVENT
@@ -115,7 +115,7 @@ static void doNegateFloat(Value *v);
 
 	TypeName			*typnam;
 	DefElem				*defelt;
-	SortGroupBy			*sortgroupby;
+	SortBy				*sortby;
 	JoinExpr			*jexpr;
 	IndexElem			*ielem;
 	Alias				*alias;
@@ -189,7 +189,7 @@ static void doNegateFloat(Value *v);
 				database_name access_method_clause access_method attr_name
 				index_name name function_name file_name
 
-%type <list>	func_name handler_name qual_Op qual_all_Op OptUseOp
+%type <list>	func_name handler_name qual_Op qual_all_Op
 				opt_class opt_validator
 
 %type <range>	qualified_name OptConstrFromTable
@@ -278,7 +278,7 @@ static void doNegateFloat(Value *v);
 %type <value>	NumericOnly FloatOnly IntegerOnly
 %type <columnref>	columnref
 %type <alias>	alias_clause
-%type <sortgroupby>		sortby
+%type <sortby>	sortby
 %type <ielem>	index_elem
 %type <node>	table_ref
 %type <jexpr>	joined_table
@@ -4577,21 +4577,34 @@ sortby_list:
 			| sortby_list ',' sortby				{ $$ = lappend($1, $3); }
 		;
 
-sortby:		a_expr OptUseOp
+sortby:		a_expr USING qual_all_Op
 				{
-					$$ = makeNode(SortGroupBy);
+					$$ = makeNode(SortBy);
 					$$->node = $1;
-					$$->useOp = $2;
+					$$->sortby_kind = SORTBY_USING;
+					$$->useOp = $3;
 				}
-		;
-
-OptUseOp:	USING qual_all_Op						{ $$ = $2; }
-			| ASC
-							{ $$ = makeList1(makeString("<")); }
-			| DESC
-							{ $$ = makeList1(makeString(">")); }
-			| /*EMPTY*/
-							{ $$ = makeList1(makeString("<"));	/*default*/ }
+			| a_expr ASC
+				{
+					$$ = makeNode(SortBy);
+					$$->node = $1;
+					$$->sortby_kind = SORTBY_ASC;
+					$$->useOp = NIL;
+				}
+			| a_expr DESC
+				{
+					$$ = makeNode(SortBy);
+					$$->node = $1;
+					$$->sortby_kind = SORTBY_DESC;
+					$$->useOp = NIL;
+				}
+			| a_expr
+				{
+					$$ = makeNode(SortBy);
+					$$->node = $1;
+					$$->sortby_kind = SORTBY_ASC;	/* default */
+					$$->useOp = NIL;
+				}
 		;
 
 

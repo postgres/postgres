@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2003, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Id: nodes.h,v 1.146 2003/08/04 02:40:13 momjian Exp $
+ * $Id: nodes.h,v 1.147 2003/08/17 19:58:06 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -265,7 +265,7 @@ typedef enum NodeTag
 	T_ExprFieldSelect,
 	T_ResTarget,
 	T_TypeCast,
-	T_SortGroupBy,
+	T_SortBy,
 	T_RangeSubselect,
 	T_RangeFunction,
 	T_TypeName,

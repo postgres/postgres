@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/arrayfuncs.c,v 1.98 2003/08/15 00:22:26 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/arrayfuncs.c,v 1.99 2003/08/17 19:58:05 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -28,6 +28,7 @@
 #include "utils/memutils.h"
 #include "utils/lsyscache.h"
 #include "utils/syscache.h"
+#include "utils/typcache.h"
 
 
 /*----------
@@ -2341,6 +2342,9 @@ deconstruct_array(ArrayType *array,
  *		  compares two arrays for equality
  * result :
  *		  returns true if the arrays are equal, false otherwise.
+ *
+ * Note: we do not use array_cmp here, since equality may be meaningful in
+ * datatypes that don't have a total ordering (and hence no btree support).
  *-----------------------------------------------------------------------------
  */
 Datum
@@ -2357,13 +2361,12 @@ array_eq(PG_FUNCTION_ARGS)
 	int			nitems1 = ArrayGetNItems(ndims1, dims1);
 	int			nitems2 = ArrayGetNItems(ndims2, dims2);
 	Oid			element_type = ARR_ELEMTYPE(array1);
-	FmgrInfo   *ae_fmgr_info = fcinfo->flinfo;
 	bool		result = true;
+	TypeCacheEntry *typentry;
 	int			typlen;
 	bool		typbyval;
 	char		typalign;
 	int			i;
-	ArrayMetaState *my_extra;
 	FunctionCallInfoData locfcinfo;
 
 	if (element_type != ARR_ELEMTYPE(array2))
@@ -2379,38 +2382,31 @@ array_eq(PG_FUNCTION_ARGS)
 		/*
 		 * We arrange to look up the equality function only once per
 		 * series of calls, assuming the element type doesn't change
-		 * underneath us.
+		 * underneath us.  The typcache is used so that we have no
+		 * memory leakage when being used as an index support function.
 		 */
-		my_extra = (ArrayMetaState *) ae_fmgr_info->fn_extra;
-		if (my_extra == NULL)
+		typentry = (TypeCacheEntry *) fcinfo->flinfo->fn_extra;
+		if (typentry == NULL ||
+			typentry->type_id != element_type)
 		{
-			ae_fmgr_info->fn_extra = MemoryContextAlloc(ae_fmgr_info->fn_mcxt,
-												 sizeof(ArrayMetaState));
-			my_extra = (ArrayMetaState *) ae_fmgr_info->fn_extra;
-			my_extra->element_type = InvalidOid;
+			typentry = lookup_type_cache(element_type,
+										 TYPECACHE_EQ_OPR_FINFO);
+			if (!OidIsValid(typentry->eq_opr_finfo.fn_oid))
+				ereport(ERROR,
+						(errcode(ERRCODE_UNDEFINED_FUNCTION),
+						 errmsg("could not identify an equality operator for type %s",
+								format_type_be(element_type))));
+			fcinfo->flinfo->fn_extra = (void *) typentry;
 		}
-
-		if (my_extra->element_type != element_type)
-		{
-			Oid			opfuncid = equality_oper_funcid(element_type);
-
-			get_typlenbyvalalign(element_type,
-								 &my_extra->typlen,
-								 &my_extra->typbyval,
-								 &my_extra->typalign);
-			fmgr_info_cxt(opfuncid, &my_extra->proc,
-						  ae_fmgr_info->fn_mcxt);
-			my_extra->element_type = element_type;
-		}
-		typlen = my_extra->typlen;
-		typbyval = my_extra->typbyval;
-		typalign = my_extra->typalign;
+		typlen = typentry->typlen;
+		typbyval = typentry->typbyval;
+		typalign = typentry->typalign;
 
 		/*
 		 * apply the operator to each pair of array elements.
 		 */
 		MemSet(&locfcinfo, 0, sizeof(locfcinfo));
-		locfcinfo.flinfo = &my_extra->proc;
+		locfcinfo.flinfo = &typentry->eq_opr_finfo;
 		locfcinfo.nargs = 2;
 
 		/* Loop over source data */
@@ -2519,23 +2515,14 @@ array_cmp(FunctionCallInfo fcinfo)
 	int			nitems1 = ArrayGetNItems(ndims1, dims1);
 	int			nitems2 = ArrayGetNItems(ndims2, dims2);
 	Oid			element_type = ARR_ELEMTYPE(array1);
-	FmgrInfo   *ac_fmgr_info = fcinfo->flinfo;
 	int			result = 0;
+	TypeCacheEntry *typentry;
 	int			typlen;
 	bool		typbyval;
 	char		typalign;
 	int			min_nitems;
 	int			i;
-	typedef struct
-	{
-		Oid			element_type;
-		int16		typlen;
-		bool		typbyval;
-		char		typalign;
-		FmgrInfo	eqproc;
-		FmgrInfo	ordproc;
-	} ac_extra;
-	ac_extra   *my_extra;
+	FunctionCallInfoData locfcinfo;
 
 	if (element_type != ARR_ELEMTYPE(array2))
 		ereport(ERROR,
@@ -2543,37 +2530,34 @@ array_cmp(FunctionCallInfo fcinfo)
 			errmsg("cannot compare arrays of different element types")));
 
 	/*
-	 * We arrange to look up the element type info and related functions
-	 * only once per series of calls, assuming the element type doesn't
-	 * change underneath us.
+	 * We arrange to look up the comparison function only once per series of
+	 * calls, assuming the element type doesn't change underneath us.
+	 * The typcache is used so that we have no memory leakage when being used
+	 * as an index support function.
 	 */
-	my_extra = (ac_extra *) ac_fmgr_info->fn_extra;
-	if (my_extra == NULL)
+	typentry = (TypeCacheEntry *) fcinfo->flinfo->fn_extra;
+	if (typentry == NULL ||
+		typentry->type_id != element_type)
 	{
-		ac_fmgr_info->fn_extra = MemoryContextAlloc(ac_fmgr_info->fn_mcxt,
-													sizeof(ac_extra));
-		my_extra = (ac_extra *) ac_fmgr_info->fn_extra;
-		my_extra->element_type = InvalidOid;
+		typentry = lookup_type_cache(element_type,
+									 TYPECACHE_CMP_PROC_FINFO);
+		if (!OidIsValid(typentry->cmp_proc_finfo.fn_oid))
+			ereport(ERROR,
+					(errcode(ERRCODE_UNDEFINED_FUNCTION),
+					 errmsg("could not identify a comparison function for type %s",
+							format_type_be(element_type))));
+		fcinfo->flinfo->fn_extra = (void *) typentry;
 	}
+	typlen = typentry->typlen;
+	typbyval = typentry->typbyval;
+	typalign = typentry->typalign;
 
-	if (my_extra->element_type != element_type)
-	{
-		Oid			eqfuncid = equality_oper_funcid(element_type);
-		Oid			ordfuncid = ordering_oper_funcid(element_type);
-
-		get_typlenbyvalalign(element_type,
-							 &my_extra->typlen,
-							 &my_extra->typbyval,
-							 &my_extra->typalign);
-		fmgr_info_cxt(eqfuncid, &my_extra->eqproc,
-					  ac_fmgr_info->fn_mcxt);
-		fmgr_info_cxt(ordfuncid, &my_extra->ordproc,
-					  ac_fmgr_info->fn_mcxt);
-		my_extra->element_type = element_type;
-	}
-	typlen = my_extra->typlen;
-	typbyval = my_extra->typbyval;
-	typalign = my_extra->typalign;
+	/*
+	 * apply the operator to each pair of array elements.
+	 */
+	MemSet(&locfcinfo, 0, sizeof(locfcinfo));
+	locfcinfo.flinfo = &typentry->cmp_proc_finfo;
+	locfcinfo.nargs = 2;
 
 	/* Loop over source data */
 	min_nitems = Min(nitems1, nitems2);
@@ -2581,7 +2565,7 @@ array_cmp(FunctionCallInfo fcinfo)
 	{
 		Datum		elt1;
 		Datum		elt2;
-		Datum		opresult;
+		int32		cmpresult;
 
 		/* Get element pair */
 		elt1 = fetch_att(p1, typbyval, typlen);
@@ -2594,15 +2578,17 @@ array_cmp(FunctionCallInfo fcinfo)
 		p2 = (char *) att_align(p2, typalign);
 
 		/* Compare the pair of elements */
+		locfcinfo.arg[0] = elt1;
+		locfcinfo.arg[1] = elt2;
+		locfcinfo.argnull[0] = false;
+		locfcinfo.argnull[1] = false;
+		locfcinfo.isnull = false;
+		cmpresult = DatumGetInt32(FunctionCallInvoke(&locfcinfo));
 
-		/* are they equal */
-		opresult = FunctionCall2(&my_extra->eqproc, elt1, elt2);
-		if (DatumGetBool(opresult))
-			continue;
+		if (cmpresult == 0)
+			continue;			/* equal */
 
-		/* nope, see if arg1 is less than arg2 */
-		opresult = FunctionCall2(&my_extra->ordproc, elt1, elt2);
-		if (DatumGetBool(opresult))
+		if (cmpresult < 0)
 		{
 			/* arg1 is less than arg2 */
 			result = -1;

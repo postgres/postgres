@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/parser/parse_clause.c,v 1.121 2003/08/07 19:20:22 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/parser/parse_clause.c,v 1.122 2003/08/17 19:58:05 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -1295,7 +1295,7 @@ transformSortClause(ParseState *pstate,
 
 	foreach(olitem, orderlist)
 	{
-		SortGroupBy *sortby = lfirst(olitem);
+		SortBy	   *sortby = lfirst(olitem);
 		TargetEntry *tle;
 
 		tle = findTargetlistEntry(pstate, sortby->node,
@@ -1303,7 +1303,9 @@ transformSortClause(ParseState *pstate,
 
 		sortlist = addTargetToSortList(pstate, tle,
 									   sortlist, targetlist,
-									   sortby->useOp, resolveUnknown);
+									   sortby->sortby_kind,
+									   sortby->useOp,
+									   resolveUnknown);
 	}
 
 	return sortlist;
@@ -1409,7 +1411,7 @@ transformDistinctClause(ParseState *pstate, List *distinctlist,
 			{
 				*sortClause = addTargetToSortList(pstate, tle,
 												  *sortClause, targetlist,
-												  NIL, true);
+												  SORTBY_ASC, NIL, true);
 
 				/*
 				 * Probably, the tle should always have been added at the
@@ -1457,7 +1459,8 @@ addAllTargetsToSortList(ParseState *pstate, List *sortlist,
 		if (!tle->resdom->resjunk)
 			sortlist = addTargetToSortList(pstate, tle,
 										   sortlist, targetlist,
-										   NIL, resolveUnknown);
+										   SORTBY_ASC, NIL,
+										   resolveUnknown);
 	}
 	return sortlist;
 }
@@ -1478,7 +1481,8 @@ addAllTargetsToSortList(ParseState *pstate, List *sortlist,
 List *
 addTargetToSortList(ParseState *pstate, TargetEntry *tle,
 					List *sortlist, List *targetlist,
-					List *opname, bool resolveUnknown)
+					int sortby_kind, List *sortby_opname,
+					bool resolveUnknown)
 {
 	/* avoid making duplicate sortlist entries */
 	if (!targetIsInSortList(tle, sortlist))
@@ -1499,13 +1503,25 @@ addTargetToSortList(ParseState *pstate, TargetEntry *tle,
 
 		sortcl->tleSortGroupRef = assignSortGroupRef(tle, targetlist);
 
-		if (opname)
-			sortcl->sortop = compatible_oper_opid(opname,
-												  restype,
-												  restype,
-												  false);
-		else
-			sortcl->sortop = ordering_oper_opid(restype);
+		switch (sortby_kind)
+		{
+			case SORTBY_ASC:
+				sortcl->sortop = ordering_oper_opid(restype);
+				break;
+			case SORTBY_DESC:
+				sortcl->sortop = reverse_ordering_oper_opid(restype);
+				break;
+			case SORTBY_USING:
+				Assert(sortby_opname != NIL);
+				sortcl->sortop = compatible_oper_opid(sortby_opname,
+													  restype,
+													  restype,
+													  false);
+				break;
+			default:
+				elog(ERROR, "unrecognized sortby_kind: %d", sortby_kind);
+				break;
+		}
 
 		sortlist = lappend(sortlist, sortcl);
 	}

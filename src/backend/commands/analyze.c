@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/commands/analyze.c,v 1.58 2003/08/04 02:39:58 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/commands/analyze.c,v 1.59 2003/08/17 19:58:04 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -390,7 +390,6 @@ examine_attribute(Relation onerel, int attnum)
 {
 	Form_pg_attribute attr = onerel->rd_att->attrs[attnum - 1];
 	Operator	func_operator;
-	Oid			oprrest;
 	HeapTuple	typtuple;
 	Oid			eqopr = InvalidOid;
 	Oid			eqfunc = InvalidOid;
@@ -409,12 +408,8 @@ examine_attribute(Relation onerel, int attnum)
 	func_operator = equality_oper(attr->atttypid, true);
 	if (func_operator != NULL)
 	{
-		oprrest = ((Form_pg_operator) GETSTRUCT(func_operator))->oprrest;
-		if (oprrest == F_EQSEL)
-		{
-			eqopr = oprid(func_operator);
-			eqfunc = oprfuncid(func_operator);
-		}
+		eqopr = oprid(func_operator);
+		eqfunc = oprfuncid(func_operator);
 		ReleaseSysCache(func_operator);
 	}
 	if (!OidIsValid(eqfunc))
@@ -447,9 +442,7 @@ examine_attribute(Relation onerel, int attnum)
 	func_operator = ordering_oper(attr->atttypid, true);
 	if (func_operator != NULL)
 	{
-		oprrest = ((Form_pg_operator) GETSTRUCT(func_operator))->oprrest;
-		if (oprrest == F_SCALARLTSEL)
-			ltopr = oprid(func_operator);
+		ltopr = oprid(func_operator);
 		ReleaseSysCache(func_operator);
 	}
 	stats->ltopr = ltopr;

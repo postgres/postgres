@@ -9,7 +9,7 @@
  * workings can be found in the book "Software Solutions in C" by
  * Dale Schumacher, Academic Press, ISBN: 0-12-632360-7.
  *
- * $Header: /cvsroot/pgsql/src/backend/utils/adt/cash.c,v 1.59 2003/07/27 04:53:03 tgl Exp $
+ * $Header: /cvsroot/pgsql/src/backend/utils/adt/cash.c,v 1.60 2003/08/17 19:58:05 tgl Exp $
  */
 
 #include "postgres.h"
@@ -342,6 +342,9 @@ cash_send(PG_FUNCTION_ARGS)
 	PG_RETURN_BYTEA_P(pq_endtypsend(&buf));
 }
 
+/*
+ * Comparison functions
+ */
 
 Datum
 cash_eq(PG_FUNCTION_ARGS)
@@ -395,6 +398,20 @@ cash_ge(PG_FUNCTION_ARGS)
 	Cash		c2 = PG_GETARG_CASH(1);
 
 	PG_RETURN_BOOL(c1 >= c2);
+}
+
+Datum
+cash_cmp(PG_FUNCTION_ARGS)
+{
+	Cash		c1 = PG_GETARG_CASH(0);
+	Cash		c2 = PG_GETARG_CASH(1);
+
+	if (c1 > c2)
+		PG_RETURN_INT32(1);
+	else if (c1 == c2)
+		PG_RETURN_INT32(0);
+	else
+		PG_RETURN_INT32(-1);
 }
 
 

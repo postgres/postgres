@@ -10,7 +10,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/nabstime.c,v 1.113 2003/08/04 02:40:05 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/nabstime.c,v 1.114 2003/08/17 19:58:05 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -505,11 +505,11 @@ abstime_finite(PG_FUNCTION_ARGS)
 static int
 abstime_cmp_internal(AbsoluteTime a, AbsoluteTime b)
 {
-/*
- * We consider all INVALIDs to be equal and larger than any non-INVALID.
- * This is somewhat arbitrary; the important thing is to have a
- * consistent sort order.
- */
+	/*
+	 * We consider all INVALIDs to be equal and larger than any non-INVALID.
+	 * This is somewhat arbitrary; the important thing is to have a
+	 * consistent sort order.
+	 */
 	if (a == INVALID_ABSTIME)
 	{
 		if (b == INVALID_ABSTIME)
@@ -904,7 +904,7 @@ tintervalout(PG_FUNCTION_ARGS)
 	char	   *i_str,
 			   *p;
 
-	i_str = (char *) palloc(T_INTERVAL_LEN);	/* ['...' '...'] */
+	i_str = (char *) palloc(T_INTERVAL_LEN);	/* ["..." "..."] */
 	strcpy(i_str, "[\"");
 	if (interval->status == T_INTERVAL_INVAL)
 		strcat(i_str, INVALID_INTERVAL_STR);
@@ -920,7 +920,7 @@ tintervalout(PG_FUNCTION_ARGS)
 		strcat(i_str, p);
 		pfree(p);
 	}
-	strcat(i_str, "\"]\0");
+	strcat(i_str, "\"]");
 	PG_RETURN_CSTRING(i_str);
 }
 
@@ -1190,22 +1190,42 @@ timenow(PG_FUNCTION_ARGS)
 }
 
 /*
- *		reltimeeq		- returns true iff arguments are equal
- *		reltimene		- returns true iff arguments are not equal
- *		reltimelt		- returns true iff t1 less than t2
- *		reltimegt		- returns true iff t1 greater than t2
- *		reltimele		- returns true iff t1 less than or equal to t2
- *		reltimege		- returns true iff t1 greater than or equal to t2
+ * reltime comparison routines
  */
+static int
+reltime_cmp_internal(RelativeTime a, RelativeTime b)
+{
+	/*
+	 * We consider all INVALIDs to be equal and larger than any non-INVALID.
+	 * This is somewhat arbitrary; the important thing is to have a
+	 * consistent sort order.
+	 */
+	if (a == INVALID_RELTIME)
+	{
+		if (b == INVALID_RELTIME)
+			return 0;			/* INVALID = INVALID */
+		else
+			return 1;			/* INVALID > non-INVALID */
+	}
+
+	if (b == INVALID_RELTIME)
+		return -1;				/* non-INVALID < INVALID */
+
+	if (a > b)
+		return 1;
+	else if (a == b)
+		return 0;
+	else
+		return -1;
+}
+
 Datum
 reltimeeq(PG_FUNCTION_ARGS)
 {
 	RelativeTime t1 = PG_GETARG_RELATIVETIME(0);
 	RelativeTime t2 = PG_GETARG_RELATIVETIME(1);
 
-	if (t1 == INVALID_RELTIME || t2 == INVALID_RELTIME)
-		PG_RETURN_BOOL(false);
-	PG_RETURN_BOOL(t1 == t2);
+	PG_RETURN_BOOL(reltime_cmp_internal(t1, t2) == 0);
 }
 
 Datum
@@ -1214,9 +1234,7 @@ reltimene(PG_FUNCTION_ARGS)
 	RelativeTime t1 = PG_GETARG_RELATIVETIME(0);
 	RelativeTime t2 = PG_GETARG_RELATIVETIME(1);
 
-	if (t1 == INVALID_RELTIME || t2 == INVALID_RELTIME)
-		PG_RETURN_BOOL(false);
-	PG_RETURN_BOOL(t1 != t2);
+	PG_RETURN_BOOL(reltime_cmp_internal(t1, t2) != 0);
 }
 
 Datum
@@ -1225,9 +1243,7 @@ reltimelt(PG_FUNCTION_ARGS)
 	RelativeTime t1 = PG_GETARG_RELATIVETIME(0);
 	RelativeTime t2 = PG_GETARG_RELATIVETIME(1);
 
-	if (t1 == INVALID_RELTIME || t2 == INVALID_RELTIME)
-		PG_RETURN_BOOL(false);
-	PG_RETURN_BOOL(t1 < t2);
+	PG_RETURN_BOOL(reltime_cmp_internal(t1, t2) < 0);
 }
 
 Datum
@@ -1236,9 +1252,7 @@ reltimegt(PG_FUNCTION_ARGS)
 	RelativeTime t1 = PG_GETARG_RELATIVETIME(0);
 	RelativeTime t2 = PG_GETARG_RELATIVETIME(1);
 
-	if (t1 == INVALID_RELTIME || t2 == INVALID_RELTIME)
-		PG_RETURN_BOOL(false);
-	PG_RETURN_BOOL(t1 > t2);
+	PG_RETURN_BOOL(reltime_cmp_internal(t1, t2) > 0);
 }
 
 Datum
@@ -1247,9 +1261,7 @@ reltimele(PG_FUNCTION_ARGS)
 	RelativeTime t1 = PG_GETARG_RELATIVETIME(0);
 	RelativeTime t2 = PG_GETARG_RELATIVETIME(1);
 
-	if (t1 == INVALID_RELTIME || t2 == INVALID_RELTIME)
-		PG_RETURN_BOOL(false);
-	PG_RETURN_BOOL(t1 <= t2);
+	PG_RETURN_BOOL(reltime_cmp_internal(t1, t2) <= 0);
 }
 
 Datum
@@ -1258,9 +1270,16 @@ reltimege(PG_FUNCTION_ARGS)
 	RelativeTime t1 = PG_GETARG_RELATIVETIME(0);
 	RelativeTime t2 = PG_GETARG_RELATIVETIME(1);
 
-	if (t1 == INVALID_RELTIME || t2 == INVALID_RELTIME)
-		PG_RETURN_BOOL(false);
-	PG_RETURN_BOOL(t1 >= t2);
+	PG_RETURN_BOOL(reltime_cmp_internal(t1, t2) >= 0);
+}
+
+Datum
+btreltimecmp(PG_FUNCTION_ARGS)
+{
+	RelativeTime t1 = PG_GETARG_RELATIVETIME(0);
+	RelativeTime t2 = PG_GETARG_RELATIVETIME(1);
+
+	PG_RETURN_INT32(reltime_cmp_internal(t1, t2));
 }
 
 
@@ -1287,34 +1306,62 @@ tintervalsame(PG_FUNCTION_ARGS)
 	PG_RETURN_BOOL(false);
 }
 
-
 /*
- *		tintervaleq		- returns true iff interval i1 is equal to interval i2
- *		Check length of intervals.
+ * tinterval comparison routines
+ *
+ * Note: comparison is based on the lengths of the intervals, not on
+ * endpoint value.  This is pretty bogus, but since it's only a legacy
+ * datatype I'm not going to propose changing it.
  */
+static int
+tinterval_cmp_internal(TimeInterval a, TimeInterval b)
+{
+	bool		a_invalid;
+	bool		b_invalid;
+	AbsoluteTime a_len;
+	AbsoluteTime b_len;
+
+	/*
+	 * We consider all INVALIDs to be equal and larger than any non-INVALID.
+	 * This is somewhat arbitrary; the important thing is to have a
+	 * consistent sort order.
+	 */
+	a_invalid = ((a->status == T_INTERVAL_INVAL) ||
+				 (a->data[0] == INVALID_ABSTIME) ||
+				 (a->data[1] == INVALID_ABSTIME));
+	b_invalid = ((b->status == T_INTERVAL_INVAL) ||
+				 (b->data[0] == INVALID_ABSTIME) ||
+				 (b->data[1] == INVALID_ABSTIME));
+
+	if (a_invalid)
+	{
+		if (b_invalid)
+			return 0;			/* INVALID = INVALID */
+		else
+			return 1;			/* INVALID > non-INVALID */
+	}
+
+	if (b_invalid)
+		return -1;				/* non-INVALID < INVALID */
+
+	a_len = a->data[1] - a->data[0];
+	b_len = b->data[1] - b->data[0];
+
+	if (a_len > b_len)
+		return 1;
+	else if (a_len == b_len)
+		return 0;
+	else
+		return -1;
+}
+
 Datum
 tintervaleq(PG_FUNCTION_ARGS)
 {
 	TimeInterval i1 = PG_GETARG_TIMEINTERVAL(0);
 	TimeInterval i2 = PG_GETARG_TIMEINTERVAL(1);
-	AbsoluteTime t10,
-				t11,
-				t20,
-				t21;
 
-	if (i1->status == T_INTERVAL_INVAL || i2->status == T_INTERVAL_INVAL)
-		PG_RETURN_BOOL(false);
-
-	t10 = i1->data[0];
-	t11 = i1->data[1];
-	t20 = i2->data[0];
-	t21 = i2->data[1];
-
-	if ((t10 == INVALID_ABSTIME) || (t11 == INVALID_ABSTIME)
-		|| (t20 == INVALID_ABSTIME) || (t21 == INVALID_ABSTIME))
-		PG_RETURN_BOOL(false);
-
-	PG_RETURN_BOOL((t11 - t10) == (t21 - t20));
+	PG_RETURN_BOOL(tinterval_cmp_internal(i1, i2) == 0);
 }
 
 Datum
@@ -1322,24 +1369,8 @@ tintervalne(PG_FUNCTION_ARGS)
 {
 	TimeInterval i1 = PG_GETARG_TIMEINTERVAL(0);
 	TimeInterval i2 = PG_GETARG_TIMEINTERVAL(1);
-	AbsoluteTime t10,
-				t11,
-				t20,
-				t21;
 
-	if (i1->status == T_INTERVAL_INVAL || i2->status == T_INTERVAL_INVAL)
-		PG_RETURN_BOOL(false);
-
-	t10 = i1->data[0];
-	t11 = i1->data[1];
-	t20 = i2->data[0];
-	t21 = i2->data[1];
-
-	if ((t10 == INVALID_ABSTIME) || (t11 == INVALID_ABSTIME)
-		|| (t20 == INVALID_ABSTIME) || (t21 == INVALID_ABSTIME))
-		PG_RETURN_BOOL(false);
-
-	PG_RETURN_BOOL((t11 - t10) != (t21 - t20));
+	PG_RETURN_BOOL(tinterval_cmp_internal(i1, i2) != 0);
 }
 
 Datum
@@ -1347,24 +1378,8 @@ tintervallt(PG_FUNCTION_ARGS)
 {
 	TimeInterval i1 = PG_GETARG_TIMEINTERVAL(0);
 	TimeInterval i2 = PG_GETARG_TIMEINTERVAL(1);
-	AbsoluteTime t10,
-				t11,
-				t20,
-				t21;
 
-	if (i1->status == T_INTERVAL_INVAL || i2->status == T_INTERVAL_INVAL)
-		PG_RETURN_BOOL(false);
-
-	t10 = i1->data[0];
-	t11 = i1->data[1];
-	t20 = i2->data[0];
-	t21 = i2->data[1];
-
-	if ((t10 == INVALID_ABSTIME) || (t11 == INVALID_ABSTIME)
-		|| (t20 == INVALID_ABSTIME) || (t21 == INVALID_ABSTIME))
-		PG_RETURN_BOOL(false);
-
-	PG_RETURN_BOOL((t11 - t10) < (t21 - t20));
+	PG_RETURN_BOOL(tinterval_cmp_internal(i1, i2) < 0);
 }
 
 Datum
@@ -1372,24 +1387,8 @@ tintervalle(PG_FUNCTION_ARGS)
 {
 	TimeInterval i1 = PG_GETARG_TIMEINTERVAL(0);
 	TimeInterval i2 = PG_GETARG_TIMEINTERVAL(1);
-	AbsoluteTime t10,
-				t11,
-				t20,
-				t21;
 
-	if (i1->status == T_INTERVAL_INVAL || i2->status == T_INTERVAL_INVAL)
-		PG_RETURN_BOOL(false);
-
-	t10 = i1->data[0];
-	t11 = i1->data[1];
-	t20 = i2->data[0];
-	t21 = i2->data[1];
-
-	if ((t10 == INVALID_ABSTIME) || (t11 == INVALID_ABSTIME)
-		|| (t20 == INVALID_ABSTIME) || (t21 == INVALID_ABSTIME))
-		PG_RETURN_BOOL(false);
-
-	PG_RETURN_BOOL((t11 - t10) <= (t21 - t20));
+	PG_RETURN_BOOL(tinterval_cmp_internal(i1, i2) <= 0);
 }
 
 Datum
@@ -1397,24 +1396,8 @@ tintervalgt(PG_FUNCTION_ARGS)
 {
 	TimeInterval i1 = PG_GETARG_TIMEINTERVAL(0);
 	TimeInterval i2 = PG_GETARG_TIMEINTERVAL(1);
-	AbsoluteTime t10,
-				t11,
-				t20,
-				t21;
 
-	if (i1->status == T_INTERVAL_INVAL || i2->status == T_INTERVAL_INVAL)
-		PG_RETURN_BOOL(false);
-
-	t10 = i1->data[0];
-	t11 = i1->data[1];
-	t20 = i2->data[0];
-	t21 = i2->data[1];
-
-	if ((t10 == INVALID_ABSTIME) || (t11 == INVALID_ABSTIME)
-		|| (t20 == INVALID_ABSTIME) || (t21 == INVALID_ABSTIME))
-		PG_RETURN_BOOL(false);
-
-	PG_RETURN_BOOL((t11 - t10) > (t21 - t20));
+	PG_RETURN_BOOL(tinterval_cmp_internal(i1, i2) > 0);
 }
 
 Datum
@@ -1422,24 +1405,17 @@ tintervalge(PG_FUNCTION_ARGS)
 {
 	TimeInterval i1 = PG_GETARG_TIMEINTERVAL(0);
 	TimeInterval i2 = PG_GETARG_TIMEINTERVAL(1);
-	AbsoluteTime t10,
-				t11,
-				t20,
-				t21;
 
-	if (i1->status == T_INTERVAL_INVAL || i2->status == T_INTERVAL_INVAL)
-		PG_RETURN_BOOL(false);
+	PG_RETURN_BOOL(tinterval_cmp_internal(i1, i2) >= 0);
+}
 
-	t10 = i1->data[0];
-	t11 = i1->data[1];
-	t20 = i2->data[0];
-	t21 = i2->data[1];
+Datum
+bttintervalcmp(PG_FUNCTION_ARGS)
+{
+	TimeInterval i1 = PG_GETARG_TIMEINTERVAL(0);
+	TimeInterval i2 = PG_GETARG_TIMEINTERVAL(1);
 
-	if ((t10 == INVALID_ABSTIME) || (t11 == INVALID_ABSTIME)
-		|| (t20 == INVALID_ABSTIME) || (t21 == INVALID_ABSTIME))
-		PG_RETURN_BOOL(false);
-
-	PG_RETURN_BOOL((t11 - t10) >= (t21 - t20));
+	PG_RETURN_INT32(tinterval_cmp_internal(i1, i2));
 }
 
 
@@ -1652,7 +1628,7 @@ istinterval(char *i_string,
 			break;
 	}
 	p++;
-	/* skip leading blanks up to "'" */
+	/* skip leading blanks up to '"' */
 	while ((c = *p) != '\0')
 	{
 		if (IsSpace(c))
@@ -1680,10 +1656,10 @@ istinterval(char *i_string,
 	/* get the first date */
 	*i_start = DatumGetAbsoluteTime(DirectFunctionCall1(abstimein,
 													CStringGetDatum(p)));
-	/* rechange NULL at the end of the first date to a "'" */
+	/* rechange NULL at the end of the first date to a '"' */
 	*p1 = '"';
 	p = ++p1;
-	/* skip blanks up to "'", beginning of second date */
+	/* skip blanks up to '"', beginning of second date */
 	while ((c = *p) != '\0')
 	{
 		if (IsSpace(c))
@@ -1708,7 +1684,7 @@ istinterval(char *i_string,
 	/* get the second date */
 	*i_end = DatumGetAbsoluteTime(DirectFunctionCall1(abstimein,
 													CStringGetDatum(p)));
-	/* rechange NULL at the end of the first date to a ''' */
+	/* rechange NULL at the end of the first date to a '"' */
 	*p1 = '"';
 	p = ++p1;
 	/* skip blanks up to ']' */

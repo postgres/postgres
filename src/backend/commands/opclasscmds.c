@@ -9,7 +9,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/commands/opclasscmds.c,v 1.17 2003/08/04 02:39:58 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/commands/opclasscmds.c,v 1.18 2003/08/17 19:58:04 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -261,7 +261,9 @@ DefineOpClass(CreateOpClassStmt *stmt)
 
 	/*
 	 * If we are creating a default opclass, check there isn't one
-	 * already. (XXX should we restrict this test to visible opclasses?)
+	 * already.  (Note we do not restrict this test to visible opclasses;
+	 * this ensures that typcache.c can find unique solutions to its
+	 * questions.)
 	 */
 	if (stmt->isDefault)
 	{

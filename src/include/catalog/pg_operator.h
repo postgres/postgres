@@ -8,7 +8,7 @@
  * Portions Copyright (c) 1996-2003, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Id: pg_operator.h,v 1.120 2003/08/04 02:40:12 momjian Exp $
+ * $Id: pg_operator.h,v 1.121 2003/08/17 19:58:06 tgl Exp $
  *
  * NOTES
  *	  the genbki.sh script reads this file and generates .bki
@@ -424,7 +424,7 @@ DATA(insert OID = 965 (  "^"	   PGNSP PGUID b f	701  701	701 0 0 0 0 0 0 dpow - 
 DATA(insert OID = 966 (  "+"	   PGNSP PGUID b f 1034 1033 1034 0 0 0 0 0 0 aclinsert - - ));
 DATA(insert OID = 967 (  "-"	   PGNSP PGUID b f 1034 1033 1034 0 0 0 0 0 0 aclremove - - ));
 DATA(insert OID = 968 (  "~"	   PGNSP PGUID b f 1034 1033	 16 0 0 0 0 0 0 aclcontains - - ));
-DATA(insert OID = 974 (  "="	   PGNSP PGUID b f 1033 1033	 16 974 0 0 0 0 0 aclitemeq eqsel eqjoinsel ));
+DATA(insert OID = 974 (  "="	   PGNSP PGUID b t 1033 1033	 16 974 0 0 0 0 0 aclitemeq eqsel eqjoinsel ));
 
 /* additional geometric operators - thomas 1997-07-09 */
 DATA(insert OID =  969 (  "@@"	   PGNSP PGUID l f	0  601	600    0  0 0 0 0 0 lseg_center - - ));
@@ -448,6 +448,7 @@ DATA(insert OID = 1071 (  "<>"	   PGNSP PGUID b f 2277 2277 16 1071 1070  0 0 0 
 DATA(insert OID = 1072 (  "<"	   PGNSP PGUID b f 2277 2277 16 1073 1075  0 0 0 0 array_lt scalarltsel scalarltjoinsel ));
 #define ARRAY_LT_OP 1072
 DATA(insert OID = 1073 (  ">"	   PGNSP PGUID b f 2277 2277 16 1072 1074  0 0 0 0 array_gt scalargtsel scalargtjoinsel ));
+#define ARRAY_GT_OP 1073
 DATA(insert OID = 1074 (  "<="	   PGNSP PGUID b f 2277 2277 16 1075 1073  0 0 0 0 array_le scalarltsel scalarltjoinsel ));
 DATA(insert OID = 1075 (  ">="	   PGNSP PGUID b f 2277 2277 16 1074 1072  0 0 0 0 array_ge scalargtsel scalargtjoinsel ));
 

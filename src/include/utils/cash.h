@@ -23,6 +23,7 @@ extern Datum cash_lt(PG_FUNCTION_ARGS);
 extern Datum cash_le(PG_FUNCTION_ARGS);
 extern Datum cash_gt(PG_FUNCTION_ARGS);
 extern Datum cash_ge(PG_FUNCTION_ARGS);
+extern Datum cash_cmp(PG_FUNCTION_ARGS);
 
 extern Datum cash_pl(PG_FUNCTION_ARGS);
 extern Datum cash_mi(PG_FUNCTION_ARGS);
