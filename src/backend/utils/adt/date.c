@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/date.c,v 1.89 2003/08/04 02:40:04 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/date.c,v 1.90 2003/08/08 00:10:31 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -1671,12 +1671,13 @@ timetz_larger(PG_FUNCTION_ARGS)
 {
 	TimeTzADT  *time1 = PG_GETARG_TIMETZADT_P(0);
 	TimeTzADT  *time2 = PG_GETARG_TIMETZADT_P(1);
+	TimeTzADT  *result;
 
-	if (DatumGetBool(DirectFunctionCall2(timetz_gt,
-										 TimeTzADTPGetDatum(time1),
-										 TimeTzADTPGetDatum(time2))))
-		PG_RETURN_TIMETZADT_P(time1);
-	PG_RETURN_TIMETZADT_P(time2);
+	if (timetz_cmp_internal(time1, time2) > 0)
+		result = time1;
+	else
+		result = time2;
+	PG_RETURN_TIMETZADT_P(result);
 }
 
 Datum
@@ -1684,12 +1685,13 @@ timetz_smaller(PG_FUNCTION_ARGS)
 {
 	TimeTzADT  *time1 = PG_GETARG_TIMETZADT_P(0);
 	TimeTzADT  *time2 = PG_GETARG_TIMETZADT_P(1);
+	TimeTzADT  *result;
 
-	if (DatumGetBool(DirectFunctionCall2(timetz_lt,
-										 TimeTzADTPGetDatum(time1),
-										 TimeTzADTPGetDatum(time2))))
-		PG_RETURN_TIMETZADT_P(time1);
-	PG_RETURN_TIMETZADT_P(time2);
+	if (timetz_cmp_internal(time1, time2) < 0)
+		result = time1;
+	else
+		result = time2;
+	PG_RETURN_TIMETZADT_P(result);
 }
 
 /* timetz_pl_interval()

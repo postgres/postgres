@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/timestamp.c,v 1.90 2003/08/04 02:40:05 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/timestamp.c,v 1.91 2003/08/08 00:10:31 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -20,6 +20,10 @@
 #include <errno.h>
 #include <float.h>
 #include <limits.h>
+/* for finite() on Solaris */
+#ifdef HAVE_IEEEFP_H
+#include <ieeefp.h>
+#endif
 
 #include "access/hash.h"
 #include "access/xact.h"
@@ -1290,6 +1294,9 @@ SetEpochTimestamp(void)
 }	/* SetEpochTimestamp() */
 
 /*
+ * We are currently sharing some code between timestamp and timestamptz.
+ * The comparison functions are among them. - thomas 2001-09-25
+ *
  *		timestamp_relop - is timestamp1 relop timestamp2
  *
  *		collate invalid timestamp at the end
@@ -1297,7 +1304,37 @@ SetEpochTimestamp(void)
 static int
 timestamp_cmp_internal(Timestamp dt1, Timestamp dt2)
 {
+#ifdef HAVE_INT64_TIMESTAMP
 	return ((dt1 < dt2) ? -1 : ((dt1 > dt2) ? 1 : 0));
+#else
+	/*
+	 * When using float representation, we have to be wary of NaNs.
+	 *
+	 * We consider all NANs to be equal and larger than any non-NAN. This
+	 * is somewhat arbitrary; the important thing is to have a consistent
+	 * sort order.
+	 */
+	if (isnan(dt1))
+	{
+		if (isnan(dt2))
+			return 0;			/* NAN = NAN */
+		else
+			return 1;			/* NAN > non-NAN */
+	}
+	else if (isnan(dt2))
+	{
+		return -1;				/* non-NAN < NAN */
+	}
+	else
+	{
+		if (dt1 > dt2)
+			return 1;
+		else if (dt1 < dt2)
+			return -1;
+		else
+			return 0;
+	}
+#endif
 }
 
 Datum
@@ -1610,9 +1647,6 @@ overlaps_timestamp(PG_FUNCTION_ARGS)
  *	"Arithmetic" operators on date/times.
  *---------------------------------------------------------*/
 
-/* We are currently sharing some code between timestamp and timestamptz.
- * The comparison functions are among them. - thomas 2001-09-25
- */
 Datum
 timestamp_smaller(PG_FUNCTION_ARGS)
 {
@@ -1620,8 +1654,11 @@ timestamp_smaller(PG_FUNCTION_ARGS)
 	Timestamp	dt2 = PG_GETARG_TIMESTAMP(1);
 	Timestamp	result;
 
-	result = ((dt2 < dt1) ? dt2 : dt1);
-
+	/* use timestamp_cmp_internal to be sure this agrees with comparisons */
+	if (timestamp_cmp_internal(dt1, dt2) < 0)
+		result = dt1;
+	else
+		result = dt2;
 	PG_RETURN_TIMESTAMP(result);
 }
 
@@ -1632,8 +1669,10 @@ timestamp_larger(PG_FUNCTION_ARGS)
 	Timestamp	dt2 = PG_GETARG_TIMESTAMP(1);
 	Timestamp	result;
 
-	result = ((dt2 > dt1) ? dt2 : dt1);
-
+	if (timestamp_cmp_internal(dt1, dt2) > 0)
+		result = dt1;
+	else
+		result = dt2;
 	PG_RETURN_TIMESTAMP(result);
 }
 
@@ -1846,42 +1885,11 @@ interval_smaller(PG_FUNCTION_ARGS)
 	Interval   *interval2 = PG_GETARG_INTERVAL_P(1);
 	Interval   *result;
 
-#ifdef HAVE_INT64_TIMESTAMP
-	int64		span1,
-				span2;
-
-#else
-	double		span1,
-				span2;
-#endif
-
-	result = (Interval *) palloc(sizeof(Interval));
-
-	span1 = interval1->time;
-	span2 = interval2->time;
-#ifdef HAVE_INT64_TIMESTAMP
-	if (interval1->month != 0)
-		span1 += ((interval1->month * INT64CONST(30) * INT64CONST(86400000000)));
-	if (interval2->month != 0)
-		span2 += ((interval2->month * INT64CONST(30) * INT64CONST(86400000000)));
-#else
-	if (interval1->month != 0)
-		span1 += (interval1->month * (30.0 * 86400));
-	if (interval2->month != 0)
-		span2 += (interval2->month * (30.0 * 86400));
-#endif
-
-	if (span2 < span1)
-	{
-		result->time = interval2->time;
-		result->month = interval2->month;
-	}
+	/* use interval_cmp_internal to be sure this agrees with comparisons */
+	if (interval_cmp_internal(interval1, interval2) < 0)
+		result = interval1;
 	else
-	{
-		result->time = interval1->time;
-		result->month = interval1->month;
-	}
-
+		result = interval2;
 	PG_RETURN_INTERVAL_P(result);
 }
 
@@ -1892,42 +1900,10 @@ interval_larger(PG_FUNCTION_ARGS)
 	Interval   *interval2 = PG_GETARG_INTERVAL_P(1);
 	Interval   *result;
 
-#ifdef HAVE_INT64_TIMESTAMP
-	int64		span1,
-				span2;
-
-#else
-	double		span1,
-				span2;
-#endif
-
-	result = (Interval *) palloc(sizeof(Interval));
-
-	span1 = interval1->time;
-	span2 = interval2->time;
-#ifdef HAVE_INT64_TIMESTAMP
-	if (interval1->month != 0)
-		span1 += ((interval1->month * INT64CONST(30) * INT64CONST(86400000000)));
-	if (interval2->month != 0)
-		span2 += ((interval2->month * INT64CONST(30) * INT64CONST(86400000000)));
-#else
-	if (interval1->month != 0)
-		span1 += (interval1->month * (30.0 * 86400));
-	if (interval2->month != 0)
-		span2 += (interval2->month * (30.0 * 86400));
-#endif
-
-	if (span2 > span1)
-	{
-		result->time = interval2->time;
-		result->month = interval2->month;
-	}
+	if (interval_cmp_internal(interval1, interval2) > 0)
+		result = interval1;
 	else
-	{
-		result->time = interval1->time;
-		result->month = interval1->month;
-	}
-
+		result = interval2;
 	PG_RETURN_INTERVAL_P(result);
 }
 
