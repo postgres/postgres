@@ -6,7 +6,7 @@
  *
  *
  * IDENTIFICATION
- *    $Header: /cvsroot/pgsql/src/backend/parser/Attic/catalog_utils.c,v 1.2 1996/07/19 07:24:08 scrappy Exp $
+ *    $Header: /cvsroot/pgsql/src/backend/parser/Attic/catalog_utils.c,v 1.3 1996/08/09 19:06:59 scrappy Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -1440,7 +1440,7 @@ op_error(char *op, int arg1, int arg2)
 	 op, tname(tp1),tname(tp2));
     elog(NOTICE, "You will either have to retype this query using an");
     elog(NOTICE, "explicit cast, or you will have to define the operator");
-    elog(WARN, "%s for %s and %s using DEFINE OPERATOR", 
+    elog(WARN, "%s for %s and %s using CREATE OPERATOR", 
 	 op, tname(tp1),tname(tp2));
 }
 
