@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *    $Header: /cvsroot/pgsql/src/backend/storage/lmgr/proc.c,v 1.13 1997/01/08 08:32:17 bryanh Exp $
+ *    $Header: /cvsroot/pgsql/src/backend/storage/lmgr/proc.c,v 1.14 1997/02/11 23:05:38 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -46,7 +46,7 @@
  *      This is so that we can support more backends. (system-wide semaphore
  *      sets run out pretty fast.)                -ay 4/95
  *
- * $Header: /cvsroot/pgsql/src/backend/storage/lmgr/proc.c,v 1.13 1997/01/08 08:32:17 bryanh Exp $
+ * $Header: /cvsroot/pgsql/src/backend/storage/lmgr/proc.c,v 1.14 1997/02/11 23:05:38 momjian Exp $
  */
 #include <sys/time.h>
 #ifndef WIN32
@@ -469,6 +469,7 @@ ProcSleep(PROC_QUEUE *queue,
 		break;
 	}
     
+    MyProc->proc = proc;
     MyProc->token = token;
     MyProc->waitLock = lock;
     
