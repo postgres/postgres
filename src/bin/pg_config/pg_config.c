@@ -17,7 +17,7 @@
  *
  * Portions Copyright (c) 1996-2003, PostgreSQL Global Development Group
  *
- * $PostgreSQL: pgsql/src/bin/pg_config/pg_config.c,v 1.2 2004/08/01 14:01:36 momjian Exp $
+ * $PostgreSQL: pgsql/src/bin/pg_config/pg_config.c,v 1.3 2004/08/02 12:34:14 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -43,6 +43,7 @@ help()
 	printf(_("  --includedir-server   show location of C header files for the server\n"));
 	printf(_("  --libdir              show location of object code libraries\n"));
 	printf(_("  --pkglibdir           show location of dynamically loadable modules\n"));
+	printf(_("  --pgxs                show location of extension makefile\n"));
 	printf(_("  --configure           show options given to 'configure' script when\n"));
 	printf(_("                        PostgreSQL was built\n"));
 	printf(_("  --version             show the PostgreSQL version, then exit\n"));
@@ -81,6 +82,7 @@ main (int argc, char ** argv)
 			strcmp(argv[i],"--includedir-server") == 0 ||
 			strcmp(argv[i],"--libdir") == 0 ||
 			strcmp(argv[i],"--pkglibdir") == 0 ||
+			strcmp(argv[i],"--pgxs") == 0 ||
 			strcmp(argv[i],"--configure") == 0)
 		{
 			/* come back to these later */
@@ -136,6 +138,11 @@ main (int argc, char ** argv)
 			get_lib_path(mypath,otherpath);
 		else if (strcmp(argv[i],"--pkglibdir") == 0)
 			get_pkglib_path(mypath,otherpath);
+		else if (strcmp(argv[i],"--pgxs") == 0)
+		{
+			get_pkglib_path(mypath,otherpath);
+			strncat(otherpath, "/pgxs", MAXPGPATH-1);
+		}
 
 		printf("%s\n",otherpath);
 	}

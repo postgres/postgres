@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/ref/pg_config-ref.sgml,v 1.17 2003/11/29 19:51:39 pgsql Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/ref/pg_config-ref.sgml,v 1.18 2004/08/02 12:34:14 momjian Exp $ -->
 
 <refentry id="app-pgconfig">
  <refmeta>
@@ -25,6 +25,7 @@
     <arg>--includedir-server</arg>
     <arg>--libdir</arg>
     <arg>--pkglibdir</arg>
+    <arg>--pgxs</arg>
     <arg>--configure</arg>
     <arg>--version</arg>
    </group>
@@ -97,6 +98,15 @@
        architecture-dependent data files may also be installed in this
        directory.)
       </para>
+     </listitem>
+    </varlistentry>
+
+    <varlistentry>
+     <term><option>--pgxs</option></>
+     <listitem>
+      <para>
+       Print the location of extension makefiles.
+     </para>
      </listitem>
     </varlistentry>
 
