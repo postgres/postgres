@@ -8,18 +8,24 @@
 
 #define BLCKSZ	8192
 
-#define HAVE_VALUES_H
-#define HAVE_MEMMOVE
+#define HAVE_SYS_SELECT_H
 #define HAVE_TERMIOS_H
+#define HAVE_VALUES_H
+
+#define HAVE_MEMMOVE
 #define HAVE_SIGSETJMP
+#define HAVE_KILL
+#define HAVE_ISINF
+#define HAVE_CBRT
+#define HAVE_RINT
 
 #if defined(aix)
+#  undef HAVE_SYS_SELECT_H
 #  undef HAVE_TERMIOS_H
+#  undef HAVE_ISINF
 #  define CLASS_CONFLICT 
 #  define DISABLE_XOPEN_NLS 
-#  define HAVE_ISINF
 #  define NEED_UNION_SEMUN 
-#  define HAVE_SYS_SELECT_H
 #  define HAVE_TZSET
 #  define HAVE_ANSI_CPP
 #  define HAS_TEST_AND_SET
@@ -27,10 +33,10 @@
 #endif
 
 #if defined(alpha)
+#  undef HAVE_ISINF 
 #  define USE_POSIX_TIME 
 #  define USE_POSIX_SIGNALS
 #  define DISABLE_XOPEN_NLS 
-#  define HAVE_ISINF 
 #  define HAS_LONG_LONG
 #  define NEED_UNION_SEMUN 
 #  define HAS_TEST_AND_SET
@@ -41,7 +47,6 @@
 #if defined(BSD44_derived)
 #  define HAVE_LIMITS_H
 #  define USE_POSIX_TIME
-#  define HAVE_CBRT
 #  define NEED_I386_TAS_ASM
 #  define HAS_TEST_AND_SET
 #  if defined(__mips__)
@@ -62,7 +67,7 @@
 #  endif
 #  define HAVE_LIMITS_H
 #  define USE_POSIX_TIME
-#  define HAVE_CBRT
+#  undef HAVE_CBRT
 #  define HAS_TEST_AND_SET
    typedef unsigned char slock_t;
 #endif
@@ -78,8 +83,8 @@
 #  define JMP_BUF
 #  define USE_POSIX_TIME
 #  define HAVE_TZSET
-#  define HAVE_CBRT
-#  define HAVE_RINT
+#  undef HAVE_CBRT
+#  undef HAVE_RINT
 #  define NEED_UNION_SEMUN 
 #  define HAS_TEST_AND_SET
    typedef struct { int sem[4]; } slock_t;
@@ -89,7 +94,7 @@
 #  define HAVE_LIMITS_H
 #  define USE_POSIX_TIME 
 #  define USE_POSIX_SIGNALS
-#  define HAVE_ISINF 
+#  undef HAVE_ISINF 
 #  define NEED_RUSAGE 
 #  define NO_EMPTY_STMTS
 #  define HAVE_TZSET
@@ -102,7 +107,7 @@
 #if defined(irix5)
 #  define USE_POSIX_TIME 
 #  define USE_POSIX_SIGNALS
-#  define HAVE_ISINF 
+#  undef HAVE_ISINF 
 #  define NO_EMPTY_STMTS
 #  define NO_VFORK
 #  define HAVE_TZSET
@@ -122,7 +127,7 @@
 #  define JMP_BUF
 #  define USE_POSIX_TIME
 #  define HAVE_TZSET
-#  define HAVE_CBRT
+#  undef HAVE_CBRT
 #  define NEED_I386_TAS_ASM
 #  define HAS_TEST_AND_SET
    typedef unsigned char slock_t;
@@ -161,7 +166,7 @@
 #  define HAVE_LIMITS_H
 #  define USE_POSIX_TIME 
 #  define USE_POSIX_SIGNALS
-#  define HAVE_ISINF 
+#  undef HAVE_ISINF 
 #  define NEED_RUSAGE 
 #  define NO_EMPTY_STMTS
 #  define USE_POSIX_TIME
@@ -180,7 +185,7 @@ typedef unsigned char slock_t;
 #if defined(svr4) 
 #  define USE_POSIX_TIME 
 #  define USE_POSIX_SIGNALS
-#  define HAVE_ISINF 
+#  undef HAVE_ISINF 
 #  define NEED_RUSAGE 
 #  define NO_EMPTY_STMTS
 #  define HAVE_TZSET
@@ -189,22 +194,23 @@ typedef unsigned char slock_t;
 #endif
 
 #if defined(win32)
-#  define JMP_BUF
+#  undef HAVE_KILL
 #  undef HAVE_SIGSETJMP
+#  undef HAVE_CBRT
+#  undef HAVE_ISINF
+#  define JMP_BUF
 #  define NO_UNISTD_H
 #  define USES_WINSOCK 
 #  define NOFILE	100
 #  define NEED_UNION_SEMUN
 #  define HAVE_TZSET
-#  define HAVE_CBRT
-#  define HAVE_ISINF
 #  ifndef MAXPATHLEN
 #  define MAXPATHLEN    250
 #  endif
 #endif /* WIN32 */
 
 #if defined(ultrix4)
-#  define HAVE_ISINF 
+#  undef HAVE_ISINF 
 #  define USE_POSIX_TIME
 #  define NEED_UNION_SEMUN 
 #  define NEED_STRDUP
