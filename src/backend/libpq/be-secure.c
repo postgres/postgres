@@ -11,7 +11,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/libpq/be-secure.c,v 1.5 2002/06/14 04:36:58 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/libpq/be-secure.c,v 1.6 2002/06/14 04:38:04 momjian Exp $
  *
  *	  Since the server static private key ($DataDir/server.key)
  *	  will normally be stored unencrypted so that the database
@@ -65,7 +65,7 @@
  *	  [*] server verifies client certificates
  *
  *	  milestone 5: provide informational callbacks
- *	  [ ] provide informational callbacks
+ *	  [*] provide informational callbacks
  *
  *	  other changes
  *	  [ ] tcp-wrappers
@@ -125,6 +125,7 @@ static DH *load_dh_file(int keylength);
 static DH *load_dh_buffer(const char *, size_t);
 static DH *tmp_dh_cb(SSL *s, int is_export, int keylength);
 static int verify_cb(int, X509_STORE_CTX *);
+static void info_cb(SSL *ssl, int type, int args);
 static int initialize_SSL(void);
 static void destroy_SSL(void);
 static int open_server_SSL(Port *);
@@ -539,6 +540,45 @@ verify_cb (int ok, X509_STORE_CTX *ctx)
 	return ok;
 }
 
+/*
+ *	This callback is used to copy SSL information messages
+ *	into the PostgreSQL log.
+ */
+static void
+info_cb (SSL *ssl, int type, int args)
+{
+	if (DebugLvl < 2)
+		return;
+
+	switch (type)
+	{
+	case SSL_CB_HANDSHAKE_START:
+		elog(DEBUG, "SSL: handshake start");
+		break;
+	case SSL_CB_HANDSHAKE_DONE:
+		elog(DEBUG, "SSL: handshake done");
+		break;
+	case SSL_CB_ACCEPT_LOOP:
+		if (DebugLvl >= 3)
+			elog(DEBUG, "SSL: accept loop");
+		break;
+	case SSL_CB_ACCEPT_EXIT:
+		elog(DEBUG, "SSL: accept exit (%d)", args);
+		break;
+	case SSL_CB_CONNECT_LOOP:
+		elog(DEBUG, "SSL: connect loop");
+		break;
+	case SSL_CB_CONNECT_EXIT:
+		elog(DEBUG, "SSL: connect exit (%d)", args);
+		break;
+	case SSL_CB_READ_ALERT:
+		elog(DEBUG, "SSL: read alert (0x%04x)", args);
+		break;
+	case SSL_CB_WRITE_ALERT:
+		elog(DEBUG, "SSL: write alert (0x%04x)", args);
+		break;
+	}
+}
 
 /*
  *	Initialize global SSL context.
@@ -662,6 +702,9 @@ open_server_SSL (Port *port)
 		port->peer_cn[sizeof(port->peer_cn)-1] = '\0';
 	}
 	elog(DEBUG, "secure connection from '%s'", port->peer_cn);
+
+	/* set up debugging/info callback */
+	SSL_CTX_set_info_callback(SSL_context, info_cb);
 
 	return 0;
 }
