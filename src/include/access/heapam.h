@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2000, PostgreSQL, Inc
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Id: heapam.h,v 1.56 2000/08/03 19:19:38 tgl Exp $
+ * $Id: heapam.h,v 1.57 2000/11/14 21:04:32 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -191,7 +191,7 @@ fastgetattr(HeapTuple tup, int attnum, TupleDesc tupleDesc,
 			: \
 			(((attnum) == TableOidAttributeNumber) ? \
 			( \
-				(Datum)((tup)->tableOid) \
+				(Datum)((tup)->t_tableOid) \
 			) \
             : \
 			( \

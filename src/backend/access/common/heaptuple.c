@@ -9,7 +9,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/access/common/heaptuple.c,v 1.65 2000/07/04 02:40:56 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/access/common/heaptuple.c,v 1.66 2000/11/14 21:04:32 tgl Exp $
  *
  * NOTES
  *	  The old interface functions have been converted to macros
@@ -275,38 +275,6 @@ heap_sysattrbyval(AttrNumber attno)
 	return byval;
 }
 
-#ifdef NOT_USED
-/* ----------------
- *		heap_getsysattr
- * ----------------
- */
-Datum
-heap_getsysattr(HeapTuple tup, Buffer b, int attnum)
-{
-	switch (attnum)
-	{
-		case TableOidAttributeNumber:
-			return (Datum) &tup->t_tableoid;
-		case SelfItemPointerAttributeNumber:
-			return (Datum) &tup->t_ctid;
-		case ObjectIdAttributeNumber:
-			return (Datum) (long) tup->t_oid;
-		case MinTransactionIdAttributeNumber:
-			return (Datum) (long) tup->t_xmin;
-		case MinCommandIdAttributeNumber:
-			return (Datum) (long) tup->t_cmin;
-		case MaxTransactionIdAttributeNumber:
-			return (Datum) (long) tup->t_xmax;
-		case MaxCommandIdAttributeNumber:
-			return (Datum) (long) tup->t_cmax;
-		default:
-			elog(ERROR, "heap_getsysattr: undefined attnum %d", attnum);
-	}
-	return (Datum) NULL;
-}
-
-#endif
-
 /* ----------------
  *		nocachegetattr
  *
@@ -563,6 +531,9 @@ nocachegetattr(HeapTuple tuple,
  *		heap_copytuple
  *
  *		returns a copy of an entire tuple
+ *
+ * The HeapTuple struct, tuple header, and tuple data are all allocated
+ * as a single palloc() block.
  * ----------------
  */
 HeapTuple
@@ -576,17 +547,17 @@ heap_copytuple(HeapTuple tuple)
 	newTuple = (HeapTuple) palloc(HEAPTUPLESIZE + tuple->t_len);
 	newTuple->t_len = tuple->t_len;
 	newTuple->t_self = tuple->t_self;
+	newTuple->t_tableOid = tuple->t_tableOid;
 	newTuple->t_datamcxt = CurrentMemoryContext;
 	newTuple->t_data = (HeapTupleHeader) ((char *) newTuple + HEAPTUPLESIZE);
-	memmove((char *) newTuple->t_data,
-			(char *) tuple->t_data, tuple->t_len);
+	memcpy((char *) newTuple->t_data, (char *) tuple->t_data, tuple->t_len);
 	return newTuple;
 }
 
 /* ----------------
  *		heap_copytuple_with_tuple
  *
- *		returns a copy of an tuple->t_data
+ *		copy a tuple into a caller-supplied HeapTuple management struct
  * ----------------
  */
 void
@@ -600,11 +571,10 @@ heap_copytuple_with_tuple(HeapTuple src, HeapTuple dest)
 
 	dest->t_len = src->t_len;
 	dest->t_self = src->t_self;
+	dest->t_tableOid = src->t_tableOid;
 	dest->t_datamcxt = CurrentMemoryContext;
 	dest->t_data = (HeapTupleHeader) palloc(src->t_len);
-	memmove((char *) dest->t_data,
-			(char *) src->t_data, src->t_len);
-	return;
+	memcpy((char *) dest->t_data, (char *) src->t_data, src->t_len);
 }
 
 #ifdef NOT_USED
@@ -705,6 +675,7 @@ heap_formtuple(TupleDesc tupleDescriptor,
 
 	tuple->t_len = len;
 	ItemPointerSetInvalid(&(tuple->t_self));
+	tuple->t_tableOid = InvalidOid;
 	td->t_natts = numberOfAttributes;
 	td->t_hoff = hoff;
 
@@ -805,6 +776,7 @@ heap_modifytuple(HeapTuple tuple,
 	newTuple->t_data->t_infomask = infomask;
 	newTuple->t_data->t_natts = numberOfAttributes;
 	newTuple->t_self = tuple->t_self;
+	newTuple->t_tableOid = tuple->t_tableOid;
 
 	return newTuple;
 }
@@ -851,17 +823,19 @@ heap_addheader(uint32 natts,	/* max domain index */
 	tuple->t_datamcxt = CurrentMemoryContext;
 	td = tuple->t_data = (HeapTupleHeader) ((char *) tuple + HEAPTUPLESIZE);
 
-	MemSet((char *) td, 0, len);
-
 	tuple->t_len = len;
 	ItemPointerSetInvalid(&(tuple->t_self));
+	tuple->t_tableOid = InvalidOid;
+
+	MemSet((char *) td, 0, len);
+
 	td->t_hoff = hoff;
 	td->t_natts = natts;
 	td->t_infomask = 0;
 	td->t_infomask |= HEAP_XMAX_INVALID;
 
 	if (structlen > 0)
-		memmove((char *) td + hoff, structure, (size_t) structlen);
+		memcpy((char *) td + hoff, structure, (size_t) structlen);
 
 	return tuple;
 }

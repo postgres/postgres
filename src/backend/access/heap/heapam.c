@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/access/heap/heapam.c,v 1.93 2000/11/08 22:09:54 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/access/heap/heapam.c,v 1.94 2000/11/14 21:04:31 tgl Exp $
  *
  *
  * INTERFACE ROUTINES
@@ -255,9 +255,7 @@ heapgettup(Relation relation,
 	OffsetNumber lineoff;
 	int			linesleft;
 	ItemPointer tid = (tuple->t_data == NULL) ?
-	(ItemPointer) NULL : &(tuple->t_self);
-    
-	tuple->tableOid = relation->rd_id;
+		(ItemPointer) NULL : &(tuple->t_self);
 
 	/* ----------------
 	 *	increment access statistics
@@ -294,6 +292,8 @@ heapgettup(Relation relation,
 
 	if (!ItemPointerIsValid(tid))
 		Assert(!PointerIsValid(tid));
+    
+	tuple->t_tableOid = relation->rd_id;
 
 	/* ----------------
 	 *	return null immediately if relation is empty
@@ -1145,7 +1145,6 @@ heap_fetch(Relation relation,
 	ItemPointer tid = &(tuple->t_self);
 	OffsetNumber offnum;
 
-	tuple->tableOid = relation->rd_id;
 	/* ----------------
 	 *	increment access statistics
 	 * ----------------
@@ -1193,6 +1192,7 @@ heap_fetch(Relation relation,
 	tuple->t_datamcxt = NULL;
 	tuple->t_data = (HeapTupleHeader) PageGetItem((Page) dp, lp);
 	tuple->t_len = ItemIdGetLength(lp);
+	tuple->t_tableOid = relation->rd_id;
 
 	/* ----------------
 	 *	check time qualification of tid
@@ -1241,7 +1241,6 @@ heap_get_latest_tid(Relation relation,
 	bool		invalidBlock,
 				linkend;
 
-	tp.tableOid = relation->rd_id;
 	/* ----------------
 	 *	get the buffer from the relation descriptor
 	 *	Note that this does a buffer pin.
@@ -1333,7 +1332,6 @@ heap_insert(Relation relation, HeapTuple tup)
 	Buffer buffer;
 
 	/* increment access statistics */
-	tup->tableOid = relation->rd_id;
 	IncrHeapAccessStat(local_insert);
 	IncrHeapAccessStat(global_insert);
 
@@ -1357,6 +1355,7 @@ heap_insert(Relation relation, HeapTuple tup)
 	StoreInvalidTransactionId(&(tup->t_data->t_xmax));
 	tup->t_data->t_infomask &= ~(HEAP_XACT_MASK);
 	tup->t_data->t_infomask |= HEAP_XMAX_INVALID;
+	tup->t_tableOid = relation->rd_id;
 
 #ifdef TUPLE_TOASTER_ACTIVE
 	/* ----------
@@ -1420,7 +1419,6 @@ heap_delete(Relation relation, ItemPointer tid, ItemPointer ctid)
 	Buffer		buffer;
 	int			result;
 
-	tp.tableOid = relation->rd_id;
 	/* increment access statistics */
 	IncrHeapAccessStat(local_delete);
 	IncrHeapAccessStat(global_delete);
@@ -1440,6 +1438,7 @@ heap_delete(Relation relation, ItemPointer tid, ItemPointer ctid)
 	tp.t_data = (HeapTupleHeader) PageGetItem((Page) dp, lp);
 	tp.t_len = ItemIdGetLength(lp);
 	tp.t_self = *tid;
+	tp.t_tableOid = relation->rd_id;
 
 l1:
 	result = HeapTupleSatisfiesUpdate(&tp);
@@ -1546,7 +1545,6 @@ heap_update(Relation relation, ItemPointer otid, HeapTuple newtup,
 	Buffer		buffer, newbuf;
 	int			result;
 
-	newtup->tableOid = relation->rd_id;
 	/* increment access statistics */
 	IncrHeapAccessStat(local_replace);
 	IncrHeapAccessStat(global_replace);
@@ -1733,7 +1731,6 @@ heap_mark4update(Relation relation, HeapTuple tuple, Buffer *buffer)
 	PageHeader	dp;
 	int			result;
 
-	tuple->tableOid = relation->rd_id;
 	/* increment access statistics */
 	IncrHeapAccessStat(local_mark4update);
 	IncrHeapAccessStat(global_mark4update);
