@@ -2,10 +2,11 @@ Here are two conversion utilities for MySQL dumps.  Use the one you prefer.
 
 The most recent version of my2pg.pl can be obtained from:
 
-	http://gborg.postgresql.org/project/mysql2psql/projdisplay.php
+	http://www.omnistarinc.com/~fonin/downloads.php#my2pg
 
 my2pg.diff has additional changes for CREATE FUNCTION.
 
 Another tool, mysql2pgsql, can be found at:
 
-	http://www.omnistarinc.com/~fonin/downloads.php#my2pg
+	http://gborg.postgresql.org/project/mysql2psql/projdisplay.php
+
