@@ -1460,7 +1460,7 @@ ConstraintDeferrabilitySpec: NOT DEFERRABLE	{ $$ = make_str("not deferrable"); }
                 ;
 
 ConstraintTimeSpec: INITIALLY IMMEDIATE		{ $$ = make_str("initially immediate"); }
-                | INITIALLY DEFERRED	{ $$ = make_str("initially deferrable"); }
+                | INITIALLY DEFERRED	{ $$ = make_str("initially deferred"); }
                 ;
 
 DropTrigStmt:  DROP TRIGGER name ON relation_name
