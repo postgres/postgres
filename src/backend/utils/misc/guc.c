@@ -4,7 +4,7 @@
  * Support for grand unified configuration scheme, including SET
  * command, configuration file, and command line options.
  *
- * $Header: /cvsroot/pgsql/src/backend/utils/misc/guc.c,v 1.47 2001/09/07 00:27:29 tgl Exp $
+ * $Header: /cvsroot/pgsql/src/backend/utils/misc/guc.c,v 1.48 2001/09/12 14:06:37 petere Exp $
  *
  * Copyright 2000 by PostgreSQL Global Development Group
  * Written by Peter Eisentraut <peter_e@gmx.net>.
@@ -317,7 +317,7 @@ static struct config_int
 	{"max_fsm_pages", PGC_POSTMASTER, &MaxFSMPages,
 	 10000, 1000, INT_MAX, NULL, NULL},
 
-	{"max_locks_per_xact", PGC_POSTMASTER, &max_locks_per_xact,
+	{"max_locks_per_transaction", PGC_POSTMASTER, &max_locks_per_xact,
 	 64, 10, INT_MAX, NULL, NULL},
 
 	{"checkpoint_segments", PGC_SIGHUP, &CheckPointSegments,

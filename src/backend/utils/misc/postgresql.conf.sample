@@ -47,7 +47,7 @@
 #shared_buffers = 64        # 2*max_connections, min 16
 #max_fsm_relations = 100    # min 10
 #max_fsm_pages = 10000      # min 1000
-#max_locks_per_xact = 64    # min 10
+#max_locks_per_transaction = 64 # min 10
 #wal_buffers = 8            # min 4
 
 #

@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/runtime.sgml,v 1.77 2001/09/09 23:52:12 petere Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/runtime.sgml,v 1.78 2001/09/12 14:06:37 petere Exp $
 -->
 
 <Chapter Id="runtime">
@@ -1187,11 +1187,11 @@ dynamic_library_path = '/usr/local/lib:/home/my_project/lib:$libdir:$libdir/cont
      </varlistentry>
 
      <varlistentry>
-      <term><varname>MAX_LOCKS_PER_XACT</varname> (<type>integer</type>)</term>
+      <term><varname>MAX_LOCKS_PER_TRANSACTION</varname> (<type>integer</type>)</term>
       <listitem>
        <para>
         The shared lock table is sized on the assumption that at most
-	<varname>max_locks_per_xact</> * <varname>max_connections</varname> distinct objects will need
+	<varname>max_locks_per_transaction</> * <varname>max_connections</varname> distinct objects will need
 	to be locked at any one time.  The default, 64, has historically
 	proven sufficient, but you might need to raise this value if you
 	have clients that touch many different tables in a single transaction.
