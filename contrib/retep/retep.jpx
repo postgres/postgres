@@ -4,6 +4,12 @@
 <project>
   <property category="idl" name="ProcessIDL" value="false" />
   <property category="runtime.0" name="RunnableType" value="com.borland.jbuilder.runtime.ApplicationRunner" />
+  <property category="runtime.0" name="application.class" value="uk.org.retep.util.hba.Main" />
+  <property category="runtime.0" name="application.parameters" value="-d2 pg_hba.conf" />
+  <property category="runtime.0" name="appserver.ejbJarsSaved" value="1" />
+  <property category="runtime.0" name="appserver.parameters" value="-jts -jns -jss -jdb" />
+  <property category="runtime.0" name="appserver.servername" value="ejbcontainer" />
+  <property category="runtime.0" name="appserver.vmparameters" value="" />
   <property category="runtime.0" name="jsprunner.docbase" value="." />
   <property category="runtime.0" name="jsprunner.jspfile" value="E%|/docs/java/xml/example6" />
   <property category="sys" name="AuthorLabel" value="@author" />
@@ -15,7 +21,7 @@
   <property category="sys" name="CompanyLabel" value="Company:" />
   <property category="sys" name="Copyright" value="Copyright (c) 2001" />
   <property category="sys" name="CopyrightLabel" value="Copyright:" />
-  <property category="sys" name="DefaultPackage" value="uk.org.retep.xml.jdbc" />
+  <property category="sys" name="DefaultPackage" value="uk.org.retep.util.misc" />
   <property category="sys" name="Description" value="" />
   <property category="sys" name="DescriptionLabel" value="Description:" />
   <property category="sys" name="DocPath" value="doc" />
@@ -25,7 +31,7 @@
   <property category="sys" name="InstanceVisibility" value="0" />
   <property category="sys" name="JDK" value="java 1.3.0-C" />
   <property category="sys" name="LastTag" value="0" />
-  <property category="sys" name="Libraries" value="JAXP;Oracle JDBC" />
+  <property category="sys" name="Libraries" value="JAXP;Oracle JDBC;JDK1.3 JRE" />
   <property category="sys" name="MakeStable" value="0" />
   <property category="sys" name="OutPath" value="build" />
   <property category="sys" name="SourcePath" value="." />
@@ -34,13 +40,17 @@
   <property category="sys" name="Version" value="1.0" />
   <property category="sys" name="VersionLabel" value="@version" />
   <property category="sys" name="WorkingDirectory" value="." />
-  <node type="Folder" name="core" />
+  <node type="Package" name="uk.org.retep.app" />
+  <node type="Package" name="uk.org.retep.dtu" />
+  <node type="Package" name="uk.org.retep.tools" />
+  <node type="Package" name="uk.org.retep.util" />
   <node type="Package" name="uk.org.retep.xml.core" />
   <node type="Package" name="uk.org.retep.xml.jdbc" />
   <node type="Package" name="uk.org.retep.xml.parser" />
   <file path="build.xml" />
   <file path="CHANGELOG" />
   <file path="Implementation" />
+  <file path="uk/org/retep/util/models/PropertiesTableModel.java" />
   <file path="README" />
 </project>
 

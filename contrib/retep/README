@@ -1,0 +1,35 @@
+Before you ask what retepTools are, they are my personal suite of utilities.
+About 90% of them are JDBC related (either they use JDBC, or I use them in
+developing the JDBC driver).
+
+Now, because of various reasons I won't go into now, in January 2001 I decided
+to release the entire lot to the public. I could have used something like
+SourceForge, but as they are mainly JDBC related I thought here is the best
+place.
+
+Now all (bar retepPDF, see end-note) will over the next few months be going
+into the /contrib/retep directory. They range from simple XML Inport/Export
+classes to entire sub-systems that can be plugged into applications.
+
+All this lot were never released, so I'm placing them under PostgreSQL's
+licence.
+
+Please refer to Implementation for details of what package does what.
+
+It all requires Java2SE (JDK1.2) as a minimum. I do have some plans for some
+EJB tools later, so those will need Java2EE, but not yet ;-)
+
+Peter Mount
+peter@retep.org.uk
+March 2 2001
+
+retepPDF: This is not included for two reasons:
+
+1: It's big and not really related in any way to PostgreSQL
+2: More importantly, I (may be foolishly) released it some 3 years ago under
+   the LGPL. As a few people have added to it, it's not really possible to
+   change the licence, and I don't want to polute PostgreSQL's source tree ;-)
+
+retepGraph: This was an old graphics library. It's been obsolete for 3 years
+now, so it's not going in.
+
