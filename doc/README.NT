@@ -54,5 +54,11 @@ appears to have some problems with locking.
 
 Joost
 
+[Added by bjm]
 
+By default, PostgreSQL clients like psql communicate by default using
+unix domain sockets, which don't work on NT.  Start the postmaster with
+-i, and when connecting to the database from a client, set the PGHOST
+environment variable to 'localhost' or supply the hostname on the
+command line.
 
