@@ -7,17 +7,14 @@
 #   name = value
 #
 # (The `=' is optional.) White space is collapsed, comments are
-# introduced by `#' anywhere on a line. The complete list of option
+# introduced by `#' anywhere on a line.  The complete list of option
 # names and allowed values can be found in the PostgreSQL
-# documentation. Examples are:
-
-#log_connections = on
-#fsync = off
-#max_connections = 64
+# documentation.  The commented-out settings shown in this file
+# represent the default values.
 
 # Any option can also be given as a command line switch to the
 # postmaster, e.g., 'postmaster -c log_connections=on'. Some options
-# can be set at run-time with the 'SET' SQL command.
+# can be changed at run-time with the 'SET' SQL command.
 
 
 #========================================================================
@@ -29,7 +26,7 @@
 #tcpip_socket = false
 #ssl = false
 
-#max_connections = 32 # 1-1024
+#max_connections = 32
 
 #port = 5432 
 #hostname_lookup = false

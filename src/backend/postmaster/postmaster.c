@@ -37,7 +37,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/postmaster/postmaster.c,v 1.238 2001/09/07 00:27:29 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/postmaster/postmaster.c,v 1.239 2001/09/07 00:46:42 tgl Exp $
  *
  * NOTES
  *
@@ -480,11 +480,7 @@ PostmasterMain(int argc, char *argv[])
 				 */
 				break;
 			case 'N':
-
-				/*
-				 * The max number of backends to start. Can't set to less
-				 * than 1 or more than compiled-in limit.
-				 */
+				/* The max number of backends to start. */
 				SetConfigOption("max_connections", optarg, PGC_POSTMASTER, true);
 				break;
 			case 'n':

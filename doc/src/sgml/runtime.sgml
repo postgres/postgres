@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/runtime.sgml,v 1.75 2001/08/15 18:42:14 momjian Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/runtime.sgml,v 1.76 2001/09/07 00:46:41 tgl Exp $
 -->
 
 <Chapter Id="runtime">
@@ -1145,10 +1145,8 @@ dynamic_library_path = '/usr/local/lib:/home/my_project/lib:$libdir:$libdir/cont
       <listitem>
        <para>
         Determines how many concurrent connections the database server
-        will allow. The default is 32. There is also a compiled-in
-        hard upper limit on this value, which is typically 1024
-	(both numbers can be altered when compiling the server). This
-        parameter can only be set at server start.
+        will allow. The default is 32 (unless altered while building
+	the server). This parameter can only be set at server start.
        </para>
       </listitem>
      </varlistentry>
@@ -1760,7 +1758,7 @@ dynamic_library_path = '/usr/local/lib:/home/my_project/lib:$libdir:$libdir/cont
     <productname>Postgres</> uses one semaphore per allowed connection
     (<option>-N</> option), in sets of 16.  Each such set will also
     contain a 17th semaphore which contains a <quote>magic
-    number</quote>, to avoid collision with semaphore sets used by
+    number</quote>, to detect collision with semaphore sets used by
     other applications. The maximum number of semaphores in the system
     is set by <varname>SEMMNS</>, which consequently must be at least
     as high as the connection setting plus one extra for each 16
