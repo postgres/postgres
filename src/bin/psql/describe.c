@@ -3,7 +3,7 @@
  *
  * Copyright (c) 2000-2003, PostgreSQL Global Development Group
  *
- * $PostgreSQL: pgsql/src/bin/psql/describe.c,v 1.91 2003/12/23 23:13:14 momjian Exp $
+ * $PostgreSQL: pgsql/src/bin/psql/describe.c,v 1.92 2004/01/11 19:10:49 dennis Exp $
  */
 #include "postgres_fe.h"
 #include "describe.h"
@@ -892,7 +892,7 @@ describeOneTableDetails(const char *schemaname,
 							  schemaname, indtable);
 
 			if (strlen(indpred))
-				appendPQExpBuffer(&tmpbuf, ", predicate (%s)", indpred);
+				appendPQExpBuffer(&tmpbuf, _(", predicate (%s)"), indpred);
 
 			footers = xmalloczero(2 * sizeof(*footers));
 			footers[0] = xstrdup(tmpbuf.data);
