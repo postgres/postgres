@@ -1,6 +1,6 @@
 <!--
  Documentation of the system catalogs, directed toward PostgreSQL developers
- $PostgreSQL: pgsql/doc/src/sgml/catalogs.sgml,v 2.82 2004/01/06 23:55:18 tgl Exp $
+ $PostgreSQL: pgsql/doc/src/sgml/catalogs.sgml,v 2.83 2004/02/12 23:41:00 tgl Exp $
  -->
 
 <chapter id="catalogs">
@@ -3522,6 +3522,13 @@
       <entry><type>regproc</type></entry>
       <entry><literal><link linkend="catalog-pg-proc"><structname>pg_proc</structname></link>.oid</literal></entry>
       <entry>Output conversion function (binary format), or 0 if none</entry>
+     </row>
+
+     <row>
+      <entry><structfield>typanalyze</structfield></entry>
+      <entry><type>regproc</type></entry>
+      <entry><literal><link linkend="catalog-pg-proc"><structname>pg_proc</structname></link>.oid</literal></entry>
+      <entry>Custom ANALYZE function, or 0 to use the standard function</entry>
      </row>
 
      <row>

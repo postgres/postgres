@@ -12,7 +12,7 @@
  *	by PostgreSQL
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/bin/pg_dump/pg_dump.c,v 1.363 2004/01/22 19:09:32 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/bin/pg_dump/pg_dump.c,v 1.364 2004/02/12 23:41:03 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -1648,9 +1648,9 @@ getTypes(int *numTypes)
 
 		/*
 		 * Make sure there are dependencies from the type to its input and
-		 * output functions.  (We don't worry about typsend/typreceive since
-		 * those are only valid in 7.4 and later, wherein the standard
-		 * dependency mechanism will pick them up.)
+		 * output functions.  (We don't worry about typsend, typreceive, or
+		 * typanalyze since those are only valid in 7.4 and later, wherein
+		 * the standard dependency mechanism will pick them up.)
 		 */
 		funcInfo = findFuncByOid(tinfo[i].typinput);
 		if (funcInfo)
@@ -4148,10 +4148,12 @@ dumpBaseType(Archive *fout, TypeInfo *tinfo)
 	char	   *typoutput;
 	char	   *typreceive;
 	char	   *typsend;
+	char	   *typanalyze;
 	Oid			typinputoid;
 	Oid			typoutputoid;
 	Oid			typreceiveoid;
 	Oid			typsendoid;
+	Oid			typanalyzeoid;
 	char	   *typdelim;
 	char	   *typdefault;
 	char	   *typbyval;
@@ -4162,14 +4164,32 @@ dumpBaseType(Archive *fout, TypeInfo *tinfo)
 	selectSourceSchema(tinfo->typnamespace->nspname);
 
 	/* Fetch type-specific details */
-	if (fout->remoteVersion >= 70400)
+	if (fout->remoteVersion >= 70500)
 	{
 		appendPQExpBuffer(query, "SELECT typlen, "
 						  "typinput, typoutput, typreceive, typsend, "
+						  "typanalyze, "
 						  "typinput::pg_catalog.oid as typinputoid, "
 						  "typoutput::pg_catalog.oid as typoutputoid, "
 						  "typreceive::pg_catalog.oid as typreceiveoid, "
 						  "typsend::pg_catalog.oid as typsendoid, "
+						  "typanalyze::pg_catalog.oid as typanalyzeoid, "
+						  "typdelim, typdefault, typbyval, typalign, "
+						  "typstorage "
+						  "FROM pg_catalog.pg_type "
+						  "WHERE oid = '%u'::pg_catalog.oid",
+						  tinfo->dobj.catId.oid);
+	}
+	else if (fout->remoteVersion >= 70400)
+	{
+		appendPQExpBuffer(query, "SELECT typlen, "
+						  "typinput, typoutput, typreceive, typsend, "
+						  "'-' as typanalyze, "
+						  "typinput::pg_catalog.oid as typinputoid, "
+						  "typoutput::pg_catalog.oid as typoutputoid, "
+						  "typreceive::pg_catalog.oid as typreceiveoid, "
+						  "typsend::pg_catalog.oid as typsendoid, "
+						  "0 as typanalyzeoid, "
 						  "typdelim, typdefault, typbyval, typalign, "
 						  "typstorage "
 						  "FROM pg_catalog.pg_type "
@@ -4181,9 +4201,11 @@ dumpBaseType(Archive *fout, TypeInfo *tinfo)
 		appendPQExpBuffer(query, "SELECT typlen, "
 						  "typinput, typoutput, "
 						  "'-' as typreceive, '-' as typsend, "
+						  "'-' as typanalyze, "
 						  "typinput::pg_catalog.oid as typinputoid, "
 						  "typoutput::pg_catalog.oid as typoutputoid, "
 						  "0 as typreceiveoid, 0 as typsendoid, "
+						  "0 as typanalyzeoid, "
 						  "typdelim, typdefault, typbyval, typalign, "
 						  "typstorage "
 						  "FROM pg_catalog.pg_type "
@@ -4199,9 +4221,11 @@ dumpBaseType(Archive *fout, TypeInfo *tinfo)
 		appendPQExpBuffer(query, "SELECT typlen, "
 						  "typinput, typoutput, "
 						  "'-' as typreceive, '-' as typsend, "
+						  "'-' as typanalyze, "
 						  "typinput::oid as typinputoid, "
 						  "typoutput::oid as typoutputoid, "
 						  "0 as typreceiveoid, 0 as typsendoid, "
+						  "0 as typanalyzeoid, "
 						  "typdelim, typdefault, typbyval, typalign, "
 						  "typstorage "
 						  "FROM pg_type "
@@ -4213,9 +4237,11 @@ dumpBaseType(Archive *fout, TypeInfo *tinfo)
 		appendPQExpBuffer(query, "SELECT typlen, "
 						  "typinput, typoutput, "
 						  "'-' as typreceive, '-' as typsend, "
+						  "'-' as typanalyze, "
 						  "typinput::oid as typinputoid, "
 						  "typoutput::oid as typoutputoid, "
 						  "0 as typreceiveoid, 0 as typsendoid, "
+						  "0 as typanalyzeoid, "
 						  "typdelim, typdefault, typbyval, typalign, "
 						  "'p'::char as typstorage "
 						  "FROM pg_type "
@@ -4240,10 +4266,12 @@ dumpBaseType(Archive *fout, TypeInfo *tinfo)
 	typoutput = PQgetvalue(res, 0, PQfnumber(res, "typoutput"));
 	typreceive = PQgetvalue(res, 0, PQfnumber(res, "typreceive"));
 	typsend = PQgetvalue(res, 0, PQfnumber(res, "typsend"));
+	typanalyze = PQgetvalue(res, 0, PQfnumber(res, "typanalyze"));
 	typinputoid = atooid(PQgetvalue(res, 0, PQfnumber(res, "typinputoid")));
 	typoutputoid = atooid(PQgetvalue(res, 0, PQfnumber(res, "typoutputoid")));
 	typreceiveoid = atooid(PQgetvalue(res, 0, PQfnumber(res, "typreceiveoid")));
 	typsendoid = atooid(PQgetvalue(res, 0, PQfnumber(res, "typsendoid")));
+	typanalyzeoid = atooid(PQgetvalue(res, 0, PQfnumber(res, "typanalyzeoid")));
 	typdelim = PQgetvalue(res, 0, PQfnumber(res, "typdelim"));
 	if (PQgetisnull(res, 0, PQfnumber(res, "typdefault")))
 		typdefault = NULL;
@@ -4270,13 +4298,15 @@ dumpBaseType(Archive *fout, TypeInfo *tinfo)
 
 	if (fout->remoteVersion >= 70300)
 	{
-		/* regproc result is correctly quoted in 7.3 */
+		/* regproc result is correctly quoted as of 7.3 */
 		appendPQExpBuffer(q, ",\n    INPUT = %s", typinput);
 		appendPQExpBuffer(q, ",\n    OUTPUT = %s", typoutput);
 		if (OidIsValid(typreceiveoid))
 			appendPQExpBuffer(q, ",\n    RECEIVE = %s", typreceive);
 		if (OidIsValid(typsendoid))
 			appendPQExpBuffer(q, ",\n    SEND = %s", typsend);
+		if (OidIsValid(typanalyzeoid))
+			appendPQExpBuffer(q, ",\n    ANALYZE = %s", typanalyze);
 	}
 	else
 	{
@@ -4284,7 +4314,7 @@ dumpBaseType(Archive *fout, TypeInfo *tinfo)
 		/* cannot combine these because fmtId uses static result area */
 		appendPQExpBuffer(q, ",\n    INPUT = %s", fmtId(typinput));
 		appendPQExpBuffer(q, ",\n    OUTPUT = %s", fmtId(typoutput));
-		/* no chance that receive/send need be printed */
+		/* no chance that receive/send/analyze need be printed */
 	}
 
 	if (typdefault != NULL)

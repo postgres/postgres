@@ -8,7 +8,7 @@
  * Portions Copyright (c) 1996-2003, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/include/catalog/pg_statistic.h,v 1.23 2003/11/29 22:40:58 pgsql Exp $
+ * $PostgreSQL: pgsql/src/include/catalog/pg_statistic.h,v 1.24 2004/02/12 23:41:04 tgl Exp $
  *
  * NOTES
  *	  the genbki.sh script reads this file and generates .bki
@@ -164,11 +164,30 @@ typedef FormData_pg_statistic *Form_pg_statistic;
 /*
  * Currently, three statistical slot "kinds" are defined: most common values,
  * histogram, and correlation.	Additional "kinds" will probably appear in
- * future to help cope with non-scalar datatypes.
+ * future to help cope with non-scalar datatypes.  Also, custom data types
+ * can define their own "kind" codes by mutual agreement between a custom
+ * typanalyze routine and the selectivity estimation functions of the type's
+ * operators.
  *
  * Code reading the pg_statistic relation should not assume that a particular
  * data "kind" will appear in any particular slot.	Instead, search the
- * stakind fields to see if the desired data is available.
+ * stakind fields to see if the desired data is available.  (The standard
+ * function get_attstatsslot() may be used for this.)
+ */
+
+/*
+ * The present allocation of "kind" codes is:
+ *
+ *	1-99:		reserved for assignment by the core PostgreSQL project
+ *				(values in this range will be documented in this file)
+ *	100-199:	reserved for assignment by the PostGIS project
+ *				(values to be documented in PostGIS documentation)
+ *	200-9999:	reserved for future public assignments
+ *
+ * For private use you may choose a "kind" code at random in the range
+ * 10000-30000.  However, for code that is to be widely disseminated it is
+ * better to obtain a publicly defined "kind" code by request from the
+ * PostgreSQL Global Development Group.
  */
 
 /*

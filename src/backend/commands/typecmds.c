@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/commands/typecmds.c,v 1.52 2004/01/10 23:28:44 neilc Exp $
+ *	  $PostgreSQL: pgsql/src/backend/commands/typecmds.c,v 1.53 2004/02/12 23:41:02 tgl Exp $
  *
  * DESCRIPTION
  *	  The "DefineFoo" routines take the parse tree and pick out the
@@ -77,6 +77,7 @@ static Oid	findTypeInputFunction(List *procname, Oid typeOid);
 static Oid	findTypeOutputFunction(List *procname, Oid typeOid);
 static Oid	findTypeReceiveFunction(List *procname, Oid typeOid);
 static Oid	findTypeSendFunction(List *procname, Oid typeOid);
+static Oid	findTypeAnalyzeFunction(List *procname, Oid typeOid);
 static List *get_rels_with_domain(Oid domainOid, LOCKMODE lockmode);
 static void domainOwnerCheck(HeapTuple tup, TypeName *typename);
 static char *domainAddConstraint(Oid domainOid, Oid domainNamespace,
@@ -101,6 +102,7 @@ DefineType(List *names, List *parameters)
 	List	   *outputName = NIL;
 	List	   *receiveName = NIL;
 	List	   *sendName = NIL;
+	List	   *analyzeName = NIL;
 	char	   *defaultValue = NULL;
 	bool		byValue = false;
 	char		delimiter = DEFAULT_TYPDELIM;
@@ -110,6 +112,7 @@ DefineType(List *names, List *parameters)
 	Oid			outputOid;
 	Oid			receiveOid = InvalidOid;
 	Oid			sendOid = InvalidOid;
+	Oid			analyzeOid = InvalidOid;
 	char	   *shadow_type;
 	List	   *pl;
 	Oid			typoid;
@@ -151,6 +154,9 @@ DefineType(List *names, List *parameters)
 			receiveName = defGetQualifiedName(defel);
 		else if (strcasecmp(defel->defname, "send") == 0)
 			sendName = defGetQualifiedName(defel);
+		else if (strcasecmp(defel->defname, "analyze") == 0 ||
+				 strcasecmp(defel->defname, "analyse") == 0)
+			analyzeName = defGetQualifiedName(defel);
 		else if (strcasecmp(defel->defname, "delimiter") == 0)
 		{
 			char	   *p = defGetString(defel);
@@ -319,6 +325,13 @@ DefineType(List *names, List *parameters)
 	}
 
 	/*
+	 * Convert analysis function proc name to an OID. If no analysis function
+	 * is specified, we'll use zero to select the built-in default algorithm.
+	 */
+	if (analyzeName)
+		analyzeOid = findTypeAnalyzeFunction(analyzeName, typoid);
+
+	/*
 	 * now have TypeCreate do all the real work.
 	 */
 	typoid =
@@ -334,6 +347,7 @@ DefineType(List *names, List *parameters)
 				   outputOid,	/* output procedure */
 				   receiveOid,	/* receive procedure */
 				   sendOid,		/* send procedure */
+				   analyzeOid,	/* analyze procedure */
 				   elemType,	/* element type ID */
 				   InvalidOid,	/* base type ID (only for domains) */
 				   defaultValue,	/* default type value */
@@ -366,6 +380,7 @@ DefineType(List *names, List *parameters)
 			   F_ARRAY_OUT,		/* output procedure */
 			   F_ARRAY_RECV,	/* receive procedure */
 			   F_ARRAY_SEND,	/* send procedure */
+			   InvalidOid,		/* analyze procedure - default */
 			   typoid,			/* element type ID */
 			   InvalidOid,		/* base type ID */
 			   NULL,			/* never a default type value */
@@ -473,6 +488,7 @@ DefineDomain(CreateDomainStmt *stmt)
 	Oid			outputProcedure;
 	Oid			receiveProcedure;
 	Oid			sendProcedure;
+	Oid			analyzeProcedure;
 	bool		byValue;
 	char		delimiter;
 	char		alignment;
@@ -561,6 +577,9 @@ DefineDomain(CreateDomainStmt *stmt)
 	outputProcedure = baseType->typoutput;
 	receiveProcedure = baseType->typreceive;
 	sendProcedure = baseType->typsend;
+
+	/* Analysis function */
+	analyzeProcedure = baseType->typanalyze;
 
 	/* Inherited default value */
 	datum = SysCacheGetAttr(TYPEOID, typeTup,
@@ -714,6 +733,7 @@ DefineDomain(CreateDomainStmt *stmt)
 				   outputProcedure,		/* output procedure */
 				   receiveProcedure,	/* receive procedure */
 				   sendProcedure,		/* send procedure */
+				   analyzeProcedure,	/* analyze procedure */
 				   basetypelem, /* element type ID */
 				   basetypeoid, /* base type ID */
 				   defaultValue,	/* default type value (text) */
@@ -1033,6 +1053,35 @@ findTypeSendFunction(List *procname, Oid typeOid)
 	return InvalidOid;			/* keep compiler quiet */
 }
 
+static Oid
+findTypeAnalyzeFunction(List *procname, Oid typeOid)
+{
+	Oid			argList[FUNC_MAX_ARGS];
+	Oid			procOid;
+
+	/*
+	 * Analyze functions always take one INTERNAL argument and return bool.
+	 */
+	MemSet(argList, 0, FUNC_MAX_ARGS * sizeof(Oid));
+
+	argList[0] = INTERNALOID;
+
+	procOid = LookupFuncName(procname, 1, argList, true);
+	if (!OidIsValid(procOid))
+		ereport(ERROR,
+				(errcode(ERRCODE_UNDEFINED_FUNCTION),
+				 errmsg("function %s does not exist",
+						func_signature_string(procname, 1, argList))));
+
+	if (get_func_rettype(procOid) != BOOLOID)
+		ereport(ERROR,
+				(errcode(ERRCODE_INVALID_OBJECT_DEFINITION),
+				 errmsg("type analyze function %s must return type \"boolean\"",
+						NameListToString(procname))));
+
+	return procOid;
+}
+
 
 /*-------------------------------------------------------------------
  * DefineCompositeType
@@ -1192,6 +1241,7 @@ AlterDomainDefault(List *names, Node *defaultRaw)
 							 typTup->typoutput,
 							 typTup->typreceive,
 							 typTup->typsend,
+							 typTup->typanalyze,
 							 typTup->typelem,
 							 typTup->typbasetype,
 							 defaultExpr,

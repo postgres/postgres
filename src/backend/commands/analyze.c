@@ -1,14 +1,14 @@
 /*-------------------------------------------------------------------------
  *
  * analyze.c
- *	  the postgres statistics generator
+ *	  the Postgres statistics generator
  *
  * Portions Copyright (c) 1996-2003, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/commands/analyze.c,v 1.67 2004/02/10 03:42:43 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/commands/analyze.c,v 1.68 2004/02/12 23:41:02 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -23,8 +23,6 @@
 #include "catalog/indexing.h"
 #include "catalog/namespace.h"
 #include "catalog/pg_operator.h"
-#include "catalog/pg_statistic.h"
-#include "catalog/pg_type.h"
 #include "commands/vacuum.h"
 #include "miscadmin.h"
 #include "parser/parse_oper.h"
@@ -38,90 +36,12 @@
 #include "utils/tuplesort.h"
 
 
-/*
- * Analysis algorithms supported
- */
-typedef enum
-{
-	ALG_MINIMAL = 1,			/* Compute only most-common-values */
-	ALG_SCALAR					/* Compute MCV, histogram, sort
-								 * correlation */
-} AlgCode;
-
-/*
- * To avoid consuming too much memory during analysis and/or too much space
- * in the resulting pg_statistic rows, we ignore varlena datums that are wider
- * than WIDTH_THRESHOLD (after detoasting!).  This is legitimate for MCV
- * and distinct-value calculations since a wide value is unlikely to be
- * duplicated at all, much less be a most-common value.  For the same reason,
- * ignoring wide values will not affect our estimates of histogram bin
- * boundaries very much.
- */
-#define WIDTH_THRESHOLD  1024
-
-/*
- * We build one of these structs for each attribute (column) that is to be
- * analyzed.  The struct and subsidiary data are in anl_context,
- * so they live until the end of the ANALYZE operation.
- */
-typedef struct
-{
-	/* These fields are set up by examine_attribute */
-	int			attnum;			/* attribute number */
-	AlgCode		algcode;		/* Which algorithm to use for this column */
-	int			minrows;		/* Minimum # of rows wanted for stats */
-	Form_pg_attribute attr;		/* copy of pg_attribute row for column */
-	Form_pg_type attrtype;		/* copy of pg_type row for column */
-	Oid			eqopr;			/* '=' operator for datatype, if any */
-	Oid			eqfunc;			/* and associated function */
-	Oid			ltopr;			/* '<' operator for datatype, if any */
-
-	/*
-	 * These fields are filled in by the actual statistics-gathering
-	 * routine
-	 */
-	bool		stats_valid;
-	float4		stanullfrac;	/* fraction of entries that are NULL */
-	int4		stawidth;		/* average width */
-	float4		stadistinct;	/* # distinct values */
-	int2		stakind[STATISTIC_NUM_SLOTS];
-	Oid			staop[STATISTIC_NUM_SLOTS];
-	int			numnumbers[STATISTIC_NUM_SLOTS];
-	float4	   *stanumbers[STATISTIC_NUM_SLOTS];
-	int			numvalues[STATISTIC_NUM_SLOTS];
-	Datum	   *stavalues[STATISTIC_NUM_SLOTS];
-} VacAttrStats;
-
-
-typedef struct
-{
-	Datum		value;			/* a data value */
-	int			tupno;			/* position index for tuple it came from */
-} ScalarItem;
-
-typedef struct
-{
-	int			count;			/* # of duplicates */
-	int			first;			/* values[] index of first occurrence */
-} ScalarMCVItem;
-
-
-#define swapInt(a,b)	do {int _tmp; _tmp=a; a=b; b=_tmp;} while(0)
-#define swapDatum(a,b)	do {Datum _tmp; _tmp=a; a=b; b=_tmp;} while(0)
-
-
 /* Default statistics target (GUC parameter) */
 int			default_statistics_target = 10;
-
 
 static int	elevel = -1;
 
 static MemoryContext anl_context = NULL;
-
-/* context information for compare_scalars() */
-static FmgrInfo *datumCmpFn;
-static SortFunctionKind datumCmpFnKind;
-static int *datumCmpTupnoLink;
 
 
 static VacAttrStats *examine_attribute(Relation onerel, int attnum);
@@ -131,15 +51,9 @@ static double random_fract(void);
 static double init_selection_state(int n);
 static double select_next_random_record(double t, int n, double *stateptr);
 static int	compare_rows(const void *a, const void *b);
-static int	compare_scalars(const void *a, const void *b);
-static int	compare_mcvs(const void *a, const void *b);
-static void compute_minimal_stats(VacAttrStats *stats,
-					  TupleDesc tupDesc, double totalrows,
-					  HeapTuple *rows, int numrows);
-static void compute_scalar_stats(VacAttrStats *stats,
-					 TupleDesc tupDesc, double totalrows,
-					 HeapTuple *rows, int numrows);
 static void update_attstats(Oid relid, int natts, VacAttrStats **vacattrstats);
+
+static bool std_typanalyze(VacAttrStats *stats);
 
 
 /*
@@ -345,19 +259,12 @@ analyze_rel(Oid relid, VacuumStmt *vacstmt)
 		old_context = MemoryContextSwitchTo(col_context);
 		for (i = 0; i < attr_cnt; i++)
 		{
-			switch (vacattrstats[i]->algcode)
-			{
-				case ALG_MINIMAL:
-					compute_minimal_stats(vacattrstats[i],
-										  onerel->rd_att, totalrows,
-										  rows, numrows);
-					break;
-				case ALG_SCALAR:
-					compute_scalar_stats(vacattrstats[i],
-										 onerel->rd_att, totalrows,
-										 rows, numrows);
-					break;
-			}
+			(*vacattrstats[i]->compute_stats) (vacattrstats[i],
+											   vacattrstats[i]->tupattnum,
+											   onerel->rd_att,
+											   totalrows,
+											   rows,
+											   numrows);
 			MemoryContextResetAndDeleteChildren(col_context);
 		}
 		MemoryContextSwitchTo(old_context);
@@ -390,14 +297,11 @@ static VacAttrStats *
 examine_attribute(Relation onerel, int attnum)
 {
 	Form_pg_attribute attr = onerel->rd_att->attrs[attnum - 1];
-	Operator	func_operator;
 	HeapTuple	typtuple;
-	Oid			eqopr = InvalidOid;
-	Oid			eqfunc = InvalidOid;
-	Oid			ltopr = InvalidOid;
 	VacAttrStats *stats;
+	bool		ok;
 
-	/* Don't analyze dropped columns */
+	/* Never analyze dropped columns */
 	if (attr->attisdropped)
 		return NULL;
 
@@ -405,23 +309,10 @@ examine_attribute(Relation onerel, int attnum)
 	if (attr->attstattarget == 0)
 		return NULL;
 
-	/* If column has no "=" operator, we can't do much of anything */
-	func_operator = equality_oper(attr->atttypid, true);
-	if (func_operator != NULL)
-	{
-		eqopr = oprid(func_operator);
-		eqfunc = oprfuncid(func_operator);
-		ReleaseSysCache(func_operator);
-	}
-	if (!OidIsValid(eqfunc))
-		return NULL;
-
 	/*
-	 * If we have "=" then we're at least able to do the minimal
-	 * algorithm, so start filling in a VacAttrStats struct.
+	 * Create the VacAttrStats struct.
 	 */
 	stats = (VacAttrStats *) palloc0(sizeof(VacAttrStats));
-	stats->attnum = attnum;
 	stats->attr = (Form_pg_attribute) palloc(ATTRIBUTE_TUPLE_SIZE);
 	memcpy(stats->attr, attr, ATTRIBUTE_TUPLE_SIZE);
 	typtuple = SearchSysCache(TYPEOID,
@@ -432,57 +323,25 @@ examine_attribute(Relation onerel, int attnum)
 	stats->attrtype = (Form_pg_type) palloc(sizeof(FormData_pg_type));
 	memcpy(stats->attrtype, GETSTRUCT(typtuple), sizeof(FormData_pg_type));
 	ReleaseSysCache(typtuple);
-	stats->eqopr = eqopr;
-	stats->eqfunc = eqfunc;
-
-	/* If the attstattarget column is negative, use the default value */
-	if (stats->attr->attstattarget < 0)
-		stats->attr->attstattarget = default_statistics_target;
-
-	/* Is there a "<" operator with suitable semantics? */
-	func_operator = ordering_oper(attr->atttypid, true);
-	if (func_operator != NULL)
-	{
-		ltopr = oprid(func_operator);
-		ReleaseSysCache(func_operator);
-	}
-	stats->ltopr = ltopr;
+	stats->anl_context = anl_context;
+	stats->tupattnum = attnum;
 
 	/*
-	 * Determine the algorithm to use (this will get more complicated
-	 * later)
+	 * Call the type-specific typanalyze function.  If none is specified,
+	 * use std_typanalyze().
 	 */
-	if (OidIsValid(ltopr))
-	{
-		/* Seems to be a scalar datatype */
-		stats->algcode = ALG_SCALAR;
-		/*--------------------
-		 * The following choice of minrows is based on the paper
-		 * "Random sampling for histogram construction: how much is enough?"
-		 * by Surajit Chaudhuri, Rajeev Motwani and Vivek Narasayya, in
-		 * Proceedings of ACM SIGMOD International Conference on Management
-		 * of Data, 1998, Pages 436-447.  Their Corollary 1 to Theorem 5
-		 * says that for table size n, histogram size k, maximum relative
-		 * error in bin size f, and error probability gamma, the minimum
-		 * random sample size is
-		 *		r = 4 * k * ln(2*n/gamma) / f^2
-		 * Taking f = 0.5, gamma = 0.01, n = 1 million rows, we obtain
-		 *		r = 305.82 * k
-		 * Note that because of the log function, the dependence on n is
-		 * quite weak; even at n = 1 billion, a 300*k sample gives <= 0.59
-		 * bin size error with probability 0.99.  So there's no real need to
-		 * scale for n, which is a good thing because we don't necessarily
-		 * know it at this point.
-		 *--------------------
-		 */
-		stats->minrows = 300 * stats->attr->attstattarget;
-	}
+	if (OidIsValid(stats->attrtype->typanalyze))
+		ok = DatumGetBool(OidFunctionCall1(stats->attrtype->typanalyze,
+										   PointerGetDatum(stats)));
 	else
+		ok = std_typanalyze(stats);
+
+	if (!ok || stats->compute_stats == NULL || stats->minrows <= 0)
 	{
-		/* Can't do much but the minimal stuff */
-		stats->algcode = ALG_MINIMAL;
-		/* Might as well use the same minrows as above */
-		stats->minrows = 300 * stats->attr->attstattarget;
+		pfree(stats->attrtype);
+		pfree(stats->attr);
+		pfree(stats);
+		return NULL;
 	}
 
 	return stats;
@@ -852,6 +711,304 @@ compare_rows(const void *a, const void *b)
 
 
 /*
+ *	update_attstats() -- update attribute statistics for one relation
+ *
+ *		Statistics are stored in several places: the pg_class row for the
+ *		relation has stats about the whole relation, and there is a
+ *		pg_statistic row for each (non-system) attribute that has ever
+ *		been analyzed.	The pg_class values are updated by VACUUM, not here.
+ *
+ *		pg_statistic rows are just added or updated normally.  This means
+ *		that pg_statistic will probably contain some deleted rows at the
+ *		completion of a vacuum cycle, unless it happens to get vacuumed last.
+ *
+ *		To keep things simple, we punt for pg_statistic, and don't try
+ *		to compute or store rows for pg_statistic itself in pg_statistic.
+ *		This could possibly be made to work, but it's not worth the trouble.
+ *		Note analyze_rel() has seen to it that we won't come here when
+ *		vacuuming pg_statistic itself.
+ *
+ *		Note: if two backends concurrently try to analyze the same relation,
+ *		the second one is likely to fail here with a "tuple concurrently
+ *		updated" error.  This is slightly annoying, but no real harm is done.
+ *		We could prevent the problem by using a stronger lock on the
+ *		relation for ANALYZE (ie, ShareUpdateExclusiveLock instead
+ *		of AccessShareLock); but that cure seems worse than the disease,
+ *		especially now that ANALYZE doesn't start a new transaction
+ *		for each relation.	The lock could be held for a long time...
+ */
+static void
+update_attstats(Oid relid, int natts, VacAttrStats **vacattrstats)
+{
+	Relation	sd;
+	int			attno;
+
+	sd = heap_openr(StatisticRelationName, RowExclusiveLock);
+
+	for (attno = 0; attno < natts; attno++)
+	{
+		VacAttrStats *stats = vacattrstats[attno];
+		HeapTuple	stup,
+					oldtup;
+		int			i,
+					k,
+					n;
+		Datum		values[Natts_pg_statistic];
+		char		nulls[Natts_pg_statistic];
+		char		replaces[Natts_pg_statistic];
+
+		/* Ignore attr if we weren't able to collect stats */
+		if (!stats->stats_valid)
+			continue;
+
+		/*
+		 * Construct a new pg_statistic tuple
+		 */
+		for (i = 0; i < Natts_pg_statistic; ++i)
+		{
+			nulls[i] = ' ';
+			replaces[i] = 'r';
+		}
+
+		i = 0;
+		values[i++] = ObjectIdGetDatum(relid);	/* starelid */
+		values[i++] = Int16GetDatum(stats->attr->attnum);	/* staattnum */
+		values[i++] = Float4GetDatum(stats->stanullfrac);	/* stanullfrac */
+		values[i++] = Int32GetDatum(stats->stawidth);	/* stawidth */
+		values[i++] = Float4GetDatum(stats->stadistinct);	/* stadistinct */
+		for (k = 0; k < STATISTIC_NUM_SLOTS; k++)
+		{
+			values[i++] = Int16GetDatum(stats->stakind[k]);		/* stakindN */
+		}
+		for (k = 0; k < STATISTIC_NUM_SLOTS; k++)
+		{
+			values[i++] = ObjectIdGetDatum(stats->staop[k]);	/* staopN */
+		}
+		for (k = 0; k < STATISTIC_NUM_SLOTS; k++)
+		{
+			int			nnum = stats->numnumbers[k];
+
+			if (nnum > 0)
+			{
+				Datum	   *numdatums = (Datum *) palloc(nnum * sizeof(Datum));
+				ArrayType  *arry;
+
+				for (n = 0; n < nnum; n++)
+					numdatums[n] = Float4GetDatum(stats->stanumbers[k][n]);
+				/* XXX knows more than it should about type float4: */
+				arry = construct_array(numdatums, nnum,
+									   FLOAT4OID,
+									   sizeof(float4), false, 'i');
+				values[i++] = PointerGetDatum(arry);	/* stanumbersN */
+			}
+			else
+			{
+				nulls[i] = 'n';
+				values[i++] = (Datum) 0;
+			}
+		}
+		for (k = 0; k < STATISTIC_NUM_SLOTS; k++)
+		{
+			if (stats->numvalues[k] > 0)
+			{
+				ArrayType  *arry;
+
+				arry = construct_array(stats->stavalues[k],
+									   stats->numvalues[k],
+									   stats->attr->atttypid,
+									   stats->attrtype->typlen,
+									   stats->attrtype->typbyval,
+									   stats->attrtype->typalign);
+				values[i++] = PointerGetDatum(arry);	/* stavaluesN */
+			}
+			else
+			{
+				nulls[i] = 'n';
+				values[i++] = (Datum) 0;
+			}
+		}
+
+		/* Is there already a pg_statistic tuple for this attribute? */
+		oldtup = SearchSysCache(STATRELATT,
+								ObjectIdGetDatum(relid),
+								Int16GetDatum(stats->attr->attnum),
+								0, 0);
+
+		if (HeapTupleIsValid(oldtup))
+		{
+			/* Yes, replace it */
+			stup = heap_modifytuple(oldtup,
+									sd,
+									values,
+									nulls,
+									replaces);
+			ReleaseSysCache(oldtup);
+			simple_heap_update(sd, &stup->t_self, stup);
+		}
+		else
+		{
+			/* No, insert new tuple */
+			stup = heap_formtuple(sd->rd_att, values, nulls);
+			simple_heap_insert(sd, stup);
+		}
+
+		/* update indexes too */
+		CatalogUpdateIndexes(sd, stup);
+
+		heap_freetuple(stup);
+	}
+
+	heap_close(sd, RowExclusiveLock);
+}
+
+
+/*==========================================================================
+ *
+ * Code below this point represents the "standard" type-specific statistics
+ * analysis algorithms.  This code can be replaced on a per-data-type basis
+ * by setting a nonzero value in pg_type.typanalyze.
+ *
+ *==========================================================================
+ */
+
+
+/*
+ * To avoid consuming too much memory during analysis and/or too much space
+ * in the resulting pg_statistic rows, we ignore varlena datums that are wider
+ * than WIDTH_THRESHOLD (after detoasting!).  This is legitimate for MCV
+ * and distinct-value calculations since a wide value is unlikely to be
+ * duplicated at all, much less be a most-common value.  For the same reason,
+ * ignoring wide values will not affect our estimates of histogram bin
+ * boundaries very much.
+ */
+#define WIDTH_THRESHOLD  1024
+
+#define swapInt(a,b)	do {int _tmp; _tmp=a; a=b; b=_tmp;} while(0)
+#define swapDatum(a,b)	do {Datum _tmp; _tmp=a; a=b; b=_tmp;} while(0)
+
+/*
+ * Extra information used by the default analysis routines
+ */
+typedef struct
+{
+	Oid			eqopr;			/* '=' operator for datatype, if any */
+	Oid			eqfunc;			/* and associated function */
+	Oid			ltopr;			/* '<' operator for datatype, if any */
+} StdAnalyzeData;
+
+typedef struct
+{
+	Datum		value;			/* a data value */
+	int			tupno;			/* position index for tuple it came from */
+} ScalarItem;
+
+typedef struct
+{
+	int			count;			/* # of duplicates */
+	int			first;			/* values[] index of first occurrence */
+} ScalarMCVItem;
+
+
+/* context information for compare_scalars() */
+static FmgrInfo *datumCmpFn;
+static SortFunctionKind datumCmpFnKind;
+static int *datumCmpTupnoLink;
+
+
+static void compute_minimal_stats(VacAttrStats *stats, int attnum,
+					  TupleDesc tupDesc, double totalrows,
+					  HeapTuple *rows, int numrows);
+static void compute_scalar_stats(VacAttrStats *stats, int attnum,
+					 TupleDesc tupDesc, double totalrows,
+					 HeapTuple *rows, int numrows);
+static int	compare_scalars(const void *a, const void *b);
+static int	compare_mcvs(const void *a, const void *b);
+
+
+/*
+ * std_typanalyze -- the default type-specific typanalyze function
+ */
+static bool
+std_typanalyze(VacAttrStats *stats)
+{
+	Form_pg_attribute attr = stats->attr;
+	Operator	func_operator;
+	Oid			eqopr = InvalidOid;
+	Oid			eqfunc = InvalidOid;
+	Oid			ltopr = InvalidOid;
+	StdAnalyzeData *mystats;
+
+	/* If the attstattarget column is negative, use the default value */
+	/* NB: it is okay to scribble on stats->attr since it's a copy */
+	if (attr->attstattarget < 0)
+		attr->attstattarget = default_statistics_target;
+
+	/* If column has no "=" operator, we can't do much of anything */
+	func_operator = equality_oper(attr->atttypid, true);
+	if (func_operator != NULL)
+	{
+		eqopr = oprid(func_operator);
+		eqfunc = oprfuncid(func_operator);
+		ReleaseSysCache(func_operator);
+	}
+	if (!OidIsValid(eqfunc))
+		return false;
+
+	/* Is there a "<" operator with suitable semantics? */
+	func_operator = ordering_oper(attr->atttypid, true);
+	if (func_operator != NULL)
+	{
+		ltopr = oprid(func_operator);
+		ReleaseSysCache(func_operator);
+	}
+
+	/* Save the operator info for compute_stats routines */
+	mystats = (StdAnalyzeData *) palloc(sizeof(StdAnalyzeData));
+	mystats->eqopr = eqopr;
+	mystats->eqfunc = eqfunc;
+	mystats->ltopr = ltopr;
+	stats->extra_data = mystats;
+
+	/*
+	 * Determine which standard statistics algorithm to use
+	 */
+	if (OidIsValid(ltopr))
+	{
+		/* Seems to be a scalar datatype */
+		stats->compute_stats = compute_scalar_stats;
+		/*--------------------
+		 * The following choice of minrows is based on the paper
+		 * "Random sampling for histogram construction: how much is enough?"
+		 * by Surajit Chaudhuri, Rajeev Motwani and Vivek Narasayya, in
+		 * Proceedings of ACM SIGMOD International Conference on Management
+		 * of Data, 1998, Pages 436-447.  Their Corollary 1 to Theorem 5
+		 * says that for table size n, histogram size k, maximum relative
+		 * error in bin size f, and error probability gamma, the minimum
+		 * random sample size is
+		 *		r = 4 * k * ln(2*n/gamma) / f^2
+		 * Taking f = 0.5, gamma = 0.01, n = 1 million rows, we obtain
+		 *		r = 305.82 * k
+		 * Note that because of the log function, the dependence on n is
+		 * quite weak; even at n = 1 billion, a 300*k sample gives <= 0.59
+		 * bin size error with probability 0.99.  So there's no real need to
+		 * scale for n, which is a good thing because we don't necessarily
+		 * know it at this point.
+		 *--------------------
+		 */
+		stats->minrows = 300 * attr->attstattarget;
+	}
+	else
+	{
+		/* Can't do much but the minimal stuff */
+		stats->compute_stats = compute_minimal_stats;
+		/* Might as well use the same minrows as above */
+		stats->minrows = 300 * attr->attstattarget;
+	}
+
+	return true;
+}
+
+/*
  *	compute_minimal_stats() -- compute minimal column statistics
  *
  *	We use this when we can find only an "=" operator for the datatype.
@@ -867,7 +1024,7 @@ compare_rows(const void *a, const void *b)
  *	depend mainly on the length of the list we are willing to keep.
  */
 static void
-compute_minimal_stats(VacAttrStats *stats,
+compute_minimal_stats(VacAttrStats *stats, int attnum,
 					  TupleDesc tupDesc, double totalrows,
 					  HeapTuple *rows, int numrows)
 {
@@ -890,6 +1047,7 @@ compute_minimal_stats(VacAttrStats *stats,
 	int			track_cnt,
 				track_max;
 	int			num_mcv = stats->attr->attstattarget;
+	StdAnalyzeData *mystats = (StdAnalyzeData *) stats->extra_data;
 
 	/*
 	 * We track up to 2*n values for an n-element MCV list; but at least
@@ -901,7 +1059,7 @@ compute_minimal_stats(VacAttrStats *stats,
 	track = (TrackItem *) palloc(track_max * sizeof(TrackItem));
 	track_cnt = 0;
 
-	fmgr_info(stats->eqfunc, &f_cmpeq);
+	fmgr_info(mystats->eqfunc, &f_cmpeq);
 
 	for (i = 0; i < numrows; i++)
 	{
@@ -914,7 +1072,7 @@ compute_minimal_stats(VacAttrStats *stats,
 
 		vacuum_delay_point();
 
-		value = heap_getattr(tuple, stats->attnum, tupDesc, &isnull);
+		value = heap_getattr(tuple, attnum, tupDesc, &isnull);
 
 		/* Check for null/nonnull */
 		if (isnull)
@@ -1137,7 +1295,7 @@ compute_minimal_stats(VacAttrStats *stats,
 			float4	   *mcv_freqs;
 
 			/* Must copy the target values into anl_context */
-			old_context = MemoryContextSwitchTo(anl_context);
+			old_context = MemoryContextSwitchTo(stats->anl_context);
 			mcv_values = (Datum *) palloc(num_mcv * sizeof(Datum));
 			mcv_freqs = (float4 *) palloc(num_mcv * sizeof(float4));
 			for (i = 0; i < num_mcv; i++)
@@ -1150,7 +1308,7 @@ compute_minimal_stats(VacAttrStats *stats,
 			MemoryContextSwitchTo(old_context);
 
 			stats->stakind[0] = STATISTIC_KIND_MCV;
-			stats->staop[0] = stats->eqopr;
+			stats->staop[0] = mystats->eqopr;
 			stats->stanumbers[0] = mcv_freqs;
 			stats->numnumbers[0] = num_mcv;
 			stats->stavalues[0] = mcv_values;
@@ -1175,7 +1333,7 @@ compute_minimal_stats(VacAttrStats *stats,
  *	data values into order.
  */
 static void
-compute_scalar_stats(VacAttrStats *stats,
+compute_scalar_stats(VacAttrStats *stats, int attnum,
 					 TupleDesc tupDesc, double totalrows,
 					 HeapTuple *rows, int numrows)
 {
@@ -1199,12 +1357,13 @@ compute_scalar_stats(VacAttrStats *stats,
 	int			track_cnt = 0;
 	int			num_mcv = stats->attr->attstattarget;
 	int			num_bins = stats->attr->attstattarget;
+	StdAnalyzeData *mystats = (StdAnalyzeData *) stats->extra_data;
 
 	values = (ScalarItem *) palloc(numrows * sizeof(ScalarItem));
 	tupnoLink = (int *) palloc(numrows * sizeof(int));
 	track = (ScalarMCVItem *) palloc(num_mcv * sizeof(ScalarMCVItem));
 
-	SelectSortFunction(stats->ltopr, &cmpFn, &cmpFnKind);
+	SelectSortFunction(mystats->ltopr, &cmpFn, &cmpFnKind);
 	fmgr_info(cmpFn, &f_cmpfn);
 
 	/* Initial scan to find sortable values */
@@ -1216,7 +1375,7 @@ compute_scalar_stats(VacAttrStats *stats,
 
 		vacuum_delay_point();
 
-		value = heap_getattr(tuple, stats->attnum, tupDesc, &isnull);
+		value = heap_getattr(tuple, attnum, tupDesc, &isnull);
 
 		/* Check for null/nonnull */
 		if (isnull)
@@ -1469,7 +1628,7 @@ compute_scalar_stats(VacAttrStats *stats,
 			float4	   *mcv_freqs;
 
 			/* Must copy the target values into anl_context */
-			old_context = MemoryContextSwitchTo(anl_context);
+			old_context = MemoryContextSwitchTo(stats->anl_context);
 			mcv_values = (Datum *) palloc(num_mcv * sizeof(Datum));
 			mcv_freqs = (float4 *) palloc(num_mcv * sizeof(float4));
 			for (i = 0; i < num_mcv; i++)
@@ -1482,7 +1641,7 @@ compute_scalar_stats(VacAttrStats *stats,
 			MemoryContextSwitchTo(old_context);
 
 			stats->stakind[slot_idx] = STATISTIC_KIND_MCV;
-			stats->staop[slot_idx] = stats->eqopr;
+			stats->staop[slot_idx] = mystats->eqopr;
 			stats->stanumbers[slot_idx] = mcv_freqs;
 			stats->numnumbers[slot_idx] = num_mcv;
 			stats->stavalues[slot_idx] = mcv_values;
@@ -1555,7 +1714,7 @@ compute_scalar_stats(VacAttrStats *stats,
 			Assert(nvals >= num_hist);
 
 			/* Must copy the target values into anl_context */
-			old_context = MemoryContextSwitchTo(anl_context);
+			old_context = MemoryContextSwitchTo(stats->anl_context);
 			hist_values = (Datum *) palloc(num_hist * sizeof(Datum));
 			for (i = 0; i < num_hist; i++)
 			{
@@ -1569,7 +1728,7 @@ compute_scalar_stats(VacAttrStats *stats,
 			MemoryContextSwitchTo(old_context);
 
 			stats->stakind[slot_idx] = STATISTIC_KIND_HISTOGRAM;
-			stats->staop[slot_idx] = stats->ltopr;
+			stats->staop[slot_idx] = mystats->ltopr;
 			stats->stavalues[slot_idx] = hist_values;
 			stats->numvalues[slot_idx] = num_hist;
 			slot_idx++;
@@ -1584,7 +1743,7 @@ compute_scalar_stats(VacAttrStats *stats,
 						corr_x2sum;
 
 			/* Must copy the target values into anl_context */
-			old_context = MemoryContextSwitchTo(anl_context);
+			old_context = MemoryContextSwitchTo(stats->anl_context);
 			corrs = (float4 *) palloc(sizeof(float4));
 			MemoryContextSwitchTo(old_context);
 
@@ -1607,7 +1766,7 @@ compute_scalar_stats(VacAttrStats *stats,
 				(values_cnt * corr_x2sum - corr_xsum * corr_xsum);
 
 			stats->stakind[slot_idx] = STATISTIC_KIND_CORRELATION;
-			stats->staop[slot_idx] = stats->ltopr;
+			stats->staop[slot_idx] = mystats->ltopr;
 			stats->stanumbers[slot_idx] = corrs;
 			stats->numnumbers[slot_idx] = 1;
 			slot_idx++;
@@ -1664,156 +1823,4 @@ compare_mcvs(const void *a, const void *b)
 	int			db = ((ScalarMCVItem *) b)->first;
 
 	return da - db;
-}
-
-
-/*
- *	update_attstats() -- update attribute statistics for one relation
- *
- *		Statistics are stored in several places: the pg_class row for the
- *		relation has stats about the whole relation, and there is a
- *		pg_statistic row for each (non-system) attribute that has ever
- *		been analyzed.	The pg_class values are updated by VACUUM, not here.
- *
- *		pg_statistic rows are just added or updated normally.  This means
- *		that pg_statistic will probably contain some deleted rows at the
- *		completion of a vacuum cycle, unless it happens to get vacuumed last.
- *
- *		To keep things simple, we punt for pg_statistic, and don't try
- *		to compute or store rows for pg_statistic itself in pg_statistic.
- *		This could possibly be made to work, but it's not worth the trouble.
- *		Note analyze_rel() has seen to it that we won't come here when
- *		vacuuming pg_statistic itself.
- *
- *		Note: if two backends concurrently try to analyze the same relation,
- *		the second one is likely to fail here with a "tuple concurrently
- *		updated" error.  This is slightly annoying, but no real harm is done.
- *		We could prevent the problem by using a stronger lock on the
- *		relation for ANALYZE (ie, ShareUpdateExclusiveLock instead
- *		of AccessShareLock); but that cure seems worse than the disease,
- *		especially now that ANALYZE doesn't start a new transaction
- *		for each relation.	The lock could be held for a long time...
- */
-static void
-update_attstats(Oid relid, int natts, VacAttrStats **vacattrstats)
-{
-	Relation	sd;
-	int			attno;
-
-	sd = heap_openr(StatisticRelationName, RowExclusiveLock);
-
-	for (attno = 0; attno < natts; attno++)
-	{
-		VacAttrStats *stats = vacattrstats[attno];
-		HeapTuple	stup,
-					oldtup;
-		int			i,
-					k,
-					n;
-		Datum		values[Natts_pg_statistic];
-		char		nulls[Natts_pg_statistic];
-		char		replaces[Natts_pg_statistic];
-
-		/* Ignore attr if we weren't able to collect stats */
-		if (!stats->stats_valid)
-			continue;
-
-		/*
-		 * Construct a new pg_statistic tuple
-		 */
-		for (i = 0; i < Natts_pg_statistic; ++i)
-		{
-			nulls[i] = ' ';
-			replaces[i] = 'r';
-		}
-
-		i = 0;
-		values[i++] = ObjectIdGetDatum(relid);	/* starelid */
-		values[i++] = Int16GetDatum(stats->attnum);		/* staattnum */
-		values[i++] = Float4GetDatum(stats->stanullfrac);		/* stanullfrac */
-		values[i++] = Int32GetDatum(stats->stawidth);	/* stawidth */
-		values[i++] = Float4GetDatum(stats->stadistinct);		/* stadistinct */
-		for (k = 0; k < STATISTIC_NUM_SLOTS; k++)
-		{
-			values[i++] = Int16GetDatum(stats->stakind[k]);		/* stakindN */
-		}
-		for (k = 0; k < STATISTIC_NUM_SLOTS; k++)
-		{
-			values[i++] = ObjectIdGetDatum(stats->staop[k]);	/* staopN */
-		}
-		for (k = 0; k < STATISTIC_NUM_SLOTS; k++)
-		{
-			int			nnum = stats->numnumbers[k];
-
-			if (nnum > 0)
-			{
-				Datum	   *numdatums = (Datum *) palloc(nnum * sizeof(Datum));
-				ArrayType  *arry;
-
-				for (n = 0; n < nnum; n++)
-					numdatums[n] = Float4GetDatum(stats->stanumbers[k][n]);
-				/* XXX knows more than it should about type float4: */
-				arry = construct_array(numdatums, nnum,
-									   FLOAT4OID,
-									   sizeof(float4), false, 'i');
-				values[i++] = PointerGetDatum(arry);	/* stanumbersN */
-			}
-			else
-			{
-				nulls[i] = 'n';
-				values[i++] = (Datum) 0;
-			}
-		}
-		for (k = 0; k < STATISTIC_NUM_SLOTS; k++)
-		{
-			if (stats->numvalues[k] > 0)
-			{
-				ArrayType  *arry;
-
-				arry = construct_array(stats->stavalues[k],
-									   stats->numvalues[k],
-									   stats->attr->atttypid,
-									   stats->attrtype->typlen,
-									   stats->attrtype->typbyval,
-									   stats->attrtype->typalign);
-				values[i++] = PointerGetDatum(arry);	/* stavaluesN */
-			}
-			else
-			{
-				nulls[i] = 'n';
-				values[i++] = (Datum) 0;
-			}
-		}
-
-		/* Is there already a pg_statistic tuple for this attribute? */
-		oldtup = SearchSysCache(STATRELATT,
-								ObjectIdGetDatum(relid),
-								Int16GetDatum(stats->attnum),
-								0, 0);
-
-		if (HeapTupleIsValid(oldtup))
-		{
-			/* Yes, replace it */
-			stup = heap_modifytuple(oldtup,
-									sd,
-									values,
-									nulls,
-									replaces);
-			ReleaseSysCache(oldtup);
-			simple_heap_update(sd, &stup->t_self, stup);
-		}
-		else
-		{
-			/* No, insert new tuple */
-			stup = heap_formtuple(sd->rd_att, values, nulls);
-			simple_heap_insert(sd, stup);
-		}
-
-		/* update indexes too */
-		CatalogUpdateIndexes(sd, stup);
-
-		heap_freetuple(stup);
-	}
-
-	heap_close(sd, RowExclusiveLock);
 }

@@ -1,5 +1,5 @@
 <!--
-$PostgreSQL: pgsql/doc/src/sgml/ref/create_type.sgml,v 1.48 2003/11/29 19:51:38 pgsql Exp $
+$PostgreSQL: pgsql/doc/src/sgml/ref/create_type.sgml,v 1.49 2004/02/12 23:41:02 tgl Exp $
 PostgreSQL documentation
 -->
 
@@ -28,6 +28,7 @@ CREATE TYPE <replaceable class="parameter">name</replaceable> (
     OUTPUT = <replaceable class="parameter">output_function</replaceable>
     [ , RECEIVE = <replaceable class="parameter">receive_function</replaceable> ]
     [ , SEND = <replaceable class="parameter">send_function</replaceable> ]
+    [ , ANALYZE = <replaceable class="parameter">analyze_function</replaceable> ]
     [ , INTERNALLENGTH = { <replaceable class="parameter">internallength</replaceable> | VARIABLE } ]
     [ , PASSEDBYVALUE ]
     [ , ALIGNMENT = <replaceable class="parameter">alignment</replaceable> ]
@@ -83,8 +84,9 @@ CREATE TYPE <replaceable class="parameter">name</replaceable> (
    <replaceable class="parameter">input_function</replaceable> and
    <replaceable class="parameter">output_function</replaceable>
    are required, while the functions
-   <replaceable class="parameter">receive_function</replaceable> and
-   <replaceable class="parameter">send_function</replaceable>
+   <replaceable class="parameter">receive_function</replaceable>,
+   <replaceable class="parameter">send_function</replaceable> and
+   <replaceable class="parameter">analyze_function</replaceable>
    are optional.  Generally these functions have to be coded in C
    or another low-level language.
   </para>
@@ -150,6 +152,19 @@ CREATE TYPE <replaceable class="parameter">name</replaceable> (
    type.  Similarly the other functions will be linked to the (now already
    existing) shell type.  Finally, <command>CREATE TYPE</> replaces the
    shell entry with a complete type definition, and the new type can be used.
+  </para>
+
+  <para>
+   The optional <replaceable class="parameter">analyze_function</replaceable>
+   performs type-specific statistics collection for columns of the data type.
+   By default, <command>ANALYZE</> will attempt to gather statistics using
+   the type's <quote>equals</> and <quote>less-than</> operators, if there
+   is a default b-tree operator class for the type.  For non-scalar types
+   this behavior is likely to be unsuitable, so it can be overridden by
+   specifying a custom analysis function.  The analysis function must be
+   declared to take a single argument of type <type>internal</>, and return
+   a <type>boolean</> result.  The detailed API for analysis functions appears
+   in <filename>src/include/commands/vacuum.h</>.
   </para>
 
   <para>
@@ -337,6 +352,16 @@ CREATE TYPE <replaceable class="parameter">name</replaceable> (
      <para>
       The name of a function that converts data from the type's
       internal form to its external binary form.
+     </para>
+    </listitem>
+   </varlistentry>
+
+   <varlistentry>
+    <term><replaceable class="parameter">analyze_function</replaceable></term>
+    <listitem>
+     <para>
+      The name of a function that performs statistical analysis for the
+      data type.
      </para>
     </listitem>
    </varlistentry>

@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/catalog/pg_type.c,v 1.92 2004/01/07 18:56:25 neilc Exp $
+ *	  $PostgreSQL: pgsql/src/backend/catalog/pg_type.c,v 1.93 2004/02/12 23:41:02 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -86,6 +86,7 @@ TypeShellMake(const char *typeName, Oid typeNamespace)
 	values[i++] = ObjectIdGetDatum(InvalidOid); /* typoutput */
 	values[i++] = ObjectIdGetDatum(InvalidOid); /* typreceive */
 	values[i++] = ObjectIdGetDatum(InvalidOid); /* typsend */
+	values[i++] = ObjectIdGetDatum(InvalidOid); /* typanalyze */
 	values[i++] = CharGetDatum('i');	/* typalign */
 	values[i++] = CharGetDatum('p');	/* typstorage */
 	values[i++] = BoolGetDatum(false);	/* typnotnull */
@@ -115,6 +116,7 @@ TypeShellMake(const char *typeName, Oid typeNamespace)
 								 typoid,
 								 InvalidOid,
 								 0,
+								 InvalidOid,
 								 InvalidOid,
 								 InvalidOid,
 								 InvalidOid,
@@ -157,6 +159,7 @@ TypeCreate(const char *typeName,
 		   Oid outputProcedure,
 		   Oid receiveProcedure,
 		   Oid sendProcedure,
+		   Oid analyzeProcedure,
 		   Oid elementType,
 		   Oid baseType,
 		   const char *defaultTypeValue,		/* human readable rep */
@@ -236,6 +239,7 @@ TypeCreate(const char *typeName,
 	values[i++] = ObjectIdGetDatum(outputProcedure);	/* typoutput */
 	values[i++] = ObjectIdGetDatum(receiveProcedure);	/* typreceive */
 	values[i++] = ObjectIdGetDatum(sendProcedure);		/* typsend */
+	values[i++] = ObjectIdGetDatum(analyzeProcedure);	/* typanalyze */
 	values[i++] = CharGetDatum(alignment);		/* typalign */
 	values[i++] = CharGetDatum(storage);		/* typstorage */
 	values[i++] = BoolGetDatum(typeNotNull);	/* typnotnull */
@@ -332,6 +336,7 @@ TypeCreate(const char *typeName,
 								 outputProcedure,
 								 receiveProcedure,
 								 sendProcedure,
+								 analyzeProcedure,
 								 elementType,
 								 baseType,
 								 (defaultTypeBin ?
@@ -366,6 +371,7 @@ GenerateTypeDependencies(Oid typeNamespace,
 						 Oid outputProcedure,
 						 Oid receiveProcedure,
 						 Oid sendProcedure,
+						 Oid analyzeProcedure,
 						 Oid elementType,
 						 Oid baseType,
 						 Node *defaultExpr,
@@ -421,6 +427,14 @@ GenerateTypeDependencies(Oid typeNamespace,
 	{
 		referenced.classId = RelOid_pg_proc;
 		referenced.objectId = sendProcedure;
+		referenced.objectSubId = 0;
+		recordDependencyOn(&myself, &referenced, DEPENDENCY_NORMAL);
+	}
+
+	if (OidIsValid(analyzeProcedure))
+	{
+		referenced.classId = RelOid_pg_proc;
+		referenced.objectId = analyzeProcedure;
 		referenced.objectSubId = 0;
 		recordDependencyOn(&myself, &referenced, DEPENDENCY_NORMAL);
 	}
