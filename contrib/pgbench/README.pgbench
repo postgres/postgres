@@ -164,6 +164,10 @@ Basically it is same as BSD license. See pgbench.c for more details.
 
 o History
 
+2003/06/10
+	* fix uninitialized memory bug
+	* add support for PGHOST, PGPORT, PGUSER environment variables
+
 2002/07/20
 	* patch contributed by Neil Conway.
 	* code/document clean up and add -l option.

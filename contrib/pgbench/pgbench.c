@@ -1,5 +1,5 @@
 /*
- * $Header: /cvsroot/pgsql/contrib/pgbench/pgbench.c,v 1.23 2003/05/14 03:25:56 tgl Exp $
+ * $Header: /cvsroot/pgsql/contrib/pgbench/pgbench.c,v 1.24 2003/06/10 09:07:15 ishii Exp $
  *
  * pgbench: a simple TPC-B like benchmark program for PostgreSQL
  * written by Tatsuo Ishii
@@ -694,6 +694,14 @@ main(int argc, char **argv)
 
 	PGconn	   *con;
 	PGresult   *res;
+	char	   *env;
+
+	if ((env = getenv("PGHOST")) != NULL && *env != '\0')
+		pghost = env;
+	if ((env = getenv("PGPORT")) != NULL && *env != '\0')
+		pgport = env;
+	else if ((env = getenv("PGUSER")) != NULL && *env != '\0')
+		login = env;
 
 	while ((c = getopt(argc, argv, "ih:nvp:dc:t:s:U:P:CNSl")) != -1)
 	{
@@ -788,8 +796,11 @@ main(int argc, char **argv)
 		dbName = argv[optind];
 	else
 	{
-		dbName = getenv("USER");
-		if (dbName == NULL)
+		if ((env = getenv("PGDATABASE")) != NULL && *env != '\0')
+			dbName = env;
+		else if (login != NULL && *login != '\0')
+			dbName = login;
+		else
 			dbName = "";
 	}
 
@@ -802,7 +813,7 @@ main(int argc, char **argv)
 	remains = nclients;
 
 	state = (CState *) malloc(sizeof(*state) * nclients);
-	memset(state, 0, sizeof(*state));
+	memset(state, 0, sizeof(*state) * nclients);
 
 	if (use_log)
 	{
