@@ -10,7 +10,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/parser/gram.y,v 1.49 1997/09/24 08:31:04 vadim Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/parser/gram.y,v 1.50 1997/09/24 17:53:53 thomas Exp $
  *
  * HISTORY
  *	  AUTHOR			DATE			MAJOR EVENT
@@ -232,7 +232,9 @@ static char *FlattenStringList(List *list);
 %token	BOTH, LEADING, TRAILING, 
 %token	EXTRACT, POSITION, SUBSTRING, TRIM
 %token	DOUBLE, PRECISION, FLOAT
+%token	DECIMAL, NUMERIC
 %token	CHARACTER, VARYING
+%token	CURRENT_DATE, CURRENT_TIME, CURRENT_TIMESTAMP
 
 /* Special keywords, not in the query language - see the "lex" file */
 %token <str>	IDENT, SCONST, Op
@@ -2339,6 +2341,10 @@ typname:  txname
 
 					if (!strcasecmp($1, "float"))
 						tname = xlateSqlType("float8");
+					else if (!strcasecmp($1, "decimal"))
+						tname = xlateSqlType("integer");
+					else if (!strcasecmp($1, "numeric"))
+						tname = xlateSqlType("integer");
 					else
 						tname = xlateSqlType($1);
 					$$->name = tname;
@@ -2375,6 +2381,8 @@ txname:  Id								{ $$ = $1; }
 		| CHARACTER char_type			{ $$ = $2; }
 		| DOUBLE PRECISION				{ $$ = xlateSqlType("float8"); }
 		| FLOAT							{ $$ = xlateSqlType("float"); }
+		| DECIMAL						{ $$ = "decimal"; }
+		| NUMERIC						{ $$ = "numeric"; }
 		;
 
 char_type:  VARYING						{ $$ = xlateSqlType("varchar"); }
@@ -2400,8 +2408,10 @@ Typename:  typname opt_array_bounds
 				{
 					$$ = $1;
 					$$->arrayBounds = $2;
+#if FALSE
 					if (!strcasecmp($1->name, "varchar"))
 						$$->typlen = 4 + 1;
+#endif
 				}
 		| txname '(' Iconst ')'
 				{
@@ -2410,19 +2420,32 @@ Typename:  typname opt_array_bounds
 					 * We do it here instead of the 'typname:' production
 					 * because we don't want to allow arrays of VARCHAR().
 					 * I haven't thought about whether that will work or not.
-					 *							   - ay 6/95
-					 * Also implements FLOAT() - thomas 1997-09-18
+					 *								- ay 6/95
+					 * Also implements FLOAT().
+					 * Check precision limits assuming IEEE floating types.
+					 *								- thomas 1997-09-18
 					 */
 					$$ = makeNode(TypeName);
 					if (!strcasecmp($1, "float")) {
 						if ($3 < 1)
-							elog(WARN,"precision for '%s' type must be at least 1",$1);
-						else if ($3 <= 7)
+							elog(WARN,"precision for FLOAT must be at least 1",NULL);
+						else if ($3 < 7)
 							$$->name = xlateSqlType("float4");
-						else if ($3 < 14)
+						else if ($3 < 16)
 							$$->name = xlateSqlType("float8");
 						else
-							elog(WARN,"precision for '%s' type must be less than 14",$1);
+							elog(WARN,"precision for FLOAT must be less than 16",NULL);
+					} else if (!strcasecmp($1, "decimal")) {
+						/* DECIMAL is allowed to have more precision than specified */
+						if ($3 > 9)
+							elog(WARN,"DECIMAL precision %d exceeds implementation limit of 9",$3);
+						$$->name = xlateSqlType("integer");
+
+					} else if (!strcasecmp($1, "numeric")) {
+						/* integer holds 9.33 decimal places, so assume an even 9 for now */
+						if ($3 != 9)
+							elog(WARN,"NUMERIC precision %d must be 9",$3);
+						$$->name = xlateSqlType("integer");
 
 					} else {
 						if (!strcasecmp($1, "char"))
@@ -2448,6 +2471,28 @@ Typename:  typname opt_array_bounds
 						 */
 						$$->typlen = 4 + $3;
 					}
+				}
+		| txname '(' Iconst ',' Iconst ')'
+				{
+					$$ = makeNode(TypeName);
+					if (!strcasecmp($1, "decimal")) {
+						if ($3 > 9)
+							elog(WARN,"DECIMAL precision %d exceeds implementation limit of 9",$3);
+						if ($5 != 0)
+							elog(WARN,"DECIMAL scale %d must be zero",$5);
+						$$->name = xlateSqlType("integer");
+
+					} else if (!strcasecmp($1, "numeric")) {
+						if ($3 != 9)
+							elog(WARN,"NUMERIC precision %d must be 9",$3);
+						if ($5 != 0)
+							elog(WARN,"NUMERIC scale %d must be zero",$5);
+						$$->name = xlateSqlType("integer");
+
+					} else {
+						elog(WARN,"%s(%d,%d) not implemented",$1,$3,$5);
+					}
+					$$->name = xlateSqlType("integer");
 				}
 		;
 
@@ -2550,6 +2595,88 @@ a_expr:  attr opt_indirection
 					FuncCall *n = makeNode(FuncCall);
 					n->funcname = $1;
 					n->args = NIL;
+					$$ = (Node *)n;
+				}
+		| CURRENT_DATE
+				{
+					A_Const *n = makeNode(A_Const);
+					TypeName *t = makeNode(TypeName);
+
+					n->val.type = T_String;
+					n->val.val.str = "now";
+					n->typename = t;
+
+					t->name = xlateSqlType("date");
+					t->setof = FALSE;
+
+					$$ = (Node *)n;
+				}
+		| CURRENT_TIME
+				{
+					A_Const *n = makeNode(A_Const);
+					TypeName *t = makeNode(TypeName);
+
+					n->val.type = T_String;
+					n->val.val.str = "now";
+					n->typename = t;
+
+					t->name = xlateSqlType("time");
+					t->setof = FALSE;
+
+					$$ = (Node *)n;
+				}
+		| CURRENT_TIME '(' AexprConst ')'
+				{
+					FuncCall *n = makeNode(FuncCall);
+					A_Const *s = makeNode(A_Const);
+					TypeName *t = makeNode(TypeName);
+
+					n->funcname = xlateSqlType("time");
+					n->args = lcons(s, NIL);
+
+					s->val.type = T_String;
+					s->val.val.str = "now";
+					s->typename = t;
+
+					t->name = xlateSqlType("time");
+					t->setof = FALSE;
+
+					elog(NOTICE,"CURRENT_TIME(p) precision not implemented",NULL);
+
+					$$ = (Node *)n;
+				}
+		| CURRENT_TIMESTAMP
+				{
+					A_Const *n = makeNode(A_Const);
+					TypeName *t = makeNode(TypeName);
+
+					n->val.type = T_String;
+					n->val.val.str = "now";
+					n->typename = t;
+
+					t->name = xlateSqlType("timestamp");
+					t->setof = FALSE;
+
+					$$ = (Node *)n;
+				}
+		| CURRENT_TIMESTAMP '(' AexprConst ')'
+				{
+					FuncCall *n = makeNode(FuncCall);
+					A_Const *s = makeNode(A_Const);
+					TypeName *t = makeNode(TypeName);
+
+					n->funcname = xlateSqlType("timestamp");
+					n->args = lcons(s, NIL);
+
+					s->val.type = T_String;
+					s->val.val.str = "now";
+					s->typename = t;
+
+					t->name = xlateSqlType("timestamp");
+					t->setof = FALSE;
+
+					elog(NOTICE,"CURRENT_TIMESTAMP(p) precision not implemented",NULL);
+
 					$$ = (Node *)n;
 				}
 		/* We probably need to define an "exists" node,
@@ -3022,7 +3149,10 @@ access_method:			Id				{ $$ = $1; };
 attr_name:				ColId			{ $$ = $1; };
 class:					Id				{ $$ = $1; };
 index_name:				Id				{ $$ = $1; };
-name:					Id				{ $$ = $1; };
+
+name:  Id								{ $$ = $1; }
+		| TIME							{ $$ = xlateSqlType("time"); }
+		;
 
 date:					Sconst			{ $$ = $1; };
 file_name:				Sconst			{ $$ = $1; };
@@ -3138,6 +3268,8 @@ void parser_init(Oid *typev, int nargs)
 /* FlattenStringList()
  * Traverse list of string nodes and convert to a single string.
  * Used for reconstructing string form of complex expressions.
+ *
+ * Allocate at least one byte for terminator.
  */
 static char *
 FlattenStringList(List *list)
@@ -3145,7 +3277,7 @@ FlattenStringList(List *list)
 	List *l, *lp;
 	char *s;
 	char *sp;
-	int nlist, len = 1;
+	int nlist, len = 0;
 
 	nlist = length(list);
 #ifdef PARSEDEBUG
@@ -3157,12 +3289,13 @@ printf( "list has %d elements\n", nlist);
 		sp = (char *)(lp->elem.ptr_value);
 		l = lnext(l);
 #ifdef PARSEDEBUG
-printf( "length of %s is %d\n", sp, strlen(sp));
+printf( "sp is x%8p; length of %s is %d\n", sp, sp, strlen(sp));
 #endif
-		len += strlen(sp)+1;
+		len += strlen(sp);
 	};
+	len += nlist;
 
-	s = (char*) palloc(len);
+	s = (char*) palloc(len+1);
 	*s = '\0';
 
 	l = list;
@@ -3174,9 +3307,9 @@ printf( "length of %s is %d\n", sp, strlen(sp));
 printf( "length of %s is %d\n", sp, strlen(sp));
 #endif
 		strcat(s,sp);
-		strcat(s," ");
+		if (l != NIL) strcat(s," ");
 	};
-	*(s+len-2) = '\0';
+	*(s+len) = '\0';
 
 #ifdef PARSEDEBUG
 printf( "flattened string is \"%s\"\n", s);
