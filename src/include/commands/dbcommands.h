@@ -6,7 +6,7 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: dbcommands.h,v 1.3 1998/07/24 03:32:19 scrappy Exp $
+ * $Id: dbcommands.h,v 1.4 1998/07/26 04:31:23 scrappy Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -19,7 +19,7 @@
  */
 #define SIGKILLDAEMON1	SIGTERM
 
-#ifdef MB
+#ifdef MULTIBYTE
 extern void createdb(char *dbname, char *dbpath, int encoding);
 #else
 extern void createdb(char *dbname, char *dbpath);

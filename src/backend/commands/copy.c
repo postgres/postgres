@@ -6,7 +6,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/commands/copy.c,v 1.50 1998/07/24 03:31:14 scrappy Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/commands/copy.c,v 1.51 1998/07/26 04:30:23 scrappy Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -37,7 +37,7 @@
 #include "commands/trigger.h"
 #include <storage/fd.h>
 
-#ifdef MB
+#ifdef MULTIBYTE
 #include "mb/pg_wchar.h"
 #endif
 
@@ -1016,14 +1016,14 @@ CopyReadAttribute(FILE *fp, bool *isnull, char *delim)
 	char		c;
 	int			done = 0;
 	int			i = 0;
-#ifdef MB
+#ifdef MULTIBYTE
 	int	mblen;
 	int	encoding;
 	unsigned char	s[2];
 	int	j;
 #endif
 
-#ifdef MB
+#ifdef MULTIBYTE
 	encoding = pg_get_client_encoding();
 	s[1] = 0;
 #endif
@@ -1129,7 +1129,7 @@ CopyReadAttribute(FILE *fp, bool *isnull, char *delim)
 		}
 		if (!done) {
 			attribute[i++] = c;
-#ifdef MB
+#ifdef MULTIBYTE
 			s[0] = c;
 			mblen = pg_encoding_mblen(encoding, s);
 			mblen--;
@@ -1145,7 +1145,7 @@ CopyReadAttribute(FILE *fp, bool *isnull, char *delim)
 			elog(ERROR, "CopyReadAttribute - attribute length too long. line: %d", lineno);
 	}
 	attribute[i] = '\0';
-#ifdef MB
+#ifdef MULTIBYTE
 	return(pg_client_to_server((unsigned char*)attribute, strlen(attribute)));
 #else
 	return (&attribute[0]);
@@ -1157,20 +1157,20 @@ CopyAttributeOut(FILE *fp, unsigned char *server_string, char *delim, int is_arr
 {
         unsigned char           *string;
 	unsigned char		c;
-#ifdef MB
+#ifdef MULTIBYTE
 	int	mblen;
 	int	encoding;
 	int	i;
 #endif
 
-#ifdef MB
+#ifdef MULTIBYTE
 	string = pg_server_to_client(server_string, strlen(server_string));
 	encoding = pg_get_client_encoding();
 #else
 	string = server_string;
 #endif
 
-#ifdef MB
+#ifdef MULTIBYTE
 	for (; (mblen = pg_encoding_mblen(encoding, string)) &&
 	       ((c = *string) != '\0'); string += mblen)
 #else
@@ -1197,7 +1197,7 @@ CopyAttributeOut(FILE *fp, unsigned char *server_string, char *delim, int is_arr
 				fputc('\\', fp);
 			}
 		}
-#ifdef MB
+#ifdef MULTIBYTE
 		for (i=0;i<mblen;i++) {
 			fputc(*(string+i), fp);
 		}

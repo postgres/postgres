@@ -1,5 +1,5 @@
 #!/bin/sh
-# $Header: /cvsroot/pgsql/src/test/regress/Attic/regress.sh,v 1.19 1998/04/27 17:10:17 scrappy Exp $
+# $Header: /cvsroot/pgsql/src/test/regress/Attic/regress.sh,v 1.20 1998/07/26 04:31:41 scrappy Exp $
 #
 if echo '\c' | grep -s c >/dev/null 2>&1
 then
@@ -42,8 +42,8 @@ fi
 
 echo "=============== running regression queries...         ================="
 echo "" > regression.diffs
-if [ a$MB != a ];then
-	mbtests=`echo $MB|tr "[A-Z]" "[a-z]"`
+if [ -n "$MULTIBYTE" ];then
+	mbtests=`echo $MULTIBYTE|tr "[A-Z]" "[a-z]"`
 else
 	mbtests=""
 fi

@@ -4,7 +4,7 @@
 #    Makefile for commands
 #
 # IDENTIFICATION
-#    $Header: /cvsroot/pgsql/src/backend/commands/Makefile,v 1.14 1998/07/24 03:31:11 scrappy Exp $
+#    $Header: /cvsroot/pgsql/src/backend/commands/Makefile,v 1.15 1998/07/26 04:30:22 scrappy Exp $
 #
 #-------------------------------------------------------------------------
 
@@ -13,8 +13,8 @@ include ../../Makefile.global
 
 CFLAGS += -I..
 
-ifdef MB
-CFLAGS += -DMB=$(MB)
+ifdef MULTIBYTE
+CFLAGS+= $(MBFLAGS)
 endif
 
 OBJS = async.o creatinh.o command.o copy.o defind.o define.o \

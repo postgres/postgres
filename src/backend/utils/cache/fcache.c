@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/cache/Attic/fcache.c,v 1.13 1998/07/24 03:31:46 scrappy Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/cache/Attic/fcache.c,v 1.14 1998/07/26 04:30:55 scrappy Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -22,7 +22,7 @@
 #include "catalog/pg_type.h"
 #include "catalog/pg_proc.h"
 #include "catalog/pg_language.h"
-#ifdef MB
+#ifdef MULTIBYTE
 #include "catalog/pg_class_mb.h"
 #else
 #include "catalog/pg_class.h"

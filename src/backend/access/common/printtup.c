@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/access/common/printtup.c,v 1.30 1998/07/18 18:34:01 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/access/common/printtup.c,v 1.31 1998/07/26 04:30:16 scrappy Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -24,7 +24,7 @@
 #include <utils/syscache.h>
 
 #ifdef MULTIBYTE
-#include <commands/variable.h>
+#include <mb/pg_wchar.h>
 #endif
 
 /* ----------------------------------------------------------------

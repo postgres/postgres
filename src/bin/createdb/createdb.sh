@@ -11,13 +11,13 @@
 #
 #
 # IDENTIFICATION
-#    $Header: /cvsroot/pgsql/src/bin/createdb/Attic/createdb.sh,v 1.9 1998/07/24 03:32:06 scrappy Exp $
+#    $Header: /cvsroot/pgsql/src/bin/createdb/Attic/createdb.sh,v 1.10 1998/07/26 04:31:13 scrappy Exp $
 #
 #-------------------------------------------------------------------------
 
 CMDNAME=`basename $0`
 
-MBENABLED=__MB__
+MBENABLED=__MULTIBYTE__
 MB=
 
 if [ -z "$USER" ]; then

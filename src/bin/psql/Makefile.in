@@ -7,7 +7,7 @@
 #
 #
 # IDENTIFICATION
-#    $Header: /cvsroot/pgsql/src/bin/psql/Attic/Makefile.in,v 1.12 1998/06/16 07:29:37 momjian Exp $
+#    $Header: /cvsroot/pgsql/src/bin/psql/Attic/Makefile.in,v 1.13 1998/07/26 04:31:20 scrappy Exp $
 #
 #-------------------------------------------------------------------------
 
@@ -24,8 +24,8 @@ LDFLAGS+= $(KRBLIBS)
 CFLAGS+= $(KRBFLAGS)
 endif
 
-ifdef MB
-CFLAGS+= -DMB=$(MB)
+ifdef MULTIBYTE
+CFLAGS+= $(MBFLAGS)
 endif
 
 OBJS= psql.o stringutils.o @STRDUP@ 

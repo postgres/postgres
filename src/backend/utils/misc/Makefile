@@ -4,7 +4,7 @@
 #    Makefile for utils/misc
 #
 # IDENTIFICATION
-#    $Header: /cvsroot/pgsql/src/backend/utils/misc/Makefile,v 1.7 1998/07/24 03:31:58 scrappy Exp $
+#    $Header: /cvsroot/pgsql/src/backend/utils/misc/Makefile,v 1.8 1998/07/26 04:31:06 scrappy Exp $
 #
 #-------------------------------------------------------------------------
 
@@ -13,8 +13,8 @@ include ../../../Makefile.global
 
 CFLAGS += -I../..
 
-ifdef MB
-CFLAGS += -DMB=$(MB)
+ifdef MULTIBYTE
+CFLAGS+= $(MBFLAGS)
 endif
 
 OBJS = database.o superuser.o 

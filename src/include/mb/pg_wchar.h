@@ -1,4 +1,4 @@
-/* $Id: pg_wchar.h,v 1.1 1998/07/24 03:32:24 scrappy Exp $ */
+/* $Id: pg_wchar.h,v 1.2 1998/07/26 04:31:26 scrappy Exp $ */
 
 #ifndef PG_WCHAR_H
 #define PG_WCHAR_H
@@ -25,7 +25,7 @@
 /* followings are for client encoding only */
 #define SJIS 32		/* Shift JIS */
 
-#ifdef MB
+#ifdef MULTIBYTE
 typedef unsigned int pg_wchar;
 #else
 #define pg_wchar char
@@ -67,7 +67,7 @@ typedef unsigned int pg_wchar;
 #define	LC_CNS11643_6	0xf9	/* CNS 11643-1992 Plane 6 */
 #define	LC_CNS11643_7	0xfa	/* CNS 11643-1992 Plane 7 */
 
-#ifdef MB
+#ifdef MULTIBYTE
 typedef struct {
   int encoding;		/* encoding symbol value */
   char *name;		/* encoding name */
@@ -117,6 +117,6 @@ extern void SetDatabaseEncoding(int);
 extern void SetTemplateEncoding(int);
 extern int GetTemplateEncoding(void);
 
-#endif	/* MB */
+#endif	/* MULTIBYTE */
 
 #endif	/* PG_WCHAR_H */

@@ -3,7 +3,7 @@
  * client encoding and server internal encoding.
  * (currently mule internal code (mic) is used)
  * Tatsuo Ishii
- * $Id: mbutils.c,v 1.1 1998/07/24 03:31:56 scrappy Exp $ */
+ * $Id: mbutils.c,v 1.2 1998/07/26 04:31:04 scrappy Exp $ */
 
 #include <stdio.h>
 #include <string.h>
@@ -183,7 +183,7 @@ int pg_mbstrlen_with_len(const unsigned char *mbstr, int limit)
 /*
  * fuctions for utils/init
  */
-static int DatabaseEncoding = MB;
+static int DatabaseEncoding = MULTIBYTE;
 void
 SetDatabaseEncoding(int encoding)
 {

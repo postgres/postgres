@@ -1,5 +1,5 @@
 #! /bin/sh
-# $Header: /cvsroot/pgsql/src/test/mb/mbregress.sh,v 1.1 1998/07/24 03:32:40 scrappy Exp $
+# $Header: /cvsroot/pgsql/src/test/mb/mbregress.sh,v 1.2 1998/07/26 04:31:38 scrappy Exp $
 
 if echo '\c' | grep -s c >/dev/null 2>&1
 then
@@ -8,6 +8,10 @@ then
 else
 	ECHO_N="echo"
 	ECHO_C='\c'
+fi
+
+if [ ! -d results ];then
+    mkdir results
 fi
 
 PSQL="psql -n -e -q"

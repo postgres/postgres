@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/bootstrap/bootparse.y,v 1.17 1998/07/24 03:31:07 scrappy Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/bootstrap/bootparse.y,v 1.18 1998/07/26 04:30:18 scrappy Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -31,7 +31,7 @@
 #include "bootstrap/bootstrap.h"
 #include "catalog/heap.h"
 #include "catalog/pg_am.h"
-#ifdef MB
+#ifdef MULTIBYTE
 #include "catalog/pg_attribute_mb.h"
 #include "catalog/pg_class_mb.h"
 #else

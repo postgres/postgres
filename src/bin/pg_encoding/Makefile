@@ -6,7 +6,7 @@
 #
 #
 # IDENTIFICATION
-#    $Header: /cvsroot/pgsql/src/bin/pg_encoding/Attic/Makefile,v 1.1 1998/07/24 03:32:10 scrappy Exp $
+#    $Header: /cvsroot/pgsql/src/bin/pg_encoding/Attic/Makefile,v 1.2 1998/07/26 04:31:18 scrappy Exp $
 #
 #-------------------------------------------------------------------------
 
@@ -15,7 +15,7 @@ include ../../Makefile.global
 
 OBJS= pg_encoding.o
 
-CFLAGS+= -DMB=$(MB) -I$(SRCDIR)/include
+CFLAGS+= $(MBFLAGS) -I$(SRCDIR)/include
 
 all: pg_encoding
 

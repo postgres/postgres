@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/interfaces/libpq/fe-connect.c,v 1.76 1998/07/24 03:32:33 scrappy Exp $
+ *	  $Header: /cvsroot/pgsql/src/interfaces/libpq/fe-connect.c,v 1.77 1998/07/26 04:31:36 scrappy Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -44,7 +44,7 @@
 #include <crypt.h>
 #endif
 
-#ifdef MB
+#ifdef MULTIBYTE
 #include "mb/pg_wchar.h"
 #endif
 
@@ -792,7 +792,7 @@ PQsetenv(PGconn *conn)
 {
 	struct EnvironmentOptions *eo;
 	char		setQuery[80];	/* mjl: size okay? XXX */
-#ifdef MB
+#ifdef MULTIBYTE
 	char	*envname = "PGCLIENTENCODING";
 	char	envbuf[64];
 	char	*env;
@@ -800,7 +800,7 @@ PQsetenv(PGconn *conn)
 	PGresult   *rtn;
 #endif
 
-#ifdef MB
+#ifdef MULTIBYTE
 	/* query server encoding */
 	env = getenv(envname);
 	if (!env) {
@@ -815,7 +815,7 @@ PQsetenv(PGconn *conn)
 	    PQclear(rtn);
 	  }
 	  if (!encoding) {	/* this should not happen */
-	    sprintf(envbuf,"%s=%s",envname,pg_encoding_to_char(MB));
+	    sprintf(envbuf,"%s=%s",envname,pg_encoding_to_char(MULTIBYTE));
 	    putenv(envbuf);
 	  }
 	}

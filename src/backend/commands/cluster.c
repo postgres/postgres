@@ -14,7 +14,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/commands/cluster.c,v 1.24 1998/07/24 03:31:13 scrappy Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/commands/cluster.c,v 1.25 1998/07/26 04:30:22 scrappy Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -43,7 +43,7 @@
 #include <utils/excid.h>
 #include <utils/mcxt.h>
 #include <catalog/pg_proc.h>
-#ifdef MB
+#ifdef MULTIBYTE
 #include <catalog/pg_class_mb.h>
 #else
 #include <catalog/pg_class.h>

@@ -7,7 +7,7 @@
 #
 #
 # IDENTIFICATION
-#    $Header: /cvsroot/pgsql/src/interfaces/libpq/Attic/Makefile.in,v 1.24 1998/07/24 03:32:33 scrappy Exp $
+#    $Header: /cvsroot/pgsql/src/interfaces/libpq/Attic/Makefile.in,v 1.25 1998/07/26 04:31:35 scrappy Exp $
 #
 #-------------------------------------------------------------------------
 
@@ -25,14 +25,14 @@ ifdef KRBVERS
 CFLAGS+= $(KRBFLAGS)
 endif
 
-ifdef MB
-CFLAGS+= -DMB=$(MB)
+ifdef MULTIBYTE
+CFLAGS+= $(MBFLAGS)
 endif
 
 OBJS= fe-auth.o fe-connect.o fe-exec.o fe-misc.o fe-print.o fe-lobj.o \
       dllist.o pqsignal.o
 
-ifdef MB
+ifdef MULTIBYTE
 OBJS+= common.o wchar.o conv.o
 endif
 
@@ -42,7 +42,7 @@ install-shlib-dep :=
 
 ifeq ($(PORTNAME), linux)
   install-shlib-dep := install-shlib
-  shlib := libpq.so.$(SO_MAJOR_VERSION).$(SO_MINOR_VERSION)
+  shlib := libpq.so.$(SO_MAJOR_VERSION)
   LDFLAGS_SL = -shared -soname libpq.so.$(SO_MAJOR_VERSION)
   CFLAGS += $(CFLAGS_SL)
 endif
@@ -103,6 +103,19 @@ fe-lobj.o: $(SRCDIR)/backend/fmgr.h
 # so we can't use the object in $(SRCDIR)/backend
 dllist.c:	$(SRCDIR)/backend/lib/dllist.c
 	-ln -s $(SRCDIR)/backend/lib/dllist.c .
+
+ifdef MULTIBYTE
+# We need to compile this with special options for shared libs,
+# so we can't use the object in $(SRCDIR)/backend
+common.c: $(SRCDIR)/backend/utils/mb/common.c
+	-ln -s $(SRCDIR)/backend/utils/mb/common.c .
+
+wchar.c: $(SRCDIR)/backend/utils/mb/wchar.c
+	-ln -s $(SRCDIR)/backend/utils/mb/wchar.c .
+
+conv.c: $(SRCDIR)/backend/utils/mb/conv.c
+	-ln -s $(SRCDIR)/backend/utils/mb/conv.c .
+endif
 
 # The following rules cause dependencies in the backend directory to 
 # get made if they don't exist, but don't cause them to get remade if they

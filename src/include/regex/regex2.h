@@ -197,15 +197,7 @@ struct re_guts
 
 /* misc utilities */
 #ifdef MULTIBYTE
-#  if MULTIBYTE == MULE_INTERNAL
-#    define OUT		(16777216+1)	/* 16777216 == 2^24 == 3 bytes */
-#  elif MULTIBYTE == EUC_JP || MULTIBYTE == EUC_CN || MULTIBYTE == EUC_KR || MULTIBYTE == EUC_TW
-#    define OUT		(USHRT_MAX+1)	/* 2 bytes */
-#  elif MULTIBYTE == UNICODE
-#    define OUT		(USHRT_MAX+1)	/* 2 bytes. assuming UCS-2 */
-#  else
-#    define OUT		(UCHAR_MAX+1)	/* other codes. assuming 1 byte */
-#  endif
+#  define OUT		(16777216+1)	/* 16777216 == 2^24 == 3 bytes */
 #else
 #  define OUT		(CHAR_MAX+1)	/* a non-character value */
 #endif

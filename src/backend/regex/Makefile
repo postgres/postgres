@@ -4,7 +4,7 @@
 #    Makefile for regex
 #
 # IDENTIFICATION
-#    $Header: /cvsroot/pgsql/src/backend/regex/Makefile,v 1.7 1998/07/24 03:31:24 scrappy Exp $
+#    $Header: /cvsroot/pgsql/src/backend/regex/Makefile,v 1.8 1998/07/26 04:30:34 scrappy Exp $
 #
 #-------------------------------------------------------------------------
 
@@ -15,8 +15,8 @@ CFLAGS += -I..
 CFLAGS += -DPOSIX_MISTAKE 
 
 OBJS = regcomp.o regerror.o regexec.o regfree.o
-ifdef MB
-CFLAGS += -DMB=$(MB)
+ifdef MULTIBYTE
+CFLAGS+= $(MBFLAGS)
 endif
 
 all: SUBSYS.o

@@ -9,7 +9,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/tcop/utility.c,v 1.43 1998/07/24 03:31:38 scrappy Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/tcop/utility.c,v 1.44 1998/07/26 04:30:48 scrappy Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -558,7 +558,7 @@ ProcessUtility(Node *parsetree,
 
 				*ps_status = commandTag = "CREATEDB";
 				CHECK_IF_ABORTED();
-#ifdef MB
+#ifdef MULTIBYTE
 				createdb(stmt->dbname, stmt->dbpath, stmt->encoding);
 #else
 				createdb(stmt->dbname, stmt->dbpath);

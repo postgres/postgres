@@ -118,19 +118,8 @@ extern		"C"
 #define CODEMAX (BOL+5)			/* highest code used */
 
 #ifdef MULTIBYTE
-#  if MULTIBYTE == MULE_INTERNAL
-#    define NONCHAR(c)	((c) > 16777216)	/* 16777216 == 2^24 == 3 bytes */
-#    define NNONCHAR	(CODEMAX-16777216)
-#  elif MULTIBYTE == EUC_JP || MULTIBYTE == EUC_CN || MULTIBYTE == EUC_KR || MULTIBYTE == EUC_TW
-#    define NONCHAR(c)	((c) > USHRT_MAX)
-#    define NNONCHAR	(CODEMAX-USHRT_MAX)
-#  elif MULTIBYTE == UNICODE
-#    define NONCHAR(c)	((c) > USHRT_MAX)
-#    define NNONCHAR	(CODEMAX-USHRT_MAX)
-#  else	/* assume 1 byte code such as ISO8859-1 */
-#    define NONCHAR(c)	((c) > UCHAR_MAX)
-#    define NNONCHAR	(CODEMAX-UCHAR_MAX)
-#  endif
+#  define NONCHAR(c)	((c) > 16777216)	/* 16777216 == 2^24 == 3 bytes */
+#  define NNONCHAR	(CODEMAX-16777216)
 #else
 #  define NONCHAR(c)		((c) > CHAR_MAX)
 #  define NNONCHAR		(CODEMAX-CHAR_MAX)

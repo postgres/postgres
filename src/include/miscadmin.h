@@ -11,7 +11,7 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: miscadmin.h,v 1.28 1998/07/24 03:32:13 scrappy Exp $
+ * $Id: miscadmin.h,v 1.29 1998/07/26 04:31:23 scrappy Exp $
  *
  * NOTES
  *	  some of the information in this file will be moved to
@@ -116,7 +116,7 @@ extern char *DatabaseName;
 extern char *DatabasePath;
 
 /* in utils/misc/database.c */
-#ifdef MB
+#ifdef MULTIBYTE
 extern void GetRawDatabaseInfo(char *name, Oid *owner, Oid *db_id, char *path, int *encoding);
 #else
 extern void GetRawDatabaseInfo(char *name, Oid *owner, Oid *db_id, char *path);

@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/cache/relcache.c,v 1.42 1998/07/24 03:31:47 scrappy Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/cache/relcache.c,v 1.43 1998/07/26 04:30:57 scrappy Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -53,7 +53,7 @@
 #include "catalog/indexing.h"
 #include "catalog/pg_aggregate.h"
 #include "catalog/pg_attrdef.h"
-#ifdef MB
+#ifdef MULTIBYTE
 #include "catalog/pg_attribute_mb.h"
 #else
 #include "catalog/pg_attribute.h"

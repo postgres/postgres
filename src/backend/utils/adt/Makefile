@@ -4,7 +4,7 @@
 #    Makefile for utils/adt
 #
 # IDENTIFICATION
-#    $Header: /cvsroot/pgsql/src/backend/utils/adt/Makefile,v 1.14 1998/07/08 13:57:05 thomas Exp $
+#    $Header: /cvsroot/pgsql/src/backend/utils/adt/Makefile,v 1.15 1998/07/26 04:30:52 scrappy Exp $
 #
 #-------------------------------------------------------------------------
 
@@ -13,8 +13,8 @@ include ../../../Makefile.global
 
 CFLAGS += -I../..
 
-ifdef MB
-CFLAGS+=-DMB=$(MB)
+ifdef MULTIBYTE
+CFLAGS+= $(MBFLAGS)
 endif
 
 OBJS = acl.o arrayfuncs.o arrayutils.o bool.o cash.o char.o chunk.o \

@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/init/miscinit.c,v 1.17 1998/07/24 03:31:50 scrappy Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/init/miscinit.c,v 1.18 1998/07/26 04:31:01 scrappy Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -234,8 +234,8 @@ SetDatabaseName(char *name)
 	strcpy(DatabaseName, name);
 }
 
-#ifndef MB
-/* even if MB is not enabled, this function is neccesary
+#ifndef MULTIBYTE
+/* even if MULTIBYTE is not enabled, this function is neccesary
  * since pg_proc.h does have.
  */
 const char *

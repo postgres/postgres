@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/commands/dbcommands.c,v 1.16 1998/07/24 03:31:15 scrappy Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/commands/dbcommands.c,v 1.17 1998/07/26 04:30:24 scrappy Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -22,7 +22,7 @@
 #include "access/htup.h"
 #include "access/relscan.h"
 #include "catalog/catname.h"
-#ifdef MB
+#ifdef MULTIBYTE
 #include "catalog/pg_database_mb.h"
 #else
 #include "catalog/pg_database.h"
@@ -47,7 +47,7 @@ static HeapTuple get_pg_dbtup(char *command, char *dbname, Relation dbrel);
 static void stop_vacuum(char *dbpath, char *dbname);
 
 void
-#ifdef MB
+#ifdef MULTIBYTE
 createdb(char *dbname, char *dbpath, int encoding)
 #else
 createdb(char *dbname, char *dbpath)
@@ -98,7 +98,7 @@ createdb(char *dbname, char *dbpath)
 			dbname, user_id, dbname);
 #endif
 
-#ifdef MB
+#ifdef MULTIBYTE
 	sprintf(buf, "insert into pg_database (datname, datdba, encoding, datpath)"
 			" values (\'%s\', \'%d\', \'%d\', \'%s\');", dbname, user_id, encoding, loc);
 #else

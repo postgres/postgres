@@ -10,7 +10,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/parser/gram.y,v 2.18 1998/07/26 01:18:04 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/parser/gram.y,v 2.19 1998/07/26 04:30:31 scrappy Exp $
  *
  * HISTORY
  *	  AUTHOR			DATE			MAJOR EVENT
@@ -46,7 +46,7 @@
 #include "utils/elog.h"
 #include "access/xact.h"
 
-#ifdef MB
+#ifdef MULTIBYTE
 #include "mb/pg_wchar.h"
 #endif
 
@@ -2084,7 +2084,7 @@ CreatedbStmt:  CREATE DATABASE database_name WITH opt_database1 opt_database2
 					}
 					n->dbname = $3;
 					n->dbpath = $5;
-#ifdef MB
+#ifdef MULTIBYTE
 					if ($6 != NULL) {
 						n->encoding = pg_char_to_encoding($6);
 						if (n->encoding < 0) {
@@ -2103,7 +2103,7 @@ CreatedbStmt:  CREATE DATABASE database_name WITH opt_database1 opt_database2
 					CreatedbStmt *n = makeNode(CreatedbStmt);
 					n->dbname = $3;
 					n->dbpath = NULL;
-#ifdef MB
+#ifdef MULTIBYTE
 					n->encoding = GetTemplateEncoding();
 #endif
 					$$ = (Node *)n;

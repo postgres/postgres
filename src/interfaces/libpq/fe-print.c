@@ -9,7 +9,7 @@
  * didn't really belong there.
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/interfaces/libpq/fe-print.c,v 1.7 1998/07/18 18:34:33 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/interfaces/libpq/fe-print.c,v 1.8 1998/07/26 04:31:36 scrappy Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -36,8 +36,7 @@
 #endif /* WIN32 */
 
 #ifdef MULTIBYTE
-#include "regex/pg_wchar.h"
-#include "commands/variable.h"
+#include "mb/pg_wchar.h"
 #endif
 
 #ifdef TIOCGWINSZ

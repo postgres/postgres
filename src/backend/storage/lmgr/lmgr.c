@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/storage/lmgr/lmgr.c,v 1.14 1998/07/24 03:31:33 scrappy Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/storage/lmgr/lmgr.c,v 1.15 1998/07/26 04:30:41 scrappy Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -41,7 +41,7 @@
 
 #include "catalog/catname.h"
 #include "catalog/catalog.h"
-#ifdef MB
+#ifdef MULTIBYTE
 #include "catalog/pg_class_mb.h"
 #else
 #include "catalog/pg_class.h"

@@ -4,7 +4,7 @@
 #    Makefile for access/common
 #
 # IDENTIFICATION
-#    $Header: /cvsroot/pgsql/src/backend/access/common/Makefile,v 1.11 1998/06/16 07:29:18 momjian Exp $
+#    $Header: /cvsroot/pgsql/src/backend/access/common/Makefile,v 1.12 1998/07/26 04:30:16 scrappy Exp $
 #
 #-------------------------------------------------------------------------
 
@@ -13,8 +13,8 @@ include ../../../Makefile.global
 
 CFLAGS+=-I../..
 
-ifdef MB
-CFLAGS+= -DMB=$(MB)
+ifdef MULTIBYTE
+CFLAGS+= $(MBFLAGS)
 endif
 
 OBJS = heaptuple.o heapvalid.o indextuple.o indexvalid.o printtup.o \

@@ -4,7 +4,7 @@
 #    Makefile for utils/mb
 #
 # IDENTIFICATION
-#    $Header: /cvsroot/pgsql/src/backend/utils/mb/Makefile,v 1.1 1998/07/24 03:31:54 scrappy Exp $
+#    $Header: /cvsroot/pgsql/src/backend/utils/mb/Makefile,v 1.2 1998/07/26 04:31:03 scrappy Exp $
 #
 #-------------------------------------------------------------------------
 
@@ -12,8 +12,8 @@ SRCDIR = ../../..
 include ../../../Makefile.global
 
 CFLAGS += -I../..
-ifdef MB
-CFLAGS += -DMB=$(MB)
+ifdef MULTIBYTE
+CFLAGS+= $(MBFLAGS)
 endif
 
 OBJS = common.o conv.o mbutils.o wchar.o wstrcmp.o wstrncmp.o variable.o

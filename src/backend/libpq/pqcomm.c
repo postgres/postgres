@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/libpq/pqcomm.c,v 1.49 1998/07/18 18:34:03 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/libpq/pqcomm.c,v 1.50 1998/07/26 04:30:28 scrappy Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -68,7 +68,7 @@
 #include "libpq/libpq.h"		/* where the declarations go */
 #include "storage/ipc.h"
 #ifdef MULTIBYTE
-#include "commands/variable.h"
+#include "mb/pg_wchar.h"
 #endif
 
 /* ----------------

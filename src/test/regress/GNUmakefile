@@ -7,7 +7,7 @@
 #
 #
 # IDENTIFICATION
-#    $Header: /cvsroot/pgsql/src/test/regress/GNUmakefile,v 1.15 1998/03/15 07:39:01 scrappy Exp $
+#    $Header: /cvsroot/pgsql/src/test/regress/GNUmakefile,v 1.16 1998/07/26 04:31:41 scrappy Exp $
 #
 #-------------------------------------------------------------------------
 
@@ -50,7 +50,7 @@ all: $(INFILES)
 # run the test
 #
 runtest: $(INFILES) 
-	MB=$(MB);export MB; \
+	MULTIBYTE=$(MULTIBYTE);export MULTIBYTE; \
 	$(SHELL) ./regress.sh 2>&1 | tee regress.out
 	@echo "ACTUAL RESULTS OF REGRESSION TEST ARE NOW IN FILE regress.out"
 

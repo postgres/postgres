@@ -7,7 +7,7 @@
 #
 #
 # IDENTIFICATION
-#    $Header: /cvsroot/pgsql/src/bin/Makefile,v 1.14 1998/07/24 03:32:02 scrappy Exp $
+#    $Header: /cvsroot/pgsql/src/bin/Makefile,v 1.15 1998/07/26 04:31:08 scrappy Exp $
 #
 #-------------------------------------------------------------------------
 
@@ -17,7 +17,7 @@ include ../Makefile.global
 DIRS = pg_id pg_version psql pg_dump pg_passwd cleardbdir createdb \
 	createuser destroydb destroyuser initdb initlocation ipcclean
 
-ifdef MB
+ifdef MULTIBYTE
 DIRS += pg_encoding
 endif
 

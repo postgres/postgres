@@ -4,7 +4,7 @@
 #    Makefile for utils
 #
 # IDENTIFICATION
-#    $Header: /cvsroot/pgsql/src/backend/utils/Makefile,v 1.7 1998/07/24 03:31:39 scrappy Exp $
+#    $Header: /cvsroot/pgsql/src/backend/utils/Makefile,v 1.8 1998/07/26 04:30:50 scrappy Exp $
 #
 #-------------------------------------------------------------------------
 
@@ -23,7 +23,7 @@ OBJS = fmgrtab.o adt/SUBSYS.o cache/SUBSYS.o error/SUBSYS.o \
 
 DIRS = adt cache error fmgr hash init misc mmgr sort time
 
-ifdef MB
+ifdef MULTIBYTE
 OBJS += mb/SUBSYS.o
 DIRS += mb
 endif

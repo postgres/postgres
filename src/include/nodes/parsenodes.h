@@ -6,7 +6,7 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: parsenodes.h,v 1.51 1998/07/24 03:32:26 scrappy Exp $
+ * $Id: parsenodes.h,v 1.52 1998/07/26 04:31:29 scrappy Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -480,7 +480,7 @@ typedef struct CreatedbStmt
 	NodeTag		type;
 	char	   *dbname;			/* database to create */
 	char	   *dbpath;			/* location of database */
-#ifdef MB
+#ifdef MULTIBYTE
 	int	   encoding;			/* default encoding
 						   (see regex/pg_wchar.h) */
 #endif

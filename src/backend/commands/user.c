@@ -20,7 +20,7 @@
 
 #include <miscadmin.h>
 #include <catalog/catname.h>
-#ifdef MB
+#ifdef MULTIBYTE
 #include <catalog/pg_database_mb.h>
 #else
 #include <catalog/pg_database.h>

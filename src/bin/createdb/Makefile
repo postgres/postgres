@@ -7,7 +7,7 @@
 #
 #
 # IDENTIFICATION
-#    $Header: /cvsroot/pgsql/src/bin/createdb/Attic/Makefile,v 1.9 1998/07/24 03:32:04 scrappy Exp $
+#    $Header: /cvsroot/pgsql/src/bin/createdb/Attic/Makefile,v 1.10 1998/07/26 04:31:12 scrappy Exp $
 #
 #-------------------------------------------------------------------------
 
@@ -17,7 +17,7 @@ include ../../Makefile.global
 all: createdb
 
 createdb: createdb.sh
-	sed 's/__MB__/$(MB)/' createdb.sh > createdb
+	sed 's/__MULTIBYTE__/$(MULTIBYTE)/' createdb.sh > createdb
 
 install: createdb
 	$(INSTALL) $(INSTL_EXE_OPTS) $< $(BINDIR)/$<

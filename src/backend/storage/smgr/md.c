@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/storage/smgr/md.c,v 1.34 1998/07/24 03:31:35 scrappy Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/storage/smgr/md.c,v 1.35 1998/07/26 04:30:44 scrappy Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -568,11 +568,11 @@ mdblindwrt(char *dbstr,
 		Oid			owner,
 					id;
 		char	   *tmpPath;
-#ifdef MB
+#ifdef MULTIBYTE
 		int	   tmpEncoding;
 #endif
 
-#ifdef MB
+#ifdef MULTIBYTE
 		GetRawDatabaseInfo(dbstr, &owner, &id, dbpath, &tmpEncoding);
 #else
 		GetRawDatabaseInfo(dbstr, &owner, &id, dbpath);
@@ -614,11 +614,11 @@ mdblindwrt(char *dbstr,
 					id;
 		char	   *tmpPath;
 
-#ifdef MB
+#ifdef MULTIBYTE
 		int	   tmpEncoding;
 #endif
 
-#ifdef MB
+#ifdef MULTIBYTE
 		GetRawDatabaseInfo(dbstr, &owner, &id, dbpath, &tmpEncoding);
 #else
 		GetRawDatabaseInfo(dbstr, &owner, &id, dbpath);
