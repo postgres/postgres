@@ -3,7 +3,7 @@
 # pg_upgrade: update a database without needing a full dump/reload cycle.
 # CAUTION: read the manual page before trying to use this!
 
-# $Header: /cvsroot/pgsql/src/bin/pg_dump/Attic/pg_upgrade,v 1.21 2002/01/10 03:05:48 momjian Exp $
+# $Header: /cvsroot/pgsql/src/bin/pg_dump/Attic/pg_upgrade,v 1.22 2002/01/10 04:58:19 momjian Exp $
 #
 # NOTE: we must be sure to update the version-checking code a few dozen lines
 # below for each new PostgreSQL release.
@@ -77,51 +77,60 @@ then	echo "Cannot read ./$OLDDIR/PG_VERSION --- something is wrong." 1>&2
 fi
 
 # Get the actual versions seen in the data dirs.
-DESTVERSION=`cat ./data/PG_VERSION`
-SRCVERSION=`cat ./$OLDDIR/PG_VERSION`
+DEST_VERSION=`cat ./data/PG_VERSION`
+SRC_VERSION=`cat ./$OLDDIR/PG_VERSION`
 
 # Check for version compatibility.
 # This code will need to be updated/reviewed for each new PostgreSQL release.
 
-# MYVERSION is the expected output database version
-MYVERSION="7.1"
+# UPGRADE_VERSION is the expected output database version
+UPGRADE_VERSION="7.1"
 
-if [ "$SRCVERSION" = "7.1" -a ! "$DATA" ]
-then	echo "$0 requires a full data dump file to upgrade from version $SRCVERSION." 1>&2
-	echo "Use the '-d' parameter to specify the dump file" 1>&2
+if [ "$SRC_VERSION" = "7.1" -a ! "$DATA" ]
+then	echo "$0 requires a full data dump file to upgrade from version $SRC_VERSION." 1>&2
+	echo "Use the '-d' parameter to specify the data dump file" 1>&2
+	echo "If you don't have enough disk space to keep a dump file, grep out the '\\connect' and" 1>&2
+	echo "'SELECT setval' lines from the dump file and pass that file to $0, e.g:" 1>&2
+	echo 1>&2
+	echo "	pg_dumpall | egrep '^(\\connect)|SELECT setval \()[^	]*$' > data.out" 1>&2
 	exit 1
 fi
 
-if [ "$DESTVERSION" != "$MYVERSION" -a "$DESTVERSION" != "$SRCVERSION" ]
-then	echo "$0 is for PostgreSQL version $MYVERSION, but ./data/PG_VERSION contains $DESTVERSION." 1>&2
-	echo "Did you run initdb for version $MYVERSION?" 1>&2
+if [ "$SRC_VERSION" != "7.1" -a "$DATA" ]
+then	echo "$0 does not require the -d option for this version." 1>&2
+	exit 1
+fi
+
+if [ "$DEST_VERSION" != "$UPGRADE_VERSION" -a "$DEST_VERSION" != "$SRC_VERSION" ]
+then	echo "`basename $0` is for PostgreSQL version $UPGRADE_VERSION, but ./data/PG_VERSION contains $DEST_VERSION." 1>&2
+	echo "Did you run initdb for version $UPGRADE_VERSION?" 1>&2
 	exit 1
 fi
 
 # Check that input database is of a compatible version (anything with the same
 # physical layout of user tables and indexes should be OK).  I did not write
-# something like "$SRCVERSION -ge $MINVERSION" because test(1) isn't bright
+# something like "$SRC_VERSION -ge $UPGRADE_VERSION" because test(1) isn't bright
 # enough to compare dotted version strings properly.  Using a case statement
 # looks uglier but is more flexible.
 
-case "$SRCVERSION" in
+case "$SRC_VERSION" in
 #    7.2) ;;
-    *)	echo "Sorry, `basename $0` cannot upgrade database version $SRCVERSION to $DESTVERSION." 1>&2
+    *)	echo "Sorry, `basename $0` cannot upgrade database version $SRC_VERSION to $DEST_VERSION." 1>&2
 	echo "The on-disk structure of tables has changed." 1>&2
-	echo "You will need to dump and restore using pg_dump." 1>&2
+	echo "You will need to dump and restore using pg_dumpall." 1>&2
 	exit 1;;
 esac
 
 
-# OK, ready to proceed.
+# Checking done.  Ready to proceed.
 
 # Execute the schema script to create everything, except modify any
 # sequences with int4 maximums if we are upgrading from 7.1.
 cat $SCHEMA | awk -F' ' '{
-				if ("'"$SRCVERSION"'" == "7.1" &&
+				if ("'"$SRC_VERSION"'" == "7.1" &&
 				    $1 == "CREATE" &&
 				    $2 == "SEQUENCE" &&
-				    ($9 >= 2147483646 && # handle OS round
+				    ($9 >= 2147483646 && # handle OS rounding
 				    ($9 <= 2147483648))
 				{
 					for(i=1; i < NF; i++)
@@ -134,32 +143,28 @@ cat $SCHEMA | awk -F' ' '{
 				else	print $0;
 			}' |
 psql "template1"
-
 if [ $? -ne 0 ]
 then	echo "There were errors in the input script $SCHEMA.
 $0 aborted." 1>&2
 	exit 1
 fi
 
-
-if [ "$SRCVERSION" != "7.1" ]
+# Set sequence values for 7.1-version sequences, which are int4.
+if [ "$SRC_VERSION" != "7.1" ]
 then	echo "Input script $SCHEMA complete, fixing row commit statuses..."
 else	echo "Input script $SCHEMA complete, setting int8 sequences..."
 
-# Set all the sequence counters because they are not brought over
-# in the schema dump, and the old 7.1 sequences where int4 in size
-# so bringing over the file wouldn't help us anyway.
-cat $DATA | awk '$0 == "\\connect " || "SELECT setval (" \
-			{print $0;}' |
-psql "template1"
-
-if [ $? -ne 0 ]
-then	echo "There were errors in the input script $SCHEMA.
+	# Set all the sequence counters because they are not brought over
+	# in the schema dump.
+	cat $DATA | egrep '^(\\connect)|SELECT setval \()[^	]*$' |
+	psql "template1"
+	if [ $? -ne 0 ]
+	then	echo "There were errors in setting the sequence values.
 $0 aborted." 1>&2
-	exit 1
-fi
+		exit 1
+	fi
 
-echo "Int8 sequences set, fixing row commit statuses..."
+	echo "Int8 sequences set, fixing row commit statuses..."
 fi
 
 # Now vacuum each result database in case our transaction increase
@@ -174,10 +179,16 @@ $0 aborted." 1>&2
 	fi
 done
 
-# should be pretty small file
+# Used for scans looking for a database/tablename match
+# New oid is looked up
 pg_dumpall -s > $TMPFILE 2>/dev/null
+if [ "$?" -ne 0 ]
+then	echo "Unable to dump schema of new database.;  exiting" 1>&2
+	exit 1
+fi
 
-# flush buffers to disk
+# we are done with SQL database access
+# shutdown forces buffers to disk
 pg_ctl stop
 if [ "$?" -ne 0 ]
 then	echo "Unable to stop database server.;  exiting" 1>&2
@@ -188,7 +199,7 @@ echo "Commit fixes complete, moving data files..."
 
 cat "$SCHEMA" | while read LINE
 do
-	if /bin/echo "$LINE" | grep -q "^\\\\connect [^	]*$"
+	if /bin/echo "$LINE" | grep -q '^\\connect [^	]*$'
 	then	OLDDB="$DB"
 		DB="`/bin/echo \"$LINE\" | cut -d' ' -f2`"
 		if [ "$DB" = "-" ]
@@ -208,10 +219,19 @@ do
 		then	TABLE=""
 		fi
 	fi
+	# 7.1 sequences were handled earlier because they were int4.
+	if test "$SRC_VERSION" != "7.1" &&
+	   echo "$LINE" | egrep -q "^-- Name: [^ ]* Type: SEQUENCE "
+	then	TABLE="`echo \"$LINE\" | cut -d' ' -f3`"
+		# skip system tables
+		if [ "`echo \"$TABLE\" | cut -c 1-3`" = "pg_" ]
+		then	TABLE=""
+		fi
+	fi
 	if [ "$DB" -a "$OID" -a "$TABLE" ]
 	then
 		NEWOID=`awk -F' ' '
-				BEGIN 	{ newdb=""; newoid=""; 
+				BEGIN 	{ newdb=""; newoid="";
 					  newtable=""; ret=0;}
 				$1 == "\\\\connect" && $2 != "-" {newdb=$2;}
 				$0 ~ /^-- TOC Entry ID [0-9]* .OID / \
@@ -219,36 +239,43 @@ do
 				{print $0 >> "/tmp/x";
 				print $3 >> "/tmp/x";
 				print newdb," ", newoid >> "/tmp/x"}
-				($0 ~ /^-- Name: [^ ]* Type: TABLE / && \
-				 $0 ~ /^-- Name: [^ ]* Type: INDEX /) && \
+				($0 ~ /^-- Name: [^ ]* Type: TABLE / || \
+				 $0 ~ /^-- Name: [^ ]* Type: INDEX / || \
+				 $0 ~ /^-- Name: [^ ]* Type: SEQUENCE /) && \
 				newdb == "'"$DB"'" && \
 				$3 == "'"$TABLE"'" \
 					{ ret=newoid; exit}
 				END { print ret;}' $TMPFILE`
 		if [ "$NEWOID" -eq 0 ]
-		then	echo "Move of database $DB, OID $OID, table $TABLE failed.\nNew oid not found;  exiting" 1>&2
+		then	echo "Move of database $DB, OID $OID, table $TABLE failed.
+New oid not found;  exiting" 1>&2
 			exit 1
 		fi
 		# We use stars so we don't have to worry about database oids
  		if [ `ls "$OLDDIR"/base/*/"$OID" | wc -l` -eq 0 ]
-		then	echo "Move of database $DB, OID $OID, table $TABLE failed.\nFile not found;  exiting" 1>&2
+		then	echo "Move of database $DB, OID $OID, table $TABLE failed.
+File not found;  exiting" 1>&2
 			exit 1
 		fi
   		if [ `ls "$OLDDIR"/base/*/"$OID" | wc -l` -gt 1 ]
-		then	echo "Move of database $DB, OID $OID, table $TABLE failed.\nToo many found;  exiting" 1>&2
+		then	echo "Move of database $DB, OID $OID, table $TABLE failed.
+Too many found;  exiting" 1>&2
 			exit 1
 		fi
 		if [ `ls data/base/*/"$NEWOID" | wc -l` -eq 0 ]
-		then	echo "Move of database $DB, OID $OID, table $TABLE to $NEWOID failed.\nFile not found;  exiting" 1>&2
+		then	echo "Move of database $DB, OID $OID, table $TABLE to $NEWOID failed.
+File not found;  exiting" 1>&2
 			exit 1
 		fi
 		if [ `ls data/base/*/"$NEWOID" | wc -l` -gt 1 ]
-		then	echo "Move of database $DB, OID $OID, table $TABLE to $NEWOID failed.\nToo many found;  exiting" 1>&2
+		then	echo "Move of database $DB, OID $OID, table $TABLE to $NEWOID failed.
+Too many found;  exiting" 1>&2
 			exit 1
 		fi
 		mv -f "$OLDDIR"/base/*/"$OID" data/base/*/"$NEWOID"
 		if [ "$?" -ne 0 ]
-		then	echo "Move of database $DB, OID $OID, table $TABLE \n to $NEWOID failed.;  exiting" 1>&2
+		then	echo "Move of database $DB, OID $OID, table $TABLE 
+to $NEWOID failed.;  exiting" 1>&2
 			exit 1
 		fi
 		TABLE=""
@@ -256,7 +283,7 @@ do
 done
 
 # 7.1 has non-compressed log file format
-if [ "$SRCVERSION" = "7.1" ]
+if [ "$SRC_VERSION" = "7.1" ]
 then
 	# pg_log is oid 1269 in 7.1
 	LOGSIZE=`ls -l "$OLDDIR"/global/1269 "$OLDDIR"/global/1269.* 2>/dev/null |
@@ -270,7 +297,6 @@ then
 # set max transaction id
 
 else
-	# how to handle 7.2?
 	rm -r data/pg_clog &&
 	mv "$OLDDIR"/data/pg_clog data/pg_clog &&
 	mv "$OLDDIR"/data/global/pg_control data/global/pg_control

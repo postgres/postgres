@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/ref/Attic/pg_upgrade.sgml,v 1.14 2002/01/09 21:50:51 momjian Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/ref/Attic/pg_upgrade.sgml,v 1.15 2002/01/10 04:58:19 momjian Exp $
 PostgreSQL documentation
 -->
 
@@ -50,7 +50,10 @@ pg_upgrade -s <replaceable class="parameter">filename</replaceable> [ -d <replac
    <step performance="required">
     <para>
      Back up your existing data directory, preferably by making a
-     complete dump with pg_dumpall.
+     complete dump with pg_dumpall. Those upgrading from 7.1 are
+     required to supply this dump filename to pg_upgrade with the
+     <option>-d</option> option. Other releases should not use the
+     <option>-d</option> option.
     </para>
    </step>
 
