@@ -10,7 +10,7 @@
  * Written by Peter Eisentraut <peter_e@gmx.net>.
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/utils/misc/guc.c,v 1.200 2004/04/19 21:21:34 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/utils/misc/guc.c,v 1.201 2004/04/19 21:22:14 momjian Exp $
  *
  *--------------------------------------------------------------------
  */
@@ -3394,8 +3394,6 @@ void
 SetPGVariable(const char *name, List *args, bool is_local)
 {
 	char	   *argstring = flatten_set_variable_args(name, args);
-printf("bjm:  %s %s\n", name, argstring);
-fflush(stdout);
 
 	/* Note SET DEFAULT (argstring == NULL) is equivalent to RESET */
 	set_config_option(name,
