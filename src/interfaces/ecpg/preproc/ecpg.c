@@ -1,4 +1,4 @@
-/* $Header: /cvsroot/pgsql/src/interfaces/ecpg/preproc/ecpg.c,v 1.66 2003/04/08 12:34:25 meskes Exp $ */
+/* $Header: /cvsroot/pgsql/src/interfaces/ecpg/preproc/ecpg.c,v 1.67 2003/05/01 17:16:57 meskes Exp $ */
 
 /* New main for ecpg, the PostgreSQL embedded SQL precompiler. */
 /* (C) Michael Meskes <meskes@postgresql.org> Feb 5th, 1998 */
@@ -19,7 +19,8 @@ extern char *optarg;
 
 int			ret_value = 0,
 			autocommit = false,
-			auto_create_c = false;
+			auto_create_c = false,
+			system_includes = false;
 
 enum COMPAT_MODE	compat = ECPG_COMPAT_PGSQL;
 
@@ -43,11 +44,13 @@ help(const char *progname)
 	printf("  -d             generate parser debug output\n");
 #endif
 	printf("  -C <mode>      set compatibility mode\n"
-		   "                 mode may be INFORMIX only at the moment\n");
+		   "                 mode may be INFORMIX only at the moment\n"
+		   "                 INFORMIX mode implies '-i'\n");
 	printf("  -D SYMBOL      define SYMBOL\n");
 	printf("  -I DIRECTORY   search DIRECTORY for include files\n");
 	printf("  -o OUTFILE     write result to OUTFILE\n");
 	printf("  -t             turn on autocommit of transactions\n");
+	printf("  -i             parse system include files as well\n");
 	printf("  --help         show this help, then exit\n");
 	printf("  --version      output version information, then exit\n");
 	printf("\nIf no output file is specified, the name is formed by adding .c to the\n"
@@ -127,7 +130,7 @@ main(int argc, char *const argv[])
 	add_include_path("/usr/local/include");
 	add_include_path(".");
 
-	while ((c = getopt(argc, argv, "vco:I:tD:dC:")) != -1)
+	while ((c = getopt(argc, argv, "vcio:I:tD:dC:")) != -1)
 	{
 		switch (c)
 		{
@@ -150,10 +153,14 @@ main(int argc, char *const argv[])
 			case 'c':
 				auto_create_c = true;
 				break;
+			case 'i':
+				system_includes = true;
+				break;
 			case 'C':
 				if (strcmp(optarg, "INFORMIX") == 0)
 				{
 					compat = ECPG_COMPAT_INFORMIX;
+					system_includes = true;
 					add_preprocessor_define("dec_t=Numeric");
 					add_preprocessor_define("intrvl_t=Interval");
 				}

@@ -12,7 +12,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/interfaces/ecpg/preproc/pgc.l,v 1.106 2003/02/17 14:06:39 meskes Exp $
+ *	  $Header: /cvsroot/pgsql/src/interfaces/ecpg/preproc/pgc.l,v 1.107 2003/05/01 17:16:57 meskes Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -24,7 +24,6 @@
 #include <errno.h>
 
 #include "extern.h"
-
 
 extern YYSTYPE yylval;
 
@@ -44,6 +43,7 @@ static int		literalalloc;			/* current allocated buffer size */
 static void addlit(char *ytext, int yleng);
 static void addlitchar (unsigned char);
 static void string_unput (char *);
+static void parse_include (void);
 
 char *token_start;
 int state_before;
@@ -265,12 +265,17 @@ else	[eE][lL][sS][eE]
 elif	[eE][lL][iI][fF]
 endif	[eE][nN][dD][iI][fF]
 
+struct	[sS][tT][rR][uU][cC][tT]
+
 exec_sql		{exec}{space}*{sql}{space}*
 ipdigit			({digit}|{digit}{digit}|{digit}{digit}{digit})
 ip			{ipdigit}\.{ipdigit}\.{ipdigit}\.{ipdigit}
 
+/* we might want to parse all cpp include files */
+cppinclude 		{space}*#{include}{space}*
+
 /* Take care of cpp continuation lines */
-cppline			{space}*#(.*\\{space})*.*
+cppline			{space}*#(.*\\{space})+.*
 
 /*
  * Quoted strings must allow some special characters such as single-quote
@@ -429,6 +434,20 @@ cppline			{space}*#(.*\\{space})*.*
 			  else
 				return yytext[0];
 			}
+<C>{informix_special}{struct} {
+				  /* are we simulating Informix? */
+				  if (compat == ECPG_COMPAT_INFORMIX)
+				  {
+				  	string_unput("typedef struct ");
+			  		BEGIN SQL;
+					return SQL_START;
+				  }
+				  else
+				  {
+					string_unput("struct ");
+				  	return S_ANYTHING;
+				  }
+}
 <SQL>{self}			{ /*
 					   * We may find a ';' inside a structure
 					   * definition in a TYPE or VAR statement.
@@ -550,22 +569,6 @@ cppline			{space}*#(.*\\{space})*.*
 						ScanKeyword    *keyword;
 						struct _defines *ptr;
 
-						/* Is it an SQL keyword? */
-						keyword = ScanKeywordLookup(yytext);
-						if (keyword != NULL)
-							return keyword->value;
-
-						/* Is it an ECPG keyword? */
-						keyword = ScanECPGKeywordLookup( yytext);
-						if (keyword != NULL)
-							return keyword->value;
-
-						/* Is it a C keyword? */
-						keyword = ScanCKeywordLookup(yytext);
-						if (keyword != NULL)
-							return keyword->value;
-
-
 						/* How about a DEFINE? */
 						for (ptr = defines; ptr; ptr = ptr->next)
 						{
@@ -586,6 +589,21 @@ cppline			{space}*#(.*\\{space})*.*
 								break;
 							}
 						}
+
+						/* Is it an SQL keyword? */
+						keyword = ScanKeywordLookup(yytext);
+						if (keyword != NULL)
+							return keyword->value;
+
+						/* Is it an ECPG keyword? */
+						keyword = ScanECPGKeywordLookup( yytext);
+						if (keyword != NULL)
+							return keyword->value;
+
+						/* Is it a C keyword? */
+						keyword = ScanCKeywordLookup(yytext);
+						if (keyword != NULL)
+							return keyword->value;
 
 						/*
 						 * None of the above.  Return it as an identifier.
@@ -627,42 +645,53 @@ cppline			{space}*#(.*\\{space})*.*
 						}
 						return ICONST;
 					}
+<C>{cppinclude}		{
+					  if (system_includes)
+					  {
+					  	BEGIN(incl);
+					  }
+					  else
+					  {
+						yylval.str = mm_strdup(yytext);
+						return(CPP_LINE);
+					  }
+			}
 <C>{cppline}		{
 						yylval.str = mm_strdup(yytext);
 						return(CPP_LINE);
 					}
 <C>{identifier} 	{
 						ScanKeyword		*keyword;
+						struct _defines *ptr;
 
-						keyword = ScanCKeywordLookup(yytext);
-						if (keyword != NULL) {
-							return keyword->value;
-						}
-						else
+						/* is it a define? */
+						for (ptr = defines; ptr; ptr = ptr->next)
 						{
-							struct _defines *ptr;
-
-							for (ptr = defines; ptr; ptr = ptr->next)
+							if (strcmp(yytext, ptr->old) == 0)
 							{
-								if (strcmp(yytext, ptr->old) == 0)
-								{
-									struct _yy_buffer *yb;
+								struct _yy_buffer *yb;
 
-									yb = mm_alloc(sizeof(struct _yy_buffer));
+								yb = mm_alloc(sizeof(struct _yy_buffer));
 
-												yb->buffer =  YY_CURRENT_BUFFER;
-												yb->lineno = yylineno;
-												yb->filename = mm_strdup(input_filename);
-												yb->next = yy_buffer;
+								yb->buffer =  YY_CURRENT_BUFFER;
+								yb->lineno = yylineno;
+								yb->filename = mm_strdup(input_filename);
+								yb->next = yy_buffer;
 
-												yy_buffer = yb;
+								yy_buffer = yb;
 
-									yy_scan_string(ptr->new);
-									break;
-								}
+								yy_scan_string(ptr->new);
+								break;
 							}
-							if (ptr == NULL)
-							{
+						}
+
+						if (ptr == NULL)
+						{
+							keyword = ScanCKeywordLookup(yytext);
+							if (keyword != NULL)
+								return keyword->value;
+
+							else {
 								yylval.str = mm_strdup(yytext);
 								return IDENT;
 							}
@@ -940,7 +969,11 @@ cppline			{space}*#(.*\\{space})*.*
 					}
 <def>[^;]			{ addlit(yytext, yyleng); }
 
-<incl>[^;]+";"		{ 
+<incl>\<[^\>]+\>{space}*";"?		{	parse_include(); }
+<incl>{dquote}{xdinside}{dquote}{space}*";"?	{	parse_include(); }
+<incl>[^;\<\>\"]+";"		{
+				parse_include();
+#if 0
 						/* got the include file name */
 						struct _yy_buffer *yb;
 					  	struct _include_path *ip;
@@ -1026,6 +1059,7 @@ cppline			{space}*#(.*\\{space})*.*
 						output_line_number();
 
 					  	BEGIN C;
+#endif
 					}
 
 <<EOF>>				{
@@ -1128,3 +1162,96 @@ string_unput (char *string)
 		unput(string[i]);
 }
 
+static void
+parse_include(void)
+{
+	/* got the include file name */
+	struct _yy_buffer *yb;
+  	struct _include_path *ip;
+  	char inc_file[MAXPGPATH];
+  	unsigned int i;
+
+  	yb = mm_alloc(sizeof(struct _yy_buffer));
+
+  	yb->buffer =	YY_CURRENT_BUFFER;
+  	yb->lineno = yylineno;
+  	yb->filename = input_filename;
+  	yb->next = yy_buffer;
+
+  	yy_buffer = yb;
+
+  	/*
+	 * skip the ";" if there is one and trailing whitespace. Note that
+	 * yytext contains at least one non-space character plus the ";" 
+	 */
+  	for ( i = strlen(yytext)-2;
+		i > 0 && isspace((unsigned char) yytext[i]);
+		i-- )
+  		{}
+
+	if (yytext[i] == ';')
+		i--;
+
+	yytext[i+1] = '\0';
+	
+	yyin = NULL;
+
+	/* If file name is enclosed in '"' remove these and look only in '.' */
+	/* Informix does look into all include paths though, except filename starts with '/' */
+	if ((yytext[0] == '"' && yytext[i] == '"') && (compat != ECPG_COMPAT_INFORMIX || yytext[1] == '/'))
+	{
+		yytext[i] = '\0';
+		memmove(yytext, yytext+1, strlen(yytext));
+	
+		strncpy(inc_file, yytext, sizeof(inc_file));
+		yyin = fopen(inc_file, "r");
+		if (!yyin)
+		{
+			if (strcmp(inc_file + strlen(inc_file) - 2, ".h"))
+			{
+				strcat(inc_file, ".h");
+				yyin = fopen(inc_file, "r");
+			}
+		}
+		
+	}
+	else
+	{
+		if ((yytext[0] == '"' && yytext[i] == '"') || (yytext[0] == '<' && yytext[i] == '>'))
+		{
+			yytext[i] = '\0';
+			memmove(yytext, yytext+1, strlen(yytext));
+		}
+		
+	  	for (ip = include_paths; yyin == NULL && ip != NULL; ip = ip->next)
+	  	{
+			if (strlen(ip->path) + strlen(yytext) + 3 > MAXPGPATH)
+			{
+				fprintf(stderr, "Error: Path %s/%s is too long in line %d, skipping.\n", ip->path, yytext, yylineno);
+				continue;
+			}
+			snprintf (inc_file, sizeof(inc_file), "%s/%s", ip->path, yytext);
+			yyin = fopen(inc_file, "r");
+			if (!yyin)
+			{
+				if (strcmp(inc_file + strlen(inc_file) - 2, ".h"))
+				{
+					strcat(inc_file, ".h");
+					yyin = fopen( inc_file, "r" );
+				}
+			}
+		}
+	}
+	if (!yyin)
+	{
+		snprintf(errortext, sizeof(errortext), "Cannot open include file %s in line %d\n", yytext, yylineno);
+		mmerror(NO_INCLUDE_FILE, ET_FATAL, errortext);
+  	}
+
+	input_filename = mm_strdup(inc_file);
+	yy_switch_to_buffer(yy_create_buffer(yyin,YY_BUF_SIZE ));
+	yylineno = 1;
+	output_line_number();
+
+  	BEGIN C;
+}
