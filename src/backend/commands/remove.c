@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/commands/Attic/remove.c,v 1.51 2000/09/06 14:15:16 petere Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/commands/Attic/remove.c,v 1.52 2000/09/12 16:48:55 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -356,15 +356,12 @@ RemoveFunction(char *functionName,		/* function name to be removed */
 							  0);
 
 	if (!HeapTupleIsValid(tup))
-	{
-		heap_close(relation, RowExclusiveLock);
 		func_error("RemoveFunction", functionName, nargs, argList, NULL);
-	}
 
 	if (((Form_pg_proc) GETSTRUCT(tup))->prolang == INTERNALlanguageId ||
 		((Form_pg_proc) GETSTRUCT(tup))->prolang == NEWINTERNALlanguageId)
 	{
-		heap_close(relation, RowExclusiveLock);
+		/* "Helpful" notice when removing a builtin function ... */
 		elog(NOTICE, "Removing built-in function \"%s\"", functionName);
 	}
 
