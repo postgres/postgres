@@ -6,7 +6,7 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: libpq-fe.h,v 1.29 1998/05/06 23:51:16 momjian Exp $
+ * $Id: libpq-fe.h,v 1.30 1998/06/16 07:29:49 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -363,6 +363,10 @@ extern		"C"
 							  int width		/* width of column, if
 											 * 0, use variable width */
 		);
+
+#ifdef MB
+	extern int PQmblen(unsigned char *s);
+#endif
 
 /* === in fe-auth.c === */
 	extern MsgType fe_getauthsvc(char *PQerrormsg);

@@ -4,7 +4,7 @@
 #    Makefile for access/common
 #
 # IDENTIFICATION
-#    $Header: /cvsroot/pgsql/src/backend/access/common/Makefile,v 1.10 1998/04/06 00:20:44 momjian Exp $
+#    $Header: /cvsroot/pgsql/src/backend/access/common/Makefile,v 1.11 1998/06/16 07:29:18 momjian Exp $
 #
 #-------------------------------------------------------------------------
 
@@ -12,6 +12,10 @@ SRCDIR = ../../..
 include ../../../Makefile.global
 
 CFLAGS+=-I../..
+
+ifdef MB
+CFLAGS+= -DMB=$(MB)
+endif
 
 OBJS = heaptuple.o heapvalid.o indextuple.o indexvalid.o printtup.o \
        scankey.o tupdesc.o  

@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/libpq/pqcomm.c,v 1.44 1998/06/15 19:28:27 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/libpq/pqcomm.c,v 1.45 1998/06/16 07:29:23 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -23,6 +23,9 @@
  *		pq_putstr		- send a null terminated string to connection
  *		pq_putnchar		- send n characters to connection
  *		pq_putint		- send an integer to connection
+ *		pq_putncharlen		- send n characters to connection
+ *					  (also send an int header indicating
+ *					   the length)
  *		pq_getinaddr	- initialize address from host and port number
  *		pq_getinserv	- initialize address from host and service name
  *		pq_connect		- create remote input / output connection
@@ -66,6 +69,9 @@
 #include "libpq/auth.h"
 #include "libpq/libpq.h"		/* where the declarations go */
 #include "storage/ipc.h"
+#ifdef MB
+#include "commands/variable.h"
+#endif
 
 /* ----------------
  *		declarations
@@ -180,6 +186,14 @@ pq_getstr(char *s, int maxlen)
 {
 	int			c = '\0';
 
+#ifdef MB
+	unsigned char *p, *ps;
+	int len;
+
+	ps = s;
+	len = maxlen;
+#endif
+
 	if (Pfin == (FILE *) NULL)
 	{
 /*		elog(DEBUG, "Input descriptor is null"); */
@@ -190,6 +204,13 @@ pq_getstr(char *s, int maxlen)
 		*s++ = c;
 	*s = '\0';
 
+#ifdef MB
+	p = pg_client_to_server(ps, len);
+	if (ps != p) {	/* actual conversion has been done? */
+	  strcpy(ps, p);
+	}
+#endif
+	
 	/* -----------------
 	 *	   If EOF reached let caller know.
 	 *	   (This will only happen if we hit EOF before the string
@@ -325,7 +346,14 @@ pq_getint(int b)
 void
 pq_putstr(char *s)
 {
+#ifdef MB
+        unsigned char *p;
+
+        p = pg_server_to_client(s, strlen(s));
+	if (pqPutString(p, Pfout))
+#else
 	if (pqPutString(s, Pfout))
+#endif
 	{
 		sprintf(PQerrormsg,
 				"FATAL: pq_putstr: fputs() failed: errno=%d\n", errno);
@@ -788,3 +816,17 @@ StreamOpen(char *hostName, short portName, Port *port)
 
 	return (STATUS_OK);
 }
+
+#ifdef MB
+void
+pq_putncharlen(char *s, int n)
+{
+  unsigned char *p;
+  int len;
+
+  p = pg_server_to_client(s, n);
+  len = strlen(p);
+  pq_putint(len, sizeof(int));
+  pq_putnchar(p, len);
+}
+#endif

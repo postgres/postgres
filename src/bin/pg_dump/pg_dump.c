@@ -21,7 +21,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/bin/pg_dump/pg_dump.c,v 1.73 1998/06/16 06:52:15 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/bin/pg_dump/pg_dump.c,v 1.74 1998/06/16 07:29:32 momjian Exp $
  *
  * Modifications - 6/10/96 - dave@bensoft.com - version 1.13.dhb
  *
@@ -597,7 +597,8 @@ main(int argc, char **argv)
 
 					tablename = strdup(optarg);
 					for (i = 0; tablename[i]; i++)
-						if (isupper(tablename[i]))
+						if (isascii((unsigned char)tablename[i]) &&
+						    isupper(tablename[i]))
 							tablename[i] = tolower(tablename[i]);
 				}
 				break;

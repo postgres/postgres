@@ -9,7 +9,7 @@
  * didn't really belong there.
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/interfaces/libpq/fe-print.c,v 1.4 1998/06/16 06:57:27 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/interfaces/libpq/fe-print.c,v 1.5 1998/06/16 07:29:49 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -28,6 +28,10 @@
 #include <termios.h>
 #endif
 
+#ifdef MB
+#include "regex/pg_wchar.h"
+#include "commands/variable.h"
+#endif
 
 #ifdef TIOCGWINSZ
 static struct winsize screen_size;
@@ -469,7 +473,29 @@ PQprintTuples(PGresult *res,
 	}
 }
 
+#ifdef MB
+/*
+ * returns the byte length of the word beginning s.
+ * Client side encoding is determined by the environment variable
+ * "PGCLIENTENCODING".
+ * if this variable is not defined, the same encoding as
+ * the backend is assumed.
+ */
+int PQmblen(unsigned char *s)
+{
+  char *str;
+  int encoding = -1;
 
+  str = getenv("PGCLIENTENCODING");
+  if (str) {
+    encoding = pg_char_to_encoding(str);
+  }
+  if (encoding < 0) {
+    encoding = MB;
+  }
+  return(pg_encoding_mblen(encoding, s));
+}
+#endif
 
 static void
 do_field(PQprintOpt *po, PGresult *res,
@@ -504,7 +530,15 @@ do_field(PQprintOpt *po, PGresult *res,
 
 	if (!skipit)
 	{
+#ifdef MB
+	        int len;
+
+ 		for (p = pval, o = buf; *p;
+		     len = PQmblen(p),memcpy(o,p,len),
+		     o+=len, p+=len)
+#else
 		for (p = pval, o = buf; *p; *(o++) = *(p++))
+#endif
 		{
 			if ((fs_len == 1 && (*p == *(po->fieldSep))) || *p == '\\' || *p == '\n')
 				*(o++) = '\\';

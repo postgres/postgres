@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/bin/psql/Attic/psql.c,v 1.145 1998/06/15 19:30:07 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/bin/psql/Attic/psql.c,v 1.146 1998/06/16 07:29:38 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -639,8 +639,13 @@ tableDesc(PsqlSettings *pset, char *table, FILE *fout)
 	}
 	else
 	{
+#ifdef MB
+		for (i = 0; table[i]; i += PQmblen(table+i))
+#else
 		for (i = 0; table[i]; i++)
-			if (isupper(table[i]))
+#endif
+			if (isascii((unsigned char)table[i]) &&
+			    isupper(table[i]))
 				table[i] = tolower(table[i]);
 	}
 
@@ -811,7 +816,11 @@ objectDescription(PsqlSettings *pset, char *object, FILE *fout)
 	}
 	else
 	{
+#ifdef MB
+		for (i = 0; object[i]; i += PQmblen(object+i))
+#else
 		for (i = 0; object[i]; i++)
+#endif
 			if (isupper(object[i]))
 				object[i] = tolower(object[i]);
 	}
@@ -2296,9 +2305,16 @@ MainLoop(PsqlSettings *pset, char *query, FILE *source)
 		{
 			int			i;
 
-			was_bslash = false;
+#ifdef MB
+			int mblen = 1;
+#endif
 
+			was_bslash = false;
+#ifdef MB
+			for (i = 0; i < len; mblen=PQmblen(line+i), i+=mblen)
+#else
 			for (i = 0; i < len; i++)
+#endif
 			{
 				if (line[i] == '\\' && !in_quote)
 				{
@@ -2322,7 +2338,9 @@ MainLoop(PsqlSettings *pset, char *query, FILE *source)
 					/* start an extended comment? */
 				}
 
-				if (querySent && !isspace(line[i]))
+				if (querySent &&
+				    isascii((unsigned char)(line[i])) &&
+				    !isspace(line[i]))
 				{
 					query[0] = '\0';
 					querySent = false;
@@ -2330,7 +2348,11 @@ MainLoop(PsqlSettings *pset, char *query, FILE *source)
 
 				if (was_bslash)
 					was_bslash = false;
+#ifdef MB
+				else if (i > 0 && line[i - mblen] == '\\')
+#else
 				else if (i > 0 && line[i - 1] == '\\')
+#endif
 					was_bslash = true;
 
 				/* inside a quote? */
@@ -2339,22 +2361,42 @@ MainLoop(PsqlSettings *pset, char *query, FILE *source)
 				else if (xcomment != NULL)		/* inside an extended
 												 * comment? */
 				{
+#ifdef MB
+					if (line[i] == '*' && line[i + mblen] == '/')
+#else
 					if (line[i] == '*' && line[i + 1] == '/')
+#endif
 					{
 						xcomment = NULL;
+#ifdef MB
+						i += mblen;
+#else
 						i++;
+#endif
 					}
 				}
 				/* possible backslash command? */
+#ifdef MB
+				else if (line[i] == '/' && line[i + mblen] == '*')
+#else
 				else if (line[i] == '/' && line[i + 1] == '*')
+#endif
 				{
 					xcomment = line + i;
+#ifdef MB
+					i += mblen;
+#else
 					i++;
-
+#endif
 				}
 				/* single-line comment? truncate line */
+#ifdef MB
+				else if ((line[i] == '-' && line[i + mblen] == '-') ||
+						 (line[i] == '/' && line[i + mblen] == '/'))
+#else
 				else if ((line[i] == '-' && line[i + 1] == '-') ||
 						 (line[i] == '/' && line[i + 1] == '/'))
+#endif
 				{
 					/* print comment at top of query */
 					if (pset->singleStep)

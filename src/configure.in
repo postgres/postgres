@@ -194,12 +194,12 @@ AC_ARG_WITH(mb,
     [  --with-mb=<encoding> enable multi-byte support ], 
     [
 	case "$withval" in
-	EUC_JP|EHC_CN|EUC_KR|EUC_TW|UNICODE|MULE_INTERNAL)
+	EUC_JP|EHC_CN|EUC_KR|EUC_TW|UNICODE|MULE_INTERNAL|LATIN1)
             MB="$withval";
 	    AC_MSG_RESULT("enabled with $withval")
             ;;
 	*)
-	    AC_MSG_ERROR([*** You must supply an argument to the --with-mb option one of EUC_JP,EHC_CN,EUC_KR,EUC_TW,UNICODE,MULE_INTERNAL])
+	    AC_MSG_ERROR([*** You must supply an argument to the --with-mb option one of EUC_JP,EHC_CN,EUC_KR,EUC_TW,UNICODE,MULE_INTERNAL,LATIN1])
 	  ;;
 	esac
 	MB="$withval"

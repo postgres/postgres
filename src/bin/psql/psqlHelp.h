@@ -5,7 +5,7 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: psqlHelp.h,v 1.43 1998/06/15 18:39:49 momjian Exp $
+ * $Id: psqlHelp.h,v 1.44 1998/06/16 07:29:39 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -263,7 +263,11 @@ static struct _helpStruct QL_HELP[] = {
 	"notify <class_name>"},
 	{"reset",
 		"set run-time environment back to default",
+#ifdef MB
+	"reset {DateStyle | GEQO | R_PLANS | CLIENT_ENCODING}"},
+#else
 	"reset {DateStyle | GEQO | R_PLANS}"},
+#endif
 	{"revoke",
 		"revoke access control from a user or group",
 	"revoke <privilege[,privilege,...]> on <rel1>[,...<reln>] from \n\
@@ -284,12 +288,23 @@ static struct _helpStruct QL_HELP[] = {
 \t[union [all] select ...];"},
 	{"set",
 		"set run-time environment",
+#ifdef MB
+	"set DateStyle to {'ISO' | 'SQL' | 'Postgres' | 'European' | 'US' | 'NonEuropean'}\n\
+set GEQO to {'ON[=#]' | 'OFF'}\n\
+set R_PLANS to {'ON' | 'OFF'}\n\
+set CLIENT_ENCODING to {'EUC_JP' | 'SJIS' | 'EUC_CN' | 'EUC_KR' | 'EUC_TW' | 'MULE_INTERNAL' | 'LATIN1'}"},
+#else
 	"set DateStyle to {'ISO' | 'SQL' | 'Postgres' | 'European' | 'US' | 'NonEuropean'}\n\
 set GEQO to {'ON[=#]' | 'OFF'}\n\
 set R_PLANS to {'ON' | 'OFF'}"},
+#endif
 	{"show",
 		"show current run-time environment",
+#ifdef MB
+	"show {DateStyle | GEQO | R_PLANS | CLIENT_ENCODING}"},
+#else
 	"show {DateStyle | GEQO | R_PLANS}"},
+#endif
 	{"update",
 		"update tuples",
 	"update <class_name> set <attr1>=<expr1>,...<attrN>=<exprN> [from <from_clause>] [where <qual>];"},

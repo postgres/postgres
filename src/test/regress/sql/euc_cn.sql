@@ -13,3 +13,7 @@ select * from 计算机术语 where 分类号 like '_Z01_';
 select * from 计算机术语 where 分类号 like '_Z%';
 select * from 计算机术语 where 术语 ~ '电脑[显图]';
 select * from 计算机术语 where 术语 ~* '电脑[显图]';
+select *,character_length(术语) from 计算机术语;
+select *,octet_length(术语) from 计算机术语;
+select *,position('显' in 术语) from 计算机术语;
+select *,substring(术语 from 3 for 4) from 计算机术语;

@@ -13,3 +13,7 @@ select * from Íªß©Ñ¦¿ë¾î where ÝÂ×¾ÄÚµå like '_Z01_';
 select * from Íªß©Ñ¦¿ë¾î where ÝÂ×¾ÄÚµå like '_Z%';
 select * from Íªß©Ñ¦¿ë¾î where ¿ë¾î ~ 'ÄÄÇ»ÅÍ[µð±×]';
 select * from Íªß©Ñ¦¿ë¾î where ¿ë¾î ~* 'ÄÄÇ»ÅÍ[µð±×]';
+select *,character_length(¿ë¾î) from Íªß©Ñ¦¿ë¾î;
+select *,octet_length(¿ë¾î) from Íªß©Ñ¦¿ë¾î;
+select *,position('µð' in ¿ë¾î) from Íªß©Ñ¦¿ë¾î;
+select *,substring(¿ë¾î from 3 for 4) from Íªß©Ñ¦¿ë¾î;

@@ -1,4 +1,4 @@
-postgresql 6.3.2 multi-byte (MB) support README	       1998/4/21 作成
+postgresql 6.3.2 multi-byte (MB) support README	       1998/5/25 作成
 
 							石井達夫
 						t-ishii@sra.co.jp
@@ -9,8 +9,8 @@ postgresql 6.3.2 multi-byte (MB) support README	       1998/4/21 作成
   PostgreSQL におけるマルチバイトサポートは以下のような特徴を持っています。
 
     1.マルチバイト文字として、日本語、中国語などの各国の EUC、Unicode、
-      mule internal code がコンパイル時に選択可能。データベースには
-      このコードのまま格納されます。
+      mule internal code, ISO-8859-1 がコンパイル時に選択可能。
+      データベースにはこのコードのまま格納されます。
     2.テーブル名にマルチバイト文字が使用可能(ただし、OS がマルチバイト
       のファイル名を許していることが必要)
     3.カラム名にマルチバイト文字が使用可能
@@ -19,6 +19,8 @@ postgresql 6.3.2 multi-byte (MB) support README	       1998/4/21 作成
     6.マルチバイト文字の LIKE 検索が使用可能
     7.character_length(), position(), substring() でのマルチバイト
       サポート
+    8.環境変数 PGCLIENTENCODING により、クライアント側の文字コード
+      がバックエンド側と異る場合に、自動的にコード変換を行ないます。
 
 インストール：
   デフォルトでは PostgreSQL はマルチバイトをサポートしていません。
@@ -46,6 +48,9 @@ postgresql 6.3.2 multi-byte (MB) support README	       1998/4/21 作成
 			すなわち 0xffff までです。
 	MULE_INTERNAL	mule の内部コード。ただし、Type N の不定長文字は
 			サポートしていません。
+	LATIN1		ISO8859 Latin 1。シングルバイトなんですけど、
+			試しということで:-)ちなみに、LATIN2 etc. は
+			未サポート。
 
   選択の目安としては、英語と日本語しか使わない場合は EUC_JP(同様に、中
   国語しか使わない場合は EUC_CN... などとなります)、その他の言語も使いた
@@ -64,13 +69,101 @@ postgresql 6.3.2 multi-byte (MB) support README	       1998/4/21 作成
   http://www.sra.co.jp/people/t-ishii/PostgreSQL/ でも簡単なインストー
   ル方法を紹介しています。
 
+環境変数 PGCLIENTENCODING について：
+
+  デフォルトでは、コンパイル時に指定したサーバ側の文字コードと、psql 
+  などのクライアント側の文字コードが一致しているものと見倣されます。サー
+  バ側と異る文字コードを使いたい場合は、環境変数 PGCLIENTENCODING を設
+  定します。設定可能な文字コードは、上記に加え、SJIS (シフトJIS)
+  が指定できます。
+
+	ちなみに、SJIS は JISX0201 の 1バイトカナ、いわゆる「半角カタ
+	カナ」もサポートしています(決して「半角カタカナ」の使用をお勧
+	めしているわけじゃないですが)。
+
+  たとえば、MB=EUC_JP で PostgeSQL がインストールされている場合、
+  postmaster を立ち上げるときに環境変数 PGCLIENTENCODING に SJIS を設
+  定すると、クライアントは SJIS コードで PostgreSQL にアクセスできるよ
+  うになります。ただし、データベースに格納されるデータ自体はあくまで 
+  MB で指定した EUC_JP のままです。
+
+  クライアント側でセッション毎に文字コードを変えることもできます。
+  セッション開始時に環境変数 PGCLIENTENCODING がセットされていると、そ
+  れが優先されてクライアント側の文字コードに採用されます。この機能を利
+  用すると、あるユーザは EUC_JP で、別なユーザは SJIS で同じデータベー
+  スにアクセスするというようなことができるようになります。
+
+  MB=MULE_INTERNAL で PostgreSQL をインストールしておくと、普段は 
+  EUC_JP でクライアントを利用し、複数の文字集合を混在させるときだけク
+  ライアントを MULE_INTERNAL に設定するなどの使い分けができて便利です。
+  ただ、一般に EUC_JP に比べ、MULE_INTERNAL によるデータ表現はややスペー
+  スを喰うので、そのへんは考慮しておく必要があります。たとえば、2バイ
+  トで表現できる漢字は MULE_INTERNAL では 3バイトを要します。
+
+  注意しておく必要があるのは、サーバ側の文字コードとクライアント側の文
+  字コードがいつも相互変換できるとは限らないことです。極端な話、サーバ
+  側が EUC_JP なのに、クライアント側が EUC_KR だったらどうなるでしょう。
+  この場合 PostgreSQL は変換できないコードを 16進表現に変換してしまい
+  ます。たとえば、"(bdae)" のように。なお、この 16進表現は mule
+  internalcode のコードであることに注意して下さい。これは、直接クライ
+  アント <--> サーバの文字コードを変換するのではなく、一度内部表現であ
+  る mule internal code を経由しているためです。
+
+  クライアント側の文字コードの設定は、"set client_encoding" コマンドで
+  も可能です。たとえば、
+
+	set client_encoding to 'sjis';
+
+  で明示的にクライアント側の文字コードを SJIS に設定できます。実際、ク
+  ライアントがサーバに接続する際には libpq の中で "set
+  client_encoding" コマンドを発行しています。セッション中に 
+  set client_encoding" コマンドを発行すれば、動的に文字コードの切替え
+  ができますが、その際には環境変数 PGCLIENTENCODING を同時にクライアン
+  トアプリケーションの中で設定し直す必要があります。(psql には現在この
+  機能がないため、事実上動的にクライアント側の文字コードを設定すること
+  ができません。)
+
+  現在設定されているクライアント側の文字コードは
+
+	show client_encoding;
+
+  で参照できます。また、
+
+	reset client_encoding;
+
+  は、デフォルトのクライアント文字コード設定に復帰させます。postmaster 
+  を立ち上げるときに環境変数 PGCLIENTENCODING が設定されているとその文
+  字コードに、そうでなければコンパイル時に指定したサーバ側の文字コード
+  と同じになります。
+
+制限事項：
+
+  SJIS を使用する場合、PostgreSQL のクライアントでまともに対応している
+  のは psql だけです。Tcl/Tk、そのほかは対応してません。
+
 謝辞：
+
   o 各種文字セット、コード系について、日本語 PostgreSQL メーリングリスト
     のメンバの方からアドバイスを頂きました。ここに感謝します。
+    また、SJIS 対応については、市川@お茶大さんのパッチを参考にさせてい
+    ただきました。
 
 改定履歴：
 
-  1998/4/21 機能追加／バグ修正
+  1998/5/25 バグ修正(mb_b3.patch として pgsql-jp ML にリリース、
+	本家では 6.4 snapshot に取り込まれる予定)	
+
+  1998/5/18 機能追加／バグ修正(mb_b2.patch として pgsql-jp ML にリリース、
+	本家では 6.4 snapshot に取り込まれる予定)
+	* 環境変数 PGCLIENTENCODING のサポート。クライアント側の
+	  文字コードを指定する。現在、SJIS, EUC_*, MULE_INTERNAL, LATIN1
+	  が指定できる。また、
+	  set client_encoding to 'sjis';
+	  でも可能
+	* 8bit 文字が渡ると問題が起きる箇所にできるだけ対応
+
+  1998/4/21 機能追加／バグ修正(mb_b1.patch として pgsql-jp ML にリリース、
+	本家では 6.4 snapshot に取り込まれている)
 	* character_length(), position(), substring() のマルチバイト
 	  対応
 	* octet_length() 追加 → initdb のやり直し必要

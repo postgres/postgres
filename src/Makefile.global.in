@@ -7,7 +7,7 @@
 #
 #
 # IDENTIFICATION
-#    $Header: /cvsroot/pgsql/src/Makefile.global.in,v 1.42 1998/05/12 15:42:08 momjian Exp $
+#    $Header: /cvsroot/pgsql/src/Makefile.global.in,v 1.43 1998/06/16 07:29:15 momjian Exp $
 #
 # NOTES
 #    Essentially all Postgres make files include this file and use the 
@@ -150,7 +150,7 @@ X11_LIBS= -lX11 @X_EXTRA_LIBS@
 #
 # enable multi-byte support
 # choose one of:
-# EUC_JP,EHC_CN,EUC_KR,EUC_TW,UNICODE,MULE_INTERNAL
+# EUC_JP,EUC_CN,EUC_KR,EUC_TW,UNICODE,MULE_INTERNAL,LATIN1
 MB=@MB@
 
 ##############################################################################

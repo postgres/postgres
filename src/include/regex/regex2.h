@@ -203,6 +203,8 @@ struct re_guts
 #    define OUT		(USHRT_MAX+1)	/* 2 bytes */
 #  elif MB == UNICODE
 #    define OUT		(USHRT_MAX+1)	/* 2 bytes. assuming UCS-2 */
+#  else
+#    define OUT		(UCHAR_MAX+1)	/* other codes. assuming 1 byte */
 #  endif
 #else
 #  define OUT		(CHAR_MAX+1)	/* a non-character value */

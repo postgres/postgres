@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/tcop/postgres.c,v 1.76 1998/06/15 19:29:27 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/tcop/postgres.c,v 1.77 1998/06/16 07:29:30 momjian Exp $
  *
  * NOTES
  *	  this is the "main" module of the postgres backend and
@@ -81,6 +81,10 @@
 
 #if FALSE
 #include "nodes/memnodes.h"
+#endif
+
+#ifdef MB
+#include "commands/variable.h"
 #endif
 
 /* ----------------
@@ -1270,6 +1274,19 @@ PostgresMain(int argc, char *argv[], int real_argc, char *real_argv[])
 
 	InitPostgres(DBName);
 
+#ifdef MB
+	/* set default client encoding */
+	if (!Quiet)
+	{
+		puts("\treset_client_encoding()..");
+	}
+	reset_client_encoding();
+	if (!Quiet)
+	{
+		puts("\treset_client_encoding() done.");
+	}
+#endif
+
 	/* ----------------
 	 *	if an exception is encountered, processing resumes here
 	 *	so we abort the current transaction and start a new one.
@@ -1308,7 +1325,7 @@ PostgresMain(int argc, char *argv[], int real_argc, char *real_argv[])
 	if (!IsUnderPostmaster)
 	{
 		puts("\nPOSTGRES backend interactive interface");
-		puts("$Revision: 1.76 $ $Date: 1998/06/15 19:29:27 $");
+		puts("$Revision: 1.77 $ $Date: 1998/06/16 07:29:30 $");
 	}
 
 	/* ----------------

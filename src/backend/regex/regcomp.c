@@ -1344,7 +1344,7 @@ cset	   *cs;
 
 	for (i = 0; i < css; i++)
 		if (CHIN(cs, i))
-			return ((char) i);
+			return (i);
 	assert(never);
 	return (0);					/* arbitrary */
 }

@@ -807,12 +807,12 @@ if test "${with_mb+set}" = set; then
   withval="$with_mb"
   
 	case "$withval" in
-	EUC_JP|EHC_CN|EUC_KR|EUC_TW|UNICODE|MULE_INTERNAL)
+	EUC_JP|EHC_CN|EUC_KR|EUC_TW|UNICODE|MULE_INTERNAL|LATIN1)
             MB="$withval";
 	    echo "$ac_t"""enabled with $withval"" 1>&6
             ;;
 	*)
-	    { echo "configure: error: *** You must supply an argument to the --with-mb option one of EUC_JP,EHC_CN,EUC_KR,EUC_TW,UNICODE,MULE_INTERNAL" 1>&2; exit 1; }
+	    { echo "configure: error: *** You must supply an argument to the --with-mb option one of EUC_JP,EHC_CN,EUC_KR,EUC_TW,UNICODE,MULE_INTERNAL,LATIN1" 1>&2; exit 1; }
 	  ;;
 	esac
 	MB="$withval"

@@ -127,6 +127,9 @@ extern		"C"
 #  elif MB == UNICODE
 #    define NONCHAR(c)	((c) > USHRT_MAX)
 #    define NNONCHAR	(CODEMAX-USHRT_MAX)
+#  else	/* assume 1 byte code such as ISO8859-1 */
+#    define NONCHAR(c)	((c) > UCHAR_MAX)
+#    define NNONCHAR	(CODEMAX-UCHAR_MAX)
 #  endif
 #else
 #  define NONCHAR(c)		((c) > CHAR_MAX)

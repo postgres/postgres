@@ -1,10 +1,10 @@
-postgresql 6.3 multi-byte (MB) support README	  April 21 1998
+postgresql 6.4 multi-byte (MB) support README	  Jun 5 1998
 
 						Tatsuo Ishii
 						t-ishii@sra.co.jp
 		  http://www.sra.co.jp/people/t-ishii/PostgreSQL/
 
-Introduction
+0. Introduction
 
 The MB support is intended for allowing PostgreSQL to handle
 multi-byte character sets such as EUC(Extended Unix Code), Unicode and
@@ -18,7 +18,7 @@ have been fixed. I just confirmed that the regression test ran fine
 and a few French characters could be used with the patch. Please let
 me know if you find any problem while using 8-bit characters)
 
-How to use
+1. How to use
 
 create src/Makefile.custom with a line including:
 
@@ -36,6 +36,7 @@ where encoding_system is one of:
 	EUC_TW			Taiwan EUC
 	UNICODE			Unicode(UTF-8)
 	MULE_INTERNAL		Mule internal
+	LATIN1			ISO 8859-1 English and some European laguages
 
 Example:
 
@@ -49,7 +50,54 @@ Example:
 If MB is disabled, nothing is changed except better supporting for
 8-bit single byte character sets.
 
-References
+2. PGCLIENTENCODING
+
+If an environment variable PGCLIENTENCODING is defined on the
+frontend, automatic encoding translation is done by the backend. For
+example, if the backend has been compiled with MB=EUC_JP and
+PGCLIENTENCODING=SJIS(Shift JIS: yet another Japanese encoding
+system), then any SJIS strings coming from the frontend would be
+translated to EUC_JP before going into the parser. Outputs from the
+backend would be translated to SJIS of course.
+
+Supported encodings for PGCLIENTENCODING are:
+
+	EUC_JP			Japanese EUC
+	SJIS			Yet another Japanese encoding
+	EUC_CN			Chinese EUC
+	EUC_KR			Korean EUC
+	EUC_TW			Taiwan EUC
+	MULE_INTERNAL		Mule internal
+	LATIN1			ISO 8859-1 English and some European laguages
+
+Note that UNICODE is not supported(yet). Also note that the
+translation is not always possible. Suppose you choose EUC_JP for the
+backend, LATIN1 for the frotend, then some Japanese characters cannot
+be translated into latin. In this case, a letter cannot be represented
+in the Latin character set, would be transformed as:
+
+	(HEXA DECIMAL)
+
+3. SET CLIENT_ENCODING TO command
+
+Actually setting the frontend side encoding information is done by a
+new command:
+
+	SET CLIENT_ENCODING TO 'encoding';
+
+where encoding is one of the encodings those can be set to
+PGCLIENTENCODING.  To query the current the frontend encoding:
+
+	SHOW CLIENT_ENCODING;
+
+To return to the default encoding:
+
+	RESET CLIENT_ENCODING;
+
+This would reset the frontend encoding to same as the backend
+encoding, thus no endoing translation would be performed.
+
+4. References
 
 These are good sources to start learning various kind of encoding
 systems.
@@ -64,7 +112,14 @@ Unicode: http://www.unicode.org/
 	RFC 2044
 	UTF-8 is defined here.
 
-History
+5. History
+
+Jun 5, 1988
+	* add support for the encoding translation between the backend
+	  and the frontend
+	* new command SET CLIENT_ENCODING etc. added
+	* add support for LATIN1 character set
+	* enhance 8 bit cleaness
 
 April 21, 1998 some enhancements/fixes
 	* character_length(), position(), substring() are now aware of 

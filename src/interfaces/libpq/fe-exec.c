@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/interfaces/libpq/fe-exec.c,v 1.53 1998/06/15 19:30:25 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/interfaces/libpq/fe-exec.c,v 1.54 1998/06/16 07:29:48 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -1264,7 +1264,8 @@ PQfnumber(PGresult *res, const char *field_name)
 	}
 	else
 		for (i = 0; field_case[i]; i++)
-			if (isupper(field_case[i]))
+			if (isascii((unsigned char)field_case[i]) &&
+			    isupper(field_case[i]))
 				field_case[i] = tolower(field_case[i]);
 
 	for (i = 0; i < res->numAttributes; i++)
@@ -1465,8 +1466,6 @@ PQgetvalue(PGresult *res, int tup_num, int field_num)
 
 	return res->tuples[tup_num][field_num].value;
 }
-
-
 
 /* PQgetlength:
 	 returns the length of a field value in bytes.	If res is binary,

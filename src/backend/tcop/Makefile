@@ -4,7 +4,7 @@
 #    Makefile for tcop
 #
 # IDENTIFICATION
-#    $Header: /cvsroot/pgsql/src/backend/tcop/Makefile,v 1.16 1998/04/06 00:26:05 momjian Exp $
+#    $Header: /cvsroot/pgsql/src/backend/tcop/Makefile,v 1.17 1998/06/16 07:29:30 momjian Exp $
 #
 #-------------------------------------------------------------------------
 
@@ -12,6 +12,10 @@ SRCDIR= ../..
 include ../../Makefile.global
 
 CFLAGS+= -I..
+
+ifdef MB
+CFLAGS+= -DMB=$(MB)
+endif
 
 ifeq ($(CC), gcc)
 CFLAGS+= -Wno-error

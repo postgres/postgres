@@ -7,7 +7,7 @@
 #
 #
 # IDENTIFICATION
-#    $Header: /cvsroot/pgsql/src/interfaces/libpq/Attic/Makefile.in,v 1.21 1998/06/16 03:17:47 momjian Exp $
+#    $Header: /cvsroot/pgsql/src/interfaces/libpq/Attic/Makefile.in,v 1.22 1998/06/16 07:29:45 momjian Exp $
 #
 #-------------------------------------------------------------------------
 
@@ -25,8 +25,16 @@ ifdef KRBVERS
 CFLAGS+= $(KRBFLAGS)
 endif
 
+ifdef MB
+CFLAGS+= -DMB=$(MB)
+endif
+
 OBJS= fe-auth.o fe-connect.o fe-exec.o fe-misc.o fe-print.o fe-lobj.o \
       dllist.o pqsignal.o
+
+ifdef MB
+OBJS+= pqutils.o pqmbutils.o
+endif
 
 # Shared library stuff
 shlib := 
