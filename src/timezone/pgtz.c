@@ -6,7 +6,7 @@
  * Portions Copyright (c) 1996-2003, PostgreSQL Global Development Group
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/timezone/pgtz.c,v 1.14 2004/05/24 02:30:29 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/timezone/pgtz.c,v 1.15 2004/05/25 18:08:59 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -15,18 +15,39 @@
 #include "postgres.h"
 
 #include <ctype.h>
+#include <sys/stat.h>
 
 #include "miscadmin.h"
 #include "pgtime.h"
 #include "pgtz.h"
+#include "storage/fd.h"
 #include "tzfile.h"
 #include "utils/elog.h"
 #include "utils/guc.h"
 
 
+#define T_DAY	((time_t) (60*60*24))
+#define T_MONTH ((time_t) (60*60*24*31))
+
+struct tztry
+{
+	char		std_zone_name[TZ_STRLEN_MAX + 1],
+				dst_zone_name[TZ_STRLEN_MAX + 1];
+#define MAX_TEST_TIMES 10
+	int			n_test_times;
+	time_t		test_times[MAX_TEST_TIMES];
+};
+
 static char tzdir[MAXPGPATH];
 static int	done_tzdir = 0;
 
+static bool scan_available_timezones(char *tzdir, char *tzdirsub,
+									 struct tztry *tt);
+
+
+/*
+ * Return full pathname of timezone data directory
+ */
 char *
 pg_TZDIR(void)
 {
@@ -41,62 +62,8 @@ pg_TZDIR(void)
 }
 
 /*
- * Try to determine the system timezone (as opposed to the timezone
- * set in our own library).
+ * Get GMT offset from a system struct tm
  */
-#define T_DAY	((time_t) (60*60*24))
-#define T_MONTH ((time_t) (60*60*24*31))
-
-struct tztry
-{
-	char		std_zone_name[TZ_STRLEN_MAX + 1],
-				dst_zone_name[TZ_STRLEN_MAX + 1];
-#define MAX_TEST_TIMES 5
-	int			n_test_times;
-	time_t		test_times[MAX_TEST_TIMES];
-};
-
-
-static bool
-compare_tm(struct tm *s, struct pg_tm *p)
-{
-	if (s->tm_sec != p->tm_sec ||
-		s->tm_min != p->tm_min ||
-		s->tm_hour != p->tm_hour ||
-		s->tm_mday != p->tm_mday ||
-		s->tm_mon != p->tm_mon ||
-		s->tm_year != p->tm_year ||
-		s->tm_wday != p->tm_wday ||
-		s->tm_yday != p->tm_yday ||
-		s->tm_isdst != p->tm_isdst)
-		return false;
-	return true;
-}
-
-static bool
-try_timezone(char *tzname, struct tztry *tt)
-{
-	int			i;
-	struct tm	   *systm;
-	struct pg_tm   *pgtm;
-
-	if (!pg_tzset(tzname))
-		return false;			/* can't handle the TZ name at all */
-
-	/* Check for match at all the test times */
-	for (i = 0; i < tt->n_test_times; i++)
-	{
-		pgtm = pg_localtime(&(tt->test_times[i]));
-		if (!pgtm)
-			return false;		/* probably shouldn't happen */
-		systm = localtime(&(tt->test_times[i]));
-		if (!compare_tm(systm, pgtm))
-			return false;
-	}
-
-	return true;
-}
-
 static int
 get_timezone_offset(struct tm *tm)
 {
@@ -113,20 +80,22 @@ get_timezone_offset(struct tm *tm)
 #endif
 }
 
-
+/*
+ * Grotty kluge for win32 ... do we really need this?
+ */
 #ifdef WIN32
 #define TZABBREV(tz) win32_get_timezone_abbrev(tz)
 
 static char *
-win32_get_timezone_abbrev(char *tz)
+win32_get_timezone_abbrev(const char *tz)
 {
 	static char w32tzabbr[TZ_STRLEN_MAX + 1];
 	int			l = 0;
-	char	   *c;
+	const char  *c;
 
 	for (c = tz; *c; c++)
 	{
-		if (isupper(*c))
+		if (isupper((unsigned char) *c))
 			w32tzabbr[l++] = *c;
 	}
 	w32tzabbr[l] = '\0';
@@ -134,8 +103,85 @@ win32_get_timezone_abbrev(char *tz)
 }
 
 #else
-#define TZABBREV(tz) tz
+#define TZABBREV(tz) (tz)
 #endif
+
+/*
+ * Convenience subroutine to convert y/m/d to time_t
+ */
+static time_t
+build_time_t(int year, int month, int day)
+{
+	struct tm	tm;
+
+	memset(&tm, 0, sizeof(tm));
+	tm.tm_mday = day;
+	tm.tm_mon = month - 1;
+	tm.tm_year = year - 1900;
+
+	return mktime(&tm);
+}
+
+/*
+ * Does a system tm value match one we computed ourselves?
+ */
+static bool
+compare_tm(struct tm *s, struct pg_tm *p)
+{
+	if (s->tm_sec != p->tm_sec ||
+		s->tm_min != p->tm_min ||
+		s->tm_hour != p->tm_hour ||
+		s->tm_mday != p->tm_mday ||
+		s->tm_mon != p->tm_mon ||
+		s->tm_year != p->tm_year ||
+		s->tm_wday != p->tm_wday ||
+		s->tm_yday != p->tm_yday ||
+		s->tm_isdst != p->tm_isdst)
+		return false;
+	return true;
+}
+
+/*
+ * See if a specific timezone setting matches the system behavior
+ */
+static bool
+try_timezone(const char *tzname, struct tztry *tt)
+{
+	int			i;
+	struct tm	   *systm;
+	struct pg_tm   *pgtm;
+	char		cbuf[TZ_STRLEN_MAX + 1];
+
+	if (!pg_tzset(tzname))
+		return false;			/* can't handle the TZ name at all */
+
+	/* Check for match at all the test times */
+	for (i = 0; i < tt->n_test_times; i++)
+	{
+		pgtm = pg_localtime(&(tt->test_times[i]));
+		if (!pgtm)
+			return false;		/* probably shouldn't happen */
+		systm = localtime(&(tt->test_times[i]));
+		if (!compare_tm(systm, pgtm))
+			return false;
+		if (systm->tm_isdst >= 0)
+		{
+			/* Check match of zone names, too */
+			if (pgtm->tm_zone == NULL)
+				return false;
+			memset(cbuf, 0, sizeof(cbuf));
+			strftime(cbuf, sizeof(cbuf) - 1, "%Z", systm); /* zone abbr */
+			if (strcmp(TZABBREV(cbuf), pgtm->tm_zone) != 0)
+				return false;
+		}
+	}
+
+	/* Reject if leap seconds involved */
+	if (!tz_acceptable())
+		return false;
+
+	return true;
+}
 
 
 /*
@@ -155,6 +201,7 @@ identify_system_timezone(void)
 	int			std_ofs = 0;
 	struct tztry tt;
 	struct tm  *tm;
+	char		tmptzdir[MAXPGPATH];
 	char		cbuf[TZ_STRLEN_MAX + 1];
 
 	/* Initialize OS timezone library */
@@ -225,6 +272,20 @@ identify_system_timezone(void)
 		}
 	}
 
+	/*
+	 * Add a couple of historical dates as well; without this we are likely
+	 * to choose an accidental match, such as Antartica/Palmer when we
+	 * really want America/Santiago.  Ideally we'd probe some dates before
+	 * 1970 too, but that is guaranteed to fail if the system TZ library
+	 * doesn't cope with DST before 1970.
+	 */
+	tt.test_times[tt.n_test_times++] = build_time_t(1970, 1, 15);
+	tt.test_times[tt.n_test_times++] = build_time_t(1970, 7, 15);
+	tt.test_times[tt.n_test_times++] = build_time_t(1990, 4, 1);
+	tt.test_times[tt.n_test_times++] = build_time_t(1990, 10, 1);
+
+	Assert(tt.n_test_times <= MAX_TEST_TIMES);
+
 	/* We should have found a STD zone name by now... */
 	if (tt.std_zone_name[0] == '\0')
 	{
@@ -234,7 +295,17 @@ identify_system_timezone(void)
 		return NULL;			/* go to GMT */
 	}
 
-	/* If we found DST too then try STD<ofs>DST */
+	/* Search for a matching timezone file */
+	strcpy(tmptzdir, pg_TZDIR());
+	if (scan_available_timezones(tmptzdir,
+								 tmptzdir + strlen(tmptzdir) + 1,
+								 &tt))
+	{
+		StrNCpy(resultbuf, pg_get_current_timezone(), sizeof(resultbuf));
+		return resultbuf;
+	}
+
+	/* If we found DST then try STD<ofs>DST */
 	if (tt.dst_zone_name[0] != '\0')
 	{
 		snprintf(resultbuf, sizeof(resultbuf), "%s%d%s",
@@ -269,6 +340,96 @@ identify_system_timezone(void)
 			 errhint("You can specify the correct timezone in postgresql.conf.")));
 	return resultbuf;
 }
+
+/*
+ * Recursively scan the timezone database looking for a usable match to
+ * the system timezone behavior.
+ *
+ * tzdir points to a buffer of size MAXPGPATH.  On entry, it holds the
+ * pathname of a directory containing TZ files.  We internally modify it
+ * to hold pathnames of sub-directories and files, but must restore it
+ * to its original contents before exit.
+ *
+ * tzdirsub points to the part of tzdir that represents the subfile name
+ * (ie, tzdir + the original directory name length, plus one for the
+ * first added '/').
+ *
+ * tt tells about the system timezone behavior we need to match.
+ *
+ * On success, returns TRUE leaving the proper timezone selected.
+ * On failure, returns FALSE with a random timezone selected.
+ */
+static bool
+scan_available_timezones(char *tzdir, char *tzdirsub, struct tztry *tt)
+{
+	int			tzdir_orig_len = strlen(tzdir);
+	bool		found = false;
+	DIR		   *dirdesc;
+
+	dirdesc = AllocateDir(tzdir);
+	if (!dirdesc)
+	{
+		ereport(LOG,
+				(errcode_for_file_access(),
+				 errmsg("could not open directory \"%s\": %m", tzdir)));
+		return false;
+	}
+
+	for (;;)
+	{
+		struct dirent *direntry;
+		struct stat statbuf;
+
+		errno = 0;
+		direntry = readdir(dirdesc);
+		if (!direntry)
+		{
+			if (errno)
+				ereport(LOG,
+						(errcode_for_file_access(),
+						 errmsg("error reading directory: %m")));
+			break;
+		}
+
+		/* Ignore . and .., plus any other "hidden" files */
+		if (direntry->d_name[0] == '.')
+			continue;
+
+		snprintf(tzdir + tzdir_orig_len, MAXPGPATH - tzdir_orig_len,
+				 "/%s", direntry->d_name);
+
+		if (stat(tzdir, &statbuf) != 0)
+		{
+			ereport(LOG,
+					(errcode_for_file_access(),
+					 errmsg("could not stat \"%s\": %m", tzdir)));
+			continue;
+		}
+
+		if (S_ISDIR(statbuf.st_mode))
+		{
+			/* Recurse into subdirectory */
+			found = scan_available_timezones(tzdir, tzdirsub, tt);
+			if (found)
+				break;
+		}
+		else
+		{
+			/* Load and test this file */
+			found = try_timezone(tzdirsub, tt);
+			if (found)
+				break;
+		}
+	}
+
+	FreeDir(dirdesc);
+
+	/* Restore tzdir */
+	tzdir[tzdir_orig_len] = '\0';
+
+	return found;
+}
+
 
 /*
  * Check whether timezone is acceptable.
@@ -351,6 +512,6 @@ pg_timezone_initialize(void)
 		/* Select setting */
 		def_tz = select_default_timezone();
 		/* Tell GUC about the value. Will redundantly call pg_tzset() */
-		SetConfigOption("timezone", def_tz, PGC_POSTMASTER, PGC_S_ENV_VAR);
+		SetConfigOption("timezone", def_tz, PGC_POSTMASTER, PGC_S_ARGV);
 	}
 }
