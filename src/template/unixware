@@ -1,5 +1,4 @@
 if test "$GCC" != yes; then
-then
   # The -Kno_host is for a bug in the compiler.  See -hackers
   # discussion on 7-8/Aug/2003.
   cat >conftest.c <<__EOF__
