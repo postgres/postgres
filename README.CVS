@@ -1,0 +1,13 @@
+Tarball versions of PostgreSQL will contain INSTALL and HISTORY files in
+this directory.
+
+For people using CVS checkouts, you can view the install instructions
+at:
+
+	http://developer.postgresql.org/docs/postgres/installation.html
+
+and the release notes can be viewed at:
+
+	http://developer.postgresql.org/docs/postgres/release.html
+
+This file does not appear in release tarball.
