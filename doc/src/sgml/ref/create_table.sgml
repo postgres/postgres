@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/ref/create_table.sgml,v 1.27 2000/04/14 22:53:10 momjian Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/ref/create_table.sgml,v 1.28 2000/04/15 23:29:58 momjian Exp $
 Postgres documentation
 -->
 
@@ -353,7 +353,7 @@ DEFAULT <replaceable class="PARAMETER">value</replaceable>
 	<varlistentry>
 	 <term>SYSTEM_USER</term>
 	 <listitem>
-	  <simpara>See CURRENT_USER function</simpara>
+	  <simpara>Not implemented</simpara>
 	 </listitem>
 	</varlistentry>
        </variablelist>
