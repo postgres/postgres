@@ -8,13 +8,46 @@
 #
 #
 # IDENTIFICATION
-#    $Header: /cvsroot/pgsql/src/bin/pg_ctl/Attic/pg_ctl.sh,v 1.3 1999/12/06 08:49:00 ishii Exp $
+#    $Header: /cvsroot/pgsql/src/bin/pg_ctl/Attic/pg_ctl.sh,v 1.4 1999/12/22 04:12:55 ishii Exp $
 #
 #-------------------------------------------------------------------------
 CMDNAME=`basename $0`
 
-# set default path to postmaster
-po_path=__BINDIR__/postmaster
+#
+# Find out where we're located
+#
+if echo "$0" | grep '/' > /dev/null 2>&1 
+then
+        # explicit dir name given
+        PGPATH=`echo $0 | sed 's,/[^/]*$,,'`       # (dirname command is not portable)
+else
+        # look for it in PATH ('which' command is not portable)
+        for dir in `echo "$PATH" | sed 's/:/ /g'`
+	do
+                # empty entry in path means current dir
+                [ -z "$dir" ] && dir='.'
+                if [ -f "$dir/$CMDNAME" ]
+		then
+                        PGPATH="$dir"
+                        break
+                fi
+        done
+fi
+
+# Check if needed programs actually exist in path
+for prog in postmaster
+do
+        if [ ! -x "$PGPATH/$prog" ]
+	then
+                echo "The program $prog needed by $CMDNAME could not be found. It was"
+                echo "expected at:"
+                echo "    $PGPATH/$prog"
+                echo "If this is not the correct directory, please start $CMDNAME"
+                echo "with a full search path. Otherwise make sure that the program"
+                echo "was installed successfully."
+                exit 1
+        fi
+done
 
 # set default shutdown signal
 sig="-TERM"

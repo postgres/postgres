@@ -7,7 +7,7 @@
 #
 #
 # IDENTIFICATION
-#    $Header: /cvsroot/pgsql/src/bin/pg_ctl/Makefile,v 1.2 1999/12/08 10:29:51 momjian Exp $
+#    $Header: /cvsroot/pgsql/src/bin/pg_ctl/Makefile,v 1.3 1999/12/22 04:12:55 ishii Exp $
 #
 #-------------------------------------------------------------------------
 
@@ -17,10 +17,11 @@ include ../../Makefile.global
 all: pg_ctl
 
 pg_ctl: pg_ctl.sh
-	sed -e 's@__BINDIR__@$(BINDIR)@' pg_ctl.sh > pg_ctl
+	cat pg_ctl.sh > pg_ctl
 
 install: pg_ctl
 	$(INSTALL) $(INSTL_EXE_OPTS) $+ $(BINDIR)
+	$(INSTALL) $(INSTLOPTS) postmaster.opts.default.sample $(LIBDIR)
 
 clean:
 	rm -f pg_ctl
