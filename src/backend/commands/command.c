@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/commands/Attic/command.c,v 1.172 2002/04/02 08:51:50 inoue Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/commands/Attic/command.c,v 1.173 2002/04/11 23:20:04 momjian Exp $
  *
  * NOTES
  *	  The PerformAddAttribute() code, like most of the relation
@@ -604,10 +604,10 @@ AlterTableAlterColumnDropNotNull(Oid myrelid,
 		elog(ERROR, "ALTER TABLE: Cannot alter system attribute \"%s\"",
 			 colName);
 
-	/* 
+	/*
 	 * Check that the attribute is not in a primary key
 	 */
-		
+
 	/* Loop over all indices on the relation */
 	indexoidlist = RelationGetIndexList(rel);
 
@@ -986,9 +986,9 @@ AlterTableAlterColumnFlags(Oid myrelid,
 		elog(ERROR, "ALTER TABLE: relation \"%s\" is not a table",
 			 RelationGetRelationName(rel));
 
-	/*	
+	/*
 	 * we allow statistics case for system tables
-	 */	
+	 */
 	if (*flagType != 'S' &&
 		!allowSystemTableMods
 		&& IsSystemRelationName(RelationGetRelationName(rel)))
@@ -1911,7 +1911,7 @@ LockTableCommand(LockStmt *lockstmt)
 /*
  * CREATE SCHEMA
  */
-void 
+void
 CreateSchemaCommand(CreateSchemaStmt *stmt)
 {
 	const char *schemaName = stmt->schemaname;
@@ -1976,13 +1976,13 @@ CreateSchemaCommand(CreateSchemaStmt *stmt)
 		Node	   *parsetree = (Node *) lfirst(parsetree_item);
 		List	   *querytree_list,
 				   *querytree_item;
-				   
+
 		querytree_list = parse_analyze(parsetree, NULL);
-		
+
 		foreach(querytree_item, querytree_list)
 		{
 			Query	   *querytree = (Query *) lfirst(querytree_item);
-			
+
 			/* schemas should contain only utility stmts */
 			Assert(querytree->commandType == CMD_UTILITY);
 			/* do this step */

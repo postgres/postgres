@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/ref/create_index.sgml,v 1.27 2002/03/22 19:20:38 petere Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/ref/create_index.sgml,v 1.28 2002/04/11 23:20:04 momjian Exp $
 PostgreSQL documentation
 -->
 
@@ -76,9 +76,10 @@ CREATE [ UNIQUE ] INDEX <replaceable class="parameter">index_name</replaceable> 
       <term><replaceable class="parameter">acc_method</replaceable></term>
       <listitem>
        <para>
-	The name of the access method to be used for
-	the index. The default access method is <literal>BTREE</literal>.
-	<application>PostgreSQL</application> provides four access methods for indexes:
+	The name of the access method to be used for the index. The
+	default access method is <literal>BTREE</literal>.
+	<application>PostgreSQL</application> provides four access
+	methods for indexes:
 
 	<variablelist>
 	 <varlistentry>
@@ -225,26 +226,27 @@ ERROR: Cannot create index: 'index_name' already exists.
   </para>
 
   <para>
-   In the second syntax shown above, an index is defined
-   on the result of a user-specified function
-   <replaceable class="parameter">func_name</replaceable> applied
-   to one or more columns of a single table.
-   These <firstterm>functional indexes</firstterm>
-   can be used to obtain fast access to data
-   based on operators that would normally require some
-   transformation to apply them to the base data.
+   In the second syntax shown above, an index is defined on the result
+   of a user-specified function <replaceable
+   class="parameter">func_name</replaceable> applied to one or more
+   columns of a single table. These <firstterm>functional
+   indexes</firstterm> can be used to obtain fast access to data based
+   on operators that would normally require some transformation to apply
+   them to the base data. For example, a functional index on
+   <literal>upper(col)</> would allow the clause
+   <literal>WHERE upper(col) = 'JIM'</> to use an index.
   </para>
 
   <para>
-   <application>PostgreSQL</application> provides B-tree, R-tree, hash, and GiST access methods for
-   indexes.  The B-tree access method is an implementation of
-   Lehman-Yao high-concurrency B-trees.  The R-tree access method
-   implements standard R-trees using Guttman's quadratic split algorithm.
-   The hash access method is an implementation of Litwin's linear
-   hashing.  We mention the algorithms used solely to indicate that all
-   of these access methods are fully dynamic and do not have to be
-   optimized periodically (as is the case with, for example, static hash
-   access methods).
+   <application>PostgreSQL</application> provides B-tree, R-tree, hash,
+   and GiST access methods for indexes. The B-tree access method is an
+   implementation of Lehman-Yao high-concurrency B-trees. The R-tree
+   access method implements standard R-trees using Guttman's quadratic
+   split algorithm. The hash access method is an implementation of
+   Litwin's linear hashing. We mention the algorithms used solely to
+   indicate that all of these access methods are fully dynamic and do
+   not have to be optimized periodically (as is the case with, for
+   example, static hash access methods).
   </para>
 
   <para>
@@ -338,18 +340,18 @@ ERROR: Cannot create index: 'index_name' already exists.
 
   <para>
    An <firstterm>operator class</firstterm> can be specified for each
-   column of an index.  The operator class identifies the operators to
-   be used by the index for that column.  For example, a B-tree index on
+   column of an index. The operator class identifies the operators to be
+   used by the index for that column. For example, a B-tree index on
    four-byte integers would use the <literal>int4_ops</literal> class;
    this operator class includes comparison functions for four-byte
-   integers.  In practice the default operator class for the field's
-   data type is usually sufficient.  The main point of having operator classes
+   integers. In practice the default operator class for the field's data
+   type is usually sufficient. The main point of having operator classes
    is that for some data types, there could be more than one meaningful
-   ordering.  For example, we might want to sort a complex-number data type
-   either by absolute value or by real part.  We could do this by defining
-   two operator classes for the data type and then selecting the proper
-   class when making an index.  There are also some operator classes with
-   special purposes:
+   ordering. For example, we might want to sort a complex-number data
+   type either by absolute value or by real part. We could do this by
+   defining two operator classes for the data type and then selecting
+   the proper class when making an index. There are also some operator
+   classes with special purposes:
 
    <itemizedlist>
     <listitem>
