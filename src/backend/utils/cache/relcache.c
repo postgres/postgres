@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/cache/relcache.c,v 1.123 2001/01/04 02:24:22 inoue Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/cache/relcache.c,v 1.124 2001/01/06 01:48:59 inoue Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -2104,14 +2104,10 @@ RelationCacheInitialize(void)
 	formrdesc(LogRelationName, Natts_pg_log, Desc_pg_log);
 
 	/*
-	 * If this isn't initdb time, then we want to initialize some index
-	 * relation descriptors, as well.  The descriptors are for
-	 * pg_attnumind (to make building relation descriptors fast) and
-	 * possibly others, as they're added.
+	 * init_irels() used to be called here. It is changed to be called
+	 * in RelationCacheInitializePhase2() now so that transactional
+	 * control could guarantee the consistency.
 	 */
-
-	if (!IsBootstrapProcessingMode())
-		init_irels();
 
 	MemoryContextSwitchTo(oldcxt);
 }
@@ -2134,6 +2130,17 @@ RelationCacheInitializePhase2(void)
 	 */
 	if (!IsBootstrapProcessingMode())
 	{
+		/*
+		 * Initialize critical system index relation descriptors, first.
+		 * They are to make building relation descriptors fast.
+		 * init_irels() used to be called in RelationCacheInitialize().
+		 * It is changed to be called here to be transaction safe.
+		 */
+		MemoryContext oldcxt = MemoryContextSwitchTo(CacheMemoryContext);
+		init_irels();
+		MemoryContextSwitchTo(oldcxt);
+
+		/* fix nailed-in-cache relations */
 		fixrdesc(RelationRelationName);
 		fixrdesc(AttributeRelationName);
 		fixrdesc(ProcedureRelationName);
