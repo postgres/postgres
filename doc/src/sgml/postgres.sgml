@@ -1,5 +1,5 @@
 <!--
-$PostgreSQL: pgsql/doc/src/sgml/postgres.sgml,v 1.65 2004/11/12 21:50:53 tgl Exp $
+$PostgreSQL: pgsql/doc/src/sgml/postgres.sgml,v 1.66 2004/12/03 01:20:14 momjian Exp $
 -->
 
 <!DOCTYPE book PUBLIC "-//OASIS//DTD DocBook V4.2//EN" [
@@ -179,6 +179,7 @@ $PostgreSQL: pgsql/doc/src/sgml/postgres.sgml,v 1.65 2004/11/12 21:50:53 tgl Exp
   &lobj;
   &ecpg;
   &infoschema;
+  &external_projects;
 
  </part>
 
