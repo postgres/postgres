@@ -1,6 +1,6 @@
 TODO list for PostgreSQL
 ========================
-Last updated:		Wed May 19 22:01:03 EDT 2004
+Last updated:		Wed May 19 22:07:53 EDT 2004
 
 Current maintainer:	Bruce Momjian (pgman@candle.pha.pa.us)
 
@@ -200,6 +200,7 @@ Commands
 	o -Allow ALTER TABLE to modify column lengths and change to binary
 	  compatible types
 	o Add ALTER DATABASE ... OWNER TO newowner
+	o Add ALTER DOMAIN TYPE
 	o Allow ALTER TABLE ... ALTER CONSTRAINT ... RENAME
 	o Allow ALTER TABLE to change constraint deferrability and actions
 	o Disallow dropping of an inherited constraint
