@@ -142,6 +142,12 @@
 	<entry>sqrt(2.0)</entry>
        </row>
        <row>
+	<entry>cbrt(float8)</entry>
+	<entry>float8</entry>
+	<entry>cube root</entry>
+	<entry>cbrt(27.0)</entry>
+       </row>
+       <row>
 	<entry>trunc(float8)</entry>
 	<entry>float8</entry>
 	<entry>truncate (towards zero)</entry>
