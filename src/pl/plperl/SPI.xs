@@ -55,17 +55,25 @@ elog_elog(level, message)
 	int level
 	char* message
 	CODE:
-	if (level > 0)
-		return;
-	else
-		elog(level, message);
+	elog(level, message);
 
 
 int
 elog_DEBUG()
 
 int
-elog_ERROR()
+elog_LOG()
+
+int
+elog_INFO()
 
 int
 elog_NOTICE()
+
+int
+elog_WARNING()
+
+int
+elog_ERROR()
+
+

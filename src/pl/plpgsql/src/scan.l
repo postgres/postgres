@@ -4,7 +4,7 @@
  *			  procedural language
  *
  * IDENTIFICATION
- *    $Header: /cvsroot/pgsql/src/pl/plpgsql/src/Attic/scan.l,v 1.16 2001/10/09 15:59:56 tgl Exp $
+ *    $Header: /cvsroot/pgsql/src/pl/plpgsql/src/Attic/scan.l,v 1.17 2002/03/06 18:50:29 momjian Exp $
  *
  *    This software is copyrighted by Jan Wieck - Hamburg.
  *
@@ -117,8 +117,10 @@ from			{ return K_FROM;			}
 get				{ return K_GET;				}
 if				{ return K_IF;				}
 in				{ return K_IN;				}
+info			{ return K_INFO;			}
 into			{ return K_INTO;			}
 is				{ return K_IS;				}
+log				{ return K_LOG;				}
 loop			{ return K_LOOP;			}
 not				{ return K_NOT;				}
 notice			{ return K_NOTICE;			}
@@ -136,6 +138,7 @@ select			{ return K_SELECT;			}
 then			{ return K_THEN;			}
 to				{ return K_TO;				}
 type			{ return K_TYPE;			}
+warning			{ return K_WARNING;			}
 when			{ return K_WHEN;			}
 while			{ return K_WHILE;			}
 

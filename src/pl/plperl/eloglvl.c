@@ -13,7 +13,31 @@
 int
 elog_DEBUG(void)
 {
+	return DEBUG1;
+}
+
+int
+elog_LOG(void)
+{
 	return LOG;
+}
+
+int
+elog_INFO(void)
+{
+	return INFO;
+}
+
+int
+elog_NOTICE(void)
+{
+	return NOTICE;
+}
+
+int
+elog_WARNING(void)
+{
+	return WARNING;
 }
 
 int
@@ -22,8 +46,3 @@ elog_ERROR(void)
 	return ERROR;
 }
 
-int
-elog_NOTICE(void)
-{
-	return NOTICE;
-}

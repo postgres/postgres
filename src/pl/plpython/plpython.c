@@ -29,7 +29,7 @@
  * MAINTENANCE, SUPPORT, UPDATES, ENHANCEMENTS, OR MODIFICATIONS.
  *
  * IDENTIFICATION
- *	$Header: /cvsroot/pgsql/src/pl/plpython/plpython.c,v 1.15 2002/03/06 06:10:47 momjian Exp $
+ *	$Header: /cvsroot/pgsql/src/pl/plpython/plpython.c,v 1.16 2002/03/06 18:50:32 momjian Exp $
  *
  *********************************************************************
  */
@@ -1658,9 +1658,12 @@ PLyDict_FromTuple(PLyTypeInfo * info, HeapTuple tuple, TupleDesc desc)
 /* interface to postgresql elog
  */
 static PyObject *PLy_debug(PyObject *, PyObject *);
+static PyObject *PLy_log(PyObject *, PyObject *);
+static PyObject *PLy_info(PyObject *, PyObject *);
+static PyObject *PLy_notice(PyObject *, PyObject *);
+static PyObject *PLy_warning(PyObject *, PyObject *);
 static PyObject *PLy_error(PyObject *, PyObject *);
 static PyObject *PLy_fatal(PyObject *, PyObject *);
-static PyObject *PLy_notice(PyObject *, PyObject *);
 
 /* PLyPlanObject, PLyResultObject and SPI interface
  */
@@ -1782,9 +1785,12 @@ static PyMethodDef PLy_methods[] = {
 	 * logging methods
 	 */
 	{"debug", PLy_debug, METH_VARARGS, NULL},
+	{"log", PLy_log, METH_VARARGS, NULL},
+	{"info", PLy_info, METH_VARARGS, NULL},
+	{"notice", PLy_notice, METH_VARARGS, NULL},
+	{"warning", PLy_warning, METH_VARARGS, NULL},
 	{"error", PLy_error, METH_VARARGS, NULL},
 	{"fatal", PLy_fatal, METH_VARARGS, NULL},
-	{"notice", PLy_notice, METH_VARARGS, NULL},
 
 	/*
 	 * create a stored plan
@@ -2627,35 +2633,53 @@ populate_methods(PyObject *klass, PyMethodDef *methods)
 /* the python interface to the elog function
  * don't confuse these with PLy_elog
  */
-static PyObject *PLy_log(int, PyObject *, PyObject *);
+static PyObject *PLy_output(int, PyObject *, PyObject *);
 
 PyObject *
 PLy_debug(PyObject * self, PyObject * args)
 {
-	return PLy_log(LOG, self, args);
+	return PLy_output(DEBUG1, self, args);
 }
 
 PyObject *
-PLy_error(PyObject * self, PyObject * args)
+PLy_log(PyObject * self, PyObject * args)
 {
-	return PLy_log(ERROR, self, args);
+	return PLy_output(LOG, self, args);
 }
 
 PyObject *
-PLy_fatal(PyObject * self, PyObject * args)
+PLy_info(PyObject * self, PyObject * args)
 {
-	return PLy_log(FATAL, self, args);
+	return PLy_output(INFO, self, args);
 }
 
 PyObject *
 PLy_notice(PyObject * self, PyObject * args)
 {
-	return PLy_log(NOTICE, self, args);
+	return PLy_output(NOTICE, self, args);
+}
+
+PyObject *
+PLy_warning(PyObject * self, PyObject * args)
+{
+	return PLy_output(WARNING, self, args);
+}
+
+PyObject *
+PLy_error(PyObject * self, PyObject * args)
+{
+	return PLy_output(ERROR, self, args);
+}
+
+PyObject *
+PLy_fatal(PyObject * self, PyObject * args)
+{
+	return PLy_output(FATAL, self, args);
 }
 
 
 PyObject *
-PLy_log(volatile int level, PyObject * self, PyObject * args)
+PLy_output(volatile int level, PyObject * self, PyObject * args)
 {
 	DECLARE_EXC();
 	PyObject   *so;

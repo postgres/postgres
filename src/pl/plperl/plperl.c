@@ -33,7 +33,7 @@
  *	  ENHANCEMENTS, OR MODIFICATIONS.
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/pl/plperl/plperl.c,v 1.28 2002/01/24 21:40:44 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/pl/plperl/plperl.c,v 1.29 2002/03/06 18:50:26 momjian Exp $
  *
  **********************************************************************/
 
@@ -210,7 +210,7 @@ plperl_init_interp(void)
 		 */
 		"require Safe; SPI::bootstrap();"
 		"sub ::mksafefunc { my $x = new Safe; $x->permit_only(':default');$x->permit(':base_math');"
-		"$x->share(qw[&elog &DEBUG &NOTICE &ERROR]);"
+		"$x->share(qw[&elog &DEBUG &LOG &INFO &NOTICE &WARNING &ERROR]);"
 		" return $x->reval(qq[sub { $_[0] }]); }"
 		"sub ::mkunsafefunc {return eval(qq[ sub { $_[0] } ]); }"
 	};
