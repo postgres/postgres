@@ -3,7 +3,7 @@
  *
  * Copyright 2000 by PostgreSQL Global Development Group
  *
- * $Header: /cvsroot/pgsql/src/bin/psql/print.c,v 1.20 2001/06/02 18:25:18 petere Exp $
+ * $Header: /cvsroot/pgsql/src/bin/psql/print.c,v 1.21 2001/08/01 18:44:54 momjian Exp $
  */
 #include "postgres_fe.h"
 #include "print.h"
@@ -29,6 +29,9 @@
 #define DEFAULT_PAGER "less"
 #endif
 
+#ifdef HAVE_TERMIOS_H
+#include <termios.h>
+#endif
 
 
 /*************************/
