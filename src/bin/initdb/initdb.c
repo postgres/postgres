@@ -12,7 +12,7 @@
  * This is a C implementation of the previous shell script for setting up a
  * PostgreSQL cluster location, and should be highly compatible with it.
  *
- * $Header: /cvsroot/pgsql/src/bin/initdb/initdb.c,v 1.3 2003/11/13 01:09:24 tgl Exp $
+ * $Header: /cvsroot/pgsql/src/bin/initdb/initdb.c,v 1.4 2003/11/13 01:36:00 tgl Exp $
  *
  * TODO:
  *	 - clean up find_postgres code and return values
@@ -356,7 +356,7 @@ readfile(char *path)
 
 	if ((infile = fopen(path, "r")) == NULL)
 	{
-		fprintf(stderr, "could not read %s ... ", path);
+		fprintf(stderr, "could not read %s\n", path);
 		exit_nicely();
 	}
 
@@ -415,7 +415,7 @@ writefile(char *path, char **lines)
 	;
 	if ((out_file = fopen(path, PG_BINARY_W)) == NULL)
 	{
-		fprintf(stderr, "could not write %s ... ", path);
+		fprintf(stderr, "could not write %s\n", path);
 		exit_nicely();
 	}
 	for (line = lines; *line != NULL; line++)
@@ -1005,6 +1005,9 @@ test_connections(void)
 	int			i,
 				status;
 
+	printf("selecting default max_connections ... ");
+	fflush(stdout);
+
 	for (i = 0; i < len; i++)
 	{
 		snprintf(cmd, sizeof(cmd), format,
@@ -1016,7 +1019,8 @@ test_connections(void)
 	if (i >= len)
 		i = len - 1;
 	n_connections = conns[i];
-	printf("connections set to %d\n", n_connections);
+
+	printf("%d\n", n_connections);
 }
 
 /*
@@ -1035,6 +1039,9 @@ test_buffers(void)
 	int			i,
 				status;
 
+	printf("selecting default shared_buffers ... ");
+	fflush(stdout);
+
 	for (i = 0; i < len; i++)
 	{
 		snprintf(cmd, sizeof(cmd), format, pgpath, bufs[i], n_connections,
@@ -1046,7 +1053,8 @@ test_buffers(void)
 	if (i >= len)
 		i = len - 1;
 	n_buffers = bufs[i];
-	printf("buffers set to %d\n", n_buffers);
+
+	printf("%d\n", n_buffers);
 }
 
 /*
@@ -1062,6 +1070,7 @@ setup_config(void)
 	char		path[MAXPGPATH];
 
 	fputs("creating configuration files ... ", stdout);
+	fflush(stdout);
 
 	/* postgresql.conf */
 
@@ -1140,6 +1149,7 @@ bootstrap_template1(char *short_version)
 	PG_CMD_DECL;
 
 	printf("creating template1 database in %s/base/1 ... ", pg_data);
+	fflush(stdout);
 
 	if (debug)
 		talkargs = "-d 5";
@@ -1226,6 +1236,7 @@ setup_shadow(void)
 	PG_CMD_DECL;
 
 	fputs("initializing pg_shadow ... ", stdout);
+	fflush(stdout);
 
 	snprintf(cmd, MAXPGPATH,
 			 "\"%s/postgres\" -F -O -c search_path=pg_catalog "
@@ -1266,16 +1277,16 @@ get_set_pwd(void)
 	free(pwd2);
 
 	printf("storing the password ... ");
+	fflush(stdout);
 
 	snprintf(cmd, MAXPGPATH,
 			 "\"%s/postgres\" -F -O -c search_path=pg_catalog "
 			 "-c exit_on_error=true template1 >%s", pgpath, DEVNULL);
 
-
 	PG_CMD_OPEN;
 
-	if (fprintf(
-	   pg, "ALTER USER \"%s\" WITH PASSWORD '%s';\n", username, pwd1) < 0)
+	if (fprintf(pg,
+				"ALTER USER \"%s\" WITH PASSWORD '%s';\n", username, pwd1) < 0)
 	{
 		/* write failure */
 		exit_nicely();
@@ -1320,6 +1331,7 @@ unlimit_systables(void)
 	PG_CMD_DECL;
 
 	fputs("enabling unlimited row size for system tables ... ", stdout);
+	fflush(stdout);
 
 	snprintf(cmd, MAXPGPATH,
 			 "\"%s/postgres\" -F -O -c search_path=pg_catalog "
@@ -1389,6 +1401,7 @@ setup_depend(void)
 	PG_CMD_DECL;
 
 	fputs("initializing pg_depend ... ", stdout);
+	fflush(stdout);
 
 	snprintf(cmd, MAXPGPATH,
 			 "\"%s/postgres\" -F -O -c search_path=pg_catalog "
@@ -1417,6 +1430,7 @@ setup_sysviews(void)
 	char	  **sysviews_setup;
 
 	fputs("creating system views ... ", stdout);
+	fflush(stdout);
 
 	sysviews_setup = readfile(system_views_file);
 
@@ -1472,6 +1486,7 @@ setup_description(void)
 	char	  **desc_lines;
 
 	fputs("loading pg_description ... ", stdout);
+	fflush(stdout);
 
 	snprintf(cmd, MAXPGPATH,
 			 "\"%s/postgres\" -F -O -c search_path=pg_catalog "
@@ -1513,6 +1528,7 @@ setup_conversion(void)
 	char	  **conv_lines;
 
 	fputs("creating conversions ... ", stdout);
+	fflush(stdout);
 
 	snprintf(cmd, MAXPGPATH,
 			 "\"%s/postgres\" -F -O -c search_path=pg_catalog "
@@ -1563,7 +1579,8 @@ setup_privileges(void)
 
 	char	  **priv_lines;
 
-	fputs("setting privileges on builtin objects ... ", stdout);
+	fputs("setting privileges on built-in objects ... ", stdout);
+	fflush(stdout);
 
 	snprintf(cmd, MAXPGPATH,
 			 "\"%s/postgres\" -F -O -c search_path=pg_catalog "
@@ -1624,6 +1641,7 @@ setup_schema(void)
 	int			fres;
 
 	fputs("creating information schema ... ", stdout);
+	fflush(stdout);
 
 	lines = readfile(info_schema_file);
 
@@ -1710,6 +1728,7 @@ vacuum_db(void)
 	PG_CMD_DECL_NOLINE;
 
 	fputs("vacuuming database template1 ... ", stdout);
+	fflush(stdout);
 
 	snprintf(cmd, MAXPGPATH,
 			 "\"%s/postgres\" -F -O -c search_path=pg_catalog "
@@ -1768,6 +1787,7 @@ make_template0(void)
 	PG_CMD_DECL;
 
 	fputs("copying template1 to template0 ... ", stdout);
+	fflush(stdout);
 
 	snprintf(cmd, MAXPGPATH,
 			 "\"%s/postgres\" -F -O -c search_path=pg_catalog "
@@ -2263,7 +2283,7 @@ main(int argc, char *argv[])
 		strcmp(lc_ctype, lc_monetary) == 0 &&
 		strcmp(lc_ctype, lc_messages) == 0)
 	{
-		printf("The database cluster will be initialized with locale %s\n",
+		printf("The database cluster will be initialized with locale %s.\n\n",
 			   lc_ctype);
 	}
 	else
@@ -2274,7 +2294,7 @@ main(int argc, char *argv[])
 			   "  MESSAGES: %s\n"
 			   "  MONETARY: %s\n"
 			   "  NUMERIC:  %s\n"
-			   "  TIME:     %s\n",
+			   "  TIME:     %s\n\n",
 			   lc_collate,
 			   lc_ctype,
 			   lc_messages,
@@ -2326,7 +2346,8 @@ main(int argc, char *argv[])
 	 */
 	if (errno == ENOENT)
 	{
-		printf("creating directory \"%s\" ... ", pg_data);
+		printf("creating directory %s ... ", pg_data);
+		fflush(stdout);
 
 		if (!mkdatadir(NULL))
 			exit_nicely();
@@ -2339,6 +2360,7 @@ main(int argc, char *argv[])
 	for (i = 0; i < (sizeof(subdirs) / sizeof(char *)); i++)
 	{
 		printf("creating directory %s/%s ... ", pg_data, subdirs[i]);
+		fflush(stdout);
 
 		if (!mkdatadir(subdirs[i]))
 			exit_nicely();
