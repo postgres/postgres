@@ -1,6 +1,6 @@
 #!/bin/sh
 #
-# $Header: /cvsroot/pgsql/src/test/regress/Attic/run_check.sh,v 1.2 1999/11/20 20:21:30 tgl Exp $
+# $Header: /cvsroot/pgsql/src/test/regress/Attic/run_check.sh,v 1.3 1999/11/21 01:53:39 tgl Exp $
 
 # ----------
 # This is currently needed because the actual 7.0 psql makes
@@ -118,7 +118,6 @@ fi
 
 echo "=============== Create ./tmp_check directory           ================"
 mkdir -p $CHKDIR
-mkdir -p $PGDATA
 mkdir -p $LOGDIR
 
 
@@ -264,7 +263,7 @@ lno=0
 	case $type in
 		parallel)	# ----------
 					# This is the beginning of a new group of
-					# tests that should be executed parallel.
+					# tests that should be executed in parallel.
 					# ----------
 					parlist=
 					parlno=$lno
@@ -330,28 +329,33 @@ lno=0
 					fi
 
 					# ----------
-					# Tell what we're doing and start them all in background.
-					# The bourne shell's wait is
-					# too dumb to do it smarter. I'd really like to see
-					# the ok|failed message as soon as the individual tests
-					# finish. That'd make it easier to start longer running
-					# ones first to increase concurrency.
+					# Tell what we're doing and then start them all, using
+					# a subshell for each one.  The subshell is just there
+					# to print the test name when it finishes, so one can
+					# see which tests finish fastest.  We do NOT run the
+					# ok/failed comparison tests in the parallel subshells,
+					# because we want the diffs (if any) to come out in a
+					# predictable order --- and certainly not interleaved!
 					# ----------
 					gnam=`echo "$pargroup ($parntests tests)" | awk '{printf "%-26.26s", $0;}'`
-					$ECHO_N "parallel $gnam  ... " $ECHO_C
+					echo "parallel $gnam  ..."
 
-					for name in $parlist ; do
-						$FRONTEND regression < sql/${name}.sql			\
-							> results/${name}.out 2>&1  &
+					for name in $parlist
+					do
+						(
+							$FRONTEND regression < sql/${name}.sql			\
+								> results/${name}.out 2>&1
+							$ECHO_N " $name" $ECHO_C
+						) &
 					done
 					wait
+					echo ""
 
 					# ----------
 					# Setup status information for the diff check below
 					# ----------
 					checklist=$parlist
 					checkpname=1
-					echo "done"
 					;;
 
 		test)		# ----------
