@@ -1,5 +1,5 @@
 <!--
-$PostgreSQL: pgsql/doc/src/sgml/ref/psql-ref.sgml,v 1.118 2004/07/13 16:48:15 momjian Exp $
+$PostgreSQL: pgsql/doc/src/sgml/ref/psql-ref.sgml,v 1.119 2004/07/15 03:56:04 momjian Exp $
 PostgreSQL documentation
 -->
 
@@ -832,6 +832,8 @@ testdb=>
         Lists all available tablespaces. If <replaceable
         class="parameter">pattern</replaceable>
         is specified, only tablespaces whose names match the pattern are shown.
+        If <literal>+</literal> is appended to the command name, each object 
+        is listed with its associated permissions.
         </para>
         </listitem>
       </varlistentry>

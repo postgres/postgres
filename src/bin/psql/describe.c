@@ -3,7 +3,7 @@
  *
  * Copyright (c) 2000-2003, PostgreSQL Global Development Group
  *
- * $PostgreSQL: pgsql/src/bin/psql/describe.c,v 1.102 2004/07/13 16:48:16 momjian Exp $
+ * $PostgreSQL: pgsql/src/bin/psql/describe.c,v 1.103 2004/07/15 03:56:06 momjian Exp $
  */
 #include "postgres_fe.h"
 #include "describe.h"
@@ -106,7 +106,7 @@ describeAggregates(const char *pattern, bool verbose)
  * Takes an optional regexp to select particular tablespaces
  */
 bool
-describeTablespaces(const char *pattern)
+describeTablespaces(const char *pattern, bool verbose)
 {
 	PQExpBufferData buf;
 	PGresult   *res;
@@ -117,9 +117,16 @@ describeTablespaces(const char *pattern)
 	printfPQExpBuffer(&buf,
 					  "SELECT spcname AS \"%s\",\n"
 					  "  pg_catalog.pg_get_userbyid(spcowner) AS \"%s\",\n"
-					  "  spclocation AS \"%s\"\n"
-					  "FROM pg_catalog.pg_tablespace\n",
+					  "  spclocation AS \"%s\"",
 					  _("Name"), _("Owner"), _("Location"));
+
+	if (verbose)
+		appendPQExpBuffer(&buf,
+			",\n  spcacl as \"%s\"",
+			_("Access privileges"));
+						  
+	appendPQExpBuffer(&buf,
+					  "\nFROM pg_catalog.pg_tablespace\n");
 
 	processNamePattern(&buf, pattern, false, false,
 					   NULL, "spcname", NULL,
