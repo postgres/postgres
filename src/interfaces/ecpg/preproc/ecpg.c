@@ -3,7 +3,11 @@
 /* Placed under the same copyright as PostgresSQL */
 
 #include <stdio.h>
-#include <getopt.h>
+#if HAVE_GETOPT_H
+# include <getopt.h>
+#else
+# include <unistd.h>
+#endif
 #include <stdlib.h>
 #include <strings.h>
 
