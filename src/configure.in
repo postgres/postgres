@@ -490,6 +490,7 @@ AC_SUBST(USE_ODBC)
 AC_SUBST(MULTIBYTE)
 
 dnl Check for C++ support (allow override if needed)
+dnl XXX: probably should default to HAVECXX='false'
 HAVECXX='true'
 AC_ARG_WITH(CXX,
     [  --with-CXX=compiler     use specific C++ compiler
@@ -497,28 +498,24 @@ AC_ARG_WITH(CXX,
     [
 	case "$withval" in
 	"" | y | ye | yes)
-	    AC_MSG_ERROR([*** You must supply an argument to the --with-CC option.])
+	    HAVECXX='true'
+	    # allow configure to choose C++ compiler
 	  ;;
 	n | no)
 	    HAVECXX='false'
 	  ;;
+	*)
+	    HAVECXX='true'
+	    CXX="$withval"
+	  ;;
 	esac
-	CXX="$withval"
-    ],
-    [   AC_PROG_CXX])
+    ])
 AC_SUBST(HAVECXX)
 
 if test "$HAVECXX" = 'true' ; then
+    dnl Even if CXX value was given to us, need to run AC_PROG_CXX ...
+    AC_PROG_CXX
     AC_LANG_CPLUSPLUS
-
-    dnl check whether "using namespace std" works on this C++ compiler
-    AC_MSG_CHECKING([for namespace std in C++])
-    AC_TRY_COMPILE([#include <stdio.h>
-#include <stdlib.h>
-using namespace std;
-], [],
-    [AC_DEFINE(HAVE_NAMESPACE_STD) AC_MSG_RESULT(yes)],
-    [AC_MSG_RESULT(no)])
 
     dnl check whether "#include <string>" works on this C++ compiler
     AC_MSG_CHECKING([for include <string> in C++])
@@ -547,7 +544,23 @@ system's C++ header files.
      HAVECXX='false'
 ])
 ])
+fi
 
+if test "$HAVECXX" = 'true' ; then
+    dnl check whether "using namespace std" works on this C++ compiler.
+    dnl NOTE: on at least some compilers, it will not work until you've
+    dnl included a header that mentions namespace std.  Thus, include
+    dnl the usual suspects before trying it.
+    AC_MSG_CHECKING([for namespace std in C++])
+    AC_TRY_COMPILE([#include <stdio.h>
+#include <stdlib.h>
+#ifdef HAVE_CXX_STRING_HEADER
+#include <string>
+#endif
+using namespace std;
+], [],
+    [AC_DEFINE(HAVE_NAMESPACE_STD) AC_MSG_RESULT(yes)],
+    [AC_MSG_RESULT(no)])
 fi
 
 dnl make sure we revert to C compiler, not C++, for subsequent tests
