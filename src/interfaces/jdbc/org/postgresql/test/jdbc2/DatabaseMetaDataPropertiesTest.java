@@ -84,7 +84,7 @@ public class DatabaseMetaDataPropertiesTest extends TestCase
 			assertTrue(!dbmd.supportsANSI92IntermediateSQL());
 			assertTrue(!dbmd.supportsANSI92FullSQL());
 
-			assertTrue(!dbmd.supportsIntegrityEnhancementFacility());
+			assertTrue(dbmd.supportsIntegrityEnhancementFacility());
 
 		}
 		catch (SQLException ex)
