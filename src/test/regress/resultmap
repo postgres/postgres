@@ -19,6 +19,7 @@ geometry/i.86-pc-cygwin*=geometry-cygwin-precision
 geometry/powerpc-unknown-linux-gnulibc1=geometry-powerpc-linux-gnulibc1
 geometry/powerpc.*aix4=geometry-powerpc-aix4
 geometry/sparc-sun-solaris=geometry-solaris-precision
+geometry/alpha.*-linux-gnu=geometry-solaris-precision
 horology/.*aix4=horology-1947-PDT
 horology/alpha.*-dec-osf=horology-solaris-1947
 horology/hppa=horology-no-DST-before-1970
