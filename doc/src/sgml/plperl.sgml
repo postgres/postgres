@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/plperl.sgml,v 2.8 2001/05/12 22:51:35 petere Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/plperl.sgml,v 2.9 2001/06/22 21:37:14 momjian Exp $
 -->
 
 <chapter id="plperl">
@@ -20,7 +20,8 @@ $Header: /cvsroot/pgsql/doc/src/sgml/plperl.sgml,v 2.8 2001/05/12 22:51:35 peter
  </para>
 
  <para>
-  The PL/Perl intepreter is a full Perl interpreter. However, certain
+  The PL/Perl interpreter (when installed as trusted interpreter with 
+  default name 'plperl') intepreter is a full Perl interpreter. However, certain
   operations have been disabled in order to maintain the security of
   the system.  In general, the operations that are restricted are
   those that interact with the environment. This includes filehandle
@@ -28,6 +29,11 @@ $Header: /cvsroot/pgsql/doc/src/sgml/plperl.sgml,v 2.8 2001/05/12 22:51:35 peter
   (for external modules).  It should be noted that this security is
   not absolute. Indeed, several Denial-of-Service attacks are still
   possible - memory exhaustion and endless loops are two examples.
+
+ </para>
+ <para>
+  When PL/Perl is installed as 'untrusted' interpreter (with name 'plperlu'),
+  everything is permitted, and any perl code can be loaded (by superuser only).
  </para>
 
  <sect1 id="plperl-install">
@@ -76,6 +82,11 @@ gmake install
    language into a database.
 <screen>
 <prompt>$</prompt> <userinput>createlang plperl template1</userinput>
+</screen>
+   Alternatively, to create untrusted interpreter (where functions can only
+be created by superuser, but the functions are not restricted), use:
+<screen>
+<prompt>$</prompt> <userinput>createlang plperlu template1</userinput>
 </screen>
    If it is installed into template1, all future databases will have
    the language installed automatically.
@@ -157,6 +168,15 @@ CREATE FUNCTION badfunc() RETURNS integer AS '
 ' LANGUAGE 'plperl';
 </programlisting>
    The creation of the function will succeed, but executing it will not.
+
+   Note that if same function was created by superuser using language 
+   'plperlu', execution would succeed.
+  </para>
+  <para>
+   Access to database itself from your perl function can be done via 
+   an experimental module DBD::PgSPI, available at <ulink url="http://www.formenos.org/PgSPI/">this site</ulink>. This module makes available a DBI-compliant
+   database-handle named $pg_dbh, and you can use that to make queries with
+   normal DBI syntax.
   </para>
 
  </sect1>

@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/commands/Attic/creatinh.c,v 1.77 2001/05/14 20:30:20 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/commands/Attic/creatinh.c,v 1.78 2001/06/22 21:37:14 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -218,7 +218,7 @@ RemoveRelation(char *name)
 }
 
 /*
- * TruncateRelation --
+ * TruncateRelation
  *				  Removes all the rows from a relation
  *
  * Exceptions:
