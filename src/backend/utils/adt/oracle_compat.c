@@ -1,8 +1,17 @@
-/*
- *	Edmund Mergl <E.Mergl@bawue.de>
+/*-------------------------------------------------------------------------
+ * oracle_compat.c
+ *	Oracle compatible functions.
  *
- *	$Header: /cvsroot/pgsql/src/backend/utils/adt/oracle_compat.c,v 1.34 2001/09/22 03:30:39 ishii Exp $
+ * Copyright (c) 1997-2001, PostgreSQL Global Development Group
  *
+ *	Author: Edmund Mergl <E.Mergl@bawue.de>
+ *	Multibyte enhancement: Tatsuo Ishii <ishii@postgresql.org>
+ *
+ *
+ * IDENTIFICATION
+ *	$Header: /cvsroot/pgsql/src/backend/utils/adt/oracle_compat.c,v 1.35 2001/09/23 11:02:01 ishii Exp $
+ *
+ *-------------------------------------------------------------------------
  */
 
 #include "postgres.h"
@@ -162,6 +171,9 @@ lpad(PG_FUNCTION_ARGS)
 	int			m,
 				s1len,
 				s2len;
+#ifdef MULTIBYTE
+	int bytelen;
+#endif
 
 	/* Negative len is silently taken as zero */
 	if (len < 0)
@@ -175,32 +187,62 @@ lpad(PG_FUNCTION_ARGS)
 	if (s2len < 0)
 		s2len = 0;				/* shouldn't happen */
 
+#ifdef MULTIBYTE
+	s1len = pg_mbstrlen_with_len(VARDATA(string1),s1len);
+#endif
 	if (s1len > len)
 		s1len = len;			/* truncate string1 to len chars */
 
 	if (s2len <= 0)
 		len = s1len;			/* nothing to pad with, so don't pad */
 
+#ifdef MULTIBYTE
+	bytelen = pg_database_encoding_max_length() * len;
+	ret = (text *) palloc(VARHDRSZ + bytelen);
+	VARATT_SIZEP(ret) = VARHDRSZ + bytelen;
+#else
 	ret = (text *) palloc(VARHDRSZ + len);
 	VARATT_SIZEP(ret) = VARHDRSZ + len;
-
+#endif
 	m = len - s1len;
 
 	ptr2 = VARDATA(string2);
 	ptr2end = ptr2 + s2len;
 	ptr_ret = VARDATA(ret);
 
+#ifdef MULTIBYTE
+	while (m--)
+	{
+	    int mlen = pg_mblen(ptr2);
+	    memcpy(ptr_ret, ptr2, mlen);
+	    ptr_ret += mlen;
+	    ptr2 += mlen;
+	    if (ptr2 == ptr2end)	/* wrap around at end of s2 */
+		ptr2 = VARDATA(string2);
+	}
+#else
 	while (m--)
 	{
 		*ptr_ret++ = *ptr2++;
 		if (ptr2 == ptr2end)	/* wrap around at end of s2 */
 			ptr2 = VARDATA(string2);
 	}
+#endif
 
 	ptr1 = VARDATA(string1);
 
+#ifdef MULTIBYTE
+	while (s1len--)
+	{
+	    int mlen = pg_mblen(ptr1);
+	    memcpy(ptr_ret, ptr1, mlen);
+	    ptr_ret += mlen;
+	    ptr1 += mlen;
+	}
+#else
 	while (s1len--)
 		*ptr_ret++ = *ptr1++;
+#endif
 
 	PG_RETURN_TEXT_P(ret);
 }
@@ -236,6 +278,9 @@ rpad(PG_FUNCTION_ARGS)
 	int			m,
 				s1len,
 				s2len;
+#ifdef MULTIBYTE
+	int bytelen;
+#endif
 
 	/* Negative len is silently taken as zero */
 	if (len < 0)
@@ -249,32 +294,63 @@ rpad(PG_FUNCTION_ARGS)
 	if (s2len < 0)
 		s2len = 0;				/* shouldn't happen */
 
+#ifdef MULTIBYTE
+	s1len = pg_mbstrlen_with_len(VARDATA(string1),s1len);
+#endif
+
 	if (s1len > len)
 		s1len = len;			/* truncate string1 to len chars */
 
 	if (s2len <= 0)
 		len = s1len;			/* nothing to pad with, so don't pad */
 
+#ifdef MULTIBYTE
+	bytelen = pg_database_encoding_max_length() * len;
+	ret = (text *) palloc(VARHDRSZ + bytelen);
+	VARATT_SIZEP(ret) = VARHDRSZ + bytelen;
+#else
 	ret = (text *) palloc(VARHDRSZ + len);
 	VARATT_SIZEP(ret) = VARHDRSZ + len;
-
+#endif
 	m = len - s1len;
 
 	ptr1 = VARDATA(string1);
 	ptr_ret = VARDATA(ret);
 
+#ifdef MULTIBYTE
+	while (s1len--)
+	{
+	    int mlen = pg_mblen(ptr1);
+	    memcpy(ptr_ret, ptr1, mlen);
+	    ptr_ret += mlen;
+	    ptr1 += mlen;
+	}
+#else
 	while (s1len--)
 		*ptr_ret++ = *ptr1++;
+#endif
 
 	ptr2 = VARDATA(string2);
 	ptr2end = ptr2 + s2len;
 
+#ifdef MULTIBYTE
+	while (m--)
+	{
+	    int mlen = pg_mblen(ptr2);
+	    memcpy(ptr_ret, ptr2, mlen);
+	    ptr_ret += mlen;
+	    ptr2 += mlen;
+	    if (ptr2 == ptr2end)	/* wrap around at end of s2 */
+		ptr2 = VARDATA(string2);
+	}
+#else
 	while (m--)
 	{
 		*ptr_ret++ = *ptr2++;
 		if (ptr2 == ptr2end)	/* wrap around at end of s2 */
 			ptr2 = VARDATA(string2);
 	}
+#endif
 
 	PG_RETURN_TEXT_P(ret);
 }
@@ -708,6 +784,13 @@ translate(PG_FUNCTION_ARGS)
 				tolen,
 				retlen,
 				i;
+#ifdef MULTIBYTE
+	int str_len;
+	int estimate_len;
+	int len;
+	int source_len;
+	int from_index;
+#endif
 
 	if ((m = VARSIZE(string) - VARHDRSZ) <= 0)
 		PG_RETURN_TEXT_P(string);
@@ -717,12 +800,65 @@ translate(PG_FUNCTION_ARGS)
 	tolen = VARSIZE(to) - VARHDRSZ;
 	to_ptr = VARDATA(to);
 
+#ifdef MULTIBYTE
+	str_len = VARSIZE(string);
+	estimate_len = (tolen*1.0/fromlen + 0.5)*str_len;
+	estimate_len = estimate_len>str_len?estimate_len:str_len;
+	result = (text *) palloc(estimate_len);
+#else
 	result = (text *) palloc(VARSIZE(string));
+#endif
 
 	source = VARDATA(string);
 	target = VARDATA(result);
 	retlen = 0;
 
+#ifdef MULTIBYTE
+	while (m > 0)
+	{
+		source_len = pg_mblen(source);
+		from_index = 0;
+
+		for (i = 0; i < fromlen; i += len)
+		{
+		    len = pg_mblen(&from_ptr[i]);
+		    if (len == source_len &&
+			memcmp(source, &from_ptr[i], len) == 0)
+			break;
+
+		    from_index++;
+		}
+		if (i < fromlen)
+		{
+				/* substitute */
+		    char *p = to_ptr;
+		    for (i=0;i<from_index;i++)
+		    {
+			p += pg_mblen(p);
+			if (p >= (to_ptr + tolen))
+			    break;
+		    }
+		    if (p < (to_ptr + tolen))
+		    {
+			len = pg_mblen(p);
+			memcpy(target, p, len);
+			target += len;
+			retlen += len;
+		    }
+
+		}
+		else
+		{
+			/* no match, so copy */
+		    memcpy(target, source, source_len);
+		    target += source_len;
+		    retlen += source_len;
+		}
+
+		source += source_len;
+		m -= source_len;
+	}
+#else
 	while (m-- > 0)
 	{
 		char		rep = *source++;
@@ -752,6 +888,7 @@ translate(PG_FUNCTION_ARGS)
 			retlen++;
 		}
 	}
+#endif
 
 	VARATT_SIZEP(result) = retlen + VARHDRSZ;
 
