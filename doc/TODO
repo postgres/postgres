@@ -259,7 +259,6 @@ Clients
 	o Solve cardinality > 1 for input descriptors / variables
 	o sqlwarn[6] should be 'W' if the PRECISION or SCALE value specified
 	o Improve error handling
-	o Allow :var[:index] or :var[<integer>] as cvariable for an array var
 	o Add a semantic check level, e.g. check if a table really exists
 	o Fix nested C comments
 	o Add SQLSTATE
