@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/storage/lmgr/proc.c,v 1.89 2000/12/22 00:51:54 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/storage/lmgr/proc.c,v 1.90 2001/01/09 09:38:57 inoue Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -48,7 +48,7 @@
  *		This is so that we can support more backends. (system-wide semaphore
  *		sets run out pretty fast.)				  -ay 4/95
  *
- * $Header: /cvsroot/pgsql/src/backend/storage/lmgr/proc.c,v 1.89 2000/12/22 00:51:54 tgl Exp $
+ * $Header: /cvsroot/pgsql/src/backend/storage/lmgr/proc.c,v 1.90 2001/01/09 09:38:57 inoue Exp $
  */
 #include "postgres.h"
 
@@ -864,7 +864,9 @@ HandleDeadLock(SIGNAL_ARGS)
 {
 	int			save_errno = errno;
 	LOCK	   *mywaitlock;
+	bool	isWaitingForLock = lockWaiting; /* save waiting status */
 
+	SetWaitingForLock(false); /* disable query cancel during this fuction */
 	LockLockTable();
 
 	/* ---------------------
@@ -884,6 +886,7 @@ HandleDeadLock(SIGNAL_ARGS)
 	{
 		UnlockLockTable();
 		errno = save_errno;
+		SetWaitingForLock(isWaitingForLock); /* restore waiting status */
 		return;
 	}
 
@@ -897,6 +900,7 @@ HandleDeadLock(SIGNAL_ARGS)
 		/* No deadlock, so keep waiting */
 		UnlockLockTable();
 		errno = save_errno;
+		SetWaitingForLock(isWaitingForLock); /* restore waiting status */
 		return;
 	}
 
@@ -911,7 +915,7 @@ HandleDeadLock(SIGNAL_ARGS)
 	SHMQueueElemInit(&(MyProc->links));
 	MyProc->waitLock = NULL;
 	MyProc->waitHolder = NULL;
-	lockWaiting = false;
+	isWaitingForLock = false; /* wait for lock no longer */
 
 	/* ------------------
 	 * Unlock my semaphore so that the interrupted ProcSleep() call can finish.
