@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/storage/ipc/sinval.c,v 1.10 1998/06/15 19:29:15 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/storage/ipc/sinval.c,v 1.11 1998/08/25 21:31:17 scrappy Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -157,8 +157,7 @@ RegisterSharedInvalid(int cacheId,		/* XXX */
 /*	should be called by a backend											*/
 /****************************************************************************/
 void
-			InvalidateSharedInvalid(void (*invalFunction) (),
-									void (*resetFunction) ())
+InvalidateSharedInvalid(void (*invalFunction) (), void (*resetFunction) ())
 {
 	SpinAcquire(SInvalLock);
 	SIReadEntryData(shmInvalBuffer, MyBackendId,

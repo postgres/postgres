@@ -7,11 +7,13 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/storage/ipc/sinvaladt.c,v 1.12 1998/07/13 16:34:49 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/storage/ipc/sinvaladt.c,v 1.13 1998/08/25 21:31:18 scrappy Exp $
  *
  *-------------------------------------------------------------------------
  */
 #include <stdio.h>
+#include <signal.h>
+#include <unistd.h>
 
 #include "postgres.h"
 
@@ -20,6 +22,7 @@
 #include "storage/sinvaladt.h"
 #include "storage/lmgr.h"
 #include "utils/palloc.h"
+#include "utils/trace.h"
 
 /* ----------------
  *		global variable notes
@@ -357,6 +360,19 @@ SIGetProcStateLimit(SISeg *segP, int i)
 static bool
 SIIncNumEntries(SISeg *segP, int num)
 {
+	/*
+	 * Try to prevent table overflow. When the table is 70% full send
+	 * a SIGUSR2 to the postmaster which will send it back to all the
+	 * backends. This will be handled by Async_NotifyHandler() with a
+	 * StartTransactionCommand() which will flush unread SI entries for
+	 * each backend.									dz - 27 Jan 1998
+	 */
+	if (segP->numEntries == (MAXNUMMESSAGES * 70 / 100)) {
+		TPRINTF(TRACE_VERBOSE,
+				"SIIncNumEntries: table is 70%% full, signaling postmaster");
+		kill(getppid(), SIGUSR2);
+	}
+
 	if ((segP->numEntries + num) <= MAXNUMMESSAGES)
 	{
 		segP->numEntries = segP->numEntries + num;
@@ -655,7 +671,7 @@ SIReadEntryData(SISeg *segP,
 	else
 	{
 		/* backend must not read messages, its own state has to be reset	 */
-		elog(NOTICE, "SIMarkEntryData: cache state reset");
+		elog(NOTICE, "SIReadEntryData: cache state reset");
 		resetFunction();		/* XXXX call it here, parameters? */
 
 		/* new valid state--mark all messages "read" */

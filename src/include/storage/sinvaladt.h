@@ -6,7 +6,7 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: sinvaladt.h,v 1.8 1998/02/26 04:43:35 momjian Exp $
+ * $Id: sinvaladt.h,v 1.9 1998/08/25 21:31:20 scrappy Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -44,8 +44,8 @@ C----------------End shared segment -------
 */
 
 /* Parameters (configurable)  *******************************************/
-#define MaxBackendId 32			/* maximum number of backends		*/
-#define MAXNUMMESSAGES 1000		/* maximum number of messages in seg */
+#define MaxBackendId 64			/* maximum number of backends		*/
+#define MAXNUMMESSAGES 4000		/* maximum number of messages in seg */
 
 
 #define InvalidOffset	1000000000		/* a invalid offset  (End of
