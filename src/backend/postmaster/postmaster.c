@@ -37,7 +37,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/postmaster/postmaster.c,v 1.266 2002/02/19 20:45:04 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/postmaster/postmaster.c,v 1.267 2002/02/23 01:31:35 petere Exp $
  *
  * NOTES
  *
@@ -396,6 +396,8 @@ PostmasterMain(int argc, char *argv[])
 											  ALLOCSET_DEFAULT_MAXSIZE);
 	MemoryContextSwitchTo(PostmasterContext);
 
+	IgnoreSystemIndexes(false);
+
 	/*
 	 * Options setup
 	 */
@@ -403,60 +405,12 @@ PostmasterMain(int argc, char *argv[])
 
 	/* PGPORT environment variable, if set, overrides GUC setting */
 	if (getenv("PGPORT"))
-		SetConfigOption("port", getenv("PGPORT"), PGC_POSTMASTER, true);
+		SetConfigOption("port", getenv("PGPORT"),
+						PGC_POSTMASTER, PGC_S_ARGV/*sortof*/);
 
 	potential_DataDir = getenv("PGDATA");		/* default value */
 
-	/*
-	 * First we must scan for a -D argument to get the data dir. Then read
-	 * the config file. Finally, scan all the other arguments. (Command
-	 * line switches override config file.)
-	 *
-	 * Note: The two lists of options must be exactly the same, even though
-	 * perhaps the first one would only have to be "D:" with opterr turned
-	 * off. But some versions of getopt (notably GNU) are going to
-	 * arbitrarily permute some "non-options" (according to the local
-	 * world view) which will result in some switches being associated
-	 * with the wrong argument. Death and destruction will occur.
-	 */
 	opterr = 1;
-	while ((opt = getopt(argc, argv, "A:a:B:b:c:D:d:Fh:ik:lm:MN:no:p:Ss-:")) != -1)
-	{
-		switch (opt)
-		{
-			case 'D':
-				potential_DataDir = optarg;
-				break;
-
-			case '?':
-				fprintf(stderr, gettext("Try '%s --help' for more information.\n"), progname);
-				ExitPostmaster(1);
-		}
-	}
-
-	/*
-	 * Postmaster accepts no non-option switch arguments.
-	 */
-	if (optind < argc)
-	{
-		postmaster_error("invalid argument -- %s", argv[optind]);
-		fprintf(stderr, gettext("Try '%s --help' for more information.\n"),
-				progname);
-		ExitPostmaster(1);
-	}
-
-	checkDataDir(potential_DataDir);	/* issues error messages */
-	SetDataDir(potential_DataDir);
-
-	ProcessConfigFile(PGC_POSTMASTER);
-
-	IgnoreSystemIndexes(false);
-
-	/* reset getopt(3) to rescan arguments */
-	optind = 1;
-#ifdef HAVE_INT_OPTRESET
-	optreset = 1;				/* some systems need this too */
-#endif
 
 	while ((opt = getopt(argc, argv, "A:a:B:b:c:D:d:Fh:ik:lm:MN:no:p:Ss-:")) != -1)
 	{
@@ -464,7 +418,7 @@ PostmasterMain(int argc, char *argv[])
 		{
 			case 'A':
 #ifdef USE_ASSERT_CHECKING
-				SetConfigOption("debug_assertions", optarg, PGC_POSTMASTER, true);
+				SetConfigOption("debug_assertions", optarg, PGC_POSTMASTER, PGC_S_ARGV);
 #else
 				postmaster_error("Assert checking is not compiled in.");
 #endif
@@ -473,13 +427,13 @@ PostmasterMain(int argc, char *argv[])
 				/* Can no longer set authentication method. */
 				break;
 			case 'B':
-				SetConfigOption("shared_buffers", optarg, PGC_POSTMASTER, true);
+				SetConfigOption("shared_buffers", optarg, PGC_POSTMASTER, PGC_S_ARGV);
 				break;
 			case 'b':
 				/* Can no longer set the backend executable file to use. */
 				break;
 			case 'D':
-				/* already done above */
+				potential_DataDir = optarg;
 				break;
 			case 'd':
 
@@ -487,23 +441,23 @@ PostmasterMain(int argc, char *argv[])
 				 * Turn on debugging for the postmaster and the backend
 				 * servers descended from it.
 				 */
-				SetConfigOption("debug_level", optarg, PGC_POSTMASTER, true);
+				SetConfigOption("debug_level", optarg, PGC_POSTMASTER, PGC_S_ARGV);
 				break;
 			case 'F':
-				SetConfigOption("fsync", "false", PGC_POSTMASTER, true);
+				SetConfigOption("fsync", "false", PGC_POSTMASTER, PGC_S_ARGV);
 				break;
 			case 'h':
-				SetConfigOption("virtual_host", optarg, PGC_POSTMASTER, true);
+				SetConfigOption("virtual_host", optarg, PGC_POSTMASTER, PGC_S_ARGV);
 				break;
 			case 'i':
-				SetConfigOption("tcpip_socket", "true", PGC_POSTMASTER, true);
+				SetConfigOption("tcpip_socket", "true", PGC_POSTMASTER, PGC_S_ARGV);
 				break;
 			case 'k':
-				SetConfigOption("unix_socket_directory", optarg, PGC_POSTMASTER, true);
+				SetConfigOption("unix_socket_directory", optarg, PGC_POSTMASTER, PGC_S_ARGV);
 				break;
 #ifdef USE_SSL
 			case 'l':
-				SetConfigOption("ssl", "true", PGC_POSTMASTER, true);
+				SetConfigOption("ssl", "true", PGC_POSTMASTER, PGC_S_ARGV);
 				break;
 #endif
 			case 'm':
@@ -519,7 +473,7 @@ PostmasterMain(int argc, char *argv[])
 				break;
 			case 'N':
 				/* The max number of backends to start. */
-				SetConfigOption("max_connections", optarg, PGC_POSTMASTER, true);
+				SetConfigOption("max_connections", optarg, PGC_POSTMASTER, PGC_S_ARGV);
 				break;
 			case 'n':
 				/* Don't reinit shared mem after abnormal exit */
@@ -536,7 +490,7 @@ PostmasterMain(int argc, char *argv[])
 				strcpy(original_extraoptions, optarg);
 				break;
 			case 'p':
-				SetConfigOption("port", optarg, PGC_POSTMASTER, true);
+				SetConfigOption("port", optarg, PGC_POSTMASTER, PGC_S_ARGV);
 				break;
 			case 'S':
 
@@ -546,7 +500,7 @@ PostmasterMain(int argc, char *argv[])
 				 * it's most badly needed on SysV-derived systems like
 				 * SVR4 and HP-UX.
 				 */
-				SetConfigOption("silent_mode", "true", PGC_POSTMASTER, true);
+				SetConfigOption("silent_mode", "true", PGC_POSTMASTER, PGC_S_ARGV);
 				break;
 			case 's':
 
@@ -573,7 +527,7 @@ PostmasterMain(int argc, char *argv[])
 							elog(ERROR, "-c %s requires argument", optarg);
 					}
 
-					SetConfigOption(name, value, PGC_POSTMASTER, true);
+					SetConfigOption(name, value, PGC_POSTMASTER, PGC_S_ARGV);
 					free(name);
 					if (value)
 						free(value);
@@ -581,10 +535,20 @@ PostmasterMain(int argc, char *argv[])
 				}
 
 			default:
-				/* shouldn't get here */
 				fprintf(stderr, gettext("Try '%s --help' for more information.\n"), progname);
 				ExitPostmaster(1);
 		}
+	}
+
+	/*
+	 * Postmaster accepts no non-option switch arguments.
+	 */
+	if (optind < argc)
+	{
+		postmaster_error("invalid argument -- %s", argv[optind]);
+		fprintf(stderr, gettext("Try '%s --help' for more information.\n"),
+				progname);
+		ExitPostmaster(1);
 	}
 
 	/*
@@ -600,6 +564,11 @@ PostmasterMain(int argc, char *argv[])
 		postmaster_error("The number of buffers (-B) must be at least twice the number of allowed connections (-N) and at least 16.");
 		ExitPostmaster(1);
 	}
+
+	checkDataDir(potential_DataDir);	/* issues error messages */
+	SetDataDir(potential_DataDir);
+
+	ProcessConfigFile(PGC_POSTMASTER);
 
 	/*
 	 * Now that we are done processing the postmaster arguments, reset

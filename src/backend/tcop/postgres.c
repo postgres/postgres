@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/tcop/postgres.c,v 1.246 2002/02/19 19:54:43 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/tcop/postgres.c,v 1.247 2002/02/23 01:31:36 petere Exp $
  *
  * NOTES
  *	  this is the "main" module of the postgres backend and
@@ -1089,6 +1089,7 @@ PostgresMain(int argc, char *argv[], const char *username)
 	bool		secure;
 	int			errs = 0;
 	GucContext	ctx;
+	GucSource	gucsource;
 	char	   *tmp;
 
 	int			firstchar;
@@ -1164,13 +1165,14 @@ PostgresMain(int argc, char *argv[], const char *username)
 	/* all options are allowed until '-p' */
 	secure = true;
 	ctx = PGC_POSTMASTER;
+	gucsource = PGC_S_ARGV;		/* initial switches came from command line */
 
 	while ((flag = getopt(argc, argv, "A:B:c:CD:d:Eef:FiNOPo:p:S:st:v:W:x:-:")) != -1)
 		switch (flag)
 		{
 			case 'A':
 #ifdef USE_ASSERT_CHECKING
-				SetConfigOption("debug_assertions", optarg, ctx, true);
+				SetConfigOption("debug_assertions", optarg, ctx, gucsource);
 #else
 				elog(NOTICE, "Assert checking is not compiled in");
 #endif
@@ -1181,7 +1183,7 @@ PostgresMain(int argc, char *argv[], const char *username)
 				/*
 				 * specify the size of buffer pool
 				 */
-				SetConfigOption("shared_buffers", optarg, ctx, true);
+				SetConfigOption("shared_buffers", optarg, ctx, gucsource);
 				break;
 
 			case 'C':
@@ -1198,17 +1200,17 @@ PostgresMain(int argc, char *argv[], const char *username)
 				break;
 
 			case 'd':			/* debug level */
-				SetConfigOption("debug_level", optarg, ctx, true);
+				SetConfigOption("debug_level", optarg, ctx, gucsource);
 				if (DebugLvl >= 1)
-					SetConfigOption("log_connections", "true", ctx, true);
+					SetConfigOption("log_connections", "true", ctx, gucsource);
 				if (DebugLvl >= 2)
-					SetConfigOption("debug_print_query", "true", ctx, true);
+					SetConfigOption("debug_print_query", "true", ctx, gucsource);
 				if (DebugLvl >= 3)
-					SetConfigOption("debug_print_parse", "true", ctx, true);
+					SetConfigOption("debug_print_parse", "true", ctx, gucsource);
 				if (DebugLvl >= 4)
-					SetConfigOption("debug_print_plan", "true", ctx, true);
+					SetConfigOption("debug_print_plan", "true", ctx, gucsource);
 				if (DebugLvl >= 5)
-					SetConfigOption("debug_print_rewritten", "true", ctx, true);
+					SetConfigOption("debug_print_rewritten", "true", ctx, gucsource);
 				break;
 
 			case 'E':
@@ -1232,7 +1234,7 @@ PostgresMain(int argc, char *argv[], const char *username)
 				/*
 				 * turn off fsync
 				 */
-				SetConfigOption("fsync", "false", ctx, true);
+				SetConfigOption("fsync", "false", ctx, gucsource);
 				break;
 
 			case 'f':
@@ -1265,7 +1267,7 @@ PostgresMain(int argc, char *argv[], const char *username)
 						errs++;
 				}
 				if (tmp)
-					SetConfigOption(tmp, "false", ctx, true);
+					SetConfigOption(tmp, "false", ctx, gucsource);
 				break;
 
 			case 'i':
@@ -1319,6 +1321,7 @@ PostgresMain(int argc, char *argv[], const char *username)
 					secure = false;		/* subsequent switches are NOT
 										 * secure */
 					ctx = PGC_BACKEND;
+					gucsource = PGC_S_CLIENT;
 				}
 				break;
 
@@ -1327,7 +1330,7 @@ PostgresMain(int argc, char *argv[], const char *username)
 				/*
 				 * S - amount of sort memory to use in 1k bytes
 				 */
-				SetConfigOption("sort_mem", optarg, ctx, true);
+				SetConfigOption("sort_mem", optarg, ctx, gucsource);
 				break;
 
 			case 's':
@@ -1335,7 +1338,7 @@ PostgresMain(int argc, char *argv[], const char *username)
 				/*
 				 * s - report usage statistics (timings) after each query
 				 */
-				SetConfigOption("show_query_stats", "true", ctx, true);
+				SetConfigOption("show_query_stats", "true", ctx, gucsource);
 				break;
 
 			case 't':
@@ -1368,7 +1371,7 @@ PostgresMain(int argc, char *argv[], const char *username)
 						break;
 				}
 				if (tmp)
-					SetConfigOption(tmp, "true", ctx, true);
+					SetConfigOption(tmp, "true", ctx, gucsource);
 				break;
 
 			case 'v':
@@ -1432,7 +1435,7 @@ PostgresMain(int argc, char *argv[], const char *username)
 							elog(ERROR, "-c %s requires argument", optarg);
 					}
 
-					SetConfigOption(name, value, ctx, true);
+					SetConfigOption(name, value, ctx, gucsource);
 					free(name);
 					if (value)
 						free(value);
@@ -1451,7 +1454,7 @@ PostgresMain(int argc, char *argv[], const char *username)
 		(Show_parser_stats || Show_planner_stats || Show_executor_stats))
 	{
 		elog(NOTICE, "Query statistics are disabled because parser, planner, or executor statistics are on.");
-		SetConfigOption("show_query_stats", "false", ctx, true);
+		SetConfigOption("show_query_stats", "false", ctx, gucsource);
 	}
 
 	if (!IsUnderPostmaster)
@@ -1623,7 +1626,7 @@ PostgresMain(int argc, char *argv[], const char *username)
 	if (!IsUnderPostmaster)
 	{
 		puts("\nPOSTGRES backend interactive interface ");
-		puts("$Revision: 1.246 $ $Date: 2002/02/19 19:54:43 $\n");
+		puts("$Revision: 1.247 $ $Date: 2002/02/23 01:31:36 $\n");
 	}
 
 	/*

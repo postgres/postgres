@@ -4,7 +4,7 @@
  * Support for grand unified configuration scheme, including SET
  * command, configuration file, and command line options.
  *
- * $Header: /cvsroot/pgsql/src/backend/utils/misc/guc.c,v 1.58 2001/10/30 05:38:56 momjian Exp $
+ * $Header: /cvsroot/pgsql/src/backend/utils/misc/guc.c,v 1.59 2002/02/23 01:31:36 petere Exp $
  *
  * Copyright 2000 by PostgreSQL Global Development Group
  * Written by Peter Eisentraut <peter_e@gmx.net>.
@@ -107,6 +107,7 @@ struct config_generic
 {
 	const char *name;
 	GucContext	context;
+	GucSource	source;
 	void	   *variable;
 };
 
@@ -115,6 +116,7 @@ struct config_bool
 {
 	const char *name;
 	GucContext	context;
+	GucSource	source;
 	bool	   *variable;
 	bool		default_val;
 	/* No need for parse_hook ... presumably both values are legal */
@@ -126,6 +128,7 @@ struct config_int
 {
 	const char *name;
 	GucContext	context;
+	GucSource	source;
 	int		   *variable;
 	int			default_val;
 	int			min;
@@ -139,6 +142,7 @@ struct config_real
 {
 	const char *name;
 	GucContext	context;
+	GucSource	source;
 	double	   *variable;
 	double		default_val;
 	double		min;
@@ -157,6 +161,7 @@ struct config_string
 {
 	const char *name;
 	GucContext	context;
+	GucSource	source;
 	char	  **variable;
 	const char *boot_default_val;
 	bool		(*parse_hook) (const char *proposed);
@@ -193,157 +198,157 @@ static struct config_bool
 			ConfigureNamesBool[] =
 {
 	{
-		"enable_seqscan", PGC_USERSET, &enable_seqscan, true, NULL
+		"enable_seqscan", PGC_USERSET, PGC_S_DEFAULT, &enable_seqscan, true, NULL
 	},
 	{
-		"enable_indexscan", PGC_USERSET, &enable_indexscan, true, NULL
+		"enable_indexscan", PGC_USERSET, PGC_S_DEFAULT, &enable_indexscan, true, NULL
 	},
 	{
-		"enable_tidscan", PGC_USERSET, &enable_tidscan, true, NULL
+		"enable_tidscan", PGC_USERSET, PGC_S_DEFAULT, &enable_tidscan, true, NULL
 	},
 	{
-		"enable_sort", PGC_USERSET, &enable_sort, true, NULL
+		"enable_sort", PGC_USERSET, PGC_S_DEFAULT, &enable_sort, true, NULL
 	},
 	{
-		"enable_nestloop", PGC_USERSET, &enable_nestloop, true, NULL
+		"enable_nestloop", PGC_USERSET, PGC_S_DEFAULT, &enable_nestloop, true, NULL
 	},
 	{
-		"enable_mergejoin", PGC_USERSET, &enable_mergejoin, true, NULL
+		"enable_mergejoin", PGC_USERSET, PGC_S_DEFAULT, &enable_mergejoin, true, NULL
 	},
 	{
-		"enable_hashjoin", PGC_USERSET, &enable_hashjoin, true, NULL
-	},
-
-	{
-		"ksqo", PGC_USERSET, &_use_keyset_query_optimizer, false, NULL
-	},
-	{
-		"geqo", PGC_USERSET, &enable_geqo, true, NULL
+		"enable_hashjoin", PGC_USERSET, PGC_S_DEFAULT, &enable_hashjoin, true, NULL
 	},
 
 	{
-		"tcpip_socket", PGC_POSTMASTER, &NetServer, false, NULL
+		"ksqo", PGC_USERSET, PGC_S_DEFAULT, &_use_keyset_query_optimizer, false, NULL
 	},
 	{
-		"ssl", PGC_POSTMASTER, &EnableSSL, false, NULL
-	},
-	{
-		"fsync", PGC_SIGHUP, &enableFsync, true, NULL
-	},
-	{
-		"silent_mode", PGC_POSTMASTER, &SilentMode, false, NULL
+		"geqo", PGC_USERSET, PGC_S_DEFAULT, &enable_geqo, true, NULL
 	},
 
 	{
-		"log_connections", PGC_BACKEND, &Log_connections, false, NULL
+		"tcpip_socket", PGC_POSTMASTER, PGC_S_DEFAULT, &NetServer, false, NULL
 	},
 	{
-		"log_timestamp", PGC_SIGHUP, &Log_timestamp, false, NULL
+		"ssl", PGC_POSTMASTER, PGC_S_DEFAULT, &EnableSSL, false, NULL
 	},
 	{
-		"log_pid", PGC_SIGHUP, &Log_pid, false, NULL
+		"fsync", PGC_SIGHUP, PGC_S_DEFAULT, &enableFsync, true, NULL
+	},
+	{
+		"silent_mode", PGC_POSTMASTER, PGC_S_DEFAULT, &SilentMode, false, NULL
+	},
+
+	{
+		"log_connections", PGC_BACKEND, PGC_S_DEFAULT, &Log_connections, false, NULL
+	},
+	{
+		"log_timestamp", PGC_SIGHUP, PGC_S_DEFAULT, &Log_timestamp, false, NULL
+	},
+	{
+		"log_pid", PGC_SIGHUP, PGC_S_DEFAULT, &Log_pid, false, NULL
 	},
 
 #ifdef USE_ASSERT_CHECKING
 	{
-		"debug_assertions", PGC_USERSET, &assert_enabled, true, NULL
+		"debug_assertions", PGC_USERSET, PGC_S_DEFAULT, &assert_enabled, true, NULL
 	},
 #endif
 
 	{
-		"debug_print_query", PGC_USERSET, &Debug_print_query, false, NULL
+		"debug_print_query", PGC_USERSET, PGC_S_DEFAULT, &Debug_print_query, false, NULL
 	},
 	{
-		"debug_print_parse", PGC_USERSET, &Debug_print_parse, false, NULL
+		"debug_print_parse", PGC_USERSET, PGC_S_DEFAULT, &Debug_print_parse, false, NULL
 	},
 	{
-		"debug_print_rewritten", PGC_USERSET, &Debug_print_rewritten, false, NULL
+		"debug_print_rewritten", PGC_USERSET, PGC_S_DEFAULT, &Debug_print_rewritten, false, NULL
 	},
 	{
-		"debug_print_plan", PGC_USERSET, &Debug_print_plan, false, NULL
+		"debug_print_plan", PGC_USERSET, PGC_S_DEFAULT, &Debug_print_plan, false, NULL
 	},
 	{
-		"debug_pretty_print", PGC_USERSET, &Debug_pretty_print, false, NULL
+		"debug_pretty_print", PGC_USERSET, PGC_S_DEFAULT, &Debug_pretty_print, false, NULL
 	},
 
 	{
-		"show_parser_stats", PGC_USERSET, &Show_parser_stats, false, NULL
+		"show_parser_stats", PGC_USERSET, PGC_S_DEFAULT, &Show_parser_stats, false, NULL
 	},
 	{
-		"show_planner_stats", PGC_USERSET, &Show_planner_stats, false, NULL
+		"show_planner_stats", PGC_USERSET, PGC_S_DEFAULT, &Show_planner_stats, false, NULL
 	},
 	{
-		"show_executor_stats", PGC_USERSET, &Show_executor_stats, false, NULL
+		"show_executor_stats", PGC_USERSET, PGC_S_DEFAULT, &Show_executor_stats, false, NULL
 	},
 	{
-		"show_query_stats", PGC_USERSET, &Show_query_stats, false, NULL
+		"show_query_stats", PGC_USERSET, PGC_S_DEFAULT, &Show_query_stats, false, NULL
 	},
 #ifdef BTREE_BUILD_STATS
 	{
-		"show_btree_build_stats", PGC_SUSET, &Show_btree_build_stats, false, NULL
+		"show_btree_build_stats", PGC_SUSET, PGC_S_DEFAULT, &Show_btree_build_stats, false, NULL
 	},
 #endif
 
 	{
-		"stats_start_collector", PGC_POSTMASTER, &pgstat_collect_startcollector, true, NULL
+		"stats_start_collector", PGC_POSTMASTER, PGC_S_DEFAULT, &pgstat_collect_startcollector, true, NULL
 	},
 	{
-		"stats_reset_on_server_start", PGC_POSTMASTER, &pgstat_collect_resetonpmstart, true, NULL
+		"stats_reset_on_server_start", PGC_POSTMASTER, PGC_S_DEFAULT, &pgstat_collect_resetonpmstart, true, NULL
 	},
 	{
-		"stats_command_string", PGC_SUSET, &pgstat_collect_querystring, false, NULL
+		"stats_command_string", PGC_SUSET, PGC_S_DEFAULT, &pgstat_collect_querystring, false, NULL
 	},
 	{
-		"stats_row_level", PGC_SUSET, &pgstat_collect_tuplelevel, false, NULL
+		"stats_row_level", PGC_SUSET, PGC_S_DEFAULT, &pgstat_collect_tuplelevel, false, NULL
 	},
 	{
-		"stats_block_level", PGC_SUSET, &pgstat_collect_blocklevel, false, NULL
+		"stats_block_level", PGC_SUSET, PGC_S_DEFAULT, &pgstat_collect_blocklevel, false, NULL
 	},
 
 	{
-		"trace_notify", PGC_USERSET, &Trace_notify, false, NULL
+		"trace_notify", PGC_USERSET, PGC_S_DEFAULT, &Trace_notify, false, NULL
 	},
 
 #ifdef LOCK_DEBUG
 	{
-		"trace_locks", PGC_SUSET, &Trace_locks, false, NULL
+		"trace_locks", PGC_SUSET, PGC_S_DEFAULT, &Trace_locks, false, NULL
 	},
 	{
-		"trace_userlocks", PGC_SUSET, &Trace_userlocks, false, NULL
+		"trace_userlocks", PGC_SUSET, PGC_S_DEFAULT, &Trace_userlocks, false, NULL
 	},
 	{
-		"trace_lwlocks", PGC_SUSET, &Trace_lwlocks, false, NULL
+		"trace_lwlocks", PGC_SUSET, PGC_S_DEFAULT, &Trace_lwlocks, false, NULL
 	},
 	{
-		"debug_deadlocks", PGC_SUSET, &Debug_deadlocks, false, NULL
+		"debug_deadlocks", PGC_SUSET, PGC_S_DEFAULT, &Debug_deadlocks, false, NULL
 	},
 #endif
 
 	{
-		"hostname_lookup", PGC_SIGHUP, &HostnameLookup, false, NULL
+		"hostname_lookup", PGC_SIGHUP, PGC_S_DEFAULT, &HostnameLookup, false, NULL
 	},
 	{
-		"show_source_port", PGC_SIGHUP, &ShowPortNumber, false, NULL
-	},
-
-	{
-		"sql_inheritance", PGC_USERSET, &SQL_inheritance, true, NULL
-	},
-	{
-		"australian_timezones", PGC_USERSET, &Australian_timezones, false, ClearDateCache
-	},
-	{
-		"fixbtree", PGC_POSTMASTER, &FixBTree, true, NULL
-	},
-	{
-		"password_encryption", PGC_USERSET, &Password_encryption, false, NULL
-	},
-	{
-		"transform_null_equals", PGC_USERSET, &Transform_null_equals, false, NULL
+		"show_source_port", PGC_SIGHUP, PGC_S_DEFAULT, &ShowPortNumber, false, NULL
 	},
 
 	{
-		NULL, 0, NULL, false, NULL
+		"sql_inheritance", PGC_USERSET, PGC_S_DEFAULT, &SQL_inheritance, true, NULL
+	},
+	{
+		"australian_timezones", PGC_USERSET, PGC_S_DEFAULT, &Australian_timezones, false, ClearDateCache
+	},
+	{
+		"fixbtree", PGC_POSTMASTER, PGC_S_DEFAULT, &FixBTree, true, NULL
+	},
+	{
+		"password_encryption", PGC_USERSET, PGC_S_DEFAULT, &Password_encryption, false, NULL
+	},
+	{
+		"transform_null_equals", PGC_USERSET, PGC_S_DEFAULT, &Transform_null_equals, false, NULL
+	},
+
+	{
+		NULL, 0, 0, NULL, false, NULL
 	}
 };
 
@@ -352,34 +357,34 @@ static struct config_int
 			ConfigureNamesInt[] =
 {
 	{
-		"geqo_threshold", PGC_USERSET, &geqo_rels,
+		"geqo_threshold", PGC_USERSET, PGC_S_DEFAULT, &geqo_rels,
 		DEFAULT_GEQO_RELS, 2, INT_MAX, NULL, NULL
 	},
 	{
-		"geqo_pool_size", PGC_USERSET, &Geqo_pool_size,
+		"geqo_pool_size", PGC_USERSET, PGC_S_DEFAULT, &Geqo_pool_size,
 		DEFAULT_GEQO_POOL_SIZE, 0, MAX_GEQO_POOL_SIZE, NULL, NULL
 	},
 	{
-		"geqo_effort", PGC_USERSET, &Geqo_effort,
+		"geqo_effort", PGC_USERSET, PGC_S_DEFAULT, &Geqo_effort,
 		1, 1, INT_MAX, NULL, NULL
 	},
 	{
-		"geqo_generations", PGC_USERSET, &Geqo_generations,
+		"geqo_generations", PGC_USERSET, PGC_S_DEFAULT, &Geqo_generations,
 		0, 0, INT_MAX, NULL, NULL
 	},
 	{
-		"geqo_random_seed", PGC_USERSET, &Geqo_random_seed,
+		"geqo_random_seed", PGC_USERSET, PGC_S_DEFAULT, &Geqo_random_seed,
 		-1, INT_MIN, INT_MAX, NULL, NULL
 	},
 
 	{
-		"deadlock_timeout", PGC_POSTMASTER, &DeadlockTimeout,
+		"deadlock_timeout", PGC_POSTMASTER, PGC_S_DEFAULT, &DeadlockTimeout,
 		1000, 0, INT_MAX, NULL, NULL
 	},
 
 #ifdef ENABLE_SYSLOG
 	{
-		"syslog", PGC_SIGHUP, &Use_syslog,
+		"syslog", PGC_SIGHUP, PGC_S_DEFAULT, &Use_syslog,
 		0, 0, 2, NULL, NULL
 	},
 #endif
@@ -390,121 +395,121 @@ static struct config_int
 	 * constraints here are partially unused.
 	 */
 	{
-		"max_connections", PGC_POSTMASTER, &MaxBackends,
+		"max_connections", PGC_POSTMASTER, PGC_S_DEFAULT, &MaxBackends,
 		DEF_MAXBACKENDS, 1, INT_MAX, NULL, NULL
 	},
 
 	{
-		"shared_buffers", PGC_POSTMASTER, &NBuffers,
+		"shared_buffers", PGC_POSTMASTER, PGC_S_DEFAULT, &NBuffers,
 		DEF_NBUFFERS, 16, INT_MAX, NULL, NULL
 	},
 
 	{
-		"port", PGC_POSTMASTER, &PostPortNumber,
+		"port", PGC_POSTMASTER, PGC_S_DEFAULT, &PostPortNumber,
 		DEF_PGPORT, 1, 65535, NULL, NULL
 	},
 
 	{
-		"unix_socket_permissions", PGC_POSTMASTER, &Unix_socket_permissions,
+		"unix_socket_permissions", PGC_POSTMASTER, PGC_S_DEFAULT, &Unix_socket_permissions,
 		0777, 0000, 0777, NULL, NULL
 	},
 
 	{
-		"sort_mem", PGC_USERSET, &SortMem,
+		"sort_mem", PGC_USERSET, PGC_S_DEFAULT, &SortMem,
 		512, 4 * BLCKSZ / 1024, INT_MAX, NULL, NULL
 	},
 
 	{
-		"vacuum_mem", PGC_USERSET, &VacuumMem,
+		"vacuum_mem", PGC_USERSET, PGC_S_DEFAULT, &VacuumMem,
 		8192, 1024, INT_MAX, NULL, NULL
 	},
 
 	{
-		"max_files_per_process", PGC_BACKEND, &max_files_per_process,
+		"max_files_per_process", PGC_BACKEND, PGC_S_DEFAULT, &max_files_per_process,
 		1000, 25, INT_MAX, NULL, NULL
 	},
 
 	{
-		"debug_level", PGC_USERSET, &DebugLvl,
+		"debug_level", PGC_USERSET, PGC_S_DEFAULT, &DebugLvl,
 		0, 0, 16, NULL, NULL
 	},
 
 #ifdef LOCK_DEBUG
 	{
-		"trace_lock_oidmin", PGC_SUSET, &Trace_lock_oidmin,
+		"trace_lock_oidmin", PGC_SUSET, PGC_S_DEFAULT, &Trace_lock_oidmin,
 		BootstrapObjectIdData, 1, INT_MAX, NULL, NULL
 	},
 	{
-		"trace_lock_table", PGC_SUSET, &Trace_lock_table,
+		"trace_lock_table", PGC_SUSET, PGC_S_DEFAULT, &Trace_lock_table,
 		0, 0, INT_MAX, NULL, NULL
 	},
 #endif
 	{
-		"max_expr_depth", PGC_USERSET, &max_expr_depth,
+		"max_expr_depth", PGC_USERSET, PGC_S_DEFAULT, &max_expr_depth,
 		DEFAULT_MAX_EXPR_DEPTH, 10, INT_MAX, NULL, NULL
 	},
 
 	{
-		"max_fsm_relations", PGC_POSTMASTER, &MaxFSMRelations,
+		"max_fsm_relations", PGC_POSTMASTER, PGC_S_DEFAULT, &MaxFSMRelations,
 		100, 10, INT_MAX, NULL, NULL
 	},
 	{
-		"max_fsm_pages", PGC_POSTMASTER, &MaxFSMPages,
+		"max_fsm_pages", PGC_POSTMASTER, PGC_S_DEFAULT, &MaxFSMPages,
 		10000, 1000, INT_MAX, NULL, NULL
 	},
 
 	{
-		"max_locks_per_transaction", PGC_POSTMASTER, &max_locks_per_xact,
+		"max_locks_per_transaction", PGC_POSTMASTER, PGC_S_DEFAULT, &max_locks_per_xact,
 		64, 10, INT_MAX, NULL, NULL
 	},
 
 	{
-		"authentication_timeout", PGC_SIGHUP, &AuthenticationTimeout,
+		"authentication_timeout", PGC_SIGHUP, PGC_S_DEFAULT, &AuthenticationTimeout,
 		60, 1, 600, NULL, NULL
 	},
 
 	{
-		"pre_auth_delay", PGC_SIGHUP, &PreAuthDelay,
+		"pre_auth_delay", PGC_SIGHUP, PGC_S_DEFAULT, &PreAuthDelay,
 		0, 0, 60, NULL, NULL
 	},
 
 	{
-		"checkpoint_segments", PGC_SIGHUP, &CheckPointSegments,
+		"checkpoint_segments", PGC_SIGHUP, PGC_S_DEFAULT, &CheckPointSegments,
 		3, 1, INT_MAX, NULL, NULL
 	},
 
 	{
-		"checkpoint_timeout", PGC_SIGHUP, &CheckPointTimeout,
+		"checkpoint_timeout", PGC_SIGHUP, PGC_S_DEFAULT, &CheckPointTimeout,
 		300, 30, 3600, NULL, NULL
 	},
 
 	{
-		"wal_buffers", PGC_POSTMASTER, &XLOGbuffers,
+		"wal_buffers", PGC_POSTMASTER, PGC_S_DEFAULT, &XLOGbuffers,
 		8, 4, INT_MAX, NULL, NULL
 	},
 
 	{
-		"wal_files", PGC_SIGHUP, &XLOGfiles,
+		"wal_files", PGC_SIGHUP, PGC_S_DEFAULT, &XLOGfiles,
 		0, 0, 64, NULL, NULL
 	},
 
 	{
-		"wal_debug", PGC_SUSET, &XLOG_DEBUG,
+		"wal_debug", PGC_SUSET, PGC_S_DEFAULT, &XLOG_DEBUG,
 		0, 0, 16, NULL, NULL
 	},
 
 	{
-		"commit_delay", PGC_USERSET, &CommitDelay,
+		"commit_delay", PGC_USERSET, PGC_S_DEFAULT, &CommitDelay,
 		0, 0, 100000, NULL, NULL
 	},
 
 	{
-		"commit_siblings", PGC_USERSET, &CommitSiblings,
+		"commit_siblings", PGC_USERSET, PGC_S_DEFAULT, &CommitSiblings,
 		5, 1, 1000, NULL, NULL
 	},
 
 	{
-		NULL, 0, NULL, 0, 0, 0, NULL, NULL
+		NULL, 0, 0, NULL, 0, 0, 0, NULL, NULL
 	}
 };
 
@@ -513,34 +518,34 @@ static struct config_real
 			ConfigureNamesReal[] =
 {
 	{
-		"effective_cache_size", PGC_USERSET, &effective_cache_size,
+		"effective_cache_size", PGC_USERSET, PGC_S_DEFAULT, &effective_cache_size,
 		DEFAULT_EFFECTIVE_CACHE_SIZE, 0, DBL_MAX, NULL, NULL
 	},
 	{
-		"random_page_cost", PGC_USERSET, &random_page_cost,
+		"random_page_cost", PGC_USERSET, PGC_S_DEFAULT, &random_page_cost,
 		DEFAULT_RANDOM_PAGE_COST, 0, DBL_MAX, NULL, NULL
 	},
 	{
-		"cpu_tuple_cost", PGC_USERSET, &cpu_tuple_cost,
+		"cpu_tuple_cost", PGC_USERSET, PGC_S_DEFAULT, &cpu_tuple_cost,
 		DEFAULT_CPU_TUPLE_COST, 0, DBL_MAX, NULL, NULL
 	},
 	{
-		"cpu_index_tuple_cost", PGC_USERSET, &cpu_index_tuple_cost,
+		"cpu_index_tuple_cost", PGC_USERSET, PGC_S_DEFAULT, &cpu_index_tuple_cost,
 		DEFAULT_CPU_INDEX_TUPLE_COST, 0, DBL_MAX, NULL, NULL
 	},
 	{
-		"cpu_operator_cost", PGC_USERSET, &cpu_operator_cost,
+		"cpu_operator_cost", PGC_USERSET, PGC_S_DEFAULT, &cpu_operator_cost,
 		DEFAULT_CPU_OPERATOR_COST, 0, DBL_MAX, NULL, NULL
 	},
 
 	{
-		"geqo_selection_bias", PGC_USERSET, &Geqo_selection_bias,
+		"geqo_selection_bias", PGC_USERSET, PGC_S_DEFAULT, &Geqo_selection_bias,
 		DEFAULT_GEQO_SELECTION_BIAS, MIN_GEQO_SELECTION_BIAS,
 		MAX_GEQO_SELECTION_BIAS, NULL, NULL
 	},
 
 	{
-		NULL, 0, NULL, 0.0, 0.0, 0.0, NULL, NULL
+		NULL, 0, 0, NULL, 0.0, 0.0, 0.0, NULL, NULL
 	}
 };
 
@@ -549,54 +554,54 @@ static struct config_string
 			ConfigureNamesString[] =
 {
 	{
-		"default_transaction_isolation", PGC_USERSET, &default_iso_level_string,
+		"default_transaction_isolation", PGC_USERSET, PGC_S_DEFAULT, &default_iso_level_string,
 		"read committed", check_defaultxactisolevel, assign_defaultxactisolevel
 	},
 
 	{
-		"dynamic_library_path", PGC_SUSET, &Dynamic_library_path,
+		"dynamic_library_path", PGC_SUSET, PGC_S_DEFAULT, &Dynamic_library_path,
 		"$libdir", NULL, NULL
 	},
 
 	{
-		"krb_server_keyfile", PGC_POSTMASTER, &pg_krb_server_keyfile,
+		"krb_server_keyfile", PGC_POSTMASTER, PGC_S_DEFAULT, &pg_krb_server_keyfile,
 		PG_KRB_SRVTAB, NULL, NULL
 	},
 
 #ifdef ENABLE_SYSLOG
 	{
-		"syslog_facility", PGC_POSTMASTER, &Syslog_facility,
+		"syslog_facility", PGC_POSTMASTER, PGC_S_DEFAULT, &Syslog_facility,
 		"LOCAL0", check_facility, NULL
 	},
 	{
-		"syslog_ident", PGC_POSTMASTER, &Syslog_ident,
+		"syslog_ident", PGC_POSTMASTER, PGC_S_DEFAULT, &Syslog_ident,
 		"postgres", NULL, NULL
 	},
 #endif
 
 	{
-		"unix_socket_group", PGC_POSTMASTER, &Unix_socket_group,
+		"unix_socket_group", PGC_POSTMASTER, PGC_S_DEFAULT, &Unix_socket_group,
 		"", NULL, NULL
 	},
 
 	{
-		"unix_socket_directory", PGC_POSTMASTER, &UnixSocketDir,
+		"unix_socket_directory", PGC_POSTMASTER, PGC_S_DEFAULT, &UnixSocketDir,
 		"", NULL, NULL
 	},
 
 	{
-		"virtual_host", PGC_POSTMASTER, &VirtualHost,
+		"virtual_host", PGC_POSTMASTER, PGC_S_DEFAULT, &VirtualHost,
 		"", NULL, NULL
 	},
 
 	{
-		"wal_sync_method", PGC_SIGHUP, &XLOG_sync_method,
+		"wal_sync_method", PGC_SIGHUP, PGC_S_DEFAULT, &XLOG_sync_method,
 		XLOG_sync_method_default, check_xlog_sync_method,
 		assign_xlog_sync_method
 	},
 
 	{
-		NULL, 0, NULL, NULL, NULL, NULL
+		NULL, 0, 0, NULL, NULL, NULL, NULL
 	}
 };
 
@@ -870,11 +875,12 @@ parse_real(const char *value, double *result)
  */
 bool
 set_config_option(const char *name, const char *value,
-				  GucContext context, bool DoIt, bool makeDefault)
+				  GucContext context, bool DoIt, GucSource source)
 {
 	struct config_generic *record;
 	enum config_type type;
 	int			elevel;
+	bool		makeDefault;
 
 	elevel = (context == PGC_SIGHUP) ? DEBUG : ERROR;
 
@@ -884,6 +890,15 @@ set_config_option(const char *name, const char *value,
 		elog(elevel, "'%s' is not a valid option name", name);
 		return false;
 	}
+
+	if (record->source > source)
+	{
+		if (DebugLvl > 1)
+			elog(DEBUG, "setting %s refused because previous source is higher",
+				 name);
+		return false;
+	}
+	makeDefault = source < PGC_S_SESSION;
 
 	/*
 	 * Check if the option can be set at this time. See guc.h for the
@@ -961,6 +976,7 @@ set_config_option(const char *name, const char *value,
 						*conf->variable = boolval;
 						if (makeDefault)
 							conf->default_val = boolval;
+						conf->source = source;
 					}
 				}
 				else if (DoIt)
@@ -1005,6 +1021,7 @@ set_config_option(const char *name, const char *value,
 						*conf->variable = intval;
 						if (makeDefault)
 							conf->default_val = intval;
+						conf->source = source;
 					}
 				}
 				else if (DoIt)
@@ -1049,6 +1066,7 @@ set_config_option(const char *name, const char *value,
 						*conf->variable = dval;
 						if (makeDefault)
 							conf->default_val = dval;
+						conf->source = source;
 					}
 				}
 				else if (DoIt)
@@ -1099,6 +1117,7 @@ set_config_option(const char *name, const char *value,
 								free(conf->default_val);
 							conf->default_val = str;
 						}
+						conf->source = source;
 					}
 				}
 				else if (DoIt)
@@ -1143,9 +1162,9 @@ set_config_option(const char *name, const char *value,
  */
 void
 SetConfigOption(const char *name, const char *value,
-				GucContext context, bool makeDefault)
+				GucContext context, GucSource source)
 {
-	(void) set_config_option(name, value, context, true, makeDefault);
+	(void) set_config_option(name, value, context, true, source);
 }
 
 

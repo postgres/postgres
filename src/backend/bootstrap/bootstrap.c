@@ -8,7 +8,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/bootstrap/bootstrap.c,v 1.120 2002/01/10 01:11:45 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/bootstrap/bootstrap.c,v 1.121 2002/02/23 01:31:34 petere Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -262,7 +262,7 @@ BootstrapMain(int argc, char *argv[])
 										 * parsing */
 				break;
 			case 'F':
-				SetConfigOption("fsync", "false", PGC_POSTMASTER, true);
+				SetConfigOption("fsync", "false", PGC_POSTMASTER, PGC_S_ARGV);
 				break;
 			case 'o':
 				StrNCpy(OutputFileName, optarg, MAXPGPATH);
@@ -274,7 +274,7 @@ BootstrapMain(int argc, char *argv[])
 				/* indicates fork from postmaster */
 				break;
 			case 'B':
-				SetConfigOption("shared_buffers", optarg, PGC_POSTMASTER, true);
+				SetConfigOption("shared_buffers", optarg, PGC_POSTMASTER, PGC_S_ARGV);
 				break;
 			default:
 				usage();

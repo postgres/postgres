@@ -9,7 +9,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/commands/variable.c,v 1.57 2001/12/09 04:37:50 thomas Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/commands/variable.c,v 1.58 2002/02/23 01:31:35 petere Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -780,7 +780,7 @@ SetPGVariable(const char *name, List *args)
 		if (strcasecmp(name, "session_authorization") == 0)
 			SetSessionAuthorization(value);
 		else
-			SetConfigOption(name, value, superuser() ? PGC_SUSET : PGC_USERSET, false);
+			SetConfigOption(name, value, superuser() ? PGC_SUSET : PGC_USERSET, PGC_S_SESSION);
 	}
 	return;
 }
@@ -846,5 +846,5 @@ ResetPGVariable(const char *name)
 	else
 		SetConfigOption(name, NULL,
 						superuser() ? PGC_SUSET : PGC_USERSET,
-						false);
+						PGC_S_SESSION);
 }

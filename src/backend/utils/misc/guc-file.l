@@ -4,7 +4,7 @@
  *
  * Copyright 2000 by PostgreSQL Global Development Group
  *
- * $Header: /cvsroot/pgsql/src/backend/utils/misc/guc-file.l,v 1.9 2001/08/06 13:45:15 petere Exp $
+ * $Header: /cvsroot/pgsql/src/backend/utils/misc/guc-file.l,v 1.10 2002/02/23 01:31:36 petere Exp $
  */
 
 %{
@@ -240,13 +240,15 @@ ProcessConfigFile(GucContext context)
 	 */
     for(item = head; item; item=item->next)
 	{
-		if (!set_config_option(item->name, item->value, context, false, false))
+		if (!set_config_option(item->name, item->value, context,
+							   false, PGC_S_INFINITY))
 			goto cleanup_exit;
 	}
 
     /* If we got here all the options parsed okay. */
 	for(item = head; item; item=item->next)
-		set_config_option(item->name, item->value, context, true, true);
+		set_config_option(item->name, item->value, context,
+						  true, PGC_S_FILE);
 
  cleanup_exit:
 	free_name_value_list(head);
