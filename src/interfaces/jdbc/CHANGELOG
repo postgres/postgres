@@ -10,6 +10,17 @@ Mon Sep 13 23:56:00 BST 1999 peter@retep.org.uk
 	- Replaced $$(cmd...) with `cmd...` in the Makefile. This should allow
 	  the driver to compile when using shells other than Bash.
 
+Thu Sep  9 01:18:39 MEST 1999 jens@jens.de
+	- fixed bug in handling of DECIMAL type
+
+Wed Aug  4 00:25:18 CEST 1999 jens@jens.de
+	- updated ResultSetMetaData.getColumnDisplaySize() to return
+	  the actual display size
+	- updated driver to use postgresql FE/BE-protocol version 2
+
+Mon Aug  2 03:29:35 CEST 1999 jens@jens.de
+         - fixed bug in DatabaseMetaData.getPrimaryKeys()
+ 
 Sun Aug  1 18:05:42 CEST 1999 jens@jens.de
         - added support for getTransactionIsolation and setTransactionIsolation
 

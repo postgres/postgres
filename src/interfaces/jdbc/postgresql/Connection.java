@@ -10,7 +10,7 @@ import postgresql.largeobject.*;
 import postgresql.util.*;
 
 /**
- * $Id: Connection.java,v 1.19 1999/09/14 22:43:38 peter Exp $
+ * $Id: Connection.java,v 1.20 1999/09/15 20:39:50 peter Exp $
  *
  * This abstract class is used by postgresql.Driver to open either the JDBC1 or
  * JDBC2 versions of the Connection class.
@@ -44,7 +44,7 @@ public abstract class Connection
   // These are new for v6.3, they determine the current protocol versions
   // supported by this version of the driver. They are defined in
   // src/include/libpq/pqcomm.h
-  protected static final int PG_PROTOCOL_LATEST_MAJOR = 1;
+  protected static final int PG_PROTOCOL_LATEST_MAJOR = 2;
   protected static final int PG_PROTOCOL_LATEST_MINOR = 0;
   private static final int SM_DATABASE	= 64;
   private static final int SM_USER	= 32;
@@ -69,7 +69,11 @@ public abstract class Connection
   
   // Now handle notices as warnings, so things like "show" now work
   public SQLWarning firstWarning = null;
-  
+    
+    // The PID an cancellation key we get from the backend process
+    public int pid;
+    public int ckey;
+    
     /**
      * This is called by Class.forName() from within postgresql.Driver
      */
@@ -210,6 +214,33 @@ public abstract class Connection
 	  throw new PSQLException("postgresql.con.failed",e);
 	}
 	
+
+      // As of protocol version 2.0, we should now receive the cancellation key and the pid
+      int beresp = pg_stream.ReceiveChar();
+      switch(beresp) {
+        case 'K':
+          pid = pg_stream.ReceiveInteger(4);
+          ckey = pg_stream.ReceiveInteger(4);
+          break;
+	case 'E':
+	case 'N':
+           throw new SQLException(pg_stream.ReceiveString(4096));
+        default:
+          throw new PSQLException("postgresql.con.setup");
+      }
+
+      // Expect ReadyForQuery packet
+      beresp = pg_stream.ReceiveChar();
+      switch(beresp) {
+        case 'Z':
+	   break;
+	case 'E':
+	case 'N':
+           throw new SQLException(pg_stream.ReceiveString(4096));
+        default:
+          throw new PSQLException("postgresql.con.setup");
+      }
+
       // Originally we issued a SHOW DATESTYLE statement to find the databases default
       // datestyle. However, this caused some problems with timestamps, so in 6.5, we
       // went the way of ODBC, and set the connection to ISO.
@@ -311,7 +342,7 @@ public abstract class Connection
 		    switch (c)
 			{
 			case 'A':	// Asynchronous Notify
-			    int pid = pg_stream.ReceiveInteger(4);
+			    pid = pg_stream.ReceiveInteger(4);
 			    msg = pg_stream.ReceiveString(8192);
 			    break;
 			case 'B':	// Binary Data Transfer
@@ -383,6 +414,8 @@ public abstract class Connection
 				throw new PSQLException("postgresql.con.multres");
 			    fields = ReceiveFields();
 			    break;
+			case 'Z':       // backend ready for query, ignore for now :-)
+			    break;
 			default:
 			    throw new PSQLException("postgresql.con.type",new Character((char)c));
 			}
@@ -410,7 +443,8 @@ public abstract class Connection
 		String typname = pg_stream.ReceiveString(8192);
 		int typid = pg_stream.ReceiveIntegerR(4);
 		int typlen = pg_stream.ReceiveIntegerR(2);
-		fields[i] = new Field(this, typname, typid, typlen);
+		int typmod = pg_stream.ReceiveIntegerR(4);
+		fields[i] = new Field(this, typname, typid, typlen, typmod);
 	    }
 	return fields;
     }

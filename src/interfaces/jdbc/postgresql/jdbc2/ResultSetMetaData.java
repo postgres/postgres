@@ -183,19 +183,38 @@ public class ResultSetMetaData implements java.sql.ResultSetMetaData
    */
   public int getColumnDisplaySize(int column) throws SQLException
   {
-    int max = getColumnLabel(column).length();
-    int i;
-    
-    for (i = 0 ; i < rows.size(); ++i)
-      {
-	byte[][] x = (byte[][])(rows.elementAt(i));
-	if(x[column-1]!=null) {
-	  int xl = x[column - 1].length;
-	  if (xl > max)
-	    max = xl;
-	}
-      }
-    return max;
+    Field f = getField(column);
+    String type_name = f.getTypeName();
+    int sql_type = f.getSQLType();
+    int typmod = f.mod;
+
+    // I looked at other JDBC implementations and couldn't find a consistent
+    // interpretation of the "display size" for numeric values, so this is our's
+    // FIXME: currently, only types with a SQL92 or SQL3 pendant are implemented - jens@jens.de
+
+    // fixed length data types
+    if (type_name.equals( "int2"      ))  return 6;  // -32768 to +32768 (5 digits and a sign)
+    if (type_name.equals( "int4"      ) 
+     || type_name.equals( "oid"       ))  return 11; // -2147483648 to +2147483647
+    if (type_name.equals( "int8"      ))  return 20; // -9223372036854775808 to +9223372036854775807
+    if (type_name.equals( "money"     ))  return 12; // MONEY = DECIMAL(9,2)
+    if (type_name.equals( "float4"    ))  return 11; // i checked it out ans wasn't able to produce more than 11 digits
+    if (type_name.equals( "float8"    ))  return 20; // dito, 20
+    if (type_name.equals( "char"      ))  return 1;
+    if (type_name.equals( "bool"      ))  return 1;
+    if (type_name.equals( "date"      ))  return 14; // "01/01/4713 BC" - "31/12/32767 AD"
+    if (type_name.equals( "time"      ))  return 8;  // 00:00:00-23:59:59
+    if (type_name.equals( "timestamp" ))  return 22; // hhmmm ... the output looks like this: 1999-08-03 22:22:08+02
+
+    // variable length fields
+    typmod -= 4;
+    if (type_name.equals( "bpchar"    )
+     || type_name.equals( "varchar"   ))  return typmod; // VARHDRSZ=sizeof(int32)=4
+    if (type_name.equals( "numeric"   ))  return ( (typmod >>16) & 0xffff )
+                                           + 1 + ( typmod        & 0xffff ); // DECIMAL(p,s) = (p digits).(s digits)
+
+    // if we don't know better
+    return f.length;
   }
   
   /**

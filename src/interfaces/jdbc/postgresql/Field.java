@@ -14,6 +14,7 @@ public class Field
 {
   public int length;		// Internal Length of this field
   public int oid;		// OID of the type
+  public int mod;		// type modifier of this field
   public String name;		// Name of this field
   
   protected Connection conn;	// Connection Instantation
@@ -29,14 +30,28 @@ public class Field
    * @param oid the OID of the field
    * @param len the length of the field
    */
-  public Field(Connection conn, String name, int oid, int length)
+  public Field(Connection conn, String name, int oid, int length,int mod)
   {
     this.conn = conn;
     this.name = name;
     this.oid = oid;
     this.length = length;
+    this.mod = mod;
   }
   
+    /**
+     * Constructor without mod parameter.
+     *
+     * @param conn the connection this field came from
+     * @param name the name of the field
+     * @param oid the OID of the field
+     * @param len the length of the field
+     */
+    public Field(Connection conn, String name, int oid, int length)
+    {
+	this(conn,name,oid,length,0);
+    }
+    
   /**
    * @return the oid of this Field's data type
    */
@@ -103,6 +118,7 @@ public class Field
     "int4","oid",
     "int8",
     "cash","money",
+    "numeric",
     "float4",
     "float8",
     "bpchar","char","char2","char4","char8","char16",
@@ -125,6 +141,7 @@ public class Field
     Types.INTEGER,Types.INTEGER,
     Types.BIGINT,
     Types.DECIMAL,Types.DECIMAL,
+    Types.NUMERIC,
     Types.REAL,
     Types.DOUBLE,
     Types.CHAR,Types.CHAR,Types.CHAR,Types.CHAR,Types.CHAR,Types.CHAR,

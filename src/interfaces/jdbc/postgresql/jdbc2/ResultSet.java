@@ -310,7 +310,7 @@ public class ResultSet extends postgresql.ResultSet implements java.sql.ResultSe
   
   /**
    * Get the value of a column in the current row as a 
-   * java.lang.BigDecimal object
+   * java.math.BigDecimal object
    *
    * @param columnIndex  the first column is 1, the second is 2...
    * @param scale the number of digits to the right of the decimal
@@ -723,7 +723,7 @@ public class ResultSet extends postgresql.ResultSet implements java.sql.ResultSe
       case Types.BIGINT:
 	return new Long(getLong(columnIndex));
       case Types.NUMERIC:
-	return getBigDecimal(columnIndex, 0);
+	return getBigDecimal(columnIndex, ((field.mod-4) & 0xffff));
       case Types.REAL:
 	return new Float(getFloat(columnIndex));
       case Types.DOUBLE:
