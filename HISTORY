@@ -1,4 +1,4 @@
-PostgreSQL 6.2beta               Sat Sep 27 07:20:16 PDT 1997
+PostgreSQL 6.2               Thu Oct 02 12:53:46 EDT 1997
 -------------------------------------------------------------
 
 A dump/restore is required for those wishing to migrate data from
@@ -26,6 +26,7 @@ Fix handling of functions with non-attribute first argument in
 	WHERE clauses (Vadim)
 Fix GROUP BY when order of entries is different from order
 	in target list (Vadim)
+Fix pg_dump for aggregates without sfunc1 (Vadim)
 
 Enhancements
 ------------
@@ -35,10 +36,8 @@ Added JDBC driver as an interface(Adrian & Peter)
 pg_password utility
 Return number of tuples inserted/affected by INSERT/UPDATE/DELETE etc.(Vadim)
 Triggers implemented with CREATE TRIGGER (SQL3)(Vadim)
-SPI (Server Programming Interface) - allows execution of queries inside 
+SPI (Server Programming Interface) allows execution of queries inside 
 	C-functions (Vadim)
-	SPI implemented not just to support triggers, but functions too,
-		and as "workhorse" for procedural language(s) in future...
 NOT NULL implemented (SQL92)(Robson Paniago de Miranda)
 Include reserved words for string handling, outer joins, and unions(Thomas)
 Implement extended comments ("/* ... */") using exclusive states(Thomas)
@@ -76,6 +75,7 @@ Fix for psql pager when no tty(Bruce)
 New entab utility(Bruce)
 General trigger functions for referential integrity (Vadim)
 General trigger functions for time travel (Vadim)
+General trigger functions for AUTOINCREMENT/IDENTITY feature (Vadim)
 MOVE implementation (Vadim)
 
 Source Tree Changes
@@ -111,6 +111,7 @@ Add comments syntax regression test(Thomas)
 Add PGINDENT and support program(Bruce)
 Massive commit to run PGINDENT on all *.c and *.h files(Bruce)
 Files moved to /src/tools directory(Bruce)
+SPI and Trigger programming guides (Vadim & D'Arcy)
 
 
 PostgreSQL 6.1.1                 Mon Jul 22 18:04:49 EDT 1997
