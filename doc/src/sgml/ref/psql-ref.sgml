@@ -1,5 +1,5 @@
 <!--
-$PostgreSQL: pgsql/doc/src/sgml/ref/psql-ref.sgml,v 1.104 2004/01/20 23:48:56 tgl Exp $
+$PostgreSQL: pgsql/doc/src/sgml/ref/psql-ref.sgml,v 1.105 2004/02/12 19:58:16 momjian Exp $
 PostgreSQL documentation
 -->
 
@@ -524,7 +524,7 @@ Welcome to psql &version;, the PostgreSQL interactive terminal.
 
 Type:  \copyright for distribution terms
        \h for help with SQL commands
-       \? for help on internal slash commands
+       \? for help with psql commands
        \g or terminate with semicolon to execute query
        \q to quit
 

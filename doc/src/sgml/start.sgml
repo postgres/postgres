@@ -1,5 +1,5 @@
 <!--
-$PostgreSQL: pgsql/doc/src/sgml/start.sgml,v 1.34 2004/02/12 16:38:04 momjian Exp $
+$PostgreSQL: pgsql/doc/src/sgml/start.sgml,v 1.35 2004/02/12 19:58:16 momjian Exp $
 -->
 
  <chapter id="tutorial-start">
@@ -321,7 +321,7 @@ Welcome to psql &version;, the PostgreSQL interactive terminal.
  
 Type:  \copyright for distribution terms
        \h for help with SQL commands
-       \? for help on internal slash commands
+       \? for help with psql commands
        \g or terminate with semicolon to execute query
        \q to quit
  

@@ -3,7 +3,7 @@
  *
  * Copyright (c) 2000-2003, PostgreSQL Global Development Group
  *
- * $PostgreSQL: pgsql/src/bin/psql/startup.c,v 1.83 2004/01/25 03:07:22 neilc Exp $
+ * $PostgreSQL: pgsql/src/bin/psql/startup.c,v 1.84 2004/02/12 19:58:16 momjian Exp $
  */
 #include "postgres_fe.h"
 
@@ -267,8 +267,8 @@ main(int argc, char *argv[])
 			printf(gettext("Welcome to %s %s, the PostgreSQL interactive terminal.\n\n"
 						   "Type:  \\copyright for distribution terms\n"
 						   "       \\h for help with SQL commands\n"
-					   "       \\? for help on internal slash commands\n"
-			  "       \\g or terminate with semicolon to execute query\n"
+						   "       \\? for help with psql commands\n"
+						   "       \\g or terminate with semicolon to execute query\n"
 						   "       \\q to quit\n\n"),
 				   pset.progname, PG_VERSION);
 #ifdef USE_SSL
