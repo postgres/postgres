@@ -10,7 +10,7 @@
  * Written by Peter Eisentraut <peter_e@gmx.net>.
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/utils/misc/guc.c,v 1.172 2003/11/29 19:52:03 pgsql Exp $
+ *	  $PostgreSQL: pgsql/src/backend/utils/misc/guc.c,v 1.173 2003/12/01 03:55:21 momjian Exp $
  *
  *--------------------------------------------------------------------
  */
@@ -808,7 +808,7 @@ static struct config_bool ConfigureNamesBool[] =
 	},
 	{
 		{"transaction_read_only", PGC_USERSET, CLIENT_CONN_STATEMENT,
-			gettext_noop("Shows the current transaction's read-only status."),
+			gettext_noop("Sets the current transaction's read-only status."),
 			NULL,
 			GUC_NO_RESET_ALL | GUC_NOT_IN_SAMPLE | GUC_DISALLOW_IN_FILE
 		},
@@ -1532,7 +1532,7 @@ static struct config_string ConfigureNamesString[] =
 	{
 		/* Not for general use --- used by SET SESSION AUTHORIZATION */
 		{"session_authorization", PGC_USERSET, UNGROUPED,
-			gettext_noop("Shows the session user name."),
+			gettext_noop("Sets the session user name."),
 			NULL,
 			GUC_REPORT | GUC_NO_SHOW_ALL | GUC_NO_RESET_ALL | GUC_NOT_IN_SAMPLE | GUC_DISALLOW_IN_FILE
 		},
@@ -1572,7 +1572,7 @@ static struct config_string ConfigureNamesString[] =
 
 	{
 		{"transaction_isolation", PGC_USERSET, CLIENT_CONN_STATEMENT,
-			gettext_noop("Shows the current transaction's isolation level."),
+			gettext_noop("Sets the current transaction's isolation level."),
 			NULL,
 			GUC_NO_RESET_ALL | GUC_NOT_IN_SAMPLE | GUC_DISALLOW_IN_FILE
 		},
