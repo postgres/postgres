@@ -26,7 +26,7 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- * $PostgreSQL: pgsql/contrib/pgcrypto/internal.c,v 1.13 2004/05/07 00:24:57 tgl Exp $
+ * $PostgreSQL: pgsql/contrib/pgcrypto/internal.c,v 1.14 2004/10/25 02:15:02 tgl Exp $
  */
 
 
@@ -493,25 +493,25 @@ bf_load(int mode)
 /* ciphers */
 
 static PX_Cipher *
-rj_128_ecb()
+rj_128_ecb(void)
 {
 	return rj_load(MODE_ECB);
 }
 
 static PX_Cipher *
-rj_128_cbc()
+rj_128_cbc(void)
 {
 	return rj_load(MODE_CBC);
 }
 
 static PX_Cipher *
-bf_ecb_load()
+bf_ecb_load(void)
 {
 	return bf_load(MODE_ECB);
 }
 
 static PX_Cipher *
-bf_cbc_load()
+bf_cbc_load(void)
 {
 	return bf_load(MODE_CBC);
 }

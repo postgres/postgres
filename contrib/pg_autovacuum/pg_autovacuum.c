@@ -4,7 +4,7 @@
  * Revisions by Christopher B. Browne, Liberty RMS
  * Win32 Service code added by Dave Page
  *
- * $PostgreSQL: pgsql/contrib/pg_autovacuum/pg_autovacuum.c,v 1.22 2004/10/16 21:50:02 tgl Exp $
+ * $PostgreSQL: pgsql/contrib/pg_autovacuum/pg_autovacuum.c,v 1.23 2004/10/25 02:14:59 tgl Exp $
  */
 
 #include "postgres_fe.h"
@@ -192,7 +192,7 @@ log_entry(const char *logentry, int level)
  */
 #ifndef WIN32
 static void
-daemonize()
+daemonize(void)
 {
 	pid_t		pid;
 
@@ -552,7 +552,7 @@ print_table_info(tbl_info * tbl)
 
 /* init_db_list() creates the db_list and initalizes template1 */
 static Dllist *
-init_db_list()
+init_db_list(void)
 {
 	Dllist	   *db_list = DLNewList();
 	db_info    *dbs = NULL;
@@ -975,7 +975,7 @@ send_query(const char *query, db_info * dbi)
 
 
 static void
-free_cmd_args()
+free_cmd_args(void)
 {
 	if (args != NULL)
 	{
@@ -1109,7 +1109,7 @@ get_cmd_args(int argc, char *argv[])
 }
 
 static void
-usage()
+usage(void)
 {
 	int			i = 0;
 	float		f = 0;
@@ -1151,7 +1151,7 @@ usage()
 }
 
 static void
-print_cmd_args()
+print_cmd_args(void)
 {
 	sprintf(logbuffer, "Printing command_args");
 	log_entry(logbuffer, LVL_INFO);

@@ -1,7 +1,7 @@
 /* -------------------------------------------------------------------------
  * pg_dumplo
  *
- * $PostgreSQL: pgsql/contrib/pg_dumplo/main.c,v 1.19 2003/11/29 19:51:35 pgsql Exp $
+ * $PostgreSQL: pgsql/contrib/pg_dumplo/main.c,v 1.20 2004/10/25 02:15:00 tgl Exp $
  *
  *					Karel Zak 1999-2000
  * -------------------------------------------------------------------------
@@ -264,7 +264,7 @@ parse_lolist(LODumpMaster * pgLO)
 
 
 static void
-usage()
+usage(void)
 {
 	printf("\npg_dumplo %s - PostgreSQL large objects dump\n", PG_VERSION);
 	puts("pg_dumplo [option]\n\n"

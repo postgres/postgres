@@ -32,7 +32,7 @@
 
 
 int
-backend_pid()
+backend_pid(void)
 {
 	return getpid();
 }

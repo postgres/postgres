@@ -24,7 +24,7 @@
 #ifdef DICT_BODY
 #include <ctype.h> /* tolower */
 
-static void * setup_english_stemmer();
+static void * setup_english_stemmer(void);
 
 static const char * english_stem(void * z, const char * q, int i0, int i1);
 
@@ -1233,11 +1233,13 @@ find_english_stopword( unsigned char *buf, int len ) {
 #undef ISFINISH
 
 static int
-is_stopengword(void* obj,char* word,int len) {
+is_stopengword(void* obj,char* word,int len)
+{
 	return ( len == find_english_stopword((unsigned char*)word, len) ) ? 1 : 0;
 }
 
-static void * setup_english_stemmer()
+static void *
+setup_english_stemmer(void)
 {
     struct english_stemmer * z = (struct english_stemmer *) malloc(sizeof(struct english_stemmer));
     z->p = 0; z->p_size = 0;
@@ -1245,7 +1247,8 @@ static void * setup_english_stemmer()
     return (void *) z;
 }
 
-static void closedown_english_stemmer(void * z_)
+static void
+closedown_english_stemmer(void * z_)
 {
     struct english_stemmer * z = (struct english_stemmer *) z_;
     free_pool(z->irregulars);
@@ -1254,7 +1257,8 @@ static void closedown_english_stemmer(void * z_)
 }
 
 static char*
-engstemming(void* obj, char *word, int *len) {
+engstemming(void* obj, char *word, int *len)
+{
 	struct english_stemmer * z = (struct english_stemmer *) obj;
 	const char* stemmed_word;
 	char *result = word;
