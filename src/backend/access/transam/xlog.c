@@ -6,7 +6,7 @@
  * Portions Copyright (c) 1996-2000, PostgreSQL, Inc
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Header: /cvsroot/pgsql/src/backend/access/transam/xlog.c,v 1.34 2000/11/25 20:33:50 tgl Exp $
+ * $Header: /cvsroot/pgsql/src/backend/access/transam/xlog.c,v 1.35 2000/11/27 05:36:12 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -860,7 +860,11 @@ XLogFileInit(uint32 log, uint32 seg, bool *usexistent)
 			 log, seg, 0);
 
 	close(fd);
-	link(tpath, path);
+
+	if (link(tpath, path) < 0)
+		elog(STOP, "InitRelink(logfile %u seg %u) failed: %m",
+			 logId, logSeg);
+
 	unlink(tpath);
 
 	fd = BasicOpenFile(path, O_RDWR | PG_BINARY, S_IRUSR | S_IWUSR);
