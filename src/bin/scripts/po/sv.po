@@ -1,12 +1,12 @@
 # Swedish message translation file for postgresql
-# Dennis Björklund <db@zigo.dhs.org>, 2003, 2004.
+# Dennis Björklund <db@zigo.dhs.org>, 2003, 2004, 2005.
 #
 msgid ""
 msgstr ""
 "Project-Id-Version: PostgreSQL 8.0\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2004-06-25 09:44+0200\n"
-"PO-Revision-Date: 2004-06-25 10:12+0200\n"
+"POT-Creation-Date: 2005-01-06 12:37+0100\n"
+"PO-Revision-Date: 2005-01-06 12:39+0100\n"
 "Last-Translator: Dennis Björklund <db@zigo.dhs.org>\n"
 "Language-Team: Swedish <sv@li.org>\n"
 "MIME-Version: 1.0\n"
@@ -16,13 +16,13 @@ msgstr ""
 #: createdb.c:102 createdb.c:121 createlang.c:97 createlang.c:118
 #: createlang.c:160 createuser.c:117 createuser.c:132 dropdb.c:84 dropdb.c:93
 #: dropdb.c:101 droplang.c:94 droplang.c:115 droplang.c:157 dropuser.c:84
-#: dropuser.c:99 clusterdb.c:97 clusterdb.c:112 vacuumdb.c:114 vacuumdb.c:129
+#: dropuser.c:99 clusterdb.c:95 clusterdb.c:110 vacuumdb.c:112 vacuumdb.c:127
 #, c-format
 msgid "Try \"%s --help\" for more information.\n"
 msgstr "Försök med \"%s --help\" för mer information.\n"
 
 #: createdb.c:119 createlang.c:116 createuser.c:130 dropdb.c:99 droplang.c:113
-#: dropuser.c:97 clusterdb.c:110 vacuumdb.c:127
+#: dropuser.c:97 clusterdb.c:108 vacuumdb.c:125
 #, c-format
 msgid "%s: too many command-line arguments (first is \"%s\")\n"
 msgstr "%s: för många kommandoradsargument (första är \"%s\")\n"
@@ -52,7 +52,7 @@ msgstr ""
 "\n"
 
 #: createdb.c:218 createlang.c:299 createuser.c:240 dropdb.c:147
-#: droplang.c:280 dropuser.c:147 clusterdb.c:236 vacuumdb.c:262
+#: droplang.c:280 dropuser.c:147 clusterdb.c:234 vacuumdb.c:260
 #, c-format
 msgid "Usage:\n"
 msgstr "Användning:\n"
@@ -63,7 +63,7 @@ msgid "  %s [OPTION]... [DBNAME] [DESCRIPTION]\n"
 msgstr "  %s [FLAGGA]... [DBNAMN] [BESKRIVNING]\n"
 
 #: createdb.c:220 createlang.c:301 createuser.c:242 dropdb.c:149
-#: droplang.c:282 dropuser.c:149 clusterdb.c:238 vacuumdb.c:264
+#: droplang.c:282 dropuser.c:149 clusterdb.c:236 vacuumdb.c:262
 #, c-format
 msgid ""
 "\n"
@@ -85,7 +85,9 @@ msgstr "  -E, --encoding=ENCODING      teckenkodning för databasen\n"
 #: createdb.c:223
 #, c-format
 msgid "  -O, --owner=OWNER            database user to own the new database\n"
-msgstr "  -O, --owner=ÄGARE            databasanvändare som blir ägare till databasen\n"
+msgstr ""
+"  -O, --owner=ÄGARE            databasanvändare som blir ägare till "
+"databasen\n"
 
 #: createdb.c:224
 #, c-format
@@ -96,7 +98,8 @@ msgstr "  -T, --template=MALL          databasmall att kopiera från\n"
 #, c-format
 msgid ""
 "  -e, --echo                   show the commands being sent to the server\n"
-msgstr "  -e, --echo                   visa kommandon som skickas till servern\n"
+msgstr ""
+"  -e, --echo                   visa kommandon som skickas till servern\n"
 
 #: createdb.c:226
 #, c-format
@@ -111,9 +114,10 @@ msgstr "  --help                       visa denna hjälp, avsluta sedan\n"
 #: createdb.c:228
 #, c-format
 msgid "  --version                    output version information, then exit\n"
-msgstr "  --version                    visa versionsinformation, avsluta sedan\n"
+msgstr ""
+"  --version                    visa versionsinformation, avsluta sedan\n"
 
-#: createdb.c:229 createuser.c:255 clusterdb.c:246 vacuumdb.c:275
+#: createdb.c:229 createuser.c:255 clusterdb.c:244 vacuumdb.c:273
 #, c-format
 msgid ""
 "\n"
@@ -126,7 +130,9 @@ msgstr ""
 #, c-format
 msgid ""
 "  -h, --host=HOSTNAME          database server host or socket directory\n"
-msgstr "  -h, --host=VÄRDNAMN          databasens värdnamn eller uttag(socket)-katalog\n"
+msgstr ""
+"  -h, --host=VÄRDNAMN          databasens värdnamn eller uttag(socket)-"
+"katalog\n"
 
 #: createdb.c:231
 #, c-format
@@ -154,7 +160,7 @@ msgstr ""
 "användarnamnet.\n"
 
 #: createdb.c:235 createlang.c:312 createuser.c:262 dropdb.c:159
-#: droplang.c:292 dropuser.c:159 clusterdb.c:252 vacuumdb.c:281
+#: droplang.c:292 dropuser.c:159 clusterdb.c:250 vacuumdb.c:279
 #, c-format
 msgid ""
 "\n"
@@ -230,7 +236,7 @@ msgid "  -d, --dbname=DBNAME       database to install language in\n"
 msgstr "  -d, --dbname=DBNAMN       databas att installera språk i\n"
 
 #: createlang.c:303 createuser.c:251 dropdb.c:150 droplang.c:284
-#: dropuser.c:150 clusterdb.c:242
+#: dropuser.c:150 clusterdb.c:240
 #, c-format
 msgid ""
 "  -e, --echo                show the commands being sent to the server\n"
@@ -249,36 +255,36 @@ msgid ""
 msgstr "  -L, --pglib=KATALOG       hitta språkinterpretator i KATALOG\n"
 
 #: createlang.c:306 createuser.c:256 dropdb.c:153 droplang.c:286
-#: dropuser.c:153 clusterdb.c:247 vacuumdb.c:276
+#: dropuser.c:153 clusterdb.c:245 vacuumdb.c:274
 #, c-format
 msgid "  -h, --host=HOSTNAME       database server host or socket directory\n"
 msgstr ""
 "  -h, --host=VÄRDNAMN       databasens värdnamn eller uttag(socket)-katalog\n"
 
 #: createlang.c:307 createuser.c:257 dropdb.c:154 droplang.c:287
-#: dropuser.c:154 clusterdb.c:248 vacuumdb.c:277
+#: dropuser.c:154 clusterdb.c:246 vacuumdb.c:275
 #, c-format
 msgid "  -p, --port=PORT           database server port\n"
 msgstr "  -p, --port=PORT           databasens serverport\n"
 
-#: createlang.c:308 dropdb.c:155 droplang.c:288 clusterdb.c:249 vacuumdb.c:278
+#: createlang.c:308 dropdb.c:155 droplang.c:288 clusterdb.c:247 vacuumdb.c:276
 #, c-format
 msgid "  -U, --username=USERNAME   user name to connect as\n"
 msgstr "  -U, --username=ANVÄNDARE  användarnamn att koppla upp som\n"
 
-#: createlang.c:309 dropdb.c:156 droplang.c:289 clusterdb.c:250 vacuumdb.c:279
+#: createlang.c:309 dropdb.c:156 droplang.c:289 clusterdb.c:248 vacuumdb.c:277
 #, c-format
 msgid "  -W, --password            prompt for password\n"
 msgstr "  -W, --password            fråga efter lösenord\n"
 
 #: createlang.c:310 createuser.c:253 dropdb.c:157 droplang.c:290
-#: dropuser.c:157 clusterdb.c:244
+#: dropuser.c:157 clusterdb.c:242
 #, c-format
 msgid "  --help                    show this help, then exit\n"
 msgstr "  --help                    visa denna hjälpen, avsluta sedan\n"
 
 #: createlang.c:311 createuser.c:254 dropdb.c:158 droplang.c:291
-#: dropuser.c:158 clusterdb.c:245
+#: dropuser.c:158 clusterdb.c:243
 #, c-format
 msgid "  --version                 output version information, then exit\n"
 msgstr "  --version                 visa versionsinformation, avsluta sedan\n"
@@ -373,7 +379,7 @@ msgstr "  -N, --unencrypted         spara lösenordet okrypterat\n"
 msgid "  -i, --sysid=SYSID         select sysid for new user\n"
 msgstr "  -i, --sysid=SYSID         välj system-id för nya användaren\n"
 
-#: createuser.c:252 dropdb.c:152 dropuser.c:152 clusterdb.c:243
+#: createuser.c:252 dropdb.c:152 dropuser.c:152 clusterdb.c:241
 #, c-format
 msgid "  -q, --quiet               don't write any messages\n"
 msgstr "  -q, --quiet               skriv inte ut några meddelanden\n"
@@ -506,32 +512,32 @@ msgstr ""
 "  -U, --username=USERNAMN   användare att koppla upp som\n"
 "                            (inte den som tas bort)\n"
 
-#: clusterdb.c:120
+#: clusterdb.c:118
 #, c-format
 msgid "%s: cannot cluster all databases and a specific one at the same time\n"
 msgstr "%s: kan inte klustra alla databaser och en specifik på en gång\n"
 
-#: clusterdb.c:126
+#: clusterdb.c:124
 #, c-format
 msgid "%s: cannot cluster a specific table in all databases\n"
 msgstr "%s: kan inte klustra en specifik tabell i alla databaser\n"
 
-#: clusterdb.c:182
+#: clusterdb.c:180
 #, c-format
 msgid "%s: clustering of table \"%s\" in database \"%s\" failed: %s"
 msgstr "%s: klustring av tabell \"%s\" i databas \"%s\" misslyckades: %s"
 
-#: clusterdb.c:185
+#: clusterdb.c:183
 #, c-format
 msgid "%s: clustering of database \"%s\" failed: %s"
 msgstr "%s: klustring av databas \"%s\" misslyckades: %s"
 
-#: clusterdb.c:221
+#: clusterdb.c:219
 #, c-format
 msgid "%s: clustering database \"%s\"\n"
 msgstr "%s: klustring av databas \"%s\"\n"
 
-#: clusterdb.c:235
+#: clusterdb.c:233
 #, c-format
 msgid ""
 "%s clusters all previously clustered tables in a database.\n"
@@ -540,27 +546,27 @@ msgstr ""
 "%s klustrar alla tidigare klustrade tabeller i en database.\n"
 "\n"
 
-#: clusterdb.c:237 vacuumdb.c:263
+#: clusterdb.c:235 vacuumdb.c:261
 #, c-format
 msgid "  %s [OPTION]... [DBNAME]\n"
 msgstr "  %s [FLAGGA]... [DBNAMN]\n"
 
-#: clusterdb.c:239
+#: clusterdb.c:237
 #, c-format
 msgid "  -a, --all                 cluster all databases\n"
 msgstr "  -a, --all                 klustra alla databaser\n"
 
-#: clusterdb.c:240
+#: clusterdb.c:238
 #, c-format
 msgid "  -d, --dbname=DBNAME       database to cluster\n"
 msgstr "  -d, --dbname=DBNAME       databas att klustra\n"
 
-#: clusterdb.c:241
+#: clusterdb.c:239
 #, c-format
 msgid "  -t, --table=TABLE         cluster specific table only\n"
 msgstr "  -t, --table=TABLE         klustra enbart specifik tabell\n"
 
-#: clusterdb.c:251
+#: clusterdb.c:249
 #, c-format
 msgid ""
 "\n"
@@ -569,32 +575,32 @@ msgstr ""
 "\n"
 "Läs beskrivningen av SQL-kommandot CLUSTER för detaljer.\n"
 
-#: vacuumdb.c:137
+#: vacuumdb.c:135
 #, c-format
 msgid "%s: cannot vacuum all databases and a specific one at the same time\n"
 msgstr "%s: kan inte köra vacuum på alla tabeller och en specifik på en gång\n"
 
-#: vacuumdb.c:143
+#: vacuumdb.c:141
 #, c-format
 msgid "%s: cannot vacuum a specific table in all databases\n"
 msgstr "%s: kan inte köra vacuum på en specifik tabell i alla databaser\n"
 
-#: vacuumdb.c:207
+#: vacuumdb.c:205
 #, c-format
 msgid "%s: vacuuming of table \"%s\" in database \"%s\" failed: %s"
 msgstr "%s: vaccum på tabell \"%s\" i databas \"%s\" misslyckades: %s"
 
-#: vacuumdb.c:210
+#: vacuumdb.c:208
 #, c-format
 msgid "%s: vacuuming of database \"%s\" failed: %s"
 msgstr "%s: vacuum av databas \"%s\" misslyckades: %s"
 
-#: vacuumdb.c:247
+#: vacuumdb.c:245
 #, c-format
 msgid "%s: vacuuming database \"%s\"\n"
 msgstr "%s: kör vacuum på databas \"%s\"\n"
 
-#: vacuumdb.c:261
+#: vacuumdb.c:259
 #, c-format
 msgid ""
 "%s cleans and analyzes a PostgreSQL database.\n"
@@ -603,34 +609,34 @@ msgstr ""
 "%s städar upp och analyserar en PostgreSQL-databas.\n"
 "\n"
 
-#: vacuumdb.c:265
+#: vacuumdb.c:263
 #, c-format
 msgid "  -a, --all                       vacuum all databases\n"
 msgstr "  -a, --all                       kör vacuum på alla databaser\n"
 
-#: vacuumdb.c:266
+#: vacuumdb.c:264
 #, c-format
 msgid "  -d, --dbname=DBNAME             database to vacuum\n"
 msgstr "  -d, --dbname=DBNAMN             databas att köra vacuum på\n"
 
-#: vacuumdb.c:267
+#: vacuumdb.c:265
 #, c-format
 msgid "  -t, --table='TABLE[(COLUMNS)]'  vacuum specific table only\n"
 msgstr ""
 "  -t, --table='TABELL[(KOLUMNER)]'\n"
 "                                 kör vakum enbart på specifik tabell\n"
 
-#: vacuumdb.c:268
+#: vacuumdb.c:266
 #, c-format
 msgid "  -f, --full                      do full vacuuming\n"
 msgstr "  -f, --full                      kör full vacuum\n"
 
-#: vacuumdb.c:269
+#: vacuumdb.c:267
 #, c-format
 msgid "  -z, --analyze                   update optimizer hints\n"
 msgstr "  -z, --analyze                   updatera optimeringsstatistik\n"
 
-#: vacuumdb.c:270
+#: vacuumdb.c:268
 #, c-format
 msgid ""
 "  -e, --echo                      show the commands being sent to the "
@@ -638,29 +644,29 @@ msgid ""
 msgstr ""
 "  -e, --echo                      visa kommandon som skickas till servern\n"
 
-#: vacuumdb.c:271
+#: vacuumdb.c:269
 #, c-format
 msgid "  -q, --quiet                     don't write any messages\n"
 msgstr "  -q, --quiet                     skriv inte ut några meddelanden\n"
 
-#: vacuumdb.c:272
+#: vacuumdb.c:270
 #, c-format
 msgid "  -v, --verbose                   write a lot of output\n"
 msgstr "  -v, --verbose                   skriv massor med utdata\n"
 
-#: vacuumdb.c:273
+#: vacuumdb.c:271
 #, c-format
 msgid "  --help                          show this help, then exit\n"
 msgstr "  --help                          visa denna hjälp, avsluta sedan\n"
 
-#: vacuumdb.c:274
+#: vacuumdb.c:272
 #, c-format
 msgid ""
 "  --version                       output version information, then exit\n"
 msgstr ""
 "  --version                       visa versionsinformation, avsluta sedan\n"
 
-#: vacuumdb.c:280
+#: vacuumdb.c:278
 #, c-format
 msgid ""
 "\n"
@@ -669,37 +675,47 @@ msgstr ""
 "\n"
 "Läs beskrivningen på SQL-kommandot VACUUM för detaljer.\n"
 
-#: common.c:86 common.c:112
+#: common.c:33
+#, c-format
+msgid "%s: could not obtain information about current user: %s\n"
+msgstr "%s: kunde inte få information om den aktuella användaren: %s\n"
+
+#: common.c:44
+#, c-format
+msgid "%s: could not get current user name: %s\n"
+msgstr "%s: kunde inte ta reda på det aktuella användarnamnet: %s\n"
+
+#: common.c:89 common.c:115
 msgid "Password: "
 msgstr "Lösenord: "
 
-#: common.c:99
+#: common.c:102
 #, c-format
 msgid "%s: could not connect to database %s\n"
 msgstr "%s: kunde inte koppla upp mot databas %s\n"
 
-#: common.c:122
+#: common.c:125
 #, c-format
 msgid "%s: could not connect to database %s: %s"
-msgstr "%s: kunde inte kopppla upp mot databas %s: %s"
+msgstr "%s: kunde inte koppla upp mot databas %s: %s"
 
-#: common.c:146
+#: common.c:149
 #, c-format
 msgid "%s: query failed: %s"
 msgstr "%s: fråga misslyckades: %s"
 
-#: common.c:147
+#: common.c:150
 #, c-format
 msgid "%s: query was: %s\n"
 msgstr "%s: fråga var: %s\n"
 
 #. translator: Make sure the (y/n) prompts match the translation of this.
-#: common.c:161
+#: common.c:164
 msgid "y"
 msgstr "j"
 
 #. translator: Make sure the (y/n) prompts match the translation of this.
-#: common.c:163
+#: common.c:166
 msgid "n"
 msgstr "n"
 
