@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/ddl.sgml,v 1.36 2005/01/08 01:44:05 tgl Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/ddl.sgml,v 1.37 2005/01/09 17:47:30 tgl Exp $ -->
 
 <chapter id="ddl">
  <title>Data Definition</title>
@@ -1279,23 +1279,22 @@ WHERE c.altitude &gt; 500 and c.tableoid = p.oid;
 <programlisting>
 ALTER TABLE products ADD COLUMN description text;
 </programlisting>
-    The new column will initially be filled with null values in the
-    existing rows of the table.
+    The new column is initially filled with whatever default
+    value is given (null if you don't specify a <literal>DEFAULT</> clause).
    </para>
 
    <para>
-    You can also define a constraint on the column at the same time,
+    You can also define constraints on the column at the same time,
     using the usual syntax:
 <programlisting>
 ALTER TABLE products ADD COLUMN description text CHECK (description &lt;&gt; '');
 </programlisting>
-    A new column cannot have a not-null constraint since the column
-    initially has to contain null values.  But you can add a not-null
-    constraint later.  Also, you cannot define a default value on a
-    new column.  According to the SQL standard, this would have to
-    fill the new columns in the existing rows with the default value,
-    which is not implemented yet.  But you can adjust the column
-    default later on.
+    In fact all the options that can be applied to a column description
+    in <command>CREATE TABLE</> can be used here.  Keep in mind however
+    that the default value must satisfy the given constraints, or the
+    <literal>ADD</> will fail.  Alternatively, you can add
+    constraints later (see below) after you've filled in the new column
+    correctly.
    </para>
   </sect2>
 
@@ -1390,12 +1389,17 @@ ALTER TABLE products ALTER COLUMN product_no DROP NOT NULL;
 <programlisting>
 ALTER TABLE products ALTER COLUMN price SET DEFAULT 7.77;
 </programlisting>
+    Note that this doesn't affect any existing rows in the table, it
+    just changes the default for future <command>INSERT</> commands.
+   </para>
+
+   <para>
     To remove any default value, use
 <programlisting>
 ALTER TABLE products ALTER COLUMN price DROP DEFAULT;
 </programlisting>
-    This is equivalent to setting the default to null, at least in
-    <productname>PostgreSQL</>.  As a consequence, it is not an error
+    This is equivalent to setting the default to null.
+    As a consequence, it is not an error
     to drop a default where one hadn't been defined, because the
     default is implicitly the null value.
    </para>
