@@ -12,7 +12,7 @@
  * Portions Copyright (c) 1996-2001, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Id: c.h,v 1.99 2001/08/24 14:07:49 petere Exp $
+ * $Id: c.h,v 1.100 2001/08/24 22:46:28 petere Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -50,6 +50,7 @@
 */
 
 #include "pg_config.h"
+#include "postgres_ext.h"
 
 #include <stdio.h>
 #include <stdlib.h>
