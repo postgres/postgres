@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/interfaces/libpq/fe-connect.c,v 1.217 2003/01/06 03:18:27 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/interfaces/libpq/fe-connect.c,v 1.218 2003/01/06 22:48:16 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -132,9 +132,8 @@ static const PQconninfoOption PQconninfoOptions[] = {
 	"Database-Host", "", 40},
 
 	{"hostaddr", "PGHOSTADDR", NULL, NULL,
-	"Database-Host-IPv4-Address", "", 15},		/* Room for
-												 * abc.def.ghi.jkl */
-
+	"Database-Host-IP-Address", "", 45},
+	
 	{"port", "PGPORT", DEF_PGPORT_STR, NULL,
 	"Database-Port", "", 6},
 

@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/libpq.sgml,v 1.103 2002/12/13 05:49:10 momjian Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/libpq.sgml,v 1.104 2003/01/06 22:48:16 momjian Exp $
 -->
 
  <chapter id="libpq">
@@ -110,14 +110,15 @@ PGconn *PQconnectdb(const char *conninfo)
      <listitem>
      <para>
       IP address of host to connect to. This should be in standard
-      numbers-and-dots form, as used by the BSD functions <function>inet_aton</> et al. If
-      a nonzero-length string is specified, TCP/IP communication is used.
+      IPv4 address format, e.g. <literal>172.28.40.9</>.  If your machine 
+      supports IPv6, you can also use those addresses. If a nonzero-length 
+      string is specified, TCP/IP communication is used.
      </para>
      <para>
       Using <literal>hostaddr</> instead of host allows the application to avoid a host
       name look-up, which may be important in applications with time
       constraints. However, Kerberos authentication requires the host
-      name. The following therefore applies. If host is specified without
+      name. The following therefore applies: If host is specified without
       <literal>hostaddr</>, a host name lookup is forced. If <literal>hostaddr</> is specified without
       host, the value for <literal>hostaddr</> gives the remote address; if Kerberos is
       used, this causes a reverse name query. If both host and <literal>hostaddr</> are
