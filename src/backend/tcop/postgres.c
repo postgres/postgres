@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/tcop/postgres.c,v 1.220 2001/06/12 22:54:06 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/tcop/postgres.c,v 1.221 2001/06/18 23:42:32 momjian Exp $
  *
  * NOTES
  *	  this is the "main" module of the postgres backend and
@@ -1108,6 +1108,8 @@ PostgresMain(int argc, char *argv[], int real_argc, char *real_argv[], const cha
 	const char *DBName = NULL;
 	bool		secure = true;
 	int			errs = 0;
+	GucContext	ctx;
+	char		*tmp;
 
 	int			firstchar;
 	StringInfo	parser_input;
@@ -1117,6 +1119,9 @@ PostgresMain(int argc, char *argv[], int real_argc, char *real_argv[], const cha
 
 	char	   *potential_DataDir = NULL;
 
+	/* all options are allowed if not under postmaster */
+	ctx = IsUnderPostmaster ? PGC_BACKEND : PGC_POSTMASTER;
+	
 	/*
 	 * Catch standard options before doing much else.  This even works on
 	 * systems without getopt_long.
@@ -1188,7 +1193,7 @@ PostgresMain(int argc, char *argv[], int real_argc, char *real_argv[], const cha
 		{
 			case 'A':
 #ifdef USE_ASSERT_CHECKING
-				assert_enabled = atoi(optarg);
+				SetConfigOption("debug_assertions", optarg, ctx, true);
 #else
 				fprintf(stderr, "Assert checking is not compiled in\n");
 #endif
@@ -1200,7 +1205,7 @@ PostgresMain(int argc, char *argv[], int real_argc, char *real_argv[], const cha
 				 * specify the size of buffer pool
 				 */
 				if (secure)
-					NBuffers = atoi(optarg);
+					SetConfigOption("shared_buffers", optarg, ctx, true);
 				break;
 
 			case 'C':
@@ -1217,17 +1222,18 @@ PostgresMain(int argc, char *argv[], int real_argc, char *real_argv[], const cha
 				break;
 
 			case 'd':			/* debug level */
-				DebugLvl = atoi(optarg);
+				tmp = "true";
+				SetConfigOption("debug_level", optarg, ctx, true);
 				if (DebugLvl >= 1);
-				Log_connections = true;
+				SetConfigOption("log_connections", tmp, ctx, true);
 				if (DebugLvl >= 2)
-					Debug_print_query = true;
+					SetConfigOption("debug_print_query", tmp, ctx, true);
 				if (DebugLvl >= 3)
-					Debug_print_parse = true;
+					SetConfigOption("debug_print_parse", tmp, ctx, true);
 				if (DebugLvl >= 4)
-					Debug_print_plan = true;
+					SetConfigOption("debug_print_plan", tmp, ctx, true);
 				if (DebugLvl >= 5)
-					Debug_print_rewritten = true;
+					SetConfigOption("debug_print_rewritten", tmp, ctx, true);
 				break;
 
 			case 'E':
@@ -1252,7 +1258,7 @@ PostgresMain(int argc, char *argv[], int real_argc, char *real_argv[], const cha
 				 * turn off fsync
 				 */
 				if (secure)
-					enableFsync = false;
+					SetConfigOption("fsync", "true", ctx, true);
 				break;
 
 			case 'f':
@@ -1260,29 +1266,32 @@ PostgresMain(int argc, char *argv[], int real_argc, char *real_argv[], const cha
 				/*
 				 * f - forbid generation of certain plans
 				 */
+				tmp = NULL;
 				switch (optarg[0])
 				{
 					case 's':	/* seqscan */
-						enable_seqscan = false;
+						tmp = "enable_seqscan";
 						break;
 					case 'i':	/* indexscan */
-						enable_indexscan = false;
+						tmp = "enable_indexscan";
 						break;
 					case 't':	/* tidscan */
-						enable_tidscan = false;
+						tmp = "enable_tidscan";
 						break;
 					case 'n':	/* nestloop */
-						enable_nestloop = false;
+						tmp = "enable_nestloop";
 						break;
 					case 'm':	/* mergejoin */
-						enable_mergejoin = false;
+						tmp = "enable_mergejoin";
 						break;
 					case 'h':	/* hashjoin */
-						enable_hashjoin = false;
+						tmp = "enable_hashjoin";
 						break;
 					default:
 						errs++;
 				}
+				if (tmp)
+					SetConfigOption(tmp, "false", ctx, true);
 				break;
 
 			case 'i':
@@ -1352,13 +1361,7 @@ PostgresMain(int argc, char *argv[], int real_argc, char *real_argv[], const cha
 				/*
 				 * S - amount of sort memory to use in 1k bytes
 				 */
-				{
-					int			S;
-
-					S = atoi(optarg);
-					if (S >= 4 * BLCKSZ / 1024)
-						SortMem = S;
-				}
+				SetConfigOption("sort_mem", optarg, ctx, true);
 				break;
 
 			case 's':
@@ -1366,7 +1369,7 @@ PostgresMain(int argc, char *argv[], int real_argc, char *real_argv[], const cha
 				/*
 				 * s - report usage statistics (timings) after each query
 				 */
-				Show_query_stats = 1;
+				SetConfigOption("show_query_stats", optarg, ctx, true);
 				break;
 
 			case 't':
@@ -1380,23 +1383,26 @@ PostgresMain(int argc, char *argv[], int real_argc, char *real_argv[], const cha
 				 *	caution: -s can not be used together with -t.
 				 * ----------------
 				 */
+				tmp = NULL;
 				switch (optarg[0])
 				{
 					case 'p':
 						if (optarg[1] == 'a')
-							Show_parser_stats = 1;
+							tmp = "show_parser_stats";
 						else if (optarg[1] == 'l')
-							Show_planner_stats = 1;
+							tmp = "show_planner_stats";
 						else
 							errs++;
 						break;
 					case 'e':
-						Show_executor_stats = 1;
+						tmp = "show_parser_stats";
 						break;
 					default:
 						errs++;
 						break;
 				}
+				if (tmp)
+					SetConfigOption(tmp, "true", ctx, true);
 				break;
 
 			case 'v':
@@ -1460,9 +1466,7 @@ PostgresMain(int argc, char *argv[], int real_argc, char *real_argv[], const cha
 							elog(ERROR, "-c %s requires argument", optarg);
 					}
 
-					/* all options are allowed if not under postmaster */
-					SetConfigOption(name, value,
-					 (IsUnderPostmaster) ? PGC_BACKEND : PGC_POSTMASTER, true);
+					SetConfigOption(name, value, ctx, true);
 					free(name);
 					if (value)
 						free(value);
@@ -1709,7 +1713,7 @@ PostgresMain(int argc, char *argv[], int real_argc, char *real_argv[], const cha
 	if (!IsUnderPostmaster)
 	{
 		puts("\nPOSTGRES backend interactive interface ");
-		puts("$Revision: 1.220 $ $Date: 2001/06/12 22:54:06 $\n");
+		puts("$Revision: 1.221 $ $Date: 2001/06/18 23:42:32 $\n");
 	}
 
 	/*
