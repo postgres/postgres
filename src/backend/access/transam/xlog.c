@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2003, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/backend/access/transam/xlog.c,v 1.151 2004/07/22 20:18:40 tgl Exp $
+ * $PostgreSQL: pgsql/src/backend/access/transam/xlog.c,v 1.152 2004/07/22 21:09:37 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -4007,6 +4007,18 @@ StartupXLOG(void)
 
 	/* Now we can determine the list of expected TLIs */
 	expectedTLIs = readTimeLineHistory(recoveryTargetTLI);
+
+	/*
+	 * If pg_control's timeline is not in expectedTLIs, then we cannot
+	 * proceed: the backup is not part of the history of the requested
+	 * timeline.
+	 */
+	if (!list_member_int(expectedTLIs,
+						 (int) ControlFile->checkPointCopy.ThisTimeLineID))
+		ereport(FATAL,
+				(errmsg("requested timeline %u is not a child of database system timeline %u",
+						recoveryTargetTLI,
+						ControlFile->checkPointCopy.ThisTimeLineID)));
 
 	/*
 	 * Get the last valid checkpoint record.  If the latest one according
