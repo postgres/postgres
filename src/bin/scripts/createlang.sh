@@ -8,7 +8,7 @@
 #
 #
 # IDENTIFICATION
-#    $Header: /cvsroot/pgsql/src/bin/scripts/Attic/createlang.sh,v 1.7 2000/03/14 23:06:41 thomas Exp $
+#    $Header: /cvsroot/pgsql/src/bin/scripts/Attic/createlang.sh,v 1.8 2000/03/25 19:10:27 tgl Exp $
 #
 #-------------------------------------------------------------------------
 
@@ -184,9 +184,13 @@ case "$langname" in
 		lancomp="PL/Tcl"
 		trusted="TRUSTED "
 		handler="pltcl_call_handler";;
+	plperl)
+		lancomp="PL/Perl"
+		trusted="TRUSTED "
+		handler="plperl_call_handler";;
 	*)
 		echo "$CMDNAME: unsupported language '$langname'"
-		echo "Supported languages are 'plpgsql' and 'pltcl'."
+		echo "Supported languages are 'plpgsql', 'pltcl', and 'plperl'."
 		exit 1
         ;;
 esac
