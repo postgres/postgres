@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *    $Header: /cvsroot/pgsql/src/backend/storage/buffer/bufmgr.c,v 1.7 1997/01/14 05:40:45 vadim Exp $
+ *    $Header: /cvsroot/pgsql/src/backend/storage/buffer/bufmgr.c,v 1.8 1997/01/16 08:11:41 vadim Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -26,7 +26,7 @@
  *
  * WriteNoReleaseBuffer() -- mark the buffer contents as "dirty"
  *	but don't unpin.  The disk IO is delayed until buffer
- *	replacement if LateWrite flag is set.
+ *	replacement if WriteMode is BUFFER_LATE_WRITE.
  *
  * WriteBuffer() -- WriteNoReleaseBuffer() + ReleaseBuffer() 
  *
@@ -74,11 +74,12 @@
 #include "executor/execdebug.h"	/* for NDirectFileRead */
 #include "catalog/catalog.h"
 
-extern int LateWrite;
 extern SPINLOCK BufMgrLock;
 extern int ReadBufferCount;
 extern int BufferHitCount;
 extern int BufferFlushCount;
+
+static int WriteMode = BUFFER_LATE_WRITE;	/* Delayed write is default */
 
 static void WaitIO(BufferDesc *buf, SPINLOCK spinlock);
 #ifndef HAS_TEST_AND_SET
@@ -90,7 +91,7 @@ static Buffer ReadBufferWithBufferLock(Relation relation, BlockNumber blockNum,
 				       bool bufferLockHeld);
 static BufferDesc *BufferAlloc(Relation reln, BlockNumber blockNum,
 			       bool *foundPtr, bool bufferLockHeld);
-static int FlushBuffer(Buffer buffer);
+static int FlushBuffer (Buffer buffer, bool release);
 static void BufferSync(void);
 static int BufferReplace(BufferDesc *bufHdr, bool bufferLockHeld);
 
@@ -611,8 +612,8 @@ BufferAlloc(Relation reln,
 /*
  * WriteBuffer--
  *
- *	Pushes buffer contents to disk if LateWrite is
- * not set.  Otherwise, marks contents as dirty.  
+ *	Pushes buffer contents to disk if WriteMode is BUFFER_FLUSH_WRITE.
+ *	Otherwise, marks contents as dirty.  
  *
  * Assume that buffer is pinned.  Assume that reln is
  *	valid.
@@ -628,8 +629,8 @@ WriteBuffer(Buffer buffer)
 {
     BufferDesc	*bufHdr;
 
-    if (! LateWrite) {
-	return(FlushBuffer(buffer));
+    if (WriteMode == BUFFER_FLUSH_WRITE) {
+	return (FlushBuffer (buffer, TRUE));
     } else {
 
 	if (BufferIsLocal(buffer))
@@ -712,26 +713,41 @@ DirtyBufferCopy(Oid dbid, Oid relid, BlockNumber blkno, char *dest)
  * us).
  */
 static int
-FlushBuffer(Buffer buffer)
+FlushBuffer(Buffer buffer, bool release)
 {
     BufferDesc	*bufHdr;
+    Oid bufdb;
+    Relation bufrel;
+    int	status;
 
     if (BufferIsLocal(buffer))
-	return FlushLocalBuffer(buffer);
+	return FlushLocalBuffer(buffer, release);
 	    
     if (BAD_BUFFER_ID(buffer))
 	return (STATUS_ERROR);
     
     bufHdr = &BufferDescriptors[buffer-1];
+    bufdb = bufHdr->tag.relId.dbId;
     
-    if (!BufferReplace(bufHdr, false)) {
-	elog(WARN, "FlushBuffer: cannot flush %d", bufHdr->tag.blockNum);
+    Assert (bufdb == MyDatabaseId || bufdb == (Oid) NULL);
+    bufrel = RelationIdCacheGetRelation (bufHdr->tag.relId.relId);
+    Assert (bufrel != (Relation) NULL);
+
+    status = smgrflush(bufHdr->bufsmgr, bufrel, bufHdr->tag.blockNum,
+			   (char *) MAKE_PTR(bufHdr->data));
+    
+    if (status == SM_FAIL)
+    {
+	elog(WARN, "FlushBuffer: cannot flush block %u of the relation %.*s", 
+			bufHdr->tag.blockNum, 
+			NAMEDATALEN, bufrel->rd_rel->relname.data);
 	return (STATUS_ERROR);
     }
     
     SpinAcquire(BufMgrLock); 
     bufHdr->flags &= ~BM_DIRTY; 
-    UnpinBuffer(bufHdr);
+    if ( release )
+    	UnpinBuffer(bufHdr);
     SpinRelease(BufMgrLock);
     
     return(STATUS_OK);
@@ -750,8 +766,8 @@ WriteNoReleaseBuffer(Buffer buffer)
 {
     BufferDesc	*bufHdr;
     
-    if (! LateWrite) {
-	return(FlushBuffer(buffer));
+    if (WriteMode == BUFFER_FLUSH_WRITE) {
+	return (FlushBuffer (buffer, FALSE));
     } else {
 
 	if (BufferIsLocal(buffer))
@@ -899,7 +915,11 @@ BufferSync()
 		    elog(WARN, "cannot write %u for %s",
 			 bufHdr->tag.blockNum, bufHdr->sb_relname);
 		}
-		
+		/*
+		 * What if someone has marked this buffer as DIRTY after
+		 * smgr[blind]write but before SpinAcquire(BufMgrLock)
+		 * ??? - vadim 01/16/97
+		 */
 		bufHdr->flags &= ~BM_DIRTY;
 		if (reln != (Relation)NULL)
 		    RelationDecrementReferenceCount(reln);
@@ -1145,7 +1165,6 @@ BufferGetRelation(Buffer buffer)
  *
  * Flush the buffer corresponding to 'bufHdr'
  *
- * Assumes that the BufMgrLock has NOT been acquired.
  */
 static int
 BufferReplace(BufferDesc *bufHdr, bool bufferLockHeld)
@@ -1655,3 +1674,11 @@ BufferRefCountRestore(int *refcountsave)
     }
 }
 
+int SetBufferWriteMode (int mode)
+{
+    int old;
+    
+    old = WriteMode;
+    WriteMode = mode;
+    return (old);
+}
