@@ -4,7 +4,7 @@
  *
  * Portions Copyright (c) 1996-2004, PostgreSQL Global Development Group
  *
- * $PostgreSQL: pgsql/src/bin/pg_ctl/pg_ctl.c,v 1.34 2004/10/12 21:54:43 petere Exp $
+ * $PostgreSQL: pgsql/src/bin/pg_ctl/pg_ctl.c,v 1.35 2004/10/13 10:35:05 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -20,6 +20,10 @@
 
 #include "libpq/pqsignal.h"
 #include "getopt_long.h"
+
+#if defined(__CYGWIN__)
+#include <windows.h>
+#endif
 
 #ifndef HAVE_OPTRESET
 int			optreset;
@@ -95,7 +99,7 @@ static void do_reload(void);
 static void do_status(void);
 static void do_kill(pgpid_t pid);
 
-#ifdef WIN32
+#if defined(WIN32) || defined(__CYGWIN__)
 static bool pgwin32_IsInstalled(SC_HANDLE);
 static char *pgwin32_CommandLine(bool);
 static void pgwin32_doRegister();
@@ -116,7 +120,7 @@ static char pid_file[MAXPGPATH];
 static char conf_file[MAXPGPATH];
 
 
-#ifdef WIN32
+#if defined(WIN32) || defined(__CYGWIN__)
 static void
 write_eventlog(int level, const char *line)
 {
@@ -154,7 +158,7 @@ write_stderr(const char *fmt,...)
 	va_list		ap;
 
 	va_start(ap, fmt);
-#ifndef WIN32
+#if !defined(WIN32) && !defined(__CYGWIN__)
 	/* On Unix, we just fprintf to stderr */
 	vfprintf(stderr, fmt, ap);
 #else
@@ -318,7 +322,7 @@ start_postmaster(void)
 	 * http://dev.remotenetworktechnology.com/cmd/cmdfaq.htm
 	 */
 	if (log_file != NULL)
-#ifndef WIN32
+#if !defined(WIN32) && !defined(__CYGWIN__)
 		snprintf(cmd, MAXPGPATH, "%s\"%s\" %s%s < \"%s\" >> \"%s\" 2>&1 &%s",
 #else
 		snprintf(cmd, MAXPGPATH, "%sSTART /B \"\" \"%s\" %s%s < \"%s\" >> \"%s\" 2>&1%s",
@@ -326,7 +330,7 @@ start_postmaster(void)
 				 SYSTEMQUOTE, postgres_path, pgdata_opt, post_opts,
 				 DEVNULL, log_file, SYSTEMQUOTE);
 	else
-#ifndef WIN32
+#if !defined(WIN32) && !defined(__CYGWIN__)
 		snprintf(cmd, MAXPGPATH, "%s\"%s\" %s%s < \"%s\" 2>&1 &%s",
 #else
 		snprintf(cmd, MAXPGPATH, "%sSTART /B \"\" \"%s\" %s%s < \"%s\" 2>&1%s",
@@ -807,7 +811,7 @@ do_kill(pgpid_t pid)
 	}
 }
 
-#ifdef WIN32
+#if defined(WIN32) || defined(__CYGWIN__)
 
 static bool
 pgwin32_IsInstalled(SC_HANDLE hSCM)
@@ -1085,14 +1089,14 @@ do_help(void)
 	printf(_("  %s reload  [-D DATADIR] [-s]\n"), progname);
 	printf(_("  %s status  [-D DATADIR]\n"), progname);
 	printf(_("  %s kill    SIGNALNAME PROCESSID\n"), progname);
-#ifdef WIN32
+#if defined(WIN32) || defined(__CYGWIN__)
 	printf(_("  %s register   [-N SERVICENAME] [-U USERNAME] [-P PASSWORD] [-D DATADIR] [-w] [-o \"OPTIONS\"]\n"), progname);
 	printf(_("  %s unregister [-N SERVICENAME]\n"), progname);
 #endif
 	printf(_("Common options:\n"));
 	printf(_("  -D, --pgdata DATADIR   location of the database storage area\n"));
 	printf(_("  -s, --silent only print errors, no informational messages\n"));
-#ifdef WIN32
+#if defined(WIN32) || defined(__CYGWIN__)
 	printf(_("  -N       service name with which to register PostgreSQL server\n"));
 	printf(_("  -P       password of account to register PostgreSQL server\n"));
 	printf(_("  -U       user name of account to register PostgreSQL server\n"));
@@ -1201,7 +1205,7 @@ main(int argc, char **argv)
 	int			c;
 	pgpid_t		killproc = 0;
 
-#ifdef WIN32
+#if defined(WIN32) || defined(__CYGWIN__)
 	setvbuf(stderr, NULL, _IONBF, 0);
 #endif
 
@@ -1348,7 +1352,7 @@ main(int argc, char **argv)
 				set_sig(argv[++optind]);
 				killproc = atol(argv[++optind]);
 			}
-#ifdef WIN32
+#if defined(WIN32) || defined(__CYGWIN__)
 			else if (strcmp(argv[optind], "register") == 0)
 				ctl_command = REGISTER_COMMAND;
 			else if (strcmp(argv[optind], "unregister") == 0)
@@ -1438,7 +1442,7 @@ main(int argc, char **argv)
 		case KILL_COMMAND:
 			do_kill(killproc);
 			break;
-#ifdef WIN32
+#if defined(WIN32) || defined(__CYGWIN__)
 		case REGISTER_COMMAND:
 			pgwin32_doRegister();
 			break;
