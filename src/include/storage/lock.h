@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2001, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Id: lock.h,v 1.46 2001/02/23 18:28:46 momjian Exp $
+ * $Id: lock.h,v 1.47 2001/02/23 19:24:06 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -76,6 +76,14 @@ typedef int LOCKMETHOD;
 #define USER_LOCKMETHOD		2
 #define MIN_LOCKMETHOD		DEFAULT_LOCKMETHOD
 
+/* There is normally only one lock method, the default one.
+ * If user locks are enabled, an additional lock method is present
+ *
+ * LOCKMETHODCTL and LOCKMETHODTABLE are split because the first lives
+ * in shared memory.  This is because it contains a spinlock.
+ * LOCKMETHODTABLE exists in private memory.  Both are created by the
+ * postmaster and should be the same in all backends
+ */
 
 /*
  * This is the control structure for a lock table.	It
