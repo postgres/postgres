@@ -1,16 +1,16 @@
 2003-09-08 04:14:56 GMT
 
-/src/backend/bootstrap/bootparse.c
-/src/backend/bootstrap/bootscanner.c
-/src/backend/bootstrap/bootstrap_tokens.h
-/src/backend/bootstrap/bootstrap_tokens.h
-/src/backend/parser/gram.c
-/src/backend/parser/parse.h
-/src/backend/parser/scan.c
-/src/interfaces/ecpg/preproc/pgc.c
-/src/interfaces/ecpg/preproc/preproc.c
-/src/interfaces/ecpg/preproc/preproc.h
-/src/pl/plpgsql/src/pl.tab.h
-/src/pl/plpgsql/src/pl_gram.c
-/src/pl/plpgsql/src/pl_scan.c
+./src/backend/bootstrap/bootparse.c
+./src/backend/bootstrap/bootscanner.c
+./src/backend/bootstrap/bootstrap_tokens.h
+./src/backend/bootstrap/bootstrap_tokens.h
+./src/backend/parser/gram.c
+./src/backend/parser/parse.h
+./src/backend/parser/scan.c
+./src/interfaces/ecpg/preproc/pgc.c
+./src/interfaces/ecpg/preproc/preproc.c
+./src/interfaces/ecpg/preproc/preproc.h
+./src/pl/plpgsql/src/pl.tab.h
+./src/pl/plpgsql/src/pl_gram.c
+./src/pl/plpgsql/src/pl_scan.c
 
