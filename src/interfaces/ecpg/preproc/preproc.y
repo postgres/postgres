@@ -1,4 +1,4 @@
-/* $Header: /cvsroot/pgsql/src/interfaces/ecpg/preproc/Attic/preproc.y,v 1.206 2003/01/21 20:01:12 meskes Exp $ */
+/* $Header: /cvsroot/pgsql/src/interfaces/ecpg/preproc/Attic/preproc.y,v 1.207 2003/02/13 20:37:28 meskes Exp $ */
 
 /* Copyright comment */
 %{
@@ -376,7 +376,7 @@ make_name(void)
 %type  <str>	storage_clause opt_initializer c_anything
 %type  <str>	variable_list variable c_thing c_term
 %type  <str>	opt_pointer ECPGDisconnect dis_name storage_modifier
-%type  <str>	stmt ECPGRelease execstring server_name
+%type  <str>	ECPGRelease execstring server_name ECPGVarDeclaration
 %type  <str>	connection_object opt_server opt_port c_stuff c_stuff_item
 %type  <str>	user_name opt_user char_variable ora_user ident opt_reference
 %type  <str>	var_type_declarations quoted_ident_stringvar
@@ -385,13 +385,13 @@ make_name(void)
 %type  <str>	enum_type civar civarind ECPGCursorStmt ECPGDeallocate
 %type  <str>	ECPGFree ECPGDeclare ECPGVar opt_at enum_definition
 %type  <str>	struct_type s_struct vt_declarations variable_declarations
-%type  <str>	var_declaration type_declaration
+%type  <str>	var_declaration type_declaration single_vt_declaration
 %type  <str>	s_union union_type ECPGSetAutocommit on_off
 %type  <str>	ECPGAllocateDescr ECPGDeallocateDescr symbol opt_symbol
-%type  <str>	ECPGGetDescriptorHeader ECPGColLabel
+%type  <str>	ECPGGetDescriptorHeader ECPGColLabel single_var_declaration
 %type  <str>	reserved_keyword unreserved_keyword
 %type  <str>	col_name_keyword func_name_keyword
-%type  <str>	ECPGTypeName variablelist
+%type  <str>	ECPGTypeName variablelist ECPGColLabelCommon
 
 %type  <descriptor> ECPGGetDescriptor
 
@@ -399,7 +399,7 @@ make_name(void)
 
 %type  <dtype_enum> descriptor_item desc_header_item
 
-%type  <type>	type
+%type  <type>	type common_type single_vt_type
 
 %type  <action> action
 
@@ -651,6 +651,12 @@ stmt:  AlterDatabaseSetStmt { output_statement($1, 0, connection); }
 				mmerror(PARSE_ERROR, ET_ERROR, "no at option for var statement.\n");
 
 			output_simple_statement($1);
+		}
+		| ECPGVarDeclaration
+		{
+			fprintf(yyout, "%s", $1);
+                        free($1);
+			output_line_number();
 		}
 		| ECPGWhenever
 		{
@@ -4125,8 +4131,89 @@ ECPGDeallocate: DEALLOCATE PREPARE ident
 			{ $$ = cat_str(2, make_str("ECPGdeallocate(__LINE__, \""), $2, make_str("\");")); }
 		;
 
+/* 
+ * variable decalartion outside exec sql declare block
+ */
+ECPGVarDeclaration: single_vt_declaration;
+
+single_vt_declaration: type_declaration		{ $$ = $1; }
+		| single_var_declaration	{ $$ = $1; }
+		;
+	
+single_var_declaration: storage_clause storage_modifier
+		{
+			actual_storage[struct_level] = cat2_str(mm_strdup($1), mm_strdup($2));
+			actual_startline[struct_level] = hashline_number();
+		}
+		single_vt_type
+		{
+			actual_type[struct_level].type_enum = $4.type_enum;
+			actual_type[struct_level].type_dimension = $4.type_dimension;
+			actual_type[struct_level].type_index = $4.type_index;
+			actual_type[struct_level].type_sizeof = $4.type_sizeof;
+
+			/* we do not need the string "varchar" for output */
+			/* so replace it with an empty string */
+			if ($4.type_enum == ECPGt_varchar)
+			{
+				free($4.type_str);
+				$4.type_str=EMPTY;
+			}
+		}
+		variable_list 
+		{
+			$$ = cat_str(6, actual_startline[struct_level], $1, $2, $4.type_str, $6, make_str(";\n"));
+		}
+		;
+
+single_vt_type: common_type
+		| ECPGColLabelCommon
+		{
+			/*
+			 * Check for type names that the SQL grammar treats as
+			 * unreserved keywords
+			 */
+			if (strcmp($1, "varchar") == 0)
+			{
+				$$.type_enum = ECPGt_varchar;
+				$$.type_str = make_str("varchar");
+				$$.type_dimension = -1;
+				$$.type_index = -1;
+				$$.type_sizeof = NULL;
+			}
+			else if (strcmp($1, "float") == 0)
+			{
+				$$.type_enum = ECPGt_float;
+				$$.type_str = make_str("float");
+				$$.type_dimension = -1;
+				$$.type_index = -1;
+				$$.type_sizeof = NULL;
+			}
+			else if (strcmp($1, "double") == 0)
+			{
+				$$.type_enum = ECPGt_double;
+				$$.type_str = make_str("double");
+				$$.type_dimension = -1;
+				$$.type_index = -1;
+				$$.type_sizeof = NULL;
+			}
+			else
+			{
+				/* this is for typedef'ed types */
+				struct typedefs *this = get_typedef($1);
+
+				$$.type_str = (this->type->type_enum == ECPGt_varchar) ? EMPTY : mm_strdup(this->name);
+				$$.type_enum = this->type->type_enum;
+				$$.type_dimension = this->type->type_dimension;
+				$$.type_index = this->type->type_index;
+				$$.type_sizeof = this->type->type_sizeof;
+				struct_member_list[struct_level] = ECPGstruct_member_dup(this->struct_member_list);
+			}
+		}
+		;
+
 /*
- * variable declaration inside the exec sql declare block
+ * variable declaration inside exec sql declare block
  */
 ECPGDeclaration: sql_startdeclare
 		{ fputs("/* exec sql begin declare section */", yyout); }
@@ -4256,7 +4343,7 @@ storage_modifier : S_CONST		{ $$ = make_str("const"); }
 		| /*EMPTY*/				{ $$ = EMPTY; }
 		;
 
-type: simple_type
+common_type: simple_type
 		{
 			$$.type_enum = $1;
 			$$.type_str = mm_strdup(ECPGtype_name($1));
@@ -4288,6 +4375,9 @@ type: simple_type
 			$$.type_index = -1;
 			$$.type_sizeof = NULL;
 		}
+		;
+
+type:		common_type
 		| ECPGColLabel
 		{
 			/*
@@ -5108,14 +5198,16 @@ ColLabel:  ECPGColLabel					{ $$ = $1; }
 		| UNION							{ $$ = make_str("union"); }
 		;
 
-ECPGColLabel:  ident					{ $$ = $1; }
+ECPGColLabelCommon:  ident                              { $$ = $1; }
+                | col_name_keyword                      { $$ = $1; }
+                | func_name_keyword                     { $$ = $1; }
+                ;
+		
+ECPGColLabel:  ECPGColLabelCommon			{ $$ = $1; }
 		| unreserved_keyword			{ $$ = $1; }
-		| col_name_keyword				{ $$ = $1; }
-		| func_name_keyword				{ $$ = $1; }
-		| reserved_keyword				{ $$ = $1; }
-		| ECPGKeywords					{ $$ = $1; }
+		| reserved_keyword			{ $$ = $1; }
+		| ECPGKeywords				{ $$ = $1; }
 		;
-
 
 /*
  * Keyword classification lists.  Generally, every keyword present in
