@@ -7,7 +7,7 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: pg_attribute.h,v 1.11 1997/08/21 03:02:13 momjian Exp $
+ * $Id: pg_attribute.h,v 1.12 1997/08/22 04:04:18 vadim Exp $
  *
  * NOTES
  *    the genbki.sh script reads this file and generates .bki
@@ -362,7 +362,7 @@ DATA(insert OID = 0 ( 1261 vtype            18 0  1 -11 0 -1 t f c f f));
 { 1249l, {"attrelid"},    26l, 0l,  4,  1, 0l, -1l, '\001', '\0', 'i', '\0', '\0' }, \
 { 1249l, {"attname"},     19l, 0l, NAMEDATALEN,  2, 0l, -1l, '\0', '\0', 'i', '\0', '\0' }, \
 { 1249l, {"atttypid"},    26l, 0l,  4,  3, 0l, -1l, '\001', '\0', 'i', '\0', '\0' }, \
-{ 1249l, {"attdisbursion"},   700l, 0l,  4,  4, 0l, -1l, '\001', '\0', 'i', '\0', '\0' }, \
+{ 1249l, {"attdisbursion"},   700l, 0l,  4,  4, 0l, -1l, '\0', '\0', 'i', '\0', '\0' }, \
 { 1249l, {"attlen"},      21l, 0l,  2,  5, 0l, -1l, '\001', '\0', 's', '\0', '\0' }, \
 { 1249l, {"attnum"},      21l, 0l,  2,  6, 0l, -1l, '\001', '\0', 's', '\0', '\0' }, \
 { 1249l, {"attnelems"},   23l, 0l,  4,  7, 0l, -1l, '\001', '\0', 'i', '\0', '\0' }, \
@@ -376,7 +376,7 @@ DATA(insert OID = 0 ( 1261 vtype            18 0  1 -11 0 -1 t f c f f));
 DATA(insert OID = 0 ( 1249 attrelid         26 0  4   1 0 -1 t f i f f));
 DATA(insert OID = 0 ( 1249 attname          19 0 NAMEDATALEN  2 0 -1 f f i f f));
 DATA(insert OID = 0 ( 1249 atttypid         26 0  4   3 0 -1 t f i f f));
-DATA(insert OID = 0 ( 1249 attdisbursion   700 0  4   4 0 -1 t f i f f));
+DATA(insert OID = 0 ( 1249 attdisbursion   700 0  4   4 0 -1 f f i f f));
 DATA(insert OID = 0 ( 1249 attlen           21 0  2   5 0 -1 t f s f f));
 DATA(insert OID = 0 ( 1249 attnum           21 0  2   6 0 -1 t f s f f));
 DATA(insert OID = 0 ( 1249 attnelems        23 0  4   7 0 -1 t f i f f));
@@ -417,7 +417,7 @@ DATA(insert OID = 0 ( 1249 vtype            18 0  1 -11 0 -1 t f c f f));
 { 1259l, {"relarch"},      18,  0l,  1, 11, 0l, -1l, '\001', '\0', 'c', '\0', '\0' }, \
 { 1259l, {"relnatts"},     21,  0l,  2, 12, 0l, -1l, '\001', '\0', 's', '\0', '\0' }, \
 { 1259l, {"relsmgr"},      210l, 0l, 2, 13, 0l, -1l, '\001', '\0', 's', '\0', '\0' }, \
-{ 1259l, {"relchecks"},    210l, 0l, 2, 14, 0l, -1l, '\001', '\0', 's', '\0', '\0' }, \
+{ 1259l, {"relchecks"},    21l, 0l, 2, 14, 0l, -1l, '\001', '\0', 's', '\0', '\0' }, \
 { 1259l, {"relhasrules"},  16,  0l,  1, 15, 0l, -1l, '\001', '\0', 'c', '\0', '\0' }, \
 { 1259l, {"relacl"},     1034l, 0l, -1, 16, 0l, -1l,   '\0', '\0', 'i', '\0', '\0' }
 
@@ -435,7 +435,7 @@ DATA(insert OID = 0 ( 1259 relkind          18 0  1  10 0 -1 t f c f f));
 DATA(insert OID = 0 ( 1259 relarch          18 0  1  11 0 -1 t f c f f));
 DATA(insert OID = 0 ( 1259 relnatts         21 0  2  12 0 -1 t f s f f));
 DATA(insert OID = 0 ( 1259 relsmgr         210 0  2  13 0 -1 t f s f f));
-DATA(insert OID = 0 ( 1259 relchecks       210 0  2  14 0 -1 t f s f f));
+DATA(insert OID = 0 ( 1259 relchecks        21 0  2  14 0 -1 t f s f f));
 DATA(insert OID = 0 ( 1259 relhasrules      16 0  1  15 0 -1 t f c f f));
 DATA(insert OID = 0 ( 1259 relacl         1034 0 -1  16 0 -1 f f i f f));
 DATA(insert OID = 0 ( 1259 ctid             27 0  6  -1 0 -1 f f i f f));
