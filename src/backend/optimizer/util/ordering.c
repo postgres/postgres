@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/optimizer/util/Attic/ordering.c,v 1.12 1999/02/11 14:58:58 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/optimizer/util/Attic/ordering.c,v 1.13 1999/02/11 17:00:48 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -18,7 +18,7 @@
 #include "optimizer/internal.h"
 #include "optimizer/ordering.h"
 
-static bool equal_sortops_order(Oid *ordering1, Oid *ordering2, int *more_sort);
+static bool equal_sortops_order(Oid *ordering1, Oid *ordering2, int *better_sort);
 
 /*
  * equal-path-ordering--
@@ -28,23 +28,23 @@ static bool equal_sortops_order(Oid *ordering1, Oid *ordering2, int *more_sort);
 bool
 pathorder_match(PathOrder *path_ordering1,
 				PathOrder *path_ordering2,
-				int *more_sort)
+				int *better_sort)
 {
 	
-	*more_sort = 0;
+	*better_sort = 0;
 
 	if (path_ordering1 == path_ordering2)
 		return true;
 	
 	if (!path_ordering2)
 	{
-		*more_sort = 1;
+		*better_sort = 1;
 		return true;
 	}
 
 	if (!path_ordering1)
 	{
-		*more_sort = 2;
+		*better_sort = 2;
 		return true;
 	}
 
@@ -58,14 +58,14 @@ pathorder_match(PathOrder *path_ordering1,
 	{
 		return equal_sortops_order(path_ordering1->ord.sortop,
 									path_ordering2->ord.sortop,
-									more_sort);
+									better_sort);
 	}
 	else if (path_ordering1->ordtype == MERGE_ORDER &&
 			 path_ordering2->ordtype == SORTOP_ORDER)
 	{
 		if (!path_ordering2->ord.sortop)
 		{
-			*more_sort = 1;
+			*better_sort = 1;
 			return true;
 		}
 		return path_ordering1->ord.merge->left_operator == path_ordering2->ord.sortop[0];
@@ -74,7 +74,7 @@ pathorder_match(PathOrder *path_ordering1,
 	{
 		if (!path_ordering1->ord.sortop)
 		{
-			*more_sort = 2;
+			*better_sort = 2;
 			return true;
 		}
 		return path_ordering1->ord.sortop[0] == path_ordering2->ord.merge->left_operator;
@@ -127,24 +127,24 @@ equal_merge_ordering(MergeOrder *merge_ordering1,
  *	  Returns true iff the sort operators are in the same order.
  */
 static bool
-equal_sortops_order(Oid *ordering1, Oid *ordering2, int *more_sort)
+equal_sortops_order(Oid *ordering1, Oid *ordering2, int *better_sort)
 {
 	int			i = 0;
 
-	*more_sort = 0;
+	*better_sort = 0;
 	
 	if (ordering1 == ordering2)
 		return true;
 
 	if (!ordering2)
 	{
-		*more_sort = 1;
+		*better_sort = 1;
 		return true;
 	}
 	
 	if (!ordering1)
 	{
-		*more_sort = 2;
+		*better_sort = 2;
 		return true;
 	}
 	
@@ -157,13 +157,13 @@ equal_sortops_order(Oid *ordering1, Oid *ordering2, int *more_sort)
 
 	if (ordering1[i] != 0 && ordering2[i] == 0)
 	{
-		*more_sort = 1;
+		*better_sort = 1;
 		return true;
 	}
 	
 	if (ordering1[i] == 0 && ordering2[i] != 0)
 	{
-		*more_sort = 2;
+		*better_sort = 2;
 		return true;
 	}
 	

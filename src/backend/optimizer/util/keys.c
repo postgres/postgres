@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/optimizer/util/Attic/keys.c,v 1.15 1999/02/11 04:08:42 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/optimizer/util/Attic/keys.c,v 1.16 1999/02/11 17:00:48 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -118,7 +118,7 @@ extract_join_subkey(JoinKey *jk, int which_subkey)
  *
  */
 bool
-pathkeys_match(List *keys1, List *keys2, int *longer_key)
+pathkeys_match(List *keys1, List *keys2, int *better_key)
 {
 	List	   *key1,
 			   *key2,
@@ -134,17 +134,17 @@ pathkeys_match(List *keys1, List *keys2, int *longer_key)
 			 key1a = lnext(key1a), key2a = lnext(key2a))
 			if (!equal(lfirst(key1a), lfirst(key2a)))
 			{
-				*longer_key = 0;
+				*better_key = 0;
 				return false;
 			}
 		if (key1a != NIL && key2a == NIL)
 		{
-			*longer_key = 1;
+			*better_key = 1;
 			return true;
 		}
 		if (key1a == NIL && key2a != NIL)
 		{
-			*longer_key = 2;
+			*better_key = 2;
 			return true;
 		}
 	}
@@ -156,15 +156,15 @@ pathkeys_match(List *keys1, List *keys2, int *longer_key)
 	 */
 	if (key1 != NIL && key2 == NIL)
 	{
-		*longer_key = 1;
+		*better_key = 1;
 		return true;
 	}
 	if (key1 == NIL && key2 != NIL)
 	{
-		*longer_key = 2;
+		*better_key = 2;
 		return true;
 	}
-	*longer_key = 0;
+	*better_key = 0;
 	return true;
 }
 

@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/optimizer/path/Attic/joinutils.c,v 1.18 1999/02/11 14:58:53 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/optimizer/path/Attic/joinutils.c,v 1.19 1999/02/11 17:00:48 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -214,12 +214,12 @@ match_paths_joinkeys(List *joinkeys,
 	foreach(i, paths)
 	{
 		Path	   *path = (Path *) lfirst(i);
-		int			more_sort;
+		int			better_sort;
 		
 		key_match = every_func(joinkeys, path->pathkeys, which_subkey);
 
-		if (pathorder_match(ordering, path->pathorder, &more_sort) &&
-			more_sort == 0 &&
+		if (pathorder_match(ordering, path->pathorder, &better_sort) &&
+			better_sort == 0 &&
 			length(joinkeys) == length(path->pathkeys) && key_match)
 		{
 
