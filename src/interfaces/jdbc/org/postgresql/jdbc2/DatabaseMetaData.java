@@ -1697,6 +1697,9 @@ public class DatabaseMetaData implements java.sql.DatabaseMetaData
 	case 'S':
 	    relKind = "SEQUENCE";
 	    break;
+	case 'v':
+	    relKind = "VIEW";
+	    break;
 	default:
 	    relKind = null;
 	}
@@ -1704,7 +1707,7 @@ public class DatabaseMetaData implements java.sql.DatabaseMetaData
 	tuple[0] = null;		// Catalog name
 	tuple[1] = null;		// Schema name
 	tuple[2] = r.getBytes(1);	// Table name
-	tuple[3] = relKind.getBytes();	// Table type
+	tuple[3] = (relKind==null) ? null : relKind.getBytes();	// Table type
 	tuple[4] = remarks;		// Remarks
 	v.addElement(tuple);
       }
