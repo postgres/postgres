@@ -1,4 +1,4 @@
-select two, four, ten, twenty, hundred, string4 into table temp from tenk1;
-drop table temp;
-select two, four, ten, twenty, hundred, string4 into table temp from tenk1;
-drop table temp;
+select two, four, ten, twenty, hundred, string4 into table temp_bench from tenk1;
+drop table temp_bench;
+select two, four, ten, twenty, hundred, string4 into table temp_bench from tenk1;
+drop table temp_bench;

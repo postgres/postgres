@@ -1,4 +1,4 @@
-select int4min(unique2) as x into table temp from tenk1;
-drop table temp;
-select int4min(unique2) as x into table temp from tenk1;
-drop table temp;
+select min(unique2) as x into table temp_bench from tenk1;
+drop table temp_bench;
+select min(unique2) as x into table temp_bench from tenk1;
+drop table temp_bench;
