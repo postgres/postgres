@@ -1,4 +1,4 @@
-<!-- $Header: /cvsroot/pgsql/doc/src/sgml/installation.sgml,v 1.157 2003/10/26 00:00:40 momjian Exp $ -->
+<!-- $Header: /cvsroot/pgsql/doc/src/sgml/installation.sgml,v 1.158 2003/10/26 00:21:04 momjian Exp $ -->
 
 <chapter id="installation">
  <title><![%standalone-include[<productname>PostgreSQL</>]]>
@@ -1585,6 +1585,22 @@ gunzip -c postgres.ps.gz \
        </row>
        <row>
 	<entry><systemitem class="osname">Linux</></entry>
+	<entry><systemitem>Arm</></entry>
+	<entry>7.4</entry>
+	<entry>2003-10-25,
+	 No?l K?the (<email>noel@debian.org</email>)</entry>
+	<entry>2.4</entry>
+       </row>
+       <row>
+	<entry><systemitem class="osname">Linux</></entry>
+	<entry><systemitem>Itanium</></entry>
+	<entry>7.4</entry>
+	<entry>2003-10-25,
+	 No?l K?the (<email>noel@debian.org</email>)</entry>
+	<entry>2.4</entry>
+       </row>
+       <row>
+	<entry><systemitem class="osname">Linux</></entry>
 	<entry><systemitem>PlayStation 2</></entry>
 	<entry>7.3</entry>
 	<entry>2002-11-19,
@@ -1603,9 +1619,9 @@ gunzip -c postgres.ps.gz \
 	<entry><systemitem class="osname">Linux</></entry>
 	<entry><systemitem>S/390</></entry>
 	<entry>7.3</entry>
-	<entry>2002-11-22,
-	 Permaine Cheung <email>pcheung@redhat.com</email>)</entry>
-	<entry>both s390 and s390x (32 and 64 bit)</entry>
+	<entry>2003-10-25,
+	 No?l K?the (<email>noel@debian.org</email>)</entry>
+	<entry></entry>
        </row>
        <row>
 	<entry><systemitem class="osname">Linux</></entry>
@@ -1614,6 +1630,14 @@ gunzip -c postgres.ps.gz \
 	<entry>2003-10-24, 
 	 Peter Eisentraut (<email>peter_e@gmx.net</email>)</entry>
 	<entry>2.4, 32-bit</entry>
+       </row>
+       <row>
+	<entry><systemitem class="osname">Linux</></entry>
+	<entry><systemitem>x86</></entry>
+	<entry>7.4</entry>
+	<entry>2003-10-24,
+	 Peter Eisentraut (<email>peter_e@gmx.net</email>)</entry>
+	<entry>2.4</entry>
        </row>
        <row>
 	<entry><systemitem class="osname">Linux</></entry>
