@@ -3,10 +3,11 @@
  *
  * Copyright 2000 by PostgreSQL Global Development Group
  *
- * $Header: /cvsroot/pgsql/src/bin/psql/stringutils.c,v 1.27 2001/02/10 02:31:28 tgl Exp $
+ * $Header: /cvsroot/pgsql/src/bin/psql/stringutils.c,v 1.28 2001/02/27 08:13:27 ishii Exp $
  */
 #include "postgres_fe.h"
 #include "stringutils.h"
+#include "settings.h"
 
 #include <ctype.h>
 #include <assert.h>

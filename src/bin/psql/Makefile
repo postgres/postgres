@@ -5,7 +5,7 @@
 # Portions Copyright (c) 1996-2001, PostgreSQL Global Development Group
 # Portions Copyright (c) 1994, Regents of the University of California
 #
-# $Header: /cvsroot/pgsql/src/bin/psql/Makefile,v 1.29 2001/02/20 19:20:29 petere Exp $
+# $Header: /cvsroot/pgsql/src/bin/psql/Makefile,v 1.30 2001/02/27 08:13:27 ishii Exp $
 #
 #-------------------------------------------------------------------------
 
@@ -44,6 +44,13 @@ OBJS+=$(top_builddir)/src/backend/port/snprintf.o
 
 $(top_builddir)/src/backend/port/snprintf.o:
 	$(MAKE) -C $(top_builddir)/src/backend/port snprintf.o
+endif
+
+ifdef STRTOUL
+OBJS+=$(top_builddir)/src/backend/port/strtoul.o
+
+$(top_builddir)/src/backend/port/strtoul.o:
+	$(MAKE) -C $(top_builddir)/src/backend/port strtoul.o
 endif
 
 # End of hacks for picking up backend 'port' modules

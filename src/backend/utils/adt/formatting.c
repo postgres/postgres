@@ -1,7 +1,7 @@
 /* -----------------------------------------------------------------------
  * formatting.c
  *
- * $Header: /cvsroot/pgsql/src/backend/utils/adt/formatting.c,v 1.32 2001/02/12 12:52:02 momjian Exp $
+ * $Header: /cvsroot/pgsql/src/backend/utils/adt/formatting.c,v 1.33 2001/02/27 08:13:28 ishii Exp $
  *
  *
  *	 Portions Copyright (c) 1999-2000, PostgreSQL Global Development Group
@@ -1398,7 +1398,7 @@ int4len(int4 num)
 {
 	char		b[16];
 
-	return sprintf(b, "%d", num);
+	return snprintf(b, sizeof(b), "%d", num);
 }
 
 /* ----------
@@ -3211,7 +3211,7 @@ int_to_roman(int number)
 		fill_str(result, '#', 15);
 		return result;
 	}
-	len = sprintf(numstr, "%d", number);
+	len = snprintf(numstr, sizeof(numstr), "%d", number);
 
 	for (p = numstr; *p != '\0'; p++, --len)
 	{
@@ -4013,7 +4013,7 @@ NUM_processor(FormatNode *node, NUMDesc *Num, char *inout, char *number,
 						Np->inout_p += strlen(Np->inout_p) - 1;
 					}
 					else
-						Np->inout_p += sprintf(Np->inout_p, "%15s", Np->number_p) - 1;
+						Np->inout_p += snprintf(Np->inout_p, plen - (Np->inout_p - Np->inout), "%15s", Np->number_p) - 1;
 					break;
 
 				case NUM_rn:
@@ -4023,7 +4023,7 @@ NUM_processor(FormatNode *node, NUMDesc *Num, char *inout, char *number,
 						Np->inout_p += strlen(Np->inout_p) - 1;
 					}
 					else
-						Np->inout_p += sprintf(Np->inout_p, "%15s", str_tolower(Np->number_p)) - 1;
+						Np->inout_p += snprintf(Np->inout_p, plen - (Np->inout_p - Np->inout), "%15s", str_tolower(Np->number_p)) - 1;
 					break;
 
 				case NUM_th:

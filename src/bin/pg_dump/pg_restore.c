@@ -68,8 +68,13 @@
 #ifdef HAVE_GETOPT_H 
 #include <getopt.h>
 #else
+#ifdef HAVE_OPTARG_DECL
 #include <unistd.h>
-#endif
+#else
+extern char *optarg;
+extern int optind, opterr, optopt;
+#endif	/* HAVE_OPTARG_DECL */
+#endif	/* HAVE_GETOPT_H */
 
 /* Forward decls */
 static void usage(const char *progname);

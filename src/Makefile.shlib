@@ -6,7 +6,7 @@
 # Copyright (c) 1998, Regents of the University of California
 #
 # IDENTIFICATION
-#    $Header: /cvsroot/pgsql/src/Makefile.shlib,v 1.45 2001/02/20 19:20:28 petere Exp $
+#    $Header: /cvsroot/pgsql/src/Makefile.shlib,v 1.46 2001/02/27 08:13:29 ishii Exp $
 #
 #-------------------------------------------------------------------------
 
@@ -184,6 +184,11 @@ ifeq ($(PORTNAME), solaris)
   SHLIB_LINK		+= -lm -lc
 endif
 
+ifeq ($(PORTNAME), sunos4)
+  shlib			:= lib$(NAME)$(DLSUFFIX).$(SO_MAJOR_VERSION).$(SO_MINOR_VERSION)
+  LINK.shared		= $(LD) -assert pure-text -Bdynamic
+endif
+ 
 ifeq ($(PORTNAME), osf)
   shlib			:= lib$(NAME)$(DLSUFFIX).$(SO_MAJOR_VERSION).$(SO_MINOR_VERSION)
   LINK.shared		= $(LD) -shared -expect_unresolved '*'

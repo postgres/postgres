@@ -777,6 +777,9 @@ AC_CHECK_FUNCS([fcvt getopt_long memmove pstat setproctitle setsid sigprocmask s
 dnl Check whether <unistd.h> declares fdatasync().
 AC_EGREP_HEADER(fdatasync, unistd.h, AC_DEFINE(HAVE_FDATASYNC_DECL))
 
+dnl Check whether <unistd.h> declares optarg
+AC_EGREP_HEADER(optarg, unistd.h, AC_DEFINE(HAVE_OPTARG_DECL))
+
 AC_CACHE_CHECK([for PS_STRINGS], [pgac_cv_var_PS_STRINGS],
 [AC_TRY_LINK(
 [#include <machine/vmparam.h>
@@ -1073,6 +1076,12 @@ AC_DEFINE_UNQUOTED(INT64_FORMAT, $INT64_FORMAT)
 AC_CHECK_FUNCS([strtoll strtoq], [break])
 AC_CHECK_FUNCS([strtoull strtouq], [break])
 
+dnl psql needs atexit() or on_exit()
+AC_CHECK_FUNC(atexit,
+	[AC_DEFINE(HAVE_ATEXIT)],
+	[AC_CHECK_FUNCS(on_exit,
+		[AC_DEFINE(HAVE_ON_EXIT)],
+		[AC_MSG_ERROR([atexi() nor on_exit() found])])])
 
 dnl Need a #define for the size of Datum (unsigned long)
 

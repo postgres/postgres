@@ -2,7 +2,7 @@ AROPT = cr
 
 DLSUFFIX = .so
 ifeq ($(GCC), yes)
-CFLAGS_SL = -fPIC
+CFLAGS_SL = -fpic
 else
 CFLAGS_SL = -PIC
 endif
@@ -13,4 +13,5 @@ CXXFLAGS_SL = -PIC
 endif
 
 %.so: %.o
-	$(LD) -dc -dp -Bdynamic -o $@ $<
+	$(LD) -assert pure-text -Bdynamic -o $@ $<
+

@@ -6,13 +6,21 @@
  *
  * Copyright (C) 2000 by PostgreSQL Global Development Group
  *
- * $Header: /cvsroot/pgsql/src/bin/pg_id/Attic/pg_id.c,v 1.17 2001/02/10 02:31:27 tgl Exp $
+ * $Header: /cvsroot/pgsql/src/bin/pg_id/Attic/pg_id.c,v 1.18 2001/02/27 08:13:28 ishii Exp $
  */
 #include "postgres_fe.h"
 
 #ifdef HAVE_GETOPT_H
 #include <getopt.h>
-#endif
+#else
+#ifdef HAVE_OPTARG_DECL
+#include <unistd.h>
+#else
+extern char *optarg;
+extern int optind, opterr, optopt;
+#endif	/* HAVE_OPTARG_DECL */
+#endif	/* HAVE_GETOPT_H */
+
 #include <pwd.h>
 #include <stdio.h>
 #include <stdlib.h>

@@ -3,7 +3,7 @@
  *
  * Copyright 2000 by PostgreSQL Global Development Group
  *
- * $Header: /cvsroot/pgsql/src/bin/psql/print.c,v 1.15 2001/02/10 02:31:28 tgl Exp $
+ * $Header: /cvsroot/pgsql/src/bin/psql/print.c,v 1.16 2001/02/27 08:13:27 ishii Exp $
  */
 #include "postgres_fe.h"
 #include "print.h"
@@ -20,6 +20,8 @@
 
 #include "pqsignal.h"
 #include "libpq-fe.h"
+
+#include "settings.h"
 
 #ifndef __CYGWIN__
 #define DEFAULT_PAGER "more"
