@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/tcop/postgres.c,v 1.197 2000/12/18 18:45:05 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/tcop/postgres.c,v 1.198 2000/12/20 21:51:52 tgl Exp $
  *
  * NOTES
  *	  this is the "main" module of the postgres backend and
@@ -1462,21 +1462,12 @@ PostgresMain(int argc, char *argv[], int real_argc, char *real_argv[], const cha
 	Assert(DataDir);
 
 	/*
-	 * 1. Set BlockSig and UnBlockSig masks. 2. Set up signal handlers. 3.
-	 * Allow only SIGUSR1 signal (we never block it) during
-	 * initialization.
+	 * Set up signal handlers and masks.
 	 *
-	 * Note that postmaster already blocked ALL signals to make us happy.
+	 * Note that postmaster blocked all signals before forking child process,
+	 * so there is no race condition whereby we might receive a signal before
+	 * we have set up the handler.
 	 */
-	pqinitmask();
-
-#ifdef HAVE_SIGPROCMASK
-	sigdelset(&BlockSig, SIGUSR1);
-#else
-	BlockSig &= ~(sigmask(SIGUSR1));
-#endif
-
-	PG_SETMASK(&BlockSig);		/* block everything except SIGUSR1 */
 
 	pqsignal(SIGHUP, SigHupHandler);	/* set flag to read config file */
 	pqsignal(SIGINT, QueryCancelHandler);		/* cancel current query */
@@ -1498,6 +1489,17 @@ PostgresMain(int argc, char *argv[], int real_argc, char *real_argv[], const cha
 	pqsignal(SIGTTIN, SIG_DFL);
 	pqsignal(SIGTTOU, SIG_DFL);
 	pqsignal(SIGCONT, SIG_DFL);
+
+	pqinitmask();
+
+	/* We allow SIGUSR1 (quickdie) at all times */
+#ifdef HAVE_SIGPROCMASK
+	sigdelset(&BlockSig, SIGUSR1);
+#else
+	BlockSig &= ~(sigmask(SIGUSR1));
+#endif
+
+	PG_SETMASK(&BlockSig);		/* block everything except SIGUSR1 */
 
 
 	if (IsUnderPostmaster)
@@ -1649,7 +1651,7 @@ PostgresMain(int argc, char *argv[], int real_argc, char *real_argv[], const cha
 	if (!IsUnderPostmaster)
 	{
 		puts("\nPOSTGRES backend interactive interface ");
-		puts("$Revision: 1.197 $ $Date: 2000/12/18 18:45:05 $\n");
+		puts("$Revision: 1.198 $ $Date: 2000/12/20 21:51:52 $\n");
 	}
 
 	/*

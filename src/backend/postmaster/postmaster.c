@@ -11,7 +11,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/postmaster/postmaster.c,v 1.200 2000/12/18 18:45:04 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/postmaster/postmaster.c,v 1.201 2000/12/20 21:51:52 tgl Exp $
  *
  * NOTES
  *
@@ -180,7 +180,7 @@ static time_t	checkpointed = 0;
 
 static int	Shutdown = NoShutdown;
 
-static bool FatalError = false;
+static bool FatalError = false;	/* T if recovering from backend crash */
 
 /*
  * State for assigning random salts and cancel keys.
@@ -649,7 +649,7 @@ PostmasterMain(int argc, char *argv[])
 	pqsignal(SIGTERM, pmdie);	/* wait for children and ShutdownDataBase */
 	pqsignal(SIGALRM, SIG_IGN); /* ignored */
 	pqsignal(SIGPIPE, SIG_IGN); /* ignored */
-	pqsignal(SIGUSR1, SIG_IGN); /* ignored */
+	pqsignal(SIGUSR1, pmdie);	/* currently ignored, but see note in pmdie */
 	pqsignal(SIGUSR2, pmdie);	/* send SIGUSR2, don't die */
 	pqsignal(SIGCHLD, reaper);	/* handle child termination */
 	pqsignal(SIGTTIN, SIG_IGN); /* ignored */
@@ -1329,6 +1329,18 @@ pmdie(SIGNAL_ARGS)
 
 	switch (postgres_signal_arg)
 	{
+		case SIGUSR1:
+			/*
+			 * Currently the postmaster ignores SIGUSR1 (maybe it should
+			 * do something useful instead?)  But we must have some handler
+			 * installed for SIGUSR1, not just set it to SIG_IGN.  Else, a
+			 * freshly spawned backend would likewise have it set to SIG_IGN,
+			 * which would mean the backend would ignore any attempt to kill
+			 * it before it had gotten as far as setting up its own handler.
+			 */
+			errno = save_errno;
+			return;
+
 		case SIGUSR2:
 
 			/*
@@ -1511,7 +1523,7 @@ reaper(SIGNAL_ARGS)
 				ExitPostmaster(1);
 			}
 			StartupPID = 0;
-			FatalError = false;
+			FatalError = false;	/* done with recovery */
 			if (Shutdown > NoShutdown)
 			{
 				if (ShutdownPID > 0)
@@ -1539,12 +1551,7 @@ reaper(SIGNAL_ARGS)
 		/*
 		 * Wait for all children exit, then reset shmem and StartupDataBase.
 		 */
-		if (DLGetHead(BackendList))
-		{
-			errno = save_errno;
-			return;
-		}
-		if (StartupPID > 0 || ShutdownPID > 0)
+		if (DLGetHead(BackendList) || StartupPID > 0 || ShutdownPID > 0)
 		{
 			errno = save_errno;
 			return;
@@ -1595,13 +1602,10 @@ CleanupProc(int pid,
 	Dlelem	   *curr,
 			   *next;
 	Backend    *bp;
-	int			sig;
 
 	if (DebugLvl)
-	{
 		fprintf(stderr, "%s: CleanupProc: pid %d exited with status %d\n",
 				progname, pid, exitstatus);
-	}
 
 	/*
 	 * If a backend dies in an ugly way (i.e. exit status not 0) then we
@@ -1609,7 +1613,7 @@ CleanupProc(int pid,
 	 * we assume everything is hunky dory and simply remove the backend
 	 * from the active backend list.
 	 */
-	if (!exitstatus)
+	if (exitstatus == 0)
 	{
 		curr = DLGetHead(BackendList);
 		while (curr)
@@ -1628,66 +1632,64 @@ CleanupProc(int pid,
 		if (pid == CheckPointPID)
 		{
 			CheckPointPID = 0;
-			checkpointed = time(NULL);
+			if (!FatalError)
+				checkpointed = time(NULL);
 		}
 		else
-			ProcRemove(pid);
+		{
+			/* Why is this done here, and not by the backend itself? */
+			if (!FatalError)
+				ProcRemove(pid);
+		}
 
 		return;
 	}
 
 	if (!FatalError)
 	{
+		/* Make log entry unless we did so already */
 		tnow = time(NULL);
 		fprintf(stderr, "Server process (pid %d) exited with status %d at %s"
 				"Terminating any active server processes...\n",
 				pid, exitstatus, ctime(&tnow));
 		fflush(stderr);
 	}
-	FatalError = true;
+
 	curr = DLGetHead(BackendList);
 	while (curr)
 	{
 		next = DLGetSucc(curr);
 		bp = (Backend *) DLE_VAL(curr);
-
-		/*
-		 * SIGUSR1 is the special signal that says exit without proc_exit
-		 * and let the user know what's going on. ProcSemaphoreKill()
-		 * cleans up the backends semaphore.  If SendStop is set (-s on
-		 * command line), then we send a SIGSTOP so that we can core dumps
-		 * from all backends by hand.
-		 */
-		sig = (SendStop) ? SIGSTOP : SIGUSR1;
 		if (bp->pid != pid)
 		{
-			if (DebugLvl)
-				fprintf(stderr, "%s: CleanupProc: sending %s to process %d\n",
-						progname,
-						(sig == SIGUSR1)
-						? "SIGUSR1" : "SIGSTOP",
-						bp->pid);
-			kill(bp->pid, sig);
+			/*
+			 * This backend is still alive.  Unless we did so already,
+			 * tell it to commit hara-kiri.
+			 *
+			 * SIGUSR1 is the special signal that says exit without proc_exit
+			 * and let the user know what's going on. But if SendStop is set
+			 * (-s on command line), then we send SIGSTOP instead, so that we
+			 * can get core dumps from all backends by hand.
+			 */
+			if (!FatalError)
+			{
+				if (DebugLvl)
+					fprintf(stderr, "%s: CleanupProc: sending %s to process %d\n",
+							progname,
+							(SendStop ? "SIGSTOP" : "SIGUSR1"),
+							bp->pid);
+				kill(bp->pid, (SendStop ? SIGSTOP : SIGUSR1));
+			}
 		}
 		else
 		{
-
 			/*
-			 * I don't like that we call ProcRemove() here, assuming that
-			 * shmem may be corrupted! But is there another way to free
-			 * backend semaphores? Actually, I believe that we need not in
-			 * per backend semaphore at all (we use them to wait on lock
-			 * only, couldn't we just sigpause?), so probably we'll remove
-			 * this call from here someday.  -- vadim 04-10-1999
+			 * Found entry for freshly-dead backend, so remove it.
+			 *
+			 * Don't call ProcRemove() here, since shmem may be corrupted!
+			 * We are going to reinitialize shmem and semaphores anyway
+			 * once all the children are dead, so no need for it.
 			 */
-			if (pid == CheckPointPID)
-			{
-				CheckPointPID = 0;
-				checkpointed = 0;
-			}
-			else
-				ProcRemove(pid);
-
 			DLRemove(curr);
 			free(bp);
 			DLFreeElem(curr);
@@ -1695,6 +1697,13 @@ CleanupProc(int pid,
 		curr = next;
 	}
 
+	if (pid == CheckPointPID)
+	{
+		CheckPointPID = 0;
+		checkpointed = 0;
+	}
+
+	FatalError = true;
 }
 
 /*
