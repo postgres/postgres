@@ -6,7 +6,7 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: pg_proc.h,v 1.41 1997/12/23 19:29:15 thomas Exp $
+ * $Id: pg_proc.h,v 1.42 1998/01/01 05:47:11 thomas Exp $
  *
  * NOTES
  *	  The script catalog/genbki.sh reads this file and generates .bki
@@ -1917,6 +1917,9 @@ DESCR("convert");
 DATA(insert OID = 1480 (  circle_box		PGUID 11 f t f 1 f 603 "718" 100 0 1 0	foo bar ));
 DESCR("convert");
 
+DATA(insert OID = 1481 (  text_substr		PGUID 11 f t f 3 f 25 "25 23 23" 100 0 0 100  foo bar ));
+DESCR("return portion of string");
+
 DATA(insert OID = 1530 (  point				PGUID 14 f t f 2 f 600 "601 601" 100 0 0 100  "select lseg_interpt($1, $2)" - ));
 DESCR("convert");
 DATA(insert OID = 1531 (  point				PGUID 14 f t f 1 f 600 "718" 100 0 0 100  "select circle_center($1)" - ));
@@ -2021,7 +2024,7 @@ DATA(insert OID =  875 (  ltrim		   PGUID 11 f t f 2 f 25 "25 25" 100 0 0 100  f
 DESCR("left-pad string to length");
 DATA(insert OID =  876 (  rtrim		   PGUID 11 f t f 2 f 25 "25 25" 100 0 0 100  foo bar ));
 DESCR("right-pad string to length");
-DATA(insert OID =  877 (  substr	   PGUID 11 f t f 3 f 25 "25 23 23" 100 0 0 100  foo bar ));
+DATA(insert OID =  877 (  substr	   PGUID 14 f t f 3 f 25 "25 23 23" 100 0 0 100  "select text_substr($1, $2, $3)" - ));
 DESCR("return portion of string");
 DATA(insert OID =  878 (  translate    PGUID 11 f t f 3 f 25 "25 18 18" 100 0 0 100  foo bar ));
 DESCR("modify string by substring replacement");
@@ -2033,7 +2036,7 @@ DATA(insert OID =  881 (  ltrim		   PGUID 14 f t f 1 f 25 "25" 100 0 0 100  "sel
 DESCR("remove initial characters from string");
 DATA(insert OID =  882 (  rtrim		   PGUID 14 f t f 1 f 25 "25" 100 0 0 100  "select rtrim($1, \' \')" - ));
 DESCR("remove trailing characters from string");
-DATA(insert OID =  883 (  substr	   PGUID 14 f t f 2 f 25 "25 23" 100 0 0 100  "select substr($1, $2, 10000)" - ));
+DATA(insert OID =  883 (  substr	   PGUID 14 f t f 2 f 25 "25 23" 100 0 0 100  "select substr($1, $2, -1)" - ));
 DESCR("return portion of string");
 DATA(insert OID =  884 (  btrim		   PGUID 11 f t f 2 f 25 "25 25" 100 0 0 100  foo bar ));
 DESCR("trim both ends of string");
