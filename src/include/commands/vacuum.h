@@ -6,7 +6,7 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: vacuum.h,v 1.6 1997/02/07 16:23:57 momjian Exp $
+ * $Id: vacuum.h,v 1.7 1997/04/23 06:28:48 vadim Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -54,7 +54,8 @@ typedef struct {
     int16 best_len, guess1_len, guess2_len, max_len, min_len;
     int32 best_cnt, guess1_cnt, guess1_hits, guess2_hits, null_cnt,nonnull_cnt;
     int32 max_cnt, min_cnt;
-    regproc cmpeq, cmplt, cmpgt, outfunc;
+    func_ptr f_cmpeq, f_cmplt, f_cmpgt;
+    regproc outfunc;
     bool initialized;
 } VacAttrStats;
 
@@ -72,14 +73,14 @@ typedef struct VRelStats {
     Size		min_tlen;
     Size		max_tlen;
     bool		hasindex;
-    int			natts;
+    int			va_natts;	/* number of attrs being analyzed */
     VacAttrStats	*vacattrstats;
 } VRelStats;
 
 extern bool VacuumRunning;
 
 extern void vc_abort(void);
-extern void vacuum(char *vacrel, bool verbose);
+extern void vacuum(char *vacrel, bool verbose, bool analyze, List *va_spec);
 
 #define ATTNVALS_SCALE 	1000000000 /* XXX so it can act as a float4 */
 

@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *    $Header: /cvsroot/pgsql/src/backend/commands/vacuum.c,v 1.29 1997/04/17 01:45:36 vadim Exp $
+ *    $Header: /cvsroot/pgsql/src/backend/commands/vacuum.c,v 1.30 1997/04/23 06:25:43 vadim Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -42,6 +42,7 @@
 #include <utils/mcxt.h>
 #include <utils/inval.h>
 #include <utils/syscache.h>
+#include <utils/builtins.h>
 #include <commands/vacuum.h>
 #include <parser/catalog_utils.h>
 #include <storage/bufpage.h>
@@ -56,38 +57,41 @@
 #include <port-protos.h>
 
 bool VacuumRunning =	false;
+
+static Portal vc_portal;
+
 static int MESSAGE_LEVEL;	/* message level */
 
 #define swapLong(a,b)	{long tmp; tmp=a; a=b; b=tmp;}
 #define swapInt(a,b)	{int tmp; tmp=a; a=b; b=tmp;}
 #define swapDatum(a,b)	{Datum tmp; tmp=a; a=b; b=tmp;}
-#define VacAttrStatsEqValid(stats) ( RegProcedureIsValid(stats->cmpeq))
-#define VacAttrStatsLtGtValid(stats) ( RegProcedureIsValid(stats->cmplt) && \
-				   RegProcedureIsValid(stats->cmpgt) && \
+#define VacAttrStatsEqValid(stats) ( stats->f_cmpeq != NULL )
+#define VacAttrStatsLtGtValid(stats) ( stats->f_cmplt != NULL && \
+				   stats->f_cmpgt != NULL && \
 				   RegProcedureIsValid(stats->outfunc) )
   
 
 /* non-export function prototypes */
 static void vc_init(void);
 static void vc_shutdown(void);
-static void vc_vacuum(NameData *VacRelP);
-static VRelList vc_getrels(Portal p, NameData *VacRelP);
-static void vc_vacone (Oid relid);
+static void vc_vacuum(NameData *VacRelP, bool analyze, List *va_cols);
+static VRelList vc_getrels(NameData *VacRelP);
+static void vc_vacone (Oid relid, bool analyze, List *va_cols);
 static void vc_scanheap (VRelStats *vacrelstats, Relation onerel, VPageList Vvpl, VPageList Fvpl);
 static void vc_rpfheap (VRelStats *vacrelstats, Relation onerel, VPageList Vvpl, VPageList Fvpl, int nindices, Relation *Irel);
 static void vc_vacheap (VRelStats *vacrelstats, Relation onerel, VPageList vpl);
 static void vc_vacpage (Page page, VPageDescr vpd, Relation archrel);
 static void vc_vaconeind (VPageList vpl, Relation indrel, int nhtups);
 static void vc_scanoneind (Relation indrel, int nhtups);
-static void vc_attrstats(Relation onerel, VacAttrStats *vacattrstats, HeapTuple htup);
+static void vc_attrstats(Relation onerel, VRelStats *vacrelstats, HeapTuple htup);
 static void vc_bucketcpy(AttributeTupleForm attr, Datum value, Datum *bucket, int16 *bucket_len);
-static void vc_updstats(Oid relid, int npages, int ntups, bool hasindex, VacAttrStats *vacattrstats);
-static void vc_delhilowstats(Oid relid);
+static void vc_updstats(Oid relid, int npages, int ntups, bool hasindex, VRelStats *vacrelstats);
+static void vc_delhilowstats (Oid relid, int attcnt, int *attnums);
 static void vc_setpagelock(Relation rel, BlockNumber blkno);
 static VPageDescr vc_tidreapped (ItemPointer itemptr, VPageList vpl);
 static void vc_reappage (VPageList vpl, VPageDescr vpc);
 static void vc_vpinsert (VPageList vpl, VPageDescr vpnew);
-static void vc_free(Portal p, VRelList vrl);
+static void vc_free(VRelList vrl);
 static void vc_getindices (Oid relid, int *nindices, Relation **Irel);
 static void vc_clsindices (int nindices, Relation *Irel);
 static Relation vc_getarchrel(Relation heaprel);
@@ -100,9 +104,25 @@ static int vc_cmp_offno (char *left, char *right);
 static bool vc_enough_space (VPageDescr vpd, Size len);
 
 void
-vacuum(char *vacrel, bool verbose)
+vacuum(char *vacrel, bool verbose, bool analyze, List *va_spec)
 {
+    char *pname;
+    MemoryContext old;
+    PortalVariableMemory pmem;
     NameData VacRel;
+    List *le;
+    List *va_cols = NIL;
+
+    /*
+     *  Create a portal for safe memory across transctions.  We need to
+     *  palloc the name space for it because our hash function expects
+     *	the name to be on a longword boundary.  CreatePortal copies the
+     *  name to safe storage for us.
+     */
+    pname = (char *) palloc(strlen(VACPNAME) + 1);
+    strcpy(pname, VACPNAME);
+    vc_portal = CreatePortal(pname);
+    pfree(pname);
 
     if (verbose)
 	MESSAGE_LEVEL = NOTICE;
@@ -112,15 +132,32 @@ vacuum(char *vacrel, bool verbose)
     /* vacrel gets de-allocated on transaction commit */
     if (vacrel)
     	strcpy(VacRel.data,vacrel);
+
+    pmem = PortalGetVariableMemory(vc_portal);
+    old = MemoryContextSwitchTo((MemoryContext)pmem);
+
+    Assert ( va_spec == NIL || analyze );
+    foreach (le, va_spec)
+    {
+    	char *col = (char*)lfirst(le);
+    	char *dest;
+    	
+    	dest = (char*) palloc (strlen (col) + 1);
+    	strcpy (dest, col);
+    	va_cols = lappend (va_cols, dest);
+    }
+    (void) MemoryContextSwitchTo(old);
     	
     /* initialize vacuum cleaner */
     vc_init();
 
     /* vacuum the database */
     if (vacrel)
-    	vc_vacuum(&VacRel);
+    	vc_vacuum (&VacRel, analyze, va_cols);
     else
-    	vc_vacuum(NULL);
+    	vc_vacuum (NULL, analyze, NIL);
+
+    PortalDestroy (&vc_portal);
 
     /* clean up */
     vc_shutdown();
@@ -199,46 +236,25 @@ vc_abort()
  *	locks at one time.
  */
 static void
-vc_vacuum(NameData *VacRelP)
+vc_vacuum(NameData *VacRelP, bool analyze, List *va_cols)
 {
     VRelList vrl, cur;
-    char *pname;
-    Portal p;
-
-    /*
-     *  Create a portal for safe memory across transctions.  We need to
-     *  palloc the name space for it because our hash function expects
-     *	the name to be on a longword boundary.  CreatePortal copies the
-     *  name to safe storage for us.
-     */
-
-    pname = (char *) palloc(strlen(VACPNAME) + 1);
-    strcpy(pname, VACPNAME);
-    p = CreatePortal(pname);
-    pfree(pname);
 
     /* get list of relations */
-    vrl = vc_getrels(p, VacRelP);
+    vrl = vc_getrels(VacRelP);
 
-    if ( vrl != NULL )
-    {
-    	if (VacRelP != NULL)
-    	    vc_delhilowstats(vrl->vrl_relid);
-    	else
-    	    vc_delhilowstats(InvalidOid);
-    }
+    if ( analyze && VacRelP == NULL && vrl != NULL )
+    	vc_delhilowstats (InvalidOid, 0, NULL);
     	
     /* vacuum each heap relation */
     for (cur = vrl; cur != (VRelList) NULL; cur = cur->vrl_next)
-	vc_vacone (cur->vrl_relid);
+	vc_vacone (cur->vrl_relid, analyze, va_cols);
 
-    vc_free(p, vrl);
-
-    PortalDestroy(&p);
+    vc_free(vrl);
 }
 
 static VRelList
-vc_getrels(Portal p, NameData *VacRelP)
+vc_getrels(NameData *VacRelP)
 {
     Relation pgclass;
     TupleDesc pgcdesc;
@@ -267,7 +283,7 @@ vc_getrels(Portal p, NameData *VacRelP)
 			       CharacterEqualRegProcedure, CharGetDatum('r'));
     }
  
-    portalmem = PortalGetVariableMemory(p);
+    portalmem = PortalGetVariableMemory(vc_portal);
     vrl = cur = (VRelList) NULL;
 
     pgclass = heap_openr(RelationRelationName);
@@ -370,7 +386,7 @@ vc_getrels(Portal p, NameData *VacRelP)
  *	us to lock the entire database during one pass of the vacuum cleaner.
  */
 static void
-vc_vacone (Oid relid)
+vc_vacone (Oid relid, bool analyze, List *va_cols)
 {
     Relation pgclass;
     TupleDesc pgcdesc;
@@ -383,8 +399,7 @@ vc_vacone (Oid relid)
     VPageListData Fvpl;	/* List of pages with space enough for re-using */
     VPageDescr *vpp;
     Relation *Irel;
-    int32 nindices, i, attr_cnt;
-    AttributeTupleForm *attr;
+    int32 nindices, i;
     VRelStats *vacrelstats;
     
     StartTransactionCommand();
@@ -412,55 +427,117 @@ vc_vacone (Oid relid)
     /* now open the class and vacuum it */
     onerel = heap_open(relid);
 
-    attr_cnt = onerel->rd_att->natts;
-    attr = onerel->rd_att->attrs;
-
     vacrelstats = (VRelStats *) palloc(sizeof(VRelStats));
     vacrelstats->relid = relid;
     vacrelstats->npages = vacrelstats->ntups = 0;
     vacrelstats->hasindex = false;
-    vacrelstats->vacattrstats =
-		(VacAttrStats *) palloc(attr_cnt * sizeof(VacAttrStats));
+    if ( analyze && !IsSystemRelationName ((RelationGetRelationName (onerel))->data) )
+    {
+    	int attr_cnt, *attnums = NULL;
+    	AttributeTupleForm *attr;
+    	
+    	attr_cnt = onerel->rd_att->natts;
+    	attr = onerel->rd_att->attrs;
+    	
+    	if ( va_cols != NIL )
+    	{
+    	    int tcnt = 0;
+    	    List *le;
+    	    
+    	    if ( length (va_cols) > attr_cnt )
+    	    	elog (WARN, "vacuum: too many attributes specified for relation %.*s",
+    	    		NAMEDATALEN, (RelationGetRelationName(onerel))->data);
+    	    attnums = (int*) palloc (attr_cnt * sizeof (int));
+    	    foreach (le, va_cols)
+    	    {
+    	    	char *col = (char*) lfirst(le);
+    	    	    
+    	    	for (i = 0; i < attr_cnt; i++)
+    	    	{
+    	    	    if ( namestrcmp (&(attr[i]->attname), col) == 0 )
+    	    	    	break;
+    	    	}
+    	    	if ( i < attr_cnt )		/* found */
+    	    	    attnums[tcnt++] = i;
+    	    	else
+    	    	{
+    	    	    elog (WARN, "vacuum: there is no attribute %s in %.*s",
+    	    	    	col, NAMEDATALEN, (RelationGetRelationName(onerel))->data);
+    	    	}
+    	    }
+    	    attr_cnt = tcnt;
+    	}
+    	    	
+    	vacrelstats->vacattrstats = 
+    		(VacAttrStats *) palloc (attr_cnt * sizeof(VacAttrStats));
     
-    for (i = 0; i < attr_cnt; i++) {
-	Operator func_operator;
-	OperatorTupleForm pgopform;
-	VacAttrStats *stats = &vacrelstats->vacattrstats[i];
+    	for (i = 0; i < attr_cnt; i++)
+    	{
+	    Operator func_operator;
+	    OperatorTupleForm pgopform;
+	    VacAttrStats *stats;
 
-	stats->attr = palloc(ATTRIBUTE_TUPLE_SIZE);
-	memmove(stats->attr,attr[i],ATTRIBUTE_TUPLE_SIZE);
-	stats->best = stats->guess1 = stats->guess2 = 0;
-	stats->max = stats->min = 0;
-	stats->best_len = stats->guess1_len = stats->guess2_len = 0;
-	stats->max_len = stats->min_len = 0;
-	stats->initialized = false;
-	stats->best_cnt = stats->guess1_cnt = stats->guess1_hits = stats->guess2_hits = 0;
-	stats->max_cnt = stats->min_cnt = stats->null_cnt = stats->nonnull_cnt = 0;
+	    stats = &vacrelstats->vacattrstats[i];
+	    stats->attr = palloc(ATTRIBUTE_TUPLE_SIZE);
+	    memmove (stats->attr, attr[((attnums) ? attnums[i] : i)], ATTRIBUTE_TUPLE_SIZE);
+	    stats->best = stats->guess1 = stats->guess2 = 0;
+	    stats->max = stats->min = 0;
+	    stats->best_len = stats->guess1_len = stats->guess2_len = 0;
+	    stats->max_len = stats->min_len = 0;
+	    stats->initialized = false;
+	    stats->best_cnt = stats->guess1_cnt = stats->guess1_hits = stats->guess2_hits = 0;
+	    stats->max_cnt = stats->min_cnt = stats->null_cnt = stats->nonnull_cnt = 0;
 	
-        func_operator = oper("=",stats->attr->atttypid,stats->attr->atttypid,true);
-	if (func_operator != NULL) {
-	    pgopform = (OperatorTupleForm) GETSTRUCT(func_operator);
-	    stats->cmpeq = pgopform->oprcode;
-	}
-	else	stats->cmpeq = InvalidOid;
-        func_operator = oper("<",stats->attr->atttypid,stats->attr->atttypid,true);
-	if (func_operator != NULL) {
-	    pgopform = (OperatorTupleForm) GETSTRUCT(func_operator);
-	    stats->cmplt = pgopform->oprcode;
-	}
-	else	stats->cmplt = InvalidOid;
-        func_operator = oper(">",stats->attr->atttypid,stats->attr->atttypid,true);
-	if (func_operator != NULL) {
-	    pgopform = (OperatorTupleForm) GETSTRUCT(func_operator);
-	    stats->cmpgt = pgopform->oprcode;
-	}
-	else	stats->cmpgt = InvalidOid;
-	pgttup = SearchSysCacheTuple(TYPOID,
+            func_operator = oper("=",stats->attr->atttypid,stats->attr->atttypid,true);
+	    if (func_operator != NULL)
+	    {
+	    	int nargs;
+	    
+	    	pgopform = (OperatorTupleForm) GETSTRUCT(func_operator);
+	    	fmgr_info (pgopform->oprcode, &(stats->f_cmpeq), &nargs);
+	    }
+	    else
+	    	stats->f_cmpeq = NULL;
+	
+            func_operator = oper("<",stats->attr->atttypid,stats->attr->atttypid,true);
+	    if (func_operator != NULL)
+	    {
+	    	int nargs;
+	    
+	    	pgopform = (OperatorTupleForm) GETSTRUCT(func_operator);
+	    	fmgr_info (pgopform->oprcode, &(stats->f_cmplt), &nargs);
+	    }
+	    else
+	    	stats->f_cmplt = NULL;
+	
+            func_operator = oper(">",stats->attr->atttypid,stats->attr->atttypid,true);
+	    if (func_operator != NULL)
+	    {
+	    	int nargs;
+	    
+	    	pgopform = (OperatorTupleForm) GETSTRUCT(func_operator);
+	    	fmgr_info (pgopform->oprcode, &(stats->f_cmpgt), &nargs);
+	    }
+	    else
+	    	stats->f_cmpgt = NULL;
+	
+	    pgttup = SearchSysCacheTuple(TYPOID,
                                     ObjectIdGetDatum(stats->attr->atttypid),
                                     0,0,0);
-        if (HeapTupleIsValid(pgttup))
-            stats->outfunc = ((TypeTupleForm) GETSTRUCT(pgttup))->typoutput;
-	else	stats->outfunc = InvalidOid;
+            if (HeapTupleIsValid(pgttup))
+            	stats->outfunc = ((TypeTupleForm) GETSTRUCT(pgttup))->typoutput;
+	    else
+	    	stats->outfunc = InvalidOid;
+    	}
+    	vacrelstats->va_natts = attr_cnt;
+    	vc_delhilowstats (relid, ((attnums) ? attr_cnt : 0), attnums);
+    	if ( attnums )
+    	    pfree (attnums);
+    }
+    else
+    {
+    	vacrelstats->va_natts = 0;
+    	vacrelstats->vacattrstats = (VacAttrStats *) NULL;
     }
 
     /* we require the relation to be locked until the indices are cleaned */
@@ -522,7 +599,7 @@ vc_vacone (Oid relid)
 
     /* update statistics in pg_class */
     vc_updstats(vacrelstats->relid, vacrelstats->npages, vacrelstats->ntups,
-			 vacrelstats->hasindex, vacrelstats->vacattrstats);
+			 vacrelstats->hasindex, vacrelstats);
 
     /* next command frees attribute stats */
 
@@ -748,7 +825,7 @@ DELETE_TRANSACTION_ID_VALID %d, TUPGONE %d.",
 		    min_tlen = htup->t_len;
 		if ( htup->t_len > max_tlen )
 		    max_tlen = htup->t_len;
-		vc_attrstats(onerel, vacrelstats->vacattrstats, htup);
+		vc_attrstats(onerel, vacrelstats, htup);
 	    }
 	}
 
@@ -1384,8 +1461,8 @@ vc_scanoneind (Relation indrel, int nhtups)
 	ru1.ru_utime.tv_sec - ru0.ru_utime.tv_sec);
 
     if ( nitups != nhtups )
-    	elog (NOTICE, "NUMBER OF INDEX' TUPLES (%u) IS NOT THE SAME AS HEAP' (%u)",
-    		nitups, nhtups);
+    	elog (NOTICE, "Ind %.*s: NUMBER OF INDEX' TUPLES (%u) IS NOT THE SAME AS HEAP' (%u)",
+    		NAMEDATALEN, indrel->rd_rel->relname.data, nitups, nhtups);
 
 } /* vc_scanoneind */
 
@@ -1463,8 +1540,8 @@ vc_vaconeind(VPageList vpl, Relation indrel, int nhtups)
 	ru1.ru_utime.tv_sec - ru0.ru_utime.tv_sec);
 
     if ( nitups != nhtups )
-    	elog (NOTICE, "NUMBER OF INDEX' TUPLES (%u) IS NOT THE SAME AS HEAP' (%u)",
-    		nitups, nhtups);
+    	elog (NOTICE, "Ind %.*s: NUMBER OF INDEX' TUPLES (%u) IS NOT THE SAME AS HEAP' (%u)",
+    		NAMEDATALEN, indrel->rd_rel->relname.data, nitups, nhtups);
 
 } /* vc_vaconeind */
 
@@ -1532,23 +1609,20 @@ vc_tidreapped(ItemPointer itemptr, VPageList vpl)
  *
  */
 static void
-vc_attrstats(Relation onerel, VacAttrStats *vacattrstats, HeapTuple htup)
+vc_attrstats(Relation onerel, VRelStats *vacrelstats, HeapTuple htup)
 {
-    int i, attr_cnt;
-    AttributeTupleForm *attr;
-    TupleDesc tupDesc;
+    int i, attr_cnt = vacrelstats->va_natts;
+    VacAttrStats *vacattrstats = vacrelstats->vacattrstats;
+    TupleDesc tupDesc = onerel->rd_att;
     Datum value;
     bool isnull;
-
-    attr_cnt = onerel->rd_att->natts;
-    attr = onerel->rd_att->attrs;
-    tupDesc = onerel->rd_att;
 
     for (i = 0; i < attr_cnt; i++) {
 	VacAttrStats *stats = &vacattrstats[i];
 	bool value_hit = true;
 
-	value = (Datum) heap_getattr(htup, InvalidBuffer, i+1, tupDesc, &isnull);
+	value = (Datum) heap_getattr (htup, InvalidBuffer, 
+					stats->attr->attnum, tupDesc, &isnull);
 
 	if (!VacAttrStatsEqValid(stats))
 		continue;
@@ -1571,26 +1645,26 @@ vc_attrstats(Relation onerel, VacAttrStats *vacattrstats, HeapTuple htup)
 		stats->initialized = true;
 	    }
 	    if (VacAttrStatsLtGtValid(stats)) {
-		if (fmgr(stats->cmplt,value,stats->min)) {
+		if ( (*(stats->f_cmplt)) (value,stats->min) ) {
 		    vc_bucketcpy(stats->attr, value, &stats->min, &stats->min_len);
 		    stats->min_cnt = 0;
 	    	}
-		if (fmgr(stats->cmpgt,value,stats->max)) {
+		if ( (*(stats->f_cmpgt)) (value,stats->max) ) {
 		    vc_bucketcpy(stats->attr, value, &stats->max, &stats->max_len);
 		    stats->max_cnt = 0;
 	    	}
-	    	if (fmgr(stats->cmpeq,value,stats->min))
+	    	if ( (*(stats->f_cmpeq)) (value,stats->min) )
 		    stats->min_cnt++;
-		else if (fmgr(stats->cmpeq,value,stats->max))
+		else if ( (*(stats->f_cmpeq)) (value,stats->max) )
 		    stats->max_cnt++;
 	    }
-	    if (fmgr(stats->cmpeq,value,stats->best))
-		stats->	best_cnt++;
-	    else if (fmgr(stats->cmpeq,value,stats->guess1)) {
+	    if ( (*(stats->f_cmpeq)) (value,stats->best) )
+		stats->best_cnt++;
+	    else if ( (*(stats->f_cmpeq)) (value,stats->guess1) ) {
 		stats->guess1_cnt++;
-		stats->	guess1_hits++;
+		stats->guess1_hits++;
 	    }
-	    else if (fmgr(stats->cmpeq,value,stats->guess2))
+	    else if ( (*(stats->f_cmpeq)) (value,stats->guess2) )
 		stats->guess2_hits++;
 	    else value_hit = false;
 
@@ -1605,12 +1679,12 @@ vc_attrstats(Relation onerel, VacAttrStats *vacattrstats, HeapTuple htup)
 		swapInt(stats->best_len,stats->guess1_len);
 		swapLong(stats->best_cnt,stats->guess1_cnt);
 		stats->guess1_hits = 1;
-		stats->	guess2_hits = 1;
+		stats->guess2_hits = 1;
 	    }
 	    if (!value_hit) {
 		vc_bucketcpy(stats->attr, value, &stats->guess2, &stats->guess2_len);
 		stats->guess1_hits = 1;
-		stats->	guess2_hits = 1;
+		stats->guess2_hits = 1;
 	    }
 	}
     }
@@ -1652,7 +1726,7 @@ vc_bucketcpy(AttributeTupleForm attr, Datum value, Datum *bucket, int16 *bucket_
  *	historical queries very expensive.
  */
 static void
-vc_updstats(Oid relid, int npages, int ntups, bool hasindex, VacAttrStats *vacattrstats)
+vc_updstats(Oid relid, int npages, int ntups, bool hasindex, VRelStats *vacrelstats)
 {
     Relation rd, ad, sd;
     HeapScanDesc rsdesc, asdesc;
@@ -1684,8 +1758,11 @@ vc_updstats(Oid relid, int npages, int ntups, bool hasindex, VacAttrStats *vacat
     pgcform->relpages = npages;
     pgcform->relhasindex = hasindex;
 
-    if (vacattrstats != NULL)
+    if ( vacrelstats != NULL && vacrelstats->va_natts > 0 )
     {
+    	VacAttrStats *vacattrstats = vacrelstats->vacattrstats;
+    	int natts = vacrelstats->va_natts;
+    	
     	ad = heap_openr(AttributeRelationName);
 	sd = heap_openr(StatisticRelationName);
         ScanKeyEntryInitialize(&askey, 0, Anum_pg_attribute_attrelid,
@@ -1693,19 +1770,27 @@ vc_updstats(Oid relid, int npages, int ntups, bool hasindex, VacAttrStats *vacat
 
 	asdesc = heap_beginscan(ad, false, NowTimeQual, 1, &askey);
 
-	while (HeapTupleIsValid(atup = heap_getnext(asdesc, 0, &abuf))) {
-	    int slot, i;
+	while (HeapTupleIsValid(atup = heap_getnext(asdesc, 0, &abuf)))
+	{
+	    int i;
 	    double selratio;  /* average ratio of rows selected for a random constant */
 	    VacAttrStats *stats;
 	    Datum values[ Natts_pg_statistic ];
     	    char nulls[ Natts_pg_statistic ];
 
 	    attp = (AttributeTupleForm) GETSTRUCT(atup);
-	    slot = attp->attnum - 1;
-	    if (slot < 0) /* skip system attributes for now,
-			   they are unique anyway */
-		continue;            
-	    stats = &vacattrstats[slot];
+	    if ( attp->attnum <= 0)	/* skip system attributes for now, */
+			   		/* they are unique anyway */
+		continue;
+	    
+	    for (i = 0; i < natts; i++)
+	    {
+	    	if ( attp->attnum == vacattrstats[i].attr->attnum )
+	    	    break;
+	    }
+	    if ( i >= natts )
+	    	continue;
+	    stats = &(vacattrstats[i]);
 
 	    /* overwrite the existing statistics in the tuple */
 	    if (VacAttrStatsEqValid(stats)) {
@@ -1794,7 +1879,6 @@ vc_updstats(Oid relid, int npages, int ntups, bool hasindex, VacAttrStats *vacat
     /* that's all, folks */
     heap_endscan(rsdesc);
     heap_close(rd);
-
 }
 
 /*
@@ -1802,7 +1886,7 @@ vc_updstats(Oid relid, int npages, int ntups, bool hasindex, VacAttrStats *vacat
  *
  */
 static void
-vc_delhilowstats(Oid relid)
+vc_delhilowstats(Oid relid, int attcnt, int *attnums)
 {
     Relation pgstatistic;
     HeapScanDesc pgsscan;
@@ -1820,7 +1904,21 @@ vc_delhilowstats(Oid relid)
     else
 	pgsscan = heap_beginscan(pgstatistic, false, NowTimeQual, 0, NULL);
 
-    while (HeapTupleIsValid(pgstup = heap_getnext(pgsscan, 0, NULL))) {
+    while (HeapTupleIsValid(pgstup = heap_getnext(pgsscan, 0, NULL)))
+    {
+    	if ( attcnt > 0 )
+    	{
+    	    Form_pg_statistic pgs = (Form_pg_statistic) GETSTRUCT (pgstup);
+    	    int i;
+    	    
+    	    for (i = 0; i < attcnt; i++)
+    	    {
+    	    	if ( pgs->staattnum == attnums[i] + 1 )
+    	    	    break;
+    	    }
+    	    if ( i >= attcnt )
+    	    	continue;		/* don't delete it */
+    	}
 	heap_delete(pgstatistic, &pgstup->t_ctid);
     }
 
@@ -1836,7 +1934,6 @@ static void vc_setpagelock(Relation rel, BlockNumber blkno)
 
     RelationSetLockForWritePage(rel, &itm);
 }
-
 
 /*
  *  vc_reappage() -- save a page on the array of reapped pages.
@@ -1881,13 +1978,13 @@ vc_vpinsert (VPageList vpl, VPageDescr vpnew)
 }
 
 static void
-vc_free(Portal p, VRelList vrl)
+vc_free(VRelList vrl)
 {
     VRelList p_vrl;
     MemoryContext old;
     PortalVariableMemory pmem;
 
-    pmem = PortalGetVariableMemory(p);
+    pmem = PortalGetVariableMemory(vc_portal);
     old = MemoryContextSwitchTo((MemoryContext)pmem);
 
     while (vrl != (VRelList) NULL) {
