@@ -3,7 +3,7 @@
  *
  * Copyright 2000 by PostgreSQL Global Development Group
  *
- * $Header: /cvsroot/pgsql/src/bin/psql/common.c,v 1.47 2002/10/15 02:24:16 tgl Exp $
+ * $Header: /cvsroot/pgsql/src/bin/psql/common.c,v 1.48 2002/10/15 16:44:21 tgl Exp $
  */
 #include "postgres_fe.h"
 
@@ -236,19 +236,26 @@ PSQLexec(const char *query, bool ignore_command_ok)
 	if (var && strcmp(var, "noexec") == 0)
 		return NULL;
 
+	/* discard any uneaten results of past queries */
+	while ((newres = PQgetResult(pset.db)) != NULL)
+		PQclear(newres);
+
 	cancelConn = pset.db;
 	if (PQsendQuery(pset.db, query))
 	{
 		while ((newres = PQgetResult(pset.db)) != NULL)
 		{
-			if (ignore_command_ok &&
-				PQresultStatus(newres) == PGRES_COMMAND_OK)
+			rstatus = PQresultStatus(newres);
+			if (ignore_command_ok && rstatus == PGRES_COMMAND_OK)
 			{
 				PQclear(newres);
 				continue;
 			}
 			PQclear(res);
 			res = newres;
+			if (rstatus == PGRES_COPY_IN ||
+				rstatus == PGRES_COPY_OUT)
+				break;
 		}
 	}
 	rstatus = PQresultStatus(res);
