@@ -11,7 +11,7 @@
  * Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/access/nbtree/nbtree.c,v 1.47 1999/10/17 22:15:03 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/access/nbtree/nbtree.c,v 1.48 1999/11/14 16:22:59 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -664,7 +664,7 @@ _bt_restscan(IndexScanDesc scan)
 	for (;;)
 	{
 		if (P_RIGHTMOST(opaque))
-			elog(FATAL, "_bt_restscan: my bits moved right off the end of the world!");
+			elog(FATAL, "_bt_restscan: my bits moved right off the end of the world!\nTry recreating the index.");
 
 		blkno = opaque->btpo_next;
 		_bt_relbuf(rel, buf, BT_READ);
