@@ -1,0 +1,1753 @@
+From pgsql-interfaces-owner+M1688@postgresql.org Tue Jun  5 17:37:13 2001
+Reply-To: <jeff@jeffjohnson.net>
+From: Jeff Johnson <jeff@jeffjohnson.net>
+To: <pgsql-interfaces@postgresql.org>
+Subject: [INTERFACES] libpq socket problem on Win32
+Date: Thu, 31 May 2001 15:56:18 -0400
+Message-ID: <B9C9130B5D27D4119D5D00A0C9D3A987109458@SERVER>
+X-Priority: 3 (Normal)
+X-MSMail-Priority: Normal
+X-Mailer: Microsoft Outlook CWS, Build 9.0.2416 (9.0.2910.0)
+Importance: Normal
+X-MimeOLE: Produced By Microsoft MimeOLE V5.50.4133.2400
+Precedence: bulk
+Sender: pgsql-interfaces-owner@postgresql.org
+Content-Length:  2088
+
+I found a problem in libpq.dll when trying to send large SQL
+statements to postgres 7.1.x on FreeBSD 4.3 from Windows 2000.  The
+same SQL worked fine when sent from FreeBSD.  At first I thought it
+was something to do with an 8k limit on text fields but it's just low
+level socket code trying to deal with large packets that breaks on
+Win32.
+
+It looks like recv on Win32 returns ENOENT instead of EAGAIN for some
+reason.  I avoid C as much as possible and low level socket stuff so
+this is all new to me.  I hacked libpq\fe-misc.c to handle ENOENT the
+same way it handles EAGAIN and everything works now.  I got the clue
+from searching deja.com for "ENOENT EAGAIN recv".  The first article
+describes a similar problem.
+
+I don't know if my code is the correct fix.  Who should I send it to?
+
+Thanks,
+Jeff
+
+> -----Original Message-----
+> From: pygresql-admin@vex.net
+> [mailto:pygresql-admin@vex.net]On Behalf Of
+> Daryl Tester
+> Sent: Thursday, May 31, 2001 9:56 AM
+> To: pygresql@vex.net
+> Subject: Re: [PyGreSQL] limit on size of text fields?
+>
+>
+> Jeff Johnson wrote:
+>
+> Netscape just crashed and ate my last reply, so this one will
+> be brief ...
+>
+> > Why does the same script run fine when run from FreeBSD also using
+> > pygresql?
+>
+> No idea.
+>
+> > Postgres claims it
+> > has virtually no limits and 8k seems kinda small for a text field
+> > limit.
+>
+> This is on 6.5 - I've no idea what you're running -
+>
+> dt=> create table test ( t text);
+> CREATE
+> insert into test values ('xxxxxxxxxxxxxxxxxx'); -- x * 8200
+> ERROR:  Tuple is too big: size 8236
+> EOF
+>
+> According to the FAQ on PostgreSQL's website, 7.1 and greater
+> supports unlimited row size.  Which version are you running?
+>
+> Regards,
+>   Daryl Tester
+>
+> _______________________________________________
+> PyGreSQL mailing list
+> PyGreSQL@vex.net
+> http://www.vex.net/mailman/listinfo/pygresql
+>
+
+
+
+
+---------------------------(end of broadcast)---------------------------
+TIP 2: you can get off all lists at once with the unregister command
+    (send "unregister YourEmailAddressHere" to majordomo@postgresql.org)
+
+From pgsql-docs-owner+M804@postgresql.org Tue Jun  5 17:28:56 2001
+Reply-To: <jeff@jeffjohnson.net>
+From: Jeff Johnson <jeff@jeffjohnson.net>
+To: <pgsql-interfaces@postgresql.org>,  <pgsql-docs@postgresql.org>
+Subject: [DOCS] libpq sockets on win32
+Date: Mon, 4 Jun 2001 12:42:12 -0400
+Message-ID: <B9C9130B5D27D4119D5D00A0C9D3A98710945B@SERVER>
+X-Priority: 3 (Normal)
+X-MSMail-Priority: Normal
+X-Mailer: Microsoft Outlook CWS, Build 9.0.2416 (9.0.2910.0)
+In-Reply-To: <B9C9130B5D27D4119D5D00A0C9D3A987193157@SERVER>
+X-MimeOLE: Produced By Microsoft MimeOLE V5.50.4133.2400
+Importance: Normal
+Precedence: bulk
+Sender: pgsql-docs-owner@postgresql.org
+Content-Length:   894
+
+I found that sending more than 16k of data in a SQL statement caused a
+problem.  I was using PyGreSQL but narrowed the error down to
+"\postgresql-7.1.2\src\interfaces\libpq\fe-misc.c" pqReadData() and
+pqFlush().  After some poking around, it looked like recv was setting
+errno to ENOENT for some reason.  I figured out why today.  Win32
+sockets don't set errno at all.  ENOENT was just left in errno from
+some earlier call.
+
+This article describes the problem and work around.
+http://msdn.microsoft.com/library/psdk/winsock/ovrvw3_26ia.htm
+
+I haven't done much C coding in a few years and don't want to break
+other code by blindly doing:
+
+#define errno WSAGetLastError
+
+Does anyone that knows this code want to take a crack at it?
+
+Thanks,
+Jeff
+
+
+---------------------------(end of broadcast)---------------------------
+TIP 1: subscribe and unsubscribe commands go to majordomo@postgresql.org
+
+From pgsql-interfaces-owner+M1662@postgresql.org Mon Jun  4 13:19:31 2001
+Reply-To: <jeff@jeffjohnson.net>
+From: Jeff Johnson <jeff@jeffjohnson.net>
+To: <pgsql-interfaces@postgresql.org>,  <pgsql-docs@postgresql.org>
+Subject: [INTERFACES] libpq sockets on win32
+Date: Mon, 4 Jun 2001 12:42:12 -0400
+Message-ID: <B9C9130B5D27D4119D5D00A0C9D3A98710945B@SERVER>
+X-Priority: 3 (Normal)
+X-MSMail-Priority: Normal
+X-Mailer: Microsoft Outlook CWS, Build 9.0.2416 (9.0.2910.0)
+In-Reply-To: <B9C9130B5D27D4119D5D00A0C9D3A987193157@SERVER>
+X-MimeOLE: Produced By Microsoft MimeOLE V5.50.4133.2400
+Importance: Normal
+Precedence: bulk
+Sender: pgsql-interfaces-owner@postgresql.org
+Content-Length:   859
+
+I found that sending more than 16k of data in a SQL statement caused a
+problem.  I was using PyGreSQL but narrowed the error down to
+"\postgresql-7.1.2\src\interfaces\libpq\fe-misc.c" pqReadData() and
+pqFlush().  After some poking around, it looked like recv was setting
+errno to ENOENT for some reason.  I figured out why today.  Win32
+sockets don't set errno at all.  ENOENT was just left in errno from
+some earlier call.
+
+This article describes the problem and work around.
+http://msdn.microsoft.com/library/psdk/winsock/ovrvw3_26ia.htm
+
+I haven't done much C coding in a few years and don't want to break
+other code by blindly doing:
+
+#define errno WSAGetLastError
+
+Does anyone that knows this code want to take a crack at it?
+
+Thanks,
+Jeff
+
+
+---------------------------(end of broadcast)---------------------------
+TIP 4: Don't 'kill -9' the postmaster
+
+From pgsql-interfaces-owner+M1665@postgresql.org Mon Jun  4 15:00:58 2001
+Reply-To: <jeff@jeffjohnson.net>
+From: Jeff Johnson <jeff@jeffjohnson.net>
+To: 'Bruce Momjian' <pgman@candle.pha.pa.us>,  <jeff@jeffjohnson.net>
+cc: <pgsql-interfaces@postgresql.org>,  <pgsql-docs@postgresql.org>
+Subject: RE: [INTERFACES] libpq sockets on win32
+Date: Mon, 4 Jun 2001 14:01:52 -0400
+Message-ID: <B9C9130B5D27D4119D5D00A0C9D3A98710945E@SERVER>
+X-Priority: 3 (Normal)
+X-MSMail-Priority: Normal
+X-Mailer: Microsoft Outlook CWS, Build 9.0.2416 (9.0.2910.0)
+In-Reply-To: <B9C9130B5D27D4119D5D00A0C9D3A987193173@SERVER>
+X-MimeOLE: Produced By Microsoft MimeOLE V5.50.4133.2400
+Importance: Normal
+Precedence: bulk
+Sender: pgsql-interfaces-owner@postgresql.org
+Content-Length:   517
+
+> > This article describes the problem and work around.
+> > http://msdn.microsoft.com/library/psdk/winsock/ovrvw3_26ia.htm
+>
+> I can't read that web site under Netscape.
+>
+> If I could read it, I think I could fix it.  Please send it in some
+> readable format.
+>
+
+I chopped the content out and stuck it into a basic HTML file and
+attached it.
+
+Thanks for taking a look,
+Jeff
+
+[ Attachment, skipping... ]
+
+
+---------------------------(end of broadcast)---------------------------
+TIP 4: Don't 'kill -9' the postmaster
+
+From jeff@jeffjohnson.net Mon Jun  4 14:08:25 2001
+Reply-To: <jeff@jeffjohnson.net>
+From: Jeff Johnson <jeff@jeffjohnson.net>
+To: 'Bruce Momjian' <pgman@candle.pha.pa.us>,  <jeff@jeffjohnson.net>
+cc: <pgsql-interfaces@postgresql.org>,  <pgsql-docs@postgresql.org>
+Subject: RE: [INTERFACES] libpq sockets on win32
+Date: Mon, 4 Jun 2001 14:01:52 -0400
+Message-ID: <B9C9130B5D27D4119D5D00A0C9D3A98710945E@SERVER>
+X-Priority: 3 (Normal)
+X-MSMail-Priority: Normal
+X-Mailer: Microsoft Outlook CWS, Build 9.0.2416 (9.0.2910.0)
+In-Reply-To: <B9C9130B5D27D4119D5D00A0C9D3A987193173@SERVER>
+X-MimeOLE: Produced By Microsoft MimeOLE V5.50.4133.2400
+Importance: Normal
+Content-Length:   404
+
+> > This article describes the problem and work around.
+> > http://msdn.microsoft.com/library/psdk/winsock/ovrvw3_26ia.htm
+>
+> I can't read that web site under Netscape.
+>
+> If I could read it, I think I could fix it.  Please send it in some
+> readable format.
+>
+
+I chopped the content out and stuck it into a basic HTML file and
+attached it.
+
+Thanks for taking a look,
+Jeff
+
+[ Attachment, skipping... ]
+
+From pgsql-interfaces-owner+M1664@postgresql.org Mon Jun  4 14:49:18 2001
+From: Bruce Momjian <pgman@candle.pha.pa.us>
+Message-ID: <200106041822.f54IMjY29512@candle.pha.pa.us>
+Subject: Re: [INTERFACES] libpq sockets on win32
+In-Reply-To: <B9C9130B5D27D4119D5D00A0C9D3A98710945E@SERVER> from Jeff Johnson
+	at Jun 4, 2001 02:01:52 pm
+To: jeff@jeffjohnson.net
+Date: Mon, 4 Jun 2001 14:22:45 -0400 (EDT)
+cc: pgsql-interfaces@postgresql.org, pgsql-docs@postgresql.org
+X-Mailer: ELM [version 2.4ME+ PL90 (25)]
+Precedence: bulk
+Sender: pgsql-interfaces-owner@postgresql.org
+Content-Length:  2326
+
+
+Can you try this patch and let me know if it helps?  It is a different
+approach.  This was the only place I saw errno checked for a
+non-predefined value.
+
+One other solution may be to use the #define only in the libpq C files
+that need it.  What really stinks is that the errno define is only
+useful for socket errno settings.
+
+I do see a use in fe-connect.c:
+	
+	#ifndef WIN32
+	        if (errno == EINPROGRESS || errno == 0)
+	#else
+	        if (WSAGetLastError() == WSAEINPROGRESS)
+	#endif
+
+I hate to litter this through the whole source.  I wonder if we have to
+bracket the errno checkes with #define/#undef.  Can you try that with
+the fix described on the web page.  The above would convert to:
+	
+	#ifdef WIN32
+	#define errno WSAGetLastError
+	#endif
+	        if (errno == EINPROGRESS || errno == 0)
+	#ifdef WIN32
+	#undef errno
+	#endif
+
+Maybe make these into their own macros somehow.
+
+> > > This article describes the problem and work around.
+> > > http://msdn.microsoft.com/library/psdk/winsock/ovrvw3_26ia.htm
+> >
+> > I can't read that web site under Netscape.
+> >
+> > If I could read it, I think I could fix it.  Please send it in some
+> > readable format.
+> >
+> 
+> I chopped the content out and stuck it into a basic HTML file and
+> attached it.
+> 
+> Thanks for taking a look,
+> Jeff
+
+[ Attachment, skipping... ]
+
+-- 
+  Bruce Momjian                        |  http://candle.pha.pa.us
+  pgman@candle.pha.pa.us               |  (610) 853-3000
+  +  If your life is a hard drive,     |  830 Blythe Avenue
+  +  Christ can be your backup.        |  Drexel Hill, Pennsylvania 19026
+
+Index: src/interfaces/libpq/fe-misc.c
+===================================================================
+RCS file: /home/projects/pgsql/cvsroot/pgsql/src/interfaces/libpq/fe-misc.c,v
+retrieving revision 1.49
+diff -c -r1.49 fe-misc.c
+*** src/interfaces/libpq/fe-misc.c	2001/05/28 15:29:51	1.49
+--- src/interfaces/libpq/fe-misc.c	2001/06/04 17:52:40
+***************
+*** 614,619 ****
+--- 614,623 ----
+  
+  		int			sent;
+  
++ #ifdef WIN32
++ 		errno = 0;	/* Win32 doesn't set this, needs reset */
++ #endif
++ 
+  #ifdef USE_SSL
+  		if (conn->ssl)
+  			sent = SSL_write(conn->ssl, ptr, len);
+
+
+---------------------------(end of broadcast)---------------------------
+TIP 6: Have you searched our list archives?
+
+http://www.postgresql.org/search.mpl
+
+From pgsql-interfaces-owner+M1667@postgresql.org Mon Jun  4 15:09:54 2001
+Date: Mon, 4 Jun 2001 20:24:23 +0200 (CEST)
+From: Peter Eisentraut <peter_e@gmx.net>
+To: Jeff Johnson <jeff@jeffjohnson.net>
+cc: <pgsql-interfaces@postgresql.org>
+Subject: Re: [INTERFACES] libpq sockets on win32
+In-Reply-To: <B9C9130B5D27D4119D5D00A0C9D3A98710945B@SERVER>
+Message-ID: <Pine.LNX.4.30.0106042021520.768-100000@peter.localdomain>
+X-Sender: 520083510237-0001@t-dialin.net
+Precedence: bulk
+Sender: pgsql-interfaces-owner@postgresql.org
+Content-Length:   831
+
+Jeff Johnson writes:
+
+> After some poking around, it looked like recv was setting errno to
+> ENOENT for some reason.  I figured out why today.  Win32 sockets don't
+> set errno at all.  ENOENT was just left in errno from some earlier
+> call.
+
+There are already a few (wrong) attempts to cover this situation in
+fe-connect.c, but it looks like a bunch of #ifdef's are needed.
+
+> I haven't done much C coding in a few years and don't want to break
+> other code by blindly doing:
+>
+> #define errno WSAGetLastError
+
+Probably rather
+
+#ifndef WIN32
+normal code;
+#else
+windows code;
+#endif
+
+-- 
+Peter Eisentraut   peter_e@gmx.net   http://funkturm.homeip.net/~peter
+
+
+---------------------------(end of broadcast)---------------------------
+TIP 5: Have you checked our extensive FAQ?
+
+http://www.postgresql.org/users-lounge/docs/faq.html
+
+From tgl@sss.pgh.pa.us Mon Jun  4 14:29:46 2001
+To: Bruce Momjian <pgman@candle.pha.pa.us>
+cc: jeff@jeffjohnson.net, pgsql-interfaces@postgresql.org, 
+	  pgsql-docs@postgresql.org
+Subject: Re: [INTERFACES] libpq sockets on win32 
+In-Reply-To: <200106041753.f54HrrU27542@candle.pha.pa.us> 
+References: <200106041753.f54HrrU27542@candle.pha.pa.us>
+Comments: In-reply-to Bruce Momjian <pgman@candle.pha.pa.us>
+	message dated "Mon, 04 Jun 2001 13:53:53 -0400"
+Date: Mon, 04 Jun 2001 14:29:38 -0400
+Message-ID: <6675.991679378@sss.pgh.pa.us>
+From: Tom Lane <tgl@sss.pgh.pa.us>
+Content-Length:   683
+
+Bruce Momjian <pgman@candle.pha.pa.us> writes:
+>> This article describes the problem and work around.
+>> http://msdn.microsoft.com/library/psdk/winsock/ovrvw3_26ia.htm
+
+> I can't read that web site under Netscape.
+
+Comes up fine for me (maybe you need to turn off Javascript?)
+
+However, the advice on it seems to be written by someone who does not
+know the difference between a variable and a function :-(.  Read with
+a large grain of salt.
+
+We already have a couple of #ifdef'd usages of WSAGetLastError() in
+libpq, but it's quite unclear which other references to errno might
+need to be changed.  A blanket replacement of errno would certainly
+break things.
+
+			regards, tom lane
+
+From pgsql-interfaces-owner+M1666@postgresql.org Mon Jun  4 15:04:34 2001
+To: Bruce Momjian <pgman@candle.pha.pa.us>
+cc: jeff@jeffjohnson.net, pgsql-interfaces@postgresql.org, 
+	  pgsql-docs@postgresql.org
+Subject: Re: [INTERFACES] libpq sockets on win32 
+In-Reply-To: <200106041753.f54HrrU27542@candle.pha.pa.us> 
+References: <200106041753.f54HrrU27542@candle.pha.pa.us>
+Comments: In-reply-to Bruce Momjian <pgman@candle.pha.pa.us>
+	message dated "Mon, 04 Jun 2001 13:53:53 -0400"
+Date: Mon, 04 Jun 2001 14:29:38 -0400
+Message-ID: <6675.991679378@sss.pgh.pa.us>
+From: Tom Lane <tgl@sss.pgh.pa.us>
+Precedence: bulk
+Sender: pgsql-interfaces-owner@postgresql.org
+Content-Length:   854
+
+Bruce Momjian <pgman@candle.pha.pa.us> writes:
+>> This article describes the problem and work around.
+>> http://msdn.microsoft.com/library/psdk/winsock/ovrvw3_26ia.htm
+
+> I can't read that web site under Netscape.
+
+Comes up fine for me (maybe you need to turn off Javascript?)
+
+However, the advice on it seems to be written by someone who does not
+know the difference between a variable and a function :-(.  Read with
+a large grain of salt.
+
+We already have a couple of #ifdef'd usages of WSAGetLastError() in
+libpq, but it's quite unclear which other references to errno might
+need to be changed.  A blanket replacement of errno would certainly
+break things.
+
+			regards, tom lane
+
+---------------------------(end of broadcast)---------------------------
+TIP 5: Have you checked our extensive FAQ?
+
+http://www.postgresql.org/users-lounge/docs/faq.html
+
+From pgsql-interfaces-owner+M1668@postgresql.org Mon Jun  4 15:09:47 2001
+From: Bruce Momjian <pgman@candle.pha.pa.us>
+Message-ID: <200106041832.f54IWHD00108@candle.pha.pa.us>
+Subject: Re: [INTERFACES] libpq sockets on win32
+In-Reply-To: <6675.991679378@sss.pgh.pa.us> from Tom Lane at Jun 4, 2001 02:29:38
+	pm
+To: Tom Lane <tgl@sss.pgh.pa.us>
+Date: Mon, 4 Jun 2001 14:32:17 -0400 (EDT)
+cc: jeff@jeffjohnson.net, pgsql-interfaces@postgresql.org, 
+	  pgsql-docs@postgresql.org
+X-Mailer: ELM [version 2.4ME+ PL90 (25)]
+Precedence: bulk
+Sender: pgsql-interfaces-owner@postgresql.org
+Content-Length:  1323
+
+> Bruce Momjian <pgman@candle.pha.pa.us> writes:
+> >> This article describes the problem and work around.
+> >> http://msdn.microsoft.com/library/psdk/winsock/ovrvw3_26ia.htm
+> 
+> > I can't read that web site under Netscape.
+> 
+> Comes up fine for me (maybe you need to turn off Javascript?)
+
+Thanks, that fixed it.
+
+> However, the advice on it seems to be written by someone who does not
+> know the difference between a variable and a function :-(.  Read with
+> a large grain of salt.
+> 
+> We already have a couple of #ifdef'd usages of WSAGetLastError() in
+> libpq, but it's quite unclear which other references to errno might
+> need to be changed.  A blanket replacement of errno would certainly
+> break things.
+
+That's why I recommended brackets of #define/#undef around tests of
+socket errno's.
+
+-- 
+  Bruce Momjian                        |  http://candle.pha.pa.us
+  pgman@candle.pha.pa.us               |  (610) 853-3000
+  +  If your life is a hard drive,     |  830 Blythe Avenue
+  +  Christ can be your backup.        |  Drexel Hill, Pennsylvania 19026
+
+---------------------------(end of broadcast)---------------------------
+TIP 3: if posting/reading through Usenet, please send an appropriate
+subscribe-nomail command to majordomo@postgresql.org so that your
+message can get through to the mailing list cleanly
+
+From jeff@jeffjohnson.net Mon Jun  4 15:09:40 2001
+Reply-To: <jeff@jeffjohnson.net>
+From: Jeff Johnson <jeff@jeffjohnson.net>
+To: 'Bruce Momjian' <pgman@candle.pha.pa.us>,  <jeff@jeffjohnson.net>
+cc: <pgsql-interfaces@postgresql.org>,  <pgsql-docs@postgresql.org>
+Subject: RE: [INTERFACES] libpq sockets on win32
+Date: Mon, 4 Jun 2001 15:03:35 -0400
+Message-ID: <B9C9130B5D27D4119D5D00A0C9D3A98710945F@SERVER>
+X-Priority: 3 (Normal)
+X-MSMail-Priority: Normal
+X-Mailer: Microsoft Outlook CWS, Build 9.0.2416 (9.0.2910.0)
+In-Reply-To: <B9C9130B5D27D4119D5D00A0C9D3A987193178@SERVER>
+X-MimeOLE: Produced By Microsoft MimeOLE V5.50.4133.2400
+Importance: Normal
+Content-Length:  1605
+
+Bruce Momjian wrote:
+> Can you try this patch and let me know if it helps?  It is a
+different
+> approach.  This was the only place I saw errno checked for a
+> non-predefined value.
+
+Setting errno = 0 doesn't help, the error handling code is entered
+when recv returns -1, then even if errno == 0, it'll bomb out.
+
+> I hate to litter this through the whole source.  I wonder if
+> we have to
+> bracket the errno checkes with #define/#undef.  Can you try that
+with
+> the fix described on the web page.  The above would convert to:
+>
+> 	#ifdef WIN32
+> 	#define errno WSAGetLastError
+> 	#endif
+> 	        if (errno == EINPROGRESS || errno == 0)
+> 	#ifdef WIN32
+> 	#undef errno
+> 	#endif
+>
+> Maybe make these into their own macros somehow.
+
+Even when I was a C programmer I never did much more than simple
+defines with the pre-compiler so I'll leave this to those that know
+how :)
+
+As Tom Lane points out in another post, the "define errno
+WSAGetLastError" seems to confuse a variable with a function.  I was
+surprised that such a thing could work.  I'm happy to hear that it
+doesn't.
+
+What about something like this:
+
+#ifdef WIN32
+#define s_errno WSAGetLastError()
+#else
+#define s_errno errno
+#endif
+
+/* for socket functions, check s_errno */
+if (s_errno == EINPROGRESS || s_errno == 0)
+...
+
+/* for non-socket functions, check errno as usual */
+if (errno == ENOENT)
+...
+
+
+Then replace only errno with s_errno when it is used with socket code.
+I'm not sure if strerror would work with all the errors returned by
+WSAGetLastError().  The Win32 SDK says to use FormatMessage(a ton of
+stuff here).
+
+
+Regards,
+Jeff
+
+
+From pgsql-interfaces-owner+M1669@postgresql.org Mon Jun  4 15:36:36 2001
+Reply-To: <jeff@jeffjohnson.net>
+From: Jeff Johnson <jeff@jeffjohnson.net>
+To: 'Bruce Momjian' <pgman@candle.pha.pa.us>,  <jeff@jeffjohnson.net>
+cc: <pgsql-interfaces@postgresql.org>,  <pgsql-docs@postgresql.org>
+Subject: RE: [INTERFACES] libpq sockets on win32
+Date: Mon, 4 Jun 2001 15:03:35 -0400
+Message-ID: <B9C9130B5D27D4119D5D00A0C9D3A98710945F@SERVER>
+X-Priority: 3 (Normal)
+X-MSMail-Priority: Normal
+X-Mailer: Microsoft Outlook CWS, Build 9.0.2416 (9.0.2910.0)
+In-Reply-To: <B9C9130B5D27D4119D5D00A0C9D3A987193178@SERVER>
+X-MimeOLE: Produced By Microsoft MimeOLE V5.50.4133.2400
+Importance: Normal
+Precedence: bulk
+Sender: pgsql-interfaces-owner@postgresql.org
+Content-Length:  1761
+
+Bruce Momjian wrote:
+> Can you try this patch and let me know if it helps?  It is a
+different
+> approach.  This was the only place I saw errno checked for a
+> non-predefined value.
+
+Setting errno = 0 doesn't help, the error handling code is entered
+when recv returns -1, then even if errno == 0, it'll bomb out.
+
+> I hate to litter this through the whole source.  I wonder if
+> we have to
+> bracket the errno checkes with #define/#undef.  Can you try that
+with
+> the fix described on the web page.  The above would convert to:
+>
+> 	#ifdef WIN32
+> 	#define errno WSAGetLastError
+> 	#endif
+> 	        if (errno == EINPROGRESS || errno == 0)
+> 	#ifdef WIN32
+> 	#undef errno
+> 	#endif
+>
+> Maybe make these into their own macros somehow.
+
+Even when I was a C programmer I never did much more than simple
+defines with the pre-compiler so I'll leave this to those that know
+how :)
+
+As Tom Lane points out in another post, the "define errno
+WSAGetLastError" seems to confuse a variable with a function.  I was
+surprised that such a thing could work.  I'm happy to hear that it
+doesn't.
+
+What about something like this:
+
+#ifdef WIN32
+#define s_errno WSAGetLastError()
+#else
+#define s_errno errno
+#endif
+
+/* for socket functions, check s_errno */
+if (s_errno == EINPROGRESS || s_errno == 0)
+...
+
+/* for non-socket functions, check errno as usual */
+if (errno == ENOENT)
+...
+
+
+Then replace only errno with s_errno when it is used with socket code.
+I'm not sure if strerror would work with all the errors returned by
+WSAGetLastError().  The Win32 SDK says to use FormatMessage(a ton of
+stuff here).
+
+
+Regards,
+Jeff
+
+
+---------------------------(end of broadcast)---------------------------
+TIP 6: Have you searched our list archives?
+
+http://www.postgresql.org/search.mpl
+
+From pgsql-interfaces-owner+M1670@postgresql.org Mon Jun  4 16:01:48 2001
+From: Bruce Momjian <pgman@candle.pha.pa.us>
+Message-ID: <200106041921.f54JLns03333@candle.pha.pa.us>
+Subject: Re: [INTERFACES] libpq sockets on win32
+In-Reply-To: <B9C9130B5D27D4119D5D00A0C9D3A98710945F@SERVER> from Jeff Johnson
+	at Jun 4, 2001 03:03:35 pm
+To: jeff@jeffjohnson.net
+Date: Mon, 4 Jun 2001 15:21:49 -0400 (EDT)
+cc: pgsql-interfaces@postgresql.org, pgsql-docs@postgresql.org
+X-Mailer: ELM [version 2.4ME+ PL90 (25)]
+Precedence: bulk
+Sender: pgsql-interfaces-owner@postgresql.org
+Content-Length: 12086
+
+> As Tom Lane points out in another post, the "define errno
+> WSAGetLastError" seems to confuse a variable with a function.  I was
+> surprised that such a thing could work.  I'm happy to hear that it
+> doesn't.
+> 
+> What about something like this:
+> 
+> #ifdef WIN32
+> #define s_errno WSAGetLastError()
+> #else
+> #define s_errno errno
+> #endif
+> 
+> /* for socket functions, check s_errno */
+> if (s_errno == EINPROGRESS || s_errno == 0)
+> ...
+> 
+> /* for non-socket functions, check errno as usual */
+> if (errno == ENOENT)
+> ...
+
+I have done exactly that.  I assume fcntl(), ioctl(), select() use errno
+even if used on a socket, while getsockopt(), setsockopt(), socket(),
+connect(), getsockname(), send(), recv() use WSAGetLastError.  Is this
+list correct?
+
+The patch is attached.  Please let me know so I can finalize it and
+apply it.
+
+-- 
+  Bruce Momjian                        |  http://candle.pha.pa.us
+  pgman@candle.pha.pa.us               |  (610) 853-3000
+  +  If your life is a hard drive,     |  830 Blythe Avenue
+  +  Christ can be your backup.        |  Drexel Hill, Pennsylvania 19026
+
+Index: src/interfaces/libpq/fe-connect.c
+===================================================================
+RCS file: /home/projects/pgsql/cvsroot/pgsql/src/interfaces/libpq/fe-connect.c,v
+retrieving revision 1.164
+diff -c -r1.164 fe-connect.c
+*** src/interfaces/libpq/fe-connect.c	2001/03/31 23:14:37	1.164
+--- src/interfaces/libpq/fe-connect.c	2001/06/04 19:18:14
+***************
+*** 735,741 ****
+  	{
+  		printfPQExpBuffer(&conn->errorMessage,
+  				 "connectNoDelay() -- setsockopt failed: errno=%d\n%s\n",
+! 						  errno, strerror(errno));
+  #ifdef WIN32
+  		printf("Winsock error: %i\n", WSAGetLastError());
+  #endif
+--- 735,741 ----
+  	{
+  		printfPQExpBuffer(&conn->errorMessage,
+  				 "connectNoDelay() -- setsockopt failed: errno=%d\n%s\n",
+! 						  sockerrno, strerror(sockerrno));
+  #ifdef WIN32
+  		printf("Winsock error: %i\n", WSAGetLastError());
+  #endif
+***************
+*** 890,896 ****
+  		printfPQExpBuffer(&conn->errorMessage,
+  						  "connectDBStart() -- "
+  						  "socket() failed: errno=%d\n%s\n",
+! 						  errno, strerror(errno));
+  		goto connect_errReturn;
+  	}
+  
+--- 890,896 ----
+  		printfPQExpBuffer(&conn->errorMessage,
+  						  "connectDBStart() -- "
+  						  "socket() failed: errno=%d\n%s\n",
+! 						  sockerrno, strerror(sockerrno));
+  		goto connect_errReturn;
+  	}
+  
+***************
+*** 934,944 ****
+  	 */
+  	if (connect(conn->sock, &conn->raddr.sa, conn->raddr_len) < 0)
+  	{
+! #ifndef WIN32
+! 		if (errno == EINPROGRESS || errno == 0)
+! #else
+! 		if (WSAGetLastError() == WSAEINPROGRESS)
+! #endif
+  		{
+  
+  			/*
+--- 934,940 ----
+  	 */
+  	if (connect(conn->sock, &conn->raddr.sa, conn->raddr_len) < 0)
+  	{
+! 		if (sockerrno == EINPROGRESS || sockerrno == 0)
+  		{
+  
+  			/*
+***************
+*** 950,956 ****
+  		else
+  		{
+  			/* Something's gone wrong */
+! 			connectFailureMessage(conn, "connectDBStart()", errno);
+  			goto connect_errReturn;
+  		}
+  	}
+--- 946,952 ----
+  		else
+  		{
+  			/* Something's gone wrong */
+! 			connectFailureMessage(conn, "connectDBStart()", sockerrno);
+  			goto connect_errReturn;
+  		}
+  	}
+***************
+*** 970,983 ****
+  		{
+  			printfPQExpBuffer(&conn->errorMessage,
+  							  "connectDB() -- couldn't send SSL negotiation packet: errno=%d\n%s\n",
+! 							  errno, strerror(errno));
+  			goto connect_errReturn;
+  		}
+  		/* Now receive the postmasters response */
+  		if (recv(conn->sock, &SSLok, 1, 0) != 1)
+  		{
+  			printfPQExpBuffer(&conn->errorMessage, "PQconnectDB() -- couldn't read postmaster response: errno=%d\n%s\n",
+! 							  errno, strerror(errno));
+  			goto connect_errReturn;
+  		}
+  		if (SSLok == 'S')
+--- 966,979 ----
+  		{
+  			printfPQExpBuffer(&conn->errorMessage,
+  							  "connectDB() -- couldn't send SSL negotiation packet: errno=%d\n%s\n",
+! 							  sockerrno, strerror(sockerrno));
+  			goto connect_errReturn;
+  		}
+  		/* Now receive the postmasters response */
+  		if (recv(conn->sock, &SSLok, 1, 0) != 1)
+  		{
+  			printfPQExpBuffer(&conn->errorMessage, "PQconnectDB() -- couldn't read postmaster response: errno=%d\n%s\n",
+! 							  sockerrno, strerror(sockerrno));
+  			goto connect_errReturn;
+  		}
+  		if (SSLok == 'S')
+***************
+*** 1233,1239 ****
+  					printfPQExpBuffer(&conn->errorMessage,
+  							   "PQconnectPoll() -- getsockopt() failed: "
+  									  "errno=%d\n%s\n",
+! 									  errno, strerror(errno));
+  					goto error_return;
+  				}
+  				else if (optval != 0)
+--- 1229,1235 ----
+  					printfPQExpBuffer(&conn->errorMessage,
+  							   "PQconnectPoll() -- getsockopt() failed: "
+  									  "errno=%d\n%s\n",
+! 									  sockerrno, strerror(sockerrno));
+  					goto error_return;
+  				}
+  				else if (optval != 0)
+***************
+*** 1255,1261 ****
+  					printfPQExpBuffer(&conn->errorMessage,
+  							  "PQconnectPoll() -- getsockname() failed: "
+  									  "errno=%d\n%s\n",
+! 									  errno, strerror(errno));
+  					goto error_return;
+  				}
+  
+--- 1251,1257 ----
+  					printfPQExpBuffer(&conn->errorMessage,
+  							  "PQconnectPoll() -- getsockname() failed: "
+  									  "errno=%d\n%s\n",
+! 									  sockerrno, strerror(sockerrno));
+  					goto error_return;
+  				}
+  
+***************
+*** 1296,1302 ****
+  									  "PQconnectPoll() --  "
+  									  "couldn't send startup packet: "
+  									  "errno=%d\n%s\n",
+! 									  errno, strerror(errno));
+  					goto error_return;
+  				}
+  
+--- 1292,1298 ----
+  									  "PQconnectPoll() --  "
+  									  "couldn't send startup packet: "
+  									  "errno=%d\n%s\n",
+! 									  sockerrno, strerror(sockerrno));
+  					goto error_return;
+  				}
+  
+***************
+*** 2110,2116 ****
+--- 2106,2114 ----
+  int
+  PQrequestCancel(PGconn *conn)
+  {
++ #ifndef WIN32
+  	int			save_errno = errno;
++ #endif
+  	int			tmpsock = -1;
+  	struct
+  	{
+***************
+*** 2127,2133 ****
+--- 2125,2133 ----
+  		strcpy(conn->errorMessage.data,
+  			   "PQrequestCancel() -- connection is not open\n");
+  		conn->errorMessage.len = strlen(conn->errorMessage.data);
++ #ifndef WIN32
+  		errno = save_errno;
++ #endif
+  		return FALSE;
+  	}
+  
+***************
+*** 2173,2183 ****
+  	close(tmpsock);
+  #endif
+  
+  	errno = save_errno;
+  	return TRUE;
+  
+  cancel_errReturn:
+! 	strcat(conn->errorMessage.data, strerror(errno));
+  	strcat(conn->errorMessage.data, "\n");
+  	conn->errorMessage.len = strlen(conn->errorMessage.data);
+  	if (tmpsock >= 0)
+--- 2173,2185 ----
+  	close(tmpsock);
+  #endif
+  
++ #ifndef WIN32
+  	errno = save_errno;
++ #endif
+  	return TRUE;
+  
+  cancel_errReturn:
+! 	strcat(conn->errorMessage.data, strerror(sockerrno));
+  	strcat(conn->errorMessage.data, "\n");
+  	conn->errorMessage.len = strlen(conn->errorMessage.data);
+  	if (tmpsock >= 0)
+***************
+*** 2188,2194 ****
+--- 2190,2198 ----
+  		close(tmpsock);
+  #endif
+  	}
++ #ifndef WIN32
+  	errno = save_errno;
++ #endif
+  	return FALSE;
+  }
+  
+Index: src/interfaces/libpq/fe-misc.c
+===================================================================
+RCS file: /home/projects/pgsql/cvsroot/pgsql/src/interfaces/libpq/fe-misc.c,v
+retrieving revision 1.49
+diff -c -r1.49 fe-misc.c
+*** src/interfaces/libpq/fe-misc.c	2001/05/28 15:29:51	1.49
+--- src/interfaces/libpq/fe-misc.c	2001/06/04 19:18:20
+***************
+*** 447,471 ****
+  					 conn->inBufSize - conn->inEnd, 0);
+  	if (nread < 0)
+  	{
+! 		if (errno == EINTR)
+  			goto tryAgain;
+  		/* Some systems return EAGAIN/EWOULDBLOCK for no data */
+  #ifdef EAGAIN
+! 		if (errno == EAGAIN)
+  			return someread;
+  #endif
+  #if defined(EWOULDBLOCK) && (!defined(EAGAIN) || (EWOULDBLOCK != EAGAIN))
+! 		if (errno == EWOULDBLOCK)
+  			return someread;
+  #endif
+  		/* We might get ECONNRESET here if using TCP and backend died */
+  #ifdef ECONNRESET
+! 		if (errno == ECONNRESET)
+  			goto definitelyFailed;
+  #endif
+  		printfPQExpBuffer(&conn->errorMessage,
+  						"pqReadData() --  read() failed: errno=%d\n%s\n",
+! 						  errno, strerror(errno));
+  		return -1;
+  	}
+  	if (nread > 0)
+--- 447,471 ----
+  					 conn->inBufSize - conn->inEnd, 0);
+  	if (nread < 0)
+  	{
+! 		if (sockerrno == EINTR)
+  			goto tryAgain;
+  		/* Some systems return EAGAIN/EWOULDBLOCK for no data */
+  #ifdef EAGAIN
+! 		if (sockerrno == EAGAIN)
+  			return someread;
+  #endif
+  #if defined(EWOULDBLOCK) && (!defined(EAGAIN) || (EWOULDBLOCK != EAGAIN))
+! 		if (sockerrno == EWOULDBLOCK)
+  			return someread;
+  #endif
+  		/* We might get ECONNRESET here if using TCP and backend died */
+  #ifdef ECONNRESET
+! 		if (sockerrno == ECONNRESET)
+  			goto definitelyFailed;
+  #endif
+  		printfPQExpBuffer(&conn->errorMessage,
+  						"pqReadData() --  read() failed: errno=%d\n%s\n",
+! 						  sockerrno, strerror(sockerrno));
+  		return -1;
+  	}
+  	if (nread > 0)
+***************
+*** 533,557 ****
+  					 conn->inBufSize - conn->inEnd, 0);
+  	if (nread < 0)
+  	{
+! 		if (errno == EINTR)
+  			goto tryAgain2;
+  		/* Some systems return EAGAIN/EWOULDBLOCK for no data */
+  #ifdef EAGAIN
+! 		if (errno == EAGAIN)
+  			return 0;
+  #endif
+  #if defined(EWOULDBLOCK) && (!defined(EAGAIN) || (EWOULDBLOCK != EAGAIN))
+! 		if (errno == EWOULDBLOCK)
+  			return 0;
+  #endif
+  		/* We might get ECONNRESET here if using TCP and backend died */
+  #ifdef ECONNRESET
+! 		if (errno == ECONNRESET)
+  			goto definitelyFailed;
+  #endif
+  		printfPQExpBuffer(&conn->errorMessage,
+  						"pqReadData() --  read() failed: errno=%d\n%s\n",
+! 						  errno, strerror(errno));
+  		return -1;
+  	}
+  	if (nread > 0)
+--- 533,557 ----
+  					 conn->inBufSize - conn->inEnd, 0);
+  	if (nread < 0)
+  	{
+! 		if (sockerrno == EINTR)
+  			goto tryAgain2;
+  		/* Some systems return EAGAIN/EWOULDBLOCK for no data */
+  #ifdef EAGAIN
+! 		if (sockerrno == EAGAIN)
+  			return 0;
+  #endif
+  #if defined(EWOULDBLOCK) && (!defined(EAGAIN) || (EWOULDBLOCK != EAGAIN))
+! 		if (sockerrno == EWOULDBLOCK)
+  			return 0;
+  #endif
+  		/* We might get ECONNRESET here if using TCP and backend died */
+  #ifdef ECONNRESET
+! 		if (sockerrno == ECONNRESET)
+  			goto definitelyFailed;
+  #endif
+  		printfPQExpBuffer(&conn->errorMessage,
+  						"pqReadData() --  read() failed: errno=%d\n%s\n",
+! 						  sockerrno, strerror(sockerrno));
+  		return -1;
+  	}
+  	if (nread > 0)
+***************
+*** 633,639 ****
+  			 * EPIPE or ECONNRESET, assume we've lost the backend
+  			 * connection permanently.
+  			 */
+! 			switch (errno)
+  			{
+  #ifdef EAGAIN
+  				case EAGAIN:
+--- 633,639 ----
+  			 * EPIPE or ECONNRESET, assume we've lost the backend
+  			 * connection permanently.
+  			 */
+! 			switch (sockerrno)
+  			{
+  #ifdef EAGAIN
+  				case EAGAIN:
+***************
+*** 668,674 ****
+  				default:
+  					printfPQExpBuffer(&conn->errorMessage,
+  					  "pqFlush() --  couldn't send data: errno=%d\n%s\n",
+! 									  errno, strerror(errno));
+  					/* We don't assume it's a fatal error... */
+  					return EOF;
+  			}
+--- 668,674 ----
+  				default:
+  					printfPQExpBuffer(&conn->errorMessage,
+  					  "pqFlush() --  couldn't send data: errno=%d\n%s\n",
+! 									  sockerrno, strerror(sockerrno));
+  					/* We don't assume it's a fatal error... */
+  					return EOF;
+  			}
+Index: src/interfaces/libpq/libpq-int.h
+===================================================================
+RCS file: /home/projects/pgsql/cvsroot/pgsql/src/interfaces/libpq/libpq-int.h,v
+retrieving revision 1.33
+diff -c -r1.33 libpq-int.h
+*** src/interfaces/libpq/libpq-int.h	2001/03/22 04:01:27	1.33
+--- src/interfaces/libpq/libpq-int.h	2001/06/04 19:18:23
+***************
+*** 34,39 ****
+--- 34,45 ----
+  #include <openssl/err.h>
+  #endif
+  
++ #ifndef WIN32
++ #define sockerrno errno
++ #else
++ #define sockerrno WSAGetLastError
++ #endif
++ 
+  /* libpq supports this version of the frontend/backend protocol.
+   *
+   * NB: we used to use PG_PROTOCOL_LATEST from the backend pqcomm.h file,
+
+
+---------------------------(end of broadcast)---------------------------
+TIP 2: you can get off all lists at once with the unregister command
+    (send "unregister YourEmailAddressHere" to majordomo@postgresql.org)
+
+From jeff@jeffjohnson.net Mon Jun  4 15:54:55 2001
+Reply-To: <jeff@jeffjohnson.net>
+From: Jeff Johnson <jeff@jeffjohnson.net>
+To: 'Bruce Momjian' <pgman@candle.pha.pa.us>,  <jeff@jeffjohnson.net>
+cc: <pgsql-interfaces@postgresql.org>,  <pgsql-docs@postgresql.org>
+Subject: RE: [INTERFACES] libpq sockets on win32
+Date: Mon, 4 Jun 2001 15:48:50 -0400
+Message-ID: <B9C9130B5D27D4119D5D00A0C9D3A987109460@SERVER>
+X-Priority: 3 (Normal)
+X-MSMail-Priority: Normal
+X-Mailer: Microsoft Outlook CWS, Build 9.0.2416 (9.0.2910.0)
+In-Reply-To: <B9C9130B5D27D4119D5D00A0C9D3A987193185@SERVER>
+X-MimeOLE: Produced By Microsoft MimeOLE V5.50.4133.2400
+Importance: Normal
+Content-Length:  2120
+
+> I have done exactly that.  I assume fcntl(), ioctl(),
+> select() use errno
+> even if used on a socket, while getsockopt(), setsockopt(),
+socket(),
+> connect(), getsockname(), send(), recv() use WSAGetLastError.  Is
+this
+> list correct?
+
+I don't know enough about such things.
+
+>
+> The patch is attached.  Please let me know so I can finalize it and
+> apply it.
+
+Couple of changes required to compile on Win32:
+
+Change:
+#define sockerrno WSAGetLastError
+To:
+#define sockerrno WSAGetLastError()
+
+
+This has to go back into fe-connect.c, EINPROGRESS isn't defined in
+Win32 for some reason..
+#ifndef WIN32
+		if (errno == EINPROGRESS || errno == 0)
+#else
+		if (WSAGetLastError() == WSAEINPROGRESS)
+#endif
+
+
+
+I tested it out but I'm getting this error when sending a large SQL
+statement (>16k).
+
+
+  File "WebKit\Application.py", line 340, in dispatchRequest
+    self.handleGoodURL(transaction)
+  File "WebKit\Application.py", line 457, in handleGoodURL
+    self.respond(transaction)
+  File "WebKit\Application.py", line 569, in respond
+    transaction.respond()
+  File "H:\webware\Webware\WebKit\Transaction.py", line 93, in respond
+    self._servlet.respond(self)
+  File "H:\webware\Webware\WebKit\HTTPServlet.py", line 38, in respond
+    method(self, trans)
+  File "H:\webware\Webware\WebKit\Page.py", line 34, in respondToGet
+    self._respond(transaction)
+  File "H:\webware\Webware\WebKit\Page.py", line 67, in _respond
+    self.writeHTML()
+  File "H:\webware\Webware\WebKit\Page.py", line 129, in writeHTML
+    self.writeBody()
+  File "H:\webware\Webware\WebKit\Page.py", line 186, in writeBody
+    self.writeBodyParts()
+  File "/EA\www\SitePage.py", line 305, in writeBodyParts
+    self.writeContent()
+  File "\EA\www\MyTest.py", line 9, in writeContent
+    self.transferRecords()
+  File "\EA\www\MyTest.py", line 45, in transferRecords
+    cu.execute(sql)
+  File "c:\python20\pgdb.py", line 189, in execute
+    self.executemany(operation, (params,))
+  File "c:\python20\pgdb.py", line 204, in executemany
+    rows = self.__source.execute(sql)
+ValueError: pqReadData() --  read() failed: errno=10035
+Unknown error
+
+
+
+
+From pgsql-interfaces-owner+M1671@postgresql.org Mon Jun  4 16:08:04 2001
+Reply-To: <jeff@jeffjohnson.net>
+From: Jeff Johnson <jeff@jeffjohnson.net>
+To: 'Bruce Momjian' <pgman@candle.pha.pa.us>,  <jeff@jeffjohnson.net>
+cc: <pgsql-interfaces@postgresql.org>,  <pgsql-docs@postgresql.org>
+Subject: RE: [INTERFACES] libpq sockets on win32
+Date: Mon, 4 Jun 2001 15:48:50 -0400
+Message-ID: <B9C9130B5D27D4119D5D00A0C9D3A987109460@SERVER>
+X-Priority: 3 (Normal)
+X-MSMail-Priority: Normal
+X-Mailer: Microsoft Outlook CWS, Build 9.0.2416 (9.0.2910.0)
+In-Reply-To: <B9C9130B5D27D4119D5D00A0C9D3A987193185@SERVER>
+X-MimeOLE: Produced By Microsoft MimeOLE V5.50.4133.2400
+Importance: Normal
+Precedence: bulk
+Sender: pgsql-interfaces-owner@postgresql.org
+Content-Length:  2381
+
+> I have done exactly that.  I assume fcntl(), ioctl(),
+> select() use errno
+> even if used on a socket, while getsockopt(), setsockopt(),
+socket(),
+> connect(), getsockname(), send(), recv() use WSAGetLastError.  Is
+this
+> list correct?
+
+I don't know enough about such things.
+
+>
+> The patch is attached.  Please let me know so I can finalize it and
+> apply it.
+
+Couple of changes required to compile on Win32:
+
+Change:
+#define sockerrno WSAGetLastError
+To:
+#define sockerrno WSAGetLastError()
+
+
+This has to go back into fe-connect.c, EINPROGRESS isn't defined in
+Win32 for some reason..
+#ifndef WIN32
+		if (errno == EINPROGRESS || errno == 0)
+#else
+		if (WSAGetLastError() == WSAEINPROGRESS)
+#endif
+
+
+
+I tested it out but I'm getting this error when sending a large SQL
+statement (>16k).
+
+
+  File "WebKit\Application.py", line 340, in dispatchRequest
+    self.handleGoodURL(transaction)
+  File "WebKit\Application.py", line 457, in handleGoodURL
+    self.respond(transaction)
+  File "WebKit\Application.py", line 569, in respond
+    transaction.respond()
+  File "H:\webware\Webware\WebKit\Transaction.py", line 93, in respond
+    self._servlet.respond(self)
+  File "H:\webware\Webware\WebKit\HTTPServlet.py", line 38, in respond
+    method(self, trans)
+  File "H:\webware\Webware\WebKit\Page.py", line 34, in respondToGet
+    self._respond(transaction)
+  File "H:\webware\Webware\WebKit\Page.py", line 67, in _respond
+    self.writeHTML()
+  File "H:\webware\Webware\WebKit\Page.py", line 129, in writeHTML
+    self.writeBody()
+  File "H:\webware\Webware\WebKit\Page.py", line 186, in writeBody
+    self.writeBodyParts()
+  File "/EA\www\SitePage.py", line 305, in writeBodyParts
+    self.writeContent()
+  File "\EA\www\MyTest.py", line 9, in writeContent
+    self.transferRecords()
+  File "\EA\www\MyTest.py", line 45, in transferRecords
+    cu.execute(sql)
+  File "c:\python20\pgdb.py", line 189, in execute
+    self.executemany(operation, (params,))
+  File "c:\python20\pgdb.py", line 204, in executemany
+    rows = self.__source.execute(sql)
+ValueError: pqReadData() --  read() failed: errno=10035
+Unknown error
+
+
+
+
+---------------------------(end of broadcast)---------------------------
+TIP 3: if posting/reading through Usenet, please send an appropriate
+subscribe-nomail command to majordomo@postgresql.org so that your
+message can get through to the mailing list cleanly
+
+From pgsql-interfaces-owner+M1673@postgresql.org Mon Jun  4 17:09:06 2001
+Reply-To: <jeff@jeffjohnson.net>
+From: Jeff Johnson <jeff@jeffjohnson.net>
+To: 'Bruce Momjian' <pgman@candle.pha.pa.us>,  <jeff@jeffjohnson.net>
+cc: <pgsql-interfaces@postgresql.org>,  <pgsql-docs@postgresql.org>
+Subject: RE: [INTERFACES] libpq sockets on win32
+Date: Mon, 4 Jun 2001 16:25:05 -0400
+Message-ID: <B9C9130B5D27D4119D5D00A0C9D3A987109461@SERVER>
+X-Priority: 3 (Normal)
+X-MSMail-Priority: Normal
+X-Mailer: Microsoft Outlook CWS, Build 9.0.2416 (9.0.2910.0)
+In-Reply-To: <B9C9130B5D27D4119D5D00A0C9D3A98719318C@SERVER>
+X-MimeOLE: Produced By Microsoft MimeOLE V5.50.4133.2400
+Importance: Normal
+Precedence: bulk
+Sender: pgsql-interfaces-owner@postgresql.org
+Content-Length:  2697
+
+I found this in WinSock.h ... it might shed some light on the problem.
+
+
+#define WSABASEERR              10000
+[snip]
+
+/*
+ * Windows Sockets definitions of regular Berkeley error constants
+ */
+#define WSAEWOULDBLOCK          (WSABASEERR+35)
+#define WSAEINPROGRESS          (WSABASEERR+36)
+
+
+
+> -----Original Message-----
+> From: Bruce Momjian [mailto:pgman@candle.pha.pa.us]
+> Sent: Monday, June 04, 2001 4:02 PM
+> To: jeff@jeffjohnson.net
+> Cc: pgsql-interfaces@postgresql.org; pgsql-docs@postgresql.org
+> Subject: Re: [INTERFACES] libpq sockets on win32
+>
+>
+> > > I have done exactly that.  I assume fcntl(), ioctl(),
+> > > select() use errno
+> > > even if used on a socket, while getsockopt(), setsockopt(),
+> > socket(),
+> > > connect(), getsockname(), send(), recv() use WSAGetLastError.
+Is
+> > this
+> > > list correct?
+> >
+> > I don't know enough about such things.
+>
+> The web page wasn't clear about that.
+>
+> > >
+> > > The patch is attached.  Please let me know so I can
+> finalize it and
+> > > apply it.
+> >
+> > Couple of changes required to compile on Win32:
+> >
+> > Change:
+> > #define sockerrno WSAGetLastError
+> > To:
+> > #define sockerrno WSAGetLastError()
+> >
+>
+> OK.
+>
+> >
+> > This has to go back into fe-connect.c, EINPROGRESS isn't defined
+in
+> > Win32 for some reason..
+> > #ifndef WIN32
+> > 		if (errno == EINPROGRESS || errno == 0)
+> > #else
+> > 		if (WSAGetLastError() == WSAEINPROGRESS)
+> > #endif
+> >
+>
+> OK.  Not sure why it wasn't defined, but, oh well.
+>
+> >
+> >
+> > I tested it out but I'm getting this error when sending a large
+SQL
+> > statement (>16k).
+> >     cu.execute(sql)
+> >   File "c:\python20\pgdb.py", line 189, in execute
+> >     self.executemany(operation, (params,))
+> >   File "c:\python20\pgdb.py", line 204, in executemany
+> >     rows = self.__source.execute(sql)
+> > ValueError: pqReadData() --  read() failed: errno=10035
+> > Unknown error
+>
+> That errno is very high, 10035.  If I take a look at my sys/errno.h
+on
+> BSD/OS, I see:
+>
+> 	#define EAGAIN      35      /* Resource temporarily
+> unavailable */
+>
+> so my guess is that WSAGetLastError() returns errno plus 10,000.
+What
+> value does your include file set for EAGAIN, 10035 or 35.  If
+> it is 35,
+> the following patch may work.  It has all your suggested fixes.
+>
+> --
+>   Bruce Momjian                        |  http://candle.pha.pa.us
+>   pgman@candle.pha.pa.us               |  (610) 853-3000
+>   +  If your life is a hard drive,     |  830 Blythe Avenue
+>   +  Christ can be your backup.        |  Drexel Hill,
+> Pennsylvania 19026
+>
+
+
+---------------------------(end of broadcast)---------------------------
+TIP 1: subscribe and unsubscribe commands go to majordomo@postgresql.org
+
+From jeff@jeffjohnson.net Mon Jun  4 16:31:10 2001
+Reply-To: <jeff@jeffjohnson.net>
+From: Jeff Johnson <jeff@jeffjohnson.net>
+To: 'Bruce Momjian' <pgman@candle.pha.pa.us>,  <jeff@jeffjohnson.net>
+cc: <pgsql-interfaces@postgresql.org>,  <pgsql-docs@postgresql.org>
+Subject: RE: [INTERFACES] libpq sockets on win32
+Date: Mon, 4 Jun 2001 16:25:05 -0400
+Message-ID: <B9C9130B5D27D4119D5D00A0C9D3A987109461@SERVER>
+X-Priority: 3 (Normal)
+X-MSMail-Priority: Normal
+X-Mailer: Microsoft Outlook CWS, Build 9.0.2416 (9.0.2910.0)
+In-Reply-To: <B9C9130B5D27D4119D5D00A0C9D3A98719318C@SERVER>
+X-MimeOLE: Produced By Microsoft MimeOLE V5.50.4133.2400
+Importance: Normal
+Content-Length:  2550
+
+I found this in WinSock.h ... it might shed some light on the problem.
+
+
+#define WSABASEERR              10000
+[snip]
+
+/*
+ * Windows Sockets definitions of regular Berkeley error constants
+ */
+#define WSAEWOULDBLOCK          (WSABASEERR+35)
+#define WSAEINPROGRESS          (WSABASEERR+36)
+
+
+
+> -----Original Message-----
+> From: Bruce Momjian [mailto:pgman@candle.pha.pa.us]
+> Sent: Monday, June 04, 2001 4:02 PM
+> To: jeff@jeffjohnson.net
+> Cc: pgsql-interfaces@postgresql.org; pgsql-docs@postgresql.org
+> Subject: Re: [INTERFACES] libpq sockets on win32
+>
+>
+> > > I have done exactly that.  I assume fcntl(), ioctl(),
+> > > select() use errno
+> > > even if used on a socket, while getsockopt(), setsockopt(),
+> > socket(),
+> > > connect(), getsockname(), send(), recv() use WSAGetLastError.
+Is
+> > this
+> > > list correct?
+> >
+> > I don't know enough about such things.
+>
+> The web page wasn't clear about that.
+>
+> > >
+> > > The patch is attached.  Please let me know so I can
+> finalize it and
+> > > apply it.
+> >
+> > Couple of changes required to compile on Win32:
+> >
+> > Change:
+> > #define sockerrno WSAGetLastError
+> > To:
+> > #define sockerrno WSAGetLastError()
+> >
+>
+> OK.
+>
+> >
+> > This has to go back into fe-connect.c, EINPROGRESS isn't defined
+in
+> > Win32 for some reason..
+> > #ifndef WIN32
+> > 		if (errno == EINPROGRESS || errno == 0)
+> > #else
+> > 		if (WSAGetLastError() == WSAEINPROGRESS)
+> > #endif
+> >
+>
+> OK.  Not sure why it wasn't defined, but, oh well.
+>
+> >
+> >
+> > I tested it out but I'm getting this error when sending a large
+SQL
+> > statement (>16k).
+> >     cu.execute(sql)
+> >   File "c:\python20\pgdb.py", line 189, in execute
+> >     self.executemany(operation, (params,))
+> >   File "c:\python20\pgdb.py", line 204, in executemany
+> >     rows = self.__source.execute(sql)
+> > ValueError: pqReadData() --  read() failed: errno=10035
+> > Unknown error
+>
+> That errno is very high, 10035.  If I take a look at my sys/errno.h
+on
+> BSD/OS, I see:
+>
+> 	#define EAGAIN      35      /* Resource temporarily
+> unavailable */
+>
+> so my guess is that WSAGetLastError() returns errno plus 10,000.
+What
+> value does your include file set for EAGAIN, 10035 or 35.  If
+> it is 35,
+> the following patch may work.  It has all your suggested fixes.
+>
+> --
+>   Bruce Momjian                        |  http://candle.pha.pa.us
+>   pgman@candle.pha.pa.us               |  (610) 853-3000
+>   +  If your life is a hard drive,     |  830 Blythe Avenue
+>   +  Christ can be your backup.        |  Drexel Hill,
+> Pennsylvania 19026
+>
+
+
+From pgsql-interfaces-owner+M1674@postgresql.org Mon Jun  4 17:13:00 2001
+From: Bruce Momjian <pgman@candle.pha.pa.us>
+Message-ID: <200106042035.f54KZ8409367@candle.pha.pa.us>
+Subject: Re: [INTERFACES] libpq sockets on win32
+In-Reply-To: <B9C9130B5D27D4119D5D00A0C9D3A987109461@SERVER> from Jeff Johnson
+	at Jun 4, 2001 04:25:05 pm
+To: jeff@jeffjohnson.net
+Date: Mon, 4 Jun 2001 16:35:08 -0400 (EDT)
+cc: pgsql-interfaces@postgresql.org, pgsql-docs@postgresql.org
+X-Mailer: ELM [version 2.4ME+ PL90 (25)]
+Precedence: bulk
+Sender: pgsql-interfaces-owner@postgresql.org
+Content-Length:   933
+
+> I found this in WinSock.h ... it might shed some light on the problem.
+> 
+> 
+> #define WSABASEERR              10000
+> [snip]
+> 
+> /*
+>  * Windows Sockets definitions of regular Berkeley error constants
+>  */
+> #define WSAEWOULDBLOCK          (WSABASEERR+35)
+> #define WSAEINPROGRESS          (WSABASEERR+36)
+> 
+
+I modified the patch to use WSABASEERR rather than 10000.
+
+Do your includes define EAGAIN and stuff like that?  Whare are those
+values?  If they are the same as WSAEAGAIN, then my patch should work.
+
+-- 
+  Bruce Momjian                        |  http://candle.pha.pa.us
+  pgman@candle.pha.pa.us               |  (610) 853-3000
+  +  If your life is a hard drive,     |  830 Blythe Avenue
+  +  Christ can be your backup.        |  Drexel Hill, Pennsylvania 19026
+
+---------------------------(end of broadcast)---------------------------
+TIP 6: Have you searched our list archives?
+
+http://www.postgresql.org/search.mpl
+
+From jeff@jeffjohnson.net Mon Jun  4 17:17:27 2001
+Reply-To: <jeff@jeffjohnson.net>
+From: Jeff Johnson <jeff@jeffjohnson.net>
+To: 'Bruce Momjian' <pgman@candle.pha.pa.us>
+Subject: RE: [INTERFACES] libpq sockets on win32
+Date: Mon, 4 Jun 2001 17:11:23 -0400
+Message-ID: <B9C9130B5D27D4119D5D00A0C9D3A987109462@SERVER>
+X-Priority: 3 (Normal)
+X-MSMail-Priority: Normal
+X-Mailer: Microsoft Outlook CWS, Build 9.0.2416 (9.0.2910.0)
+In-Reply-To: <B9C9130B5D27D4119D5D00A0C9D3A98719318F@SERVER>
+X-MimeOLE: Produced By Microsoft MimeOLE V5.50.4133.2400
+Importance: Normal
+Content-Length:   863
+
+> > I found this in WinSock.h ... it might shed some light on
+> the problem.
+> >
+> >
+> > #define WSABASEERR              10000
+> > [snip]
+> >
+> > /*
+> >  * Windows Sockets definitions of regular Berkeley error constants
+> >  */
+> > #define WSAEWOULDBLOCK          (WSABASEERR+35)
+> > #define WSAEINPROGRESS          (WSABASEERR+36)
+> >
+>
+> I modified the patch to use WSABASEERR rather than 10000.
+>
+> Do your includes define EAGAIN and stuff like that?  Whare are those
+> values?  If they are the same as WSAEAGAIN, then my patch should
+work.
+
+>From what I've seen, it looks like EAGAIN and EWOULDBLOCK represent
+the same thing but on different OSs.  On my win32 machine, there is no
+definition for WSAEAGAIN, I think it uses WSAEWOULDBLOCK instead.
+EAGAIN is defined as 11 so the sockerror - 1000 solution isn't going
+to work here but it was a good try :)
+
+
+
+
+
+From pgsql-docs-owner+M803@postgresql.org Mon Jun  4 17:29:10 2001
+From: Bruce Momjian <pgman@candle.pha.pa.us>
+Message-ID: <200106042035.f54KZ8409367@candle.pha.pa.us>
+Subject: [DOCS] Re: [INTERFACES] libpq sockets on win32
+In-Reply-To: <B9C9130B5D27D4119D5D00A0C9D3A987109461@SERVER> from Jeff Johnson
+	at Jun 4, 2001 04:25:05 pm
+To: jeff@jeffjohnson.net
+Date: Mon, 4 Jun 2001 16:35:08 -0400 (EDT)
+cc: pgsql-interfaces@postgresql.org, pgsql-docs@postgresql.org
+X-Mailer: ELM [version 2.4ME+ PL90 (25)]
+Precedence: bulk
+Sender: pgsql-docs-owner@postgresql.org
+Content-Length:   924
+
+> I found this in WinSock.h ... it might shed some light on the problem.
+> 
+> 
+> #define WSABASEERR              10000
+> [snip]
+> 
+> /*
+>  * Windows Sockets definitions of regular Berkeley error constants
+>  */
+> #define WSAEWOULDBLOCK          (WSABASEERR+35)
+> #define WSAEINPROGRESS          (WSABASEERR+36)
+> 
+
+I modified the patch to use WSABASEERR rather than 10000.
+
+Do your includes define EAGAIN and stuff like that?  Whare are those
+values?  If they are the same as WSAEAGAIN, then my patch should work.
+
+-- 
+  Bruce Momjian                        |  http://candle.pha.pa.us
+  pgman@candle.pha.pa.us               |  (610) 853-3000
+  +  If your life is a hard drive,     |  830 Blythe Avenue
+  +  Christ can be your backup.        |  Drexel Hill, Pennsylvania 19026
+
+---------------------------(end of broadcast)---------------------------
+TIP 1: subscribe and unsubscribe commands go to majordomo@postgresql.org
+
+From mha@sollentuna.net Tue Jun  5 10:47:26 2001
+X-MimeOLE: Produced By Microsoft Exchange V6.0.4418.65
+Content-Class: urn:content-classes:message
+Subject: RE: [DOCS] Re: [INTERFACES] libpq sockets on win32
+Date: Tue, 5 Jun 2001 16:47:02 +0200
+Message-ID: <81124B76C0CF364EBAC6CD213ABEDEF701AA0D@ARGON.edu.sollentuna.se>
+X-MS-Has-Attach: 
+X-MS-TNEF-Correlator: 
+Thread-Topic: [DOCS] Re: [INTERFACES] libpq sockets on win32
+Thread-Index: AcDtMv+ZlEOBPSGzQV6B/+jItK6tQAAmmDSg
+From: Magnus Hagander <mha@sollentuna.net>
+To: Bruce Momjian <pgman@candle.pha.pa.us>,  <jeff@jeffjohnson.net>
+cc: <pgsql-interfaces@postgresql.org>
+X-MIME-Autoconverted: from quoted-printable to 8bit by candle.pha.pa.us id f55ElOc09621
+Content-Length:  1074
+
+> > > I have done exactly that.  I assume fcntl(), ioctl(),
+> > > select() use errno
+> > > even if used on a socket, while getsockopt(), setsockopt(),
+> > socket(),
+> > > connect(), getsockname(), send(), recv() use WSAGetLastError.  Is
+> > this
+> > > list correct?
+> > 
+> > I don't know enough about such things.
+> 
+> The web page wasn't clear about that.
+No, that list is not correct.
+
+1) select() can *only* be used on a socket in Windows, and it puts its
+error info in WSAGetLastError().
+
+2) ioctl() should *not* be used on sockets. Instead, ioctlsocket()
+shuold be used. ioctlsocket() puts its error info in WSAGetLastError().
+(http://msdn.microsoft.com/library/psdk/winsock/ovrvw3_98mq.htm). (loads
+fine in my Netscape, doesn't look all that good, but definitly readable)
+
+3) fcntl() should *not* be used on sockets. ioctlsocket() again. 
+
+Generaelly, all functions dealing with sockets use WSAGetLastError().
+And sockets and file descriptors are *not* necessarily interchangable on
+Win32.
+
+
+Note - this is Win32, *not* cygwin. Cygwin maps to errno, AFAIK.
+
+//Magnus
+
+From pgsql-interfaces-owner+M1682@postgresql.org Tue Jun  5 12:11:11 2001
+X-MimeOLE: Produced By Microsoft Exchange V6.0.4418.65
+Content-Class: urn:content-classes:message
+Subject: RE: [DOCS] Re: [INTERFACES] libpq sockets on win32
+Date: Tue, 5 Jun 2001 16:47:02 +0200
+Message-ID: <81124B76C0CF364EBAC6CD213ABEDEF701AA0D@ARGON.edu.sollentuna.se>
+X-MS-Has-Attach: 
+X-MS-TNEF-Correlator: 
+Thread-Topic: [DOCS] Re: [INTERFACES] libpq sockets on win32
+Thread-Index: AcDtMv+ZlEOBPSGzQV6B/+jItK6tQAAmmDSg
+From: Magnus Hagander <mha@sollentuna.net>
+To: Bruce Momjian <pgman@candle.pha.pa.us>,  <jeff@jeffjohnson.net>
+cc: <pgsql-interfaces@postgresql.org>
+X-MIME-Autoconverted: from quoted-printable to 8bit by postgresql.org id f55ElTE38246
+Precedence: bulk
+Sender: pgsql-interfaces-owner@postgresql.org
+Content-Length:  1186
+
+> > > I have done exactly that.  I assume fcntl(), ioctl(),
+> > > select() use errno
+> > > even if used on a socket, while getsockopt(), setsockopt(),
+> > socket(),
+> > > connect(), getsockname(), send(), recv() use WSAGetLastError.  Is
+> > this
+> > > list correct?
+> > 
+> > I don't know enough about such things.
+> 
+> The web page wasn't clear about that.
+No, that list is not correct.
+
+1) select() can *only* be used on a socket in Windows, and it puts its
+error info in WSAGetLastError().
+
+2) ioctl() should *not* be used on sockets. Instead, ioctlsocket()
+shuold be used. ioctlsocket() puts its error info in WSAGetLastError().
+(http://msdn.microsoft.com/library/psdk/winsock/ovrvw3_98mq.htm). (loads
+fine in my Netscape, doesn't look all that good, but definitly readable)
+
+3) fcntl() should *not* be used on sockets. ioctlsocket() again. 
+
+Generaelly, all functions dealing with sockets use WSAGetLastError().
+And sockets and file descriptors are *not* necessarily interchangable on
+Win32.
+
+
+Note - this is Win32, *not* cygwin. Cygwin maps to errno, AFAIK.
+
+//Magnus
+
+---------------------------(end of broadcast)---------------------------
+TIP 4: Don't 'kill -9' the postmaster
+
