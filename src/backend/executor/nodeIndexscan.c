@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/executor/nodeIndexscan.c,v 1.64 2001/10/28 06:25:43 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/executor/nodeIndexscan.c,v 1.65 2001/11/12 17:18:06 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -339,10 +339,17 @@ ExecIndexReScan(IndexScan *node, ExprContext *exprCtxt, Plan *parent)
 	{
 		/*
 		 * If we are being passed an outer tuple, save it for runtime key
-		 * calc
+		 * calc.  We also need to link it into the "regular" per-tuple
+		 * econtext, so it can be used during indexqualorig evaluations.
 		 */
 		if (exprCtxt != NULL)
+		{
+			ExprContext *stdecontext;
+
 			econtext->ecxt_outertuple = exprCtxt->ecxt_outertuple;
+			stdecontext = node->scan.scanstate->cstate.cs_ExprContext;
+			stdecontext->ecxt_outertuple = exprCtxt->ecxt_outertuple;
+		}
 
 		/*
 		 * Reset the runtime-key context so we don't leak memory as each
