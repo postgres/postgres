@@ -4,7 +4,7 @@
  *						  procedural language
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/pl/plpgsql/src/gram.y,v 1.61 2004/08/20 22:00:14 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/pl/plpgsql/src/gram.y,v 1.62 2004/09/14 23:46:46 neilc Exp $
  *
  *	  This software is copyrighted by Jan Wieck - Hamburg.
  *
@@ -1709,7 +1709,7 @@ read_sql_construct(int until,
 
 	lno = plpgsql_scanner_lineno();
 	plpgsql_dstring_init(&ds);
-	plpgsql_dstring_append(&ds, (char *) sqlstart);
+	plpgsql_dstring_append(&ds, sqlstart);
 
 	for (;;)
 	{

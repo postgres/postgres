@@ -3,7 +3,7 @@
  *			  procedural language
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/pl/plpgsql/src/plpgsql.h,v 1.54 2004/09/13 20:09:21 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/pl/plpgsql/src/plpgsql.h,v 1.55 2004/09/14 23:46:46 neilc Exp $
  *
  *	  This software is copyrighted by Jan Wieck - Hamburg.
  *
@@ -716,7 +716,7 @@ extern void plpgsql_xact_cb(XactEvent event, TransactionId parentXid, void *arg)
  */
 extern void plpgsql_dstring_init(PLpgSQL_dstring *ds);
 extern void plpgsql_dstring_free(PLpgSQL_dstring *ds);
-extern void plpgsql_dstring_append(PLpgSQL_dstring *ds, char *str);
+extern void plpgsql_dstring_append(PLpgSQL_dstring *ds, const char *str);
 extern char *plpgsql_dstring_get(PLpgSQL_dstring *ds);
 
 /* ----------

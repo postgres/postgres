@@ -3,7 +3,7 @@
  *			  procedural language
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/pl/plpgsql/src/pl_funcs.c,v 1.36 2004/08/30 02:54:42 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/pl/plpgsql/src/pl_funcs.c,v 1.37 2004/09/14 23:46:46 neilc Exp $
  *
  *	  This software is copyrighted by Jan Wieck - Hamburg.
  *
@@ -80,7 +80,7 @@ plpgsql_dstring_free(PLpgSQL_dstring *ds)
  * ----------
  */
 void
-plpgsql_dstring_append(PLpgSQL_dstring *ds, char *str)
+plpgsql_dstring_append(PLpgSQL_dstring *ds, const char *str)
 {
 	int			len = strlen(str);
 	int			needed = ds->used + len + 1;
