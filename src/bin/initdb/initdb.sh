@@ -27,7 +27,7 @@
 # Portions Copyright (c) 1996-2002, PostgreSQL Global Development Group
 # Portions Copyright (c) 1994, Regents of the University of California
 #
-# $Header: /cvsroot/pgsql/src/bin/initdb/Attic/initdb.sh,v 1.204.2.1 2004/01/14 03:47:12 tgl Exp $
+# $Header: /cvsroot/pgsql/src/bin/initdb/Attic/initdb.sh,v 1.204.2.2 2004/04/29 19:56:35 tgl Exp $
 #
 #-------------------------------------------------------------------------
 
@@ -1043,11 +1043,7 @@ $ECHO_N "loading pg_description... "$ECHO_C
 	classname name, \
 	objsubid int4, \
 	description text) WITHOUT OIDS;
-    COPY tmp_pg_description FROM STDIN;
-EOF
-  cat "$POSTGRES_DESCR"
-  cat <<EOF
-\.
+    COPY tmp_pg_description FROM '$POSTGRES_DESCR';
     INSERT INTO pg_description SELECT \
 	t.objoid, c.oid, t.objsubid, t.description \
     FROM tmp_pg_description t, pg_class c WHERE c.relname = t.classname;
