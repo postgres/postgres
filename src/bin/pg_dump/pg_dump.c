@@ -21,7 +21,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/bin/pg_dump/pg_dump.c,v 1.127 1999/12/27 15:42:43 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/bin/pg_dump/pg_dump.c,v 1.128 1999/12/27 15:45:04 momjian Exp $
  *
  * Modifications - 6/10/96 - dave@bensoft.com - version 1.13.dhb
  *
@@ -1700,7 +1700,7 @@ getTables(int *numTables, FuncInfo *finfo, int numFuncs)
 				int			tgnargs = atoi(PQgetvalue(res2, i2, i_tgnargs));
 				const char *tgargs = PQgetvalue(res2, i2, i_tgargs);
 				const char *p;
-				char		farg[MAX_QUERY_SIZE];
+				PQExpBuffer	farg = createPQExpBuffer();
 				int			findx;
 
 				for (findx = 0; findx < numFuncs; findx++)
@@ -1786,14 +1786,13 @@ getTables(int *numTables, FuncInfo *finfo, int numFuncs)
 							break;
 					}
 					p--;
-					for (s = tgargs, d = &(farg[0]); s < p;)
+					for (s = tgargs; s < p;)
 					{
 						if (*s == '\'')
-							*d++ = '\\';
-						*d++ = *s++;
+							appendPQExpBufferChar(farg, '\\');
+						appendPQExpBufferChar(farg, *s++);
 					}
-					*d = 0;
-					appendPQExpBuffer(query, "'%s'%s", farg,
+					appendPQExpBuffer(query, "'%s'%s", farg->data,
 							(findx < tgnargs - 1) ? ", " : "");
 					tgargs = p + 4;
 				}
