@@ -176,10 +176,11 @@
 #
 #dynamic_library_path = '$libdir'
 #australian_timezones = false
-#authentication_timeout = 60  # min 1, max 600
+#authentication_timeout = 60    # min 1, max 600
 #deadlock_timeout = 1000
 #default_transaction_isolation = 'read committed'
-#max_expr_depth = 10000 # min 10
+#max_expr_depth = 10000         # min 10
+#max_files_per_process = 1000   # min 25
 #password_encryption = false
 #sql_inheritance = true
 #transform_null_equals = false

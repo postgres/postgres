@@ -4,7 +4,7 @@
  * Support for grand unified configuration scheme, including SET
  * command, configuration file, and command line options.
  *
- * $Header: /cvsroot/pgsql/src/backend/utils/misc/guc.c,v 1.53 2001/09/29 04:02:25 tgl Exp $
+ * $Header: /cvsroot/pgsql/src/backend/utils/misc/guc.c,v 1.54 2001/09/30 18:57:45 tgl Exp $
  *
  * Copyright 2000 by PostgreSQL Global Development Group
  * Written by Peter Eisentraut <peter_e@gmx.net>.
@@ -31,6 +31,7 @@
 #include "optimizer/paths.h"
 #include "optimizer/planmain.h"
 #include "parser/parse_expr.h"
+#include "storage/fd.h"
 #include "storage/freespace.h"
 #include "storage/lock.h"
 #include "storage/proc.h"
@@ -301,6 +302,9 @@ static struct config_int
 
 	{"vacuum_mem", PGC_USERSET, &VacuumMem,
 	8192, 1024, INT_MAX, NULL, NULL},
+
+	{"max_files_per_process", PGC_BACKEND, &max_files_per_process,
+	1000, 25, INT_MAX, NULL, NULL},
 
 	{"debug_level", PGC_USERSET, &DebugLvl,
 	0, 0, 16, NULL, NULL},

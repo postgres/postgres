@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2001, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Id: fd.h,v 1.30 2001/06/11 04:12:29 tgl Exp $
+ * $Id: fd.h,v 1.31 2001/09/30 18:57:45 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -42,6 +42,11 @@
 typedef char *FileName;
 
 typedef int File;
+
+
+/* GUC parameter */
+extern int max_files_per_process;
+
 
 /*
  * prototypes for functions in fd.c

@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/storage/file/fd.c,v 1.83 2001/08/04 19:42:34 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/storage/file/fd.c,v 1.84 2001/09/30 18:57:45 tgl Exp $
  *
  * NOTES:
  *
@@ -69,7 +69,7 @@
  *
  * (Even though most dynamic loaders now use dlopen(3) or the
  * equivalent, the OS must still open several files to perform the
- * dynamic loading.  Keep this here.)
+ * dynamic loading.  And stdin/stdout/stderr count too.  Keep this here.)
  */
 #ifndef RESERVE_FOR_LD
 #define RESERVE_FOR_LD	10
@@ -86,6 +86,14 @@
 #ifndef FD_MINFREE
 #define FD_MINFREE 10
 #endif
+
+/*
+ * A number of platforms return values for sysconf(_SC_OPEN_MAX) that are
+ * far beyond what they can really support.  This GUC parameter limits what
+ * we will believe.
+ */
+int max_files_per_process = 1000;
+
 
 /* Debugging.... */
 
@@ -281,29 +289,46 @@ pg_nofile(void)
 {
 	static long no_files = 0;
 
+	/* need do this calculation only once */
 	if (no_files == 0)
 	{
-		/* need do this calculation only once */
-#ifndef HAVE_SYSCONF
-		no_files = (long) NOFILE;
-#else
+		/*
+		 * Ask the system what its files-per-process limit is.
+		 */
+#ifdef HAVE_SYSCONF
 		no_files = sysconf(_SC_OPEN_MAX);
-		if (no_files == -1)
+		if (no_files <= 0)
 		{
-/* tweak for Hurd, which does not support NOFILE */
 #ifdef NOFILE
-			elog(DEBUG, "pg_nofile: Unable to get _SC_OPEN_MAX using sysconf(); using %d", NOFILE);
 			no_files = (long) NOFILE;
 #else
-			elog(FATAL, "pg_nofile: Unable to get _SC_OPEN_MAX using sysconf() and NOFILE is undefined");
+			no_files = (long) max_files_per_process;
 #endif
+			elog(DEBUG, "pg_nofile: sysconf(_SC_OPEN_MAX) failed; using %ld",
+				 no_files);
 		}
+#else /* !HAVE_SYSCONF */
+#ifdef NOFILE
+		no_files = (long) NOFILE;
+#else
+		no_files = (long) max_files_per_process;
 #endif
+#endif /* HAVE_SYSCONF */
 
+		/*
+		 * Some platforms return hopelessly optimistic values.  Apply a
+		 * configurable upper limit.
+		 */
+		if (no_files > (long) max_files_per_process)
+			no_files = (long) max_files_per_process;
+
+		/*
+		 * Make sure we have enough to get by after reserving some for LD.
+		 */
 		if ((no_files - RESERVE_FOR_LD) < FD_MINFREE)
-			elog(FATAL, "pg_nofile: insufficient File Descriptors in postmaster to start backend (%ld).\n"
-				 "                   O/S allows %ld, Postmaster reserves %d, We need %d (MIN) after that.",
-				 no_files - RESERVE_FOR_LD, no_files, RESERVE_FOR_LD, FD_MINFREE);
+			elog(FATAL, "pg_nofile: insufficient file descriptors available to start backend.\n"
+				 "\tSystem allows %ld, we need at least %d.",
+				 no_files, RESERVE_FOR_LD + FD_MINFREE);
 
 		no_files -= RESERVE_FOR_LD;
 	}
