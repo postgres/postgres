@@ -64,10 +64,10 @@ LIB32_FLAGS=
 LIB32_OBJS= \
 	"$(OUTDIR)\win32.obj" \
 	"$(INTDIR)\getaddrinfo.obj" \
+	"$(INTDIR)\thread.obj" \
 	"$(INTDIR)\inet_aton.obj" \
 	"$(INTDIR)\crypt.obj" \
 	"$(INTDIR)\path.obj" \
-	"$(INTDIR)\thread.obj" \
 	"$(INTDIR)\dllist.obj" \
 	"$(INTDIR)\md5.obj" \
 	"$(INTDIR)\ip.obj" \
@@ -102,6 +102,7 @@ ALL: "$(OUTDIR)" "$(OUTDIR)\blibpq.dll" "$(OUTDIR)\blibpq.lib"
 
 CLEAN :
 	-@erase "$(INTDIR)\getaddrinfo.obj"
+	-@erase "$(INTDIR)\thread.obj"
 	-@erase "$(INTDIR)\inet_aton.obj"
 	-@erase "$(INTDIR)\crypt.obj"
 	-@erase "$(INTDIR)\path.obj"

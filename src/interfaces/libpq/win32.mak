@@ -43,8 +43,9 @@ ALL : "$(OUTDIR)\libpq.lib" "$(OUTDIR)\libpq.dll"
 
 CLEAN :
 	-@erase "$(INTDIR)\getaddrinfo.obj"
+	-@erase "$(INTDIR)\thread.obj"
 	-@erase "$(INTDIR)\inet_aton.obj"
-      -@erase "$(INTDIR)\crypt.obj"
+	-@erase "$(INTDIR)\crypt.obj"
 	-@erase "$(INTDIR)\path.obj"
 	-@erase "$(INTDIR)\dllist.obj"
 	-@erase "$(INTDIR)\md5.obj"
@@ -90,6 +91,7 @@ LIB32_FLAGS=$(LOPT) /nologo /out:"$(OUTDIR)\libpq.lib"
 LIB32_OBJS= \
 	"$(INTDIR)\win32.obj" \
 	"$(INTDIR)\getaddrinfo.obj" \
+	"$(INTDIR)\thread.obj" \
 	"$(INTDIR)\inet_aton.obj" \
         "$(INTDIR)\crypt.obj" \
 	"$(INTDIR)\path.obj" \
@@ -104,7 +106,6 @@ LIB32_OBJS= \
 	"$(INTDIR)\fe-lobj.obj" \
 	"$(INTDIR)\fe-misc.obj" \
 	"$(INTDIR)\fe-print.obj" \
-	"$(INTDIR)\thread.obj" \
 	"$(INTDIR)\fe-secure.obj" \
 	"$(INTDIR)\pqexpbuffer.obj" \
 	"$(INTDIR)\wchar.obj" \
