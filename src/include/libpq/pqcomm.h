@@ -9,7 +9,7 @@
  * Portions Copyright (c) 1996-2000, PostgreSQL, Inc
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Id: pqcomm.h,v 1.50 2000/11/25 04:13:18 momjian Exp $
+ * $Id: pqcomm.h,v 1.51 2000/11/25 22:34:14 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -171,14 +171,5 @@ typedef struct CancelRequestPacket
  */
 #define NEGOTIATE_SSL_CODE PG_PROTOCOL(1234,5679)
 
-
-/*
- * Configuration options
- */
-extern int Unix_socket_permissions;
-
-extern char * Unix_socket_group;
-extern char * UnixSocketDir;
-extern char * Virtual_host;
 
 #endif	 /* PQCOMM_H */

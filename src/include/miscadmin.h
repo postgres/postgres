@@ -12,7 +12,7 @@
  * Portions Copyright (c) 1996-2000, PostgreSQL, Inc
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Id: miscadmin.h,v 1.73 2000/11/25 05:00:30 momjian Exp $
+ * $Id: miscadmin.h,v 1.74 2000/11/25 22:34:13 momjian Exp $
  *
  * NOTES
  *	  some of the information in this file will be moved to
@@ -111,6 +111,11 @@ extern bool SilentMode;
 extern int MaxBackends;
 extern int NBuffers;
 extern int PostPortNumber;
+extern int Unix_socket_permissions;
+extern char *Unix_socket_group;
+extern char *UnixSocketDir;
+extern char *Virtual_host;
+
 
 /*****************************************************************************
  *	  pdir.h --																 *
