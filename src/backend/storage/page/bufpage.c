@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/storage/page/bufpage.c,v 1.40 2001/10/28 06:25:51 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/storage/page/bufpage.c,v 1.41 2001/11/08 04:05:13 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -349,7 +349,7 @@ PageRepairFragmentation(Page page, OffsetNumber *unused)
 
 		if (totallen > (Size) (pd_special - pd_lower))
 			elog(ERROR, "PageRepairFragmentation: corrupted item lengths, total %u, avail %u",
-				 totallen, pd_special - pd_lower);
+				 (unsigned int) totallen, pd_special - pd_lower);
 
 		/* sort itemIdSortData array into decreasing itemoff order */
 		qsort((char *) itemidbase, nused, sizeof(struct itemIdSortData),

@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/varchar.c,v 1.85 2001/10/25 05:49:46 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/varchar.c,v 1.86 2001/11/08 04:05:13 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -117,7 +117,8 @@ bpcharin(PG_FUNCTION_ARGS)
 		if (strspn(s + mbmaxlen, " ") == len - mbmaxlen)
 			len = mbmaxlen;
 		else
-			elog(ERROR, "value too long for type character(%d)", maxlen);
+			elog(ERROR, "value too long for type character(%d)",
+				 (int) maxlen);
 
 		/*
 		 * XXX: at this point, maxlen is the necessary byte length, not
@@ -128,7 +129,8 @@ bpcharin(PG_FUNCTION_ARGS)
 		if (strspn(s + maxlen, " ") == len - maxlen)
 			len = maxlen;
 		else
-			elog(ERROR, "value too long for type character(%d)", maxlen);
+			elog(ERROR, "value too long for type character(%d)",
+				 (int) maxlen);
 #endif
 	}
 #ifdef MULTIBYTE
@@ -443,7 +445,8 @@ varcharin(PG_FUNCTION_ARGS)
 			len = maxlen;
 #endif
 		else
-			elog(ERROR, "value too long for type character varying(%d)", maxlen);
+			elog(ERROR, "value too long for type character varying(%d)",
+				 (int) maxlen);
 	}
 
 	result = palloc(len + VARHDRSZ);
