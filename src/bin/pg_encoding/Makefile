@@ -4,7 +4,7 @@
 #
 # Copyright (c) 1998, PostgreSQL Global Development Group
 #
-# $Header: /cvsroot/pgsql/src/bin/pg_encoding/Attic/Makefile,v 1.13 2001/02/20 19:20:28 petere Exp $
+# $Header: /cvsroot/pgsql/src/bin/pg_encoding/Attic/Makefile,v 1.14 2001/03/23 05:46:05 ishii Exp $
 #
 #-------------------------------------------------------------------------
 
@@ -15,6 +15,13 @@ include $(top_builddir)/src/Makefile.global
 OBJS= pg_encoding.o
 
 all: submake pg_encoding
+
+ifdef STRTOUL
+OBJS+=$(top_builddir)/src/backend/port/strtoul.o
+
+$(top_builddir)/src/backend/port/strtoul.o:
+	$(MAKE) -C $(top_builddir)/src/backend/port strtoul.o
+endif
 
 pg_encoding: $(OBJS)
 	$(CC) $(CFLAGS) $^ $(libpq) $(LDFLAGS) $(LIBS) -o $@
